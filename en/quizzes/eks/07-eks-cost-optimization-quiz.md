@@ -1,6 +1,6 @@
 # Amazon EKS Cost Optimization Quiz
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 16, 2026
 
 Examples are independent configuration alternatives, not executed deployments or measured savings. Merge changes into the existing resource owner; do not apply every example successively over the same workload. Replace placeholder application images and application-owned hooks, verify account/context/Region and compatible controllers, and test behavior before operational use.
 
@@ -1319,7 +1319,7 @@ The most effective approach for optimizing Amazon EKS cluster management costs i
 
 The short eksctl command illustrates creation, not a production network/IAM preset. Select the EKS version from the AWS catalog, review the VPC and API endpoint exposure using the [creation guide](../../eks/02-eks-cluster-creation.md), and keep controller permissions on dedicated identities. Node-group size bounds do not install an autoscaler or impose a spending cap. Standard/extended support fees, optional Provisioned Control Plane capacity, and shared management dependencies also affect the comparison.
 
-The Terraform example uses the checked module **21.25.0**, whose minimum AWS provider is **6.59**; the shown provider pin is 6.64.0. Inputs deliberately have no guessed environment defaults. Supply owned private networking and API reachability, reviewed access entries, compatible/pinned add-ons with their IAM associations, and managed node groups. Standard EC2 nodes need the appropriate CNI/DNS/proxy path; this is not an Auto Mode example. Coordinate desired-size ownership with the autoscaler and use separate state/provider identities where the isolation model requires it. No plan/apply or production readiness is claimed.
+The Terraform example uses the checked module **21.25.0**, whose minimum AWS provider is **6.59**; the shown provider pin is 6.69.1. Inputs deliberately have no guessed environment defaults. Supply owned private networking and API reachability, reviewed access entries, compatible/pinned add-ons with their IAM associations, and managed node groups. Standard EC2 nodes need the appropriate CNI/DNS/proxy path; this is not an Auto Mode example. Coordinate desired-size ownership with the autoscaler and use separate state/provider identities where the isolation model requires it. No plan/apply or production readiness is claimed.
 
 **Implementation Methods:**
 
@@ -1345,7 +1345,7 @@ The Terraform example uses the checked module **21.25.0**, whose minimum AWS pro
      required_providers {
        aws = {
          source  = "hashicorp/aws"
-         version = "= 6.64.0"
+         version = "= 6.69.1"
        }
      }
    }
@@ -1769,7 +1769,7 @@ The CUR command below creates a **legacy CUR**, not a Cost Explorer dashboard or
    ```
 
 3. **Kubecost Installation and Configuration**:
-Use the checked Kubecost 3.2.4 installation in the [source guide](../../eks/07-eks-cost-optimization.md), or OpenCost 1.121.2/chart 2.5.31 in [EKS06 question 6](06-eks-monitoring-logging-quiz.md). Kubecost 3.x uses ClickHouse/direct finops-agent collection; 2.x Prometheus values and command-line license tokens are not this setup. Reuse one owned deployment and review its migration, licensing, and storage requirements.
+Use the checked Kubecost 3.3.1 installation in the [source guide](../../eks/07-eks-cost-optimization.md), or OpenCost 1.121.2/chart 2.5.31 in [EKS06 question 6](06-eks-monitoring-logging-quiz.md). Kubecost 3.x uses ClickHouse/direct finops-agent collection; 2.x Prometheus values and command-line license tokens are not this setup. Reuse one owned deployment and review its migration, licensing, and storage requirements.
 
 4. **Legacy CUR Delivery Setup**:
    ```bash
@@ -2046,7 +2046,7 @@ The named tools are examples of complementary roles, not a requirement to instal
 **Implementation Methods:**
 
 1. **Kubecost Installation and Configuration**:
-Reuse the checked installation and allocation-data prerequisites from Q5 and the [source guide](../../eks/07-eks-cost-optimization.md). Kubecost 3.2.4 uses the current `kubecost/kubecost` chart and ClickHouse/direct-agent architecture; product features depend on edition/configuration. OpenCost is a separate option. Do not deploy a second collector over an existing owned setup.
+Reuse the checked installation and allocation-data prerequisites from Q5 and the [source guide](../../eks/07-eks-cost-optimization.md). Kubecost 3.3.1 uses the current `kubecost/kubecost` chart and ClickHouse/direct-agent architecture; product features depend on edition/configuration. OpenCost is a separate option. Do not deploy a second collector over an existing owned setup.
 
 2. **Karpenter Installation and Configuration**:
 Save the following as `karpenter-values.yaml`, replace the account/role/cluster/endpoint/queue with reviewed existing values, and follow the [Karpenter guide](../../autoscaling/02-karpenter.md). The checked example uses 1.14.1; EKS 1.36 needs at least 1.13 in the compatibility matrix. These are `settings.*` keys, not ignored `controller.clusterName/clusterEndpoint` values. The IRSA trust must match `system:serviceaccount:karpenter:karpenter` and its audience; do not combine conflicting IRSA/Pod Identity assignments. Prepare controller/node IAM, node access, subnets/security groups, the interruption queue/event wiring, and reliable bootstrap capacity first. Fresh Helm installs and CRD upgrades have different ownership/lifecycle steps; the controller upgrade alone does not upgrade existing CRDs.
@@ -2208,7 +2208,7 @@ The VPA examples use Off while HPA uses CPU/memory utilization denominators. Ena
 
 PriorityClass controls scheduling/preemption priority, not cost allocation or guaranteed availability. Govern who can assign priorities; scheduler preemption makes a best-effort attempt to respect PDBs. Review disruption and workload recovery. Cost observations and recommendations need an explicit reviewed policy/change path before controllers act; the architecture diagram does not implement that integration.
 
-The Terraform alternative uses Helm provider 3.3.0 values-file configuration and AWS provider 6.64.0. Supply the explicit Kubernetes context and reviewed chart values, including compatible identity, storage, and license-secret references; it does not create those prerequisites. Do not put raw license/cloud credentials into values or state. Reconcile an existing release with its owner instead of installing it again through a second manager. The 1,000 USD/80% budget is illustrative, uses a verified billing tag filter, and is not a hard spending cap. No cluster/Helm provisioning or notification was executed in this audit.
+The Terraform alternative uses Helm provider 3.3.0 values-file configuration and AWS provider 6.69.1. Supply the explicit Kubernetes context and reviewed chart values, including compatible identity, storage, and license-secret references; it does not create those prerequisites. Do not put raw license/cloud credentials into values or state. Reconcile an existing release with its owner instead of installing it again through a second manager. The 1,000 USD/80% budget is illustrative, uses a verified billing tag filter, and is not a hard spending cap. No cluster/Helm provisioning or notification was executed in this audit.
 
 The API example below explicitly targets OpenCost 1.121.2 from the earlier setup, not a guessed Kubecost 3.x URL. Its `/allocation` API accepts `namespace,controllerKind,controller` aggregation; `deployment` is not the documented generic aggregation key. The response data is an array of allocation-set maps, not a direct namespace/Deployment dictionary. Validate HTTP/API errors and data coverage; an empty result is not zero cost or evidence of overprovisioning. Allocation quantities, usage, requests, byte-hours/core-hours, and current replica counts have different meanings and time windows. Inspect the versioned schema and comparable workload metrics before recommending rightsizing. Raw allocation estimates must be reconciled with billing and idle/shared-cost policies.
 
@@ -2343,7 +2343,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -2384,7 +2384,7 @@ resource "helm_release" "kubecost" {
   name             = "kubecost"
   repository       = "https://kubecost.github.io/kubecost/"
   chart            = "kubecost"
-  version          = "3.2.4"
+  version          = "3.3.1"
   namespace        = "kubecost"
   create_namespace = true
   values           = [file(var.reviewed_kubecost_values_path)]

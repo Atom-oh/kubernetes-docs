@@ -333,7 +333,7 @@ spec:
     effect: NoSchedule
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m

@@ -95,7 +95,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: nginxinc/nginx-unprivileged:1.30.4@sha256:cb92301e719d6639028de775fe8b28e15f58343aca5e5372001311958aafb300
+        image: nginxinc/nginx-unprivileged:1.30.6@sha256:455cebcadcac0b597cdeaab077d93fb8ad59a98f7ed001dcf8f8693154b5d3d3
         resources:
           requests:
             cpu: 250m
@@ -287,7 +287,7 @@ Preserve the `Estimated` flags and account for refunds, credits, discount alloca
 
 ## Resource Right-Sizing
 
-Use the pinned [VPA 1.7.1 installation guide](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md). Its documented compatibility includes Kubernetes 1.28+, with higher requirements for specific in-place features. The old `releases/latest/download/...` URLs were not a valid VPA installation procedure. Review CRDs, RBAC, metrics-server and component/certificate setup before applying cluster-wide installation scripts; `Off` still needs a working recommender.
+Use the pinned [VPA 1.8.0 installation guide](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/installation.md). Its documented compatibility for VPA 1.8.x is Kubernetes 1.36–1.38, with additional requirements for specific in-place features. The old `releases/latest/download/...` URLs were not a valid VPA installation procedure. Review CRDs, RBAC, metrics-server and component/certificate setup before applying cluster-wide installation scripts; `Off` still needs a working recommender.
 
 This resource targets the actual lab Deployment in the same namespace:
 
@@ -504,8 +504,8 @@ Reducing AZ resilience is not a generic cost optimization. Include data transfer
 - [Activating cost allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html)
 - [CloudWatch estimated billing charges](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html)
 - [Kubecost 3.2.4 chart](https://kubecost.github.io/kubecost/kubecost-3.2.4.tgz)
-- [VPA 1.7.1 installation](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md)
-- [VPA known limitations](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/known-limitations.md)
+- [VPA 1.8.0 installation](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/installation.md)
+- [VPA known limitations](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/known-limitations.md)
 - [Kubernetes resource units and scheduling](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
 - [Auto Mode NodeClass and tags](https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html)
 

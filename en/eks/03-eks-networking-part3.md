@@ -1,7 +1,7 @@
 # Part 3: Troubleshooting
 
-> **Verified Example Versions**: EKS Kubernetes 1.36, Amazon VPC CNI 1.23.0
-> **Last Updated**: September 11, 2026
+> **Verified Example Versions**: EKS Kubernetes 1.36, Amazon VPC CNI 1.23.2
+> **Last Updated**: October 16, 2026
 
 ## Overview
 
@@ -52,7 +52,7 @@ EKS supports multiple networking modes, each with different performance characte
 
 ### MTU Optimization
 
-The actual VPC CNI environment variable is **`AWS_VPC_ENI_MTU`**, not `ENI_MTU`. In 1.23.0 it defaults to 9001; `POD_MTU` controls Pod virtual interfaces and, when unset, derives from the ENI MTU. Inspect both the init and main containers before changing configuration:
+The actual VPC CNI environment variable is **`AWS_VPC_ENI_MTU`**, not `ENI_MTU`. In 1.23.2 it defaults to 9001; `POD_MTU` controls Pod virtual interfaces and, when unset, derives from the ENI MTU. Inspect both the init and main containers before changing configuration:
 ```bash
 kubectl -n kube-system get daemonset aws-node -o json > aws-node-current.json
 python3 - <<'PY'
@@ -364,7 +364,7 @@ aws elbv2 describe-target-health --region "$AWS_REGION" --target-group-arn "$TAR
 ```
 Change one confirmed cause at a time, retain a rollback path, and repeat the same positive and negative application checks. The commands above are diagnostic examples; this audit did not execute against an EKS cluster.
 
-Official references: [EC2 bandwidth](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html), [MTU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html), [VPC CNI 1.23.0 settings](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md), [Kubernetes sysctls](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/), [Service traffic distribution](https://kubernetes.io/docs/reference/networking/virtual-ips/).
+Official references: [EC2 bandwidth](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html), [MTU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html), [VPC CNI 1.23.2 settings](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.2/README.md), [Kubernetes sysctls](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/), [Service traffic distribution](https://kubernetes.io/docs/reference/networking/virtual-ips/).
 
 ## Quiz
 

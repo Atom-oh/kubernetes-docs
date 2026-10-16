@@ -69,7 +69,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: file-owner
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sh
         - -c

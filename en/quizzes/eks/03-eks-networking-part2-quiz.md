@@ -1,8 +1,8 @@
 # EKS Networking Quiz - Part 2
 
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
-These answers use the controller ownership and prerequisites in [Part 2](../../eks/03-eks-networking-part2.md): LBC 3.5.0 and Gateway API 1.6.0. Commands are examples that change resources when run; local schema/mock tests do not constitute an EKS deployment. Replace account/Region/resource placeholders, use the intended kubeconfig and preserve the platform’s IAM/Helm/IaC ownership.
+These answers use the controller ownership and prerequisites in [Part 2](../../eks/03-eks-networking-part2.md): LBC 3.6.0 and Gateway API 1.6.0. Commands are examples that change resources when run; local schema/mock tests do not constitute an EKS deployment. Replace account/Region/resource placeholders, use the intended kubeconfig and preserve the platform’s IAM/Helm/IaC ownership.
 
 ### 1. What type of AWS load balancer does AWS Load Balancer Controller provision by default for Kubernetes Ingress resources?
 
@@ -691,7 +691,7 @@ Issues with other options:
 
 </details>
 
-### 12. How are LBC 3.5.0 Gateway controllers enabled?
+### 12. How are LBC 3.6.0 Gateway controllers enabled?
 
 - A. Always pass `--enable-gateway-api`
 - B. Detect compatible CRDs with the real default-enabled gates
@@ -755,7 +755,7 @@ Issues with other options:
 </details>
 The `my-nlb-gateway` listener and backend Service must exist in `gateway-demo`. TLSRoute with this implementation does not provide SNI-based NLB routing; use the release-specific TLS behavior rather than assuming all Gateway API implementations behave alike.
 
-### 14. How does LBC 3.5.0 configure a static certificate for an ALB Gateway?
+### 14. How does LBC 3.6.0 configure a static certificate for an ALB Gateway?
 
 - A. Create any Secret named tls-cert
 - B. Use the ACM ARN in LoadBalancerConfiguration

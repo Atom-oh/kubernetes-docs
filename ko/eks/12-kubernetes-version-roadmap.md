@@ -898,7 +898,7 @@ Resize로 Pod QoS class를 바꿀 수 없습니다. Guaranteed Pod는 CPU·memor
 
 #### 현재 VPA 연동은 별도의 버전 결정
 
-다음은 **2026년 companion component 예시**이며 Kubernetes 1.33 출시 당시 VPA 1.7이 있었다는 뜻이 아닙니다. 출시된 VPA **1.7.1** API는 1.7.0에서 alpha로 도입한 `InPlace`를 지원합니다. Admission-controller·updater 양쪽의 VPA `InPlace` gate와 Kubernetes 1.33+ in-place-resize 지원이 필요합니다. VPA의 Pod eviction fallback을 피하지만 resize 완료나 모든 container policy의 무재시작을 보장하지 않습니다. 권고만 관찰하려면 먼저 `Off`를 사용합니다.
+다음은 **2026년 companion component 예시**이며 Kubernetes 1.33 출시 당시 VPA 1.8이 있었다는 뜻이 아닙니다. 출시된 VPA **1.8.0** API는 1.7.0에서 alpha로 도입했고 1.8.0에서도 alpha인 `InPlace`를 지원합니다. Admission-controller·updater 양쪽의 VPA `InPlace` gate와 Kubernetes 1.33+ in-place-resize 지원이 필요하며, VPA 1.8.x 자체의 문서상 호환 범위는 Kubernetes 1.36–1.38입니다. VPA의 Pod eviction fallback을 피하지만 resize 완료나 모든 container policy의 무재시작을 보장하지 않습니다. 권고만 관찰하려면 먼저 `Off`를 사용합니다.
 
 아래 CPU-only policy는 기존 Deployment/container의 예시 범위입니다. 변경 활성화 전에 controller 배포 flag와 용량을 검토합니다. `InPlaceOrRecreate`는 재생성으로 fallback할 수 있는 별도 모드이며 VPA 1.6에서 GA, 기존 gate는 1.7에서 제거되었습니다. 제거된 gate를 설정하거나 Kubernetes GA만으로 VPA 동작을 추론하지 않습니다.
 
@@ -1047,7 +1047,7 @@ spec:
 
 LoadBalancerIPMode·RetryGenerateName은 1.32에서 이미 GA였습니다. KYAML 도입은 1.33이 아닌 1.34입니다.
 
-[Kubernetes 1.33 release](https://kubernetes.io/blog/2025/04/23/kubernetes-v1-33-release/) · [Versioned 1.36 resize guide](https://github.com/kubernetes/website/blob/release-1.36/content/en/docs/tasks/configure-pod-container/resize-container-resources.md) · [VPA 1.7.1 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md) · [Service range extension](https://kubernetes.io/docs/tasks/network/extend-service-ip-ranges/) · [EKS network configuration API](https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigRequest.html) · [Data-transfer charge interpretation](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
+[Kubernetes 1.33 release](https://kubernetes.io/blog/2025/04/23/kubernetes-v1-33-release/) · [Versioned 1.36 resize guide](https://github.com/kubernetes/website/blob/release-1.36/content/en/docs/tasks/configure-pod-container/resize-container-resources.md) · [VPA 1.8.0 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md) · [VPA 1.8.0 compatibility](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/installation.md#compatibility) · [Service range extension](https://kubernetes.io/docs/tasks/network/extend-service-ip-ranges/) · [EKS network configuration API](https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigRequest.html) · [Data-transfer charge interpretation](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
 
 ---
 
@@ -2816,7 +2816,7 @@ historical_planning_example:
 - [EKS Auto Mode networking](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)
 - [EKS best practices](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
 - [EKS pricing](https://aws.amazon.com/eks/pricing/)
-- [VPA 1.7.1 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md)
+- [VPA 1.8.0 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md)
 - [Pluto](https://github.com/FairwindsOps/pluto)
 - [Kubent](https://github.com/doitintl/kube-no-trouble)
 

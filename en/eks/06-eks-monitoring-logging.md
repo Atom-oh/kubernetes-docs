@@ -1,6 +1,6 @@
 # Amazon EKS Monitoring and Logging
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 16, 2026
 
 Effective monitoring and logging are essential for maintaining the reliability, availability, and performance of Amazon EKS clusters. This document covers various tools, techniques, and best practices for implementing monitoring and logging in EKS clusters.
 
@@ -634,7 +634,7 @@ AMP stores and queries ingested Prometheus metrics; AMG queries configured data 
 
 Prepare an IRSA role for ServiceAccount monitoring/amp-writer. Its trust policy must use this cluster’s OIDC provider and exact sub=system:serviceaccount:monitoring:amp-writer and aud=sts.amazonaws.com conditions. Grant aps:RemoteWrite on the intended workspace ARN. The Prometheus process must receive the projected token and reach STS and the AMP endpoint; Kubernetes RBAC is a separate permission path. Do not also attach an unrelated Pod Identity association or static AWS keys to this example.
 
-The following reads the workspace and writes an overlay for the reviewed chart 90.1.1. It accepts the documented endpoint forms with or without /api/v1/ and appends remote_write exactly once. Python 3 is required; no workspace is created:
+The following reads the workspace and writes an overlay for the reviewed chart 92.9.0. It accepts the documented endpoint forms with or without /api/v1/ and appends remote_write exactly once. Python 3 is required; no workspace is created:
 
 ```bash
 set -euo pipefail
@@ -685,7 +685,7 @@ print("Wrote amp-values.json; review it with all existing release values")
 PY
 ```
 
-Combine amp-values.json with monitoring-values.yaml in the owner’s reviewed installation/upgrade values. The overlay replaces the remoteWrite list; preserve any existing destinations and external labels intentionally. For a new release, add -f amp-values.json to the installation command below. For an existing release, retain all current settings and review the rendered diff and rollout before applying the owner’s upgrade procedure. Changing the ServiceAccount changes the Prometheus Pod identity. Chart 90.1.1 uses an explicit ServiceAccount token Secret for its default API-server/kubelet ServiceMonitor authorization. Keep that Secret protected and follow its rotation/revocation procedure; it is distinct from the short-lived, audience-bound IRSA token. Disabling createTokenSecret without replacing every dependent monitor credential breaks the render or authentication.
+Combine amp-values.json with monitoring-values.yaml in the owner’s reviewed installation/upgrade values. The overlay replaces the remoteWrite list; preserve any existing destinations and external labels intentionally. For a new release, add -f amp-values.json to the installation command below. For an existing release, retain all current settings and review the rendered diff and rollout before applying the owner’s upgrade procedure. Changing the ServiceAccount changes the Prometheus Pod identity. Chart 92.9.0 uses an explicit ServiceAccount token Secret for its default API-server/kubelet ServiceMonitor authorization. Keep that Secret protected and follow its rotation/revocation procedure; it is distinct from the short-lived, audience-bound IRSA token. Disabling createTokenSecret without replacing every dependent monitor credential breaks the render or authentication.
 
 For multiple replicas, configure AMP’s documented HA deduplication labels and replica topology rather than assuming duplicate scrapes are free. Set cardinality, retention and ingestion budgets from the actual workload. Check remote-write failures/backlog and query recent data in the intended workspace; a successful Helm rollout is not ingestion proof.
 
@@ -712,7 +712,7 @@ References: [AMP remote write](https://docs.aws.amazon.com/prometheus/latest/use
 
 This example uses one owned kube-prometheus-stack release, which includes the Prometheus Operator required by the ServiceMonitor and PrometheusRule examples. A standalone Prometheus chart does not automatically provide those CRDs/controllers. Inspect existing operators, releases and CRD ownership before installing; use the owner’s upgrade procedure for an existing stack.
 
-The reviewed baseline is chart 90.1.1 / Operator 0.93.1, rendered for EKS 1.36. It assumes standard Linux EC2 nodes and a prepared encrypted ebs-gp3 StorageClass with working EBS CSI permissions. For Auto Mode or another storage implementation, select its actual supported class and node placement. Retention and PVC sizes below are example allocations, not measured capacity guarantees.
+The reviewed baseline is chart 92.9.0 / Operator 0.94.1, rendered for EKS 1.36. It assumes standard Linux EC2 nodes and a prepared encrypted ebs-gp3 StorageClass with working EBS CSI permissions. For Auto Mode or another storage implementation, select its actual supported class and node placement. Retention and PVC sizes below are example allocations, not measured capacity guarantees.
 
 Prepare namespace monitoring and Secret grafana-admin with admin-user/admin-password keys through the approved secret-management process. The values reference that Secret rather than placing a shared password in Helm values or command arguments. Save the following as monitoring-values.yaml:
 
@@ -781,7 +781,7 @@ For a new owned release:
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm install monitoring prometheus-community/kube-prometheus-stack \
-  --version 90.1.1 --namespace monitoring --create-namespace \
+  --version 92.9.0 --namespace monitoring --create-namespace \
   -f monitoring-values.yaml --wait --timeout 10m
 ```
 
@@ -803,7 +803,7 @@ Protect the Grafana database/PVC and exported dashboard definitions. Use Grafana
 
 The chart render confirms the actual Prometheus service monitoring-kube-prometheus-prometheus, Grafana service monitoring-grafana and data-source UID prometheus. Custom ServiceMonitors/PrometheusRules must match the release=monitoring selectors used by this release. Rendered manifests and schema checks are local evidence; no stack, PVC or login was exercised in a live cluster.
 
-Reference: [kube-prometheus-stack chart and upgrade guidance](https://github.com/prometheus-community/helm-charts/tree/kube-prometheus-stack-90.1.1/charts/kube-prometheus-stack).
+Reference: [kube-prometheus-stack chart and upgrade guidance](https://github.com/prometheus-community/helm-charts/tree/kube-prometheus-stack-92.9.0/charts/kube-prometheus-stack).
 
 #### Key Prometheus Metrics
 

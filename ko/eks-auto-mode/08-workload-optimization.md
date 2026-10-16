@@ -86,7 +86,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: nginxinc/nginx-unprivileged:1.30.4@sha256:cb92301e719d6639028de775fe8b28e15f58343aca5e5372001311958aafb300
+        image: nginxinc/nginx-unprivileged:1.30.6@sha256:455cebcadcac0b597cdeaab077d93fb8ad59a98f7ed001dcf8f8693154b5d3d3
         resources:
           requests:
             cpu: 500m
@@ -258,7 +258,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: processor
-        image: busybox:1.37.0@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+        image: busybox:1.38.0@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
         command:
         - /bin/sh
         - -ec

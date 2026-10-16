@@ -85,7 +85,7 @@ spec:
                 - spot
       containers:
       - name: app
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         resources:
           requests:
             cpu: 100m
@@ -273,7 +273,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       - name: app
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         lifecycle:
           preStop:
             exec:

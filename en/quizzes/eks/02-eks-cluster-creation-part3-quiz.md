@@ -327,7 +327,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
       - name: client
-        image: public.ecr.aws/docker/library/busybox:1.37.0
+        image: public.ecr.aws/docker/library/busybox:1.38.0
         command: [sleep, '3600']
         resources:
           requests: {cpu: 10m, memory: 16Mi}
@@ -1640,7 +1640,7 @@ spec:
         audit.example.com/pool: green
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         readinessProbe:
@@ -1739,7 +1739,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
       - name: reserve
-        image: public.ecr.aws/docker/library/busybox:1.37.0
+        image: public.ecr.aws/docker/library/busybox:1.38.0
         command: [sleep, '86400']
         resources:
           requests: {cpu: 1000m, memory: 1000Mi}
@@ -1824,7 +1824,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: secure-container
-        image: public.ecr.aws/docker/library/busybox:1.37.0
+        image: public.ecr.aws/docker/library/busybox:1.38.0
         command:
         - sh
         - -c

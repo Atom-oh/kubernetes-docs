@@ -95,7 +95,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: nginxinc/nginx-unprivileged:1.30.4@sha256:cb92301e719d6639028de775fe8b28e15f58343aca5e5372001311958aafb300
+        image: nginxinc/nginx-unprivileged:1.30.6@sha256:455cebcadcac0b597cdeaab077d93fb8ad59a98f7ed001dcf8f8693154b5d3d3
         resources:
           requests:
             cpu: 250m
@@ -287,7 +287,7 @@ jq '[.ResultsByTime[] | {period:.TimePeriod,estimated:.Estimated,groups:.Groups}
 
 ## 리소스 적정 크기
 
-고정된 [VPA 1.7.1 설치 가이드](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md)를 사용합니다. 문서상 Kubernetes 1.28+를 지원하며 특정 in-place 기능은 더 높은 버전이 필요합니다. 이전 `releases/latest/download/...` URL은 유효한 VPA 설치 절차가 아니었습니다. 클러스터 범위 설치 스크립트 적용 전에 CRD·RBAC·metrics-server·컴포넌트/인증서 구성을 검토하세요. `Off`도 정상 recommender가 필요합니다.
+고정된 [VPA 1.8.0 설치 가이드](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/installation.md)를 사용합니다. 문서상 VPA 1.8.x는 Kubernetes 1.36–1.38을 지원하며 특정 in-place 기능은 추가 조건이 필요합니다. 이전 `releases/latest/download/...` URL은 유효한 VPA 설치 절차가 아니었습니다. 클러스터 범위 설치 스크립트 적용 전에 CRD·RBAC·metrics-server·컴포넌트/인증서 구성을 검토하세요. `Off`도 정상 recommender가 필요합니다.
 
 아래 리소스는 같은 namespace의 실제 실습 Deployment를 대상으로 합니다.
 
@@ -504,8 +504,8 @@ AZ 복원력 축소는 일반적인 비용 최적화가 아닙니다. 배치·�
 - [Activating cost allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html)
 - [CloudWatch estimated billing charges](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html)
 - [Kubecost 3.2.4 chart](https://kubecost.github.io/kubecost/kubecost-3.2.4.tgz)
-- [VPA 1.7.1 installation](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md)
-- [VPA known limitations](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/known-limitations.md)
+- [VPA 1.8.0 installation](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/installation.md)
+- [VPA known limitations](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/known-limitations.md)
 - [Kubernetes resource units and scheduling](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
 - [Auto Mode NodeClass and tags](https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html)
 

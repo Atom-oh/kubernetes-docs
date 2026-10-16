@@ -2,8 +2,8 @@
 
 < [이전: GPU 서버 통합](./05-gpu-integration.md) | [목차](./README.md) | [다음: 노드 라이프사이클 관리](./07-node-lifecycle.md) >
 
-> **지원 버전**: 호환 Karpenter를 사용하는 지원 EKS 버전. Kubernetes 1.36.2와 Karpenter/provider 1.14.1 인터페이스 확인.
-> **마지막 업데이트**: 2026년 9월 13일
+> **지원 버전**: 호환 Karpenter를 사용하는 지원 EKS 버전. Kubernetes 1.36.5와 Karpenter/provider 1.14.1(검토 고정 버전) 인터페이스 확인.
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 문서는 Hybrid·클라우드 노드에 워크로드를 배치하고 cloud bursting과 Pod deletion cost의 한계를 설명합니다. 예제는 로컬로 검증한 구성·패치 방식입니다. 감사 중 클라우드 용량 생성, 노드 변경, 애플리케이션·GPU 워크로드 실행을 수행하지 않았습니다.
 
@@ -43,7 +43,7 @@ GPU 전용 taint에는 `nvidia.com/gpu=present:NoSchedule` 같은 검토한 규�
 
 Karpenter는 조건을 만족하는 Pending Pod를 위해 EC2 용량을 생성하며 온프레미스 서버를 추가하지 않습니다. HPA/KEDA나 애플리케이션 컨트롤러가 replica 수요를 조절하고, 노드 프로비저너는 별도 제어 루프입니다. AWS quota, 인스턴스 가용성, subnet IP, IAM, 노드 bootstrap과 워크로드 의존성이 확장을 막을 수 있습니다.
 
-클러스터 Kubernetes minor와 호환되는 Karpenter를 사용합니다. 현재 호환성 행렬에서 **Kubernetes 1.36은 최소 1.13**이 필요합니다. 예제는 **1.14.1** CRD로 확인했습니다. Auto Mode `NodeClass`가 아닌 자체 관리 Karpenter `EC2NodeClass` 예제입니다.
+클러스터 Kubernetes minor와 호환되는 Karpenter를 사용합니다. 현재 호환성 행렬에서 **Kubernetes 1.36은 최소 1.13**이 필요합니다. 예제는 검토 기준으로 고정한 **1.14.1** CRD로 확인했으며 1.15.0(2026년 10월 10일) 변경 사항은 반영하지 않았습니다. Auto Mode `NodeClass`가 아닌 자체 관리 Karpenter `EC2NodeClass` 예제입니다.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -310,7 +310,7 @@ Required hostname anti-affinity는 충분한 용량이 있을 때 matching repli
 
 `controller.kubernetes.io/pod-deletion-cost`는 Pod의 정수 annotation입니다. 유효 범위는 **−2147483648~2147483647**, 없으면 기본값0이며 음수도 허용됩니다. ReplicaSet 축소 시 해당 Pod 집합 안에서 낮은 값을 **best-effort**로 먼저 제거합니다.
 
-확인한 Kubernetes1.36.2 컨트롤러에서 deletion cost보다 먼저 비교하는 항목은 다음과 같습니다.
+확인한 Kubernetes1.36.5 컨트롤러에서 deletion cost보다 먼저 비교하는 항목은 다음과 같습니다.
 
 1. 할당된 Pod보다 미할당 Pod 우선.
 2. Pending → Unknown → Running 순서.
@@ -433,7 +433,7 @@ Karpenter1.14.1도 Pod priority와 함께 **정규화된 eviction-cost 계산**�
 - [Taint와 toleration](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)
 - [Pod topology spread](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)
 - [ReplicaSet deletion cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
-- [Kubernetes1.36.2 scale-down 비교](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/controller/controller_utils.go)
+- [Kubernetes1.36.5 scale-down 비교](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/controller/controller_utils.go)
 - [Pod disruption과 PDB 범위](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
 - [Local volume과 PV node affinity](https://kubernetes.io/docs/concepts/storage/volumes/#local)
 - [StorageClass volume binding](https://kubernetes.io/docs/concepts/storage/storage-classes/#volume-binding-mode)

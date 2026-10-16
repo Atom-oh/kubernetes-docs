@@ -1,6 +1,6 @@
 # Amazon EKS 모니터링 및 로깅
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 효과적인 모니터링 및 로깅은 Amazon EKS 클러스터의 안정성, 가용성 및 성능을 유지하는 데 필수적입니다. 이 문서에서는 EKS 클러스터에서 모니터링 및 로깅을 구현하기 위한 다양한 도구, 기술 및 모범 사례를 다룹니다.
 
@@ -634,7 +634,7 @@ AMP는 수집한 Prometheus metric을 저장·조회하고 AMG는 구성한 data
 
 ServiceAccount monitoring/amp-writer용 IRSA 역할을 준비합니다. Trust policy는 이 클러스터의 OIDC provider와 정확한 sub=system:serviceaccount:monitoring:amp-writer·aud=sts.amazonaws.com 조건을 사용해야 합니다. 대상 workspace ARN에 aps:RemoteWrite를 부여합니다. Prometheus process는 projected token을 받고 STS·AMP endpoint에 연결할 수 있어야 하며 Kubernetes RBAC는 별도 권한 경로입니다. 이 예제에 무관한 Pod Identity association이나 정적 AWS key를 함께 연결하지 않습니다.
 
-다음은 workspace를 읽고 검토한 chart 90.1.1의 overlay를 작성합니다. /api/v1/이 있거나 없는 endpoint 형식을 처리해 remote_write 경로를 한 번만 붙입니다. Python 3이 필요하며 workspace를 생성하지 않습니다:
+다음은 workspace를 읽고 검토한 chart 92.9.0의 overlay를 작성합니다. /api/v1/이 있거나 없는 endpoint 형식을 처리해 remote_write 경로를 한 번만 붙입니다. Python 3이 필요하며 workspace를 생성하지 않습니다:
 
 ```bash
 set -euo pipefail
@@ -685,7 +685,7 @@ print("Wrote amp-values.json; review it with all existing release values")
 PY
 ```
 
-소유자의 검토한 설치·upgrade values에서 amp-values.json과 monitoring-values.yaml을 함께 사용합니다. Overlay는 remoteWrite 목록을 교체하므로 기존 목적지·external label을 의도에 맞게 보존합니다. 신규 release는 아래 설치 명령에 -f amp-values.json을 추가합니다. 기존 release는 현재 설정을 모두 유지하고 render diff·rollout을 검토한 뒤 소유자의 upgrade 절차를 따릅니다. ServiceAccount 변경은 Prometheus Pod 신원을 바꾸며 Chart 90.1.1의 기본 API-server·kubelet ServiceMonitor 인증은 명시적인 ServiceAccount token Secret을 사용합니다. 이 Secret을 보호하고 rotation·폐기 절차를 따릅니다. IRSA의 짧은 수명·audience 제한 token과는 다릅니다. 의존하는 모든 monitor 자격 증명을 교체하지 않고 createTokenSecret을 끄면 render·인증이 실패합니다.
+소유자의 검토한 설치·upgrade values에서 amp-values.json과 monitoring-values.yaml을 함께 사용합니다. Overlay는 remoteWrite 목록을 교체하므로 기존 목적지·external label을 의도에 맞게 보존합니다. 신규 release는 아래 설치 명령에 -f amp-values.json을 추가합니다. 기존 release는 현재 설정을 모두 유지하고 render diff·rollout을 검토한 뒤 소유자의 upgrade 절차를 따릅니다. ServiceAccount 변경은 Prometheus Pod 신원을 바꾸며 Chart 92.9.0의 기본 API-server·kubelet ServiceMonitor 인증은 명시적인 ServiceAccount token Secret을 사용합니다. 이 Secret을 보호하고 rotation·폐기 절차를 따릅니다. IRSA의 짧은 수명·audience 제한 token과는 다릅니다. 의존하는 모든 monitor 자격 증명을 교체하지 않고 createTokenSecret을 끄면 render·인증이 실패합니다.
 
 여러 replica에서는 중복 scrape가 무료라고 가정하지 말고 AMP의 문서화된 HA deduplication label·replica 구성을 설정합니다. 실제 workload에 맞게 cardinality·retention·수집 비용을 계획합니다. Remote-write 실패·backlog와 대상 workspace의 최근 데이터를 확인하며 Helm rollout 성공만으로 수집을 증명하지 않습니다.
 
@@ -712,7 +712,7 @@ AMG 12+에서는 Amazon Managed Service for Prometheus data-source plugin을 선
 
 이 예제는 ServiceMonitor·PrometheusRule 예제에 필요한 Prometheus Operator를 포함하는 kube-prometheus-stack release 하나를 소유자가 관리합니다. 독립 Prometheus chart만 설치하면 해당 CRD·controller가 자동 제공되는 것은 아닙니다. 설치 전에 기존 operator·release·CRD 소유권을 확인하며 기존 stack은 소유자의 upgrade 절차를 따릅니다.
 
-검토한 기준은 chart 90.1.1·Operator 0.93.1이며 EKS 1.36용으로 render했습니다. 일반 Linux EC2 노드와 동작하는 EBS CSI 권한, 준비된 암호화 ebs-gp3 StorageClass를 전제로 합니다. Auto Mode·다른 storage 구현은 실제 지원 class와 노드 배치를 선택합니다. 아래 retention·PVC 크기는 예시 할당이며 실측 용량 보장이 아닙니다.
+검토한 기준은 chart 92.9.0·Operator 0.94.1이며 EKS 1.36용으로 render했습니다. 일반 Linux EC2 노드와 동작하는 EBS CSI 권한, 준비된 암호화 ebs-gp3 StorageClass를 전제로 합니다. Auto Mode·다른 storage 구현은 실제 지원 class와 노드 배치를 선택합니다. 아래 retention·PVC 크기는 예시 할당이며 실측 용량 보장이 아닙니다.
 
 승인된 secret 관리 경로로 monitoring namespace와 admin-user·admin-password key가 있는 grafana-admin Secret을 준비합니다. Values는 공통 암호를 Helm values·명령 인수에 넣는 대신 Secret을 참조합니다. 다음을 monitoring-values.yaml로 저장합니다:
 
@@ -781,7 +781,7 @@ Chart 기본값은 kubelet server 인증서 검증을 생략합니다. 이 value
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm install monitoring prometheus-community/kube-prometheus-stack \
-  --version 90.1.1 --namespace monitoring --create-namespace \
+  --version 92.9.0 --namespace monitoring --create-namespace \
   -f monitoring-values.yaml --wait --timeout 10m
 ```
 
@@ -803,7 +803,7 @@ Grafana database·PVC와 export한 dashboard 정의를 보호합니다. Grafana�
 
 Chart render에서 실제 Prometheus service monitoring-kube-prometheus-prometheus, Grafana service monitoring-grafana와 data-source UID prometheus를 확인했습니다. Custom ServiceMonitor·PrometheusRule은 이 release의 release=monitoring selector와 일치해야 합니다. Render·schema 검사는 로컬 증거이며 실제 클러스터의 stack·PVC·로그인을 시험하지 않았습니다.
 
-참고: [kube-prometheus-stack chart and upgrade guidance](https://github.com/prometheus-community/helm-charts/tree/kube-prometheus-stack-90.1.1/charts/kube-prometheus-stack).
+참고: [kube-prometheus-stack chart and upgrade guidance](https://github.com/prometheus-community/helm-charts/tree/kube-prometheus-stack-92.9.0/charts/kube-prometheus-stack).
 
 #### 주요 Prometheus 지표
 

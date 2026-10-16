@@ -2,8 +2,8 @@
 
 < [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Node Lifecycle Management](./07-node-lifecycle.md) >
 
-> **Supported Versions**: Supported EKS versions with compatible Karpenter; reviewed Kubernetes 1.36.2 and Karpenter/provider 1.14.1 interfaces.
-> **Last Updated**: September 13, 2026
+> **Supported Versions**: Supported EKS versions with compatible Karpenter; reviewed Kubernetes 1.36.5 and Karpenter/provider 1.14.1 (pinned review baseline) interfaces.
+> **Last Updated**: October 16, 2026
 
 This chapter places workloads on Hybrid and cloud nodes and explains the limits of cloud bursting and Pod deletion cost. The examples are locally validated configuration/patch patterns. No cloud capacity, node mutation, application or GPU workload was created during the audit.
 
@@ -43,7 +43,7 @@ For a GPU-specific taint, use a reviewed convention such as `nvidia.com/gpu=pres
 
 Karpenter creates EC2 capacity for eligible pending Pods. It does not add on-premises servers. HPA/KEDA or an application controller adjusts replica demand; the node provisioner is a separate control loop. AWS quotas, offering availability, subnet IPs, IAM, node bootstrap and workload dependencies can all prevent expansion.
 
-Use a Karpenter version supported by the cluster's Kubernetes minor; the current compatibility matrix requires at least **1.13 for Kubernetes 1.36**. This example was checked against the **1.14.1** CRDs. It is a self-managed Karpenter `EC2NodeClass` example, not an Auto Mode `NodeClass`.
+Use a Karpenter version supported by the cluster's Kubernetes minor; the current compatibility matrix requires at least **1.13 for Kubernetes 1.36**. This example was checked against the **1.14.1** CRDs pinned as the review baseline; changes in 1.15.0 (October 10, 2026) are not reflected. It is a self-managed Karpenter `EC2NodeClass` example, not an Auto Mode `NodeClass`.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -310,7 +310,7 @@ Data-local labels do not create or replicate data. For local persistent data, us
 
 `controller.kubernetes.io/pod-deletion-cost` is an integer annotation on a Pod. Its valid range is **−2147483648 to2147483647**, defaulting to0 when absent; negative values are allowed. ReplicaSet downscaling prefers lower values among its Pods on a **best-effort** basis.
 
-For the reviewed Kubernetes1.36.2 controller, these comparisons precede deletion cost:
+For the reviewed Kubernetes1.36.5 controller, these comparisons precede deletion cost:
 
 1. Unassigned Pods before assigned Pods.
 2. Pending before Unknown before Running.
@@ -433,7 +433,7 @@ Empty nodes are not guaranteed to disappear immediately: reconciliation, disrupt
 - [Taints and tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)
 - [Pod topology spread](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)
 - [ReplicaSet deletion cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
-- [Kubernetes1.36.2 scale-down comparison](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/controller/controller_utils.go)
+- [Kubernetes1.36.5 scale-down comparison](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/controller/controller_utils.go)
 - [Pod disruptions and PDB scope](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
 - [Local volumes and PV node affinity](https://kubernetes.io/docs/concepts/storage/volumes/#local)
 - [StorageClass volume binding](https://kubernetes.io/docs/concepts/storage/storage-classes/#volume-binding-mode)

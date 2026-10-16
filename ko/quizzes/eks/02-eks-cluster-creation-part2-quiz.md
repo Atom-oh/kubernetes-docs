@@ -871,7 +871,7 @@ spec:
         example.com/migration-target: "true"
       containers:
         - name: nginx
-          image: nginx:1.30.4
+          image: nginx:1.30.6
           ports:
             - containerPort: 80
           readinessProbe:

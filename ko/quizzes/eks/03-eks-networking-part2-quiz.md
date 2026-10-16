@@ -1,8 +1,8 @@
 # EKS 네트워킹 퀴즈 - Part 2
 
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
-답안은 [Part 2](../../eks/03-eks-networking-part2.md)의 컨트롤러 소유권과 전제 조건(LBC 3.5.0, Gateway API 1.6.0)을 따릅니다. 명령은 실행 시 리소스를 변경하는 예제이며 로컬 스키마·모의 검증은 EKS 배포 검증이 아닙니다. 계정·리전·리소스 자리표시자를 바꾸고 의도한 kubeconfig와 기존 IAM/Helm/IaC 소유자를 사용하세요.
+답안은 [Part 2](../../eks/03-eks-networking-part2.md)의 컨트롤러 소유권과 전제 조건(LBC 3.6.0, Gateway API 1.6.0)을 따릅니다. 명령은 실행 시 리소스를 변경하는 예제이며 로컬 스키마·모의 검증은 EKS 배포 검증이 아닙니다. 계정·리전·리소스 자리표시자를 바꾸고 의도한 kubeconfig와 기존 IAM/Helm/IaC 소유자를 사용하세요.
 
 ### 1. AWS Load Balancer Controller가 Kubernetes Ingress 리소스를 위해 기본적으로 프로비저닝하는 AWS 로드 밸런서 유형은 무엇인가요?
 
@@ -694,7 +694,7 @@ LBC는 ALB와 NLB Gateway를 별도로 사용합니다. 임의의 GatewayClass �
 
 </details>
 
-### 12. LBC 3.5.0의 Gateway 컨트롤러는 어떻게 활성화되나요?
+### 12. LBC 3.6.0의 Gateway 컨트롤러는 어떻게 활성화되나요?
 
 - A. Always pass `--enable-gateway-api`
 - B. Detect compatible CRDs with the real default-enabled gates
@@ -758,7 +758,7 @@ spec:
 </details>
 `my-nlb-gateway` 리스너와 백엔드 Service는 `gateway-demo`에 있어야 합니다. 이 구현의 TLSRoute는 NLB의 SNI 기반 라우팅을 제공하지 않으므로 모든 Gateway API 구현이 같다고 가정하지 말고 릴리스별 TLS 동작을 확인합니다.
 
-### 14. LBC 3.5.0은 ALB Gateway의 정적 인증서를 어떻게 구성하나요?
+### 14. LBC 3.6.0은 ALB Gateway의 정적 인증서를 어떻게 구성하나요?
 
 - A. Create any Secret named tls-cert
 - B. Use the ACM ARN in LoadBalancerConfiguration

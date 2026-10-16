@@ -1,7 +1,7 @@
 # ArgoCD
 
-> **검토 기준**: Argo CD 3.5.2, Argo Rollouts 1.10.0. Argo CD 매니페스트 고정 버전은 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
-> **마지막 업데이트**: 2026년 10월 12일
+> **검토 기준**: Argo CD 3.5.2, Argo Rollouts 1.10.0. Argo CD 매니페스트 고정 버전은 릴리스 노트 검토 후 패치 3.5.5로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 
@@ -201,7 +201,7 @@ spec:
 
 ## 버전 지원 정보
 
-검토 기준은 **Argo CD 3.5.2 / Helm Chart 10.8.4**이며, 매니페스트 예제는 릴리스 노트 검토 후 패치 3.5.4로 갱신했습니다(재실행 안 함). Chart 10.8.4는 여전히 Argo CD v3.5.2를 배포하며, 3.5.4는 chart 10.9.7부터 포함됩니다. 앱 버전과 설치 Chart 버전은 다릅니다. Argo CD는 최근 세 minor 라인에 패치를 제공하며, 이보다 오래된 라인은 EOL입니다.
+검토 기준은 **Argo CD 3.5.2 / Helm Chart 10.8.4**이며, 매니페스트 예제는 릴리스 노트 검토 후 패치 3.5.5로 갱신했습니다(재실행 안 함). Chart 10.8.4는 여전히 Argo CD v3.5.2를 배포하며, 3.5.5는 chart 10.10.3부터 포함됩니다. 앱 버전과 설치 Chart 버전은 다릅니다. Argo CD는 최근 세 minor 라인에 패치를 제공하며, 이보다 오래된 라인은 EOL입니다.
 
 ### 테스트된 Kubernetes 조합
 
@@ -211,7 +211,7 @@ spec:
 | 3.4 | 1.35, 1.34, 1.33, 1.32 |
 | 3.3 | 1.35, 1.34, 1.33, 1.32 |
 
-위 표는 3.5.4 저장소에 기록된 업스트림 테스트 조합입니다. Helm Chart의 최소 `kubeVersion` 조건, Kubernetes 자체 지원 기간, EKS 지원 기간 및 관리형 Argo CD 버전 정책과는 별개입니다. EKS 버전 하나를 특정 Argo CD minor에 일대일로 대응시키지 않습니다.
+위 표는 3.5.5 저장소에 기록된 업스트림 테스트 조합입니다. Helm Chart의 최소 `kubeVersion` 조건, Kubernetes 자체 지원 기간, EKS 지원 기간 및 관리형 Argo CD 버전 정책과는 별개입니다. EKS 버전 하나를 특정 Argo CD minor에 일대일로 대응시키지 않습니다.
 
 ### 최근 릴리스
 
@@ -263,7 +263,7 @@ EKS Capability for Argo CD는 자체 설치와 다른 운영 경로입니다. 20
 kubectl create namespace argocd
 
 # ArgoCD 설치
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 # 설치 확인
 kubectl get pods -n argocd
@@ -348,11 +348,11 @@ UI 접근은 TLS와 접근 범위를 구성한 Ingress 또는 로컬 포트 포�
 
 ### 버전별 검토 근거
 
-- [Argo CD 3.5.4 tested Kubernetes versions](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/tested-kubernetes-versions.md)
-- [Release support policy](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/developer-guide/release-process-and-cadence.md)
+- [Argo CD 3.5.5 tested Kubernetes versions](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/tested-kubernetes-versions.md)
+- [Release support policy](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/developer-guide/release-process-and-cadence.md)
 - [3.5.0 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0)
 - [3.5.2 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)
 - [3.5.3 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.3)
 - [3.5.4 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)
-- [Chart 10.9.7 (first chart with Argo CD 3.5.4)](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.9.7)
-- [HA component behavior](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/high_availability.md)
+- [Chart 10.10.3 (first chart with Argo CD 3.5.5)](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.10.3)
+- [HA component behavior](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/high_availability.md)

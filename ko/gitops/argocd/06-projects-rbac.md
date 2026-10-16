@@ -1,7 +1,7 @@
 # ArgoCD 프로젝트와 RBAC
 
-> **검토 기준**: Argo CD 3.5.2. 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
-> **마지막 업데이트**: 2026년 10월 12일
+> **검토 기준**: Argo CD 3.5.2. 릴리스 노트 검토 후 패치 3.5.5로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 
@@ -616,7 +616,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGOCD_VERSION=v3.5.4
+        ARGOCD_VERSION=v3.5.5
         case "$(uname -m)" in
           x86_64) cli_arch=amd64 ;;
           aarch64|arm64) cli_arch=arm64 ;;

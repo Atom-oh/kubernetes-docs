@@ -494,7 +494,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: seed
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sh
         - -c
@@ -553,7 +553,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: reader
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sleep
         - '3600'

@@ -645,7 +645,7 @@ intro_kubectl cluster-info
 
 ```bash
 intro_kubectl create namespace intro-smoke
-intro_kubectl -n intro-smoke create deployment nginx --image=nginx:1.30.4-alpine
+intro_kubectl -n intro-smoke create deployment nginx --image=nginx:1.30.6-alpine
 intro_kubectl -n intro-smoke rollout status deployment/nginx --timeout=180s
 intro_kubectl -n intro-smoke expose deployment nginx --port=80 --type=ClusterIP
 intro_kubectl -n intro-smoke get deployment,service
@@ -724,7 +724,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: backend
-        image: nginx:1.30.4-alpine
+        image: nginx:1.30.6-alpine
         ports:
         - name: http
           containerPort: 80
@@ -805,7 +805,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: frontend
-        image: nginx:1.30.4-alpine
+        image: nginx:1.30.6-alpine
         ports:
         - name: http
           containerPort: 80

@@ -1,11 +1,11 @@
 # EKS Cluster Creation - Part 4: Creating Clusters Using Terraform
 
-> **Example Versions**: Amazon EKS 1.36; Terraform 1.15.7; AWS provider 6.64.0; EKS module 21.25.0
-> **Last Updated**: September 11, 2026
+> **Example Versions**: Amazon EKS 1.36; Terraform 1.16.6; AWS provider 6.69.1; EKS module 21.29.0
+> **Last Updated**: October 16, 2026
 
 ## Three-Layer Terraform Example
 
-Terraform manages infrastructure as code. This example uses AWS provider 6.x and pins EKS module **21.25.0** and VPC module **5.21.0**. The HCL was checked with Terraform 1.15.7 and AWS provider 6.64.0; AWS deployment and production behavior were not executed. The original v20-style `cluster_*` inputs are incompatible with module v21: use `name`, `kubernetes_version`, `addons` and the other v21 names shown below.
+Terraform manages infrastructure as code. This example uses AWS provider 6.x and pins EKS module **21.29.0** and VPC module **6.7.3**. The HCL was checked with Terraform 1.16.6 and AWS provider 6.69.1; AWS deployment and production behavior were not executed. The original v20-style `cluster_*` inputs are incompatible with module v21: use `name`, `kubernetes_version`, `addons` and the other v21 names shown below.
 
 Separate states can help teams divide ownership and review changes by lifecycle. They do not eliminate dependencies or operational impact: a network change can still interrupt a cluster, and an add-on or access-policy change can affect every workload. This is an example structure, not a tested production architecture.
 
@@ -157,7 +157,7 @@ variable "tags" {
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.21.0"
+  version = "6.7.3"
 
   name = "${var.cluster_name}-vpc"
   cidr = var.vpc_cidr
@@ -302,7 +302,7 @@ variable "cluster_admin_role_arn" {
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
@@ -749,7 +749,7 @@ Choose this **new-cluster alternative before initial deployment**; replacing an 
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
@@ -806,7 +806,7 @@ This is a **new hybrid-only control-plane alternative**, not a complete host-pro
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
@@ -1165,7 +1165,7 @@ To test what you learned in this chapter, try the [EKS Cluster Creation - Part 4
 
 ## Verification References
 
-- [EKS module v21 migration](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v21.25.0/docs/UPGRADE-21.0.md)
+- [EKS module v21 migration](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v21.29.0/docs/UPGRADE-21.0.md)
 - [S3 backend locking](https://developer.hashicorp.com/terraform/language/backend/s3)
 - [Remote state access](https://developer.hashicorp.com/terraform/language/state/remote-state-data)
 - [Pod Identity role trust](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html)

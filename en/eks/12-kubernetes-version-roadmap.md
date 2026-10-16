@@ -892,7 +892,7 @@ A resize cannot change the Pod’s QoS class. Guaranteed Pods must retain equal 
 
 #### Current VPA integration is a separate version decision
 
-This is a **2026 companion-component example**, not a claim that VPA 1.7 existed when Kubernetes 1.33 launched. The released VPA **1.7.1** API supports `InPlace`, introduced as alpha in 1.7.0. It requires the VPA `InPlace` feature gate on both admission-controller and updater, plus Kubernetes 1.33+ in-place-resize support. It avoids VPA Pod eviction fallback; it does not guarantee that a resize will complete or that every container policy is restart-free. Start with `Off` if recommendation-only observation is intended.
+This is a **2026 companion-component example**, not a claim that VPA 1.8 existed when Kubernetes 1.33 launched. The released VPA **1.8.0** API supports `InPlace`, introduced as alpha in 1.7.0 and still alpha in 1.8.0. It requires the VPA `InPlace` feature gate on both admission-controller and updater, plus Kubernetes 1.33+ in-place-resize support; VPA 1.8.x itself documents Kubernetes 1.36–1.38 compatibility. It avoids VPA Pod eviction fallback; it does not guarantee that a resize will complete or that every container policy is restart-free. Start with `Off` if recommendation-only observation is intended.
 
 The CPU-only policy below uses illustrative bounds for an existing Deployment/container. Review the controller deployment flags and capacity before enabling changes. `InPlaceOrRecreate` is a different mode: it can fall back to recreation, became GA in VPA 1.6, and its old gate was removed in 1.7. Do not enable a removed gate or infer VPA behavior from Kubernetes GA alone.
 
@@ -1041,7 +1041,7 @@ spec:
 
 LoadBalancerIPMode and RetryGenerateName had already reached GA in 1.32. KYAML was introduced in 1.34, not 1.33.
 
-[Kubernetes 1.33 release](https://kubernetes.io/blog/2025/04/23/kubernetes-v1-33-release/) · [Versioned 1.36 resize guide](https://github.com/kubernetes/website/blob/release-1.36/content/en/docs/tasks/configure-pod-container/resize-container-resources.md) · [VPA 1.7.1 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md) · [Service range extension](https://kubernetes.io/docs/tasks/network/extend-service-ip-ranges/) · [EKS network configuration API](https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigRequest.html) · [Data-transfer charge interpretation](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
+[Kubernetes 1.33 release](https://kubernetes.io/blog/2025/04/23/kubernetes-v1-33-release/) · [Versioned 1.36 resize guide](https://github.com/kubernetes/website/blob/release-1.36/content/en/docs/tasks/configure-pod-container/resize-container-resources.md) · [VPA 1.8.0 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md) · [VPA 1.8.0 compatibility](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/installation.md#compatibility) · [Service range extension](https://kubernetes.io/docs/tasks/network/extend-service-ip-ranges/) · [EKS network configuration API](https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigRequest.html) · [Data-transfer charge interpretation](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
 
 ---
 
@@ -2812,7 +2812,7 @@ The release-specific source and vendor API documentation take precedence over ol
 - [EKS Auto Mode networking](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)
 - [EKS best practices](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
 - [EKS pricing](https://aws.amazon.com/eks/pricing/)
-- [VPA 1.7.1 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md)
+- [VPA 1.8.0 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md)
 - [Pluto](https://github.com/FairwindsOps/pluto)
 - [Kubent](https://github.com/doitintl/kube-no-trouble)
 
