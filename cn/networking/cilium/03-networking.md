@@ -1,427 +1,238 @@
 # 网络模型与 VXLAN
 
-> **支持版本**: Cilium 1.18
-> **最后更新**: February 22, 2026
+> **审查基线**：Cilium 1.20.2，已测试 Kubernetes 1.33–1.36、Linux 5.10+ 或已记录的等效回移版本，例如 RHEL 8.10 的 4.18 内核。
+> **最后更新**：October 15, 2026
 
 ## 实验环境设置
 
-要跟随本文档中的示例操作，您需要以下工具和环境：
+使用[安装指南](README.md)准备一个可随时丢弃的集群以及与架构匹配的 Cilium CLI。将 kubectl 保持在 API server 的一个次要版本范围内；“v1.31 or higher”并不是兼容性规则。
 
-### 必需工具
-- kubectl v1.31 或更高版本
-- 可用的 Kubernetes 集群（EKS、minikube、kind 等）
-- Cilium CLI
-- tcpdump、wireshark（用于网络数据包分析）
+下面的通用模式示例至少需要两个可调度的 Linux 节点、没有冲突的 Pod CNI、正常工作的 kube-proxy，以及不重叠的 Pod CIDR。原生路由示例还要求节点共享一个 L2 网段。这些并非 EKS ENI、GKE Dataplane V2、AKS 托管 Cilium 或原地 CNI 迁移方案。
 
-### 网络分析工具安装
+### 网络分析工具
+
+通过分析主机支持的软件包源安装 tcpdump/Wireshark。节点抓包必须在相关节点/网络命名空间上运行，而不仅仅是在运行 kubectl 的笔记本电脑上。agent monitor 报告已发出的 BPF 事件；它并非完整的数据包捕获工具。
 
 ```bash
-# Install tcpdump
-sudo apt-get update
-sudo apt-get install -y tcpdump
-
-# Cilium network packet capture
-kubectl exec -n kube-system -it $(kubectl get pods -n kube-system -l k8s-app=cilium -o jsonpath='{.items[0].metadata.name}') -- cilium monitor -v
-
-# VXLAN traffic analysis
-sudo tcpdump -i any udp port 8472 -vv
+kubectl config current-context
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+export CILIUM_POD=cilium-REPLACE-WITH-AGENT-ON-TARGET-NODE
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- \
+  cilium-dbg monitor --type trace -v
 ```
+
+对于下面显式的 VXLAN 配置文件，在相关 worker 上捕获一个有界样本：
+
+```bash
+sudo tcpdump -nn -i any -c 50 'udp port 8472'
+```
+
+如果配置的隧道端口不同，请使用该端口。生成跨节点 Pod 流量：同节点流量无需穿过 overlay。空的抓包结果可能表示节点、接口、端口或流量路径错误，而非网络故障。
 
 ## 容器网络模型比较
 
-容器网络模型定义了容器之间如何通信。每种模型在性能、可扩展性、安全性和实现复杂度方面各有优缺点。
+主机命名空间、桥接和节点间传输描述网络的不同方面，并且可以共存。它们并非通用的性能或安全性排名。
 
-### 主要网络模型：
-
-1. **Host 网络模型**：
-   - 容器共享 Host 的网络命名空间
-   - 性能最佳，但可能发生端口冲突
-   - 安全隔离有限
-
-2. **Bridge 网络模型**：
-   - 容器通过 Host 内的虚拟网桥连接
-   - 对同一 Host 上容器之间的通信高效
-   - Host 间通信需要额外机制
-
-3. **Overlay 网络模型**：
-   - 在物理网络之上构建虚拟网络
-   - 使用封装实现 Host 间通信
-   - 灵活但会带来轻微的性能开销
-
-4. **Underlay 网络模型**：
-   - 直接利用物理网络基础设施
-   - 以最小开销实现最佳性能
-   - 依赖物理网络配置
-
-### 网络模型比较：
-
-| 模型 | 性能 | 可扩展性 | 安全性 | 实现复杂度 | 使用场景 |
-|-------|-------------|-------------|----------|---------------------------|-----------|
-| Host | 非常高 | 低 | 低 | 低 | 高性能工作负载、单容器 |
-| Bridge | 高 | 中 | 中 | 中 | 单 Host 部署 |
-| Overlay | 中 | 高 | 高 | 高 | 多 Host 集群 |
-| Underlay | 高 | 中 | 中 | 非常高 | 注重性能的生产环境 |
+| 模型 | 机制 | 重要权衡 |
+|---|---|---|
+| 主机网络 | Pod 共享节点网络命名空间 | 端口冲突和更弱的网络命名空间隔离；并不必然带来最佳应用程序性能 |
+| 桥接 | 虚拟 L2 桥接接口 | 节点间通信仍需要路由/传输；Cilium 不要求每个 endpoint 都使用 Linux bridge |
+| Overlay | 封装流量通过 IP underlay 传输 | 额外的报头和处理开销，但 underlay 无需路由每个 Pod 前缀 |
+| 原生/underlay 路由 | 网络可以路由工作负载地址 | 需要正确的转发/返回路由和地址规划；不会固有地提供或移除 policy/encryption |
 
 ### Cilium 网络模式
 
-```mermaid
-flowchart TD
-    subgraph "Cilium Networking Modes"
-        direction LR
-
-        subgraph "Overlay Mode"
-            VXLAN[VXLAN]
-            Geneve[Geneve]
-        end
-
-        subgraph "Native Routing Mode"
-            Direct[Direct Routing]
-            BGP[BGP]
-        end
-
-        subgraph "Cloud Integration Mode"
-            AWS_ENI[AWS ENI]
-            Azure_IPAM[Azure IPAM]
-            GKE[GKE]
-        end
-    end
-
-    VXLAN -->|"Encapsulation (UDP 8472)"| Encap[Encapsulation Overhead\nSlight Performance Impact]
-    Geneve -->|"Encapsulation (UDP 6081)"| Encap
-
-    Direct -->|"Direct Routing\n(No Encapsulation)"| NoEncap[No Encapsulation\nBest Performance]
-    BGP -->|"BGP Routing\n(No Encapsulation)"| NoEncap
-
-    AWS_ENI -->|"AWS VPC Integration"| Cloud[Cloud Native\nPerformance Optimized]
-    Azure_IPAM -->|"Azure VNET Integration"| Cloud
-    GKE -->|"Google Cloud VPC Integration"| Cloud
-
-    classDef overlay fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef native fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cloud fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef perf fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    class VXLAN,Geneve overlay;
-    class Direct,BGP native;
-    class AWS_ENI,Azure_IPAM,GKE cloud;
-    class Encap,NoEncap,Cloud perf;
-```
+Cilium 的 `routingMode` 为 `tunnel` 或 `native`。VXLAN/Geneve 选择隧道协议。云 IPAM 集成是另一个配置维度，通常与原生 datapath 配对；它们不是第三个 `routingMode` 值。BGP 是路由通告机制，而不是独立的数据包转发模式。
 
 ## VXLAN 技术深入解析
 
-> **关键概念**：VXLAN（Virtual Extensible LAN）是一种网络虚拟化技术，可在 Layer 3 网络之上覆盖 Layer 2 网络。
+VXLAN 通过 IP 网络在 UDP 中承载内部 Ethernet 帧。VTEP 封装/解封装流量；24 位 VNI 提供理论上 2^24 个标识符的空间。这并不承诺 Kubernetes 部署支持 1,600 万个租户。
 
-VXLAN 是一种网络虚拟化技术，可在 Layer 3 网络之上覆盖 Layer 2 网络。它广泛用于云环境，以扩展网络分段的数量并支持多租户环境。
+标准化的 VXLAN 目标端口为 UDP 4789。**Cilium 默认将 UDP 8472 用于 VXLAN，并将 UDP 6081 用于 Geneve；两者均可配置。**Cilium 可以在封装中携带安全身份元数据，因此请勿将通用 VXLAN 网段数量等同于 Cilium 租户/policy 边界。
 
-### VXLAN 基本概念：
+### VXLAN 数据包结构
 
-- **VXLAN Segment**：由 VXLAN Network Identifier（VNI）标识的逻辑 L2 分段
-- **VXLAN Tunnel Endpoint（VTEP）**：负责 VXLAN 数据包的封装和解封装
-- **VNI（VXLAN Network Identifier）**：最多支持 16,777,216（2^24）个唯一网络分段
-- **Encapsulation**：将原始 L2 帧封装到 UDP 数据包中
-
-### VXLAN 数据包结构：
-
-```
-+-------------------------------+
-| Outer Ethernet Header         |
-+-------------------------------+
-| Outer IP Header (usually IPv4)|
-+-------------------------------+
-| Outer UDP Header (port 8472)  |
-+-------------------------------+
-| VXLAN Header (contains VNI)   |
-+-------------------------------+
-| Original Ethernet Frame       |
-| (Inner Ethernet Header +      |
-|  Payload)                     |
-+-------------------------------+
+```text
+Outer Ethernet
+  Outer IP (IPv4 or IPv6)
+    Outer UDP (Cilium VXLAN default destination 8472; standard 4789)
+      VXLAN header (8 bytes, including VNI)
+        Inner Ethernet
+          Inner IP packet and transport/application payload
 ```
 
-### Cilium VXLAN 配置示例
+IP 承载 UDP；外部 IP 报头本身并不承载在外部 UDP 报头内。VXLAN 分段不提供加密、完整性或自动 NetworkPolicy 隔离。应适当地限制 underlay 路径，并单独配置 policy/encryption。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "vxlan"
-  enable-ipv4: "true"
-  enable-ipv6: "false"
-  ipv4-range: "10.0.0.0/16"
-  ipv4-service-range: "10.96.0.0/12"
-```
+### MTU 预算
 
-此配置指示 Cilium 使用 VXLAN 隧道为集群内的 Pod 间通信建立网络。每个节点都充当 VTEP，并将 Pod 流量封装为 VXLAN 数据包后传输到其他节点。
+对于没有额外封装/选项的普通 VXLAN，内部 IP 预算的缩减为：
 
-```mermaid
-flowchart TD
-    subgraph "VXLAN Packet Structure"
-        direction TB
-        A["Outer Ethernet Header"] --> B["Outer IP Header (usually UDP)"]
-        B --> C["VXLAN Header (contains VNI)"]
-        C --> D["Original Ethernet Frame"]
-    end
+| Underlay IP family | Outer IP + UDP + VXLAN + inner Ethernet | 1,500-byte underlay IP MTU 的内部 IP 预算 |
+|---|---|---|
+| IPv4 | 20 + 8 + 8 + 14 = 50 bytes | 1,450 bytes |
+| IPv6 | 40 + 8 + 8 + 14 = 70 bytes | 1,430 bytes |
 
-    classDef header fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    class A,B,C,D header;
-```
+外部 Ethernet 报头位于该 underlay IP MTU 之外。加密、Geneve 选项和其他路径可能改变预算。有效路由 MTU 和 Pod veth 的设备 MTU 不必相同。
 
-### VXLAN 的工作原理：
+在 Cilium 1.20.2 中，Helm **`MTU` 会覆盖底层网络 MTU**；然后 Cilium 会计算路由开销。`MTU: 0` 选择自动检测。将 `MTU: 1450` 视为“最终 Pod payload MTU”可能会再次减去隧道开销。本地接口检测也无法证明整个路径上的最小 MTU。
 
-1. **封装**：源 VTEP 使用 VXLAN Header 封装原始 L2 帧
-2. **传输**：封装后的数据包通过 IP 网络发送到目标 VTEP
-3. **解封装**：目标 VTEP 移除 VXLAN Header 并提取原始 L2 帧
-4. **交付**：将原始 L2 帧交付给目标端点
+### VXLAN 与其他封装的比较
 
-### VXLAN 与其他 Overlay 技术的比较：
-
-| 技术 | 封装 | 最大网络数 | 端口 | 优点 | 缺点 |
-|------------|---------------|--------------|------|------------|---------------|
-| VXLAN | L2 over UDP | 16,777,216 (2^24) | 4789 | 广泛支持、大规模可扩展性 | 开销（50 字节） |
-| GENEVE | 可变长度 Header | 16,777,216 (2^24) | 6081 | 可扩展元数据 | 较新，支持有限 |
-| GRE | IP over IP | 无限制 | IP Protocol 47 | 开销低 | 防火墙穿越问题 |
-| NVGRE | L2 over GRE | 16,777,216 (2^24) | IP Protocol 47 | Microsoft 环境集成 | 硬件卸载支持有限 |
+| 技术 | 载体 / 标识符 | 协议或端口 | 边界 |
+|---|---|---|---|
+| VXLAN | UDP 中的 Ethernet；24 位 VNI | UDP 4789 标准；Cilium 8472 默认 | 固定基础报头；非加密 |
+| Geneve | 带可扩展选项的通用网络虚拟化；24 位 VNI | UDP 6081 | 选项长度会改变开销 |
+| GRE | 通用封装；基础 GRE 没有 VXLAN 风格的 VNI | IP protocol 47，不是 TCP/UDP port 47 | 必须考虑可选扩展；“无限网络”不是已定义的容量 |
+| NVGRE | Ethernet over GRE；GRE key 内的 24 位 VSID | IP protocol 47 | 不同的标识符/流语义；支持情况取决于实现 |
 
 ## Cilium 的 Overlay 网络
 
-Cilium 默认使用 VXLAN 实现 Overlay 网络，但也支持 Geneve 等其他封装协议。Cilium 的 Overlay 网络利用 eBPF 提供优化的数据路径。
+如果没有覆盖性的平台/配置文件设置，Cilium 使用带 VXLAN 的隧道路由。跨节点 Pod 传输需要可达的节点地址、允许的隧道 UDP 流量以及可用的 MTU。Overlay 不会解决重叠的 Pod 地址范围，也不会使断开连接的节点变为可达。有关数据包路径、隧道设备、MTU 预算和原生路由变体，请参阅[Overlay 与原生路由](09-overlay-native-routing.md)。
 
-### Cilium Overlay 网络架构：
+![跨节点 overlay 流：endpoint 处理、源 VTEP 封装、underlay 传输、目标解封装和 endpoint 交付。](../../.gitbook/assets/en-networking-cilium-03-networking-2.png)
 
-```mermaid
-flowchart TD
-    subgraph "Host A"
-        direction TB
-        A1["Container A
-        10.0.0.1"] --> B1["eBPF"]
-        B1 --> C1["VTEP
-        192.168.1.1"]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-03-networking-2.html)
 
-    subgraph "Host B"
-        direction TB
-        A2["Container B
-        10.0.0.2"] --> B2["eBPF"]
-        B2 --> C2["VTEP
-        192.168.1.2"]
-    end
+该图为概念性流程。其地址不是每节点 IPAM 分配计划；实际节点 Pod 块必须以无重叠的方式一致分配。Policy 在配置的位置应用，且源/目标 hook 可能不同。
 
-    C1 <--> D["Physical Network"] <--> C2
-
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef vtep fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef network fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class A1,A2 container;
-    class B1,B2 ebpf;
-    class C1,C2 vtep;
-    class D network;
-```
-
-### Cilium Overlay 网络的工作原理：
-
-1. **数据包生成**：Container A 向 Container B 发送数据包
-2. **eBPF 处理**：eBPF 程序拦截数据包并应用策略
-3. **VTEP 识别**：识别目标容器的 VTEP
-4. **封装**：使用 VXLAN Header 封装数据包
-5. **传输**：通过物理网络将封装后的数据包发送到目标 Host
-6. **解封装**：在目标 Host 移除 VXLAN Header
-7. **eBPF 处理**：目标 Host 上的 eBPF 程序处理数据包
-8. **交付**：将数据包交付给目标容器
-
-### Cilium Overlay 网络优化：
-
-- **Direct Path**：在可能时使用直接路由
-- **DSR（Direct Server Return）**：用于负载均衡响应的优化
-- **Connection Tracking Bypass**：对已知连接绕过连接跟踪
-- **XDP 集成**：利用 XDP 进行早期数据包处理
-- **Header Push/Pop Optimization**：高效处理 Header
-
-### Cilium Overlay 网络配置：
-
-```yaml
-# cilium-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable overlay mode
-  tunnel: "vxlan"
-
-  # VXLAN port setting (default: 8472)
-  tunnel-port: "8472"
-
-  # MTU setting
-  mtu: "1450"
-
-  # Auto direct node routes
-  auto-direct-node-routes: "true"
-```
-
-## 性能优化技术
-
-Cilium 提供了多种性能优化技术，以最大限度地降低网络延迟并提高吞吐量。
-
-### 网络模式优化：
-
-1. **Direct Routing 模式**：
-   - 使用无需 Overlay 封装的直接路由
-   - 通过消除封装开销提升性能
-   - 要求 Host 之间存在可路由网络
-
-2. **Hybrid 模式**：
-   - 在可能时使用直接路由，否则使用 Overlay
-   - 在灵活性与性能之间取得平衡
-
-3. **Native Routing 模式**：
-   - 与现有网络基础设施集成
-   - 利用 BGP 等路由协议
-
-### 数据路径优化：
-
-1. **XDP 利用**：
-   - 在网络栈的早期阶段处理数据包
-   - 通过尽早丢弃不必要的数据包提升性能
-
-2. **eBPF Map 优化**：
-   - 高效的 Map 结构和大小调整
-   - 使用 LRU（Least Recently Used）Map 优化内存使用
-
-3. **Connection Tracking 优化**：
-   - 调整连接跟踪表大小
-   - 为已知连接绕过连接跟踪
-
-4. **基于 Socket 的负载均衡**：
-   - 在 Socket 层进行负载均衡
-   - 降低数据包处理开销
-
-### 系统级优化：
-
-1. **CPU Affinity**：
-   - 将网络处理绑定到特定 CPU 核心
-   - 提高缓存局部性并减少上下文切换
-
-2. **NUMA 感知**：
-   - 感知 NUMA（Non-Uniform Memory Access）拓扑
-   - 优化本地内存访问
-
-3. **中断调优**：
-   - 优化网络中断处理
-   - 中断合并与分配
-
-4. **Huge Pages**：
-   - 减少内存管理开销
-   - 减少 TLB（Translation Lookaside Buffer）未命中
+1. Cilium 从 control-plane 和 datapath 状态识别远程 endpoint/node。
+2. 源端封装相关 Pod 数据包，并使用 underlay 节点地址发送。
+3. 目标端解封装并处理/交付内部数据包。
+4. Datapath 事件、路由状态和抓包有助于定位故障；仅缺少一个事件并不能确定原因。
 
 ## 路由机制
 
-Cilium 支持两种主要路由机制：Encapsulation 和 Native-Routing。
+### 封装
 
-### 1. Encapsulation
+Underlay 仅需要节点/隧道路由，而非每个 Pod 前缀的路由。代价包括报头和处理开销。只有当整个路径支持所选 MTU 时，较大的帧才能降低相对开销。
 
-Encapsulation 是一种通过将原始数据包封装在另一个数据包中进行传输的方法。Cilium 支持 VXLAN 和 Geneve 等封装协议。
+### 原生路由
 
-**工作原理**：
-1. 在源节点生成数据包。
-2. Cilium 使用封装 Header 包装原始数据包，从而对数据包进行封装。
-3. 封装后的数据包通过物理网络发送到目标节点。
-4. 在目标节点，Cilium 对数据包进行解封装以提取原始数据包。
-5. 提取出的数据包被交付给目标容器。
+节点和 underlay 必须路由 Pod 地址，包括返回流量。路由可以来自云网络、路由器、静态配置或其他路由组件。启用原生模式不会自动启动 BGP 或通告每个 Pod CIDR。
 
-**优点**：
-- 与现有网络基础设施兼容
-- 独立于网络拓扑
-- 防止多集群环境中的 IP 冲突
+`autoDirectNodeRoutes: true` 为共享 L2 网络的节点安装直接 PodCIDR 路由。对于多个 L2 网段，当独立运行的路由路径处理它们时，`directRoutingSkipUnreachable` 可以跳过不可达的直接路由。它不会回退到 overlay 隧道。
 
-**缺点**：
-- 封装开销导致性能受影响
-- MTU 大小减小
-- 额外的 CPU 使用量
+**不要将隧道路由与 `autoDirectNodeRoutes: true` 结合使用：Cilium 1.20.2 会在启动时明确拒绝此组合。**旧的“混合模式”方案无效。原生路由仍可与特定功能的封装共存，例如已配置的 Geneve DSR 路径；那是独立的 Service 功能。
 
-### 2. Native-Routing
+Cilium BGP Control Plane 向 peer 通告已配置的 Pod/Service 前缀。它**不会对本地 datapath 进行编程**，且不得将其视为自动提供缺失集群内路由的组件。
 
-Native routing 是一种无需封装的直接路由方法。在此模式下，底层网络基础设施必须能够路由 Pod IP 地址。
+## 性能优化技术
 
-**工作原理**：
-1. 每个节点通告在该节点上运行的 Pod 的 CIDR 块。
-2. 配置路由表，将每个 Pod CIDR 块路由到相应节点。
-3. 数据包无需封装，直接路由到目标节点。
+在比较模式前，应使用相同的协议、payload 大小、并发度、节点放置、policy、encryption 和 proxy 设置进行测量。移除一个封装报头并不保证更低的应用延迟。
 
-**优点**：
-- 无封装开销
-- 网络性能提升
-- 更低的 CPU 使用量
+- **Datapath：**socket load balancing、受支持的 XDP 加速和 DSR 适用于特定路径。它们不会因 VXLAN 或原生路由而自动启用。
+- **连接跟踪：**Cilium BPF 连接跟踪和 Linux netfilter conntrack 是不同的状态机制。绕过 netfilter 路径并不意味着所有已建立流量都会停止使用 Cilium 连接状态。
+- **Maps：**根据实际容量和内存压力调整 map 大小。LRU 驱逐对缓存很有用，但并非每个 map 的通用优化方案。
+- **主机调优：**CPU/NUMA 放置、IRQ 分配/合并及队列配置可能有助于或损害特定工作负载。Huge pages 不是通用的 Cilium 加速开关；需要针对实际使用方和环境提供证据。
 
-**缺点**：
-- 依赖底层网络基础设施
-- 网络拓扑限制
-- IP 地址管理复杂性
+## 云提供商特定网络
 
-## Cloud Provider 特定网络
+| 环境 | 正确区分 |
+|---|---|
+| AWS ENI IPAM | Cilium 分配可由 VPC 路由的 ENI 地址，并且具有 operator IAM/API/subnet/instance-capacity 要求。ENI security groups 和 Cilium policy 相互补充；这并不自动等同于 AWS VPC CNI 的每 Pod branch-ENI 功能 |
+| EKS 平台 | 普通 EC2 节点上的替代 CNI 有独立的支持责任。Fargate 和 EKS Auto Mode 不支持用此通用实验配置文件替换其 CNI。Hybrid Nodes 具有独立的受支持安装路径 |
+| Google Cloud | 自行管理的上游 Cilium 可以使用 Kubernetes host-scope IPAM 和可路由的 alias range。托管的 GKE Dataplane V2 使用 Google 托管的 Cilium/`anetd`；不要在其上安装另一个上游 dataplane，也不要假定公开的功能完全相同 |
+| Azure | Azure CNI Powered by Cilium 由 AKS 托管并使用委托的 IPAM。上游 Azure IPAM 面向自行管理的 Azure VM/VMSS 集群；AKS BYOCNI 是另一个明确选定的部署模型 |
 
-Cilium 与各种 Cloud Provider 的网络功能集成。
+并非每条 Cilium policy 都会自动创建云 firewall/security-group 配置。请先选择平台指南和支持模型。
 
-### 1. AWS ENI（Elastic Network Interface）
+## 实验：Cilium 网络模式配置和性能测试
 
-在 AWS ENI 模式下，Cilium 使用 AWS Elastic Network Interfaces 向 Pod 分配原生 VPC IP 地址。
+### 在新准备的集群上选择一种模式
 
-**主要功能**：
-- 向 Pod 分配原生 VPC IP 地址
-- 无需 Overlay 网络的 VPC 原生网络
-- AWS security group 和 network policy 集成
-- 改进网络性能
+保存此通用文件，首先在 Pod CIDR 与节点、Service、VPC 或已连接网络范围重叠时替换它。使所选范围与 cluster/kube-proxy 配置以及原生配置文件的 `ipv4NativeRoutingCIDR` 保持一致；仅更改一个文件是不够的。`kubeProxyReplacement: false` 有意假定 kube-proxy 正常工作。这些是 Helm values，而不是要用 kubectl 应用的 ConfigMap。
 
-### 2. Google Cloud 网络
+**`lab-common.yaml`**
 
-在 Google Kubernetes Engine（GKE）中，Cilium 与 Google Cloud 网络功能集成。
-
-**主要功能**：
-- GCP VPC 原生 IP 地址分配
-- GCP firewall rules 集成
-- GKE 网络优化
-
-## 实验：Cilium 网络模式配置与性能测试
-
-### 各种网络模式配置：
-
-```bash
-# VXLAN overlay mode configuration
-cilium install --config tunnel=vxlan
-
-# Geneve overlay mode configuration
-cilium install --config tunnel=geneve
-
-# Direct routing mode configuration
-cilium install --config tunnel=disabled --config auto-direct-node-routes=true
-
-# Hybrid mode configuration
-cilium install --config tunnel=vxlan --config auto-direct-node-routes=true
+```yaml
+kubeProxyReplacement: false
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
+MTU: 0
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
 ```
 
-### 网络性能测试：
+
+请从以下模式文件中准确选择一个。应为比较使用独立的可随时丢弃集群，而非在运行中的集群上反复重新安装 CNI。
+
+**`mode-vxlan.yaml`**
+
+```yaml
+routingMode: tunnel
+tunnelProtocol: vxlan
+tunnelPort: 8472
+autoDirectNodeRoutes: false
+```
+
+**`mode-geneve.yaml`**
+
+```yaml
+routingMode: tunnel
+tunnelProtocol: geneve
+tunnelPort: 6081
+autoDirectNodeRoutes: false
+```
+
+**`mode-native.yaml`**
+
+```yaml
+routingMode: native
+ipv4NativeRoutingCIDR: 10.244.0.0/16
+autoDirectNodeRoutes: true
+```
+
+
+对于 VXLAN 示例：
 
 ```bash
-# Deploy test pods
-kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/master/examples/kubernetes/connectivity-check/connectivity-check.yaml
-
-# Latency test
-kubectl exec -it pod/netperf-client -- netperf -H netperf-server -t TCP_RR
-
-# Throughput test
-kubectl exec -it pod/netperf-client -- netperf -H netperf-server -t TCP_STREAM
-
-# Connection establishment speed test
-kubectl exec -it pod/netperf-client -- netperf -H netperf-server -t TCP_CRR
+kubectl config current-context
+cilium install --version 1.20.2 --values lab-common.yaml --values mode-vxlan.yaml
+cilium status --wait
 ```
+
+仅在其网络前提条件成立时，才改选 `mode-geneve.yaml` 或 `mode-native.yaml`。不要应用已过时的 `tunnel: vxlan`、`ipv4-range` 或 `ipv4-service-range` ConfigMap 示例；请通过受支持的 Helm 字段配置 IPAM。
+
+### 网络性能测试
+
+使用 CLI 维护的性能工作负载，而非假定不相关的 manifest 会创建 `netperf-client` 和 `netperf-server`。在准备好的可随时丢弃集群上：
+
+```bash
+cilium connectivity perf --test-namespace cilium-net-perf \
+  --namespace-labels docs-audit-lab=cilium-networking-03 \
+  --duration 10s --samples 2 --crr --udp \
+  --host-net=false --pod-net=true --same-node=true --other-node=true \
+  --report-dir ./cilium-net-perf-results
+```
+
+持续时间适用于每个测试用例/样本，而不是总计十秒的运行。此操作会创建测试工作负载并产生网络负载。CLI 0.20.1 会为 namespace 追加序列后缀（默认单套件为 `cilium-net-perf-1`）。将版本、放置和设置与结果一同保存；不保证任何吞吐量/延迟数值。
+
+TCP 请求/响应、连接速率和流测试回答的是不同问题。如果使用独立准备的 iperf3 设置，UDP 测试仍需要 TCP 控制连接和 UDP 数据路径；仅暴露 TCP 5201 的 Service 并不足够。提供的 UDP 速率不等于实际测得的吞吐量。
+
+这些示例已根据当前官方 values、API schemas 和 CLI source 进行检查。此次审查没有在主机重启后渲染 Helm templates、部署集群或运行网络基准测试；在依赖结果前，请验证完整的平台/实验环境。
+
+## 来源
+
+- [Cilium 1.20.2 路由](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/routing.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml), [启动验证](https://github.com/cilium/cilium/blob/v1.20.2/daemon/cmd/daemon_main.go), [MTU 计算](https://github.com/cilium/cilium/blob/v1.20.2/pkg/mtu/mtu.go), [MTU 选项](https://github.com/cilium/cilium/blob/v1.20.2/pkg/mtu/cell.go)
+- [VXLAN RFC 7348](https://www.rfc-editor.org/rfc/rfc7348.txt), [Geneve RFC 8926](https://www.rfc-editor.org/rfc/rfc8926.txt), [GRE RFC 2784](https://www.rfc-editor.org/rfc/rfc2784.txt), [NVGRE RFC 7637](https://www.rfc-editor.org/rfc/rfc7637.txt)
+- [BGP Control Plane](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane.rst), [AWS ENI](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/eni.rst), [EKS 替代 CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html), [GKE Dataplane V2](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2), [Azure IPAM](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/azure.rst)
+- [CLI 0.20.1 connectivity/perf 选项](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go), [iperf3 调用](https://software.es.net/iperf/invoking.html), [kubectl 版本偏差](https://kubernetes.io/releases/version-skew-policy/)
+
 
 [返回主页](README.md)
 
 ## 测验
 
-要测试您在本章学到的内容，请尝试[主题测验](../../quizzes/networking/cilium/03-networking-quiz.md)。
+完成[网络验证练习和预期结果](../../quizzes/networking/cilium/03-networking-quiz.md)。

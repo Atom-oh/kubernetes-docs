@@ -1,166 +1,151 @@
-# L2-L7 ネットワーキングとロードバランシング
+# L2–L7 ネットワーキングとロードバランシング
 
-> **サポート対象バージョン**: Cilium 1.18
-> **最終更新**: February 22, 2026
+> **レビュー基準**: Cilium 1.20.2、CLI 0.20.1。Istio の例では 1.31 API を使用します。
+> **最終更新**: October 15, 2026
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
+[インストール](README.md) および[ネットワーキング](03-networking.md)ガイドに従って用意した使い捨てクラスタを使用してください。プラットフォーム/カーネルのサポートおよび kubectl のバージョン差異を確認します。HTTP ラボには、スケジュール可能な Linux ノードが 2 台必要です。DSR/Maglev 実験にはさらに、準備済みの kube-proxy-free クラスタ、到達可能な実際の API-server エンドポイント、およびサポート対象のネットワークパスが必要です。
 
-### 必要なツール
-- kubectl v1.31 以降
-- 動作する Kubernetes クラスター（EKS、minikube、kind など）
-- Cilium CLI
-- curl、jq（API テスト用）
+実験には完全なインストール値を選択してください。繰り返し実行する `cilium install --config ...` コマンドは、実行中の機能移行手順ではありません。また、任意のインストール後に kube-proxy を削除することは安全な近道ではありません。
 
-### L7 Policy テスト環境のセットアップ
+## OSI レイヤーを理解する
+
+OSI は概念モデルであり、7 つの Cilium プロセスや固定されたポリシーフックの順序ではありません。
+
+| レイヤー | 役割 / 例 | Cilium との関係 |
+|---|---|---|
+| L1 物理 | ビット、媒体、トランシーバー、リピーター | 基盤となるハードウェア/ネットワーク要件 |
+| L2 データリンク | Ethernet フレーム、MAC アドレス指定、ブリッジ/スイッチ | パケット処理および明示的に設定された L2 Service announcement |
+| L3 ネットワーク | IP パケット、ルーティング、ICMP | ルーティング、identity/CIDR ポリシー、およびサポート対象のフラグメント処理 |
+| L4 トランスポート | TCP セグメントと信頼性のあるストリーム、配信/順序保証のない UDP データグラム | ポート/プロトコルポリシー、接続状態、Service 変換 |
+| L5 セッション | セッション/対話の編成 | 多くの場合アプリケーション/プロトコル内で実装される概念的な機能 |
+| L6 プレゼンテーション | 表現、エンコーディング、暗号変換 | TLS は概念上ここにマッピングされることが多く、普遍的な独立 Linux レイヤーではない |
+| L7 アプリケーション | HTTP、DNS、gRPC、その他のアプリケーションプロトコル | サポート対象のプロキシポリシー。アプリケーションプロトコルの存在は Cilium ポリシーパーサーの存在を意味しない |
+
+### 実際のレイヤー固有機能
+
+- **L2:** L2 Announcements は、対象となる Service IP に対するベータ版の設定済み ARP/NDP 応答メカニズムです。これには kube-proxy replacement と適切なデバイス/ローカルネットワーク到達可能性が必要です。選出されたノードがその Service のトラフィックを受信します。これは任意の MAC/VLAN ACL サポートでも、すべてのパケットをキャプチャする一般的な L2 ブリッジ/保証でもありません。`externalTrafficPolicy: Local` には文書化された非互換性があります。
+- **L3:** IP/identity ポリシーとルーティングにはモード固有の要件があります。マルチキャストは、VXLAN を必要とする個別に有効化されるベータ機能です。文書化された最小カーネルは、AMD64 では 5.10、AArch64 では 6.0 です。すべてのルーティングモードで動作すると仮定しないでください。
+- **L4:** TCP/UDP ポートポリシー、connection tracking、socket/packet Service load balancing、およびサポート対象の affinity は、異なるフックで動作します。socket の決定はパケット構築前に発生する場合があります。
+- **L7:** 現在の組み込みポリシーグループは HTTP と DNS です。gRPC はサポート対象の HTTP/2 パスを使用します。Kafka L7 ルールは削除されています。TLS/SNI 機能には文書化されたプロキシ設定が必要です。暗号化されたアプリケーションコンテンツは自動的に検査可能にはなりません。
+
+HTTP/gRPC ポリシーは Envoy を使用し、DNS ポリシーは Cilium の DNS proxy を使用します。Envoy は values/アップグレード互換性に応じて agent 管理プロセスまたは専用の `cilium-envoy` DaemonSet になります。L7 を有効にした新規 1.20 chart のデフォルトでは DaemonSet が優先され、以下のプロファイルでは明示的に設定します。ポリシーを追加しても、すべてのインストール設定が上書きされるわけではありません。
+
+## HTTP ポリシーラボ
+
+新しい namespace と対応する workload を作成します。イメージ/digest および既知の server readiness パスは、公式 CLI テスト Deployment 定義から取得しています。
 
 ```bash
-# Create test namespace
-kubectl create namespace l7-test
-
-# Deploy sample application
-kubectl -n l7-test apply -f https://raw.githubusercontent.com/cilium/cilium/v1.14/examples/kubernetes/l7-policy/l7-application.yaml
-
-# Verify deployment
-kubectl -n l7-test get pods,svc
-
-# Deploy test client
-kubectl -n l7-test run client --image=curlimages/curl --restart=Never -- sleep 3600
-
-# Basic connectivity test
-kubectl -n l7-test exec client -- curl -s app1-service/public
+set -euo pipefail
+kubectl create namespace cilium-l2l7-demo
+kubectl label namespace cilium-l2l7-demo docs-audit-lab=cilium-l2l7-05
 ```
 
-## OSI モデルのレイヤー（L2、L3、L4、L7）を理解する
+namespace がすでに存在する場合は停止してください。別の実行のリソースを再利用するのではなく、一貫して新しい名前を選択してください。
 
-> **重要な概念**: OSI（Open Systems Interconnection）モデルは、ネットワーク通信を 7 つの抽象化レイヤーに分類する概念モデルです。
+**`l7-app.yaml`**
 
-OSI モデルは、ネットワーク通信を 7 つの抽象化レイヤーに分類する概念モデルです。Cilium は、これらのさまざまなレイヤーでネットワーキングとセキュリティ機能を提供します。
-
-### OSI モデルのレイヤー図
-
-```mermaid
-flowchart TD
-    subgraph "OSI Model Layers"
-        L7[7. Application Layer]
-        L6[6. Presentation Layer]
-        L5[5. Session Layer]
-        L4[4. Transport Layer]
-        L3[3. Network Layer]
-        L2[2. Data Link Layer]
-        L1[1. Physical Layer]
-
-        L7 --> L6 --> L5 --> L4 --> L3 --> L2 --> L1
-    end
-
-    subgraph "Cilium Features"
-        CL7[L7 Policy\nHTTP, gRPC, Kafka]
-        CL4[L4 Policy\nPort, Protocol]
-        CL3[L3 Policy\nIP, CIDR]
-
-        CL7 --> CL4 --> CL3
-    end
-
-    subgraph "Data Units"
-        D7[Data]
-        D6[Data]
-        D5[Data]
-        D4[Segment]
-        D3[Packet]
-        D2[Frame]
-        D1[Bit]
-    end
-
-    subgraph "Addressing"
-        A7[URL, URI]
-        A4[Port]
-        A3[IP Address]
-        A2[MAC Address]
-    end
-
-    L7 --- D7 --- A7
-    L6 --- D6
-    L5 --- D5
-    L4 --- D4 --- A4
-    L3 --- D3 --- A3
-    L2 --- D2 --- A2
-    L1 --- D1
-
-    L7 -.- CL7
-    L4 -.- CL4
-    L3 -.- CL3
-
-    classDef l7 fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef l4 fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef l3 fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef l2 fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef l1 fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    class L7,D7,A7,CL7 l7;
-    class L4,D4,A4,CL4 l4;
-    class L3,D3,A3,CL3 l3;
-    class L2,D2,A2 l2;
-    class L1,D1 l1;
-    class L6,D6,L5,D5 l1;
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  namespace: cilium-l2l7-demo
+  labels:
+    app: client
+spec:
+  automountServiceAccountToken: false
+  containers:
+  - name: client
+    image: quay.io/cilium/alpine-curl:v1.10.0@sha256:913e8c9f3d960dde03882defa0edd3a919d529c2eb167caa7f54194528bde364
+    command:
+    - /usr/bin/pause
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: outsider
+  namespace: cilium-l2l7-demo
+  labels:
+    app: outsider
+spec:
+  automountServiceAccountToken: false
+  containers:
+  - name: client
+    image: quay.io/cilium/alpine-curl:v1.10.0@sha256:913e8c9f3d960dde03882defa0edd3a919d529c2eb167caa7f54194528bde364
+    command:
+    - /usr/bin/pause
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1
+  namespace: cilium-l2l7-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app1
+  template:
+    metadata:
+      labels:
+        app: app1
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: client
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: http
+        image: quay.io/cilium/json-mock:v1.4.1@sha256:6a66df90808a39c02e7a9d58af7bf0e54d8f8b7d4bc528f48c891969a7049195
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app1-service
+  namespace: cilium-l2l7-demo
+spec:
+  selector:
+    app: app1
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
 ```
 
-### OSI モデルのレイヤー:
 
-1. **物理レイヤー（L1）**:
-   - ビット伝送のための物理媒体
-   - 電気的、機械的、機能的特性を定義
-   - 例: ケーブル、スイッチ、リピーター
+```bash
+kubectl apply -f l7-app.yaml
+kubectl -n cilium-l2l7-demo wait --for=condition=Ready pod/client pod/outsider --timeout=120s
+kubectl -n cilium-l2l7-demo rollout status deployment/app1 --timeout=120s
+kubectl -n cilium-l2l7-demo get pods,services -o wide
+kubectl -n cilium-l2l7-demo exec client -- \
+  curl --fail --silent --show-error --max-time 5 http://app1-service/
+```
 
-2. **データリンクレイヤー（L2）**:
-   - 物理アドレッシング（MAC アドレス）
-   - フレーム形式とフロー制御
-   - 例: Ethernet、スイッチ、ブリッジ
+outsider のベースライン接続性も確認してください。Service はポート 80 を公開しますが、その backend は **8080** でリッスンします。Pod ingress policy は backend ポートを使用します。これにより、存在しない/一致しない以前の application セットアップ、およびデフォルトの labels/entrypoint が例と一致しなかった client Pod を置き換えます。
 
-3. **ネットワークレイヤー（L3）**:
-   - 論理アドレッシング（IP アドレス）
-   - パケットルーティングと転送
-   - 例: IP、ルーター、ICMP
-
-4. **トランスポートレイヤー（L4）**:
-   - エンドツーエンド接続と信頼性
-   - Port ベースのアドレッシング
-   - 例: TCP、UDP、Port
-
-5. **セッションレイヤー（L5）**:
-   - セッションの確立、管理、終了
-   - ダイアログ制御と同期
-   - 例: NetBIOS、RPC
-
-6. **プレゼンテーションレイヤー（L6）**:
-   - データ形式の変換と暗号化
-   - データ圧縮とエンコーディング
-   - 例: SSL/TLS、JPEG、ASCII
-
-7. **アプリケーションレイヤー（L7）**:
-   - ユーザーインターフェースとアプリケーションサービス
-   - プロトコルと API
-   - 例: HTTP、DNS、FTP、gRPC
-
-### 各レイヤーの主な特性:
-
-| レイヤー | アドレッシング | 単位 | デバイス/プロトコル | Cilium 機能 |
-|-------|------------|------|-----------------|----------------|
-| L2 | MAC アドレス | フレーム | スイッチ、ブリッジ | ARP 処理、MAC フィルタリング |
-| L3 | IP アドレス | パケット | ルーター、IP | IP ルーティング、CIDR ベースの Policy |
-| L4 | Port | セグメント | TCP、UDP | Port ベースのフィルタリング、接続追跡 |
-| L7 | URL、Method | メッセージ | HTTP、gRPC、Kafka | API 対応フィルタリング、header ベースのルーティング |
-
-### L7 Policy の例
-
-以下は、HTTP Method とパスに基づいてトラフィックをフィルタリングする Cilium L7 Policy の例です。
+**`app1-http.yaml`**
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: l7-policy
-  namespace: l7-test
+  name: app1-http
+  namespace: cilium-l2l7-demo
 spec:
   endpointSelector:
     matchLabels:
@@ -168,144 +153,80 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: client
+        k8s:io.kubernetes.pod.namespace: cilium-l2l7-demo
+        k8s:app: client
     toPorts:
     - ports:
-      - port: "80"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/public"
-        - method: "POST"
-          path: "/api/v1"
-          headers:
-          - "X-Auth-Token: ^[a-zA-Z0-9]{32}$"
+        - method: ^GET$
+          path: ^/$
+        - method: ^POST$
+          path: ^/api/v1$
+          headerMatches:
+          - name: x-demo-tenant
+            value: team-a
 ```
 
-この Policy は以下を許可します:
-1. `/public` パスへの GET リクエスト
-2. `/api/v1` パスへの POST リクエスト（有効な X-Auth-Token header を含む）
 
-その他すべてのリクエストはブロックされます。
-| L7 | URI、Method | メッセージ | HTTP、gRPC、Kafka | API 対応フィルタリング、header 検査 |
+```bash
+kubectl apply -f app1-http.yaml
+kubectl -n cilium-l2l7-demo get cnp app1-http -o yaml
+```
 
-## Cilium のレイヤー固有機能
+ポリシーの実現後、名前付き client は GET `/` リクエストを実行できます。POST `/api/v1` は、このルールにより正確な `x-demo-tenant: team-a` ヘッダーを持つ場合にのみ許可されます。backend は引き続きその API 操作を実装している必要があります。その他の method/path/peer は、ほかに適用可能なポリシーが許可していない範囲でのみ拒否されます。application response と同様に、実現されたポリシーおよびフローの証跡も検証してください。
 
-Cilium は L2 から L7 までのさまざまなネットワークレイヤーで機能を提供し、包括的なネットワーキングおよびセキュリティソリューションを実現します。
+このヘッダーは **デモ用フィルターであり、認証ではありません**。以前の 32 文字の「token」条件は、identity、signature、issuer、expiry、または authorization を検証しませんでした。リリース済み translator では、値を含む `headers` 文字列はその値にリテラル一致します。`X-Auth-Token: ^[a-zA-Z0-9]{32}$` は regex token validator ではありません。意図した正確な値/存在要件には明示的な `headerMatches` を使用し、ユーザーは application/適切な authentication layer で認証してください。
 
-### L2（データリンクレイヤー）機能:
-
-- **ARP 処理**: Address Resolution Protocol の処理
-- **MAC アドレスフィルタリング**: MAC アドレスベースのフィルタリング
-- **VLAN タギング**: Virtual LAN タグの処理
-- **ブリッジモード**: L2 ブリッジモードのサポート
-- **プロミスキャスモード**: すべてのトラフィックをキャプチャ
-
-### L3（ネットワークレイヤー）機能:
-
-- **IP ルーティング**: IP パケットのルーティング
-- **CIDR ベースの Policy**: IP アドレス範囲ベースのフィルタリング
-- **IP フラグメンテーション**: IP パケットフラグメントの処理
-- **ICMP 処理**: ICMP メッセージの処理
-- **マルチキャスト**: IP マルチキャストのサポート
-
-### L4（トランスポートレイヤー）機能:
-
-- **Port ベースのフィルタリング**: TCP/UDP Port ベースのフィルタリング
-- **接続追跡**: 接続状態の追跡
-- **TCP Option 処理**: TCP Option とフラグの処理
-- **Socket ベースのロードバランシング**: Socket レベルのロードバランシング
-- **セッションアフィニティ**: 永続的なセッションの維持
-
-### L7（アプリケーションレイヤー）機能:
-
-- **HTTP フィルタリング**: HTTP Method、パス、header ベースのフィルタリング
-- **gRPC フィルタリング**: gRPC Method とメタデータベースのフィルタリング
-- **Kafka フィルタリング**: Kafka トピックと操作ベースのフィルタリング
-- **DNS フィルタリング**: DNS クエリとレスポンスベースのフィルタリング
-- **TLS インスペクション**: TLS 証明書と SNI ベースのフィルタリング
-
-### クロスレイヤー統合:
-
-Cilium はさまざまなレイヤーにわたる機能を統合し、包括的なネットワーキングおよびセキュリティソリューションを提供します:
-
-- **L3/L4 + L7 Policy**: IP/Port ベースのフィルタリングとアプリケーションレイヤーフィルタリングを組み合わせる
-- **マルチプロトコルサポート**: HTTP、gRPC、Kafka などのさまざまなプロトコルをサポート
-- **階層型 Policy 適用**: さまざまなレイヤーで Policy を適用
-- **統合 Observability**: 全レイヤーにわたるトラフィックの監視と可視化
+method と path は正規表現をサポートします。組み込み Cilium HTTP policy には任意の request-body predicate はありません。ヘッダーの存在、完全一致、URL filtering、および application authorization は異なる制御です。
 
 ## Service Mesh 統合
 
-Cilium は Istio などの Service Mesh と統合し、マイクロサービスアーキテクチャ向けに強力なネットワーキング、セキュリティ、Observability ソリューションを提供します。
+Cilium はネットワーキングとサポート対象の network policy を提供し、Istio は設定された proxy と mesh の動作を所有します。統合によって Istio sidecar が自動的にバイパスされたり、その mTLS コストが除去されたり、すべての trace が統合されたり、リクエストが高速になることが保証されたりするわけではありません。
 
-### Cilium-Istio 統合アーキテクチャ:
-
-```
-+-------------------+
-| Service Mesh      |
-| Control Plane     |
-| (Istio Pilot)     |
-+--------+----------+
-         |
-         v
-+-------------------+
-| Envoy Proxy       |
-| (Sidecar)         |
-+--------+----------+
-         |
-         v
-+-------------------+
-| Cilium eBPF       |
-| (Data Plane)      |
-+-------------------+
+```text
+Configuration: istiod --> Istio Envoy proxies
+Request: app --> source sidecar --> Cilium/network --> destination sidecar --> app
 ```
 
-### Cilium-Istio 統合の利点:
+### Istio のトラフィックインターセプトを維持する
 
-1. **パフォーマンスの向上**:
-   - Envoy Sidecar のバイパスによるレイテンシー削減
-   - eBPF ベースの最適化されたデータパス
+現在の Cilium integration guide では kube-proxy coexistence と、慎重に設定した full-replacement オプションが提供されています。coexistence のフラグメントは次のとおりです。
 
-2. **セキュリティの強化**:
-   - Kernel レベルの Policy 適用
-   - L3-L7 セキュリティ Policy の統合
-
-3. **Observability の向上**:
-   - 統合された監視とトレーシング
-   - ネットワークフローの可視性
-
-4. **運用の簡素化**:
-   - 一貫したネットワーキングおよびセキュリティモデル
-   - 冗長な機能の排除
-
-### Cilium-Istio のセットアップ:
-
-```bash
-# Cilium installation (with Istio integration enabled)
-cilium install --config enable-envoy-config=true --config enable-l7-proxy=true
-
-# Istio installation
-istioctl install --set profile=default
-
-# Enable Istio sidecar auto-injection
-kubectl label namespace default istio-injection=enabled
-
-# Verify Cilium-Istio integration
-cilium status --verbose
-```
-
-### Istio Virtual Service と Cilium Policy の組み合わせ:
+**`istio-cilium-values.yaml`**
 
 ```yaml
-# istio-virtual-service.yaml
-apiVersion: networking.istio.io/v1alpha3
+kubeProxyReplacement: false
+socketLB:
+  hostNamespaceOnly: true
+cni:
+  exclusive: false
+```
+
+
+意図的に準備された full-replacement セットアップの場合、`kubeProxyReplacement: true` にはさらに、到達可能な API endpoint と replacement の前提条件が必要です。Pod socket translation が Istio interception をバイパスしないように `socketLB.hostNamespaceOnly: true` を維持し、ノード CNI configuration を共有する場合は `cni.exclusive: false` を使用してください。
+
+Istio sidecar redirection では init container または Istio CNI node agent を使用でき、ambient は対応する node/CNI パスを使用します。1 つのモードを選択して、[保守されている Istio インストールガイド](../../service-mesh/istio/01-installation.md)に従ってください。Kubernetes API server は Istio の admission webhook に到達できる必要があります。managed-control-plane/overlay network では、文書化された routing または host-network ソリューションが必要になる場合があります。すべての overlay cluster に対して `istiod hostNetwork: true` を指定しないでください。
+
+### mTLS を保持し L7 の責務を割り当てる
+
+Istio で暗号化された workload traffic に plaintext の Cilium HTTP inspection を適用しないでください。この例では Istio mTLS と L7 routing を Istio に保持し、Cilium の **L3/L4 のみ**の policy を使用します。以前の統合 L7 例を通すためだけに mTLS を無効にすると、security design が変更されます。
+
+以下は、`productpage` と `reviews` workload、ポート 9080 上の reviews Service、および `version: v1`/`v2` の label を持つ reviews Pod を備えた、すでに準備済みの `istio-cilium-demo` namespace 用の **sidecar-mode** configuration です。完全な Bookinfo deployment ではありません。
+
+**`istio-reviews.yaml`**
+
+```yaml
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
+  namespace: istio-cilium-demo
 spec:
   hosts:
-  - reviews
+  - reviews.istio-cilium-demo.svc.cluster.local
   http:
   - match:
     - headers:
@@ -313,18 +234,46 @@ spec:
           exact: jason
     route:
     - destination:
-        host: reviews
+        host: reviews.istio-cilium-demo.svc.cluster.local
         subset: v2
+        port:
+          number: 9080
   - route:
     - destination:
-        host: reviews
+        host: reviews.istio-cilium-demo.svc.cluster.local
         subset: v1
+        port:
+          number: 9080
 ---
-# cilium-l7-policy.yaml
-apiVersion: "cilium.io/v2"
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: reviews-subsets
+  namespace: istio-cilium-demo
+spec:
+  host: reviews.istio-cilium-demo.svc.cluster.local
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-cilium-demo
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "reviews-policy"
+  name: reviews-l4
+  namespace: istio-cilium-demo
 spec:
   endpointSelector:
     matchLabels:
@@ -332,237 +281,252 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: productpage
+        k8s:io.kubernetes.pod.namespace: istio-cilium-demo
+        k8s:app: productpage
     toPorts:
     - ports:
-      - port: "9080"
+      - port: '9080'
         protocol: TCP
-      rules:
-        http:
-        - method: "GET"
-          path: "/reviews/.*"
 ```
+
+
+DestinationRule は VirtualService が参照する subset を定義します。`end-user: jason` ヘッダーはデモルートを選択します。これは認証済み identity ではありません。sidecar injection の成功、実際の endpoint label、subset readiness、および mesh telemetry を検証してください。
+
+9080 Cilium ルールを ambient policy のレシピとして再利用しないでください。ambient HBONE はポート 15008 で暗号化トンネリングを使用し、可視の traffic/identity 境界を変更します。その topology に適切な Istio policy とプラットフォーム固有の Cilium network guard を適用してください。
 
 ## ロードバランシングアーキテクチャ
 
-Cilium は eBPF を活用して、効率的かつスケーラブルなロードバランシングソリューションを提供します。これは Kubernetes Service の kube-proxy 置き換えとして動作できます。
+Cilium の service map、backend map、reverse-NAT state、および connection tracking は、異なる forwarding stage をサポートします。L7 Envoy load balancing は別のコンポーネントです。その algorithm リストを BPF service datapath と混同しないでください。
 
-### Cilium ロードバランシングモード:
+### BPF forwarding モードと algorithm
 
-1. **DSR（Direct Server Return）モード**:
-   - レスポンストラフィックはロードバランサーをバイパスして直接クライアントへ送信される
-   - ロードバランサーのボトルネックを排除
-   - 大きなレスポンスの処理に最適化
+| 設定 / メカニズム | 意味と制限 |
+|---|---|
+| `loadBalancer.mode: snat` | デフォルトの forwarding mode。適用可能な external service path では、direct-return path ではなく source translation/reverse state を使用する |
+| `dsr` | リモート backend の応答は ingress load-balancing node をバイパスできる。network はその return path を許可する必要があり、upstream proxy によってすでに変換された client IP を復元することはできない |
+| `hybrid` | TCP は DSR、UDP は SNAT を使用する。これは有効な load-balancer 動作であり、無効な tunnel/auto-direct-routing の組み合わせとは異なる |
+| Annotation-based forwarding | Service ごとにサポートされる opt-in 動作。forwarding annotation は作成時の選択であり、変更すると接続が切断される可能性がある |
+| `loadBalancer.algorithm: random` | デフォルトの BPF backend-selection algorithm |
+| `maglev` | サポート対象の XDP acceleration を含む、サポート対象の external N–S path の一貫した選択。通常の socket-LB E–W connection は Maglev の対象ではない |
+| `sessionAffinity: ClientIP` | 個別の Kubernetes Service affinity。key は external source IP、または該当する in-cluster socket-LB traffic では client の network-namespace cookie |
 
-2. **SNAT（Source Network Address Translation）モード**:
-   - 送信元 IP アドレスをロードバランサーの IP に変換
-   - クライアント IP を保持する必要がない場合に有用
-   - 既存の kube-proxy と同様の動作
+Maglev は、backend removal 後も session が維持される保証ではありません。ノードには一貫した backend state、table size、および seed が必要です。デフォルトの table size は 16381 です。以下で使用する 65521 は許可された値であり、普遍的な推奨ではありません。より大きな table はメモリを消費します。affinity expiry と connection state は hashing とは別のものです。
 
-3. **ハイブリッドモード**:
-   - 状況に応じて DSR または SNAT モードを使用
-   - 柔軟性とパフォーマンスのバランス
+DSR dispatch は、native-routing IP options、文書化された native/Geneve-overlay configuration での Geneve、または文書化された native-only の IPIP/IP6IP6 パスを使用できます。VXLAN overlay は Geneve DSR dispatch と交換可能ではありません。IPIP には独自の port/translation 制約があります。選択する前にリリースガイドを確認してください。
 
-### Cilium ロードバランシングコンポーネント:
+XDP acceleration にはサポート対象の device/driver が必要です。`native` は選択した device がそれをサポートしていることを想定し、`best-effort` はサポートされる場所で有効にします。以前の `enable-xdp-acceleration` key を書くだけで有効になるわけではありません。また、初期の XDP forwarding は tcpdump の後段の capture point では見えない場合があります。
 
-- **Service Map**: Service IP:Port からバックエンド Pod へのマッピング
-- **Backend Map**: バックエンド Pod 情報の保存
-- **Reverse NAT Map**: 接続追跡とレスポンス処理
-- **Socket LB**: Socket レベルでのロードバランシング
-- **XDP Acceleration**: 早期パケット処理の高速化
+### Cilium と kube-proxy
 
-### Cilium と kube-proxy の比較:
+| 観点 | 正しい比較 |
+|---|---|
+| Linux Service 実装 | Cilium は BPF hook/map を使用する。kube-proxy には iptables および nftables モードがあり、IPVS は Kubernetes 1.35 以降非推奨 |
+| プラットフォーム | Cilium が表明する Linux/kernel 要件が適用される。Windows kernelspace kube-proxy は異なる実装 |
+| 接続状態 | Cilium BPF connection/NAT state は Linux netfilter conntrack とは異なる。「optional 対 always」という表現は広すぎる |
+| L7 | Cilium はサポート対象の proxy を統合する。kube-proxy の Service forwarding は HTTP policy engine ではない |
+| パフォーマンス | 同じ workload と configuration を測定する。どちらの製品名も固定順位を確立しない |
 
-| 機能 | Cilium | kube-proxy |
-|---------|--------|------------|
-| 実装 | eBPF | iptables/IPVS |
-| パフォーマンス | 高 | 中/低 |
-| スケーラビリティ | 高 | 中 |
-| 接続追跡 | 任意 | 常に有効 |
-| DSR サポート | ネイティブサポート | 限定的（IPVS モードのみ） |
-| Socket レベル LB | サポート | 非サポート |
-| L7 認識 | サポート | 非サポート |
-| Observability | 高 | 限定的 |
+基盤となる Linux IPVS subsystem に direct-routing capabilities があるからといって、kube-proxy DSR configuration を推測しないでください。
 
-### Cilium ロードバランシング設定:
+## 準備済み DSR/Maglev ラボ
+
+このプロファイルは、新しい準備済みの kube-proxy-free **IPv4 Geneve-overlay** テストクラスタ用です。既存 CNI の移行、kube-proxy の削除、または cloud anti-spoofing/routing control の設定は行いません。競合しない Pod CIDR を使用し、external return path を検証してください。
+
+**`lb-values.yaml`**
 
 ```yaml
-# cilium-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable kube-proxy replacement
-  kube-proxy-replacement: "strict"
-
-  # Enable DSR mode
-  enable-dsr: "true"
-
-  # External service load balancing
-  enable-external-ips: "true"
-
-  # NodePort acceleration
-  enable-node-port: "true"
-
-  # XDP acceleration
-  enable-xdp-acceleration: "true"
+kubeProxyReplacement: true
+routingMode: tunnel
+tunnelProtocol: geneve
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
+loadBalancer:
+  mode: dsr
+  dsrDispatch: geneve
+  algorithm: maglev
+  acceleration: disabled
+maglev:
+  tableSize: 65521
+bpf:
+  masquerade: true
+enableIPv4Masquerade: true
+enableIPv6Masquerade: false
+l7Proxy: true
+envoy:
+  enabled: true
+hubble:
+  enabled: true
+  relay:
+    enabled: true
 ```
 
-## マスカレーディング
 
-マスカレーディングは、外部ネットワークと通信する際に、内部ネットワークの IP アドレスを別の IP アドレスに変換するプロセスです。Cilium はさまざまなマスカレーディング設定と実装モードをサポートしています。
+実際の API endpoint と、クラスタごとに永続化された Maglev seed を 1 つ指定してください。seed は 12 random byte の base64 encoding です。一度生成してクラスタの values と共に保存し、upgrade ごとに再生成するのではなく再利用してください。
 
-### 1. マスカレーディング設定
+```bash
+: "${API_SERVER_HOST:?Set the reachable real API server host, not its ClusterIP}"
+: "${API_SERVER_PORT:?Set the actual API server port}"
+: "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
+helm repo add cilium https://helm.cilium.io/
+helm repo update cilium
+helm install cilium cilium/cilium --version 1.20.2 --namespace kube-system \
+  --values lb-values.yaml \
+  --set-string k8sServiceHost="$API_SERVER_HOST" \
+  --set k8sServicePort="$API_SERVER_PORT" \
+  --set-string maglev.hashSeed="$MAGLEV_SEED"
+cilium status --wait
+```
 
-Cilium では、マスカレーディングは以下の目的で使用されます:
-- クラスター内部 IP アドレスを外部ネットワークから隠す
-- クラスター外部の Service へのアクセスを提供する
-- Network Address Translation（NAT）を実装する
+選択したクラスタでは、このガイドで作成した namespace を使用してください。これが別の使い捨てクラスタである場合は、最初にそこで namespace の作成/label 手順を繰り返してください。HTTP-policy application とこの external-LB backend では異なる label を使用するため、先行する client 専用 HTTP rule がこの実験を誤ってブロックすることはありません。
 
-**設定オプション**:
-- `enable-ipv4-masquerade`: IPv4 マスカレーディングの有効化/無効化
-- `enable-ipv6-masquerade`: IPv6 マスカレーディングの有効化/無効化
-- `masquerade-all`: すべてのトラフィックでマスカレーディングを有効化
-- `masquerade-interfaces`: マスカレーディングを適用するインターフェースを指定
+**`lb-echo.yaml`**
 
-**設定例**:
 ```yaml
-# cilium-masquerade-config.yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  enable-ipv4-masquerade: "true"
-  enable-ipv6-masquerade: "false"
-  masquerade-all: "false"
-  ipv4-native-routing-cidr: "10.0.0.0/8"
+  name: lb-echo
+  namespace: cilium-l2l7-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lb-echo
+  template:
+    metadata:
+      labels:
+        app: lb-echo
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: http
+        image: quay.io/cilium/json-mock:v1.4.1@sha256:6a66df90808a39c02e7a9d58af7bf0e54d8f8b7d4bc528f48c891969a7049195
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb-echo
+  namespace: cilium-l2l7-demo
+spec:
+  type: NodePort
+  selector:
+    app: lb-echo
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
 ```
 
-### 2. 実装モード
 
-Cilium は、iptables ベースと eBPF ベースの 2 つのマスカレーディング実装モードをサポートしています。
+```bash
+kubectl apply -f lb-echo.yaml
+kubectl -n cilium-l2l7-demo rollout status deployment/lb-echo --timeout=120s
+kubectl -n cilium-l2l7-demo get pods -l app=lb-echo -o wide
+kubectl -n cilium-l2l7-demo get service lb-echo -o wide
+NODEPORT=$(kubectl -n cilium-l2l7-demo get service lb-echo -o jsonpath='{.spec.ports[0].nodePort}')
+```
 
-**iptables ベースのマスカレーディング**:
-- 従来の iptables ルールを使用してマスカレーディングを実装
-- すべての Linux ディストリビューションと互換性あり
-- 大規模環境ではパフォーマンスの制約あり
+backend node **とは異なる**到達可能な ingress node と、Cilium の in-cluster socket LB の対象ではない external client を使用してください。その client から、実際の値を使用して `http://ENTRY_NODE_IP:NODEPORT/` をリクエストします。Pod-to-ClusterIP curl は external DSR も Maglev の動作も証明しません。request/response path と backend/connection state を検証してください。HTTP response の成功だけからそれらを推測しないでください。
 
-**eBPF ベースのマスカレーディング**:
-- eBPF プログラムを使用してマスカレーディングを実装
-- パフォーマンスとスケーラビリティを向上
-- 最近の Linux Kernel が必要
+## マスカレード
 
-**設定例**:
+Pod egress masquerading は、設定された external path に必要な場合に source address を変更します。これは encryption や firewall ではなく、Service DNAT および DSR forwarding とは異なります。
+
+次のフラグメントは、network がそれらの Pod source/return route を実際にサポートする場合にのみ、例の `10.0.0.0/8` destination range を source masquerading から除外します。
+
+**`masquerade-values.yaml`**
+
 ```yaml
-# cilium-ebpf-masquerade-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  enable-ipv4-masquerade: "true"
-  enable-bpf-masquerade: "true"  # Enable eBPF-based masquerading
+bpf:
+  masquerade: true
+enableIPv4Masquerade: true
+enableIPv6Masquerade: false
+ipv4NativeRoutingCIDR: 10.0.0.0/8
 ```
 
-## IPv4 フラグメント処理
 
-IPv4 フラグメントは、MTU（Maximum Transmission Unit）を超えるために複数の小さなパケットに分割された IP パケットです。Cilium は IPv4 フラグメントを処理するためのさまざまなメカニズムを提供します。
+`ipv4NativeRoutingCIDR` は想定される routable range と対応する masquerade exclusion を表します。これは route をインストールしたり、datapath 全体を native routing に切り替えたりするものではありません。動作する return route のない広範な除外は接続性を破壊する可能性があります。
 
-### 1. フラグメント処理メカニズム
+- BPF masquerading は、このリリースでは BPF NodePort feature に依存し、BPF program を持つ device にのみ適用されます。選択された device を調べ、必要に応じて文書化された `devices` configuration を使用してください。
+- iptables implementation は、文書化された `egressMasqueradeInterfaces` の動作を使用します。その field や、削除された汎用的な `masquerade-interfaces`/`masquerade-all` の例を、普遍的な BPF control とみなさないでください。
+- IPv6 BPF masquerading はベータ版として文書化されています。どちらの implementation も Cilium の platform/kernel 要件を取り除くものではなく、最終的にはいずれも kernel 内で traffic を処理します。
+- node-address exception、ip-masq-agent exclusion、および後段の cloud/NAT gateway が観測される source に影響する可能性があります。制御された observer と node 側の state/capture を使用してください。任意の public site に到達できても、特定の NAT implementation が証明されるわけではありません。
 
-Cilium は以下の IPv4 フラグメント処理メカニズムをサポートしています:
-- **フラグメント追跡**: フラグメントを追跡して再構築
-- **フラグメントマッチング**: 最初のフラグメントに基づく Policy の決定
-- **LPM（Longest Prefix Match）ベースのルーティング**: フラグメントの効率的なルーティング
+該当する agent 上で実行します。
 
-### 2. フラグメント関連設定
+```bash
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+export CILIUM_POD=cilium-REPLACE-WITH-AGENT-ON-TARGET-NODE
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf nat list
+```
 
-Cilium は IPv4 フラグメント処理用のさまざまな設定オプションを提供します:
-- `enable-ipv4-fragment-tracking`: IPv4 フラグメント追跡の有効化/無効化
-- `fragment-tracking-timeout`: フラグメント追跡タイムアウトを設定
-- `max-fragments-per-flow`: フローあたりの最大フラグメント数を設定
+## フラグメント処理と MTU
 
-**設定例**:
+リリース済み fragment tracker は、datagram identity と L4 source/destination port を、サイズ上限のある LRU map に保存します。L4 header を持たない後続 fragment の port context を復元できますが、**BPF payload-reassembly engine ではなく**、fragment attack に対する保証でもありません。
+
+文書化された機能には IPv4 と IPv6 の tracking が含まれ、対応する flag によりデフォルトで有効化され、ベータ版とされています。有効な IPv4 flag は引き続き `enable-ipv4-fragment-tracking` です。`bpf-fragments-map-max` は追跡される datagram map capacity を制御します。以前の `fragment-tracking-timeout` および `max-fragments-per-flow` 設定はリリース済み configuration contract には含まれません。
+
+chart の追加 configuration map を使用する明示的な例です。
+
+**`fragment-values.yaml`**
+
 ```yaml
-# cilium-fragment-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  enable-ipv4-fragment-tracking: "true"
-  fragment-tracking-timeout: "60"  # in seconds
-  max-fragments-per-flow: "10"
+extraConfig:
+  enable-ipv4-fragment-tracking: 'true'
+  bpf-fragments-map-max: '8192'
 ```
 
-### 3. フラグメント処理に関する考慮事項
 
-IPv4 フラグメント処理時の考慮事項:
-- **パフォーマンスへの影響**: フラグメントの追跡と再構築は追加リソースを消費します。
-- **セキュリティへの影響**: フラグメントはセキュリティ Policy をバイパスするために使用される可能性があります。
-- **MTU の最適化**: フラグメンテーションを防ぐために MTU を最適化することが推奨されます。
-- **Path MTU Discovery**: フラグメンテーションを防ぐために PMTUD を有効化できます。
+8192 は capacity の例であり、flow あたりの fragment の最大数ではありません。capacity を診断する際は `cilium_ipv4_frag_datagrams` / `cilium_ipv6_frag_datagrams` とその pressure を調べてください。pressure は reassembly-success または attack-prevention のカウンターではありません。
 
-**ベストプラクティス**:
-- 可能な場合は、フラグメンテーションを防ぐために MTU を一貫して設定します。
-- オーバーレイネットワークを使用する場合は、カプセル化のオーバーヘッドを考慮して MTU を調整します。
-- フラグメントベースの攻撃を防ぐためにフラグメント追跡を有効化します。
-- ネットワーク Policy ではフラグメント処理を考慮します。
+正しい packet sizing と、動作する path MTU discovery path を優先してください。PMTUD は関連する error signaling と network behavior に依存しており、どこでも自動的な最適サイズ設定を保証するものではありません。Cilium の `MTU` は **underlying-network override** です。[ネットワーキングガイド](03-networking.md)で説明しているように、通常の VXLAN overhead は IPv4 underlay では 50 byte、IPv6 では 70 byte です。1500-byte path に対して base を盲目的に 1450 に設定すると、overhead を二重に差し引く可能性があります。
 
-## ラボ: ロードバランシングとマスカレーディングの設定
+## 可観測性とトラブルシューティング
 
-### 1. kube-proxy 置き換えモードの設定:
+正しい node、実際の Envoy deployment mode、目的の policy、実現された endpoint state、および新しい traffic を調べてください。agent-local operation には `cilium-dbg` を、cluster operation には standalone CLI を使用します。削除された `policy trace` command や強制 endpoint regeneration は、この診断の出発点ではありません。
+
+有効な Hubble Relay port-forward を別の terminal で実行したままにし、関連する flow を観察します。
 
 ```bash
-# Enable kube-proxy replacement mode
-cilium install --config kube-proxy-replacement=strict
-
-# Check status
-cilium status --verbose
+cilium hubble port-forward
 ```
-
-### 2. DSR モードの設定:
 
 ```bash
-# Enable DSR mode
-cilium install --config enable-dsr=true
-
-# Create service
-kubectl create deployment echo --image=cilium/json-mock
-kubectl expose deployment echo --port=8080 --target-port=80
-
-# Test service
-kubectl run client --rm -it --image=busybox -- wget -O- echo:8080
+hubble observe --namespace cilium-l2l7-demo --protocol http --last 20
+hubble observe --namespace cilium-l2l7-demo --verdict DROPPED --last 20
 ```
 
-### 3. マスカレーディングの設定:
+HTTP policy rejection は packet DROPPED verdict ではなく HTTP 403 として現れる場合があります。timeout だけでも readiness、DNS、routing、TLS、または observation の問題を意味することがあります。すべての error を policy success と解釈せず、レイヤーを相関付けてください。
 
-```bash
-# Enable eBPF-based masquerading
-cilium install --config enable-ipv4-masquerade=true --config enable-bpf-masquerade=true
+## 検証の制限とソース
 
-# Test external service access
-kubectl run client --rm -it --image=busybox -- wget -O- google.com
-```
+これらはリリースの source/schema を確認済みで、範囲を限定した local fixture を用いる例であり、production-tested platform や live-cluster benchmark ではありません。image execution、webhook reachability、mTLS traffic、DSR return path、NAT behavior、および fragmentation には、準備済み環境での検証が引き続き必要です。この実行で label 付けした application resource のみをクリーンアップしてください。ラボのクリーンアップとして cluster CNI を削除しないでください。
 
-### 4. IPv4 フラグメント処理の設定:
+- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/kubernetes/kubeproxy-free.rst)、[masquerading](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/masquerading.rst)、[fragment handling](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/fragmentation.rst)、[fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.2/pkg/maps/fragmap/fragmap.go)
+- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/l2-announcements.rst)、[multicast](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/multicast.rst)、[HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.2/pkg/envoy/policy/envoy_l7_rules_translator.go)、[Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/templates/_helpers.tpl)
+- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/servicemesh/istio.rst)、[Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/)、[webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/)、[Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
+- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/)、[Cilium 1.20.2 values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml)
 
-```bash
-# Enable fragment tracking
-cilium install --config enable-ipv4-fragment-tracking=true
-
-# MTU setting
-cilium install --config mtu=1450
-```
 
 [メインページに戻る](README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/networking/cilium/05-l2-l7-networking-quiz.md)に挑戦してください。
+[L2–L7 とロードバランシングの問題を確認する](../../quizzes/networking/cilium/05-l2-l7-networking-quiz.md).
