@@ -112,4 +112,25 @@ When adding a brand-new top-level content section, no extra config is needed her
 
 `.github/workflows/weekly-news-digest.yml` runs weekly, matches fresh Kubernetes/EKS/CNCF news against `.github/news-topic-map.yml`, and updates the matched doc(s) in place in both `ko/` and `en/` (bumping the header's "마지막 업데이트"/"Last Updated" date) rather than writing a separate news file. Unmatched news is recorded as a link-only line in `ko/news/README.md` / `en/news/README.md`'s "갱신 로그"/"Update Log" — those two files are the only ones under `news/`; no per-week files are created.
 
+The Markdown logs remain the source of truth. VitePress replaces their
+`<!-- news-dashboard -->` marker with a dashboard (eight-week topic heatmap,
+summary counts, filters, search and cards); the complete log stays available
+in a collapsible `<details>` block and remains readable on GitBook.
+
+New batches write one single-line bullet per announcement, grouping every
+related document on that line, with a verified source link even for matched
+docs. Use identical logging weeks, document paths, source URLs and entry
+order in ko/en. Preserve historical lines and the dashboard marker/details
+wrapper. Logging weeks are not source publication dates, and historical
+document-specific records are not counts of distinct source articles.
+
+After changing either news log, run `npm run docs:news` and commit
+`.vitepress/theme/news.generated.json` with the Markdown. Never edit this
+generated file manually. `npm run docs:validate` rejects stale data, invalid
+dates/links, missing document targets and ko/en record mismatches. The weekly
+workflow regenerates data, requires source URLs for its current-week entries,
+runs validation and then applies the existing content-review threshold of
+85/100 before opening a PR. News header dates are updated only when new
+entries are added.
+
 When adding a new top-level content section that should participate in this pipeline (i.e., news about it should get auto-applied rather than always falling through to link-only), add a matching entry to `.github/news-topic-map.yml`.

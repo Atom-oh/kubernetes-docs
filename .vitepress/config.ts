@@ -93,6 +93,15 @@ const config = defineConfig({
     },
     config(md) {
       preserveInlineCode(md)
+      // Keep the shared Markdown readable on GitBook. Only VitePress turns
+      // this portable marker into the interactive news dashboard.
+      md.core.ruler.push('news_dashboard', (state) => {
+        for (const token of state.tokens) {
+          if (token.type === 'html_block' && token.content.trim() === '<!-- news-dashboard -->') {
+            token.content = '<NewsDashboard />\n'
+          }
+        }
+      })
       // Content links target README.md (GitBook convention). The README→index
       // rewrites change the emitted routes, but VitePress does not map link
       // hrefs through rewrites — normalize them here so rendered links match.

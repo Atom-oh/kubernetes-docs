@@ -1,6 +1,6 @@
 import DefaultTheme from 'vitepress/theme'
 import mediumZoom from 'medium-zoom'
-import { nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { defineAsyncComponent, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vitepress'
 import { initQuizProgress } from './quiz-progress.mjs'
 import { createDocViewTracker } from './analytics.mjs'
@@ -27,6 +27,9 @@ const hardenLangSwitchLinks = () => {
 
 export default {
   extends: DefaultTheme,
+  enhanceApp({ app }) {
+    app.component('NewsDashboard', defineAsyncComponent(() => import('./components/NewsDashboard.vue')))
+  },
   setup() {
     const route = useRoute()
     const router = useRouter()

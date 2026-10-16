@@ -5,6 +5,11 @@ This page records documentation changes prompted by Kubernetes, Amazon EKS and C
 
 Week labels identify log-entry weeks and may differ from source publication dates. These are historical records; consult the linked guides and official sources for current support, security patches and operating requirements. “No matching doc” describes the automated match at that time.
 
+<!-- news-dashboard -->
+
+<details class="news-log">
+<summary>Expand the complete update log</summary>
+
 ## Update Log
 
 - 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied the Karpenter v1.15.0 release (node repair as a voluntary disruption with reboot support, CEL in KubeletConfiguration, broader DRA support, and more)
@@ -101,3 +106,5 @@ Week labels identify log-entry weeks and may differ from source publication date
 - 2026-07-11: no matching doc — CNCF Data Storage in Cloud Native AI white paper published ([source](https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/))
 - 2026-07-11: no matching doc — Amazon EMR on EKS now supports an Apache Spark troubleshooting agent ([source](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/))
 - 2026-07-11: no matching doc — AWS Systems Manager hybrid/multicloud node pricing overhaul (Advanced Instances Tier eliminated) ([source](https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/))
+
+</details>

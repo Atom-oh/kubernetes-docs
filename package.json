@@ -8,9 +8,11 @@
     "docs:build:locale": "vitepress build",
     "docs:preview": "vitepress preview",
     "docs:llms": "node scripts/generate-llms-txt.mjs",
+    "docs:news": "node scripts/generate-news-data.mjs",
+    "docs:news:check": "node scripts/generate-news-data.mjs --check",
     "docs:mcp": "node scripts/docs-mcp.mjs",
     "docs:test": "node --test scripts/__tests__/*.test.mjs",
-    "docs:validate": "npm run docs:test && node scripts/validate-local-links.mjs && node scripts/validate-image-assets.mjs && node scripts/validate-language-parity.mjs"
+    "docs:validate": "npm run docs:test && npm run docs:news:check && node scripts/validate-local-links.mjs && node scripts/validate-image-assets.mjs && node scripts/validate-language-parity.mjs"
   },
   "devDependencies": {
     "medium-zoom": "^1.1.0",
