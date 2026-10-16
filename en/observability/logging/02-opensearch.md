@@ -1,7 +1,7 @@
 # Amazon OpenSearch Service
 
 > **Last Updated**: September 13, 2026
-> **Example baseline**: provisioned OpenSearch Service 3.5; Terraform 1.15.7/AWS provider 6.64.0; AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9). Local configuration checks only; no domain, collector, SAML session or data-delivery test was deployed.
+> **Example baseline**: provisioned OpenSearch Service 3.5; Terraform 1.15.7/AWS provider 6.69.1; AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9). Local configuration checks only; no domain, collector, SAML session or data-delivery test was deployed.
 
 Amazon OpenSearch Service manages search clusters and supports selected OpenSearch and legacy Elasticsearch OSS versions. This chapter covers a VPC domain and the traditional hot/UltraWarm/cold tiers. Serverless collections and newer optimized-instance storage options have separate configuration, API and availability requirements.
 
@@ -68,7 +68,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }

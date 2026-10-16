@@ -1,7 +1,7 @@
 # CloudWatch Logs
 
 > **마지막 업데이트**: 2026년 9월 13일
-> **검사한 예제**: AWS provider 6.64.0, 선택적 CloudWatch Observability Helm chart 6.6.0, 수동 AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9. 로컬 설정·SDK·합성 payload 검사이며 AWS 리소스, 로그 전달, Insights 쿼리나 알람을 실제 실행하지 않았습니다.
+> **검사한 예제**: AWS provider 6.69.1, 선택적 CloudWatch Observability Helm chart 6.6.0, 수동 AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9. 로컬 설정·SDK·합성 payload 검사이며 AWS 리소스, 로그 전달, Insights 쿼리나 알람을 실제 실행하지 않았습니다.
 
 Amazon CloudWatch Logs는 로그 수집·저장·분석을 관리합니다. Producer, identity, 네트워크, 보존, quota와 downstream consumer는 별도로 구성해야 합니다. EKS 컨트롤 플레인, 워크로드, EKS Auto Mode 관리형 컴포넌트 로그는 수집 경로가 다릅니다.
 
@@ -124,7 +124,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }

@@ -311,7 +311,7 @@ Loopback으로 제한하고 사용량 보고를 끄며 `./tempo-data`에 기록�
 
 ### Terraform으로 S3 및 IRSA 설정
 
-AWS provider **6.64.0** 예제는 SSE-S3와 **기존** 클러스터 OIDC provider를 사용합니다. 계정·전역적으로 고유한 버킷 이름·issuer 입력을 교체합니다. EKS 클러스터, Kafka, KMS 키를 생성하는 예제는 아닙니다.
+AWS provider **6.69.1** 예제는 SSE-S3와 **기존** 클러스터 OIDC provider를 사용합니다. 계정·전역적으로 고유한 버킷 이름·issuer 입력을 교체합니다. EKS 클러스터, Kafka, KMS 키를 생성하는 예제는 아닙니다.
 
 ```hcl
 terraform {
@@ -319,7 +319,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
