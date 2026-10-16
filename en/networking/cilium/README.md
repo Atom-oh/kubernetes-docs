@@ -20,8 +20,13 @@ The dates below are GitHub publication dates in UTC and describe those releases,
 | August 18, 2026 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh documentation and bug fixes, including restart/CIDR-policy handling |
 | August 18, 2026 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | Includes ENI interface timing, Service/LB and other fixes |
 | August 18, 2026 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall support and related fixes |
-| September 16, 2026 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | Bug fixes including ENI IPAM prefix allocation/release, policy revision for Pods created right after a policy change, and a LocalRedirectPolicy regression |
+| September 9, 2026 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | Pre-release; its changelog covers pre.0 to pre.2 because **1.21.0-pre.1 was never published** |
+| September 16, 2026 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | Bug fixes including ENI IPAM prefix-delegation allocation/release and secondary-VPC-CIDR handling, ClusterMesh fixes, policy revision for Pods created right after a policy change, a LocalRedirectPolicy regression, and upgrading clusters created in v1.15 or earlier (`CiliumNodeConfig v2alpha1` CRD version) |
+| September 16, 2026 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | Patch releases of the older supported lines |
+| October 2, 2026 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | Latest 1.21 pre-release; **1.21 is pre-release only (no GA yet)** and items marked 1.21 in this guide may change |
 | October 15, 2026 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API dependency v1.6.3, conntrack GC and handling of CNPs with `nodeSelector`, among other fixes; this guide's current reviewed baseline |
+
+On September 14, 2026, the CNCF blog published a [Cilium 1.20 feature recap](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/) (Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM, and more), covering the same scope as the 1.20.0 announcement summary below.
 
 The 1.20.0 announcement reports **2,660+ new commits**, supported by a **community of 1,100+ contributors**. The latter is community size, not a count of authors in this release. Highlights include:
 
@@ -31,7 +36,7 @@ The 1.20.0 announcement reports **2,660+ new commits**, supported by a **communi
 - Traffic distribution hints, weighted Maglev backends and stable MCS integration; Kubernetes ClusterNetworkPolicy support and **beta** ztunnel-based workload identity.
 - A reported `cilium-cni` binary reduction from roughly **77 MB to 16 MB**. ADS/Delta xDS improvements are in the 1.20 announcement; do not attribute them to the 1.18.13 patch notes. These are upstream release claims, not measurements repeated in this audit.
 
-Review the [1.20 upgrade notes](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes) for removed/replaced legacy Mutual Authentication, Envoy Go extensions, Kafka-aware policies, the old CiliumNodeConfig API, libnetwork integration and custom CNI configuration changes.
+Review the [1.20 upgrade notes](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes) for Mutual Authentication (**deprecated in 1.20**, removed in the 1.21 pre-release), the removed/replaced Envoy Go extensions, Kafka-aware policies, the old CiliumNodeConfig API, libnetwork integration and custom CNI configuration changes.
 
 ### NetworkPolicy Security Advisory
 
@@ -115,7 +120,8 @@ ipv4:
   enabled: true
 ipv6:
   enabled: false
-egressMasqueradeInterfaces: eth0
+# egressMasqueradeInterfaces is intentionally omitted: it only affects iptables masquerade,
+# and ENI mode leaves IPv4 masquerade off by default since 1.18.
 serviceAccounts:
   operator:
     annotations:
@@ -154,7 +160,7 @@ Use it as a **different configuration**, not an overlay on the ENI-replacement v
 
 ### ClusterMesh
 
-ClusterMesh needs unique cluster identities, compatible versions, reachable/nonoverlapping Pod networks, authenticated API connectivity and an appropriate exposure model. A LoadBalancer Service can create cloud resources and needs a deliberate network/security design. Creating two public endpoints is not sufficient to connect clusters safely. Follow the maintained [ClusterMesh guide](../../service-mesh/cilium-service-mesh/01-architecture.md) and the advanced chapter for the chosen topology.
+ClusterMesh needs unique cluster identities, compatible versions, reachable/nonoverlapping Pod networks, authenticated API connectivity and an appropriate exposure model. A LoadBalancer Service can create cloud resources and needs a deliberate network/security design. Creating two public endpoints is not sufficient to connect clusters safely. Follow the maintained [ClusterMesh guide](13-clustermesh-install-upgrade.md) and the advanced chapter for the chosen topology.
 
 ## Installation and Configuration
 
@@ -426,6 +432,35 @@ kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200
 - Large-Scale Deployment Strategies
 - Real-World Use Case Studies
 - Future Roadmap and Development Direction
+
+**[eBPF Datapath Internals](08-ebpf-datapath-internals.md)**
+- Program set, attach points and tail calls
+- BPF map catalog, sizing and compile/load flow
+- Policy enforcement path and Hubble event pipeline
+
+**[Overlay and Native Routing](09-overlay-native-routing.md)**
+- VXLAN/Geneve, identity in the VNI, MTU and packet walks
+- Native routing, masquerading, host routing, DSR and netkit
+- EKS decision table: overlay vs ENI vs VPC CNI chaining
+
+**[IPAM Deep Dive](10-ipam-deep-dive.md)**
+- Every IPAM mode, sizing math and decision matrix
+- Multi-pool, `CiliumPodIPPool`, ENI, LB IPAM, Node IPAM
+- Exhaustion troubleshooting and 1.21 API changes
+
+**[BGP, Load Balancer IPs and Egress](11-bgp-lb-egress-edge.md)**
+- BGP Control Plane v2 CRDs, advertisement and inspection
+- L2 announcements, Egress Gateway, Local Redirect Policy
+- Gateway API requirements and internal-only EKS exposure
+
+**[mTLS, Encryption and Identity](12-mtls-encryption-identity.md)**
+- Identity model, policy semantics and audit mode
+- Mutual Authentication timeline, ztunnel workload mTLS
+- WireGuard, IPsec, Hubble and certificate management
+
+**[Versions, Install/Upgrade and Cluster Mesh](13-clustermesh-install-upgrade.md)**
+- Feature matrix 1.17-1.21, upgrade and rollback rules
+- EKS install specifics, Cluster Mesh and MCS-API
 
 ## Additional Resources
 

@@ -671,7 +671,7 @@ operator:
   rollOutPods: true
 ```
 
-The AWS-style `v2alpha1` APIs remain served in the reviewed 1.18.3 CRDs (which also serve `v2`). There is no need to replace CRDs simply to use this example.
+The AWS-style `v2alpha1` APIs remain served in the reviewed 1.18.3 CRDs (which also serve `v2`). There is no need to replace CRDs simply to use this example. On Cilium 1.19+ use the `cilium.io/v2` BGP CRDs instead (the `v2alpha1` BGP CRDs are deprecated), and the legacy `CiliumBGPPeeringPolicy` was removed in 1.19.
 
 The following selects hybrid nodes, links the peer's advertisement selector to the advertisement labels, and advertises only their Pod CIDRs:
 

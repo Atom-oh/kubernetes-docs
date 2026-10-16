@@ -1,100 +1,100 @@
 # Datadog
 
-> **Última actualización**: September 13, 2026
-> Helm chart 3.244.0; Agent/Cluster Agent 7.83.1 correspondientes.
-> Los límites de configuración, SDK y validación local se indican a continuación; no se modificó ningún tenant de Datadog.
+> **Última actualización**: October 12, 2026
+> Helm chart 3.244.0; Agent/Cluster Agent coincidentes 7.83.1.
+> A continuación se indican los límites de configuración, SDK y validación local; no se modificó ningún tenant de Datadog.
 
 ## Introducción
 
-Datadog proporciona un backend de observabilidad SaaS. Los equipos siguen siendo responsables de los collectors, la identidad,
+Datadog proporciona un backend de observabilidad SaaS. Los equipos siguen siendo responsables de los recopiladores, la identidad,
 el acceso de red, la instrumentación, la divulgación de datos, la retención, los monitores y el costo.
-Infrastructure Monitoring, APM, profiling, logs y otros productos tienen derechos de uso
-y dimensiones de facturación distintos; instalar un Agent no incluye todos los productos.
+Infrastructure Monitoring, APM, profiling, logs y otros productos tienen derechos y dimensiones de facturación
+distintos; instalar un Agent no incluye todos los productos.
 
-| Tema | Datadog | CloudWatch | Prometheus / Grafana autoadministrados |
+| Tema | Datadog | CloudWatch | Prometheus / Grafana autogestionados |
 | --- | --- | --- | --- |
-| Backend | Datadog SaaS, con disponibilidad específica por site | Servicios administrados por AWS | Almacenamiento, consulta y visualización operados |
+| Backend | Datadog SaaS, con disponibilidad específica del sitio | Servicios administrados por AWS | Almacenamiento, consulta y visualización operados |
 | Recopilación | Agent/Cluster Agent, bibliotecas y rutas OTel compatibles | Métricas de servicios AWS, agents/SDKs/OTLP | Exporters, scraping, agents y remote write |
-| APM/logs | Seleccione y configure los productos necesarios | Application Signals, integraciones de tracing y Logs | Configure los backends y collectors correspondientes |
-| Operaciones | Persisten las responsabilidades de collector/configuración y de la aplicación | Persisten las responsabilidades de recopilación/configuración y respuesta | Persisten las responsabilidades de backend y recopilación |
-| Costo | Unidades de host y de uso/retención específicas de cada producto | Unidades de métrica/observación/OTLP/log/consulta/alarma | Infraestructura y esfuerzo operativo |
+| APM/logs | Seleccione y configure los productos requeridos | Integraciones de Application Signals, tracing y Logs | Configure los backends y recopiladores pertinentes |
+| Operaciones | Se mantienen las responsabilidades del recopilador/configuración y de la aplicación | Se mantienen las responsabilidades de recopilación/configuración y respuesta | Se mantienen las responsabilidades del backend y la recopilación |
+| Costo | Unidades de uso/retención específicas de host y otros productos | Unidades de métrica/observación/OTLP/log/consulta/alarma | Infraestructura y esfuerzo operativo |
 
-Elija el **site** de Datadog correcto para la organización y sus credenciales;
-los endpoints de la API, la residencia de datos, los productos disponibles y las condiciones de precios no son
-intercambiables entre sites. Use el catálogo de integraciones en lugar de una afirmación sobre un número
-fijo de integraciones o una clasificación universal de “fácil/avanzado/económico”.
+Elija el **sitio** de Datadog correcto para la organización y sus credenciales;
+los endpoints de API, la residencia de datos, los productos disponibles y los términos de precios no son
+intercambiables entre sitios. Use el catálogo de integraciones en lugar de afirmar un número fijo de
+integraciones o una clasificación universal de “fácil/avanzado/barato”.
 
-## Arquitectura de integración con EKS
+## Arquitectura de integración de EKS
 
 | Componente | Responsabilidad / límite |
 | --- | --- |
-| Node Agent | Verificaciones de host/contenedor; habitualmente un DaemonSet en nodos EC2 compatibles |
-| Cluster Agent | Metadatos/verificaciones compartidos de Kubernetes, coordinación de eventos y funciones opcionales de admission/métricas externas |
-| Trace Agent | Recibe las cargas de traces de la aplicación y las reenvía |
-| Recopilación de procesos / system-probe | Funciones opcionales de proceso/red/seguridad con sus propios requisitos de SO, privilegios y producto |
-| Admission Controller | Inyecta ajustes de conexión y, cuando se configura, bibliotecas de cliente compatibles en los nuevos pods |
+| Node Agent | Comprobaciones de host/contenedor; normalmente un DaemonSet en nodos EC2 compatibles |
+| Cluster Agent | Metadatos/comprobaciones compartidos de Kubernetes, coordinación de eventos y funciones opcionales de admission/external-metric |
+| Trace Agent | Recibe cargas útiles de traces de aplicaciones y las reenvía |
+| Recopilación de procesos / system-probe | Funciones opcionales de proceso/red/seguridad con sus propios requisitos de sistema operativo, privilegios y producto |
+| Admission Controller | Inserta la configuración de conexión y, cuando se configura, bibliotecas de cliente compatibles en pods nuevos |
 
-La instrumentación de la aplicación produce traces/profiles; un listener del Agent o una
-etiqueta de pod por sí solos no demuestran que exista instrumentación. El Cluster Agent no es la ruta
-habitual de reenvío de logs de aplicación ni de traces.
+La instrumentación de aplicaciones produce traces/profiles; un listener de Agent o una etiqueta de Pod
+por sí sola no demuestra la instrumentación. El Cluster Agent no es la ruta habitual de
+reenvío de logs o traces de aplicaciones.
 
-La instalación de este capítulo apunta a **nodos EKS Linux respaldados por EC2**. EKS Fargate
-usa el modelo documentado de recopilación por pod/sidecar, no este DaemonSet de host.
+La instalación de este capítulo se dirige a **nodos EKS basados en Linux EC2**. EKS Fargate
+usa el modelo documentado de recopilación por Pod/sidecar, no este DaemonSet de host.
 UDS es local al host y no es compatible con Windows. Windows, Bottlerocket,
-Auto Mode y el cómputo mixto necesitan sus ajustes específicos de distribución/función y
-el acceso al host compatible. No desactive la verificación de TLS ni afirme que todas las
-funciones de eBPF/procesos funcionan en todos los entornos.
+Auto Mode y computación mixta requieren sus configuraciones específicas de distribución/función y
+acceso al host compatible. No desactive la verificación TLS ni afirme que todas las funciones
+de eBPF/proceso funcionan en todas partes.
 
-Datadog documenta Agent y Cluster Agent 7.67+ para la compatibilidad con Kubernetes 1.33+
-en lo relativo a `AllocatedResources`, y recomienda que sus versiones coincidan. Esos requisitos
-mínimos de funcionalidad no son la matriz de soporte actual de EKS.
+Datadog documenta Agent y Cluster Agent 7.67+ para compatibilidad con Kubernetes 1.33+
+con `AllocatedResources`, y recomienda que sus versiones coincidan. Dichos requisitos mínimos de
+funciones no son la matriz actual de soporte de EKS.
 
-La descripción general muestra las rutas de recopilación posibles. Los traces/profiles requieren instrumentación de la aplicación y los productos seleccionados; el enrutamiento de notificaciones de Watchdog debe configurarse.
+La descripción general muestra posibles rutas de recopilación. Los traces/profiles requieren instrumentación de aplicaciones y productos seleccionados; se debe configurar el enrutamiento de notificaciones de Watchdog.
 
-![La telemetría del node Agent de Datadog y los metadatos del Cluster Agent llegan a los productos SaaS configurados.](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
+![La telemetría del Agent de nodo de Datadog y los metadatos de Cluster Agent alcanzan los productos SaaS configurados.](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
 
 [Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-1.html)
 
-## Instalación del Datadog Agent
+## Instalación de Datadog Agent
 
-Datadog recomienda su Operator para una configuración del ciclo de vida de más alto nivel y también
-admite la instalación con Helm. Este ejemplo gestiona los Agents de nodo/Cluster mediante el
-**Helm chart de Datadog Agent**. El chart 3.244.0 incluye una dependencia opcional del Operator;
+Datadog recomienda su Operator para configuración del ciclo de vida de nivel superior y también
+admite la instalación con Helm. Este ejemplo controla los Agents de nodo/Cluster mediante el
+**Helm chart de Datadog Agent**. El chart 3.244.0 incluye una dependencia opcional de Operator;
 `datadog.operator.enabled: false` mantiene ese controlador adicional fuera de este ejemplo.
 No significa que el Operator sea obsoleto.
 
-El chart usa por defecto Agent/Cluster Agent 7.82.3. Este ejemplo fija explícitamente ambos
-en **7.83.1** y en los digests de índice de imagen verificados. La versión incluye correcciones de
-facturación de pruebas de red, limpieza de snapshots de containerd y cierre del leader-lock del Cluster Agent.
-Los índices de imagen del Agent/Cluster Agent incluyen Linux amd64/arm64. Un render de plantilla
-exitoso no es un despliegue en Kubernetes ni una prueba de compatibilidad en tiempo de ejecución.
+El chart tiene como valor predeterminado Agent/Cluster Agent 7.82.3. Este ejemplo fija explícitamente ambos
+a **7.83.1** y los digests verificados del índice de imágenes. La versión incluye correcciones para la
+facturación de network-test, limpieza de snapshots de containerd y apagado del bloqueo de líder de Cluster Agent.
+Los índices de imágenes de Agent/Cluster Agent incluyen Linux amd64/arm64. Un renderizado de template
+correcto no es una prueba de despliegue de Kubernetes ni de compatibilidad en tiempo de ejecución.
 
 ### Credenciales y propiedad de la instalación
 
-Este perfil obtiene la API key de Datadog y el token compartido del Cluster Agent desde
-AWS Secrets Manager usando el backend nativo `aws.secrets`. No se necesita una application key
-para la ingesta básica; las métricas externas permanecen desactivadas.
+Este perfil obtiene la clave de API de Datadog y el token compartido de Cluster Agent desde
+AWS Secrets Manager mediante el backend nativo `aws.secrets`. No se necesita una clave de aplicación
+para la ingesta básica; las métricas externas permanecen deshabilitadas.
 
-Prepare `observability/datadog` en `ap-northeast-2` con las claves de cadena JSON `api-key`
+Prepare `observability/datadog` en `ap-northeast-2` con claves de cadena JSON `api-key`
 y `cluster-token`; el token debe ser criptográficamente aleatorio y tener al menos
-32 caracteres. La API key debe corresponder al site de Datadog. Ambos ServiceAccounts,
+32 caracteres. La clave de API debe coincidir con el sitio de Datadog. Ambos ServiceAccounts,
 `datadog` y `datadog-cluster-agent` en el namespace `datadog`, requieren roles IRSA
-delimitados, conectividad regional con STS/Secrets Manager y permisos de KMS si corresponde.
-Reemplace los dos ARN de rol de ejemplo. El fallback de credenciales de metadatos de EC2 está desactivado.
-Consulte [los prerrequisitos completos y los perfiles reutilizables](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md).
+con alcance limitado, conectividad regional con STS/Secrets Manager y permiso KMS si corresponde.
+Reemplace los dos ARN de roles de ejemplo. La reserva de credenciales de metadatos EC2 está deshabilitada.
+Consulte los [requisitos previos completos y perfiles reutilizables](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md).
 
-Use Python 3/PyYAML 6.0.3 y el postrenderer ejecutable de chart fijado de ese
-directorio del repositorio. Reemplaza exactamente siete entradas SecretKeyRef codificadas
-por **handles literales `ENC[...]`**, preservando los consumidores de nodo, trace, init y Cluster Agent.
+Use Python 3/PyYAML 6.0.3 y el postrenderer ejecutable del chart fijado desde ese
+directorio del repositorio. Reemplaza exactamente siete entradas codificadas de forma fija de SecretKeyRef
+con controladores **literales `ENC[...]`**, preservando los consumidores de nodo, trace, init y Cluster Agent.
 La resolución nativa actualiza la configuración en memoria, no el entorno.
-El script de init requiere un `DD_API_KEY` no vacío, por lo que eliminarlo sin un reemplazo
-válido rompe el arranque. El Secret `must-use-secret-postrenderer` está deliberadamente
-ausente; no lo cree para eludir un renderer omitido.
-Mantenga el renderer en cada instalación/actualización y revise los cambios en el chart fijado, las imágenes o el contrato del perfil.
+El script init requiere `DD_API_KEY` no vacío, por lo que eliminarlo sin un reemplazo válido
+interrumpe el inicio. El Secret `must-use-secret-postrenderer` está deliberadamente
+ausente; no lo cree para omitir un renderer faltante. Mantenga el renderer en cada
+instalación/actualización y revise los cambios en el chart, las imágenes o el contrato de perfil fijados.
 
-Estos comandos modifican el cluster únicamente en la instalación; no se ejecutó ningún despliegue
-en la auditoría. Ejecútelos desde la raíz del repositorio, en un namespace `datadog` existente,
-con un release propio y después de preparar los prerrequisitos de IAM/secretos.
+Estos comandos cambian el clúster únicamente durante la instalación; no se ejecutó ningún despliegue
+en la auditoría. Ejecute desde la raíz del repositorio, en un namespace `datadog` existente,
+con una versión que le pertenezca después de preparar los requisitos previos de IAM/secrets.
 
 ```bash
 PROFILE=examples/observability/secret-profiles
@@ -111,12 +111,12 @@ helm upgrade --install datadog datadog/datadog --version 3.244.0 \
 
 ### Valores revisados
 
-Lo siguiente coincide con el `datadog-values.yaml` reutilizable. Los logs se activan de forma opcional
-mediante la configuración del contenedor, APM/DogStatsD usan UDS, y la inyección automática de bibliotecas
-a nivel de cluster, las métricas externas de HPA, las estadísticas de red de discovery y la recopilación
-opcional de procesos/red no están habilitadas aquí.
-El namespace de la aplicación debe ser distinto del namespace del Agent; SSI no
-instrumenta pods en el propio namespace del Agent.
+Lo siguiente coincide con el `datadog-values.yaml` reutilizable. Los logs se habilitan de forma opcional mediante la
+configuración del contenedor, APM/DogStatsD usan UDS y la inyección automática de bibliotecas en todo el clúster,
+las métricas HPA externas, las estadísticas de red de discovery y la recopilación opcional de procesos/red
+no están habilitadas aquí.
+El namespace de aplicación debe estar separado del namespace de Agent; SSI
+no instrumenta Pods en el namespace propio de Agent.
 
 ```yaml
 # datadog 3.244.0: postrenderer required; replace example IRSA role ARNs.
@@ -207,85 +207,85 @@ agents:
       eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-agent-secrets
 ```
 
-Los únicos valores de entorno relacionados con credenciales después del postrendering son
+Los únicos valores de entorno relacionados con credenciales después del postrenderizado son
 `ENC[observability/datadog;api-key]` y `ENC[observability/datadog;cluster-token]`.
-`DD_SECRET_BACKEND_TYPE`/`CONFIG` solo transportan el tipo de backend y la región. Ningún shell
-exporta un valor resuelto, ninguna clave real se coloca en los valores de Helm y el perfil
-no necesita un Secret de credenciales de Kubernetes. Los dos contenedores de volumen de init solo
-copian la configuración de la imagen; init-config usa el handle de la API key para su verificación
-de arranque. La autorización real del backend nativo y la ingesta en Datadog aún requieren
+`DD_SECRET_BACKEND_TYPE`/`CONFIG` solo contienen el tipo de backend y la región. Ningún shell
+exporta un valor resuelto, no se coloca ninguna clave real en los valores de Helm y el perfil
+no necesita un Secret de credenciales de Kubernetes. Los dos contenedores init-volume solo
+copian la configuración de la imagen; init-config usa el controlador de clave de API para su comprobación
+de arranque. La autorización real del backend nativo y la ingesta de Datadog aún requieren
 verificación en tiempo de ejecución.
 
-La renovación programada de secretos y la renovación por fallo de la API están explícitamente desactivadas.
-Rote mediante un reinicio coordinado y aprobado de los Pods de nodo/trace y del Cluster Agent; mantenga
-válida la API key antigua hasta que toda la flota use la nueva clave. Un cambio de cluster-token puede interrumpir
-la autenticación entre el node Agent y el Cluster Agent durante un despliegue con versiones mixtas, así que planifique una
-ventana de mantenimiento o una transición validada por separado. No se afirma que la rotación sea sin
-tiempo de inactividad. Consulte [los backends de secretos de Datadog](https://docs.datadoghq.com/agent/guide/secrets-management/).
+La actualización programada y por error de API de secrets está explícitamente deshabilitada.
+Rote mediante un reinicio coordinado aprobado de los Pods de nodo/trace y Cluster Agent; mantenga una
+clave de API antigua válida hasta que la flota use la nueva clave. Un cambio de cluster-token puede interrumpir
+la autenticación de node/Cluster Agent durante el despliegue de versión mixta, así que planifique una
+ventana de mantenimiento o una transición validada por separado. No se afirma una rotación sin tiempo de inactividad.
+Consulte [backends de secrets de Datadog](https://docs.datadoghq.com/agent/guide/secrets-management/).
 
 `processAgent.enabled` está obsoleto; use las opciones de recopilación individuales.
-El chart ya monta `/etc/passwd` cuando corresponde, así que no agregue volúmenes/montajes
-manuales duplicados de `passwd`. Las sustituciones de recursos son por componente, como
+El chart ya monta `/etc/passwd` cuando corresponde, así que no agregue
+volúmenes/montajes manuales `passwd` duplicados. Las anulaciones de recursos son por componente, como
 `agents.containers.agent.resources`; dimensione los contenedores realmente renderizados bajo carga.
-Dos réplicas del Cluster Agent no sustituyen las pruebas de ubicación, disrupción y fallo.
+Dos réplicas de Cluster Agent no sustituyen las pruebas de colocación, interrupción y fallos.
 
 Las entradas originales de nivel superior `kubeStateMetricsEnabled` y `prometheus.enabled`
-no configuran las integraciones que se afirmaban. La opción heredada de KSM está anidada bajo
+no configuran las integraciones indicadas. La opción KSM heredada está anidada en
 `datadog`; el ejemplo usa `datadog.kubeStateMetricsCore.enabled` y evita
-la recopilación heredada duplicada. Las verificaciones explícitas de Autodiscovery de Datadog son distintas
-de activar `prometheusScrape` para todas las anotaciones.
+la recopilación heredada duplicada. Las comprobaciones explícitas de Datadog Autodiscovery son independientes
+de habilitar el discovery `prometheusScrape` para todas las anotaciones.
 
-`datadog.profiling.enabled` **es válido**. Inyecta `DD_PROFILING_ENABLED` en
-los pods elegibles y requiere bibliotecas de cliente instaladas y Cluster Agent 7.57+.
+`datadog.profiling.enabled` **es válido**. Inserta `DD_PROFILING_ENABLED` en
+Pods aptos y requiere bibliotecas de cliente instaladas y Cluster Agent 7.57+.
 No instala un profiler en una aplicación arbitraria sin instrumentar.
-Elija deliberadamente su comportamiento `null`/`false`/`auto`/`true`. Del mismo modo, habilitar
-las métricas externas de HPA requiere su application key, permisos de API, servicio/CRDs
-y la disponibilidad real de las métricas; el monitoreo de red requiere acceso compatible a system-probe.
+Elija deliberadamente su comportamiento `null`/`false`/`auto`/`true`. De forma similar, habilitar
+métricas HPA externas requiere su clave de aplicación, permisos de API, service/CRDs
+y disponibilidad real de métricas; la monitorización de red requiere acceso compatible a system-probe.
 
-### La integración de cuenta de AWS es una ruta aparte
+### La integración de la cuenta AWS es una ruta independiente
 
-La integración SaaS de cuenta de AWS usa un rol entre cuentas autorizado y un
-external ID proporcionado por Datadog, con los permisos que necesitan las integraciones seleccionadas.
-Un rol IRSA arbitrario asociado a la SA de un node Agent no configura esa
-integración SaaS. La recopilación ordinaria del Agent de Kubernetes no requiere la amplia
-política de CloudWatch/EC2/tags que se mostraba antes aquí.
+La integración SaaS de cuenta AWS usa un rol autorizado entre cuentas y un ID externo
+proporcionado por Datadog, con los permisos necesarios para las integraciones seleccionadas.
+Un rol IRSA arbitrario asociado a un Agent SA de nodo no configura esa integración SaaS.
+La recopilación ordinaria de Kubernetes Agent no requiere la amplia política de CloudWatch/EC2/tags
+mostrada anteriormente aquí.
 
-Use Pod Identity o IRSA solo para un Agent/verificación que realmente llame a AWS, con su
-rol, confianza y permisos específicos. Determine el nombre de la service account **renderizada**;
-crear una asociación de IAM para una SA `datadog-agent` supuesta no vincula una
-SA distinta usada por el release de Helm. Nunca considere una verificación local del caller de STS como
+Use Pod Identity o IRSA solo para un Agent/check que realmente llame a AWS, con su
+rol, confianza y permisos específicos. Resuelva el nombre de ServiceAccount **renderizado**;
+crear una asociación IAM para un SA `datadog-agent` supuesto no vincula un
+SA diferente usado por la versión de Helm. Nunca trate una comprobación local del llamador STS como
 prueba de la identidad de la carga de trabajo.
 
 ## Infrastructure Monitoring
 
-### Verifique el collector, la unidad y los tags de la métrica
+### Compruebe el recopilador, la unidad y los tags de la métrica
 
-| Métrica / origen | Significado |
+| Métrica / fuente | Significado |
 | --- | --- |
-| `system.cpu.idle` / verificación System | **Porcentaje** de CPU inactiva; adecuado para un umbral de nodo basado en porcentaje |
-| `system.mem.total`, `system.mem.used`, `system.mem.free` | Mediciones de memoria; free no es intercambiable con memoria utilizable/recuperable |
-| `kubernetes.cpu.usage.total` / Kubelet | **Nanocores**, no porcentaje; un core son 1.000.000.000 de nanocores |
-| `kubernetes.memory.usage`, `kubernetes.memory.limits` | Bytes; comparar uso con límite requiere el mismo conjunto de entidad/tags |
-| `kubernetes.pods.running`, `kubernetes.containers.restarts` | Gauges válidos de Kubelet: pods en ejecución y reinicios acumulados de contenedores |
-| `kubernetes_state.deployment.replicas_available`, `kubernetes_state.deployment.replicas_desired` | Estado del Deployment según Kubernetes State Metrics Core |
-| `kubernetes_state.pod.status_phase`, `kubernetes_state.service.count` | Fase del Pod/inventario de Services; revise sus tags de agrupación documentados |
-| `kubernetes_state.container.restarts` | Gauge de reinicios de State Core, con tags de namespace/pod/contenedor |
+| `system.cpu.idle` / comprobación System | **Porcentaje** de CPU inactiva; adecuado para un umbral de nodo basado en porcentaje |
+| `system.mem.total`, `system.mem.used`, `system.mem.free` | Mediciones de memoria; libre no es intercambiable con memoria utilizable/reclamable |
+| `kubernetes.cpu.usage.total` / Kubelet | **Nanocores**, no porcentaje; un core equivale a 1,000,000,000 nanocores |
+| `kubernetes.memory.usage`, `kubernetes.memory.limits` | Bytes; el uso frente al límite requiere coincidir con la misma entidad/conjunto de tags |
+| `kubernetes.pods.running`, `kubernetes.containers.restarts` | Gauges válidos de Kubelet: Pods en ejecución y reinicios acumulados de contenedores |
+| `kubernetes_state.deployment.replicas_available`, `kubernetes_state.deployment.replicas_desired` | Estado de Deployment de Kubernetes State Metrics Core |
+| `kubernetes_state.pod.status_phase`, `kubernetes_state.service.count` | Inventario de fase de Pod/service; inspeccione sus tags de agrupación documentados |
+| `kubernetes_state.container.restarts` | Gauge de reinicio de State Core, con tags namespace/pod/container |
 
-La integración heredada de Kubernetes, la verificación de Kubelet y State Core tienen catálogos
-distintos. Una métrica ausente de un catálogo no ha sido necesariamente eliminada del
-Agent. No renombre a ciegas métricas válidas de Kubelet. La disponibilidad de sistema de archivos/red
-y las unidades de tasa dependen del collector/runtime; lea la definición real de esa métrica.
+La integración heredada de Kubernetes, la comprobación de Kubelet y State Core tienen
+catálogos diferentes. Una métrica ausente de un catálogo no necesariamente se eliminó del
+Agent. No cambie el nombre de métricas válidas de Kubelet a ciegas. La disponibilidad de filesystem/network
+y las unidades de rate dependen del recopilador/tiempo de ejecución; lea la definición real de esa métrica.
 
 Use el tag estándar `kube_cluster_name` para esta instalación de Kubernetes e inspeccione
-los tags reales de las métricas antes de agrupar. Las métricas de State Core centradas en el cluster no siempre
-llevan un tag `host`. `cluster_name` y `kube_cluster_name` no son intercambiables.
-Un valor bruto en nanocores comparado con 80 no significa 80% de CPU.
+los tags reales de métricas antes de agrupar. Las métricas State Core centradas en el clúster no siempre
+incluyen un tag `host`. `cluster_name` y `kube_cluster_name` no son intercambiables.
+Un valor nanocore sin procesar comparado con 80 no significa 80% de CPU.
 
-### Autodiscovery con OpenMetrics
+### OpenMetrics Autodiscovery
 
-Combine el siguiente **fragmento de metadatos** en una carga de trabajo cuyo contenedor se llame
-`app` y que exponga el gauge `queue_depth` en el puerto 9464. No crea esa
-aplicación ni ese endpoint. El identificador de contenedor de la anotación debe coincidir.
+Combine el siguiente **fragmento de metadata** en una carga de trabajo cuyo contenedor se denomine
+`app` y sirva el gauge `queue_depth` en el puerto 9464. No crea esa
+aplicación ni endpoint. El identificador de contenedor de la anotación debe coincidir.
 Proteja el endpoint y configure TLS/autenticación si es necesario.
 
 ```yaml
@@ -298,26 +298,26 @@ metadata:
       \  }\n    ]\n  }\n}"
 ```
 
-La verificación `openmetrics` actual usa `openmetrics_endpoint`. Estas anotaciones de
-Autodiscovery de Datadog no requieren un servidor Prometheus aparte ni el
-discovery amplio de `prometheusScrape` del chart. Restrinja las métricas/labels seleccionadas.
-Para counters e histogramas, verifique la normalización de nombres, las series `.count`/de buckets
-emitidas y el comportamiento según la versión de la verificación, en lugar de suponer que el nombre de Prometheus
-es también el nombre final en Datadog.
+La comprobación actual `openmetrics` usa `openmetrics_endpoint`. Estas anotaciones de Datadog
+Autodiscovery no requieren un servidor Prometheus independiente ni el discovery amplio
+`prometheusScrape` del chart. Restrinja las métricas/labels seleccionadas.
+Para counters e histograms, verifique la normalización de nombres, las series `.count`/bucket
+emitidas y el comportamiento de versión de la comprobación en vez de asumir que el nombre de Prometheus
+también es el nombre final de Datadog.
 
 ### DogStatsD: use un endpoint alcanzable desde la aplicación
 
-El `localhost` de un pod de aplicación no es el node Agent. El ejemplo de Linux usa
-el directorio UDS local al host. El modo `socket` del Admission Controller puede inyectar
-`DD_DOGSTATSD_URL`, `DD_TRACE_AGENT_URL` y el volumen; de lo contrario, configure explícitamente los montajes
-y permisos correspondientes. Un `admission.datadoghq.com/config.mode` específico de Pod
-es un **label**, no una anotación. Monte el directorio padre para que el reemplazo del socket
-tras un reinicio del Agent siga siendo visible.
+El `localhost` de un Pod de aplicación no es el Agent de nodo. El ejemplo de Linux usa
+el directorio UDS local del host. El modo `socket` de Admission Controller puede insertar
+`DD_DOGSTATSD_URL`, `DD_TRACE_AGENT_URL` y el volumen; de lo contrario, configure los
+montajes y permisos coincidentes explícitamente. Un `admission.datadoghq.com/config.mode` específico de Pod
+es una **label**, no una anotación. Monte el directorio principal para que el reemplazo del socket
+después de un reinicio de Agent siga siendo visible.
 
-El helper de Python se verificó con `datadog==0.53.0`. Pase la ruta real del sistema de archivos,
+El helper de Python se comprobó con `datadog==0.53.0`. Pase la ruta real del filesystem,
 como `/var/run/datadog/dsd.socket`, a `socket_path`; la URL `unix://`
-que usan otros SDKs/ajustes de entorno no tiene el mismo formato de argumento.
-Llame a `emit_batch` con los recuentos reales del intervalo, incluidos los valores cero de good/error.
+usada por otros SDKs/configuraciones de entorno no tiene el mismo formato de argumento.
+Llame a `emit_batch` con conteos reales de intervalo, incluidos valores cero de good/error.
 
 ```python
 from datadog import DogStatsd
@@ -347,9 +347,9 @@ def make_metrics_client(socket_path):
 ```
 
 El helper de Go usa datadog-go/v5. Cree el cliente con `WithNamespace("my_app.")`
-y los mismos tags `env:demo,service:orders`. Verifique los errores del constructor, del envío y del cierre;
+y los mismos tags `env:demo,service:orders`. Compruebe los errores de constructor, envío y cierre;
 no descarte el error de `statsd.New`. El helper no cierra un cliente compartido
-proporcionado por el caller.
+proporcionado por quien llama.
 
 ```go
 package metrics
@@ -382,24 +382,24 @@ func EmitBatch(client *statsd.Client, total, errors int64) error {
 }
 ```
 
-| Tipo de DogStatsD | Interpretación |
+| Tipo DogStatsD | Interpretación |
 | --- | --- |
-| Counter | Recuento por intervalo; Datadog puede almacenarlo como tasa. `.as_count()` reconstruye los recuentos para una ventana de consulta |
-| Gauge | Instantánea como la profundidad de cola; sumar instantáneas no es un recuento de solicitudes procesadas |
+| Counter | Conteo de intervalo; Datadog puede almacenarlo como rate. `.as_count()` reconstruye conteos para una ventana de consulta |
+| Gauge | Instantánea como profundidad de cola; sumar instantáneas no es un conteo de solicitudes procesadas |
 | Histogram | Agregado por el Agent receptor; promediar percentiles por host no crea un percentil global |
-| Distribution | Admite agregación de distribuciones en el backend; revise los percentiles habilitados, los tags y la facturación |
-| Service check | Estado de una verificación de salud real: 0 OK, 1 advertencia, 2 crítico, 3 desconocido |
+| Distribution | Admite agregación de distribución de backend; revise percentiles habilitados, tags y facturación |
+| Service check | Estado de una comprobación de salud real: 0 OK, 1 advertencia, 2 crítico, 3 desconocido |
 
-La entrega local de datagramas no confirma la ingesta en SaaS. UDP puede perder paquetes;
-el buffering de UDS/cliente y las colas del Agent también requieren monitoreo. El helper de ejemplo no
-habilita la telemetría del cliente DogStatsD, así que elija una señal separada de salud de recopilación
-para el despliegue. Los reintentos/envíos duplicados de counters no son un libro contable de negocio con entrega exacta.
+La entrega local de datagramas no confirma la ingesta SaaS. UDP puede perder paquetes;
+UDS/buffering del cliente y las colas de Agent también necesitan monitorización. El helper de muestra
+no habilita la telemetría del cliente DogStatsD, así que elija una señal independiente de estado de recopilación
+para el despliegue. Los reintentos de counter/envíos duplicados no constituyen un libro de negocio de exactamente una vez.
 
 ### Configuración de Autodiscovery basada en archivos
 
-Para una configuración gestionada por Helm, `datadog.confd` crea y monta los archivos de verificación.
+Para configuración gestionada por Helm, `datadog.confd` crea y monta los archivos de comprobación.
 Un ConfigMap independiente llamado `datadog-checks` no se descubre automáticamente solo
-por existir. El siguiente fragmento de NGINX requiere una identidad de imagen coincidente
+porque exista. El siguiente fragmento NGINX requiere una identidad de imagen coincidente
 y un endpoint `stub_status` configurado y autorizado.
 
 ```yaml
@@ -409,26 +409,26 @@ datadog:
       \ http://%%host%%:80/nginx_status\n"
 ```
 
-Una verificación de Redis autenticada necesita además el puerto/TLS correctos y la entrega de
-credenciales. `%%env_REDIS_PASSWORD%%` lee el entorno **del Agent**, no el del pod
-de la aplicación Redis. Prefiera un backend de secretos de Datadog configurado o la entrega de archivos
-protegida con los permisos específicos que requiera; no exponga contraseñas en
-ejemplos públicos de verificaciones ni conceda lecturas de Secrets a nivel de cluster solo para discovery.
+Una comprobación Redis autenticada necesita además el puerto/TLS y la entrega de credenciales correctos.
+`%%env_REDIS_PASSWORD%%` lee el entorno **del Agent**, no el entorno del Pod
+de aplicación Redis. Prefiera un backend de secrets Datadog configurado o la entrega de archivos protegidos
+con los permisos específicos que necesita; no exponga contraseñas en ejemplos públicos de comprobación
+ni conceda lecturas de Secret en todo el clúster solo para discovery.
 
-## APM y tracing distribuido
+## APM y Distributed Tracing
 
 ### La inyección local de SDK y SSI son decisiones explícitas
 
-El label de opt-in de admission permite la inyección de mutaciones/ajustes de conexión. Para instalar
-una biblioteca de tracing, configure los objetivos de SSI o una anotación de lenguaje/versión compatible.
-El label por sí solo no prueba que se haya instalado un SDK ni que los traces hayan llegado a Datadog.
+La label de opt-in de admission permite la mutación/inyección de configuración de conexión. Para instalar
+una biblioteca de tracing, configure objetivos SSI o una anotación de lenguaje/versión compatible.
+La label por sí sola no demuestra que se instaló un SDK ni que los traces llegaron a Datadog.
 La inyección local de Java/Python/Node.js requiere Cluster Agent 7.40+; .NET/Ruby requiere
-7.44+. La versión actual 7.83.1 también excluye `kube-system` y su propio namespace de la inyección.
+7.44+. Cluster Agent 7.83.1 (la versión fijada en esta guía) también excluye `kube-system` y su propio namespace de la inyección.
 
-Para un ejemplo controlado de Java, combine el siguiente **fragmento de plantilla de pod** en
-un Deployment existente en un namespace de aplicación, preservando su selector,
-contenedores y ajustes de seguridad. No es un Deployment completo para aplicar por sí solo.
-La imagen de init de Java `gcr.io/datadoghq/dd-lib-java-init:v1.66.0` se verificó para
+Para un ejemplo Java controlado, combine el siguiente **fragmento de pod-template** en
+un Deployment existente de un namespace de aplicación, conservando su selector,
+contenedores y configuración de seguridad. No es un Deployment completo para aplicar por sí solo.
+La imagen init de Java `gcr.io/datadoghq/dd-lib-java-init:v1.66.0` se verificó para
 Linux amd64/arm64. Verifique la compatibilidad real de JVM/framework/imagen de la aplicación.
 
 ```yaml
@@ -445,25 +445,25 @@ spec:
         admission.datadoghq.com/java-lib.version: v1.66.0
 ```
 
-Los labels `tags.datadoghq.com/*` proporcionan el tagging unificado de service/environment/version.
-No coloque el label solo en los metadatos del Deployment esperando que sus pods lo hereden.
-La inyección ocurre cuando se admiten **nuevos pods**. Confirme los init
-containers inyectados, los archivos de biblioteca, los montajes/permisos de UDS y los ajustes de conectividad
-no secretos, y luego verifique el tráfico/traces reales. Las exclusiones de namespace, los fallos del webhook,
+Las labels `tags.datadoghq.com/*` proporcionan etiquetado unificado de service/environment/version.
+No coloque la label solo en los metadata de Deployment y espere que sus Pods la hereden.
+La inyección ocurre cuando se admiten **nuevos Pods**. Confirme los contenedores init insertados,
+los archivos de biblioteca, montajes/permisos UDS y los ajustes de conectividad no secretos,
+y después verifique el tráfico/traces reales. Las exclusiones de namespace, los fallos de webhook,
 las políticas de seguridad y las imágenes no compatibles pueden impedir la instrumentación.
 
-SSI a nivel de cluster es una alternativa que se configura mediante
-`datadog.apm.instrumentation`, con objetivos de namespace/pod y versiones de biblioteca revisados.
-Evite combinar sin intención tracers manuales e inyectados: una biblioteca inyectada puede
-tener precedencia sobre una instalada manualmente. Habilitar el profiler sigue requiriendo
-una biblioteca de cliente compatible y sus propias condiciones de producto/runtime.
+SSI en todo el clúster es una alternativa configurada mediante
+`datadog.apm.instrumentation`, con objetivos de namespace/pod y versiones de bibliotecas revisados.
+Evite combinar tracers manuales e inyectados involuntariamente: una biblioteca inyectada puede
+tener prioridad sobre una instalada manualmente. La habilitación de profiler sigue requiriendo
+una biblioteca de cliente compatible y sus propias condiciones de producto/tiempo de ejecución.
 
-### Instrumentación manual de Java
+### Instrumentación Java manual
 
-Use un `dd-java-agent.jar` versionado y preparado al iniciar la JVM de la aplicación, o la
-ruta de inyección validada anterior. Agregar solo `dd-trace-api` da acceso a la
-anotación/API; **no** inicia la instrumentación de bytecode en tiempo de ejecución.
-La dependencia de Maven a continuación y el código fuente de Java son archivos separados.
+Use un `dd-java-agent.jar` por etapas y versionado al iniciar la JVM de la aplicación, o la
+ruta de inyección validada anterior. Agregar solamente `dd-trace-api` da acceso a la
+anotación/API; **no** inicia instrumentación de bytecode en tiempo de ejecución.
+La dependencia Maven siguiente y el código fuente Java son archivos independientes.
 
 ```xml
 <dependency>
@@ -486,18 +486,18 @@ public final class TraceMethods {
 }
 ```
 
-El handler representa el código de aplicación que proporciona el caller. Use nombres acotados
-de operación/recurso. Los tags de identificador por pedido/cliente del ejemplo anterior
+El handler representa código de aplicación proporcionado por quien llama. Use nombres
+acotados de operación/recurso. Los tags de identificador por pedido/cliente del ejemplo antiguo
 son innecesarios para esta demostración y pueden crear riesgos de divulgación/cardinalidad.
-Las APIs manuales de spans requieren su bridge/biblioteca compatible correspondiente; no agregue
-imports de OpenTracing a un proyecto que solo tiene la API de anotaciones.
+Las APIs de span manuales requieren su bridge/biblioteca compatible correspondiente; no agregue
+importaciones OpenTracing a un proyecto que solo tiene la API de anotación.
 
-### Instrumentación manual de Python
+### Instrumentación Python manual
 
-Use el import actual `ddtrace.trace` para este ejemplo verificado con 4.14.0. Mantenga la
+Use la importación actual `ddtrace.trace` para este ejemplo comprobado 4.14.0. Mantenga la
 declaración de dependencia en `requirements.txt`, no dentro de un bloque de código Python.
-Para la auto-instrumentación de frameworks, siga la configuración seleccionada de `ddtrace-run`/SSI
-antes de los imports de la aplicación; no suponga que este helper parchea todo un framework.
+Para la auto-instrumentación de framework, siga la configuración seleccionada de `ddtrace-run`/SSI
+antes de las importaciones de aplicación; no suponga que este helper aplica patches a un framework completo.
 
 ```text
 ddtrace==4.14.0
@@ -512,25 +512,25 @@ def process_order(handler):
         return handler()
 ```
 
-El decorador equivalente `tracer.wrap` está disponible para el tracing de métodos. Las excepciones
-del handler deben propagarse; registrar un span no es un reintento de la aplicación ni una
-garantía de éxito. Use tags correctos de service/env/version y propagación de contexto
-en las integraciones HTTP/de mensajería compatibles. Los service maps provienen de relaciones
-instrumentadas observadas, no de `DD_TAGS` arbitrarios por sí solos.
+El decorador equivalente `tracer.wrap` está disponible para tracing de métodos. Las excepciones
+del handler deben propagarse; registrar un span no es un reintento de aplicación ni una
+garantía de éxito. Use tags de service/env/version correctos y propagación de contexto
+a través de integraciones HTTP/message compatibles. Los mapas de servicios provienen de relaciones
+instrumentadas observadas, no solo de `DD_TAGS` arbitrarios.
 
-No etiquete por defecto identificadores brutos de cliente/pedido, tokens ni cuerpos de solicitud.
-Revise la captura de la instrumentación, los mensajes de error y las reglas de muestreo/enmascaramiento de
+No etiquete identificadores sin procesar de cliente/pedido, tokens ni cuerpos de solicitud de forma predeterminada.
+Revise la captura de instrumentación, los mensajes de error y las reglas de muestreo/enmascaramiento para
 la aplicación real. La auto-instrumentación no garantiza la eliminación completa de PII.
 
 ## Log Management
 
-### Elija la recopilación y el parsing de forma deliberada
+### Seleccione deliberadamente la recopilación y el parsing
 
-La instalación habilita la recopilación de logs pero deja `containerCollectAll: false`.
-Combine estos metadatos en la plantilla de pod para el contenedor llamado `app`.
-La regla de multilínea se aplica a **registros de Java en texto plano que comienzan con una fecha**.
-No es un parser general de logs JSON. El framing del runtime de contenedores y el parsing de los mensajes
-de la aplicación son etapas separadas; verifique los registros realmente recopilados.
+La instalación habilita la recopilación de logs, pero deja `containerCollectAll: false`.
+Combine estos metadata en el template de Pod para el contenedor llamado `app`.
+La regla multiline se aplica a **registros Java de texto sin formato que comienzan con una fecha**.
+No es un parser general de logs JSON. El framing de runtime de contenedor y el parsing de mensajes
+de aplicación son etapas independientes; verifique los registros recopilados reales.
 
 ```yaml
 metadata:
@@ -541,18 +541,18 @@ metadata:
       : \"^\\\\d{4}-\\\\d{2}-\\\\d{2}\"\n      }\n    ]\n  }\n]"
 ```
 
-Para aplicaciones con un evento JSON por línea, use la ruta JSON compatible en lugar de
-unir eventos JSON no relacionados con esta regla. El acceso a archivos, las rutas del runtime, la coincidencia
-de anotaciones, los ajustes de exclusión y los filtros del pipeline del backend afectan todos a la recopilación.
-Verifique la recopilación selectiva con una aplicación que coincida y otra excluida.
+Para aplicaciones de un evento JSON por línea, use la ruta JSON compatible en lugar de
+unir eventos JSON no relacionados con esta regla. El acceso a archivos, las rutas de runtime, la coincidencia
+de anotaciones, la configuración de exclusión y los filtros de pipeline de backend afectan la recopilación.
+Compruebe la recopilación selectiva tanto con una aplicación coincidente como con una excluida.
 
-### Estructura de la solicitud de pipeline
+### Estructura de solicitud de pipeline
 
-Esta solicitud usa los campos reales de la API **`match_rules` y `support_rules`**.
-Los antiguos campos en camelCase no eran el modelo de la API de Logs. El mensaje de ejemplo define
-el formato de línea esperado; use el formato/zona horaria real de la aplicación y pruebe
-los casos sin coincidencia/multilínea/de error. Un modelo de solicitud válido no prueba el parsing con Grok
-ni la ingesta/indexación en un tenant de Datadog.
+Esta solicitud usa los campos reales de API **`match_rules` y `support_rules`**.
+Los antiguos campos camelCase no eran el modelo de Logs API. El mensaje de muestra define
+el formato de línea esperado; use el formato/zona horaria reales de la aplicación y pruebe
+casos sin coincidencia/multiline/error. Un modelo de solicitud válido no demuestra parsing Grok
+ni ingesta/indexación en un tenant de Datadog.
 
 ```json
 {
@@ -595,21 +595,21 @@ ni la ingesta/indexación en un tenant de Datadog.
 }
 ```
 
-Crear o reordenar pipelines cambia el procesamiento de los logs que coinciden. Configúrelo
-en el site correcto, con permisos de API delimitados y respetando la propiedad de los pipelines existentes.
+La creación/reordenación de pipelines cambia el procesamiento para logs coincidentes. Configúrelo
+bajo el sitio correcto, permisos de API con alcance limitado y propiedad de pipeline existente.
 No se envió ninguna solicitud de pipeline durante esta auditoría.
 
-### Correlación trace-log y propiedad del MDC
+### Correlación trace-log y propiedad de MDC
 
-Use la inyección automática de logs compatible cuando sea posible y conserve los IDs de trace/span
-como cadenas en los logs estructurados. También se necesitan service/env/version correctos, timestamps, parsing y
-datos de trace disponibles; dos campos de ID por sí solos no garantizan la correlación.
-No existe un trace ID activo útil cuando un proceso no ha sido instrumentado.
+Use la inyección automática de logs compatible cuando sea posible y preserve los ID de trace/span
+como cadenas en logs estructurados. También son necesarios service/env/version correctos, timestamps, parsing
+y datos de trace disponibles; dos campos de ID por sí solos no garantizan la correlación.
+No hay un ID de trace activo útil cuando un proceso no se ha instrumentado.
 
-Para aplicaciones que gestionan explícitamente el MDC de SLF4J, este helper restaura el
-**contexto previo completo** del caller tanto en caso de éxito como de fallo. El antiguo `MDC.clear()` incondicional
-perdía campos no relacionados del caller. Es un helper sincrónico, no un mecanismo de propagación
-de contexto asíncrono ni un filtro de servlet completo.
+Para aplicaciones que administran explícitamente SLF4J MDC, este helper restaura el
+**contexto anterior completo** de quien llama tanto en éxito como en fallo. El anterior `MDC.clear()`
+incondicional perdía campos no relacionados de quien llama. Es un helper síncrono, no un mecanismo
+de propagación de contexto async ni un filtro servlet completo.
 
 ```java
 import java.util.Map;
@@ -637,20 +637,20 @@ public final class TraceLogContext {
 }
 ```
 
-Requiere `dd-trace-api` y una API/proveedor de SLF4J compatible con la aplicación.
-El patrón de logging o el encoder JSON debe incluir los valores del MDC. No copie un
-ejemplo de servlet sin la API de servlet, los imports y el contrato de excepciones verificadas.
+Requiere `dd-trace-api` y la API/proveedor SLF4J compatible de la aplicación.
+El patrón de logging o el encoder JSON debe incluir los valores MDC. No copie un
+ejemplo servlet sin la API servlet, las importaciones y el contrato de excepciones comprobado.
 
 ## Dashboards y alertas
 
 <span id="dashboard-creation-api"></span>
 
-### Construcción de la solicitud de dashboard
+### Construcción de solicitudes de dashboard
 
-Este helper usa `datadog-api-client==2.60.0` para construir un cuerpo de solicitud. Las variables de plantilla
-de cluster y namespace son realmente referenciadas por sus consultas. El widget de host
-usa una métrica de porcentaje; el widget de pod usa bytes de memoria y su filtro de namespace.
-Verifique que los datos seleccionados tengan realmente los tags de agrupación.
+Este helper usa `datadog-api-client==2.60.0` para construir un cuerpo de solicitud. Las variables de template
+de clúster y namespace se referencian realmente mediante sus consultas. El widget de host
+usa una métrica de porcentaje; el widget de Pod usa bytes de memoria y su filtro de namespace.
+Compruebe que los datos seleccionados realmente tengan los tags de agrupación.
 
 ```python
 from datadog_api_client.v1.model.dashboard import Dashboard
@@ -680,20 +680,20 @@ def build_dashboard(cluster_name):
     )
 ```
 
-El caller proporciona un `ApiClient` correctamente configurado y usa `DashboardsApi`
-para crear o actualizar el dashboard previsto. Registre/reconcilie el ID devuelto;
-la creación repetida por título puede generar duplicados. El site y las credenciales de automatización
-delimitadas son independientes de la API key del node Agent. No se llamó a ninguna API de dashboards
+Quien llama proporciona un `ApiClient` configurado correctamente y usa `DashboardsApi`
+para crear o actualizar el dashboard previsto. Registre/reconcilie su ID devuelto;
+la creación repetida por título puede crear duplicados. El sitio y las credenciales de automatización
+con alcance limitado son independientes de la clave de API del node Agent. No se llamó a ninguna API de dashboard
 en esta auditoría.
 
 <span id="monitor-alert-configuration"></span>
 
-### Consultas de monitores y unidades
+### Consultas y unidades de monitor
 
-Use un provider de Terraform de Datadog configurado y restricciones de versión/archivo de lock del proyecto.
-Estos son fragmentos de recursos, no una configuración completa de provider/credenciales. Los umbrales
-son ejemplos; inspeccione las unidades, tags y ventanas reales de las métricas y los objetivos de la aplicación.
-El primer monitor evalúa directamente el porcentaje de inactividad en lugar de comparar nanocores
+Use un proveedor Datadog Terraform configurado y restricciones de versión/archivo de bloqueo del proyecto.
+Estos son fragmentos de recursos, no una configuración completa de proveedor/credenciales. Los umbrales
+son ejemplos; inspeccione las unidades de métricas, tags, ventanas y objetivos de aplicación reales.
+El primer monitor evalúa directamente el porcentaje idle en vez de comparar nanocores
 con 80 y llamar al resultado “porcentaje de CPU”.
 
 ```hcl
@@ -742,39 +742,39 @@ resource "datadog_monitor" "request_error_rate" {
 }
 ```
 
-El gauge de reinicios es un **total**. Comparar sumas de muestras repetidas del gauge en dos
-ventanas no cuenta de forma fiable los reinicios nuevos, especialmente con reinicios del contador, pods
-de reemplazo o muestreo desigual. Un monitor de reinicios recientes necesita un diseño validado de
-delta/reset. Este ejemplo alerta explícitamente sobre un total en su lugar.
+El gauge de reinicio es un **total**. Comparar sumas de muestras repetidas de gauge en dos
+ventanas no cuenta nuevos reinicios de forma fiable, especialmente con resets, Pods de reemplazo
+o muestreo desigual. Un monitor de reinicio reciente necesita un diseño validado de delta/reset.
+Este ejemplo alerta explícitamente sobre un total en su lugar.
 
-El monitor de errores usa los tres counters emitidos por `emit_batch`, incluidos los
-valores cero explícitos para las solicitudes con error/correctas. Para la evaluación con `.as_count()`, la
-agregación temporal ocurre **antes de la división**: sum(errors)/sum(total), en lugar de una suma
-de la proporción de cada bucket temporal. Use un agregador de suma con esta ruta.
+El monitor de errores usa los tres counters emitidos por `emit_batch`, incluidos
+valores cero explícitos para solicitudes error/good. Para la evaluación `.as_count()`, la agregación
+temporal ocurre **antes de la división**: sum(errors)/sum(total), en lugar de una suma
+de la proporción de cada bucket de tiempo. Use un agregador sum con esta ruta.
 
-Tráfico cero, telemetría ausente y tráfico genuinamente libre de errores son cosas distintas.
-Defina condiciones mínimas de tráfico/salud de recopilación y valide el comportamiento del monitor
-ante la ausencia de datos. `notify_no_data: false` no establece que haya salud; simplemente
-no notifica ante datos ausentes en estos fragmentos.
+Tráfico cero, telemetría ausente y tráfico realmente libre de errores son diferentes.
+Defina condiciones mínimas de tráfico/estado de recopilación y valide el comportamiento de
+ausencia de datos del monitor. `notify_no_data: false` no establece el estado; simplemente
+no notifica sobre datos faltantes en estos fragmentos.
 
-Para las métricas integradas de APM, use los nombres y tags reales `trace.<operation>.hits/errors`
-que genera la integración elegida. Java, Python y otras integraciones no
-emiten todas `trace.http.request.*`. El análisis de traces, las métricas de trace generadas y las
-métricas personalizadas de DogStatsD son orígenes distintos.
+Para métricas APM integradas, use los nombres y tags reales `trace.<operation>.hits/errors`
+generados por la integración elegida. Las integraciones Java, Python y otras no emiten todas
+`trace.http.request.*`. Trace analytics, métricas de trace generadas y métricas DogStatsD personalizadas
+son fuentes distintas.
 
 <span id="watchdog-ai"></span>
 
 ### Watchdog y entrega de notificaciones
 
-Watchdog puede exponer anomalías/insights detectados sin elegir manualmente cada
-umbral. Un insight no es prueba de que se haya entregado una notificación. Use el
-flujo de trabajo compatible de Watchdog/monitores y verifique el origen del evento, la
-disponibilidad del producto y el enrutamiento de notificaciones en el site previsto.
+Watchdog puede revelar anomalías/insights detectados sin elegir manualmente cada
+umbral. Un insight no prueba que se entregó una notificación. Use el flujo de trabajo
+compatible de Watchdog/monitor y verifique la fuente de evento, la disponibilidad de producto
+y el enrutamiento de notificaciones en el sitio previsto.
 
-El siguiente fragmento de monitor de eventos asume que existen eventos reales que coinciden con
+El siguiente fragmento de event-monitor supone que existen eventos reales que coinciden con
 `source:watchdog` en esa organización. No inventa un tag de grupo `story_category`
-ni garantiza que todos los resultados de Watchdog aparezcan en este stream. Valide el
-filtro contra eventos reales antes de habilitar notificaciones.
+ni garantiza que cada resultado Watchdog aparezca en este stream. Valide el
+filtro con eventos reales antes de habilitar notificaciones.
 
 ```hcl
 resource "datadog_monitor" "watchdog_events" {
@@ -788,12 +788,12 @@ resource "datadog_monitor" "watchdog_events" {
 
 <span id="_3-slo-configuration"></span>
 
-### Construcción de la solicitud de SLO
+### Construcción de solicitudes de SLO
 
-Los SLOs basados en métricas necesitan recuentos de good/total bien definidos. El helper siguiente usa los
-counters explícitos anteriores. “Good” debe coincidir con la política de SLI de la aplicación; contar
-solo HTTP 2xx no es una definición universal de disponibilidad. Valide el comportamiento con tráfico cero y
-con datos ausentes en lugar de tratar la ausencia como 100% de éxito.
+Los SLO basados en métricas necesitan conteos good/total bien definidos. El helper siguiente usa
+los counters explícitos anteriores. “Good” debe coincidir con la política SLI de la aplicación; contar
+solo HTTP 2xx no es una definición universal de disponibilidad. Valide el comportamiento de tráfico cero
+y datos faltantes en lugar de tratar la ausencia como 100 % de éxito.
 
 ```python
 from datadog_api_client.v1.model.service_level_objective_request import ServiceLevelObjectiveRequest
@@ -813,35 +813,35 @@ def build_success_slo():
     )
 ```
 
-Esto construye una solicitud, no un SLO en vivo. El caller configurado puede pasarla a
-`ServiceLevelObjectivesApi.create_slo` después de verificar la propiedad, los datos y los permisos.
-Datadog también admite SLOs basados en monitores y de time-slice; elija el modelo
-que coincida con el SLI en lugar de forzar un gauge/total de reinicios a un recuento de eventos correctos.
+Esto construye una solicitud, no un SLO activo. Quien llama configurado puede pasarlo a
+`ServiceLevelObjectivesApi.create_slo` después de verificar propiedad, datos y permisos.
+Datadog también admite SLO basados en monitor y time-slice; elija el modelo
+que coincida con el SLI en vez de forzar un total de gauge/reinicio a un conteo de eventos good.
 
 ## Estructura de costos
 
 <span id="pricing-overview"></span>
 
-### Use las unidades reales del producto y del contrato
+### Use las unidades reales de producto y contrato
 
-| Componente | Datos de entrada para la estimación |
+| Componente | Entradas para estimar |
 | --- | --- |
-| Infrastructure | Hosts/contenedores facturables o el modelo de plataforma aplicable, el plan y los términos de compromiso |
-| APM | Hosts de APM facturables y el plan/modelo seleccionado, las asignaciones incluidas, los spans ingeridos e indexados |
-| Logs | Volumen ingerido más las opciones de indexación/retención/búsqueda/archivo |
-| Métricas personalizadas / distribuciones | Combinaciones distintas de métrica/tag, agregaciones habilitadas y volúmenes incluidos aplicables |
-| Productos adicionales | Cargos de profiling, red/seguridad, serverless y otros productos habilitados |
+| Infrastructure | Hosts/contenedores facturables o el modelo de plataforma aplicable, plan y términos de compromiso |
+| APM | Hosts APM facturables y plan/modelo seleccionado, asignaciones incluidas, spans ingeridos e indexados |
+| Logs | Volumen ingerido más opciones de indexación/retención/búsqueda/archive |
+| Métricas personalizadas / distributions | Combinaciones distintas de métrica/tag, agregaciones habilitadas y volúmenes incluidos aplicables |
+| Productos adicionales | Cargos por profiling, red/seguridad, serverless y otros productos habilitados |
 
-No combine todos los productos en una tabla universal Free/Pro/Enterprise. La página de
-precios distingue productos, términos anuales/on-demand y ofertas adjuntas frente a
-independientes. La retención de métricas de infraestructura, traces consultables y logs indexados
-no es un único ajuste común de “15 meses”.
+No combine cada producto en una tabla universal Free/Pro/Enterprise. La página de precios
+distingue productos, términos anuales/bajo demanda y ofertas adjuntas frente a independientes.
+La retención de métricas de infraestructura, traces consultables e logs indexados
+no es una configuración común de “15 meses”.
 
 <span id="cost-calculation-example"></span>
 
-Para el antiguo ejemplo de 100 nodos, **50 servicios no implican 50 hosts de APM**. Con un
-acuerdo con precio por host, determine primero los recuentos reales de hosts facturables de Infrastructure y APM.
-Para 100 GB/día durante 30 días, la ingesta de logs es de 3.000 GB, pero la ingesta
+Para el antiguo ejemplo de 100 nodos, **50 services no implican 50 hosts APM**. En un
+acuerdo con precio por host, determine primero los conteos reales de hosts facturables de Infrastructure y APM.
+Para 100 GB/día durante 30 días, la ingesta de logs es 3,000 GB, pero la ingesta
 por sí sola no es la factura total de logs.
 
 ```text
@@ -854,51 +854,51 @@ Estimated cost =
   + custom-metric and other enabled-product charges
 ```
 
-El total anterior de ~$3.350 usaba unidades de APM que no correspondían y omitía dimensiones facturables.
-No era una factura de producción medida. Use la cotización actual del site/producto y
-el uso medido en lugar de tratar esa estimación como una garantía presupuestaria.
+El total anterior de ~$3,350 usaba unidades APM no coincidentes y omitía dimensiones facturables.
+No era una factura de producción medida. Use la cotización actual de sitio/producto y el uso
+medido en vez de tratar esa estimación como una garantía de presupuesto.
 
 <span id="cost-optimization-strategies"></span>
 
-### Los controles de métricas, logs y traces hacen cosas distintas
+### Los controles de métricas, logs y trace hacen cosas distintas
 
 <span id="_1-metric-optimization"></span>
 
-- `dogstatsd.nonLocalTraffic` controla la alcanzabilidad del receptor; no es una cuota de
-  métricas personalizadas. Cerrar un receptor puede simplemente perder telemetría.
-- `ignoreAutoConfig` desactiva verificaciones automáticas seleccionadas. Los filtros de exclusión de contenedores
+- `dogstatsd.nonLocalTraffic` controla la accesibilidad del receptor; no es una cuota de métricas
+  personalizadas. Cerrar un receptor puede simplemente perder telemetría.
+- `ignoreAutoConfig` deshabilita comprobaciones automáticas seleccionadas. Los filtros de exclusión de contenedor
   seleccionan contenedores; ninguno es un limitador general de cardinalidad de tags.
-- Revise las métricas y los valores de tags permitidos en el propietario de su recopilación. Cambiar la
-  cardinalidad de los tags de origen puede cambiar los tags de agrupación disponibles, así que vuelva a verificar monitores/SLOs.
+- Revise las métricas y valores de tags permitidos en su propietario de recopilación. Cambiar la cardinalidad
+  de tags de origen puede cambiar los tags de agrupación disponibles, así que vuelva a comprobar monitores/SLOs.
 <span id="_2-log-optimization"></span>
 
-- La exclusión de logs en el origen evita enviar registros seleccionados. La exclusión en el índice ocurre
-  después y no elimina los costos de ingesta. Preserve la evidencia de incidentes y los fallos;
-  no descarte todas las líneas de health-check sin importar su resultado.
+- La exclusión de logs en origen evita el envío de registros seleccionados. La exclusión de índice ocurre
+  después y no elimina los costos de ingesta. Conserve la evidencia de incidentes y los fallos;
+  no descarte cada línea de health-check sin importar el resultado.
 <span id="_3-apm-sampling"></span>
 
-- El muestreo y la indexación/retención son cosas separadas. `DD_TRACE_SAMPLE_RATE` o las reglas de
-  muestreo dependen de la biblioteca/versión y del alcance coincidente. El `DD_TRACE_RATE_LIMIT`
-  documentado de Python es por proceso y se aplica con las reglas/tasa de muestreo configuradas,
-  no es un tope a nivel de cluster ni en dólares. Una tasa de traces del 10% no implica una reducción del 90%
+- El muestreo y la indexación/retención son independientes. `DD_TRACE_SAMPLE_RATE` o las reglas de muestreo
+  dependen de la biblioteca/versión y del alcance coincidente. El documentado `DD_TRACE_RATE_LIMIT` de Python
+  es por proceso y se aplica con las reglas/rate de muestreo configuradas,
+  no como un límite de todo el clúster ni de dólares. Una tasa de trace del 10 % no implica una reducción del 90 %
   en toda la factura de Datadog.
 
-## Mejores prácticas
+## Prácticas recomendadas
 
 <span id="_1-tagging-strategy"></span>
 
-Use labels consistentes de service/env/version y tags acotados, con permisos separados para la
-ingesta con API key y para la automatización con application key. Revise la captura de la aplicación
-y las rutas de secretos/enmascaramiento antes de recopilar todos los logs, argumentos de procesos o profiles.
-Monitoree las colas/descartes del collector y verifique las salidas reales después de cambiar filtros.
+Use labels consistentes de service/env/version y tags acotados, con permisos separados de
+ingesta de clave de API y automatización de clave de aplicación. Revise las rutas de captura de aplicación
+y enmascaramiento de secrets antes de recopilar todos los logs, argumentos de proceso o profiles.
+Monitorice las colas/pérdidas del recopilador y verifique las salidas reales después de cambiar filtros.
 
 <span id="_2-alert-layering"></span>
 
-Acuerde con el equipo de operaciones la severidad de las alertas, la propiedad y los objetivos de respuesta.
-Las etiquetas P1/P2 de un runbook son una política operativa, no definiciones de recursos de Datadog
-por sí mismas. Pruebe los destinos reales, los datos ausentes y las notificaciones de recuperación.
-Use un SLI/SLO documentado y el contexto de tráfico en lugar de elegir umbrales solo
-porque aparecen en un ejemplo.
+Acuerde gravedad de alerta, propiedad y objetivos de respuesta con el equipo de operaciones.
+Las etiquetas P1/P2 en un runbook son una política operativa, no definiciones independientes de recursos Datadog.
+Pruebe los destinos reales, los datos faltantes y las notificaciones de recuperación.
+Use un SLI/SLO documentado y el contexto de tráfico en vez de elegir umbrales solo
+porque aparecen en una muestra.
 
 <span id="common-issues"></span>
 
@@ -906,12 +906,12 @@ porque aparecen en un ejemplo.
 
 <span id="_1-agent-not-sending-metrics"></span>
 
-Comience por el propietario de la instalación, los nombres reales de pods/contenedores y el site previsto.
-Verifique los handles literales del backend nativo, IRSA para Secrets Manager y el postrenderer requerido,
-la salud del Agent/Cluster Agent, el acceso a Kubelet/RBAC,
-la configuración de scraping y la telemetría en cola/descartada. El pod renderizado del node
-Agent de esta versión tiene los contenedores `agent` y `trace-agent`; el antiguo selector `app=datadog`
-no es un sustituto fiable de inspeccionar los labels actuales.
+Comience con el propietario de la instalación, los nombres reales de pod/contenedor y el sitio previsto.
+Compruebe los controladores literales de backend nativo, IRSA de Secrets Manager y el postrenderer requerido,
+la salud de Agent/Cluster Agent, el acceso Kubelet/RBAC,
+la configuración de scrape y la telemetría en cola/perdida. El Pod de Agent de nodo renderizado por esta versión
+tiene contenedores `agent` y `trace-agent`; el selector antiguo `app=datadog`
+no es un sustituto fiable de inspeccionar las labels actuales.
 
 <span id="debugging-commands"></span>
 
@@ -939,58 +939,58 @@ kubectl exec -n datadog "$DD_AGENT_POD" -c agent -- agent flare --local
 
 <span id="_2-missing-apm-traces"></span>
 
-Para los traces, verifique la inyección/arranque real de la biblioteca, el socket o endpoint de host,
-los permisos y la consistencia de los tags. Una verificación TCP exitosa no valida una ruta
-UDS ni prueba que se acepten las cargas de traces. No use `env | grep DD_`: puede divulgar
-API/application keys o credenciales de proxy.
+Para traces, verifique la inyección/inicio real de biblioteca, el socket o endpoint de host,
+los permisos y tags consistentes. Una comprobación TCP exitosa no valida una ruta UDS ni prueba
+cargas útiles de trace aceptadas. No use `env | grep DD_`: puede divulgar
+claves de API/aplicación o credenciales de proxy.
 
 <span id="_3-logs-not-collected"></span>
 
-Para los logs, inspeccione la anotación/identificador de contenedor real y el acceso a archivos, y luego
-las exclusiones de recopilación, el parsing y los filtros de índice. `agent configcheck`, el status, los
-logs y los archivos pueden exponer configuración o datos de la aplicación; inspeccione/enmascare las
-salidas antes de compartirlas.
+Para logs, inspeccione el identificador real de anotación/contenedor y el acceso a archivos, luego
+las exclusiones de recopilación, el parsing y los filtros de índice. `agent configcheck`, status,
+logs y archives pueden exponer datos de configuración o aplicación; inspeccione/enmascare
+las salidas antes de compartirlas.
 
-`agent flare --local` crea un paquete local para inspección. La carga o la recopilación remota del flare
-es una acción de soporte autorizada aparte. El enmascaramiento integrado es útil,
-pero no sustituye la revisión del archivo respecto a los datos que recopiló su aplicación.
+`agent flare --local` crea un bundle local para inspección. La carga o recopilación remota de flare
+es una acción de soporte autorizada independiente. El enmascaramiento incorporado es útil,
+pero no sustituye revisar el archive para los datos recopilados por su aplicación.
 
-## Alcance de la validación
+## Alcance de validación
 
-La auditoría usó el renderizado del chart y la inspección del esquema/código oficial, datagramas
-Unix locales de DogStatsD, spans manuales de ddtrace 4.14.0 en Python 3.12 con exportación/telemetría desactivadas,
-la compilación de dd-trace-api 1.66.0 para Java 17 y pruebas sincrónicas del MDC, y los modelos de solicitud/serialización
-del API client 2.60.0. Estas verificaciones no llamaron a un tenant de Datadog, no instalaron en EKS,
-no ejecutaron un admission webhook, no enviaron traces/logs al SaaS, no crearon dashboards/monitores/
+La auditoría usó renderizado de chart e inspección de schema/source oficiales, datagramas Unix DogStatsD locales,
+spans manuales ddtrace 4.14.0 en Python 3.12 con export/telemetry deshabilitados,
+compilación de dd-trace-api 1.66.0 para Java 17 y pruebas MDC síncronas, y modelos/serialización
+de solicitudes de cliente API 2.60.0. Estas comprobaciones no llamaron a un tenant de Datadog, instalaron en EKS,
+ejecutaron un webhook de admission, enviaron traces/logs a SaaS, crearon dashboards/monitors/
 SLOs ni midieron costos.
 
-El significado de las consultas de los monitores se verificó contra las unidades de métrica documentadas y las
-reglas de agregación; no se invocó ningún motor de consultas de Datadog ni un plan del provider de Terraform.
-El esquema de la solicitud de Grok es distinto del parsing en vivo. Las aplicaciones, credenciales,
-el tráfico, el soporte en tiempo de ejecución y la propiedad del destino siguen siendo prerrequisitos del despliegue.
+El significado de las consultas de monitor se comprobó con las unidades de métricas documentadas y
+las reglas de agregación; no se invocó ningún motor de consulta de Datadog ni plan de proveedor Terraform.
+El schema de solicitud Grok es distinto del parsing activo. Las aplicaciones, credenciales,
+tráfico, soporte de runtime y propiedad de destino siguen siendo requisitos previos de despliegue.
 
 ## Referencias
 
-- [Kubernetes installation and version prerequisites](https://docs.datadoghq.com/containers/kubernetes/installation.md)
+- [Instalación de Kubernetes y requisitos previos de versión](https://docs.datadoghq.com/containers/kubernetes/installation.md)
 - [Helm chart 3.244.0](https://github.com/DataDog/helm-charts/releases/tag/datadog-3.244.0)
-- [Agent 7.83.1 release](https://github.com/DataDog/datadog-agent/releases/tag/7.83.1)
-- [Kubernetes distributions](https://docs.datadoghq.com/containers/kubernetes/distributions.md)
-- [Kubelet metrics](https://docs.datadoghq.com/integrations/kubelet.md)
+- [Versión Agent 7.83.1](https://github.com/DataDog/datadog-agent/releases/tag/7.83.1)
+- [Distribuciones Kubernetes](https://docs.datadoghq.com/containers/kubernetes/distributions.md)
+- [Métricas Kubelet](https://docs.datadoghq.com/integrations/kubelet.md)
 - [Kubernetes State Metrics Core](https://docs.datadoghq.com/integrations/kubernetes_state_core.md)
-- [System metrics](https://docs.datadoghq.com/integrations/system.md)
-- [AWS account integration](https://docs.datadoghq.com/integrations/amazon-web-services.md)
+- [Métricas System](https://docs.datadoghq.com/integrations/system.md)
+- [Integración de cuenta AWS](https://docs.datadoghq.com/integrations/amazon-web-services.md)
 - [Admission Controller](https://docs.datadoghq.com/containers/cluster_agent/admission_controller.md)
-- [Local SDK injection](https://docs.datadoghq.com/tracing/guide/local_sdk_injection.md)
-- [OpenMetrics on Kubernetes](https://docs.datadoghq.com/containers/kubernetes/prometheus.md)
+- [Inyección SDK local](https://docs.datadoghq.com/tracing/guide/local_sdk_injection.md)
+- [OpenMetrics en Kubernetes](https://docs.datadoghq.com/containers/kubernetes/prometheus.md)
 - [DogStatsD UDS](https://docs.datadoghq.com/extend/dogstatsd/unix_socket.md)
-- [Python tracing configuration](https://docs.datadoghq.com/tracing/trace_collection/library_config/python.md)
-- [Custom instrumentation](https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md)
-- [Log parsing](https://docs.datadoghq.com/logs/log_configuration/parsing.md)
-- [as_count monitor evaluation](https://docs.datadoghq.com/monitors/guide/as-count-in-monitor-evaluations.md)
-- [Metric-based SLOs](https://docs.datadoghq.com/service_level_objectives/metric.md)
-- [Datadog pricing and billing FAQs](https://www.datadoghq.com/pricing/)
-- [Agent flare handling](https://docs.datadoghq.com/agent/troubleshooting/send_a_flare.md)
+- [Configuración de tracing Python](https://docs.datadoghq.com/tracing/trace_collection/library_config/python.md)
+- [Instrumentación personalizada](https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md)
+- [Parsing de logs](https://docs.datadoghq.com/logs/log_configuration/parsing.md)
+- [Evaluación de monitor as_count](https://docs.datadoghq.com/monitors/guide/as-count-in-monitor-evaluations.md)
+- [SLO basados en métricas](https://docs.datadoghq.com/service_level_objectives/metric.md)
+- [Preguntas frecuentes sobre precios y facturación de Datadog](https://www.datadoghq.com/pricing/)
+- [Gestión de Agent flare](https://docs.datadoghq.com/agent/troubleshooting/send_a_flare.md)
 
 <span id="quiz"></span>
 
-[Quiz](../../quizzes/observability/metrics/05-datadog-quiz.md)
+[Cuestionario](../../quizzes/observability/metrics/05-datadog-quiz.md)

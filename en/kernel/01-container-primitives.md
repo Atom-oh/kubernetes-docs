@@ -95,6 +95,10 @@ cgroups (control groups) **measure and limit resource use for a group of process
 
 Where v1's "separate tree per controller" actually hurt was **coordinating memory reclaim with IO.** When memory runs low and page cache must be dropped, that reclaim itself causes disk IO — and in v1 the two controllers knew nothing about each other. v2's unified tree handles both in the same hierarchy.
 
+### October 2026 Update: cgroup v1 deprecation moving forward
+
+The Kubernetes blog summarized the state of the cgroup v1→v2 transition ([The Shift to cgroup v2 in Kubernetes](https://kubernetes.io/blog/2026/10/06/kubernetes-cgroups-v2-shift/), 2026-10-06). cgroup v2 management has been stable since v1.25 and cgroup v1 support has been in maintenance mode since v1.31; **starting with v1.35, the kubelet's `failCgroupV1` defaults to `true`, so the kubelet no longer starts on a cgroup v1 node by default.** Setting `failCgroupV1: false` in the kubelet configuration is a temporary override; full removal is tracked in KEP-5573. On kubeadm clusters, the SystemVerification preflight check treats cgroup v1 as an error with kubelet v1.35 or later (a warning on older kubelets). If you are on a release older than v1.35, migrate every Linux node to cgroup v2 before upgrading.
+
 ### The biggest operational change — OOM diagnosis
 
 Here is the fact you must know about cgroup v2.

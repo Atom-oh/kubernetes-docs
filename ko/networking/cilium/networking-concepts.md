@@ -304,7 +304,7 @@ IPsec은 IP 패킷 수준에서 보안 서비스를 제공하는 프로토콜 �
 
 Cilium은 VXLAN 및 Geneve와 같은 오버레이 프로토콜을 지원하며, eBPF를 활용하여 효율적인 패킷 처리를 제공합니다.
 
-- **eBPF 기반 VXLAN 처리**: 커널 내에서 직접 패킷 캡슐화 및 디캡슐화
+- **eBPF 보조 VXLAN 처리**: BPF 프로그램이 VXLAN 헤더를 직접 만들지는 않고, 터널 메타데이터(`bpf_skb_set_tunnel_key`)를 설정한 뒤 flow-based `cilium_vxlan`(또는 `cilium_geneve`) 디바이스로 redirect하면 커널의 VXLAN/Geneve 드라이버가 캡슐화·역캡슐화합니다. [오버레이와 네이티브 라우팅](09-overlay-native-routing.md) 참고
 - **효율적인 라우팅**: 최적화된 경로를 통한 패킷 전달
 - **암호화 옵션**: IPsec 또는 WireGuard를 통한 암호화된 오버레이
 - **모드 선택**: 지원되는 라우팅 모드를 선택; 터널 모드와 자동 직접 노드 라우트를 함께 켜면 거부되며 fallback 수단이 아님

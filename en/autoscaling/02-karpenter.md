@@ -354,7 +354,14 @@ AWS’s July22,2026 announcement added EFA network-interface and placement-group
 
 ### October 2026 Update: v1.15.0 Standard Release
 
-[v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0), a standard (non-LTS) minor, was published on October 10, 2026. Standard releases are supported only until the next minor ships, so the examples in this chapter stay on 1.14 LTS (1.14.1). If you need Kubernetes1.37 or move to 1.15, check the [v1.15 compatibility matrix](https://karpenter.sh/v1.15/upgrading/compatibility/) and upgrade guidance first.
+[v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0), a standard (non-LTS) minor, was published on October 10, 2026. Key changes:
+
+- **Node repair becomes a voluntary disruption**: node repair is folded into the disruption machinery, with terminate-first repair when a capacity-constrained NodePool cannot stage a replacement node first. Reboot via `ec2:RebootInstances` is added as a repair action (behind the `RebootForRepair` AWS feature gate), and the previous repair controller remains available through the `--legacy-node-repair` flag.
+- **CEL support in KubeletConfiguration**: `maxPodsExpression`, `kubeReserved` and `systemReserved` accept CEL expressions, and the EC2NodeClass KubeletConfiguration fields were extended.
+- **Broader DRA support**: prioritized alternatives support plus NVIDIA and EFA driver DRA support.
+- Also: an `--aws-feature-gates` flag, default pod topology spread awareness, accounting for instance type volume limits during provisioning, new disruption metrics such as `karpenter_pods_disrupted_total`, and a feature-gated pod deletion cost management controller.
+
+Under the support policy, regular minors are supported only until the next minor, so with v1.15.0 out, v1.14 continues only as an LTS line (through July 2027); the examples in this chapter therefore stay on 1.14 LTS (1.14.1). Kubernetes 1.37 requires Karpenter 1.15.x, so if you need Kubernetes 1.37 or move to 1.15, check the [v1.15 compatibility matrix](https://karpenter.sh/v1.15/upgrading/compatibility/) and upgrade guidance first. See the [v1.15.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) for details.
 
 ## Node Classes
 

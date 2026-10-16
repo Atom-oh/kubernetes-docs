@@ -1,16 +1,16 @@
 # Kubernetes Pod 和工作负载
 
-> **支持的版本**: Kubernetes 1.32, 1.33, 1.34
-> **最后更新**: February 23, 2026
+> **支持的版本**: Kubernetes 1.35, 1.36, 1.37
+> **最后更新**: October 12, 2026
 
-本文详细说明 Kubernetes 的基本执行单元 Pod，以及用于管理它们的各类工作负载资源。我们将从 Pod 的概念出发，介绍 Deployment、StatefulSet、DaemonSet 等各种工作负载资源的特性和使用场景。
+本文详细说明 Kubernetes 中的基本执行单元 Pod，以及用于管理它们的各种工作负载资源。我们将从 Pod 概念开始，介绍 Deployment、StatefulSet、DaemonSet 等多种工作负载资源的特性和使用场景。
 
 ## 实验环境设置
 
 要跟随本文中的示例，您需要以下工具和环境：
 
 ### 所需工具
-- kubectl v1.34 或更高版本
+- 与 API server 相差不超过一个次要版本的 kubectl
 - 可用的 Kubernetes 集群（EKS、minikube、kind 等）
 
 ### 部署示例应用程序
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -59,45 +59,37 @@ kubectl -n workloads-demo get deployments,pods
 - [Pod 概念](#pod-concepts)
 - [Pod 生命周期](#pod-lifecycle)
 - [Pod 设计模式](#pod-design-patterns)
-- [工作负载资源概览](#workload-resources-overview)
+- [工作负载资源概述](#workload-resources-overview)
 - [ReplicaSet](#replicaset)
 - [Deployment](#deployment)
 - [StatefulSet](#statefulset)
 - [DaemonSet](#daemonset)
 - [Job 和 CronJob](#jobs-and-cronjobs)
-- [资源管理 (English)](https://www.atomai.click/kubernetes-docs/en/core/07-policies#resource-management)
-- [Pod 中断预算 (English)](https://www.atomai.click/kubernetes-docs/en/core/08-scheduling-preemption-eviction#pod-disruption-budget-pdb)
-- [水平 Pod 自动扩缩容 (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#horizontal-pod-autoscaler-hpa)
-- [垂直 Pod 自动扩缩容 (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#vertical-pod-autoscaler-vpa)
-- [工作负载最佳实践 (English)](https://www.atomai.click/kubernetes-docs/en/core/02-pods-and-workloads#pod-design-patterns)
-- [Amazon EKS 工作负载注意事项 (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#eks-specific-best-practices)
-
-<span id="pod-concepts"></span>
 
 ## Pod 概念
 
-> **关键概念**：Pod 是 Kubernetes 中最小的可部署计算单元，由共享存储和网络的一个或多个容器组构成。
+> **核心概念**：Pod 是 Kubernetes 中最小的可部署计算单元，由共享存储和网络的一个或多个容器组构成。
 
-Pod 是 Kubernetes 中最小的可部署计算单元。Pod 是由一个或多个共享存储和网络、并一同调度的容器组成的组。
+Pod 是 Kubernetes 中最小的可部署计算单元。Pod 是一个或多个容器组成的组，它们共享存储和网络，并被共同调度。
 
 ### Pod 特性
 
-1. **共享上下文**：Pod 中的所有容器共享相同的网络命名空间、IPC 命名空间和 UTS 命名空间。
-2. **相同 Node**：Pod 中的所有容器始终在同一 Node 上运行。
-3. **唯一 IP 地址**：每个 Pod 在集群中都有唯一的 IP 地址。
-4. **临时性**：Pod 本质上是临时的，发生故障时可以由新的 Pod 替换。
-5. **原子单元**：Pod 是部署、调度和副本管理的原子单元。
+1. **共享上下文**：容器共享 Pod 网络，通常也共享 IPC；进程命名空间共享需要 `shareProcessNamespace: true`。容器根文件系统仍然彼此独立。
+2. **同一节点**：Pod 中的所有容器始终运行在同一节点上。
+3. **唯一 IP 地址**：每个 Pod 在集群内都有唯一的 IP 地址。
+4. **临时性**：Pod 本质上是临时的，发生故障时可以被新的 Pod 替换。
+5. **原子单元**：Pod 是部署、调度和复制的原子单元。
 
 ### Pod 结构
 
 Pod 由以下组件构成：
 
-1. **容器**：在 Pod 内运行的一个或多个容器
-2. **卷**：Pod 内各容器共享的存储
+1. **容器**：在 Pod 中运行的一个或多个容器
+2. **卷**：Pod 中容器共享的存储
 3. **网络**：分配给 Pod 的 IP 地址和端口
-4. **容器规格**：容器镜像、环境变量、资源需求等
+4. **容器规范**：容器镜像、环境变量、资源需求等
 
-![一个 Kubernetes Pod 边界，展示应用程序容器、sidecar 容器和 init 容器共享一个 Pod IP 地址和网络命名空间，以及四种可挂载的存储卷类型（emptyDir、configMap、secret、persistentVolumeClaim）。](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
+![Kubernetes Pod 边界：应用程序容器、sidecar 容器和 init 容器共享一个 Pod IP 地址和网络命名空间，旁边还有四类可挂载存储卷（emptyDir、configMap、secret、persistentVolumeClaim）。](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-02-pods-and-workloads-0.html)
 
@@ -113,7 +105,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
     volumeMounts:
@@ -123,7 +115,8 @@ spec:
     image: alpine
     command: ["/bin/sh", "-c"]
     args:
-    - while true; do
+    - |
+      while true; do
         echo "Current time: $(date)" > /content/index.html;
         sleep 10;
       done
@@ -135,9 +128,9 @@ spec:
     emptyDir: {}
 ```
 
-### 实践示例：Web 应用程序 Pod
+### 实际示例：Web 应用程序 Pod
 
-以下是包含 Web 应用程序和 sidecar 容器的 Pod 示例：
+以下示例展示一个包含 Web 应用程序和 sidecar 容器的 Pod：
 
 ```yaml
 apiVersion: v1
@@ -150,7 +143,10 @@ metadata:
 spec:
   containers:
   - name: web-application
-    image: nginx:1.21
+    image: nginx:1.30.4
+    volumeMounts:
+    - name: log-volume
+      mountPath: /var/log/nginx
     ports:
     - containerPort: 80
     resources:
@@ -161,7 +157,7 @@ spec:
         memory: "256Mi"
         cpu: "500m"
   - name: log-collector
-    image: fluentd:v1.14
+    image: fluentd:v1.19-debian-1
     volumeMounts:
     - name: log-volume
       mountPath: /var/log/nginx
@@ -177,24 +173,15 @@ spec:
     emptyDir: {}
 ```
 
-此示例演示了以下实际场景：
-- 将 Nginx Web 服务器作为主容器运行
+此示例演示以下实际场景：
+- 将 Nginx Web server 作为主容器运行
 - 将 Fluentd 日志收集器作为 sidecar 容器运行
 - 在两个容器之间共享日志卷
 - 为每个容器设置资源请求和限制
 
-此配置适用于运行紧密关联的容器，同时在微服务架构中分离日志记录、监控和代理等功能。
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+此配置适合在微服务架构中运行紧密关联的容器，同时分离日志记录、监控和代理等功能。
 
-    %% Apply classes
-    class Pod default;
-    class Container1,Container2 userApp;
-    class Volume dataStore;
-    class IP default;
-```
+这些日志清单展示了卷的连接方式。Fluentd 还需要显式的 tail 源和输出配置；仅挂载目录不会收集其日志。镜像和应用程序配置仅用于说明，并非生产版本建议。原生 sidecar 使用带有 `restartPolicy: Always` 的 `initContainers`（自 v1.33 起稳定）；普通多容器 Pod 不保证启动或关闭顺序。
 
 ### Pod 定义
 
@@ -210,7 +197,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
     resources:
@@ -231,9 +218,9 @@ spec:
 
 **多容器 Pod**：
 - 包含多个紧密耦合的容器
-- 容器之间可以进行本地通信（localhost）
+- 容器之间可进行本地通信（localhost）
 - 通过共享卷共享数据
-- 一同扩缩容和放置
+- 共同扩缩容和放置
 
 ### 多容器 Pod 模式
 
@@ -248,9 +235,12 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/nginx
   - name: log-collector
-    image: fluentd:v1.14
+    image: fluentd:v1.19-debian-1
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
@@ -260,7 +250,7 @@ spec:
 ```
 
 2. **Ambassador 模式**：充当外部服务代理的容器
-   - 示例：数据库代理、Service Mesh sidecar
+   - 示例：数据库代理、服务网格 sidecar
 
 ```yaml
 apiVersion: v1
@@ -272,7 +262,7 @@ spec:
   - name: app
     image: myapp:1.0
   - name: ambassador
-    image: envoy:v1.20
+    image: envoyproxy/envoy:v1.20.0
     ports:
     - containerPort: 9901
 ```
@@ -289,6 +279,9 @@ spec:
   containers:
   - name: app
     image: myapp:1.0
+    volumeMounts:
+    - name: app-logs
+      mountPath: /var/log/app
   - name: adapter
     image: adapter:1.0
     volumeMounts:
@@ -319,23 +312,23 @@ spec:
 
 ### Pod 网络
 
-Pod 内的容器具有以下网络特性：
+Pod 中的容器具有以下网络特性：
 
-1. **相同 IP 地址**：Pod 内的所有容器共享同一个 IP 地址。
-2. **端口共享**：Pod 内的容器共享端口空间，因此不能使用相同端口。
-3. **Localhost 通信**：Pod 内的容器可以通过 localhost 相互通信。
-4. **Pod 间通信**：每个 Pod 都有唯一的 IP 地址，并可直接与其他 Pod 通信。
+1. **相同 IP 地址**：Pod 中所有容器共享同一 IP 地址。
+2. **端口共享**：Pod 中的容器共享端口空间，因此通常不能绑定相同的 IP/协议/端口组合。
+3. **Localhost 通信**：Pod 中的容器可通过 localhost 彼此通信。
+4. **Pod 间通信**：每个 Pod 都有唯一 IP 地址，可直接与其他 Pod 通信。
 
 ### Pod 存储
 
 Pod 可以使用各种类型的卷来存储和共享数据：
 
-1. **emptyDir**：在 Pod 创建时创建、在 Pod 删除时删除的临时卷
-2. **hostPath**：从宿主 Node 的文件系统挂载到 Pod 的卷
-3. **persistentVolumeClaim**：请求持久化存储的卷
+1. **emptyDir**：创建 Pod 时创建、删除 Pod 时删除的临时卷
+2. **hostPath**：从主机节点文件系统挂载到 Pod 的卷
+3. **persistentVolumeClaim**：请求持久存储的卷
 4. **configMap**：作为卷挂载的 ConfigMap
 5. **secret**：作为卷挂载的 Secret
-6. **projected**：映射到同一目录的多个卷来源
+6. **projected**：映射到同一目录的多个卷源
 
 ```yaml
 apiVersion: v1
@@ -359,46 +352,44 @@ spec:
       name: app-config
 ```
 
-<span id="pod-lifecycle"></span>
-
 ## Pod 生命周期
 
-Pod 从创建到终止会经历多个生命周期阶段。理解该生命周期对于确保应用程序的稳定性和可用性非常重要。
+Pod 从创建到终止会经历多个生命周期阶段。了解该生命周期对于确保应用程序稳定性和可用性非常重要。
 
 ### Pod 阶段
 
 Pod 会经历以下阶段：
 
-1. **Pending**：Pod 已被集群接受，但尚未设置好一个或多个容器
-2. **Running**：Pod 已绑定到 Node，所有容器均已创建，并且至少一个容器正在运行、启动或重启
+1. **Pending**：Pod 已被集群接受，但一个或多个容器尚未设置完成
+2. **Running**：Pod 已绑定到节点，所有容器均已创建，并且至少有一个容器正在运行、启动或重启
 3. **Succeeded**：Pod 中所有容器均已成功终止，且不会重启
-4. **Failed**：Pod 中所有容器均已终止，且至少一个容器以失败状态终止
-5. **Unknown**：由于某些原因无法获取 Pod 状态
+4. **Failed**：Pod 中所有容器均已终止，且至少一个容器因失败而终止
+5. **Unknown**：由于某种原因无法获取 Pod 状态
 
 ### 容器状态
 
-Pod 内的每个容器都可以具有以下状态：
+Pod 中的每个容器可具有以下状态：
 
 1. **Waiting**：容器运行前的状态（下载镜像、等待依赖项等）
-2. **Running**：容器正常运行
-3. **Terminated**：容器已完成执行或因某些原因失败
+2. **Running**：进程正在执行；仅此状态并不能表明应用程序健康或就绪
+3. **Terminated**：容器已完成执行或因某种原因失败
 
-### Pod 条件
+### Pod Conditions
 
-Pod 通过以下条件更具体地表明其状态：
+Pod 通过以下 Conditions 更具体地表示其状态：
 
-1. **PodScheduled**：Pod 是否已调度到 Node
-2. **ContainersReady**：Pod 中所有容器是否均已就绪
-3. **Initialized**：所有 init 容器是否均已成功完成
-4. **Ready**：Pod 是否能够处理请求并添加到 Service 的负载均衡池
+1. **PodScheduled**：Pod 是否已调度到节点
+2. **ContainersReady**：Pod 中所有容器是否就绪
+3. **Initialized**：常规 init 容器已完成，且可重启 init 容器（原生 sidecar）已启动
+4. **Ready**：Pod 是否能够处理请求并加入 Service 的负载均衡池
 
 ### 容器探针
 
-Kubernetes 提供以下探针来检查容器状态：
+Kubernetes 提供以下探针以检查容器状态：
 
 1. **livenessProbe**：检查容器是否存活；失败时重启容器
-2. **readinessProbe**：检查容器是否已准备好处理请求；失败时将其从 Service 流量中移除
-3. **startupProbe**：检查容器内的应用程序是否已启动；成功前禁用其他探针
+2. **readinessProbe**：检查容器是否已准备好处理请求；失败时从 Service 流量中排除
+3. **startupProbe**：检查容器中的应用程序是否已启动；成功前禁用其他探针
 
 ```yaml
 apiVersion: v1
@@ -435,25 +426,25 @@ spec:
 
 ### Pod 终止过程
 
-当 Pod 终止时，将发生以下过程：
+终止 Pod 时会发生以下过程：
 
 1. **向 API Server 发出删除请求**：用户或控制器请求删除 Pod
-2. **开始终止期**：设置默认终止期（30 秒）
-3. **API 更新**：API Server 更新 Pod 的删除时间戳
-4. **从 Service 中移除**：Endpoint 控制器将 Pod 从 Service endpoint 中移除
-5. **SIGTERM 信号**：kubelet 向容器发送 SIGTERM 信号
+2. **终止期开始**：设置默认终止期（30 秒）
+3. **API 更新**：API server 更新 Pod 的删除时间戳
+4. **Endpoint 更新**：EndpointSlice 将端点标记为正在终止且未就绪；传播与节点关闭并发进行
+5. **停止信号**：kubelet 在宽限期内运行任意 preStop hook，然后请求运行时发送停止信号（通常是 SIGTERM，除非镜像/容器覆盖它）
 6. **等待优雅关闭**：为应用程序提供优雅关闭的时间
-7. **SIGKILL 信号**：如果容器在终止期后仍未终止，则发送 SIGKILL 信号
+7. **SIGKILL 信号**：如果容器在终止期后仍未终止，将发送 SIGKILL 信号
 8. **资源清理**：kubelet 清理 Pod 资源
 
 ### Init 容器
 
-Init 容器是在 Pod 中应用程序容器启动前运行的特殊容器：
+Init 容器是应用程序容器在 Pod 中启动前运行的特殊容器：
 
-1. **顺序执行**：Init 容器按照定义顺序一次运行一个
-2. **前置条件**：每个 init 容器仅在前一个容器成功完成后才启动
-3. **失败后重启**：如果 init 容器失败，将根据 Pod 的重启策略重启
-4. **用途**：应用程序容器启动前的设置、依赖项验证、权限设置等
+1. **顺序执行**：Init 容器按定义顺序逐个运行
+2. **前置条件**：每个 init 容器仅在前一个容器成功完成后启动
+3. **失败时重启**：若 init 容器失败，将根据 Pod 的重启策略重启
+4. **用途**：应用程序容器启动前的设置、依赖验证、权限设置等
 
 ```yaml
 apiVersion: v1
@@ -475,34 +466,32 @@ spec:
 
 ### Pod 中断
 
-Pod 中断可分为自愿中断或非自愿中断：
+Pod 中断可分为自愿中断和非自愿中断：
 
 1. **自愿中断**：由集群管理员或自动化工具导致的中断
-   - Node 腾空
+   - 节点排空
    - Deployment 更新
    - Pod 删除
 
-2. **非自愿中断**：由硬件故障、内核崩溃、网络分区等导致的中断。
+2. **非自愿中断**：因硬件故障、内核 panic、网络分区等造成的中断。
 
-PodDisruptionBudget 可以在自愿中断期间确保最低可用性。
-
-<span id="pod-design-patterns"></span>
+PodDisruptionBudget 通过 Eviction API（例如 drain）限制自愿驱逐。直接删除 Pod 和 Deployment 滚动更新会绕过它；请另行配置 rollout 可用性。它无法防止非自愿故障。
 
 ## Pod 设计模式
 
-设计 Pod 时需要考虑多种模式和最佳实践。理解并应用这些模式可以提高应用程序的稳定性、可扩展性和可维护性。
+设计 Pod 时需要考虑多种模式和最佳实践。理解并应用这些模式可提高应用程序的稳定性、可扩展性和可维护性。
 
 ### 单一职责原则
 
 Pod 应遵循单一职责原则：
 
 1. **一个主要功能**：每个 Pod 应负责一个主要功能或进程
-2. **独立扩缩容**：应设计为每个功能都可独立扩缩容
-3. **独立生命周期**：应设计为每个功能都可以拥有自己的生命周期
+2. **独立扩缩容**：设计应使每项功能均可独立扩缩容
+3. **独立生命周期**：设计应使每项功能均可拥有自己的生命周期
 
 ### Pod 模板
 
-Pod 模板是在工作负载资源（Deployment、StatefulSet 等）中用于创建 Pod 的规格：
+Pod 模板是用于在工作负载资源（Deployment、StatefulSet 等）中创建 Pod 的规范：
 
 ```yaml
 apiVersion: apps/v1
@@ -521,18 +510,18 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
   # Pod template ends
 ```
 
-### Pod 亲和性与反亲和性
+### Pod 亲和性和反亲和性
 
-Pod 亲和性和反亲和性是控制 Pod 被调度到哪些 Node 的规则：
+Pod 亲和性和反亲和性是控制 Pod 调度到哪些节点的规则：
 
-1. **Pod 亲和性**：调度到与特定 Pod 相同的 Node 或拓扑域
-2. **Pod 反亲和性**：调度到与特定 Pod 不同的 Node 或拓扑域
+1. **Pod 亲和性**：与特定 Pod 调度到同一节点或拓扑域
+2. **Pod 反亲和性**：与特定 Pod 调度到不同节点或拓扑域
 
 ```yaml
 apiVersion: v1
@@ -563,12 +552,12 @@ spec:
           topologyKey: "kubernetes.io/hostname"
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
 ```
 
-### Node 亲和性
+### 节点亲和性
 
-Node 亲和性是一种将 Pod 调度限制到特定 Node 的规则：
+节点亲和性是将 Pod 限制为调度到特定节点的规则：
 
 ```yaml
 apiVersion: v1
@@ -592,12 +581,14 @@ spec:
 
 ### Taint 和 Toleration
 
-Taint 应用于 Node 以阻止调度某些 Pod，而 Toleration 应用于 Pod 以允许在带有 Taint 的 Node 上调度：
+Taint 应用于节点以阻止某些 Pod 被调度，而 Toleration 应用于 Pod 以允许调度到带有 Taint 的节点：
 
-```yaml
+```bash
 # Apply taint to node
 kubectl taint nodes node1 key=value:NoSchedule
+```
 
+```yaml
 # Apply toleration to Pod
 apiVersion: v1
 kind: Pod
@@ -616,7 +607,7 @@ spec:
 
 ### 资源请求和限制
 
-为 Pod 中的容器设置资源请求和限制，对于高效使用集群资源并确保稳定性非常重要：
+为 Pod 中的容器设置资源请求和限制，对于高效使用集群资源和确保稳定性很重要：
 
 ```yaml
 apiVersion: v1
@@ -638,7 +629,7 @@ spec:
 
 ### Pod 安全上下文
 
-安全上下文定义 Pod 或容器级别的安全设置：
+安全上下文在 Pod 或容器级别定义安全设置：
 
 ```yaml
 apiVersion: v1
@@ -662,7 +653,7 @@ spec:
 
 ### Pod 优先级和抢占
 
-当集群资源不足时，Pod 优先级和抢占决定哪些 Pod 被调度、哪些 Pod 被抢占：
+Pod 优先级和抢占决定在集群资源不足时哪些 Pod 被调度、哪些 Pod 被抢占：
 
 ```yaml
 # Priority class definition
@@ -673,7 +664,7 @@ metadata:
 value: 1000000
 globalDefault: false
 description: "This priority class should be used for critical pods only."
-
+---
 # Pod using priority class
 apiVersion: v1
 kind: Pod
@@ -686,11 +677,9 @@ spec:
     image: myapp:1.0
 ```
 
-<span id="workload-resources-overview"></span>
+## 工作负载资源概述
 
-## 工作负载资源概览
-
-Kubernetes 提供多种用于管理 Pod 的工作负载资源。每种工作负载资源均针对特定的使用场景和要求而设计。
+Kubernetes 提供多种工作负载资源来管理 Pod。每种工作负载资源均针对特定使用场景和需求而设计。
 
 ### 工作负载资源类型
 
@@ -699,7 +688,7 @@ Kubernetes 中的主要工作负载资源有：
 1. **ReplicaSet**：维护指定数量的 Pod 副本
 2. **Deployment**：管理 ReplicaSet 以提供声明式更新
 3. **StatefulSet**：用于需要状态持久化的应用程序的资源
-4. **DaemonSet**：在所有 Node 上运行一个 Pod 副本
+4. **DaemonSet**：在所有节点上运行一份 Pod 副本
 5. **Job**：完成后终止的一次性任务
 6. **CronJob**：按计划定期运行 Job
 
@@ -707,15 +696,15 @@ Kubernetes 中的主要工作负载资源有：
 
 选择合适工作负载资源的标准：
 
-1. **状态持久化**：应用程序是否需要维护状态
-2. **执行模式**：是持续运行、一次性运行还是定期运行
-3. **部署要求**：滚动更新、蓝绿部署等的要求
-4. **Node 覆盖范围**：是否需要在所有 Node 上运行
-5. **可扩展性要求**：是否需要水平扩缩容
+1. **状态持久化**：应用程序是否需要保持状态
+2. **执行模式**：持续运行、一次性运行还是定期运行
+3. **部署需求**：滚动更新、蓝绿部署等要求
+4. **节点覆盖范围**：是否需要在所有节点上运行
+5. **可扩展性需求**：是否需要水平扩缩容
 
 ## ReplicaSet
 
-ReplicaSet 确保指定数量的 Pod 副本始终运行。如果 Pod 失败或被删除，ReplicaSet 会自动创建替代 Pod。
+ReplicaSet 确保始终运行指定数量的 Pod 副本。如果 Pod 失败或被删除，ReplicaSet 会自动创建替换 Pod。
 
 ### ReplicaSet 的主要功能
 
@@ -757,36 +746,36 @@ spec:
 
 ### ReplicaSet 操作
 
-1. **标签选择器匹配**：ReplicaSet 识别与标签选择器匹配的 Pod
+1. **标签选择器匹配**：ReplicaSet 识别匹配标签选择器的 Pod
 2. **检查当前状态**：验证当前运行的 Pod 数量
-3. **与期望状态比较**：将当前 Pod 数量与期望副本数进行比较
+3. **与期望状态比较**：将当前 Pod 数量与期望副本数比较
 4. **调整操作**：根据需要创建或删除 Pod
 
 ### ReplicaSet 与 Replication Controller
 
-ReplicaSet 是 Replication Controller 的后继者，并提供了更强大的标签选择器：
+ReplicaSet 是 Replication Controller 的后继者，并提供更强大的标签选择器：
 
-1. **Replication Controller**：仅支持基于相等性的选择器（例如，app=nginx）
-2. **ReplicaSet**：支持基于集合的选择器（例如，app in (nginx, apache)）
+1. **Replication Controller**：仅支持基于相等性的选择器（例如 app=nginx）
+2. **ReplicaSet**：支持基于集合的选择器（例如 app in (nginx, apache)）
 
 ### ReplicaSet 使用场景
 
-ReplicaSet 通常通过 Deployment 间接使用，而不是直接使用。不过，在以下情况下可以直接使用：
+ReplicaSet 通常通过 Deployment 间接使用，而非直接使用。但在以下情况可直接使用：
 
-1. **简单副本管理**：仅需维护 Pod 副本时
+1. **简单复制**：仅需维护 Pod 副本时
 2. **自定义更新**：需要自定义更新机制时
 3. **遗留支持**：支持遗留应用程序
 
 ## Deployment
 
-Deployment 管理 ReplicaSet 以提供 Pod 的声明式更新。Deployment 管理应用程序的滚动更新、回滚、扩缩容等操作。
+Deployment 管理 ReplicaSet，以便为 Pod 提供声明式更新。Deployment 为应用程序管理滚动更新、回滚、扩缩容等。
 
 ### Deployment 的主要功能
 
 1. **声明式更新**：声明期望状态，Deployment 将当前状态变更为期望状态
-2. **滚动更新**：在不中断服务的情况下更新应用程序
-3. **回滚**：轻松回滚到先前版本
-4. **扩缩容**：调整应用程序副本数
+2. **滚动更新**：无需停机即可更新应用程序
+3. **回滚**：可轻松回滚到先前版本
+4. **扩缩容**：调整应用程序副本数量
 5. **部署历史**：保留先前部署版本的记录
 
 ### Deployment 定义
@@ -815,7 +804,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -843,9 +832,9 @@ spec:
 
 Deployment 提供两种更新策略：
 
-1. **RollingUpdate**：逐步更新 Pod，实现不中断服务的部署（默认）
+1. **RollingUpdate**：逐步更新 Pod，以实现无停机部署（默认）
    - **maxSurge**：可在期望 Pod 数量之上创建的最大 Pod 数量
-   - **maxUnavailable**：更新期间不可用的最大 Pod 数量
+   - **maxUnavailable**：更新期间不可用 Pod 的最大数量
 
 2. **Recreate**：在创建新 Pod 前删除所有现有 Pod（会造成暂时停机）
 
@@ -855,16 +844,16 @@ Deployment 支持回滚到先前版本：
 
 ```bash
 # Check deployment history
-kubectl rollout history deployment/nginx-deployment
+kubectl -n workloads-demo rollout history deployment/nginx-deployment
 
 # Check details of specific version
-kubectl rollout history deployment/nginx-deployment --revision=2
+kubectl -n workloads-demo rollout history deployment/nginx-deployment --revision=2
 
 # Rollback to previous version
-kubectl rollout undo deployment/nginx-deployment
+kubectl -n workloads-demo rollout undo deployment/nginx-deployment
 
 # Rollback to specific version
-kubectl rollout undo deployment/nginx-deployment --to-revision=2
+kubectl -n workloads-demo rollout undo deployment/nginx-deployment --to-revision=2
 ```
 
 ### Deployment 扩缩容
@@ -873,7 +862,7 @@ Deployment 可以轻松扩缩容：
 
 ```bash
 # Imperative scaling
-kubectl scale deployment/nginx-deployment --replicas=5
+kubectl -n workloads-demo scale deployment/nginx-deployment --replicas=5
 
 # Declarative scaling (after modifying YAML file)
 kubectl apply -f deployment.yaml
@@ -885,34 +874,30 @@ kubectl apply -f deployment.yaml
 
 ```bash
 # Pause rollout
-kubectl rollout pause deployment/nginx-deployment
+kubectl -n workloads-demo rollout pause deployment/nginx-deployment
 
 # Apply multiple changes
-kubectl set image deployment/nginx-deployment nginx=nginx:1.22
-kubectl set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
+kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.4-alpine
+kubectl -n workloads-demo set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
 
 # Resume rollout
-kubectl rollout resume deployment/nginx-deployment
+kubectl -n workloads-demo rollout resume deployment/nginx-deployment
 ```
 
 ### Deployment 状态
 
-Deployment 可以具有以下状态：
-
-1. **Progressing**：正在创建新的 ReplicaSet 或进行扩缩容
-2. **Complete**：所有副本均已更新且可用
-3. **Failed**：部署期间发生错误（例如，拉取镜像失败、资源不足）
+Deployment Conditions 包括 `Progressing`、`Available` 和 `ReplicaFailure`。停滞的 rollout 可能报告原因为 `ProgressDeadlineExceeded` 的 `Progressing=False`；Kubernetes 不会自动回滚它。“Complete”描述的是 rollout 完成情况，而非一种 Condition 类型。
 
 ## StatefulSet
 
-StatefulSet 是一种用于需要状态持久化的应用程序的工作负载资源。它为每个 Pod 分配唯一标识符，并提供稳定的网络标识符和持久化存储。
+StatefulSet 是用于需要状态持久化的应用程序的工作负载资源。它为每个 Pod 分配唯一标识符，并提供稳定的网络标识符和持久存储。
 
 ### StatefulSet 的主要功能
 
-1. **稳定且唯一的网络标识符**：Pod 名称和主机名即使在重启后也会保留
-2. **稳定且持久化的存储**：即使 Pod 被重新调度，仍可访问相同的存储
-3. **顺序部署和扩缩容**：按顺序创建、更新和删除 Pod
-4. **顺序自动滚动更新**：按顺序更新 Pod
+1. **稳定且唯一的网络标识符**：Pod 名称和主机名即使在重启后也会保持
+2. **稳定且持久的存储**：即使 Pod 被重新调度，也可访问相同存储
+3. **顺序部署和扩缩容**：Pod 按顺序创建、更新和删除
+4. **顺序自动滚动更新**：Pod 按顺序更新
 
 ### StatefulSet 定义
 
@@ -937,7 +922,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
           name: web
@@ -962,11 +947,11 @@ StatefulSet 按以下格式为 Pod 分配唯一标识符：
 <StatefulSet name>-<ordinal index>
 ```
 
-例如，`web` StatefulSet 会创建 `web-0`、`web-1`、`web-2` 等 Pod。
+例如，`web` StatefulSet 创建 `web-0`、`web-1`、`web-2` 等 Pod。
 
 ### StatefulSet Headless Service
 
-StatefulSet 通常与 headless Service（clusterIP: None）一起使用。这会为每个 Pod 创建 DNS 记录：
+StatefulSet 通常与 headless Service（clusterIP: None）配合使用。这会为每个 Pod 创建 DNS 记录：
 
 ```yaml
 apiVersion: v1
@@ -984,7 +969,7 @@ spec:
     app: nginx
 ```
 
-这样，每个 Pod 都具有以下格式的 DNS 名称：
+这样，每个 Pod 都有以下格式的 DNS 名称：
 ```
 <Pod name>.<service name>.<namespace>.svc.cluster.local
 ```
@@ -993,7 +978,7 @@ spec:
 
 ### StatefulSet 存储
 
-StatefulSet 使用 `volumeClaimTemplates` 为每个 Pod 自动创建 Persistent Volume Claim（PVC）。即使 Pod 被重新调度，这些 PVC 也会保留。
+StatefulSet 使用 `volumeClaimTemplates` 自动为每个 Pod 创建 Persistent Volume Claim（PVC）。即使 Pod 被重新调度，这些 PVC 仍会保留。
 
 ### StatefulSet 更新策略
 
@@ -1018,88 +1003,42 @@ StatefulSet 适用于以下应用程序：
 3. **消息队列**：RabbitMQ 等
 4. **其他有状态应用程序**：文件服务器、会话存储等
 
-### StatefulSet 示例：MySQL 复制
+### StatefulSet 示例：持久化 MySQL 实例
+
+此示例展示一个 MySQL 实例的稳定身份和 PVC。它**不会**配置复制或自动数据库故障转移。增加 `replicas` 会创建相互独立的数据库。在相同 namespace 中创建具有 `password` 键的 `mysql-secret`，并提供默认 StorageClass（或显式设置合适的 class）。请使用经过测试的 MySQL 8.4 patch/digest；凭据变更需要数据库级别的轮换，而不只是更新 Secret。
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  labels:
-    app: mysql
 spec:
-  ports:
-  - port: 3306
-    name: mysql
   clusterIP: None
   selector:
     app: mysql
+  ports:
+  - name: mysql
+    port: 3306
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql
 spec:
+  serviceName: mysql
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
-  serviceName: mysql
-  replicas: 3
+  podManagementPolicy: OrderedReady
   template:
     metadata:
       labels:
         app: mysql
     spec:
-      initContainers:
-      - name: init-mysql
-        image: mysql:5.7
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          # Generate server ID based on Pod index
-          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-          ordinal=${BASH_REMATCH[1]}
-          echo [mysqld] > /mnt/conf.d/server-id.cnf
-          echo server-id=$((100 + $ordinal)) >> /mnt/conf.d/server-id.cnf
-          # Master or slave configuration
-          if [[ $ordinal -eq 0 ]]; then
-            echo [mysqld] > /mnt/conf.d/master.cnf
-            echo log-bin=mysql-bin >> /mnt/conf.d/master.cnf
-          else
-            echo [mysqld] > /mnt/conf.d/slave.cnf
-            echo super-read-only >> /mnt/conf.d/slave.cnf
-          fi
-        volumeMounts:
-        - name: conf
-          mountPath: /mnt/conf.d
-      - name: clone-mysql
-        image: gcr.io/google-samples/xtrabackup:1.0
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          # Only perform replication if not the first Pod
-          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-          ordinal=${BASH_REMATCH[1]}
-          if [[ $ordinal -eq 0 ]]; then
-            exit 0
-          fi
-          # Replicate data from previous Pod
-          ncat --recv-only mysql-$(($ordinal-1)).mysql 3307 | xbstream -x -C /var/lib/mysql
-          # Prepare backup
-          xtrabackup --prepare --target-dir=/var/lib/mysql
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
       containers:
       - name: mysql
-        image: mysql:5.7
+        image: mysql:8.4
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -1109,89 +1048,50 @@ spec:
         ports:
         - name: mysql
           containerPort: 3306
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
+        startupProbe:
+          tcpSocket:
+            port: mysql
+          periodSeconds: 10
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h 127.0.0.1 -u root -e "SELECT 1"'
+          periodSeconds: 10
+          timeoutSeconds: 5
         resources:
           requests:
             cpu: 500m
             memory: 1Gi
-        livenessProbe:
-          exec:
-            command: ["mysqladmin", "ping"]
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-        readinessProbe:
-          exec:
-            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          timeoutSeconds: 1
-      - name: xtrabackup
-        image: gcr.io/google-samples/xtrabackup:1.0
-        ports:
-        - name: xtrabackup
-          containerPort: 3307
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          cd /var/lib/mysql
-          # Start slave
-          if [[ -f xtrabackup_slave_info ]]; then
-            cat xtrabackup_slave_info | sed -E 's/;$//g' > change_master_to.sql
-            mysql -h 127.0.0.1 -e "$(cat change_master_to.sql); RESET SLAVE; START SLAVE;"
-          # If replicated from master
-          elif [[ -f xtrabackup_binlog_info ]]; then
-            [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-            ordinal=${BASH_REMATCH[1]}
-            [[ $ordinal -eq 0 ]] && exit 0
-            master_host=mysql-0.mysql
-            master_log_file=$(cat xtrabackup_binlog_info | awk '{print $1}')
-            master_log_pos=$(cat xtrabackup_binlog_info | awk '{print $2}')
-            mysql -h 127.0.0.1 -e "CHANGE MASTER TO MASTER_HOST='$master_host', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='$master_log_file', MASTER_LOG_POS=$master_log_pos; RESET SLAVE; START SLAVE;"
-          fi
-          # Start backup server
-          exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1"
+          limits:
+            memory: 2Gi
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-      volumes:
-      - name: conf
-        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: standard
+      accessModes: [ReadWriteOnce]
       resources:
         requests:
           storage: 10Gi
 ```
 
+对于复制和 leader 提升，请使用数据库 operator 或单独经过测试的复制 runbook。单独的 StatefulSet 不提供其中任一功能。[上游复制教程](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/)明确使用了不安全的教学默认值，并非生产配置。
+
 ## DaemonSet
 
-DaemonSet 确保在所有 Node（或特定 Node）上运行一个 Pod 副本。将 Node 添加到集群时，系统会自动添加 Pod；移除 Node 时，也会移除 Pod。
+DaemonSet 确保一份 Pod 副本在所有节点（或特定节点）上运行。节点添加到集群时会自动添加 Pod，节点移除时也会移除 Pod。
 
 ### DaemonSet 的主要功能
 
-1. **在所有 Node 上运行**：在集群中的所有 Node 上运行 Pod
-2. **Node 选择**：可通过 Node 选择器仅在特定 Node 上运行
-3. **自动部署**：添加新 Node 时自动部署 Pod
-4. **自动清理**：移除 Node 时自动清理 Pod
+1. **在所有节点运行**：在集群中的所有节点上运行 Pod
+2. **节点选择**：可通过节点选择器仅在特定节点上运行
+3. **自动部署**：添加新节点时自动部署 Pod
+4. **自动清理**：移除节点时自动清理 Pod
 
 ### DaemonSet 定义
 
@@ -1217,7 +1117,7 @@ spec:
         name: fluentd-elasticsearch
     spec:
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
       containers:
       - name: fluentd-elasticsearch
@@ -1231,31 +1131,28 @@ spec:
         volumeMounts:
         - name: varlog
           mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
           readOnly: true
       terminationGracePeriodSeconds: 30
       volumes:
       - name: varlog
         hostPath:
           path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
 ```
+
+对于 CRI runtime，请配置收集器解析 `/var/log/pods` 下的 CRI 日志（通常从 `/var/log/containers` 链接），而不是 Docker JSON 日志。收集器需要自己的源/输出配置和 RBAC。
 
 ### DaemonSet 更新策略
 
 DaemonSet 提供两种更新策略：
 
-1. **RollingUpdate**：按顺序更新 Pod（默认）
-   - **maxUnavailable**：更新期间不可用的最大 Pod 数量
+1. **RollingUpdate**：顺序更新 Pod（默认）
+   - **maxUnavailable**：更新期间不可用 Pod 的最大数量
 
 2. **OnDelete**：仅在删除 Pod 时更新
 
-### DaemonSet Node 选择
+### DaemonSet 节点选择
 
-可以将 DaemonSet 配置为仅在特定 Node 上运行：
+可以配置 DaemonSet 仅在特定节点上运行：
 
 ```yaml
 spec:
@@ -1267,14 +1164,14 @@ spec:
 
 ### DaemonSet Taint Toleration
 
-DaemonSet 可以设置 Toleration，以便在带有 Taint 的 Node 上运行：
+DaemonSet 可以设置 Toleration，以在带有 Taint 的节点上运行：
 
 ```yaml
 spec:
   template:
     spec:
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
 ```
 
@@ -1284,7 +1181,7 @@ DaemonSet 用于以下目的：
 
 1. **日志收集器**：Fluentd、Logstash 等
 2. **监控 Agent**：Prometheus Node Exporter、Datadog Agent 等
-3. **网络插件**：Calico、Cilium、Weave Net 等
+3. **网络插件**：Calico、Cilium 等
 4. **存储 Daemon**：Ceph、GlusterFS 等
 5. **安全 Agent**：Falco、Sysdig 等
 
@@ -1352,22 +1249,20 @@ spec:
           path: /
 ```
 
-<span id="jobs-and-cronjobs"></span>
-
 ## Job 和 CronJob
 
 Job 和 CronJob 是用于运行一次性或定期任务的工作负载资源。
 
 ### Job
 
-Job 创建一个或多个 Pod，并持续执行直到指定数量的 Pod 成功终止。
+Job 创建一个或多个 Pod，并持续执行，直到指定数量的 Pod 成功终止。
 
 #### Job 的主要功能
 
-1. **完成保证**：运行直到指定数量的 Pod 成功完成
+1. **完成情况跟踪**：跟踪成功的 Pod；重试限制或截止期限可使 Job 失败
 2. **并行执行**：可并行运行多个 Pod
 3. **重试**：自动重试失败的 Pod
-4. **完成后清理**：可选择在 Job 完成后清理 Pod
+4. **完成后清理**：可选地在 Job 完成后清理 Pod
 
 #### Job 定义
 
@@ -1402,8 +1297,8 @@ spec:
 
 Job 提供两种完成模式：
 
-1. **NonIndexed**：标准 Job 模式，当指定数量的 Pod 成功完成时 Job 完成
-2. **Indexed**：为每个 Pod 分配从 0 开始的索引，以执行特定索引范围的任务
+1. **NonIndexed**：标准 Job 模式，指定数量的 Pod 成功完成时 Job 完成
+2. **Indexed**：每个 Pod 被分配从 0 开始的索引，并为特定索引范围执行任务
 
 ```yaml
 apiVersion: batch/v1
@@ -1434,14 +1329,14 @@ Job 用于以下目的：
 
 ### CronJob
 
-CronJob 会按照指定的计划定期运行 Job。它们的工作方式类似于 Linux cron job。
+CronJob 根据指定计划定期运行 Job。它们的工作方式与 Linux cron job 类似。
 
 #### CronJob 的主要功能
 
 1. **计划执行**：使用 cron 表达式指定执行计划
-2. **Job 管理**：根据计划创建 Job
+2. **Job 管理**：按计划创建 Job
 3. **并发策略**：定义先前 Job 仍在运行时的行为
-4. **历史记录限制**：限制已完成 Job 的历史记录
+4. **历史限制**：限制已完成 Job 的历史记录
 
 #### CronJob 定义
 
@@ -1452,7 +1347,7 @@ metadata:
   name: hello
 spec:
   schedule: "*/1 * * * *"  # Run every minute
-  timeZone: "America/New_York"  # Timezone (Kubernetes 1.24+)
+  timeZone: "America/New_York"  # Timezone (stable since Kubernetes 1.27)
   concurrencyPolicy: Forbid  # Allow, Forbid, Replace
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -1479,7 +1374,7 @@ Cron 表达式采用以下格式：
 | +----------------- hour (0 - 23)
 | | +--------------- day of month (1 - 31)
 | | | +------------- month (1 - 12)
-| | | | +----------- day of week (0 - 6) (Sunday to Saturday; 7 is also Sunday)
+| | | | +----------- day of week (0 - 6) (Sunday to Saturday; use 0 for Sunday)
 | | | | |
 | | | | |
 * * * * *
@@ -1497,9 +1392,9 @@ Cron 表达式采用以下格式：
 
 CronJob 提供三种并发策略：
 
-1. **Allow**：可同时运行多个 Job（默认）
-2. **Forbid**：如果先前 Job 仍在运行，则跳过新 Job
-3. **Replace**：如果先前 Job 仍在运行，则用新 Job 替换它
+1. **Allow**：多个 Job 可同时运行（默认）
+2. **Forbid**：若先前 Job 仍在运行，跳过新 Job
+3. **Replace**：若先前 Job 仍在运行，用新 Job 替换它
 
 #### CronJob 使用场景
 
@@ -1519,7 +1414,8 @@ kind: CronJob
 metadata:
   name: database-backup
 spec:
-  schedule: "0 2 * * *"  # Run daily at 02:00
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -1547,8 +1443,13 @@ spec:
             - /bin/sh
             - -c
             - |
-              pg_dump -Fc > /backup/db-$(date +%Y%m%d-%H%M%S).dump
-              find /backup -type f -mtime +7 -delete  # Delete backups older than 7 days
+              set -eu
+              backup_file="/backup/db-$(date +%Y%m%d-%H%M%S).dump"
+              trap 'rm -f "$backup_file.partial"' EXIT
+              pg_dump -Fc > "$backup_file.partial"
+              pg_restore --list "$backup_file.partial" > /dev/null
+              mv "$backup_file.partial" "$backup_file"
+              find /backup -maxdepth 1 -type f -name 'db-*.dump' -mtime +7 -delete
             volumeMounts:
             - name: backup-volume
               mountPath: /backup
@@ -1559,10 +1460,12 @@ spec:
               claimName: backup-pvc
 ```
 
-## 结语
+CronJob 调度是近似的：Job 必须能够容忍重复执行。`Forbid` 仅适用于来自同一 CronJob 的 Job。历史限制删除的是 Job/Pod 对象，而不是备份文件。备份示例在 02:00 UTC 运行，且需要 `backup-pvc`、`postgres-secret` 和可访问的数据库；`pg_dump` 必须至少与 server 主版本一样新。当 `PGDATABASE` 与 `PGUSER` 不同时，请指定 `PGDATABASE`。请单独测试实际恢复。
 
-本文介绍了 Kubernetes 的基本构建块 Pod 和各种工作负载资源。我们从 Pod 的概念出发，探讨了 Deployment、StatefulSet、DaemonSet、Job 和 CronJob 等各种工作负载资源的特性和使用场景。这些资源各有独特的用途和功能，恰当使用它们能够实现高效的应用程序部署和管理。
+## 总结
+
+本文介绍了 Kubernetes 的基本构建块 Pod 和各种工作负载资源。我们从 Pod 概念开始，探讨了 Deployment、StatefulSet、DaemonSet、Job 和 CronJob 等多种工作负载资源的特性和使用场景。这些资源各有独特用途和功能，恰当使用它们可实现高效的应用程序部署和管理。
 
 ## 测验
 
-要检验您在本章所学的内容，请尝试 [Pod 和工作负载测验](../quizzes/core/02-pods-and-workloads-quiz.md)。
+要测试您在本章所学内容，请尝试 [Pod 和工作负载测验](../quizzes/core/02-pods-and-workloads-quiz.md)。

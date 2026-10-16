@@ -671,7 +671,7 @@ operator:
   rollOutPods: true
 ```
 
-AWS 예제의 `v2alpha1`은 검토한 1.18.3 CRD에서 계속 served 상태이며 `v2`도 지원됩니다. 이 예제 때문에 CRD를 교체할 필요는 없습니다.
+AWS 예제의 `v2alpha1`은 검토한 1.18.3 CRD에서 계속 served 상태이며 `v2`도 지원됩니다. 이 예제 때문에 CRD를 교체할 필요는 없습니다. Cilium 1.19 이상에서는 `cilium.io/v2` BGP CRD를 사용하세요(`v2alpha1` BGP CRD는 deprecated). 레거시 `CiliumBGPPeeringPolicy`는 1.19에서 제거되었습니다.
 
 아래는 hybrid node를 선택하고 peer advertisement selector와 advertisement label을 연결하며 Pod CIDR만 광고합니다.
 

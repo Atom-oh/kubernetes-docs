@@ -1,774 +1,630 @@
 # ネットワーク設定
 
-< [前へ: 前提条件](01-prerequisites.md) | [目次](./README.md) | [次へ: Air-Gap セットアップ](03-airgap-setup.md) >
+> **サポート対象バージョン**: EKS 1.36 の例。AWS が管理する Cilium 1.18.3-0 を参照バージョンとし、互換性のあるホスト/カーネルが必要です
+> **最終更新**: September 16, 2026
 
-> **サポート対象バージョン**: EKS 1.31+, nodeadm 0.1+ **最終更新**: February 23, 2026
+ルーティング、DNS、TLS、認証情報、アプリケーショントラフィックはそれぞれ個別に検証してください。これらの例は、モック化した Terraform provider を含むローカルのスキーマとフィクスチャで確認したものであり、AWS リソース、ルーター、ファイアウォール、稼働中の cluster は一切変更していません。図は AWS の概念に基づくこのリポジトリ独自の説明図であり、この構成に対する AWS 公式の検証結果ではありません。
 
-このドキュメントでは、CIDR 要件、ファイアウォールルール、AWS エンドポイントアクセス、セキュリティグループ設定、DNS セットアップなど、EKS Hybrid Nodes に必要なネットワーク設定について説明します。
-
-## ネットワークアーキテクチャの概要
-
-次の図は、VPC 設定、Transit Gateway ルーティング、リモート CIDR、ファイアウォールルールを含む、EKS Hybrid Nodes の完全なネットワークトポロジーを示しています。
-
-![クラスタの RemoteNodeNetwork および RemotePodNetwork 設定を、VPC 側とオンプレミス側の両方のルートテーブルに結び付ける Hybrid Nodes の前提条件図。](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+![Hybrid prerequisites and bidirectional routing.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
-### ネットワークハブとしての VPC
+**セキュリティチーム向けの補足資料:** [Hybrid Nodes のネットワーク分離レビュー](11-network-separation-security.md)では、control plane からオンプレミスへの新たな接続、endpoint の種類、権限とデータの境界、レビュー用の証跡について説明しています。プライベート接続だけではコンプライアンスは満たされません。
 
-EKS Hybrid Nodes 環境では、VPC は Hybrid Nodes と control plane 間の**ネットワークハブ**として機能します。
+## ネットワークアーキテクチャの概要
 
-* **ENI の配置**: EKS control plane は VPC サブネットに ENI (Elastic Network Interface) を配置します。これらの ENI は、control plane と Hybrid Nodes 間の通信エンドポイントです。
-* **トラフィック経路**: control plane と Hybrid Nodes 間のすべてのトラフィックは、これらの ENI を通過します。API server リクエスト、kubelet 通信、webhook 呼び出し、およびすべての control plane トラフィックが VPC ENI を経由します。
-* **ENI IP の変更**: クラスタ更新時（例: バージョンアップグレード）に、ENI が削除および再作成され、IP アドレスが変更される場合があります。ファイアウォールルールでは個別の IP ではなくサブネット CIDR 範囲を使用することで、これらの変更に柔軟に対応できます。
+control plane から hybrid node へのトラフィックと、プライベートな Kubernetes API トラフィックは cluster VPC のネットワーク経路を使用します。パブリック API endpoint に対する kubelet のトラフィックは、代わりに設定されたパブリック経路を使用します。「すべてのトラフィックは常に VPC の ENI を通過する」という説明は的が広すぎました。Direct Connect の public VIF、プライベート接続、パブリックインターネット経路はそれぞれ別個の選択肢です。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         AWS Cloud                                │
-│  ┌──────────────────┐    ┌──────────────────────────────────┐   │
-│  │  EKS Control     │    │              VPC                  │   │
-│  │     Plane        │◄──►│  ┌────────┐  ┌────────┐          │   │
-│  │                  │    │  │  ENI   │  │  ENI   │          │   │
-│  └──────────────────┘    │  │10.0.1.x│  │10.0.2.x│          │   │
-│                          │  └────┬───┘  └────┬───┘          │   │
-│                          └───────┼───────────┼──────────────┘   │
-└──────────────────────────────────┼───────────┼──────────────────┘
-                                   │           │
-                           VPN / Direct Connect
-                                   │           │
-┌──────────────────────────────────┼───────────┼──────────────────┐
-│                          On-Premises                             │
-│                    ┌─────────────┴───────────┴─────────────┐    │
-│                    │         Hybrid Nodes                   │    │
-│                    │   ┌─────────┐    ┌─────────┐          │    │
-│                    │   │  Node   │    │  Node   │          │    │
-│                    │   │ kubelet │    │ kubelet │          │    │
-│                    │   └─────────┘    └─────────┘          │    │
-│                    └───────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+EKS control plane の ENI/IP は変わる可能性があります。共有 VPC 内のすべての `Amazon EKS*` ENI をこの cluster のものとみなすのではなく、実際の cluster の所有関係と承認済みの control plane subnet 範囲を確認してください。
+
+読み取り専用の診断を行う前に、アカウントと Kubernetes context を固定します。
+
+```bash
+set -euo pipefail
+: "${EXPECTED_ACCOUNT_ID:?Set the intended account}"
+: "${AWS_REGION:?Set the cluster Region}"
+: "${CLUSTER_NAME:?Set the reviewed cluster name}"
+: "${KUBECONFIG:?Set the reviewed kubeconfig}"
+export KUBECONFIG KUBE_CONTEXT="${KUBE_CONTEXT:-$CLUSTER_NAME}"
+check_account() {
+  local account
+  account=$(aws sts get-caller-identity --region "$AWS_REGION" --query Account --output text) || return
+  test "$account" = "$EXPECTED_ACCOUNT_ID" || { printf 'Account mismatch.\n' >&2; return 1; }
+}
+check_account
+umask 077
+export WORK_DIR
+WORK_DIR=$(mktemp -d "$PWD/hybrid-network.XXXXXXXX")
+aws eks describe-cluster --region "$AWS_REGION" --name "$CLUSTER_NAME" --output json \
+  > "$WORK_DIR/cluster.json"
+endpoint=$(kubectl --context "$KUBE_CONTEXT" config view --minify \
+  -o jsonpath='{.clusters[0].cluster.server}')
+jq -e --arg endpoint "$endpoint" '
+  .cluster.status=="ACTIVE" and .cluster.endpoint==$endpoint and
+  (.cluster.remoteNetworkConfig.remoteNodeNetworks|length)>0
+' "$WORK_DIR/cluster.json" >/dev/null
+printf 'Private diagnostics: %s\n' "$WORK_DIR"
 ```
 
 ## CIDR 範囲の要件
 
-オンプレミスの node CIDR および pod CIDR は、次の要件を満たす必要があります。
+リモートの node/Pod ネットワークには、VPC および Kubernetes Service CIDR とは別の、重複しない IPv4 の **RFC1918 または CGNAT** アドレスを使用します。各リモート種別ごとに最大 15 個の CIDR がサポートされます。現行の EKS では、API ワークフローを通じて既存 cluster に対するリモートネットワーク設定が可能です。作成時のみの設定ではありません。
 
-* **RFC-1918 範囲**内であること: `10.0.0.0/8`、`172.16.0.0/12`、`192.168.0.0/16`
-* 次の CIDR と**重複しない**こと:
-  * 相互（node CIDR と pod CIDR）
-  * EKS クラスタの VPC CIDR
-  * Kubernetes Service IPv4 CIDR
+| ネットワークの挙動 | 意味 |
+|------------------|---------|
+| ルーティング可能な Pod IP | 承認済みのルートにより、クラウド/control plane 側のクライアントが Pod IP への接続を開始できます |
+| マスカレードされた egress | SNAT は Pod 側から開始した接続の戻り経路を提供できますが、新しい inbound 接続を自動的に許可するものではありません |
+| ルーティング不可能な Pod ネットワーク | クラウドから Pod への直接トラフィックには別のサポート経路が必要です。一般的な設計ではクラウドホスト型の webhook/API service を使用してください |
 
-`RemoteNodeNetwork` および `RemotePodNetwork` フィールドは、EKS クラスタの作成時に指定します。
-
-### ルーティング可能な Pod ネットワークとルーティング不可能な Pod ネットワーク
-
-| 設定                        | ルーティング可能（推奨）                              | ルーティング不可能               |
-| --------------------------- | ----------------------------------------------------- | -------------------------------- |
-| セットアップ                | BGP（推奨）、静的ルート、またはカスタムルーティング   | CNI egress masquerade/NAT        |
-| Webhook                     | Hybrid Nodes 上で実行可能                              | cloud nodes 上でのみ実行する必要あり |
-| Pod↔Pod 通信                | cloud↔オンプレミスの直接通信                          | 不可能                           |
-| AWS サービス統合            | ALB、Prometheus などが Hybrid workload に到達可能     | Hybrid workload に到達不可       |
-
-> **推奨**: Cilium BGP Control Plane を使用して pod CIDR をルーティング可能にしてください。
-
-***
+ルーティング不可能であることは、Pod が AWS API 呼び出しを一切開始できないという意味ではありません。hybrid/クラウド間の Pod 直接通信や hybrid でホストする webhook を使う場合は、実際の Pod ルートを用意してください。Gateway/proxy を使う代替案には別の要件があります。
 
 ## 必要なファイアウォールポート
 
-### クラスタ通信ポート
+| フロー | プロトコル / ポート |
+|------|-----------------|
+| Node/Pod → Kubernetes API | 実際の cluster endpoint への TCP443 |
+| control plane の ENI → kubelet | kubelet の認証/認可を伴う TCP10250 |
+| control plane → webhook または集約 API の Pod | 汎用的な「8443+」の範囲ではなく、設定された TCP ポート |
+| DNS クライアント ↔ 実際のリゾルバー | UDP/TCP53 とステートフルな戻りトラフィック |
+| 参加ノード間の Cilium VXLAN | UDP8472 |
+| Cilium Geneve（設計上選択され、かつサポートされる場合のみ） | UDP6081 |
+| Cilium のヘルスチェック | TCP4240 と、必要な ICMP/health endpoint への到達性 |
+| BGP node ↔ ルーター | 設定された active/passive ピアに対する TCP179 |
+| VPN gateway のトランスポート | UDP500/4500 と該当する IPsec トランスポート要件 |
+| アプリケーション / AWS 認証情報およびレジストリサービス | 実際の宛先とポートのみ |
 
-オンプレミスと AWS 間の通信のため、以下のポートを開放する必要があります。
+ファイアウォールの変更は、コネクショントラッキングと既存ルールを保持したまま、ネットワーク所有者を通じて適用してください。従来の広範な `10.0.0.0/8` INPUT ルール、範囲を絞らない DNS/VXLAN の許可、ルールセット全体の保存は、安全に再利用できるファイアウォールポリシーではありませんでした。認証なしの kubelet 10255 を、最近の任意要件として開放してはいけません。
 
-| ポート         | プロトコル   | 方向          | 用途                                                                     |
-| -------------- | ------------ | ------------- | ------------------------------------------------------------------------ |
-| 443            | TCP          | On-Prem → AWS | kubelet から Kubernetes API server                                       |
-| 443            | TCP          | On-Prem → AWS | Pods から Kubernetes API server                                          |
-| 10250          | TCP          | AWS → On-Prem | API server から kubelet                                                  |
-| Webhook ポート | TCP          | AWS → On-Prem | API server から webhook（ルーティング可能な pod ネットワークのみ）       |
-| 53             | TCP/UDP      | 双方向        | CoreDNS（pod CIDR ↔ pod CIDR。CoreDNS が cloud で実行される場合は VPC CIDR を含める） |
-| App ポート     | ユーザー定義 | 双方向        | Pod 間のアプリケーション通信                                              |
+## AWS endpoint へのアクセス
 
-### VPN ポート（Site-to-Site VPN を使用する場合）
+**EKS 管理 API の PrivateLink endpoint は、Kubernetes API server の endpoint ではありません。**
 
-| ポート | プロトコル | 方向   | 用途                        |
-| ------ | ---------- | ------ | --------------------------- |
-| 500    | UDP        | 双方向 | IKE (Internet Key Exchange) |
-| 4500   | UDP        | 双方向 | IPSec NAT-T                 |
+| `com.amazonaws.<region>.*` のサービスサフィックス | 用途 / 必要になる場面 |
+|------------------------------------------------|-----------------------|
+| `eks` | DescribeCluster などの AWS EKS 管理 API 呼び出し |
+| `eks-auth` | EKS Pod Identity を使用する場合 |
+| `ecr.api`, `ecr.dkr` | プライベートな ECR API/レジストリ。イメージレイヤーには S3 へのアクセスも必要です |
+| `s3` | プライベートな S3 アクセス。オンプレミスからは VPC gateway endpoint を直接利用できません |
+| `ssm`, 該当する SSM メッセージング系サービス | SSM の認証情報/管理機能 |
+| `rolesanywhere` | IAM Roles Anywhere をプロバイダーとして使用する場合の認証情報 |
+| `sts` | 実際のクライアントによる STS/IRSA/AssumeRole 呼び出し。ローカルでの EKS トークン署名自体はクライアントの STS ネットワークリクエストではありません |
+| `logs`, `monitoring`, その他選択したサービス | 選択したエージェント/ワークロードがそれらを呼び出す場合のみ |
+| `oidc-eks` | 現行の EKS OIDC discovery/JWKS 用 PrivateLink サービス（利用可能なリージョンで） |
+| `eks-proxy` | AWS コンソールのリソース表示用。公開されたアプリケーション向け SDK/API ではありません |
 
-### Cilium CNI ポート
+対象リージョンでサービスが利用可能かを確認してください。プライベートな ECR endpoint によって、**public ECR**、CloudFront、任意のパッケージリポジトリがプライベートになるわけではありません。たとえば public ECR にある AWS の Cilium OCI チャートには、承認済みで到達可能な配布経路またはミラーが必要です。
 
-CNI として Cilium を使用する場合に必要となる追加ポート:
+OIDC discovery/JWKS は匿名で公開される公開鍵情報です。`oidc-eks` はデフォルトのフルアクセス endpoint policy のみを受け付けます。到達性は SG/ルーティングで制御し、role の認可は IAM 信頼ポリシーの `aud`/`sub` 条件で制御してください。STS は IRSA トークンを AWS 内部で検証するため、この VPC endpoint とは無関係です。
 
-| ポート | プロトコル | 方向   | 用途                                |
-| ------ | ---------- | ------ | ----------------------------------- |
-| 8472   | UDP        | 双方向 | VXLAN overlay（デフォルトの tunnel mode） |
-| 4240   | TCP        | 双方向 | ヘルスチェック                      |
-
-> **注記**: Cilium および Calico の詳細なファイアウォール要件については、各プロジェクトの公式ドキュメントを参照してください。
-
-### iptables ルールの例
-
-```bash
-# Allow Kubernetes API server communication
-sudo iptables -A INPUT -p tcp --dport 443 -s 10.0.0.0/8 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp --dport 443 -d 10.0.0.0/8 -j ACCEPT
-
-# Allow Kubelet API
-sudo iptables -A INPUT -p tcp --dport 10250 -s 10.0.0.0/8 -j ACCEPT
-
-# Allow Cilium VXLAN
-sudo iptables -A INPUT -p udp --dport 8472 -j ACCEPT
-sudo iptables -A OUTPUT -p udp --dport 8472 -j ACCEPT
-
-# Allow Cilium health check
-sudo iptables -A INPUT -p tcp --dport 4240 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp --dport 4240 -j ACCEPT
-
-# Allow DNS
-sudo iptables -A INPUT -p tcp --dport 53 -j ACCEPT
-sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
-sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-
-# Save rules
-sudo iptables-save | sudo tee /etc/iptables/rules.v4
-```
-
-***
-
-## オンプレミスのアウトバウンドアクセス要件
-
-### インストールおよびアップグレードに必要なエンドポイント
-
-nodeadm のインストールおよびアップグレード中、オンプレミスノードから HTTPS (443) 経由で次の AWS エンドポイントに到達可能である必要があります。
-
-| コンポーネント          | URL                                                     | 注記                                  |
-| ----------------------- | ------------------------------------------------------- | ------------------------------------- |
-| EKS node artifact (S3)  | `https://hybrid-assets.eks.amazonaws.com`               | nodeadm バイナリと依存関係            |
-| EKS サービス            | `https://eks.<region>.amazonaws.com`                    | クラスタ情報の検索                    |
-| ECR サービス            | `https://api.ecr.<region>.amazonaws.com`                | コンテナイメージの pull                |
-| SSM バイナリ            | `https://amazon-ssm-<region>.s3.<region>.amazonaws.com` | SSM credential provider 使用時        |
-| SSM サービス            | `https://ssm.<region>.amazonaws.com`                    | SSM credential provider 使用時        |
-| IAM Roles Anywhere      | `https://rolesanywhere.<region>.amazonaws.com`          | IAM RA credential provider 使用時     |
-| OS package manager      | リージョン固有のエンドポイント                          | システムパッケージのインストール      |
-
-### 継続運用に必要なエンドポイント
-
-| 用途                      | ソース    | 宛先                  | 注記                         |
-| ------------------------- | --------- | --------------------- | ---------------------------- |
-| Kubelet → API server      | Node CIDR | EKS cluster IPs       | ポート 443                   |
-| Pod → API server          | Pod CIDR  | EKS cluster IPs       | ポート 443                   |
-| SSM credential refresh    | Node CIDR | SSM endpoint          | 5 分間の heartbeat 間隔      |
-| IAM RA credential refresh | Node CIDR | IAM Anywhere endpoint | 定期的な refresh             |
-| EKS Pod Identity          | Node CIDR | EKS Auth endpoint     | Pod Identity 使用時          |
-
-### EKS クラスタ Network Interface IP の確認
-
-ファイアウォールルールで EKS クラスタ IP が必要な場合、次のコマンドを使用します。
+Roles Anywhere の CreateSession 向け endpoint policy では、評価が証明書認証より先に行われるため、principal は `*` にする必要があります。ドキュメントに従い、承認済みの trust anchor リソースとサポートされる証明書の条件で制限してください。これら異なるサービス間で、汎用的な endpoint policy を1つ流用してはいけません。endpoint policy は endpoint のトラフィックをフィルタリングするものであり、IAM/role の信頼関係を置き換えるものでも、パブリックなサービス endpoint を全体的に無効化するものでもありません。
 
 ```bash
-aws ec2 describe-network-interfaces \
-  --filters "Name=vpc-id,Values=<VPC_ID>" "Name=description,Values=Amazon EKS*" \
-  --query 'NetworkInterfaces[].PrivateIpAddress' \
-  --output text
+check_account
+vpc_id=$(jq -er '.cluster.resourcesVpcConfig.vpcId' "$WORK_DIR/cluster.json")
+aws ec2 describe-vpc-endpoints --region "$AWS_REGION" \
+  --filters "Name=vpc-id,Values=$vpc_id" --output json |
+  jq '[.VpcEndpoints[]|{id:.VpcEndpointId,service:.ServiceName,type:.VpcEndpointType,
+      state:.State,privateDNS:.PrivateDnsEnabled,dnsOptions:.DnsOptions,
+      subnets:.SubnetIds,groups:.Groups,dnsEntries:.DnsEntries}]'
 ```
 
-> **注記**: EKS network interface はクラスタ更新時（例: バージョンアップグレード）に削除および再作成される場合があります。制約されたサブネットサイズを使用すると IP 範囲を予測可能にでき、ファイアウォール設定が簡素化されます。
+### S3 のプライベート DNS とアーティファクト配布
 
-***
+S3 の **interface endpoint はプライベート DNS をサポートします**。inbound Resolver 限定のオプションを使うと、オンプレミスからのクエリは interface endpoint 経由になり、VPC 内のトラフィックは必須の S3 gateway endpoint を使用します。このオプションを有効にしている間は gateway endpoint を維持してください。あるいはオプションを解除して、対象となるすべての S3 トラフィックに interface endpoint を使用することもできます。
 
-## VPC Private Endpoint（Air-Gap / プライベート接続）
+プライベート DNS は TLS の書き換えではありません。`hybrid-assets.eks.amazonaws.com` を S3 endpoint にマッピングする PHZ/CNAME を作っても、S3 が CloudFront ホスト名の証明書やオブジェクト/Host のルーティング動作を得るわけではありません。そのようなミラーを動かすために TLS 検証を無効化してはいけません。サポートされているアーティファクト準備/クライアント設定の経路、独自のホスト名と証明書を持つ承認済みミラー、または検証済みイメージへの依存関係のプリインストールを使用してください。
 
-オンプレミスノードがインターネットアクセスなしで VPN または Direct Connect 経由で AWS に接続する場合、AWS サービスにプライベートに到達するために **VPC Interface Endpoint** (PrivateLink) を設定する必要があります。
+## VPC プライベート endpoint（インターネット制限環境での接続） {#vpc-private-endpoints-air-gap-private-connectivity}
 
-### VPC Endpoint が必要な理由
+ここでの「エアギャップ」とは、インターネットアクセスを制限しつつ必要な AWS 接続は確保した状態を意味し、完全に切り離された cluster ではありません。
 
-通常の AWS API 呼び出しはパブリックインターネットを経由します。air-gapped またはプライベートのみの環境にはインターネット経路がないため、AWS サービスに到達できません。VPC Interface Endpoint はプライベート IP アドレスを持つ ENI (Elastic Network Interface) を VPC 内に作成し、オンプレミスノードが VPN/Direct Connect 経由で AWS API に直接到達できるようにします。
+以下の完全な Terraform の例は、既存の VPC、endpoint 用 subnet、TGW を使用します。VPN/DX の回線、TGW アタッチメント、オンプレミス側のルート、EKS のプライベート DNS 設定は作成しません。VPC の DNS サポート/ホスト名の有効化と、実際に異なる AZ であることを確認してください。subnet ID が2つ異なるだけでは AZ 分散の証明にはなりません。
 
-```
-On-premises node
-  → VPN / Direct Connect
-    → VPC Interface Endpoint ENI (private IP)
-      → AWS Service (EKS, ECR, STS, SSM, etc.)
-```
-
-> **重要なポイント**: Gateway endpoint（S3 および DynamoDB 用）は VPC ルートテーブルにルートを追加するだけであり、VPN/Direct Connect 経由で**オンプレミスネットワークから到達できません**。オンプレミスから S3 にアクセスするには、**Interface type** の S3 endpoint を使用する必要があります。
-
-### 必要な Interface VPC Endpoint
-
-| サービス     | Endpoint Service Name                | Private DNS | 用途                                                 |
-| ------------ | ------------------------------------ | ----------- | ---------------------------------------------------- |
-| EKS          | `com.amazonaws.<region>.eks`         | Yes         | Kubernetes API server 通信                           |
-| EKS Auth     | `com.amazonaws.<region>.eks-auth`    | Yes         | Pod Identity 認証                                    |
-| ECR API      | `com.amazonaws.<region>.ecr.api`     | Yes         | イメージメタデータのクエリ                           |
-| ECR DKR      | `com.amazonaws.<region>.ecr.dkr`     | Yes         | イメージ pull (Docker registry)                      |
-| S3           | `com.amazonaws.<region>.s3`          | —           | イメージレイヤー、nodeadm artifact（**Interface type**） |
-| STS          | `com.amazonaws.<region>.sts`         | Yes         | IAM credential exchange                              |
-| SSM          | `com.amazonaws.<region>.ssm`         | Yes         | SSM credential provider 使用時                       |
-| SSM Messages | `com.amazonaws.<region>.ssmmessages` | Yes         | SSM Session Manager 通信                             |
-
-> **注記**: S3 Interface endpoint は `private_dns_enabled` を自動的にはサポートしません。S3 ドメインに対してプライベート DNS 解決が必要な場合、別途 Private Hosted Zone (PHZ) を設定する必要があります。`hybrid-assets.eks.amazonaws.com` のプライベートミラーリングパターンについては、[Air-Gap セットアップ - hybrid-assets Private Mirroring (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/03-airgap-setup#dns-and-private-endpoint-requirements) を参照してください。
-
-### Terraform による VPC Endpoint の作成
-
-#### Security Group
+置き換えを計画する前に、元のインフラストラクチャ所有者を通じて既存リソースを import/引き継いでください。デフォルトの endpoint セットは SSM を例示したものです。選択したプロバイダー/ワークロードに合わせて変更してください。endpoint と Resolver の ENI には課金が発生します。provider のアカウントガードと範囲を絞った ingress は意図的なものです。応答トラフィックは SG のステートフルな追跡を利用します。
 
 ```hcl
-resource "aws_security_group" "vpc_endpoints" {
-  name_prefix = "vpc-endpoints-"
+terraform {
+  required_version = ">= 1.9, < 2.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.64.0"
+    }
+  }
+}
+
+provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.expected_account_id]
+}
+
+variable "expected_account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.expected_account_id))
+    error_message = "Set the reviewed 12-digit account ID."
+  }
+}
+
+variable "region" {
+  type = string
+}
+
+variable "name_prefix" {
+  type    = string
+  default = "hybrid-network"
+}
+
+variable "vpc_id" {
+  type = string
+}
+
+variable "endpoint_subnet_ids" {
+  type = set(string)
+  validation {
+    condition     = length(var.endpoint_subnet_ids) >= 2
+    error_message = "Provide subnets in at least two verified Availability Zones."
+  }
+}
+
+variable "s3_gateway_route_table_ids" {
+  type = set(string)
+  validation {
+    condition     = length(var.s3_gateway_route_table_ids) > 0
+    error_message = "Provide the reviewed VPC route tables for the S3 gateway endpoint."
+  }
+}
+
+variable "client_ipv4_cidrs" {
+  type = set(string)
+  validation {
+    condition = length(var.client_ipv4_cidrs) > 0 && alltrue([
+      for c in var.client_ipv4_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"
+    ])
+    error_message = "Provide scoped IPv4 CIDRs for the actual VPC/on-premises clients."
+  }
+}
+
+variable "onprem_dns_client_cidrs" {
+  type = set(string)
+  validation {
+    condition = length(var.onprem_dns_client_cidrs) > 0 && alltrue([
+      for c in var.onprem_dns_client_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"
+    ])
+    error_message = "Scope inbound DNS to the actual on-premises resolvers."
+  }
+}
+
+variable "onprem_dns_servers" {
+  type = set(string)
+  validation {
+    condition = length(var.onprem_dns_servers) > 0 && alltrue([
+      for ip in var.onprem_dns_servers : can(cidrnetmask("${ip}/32"))
+    ])
+    error_message = "Provide actual IPv4 addresses of the on-premises DNS servers."
+  }
+}
+
+variable "onprem_domain" {
+  type    = string
+  default = "corp.example.internal"
+  validation {
+    condition = length(var.onprem_domain) <= 253 && length(split(".", trimsuffix(var.onprem_domain, "."))) >= 2 && alltrue([
+      for label in split(".", trimsuffix(var.onprem_domain, ".")) :
+      length(label) <= 63 && can(regex("^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$", label))
+    ]) && !can(regex("(^|\\.)(amazonaws\\.com|api\\.aws|cluster\\.local)\\.?$", lower(var.onprem_domain)))
+    error_message = "Use a specific owned DNS suffix; do not forward root, AWS or Kubernetes service zones back to on-premises."
+  }
+}
+
+variable "interface_services" {
+  type    = set(string)
+  default = ["eks", "ecr.api", "ecr.dkr", "ssm", "ssmmessages"]
+  validation {
+    condition     = !contains(var.interface_services, "s3")
+    error_message = "S3 has its own gateway/interface configuration below."
+  }
+}
+
+variable "endpoint_policy_json" {
+  type    = map(string)
+  default = {}
+  validation {
+    condition = !contains(keys(var.endpoint_policy_json), "oidc-eks") && alltrue([
+      for policy in values(var.endpoint_policy_json) : can(jsondecode(policy))
+    ])
+    error_message = "Use valid service-specific JSON policies; oidc-eks supports only its default full-access policy."
+  }
+}
+
+variable "controlplane_route_table_ids" {
+  type = set(string)
+}
+
+variable "remote_ipv4_cidrs" {
+  type = set(string)
+  validation {
+    condition = alltrue([
+      for c in var.remote_ipv4_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"
+    ])
+    error_message = "Use reviewed remote node, Pod and required DNS/service IPv4 CIDRs."
+  }
+}
+
+variable "existing_transit_gateway_id" {
+  type = string
+}
+```
+```hcl
+# Import/adopt existing resources through their owner before using this example.
+# The existing VPC must have DNS support/hostnames and working hybrid routes.
+resource "aws_security_group" "endpoints" {
+  name_prefix = "${var.name_prefix}-vpce-"
+  description = "HTTPS clients for interface endpoints"
   vpc_id      = var.vpc_id
-  description = "Security group for VPC Interface Endpoints"
-
-  ingress {
-    description = "HTTPS from VPC and on-premises"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [
-      var.vpc_cidr,           # VPC internal traffic
-      var.remote_node_cidr,   # On-premises node CIDR
-      var.remote_pod_cidr     # On-premises pod CIDR
-    ]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "vpc-endpoints-sg"
-  }
-}
-```
-
-#### Interface VPC Endpoint
-
-```hcl
-# List of Interface endpoints to create
-locals {
-  interface_endpoints = {
-    eks          = "com.amazonaws.${var.region}.eks"
-    eks-auth     = "com.amazonaws.${var.region}.eks-auth"
-    ecr-api      = "com.amazonaws.${var.region}.ecr.api"
-    ecr-dkr      = "com.amazonaws.${var.region}.ecr.dkr"
-    sts          = "com.amazonaws.${var.region}.sts"
-    ssm          = "com.amazonaws.${var.region}.ssm"
-    ssmmessages  = "com.amazonaws.${var.region}.ssmmessages"
-  }
 }
 
-resource "aws_vpc_endpoint" "interface" {
-  for_each = local.interface_endpoints
+resource "aws_vpc_security_group_ingress_rule" "endpoint_https" {
+  for_each          = var.client_ipv4_cidrs
+  security_group_id = aws_security_group.endpoints.id
+  cidr_ipv4         = each.value
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+}
 
+resource "aws_vpc_endpoint" "service" {
+  for_each            = var.interface_services
   vpc_id              = var.vpc_id
-  service_name        = each.value
+  service_name        = "com.amazonaws.${var.region}.${each.value}"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
-
-  subnet_ids         = var.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
-
-  tags = {
-    Name = "vpce-${each.key}"
-  }
+  subnet_ids          = var.endpoint_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  policy              = lookup(var.endpoint_policy_json, each.key, null)
+  tags                = { Name = "${var.name_prefix}-${each.key}" }
 }
 
-# S3 Interface endpoint (Interface type, not Gateway)
+# S3 inbound-Resolver-only private DNS requires this gateway endpoint.
+resource "aws_vpc_endpoint" "s3_gateway" {
+  vpc_id            = var.vpc_id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = var.s3_gateway_route_table_ids
+  tags             = { Name = "${var.name_prefix}-s3-gateway" }
+}
+
 resource "aws_vpc_endpoint" "s3_interface" {
   vpc_id              = var.vpc_id
   service_name        = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type   = "Interface"
-  private_dns_enabled = false  # S3 does not support auto Private DNS for Interface type
-
-  subnet_ids         = var.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
-
-  tags = {
-    Name = "vpce-s3-interface"
+  private_dns_enabled = true
+  subnet_ids          = var.endpoint_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  dns_options {
+    private_dns_only_for_inbound_resolver_endpoint = true
   }
+  depends_on = [aws_vpc_endpoint.s3_gateway]
+  tags       = { Name = "${var.name_prefix}-s3-interface" }
+}
+
+resource "aws_security_group" "dns_inbound" {
+  name_prefix = "${var.name_prefix}-dns-in-"
+  description = "DNS from on-premises resolvers"
+  vpc_id      = var.vpc_id
+}
+
+resource "aws_security_group" "dns_outbound" {
+  name_prefix = "${var.name_prefix}-dns-out-"
+  description = "DNS to reviewed on-premises resolvers"
+  vpc_id      = var.vpc_id
+}
+
+locals {
+  inbound_dns_rules = {
+    for pair in setproduct(var.onprem_dns_client_cidrs, toset(["tcp", "udp"])) :
+    "${pair[0]}-${pair[1]}" => { cidr = pair[0], protocol = pair[1] }
+  }
+  outbound_dns_rules = {
+    for pair in setproduct(var.onprem_dns_servers, toset(["tcp", "udp"])) :
+    "${pair[0]}-${pair[1]}" => { ip = pair[0], protocol = pair[1] }
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "dns" {
+  for_each          = local.inbound_dns_rules
+  security_group_id = aws_security_group.dns_inbound.id
+  cidr_ipv4         = each.value.cidr
+  ip_protocol       = each.value.protocol
+  from_port         = 53
+  to_port           = 53
+}
+
+resource "aws_vpc_security_group_egress_rule" "dns" {
+  for_each          = local.outbound_dns_rules
+  security_group_id = aws_security_group.dns_outbound.id
+  cidr_ipv4         = "${each.value.ip}/32"
+  ip_protocol       = each.value.protocol
+  from_port         = 53
+  to_port           = 53
+}
+
+resource "aws_route53_resolver_endpoint" "inbound" {
+  name                   = "${var.name_prefix}-inbound"
+  direction              = "INBOUND"
+  resolver_endpoint_type = "IPV4"
+  security_group_ids     = [aws_security_group.dns_inbound.id]
+  dynamic "ip_address" {
+    for_each = var.endpoint_subnet_ids
+    content {
+      subnet_id = ip_address.value
+    }
+  }
+}
+
+resource "aws_route53_resolver_endpoint" "outbound" {
+  name                   = "${var.name_prefix}-outbound"
+  direction              = "OUTBOUND"
+  resolver_endpoint_type = "IPV4"
+  security_group_ids     = [aws_security_group.dns_outbound.id]
+  dynamic "ip_address" {
+    for_each = var.endpoint_subnet_ids
+    content {
+      subnet_id = ip_address.value
+    }
+  }
+}
+
+resource "aws_route53_resolver_rule" "onprem" {
+  domain_name          = var.onprem_domain
+  name                 = "${var.name_prefix}-onprem"
+  rule_type            = "FORWARD"
+  resolver_endpoint_id = aws_route53_resolver_endpoint.outbound.id
+  dynamic "target_ip" {
+    for_each = var.onprem_dns_servers
+    content {
+      ip   = target_ip.value
+      port = 53
+    }
+  }
+}
+
+resource "aws_route53_resolver_rule_association" "onprem" {
+  resolver_rule_id = aws_route53_resolver_rule.onprem.id
+  vpc_id           = var.vpc_id
+}
+
+output "inbound_resolver_ips" {
+  value = [for address in aws_route53_resolver_endpoint.inbound.ip_address : address.ip]
+}
+
+# VPC return routes only. Existing TGW attachment routes/propagation and
+# on-premises routing must be managed separately by their infrastructure owner.
+locals {
+  remote_routes = {
+    for pair in setproduct(var.controlplane_route_table_ids, var.remote_ipv4_cidrs) :
+    "${pair[0]}-${pair[1]}" => { table = pair[0], cidr = pair[1] }
+  }
+}
+
+resource "aws_route" "hybrid" {
+  for_each               = local.remote_routes
+  route_table_id         = each.value.table
+  destination_cidr_block = each.value.cidr
+  transit_gateway_id     = var.existing_transit_gateway_id
+  # A VGW topology uses gateway_id instead; do not set both target fields.
 }
 ```
 
-### AWS CLI による VPC Endpoint の作成
-
-```bash
-# 1. Create security group for VPC endpoints
-SG_ID=$(aws ec2 create-security-group \
-  --group-name vpc-endpoints-sg \
-  --description "Security group for VPC Interface Endpoints" \
-  --vpc-id <VPC_ID> \
-  --query 'GroupId' --output text)
-
-# Allow port 443 inbound
-aws ec2 authorize-security-group-ingress \
-  --group-id $SG_ID \
-  --ip-permissions '[
-    {"IpProtocol": "tcp", "FromPort": 443, "ToPort": 443,
-     "IpRanges": [
-       {"CidrIp": "<VPC_CIDR>", "Description": "VPC internal"},
-       {"CidrIp": "<REMOTE_NODE_CIDR>", "Description": "On-prem nodes"},
-       {"CidrIp": "<REMOTE_POD_CIDR>", "Description": "On-prem pods"}
-     ]}
-  ]'
-
-# 2. Create Interface VPC endpoint (EKS example)
-aws ec2 create-vpc-endpoint \
-  --vpc-id <VPC_ID> \
-  --vpc-endpoint-type Interface \
-  --service-name com.amazonaws.<REGION>.eks \
-  --subnet-ids <SUBNET_ID_1> <SUBNET_ID_2> \
-  --security-group-ids $SG_ID \
-  --private-dns-enabled
-
-# 3. Create remaining service endpoints
-for SERVICE in eks-auth ecr.api ecr.dkr sts ssm ssmmessages; do
-  echo "Creating endpoint for: $SERVICE"
-  aws ec2 create-vpc-endpoint \
-    --vpc-id <VPC_ID> \
-    --vpc-endpoint-type Interface \
-    --service-name com.amazonaws.<REGION>.$SERVICE \
-    --subnet-ids <SUBNET_ID_1> <SUBNET_ID_2> \
-    --security-group-ids $SG_ID \
-    --private-dns-enabled
-done
-
-# 4. S3 Interface endpoint (without private-dns-enabled)
-aws ec2 create-vpc-endpoint \
-  --vpc-id <VPC_ID> \
-  --vpc-endpoint-type Interface \
-  --service-name com.amazonaws.<REGION>.s3 \
-  --subnet-ids <SUBNET_ID_1> <SUBNET_ID_2> \
-  --security-group-ids $SG_ID
-
-# 5. Verify created endpoints
-aws ec2 describe-vpc-endpoints \
-  --filters "Name=vpc-id,Values=<VPC_ID>" \
-  --query 'VpcEndpoints[].{ID:VpcEndpointId, Service:ServiceName, State:State}' \
-  --output table
-```
-
-### オンプレミス DNS 解決フロー
-
-VPC endpoint の `private_dns_enabled` オプションは VPC 内でのみ機能します。オンプレミスノードが AWS サービスドメイン（例: `eks.ap-northeast-2.amazonaws.com`）を VPC endpoint のプライベート IP に解決するには、DNS クエリを Route 53 Resolver Inbound Endpoint 経由でルーティングする必要があります。
-
-```
-On-premises node
-  → On-premises DNS server (conditional forwarding)
-    → Route 53 Resolver Inbound Endpoint (in VPC)
-      → Route 53 resolves via Private Hosted Zone / VPC DNS
-        → Returns VPC Endpoint ENI private IP
-          → On-premises node reaches ENI directly over VPN/DX
-```
-
-#### オンプレミス DNS での条件付きフォワーディングの設定
-
-オンプレミス DNS server（例: BIND、Windows DNS、dnsmasq）を設定し、AWS ドメインを Route 53 Inbound Endpoint にフォワードします。
-
-```
-# BIND example (/etc/named.conf)
-zone "amazonaws.com" {
-    type forward;
-    forward only;
-    forwarders {
-        10.0.1.10;    # Route 53 Inbound Endpoint IP #1
-        10.0.2.10;    # Route 53 Inbound Endpoint IP #2
-    };
-};
-
-zone "eks.amazonaws.com" {
-    type forward;
-    forward only;
-    forwarders {
-        10.0.1.10;
-        10.0.2.10;
-    };
-};
-```
-
-> **注記**: Route 53 Resolver Inbound Endpoint の作成については、このドキュメントの [DNS 設定](02-network-configuration.md#dns-configuration) セクションを参照してください。VPC endpoint を設定した後は、必ず `nslookup eks.<region>.amazonaws.com` でプライベート IP が返されることを確認してください。
-
-***
-
-## AWS Security Group 設定
-
-EKS はクラスタ作成時に security group のインバウンドルールを自動設定しますが、アウトバウンドルールは自動作成されません（security group はデフォルトで全アウトバウンドを許可します）。
-
-### 自動作成されるインバウンドルール
-
-| プロトコル | ポート | ソース              | 用途                                    |
-| ---------- | ------ | ------------------- | --------------------------------------- |
-| TCP        | 443    | Remote node CIDR(s) | kubelet から Kubernetes API             |
-| TCP        | 443    | Remote pod CIDR(s)  | Pods から Kubernetes API（非 NAT CNI）  |
-
-### 手動で追加するアウトバウンドルール
-
-| プロトコル | ポート         | 宛先                | 用途                    |
-| ---------- | -------------- | ------------------- | ----------------------- |
-| TCP        | 10250          | Remote node CIDR(s) | API server から kubelet |
-| TCP        | Webhook ポート | Remote pod CIDR(s)  | API server から webhook |
-
-```bash
-# Example: Create a custom security group
-aws ec2 create-security-group \
-  --group-name hybrid-nodes-sg \
-  --description "Security group for EKS Hybrid Nodes" \
-  --vpc-id <VPC_ID>
-
-# Add inbound rules
-aws ec2 authorize-security-group-ingress \
-  --group-id <SG_ID> \
-  --ip-permissions '[
-    {"IpProtocol": "tcp", "FromPort": 443, "ToPort": 443,
-     "IpRanges": [{"CidrIp": "<REMOTE_NODE_CIDR>"}, {"CidrIp": "<REMOTE_POD_CIDR>"}]}
-  ]'
-```
-
-> **注意**: security group あたりのインバウンドルールのデフォルト上限は 60 です。また、リモートネットワークが削除されても、EKS はルールを自動的に削除しません。手動でのクリーンアップが必要です。
-
-***
-
-## Pod CIDR ファイアウォール戦略
-
-Pod 間通信のため、Pod CIDR の全範囲に対するファイアウォールルールを登録する必要があります。
-
-```bash
-# Pod CIDR range example: 10.244.0.0/16
-# Check cluster's Pod CIDR
-kubectl cluster-info dump | grep -m 1 cluster-cidr
-
-# Add firewall rules for Pod CIDR
-sudo iptables -A INPUT -s 10.244.0.0/16 -j ACCEPT
-sudo iptables -A OUTPUT -d 10.244.0.0/16 -j ACCEPT
-sudo iptables -A FORWARD -s 10.244.0.0/16 -j ACCEPT
-sudo iptables -A FORWARD -d 10.244.0.0/16 -j ACCEPT
-
-# Add Service CIDR as well (e.g., 172.20.0.0/16)
-sudo iptables -A INPUT -s 172.20.0.0/16 -j ACCEPT
-sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT
-```
-
-***
-
-<span id="dns-configuration"></span>
+S3 gateway への依存関係は明示的に指定しています。`remote_ipv4_cidrs` には node/Pod ネットワークだけでなく、必要なオンプレミスの DNS/service 範囲も含めてください。例に挙げた DNS サーバー `192.168.1.10/11` には、承認済みの `192.168.1.0/24` ルートまたは対応するホストルートが必要です。VGW の戻りルートには `transit_gateway_id` ではなく `gateway_id` を使用してください。TGW の ID を VGW/gateway のフィールドに設定したり、両方のターゲットを同時に設定してはいけません。VPC のルートだけでは TGW/VPN/オンプレミスのルーティングは成立しません。
 
 ## DNS 設定
 
-### Route 53 Resolver Inbound Endpoint
+オンプレミスのリゾルバーは、選択した AWS/サービス名や実際の cluster endpoint 名を Route 53 Resolver の inbound IP に条件付きで転送できます。実際の endpoint に対して返されたアドレスを使用してください。`amazonaws.com` を広く転送すると無関係なサービスにも影響し得るため、ゾーンは意図的に選択し、転送ループを避けてください。
 
-オンプレミスから AWS ドメインをクエリできるように Inbound Endpoint を作成します。
-
-```bash
-# Create Inbound Endpoint
-aws route53resolver create-resolver-endpoint \
-  --creator-request-id "hybrid-inbound-$(date +%s)" \
-  --name "hybrid-inbound-endpoint" \
-  --security-group-ids sg-0123456789abcdef0 \
-  --direction INBOUND \
-  --ip-addresses SubnetId=subnet-111111111,Ip=10.0.1.10 SubnetId=subnet-222222222,Ip=10.0.2.10
-
-# Check Endpoint IPs
-aws route53resolver list-resolver-endpoint-ip-addresses \
-  --resolver-endpoint-id rslvr-in-xxxxxxxxxxxxx
+```text
+// Example service zones only. Replace these Resolver IPs with actual outputs.
+zone "eks.ap-northeast-2.amazonaws.com" {
+    type forward;
+    forward only;
+    forwarders { 10.0.1.10; 10.0.2.10; };
+};
+zone "s3.ap-northeast-2.amazonaws.com" {
+    type forward;
+    forward only;
+    forwarders { 10.0.1.10; 10.0.2.10; };
+};
 ```
 
-### Route 53 Resolver Outbound Endpoint
+この BIND のフラグメントが対象とするのは記載したサービスゾーンのみで、Kubernetes API のホスト名を自動的に含むわけではありません。検証済みのサービス一覧から、実際の cluster endpoint の DNS 名/サフィックスとその他の必要な名前を追加してください。オンプレミスのゾーンは Resolver の outbound ルールで処理します。そのゾーンは選択した DNS サーバー上で権威があり到達可能である必要があり、同じループへ転送し返してはいけません。
 
-AWS がオンプレミスドメインをクエリできるように Outbound Endpoint とフォワーディングルールを作成します。
+### CoreDNS のカスタムドメイン設定
 
-```bash
-# Create Outbound Endpoint
-aws route53resolver create-resolver-endpoint \
-  --creator-request-id "hybrid-outbound-$(date +%s)" \
-  --name "hybrid-outbound-endpoint" \
-  --security-group-ids sg-0123456789abcdef0 \
-  --direction OUTBOUND \
-  --ip-addresses SubnetId=subnet-111111111 SubnetId=subnet-222222222
+選択した設計で CoreDNS から直接転送する場合は、レビュー済みの server ブロックを既存の Corefile にマージしてください。管理対象の ConfigMap 全体を上書きしてはいけません。
 
-# Create forwarding rule (on-premises domain)
-aws route53resolver create-resolver-rule \
-  --creator-request-id "forward-onprem-$(date +%s)" \
-  --name "forward-to-onprem" \
-  --rule-type FORWARD \
-  --domain-name "internal.company.io" \
-  --resolver-endpoint-id rslvr-out-xxxxxxxxxxxxx \
-  --target-ips "Ip=192.168.1.10,Port=53" "Ip=192.168.1.11,Port=53"
-
-# Associate rule with VPC
-aws route53resolver associate-resolver-rule \
-  --resolver-rule-id rslvr-rr-xxxxxxxxxxxxx \
-  --vpc-id vpc-0123456789abcdef0
-```
-
-### CoreDNS カスタムドメイン設定
-
-オンプレミスドメインの DNS クエリをオンプレミス DNS server にフォワードします。
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: coredns
-  namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf {
-            max_concurrent 1000
-        }
-        cache 30
-        loop
-        reload
-        loadbalance
+```text
+# Fragment to merge through the CoreDNS configuration owner.
+corp.example.internal:53 {
+    errors
+    cache 30
+    forward . 192.168.1.10 192.168.1.11 {
+        max_concurrent 1000
     }
-    internal.company.io:53 {
-        errors
-        cache 30
-        forward . 192.168.1.10 192.168.1.11 {
-            max_concurrent 1000
-        }
-    }
+}
 ```
+
+既存の Kubernetes ゾーン、health/readiness、reload の動作は維持してください。実際の resolver ファイルと systemd-resolved/stub の構成を確認してください。DNS サーバーを自分自身へ転送するとループする可能性があります。あるゾーンについては、適切な VPC 転送経路か明示的な CoreDNS 転送のいずれかを選び、矛盾する経路を重ねないようにしてください。
+
+EKS のマネージド add-on では、**インストール済みバージョンの**設定スキーマを取得し、無関係な既存設定を保持したまま、提案する値の全体を検証してください。
 
 ```bash
-# Apply CoreDNS ConfigMap
-kubectl apply -f coredns-configmap.yaml
-
-# Restart CoreDNS
-kubectl rollout restart deployment coredns -n kube-system
-
-# Test DNS resolution
-kubectl run dns-test --rm -it --image=busybox --restart=Never -- nslookup internal.company.io
+check_account
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
+  --addon-name coredns --output json > "$WORK_DIR/coredns-addon.json"
+addon_version=$(jq -er '.addon.addonVersion' "$WORK_DIR/coredns-addon.json")
+aws eks describe-addon-configuration --region "$AWS_REGION" --addon-name coredns \
+  --addon-version "$addon_version" --output json > "$WORK_DIR/coredns-schema-response.json"
+jq -r '.configurationSchema' "$WORK_DIR/coredns-schema-response.json" \
+  > "$WORK_DIR/coredns-schema.json"
+# Prepare the full intended values, preserving unrelated existing configuration.
+: "${COREDNS_CANDIDATE_JSON:?Set the reviewed full configurationValues JSON file}"
+export COREDNS_CANDIDATE_JSON
+python3 - <<'PY'
+import json, os
+from pathlib import Path
+import jsonschema
+folder = Path(os.environ["WORK_DIR"])
+schema = json.loads((folder / "coredns-schema.json").read_text())
+candidate = json.loads(Path(os.environ["COREDNS_CANDIDATE_JSON"]).read_text())
+validator = jsonschema.validators.validator_for(schema)
+validator.check_schema(schema)
+validator(schema).validate(candidate)
+print("Configuration matches the fetched schema; rollout and DNS behavior are not yet verified")
+PY
 ```
 
-### CoreDNS のデュアルロケーション Deployment（オンプレミス + Cloud）
+これはローカルでのスキーマ検証であり、ロールアウトではありません。設定を適用する前に、マネージド add-on/GitOps の管理主体、オートスケーリング、復旧手順について調整してください。
 
-#### デュアルロケーション Deployment が必要な理由
+### CoreDNS の配置とローカリティ
 
-EKS Hybrid Nodes 環境で CoreDNS が cloud nodes 上でのみ実行されている場合、オンプレミス Pods からの DNS クエリは VPN/Direct Connect リンクを経由して cloud に到達し、戻る必要があります。逆に、CoreDNS がオンプレミスノード上でのみ実行されている場合、cloud Pods からの DNS クエリは逆方向の往復を行う必要があります。
+AWS は、混在 cluster においてクラウドノードに少なくとも1つ、hybrid node に少なくとも1つの CoreDNS replica を配置することを推奨しています。ロケーションごとに2つという構成は可用性のための選択肢になり得ますが、replica 4つは普遍的な最小値でも保証でもありません。
 
-DNS レイテンシーを最小限に抑え、片側でネットワーク障害が発生しても DNS サービスの可用性を維持するために、**CoreDNS Pods は両側に存在する必要があります**。
+DNS を担わせるすべてのノードで、実際のゾーンラベルを確認してください。hybrid node には `onprem-dc1` のような、所有者が定義した `topology.kubernetes.io/zone` の値が必要です。compute-type のラベルは自動的にそのゾーンや taint になるわけではありません。無関係な affinity/tolerations を削除せずに、配置の設定をマージしてください。
 
-#### 推奨レプリカ数
-
-最低 **4 レプリカ**（cloud 2 + オンプレミス 2）を推奨します。各ロケーションに少なくとも 2 レプリカを配置することで、高可用性を確保できます。
-
-#### CoreDNS Deployment Patch
-
-`topologySpreadConstraints` と `tolerations` を使用して、CoreDNS Pods を cloud nodes とオンプレミスノードに均等に分散します。
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: coredns
-  namespace: kube-system
-spec:
-  replicas: 4
-  template:
-    spec:
-      tolerations:
-        - key: "eks.amazonaws.com/compute-type"
-          value: "hybrid"
-          effect: "NoSchedule"
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: "eks.amazonaws.com/compute-type"
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              k8s-app: kube-dns
-```
-
-#### kubectl patch コマンド
-
-```bash
-kubectl patch deployment coredns -n kube-system --type=strategic -p '{
-  "spec": {
-    "replicas": 4,
-    "template": {
-      "spec": {
-        "tolerations": [
-          {
-            "key": "eks.amazonaws.com/compute-type",
-            "value": "hybrid",
-            "effect": "NoSchedule"
-          }
-        ],
-        "topologySpreadConstraints": [
-          {
-            "maxSkew": 1,
-            "topologyKey": "eks.amazonaws.com/compute-type",
-            "whenUnsatisfiable": "ScheduleAnyway",
+```json
+{
+  "affinity": {
+    "podAntiAffinity": {
+      "preferredDuringSchedulingIgnoredDuringExecution": [
+        {
+          "weight": 100,
+          "podAffinityTerm": {
             "labelSelector": {
               "matchLabels": {
                 "k8s-app": "kube-dns"
               }
-            }
+            },
+            "topologyKey": "kubernetes.io/hostname"
           }
-        ]
-      }
+        },
+        {
+          "weight": 50,
+          "podAffinityTerm": {
+            "labelSelector": {
+              "matchLabels": {
+                "k8s-app": "kube-dns"
+              }
+            },
+            "topologyKey": "topology.kubernetes.io/zone"
+          }
+        }
+      ]
     }
   }
-}'
+}
 ```
 
-#### 配置の確認
+ソフトな affinity/spread は優先設定にすぎず、2+2 の分散や bootstrap の成功を保証するものではありません。また、配置だけではクライアントがローカルの DNS replica を選ぶとも限りません。
 
+AWS がドキュメント化している Service Traffic Distribution の例では `PreferClose` を使用します。Cilium では、サポートされている `loadBalancer.serviceTopology` の設定を行い、所有者を通じて対象エージェントをロールアウトしてから、この機能に依存してください。実際のデータプレーン/バージョンと、正常なローカル endpoint を確認してください。
+
+```json
+{
+  "spec": {
+    "trafficDistribution": "PreferClose"
+  }
+}
+```
 ```bash
-# Verify CoreDNS Pods are distributed across both node types
-kubectl get pods -n kube-system -l k8s-app=kube-dns -o wide
-
-# Check compute-type labels on nodes
-kubectl get nodes -L eks.amazonaws.com/compute-type
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
+  get service kube-dns -o json |
+  jq '{name:.metadata.name,uid:.metadata.uid,clusterIP:.spec.clusterIP,
+       clusterIPs:.spec.clusterIPs,ports:.spec.ports,trafficDistribution:.spec.trafficDistribution}'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
+  get endpointslices -l kubernetes.io/service-name=kube-dns -o json |
+  jq '[.items[]|{name:.metadata.name,addressType,ports,
+       endpoints:[.endpoints[]?|{addresses,nodeName,zone,conditions,hints}]}]'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
+  get pods -l k8s-app=kube-dns -o json |
+  jq '[.items[]|{name:.metadata.name,node:.spec.nodeName,phase:.status.phase,
+       ready:([.status.conditions[]?|select(.type=="Ready")|.status]|first // "NotReported")}]'
 ```
 
-> **注記**:
->
-> * EKS managed CoreDNS add-on を使用する場合、同じ設定を add-on の `configurationValues` を通じて適用できます。
-> * `whenUnsatisfiable: ScheduleAnyway` を使用すると、一方にしかノードが存在しない場合でもスケジューリングがブロックされません。これにより、初期クラスタ bootstrap 中も CoreDNS が正常に起動することを保証します。
+実際の Service IP、EndpointSlice のゾーン/hints、Pod の readiness を確認してください。`10.100.0.10` は特定の Service CIDR における例であり、普遍的な cluster DNS アドレスではありません。ローカルの replica があっても、切断された EKS cluster が完全に独立した DNS/control plane になるわけではありません。
 
-***
+## トラフィックフローのパターン
 
-## トラフィックフローパターン
+図では説明用のアドレスと簡略化した処理段階を使用しています。実際の Service データプレーンが kube-proxy の iptables なのか、nftables/IPVS なのか、Cilium の eBPF 置き換えなのかを確認してください。
 
-AWS とオンプレミス間のトラフィックフローパターンを理解することは、ファイアウォール設定とトラブルシューティングに不可欠です。以下のセクションでは、AWS 公式アーキテクチャ図とともに各トラフィックパターンを詳しく説明します。
+### パターン 1: Kubelet → EKS control plane
 
-> **出典**: [AWS EKS Hybrid Nodes Traffic Flows](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
+kubelet は設定された Kubernetes API endpoint を解決して接続します。プライベートアクセスとパブリックアクセスでは経路が異なり、いずれも EKS 管理用の PrivateLink endpoint と混同してはいけません。
 
-### パターン 1: Kubelet → EKS Control Plane
+![Kubelet API access paths for public and private endpoint configurations.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
 
-Kubelet は DNS lookup 経由で API server endpoint に HTTPS リクエストを開始します。パブリックアクセスモードでは、トラフィックはパブリックインターネットを経由します。プライベートモードでは、トラフィックは VPN/DX 経由で VPC ENI に流れます。
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-10.html)
 
-![Kubelet から Control Plane](../.gitbook/assets/hybrid-nodes-kubelet-to-cp.svg)
+### パターン 2: EKS control plane → Kubelet
 
-### パターン 2: EKS Control Plane → Kubelet
+control plane は、報告されたルーティング可能なノードアドレスへ TCP10250 で接続します。この経路は logs、exec、port-forward を支えるもので、逆方向のルーティング、ファイアウォールの許可、kubelet の認証が必要です。
 
-API server は node status object から node IP を取得します。トラフィックは VPC を経由し、その後 Direct Connect または VPN を介して cloud 境界を越え、ポート 10250 の kubelet に到達します。これは `kubectl logs`、`kubectl exec`、`kubectl port-forward` などで使用されます。
+![Control-plane connection to the routable kubelet address over TCP10250.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png)
 
-![Control Plane から Kubelet](../.gitbook/assets/hybrid-nodes-cp-to-kubelet.svg)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-11.html)
 
-### パターン 3: Pod → EKS Control Plane
+### パターン 3: Pod → EKS control plane
 
-Pods は `kubernetes` Service (ClusterIP) 経由で Kubernetes API と通信します。kube-proxy は Service IP を control plane ENI IP に変換するため DNAT を適用し、パケットは VPN/DX 経由で VPC にルーティングされます。
+Kubernetes Service IP を使用する Pod では、選択した API endpoint への Service 変換が必要です。egress の SNAT が適用される場合、応答はノードのアドレス宛てになり、コネクショントラッキングが変換を戻します。SNAT がない場合は、Pod のアドレスに対する戻りルートが必要です。
 
-* **CNI NAT なし**: Pod は kubernetes Service IP（例: 172.16.0.1）に送信し、kube-proxy が control plane ENI IP への DNAT を適用します。戻りトラフィックには pod CIDR 経由の逆方向ルーティングが必要です。
-* **CNI NAT あり**: CNI は node 処理前に SNAT を適用するため、戻りルーティングが簡素化されます（追加の pod CIDR ルーティングは不要）。
+![Logical Service translation and optional SNAT effects; the pictured order is not a universal hook sequence.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
 
-![Pod から Control Plane](../.gitbook/assets/hybrid-nodes-pod-to-cp.svg)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-12.html)
 
-### パターン 4: EKS Control Plane → Pod (Webhook)
+図にある SNAT が DNAT より先という番号付けは、普遍的な hook の順序ではありません。iptables の経路では通常、Service の DNAT がルーティングと該当する POSTROUTING の SNAT より先に行われます。eBPF の経路では異なります。結論を出す前に、実際のパケット/接続の状態をキャプチャしてください。
 
-API server は Hybrid Nodes 上で実行される webhook pods への直接接続を開始します。トラフィックはリモート pod CIDR 用に VPC を経由し、gateway を介して境界を越えます。これには**ルーティング可能な pod CIDR が必要です**。
+### パターン 4: EKS control plane → Pod（webhook）
 
-![Control Plane から Pod](../.gitbook/assets/hybrid-nodes-cp-to-pod.svg)
+API server が、選択した webhook Pod の IP/ポートに到達できる必要があります。設定されたポートを使用してください。従来の「8443+」という凡例は有効なポート範囲要件ではありません。
 
-> **重要**: オンプレミス pod CIDR がルーティング可能でない場合、**すべての webhook を cloud nodes 上で実行する必要があります**。下記の [Webhook 設定](02-network-configuration.md#webhook-configuration) を参照してください。
+![Control-plane path to a webhook Pod; use its actual configured TCP port and dataplane.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
 
-### パターン 5: Hybrid Nodes 上の Pod ↔ Pod
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-13.html)
 
-異なる Hybrid Nodes 上の Pods は、[VXLAN encapsulation (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/03-networking#vxlan-technology-deep-dive)（または Geneve、IP-in-IP などの類似した overlay protocol）を使用して通信します。CNI は、送信元/宛先 node IP を使用する外側のヘッダーで、元の pod-to-pod パケットをカプセル化します。受信 node の CNI はカプセル化を解除して宛先 pod に配信します。
+### パターン 5: hybrid node 上の Pod ↔ Pod
 
-![Hybrid Nodes 上の Pod から Pod](../.gitbook/assets/hybrid-nodes-pod-to-pod.svg)
+サポートされている VXLAN overlay では、宛先ノードへの到達に**外側のノード IP** を使用します。カプセル化されたパケットを運ぶだけであれば、underlay に内側の宛先 Pod CIDR へのルートは不要です。
 
-#### VXLAN Encapsulation の詳細
+![VXLAN Pod communication. Outer forwarding uses node IPs; the older Pod-CIDR forwarding labels need correction.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
 
-VXLAN (Virtual Extensible LAN) は、L2 フレームを L3 パケットにカプセル化して overlay network を作成します。Hybrid Nodes 間の Pod 通信時にパケット構造がどのように変化するかを以下に示します。
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-14.html)
 
-**元のパケット（カプセル化前）**
+図中、カプセル化後に `10.85.x.0/24` を使う転送のラベルは、古い簡略表現として読む必要があります。外側のパケットは `10.80.0.x` へルーティングされます。同一の L2 セグメント上のノードは、ルーターを経由せずに直接通信できる場合があります。
 
-```
-┌────────────────────────────────────────────────┐
-│  Pod-A IP (src) → Pod-B IP (dst) │   Payload   │
-│    10.85.0.10       10.85.1.20   │   (data)    │
-└────────────────────────────────────────────────┘
-```
+VXLAN は内側の Ethernet フレームを UDP でカプセル化します。IPv4 で追加のカプセル化がない例では、50 バイトのオーバーヘッドにより MTU を 1500→1450 に調整する説明が成り立ちます。追加のトンネリングがあるとこの計算は変わります。Cilium の VXLAN は UDP8472 を使用し、標準的な VXLAN では一般に 4789 が使われます。Geneve は UDP6081 を使用します。現行の Cilium のトンネル設定は VXLAN/Geneve を区別します。IP-in-IP は、古い `--tunnel` の助言で選択されるような相互に置き換え可能なデフォルト overlay ではありません。
 
-**VXLAN Encapsulation 後**
+VNI フィールドは 24 ビットで、Cilium はカプセル化のメタデータにセキュリティ identity を載せることができます。これは暗号によるテナント分離ではありません。ネットワークポリシーと実際の identity 伝搬は別のものとして扱ってください。
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ Outer IP Header │ UDP Header │ VXLAN Header │      Original Packet          │
-│ Node-A → Node-B │ Port 8472  │    (VNI)     │ Pod-A IP → Pod-B IP │ Payload │
-│ 10.80.1.10      │            │              │ 10.85.0.10  10.85.1.20        │
-│   → 10.80.1.11  │            │              │                               │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+### パターン 6: クラウドの Pod ↔ hybrid の Pod
 
-**Encapsulation プロセス（送信元 Node）**
+Pod IP 間の直接トラフィックには、VPC、WAN、オンプレミスにわたる該当 Pod のルートが必要です。Service 変換が必要になるのは、リクエストが実際に Service の VIP を宛先としている場合だけです。
 
-1. Pod-A が Pod-B にパケットを送信します
-2. 送信元 node の CNI (Cilium) が宛先 Pod IP を検索し、対象 node を特定します
-3. CNI が元のパケットを VXLAN ヘッダーおよび外側 IP ヘッダーでラップします
-4. 外側ヘッダーでは node IP を送信元/宛先として使用します
-5. カプセル化されたパケットは UDP ポート 8472 経由で送信されます
+![Direct cloud-to-hybrid Pod routing; kube-proxy Service translation is not required for a direct Pod-IP destination.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
 
-**Decapsulation プロセス（宛先 Node）**
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-15.html)
 
-1. 宛先 node が UDP ポート 8472 で VXLAN パケットを受信します
-2. CNI が VXLAN ヘッダーと外側 IP ヘッダーを取り除きます
-3. 元のパケットが宛先 Pod に配信されます
+図中の kube-proxy/iptables のブロックはデータプレーンに依存します。Pod IP 宛ての直接パケットが本質的に kube-proxy の DNAT を必要とするわけではありません。
 
-**主要コンポーネント**
+### kube-proxy と kubelet の詳細
 
-| コンポーネント                 | 説明                                                                       |
-| ------------------------------ | -------------------------------------------------------------------------- |
-| VNI (VXLAN Network Identifier) | pod network traffic を分離する 24-bit identifier（デフォルト: 自動割り当て） |
-| UDP Port                       | Cilium デフォルト: 8472、Standard VXLAN: 4789                              |
-| MTU                            | VXLAN overhead（50 bytes）を考慮する必要あり。例: 1500 → 1450              |
+kube-proxy の **iptables モード**では、一般的なチェーンの経路は次のようになります。
 
-> **注記**: Cilium は VXLAN のほかに、Geneve や IP-in-IP などの tunnel protocol をサポートします。tunnel mode を選択するには `--tunnel` オプションを使用してください。
-
-### パターン 6: Cloud Pod ↔ Hybrid Pod (East-West)
-
-VPC pods（VPC CNI を使用）は Hybrid pods に直接送信します。VPC ルーティングがトラフィックをオンプレミス gateway に向け、パケットは境界を越えて Hybrid node に到達します。これには**ルーティング可能な pod CIDR**と適切な VPC route table entry が必要です。
-
-![East-West Traffic](../.gitbook/assets/hybrid-nodes-east-west.svg)
-
-### トラフィックフローの概要
-
-| # | フロー                    | 方向             | ポート    | 要件                               |
-| - | ------------------------- | ---------------- | --------- | ---------------------------------- |
-| 1 | Kubelet → API Server      | On-Prem → AWS    | TCP 443   | VPN/DX またはインターネット         |
-| 2 | API Server → Kubelet      | AWS → On-Prem    | TCP 10250 | SG outbound rule                   |
-| 3 | Pod → API Server          | On-Prem → AWS    | TCP 443   | kube-proxy DNAT                    |
-| 4 | API Server → Webhook Pod  | AWS → On-Prem    | TCP 8443+ | **ルーティング可能な pod CIDR**     |
-| 5 | Hybrid Pod ↔ Hybrid Pod   | On-Prem 内部     | UDP 8472  | Cilium VXLAN                       |
-| 6 | Cloud Pod ↔ Hybrid Pod    | AWS ↔ On-Prem    | VPC route | **ルーティング可能な pod CIDR** + VPC routes |
-
-### kube-proxy iptables チェーン構造
-
-kube-proxy は iptables ルールを使用して、Kubernetes Service トラフィックを実際の Pods にルーティングします。同じ 3 層のチェーン構造が Hybrid Nodes にも適用されます。
-
-```
-KUBE-SERVICES (entry point)
-  └─→ KUBE-SVC-xxxx (per-service chain, load balancing)
-        └─→ KUBE-SEP-xxxx (per-endpoint chain, DNAT to pod IP)
+```text
+KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 ```
 
-**チェーンの役割**
+同じ重みの適格な endpoint が3つあり、affinity/ローカリティのポリシーによる上書きがない場合、条件付き確率は 1/3、次に残りのパケットの 1/2、そして残り、というかたちでほぼ均等な選択になります。これは説明用の例であり、キャプチャした出力でも、すべてのデータプレーンのルール構造でもありません。
 
-| チェーン            | 役割                                                       | 例                                   |
-| ------------------- | ---------------------------------------------------------- | ------------------------------------ |
-| **KUBE-SERVICES**   | 宛先 IP:Port をすべての ClusterIP Service と照合する          | `172.20.0.1:443` → `KUBE-SVC-NPX...` |
-| **KUBE-SVC-xxxx**   | 確率ベースの load balancing で endpoint を選択する           | 3 Pods → 各 33% の確率               |
-| **KUBE-SEP-xxxx**   | 特定の Pod IP:Port への DNAT を実行する                     | `10.85.0.15:8080` への DNAT          |
-
-**実際の iptables ルールの例**
-
-```bash
+```text
 # KUBE-SERVICES chain (nat table)
 -A KUBE-SERVICES -d 172.20.0.10/32 -p tcp -m tcp --dport 80 -j KUBE-SVC-XXXXXX
 
@@ -783,59 +639,41 @@ KUBE-SERVICES (entry point)
 -A KUBE-SEP-CCCCCC -p tcp -j DNAT --to-destination 10.85.1.20:8080
 ```
 
-> **Hybrid 環境への影響**: 上記の例で、`10.85.1.20` が異なる Hybrid node 上の Pod である場合、DNAT 後のパケットは VXLAN カプセル化されてその node に送信されます。kube-proxy は Service トラフィックを Pod IP に変換し、CNI が実際のネットワークルーティングを処理します。
+| セキュアな kubelet endpoint | 用途 |
+|------------------------|---------|
+| `/pods` | Pod の情報 |
+| `/exec/{namespace}/{pod}/{container}` | container の exec ストリーム |
+| `/containerLogs/{namespace}/{pod}/{container}` | container のログ。以前の `/logs/...` パスではありません |
+| `/metrics`, `/healthz` | 認可済みのメトリクス/ヘルス endpoint |
 
-### kubelet Endpoint
-
-kubelet は各 node 上で実行され、API server 通信用の REST endpoint を公開します。
-
-**kubelet API ポートと Endpoint**
-
-| ポート | Endpoint                              | 用途                                             |
-| ------ | ------------------------------------- | ------------------------------------------------ |
-| 10250  | `/pods`                               | node 上で実行されている pods を一覧表示          |
-| 10250  | `/exec/{namespace}/{pod}/{container}` | コンテナ内でコマンドを実行 (`kubectl exec`)       |
-| 10250  | `/logs/{namespace}/{pod}/{container}` | コンテナログをストリーミング (`kubectl logs`)     |
-| 10250  | `/metrics`                            | kubelet metrics を公開（Prometheus scraping 用）  |
-| 10250  | `/healthz`                            | kubelet ヘルスチェック                            |
-
-**Node 登録とアドレス報告**
-
-kubelet が cluster に node を登録すると、`Node.status.addresses` にアドレス情報を報告します。
-
-```yaml
-status:
-  addresses:
-  - address: 10.80.1.10        # Actual on-premises IP
-    type: InternalIP
-  - address: hybrid-node-001   # Node hostname
-    type: Hostname
-```
-
-* **InternalIP**: node の実際のオンプレミス IP アドレス。API server はこのアドレスを使用して kubelet に接続します。
-* **Hostname**: node の hostname。
-
-> **ファイアウォールルールの要件**: API server は `InternalIP` を使用して kubelet に接続するため、**AWS → On-Prem からの TCP ポート 10250 を開放する必要があります**。この接続がブロックされると、`kubectl exec`、`kubectl logs`、`kubectl port-forward` などのコマンドは失敗します。
-
-***
+サポートされている API server 経由の診断手段と適切な認可を使用してください。ノードの実際の `status.addresses` が重要です。ホスト名や無関係なオブジェクトの先頭アドレスで代用してはいけません。
 
 ## ルーティング可能な Pod CIDR の設定
 
-オンプレミス pod CIDR をルーティング可能にすることは、webhook、east-west traffic、AWS サービス統合（ALB、Prometheus など）に不可欠です。
-
-![それぞれ独自の pod CIDR を持つ 2 つの Hybrid Nodes が、オンプレミス router と gateway を経由して AWS に到達する図。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
+![Illustrative remote Pod CIDRs and the on-premises router.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-0.html)
 
 ### オプション 1: BGP（推奨）
 
-CNI は仮想 router として機能し、node ごとの pod CIDR route をローカルのオンプレミス router に伝播します。これは最も動的で保守しやすいアプローチです。
-
-![各 Hybrid node が BGP UPDATE により自身の pod CIDR をオンプレミス router に広告する図。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png)
+![Illustrative BGP Pod-prefix advertisements.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-1.html)
 
-#### Cilium BGP Control Plane 設定
+AWS の CNI サポート専用ページには、AWS が管理する Cilium 1.17/1.18 のビルドが記載されています。ここでの参照バージョンは互換性のあるカーネル/OS 上の 1.18.3-0 です。upstream の 1.19 に無検証で置き換えないでください。AWS の他のページには Calico BGP とその例が引き続き記載されています。それは Calico プロジェクトが非推奨であることの根拠にはなりません。既存のデプロイについてはサポート範囲を確認してください。
+
+**既存の固定された Cilium リリース**の所有者を通じて BGP を有効化し、values をマージして operator/agent のロールアウトを確認してください。
+
+```yaml
+bgpControlPlane:
+  enabled: true
+operator:
+  rollOutPods: true
+```
+
+AWS 形式の `v2alpha1` API は、レビュー対象の 1.18.3 の CRD でも引き続き提供されています（同 CRD は `v2` も提供します）。この例を使うためだけに CRD を置き換える必要はありません。
+
+以下では hybrid node を選択し、ピアの advertisement セレクターを advertisement のラベルに紐づけ、それらの Pod CIDR のみをアドバタイズします。
 
 ```yaml
 apiVersion: cilium.io/v2alpha1
@@ -843,68 +681,73 @@ kind: CiliumBGPClusterConfig
 metadata:
   name: hybrid-bgp-config
 spec:
+  nodeSelector:
+    matchLabels:
+      eks.amazonaws.com/compute-type: hybrid
   bgpInstances:
   - name: hybrid-instance
     localASN: 65001
     peers:
     - name: on-prem-router
       peerASN: 65000
-      peerAddress: 10.80.0.1
+      peerAddress: 10.80.1.1
       peerConfigRef:
         name: on-prem-peer
----
+```
+```yaml
 apiVersion: cilium.io/v2alpha1
 kind: CiliumBGPPeerConfig
 metadata:
   name: on-prem-peer
 spec:
+  timers:
+    holdTimeSeconds: 90
+    keepAliveTimeSeconds: 30
+  gracefulRestart:
+    enabled: true
+    restartTimeSeconds: 120
   families:
   - afi: ipv4
     safi: unicast
-  gracefulRestart:
-    enabled: true
----
+    advertisements:
+      matchLabels:
+        advertise: hybrid-pods
+```
+```yaml
 apiVersion: cilium.io/v2alpha1
 kind: CiliumBGPAdvertisement
 metadata:
-  name: pod-cidr-advert
+  name: hybrid-pod-cidrs
+  labels:
+    advertise: hybrid-pods
 spec:
   advertisements:
   - advertisementType: PodCIDR
-  - advertisementType: Service
-    service:
-      addresses:
-      - ClusterIP
 ```
 
-#### ASN (Autonomous System Number) の理解
+この例は、選択したノードが意図したピアリングトポロジーでルーター `10.80.1.1` に到達できることを前提としています。ラック/ループバックが異なる場合は、重複しない個別のセレクターとレビュー済みの multihop 設定が必要になることがあります。TCP179、ASN、認証、ルートフィルター、ネゴシエートされたタイマー、graceful restart 時の stale route の挙動については、ネットワーク所有者のレビューが必要です。
 
-上記の Cilium BGP 設定では、`localASN` と `peerASN` は、各 BGP participant に割り当てられる一意の識別子である**Autonomous System Number**です。すべての BGP speaker（router、switch、またはこの場合は各 node 上の Cilium）には ASN が必要であり、接続先 peer にも ASN が必要です。
+BGP セッションが確立しただけでは、意図した prefix がアドバタイズされ、受け入れられ、ルーターの転送テーブルにインストールされたことの証明にはなりません。Cilium の BGP control plane は到達性をアドバタイズするものであり、カーネル/underlay のルーティングすべてを置き換えるものではありません。
 
-**Private ASN 範囲と Public ASN 範囲**
+```bash
+cilium --context "$KUBE_CONTEXT" bgp peers
+cilium --context "$KUBE_CONTEXT" bgp routes
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get ciliumbgpclusterconfigs,ciliumbgppeerconfigs,ciliumbgpadvertisements -o json |
+  jq '[.items[]|{kind,name:.metadata.name,status:.status}]'
+```
 
-| 範囲                        | 種類           | ユースケース                                                                                |
-| --------------------------- | -------------- | ------------------------------------------------------------------------------------------- |
-| **64512 – 65534**           | 16-bit Private | 内部ネットワーク、data center、lab 環境。**EKS Hybrid Nodes にはこの範囲を使用してください。** |
-| **4200000000 – 4294967294** | 32-bit Private | 多数の一意な ASN を必要とする大規模な内部 Deployment                                        |
-| 1 – 64511                   | 16-bit Public  | RIR (ARIN、RIPE、APNIC) に登録されたインターネット向けネットワーク                         |
+#### ASN とルーターの設定
 
-> **EKS Hybrid Nodes の場合**: 常に**private ASN 範囲**（64512–65534）を使用してください。public ASN は不要です。ここでの BGP は、Cilium nodes とオンプレミス router 間の内部ネットワーク内でのみ使用されます。
+RFC6996 のプライベート範囲は **64512〜65534** と **4200000000〜4294967294** です。従来の「16 ビットの範囲のみ」という一律のルールは誤りでした。1〜64511 のすべての値を自由に使えるパブリック ASN として説明してはいけません。パブリック/予約済み/ドキュメント用の割り当てにはそれぞれ独自のルールがあります。
 
-**ASN 値の選択方法**
+既存の、調整済みのネットワーク ASN を使用してください。これらの例では `localASN=65001` が Cilium ノードを、`peerASN=65000` がそのオンプレミスルーターを表します。TGW の ASN は上流の別の関係です。TGW が存在するだけで Cilium が自動的に TGW とピアリングすることはありません。Site-to-Site VPN の BGP は、設定された VPN/customer gateway の経路上で終端します。TGW Connect はさらに別のトランスポート/設計です。
 
-* **`localASN`**（例: `65001`）: Hybrid Nodes 上で実行される Cilium に割り当てる ASN。同じ cluster 内のすべての Cilium nodes は通常 1 つの ASN を共有します。
-* **`peerASN`**（例: `65000`）: Cilium が peer を確立するオンプレミス router の ASN。この値は router の BGP 設定で確認してください。
-
-環境内で BGP が現在設定されていない場合は、private 範囲から異なる 2 つの数値を選ぶだけです（例: router に `65000`、Cilium に `65001`）。ネットワークチームがすでに内部で BGP を使用している場合は、ASN の競合を避けるために調整してください。
-
-**オンプレミス Router BGP 設定例**
-
-以下は、上記の Cilium 設定と一致するように BGP peering の**router 側**を設定する例です。各例では、router は ASN `65000` を使用し、`10.80.1.10`（ASN `65001`）にある Cilium node と peer を確立します。
+以下のベンダー別フラグメントは説明用の出発点であり、実機で検証した設定ではありません。プラットフォーム/バージョン固有の import/export prefix フィルター、上限、復旧手順とともに、ルーターの所有者を通じてマージしてください。稼働中のルーターのグローバル ASN を無闇に変更しないでください。
 
 **Cisco IOS / IOS-XE**
 
-```
+```text
 router bgp 65000
  neighbor 10.80.1.10 remote-as 65001
  neighbor 10.80.1.10 description "EKS Hybrid Node - Cilium BGP"
@@ -917,7 +760,7 @@ router bgp 65000
 
 **Cisco NX-OS (Nexus)**
 
-```
+```text
 router bgp 65000
   address-family ipv4 unicast
   neighbor 10.80.1.10
@@ -929,7 +772,7 @@ router bgp 65000
 
 **Juniper Junos (MX / QFX / SRX)**
 
-```
+```text
 set protocols bgp group eks-hybrid type external
 set protocols bgp group eks-hybrid peer-as 65001
 set protocols bgp group eks-hybrid neighbor 10.80.1.10 description "EKS Hybrid Node"
@@ -939,7 +782,7 @@ set routing-options autonomous-system 65000
 
 **Arista EOS**
 
-```
+```text
 router bgp 65000
    neighbor 10.80.1.10 remote-as 65001
    neighbor 10.80.1.10 description EKS-Hybrid-Cilium
@@ -948,246 +791,143 @@ router bgp 65000
       neighbor 10.80.1.10 activate
 ```
 
-**MikroTik RouterOS**
+**MikroTik RouterOS 7.20+**
 
+```text
+/routing/bgp/instance
+add name=hybrid as=65000
+/routing/bgp/connection
+add name=hybrid-node-001 instance=hybrid remote.address=10.80.1.10 remote.as=65001 local.role=ebgp address-families=ip disabled=yes
+# Review input/output filters and routing before enabling the connection.
 ```
-/routing bgp connection
-add name=eks-hybrid remote.address=10.80.1.10 remote.as=65001 \
-    local.role=ebgp as=65000 address-families=ip
-```
 
-**FRRouting (FRR) — Software Router (Linux)**
+**FRRouting (FRR), 参照バージョン 10.7.1**
 
-FRRouting は Linux server および VM 上のソフトウェア BGP router として一般的に使用されます。
-
-```
+```text
+ip prefix-list HYBRID_PODS seq 10 permit 10.85.0.0/16 ge 25 le 25
+route-map FROM_HYBRID permit 10
+ match ip address prefix-list HYBRID_PODS
+route-map TO_HYBRID deny 10
 router bgp 65000
+ bgp router-id 10.80.1.1
+ bgp ebgp-requires-policy
  neighbor 10.80.1.10 remote-as 65001
- neighbor 10.80.1.10 description EKS-Hybrid-Cilium
- !
  address-family ipv4 unicast
   neighbor 10.80.1.10 activate
+  neighbor 10.80.1.10 route-map FROM_HYBRID in
+  neighbor 10.80.1.10 route-map TO_HYBRID out
  exit-address-family
 ```
 
-**AWS Transit Gateway (TGW)**
-
-Site-to-Site VPN で AWS Transit Gateway を使用する場合、TGW 側の ASN は TGW の作成時に設定します。
-
-```bash
-# TGW creation with custom ASN
-aws ec2 create-transit-gateway \
-  --options AmazonSideAsn=65000
-
-# The VPN tunnel automatically establishes BGP with the TGW ASN
-# On-premises router (or Cilium) uses its own ASN to peer with TGW
-```
-
-> **注記**: AWS TGW のデフォルト ASN は `64512` です。Cilium nodes が `65001` を使用する場合、Cilium 設定の TGW（または VGW）peer ASN は TGW の ASN と一致する必要があります。
-
-**複数の Hybrid Nodes**
-
-複数の Hybrid Nodes がある場合、各 node は**同じ `localASN`**でそれぞれの Cilium BGP speaker を実行します。オンプレミス router は各 node と個別に peer を確立します。
-
-```
-# Router config — peer with each hybrid node
-router bgp 65000
- neighbor 10.80.1.10 remote-as 65001   ! hybrid-node-001
- neighbor 10.80.1.11 remote-as 65001   ! hybrid-node-002
- neighbor 10.80.1.12 remote-as 65001   ! hybrid-node-003
-```
-
-各 node は自身の pod CIDR slice（例: node-001 は `10.85.0.0/25`、node-002 は `10.85.0.128/25` を広告）を広告するため、router はすべての pod CIDR の完全な routing table を構築します。
-
-#### BGP Peering の確認
-
-```bash
-cilium bgp peers
-cilium bgp routes
-```
-
-Hybrid Nodes は Session State `established` と表示されるはずです。
+RouterOS 7.20 以降では BGP インスタンスを明示的に定義します。FRR の従来のデフォルトでは eBGP のポリシーが必須で、フィルターがないまま確立したセッションは `(Policy)` と表示され、ルートを交換しないことがあります。FRR の例では、レビュー済みの `/25` の Pod ブロックのみを受け入れ、Cilium へはルートをエクスポートしません。実際の IPAM 設計と上流のルーティングに合わせてフィルターを調整してください。
 
 ### オプション 2: 静的ルート
 
-pod CIDR を使用する手動の router 設定です。最も簡単ですが、エラーが発生しやすく、node の変更時に手動更新が必要です。
-
-![オンプレミス router の静的ルートが、各 pod CIDR を next hop としてその node IP に向ける図。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
+![Illustrative static Pod-prefix routes; derive current next hops from observed state.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-2.html)
 
-#### Cluster-Pool IPAM 割り当ての理解
+Cilium の **cluster-pool IPAM** では、割り当て済みの `CiliumNode.spec.ipam.podCIDRs` をすべて読み取ってください。割り当てがノードの登録順に従うとは限りません。`/16` は幾何学的には 512 個の `/25` ブロックを含み、各 `/25` は 128 アドレスを持ちますが、これは 512 ノードのサポートや、ノードあたり 128 個の利用可能なアプリケーション Pod IP を保証するものではありません。予約アドレス、ノード/CNI による使用、kubelet やリソースの上限も影響します。
 
-Cilium の `cluster-pool` IPAM mode では、pod CIDR pool 全体が node ごとの固定サイズ block に分割されます。[04-node-bootstrap.md](04-node-bootstrap.md) の Cilium values で、次の 2 つの主要パラメータを設定します。
+これはレビュー済みの新規プールに対する Cilium の Helm values のフラグメントであり、kubelet 全体の `podCIDR` 設定ではありません。移行の近道として、既存の割り当て済み CIDR やブロックサイズを変更してはいけません。
 
-| パラメータ                   | 値の例         | 説明                                  |
-| ---------------------------- | -------------- | ------------------------------------- |
-| `clusterPoolIPv4PodCIDRList` | `10.85.0.0/16` | pod CIDR pool 全体                    |
-| `clusterPoolIPv4MaskSize`    | `25`           | node ごとに割り当てる subnet size (/25 = 128 IPs) |
+```yaml
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.85.0.0/16
+    clusterPoolIPv4MaskSize: 25
+```
 
-たとえば `10.85.0.0/16` の pool と `/25` の mask size では、最大 **512 nodes** にそれぞれ 128 個の pod IP を割り当てられます。Cilium Operator は node の登録順に block を割り当てます。
-
-| Node            | 割り当てられた PodCIDR | 利用可能な Pod IPs            |
-| --------------- | ---------------------- | ----------------------------- |
-| hybrid-node-001 | `10.85.0.0/25`         | `10.85.0.1` – `10.85.0.126`   |
-| hybrid-node-002 | `10.85.0.128/25`       | `10.85.0.129` – `10.85.0.254` |
-| hybrid-node-003 | `10.85.1.0/25`         | `10.85.1.1` – `10.85.1.126`   |
-
-> **重要**: この割り当て情報は **CiliumNode CR** に記録されます。Kubernetes Node object の `spec.podCIDR` と異なる場合があるため、静的ルートを設定するときは必ず CiliumNode CR を参照してください。
-
-#### Node ごとの PodCIDR のクエリ
-
-静的ルートを設定するには、各 node に割り当てられた PodCIDR と node IP（next hop）を特定する必要があります。クエリ方法は CNI により異なります。
-
-**Cilium** — `CiliumNode` CR の `spec.ipam.podCIDRs` が信頼できる情報源です。
+`.addresses[0]` を next hop として使わないでください。Cilium 内部のアドレスである可能性があります。以下は IPv4 の InternalIP を Kubernetes の Node と相互チェックし、すべての Pod prefix を承認済みのリモート範囲に対して検証し、重複や状態の欠落を拒否して、実行可能なシェルではなく **JSON の候補**を生成します。
 
 ```bash
-kubectl get ciliumnodes -o custom-columns='\
-NAME:.metadata.name,\
-NODE_IP:.spec.addresses[0].ip,\
-POD_CIDR:.spec.ipam.podCIDRs[0]'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes \
+  -l eks.amazonaws.com/compute-type=hybrid -o json |
+  jq '{items:[.items[]|{metadata:{name:.metadata.name,uid:.metadata.uid},
+       status:{addresses:.status.addresses}}]}' > "$WORK_DIR/hybrid-nodes.json"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get ciliumnodes.cilium.io -o json |
+  jq '{items:[.items[]|{metadata:{name:.metadata.name,uid:.metadata.uid},
+       spec:{addresses:.spec.addresses,ipam:{podCIDRs:.spec.ipam.podCIDRs}}}]}' \
+  > "$WORK_DIR/cilium-nodes.json"
 ```
-
-```
-NAME                NODE_IP       POD_CIDR
-hybrid-node-001     10.80.1.10    10.85.0.0/25
-hybrid-node-002     10.80.1.11    10.85.0.128/25
-hybrid-node-003     10.80.1.12    10.85.1.0/25
-```
-
-> CiliumNode CR 構造、scripting での使用方法、詳細については、[Cilium IPAM — CiliumNode CR による Node ごとの PodCIDR のクエリ (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/04-ipam-policy#querying-per-node-podcidrs-via-ciliumnode-cr) を参照してください。
-
-**Calico** — `BlockAffinity` CR が node ごとの CIDR block を追跡します。
-
 ```bash
-kubectl get blockaffinities -o custom-columns='\
-NAME:.metadata.name,\
-CIDR:.spec.cidr,\
-NODE:.spec.node'
+python3 - <<'PY'
+import ipaddress, json, os
+from pathlib import Path
+folder = Path(os.environ["WORK_DIR"])
+network = json.loads((folder / "cluster.json").read_text())["cluster"]["remoteNetworkConfig"]
+node_ranges = [ipaddress.ip_network(c, strict=True) for n in network["remoteNodeNetworks"] for c in n["cidrs"]]
+pod_ranges = [ipaddress.ip_network(c, strict=True) for n in network.get("remotePodNetworks", []) for c in n["cidrs"]]
+if not pod_ranges:
+    raise SystemExit("A reviewed routable remote Pod range is required for this route plan")
+nodes = {n["metadata"]["name"]: n for n in json.loads((folder / "hybrid-nodes.json").read_text())["items"]}
+claims = json.loads((folder / "cilium-nodes.json").read_text())["items"]
+rows, seen = [], []
+for item in claims:
+    name = item["metadata"]["name"]
+    if name not in nodes:
+        continue
+    node = nodes[name]
+    ips = [ipaddress.ip_address(a["address"]) for a in node["status"]["addresses"]
+           if a["type"] == "InternalIP" and ":" not in a["address"]]
+    if len(ips) != 1 or not any(ips[0] in n for n in node_ranges):
+        raise SystemExit(f"Review the unique IPv4 InternalIP and remote-node range for {name}")
+    cilium_ips = [ipaddress.ip_address(a["ip"]) for a in item["spec"].get("addresses", [])
+                  if a["type"] == "InternalIP" and ":" not in a["ip"]]
+    if cilium_ips != ips:
+        raise SystemExit(f"Kubernetes/Cilium InternalIP mismatch for {name}")
+    cidrs = item["spec"]["ipam"].get("podCIDRs") or []
+    if not cidrs:
+        raise SystemExit(f"No allocated cluster-pool Pod CIDRs for {name}; do not invent a route")
+    for raw in cidrs:
+        cidr = ipaddress.ip_network(raw, strict=True)
+        if cidr.version != 4 or not any(cidr.subnet_of(p) for p in pod_ranges):
+            raise SystemExit(f"Unapproved Pod CIDR for {name}: {cidr}")
+        if any(cidr.overlaps(previous) for previous in seen):
+            raise SystemExit("Overlapping or duplicate Pod routes require investigation")
+        seen.append(cidr)
+        rows.append({"node": name, "nodeUID": node["metadata"]["uid"],
+                     "ciliumNodeUID": item["metadata"]["uid"], "destination": str(cidr), "nextHop": str(ips[0])})
+if set(nodes) != {row["node"] for row in rows}:
+    raise SystemExit("Some hybrid nodes have no matching Cilium allocation")
+(folder / "reviewed-route-candidates.json").write_text(json.dumps(rows, indent=2) + "\n")
+print(json.dumps(rows, indent=2))
+PY
 ```
 
-> **⚠ 非推奨**: Calico は EKS Hybrid Nodes で正式にはサポートされなくなりました。新しい Deployment には Cilium を使用してください。BlockAffinity の詳細なクエリについては、[Calico Advanced Topics — BlockAffinity による Node ごとの PodCIDR のクエリ (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/07-advanced-topics#inspect-node-affine-cidr-blocks) を参照してください。
+これは cluster-pool IPAM に対するある時点の計画であり、ノード identity のアトミックなリースでも、ルーティングコントローラーでもありません。変更前に再検証してください。Calico の BlockAffinity は別のモデルです。このジェネレーターを無検証で再利用せず、その状態、borrowing/pool の挙動、実際のルートを確認してください。
 
-#### 静的ルートの設定
+所有者のレビュー後、手動でのルーター設定の記述は次のようになります。
 
-CiliumNode（または Calico BlockAffinity）CR の情報に基づいて、router に静的ルートを追加します。一般的なパターンは次のとおりです。
-
-```
-Destination = Node's PodCIDR
-Next Hop    = Node's InternalIP
-```
-
-**Linux (ip route)**
-
-```bash
-# Add routes for each node's pod CIDR
-ip route add 10.85.0.0/25 via 10.80.1.10    # hybrid-node-001
-ip route add 10.85.0.128/25 via 10.80.1.11  # hybrid-node-002
-ip route add 10.85.1.0/25 via 10.80.1.12    # hybrid-node-003
-```
-
-再起動後も維持するには:
-
-```bash
-# /etc/network/interfaces.d/hybrid-routes (Debian/Ubuntu)
-up ip route add 10.85.0.0/25 via 10.80.1.10
-up ip route add 10.85.0.128/25 via 10.80.1.11
-up ip route add 10.85.1.0/25 via 10.80.1.12
-
-# Or for NetworkManager (RHEL/Rocky)
-# /etc/NetworkManager/dispatcher.d/99-hybrid-routes
-```
-
-**Cisco IOS / IOS-XE**
-
-```
-ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
-ip route 10.85.0.128 255.255.255.128 10.80.1.11 name hybrid-node-002-pods
-ip route 10.85.1.0 255.255.255.128 10.80.1.12 name hybrid-node-003-pods
-```
-
-**FRRouting (FRR)**
-
-```
-ip route 10.85.0.0/25 10.80.1.10
-ip route 10.85.0.128/25 10.80.1.11
-ip route 10.85.1.0/25 10.80.1.12
-```
-
-**AWS VPC Route Table**
-
-Pods が VPN/Direct Connect 経由で接続された AWS VPC から到達可能である必要がある場合は、集約 CIDR を使用します。
-
-```bash
-# Add VPC route with aggregate CIDR (VPN Gateway or TGW as next hop)
-aws ec2 create-route \
-  --route-table-id rtb-0123456789abcdef0 \
-  --destination-cidr-block 10.85.0.0/16 \
-  --gateway-id vgw-0123456789abcdef0
-```
-
-```hcl
-# Terraform
-resource "aws_route" "hybrid_pod_cidr" {
-  route_table_id         = aws_route_table.main.id
-  destination_cidr_block = "10.85.0.0/16"
-  gateway_id             = aws_vpn_gateway.main.id
-}
-```
-
-#### 自動化と BGP の比較
-
-CiliumNode CR から `ip route` コマンドを自動生成するスクリプト例:
-
-```bash
-#!/bin/bash
-# generate-static-routes.sh — Generate static route commands from CiliumNode CRs
-kubectl get ciliumnodes -o json | jq -r \
-  '.items[] | "ip route add \(.spec.ipam.podCIDRs[0]) via \(.spec.addresses[0].ip)"'
-```
-
-出力例:
-
-```
+```text
+# Illustrative syntax after validating the route plan on the intended router:
+# Linux
 ip route add 10.85.0.0/25 via 10.80.1.10
-ip route add 10.85.0.128/25 via 10.80.1.11
-ip route add 10.85.1.0/25 via 10.80.1.12
+# Cisco IOS / IOS-XE
+ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
+# FRR
+ip route 10.85.0.0/25 10.80.1.10
 ```
 
-**静的ルートと BGP の比較**
+変更は実際のネットワークマネージャー/デバイス設定を通じて永続化してください。`up ip route ...` の行は ifupdown のスタンザに属するもので、単独の Bash スクリプトに置くものではなく、最近のすべての Linux ネットワークマネージャーで通用するものでもありません。静的ルートにはドリフト/障害の追跡が必要です。元の「1〜5 ノード」というしきい値は計画上の目安であり、技術的な上限ではありませんでした。
 
-| 観点                       | 静的ルート                                   | BGP（オプション 1）                         |
-| -------------------------- | -------------------------------------------- | -------------------------------------------- |
-| Node の追加                 | router への手動ルート追加が必要                  | ルートが自動的に伝播                         |
-| Node の削除                 | router からの手動ルート削除が必要              | ルートが自動的に撤回                         |
-| Node IP の変更              | すべてのルートを手動で更新する必要あり         | 更新が自動的に伝播                           |
-| 障害検出                   | なし（古いルートが残る）                       | BGP keepalive により自動検出                 |
-| 設定の複雑さ               | 低                                           | 中（BGP peering 設定が必要）                 |
-| 拡張性                     | 1～5 nodes に適している                       | 数十～数百 nodes に拡張可能                  |
+### オプション 3: ARP プロキシ
 
-> **推奨**:
->
-> * **PoC / 小規模環境**（1～5 nodes）: 静的ルートにより迅速に開始できます
-> * **本番環境 / 5+ nodes**: [BGP（オプション 1） (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#option-1-bgp-recommended) を使用してください。node の変更に自動的に対応し、運用オーバーヘッドを大幅に削減します
-> * **ポリシーにより BGP が許可されない環境**: 上記の自動化スクリプトと静的ルートを使用してルート変更を管理してください
+AWS は proxy ARP を L2 における選択肢の一つとして説明しています。これには適切な on-link の近隣探索の挙動と、専用に設定された CNI/ホスト側の実装が必要です。汎用的な Cilium を有効化するだけでは、この経路が使える状態であることの証明にはなりません。
 
-### オプション 3: ARP Proxying
-
-Nodes はホストされる pod IP の ARP リクエストに応答します。ローカル router への Layer 2 ネットワーク近接性が必要です。Cilium には組み込みの proxy ARP サポートがあります。router の BGP または静的ルート設定は不要ですが、pod CIDR が他のネットワークと重複してはなりません。
-
-![node が自身の MAC で pod IP の ARP リクエストに応答し、router が pods を同じリンク上の host として扱う図。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
+![Proxy ARP concept for a verified L2/on-link design; upstream routes are still required.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-3.html)
 
-***
+ARP のブロードキャストは TGW/VPN/DX の Layer 3 ルーティングを越えません。このオプションによって VPC/WAN の戻りルート要件がなくなるわけではありません。BGP/静的ルートの設計を置き換える前に、実際の L2 の挙動とフェイルオーバーを検証してください。
 
-## Network Policy
+## ネットワークポリシー
 
-Network policy を使用して、Hybrid node 環境の Pod 間トラフィックを制御できます。Cilium CNI を使用する場合、標準の Kubernetes NetworkPolicy と拡張された CiliumNetworkPolicy の両方がサポートされます。
+ポリシーの効果は、セレクション、方向、適用するデータプレーンに依存します。Kubernetes NetworkPolicy の allow は加算的で、別の一致するポリシーがトラフィックを許可し得ます。Cilium の明示的な deny と L7 の挙動は個別に評価する必要があります。以下の例は管理された namespace で試すべき代替案であり、あらゆる allow ルールを重ねればより厳格になると期待するための指示ではありません。
 
 ### Kubernetes NetworkPolicy
-
-標準の Kubernetes NetworkPolicy は、基本的な L3/L4 トラフィックフィルタリングを提供します。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1211,11 +951,9 @@ spec:
       port: 9080
 ```
 
-この policy は、`bookinfo` namespace 内で `app: productpage` label を持つ Pods のみが、`app: reviews` Pods のポート 9080 にアクセスすることを許可します。
+これは `reviews` への ingress を選択し、同じ namespace 内で一致する `productpage` の Pod からの TCP9080 を許可します。すべての Pod/方向を分離したり、他のすべてのポリシーを上書きするものではありません。
 
-### CiliumNetworkPolicy
-
-CiliumNetworkPolicy は Kubernetes NetworkPolicy を、L7 filtering、DNS-aware policy、identity-based matching で拡張します。
+### CiliumNetworkPolicy と L7
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1231,21 +969,17 @@ spec:
   - fromEndpoints:
     - matchLabels:
         app: productpage
+        k8s:io.kubernetes.pod.namespace: bookinfo
     toPorts:
     - ports:
-      - port: "9080"
+      - port: '9080'
         protocol: TCP
 ```
-
-#### CiliumNetworkPolicy の高度な機能
-
-**L7 HTTP Filtering**
-
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: l7-rule
+  name: frontend-http-contract
   namespace: bookinfo
 spec:
   endpointSelector:
@@ -1255,17 +989,22 @@ spec:
   - fromEndpoints:
     - matchLabels:
         app: productpage
+        k8s:io.kubernetes.pod.namespace: bookinfo
     toPorts:
     - ports:
-      - port: "9080"
+      - port: '9080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/.*"
+        - method: GET
+          path: /api/v1/.*
 ```
 
-**DNS ベースの Egress Policy**
+この HTTP ルールは、制限のない L4 の allow に対する代替案であり、その上に自動的に重なる制限ではありません。実際のアプリケーションのパスを使用してください。HTTP の検査には適切な可視性が必要で、暗号化された mesh/TLS のトラフィックが自動的に検査可能になるわけではありません。
+
+### DNS ベースの egress
+
+別途用意した `external-api-client` の例では、**Cilium が identity を認識する CoreDNS Pod** への DNS と、観測された API アドレスへの HTTPS を許可します。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1276,42 +1015,32 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: productpage
+      app: external-api-client
   egress:
-  - toFQDNs:
-    - matchName: "api.example.com"
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "443"
+      - port: '53'
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: '*'
+  - toFQDNs:
+    - matchName: api.example.com
+    toPorts:
+    - ports:
+      - port: '443'
         protocol: TCP
 ```
 
-### Hybrid 環境における Network Policy の考慮事項
+実際のリゾルバー/identity の構成を確認してください。NodeLocal DNS、ホストの DNS、Cilium 管理外の endpoint では、サポートされる別のルールが必要になることがあります。FQDN の IP 観測はリモート API の認証ではありません。DNS のキャッシュと共有アドレスを考慮してください。また、Cilium 固有の L7/FQDN 機能は、AWS が挙げているデフォルトの Kubernetes NetworkPolicy のサポート範囲を超えています。
 
-| 考慮事項                     | 説明                                                                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **デフォルトの動作**         | network policy がない場合、すべてのトラフィックが許可されます。NetworkPolicy を適用すると、明示的に許可されたトラフィックのみが通過します。 |
-| **境界をまたぐトラフィック** | policy は cloud nodes 上の Pods と Hybrid Nodes 上の Pods 間の通信を考慮する必要があります。                                      |
-| **CNI 要件**                 | Cilium が CNI として設定されている場合、両方の policy type が機能します。                                                         |
-| **Policy Scope**             | CiliumNetworkPolicy はその namespace にのみ適用されます。cluster-wide policy には CiliumClusterwideNetworkPolicy を使用してください。 |
+## webhook の設定
 
-> **推奨**: Hybrid 環境では、意図しない境界をまたぐトラフィックを防ぐために明示的な network policy を定義してください。機密性の高い workload は、厳格な Ingress/Egress policy で保護する必要があります。
-
-***
-
-<span id="webhook-configuration"></span>
-
-## Webhook 設定
-
-Webhook は、Kubernetes application およびオープンソースプロジェクト（AWS Load Balancer Controller、CloudWatch Observability Agent）で、mutating および validation 機能のために使用されます。
-
-### ルーティング可能な Pod ネットワークの場合
-
-オンプレミス pod CIDR が（BGP、静的ルート、または ARP proxy 経由で）ルーティング可能な場合、webhook は Hybrid Nodes 上で実行できます。
-
-### ルーティング不可能な Pod ネットワークの場合
-
-オンプレミス pod CIDR がルーティング**不可能**な場合、node affinity を使用して、**すべての webhook を cloud nodes 上で実行してください**。
+一般的な直接ルーティングの設計では、control plane が webhook Pod の IP に到達できる必要があります。適切な Pod の戻り経路がない場合は、適切な場所に配置したクラウドホスト型のコンポーネントを使用してください。gateway/proxy を使う代替設計は個別に検証してください。
 
 ```yaml
 affinity:
@@ -1325,18 +1054,86 @@ affinity:
           - hybrid
 ```
 
-### Webhook を使用する Add-on
+これは Pod テンプレートの affinity のフラグメントであり、完全な Deployment ではありません。`NotIn hybrid` の条件は、一致する正常なクラウド側のキャパシティや、その他すべてのスケジューリング制約が満たされることの証明にはなりません。
 
-次の add-on では webhook の配置を考慮する必要があります。
+AWS Load Balancer Controller、CloudWatch/ADOT の operator、cert-manager には webhook の配置要件があります。これらの operator とノード側のコレクターを区別してください。**Metrics Server は集約 API service であり、admission webhook ではありません**が、それでも control plane から Pod への到達性が必要です。Pod の phase だけでなく、実際の API 呼び出しと webhook をテストしてください。
 
-| Add-on                         | Webhook の配置（ルーティング不可能な Pod CIDR） |
-| ------------------------------ | ----------------------------------------------- |
-| AWS Load Balancer Controller   | cloud nodes のみ                                |
-| CloudWatch Observability Agent | cloud nodes のみ                                |
-| ADOT (OpenTelemetry)           | cloud nodes のみ                                |
-| cert-manager                   | cloud nodes のみ                                |
-| Kubernetes Metrics Server      | ルーティング可能な pod CIDR が必要              |
+## 読み取り専用の接続診断
 
-***
+### Kubernetes API の TLS とタイミング
 
-< [前へ: 前提条件](01-prerequisites.md) | [目次](./README.md) | [次へ: Air-Gap セットアップ](03-airgap-setup.md) >
+```bash
+set -euo pipefail
+endpoint=$(jq -er '.cluster.endpoint' "$WORK_DIR/cluster.json")
+case "$endpoint" in https://*) ;; *) printf 'HTTPS endpoint required.\n' >&2; exit 1;; esac
+jq -er '.cluster.certificateAuthority.data' "$WORK_DIR/cluster.json" |
+  base64 --decode > "$WORK_DIR/cluster-ca.pem"
+openssl x509 -in "$WORK_DIR/cluster-ca.pem" -noout >/dev/null
+curl --silent --show-error --connect-timeout 5 --max-time 15 \
+  --cacert "$WORK_DIR/cluster-ca.pem" --output "$WORK_DIR/api-response.txt" \
+  --write-out '{"httpCode":%{http_code},"remoteIP":"%{remote_ip}","dnsTotalSeconds":%{time_namelookup},"connectTotalSeconds":%{time_connect},"tlsTotalSeconds":%{time_appconnect},"totalSeconds":%{time_total}}\n' \
+  "$endpoint/readyz" > "$WORK_DIR/api-timing.json"
+cat "$WORK_DIR/api-timing.json"
+```
+
+cluster の CA とホスト名が検証を通る必要があります。HTTP401/403 の応答は、認可が不足している一方で TLS endpoint には到達できていることを示し得ますが、アプリケーションのヘルスチェックの成功ではありません。curl のタイミングフィールドは累積の各フェーズであり、純粋な RTT の測定値ではありません。ICMP ping に応答がないことは、EKS API が停止している証明にはなりません。
+
+### VPN の状態とメトリクス
+
+```bash
+: "${VPN_ID:?Select the reviewed VPN connection}"
+: "${TUNNEL_IP:?Select its actual AWS tunnel outside IP}"
+check_account
+# Select telemetry only: do not dump customer gateway configuration or pre-shared keys.
+aws ec2 describe-vpn-connections --region "$AWS_REGION" --vpn-connection-ids "$VPN_ID" \
+  --query 'VpnConnections[].{id:VpnConnectionId,state:State,telemetry:VgwTelemetry}' \
+  --output json > "$WORK_DIR/vpn-state.json"
+jq -e --arg ip "$TUNNEL_IP" 'length==1 and any(.[0].telemetry[]?; .OutsideIpAddress==$ip)' \
+  "$WORK_DIR/vpn-state.json" >/dev/null
+export VPN_ID TUNNEL_IP
+python3 - <<'PY'
+import ipaddress, json, os
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+ipaddress.ip_address(os.environ["TUNNEL_IP"])
+now = datetime.now(timezone.utc)
+end = now.replace(minute=now.minute - now.minute % 5, second=0, microsecond=0)
+body = {"Namespace": "AWS/VPN", "MetricName": "TunnelState",
+        "Dimensions": [{"Name": "VpnId", "Value": os.environ["VPN_ID"]},
+                       {"Name": "TunnelIpAddress", "Value": os.environ["TUNNEL_IP"]}],
+        "StartTime": (end - timedelta(minutes=15)).isoformat(), "EndTime": end.isoformat(),
+        "Period": 300, "Statistics": ["Minimum", "Maximum"]}
+(Path(os.environ["WORK_DIR"]) / "vpn-metric-request.json").write_text(json.dumps(body, indent=2) + "\n")
+PY
+aws cloudwatch get-metric-statistics --region "$AWS_REGION" \
+  --cli-input-json "file://$WORK_DIR/vpn-metric-request.json" --output json \
+  > "$WORK_DIR/vpn-metric-result.json"
+jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-metric-result.json"
+```
+
+`available` は VPN リソースの状態であり、トンネルの健全性ではありません。TunnelState は UP/静的または ESTABLISHED/BGP のとき 1、それ以外の状態では 0 になります。集計値は小数になり得ます。データがないことと DOWN は区別し、両方のトンネル、ルート、実際のワークロードの挙動を確認してください。このクエリは customer gateway の設定や pre-shared key を出力しないようにしています。
+
+AWS の RTT 200ms 以下 / 100Mbps という指針は一般的なガイダンスです。従来の 50/100ms の区分や「Direct Connect は常に 10ms 未満」という記述は、検証されていない目安であり、保証ではありませんでした。
+
+## 参考資料
+
+- [Hybrid networking](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
+- [EKS PrivateLink: management, OIDC and console endpoints](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)
+- [S3 interface endpoints and private DNS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
+- [Roles Anywhere endpoint policies](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/vpc-interface-endpoints.html)
+- [Current hybrid CNI support](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [AWS hybrid BGP procedure](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html)
+- [Mixed-mode DNS and webhooks](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [Hybrid routing concepts](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-kubernetes.html)
+- [Hybrid traffic-flow reference](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
+- [Cilium 1.18.3 routing source](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/routing.rst)
+- [Cilium 1.18.3 DNS-policy source](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/security/dns.rst)
+- [RFC6996 private ASNs](https://www.rfc-editor.org/rfc/rfc6996.html)
+- [RouterOS BGP reference](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
+- [FRR 10.7.1 BGP reference source](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
+- [VPN metrics](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
+- [Kubernetes 1.36.2 kubelet server source](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/server/server.go)
+- [Kubernetes NetworkPolicy semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+
+
+< [前へ: 前提条件](01-prerequisites.md) | [目次](./README.md) | [次へ: インターネット制限環境のセットアップ](03-airgap-setup.md) >

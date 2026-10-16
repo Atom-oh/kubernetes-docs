@@ -304,7 +304,7 @@ IPsec is a protocol suite that provides security services at the IP packet level
 
 Cilium supports overlay protocols like VXLAN and Geneve, leveraging eBPF to provide efficient packet processing.
 
-- **eBPF-based VXLAN Processing**: Direct packet encapsulation and decapsulation within the kernel
+- **eBPF-assisted VXLAN Processing**: BPF programs do not build the VXLAN header themselves; they set tunnel metadata (`bpf_skb_set_tunnel_key`) and redirect to the flow-based `cilium_vxlan` (or `cilium_geneve`) device, where the kernel's VXLAN/Geneve driver encapsulates and decapsulates. See [Overlay and native routing](09-overlay-native-routing.md)
 - **Efficient Routing**: Packet forwarding through optimized paths
 - **Encryption Options**: Encrypted overlay via IPsec or WireGuard
 - **Mode Selection**: Choose a supported routing mode. Enabling automatic direct node routes together with tunnel mode is rejected; it is not a fallback mechanism

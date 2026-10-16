@@ -94,11 +94,14 @@ Enabling these two Cilium address-family flags does not configure Kubernetes Ser
 
 ### Multi-Pool and CiliumPodIPPool
 
-The documented mode is `multi-pool`; the resource API remains `cilium.io/v2alpha1`. Do not infer a feature's maturity solely from that API suffix. On a fresh cluster using this mode, provide a default pool for ordinary allocations:
+The documented mode is `multi-pool`; the resource API is still `cilium.io/v2alpha1` in 1.20 (in the **[1.21 pre-release]** `CiliumPodIPPool` is served as `cilium.io/v2`, which becomes the storage version, `v2alpha1` is deprecated, and `spec.ipv4.pool`/`spec.ipv6.pool` add per-CIDR `reservedRanges`; those fields exist only in `v2`). Do not infer a feature's maturity solely from that API suffix. The upstream multi-pool tutorial also requires `kubeProxyReplacement=true` and `bpf.masquerade=true` (iptables masquerade would need `egressMasqueradeInterfaces`); the example below includes them. For allocation internals, pool sizing and migration, see [IPAM deep dive](10-ipam-deep-dive.md). On a fresh cluster using this mode, provide a default pool for ordinary allocations:
 
 **`multi-pool-values.yaml`**
 
 ```yaml
+kubeProxyReplacement: true
+bpf:
+  masquerade: true
 ipam:
   mode: multi-pool
   operator:
@@ -194,14 +197,13 @@ eni:
   eniTags:
     team: platform
   awsEnablePrefixDelegation: true
-routingMode: native
-endpointRoutes:
-  enabled: true
 ipv4:
   enabled: true
 ipv6:
   enabled: false
 ```
+
+`eni.enabled=true` already makes the chart default `routingMode` to `native` and enable endpoint routes, so those keys are omitted here (Helm template `cilium-configmap.yaml` in 1.20.2).
 
 
 `eni.awsEnablePrefixDelegation` requires the instance/subnet setup to support the requested prefixes. An IPv4 `/28` contains 16 addresses, not a guarantee of 16 additional schedulable Pods in every configuration. The default is disabled. Do not add the invented `eni-prefix-delegation-enabled` key.

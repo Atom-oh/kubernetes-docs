@@ -20,8 +20,13 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 | 2026-08-18 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh 문서와 restart/CIDR-policy 처리 등 버그 수정 |
 | 2026-08-18 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | ENI 인터페이스 타이밍, Service/LB 등 수정 |
 | 2026-08-18 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall 지원 및 관련 수정 |
-| 2026-09-16 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | ENI IPAM prefix 할당·해제, 정책 변경 직후 Pod의 정책 revision, LocalRedirectPolicy 회귀 등 버그 수정 |
+| 2026-09-09 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | Pre-release. changelog가 pre.0~pre.2를 포함하며 **1.21.0-pre.1은 게시되지 않았음** |
+| 2026-09-16 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | ENI IPAM prefix delegation(할당·해제)·보조 VPC CIDR, ClusterMesh, 정책 변경 직후 Pod의 정책 revision, LocalRedirectPolicy 회귀, v1.15 이하에서 생성된 클러스터 업그레이드(`CiliumNodeConfig v2alpha1` CRD 버전) 등 버그 수정 |
+| 2026-09-16 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | 이전 지원 라인의 패치 릴리스 |
+| 2026-10-02 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 최신 1.21 pre-release. **1.21은 pre-release만 있으며 GA 전**이므로 이 가이드의 1.21 항목은 변경될 수 있음 |
 | 2026-10-15 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API 의존성 v1.6.3, conntrack GC, `nodeSelector`가 있는 CNP 처리 등 수정, 이 가이드의 현재 검토 기준 |
+
+2026년 9월 14일 CNCF 블로그에 [Cilium 1.20 기능 정리 글](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/)(Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM 등)이 게시되었습니다. 내용은 아래 1.20.0 발표 요약과 같은 범위입니다.
 
 1.20.0 발표는 **2,660개 이상의 새 커밋**과 **1,100명 이상 기여자의 커뮤니티**를 소개합니다. 후자는 해당 릴리스 작성자 수가 아닌 커뮤니티 규모입니다. 주요 변경은 다음과 같습니다.
 
@@ -31,7 +36,7 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 - 트래픽 분배 힌트, 가중치 Maglev backend, stable MCS 통합, Kubernetes ClusterNetworkPolicy, **beta** ztunnel 워크로드 identity 지원입니다.
 - 발표된 `cilium-cni` 바이너리 크기 감소는 약 **77MB→16MB**입니다. ADS/Delta xDS 개선은 1.20 발표 내용이며 1.18.13 패치 내용으로 귀속하면 안 됩니다. 이 감사에서 다시 측정한 결과가 아닌 업스트림 릴리스의 설명입니다.
 
-레거시 Mutual Authentication, Envoy Go 확장, Kafka 인지 정책, 이전 CiliumNodeConfig API, libnetwork, 사용자 정의 CNI 설정의 제거/변경은 [1.20 업그레이드 안내](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)를 확인하세요.
+Mutual Authentication(**1.20에서 deprecated**, 1.21 pre-release에서 제거), Envoy Go 확장, Kafka 인지 정책, 이전 CiliumNodeConfig API, libnetwork, 사용자 정의 CNI 설정의 제거/변경은 [1.20 업그레이드 안내](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)를 확인하세요.
 
 ### NetworkPolicy 보안 권고
 
@@ -115,7 +120,8 @@ ipv4:
   enabled: true
 ipv6:
   enabled: false
-egressMasqueradeInterfaces: eth0
+# egressMasqueradeInterfaces는 의도적으로 생략: iptables masquerade에만 적용되며,
+# ENI 모드는 1.18부터 IPv4 masquerade가 기본 꺼짐입니다.
 serviceAccounts:
   operator:
     annotations:
@@ -154,7 +160,7 @@ ENI 교체 values 위에 추가하는 설정이 아닌 **별도 구성**으로 �
 
 ### ClusterMesh
 
-고유한 cluster identity, 호환 버전, 접근 가능하고 중복되지 않는 Pod 네트워크, 인증된 API 연결, 적절한 노출 방식이 필요합니다. LoadBalancer Service는 클라우드 리소스를 만들 수 있어 의도적인 네트워크/보안 설계가 필요합니다. 공개 endpoint 두 개만 만든다고 안전한 클러스터 연결이 완성되지는 않습니다. 선택한 토폴로지의 [ClusterMesh 가이드](../../service-mesh/cilium-service-mesh/01-architecture.md)와 고급 장을 따르세요.
+고유한 cluster identity, 호환 버전, 접근 가능하고 중복되지 않는 Pod 네트워크, 인증된 API 연결, 적절한 노출 방식이 필요합니다. LoadBalancer Service는 클라우드 리소스를 만들 수 있어 의도적인 네트워크/보안 설계가 필요합니다. 공개 endpoint 두 개만 만든다고 안전한 클러스터 연결이 완성되지는 않습니다. 선택한 토폴로지의 [ClusterMesh 가이드](13-clustermesh-install-upgrade.md)와 고급 장을 따르세요.
 
 ## 설치 및 구성
 
@@ -426,6 +432,35 @@ kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200
 - 대규모 배포 전략
 - 실제 사용 사례 연구
 - 미래 로드맵 및 발전 방향
+
+**[eBPF 데이터패스 내부](08-ebpf-datapath-internals.md)**
+- 프로그램 구성, attach 지점, tail call
+- BPF 맵 카탈로그, 크기 조정, 컴파일/로드 흐름
+- 정책 적용 경로와 Hubble 이벤트 파이프라인
+
+**[오버레이와 네이티브 라우팅](09-overlay-native-routing.md)**
+- VXLAN/Geneve, VNI에 실리는 identity, MTU, 패킷 워크
+- 네이티브 라우팅, 마스커레이딩, 호스트 라우팅, DSR, netkit
+- EKS 선택표: 오버레이 vs ENI vs VPC CNI 체이닝
+
+**[IPAM 심화](10-ipam-deep-dive.md)**
+- 모든 IPAM 모드, 크기 산정, 선택 매트릭스
+- Multi-pool, `CiliumPodIPPool`, ENI, LB IPAM, Node IPAM
+- 고갈 트러블슈팅과 1.21 API 변경
+
+**[BGP, 로드밸런서 IP, Egress](11-bgp-lb-egress-edge.md)**
+- BGP Control Plane v2 CRD, 광고, 점검 방법
+- L2 announcements, Egress Gateway, Local Redirect Policy
+- Gateway API 요구 사항과 EKS 내부 전용 노출
+
+**[mTLS, 암호화, Identity](12-mtls-encryption-identity.md)**
+- Identity 모델, 정책 의미론, audit 모드
+- Mutual Authentication 타임라인, ztunnel 워크로드 mTLS
+- WireGuard, IPsec, Hubble, 인증서 관리
+
+**[버전, 설치/업그레이드, Cluster Mesh](13-clustermesh-install-upgrade.md)**
+- 1.17~1.21 기능 매트릭스, 업그레이드/롤백 규칙
+- EKS 설치 세부 사항, Cluster Mesh, MCS-API
 
 ## 추가 자료
 

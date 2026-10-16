@@ -87,7 +87,7 @@ In Cilium 1.20.3, Helm **`MTU` overrides the underlying-network MTU**; Cilium th
 
 ## Cilium's Overlay Networking
 
-Without an overriding platform/profile configuration, Cilium uses tunnel routing with VXLAN. Cross-node Pod transport needs reachable node addresses, permitted tunnel UDP traffic and a usable MTU. Overlay does not fix overlapping Pod address ranges or make disconnected nodes reachable.
+Without an overriding platform/profile configuration, Cilium uses tunnel routing with VXLAN. Cross-node Pod transport needs reachable node addresses, permitted tunnel UDP traffic and a usable MTU. Overlay does not fix overlapping Pod address ranges or make disconnected nodes reachable. For the packet walk, tunnel devices, MTU budgeting and native-routing variants see [Overlay and native routing](09-overlay-native-routing.md).
 
 ![Cross-node overlay flow: endpoint processing, source VTEP encapsulation, underlay transit, destination decapsulation and endpoint delivery.](../../.gitbook/assets/en-networking-cilium-03-networking-2.png)
 

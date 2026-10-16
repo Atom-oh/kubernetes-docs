@@ -1,1689 +1,579 @@
-# 使用 cert-manager 进行证书管理
+# 使用 cert-manager 管理证书
 
-> **支持的版本**: cert-manager 1.16+, Kubernetes 1.31, 1.32, 1.33
-> **最后更新**: July 13, 2026
+> **最后更新**：October 12, 2026
+> **验证基准**：cert-manager 1.21.2、cmctl 2.5.0、trust-manager 0.25.0、istio-csr 0.17.0、aws-privateca-issuer 1.9.2、ACK ACM 1.8.1。cert-manager 1.21 已发布的受支持/已测试 Kubernetes 版本范围为 1.33–1.36；Kubernetes 1.37 不在该范围内，因此本指南不声明与其兼容。
 
-cert-manager 是适用于 Kubernetes 的强大且可扩展的 X.509 证书控制器。它可以自动管理和签发来自多种来源的 TLS 证书，包括 Let's Encrypt、HashiCorp Vault、Venafi 和私有 PKI 系统。
+cert-manager 将证书签发和续订作为 Kubernetes 资源进行管理。**CA 信任分发、应用程序重载、吊销以及 CRL/OCSP 操作仍是独立职责。**示例已使用本地 schema、配置和库进行检查；它们并非外部 CA 签发或 AWS/Kubernetes 部署的证据。一项单独的临时本地 Vault 2.1.0 测试使用合成 CA，对十六个签发/CSR 签名接受/拒绝案例进行了测试。
 
-## 目录
-
-1. [概述](#overview)
-2. [架构](#architecture)
-3. [安装](#installation)
-4. [核心概念](#core-concepts)
-5. [Issuer 类型](#issuer-types)
-6. [EKS 集成模式](#eks-integration-patterns)
-7. [AWS 原生替代方案：ACM + ACK](#aws-native-alternative-acm--ack)
-8. [Service Mesh 集成](#service-mesh-integration)
-9. [trust-manager](#trust-manager)
-10. [监控与故障排查](#monitoring-and-troubleshooting)
-11. [最佳实践](#best-practices)
-12. [总结与参考资料](#summary-and-references)
-
----
-
-<span id="overview"></span>
+<span id="what-cert-manager-solves"></span>
+<span id="project-status"></span>
+<span id="why-certificate-lifecycle-automation-matters"></span>
+<span id="overview-1"></span>
 
 ## 概述
 
-### cert-manager 解决的问题
+cert-manager 于 2020 年 11 月 10 日加入 CNCF，于 2022 年 9 月 19 日成为孵化项目，并于 **2024 年 9 月 29 日毕业**。毕业并不保证特定部署的安全性或可用性。
 
-在 Kubernetes 环境中手动管理证书会带来显著的运维挑战：
+| 生命周期关注点 | 职责 |
+|---|---|
+| 签发 | Issuer 身份验证、请求者批准、SAN/用途/有效期策略 |
+| 续订 | 实际签发的有效期、ARI/renewBefore、重试和告警 |
+| 密钥轮换 | Secret 访问、使用方重载、CA 轮换顺序 |
+| 信任 | 每个 namespace/进程信任哪些根/中间证书 |
+| 吊销 | CA 吊销流程以及 CRL/OCSP 的发布/使用 |
 
-| 挑战 | 影响 | cert-manager 解决方案 |
-|-----------|--------|----------------------|
-| **手动续期** | 证书过期导致 Service 中断 | 在过期前自动续期 |
-| **流程不一致** | 安全缺口和配置漂移 | 声明式 Certificate 资源 |
-| **密钥管理** | 密钥暴露风险 | 自动生成和轮换密钥 |
-| **多 Issuer 复杂性** | 运维开销 | 面向所有 CA 类型的统一接口 |
-| **与 GitOps 不兼容** | 无法对 Secret 进行版本控制 | Certificate CR 对 GitOps 友好 |
+不要将旧的 1.16.2 安装和兼容性表格作为当前支持指南。1.16 版本已于 2025 年 6 月结束生命周期（EOL）。请使用中间版本的发行说明和 CRD 变更规划升级。
 
-### 项目状态
-
-cert-manager 是一个 **CNCF Graduated 项目**，表明它已达到生产就绪的成熟度：
-
-- 首次发布：2017
-- CNCF Sandbox：2020
-- CNCF Incubating：2022
-- CNCF Graduated：2024
-- 活跃维护者来自 Venafi、Red Hat 和社区
-- GitHub stars 超过 10,000，并在生产环境中被广泛采用
-
-### 为什么证书生命周期自动化很重要
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│              Certificate Lifecycle Without Automation                    │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  Day 1: Generate CSR → Day 2: Submit to CA → Day 3: Receive cert       │
-│  Day 4: Configure application → Day 89: Forget about renewal           │
-│  Day 90: Certificate expires → Day 90: Production outage!              │
-│                                                                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│              Certificate Lifecycle With cert-manager                     │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  Day 1: Apply Certificate CR → cert-manager handles everything         │
-│  Day 60: Automatic renewal triggered → Zero intervention required      │
-│  Day 90: New certificate active → No outage, no manual work            │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-<span id="architecture"></span>
+<span id="component-overview"></span>
+<span id="component-responsibilities"></span>
+<span id="certificate-issuance-flow"></span>
 
 ## 架构
 
-### 组件概览
+![cert-manager 组件及 Issuer/Secret 关系](../.gitbook/assets/en-security-10-cert-manager-0.png)
 
-cert-manager 由三个主要组件组成，它们协同工作来管理证书生命周期：
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-0.html)
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["cert-manager Control Plane"]
-        CM[cert-manager Controller]
-        WH[Webhook Server]
-        CI[cainjector]
-    end
+controller 协调 Certificates 并创建 CertificateRequests；issuer controller 负责处理签发。webhook 对自定义资源进行验证/默认值设置/转换，cainjector 则在受支持的 API/webhook 配置中管理 CA bundle。CA/SelfSigned issuer 不一定是外部服务。
 
-    subgraph CRDs["Custom Resources"]
-        CERT[Certificate]
-        CR[CertificateRequest]
-        ISS[Issuer]
-        CISS[ClusterIssuer]
-        ORD[Order]
-        CHL[Challenge]
-    end
-
-    subgraph External["External CAs"]
-        LE[Let's Encrypt]
-        VAULT[HashiCorp Vault]
-        PCA[AWS Private CA]
-        SELF[Self-Signed]
-    end
-
-    subgraph K8s["Kubernetes Resources"]
-        SEC[TLS Secret]
-        ING[Ingress]
-        GW[Gateway]
-    end
-
-    API[API Server] --> WH
-    WH --> |Validates| CRDs
-    CM --> |Watches| CERT
-    CM --> |Creates| CR
-    CR --> |Processed by| ISS
-    CR --> |Processed by| CISS
-    ISS --> External
-    CISS --> External
-    CM --> |Creates| SEC
-    CI --> |Injects CA| WH
-    CI --> |Injects CA| API
-
-    ING --> |References| SEC
-    GW --> |References| SEC
-
-    classDef controller fill:#4CAF50,stroke:#333,color:white
-    classDef crd fill:#2196F3,stroke:#333,color:white
-    classDef external fill:#FF9800,stroke:#333,color:white
-    classDef k8s fill:#9C27B0,stroke:#333,color:white
-
-    class CM,WH,CI controller
-    class CERT,CR,ISS,CISS,ORD,CHL crd
-    class LE,VAULT,PCA,SELF external
-    class SEC,ING,GW k8s
-```
-
-### 组件职责
-
-| 组件 | 职责 | 关键功能 |
-|-----------|---------------|---------------|
-| **Controller** | 主协调循环 | 监视 Certificate CR，创建 CertificateRequest，存储已签发证书 |
-| **Webhook** | Admission control | 验证并变更 cert-manager 资源 |
-| **cainjector** | CA bundle 注入 | 将 CA 证书注入 Webhook 和 API server |
-
-### 证书签发流程
-
-```mermaid
-flowchart LR
-    subgraph User["User Action"]
-        U[Create Certificate CR]
-    end
-
-    subgraph Controller["cert-manager Controller"]
-        DETECT[Detect new Certificate]
-        CREATECR[Create CertificateRequest]
-        PROCESS[Process with Issuer]
-        STORE[Store in Secret]
-    end
-
-    subgraph ACME["ACME Flow (if applicable)"]
-        ORDER[Create Order]
-        CHALLENGE[Create Challenge]
-        SOLVE[Solve Challenge]
-        FINALIZE[Finalize Order]
-    end
-
-    subgraph Output["Result"]
-        SECRET[TLS Secret Created]
-        READY[Certificate Ready]
-    end
-
-    U --> DETECT
-    DETECT --> CREATECR
-    CREATECR --> PROCESS
-
-    PROCESS --> |ACME Issuer| ORDER
-    ORDER --> CHALLENGE
-    CHALLENGE --> SOLVE
-    SOLVE --> FINALIZE
-    FINALIZE --> STORE
-
-    PROCESS --> |Non-ACME| STORE
-
-    STORE --> SECRET
-    SECRET --> READY
-
-    classDef user fill:#E1F5FE,stroke:#333
-    classDef controller fill:#4CAF50,stroke:#333,color:white
-    classDef acme fill:#FF9800,stroke:#333,color:white
-    classDef output fill:#C8E6C9,stroke:#333
-
-    class U user
-    class DETECT,CREATECR,PROCESS,STORE controller
-    class ORDER,CHALLENGE,SOLVE,FINALIZE acme
-    class SECRET,READY output
-```
-
----
-
-<span id="installation"></span>
+<span id="prerequisites"></span>
+<span id="installation-with-helm-recommended"></span>
+<span id="production-helm-values"></span>
+<span id="installation-with-kubectl"></span>
+<span id="verify-installation"></span>
 
 ## 安装
 
-### 前置条件
-
-安装 cert-manager 之前，请确保：
-
-- Kubernetes cluster 版本 1.25+
-- `kubectl` 已配置 cluster admin 访问权限
-- Helm 3.x（用于 Helm 安装方式）
-
-### 使用 Helm 安装（推荐）
+检查受支持的 Kubernetes 版本、Helm/cluster 权限、Gateway API CRD 和真实的 Gateway controller，以及可选的 Prometheus Operator CRD。如果在 controller 启动后才安装 Gateway API CRD，请验证重启/发现要求。
 
 ```bash
-# Add the Jetstack Helm repository
 helm repo add jetstack https://charts.jetstack.io
-helm repo update
-
-# Install cert-manager with CRDs
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --version v1.16.2 \
-  --set crds.enabled=true \
-  --set prometheus.enabled=true \
-  --set webhook.timeoutSeconds=30
+helm repo update jetstack
+helm upgrade --install cert-manager jetstack/cert-manager \
+  --version v1.21.2 --namespace cert-manager --create-namespace \
+  --values cert-manager-values.yaml
+kubectl get pods -n cert-manager
+cmctl check api
 ```
 
-### 生产环境 Helm Values
-
 ```yaml
-# cert-manager-values.yaml
 crds:
   enabled: true
   keep: true
-
 replicaCount: 2
-
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
-
-resources:
-  requests:
-    cpu: 50m
-    memory: 64Mi
-  limits:
-    cpu: 200m
-    memory: 256Mi
-
+config:
+  apiVersion: controller.config.cert-manager.io/v1alpha1
+  kind: ControllerConfiguration
+  gatewayAPI:
+    enabled: true
 prometheus:
   enabled: true
   servicemonitor:
     enabled: true
-    namespace: monitoring
-
 webhook:
   replicaCount: 2
-  timeoutSeconds: 30
-  resources:
-    requests:
-      cpu: 25m
-      memory: 32Mi
-    limits:
-      cpu: 100m
-      memory: 128Mi
-
+  timeoutSeconds: 10
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
 cainjector:
   replicaCount: 2
-  resources:
-    requests:
-      cpu: 25m
-      memory: 64Mi
-    limits:
-      cpu: 100m
-      memory: 256Mi
-
-# For EKS with IRSA
-serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/cert-manager-role
-
-# Global settings
-global:
-  leaderElection:
-    namespace: cert-manager
-  logLevel: 2
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
 ```
 
-```bash
-# Install with custom values
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --version v1.16.2 \
-  -f cert-manager-values.yaml
-```
+此配置启用了 ServiceMonitor 和 Gateway API，因此其 CRD/controller 必须已经存在。对于不含这些依赖项的最小安装，请禁用这些选项。副本数/PDB 不能替代节点/AZ 分布和 API 连通性。当前配置使用 config.gatewayAPI.enabled；较旧的 enableGatewayAPI 字段仍会被 1.21.2 解码器接受，但已弃用。
 
-### 使用 kubectl 安装
+检查 CRD 保留和实际卸载所有权。删除 CRD 可能会删除其自定义资源；这不是常规升级故障排除步骤。
 
-```bash
-# Install cert-manager manifests (includes CRDs)
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.yaml
-
-# Verify installation
-kubectl get pods -n cert-manager
-```
-
-### 验证安装
-
-```bash
-# Check all pods are running
-kubectl get pods -n cert-manager
-
-# Expected output:
-# NAME                                       READY   STATUS    RESTARTS   AGE
-# cert-manager-5d7f97b46d-xxxxx              1/1     Running   0          2m
-# cert-manager-cainjector-7f694c4c58-xxxxx   1/1     Running   0          2m
-# cert-manager-webhook-7cd8c769bb-xxxxx      1/1     Running   0          2m
-
-# Check CRDs are installed
-kubectl get crd | grep cert-manager
-
-# Expected output:
-# certificaterequests.cert-manager.io
-# certificates.cert-manager.io
-# challenges.acme.cert-manager.io
-# clusterissuers.cert-manager.io
-# issuers.cert-manager.io
-# orders.acme.cert-manager.io
-
-# Test with cmctl (optional)
-# Install cmctl: https://cert-manager.io/docs/reference/cmctl/
-cmctl check api
-```
-
----
-
-<span id="core-concepts"></span>
+<span id="custom-resource-definitions-crds"></span>
+<span id="certificate-resource"></span>
+<span id="issuer-vs-clusterissuer"></span>
+<span id="certificaterequest-resource"></span>
 
 ## 核心概念
 
-### Custom Resource Definitions (CRDs)
+![Certificate 资源和 controller 创建的请求](../.gitbook/assets/en-security-10-cert-manager-1.png)
 
-cert-manager 引入了多个 CRD 来管理证书生命周期：
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-1.html)
 
-| CRD | 作用域 | 用途 |
-|-----|-------|---------|
-| **Certificate** | Namespaced | 声明期望的证书属性 |
-| **CertificateRequest** | Namespaced | 表示绑定到某个 Issuer 的 CSR |
-| **Issuer** | Namespaced | 定义如何获取证书（namespace-scoped） |
-| **ClusterIssuer** | Cluster | 定义如何获取证书（cluster-wide） |
-| **Order** | Namespaced | 表示 ACME order |
-| **Challenge** | Namespaced | 表示 ACME challenge |
+| 资源 | 范围和用途 |
+|---|---|
+| Certificate | namespace 内所需的证书和输出 Secret |
+| Issuer | 在其 namespace 内引用的签发配置 |
+| ClusterIssuer | 跨 namespace 引用的签发配置 |
+| CertificateRequest | CSR、issuerRef 和批准/拒绝状态 |
+| Order/Challenge | ACME 路径使用的订购/验证资源 |
 
-### Certificate 资源
+ClusterIssuer 的凭据/CA Secret 位于 controller 的 cluster-resource namespace，默认值为 cert-manager。Issuer Secret 位于 Issuer namespace。创建 Certificate 的权限本身并不会限制 SAN 或 issuerRef。
 
-Certificate 资源是请求证书的主要接口：
+### Certificate 和续订
 
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: example-com-tls
-  namespace: default
+  name: app-tls
+  namespace: demo-app
 spec:
-  # Secret where the certificate will be stored
-  secretName: example-com-tls-secret
-
-  # Certificate duration (default: 2160h = 90 days)
+  secretName: app-tls
+  dnsNames: [app.example.com]
   duration: 2160h
-
-  # Renewal window (default: 360h = 15 days before expiry)
-  renewBefore: 360h
-
-  # Subject fields
-  subject:
-    organizations:
-      - Example Inc
-
-  # Common name (deprecated, use dnsNames)
-  commonName: example.com
-
-  # Private key settings
-  privateKey:
-    algorithm: RSA
-    size: 2048
-    rotationPolicy: Always
-
-  # Usages
-  usages:
-    - digital signature
-    - key encipherment
-    - server auth
-
-  # DNS names for the certificate
-  dnsNames:
-    - example.com
-    - www.example.com
-    - api.example.com
-
-  # IP addresses (optional)
-  ipAddresses:
-    - 192.168.1.1
-
-  # Reference to the issuer
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-    group: cert-manager.io
-```
-
-### Issuer vs ClusterIssuer
-
-```yaml
-# Issuer - namespace-scoped
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: ca-issuer
-  namespace: my-namespace  # Only usable in this namespace
-spec:
-  ca:
-    secretName: ca-key-pair
-
----
-# ClusterIssuer - cluster-wide
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod  # No namespace, available cluster-wide
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod-account-key
-    solvers:
-      - http01:
-          ingress:
-            class: nginx
-```
-
-### CertificateRequest 资源
-
-CertificateRequest 通常由 cert-manager 自动创建：
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: CertificateRequest
-metadata:
-  name: example-com-tls-xxxxx
-  namespace: default
-spec:
-  # Base64-encoded CSR
-  request: LS0tLS1CRUdJTi...
-
-  # Reference to the issuer
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-    group: cert-manager.io
-
-  # Requested duration
-  duration: 2160h
-
-  # Usages
-  usages:
-    - digital signature
-    - key encipherment
-    - server auth
-```
-
----
-
-<span id="issuer-types"></span>
-
-## Issuer 类型
-
-### SelfSigned Issuer（开发/测试）
-
-自签名证书适用于开发和测试环境：
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: selfsigned-issuer
-spec:
-  selfSigned: {}
-
----
-# Create a self-signed CA certificate
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: selfsigned-ca
-  namespace: cert-manager
-spec:
-  isCA: true
-  commonName: selfsigned-ca
-  secretName: selfsigned-ca-secret
+  renewBeforePercentage: 33
   privateKey:
     algorithm: ECDSA
     size: 256
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages: [server auth]
   issuerRef:
-    name: selfsigned-issuer
+    name: lab-ca
     kind: ClusterIssuer
     group: cert-manager.io
 ```
 
-### CA Issuer（内部 PKI）
+请求的有效期可能与 CA 实际签发的有效期不同。默认续订发生在**实际 X.509 有效期的三分之二处**，而非到期前固定的 15/30 天。renewBeforePercentage 根据实际有效期推导缓冲期。选择 renewBefore 或百分比，不要同时选择两者；duration 至少为 1 小时，有效续订缓冲期必须至少为 5 分钟且短于 duration。
 
-适用于拥有自己内部 Certificate Authority 的组织：
+版本 1.21.2 的续订策略/窗口和受支持的 ARI 路径会影响时机。renewal.policy:Disabled 会禁用自动续订。检查 status.renewalTime、实际 notBefore/notAfter 和失败告警。自 1.18 起，privateKey.rotationPolicy 默认为 Always。更新密钥/证书 Secret 并不能保证应用程序重载。
+
+### CertificateRequest 和私钥
+
+直接请求需要真实的 PEM CSR；不要应用截断的 base64 示例。cmctl create certificaterequest **会在 cluster 中创建请求**，并非离线验证命令。单独限制 cmctl approve/deny 权限。本次审计仅使用 cert-manager PKI 库生成并验证合成的本地密钥/CSR。
+
+<span id="selfsigned-issuer-development-testing"></span>
+<span id="ca-issuer-internal-pki"></span>
+<span id="acme-let-s-encrypt"></span>
+<span id="acme-challenge-types"></span>
+<span id="http-01-solver"></span>
+<span id="dns-01-solver-with-route53-and-irsa"></span>
+<span id="aws-private-ca-issuer"></span>
+<span id="hashicorp-vault-pki"></span>
+
+## Issuer 类型
+
+### SelfSigned 和 CA 引导
+
+[完整引导示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/bootstrap.yaml)创建专用的实验室根证书和叶证书。根证书明确使用 renewal Disabled 和密钥轮换 Never，以避免**计划外的信任锚替换**。生产根证书托管、离线 CA、中间证书隔离、审计和吊销需要单独设计。
 
 ```yaml
-# First, create a Secret with the CA certificate and key
 apiVersion: v1
-kind: Secret
+kind: Namespace
 metadata:
-  name: ca-key-pair
+  name: cert-manager
+  labels:
+    trust-bundle: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-app
+  labels:
+    trust-bundle: enabled
+    cert-manager-http01: enabled
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: bootstrap
   namespace: cert-manager
-type: kubernetes.io/tls
-data:
-  tls.crt: LS0tLS1CRUdJTi...  # Base64-encoded CA certificate
-  tls.key: LS0tLS1CRUdJTi...  # Base64-encoded CA private key
-
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-root
+  namespace: cert-manager
+spec:
+  secretName: lab-root
+  isCA: true
+  commonName: Documentation Lab Root
+  subject:
+    organizations: [Documentation Lab]
+  duration: 8760h
+  renewal:
+    policy: Disabled
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    encoding: PKCS8
+    rotationPolicy: Never
+  usages: [cert sign, crl sign]
+  issuerRef:
+    name: bootstrap
+    kind: Issuer
+    group: cert-manager.io
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: ca-issuer
+  name: lab-ca
 spec:
   ca:
-    secretName: ca-key-pair
-
+    secretName: lab-root
 ---
-# Request a certificate from the CA issuer
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: internal-service-tls
-  namespace: default
+  name: app-tls
+  namespace: demo-app
 spec:
-  secretName: internal-service-tls-secret
-  duration: 8760h  # 1 year
-  renewBefore: 720h  # 30 days
-  dnsNames:
-    - internal-service.default.svc.cluster.local
-    - internal-service.default.svc
-    - internal-service
+  secretName: app-tls
+  dnsNames: [app.example.com]
+  duration: 2160h
+  renewBeforePercentage: 33
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages: [server auth]
   issuerRef:
-    name: ca-issuer
+    name: lab-ca
     kind: ClusterIssuer
+    group: cert-manager.io
 ```
 
-### ACME / Let's Encrypt
+CA issuer 使用包含 CA 证书/私钥的 Secret。替换该 Secret 不会立即重新签发每个叶证书或更新每个客户端信任库。CA issuer 可包含 CRL/OCSP URL，但不会生成或维护 CRL/OCSP 响应。实施策略以防止叶证书的存活时间超过其 CA。
 
-ACME（Automatic Certificate Management Environment）与 Let's Encrypt 和其他兼容 ACME 的 CA 一起使用。
+### ACME：HTTP-01 和 DNS-01
 
-#### ACME Challenge 类型
+![ACME HTTP/DNS 验证和签发](../.gitbook/assets/en-security-10-cert-manager-2.png)
 
-```mermaid
-flowchart TB
-    subgraph ACME["ACME Challenge Selection"]
-        START[Certificate Request]
-        HTTP01[HTTP-01 Challenge]
-        DNS01[DNS-01 Challenge]
-    end
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-2.html)
 
-    subgraph HTTP["HTTP-01 Flow"]
-        H1[cert-manager creates<br/>challenge token]
-        H2[Expose token at<br/>/.well-known/acme-challenge/]
-        H3[Let's Encrypt verifies<br/>via HTTP request]
-        H4[Challenge completed]
-    end
+HTTP-01 需要通过端口 80 访问 hostname，且不支持通配符。DNS-01 使用 DNS TXT 权限进行通配符验证。重复使用的授权和 ACM 的预验证流程意味着不一定会为每个请求都创建新的 Challenge。
 
-    subgraph DNS["DNS-01 Flow"]
-        D1[cert-manager creates<br/>challenge token]
-        D2[Create TXT record<br/>_acme-challenge.domain]
-        D3[Let's Encrypt verifies<br/>via DNS query]
-        D4[Challenge completed]
-    end
+不要推荐维护已于 2026 年 3 月结束的社区 ingress-nginx 作为新安装的默认选项。[HTTP-01 Gateway 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/public-staging.yaml)假设已安装 Envoy Gateway 及其 envoy-gateway GatewayClass。验证实际 class，并使 solver namespace 的 cert-manager-http01:enabled 标签与 allowedRoutes 对齐。Gateway 证书 shimming 不会安装 Gateway controller 或实现其 TLS 重载。
 
-    subgraph Route53["Route53 DNS-01 with IRSA"]
-        R1[EKS Pod with IRSA]
-        R2[AssumeRoleWithWebIdentity]
-        R3[Route53 API]
-        R4[Create/Delete TXT record]
-    end
-
-    START --> |Port 80 accessible| HTTP01
-    START --> |Wildcard cert OR<br/>Port 80 blocked| DNS01
-
-    HTTP01 --> H1 --> H2 --> H3 --> H4
-    DNS01 --> D1 --> D2 --> D3 --> D4
-
-    D2 --> |AWS| R1
-    R1 --> R2 --> R3 --> R4
-
-    classDef acme fill:#4CAF50,stroke:#333,color:white
-    classDef http fill:#2196F3,stroke:#333,color:white
-    classDef dns fill:#FF9800,stroke:#333,color:white
-    classDef aws fill:#FF5722,stroke:#333,color:white
-
-    class START,HTTP01,DNS01 acme
-    class H1,H2,H3,H4 http
-    class D1,D2,D3,D4 dns
-    class R1,R2,R3,R4 aws
-```
-
-#### HTTP-01 Solver
+[Route53 issuer](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-issuer.yaml)和[IAM 策略](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-policy.json)指定 hostedZoneID，并将变更限制为 Challenge TXT 名称。指定 zone 可避免要求全局 ListHostedZonesByName 访问权限。通过 IRSA 或受支持的 Pod Identity 以及任何跨账户角色链验证 controller 凭据。namespace 选择和 dnsZones 不能替代 IAM 授权。
 
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod
+  name: public-dns01
 spec:
   acme:
-    # Let's Encrypt production server
-    server: https://acme-v02.api.letsencrypt.org/directory
-
-    # Email for certificate expiry notifications
-    email: admin@example.com
-
-    # Secret to store the ACME account private key
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: pki-admin@example.com
     privateKeySecretRef:
-      name: letsencrypt-prod-account-key
-
-    # HTTP-01 solver configuration
+      name: public-dns01-account
     solvers:
-      - http01:
-          ingress:
-            class: nginx
-            # Or specify a specific ingress name
-            # ingressTemplate:
-            #   metadata:
-            #     annotations:
-            #       kubernetes.io/ingress.class: nginx
-```
-
-#### 使用 Route53 和 IRSA 的 DNS-01 Solver
-
-```yaml
-# IAM Policy for cert-manager (create via AWS CLI or Terraform)
-# {
-#   "Version": "2012-10-17",
-#   "Statement": [
-#     {
-#       "Effect": "Allow",
-#       "Action": "route53:GetChange",
-#       "Resource": "arn:aws:route53:::change/*"
-#     },
-#     {
-#       "Effect": "Allow",
-#       "Action": [
-#         "route53:ChangeResourceRecordSets",
-#         "route53:ListResourceRecordSets"
-#       ],
-#       "Resource": "arn:aws:route53:::hostedzone/HOSTED_ZONE_ID"
-#     },
-#     {
-#       "Effect": "Allow",
-#       "Action": "route53:ListHostedZonesByName",
-#       "Resource": "*"
-#     }
-#   ]
-# }
-
----
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-dns01
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@example.com
-    privateKeySecretRef:
-      name: letsencrypt-dns01-account-key
-    solvers:
-      # DNS-01 solver for Route53
       - selector:
-          dnsZones:
-            - "example.com"
+          dnsZones: [example.com]
         dns01:
           route53:
-            region: us-east-1
+            region: ap-northeast-2
             hostedZoneID: Z1234567890ABC
-            # Using IRSA - no credentials needed in the spec
-            # cert-manager ServiceAccount must have the IAM role annotation
-
----
-# Wildcard certificate (only possible with DNS-01)
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: wildcard-example-com
-  namespace: default
-spec:
-  secretName: wildcard-example-com-tls
-  dnsNames:
-    - "example.com"
-    - "*.example.com"
-  issuerRef:
-    name: letsencrypt-dns01
-    kind: ClusterIssuer
 ```
 
-### AWS Private CA Issuer
+Let’s Encrypt staging 具有生产浏览器不信任的速率限制和根证书。ACME 账户按环境区分。到期通知电子邮件已于 2025 年停止；email 字段不能替代到期监控。对于 429 响应，应遵循 Retry-After 和相关的补充策略，而不是总在一小时后重试。ARI 续订与新签发有不同的速率限制处理方式。
 
-适用于需要 AWS Private Certificate Authority 的企业环境：
+### AWS Private CA
+
+外部 aws-privateca-issuer controller 需要 CA-ARN 范围内的签发/读取权限和 EKS workload identity。文档规定的操作为 acm-pca:DescribeCertificateAuthority、acm-pca:GetCertificate 和 acm-pca:IssueCertificate；将其 Resource 限制为目标 CA ARN。替换[示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/pca-issuer.yaml)中的实际 CA ARN，并验证 CA 模式、template、算法、用途和请求的有效期。分别检查短期 CA 限制和定价。不要使用 disableApprovedCheck 绕过批准检查。
 
 ```bash
-# Install AWS PCA Issuer
 helm repo add awspca https://cert-manager.github.io/aws-privateca-issuer
-helm install aws-pca-issuer awspca/aws-privateca-issuer \
-  --namespace cert-manager \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT_ID:role/aws-pca-issuer-role
+helm upgrade --install aws-pca-issuer awspca/aws-privateca-issuer \
+  --version v1.9.2 --namespace cert-manager
 ```
 
-```yaml
-# IAM Policy for AWS PCA Issuer
-# {
-#   "Version": "2012-10-17",
-#   "Statement": [
-#     {
-#       "Effect": "Allow",
-#       "Action": [
-#         "acm-pca:IssueCertificate",
-#         "acm-pca:GetCertificate",
-#         "acm-pca:DescribeCertificateAuthority"
-#       ],
-#       "Resource": "arn:aws:acm-pca:REGION:ACCOUNT_ID:certificate-authority/CA_ID"
-#     }
-#   ]
-# }
+### Vault PKI
 
----
-apiVersion: awspca.cert-manager.io/v1beta1
-kind: AWSPCAClusterIssuer
-metadata:
-  name: aws-pca-issuer
-spec:
-  arn: arn:aws:acm-pca:us-east-1:123456789012:certificate-authority/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-  region: us-east-1
+[Issuer/token RBAC 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-issuer.yaml)将 token 创建限制为 demo-app/vault-issuer。单独提供 Vault server 的 TLS CA Secret。[PKI role/policy 脚本](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/vault-setup.sh)假定现有 PKI/Kubernetes-auth mount、已批准的 Vault identity 以及已配置的 TokenReview 访问。
 
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: internal-mtls-cert
-  namespace: default
-spec:
-  secretName: internal-mtls-tls
-  duration: 8760h
-  renewBefore: 720h
-  commonName: service.internal.example.com
-  dnsNames:
-    - service.internal.example.com
-  usages:
-    - digital signature
-    - key encipherment
-    - server auth
-    - client auth  # For mTLS
-  issuerRef:
-    name: aws-pca-issuer
-    kind: AWSPCAClusterIssuer
-    group: awspca.cert-manager.io
-```
+在 Vault role 中限制 SAN，并将 audience vault://demo-app/vault-pki 绑定到此 Issuer。reviewer JWT、Kubernetes API audience 和 OIDC 访问取决于 Vault 的运行位置。不要以 tls-skip-verify 或宽泛的默认 Vault policy 绕过连通性问题。
 
-### HashiCorp Vault PKI
+<span id="tls-termination-comparison"></span>
+<span id="alb-ingress-with-acm-vs-cert-manager"></span>
+<span id="nlb-with-tls-termination-at-ingress-controller"></span>
+<span id="gateway-api-integration"></span>
 
-适用于将 HashiCorp Vault 作为 PKI 后端的组织：
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: vault-issuer
-spec:
-  vault:
-    # Vault server address
-    server: https://vault.example.com
-
-    # PKI secrets engine path
-    path: pki/sign/my-role
-
-    # Vault namespace (Enterprise only)
-    # namespace: admin
-
-    # CA bundle for Vault TLS
-    caBundle: LS0tLS1CRUdJTi...
-
-    # Authentication method
-    auth:
-      # Kubernetes auth method
-      kubernetes:
-        role: cert-manager
-        mountPath: /v1/auth/kubernetes
-        serviceAccountRef:
-          name: cert-manager
-          # namespace: cert-manager  # Optional, defaults to issuer namespace
-
-      # Or use AppRole auth
-      # appRole:
-      #   path: approle
-      #   roleId: my-role-id
-      #   secretRef:
-      #     name: vault-approle-secret
-      #     key: secretId
-
----
-# Vault configuration (run in Vault)
-# vault secrets enable pki
-# vault secrets tune -max-lease-ttl=8760h pki
-# vault write pki/root/generate/internal \
-#     common_name="Example Root CA" \
-#     ttl=87600h
-# vault write pki/roles/my-role \
-#     allowed_domains="example.com" \
-#     allow_subdomains=true \
-#     max_ttl=72h
-# vault write auth/kubernetes/role/cert-manager \
-#     bound_service_account_names=cert-manager \
-#     bound_service_account_namespaces=cert-manager \
-#     policies=pki-policy \
-#     ttl=1h
-```
-
----
-
-<span id="eks-integration-patterns"></span>
+DNS role 明确设置 allow_ip_sans=false 和 allow_localhost=false。allowed_domains 不会限制 IP SAN，而 localhost 有单独的宽松默认值。vault write POST 会将省略的 role 字段重置为默认值；应用后读取完整 role，并测试允许的 DNS 请求以及被拒绝的 IP/localhost 请求。
 
 ## EKS 集成模式
 
-### TLS 终止比较
+| 路径 | TLS 终止和密钥位置 |
+|---|---|
+| 使用 ACM 的 ALB/NLB TLS listener | AWS 负载均衡器使用 ACM ARN |
+| 使用 Gateway/Pod 的 NLB TCP | Backend 使用 Kubernetes Secret 终止 TLS |
+| Gateway HTTPS listener | Gateway controller 引用同一 namespace 的 TLS Secret |
+| 可导出的 ACM 公共证书 | 客户管理的 workload 使用显式导出的密钥/证书 |
 
-| 方案 | TLS 终止 | 证书来源 | 使用场景 |
-|----------|----------------|-------------------|----------|
-| **ALB + ACM** | 在 ALB | AWS Certificate Manager | 面向公网并使用 AWS 托管证书 |
-| **ALB + cert-manager** | 在 ALB | cert-manager | 面向公网并使用自定义 CA |
-| **NLB + Ingress** | 在 Ingress Controller | cert-manager | Layer 4 load balancing |
-| **NLB + Pod** | 在 Pod | cert-manager | 端到端加密 |
-| **Gateway API** | 在 Gateway | cert-manager | 现代 API，面向未来 |
-
-> ACM 证书现在也可以定义并协调为原生 Kubernetes 资源。请参见下方的 [AWS 原生替代方案：ACM + ACK](#aws-native-alternative-acm--ack)。
-
-### ALB Ingress with ACM vs cert-manager
+ALB 不会直接读取 cert-manager Kubernetes Secret 作为 listener 证书；导入/导出和 ACM ARN 关系是独立步骤。[ALB 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/alb-acm-ingress.yaml)需要真实的 ACM ARN 和 backend Service。[NLB TCP 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/nlb-tcp-service.yaml)将 TLS 传递到 backend 端口 8443，该端口必须实际提供 TLS。
 
 ```yaml
-# Option 1: ALB with ACM (AWS-managed certificates)
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: app-ingress-acm
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    # ACM certificate ARN
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/xxxxxxxx
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
-spec:
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: app-service
-                port:
-                  number: 80
-
----
-# Option 2: Ingress-nginx with cert-manager
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: app-ingress-certmanager
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  tls:
-    - hosts:
-        - app.example.com
-      secretName: app-example-com-tls
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: app-service
-                port:
-                  number: 80
-```
-
-### 使用 Ingress Controller 进行 TLS 终止的 NLB
-
-```yaml
-# NLB Service for ingress-nginx
-apiVersion: v1
-kind: Service
-metadata:
-  name: ingress-nginx-controller
-  namespace: ingress-nginx
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: external
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
-    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
-spec:
-  type: LoadBalancer
-  ports:
-    - name: https
-      port: 443
-      targetPort: 443
-      protocol: TCP
-  selector:
-    app.kubernetes.io/name: ingress-nginx
-
----
-# Certificate for ingress controller
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: ingress-tls
-  namespace: ingress-nginx
-spec:
-  secretName: ingress-tls-secret
-  dnsNames:
-    - "*.example.com"
-    - example.com
-  issuerRef:
-    name: letsencrypt-dns01
-    kind: ClusterIssuer
-```
-
-### Gateway API 集成
-
-```yaml
-# Install Gateway API CRDs
-# kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
-
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: main-gateway
-  namespace: default
+  name: app-gateway
+  namespace: demo-app
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: lab-ca
 spec:
-  gatewayClassName: nginx  # or istio, envoy, etc.
+  gatewayClassName: envoy-gateway
   listeners:
     - name: https
-      port: 443
+      hostname: app.example.com
       protocol: HTTPS
-      hostname: "*.example.com"
+      port: 443
       tls:
         mode: Terminate
         certificateRefs:
-          - name: wildcard-example-com-tls
+          - group: ""
             kind: Secret
+            name: app-gateway-tls
       allowedRoutes:
         namespaces:
-          from: All
-
+          from: Same
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: app-route
-  namespace: default
+  name: app
+  namespace: demo-app
 spec:
   parentRefs:
-    - name: main-gateway
-      namespace: default
-  hostnames:
-    - app.example.com
+    - name: app-gateway
+  hostnames: [app.example.com]
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: app-service
-          port: 80
+    - backendRefs:
+        - name: app
+          port: 8080
 ```
 
----
+此 Gateway 使用 lab-ca，普通浏览器并不信任它。真正的公共签发需要经批准的 issuer/domain 验证路径和 controller。验证 GatewayClass 名称和 certificateRefs 范围/类型；避免让两个 controller 拥有同一个 Secret。
+
+<span id="july-2026-update-acm-now-supports-the-acme-protocol"></span>
+<span id="supported-certificate-types"></span>
+<span id="applicable-scenarios"></span>
+<span id="example-defining-a-certificate-via-ack"></span>
+<span id="comparison-with-cert-manager"></span>
 
 <span id="aws-native-alternative-acm--ack"></span>
 
 ## AWS 原生替代方案：ACM + ACK
 
-### 概述
+### ACM RequestCertificate 和 ACK 导出
 
-2025 年 12 月 15 日，AWS 发布了[使用 AWS Certificate Manager (ACM) 为 Kubernetes 自动化证书管理](https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes)，将 ACM 与 AWS Controllers for Kubernetes (ACK) 集成。在 cluster 中安装 ACM ACK controller 后，可以将证书定义为原生 Kubernetes custom resource (YAML)，ACK controller 会自动处理完整生命周期：请求签发、完成域名/所有权验证，以及创建并续期对应的 Kubernetes Secret。
-
-cert-manager 是一个 CNCF 开源解决方案，支持广泛的 Issuer（Let's Encrypt 和其他 ACME Issuer、Vault、AWS Private CA、自签名等）；而 ACM+ACK 集成是一个 **AWS 原生替代方案**。对于已经投入 IAM/ACM 生态系统的组织，它可以在不运行单独开源控制器的情况下提供同类自动化能力。
-
-### 2026 年 7 月更新：ACM 现在支持 ACME 协议
-
-2026 年 7 月，ACM 增加了[通过 ACME 协议签发公有证书](https://aws.amazon.com/about-aws/whats-new/2026/07/aws-certificate-manager-acme/)的支持。你可以预置一个完全托管的 ACME server endpoint，该 endpoint 使用 Amazon Trust Services 签发有效期为 45 天的公有 TLS 证书，并可由任何兼容 ACMEv2 的客户端使用——包括 Certbot、acme.sh 和用于 Kubernetes 的 cert-manager。换句话说，现在只需将 cert-manager 现有 ACME Issuer 的 `server` 字段指向 ACM ACME endpoint，即可使用 ACM 公有证书，而无需安装 ACK controller。
-
-PKI 管理员可以在 endpoint 级别应用集中治理——限制域名范围并强制执行 wildcard 策略——并将证书请求委派给应用团队，而无需分发 DNS 凭据；所有活动都可通过 CloudTrail 日志和 CloudWatch 指标审计。随着 CA/Browser Forum 要求到 2029 年证书生命周期为 47 天，cert-manager + ACM ACME endpoint 组合被定位为 Let's Encrypt 的 AWS 原生替代方案。
-
-### 支持的证书类型
-
-| 类型 | 使用场景 |
-|------|----------|
-| **ACM Exportable Public Certificates** | 导出到 Kubernetes Secret 以供 Pod/Ingress 直接使用的公有域名证书 |
-| **AWS Private CA** | 需要私有 PKI 的内部服务和 service-mesh（Istio、Linkerd）mTLS 工作负载 |
-
-### 适用场景
-
-- 直接在应用程序 Pod 中终止 TLS（NGINX、自定义应用程序）
-- Service mesh（Istio、Linkerd）工作负载证书
-- 未使用 ALB/NLB 原生证书集成的第三方 Ingress Controllers（NGINX Ingress、Traefik）
-- 需要一致证书管理的多 cluster/混合环境
-
-### 示例：通过 ACK 定义 Certificate
+ACK ACM 本身是需要安装和运维的开源 controller。1.8.1 [示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml)明确配置 options.export:ENABLED、exportTo 和输出 Secret。仅定义签发请求不会创建 TLS Secret。在 1.8.1 CRD（v1.10.0 中未变）中，validationMethod 仅出现在只读 status domainValidations 字段中，而非 spec 中；不要从旧示例复制到请求中。
 
 ```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: exported-public-tls
+  namespace: demo-app
+type: kubernetes.io/tls
+data:
+  tls.crt: ""
+  tls.key: ""
+---
 apiVersion: acm.services.k8s.aws/v1alpha1
 kind: Certificate
 metadata:
-  name: example-com-tls
-  namespace: default
+  name: exportable-public-tls
+  namespace: demo-app
 spec:
-  domainName: example.com
-  subjectAlternativeNames:
-    - "*.example.com"
-  validationMethod: DNS
-  tags:
-    - key: managed-by
-      value: ack
+  domainName: app.example.com
+  keyAlgorithm: RSA_2048
+  options:
+    export: ENABLED
+  exportTo:
+    namespace: demo-app
+    name: exported-public-tls
+    key: tls.crt
 ```
 
-ACK controller 会监视此资源，向 ACM 请求证书，并在签发完成后创建/续期生成的 Kubernetes Secret。具体字段名称和 Secret 导出机制可能因 ACM ACK controller 版本而异，因此安装前请查看官方文档。
+域验证是独立的。Route53 ACK 可以管理 ACM 提供的 CNAME，但安装 ACM controller 不会自动验证每个 DNS 提供商。评估可导出证书的定价、controller IAM/RBAC/namespace 边界，以及私钥 Secret 访问。Private-CA/SPIFFE mTLS identity 需要自身的 issuer/trust 设计。
 
-### 与 cert-manager 的比较
+### ACM ACME：EAB 和预验证域
 
-| 方面 | cert-manager | ACM + ACK |
-|--------|--------------|-----------|
-| **Issuers** | Let's Encrypt、Vault、AWS PCA 等 | ACM（公有）、AWS Private CA |
-| **生态系统** | CNCF 开源、厂商中立 | AWS 原生、基于 IAM 的访问控制 |
-| **安装内容** | cert-manager controller | 用于 ACM 的 ACK service controller |
-| **成本** | 免费（仅基础设施成本） | 标准 ACM/AWS Private CA 定价；Kubernetes 集成本身不额外收费 |
-| **最适合** | Multi-cloud，或需要 ACME Issuer | 以 AWS 为中心且已使用 ACM/IAM 的组织 |
+ACM ACME 于 2026 年 7 月 6 日发布，可签发 45 天有效期的公共证书。PKI 管理员准备与 IAM role 关联的 endpoint/domain 验证和 EAB 凭据，然后注册客户端。**仅更改 server URL 不够。**安全地存储 HMAC 密钥，并在 cert-manager 的 cluster-resource namespace 中提供 acm-eab Secret/hmac 条目。
 
-这两种方式并不互斥——例如，公有域名证书可以通过 ACM+ACK 管理，而内部 mTLS 证书继续通过 cert-manager 与 AWS PCA Issuer 管理。
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: acm-acme
+spec:
+  acme:
+    server: https://acm-acme-enroll.ap-northeast-2.api.aws/REPLACE_ENDPOINT_ID/directory
+    email: pki-admin@example.com
+    privateKeySecretRef:
+      name: acm-acme-account
+    externalAccountBinding:
+      keyID: REPLACE_EAB_KEY_ID
+      keySecretRef:
+        name: acm-eab
+        key: hmac
+```
 
----
+externalAccountBinding 引用的 Secret 值必须包含 base64url 编码的 HMAC 密钥；Kubernetes Secret 数据编码是单独一层。保留已编码的 provider 值，不要重复编码。请参阅 [ACME EAB 配置](https://cert-manager.io/docs/configuration/acme/)。
 
-<span id="service-mesh-integration"></span>
+Endpoint ID 和 EAB keyID 是占位符。域必须在 endpoint 上预验证。ACME client 生成/持有私钥并管理续订。ACM inventory 中出现 ARN 并不使该证书可直接与托管的 ALB/CloudFront/API Gateway 集成使用。ExportCertificate、RenewCertificate 和 RevokeCertificate 不适用于此签发路径；ACME client 拥有其生命周期。请区分 AWS 集成服务的 RequestCertificate。
+
+<span id="istio-with-istio-csr"></span>
+<span id="installing-istio-csr"></span>
+<span id="configuring-istio-to-use-istio-csr"></span>
+<span id="linkerd-trust-anchor-management"></span>
 
 ## Service Mesh 集成
 
-### Istio 与 istio-csr
+![istio-agent、istio-csr、SDS 和对等 mTLS](../.gitbook/assets/en-security-10-cert-manager-3.png)
 
-istio-csr 是一个 cert-manager agent，可与 Istio 集成以提供工作负载证书。它会用 cert-manager 签名的证书替换默认的 istiod CA。
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-3.html)
 
-```mermaid
-flowchart TB
-    subgraph Workload["Istio Workload Pod"]
-        APP[Application Container]
-        ENVOY[Envoy Sidecar]
-    end
+### Istio 和 istio-csr
 
-    subgraph IstioCsr["istio-csr"]
-        CSR_AGENT[istio-csr Agent]
-        CSR_QUEUE[CSR Queue]
-    end
+在 sidecar 流程中，istio-agent 创建 CSR，istio-csr 提交 CertificateRequest。agent 通过 SDS 将密钥/证书材料传递给 Envoy；workload proxy 建立 mTLS。同一 Pod 内的应用程序 hop 不会自动使用 mTLS。
 
-    subgraph CertManager["cert-manager"]
-        CM_CTRL[cert-manager Controller]
-        CR[CertificateRequest]
-    end
-
-    subgraph Issuer["Certificate Issuer"]
-        ISS[ClusterIssuer]
-        CA[CA / Vault / PCA]
-    end
-
-    subgraph Output["Result"]
-        SVID[SPIFFE SVID Certificate]
-        MTLS[mTLS Communication]
-    end
-
-    ENVOY --> |1. CSR Request| CSR_AGENT
-    CSR_AGENT --> |2. Queue CSR| CSR_QUEUE
-    CSR_QUEUE --> |3. Create CertificateRequest| CM_CTRL
-    CM_CTRL --> |4. Process| CR
-    CR --> |5. Sign with| ISS
-    ISS --> |6. Request signing| CA
-    CA --> |7. Signed cert| ISS
-    ISS --> |8. Return cert| CR
-    CR --> |9. Certificate| CM_CTRL
-    CM_CTRL --> |10. Return| CSR_AGENT
-    CSR_AGENT --> |11. SVID| ENVOY
-    ENVOY --> |12. Enable| MTLS
-
-    APP <--> ENVOY
-
-    classDef workload fill:#E1F5FE,stroke:#333
-    classDef istiocsr fill:#4CAF50,stroke:#333,color:white
-    classDef certmanager fill:#2196F3,stroke:#333,color:white
-    classDef issuer fill:#FF9800,stroke:#333,color:white
-    classDef output fill:#C8E6C9,stroke:#333
-
-    class APP,ENVOY workload
-    class CSR_AGENT,CSR_QUEUE istiocsr
-    class CM_CTRL,CR certmanager
-    class ISS,CA issuer
-    class SVID,MTLS output
-```
-
-#### 安装 istio-csr
+[istio-csr values](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/istio-csr-values.yaml)为 rootCAFile 配置真实的 ConfigMap volume/mount。先在 cert-manager 中创建应用程序信任 bundle，并等待 issuer 就绪。仅文件路径或 meshConfig 中的空 PEM 均不足够。使用当前的 Istio Helm/istioctl external-CA 设置；不要将 istio-csr 路径与 Kubernetes CSR RA 模式混用。单独评估 Ambient 支持。
 
 ```bash
-# Create issuer for istio-csr
-kubectl apply -f - <<EOF
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: istio-ca
-spec:
-  ca:
-    secretName: istio-ca-secret
-EOF
-
-# Install istio-csr
-helm repo add jetstack https://charts.jetstack.io
-helm install istio-csr jetstack/cert-manager-istio-csr \
-  --namespace cert-manager \
-  --set app.certmanager.issuer.name=istio-ca \
-  --set app.certmanager.issuer.kind=ClusterIssuer \
-  --set app.certmanager.issuer.group=cert-manager.io \
-  --set app.tls.certificateDuration=1h \
-  --set app.tls.istiodCertificateDuration=1h \
-  --set app.tls.rootCAFile=/var/run/secrets/istio-csr/ca.pem
+helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
+  --version v0.17.0 --namespace cert-manager --values istio-csr-values.yaml
 ```
 
-#### 配置 Istio 使用 istio-csr
+### Linkerd 和 trust-manager
+
+[Linkerd identity 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml)准备 issuer Secret 和 root-bundle ConfigMap。固定版本的 control-plane chart 2026.9.1 引用 linkerd-identity-issuer 和 linkerd-identity-trust-roots。
 
 ```yaml
-# IstioOperator configuration
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-metadata:
-  name: istio
-  namespace: istio-system
-spec:
-  profile: default
-  meshConfig:
-    # Use istio-csr for workload certificates
-    caCertificates:
-      - pem: |
-          # CA certificate from cert-manager
-    defaultConfig:
-      proxyMetadata:
-        # Point to istio-csr for certificate signing
-        ISTIO_META_CERT_SIGNER: istio-csr.cert-manager.svc
-  components:
-    pilot:
-      k8s:
-        env:
-          # Disable istiod CA
-          - name: ENABLE_CA_SERVER
-            value: "false"
-          # Use external CA
-          - name: EXTERNAL_CA
-            value: ISTIOD_RA_KUBERNETES_API
-        overlays:
-          - apiVersion: apps/v1
-            kind: Deployment
-            name: istiod
-            patches:
-              - path: spec.template.spec.containers[0].volumeMounts[-]
-                value:
-                  name: istio-csr-ca-configmap
-                  mountPath: /var/run/secrets/istiod/tls
-                  readOnly: true
-              - path: spec.template.spec.volumes[-]
-                value:
-                  name: istio-csr-ca-configmap
-                  configMap:
-                    name: istio-csr-ca-configmap
+identity:
+  externalCA: true
+  issuer:
+    scheme: kubernetes.io/tls
 ```
 
-### Linkerd Trust Anchor 管理
+这会将 control plane 连接到由外部续订的 issuer Secret，而不是在安装期间只复制一次密钥。根证书轮换需要旧/新根证书重叠、workload 续订和信任重载。示例实验室根证书为手动管理，且已禁用自动续订。
 
-Linkerd 需要用于 mTLS 的 trust anchor 证书。cert-manager 可以管理它：
-
-```yaml
-# Create a self-signed issuer for the trust anchor
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: linkerd-trust-anchor
-spec:
-  selfSigned: {}
-
----
-# Trust anchor certificate (root CA)
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: linkerd-trust-anchor
-  namespace: linkerd
-spec:
-  isCA: true
-  commonName: root.linkerd.cluster.local
-  secretName: linkerd-trust-anchor
-  privateKey:
-    algorithm: ECDSA
-    size: 256
-  duration: 87600h  # 10 years
-  renewBefore: 8760h  # 1 year
-  issuerRef:
-    name: linkerd-trust-anchor
-    kind: ClusterIssuer
-
----
-# Issuer using the trust anchor
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: linkerd-identity-issuer
-  namespace: linkerd
-spec:
-  ca:
-    secretName: linkerd-trust-anchor
-
----
-# Identity issuer certificate
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: linkerd-identity-issuer
-  namespace: linkerd
-spec:
-  isCA: true
-  commonName: identity.linkerd.cluster.local
-  secretName: linkerd-identity-issuer
-  privateKey:
-    algorithm: ECDSA
-    size: 256
-  duration: 48h
-  renewBefore: 25h
-  issuerRef:
-    name: linkerd-identity-issuer
-    kind: Issuer
-```
-
-```bash
-# Install Linkerd with cert-manager managed certificates
-linkerd install \
-  --identity-trust-anchors-file <(kubectl get secret linkerd-trust-anchor -n linkerd -o jsonpath='{.data.ca\.crt}' | base64 -d) \
-  --identity-issuer-certificate-file <(kubectl get secret linkerd-identity-issuer -n linkerd -o jsonpath='{.data.tls\.crt}' | base64 -d) \
-  --identity-issuer-key-file <(kubectl get secret linkerd-identity-issuer -n linkerd -o jsonpath='{.data.tls\.key}' | base64 -d) \
-  | kubectl apply -f -
-```
-
----
+<span id="installing-trust-manager"></span>
+<span id="bundle-resource"></span>
+<span id="using-trust-bundles-in-applications"></span>
 
 ## trust-manager
 
-trust-manager 是 cert-manager 的配套项目，用于跨 namespace 分发 CA trust bundle。
-
-### 安装 trust-manager
-
-```bash
-helm repo add jetstack https://charts.jetstack.io
-helm install trust-manager jetstack/trust-manager \
-  --namespace cert-manager \
-  --set app.trust.namespace=cert-manager
-```
-
-### Bundle 资源
+默认 trust-manager 0.25.0 chart 渲染 trust.cert-manager.io/v1alpha1 Bundle。仓库中的额外 CRD 本身不会更改默认安装的 API。源 Secret/ConfigMap 从已配置的 trust namespace 读取。
 
 ```yaml
 apiVersion: trust.cert-manager.io/v1alpha1
 kind: Bundle
 metadata:
-  name: public-bundle
+  name: application-trust
 spec:
   sources:
-    # Include default CA certificates
-    - useDefaultCAs: true
-
-    # Include specific ConfigMap
-    - configMap:
-        name: my-ca-bundle
-        key: ca-bundle.crt
-
-    # Include from Secret
     - secret:
-        name: internal-ca
+        name: lab-root
         key: tls.crt
-
-    # Inline CA certificate
-    - inlineString: |
-        -----BEGIN CERTIFICATE-----
-        MIIBkTCB+wIJAKHBfpEgcMFuMA0GCSqGSIb3DQEBCwUAMBExDzANBgNVBAMMBnJv
-        ...
-        -----END CERTIFICATE-----
-
   target:
-    # Create ConfigMap in all namespaces
     configMap:
-      key: ca-bundle.crt
-
-    # Or specify namespaces
-    # namespaceSelector:
-    #   matchLabels:
-    #     trust-bundle: enabled
+      key: ca-bundle.pem
+    namespaceSelector:
+      matchLabels:
+        trust-bundle: enabled
 ```
 
-### 在应用程序中使用 Trust Bundle
+内联 PEM 字段是 inLine，而不是 inlineString。最小化公共/私有信任根，并明确选择目标 namespace。Secret target 需要单独启用/RBAC；该示例使用 ConfigMap。信任 bundle 分发信任锚，而非私钥。
+
+[consumer Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/trust-consumer.yaml)挂载一个目录。ConfigMap 变更不会通过 subPath 文件挂载传播。即使目录投影也不会重载进程缓存的 TLS context；测试应用程序是否实际使用 SSL_CERT_FILE 或其配置的 trust store。
+
+<span id="prometheus-metrics"></span>
+<span id="key-metrics"></span>
+<span id="prometheusrule-for-alerting"></span>
+<span id="certificate-readiness-check"></span>
+<span id="common-errors-and-solutions"></span>
+<span id="cmctl-cli-tool"></span>
+
+## 监控和故障排除
+
+检查已安装 chart 的 ServiceMonitor 中的 selector 和 port/targetPort 值。1.21.2 配置面向 controller/cainjector/webhook 的 http-metrics。不要杜撰 tcp-prometheus-servicemonitor port 名称。
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: app-with-trust-bundle
-spec:
-  template:
-    spec:
-      containers:
-        - name: app
-          image: myapp:latest
-          volumeMounts:
-            - name: ca-bundle
-              mountPath: /etc/ssl/certs/ca-certificates.crt
-              subPath: ca-bundle.crt
-              readOnly: true
-          env:
-            - name: SSL_CERT_FILE
-              value: /etc/ssl/certs/ca-certificates.crt
-      volumes:
-        - name: ca-bundle
-          configMap:
-            name: public-bundle
+groups:
+  - name: cert-manager
+    rules:
+      - alert: CertificateNotReady
+        expr: certmanager_certificate_ready_status{condition="True"} == 0
+        for: 10m
+        labels:
+          severity: critical
+      - alert: CertificateExpiringSoon
+        expr: (certmanager_certificate_expiration_timestamp_seconds - time() < 604800) and (certmanager_certificate_expiration_timestamp_seconds - time() > 86400)
+        for: 30m
+        labels:
+          severity: warning
+      - alert: CertificateExpiryCritical
+        expr: (certmanager_certificate_expiration_timestamp_seconds - time() <= 86400) and (certmanager_certificate_expiration_timestamp_seconds - time() > 0)
+        for: 10m
+        labels:
+          severity: critical
+      - alert: CertificateExpired
+        expr: (certmanager_certificate_expiration_timestamp_seconds > 0) and (certmanager_certificate_expiration_timestamp_seconds <= time())
+        for: 5m
+        labels:
+          severity: critical
 ```
 
----
-
-<span id="monitoring-and-troubleshooting"></span>
-
-## 监控与故障排查
-
-### Prometheus Metrics
-
-cert-manager 暴露用于监控证书健康状况的 metrics：
-
-```yaml
-# ServiceMonitor for Prometheus Operator
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: cert-manager
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: cert-manager
-  namespaceSelector:
-    matchNames:
-      - cert-manager
-  endpoints:
-    - port: tcp-prometheus-servicemonitor
-      interval: 30s
-```
-
-### 关键 Metrics
-
-| Metric | 描述 | 告警阈值 |
-|--------|-------------|-----------------|
-| `certmanager_certificate_ready_status` | Certificate 就绪状态（1=ready，0=not ready） | != 1 |
-| `certmanager_certificate_expiration_timestamp_seconds` | Certificate 过期时间戳 | < 7 days |
-| `certmanager_certificate_renewal_timestamp_seconds` | 下一次续期时间戳 | Past due |
-| `certmanager_controller_sync_call_count` | Controller 同步操作 | Spike detection |
-| `certmanager_http_acme_client_request_count` | ACME HTTP 请求 | Rate limiting detection |
-
-### 用于告警的 PrometheusRule
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: cert-manager-alerts
-  namespace: monitoring
-spec:
-  groups:
-    - name: cert-manager
-      rules:
-        - alert: CertificateNotReady
-          expr: certmanager_certificate_ready_status == 0
-          for: 10m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Certificate {{ $labels.name }} in {{ $labels.namespace }} is not ready"
-            description: "Certificate has been in not-ready state for more than 10 minutes"
-
-        - alert: CertificateExpiringSoon
-          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 604800
-          for: 1h
-          labels:
-            severity: warning
-          annotations:
-            summary: "Certificate {{ $labels.name }} expires in less than 7 days"
-            description: "Certificate will expire in {{ $value | humanizeDuration }}"
-
-        - alert: CertificateExpiryCritical
-          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 86400
-          for: 10m
-          labels:
-            severity: critical
-          annotations:
-            summary: "Certificate {{ $labels.name }} expires in less than 24 hours"
-            description: "Certificate will expire in {{ $value | humanizeDuration }}"
-```
-
-### Certificate 就绪检查
+就绪指标包含 True/False/Unknown 序列；未过滤的 ==0 可能会对健康证书触发。这些规则通过了 5 个案例/20 个断言，覆盖健康、NotReady、警告到期、严重到期和已过期的证书。抓取/指标缺失需要单独的告警。
 
 ```bash
-# Check certificate status
-kubectl get certificates -A
-
-# Detailed certificate status
-kubectl describe certificate <name> -n <namespace>
-
-# Check CertificateRequest status
-kubectl get certificaterequests -A
-
-# View certificate details
-kubectl get secret <secret-name> -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -text -noout
+kubectl get certificates,certificaterequests -A
+kubectl get orders,challenges -A
+kubectl describe certificate app-tls -n demo-app
+cmctl status certificate app-tls -n demo-app
+# These change resources; check permissions and impact first.
+cmctl renew app-tls -n demo-app
 ```
 
-### 常见错误和解决方案
+选择递归 DNS resolver 不是增加传播等待时间。检查 split-horizon DNS、CAA、TXT 授权、CNAME、HTTP 路径和 Challenge 原因。调整 chart timeoutSeconds（1–30 秒）之前，先调查 webhook 连通性/身份验证/路由；不存在可盲目套用的通用 webhook-timeout 标志。
 
-| 错误 | 原因 | 解决方案 |
-|-------|-------|----------|
-| `Waiting for HTTP-01 challenge propagation` | Challenge endpoint 不可访问 | 检查 Ingress、Service、防火墙规则 |
-| `DNS problem: NXDOMAIN` | DNS record 未创建 | 验证 Route53 权限和 hosted zone ID |
-| `Error presenting challenge: 403 Forbidden` | IRSA/IAM 权限问题 | 检查 ServiceAccount annotations 和 IAM policy |
-| `acme: error code 429` | 超出 rate limit | 等待 1 小时，测试时使用 staging server |
-| `certificate is not valid for any names` | DNS name 不匹配 | 验证 Certificate spec 中的 `dnsNames` |
-| `Error getting keypair for CA issuer` | CA secret 缺失或格式错误 | 检查 CA secret 是否存在且包含正确 key |
-
-### cmctl CLI Tool
-
-```bash
-# Install cmctl
-# Linux
-curl -fsSL https://github.com/cert-manager/cmctl/releases/download/v2.1.0/cmctl_linux_amd64.tar.gz | tar xz
-sudo mv cmctl /usr/local/bin/
-
-# Verify API is ready
-cmctl check api
-
-# Check certificate status
-cmctl status certificate <name> -n <namespace>
-
-# Manually trigger renewal
-cmctl renew <certificate-name> -n <namespace>
-
-# Create CertificateRequest for testing
-cmctl create certificaterequest my-cr \
-  --from-certificate-file cert.yaml \
-  --namespace default
-
-# Approve/Deny CertificateRequest (if approval is required)
-cmctl approve <certificaterequest-name> -n <namespace>
-cmctl deny <certificaterequest-name> -n <namespace>
-
-# Convert legacy cert-manager resources
-cmctl convert -f old-resources.yaml
-```
-
----
-
-<span id="best-practices"></span>
+<span id="renewal-buffer-configuration"></span>
+<span id="backup-ca-strategy"></span>
+<span id="multi-tenant-issuer-strategy"></span>
+<span id="rbac-configuration"></span>
+<span id="private-key-rotation"></span>
 
 ## 最佳实践
 
-### 续期缓冲区配置
+- [namespace Role](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/certificate-requester-rbac.yaml)管理 Certificates，而不向开发人员授予 cluster 范围的 Secret 读取权限。SAN/issuerRef/secretName 限制需要独立的准入/批准策略。
+- 将 CertificateRequest 批准与 CA 凭据访问分离。检查默认 approval-controller 行为，并在需要时配置 approver-policy 等签发策略。
+- CA 密钥备份需要加密、访问控制和恢复测试；不要将明文 Secret YAML 转储到普通目录中。Base64 不是加密。
+- 私有 CA 不是公共 CA 的自动后备方案：请验证客户端信任、名称、用途、密钥访问和恢复时间。
+- secretTemplate annotations/labels 是元数据；它们本身不会激活 external-secret 同步。
+- 分别测试续订、CA 轮换、使用方重载和吊销。Schema/Helm 成功并不能证明签发成功。
 
-设置合适的续期窗口以防止证书过期：
+<span id="table-of-contents"></span>
+<span id="key-concepts-summary"></span>
+<span id="issuer-selection-guide"></span>
+<span id="official-references"></span>
+<span id="version-compatibility-matrix"></span>
 
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: example-cert
-spec:
-  # Certificate valid for 90 days
-  duration: 2160h
+## 总结和参考资料
 
-  # Renew 30 days before expiry (gives time for issues)
-  renewBefore: 720h
+本地检查包括固定版本的 Helm/CRD schema、controller-config 解码、6 个续订案例、真实 CSR 生成/签名检查、5 个 Prometheus 案例/20 个断言、24 个图表浏览器案例，以及临时本地 Vault 中十六个合成签发/CSR 签名案例。未执行外部 CA/ACME 签发、AWS 资源创建、已部署 Vault 登录、mesh 安装或运行时 mTLS。
 
-  # For short-lived certificates (1 hour)
-  # duration: 1h
-  # renewBefore: 30m
-```
-
-### CA 备份策略
-
-始终维护 CA 备份以支持灾难恢复：
-
-```bash
-# Backup CA certificate and key
-kubectl get secret ca-key-pair -n cert-manager -o yaml > ca-backup.yaml
-
-# Store securely (encrypted, off-cluster)
-# Consider using AWS Secrets Manager or HashiCorp Vault for CA storage
-
-# Restore procedure
-kubectl apply -f ca-backup.yaml
-```
-
-### 多租户 Issuer 策略
-
-```yaml
-# ClusterIssuer for shared infrastructure
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: platform-team@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod-key
-    solvers:
-      - http01:
-          ingress:
-            class: nginx
-
----
-# Namespace-scoped Issuer for team-specific CA
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: team-a-ca
-  namespace: team-a
-spec:
-  ca:
-    secretName: team-a-ca-keypair
-
----
-# RBAC for namespace issuers
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: cert-manager-issuer-admin
-  namespace: team-a
-rules:
-  - apiGroups: ["cert-manager.io"]
-    resources: ["issuers"]
-    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-  - apiGroups: ["cert-manager.io"]
-    resources: ["certificates", "certificaterequests"]
-    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-```
-
-### RBAC 配置
-
-```yaml
-# Allow developers to create Certificates but not Issuers
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: cert-manager-certificate-creator
-rules:
-  - apiGroups: ["cert-manager.io"]
-    resources: ["certificates"]
-    verbs: ["create", "delete", "get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list", "watch"]
-    # Note: Don't grant create/delete on secrets unless needed
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: developers-certificate-creator
-subjects:
-  - kind: Group
-    name: developers
-    apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: cert-manager-certificate-creator
-  apiGroup: rbac.authorization.k8s.io
-```
-
-### Private Key 轮换
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: rotating-cert
-spec:
-  secretName: rotating-cert-tls
-  dnsNames:
-    - app.example.com
-  privateKey:
-    # Rotate key on each renewal
-    rotationPolicy: Always
-    algorithm: ECDSA
-    size: 256
-  issuerRef:
-    name: ca-issuer
-    kind: ClusterIssuer
-```
-
----
-
-<span id="summary-and-references"></span>
-
-## 总结与参考资料
-
-### 关键概念总结
-
-| 概念 | 描述 |
-|---------|-------------|
-| **Certificate** | 声明期望的证书并触发签发 |
-| **Issuer** | Namespace-scoped 的证书颁发机构配置 |
-| **ClusterIssuer** | Cluster-wide 的证书颁发机构配置 |
-| **CertificateRequest** | 表示单个证书签名请求 |
-| **ACME** | 用于自动证书签发的协议（Let's Encrypt） |
-| **HTTP-01** | 通过 HTTP endpoint 验证的 ACME challenge |
-| **DNS-01** | 通过 DNS TXT record 验证的 ACME challenge |
-| **trust-manager** | 跨 namespace 分发 CA bundle |
-| **istio-csr** | 将 cert-manager 与 Istio 集成以提供工作负载证书 |
-
-### Issuer 选择指南
-
-| 场景 | 推荐 Issuer |
-|----------|-------------------|
-| 开发/测试 | SelfSigned 或 CA |
-| 公有网站 | ACME (Let's Encrypt) |
-| 使用现有 PKI 的内部服务 | CA 或 Vault |
-| AWS 原生企业 | AWS PCA |
-| Multi-cloud 企业 | Vault PKI |
-| Service mesh 工作负载 | 结合 istio-csr/Linkerd 集成的 CA |
-
-### 官方参考资料
-
-| 资源 | URL |
-|----------|-----|
-| cert-manager 文档 | https://cert-manager.io/docs/ |
-| cert-manager GitHub | https://github.com/cert-manager/cert-manager |
-| ACME Protocol RFC | https://datatracker.ietf.org/doc/html/rfc8555 |
-| Let's Encrypt 文档 | https://letsencrypt.org/docs/ |
-| AWS PCA Issuer | https://github.com/cert-manager/aws-privateca-issuer |
-| Kubernetes 的 ACM 自动化证书管理（2025 年 12 月 15 日） | https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes |
-| istio-csr | https://github.com/cert-manager/istio-csr |
-| trust-manager | https://github.com/cert-manager/trust-manager |
-| cmctl CLI | https://cert-manager.io/docs/reference/cmctl/ |
-| Helm Chart | https://artifacthub.io/packages/helm/cert-manager/cert-manager |
-
-### 版本兼容性矩阵
-
-| cert-manager | Kubernetes | Helm |
-|--------------|------------|------|
-| 1.16.x | 1.28 - 1.33 | 3.x |
-| 1.15.x | 1.27 - 1.32 | 3.x |
-| 1.14.x | 1.26 - 1.31 | 3.x |
-| 1.13.x | 1.25 - 1.30 | 3.x |
+- [cert-manager 发行版本](https://cert-manager.io/docs/releases/)
+- [cert-manager 1.21.2 发行版本](https://github.com/cert-manager/cert-manager/releases/tag/v1.21.2)
+- [CNCF 项目历史](https://www.cncf.io/projects/cert-manager/)
+- [证书续订和轮换](https://cert-manager.io/docs/usage/certificate/)
+- [CA issuer 限制](https://cert-manager.io/docs/configuration/ca/)
+- [Vault issuer](https://cert-manager.io/docs/configuration/vault/)
+- [Gateway API issuer 集成](https://cert-manager.io/docs/usage/gateway/)
+- [trust-manager](https://cert-manager.io/docs/trust/trust-manager/)
+- [istio-csr](https://cert-manager.io/docs/usage/istio-csr/)
+- [Linkerd 自动证书轮换](https://linkerd.io/2-edge/tasks/automatically-rotating-control-plane-tls-credentials/)
+- [ACM Kubernetes 导出](https://docs.aws.amazon.com/acm/latest/userguide/exportable-certificates-kubernetes.html)
+- [ACM ACME](https://docs.aws.amazon.com/acm/latest/userguide/acm-acme.html)
+- [ACM ACME 发布](https://aws.amazon.com/about-aws/whats-new/2026/07/aws-certificate-manager-acme/)
+- [AWS Private CA issuer](https://github.com/cert-manager/aws-privateca-issuer/tree/v1.9.2)
+- [Let’s Encrypt 速率限制](https://letsencrypt.org/docs/rate-limits/)
+- [Staging 环境](https://letsencrypt.org/docs/staging-environment/)
+- [到期电子邮件已停止](https://letsencrypt.org/2025/01/22/ending-expiration-emails/)
+- [Ingress NGINX 退役](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)

@@ -540,12 +540,14 @@ ingressController:
     allocateLoadBalancerNodePorts: true
     externalTrafficPolicy: Cluster
     annotations:
-      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internal
       service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
       service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
       service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: TCP
       service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: traffic-port
 ```
+
+This NLB is **internal** by design: the only public entry point is CloudFront, which reaches it through a CloudFront VPC origin. Its security group must admit only the VPC-origin security group (or the CloudFront managed prefix list), never a public CIDR.
 
 This overlay describes **AWS LBC-managed NLB → EC2 NodePort → Cilium Ingress Envoy**. It requires AWS LBC 3.6.0, its IAM/subnet/security-group prerequisites, eligible EC2 nodes, a Cilium-supported EKS/CNI configuration, and allocated NodePorts. It is not an EKS Auto Mode or Fargate Cilium installation recipe. `service.k8s.aws/nlb` explicitly selects AWS LBC; the legacy `aws-load-balancer-type: nlb` annotation does not express that ownership.
 

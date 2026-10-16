@@ -241,9 +241,14 @@ Backend readiness comes from control-plane state and applicable health mechanism
 | `bpf/bpf_overlay.c` | Overlay packet path |
 | `bpf/bpf_host.c` | Host/device path and supported host-firewall processing |
 | `bpf/bpf_xdp.c` | XDP path, including configured load-balancer acceleration |
-| `bpf/bpf_sock.c` | Socket-address hooks including connect/sendmsg/recvmsg service translation |
+| `bpf/bpf_sock.c` | cgroup socket-address hooks (IPv4 and IPv6): connect, sendmsg, recvmsg, getpeername, bind/post_bind and sock_release, used for socket-level service translation |
+| `bpf/bpf_wireguard.c` | `cilium_wg0` device programs (`cil_from_wireguard`/`cil_to_wireguard`) that mark WireGuard-decrypted traffic |
+| `bpf/bpf_sock_term.c` | BPF iterators (TCP/UDP) that destroy sockets connected to deleted Service backends |
+| `bpf/bpf_probes.c`, `bpf/bpf_alignchecker.c` | Not datapath programs: kernel-feature probes run at agent startup, and a C/Go struct-layout check |
 | `bpf/lib/lb.h` | Shared load-balancing helpers |
 | `bpf/lib/policy.h` | Shared policy helpers |
+
+For the loader, attach points, tail calls and per-program walk-throughs see [eBPF datapath internals](08-ebpf-datapath-internals.md).
 
 There are no top-level `bpf_lb.c` or `bpf_network.c` files in this release. Function names and feature gates change; inspect the exact release instead of treating conceptual names as source files.
 

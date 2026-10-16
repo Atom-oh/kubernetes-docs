@@ -236,7 +236,7 @@ Egress Gateway는 선택된 트래픽을 예측 가능한 게이트웨이 주소
 
 ## 현재 BGP 구성
 
-이전의 `CiliumBGPPeeringPolicy` 예제는 이 검토 버전에서 사용할 수 없습니다. 현재 구성은 클러스터·노드 선택, 피어 설정과 광고할 접두사를 **`cilium.io/v2`** 리소스 3개로 구분합니다.
+이전의 `CiliumBGPPeeringPolicy` 예제는 이 검토 버전에서 사용할 수 없습니다. 현재 구성은 클러스터·노드 선택, 피어 설정과 광고할 접두사를 **`cilium.io/v2`** 리소스 3개로 구분합니다. BGP Control Plane, LoadBalancer IP 광고, Egress Gateway, edge 패턴의 상세 내용은 [BGP, LB, egress, edge](11-bgp-lb-egress-edge.md), 멀티 클러스터는 [ClusterMesh 설치·업그레이드](13-clustermesh-install-upgrade.md)를 참고하세요.
 
 이는 격리된 라우팅 실습용 구성 모델이며 완전한 클라우드 라우터 설정이 아닙니다. `PodCIDR` 광고를 위한 cluster-pool 또는 Kubernetes host-scope IPAM, 접근 가능한 피어 라우터와 그 설정, 의도적으로 `cilium-bgp=lab` 레이블을 지정한 노드를 가정합니다. `192.0.2.1`은 문서용 주소이므로 `/32` 없는 실제 피어 IP로 바꿉니다. Multi-pool IPAM은 다른 광고 유형과 풀 선택을 사용합니다.
 

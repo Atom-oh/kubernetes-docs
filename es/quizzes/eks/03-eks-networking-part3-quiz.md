@@ -1,805 +1,397 @@
-# EKS Networking Quiz - Part 3
+# Cuestionario de networking de EKS - Parte 3
 
-Este quiz evalúa tu comprensión de conceptos avanzados de networking en Amazon EKS, incluidos service mesh, VPC endpoints, networking multi-cluster y seguridad de red.
+> **Última actualización**: October 12, 2026
 
-## Multiple Choice Questions
+Este cuestionario cubre los [conceptos de resolución de problemas de la Parte 3](../../eks/03-eks-networking-part3.md), la conectividad privada, el diseño multiclúster y las operaciones de mesh. Los ejemplos actuales usan EKS Kubernetes 1.36 y VPC CNI 1.23.0; la configuración histórica de App Mesh se identifica explícitamente. Los ejemplos de creación de recursos requieren prerrequisitos revisados de IAM, red y propiedad. Esta auditoría realiza comprobaciones locales, no un despliegue de EKS.
 
-### 1. What is the main architectural change that occurs when implementing a service mesh (e.g., AWS App Mesh, Istio) in Amazon EKS?
+### 1. ¿Qué cambia cuando una aplicación se inscribe en un service mesh basado en sidecar?
 
-A. Toda la comunicación pod-to-pod se enruta fuera de la VPC B. Se agrega un sidecar proxy a cada pod para mediar la comunicación service-to-service C. Los objetos Kubernetes Service ya no se usan D. Todo el tráfico de red se enruta a través de AWS Transit Gateway
+- A. Todo el tráfico del Pod sale de la VPC
+- B. Un proxy gestiona el tráfico de servicios inscritos
+- C. Se elimina el descubrimiento de servicios
+- D. Todo el tráfico requiere Transit Gateway
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Se agrega un sidecar proxy a cada pod para mediar la comunicación service-to-service**
+**Respuesta: B. Un proxy inyectado procesa el tráfico de servicios inscritos.**
 
-**Explicación:** El cambio arquitectónico más significativo al implementar un service mesh es que se agrega un sidecar proxy (normalmente Envoy) a cada pod. Este sidecar proxy intercepta y procesa todo el tráfico entrante y saliente del pod, mediando la comunicación service-to-service.
-
-**Características clave:**
-
-1. **Patrón Sidecar**: Un proxy container se despliega junto a cada application container. Este proxy maneja toda la comunicación de red.
-2. **Cambios en el flujo de tráfico**:
-   * Tradicional: Client → Service → Target Pod
-   * Service Mesh: Client → Client Sidecar → Service → Target Sidecar → Target Pod
-3. **Data Plane y Control Plane**:
-   * Data Plane: Colección de sidecar proxies
-   * Control Plane: Componente central que administra la configuración de los proxies y aplica políticas
-4. **Sin cambios en el código de la aplicación**: Uno de los principales beneficios de un service mesh es la capacidad de agregar funciones avanzadas de networking sin cambiar el código de la aplicación.
-
-**Ejemplo de implementación de Service Mesh (AWS App Mesh):**
-
-```yaml
-# App Mesh sidecar injection example
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        appmesh.k8s.aws/mesh: my-mesh  # App Mesh mesh name
-        appmesh.k8s.aws/virtualNode: example-vn  # Virtual node name
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
+En modo sidecar, la aplicación y el proxy comparten un espacio de nombres de red y una IP de Pod. El proxy forma parte del plano de datos; el plano de control distribuye la configuración de enrutamiento, seguridad e identidad. NetworkPolicy, el enrutamiento de VPC y el descubrimiento de Service siguen siendo importantes. La ruta lógica es:
+```text
+Application → client proxy → Pod network → destination proxy → application
 ```
+La interceptación depende de la inscripción, los puertos excluidos, el protocolo y el modo; no todos los paquetes deben atravesar un VIP de Service. Los mesh ambient usan un diseño diferente de proxy de nodo/waypoint, por lo que la pregunta trata explícitamente sobre el modo sidecar. Los mesh pueden proporcionar reintentos, enrutamiento, mTLS y telemetría sin reescribir la implementación del servicio principal, pero las aplicaciones aún pueden necesitar propagación del contexto de trazas, protocolos compatibles y gestión de tiempos de espera.
 
-**Características proporcionadas por Service Mesh:**
-
-* Administración de tráfico (routing, load balancing, circuit breaking)
-* Seguridad (mTLS, authentication, authorization)
-* Observabilidad (metrics, logs, distributed tracing)
-* Aplicación de políticas
-
-Problemas con las otras opciones:
-
-* **A. Toda la comunicación pod-to-pod se enruta fuera de la VPC**: Service mesh normalmente opera dentro del cluster y no enruta tráfico fuera de la VPC.
-* **C. Los objetos Kubernetes Service ya no se usan**: Service mesh complementa, en lugar de reemplazar, los objetos Kubernetes Service.
-* **D. Todo el tráfico de red se enruta a través de AWS Transit Gateway**: Service mesh no está relacionado con AWS Transit Gateway y administra la comunicación service-to-service dentro del cluster.
+Use el inyector/revisión compatible del mesh seleccionado, no una imagen antigua de Envoy añadida manualmente ni inyectores simultáneos. AWS App Mesh es un ejemplo histórico: el soporte y el acceso finalizaron el 30 de septiembre de 2026. Los despliegues existentes deben migrar; no es el ejemplo predeterminado para nuevas instalaciones. Consulte [Istio installation](../../service-mesh/istio/01-installation.md) para conocer la ruta de implementación mantenida.
 
 </details>
 
-### 2. What is the main benefit of using VPC endpoints to privately access AWS services in Amazon EKS?
+### 2. ¿Qué proporcionan los endpoints de VPC para las cargas de trabajo privadas de EKS?
 
-A. Proporciona ancho de banda ilimitado a todos los AWS services B. Permite acceso privado a AWS services sin un internet gateway C. Reduce los costos de uso de AWS services en un 50% D. Proporciona authentication automática a todos los AWS services
+- A. Ancho de banda ilimitado
+- B. Conectividad privada a servicios compatibles
+- C. Un descuento automático del 50%
+- D. Autenticación automática de AWS
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Permite acceso privado a AWS services sin un internet gateway**
+**Respuesta: B. Rutas privadas a endpoints de servicios de AWS compatibles sin internet/NAT para esas solicitudes.**
 
-**Explicación:** El principal beneficio de usar VPC endpoints en Amazon EKS es la capacidad de acceder de forma privada a AWS services sin un internet gateway. Esto mejora la seguridad y reduce los costos de transferencia de datos.
+Los endpoints de interfaz crean ENI en las subredes/AZ seleccionadas y normalmente generan cargos horarios y de procesamiento de datos. Los endpoints de gateway para S3/DynamoDB agregan entradas de tabla de rutas y no tienen cargo por endpoint; los cargos de servicio/almacenamiento/solicitud aún se aplican. Los endpoints no conceden permisos de IAM, no garantizan menor costo/latencia ni satisfacen automáticamente los requisitos de cumplimiento.
 
-**Tipos de VPC Endpoint:**
+Para extracciones privadas de imágenes de ECR, planifique `ecr.api`, `ecr.dkr` y la ruta de descarga de capas de S3, las reglas HTTPS del SG de endpoint, compatibilidad de DNS/DNS privado, tablas de rutas y políticas de endpoint/IAM. Los demás servicios necesarios dependen de las cargas de trabajo: STS regional para IRSA, `eks-auth` para Pod Identity, API de EC2 para CNI, Logs/monitorización y otros según se utilicen. El endpoint de servicio de EKS no sustituye al endpoint privado de API de Kubernetes. ECR Public y las primeras solicitudes de pull-through cache/capas externas de Windows pueden requerir conectividad externa adicional o un mirror de imágenes preparado.
 
-1. **Interface Endpoints (AWS PrivateLink)**:
-   * Proporciona conectividad privada a la mayoría de los AWS services
-   * Crea endpoint network interfaces (ENIs) en cada subnet
-   * Ejemplos: ECR, CloudWatch, SNS, SQS, etc.
-2. **Gateway Endpoints**:
-   * Proporciona conectividad privada a S3 y DynamoDB
-   * Agrega routes a route tables
-   * Sin costo adicional
-
-**Ejemplo de configuración de VPC Endpoint para EKS:**
-
+Este ejemplo parametrizado de CloudFormation agrega solo tres endpoints a una VPC **existente**. Revise los endpoints existentes/la propiedad de DNS privado antes de crearlo. Deliberadamente deja las políticas de endpoint específicas del servicio para que las defina el propietario de seguridad; el acceso predeterminado de endpoint no anula IAM. Prepare un change set en lugar de asumir que se trata de un despliegue completo de clúster aislado:
 ```yaml
-# CloudFormation example
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECR API/DKR and S3 endpoints in an existing VPC; not a complete private EKS stack
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Existing subnets in distinct Availability Zones
+  PrivateRouteTableIds:
+    Type: CommaDelimitedList
+    Description: Route tables used by the image-pulling workloads
+  EndpointSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Existing same-VPC SG permitting HTTPS from the intended nodes/Pods
 Resources:
   S3GatewayEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcId: !Ref VPC
-      RouteTableIds:
-        - !Ref PrivateRouteTable
+      VpcId: !Ref VpcId
+      RouteTableIds: !Ref PrivateRouteTableIds
       VpcEndpointType: Gateway
-
   ECRApiEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-      VpcId: !Ref VPC
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-      SecurityGroupIds:
-        - !Ref EndpointSecurityGroup
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
+      PrivateDnsEnabled: true
+      VpcEndpointType: Interface
+  ECRDkrEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
       PrivateDnsEnabled: true
       VpcEndpointType: Interface
 ```
-
-**AWS Services clave que requieren VPC Endpoints para EKS:**
-
-* Amazon ECR (pulling container images)
-* Amazon S3 (archivos de configuración, backups, etc.)
-* AWS KMS (encryption keys)
-* Amazon CloudWatch (logging and monitoring)
-* AWS STS (asumir IAM roles)
-
-**Beneficios de usar VPC Endpoints:**
-
-1. **Seguridad mejorada**: El tráfico no atraviesa internet público
-2. **Costos de red reducidos**: Menores costos de transferencia de datos hacia AWS services
-3. **Latencia reducida**: Routing directo dentro de la red de AWS
-4. **Compliance**: Cumple requisitos regulatorios y de soberanía de datos
-
-**Configuración de EKS Node en Private Subnets:**
-
+Cuando se requiere un nuevo node group, `eksctl create nodegroup` usa **`--subnet-ids`**; la marca anterior `--vpc-private-subnets` era incorrecta para este comando. El ejemplo crea nodos administrados facturables después de que las rutas privadas de API/servicio estén listas; úselo solo si eksctl es el propietario previsto, sin un `private-ng` existente. El tamaño de instancia es ilustrativo, no una guía de dimensionamiento.
 ```bash
-# Create node group in private subnets with eksctl
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name private-ng \
-  --node-private-networking \
-  --vpc-private-subnets subnet-0123456789abcdef0,subnet-0123456789abcdef1
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster name}"
+: "${AWS_REGION:?Set its Region}"
+: "${PRIVATE_SUBNET_A:?Set an existing private subnet}"
+: "${PRIVATE_SUBNET_B:?Set another private subnet}"
+eksctl create nodegroup --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --name private-ng --managed --version auto --node-type m5.large \
+  --nodes 2 --nodes-min 2 --nodes-max 3 --node-private-networking \
+  --subnet-ids "$PRIVATE_SUBNET_A,$PRIVATE_SUBNET_B"
 ```
 
-Problemas con las otras opciones:
-
-* **A. Proporciona ancho de banda ilimitado a todos los AWS services**: VPC endpoints no proporcionan ancho de banda ilimitado; puede haber límites de ancho de banda según el servicio y la región.
-* **C. Reduce los costos de uso de AWS services en un 50%**: VPC endpoints pueden reducir los costos de transferencia de datos, pero no reducen los costos de uso de AWS services en un 50%.
-* **D. Proporciona authentication automática a todos los AWS services**: VPC endpoints no automatizan la authentication; aún se requieren permisos IAM adecuados.
-
 </details>
 
-### 3. What is the most effective method for implementing multi-cluster networking in Amazon EKS?
+### 3. ¿Qué opción proporciona enrutamiento de hub entre varias VPC sin solapamiento?
 
-A. Usar public load balancers en cada cluster para la comunicación inter-cluster B. Usar AWS Transit Gateway para conectar múltiples VPCs y configurar routing inter-cluster C. Desplegar todos los clusters en una sola VPC para reducir la complejidad de red D. Usar NAT gateways en cada cluster para la comunicación inter-cluster
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B. Usar AWS Transit Gateway para conectar múltiples VPCs y configurar routing inter-cluster**
-
-**Explicación:** El método más efectivo para implementar networking multi-cluster en Amazon EKS es usar AWS Transit Gateway para conectar múltiples VPCs y configurar routing inter-cluster. Este enfoque proporciona escalabilidad, seguridad y facilidad de administración.
-
-**Networking Multi-Cluster con AWS Transit Gateway:**
-
-1. **Resumen de arquitectura**:
-   * Cada EKS cluster se despliega en una VPC separada
-   * Transit Gateway conecta todas las VPCs
-   * La comunicación inter-cluster se enruta a través de Transit Gateway
-2.  **Pasos de configuración**:
-
-    ```bash
-    # 1. Create Transit Gateway
-    aws ec2 create-transit-gateway --description "EKS Multi-Cluster TGW"
-
-    # 2. Attach VPC to Transit Gateway
-    aws ec2 create-transit-gateway-vpc-attachment \
-      --transit-gateway-id tgw-0123456789abcdef0 \
-      --vpc-id vpc-0123456789abcdef0 \
-      --subnet-ids subnet-0123456789abcdef0 subnet-0123456789abcdef1
-
-    # 3. Update routing tables
-    aws ec2 create-route \
-      --route-table-id rtb-0123456789abcdef0 \
-      --destination-cidr-block 10.1.0.0/16 \
-      --transit-gateway-id tgw-0123456789abcdef0
-    ```
-3. **Planificación de CIDR**:
-   * Asigna bloques CIDR no superpuestos a cada cluster/VPC
-   * Ejemplo: Cluster1: 10.0.0.0/16, Cluster2: 10.1.0.0/16, Cluster3: 10.2.0.0/16
-
-**Opciones de Multi-Cluster Service Discovery:**
-
-1.  **AWS Cloud Map**:
-
-    ```bash
-    # Create namespace
-    aws servicediscovery create-private-dns-namespace \
-      --name multi-cluster.local \
-      --vpc vpc-0123456789abcdef0
-
-    # Register service
-    aws servicediscovery register-instance \
-      --service-id srv-0123456789abcdef0 \
-      --instance-id api-service-cluster1 \
-      --attributes AWS_INSTANCE_IPV4=10.0.1.123
-    ```
-2.  **Configuración personalizada de CoreDNS**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: coredns
-      namespace: kube-system
-    data:
-      Corefile: |
-        .:53 {
-            errors
-            health
-            kubernetes cluster.local in-addr.arpa ip6.arpa {
-               pods insecure
-               upstream
-               fallthrough in-addr.arpa ip6.arpa
-            }
-            forward . /etc/resolv.conf
-            cache 30
-            loop
-            reload
-            loadbalance
-        }
-        cluster2.svc.local:53 {
-            errors
-            cache 30
-            forward . 10.1.0.2
-        }
-    ```
-
-**Consideraciones de seguridad para Networking Multi-Cluster:**
-
-1. **Control de tráfico Inter-VPC**:
-   * Usa Transit Gateway security groups y routing tables para restringir el tráfico
-   * Permite solo los puertos y protocolos necesarios
-2.  **Network Policies**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-cross-cluster
-    spec:
-      podSelector:
-        matchLabels:
-          app: api-service
-      ingress:
-      - from:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2's CIDR
-      egress:
-      - to:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2's CIDR
-    ```
-
-**Opciones de Multi-Cluster Service Mesh:**
-
-1. **Istio Multi-Cluster**:
-   * Administra múltiples clusters con un solo control plane
-   * Cross-cluster service discovery y load balancing
-2. **AWS App Mesh**:
-   * Crea un mesh que abarca múltiples clusters
-   * Service discovery mediante AWS Cloud Map
-
-**Consideraciones de optimización de costos:**
-
-* Considera los cargos por hora y de procesamiento de datos de Transit Gateway
-* Minimiza la transferencia de datos cross-cluster
-* Comunícate dentro de la misma availability zone cuando sea posible
-
-Problemas con las otras opciones:
-
-* **A. Usar public load balancers en cada cluster para la comunicación inter-cluster**: Este método aumenta los riesgos de seguridad, incurre en costos de transferencia de datos de internet y aumenta la latencia.
-* **C. Desplegar todos los clusters en una sola VPC para reducir la complejidad de red**: Desplegar múltiples clusters en una sola VPC puede provocar limitaciones de espacio de direcciones IP, falta de límites de seguridad y problemas de escalabilidad.
-* **D. Usar NAT gateways en cada cluster para la comunicación inter-cluster**: NAT gateways son para tráfico saliente a internet y no son adecuados para la comunicación inter-cluster.
-
-</details>
-
-### 5. What is the most effective method for optimizing pod networking performance in Amazon EKS?
-
-A. Usar host network mode para todos los pods B. Habilitar la feature prefix delegation de Amazon VPC CNI C. Usar servicios NodePort para todos los pods D. Usar AWS Global Accelerator para toda la comunicación intra-cluster
+- A. Un balanceador de carga público es obligatorio
+- B. Transit Gateway con enrutamiento completo
+- C. Cada clúster debe compartir una VPC
+- D. Un gateway NAT proporciona descubrimiento de Kubernetes
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Habilitar la feature prefix delegation de Amazon VPC CNI**
+**Respuesta: B. AWS Transit Gateway**
 
-**Explicación:** El método más efectivo para optimizar el rendimiento de pod networking en Amazon EKS es habilitar la feature prefix delegation de Amazon VPC CNI. Esta feature aumenta significativamente el número de direcciones IP secundarias asignadas a cada node y reduce la frecuencia de creación de ENI (Elastic Network Interface), mejorando el rendimiento y la escalabilidad del networking.
+Transit Gateway es un diseño para muchas VPC; no es universalmente la arquitectura multiclúster más eficaz. Compare VPC peering, VPC compartidas, exposición de servicios mediante PrivateLink, VPC Lattice y gateways de mesh con respecto a límites de confianza, escala, DNS, solapamiento de direcciones y costo. NAT también tiene usos de conectividad privada; no proporciona descubrimiento de servicios.
 
-**Cómo funciona Prefix Delegation:**
+Para un diseño de TGW, planifique CIDR de Pod/VPC enrutables sin solapamiento, attachments en cada AZ participante, asociaciones/propagación de tablas de rutas de TGW, rutas de subred de cargas de trabajo y rutas de retorno. Una sola ruta de TGW es insuficiente. Los ClusterIP de Kubernetes son direcciones de servicio virtuales, no endpoints remotos enrutables automáticamente. Exporte endpoints de Pod accesibles o direcciones de servicio de gateway/balanceador de carga mediante un diseño de descubrimiento explícito. Lea el estado real de las rutas antes de modificarlo:
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the transit gateway Region}"
+: "${TGW_ROUTE_TABLE_ID:?Set the intended TGW route table}"
+: "${VPC_ROUTE_TABLE_ID:?Set a workload-subnet route table}"
+aws ec2 search-transit-gateway-routes --region "$AWS_REGION" \
+  --transit-gateway-route-table-id "$TGW_ROUTE_TABLE_ID" \
+  --filters Name=state,Values=active
+aws ec2 describe-route-tables --region "$AWS_REGION" \
+  --route-table-ids "$VPC_ROUTE_TABLE_ID"
+```
+TGW no tiene un SG de firewall conectado a él. Use SG de endpoint/nodo/Pod, NACL, NetworkPolicy y enrutamiento inspeccionado según corresponda. La referencia de SG entre VPC es una característica compatible de TGW bajo las restricciones documentadas de attachment/Region; es distinta de conectar un SG al TGW y no sustituye el enrutamiento.
 
-1. **Default VPC CNI vs Prefix Delegation**:
-   * Default VPC CNI: Asigna direcciones IP secundarias individuales a cada ENI
-   * Prefix Delegation: Asigna bloques CIDR /28 (16 IPs) a cada ENI
-2.  **Método de habilitación**:
-
-    ```bash
-    # Enable prefix delegation
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-    # Verify prefix delegation
-    kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
-    ```
-3.  **Opciones de configuración adicionales**:
-
-    ```bash
-    # Set prefix allocation size (default: /28)
-    kubectl set env daemonset aws-node -n kube-system WARM_PREFIX_TARGET=1
-
-    # Threshold for requesting new prefix when available IPs are low
-    kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-    ```
-
-**Beneficios de Prefix Delegation:**
-
-1. **Escalabilidad mejorada**:
-   * Mayor número máximo de pods por node (normalmente de 110 a 250+)
-   * Menor API throttling debido a menos llamadas de creación de ENI
-2. **Tiempo de inicio de Pod más rápido**:
-   * Menos llamadas de API necesarias para asignar direcciones IP a nuevos pods
-   * Mejor rendimiento para despliegues de pods a gran escala
-3. **Eficiencia de direcciones IP**:
-   * Soporta más pods con la misma cantidad de ENIs
-   * Mitiga problemas de agotamiento de direcciones IP
-
-**Comparación de Maximum Pods Per Instance Type:**
-
-| Instance Type | Default VPC CNI | Prefix Delegation Enabled |
-| ------------- | --------------- | ------------------------- |
-| t3.medium     | 17              | 110                       |
-| m5.large      | 29              | 110                       |
-| c5.xlarge     | 58              | 250                       |
-| r5.2xlarge    | 58              | 250                       |
-
-**Ejemplo de configuración (ConfigMap):**
-
+Cloud Map requiere completar el namespace, un Service y la gestión de registro/salud/cancelación de registro. TGW no comparte automáticamente DNS de zonas alojadas privadas. Use asociaciones de zonas privadas aprobadas o endpoints/reglas de Route 53 Resolver. No reenvíe al resolvedor `base+2` de otra VPC como si fuera el CoreDNS de ese clúster. Este **fragmento de Corefile** asume dos resolvedores de entrada reales y accesibles que ya resuelven los registros `cluster2.example.internal` exportados. Intégrelo mediante el propietario de la configuración DNS y conserve la zona local del clúster:
+```text
+cluster2.example.internal:53 {
+    errors
+    cache 30
+    forward . 10.1.20.10 10.1.21.10
+}
+```
+La siguiente política de ingress permite un CIDR de origen remoto hacia un puerto de API, según la dirección de origen realmente visible después de NAT/proxies. Otras políticas coincidentes pueden ampliar la autorización. Los requisitos de egress/DNS deben diseñarse por separado; los labels de namespace/Pod entre clústeres no se comparten automáticamente.
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
 metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-prefix-delegation: "true"
-  warm-prefix-target: "1"
-  warm-ip-target: "5"
+  name: remote-api-ingress
+  namespace: multicluster-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api-service
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.1.0.0/16
+    ports:
+    - protocol: TCP
+      port: 8080
 ```
-
-**Consideraciones y limitaciones:**
-
-1. **Tamaño de subnet**:
-   * Prefix delegation requiere subnets lo suficientemente grandes
-   * Se recomienda un bloque CIDR mínimo /24
-2. **Security Group Rules**:
-   * Security group rules pueden simplificarse con prefix delegation
-   * Puede referenciar bloques CIDR en lugar de IPs individuales
-3. **Compatibilidad**:
-   * Algunos tipos de instancias EC2 legacy no soportan prefix delegation
-   * Se recomiendan instancias basadas en Nitro
-4. **Administración de direcciones IP**:
-   * Prefix delegation usa las direcciones IP de forma más eficiente, pero la planificación CIDR adecuada sigue siendo necesaria
-
-**Monitoring y troubleshooting:**
-
-```bash
-# Check IP address allocation per node
-kubectl exec -n kube-system aws-node-xxxxx -- curl -s http://localhost:61679/v1/enis | jq
-
-# Check prefix delegation status
-kubectl logs -n kube-system aws-node-xxxxx | grep -i prefix
-```
-
-Problemas con las otras opciones:
-
-* **A. Usar host network mode para todos los pods**: Host network mode hace que los pods compartan el network namespace del node, lo que provoca conflictos de puertos y elimina el aislamiento de red.
-* **C. Usar servicios NodePort para todos los pods**: NodePort es un mecanismo de exposición de Service y no está relacionado con la optimización del rendimiento de pod networking.
-* **D. Usar AWS Global Accelerator para toda la comunicación intra-cluster**: AWS Global Accelerator es para administración de tráfico global y no es adecuado para la optimización de la comunicación intra-cluster.
+Istio multi-primary y primary-remote son diseños de plano de control diferentes; seleccione el modelo compatible y verifique los gateways east-west, la confianza de identidad y el estado de los endpoints. El uso multiclúster existente de App Mesh debe tener en cuenta su retirada de septiembre de 2026. Compare los cargos por hora, procesamiento y entre AZ usando la ruta real; los diseños de misma VPC o de balanceador de carga público no son inherentemente inválidos, pero requieren su propio análisis de seguridad/costo.
 
 </details>
 
-## Short Answer Questions
+### 4. ¿Qué característica de VPC CNI asigna direcciones IPv4 en bloques /28 para aumentar la densidad de slots de direcciones?
 
-### 7. What is the most commonly used open-source proxy for sidecar proxies when implementing a service mesh in Amazon EKS?
+- A. hostNetwork para todos los Pods
+- B. Delegación de prefijos
+- C. NodePort para cada Service
+- D. Global Accelerator para tráfico entre Pods
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** Envoy
+**Respuesta: B. Delegación de prefijos**
 
-**Explicación detallada:**
+Un /28 de IPv4 delegado proporciona 16 direcciones de Pod y consume un slot de dirección ENI. Puede reducir el trabajo de API de asignación y mejorar el inicio/densidad de Pod; no es una optimización universal del rendimiento de paquetes ni una solución para el agotamiento total de subredes. IPv6 usa un tamaño de prefijo diferente. El hardware Nitro compatible, los prefijos libres contiguos, maxPods de kubelet y la capacidad de recursos aún restringen la densidad.
 
-El sidecar proxy más utilizado al implementar un service mesh en Amazon EKS es Envoy. Envoy es un proxy basado en C++ de alto rendimiento usado como data plane proxy en la mayoría de las implementaciones principales de service mesh (Istio, AWS App Mesh, Consul Connect, etc.).
+Fusione este fragmento JSON en la configuración exacta del add-on de EKS después de revisar el esquema/la propiedad, o use los valores `env` de Helm correspondientes. Las claves antiguas en minúsculas de ConfigMap `amazon-vpc-cni` no configuran el CNI de Linux:
+```json
+{
+  "env": {
+    "ENABLE_PREFIX_DELEGATION": "true",
+    "WARM_PREFIX_TARGET": "1"
+  }
+}
+```
+`WARM_PREFIX_TARGET=1` significa un prefijo de reserva, no el tamaño del prefijo. Los valores positivos de `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` tienen prioridad sobre el objetivo de prefijo de reserva. Los pools de reserva grandes reservan más espacio de subred. Planifique una transición de node group y la configuración de maxPods; alternar solo el DaemonSet no hace que los nodos existentes admitan una densidad arbitraria.
 
-**Características clave de Envoy:**
+| Instancia | Fórmula convencional de maxPods de IPv4 secundarias | Límite ilustrativo del modo de prefijo para estas instancias pequeñas |
+|---|---:|---:|
+| t3.medium | 17 | 110 |
+| m5.large | 29 | 110 |
+| c5.xlarge | 58 | 110 |
+| r5.2xlarge | 58 | 110 |
 
-1. **Arquitectura de alto rendimiento**:
-   * Escrito en C++ para baja latencia y alto throughput
-   * Modelo de networking asíncrono y orientado a eventos
-2. **Funciones completas de administración de tráfico**:
-   * Load balancing (round robin, weighted, least request, etc.)
-   * Circuit breaking y outlier detection
-   * Políticas de retry y timeout
-   * Traffic splitting y mirroring
-3. **Observabilidad**:
-   * Métricas y estadísticas detalladas
-   * Integración con distributed tracing (Zipkin, Jaeger, etc.)
-   * Access logging
-4. **Funciones de seguridad**:
-   * Terminación TLS/mTLS
-   * Authentication y authorization
-   * Rate limiting
+Estos son límites de configuración, no resultados de benchmark ni garantías de que todos los Pods quepan. Las anteriores 250 entradas para c5.xlarge/r5.2xlarge eran incorrectas: el límite recomendado por EKS es 110 con menos de 30 vCPU y 250 con 30 o más vCPU. Las interfaces de rama de Pod SG tienen límites independientes. La asignación de prefijos necesita bloques /28 contiguos, no una subred mínima /24 universal, y no simplifica automáticamente la política de SG.
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the node Region}"
+kubectl get nodes -o 'custom-columns=NAME:.metadata.name,TYPE:.metadata.labels.node\.kubernetes\.io/instance-type,PODS:.status.allocatable.pods'
+kubectl -n kube-system get daemonset aws-node -o yaml
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+aws ec2 describe-instance-types --region "$AWS_REGION" \
+  --instance-types t3.medium m5.large c5.xlarge r5.2xlarge \
+  --query 'InstanceTypes[].{Type:InstanceType,vCPUs:VCpuInfo.DefaultVCpus,ENIs:NetworkInfo.MaximumNetworkInterfaces,IPv4Slots:NetworkInfo.Ipv4AddressesPerInterface}'
+```
 
-**Despliegue de Envoy en Service Mesh:**
+</details>
 
-1.  **Patrón Sidecar**:
+### 5. ¿Qué proxy usa el modo sidecar de Istio y cómo se diagnostica?
 
-    ```yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: example-app
-    spec:
-      template:
-        spec:
-          containers:
-          - name: app
-            image: app:latest
-          - name: envoy-proxy
-            image: envoyproxy/envoy:v1.20.0
-            ports:
-            - containerPort: 15001
-            volumeMounts:
-            - name: envoy-config
-              mountPath: /etc/envoy
-          volumes:
-          - name: envoy-config
-            configMap:
-              name: envoy-config
-    ```
-2. **Inyección automática**:
-   * Istio: annotation `sidecar.istio.io/inject: "true"`
-   * AWS App Mesh: label `appmesh.k8s.aws/sidecarInjectorWebhook: enabled`
+<details>
+<summary>Mostrar respuesta</summary>
 
-**Ejemplo de configuración de Envoy:**
+**Respuesta: Envoy**
 
+El modo sidecar de Istio usa Envoy, con istiod proporcionando descubrimiento, enrutamiento y configuración de certificados. Las funciones antiguas de Pilot/Citadel se consolidaron en istiod y Mixer no es un componente requerido actualmente. Otros mesh pueden usar proxies distintos; Envoy no es un requisito de Kubernetes ni de todos los mesh.
+
+Envoy admite pools de conexiones, enrutamiento HTTP/TCP, reintentos, detección de valores atípicos, TLS y telemetría cuando se configura. Añadir meramente un contenedor Envoy no organiza la interceptación transparente de tráfico, identidad de carga de trabajo, xDS ni mTLS. Para un mesh real, use su inyector y compilación de proxy compatibles. La imagen independiente antigua de Envoy 1.20 y el Deployment incompleto no eran una instalación actual válida.
+
+El siguiente **bootstrap de proxy inverso independiente** ilustra los conceptos originales de listener/route/cluster. Se valida localmente con Envoy 1.39.1 upstream. Una aplicación HTTP independiente debe escuchar en `127.0.0.1:8080` en el mismo espacio de nombres de red. El proxy y el listener de administración se enlazan solo a loopback; no es un despliegue de mesh de producción ni de Kubernetes:
 ```yaml
+admin:
+  address:
+    socket_address:
+      address: 127.0.0.1
+      port_value: 9901
 static_resources:
   listeners:
-  - address:
+  - name: local-proxy
+    address:
       socket_address:
-        address: 0.0.0.0
+        address: 127.0.0.1
         port_value: 15001
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          stat_prefix: ingress_http
+          stat_prefix: demo_http
           route_config:
-            name: local_route
+            name: local-route
             virtual_hosts:
             - name: backend
               domains: ["*"]
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
-                  cluster: service_backend
+                  cluster: local-app
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
   clusters:
-  - name: service_backend
+  - name: local-app
     connect_timeout: 0.25s
-    type: STRICT_DNS
+    type: STATIC
     lb_policy: ROUND_ROBIN
     load_assignment:
-      cluster_name: service_backend
+      cluster_name: local-app
       endpoints:
       - lb_endpoints:
         - endpoint:
             address:
               socket_address:
-                address: backend-service
-                port_value: 80
+                address: 127.0.0.1
+                port_value: 8080
 ```
-
-**Integración de Envoy por Service Mesh:**
-
-1. **Istio**:
-   * Usa Envoy como sidecar proxy
-   * istiod administra dinámicamente la configuración de Envoy
-   * Componentes como Pilot, Mixer, Citadel se integran con Envoy
-2. **AWS App Mesh**:
-   * El controller de AWS App Mesh inyecta el sidecar Envoy
-   * Se integra con AWS Cloud Map para service discovery
-   * Envoy Management Service (EMS) administra la configuración de Envoy
-3. **Consul Connect**:
-   * Usa Envoy como data plane proxy
-   * Consul proporciona service discovery y configuration management
-
-**Monitoring y debugging de Envoy:**
-
+Guárdelo como `envoy-config.yaml` y valídelo con el binario upstream correspondiente. La validación analiza la configuración; no demuestra que el backend o la identidad de carga de trabajo funcionen.
 ```bash
-# Port forward Envoy admin interface
-kubectl port-forward <pod-name> 19000:19000
-
-# Check configuration and stats
-curl localhost:19000/config_dump
-curl localhost:19000/stats
-
-# Check cluster status
-curl localhost:19000/clusters
+envoy --mode validate --concurrency 1 --config-path envoy-config.yaml
 ```
-
-**Consideraciones de optimización de rendimiento:**
-
-* Asignación de recursos: Asigna CPU y memoria suficientes a Envoy
-* Connection pooling: Configura upstream connection pooling para mejorar el rendimiento
-* Tamaño de buffer: Configura tamaños de buffer adecuados para la optimización del uso de memoria
-* Filter chain: Habilita solo los filtros necesarios para minimizar el overhead
-
-Envoy es un componente central de la arquitectura moderna de service mesh, y cumple un rol crítico para hacer que la comunicación de microservicios sea segura, confiable y observable.
+Para un proxy de mesh de Kubernetes existente, descubra el puerto de administración y el nombre del contenedor configurados en lugar de suponer 19000. El puerto de administración predeterminado de App Mesh es 9901; Istio suele usar 15000 y la configuración de despliegue puede variar. Ejecute este port-forward en una terminal:
+```bash
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the existing mesh workload namespace}"
+: "${MESH_POD:?Set the existing proxy Pod}"
+: "${ENVOY_ADMIN_PORT:?Use the admin port actually configured by that mesh}"
+kubectl -n "$MESH_NAMESPACE" port-forward --address 127.0.0.1 \
+  "pod/$MESH_POD" "19000:$ENVOY_ADMIN_PORT"
+```
+Después emita consultas acotadas de solo lectura desde otra terminal. Los volcados de configuración pueden contener topología interna o configuración sensible; no los publique ni exponga externamente el listener de administración.
+```bash
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/config_dump
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/stats
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/clusters
+```
+Inspeccione conjuntamente el estado upstream, los límites de pool de conexiones, los reintentos, el costo de filtros, la memoria y la latencia de solicitudes. Ajuste a partir del comportamiento medido de la carga de trabajo; eliminar filtros de seguridad únicamente para reducir la sobrecarga cambia el modelo de seguridad.
 
 </details>
 
-### 8. What is the name of the Kubernetes add-on responsible for internal DNS resolution in Amazon EKS clusters?
+### 6. ¿Qué proporciona DNS en los nodos convencionales de EKS y cómo debe configurarse?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** CoreDNS
+**Respuesta: CoreDNS (primero identifique el propietario real de DNS/add-on).**
 
-**Explicación detallada:**
+CoreDNS es el add-on de DNS habitual en el cómputo convencional de EKS. El método de creación/la propiedad del add-on pueden diferir; EKS Auto Mode incluye DNS de clúster administrado y no necesita inherentemente el Deployment tradicional de CoreDNS. Identifique el propietario de cómputo/DNS antes de aplicar las siguientes comprobaciones del add-on convencional. Una respuesta ResourceNotFound requiere investigar la propiedad, no una reinstalación automática:
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster}"
+: "${AWS_REGION:?Set the cluster Region}"
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
+  --addon-name coredns
+kubectl -n kube-system get deployment coredns -o yaml
+kubectl -n kube-system get configmap coredns -o yaml
+kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=kube-dns
+```
+DNS de Service normalmente sigue `<service>.<namespace>.svc.<cluster-domain>`; `cluster.local` es un dominio común, no inmutable. Los registros Headless/ExternalName difieren de los registros ClusterIP normales. No suponga que cada IP de Pod arbitraria tiene un registro DNS inverso útil.
 
-El Kubernetes add-on responsable de la resolución DNS interna en clusters de Amazon EKS es CoreDNS. CoreDNS actúa como el DNS server para service discovery dentro de los Kubernetes clusters, manejando la resolución de nombres para pods y services.
+Este es un **Corefile** ilustrativo, no un ConfigMap para sobrescribir a ciegas. Conserve la configuración administrada, el dominio real del clúster, las probes y el Service DNS. `pods insecure` permite respuestas DNS sintácticas de IP de Pod sin verificar el Pod; elija el modo previsto del plugin Kubernetes.
+```text
+.:53 {
+    errors
+    health {
+        lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+        ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+```
+`errors` registra fallos; `health` y `ready` cumplen funciones de probe distintas; `kubernetes` responde registros de clúster; `forward` resuelve otros dominios; `prometheus` expone métricas; `cache`, `reload` y `loadbalance` afectan el almacenamiento en caché, la recarga de configuración y el orden de registros. El plugin `loop` detecta ciertos bucles de reenvío simples durante el inicio, no todos los bucles DNS dinámicos indefinidamente. `loadbalance` cambia el orden de las respuestas DNS, no el reenvío de paquetes de Service.
 
-**Características clave de CoreDNS:**
+Para reenvío condicional, use servidores DNS aprobados y accesibles y permita UDP/TCP53. La primera dirección de una subred VPC, como 10.0.0.1, no es un servidor DNS corporativo de ejemplo. El plugin `file` sirve un archivo de zona autoritativo que se debe crear/montar y mantener con SOA/registros válidos; no sustituye un reenvío de dominio de stub. Los resolvedores públicos requieren una política deliberada de egress y divulgación; no pueden resolver zonas alojadas privadas por arte de magia.
 
-1. **Service Discovery**:
-   * Resuelve nombres DNS en el formato `<service-name>.<namespace>.svc.cluster.local`
-   * Soporta reverse DNS lookups para direcciones IP de pod
-2. **Arquitectura de plugins**:
-   * Extiende la funcionalidad mediante varios plugins
-   * Caching, metrics, logging, error handling, etc.
-3. **Flexibilidad de configuración**:
-   * Configuración declarativa mediante Corefile
-   * Soporta recarga dinámica
+Este fragmento de caché corrige el orden original de argumentos: `prefetch AMOUNT DURATION PERCENTAGE`. Reemplace la directiva de caché existente en lugar de añadir una segunda:
+```text
+cache 30 {
+    success 10000
+    denial 1024
+    prefetch 10 2m 10%
+}
+```
+En CoreDNS upstream 1.14.7, `denial1000` se acepta pero se normaliza a1024; `success10000` se normaliza a9984. El valor explícito1024 conserva la capacidad de denegación efectiva original. Estas capacidades son comportamiento de implementación, no una recomendación de dimensionamiento DNS medida.
 
-**Despliegue de CoreDNS en EKS:**
-
-1. **Configuración de despliegue predeterminada**:
-   * Se despliega automáticamente cuando se crea el EKS cluster
-   * Se ejecuta en el namespace kube-system
-   * Normalmente se despliega con 2 o más replicas
-2.  **Verificación**:
-
-    ```bash
-    # Check CoreDNS pods
-    kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-    # Check CoreDNS version
-    kubectl describe deployment coredns -n kube-system | grep Image
-    ```
-
-**Configuración de CoreDNS (Corefile):**
-
+Elija un **único propietario de escalado**. Use el autoescalado administrado de CoreDNS por EKS cuando sea compatible con la versión/esquema exactos del add-on, o un HPA/autoscaler proporcional al clúster de propiedad independiente. El siguiente HPA es solo para un Deployment administrado deliberadamente por el usuario con metrics-server y solicitudes de CPU; no lo combine con otro administrador de réplicas:
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 metadata:
   name: coredns
   namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-            ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coredns
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
 ```
-
-**Descripciones de plugins clave:**
-
-1. **errors**: Registra errores
-2. **health**: Proporciona un endpoint de health check
-3. **ready**: Proporciona un endpoint de readiness check
-4. **kubernetes**: Maneja Kubernetes service discovery
-5. **prometheus**: Expone métricas de Prometheus
-6. **forward**: Reenvía consultas DNS externas a upstream DNS servers
-7. **cache**: Almacena en caché respuestas DNS
-8. **loop**: Detecta y evita DNS loops
-9. **reload**: Recarga automáticamente ante cambios en Corefile
-10. **loadbalance**: Balancea carga entre múltiples registros A/AAAA
-
-**Ejemplos de configuración personalizada:**
-
-1.  **Usar un DNS Server específico para External Domain**:
-
-    ```
-    example.com {
-        forward . 10.0.0.1
-    }
-    ```
-2.  **Configuración de Stub Domain**:
-
-    ```
-    internal.corp {
-        file /etc/coredns/internal.db
-    }
-    ```
-3.  **Conditional Forwarding**:
-
-    ```
-    . {
-        forward . 8.8.8.8 8.8.4.4 {
-            policy sequential
-        }
-    }
-    ```
-
-**Optimización de rendimiento y escalado:**
-
-1.  **Auto Scaling**:
-
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: coredns
-      namespace: kube-system
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-    ```
-2.  **Optimización de asignación de recursos**:
-
-    ```yaml
-    resources:
-      limits:
-        memory: 170Mi
-      requests:
-        cpu: 100m
-        memory: 70Mi
-    ```
-3.  **Ajuste de caché**:
-
-    ```
-    cache {
-        success 10000
-        denial 1000
-        prefetch 10 10% 2m
-    }
-    ```
-
-**Troubleshooting:**
-
-1.  **Prueba de resolución DNS**:
-
-    ```bash
-    # Create test pod
-    kubectl run dnsutils --image=gcr.io/kubernetes-e2e-test-images/dnsutils:1.3 -- sleep 3600
-
-    # Test DNS lookup
-    kubectl exec -it dnsutils -- nslookup kubernetes.default
-    ```
-2.  **Revisar logs de CoreDNS**:
-
-    ```bash
-    kubectl logs -n kube-system -l k8s-app=kube-dns
-    ```
-3.  **Revisar DNS Policy**:
-
-    ```bash
-    kubectl get pods <pod-name> -o jsonpath='{.spec.dnsPolicy}'
-    ```
-
-CoreDNS es un componente crítico de los EKS clusters, que proporciona funcionalidad central de service discovery para la arquitectura de microservicios. Garantizar un servicio DNS confiable mediante configuración y monitoring adecuados es esencial.
+El ejemplo original de recursos (solicitud de CPU de 100m, solicitud de memoria de 70Mi, límite de memoria de 170Mi) es ilustrativo, no está validado para la carga de trabajo. Supervise la tasa de consultas, los errores, el comportamiento de aciertos/fallos de caché, memoria/OOM y la latencia de respuesta, y después dimensione. Para el diagnóstico use una carga de trabajo de diagnóstico aprobada existente con herramientas DNS; inspeccione dnsPolicy/dnsConfig/resolv.conf, EndpointSlices de kube-dns y las rutas de política/SG/upstream. Pruebe por separado un Service del clúster y un nombre externo/privado aprobado. La imagen dnsutils obsoleta anterior y el Pod sin propietario no eran prerrequisitos para el diagnóstico de DNS.
 
 </details>
 
-## Hands-on Questions
-
-### 10. Explain how to implement a service mesh (e.g., AWS App Mesh) in an Amazon EKS cluster to secure and monitor microservice communication. Include implementation steps, key components, and monitoring methods.
+### 7. ¿Cómo se debe proteger, observar y migrar un despliegue existente de App Mesh?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
+**Respuesta: Revise el grafo, la identidad y la telemetría existentes, y después valide un reemplazo compatible.**
 
-Así se implementa AWS App Mesh en un Amazon EKS cluster para asegurar y monitorear la comunicación de microservicios:
-
-### 1. AWS App Mesh Implementation Steps
-
-#### 1.1. Set Up Prerequisites
-
+**Ejercicio de operaciones históricas y migración:** El soporte y el acceso a recursos de AWS App Mesh finalizaron el **30 de septiembre de 2026**. No siga la receta original para aprovisionar un nuevo mesh, Private CA y Grafana público. Para un despliegue anterior de App Mesh, inventaríe su grafo y migre a un mesh/gateway compatible. ECS Service Connect no es un objetivo de instalación de EKS; evalúe una arquitectura de mesh/gateway de Kubernetes compatible para las características que realmente se usan.
 ```bash
-# Set up required IAM permissions
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=appmesh-system \
-  --name=appmesh-controller \
-  --attach-policy-arn=arn:aws:iam::aws:policy/AWSCloudMapFullAccess,arn:aws:iam::aws:policy/AWSAppMeshFullAccess \
-  --override-existing-serviceaccounts \
-  --approve
-
-# Add Helm repository
-helm repo add eks https://aws.github.io/eks-charts
-helm repo update
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the namespace of the existing mesh workloads}"
+kubectl get meshes.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get virtualnodes.appmesh.k8s.aws,virtualservices.appmesh.k8s.aws,virtualrouters.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get deployments,services
 ```
+**1. Mapee el grafo existente.** Los selectores de namespace de mesh eligen los namespaces participantes; los selectores de Pod de VirtualNode eligen cargas de trabajo, listeners y descubrimiento de servicios. Los nombres de VirtualService se enrutan a un VirtualNode o VirtualRouter; las rutas de router seleccionan VirtualNodes ponderados. Inventaríe referencias de backend, DNS de endpoint, comprobaciones de salud, IAM/IRSA, configuración de inyector y puertos de escucha de aplicaciones. El marcador de posición original `service-a:latest` y las cargas de trabajo service-b ausentes no eran una aplicación funcional. No sobrescriba ServiceAccounts existentes ni adjunte políticas de acceso completo como paso de resolución de problemas.
 
-#### 1.2. Install App Mesh Controller
+**2. Distinga TLS de la autenticación mutua.** Un listener en modo STRICT con solo un certificado de servidor requiere conexiones cifradas, pero por sí solo no autentica clientes. App Mesh mTLS necesita certificados de cliente y confianza de cliente en el lado del servidor, así como confianza de servidor/comprobaciones de SAN en el lado del cliente. Los certificados de cliente y la confianza de validación de listener usan archivos o SDS, no una referencia de certificado de cliente de ACM. El tráfico de app a Envoy dentro de la carga de trabajo no se cifra automáticamente mediante mTLS de proxy a proxy.
 
-```bash
-# Create App Mesh controller namespace
-kubectl create ns appmesh-system
-
-# Install App Mesh controller
-helm install appmesh-controller eks/appmesh-controller \
-  --namespace appmesh-system \
-  --set region=${AWS_REGION} \
-  --set serviceAccount.create=false \
-  --set serviceAccount.name=appmesh-controller
-```
-
-#### 1.3. Create Mesh
-
+Lo siguiente es un **ejemplo de revisión de configuración heredada**, no una instalación nueva. Sus archivos ya deben estar montados de forma segura en el proxy, los certificados deben tener las identidades/usos requeridos, service-b debe existir y el namespace coincidente debe pertenecer al Mesh previsto. Agregue restricciones SAN de cliente aprobadas según requiera el diseño de confianza; confiar solo en una CA acepta sus certificados de cliente elegibles:
 ```yaml
-# mesh.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-```
-
-```bash
-kubectl apply -f mesh.yaml
-```
-
-#### 1.4. Set Up Application Namespace
-
-```bash
-# Create and label application namespace
-kubectl create ns app-namespace
-kubectl label namespace app-namespace mesh=my-mesh
-kubectl label namespace app-namespace appmesh.k8s.aws/sidecarInjectorWebhook=enabled
-```
-
-#### 1.5. Define Virtual Nodes and Services
-
-```yaml
-# virtual-node.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualNode
 metadata:
@@ -810,268 +402,79 @@ spec:
     matchLabels:
       app: service-a
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      healthCheck:
-        protocol: http
-        path: "/health"
-        port: 8080
-        healthyThreshold: 2
-        unhealthyThreshold: 2
-        timeoutMillis: 2000
-        intervalMillis: 5000
+  - portMapping:
+      port: 8080
+      protocol: http
+    tls:
+      mode: STRICT
+      certificate:
+        file:
+          certificateChain: /certs/server.crt
+          privateKey: /certs/server.key
+      validation:
+        trust:
+          file:
+            certificateChain: /certs/trusted-client-ca.pem
+    outlierDetection:
+      baseEjectionDuration:
+        unit: s
+        value: 30
+      interval:
+        unit: s
+        value: 10
+      maxEjectionPercent: 50
+      maxServerErrors: 5
   backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
+  - virtualService:
+      virtualServiceRef:
+        name: service-b
+      clientPolicy:
+        tls:
+          enforce: true
+          ports: [8080]
+          certificate:
+            file:
+              certificateChain: /certs/client.crt
+              privateKey: /certs/client.key
+          validation:
+            trust:
+              file:
+                certificateChain: /certs/trusted-server-ca.pem
+            subjectAlternativeNames:
+              match:
+                exact: [service-b.app-namespace.svc.cluster.local]
   serviceDiscovery:
     dns:
       hostname: service-a.app-namespace.svc.cluster.local
-```
-
-```yaml
-# virtual-service.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualService
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  awsName: service-a.app-namespace.svc.cluster.local
-  provider:
-    virtualRouter:
-      virtualRouterRef:
-        name: service-a-router
-```
-
-```yaml
-# virtual-router.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-```
-
-#### 1.6. Deploy Application
-
-```yaml
-# deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: service-a
-  template:
-    metadata:
-      labels:
-        app: service-a
-    spec:
-      containers:
-      - name: service-a
-        image: service-a:latest
-        ports:
-        - containerPort: 8080
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-```
-
-### 2. Secure Communication with mTLS Configuration
-
-#### 2.1. Set Up AWS Certificate Manager Private CA
-
-```bash
-# Create private CA
-aws acm-pca create-certificate-authority \
-  --certificate-authority-configuration file://ca-config.json \
-  --certificate-authority-type "ROOT" \
-  --idempotency-token 1234567890 \
-  --tags Key=Name,Value=AppMeshCA
-
-# Save CA ARN
-export CA_ARN=$(aws acm-pca list-certificate-authorities --query 'CertificateAuthorities[?Status==`ACTIVE`].Arn' --output text)
-```
-
-#### 2.2. Add TLS Configuration
-
-```yaml
-# virtual-node-with-tls.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  podSelector:
-    matchLabels:
-      app: service-a
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      tls:
-        mode: STRICT  # Enable mTLS
-        certificate:
-          acm:
-            certificateArn: arn:aws:acm:region:account-id:certificate/certificate-id
-  backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
-        clientPolicy:
-          tls:
-            enforce: true
-            ports:
-              - 8080
-            validation:
-              trust:
-                acm:
-                  certificateAuthorityArns:
-                    - ${CA_ARN}
-  serviceDiscovery:
-    dns:
-      hostname: service-a.app-namespace.svc.cluster.local
-```
-
-### 3. Set Up Monitoring and Observability
-
-#### 3.1. AWS X-Ray Integration
-
-```yaml
-# mesh-with-xray.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  tracing:
-    awsXRay:
-      logLevel: INFO
-```
-
-```bash
-# Deploy X-Ray daemon
-kubectl apply -f https://github.com/aws/aws-app-mesh-controller-for-k8s/raw/master/config/samples/xray-daemon.yaml
-```
-
-#### 3.2. Amazon CloudWatch Integration
-
-```yaml
-# envoy-config.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  serviceDiscovery:
-    ipPreference: IPv4_PREFERRED
   logging:
     accessLog:
       file:
         path: /dev/stdout
-        format:
-          json:
-            - key: "source"
-              value: "%DOWNSTREAM_REMOTE_ADDRESS%"
-            - key: "destination"
-              value: "%UPSTREAM_REMOTE_ADDRESS%"
-            - key: "protocol"
-              value: "%PROTOCOL%"
 ```
+No seleccione todas las CA ACTIVE de una cuenta en una variable. Crear una CA raíz requiere una configuración explícita y pasos de activación/certificado, e incurre en cargos; no produce inmediatamente un certificado utilizable. Conserve los ARN exactos previstos. Los campos de CRD de Kubernetes de App Mesh distinguen mayúsculas y minúsculas (`certificateARN`, `certificateAuthorityARNs`); `${CA_ARN}` en un archivo YAML plano no es interpolación de shell. El ejemplo mostrado basado en archivos evita fingir que se ha ejecutado un flujo de trabajo de CA inexistente.
 
-```bash
-# Deploy CloudWatch agent
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cloudwatch-namespace.yaml
+Para pares existentes en texto sin cifrar, establezca una transición PERMISSIVE documentada, aprovisione identidades y confianza de cliente/servidor, pruebe tanto pares aceptados como rechazados y después exija STRICT. Inspeccione `ssl.handshake`, `ssl.no_certificate`, `ssl.fail_verify_no_cert` y `ssl.fail_verify_san` junto con los resultados reales de solicitudes. Un handshake TLS de servidor exitoso por sí solo no es prueba suficiente de mTLS.
 
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-configmap.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-daemonset.yaml
-```
-
-#### 3.3. Prometheus and Grafana Setup
-
-```bash
-# Create Prometheus namespace
-kubectl create namespace prometheus
-
-# Install Prometheus
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm install prometheus prometheus-community/prometheus \
-  --namespace prometheus \
-  --set alertmanager.persistentVolume.storageClass="gp2" \
-  --set server.persistentVolume.storageClass="gp2"
-
-# Install Grafana
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-helm install grafana grafana/grafana \
-  --namespace prometheus \
-  --set persistence.storageClassName="gp2" \
-  --set persistence.enabled=true \
-  --set adminPassword='EKS!sAWSome' \
-  --values grafana.yaml \
-  --set service.type=LoadBalancer
-```
-
+**3. Conserve la observabilidad durante la migración.** `Mesh.spec.tracing`, `Mesh.spec.logging` y `Mesh.spec.serviceDiscovery` de la receta original no son campos en el CRD del controlador 1.13.1 revisado. El registro de acceso pertenece a VirtualNode (como arriba). La configuración de trazas de la imagen Envoy de App Mesh es independiente; por ejemplo, este **fragmento de entorno de contenedor** requiere un daemon/colector local de X-Ray funcional en2000, permisos, acceso al endpoint y propagación de contexto de trazas:
 ```yaml
-# grafana.yaml
+env:
+- name: ENABLE_ENVOY_XRAY_TRACING
+  value: "1"
+- name: XRAY_DAEMON_PORT
+  value: "2000"
+```
+Recopile el endpoint `/stats` o Prometheus real del proxy con un collector aprobado. CloudWatch requiere scraping/exportación/EMF configurados; no suponga que las métricas RequestCount/Latency de `AWS/AppMesh` aparecen automáticamente. Inventaríe el namespace real, los nombres de métricas, las dimensiones y las unidades antes de crear un dashboard. Conserve el propietario, las credenciales y las StorageClasses compatibles existentes de CloudWatch/Prometheus/Grafana. Evite manifests flotantes, contraseñas de administrador de Grafana codificadas y un LoadBalancer público sin revisar. Este fragmento opcional de aprovisionamiento de Grafana solo identifica un datasource existente de Prometheus; no instala ni protege ninguno de los dos sistemas:
+```yaml
+apiVersion: 1
 datasources:
-  datasources.yaml:
-    apiVersion: 1
-    datasources:
-    - name: Prometheus
-      type: prometheus
-      url: http://prometheus-server.prometheus.svc.cluster.local
-      access: proxy
-      isDefault: true
+- name: Prometheus
+  type: prometheus
+  url: http://prometheus-server.prometheus.svc.cluster.local
+  access: proxy
+  isDefault: true
 ```
-
-### 4. Configure Traffic Management and Advanced Features
-
-#### 4.1. Canary Deployment Configuration
-
+**4. Mapee explícitamente el comportamiento del tráfico.** Este ejemplo de router heredado asume que ambos VirtualNodes versionados ya existen y tienen endpoints saludables. Los pesos no son garantías exactas del número de solicitudes. La detección de valores atípicos es expulsión de endpoints, distinta de los límites de circuit-breaking de pool de conexiones. Las cuatro cadenas originales de eventos de reintento HTTP son válidas: `client-error` significa 409 y `stream-error` significa flujos rechazados. Elija reintentos para operaciones idempotentes dentro del presupuesto general de tiempo de espera; los reintentos pueden amplificar la carga de fallos.
 ```yaml
-# virtual-router-canary.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualRouter
 metadata:
@@ -1079,184 +482,167 @@ metadata:
   namespace: app-namespace
 spec:
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
+  - portMapping:
+      port: 8080
+      protocol: http
   routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a-v1
-              weight: 90
-            - virtualNodeRef:
-                name: service-a-v2
-              weight: 10
+  - name: service-a-route
+    httpRoute:
+      match:
+        prefix: /
+      action:
+        weightedTargets:
+        - virtualNodeRef:
+            name: service-a-v1
+          weight: 90
+        - virtualNodeRef:
+            name: service-a-v2
+          weight: 10
+      retryPolicy:
+        maxRetries: 3
+        perRetryTimeout:
+          unit: ms
+          value: 2000
+        httpRetryEvents:
+        - gateway-error
 ```
-
-#### 4.2. Circuit Breaker Configuration
-
-```yaml
-# virtual-node-circuit-breaker.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  # ... existing configuration ...
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      outlierDetection:
-        baseEjectionDuration:
-          unit: s
-          value: 30
-        interval:
-          unit: s
-          value: 10
-        maxEjectionPercent: 50
-        maxServerErrors: 5
-```
-
-#### 4.3. Retry Policy Configuration
-
-```yaml
-# virtual-router-retry.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  # ... existing configuration ...
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-        retryPolicy:
-          maxRetries: 3
-          perRetryTimeout:
-            unit: ms
-            value: 2000
-          httpRetryEvents:
-            - server-error
-            - gateway-error
-            - client-error
-            - stream-error
-```
-
-### 5. Monitoring and Troubleshooting
-
-#### 5.1. Check Envoy Proxy Logs
-
-```bash
-# Check Envoy sidecar logs for specific pod
-kubectl logs <pod-name> -c envoy -n app-namespace
-
-# Stream all Envoy logs
-kubectl logs -f -l app=service-a -c envoy -n app-namespace
-```
-
-#### 5.2. Access Envoy Admin Interface
-
-```bash
-# Set up port forwarding
-kubectl port-forward <pod-name> -n app-namespace 9901:9901
-
-# Access in browser
-# http://localhost:9901/
-```
-
-#### 5.3. Check X-Ray Traces
-
-Navega al servicio X-Ray en la AWS Management Console para ver service maps y traces.
-
-#### 5.4. Create CloudWatch Dashboard
-
-```bash
-# Prepare JSON file for CloudWatch dashboard creation
-cat > appmesh-dashboard.json << EOF
-{
-  "widgets": [
-    {
-      "type": "metric",
-      "x": 0,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "RequestCount", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Sum" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Request Count"
-      }
-    },
-    {
-      "type": "metric",
-      "x": 12,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "Latency", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Average" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Latency"
-      }
-    }
-  ]
-}
-EOF
-
-# Create dashboard using AWS CLI
-aws cloudwatch put-dashboard --dashboard-name AppMeshDashboard --dashboard-body file://appmesh-dashboard.json
-```
-
-### 6. Best Practices and Considerations
-
-#### 6.1. Resource Requirements
-
-* Planifica los recursos de los nodes, ya que el sidecar Envoy se agrega a cada pod
-* Normalmente asigna 100-200m CPU y 128-256Mi de memoria a cada Envoy proxy
-
-#### 6.2. Gradual Implementation Strategy
-
-1. **Enfoque por fases**:
-   * Comienza con services no críticos para el negocio
-   * Evalúa el impacto con traffic mirroring
-   * Expande gradualmente después de una validación exitosa
-2. **Implementación de mTLS**:
-   * Comienza con modo PERMISSIVE
-   * Verifica que todos los services sean compatibles
-   * Cambia a modo STRICT
-
-#### 6.3. Performance Optimization
-
-* Ajusta los resource limits de Envoy
-* Configura intervalos adecuados de health check
-* Minimiza logging y tracing innecesarios
-
-#### 6.4. Security Hardening
-
-* Usa políticas IAM de least privilege
-* Rotación regular de certificados
-* Implementa defense in depth con network policies
-
-AWS App Mesh proporciona una potente solución de service mesh para asegurar y monitorear la comunicación de microservicios en EKS clusters. Una configuración y monitoring adecuados pueden mejorar significativamente la confiabilidad, seguridad y observabilidad de las aplicaciones.
+**5. Valide y haga el cambio gradualmente.** Compare enrutamiento, pares autorizados/no autorizados, DNS, rotación TLS, reintentos, recuperación ante fallos, trazas y continuidad de métricas antes de mover tráfico. Conserve una ruta de reversión dentro de la ventana restante de soporte del producto. Los valores originales de CPU de proxy de100–200m y memoria de128–256Mi son **estimaciones de ejemplo no verificadas**, no mediciones ni dimensionamiento garantizado. Mida la saturación real, memoria, latencia y tasas de error. En esta auditoría no se aprovisionó ningún mesh, CA, collector ni dashboard de nube.
 
 </details>
+
+### 8. ¿Qué variable configura la MTU de ENI adjunta en VPC CNI 1.23.0?
+
+- A. `ENI_MTU`
+- B. `AWS_VPC_ENI_MTU`
+- C. `VPC_MTU_SIZE`
+- D. `MAX_ENI`
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B. `AWS_VPC_ENI_MTU`**
+
+`POD_MTU` configura las interfaces virtuales de Pod y se deriva de la MTU de ENI cuando no se establece. `ENI_MTU` era el nombre incorrecto. Haga coincidir la MTU de la ruta real y el despliegue planificado de nodo/Pod; un valor numérico aceptado no garantiza que los gateways/túneles/endpoints remotos acepten ese tamaño de paquete. Los SG no son dispositivos para establecer MTU.
+
+</details>
+
+### 9. ¿Dónde pertenece la solución alternativa de early-demux de TCP estricto de Pod-SG?
+
+- A. Deployment de aplicación
+- B. ConfigMap de CoreDNS
+- C. Contenedor init de CNI
+- D. Anotación de LoadBalancer
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. `aws-vpc-cni-init`**
+
+La configuración documentada `DISABLE_TCP_EARLY_DEMUX=true` pertenece al contenedor init, representada por Helm `init.env`. Establecerla en el contenedor principal `aws-node` no aplica ese cambio en el momento de init. Confirme el problema de kubelet probe en modo estricto; el modo Pod-SG estándar no requiere esta solución alternativa.
+
+</details>
+
+### 10. ¿Qué optimización de orden de reglas garantiza Kubernetes NetworkPolicy?
+
+- A. Poner primero la regla más usada
+- B. Ordenar los nombres alfabéticamente
+- C. Crear las políticas restrictivas en último lugar
+- D. No hay garantía de orden
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D. Ninguna; las autorizaciones coincidentes son aditivas.**
+
+No hay una precedencia portátil de «primera coincidencia gana» o de política más reciente. Los selectores/direcciones y la unión de autorizaciones determinan el aislamiento. Las API de nivel/orden de proveedores son independientes. Conserve las restricciones necesarias y mida el costo de programación/ejecución de políticas en lugar de eliminar reglas basándose únicamente en su cantidad.
+
+</details>
+
+### 11. Una subred está agotada. ¿Aumentar WARM_IP_TARGET añade capacidad de direcciones?
+
+- A. Sí, expande la subred
+- B. No, aumenta la demanda de direcciones de reserva
+- C. Sí, omite los límites de ENI
+- D. Sí, repara cada Pod en ContainerCreating
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B. No; solicita más direcciones de reserva.**
+
+Un objetivo de reserva mayor puede reducir la latencia de asignación cuando existe capacidad, pero también reserva direcciones y puede empeorar el agotamiento. Identifique de forma independiente el espacio de subred, los slots de ENI, maxPods, la limitación de API y la fragmentación de prefijos. La delegación de prefijos no crea más direcciones IPv4 totales.
+
+</details>
+
+### 12. ¿Qué API se debe inspeccionar para obtener las direcciones y condiciones actuales de backend de Service?
+
+- A. Solo eventos de Node
+- B. Anotaciones de Ingress
+- C. EndpointSlice
+- D. Solo el ClusterIP de Service
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. EndpointSlice**
+
+Consulte EndpointSlices en el namespace de Service usando `kubernetes.io/service-name=<service>`. Compruebe direcciones, puertos y condiciones ready/serving/terminating junto con el selector de Service y targetPort. El objeto Endpoints heredado puede truncar conjuntos de endpoints grandes; un resultado vacío puede indicar problemas de selector/readiness en lugar de un fallo del balanceador de carga.
+
+</details>
+
+### 13. ¿Qué significa trafficDistribution: PreferSameZone?
+
+- A. Nunca cruzar un límite de AZ
+- B. Preferir la misma zona con alternativa
+- C. Mover los Pods existentes a una AZ
+- D. Anular todas las políticas de tráfico Local
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B. Preferir endpoints disponibles en la misma zona, con alternativa.**
+
+Es una preferencia de enrutamiento para un proxy de Service compatible, no una política de aislamiento de AZ. Asegure suficiente capacidad local. Una anotación Auto de modo topology existente tiene prioridad. Las políticas de tráfico interno/externo Local imponen requisitos más estrictos de nodo local para su tráfico respectivo y pueden descartar tráfico cuando no existe un endpoint local.
+
+</details>
+
+### 14. Calcule el producto de ancho de banda-retardo para un flujo hipotético de 10 Gbps con 20 ms de RTT.
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: 25,000,000 bytes, aproximadamente 23.84 MiB.**
+
+```text
+10,000,000,000 bits/s × 0.020 s / 8 = 25,000,000 bytes
+```
+Este es un ejemplo aritmético, no un benchmark de EKS ni una recomendación de establecer cada buffer de socket con ese valor. Tenga en cuenta los límites reales de flujo único/ráfaga de EC2, el ajuste automático de TCP, el escalado de ventana, las conexiones simultáneas y la presión de memoria. Los máximos anteriores de 16 MiB no pueden considerarse óptimos sin mediciones. Keepalive opera en sockets inactivos habilitados; es independiente del pooling HTTP y del tamaño de buffers.
+
+</details>
+
+### 15. ¿Cómo se separan los fallos de DNS, selección de Service y conectividad de aplicación?
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: Recopile evidencia y después pruebe el protocolo real con controles positivos.**
+
+Compruebe los eventos del Pod afectado antes de clasificar ContainerCreating como networking. Resuelva un Service de clúster conocido y el hostname previsto, inspeccione la coherencia de selector-puerto-readiness de Service/EndpointSlice y después compare el acceso por IP de Pod y URL de Service desde el mismo origen. Pruebe una ruta permitida conocida para que una herramienta ausente, DNS fallido o backend inactivo no se confunda con una denegación de política. Use los diagnósticos acotados del capítulo fuente:
+```bash
+set -euo pipefail
+: "${APP_NAMESPACE:?Set the affected namespace}"
+: "${APP_POD:?Set the affected Pod}"
+: "${APP_SERVICE:?Set the affected Service}"
+kubectl -n "$APP_NAMESPACE" describe pod "$APP_POD"
+kubectl -n "$APP_NAMESPACE" get events --field-selector "involvedObject.name=$APP_POD" --sort-by=.metadata.creationTimestamp
+kubectl -n "$APP_NAMESPACE" get service "$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get networkpolicy
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+```
+Para un balanceador de carga, identifique el controlador/clase, esquema, tipo de destino y motivo de estado de salud del destino. Verifique los puertos reales de aplicación/salud, las rutas de SG y enrutamiento, TLS/SNI y el enrutamiento Host. El comportamiento de ICMP por sí solo no puede demostrar la aplicación de NetworkPolicy para TCP/UDP. Cambie una causa confirmada, conserve la ruta de reversión del propietario y repita las mismas comprobaciones. Estos ejemplos no afirman realizar pruebas de red de producción.
+
+</details>
+
+Referencias oficiales: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).

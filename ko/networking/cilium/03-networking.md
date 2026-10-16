@@ -91,7 +91,7 @@ Cilium 1.20.3의 Helm **`MTU`는 기반 네트워크 MTU를 덮어쓰며**, 그 
 
 ## Cilium의 오버레이 네트워킹
 
-플랫폼·프로필이 기본값을 바꾸지 않으면 Cilium은 VXLAN tunnel routing을 사용합니다. 노드 간 Pod 전송에는 도달 가능한 노드 주소, 허용된 터널 UDP 트래픽과 적절한 MTU가 필요합니다. Overlay가 겹치는 Pod 주소를 해결하거나 연결되지 않은 노드를 연결해 주지 않습니다.
+플랫폼·프로필이 기본값을 바꾸지 않으면 Cilium은 VXLAN tunnel routing을 사용합니다. 노드 간 Pod 전송에는 도달 가능한 노드 주소, 허용된 터널 UDP 트래픽과 적절한 MTU가 필요합니다. Overlay가 겹치는 Pod 주소를 해결하거나 연결되지 않은 노드를 연결해 주지 않습니다. 패킷 경로, 터널 디바이스, MTU 계산, 네이티브 라우팅 변형은 [오버레이와 네이티브 라우팅](09-overlay-native-routing.md)을 참고하세요.
 
 ![노드 간 overlay 흐름: endpoint 처리, 소스 VTEP 캡슐화, underlay 전송, 대상 캡슐 해제와 endpoint 전달.](../../.gitbook/assets/ko-networking-cilium-03-networking-2.png)
 

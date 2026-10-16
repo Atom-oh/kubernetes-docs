@@ -1,8 +1,8 @@
 # Mejores prácticas de Istio
 
-Este documento cubre las mejores prácticas y recomendaciones para operar Istio con éxito en entornos de producción.
+Este documento cubre las mejores prácticas y recomendaciones para operar Istio correctamente en entornos de producción.
 
-## Tabla de contenido
+## Tabla de contenidos
 
 1. [Optimización del rendimiento](#performance-optimization)
 2. [Fortalecimiento de la seguridad](#security-hardening)
@@ -10,7 +10,7 @@ Este documento cubre las mejores prácticas y recomendaciones para operar Istio 
 4. [Monitoreo y observabilidad](#monitoring-and-observability)
 5. [Lista de verificación para producción](#production-checklist)
 
-<span id="performance-optimization"></span>
+Revisado para Istio 1.31 el 11 de septiembre de 2026. Los fragmentos de `IstioOperator` son entradas para `istioctl install -f`, no recursos de Kubernetes que se aplican con kubectl. Intégrelos en la configuración de instalación existente; use valores de chart equivalentes para Helm. La mayoría de los ejemplos describen sidecars; use políticas waypoint/Gateway API para ambient. Los ajustes de recursos y las duraciones de rollout son puntos de partida que se deben validar bajo carga.
 
 ## Optimización del rendimiento
 
@@ -44,8 +44,8 @@ spec:
 
 **Recomendaciones**:
 - Istiod debe tener al menos 2 réplicas
-- CPU: Ajustar según el tamaño del clúster
-- Memoria: Estimar aproximadamente 10KB por servicio
+- CPU: Ajuste según el tamaño del clúster
+- Memoria: Mida el número de servicios/proxies, el tamaño de la configuración y la tasa de actualización; no existe una fórmula fija por servicio
 
 ### 2. Optimización de recursos del Data Plane
 
@@ -53,6 +53,9 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
+  name: myapp
+  labels:
+    sidecar.istio.io/inject: "true"
   annotations:
     # Sidecar resource optimization
     sidecar.istio.io/proxyCPU: "100m"
@@ -66,11 +69,11 @@ spec:
 ```
 
 **Recomendaciones**:
-- Cargas de trabajo normales: CPU 100m, memoria 128Mi
-- Cargas de trabajo con alto tráfico: CPU 500m, memoria 512Mi
-- Concurrencia del Sidecar: `concurrency: 2` (predeterminada)
+- Workloads normales: CPU 100m, memoria 128Mi
+- Workloads de alto tráfico: CPU 500m, memoria 512Mi
+- Concurrencia del sidecar: normalmente déjela sin configurar para que Istio derive los hilos de trabajo de las solicitudes/límites de CPU
 
-### 3. Optimización del Connection Pool
+### 3. Optimización del grupo de conexiones
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -87,14 +90,14 @@ spec:
       http:
         http1MaxPendingRequests: 50
         http2MaxRequests: 100
-        maxRequestsPerConnection: 2
+        maxRequestsPerConnection: 0
         idleTimeout: 300s
 ```
 
 **Recomendaciones**:
-- `maxConnections`: Considerar las conexiones simultáneas de la carga de trabajo
-- `maxRequestsPerConnection`: 1-2 para HTTP/1.1, mayor para HTTP/2
-- `idleTimeout`: Aumentar si se necesitan conexiones de larga duración
+- `maxConnections`: Considere las conexiones concurrentes del workload
+- `maxRequestsPerConnection`: 0 significa ilimitado; los valores pequeños aumentan la rotación de conexiones y los handshakes de TLS
+- `idleTimeout`: Auméntelo si se necesitan conexiones de larga duración
 
 ### 4. Balanceo de carga por localidad
 
@@ -114,14 +117,18 @@ spec:
           to:
             "us-east-1/us-east-1a/*": 80  # Same AZ priority
             "us-east-1/us-east-1b/*": 20
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 **Beneficios**:
-- Reducción de costos entre AZ (~85%)
+- Posible reducción del tráfico entre AZ; el ahorro depende de la distribución del tráfico y de la facturación
 - Menor latencia de red
-- Manejo automático de fallas de la zona de disponibilidad
+- Valide el failover con detección de valores atípicos y capacidad saludable en otras zonas
 
-### 5. Limitación del alcance del Sidecar
+### 5. Limitación del alcance del sidecar
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -137,11 +144,9 @@ spec:
 ```
 
 **Beneficios**:
-- Menor tamaño de configuración de Envoy
+- Tamaño reducido de la configuración de Envoy
 - Menor uso de memoria
 - Envío de configuración más rápido
-
-<span id="security-hardening"></span>
 
 ## Fortalecimiento de la seguridad
 
@@ -159,9 +164,9 @@ spec:
 ```
 
 **Lista de verificación**:
-- Aplicar mTLS STRICT a todos los servicios
-- Usar PERMISSIVE solo durante los períodos de migración
-- DISABLE para servicios externos (manejar en ServiceEntry)
+- Aplique mTLS STRICT a todos los servicios
+- Use PERMISSIVE solo durante los períodos de migración
+- PeerAuthentication controla el mTLS entrante del workload. Configure HTTPS/TLS externo en ServiceEntry y, cuando sea necesario, DestinationRule; no deshabilite globalmente el mTLS de la malla.
 
 ### 2. Política de autorización
 
@@ -192,22 +197,26 @@ spec:
 ```
 
 **Mejores prácticas**:
-- Usar una política de denegación predeterminada
-- Aplicar el principio de privilegio mínimo
+- Use una política de denegación predeterminada
+- Aplique el principio de mínimo privilegio
 - Autenticación basada en Service Account
 - Aislamiento de Namespace
 
 ### 3. Control del tráfico de salida
 
 ```yaml
-# Block external traffic
+# Detect unregistered destinations; not an egress firewall
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
     outboundTrafficPolicy:
-      mode: REGISTRY_ONLY  # Allow only explicit ServiceEntries
----
+      mode: REGISTRY_ONLY  # Known Kubernetes services and ServiceEntries
+```
+
+Aplique este ServiceEntry independiente con kubectl. Imponga el aislamiento de salida con controles de red; REGISTRY_ONLY no es un límite de seguridad.
+
+```yaml
 # Allowed external services
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
@@ -254,40 +263,21 @@ spec:
       values: ["https://auth.example.com"]
 ```
 
-<span id="operations-guide"></span>
-
 ## Guía de operaciones
 
 ### 1. Estrategia de Deployment
 
 #### Adopción gradual de Istio
 
-```mermaid
-flowchart LR
-    Start[Start]
-    Phase1[Phase 1<br/>Observability]
-    Phase2[Phase 2<br/>mTLS PERMISSIVE]
-    Phase3[Phase 3<br/>mTLS STRICT]
-    Phase4[Phase 4<br/>Advanced Features]
-    End[Full Adoption]
+![Flujo de trabajo de la ruta de adopción gradual de Istio: comienza con la inyección de sidecar solo para observabilidad, pasa por TLS mutuo PERMISSIVE y luego STRICT, continúa con funciones avanzadas de gestión del tráfico y termina con la adopción completa.](../../.gitbook/assets/en-service-mesh-istio-best-practices-0.png)
 
-    Start --> Phase1
-    Phase1 --> Phase2
-    Phase2 --> Phase3
-    Phase3 --> Phase4
-    Phase4 --> End
-
-    %% Style definition
-    classDef phase fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class application
-    class Start,Phase1,Phase2,Phase3,Phase4,End phase;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-best-practices-0.html)
 
 **Fase 1: Observabilidad (1-2 semanas)**
 ```bash
 # Enable sidecar injection only
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled --overwrite
+kubectl rollout restart deployment -n default
 
 # Verify metrics, logs, traces
 # Evaluate performance impact
@@ -317,29 +307,33 @@ spec:
     mode: STRICT
 ```
 
-**Fase 4: Funcionalidades avanzadas (En curso)**
-- Traffic Management (Canary, Circuit Breaker)
-- Authorization Policy
+**Fase 4: Funciones avanzadas (en curso)**
+- Gestión del tráfico (Canary, Circuit Breaker)
+- Política de autorización
 - Rate Limiting
 
 ### 2. Estrategia de actualización
 
 #### Actualización Canary
 
+Use el binario objetivo de istioctl 1.31.0 de la guía de instalación; establecer un nombre de revisión no selecciona una versión de imagen. Este ejemplo actualiza desde la versión 1.30.4, conserva los ajustes de instalación existentes y requiere validar cada etapa. Los Gateways se pueden actualizar in situ con el perfil predeterminado; planifique explícitamente su rollout. Una instalación gestionada por Helm debe usar el flujo de trabajo de actualización de Helm.
+
 ```bash
 # 1. Install new version Control Plane
-istioctl install --set revision=1-28-0 -y
+istioctl install --set revision=1-31-0 -f existing-install.yaml
 
 # 2. Move test namespace
-kubectl label namespace test istio.io/rev=1-28-0 --overwrite
+kubectl label namespace test istio-injection- istio.io/rev=1-31-0 --overwrite
 kubectl rollout restart deployment -n test
 
 # 3. Move production after verification
-kubectl label namespace prod istio.io/rev=1-28-0 --overwrite
+kubectl label namespace prod istio-injection- istio.io/rev=1-31-0 --overwrite
 kubectl rollout restart deployment -n prod
 
 # 4. Remove previous version
-istioctl uninstall --revision=1-27-0 -y
+istioctl proxy-status
+# Only after every proxy/gateway has migrated; substitute the actual old revision
+istioctl uninstall --revision=1-30-4
 ```
 
 ### 3. Alta disponibilidad
@@ -352,33 +346,39 @@ spec:
   components:
     pilot:
       k8s:
-        replicaCount: 3
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels:
-                app: istiod
-            topologyKey: kubernetes.io/hostname
+        hpaSpec:
+          minReplicas: 3
+          maxReplicas: 5
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: istiod
+                topologyKey: topology.kubernetes.io/zone
 ```
 
 **Recomendaciones**:
 - Istiod: Mínimo 3 réplicas
-- Distribuir uniformemente entre las AZ
-- Configurar PodDisruptionBudget
+- Distribuya uniformemente entre las AZ
+- Configure PodDisruptionBudget
 
-### 4. Copia de seguridad y recuperación
+### 4. Backup y recuperación
 
 ```bash
-# Backup Istio configuration
-kubectl get istiooperator -A -o yaml > istio-operator-backup.yaml
-kubectl get vs,dr,gw,se,pa,ra,ap -A -o yaml > istio-config-backup.yaml
+# Preserve the versioned installation input in source control
+cp existing-install.yaml istio-install-backup.yaml
+# Snapshot mesh configuration; this does not include Secrets or Gateway API resources
+kubectl get virtualservices.networking.istio.io,destinationrules.networking.istio.io,gateways.networking.istio.io,serviceentries.networking.istio.io,sidecars.networking.istio.io,workloadentries.networking.istio.io,workloadgroups.networking.istio.io,peerauthentications.security.istio.io,requestauthentications.security.istio.io,authorizationpolicies.security.istio.io,telemetries.telemetry.istio.io -A -o yaml > istio-config-backup.yaml
 
-# Recovery
-kubectl apply -f istio-operator-backup.yaml
+# Restore the matching Istio version and CRDs first, then declarative resources
+istioctl install -f istio-install-backup.yaml
 kubectl apply -f istio-config-backup.yaml
 ```
 
-<span id="monitoring-and-observability"></span>
+Para las instalaciones de Helm, preserve las versiones de chart y `helm get values <release> -n <namespace> -o yaml` en su lugar. Haga backup de los Secrets de CA/TLS de forma segura e incluya cualquier recurso Gateway API, EnvoyFilter o WasmPlugin en uso. Vuelva a crear los Namespaces requeridos y revise las instantáneas generadas antes de la restauración.
 
 ## Monitoreo y observabilidad
 
@@ -387,35 +387,37 @@ kubectl apply -f istio-config-backup.yaml
 ```promql
 # 1. Latency (P50, P95, P99)
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 
 # 2. Traffic (Request count)
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 
 # 3. Errors (Error rate)
-sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
+sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
 /
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 
 # 4. Saturation (Resource utilization)
-sum(rate(container_cpu_usage_seconds_total{pod=~".*istio-proxy.*"}[5m]))
+sum(rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m]))
 ```
 
 ### 2. Monitoreo del Control Plane
 
 ```promql
 # Pilot configuration push time
-pilot_proxy_convergence_time
+histogram_quantile(0.95, sum(rate(pilot_proxy_convergence_time_bucket[5m])) by (le))
 
 # xDS connection count
-pilot_xds_pushes
+pilot_xds
 
 # Memory usage
-process_resident_memory_bytes{app="istiod"}
+process_resident_memory_bytes{job="istiod"}
 ```
 
 ### 3. Monitoreo del Data Plane
+
+Confirme que estas estadísticas de Envoy estén habilitadas en el matcher de estadísticas del proxy. Las etiquetas de los jobs de scraping dependen de la configuración; los ejemplos asumen `job="istiod"`. Una alerta `up` detecta la disponibilidad del scraping, no todos los fallos de preparación.
 
 ```promql
 # Envoy connection count
@@ -428,7 +430,7 @@ envoy_cluster_circuit_breakers_default_rq_open
 envoy_cluster_outlier_detection_ejections_active
 ```
 
-### 4. Reglas de alerta
+### 4. Reglas de alertas
 
 ```yaml
 groups:
@@ -437,9 +439,9 @@ groups:
   # High error rate
   - alert: HighErrorRate
     expr: |
-      (sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
+      (sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
       /
-      sum(rate(istio_requests_total[5m]))) > 0.05
+      sum(rate(istio_requests_total{reporter="destination"}[5m]))) > 0.05
     for: 5m
     labels:
       severity: warning
@@ -450,7 +452,7 @@ groups:
   - alert: HighLatency
     expr: |
       histogram_quantile(0.95,
-        sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+        sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
       ) > 1000
     for: 5m
     labels:
@@ -459,74 +461,72 @@ groups:
       summary: "High latency detected (P95 > 1s)"
 
   # Pilot not ready
-  - alert: PilotNotReady
-    expr: up{job="pilot"} == 0
+  - alert: IstiodScrapeUnavailable
+    expr: up{job="istiod"} == 0 or absent(up{job="istiod"})
     for: 5m
     labels:
       severity: critical
     annotations:
-      summary: "Pilot is not ready"
+      summary: "Istiod scrape target is unavailable"
 ```
-
-<span id="production-checklist"></span>
 
 ## Lista de verificación para producción
 
-### Antes de la instalación
+### Preinstalación
 
-- [ ] Verificar la compatibilidad de la versión de Kubernetes (1.28+)
-- [ ] Seleccionar la versión de Istio (se recomienda una versión estable)
-- [ ] Calcular los requisitos de recursos
-- [ ] Revisar las políticas de red
-- [ ] Establecer un plan de copia de seguridad y recuperación
+- [ ] Verifique la superposición de soporte de Istio/Kubernetes/EKS (ejemplo 1.31: EKS 1.34–1.37)
+- [ ] Seleccione la versión de Istio (se recomienda la versión estable)
+- [ ] Calcule los requisitos de recursos
+- [ ] Revise las políticas de red
+- [ ] Establezca un plan de backup y recuperación
 
 ### Instalación
 
-- [ ] Usar el perfil de producción
-- [ ] Configurar HA del Control Plane (réplicas >= 3)
-- [ ] Establecer límites de recursos
-- [ ] Configurar PodDisruptionBudget
-- [ ] Preparar el stack de monitoreo
+- [ ] Use el perfil de producción
+- [ ] Configure HA del Control Plane (réplicas >= 3)
+- [ ] Establezca límites de recursos
+- [ ] Configure PodDisruptionBudget
+- [ ] Prepare la pila de monitoreo
 
 ### Seguridad
 
-- [ ] Habilitar el modo mTLS STRICT
-- [ ] Aplicar Authorization Policy
-- [ ] Controlar el tráfico de salida
-- [ ] Configurar la autenticación JWT (si es necesario)
-- [ ] Integrar Network Policy
+- [ ] Habilite el modo mTLS STRICT
+- [ ] Aplique Authorization Policy
+- [ ] Controle el tráfico de salida
+- [ ] Configure la autenticación JWT (si es necesaria)
+- [ ] Integre Network Policy
 
 ### Gestión del tráfico
 
-- [ ] Configurar VirtualService
-- [ ] Configurar DestinationRule
-- [ ] Configurar Circuit Breaker
-- [ ] Configurar Retry/Timeout
-- [ ] Configurar Rate Limiting
+- [ ] Configure VirtualService
+- [ ] Configure DestinationRule
+- [ ] Configure Circuit Breaker
+- [ ] Configure Retry/Timeout
+- [ ] Configure Rate Limiting
 
 ### Observabilidad
 
-- [ ] Integrar Prometheus
-- [ ] Configurar paneles de Grafana
-- [ ] Configurar trazas de Jaeger/Zipkin
-- [ ] Instalar Kiali
-- [ ] Configurar reglas de alerta
+- [ ] Integre Prometheus
+- [ ] Configure los dashboards de Grafana
+- [ ] Configure el tracing de Jaeger/Zipkin
+- [ ] Instale Kiali
+- [ ] Configure las reglas de alertas
 
 ### Operaciones
 
-- [ ] Establecer un plan de actualización
-- [ ] Automatizar las copias de seguridad
+- [ ] Establezca un plan de actualización
+- [ ] Automatice los backups
 - [ ] Documentación
-- [ ] Escribir una guía de guardia
-- [ ] Preparar runbook
+- [ ] Escriba una guía de guardia
+- [ ] Prepare el runbook
 
 ### Rendimiento
 
-- [ ] Optimizar los recursos de Sidecar
-- [ ] Ajustar Connection Pool
-- [ ] Configurar el balanceo de carga por localidad
-- [ ] Limitar el alcance de Sidecar
-- [ ] Realizar pruebas de rendimiento
+- [ ] Optimice los recursos del sidecar
+- [ ] Ajuste el grupo de conexiones
+- [ ] Configure el balanceo de carga por localidad
+- [ ] Limite el alcance del sidecar
+- [ ] Realice pruebas de rendimiento
 
 ### Pruebas
 
@@ -540,7 +540,7 @@ groups:
 
 ### Aspectos que se deben evitar
 
-1. **Adoptar todo de una vez**
+1. **Adoptarlo todo de una vez**
    ```
    Don't enable all Istio features on Day 1
    Do add features gradually (Observability -> Security -> Traffic Management)
@@ -564,7 +564,7 @@ groups:
    Do: hosts: ["myapp.default.svc.cluster.local"]  # Explicit
    ```
 
-5. **Desplegar sin monitoreo**
+5. **Deployment sin monitoreo**
    ```
    Don't deploy to production without checking metrics
    Do require Golden Signals monitoring
@@ -572,30 +572,9 @@ groups:
 
 ## Optimización de costos
 
-### 1. Considerar Ambient Mode
-
-```yaml
-# Resource usage comparison
-# Sidecar Mode: 100 pods x 50MB = 5GB
-# Ambient Mode: 10 nodes x 50MB = 500MB
-
-# 85%+ reduction possible
-```
-
-### 2. Balanceo de carga por localidad
-
-```yaml
-# Cross-AZ cost savings
-# AWS: $0.01-0.02 per GB
-# Significant savings with 80% same AZ routing
-```
-
-### 3. Limitación del alcance de Sidecar
-
-```yaml
-# Remove unnecessary configuration
-# 30-50% memory usage reduction possible
-```
+- Compare las solicitudes de recursos del sidecar medidas con ztunnel más cualquier capacidad waypoint requerida. El número de Pods por sí solo no establece un porcentaje de ahorro fijo.
+- Mida los bytes entre AZ y use los precios regionales actuales de AWS para la ruta real; los pesos de localidad no se traducen directamente en una reducción de facturación universal.
+- Delimite la configuración innecesaria del proxy y mida los cambios de memoria/tiempo de envío bajo una carga representativa.
 
 ## Referencias
 
@@ -605,10 +584,19 @@ groups:
 - [Mejores prácticas de seguridad](https://istio.io/latest/docs/ops/best-practices/security/)
 
 ### Comunidad
-- [Istio Discuss](https://discuss.istio.io/)
-- [Istio Slack](https://istio.slack.com/)
-- [GitHub Issues](https://github.com/istio/istio/issues)
+- [Comunidad de Istio](https://istio.io/latest/get-involved/)
+- [Slack de Istio](https://slack.istio.io/)
+- [Issues de GitHub](https://github.com/istio/istio/issues)
 
 ### Recursos adicionales
-- [Istio en producción](https://www.tetrate.io/blog/istio-in-production/)
-- [Patrones de Service Mesh](https://www.oreilly.com/library/view/service-mesh-patterns/9781492086444/)
+- [Mejores prácticas de Deployment de Istio](https://istio.io/latest/docs/ops/best-practices/deployment/)
+- [Mejores prácticas de gestión del tráfico de Istio](https://istio.io/latest/docs/ops/best-practices/traffic-management/)
+
+- [Actualizaciones Canary](https://istio.io/latest/docs/setup/upgrade/canary/)
+- [Opciones de IstioOperator](https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/)
+- [Opciones globales de la malla](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/)
+- [Definiciones de métricas xDS de Istio (1.31.0)](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/xds/monitoring.go)
+- [Failover por localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [Estadísticas de Envoy](https://istio.io/latest/docs/ops/configuration/telemetry/envoy-stats/)
+- [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+- [Versiones compatibles](https://istio.io/latest/docs/releases/supported-releases/)

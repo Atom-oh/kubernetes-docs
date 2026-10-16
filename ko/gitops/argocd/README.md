@@ -219,7 +219,12 @@ spec:
 - 3.5.1: 2026-08-12 공개.
 - 3.5.2: 2026-08-27 공개.
 - 3.5.3: 2026-09-14 공개. 버그 수정(헬스 체크, sync 재시도 상태, UI 등).
-- 3.5.4: 2026-10-06 공개. repo-server와 AppProject 훅 처리 관련 CRITICAL 4건을 포함한 보안 수정이 들어 있습니다. 릴리스 노트는 잠재적 호환성 변경 두 가지를 명시합니다. Helm 차트를 렌더링하는 Kustomize 빌드가 더 이상 `helmGlobals.configHome`을 적용하지 않고, 4 MiB를 초과하는 OCI manifest는 거부됩니다. 최신 지원 라인은 공식 릴리스 기록으로 확인합니다.
+- 3.5.4: 2026-10-06 공개. **보안 패치 릴리스**입니다. Kustomize remote ref와 Kustomize Helm config home을 통한 repo-server 명령 실행, Jsonnet import를 통한 repo-server 파일 읽기, PreDelete/PostDelete 훅의 AppProject 제한 우회(CVE-2026-77459) 등 CRITICAL 4건을 수정했으며, v3.4.10/v3.3.15에 동일 수정이 백포트되었습니다. Kustomize 빌드가 `helmGlobals.configHome`을 더 이상 적용하지 않고 4MiB를 넘는 OCI 매니페스트를 거부하는 동작 변경이 있으므로 [릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)를 확인하고 업그레이드하세요.
+- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): 2026-09-15 공개된 3.6 라인 첫 release candidate. 프로덕션 기준 버전이 아닙니다.
+
+### 2026년 10월 업데이트: Argo CD 4.0 비저닝 시작
+
+[9월 30일 CNCF 글](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/)에 따르면 Argo 커뮤니티가 Argo CD 4.0의 비저닝(visioning) 프로세스를 시작했으며, ArgoCon North America 2026(KubeCon NA 병행, 2트랙 전일 행사)에서 메인테이너 키노트로 최근 개발 현황과 다음 버전 방향을 공유할 예정입니다. 아직 로드맵 초기 단계의 방향 논의이며 4.0의 기능·일정이 확정된 것은 아닙니다.
 
 ### Argo Rollouts
 

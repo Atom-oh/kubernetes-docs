@@ -12,6 +12,10 @@ New-install commands in this guide use 1.31.2. Istio 1.31's published Kubernetes
 
 Istio 1.30 and 1.29 remain listed as supported in the matrix at this review; 1.29's end-of-life date is listed as October 12, 2026 (expected). Verify its status before installing or upgrading. Existing installations on those branches need at least 1.30.4 or 1.29.7 for [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/), which covers Envoy vulnerabilities, a BackendTLSPolicy fail-open, and an EnvoyFilter control-plane denial of service. [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/), published October 15, affects 1.31.0–1.31.1, 1.30.0–1.30.5, and 1.29.0–1.29.8; the first versions the matrix lists with no known CVEs are 1.31.2, 1.30.6, and 1.29.9. Istio 1.28 is out of support. Istio 1.31 charts use `https://blob.istio.io/istio-release/charts`; the previous Google-hosted repository no longer receives new releases.
 
+### September 2026 update: 1.31.1, 1.30.5 and 1.29.8 patch releases
+
+On September 21, 2026, patch releases shipped for all three supported branches: [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/), 1.30.5 and 1.29.8. 1.31.1 includes the security fix [GHSA-qm8v-g4f9-qhjx](https://github.com/istio/istio/security/advisories/GHSA-qm8v-g4f9-qhjx) (CVSS 6.8, Moderate): `BackendTLSPolicy` fails open to plaintext on sidecar proxies when its CA reference is unresolved. Other fixes include the ambient-mode CNI node agent's auto-detected iptables backend (legacy vs nft) flipping between agent restarts, istiod CPU usage growing with the number of `AuthorizationPolicies`, and a memory leak in ambient multi-cluster mode when rotating a remote cluster's credentials. New installations and existing 1.31 installations should update to 1.31.1.
+
 ## Table of Contents
 
 1. [Do You Really Need a Service Mesh?](#do-you-really-need-a-service-mesh)

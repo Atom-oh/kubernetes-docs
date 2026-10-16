@@ -1,21 +1,24 @@
-# Actualizaciones de EKS: Auto Mode, rollback y blue/green
+# Actualizaciones de EKS: Auto Mode, reversión y blue/green
 
-> **Última actualización**: 12 de septiembre de 2026. Comandos comprobados con AWS CLI 2.36.44, Pluto 5.24.3 y Velero 1.18.2.
-> La transición de ejemplo es 1.35 → 1.36; compruebe la disponibilidad regional real.
+> **Última actualización**: 12 de octubre de 2026. Comandos comprobados el 12 de septiembre de 2026 con AWS CLI 2.36.44, Pluto 5.24.3 y Velero 1.18.2.
+> La transición de ejemplo es 1.35 → 1.36; descubra la disponibilidad regional real.
 
-Planifique conjuntamente control plane, nodos, complementos, aplicaciones y datos. Auto Mode
-y PDB no garantizan servicio ininterrumpido. Valide reserva, readiness, reconexión, sesiones,
-estado y recuperación frente a los objetivos de disponibilidad.
+Planifique juntos el plano de control, los nodos, los complementos, las aplicaciones y los datos.
+Auto Mode y los PDB por sí solos no garantizan un servicio ininterrumpido. Valide la capacidad de reserva,
+la preparación, el comportamiento de reconexión, las sesiones, el estado y la recuperación frente a los objetivos de disponibilidad.
 
-## 1. Versiones y responsabilidades
+## 1. Versiones y responsabilidades de gestión
 
-Kubernetes upstream mantiene las tres versiones menores más recientes, no la actual más tres
-anteriores. EKS tiene su propio ciclo: generalmente 14 meses estándar y 12 ampliados.
-Compruebe fechas exactas, política y disponibilidad regional.
+Kubernetes upstream mantiene ramas de lanzamiento para las tres versiones menores más recientes
+(1.35–1.37 al 12 de octubre de 2026), no la versión actual más las tres versiones anteriores.
+Cada versión menor recibe aproximadamente 14 meses de parches, los dos últimos meses en modo de mantenimiento; la 1.34 está en
+modo de mantenimiento hasta el fin de su vida útil el 27 de octubre de 2026.
+EKS tiene un ciclo de vida independiente: por lo general, 14 meses de
+soporte estándar y 12 meses de soporte extendido. Compruebe las fechas exactas, la política y la disponibilidad regional.
 
-La tarifa base ordinaria de control plane EKS es $0.10/hora con soporte estándar y un total de
-$0.60/hora con soporte ampliado ($0.10 + $0.50). El suplemento no es $0.60.
-Auto Mode, cómputo, almacenamiento, red y capacidad de control aprovisionada aparte son adicionales.
+La tarifa básica ordinaria del plano de control de EKS es de $0.10/hora con soporte estándar y un total de
+$0.60/hora con soporte extendido ($0.10 + $0.50). La tarifa adicional no es de $0.60.
+Auto Mode, cómputo, almacenamiento, redes y capacidad del plano de control aprovisionada por separado tienen coste adicional.
 
 ```bash
 DOCS_CLUSTER="my-cluster"
@@ -29,38 +32,42 @@ aws eks describe-cluster-versions --region "$DOCS_REGION" \
 kubectl --context "$DOCS_CONTEXT" get nodes -o wide
 ```
 
-`describe-addon-versions` comprueba compatibilidad de complementos, no fechas de soporte.
-Avance el control plane una versión menor cada vez. kubelet no puede ser más nuevo que el API
-server y la política upstream admite hasta tres menores anteriores bajo sus condiciones. No
-recomienda mantener nodos atrasados. Alinéelos antes de la siguiente actualización y revise
-por separado nodos administrados, Fargate, autogestionados e Hybrid. Use kubectl dentro de una versión menor.
+`describe-addon-versions` comprueba la compatibilidad de complementos, no las fechas de soporte del clúster.
+Avance un plano de control de EKS una versión menor a la vez, sin omitir las intermedias.
+Para las versiones actuales compatibles, kubelet no puede ser más reciente que el servidor de API y la política upstream
+permite hasta tres versiones menores anteriores bajo sus condiciones. Eso no es una recomendación para mantener
+los nodos atrasados. Planifique alinear los nodos con el plano de control actual antes de la siguiente actualización,
+y compruebe por separado los requisitos de nodos gestionados por EKS, Fargate, autogestionados e Hybrid.
+Use kubectl a no más de una versión menor del plano de control.
 
 | Despliegue | Responsabilidad de actualización |
 |---|---|
-| Solo Auto Mode | Nodos, red, bloques y LB administrados por el servicio |
-| Nodos ordinarios/autogestionados/Hybrid | Planificar nodos, CNI, DNS, proxy, drivers y controladores |
-| Clúster mixto | Conservar complementos de nodos no Auto |
-| Apps, controladores propios y add-ons EKS | Validar versiones, configuración y CRD |
+| Auto Mode puro | Nodos, redes, almacenamiento en bloques y capacidades de LB gestionados por el servicio |
+| Nodos ordinarios/autogestionados/Hybrid | Planificar actualizaciones de nodos, CNI, DNS, proxy, drivers y controladores |
+| Clúster mixto | Conservar los complementos necesarios para nodos que no son Auto |
+| Aplicaciones, controladores autogestionados y complementos de EKS | Validar las versiones instaladas, la configuración y los CRD |
 
-Auto Mode puro usa CoreDNS como servicio del nodo. No encontrar su Deployment no es por sí solo
-un fallo; los clústeres mixtos conservan DNS para otros nodos. No instale ni busque incondicionalmente
-Pods aws-node/kube-proxy/Pod Identity agent ordinarios en Auto Mode. La compatibilidad puede exigir
-trabajo previo al control plane: «control plane → todos los add-ons → nodos» no es universal.
+Auto Mode puro usa CoreDNS como servicio de sistema de nodos. La ausencia de un Deployment de CoreDNS por sí sola no es
+un fallo; los clústeres mixtos deben conservar los Deployment de DNS requeridos por otros nodos.
+No instale ni busque incondicionalmente pods aws-node/kube-proxy/Pod Identity agent de nodos ordinarios
+en Auto Mode. La compatibilidad puede requerir trabajo antes de la actualización del plano de control, por lo que
+«plano de control → cada complemento → nodos» no es universal.
 
-| Estabilidad API | Política de obsolescencia |
+| Estabilidad de API | Política de obsolescencia |
 |---|---|
-| GA | Puede declararse obsoleta, pero no eliminarse dentro del mismo major Kubernetes |
-| Beta | Retirada tras al menos nueve meses o tres menores desde la obsolescencia, el plazo mayor |
-| Alpha | Puede retirarse sin aviso previo de obsolescencia |
+| GA | Puede quedar obsoleta, pero no eliminarse dentro de la misma versión mayor de Kubernetes |
+| Beta | Eliminación del servicio después de al menos nueve meses o tres versiones menores tras la obsolescencia, lo que sea más largo |
+| Alpha | Se puede eliminar sin aviso previo de obsolescencia |
 
-Las políticas de flags CLI y métricas difieren. Compare guías y versiones reales, arquitecturas,
-versiones de plataforma y cómputo en lugar de copiar tablas antiguas.
+Las políticas de indicadores de CLI y métricas difieren. Compare las guías de migración y las versiones realmente instaladas,
+arquitecturas, versiones de plataforma y tipos de cómputo en vez de copiar tablas de compatibilidad antiguas.
 
-## 2. Revisión previa
+## 2. Revisión previa a la actualización
 
-Upgrade insights tienen límites de tiempo y cobertura. La guía oficial todavía indica una suspensión
-temporal de exigir `--force` para ciertos problemas. Distíngalo del bloqueo ERROR/UNKNOWN de
-preparación para rollback descrito después. Que una API acepte no completa la revisión.
+Los insights de actualización tienen límites de tiempo y cobertura. La guía oficial de actualización sigue indicando una
+suspensión temporal de exigir `--force` para determinados problemas de insights de actualización.
+Distinga esto del bloqueo ERROR/UNKNOWN de preparación para reversión que se indica más abajo.
+La aceptación de la API no es una revisión de preparación completada.
 
 ```bash
 aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
@@ -70,17 +77,18 @@ pluto detect-helm --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 pluto detect-api-resources --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 ```
 
-Pluto 5.24.3 distingue salida 0 limpia, 2 obsoleta y 3 eliminada. No convierta todo error en «no instalado»
-ni lo oculte con `|| true`. Su JSON es un objeto: cuente `.items // []`; una respuesta limpia puede
-omitir items. `detect-all-in-cluster` también es válido. Verifique arquitectura y checksum oficiales.
+Pluto 5.24.3 distingue salida 0 (limpio), 2 (obsoleto) y 3 (eliminado).
+No convierta todo resultado distinto de cero en «no instalado» ni lo oculte con `|| true`.
+Su JSON es un objeto: cuente `.items // []`; una respuesta limpia puede omitir items.
+`detect-all-in-cluster` también es válido. Compruebe la arquitectura y la suma de comprobación de la versión oficial.
 
-El descubrimiento en vivo puede perder versiones API originales porque el servidor convierte objetos.
-Revise Git, Helm/Kustomize renderizado, metadatos, advertencias/auditoría y clientes reales.
-Ajuste también los targets de Pluto a Istio/cert-manager desplegados.
+El descubrimiento en vivo puede omitir las versiones originales de API porque el servidor de API convierte objetos.
+Revise Git, Helm/Kustomize renderizado, metadatos de lanzamiento, advertencias/auditoría de API y clientes reales.
+Alinee también los otros objetivos de componentes de Pluto con las versiones de Istio/cert-manager desplegadas.
 
-Esta herramienta de lectura compara endpoints EKS/kubecontext y comprueba Node/Pod readiness,
-generación/rollout de Deployment, PDB y complementos instalados. Un kubeconfig con proxy puede
-usar un endpoint distinto del directo EKS y requiere revisión aparte.
+Esta herramienta de solo lectura compara los endpoints de EKS y kubecontext, y después comprueba la preparación de Node/Pod,
+la generación/despliegue de Deployment, los PDB y los complementos realmente instalados.
+Un kubeconfig proxy puede diferir del endpoint directo de EKS y requiere una revisión independiente.
 
 ```python
 # preflight.py
@@ -258,12 +266,12 @@ python3 preflight.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --context "$DOCS_CONTEXT" --target "$DOCS_TARGET" > preflight-report.json
 ```
 
-Salida 0 indica comprobaciones recogidas; 2, hallazgos; 1, resultado desconocido por error.
-Cero no aprueba automáticamente una actualización ni prueba salud completa. Las versiones
-anunciadas aún requieren revisar arquitectura/plataforma/cómputo y configuración.
+La salida 0 significa que se recopilaron las comprobaciones enumeradas, 2 significa hallazgos y 1 significa un resultado desconocido
+debido a un error. Cero no es una aprobación automática de actualización ni prueba de la salud completa de la aplicación.
+Las versiones de complementos anunciadas todavía necesitan revisión de arquitectura/plataforma/tipo de cómputo y configuración.
 
-Un PDB maxUnavailable 1 puede permitir cero interrupciones por Pods no saludables o PDB solapados.
-AlwaysAllow cambia el desalojo de Pods no saludables, no garantiza disponibilidad.
+Un PDB con maxUnavailable 1 aún puede permitir cero interrupciones debido a pods no saludables o
+PDB superpuestos. AlwaysAllow cambia el comportamiento de expulsión de pods no saludables; no garantiza la disponibilidad.
 
 ```yaml
 # pdb.yaml
@@ -280,16 +288,17 @@ spec:
       app: api
 ```
 
-No deduzca salud de fase Node o Pod Running. Distinga Deployments con cero réplicas, Jobs
-completados y selectores PDB vacíos. Compruebe EndpointSlice ready/serving/terminating y selectores;
-Services sin selector o ExternalName no necesitan endpoints Pod ordinarios.
+No infiera la salud solo de la fase Node o Pod Running. Distinga los Deployment con cero réplicas,
+los Job completados y los selectores PDB vacíos. Inspeccione las condiciones ready/serving/terminating de EndpointSlice
+y los selectores de Service; los Service sin selector/ExternalName no requieren endpoints Pod ordinarios.
 
-## 3. Copias de seguridad y validación de restauración
+## 3. Validación de copia de seguridad y restauración
 
-Las copias administradas EKS no implican restauración controlada por el cliente desde cualquier
-snapshot etcd. Separe Git/IaC, objetos Kubernetes, datos PV, bases externas, permisos, claves y
-recuperación. Prepare BackupStorageLocation, plugins/CSI e IAM de Velero. Este Schedule selecciona
-production explícitamente. Backup CLI incluye namespaces `*`; no excluye automáticamente todo velero.
+Las copias de seguridad administradas de EKS no implican restauración controlada por el cliente desde snapshots de etcd arbitrarios.
+Separe Git/IaC, objetos Kubernetes, datos PV, bases de datos externas, permisos, claves de cifrado
+y procedimientos de recuperación. Prepare primero BackupStorageLocation de Velero, la configuración de plugin/snapshot de CSI
+e IAM. Este Schedule selecciona explícitamente production.
+La CLI Backup predeterminada incluye espacios de nombres `*`; no excluye automáticamente todo velero.
 
 ```yaml
 # backup-schedule.yaml
@@ -317,12 +326,14 @@ velero --kubecontext "$DOCS_CONTEXT" backup describe "$DOCS_BACKUP" --details
 velero --kubecontext "$DOCS_CONTEXT" backup logs "$DOCS_BACKUP"
 ```
 
-Completed no demuestra consistencia ni recuperación de todos los volúmenes. Revise errores,
-avisos, snapshots/data-mover, exclusiones y pausa/replicación de DB. PVC/PV solos no son copia
-completa de aplicación/Secret/Service/datos. El backup de archivos requiere node-agent y volúmenes aparte.
+Completed no demuestra la consistencia de la aplicación ni la recuperación de cada volumen.
+Revise errores/advertencias, resultados de snapshot/data-mover, volúmenes excluidos y la pausa/replicación de la base de datos.
+Los objetos PVC/PV por sí solos no son una copia de seguridad completa de aplicación/Secret/Service/datos.
+La copia de seguridad de filesystem requiere una configuración independiente de node-agent y volumen.
 
-Velero 1.18.2 restore create no tiene `--dry-run`. `-o yaml/json` imprime Restore sin crearlo,
-pero consulta descubrimiento/Backup. No es completamente offline ni una prueba de recuperación.
+Velero 1.18.2 restore create no tiene `--dry-run`.
+`-o yaml/json` imprime el Restore sin crearlo, pero realiza descubrimiento/lecturas de Backup.
+No está completamente desconectado ni es una prueba de recuperación.
 
 ```bash
 velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
@@ -330,18 +341,20 @@ velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
   --namespace-mappings production:restore-test -o yaml > restore-plan.yaml
 ```
 
-Restaure realmente en pruebas aisladas. Mapear namespaces no aísla CronJobs, consumidores,
-DB externas ni cambios DNS/LB. Revise propiedad de escritura del backup, región/AZ del snapshot
- y KMS/IAM del clúster de prueba. Use BackupStorageLocation de lectura para sincronizar cuando
-proceda. Pruebe creación, arranque, adjunto de volumen, integridad y aplicación por separado.
-No elimine el backup original durante la limpieza.
+Realice restauraciones reales en un entorno de prueba aislado. El mapeo de espacio de nombres por sí solo no
+aísla CronJobs, consumidores, bases de datos externas ni cambios DNS/LB.
+Revise la propiedad de escritura del almacenamiento de copias de seguridad, la región/AZ de snapshot y KMS/IAM para el clúster de prueba.
+Use un BackupStorageLocation de solo lectura para la sincronización cuando corresponda.
+Pruebe por separado la creación de restauración, inicio de Pod, conexión de volumen, integridad y comportamiento de la aplicación.
+No elimine la copia de seguridad original durante la limpieza de prueba.
 
-## 4. Actualización de control plane y nodos
+## 4. Actualizaciones del plano de control y nodos
 
-Use la capa existente del [capítulo de infraestructura](./01-infrastructure-setup.md).
-No duplique el clúster en otro state ni reconstruya VPC/IAM. Revise majors de módulo/proveedor
-separados de minors Kubernetes. No mezcle entradas EKS módulo v20 con el actual.
-Sustituya tfvars por una ruta absoluta real.
+Esto usa la capa de clúster existente del [capítulo de infraestructura](./01-infrastructure-setup.md).
+No cree un clúster duplicado en un estado nuevo ni reconstruya VPC/IAM.
+Revise por separado los cambios mayores de módulo/proveedor de los cambios menores de Kubernetes.
+No mezcle entradas antiguas del módulo EKS v20 con el módulo actual.
+Reemplace tfvars con una ruta de archivo absoluta real.
 
 ```bash
 DOCS_TFVARS="/absolute/path/to/production.cluster.tfvars.json"
@@ -352,8 +365,8 @@ terraform -chdir=terraform/02-cluster show upgrade.tfplan
 terraform -chdir=terraform/02-cluster apply upgrade.tfplan
 ```
 
-Si elige CLI, evite cambios IaC concurrentes sobre el mismo ajuste. El siguiente comando realiza
-un cambio real tras la revisión. Registre el ID de actualización.
+Si elige cambios de CLI, evite cambios simultáneos de IaC en la misma configuración.
+El siguiente comando realiza un cambio real después de la revisión de preparación. Registre su ID de actualización.
 
 ```bash
 DOCS_UPDATE_ID=$(aws eks update-cluster-version \
@@ -428,54 +441,57 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_UPDATE_ID" --timeout-seconds 5400
 ```
 
-Salida 0 significa Successful; 1, fallo/cancelación/error de consulta; 2, timeout cliente.
-El timeout no cancela AWS: continúe observando el mismo ID. Una actualización del control plane
-no puede detenerse arbitrariamente después de empezar. cluster-active no prueba que finalizara
-el reemplazo de nodos. Recompruebe versión, nodos y aplicaciones.
+La salida 0 significa Successful, 1 significa fallo/cancelación/error de consulta y 2 significa un tiempo de espera del cliente.
+El tiempo de espera no cancela AWS; reanude la observación del mismo ID.
+No se puede pausar/detener arbitrariamente una actualización del plano de control después de que comienza.
+cluster-active por sí solo no establece la finalización del reemplazo de nodos.
+Vuelva a comprobar la versión real, los nodos y las aplicaciones después.
 
-Auto Mode sustituye nodos incrementalmente después del control plane. El cliente no selecciona
-su AMI con EC2NodeClass al2023@latest. Los nodos ordinarios/propios/Hybrid y Pods Fargate existentes
-requieren tratamiento separado. No todos los add-ons se actualizan automáticamente. Revise versiones
-y esquemas con describe-addon-configuration; no aplique OVERWRITE indiscriminadamente.
+Auto Mode reemplaza nodos de forma incremental después de la actualización del plano de control.
+Los clientes no seleccionan una AMI de Auto Mode a través de EC2NodeClass al2023@latest.
+Los nodos ordinarios gestionados/autogestionados/Hybrid y los pods Fargate existentes necesitan tratamiento independiente.
+No todos los complementos de EKS se actualizan automáticamente. Revise versiones y esquemas de configuración
+desde describe-addon-configuration; no aplique indiscriminadamente OVERWRITE.
 
 ### Restricciones de interrupción
 
-Los presupuestos NodePool se combinan con la restricción más estricta. 10% y 1 no significan
-«al menos uno». Considere redondeo, nodos borrándose/NotReady y horarios UTC.
-Un presupuesto programado no prohíbe interrupciones fuera de su ventana.
+Los presupuestos NodePool aplicables se combinan mediante la restricción más estricta.
+10% y 1 no significan «al menos uno». Considere el redondeo, los nodos eliminados/NotReady y las programaciones UTC.
+Un presupuesto programado por sí solo no prohíbe la interrupción fuera de su ventana activa.
 
-Para pausar drift voluntario, conserve/revise presupuestos, añada por ejemplo
-`nodes: "0", reasons: [Drifted]` y restaure después la política original. Una anotación
-do-not-disrupt en metadatos NodePool no es ese mecanismo. Anotaciones y presupuestos no impiden
-toda interrupción, expiración o vía de terminación con gracia.
+Para pausar la desviación voluntaria, conserve/revise los presupuestos existentes, agregue una política como
+`nodes: "0", reasons: [Drifted]`, y luego restaure la política original.
+Una anotación do-not-disrupt en los metadatos de NodePool no es ese mecanismo de pausa.
+Las anotaciones Node/Pod y los presupuestos no impiden todas las rutas de interrupción, caducidad o periodo de gracia de terminación.
 
-| Opción de drain manual | Significado |
+| Opción de drenaje manual | Significado |
 |---|---|
-| `--ignore-daemonsets` | Excluye Pods DaemonSet sin eliminarlos |
-| `--delete-emptydir-data` | Permite perder datos emptyDir |
-| `--disable-eviction` | Borra en vez de Eviction, omitiendo PDB |
+| `--ignore-daemonsets` | Excluye los pods DaemonSet sin eliminarlos |
+| `--delete-emptydir-data` | Permite pérdida de datos emptyDir |
+| `--disable-eviction` | Elimina en lugar de usar Eviction, omitiendo la protección PDB |
 
-DaemonSets se ejecutan en nodos elegibles. No automatice borrado forzado/omisión PDB como remedio genérico.
+DaemonSets se ejecutan en nodos aptos. No automatice la eliminación forzada/omisión de PDB como solución genérica.
 
-## 5. Rollback nativo de versión Kubernetes
+## 5. Reversión nativa de versión de Kubernetes
 
-EKS permite iniciar rollback a la menor anterior dentro de siete días tras finalizar la actualización.
-«El control plane nunca puede retroceder» ya no es correcto. Hay restricciones para clústeres creados
-en su versión actual, ventana vencida, actualizaciones automáticas al terminar soporte ampliado y
-funciones EKS incompatibles. Tras varias actualizaciones solo se admite la menor inmediatamente
-anterior. Volver a soporte ampliado exige sus condiciones de política y coste.
+EKS permite iniciar una reversión a la versión menor anterior dentro de los siete días posteriores a la finalización de la actualización.
+«Los planos de control nunca pueden revertirse» ya no es correcto.
+Las restricciones incluyen clústeres creados en su versión actual, una ventana vencida, actualizaciones automáticas
+al final del soporte extendido y características de EKS incompatibles con el objetivo.
+Después de actualizaciones consecutivas, solo la versión menor inmediatamente anterior es elegible.
+Los objetivos de soporte extendido requieren las condiciones de política y coste correspondientes.
 
 | Componente | Tratamiento |
 |---|---|
-| API server/control plane | Menor anterior y su última versión de plataforma |
-| Nodos Auto Mode | El servicio ajusta primero nodos y luego control plane |
-| Grupos administrados ordinarios | El usuario ajusta primero con UpdateNodegroupVersion |
-| Autogestionados/Hybrid | El usuario sustituye primero por nodos compatibles |
-| Fargate | No degrada directamente kubelets de Pods existentes; planificar reemplazo/compatibilidad |
-| Add-ons, apps, objetos etcd y datos PV | No se restauran desde snapshot histórico |
+| Servidor de API/plano de control | Versión menor anterior de Kubernetes y su última versión de plataforma |
+| Nodos Auto Mode | El servicio ajusta primero los nodos y luego revierte el plano de control |
+| Grupos de nodos gestionados ordinarios | El usuario los ajusta primero con UpdateNodegroupVersion |
+| Nodos autogestionados/Hybrid | El usuario primero los reemplaza por nodos compatibles |
+| Fargate | Sin degradación directa de los kubelet de Pod existentes; planifique reemplazo/compatibilidad por separado |
+| Complementos, aplicaciones, objetos etcd y datos PV | No se restauran desde un snapshot histórico |
 
-No restaura datos ni devuelve tráfico instantáneamente. Valide compatibilidad de API/campos nuevos,
-controladores y esquemas DB con la versión anterior.
+Esto no es restauración de datos ni una reversión instantánea del tráfico.
+Valide la compatibilidad de nuevas API/campos, controladores y esquemas de base de datos con la versión anterior.
 
 ```bash
 aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
@@ -489,44 +505,49 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_ROLLBACK_ID" --timeout-seconds 5400
 ```
 
-CLI 2.36.44 soporta rollback-config; la antigua 2.35.11 del entorno no. Una opción desconocida en
-CLI vieja no implica ausencia de capacidad EKS. Use CLI actual oficial o API/SDK compatible.
-No hay un comando separado aws eks rollback-cluster.
+La CLI 2.36.44 probada admite rollback-config; la 2.35.11 anterior del entorno no lo admitía.
+No confunda una opción desconocida de una CLI antigua con la ausencia de la capacidad de EKS.
+Use la CLI oficial actualizada o una API/SDK compatible. No existe un comando independiente aws eks rollback-cluster.
 
-ERROR/UNKNOWN en preparación bloquea; WARNING es informativo. Force puede omitir insights,
-no elegibilidad ni controles de interrupción Auto Mode. La base no usa force.
+La preparación para reversión ERROR/UNKNOWN bloquea la operación; WARNING es informativo.
+Force puede omitir comprobaciones de insights, pero no los controles de elegibilidad ni de interrupción de Auto Mode.
+La línea de base no usa force.
 
-### Observación y cancelación Auto Mode
+### Observación y cancelación de Auto Mode
 
-Durante rollback de nodos, el control plane sigue en la versión nueva y el estado ACTIVE.
-EKS revisa insights al cumplir el skew y luego revierte CP. Observe el ID. El timeout de nodos es
-720 minutos por defecto, rango 120–10,080: límite mínimo, no temporizador exacto. Distinga la
-ventana de inicio de siete días del timeout de una fase ya iniciada. Si vence, CP conserva la versión,
-los nodos vuelven hacia ella y la actualización queda Failed.
+Durante la reversión de nodos, el plano de control continúa sirviendo la versión más nueva y el estado del clúster permanece
+ACTIVE. EKS vuelve a comprobar los insights después de que los nodos cumplen los requisitos de desfase del objetivo y luego revierte el CP.
+Observe el ID de actualización. El tiempo de espera de nodos predeterminado es de 720 minutos, con un rango de 120–10,080 minutos.
+Es un límite mínimo, no un temporizador exacto. Distinga la ventana de inicio de siete días del tiempo de espera
+de una fase de nodos ya iniciada. Al agotarse el tiempo, el CP permanece en la versión actual, los nodos regresan gradualmente
+hacia ella y la actualización pasa a Failed.
 
-Presupuesto Drift cero o do-not-disrupt del nodo pueden bloquear. PDB/anotaciones Pod retrasan
-hasta TerminationGracePeriod, no indefinidamente. La cancelación es de mejor esfuerzo durante
-la fase de nodos; interrupciones iniciadas pueden terminar. No puede cancelarse tras comenzar rollback de CP.
+Un presupuesto Drift de cero o node do-not-disrupt puede bloquear el progreso. Los PDB/anotaciones Pod pueden retrasar
+la interrupción hasta TerminationGracePeriod, pero no impedirla permanentemente.
+La cancelación de mejor esfuerzo está disponible durante la fase de nodos, aunque las interrupciones individuales
+que ya están en curso pueden finalizar. La cancelación no está disponible tras iniciar la reversión del CP.
 
 ```bash
 aws eks cancel-update --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_ROLLBACK_ID"
 ```
 
-Tras cancelar, los nodos convergen a la versión actual del CP. Un timeout IaC no detiene AWS,
-y rollback de CloudFormation no equivale a rollback automático Kubernetes. Reconcilie versiones
-reales/deseadas de IaC después de cambios CLI/API.
+Después de la cancelación, los nodos regresan gradualmente hacia la versión actual del CP.
+Un tiempo de espera de IaC no detiene la operación de AWS, y la reversión de una pila CloudFormation no es una reversión automática
+de versión de Kubernetes. Reconcilie las versiones reales y previstas de IaC después de los cambios de CLI/API.
 
 ## 6. Blue/green
 
-Use state/identidad distintos para Green y deje DNS/NLB/DB compartidos fuera del borrado de Blue.
-Registre mediante [GitOps multiclúster](./04-gitops-multi-cluster.md) con endpoint/CA reales,
-identidad de carga, assume-role, entradas EKS y RBAC. Aplique el Secret de clúster al contexto Hub, no Green.
+Use estado/identidad distintos para Green y mantenga la propiedad compartida de DNS/NLB/base de datos fuera del alcance
+de eliminación de Blue. Registre mediante los procedimientos de [GitOps multiclúster](./04-gitops-multi-cluster.md)
+para endpoint/CA reales, identidad de carga de trabajo, assume-role, entradas de acceso EKS y RBAC de Kubernetes.
+Aplique el Secret del clúster al contexto Hub, no a Green.
 
-Este ApplicationSet selecciona solo Green sin sync automático. Prepare AppProject/namespace,
-repositorio y revisión aprobada. Sustituya URL/SHA y controle activación simultánea de workers,
-consumidores y CronJobs. preserveResourcesOnDeletion protege cargas si un selector elimina una
-Application generada. Conservar no transfiere gestión; planifique propiedad GitOps estable antes del cambio.
+Este ApplicationSet selecciona solo Green sin sincronización automatizada.
+Prepare el AppProject/espacio de nombres de producción, el repositorio y la revisión aprobada.
+Reemplace los marcadores URL/SHA y controle la activación simultánea de workers, consumidores y CronJobs.
+preserveResourcesOnDeletion protege las cargas de trabajo si un cambio de selector elimina una Application generada.
+La preservación no es una transferencia de gestión; planifique la propiedad de GitOps en estado estable antes de cambiar colores/selectores.
 
 ```yaml
 # applicationset.yaml
@@ -578,20 +599,22 @@ argocd app sync api-my-cluster-green
 argocd app wait api-my-cluster-green --sync --health --timeout 300
 ```
 
-Para volver a una revisión, restaure Git aprobado y sincronice. argocd app rollback usa ID del
-historial, no SHA. Sync automático o estado ApplicationSet podrían volver a cambiarlo.
+Para revertir una revisión Git, restaure el estado Git aprobado y sincronice.
+argocd app rollback toma un ID de historial de despliegue, no un SHA.
+De lo contrario, el estado deseado de sincronización automatizada/ApplicationSet puede cambiarlo de nuevo.
 
 ### Probar Green directamente
 
-Running y TCP no demuestran DB, mensajes o readiness. Use ruta directa Green conservando
-SNI/Host del servicio y validación del certificado. El hostname AWS del NLB no es el TLS de la app.
-Para un Service que realmente sirve HTTPS en 443, use otro terminal:
+Los pods en ejecución y la conectividad TCP no demuestran el comportamiento de base de datos/mensajes/preparación.
+Use una ruta Green directa y conserve el SNI/Host y la validación de certificado del nombre de host del servicio.
+El nombre de host AWS del NLB no es el nombre de host TLS de la aplicación.
+Para un Service que realmente sirve HTTPS en 443, use una terminal independiente:
 
 ```bash
 kubectl --context green -n production port-forward --address 127.0.0.1 svc/api 18443:443
 ```
 
-En otro terminal use hostname, ruta y contrato de respuesta reales.
+En otra terminal, use el nombre de host, la ruta y el contrato de respuesta reales.
 
 ```bash
 DOCS_SERVICE_HOST="api.example.com"
@@ -602,19 +625,20 @@ DOCS_HTTP_CODE=$(curl --silent --show-error --fail --connect-timeout 5 --max-tim
 test "$DOCS_HTTP_CODE" = "200" || exit 1
 ```
 
-### Pesos NLB
+### Pesos de NLB
 
-Los grupos ponderados NLB están soportados. Pesos relativos 0–999 no necesitan sumar 100.
-Son proporciones esperadas de conexiones nuevas, no solicitudes, bytes o sesiones exactos.
-Registre destinos sanos en TG distintos por clúster. Véase [infraestructura avanzada](./02-infrastructure-advanced.md)
-para TGB, tipos y grupos/red.
+Los grupos de destino ponderados de NLB son compatibles. Los pesos relativos van de 0 a 999 y no necesitan sumar 100.
+Expresan proporciones esperadas de conexiones nuevas, no solicitudes, bytes ni sesiones existentes exactas.
+Registre destinos saludables en TG independientes para cada clúster.
+Consulte [infraestructura avanzada](./02-infrastructure-advanced.md) para TGB, tipo de destino y grupos de red/seguridad.
 
-Los cambios ordinarios afectan conexiones nuevas; peso cero puede cerrar las existentes pronto.
-No es drenaje sin interrupciones: pruebe duración, reintentos y sesiones. TCP/UDP/TCP_UDP
-admiten afinidad de TG; TLS no. La afinidad forward TCP no es exclusiva de ALB.
-DurationSeconds está documentado para ALB; no traslade esa garantía a NLB.
+Los cambios de peso ordinarios afectan conexiones nuevas, pero establecer el peso en cero puede cerrar conexiones existentes
+después de un breve periodo. Esto no es drenaje ininterrumpido; pruebe duración, reintentos y sesiones.
+TCP/UDP/TCP_UDP admiten afinidad de grupo de destino; los listeners TLS no.
+La afinidad de reenvío TCP no es una característica exclusiva de ALB.
+La API documenta DurationSeconds para ALB; no copie esa garantía de duración a NLB.
 
-La herramienta solo genera JSON. Verifique primero protocolo del listener, VPC del TG,
+Esta herramienta solo genera JSON. Verifique primero el protocolo real del listener y la VPC de grupo de destino,
 protocolo/familia IP, salud y afinidad existente.
 
 ```python
@@ -683,30 +707,35 @@ aws elbv2 describe-listeners --region "$DOCS_REGION" \
   --listener-arns "$DOCS_LISTENER_ARN" --output json
 ```
 
-Fije primero las tres variables ARN. No avance porcentajes solo por tiempo. Observe SLO,
-conexiones nuevas/existentes, errores y sesiones en cada etapa. Pruebe peso cero, destinos enfermos
-y cross-zone sin asumir failover a otro TG. Use una ruta Service directa separada para validar Green.
+Establezca primero las tres variables ARN. No avance porcentajes basándose solo en temporizadores.
+Observe SLO, conexiones nuevas/existentes, errores y sesiones en cada etapa.
+Pruebe peso cero, destinos no saludables y comportamiento entre zonas en lugar de asumir failover a otro TG.
+Use una ruta Service directa independiente al validar Green detrás de un NLB compartido.
 
 ### Datos y limpieza
 
-RDS/ElastiCache externos o EFS compartido no eliminan migración de esquemas, permisos, formatos
-ni escritores/consumidores concurrentes. Un filesystem compartido o un conteo SQL no demuestra
-consistencia. Revise región/AZ de snapshots, StorageClass, KMS y RPO desde últimas escrituras.
+RDS/ElastiCache externos o EFS compartido no eliminan el trabajo de migración de esquemas, permisos, formato de caché o
+de escritores/consumidores simultáneos. Un filesystem compartido o un conteo SQL no establece
+consistencia. Compruebe región/AZ de snapshot, clase de almacenamiento, KMS y RPO desde las últimas escrituras.
 
-Conserve Blue durante observación/recuperación acordadas y validación de datos. Un TG de peso cero
-puede seguir referenciado. Borrar TGB/clúster Auto Mode afecta al ciclo TG: retire sus referencias
-de listeners compartidos y revise propiedad, IaC y orden antes de limpiar. Distíngalo de grupos
-externos del LB Controller autogestionado. No ejecute terraform destroy automáticamente tras mover tráfico.
+Conserve Blue durante el periodo acordado de observación/recuperación y la verificación de compatibilidad de datos.
+Un TG con peso cero aún puede ser referenciado por un listener.
+La eliminación de TGB/clúster de Auto Mode afecta el ciclo de vida del TG asociado. Elimine las referencias de TG Blue
+de listeners compartidos y luego revise la propiedad, IaC y el orden de eliminación antes de la limpieza.
+Distinga esto de la propiedad de TG externo de LB Controller autogestionado.
+No ejecute automáticamente terraform destroy inmediatamente después de cambiar el tráfico.
 
-Si workers ya están en clústeres separados por AZ, actualizar uno cada vez es una opción; no
-convierte sus control planes EKS en una sola AZ. Valide reserva/estado de los otros y elegibilidad/
-duración de rollback. La ventana de siete días no garantiza retorno instantáneo a Blue.
+Si los workers ya se ejecutan en clústeres separados por AZ, actualizar un clúster a la vez es una opción.
+Eso no convierte cada plano de control de EKS en una sola AZ.
+Valide la capacidad de reserva/compatibilidad de estado de otros clústeres y la elegibilidad/duración de reversión nativa.
+La ventana de siete días no garantiza una reversión instantánea a Blue.
 
-## 7. Validación posterior
+## 7. Validación posterior a la actualización
 
-Después de Successful, compruebe versiones, Node/Pod Ready, generaciones, DNS/red, storage,
-permisos, aplicación y trabajos programados. count incluye muestras de condición/fase de valor cero.
-Agregue como abajo y no transforme ausencias en cero saludable. Multiclúster necesita etiquetas reales.
+Después de que la actualización sea Successful, verifique las versiones reales, Node/Pod Ready, generaciones de controladores,
+rutas DNS/red, almacenamiento, permisos, comportamiento de aplicación y trabajo programado.
+count también cuenta muestras de condición/fase con valor cero. Agregue los valores como se indica a continuación y no
+convierta observaciones ausentes en cero saludable. Varios clústeres necesitan etiquetas de clúster reales en la recopilación.
 
 ```promql
 count by (cluster, kubelet_version) (
@@ -728,11 +757,11 @@ sum by (cluster) (
 )
 ```
 
-Los recuentos de reinicios de Pods no son recuentos de reprogramación. No suponga que las métricas
-del controlador Auto Mode se recopilen desde un pod Karpenter autogestionado.
+Los conteos de reinicios de Pod no son conteos de reprogramación. No asuma que las métricas de controladores de Auto Mode
+se recopilan desde un pod Karpenter autogestionado.
 Lo siguiente requiere un contrato real de etiqueta/métrica service=api.
-Cero tráfico no es una tasa de errores cero saludable; rellene las series de errores ausentes con cero solo
-cuando exista la serie de tráfico total y su tasa sea positiva.
+El tráfico cero no es una tasa de error cero saludable; complete las series de errores ausentes con cero solo cuando
+la serie de tráfico total exista y su tasa sea positiva.
 
 ```promql
 (
@@ -754,32 +783,35 @@ histogram_quantile(0.99,
 )
 ```
 
-Utilice el mismo desplazamiento para numeradores, denominadores y intervalos de histogramas al comparar el historial.
-[30m] offset 1h cubre de 90 a 60 minutos antes del momento actual, no de 60 a 30 minutos.
-Compare grupos equivalentes: azul/verde pueden diferir en tráfico, rutas, número de muestras y carga.
-Setenta y dos horas no cubren un patrón semanal completo. Elija la duración de observación según los ciclos
-de las cargas de trabajo y la ventana en la que sigue siendo posible revertir.
+Use el mismo offset para numeradores, denominadores y buckets al comparar el historial.
+[30m] offset 1h cubre de 90 a 60 minutos antes de ahora, no de 60 a 30 minutos.
+Compare cohortes equivalentes: blue/green puede diferir en tráfico, rutas, conteos de muestras y carga.
+Setenta y dos horas no cubren un patrón semanal completo. Elija la duración de observación a partir de los ciclos de carga de trabajo
+y de la ventana de elegibilidad de reversión.
 
-Use UID explícitos y provisioning completo del [capítulo de la plataforma](./09-observability-stack.md).
-No presente paneles parciales como dashboard importable. Registre versiones, ID, tiempos previstos/
-reales, fallos y resultados de recuperación.
+Use los UID explícitos y el aprovisionamiento completo de dashboard del [capítulo de stack](./09-observability-stack.md).
+No presente YAML/JSON parcial de panel como un dashboard completo importable.
+Registre las versiones antes/después, los ID de actualización, la planificación/tiempo real, los fallos y los resultados de recuperación.
 
-La revisión comprobó casos sintéticos de preflight/espera/rutas, parsers CLI, salida GET-only Velero
-y manifiestos/consultas. No ejecutó upgrades/rollback EKS, cambios NLB, snapshots/restores ni carga real.
+Esta revisión comprobó casos sintéticos de preflight/espera/enrutamiento, analizadores de CLI oficiales, comportamiento
+de salida solo GET de Velero y manifiestos/consultas. No ejecutó actualizaciones/reversiones reales de EKS, cambios de NLB,
+snapshots/restauraciones ni pruebas de carga de aplicaciones.
 
 ## Referencias oficiales
 
-- [Actualización EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
-- [Rollback EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
-- [Rollback Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)
-- [Actualizaciones Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
-- [Precios EKS](https://aws.amazon.com/eks/pricing/)
-- [Diferencias de versiones Kubernetes](https://kubernetes.io/releases/version-skew-policy/)
-- [Obsolescencia Kubernetes](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
+- [Actualización de EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [Reversión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+- [Reversión de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)
+- [Actualizaciones de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
+- [Precios de EKS](https://aws.amazon.com/eks/pricing/)
+- [Desfase de versiones de Kubernetes](https://kubernetes.io/releases/version-skew-policy/)
+- [Historial de versiones de Kubernetes](https://kubernetes.io/releases/)
+- [Lanzamientos de parches y periodo de soporte de Kubernetes](https://kubernetes.io/releases/patch-releases/)
+- [Política de obsolescencia de Kubernetes](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
 - [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
 - [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
-- [Listeners NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [Listeners de NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 
 ---
 
-< [Anterior: Optimización de recursos](./10-resource-optimization.md) | [Contenido](./README.md) | [Siguiente: Capacidad para eventos](./12-event-capacity-planning.md) >
+< [Anterior: Optimización de recursos](./10-resource-optimization.md) | [Contenido](./README.md) | [Siguiente: Planificación de capacidad para eventos](./12-event-capacity-planning.md) >

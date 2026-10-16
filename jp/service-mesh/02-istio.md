@@ -1,187 +1,187 @@
 # Istio
 
-> **最終更新**: September 11, 2026 · Istio 1.31のガイダンス
+> **最終更新**: October 12, 2026 · Istio 1.31 guidance
 
-この概要は以前の章URLを利用可能なまま保持します。詳細手順と互換性表は、保守されている[Istioドキュメント索引](istio/README.md)と[インストールガイド](istio/01-installation.md)が管理しています。現在の設定にはそちらを使ってください。
+この概要では、以前の章の URL を引き続き使用できます。詳細な手順および互換性マトリクスは、保守されている [Istio documentation index](istio/README.md) と [installation guide](istio/01-installation.md) で管理されています。現在のセットアップについては、そちらを使用してください。
 
 ## 目次
 
 - [はじめに](#introduction)
 - [主な機能](#key-features)
-- [アーキテクチャ概要](#architecture-overview)
+- [アーキテクチャの概要](#architecture-overview)
 - [詳細ドキュメント](#detailed-documentation)
 - [クイックスタート](#quick-start)
-- [学習資料](#learning-resources)
+- [学習リソース](#learning-resources)
 
-## はじめに {#introduction}
+## はじめに
 
-Istioはマイクロサービスアプリ向けオープンソースのサービスメッシュプラットフォームです。サービスメッシュはサービス間通信を扱うインフラ層で、インフラレベルで通信を制御・観測できます。トレースコンテキスト伝播、安全な終了、業務の冪等性には引き続きアプリの関与が必要です。
+Istio は、マイクロサービスアプリケーション向けのオープンソースの service mesh プラットフォームです。service mesh は、サービス間通信を処理するインフラストラクチャ層であり、サービス通信をインフラストラクチャレベルで制御および観測できます。アプリケーションの trace-context 伝播、グレースフルシャットダウン、ビジネス上の冪等性には、引き続きアプリケーション側の対応が必要です。
 
-### サービスメッシュとは
+### Service Mesh とは？
 
-サービスメッシュは次の中核機能を提供します。
+service mesh は、次の中核的な機能を提供します。
 
-1. **トラフィック管理**: サービス間の通信フローを制御
-2. **セキュリティ**: サービス間通信の暗号化と認証
-3. **可観測性**: サービス間通信の可視化
+1. **Traffic Management**: サービス間のトラフィックフローを制御
+2. **Security**: サービス間通信の暗号化と認証
+3. **Observability**: サービス間通信の可視化
 
-### Istioの主な利点
+### Istio の主な利点
 
-- **プラットフォーム非依存**: Kubernetes、VMなど多様な環境で動作
-- **透過的統合**: 多くのネットワーク制御はアプリの業務ロジック変更なしで追加可能
-- **ワークロードmTLS**: 参加メッシュ経路で管理IDと転送保護を提供。適用と例外を確認
-- **高度なトラフィック管理**: ルーティング、負荷分散、障害注入など
-- **詳細メトリクス**: サービス間通信の詳細なメトリクス
-- **ポリシー適用**: アクセス制御と明示設定するローカル/グローバルレート制限
+- **Platform Independence**: さまざまな環境（Kubernetes、VM など）で動作
+- **Transparent Integration**: アプリケーションのビジネスロジックを変更せずに、多くのネットワーク制御を追加可能
+- **Workload mTLS**: mesh に参加したパスでの管理されたアイデンティティとトランスポート保護。強制適用と例外を確認してください
+- **Advanced Traffic Management**: ルーティング、load balancing、fault injection など
+- **Detailed Metrics**: サービス間通信に関する詳細なメトリクス
+- **Policy Enforcement**: アクセス制御と、明示的に構成されたローカル／グローバルの rate limiting
 
-## 主な機能 {#key-features}
+## 主な機能
 
-### 1. トラフィック管理
+### 1. Traffic Management
 
-Istioは強力なトラフィック管理機能を提供します。
+Istio は強力な Traffic Management 機能を提供します。
 
-- **ゲートウェイ**: 外部通信をルーティング。Istio GatewayリソースとKubernetes Gateway APIを区別
-- **VirtualService / HTTPRoute**: 選択データプレーンとコントローラーがサポートするAPIでルーティングを設定
-- **DestinationRule**: 負荷分散と接続プールを設定
-- **トラフィック分割**: カナリアデプロイとA/Bテストをサポート
-- **Argo Rollouts統合**: 別途設定する分析と失敗処理による段階的デリバリー
+- **Gateways**: 外部トラフィックをルーティング。Istio Gateway リソースと Kubernetes Gateway API を区別します
+- **VirtualService / HTTPRoute**: 選択した data plane および controller でサポートされる API を使用してルーティングを構成
+- **DestinationRule**: load balancing と connection pool を構成
+- **Traffic Splitting**: Canary deployment と A/B testing をサポート
+- **Argo Rollouts Integration**: 個別に構成された分析および障害処理による progressive delivery
 
-### 2. セキュリティ
+### 2. Security
 
-包括的なセキュリティ機能:
+包括的な Security 機能：
 
-- **mTLS**: 参加ワークロードの転送にID認証と暗号化
-- **認可ポリシー**: 細粒度アクセス制御
-- **リクエスト認証**: JWT検証。JWT必須の場合はAuthorizationPolicyを使用
-- **ピア認証**: ワークロード受信mTLSポリシー
+- **mTLS**: 参加済み workload のトランスポートに対するアイデンティティ認証と暗号化
+- **Authorization Policy**: きめ細かなアクセス制御
+- **Request Authentication**: JWT 検証。JWT が必須の場合は AuthorizationPolicy を使用
+- **Peer Authentication**: inbound workload の mTLS ポリシー
 
-### 3. 可観測性
+### 3. Observability
 
-選択モード向けに設定するテレメトリーとバックエンド統合:
+選択したモード用に構成された Telemetry および backend 統合：
 
-- **メトリクス**: Prometheus統合
-- **分散トレーシング**: OpenTelemetryとJaegerなど、設定済みトレースprovider/バックエンド。アプリがコンテキストを伝播
-- **ログ記録**: アクセスログと構造化ログ
-- **可視化**: Kialiダッシュボード
+- **Metrics**: Prometheus 統合
+- **Distributed Tracing**: Jaeger を備えた OpenTelemetry など、構成済みの trace provider/backend。アプリケーションが context を伝播します
+- **Logging**: access log と structured logging
+- **Visualization**: Kiali dashboard
 
-### 4. 耐障害性
+### 4. Resilience
 
-サービスの耐障害性パターン:
+サービスの Resilience パターン：
 
-- **サーキットブレーカー**: 接続/要求プール制限。過負荷防止の保証ではない
-- **再試行**: 繰り返して安全な操作に明示的予算。結果不明の書き込み再試行は無効化
-- **タイムアウト**: 要求タイムアウト設定
-- **外れ値検出**: 異常インスタンスを除外
-- **レート制限**: 設定したローカルトークンバケットまたはグローバルレート制限サービス
+- **Circuit Breaker**: connection/request-pool の上限。overload を防ぐ保証ではありません
+- **Retry**: retry-safe 操作に対する明示的な予算。あいまいな write retry は無効化
+- **Timeout**: request timeout の構成
+- **Outlier Detection**: 正常でない instance を除外
+- **Rate Limiting**: 構成済みのローカル token bucket またはグローバル rate-limit service
 
-## アーキテクチャ概要 {#architecture-overview}
+## アーキテクチャの概要
 
-Istioは**コントロールプレーン**と**データプレーン**からなります。以下はサイドカー形式で、ambientトポロジーではありません。
+Istio は **Control Plane** と **Data Plane** で構成されます。次の図は sidecar 形式を示しており、ambient トポロジーではありません。
 
-![コントロールプレーンのIstiodが、データプレーンの3 Pod内でアプリコンテナに併設されたEnvoyサイドカーへ設定を送り、プロキシ同士が直接相互TLS接続を確立する。](../.gitbook/assets/en-service-mesh-02-istio-0.png)
+![Control Plane 内の Istiod は、3 つの Data Plane Pod の application container とともに実行される Envoy sidecar proxy に構成をプッシュし、それらの proxy は相互に直接 mTLS 接続を確立します。](../.gitbook/assets/en-service-mesh-02-istio-0.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-02-istio-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-02-istio-0.html)
 
-### コントロールプレーン（istiod）
+### Control Plane (istiod)
 
-istiodはIstioの中央制御コンポーネントで、次を提供します。
+istiod は Istio の中央 Control コンポーネントで、次を提供します。
 
-- **サービス検出**: メッシュのサービスレジストリを維持
-- **設定管理**: 設定を監視・変換し、プロキシ設定を配布。APIリソースはKubernetesが永続化
-- **証明書管理**: 設定CAを使いワークロード証明書要求とローテーションを管理
+- **Service Discovery**: mesh の service registry を維持
+- **Configuration Management**: 構成を監視し、変換して proxy 設定を配布。Kubernetes は API リソースを永続化します
+- **Certificate Management**: 構成済みの CA を使用して workload certificate のリクエストとローテーションを管理
 
-### データプレーン: サイドカーとAmbient
+### Data Plane: Sidecar と Ambient
 
-サイドカーモードでは参加アプリPodごとにEnvoyが併設されます。
+sidecar モードでは、Envoy は参加済みの各 application Pod とともに実行されます。
 
-- **トラフィックルーティング**: サービス間通信を制御
-- **負荷分散**: サービスインスタンスへ通信を分散
-- **セキュリティ**: mTLS暗号化と認証
-- **可観測性**: メトリクス、ログ、トレースを収集
+- **Traffic Routing**: サービス間のトラフィックを制御
+- **Load Balancing**: service instance 間でトラフィックを分散
+- **Security**: mTLS の暗号化と認証
+- **Observability**: metrics、logs、traces を収集
 
-AmbientはL4転送にノードレベルztunnel、対応L7機能に任意のEnvoy waypointを使います。全アプリPodにEnvoyを注入しません。モードで機能対応、ポリシー接続、リソース使用が異なり、このトポロジーから固定節約率や普遍的性能優位性は導けません。[Ambientモード](istio/advanced/01-ambient-mode.md)を参照してください。
+Ambient は、L4 トランスポートに node レベルの ztunnel を使用し、サポートされる L7 機能には任意で Envoy waypoint を使用します。すべての application Pod に Envoy を inject するわけではありません。機能サポート、policy のアタッチ、リソース使用量はモードによって異なります。このトポロジーから、固定的なリソース削減率や普遍的なパフォーマンス優位性が導かれるわけではありません。[Ambient Mode](istio/advanced/01-ambient-mode.md) を参照してください。
 
-## 詳細ドキュメント {#detailed-documentation}
+## 詳細ドキュメント
 
-以下のリンクは保守されているサブツリーへの学習案内です。索引には追加・新規トピックもあります。
+以下のリンクは、保守されているサブツリーを学ぶためのマップです。その index には、追加および新規トピックが含まれます。
 
-### 📚 基本文書
+### 📚 基本ドキュメント
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |----------|-------------|
-| [インストールガイド](istio/01-installation.md) | Istioインストールと初期設定 |
-| [主要概念](istio/02-basic-concepts.md) | Istioの基本概念と用語 |
-| [コンポーネント](istio/03-architecture.md) | Istioアーキテクチャとコンポーネント |
+| [Installation Guide](istio/01-installation.md) | Istio のインストールと初期セットアップ |
+| [Core Concepts](istio/02-basic-concepts.md) | Istio の基本概念と用語 |
+| [Components](istio/03-architecture.md) | Istio のアーキテクチャとコンポーネント |
 
-### 🚦 トラフィック管理
+### 🚦 Traffic Management
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |----------|-------------|
-| [GatewayとVirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Ingress/Egress Gateway設定 |
-| [ルーティング](istio/traffic-management/02-routing.md) | VirtualServiceルーティングルール |
-| [DestinationRule](istio/traffic-management/03-destination-rule.md) | サービス通信ポリシー |
-| [トラフィック分割](istio/traffic-management/04-traffic-splitting.md) | カナリアデプロイとA/Bテスト |
-| [タイムアウトと再試行](istio/traffic-management/05-retry-timeout.md) | タイムアウト/再試行ポリシー |
-| [負荷分散](istio/traffic-management/06-load-balancing.md) | 多様な負荷分散戦略 |
-| [サーキットブレーカー](istio/traffic-management/07-circuit-breaker.md) | サーキットブレーカーパターン実装 |
-| [障害注入](istio/traffic-management/08-fault-injection.md) | カオスエンジニアリング |
-| [トラフィックミラーリング](istio/traffic-management/09-traffic-mirror.md) | 通信ミラーリングとシャドーテスト |
-| [セッションアフィニティ](istio/traffic-management/10-session-affinity.md) | セッションアフィニティ設定 |
+| [Gateway & VirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Ingress/Egress Gateway の構成 |
+| [Routing](istio/traffic-management/02-routing.md) | VirtualService の routing rules |
+| [DestinationRule](istio/traffic-management/03-destination-rule.md) | service traffic policy |
+| [Traffic Splitting](istio/traffic-management/04-traffic-splitting.md) | Canary deployment と A/B testing |
+| [Timeout and Retry](istio/traffic-management/05-retry-timeout.md) | timeout と retry policy |
+| [Load Balancing](istio/traffic-management/06-load-balancing.md) | さまざまな load balancing strategy |
+| [Circuit Breaker](istio/traffic-management/07-circuit-breaker.md) | Circuit Breaker パターンの実装 |
+| [Fault Injection](istio/traffic-management/08-fault-injection.md) | chaos engineering |
+| [Traffic Mirroring](istio/traffic-management/09-traffic-mirror.md) | traffic mirroring と shadow testing |
+| [Session Affinity](istio/traffic-management/10-session-affinity.md) | session affinity の構成 |
 
-### 🔐 セキュリティ
+### 🔐 Security
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |----------|-------------|
-| [mTLS](istio/security/01-mtls.md) | サービス間mTLS設定 |
-| [認可ポリシー](istio/security/03-authorization.md) | アクセス制御ポリシー |
-| [リクエスト認証](istio/security/02-authentication.md) | JWTベース認証 |
-| [ピア認証](istio/security/01-mtls.md) | サービス間認証 |
+| [mTLS](istio/security/01-mtls.md) | サービス間 mTLS の構成 |
+| [Authorization Policy](istio/security/03-authorization.md) | access control policy |
+| [Request Authentication](istio/security/02-authentication.md) | JWT ベースの認証 |
+| [Peer Authentication](istio/security/01-mtls.md) | サービス間認証 |
 
-### 📊 可観測性
+### 📊 Observability
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |----------|-------------|
-| [メトリクス](istio/observability/01-metrics.md) | Prometheusメトリクス収集 |
-| [分散トレーシング](istio/observability/02-tracing.md) | Jaeger/Zipkin統合 |
-| [ログ記録](istio/observability/03-logging.md) | アクセスログと構造化ログ |
-| [可視化](istio/observability/04-dashboards.md) | Kiali、Grafanaダッシュボード |
+| [Metrics](istio/observability/01-metrics.md) | Prometheus metrics の収集 |
+| [Distributed Tracing](istio/observability/02-tracing.md) | Jaeger/Zipkin 統合 |
+| [Logging](istio/observability/03-logging.md) | access log と structured logging |
+| [Visualization](istio/observability/04-dashboards.md) | Kiali、Grafana dashboard |
 
-### 💪 耐障害性
+### 💪 Resilience
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |----------|-------------|
-| [外れ値検出](istio/resilience/01-outlier-detection.md) | 異常インスタンス検出 |
-| [レート制限](istio/resilience/02-rate-limiting.md) | ローカル/グローバルレート制限 |
-| [ゾーンを考慮したルーティング](istio/resilience/03-zone-aware-routing.md) | ローカリティ対応ルーティング |
+| [Outlier Detection](istio/resilience/01-outlier-detection.md) | 正常でない instance の検出 |
+| [Rate Limiting](istio/resilience/02-rate-limiting.md) | ローカルおよびグローバルの rate limiting |
+| [Zone Aware Routing](istio/resilience/03-zone-aware-routing.md) | locality-aware routing |
 
 ### 🚀 高度なトピック
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |----------|-------------|
-| [Ambientモード](istio/advanced/01-ambient-mode.md) | サイドカーなしのサービスメッシュ |
-| [マルチクラスター](istio/advanced/02-multi-cluster.md) | マルチクラスターメッシュ設定 |
-| [EnvoyFilter](istio/advanced/03-envoy-filter.md) | Envoyカスタマイズ |
-| [DNS捕捉とキャッシュ](istio/advanced/04-dns-cache.md) | DNS捕捉、解決、実測キャッシュ動作 |
-| [gRPC](istio/advanced/05-grpc.md) | gRPCプロトコル対応 |
-| [WebSocket](istio/advanced/06-websocket.md) | WebSocket接続対応 |
-| [サイドカー注入](istio/advanced/07-sidecar-injection.md) | サイドカー注入の仕組み |
-| [Argo Rollouts](istio/advanced/08-argo-rollouts.md) | 段階的デリバリー統合 |
+| [Ambient Mode](istio/advanced/01-ambient-mode.md) | sidecar を使用しない service mesh |
+| [Multi-cluster](istio/advanced/02-multi-cluster.md) | multi-cluster mesh の構成 |
+| [EnvoyFilter](istio/advanced/03-envoy-filter.md) | Envoy のカスタマイズ |
+| [DNS Capture and Caching](istio/advanced/04-dns-cache.md) | DNS capture、resolution、および測定済み cache の動作 |
+| [gRPC](istio/advanced/05-grpc.md) | gRPC protocol のサポート |
+| [WebSocket](istio/advanced/06-websocket.md) | WebSocket connection のサポート |
+| [Sidecar Injection](istio/advanced/07-sidecar-injection.md) | sidecar injection mechanism |
+| [Argo Rollouts](istio/advanced/08-argo-rollouts.md) | progressive delivery 統合 |
 
 ### ✅ ベストプラクティス
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |----------|-------------|
-| [ベストプラクティス](istio/best-practices.md) | 本番チェックリストと推奨事項 |
+| [Best Practices](istio/best-practices.md) | 本番運用のチェックリストと推奨事項 |
 
-## クイックスタート {#quick-start}
+## クイックスタート
 
-1. [インストールガイド](istio/01-installation.md)で正確なIstio/Kubernetes/EKS互換範囲を確認します。一般的な「Kubernetes 1.28+」では現Istioリリースに不十分です。
-2. サイドカーかambientを選び、ガイドの固定CLI/チャート、隔離名前空間、プラットフォーム前提条件に従います。版不明の最新CLIを取得してから古い版のディレクトリに移らないでください。
-3. 保守ガイドの対応版BookinfoとGateway手順を使います。デフォルトプロファイルはIngress Gateway Deploymentを自動提供せず、Gateway設定オブジェクトだけでは各インストールに必要な全Gateway/LoadBalancerを作りません。
-4. 実Gatewayアドレス、Serviceポート、ルート状態、HTTP応答を確認します。ロードバランサーはIPかホスト名を公開できます。AWS専用ホスト名フィールドや特定ポート名を想定しないでください。
-5. ダッシュボードコマンド使用前に選択した[可観測性バックエンド](istio/observability/README.md)をインストール・設定します。Prometheus、Grafana、Kiali、トレースストレージはデフォルトIstioプロファイルでは自動導入されません。
+1. [installation guide](istio/01-installation.md) で、正確な Istio/Kubernetes/EKS の互換性の共通範囲を確認してください。一般的な「Kubernetes 1.28+」という前提条件だけでは、現在の Istio release に対して十分ではありません。
+2. sidecar または ambient を選択し、その guide の固定された CLI/chart、分離された namespace、およびプラットフォームの前提条件に従ってください。指定されていない latest CLI をダウンロードしてから、古い version directory に移動しないでください。
+3. 保守されている guide にある、対応 version の Bookinfo 手順および Gateway 手順を使用してください。default profile は ingress gateway Deployment を自動的に提供せず、Gateway configuration object だけで各インストールに必要な gateway/LoadBalancer がすべて作成されるわけではありません。
+4. 実際の gateway address、Service port、route status、および HTTP response を確認してください。load balancer は IP または hostname を公開する場合があります。AWS 専用の hostname field や特定の port name を想定しないでください。
+5. dashboard command を使用する前に、選択した [observability backends](istio/observability/README.md) をインストール／構成してください。Prometheus、Grafana、Kiali、および tracing storage は、デフォルトの Istio profile では自動的にインストールされません。
 
-その手順完了後の基本確認:
+その手順を完了した後の基本的な検証：
 
 ```bash
 istioctl version
@@ -189,46 +189,46 @@ istioctl analyze -A
 istioctl proxy-status
 ```
 
-プロキシ状態は診断入力の1つです。Ambient参加とztunnelには独自確認が必要で、analyzerで問題がなくてもエンドツーエンド通信テストではありません。
+Proxy status は診断入力の一つにすぎません。Ambient enrollment と ztunnel には独自の確認が必要であり、analyzer の結果が正常であっても end-to-end traffic test ではありません。
 
-## 学習資料 {#learning-resources}
+## 学習リソース
 
 ### 公式ドキュメント
 
-- [Istio公式ドキュメント](https://istio.io/latest/docs/)
-- [Istio GitHubリポジトリ](https://github.com/istio/istio)
-- [Envoy Proxyドキュメント](https://www.envoyproxy.io/docs/envoy/latest/)
+- [Istio Official Documentation](https://istio.io/latest/docs/)
+- [Istio GitHub Repository](https://github.com/istio/istio)
+- [Envoy Proxy Documentation](https://www.envoyproxy.io/docs/envoy/latest/)
 
-### AWSとコミュニティ
+### AWS とコミュニティ
 
-- [Amazon EKS上のIstio](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
-- [保守されているAWS統合ガイド](istio/04-aws-integration.md)
-- [AWS App Meshライフサイクル通知](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWSはSeptember 30, 2026にサポート終了としています。移行要件を評価してください。新規デプロイの推奨ではありません。
-- [Istioコミュニティ、チャネル、ワーキンググループ](https://istio.io/latest/get-involved/)
+- [Istio on Amazon EKS](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
+- [Maintained AWS integration guide](istio/04-aws-integration.md)
+- [AWS App Mesh lifecycle notice](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWS は September 30, 2026 にサポートを終了しました。移行要件を評価してください。これは新規デプロイメントの推奨ではありません。
+- [Istio community, channels and working groups](https://istio.io/latest/get-involved/)
 
-### 追加資料
+### 追加リソース
 
-- [Service Mesh Patterns（O'Reilly）](https://www.oreilly.com/library/view/service-mesh-patterns/9781492086444/)
-- [Istio in Action（Manning）](https://www.manning.com/books/istio-in-action)
-- [Istio性能最適化ガイド](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+- [Service Mesh Patterns (O'Reilly)](https://www.oreilly.com/library/view/service-mesh-patterns/9781492086444/)
+- [Istio in Action (Manning)](https://www.manning.com/books/istio-in-action)
+- [Istio Performance Optimization Guide](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
 
 ## クイズ
 
-Istioの理解を確認するには、[Istioクイズ](../quizzes/service-mesh/02-istio-quiz.md)に挑戦してください。
+Istio の理解度を確認するには、[Istio Quiz](../quizzes/service-mesh/02-istio-quiz.md) に挑戦してください。
 
-クイズは次を扱います。
+このクイズでは、次のトピックを扱います。
 
-- サービスメッシュの基本概念
-- Istioアーキテクチャ
-- トラフィック管理（カナリアデプロイ）
-- セキュリティ（mTLS）
-- GatewayとIngress
-- 可観測性ツール
-- サイドカーとambientモード
-- レート制限
-- ローカリティルーティング
-- Amazon EKS統合
+- service mesh の基本概念
+- Istio アーキテクチャ
+- Traffic Management（Canary deployment）
+- Security（mTLS）
+- Gateway と Ingress
+- Observability ツール
+- sidecar および ambient モード
+- Rate Limiting
+- locality routing
+- Amazon EKS 統合
 
 ---
 
-**次のステップ**: [インストールガイド](istio/01-installation.md)でIstioを導入し、[主要概念](istio/02-basic-concepts.md)で基礎を学んでください。
+**次のステップ**: [Installation Guide](istio/01-installation.md) を参照して Istio をインストールし、[Core Concepts](istio/02-basic-concepts.md) で基本概念を学んでください。

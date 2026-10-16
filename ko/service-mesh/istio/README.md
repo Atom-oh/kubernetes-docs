@@ -12,6 +12,10 @@ Istio 1.31.0은 GA이며 [릴리스 발표](https://istio.io/latest/news/release
 
 이번 검토에서 매트릭스는 Istio 1.30과 1.29를 여전히 지원 중으로 표시합니다. 1.29의 예정 지원 종료일은 2026년 10월 12일(예상)로 표시되어 있습니다. 설치나 업그레이드 전 현재 상태를 확인하세요. 해당 브랜치는 Envoy 취약점, BackendTLSPolicy의 fail-open, EnvoyFilter의 Control Plane 서비스 거부를 수정한 [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/)을 적용하려면 최소 1.30.4 또는 1.29.7이 필요합니다. 10월 15일 공개된 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/)은 1.31.0–1.31.1, 1.30.0–1.30.5, 1.29.0–1.29.8에 영향을 주며, 매트릭스의 알려진 CVE가 없는 버전은 1.31.2, 1.30.6, 1.29.9 이상입니다. Istio 1.28은 지원이 종료되었습니다. Istio 1.31 차트는 `https://blob.istio.io/istio-release/charts`를 사용하며 기존 Google 호스팅 저장소에는 신규 릴리스가 게시되지 않습니다.
 
+### 2026년 9월 업데이트: 1.31.1·1.30.5·1.29.8 패치 릴리스
+
+2026년 9월 21일 지원 중인 세 브랜치의 패치 릴리스 [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/), 1.30.5, 1.29.8이 공개되었습니다. 1.31.1은 보안 수정 [GHSA-qm8v-g4f9-qhjx](https://github.com/istio/istio/security/advisories/GHSA-qm8v-g4f9-qhjx)(CVSS 6.8, Moderate)를 포함합니다. `BackendTLSPolicy`의 CA 참조가 해석되지 않을 때 사이드카 프록시가 평문(plaintext)으로 fail-open하는 문제입니다. 그 외 ambient 모드 CNI 노드 에이전트의 iptables 백엔드(legacy/nft) 자동 감지가 재시작마다 뒤바뀌던 문제, `AuthorizationPolicy` 수 증가에 따른 istiod CPU 사용량 증가, ambient 멀티클러스터에서 원격 클러스터 자격 증명 로테이션 시 메모리 누수 등이 수정되었습니다. 신규 설치와 기존 1.31 설치는 1.31.1로 업데이트하는 것을 권장합니다.
+
 ## 목차
 
 1. [서비스 메시가 정말 필요한가?](#서비스-메시가-정말-필요한가)

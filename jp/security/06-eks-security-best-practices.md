@@ -1,39 +1,40 @@
 # EKS セキュリティのベストプラクティス
 
-> **レビュー基準**: 最新の AWS ドキュメント、Kubernetes 1.35 API スキーマ、Terraform 1.15.7 / AWS プロバイダー 6.64.0。実クラスターへのデプロイは実施していません。
-> **最終更新**: September 13, 2026
+> **レビュー基準**: 現行の AWS ドキュメント、Kubernetes 1.35 API スキーマ、Terraform 1.15.7 / AWS provider 6.64.0。ライブクラスターへのデプロイは実施していません。
+> **最終更新**: October 15, 2026
 
-このドキュメントでは、Amazon EKS 環境におけるセキュリティのベストプラクティスを扱います。IAM 統合からネットワークセキュリティ、ランタイム保護まで、EKS クラスターを安全に運用する方法を学びます。
+このドキュメントでは、Amazon EKS 環境向けのセキュリティベストプラクティスを扱います。IAM 統合からネットワークセキュリティ、ランタイム保護まで、EKS クラスターを安全に運用する方法を学びます。
 
 ## 目次
 
 1. [IRSA (IAM Roles for Service Accounts)](#irsa-iam-roles-for-service-accounts)
 2. [EKS Pod Identity](#eks-pod-identity)
-3. [Security Groups for Pods](#security-groups-for-pods)
-4. [VPC Endpoints](#vpc-endpoints)
-5. [Control Plane Logging](#control-plane-logging)
-6. [GuardDuty EKS Protection](#guardduty-eks-protection)
+3. [Pod の Security Groups](#security-groups-for-pods)
+4. [VPC エンドポイント](#vpc-endpoints)
+5. [コントロールプレーンのログ記録](#control-plane-logging)
+6. [GuardDuty EKS 保護](#guardduty-eks-protection)
 7. [Amazon Inspector](#amazon-inspector)
 8. [CIS Kubernetes Benchmark](#cis-kubernetes-benchmark)
-9. [Cluster Encryption](#cluster-encryption)
-10. [Node Security](#node-security)
-11. [Private Clusters](#private-clusters)
-12. [Multi-tenancy Patterns](#multi-tenancy-patterns)
+9. [クラスター暗号化](#cluster-encryption)
+10. [ノードセキュリティ](#node-security)
+11. [プライベートクラスター](#private-clusters)
+12. [マルチテナンシーのパターン](#multi-tenancy-patterns)
+13. [境界セキュリティと検査パス](#perimeter-security-and-inspection-paths)
 
 ---
 
-## IRSA (IAM Roles for Service Accounts) {#irsa-iam-roles-for-service-accounts}
+## IRSA (IAM Roles for Service Accounts)
 
 ### IRSA の概要
 
-IRSA (IAM Roles for Service Accounts) は IAM ロールを Kubernetes ServiceAccount に関連付け、Pod から AWS サービスへ安全にアクセスできるようにします。
+IRSA (IAM Roles for Service Accounts) は IAM ロールを Kubernetes ServiceAccount に関連付け、Pod が AWS サービスへ安全にアクセスできるようにします。
 
-Kubernetes API サーバーが projected ServiceAccount トークンを発行します。SDK はそれを STS AssumeRoleWithWebIdentity で交換し、STS は IAM OIDC プロバイダーに紐づく issuer / JWKS とロールの信頼条件を検証してから一時的な認証情報を返します。IAM OIDC プロバイダーオブジェクトは、トークンを発行する稼働中のプロキシではありません。
+Kubernetes API サーバーがプロジェクテッド ServiceAccount トークンを発行します。SDK はそれを STS AssumeRoleWithWebIdentity と交換します。STS は IAM OIDC provider およびロールの信頼条件に関連付けられた issuer/JWKS を検証してから、一時的な認証情報を返します。IAM OIDC provider オブジェクトは、実行中のトークン発行プロキシではありません。
 
 
 ### IRSA のセットアップ
 
-以下のオペレーター向けの例は実行していません。実際のリージョン、クラスター、バケットの所有者/パス、ポリシー ARN に合わせ、アプリケーションイメージはレビュー済みのバージョン/ダイジェストに置き換えてください。別リージョンの OIDC issuer や、推測した eksctl 生成ロール ARN を混在させないでください。
+次のオペレーター例は実行されていません。実際の Region、クラスター、バケット所有者/パス、ポリシー ARN に合わせ、アプリケーションイメージはレビュー済みのバージョン/ダイジェストに置き換えてください。別の Region の OIDC issuer や、推測した eksctl 生成ロール ARN を混在させないでください。
 
 
 
@@ -95,7 +96,7 @@ eksctl create iamserviceaccount \
     --approve
 ```
 
-### IRSA の利用
+### IRSA の使用
 
 ```yaml
 # Reuse the ServiceAccount created by eksctl; do not guess its generated role ARN.
@@ -114,7 +115,7 @@ spec:
     # AWS SDK automatically uses IRSA token
 ```
 
-### IRSA の信頼ポリシー
+### IRSA 信頼ポリシー
 
 ```json
 {
@@ -164,18 +165,18 @@ metadata:
 
 ---
 
-## EKS Pod Identity {#eks-pod-identity}
+## EKS Pod Identity
 
 ### Pod Identity の概要
 
-EKS Pod Identity は、認証情報を配布する別の仕組みです。IRSA との選択は、実際のプラットフォーム/SDK のサポート状況、信頼境界、運用要件に基づいて判断してください。IRSA を廃止するものではなく、すべてのワークロードを自動的にセキュアにするものでもありません。
+EKS Pod Identity は代替の認証情報配信メカニズムです。実際のプラットフォーム/SDK サポート、信頼境界、運用要件に基づいて IRSA と使い分けてください。IRSA を廃止するものでも、すべてのワークロードを自動的により安全にするものでもありません。
 
-サポートされる Pod SDK はローカルエージェント経路を使用し、エージェントは association とロールに従って EKS Auth を通じて一時的な認証情報を取得します。クロスアカウントのロールやロールチェーンについては、現時点でサポートされる仕組み、信頼条件、セッションタグ条件を個別に確認してください。
+サポート対象の Pod SDK はローカルエージェントパスを使用します。エージェントは、association とロールに従い EKS Auth を介して一時的な認証情報を取得します。クロスアカウントロールまたはロールチェーンについては、現在サポートされているメカニズム、信頼、セッションタグ条件を個別に確認してください。
 
 
 ### Pod Identity のセットアップ
 
-EKS Auto Mode にはエージェントが含まれます。その他のサポート対象プラットフォームでは、現在互換性のあるアドオンバージョンを選択し、既存のオーナーを通じて管理してください。以下のアカウント/クラスター/namespace/ServiceAccount の値を置き換え、意図した namespace / ServiceAccount のセッションタグ条件でロールの信頼関係を制限してください。アドオンと association をインストールしただけでは、SDK の互換性、認証情報の優先順位、ネットワークアクセスは検証されません。
+EKS Auto Mode にはエージェントが含まれます。その他のサポート対象プラットフォームでは、現在互換性のある addon バージョンを選択し、既存の所有者を通じて管理してください。下記のアカウント/クラスター/namespace/ServiceAccount 値を置き換え、意図した namespace/ServiceAccount のセッションタグ条件でロール信頼を制限してください。addon と association をインストールしても、SDK の互換性、認証情報の優先順位、ネットワークアクセスは検証されません。
 
 
 
@@ -227,7 +228,7 @@ aws eks create-pod-identity-association \
     --role-arn arn:aws:iam::123456789012:role/my-pod-role
 ```
 
-### Pod Identity の利用
+### Pod Identity の使用
 
 ```yaml
 # ServiceAccount (no annotation needed)
@@ -253,22 +254,22 @@ spec:
 
 ### IRSA と Pod Identity の比較
 
-| 項目 | IRSA | EKS Pod Identity |
+| 機能 | IRSA | EKS Pod Identity |
 |---------|------|------------------|
-| **セットアップの複雑さ** | OIDC Provider が必要 | シンプル (API 呼び出し) |
-| **信頼ポリシー** | 正確な OIDC issuer、audience、subject | サービスプリンシパルと制限条件 |
-| **ロールの再利用** | クラスターごとの修正が必要 | クラスター間で再利用可能 |
-| **監査ログ** | CloudTrail (SA レベル) | CloudTrail (Pod レベル) |
-| **セッションタグ** | EKS Pod Identity と同じセッションタグ動作を前提にしないこと | ドキュメント化されたセッションタグをサポート。無効化/チェーンの動作は確認が必要 |
-| **選択基準** | サポート対象プラットフォーム、OIDC 信頼、運用モデル | サポート対象プラットフォーム、association、エージェント/SDK モデル |
+| **セットアップの複雑さ** | OIDC Provider が必要 | 簡単（API 呼び出し） |
+| **信頼ポリシー** | 正確な OIDC issuer、audience、subject | サービスプリンシパルと制限付き条件 |
+| **ロールの再利用** | クラスターごとの変更が必要 | クラスター間で再利用 |
+| **監査ログ** | CloudTrail（SA レベル） | CloudTrail（Pod レベル） |
+| **セッションタグ** | EKS Pod Identity と同じセッションタグの動作を前提にしない | ドキュメント化されたセッションタグをサポート。無効化/チェーンの動作をレビューする |
+| **選択** | サポート対象プラットフォーム、OIDC 信頼、運用モデル | サポート対象プラットフォーム、association、エージェント/SDK モデル |
 
 ---
 
-## Security Groups for Pods {#security-groups-for-pods}
+## Pod の Security Groups
 
 ### 概要
 
-Security Groups for Pods は VPC セキュリティグループを Pod に直接適用し、ネットワークレベルの分離を提供します。
+Pod の Security Groups は、VPC Security Groups を Pod に直接適用し、ネットワークレベルの分離を提供します。
 
 ### 前提条件
 
@@ -285,7 +286,7 @@ aws iam attach-role-policy \
     --policy-arn arn:aws:iam::aws:policy/AmazonEKSVPCResourceController
 ```
 
-Security Groups for Pods には、トランキングに対応したサポート対象インスタンスと CNI モードが必要です。最新のドキュメントでは Windows と EKS Auto Mode は対象外であり、すべての Nitro インスタンスがサポートされているわけではありません。VPC Resource Controller のポリシーはクラスターロールに付与します。複数のセキュリティグループをアタッチした場合、許可ルールは結合されます。積集合にはなりません。有効化する前に strict / standard モード、DNS、プローブ、ロードバランサーの動作を確認してください。
+Pod の Security Groups には、サポート対象のトランキング対応インスタンスと CNI モードが必要です。現在のドキュメントでは Windows と EKS Auto Mode は対象外であり、すべての Nitro インスタンスがサポートされるわけではありません。VPC Resource Controller ポリシーはクラスターのロールに属します。複数のアタッチ済みセキュリティグループでは許可ルールが結合され、交差するわけではありません。有効化する前に strict/standard モード、DNS、プローブ、ロードバランサーの動作を確認してください。
 
 ### SecurityGroupPolicy の設定
 
@@ -307,49 +308,49 @@ spec:
       - sg-0987654321fedcba0  # Common monitoring SG
 ```
 
-### Terraform によるセキュリティグループ設定
+### Terraform による Security Group の設定
 
-アタッチされた SG のルールが結合されることを踏まえ、実際のソースセキュリティグループと必要なデータベース、レプリケーション、モニタリングのポートを特定してください。SecurityGroupPolicy、ソース/ターゲット SG、VPC、Pod セレクターは整合している必要があります。旧来の宣言には未定義のモジュール/SG 参照と無制限の egress が含まれており、完全なデプロイモジュールではありませんでした。
+実際のソースセキュリティグループと、必要なデータベース、レプリケーション、モニタリングのポートを特定し、アタッチ済み SG ルールが結合されることを忘れないでください。SecurityGroupPolicy、ソース/ターゲット SG、VPC、Pod セレクターは一致していなければなりません。古い宣言には未定義の module/SG 参照と無制限の egress が含まれており、完全なデプロイモジュールではありませんでした。
 
-セキュリティグループの戻りトラフィックはステートフルですが、アプリケーションが新規に開始する DNS / データベース / 外部への接続には別途 egress の要件があります。宛先を限定し、CNI の強制モードと NetworkPolicy を有効にした状態で接続性をテストしてください。この監査ではセキュリティグループ / Pod ENI の作成やネットワーク分離テストの実行は行っていません。
+Security group の戻りトラフィックはステートフルですが、アプリケーションが新たに開始する DNS/データベース/外部接続には個別の egress 要件があります。宛先を制限し、CNI の強制モードおよび NetworkPolicy で接続性をテストしてください。この監査では、security groups/Pod ENI の作成やネットワーク分離テストの実行は行っていません。
 
 ---
 
-## VPC Endpoints {#vpc-endpoints}
+## VPC エンドポイント
 
-### プライベート EKS のための VPC Endpoints
+### プライベート EKS 向け VPC エンドポイント
 
-Kubernetes のプライベート API エンドポイントと、AWS サービス向けの PrivateLink エンドポイントは別物です。`eks` VPC エンドポイントは、kubectl が使用する Kubernetes API 接続を代替しません。実際のノード、ワークロード、オペレーターの経路で必要なサービスのみを選択し、リージョンのサポート状況、DNS、セキュリティグループ、ルート、エンドポイントポリシー、IAM をあわせて確認してください。
+Kubernetes のプライベート API エンドポイントと AWS サービスの PrivateLink エンドポイントは異なります。`eks` VPC エンドポイントは kubectl が使用する Kubernetes API 接続の代わりにはなりません。実際のノード、ワークロード、オペレーターパスで必要なサービスだけを選択し、Region のサポート、DNS、security groups、ルート、エンドポイントポリシー、IAM をまとめて検証してください。
 
-| 目的 | 経路 |
+| 目的 | パス |
 |---|---|
-| Kubernetes API | クラスターのプライベート API エンドポイントと接続されたネットワーク |
+| Kubernetes API | クラスターのプライベート API エンドポイントと接続済みネットワーク |
 | EKS 管理 API | `com.amazonaws.<region>.eks` |
 | Pod Identity | `com.amazonaws.<region>.eks-auth` |
-| IRSA の STS 交換 | `com.amazonaws.<region>.sts`。SDK でリージョナル STS を設定する |
-| OIDC ディスカバリー/JWKS | 現在ドキュメント化されている `com.amazonaws.<region>.oidc-eks`。STS とは別 |
-| ECR イメージ | `ecr.api`、`ecr.dkr` インターフェイスと S3 のイメージレイヤー経路 |
-| 追加のサービス | 実際に使用する EC2、Logs、ELB、Auto Scaling、SSM などの API について確認済みのエンドポイント |
+| IRSA STS 交換 | `com.amazonaws.<region>.sts`。SDK でリージョナル STS を設定する |
+| OIDC 検出/JWKS | 現在ドキュメント化されている `com.amazonaws.<region>.oidc-eks`。STS とは別 |
+| ECR イメージ | `ecr.api`、`ecr.dkr` インターフェイスと S3 イメージレイヤーパス |
+| 追加サービス | 実際に使用する EC2、Logs、ELB、Auto Scaling、SSM、その他の API の検証済みエンドポイント |
 
-最新の EKS プライベートクラスターのドキュメントには、Route 53 API サービス `com.amazonaws.route53` も記載されています。DNS 解決と Route 53 管理 API 呼び出しを区別し、サービス/リージョンのサポート状況を確認してください。レガシーな `ec2messages` エンドポイントをすべてのリージョンで無条件に作成しないでください。SSM Agent とメッセージングの要件を確認してください。
+現在の EKS プライベートクラスターのドキュメントには、Route 53 API サービス `com.amazonaws.route53` も記載されています。DNS 解決と Route 53 管理 API 呼び出しを区別し、サービス/Region のサポートを確認してください。すべての Region で旧式の `ec2messages` エンドポイントを無条件に作成せず、SSM Agent とメッセージングの要件を確認してください。
 
-### Terraform による VPC Endpoint のセットアップ
+### Terraform VPC エンドポイントのセットアップ
 
-[完全な Terraform の例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/eks-security/private-endpoints) は `論理名 → 正確なサービス名` のマップを受け取ります。旧来の `split(...)[4]` はサービス名の長さによって範囲外になったり誤ったタグを生成する可能性があったため、タグには `each.key` を使用します。
+[完全な Terraform の例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/eks-security/private-endpoints)では、`論理名 → 正確なサービス名` のマップを使用します。古い `split(...)[4]` は範囲外になるか、サービス名の長さによって誤ったタグを生成する可能性がありました。現在、タグには `each.key` を使用します。
 
-既存のサブネット、ルートテーブル、承認済みクライアントセキュリティグループ、レビュー済みの S3 エンドポイントポリシーを指定してください。HTTPS は指定したクライアントグループからのみ許可されます。S3 ポリシーは ECR レイヤー用バケットやその他の必要なバケットを対象に含める必要があります。エンドポイントポリシー自体が IAM アクセスを許可するわけではありません。Terraform 1.15.7 / AWS プロバイダー 6.64.0 でのスキーマ検証は通過しましたが、plan / apply やリソース作成は実施していません。
+既存のサブネット、ルートテーブル、承認済みクライアント security groups、レビュー済みの S3 エンドポイントポリシーを指定してください。HTTPS は、名前付きクライアントグループからのみ許可されます。S3 ポリシーは ECR レイヤーバケットおよびその他の必要なバケットをカバーする必要があります。エンドポイントポリシー自体は IAM アクセスを付与しません。Terraform 1.15.7/AWS provider 6.64.0 のスキーマ検証は合格しましたが、plan/apply やリソース作成は実行していません。
 
 ---
 
-## Control Plane Logging {#control-plane-logging}
+## コントロールプレーンのログ記録
 
-### EKS コントロールプレーンのログタイプ
+### EKS コントロールプレーンログの種類
 
-サポートされるタイプは `api`、`audit`、`authenticator`、`controllerManager`、`scheduler` です。kubelet / コンテナのログには別の収集経路があります。ロググループは `/aws/eks/<cluster-name>/cluster` です。リージョン、保持期間、アクセス、暗号化、機微データの取り扱い、収集コストを運用ポリシーに従って設定してください。
+サポートされている種類は `api`、`audit`、`authenticator`、`controllerManager`、`scheduler` です。Kubelet/container ログには個別の収集パスがあります。ロググループは `/aws/eks/<cluster-name>/cluster` です。運用ポリシーに従って Region、保持期間、アクセス、暗号化、機密データの取り扱い、収集コストを設定してください。
 
-### ロギングの有効化
+### ログ記録の有効化
 
-変更は既存クラスターの IaC オーナーと調整してください。以下は自身が所有するクラスターを対象としたもので、この監査では実行していません。更新は非同期です。返された更新 ID を `describe-update` で確認し、その後で実際にログが到達しているかを別途検証してください。ロギングの有効化にあたって、新しいクラスターリソースを宣言したり API エンドポイントの公開設定を変更する必要はありません。
+既存クラスターの IaC 所有者と変更を調整してください。次の例は所有するクラスターを対象としており、この監査中には実行されていません。更新は非同期です。返された更新 ID を `describe-update` で確認してから、実際のログ到着を個別に検証してください。ログ記録の有効化では、新しいクラスターリソースの宣言や API エンドポイント公開範囲の変更は必要ありません。
 
 ```bash
 aws eks update-cluster-config --region ap-northeast-2 \
@@ -358,9 +359,9 @@ aws eks update-cluster-config --region ap-northeast-2 \
 
 ### CloudWatch Logs Insights クエリ
 
-以下は **それぞれ独立した Logs Insights QL クエリ** です。選択したロググループで実際のフィールド / 時間範囲を確認してください。最初のクエリは探索的なテキストマッチであり、認証失敗を完全に検出するものではありません。この監査ではマネージドクエリエンジンの実行は行っていません。
+これらは**個別の Logs Insights QL クエリ**です。選択したロググループで実際のフィールド/時間範囲を調べてください。最初のクエリは探索的なテキスト一致であり、完全な認証失敗検出器ではありません。この監査中にマネージドクエリエンジンは実行していません。
 
-Authenticator のエラー (探索用)
+Authenticator エラー（探索的）
 
 ```text
 fields @timestamp, @message
@@ -370,7 +371,7 @@ fields @timestamp, @message
 | limit 100
 ```
 
-特定のアイデンティティによる呼び出し
+選択した ID による呼び出し
 
 ```text
 fields @timestamp, user.username, verb, requestURI, responseStatus.code
@@ -380,7 +381,7 @@ fields @timestamp, user.username, verb, requestURI, responseStatus.code
 | limit 50
 ```
 
-認可の拒否
+認可拒否
 
 ```text
 fields @timestamp, user.username, verb, requestURI, responseStatus.code
@@ -390,7 +391,7 @@ fields @timestamp, user.username, verb, requestURI, responseStatus.code
 | limit 100
 ```
 
-Secret API へのアクセス
+Secret API アクセス
 
 ```text
 fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, responseStatus.code
@@ -402,17 +403,17 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## GuardDuty EKS Protection {#guardduty-eks-protection}
+## GuardDuty EKS 保護
 
-### GuardDuty EKS Protection の概要
+### GuardDuty EKS 保護の概要
 
-EKS 監査ログの分析、Runtime Monitoring、GuardDuty の基本データソースは区別してください。EKS 監査ログ分析は Kubernetes API のアクティビティを対象とし、ユーザーが CloudWatch へのコントロールプレーンログのエクスポートを有効化しているかどうかには依存しません。Runtime Monitoring にはセキュリティエージェントと実際のカバレッジが必要です。
+EKS 監査ログ分析、Runtime Monitoring、基盤となる GuardDuty データソースを分けて考えてください。EKS 監査分析は Kubernetes API アクティビティに関するものであり、ユーザーの CloudWatch コントロールプレーンログエクスポートの有効化には依存しません。Runtime Monitoring にはセキュリティエージェントと実際のカバレッジが必要です。
 
-現在の Runtime Monitoring のドキュメントでは EC2 ベースの EKS と EKS Auto Mode がサポート対象で、EKS Hybrid Nodes と EKS Fargate は対象外です。ECS Fargate のサポートは EKS Fargate のサポートではありません。組織 / 委任管理者の所有関係、リージョンごとの detector、プラットフォーム、コスト、エージェント管理のオーナーを確認してください。
+現在の Runtime Monitoring ドキュメントでは、EC2 ベースの EKS と EKS Auto Mode をサポートし、EKS Hybrid Nodes と EKS Fargate は対象外です。ECS Fargate のサポートは EKS Fargate のサポートではありません。organization/delegated-administrator の所有権、リージョナル detector、プラットフォーム、コスト、エージェント管理の所有者を確認してください。
 
 ### GuardDuty の有効化
 
-以下は既存の detector に対する **設定ペイロードの例** であり、アカウントに適用したものではありません。`RUNTIME_MONITORING` は EKS を含むため、`EKS_RUNTIME_MONITORING` と併せて指定するのは無効です。常に detector を作成して最初に返された ID を選ぶのではなく、自身が所有する detector を確認してください。エージェント自動管理のリソース / 権限と、実測されたカバレッジをレビューしてください。
+以下は既存 detector 向けの**設定ペイロード例**であり、アカウントには適用されていません。`RUNTIME_MONITORING` には EKS が含まれるため、`EKS_RUNTIME_MONITORING` と同時に指定するのは無効です。常に detector を作成して最初に返された ID を選ぶのではなく、所有する detector を調べてください。自動化されたエージェント管理リソース/権限と、測定されたカバレッジをレビューしてください。
 
 ```json
 [
@@ -427,22 +428,22 @@ EKS 監査ログの分析、Runtime Monitoring、GuardDuty の基本データソ
 ]
 ```
 
-### GuardDuty EKS の検出タイプ
+### GuardDuty EKS Finding の種類
 
-実際のタイプには tactic のプレフィックスが付きます。作り込んだ固定の重要度テーブルではなく、検出結果の `severity`、リソース、アカウント/リージョン、カバレッジ、公式の説明を使用してください。
+実際の種類には tactic プレフィックスが含まれます。作り上げた固定の重要度テーブルではなく、Finding の `severity`、リソース、アカウント/Region、カバレッジ、公式の説明を使用してください。
 
-| 実際のタイプ例 | 範囲 |
+| 実際の種類の例 | スコープ |
 |---|---|
 | `CredentialAccess:Kubernetes/MaliciousIPCaller` | Kubernetes API アクティビティ |
 | `Discovery:Kubernetes/AnomalousBehavior.PermissionChecked` | 異常な Kubernetes 権限チェック |
-| `Execution:Runtime/ReverseShell` | エージェントが観測したランタイム動作 |
+| `Execution:Runtime/ReverseShell` | エージェントが観測したランタイムの動作 |
 | `CryptoCurrency:Runtime/BitcoinTool.B` | ランタイムのマイニング関連検出 |
 
-### 検出結果への自動対応
+### Finding 応答の自動化
 
-この EventBridge パターンは Kubernetes / Runtime のタイプをルーティングします。旧来の `prefix: Kubernetes` と `prefix: Runtime` は、実際の tactic プレフィックス付きの名前にはマッチしませんでした。マッチする/しない 6 つのケースと旧来の失敗は、公式の AWS Event Ruler 2.2.0 ライブラリで検証しました。
+この EventBridge パターンは Kubernetes/Runtime の種類をルーティングします。古い `prefix: Kubernetes` および `prefix: Runtime` は実際の tactic プレフィックス付き名前と一致しませんでした。公式 AWS Event Ruler 2.2.0 ライブラリを使い、6 件の一致/不一致ケースと古い失敗を確認しました。
 
-このパターンには通知 / 隔離のターゲットがありません。Runtime の検出結果は EKS 以外のリソースに関わることもあります。承認済みの対応にルーティングする前に、実際のリソースメタデータを確認してください。ターゲットのロール / 権限、リトライ、DLQ、重複排除は別途設定してください。`boto3.client("eks")` を作成しても Pod は隔離されません。封じ込めには設計された CNI / ホスト / クラウドの制御と、権限のある Kubernetes 操作が必要です。
+このパターンには通知/隔離ターゲットがありません。Runtime Finding は EKS を超えるリソースに関係する可能性があります。承認済みの応答へルーティングする前に、実際のリソースメタデータを調べてください。ターゲットのロール/権限、リトライ、DLQ、重複排除は個別に設定してください。`boto3.client("eks")` を作成しても Pod は隔離されません。封じ込めには、設計された CNI/ホスト/クラウドコントロールと、認可された Kubernetes 操作が必要です。
 
 ```json
 {
@@ -459,17 +460,17 @@ EKS 監査ログの分析、Runtime Monitoring、GuardDuty の基本データソ
 
 ---
 
-## Amazon Inspector {#amazon-inspector}
+## Amazon Inspector
 
-### Inspector によるコンテナイメージスキャン
+### Inspector コンテナイメージスキャン
 
-ECR の拡張スキャンは Amazon Inspector と統合し、サポート対象イメージのパッケージ脆弱性を検査します。実行中イメージの利用コンテキストは、ランタイム動作の検知とは異なります。同じイメージスキャンで任意の Kubernetes マニフェスト、IAM ポリシー、実際のネットワークトラフィックを検査することはできません。
+ECR 拡張スキャンは Amazon Inspector と統合され、サポート対象イメージのパッケージ脆弱性を検査します。実行中イメージの使用コンテキストは、ランタイム動作の検出とは異なります。同じイメージスキャンでは、任意の Kubernetes manifest、IAM ポリシー、ライブネットワークトラフィックは検査されません。
 
-レジストリスキャンの変更はアカウント / リージョンとリポジトリフィルターの範囲に影響します。所有関係と意図した範囲を確認してください。`latest` ではなくデプロイ対象のダイジェストを選択してください。新規 CVE、サポート対象イメージ、再スキャンの適格性、失敗の管理は継続して行ってください。初回スキャンを通過しても将来の安全性は保証されません。
+レジストリスキャンの変更はアカウント/Region とリポジトリフィルターのスコープに影響します。所有権と意図したスコープを確認してください。`latest` ではなく、デプロイするダイジェストを選択してください。新しい CVE、サポート対象イメージ、再スキャン適格性、失敗を継続して管理してください。初回スキャンに合格しても、将来の安全性は保証されません。
 
 ### Inspector と CI/CD の統合
 
-[完全なスキャンゲートとテスト](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/eks-security) には、正確なレジストリ / リポジトリ / ダイジェスト、完了タイムスタンプ、明示的な重要度カウントのマップが必要です。継続スキャンが `ACTIVE` であることだけでは、初回結果が利用可能であることの証明にはなりません。結果の欠落、タイムアウト、アクセス拒否、失敗、不明なステータスが、検出ゼロになることは決してありません。
+[完全なスキャンゲートとテスト](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/eks-security)には、正確なレジストリ/リポジトリ/ダイジェスト、完了タイムスタンプ、明示的な重要度カウントマップが必要です。継続スキャンの `ACTIVE` だけでは、初回結果の準備完了を証明しません。結果の欠落、タイムアウト、アクセス拒否、失敗、不明なステータスは、決して検出結果ゼロにはなりません。
 
 ```bash
 python ecr_scan_gate.py --region ap-northeast-2 \
@@ -477,85 +478,85 @@ python ecr_scan_gate.py --region ap-northeast-2 \
   --digest "$PUBLISHED_IMAGE_DIGEST" --timeout 600 --interval 10 --max-high 0
 ```
 
-`PUBLISHED_IMAGE_DIGEST` は、ビルド / プッシュ後にレジストリで確認された `sha256:...` の値でなければなりません。例のアカウント / リポジトリを置き換え、boto3 をインストールしてください。12 件のリグレッションテストは実際の boto3 / botocore Stubber と擬似時間を使用し、AWS へのリクエストや実際の待機は発生しません。
+`PUBLISHED_IMAGE_DIGEST` は、build/push 後のレジストリ確認済み `sha256:...` 値でなければなりません。例のアカウント/リポジトリを置き換え、boto3 をインストールしてください。12 件の回帰テストでは、AWS リクエストや実際の待機を行わず、本物の boto3/botocore Stubber と偽の時刻を使用します。
 
-GitHub Actions との統合には、承認済みの OIDC 信頼ロール ARN、`permissions: id-token: write`、最小権限の読み取り、ECR ログイン出力から得たレジストリ、ビルド済みダイジェストの受け渡しが必要です。未定義の `$ECR_REGISTRY`、ロールなしの認証情報設定、固定 60 秒の sleep は、完全なワークフローではありません。マルチアーキテクチャのインデックスについては、デプロイされる子ダイジェストに対するスキャンポリシーを定義してください。例外、有効期限 / 所有者、結果の鮮度要件は別途管理してください。
+GitHub Actions 統合には、承認済みの OIDC 信頼ロール ARN、`permissions: id-token: write`、最小権限の読み取り、ECR ログイン出力のレジストリ、build したダイジェストの伝播が必要です。未定義の `$ECR_REGISTRY`、ロールなしの認証情報設定、固定の 60 秒スリープは完全なワークフローではありません。マルチアーキテクチャインデックスでは、デプロイされた子ダイジェストのスキャンポリシーを定義してください。例外、有効期限/所有権、結果鮮度の要件は個別に管理してください。
 
-拡張スキャンの検出イベントは `aws.inspector2` / `Inspector2 Finding` を使用し、Basic な ECR イメージスキャンのイベントとは異なります。[検証済みのアラート用 CloudFormation の例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml) には、キー、権限、受信側に関する別途の前提条件があります。
+拡張 Finding イベントは `aws.inspector2` / `Inspector2 Finding` を使用し、Basic ECR イメージスキャンイベントとは異なります。[検証済みのアラート CloudFormation 例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml)には、個別のキー、権限、受信者の前提条件があります。
 
 ---
 
-## CIS Kubernetes Benchmark {#cis-kubernetes-benchmark}
+## CIS Kubernetes Benchmark
 
 ### kube-bench の実行
 
-レビュー対象のアップストリームリリースは kube-bench **0.16.0** です。`eks-1.5.0`、`eks-1.7.0`、`eks-1.8.0` を含みますが、旧来の例にあった `eks-1.4.0` ディレクトリは含まれません。組織が要求する CIS EKS のエディションと、互換性のあるクラスター / ノード OS / ツールのサポート状況に基づいて選択してください。最も大きい番号が自動的に正しい選択になるわけではありません。アップストリームのサンプル Job 自体は依然として `latest` と 1.5.0 を使用しているため、そのまま適用せず、イメージのダイジェスト、プロファイル、ホストマウント、権限をレビューして固定してください。
+レビュー済みのアップストリームリリースは kube-bench **0.16.0** です。これには `eks-1.5.0`、`eks-1.7.0`、`eks-1.8.0` が含まれますが、古い例の `eks-1.4.0` ディレクトリは含まれません。組織で必要とされ、クラスター/ノード OS/ツールのサポートと互換性がある CIS EKS エディションを選んでください。最も大きい番号が自動的に正しい選択になるわけではありません。アップストリームのサンプル Job 自体は依然として `latest` と 1.5.0 を使用しているため、盲目的に適用せず、イメージダイジェスト、プロファイル、ホストマウント、権限をレビューして固定してください。
 
-一部のチェックはホストの PID / ファイルシステムへのアクセスを必要とし、Restricted なアプリケーション namespace とは競合します。承認されたスキャナーの運用経路を用い、検査したノード、除外項目、警告を記録してください。この監査では実ノード上での kube-bench の実行は行っていません。
+一部のチェックにはホスト PID/ファイルシステムアクセスが必要で、Restricted アプリケーション namespace と競合します。承認されたスキャナーの運用パスを使用し、検査済みノード、除外、警告を記録してください。この監査では実際のノードで kube-bench を実行していません。
 
 ### CIS Benchmark の主要セクション
 
-選択した CIS EKS プロファイルにおける実際の controlplane、node、policies、managedservices のチェック項目を確認してください。マネージドコントロールプレーンのファイルに顧客がアクセスできると想定しないでください。ノード設定、RBAC、ネットワークポリシー、監査のチェックには、自動 / 手動 / 該当なしの分類が必要になる場合があります。ツールの合格率は、セキュリティ認証でも網羅的な侵害評価でもありません。
+選択した CIS EKS プロファイルで、実際の controlplane、node、policies、managedservices チェックを調べてください。マネージドコントロールプレーンファイルへの顧客アクセスを前提にしないでください。ノード設定、RBAC、network policy、監査チェックには、自動/手動/該当なしの分類が必要になる場合があります。ツールの合格率は、セキュリティ認定や網羅的な侵害評価ではありません。
 
-### コンプライアンスチェックの自動化
+### 自動コンプライアンスチェック
 
-1 つの Job は、それがスケジュールされたノードのみを検査する場合があります。ノードグループ、OS、アーキテクチャ、設定の差異を考慮してカバレッジを設計し、結果にクラスター / ノード / イメージ / プロファイル / 時刻のラベルを付けてください。定期実行にはホストマウント、ServiceAccount、必要な読み取り権限、同時実行制御、完了 / 失敗の処理、結果の保持が必要です。
+1 つの Job で検査できるのは、スケジュールされたノードだけです。ノードグループ、OS、アーキテクチャ、設定の差異をカバーするよう設計し、結果にはクラスター/ノード/イメージ/プロファイル/時刻のラベルを付けてください。スケジュール実行には、ホストマウント、ServiceAccount、必要な読み取り権限、同時実行制御、完了/失敗処理、結果保持が必要です。
 
-旧来の CronJob にはホストマウントがなく、kube-bench イメージに AWS CLI が含まれていることを前提としていました。結果をアップロードする必要がある場合は、制限されたワークロードアイデンティティを持つレビュー済みのアップローダーまたはログパイプラインを使用してください。アップロードの成功が、スキャンの失敗を隠してはなりません。
-
----
-
-## Cluster Encryption {#cluster-encryption}
-
-### EKS Secrets の暗号化 (KMS)
-
-EKS **1.28 以降は、AWS 所有の KMS キーを使用してすべての Kubernetes API データをエンベロープ暗号化するのがデフォルト** です。特定の要件がある場合はカスタマー管理キーを選択してください。そうしたキーがないことは、現在の EKS Secrets が暗号化されずに保存されていることを意味しません。
-
-カスタマー管理キーについては、クラスターロール / KMS の grant、キーポリシー、アカウント / リージョン、キーの可用性、変更手順をあわせてレビューしてください。キーの無効化 / 削除は可用性と復旧に影響し得ます。7 日間の削除待機期間を、普遍的な本番標準としてコピーしないでください。`Resource: "*"` はキーポリシー固有の意味を持ちますが、無制限の IAM アクセスとして転用してはなりません。実際のキーの所有者、管理 / 使用ロール、条件、IAM の委任を確認してください。
-
-保存時の暗号化は、権限のある API 読み取りや、侵害されたアプリケーションによる値の利用を防ぎません。認証情報のローテーション、Secret の配布と再読み込みは、別の [secrets-management](./05-secrets-management.md) の運用です。この章では KMS キー / クラスターの作成や、既存キーの関連付けの変更は行っていません。
+古い CronJob にはホストマウントがなく、kube-bench イメージに AWS CLI が含まれると仮定していました。結果をアップロードする必要がある場合は、制約されたワークロード ID を持つレビュー済みアップローダーまたはログパイプラインを使用してください。アップロードの成功によってスキャン失敗が隠されてはなりません。
 
 ---
 
-## Node Security {#node-security}
+## クラスター暗号化
+
+### EKS Secrets 暗号化 (KMS)
+
+EKS **1.28+ では、AWS 所有の KMS キーを使用したすべての Kubernetes API データのエンベロープ暗号化がデフォルトです**。特定の要件には customer-managed key を選択してください。このようなキーがないことは、現在の EKS Secrets が暗号化されずに保存されていることを意味しません。
+
+customer-managed key では、クラスターのロール/KMS grants、キーポリシー、アカウント/Region、キーの可用性、変更手順をまとめてレビューしてください。キーの無効化/削除は可用性と復旧に影響する可能性があります。7 日間の削除ウィンドウを汎用的な本番標準としてコピーしないでください。`Resource: "*"` にはキーポリシー固有の意味がありますが、無制限の IAM アクセスとして再利用してはなりません。実際のキー所有者、管理/使用ロール、条件、IAM 委任を検証してください。
+
+保存時暗号化では、認可された API 読み取りや侵害されたアプリケーションによる値の使用を阻止できません。認証情報のローテーション、Secret 配信、リロードは、個別の [secrets-management](./05-secrets-management.md) 操作です。この章では KMS キー/クラスターの作成や既存キーの関連付け変更は行っていません。
+
+---
+
+## ノードセキュリティ
 
 ### Bottlerocket OS
 
-Bottlerocket はコンテナホスト OS の選択肢であり、すべてのワークロードが安全になることを保証するものではありません。クラスターの Kubernetes バージョン、CPU アーキテクチャ、マネージドノードグループ / Auto Mode のモデル、CNI、ストレージ、エージェントのサポート組み合わせを確認してください。クラスター / API / CA の設定を無条件に上書きするのではなく、マネージドノードグループのブートストラップのマージ規則に従ってください。
+Bottlerocket はコンテナホスト OS の選択肢であり、すべてのワークロードが安全であることを保証するものではありません。クラスター Kubernetes バージョン、CPU アーキテクチャ、managed-node-group/Auto Mode モデル、CNI、ストレージ、エージェントのサポート対象の組み合わせを確認してください。クラスター/API/CA 設定を盲目的に上書きせず、managed-node-group の bootstrap マージルールに従ってください。
 
-更新 / 再起動 / 置き換え、control / admin コンテナへのアクセス、SSM 権限、イメージの出自、復旧を運用してください。旧来の例にあったネットワークバッファの sysctl 設定は、セキュリティ強化の根拠ではありませんでした。AMI タイプとインスタンスアーキテクチャは整合している必要があります。この監査ではノードグループや OS の実行は行っていません。
+更新/再起動/置換、control/admin-container アクセス、SSM 権限、イメージ来歴、復旧を運用してください。古い例のネットワークバッファ sysctl は、セキュリティ強化の根拠ではありませんでした。AMI タイプとインスタンスアーキテクチャは一致していなければなりません。この監査では node group または OS は実行していません。
 
-### ノードのセキュリティ強化
+### ノードセキュリティの強化
 
-制限されたノードロールと、ワークロード固有の IRSA / Pod Identity ロールを分離してください。hostNetwork、特権 Pod、ノードの侵害を含めて、IMDSv2 とメタデータアクセス制御を評価してください。IRSA を有効にしただけで、ノードロールへのアクセスが自動的にブロックされるわけではありません。
+制限されたノードロールを、ワークロード固有の IRSA/Pod Identity ロールから分離してください。hostNetwork、特権 Pod、ノード侵害を含む IMDSv2 とメタデータアクセス制御を評価してください。IRSA を有効にするだけでは、ノードロールへのアクセスは自動的にブロックされません。
 
-適切な非 root のアイデンティティ、特権昇格の禁止、capability の削除、seccomp、明示的な書き込み可能ボリュームを伴う読み取り専用ルートファイルシステムを使用し、実際のアプリケーションでテストしてください。ラベル / セレクター / toleration はスケジューリングの入力であり、OS のアテステーションや認可ではありません。`node.kubernetes.io/os: bottlerocket` のようなユーザー設定のラベルを信頼境界として扱わないでください。セキュリティ上の配置には、管理者が制御するラベルと NodeRestriction のような実際の保護をレビューしてください。
-
----
-
-## Private Clusters {#private-clusters}
-
-### 完全プライベートな EKS 構成
-
-プライベートな Kubernetes API には、VPC または接続された管理ネットワークからの DNS、ルート、セキュリティグループに加えて、IAM 認証と Kubernetes 認可が必要です。インターネットから到達できないことは、接続されたすべてのユーザーを認可するものではありません。
-
-API の公開設定を変更する前に、現在のオペレーター、CI、復旧経路からのプライベートアクセスをテストしてください。`endpoint_private_access` / `endpoint_public_access` は、誤って新しいクラスターを宣言するのではなく、既存の IaC オーナーを通じて管理してください。ワーカーのブートストラップと、必要な AWS API / イメージ / パッケージへのアクセスは別途設計してください。インターネットなしでの運用と、プライベートな API 公開は別の要件です。
-
-### Bastion または VPN によるアクセス
-
-VPN、Direct Connect、適切に接続されたネットワーク、または制限された管理ホストを使用してください。Client VPN のサブネット関連付けだけでは不十分です。サーバー / クライアント認証、重複しないクライアント CIDR、認可ルール、ルート / 戻りルート、DNS、セキュリティグループ、接続ログ、IAM / Kubernetes の権限をあわせて設定してください。
-
-bastion にはそれ自体のアクセス、パッチ適用、監査の責任が伴います。広範な SSH ingress や無制限のクラスター管理をデフォルトにしないでください。この章では VPN、bastion、証明書のデプロイは行っていません。
+適切な非 root ID、権限昇格なし、capability の削除、seccomp、明示的な書き込み可能ボリュームを備えた読み取り専用 root ファイルシステムを使用し、実際のアプリケーションをテストしてください。ラベル/selector/toleration はスケジューリング入力であり、OS の証明や認可ではありません。`node.kubernetes.io/os: bottlerocket` のようなユーザー設定ラベルを信頼境界として扱わないでください。セキュリティ配置のため、管理者制御ラベルと NodeRestriction などの実際の保護をレビューしてください。
 
 ---
 
-## Multi-tenancy Patterns {#multi-tenancy-patterns}
+## プライベートクラスター
+
+### 完全にプライベートな EKS 設定
+
+プライベート Kubernetes API には、VPC または接続済み管理ネットワークからの DNS、ルート、security groups に加え、IAM 認証と Kubernetes 認可が必要です。パブリックインターネットから到達できないことは、接続されたすべてのユーザーを認可することではありません。
+
+API 公開範囲を変更する前に、現在のオペレーター、CI、復旧パスからのプライベートアクセスをテストしてください。不注意に新しいクラスターを宣言するのではなく、既存 IaC の所有者を通じて `endpoint_private_access`/`endpoint_public_access` を管理してください。worker bootstrap と必要な AWS API/イメージ/パッケージアクセスは個別に設計してください。インターネットなしの運用とプライベート API 公開は別の要件です。
+
+### Bastion または VPN アクセス
+
+VPN、Direct Connect、適切に接続されたネットワーク、または制限付き管理ホストを使用してください。Client VPN のサブネット関連付けだけでは不十分です。サーバー/クライアント認証、重複しないクライアント CIDR、認可ルール、ルート/戻りルート、DNS、security groups、接続ログ、IAM/Kubernetes 権限をまとめて設定してください。
+
+bastion には、独自のアクセス、パッチ、監査の責任が追加されます。広範な SSH ingress や無制限のクラスター管理をデフォルトにしないでください。この章では VPN、bastion、証明書をデプロイしていません。
+
+---
+
+## マルチテナンシーのパターン
 
 ### Namespace ベースのマルチテナンシー
 
-Namespace は共有クラスター内の管理スコープであり、相互に敵対するテナント間の完全な境界ではありません。PSS、RBAC、クォータ、NetworkPolicy、ストレージ、ワークロードアイデンティティ、ノード / 管理者の境界を組み合わせてください。この例は Kubernetes 1.35 のポリシーベースラインを使用しています。実際のクラスターとの互換性を確認してください。
+Namespace は共有クラスターにおける管理スコープであり、相互に敵対的なテナント間の完全な境界ではありません。PSS、RBAC、quota、NetworkPolicy、ストレージ、ワークロード ID、ノード/管理者境界を組み合わせてください。この例では Kubernetes 1.35 のポリシーベースラインを使用しています。実際のクラスターとの互換性を確認してください。
 
-同一 namespace のピアは許可され、DNS は 1 つのピアの中で kube-system namespace **と** kube-dns の Pod セレクターを使用します。UDP と TCP の 53 番の両方が含まれます。実際の DNS ラベル、NodeLocal DNS、CNI の強制、追加される他のポリシー、hostNetwork / ノードのトラフィックは別途確認してください。実際の接続性テストは実施していません。
+同一 namespace のピアは許可されます。一方、DNS では 1 つのピア内で kube-system namespace **と** kube-dns Pod selector を使用します。UDP と TCP 53 の両方が含まれます。実際の DNS ラベル、NodeLocal DNS、CNI の強制、その他の加算的ポリシー、hostNetwork/ノードトラフィックを個別に確認してください。ライブ接続テストは実施していません。
 
 ```yaml
 apiVersion: v1
@@ -665,24 +666,39 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### RBAC によるマルチテナンシー
+### RBAC マルチテナンシー
 
-例のワークロード管理者は、Namespace のラベル、RoleBinding、NetworkPolicy、Secret API の権限を直接変更できません。ただし、Pod / Deployment を作成することで namespace の Secret、ServiceAccount、ボリュームを間接的に利用できます。Secret の get を除外しても、シークレットにアクセスできないことの証明にはなりません。より強い分離が必要な場合は、クラスターやアカウントの分離を検討してください。
+この例のワークロード管理者は、Namespace ラベル、RoleBindings、NetworkPolicy、Secret API 権限を直接変更できません。しかし、Pod/Deployment を作成すると、namespace の Secrets、ServiceAccounts、ボリュームを間接的に使用できます。Secret get を除外しても、secret へのアクセス不能を証明するものではありません。より強力な分離が必要な場合は、別のクラスター/アカウントを検討してください。
 
-EKS のユーザーアクセスについては、namespace スコープのアクセスポリシーや Kubernetes のグループ / RBAC を用いた現行のアクセスエントリを評価してください。aws-auth ConfigMap はレガシーな互換経路であり、唯一の統合方式ではありません。認証モードの変更には不可逆な移行上の制約があるため、移行前に管理者 / ノードのマッピングと復旧経路を検証してください。EKS のアクセスポリシーと Kubernetes RBAC はそれぞれ独立にアクセスを許可できるため、一方に権限がないことがもう一方の許可を否定するわけではありません。一般の開発者に system:masters を既定の例として付与しないでください。
+EKS のユーザーアクセスでは、namespace スコープの access policies を持つ現在の access entries、または Kubernetes groups/RBAC を評価してください。aws-auth ConfigMap はレガシーな互換性パスであり、唯一の統合メカニズムではありません。authentication-mode の変更には元に戻せない移行制約があります。移行前に管理者/ノードマッピングと復旧パスを検証してください。EKS access policies と Kubernetes RBAC はそれぞれ独立してアクセスを許可できます。そのため、一方で権限がなくても他方からの許可は拒否されません。通常の開発者に system:masters をデフォルト例として付与しないでください。
+
+---
+
+## 境界セキュリティと検査パス
+
+IAM と Pod ポリシーに加えて、パブリックアプリケーション、admission webhooks、管理者アクセス、アウトバウンドトラフィック、VPC 間パスを個別に検証してください。外部 WAF は内部 webhook を自動的に保護するわけではありません。中央 TGW 検査は、実際にそれを経由してルーティングされるトラフィックを対象とします。既存の IAM、CNI、ランタイムコントロールを以下のガイドに接続してください。
+
+| 保護領域 | 詳細ガイド |
+|---|---|
+| インシデント、検出、パッチ適用後の復旧 | [多層防御とインシデント対応](./13-defense-in-depth-incident-response.md) |
+| HTTP(S)、API、オリジンバイパス | [WAF、エッジ、API セキュリティ](./14-waf-edge-api-security.md) |
+| 管理、TLS 可視性、アプライアンスの選択 | [Palo Alto と Fortinet NGFW](./15-ngfw-paloalto-fortinet.md) |
+| 対称ルーティング、NAT、AZ、障害 | [GWLB と GENEVE](./16-gwlb-geneve-inspection.md) |
+
+これらのガイドには、一次情報源、検査の限界、承認済み環境での検証計画が含まれます。実際のアプライアンスデプロイやパフォーマンス結果は含まれません。
 
 ---
 
 ## まとめ
 
-EKS セキュリティの主要なベストプラクティス:
+EKS セキュリティの主なベストプラクティス:
 
-1. **IAM 統合**: IRSA または Pod Identity で AWS サービスにアクセスする
-2. **ネットワークセキュリティ**: Security Groups for Pods、VPC エンドポイント
-3. **ロギングとモニタリング**: コントロールプレーンログ、GuardDuty
+1. **IAM 統合**: IRSA または Pod Identity で AWS サービスへアクセスする
+2. **ネットワークセキュリティ**: Pod の Security Groups、VPC エンドポイント
+3. **ログ記録とモニタリング**: コントロールプレーンログ、GuardDuty
 4. **イメージセキュリティ**: Amazon Inspector、ECR スキャン
 5. **コンプライアンス**: CIS Benchmark、kube-bench
-6. **暗号化**: KMS による Secrets の暗号化
+6. **暗号化**: KMS による Secrets 暗号化
 7. **ノードセキュリティ**: Bottlerocket OS、最小権限
 8. **マルチテナンシー**: Namespace 分離、RBAC、ResourceQuota
 
@@ -690,9 +706,9 @@ EKS セキュリティの主要なベストプラクティス:
 
 ## 参考資料
 
-- [EKS Security Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/security.html)
-- [Amazon EKS User Guide - Security](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
-- [AWS Security Blog - EKS](https://aws.amazon.com/blogs/security/tag/amazon-eks/)
+- [EKS セキュリティのベストプラクティス](https://docs.aws.amazon.com/eks/latest/best-practices/security.html)
+- [Amazon EKS ユーザーガイド - セキュリティ](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
+- [AWS セキュリティブログ - EKS](https://aws.amazon.com/blogs/security/tag/amazon-eks/)
 - [CIS Amazon EKS Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
 
 - [security-groups-for-pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)

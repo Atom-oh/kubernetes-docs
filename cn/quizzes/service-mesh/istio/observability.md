@@ -1,19 +1,22 @@
 # 可观测性测验
 
-> **最后更新**：2026 年 9 月 11 日 · Istio 1.31 · Kubernetes 1.32–1.36。EKS 和 Kiali 兼容性限制参阅安装及仪表板章节。
+> **最后更新**: October 12, 2026
+>
+> **版本**: Istio 1.31，支持 Kubernetes 1.32–1.37。
+> 请参阅 EKS 和 Kiali 兼容性限制的安装与仪表板章节。
 
-本测验涵盖已配置的 Sidecar/waypoint 遥测。各示例独立，假定所述后端、命名空间、权限和流量已存在。YAML/API/查询检查不是生产或真实集群测试；ztunnel L4、原生 Sidecar 和高可用部署需要各自采集配置。
+本测验涵盖已配置的 sidecar/waypoint 遥测。每个示例相互独立，并假设指定的后端、Namespace、权限和流量均已存在。YAML/API/查询检查不是生产或实时集群测试；ztunnel L4、原生 sidecar 和 HA 部署需要各自特定的采集配置。
 
 ## 选择题（1-5）
 
 ### 问题 1：Prometheus 指标
 
-哪项**不是 Istio 标准服务指标名称/族**？
+以下哪项**不是 Istio 标准服务指标名称/指标族**？
 
-A. istio\_requests\_total（总请求数）\
+A. istio\_requests\_total（请求总数）\
 B. istio\_request\_duration\_milliseconds（请求延迟）\
 C. istio\_request\_bytes（请求大小）\
-D. istio\_pod\_cpu\_usage（Pod CPU 用量）
+D. istio\_pod\_cpu\_usage（Pod CPU 使用量）
 
 <details>
 
@@ -21,11 +24,11 @@ D. istio\_pod\_cpu\_usage（Pod CPU 用量）
 
 **答案：D**
 
-Istio 标准服务指标描述流量；Envoy 还暴露内部代理统计。Prometheus 从 kubelet/cAdvisor（或运行时资源管道）获取容器 CPU 用量。Metrics Server 为自动扩缩容和 `kubectl top` 提供资源指标；kube-state-metrics 暴露对象状态及配置的 requests/limits，不是实测 CPU 消耗。
+Istio 标准服务指标描述流量；Envoy 也会公开内部代理统计信息。Prometheus 从 kubelet/cAdvisor（或运行时资源管道）获取容器 CPU 使用量。Metrics Server 为自动扩缩容和 `kubectl top` 提供资源指标；kube-state-metrics 公开对象状态和已配置的 requests/limits，而非测量到的 CPU 消耗量。
 
-**解释：**
+**说明：**
 
-**Istio 采集的指标：**
+**Istio 收集的指标：**
 
 1. **istio\_requests\_total（A - O）**
 
@@ -54,16 +57,16 @@ sum(rate(istio_request_bytes_sum{reporter="destination"}[5m])) by (destination_s
 
 * 这不是 Istio 指标
 * Kubernetes 指标：`container_cpu_usage_seconds_total`
-* 抓取 kubelet/cAdvisor；比较用量与配置 limits 时，kube-state-metrics 很有用
+* 抓取 kubelet/cAdvisor；将使用量与已配置的 limits 比较时，kube-state-metrics 很有用
 
 **Istio 指标类别：**
 
-| 类别 | 示例指标 | 描述 |
+| 类别     | 示例指标                                | 说明                   |
 | ------------ | --------------------------------------------- | ----------------------------- |
-| **请求** | istio\_requests\_total | 请求数、响应码 |
-| **持续时间** | istio\_request\_duration\_milliseconds | 延迟分布 |
-| **大小** | istio\_request\_bytes、istio\_response\_bytes | 流量大小 |
-| **TCP** | istio\_tcp\_connections\_opened\_total | TCP 连接 |
+| **请求**  | istio\_requests\_total                        | 请求数、响应代码 |
+| **时长** | istio\_request\_duration\_milliseconds        | 延迟分布          |
+| **大小**     | istio\_request\_bytes, istio\_response\_bytes | 流量大小                  |
+| **TCP**      | istio\_tcp\_connections\_opened\_total        | TCP 连接               |
 
 **黄金信号示例：**
 
@@ -127,12 +130,12 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 
 ### 问题 2：分布式追踪
 
-在追踪提供程序/后端正常工作的前提下，要连接跨服务调用的代理 span，应用必须承担哪项职责？
+当追踪 provider/backend 正常工作时，若要跨服务调用关联代理 span，应用程序必须承担哪项职责？
 
-A. 应用必须生成 trace ID\
-B. 应用必须传播 HTTP 标头\
-C. 所有服务必须安装 Jaeger 客户端\
-D. Envoy 自动处理一切
+A. 应用程序必须生成 trace ID\
+B. 应用程序必须传播 HTTP header\
+C. 所有服务都必须安装 Jaeger client\
+D. Envoy 自动处理所有事项
 
 <details>
 
@@ -140,19 +143,19 @@ D. Envoy 自动处理一切
 
 **答案：B**
 
-配置的代理可生成 span 和 trace ID，但应用必须向出站调用传播追踪上下文。SDK 应注入活动上下文，因此子 span ID 可改变，而 trace ID 保持相同。没有自身 span 的透明应用可转发所选传播标头。
+已配置的代理可以生成 span 和 trace ID，但应用程序必须将 trace context 传播到其出站调用。SDK 应注入活动 context，因此子 span ID 可能改变，而 trace ID 保持不变。没有自身 span 的透明应用程序可以转发选定的传播 header。
 
-**解释：**
+**说明：**
 
-**分布式追踪如何工作：**
+**分布式追踪的工作方式：**
 
-![Ingress Gateway 为入站请求生成追踪标头，各下游服务（A、B、C）向下一跳传播追踪上下文，每一跳也将自己的 span 发送到 Jaeger。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
+![显示 Ingress Gateway 为传入请求生成 trace header、每个下游服务（A、B、C）将 trace context 传播至下一跳，并且每一跳也将其 span 发送到 Jaeger 的图示。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-0.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-0.html)
 
-图中演示 B3 传播到已配置 Jaeger 后端。也支持 W3C 传播及中间 OpenTelemetry Collector；已插桩应用注入其活动 span 上下文，不是原样复制每个标头。
+该图示展示了到已配置 Jaeger backend 的 B3 传播。也支持 W3C 传播和中间 OpenTelemetry Collector；已插桩的应用程序会注入其活动 span context，而不是逐字不变地复制每个 header。
 
-**需要传播的 HTTP 标头：**
+**要传播的 HTTP Header：**
 
 ```text
 W3C: traceparent, tracestate
@@ -161,7 +164,7 @@ Istio correlation: x-request-id
 B3 debug flag: x-b3-flags (do not force debug sampling on ordinary traffic)
 ```
 
-**应用代码示例：**
+**应用程序代码示例：**
 
 ```python
 # Python Flask example
@@ -220,13 +223,13 @@ app.get('/api/users', async (req, res) => {
 **各选项分析：**
 
 * **A（X）**：Envoy 自动生成 trace ID
-* **B（O）**：应用必须传播 HTTP 标头（必需）
-* **C（X）**：无需 Jaeger 客户端，Envoy 发送 span
-* **D（X）**：Envoy 创建/发送 span，但标头传播是应用职责
+* **B（O）**：应用程序必须传播 HTTP header（必需）
+* **C（X）**：不需要 Jaeger client，Envoy 会发送 Span
+* **D（X）**：Envoy 创建/发送 Span，但 header 传播是应用程序的职责
 
 **采样配置：**
 
-此处假定使用追踪章节的 `otel-tracing` 提供程序。`1.0` 表示 1%，不是 100%；提供程序/导出器设置和上下文传播是独立要求。
+这假定使用追踪章节中的 `otel-tracing` provider。`1.0` 表示 1%，而非 100%；provider/exporter 设置和 context 传播是独立要求。
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -257,11 +260,11 @@ kubectl port-forward -n observability svc/jaeger-query 16686:16686
 
 ### 问题 3：Kiali 可视化
 
-Kiali **不提供**哪项功能？
+Kiali **不**提供以下哪项功能？
 
 A. 服务拓扑可视化\
-B. 流量分析\
-C. 自动执行金丝雀部署\
+B. 流量流向分析\
+C. 自动执行 Canary 部署\
 D. Istio 配置验证
 
 <details>
@@ -270,11 +273,11 @@ D. Istio 配置验证
 
 **答案：C**
 
-Kiali 是**观察和分析工具**，部署执行由 **Argo Rollouts** 等工具处理。
+Kiali 是一个**观测和分析工具**，而部署执行由 **Argo Rollouts** 等工具处理。
 
-**解释：**
+**说明：**
 
-**Kiali 主要功能：**
+**Kiali 的主要功能：**
 
 **1. 服务拓扑可视化（A - O）**
 
@@ -289,7 +292,7 @@ istioctl dashboard kiali
 # - Response time display
 ```
 
-**图视图示例：**
+**Graph 视图示例：**
 
 ```
 Frontend → Backend → Database
@@ -302,34 +305,34 @@ Color codes:
 - Gray: No traffic
 ```
 
-**2. 流量分析（B - O）**
+**2. 流量流向分析（B - O）**
 
-Kiali 展示：
+Kiali 显示：
 
 * 请求数（RPS）
 * 错误率（%）
 * P50/P95/P99 延迟
 * TCP 连接数
 
-**3. 自动执行金丝雀部署（C - X）**
+**3. 自动执行 Canary 部署（C - X）**
 
-* Kiali 可展示流量，并在有权限时编辑 Istio 配置/使用流量向导
-* 它不替代自动渐进式交付控制器
+* Kiali 可以显示流量，并在有权限时编辑 Istio 配置/使用流量向导
+* 它不会替代自动化渐进式交付 controller
 * 部署执行：Argo Rollouts、Flagger
 
 **4. Istio 配置验证（D - O）**
 
-[Kiali 验证目录](https://kiali.io/docs/features/validations/)中的示例：
+来自 [Kiali 验证目录](https://kiali.io/docs/features/validations/)的示例：
 
-- VirtualService：未定义子集（`KIA1107`）。
-- DestinationRule：重叠主机/子集定义（`KIA0201`）。
-- AuthorizationPolicy：引用命名空间未找到（`KIA0101`），或主体未关联到已发现工作负载 ServiceAccount（`KIA0106`）。
+- VirtualService：未定义的 subset（`KIA1107`）。
+- DestinationRule：重叠的 host/subset 定义（`KIA0201`）。
+- AuthorizationPolicy：找不到引用的 Namespace（`KIA0101`），或 principal 未关联到已发现 workload 的 ServiceAccount（`KIA0106`）。
 
-检查取决于 Kiali 版本、发现范围和访问权限。检查实际代码/消息及生效代理策略；Kiali 不能证明任意策略冲突，也不能证明每个证书和运行时路由都正常。
+检查取决于 Kiali 的版本、发现范围和访问权限。请检查实际的代码/消息和有效代理策略；Kiali 不能证明任意策略发生冲突，或每个证书和运行时 route 都能工作。
 
 **Kiali 安装：**
 
-固定 Operator、身份验证及当前兼容性限制参阅[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)。Kiali 单独安装；示例插件用于演示，没有后端/RBAC 配置的 Helm 安装不是生产设置。
+请遵循[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)中固定版本的 operator、认证和当前兼容性限制。Kiali 单独安装；示例 addon 是演示，未配置 backend/RBAC 的 Helm 安装并非生产设置。
 
 **Kiali 主菜单：**
 
@@ -344,13 +347,13 @@ Kiali 展示：
 
 **Kiali 与其他工具：**
 
-| 工具 | 作用 | 自动渐进式交付 |
+| 工具 | 角色 | 自动化渐进式交付 |
 | ----------------- | ----------------------------------- | -------------------- |
-| **Kiali** | 可视化、分析、验证 | 否 |
-| **Argo Rollouts** | 渐进式交付 | 是 |
-| **Flagger** | 自动金丝雀部署 | 是 |
-| **Grafana** | 指标仪表板 | 否 |
-| **Jaeger** | 分布式追踪 | 否 |
+| **Kiali**         | 可视化、分析、验证 | 否                   |
+| **Argo Rollouts** | 渐进式交付                | 是                  |
+| **Flagger**       | 自动 Canary 部署         | 是                  |
+| **Grafana**       | 指标仪表板                   | 否                   |
+| **Jaeger**        | 分布式追踪                 | 否                   |
 
 **实际使用示例：**
 
@@ -380,13 +383,13 @@ istioctl dashboard kiali
 
 ***
 
-### 问题 4：访问日志配置
+### 问题 4：Access Log 配置
 
-如何在 Istio 中将访问日志输出配置为 **JSON 格式**？
+如何在 Istio 中将 Access Log 输出配置为 **JSON 格式**？
 
 A. 在 IstioOperator 中将 meshConfig.accessLogEncoding 设为 JSON\
 B. 直接修改 Envoy ConfigMap\
-C. 为每个 Pod 添加注解\
+C. 为每个 Pod 添加 annotation\
 D. 通过 Prometheus 查询转换为 JSON
 
 <details>
@@ -395,11 +398,11 @@ D. 通过 Prometheus 查询转换为 JSON
 
 **答案：A**
 
-A 是有效的 MeshConfig 方法：在 `istioctl install -f` 输入中启用日志，并使用 `accessLogEncoding: JSON`。这不是集群内 Operator 资源。自定义 `envoyFileAccessLog.logFormat.labels` 提供程序是另一受支持方法，日志章节有说明。
+A 是一种有效的 MeshConfig 方法：在 `istioctl install -f` 输入中启用 logging，并使用 `accessLogEncoding: JSON`。这不是集群内 operator resource。自定义 `envoyFileAccessLog.logFormat.labels` provider 是另一种受支持的方法，logging 章节对此有所说明。
 
-**解释：**
+**说明：**
 
-**JSON 格式访问日志配置：**
+**JSON 格式 Access Log 配置：**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -469,9 +472,9 @@ spec:
 }
 ```
 
-**按命名空间配置：**
+**按 Namespace 配置：**
 
-此替代方案需先按日志章节定义 `mesh-json`。Telemetry 选择提供程序/范围；本身不更改提供程序格式。
+对于此替代方案，首先按 logging 章节所述定义 `mesh-json`。Telemetry 选择 provider/scope；它本身不会更改 provider 的格式。
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -503,7 +506,7 @@ spec:
 
 **CloudWatch Logs 集成：**
 
-这仅是已部署 Fluent Bit 代理的输出片段，要求匹配的输入标签、CRI/JSON 解析、IAM 凭证和日志挂载。仅 ConfigMap 不采集日志。EKS Fargate 需要其受支持日志路由器配置。
+这只是已部署 Fluent Bit agent 的输出片段，该 agent 要有匹配的 input tag、CRI/JSON 解析、IAM 凭证和日志挂载。单独一个 ConfigMap 不会采集日志。EKS Fargate 需要其支持的 log-router 配置。
 
 ```yaml
 apiVersion: v1
@@ -538,13 +541,13 @@ kubectl logs <pod-name> -c istio-proxy | \
 
 **TEXT 格式与 JSON 格式：**
 
-| 项目 | TEXT | JSON |
+| 项目            | TEXT         | JSON            |
 | --------------- | ------------ | --------------- |
-| **可读性** | 高（人工） | 低（人工） |
-| **解析** | 困难 | 容易（机器） |
-| **大小** | 小 | 大 |
-| **结构** | 非结构化 | 结构化 |
-| **查询** | 困难 | 容易（jq 等） |
+| **可读性** | 高（人工） | 低（人工）     |
+| **解析**     | 困难    | 容易（机器）  |
+| **大小**        | 小        | 大           |
+| **结构**   | 非结构化 | 结构化      |
+| **查询**    | 困难    | 容易（jq 等） |
 
 **TEXT 格式示例：**
 
@@ -555,7 +558,7 @@ kubectl logs <pod-name> -c istio-proxy | \
 **参考资料：**
 
 * [日志](../../../service-mesh/istio/observability/03-logging.md)
-* [Envoy 访问日志格式](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+* [Envoy Access Log 格式](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
 
 </details>
 
@@ -563,12 +566,12 @@ kubectl logs <pod-name> -c istio-proxy | \
 
 ### 问题 5：Grafana 仪表板
 
-哪个仪表板**不属于** Istio 发布的 Grafana 仪表板集合？
+以下哪个仪表板**不**属于 Istio 发布的 Grafana 仪表板集？
 
-A. Istio 服务仪表板\
-B. Istio 工作负载仪表板\
-C. Istio 性能仪表板\
-D. Istio 成本仪表板
+A. Istio Service Dashboard\
+B. Istio Workload Dashboard\
+C. Istio Performance Dashboard\
+D. Istio Cost Dashboard
 
 <details>
 
@@ -576,15 +579,15 @@ D. Istio 成本仪表板
 
 **答案：D**
 
-D。Istio 发布流量/控制平面仪表板，但 Grafana 本身是独立插件；安装 Istio 不会自动安装这些仪表板。
+D。Istio 发布流量/control-plane 仪表板，但 Grafana 本身是独立 addon；安装 Istio 不会自动安装这些仪表板。
 
-**解释：**
+**说明：**
 
-1.31 目录包含 Service7636、Workload7630、Mesh7639、Performance11829、Control Plane7645、Wasm13277 和 Ztunnel21306。Performance 关注资源/数据用量；xDS/webhook 面板主要属于 Control Plane。Mesh 包含全局流量和组件版本，不包含此前此处列出的每个延迟面板。选择匹配已安装 Istio 版本的修订。
+1.31 目录包括 Service7636、Workload7630、Mesh7639、Performance11829、Control Plane7645、Wasm13277 和 Ztunnel21306。Performance 关注资源/数据使用；xDS/webhook 面板主要属于 Control Plane。Mesh 包括全局流量和组件版本，并不包括此前此处列出的每个延迟面板。请选择与已安装 Istio 版本匹配的 revision。
 
-成本不能通过将 `istio_requests_total` 乘以 GB 传输价格计算：请求数不是字节数，`source_cluster`/`destination_cluster` 标识集群而非可用区。代理内存是用量，不是账单。网络成本需要计费字节测量及实际源/目标位置/服务规则；资源成本分摊需要节点价格、时间和明确分摊模型。应将估算与 AWS 计费/CUR 数据及适用价格核对，不要断言固定公式。
+不能通过将 `istio_requests_total` 乘以 GB 传输价格来计算成本：请求不是字节，且 `source_cluster`/`destination_cluster` 标识 cluster 而非 Availability Zone。代理内存是使用量，不是账单。网络成本需要可计费字节测量以及实际源/目标位置和服务规则；资源成本分摊需要节点价格、时间和明确的分摊模型。应将估算与 AWS billing/CUR 数据和适用定价进行核对，而不是断言固定公式。
 
-已验证目录修订和完整自定义 JSON/预置示例参阅[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)。仅 ConfigMap 和标签不会安装仪表板加载器，也不会解析数据源输入。
+请使用[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)获取已验证的目录 revision 和完整的自定义 JSON/provisioning 示例。ConfigMap 和 label 本身不会安装 dashboard loader，也不会解析 datasource 输入。
 
 </details>
 
@@ -594,13 +597,13 @@ D。Istio 发布流量/控制平面仪表板，但 Grafana 本身是独立插件
 
 ### 问题 6：黄金信号监控
 
-解释如何使用 Istio 和 Prometheus 监控 Google SRE 的**黄金信号**（延迟、流量、错误、饱和度）。为每个信号提供 **Prometheus 查询**和**警报规则**。
+说明如何使用 Istio 和 Prometheus 监控 Google SRE 的**黄金信号**（延迟、流量、错误、饱和度）。请为每个信号包含 **Prometheus 查询**和**告警规则**。
 
 <details>
 
 <summary>显示答案</summary>
 
-每次服务跳点计算使用一个报告方，并保留服务命名空间（适用时加集群）。目标指标测量服务收到的请求；从未到达的上游失败需要源指标。HTTP5xx 只是错误定义之一；gRPC 失败需要 `grpc_response_status` 及应用专属 SLI 规则。以下延迟以毫秒计，速率为每秒：
+每次 service-hop 计算使用一个 reporter，并保留服务 Namespace（以及相关时的 cluster）。destination 指标衡量服务收到的请求；对从未到达的上游失败，需要 source 指标。HTTP5xx 只是一个错误定义；gRPC 失败需要 `grpc_response_status` 和特定于应用程序的 SLI 规则。以下延迟单位为毫秒，速率单位为每秒：
 
 ```promql
 histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
@@ -612,7 +615,7 @@ sum by (destination_service_name, destination_service_namespace) (rate(istio_req
 sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) / sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
 ```
 
-对于单集群经典 Sidecar 部署，用量/limit 比率需要 kubelet/cAdvisor 和 kube-state-metrics。排除缺失/零 limit。原生 Sidecar 可能在初始化容器资源序列中报告声明的 limits；使用这些表达式前确认实际指标族：
+对于单 cluster 的经典 sidecar 部署，使用量/limit 比率需要 kubelet/cAdvisor 和 kube-state-metrics。排除缺失/为零的 limit。原生 sidecar 可能改为在 init-container 资源 series 中报告声明的 limit；在使用这些表达式前，请确认实际指标族：
 
 ```promql
 sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m])) / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="cpu",unit="core"}) > 0)
@@ -624,9 +627,9 @@ envoy_cluster_upstream_rq_pending_active
 envoy_cluster_circuit_breakers_default_cx_open
 ```
 
-`_cx_open` 指标是 0/1 状态 gauge；活动连接数除以它不是利用率。需要容量比率时检查配置的断路器阈值。CPU rate 相除前单位是核；内存工作集相除前单位是字节。按方法细分需要先添加有界 `request_method` Telemetry 标签。
+`_cx_open` 指标是 0/1 状态 gauge；将活跃连接除以它并不是利用率。需要容量比率时，请检查已配置 circuit-breaker 阈值。CPU rate 在除法前以 core 为单位；内存 working set 在除法前以字节为单位。方法明细要求先添加有界 `request_method` Telemetry label。
 
-以下 PrometheusRule 必须由已安装 Prometheus Operator 选中。阈值和比较窗口仅为示意；流量季节性、无数据、抓取失败和最小流量条件需要环境专属处理。前一个小时窗口不是学习得到的正常基线。
+以下 PrometheusRule 必须由已安装的 Prometheus Operator 选中。阈值和比较窗口仅为示例；流量季节性、无数据、抓取失败和最小流量条件需要特定于环境的处理。此前一小时窗口不是学习得出的正常基线。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -691,7 +694,7 @@ spec:
         summary: Connection breaker at capacity
 ```
 
-使用[已检查仪表板模板](../../../service-mesh/istio/observability/04-dashboards.md)，为请求速率、错误比例、延迟和资源单位创建独立面板。不要将 CPU 核数和内存字节放在没有单位标注的共享刻度上。
+请使用[已检查的仪表板模板](../../../service-mesh/istio/observability/04-dashboards.md)，为请求速率、错误比例、延迟和资源单位创建单独的面板。不要将 CPU core 和内存字节放在一个未标记的共享刻度上。
 
 </details>
 
@@ -699,17 +702,17 @@ spec:
 
 ### 问题 7：使用 Jaeger 查找性能瓶颈
 
-解释如何使用分布式追踪工具 Jaeger 查找微服务架构中的**性能瓶颈**。包括**追踪分析方法**和**实际调试场景**。
+说明如何使用分布式追踪工具 Jaeger，在微服务架构中查找**性能瓶颈**。请包含 **Trace 分析方法**和**实际调试场景**。
 
 <details>
 
 <summary>显示答案</summary>
 
-从 [Jaeger2/OTLP 追踪设置](../../../service-mesh/istio/observability/02-tracing.md)、已配置 Telemetry 提供程序及应用上下文传播开始。不要假定旧 Jaeger 插件/Zipkin 端口或仅采样值就会部署追踪。应用/数据库 span 需要 SDK 或代理插桩；代理 span 不能揭示数据库查询内部细节。
+从 [Jaeger2/OTLP 追踪设置](../../../service-mesh/istio/observability/02-tracing.md)、已配置的 Telemetry provider 和应用程序 context 传播开始。不要假定旧 Jaeger addon/Zipkin port 或单独一个 sampling 值即可部署追踪。应用程序/database span 需要 SDK 或 agent 插桩；proxy span 无法揭示 database query 的内部细节。
 
-1. 用限定命名空间的 Prometheus 延迟查询定位受影响服务/时间窗口，再在 Jaeger 查找代表性慢追踪和正常追踪。Prometheus 直方图查询返回聚合统计，不是 trace ID。
-2. 沿关键路径分析，区分父级持续时间与自身独占时间。长父级包含子级；不自动意味着它是原因。
-3. 比较错误、重试、连接等待、查询执行和并行度。追踪时序、采样和缺失 span 限制结论。
+1. 使用限定 Namespace 的 Prometheus 延迟查询定位受影响服务/时间窗口，然后在 Jaeger 中找到具有代表性的慢速和正常 trace。Prometheus histogram 查询返回聚合统计信息，不返回 trace ID。
+2. 沿关键路径分析，并区分父级时长和独占时间。长时父级包含其子级；它不一定是原因。
+3. 比较错误、重试、连接等待、查询执行和并行性。trace 时序、sampling 和缺失 span 会限制结论。
 
 ```promql
 histogram_quantile(0.99, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))) > 2000
@@ -719,15 +722,15 @@ histogram_quantile(0.99, sum by (destination_service_name, destination_service_n
 kubectl port-forward -n observability svc/jaeger-query 16686:16686
 ```
 
-这些是假设调试场景，不是基准测试结果或字面 Jaeger API 响应：
+这些是假设性的调试场景，而非 benchmark 结果或字面的 Jaeger API 响应：
 
-| 观察 | 验证内容 | 适当响应 |
+| 观察结果 | 要验证的内容 | 恰当响应 |
 |---|---|---|
-| 2.1s 请求，包含 1.8s 的已插桩数据库操作 | 区分连接池等待、查询时间、锁和网络延迟；验证数据库执行计划 | 修复测得的原因。名为 `redis.conf` 的 ConfigMap 不会添加应用缓存 |
-| 约 10s 请求且连接池超时 | 检查应用数据库客户端池、并发和数据库容量 | 调整应用/数据库连接池并修复泄漏；Envoy DestinationRule 不配置应用连接池，HTTP 池设置也不调优 PostgreSQL |
-| 独立的 2s+2s+1s 调用顺序运行 | 确认依赖、负载限制和追踪上下文 | 仅用真实异步客户端或有界线程并行独立 I/O；预期时间可接近最长调用加开销，不保证 2s |
+|2.1s 请求，包含 1.8s 的已插桩 database operation|区分 pool wait、query 时间、lock 和网络延迟；验证 DB execution plan|修复测量出的原因。名为 `redis.conf` 的 ConfigMap 不会添加应用程序 caching|
+|约 10s 请求且发生 connection-pool timeout|检查应用程序的 DB client pool、并发性和 DB capacity|调整应用程序/DB pool 并修复泄漏；Envoy DestinationRule 不会配置应用程序 pool，HTTP pool 设置不会调整 PostgreSQL|
+|独立的 2s+2s+1s 调用按顺序运行|确认依赖关系、负载限制和 tracing context|仅使用真正的 async client 或有界 thread 并行化独立 I/O；预期时间可接近最长调用加上开销，而非保证为 2s|
 
-对于现有同步 I/O 回调，此 Python3.9+ 片段保留返回顺序并使用工作线程。应用必须提供回调并执行自己的超时；取消等待任务不会停止已经运行的线程：
+对于现有同步 I/O callback，此 Python3.9+ 片段会保留返回顺序并使用 worker thread。应用程序必须提供 callback 并自行强制其 timeout；取消等待中的 task 不会停止已运行的 thread：
 
 ```python
 import asyncio
@@ -742,32 +745,32 @@ async def get_user_data(user_id):
     return merge(profile, orders, recommendations)
 ```
 
-超时限制等待；不修复慢数据库，重试可能放大负载。展示 VirtualService 超时时，包含实际路由目的地，仅在考虑幂等性/负载后使用重试。持久 Jaeger 依赖图可能需要额外聚合；单个追踪瀑布图与全局依赖图是不同视图。应通过重复流量和指标/追踪验证疑似修复，不要只看一条漂亮追踪。
+Timeout 限制等待时间；它们不能修复缓慢的 database，重试可能放大负载。展示 VirtualService timeout 时，应包含实际的 route destination，并仅在考虑幂等性/负载后使用重试。持久 Jaeger dependency map 可能需要额外聚合；单个 trace 瀑布图和全局 dependency map 是不同视图。请用重复流量和指标/trace 验证可疑修复，而不只看一个看似美观的 trace。
 
 </details>
 
 ***
 
-### 问题 8：使用 Kiali 排查服务网格
+### 问题 8：使用 Kiali 排查 Service Mesh 问题
 
-解释如何使用 Kiali 诊断并解决 Istio 服务网格的**常见问题**（配置错误、流量异常、安全策略冲突）。
+说明如何使用 Kiali 诊断和解决 Istio service mesh 中的**常见问题**（配置错误、流量异常、安全策略冲突）。
 
 <details>
 
 <summary>显示答案</summary>
 
-将 Kiali 配置检查、观测流量、Pod 日志和追踪作为证据，再验证生效代理配置。仪表板章节记录版本/身份验证前提条件。不要凭图形形状虚构 Kiali 警告，也不要将绿色图标当作运行时保证。
+将 Kiali 的配置检查、观察到的流量、pod log 和 trace 作为证据，然后验证有效 proxy 配置。仪表板章节记录了版本/认证前提条件。不要从 graph 形状臆造 Kiali warning，也不要将绿色图标视为运行时保证。
 
 | 症状 | 正确解释和检查 |
 |---|---|
-| 缺失服务/子集 | 在 `default` 中，`reviews` 和 `reviews.default.svc.cluster.local` 解析为同一主机。缩短名称不会创建缺失 Service。KIA1107 标识未定义子集；检查 Service/EndpointSlice、DestinationRule 和实际 Pod 标签 |
-| 子集标签不匹配 | 标签值 `1.0` 本身没有错；让目标 Deployment 标签匹配子集。编写完整 DestinationRule 时包含元数据、host 和文档分隔符 |
-| 配置 50/50，却观察到 90/10 | 检查有效权重、匹配规则、连接亲和性、重试、端点/剔除状态和时间窗口。仅就绪副本更少不会重新定义 VirtualService 子集权重，也不保证以后达到 50/50 |
-| A↔B 环 | 双向图不证明递归调用、死锁或自动 Kiali 警报。重新设计应用前，使用追踪识别实际非预期循环 |
-| HTTP403 | 检查执行代理的策略、身份和响应详情。空 spec AuthorizationPolicy 是没有匹配规则的 ALLOW 策略；另一 ALLOW 可提供例外。它不是优先覆盖的 DENY |
-| mTLS 失败 | PeerAuthentication 描述接收方。检查特定方向的发送方 TLS 设置、接收方策略、纳管、证书/信任和端口协议。不同接收模式不自动构成冲突；统一 STRICT 是迁移决策，不是通用修复 |
+|缺失的 Service/subset|在 `default` 中，`reviews` 和 `reviews.default.svc.cluster.local` 解析为相同 host。缩短名称不会创建缺失的 Service。KIA1107 表示未定义的 subset；检查 Service/EndpointSlice、DestinationRule 和实际 pod label|
+|Subset label 不匹配|label 值 `1.0` 本身并没有错；请使预期 Deployment label 与 subset 匹配。编写完整 DestinationRule 时要包含 metadata、host 并记录分隔符|
+|观察到 90/10 而不是配置的 50/50|检查有效 weight、匹配规则、connection affinity、重试、endpoint/ejection 状态和时间窗口。仅就绪 replica 较少不会重新定义 VirtualService subset weight，也不保证之后出现 50/50 拆分|
+|A↔B cycle|双向 graph 并不能证明递归调用、deadlock 或自动 Kiali alert。在重新设计应用程序之前，使用 trace 识别实际的非预期 cycle|
+|HTTP403|检查实施策略的 proxy、identity 和响应详情。空 spec AuthorizationPolicy 是没有匹配规则的 ALLOW 策略；另一个 ALLOW 可以提供例外。它并非覆盖性的 DENY|
+|mTLS failure|PeerAuthentication 描述 receiver。针对特定方向检查 sender TLS 设置、receiver 策略、enrollment、certificate/trust 和 port protocol。不同 receiver mode 并不自动构成冲突；全局 STRICT 是迁移决策，不是通用修复方案|
 
-假定 mTLS 提供命名 frontend 主体，且没有更早的 CUSTOM/DENY 拒绝请求，带 frontend 例外的限定范围默认拒绝基线有效：
+限定范围的默认拒绝基线加上 frontend 例外是有效的，前提是 mTLS 提供指定的 frontend principal，并且没有更早的 CUSTOM/DENY 拒绝该请求：
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -806,53 +809,53 @@ istioctl proxy-config clusters <source-pod> -n default --fqdn reviews.default.sv
 istioctl x authz check <backend-pod>.default
 ```
 
-流量动画概括选定窗口；不是字节精确的数据包检查。假设不成立时，重复诊断/配置/测试循环，不要盲目重启工作负载。
+流量动画汇总选定窗口；它不是字节精确的 packet inspection。如果假设失败，请重复诊断/配置/测试循环，而不是盲目重启 workload。
 
-![Kiali 排障循环：打开 Graph 视图，将症状分为无流量、错误、响应慢或安全拒绝，检查 Istio 配置、日志、追踪或安全策略，再修复并测试配置，未解决则重复诊断。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
+![Kiali 故障排查循环：打开 Graph 视图，将症状归类为无流量、错误、响应缓慢或安全拒绝，检查 Istio 配置、日志、追踪或安全策略，然后修复并测试配置；若未解决则重复诊断。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
 
-[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-1.html)
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-1.html)
 
 </details>
 
 ***
 
-### 问题 9：生产可观测性技术栈设置
+### 问题 9：生产可观测性栈设置
 
-解释如何为生产 Kubernetes 集群以**高可用（HA）** 配置部署 Istio 可观测性技术栈（Prometheus、Grafana、Jaeger、Kiali）。包含**持久存储**、**扩缩容**和**备份**策略。
+说明如何为生产 Kubernetes cluster 以**高可用性（HA）**配置部署 Istio 可观测性栈（Prometheus、Grafana、Jaeger、Kiali）。请包含**持久存储**、**扩缩容**和**备份**策略。
 
 <details>
 
 <summary>显示答案</summary>
 
-生产高可用技术栈是环境专属设计和验证任务。下文涵盖主要要求；不是经生产测试的部署包。固定兼容 Kubernetes/Istio/Operator/chart/后端版本，审核实际使用的 chart values，并在发布前验证故障和恢复行为。[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)记录当前 Kiali 兼容性缺口；不要因版本最新就推断兼容。
+生产 HA 栈是特定于环境的设计和验证任务。以下内容涵盖主要要求；它不是经过生产测试的部署 bundle。在 rollout 前，固定兼容的 Kubernetes/Istio/operator/chart/backend 版本，审查实际使用的 chart value，并验证故障和恢复行为。[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)记录了当前 Kiali 兼容性缺口；不要从最新发布版本推断兼容性。
 
-| 组件 | 状态和高可用要求 |
+| 组件 | 状态和 HA 要求 |
 |---|---|
-| Prometheus | 运行独立副本，每副本一个 PVC；同集群副本共享集群标签，并使用不同副本标签（其他标签必须匹配才能去重）。分散故障域，按观测写入量规划保留期。负载均衡器不会合并历史 |
-| Thanos | Sidecar 暴露 StoreAPI 并可选上传块；Query 发现真实 StoreAPI 端点并按配置副本标签去重。Store Gateway 读取对象存储；Compactor 负责块压缩整理/保留，并具备适当单写入方/分片所有权 |
-| Grafana | 两个副本需要共享高可用 PostgreSQL/MySQL 数据库、一致预置/插件/密钥配置和负载均衡器。两个副本共享 SQLite 或跨节点共享一个 EBS ReadWriteOnce 卷，不是 Grafana 高可用 |
-| Alertmanager | 副本需要对等/通知去重配置、持久状态和安全接收器凭证；将 Slack webhook 放入 chart values 不是完整密钥/通知设计 |
-| Jaeger2/collector | 使用无状态 query/collector 副本，以及受支持的持久后端及其自身 HA/TLS/凭证。尾部采样器需要 trace ID 亲和性；随机 Service 后多个副本收不到完整追踪 |
-| Kiali | 使用兼容 Operator/服务器、共享配置/会话密钥行为及适当 Pod 放置。保护后端 API 和用户命名空间权限。Token 策略是单集群；需要时选择文档规定的多集群身份验证 |
+|Prometheus|运行独立 replica，每个 replica 一个 PVC，该 cluster 的 replica 共享 cluster label 且具有不同的 replica label（其他 label 必须匹配才能去重）。分布到不同故障域，并根据观测到的 ingest 确定 retention 大小。load balancer 不会合并其历史记录|
+|Thanos|Sidecar 公开 StoreAPI 并可选择上传 block；Query 发现真实 StoreAPI endpoint 并对配置的 replica label 去重。Store Gateway 读取 object storage；Compactor 以适当的 single-writer/sharding 所有权处理 block compaction/retention|
+|Grafana|两个 replica 需要共享的 HA PostgreSQL/MySQL database、一致的 provisioning/plugin/secret 配置和 load balancer。两个 replica 共享 SQLite 或跨 node 共享一个 EBS ReadWriteOnce volume 并非 Grafana HA|
+|Alertmanager|Replica 需要 peer/notification 去重配置、持久状态和受保护的 receiver credential；在 chart value 中放置 Slack webhook 并不是完整的 secret/notification 设计|
+|Jaeger2/collector|使用无状态 query/collector replica 和受支持的持久 backend 及其自身 HA/TLS/credential。Tail sampler 需要 trace-ID affinity；随机 Service 背后的多个 replica 不会收到完整 trace|
+|Kiali|使用兼容的 operator/server、共享的配置/session-secret 行为和适当的 pod placement。保护 backend API 和用户 Namespace 权限。token 策略是单 cluster；需要时请选择有文档记录的 multi-cluster 认证|
 
-**存储和对象存储连接：**
+**存储和 object-store 连接：**
 
-- 即使使用对象存储，也保留本地 Prometheus 持久化：近期 head/WAL 数据可能尚未上传。Sidecar 上传应遵循安装的 Thanos 版本对本地压缩整理/块时长的要求。
-- S3 桶、区域端点、加密、保留和 IAM 权限必须存在。将带凭证 ServiceAccount 绑定到实际运行 Sidecar/Store/Compactor 的 Pod。写着“IRSA”的 YAML 注释不会创建凭证。当前 Thanos S3 配置可使用 `aws_sdk_auth: true` 和受支持 AWS SDK 凭证链。
-- 当前 kube-prometheus-stack values 在 `prometheus.prometheusSpec.thanos.objectStorageConfig.existingSecret` 下用真实名称/键选择现有对象存储 Secret。挂载键 `thanos.yaml` 不会创建名为 `objstore.yaml` 的文件。验证文件路径、命名 gRPC Service 端口和 DNS-SRV 目标。
-- 当前 Thanos Query 使用 `--endpoint` 和 `--query.replica-label` 配置端点/去重。不要未检查所选版本就沿用旧 `--store` 示例。Kiali 查询兼容 Prometheus 后端时，可能还需文档规定的 `thanos_proxy` 设置。
-- 每个 Deployment/StatefulSet 需要匹配选择器/Pod 标签和 Service；原先不完整资源无法构成有效 StoreAPI 拓扑。在 EKS 上，EBS 支持的状态需要受支持 EC2 放置/CSI 配置；Fargate 不挂载 EBS，也不运行任意 DaemonSet。
+- 即使有 object storage 也要保留本地 Prometheus 持久化：近期 head/WAL 数据可能尚未上传。对于 sidecar upload，请遵循所安装 Thanos 版本的 local-compaction/block-duration 要求。
+- S3 bucket、regional endpoint、encryption、retention 和 IAM 权限必须存在。将含 credential 的 ServiceAccount 绑定到实际运行 sidecar/Store/Compactor 的 pod。写有“IRSA”的 YAML comment 不会创建 credential。当前 Thanos S3 配置可使用 `aws_sdk_auth: true` 和受支持的 AWS SDK credential chain。
+- 在当前 kube-prometheus-stack value 中，现有 object-store Secret 在 `prometheus.prometheusSpec.thanos.objectStorageConfig.existingSecret` 下以实际 name/key 选定。挂载 key `thanos.yaml` 不会创建名为 `objstore.yaml` 的文件。验证文件路径、具名 gRPC Service port 和 DNS-SRV target。
+- 当前 Thanos Query 使用 `--endpoint` 和 `--query.replica-label` 来配置 endpoint/去重。若未检查所选 release，不要沿用旧的 `--store` 示例。查询 Prometheus-compatible backend 的 Kiali 也可能需要其有文档记录的 `thanos_proxy` 设置。
+- 每个 Deployment/StatefulSet 都需要匹配的 selector/pod label 和 Service；原始不完整 resource 无法形成可工作的 StoreAPI 拓扑。在 EKS 上，EBS-backed state 需要受支持的 EC2 placement/CSI 配置；Fargate 不会挂载 EBS 或运行任意 DaemonSet。
 
 **配置、备份和证明：**
 
-1. 配置实际监控/规则选择器和抓取目标。在 kube-prometheus-stack 中，`alertmanager.config` 与 `alertmanager.alertmanagerSpec` 同级；验证固定 chart 模式。将密码/webhook 保留在受支持 Secret 引用中。
-2. 使用应用一致流程备份 Grafana 数据库/配置/预置仪表板/插件、所需 Prometheus 状态及 Jaeger 存储。仅对象存储保留不是所有组件的恢复策略。
-3. 仅 Velero PVC/PV 清单不能证明卷数据已捕获。配置受支持的 CSI 快照/数据移动器或文件系统备份路径、快照类/插件、凭证和恢复工作负载所需资源。检查备份状态并执行隔离恢复。
-4. 备份 Job 必须使用经过测试且包含所需工具的镜像、正确源 URL、限定范围身份、目标桶和失败处理。旧 AWS CLI 镜像/假定 curl+jq/S3 CronJob 不是已验证备份方案。
-5. 监控接收器/导出器失败、排队、抓取健康和实际 PVC 容量指标。`prometheus_tsdb_storage_blocks_bytes_total` 不是有效容量分母。技术栈无法可靠报告自身全面故障；使用独立心跳/观察者，并将缺失序列/无数据与 `up == 0` 分开处理。
-6. 测试副本/节点/可用区丢失、存储中断、后端/身份验证失败、发布和恢复。PDB 有助于计划中断；不创建数据库或可用区级高可用。记录 RPO/RTO 和观测容量，不要仅凭副本数声称达到目标。
+1. 配置实际 monitor/rule selector 和 scrape target。在 kube-prometheus-stack 中，`alertmanager.config` 是 `alertmanager.alertmanagerSpec` 的同级项；验证固定 chart schema。将 password/webhook 保留在受支持的 Secret reference 中。
+2. 使用 application-consistent procedure 备份 Grafana 的 database/configuration/provisioned dashboard/plugin、所需的 Prometheus state 和 Jaeger storage。仅有 object-store retention 并不是所有组件的 restore 策略。
+3. 仅有 Velero PVC/PV manifest 不足以证明 volume data 已被捕获。配置受支持的 CSI snapshot/data-mover 或 filesystem backup 路径、snapshot class/plugin、credential 和恢复 workload 所需 resource。检查 backup status 并执行隔离恢复。
+4. 备份 Job 必须具有包含所需 tool 的已测试 image、正确 source URL、限定范围 identity、destination bucket 和 failure handling。旧 AWS CLI image/假定 curl+jq/S3 CronJob 并非已验证的 backup 方案。
+5. 监控 receiver/exporter failure、queueing、scrape health 和实际 PVC capacity 指标。`prometheus_tsdb_storage_blocks_bytes_total` 不是有效 capacity denominator。一个栈无法可靠报告自身的完全中断；使用独立 heartbeat/observer，并将 missing-series/no-data 与 `up == 0` 分开处理。
+6. 测试 replica/node/zone 丢失、storage 中断、backend/authentication failure、rollout 和 restoration。PDB 有助于计划内中断；它们不会创建 database 或 zone 级 HA。记录 RPO/RTO 和观测到的 capacity，而非根据 replica 数量声称它们。
 
-参阅 [Grafana 高可用](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/)、[Thanos Sidecar](https://thanos.io/tip/components/sidecar.md/)、[Thanos Query](https://thanos.io/tip/components/query.md/)、[Thanos 存储](https://thanos.io/tip/thanos/storage.md/)及 [Velero CSI 备份](https://velero.io/docs/main/csi/)。
+请参阅 [Grafana HA](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/)、[Thanos Sidecar](https://thanos.io/tip/components/sidecar.md/)、[Thanos Query](https://thanos.io/tip/components/query.md/)、[Thanos storage](https://thanos.io/tip/thanos/storage.md/) 和 [Velero CSI backup](https://velero.io/docs/main/csi/)。
 
 </details>
 
@@ -860,17 +863,17 @@ istioctl x authz check <backend-pod>.default
 
 ### 问题 10：自定义指标和仪表板创建
 
-解释如何采集 Istio Envoy 默认指标之外的**业务指标**（如订单数、支付成功率），并创建 Grafana 自定义仪表板。
+说明如何收集 Istio Envoy 默认收集指标之外的**业务指标**（例如订单数、支付成功率），并创建 Grafana 自定义仪表板。
 
 <details>
 
 <summary>显示答案</summary>
 
-选择指标前先定义业务事件和计数边界。Envoy 了解请求，不知道订单是否持久创建或支付是否结算。以下**集成片段统计已完成处理尝试**，不是唯一订单或会计收入。应用必须提供处理函数/错误约定、幂等性和验证。真实支付成功指标应在支付边界记录支付结果，并从结果计数器推导比率；未维护的 Gauge 不是成功率。
+在选择指标前定义业务事件和计数边界。Envoy 知道请求，但不知道订单是否被持久创建或支付是否结算。以下**集成片段统计已完成的处理尝试**，而不是唯一订单或会计收入。应用程序必须提供自己的处理函数/error contract、幂等性和验证。对于真正的支付成功指标，应在支付边界对支付结果插桩，并从结果 counter 派生比率；未维护的 Gauge 不是成功率。
 
-使用取值有界的类别/状态标签、尝试次数 Counter，以及非负金额/持续时间 Histogram。在 `finally` 中观察持续时间以包含失败。不要以订单 ID、用户 ID 或原始 URL 标记指标。这些是单进程示例；多工作进程聚合需要客户端库支持的设置。
+使用有界 category/status label、用于尝试的 Counter 以及用于非负金额/时长的 Histogram。在 `finally` 中观测时长，以便包含失败。不要使用订单 ID、用户 ID 或原始 URL 作为指标 label。这些示例为单进程；multi-worker 聚合需要 client library 支持的设置。
 
-**Python/Flask**（应用提供 `process_order` 和 `PaymentException`）：
+**Python/Flask**（应用程序提供 `process_order` 和 `PaymentException`）：
 
 ```python
 from flask import Flask, request, jsonify, Response
@@ -918,7 +921,7 @@ def metrics():
 # or process-local counters as a production accounting system.
 ```
 
-**Node.js/Express**：持续维护的包为 `@prometheus-io/client`（示例 API 使用 Node 22 上的 0.16.1 检查）。`prom-client` 已弃用，由此包替代；现有项目必须审核迁移变更日志。配置 JSON 中间件并 await `register.metrics()`：
+**Node.js/Express**：维护的 package 是 `@prometheus-io/client`（示例 API 使用 Node 22 上的 0.16.1 验证）。`prom-client` 已被弃用，推荐使用此 package；现有项目必须审查迁移 changelog。配置 JSON middleware 并等待 `register.metrics()`：
 
 ```javascript
 const express = require('express');
@@ -970,7 +973,7 @@ app.get('/metrics', async (req, res) => {
 // Integrate app.listen/shutdown with the application's server lifecycle.
 ```
 
-**Kubernetes 采集**：此 Sidecar 实验使用 Istio 合并端点，不假定明文应用抓取能通过 STRICT mTLS。将这些标签/注解合并到 `default` 中实际 `order-service` Deployment；镜像必须包含应用并在 8080 暴露 `/metrics`。网格必须启用 Prometheus 合并。代理端点 15020 为明文，因此限制网络访问。若现有抓取器已采集这些业务指标，不要添加重复监控器。
+**Kubernetes 采集**：此 sidecar 实验使用 Istio 的合并 endpoint，因此不假定明文应用程序 scrape 可通过 STRICT mTLS。将这些 label/annotation 合并到 `default` 中实际的 `order-service` Deployment；其 image 必须包含应用程序并在 8080 上公开 `/metrics`。mesh 必须启用 Prometheus 合并。agent endpoint15020 为明文，因此请限制网络访问。如果现有 scraper 已采集这些业务指标，请勿添加重复的 monitor。
 
 ```yaml
 spec:
@@ -1029,9 +1032,9 @@ spec:
       action: keep
 ```
 
-Prometheus 资源必须选择 `istio-system` 中的 ServiceMonitor；它在 `default` 中发现 Service。仅保留业务指标族，避免重复其他位置已抓取的代理指标。`targetLabels` 显式添加 Service 的 `app` 标签。这是 Sidecar 示例；Ambient/直接 TLS 抓取需要自己的受支持设计。
+Prometheus resource 必须选中 `istio-system` 中的 ServiceMonitor；它发现 `default` 中的 Service。仅保留业务指标族可避免重复已在其他位置抓取的 proxy 指标。`targetLabels` 显式添加 Service 的 `app` label。这是 sidecar 示例；ambient/direct TLS scraping 需要其自身受支持的设计。
 
-**查询**（依次为：区间尝试次数、每秒尝试次数、成功比例、观测金额 P95、持续时间 P99、类别速率、订单尝试中的支付失败比例）：
+**查询**（依次为：区间尝试数、每秒尝试数、成功比例、观测金额 P95、时长 P99、类别速率、订单尝试中的支付失败比例）：
 
 ```promql
 sum(increase(orders_total{namespace="default",app="order-service"}[5m]))
@@ -1049,9 +1052,9 @@ sum by (product_category) (rate(orders_total{namespace="default",app="order-serv
 sum(rate(orders_total{namespace="default",app="order-service",status="payment_failed"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
 ```
 
-`increase` 估算区间总量；`rate` 为每秒值。进程重启、重试和漏抓意味着运维计数器/金额总和不是会计台账。对于唯一已提交订单或收入，应与持久业务系统核对，不要假定遥测恰好一次。
+`increase` 估算区间总数；`rate` 单位为每秒。进程重启、重试和遗漏的 scrape 意味着运营 counter/金额 sum 并非会计总账。对于唯一已提交订单或收入，应与持久业务系统核对，而不要假定遥测恰好一次。
 
-**Grafana**：此完整仪表板对象要求数据源 UID `prometheus` 及上方监控器标签。保存时不带 API 包装层，并使用[文档规定的仪表板文件预置](../../../service-mesh/istio/observability/04-dashboards.md)。仅 ConfigMap 标签不配置提供程序。
+**Grafana**：此完整 dashboard object 需要 datasource UID `prometheus` 和上方 monitor 的 label。保存时不要使用 API wrapper，并使用[有文档记录的 dashboard file provisioning](../../../service-mesh/istio/observability/04-dashboards.md)。单独一个 ConfigMap label 不会配置 provider。
 
 ```json
 {
@@ -1167,7 +1170,7 @@ sum(rate(orders_total{namespace="default",app="order-service",status="payment_fa
 }
 ```
 
-**警报**：通过已安装 Prometheus Operator 选择此规则。最小流量阈值避免无流量时触发比例警报；缺失/抓取失败需要独立信号。阈值是示例，不是业务 SLO 保证。
+**告警：**已安装的 Prometheus Operator 会选中此规则。最小流量阈值避免无流量时触发比例告警；缺失/scrape failure 需要单独信号。阈值仅为示例，不是业务 SLO 保证。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1197,7 +1200,7 @@ spec:
         summary: P95 processing attempt duration exceeds2s
 ```
 
-指标类型、暴露格式和进程模型参阅 [Python 客户端](https://prometheus.github.io/client_python/)及 [JavaScript 客户端](https://github.com/prometheus/client_js)文档。
+有关指标类型、公开格式和进程模型，请参阅 [Python client](https://prometheus.github.io/client_python/) 和 [JavaScript client](https://github.com/prometheus/client_js) 文档。
 
 </details>
 
@@ -1209,12 +1212,12 @@ spec:
 * 简答题 6-10：每题 10 分（共 50 分）
 * **总分：100 分**
 
-**评估标准：**
+**评分标准：**
 
-* 90-100 分：对这些主题理解出色
+* 90-100 分：对这些主题理解优秀
 * 80-89 分：理解良好；部署验证仍需单独进行
 * 70-79 分：一般（建议进一步学习）
-* 60-69 分：低于平均（需要复习基本概念）
+* 60-69 分：低于一般水平（需要复习基本概念）
 * 0-59 分：需要重新学习
 
 ## 学习资源

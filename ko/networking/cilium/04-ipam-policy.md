@@ -94,11 +94,14 @@ ipv6:
 
 ### Multi-Pool과 CiliumPodIPPool
 
-문서화된 모드는 `multi-pool`이며 리소스 API는 여전히 `cilium.io/v2alpha1`입니다. API 접미사만으로 기능 성숙도를 추론하지 않습니다. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
+문서화된 모드는 `multi-pool`이며 리소스 API는 1.20에서 여전히 `cilium.io/v2alpha1`입니다(**[1.21 pre-release]**에서는 `CiliumPodIPPool`이 `cilium.io/v2`로 제공되어 storage version이 되고 `v2alpha1`은 deprecated이며, `spec.ipv4.pool`/`spec.ipv6.pool`로 CIDR별 `reservedRanges`가 추가되는데 이 필드는 `v2`에만 있습니다). API 접미사만으로 기능 성숙도를 추론하지 않습니다. 업스트림 multi-pool 튜토리얼은 `kubeProxyReplacement=true`와 `bpf.masquerade=true`도 요구하므로(iptables masquerade는 `egressMasqueradeInterfaces` 필요) 아래 예제에 포함했습니다. 할당 내부 동작·풀 크기·마이그레이션은 [IPAM 심층 분석](10-ipam-deep-dive.md)을 참고하세요. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
 
 **`multi-pool-values.yaml`**
 
 ```yaml
+kubeProxyReplacement: true
+bpf:
+  masquerade: true
 ipam:
   mode: multi-pool
   operator:
@@ -194,14 +197,13 @@ eni:
   eniTags:
     team: platform
   awsEnablePrefixDelegation: true
-routingMode: native
-endpointRoutes:
-  enabled: true
 ipv4:
   enabled: true
 ipv6:
   enabled: false
 ```
+
+`eni.enabled=true`이면 차트가 이미 `routingMode`를 `native`로 기본 설정하고 endpoint routes를 활성화하므로 해당 키는 생략했습니다(1.20.2 Helm 템플릿 `cilium-configmap.yaml`).
 
 
 `eni.awsEnablePrefixDelegation`에는 해당 prefix를 지원하는 인스턴스·subnet 구성이 필요합니다. IPv4 `/28`은 주소 16개이며 모든 구성에서 Pod 16개를 추가 스케줄링할 수 있다는 뜻은 아닙니다. 기본값은 비활성입니다. 존재하지 않는 `eni-prefix-delegation-enabled` 키를 추가하지 않습니다.

@@ -241,9 +241,14 @@ struct {
 | `bpf/bpf_overlay.c` | Overlay 패킷 경로 |
 | `bpf/bpf_host.c` | 호스트·장치 경로와 지원되는 host firewall 처리 |
 | `bpf/bpf_xdp.c` | 설정된 로드밸런서 가속 등을 포함한 XDP 경로 |
-| `bpf/bpf_sock.c` | connect/sendmsg/recvmsg 서비스 변환 등의 socket-address 훅 |
+| `bpf/bpf_sock.c` | cgroup socket-address 훅(IPv4·IPv6): connect, sendmsg, recvmsg, getpeername, bind/post_bind, sock_release. 소켓 수준 Service 변환에 사용 |
+| `bpf/bpf_wireguard.c` | `cilium_wg0` 디바이스 프로그램(`cil_from_wireguard`/`cil_to_wireguard`), WireGuard로 복호화된 트래픽에 마킹 |
+| `bpf/bpf_sock_term.c` | 삭제된 Service backend에 연결된 소켓을 종료하는 BPF iterator(TCP/UDP) |
+| `bpf/bpf_probes.c`, `bpf/bpf_alignchecker.c` | 데이터패스 프로그램이 아님: 에이전트 시작 시 실행되는 커널 기능 probe와 C/Go 구조체 레이아웃 검사 |
 | `bpf/lib/lb.h` | 공통 로드밸런싱 헬퍼 |
 | `bpf/lib/policy.h` | 공통 정책 헬퍼 |
+
+로더·attach 지점·tail call·프로그램별 상세 흐름은 [eBPF 데이터패스 내부](08-ebpf-datapath-internals.md)를 참고하세요.
 
 이 릴리스에는 최상위 `bpf_lb.c`, `bpf_network.c` 파일이 없습니다. 함수명·기능 조건은 변하므로 개념적인 이름을 소스 파일로 가정하지 말고 정확한 버전을 확인합니다.
 

@@ -139,6 +139,12 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 5: L2-L7 Networking](./networking/cilium/05-l2-l7-networking.md) | [Quiz](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
    - [Part 6: Security and Visibility](./networking/cilium/06-security-visibility.md) | [Quiz](./quizzes/networking/cilium/06-security-visibility-quiz.md)
    - [Part 7: Advanced Topics](./networking/cilium/07-advanced-topics.md) | [Quiz](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [Part 8: eBPF Datapath Internals](./networking/cilium/08-ebpf-datapath-internals.md) | [Quiz](./quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md)
+   - [Part 9: Overlay and Native Routing](./networking/cilium/09-overlay-native-routing.md) | [Quiz](./quizzes/networking/cilium/09-overlay-native-routing-quiz.md)
+   - [Part 10: IPAM Deep Dive](./networking/cilium/10-ipam-deep-dive.md) | [Quiz](./quizzes/networking/cilium/10-ipam-deep-dive-quiz.md)
+   - [Part 11: BGP, Load Balancer IPs and Egress](./networking/cilium/11-bgp-lb-egress-edge.md) | [Quiz](./quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md)
+   - [Part 12: mTLS, Encryption and Identity](./networking/cilium/12-mtls-encryption-identity.md) | [Quiz](./quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md)
+   - [Part 13: Versions, Install/Upgrade and Cluster Mesh](./networking/cilium/13-clustermesh-install-upgrade.md) | [Quiz](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
    - [Networking Concepts](./networking/cilium/networking-concepts.md) | [Quiz](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [Glossary](./networking/cilium/glossary.md) | [Quiz](./quizzes/networking/cilium/glossary-quiz.md)
 8. **Calico Deep Dive**

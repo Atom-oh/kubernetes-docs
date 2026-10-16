@@ -236,7 +236,7 @@ Participate through project issues, design proposals, documentation and communit
 
 ## Current BGP Configuration
 
-The former `CiliumBGPPeeringPolicy` example is obsolete for this baseline. Current configuration separates cluster/node selection, peer settings and advertised prefixes into three **`cilium.io/v2`** resources.
+The former `CiliumBGPPeeringPolicy` example is obsolete for this baseline. Current configuration separates cluster/node selection, peer settings and advertised prefixes into three **`cilium.io/v2`** resources. For the BGP Control Plane, LoadBalancer IP advertisement, Egress Gateway and edge patterns in depth, see [BGP, LB, egress and edge](11-bgp-lb-egress-edge.md); for multi-cluster, see [ClusterMesh install and upgrade](13-clustermesh-install-upgrade.md).
 
 This is a configuration model for an isolated routing lab, not a complete cloud-router setup. It assumes cluster-pool or Kubernetes host-scope IPAM for `PodCIDR` advertisements, a reachable peer router, the corresponding router configuration, and nodes intentionally labeled `cilium-bgp=lab`. `192.0.2.1` is a documentation address; replace it with the real peer IP, without `/32`. Multi-pool IPAM uses a different advertisement type and pool selection.
 
