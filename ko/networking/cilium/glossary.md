@@ -1,7 +1,7 @@
 # 용어 및 약어
 
-> **검토 기준**: Cilium 1.20.1.
-> **최종 검토**: 2026년 9월 12일.
+> **검토 기준**: Cilium 1.20.3.
+> **최종 검토**: 2026년 10월 16일.
 
 Cilium, eBPF, Kubernetes와 네트워킹 용어를 알파벳순으로 정리합니다. 반복된 정의는 하나로 합쳤습니다.
 
@@ -320,12 +320,12 @@ Cilium, eBPF, Kubernetes와 네트워킹 용어를 알파벳순으로 정리합�
 
 ## 공식 근거
 
-- [Cilium identities](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/internals/security-identities.rst)
-- [CiliumIdentity schema](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumidentities.yaml)
-- [Cilium Operator](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/internals/cilium_operator.rst)
-- [Identity management modes](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/identity-management-mode.rst)
-- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
-- [BGP](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
+- [Cilium identities](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/internals/security-identities.rst)
+- [CiliumIdentity schema](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumidentities.yaml)
+- [Cilium Operator](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/internals/cilium_operator.rst)
+- [Identity management modes](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/kubernetes/identity-management-mode.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-wireguard.rst)
+- [BGP](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
 - [Kubernetes CNI/CRI](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
 - [Kubernetes Services](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)

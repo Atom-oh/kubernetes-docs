@@ -1,7 +1,7 @@
 # IPAM 및 네트워크 정책
 
-> **검토 기준**: Cilium 1.20.1, 테스트된 Kubernetes 1.33–1.36. 리소스 API 버전과 플랫폼 조건은 별도로 확인합니다.
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.3, 테스트된 Kubernetes 1.33–1.36. 리소스 API 버전과 플랫폼 조건은 별도로 확인합니다.
+> **최종 검토**: 2026년 10월 16일
 
 ## 실습 환경 설정
 
@@ -37,7 +37,7 @@ Cilium Pod IPAM은 workload 주소를 할당합니다. Service **ClusterIP**는 
 
 Cluster-pool과 Kubernetes host scope 모두 개별 Pod 주소를 로컬에서 할당합니다. 차이는 **노드 prefix**를 누가 할당하는지입니다. 조정이 없어지거나 사용자가 지정한 풀이 VPC·노드·Service·다른 클러스터와 겹치지 않는다고 보장하지 않습니다.
 
-릴리스된 CRD·타입은 일반 CRD-backed 할당에 `pool`, `used`를 사용합니다. 일부 설명에 남아 있는 `available`/`inuse` 대신 설치된 스키마와 모드별 필드를 기준으로 합니다. 1.20.1의 ENI는 인터페이스·multi-pool 경로를 사용하므로 일반 CRD-backed 필드가 모든 ENI 상태의 기준은 아닙니다.
+릴리스된 CRD·타입은 일반 CRD-backed 할당에 `pool`, `used`를 사용합니다. 일부 설명에 남아 있는 `available`/`inuse` 대신 설치된 스키마와 모드별 필드를 기준으로 합니다. 1.20.3의 ENI는 인터페이스·multi-pool 경로를 사용하므로 일반 CRD-backed 필드가 모든 ENI 상태의 기준은 아닙니다.
 
 ### Kubernetes/CNI 통합
 
@@ -691,10 +691,10 @@ Cluster label에는 kubeconfig context가 아니라 설정된 **Cilium cluster �
 
 ## 참고 자료
 
-- [IPAM modes/migration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/index.rst), [cluster pool](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst), [host scope](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/kubernetes.rst), [multi-pool](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/multi-pool.rst), [migration procedure](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool-to-multi-pool.rst)
-- [PodIPPool schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml), [CiliumNode schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml), [ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml), [EKS CNI boundaries](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
-- [Policy rule API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go), [L3 rules](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer3.rst), [L7 rules](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst), [DNS policies](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/dns.rst), [wildcard implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/fqdn/matchpattern/matchpattern.go)
-- [Cluster Mesh setup](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/setup.rst), [architecture](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/intro.rst), [global services](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/global-services.rst), [cross-cluster policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/policy.rst)
+- [IPAM modes/migration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/index.rst), [cluster pool](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/cluster-pool.rst), [host scope](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/kubernetes.rst), [multi-pool](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/multi-pool.rst), [migration procedure](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/cluster-pool-to-multi-pool.rst)
+- [PodIPPool schema](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml), [CiliumNode schema](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml), [ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml), [EKS CNI boundaries](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
+- [Policy rule API](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/rule.go), [L3 rules](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer3.rst), [L7 rules](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst), [DNS policies](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/dns.rst), [wildcard implementation](https://github.com/cilium/cilium/blob/v1.20.3/pkg/fqdn/matchpattern/matchpattern.go)
+- [Cluster Mesh setup](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/clustermesh/setup.rst), [architecture](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/clustermesh/intro.rst), [global services](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/clustermesh/global-services.rst), [cross-cluster policy](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/clustermesh/policy.rst)
 
 
 [메인 페이지로 돌아가기](README.md)

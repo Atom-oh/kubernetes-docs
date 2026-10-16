@@ -2,9 +2,9 @@
 
 ## 개요와 검토 기준
 
-Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 **Cilium/Helm 차트 1.20.1**, Cilium CLI **0.20.0**, Hubble CLI **1.19.4**입니다. Cilium 1.20 호환성 문서의 Kubernetes 테스트 범위는 **1.33–1.36**이며 업스트림 1.37 출시만으로 자동 확대되지 않습니다. 호스트는 AMD64/AArch64 Linux, 커널 **5.10 이상** 또는 문서화된 배포판 동등 조건(예: RHEL 8.10의 backport된 4.18)을 충족해야 합니다. 개별 기능에는 추가 조건이 있습니다.
+Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 **Cilium/Helm 차트 1.20.3**, Cilium CLI **0.20.1**, Hubble CLI **1.20.2**입니다. Cilium 1.20 호환성 문서의 Kubernetes 테스트 범위는 **1.33–1.36**이며 업스트림 1.37 출시만으로 자동 확대되지 않습니다. 호스트는 AMD64/AArch64 Linux, 커널 **5.10 이상** 또는 문서화된 배포판 동등 조건(예: RHEL 8.10의 backport된 4.18)을 충족해야 합니다. 개별 기능에는 추가 조건이 있습니다.
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ### 릴리스 이력
 
@@ -20,6 +20,8 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 | 2026-08-18 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh 문서와 restart/CIDR-policy 처리 등 버그 수정 |
 | 2026-08-18 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | ENI 인터페이스 타이밍, Service/LB 등 수정 |
 | 2026-08-18 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall 지원 및 관련 수정 |
+| 2026-09-16 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | ENI IPAM prefix 할당·해제, 정책 변경 직후 Pod의 정책 revision, LocalRedirectPolicy 회귀 등 버그 수정 |
+| 2026-10-15 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API 의존성 v1.6.3, conntrack GC, `nodeSelector`가 있는 CNP 처리 등 수정, 이 가이드의 현재 검토 기준 |
 
 1.20.0 발표는 **2,660개 이상의 새 커밋**과 **1,100명 이상 기여자의 커뮤니티**를 소개합니다. 후자는 해당 릴리스 작성자 수가 아닌 커뮤니티 규모입니다. 주요 변경은 다음과 같습니다.
 
@@ -84,7 +86,7 @@ Native routing에는 도달 가능한 underlay가 필요하고 tunneling은 VXLA
 | --- | --- |
 | 일반 EC2, Cilium ENI로 VPC CNI 교체 | 업스트림/파트너 관리 CNI이며 AWS가 지원하는 EC2 CNI는 VPC CNI, CNI 소유권·IAM·주소·경로·bootstrap·노드 전환 계획 필요 |
 | 일반 EC2, AWS VPC CNI chaining | VPC CNI가 인터페이스/IPAM을 소유하고 이후 Cilium이 연결, 기존 Pod 재생성과 L7/IPsec 제약 확인 |
-| Hybrid Nodes | AWS 전용 CNI 가이드와 AWS 유지 Cilium 빌드 매트릭스 사용, 업스트림 1.20.1이 자동으로 AWS 지원 빌드가 아님 |
+| Hybrid Nodes | AWS 전용 CNI 가이드와 AWS 유지 Cilium 빌드 매트릭스 사용, 업스트림 1.20.3이 자동으로 AWS 지원 빌드가 아님 |
 | Auto Mode | 대체 CNI/정책 플러그인 미지원, 관리형 NodeClass/네트워킹 사용 |
 | Fargate | 대체 CNI/DaemonSet 설치 미지원 |
 | Windows | Cilium Agent 요구사항은 Linux, 이 레시피를 Windows 워커에 적용하지 않음 |
@@ -123,17 +125,17 @@ serviceAccounts:
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-eni-values.yaml > cilium-eni-rendered.yaml
 
 # 클러스터 준비와 렌더링 결과 검토 후:
-helm install cilium cilium/cilium --version 1.20.1 \
+helm install cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-eni-values.yaml
 ```
 
 설치 소유 경로에서 설정을 관리하세요. 몇 개 키만 있는 `cilium-config`로 교체하면 다른 필수 설정을 잃을 수 있습니다. 이전 `tunnel=disabled` 대신 `routingMode: native`를 사용합니다. ENI 할당/권한과 SNAT 동작은 실제 환경에서 검증해야 하며 렌더링 성공만으로 EC2 네트워킹이 입증되지는 않습니다.
 
-**IPv6 조건:** 1.20.1 ENI IPAM 참조는 IPv6를 beta로 설명하지만 같은 버전 EKS 전제 페이지에는 여전히 IPv4-only ENI 제한이 있습니다. 이 가이드는 IPv4 예제를 유지하고 문서 불일치를 기록하며 어느 한 문장만으로 프로덕션 EKS IPv6 호환성이 증명되었다고 판단하지 않습니다. 별도 IPv6 설계에는 현재 ENI/dual-stack 서브넷 조건을 확인하세요.
+**IPv6 조건:** 1.20.3 ENI IPAM 참조는 IPv6를 beta로 설명하지만 같은 버전 EKS 전제 페이지에는 여전히 IPv4-only ENI 제한이 있습니다. 이 가이드는 IPv4 예제를 유지하고 문서 불일치를 기록하며 어느 한 문장만으로 프로덕션 EKS IPv6 호환성이 증명되었다고 판단하지 않습니다. 별도 IPv6 설계에는 현재 ENI/dual-stack 서브넷 조건을 확인하세요.
 
 ### 대안: VPC CNI Chaining
 
@@ -158,7 +160,7 @@ ENI 교체 values 위에 추가하는 설정이 아닌 **별도 구성**으로 �
 
 ### 클라이언트 도구
 
-워크스테이션 OS/아키텍처에 맞는 공식 Cilium CLI 0.20.0, Hubble CLI 1.19.4 자산을 사용하고 압축 해제 전에 제공된 체크섬을 검증하세요. Linux ARM64/AMD64는 다르며 macOS는 해당 Darwin 자산을 사용합니다. CLI 버전은 Cilium Agent/chart 버전과 별개입니다. [검증된 CLI 설치 안내](../../service-mesh/cilium-service-mesh/README.md)를 참고하세요.
+워크스테이션 OS/아키텍처에 맞는 공식 Cilium CLI 0.20.1, Hubble CLI 1.20.2 자산을 사용하고 압축 해제 전에 제공된 체크섬을 검증하세요. Linux ARM64/AMD64는 다르며 macOS는 해당 Darwin 자산을 사용합니다. CLI 버전은 Cilium Agent/chart 버전과 별개입니다. [검증된 CLI 설치 안내](../../service-mesh/cilium-service-mesh/README.md)를 참고하세요.
 
 ```bash
 cilium version --client
@@ -202,9 +204,9 @@ hubble:
 `cilium-values.yaml`로 저장하고 고정 버전 차트를 렌더링한 후 준비된 클러스터에만 설치합니다.
 
 ```bash
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-values.yaml > cilium-rendered.yaml
-helm install cilium cilium/cilium --version 1.20.1 \
+helm install cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-values.yaml
 cilium status --wait
 ```
@@ -319,7 +321,7 @@ DNS wildcard는 선택한 resolver로 질의를 허용할 뿐 반환된 모든 �
 
 ## Hubble 관측성
 
-위 cluster-pool values는 Relay/UI와 메트릭을 활성화합니다. 기존 설치는 소유 경로에서 의도한 Hubble values를 적용하세요. `cilium hubble enable --ui`는 지원 편의 명령이지만 `cilium hubble enable --metrics=...`는 CLI 0.20.0의 지원 플래그가 아닙니다. Helm의 `hubble.metrics.enabled`를 설정하고 이전 `http`와 `httpV2` handler를 동시에 켜지 마세요.
+위 cluster-pool values는 Relay/UI와 메트릭을 활성화합니다. 기존 설치는 소유 경로에서 의도한 Hubble values를 적용하세요. `cilium hubble enable --ui`는 지원 편의 명령이지만 `cilium hubble enable --metrics=...`는 CLI 0.20.1의 지원 플래그가 아닙니다. Helm의 `hubble.metrics.enabled`를 설정하고 이전 `http`와 `httpV2` handler를 동시에 켜지 마세요.
 
 한 터미널에서 Relay port-forward를 유지합니다.
 
@@ -432,13 +434,13 @@ kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200
 
 ## 참고 자료
 
-- [Cilium 1.20 Kubernetes 호환성](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/compatibility.rst)
-- [Cilium 시스템 요구사항](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
-- [EKS 전제조건](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst)
-- [Cilium ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)
+- [Cilium 1.20 Kubernetes 호환성](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/compatibility.rst)
+- [Cilium 시스템 요구사항](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
+- [EKS 전제조건](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/requirements-eks.rst)
+- [Cilium ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst)
 - [AWS 대체 CNI 지원](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
 - [AWS Hybrid Nodes CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [Cilium L7 정책 의미](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
+- [Cilium L7 정책 의미](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
 - [Hubble 프로젝트](https://github.com/cilium/hubble)
 - [Flannel 네트워킹/정책 통합](https://github.com/flannel-io/flannel)
 - [Calico 비교 용어](../calico/glossary.md)

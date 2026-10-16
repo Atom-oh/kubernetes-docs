@@ -1,6 +1,6 @@
 # Cilium IPAM and Network Policy Quiz
 
-> **Cilium 1.20.1 · 2026-09-12**
+> **Cilium 1.20.3 · 2026-10-16**
 
 ## IPAM
 
@@ -250,7 +250,7 @@
 
     </details>
 
-17. **What is true about rules.kafka in Cilium1.20.1?**
+17. **What is true about rules.kafka in Cilium 1.20.3?**
     - A) It provides topic authorization by default
     - B) It is enabled by changing apiVersion to v2alpha1
     - C) It automatically encrypts the broker connection

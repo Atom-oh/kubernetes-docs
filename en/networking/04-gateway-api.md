@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **API baseline**: Gateway API v1.6 Standard; select the exact bundle supported by your controller.
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 16, 2026
 
 ## Overview
 
@@ -794,19 +794,19 @@ The API's release channel, a feature's Core/Extended/implementation-specific sup
 
 | Implementation checked | Verified scope and important limits |
 |---|---|
-| Istio **1.31.0** | HTTP/gRPC and v1 TCP/TLS routes; UDP listeners are explicitly unsupported. Configurable Envoy data plane, not a guarantee that every Gateway API extension is supported |
-| Cilium **1.20.1** | Gateway API **1.6.1**, including TCPRoute/UDPRoute; combines Cilium networking with Envoy for L7 processing |
-| Envoy Gateway **1.9.1** | Gateway API **1.6.1**; published Kubernetes matrix is **1.33–1.36**. Supports UDP routing and TLS passthrough with their documented transport behavior |
-| AWS Load Balancer Controller **3.5.0** | Gateway API **1.6.0**; ALB handles HTTP/gRPC and NLB handles L4 routes. Only the oldest attached L4 Route is eligible per NLB listener; use one Route per listener |
+| Istio **1.31.2** | HTTP/gRPC and v1 TCP/TLS routes; UDP listeners are explicitly unsupported. Configurable Envoy data plane, not a guarantee that every Gateway API extension is supported |
+| Cilium **1.20.3** | Gateway API **1.6.3**, including TCPRoute/UDPRoute; combines Cilium networking with Envoy for L7 processing |
+| Envoy Gateway **1.9.2** | Gateway API **1.6.1**; published Kubernetes matrix is **1.33–1.36**. Supports UDP routing and TLS passthrough with their documented transport behavior |
+| AWS Load Balancer Controller **3.6.0** | Gateway API **1.6.0**; ALB handles HTTP/gRPC and NLB handles L4 routes. Only the oldest attached L4 Route is eligible per NLB listener; use one Route per listener |
 | AWS Gateway API Controller **2.1.3** | VPC Lattice integration; v2.1 requires Gateway API **1.5+**. HTTPRoute, GRPCRoute and TLSRoute are supported. TCP resource access is a separate Lattice resource-configuration model, not generic TCPRoute/UDPRoute support |
 | Contour **1.33.7** | Built with Gateway API **1.3.0** and release-tested on Kubernetes **1.32–1.34**. Documents HTTP/gRPC/TCP/TLS routes; use its matching channel/provisioning configuration rather than applying a newer bundle blindly |
-| NGINX Gateway Fabric **2.7.0** | Gateway API **1.6.1**, published Kubernetes minimum **1.32**; adds v1 TCPRoute/UDPRoute support. Separate product from retired community ingress-nginx |
+| NGINX Gateway Fabric **2.8.0** | Gateway API **1.6.3**, published Kubernetes minimum **1.32**; v1 TCPRoute/UDPRoute support (added in 2.7.0). Separate product from retired community ingress-nginx |
 
 These notes replace a versionless yes/no feature grid. Consult each implementation's documentation for individual filters, TLS policies, extensions, supported versions and operating requirements. Contour's bundled compatibility page does not have a 1.33.7-specific row; the API dependency and Kubernetes range above are taken from that exact release's module file and release notes.
 
 ## AWS Load Balancer Controller Gateway API Support
 
-Gateway API reached GA in **LBC v3.0.0 on 2026-01-23**. Existing Ingress and Service APIs remain supported, so a Gateway migration can be planned independently of the controller upgrade. Current v3.5.0 requires the compatible Gateway API and LBC Gateway CRDs described in the [LBC installation guide](./03-aws-lb-controller.md). EKS Auto Mode has a separate managed implementation; self-managed LBC features do not automatically describe Auto Mode.
+Gateway API reached GA in **LBC v3.0.0 on 2026-01-23**. Existing Ingress and Service APIs remain supported, so a Gateway migration can be planned independently of the controller upgrade. Current v3.6.0 requires the compatible Gateway API and LBC Gateway CRDs described in the [LBC installation guide](./03-aws-lb-controller.md). EKS Auto Mode has a separate managed implementation; self-managed LBC features do not automatically describe Auto Mode.
 
 The retired controller is the Kubernetes community **ingress-nginx** project, whose maintenance ended in March 2026. This does not mean the Kubernetes Ingress API or F5's other NGINX products were retired.
 
@@ -828,7 +828,7 @@ lbc-migrate -f ingress.yaml --output-dir ./gateway-output/
 
 The converter does not generate the existing Deployments/Services or revalidate all Ingress annotations. Review unsupported annotations, Service/IngressClassParams overrides, cross-namespace IngressGroup membership, rule precedence and TLS settings. External target groups already associated with the old ALB cannot simply be attached to the new ALB simultaneously; plan a compatible duplicate/cutover strategy.
 
-The tools provide a migration workflow, not a zero-downtime guarantee. See the [versioned migration guide](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/migrate_from_ingress.md) and [CLI reference](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/lbc_migrate_reference.md).
+The tools provide a migration workflow, not a zero-downtime guarantee. See the [versioned migration guide](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress2gateway/migrate_from_ingress.md) and [CLI reference](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress2gateway/lbc_migrate_reference.md).
 
 ## Migrating from Ingress to Gateway API
 
@@ -1258,14 +1258,14 @@ spec:
 - [Gateway API Official Documentation](https://gateway-api.sigs.k8s.io/)
 - [Gateway API GitHub](https://github.com/kubernetes-sigs/gateway-api)
 - [Istio Gateway API Support](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
-- [Cilium Gateway API](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
+- [Cilium Gateway API](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
 - [AWS Gateway API Controller](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs)
 - [Envoy Gateway](https://gateway.envoyproxy.io/)
 
 - [Gateway API 1.6 versioning](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/docs/concepts/versioning.md)
 - [ReferenceGrant and attachment exceptions](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/reference/api-types/referencegrant.md)
-- [Envoy Gateway compatibility](https://github.com/envoyproxy/gateway/blob/v1.9.1/site/content/en/news/releases/matrix.md)
-- [NGINX Gateway Fabric 2.7 release](https://github.com/nginx/nginx-gateway-fabric/blob/v2.7.0/CHANGELOG.md)
+- [Envoy Gateway compatibility](https://github.com/envoyproxy/gateway/blob/v1.9.2/site/content/en/news/releases/matrix.md)
+- [NGINX Gateway Fabric 2.8 release](https://github.com/nginx/nginx-gateway-fabric/blob/v2.8.0/CHANGELOG.md)
 - [Contour 1.33.7 release](https://github.com/projectcontour/contour/releases/tag/v1.33.7)
 - [Community ingress-nginx retirement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
 

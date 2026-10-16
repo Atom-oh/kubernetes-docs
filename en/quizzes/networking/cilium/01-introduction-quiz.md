@@ -1,6 +1,6 @@
 # Cilium Introduction and Basic Concepts Quiz
 
-> **Baseline**: Cilium 1.20.1 / CLI 0.20.0. **Last Updated**: September 12, 2026
+> **Baseline**: Cilium 1.20.3 / CLI 0.20.1. **Last Updated**: October 16, 2026
 
 ## Multiple Choice Questions
 
@@ -228,7 +228,7 @@ Kubelet communicates with the runtime through CRI, and the runtime invokes CNI. 
 
 ## Hands-on Questions
 
-16. Using the installed CLI, show a fresh Cilium 1.20.1 installation with the prepared lab values and explicit context.
+16. Using the installed CLI, show a fresh Cilium 1.20.3 installation with the prepared lab values and explicit context.
 
 <details>
 <summary>Show Answer</summary>
@@ -238,7 +238,7 @@ Kubelet communicates with the runtime through CRI, and the runtime invokes CNI. 
 ```bash
 CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
 cilium version --client
-cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.1 \
+cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.3 \
   --values cilium-lab-values.yaml
 cilium status --context "$CILIUM_LAB_CONTEXT" --wait
 ```

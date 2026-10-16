@@ -1,11 +1,11 @@
 # Amazon VPC CNI
 
-> **Review baseline**: VPC CNI / Helm chart 1.23.0; network policy agent 1.4.1.
-> **Last reviewed**: October 12, 2026.
+> **Review baseline**: VPC CNI / Helm chart 1.23.2; network policy agent 1.4.3.
+> **Last reviewed**: October 16, 2026.
 >
 > **Current EKS add-on listing**: AWS lists `v1.23.1-eksbuild.1` for Kubernetes 1.31–1.37.
 >
-> **Example pin**: Configuration examples below use upstream/Helm 1.23.0. Upstream, Helm and EKS `eksbuild` versions are separate identifiers. Check availability for the actual cluster version and Region.
+> **Example pin**: Configuration examples below use upstream/Helm 1.23.2. Upstream, Helm and EKS `eksbuild` versions are separate identifiers. Check availability for the actual cluster version and Region.
 
 ## Table of Contents
 
@@ -169,16 +169,16 @@ Pin the whole chart, which also selects the matching init and policy-agent compo
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
-helm show values eks/aws-vpc-cni --version 1.23.0 > chart-defaults.yaml
+helm show values eks/aws-vpc-cni --version 1.23.2 > chart-defaults.yaml
 helm template aws-vpc-cni eks/aws-vpc-cni --namespace kube-system \
-  --version 1.23.0 -f helm-values.yaml > rendered-cni.yaml
+  --version 1.23.2 -f helm-values.yaml > rendered-cni.yaml
 ```
 
 Prepare `helm-values.yaml` for the actual IP family, CNI ServiceAccount/IAM and selected features. The basic Linux examples in this guide use IPv4. Review the rendered resources before applying:
 
 ```bash
 helm upgrade --install aws-vpc-cni eks/aws-vpc-cni --namespace kube-system \
-  --version 1.23.0 -f helm-values.yaml --wait --timeout 10m
+  --version 1.23.2 -f helm-values.yaml --wait --timeout 10m
 ```
 
 These commands assume a clean or Helm-owned installation. Existing EKS-managed or bootstrap-owned resources need a planned ownership migration. EKS partition/registry access and image-pull prerequisites must also match the environment.
@@ -650,15 +650,15 @@ The pool ratio is limited to IPv4 and a positive observed denominator. It is an 
 
 ## References
 
-- [VPC CNI 1.23.0 documentation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
-- [VPC CNI Helm values](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/values.yaml)
-- [Chart version metadata](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/Chart.yaml)
-- [Released CNI manifest](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/config/master/aws-k8s-cni.yaml)
-- [IPAMD implementation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/ipamd.go)
-- [IPAMD introspection server](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/introspect.go)
-- [IPAM datastore](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/datastore/data_store.go)
-- [IPAMD metric definitions](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/utils/prometheusmetrics/prometheusmetrics.go)
-- [Network policy agent 1.4.1](https://github.com/aws/aws-network-policy-agent/blob/v1.4.1/README.md)
+- [VPC CNI 1.23.2 documentation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/README.md)
+- [VPC CNI Helm values](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/charts/aws-vpc-cni/values.yaml)
+- [Chart version metadata](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/charts/aws-vpc-cni/Chart.yaml)
+- [Released CNI manifest](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/config/master/aws-k8s-cni.yaml)
+- [IPAMD implementation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/ipamd.go)
+- [IPAMD introspection server](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/introspect.go)
+- [IPAM datastore](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/datastore/data_store.go)
+- [IPAMD metric definitions](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/utils/prometheusmetrics/prometheusmetrics.go)
+- [Network policy agent 1.4.3](https://github.com/aws/aws-network-policy-agent/blob/v1.4.3/README.md)
 - [AWS Helm chart index](https://aws.github.io/eks-charts/index.yaml)
 - [EKS security groups for Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 - [SGPP operating considerations](https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html)

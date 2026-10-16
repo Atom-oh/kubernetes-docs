@@ -1,6 +1,6 @@
 # Cilium IPAM 및 네트워크 정책 퀴즈
 
-> **Cilium 1.20.1 · 2026-09-12**
+> **Cilium 1.20.3 · 2026-10-16**
 
 ## IPAM
 
@@ -250,7 +250,7 @@
 
     </details>
 
-17. **Cilium1.20.1의 rules.kafka에 대한 설명으로 맞는 것은 무엇인가요?**
+17. **Cilium 1.20.3의 rules.kafka에 대한 설명으로 맞는 것은 무엇인가요?**
     - A) 기본적으로 topic 인가 제공
     - B) apiVersion을 v2alpha1로 바꾸면 활성화
     - C) Broker 연결을 자동 암호화

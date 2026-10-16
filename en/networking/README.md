@@ -1,8 +1,8 @@
 # Kubernetes Networking
 
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 >
-> **Pinned examples**: Cilium 1.20.1, Calico Open Source 3.32.2, Flannel 0.28.9, and upstream AWS VPC CNI/Helm chart 1.23.0.
+> **Pinned examples**: Cilium 1.20.3, Calico Open Source 3.32.2, Flannel 0.28.10, and upstream AWS VPC CNI/Helm chart 1.23.2.
 >
 > **Current release information**: AWS lists EKS-managed VPC CNI add-on `v1.23.1-eksbuild.1` for Kubernetes 1.31–1.37. Calico 3.33.0 is the latest Open Source release and is tested on Kubernetes 1.35–1.37. Review its release notes before changing the pinned examples.
 >
@@ -204,10 +204,10 @@ The runtime passes configuration to the plugin through the CNI interface; a sepa
 
 | Project / scope | Networking and policy | Features and limits to distinguish |
 |---|---|---|
-| **Cilium 1.20.1** | eBPF networking; Envoy for relevant L7 functions; Cilium network policies and Hubble | Linux worker dataplane, with AMD64/Arm64 requirements. Windows CLI availability is not Windows CNI support. WireGuard/IPsec and Beta ztunnel mTLS have distinct scopes. |
+| **Cilium 1.20.3** | eBPF networking; Envoy for relevant L7 functions; Cilium network policies and Hubble | Linux worker dataplane, with AMD64/Arm64 requirements. Windows CLI availability is not Windows CNI support. WireGuard/IPsec and Beta ztunnel mTLS have distinct scopes. |
 | **Calico Open Source 3.32.2 examples; 3.33.0 current** | Routing/encapsulation choices; iptables, nftables and eBPF options; ordered policy tiers and host/workload policy | Calico 3.33.0 is tested on Kubernetes 1.35–1.37. Review its release notes before upgrading. Windows has separate limits, including no Linux eBPF or WireGuard dataplane. Whisker/Goldmane flow observability is available as Tech Preview. Consult the edition matrix for paid capabilities. |
-| **Flannel 0.28.9** | Host subnet allocation and inter-node transport; VXLAN, host-gw and other backends | `flanneld` itself does not enforce NetworkPolicy; the chart's optional `netpol.enabled` deploys a SIGs policy controller. WireGuard is a documented backend; IPsec is experimental. Windows VXLAN has specific settings/limits. |
-| **AWS VPC CNI 1.23.0 upstream/Helm examples; EKS add-on `v1.23.1-eksbuild.1`** | VPC address allocation and EC2 ENIs/prefixes; EKS standard and Admin network policy capabilities on supported Linux EC2 nodes | AWS lists this managed add-on build for Kubernetes 1.31–1.37; verify regional availability and the cluster's actual version. EKS Auto Mode is a managed networking implementation with additional DNS policy capabilities. Windows, Fargate, custom networking, prefix delegation and multi-NIC support have separate conditions. |
+| **Flannel 0.28.10** | Host subnet allocation and inter-node transport; VXLAN, host-gw and other backends | `flanneld` itself does not enforce NetworkPolicy; the chart's optional `netpol.enabled` deploys a SIGs policy controller. WireGuard is a documented backend; IPsec is experimental. Windows VXLAN has specific settings/limits. |
+| **AWS VPC CNI 1.23.2 upstream/Helm examples; EKS add-on `v1.23.1-eksbuild.1`** | VPC address allocation and EC2 ENIs/prefixes; EKS standard and Admin network policy capabilities on supported Linux EC2 nodes | AWS lists this managed add-on build for Kubernetes 1.31–1.37; verify regional availability and the cluster's actual version. EKS Auto Mode is a managed networking implementation with additional DNS policy capabilities. Windows, Fargate, custom networking, prefix delegation and multi-NIC support have separate conditions. |
 | **Original Weave Net project** | Historical overlay networking implementation | The original `weaveworks/weave` repository is archived. Do not describe it as an active, supported default for a new cluster. |
 
 ### Policy, Encryption and Observability
@@ -258,7 +258,7 @@ aws eks describe-addon-configuration --region "$EKS_REGION" --addon-name vpc-cni
   --addon-version "$VPC_CNI_ADDON_VERSION"
 ```
 
-The upstream 1.23.0 release number and an EKS `eksbuild` version are different identifiers. AWS's current add-on table lists `v1.23.1-eksbuild.1` for Kubernetes 1.31–1.37; use `describe-addon-versions` in the target Region to select a compatible build. Merge changes with the intended managed add-on configuration; do not blindly select `latest` or replace unrelated values. A migration from a third-party policy implementation also needs removal of its existing enforcement state and a tested node/workload transition plan.
+The upstream 1.23.2 release number and an EKS `eksbuild` version are different identifiers. AWS's current add-on table lists `v1.23.1-eksbuild.1` for Kubernetes 1.31–1.37; use `describe-addon-versions` in the target Region to select a compatible build. Merge changes with the intended managed add-on configuration; do not blindly select `latest` or replace unrelated values. A migration from a third-party policy implementation also needs removal of its existing enforcement state and a tested node/workload transition plan.
 
 ## EKS Networking Fundamentals
 
@@ -304,7 +304,7 @@ This depicts secondary-IP mode only. A warm ENI is a configurable allocation str
 | m5.2xlarge | 4 | 15 | 58 |
 | c5.4xlarge | 8 | 30 | 234 |
 
-These values are verified against the VPC CNI 1.23.0 instance limits and legacy max-Pods table. The historical calculation is `ENIs × (IPv4 slots per ENI − 1) + 2`; it is not a current universal recommendation. Prefix delegation, custom networking, branch ENIs and multiple network cards change address capacity. Kubernetes scheduling is also bounded by kubelet `maxPods` and resources. EKS managed node groups cap `maxPods` at 110 for instances with fewer than 30 vCPUs and 250 otherwise; available IP count alone does not override that cap.
+These values are verified against the VPC CNI 1.23.2 instance limits and legacy max-Pods table. The historical calculation is `ENIs × (IPv4 slots per ENI − 1) + 2`; it is not a current universal recommendation. Prefix delegation, custom networking, branch ENIs and multiple network cards change address capacity. Kubernetes scheduling is also bounded by kubelet `maxPods` and resources. EKS managed node groups cap `maxPods` at 110 for instances with fewer than 30 vCPUs and 250 otherwise; available IP count alone does not override that cap.
 
 ### EKS Networking Considerations
 
@@ -400,6 +400,8 @@ These five connectivity options differ in layer and traffic model. Measured late
 | VPC Lattice | Application and resource networking | HTTP/HTTPS services support L7 routing and optional IAM authorization; TLS passthrough and resource configurations have different capabilities |
 
 GWLB inserts inspection appliances such as firewalls and IDS/IPS into an IP path through a Gateway Load Balancer endpoint. Its default flow stickiness uses five fields; supported configurations can instead use two or three. Validate forward and return routes, appliance health, encapsulation MTU, NACLs and the security groups of the actual workloads/appliances. GWLB itself does not have an ALB-style security group, and flow stickiness does not replace failure testing.
+
+For security design see [WAF/origin protection](../security/14-waf-edge-api-security.md), [Palo Alto/Fortinet NGFW](../security/15-ngfw-paloalto-fortinet.md) and [GWLB/GENEVE paths and failures](../security/16-gwlb-geneve-inspection.md). GWLBE also does not support SGs. For all-unhealthy targets AWS describes per-flow target selection and drops until recovery, with no direct appliance bypass. Review reduced-tuple stickiness, cross-zone, NAT and TGW appliance mode together.
 
 > 📎 The full EKS/VPC Lattice integration (Gateway API Controller, IAM authorization, routing) is in [VPC Lattice](02-vpc-lattice.md).
 
@@ -691,10 +693,10 @@ After the [beginner course](beginner/README.md), continue with the [Kernel Netwo
 - [Calico policy tiers](https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy)
 - [Calico Whisker flow logs](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
 - [Calico Windows limitations](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
-- [Flannel 0.28.9 networking and policy](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/README.md)
-- [Flannel backends](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md)
+- [Flannel 0.28.10 networking and policy](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.10/README.md)
+- [Flannel backends](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.10/Documentation/backends.md)
 - [Original Weave repository status](https://api.github.com/repos/weaveworks/weave)
-- [AWS VPC CNI 1.23.0](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
+- [AWS VPC CNI 1.23.2](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/README.md)
 - [Amazon EKS latest VPC CNI add-on versions](https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html)
 - [EKS network policy configuration](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
 - [EKS standard and Admin network policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
@@ -706,8 +708,8 @@ After the [beginner course](beginner/README.md), continue with the [Kernel Netwo
 - [Netshoot v0.16 image metadata](https://hub.docker.com/v2/repositories/nicolaka/netshoot/tags/v0.16)
 - [Netshoot v0.16 Dockerfile](https://raw.githubusercontent.com/nicolaka/netshoot/v0.16/Dockerfile)
 - [Tetragon runtime security](https://tetragon.io/docs/overview/)
-- [AWS LBC 3.5 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md)
-- [AWS LBC 3.5 Ingress configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
+- [AWS LBC 3.6 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/nlb.md)
+- [AWS LBC 3.6 Ingress configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress/annotations.md)
 - [Gateway Load Balancer concepts](https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-load-balancers.html)
 - [GENEVE encapsulation (RFC 8926)](https://www.rfc-editor.org/rfc/rfc8926)
 - [VPC DNS resolver](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)

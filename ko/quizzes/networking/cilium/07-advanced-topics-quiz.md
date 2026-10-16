@@ -1,7 +1,7 @@
 # Cilium 고급 퀴즈
 
-> **검토 기준**: Cilium 1.20.1; Cilium CLI 0.20.0; Hubble CLI 1.19.4.
-> **최종 검토**: 2026년 9월 12일.
+> **검토 기준**: Cilium 1.20.3; Cilium CLI 0.20.1; Hubble CLI 1.20.2.
+> **최종 검토**: 2026년 10월 16일.
 
 [본문으로 돌아가기](../../../networking/cilium/07-advanced-topics.md)
 

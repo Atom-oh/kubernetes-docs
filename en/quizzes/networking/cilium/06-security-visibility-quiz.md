@@ -1,7 +1,7 @@
 # Cilium Security and Visibility Quiz
 
-> **Review baseline**: Cilium 1.20.1; Hubble CLI 1.19.4.
-> **Last reviewed**: September 12, 2026.
+> **Review baseline**: Cilium 1.20.3; Hubble CLI 1.20.2.
+> **Last reviewed**: October 16, 2026.
 
 [Return to the guide](../../../networking/cilium/06-security-visibility.md)
 

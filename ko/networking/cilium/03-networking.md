@@ -1,7 +1,7 @@
 # 네트워킹 모델 및 VXLAN
 
-> **검토 기준**: Cilium 1.20.1, 테스트된 Kubernetes 1.33–1.36, Linux 5.10+ 또는 RHEL 8.10의 4.18 같은 문서화된 동등 백포트.
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.3, 테스트된 Kubernetes 1.33–1.36, Linux 5.10+ 또는 RHEL 8.10의 4.18 같은 문서화된 동등 백포트.
+> **최종 검토**: 2026년 10월 16일
 
 > 📎 Ethernet, ARP 등 링크 계층 기초는 [네트워크 기초 Part 1](../../basics/06-network-fundamentals-part1.md)을 참고하세요.
 
@@ -78,7 +78,7 @@ IP가 UDP를 운반하며 외부 IP 헤더 자체가 외부 UDP 헤더 안에 �
 
 외부 Ethernet 헤더는 이 underlay IP MTU 밖에 있습니다. 암호화, Geneve 옵션, 다른 경로는 계산을 바꿀 수 있습니다. 유효 route MTU와 Pod veth의 device MTU가 반드시 같지는 않습니다.
 
-Cilium 1.20.1의 Helm **`MTU`는 기반 네트워크 MTU를 덮어쓰며**, 그 뒤 Cilium이 경로 오버헤드를 계산합니다. `MTU: 0`은 자동 탐지입니다. `MTU: 1450`을 “최종 Pod payload MTU”로 생각하고 넣으면 터널 오버헤드를 다시 뺄 수 있습니다. 로컬 인터페이스 탐지로 전체 경로의 최소 MTU까지 증명하지는 못합니다.
+Cilium 1.20.3의 Helm **`MTU`는 기반 네트워크 MTU를 덮어쓰며**, 그 뒤 Cilium이 경로 오버헤드를 계산합니다. `MTU: 0`은 자동 탐지입니다. `MTU: 1450`을 “최종 Pod payload MTU”로 생각하고 넣으면 터널 오버헤드를 다시 뺄 수 있습니다. 로컬 인터페이스 탐지로 전체 경로의 최소 MTU까지 증명하지는 못합니다.
 
 ### VXLAN과 다른 캡슐화 비교
 
@@ -116,7 +116,7 @@ Underlay에는 모든 Pod prefix 대신 노드·터널 경로가 필요합니다
 
 `autoDirectNodeRoutes: true`는 같은 L2 네트워크를 공유하는 노드의 직접 PodCIDR 경로를 설치합니다. 여러 L2 구간에서는 `directRoutingSkipUnreachable`로 직접 도달하지 못하는 경로를 건너뛰고 별도로 작동하는 라우팅 경로를 사용할 수 있습니다. Overlay 터널로 fallback하는 기능이 아닙니다.
 
-**Tunnel routing과 `autoDirectNodeRoutes: true`를 조합하면 안 됩니다. Cilium 1.20.1은 시작 시 이 조합을 명시적으로 거부합니다.** 기존 “하이브리드 모드” 예제는 잘못되었습니다. Native routing에서도 설정한 Geneve DSR 같은 기능별 캡슐화는 가능하지만 별도 서비스 기능입니다.
+**Tunnel routing과 `autoDirectNodeRoutes: true`를 조합하면 안 됩니다. Cilium 1.20.3은 시작 시 이 조합을 명시적으로 거부합니다.** 기존 “하이브리드 모드” 예제는 잘못되었습니다. Native routing에서도 설정한 Geneve DSR 같은 기능별 캡슐화는 가능하지만 별도 서비스 기능입니다.
 
 Cilium BGP Control Plane은 설정된 Pod·Service prefix를 peer에 광고합니다. **로컬 데이터플레인을 프로그래밍하지 않으므로** 누락된 클러스터 내부 경로를 자동 설치하는 구성 요소로 생각하면 안 됩니다.
 
@@ -203,7 +203,7 @@ VXLAN 선택 예제입니다.
 
 ```bash
 kubectl config current-context
-cilium install --version 1.20.1 --values lab-common.yaml --values mode-vxlan.yaml
+cilium install --version 1.20.3 --values lab-common.yaml --values mode-vxlan.yaml
 cilium status --wait
 ```
 
@@ -221,7 +221,7 @@ cilium connectivity perf --test-namespace cilium-net-perf \
   --report-dir ./cilium-net-perf-results
 ```
 
-Duration은 전체 실행 10초가 아니라 각 test case·sample의 시간입니다. 테스트 workload와 네트워크 부하를 만듭니다. CLI 0.20.0은 namespace에 순번을 붙입니다(기본 단일 suite는 `cilium-net-perf-1`). 결과와 버전·배치·설정을 함께 저장하며 처리량·지연 수치를 보장하지 않습니다.
+Duration은 전체 실행 10초가 아니라 각 test case·sample의 시간입니다. 테스트 workload와 네트워크 부하를 만듭니다. CLI 0.20.1은 namespace에 순번을 붙입니다(기본 단일 suite는 `cilium-net-perf-1`). 결과와 버전·배치·설정을 함께 저장하며 처리량·지연 수치를 보장하지 않습니다.
 
 TCP request/response, 연결 생성률, stream은 다른 질문에 답합니다. 별도로 준비한 iperf3를 사용한다면 UDP 테스트에도 TCP 제어 연결과 UDP 데이터 경로가 필요합니다. TCP 5201만 노출한 Service로는 부족합니다. 제공한 UDP 전송률은 실제 달성 처리량이 아닙니다.
 
@@ -229,10 +229,10 @@ TCP request/response, 연결 생성률, stream은 다른 질문에 답합니다.
 
 ## 참고 자료
 
-- [Cilium 1.20.1 routing](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/routing.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml), [startup validation](https://github.com/cilium/cilium/blob/v1.20.1/daemon/cmd/daemon_main.go), [MTU calculation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/mtu/mtu.go), [MTU option](https://github.com/cilium/cilium/blob/v1.20.1/pkg/mtu/cell.go)
+- [Cilium 1.20.3 routing](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/routing.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml), [startup validation](https://github.com/cilium/cilium/blob/v1.20.3/daemon/cmd/daemon_main.go), [MTU calculation](https://github.com/cilium/cilium/blob/v1.20.3/pkg/mtu/mtu.go), [MTU option](https://github.com/cilium/cilium/blob/v1.20.3/pkg/mtu/cell.go)
 - [VXLAN RFC 7348](https://www.rfc-editor.org/rfc/rfc7348.txt), [Geneve RFC 8926](https://www.rfc-editor.org/rfc/rfc8926.txt), [GRE RFC 2784](https://www.rfc-editor.org/rfc/rfc2784.txt), [NVGRE RFC 7637](https://www.rfc-editor.org/rfc/rfc7637.txt)
-- [BGP Control Plane](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst), [AWS ENI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst), [EKS alternate CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html), [GKE Dataplane V2](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2), [Azure IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/azure.rst)
-- [CLI 0.20.0 connectivity/perf options](https://github.com/cilium/cilium-cli/blob/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go), [iperf3 invocation](https://software.es.net/iperf/invoking.html), [kubectl version skew](https://kubernetes.io/releases/version-skew-policy/)
+- [BGP Control Plane](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane.rst), [AWS ENI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst), [EKS alternate CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html), [GKE Dataplane V2](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2), [Azure IPAM](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/azure.rst)
+- [CLI 0.20.1 connectivity/perf options](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go), [iperf3 invocation](https://software.es.net/iperf/invoking.html), [kubectl version skew](https://kubernetes.io/releases/version-skew-policy/)
 
 
 [메인 페이지로 돌아가기](README.md)

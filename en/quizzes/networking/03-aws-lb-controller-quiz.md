@@ -1,6 +1,6 @@
 # AWS Load Balancer Controller Quiz
 
-Based on the self-managed LBC v3.5.0 guide.
+Based on the self-managed LBC v3.6.0 guide.
 
 ## 1. What does AWS Load Balancer Controller manage?
 

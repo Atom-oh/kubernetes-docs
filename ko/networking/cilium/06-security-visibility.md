@@ -1,11 +1,11 @@
 # 보안 및 가시성
 
-> **검토 기준**: Cilium 1.20.1, Cilium CLI 0.20.0, Hubble CLI 1.19.4.
-> **최종 검토**: 2026년 9월 12일. Cilium 1.20의 Kubernetes 호환 범위는 1.33–1.36이며, kubectl은 API 서버의 지원 버전 차이 범위에 맞춥니다.
+> **검토 기준**: Cilium 1.20.3, Cilium CLI 0.20.1, Hubble CLI 1.20.2.
+> **최종 검토**: 2026년 10월 16일. Cilium 1.20의 Kubernetes 호환 범위는 1.33–1.36이며, kubectl은 API 서버의 지원 버전 차이 범위에 맞춥니다.
 
 ## 실습 환경 설정
 
-스케줄링 가능한 Linux 노드가 최소 2개이고 DNS와 정책 적용이 정상인 기존 Cilium 1.20.1 테스트 클러스터를 사용합니다. EKS 제약과 검증된 CLI 다운로드를 포함한 [설치 및 플랫폼 전제 조건](README.md)을 먼저 확인합니다. 이 예제는 CNI를 설치하거나 교체하지 않습니다. Helm, kubectl, Cilium/Hubble CLI와 jq가 필요합니다.
+스케줄링 가능한 Linux 노드가 최소 2개이고 DNS와 정책 적용이 정상인 기존 Cilium 1.20.3 테스트 클러스터를 사용합니다. EKS 제약과 검증된 CLI 다운로드를 포함한 [설치 및 플랫폼 전제 조건](README.md)을 먼저 확인합니다. 이 예제는 CNI를 설치하거나 교체하지 않습니다. Helm, kubectl, Cilium/Hubble CLI와 jq가 필요합니다.
 
 실습은 `kube-system`의 `k8s-app=kube-dns` 레이블을 가진 CoreDNS Pod를 가정합니다. 실제 DNS 경로를 확인해야 하며, NodeLocal DNS나 다른 배포판은 목적지와 포트가 다를 수 있습니다. 기존 정책, 프록시 구성과 플랫폼 제약도 결과에 영향을 줍니다.
 
@@ -33,7 +33,7 @@ hubble:
 ```
 ```bash
 helm upgrade cilium cilium/cilium --namespace kube-system \
-  --version 1.20.1 --reuse-values --values hubble-values.yaml --wait
+  --version 1.20.3 --reuse-values --values hubble-values.yaml --wait
 cilium status --wait
 # Terminal 1: keep this process running; stop it with Ctrl-C.
 cilium hubble port-forward
@@ -75,7 +75,7 @@ Cilium은 네트워크 정책, 엔드포인트 ID와 선택적 암호화를 제�
 
 ### ID, 인증과 암호화
 
-SPIRE 기반 Cilium **상호 인증은 Beta**이며 보안 ID에 대한 별도 경로의 핸드셰이크를 수행합니다. 이 핸드셰이크 자체는 애플리케이션 트래픽을 암호화하지 않습니다. 문서화된 제약에는 ClusterMesh 미지원과 임의의 외부 mTLS 시스템과의 비호환이 포함됩니다. 별도의 **ztunnel 워크로드 mTLS도 Beta**이며 등록과 인증서 전제 조건이 따로 있습니다. ID 선택자만으로 어느 기능도 자동 활성화되지 않습니다.
+SPIRE 기반 Cilium **상호 인증은 Beta**이며 보안 ID에 대한 별도 경로의 핸드셰이크를 수행합니다. 이 핸드셰이크 자체는 애플리케이션 트래픽을 암호화하지 않습니다. 문서화된 제약에는 ClusterMesh 미지원과 임의의 외부 mTLS 시스템과의 비호환이 포함됩니다. 1.20 업그레이드 안내는 상호 인증을 폐기 예정(deprecated)으로 표시하고 ztunnel 투명 암호화를 대안으로 제시합니다. 별도의 **ztunnel 워크로드 mTLS도 Beta**이며 등록과 인증서 전제 조건이 따로 있습니다. ID 선택자만으로 어느 기능도 자동 활성화되지 않습니다.
 
 ### 암호화 구성
 
@@ -497,19 +497,19 @@ done
 
 ## 공식 근거
 
-- [Cilium policy enforcement](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/intro.rst)
+- [Cilium policy enforcement](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/policy/intro.rst)
 - [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [HTTP policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst)
-- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst)
-- [Hubble setup](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/setup.rst)
-- [Metrics](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/metrics.rst)
-- [Flow exporter](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/configuration/export.rst)
-- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
-- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
-- [Mutual authentication](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [ztunnel](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
+- [HTTP policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/policy/layer7.rst)
+- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/dns.rst)
+- [Hubble setup](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/observability/hubble/setup.rst)
+- [Metrics](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/observability/metrics.rst)
+- [Flow exporter](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/observability/hubble/configuration/export.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-wireguard.rst)
+- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-ipsec.rst)
+- [Mutual authentication](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [ztunnel](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-ztunnel.rst)
 - [Tetragon](https://raw.githubusercontent.com/cilium/tetragon/main/README.md)
-- [Hubble CLI filters](https://raw.githubusercontent.com/cilium/hubble/v1.19.4/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows.go)
+- [Hubble CLI filters](https://raw.githubusercontent.com/cilium/hubble/v1.20.2/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows.go)
 
 [메인 페이지로 돌아가기](README.md)
 

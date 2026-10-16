@@ -1,7 +1,7 @@
 # Glossary Quiz
 
-> **Review baseline**: Cilium 1.20.1.
-> **Last reviewed**: September 12, 2026.
+> **Review baseline**: Cilium 1.20.3.
+> **Last reviewed**: October 16, 2026.
 
 This quiz tests your understanding of key terms and concepts related to Cilium, eBPF, Kubernetes, and networking.
 

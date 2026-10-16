@@ -1,7 +1,7 @@
 # eBPF 기술 심층 분석
 
-> **검토 기준**: Cilium 1.20.1, Linux 5.10+ 또는 문서화된 동등 백포트(예: RHEL 8.10의 4.18 커널), 테스트된 Kubernetes 1.33–1.36. 개별 BPF 기능에는 별도 조건이 있습니다.
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.3, Linux 5.10+ 또는 문서화된 동등 백포트(예: RHEL 8.10의 4.18 커널), 테스트된 Kubernetes 1.33–1.36. 개별 BPF 기능에는 별도 조건이 있습니다.
+> **최종 검토**: 2026년 10월 16일
 
 ## 실습 환경 설정
 
@@ -235,7 +235,7 @@ struct {
 
 ### Cilium 주요 eBPF 프로그램 상세 설명
 
-| Cilium 1.20.1 소스 | 역할 |
+| Cilium 1.20.3 소스 | 역할 |
 |---|---|
 | `bpf/bpf_lxc.c` | Endpoint 패킷 경로, 정책, conntrack과 전달 |
 | `bpf/bpf_overlay.c` | Overlay 패킷 경로 |
@@ -582,7 +582,7 @@ Profiling에는 metric 이름과 적절한 커널·PMU 지원이 필요합니다
 
 - [Original BPF paper](https://www.tcpdump.org/papers/bpf-usenix93.pdf), [Linux BPF design Q&A](https://docs.kernel.org/bpf/bpf_design_QA.html), [verifier](https://docs.kernel.org/bpf/verifier.html), [ring buffer](https://docs.kernel.org/bpf/ringbuf.html), [licensing](https://docs.kernel.org/bpf/bpf_licensing.html), [seccomp](https://docs.kernel.org/userspace-api/seccomp_filter.html)
 - [Linux 6.12 BPF loading](https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c), [exec event placement](https://github.com/torvalds/linux/blob/v6.12/fs/exec.c), [libbpf 1.7](https://github.com/libbpf/libbpf/tree/v1.7.0), [bpftool 7.7](https://github.com/libbpf/bpftool/releases/tag/v7.7.0)
-- [Cilium 1.20.1 BPF source](https://github.com/cilium/cilium/tree/v1.20.1/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.1/Documentation/cmdref)
+- [Cilium 1.20.3 BPF source](https://github.com/cilium/cilium/tree/v1.20.3/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.3/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.3/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.3/Documentation/cmdref)
 - [Cilium system requirements](https://docs.cilium.io/en/v1.20/operations/system_requirements/), [Kubernetes compatibility](https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/), [kube-proxy replacement](https://docs.cilium.io/en/v1.20/network/kubernetes/kubeproxy-free/), [encryption](https://docs.cilium.io/en/v1.20/security/network/encryption/)
 
 ## 퀴즈

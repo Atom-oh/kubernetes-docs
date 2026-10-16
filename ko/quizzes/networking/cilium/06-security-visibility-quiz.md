@@ -1,7 +1,7 @@
 # Cilium 보안 및 가시성 퀴즈
 
-> **검토 기준**: Cilium 1.20.1; Hubble CLI 1.19.4.
-> **최종 검토**: 2026년 9월 12일.
+> **검토 기준**: Cilium 1.20.3; Hubble CLI 1.20.2.
+> **최종 검토**: 2026년 10월 16일.
 
 [본문으로 돌아가기](../../../networking/cilium/06-security-visibility.md)
 

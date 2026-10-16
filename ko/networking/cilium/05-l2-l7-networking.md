@@ -1,7 +1,7 @@
 # L2–L7 네트워킹 및 로드 밸런싱
 
-> **검토 기준**: Cilium 1.20.1, CLI 0.20.0. Istio 예제는 1.31 API를 사용합니다.
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.3, CLI 0.20.1. Istio 예제는 1.31 API를 사용합니다.
+> **최종 검토**: 2026년 10월 16일
 
 ## 실습 환경 설정
 
@@ -25,7 +25,7 @@ OSI는 개념적 모델이며 Cilium 프로세스 일곱 개나 고정된 정책
 
 ### 실제 계층별 기능
 
-- **L2:** L2 Announcements는 적격 Service IP에 ARP/NDP로 응답하는 설정형 beta 기능입니다. Kube-proxy 대체와 적절한 장치·로컬 네트워크 연결이 필요하며 선출된 노드가 해당 Service 트래픽을 받습니다. 임의 MAC/VLAN ACL이나 일반 L2 bridge·모든 패킷 캡처 보장이 아닙니다. `externalTrafficPolicy: Local`과의 비호환성이 문서화되어 있습니다.
+- **L2:** L2 Announcements는 적격 Service IP에 ARP/NDP로 응답하는 설정형 beta 기능입니다. Kube-proxy 대체와 적절한 장치·로컬 네트워크 연결이 필요하며 선출된 노드가 해당 Service 트래픽을 받습니다. 임의 MAC/VLAN ACL이나 일반 L2 bridge·모든 패킷 캡처 보장이 아닙니다. `externalTrafficPolicy: Local`과의 비호환성이 문서화되어 있으며, 1.20.2 릴리스 노트에는 이 조합의 트래픽 드롭 수정이 포함되어 있으므로 사용하는 버전에서 동작을 검증합니다.
 - **L3:** IP·identity 정책과 라우팅에는 모드별 조건이 있습니다. Multicast는 VXLAN이 필요한 별도 beta 기능이며 문서상 최소 커널은 AMD64 5.10, AArch64 6.0입니다. 모든 라우팅 모드에서 된다고 가정하지 않습니다.
 - **L4:** TCP/UDP port 정책, conntrack, socket·packet Service LB, 지원 affinity는 다른 훅에서 작동합니다. Socket 선택은 패킷 생성 전일 수 있습니다.
 - **L7:** 현재 내장 정책 그룹은 HTTP와 DNS입니다. gRPC는 지원 HTTP/2 경로를 사용하고 Kafka L7 규칙은 제거되었습니다. TLS/SNI 기능에는 문서화된 proxy 설정이 필요하며 암호화된 내용을 자동 검사하지 않습니다.
@@ -377,7 +377,7 @@ hubble:
 : "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
-helm install cilium cilium/cilium --version 1.20.1 --namespace kube-system \
+helm install cilium cilium/cilium --version 1.20.3 --namespace kube-system \
   --values lb-values.yaml \
   --set-string k8sServiceHost="$API_SERVER_HOST" \
   --set k8sServicePort="$API_SERVER_PORT" \
@@ -519,10 +519,10 @@ HTTP 정책 거부는 패킷 DROPPED 대신 HTTP 403일 수 있습니다. Timeou
 
 릴리스 소스·schema와 제한된 로컬 fixture로 확인한 예제이며 운영 검증 플랫폼·실제 클러스터 벤치마크가 아닙니다. 이미지 실행, webhook 연결, mTLS 트래픽, DSR 반환, NAT·fragment 동작은 준비한 환경에서 검증해야 합니다. 이번 실행의 label을 가진 애플리케이션 리소스만 정리하고 실습 종료 목적으로 클러스터 CNI를 제거하지 않습니다.
 
-- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/maps/fragmap/fragmap.go)
-- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.1/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/templates/_helpers.tpl)
-- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
-- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.1 values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.3/pkg/maps/fragmap/fragmap.go)
+- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.3/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/templates/_helpers.tpl)
+- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
+- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.3 values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
 
 
 [메인 페이지로 돌아가기](README.md)
