@@ -1,6 +1,6 @@
 # Part 3: MLflow를 EKS에 배포하기
 
-> **검토 기준**: MLflow 3.16.0 · community chart 1.11.7; 최신 패치 3.16.1 확인 · 2026-10-12
+> **검토 기준**: MLflow 3.16.0 · community chart 1.11.7; 최신 릴리스 3.17.1 확인 · 2026-10-16
 
 ## 실습 환경 준비
 
@@ -80,7 +80,7 @@ ClusterIP, private ALB, TLS는 각각 네트워크·암호화 계층이며 사�
 
 MLflow 3.16.0에서는 `allowed_hosts`와 CORS origin을 실제 host에 맞게 구성합니다. 이 community chart에서는 `extraArgs.allowedHosts`, `extraArgs.corsAllowedOrigins`로 해당 CLI 인자를 전달할 수 있습니다. Host/CORS 제한은 로그인·인가를 대신하지 않습니다.
 
-basic-auth는 3.16.0에서 기본 authorization 동작이 fail-closed로 바뀌었습니다. 3.16.1은 배포된 기본 관리자 비밀번호를 제거했습니다. 기본 자격 증명에 의존하지 말고 시작 전에 승인된 관리자 비밀번호와 auth 설정을 명시해야 합니다. 이 장의 차트와 MLflow 3.16.0 조합은 3.16.1에서 재검증하지 않았습니다.
+basic-auth는 3.16.0에서 기본 authorization 동작이 fail-closed로 바뀌었습니다. 3.16.1은 배포된 기본 관리자 비밀번호를 제거했습니다. 기본 자격 증명에 의존하지 말고 시작 전에 승인된 관리자 비밀번호와 auth 설정을 명시해야 합니다. 이 장의 차트와 MLflow 3.16.0 조합은 3.16.1이나 3.17.x에서 재검증하지 않았으며, 3.17.0 이상으로 올릴 때는 SQL backend schema 업그레이드가 필요합니다.
 
 확인한 health endpoint는 **`/health`**이며 구현은 `"OK", 200`을 반환합니다. 이것은 process HTTP 응답 검사로, RDS·S3·사용자 권한의 지속적인 정상 동작을 증명하지 않습니다. 이 릴리스의 host 검사는 health endpoint를 예외 처리합니다. `static-prefix`·Ingress rewrite·plugin을 쓰면 실제 서비스 경로를 별도로 검증합니다.
 

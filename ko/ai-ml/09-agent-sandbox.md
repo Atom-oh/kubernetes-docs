@@ -1,7 +1,7 @@
 # EKS에서 Agent Sandbox 운영하기 — AI 에이전트를 위한 격리된 상태 유지 런타임
 
 > **지원 버전**: Agent Sandbox v1.0.6(API `v1beta1`), Python SDK `k8s-agent-sandbox` 1.0.6, `cpuOptions.nestedVirtualization`은 Karpenter v1.13.0 이상
-> **마지막 업데이트**: 2026년 10월 13일
+> **마지막 업데이트**: 2026년 10월 16일
 
 [Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox)(`kubernetes-sigs/agent-sandbox`)는 Kubernetes SIG Apps 하위 프로젝트입니다. **격리되고 상태를 유지하는 단일 인스턴스 워크로드**를 위해 `Sandbox` 커스텀 리소스와 컨트롤러를 제공합니다. Sandbox 하나는 안정적인 이름을 가진 Pod 하나이며, 선택적으로 영구 스토리지를 붙이고 만료·일시 중지·재개 같은 수명 주기를 선언적으로 다룰 수 있습니다. Deployment나 StatefulSet이 직접 표현하지 못하는 부분입니다. 대표적인 사용처는 LLM이 생성한 코드를 실행하는 AI 에이전트, 강화학습(RL) 롤아웃, 노트북, 사용자별 개발 환경입니다.
 
@@ -24,19 +24,19 @@
 
 에이전트 플랫폼에는 세션이나 사용자 하나가 소유하고, 짧게 살거나 대부분 유휴 상태인 환경이 수천 개 필요한 경우가 많습니다. 각각을 크기 1짜리 StatefulSet과 Service, PVC로 만들어도 동작은 하지만, 만료·웜 풀·할당 지연·격리 기본값은 모두 직접 구현해야 합니다.
 
-### 프로젝트 현황(2026년 10월 13일)
+### 프로젝트 현황(2026년 10월 16일)
 
 | 항목 | 값 |
 |------|-----|
 | 저장소 생성 | 2025년 8월 12일 |
 | v1.0.0 | 2026년 8월 28일. `v1alpha1`과 변환 웹훅을 제거했고 모든 CRD가 `v1beta1`만 제공 |
-| 최신 릴리스 | v1.0.6(2026년 10월 8일). v1.0.0 이후 매주 패치 릴리스 |
+| 최신 릴리스 | v1.0.7(2026년 10월 15일). v1.0.0 이후 매주 패치 릴리스. 이 문서는 v1.0.6 기준 |
 | API 그룹 | `agents.x-k8s.io/v1beta1`(코어), `extensions.agents.x-k8s.io/v1beta1`(확장) |
 | 컨트롤러 네임스페이스 | `agent-sandbox-system` |
 | SDK | Python(`k8s-agent-sandbox`, Python 3.11 이상), Go(`sigs.k8s.io/agent-sandbox/clients/go/sandbox`), TypeScript |
 | 격리 | Pod의 `RuntimeClass`(예: gVisor, Kata Containers)에 위임 |
 
-프로젝트 버전은 1.0이지만 API 버전은 아직 `v1beta1`입니다. 릴리스를 고정하고, 업그레이드 전에 각 릴리스의 "Breaking Changes / Action Required" 항목을 읽으세요. v1.0.2, v1.0.5, v1.0.6처럼 패치 릴리스에도 조치 항목이 있습니다.
+프로젝트 버전은 1.0이지만 API 버전은 아직 `v1beta1`입니다. 릴리스를 고정하고, 업그레이드 전에 각 릴리스의 "Breaking Changes / Action Required" 항목을 읽으세요. v1.0.2, v1.0.5, v1.0.6, v1.0.7처럼 패치 릴리스에도 조치 항목이 있습니다.
 
 ---
 

@@ -1,12 +1,12 @@
 # Part 1: MLflow Tracking
 
-> **Review baseline**: MLflow 3.16.0; latest patch 3.16.1 checked · 2026-10-12
+> **Review baseline**: MLflow 3.16.0; latest release 3.17.1 checked · 2026-10-16
 
 ## Lab Environment Setup
 
 Install `mlflow==3.16.0` with Python 3.10 or later. The example below was checked with Python 3.12, SQLite, and a local artifact store. It requires no GPU, trained model, or remote server.
 
-Patch 3.16.1 is available, but this example has not been rerun with it. [Part 3](03-eks-deployment.md) covers a team HTTP server and EKS operation.
+Patch 3.16.1 and the later 3.17.x line (latest 3.17.1) are available, but this example has not been rerun on any version after 3.16.0. [Part 3](03-eks-deployment.md) covers a team HTTP server and EKS operation.
 
 ## What Is MLflow Tracking?
 

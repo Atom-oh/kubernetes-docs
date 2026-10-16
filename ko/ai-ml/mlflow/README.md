@@ -1,14 +1,14 @@
 # MLflow on EKS 딥다이브
 
 > **검토 기준**: MLflow 3.16.0
-> **최신 패치 확인**: MLflow 3.16.1 (2026년 9월 17일)
-> **마지막 업데이트**: 2026년 10월 12일
+> **최신 릴리스 확인**: MLflow 3.17.1 (2026년 10월 13일); 3.16 계열 최신 패치 3.16.1 (2026년 9월 17일)
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개요
 
 MLflow는 실험 추적, 모델 기록·등록·버전 관리, GenAI 평가와 tracing을 제공하는 오픈소스 플랫폼입니다. Tracing은 2.14.0에서 도입됐고 3.x에서 LoggedModel·평가·UI 연계가 확장됐습니다. 3.16.0은 2026-09-04에 공개됐습니다.
 
-3.16.1은 2026-09-17에 기본 basic-auth 관리자 비밀번호 제거를 포함한 패치 릴리스로 공개됐습니다. 아래 실행 예제는 3.16.0으로 확인했으며 3.16.1에서 다시 실행한 것은 아닙니다. MLflow 3.17.0(2026-10-07)은 이후의 minor 릴리스로, SQL backend 서버는 schema 업그레이드를 조율해 수행해야 합니다. 이 시리즈는 3.17.0을 다루지 않습니다.
+3.16.1은 2026-09-17에 기본 basic-auth 관리자 비밀번호 제거를 포함한 패치 릴리스로 공개됐습니다. 아래 실행 예제는 3.16.0으로 확인했으며 3.16.1에서 다시 실행한 것은 아닙니다. MLflow 3.17.0(2026-10-07)은 이후의 minor 릴리스로, SQL backend 서버는 schema 업그레이드를 조율해 수행해야 합니다. 3.17.1(2026-10-13)은 그 patch 릴리스입니다. 이 시리즈는 3.17.x를 다루지 않습니다.
 
 로컬 SDK와 SQLite만으로 사용할 수도 있고 HTTP tracking 서버, SQL metadata DB, artifact store를 분리해 팀 서비스로 운영할 수도 있습니다. “단일 서비스”가 반드시 하나의 Pod나 저장소를 의미하지는 않습니다. 이 시리즈는 Tracking·Registry·EKS 배포를 다루며 모든 MLflow 기능이나 GPU 학습 성공을 검증한 가이드는 아닙니다.
 
@@ -40,6 +40,8 @@ Model Registry 등록은 선택적인 수명주기 단계입니다. 모델 URI/a
 
 ## 공식 근거
 
+- [MLflow 3.17.1 릴리스](https://github.com/mlflow/mlflow/releases/tag/v3.17.1)
+- [MLflow 3.17.0 릴리스(DB 업그레이드 안내)](https://github.com/mlflow/mlflow/releases/tag/v3.17.0)
 - [MLflow 3.16.1 릴리스](https://github.com/mlflow/mlflow/releases/tag/v3.16.1)
 - [MLflow 3.16.0 검토 기준 릴리스](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
 - [MLflow 2.14.0 Tracing 도입](https://github.com/mlflow/mlflow/releases/tag/v2.14.0)

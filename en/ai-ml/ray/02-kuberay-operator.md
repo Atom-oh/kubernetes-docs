@@ -1,6 +1,6 @@
 # Part 2: The KubeRay Operator
 
-> **Review baseline**: KubeRay 1.7.0 · Ray 2.58.0 · 2026-09-12
+> **Review baseline**: KubeRay 1.7.1 · Ray 2.58.0 · 2026-10-16
 
 ## Lab Environment Setup
 
@@ -16,7 +16,7 @@ Installing the operator does not start a Ray workload. Create resources such as 
 
 ## CRDs and Feature Gates
 
-The 1.7.0 chart includes **RayCluster, RayJob, RayService, and RayCronJob** CRDs. All provide `ray.io/v1`. The first three also retain deprecated `v1alpha1`; new examples use `v1`.
+The 1.7.1 chart includes **RayCluster, RayJob, RayService, and RayCronJob** CRDs. All provide `ray.io/v1`. The first three also retain deprecated `v1alpha1`; new examples use `v1`.
 
 | Resource | Role and boundary |
 |---|---|
@@ -66,7 +66,7 @@ Min replicas and CPU/placement requirements can also affect GPU-group size; GPU 
 ```bash
 helm repo add kuberay https://ray-project.github.io/kuberay-helm/
 helm repo update kuberay
-helm pull kuberay/kuberay-operator --version 1.7.0 --untar --untardir ./vendor
+helm pull kuberay/kuberay-operator --version 1.7.1 --untar --untardir ./vendor
 helm template kuberay-operator ./vendor/kuberay-operator \
   --namespace kuberay-system --include-crds > operator.rendered.yaml
 ```
@@ -77,7 +77,7 @@ Perform actual installation after verifying context and administrative permissio
 
 ```bash
 helm upgrade --install kuberay-operator kuberay/kuberay-operator \
-  --version 1.7.0 --namespace kuberay-system --create-namespace
+  --version 1.7.1 --namespace kuberay-system --create-namespace
 kubectl rollout status deployment/kuberay-operator -n kuberay-system
 ```
 
@@ -141,12 +141,12 @@ Restrict dashboard, Ray Client, and job-submission entry points to trusted actor
 
 ## Primary Sources
 
-- [KubeRay 1.7.0 release](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
-- [1.7.0 chart values](https://github.com/ray-project/kuberay/blob/v1.7.0/helm-chart/kuberay-operator/values.yaml)
-- [Pod/resource construction](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/controllers/ray/common/pod.go)
+- [KubeRay 1.7.1 release](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)
+- [1.7.1 chart values](https://github.com/ray-project/kuberay/blob/v1.7.1/helm-chart/kuberay-operator/values.yaml)
+- [Pod/resource construction](https://github.com/ray-project/kuberay/blob/v1.7.1/ray-operator/controllers/ray/common/pod.go)
 - [Ray 2.58.0 autoscaler configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/autoscaler/_private/kuberay/autoscaling_config.py)
-- [RayJob API](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayjob_types.go)
-- [RayService API](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayservice_types.go)
+- [RayJob API](https://github.com/ray-project/kuberay/blob/v1.7.1/ray-operator/apis/ray/v1/rayjob_types.go)
+- [RayService API](https://github.com/ray-project/kuberay/blob/v1.7.1/ray-operator/apis/ray/v1/rayservice_types.go)
 - [Helm CRD lifecycle](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)
 
 [Next: Train/Tune](03-ray-train-tune.md) · [Main Page](README.md) · [Quiz](../../quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)

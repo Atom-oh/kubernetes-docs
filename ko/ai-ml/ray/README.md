@@ -1,7 +1,8 @@
 # Ray on EKS 딥다이브
 
-> **검토 기준**: Ray 2.58.0, KubeRay v1.7.0
-> **마지막 업데이트**: 2026년 9월 12일
+> **검토 기준**: Ray 2.58.0, KubeRay v1.7.1
+> **최신 릴리스 확인**: Ray 2.59.0 (2026년 10월 2일), 2026년 10월 16일 확인; 예제는 2.58.0 기준
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개요
 
@@ -28,6 +29,8 @@ KubeRay는 RayCluster/RayJob/RayService를 조정하는 Kubernetes operator입�
 
 이번 foundation 검증은 작은 단일 노드 Ray 실행입니다. GPU 학습, 다중 노드 장애 복구, 실제 EKS 설치나 autoscaling을 실행한 결과가 아닙니다.
 
+Ray 2.59.0은 로컬 클러스터에서 token 인증을 기본으로 켭니다. 주소 없이 `ray.init()`을 호출하면 `~/.ray/auth_token`이 없을 때 token을 생성하며, `RAY_AUTH_MODE=disabled`로 끌 수 있습니다. 릴리스 노트는 2.61부터 원격·다중 노드 클러스터에도 기본 적용할 예정이라고 안내합니다. 이 시리즈의 예제는 2.58.0에서 확인했으며 2.59.0에서 다시 실행하지 않았습니다.
+
 ## 현재 제공 중인 문서
 
 1. [Part 1: Ray Architecture](01-architecture.md) — task, actor, 오브젝트 스토어, head/worker 클러스터 모델
@@ -38,4 +41,5 @@ KubeRay는 RayCluster/RayJob/RayService를 조정하는 Kubernetes operator입�
 ## 공식 근거
 
 - [Ray 2.58.0](https://github.com/ray-project/ray/releases/tag/ray-2.58.0)
-- [KubeRay 1.7.0](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+- [Ray 2.59.0 (최신 확인)](https://github.com/ray-project/ray/releases/tag/ray-2.59.0)
+- [KubeRay 1.7.1](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)

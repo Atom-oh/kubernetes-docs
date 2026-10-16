@@ -1,14 +1,14 @@
 # MLflow on EKS Deep Dive
 
 > **Review baseline**: MLflow 3.16.0
-> **Latest patch checked**: MLflow 3.16.1 (September 17, 2026)
-> **Documentation reviewed**: October 12, 2026
+> **Latest release checked**: MLflow 3.17.1 (October 13, 2026); latest 3.16 patch 3.16.1 (September 17, 2026)
+> **Documentation reviewed**: October 16, 2026
 
 ## Overview
 
 MLflow provides experiment tracking, model logging and registration, version management, GenAI evaluation, and tracing. Tracing arrived in 2.14.0; 3.x expanded LoggedModel, evaluation, and UI integration. Version 3.16.0 was released on 2026-09-04.
 
-Patch 3.16.1 followed on 2026-09-17 and removed the shipped default basic-auth administrator password. The examples below were checked with 3.16.0 and were not rerun on 3.16.1. MLflow 3.17.0 (2026-10-07) is a later minor release that requires a coordinated SQL schema upgrade for SQL-backed servers; this series does not cover it.
+Patch 3.16.1 followed on 2026-09-17 and removed the shipped default basic-auth administrator password. The examples below were checked with 3.16.0 and were not rerun on 3.16.1. MLflow 3.17.0 (2026-10-07) is a later minor release that requires a coordinated SQL schema upgrade for SQL-backed servers; 3.17.1 (2026-10-13) is its patch release. This series does not cover 3.17.x.
 
 Use it locally with the SDK and SQLite, or operate an HTTP tracking service with separate SQL metadata and artifact stores. A logical service need not be one Pod or storage system. This series covers Tracking, Registry, and EKS deployment; it does not validate every MLflow feature or successful GPU training.
 
@@ -40,6 +40,8 @@ Model Registry registration is an optional lifecycle step. Serving systems consu
 
 ## Primary Sources
 
+- [MLflow 3.17.1 release](https://github.com/mlflow/mlflow/releases/tag/v3.17.1)
+- [MLflow 3.17.0 release (database upgrade notes)](https://github.com/mlflow/mlflow/releases/tag/v3.17.0)
 - [MLflow 3.16.1 release](https://github.com/mlflow/mlflow/releases/tag/v3.16.1)
 - [MLflow 3.16.0 review baseline](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
 - [Tracing introduced in MLflow 2.14.0](https://github.com/mlflow/mlflow/releases/tag/v2.14.0)

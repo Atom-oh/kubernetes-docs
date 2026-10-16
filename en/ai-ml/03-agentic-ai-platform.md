@@ -1,7 +1,7 @@
 # Building an Agentic AI Platform on EKS
 
 > **Review baseline**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 16, 2026
 
 Agentic AI goes beyond simple question-answering to autonomously create plans, use tools, and iteratively achieve goals. This chapter covers how to design an Agentic AI platform and its operating boundaries on EKS.
 
@@ -137,7 +137,7 @@ This illustrates configuration, requiring prepared endpoints and authentication.
 
 ## 5. RAG Data and Retrieval Boundaries
 
-The latest inspected Milvus release is 3.0.1; the separately reviewed Operator 1.3.9 defaults to Milvus 2.6.11. They are not one version, and a broad compatibility table is not proof of a tested 3.x upgrade. The operator repository is https://zilliztech.github.io/milvus-operator/, separate from the ordinary Milvus chart repository.
+The latest inspected Milvus release is 3.0.3 (2026-10-14); the separately reviewed Operator 1.3.9 defaults to Milvus 2.6.11. They are not one version, and a broad compatibility table is not proof of a tested 3.x upgrade. The operator repository is https://zilliztech.github.io/milvus-operator/, separate from the ordinary Milvus chart repository.
 
 Vector dimensions must match actual embedding output. Record revision, dimensions options, tokenizer, normalization and distance metric for ingestion and queries. Index parameters differ; HNSW M/efConstruction cannot simply be reused for GPU_IVF_FLAT. GPU indexing needs compatible images, version, devices and component roles; requesting a GPU on indexNode is not automatic acceleration.
 
@@ -305,7 +305,7 @@ client.flush()
 client.shutdown()
 ```
 
-Langfuse chart 2.1.0 references app 4.24.0, distinct from latest inspected server 4.35.0. Web/worker, PostgreSQL, Redis/Valkey, object storage and ClickHouse are required. The chart checks ClickHouse Operator/cert-manager prerequisites. Offline rendering supplied simulated API capability information, not a deployed operator. Default charts include secret environment delivery and are not approved file-only credential deployments.
+Langfuse chart 2.1.0 references app 4.24.0, distinct from latest inspected server 4.60.0 (2026-10-15). Web/worker, PostgreSQL, Redis/Valkey, object storage and ClickHouse are required. The chart checks ClickHouse Operator/cert-manager prerequisites. Offline rendering supplied simulated API capability information, not a deployed operator. Default charts include secret environment delivery and are not approved file-only credential deployments.
 
 DCGM FB_USED is a quantity, not a percentage; verify units and total memory. GPU utilization80% or temperature85C are not universal health thresholds. Observe latency/queues/errors/throttling and actual device limits together.
 

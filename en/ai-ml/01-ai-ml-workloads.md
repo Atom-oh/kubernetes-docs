@@ -1,7 +1,7 @@
 # AI/ML Workloads
 
-> **Review baseline**: GPU Operator 26.7.0 / NVIDIA device plugin 0.20.0 / FSx CSI 1.10.0
-> **Last Updated**: September 12, 2026
+> **Review baseline**: GPU Operator 26.7.2 / NVIDIA device plugin 0.20.1 / FSx CSI 1.11.0
+> **Last Updated**: October 16, 2026
 
 Kubernetes is a powerful platform for running AI/ML workloads. In this chapter, we will learn how to run AI/ML workloads on EKS and explore best practices.
 
@@ -156,7 +156,7 @@ This command **renders locally** the reviewed Operator chart. Inspect ClusterPol
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 helm repo update nvidia
 helm template gpu-operator nvidia/gpu-operator \
-  --version v26.7.0 --namespace gpu-operator \
+  --version v26.7.2 --namespace gpu-operator \
   --set driver.enabled=false --set toolkit.enabled=false \
   > gpu-operator.rendered.yaml
 ```
@@ -236,7 +236,7 @@ sharing:
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
 helm repo update nvdp
 helm template nvdp nvdp/nvidia-device-plugin \
-  --version 0.20.0 --namespace nvidia-device-plugin \
+  --version 0.20.1 --namespace nvidia-device-plugin \
   --set config.default=shared \
   --set-file config.map.shared=device-plugin-sharing.yaml \
   > device-plugin.rendered.yaml
@@ -319,7 +319,7 @@ spec:
       storage: 1200Gi
 ```
 
-Dynamic provisioning creates a filesystem from a StorageClass/PVC. Do not put static volumeHandle/DNS settings in the StorageClass or mix in an undefined fsx.aws.k8s.io/Lustre resource. Use the [driver's dynamic example](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0/examples/kubernetes/dynamic_provisioning) and check deployment-type-specific throughput/backup rules; SCRATCH_2 cannot use persistent-only options.
+Dynamic provisioning creates a filesystem from a StorageClass/PVC. Do not put static volumeHandle/DNS settings in the StorageClass or mix in an undefined fsx.aws.k8s.io/Lustre resource. Use the [driver's dynamic example](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.11.0/examples/kubernetes/dynamic_provisioning) and check deployment-type-specific throughput/backup rules; SCRATCH_2 cannot use persistent-only options.
 
 An Alluxio worker DaemonSet alone is not a complete cache deployment. Design master/worker roles, paths, memory, network, consistency and retention. Benchmark a separate test path on the actual mounted PVC; FIO against an unmounted /data does not measure FSx performance.
 
@@ -405,8 +405,8 @@ This chapter was corrected using official GPU Operator/device-plugin Helm render
 
 - [EKS accelerated AMIs](https://docs.aws.amazon.com/eks/latest/userguide/ml-eks-optimized-ami.html)
 - [Kubernetes GPU scheduling](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
-- [NVIDIA device plugin 0.20.0](https://github.com/NVIDIA/k8s-device-plugin/tree/v0.20.0)
-- [FSx CSI 1.10.0](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0)
+- [NVIDIA device plugin 0.20.1](https://github.com/NVIDIA/k8s-device-plugin/tree/v0.20.1)
+- [FSx CSI 1.11.0](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.11.0)
 - [EFS performance modes](https://docs.aws.amazon.com/efs/latest/ug/performance.html)
 - [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 

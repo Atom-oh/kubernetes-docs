@@ -1,7 +1,7 @@
 # EKS에서의 모델 훈련
 
-> **마지막 업데이트**: 2026년 9월 12일
-> **기준**: Slinky 1.2.2, MPI Operator 0.8.2, Volcano 1.15.2, PyTorch 2.14.0, Neuron SDK 2.32.0
+> **마지막 업데이트**: 2026년 10월 16일
+> **기준**: Slinky 1.2.3, MPI Operator 0.8.2, Volcano 1.15.2, PyTorch 2.14.0, Neuron SDK 2.32.0
 
 분산 훈련은 모델 코드, 데이터 분할, launcher, 장치 할당, 통신과 체크포인트가 함께 맞아야 합니다. Kubernetes 매니페스트가 생성되거나 Pod가 Running이라고 학습·복구가 검증된 것은 아닙니다.
 
@@ -34,7 +34,7 @@ TP8×PP4×DP2라면 전체 rank는64개입니다. 하지만 global batch는 **mi
 
 ## Slurm과 Slinky
 
-공식 저장소는 SlinkyProject/slurm-operator입니다. 확인한1.2.2 tag와 OCI chart는 존재하지만 GitHub releases/latest API는404였으므로 이를 “최신 GitHub release”로 기록하지 않았습니다.1.2 문서는 최소 Kubernetes1.29/Slurm25.11(data parser0.0.44)을 명시합니다. 최소 버전은 운영 지원 수명 보장이 아닙니다.
+공식 저장소는 SlinkyProject/slurm-operator입니다. 확인한1.2.3 tag와 OCI chart는 존재하지만 GitHub releases/latest API는404였으므로 이를 “최신 GitHub release”로 기록하지 않았습니다.1.2 문서는 최소 Kubernetes1.29/Slurm25.11(data parser0.0.44)을 명시합니다. 최소 버전은 운영 지원 수명 보장이 아닙니다.
 
 ![Slinky의 Controller, NodeSet, Accounting과 RestApi/LoginSet 역할 및 외부 저장소·노드 공급 관계.](../.gitbook/assets/ko-ai-ml-05-model-training-2.png)
 
@@ -42,16 +42,16 @@ TP8×PP4×DP2라면 전체 rank는64개입니다. 하지만 global batch는 **mi
 
 ### 실제 API와 lifecycle
 
-1.2.2의 API는 `slinky.slurm.net/v1beta1`의 Controller, NodeSet, Accounting, LoginSet, RestApi, Token입니다. 이전 SlurmCluster/SlurmNodeSet은 해당 API가 아닙니다. NodeSet은 controllerRef와 Pod template을 사용합니다. 기본 scalingMode는 StatefulSet 방식이며 DaemonSet 방식은 matching Kubernetes node마다 Pod를 만들고 replicas를 무시합니다. 이는 NodeSet controller의 동작 모드이며 slurmd가 언제나 DaemonSet 리소스라는 뜻은 아닙니다.
+1.2.3의 API는 `slinky.slurm.net/v1beta1`의 Controller, NodeSet, Accounting, LoginSet, RestApi, Token입니다. 이전 SlurmCluster/SlurmNodeSet은 해당 API가 아닙니다. NodeSet은 controllerRef와 Pod template을 사용합니다. 기본 scalingMode는 StatefulSet 방식이며 DaemonSet 방식은 matching Kubernetes node마다 Pod를 만들고 replicas를 무시합니다. 이는 NodeSet controller의 동작 모드이며 slurmd가 언제나 DaemonSet 리소스라는 뜻은 아닙니다.
 
 slurmctld는 job/node/partition 상태와 스케줄링을 관리하고 controller의 StateSaveLocation을 보존해야 합니다. slurmdbd는 accounting DB의 접근·기록 경로로, controller 상태 저장소의 대체물이 아닙니다. 로그인·REST·job 실행 주체의 인증과 파일 권한, Slurm key/JWT, DB 비밀의 전달·회전을 함께 설계합니다. 공개 NLB로 SSH를 노출하는 것을 기본 설치 조건으로 삼지 않습니다.
 
 실제 chart를 먼저 렌더링합니다. 아래는 로컬 파일만 생성하며 cluster를 설치하지 않습니다. 운영 시 cert-manager/CRD/operator/Slurm 설치 순서, 영속 저장소·DB, 사용자 identity와 지원 Slurm 이미지를 별도로 준비합니다.
 
 ```bash
-helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.2 > slurm-crds.yaml
-helm template slurm-control oci://ghcr.io/slinkyproject/charts/slurm-operator   --version 1.2.2 --namespace slinky > slurm-operator.yaml
-helm template slurm-example oci://ghcr.io/slinkyproject/charts/slurm   --version 1.2.2 --namespace slurm   --set-json 'nodesets={"cpu-example":{}}'   --set partitions.all.enabled=true > slurm-example.yaml
+helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.3 > slurm-crds.yaml
+helm template slurm-control oci://ghcr.io/slinkyproject/charts/slurm-operator   --version 1.2.3 --namespace slinky > slurm-operator.yaml
+helm template slurm-example oci://ghcr.io/slinkyproject/charts/slurm   --version 1.2.3 --namespace slurm   --set-json 'nodesets={"cpu-example":{}}'   --set partitions.all.enabled=true > slurm-example.yaml
 ```
 
 Argo CD Application은 실제 chart 경로·revision·values를 참조해야 합니다. 존재하지 않는 repo와 임의 compute.partitions/efa.enabled 설정을 붙여서는 구성되지 않습니다. prune과 CRD/PVC 삭제, Slurm drain·재큐잉·job 종료 timeout을 검토하세요. NodeSet 축소와 EC2 종료는 다른 제어 과정입니다.
@@ -243,7 +243,7 @@ scheduler는 optimizer update 기준으로 진행하고 accumulation microstep �
 
 ## 참고 자료
 
-- [Slinky 1.2.2](https://github.com/SlinkyProject/slurm-operator/tree/v1.2.2)
+- [Slinky 1.2.3](https://github.com/SlinkyProject/slurm-operator/tree/v1.2.3)
 - [Slurm controller](https://slurm.schedmd.com/slurmctld.html)
 - [Slurm accounting daemon](https://slurm.schedmd.com/slurmdbd.html)
 - [MPI Operator 0.8.2](https://github.com/kubeflow/mpi-operator/tree/v0.8.2)

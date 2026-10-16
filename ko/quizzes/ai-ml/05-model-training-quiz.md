@@ -26,7 +26,7 @@
 slurmctld는 실행 job/node/partition과 스케줄링 및 StateSaveLocation을 관리합니다. slurmdbd는 accounting DB 기록 경로이며 controller의 복구 상태를 대체하지 않습니다.
 </details>
 
-## 4. Slinky1.2.2의 compute group API는 무엇인가요?
+## 4. Slinky1.2.3의 compute group API는 무엇인가요?
 
 <details>
 <summary>정답 및 설명</summary>

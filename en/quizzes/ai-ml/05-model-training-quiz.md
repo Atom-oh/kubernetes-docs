@@ -26,7 +26,7 @@ Do not mandate3D from size alone; account for training state, activations, commu
 slurmctld manages running job/node/partition state, scheduling and StateSaveLocation. slurmdbd handles accounting database records and does not replace controller recovery state.
 </details>
 
-## 4. What is the Slinky1.2.2 compute-group API?
+## 4. What is the Slinky1.2.3 compute-group API?
 
 <details>
 <summary>Answer and explanation</summary>

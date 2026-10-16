@@ -1,6 +1,6 @@
 # Part 3: Deploying MLflow on EKS
 
-> **Review baseline**: MLflow 3.16.0 · community chart 1.11.7; latest patch 3.16.1 checked · 2026-10-12
+> **Review baseline**: MLflow 3.16.0 · community chart 1.11.7; latest release 3.17.1 checked · 2026-10-16
 
 ## Lab Environment Setup
 
@@ -80,7 +80,7 @@ ClusterIP, private ALBs, and TLS provide networking or transport controls; they 
 
 Configure MLflow 3.16.0 `allowed_hosts` and CORS origins for actual callers. In this community chart, set the corresponding CLI arguments through `extraArgs.allowedHosts` and `extraArgs.corsAllowedOrigins`. Host/CORS restrictions do not replace login or authorization.
 
-Basic-auth changed to fail-closed authorization by default in 3.16.0. Version 3.16.1 removed the shipped default administrator password, so do not rely on default credentials. Explicitly configure an approved administrator password and auth settings before startup. This chapter's chart and MLflow 3.16.0 combination was not revalidated on 3.16.1.
+Basic-auth changed to fail-closed authorization by default in 3.16.0. Version 3.16.1 removed the shipped default administrator password, so do not rely on default credentials. Explicitly configure an approved administrator password and auth settings before startup. This chapter's chart and MLflow 3.16.0 combination was not revalidated on 3.16.1 or 3.17.x, and moving to 3.17.0 or later requires a SQL backend schema upgrade.
 
 The verified health endpoint is **`/health`**, implemented as a return of `"OK", 200`. It checks HTTP process responsiveness, not continuous RDS/S3 connectivity or user authorization. This release exempts health endpoints from host validation. Check actual service paths when using `static-prefix`, ingress rewrites, or plugins.
 

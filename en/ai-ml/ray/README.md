@@ -1,7 +1,8 @@
 # Ray on EKS Deep Dive
 
-> **Review baseline**: Ray 2.58.0, KubeRay v1.7.0
-> **Documentation reviewed**: September 12, 2026
+> **Review baseline**: Ray 2.58.0, KubeRay v1.7.1
+> **Latest release checked**: Ray 2.59.0 (October 2, 2026), checked October 16, 2026; examples use 2.58.0
+> **Documentation reviewed**: October 16, 2026
 
 ## Overview
 
@@ -28,6 +29,8 @@ The trade-off is the same one covered elsewhere in this documentation site's dat
 
 The foundation check is a small single-node Ray run. It is not evidence of GPU training, multi-node recovery, a live EKS installation, or autoscaling.
 
+Ray 2.59.0 enables token authentication by default for local clusters. Calling `ray.init()` without an address generates a token when `~/.ray/auth_token` does not exist; `RAY_AUTH_MODE=disabled` turns it off. The release notes say the default is planned to extend to remote and multi-node clusters starting with 2.61. This series' examples were checked on 2.58.0 and were not rerun on 2.59.0.
+
 ## Currently Covered
 
 1. [Part 1: Ray Architecture](01-architecture.md) — tasks, actors, the object store, and the head/worker cluster model
@@ -38,4 +41,5 @@ The foundation check is a small single-node Ray run. It is not evidence of GPU t
 ## Primary Sources
 
 - [Ray 2.58.0](https://github.com/ray-project/ray/releases/tag/ray-2.58.0)
-- [KubeRay 1.7.0](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+- [Ray 2.59.0 (latest checked)](https://github.com/ray-project/ray/releases/tag/ray-2.59.0)
+- [KubeRay 1.7.1](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)

@@ -16,7 +16,7 @@
 Operator 설치와 RayCluster/RayJob/RayService 생성은 별개입니다.
 </details>
 
-2. 1.7.0 chart의 CRD와 RayCronJob 상태는?
+2. 1.7.1 chart의 CRD와 RayCronJob 상태는?
    - A) CRD는 세 개뿐이다
    - B) RayCronJob CRD가 있으면 scheduling도 항상 활성
    - C) 네 CRD가 있고 RayCronJob feature gate는 기본 비활성

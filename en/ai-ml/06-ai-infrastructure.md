@@ -1,7 +1,7 @@
 # AI Infrastructure on EKS
 
-> **Last Updated**: September 12, 2026
-> **Baselines**: GPU Operator26.7.0 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
+> **Last Updated**: October 16, 2026
+> **Baselines**: GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
 AI infrastructure combines notebooks, pipelines, distributed runtimes, devices/nodes, storage/networking and authorization. A list of tools or successful Helm release does not establish platform security, availability or model execution.
 
@@ -23,7 +23,7 @@ JARK combines JupyterHub, Argo Workflows, Ray and Karpenter. It is an integratio
 
 ### JupyterHub Authentication and Notebook Profiles
 
-Chart4.4.2 declares appVersion5.5.2, distinct from the latest inspected PyPI Hub6.0.0. Local API checks used Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0; verify actual package combinations inside the operational chart image.
+Chart4.4.2 declares appVersion5.5.2, distinct from the latest inspected PyPI Hub6.1.0 (2026-10-14). Local API checks used Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0; verify actual package combinations inside the operational chart image.
 
 Cognito is one OIDC provider option. Match callback URLs, token/userInfo endpoints, scopes and a stable username claim, and configure an explicit allow policy. MFA/corporate federation must be configured in the provider; GenericOAuthenticator does not enable them automatically.
 

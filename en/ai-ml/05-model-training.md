@@ -1,7 +1,7 @@
 # Model Training on EKS
 
-> **Last Updated**: September 12, 2026
-> **Baselines**: Slinky1.2.2, MPI Operator0.8.2, Volcano1.15.2, PyTorch2.14.0, Neuron SDK2.32.0
+> **Last Updated**: October 16, 2026
+> **Baselines**: Slinky1.2.3, MPI Operator0.8.2, Volcano1.15.2, PyTorch2.14.0, Neuron SDK2.32.0
 
 Distributed training requires compatible model code, data sharding, launchers, device allocation, communication and checkpoints. A valid manifest or Running Pod does not prove training or recovery works.
 
@@ -34,7 +34,7 @@ TP8×PP4×DP2 means64ranks. Global batch is **microbatch × accumulation × DP r
 
 ## Slurm and Slinky
 
-The official repository is SlinkyProject/slurm-operator. Tag1.2.2 and its OCI charts were verified; GitHub releases/latest returned404, so it is not described as the latest GitHub release. The1.2 documentation lists minimum Kubernetes1.29 and Slurm25.11(data parser0.0.44). Minimum compatibility is not an operational support-lifecycle guarantee.
+The official repository is SlinkyProject/slurm-operator. Tag1.2.3 and its OCI charts were verified; GitHub releases/latest returned404, so it is not described as the latest GitHub release. The1.2 documentation lists minimum Kubernetes1.29 and Slurm25.11(data parser0.0.44). Minimum compatibility is not an operational support-lifecycle guarantee.
 
 ![Roles of Slinky Controller, NodeSet, Accounting and RestApi/LoginSet, with external storage and node provisioning.](../.gitbook/assets/en-ai-ml-05-model-training-2.png)
 
@@ -42,16 +42,16 @@ The official repository is SlinkyProject/slurm-operator. Tag1.2.2 and its OCI ch
 
 ### Actual APIs and Lifecycle
 
-Version1.2.2 defines Controller, NodeSet, Accounting, LoginSet, RestApi and Token in `slinky.slurm.net/v1beta1`. The former SlurmCluster/SlurmNodeSet examples are not this API. NodeSet uses controllerRef and a Pod template. Its default scalingMode behaves like StatefulSet; DaemonSet mode creates one Pod per matching Kubernetes node and ignores replicas. These are NodeSet-controller modes, not proof that slurmd always runs as a Kubernetes DaemonSet resource.
+Version1.2.3 defines Controller, NodeSet, Accounting, LoginSet, RestApi and Token in `slinky.slurm.net/v1beta1`. The former SlurmCluster/SlurmNodeSet examples are not this API. NodeSet uses controllerRef and a Pod template. Its default scalingMode behaves like StatefulSet; DaemonSet mode creates one Pod per matching Kubernetes node and ignores replicas. These are NodeSet-controller modes, not proof that slurmd always runs as a Kubernetes DaemonSet resource.
 
 slurmctld manages job/node/partition state and scheduling; preserve its StateSaveLocation. slurmdbd handles accounting-database access and records, not a replacement for controller state. Design login/REST/job identities, filesystem permissions, Slurm keys/JWT and DB credential delivery/rotation together. Public NLB SSH exposure is not a default prerequisite.
 
 Render the actual charts first. These commands only produce local files. An operational deployment separately requires cert-manager/CRD/operator/Slurm ordering, persistence/database, user identity and compatible Slurm images.
 
 ```bash
-helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.2 > slurm-crds.yaml
-helm template slurm-control oci://ghcr.io/slinkyproject/charts/slurm-operator   --version 1.2.2 --namespace slinky > slurm-operator.yaml
-helm template slurm-example oci://ghcr.io/slinkyproject/charts/slurm   --version 1.2.2 --namespace slurm   --set-json 'nodesets={"cpu-example":{}}'   --set partitions.all.enabled=true > slurm-example.yaml
+helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.3 > slurm-crds.yaml
+helm template slurm-control oci://ghcr.io/slinkyproject/charts/slurm-operator   --version 1.2.3 --namespace slinky > slurm-operator.yaml
+helm template slurm-example oci://ghcr.io/slinkyproject/charts/slurm   --version 1.2.3 --namespace slurm   --set-json 'nodesets={"cpu-example":{}}'   --set partitions.all.enabled=true > slurm-example.yaml
 ```
 
 An Argo CD Application must reference a real chart path/revision and actual values. Invented compute.partitions/efa.enabled settings do not configure it. Review pruning, CRD/PVC deletion, Slurm draining/requeue and job termination timeouts. NodeSet scale-in and EC2 termination are separate control loops.
@@ -243,7 +243,7 @@ All guide/quiz prose and76unique original code blocks were reviewed. Checks cove
 
 ## References
 
-- [Slinky 1.2.2](https://github.com/SlinkyProject/slurm-operator/tree/v1.2.2)
+- [Slinky 1.2.3](https://github.com/SlinkyProject/slurm-operator/tree/v1.2.3)
 - [Slurm controller](https://slurm.schedmd.com/slurmctld.html)
 - [Slurm accounting daemon](https://slurm.schedmd.com/slurmdbd.html)
 - [MPI Operator 0.8.2](https://github.com/kubeflow/mpi-operator/tree/v0.8.2)
