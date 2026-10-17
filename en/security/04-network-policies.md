@@ -646,7 +646,7 @@ spec:
             value: application/json
 ```
 
-[HTTP API — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/http.go)
+[HTTP API (Cilium 1.20.3)](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/http.go)
 
 ### L7 Kafka Policy
 
@@ -676,7 +676,7 @@ spec:
         protocol: TCP
 ```
 
-[CNP schema — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+[CNP schema (Cilium 1.20.3)](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
 
 ### L7 DNS Policy
 
@@ -1672,7 +1672,7 @@ helm template cilium cilium/cilium --version 1.20.3 \
   --set routingMode=native > cilium-reviewed.yaml
 ```
 
-[AWS VPC CNI chaining — Cilium 1.20.3](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
+[AWS VPC CNI chaining (Cilium 1.20.3)](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
 ## Visualization Tools {#visualization-tools}
 

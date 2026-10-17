@@ -646,7 +646,7 @@ Query actual reports with `kubectl get policyreports -n policy-lab` and `kubectl
 
 ### Prometheus Metrics
 
-Use the chart-created metrics Services and per-controller ServiceMonitors from the tested values above. Their Service port name is `metrics-port` on 8000, with component/instance/part-of selectors—not `app: kyverno`. The render places them in `kyverno` and configures `namespaceSelector.matchNames: [kyverno]`. Prometheus must select those monitors and the namespace. Resource existence does not prove scraping or CloudWatch export.
+Use the chart-created metrics Services and per-controller ServiceMonitors from the tested values above. Their Service port name is `metrics-port` on 8000, with component/instance/part-of selectors, not `app: kyverno`. The render places them in `kyverno` and configures `namespaceSelector.matchNames: [kyverno]`. Prometheus must select those monitors and the namespace. Resource existence does not prove scraping or CloudWatch export.
 
 ## Best Practices
 

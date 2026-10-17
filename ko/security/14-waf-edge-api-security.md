@@ -159,20 +159,20 @@ ALB의 `waf.fail_open.enabled`는 WAF로 요청을 전달할 수 없을 때 targ
 
 아래 공식 자료는 2026-10-15에 조회했습니다. 변경 시 해당 제품·브랜치의 최신 경보와 제약을 다시 확인합니다.
 
-- [S01 — Kubernetes: CVE-2025-1974][S01]
-- [S09 — AWS WAF: Associating a web ACL][S09]
-- [S10 — AWS WAF: Rule action][S10]
-- [S11 — AWS WAF: Body inspection sizes][S11]
-- [S12 — AWS WAF: Oversize request components][S12]
-- [S13 — AWS WAF: Forwarded IP addresses][S13]
-- [S14 — AWS WAF: Rate-based rules][S14]
-- [S15 — AWS WAF: Logging][S15]
-- [S16 — CloudFront: Restricting access to ALB origins][S16]
-- [S17 — CloudFront: VPC origins][S17]
-- [S18 — ALB: Attributes][S18]
-- [S36 — AWS WAF: Log fields][S36]
-- [S37 — AWS WAF: Rate evaluation window][S37]
-- [S43 — AWS WAF: Rate rule caveats][S43]
+- [S01: Kubernetes: CVE-2025-1974][S01]
+- [S09: AWS WAF: Associating a web ACL][S09]
+- [S10: AWS WAF: Rule action][S10]
+- [S11: AWS WAF: Body inspection sizes][S11]
+- [S12: AWS WAF: Oversize request components][S12]
+- [S13: AWS WAF: Forwarded IP addresses][S13]
+- [S14: AWS WAF: Rate-based rules][S14]
+- [S15: AWS WAF: Logging][S15]
+- [S16: CloudFront: Restricting access to ALB origins][S16]
+- [S17: CloudFront: VPC origins][S17]
+- [S18: ALB: Attributes][S18]
+- [S36: AWS WAF: Log fields][S36]
+- [S37: AWS WAF: Rate evaluation window][S37]
+- [S43: AWS WAF: Rate rule caveats][S43]
 
 [S01]: https://kubernetes.io/blog/2025/03/24/ingress-nginx-cve-2025-1974/
 [S09]: https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html

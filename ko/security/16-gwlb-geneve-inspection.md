@@ -199,21 +199,21 @@ aws ec2 describe-transit-gateway-vpc-attachments \
 
 아래 공식 자료는 2026-10-15에 조회했습니다. 변경 시 해당 제품·브랜치의 최신 경보와 제약을 다시 확인합니다.
 
-- [S24 — AWS: Gateway Load Balancers][S24]
-- [S25 — AWS GWLB: Target group attributes][S25]
-- [S26 — AWS GWLB: Health checks][S26]
-- [S27 — AWS PrivateLink: Gateway Load Balancer endpoints][S27]
-- [S28 — AWS VPC: Route table options][S28]
-- [S29 — AWS: Centralized inspection with GWLB and TGW][S29]
-- [S30 — AWS: NAT Gateway scenarios][S30]
-- [S31 — RFC 8926: GENEVE][S31]
-- [S32 — AWS: GWLB deployment best practices][S32]
-- [S33 — EKS: Network security][S33]
-- [S34 — Kubernetes: Network Policies][S34]
-- [S39 — AWS ELB API: CreateLoadBalancer parameters][S39]
-- [S40 — AWS EC2 API: CreateVpcEndpoint parameters][S40]
-- [S42 — AWS GWLB: Target groups][S42]
-- [S44 — EKS: Outbound internet access and SNAT][S44]
+- [S24: AWS: Gateway Load Balancers][S24]
+- [S25: AWS GWLB: Target group attributes][S25]
+- [S26: AWS GWLB: Health checks][S26]
+- [S27: AWS PrivateLink: Gateway Load Balancer endpoints][S27]
+- [S28: AWS VPC: Route table options][S28]
+- [S29: AWS: Centralized inspection with GWLB and TGW][S29]
+- [S30: AWS: NAT Gateway scenarios][S30]
+- [S31: RFC 8926: GENEVE][S31]
+- [S32: AWS: GWLB deployment best practices][S32]
+- [S33: EKS: Network security][S33]
+- [S34: Kubernetes: Network Policies][S34]
+- [S39: AWS ELB API: CreateLoadBalancer parameters][S39]
+- [S40: AWS EC2 API: CreateVpcEndpoint parameters][S40]
+- [S42: AWS GWLB: Target groups][S42]
+- [S44: EKS: Outbound internet access and SNAT][S44]
 
 [S24]: https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/gateway-load-balancers.html
 [S25]: https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/edit-target-group-attributes.html
