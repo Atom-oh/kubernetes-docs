@@ -793,7 +793,7 @@ If you own a configurable Linux kubelet, the following is a **fragment to review
 }
 ```
 
-**Historical RCA template — unverified example, not an incident report.** Original dates, quantities and the original locale-specific timezone are retained; the PST and KST examples do not claim to describe the same instant. There is no source evidence for the asserted memory leak, actual remediation or completion status. Replace the placeholders with evidence before operational use.
+**Historical RCA template: unverified example, not an incident report.** Original dates, quantities and the original locale-specific timezone are retained; the PST and KST examples do not claim to describe the same instant. There is no source evidence for the asserted memory leak, actual remediation or completion status. Replace the placeholders with evidence before operational use.
 
 ```markdown
 ## Incident summary (illustrative)
@@ -801,17 +801,17 @@ If you own a configurable Linux kubelet, the following is a **fragment to review
 - Example impact: 3 nodes, 45 Pods
 - Example restoration: 2024-01-15 15:15 PST (duration 45 minutes, not a measured mean)
 
-## Example timeline — evidence required for every entry
-- 14:30 — NodeNotReady alert
-- 14:35 — Investigation starts
-- 14:50 — Hypothesis: memory pressure killed kubelet; confirm with kernel/process evidence
-- 15:00 — Proposed drain/restart; record actual authorization, effects and data safety checks
-- 15:15 — Proposed restoration point; supply workload/SLO verification
+## Example timeline (evidence required for every entry)
+- 14:30 NodeNotReady alert
+- 14:35 Investigation starts
+- 14:50 Hypothesis: memory pressure killed kubelet; confirm with kernel/process evidence
+- 15:00 Proposed drain/restart; record actual authorization, effects and data safety checks
+- 15:15 Proposed restoration point; supply workload/SLO verification
 
 ## Root-cause hypothesis
 A memory leak could exhaust node memory; not established by this template.
 
-## Follow-up proposals — no completion asserted
+## Follow-up proposals (no completion asserted)
 1. Validate application memory behavior and appropriate requests/limits.
 2. Evaluate alert threshold change from 90% to 80% against noise and capacity.
 3. Review existing node monitoring before considering Node Problem Detector.

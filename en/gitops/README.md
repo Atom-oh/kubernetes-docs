@@ -13,7 +13,7 @@
 
 ## What is GitOps?
 
-GitOps is an operational framework that applies DevOps best practices for infrastructure automation—such as version control, collaboration, compliance, and CI/CD—to infrastructure management. The term was coined by Weaveworks in 2017 and has since become a CNCF-recognized methodology for cloud-native application deployment.
+GitOps is an operational framework that applies DevOps best practices for infrastructure automation (such as version control, collaboration, compliance, and CI/CD) to infrastructure management. The term was coined by Weaveworks in 2017 and has since become a CNCF-recognized methodology for cloud-native application deployment.
 
 At its core, GitOps uses Git repositories as the single source of truth for declarative infrastructure and application configurations. Changes to the desired state are made through Git commits, and automated processes ensure the actual system state matches the declared state.
 
@@ -44,7 +44,7 @@ Git history records desired configuration. A Git revert does not restore databas
 
 ### Declarative Configuration
 
-Everything is defined as code—infrastructure, applications, policies, and configurations. This enables:
+Everything is defined as code: infrastructure, applications, policies, and configurations. This enables:
 
 - **Reproducibility**: Versioned configuration plus available artifacts, secrets and data enable recreation
 - **Auditability**: Retained configuration history; runtime/API audit logs still need collection

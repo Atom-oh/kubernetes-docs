@@ -615,10 +615,10 @@ Argo Rollouts supports native traffic providers and plugin extensions. Providers
 | Provider | Integration | Notes |
 |---|---|---|
 | NGINX Ingress | Native (`trafficRouting.nginx`) | Manipulates the `canary-weight` annotation directly |
-| AWS ALB | Native (`trafficRouting.alb`) | The Ingress backend port must be `use-annotation` — see [verification results](#verification-results-on-eks) |
+| AWS ALB | Native (`trafficRouting.alb`) | The Ingress backend port must be `use-annotation`; see [verification results](#verification-results-on-eks) |
 | Istio | Native (`trafficRouting.istio`) | Manipulates the VirtualService/DestinationRule directly |
-| SMI | Native (`trafficRouting.smi`) | The SMI project itself is effectively unmaintained — not recommended for new adoption |
-| Ambassador, Apache APISIX, Traefik | Native | Not covered in this document — see the [official docs](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
+| SMI | Native (`trafficRouting.smi`) | The SMI project itself is effectively unmaintained, not recommended for new adoption |
+| Ambassador, Apache APISIX, Traefik | Native | Not covered in this document; see the [official docs](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
 | **Kong** and other Gateway API-compliant implementations (kgateway, etc.) | **Gateway API plugin** (`trafficRouting.plugins`) | There is no native `trafficRouting.kong` field |
 
 ### NGINX Ingress (Existing Installations)
@@ -993,7 +993,7 @@ At each `setWeight` step, the plugin updates these two `backendRefs[].weight` va
 
 ### Kong (via the Gateway API Plugin)
 
-The Kong Ingress Controller (KIC) has no native Argo Rollouts integration — it uses the Gateway API plugin above. The configuration below is for standalone KIC managing an existing Kong Gateway data plane without Kong Operator. That setup uses the unmanaged annotation; Kong Operator-managed Gateways have a different lifecycle:
+The Kong Ingress Controller (KIC) has no native Argo Rollouts integration; it uses the Gateway API plugin above. The configuration below is for standalone KIC managing an existing Kong Gateway data plane without Kong Operator. That setup uses the unmanaged annotation; Kong Operator-managed Gateways have a different lifecycle:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1001,12 +1001,12 @@ kind: GatewayClass
 metadata:
   name: kong
   annotations:
-    konghq.com/gatewayclass-unmanaged: "true"   # required — without it the Gateway stays stuck on "Waiting for controller"
+    konghq.com/gatewayclass-unmanaged: "true"   # required: without it the Gateway stays stuck on "Waiting for controller"
 spec:
   controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
 ```
 
-From here, apply the same [Gateway API plugin](#gateway-api-plugin-httproute) configuration as above — the Rollout and HTTPRoute YAML are identical.
+From here, apply the same [Gateway API plugin](#gateway-api-plugin-httproute) configuration as above; the Rollout and HTTPRoute YAML are identical.
 
 ### Verification Results on EKS
 
@@ -1014,10 +1014,10 @@ The previous document reported these results with EKS 1.36, Rollouts 1.9.0, AWS 
 
 | Provider | What was checked | Result |
 |---|---|---|
-| NGINX | `canary-weight` annotation transitioning 20→50→100% | ✅ Confirmed — live curl traffic ratio matched the annotation value |
-| Istio | VirtualService weight transitioning 20→50→100%, and immediate revert to 0% on `abort` | ✅ Confirmed — curl ratio matched the weight, and traffic snapped back to the previous stable version right after abort |
+| NGINX | `canary-weight` annotation transitioning 20→50→100% | ✅ Confirmed: live curl traffic ratio matched the annotation value |
+| Istio | VirtualService weight transitioning 20→50→100%, and immediate revert to 0% on `abort` | ✅ Confirmed: curl ratio matched the weight, and traffic snapped back to the previous stable version right after abort |
 | AWS ALB | Listener rule forward weight transition, cross-checked against the live AWS state with `aws elbv2 describe-rules` | ✅ Confirmed (but requires the [`use-annotation` caveat](#aws-alb-ingress) above) |
-| Kong (Gateway API plugin) | `HTTPRoute.backendRefs[].weight` transition, and real traffic through Kong's data plane | ✅ Confirmed — though the `gatewayclass-unmanaged` annotation and exact `controllerName` are easy to get wrong (see above) |
+| Kong (Gateway API plugin) | `HTTPRoute.backendRefs[].weight` transition, and real traffic through Kong's data plane | ✅ Confirmed, though the `gatewayclass-unmanaged` annotation and exact `controllerName` are easy to get wrong (see above) |
 
 When Argo CD manages routing resources, review narrow diff exclusions for fields owned by Rollouts: the relevant ALB action annotation, Istio route weights, HTTPRoute backend weights and Service rollouts-pod-template-hash selector. Avoid ignoring entire specs/managers. Keeping values during sync also requires RespectIgnoreDifferences=true and its existing-resource limitation.
 
@@ -1080,7 +1080,7 @@ In 1.10.0, all `requiredForCompletion: true` analyses succeeding can finish an E
 
 Run A/B tests with multiple versions simultaneously.
 
-> For the detailed behavior — resource creation chain, naming rules, traffic isolation, and AnalysisRun verdicts — see the [Rollouts Experiments Deep Dive](10-rollouts-experiment.md).
+> For the detailed behavior (resource creation chain, naming rules, traffic isolation, and AnalysisRun verdicts), see the [Rollouts Experiments Deep Dive](10-rollouts-experiment.md).
 
 **Prerequisites:** An Experiment does not generate user traffic. Supply test traffic and scraping, and expose the Pod's `rollouts-pod-template-hash` as the metric label `rollouts_pod_template_hash`. The comparison below uses an illustrative one-percentage-point error-rate increase; it does not replace significance testing or minimum-sample validation. Missing data stays Inconclusive. `progressDeadlineSeconds` bounds ReplicaSet availability, not a delay before analysis.
 

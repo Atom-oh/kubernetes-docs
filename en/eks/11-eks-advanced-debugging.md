@@ -139,7 +139,7 @@ Response times in this severity table are example organizational targets. Classi
 
 ### EKS Control Plane Log Types
 
-EKS offers five control-plane log types. They are sent to the regional CloudWatch log group only when enabled; enabling logging does not reconstruct missing historical logs. Scope log access and retention and account for CloudWatch ingestion/storage/query charges. A missing group/stream can reflect disabled logging, no delivered data, the wrong region or denied access—not necessarily a control-plane failure.
+EKS offers five control-plane log types. They are sent to the regional CloudWatch log group only when enabled; enabling logging does not reconstruct missing historical logs. Scope log access and retention and account for CloudWatch ingestion/storage/query charges. A missing group/stream can reflect disabled logging, no delivered data, the wrong region or denied access, not necessarily a control-plane failure.
 
 | Type | Evidence |
 | --- | --- |
@@ -418,7 +418,7 @@ PRESERVE asks EKS to retain existing custom settings when resolving conflicts; i
 
 ### Node Join Failure Diagnosis
 
-These are hypotheses to test against the instance/NodeClaim, bootstrap logs, endpoint reachability and authentication mode—not eight guaranteed root causes.
+These are hypotheses to test against the instance/NodeClaim, bootstrap logs, endpoint reachability and authentication mode, not eight guaranteed root causes.
 
 | Area | What to verify |
 | --- | --- |
@@ -891,7 +891,7 @@ ENI descriptions are not an ownership boundary. Use the inspected instance/subne
 
 On a supported Linux/Nitro/CNI setup, prefix delegation can improve IP density and allocation behavior. Verify contiguous prefix space/reservations, ENI/prefix limits, node maxPods/allocatable Pods and migration readiness. Do not enable it blindly on running nodes or infer usable capacity solely from free IPv4 count.
 
-The following is a **configuration fragment for review**, to merge with the actual supported add-on/chart configuration—not a complete replacement of existing settings:
+The following is a **configuration fragment for review**, to merge with the actual supported add-on/chart configuration, not a complete replacement of existing settings:
 
 ```json
 {
@@ -1213,7 +1213,7 @@ fi
 ```
 PVC names are namespace-local; the consumer search must use the claim’s namespace. Inspect claim/PV UIDs, controller owners, VolumeAttachments and finalizers. A deletion timestamp produces a Terminating display state; it is not an additional PVC status.phase. Pending can be expected with WaitForFirstConsumer until a schedulable consumer exists. An omitted storageClassName differs from an explicit empty string, which requests no class.
 
-Do not null every PVC/PV finalizer to make deletion finish. PVC protection, CSI detach/delete work and reclaim policy protect different parts of the lifecycle. First identify consumers—including controllers that may recreate them—attachment state, controller errors, backups and data ownership. A last-resort orphan repair requires the driver-specific recovery procedure and verified data/attachment state; removing metadata does not perform a safe detach or restore data. Delete can remove the backing storage, and Retain is not a backup.
+Do not null every PVC/PV finalizer to make deletion finish. PVC protection, CSI detach/delete work and reclaim policy protect different parts of the lifecycle. First identify consumers (including controllers that may recreate them), attachment state, controller errors, backups and data ownership. A last-resort orphan repair requires the driver-specific recovery procedure and verified data/attachment state; removing metadata does not perform a safe detach or restore data. Delete can remove the backing storage, and Retain is not a backup.
 
 ### WaitForFirstConsumer, Topology and Encryption
 

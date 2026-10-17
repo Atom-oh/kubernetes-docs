@@ -337,7 +337,7 @@ module "eks" {
     }
   }
 
-  # EKS Add-ons (core only — additional add-ons go in 03-platform)
+  # EKS Add-ons (core only; additional add-ons go in 03-platform)
   addons = {
     coredns = {
       most_recent                 = false
@@ -734,7 +734,7 @@ EKS Pod Identity는 지원되는 워크로드의 선택지이며 IRSA를 보편�
 |------|-------------|------|
 | OIDC 프로바이더 필요 | 아니오 | 예 |
 | 크로스 어카운트 | 지원되는 `targetRoleArn` 등 명시적 역할 위임; 신뢰·권한 필요 | 대상 계정의 OIDC 신뢰 또는 명시적 역할 체이닝 |
-| 설정 복잡도 | 낮음 — 단일 연결 | 보통 — OIDC, 역할, 어노테이션 |
+| 설정 복잡도 | 낮음(단일 연결) | 보통(OIDC, 역할, 어노테이션) |
 | 세션 태그 | 활성화 시 자동 EKS 컨텍스트 태그 | EKS Pod Identity 컨텍스트 태그는 자동 제공되지 않음 |
 | 재사용 | 검토한 여러 연결에서 역할 사용 가능 | 명시적으로 제한한 여러 OIDC 발급자·subject를 한 역할에서 신뢰 가능 |
 
@@ -1089,8 +1089,8 @@ terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" apply reviewed-destroy.tfplan
 서로 다른 S3 상태 키와 기본 잠금을 사용합니다. 잠금은 한 상태의 동시 쓰기를 제어하며 3개 상태 전체의 배포를 조율하지는 않습니다.
 
 - S3 버킷에 **버전 관리를 활성화**하여 실수로 인한 상태 손상을 복구할 수 있도록 합니다.
-- IAM 정책으로 **버킷 접근을 제한**합니다 — CI/CD 파이프라인과 권한 있는 운영자만 상태를 읽고 쓸 수 있어야 합니다.
-- **상태 파일을 수동으로 편집하지 마세요** — 상태 조작이 필요한 경우 `terraform state` 명령을 사용합니다.
+- IAM 정책으로 **버킷 접근을 제한**합니다. CI/CD 파이프라인과 권한 있는 운영자만 상태를 읽고 쓸 수 있어야 합니다.
+- **상태 파일을 수동으로 편집하지 마세요**. 상태 조작이 필요한 경우 `terraform state` 명령을 사용합니다.
 
 ### 모듈 버전 관리
 
@@ -1129,33 +1129,33 @@ variable "tags" {
 
 ## 다음 단계
 
-- [EKS 클러스터 생성 - 1부: 사전 요구 사항](./02-eks-cluster-creation-part1.md) — EKS 클러스터 생성을 위한 사전 준비 사항
-- [EKS 클러스터 생성 - 2부: eksctl을 사용한 클러스터 생성](./02-eks-cluster-creation-part2.md) — eksctl을 사용한 EKS 클러스터 생성
-- [EKS 클러스터 생성 - 3부: AWS Console 및 CLI를 사용한 클러스터 생성](./02-eks-cluster-creation-part3.md) — Console과 CLI를 사용한 EKS 클러스터 생성
-- [EKS 클러스터 생성 - 5부: 클러스터 액세스, 검증, 업그레이드 및 삭제](./02-eks-cluster-creation-part5.md) — EKS 클러스터 관리
-- [EKS 네트워킹 - 1부: 기본 개념 및 VPC 구성](./03-eks-networking-part1.md) — EKS 네트워킹 기본 개념
-- [EKS 보안](./05-eks-security.md) — EKS 클러스터 보안 구성
+- [EKS 클러스터 생성 - 1부: 사전 요구 사항](./02-eks-cluster-creation-part1.md): EKS 클러스터 생성을 위한 사전 준비 사항
+- [EKS 클러스터 생성 - 2부: eksctl을 사용한 클러스터 생성](./02-eks-cluster-creation-part2.md): eksctl을 사용한 EKS 클러스터 생성
+- [EKS 클러스터 생성 - 3부: AWS Console 및 CLI를 사용한 클러스터 생성](./02-eks-cluster-creation-part3.md): Console과 CLI를 사용한 EKS 클러스터 생성
+- [EKS 클러스터 생성 - 5부: 클러스터 액세스, 검증, 업그레이드 및 삭제](./02-eks-cluster-creation-part5.md): EKS 클러스터 관리
+- [EKS 네트워킹 - 1부: 기본 개념 및 VPC 구성](./03-eks-networking-part1.md): EKS 네트워킹 기본 개념
+- [EKS 보안](./05-eks-security.md): EKS 클러스터 보안 구성
 
 ### 관련 주제
 
-- [ArgoCD](../gitops/argocd/README.md) — GitOps 연속 배포
-- [AWS Controllers for Kubernetes (ACK)](../platform-engineering/02-ack.md) — Kubernetes에서 AWS 리소스 관리
-- [Karpenter](../autoscaling/02-karpenter.md) — 노드 프로비저닝 자동화
-- [Kubernetes 확장](../core/11-extending-kubernetes.md) — Operator와 CRD를 사용한 Kubernetes API 확장
+- [ArgoCD](../gitops/argocd/README.md): GitOps 연속 배포
+- [AWS Controllers for Kubernetes (ACK)](../platform-engineering/02-ack.md): Kubernetes에서 AWS 리소스 관리
+- [Karpenter](../autoscaling/02-karpenter.md): 노드 프로비저닝 자동화
+- [Kubernetes 확장](../core/11-extending-kubernetes.md): Operator와 CRD를 사용한 Kubernetes API 확장
 
 ## 용어집
 
 | 용어 | 설명 |
 |------|------|
-| **EKS** | Amazon Elastic Kubernetes Service — AWS에서 제공하는 관리형 Kubernetes 서비스입니다. |
+| **EKS** | Amazon Elastic Kubernetes Service의 약자로, AWS에서 제공하는 관리형 Kubernetes 서비스입니다. |
 | **Terraform** | HashiCorp에서 개발한 인프라를 코드로 프로비저닝하고 관리하는 도구입니다. |
 | **Access Entry** | `aws-auth` ConfigMap을 대체하는 EKS API 기반의 클러스터 접근 권한 부여 메커니즘입니다. |
 | **Pod Identity** | OIDC 프로바이더 없이 파드에 AWS 자격 증명을 제공하는 EKS 기능입니다. |
 | **Auto Mode** | AWS가 노드 프로비저닝, 스케일링, OS 업데이트를 완전히 관리하는 EKS 모드입니다. |
 | **Hybrid Nodes** | 온프레미스 또는 엣지 서버를 EKS 클러스터의 워커 노드로 참여시킬 수 있는 EKS 기능입니다. |
-| **IAM** | Identity and Access Management — AWS 리소스에 대한 접근을 제어하는 서비스입니다. |
-| **VPC** | Virtual Private Cloud — AWS 클라우드 내의 논리적으로 격리된 가상 네트워크입니다. |
-| **IRSA** | IAM Roles for Service Accounts — 지원되는 OIDC 기반 워크로드 신원 방식입니다. |
+| **IAM** | Identity and Access Management의 약자로, AWS 리소스에 대한 접근을 제어하는 서비스입니다. |
+| **VPC** | Virtual Private Cloud의 약자로, AWS 클라우드 내의 논리적으로 격리된 가상 네트워크입니다. |
+| **IRSA** | IAM Roles for Service Accounts의 약자로, 지원되는 OIDC 기반 워크로드 신원 방식입니다. |
 | **원격 상태** | 하나의 Terraform 구성이 다른 구성의 상태 파일에서 출력을 읽을 수 있게 하는 Terraform 기능입니다. |
 
 ## 퀴즈

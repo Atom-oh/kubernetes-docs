@@ -695,9 +695,9 @@ Argo Rollouts는 네이티브 트래픽 provider와 플러그인 확장을 지�
 | Provider | 연동 방식 | 비고 |
 |---|---|---|
 | NGINX Ingress | 네이티브 (`trafficRouting.nginx`) | `canary-weight` 애노테이션 직접 조작 |
-| AWS ALB | 네이티브 (`trafficRouting.alb`) | Ingress backend port가 `use-annotation`이어야 함 — [실측 검증 결과](#실측-검증-결과-eks) 참고 |
+| AWS ALB | 네이티브 (`trafficRouting.alb`) | Ingress backend port가 `use-annotation`이어야 함, [실측 검증 결과](#실측-검증-결과-eks) 참고 |
 | Istio | 네이티브 (`trafficRouting.istio`) | VirtualService/DestinationRule 직접 조작 |
-| SMI | 네이티브 (`trafficRouting.smi`) | SMI 프로젝트 자체가 유지보수 종료 상태 — 신규 도입 비권장 |
+| SMI | 네이티브 (`trafficRouting.smi`) | SMI 프로젝트 자체가 유지보수 종료 상태, 신규 도입 비권장 |
 | Ambassador, Apache APISIX, Traefik | 네이티브 | 이 문서에서는 다루지 않음, [공식 문서](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) 참고 |
 | **Kong**, 기타 Gateway API 호환 구현체(kgateway 등) | **Gateway API 플러그인** (`trafficRouting.plugins`) | 네이티브 `trafficRouting.kong` 필드는 존재하지 않음 |
 
@@ -938,7 +938,7 @@ Kong·kgateway 등의 Gateway API 경로는 argoproj-labs가 유지하는 [Gatew
 
 아래 바이너리는 **컨트롤러 Pod가 실행되는 Linux amd64 노드용**입니다. arm64 노드에서는 파일명을 gatewayapi-plugin-linux-arm64로 바꾸고 SHA256 `5221279f7bf2c9b2c0ff6ed7ff12718ecce1d4892f1ff5e5224bb723cfd0fd92`를 사용합니다. Helm 설치는 같은 목록을 controller.trafficRouterPlugins values로 관리합니다. 매니페스트 설치는 기존 ConfigMap data에 병합하고 컨트롤러를 재시작합니다. Role 예제는 해당 Namespace의 HTTPRoute weight 조작 범위이며 다른 Route 종류/헤더 생성 기능에는 별도 권한 검토가 필요합니다.
 
-플러그인 설치 — 컨트롤러가 기동 시 바이너리를 다운로드하도록 `argo-rollouts-config` ConfigMap에 등록합니다:
+플러그인을 설치하려면 컨트롤러가 기동 시 바이너리를 다운로드하도록 `argo-rollouts-config` ConfigMap에 등록합니다:
 
 ```yaml
 apiVersion: v1
@@ -1054,7 +1054,7 @@ spec:
 
 ### Kong (Gateway API 플러그인 경유)
 
-Kong Ingress Controller(KIC)는 Argo Rollouts에 네이티브로 통합되어 있지 않습니다 — 위 Gateway API 플러그인을 그대로 사용합니다. 아래는 Kong Operator 없이 독립 KIC가 기존 Kong Gateway 데이터플레인을 관리하는 구성입니다. 이때 unmanaged 애노테이션을 사용하며 Kong Operator의 managed Gateway 구성과 구분합니다:
+Kong Ingress Controller(KIC)는 Argo Rollouts에 네이티브로 통합되어 있지 않습니다. 위 Gateway API 플러그인을 그대로 사용합니다. 아래는 Kong Operator 없이 독립 KIC가 기존 Kong Gateway 데이터플레인을 관리하는 구성입니다. 이때 unmanaged 애노테이션을 사용하며 Kong Operator의 managed Gateway 구성과 구분합니다:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1062,7 +1062,7 @@ kind: GatewayClass
 metadata:
   name: kong
   annotations:
-    konghq.com/gatewayclass-unmanaged: "true"   # 필수 — 없으면 Gateway가 "Waiting for controller"에서 멈춤
+    konghq.com/gatewayclass-unmanaged: "true"   # 필수: 없으면 Gateway가 "Waiting for controller"에서 멈춤
 spec:
   controllerName: konghq.com/kic-gateway-controller   # KIC의 IngressClass controller 문자열과 다르므로 주의
 ```
@@ -1075,10 +1075,10 @@ spec:
 
 | Provider | 검증 항목 | 결과 |
 |---|---|---|
-| NGINX | `canary-weight` 애노테이션 20→50→100% 전환 | ✅ 정상 — 실시간 curl 트래픽 비율이 애노테이션 값과 일치 |
-| Istio | VirtualService weight 20→50→100% 전환, `abort` 시 즉시 0% 복귀 | ✅ 정상 — curl 비율이 weight와 일치, abort 후 트래픽이 즉시 이전 stable로 전환 |
+| NGINX | `canary-weight` 애노테이션 20→50→100% 전환 | ✅ 정상: 실시간 curl 트래픽 비율이 애노테이션 값과 일치 |
+| Istio | VirtualService weight 20→50→100% 전환, `abort` 시 즉시 0% 복귀 | ✅ 정상: curl 비율이 weight와 일치, abort 후 트래픽이 즉시 이전 stable로 전환 |
 | AWS ALB | 리스너 규칙 forward weight 전환, `aws elbv2 describe-rules`로 실제 AWS 상태 대조 | ✅ 정상 (단, 위 [`use-annotation` 주의](#aws-alb) 필요) |
-| Kong (Gateway API 플러그인) | `HTTPRoute.backendRefs[].weight` 전환, Kong 데이터플레인 실제 트래픽 확인 | ✅ 정상 — 단, `gatewayclass-unmanaged` 애노테이션과 정확한 `controllerName` 설정이 까다로움 (위 참고) |
+| Kong (Gateway API 플러그인) | `HTTPRoute.backendRefs[].weight` 전환, Kong 데이터플레인 실제 트래픽 확인 | ✅ 정상. 단, `gatewayclass-unmanaged` 애노테이션과 정확한 `controllerName` 설정이 까다로움 (위 참고) |
 
 Argo CD가 Rollout과 라우팅 리소스를 관리한다면 Rollouts 소유 필드만 정밀하게 diff 제외 대상으로 검토합니다. 해당 ALB action 애노테이션, Istio route weight, HTTPRoute backend weight, Service의 rollouts-pod-template-hash selector가 예입니다. 전체 spec/manager를 제외하지 않습니다. sync에서도 유지하려면 RespectIgnoreDifferences=true와 기존 리소스에만 적용되는 제약을 고려합니다.
 

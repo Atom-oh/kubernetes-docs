@@ -62,7 +62,7 @@ pluto detect-api-resources --kube-context "$KUBE_CONTEXT" --target-versions "k8s
 
 앞 명령이 0이 아닌 종료 코드를 반환하면 블록이 중단되므로 결과를 처리한 뒤 나머지 검사도 완료합니다. API 리소스 검사는 저장된 어노테이션에 의존하며 모든 런타임 요청을 관찰하지 못합니다. kube-no-trouble 프로젝트의 실행 파일은 `kubent`이며 `kubectl-no-trouble`이 아닙니다.
 
-**과거 API 제거 사례** — 마이그레이션 이력이며 현재 EKS 업그레이드 대상이 아닙니다.
+**과거 API 제거 사례**: 마이그레이션 이력이며 현재 EKS 업그레이드 대상이 아닙니다.
 
 | Kubernetes 릴리스 | 제거된 서빙 API / 마이그레이션 |
 | --- | --- |
@@ -79,7 +79,7 @@ kubelet 1.25 이상은 업스트림 정책상 API 서버보다 최대 세 마이
 검토한 인프라 정의로 네트워크, IAM, 컴퓨팅 유형, 데이터와 컨트롤러를 대표하는 별도 환경을 준비합니다. 운영 환경과의 차이, 비용과 정리 담당자를 기록합니다. 개발·스테이징부터 비즈니스 기능, 확장, 복구, 알림을 검증하며 운영 환경에 사전 점검의 일부로 장애를 주입하지 않습니다. 기존 1.27→1.28 예시는 과거 사례이며 현재 프로비저닝 권고가 아닙니다.
 
 ```markdown
-# EKS upgrade plan — fill from evidence, not assumed results
+# EKS upgrade plan: fill from evidence, not assumed results
 
 - Account / Region / cluster ARN / kube context: TBD
 - Current / target minor and EKS support status: TBD
@@ -735,7 +735,7 @@ Auto Mode는 본문의 대안 `--rollback-config timeoutMinutes=...` 요청을 �
 원래 시각을 아래에 보존합니다. 시나리오와 주장된 원인에는 제공된 장애 근거가 없으므로 가설을 담은 예시로 유지합니다.
 
 ```markdown
-# Upgrade troubleshooting report — illustrative, not a verified incident
+# Upgrade troubleshooting report: illustrative, not a verified incident
 
 ## Problem description
 

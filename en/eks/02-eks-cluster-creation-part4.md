@@ -337,7 +337,7 @@ module "eks" {
     }
   }
 
-  # EKS Add-ons (core only — additional add-ons go in 03-platform)
+  # EKS Add-ons (core only; additional add-ons go in 03-platform)
   addons = {
     coredns = {
       most_recent                 = false
@@ -734,7 +734,7 @@ The Pod Identity resources shown in `03-platform/pod-identity.tf` above follow t
 |---------|-------------|------|
 | OIDC provider required | No | Yes |
 | Cross-account support | Explicit role delegation, including `targetRoleArn` where supported; requires trust/permissions | Target-account OIDC trust or explicit role chaining |
-| Setup complexity | Low — single association | Medium — OIDC, role, annotation |
+| Setup complexity | Low (single association) | Medium (OIDC, role, annotation) |
 | Session tags | Automatic EKS context tags when enabled | No automatic EKS Pod Identity context tags |
 | Re-usability | A role can serve multiple reviewed associations | A role can trust multiple explicitly scoped OIDC issuers/subjects |
 
@@ -929,7 +929,7 @@ resource "aws_iam_role_policy" "hybrid_lifecycle" {
 - **`remote_network_config`** declares non-overlapping remote node/Pod CIDRs; it does not create VPNs, routes, firewalls or a CNI. Module v21 takes objects containing `cidrs`, not lists of those objects.
 - Hybrid nodes authenticate via an IAM role with access entry type `HYBRID_LINUX`.
 - Hybrid nodes connect to the private API on TCP 443; the control plane connects **outbound to hybrid kubelets** on TCP 10250. Configure the corresponding on-premises firewall and required Pod/webhook paths; two SG rules are not a full network design.
-- VPC CNI is not used on hybrid nodes — you must configure an alternative CNI (e.g., Cilium) on the on-premises side.
+- VPC CNI is not used on hybrid nodes; you must configure an alternative CNI (e.g., Cilium) on the on-premises side.
 
 ---
 
@@ -1089,8 +1089,8 @@ After success, repeat for `02-cluster` and finally `01-network`. Stop on errors 
 Use distinct S3 state keys and native locking. Locks protect concurrent writers to one state; they do not coordinate deployments across all three states.
 
 - **Enable versioning** on the S3 bucket to recover from accidental state corruption.
-- **Restrict bucket access** with IAM policies — only CI/CD pipelines and authorized operators should read/write state.
-- **Never edit state files manually** — use `terraform state` commands when state manipulation is needed.
+- **Restrict bucket access** with IAM policies: only CI/CD pipelines and authorized operators should read/write state.
+- **Never edit state files manually**; use `terraform state` commands when state manipulation is needed.
 
 ### Module Versioning
 
@@ -1129,33 +1129,33 @@ variable "tags" {
 
 ## Next Steps
 
-- [EKS Cluster Creation - Part 1: Prerequisites](./02-eks-cluster-creation-part1.md) — Prerequisites for EKS cluster creation
-- [EKS Cluster Creation - Part 2: Creating Clusters Using eksctl](./02-eks-cluster-creation-part2.md) — Creating EKS clusters with eksctl
-- [EKS Cluster Creation - Part 3: Creating Clusters Using AWS Console and CLI](./02-eks-cluster-creation-part3.md) — Creating EKS clusters via Console and CLI
-- [EKS Cluster Creation - Part 5: Cluster Access, Validation, Upgrade, and Deletion](./02-eks-cluster-creation-part5.md) — Managing EKS clusters
-- [EKS Networking - Part 1: Basic Concepts and VPC Configuration](./03-eks-networking-part1.md) — EKS networking fundamentals
-- [EKS Security](./05-eks-security.md) — Security configuration for EKS clusters
+- [EKS Cluster Creation - Part 1: Prerequisites](./02-eks-cluster-creation-part1.md): Prerequisites for EKS cluster creation
+- [EKS Cluster Creation - Part 2: Creating Clusters Using eksctl](./02-eks-cluster-creation-part2.md): Creating EKS clusters with eksctl
+- [EKS Cluster Creation - Part 3: Creating Clusters Using AWS Console and CLI](./02-eks-cluster-creation-part3.md): Creating EKS clusters via Console and CLI
+- [EKS Cluster Creation - Part 5: Cluster Access, Validation, Upgrade, and Deletion](./02-eks-cluster-creation-part5.md): Managing EKS clusters
+- [EKS Networking - Part 1: Basic Concepts and VPC Configuration](./03-eks-networking-part1.md): EKS networking fundamentals
+- [EKS Security](./05-eks-security.md): Security configuration for EKS clusters
 
 ### Related Topics
 
-- [ArgoCD](../gitops/argocd/README.md) — GitOps continuous deployment
-- [AWS Controllers for Kubernetes (ACK)](../platform-engineering/02-ack.md) — Managing AWS resources from Kubernetes
-- [Karpenter](../autoscaling/02-karpenter.md) — Node provisioning automation
-- [Kubernetes Extensions](../core/11-extending-kubernetes.md) — Extending the Kubernetes API with Operators and CRDs
+- [ArgoCD](../gitops/argocd/README.md): GitOps continuous deployment
+- [AWS Controllers for Kubernetes (ACK)](../platform-engineering/02-ack.md): Managing AWS resources from Kubernetes
+- [Karpenter](../autoscaling/02-karpenter.md): Node provisioning automation
+- [Kubernetes Extensions](../core/11-extending-kubernetes.md): Extending the Kubernetes API with Operators and CRDs
 
 ## Glossary
 
 | Term | Description |
 |------|-------------|
-| **EKS** | Amazon Elastic Kubernetes Service — a managed Kubernetes service provided by AWS. |
+| **EKS** | Amazon Elastic Kubernetes Service, a managed Kubernetes service provided by AWS. |
 | **Terraform** | An infrastructure-as-code tool by HashiCorp for provisioning and managing cloud resources. |
 | **Access Entry** | An EKS API-based mechanism for granting IAM principals access to a cluster, replacing the `aws-auth` ConfigMap. |
 | **Pod Identity** | An EKS feature that provides AWS credentials to pods without requiring an OIDC provider. |
 | **Auto Mode** | An EKS mode where AWS fully manages node provisioning, scaling, and OS updates. |
 | **Hybrid Nodes** | An EKS feature allowing on-premises or edge servers to join an EKS cluster as worker nodes. |
-| **IAM** | Identity and Access Management — controls access to AWS resources. |
-| **VPC** | Virtual Private Cloud — a logically isolated virtual network within AWS. |
-| **IRSA** | IAM Roles for Service Accounts — a supported OIDC-based workload identity mechanism. |
+| **IAM** | Identity and Access Management, which controls access to AWS resources. |
+| **VPC** | Virtual Private Cloud, a logically isolated virtual network within AWS. |
+| **IRSA** | IAM Roles for Service Accounts, a supported OIDC-based workload identity mechanism. |
 | **Remote State** | A Terraform feature that allows one configuration to read outputs from another configuration's state file. |
 
 ## Quiz

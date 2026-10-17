@@ -462,7 +462,7 @@ aws eks describe-nodegroup \
 
 #### Upgrade Using AWS CLI
 
-For an EKS-optimized AMI, use the reviewed release and target version. This operation has its own update ID; keep the node-group scope when polling. Review platform/AMI-family support—an AL2 node group is not migrated to AL2023 merely by changing the Kubernetes version.
+For an EKS-optimized AMI, use the reviewed release and target version. This operation has its own update ID; keep the node-group scope when polling. Review platform/AMI-family support; an AL2 node group is not migrated to AL2023 merely by changing the Kubernetes version.
 
 ```bash
 set -euo pipefail

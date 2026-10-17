@@ -137,7 +137,7 @@ SIG는 관련 영역을 담당합니다. Node는 runtime·lifecycle, Auth는 인
 
 이는 공시된 버전 지원 요금이며 전체 클러스터 운영 비용이 아닙니다. Provisioned Control Plane tier·compute·Auto Mode/Hybrid Nodes·다른 capability·storage·network 비용이 추가될 수 있습니다. 동일 요율로 365일 운영하면 클러스터당 $876과 $5,256이며 차액은 $4,380입니다. 월 730시간 예시에서는 $73과 $438입니다. 실제 청구 측정값이 아닌 산술 예시입니다.
 
-### 확인한 지원 일정 — 2026년 10월 12일 기준 (UTC)
+### 확인한 지원 일정: 2026년 10월 12일 기준 (UTC)
 
 | 버전 | Upstream 출시 | EKS 출시 | Standard 종료 | Extended 종료 | 검토일 상태 |
 |---|---|---|---|---|---|
@@ -209,7 +209,7 @@ Managed node group·self-managed node·Fargate Pod·Hybrid Node는 각각의 업
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-6.html)
 
-#### KMS v2 저장 시 암호화 — GA
+#### KMS v2 저장 시 암호화: GA
 
 KMS v2는 secret seed에서 일회용 data encryption key를 파생하고 seed 보호·교체 시 KMS plugin을 사용하여 매 object 쓰기마다 원격 암호화를 요구하지 않도록 envelope encryption 성능을 개선합니다. Envelope encryption의 data-encryption·key-encryption 계층은 v1에도 있으므로 v1을 “단일 계층”으로 설명하면 안 됩니다. 개선이 일정한 latency를 보장하지는 않습니다.
 
@@ -234,7 +234,7 @@ resources:
 
 **EKS 구분:** 현재 AWS 안내는 EKS 1.28 이상에서 모든 Kubernetes API data에 KMS v2 envelope encryption을 기본 제공하며 customer-managed key를 설정하지 않으면 AWS-owned key를 사용합니다. Secrets·ConfigMaps 같은 API data에 적용되고 node나 EBS volume의 임의 data까지 암호화하는 것은 아닙니다. EKS 1.29부터 시작한다고 추론하거나 위 upstream 설정을 EKS에 적용하지 않습니다.
 
-#### ReadWriteOncePod — GA
+#### ReadWriteOncePod: GA
 
 `ReadWriteOncePod`는 클러스터 전체에서 PVC를 한 Pod로 제한합니다. `ReadWriteOnce`는 한 node의 여러 Pod가 접근할 수 있습니다. RWOP에는 호환되는 CSI volume·driver가 필요하며 upstream 최소 sidecar는 csi-provisioner 3.0.0, csi-attacher 3.3.0, csi-resizer 1.3.0입니다. 이는 기능 최소 조건이지 현재 권장 release가 아닙니다. 실제 클러스터와 provisioner가 지원하는 버전을 선택합니다.
 
@@ -292,7 +292,7 @@ initContainers:
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-7.html)
 -->
 
-#### ValidatingAdmissionPolicy — GA
+#### ValidatingAdmissionPolicy: GA
 
 ValidatingAdmissionPolicy는 API server 안에서 CEL을 평가합니다. 여러 validation webhook과 network·인증서·server 의존성을 줄일 수 있지만 잘못된 정책·평가 오류·fail-closed 설정은 여전히 요청을 거부할 수 있습니다. Policy·binding·선택적 parameter object는 역할이 다르며 parameter는 built-in resource나 custom resource가 될 수 있습니다. 필수인 세 번째 CRD 타입이 아닙니다.
 
@@ -408,7 +408,7 @@ spec:
   message: Nonempty application name and version labels are required.
 ```
 
-#### Pod Scheduling Readiness — GA
+#### Pod Scheduling Readiness: GA
 
 Scheduling gate는 Pod를 scheduling 검토에서 제외합니다. 생성·admission 시 설정하고 이후 제거할 수 있지만 생성 뒤 새 gate를 추가할 수는 없습니다. Gated Pod만으로 일반적인 unschedulable-Pod 기반 node provisioning이 시작되지는 않으므로 외부 승인·provisioning 절차에서 조건을 충족해야 합니다. Gate만으로 atomic gang scheduling이 구현되지 않습니다.
 
@@ -453,7 +453,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
   patch pod "$POD_NAME" --type=json --patch "$gate_patch"
 ```
 
-#### HPA ContainerResource metric — GA (KEP-2702)
+#### HPA ContainerResource metric: GA (KEP-2702)
 
 ContainerResource는 지정한 container를 대상으로 하므로 log/proxy sidecar 사용량이 앱 utilization 신호를 왜곡하는 것을 줄일 수 있습니다. `version-lab`에 대상 Deployment가 존재하고 적절한 request를 설정한 `app` container가 있어야 합니다. 정상 resource-metrics provider도 필요합니다. Utilization의 분모는 limit가 아닌 request입니다. Metric이 여러 개면 HPA는 가장 큰 replica 권고를 선택하며 metric 누락·readiness·stabilization이 동작에 영향을 줍니다. Replica 2~50은 측정된 최적값이 아닌 용량 예시입니다.
 
@@ -517,7 +517,7 @@ spec:
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-8.html)
 -->
 
-#### AppArmor native 필드 — GA
+#### AppArmor native 필드: GA
 
 AppArmor native 필드는 1.30에 도입되고 1.31에서 GA가 되었으며 기존 container별 beta annotation 방식을 대체합니다. Host에서 AppArmor가 실제 활성화되어 있고 runtime이 지원해야 하며 `Localhost` profile은 배치 가능한 각 node에 로드되어 있어야 합니다. Custom node label은 운영자가 검증한 조건의 표시일 뿐 profile 설치·강제 적용 수단이 아닙니다.
 
@@ -565,7 +565,7 @@ spec:
             type: RuntimeDefault
 ```
 
-#### PersistentVolume 마지막 phase 전환 시각 — GA
+#### PersistentVolume 마지막 phase 전환 시각: GA
 
 PV status의 `.status.lastPhaseTransitionTime`은 최근 phase 전환을 기록합니다. Event·backend 근거와 함께 수명주기를 진단하며 완전한 전환 이력이나 누락된 과거 이벤트의 복원으로 보지 않습니다. 아래 명령은 volume을 변경·삭제하지 않습니다.
 
@@ -577,13 +577,13 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pv "$PV_NAME" -o jso
 }'
 ```
 
-#### DRA structured parameters — 1.31에서는 아직 alpha
+#### DRA structured parameters: 1.31에서는 아직 alpha
 
 DRA 재설계는 structured API·ResourceSlice로 device 정보와 요청을 Kubernetes가 볼 수 있게 하여 scheduler 측 할당을 가능하게 했습니다. **1.31에도 classic DRA가 남아 있었으며**, 별도의 기본 비활성 `DRAControlPlaneController` gate로 제어했습니다. 출시된 1.31 소스에는 이 gate가 있고 1.32 소스에서는 제거됩니다. 따라서 기존 퀴즈의 “1.31에서 classic DRA 제거”는 잘못된 설명입니다.
 
 DRA는 1.31에서 alpha, 1.32에서 beta, core API는 1.34에서 stable이 되었습니다. 기존 `resource.k8s.io/v1beta1` 예시는 1.31 당시 API 세대를 올바르게 표현하지 못했습니다. 현재 구문은 1.34 절의 stable DRA 예시를 사용하고 설치한 driver의 DeviceClass·ResourceSlice·attribute·기능을 확인합니다. Kubernetes API 자체가 GPU driver를 설치하거나 time-slicing/MIG를 구현하지는 않습니다.
 
-#### Service traffic distribution — beta
+#### Service traffic distribution: beta
 
 Core `v1` Service의 `trafficDistribution: PreferClose`는 같은 zone endpoint를 선호하도록 요청합니다. 엄격한 locality 규칙·지리적 거리 계산·cross-AZ 요금 제거 보장이 아닌 routing 선호입니다. Endpoint 가용성·구현 proxy·traffic policy 우선순위가 영향을 줍니다. Selector가 실제 workload Pod와 일치해야 하며 예시가 endpoint를 생성하지는 않습니다.
 
@@ -628,7 +628,7 @@ Nftables backend 지원은 자동 network 마이그레이션이 아닙니다. No
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-9.html)
 
-#### Structured authorization configuration — GA
+#### Structured authorization configuration: GA
 
 Stable 설정은 `apiserver.config.k8s.io/v1`의 `AuthorizationConfiguration`을 사용합니다. 기존 authorization mode flag의 대안이지 `--authorization-mode`가 제거되었다는 뜻이 아닙니다. Flag 방식과 설정 파일 방식을 혼용하지 않습니다. EKS는 이 컨트롤 플레인 설정을 관리하므로 아래 파일은 관리자가 운영하는 API server용이며 kubectl로 적용하는 resource나 EKS 설정 인터페이스가 아닙니다.
 
@@ -661,7 +661,7 @@ authorizers:
 
 사용 전에 실제 webhook·TLS trust·보호된 kubeconfig를 준비합니다. `failurePolicy: Deny`는 해당 webhook·조건 평가 실패에 적용되며 캐시된 결정은 backend policy 변경 효과를 지연시킬 수 있습니다. 모든 API server에 일관된 설정을 사용합니다. 설정 reload를 지원하지만 Node/RBAC authorizer를 추가·제거할 수는 없으므로 비프로덕션에서 전체 정책과 복구 절차를 검증합니다.
 
-#### StatefulSet PVC retention policy — GA
+#### StatefulSet PVC retention policy: GA
 
 1.32에서 GA가 된 관련 기능은 **StatefulSet volume claim template으로 생성한 PVC의 자동 삭제·보존 정책**입니다. 모든 미사용 PVC의 보호 finalizer가 즉시 제거된다는 새 보장이 아닙니다. `whenDeleted`는 StatefulSet 삭제, `whenScaled`는 scale-down 동작을 제어하며 각각 `Retain` 또는 `Delete`를 지원합니다. 기본값은 data 보존입니다. 아래는 기존 StatefulSet에서 검토할 설정 조각입니다.
 
@@ -674,7 +674,7 @@ spec:
 
 `Delete` 선택은 data 수명주기 변경이며 PV reclaim policy에 따라 PVC 삭제가 backend storage 삭제로 이어질 수 있습니다. Pod ownership·garbage collection·CSI 작업·finalizer가 완료 시점에 영향을 줍니다. PVC 사용 중 보호는 1.32 전부터 있었으므로 멈춘 claim은 consumer·UID·attachment·controller를 조사해야 합니다. Finalizer 일괄 제거 또는 업그레이드만으로 해결된다고 가정하지 않습니다.
 
-#### VolumeAttributesClass — 1.32에서는 아직 beta
+#### VolumeAttributesClass: 1.32에서는 아직 beta
 
 VAC는 1.31에서 beta, 1.34에서 GA가 되었습니다. Beta API는 `storage.k8s.io/v1beta1`이며 현재 예시는 cluster·CSI driver가 지원할 때 1.34 절의 stable API를 사용합니다. Class parameter는 불변이고 PVC의 class 참조를 바꿔 EBS IOPS·throughput 같은 driver 지원 속성 변경을 요청합니다.
 
@@ -694,7 +694,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
 
 AWS의 1.34 안내도 stable VAC API와 이전 beta sidecar 지원을 구분합니다. EKS 컨트롤 플레인 버전만으로 임의 EBS CSI release의 VAC API 호환성이 입증되지는 않습니다.
 
-#### User namespace — 1.32에서는 beta, 기본 비활성화
+#### User namespace: 1.32에서는 beta, 기본 비활성화
 
 User namespace는 1.30에서 beta, 1.33에서 기본 활성화되었으며 GA는 1.36입니다. Pod는 `hostUsers: false`로 opt-in합니다. Container의 UID 0은 구현이 선택한 non-root host UID로 매핑되며 모든 환경에 공통인 `65534 + offset` 공식이 아닙니다. 호환 kernel·filesystem·CRI/runtime이 필요하고 모든 workload·host 접근 방식이 호환되는 것은 아닙니다.
 
@@ -743,7 +743,7 @@ spec:
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-10.html)
 
-#### Native sidecar — GA
+#### Native sidecar: GA
 
 Alpha 1.28 → beta 1.29 → GA 1.33 순서로 진행했습니다. 재시작 가능한 init container에 `restartPolicy: Always`를 지정합니다. Sidecar의 `started`가 true가 되면 kubelet이 다음 init container로 진행합니다. Startup probe가 없으면 프로세스 실행, 있으면 해당 probe 성공을 의미하며 readiness는 별도 신호입니다. 아래 일반 init container는 **두 sidecar가 시작한 뒤** 실행되고, 완료 후 앱이 시작합니다.
 
@@ -814,7 +814,7 @@ spec:
 
 일반적인 graceful termination에서는 main container 이후 sidecar를 역순으로 종료합니다. Pod의 공통 grace-period budget이 적용되므로 main 종료가 오래 걸리면 sidecar의 정상 종료 시간이 거의 남지 않을 수 있습니다. Native sidecar는 main container 완료 후 Job 완료를 막지 않으며 GA에서 처음 생긴 동작도 아닙니다. 용량 산정에는 동시에 실행하는 init·sidecar·app resource와 Pod overhead를 고려합니다. 여기서 수명주기 시간이나 앱 가용성을 측정하지 않았습니다.
 
-#### 컨테이너 리소스 in-place resize — 1.33에서 beta
+#### 컨테이너 리소스 in-place resize: 1.33에서 beta
 
 In-place resize는 Pod를 재생성하지 않고 원하는 CPU/memory 할당을 변경하지만 `resizePolicy`에 따라 container 재시작이 필요할 수 있습니다. 1.35에서 stable이 되었습니다. 아래 현재 schema 예시는 `Burstable` QoS를 유지하고 CPU는 `NotRequired`, memory는 `RestartContainer`로 설정합니다. 따라서 memory 변경은 정책상 container 재시작을 요청하며 모든 memory 변경의 본질적 제약이라는 뜻은 아닙니다.
 
@@ -927,7 +927,7 @@ spec:
       controlledValues: RequestsAndLimits
 ```
 
-#### ServiceCIDR·IPAddress — GA
+#### ServiceCIDR·IPAddress: GA
 
 Upstream Kubernetes는 allocator·API가 활성화되어 있을 때 추가 `networking.k8s.io/v1` ServiceCIDR object로 사용 가능한 Service 주소를 확장할 수 있습니다. 기본 `kubernetes` object는 API server의 초기 범위를 나타냅니다. 추가 전에 IPAM·address family·routing 중복을 검토하며 할당된 Service IP가 고아가 되는 삭제는 finalizer로 보호됩니다. ServiceCIDR는 VPC subnet이나 Pod 주소 CIDR가 아닙니다.
 
@@ -952,7 +952,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get servicecidrs
 kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get ipaddresses
 ```
 
-#### Topology-aware routing·traffic distribution — GA
+#### Topology-aware routing·traffic distribution: GA
 
 Topology-aware endpoint hint와 Service `trafficDistribution` 선호는 관련되지만 다른 메커니즘입니다. 아래 `PreferClose`는 같은 zone 선호이며 엄격한 same-zone 보장·region 간 거리 계산·기존 annotation의 일괄 deprecated 선언이 아닙니다. Ready endpoint 분포·proxy 구현·`internalTrafficPolicy`/`externalTrafficPolicy`가 경로에 영향을 줍니다.
 
@@ -973,7 +973,7 @@ spec:
     targetPort: 8080
 ```
 
-#### Job success policy — GA
+#### Job success policy: GA
 
 Success policy는 Indexed Job에 적용합니다. 아래는 index 0 성공을 요구하며 앱이 해당 프로토콜을 구현해야만 이를 leader로 해석할 수 있습니다. Kubernetes가 분산 작업 결과의 완결성·내구성을 추론하지는 않습니다. Failure policy와 나머지 Pod 종료도 고려해야 합니다. 기존 예시에 빠진 Job template의 `restartPolicy: Never`를 명시했습니다.
 
@@ -1005,7 +1005,7 @@ spec:
               fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
 ```
 
-#### OCI image volume — 1.33에서 beta, 기본 비활성화
+#### OCI image volume: 1.33에서 beta, 기본 비활성화
 
 Image volume은 모델 data 같은 OCI image 내용을 앱 image에 포함하지 않고 Pod에 제공합니다. 지원 runtime·기능 설정·registry pull identity가 필요합니다. 읽기 전용 mount이며 쓰기 가능한 PVC가 아닙니다. 앱·data image를 모두 검토하고 고정합니다. ImageVolume은 1.35에서 기본 활성화되고 1.36에서 stable이 되었으며 1.34 GA가 아닙니다.
 
@@ -1061,7 +1061,7 @@ LoadBalancerIPMode·RetryGenerateName은 1.32에서 이미 GA였습니다. KYAML
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-11.html)
 -->
 
-#### DRA core API — GA
+#### DRA core API: GA
 
 DeviceClass·ResourceClaim·ResourceClaimTemplate·ResourceSlice는 built-in `resource.k8s.io/v1` API이며 설치해야 하는 DRA core CRD가 아닙니다. Driver가 ResourceSlice로 device inventory를 제공하고 scheduler가 자원을 할당하며 kubelet이 driver와 device 준비를 조정합니다. 아키텍처 그림은 논리 흐름이며 API server·ResourceSlice 전달 경로를 생략합니다.
 
@@ -1175,7 +1175,7 @@ spec:
             request: gpu
 ```
 
-#### VolumeAttributesClass — GA
+#### VolumeAttributesClass: GA
 
 VAC는 1.34부터 `storage.k8s.io/v1`을 사용합니다. 아래 class는 표준 `ebs.csi.aws.com` driver와 기존의 호환 regional gp3 volume용이며 자동으로 Auto Mode storage 절차가 되는 것은 아닙니다. PVC class 변경 전에 driver·sidecar·API 버전·권한·volume 크기/종류·변경 cooldown·instance EBS 제한을 확인합니다.
 
@@ -1385,11 +1385,11 @@ spec:
 
 시간대는 Asia/Seoul로 명시했습니다. `Forbid`는 CronJob별 제어이지 두 schedule·다른 운영자 사이의 공유 lock이 아닙니다. UID·resourceVersion test는 API patch를 보호할 뿐 비동기 EBS 작업 전체를 직렬화하지 않습니다. 명령은 기존 변경 상태가 있으면 거부하고 class 요청 사실만 출력합니다. Workload 영향·backend 상태 확인·조정·복구를 확립할 때까지 schedule을 suspended로 유지하며 production 준비 완료를 주장하지 않습니다.
 
-#### Ordered namespace deletion — GA
+#### Ordered namespace deletion: GA
 
 Pod를 다른 namespaced resource보다 먼저 삭제하여 Pod가 살아 있는데 NetworkPolicy 같은 보안 제어가 먼저 사라지는 문제를 줄입니다. 임의 dependency graph를 계산하거나 모든 namespace 삭제 완료를 보장하지는 않습니다. 사용할 수 없는 API·controller·finalizer 때문에 여전히 멈출 수 있으므로 실제 condition을 조사합니다. Finalizer 강제 제거 또는 예시 transcript를 실측 해결 결과로 취급하지 않습니다.
 
-#### KYAML — client 출력 형식, 1.34에서 alpha
+#### KYAML: client 출력 형식, 1.34에서 alpha
 
 KYAML은 **KEP-5295**이며 KEP-4222가 아닙니다. 명시적 구분자와 인용된 문자열 값을 사용하는 YAML-compatible 출력 형식입니다. API server admission validator·전체 YAML 1.2 마이그레이션이 아니며 모든 manifest에서 anchor를 제거해야 하는 이유도 아닙니다. Kubectl 1.35에서 beta/기본 활성화, 1.36에서도 beta였고 1.37에서 stable이 되었습니다.
 
@@ -1414,7 +1414,7 @@ kubectl --kubeconfig=/dev/null --server=https://127.0.0.1:1 --request-timeout=1s
 
 Kubectl 1.36.2의 `KUBECTL_KYAML=false`는 `-o kyaml` printer를 비활성화하지만 KYAML input은 다른 출력 형식에서도 YAML로 읽힙니다. EKS 컨트롤 플레인 설정을 바꾸지 않습니다. Schema/admission 검증과 formatting은 별개이며 기존 KYAML 경고·거부 transcript는 서버 기능의 유효한 시연이 아니었습니다.
 
-#### MutatingAdmissionPolicy — 1.34에서 beta
+#### MutatingAdmissionPolicy: 1.34에서 beta
 
 MAP는 1.32 alpha, 1.34 beta(기본 비활성화), 1.36 GA 순서입니다. 아래는 **현재 1.36+ stable 형식**이며 1.34에 그대로 적용하는 manifest가 아닙니다. 과거 beta API는 `v1beta1`이고 적절한 serving·gate 설정이 필요했습니다. EKS 컨트롤 플레인 gate는 AWS가 관리합니다.
 
@@ -1488,7 +1488,7 @@ spec:
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-12.html)
 
-#### 컨테이너 리소스 in-place resize — GA
+#### 컨테이너 리소스 in-place resize: GA
 
 Alpha 1.27 → beta 1.33 → stable 1.35 순서입니다. 초기 alpha가 단순히 “1.33 전에는 CPU-only”였다는 설명은 맞지 않습니다. GA는 API 안정화이며 모든 memory resize·runtime·node policy·앱이 중단을 피한다는 보장이 아닙니다. 앞 절의 UID·resourceVersion 확인과 현재 status 필드를 사용하고 버전별 제약을 검토합니다.
 
@@ -1531,7 +1531,7 @@ spec:
 
 VPA는 별도 버전 체계를 따릅니다. `InPlaceOrRecreate`는 VPA 1.6에서 GA가 되었으며 in-place 실패 시 Pod를 재생성할 수 있습니다. `InPlace`는 별도 gate가 필요한 VPA 1.7 alpha 모드입니다. Eviction을 하지 않는다는 것이 모든 container resize policy의 무재시작이나 모든 권고의 적용 가능성을 보장하지는 않습니다. 앞의 현재 VPA 예시 조건을 따르며 Kubernetes 1.35만으로 해당 VPA 모드가 활성화되지는 않습니다.
 
-#### PreferSameNode traffic distribution — GA
+#### PreferSameNode traffic distribution: GA
 
 `PreferSameTrafficDistribution`은 1.35에서 stable이 되었습니다. `PreferSameNode`는 가능한 경우 같은 node endpoint를 선호하고 fallback을 허용하므로 엄격한 `internalTrafficPolicy: Local`과 다릅니다. 실제 Service 구현·ready endpoint·traffic policy 우선순위를 확인합니다. 모든 ALB/NLB routing을 제어하거나 cross-zone traffic을 없애는 보장이 아닙니다.
 
@@ -1550,11 +1550,11 @@ spec:
     targetPort: 8080
 ```
 
-#### KYAML — beta, kubectl에서 기본 활성화
+#### KYAML: beta, kubectl에서 기본 활성화
 
 1.35의 beta·기본 활성화는 `-o kyaml` 출력 형식에 대한 것입니다. 모든 API server 입력을 새 strict parser로 바꾸거나 모든 YAML anchor에 경고하거나 서버 gate 변경을 위해 EKS 지원 티켓을 요구하지 않습니다. 앞의 로컬 예시와 실제 1.36.2 검사가 동작을 보여 줍니다. KYAML stable은 1.36이 아닌 1.37입니다.
 
-#### Native gang scheduling — alpha, KEP-4671
+#### Native gang scheduling: alpha, KEP-4671
 
 Kubernetes 1.35에 native workload-aware/gang scheduling 개념이 도입되었습니다. 1.36에도 alpha이며 `GenericWorkload`·`GangScheduling`과 적절한 API·scheduler 활성화가 필요합니다. EKS version FAQ는 alpha 기능을 지원하지 않으며 self-managed node gate로 없는 EKS 컨트롤 플레인 API를 켤 수는 없습니다.
 
@@ -1631,7 +1631,7 @@ Node 업그레이드에서는 “GA이므로 production 안전”을 가정하�
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-13.html)
 -->
 
-#### MutatingAdmissionPolicy — GA
+#### MutatingAdmissionPolicy: GA
 
 Stable resource는 `admissionregistration.k8s.io/v1`의 `MutatingAdmissionPolicy`·`MutatingAdmissionPolicyBinding`입니다. 지원되는 mutation에 별도 webhook이 필요 없어지지만 정책 실패·비용 제한·순서·재호출 고려사항이 사라지지는 않습니다. 결정성이 모든 정책의 멱등성을 보장하지 않습니다.
 
@@ -2211,7 +2211,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n version-lab \
 
 로컬 감사에서는 fake Kubernetes/RFC6902 기반 leaf 단위 검사 50개와 schema·host-shell probe fixture를 실행했습니다. EKS에서 informer loop·BusyBox를 실행하거나 warmup 시간·cgroup·앱 성능을 측정하지 않았습니다. VPA 1.7에도 alpha CPUStartupBoost가 있지만 trigger는 Pod Ready와 선택적 지속 시간이며 이 StartupProbePassed 계약과 다르고 별도 flag·운영 조건을 가집니다.
 
-#### 기존 EKS 결과 기록 — 출처 검증되지 않음
+#### 기존 EKS 결과 기록: 출처 검증되지 않음
 
 기존 문서는 EKS 1.36.1·containerd 2.2.3·AL2023·cgroup v2·arm64/Graviton 환경을 주장했습니다. 원본 실행 artifact·출처가 제공되지 않았습니다. 아래 원래 표·log는 **검증되지 않은 기존 보고 결과**로 보존하며 재실행·현재 controller 출력·무중단의 독립적 증거가 아닙니다. MAP 표 두 개는 같은 기존 주장을 반복하며 독립 측정 두 건이 아닙니다.
 
@@ -2256,11 +2256,11 @@ RESIZED resize-demo/demo-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"
 | Container in-place resize | 1.27 | 1.33 | 1.35 |
 | Pod scheduling readiness | 1.26 | 1.27 | 1.30 |
 | Job success policy | 1.30 | 1.31 | 1.33 |
-| Pod-level resource | 1.32 | 1.34 | — |
+| Pod-level resource | 1.32 | 1.34 | - |
 | ValidatingAdmissionPolicy | 1.26 | 1.28 | 1.30 |
 | MutatingAdmissionPolicy | 1.32 | 1.34 | 1.36 |
 | 구조화된 인가 | 1.29 | 1.30 | 1.32 |
-| AppArmor native 필드 | — | 1.30 | 1.31 |
+| AppArmor native 필드 | - | 1.30 | 1.31 |
 | User namespace | 1.25 | 1.30 | 1.36 |
 | ServiceCIDR/IPAddress | 1.27 | 1.31 | 1.33 |
 | Topology-aware hint | 1.21 | 1.23 | 1.33 |
@@ -2271,7 +2271,7 @@ RESIZED resize-demo/demo-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"
 | VolumeAttributesClass | 1.29 | 1.31 | 1.34 |
 | PV 마지막 phase 전환 | 1.28 | 1.29 | 1.31 |
 | Volume 확장 실패 복구 | 1.23 | 1.32 | 1.34 |
-| Gang scheduling | 1.35 | — | — |
+| Gang scheduling | 1.35 | - | - |
 | 최소 topology domain | 1.24 | 1.25 | 1.30 |
 | DRA core | 1.26 | 1.32 | 1.34 |
 | HPA container metric | 1.20 | 1.27 | 1.30 |
@@ -2279,7 +2279,7 @@ RESIZED resize-demo/demo-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"
 | Node log query | 1.27 | 1.30 | 1.36 |
 | KMS v2 | 1.25 | 1.27 | 1.29 |
 | Kubelet tracing | 1.25 | 1.27 | 1.34 |
-| KYAML | 1.34 | 1.35 | — |
+| KYAML | 1.34 | 1.35 | - |
 
 이력 해석 시 구분할 사항:
 
@@ -2749,7 +2749,7 @@ DRA driver·device sharing·topology-aware 배치·batch 조정은 계속 발전
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-18.html)
 
-### 과거 계획 템플릿 — 현재 배포 권고가 아님
+### 과거 계획 템플릿: 현재 배포 권고가 아님
 
 이전 한글 문서의 예시 inventory와 계획 월을 보존합니다. Version·수량·월 값은 과거 예시 입력이지 실제 발견한 fleet·수행한 upgrade·검증된 component 조합이 아닙니다. 특히 이전 Istio/Argo CD/chart 버전을 새 Kubernetes와 호환된다고 취급하지 않습니다. 새 계획에서는 실제 inventory와 현재 호환성 근거로 바꿉니다. 아래 검토 항목은 재실행을 지어내지 않고 기존의 nftables 자동 전환·DRA CRD·KYAML 가정을 바로잡았습니다.
 

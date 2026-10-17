@@ -357,7 +357,7 @@ spec:
 Karpenter cost optimization settings:
 
 - **disruption.consolidateAfter**: Delay after Pods are added/removed before considering consolidation, subject to policy and disruption checks (e.g., `30s`; replaces the legacy `ttlSecondsAfterEmpty`)
-- **disruption.consolidationPolicy**: Node consolidation policy — `WhenEmpty` (remove only empty nodes) or `WhenEmptyOrUnderutilized` (also consolidate underutilized nodes; the equivalent of the legacy `consolidation.enabled: true`)
+- **disruption.consolidationPolicy**: Node consolidation policy, either `WhenEmpty` (remove only empty nodes) or `WhenEmptyOrUnderutilized` (also consolidate underutilized nodes; the equivalent of the legacy `consolidation.enabled: true`)
 - **template.spec.requirements** (`node.kubernetes.io/instance-type`): Specify cost-efficient instance types
 
 #### Horizontal Pod Autoscaler (HPA)
