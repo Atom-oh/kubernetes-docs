@@ -329,7 +329,7 @@ A normal Pod `CREATE` admission request usually has no assigned `spec.nodeName`.
 
 For a small controlled operation, derive cost **after scheduling**. The following script reads one selected Pod, checks its controller ReplicaSet UID and node classification, and writes a private JSON Patch for review. It does not scan or mutate all namespaces.
 
-Set `NAMESPACE`, `POD_NAME` and `EXPECTED_RS_UID` from the application owner's actual Deployment/ReplicaSet ownership chain—not just a shared label. It recognizes only the location conventions and cloud pool in this chapter.
+Set `NAMESPACE`, `POD_NAME` and `EXPECTED_RS_UID` from the application owner's actual Deployment/ReplicaSet ownership chain, not just a shared label. It recognizes only the location conventions and cloud pool in this chapter.
 
 ```bash
 #!/usr/bin/env bash

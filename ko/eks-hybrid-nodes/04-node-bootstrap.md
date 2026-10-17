@@ -19,7 +19,7 @@
 
 ## nodeadm과 의존성 설치
 
-Hybrid nodeadm은 EC2용 `amazon-eks-ami`가 아닌 **`aws/eks-hybrid`**에서 제공합니다. 오래된 SSM 서명 키 문제 때문에 SSM 신규 설치·업그레이드에는 **nodeadm 1.0.19 이상**이 필요합니다. 이 검토는 릴리스된 **v1.0.20 소스**를 사용했습니다.
+Hybrid nodeadm은 EC2용 `amazon-eks-ami`가 아닌 <strong>`aws/eks-hybrid`</strong>에서 제공합니다. 오래된 SSM 서명 키 문제 때문에 SSM 신규 설치·업그레이드에는 **nodeadm 1.0.19 이상**이 필요합니다. 이 검토는 릴리스된 **v1.0.20 소스**를 사용했습니다.
 
 승인한 릴리스를 HTTPS 검증과 함께 받고 독립적으로 승인한 기록의 다이제스트와 비교한 뒤 root로 실행합니다. 변경 가능한 `latest` 다운로드로 `/usr/local/bin/nodeadm`을 무조건 교체하지 않습니다. [인터넷 제한 환경 구성](./03-airgap-setup.md)은 이미지 준비와 확인한 릴리스의 private manifest 옵션을 다룹니다. 감사 환경에서 공식 아티팩트 호스트의 TLS 호스트명 검증이 실패한 뒤 nodeadm 바이너리를 받거나 실행하지 않았습니다.
 
@@ -121,7 +121,7 @@ spec:
       privateKeyPath: /etc/iam/pki/server.key
 ```
 
-경로는 예시이며 여러 머신에서 인증서 하나를 재사용하라는 의미가 아닙니다. `nodeName`을 역할 신뢰 정책의 인증서 속성과 결합합니다. 일반적인 CN 조건에서는 두 값이 일치해야 합니다. 이름은 노드 명명 규칙을 따르고 최대 64자여야 합니다. 프로필의 **`acceptRoleSessionName: true`**를 활성화합니다.
+경로는 예시이며 여러 머신에서 인증서 하나를 재사용하라는 의미가 아닙니다. `nodeName`을 역할 신뢰 정책의 인증서 속성과 결합합니다. 일반적인 CN 조건에서는 두 값이 일치해야 합니다. 이름은 노드 명명 규칙을 따르고 최대 64자여야 합니다. 프로필의 <strong>`acceptRoleSessionName: true`</strong>를 활성화합니다.
 
 역할 최대값을 12시간으로 설정하는 것만으로 세션이 늘어나지 않습니다. 요청·프로필의 유효 세션 시간은 역할 `MaxSessionDuration` 이하여야 하며 같은 값도 허용됩니다. 보안·가용성 요구 사항에 맞게 선택하고 갱신을 확인합니다. 정적 IAM 사용자 액세스 키는 세 번째 Hybrid nodeadm 지원 공급자가 아닙니다.
 

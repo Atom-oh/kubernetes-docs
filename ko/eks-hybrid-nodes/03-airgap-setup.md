@@ -88,7 +88,7 @@ SSM 신규 설치·업그레이드는 오래된 SSM 서명 키 문제 때문에 
 
 ### Manifest 검토와 단일 조합 선택
 
-원본 manifest에는 `supported_eks_releases`, `iam_roles_anywhere_releases`, `region_config`가 있습니다. Kubernetes 항목에는 `major_minor_version`, `latest_patch_version`, `patch_releases[].version`, **`patch_version`**, **`release_date`**와 아티팩트별 URL이 포함됩니다. 같은 패치에 여러 빌드가 있을 수 있습니다. 이전 `1.33.3` 예제는 역사적 스키마 설명이며 현재 승인된 패치라는 증거가 아닙니다.
+원본 manifest에는 `supported_eks_releases`, `iam_roles_anywhere_releases`, `region_config`가 있습니다. Kubernetes 항목에는 `major_minor_version`, `latest_patch_version`, `patch_releases[].version`, **`patch_version`**, <strong>`release_date`</strong>와 아티팩트별 URL이 포함됩니다. 같은 패치에 여러 빌드가 있을 수 있습니다. 이전 `1.33.3` 예제는 역사적 스키마 설명이며 현재 승인된 패치라는 증거가 아닙니다.
 
 받은 원본 manifest, 수집 시점·해시와 승인 기록을 보존하고 HTTPS 출처를 확인합니다. 다음 로컬 선택기는 정확한 Kubernetes 패치, 빌드 날짜, signing helper 릴리스, 아키텍처를 요구합니다. 모호한 선택, 누락 아티팩트, 중복 YAML 키와 알 수 없는 리전을 거부합니다. ECR 계정을 추정하지 않고 실제 리전 메타데이터를 유지합니다.
 
@@ -465,7 +465,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-hybrid-mirror
 
 ## 프록시 구성
 
-클라이언트별 목적지 표를 먼저 작성합니다. Loopback, 실제 프라이빗 API·레지스트리 이름과 프록시를 우회해야 하는 노드·Pod·Service 대역을 포함합니다. CIDR·접미사 매칭은 클라이언트마다 다릅니다. **`.eks.amazonaws.com`**을 무조건 `NO_PROXY`에 넣지 않습니다. 퍼블릭 다운로드 호스트 `hybrid-assets.eks.amazonaws.com`도 이 접미사와 일치합니다.
+클라이언트별 목적지 표를 먼저 작성합니다. Loopback, 실제 프라이빗 API·레지스트리 이름과 프록시를 우회해야 하는 노드·Pod·Service 대역을 포함합니다. CIDR·접미사 매칭은 클라이언트마다 다릅니다. <strong>`.eks.amazonaws.com`</strong>을 무조건 `NO_PROXY`에 넣지 않습니다. 퍼블릭 다운로드 호스트 `hybrid-assets.eks.amazonaws.com`도 이 접미사와 일치합니다.
 
 검토한 비밀이 아닌 프록시 설정의 셸 예제:
 
@@ -536,7 +536,7 @@ AWS 읽기가 승인된 환경에서 문서화된 연결·신원 진단인 `node
 
 업데이트 자동화는 **후보 탐색**을 수행한 뒤 출처 검증, 호환성 검토, OS·이미지 검사, 로컬 검증, 대표 노드 canary와 승인을 거쳐 승격하도록 구성합니다. 새 불변 버전·빌드 접두사에 게시하고 이전 승인 조합을 보존하며 롤백 제약을 기록합니다. 운영 `latest` 키를 조용히 덮어쓰는 cron을 사용하지 않습니다. `nodeadm upgrade`는 워크로드 이동이 필요한 중단 작업입니다.
 
-이전 퀴즈의 대역폭 추정치인 레이어 캐싱 **50–80%**, 압축 **30–50%**, 플랫폼 필터링 **50%**에는 확인 가능한 측정 출처가 없었습니다. 예측 절감률이 아닌 미검증 역사적 예시로만 보존합니다. 실제 레이어 재사용, 플랫폼과 압축 형식으로 전송량을 측정하며, 승인한 콘텐츠를 재압축하면서 다이제스트가 그대로라고 주장하지 않습니다.
+레이어 캐싱, 압축, 필요한 플랫폼의 이미지만 동기화하는 방식으로 전송량을 줄일 수 있습니다. 적용 전후의 실제 전송 바이트를 비교해 효과를 확인하고, 절감률은 이미지 구성과 레이어 재사용 정도를 기준으로 산정합니다. 승인한 콘텐츠를 재압축할 경우에는 다이제스트를 다시 확인하고 변경된 아티팩트를 승인 절차에 따라 반영합니다.
 
 ## 공식 참고 자료
 

@@ -305,7 +305,7 @@ The named-principal policy requires a signed request. **nodeadm's ordinary HTTPS
 1. Use an authenticated preparation agent/CLI to fetch the approved files, then provide them through an organization-controlled HTTPS artifact service with appropriate network access controls and a certificate for its own hostname.
 2. Use the preinstalled-image path, with no runtime binary mirror dependency.
 
-A private S3 object URL returning `403` is not repaired by a DNS override. Do not put bearer presigned URLs or credentials into manifests, process arguments or published logs. If an organization chooses unauthenticated reads of nonsecret binaries restricted to a private network, that is a separate, explicitly reviewed policy—not the named-principal policy above.
+A private S3 object URL returning `403` is not repaired by a DNS override. Do not put bearer presigned URLs or credentials into manifests, process arguments or published logs. If an organization chooses unauthenticated reads of nonsecret binaries restricted to a private network, that is a separate, explicitly reviewed policy, not the named-principal policy above.
 
 Save as `publish-plan.sh`. Run only after the bucket owner approves the candidate and permissions; this script **writes S3 objects**:
 
@@ -536,7 +536,7 @@ Use `nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml` for the docu
 
 Update automation should **discover candidates**, then require source verification, compatibility review, OS/image scanning, local validation, a representative node canary and approval before promotion. Publish under a new immutable version/build prefix, retain the previous approved cohort, and record rollback limits. Do not run a cron job that silently overwrites production `latest` keys; `nodeadm upgrade` is disruptive and requires workload evacuation.
 
-Historical bandwidth estimates in the earlier quiz—layer caching **50–80%**, compression **30–50%**, platform filtering **50%**—had no attributable measurement. Preserve them only as unverified historical illustrations, not predicted savings. Measure actual bytes for your layer reuse, platform set and compression format; do not recompress approved content while claiming its digest stays unchanged.
+Layer caching, compression and synchronizing images only for the required platforms can reduce transfer volume. Compare actual bytes transferred before and after applying these techniques, and calculate savings for the chosen images and layer reuse. If approved content is recompressed, recheck its digest and submit the changed artifacts through the approval process.
 
 ## Primary references
 

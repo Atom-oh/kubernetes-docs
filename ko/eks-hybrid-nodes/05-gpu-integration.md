@@ -88,7 +88,7 @@ GPU 인프라 운영자가 소유한 namespace·release를 사용합니다. 렌�
 
 ## 별도 Hybrid GPU 집합의 독립 DRA
 
-현재 드라이버 프로젝트는 **`kubernetes-sigs/dra-driver-nvidia-gpu`**입니다. DRA API 안정성, EKS 지원과 개별 공급자 기능 성숙도는 별도 확인합니다. 현재 NVIDIA 26.7 문서는 전체 GPU·기존 MIG 할당을 GA로 명시하며 동적 MIG, MPS, 일부 공유·NVML 할당 상태 기능에는 별도 Alpha gate가 있습니다. 데모를 시작하려고 모든 feature gate를 활성화하지 않습니다.
+현재 드라이버 프로젝트는 <strong>`kubernetes-sigs/dra-driver-nvidia-gpu`</strong>입니다. DRA API 안정성, EKS 지원과 개별 공급자 기능 성숙도는 별도 확인합니다. 현재 NVIDIA 26.7 문서는 전체 GPU·기존 MIG 할당을 GA로 명시하며 동적 MIG, MPS, 일부 공유·NVML 할당 상태 기능에는 별도 Alpha gate가 있습니다. 데모를 시작하려고 모든 feature gate를 활성화하지 않습니다.
 
 태그된 저장소 README의 이전 설명에는 GPU 할당 미지원 문구가 있습니다. 릴리스된 사전 요구 사항·설치 문서와 현재 NVIDIA 기능 표는 더 새로운 기능별 안내를 제공합니다. 운영 배포에는 정확한 버전과 지원 계약을 기록합니다.
 
@@ -169,7 +169,7 @@ GPUCluster 조정 과정은 GPU validator를 실행하고 claim을 할당할 수
 
 ## 현재 DRA manifest
 
-다음 예제는 **`resource.k8s.io/v1`**을 사용합니다. Kubernetes 1.31의 이전 alpha 형태를 현재 클러스터에 그대로 적용하지 않습니다. DRA에는 동작하는 공급자 드라이버, ResourceSlice, 호환 kubelet·런타임과 활성 API가 필요합니다. DeviceClass만으로 GPU가 발견되지 않습니다.
+다음 예제는 <strong>`resource.k8s.io/v1`</strong>을 사용합니다. Kubernetes 1.31의 이전 alpha 형태를 현재 클러스터에 그대로 적용하지 않습니다. DRA에는 동작하는 공급자 드라이버, ResourceSlice, 호환 kubelet·런타임과 활성 API가 필요합니다. DeviceClass만으로 GPU가 발견되지 않습니다.
 
 ```yaml
 apiVersion: resource.k8s.io/v1

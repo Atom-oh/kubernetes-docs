@@ -1113,7 +1113,7 @@ jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-
 
 `available`은 VPN 리소스 상태이지 tunnel health가 아닙니다. TunnelState 1은 static의 UP/BGP의 ESTABLISHED, 0은 나머지이며 집계값은 소수일 수 있습니다. 데이터 부재와 DOWN을 구분하고 양쪽 tunnel·route·실제 workload를 검증합니다. 이 query는 customer gateway 구성·pre-shared key를 dump하지 않습니다.
 
-AWS의 RTT ≤200ms/100Mbps는 일반 권장입니다. 이전 50/100ms 구간·“Direct Connect는 항상 10ms 미만”은 미검증 기준이며 보장값이 아닙니다.
+AWS의 일반적인 연결 권장 기준은 **대역폭 100 Mbps, RTT 200ms 이하**입니다. VPN이나 Direct Connect를 선택할 때는 회선의 명목 대역폭뿐 아니라 실제 왕복 지연 시간, 패킷 손실률, 장애 시 경로와 워크로드의 응답 시간을 확인합니다.
 
 ## 참고 자료
 

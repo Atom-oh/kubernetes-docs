@@ -53,7 +53,7 @@ The following is a deterministic **model**, not a bill or measurement: 32 report
 | 100 | 2,336,000 | $31,424.00 | $377,088.00 | $377,964.00 |
 
 <details>
-<summary>Preserved historical estimates — unverified and not current pricing</summary>
+<summary>Preserved historical estimates (unverified and not current pricing)</summary>
 
 The original table is retained for traceability. Vendor quote sources could not be verified. Its EKS column used the obsolete assumption `32 × $0.01 × 8,760 = $2,803.20/node-year`, with no cluster fee or marginal tiers. These numbers are not valid current comparative TCO evidence.
 
