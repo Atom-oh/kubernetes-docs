@@ -1,4 +1,4 @@
-# Reading with LLMs — llms.txt Quiz
+# Reading with LLMs: llms.txt Quiz
 
 1. What does this guidebook's `llms.txt` file contain, and what is it for?
    - A) The full Korean content in markdown, for pasting whole into a context window
@@ -17,13 +17,13 @@ In the endpoints table, `llms.txt` is an index of each content page's group, tit
 
 2. In which languages are the full-content files published?
    - A) Korean only (`llms-full-ko.txt`)
-   - B) Korean and English — two files (`llms-full-ko.txt`, `llms-full-en.txt`)
+   - B) Korean and English: two files (`llms-full-ko.txt`, `llms-full-en.txt`)
    - C) Five languages: Korean, English, Chinese, Japanese, and Spanish
    - D) A single `llms-full.txt` with every language merged together
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Korean and English — two files (`llms-full-ko.txt`, `llms-full-en.txt`)**
+**Answer: B) Korean and English: two files (`llms-full-ko.txt`, `llms-full-en.txt`)**
 
 **Explanation:**
 The language-wide full files are `llms-full-ko.txt` and `llms-full-en.txt`. The index, manifest, section bundles and per-document Markdown are additional endpoints served under `https://www.atomai.click/kubernetes-docs/`. The Korean file is recommended for "Whole-book context or RAG indexing" and the English one for "English-language tools and pipelines".
@@ -41,7 +41,7 @@ The language-wide full files are `llms-full-ko.txt` and `llms-full-en.txt`. The 
 **Answer: C) The site build generates them from the same source and deploys them together**
 
 **Explanation:**
-The page states: "The site build generates them from the same source and deploys them together, so they always match the published content." They are build outputs of the deploy pipeline — not manual uploads and not on-demand conversions.
+The page states: "The site build generates them from the same source and deploys them together, so they always match the published content." They are build outputs of the deploy pipeline, not manual uploads and not on-demand conversions.
 
 </details>
 
@@ -56,19 +56,19 @@ The page states: "The site build generates them from the same source and deploys
 **Answer: B) Only the quiz index page is linked (one link per language), under `## Optional` in `llms.txt`; individual quiz pages and their answer keys are left out of both the index and the full files**
 
 **Explanation:**
-The page says: "Quizzes appear in `llms.txt` only as a link to the quiz index page (one per language) under `## Optional`; individual quiz pages (with their answer keys) are left out of both the index and the full files — answer keys don't belong in an LLM's context." So an LLM can discover that quizzes exist and where each language's quiz index lives, but neither the flat index nor the whole-book files ever carry a single quiz page or its answers. Lab guides differ: they are also only an index link in `llms.txt`, but their full text is included in the full files.
+The page says: "Quizzes appear in `llms.txt` only as a link to the quiz index page (one per language) under `## Optional`; individual quiz pages (with their answer keys) are left out of both the index and the full files; answer keys don't belong in an LLM's context." So an LLM can discover that quizzes exist and where each language's quiz index lives, but neither the flat index nor the whole-book files ever carry a single quiz page or its answers. Lab guides differ: they are also only an index link in `llms.txt`, but their full text is included in the full files.
 
 </details>
 
 5. Given the size of the full files, which way of using them with an LLM does the page recommend?
-   - A) Paste the multi-MiB full file into every prompt — it is the most accurate approach
+   - A) Paste the multi-MiB full file into every prompt; it is the most accurate approach
    - B) Split the full file into several pieces and attach all of them every time
-   - C) Point the model at the index and let it fetch specific pages — this works better with most tools
+   - C) Point the model at the index and let it fetch specific pages; this works better with most tools
    - D) Hand over only the diagram viewer URLs and let the LLM infer the rest
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Point the model at the index and let it fetch specific pages — this works better with most tools**
+**Answer: C) Point the model at the index and let it fetch specific pages; this works better with most tools**
 
 **Explanation:**
 The "Size" note says the full files run several MiB and that "for most tools, pointing the model at the index and letting it fetch specific pages works better than pasting the whole book into one prompt." The first example prompt ("Read …/llms.txt, find the document … and summarize …") is exactly this pattern. The full files suit whole-file download-and-chunk uses such as RAG indexing.
@@ -86,7 +86,7 @@ The "Size" note says the full files run several MiB and that "for most tools, po
 **Answer: B) Every document is preceded by a separator block containing `Source: <URL>`**
 
 **Explanation:**
-Under "Format notes", "every document is preceded by a separator block" — a dashed line, a `Source: https://www.atomai.click/kubernetes-docs/en/core/01-cluster-architecture`-style URL, and another dashed line. The RAG example's comment repeats it: "documents are separated by `Source: <URL>` blocks, so per-document chunking is trivial." The file is plain markdown text, not ZIP or JSON.
+Under "Format notes", "every document is preceded by a separator block": a dashed line, a `Source: https://www.atomai.click/kubernetes-docs/en/core/01-cluster-architecture`-style URL, and another dashed line. The RAG example's comment repeats it: "documents are separated by `Source: <URL>` blocks, so per-document chunking is trivial." The file is plain markdown text, not ZIP or JSON.
 
 </details>
 
@@ -101,7 +101,7 @@ Under "Format notes", "every document is preceded by a separator block" — a da
 **Answer: B) The LLM reads the diagram's description (alt text) to understand it, while a person opens the interactive viewer URL and uses the Export menu to download PNG/JPEG/WebP, SVG, WebM, or a Share Card**
 
 **Explanation:**
-The "Diagrams are for people — the export links" section explains that because the full files carry each document's markdown verbatim, every diagram's alt text and its viewer URL (`https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`) are in the text. "A text LLM uses the alt text and surrounding prose but cannot infer image-only nodes/edges reliably; a person opens the URL and uses the viewer's **Export** menu to download PNG/JPEG/WebP, a dual-theme SVG, a 6-second trace-animation WebM, or a 1200×630 Share Card." The per-item guidance lives in the Guidebook Roadmap's "Share a diagram" section.
+The "Diagrams are for people: the export links" section explains that because the full files carry each document's markdown verbatim, every diagram's alt text and its viewer URL (`https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`) are in the text. "A text LLM uses the alt text and surrounding prose but cannot infer image-only nodes/edges reliably; a person opens the URL and uses the viewer's **Export** menu to download PNG/JPEG/WebP, a dual-theme SVG, a 6-second trace-animation WebM, or a 1200×630 Share Card." The per-item guidance lives in the Guidebook Roadmap's "Share a diagram" section.
 
 </details>
 

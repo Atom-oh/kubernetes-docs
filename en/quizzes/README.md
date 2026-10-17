@@ -8,7 +8,7 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 
 ### Introduction
 
-- [Reading with LLMs — llms.txt Quiz](./llm-guide-quiz.md)
+- [Reading with LLMs: llms.txt Quiz](./llm-guide-quiz.md)
 - [Guidebook Roadmap Quiz](./roadmap-quiz.md)
 
 ### AI/ML
@@ -24,7 +24,7 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 - [Kubeflow Architecture and Installation on EKS Quiz](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Kubeflow Pipelines Quiz](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Kubeflow Notebooks Quiz](./ai-ml/kubeflow/03-notebooks-quiz.md)
-- [Part 4: Katib — Hyperparameter Tuning and AutoML Quiz](./ai-ml/kubeflow/04-katib-quiz.md)
+- [Part 4: Katib (Hyperparameter Tuning and AutoML) Quiz](./ai-ml/kubeflow/04-katib-quiz.md)
 - [Kubeflow Trainer and Distributed Training Quiz](./ai-ml/kubeflow/05-training-operator-quiz.md)
 - [KServe Quiz](./ai-ml/kubeflow/06-kserve-quiz.md)
 - [MLflow Tracking Quiz](./ai-ml/mlflow/01-tracking-quiz.md)
@@ -52,10 +52,10 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 - [Container Technology Quiz](./basics/03-container-technology-quiz.md)
 - [Kubernetes Introduction Quiz](./basics/04-kubernetes-introduction-quiz.md)
 - [eBPF Fundamentals Quiz](./basics/05-ebpf-fundamentals-quiz.md)
-- [Network Fundamentals Part 1 Quiz — Layer Model, Link and Routing](./basics/06-network-fundamentals-part1-quiz.md)
-- [Network Fundamentals Part 2 Quiz — Transport and TLS](./basics/06-network-fundamentals-part2-quiz.md)
-- [Network Fundamentals Part 3 Quiz — Application Protocols](./basics/06-network-fundamentals-part3-quiz.md)
-- [Network Fundamentals Part 4 Quiz — The Journey and the Cloud](./basics/06-network-fundamentals-part4-quiz.md)
+- [Network Fundamentals Part 1 Quiz: Layer Model, Link and Routing](./basics/06-network-fundamentals-part1-quiz.md)
+- [Network Fundamentals Part 2 Quiz: Transport and TLS](./basics/06-network-fundamentals-part2-quiz.md)
+- [Network Fundamentals Part 3 Quiz: Application Protocols](./basics/06-network-fundamentals-part3-quiz.md)
+- [Network Fundamentals Part 4 Quiz: The Journey and the Cloud](./basics/06-network-fundamentals-part4-quiz.md)
 
 ### Container Registries
 
@@ -325,7 +325,7 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 - [App Mesh vs VPC Lattice Architecture Quiz](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
 - [Latency Impact Analysis Quiz](./service-mesh/vpc-lattice/02-latency-quiz.md)
 - [IAM Authentication Flow Quiz](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
-- [Foundations — Link-Local and SNI Quiz](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [Foundations: Link-Local and SNI Quiz](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
 - [Workload Identity Migration Quiz](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
 - [Constraints and Decision Points Quiz](./service-mesh/vpc-lattice/06-constraints-quiz.md)
 - [Kernel Datapath Quiz](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
