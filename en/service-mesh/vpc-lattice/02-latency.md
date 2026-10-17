@@ -7,7 +7,7 @@
 
 - Why migrating to Lattice introduces degrading and improving latency factors **at the same time**
 - Why which side wins depends on your environment and cannot be predicted in advance
-- What to measure, and how, so that you get an answer — a PoC measurement matrix
+- What to measure, and how, so that you get an answer: a PoC measurement matrix
 
 ## First: this document does not give you numbers
 
@@ -52,7 +52,7 @@ In AS-IS, the mTLS connection between Envoys was a **long-lived connection.** Yo
 
 In TO-BE, where and how often connections are established changes. A new connection incurs setup work; TLS handshake work applies when TLS is used. In the cited HTTP Pod benchmark, disabling keepalive raised p50 from 0.461 → 1.079 ms same-AZ and 0.704 → 1.517 ms cross-AZ. Those measurements demonstrate a connection-reuse effect in that configuration, not an isolated TLS/Lattice cost or proof that reuse matters more than a proxy hop.
 
-This is why you must audit your applications' HTTP client settings (connection pool size, keepalive, idle timeout) during migration. It is not a Lattice characteristic — it is a client configuration issue that surfaces once the proxy that used to manage connections for you is gone.
+This is why you must audit your applications' HTTP client settings (connection pool size, keepalive, idle timeout) during migration. It is not a Lattice characteristic; it is a client configuration issue that surfaces once the proxy that used to manage connections for you is gone.
 
 ## Improving Factors
 
@@ -74,7 +74,7 @@ Removing the sidecar removes the contention itself. So **on clusters with high P
 
 AWS manages the Lattice data plane, but controller reconciliation, endpoint registration, health checks and policy propagation still take time. AWS documents that auth-policy updates can take a few minutes. Measure convergence and rollout behavior rather than assuming propagation delay disappears.
 
-## Factor Summary — Sign and Where It Shows
+## Factor Summary: Sign and Where It Shows
 
 | Factor | Sign | Metric where it appears | Conditions that amplify it |
 |---|---|---|---|
@@ -147,8 +147,8 @@ Next: [IAM Authentication Flow in Detail](./03-auth-flow.md) covers what SigV4 o
 
 ## References
 
-- [Pod Network Benchmark](../../networking/06-pod-network-benchmark.md) — measured same-node/same-AZ/cross-AZ RTT and keepalive impact
-- [Amazon VPC Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/) — inter-AZ included in data processing
+- [Pod Network Benchmark](../../networking/06-pod-network-benchmark.md): measured same-node/same-AZ/cross-AZ RTT and keepalive impact
+- [Amazon VPC Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/): inter-AZ included in data processing
 - [Access logs for Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
 - [Monitoring Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-overview.html)
 

@@ -142,7 +142,7 @@ spec:
 
 #### 1. Simple Architecture
 
-![A user request passing through a load balancer (Ingress Controller) to a single monolithic application and its database — simple enough that an ingress controller suffices without a service mesh.](../../.gitbook/assets/en-service-mesh-istio-overview-2.png)
+![A user request passing through a load balancer (Ingress Controller) to a single monolithic application and its database, simple enough that an ingress controller suffices without a service mesh.](../../.gitbook/assets/en-service-mesh-istio-overview-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-overview-2.html)
 
@@ -283,7 +283,7 @@ Answer the following questions before adoption:
 
 If you determine that a Service Mesh is needed, adopt it gradually:
 
-![Four-phase rollout moving from observability-only metric collection, to mTLS security, to canary traffic management, and finally to the full advanced feature set — each phase gated by validation.](../../.gitbook/assets/en-service-mesh-istio-overview-4.png)
+![Four-phase rollout moving from observability-only metric collection, to mTLS security, to canary traffic management, and finally to the full advanced feature set, with each phase gated by validation.](../../.gitbook/assets/en-service-mesh-istio-overview-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-overview-4.html)
 

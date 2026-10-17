@@ -11,7 +11,7 @@
 
 ## 왜 이 섹션이 따로 필요한가
 
-이 섹션은 **개념 이해**를 목적으로 합니다. Lattice 리소스를 만드는 방법이나 AWS Gateway API Controller 설치 절차는 [VPC Lattice](../../networking/02-vpc-lattice.md) 문서에 이미 있고, Istio와의 기능 대비는 [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md)에 있습니다. 여기서는 그 두 문서가 다루지 않는 것 — **"왜 그렇게 설계되었는가"와 "그 설계에서 무엇이 파생되는가"**를 다룹니다.
+이 섹션은 **개념 이해**를 목적으로 합니다. Lattice 리소스를 만드는 방법이나 AWS Gateway API Controller 설치 절차는 [VPC Lattice](../../networking/02-vpc-lattice.md) 문서에 이미 있고, Istio와의 기능 대비는 [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md)에 있습니다. 여기서는 그 두 문서가 다루지 않는 것, 즉 **"왜 그렇게 설계되었는가"와 "그 설계에서 무엇이 파생되는가"**를 다룹니다.
 
 배경에는 시급성이 있습니다. **AWS App Mesh는 2026년 9월 30일 지원이 종료**되었으며, 이제 App Mesh 콘솔과 App Mesh 리소스에 접근할 수 없습니다. 신규 고객 온보딩은 2024년 9월 24일부터 이미 중단되어 있었습니다. 즉 App Mesh를 운영하던 조직에게 이 전환은 선택이 아니며 기한은 이미 지났습니다.
 
@@ -31,8 +31,8 @@
 | 1 | [App Mesh와 VPC Lattice 아키텍처 대비](./01-appmesh-vs-lattice.md) | 데이터플레인이 Pod에서 인프라로 옮겨가면 무엇이 남고 무엇이 사라지는가 |
 | 2 | [레이턴시 영향 분석](./02-latency.md) | 악화 요인과 개선 요인이 동시에 있다. 우리 환경은 어느 쪽인가 |
 | 3 | [IAM 인증 절차 상세](./03-auth-flow.md) | 요청 하나가 서명되고 검증되고 인가되기까지 4단계에서 무엇이 일어나는가 |
-| 4 | [기반 개념 — link-local과 SNI](./04-networking-basics.md) | 사이드카 없이 어떻게 트래픽을 가로채는가. TLS를 종료하지 않으면 무엇을 잃는가 |
-| 5 | [워크로드 신원 모델 전환 — SPIFFE에서 IAM으로](./05-spiffe-to-iam.md) | SPIRE가 하던 일을 IAM이 대신할 수 있는가. 무엇이 대체되지 않는가 |
+| 4 | [기반 개념: link-local과 SNI](./04-networking-basics.md) | 사이드카 없이 어떻게 트래픽을 가로채는가. TLS를 종료하지 않으면 무엇을 잃는가 |
+| 5 | [워크로드 신원 모델 전환: SPIFFE에서 IAM으로](./05-spiffe-to-iam.md) | SPIRE가 하던 일을 IAM이 대신할 수 있는가. 무엇이 대체되지 않는가 |
 | 6 | [제약과 의사결정](./06-constraints.md) | 어떤 기능·신뢰·비용·복구 선택을 결정해야 하는가? |
 | 7 | [커널 데이터패스](./07-kernel-datapath.md) | Pod routing·proxy 규칙·connection tracking이 경로에 어떻게 영향을 주는가? |
 
@@ -46,8 +46,8 @@
 
 ## 관련 문서
 
-- [VPC Lattice](../../networking/02-vpc-lattice.md) — Lattice 리소스 구성과 Gateway API Controller 설치 절차
-- [Gateway API](../../networking/04-gateway-api.md) — Kubernetes Gateway API 표준
-- [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md) — 기능·비용·운영 복잡도 비교
-- [Istio Security — mTLS](../istio/security/01-mtls.md) — sidecar 기반 상호 인증의 동작
-- [Pod 네트워크 실측 벤치마크](../../networking/06-pod-network-benchmark.md) — 같은 AZ와 Cross-AZ 레이턴시 실측 기준선
+- [VPC Lattice](../../networking/02-vpc-lattice.md): Lattice 리소스 구성과 Gateway API Controller 설치 절차
+- [Gateway API](../../networking/04-gateway-api.md): Kubernetes Gateway API 표준
+- [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md): 기능·비용·운영 복잡도 비교
+- [Istio Security: mTLS](../istio/security/01-mtls.md): sidecar 기반 상호 인증의 동작
+- [Pod 네트워크 실측 벤치마크](../../networking/06-pod-network-benchmark.md): 같은 AZ와 Cross-AZ 레이턴시 실측 기준선

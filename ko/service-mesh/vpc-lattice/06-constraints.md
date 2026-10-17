@@ -6,7 +6,7 @@
 ## 이 문서에서 다루는 것
 
 - 설계를 확정하기 전에 반드시 답해야 하는 제약 6개와 각각의 대안
-- 그 제약들이 상호작용해서 만드는 의사결정 트리 — 하나의 선택이 다른 선택을 닫아버리는 지점
+- 그 제약들이 상호작용해서 만드는 의사결정 트리: 하나의 선택이 다른 선택을 닫아버리는 지점
 - 전환 착수 전 점검 목록
 
 ## 제약 요약
@@ -22,7 +22,7 @@
 
 제약 1·2는 **현재 기능과 신뢰 경계의 선택**이며 AWS가 영원히 기능을 추가할 수 없다는 예측이 아닙니다. 서비스 listener·resource connectivity·controller 지원을 구분합니다.
 
-## 제약 1 — TLS passthrough와 인증된 HTTP 신원
+## 제약 1: TLS passthrough와 인증된 HTTP 신원
 
 ### 원리
 
@@ -53,11 +53,11 @@ TLS passthrough는 암호화된 HTTP SigV4 신원과 HTTP path/header 조건을 
 판단 기준은 **규정이 종단간 암호화나 워크로드 간 상호 인증을 요구하는가**입니다.
 
 - **요구하지 않는다면 A**입니다. IAM Auth의 인가 세밀도와 관측성 이점이 크고, 이것이 Lattice의 설계 의도에 맞는 사용법입니다.
-- **요구한다면 B**입니다. 다만 B를 택하면 인가를 어디서 표현할지 새로 설계해야 합니다 — Lattice는 SNI밖에 모르므로 인가는 애플리케이션이나 엔드포인트 mTLS의 인증서 검증에서 해야 합니다. 그리고 [05번 문서](./05-spiffe-to-iam.md)에서 언급한 대로 **SPIRE가 계속 필요할 수 있습니다.**
+- **요구한다면 B**입니다. 다만 B를 택하면 인가를 어디서 표현할지 새로 설계해야 합니다. Lattice는 SNI밖에 모르므로 인가는 애플리케이션이나 엔드포인트 mTLS의 인증서 검증에서 해야 합니다. 그리고 [05번 문서](./05-spiffe-to-iam.md)에서 언급한 대로 **SPIRE가 계속 필요할 수 있습니다.**
 
-혼합도 가능합니다. **서비스 단위로 A와 B를 나눌 수 있습니다** — 규정 대상 서비스만 B로, 나머지는 A로. 다만 두 인가 모델을 동시에 운영하는 부담이 생깁니다.
+혼합도 가능합니다. **서비스 단위로 A와 B를 나눌 수 있습니다**: 규정 대상 서비스만 B로, 나머지는 A로. 다만 두 인가 모델을 동시에 운영하는 부담이 생깁니다.
 
-## 제약 2 — 서비스와 리소스 연결 선택
+## 제약 2: 서비스와 리소스 연결 선택
 
 ### 원리
 
@@ -71,7 +71,7 @@ Raw-TCP 서비스 listener가 없다고 TCP 리소스까지 배제되는 것은 
 
 평문 DB·cache·custom TCP 프로토콜을 조사합니다. HTTP/2(h2c)의 gRPC를 같은 미지원 범주에 넣지 말고 정확한 HTTP listener·route·target 구성을 검증합니다.
 
-### 대안 — Hybrid 구성
+### 대안: Hybrid 구성
 
 | 트래픽 종류 | 경로 |
 |---|---|
@@ -83,7 +83,7 @@ Raw-TCP 서비스 listener가 없다고 TCP 리소스까지 배제되는 것은 
 
 App Mesh도 TCP route를 지원했습니다. HTTP만이 아니라 **실제로 App Mesh에 의존하던 모든 트래픽**을 조사해 대체합니다. App Mesh 지원은 2026년 9월 30일 종료되었습니다.
 
-## 제약 3 — SigV4 서명의 애플리케이션 영향
+## 제약 3: SigV4 서명의 애플리케이션 영향
 
 IAM Auth를 쓰기로 했다면(제약 1의 대안 A), **누군가 요청에 서명을 붙여야 합니다.** 이 "누군가"를 정하는 것이 애플리케이션 팀에 가장 직접적인 영향을 주는 결정입니다.
 
@@ -95,7 +95,7 @@ IAM Auth를 쓰기로 했다면(제약 1의 대안 A), **누군가 요청에 서
 
 ### 실무 권고
 
-**언어가 여러 개이거나 애플리케이션 팀의 변경 여력이 제한적이면 ②로 시작하십시오.** aws-samples 레퍼런스 구현이 검증된 매니페스트를 제공합니다 — `sigv4proxy` 사이드카를 8080에서 실행하고, init container가 `169.254.171.0/24`로 향하는 트래픽만 프록시로 리다이렉트합니다.
+**언어가 여러 개이거나 애플리케이션 팀의 변경 여력이 제한적이면 ②로 시작하십시오.** aws-samples 레퍼런스 구현이 검증된 매니페스트를 제공합니다. `sigv4proxy` 사이드카를 8080에서 실행하고, init container가 `169.254.171.0/24`로 향하는 트래픽만 프록시로 리다이렉트합니다.
 
 ②의 아이러니는 명확합니다. **Envoy 사이드카를 없애려고 전환했는데 서명 사이드카가 생깁니다.** 다만 `sigv4proxy`는 Envoy보다 훨씬 가볍고, xDS 컨트롤플레인이 없으며, 설정이 정적입니다. "사이드카를 없앤다"가 전환의 핵심 목표였다면 ①로 가야 하고, 그러면 애플리케이션 변경 계획을 세워야 합니다.
 
@@ -103,7 +103,7 @@ Auth-off 비교는 업무 트래픽이 없고 보완 network/app 제어가 있�
 
 **어느 방식이든 [03번 문서](./03-auth-flow.md)의 함정 3개(Host 헤더, x-amz-date 시각, 서명은 최종 홉에서)를 점검해야 합니다.**
 
-## 제약 4 — 병행 운영 시 Envoy iptables 예외 설정
+## 제약 4: 병행 운영 시 Envoy iptables 예외 설정
 
 제외 규칙이나 명시적 proxy 경로를 선택하기 전에 설치된 mesh 정책과 관측한 전달 동작을 확인합니다. 모든 Envoy 설정이 미등록 대상을 거부하는 것은 아닙니다.
 
@@ -124,7 +124,7 @@ Mesh iptables가 Lattice 트래픽을 가로챌 수 있습니다. 전달·실패
 
 전환 시작 **전에** 이 설정을 검증하는 것을 권합니다. 첫 Lattice 호출이 실패하는 원인의 1순위입니다.
 
-## 제약 5 — Hop 단위 과금이 호출 체인 depth에 지배된다
+## 제약 5: Hop 단위 과금이 호출 체인 depth에 지배된다
 
 ### 과금 구조
 
@@ -159,7 +159,7 @@ AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 �
 
 **마지막 두 항목이 중요합니다.** Lattice의 강점은 클러스터·VPC·계정 경계를 넘는 통신이고, 같은 클러스터 안의 통신에는 별 이점이 없으면서 비용과 레이턴시를 추가합니다. **경계를 넘는 통신만 Lattice로, 클러스터 내부는 ClusterIP로** 두는 것이 비용과 성능 양쪽에서 합리적인 경우가 많습니다.
 
-다만 여기서 [03번 문서](./03-auth-flow.md)의 제약과 만납니다 — **클러스터 내부에서 k8s Service DNS로 직접 호출하면 auth policy가 평가되지 않습니다.** 즉 "내부 통신은 Lattice를 안 거친다"를 택하면 **내부 통신의 인가를 NetworkPolicy나 애플리케이션 계층에서 별도로 설계**해야 합니다. 비용 최적화와 인가 일관성이 상충하는 지점입니다.
+다만 여기서 [03번 문서](./03-auth-flow.md)의 제약과 만납니다. **클러스터 내부에서 k8s Service DNS로 직접 호출하면 auth policy가 평가되지 않습니다.** 즉 "내부 통신은 Lattice를 안 거친다"를 택하면 **내부 통신의 인가를 NetworkPolicy나 애플리케이션 계층에서 별도로 설계**해야 합니다. 비용 최적화와 인가 일관성이 상충하는 지점입니다.
 
 ### 비용 추정에 필요한 데이터
 
@@ -175,7 +175,7 @@ AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 �
 
 전환 과정에서 애플리케이션 추적을 유지하거나 추가합니다. Lattice가 네이티브 span을 만들지 않아도 애플리케이션 trace가 사라지거나 호출 체인 분석이 불가능해지는 것은 아닙니다.
 
-## 제약 6 — Failure domain 집중과 STS 의존성
+## 제약 6: Failure domain 집중과 STS 의존성
 
 ### Failure domain이 집중된다
 
@@ -212,22 +212,22 @@ AS-IS에서 이 위치에 있던 것은 SPIRE Server였습니다. **의존성의
 | **RTO/RPO 재산정** | 장애 특성이 바뀌었으므로 기존 목표치의 근거를 다시 검토 |
 | **AWS Health / 상태 알림 연동** | 고객이 직접 복구할 수 없으므로 조기 인지가 대응의 핵심 |
 
-**"Critical 경로 이중화"와 "점진적 전환"이 실질적으로 가장 유효합니다.** 특히 롤백 경로를 유지하는 것 — App Mesh 지원은 2026년 9월 30일 종료되어 App Mesh로의 롤백은 전제할 수 없으므로, 전환 검증 기간에는 직접 호출·NLB 같은 대체 경로로 되돌릴 수 있어야 합니다.
+**"Critical 경로 이중화"와 "점진적 전환"이 실질적으로 가장 유효합니다.** 특히 롤백 경로를 유지하는 것이 중요합니다. App Mesh 지원은 2026년 9월 30일 종료되어 App Mesh로의 롤백은 전제할 수 없으므로, 전환 검증 기간에는 직접 호출·NLB 같은 대체 경로로 되돌릴 수 있어야 합니다.
 
 ## 미확정 항목
 
 ::: warning 확인 필요
 다음 항목들은 공식 문서로 확정하지 못했습니다. 설계에 영향이 있으면 반드시 직접 확인하십시오.
 
-**① API Gateway 연결** — 정확한 REST/HTTP API integration type을 확인합니다. Lattice service-network ARN이 VPC Link 대상이거나 ALB/NLB가 Lattice link-local 주소를 직접 target으로 쓸 수 있다고 가정하지 않습니다. 연결 설계에는 명시적으로 구현한 proxy/consumer와 지원 사설 경로, 별도의 auth·실패 처리가 필요합니다.
+**① API Gateway 연결**: 정확한 REST/HTTP API integration type을 확인합니다. Lattice service-network ARN이 VPC Link 대상이거나 ALB/NLB가 Lattice link-local 주소를 직접 target으로 쓸 수 있다고 가정하지 않습니다. 연결 설계에는 명시적으로 구현한 proxy/consumer와 지원 사설 경로, 별도의 auth·실패 처리가 필요합니다.
 
-**② 할당량** — 필요한 리소스·target 수와 bandwidth·connection·request 제한을 [현재 quota 문서](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html) 및 해당 계정/Region에서 확인합니다. 과거 기본값이나 조정 가능 여부를 보편적으로 적용하지 않습니다.
+**② 할당량**: 필요한 리소스·target 수와 bandwidth·connection·request 제한을 [현재 quota 문서](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html) 및 해당 계정/Region에서 확인합니다. 과거 기본값이나 조정 가능 여부를 보편적으로 적용하지 않습니다.
 
-**③ AZ 동작** — AWS는 client 측 DNS AZ affinity를 문서화하지만 backend target은 여러 AZ에 있을 수 있습니다. DNS 동작에서 같은 AZ target 선택을 추론하지 말고 선택한 target·client 경로에서 측정합니다.
+**③ AZ 동작**: AWS는 client 측 DNS AZ affinity를 문서화하지만 backend target은 여러 AZ에 있을 수 있습니다. DNS 동작에서 같은 AZ target 선택을 추론하지 말고 선택한 target·client 경로에서 측정합니다.
 
-**④ TLS 정책 동작** — 익명 principal 정책은 적용 가능하지만 인증된 HTTP SigV4 신원은 사용할 수 없다는 점이 확인됐습니다. 제약 1을 확인합니다.
+**④ TLS 정책 동작**: 익명 principal 정책은 적용 가능하지만 인증된 HTTP SigV4 신원은 사용할 수 없다는 점이 확인됐습니다. 제약 1을 확인합니다.
 
-**⑤ ECH/ESNI** — AWS는 TLS listener에서 이를 지원하지 않는다고 명시합니다. [04번 문서](./04-networking-basics.md)를 확인합니다.
+**⑤ ECH/ESNI**: AWS는 TLS listener에서 이를 지원하지 않는다고 명시합니다. [04번 문서](./04-networking-basics.md)를 확인합니다.
 :::
 
 **확정된 것과 대비하면**: link-local 대역(`169.254.171.0/24`, `fd00:ec2:80::/64`), SigV4 서비스명(`vpc-lattice-svcs`), listener protocol 3종(HTTP/HTTPS/TLS_PASSTHROUGH), condition key 목록, App Mesh 지원 종료일(2026년 9월 30일), Cross-AZ 요금이 data processing에 포함된다는 점, trace span 미지원은 확인되었습니다.
@@ -293,7 +293,7 @@ graph TD
 | **설정** | Pod readiness gate 적용 검토 (무중단 롤링 업데이트) |
 | **확인** | 미확정 항목 ①~⑤를 최신 공식 문서로 확인 |
 | **확인** | 해당 리전의 quotas 현재값과 요금 단가 확인 |
-| **운영** | 관측성 계획 — Lattice 구간 span 부재에 대한 대응 (애플리케이션 OpenTelemetry 계측) |
+| **운영** | 관측성 계획: Lattice 구간 span 부재에 대한 대응 (애플리케이션 OpenTelemetry 계측) |
 | **운영** | 롤백 경로 확보, 점진적 전환 순서 정의 |
 | **운영** | STS 갱신 실패 시 거동 테스트 |
 | **운영** | RTO/RPO 재산정 |
@@ -312,8 +312,8 @@ graph TD
 - [Amazon VPC Lattice 요금](https://aws.amazon.com/vpc/lattice/pricing/)
 - [Amazon VPC Lattice endpoints and quotas](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html)
 - [Control access to VPC Lattice services using auth policies](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
-- [AWS Gateway API Controller — IAMAuthPolicy](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
-- [AWS Gateway API Controller — Pod Readiness Gates](https://www.gateway-api-controller.eks.aws.dev/latest/guides/pod-readiness-gates/)
+- [AWS Gateway API Controller: IAMAuthPolicy](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
+- [AWS Gateway API Controller: Pod Readiness Gates](https://www.gateway-api-controller.eks.aws.dev/latest/guides/pod-readiness-gates/)
 - [aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice)
 - [Comparing the Costs of Common Network Architecture Patterns with Amazon VPC Lattice](https://repost.aws/articles/AR9Tt9m6kKR6mF5Ohj5K-3Og/comparing-the-costs-of-common-network-architecture-patterns-with-amazon-vpc-lattice)
 - [App Mesh Document history](https://docs.aws.amazon.com/app-mesh/latest/userguide/doc-history.html)

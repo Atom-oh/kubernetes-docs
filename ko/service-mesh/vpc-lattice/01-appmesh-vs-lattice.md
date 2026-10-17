@@ -11,7 +11,7 @@
 
 ## 왜 두 모델이 다르게 설계되었는가
 
-### sidecar 모델 — 애플리케이션 곁에 프록시를 둔다
+### sidecar 모델: 애플리케이션 곁에 프록시를 둔다
 
 App Mesh와 Istio가 Pod 안에 Envoy를 넣는 이유는 **애플리케이션의 컨텍스트를 알아야 하는 결정이 있기 때문**입니다.
 
@@ -19,7 +19,7 @@ App Mesh와 Istio가 Pod 안에 Envoy를 넣는 이유는 **애플리케이션�
 
 고객은 주입된 Envoy 워크로드와 별도로 배포한 SPIRE를 운영합니다. **App Mesh 제어 평면은 AWS가 운영했습니다(2026년 9월 30일 지원 종료).** 프록시 업그레이드와 자원 사용은 고객 워크로드의 운영 과제이지만 App Mesh 제어 평면까지 자체 운영한다고 설명하면 안 됩니다.
 
-### 관리형 데이터플레인 모델 — 프록시를 인프라로 밀어낸다
+### 관리형 데이터플레인 모델: 프록시를 인프라로 밀어낸다
 
 Lattice는 반대 방향을 택했습니다. 프록시를 Pod에서 빼내고 **AWS가 운영하는 인프라 계층**에 둡니다. 클라이언트 Pod는 아무것도 모른 채 평범한 HTTP 요청을 보내고, 그 요청이 Lattice 서비스의 주소로 향하면 인프라가 가로채서 처리합니다.
 
@@ -100,7 +100,7 @@ graph TB
 
 ### 이 표를 1:1 대응표로 읽으면 안 되는 이유
 
-**VirtualNode 행이 문제입니다.** App Mesh의 VirtualNode는 세 가지를 동시에 표현했습니다 — 이 워크로드가 누구인지(신원, backend TLS 설정 포함), 어디로 나가는지(backends), 어디서 받는지(listeners, health check, connection pool, outlier detection). Lattice에서 이 셋은 서로 다른 곳으로 흩어집니다.
+**VirtualNode 행이 문제입니다.** App Mesh의 VirtualNode는 세 가지를 동시에 표현했습니다. 이 워크로드가 누구인지(신원, backend TLS 설정 포함), 어디로 나가는지(backends), 어디서 받는지(listeners, health check, connection pool, outlier detection). Lattice에서 이 셋은 서로 다른 곳으로 흩어집니다.
 
 - **"어디서 받는지"의 일부**(대상 집합, health check)만 Target Group으로 갑니다
 - **"어디로 나가는지"**는 리소스가 아니라 **auth policy와 IAM 권한**의 문제가 됩니다
@@ -135,7 +135,7 @@ Lattice 리소스를 CLI나 콘솔로 직접 만들 수도 있지만, EKS에서�
 
 | Kubernetes 리소스 | 생성되는 Lattice 리소스 |
 |---|---|
-| `GatewayClass` (`amazon-vpc-lattice`) | — (Lattice를 데이터플레인으로 지정하는 선언) |
+| `GatewayClass` (`amazon-vpc-lattice`) | 없음 (Lattice를 데이터플레인으로 지정하는 선언) |
 | `Gateway` | **Service Network**를 가리킴. Gateway 이름(namespace 제외)이 Service Network 이름과 대응하며, 같은 이름의 Gateway가 여러 개면 모두 같은 Service Network를 가리킴 |
 | `HTTPRoute` / `GRPCRoute` | **Lattice Service** + **Listener Rule**. 각 Route가 **자신의 도메인 이름을 부여받음** |
 | `TLSRoute` | TLS Passthrough용 Lattice Service ([04번 문서](./04-networking-basics.md) 참고) |
@@ -174,7 +174,7 @@ Gateway API는 원래 남북(North-South, Ingress)과 동서(East-West, Mesh) �
 
 - [Migrating from AWS App Mesh to Amazon VPC Lattice (AWS Containers Blog)](https://aws.amazon.com/blogs/containers/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/)
 - [aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice)
-- [AWS Gateway API Controller — Understanding the Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/concepts/overview/)
-- [AWS Gateway API Controller — Gateway API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)
+- [AWS Gateway API Controller: Understanding the Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/concepts/overview/)
+- [AWS Gateway API Controller: Gateway API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)
 - [Amazon VPC Lattice User Guide](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
 - [App Mesh Document history](https://docs.aws.amazon.com/app-mesh/latest/userguide/doc-history.html)

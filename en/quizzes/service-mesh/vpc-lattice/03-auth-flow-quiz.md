@@ -33,12 +33,12 @@ This quiz tests your understanding of the four-stage Lattice IAM Auth flow, SigV
 **Answer: B) The calling IAM Role's identity-based policy lacks `vpc-lattice-svcs:Invoke`**
 
 **Explanation:**
-It is natural to think "the service's auth policy allows this Role, so we're done," but the calling Role itself also needs Invoke permission — a resource policy alone does not get you through. The actual error message ends with `because no identity-based policy allows the vpc-lattice-svcs:Invoke action`, telling you the cause, so read that clause first when you hit a 403. Note that C would manifest as a connection failure or timeout, not a 403.
+It is natural to think "the service's auth policy allows this Role, so we're done," but the calling Role itself also needs Invoke permission; a resource policy alone does not get you through. The actual error message ends with `because no identity-based policy allows the vpc-lattice-svcs:Invoke action`, telling you the cause, so read that clause first when you hit a 403. Note that C would manifest as a connection failure or timeout, not a 403.
 </details>
 
 3. If 403s begin right after introducing a custom domain, what should you check first?
    - A) The Target Group's protocol setting
-   - B) The `Host` header — in SigV4 the Host header is always signed, so the Host used when signing must match the actual request's Host header
+   - B) The `Host` header: in SigV4 the Host header is always signed, so the Host used when signing must match the actual request's Host header
    - C) Whether Lattice quotas were exceeded
    - D) The VPC's DNS resolution settings
 
@@ -46,15 +46,15 @@ It is natural to think "the service's auth policy allows this Role, so we're don
 
 <summary>Show Answer</summary>
 
-**Answer: B) The `Host` header — in SigV4 the Host header is always signed, so the Host used when signing must match the actual request's Host header**
+**Answer: B) The `Host` header: in SigV4 the Host header is always signed, so the Host used when signing must match the actual request's Host header**
 
 **Explanation:**
-SigV4 always includes the `Host` header in the signature. When you attach a custom domain, clients send requests to that domain and must sign with that value — if the signing logic still uses the Lattice-generated domain, the signature does not match. This problem surfaces at the moment you attach the custom domain rather than at the start of migration, which is why it is easy to miss. Introducing a custom domain requires settling SNI control, the signed Host value, and certificate management together.
+SigV4 always includes the `Host` header in the signature. When you attach a custom domain, clients send requests to that domain and must sign with that value; if the signing logic still uses the Lattice-generated domain, the signature does not match. This problem surfaces at the moment you attach the custom domain rather than at the start of migration, which is why it is easy to miss. Introducing a custom domain requires settling SNI control, the signed Host value, and certificate management together.
 </details>
 
 4. If "only Pods on one particular node get intermittent 403s," what is the most likely cause?
    - A) A Security Group misconfiguration on that node
-   - B) Clock synchronization on that node — `x-amz-date` is signed and SigV4's tolerance is about 5 minutes
+   - B) Clock synchronization on that node: `x-amz-date` is signed and SigV4's tolerance is about 5 minutes
    - C) The Gateway API Controller is not running on that node
    - D) That node's kubelet version is too old
 
@@ -62,7 +62,7 @@ SigV4 always includes the `Host` header in the signature. When you attach a cust
 
 <summary>Show Answer</summary>
 
-**Answer: B) Clock synchronization on that node — `x-amz-date` is signed and SigV4's tolerance is about 5 minutes**
+**Answer: B) Clock synchronization on that node: `x-amz-date` is signed and SigV4's tolerance is about 5 minutes**
 
 **Explanation:**
 AWS’s general SigV4 guidance says most requests must arrive within five minutes of their timestamp. Check the actual service error and UTC clock; do not treat this as a separately measured Lattice-specific guarantee.
@@ -97,7 +97,7 @@ The signed Host/path/query values must match the request. Canonical sorting mean
 **Answer: B) If the client calls the Kubernetes Service DNS directly, it bypasses Lattice and the auth policy is never evaluated**
 
 **Explanation:**
-The AWS Gateway API Controller documentation states this explicitly: `IAMAuthPolicy` performs authorization only for traffic traveling through Gateways, HTTPRoutes, and GRPCRoutes. Sending to `http://svc.ns.svc.cluster.local` bypasses Lattice, so no policy is evaluated. During migration, when both paths coexist, there are simultaneously paths where authorization applies and paths where it does not — compensating controls such as NetworkPolicy are needed. Another common cause is authType being `NONE` instead of `AWS_IAM`.
+The AWS Gateway API Controller documentation states this explicitly: `IAMAuthPolicy` performs authorization only for traffic traveling through Gateways, HTTPRoutes, and GRPCRoutes. Sending to `http://svc.ns.svc.cluster.local` bypasses Lattice, so no policy is evaluated. During migration, when both paths coexist, there are simultaneously paths where authorization applies and paths where it does not; compensating controls such as NetworkPolicy are needed. Another common cause is authType being `NONE` instead of `AWS_IAM`.
 </details>
 
 7. How do the "scope" and "directionality" of authentication change from AS-IS (App Mesh + SPIRE mTLS) to TO-BE (Lattice IAM Auth)?

@@ -17,7 +17,7 @@ This quiz tests your understanding of SPIFFE/SPIRE structure, the attestation pr
 **Answer: B) Identity must remain the same wherever the workload is scheduled and however its IP changes**
 
 **Explanation:**
-A SPIFFE ID takes the form `spiffe://<trust-domain>/<workload-path>`, where the path usually reflects namespace and ServiceAccount. Excluding network information is deliberate — a Pod may be rescheduled and get a new IP, but its identity must persist. This is the starting point of the shift from IP-based to identity-based control, the same direction of thinking as why destination-IP-based control becomes meaningless in Lattice's link-local range.
+A SPIFFE ID takes the form `spiffe://<trust-domain>/<workload-path>`, where the path usually reflects namespace and ServiceAccount. Excluding network information is deliberate: a Pod may be rescheduled and get a new IP, but its identity must persist. This is the starting point of the shift from IP-based to identity-based control, the same direction of thinking as why destination-IP-based control becomes meaningless in Lattice's link-local range.
 </details>
 
 2. In SPIRE's Workload Attestation, at which point is the bootstrapping problem decisively resolved?
@@ -86,7 +86,7 @@ Client proof actually becomes finer-grained (per-request SigV4 verification). Th
 
 6. Why is decisive difference (b), the transfer of root-of-trust ownership, a heavy item in financial-sector reviews?
    - A) AWS IAM is less secure than SPIRE
-   - B) Many organizations' security standards require, or are read as requiring, that the root of trust of an authentication system be under their own control — and running your own CA was the most direct way to satisfy that
+   - B) Many organizations' security standards require, or are read as requiring, that the root of trust of an authentication system be under their own control, and running your own CA was the most direct way to satisfy that
    - C) CloudTrail does not provide an audit trail
    - D) Authority over IAM policy decisions transfers to AWS
 
@@ -94,10 +94,10 @@ Client proof actually becomes finer-grained (per-request SigV4 verification). Th
 
 <summary>Show Answer</summary>
 
-**Answer: B) Many organizations' security standards require, or are read as requiring, that the root of trust of an authentication system be under their own control — and running your own CA was the most direct way to satisfy that**
+**Answer: B) Many organizations' security standards require, or are read as requiring, that the root of trust of an authentication system be under their own control, and running your own CA was the most direct way to satisfy that**
 
 **Explanation:**
-Adopting SPIRE was likely the result of passing that very review. Moving to Lattice IAM Auth means rebuilding the argument, with available grounds including the shared responsibility model, retained policy authority (the customer still defines who may call what via IAM), audit trails through CloudTrail and access logs, and the benefit that the customer holds no CA private key so key-leak risk is eliminated. But this is an argument that "control is exercised differently," not that "it is equivalent," and acceptance depends on organizational standards. D is wrong — policy authority stays with the customer.
+Adopting SPIRE was likely the result of passing that very review. Moving to Lattice IAM Auth means rebuilding the argument, with available grounds including the shared responsibility model, retained policy authority (the customer still defines who may call what via IAM), audit trails through CloudTrail and access logs, and the benefit that the customer holds no CA private key so key-leak risk is eliminated. But this is an argument that "control is exercised differently," not that "it is equivalent," and acceptance depends on organizational standards. D is wrong: policy authority stays with the customer.
 </details>
 
 7. In which situation might you need to keep operating SPIRE after migrating to Lattice?

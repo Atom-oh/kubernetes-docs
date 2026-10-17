@@ -21,7 +21,7 @@ Ambient L4 had a small observed P50 difference and fewer non-success responses t
 
 Choose required features first, then validate total errors, latency, identity and operations against the workload's budget. The Cilium column describes documented capability only; Cilium was not deployed in this test cycle.
 
-## 1. mTLS — Test Results (EKS 1.36.2, Istio 1.30.2)
+## 1. mTLS: Test Results (EKS 1.36.2, Istio 1.30.2)
 
 The original report names a dedicated `mesh-isolated-test` cluster, its own VPC, Amazon Linux 2023 arm 64 m 7g.xlarge nodes, and namespace-scoped STRICT PeerAuthentication in the three mesh namespaces. Control-plane and worker Kubernetes versions were reported as 1.36.2.
 
@@ -48,7 +48,7 @@ The IDs shown are **namespace/ServiceAccount identities**. Echo and client Pods 
 
 The reported negative/positive cases are consistent with STRICT enforcement for those flows. They do not establish coverage of every cluster path, protocol, source or bypass. Ambient uses the Istio CNI network-namespace capture path and HBONE on TCP 15008; sidecar mode uses the workload proxy. See the [mTLS guide](../security/01-mtls.md) for enforcement boundaries.
 
-## 2. NetworkPolicy — Test Results
+## 2. NetworkPolicy: Test Results
 
 The report used VPC CNI network-policy enforcement and identified the agent as `v1.3.5-eksbuild.3`. It does not archive the full add-on configuration/version, policy endpoints or node-state evidence. Preserve the reported version in historical results.
 
@@ -56,7 +56,7 @@ The report used VPC CNI network-policy enforcement and identified the agent as `
 
 | Mode | Result |
 |---|---|
-| sidecar | ✅ 200 OK — unaffected |
+| sidecar | ✅ 200 OK (unaffected) |
 | ambient-L4 | ❌ blocked (`i/o timeout`) |
 | ambient-L7 | ❌ blocked (`i/o timeout`) |
 
@@ -65,8 +65,8 @@ The report used VPC CNI network-policy enforcement and identified the agent as `
 
 | Mode | Result |
 |---|---|
-| ambient-L4 | ✅ 200 OK — restored |
-| ambient-L7 | ✅ 200 OK — restored |
+| ambient-L4 | ✅ 200 OK (restored) |
+| ambient-L7 | ✅ 200 OK (restored) |
 
 
 These results show the importance of HBONE for the tested path. They do not mean every existing policy works unchanged with sidecars, or that allowing 15008 is a complete least-privilege ambient policy. Source selectors, waypoint paths, DNS/control-plane egress and the CNI implementation matter. The network policy sees the tunnel port; use appropriate identity/port policy for traffic inside it.
@@ -75,7 +75,7 @@ The author reported that recreating Pods after enabling enforcement made a negat
 
 Current AWS documentation supports controller-owned Pods, including Deployments, StatefulSets, DaemonSets and Jobs; standalone Pods have additional limitations. Cilium separately supports standard NetworkPolicy and its own policy CRDs. Neither behavior should be inferred from a result on a different implementation.
 
-## 3. Latency — Test Results (T5)
+## 3. Latency: Test Results (T5)
 
 The report describes steady-state Fortio at requested 200 QPS,60 seconds,16 connections, with 12,000 successful requests per case on the same Graviton cluster:
 
@@ -92,7 +92,7 @@ The reported P50 differences are sidecar 1.29 ms, ambient L4 0.04 ms and ambient
 The appendix uses a duration-based Fortio command. Requested QPS × duration is nominal offered work, not an exact call-count guarantee; use the recorded DurationHistogram.Count/RetCodes from each run. Do not update historical version labels without rerunning and retaining the experiment.
 
 
-## 4. Zero-Downtime Rollout — 503 Test Results (core finding)
+## 4. Zero-Downtime Rollout: 503 Test Results (core finding)
 
 ### Background
 
@@ -164,7 +164,7 @@ These are observations from the stated samples. Sidecar changed **two factors**,
 
 The grace period includes preStop and container termination. A ten-second sleep provides time, not confirmation that every endpoint update has propagated. In released 1.30.2 code, EXIT_ON_ZERO_ACTIVE_CONNECTIONS first waits the configured minimum drain period and then polls downstream-listener connection statistics every second. That branch does not use the ordinary terminationDrainDuration timer; Kubernetes termination limits and observation errors still matter. Do not describe it as immediate exit or an unconditional 30-second maximum.
 
-### The risk of retry as a mitigation — Test Results (T2)
+### The risk of retry as a mitigation: Test Results (T2)
 
 The original report described a six-replica order service, collector and client, with a 20-request/s setting,300-second runs and a VirtualService policy with three retries and a two-second per-try timeout. The following values are preserved as **reported, not independently reproduced**:
 
@@ -231,7 +231,7 @@ Workload tiers are planning labels, not safety guarantees:
 
 The reported coexistence of three mesh namespaces is useful, but does not prove every mixed deployment, workload or policy combination safe.
 
-### L4-only's limitations — can I still do canary deployments?
+### L4-only's limitations: can I still do canary deployments?
 
 ztunnel does not provide per-HTTP-request header/path routing, mirroring or HTTP retry. An **Istio-managed** ingress gateway can make L7 routing decisions before forwarding to ambient backends. Gateway API itself is an API, not necessarily an Envoy Deployment: behavior depends on the GatewayClass/controller.
 
@@ -525,7 +525,7 @@ spec:
 
 The new illustration pins the reported Fortio version to a registry digest checked during this review and names HTTP ports explicitly. The original report did not archive its image digest or all protocol settings; these revisions are not evidence that the old run used identical bytes. The Fortio image is scratch-based: use its binary, not assumed sh/curl/cat utilities inside it.
 
-### D. mTLS — PeerAuthentication (§1)
+### D. mTLS: PeerAuthentication (§1)
 
 ```yaml
 apiVersion: security.istio.io/v1

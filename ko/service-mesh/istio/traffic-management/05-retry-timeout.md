@@ -123,7 +123,7 @@ spec:
 
 `payment-service`는 결제 요청처럼 비멱등 write를 처리하므로, 모든 메서드에 동일한
 retry 정책을 적용하면 `reset`이나 `5xx`가 발생했을 때 mesh가 POST를 재전송해버릴 수
-있습니다 — 이 문서 전체가 경고하는 "모호한 재전송" 위험 그대로입니다. 메서드별로
+있습니다. 이 문서 전체가 경고하는 "모호한 재전송" 위험 그대로입니다. 메서드별로
 라우트를 분리해, 읽기 전용 상태 조회는 넉넉히 재시도하고 write 경로는 mesh retry를
 완전히 끕니다.
 
@@ -334,7 +334,7 @@ TLS Origination 예제이므로 앱은 `http://api.external.com`으로 호출하
 ### 예제 3: Circuit Breaker와 함께 사용
 
 `payment`는 비멱등 write를 처리하므로, 앞서 나온 `payment-service` 예제와 동일하게
-메서드별로 라우트를 분리합니다 — 읽기는 넉넉히 재시도하고 write는 mesh retry를
+메서드별로 라우트를 분리합니다. 읽기는 넉넉히 재시도하고 write는 mesh retry를
 끕니다. 아래 circuit breaker는 양쪽 모두에 적용됩니다.
 
 ```yaml

@@ -81,7 +81,7 @@ Auth on/off는 HMAC만 분리하지 않습니다. 부하·연결 설정을 고�
 **정답: B) 레이턴시 악화 요인이지만, Lattice 경유 트래픽에는 별도의 inter-AZ 요금이 없고 data processing 요금에 포함된다**
 
 **설명:**
-Cross-AZ는 물리적 거리로 인해 레이턴시를 늘리지만(실측 기준선: 같은 AZ 0.339 ms vs 다른 AZ 0.544 ms), 과금 측면에서는 Lattice가 별도의 inter-AZ 요금을 청구하지 않고 data processing 요금에 포함시킵니다. D는 틀렸습니다 — Lattice의 Target 선택이 호출자 AZ를 고려하는지는 공식 문서로 확인되지 않았으므로 PoC에서 실측해야 하며, 그래서 측정 매트릭스에 AZ 축이 있습니다.
+Cross-AZ는 물리적 거리로 인해 레이턴시를 늘리지만(실측 기준선: 같은 AZ 0.339 ms vs 다른 AZ 0.544 ms), 과금 측면에서는 Lattice가 별도의 inter-AZ 요금을 청구하지 않고 data processing 요금에 포함시킵니다. D는 틀렸습니다. Lattice의 Target 선택이 호출자 AZ를 고려하는지는 공식 문서로 확인되지 않았으므로 PoC에서 실측해야 하며, 그래서 측정 매트릭스에 AZ 축이 있습니다.
 </details>
 
 6. PoC 측정 설계에서 웜업이 필요한 이유와, 그럼에도 첫 요청 지연을 따로 기록해야 하는 이유는?

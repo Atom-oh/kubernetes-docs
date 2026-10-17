@@ -434,7 +434,7 @@ Repeat readiness, connectivity, identity and policy tests for the named workload
 
 ### Rollback Strategy
 
-Restore the recorded injection mode and original Pod-template/policy configuration. The code below only handles the namespace-injection case above; the old revision must still exist and be healthy. A cohort with waypoints needs its enrollment/routing policies restored as part of the reviewed rollback. Delete only a specifically identified, unreferenced waypoint created for that cohort—never every Gateway in a namespace.
+Restore the recorded injection mode and original Pod-template/policy configuration. The code below only handles the namespace-injection case above; the old revision must still exist and be healthy. A cohort with waypoints needs its enrollment/routing policies restored as part of the reviewed rollback. Delete only a specifically identified, unreferenced waypoint created for that cohort, never every Gateway in a namespace.
 
 ```bash
 original_revision=$(jq -r '.metadata.labels["istio.io/rev"] // ""' migration-namespace-before.json)

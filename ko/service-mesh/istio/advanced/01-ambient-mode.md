@@ -598,7 +598,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### 한국어 추가 자료
 
-- [SKT Enterprise 소개 글](https://www.sktenterprise.com/bizInsight/blogDetail/dev/14768) — 추가 읽기 자료이며 현재 API 검증은 위 공식 문서를 기준으로 합니다.
+- [SKT Enterprise 소개 글](https://www.sktenterprise.com/bizInsight/blogDetail/dev/14768): 추가 읽기 자료이며 현재 API 검증은 위 공식 문서를 기준으로 합니다.
 
 ## 요약
 
