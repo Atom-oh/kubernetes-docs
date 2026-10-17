@@ -8,7 +8,7 @@
 
 경계·계정·네트워크 구조를 아무리 정교하게 설계해도, 다음 요소들이 정의되어 있지 않으면 그 설계가 실제로 맞는지 판정할 수 없습니다.
 
-### CUJ별 RTO/RPO 목표 — 가장 큰 누락
+### CUJ별 RTO/RPO 목표: 가장 큰 누락
 
 CUJ(critical user journey)별 RTO(Recovery Time Objective)/RPO(Recovery Point Objective)가 정의되어 있지 않으면 다음을 전혀 판정할 수 없습니다.
 
@@ -52,7 +52,7 @@ cross-AZ 비용 귀속은 Flow Logs·ENI/IP·Kubernetes workload identity와 CUR
 
 ## 2. 판정표 설계
 
-여러 문서에서 다룬 선택지들 — 경계 독립 판정, Hybrid Account portfolio, Shared+Dedicated EKS, trust zone 혼합 VPC, Hybrid data, Hybrid key ownership — 은 전부 **"판정표로 재현 가능하다"를 성립 조건**으로 둡니다. 판정표가 없으면 어떤 POC 결과도 표준으로 전환되지 않습니다.
+여러 문서에서 다룬 선택지들(경계 독립 판정, Hybrid Account portfolio, Shared+Dedicated EKS, trust zone 혼합 VPC, Hybrid data, Hybrid key ownership)은 전부 **"판정표로 재현 가능하다"를 성립 조건**으로 둡니다. 판정표가 없으면 어떤 POC 결과도 표준으로 전환되지 않습니다.
 
 판정표에 포함할 것을 권장하는 열:
 

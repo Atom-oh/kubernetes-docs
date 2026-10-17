@@ -80,9 +80,9 @@ AWS 문서가 명시적으로 경고하는 부분입니다. zonal shift가 발�
 
 "2-AZ면 약 2배, 3-AZ(N-1 기준)면 약 1.5배의 사전 capacity가 필요하다"는 계산은 산술적으로는 맞지만, 세 가지를 놓치기 쉽습니다.
 
-1. **노드 추가 지연** — placeholder Pod와 우선순위로 이미 확보된 capacity를 활용할 수 있지만 node provisioning·이미지 pull·애플리케이션 startup 지연까지 제거하지는 않습니다.
-2. **정상 AZ의 신규 capacity 확보가 다른 고객 수요로 제약될 수 있다는 위험** — 이건 가설이 아니라 AWS 문서가 "zonal impairment 시 healthy AZ에 신규 노드가 추가되지 못하는 compute capacity constraint 위험"을 실제로 명시하고 있는 사항입니다.
-3. **서비스 의존성과 AZ 배치** — surviving AZ에서 CUJ의 모든 필수 hop에 도달하고 부하를 처리할 수 있어야 합니다. topology spread·affinity·cross-zone fallback을 요구에 맞게 조합합니다. strict affinity가 오히려 복구를 막지 않는지도 시험합니다.
+1. **노드 추가 지연**: placeholder Pod와 우선순위로 이미 확보된 capacity를 활용할 수 있지만 node provisioning·이미지 pull·애플리케이션 startup 지연까지 제거하지는 않습니다.
+2. **정상 AZ의 신규 capacity 확보가 다른 고객 수요로 제약될 수 있다는 위험**: 이건 가설이 아니라 AWS 문서가 "zonal impairment 시 healthy AZ에 신규 노드가 추가되지 못하는 compute capacity constraint 위험"을 실제로 명시하고 있는 사항입니다.
+3. **서비스 의존성과 AZ 배치**: surviving AZ에서 CUJ의 모든 필수 hop에 도달하고 부하를 처리할 수 있어야 합니다. topology spread·affinity·cross-zone fallback을 요구에 맞게 조합합니다. strict affinity가 오히려 복구를 막지 않는지도 시험합니다.
 
 ### cross-AZ 비용 최적화
 
@@ -108,7 +108,7 @@ A/B EKS Runtime을 두는 실질적인 이유가 업그레이드 격리라면, �
 
 클러스터를 생성하려면 서로 다른 두 AZ의 subnet이 필요하지만, worker node는 1개 AZ에만 배치할 수도 있습니다. "1-AZ 워커 구성"이 EKS 자체에서 금지되지는 않는다는 뜻이며, 앞서 언급한 zonal shift 예외 규칙과는 별개로 판단해야 합니다.
 
-## 3. Full Workload Cell — 더 강한 격리가 필요할 때의 대안
+## 3. Full Workload Cell: 더 강한 격리가 필요할 때의 대안
 
 A/B EKS Runtime보다 더 강한 격리가 필요하다면, ingress·compute·data와 필수 dependency를 "Cell" 단위로 함께 분할·복제해서 장애 영향을 Cell 안에 제한하는 방식이 있습니다. Partition, consistency, 용량, 운영 비용이 크게 늘기 때문에 **독립적인 data partition·replication이 가능한 워크로드에만** 적용하는 것이 현실적입니다.
 

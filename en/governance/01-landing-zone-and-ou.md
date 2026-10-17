@@ -16,7 +16,7 @@ CentralConfigBaseline
         └─▶ BackupCentralVaultBaseline
 ```
 
-To use `IdentityCenterBaseline` (Identity Center integration), `CentralSecurityRolesBaseline` must already be active, which in turn requires `CentralConfigBaseline` (AWS Config). **Deactivation must happen in reverse order** — you must turn off all three on the right (IdentityCenter/BackupAdmin/BackupCentralVault) before you can turn off SecurityRoles, and only then can you turn off Config.
+To use `IdentityCenterBaseline` (Identity Center integration), `CentralSecurityRolesBaseline` must already be active, which in turn requires `CentralConfigBaseline` (AWS Config). **Deactivation must happen in reverse order**: you must turn off all three on the right (IdentityCenter/BackupAdmin/BackupCentralVault) before you can turn off SecurityRoles, and only then can you turn off Config.
 
 > **Scope**: This chain applies to the IdentityCenterBaseline managed by Control Tower 4.0. IAM Identity Center itself does not require AWS Config. Distinguish independently managed Identity Center from its Control Tower integration.
 
@@ -82,17 +82,17 @@ The key fact is that **inherited policies don't consume the per-entity attachmen
 | Strategy | Configuration | Quota-perspective evaluation |
 |---|---|---|
 | Root-heavy | Attach org-wide common SCPs at Root, OUs inherit | New Accounts inherit controls immediately, but hard to carve out per-OU exceptions |
-| Fully-specified per-OU direct attachment | Attach every SCP each OU needs directly, minimizing dependency on parent OUs | Doesn't use inheritance, so a single OU can consume the entire 10-attachment limit — at the limit, policies must be merged |
-| **Layered bundle** | Root carries only a minimal, exception-free SCP; the rest is versioned per-OU policy bundles + expiring exceptions | Actively leverages inheritance to conserve the direct-attach limit per OU — **the most scalable option from a quota perspective** |
+| Fully-specified per-OU direct attachment | Attach every SCP each OU needs directly, minimizing dependency on parent OUs | Doesn't use inheritance, so a single OU can consume the entire 10-attachment limit; at the limit, policies must be merged |
+| **Layered bundle** | Root carries only a minimal, exception-free SCP; the rest is versioned per-OU policy bundles + expiring exceptions | Actively leverages inheritance to conserve the direct-attach limit per OU, **the most scalable option from a quota perspective** |
 
 Version policy documents and attachment inventories through Git revisions, deployment manifests, and CloudTrail changes. A version in Sid is optional. Inherited SCPs/RCPs, resource policies, and permission boundaries have distinct evaluation scopes; one simulation does not establish complete effective authorization.
 
 A few more confirmed constraints:
 
-- **If an entity has any SCP enabled, the last remaining SCP cannot be removed.** A design of "the exception OU has no controls at all" doesn't hold — even exception OUs need a minimal baseline SCP.
+- **If an entity has any SCP enabled, the last remaining SCP cannot be removed.** A design of "the exception OU has no controls at all" doesn't hold; even exception OUs need a minimal baseline SCP.
 - OU nesting goes up to **5 levels** below Root, and the org can have up to **2,000 OUs** total. Flat or shallow-functional-hybrid structures aren't affected by this ceiling.
 - RCPFullAWSAccess consumes one of five RCP attachments per entity. Four available direct attachments do not prohibit inheritance. Place controls across Root, OU, and Account levels while checking supported services, service-principal exceptions, and explicit denies. RCPs can protect sensitive-data paths but do not replace IAM, KMS, or resource policies.
-- Organizations also has a **Security Hub policy type** — a means of centrally deploying Security Hub configuration as an org policy, worth reviewing alongside SCP/RCP/declarative policy/Tag Policy.
+- Organizations also has a **Security Hub policy type**, a means of centrally deploying Security Hub configuration as an org policy, worth reviewing alongside SCP/RCP/declarative policy/Tag Policy.
 
 ### Role separation by policy type (confirmed facts)
 

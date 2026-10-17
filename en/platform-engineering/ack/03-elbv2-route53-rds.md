@@ -16,7 +16,7 @@ manageMasterUserPassword=true requests RDS Secrets Manager integration without a
 
 DBInstance names or Role tags do not fix writer/reader roles. Inspect actual cluster membership; failover can change the writer. promotionTier is promotion priority, not permanent role assignment. A custom READER endpoint only uses the selected instances that are currently readers. Check available members and reconnect behavior after failover. An AZ-looking endpoint name does not implement AZ filtering.
 
-## LoadBalancer — loadbalancer-app-nlb
+## LoadBalancer: loadbalancer-app-nlb
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
@@ -37,7 +37,7 @@ spec:
   - sg-0123456789abcdef0
 ```
 
-## TargetGroup — targetgroup-app-tg
+## TargetGroup: targetgroup-app-tg
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
@@ -57,7 +57,7 @@ spec:
   healthCheckPort: '8080'
 ```
 
-## Listener — listener-app-listener
+## Listener: listener-app-listener
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
@@ -80,7 +80,7 @@ spec:
         name: app-tg
 ```
 
-## RecordSet — recordset-app-dns
+## RecordSet: recordset-app-dns
 
 ```yaml
 apiVersion: route53.services.k8s.aws/v1alpha1
@@ -100,7 +100,7 @@ spec:
     evaluateTargetHealth: true
 ```
 
-## DBSubnetGroup — dbsubnetgroup-app-db-subnets
+## DBSubnetGroup: dbsubnetgroup-app-db-subnets
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -118,7 +118,7 @@ spec:
   - subnet-0123456789abcdef1
 ```
 
-## DBCluster — dbcluster-app-aurora
+## DBCluster: dbcluster-app-aurora
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -144,7 +144,7 @@ spec:
   deletionProtection: true
 ```
 
-## DBInstance — dbinstance-app-db-1
+## DBInstance: dbinstance-app-db-1
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -165,7 +165,7 @@ spec:
   promotionTier: 0
 ```
 
-## DBInstance — dbinstance-app-db-2
+## DBInstance: dbinstance-app-db-2
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -186,7 +186,7 @@ spec:
   promotionTier: 1
 ```
 
-## DBInstance — dbinstance-app-db-3
+## DBInstance: dbinstance-app-db-3
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -207,7 +207,7 @@ spec:
   promotionTier: 2
 ```
 
-## DBClusterEndpoint — dbclusterendpoint-app-selected-readers
+## DBClusterEndpoint: dbclusterendpoint-app-selected-readers
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1

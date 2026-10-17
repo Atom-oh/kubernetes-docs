@@ -8,7 +8,7 @@ These versions do not use separate BucketPolicy or RolePolicyAttachment CRDs. Us
 
 This Role trusts EC2. It is not an IRSA/Pod Identity role; EC2 use also requires an InstanceProfile association. Its data-reading policy is not a complete ACK controller policy.
 
-## Bucket — bucket-app-data
+## Bucket: bucket-app-data
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
@@ -41,7 +41,7 @@ spec:
     \n    }\n  ]\n}"
 ```
 
-## Policy — policy-app-data-read
+## Policy: policy-app-data-read
 
 ```yaml
 apiVersion: iam.services.k8s.aws/v1alpha1
@@ -61,7 +61,7 @@ spec:
     \n    }\n  ]\n}"
 ```
 
-## Role — role-app-role
+## Role: role-app-role
 
 ```yaml
 apiVersion: iam.services.k8s.aws/v1alpha1
