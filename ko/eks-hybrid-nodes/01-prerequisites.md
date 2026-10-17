@@ -20,7 +20,7 @@ Hybrid node join 전에 host·network·credential·cluster access를 준비합�
 
 위 기준이 오래된 Kubernetes 릴리스의 현재 EKS 지원을 뜻하지는 않습니다. 현재 지원되는 EKS·OS/runtime/CNI 조합을 고르세요. AWS는 Ubuntu/RHEL의 hybrid 통합을 지원하며 vendor OS 유지보수 자체를 대신하지 않습니다.
 
-SSM 신규 설치/upgrade에는 **nodeadm 1.0.19+**가 필요합니다. 이전 binary에는 오래된 SSM signing key가 있습니다. 검토한 릴리스는 **v1.0.20**이며, EC2 EKS AMI의 동명 도구가 아닌 hybrid nodeadm을 사용합니다.
+SSM 신규 설치/upgrade에는 <strong>nodeadm 1.0.19+</strong>가 필요합니다. 이전 binary에는 오래된 SSM signing key가 있습니다. 검토한 릴리스는 **v1.0.20**이며, EC2 EKS AMI의 동명 도구가 아닌 hybrid nodeadm을 사용합니다.
 
 ARM의 EKS kube-proxy 1.31+에는 ARMv8.2+crypto가 필요합니다. Pi 5 이전/Cortex-A72는 충족하지 못하지만 Pi 5 CPU만으로 전체 stack이 검증되지는 않습니다. 이전 kube-proxy 1.30 workaround는 2026년 7월 EKS extended support가 종료됐습니다.
 
@@ -79,7 +79,7 @@ AWS 예제는 Ubuntu 22.04/24.04·RHEL 8/9와 vSphere OVA·QEMU qcow2/raw target
 
 - `K8S_VERSION` validation이 아직 1.26–1.31만 허용합니다. 검토한 current fork를 유지하고 template 때문에 버전을 낮추지 마세요.
 - `NODEADM_ARCH`는 **`amd` 또는 `arm`** 뒤에 `64`를 붙입니다. 이전 `amd64`는 `amd6464`가 됩니다.
-- Packer의 `CREDENTIAL_PROVIDER=iam`은 nodeadm의 **`iam-ra`**로 변환됩니다.
+- Packer의 `CREDENTIAL_PROVIDER=iam`은 nodeadm의 <strong>`iam-ra`</strong>로 변환됩니다.
 - 실제 파일은 `hybrid-nodes-template.pkr.hcl`이며 `general-build.qemu.al2023` source는 없습니다.
 - Mutable `releases/latest` 다운로드, vSphere `insecure_connection=true`, 기본 build password와 전역 변수 요구를 검토합니다. RHEL provisioner의 x86 repository는 고정돼 있어 binary 아키텍처만 바꿔도 ARM build가 되지는 않습니다.
 
@@ -413,7 +413,7 @@ EKS Kubernetes API CA 파일과 다릅니다. Node identity를 image에 복제�
 
 고정된 v1.0.20 template은 provisioning의 출발점입니다. SSM template은 role을 만들며 **activation은 만들지 않습니다**. 여러 cluster에 쓰기 전 넓은 DescribeCluster scope와 고정 export 이름을 검토하세요.
 
-IRA의 `CertAttributeTrustPolicy` 값은 `"CN"`이 아닌 literal **`${aws:PrincipalTag/x509Subject/CN}`**입니다. Python `cryptography` helper는 PEM을 정확히 serialize하고 기본 CA 형태·현재 유효성을 확인하며 issuer 권한·revocation 검증은 아닙니다.
+IRA의 `CertAttributeTrustPolicy` 값은 `"CN"`이 아닌 literal <strong>`${aws:PrincipalTag/x509Subject/CN}`</strong>입니다. Python `cryptography` helper는 PEM을 정확히 serialize하고 기본 CA 형태·현재 유효성을 확인하며 issuer 권한·revocation 검증은 아닙니다.
 
 ```bash
 : "${CA_PEM_FILE:?Set the approved CA certificate file, not a private key}"

@@ -263,7 +263,7 @@ VPC 라우트 테이블 (rtb-0abc123456789def0):
 └──────────────┴──────────┴──────────┴──────────────────────────┘
 ```
 
-> **중요**: EC2 인스턴스의 **소스/대상 확인(Source/Destination Check)**을 반드시 비활성화해야 합니다. 게이트웨이가 라우터 역할을 하므로 자신이 소스/대상이 아닌 패킷도 전달해야 하기 때문입니다.
+> **중요**: EC2 인스턴스의 <strong>소스/대상 확인(Source/Destination Check)</strong>을 반드시 비활성화해야 합니다. 게이트웨이가 라우터 역할을 하므로 자신이 소스/대상이 아닌 패킷도 전달해야 하기 때문입니다.
 
 Auto Mode는 NodeClass의 `advancedNetworking.sourceDestCheck: DisabledPrimaryENI`로 준비합니다. 관리형/자체 관리 노드는 provisioning 소유자가 정확한 primary ENI에 필요한 변경을 수행합니다. 다음 명령은 현재 속성만 읽습니다.
 
@@ -524,7 +524,7 @@ AWS가 유지 관리하는 Cilium build를 사용합니다. [Gateway CNI 문서]
 
 #### Cilium Helm 값에서 VTEP 활성화
 
-필수 변경은 `vtep.enabled=true`, **`l7Proxy=false`**입니다. [운영 문서](./08-operations.md)의 Cilium Ingress/Gateway API L7 profile을 같은 Cilium 설치에서 함께 켤 수 없습니다. 일반 HTTP 앱이 Gateway 라우팅을 사용하는 것까지 금지하는 제약은 아닙니다. VXLAN은 암호화를 제공하지 않으며, 별도 예제의 WireGuard flag만으로 이 datapath의 암호화 호환성이 확인되는 것도 아닙니다.
+필수 변경은 `vtep.enabled=true`, <strong>`l7Proxy=false`</strong>입니다. [운영 문서](./08-operations.md)의 Cilium Ingress/Gateway API L7 profile을 같은 Cilium 설치에서 함께 켤 수 없습니다. 일반 HTTP 앱이 Gateway 라우팅을 사용하는 것까지 금지하는 제약은 아닙니다. VXLAN은 암호화를 제공하지 않으며, 별도 예제의 WireGuard flag만으로 이 datapath의 암호화 호환성이 확인되는 것도 아닙니다.
 
 #### Cilium 설치/업데이트
 
