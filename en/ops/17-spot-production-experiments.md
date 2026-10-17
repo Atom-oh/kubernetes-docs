@@ -1,7 +1,7 @@
 # EKS Spot Production Experiments and Result Assessment
 
 > **Last Updated**: September 14, 2026
-> **Measurement status**: PARTIALLY MEASURED — steady load, drain, one Spot reclamation, PDB blocking, and an explicit On-Demand transition. Section 7 provides results and raw records.
+> **Measurement status**: PARTIALLY MEASURED (steady load, drain, one Spot reclamation, PDB blocking, and an explicit On-Demand transition). Section 7 provides results and raw records.
 > **Scope**: Interruption-tolerant workloads on EKS Auto Mode, self-managed Karpenter, or EKS managed node groups
 
 Assess Spot adoption by whether **service SLOs and data correctness survive node reclamation**, then by savings. Measure an On-Demand baseline and compare the availability and effective cost of a mixed configuration under equivalent load. Proposed numbers and durations in sections 1–6 are **experiment-design examples**. Section 7 separately identifies actual measurements; neither is an AWS guarantee.
@@ -10,7 +10,7 @@ The complementary design is **more CPU at startup → in-place CPU downscale aft
 
 The [original experiment report and workload mapping](#phase-aware-workloads) links the supplied Go controller document and describes its Deployment, StatefulSet, DaemonSet, and Argo Rollouts scope.
 
-The current decision is **HOLD production expansion — address errors during reclamation/transition, version compatibility, and interruption handling**. These synthetic HTTP measurements diagnose the installed configuration; they do not establish uninterrupted operation for a business service or a supported-version configuration.
+The current decision is **HOLD production expansion: address errors during reclamation/transition, version compatibility, and interruption handling**. These synthetic HTTP measurements diagnose the installed configuration; they do not establish uninterrupted operation for a business service or a supported-version configuration.
 
 ## 1. Behavior and limits to verify
 
@@ -111,7 +111,7 @@ Preserving Guaranteed maintains the resource configuration and QoS conditions, b
 
 ### Original experiment report and workload mapping {#phase-aware-workloads}
 
-> **Attached source:** [Automatic Phase-Aware Resize with a Go controller — Deployment / StatefulSet / DaemonSet / Argo Rollouts][N1]. This Notion document includes Go code, a Dockerfile, RBAC/deployment manifests, and the reported EKS observations. Access may require Notion sharing permissions.
+> **Attached source:** [Automatic Phase-Aware Resize with a Go controller: Deployment / StatefulSet / DaemonSet / Argo Rollouts][N1]. This Notion document includes Go code, a Dockerfile, RBAC/deployment manifests, and the reported EKS observations. Access may require Notion sharing permissions.
 
 The source's central idea is **different startup and steady CPU budgets while continuously preserving Guaranteed QoS**. Once a downscale is actually applied, lower requests may create room for additional Pods, while the steady CPU limit retains a usage cap. The source describes noisy-neighbor mitigation and improved bin-packing as design benefits to evaluate; the CPU/QoS table below does not measure a performance gain, node-density improvement, or cost saving.
 
@@ -493,8 +493,8 @@ The experiment namespace, two NodePools, EC2NodeClass, new instance profile, FIS
 ## 8. Related guides and sources
 
 - [Scaling strategies](./06-scaling-strategies.md)
-- [Kubernetes version roadmap — MAP and phase-aware CPU resize](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-april-2026)
-- [Go Phase-Aware Resize source — four-workload mapping and reported experiment results (Notion)][N1]
+- [Kubernetes version roadmap: MAP and phase-aware CPU resize](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-april-2026)
+- [Go Phase-Aware Resize source: four-workload mapping and reported experiment results (Notion)][N1]
 - [Event capacity planning](./12-event-capacity-planning.md)
 - [FinOps cost management](./13-finops-cost-platform.md)
 - [Troubleshooting playbook](./16-troubleshooting-playbook.md)
