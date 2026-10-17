@@ -37,9 +37,9 @@ Ubuntu 24.04의 과거 Pod 종료/AppArmor 수정에는 containerd 1.7.19+ 또�
 
 ### 용량과 Host 확인
 
-AWS는 **1 vCPU/1 GiB RAM 이상**을 권장하면서 엄격한 보편적 최소값은 없다고 설명합니다. OS/runtime/CNI/agent·image/log·실제 workload 용량을 추가해야 합니다. 이전 퀴즈의 2-core/2GB 최소값은 일치하지 않았습니다.
+AWS는 호스트 사양으로 **1 vCPU와 1 GiB 이상의 메모리**를 권장합니다. 실제 필요한 용량은 실행할 워크로드와 운영 구성에 따라 달라집니다.
 
-이전 disk 20/50/100GB, CPU 2/4-core, RAM 4/8GB는 계획 예시이며 검증된 workload 크기가 아닙니다.
+컨테이너 런타임, CNI, 관리 에이전트와 워크로드의 사용량을 합산해 CPU·메모리 용량을 산정합니다. 디스크는 OS, 컨테이너 이미지, 로그의 저장 공간과 운영 여유를 포함해 확보합니다.
 
 ```bash
 # Run these read-only checks on the intended hybrid host.
@@ -112,7 +112,7 @@ if command -v nvcc >/dev/null 2>&1; then nvcc --version; fi
 
 Control plane의 kubelet·hybrid webhook 접근을 포함해 안정적인 **private 양방향 연결**이 필요합니다. Public API는 node→API 경로를 바꾸며 필요한 private 역방향 경로를 없애지 않습니다.
 
-AWS의 **100 Mbps/RTT ≤200ms**는 일반 권장이지 엄격한 보편적 최소값이 아닙니다. 이전 10Gbps/5ms, packet loss 0.1%/0.01%, MTU 1500/9000은 미검증 계획 예시입니다. 실제 수요·encapsulation/path MTU를 시험하며 모든 NIC를 9000으로 바꾸지 마세요.
+AWS는 연결 성능의 일반적인 기준으로 **100 Mbps 대역폭과 RTT 200ms 이하**를 권장합니다. 필요한 대역폭과 허용 지연 시간·패킷 손실률은 워크로드에 맞게 정하고 실제 연결 경로에서 측정하세요. MTU는 터널 캡슐화에 따른 오버헤드와 경로상의 장비가 지원하는 크기를 확인한 뒤 설정합니다.
 
 Remote node/Pod CIDR은 IPv4 RFC1918/CGNAT이며 서로·VPC·service network와 겹치면 안 됩니다. 각 remote 종류의 CIDR 최대 15개를 **하나의** remote-node-network, **하나의** remote-pod-network wrapper에 넣습니다. Cluster 간 Pod routing 분리도 필요합니다.
 

@@ -37,9 +37,9 @@ Ubuntu 24.04's historical Pod-termination/AppArmor fix needed containerd 1.7.19+
 
 ### Sizing and host inspection
 
-AWS recommends at least **1 vCPU / 1 GiB RAM**, while explicitly stating there is no strict universal minimum. Add capacity for OS/runtime/CNI/agents, images/logs and actual workloads. The former quiz's two-core/two-GB minimum was inconsistent.
+AWS recommends at least **1 vCPU and 1 GiB of memory** for a host. Actual capacity needs depend on the workloads and operational configuration.
 
-The old 20/50/100GB disk, 2/4-core and 4/8GB RAM figures were planning examples, not validated workload sizes.
+Size CPU and memory for the combined usage of the container runtime, CNI, management agents and workloads. Allocate disk space for the OS, container images and logs, with operational headroom.
 
 ```bash
 # Run these read-only checks on the intended hybrid host.
@@ -112,7 +112,7 @@ Use the current NVIDIA compatibility/platform instructions for the chosen cohort
 
 Hybrid Nodes requires reliable **private bidirectional connectivity**, including control-plane access to kubelet and hybrid-hosted webhooks. Public API access changes node→API traffic, not the required private reverse path.
 
-AWS's **100 Mbps / ≤200ms RTT** is general guidance, not a strict universal minimum. The old 10Gbps/5ms, packet-loss 0.1%/0.01% and MTU 1500/9000 values are unverified planning examples. Test actual demand and encapsulation/path MTU; do not set every NIC to 9000.
+AWS recommends **100 Mbps bandwidth and RTT of 200ms or less** as general connectivity guidance. Set bandwidth, latency and packet-loss targets according to workload needs, and measure them over the actual connection path. Configure MTU after accounting for tunnel encapsulation overhead and the sizes supported by devices along the path.
 
 Remote node/Pod CIDRs use IPv4 RFC1918 or CGNAT, without overlap with each other, VPC or service networks. Up to 15 CIDRs of each remote kind fit inside **one** remote-node-network and **one** remote-pod-network wrapper. Pod routing across clusters also needs deliberate separation.
 
