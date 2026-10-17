@@ -17,7 +17,7 @@ This quiz tests your understanding of parameter application paths, kernel versio
 **Answer: B) Unreproducible configuration, breakage on kernel upgrade, defeating kernel auto-tuning**
 
 **Explanation:**
-Values differing per node make incidents hard to reproduce. Tunable names and locations move between kernel versions (sysctl → debugfs, and so on), so a setting valid on 6.1 can break on 6.18. Explicit per-socket `SO_RCVBUF`/`SO_SNDBUF` settings disable the corresponding socket's automatic sizing; changing `tcp_rmem`/`tcp_wmem` bounds does not by itself disable autotuning. So the precondition for tuning is measurement — correlate the symptom with relevant counters and adjust only settings supported by that evidence.
+Values differing per node make incidents hard to reproduce. Tunable names and locations move between kernel versions (sysctl → debugfs, and so on), so a setting valid on 6.1 can break on 6.18. Explicit per-socket `SO_RCVBUF`/`SO_SNDBUF` settings disable the corresponding socket's automatic sizing; changing `tcp_rmem`/`tcp_wmem` bounds does not by itself disable autotuning. So the precondition for tuning is measurement: correlate the symptom with relevant counters and adjust only settings supported by that evidence.
 </details>
 
 2. What must you know about AL2023's kernel version transition as of 2026?
@@ -37,35 +37,35 @@ Verify the AMI selected by the launch template/provisioner and the running kerne
 </details>
 
 3. What is the most common root cause of CPU throttling, and the first response?
-   - A) Insufficient node CPU — move to a larger instance type
-   - B) A mismatch between the CPU count the application perceives and its quota — align `GOMAXPROCS`, `-XX:ActiveProcessorCount`, etc., with the limit
-   - C) A kernel scheduler bug — upgrade the kernel
-   - D) A cgroup v2 migration problem — revert to v1
+   - A) Insufficient node CPU: move to a larger instance type
+   - B) A mismatch between the CPU count the application perceives and its quota: align `GOMAXPROCS`, `-XX:ActiveProcessorCount`, etc., with the limit
+   - C) A kernel scheduler bug: upgrade the kernel
+   - D) A cgroup v2 migration problem: revert to v1
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: B) A mismatch between the CPU count the application perceives and its quota — align `GOMAXPROCS`, `-XX:ActiveProcessorCount`, etc., with the limit**
+**Answer: B) A mismatch between the CPU count the application perceives and its quota: align `GOMAXPROCS`, `-XX:ActiveProcessorCount`, etc., with the limit**
 
 **Explanation:**
 If the runtime inside the container sees all node cores and spawns that many threads, it burns the CPU limit's quota instantly. With 4 threads running concurrently, a 20ms quota is consumed in 5ms of wall time and the remaining 95ms is waiting. So the first response is aligning the perceived CPU count with the limit, followed by raising the limit, followed by considering limit removal for extremely sensitive cases.
 </details>
 
 4. What is more effective than kernel tuning for node stability, and why?
-   - A) Limiting Pod count — lower density avoids problems
-   - B) kubelet resource reservations and eviction thresholds — insufficient reservation leads to the kernel or kubelet itself hitting OOM, taking the whole node `NotReady`, and eviction is better than a kernel OOM
-   - C) A node restart schedule — periodic restarts to clean up memory
-   - D) Smaller images — freeing disk headroom
+   - A) Limiting Pod count: lower density avoids problems
+   - B) kubelet resource reservations and eviction thresholds: insufficient reservation leads to the kernel or kubelet itself hitting OOM, taking the whole node `NotReady`, and eviction is better than a kernel OOM
+   - C) A node restart schedule: periodic restarts to clean up memory
+   - D) Smaller images: freeing disk headroom
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: B) kubelet resource reservations and eviction thresholds — insufficient reservation leads to the kernel or kubelet itself hitting OOM, taking the whole node `NotReady`, and eviction is better than a kernel OOM**
+**Answer: B) kubelet resource reservations and eviction thresholds: insufficient reservation leads to the kernel or kubelet itself hitting OOM, taking the whole node `NotReady`, and eviction is better than a kernel OOM**
 
 **Explanation:**
-With insufficient `--system-reserved` and `--kube-reserved`, Pods consume all node memory and the kernel or kubelet hits OOM. The node goes `NotReady` and every Pod on it is affected — far worse than an individual Pod OOM. Eviction is Kubernetes moving a Pod in a controlled way while the OOM killer abruptly kills a process, so the goal is setting `--eviction-hard` so Kubernetes intervenes before a kernel OOM.
+With insufficient `--system-reserved` and `--kube-reserved`, Pods consume all node memory and the kernel or kubelet hits OOM. The node goes `NotReady` and every Pod on it is affected, far worse than an individual Pod OOM. Eviction is Kubernetes moving a Pod in a controlled way while the OOM killer abruptly kills a process, so the goal is setting `--eviction-hard` so Kubernetes intervenes before a kernel OOM.
 </details>
 
 5. Why does PSI (Pressure Stall Information) give a better signal than usage metrics?
@@ -81,14 +81,14 @@ With insufficient `--system-reserved` and `--kube-reserved`, Pods consume all no
 **Answer: B) It reports the fraction of time stalled on that resource rather than usage, so it reveals time spent on reclaim or contention even when the usage graph looks calm**
 
 **Explanation:**
-`some avg10` in `memory.pressure` is the fraction of the last 10 seconds in which at least one task was stalled on that resource. With memory usage sitting calmly below the limit, a climbing value means time is going into page cache reclaim — something a usage graph alone will not show. It is provided by cgroup v2, node-wide at `/proc/pressure/*` and per cgroup at `<cgroup>/memory.pressure`.
+`some avg10` in `memory.pressure` is the fraction of the last 10 seconds in which at least one task was stalled on that resource. With memory usage sitting calmly below the limit, a climbing value means time is going into page cache reclaim, something a usage graph alone will not show. It is provided by cgroup v2, node-wide at `/proc/pressure/*` and per cgroup at `<cgroup>/memory.pressure`.
 </details>
 
 6. Which of the following is NOT a representative case of "justified tuning"?
-   - A) `vm.max_map_count` — OpenSearch-family software fails to start at the default
-   - B) `net.core.somaxconn` — evidence available from the accept-queue overflow counter
+   - A) `vm.max_map_count`: OpenSearch-family software fails to start at the default
+   - B) `net.core.somaxconn`: evidence available from the accept-queue overflow counter
    - C) Changing TCP buffer settings without a measured BDP/memory problem or understanding the per-socket override
-   - D) `net.ipv4.ip_local_port_range` — source port exhaustion shows up directly as connection failures
+   - D) `net.ipv4.ip_local_port_range`: source port exhaustion shows up directly as connection failures
 
 <details>
 
@@ -102,7 +102,7 @@ tcp_rmem/tcp_wmem define sizing bounds/defaults; changing them does not by itsel
 
 7. Which value cannot be changed via a Pod's `securityContext.sysctls`?
    - A) Many `net.*` values that are settable per net namespace
-   - B) `net.netfilter.nf_conntrack_max` — a node-global value
+   - B) `net.netfilter.nf_conntrack_max`, a node-global value
    - C) TCP-related values belonging to the Pod's net namespace
    - D) All of the above are changeable
 
@@ -110,7 +110,7 @@ tcp_rmem/tcp_wmem define sizing bounds/defaults; changing them does not by itsel
 
 <summary>Show Answer</summary>
 
-**Answer: B) `net.netfilter.nf_conntrack_max` — a node-global value**
+**Answer: B) `net.netfilter.nf_conntrack_max`, a node-global value**
 
 **Explanation:**
 Many `net.*` values are settable per net namespace and can be changed via Pod `securityContext.sysctls`. By contrast `vm.*`, `fs.*`, and some values like `net.netfilter.nf_conntrack_max` are node-global and require the node bootstrap or Bottlerocket settings path. Also, kubelet rejects "unsafe" sysctls by default, so allowing one requires `--allowed-unsafe-sysctls`, which is itself a node setting.

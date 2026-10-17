@@ -5,7 +5,7 @@
 
 ## 이 문서에서 다루는 것
 
-- 컨테이너는 커널의 어떤 기능들을 조합해 만들어지는가 — 그리고 "컨테이너"라는 커널 객체는 없다는 점
+- 컨테이너는 커널의 어떤 기능들을 조합해 만들어지는가, 그리고 "컨테이너"라는 커널 객체는 없다는 점
 - cgroup v1에서 v2로 바뀌면서 운영에서 실제로 달라진 것 (특히 OOM 진단)
 - netfilter와 conntrack이 Kubernetes 네트워킹의 어디에 끼어 있는가
 
@@ -25,11 +25,11 @@
 
 이 조합이라는 점에서 두 가지 실무적 결론이 나옵니다.
 
-**첫째, 격리는 전부 또는 전무가 아닙니다.** 어떤 namespace는 공유하고 어떤 것은 격리할 수 있습니다. Kubernetes Pod가 정확히 그 예입니다 — 같은 Pod의 컨테이너들은 network·IPC namespace를 **공유하고** mount·PID namespace는 대개 **분리**합니다. 그래서 같은 Pod 안에서는 `localhost`로 서로를 부를 수 있고(network 공유), 파일시스템은 서로 안 보입니다(mount 분리).
+**첫째, 격리는 전부 또는 전무가 아닙니다.** 어떤 namespace는 공유하고 어떤 것은 격리할 수 있습니다. Kubernetes Pod가 정확히 그 예입니다. 같은 Pod의 컨테이너들은 network·IPC namespace를 **공유하고** mount·PID namespace는 대개 **분리**합니다. 그래서 같은 Pod 안에서는 `localhost`로 서로를 부를 수 있고(network 공유), 파일시스템은 서로 안 보입니다(mount 분리).
 
 **둘째, 빠뜨린 격리는 조용히 구멍이 됩니다.** 커널이 "컨테이너를 만들어라"를 모르므로, 런타임이 seccomp 프로필을 적용하지 않으면 그냥 적용되지 않은 상태로 돕니다. 컨테이너 보안이 런타임과 정책 설정의 문제인 이유입니다.
 
-## Namespace — 무엇을 볼 수 있는가
+## Namespace: 무엇을 볼 수 있는가
 
 namespace는 **커널 자원의 "이름 공간"을 분리**합니다. 같은 이름이나 번호가 namespace마다 다른 것을 가리키게 만드는 장치입니다.
 
@@ -55,7 +55,7 @@ Pod의 정체가 여기서 정해집니다. Kubernetes는 Pod마다 net namespac
 - **netfilter 규칙도 net namespace별입니다** → 사이드카 메시의 init container가 Pod의 net namespace 안에서 iptables를 심을 수 있는 이유이고, 그 규칙이 노드 전체에 영향을 주지 않는 이유입니다 ([VPC Lattice 커널 데이터패스](../service-mesh/vpc-lattice/07-kernel-datapath.md) 참고)
 - 라우팅 테이블도 분리됩니다 → Pod 안에서 `ip route`를 보면 노드의 것이 아닙니다
 
-### user namespace — 왜 오래 기본이 아니었는가
+### user namespace: 왜 오래 기본이 아니었는가
 
 User namespace는 컨테이너 UID/GID를 다른 host 범위로 매핑합니다. 여러 탈출 동작의 권한을 줄이지만 kernel 취약점이나 추가 권한 상승 경로까지 **봉쇄한다고 보장하지는 않습니다**.
 
@@ -77,7 +77,7 @@ feature gate는 `UserNamespacesSupport`이며 kubelet과 kube-apiserver에 적�
 위 성숙도는 Kubernetes 업스트림 기준입니다. **EKS가 해당 버전을 제공하는지, 그리고 사용 중인 컨테이너 런타임과 CSI 드라이버가 idmapped mounts를 지원하는지는 별개**입니다. 도입 전에 EKS 지원 버전과 런타임·스토리지 조합을 확인하십시오.
 :::
 
-## cgroup — 얼마나 쓸 수 있는가
+## cgroup: 얼마나 쓸 수 있는가
 
 cgroup(control group)은 프로세스 그룹의 **자원 사용을 측정하고 제한**합니다. Kubernetes의 `requests`/`limits`가 최종적으로 도달하는 곳입니다.
 
@@ -91,7 +91,7 @@ cgroup(control group)은 프로세스 그룹의 **자원 사용을 측정하고 
 | **압력 정보** | 없음 | **PSI** (`cpu.pressure`, `memory.pressure`, `io.pressure`) |
 | **CPU 제한 표기** | `cpu.cfs_quota_us` / `cpu.cfs_period_us` | `cpu.max` (한 파일에 "quota period") |
 | **메모리 제한 표기** | `memory.limit_in_bytes` | `memory.max`, 여기에 `memory.high`(소프트 압력) 추가 |
-| **AL2023 EKS AMI** | — | **기본값** |
+| **AL2023 EKS AMI** | - | **기본값** |
 
 v1의 "컨트롤러마다 별개 트리"가 실제로 문제였던 지점은 **메모리 회수와 IO의 연계**입니다. 메모리가 부족해 page cache를 비워야 할 때, 그 회수 작업 자체가 디스크 IO를 유발하는데 v1에서는 두 컨트롤러가 서로를 몰랐습니다. v2의 통합 트리는 이를 같은 계층에서 다룹니다.
 
@@ -99,7 +99,7 @@ v1의 "컨트롤러마다 별개 트리"가 실제로 문제였던 지점은 **�
 
 Kubernetes 블로그가 cgroup v1→v2 전환 현황을 정리했습니다([The Shift to cgroup v2 in Kubernetes](https://kubernetes.io/blog/2026/10/06/kubernetes-cgroups-v2-shift/), 2026-10-06). cgroup v2 관리는 v1.25부터 stable이고 cgroup v1 지원은 v1.31부터 유지 보수 모드였는데, **v1.35부터는 kubelet의 `failCgroupV1` 기본값이 `true`가 되어 cgroup v1 노드에서 kubelet이 기본적으로 시작되지 않습니다.** kubelet 설정에 `failCgroupV1: false`를 지정해 임시로 우회할 수 있지만, 완전 제거가 KEP-5573으로 진행 중입니다. kubeadm 클러스터는 v1.35 이상 kubelet에서 SystemVerification preflight 검사가 cgroup v1을 오류로 처리합니다(이전 버전은 경고). v1.35 이전 버전을 쓰고 있다면 업그레이드 전에 모든 Linux 노드를 cgroup v2로 전환하세요.
 
-### 운영에서 가장 크게 달라진 것 — OOM 진단
+### 운영에서 가장 크게 달라진 것: OOM 진단
 
 cgroup v2에서 반드시 알아야 할 사실입니다.
 
@@ -122,7 +122,7 @@ cgroup v2에서 반드시 알아야 할 사실입니다.
 | 파일/값 | 의미 |
 |---|---|
 | `memory.current` | 현재 사용량 (page cache 포함) |
-| `memory.stat`의 `anon` | 익명 메모리 — 애플리케이션이 실제 붙잡은 양 |
+| `memory.stat`의 `anon` | 익명 메모리 (애플리케이션이 실제 붙잡은 양) |
 | `memory.stat`의 `file` | page cache |
 | `memory.events`의 `oom` / `oom_kill` | OOM 발생·킬 횟수 |
 | `memory.events`의 `high` / `max` | 소프트/하드 한계에 닿은 횟수 |
@@ -130,7 +130,7 @@ cgroup v2에서 반드시 알아야 할 사실입니다.
 
 **PSI가 특히 유용합니다.** 사용량(얼마나 쓰는가)이 아니라 **압박(그래서 얼마나 기다렸는가)**을 알려주기 때문입니다. `memory.pressure`의 `some avg10`이 올라가고 있으면 회수에 시간을 쓰고 있다는 뜻이고, 이는 사용량 그래프만으로는 보이지 않습니다.
 
-### CPU limit과 throttling — 사용률이 낮은데 느린 이유
+### CPU limit과 throttling: 사용률이 낮은데 느린 이유
 
 CPU limit은 **대역폭 제한**입니다. `cpu.max`가 `20000 100000`이면 "100ms 주기마다 20ms까지"를 뜻합니다.
 
@@ -143,10 +143,10 @@ CPU limit은 **대역폭 제한**입니다. `cpu.max`가 `20000 100000`이면 "1
 **대응 방향** (자세한 request/limit 설계는 [리소스 최적화](../ops/10-resource-optimization.md)):
 
 - limit을 올리거나 제거 (단 노드 안정성과 트레이드오프)
-- 애플리케이션의 스레드 수를 limit에 맞게 조정 (JVM의 `-XX:ActiveProcessorCount`, Go의 `GOMAXPROCS` 등) — **컨테이너가 인식하는 CPU 수와 실제 할당량이 다른 것이 근본 원인인 경우가 많습니다**
+- 애플리케이션의 스레드 수를 limit에 맞게 조정 (JVM의 `-XX:ActiveProcessorCount`, Go의 `GOMAXPROCS` 등). **컨테이너가 인식하는 CPU 수와 실제 할당량이 다른 것이 근본 원인인 경우가 많습니다**
 - `cpu.pressure` PSI로 실제 대기 시간 확인
 
-## 권한 — 무엇을 할 수 있는가
+## 권한: 무엇을 할 수 있는가
 
 격리(namespace)와 제한(cgroup)이 되어 있어도, 프로세스가 할 수 있는 **동작** 자체를 줄이는 것은 별개 계층입니다.
 
@@ -157,11 +157,11 @@ CPU limit은 **대역폭 제한**입니다. `cpu.max`가 `20000 100000`이면 "1
 | **LSM** (AppArmor/SELinux) | 파일·네트워크 접근을 정책으로 통제 | `securityContext.appArmorProfile` 등 |
 | **no_new_privs** | setuid 바이너리로 권한 상승 차단 | `allowPrivilegeEscalation: false` |
 
-세 계층이 다른 질문에 답합니다 — capabilities는 "이 권한을 가졌는가", seccomp는 "이 시스템 콜을 부를 수 있는가", LSM은 "이 객체에 접근할 수 있는가". 그래서 **하나만으로는 부족하고 겹쳐 쓰는 것이 정석**입니다.
+세 계층이 다른 질문에 답합니다: capabilities는 "이 권한을 가졌는가", seccomp는 "이 시스템 콜을 부를 수 있는가", LSM은 "이 객체에 접근할 수 있는가". 그래서 **하나만으로는 부족하고 겹쳐 쓰는 것이 정석**입니다.
 
 `CAP_NET_ADMIN`은 특별히 언급할 가치가 있습니다. 사이드카 메시의 init container가 iptables를 심으려면 이 권한이 필요하고, 그래서 메시 도입이 "왜 이 Pod가 NET_ADMIN을 갖고 있나"라는 보안 심의 질문을 만듭니다.
 
-## netfilter와 conntrack — Kubernetes 네트워킹의 실체
+## netfilter와 conntrack: Kubernetes 네트워킹의 실체
 
 ### netfilter
 
@@ -171,11 +171,11 @@ netfilter는 커널 네트워크 스택의 정해진 지점에 **훅**을 제공
 
 | 훅 | 언제 |
 |---|---|
-| `PREROUTING` | 패킷이 들어와 라우팅 결정 **전** — DNAT 지점 |
+| `PREROUTING` | 패킷이 들어와 라우팅 결정 **전** (DNAT 지점) |
 | `INPUT` | 로컬 프로세스로 향하는 패킷 |
 | `FORWARD` | 통과하는 패킷 |
 | `OUTPUT` | 로컬에서 나가는 패킷 |
-| `POSTROUTING` | 라우팅 결정 **후** 나가기 직전 — SNAT/MASQUERADE 지점 |
+| `POSTROUTING` | 라우팅 결정 **후** 나가기 직전 (SNAT/MASQUERADE 지점) |
 
 Kubernetes에서 이 훅들이 쓰이는 곳:
 
@@ -184,7 +184,7 @@ Kubernetes에서 이 훅들이 쓰이는 곳:
 - **NetworkPolicy**: CNI가 `FORWARD` 등에 규칙 삽입 (Calico의 iptables 데이터플레인)
 - **사이드카 메시의 트래픽 인터셉트**: Pod net namespace 안의 `OUTPUT`/`PREROUTING` REDIRECT
 
-### kube-proxy 모드 — iptables, IPVS, nftables
+### kube-proxy 모드: iptables, IPVS, nftables
 
 Service 구현 방식이 세 갈래이고, **2025~2026년에 지형이 바뀌었습니다.**
 
@@ -201,7 +201,7 @@ Service 구현 방식이 세 갈래이고, **2025~2026년에 지형이 바뀌었
 - AL2023 노드는 커널 6.x라 nftables 모드의 커널 요건을 충족합니다.
 - nftables가 GA여도 **기본값은 iptables**이므로 명시적으로 전환해야 합니다.
 
-### conntrack — 가장 자주 사고를 내는 지점
+### conntrack: 가장 자주 사고를 내는 지점
 
 netfilter가 NAT를 하려면 **연결을 기억해야** 합니다. 나갈 때 주소를 바꿨으면 돌아오는 패킷을 원래대로 되돌려야 하니까요. 이 기억을 담는 커널 테이블이 `nf_conntrack`입니다.
 
@@ -235,7 +235,7 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 - Cilium은 kube-proxy/netfilter 기능을 eBPF map으로 대체할 수 있으며 자체 tracking/map 압력과 남은 netfilter 경로를 측정합니다.
 - 연결 재사용은 churn을 줄이며 established 용량과 timeout 동작도 검증합니다.
 
-## overlayfs — 이미지 계층이 합쳐지는 방식
+## overlayfs: 이미지 계층이 합쳐지는 방식
 
 컨테이너 이미지가 계층으로 되어 있고 그 계층들이 하나의 파일시스템으로 보이는 것은 **union mount**, 구체적으로는 `overlayfs`입니다.
 
@@ -243,15 +243,15 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 
 | 계층 | 역할 |
 |---|---|
-| **lowerdir** | 읽기 전용 — 이미지 계층들 (여러 개 겹칠 수 있음) |
-| **upperdir** | 쓰기 가능 — 컨테이너의 변경분 |
+| **lowerdir** | 읽기 전용: 이미지 계층들 (여러 개 겹칠 수 있음) |
+| **upperdir** | 쓰기 가능: 컨테이너의 변경분 |
 | **merged** | 컨테이너가 보는 합쳐진 뷰 |
 
 여기서 운영상 중요한 성질이 **copy-up**입니다. lowerdir의 파일을 수정하면 **파일 전체가 upperdir로 복사된 뒤** 수정됩니다. 그래서:
 
 - **큰 파일을 조금 수정하는 것도 전체 복사 비용**을 냅니다. 1GB 파일의 1바이트 수정에 1GB 복사가 일어납니다
 - 컨테이너 안에서 대용량 쓰기를 하면 노드 디스크를 먹습니다 (ephemeral storage)
-- **쓰기가 많은 경로는 볼륨으로 빼는 것**이 정석입니다 — emptyDir, PVC 등
+- **쓰기가 많은 경로는 볼륨으로 빼는 것**이 정석입니다 (emptyDir, PVC 등)
 
 ## 정리
 
@@ -266,13 +266,13 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 
 ## 참고 자료
 
-- [Control Group v2 — Linux kernel documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html)
+- [Control Group v2: Linux kernel documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html)
 - [PSI - Pressure Stall Information](https://docs.kernel.org/accounting/psi.html)
-- [namespaces(7) — Linux manual](https://man7.org/linux/man-pages/man7/namespaces.7.html)
+- [namespaces(7): Linux manual](https://man7.org/linux/man-pages/man7/namespaces.7.html)
 - [KEP-127: Support User Namespaces](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/README.md)
-- [bottlerocket-os/bottlerocket#4221 — conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
+- [bottlerocket-os/bottlerocket#4221: conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
 - [NFTables mode for kube-proxy (Kubernetes Blog)](https://kubernetes.io/blog/2025/02/28/nftables-kube-proxy/)
 - [KEP-5495: Deprecate IPVS mode in kube-proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)
-- [Running kube-proxy in nftables Mode — EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)
+- [Running kube-proxy in nftables Mode: EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)
 - [Increase nf_conntrack_max limit on EKS nodes](https://repost.aws/knowledge-center/eks-increase-nf-conntrack-max-limit)
 - [Amazon EKS-Optimized Amazon Linux 2023 AMIs](https://aws.amazon.com/blogs/containers/amazon-eks-optimized-amazon-linux-2023-amis-now-available/)

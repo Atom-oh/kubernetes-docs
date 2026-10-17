@@ -7,7 +7,7 @@
 
 - `send()` 한 번이 NIC의 전선에 닿기까지 커널 안에서 지나는 경로와, 각 지점이 무엇을 하는가
 - 소켓 파일 디스크립터가 가상 파일시스템(Virtual File System, VFS)과 연결되는 방식과 TCP 버퍼·윈도·큐 관측값의 차이
-- 그 경로 어디에 훅을 걸 수 있는가 — XDP, TC, netfilter의 위치가 성능 차이를 만드는 이유
+- 그 경로 어디에 훅을 걸 수 있는가: XDP, TC, netfilter의 위치가 성능 차이를 만드는 이유
 - Pod 간 통신이 같은 노드·같은 AZ·다른 AZ에서 실제로 다른 경로를 지나는 이유
 
 ## 왜 경로를 알아야 하는가
@@ -24,7 +24,7 @@
 
 경로를 알면 이 표를 거꾸로 읽어 "어디를 볼지"가 나옵니다.
 
-## 소켓과 VFS — FD에서 프로토콜까지 {#socket-vfs-bridge}
+## 소켓과 VFS: FD에서 프로토콜까지 {#socket-vfs-bridge}
 
 `socket()`이 반환하는 파일 디스크립터(FD)는 프로세스의 디스크립터 테이블 인덱스입니다. 소켓의 경우 이 항목이 **`struct file`**을 참조하고, 소켓용 파일 연산과 `private_data`가 이를 **`struct socket`**에 연결합니다. 인터넷 TCP 소켓에는 프로토콜 상태를 담는 **`struct sock`**이 연결됩니다. 파일 추상화를 공유하므로 `close()`, 디스크립터 복제, 입출력 준비 상태 폴링에 소켓을 사용할 수 있습니다. 하지만 **소켓은 디스크 파일이 아니며**, 일반적인 TCP 데이터는 디스크 페이지 캐시나 블록 I/O를 거치지 않습니다.
 
@@ -46,7 +46,7 @@ recv / send / recvmsg / sendmsg
 
 TCP는 바이트 스트림을 제공합니다. `write()` 한 번이 패킷 하나나 상대의 `read()` 한 번과 대응할 필요는 없습니다. `send()` 성공은 로컬에서 받아들인 바이트 수를 뜻하며, 상대 애플리케이션이 소비했다는 증거가 아닙니다 ([socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html), [tcp(7)](https://man7.org/linux/man-pages/man7/tcp.7.html)).
 
-## 송신 경로 — send()에서 전선까지
+## 송신 경로: send()에서 전선까지
 
 이 그림은 **로컬에서 생성된 TCP/IP 트래픽이 물리 NIC로 향하는 경로**를 단순화한 것입니다. 모든 패킷의 필수 경로는 아닙니다. 루프백·가상 장치, 포워딩, XDP/AF_XDP 등의 우회 경로, netfilter flowtable 오프로드, NIC 오프로드에 따라 처리가 생략·이동·결합될 수 있습니다. 훅은 설정된 작업을 수행하며, NAT 때문에 라우팅 조회를 다시 할 수도 있습니다.
 
@@ -69,7 +69,7 @@ graph TB
 
 각 단계에서 실제로 무슨 일이 일어나는지가 진단의 근거입니다.
 
-### ① 시스템 콜 진입 — 고정 오버헤드의 출처
+### ① 시스템 콜 진입: 고정 오버헤드의 출처
 
 일반적인 `send()` 호출은 시스템 콜을 통해 커널에 진입합니다. 진입·복귀에는 호출당 오버헤드가 있고, 총비용은 복사·프로토콜 처리·스케줄링·블로킹 여부에도 달려 있습니다.
 
@@ -77,7 +77,7 @@ graph TB
 
 애플리케이션 버퍼링이나 `sendmsg()`의 scatter/gather로 여러 버퍼를 한 호출에 담을 수 있습니다. `sendmmsg()`는 여러 메시지를, `io_uring`은 제출을 묶을 수 있습니다. 각 방식의 의미는 다르며, 배치가 TCP 패킷 경계를 정하지는 않습니다.
 
-### ② 소켓 계층 — sk_buff와 버퍼
+### ② 소켓 계층: sk_buff와 버퍼
 
 이름과 달리 **`sk_buff`는 소켓의 송신 또는 수신 버퍼 전체가 아닙니다.** 헤더 위치, 선형 데이터·페이지 조각 참조 등 패킷 데이터와 메타데이터를 기술합니다. skb는 복제·분할·병합될 수 있고, GSO/GRO 때문에 전선상의 패킷 하나와 일대일로 대응하지 않을 수 있습니다. 커널의 [`sk_buff` 문서](https://docs.kernel.org/networking/skbuff.html)를 참고합니다.
 
@@ -105,7 +105,7 @@ TCP sysctl은 정책을 나타내며 모든 소켓의 현재 점유량을 나타
 
 `SO_RCVBUF`는 `SOCK_RCVBUF_LOCK`을 설정해 해당 소켓의 수신 자동 조정을 끄고, `SO_SNDBUF`는 `SOCK_SNDBUF_LOCK`으로 일반적인 송신 버퍼 확장을 막습니다. 이는 설정 플래그이며 뮤텍스가 아닙니다. TCP sysctl을 높여도 애플리케이션의 명시적 설정이 해제되지 않습니다. Linux는 보통 회계용 여유를 위해 받아들인 `SO_*BUF` 요청값을 두 배로 만들고 `getsockopt()`로 그 값을 반환합니다(최소값·상한 적용). 이 값은 현재 할당된 메모리도, 보장된 페이로드 용량도 아닙니다. `tcp_rmem[2]`를 명시적인 `SO_RCVBUF` 요청의 최대값으로 해석하거나 모든 `tcp_*mem` 값을 두 배로 계산하지 않습니다. [IP sysctl](https://docs.kernel.org/networking/ip-sysctl.html), [socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html), Linux v6.12의 [`net/core/sock.c`](https://github.com/torvalds/linux/blob/v6.12/net/core/sock.c) / [`tcp_input.c`](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_input.c)를 참고합니다.
 
-### BDP — 단위로 이해하기 {#tcp-bdp-reasoning}
+### BDP: 단위로 이해하기 {#tcp-bdp-reasoning}
 
 가상의 **1 Gbit/s** 경로에서 **RTT가 40 ms**라면 대역폭·지연 곱은 다음과 같습니다.
 
@@ -118,7 +118,7 @@ BDP = 1,000,000,000 bit/s × 0.040 s ÷ 8 bit/byte
 
 **BDP는 진단에 사용할 규모이지 sysctl 설정법이 아닙니다.** 느린 애플리케이션 데이터 생성, CPU 압박, 손실, 페이싱, 변하는 RTT, 경로 한도가 지배적일 수 있습니다. 큐잉을 늘리면 지연과 메모리 사용이 증가할 수 있습니다. 결론을 내리기 전에 [TCP 버퍼 실습](../networking/07-linux-network-diagnostics.md#tcp-buffer-lab)의 관측값을 비교합니다.
 
-### ③ 전송 계층 (TCP) — 혼잡 제어가 사는 곳
+### ③ 전송 계층 (TCP): 혼잡 제어가 사는 곳
 
 TCP는 신뢰성, 흐름 제어, 혼잡 제어를 조율합니다.
 
@@ -135,17 +135,17 @@ TCP는 신뢰성, 흐름 제어, 혼잡 제어를 조율합니다.
 
 어느 모델도 특정 워크로드에서 더 빠른 알고리즘을 보장하지 않으며 BBR에서도 손실과 복구가 중요합니다. `ss -ti`로 사용 중인 알고리즘과 RTT/cwnd를 관측하고, 비교에는 커널 버전·부하·경로를 명시해야 합니다. 버전을 고정한 구현은 [`tcp_cubic.c`](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_cubic.c), [`tcp_bbr.c`](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_bbr.c)를 참고합니다.
 
-### ④ 네트워크 계층 (IP) — 라우팅 조회
+### ④ 네트워크 계층 (IP): 라우팅 조회
 
 목적지로 가는 경로를 라우팅 테이블에서 찾습니다. **이 조회는 net namespace별**이라, Pod 안에서 보는 라우팅 테이블은 노드의 것이 아닙니다 ([컨테이너 커널 기능](./01-container-primitives.md)).
 
-### ⑤ netfilter — 규칙이 평가되는 곳
+### ⑤ netfilter: 규칙이 평가되는 곳
 
 로컬 생성 트래픽은 `OUTPUT`과 `POSTROUTING`을 거칠 수 있습니다. Pod의 veth로 들어온 트래픽은 노드 네임스페이스에서 `PREROUTING` → `FORWARD` → `POSTROUTING`을 거칠 수 있습니다. Service DNAT와 egress MASQUERADE의 위치는 설정된 데이터플레인과 훅에 달려 있으며 보편적인 단일 경로가 아닙니다.
 
 선형으로 평가하는 긴 iptables 체인은 Service 증가에 따라 조회 작업을 늘릴 수 있습니다. 실제 비용은 규칙·조회 구조·데이터플레인 모드에 달려 있으므로 규칙 수만으로 지연을 측정할 수는 없습니다. 설정된 netfilter flowtable의 빠른 경로는 이후 포워딩 훅을 우회할 수 있습니다 ([netfilter flowtable](https://docs.kernel.org/networking/nf_flowtable.html)).
 
-### ⑥ qdisc — 드롭이 실제로 일어나는 곳
+### ⑥ qdisc: 드롭이 실제로 일어나는 곳
 
 qdisc(queueing discipline)는 **패킷을 NIC로 보내기 전 큐에 넣고 순서와 속도를 정합니다.**
 
@@ -168,7 +168,7 @@ qdisc 종류에 따라 성격이 다릅니다.
 
 **버퍼블로트**는 과도한 큐 대기 지연입니다. 큰 큐는 버스트를 흡수할 수 있지만 데이터를 오래 머무르게 할 수도 있습니다. `fq_codel`은 큐 체류 시간을 감시하고 드롭 또는 가능한 경우 ECN 표시로 혼잡을 알립니다. 큐가 커졌다고 자동으로 개선되는 것은 아닙니다 ([tc-fq_codel(8)](https://man7.org/linux/man-pages/man8/tc-fq_codel.8.html)).
 
-### ⑦ 드라이버와 NIC — 오프로드
+### ⑦ 드라이버와 NIC: 오프로드
 
 일반적인 물리 NIC 경로에서는 드라이버가 패킷 데이터를 DMA용으로 매핑하고, 해당 메모리를 참조하는 디스크립터를 송신 링에 준비한 뒤 NIC에 알립니다. NIC가 C 구조체인 `sk_buff`를 직접 소비하는 것은 아닙니다. 드라이버는 완료 시점까지 관련 관리 정보를 유지합니다.
 
@@ -183,7 +183,7 @@ qdisc 종류에 따라 성격이 다릅니다.
 
 TSO/GRO는 세그먼트별 작업을 줄일 수 있습니다. **읽기 전용 관측**: `ethtool -k <iface>`는 설정된 기능을 보여주며 모든 패킷이 이를 사용한다는 증거는 아닙니다. 호스트 캡처에는 큰 GSO/GRO 단위나 아직 완성되지 않은 송신 체크섬이 보일 수 있습니다. 따라서 큰 캡처 패킷이나 잘못된 것처럼 보이는 체크섬만으로 전선상의 오류를 입증할 수 없습니다 ([세그먼트 오프로드](https://docs.kernel.org/networking/segmentation-offloads.html), [체크섬 오프로드](https://docs.kernel.org/networking/checksum-offloads.html)).
 
-## 수신 경로 — 인터럽트에서 애플리케이션까지
+## 수신 경로: 인터럽트에서 애플리케이션까지
 
 그림은 드라이버 NAPI와 선택적인 native XDP를 사용하는 일반적인 물리 NIC 수신 후 로컬 TCP 전달 경로입니다. `XDP_PASS`는 스택으로 이어지고 drop·redirect·transmit 동작은 다른 경로로 갑니다. Generic XDP는 skb가 이미 존재하는 상태에서 실행됩니다. 루프백·가상 장치·하드웨어 오프로드·busy polling·threaded NAPI에서는 순서가 달라질 수 있습니다.
 
@@ -207,7 +207,7 @@ graph TB
     style NFP fill:#fdecea,stroke:#d93025
 ```
 
-### NAPI — 인터럽트 폭주를 막는 장치
+### NAPI: 인터럽트 폭주를 막는 장치
 
 패킷마다 인터럽트를 걸면 고부하에서 **인터럽트 처리만 하다 아무 일도 못 하는 상태**(livelock)가 될 수 있습니다.
 
@@ -237,7 +237,7 @@ RSS·RPS·RFS가 모두 하드웨어 인터럽트를 옮기는 것은 아닙니�
 
 계속 증가하는 `Recv-Q`는 네트워크 증거와 함께 읽기 진행 상황·CPU 스케줄링·후속 애플리케이션 작업을 조사할 이유입니다. 스냅샷 한 번으로 애플리케이션이 유일한 원인이라고 입증할 수는 없습니다. 버퍼를 키워도 백프레셔 시점만 늦추고 더 많은 데이터를 유지하게 될 수 있습니다.
 
-## 훅 지점 비교 — XDP, TC, netfilter
+## 훅 지점 비교: XDP, TC, netfilter
 
 같은 "패킷을 가로채 처리한다"인데 **위치가 성능과 가능한 일을 결정합니다.**
 
@@ -256,7 +256,7 @@ XDP가 모든 socket/stack 문맥을 자동으로 받는 것은 아니지만 BPF
 
 데이터플레인은 서로 다른 작업을 위해 여러 훅을 함께 사용할 수 있습니다. Cilium의 실제 부착 위치는 설정과 지원 기능에 따라 달라집니다 ([Cilium eBPF](../networking/cilium/02-ebpf.md), [Cilium L2-L7 네트워킹](../networking/cilium/05-l2-l7-networking.md)).
 
-## Pod 간 통신 — 경로가 왜 다른가
+## Pod 간 통신: 경로가 왜 다른가
 
 Kubernetes에서 Pod 간 통신은 배치에 따라 **실제로 다른 커널 경로**를 지납니다. 이것이 [Pod 네트워크 실측 벤치마크](../networking/06-pod-network-benchmark.md)에서 관측된 RTT 사다리(같은 노드 0.040 ms → 같은 AZ 0.339 ms → 다른 AZ 0.544 ms)의 원인입니다.
 
@@ -268,7 +268,7 @@ Pod A [net ns A] → veth A → (노드 net ns) → veth B → Pod B [net ns B]
 
 그림의 일반 veth/routed 동일 노드 경로는 물리 NIC를 통과할 필요가 없습니다. 다른 dataplane·overlay·SR-IOV·policy/service 우회 경로는 달라질 수 있으며 가상 장치도 kernel driver 처리를 거칩니다.
 
-벤치마크에서 같은 노드 단일 플로우가 **29.97 Gbps**까지 나온 것(다른 노드는 4.96 Gbps에서 EC2 단일 플로우 한도에 막힘)이 이 때문입니다. 병목이 네트워크가 아니라 **CPU**였습니다 — 클라이언트 코어 하나가 99.8%였습니다.
+벤치마크에서 같은 노드 단일 플로우가 **29.97 Gbps**까지 나온 것(다른 노드는 4.96 Gbps에서 EC2 단일 플로우 한도에 막힘)이 이 때문입니다. 병목이 네트워크가 아니라 **CPU**였습니다. 클라이언트 코어 하나가 99.8%였습니다.
 
 ### 다른 노드의 Pod 간 (VPC CNI)
 
@@ -301,7 +301,7 @@ IPv4 라우터는 DF가 꺼진 큰 패킷을 단편화할 수 있지만, DF가 �
 | 소켓 | `ss -tinm`, `ss -ltn` | TCP 상태, 스트림 큐와 리스너 backlog의 차이, RTT/cwnd, 소켓 메모리 |
 | TCP 전역 | `nstat` / `netstat -s` | 재전송, 순서 어긋남, 버퍼 오버런 |
 | netfilter | `iptables-save`, `nft list ruleset` | 규칙 수와 내용 |
-| conntrack | `conntrack -S` | `insert_failed` — count/max·로그와 대조. 포화만의 증거는 아님 |
+| conntrack | `conntrack -S` | `insert_failed`: count/max·로그와 대조. 포화만의 증거는 아님 |
 | qdisc | `tc -s qdisc show dev <if>` | 해당 qdisc의 드롭·backlog·셰이핑·재큐잉 카운터 |
 | 인터페이스 | `ip -s link`, `ethtool -S <if>` | 인터페이스·NIC 카운터 |
 | 오프로드 | `ethtool -k <if>` | TSO/GRO/체크섬 상태 |
@@ -347,15 +347,15 @@ sysctl net.core.rmem_max net.core.wmem_max net.core.somaxconn
 
 ## 참고 자료
 
-- [Linux Networking Documentation — Kernel](https://docs.kernel.org/networking/index.html)
-- [NAPI — Linux kernel documentation](https://docs.kernel.org/networking/napi.html)
+- [Linux Networking Documentation: Kernel](https://docs.kernel.org/networking/index.html)
+- [NAPI: Linux kernel documentation](https://docs.kernel.org/networking/napi.html)
 - [Scaling in the Linux Networking Stack (RSS/RPS/RFS)](https://docs.kernel.org/networking/scaling.html)
-- [XDP — eXpress Data Path](https://docs.kernel.org/networking/af_xdp.html)
-- [Linux v6.12 소켓 구현](https://github.com/torvalds/linux/blob/v6.12/net/socket.c) — FD, VFS 연산, 소켓 API 진입점
-- [소켓 API와 옵션 — socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html)
-- [TCP — tcp(7)](https://man7.org/linux/man-pages/man7/tcp.7.html)
-- [소켓 관측 — ss(8)](https://man7.org/linux/man-pages/man8/ss.8.html)
+- [XDP (eXpress Data Path)](https://docs.kernel.org/networking/af_xdp.html)
+- [Linux v6.12 소켓 구현](https://github.com/torvalds/linux/blob/v6.12/net/socket.c): FD, VFS 연산, 소켓 API 진입점
+- [소켓 API와 옵션: socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html)
+- [TCP: tcp(7)](https://man7.org/linux/man-pages/man7/tcp.7.html)
+- [소켓 관측: ss(8)](https://man7.org/linux/man-pages/man8/ss.8.html)
 - [Pod 네트워크 실측 벤치마크](../networking/06-pod-network-benchmark.md)
 - [eBPF 기초와 실무 활용](../basics/05-ebpf-fundamentals.md)
-- [Linux segmentation offload](https://docs.kernel.org/networking/segmentation-offloads.html) — hardware TSO와 software GSO
-- [Linux IP sysctl](https://docs.kernel.org/networking/ip-sysctl.html) — TCP buffer 크기와 socket override
+- [Linux segmentation offload](https://docs.kernel.org/networking/segmentation-offloads.html): hardware TSO와 software GSO
+- [Linux IP sysctl](https://docs.kernel.org/networking/ip-sysctl.html): TCP buffer 크기와 socket override

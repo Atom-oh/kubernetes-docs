@@ -17,7 +17,7 @@
 **정답: B) 컨테이너는 namespace·cgroup·capabilities 등을 조합한 관례이므로, 격리가 선택적이고 런타임이 빠뜨린 격리는 조용한 구멍이 된다**
 
 **설명:**
-커널에는 `struct container`도, 컨테이너를 만드는 단일 시스템 콜도 없습니다. 런타임이 프로세스를 띄우면서 namespace(격리), cgroup(제한), capabilities/seccomp/LSM(권한), overlayfs(파일시스템), netfilter(네트워크)를 함께 적용하는 것입니다. 조합이라는 성질에서 두 결론이 나옵니다 — 격리가 전부 또는 전무가 아니라 선택적이며(Pod가 network namespace는 공유하고 mount는 분리하는 것이 그 예), 커널이 "컨테이너를 만들어라"를 모르므로 런타임이 seccomp 프로필을 적용하지 않으면 그냥 적용되지 않은 상태로 돕니다.
+커널에는 `struct container`도, 컨테이너를 만드는 단일 시스템 콜도 없습니다. 런타임이 프로세스를 띄우면서 namespace(격리), cgroup(제한), capabilities/seccomp/LSM(권한), overlayfs(파일시스템), netfilter(네트워크)를 함께 적용하는 것입니다. 조합이라는 성질에서 두 결론이 나옵니다. 격리가 전부 또는 전무가 아니라 선택적이며(Pod가 network namespace는 공유하고 mount는 분리하는 것이 그 예), 커널이 "컨테이너를 만들어라"를 모르므로 런타임이 seccomp 프로필을 적용하지 않으면 그냥 적용되지 않은 상태로 돕니다.
 </details>
 
 2. Pod 안의 두 컨테이너가 `localhost`로 통신할 수 있고 같은 포트를 동시에 열 수 없는 이유는?
@@ -85,7 +85,7 @@ nftables 모드는 1.29 alpha → 1.31 beta → **1.33 GA**로 성숙했고, O(1
 </details>
 
 6. Conntrack 포화 의심은 어떻게 검증해야 합니까?
-   - A) 명확한 커널 패닉 — `dmesg`에서 즉시 확인
+   - A) 명확한 커널 패닉: `dmesg`에서 즉시 확인
    - B) Conntrack count/max·insert/drop counter·kernel log를 연결하며 insert_failed만으로 포화를 확정하지 않는다
    - C) 모든 기존 연결이 즉시 끊김
    - D) CPU 사용률이 100%로 상승
@@ -113,7 +113,7 @@ NAT 없는 트래픽에도 tracking이 적용될 수 있습니다. Headless Serv
 **정답: B) EKS에 기본 존재하는 `kube-proxy-config` ConfigMap이 커맨드라인 인자보다 우선하므로, sysctl만 올려도 kube-proxy가 되돌릴 수 있다**
 
 **설명:**
-kube-proxy도 conntrack 값을 관리하며, EKS에는 `kube-proxy-config` ConfigMap이 기본으로 존재하고 이것이 커맨드라인 인자보다 우선합니다. 따라서 올바른 경로는 ConfigMap의 `conntrack.maxPerCore`·`conntrack.min`을 조정하고 kube-proxy DaemonSet을 재시작하는 것입니다. `maxPerCore`를 쓰는 이유는 절대값이 아니라 코어당 값이라 노드 크기가 달라도 비례 조정되기 때문입니다. D는 틀렸습니다 — `nf_conntrack_max`는 노드 전역이라 Pod 스펙으로 바꿀 수 없습니다.
+kube-proxy도 conntrack 값을 관리하며, EKS에는 `kube-proxy-config` ConfigMap이 기본으로 존재하고 이것이 커맨드라인 인자보다 우선합니다. 따라서 올바른 경로는 ConfigMap의 `conntrack.maxPerCore`·`conntrack.min`을 조정하고 kube-proxy DaemonSet을 재시작하는 것입니다. `maxPerCore`를 쓰는 이유는 절대값이 아니라 코어당 값이라 노드 크기가 달라도 비례 조정되기 때문입니다. D는 틀렸습니다. `nf_conntrack_max`는 노드 전역이라 Pod 스펙으로 바꿀 수 없습니다.
 </details>
 
 8. overlayfs의 copy-up이 운영에 만드는 문제는?

@@ -37,32 +37,32 @@ Launch template/provisioner가 선택한 AMI와 실행 kernel을 확인합니다
 </details>
 
 3. CPU throttling의 가장 흔한 근본 원인과 첫 대응은?
-   - A) 노드 CPU 부족 — 인스턴스 타입 상향
-   - B) 애플리케이션이 인식하는 CPU 수와 할당량의 불일치 — `GOMAXPROCS`, `-XX:ActiveProcessorCount` 등을 limit에 맞춤
-   - C) 커널 스케줄러 버그 — 커널 업그레이드
-   - D) cgroup v2 전환 문제 — v1으로 되돌림
+   - A) 노드 CPU 부족: 인스턴스 타입 상향
+   - B) 애플리케이션이 인식하는 CPU 수와 할당량의 불일치: `GOMAXPROCS`, `-XX:ActiveProcessorCount` 등을 limit에 맞춤
+   - C) 커널 스케줄러 버그: 커널 업그레이드
+   - D) cgroup v2 전환 문제: v1으로 되돌림
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: B) 애플리케이션이 인식하는 CPU 수와 할당량의 불일치 — `GOMAXPROCS`, `-XX:ActiveProcessorCount` 등을 limit에 맞춤**
+**정답: B) 애플리케이션이 인식하는 CPU 수와 할당량의 불일치: `GOMAXPROCS`, `-XX:ActiveProcessorCount` 등을 limit에 맞춤**
 
 **설명:**
 컨테이너 안의 런타임이 노드의 전체 코어 수를 보고 그만큼 스레드를 만들면, CPU limit의 할당량을 순식간에 소진합니다. 4개 스레드가 동시에 돌면 20ms 할당량이 실제 시간 5ms에 소진되고 나머지 95ms는 대기입니다. 그래서 첫 대응은 애플리케이션이 인식하는 CPU 수를 limit에 맞추는 것이고, 그 다음이 limit 상향, 그 다음이 극히 민감한 경우의 limit 제거 검토입니다.
 </details>
 
 4. 노드 안정성 확보에서 커널 튜닝보다 효과적인 것과 그 이유는?
-   - A) Pod 수 제한 — 밀도를 낮추면 문제가 없다
-   - B) kubelet의 리소스 예약과 축출 임계 — 예약이 부족하면 커널이나 kubelet이 OOM에 걸려 노드 전체가 NotReady가 되고, 축출이 커널 OOM보다 낫다
-   - C) 노드 재시작 스케줄 — 주기적 재시작으로 메모리 정리
-   - D) 이미지 크기 축소 — 디스크 여유 확보
+   - A) Pod 수 제한: 밀도를 낮추면 문제가 없다
+   - B) kubelet의 리소스 예약과 축출 임계: 예약이 부족하면 커널이나 kubelet이 OOM에 걸려 노드 전체가 NotReady가 되고, 축출이 커널 OOM보다 낫다
+   - C) 노드 재시작 스케줄: 주기적 재시작으로 메모리 정리
+   - D) 이미지 크기 축소: 디스크 여유 확보
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: B) kubelet의 리소스 예약과 축출 임계 — 예약이 부족하면 커널이나 kubelet이 OOM에 걸려 노드 전체가 NotReady가 되고, 축출이 커널 OOM보다 낫다**
+**정답: B) kubelet의 리소스 예약과 축출 임계: 예약이 부족하면 커널이나 kubelet이 OOM에 걸려 노드 전체가 NotReady가 되고, 축출이 커널 OOM보다 낫다**
 
 **설명:**
 `--system-reserved`와 `--kube-reserved`가 부족하면 Pod가 노드 메모리를 다 먹고 커널이나 kubelet 자체가 OOM에 걸립니다. 그러면 노드가 `NotReady`가 되고 그 위의 모든 Pod가 영향을 받아 개별 Pod OOM보다 훨씬 나쁜 결과가 됩니다. 축출은 Kubernetes가 통제된 방식으로 Pod를 옮기는 것이고 OOM killer는 커널이 프로세스를 갑자기 죽이는 것이므로, `--eviction-hard`를 적절히 설정해 커널 OOM 전에 Kubernetes가 개입하게 만드는 것이 목표입니다.
@@ -85,10 +85,10 @@ Launch template/provisioner가 선택한 AMI와 실행 kernel을 확인합니다
 </details>
 
 6. 다음 중 "근거 있는 튜닝"의 대표 사례가 아닌 것은?
-   - A) `vm.max_map_count` — OpenSearch 계열이 기본값에서 시작 실패
-   - B) `net.core.somaxconn` — accept 큐 오버플로 카운터로 증거 확인 가능
+   - A) `vm.max_map_count`: OpenSearch 계열이 기본값에서 시작 실패
+   - B) `net.core.somaxconn`: accept 큐 오버플로 카운터로 증거 확인 가능
    - C) 측정된 BDP/메모리 문제나 socket별 override 이해 없이 TCP buffer 설정을 바꾸는 것
-   - D) `net.ipv4.ip_local_port_range` — 출발지 포트 고갈이 연결 실패로 직접 나타남
+   - D) `net.ipv4.ip_local_port_range`: 출발지 포트 고갈이 연결 실패로 직접 나타남
 
 <details>
 
@@ -102,7 +102,7 @@ tcp_rmem/tcp_wmem은 크기 범위/기본값이며 변경 자체가 autotuning�
 
 7. Pod의 `securityContext.sysctls`로 바꿀 수 없는 값은?
    - A) net namespace별로 설정 가능한 `net.*` 값 다수
-   - B) `net.netfilter.nf_conntrack_max` — 노드 전역 값
+   - B) `net.netfilter.nf_conntrack_max`: 노드 전역 값
    - C) Pod의 net namespace에 속한 TCP 관련 값
    - D) 위 모두 변경 가능
 
@@ -110,7 +110,7 @@ tcp_rmem/tcp_wmem은 크기 범위/기본값이며 변경 자체가 autotuning�
 
 <summary>정답 보기</summary>
 
-**정답: B) `net.netfilter.nf_conntrack_max` — 노드 전역 값**
+**정답: B) `net.netfilter.nf_conntrack_max`: 노드 전역 값**
 
 **설명:**
 `net.*` 중 상당수는 net namespace별로 설정 가능해 Pod `securityContext.sysctls`로 바꿀 수 있습니다. 반면 `vm.*`, `fs.*`, 그리고 `net.netfilter.nf_conntrack_max` 같은 일부 값은 노드 전역이라 Pod 스펙으로는 바꿀 수 없고 노드 부트스트랩이나 Bottlerocket 설정 경로를 써야 합니다. 또한 kubelet은 기본적으로 "안전하지 않은" sysctl을 거부하므로 필요하면 `--allowed-unsafe-sysctls`로 명시 허용해야 하고, 이것도 노드 설정입니다.

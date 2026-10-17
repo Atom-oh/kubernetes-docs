@@ -1,4 +1,4 @@
-# Network Fundamentals Part 3 — Ten Application Protocols
+# Network Fundamentals Part 3: Ten Application Protocols
 
 > **Last Updated**: September 14, 2026
 
@@ -13,7 +13,7 @@ Transport protocols provide streams or datagrams; application protocols turn the
 
 ---
 
-## 5. Application Layer — Actual Services
+## 5. Application Layer: Actual Services
 
 ### DNS
 
@@ -75,9 +75,9 @@ AWS Systems Manager Session Manager can provide shell access without inbound SSH
 
 **In practice:** SMTP authentication and TLS secure submission/transport, but do not by themselves prove the visible sender domain. Three complementary domain mechanisms matter:
 
-- **SPF** — authorize sending hosts for the envelope MAIL FROM or HELO identity; this is not automatically the visible From header.
-- **DKIM** — verify a signature over covered message content using the signing domain’s DNS key; the signing domain can differ from the visible From domain.
-- **DMARC** — require the visible From domain to align with a passing SPF **or** DKIM identity, and publish requested handling/reporting policy.
+- **SPF**: authorize sending hosts for the envelope MAIL FROM or HELO identity; this is not automatically the visible From header.
+- **DKIM**: verify a signature over covered message content using the signing domain’s DNS key; the signing domain can differ from the visible From domain.
+- **DMARC**: require the visible From domain to align with a passing SPF **or** DKIM identity, and publish requested handling/reporting policy.
 
 Configure SPF, DKIM and DMARC together where appropriate, monitor reports, and account for forwarding/mailing-list behavior. DMARC can pass with one aligned mechanism. These controls neither guarantee delivery nor eliminate display-name or lookalike-domain impersonation; receivers also apply local policy.
 

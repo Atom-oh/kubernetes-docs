@@ -6,7 +6,7 @@ This quiz tests your understanding of socket/VFS entry paths, TCP buffers and wi
 
 1. Which component queues outgoing packets before the NIC and exposes its drops through `tc -s qdisc`?
    - A) The NIC's physical layer
-   - B) The qdisc — a drop inside the node, visible as `dropped` in `tc -s qdisc`
+   - B) The qdisc: a drop inside the node, visible as `dropped` in `tc -s qdisc`
    - C) The VPC network
    - D) The application's socket buffer
 
@@ -14,7 +14,7 @@ This quiz tests your understanding of socket/VFS entry paths, TCP buffers and wi
 
 <summary>Show Answer</summary>
 
-**Answer: B) The qdisc — a drop inside the node, visible as `dropped` in `tc -s qdisc`**
+**Answer: B) The qdisc: a drop inside the node, visible as `dropped` in `tc -s qdisc`**
 
 **Explanation:**
 A qdisc can queue and schedule outgoing packets and drop due to queue limits or active queue management. A rising `dropped` counter attributes drops to that qdisc, not every loss on the path. Correlate the affected interval and traffic with interface, driver, stack, and remote evidence. `overlimits` can reflect shaping without a drop; it is not interchangeable with `dropped`.
@@ -37,16 +37,16 @@ The early-drop advantage is mode-specific. BPF maps can maintain state, and perf
 </details>
 
 3. With heavy receive traffic, only one CPU is at 100% while the rest idle. Which possible cause and related mechanisms should you investigate?
-   - A) Insufficient qdisc queue — increase queue length
-   - B) Concentrated receive processing — inspect RSS queue/IRQ distribution, RPS software steering, and RFS cache locality
-   - C) Insufficient socket buffer — raise `tcp_rmem`
-   - D) A TCP congestion control mismatch — switch to bbr
+   - A) Insufficient qdisc queue: increase queue length
+   - B) Concentrated receive processing: inspect RSS queue/IRQ distribution, RPS software steering, and RFS cache locality
+   - C) Insufficient socket buffer: raise `tcp_rmem`
+   - D) A TCP congestion control mismatch: switch to bbr
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: B) Concentrated receive processing — inspect RSS queue/IRQ distribution, RPS software steering, and RFS cache locality**
+**Answer: B) Concentrated receive processing: inspect RSS queue/IRQ distribution, RPS software steering, and RFS cache locality**
 
 **Explanation:**
 RSS hashes flows to receive queues; IRQ affinity influences which CPUs handle them. RPS steers later receive processing in software, and RFS aims to place it near the consuming application. They do not all move hardware interrupts, and a single flow can remain on one queue. Inspect `/proc/interrupts` and per-CPU `%soft` in `mpstat -P ALL`, along with application CPU use, before assigning a cause.
@@ -86,7 +86,7 @@ Virtual devices still have driver processing. Different CNIs, SR-IOV, overlays o
 
 6. Small handshake packets pass, but larger IPv4 packets with DF set are dropped at a lower-MTU hop and the returning ICMP is blocked. Which mechanism explains the stall?
    - A) conntrack exhaustion
-   - B) PMTUD failure — the ICMP that reports path MTU is blocked, so only large packets are dropped
+   - B) PMTUD failure: the ICMP that reports path MTU is blocked, so only large packets are dropped
    - C) A TCP congestion control mismatch
    - D) Insufficient socket receive buffer
 
@@ -94,15 +94,15 @@ Virtual devices still have driver processing. Different CNIs, SR-IOV, overlays o
 
 <summary>Show Answer</summary>
 
-**Answer: B) PMTUD failure — the ICMP that reports path MTU is blocked, so only large packets are dropped**
+**Answer: B) PMTUD failure: the ICMP that reports path MTU is blocked, so only large packets are dropped**
 
 **Explanation:**
 With DF set, an IPv4 router cannot fragment the oversized packet and normally returns ICMP "fragmentation needed." Blocking that feedback can break PMTUD and create a black hole. IPv6 routers do not fragment and use ICMPv6 "Packet Too Big." Without the evidence given in the question, a working handshake followed by a stall is only a clue, not proof; probing may also allow recovery.
 </details>
 
 7. What is the recommended order for diagnosing a network problem?
-   - A) Top to bottom — from the application down to the NIC in order
-   - B) Start with drop counters — `insert_failed` in `conntrack -S`, `dropped` in `tc -s qdisc`, NIC drops in `ethtool -S`
+   - A) Top to bottom: from the application down to the NIC in order
+   - B) Start with drop counters: `insert_failed` in `conntrack -S`, `dropped` in `tc -s qdisc`, NIC drops in `ethtool -S`
    - C) Always capture packets with `tcpdump` first
    - D) Start with CPU utilization
 
@@ -110,7 +110,7 @@ With DF set, an IPv4 router cannot fragment the oversized packet and normally re
 
 <summary>Show Answer</summary>
 
-**Answer: B) Start with drop counters — `insert_failed` in `conntrack -S`, `dropped` in `tc -s qdisc`, NIC drops in `ethtool -S`**
+**Answer: B) Start with drop counters: `insert_failed` in `conntrack -S`, `dropped` in `tc -s qdisc`, NIC drops in `ethtool -S`**
 
 **Explanation:**
 These counters identify candidates to investigate, not a complete diagnosis. Correlate changes with the affected flow and time window; for conntrack, also inspect count/max and kernel logs because `insert_failed` is not unique to exhaustion. Aggregate counters can include unrelated traffic. Unchanged local counters do not exclude remote drops, authentication or application failures. Follow the symptom with checks such as RTT and cwnd in `ss -tin`, returned errors and evidence from the rest of the path.
