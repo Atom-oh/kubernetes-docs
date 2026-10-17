@@ -1,4 +1,4 @@
-# Anatomy of a Modern Data Pipeline — Five Roles
+# Anatomy of a Modern Data Pipeline: Five Roles
 
 > **Last Updated**: September 12, 2026
 
@@ -12,13 +12,13 @@ Sources, ingestion, storage, processing and consumption are **conceptual roles**
 
 [View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-01-data-pipeline-anatomy-0.html)
 
-## 1. Sources — Changes and Load
+## 1. Sources: Changes and Load
 
 Sources include application databases, logs, IoT devices and external APIs. Choose full snapshots, incremental queries or log-based CDC as needed. Log-based CDC depends on database replication logs, retention and permissions; schema-change support varies by connector and format.
 
 Read replicas and log-based extraction can reduce production-database load. They are not supported by every database/connector combination. Check initial snapshot load, replication lag and recovery after missing logs.
 
-## 2. Ingestion — Batches and Events
+## 2. Ingestion: Batches and Events
 
 | Mode | Behavior | Examples | Latency drivers |
 | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ Replay alone does not provide end-to-end exactly-once behavior. Source positions
 
 The [eight Kafka operations chapters and Part 9 benchmark](./kafka/README.md) cover the EKS choices.
 
-## 3. Storage — Originals and Query Models
+## 3. Storage: Originals and Query Models
 
 | Choice | Examples | Design considerations |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ Retaining raw data in a lake is useful for replay but is not the only standard p
 
 **ETL** means extract → transform → load into the destination. **ELT** means extract → load → transform in the destination. Moving already-curated results into a warehouse is not ELT merely because a warehouse is involved. Using both a lake and warehouse does not determine the transformation order.
 
-## 4. Processing — Bounded and Continuous Inputs
+## 4. Processing: Bounded and Continuous Inputs
 
 Spark supports batch processing and Structured Streaming; Flink also processes streams and bounded inputs. Batch/stream classifications do not assign mutually exclusive roles to products.
 
@@ -53,7 +53,7 @@ Possible designs include fast provisional stream results followed by late-data c
 
 See the [Spark](./spark/README.md) and [Flink](./flink/README.md) guides for engine operations.
 
-## 5. Consumption — Result Contracts
+## 5. Consumption: Result Contracts
 
 BI, reports, ML feature stores and data APIs consume results. Turn requirements such as “five-minute dashboard lag,” “settlement corrections after close,” or “one-second recommendation-feature target” into measurable contracts. These numbers are examples, not product performance guarantees.
 
@@ -71,7 +71,7 @@ Kafka, Spark and Flink use their respective Operators/deployment models. Airflow
 
 The conceptual breakdown began with Abhishek Agrawal's “Anatomy of a Modern Data Pipeline” infographic; the contracts and operating guidance were reviewed separately.
 
-- [ETL and ELT — AWS](https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html)
+- [ETL and ELT (AWS)](https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html)
 - [Kafka delivery semantics and log compaction](https://kafka.apache.org/43/design/design/)
 - [Flink state and checkpointing](https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/)
 - [Spark Structured Streaming](https://spark.apache.org/docs/latest/streaming/index.html)

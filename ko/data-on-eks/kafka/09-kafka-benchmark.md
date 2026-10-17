@@ -1,4 +1,4 @@
-# Part 9: Kafka on EKS 벤치마크 — 기록된 결과와 재현·해석 범위
+# Part 9: Kafka on EKS 벤치마크 (기록된 결과와 재현·해석 범위)
 
 > **보고된 실험**: 2026년 9월 2일 02:07–02:36 UTC\
 > **검토 갱신**: 2026년 9월 12일\
@@ -33,7 +33,7 @@ RF 비교는 acks도 바꾸고 배치 비교는 linger·실행 길이도 바꿉�
 | 항목 | 값 |
 |------|-----|
 | 클러스터 | Amazon EKS, Kubernetes 1.36, ap-northeast-2 (서울), Karpenter 프로비저닝 노드 |
-| 브로커 | 3 × `apache/kafka:4.3.1` (kafka_2.13-4.3.1, OpenJDK 21.0.11), **KRaft combined 모드**(각 파드가 broker+controller), StatefulSet 직접 배포 — Strimzi 등 Operator 없음 |
+| 브로커 | 3 × `apache/kafka:4.3.1` (kafka_2.13-4.3.1, OpenJDK 21.0.11), **KRaft combined 모드**(각 파드가 broker+controller), StatefulSet 직접 배포(Strimzi 등 Operator 없음) |
 | 브로커 노드 | 3 × **m5.xlarge** 온디맨드 (4 vCPU, 16 GiB), 모두 **ap-northeast-2b** 단일 AZ, podAntiAffinity로 노드당 브로커 1개, Karpenter `system` NodePool이 측정 직전 새로 만든 노드 |
 | 브로커 파드 리소스 | requests cpu 3 / mem 10Gi, limits cpu 4 / mem 12Gi, `KAFKA_HEAP_OPTS=-Xms4G -Xmx4G` (나머지 메모리도 native/off-heap·page cache 등이 함께 사용) |
 | 브로커 스토리지 | 브로커당 **gp3 100 GiB** PVC 1개 (EBS CSI, StorageClass `gp3`), gp3 기본 성능 **3,000 IOPS / 125 MiB/s** (크기와 무관한 베이스라인) |
@@ -44,7 +44,7 @@ RF 비교는 acks도 바꾸고 배치 비교는 linger·실행 길이도 바꿉�
 | 도구 | `kafka-producer-perf-test.sh`, `kafka-consumer-perf-test.sh` (apache/kafka 4.3.1 이미지에 동봉) |
 | 네트워크 경로 | 같은 AZ 안의 파드 간 통신, PLAINTEXT (TLS/SASL 없음) |
 | 토픽 | 테스트마다 새 토픽, 파티션 6개; RF3/min.isr=2 (RF1 테스트만 RF1/min.isr=1); `retention.bytes=-1` |
-| 테스트 프로듀서 설정 | `linger.ms=5`, `batch.size=65536`, `buffer.memory=67108864` (64 MiB), `compression.type=none` — 별도 표기 없으면 모든 테스트 공통 |
+| 테스트 프로듀서 설정 | `linger.ms=5`, `batch.size=65536`, `buffer.memory=67108864` (64 MiB), `compression.type=none` (별도 표기 없으면 모든 테스트 공통) |
 | 시간당 비용 | m5.xlarge 온디맨드 $0.236/h × 3 + gp3 100 GiB $0.0912/GB-월 × 3 (서울 리전, 2026-09 Pricing API 조회) |
 
 원문은 첫 측정 전에 02:05:22Z의 `kafka-1` 재시작 1회와 측정 중 재시작 없음을
