@@ -303,7 +303,7 @@ kubectl get pods --all-namespaces -o wide
 
 A pool's block size is a separate migration concern; do not change an existing pool's immutable allocation structure by replacing a tutorial manifest. The copied old example that restarted calico-node “for immediate mode application” did not prove workload MTU or application recovery.
 
-## Earlier benchmark reports — unverified provenance
+## Earlier benchmark reports (unverified provenance)
 
 The earlier English and Korean pages contained different numbers and did not supply raw results, complete software versions, placement or a reproducible harness. Both records are preserved below; they cannot be treated as one experiment or as validated performance guarantees. This audit did not rerun them.
 

@@ -288,10 +288,10 @@ diff -u "$SERVER_NOTE/root-effective.before" "$SERVER_NOTE/root-effective.restor
 
 2026년 9월 15일 확인:
 
-- [Ubuntu Server OpenSSH](https://documentation.ubuntu.com/server/how-to/security/openssh-server/) — 설치, `ssh.service`, include 우선순위.
-- [Ubuntu 24.04 릴리스 노트](https://discourse.ubuntu.com/t/noble-numbat-release-notes/39890) — OpenSSH 소켓 활성화와 소켓 설정 생성기.
-- [Rocky Linux OpenSSH 키 설정](https://docs.rockylinux.org/9/guides/security/ssh_public_private_keys/) — Rocky OpenSSH 절차.
-- [OpenSSH `ssh`](https://man.openbsd.org/ssh), [`ssh-keygen`](https://man.openbsd.org/ssh-keygen), [`sshd`](https://man.openbsd.org/sshd), [`sshd_config`](https://man.openbsd.org/sshd_config) — 신원, 키, 검증, Include·Match와 유효 설정.
-- [Ubuntu 24.04 `ssh-copy-id`](https://manpages.ubuntu.com/manpages/noble/man1/ssh-copy-id.1.html) — 선택한 키 설치와 기존 키 처리.
+- [Ubuntu Server OpenSSH](https://documentation.ubuntu.com/server/how-to/security/openssh-server/): 설치, `ssh.service`, include 우선순위.
+- [Ubuntu 24.04 릴리스 노트](https://discourse.ubuntu.com/t/noble-numbat-release-notes/39890): OpenSSH 소켓 활성화와 소켓 설정 생성기.
+- [Rocky Linux OpenSSH 키 설정](https://docs.rockylinux.org/9/guides/security/ssh_public_private_keys/): Rocky OpenSSH 절차.
+- [OpenSSH `ssh`](https://man.openbsd.org/ssh), [`ssh-keygen`](https://man.openbsd.org/ssh-keygen), [`sshd`](https://man.openbsd.org/sshd), [`sshd_config`](https://man.openbsd.org/sshd_config): 신원, 키, 검증, Include·Match와 유효 설정.
+- [Ubuntu 24.04 `ssh-copy-id`](https://manpages.ubuntu.com/manpages/noble/man1/ssh-copy-id.1.html): 선택한 키 설치와 기존 키 처리.
 
 [퀴즈](../../quizzes/networking/beginner/05-ssh-access-quiz.md) | [호스트 보안으로](06-firewalls-host-security.md)

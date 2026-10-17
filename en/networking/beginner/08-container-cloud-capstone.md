@@ -1,4 +1,4 @@
-# 8. Capstone — From Web Service Failures to Containers and Cloud
+# 8. Capstone: From Web Service Failures to Containers and Cloud
 
 > **Learning baseline**: Ubuntu Server 24.04 LTS, with an alternate Rocky Linux 9 path
 >

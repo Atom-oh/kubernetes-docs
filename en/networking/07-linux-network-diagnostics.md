@@ -1,4 +1,4 @@
-# Linux Network Diagnostics — HTTP, TCP Queues, Routing and MTU
+# Linux Network Diagnostics: HTTP, TCP Queues, Routing and MTU
 
 > **Supported environment**: Linux, Python 3.9+, curl and iproute2; local Docker Engine for the routing exercise
 > **Last Updated**: September 15, 2026

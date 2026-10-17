@@ -458,11 +458,11 @@ When no longer needed, remove the exact baseline files you created in `FW_NOTE` 
 
 Checked September 15, 2026:
 
-- [Ubuntu UFW manual](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html) — rule direction, interfaces, ordering, persistence, and exact deletion.
-- [firewalld CLI](https://firewalld.org/documentation/man-pages/firewall-cmd.html), [rich language](https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html), and [zones](https://firewalld.org/documentation/zone/connections-interfaces-and-sources.html) — timeouts, reload, source/destination rules, and classification.
-- [NetworkManager connection settings](https://networkmanager.dev/docs/api/latest/settings-connection.html) — immediate active-connection `zone` changes and empty/default behavior.
-- [Rocky Linux 9 SELinux guide](https://docs.rockylinux.org/9/guides/security/learning_selinux/) and [SELinux labeling tools](https://github.com/SELinuxProject/selinux/tree/main/policycoreutils/setfiles) — AVC diagnosis and targeted context restoration.
-- [Fedora EPEL getting started](https://docs.fedoraproject.org/en-US/epel/getting-started/), [Rocky repository documentation](https://wiki.rockylinux.org/rocky/repo/), and [EPEL Fail2ban packages](https://packages.fedoraproject.org/pkgs/fail2ban/fail2ban-server/) — optional package sources and prerequisites.
-- [Fail2ban jail configuration](https://github.com/fail2ban/fail2ban/blob/master/config/jail.conf), [systemd backend](https://github.com/fail2ban/fail2ban/blob/master/fail2ban/server/filtersystemd.py), and [client manual](https://manpages.ubuntu.com/manpages/noble/man1/fail2ban-client.1.html) — filter/backend/action separation, configuration tests, status, and scoped unban.
+- [Ubuntu UFW manual](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html): rule direction, interfaces, ordering, persistence, and exact deletion.
+- [firewalld CLI](https://firewalld.org/documentation/man-pages/firewall-cmd.html), [rich language](https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html), and [zones](https://firewalld.org/documentation/zone/connections-interfaces-and-sources.html): timeouts, reload, source/destination rules, and classification.
+- [NetworkManager connection settings](https://networkmanager.dev/docs/api/latest/settings-connection.html): immediate active-connection `zone` changes and empty/default behavior.
+- [Rocky Linux 9 SELinux guide](https://docs.rockylinux.org/9/guides/security/learning_selinux/) and [SELinux labeling tools](https://github.com/SELinuxProject/selinux/tree/main/policycoreutils/setfiles): AVC diagnosis and targeted context restoration.
+- [Fedora EPEL getting started](https://docs.fedoraproject.org/en-US/epel/getting-started/), [Rocky repository documentation](https://wiki.rockylinux.org/rocky/repo/), and [EPEL Fail2ban packages](https://packages.fedoraproject.org/pkgs/fail2ban/fail2ban-server/): optional package sources and prerequisites.
+- [Fail2ban jail configuration](https://github.com/fail2ban/fail2ban/blob/master/config/jail.conf), [systemd backend](https://github.com/fail2ban/fail2ban/blob/master/fail2ban/server/filtersystemd.py), and [client manual](https://manpages.ubuntu.com/manpages/noble/man1/fail2ban-client.1.html): filter/backend/action separation, configuration tests, status, and scoped unban.
 
 [Quiz](../../quizzes/networking/beginner/06-firewalls-host-security-quiz.md) | [Continue to monitoring](07-monitoring-performance.md)

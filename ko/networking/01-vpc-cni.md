@@ -53,7 +53,7 @@ Prefix delegation이 모든 대규모 클러스터의 필수 조건은 아니며
 일반 secondary-IPv4 모드에서는 각 ENI에 primary 주소와 CNI가 사용할 추가 주소가 있습니다. Primary ENI는 노드의 primary 주소도 전달합니다. 추가 ENI에서 더 많은 보조 Pod 주소를 공급할 수 있습니다. Custom networking은 Pod 주소를 공급하는 인터페이스·서브넷을 바꾸고, prefix·branch-ENI 모드는 할당 규칙이 다릅니다.
 
 ```text
-Linux EC2 노드 — 일반 secondary-IPv4 예제
+Linux EC2 노드 (일반 secondary-IPv4 예제)
 ├── Primary ENI: 노드 primary IP + Pod용 secondary IP
 ├── 추가 ENI: 해당 ENI의 primary IP + Pod용 secondary IP
 └── 추가 ENI: 해당 ENI의 primary IP + Pod용 secondary IP

@@ -288,10 +288,10 @@ You may reapply the owned drop-in with the same validation gates if retaining th
 
 Checked September 15, 2026:
 
-- [Ubuntu Server OpenSSH](https://documentation.ubuntu.com/server/how-to/security/openssh-server/) — installation, `ssh.service`, and include precedence.
-- [Ubuntu 24.04 release notes](https://discourse.ubuntu.com/t/noble-numbat-release-notes/39890) — OpenSSH socket activation and the socket configuration generator.
-- [Rocky Linux OpenSSH key setup](https://docs.rockylinux.org/9/guides/security/ssh_public_private_keys/) — Rocky's OpenSSH workflow.
-- [OpenSSH `ssh`](https://man.openbsd.org/ssh), [`ssh-keygen`](https://man.openbsd.org/ssh-keygen), [`sshd`](https://man.openbsd.org/sshd), and [`sshd_config`](https://man.openbsd.org/sshd_config) — identity, keys, validation, Include/Match, and effective settings.
-- [Ubuntu 24.04 `ssh-copy-id`](https://manpages.ubuntu.com/manpages/noble/man1/ssh-copy-id.1.html) — selected-key installation and existing-key handling.
+- [Ubuntu Server OpenSSH](https://documentation.ubuntu.com/server/how-to/security/openssh-server/): installation, `ssh.service`, and include precedence.
+- [Ubuntu 24.04 release notes](https://discourse.ubuntu.com/t/noble-numbat-release-notes/39890): OpenSSH socket activation and the socket configuration generator.
+- [Rocky Linux OpenSSH key setup](https://docs.rockylinux.org/9/guides/security/ssh_public_private_keys/): Rocky's OpenSSH workflow.
+- [OpenSSH `ssh`](https://man.openbsd.org/ssh), [`ssh-keygen`](https://man.openbsd.org/ssh-keygen), [`sshd`](https://man.openbsd.org/sshd), and [`sshd_config`](https://man.openbsd.org/sshd_config): identity, keys, validation, Include/Match, and effective settings.
+- [Ubuntu 24.04 `ssh-copy-id`](https://manpages.ubuntu.com/manpages/noble/man1/ssh-copy-id.1.html): selected-key installation and existing-key handling.
 
 [Quiz](../../quizzes/networking/beginner/05-ssh-access-quiz.md) | [Continue to host security](06-firewalls-host-security.md)

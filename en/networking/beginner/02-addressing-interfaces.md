@@ -345,11 +345,11 @@ Confirm only your three snapshot text files. Exit status `0` from the existence 
 
 Primary documentation checked September 14–15, 2026:
 
-- [Ubuntu 24.04 `ip-address` manual](https://manpages.ubuntu.com/manpages/noble/man8/ip-address.8.html), [`ip-link`](https://manpages.ubuntu.com/manpages/noble/man8/ip-link.8.html), [`ip-route`](https://manpages.ubuntu.com/manpages/noble/man8/ip-route.8.html), and [`ip-neighbour`](https://manpages.ubuntu.com/manpages/noble/man8/ip-neighbour.8.html) — command syntax, connected routes, address lifetimes, and neighbor states.
-- [Ubuntu 24.04 `ping` manual](https://manpages.ubuntu.com/manpages/noble/man8/ping.8.html) — bounded echo tests and interface selection.
-- [IETF RFC 1122](https://www.rfc-editor.org/rfc/rfc1122.html), [RFC 4632](https://www.rfc-editor.org/rfc/rfc4632.html), and [RFC 826](https://www.rfc-editor.org/rfc/rfc826.html) — Internet layers, CIDR, and IPv4 address resolution.
-- [IETF RFC 2131](https://www.rfc-editor.org/rfc/rfc2131.html) and [RFC 1034](https://www.rfc-editor.org/rfc/rfc1034.html) — DHCP and DNS have different responsibilities.
-- [IETF RFC 5737](https://www.rfc-editor.org/rfc/rfc5737.html) and [RFC 3849](https://www.rfc-editor.org/rfc/rfc3849.html) — reserved documentation address blocks.
-- [IETF RFC 4291](https://www.rfc-editor.org/rfc/rfc4291.html) and [RFC 4861](https://www.rfc-editor.org/rfc/rfc4861.html) — IPv6 addressing and Neighbor Discovery.
+- [Ubuntu 24.04 `ip-address` manual](https://manpages.ubuntu.com/manpages/noble/man8/ip-address.8.html), [`ip-link`](https://manpages.ubuntu.com/manpages/noble/man8/ip-link.8.html), [`ip-route`](https://manpages.ubuntu.com/manpages/noble/man8/ip-route.8.html), and [`ip-neighbour`](https://manpages.ubuntu.com/manpages/noble/man8/ip-neighbour.8.html): command syntax, connected routes, address lifetimes, and neighbor states.
+- [Ubuntu 24.04 `ping` manual](https://manpages.ubuntu.com/manpages/noble/man8/ping.8.html): bounded echo tests and interface selection.
+- [IETF RFC 1122](https://www.rfc-editor.org/rfc/rfc1122.html), [RFC 4632](https://www.rfc-editor.org/rfc/rfc4632.html), and [RFC 826](https://www.rfc-editor.org/rfc/rfc826.html): Internet layers, CIDR, and IPv4 address resolution.
+- [IETF RFC 2131](https://www.rfc-editor.org/rfc/rfc2131.html) and [RFC 1034](https://www.rfc-editor.org/rfc/rfc1034.html): DHCP and DNS have different responsibilities.
+- [IETF RFC 5737](https://www.rfc-editor.org/rfc/rfc5737.html) and [RFC 3849](https://www.rfc-editor.org/rfc/rfc3849.html): reserved documentation address blocks.
+- [IETF RFC 4291](https://www.rfc-editor.org/rfc/rfc4291.html) and [RFC 4861](https://www.rfc-editor.org/rfc/rfc4861.html): IPv6 addressing and Neighbor Discovery.
 
 Try the [quiz](../../quizzes/networking/beginner/02-addressing-interfaces-quiz.md), then continue to [Persistent configuration](03-persistent-configuration.md).

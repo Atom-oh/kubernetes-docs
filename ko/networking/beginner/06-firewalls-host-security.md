@@ -458,11 +458,11 @@ IP 하나만 정확히 해제합니다. 해당 UFW·rich rule이 없고 새 SSH 
 
 2026년 9월 15일 확인:
 
-- [Ubuntu UFW 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html) — 방향, 인터페이스, 순서, 저장, 정확한 삭제.
-- [firewalld CLI](https://firewalld.org/documentation/man-pages/firewall-cmd.html), [rich language](https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html), [zone](https://firewalld.org/documentation/zone/connections-interfaces-and-sources.html) — timeout, reload, 출발지·목적지 규칙, 분류.
-- [NetworkManager 연결 설정](https://networkmanager.dev/docs/api/latest/settings-connection.html) — 활성 연결의 즉시 zone 변경과 빈 값·기본값.
-- [Rocky Linux 9 SELinux 안내](https://docs.rockylinux.org/9/guides/security/learning_selinux/), [SELinux 라벨 도구](https://github.com/SELinuxProject/selinux/tree/main/policycoreutils/setfiles) — AVC 진단과 대상 한정 문맥 복원.
-- [Fedora EPEL 시작](https://docs.fedoraproject.org/en-US/epel/getting-started/), [Rocky 저장소 문서](https://wiki.rockylinux.org/rocky/repo/), [EPEL Fail2ban 패키지](https://packages.fedoraproject.org/pkgs/fail2ban/fail2ban-server/) — 선택 패키지 출처와 준비.
-- [Fail2ban jail 설정](https://github.com/fail2ban/fail2ban/blob/master/config/jail.conf), [systemd backend](https://github.com/fail2ban/fail2ban/blob/master/fail2ban/server/filtersystemd.py), [client 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man1/fail2ban-client.1.html) — filter·backend·action 구분, 설정 시험, 상태, 개별 unban.
+- [Ubuntu UFW 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html): 방향, 인터페이스, 순서, 저장, 정확한 삭제.
+- [firewalld CLI](https://firewalld.org/documentation/man-pages/firewall-cmd.html), [rich language](https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html), [zone](https://firewalld.org/documentation/zone/connections-interfaces-and-sources.html): timeout, reload, 출발지·목적지 규칙, 분류.
+- [NetworkManager 연결 설정](https://networkmanager.dev/docs/api/latest/settings-connection.html): 활성 연결의 즉시 zone 변경과 빈 값·기본값.
+- [Rocky Linux 9 SELinux 안내](https://docs.rockylinux.org/9/guides/security/learning_selinux/), [SELinux 라벨 도구](https://github.com/SELinuxProject/selinux/tree/main/policycoreutils/setfiles): AVC 진단과 대상 한정 문맥 복원.
+- [Fedora EPEL 시작](https://docs.fedoraproject.org/en-US/epel/getting-started/), [Rocky 저장소 문서](https://wiki.rockylinux.org/rocky/repo/), [EPEL Fail2ban 패키지](https://packages.fedoraproject.org/pkgs/fail2ban/fail2ban-server/): 선택 패키지 출처와 준비.
+- [Fail2ban jail 설정](https://github.com/fail2ban/fail2ban/blob/master/config/jail.conf), [systemd backend](https://github.com/fail2ban/fail2ban/blob/master/fail2ban/server/filtersystemd.py), [client 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man1/fail2ban-client.1.html): filter·backend·action 구분, 설정 시험, 상태, 개별 unban.
 
 [퀴즈](../../quizzes/networking/beginner/06-firewalls-host-security-quiz.md) | [모니터링으로](07-monitoring-performance.md)

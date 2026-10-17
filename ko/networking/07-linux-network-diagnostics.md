@@ -1,4 +1,4 @@
-# Linux 네트워크 진단 — HTTP, TCP 큐, 라우팅과 MTU
+# Linux 네트워크 진단: HTTP, TCP 큐, 라우팅과 MTU
 
 > **지원 환경**: Linux, Python 3.9+, curl, iproute2; 라우팅 실습에는 로컬 Docker Engine 필요
 > **마지막 업데이트**: 2026년 9월 15일

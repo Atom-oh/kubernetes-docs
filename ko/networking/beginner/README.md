@@ -228,4 +228,4 @@ python3 --version
 
 CentOS 7·예전 `ifconfig` 중심 자료를 볼 때는 개념과 실행 환경을 구분하세요. 여기서는 `ip`·`ss`와 위에 명시한 배포판을 기준으로 실습합니다.
 
-**시작:** [1장 — Linux와 CLI](01-linux-cli.md)
+**시작:** [1장: Linux와 CLI](01-linux-cli.md)

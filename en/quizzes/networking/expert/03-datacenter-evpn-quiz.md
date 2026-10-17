@@ -1,4 +1,4 @@
-# 03. Datacenter EVPN — Quiz
+# 03. Datacenter EVPN Quiz
 
 > **Last Updated**: September 15, 2026
 
