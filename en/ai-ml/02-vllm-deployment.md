@@ -275,15 +275,15 @@ These are historical measurements reported in the [September 4, 2026 repository 
 
 ### Setup
 
-- **Cluster**: a dedicated Karpenter NodePool (`bench-gpu`, on-demand `g6.2xlarge` — 1x NVIDIA L4, 24GB GPU memory, 8 vCPU, 32 GiB RAM), tainted `nvidia.com/gpu=true:NoSchedule` and labeled to join the existing `nvidia-device-plugin` daemonsets, deleted immediately after the run.
-- **Server**: `vllm/vllm-openai:v0.6.4.post1` (released 2024-11-15 — the vLLM project has since shipped its V1 engine with prefix caching on by default, so treat this as a snapshot of that release line, not current vLLM), model `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. One precision (bf16, the model's native dtype) with no quantization, speculative decoding, or prefix caching — the plain defaults this page describes elsewhere.
-- **Client**: a Python `ThreadPoolExecutor` running as a Job **inside the cluster** (a separate, non-GPU node), hitting `/v1/chat/completions` through the `vllm-server` ClusterIP Service. Non-streaming, `temperature=0`, `max_tokens=128`, 8 rotating short prompts (Kubernetes concept questions asking for 1-2 sentence answers). In practice every response ran close to the 128-token cap (a consistent ~102-token mean across all three concurrent batches) rather than stopping at 1-2 sentences — useful for comparing throughput apples-to-apples across concurrency levels, but worth knowing before reading the latency numbers as "time to answer a short question."
-- **Cold start**: from the vLLM engine's startup log to its `/health` endpoint returning `200`, about 4.5 minutes — dominated by downloading the ~15 GB of Qwen2.5-7B-Instruct weights from Hugging Face into the pod's ephemeral cache. Image pull time is not included; it was not measured separately.
+- **Cluster**: a dedicated Karpenter NodePool (`bench-gpu`, on-demand `g6.2xlarge`: 1x NVIDIA L4, 24GB GPU memory, 8 vCPU, 32 GiB RAM), tainted `nvidia.com/gpu=true:NoSchedule` and labeled to join the existing `nvidia-device-plugin` daemonsets, deleted immediately after the run.
+- **Server**: `vllm/vllm-openai:v0.6.4.post1` (released 2024-11-15; the vLLM project has since shipped its V1 engine with prefix caching on by default, so treat this as a snapshot of that release line, not current vLLM), model `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. One precision (bf16, the model's native dtype) with no quantization, speculative decoding, or prefix caching: the plain defaults this page describes elsewhere.
+- **Client**: a Python `ThreadPoolExecutor` running as a Job **inside the cluster** (a separate, non-GPU node), hitting `/v1/chat/completions` through the `vllm-server` ClusterIP Service. Non-streaming, `temperature=0`, `max_tokens=128`, 8 rotating short prompts (Kubernetes concept questions asking for 1-2 sentence answers). In practice every response ran close to the 128-token cap (a consistent ~102-token mean across all three concurrent batches) rather than stopping at 1-2 sentences, which is useful for comparing throughput apples-to-apples across concurrency levels, but worth knowing before reading the latency numbers as "time to answer a short question."
+- **Cold start**: from the vLLM engine's startup log to its `/health` endpoint returning `200`, about 4.5 minutes, dominated by downloading the ~15 GB of Qwen2.5-7B-Instruct weights from Hugging Face into the pod's ephemeral cache. Image pull time is not included; it was not measured separately.
 
 ### Reproduce
 
 ```yaml
-# NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
+# NodePool (Karpenter) - dedicated, deleted after the run; nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata: { name: bench-gpu }
@@ -351,7 +351,7 @@ Dividing roughly 300GB/s bandwidth by 15.2GB of weights gives an idealized roofl
 
 ### Caveats
 
-This is a single run (n=1) on one model, one precision (bf16), one GPU type, and one context length — treat it as one calibrated data point, not a general vLLM/L4 performance claim. The client ran inside the cluster (a separate, non-GPU node), so network latency reflects intra-cluster hops, not an external caller. Latency here is full end-to-end HTTP response time, not time-to-first-token (TTFT) — no streaming was tested. Prefix caching, speculative decoding, FP8, and multi-GPU tensor parallelism (all described earlier on this page) were not exercised. Full reproduction needs missing execution artifacts and environment details; do not extrapolate these numbers to a different model size, GPU, or prompt length.
+This is a single run (n=1) on one model, one precision (bf16), one GPU type, and one context length. Treat it as one calibrated data point, not a general vLLM/L4 performance claim. The client ran inside the cluster (a separate, non-GPU node), so network latency reflects intra-cluster hops, not an external caller. Latency here is full end-to-end HTTP response time, not time-to-first-token (TTFT); no streaming was tested. Prefix caching, speculative decoding, FP8, and multi-GPU tensor parallelism (all described earlier on this page) were not exercised. Full reproduction needs missing execution artifacts and environment details; do not extrapolate these numbers to a different model size, GPU, or prompt length.
 
 ## Monitoring and Logging
 

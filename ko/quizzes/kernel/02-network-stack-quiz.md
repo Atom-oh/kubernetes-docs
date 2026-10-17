@@ -6,7 +6,7 @@
 
 1. 송신 packet을 NIC 앞에서 queue에 넣고 `tc -s qdisc`로 자신의 drop을 보여주는 구성요소는?
    - A) NIC의 물리 계층
-   - B) qdisc — 노드 안에서 일어나는 드롭이며 `tc -s qdisc`의 `dropped`로 확인
+   - B) qdisc: 노드 안에서 일어나는 드롭이며 `tc -s qdisc`의 `dropped`로 확인
    - C) VPC 네트워크
    - D) 애플리케이션의 소켓 버퍼
 
@@ -14,7 +14,7 @@
 
 <summary>정답 보기</summary>
 
-**정답: B) qdisc — 노드 안에서 일어나는 드롭이며 `tc -s qdisc`의 `dropped`로 확인**
+**정답: B) qdisc: 노드 안에서 일어나는 드롭이며 `tc -s qdisc`의 `dropped`로 확인**
 
 **설명:**
 qdisc는 송신 패킷을 큐에 넣고 스케줄링하며 큐 한도 또는 능동적 큐 관리에 따라 드롭할 수 있습니다. 증가하는 `dropped` 카운터는 해당 qdisc의 드롭을 나타내며 경로의 모든 손실을 뜻하지는 않습니다. 해당 시간대·트래픽을 인터페이스·드라이버·스택·원격 증거와 대조합니다. `overlimits`는 드롭 없는 셰이핑을 나타낼 수 있으므로 `dropped`와 같은 뜻이 아닙니다.
@@ -37,16 +37,16 @@ qdisc는 송신 패킷을 큐에 넣고 스케줄링하며 큐 한도 또는 능
 </details>
 
 3. 수신 트래픽이 많은데 CPU 하나만 100%이고 나머지는 놉니다. 조사할 만한 원인 후보와 관련 기능은?
-   - A) qdisc 큐 부족 — 큐 길이를 늘린다
-   - B) 수신 처리가 집중됨 — RSS 큐·IRQ 분산, RPS 소프트웨어 분산, RFS 캐시 지역성을 확인
-   - C) 소켓 버퍼 부족 — `tcp_rmem`을 늘린다
-   - D) TCP 혼잡 제어 알고리즘 문제 — bbr로 전환
+   - A) qdisc 큐 부족: 큐 길이를 늘린다
+   - B) 수신 처리가 집중됨: RSS 큐·IRQ 분산, RPS 소프트웨어 분산, RFS 캐시 지역성을 확인
+   - C) 소켓 버퍼 부족: `tcp_rmem`을 늘린다
+   - D) TCP 혼잡 제어 알고리즘 문제: bbr로 전환
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: B) 수신 처리가 집중됨 — RSS 큐·IRQ 분산, RPS 소프트웨어 분산, RFS 캐시 지역성을 확인**
+**정답: B) 수신 처리가 집중됨: RSS 큐·IRQ 분산, RPS 소프트웨어 분산, RFS 캐시 지역성을 확인**
 
 **설명:**
 RSS는 플로우를 해시로 수신 큐에 배정하고, IRQ affinity는 어떤 CPU가 처리할지에 영향을 줍니다. RPS는 이후 수신 처리를 소프트웨어로 분산하며 RFS는 소비하는 애플리케이션 가까이 배치하려 합니다. 모두 하드웨어 인터럽트를 이동하는 것은 아니며 단일 플로우는 한 큐에 남을 수 있습니다. 원인을 정하기 전에 `/proc/interrupts`, `mpstat -P ALL`의 코어별 `%soft`, 애플리케이션 CPU 사용을 함께 확인합니다.
@@ -86,7 +86,7 @@ RSS는 플로우를 해시로 수신 큐에 배정하고, IRQ affinity는 어떤
 
 6. 작은 핸드셰이크 패킷은 통과하지만 DF가 설정된 큰 IPv4 패킷이 낮은 MTU의 홉에서 드롭되고 반환 ICMP도 차단됩니다. 정체를 설명하는 메커니즘은?
    - A) conntrack 포화
-   - B) PMTUD 실패 — 경로 MTU를 알려주는 ICMP가 차단되어 큰 패킷만 드롭됨
+   - B) PMTUD 실패: 경로 MTU를 알려주는 ICMP가 차단되어 큰 패킷만 드롭됨
    - C) TCP 혼잡 제어 알고리즘 불일치
    - D) 소켓 수신 버퍼 부족
 
@@ -94,15 +94,15 @@ RSS는 플로우를 해시로 수신 큐에 배정하고, IRQ affinity는 어떤
 
 <summary>정답 보기</summary>
 
-**정답: B) PMTUD 실패 — 경로 MTU를 알려주는 ICMP가 차단되어 큰 패킷만 드롭됨**
+**정답: B) PMTUD 실패: 경로 MTU를 알려주는 ICMP가 차단되어 큰 패킷만 드롭됨**
 
 **설명:**
 DF가 설정되면 IPv4 라우터는 큰 패킷을 단편화할 수 없으며 일반적으로 ICMP "fragmentation needed"를 반환합니다. 이 피드백을 차단하면 PMTUD가 실패해 블랙홀이 생길 수 있습니다. IPv6 라우터는 단편화하지 않으며 ICMPv6 "Packet Too Big"을 사용합니다. 문제에 제시한 증거가 없다면 핸드셰이크 후 정체는 단서일 뿐 확정 증거가 아니고, 탐색으로 복구할 수도 있습니다.
 </details>
 
 7. 네트워크 문제 진단 시 권장되는 순서는?
-   - A) 위에서 아래로 — 애플리케이션부터 NIC까지 순서대로
-   - B) 드롭 카운터부터 — `conntrack -S`의 `insert_failed`, `tc -s qdisc`의 `dropped`, `ethtool -S`의 NIC 드롭을 먼저 확인
+   - A) 위에서 아래로: 애플리케이션부터 NIC까지 순서대로
+   - B) 드롭 카운터부터: `conntrack -S`의 `insert_failed`, `tc -s qdisc`의 `dropped`, `ethtool -S`의 NIC 드롭을 먼저 확인
    - C) 항상 `tcpdump`로 패킷을 먼저 캡처
    - D) CPU 사용률부터 확인
 
@@ -110,7 +110,7 @@ DF가 설정되면 IPv4 라우터는 큰 패킷을 단편화할 수 없으며 �
 
 <summary>정답 보기</summary>
 
-**정답: B) 드롭 카운터부터 — `conntrack -S`의 `insert_failed`, `tc -s qdisc`의 `dropped`, `ethtool -S`의 NIC 드롭을 먼저 확인**
+**정답: B) 드롭 카운터부터: `conntrack -S`의 `insert_failed`, `tc -s qdisc`의 `dropped`, `ethtool -S`의 NIC 드롭을 먼저 확인**
 
 **설명:**
 이 counter는 조사할 후보를 가리킬 뿐 진단을 완성하지는 않습니다. 영향을 받은 flow·시간대와 변화를 연결하고, conntrack은 `insert_failed`가 포화에만 발생하는 값이 아니므로 count/max·kernel log도 확인합니다. 집계 counter에는 무관한 트래픽이 포함될 수 있습니다. 로컬 counter가 그대로여도 원격 drop·인증·애플리케이션 실패를 배제할 수 없습니다. 증상에 따라 `ss -tin`의 RTT·cwnd, 반환 오류와 나머지 경로의 증거를 확인합니다.

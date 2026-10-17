@@ -22,7 +22,7 @@
 
 2. 전환 설계에서 가장 먼저 결정해야 하는 항목은?
    - A) SigV4 서명을 라이브러리로 할지 egress proxy로 할지
-   - B) 규정이 종단간 암호화 또는 워크로드 간 상호 인증을 요구하는지 — 이에 따라 HTTPS listener + IAM Auth와 TLS Passthrough가 갈리고 이후 설계 대부분이 종속된다
+   - B) 규정이 종단간 암호화 또는 워크로드 간 상호 인증을 요구하는지: 이에 따라 HTTPS listener + IAM Auth와 TLS Passthrough가 갈리고 이후 설계 대부분이 종속된다
    - C) Lattice 서비스 개수와 예상 비용
    - D) 노드 Security Group의 prefix list 설정
 
@@ -30,7 +30,7 @@
 
 <summary>정답 보기</summary>
 
-**정답: B) 규정이 종단간 암호화 또는 워크로드 간 상호 인증을 요구하는지 — 이에 따라 HTTPS listener + IAM Auth와 TLS Passthrough가 갈리고 이후 설계 대부분이 종속된다**
+**정답: B) 규정이 종단간 암호화 또는 워크로드 간 상호 인증을 요구하는지: 이에 따라 HTTPS listener + IAM Auth와 TLS Passthrough가 갈리고 이후 설계 대부분이 종속된다**
 
 **설명:**
 이 결정은 조직의 보안 요구에 달려 있습니다. TLS Passthrough에서는 Lattice가 SigV4 호출자를 인증하거나 L7 라우팅을 위해 HTTP 필드를 검사할 수 없으며, auth policy는 anonymous principal로 제한됩니다. 따라서 인증된 workload 신원·인가는 endpoint/application에서 설계해야 하고 mTLS·SPIRE를 포함할 수 있습니다. HTTPS listener는 서명 방식 결정으로 이어집니다. 설계를 선택하기 전에 보안 담당자와 이 경계를 합의합니다.

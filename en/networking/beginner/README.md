@@ -228,4 +228,4 @@ External courses are optional. [Bootlin's Linux networking course](https://bootl
 
 When reading CentOS 7 material or older `ifconfig`-based lessons, separate the concepts from the execution environment. This course uses `ip`, `ss`, and the distributions identified above.
 
-**Start:** [Lesson 1 — Linux and the CLI](01-linux-cli.md)
+**Start:** [Lesson 1: Linux and the CLI](01-linux-cli.md)

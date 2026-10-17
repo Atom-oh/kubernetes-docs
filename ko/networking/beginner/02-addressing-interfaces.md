@@ -345,11 +345,11 @@ unset LAB_IF MGMT_IF LAB_IP LAB_CIDR LAB_PEER LAB_LINK_WAS NET_NOTE_DIR
 
 2026년 9월 14–15일에 확인한 1차 문서입니다.
 
-- [Ubuntu 24.04 `ip-address` 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man8/ip-address.8.html), [`ip-link`](https://manpages.ubuntu.com/manpages/noble/man8/ip-link.8.html), [`ip-route`](https://manpages.ubuntu.com/manpages/noble/man8/ip-route.8.html), [`ip-neighbour`](https://manpages.ubuntu.com/manpages/noble/man8/ip-neighbour.8.html) — 명령 문법, 연결 경로, 주소 수명, 이웃 상태.
-- [Ubuntu 24.04 `ping` 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man8/ping.8.html) — 제한된 echo 시험과 인터페이스 선택.
-- [IETF RFC 1122](https://www.rfc-editor.org/rfc/rfc1122.html), [RFC 4632](https://www.rfc-editor.org/rfc/rfc4632.html), [RFC 826](https://www.rfc-editor.org/rfc/rfc826.html) — 인터넷 계층, CIDR, IPv4 주소 해석.
-- [IETF RFC 2131](https://www.rfc-editor.org/rfc/rfc2131.html), [RFC 1034](https://www.rfc-editor.org/rfc/rfc1034.html) — DHCP와 DNS의 서로 다른 책임.
-- [IETF RFC 5737](https://www.rfc-editor.org/rfc/rfc5737.html), [RFC 3849](https://www.rfc-editor.org/rfc/rfc3849.html) — 문서용 예약 주소 대역.
-- [IETF RFC 4291](https://www.rfc-editor.org/rfc/rfc4291.html), [RFC 4861](https://www.rfc-editor.org/rfc/rfc4861.html) — IPv6 주소와 이웃 탐색.
+- [Ubuntu 24.04 `ip-address` 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man8/ip-address.8.html), [`ip-link`](https://manpages.ubuntu.com/manpages/noble/man8/ip-link.8.html), [`ip-route`](https://manpages.ubuntu.com/manpages/noble/man8/ip-route.8.html), [`ip-neighbour`](https://manpages.ubuntu.com/manpages/noble/man8/ip-neighbour.8.html): 명령 문법, 연결 경로, 주소 수명, 이웃 상태.
+- [Ubuntu 24.04 `ping` 매뉴얼](https://manpages.ubuntu.com/manpages/noble/man8/ping.8.html): 제한된 echo 시험과 인터페이스 선택.
+- [IETF RFC 1122](https://www.rfc-editor.org/rfc/rfc1122.html), [RFC 4632](https://www.rfc-editor.org/rfc/rfc4632.html), [RFC 826](https://www.rfc-editor.org/rfc/rfc826.html): 인터넷 계층, CIDR, IPv4 주소 해석.
+- [IETF RFC 2131](https://www.rfc-editor.org/rfc/rfc2131.html), [RFC 1034](https://www.rfc-editor.org/rfc/rfc1034.html): DHCP와 DNS의 서로 다른 책임.
+- [IETF RFC 5737](https://www.rfc-editor.org/rfc/rfc5737.html), [RFC 3849](https://www.rfc-editor.org/rfc/rfc3849.html): 문서용 예약 주소 대역.
+- [IETF RFC 4291](https://www.rfc-editor.org/rfc/rfc4291.html), [RFC 4861](https://www.rfc-editor.org/rfc/rfc4861.html): IPv6 주소와 이웃 탐색.
 
 [퀴즈](../../quizzes/networking/beginner/02-addressing-interfaces-quiz.md)를 풀고 [영구 네트워크 설정](03-persistent-configuration.md)으로 이어갑니다.

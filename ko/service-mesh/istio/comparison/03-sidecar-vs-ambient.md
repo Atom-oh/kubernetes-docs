@@ -22,7 +22,7 @@
 
 먼저 필요한 기능을 정한 다음 전체 오류, 지연, identity, 운영 조건을 워크로드 예산과 비교합니다. Cilium 열은 문서화된 기능만 설명하며, 이번 실험에서는 Cilium을 배포하지 않았습니다.
 
-## 1. mTLS — 실험 결과 (EKS 1.36.2, Istio 1.30.2)
+## 1. mTLS: 실험 결과 (EKS 1.36.2, Istio 1.30.2)
 
 원문은 전용 `mesh-isolated-test` 클러스터와 VPC, Amazon Linux 2023 arm64 m7g.xlarge 노드, 세 메시 네임스페이스의 STRICT PeerAuthentication을 기술합니다. 컨트롤 플레인과 워커 Kubernetes 버전은 1.36.2로 보고되었습니다.
 
@@ -49,7 +49,7 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 
 보고된 실패·성공 대조군은 검사한 경로의 STRICT 적용과 일치합니다. 모든 경로, 프로토콜, 출발지와 우회 가능성을 검증한 것은 아닙니다. Ambient는 Istio CNI의 네트워크 네임스페이스 트래픽 캡처와 TCP 15008 HBONE을 사용하고, sidecar 모드는 워크로드 프록시를 사용합니다. 적용 경계는 [mTLS 가이드](../security/01-mtls.md)를 참고하세요.
 
-## 2. NetworkPolicy — 실험 결과
+## 2. NetworkPolicy: 실험 결과
 
 보고서는 VPC CNI NetworkPolicy 적용과 `v1.3.5-eksbuild.3` 에이전트를 기술합니다. 전체 애드온 설정·버전, policy endpoint와 노드 상태 근거는 보관되어 있지 않습니다. 과거 결과에 기록된 버전을 유지합니다.
 
@@ -57,7 +57,7 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 
 | 모드 | 결과 |
 |---|---|
-| sidecar | ✅ 200 OK — 영향 없음 |
+| sidecar | ✅ 200 OK (영향 없음) |
 | ambient-L4 | ❌ 차단 (`i/o timeout`) |
 | ambient-L7 | ❌ 차단 (`i/o timeout`) |
 
@@ -66,8 +66,8 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 
 | 모드 | 결과 |
 |---|---|
-| ambient-L4 | ✅ 200 OK — 정상화 |
-| ambient-L7 | ✅ 200 OK — 정상화 |
+| ambient-L4 | ✅ 200 OK (정상화) |
+| ambient-L7 | ✅ 200 OK (정상화) |
 
 
 이는 검사한 경로에서 HBONE 포트가 중요함을 보여 줍니다. 모든 기존 규칙이 sidecar에서 그대로 작동하거나 15008 허용만으로 최소 권한 ambient 정책이 완성된다는 뜻은 아닙니다. 출발지 선택자, waypoint 경로, DNS/컨트롤 플레인 egress와 CNI 구현에 따라 달라집니다. 네트워크 정책에는 터널 포트가 보이므로 내부 트래픽의 identity·포트 정책도 설계해야 합니다.
@@ -76,7 +76,7 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 
 현재 AWS 문서는 Deployment, StatefulSet, DaemonSet, Job 등 컨트롤러가 소유한 Pod를 지원하며, 독립 Pod에는 추가 제약이 있습니다. Cilium도 표준 NetworkPolicy와 자체 정책 CRD를 지원합니다. 다른 구현의 동작을 이 실험 결과만으로 추론하면 안 됩니다.
 
-## 3. Latency — 실험 결과 (T5)
+## 3. Latency: 실험 결과 (T5)
 
 보고서는 같은 Graviton 클러스터에서 Fortio 요청 설정 200 QPS, 60초, 연결 16개로 정상 상태를 측정했고, 케이스마다 성공 요청 12,000건을 기록했다고 설명합니다:
 
@@ -93,7 +93,7 @@ plaintext-client -> ambient-L7 echo:8080  => EOF
 부록의 Fortio 명령은 시간 기반입니다. 요청 QPS × 실행 시간은 명목 부하이며 정확한 호출 수를 보장하지 않습니다. 각 실행의 DurationHistogram.Count와 RetCodes를 사용하세요. 재실행과 증거 보관 없이 과거 버전 표시를 갱신하지 않습니다.
 
 
-## 4. 무중단 롤아웃 — 503 실험 결과 (핵심 관측)
+## 4. 무중단 롤아웃: 503 실험 결과 (핵심 관측)
 
 ### 배경
 
@@ -129,7 +129,7 @@ Pod 종료, endpoint 전파, 애플리케이션·프록시 drain, 연결 풀과 
   Code 200 : 58301 (97.3 %)
   Code 503 : 1528 (2.6 %)
   Code  -1 : 84  (0.1 %)
-  (집계 59,913건; 명목 부하 60,000건; 평균 지연 50.4ms — 다른 두 모드는 약 2~3ms)
+  (집계 59,913건; 명목 부하 60,000건; 평균 지연 50.4ms, 다른 두 모드는 약 2~3ms)
 
 ```
 
@@ -165,7 +165,7 @@ Pod 종료, endpoint 전파, 애플리케이션·프록시 drain, 연결 풀과 
 
 종료 유예에는 preStop과 컨테이너 종료 시간이 포함됩니다. 10초 sleep은 시간을 제공할 뿐 모든 endpoint 갱신의 완료를 확인하지 않습니다. 릴리스 1.30.2 코드에서 EXIT_ON_ZERO_ACTIVE_CONNECTIONS는 최소 drain 기간 이후 downstream listener 연결 통계를 1초마다 확인합니다. 이 분기는 일반 terminationDrainDuration 타이머를 사용하지 않습니다. Kubernetes 종료 제한과 관측 오류도 영향을 줍니다. 즉시 종료나 무조건 30초 이내 drain으로 설명하면 안 됩니다.
 
-### retry 완화의 위험 — 실험 결과 (T2)
+### retry 완화의 위험: 실험 결과 (T2)
 
 원문은 주문 서비스 replica 6개, collector, client, 20 requests/s 설정, 300초 실행, 3회 retry와 per-try timeout 2초의 VirtualService를 설명합니다. 다음 값은 **보고된 값이며 독립적으로 재현하지 않았습니다**:
 
@@ -232,7 +232,7 @@ Ztunnel 베타는 이 장에 보고한 측정에 포함되지 않았습니다.
 
 세 메시 네임스페이스의 공존 보고는 유용하지만 모든 혼합 배포, 워크로드와 정책 조합의 안전성을 입증하지 않습니다.
 
-### L4-only의 한계 — canary 배포는 가능한가?
+### L4-only의 한계: canary 배포는 가능한가?
 
 ztunnel은 HTTP 요청별 헤더·경로 라우팅, 미러링과 HTTP retry를 제공하지 않습니다. **Istio가 관리하는** ingress gateway는 ambient backend에 전달하기 전에 L7 결정을 할 수 있습니다. Gateway API는 API이며 반드시 Envoy Deployment를 뜻하지 않습니다. GatewayClass/controller 구현에 따라 달라집니다.
 
@@ -526,7 +526,7 @@ spec:
 
 새 예시는 보고된 Fortio 버전에 검토 중 확인한 registry digest를 고정하고 HTTP 포트를 명시합니다. 과거 보고서는 digest와 모든 프로토콜 설정을 보관하지 않았으므로 기존 실행도 같은 바이트였다는 증거는 아닙니다. Fortio 이미지는 scratch 기반입니다. 내부 sh/curl/cat을 가정하지 말고 Fortio binary를 사용하세요.
 
-### D. mTLS — PeerAuthentication (§1)
+### D. mTLS: PeerAuthentication (§1)
 
 ```yaml
 apiVersion: security.istio.io/v1

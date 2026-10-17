@@ -926,7 +926,7 @@ Cilium implements efficient load balancing using eBPF:
 - **Scalability**: Supports large-scale services and endpoints
 - **Connection Tracking Optimization**: Efficient state management
 
-![Diagram of Cilium eBPF-based load balancing: a packet Pod A sends to a Service IP passes through a four-step eBPF pipeline in the kernel — packet intercept, service map lookup, backend selection, packet forwarding — and is delivered straight to Pod B without kube-proxy.](../../.gitbook/assets/en-networking-cilium-networking-concepts-14.png)
+![Diagram of Cilium eBPF-based load balancing: a packet Pod A sends to a Service IP passes through a four-step eBPF pipeline in the kernel (packet intercept, service map lookup, backend selection, packet forwarding) and is delivered straight to Pod B without kube-proxy.](../../.gitbook/assets/en-networking-cilium-networking-concepts-14.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-14.html)
 

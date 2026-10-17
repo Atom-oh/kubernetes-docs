@@ -8,7 +8,7 @@ BucketPolicy나 RolePolicyAttachment라는 별도 CRD는 이 버전에서 사용
 
 이 IAM Role의 trust는 EC2용입니다. Kubernetes Pod용 IRSA/Pod Identity role이 아니며 EC2에 쓰려면 InstanceProfile 연결도 별도로 필요합니다. 데이터 읽기 policy는 ACK controller를 운영하는 데 필요한 전체 policy가 아닙니다.
 
-## Bucket — bucket-app-data
+## Bucket: bucket-app-data
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
@@ -41,7 +41,7 @@ spec:
     \n    }\n  ]\n}"
 ```
 
-## Policy — policy-app-data-read
+## Policy: policy-app-data-read
 
 ```yaml
 apiVersion: iam.services.k8s.aws/v1alpha1
@@ -61,7 +61,7 @@ spec:
     \n    }\n  ]\n}"
 ```
 
-## Role — role-app-role
+## Role: role-app-role
 
 ```yaml
 apiVersion: iam.services.k8s.aws/v1alpha1

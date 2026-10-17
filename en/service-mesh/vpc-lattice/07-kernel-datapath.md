@@ -1,4 +1,4 @@
-# Kernel Datapath — How Link-Local Interception Actually Works
+# Kernel Datapath: How Link-Local Interception Actually Works
 
 > **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
 > **Last Updated**: October 12, 2026
@@ -23,7 +23,7 @@
 
 This document bridges [document 04](./04-networking-basics.md) and the [Linux Kernel section](../../kernel/README.md). General kernel concepts live in [Kernel Features Behind Containers](../../kernel/01-container-primitives.md) and [Kernel Networking Stack](../../kernel/02-network-stack.md); here we cover only **what is specific to a Lattice configuration**.
 
-## A Packet's Journey — Without a Sidecar
+## A Packet's Journey: Without a Sidecar
 
 First the clean TO-BE state: no Envoy, with the application signing directly.
 
@@ -54,7 +54,7 @@ Three things to note.
 
 **③ netfilter hooks are evaluated inside the Pod net namespace.** That is what makes the collision in the next section possible.
 
-## The Collision — Envoy iptables Interception
+## The Collision: Envoy iptables Interception
 
 ### What a sidecar mesh installs
 
@@ -98,7 +98,7 @@ A restricted proxy can return an error for an unknown destination; an allow-any/
 
 **Diagnosis path**: when Lattice calls fail, check whether the Envoy sidecar logs contain the affected requests to `169.254.171.x`. This establishes proxy traversal. Correlate the returned error, route/outbound policy and any changes to signed fields before attributing failure to interception; a configured proxy can also forward the request successfully.
 
-### Registering the exception — what, and where
+### Registering the exception: what, and where
 
 | Mesh | Setting |
 |---|---|
@@ -114,13 +114,13 @@ Ranges to exclude:
 
 ### Four practical pitfalls
 
-**① Missing IPv6** — excluding only IPv4 leads to intermittent failures on dual-stack clusters. If a client receives an AAAA record and connects over IPv6, that path is still intercepted. **The symptom being "occasional failure" makes it hard to diagnose**, because it depends on DNS response ordering and the client's address selection.
+**① Missing IPv6**: excluding only IPv4 leads to intermittent failures on dual-stack clusters. If a client receives an AAAA record and connects over IPv6, that path is still intercepted. **The symptom being "occasional failure" makes it hard to diagnose**, because it depends on DNS response ordering and the client's address selection.
 
-**② Annotations apply only to new Pods** — a Pod-level annotation is read by the init container at Pod creation. Existing Pods must be restarted.
+**② Annotations apply only to new Pods**: a Pod-level annotation is read by the init container at Pod creation. Existing Pods must be restarted.
 
-**③ Rule ordering** — netfilter evaluates a chain's rules **top to bottom** and acts on the first match. The exception `RETURN` rule must come **before** the `REDIRECT` rule. Standard mesh init containers get this order right, but if you add rules yourself you must verify it.
+**③ Rule ordering**: netfilter evaluates a chain's rules **top to bottom** and acts on the first match. The exception `RETURN` rule must come **before** the `REDIRECT` rule. Standard mesh init containers get this order right, but if you add rules yourself you must verify it.
 
-**④ Confusion with other link-local services** — Pod Identity Agent is `169.254.170.23` and IMDS is `169.254.169.254`. Lattice is `169.254.171.0/24`. **These are different ranges inside the same `169.254.0.0/16`**, so excluding the whole `169.254.0.0/16` also removes IMDS and Pod Identity traffic from mesh interception. That may be what you want (usually that traffic should not be intercepted), but **state the intent and decide deliberately.**
+**④ Confusion with other link-local services**: Pod Identity Agent is `169.254.170.23` and IMDS is `169.254.169.254`. Lattice is `169.254.171.0/24`. **These are different ranges inside the same `169.254.0.0/16`**, so excluding the whole `169.254.0.0/16` also removes IMDS and Pod Identity traffic from mesh interception. That may be what you want (usually that traffic should not be intercepted), but **state the intent and decide deliberately.**
 
 ### Verification
 
@@ -160,7 +160,7 @@ graph TB
     BYPASS["passes through, no redirect"]
 
     APP3 --> OUT2 --> R1
-    R1 -->|"yes — the proxy's own traffic"| BYPASS --> OUTNODE
+    R1 -->|"yes: the proxy's own traffic"| BYPASS --> OUTNODE
     R1 -->|"no"| R2
     R2 -->|"yes"| PRX
     R2 -->|"no"| BYPASS
@@ -170,7 +170,7 @@ graph TB
     style OUTNODE fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-This is the structure of the aws-samples reference implementation — the init container uses iptables to redirect **only traffic bound for `169.254.171.0/24`** to local port 8080, and the proxy attaches the SigV4 signature on the way out.
+This is the structure of the aws-samples reference implementation: the init container uses iptables to redirect **only traffic bound for `169.254.171.0/24`** to local port 8080, and the proxy attaches the SigV4 signature on the way out.
 
 ### Why the UID-based exception is mandatory
 
@@ -197,7 +197,7 @@ The logically required order is:
 
 **Rule 2 must precede rule 4** for Lattice traffic to reach the signing proxy rather than Envoy. When two init containers each install rules, the order depends on execution order.
 
-Fortunately the mesh side can be verified — for Istio it is confirmed from source below.
+Fortunately the mesh side can be verified; for Istio it is confirmed from source below.
 
 ### Istio's actual rule order (confirmed from source)
 
@@ -214,15 +214,15 @@ The order in which Istio's `istio-iptables` (`tools/istio-iptables/pkg/capture/r
 
 **The key finding**: the excluded-CIDR `RETURN` (4) is placed **before** the catch-all `REDIRECT` (6). So putting the Lattice range in Istio's `traffic.sidecar.istio.io/excludeOutboundIPRanges` works correctly on its own, with no ordering adjustment needed.
 
-And the **proxy UID `RETURN` (3) comes even before the excluded CIDRs** — meaning Istio itself uses the same UID-based loop prevention described in this document.
+And the **proxy UID `RETURN` (3) comes even before the excluded CIDRs**, meaning Istio itself uses the same UID-based loop prevention described in this document.
 
 ::: warning Needs verification
-The order above was confirmed from **Istio's** source. **The actual rule order App Mesh's init container installs has not been validated** — it is a separate implementation, and App Mesh support ended on September 30, 2026.
+The order above was confirmed from **Istio's** source. **The actual rule order App Mesh's init container installs has not been validated**; it is a separate implementation, and App Mesh support ended on September 30, 2026.
 
 Also, a configuration that **adds a signing proxy init container** has two init containers each installing rules, so ordering depends on the `initContainers` array order. For that combination, **dump the real rules with `iptables -t nat -L -n -v` in your target environment** and verify.
 :::
 
-## conntrack — Behavior in This Configuration
+## conntrack: Behavior in This Configuration
 
 ### What Lattice traffic leaves in conntrack
 
@@ -271,12 +271,12 @@ As a diagnosis order:
 
 | Observation | Suspect |
 |---|---|
-| `tcpdump` shows no outbound packet | Inside the Pod — routing, interception, DNS |
+| `tcpdump` shows no outbound packet | Inside the Pod: routing, interception, DNS |
 | Outbound visible but no response | SG (check both directions), routing, the Lattice side |
 | Response arrives but the application does not get it | Socket buffers, or a problem on the interception path |
 | Drop counters rising | conntrack or qdisc ([Kernel Networking Stack](../../kernel/02-network-stack.md)) |
 
-## Per-Node Divergence — "It Only Fails on Some Nodes"
+## Per-Node Divergence: "It Only Fails on Some Nodes"
 
 This symptom narrows to a few causes.
 
@@ -285,7 +285,7 @@ This symptom narrows to a few causes.
 | **Node SGs differ** | Whether the prefix list inbound rule is applied per node group |
 | **Kernel versions differ** | With `kernel-default` AMIs, 6.1 and 6.18 can coexist depending on replacement timing ([Kernel Tuning](../../kernel/03-eks-node-tuning.md)) |
 | **conntrack settings differ** | Depending on ConfigMap state at bootstrap time |
-| **Clock synchronization** | `x-amz-date` 5-minute skew — 403s on specific nodes only ([document 03](./03-auth-flow.md)) |
+| **Clock synchronization** | `x-amz-date` 5-minute skew: 403s on specific nodes only ([document 03](./03-auth-flow.md)) |
 | **Whether Pods were restarted** | Annotation changes not applied to old Pods |
 
 **The "some nodes" pattern is itself diagnostic information.** Total failure points to configuration or authentication; node-scoped failure points to node state divergence.
@@ -302,14 +302,14 @@ This symptom narrows to a few causes.
 
 ## References
 
-- [Linux Kernel Overview](../../kernel/README.md) — general background for this document
-- [Kernel Features Behind Containers](../../kernel/01-container-primitives.md) — namespaces, netfilter, conntrack
-- [Kernel Networking Stack](../../kernel/02-network-stack.md) — packet path and observation points
-- [EKS Node Kernel Tuning](../../kernel/03-eks-node-tuning.md) — conntrack configuration paths
-- [aws-samples — IAM authentication with VPC Lattice and EKS](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
-- [AWS Gateway API Controller — Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
-- [iptables-extensions(8) — owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
-- [istio/istio — tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go) — primary source for the rule ordering
+- [Linux Kernel Overview](../../kernel/README.md): general background for this document
+- [Kernel Features Behind Containers](../../kernel/01-container-primitives.md): namespaces, netfilter, conntrack
+- [Kernel Networking Stack](../../kernel/02-network-stack.md): packet path and observation points
+- [EKS Node Kernel Tuning](../../kernel/03-eks-node-tuning.md): conntrack configuration paths
+- [aws-samples: IAM authentication with VPC Lattice and EKS](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
+- [AWS Gateway API Controller: Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
+- [iptables-extensions(8): owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
+- [istio/istio: tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go): primary source for the rule ordering
 
 
 Diagnostic commands require the named utilities and permissions in the selected container/net namespace. An unsigned HTTP rejection is not proof of failed IAM configuration. Use the reviewed signing path for authorization tests, and redact credentials from verbose logs.

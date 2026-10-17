@@ -14,7 +14,7 @@
 
 Kubeflow는 독립적으로 릴리스되는 ML 컴포넌트로 구성됩니다. Community Distribution은 리비전과 공통 서비스를 묶습니다. 일부 워크로드는 CRD를 사용하지만 다른 작업은 애플리케이션 API, 데이터베이스, 오브젝트 스토리지를 사용합니다. 대시보드는 UI 진입점이며 모든 컴포넌트의 실행기나 스케줄러가 아닙니다.
 
-### CNCF 졸업 — 2026년 8월 17일
+### CNCF 졸업: 2026년 8월 17일
 
 [CNCF 발표](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/)는 졸업, 독립 보안 감사, 공식 거버넌스를 설명합니다. 이는 프로젝트 성숙도의 평가 근거입니다. 개별 배포의 위협 모델링, 테넌트 격리 시험, 규제 준수 검토를 대신하지는 않습니다.
 

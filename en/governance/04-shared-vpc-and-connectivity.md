@@ -2,7 +2,7 @@
 
 > **Last Updated**: September 13, 2026
 
-## 1. Shared VPC Owner/Participant Permissions — A Common Misunderstanding
+## 1. Shared VPC Owner/Participant Permissions: A Common Misunderstanding
 
 When adopting a Shared VPC (sharing subnets across Accounts via AWS RAM), the most common misconception is that "sharing means both sides see things equally." In reality, owner and participant permissions differ significantly, resource by resource.
 
@@ -24,7 +24,7 @@ Two practical implications follow from this table.
 
 **VPC/subnet tags are not shared with participants.** Test discovery using the actual Load Balancer Controller version, mode, and IAM permissions. Explicit subnet-ID annotations are a predictable option; this does not mean every discovery mode or version must fail.
 
-Security groups only support Allow rules, and rules from multiple SGs are merged — a broad Allow in one SG can't be offset by a more restrictive central SG. The adjustable defaults are 60 rules per SG (inbound/outbound × IPv4/IPv6, each) and 5 SGs per ENI, and there's a constraint of **"rule count × SGs per ENI ≤ 1,000."** Firewall Manager's common SG policies consume this same budget.
+Security groups only support Allow rules, and rules from multiple SGs are merged; a broad Allow in one SG can't be offset by a more restrictive central SG. The adjustable defaults are 60 rules per SG (inbound/outbound × IPv4/IPv6, each) and 5 SGs per ENI, and there's a constraint of **"rule count × SGs per ENI ≤ 1,000."** Firewall Manager's common SG policies consume this same budget.
 
 Participant ENI/SG quotas are counted against that participant Account. The defaults of 5,000 ENIs/AZ and 2,500 SGs/Region can still bottleneck each Account and are adjustable. Assess capacity separately from SG authorization.
 
@@ -52,10 +52,10 @@ Bottleneck order depends on the workload. Separate default and applied quotas, a
 When comparing "one minimal configuration that pools all workloads into a single Shared VPC" against "multiple dedicated Shared VPCs, one per workload group," there's a perspective that's easy to miss.
 
 - **Only one VPC attachment is allowed for the same TGW–VPC pair.** A VPC can connect to up to 5 TGWs. Default attachment capacity is up to 100 Gbps each direction/7.5 MPPS per AZ; discuss additional capacity with SA/TAM.
-- In the minimal configuration, all workloads' on-prem/external traffic converges onto this single attachment — you share not just blast radius, but **bandwidth and PPS ceilings** too.
+- In the minimal configuration, all workloads' on-prem/external traffic converges onto this single attachment; you share not just blast radius, but **bandwidth and PPS ceilings** too.
 - The per-workload-group configuration gives each VPC its own attachment, splitting that throughput ceiling. **Being able to split the TGW throughput ceiling is the real practical reason to choose "multiple dedicated Shared VPCs."**
 
-Ultimately, the choice between minimal and per-group configurations is better understood as a **trade-off between "central network pipeline change risk" and "VPC-level shared failure risk,"** rather than "cost vs. isolation." Both depend on the quality of the central pipeline, so the actual deciding factor is measuring "how fast can we detect and recover from a bad central route change" under both options. A hybrid — minimal configuration for general workloads, dedicated configuration for workloads with heavy on-prem/external connectivity, split by trust zone — is also worth considering.
+Ultimately, the choice between minimal and per-group configurations is better understood as a **trade-off between "central network pipeline change risk" and "VPC-level shared failure risk,"** rather than "cost vs. isolation." Both depend on the quality of the central pipeline, so the actual deciding factor is measuring "how fast can we detect and recover from a bad central route change" under both options. A hybrid (minimal configuration for general workloads, dedicated configuration for workloads with heavy on-prem/external connectivity, split by trust zone) is also worth considering.
 
 ### Key Transit Gateway quotas
 
@@ -86,11 +86,11 @@ For VPC CNI custom networking, use AZ IDs to map owner subnets to participant no
 | Private NAT | Not supported |
 | Scaling delay | Up to 60 minutes (cross-AZ traffic may occur during that window) |
 | Zonal → Regional migration | Connection resets, IP changes possible |
-| Constrained AZs | **Not supported** — check in advance |
+| Constrained AZs | **Not supported** (check in advance) |
 
-Regional NAT Gateway offers better IP/connection limits than Zonal — Regional allows 32 IPs per AZ (Zonal: 8), and each IP gains 55,000 additional concurrent connections to the same destination (dest IP + port + protocol). This has a direct benefit for patterns where a **small number of destinations receive a large volume of connections** (e.g., payment processors, shipping integrations), by preventing port exhaustion.
+Regional NAT Gateway offers better IP/connection limits than Zonal: Regional allows 32 IPs per AZ (Zonal: 8), and each IP gains 55,000 additional concurrent connections to the same destination (dest IP + port + protocol). This has a direct benefit for patterns where a **small number of destinations receive a large volume of connections** (e.g., payment processors, shipping integrations), by preventing port exhaustion.
 
-You can choose Automatic mode (AWS manages IP/AZ scaling, recommended) or Manual mode (you manage it directly). **If you need a fixed egress IP registered on an external partner's allowlist, you need Manual mode or IPAM public IPv4 allocation policy integration.** Regional NAT Gateway route tables support TGW as a valid route, so central TGW inspection and Regional NAT can be combined — they're not mutually exclusive.
+You can choose Automatic mode (AWS manages IP/AZ scaling, recommended) or Manual mode (you manage it directly). **If you need a fixed egress IP registered on an external partner's allowlist, you need Manual mode or IPAM public IPv4 allocation policy integration.** Regional NAT Gateway route tables support TGW as a valid route, so central TGW inspection and Regional NAT can be combined; they're not mutually exclusive.
 
 ## 5. TGW + Network Firewall (Central Inspection)
 
@@ -101,7 +101,7 @@ There are two ways to centrally inspect east-west traffic.
 
 Network Firewall **doesn't support asymmetric routing.** If the TGW owner Account and the firewall owner Account differ, you'll run into constraints around delete permissions and visibility.
 
-From AWS's perspective, there's no condition that makes central inspection mandatory. **A hybrid — distributed controls within a trust zone, central enforcement only between trust zones or on regulated paths** — is reasonable in most cases.
+From AWS's perspective, there's no condition that makes central inspection mandatory. **A hybrid (distributed controls within a trust zone, central enforcement only between trust zones or on regulated paths)** is reasonable in most cases.
 
 ## 6. AWS APIs and VPC Endpoints
 
@@ -111,7 +111,7 @@ Check endpoint and endpoint-policy support by service, Region, and feature. A de
 
 A Route 53 Profile can be associated with a Private Hosted Zone, Resolver rules (forwarding/system), a DNS Firewall rule group, an **interface VPC endpoint**, and VPC Resolver query logging config. A VPC can have only one Profile attached.
 
-**The priority rule is the part most likely to be misunderstood.** It's not "local VPC always wins" — it's **"the more specific name wins."**
+**The priority rule is the part most likely to be misunderstood.** It's not "local VPC always wins"; it's **"the more specific name wins."**
 
 | DNS query | Profile rule | VPC local rule | Rule applied |
 |---|---|---|---|
@@ -123,7 +123,7 @@ As the second row shows, **a more specific name registered on the central Profil
 
 ## 8. VPC-to-VPC Connectivity Options
 
-These aren't mutually exclusive — they're patterns chosen per edge based on traffic requirements.
+These aren't mutually exclusive; they're patterns chosen per edge based on traffic requirements.
 
 | Option | Suits | Constraints |
 |---|---|---|

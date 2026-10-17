@@ -4,7 +4,7 @@
 
 ## 1. Account Partitioning: What Should the Basis Be?
 
-The most common candidates for how to split Accounts are team, brand, domain, and environment (production/non-production). But **an Account should be judged by the security requirements, service quotas, cost/ownership, and lifecycle that related workloads share — not by the team's name.** Teams change frequently through reorgs, while domains (business capabilities) are relatively stable Account candidates.
+The most common candidates for how to split Accounts are team, brand, domain, and environment (production/non-production). But **an Account should be judged by the security requirements, service quotas, cost/ownership, and lifecycle that related workloads share, not by the team's name.** Teams change frequently through reorgs, while domains (business capabilities) are relatively stable Account candidates.
 
 | Option | Configuration | Pros | Cons |
 |---|---|---|---|
@@ -15,7 +15,7 @@ The most common candidates for how to split Accounts are team, brand, domain, an
 
 In practice, starting with a Hybrid portfolio and deciding shared vs. dedicated with a reproducible decision matrix each time is the common pattern (see [Decision Framework](./06-decision-framework-and-poc.md) for how to design that matrix).
 
-Treat brand as metadata if only cost separation is needed, and promote it to an Account axis only when there's a strong boundary — regulatory, independent quota, permissions, or carve-out potential. A workload that aggregates data across domains and serves it via API can be a candidate for its own Workload Account if it has independent SLO, quota, data access, and lifecycle. **A separate Account doesn't necessarily mean a separate EKS cluster.**
+Treat brand as metadata if only cost separation is needed, and promote it to an Account axis only when there's a strong boundary: regulatory, independent quota, permissions, or carve-out potential. A workload that aggregates data across domains and serves it via API can be a candidate for its own Workload Account if it has independent SLO, quota, data access, and lifecycle. **A separate Account doesn't necessarily mean a separate EKS cluster.**
 
 > **Carve-out planning**: Subnet sharing is supported within one Organization. Prepare an independent network migration before leaving. Existing resources may continue after unsharing, but new creation and managed-service replacement/scaling can be affected. Unsharing does not immediately delete or stop every resource.
 
@@ -30,7 +30,7 @@ Once Account partitioning is decided, you need to decide which Account's EKS clu
 
 In the second pattern, distinguish cluster-account IAM roles from access to another Account’s data. With Shared VPC, the participant creating EKS is the **Cluster Account**, which may differ from the Workload Account owning only a database or queue. Select Pod Identity target-role chaining, service resource policies, or IRSA as appropriate.
 
-### EKS-related quotas — where there's headroom, and where you'll actually hit a wall
+### EKS-related quotas: where there's headroom, and where you'll actually hit a wall
 
 | Quota | Default | Adjustable |
 |---|---|---|
@@ -73,7 +73,7 @@ The 100-group limit applies to a **specific permission-set/Account combination**
 
 ## 4. Workload (Application/Automation) Access to AWS
 
-The items below aren't mutually exclusive options — they're patterns you combine depending on the execution environment and whether cross-account access is needed.
+The items below aren't mutually exclusive options; they're patterns you combine depending on the execution environment and whether cross-account access is needed.
 
 | Method | Configuration | Suits |
 |---|---|---|

@@ -1,4 +1,4 @@
-# Part 9: Kafka on EKS Benchmark — Reported Results and Reproduction Limits
+# Part 9: Kafka on EKS Benchmark (Reported Results and Reproduction Limits)
 
 > **Reported experiment**: September 2, 2026, 02:07–02:36 UTC\
 > **Review updated**: September 12, 2026\
@@ -272,7 +272,7 @@ subtracting disk averages from NIC averages with different windows.
 | | Alone | During the replay | Test |
 |---|---|---|---|
 | Producer throughput | 103.36 MiB/s (105,843 rec/s) | **57.37 MiB/s** (58,746 rec/s) | E0 → E4 |
-| Producer avg / p50 | — / — | 294.06 ms / 18 ms | E4 |
+| Producer avg / p50 | - / - | 294.06 ms / 18 ms | E4 |
 | Producer p95 / p99 / p99.9 / max | p99 82 ms | **1,587 / 2,147 / 2,425 / 2,569 ms** | E0 → E4 |
 | Consumer throughput (mean of full 5-s intervals vs fetch-time rate) | 438.6 MiB/s | **299.62 MiB/s** of fetch time, 295,726 msg/s (288.79 MiB/s overall incl. the 3,666 ms rebalance; 29,297.33 MiB / 30,000,466 msgs in 101.4 s wall) | E3 → E4 |
 | Per broker (produce window) | write 60.4–67.4 MiB/s (page cache absorbing the rest), read 0 | write 39.4–47.2 + read 28.6–37.7 MiB/s, tx 92.6–106.0 MiB/s, CPU 0.36–0.42 cores | E0 → E4 |

@@ -5,7 +5,7 @@
 
 ## What This Section Covers
 
-- What containers and Kubernetes actually run on top of — the kernel features behind namespaces, cgroups, netfilter, and conntrack
+- What containers and Kubernetes actually run on top of: the kernel features behind namespaces, cgroups, netfilter, and conntrack
 - The path a packet travels inside the kernel from a Pod to the NIC, and what you can observe and tune at each point
 - How kernel parameters affect workload performance and stability on EKS nodes, and what to change versus what to leave alone
 
@@ -47,13 +47,13 @@ If you came here to diagnose a network problem, **document 2 plus the network se
 
 ## Related Documents
 
-- [Linux Basics](../basics/01-linux-basics.md) / [Linux Operations](../basics/02-linux-advanced.md) — commands and basic operations
-- [Container Technology](../basics/03-container-technology.md) — container runtimes and image layers
-- [eBPF Fundamentals](../basics/05-ebpf-fundamentals.md) — eBPF program types and uses
-- [Network Fundamentals, Part 1](../basics/06-network-fundamentals-part1.md) — from layer models to the cloud
-- [Pod Network Benchmark](../networking/06-pod-network-benchmark.md) — measurements corresponding to this section's theory
-- [Resource Optimization](../ops/10-resource-optimization.md) — request/limit design
-- [VPC Lattice Kernel Datapath](../service-mesh/vpc-lattice/07-kernel-datapath.md) — the kernel layer of link-local interception
+- [Linux Basics](../basics/01-linux-basics.md) / [Linux Operations](../basics/02-linux-advanced.md): commands and basic operations
+- [Container Technology](../basics/03-container-technology.md): container runtimes and image layers
+- [eBPF Fundamentals](../basics/05-ebpf-fundamentals.md): eBPF program types and uses
+- [Network Fundamentals, Part 1](../basics/06-network-fundamentals-part1.md): from layer models to the cloud
+- [Pod Network Benchmark](../networking/06-pod-network-benchmark.md): measurements corresponding to this section's theory
+- [Resource Optimization](../ops/10-resource-optimization.md): request/limit design
+- [VPC Lattice Kernel Datapath](../service-mesh/vpc-lattice/07-kernel-datapath.md): the kernel layer of link-local interception
 
 ## A Note on Accuracy
 

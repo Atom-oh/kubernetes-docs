@@ -7,7 +7,7 @@ This quiz tests your understanding of the legacy Training Operator's framework-s
 1. What was the fundamental architectural approach of the original (v1) Training Operator, consolidated in 2021?
    - A) A single CRD that all frameworks shared, with framework detection at runtime
    - B) A separate CRD (e.g., `PyTorchJob`, `TFJob`, `MPIJob`) per ML framework, each with its own controller implementing that framework's distributed-training semantics
-   - C) No CRDs at all — jobs were submitted directly via a `kubectl run` container with training args baked into the image
+   - C) No CRDs at all; jobs were submitted directly via a `kubectl run` container with training args baked into the image
    - D) A single `TrainingJob` CRD with a `framework` field but one shared controller
 
 <details>
@@ -16,7 +16,7 @@ This quiz tests your understanding of the legacy Training Operator's framework-s
 **Answer: B) A separate CRD (e.g., `PyTorchJob`, `TFJob`, `MPIJob`) per ML framework, each with its own controller implementing that framework's distributed-training semantics**
 
 **Explanation:**
-The v1 Training Operator provided one CRD per framework — `PyTorchJob`, `TFJob`, `MPIJob`, and others — each backed by its own controller that understood that specific framework's distributed-training conventions (e.g., PyTorch's rank/env-var model vs. TensorFlow's `TF_CONFIG`).
+The v1 Training Operator provided one CRD per framework (`PyTorchJob`, `TFJob`, `MPIJob`, and others), each backed by its own controller that understood that specific framework's distributed-training conventions (e.g., PyTorch's rank/env-var model vs. TensorFlow's `TF_CONFIG`).
 
 </details>
 
@@ -48,7 +48,7 @@ The `PyTorchJob` controller injected `MASTER_ADDR`, `RANK`, and `WORLD_SIZE` int
 **Answer: B) It replaces per-framework CRDs with a unified `TrainJob` API plus reusable `TrainingRuntime`/`ClusterTrainingRuntime` templates**
 
 **Explanation:**
-Instead of one CRD and controller per framework, Trainer v2 introduces `TrainJob` (what to run) and `TrainingRuntime`/`ClusterTrainingRuntime` (how to run it — a reusable, framework-specific execution template), decoupling job submission from distributed-launch mechanics.
+Instead of one CRD and controller per framework, Trainer v2 introduces `TrainJob` (what to run) and `TrainingRuntime`/`ClusterTrainingRuntime` (how to run it: a reusable, framework-specific execution template), decoupling job submission from distributed-launch mechanics.
 
 </details>
 
@@ -56,7 +56,7 @@ Instead of one CRD and controller per framework, Trainer v2 introduces `TrainJob
    - A) `TrainJob`
    - B) `ClusterTrainingRuntime`
    - C) Both are always created fresh per run
-   - D) Neither — a `PyTorchJob` is created instead
+   - D) Neither; a `PyTorchJob` is created instead
 
 <details>
 <summary>Show Answer</summary>
@@ -138,7 +138,7 @@ Distributed training workers need to find each other reliably; a headless Servic
 **Answer:** With compatible templates, runtime, status conditions and metric collection, Katib can create a TrainJob for each Trial, injecting that Trial's chosen hyperparameter values as script arguments, and reads back the reported metrics to guide the search.
 
 **Explanation:**
-Katib itself doesn't need to know about distributed-launch mechanics — it stamps out a `TrainJob` per Trial against a runtime the platform team already defined, keeping the hyperparameter-search logic decoupled from the training execution mechanics.
+Katib itself doesn't need to know about distributed-launch mechanics; it stamps out a `TrainJob` per Trial against a runtime the platform team already defined, keeping the hyperparameter-search logic decoupled from the training execution mechanics.
 
 </details>
 

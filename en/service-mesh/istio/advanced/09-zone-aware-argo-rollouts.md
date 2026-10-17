@@ -36,7 +36,7 @@ Splitting that global budget into `minAvailable: 1` per zone changes protection.
 | Per-zone Rollouts and zone-filtered Services, shown here | Yes | Not supplied by locality settings | A selected zone's empty pool remains empty |
 | Separate health-aware entry routing before zonal gateways/pipelines | Can be designed | Requires its own policy/controller and tests | Extra routing, capacity, identity and recovery coordination |
 
-Do not claim all three properties—strict zonal filtering, independent per-zone hashes and transparent failover—by adding a DestinationRule alone. A separate entry-routing design is outside this deployment blueprint and has not been production-tested here.
+Do not claim all three properties (strict zonal filtering, independent per-zone hashes and transparent failover) by adding a DestinationRule alone. A separate entry-routing design is outside this deployment blueprint and has not been production-tested here.
 
 ## Architecture Overview
 

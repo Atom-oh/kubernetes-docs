@@ -5,7 +5,7 @@
 
 ## What This Document Covers
 
-- Which kernel features combine to make a container — and the fact that there is no "container" kernel object
+- Which kernel features combine to make a container, and the fact that there is no "container" kernel object
 - What actually changed operationally in the cgroup v1 → v2 move (especially OOM diagnosis)
 - Where netfilter and conntrack sit in Kubernetes networking
 
@@ -25,11 +25,11 @@ A container is **a convention built by combining several independent kernel feat
 
 Two practical conclusions follow from it being a combination.
 
-**First, isolation is not all-or-nothing.** Some namespaces can be shared while others are isolated. A Kubernetes Pod is exactly that — containers in the same Pod **share** the network and IPC namespaces while mount and PID namespaces are usually **separate**. That is why containers in a Pod can reach each other over `localhost` (shared network) but cannot see each other's filesystems (separate mounts).
+**First, isolation is not all-or-nothing.** Some namespaces can be shared while others are isolated. A Kubernetes Pod is exactly that: containers in the same Pod **share** the network and IPC namespaces while mount and PID namespaces are usually **separate**. That is why containers in a Pod can reach each other over `localhost` (shared network) but cannot see each other's filesystems (separate mounts).
 
 **Second, isolation you forget becomes a silent hole.** The kernel does not know "make a container," so if the runtime does not apply a seccomp profile, the workload simply runs without one. This is why container security is a matter of runtime and policy configuration.
 
-## Namespaces — What Can It See
+## Namespaces: What Can It See
 
 A namespace **separates the "name space" of a kernel resource**, so the same name or number refers to different things in different namespaces.
 
@@ -55,7 +55,7 @@ What follows:
 - **netfilter rules are also per net namespace** → this is why a sidecar mesh's init container can install iptables rules inside the Pod's net namespace, and why those rules do not affect the whole node (see [VPC Lattice Kernel Datapath](../service-mesh/vpc-lattice/07-kernel-datapath.md))
 - Routing tables are separate too → `ip route` inside a Pod is not the node's
 
-### user namespaces — why they were not the default for so long
+### user namespaces: why they were not the default for so long
 
 A user namespace maps container UIDs/GIDs to a different host range. This reduces the privileges of many escaped operations but does **not guarantee** containment against a kernel vulnerability or other privilege-escalation path.
 
@@ -77,7 +77,7 @@ The feature gate is `UserNamespacesSupport`, applying to kubelet and kube-apiser
 Those maturity stages are upstream Kubernetes. **Whether EKS offers that version, and whether your container runtime and CSI drivers support idmapped mounts, are separate questions.** Confirm the EKS supported version and your runtime/storage combination before adopting.
 :::
 
-## cgroups — How Much Can It Use
+## cgroups: How Much Can It Use
 
 cgroups (control groups) **measure and limit resource use for a group of processes.** This is where Kubernetes `requests`/`limits` ultimately land.
 
@@ -91,15 +91,15 @@ cgroups (control groups) **measure and limit resource use for a group of process
 | **Pressure information** | None | **PSI** (`cpu.pressure`, `memory.pressure`, `io.pressure`) |
 | **CPU limit representation** | `cpu.cfs_quota_us` / `cpu.cfs_period_us` | `cpu.max` (one file: "quota period") |
 | **Memory limit representation** | `memory.limit_in_bytes` | `memory.max`, plus `memory.high` (soft pressure) |
-| **AL2023 EKS AMI** | — | **Default** |
+| **AL2023 EKS AMI** | - | **Default** |
 
-Where v1's "separate tree per controller" actually hurt was **coordinating memory reclaim with IO.** When memory runs low and page cache must be dropped, that reclaim itself causes disk IO — and in v1 the two controllers knew nothing about each other. v2's unified tree handles both in the same hierarchy.
+Where v1's "separate tree per controller" actually hurt was **coordinating memory reclaim with IO.** When memory runs low and page cache must be dropped, that reclaim itself causes disk IO, and in v1 the two controllers knew nothing about each other. v2's unified tree handles both in the same hierarchy.
 
 ### October 2026 Update: cgroup v1 deprecation moving forward
 
 The Kubernetes blog summarized the state of the cgroup v1→v2 transition ([The Shift to cgroup v2 in Kubernetes](https://kubernetes.io/blog/2026/10/06/kubernetes-cgroups-v2-shift/), 2026-10-06). cgroup v2 management has been stable since v1.25 and cgroup v1 support has been in maintenance mode since v1.31; **starting with v1.35, the kubelet's `failCgroupV1` defaults to `true`, so the kubelet no longer starts on a cgroup v1 node by default.** Setting `failCgroupV1: false` in the kubelet configuration is a temporary override; full removal is tracked in KEP-5573. On kubeadm clusters, the SystemVerification preflight check treats cgroup v1 as an error with kubelet v1.35 or later (a warning on older kubelets). If you are on a release older than v1.35, migrate every Linux node to cgroup v2 before upgrading.
 
-### The biggest operational change — OOM diagnosis
+### The biggest operational change: OOM diagnosis
 
 Here is the fact you must know about cgroup v2.
 
@@ -107,7 +107,7 @@ Here is the fact you must know about cgroup v2.
 
 So even when the memory the application actually holds (anon/RSS) is far below the limit, reading many files piles up page cache and pushes `memory.current` to the limit.
 
-There is an important distinction here. **Page cache is reclaimable.** In the normal case the kernel hits the limit, drops page cache to make room, and no OOM occurs. The problem arises **when reclaim cannot keep up with allocation** — that is when the OOM killer acts.
+There is an important distinction here. **Page cache is reclaimable.** In the normal case the kernel hits the limit, drops page cache to make room, and no OOM occurs. The problem arises **when reclaim cannot keep up with allocation**. That is when the OOM killer acts.
 
 Practical implications:
 
@@ -122,15 +122,15 @@ Practical implications:
 | File/value | Meaning |
 |---|---|
 | `memory.current` | Current usage (includes page cache) |
-| `memory.stat` → `anon` | Anonymous memory — what the application actually holds |
+| `memory.stat` → `anon` | Anonymous memory (what the application actually holds) |
 | `memory.stat` → `file` | Page cache |
 | `memory.events` → `oom` / `oom_kill` | OOM occurrences / kills |
 | `memory.events` → `high` / `max` | Times the soft/hard limit was hit |
 | `memory.pressure` (PSI) | **Fraction of time stalled** by memory pressure |
 
-**PSI is especially useful** because it reports **pressure (how long you waited as a result)** rather than usage (how much you use). A rising `some avg10` in `memory.pressure` means time is being spent on reclaim — something a usage graph alone will not show.
+**PSI is especially useful** because it reports **pressure (how long you waited as a result)** rather than usage (how much you use). A rising `some avg10` in `memory.pressure` means time is being spent on reclaim, something a usage graph alone will not show.
 
-### CPU limits and throttling — why low utilization can still be slow
+### CPU limits and throttling: why low utilization can still be slow
 
 A CPU limit is a **bandwidth limit.** `cpu.max` of `20000 100000` means "up to 20ms per 100ms period."
 
@@ -143,10 +143,10 @@ It is worse with multiple threads. With 4 threads running concurrently, a 20ms q
 **Directions for response** (see [Resource Optimization](../ops/10-resource-optimization.md) for request/limit design):
 
 - Raise or remove the limit (trading off node stability)
-- Align the application's thread count with the limit (JVM `-XX:ActiveProcessorCount`, Go `GOMAXPROCS`, etc.) — **a mismatch between the CPU count the container perceives and its actual quota is often the root cause**
+- Align the application's thread count with the limit (JVM `-XX:ActiveProcessorCount`, Go `GOMAXPROCS`, etc.); **a mismatch between the CPU count the container perceives and its actual quota is often the root cause**
 - Check actual stall time with `cpu.pressure` PSI
 
-## Privileges — What Can It Do
+## Privileges: What Can It Do
 
 Even with isolation (namespaces) and limits (cgroups) in place, reducing the **actions** a process can take is a separate layer.
 
@@ -157,11 +157,11 @@ Even with isolation (namespaces) and limits (cgroups) in place, reducing the **a
 | **LSM** (AppArmor/SELinux) | Control file and network access by policy | `securityContext.appArmorProfile`, etc. |
 | **no_new_privs** | Block privilege escalation via setuid binaries | `allowPrivilegeEscalation: false` |
 
-The three layers answer different questions — capabilities ask "do you hold this privilege," seccomp asks "may you call this syscall," LSM asks "may you touch this object." **One alone is insufficient; layering them is the norm.**
+The three layers answer different questions: capabilities ask "do you hold this privilege," seccomp asks "may you call this syscall," LSM asks "may you touch this object." **One alone is insufficient; layering them is the norm.**
 
 `CAP_NET_ADMIN` deserves a mention. A sidecar mesh's init container needs it to install iptables rules, which is why adopting a mesh raises the security-review question "why does this Pod hold NET_ADMIN?"
 
-## netfilter and conntrack — The Reality of Kubernetes Networking
+## netfilter and conntrack: The Reality of Kubernetes Networking
 
 ### netfilter
 
@@ -171,11 +171,11 @@ Main hook points:
 
 | Hook | When |
 |---|---|
-| `PREROUTING` | Packet arrives, **before** the routing decision — the DNAT point |
+| `PREROUTING` | Packet arrives, **before** the routing decision (the DNAT point) |
 | `INPUT` | Packets bound for local processes |
 | `FORWARD` | Packets passing through |
 | `OUTPUT` | Packets leaving locally |
-| `POSTROUTING` | **After** routing, just before leaving — the SNAT/MASQUERADE point |
+| `POSTROUTING` | **After** routing, just before leaving (the SNAT/MASQUERADE point) |
 
 Where these hooks are used in Kubernetes:
 
@@ -184,7 +184,7 @@ Where these hooks are used in Kubernetes:
 - **NetworkPolicy**: CNI inserts rules at `FORWARD` and elsewhere (Calico's iptables dataplane)
 - **Sidecar mesh traffic interception**: REDIRECT at `OUTPUT`/`PREROUTING` inside the Pod net namespace
 
-### kube-proxy modes — iptables, IPVS, nftables
+### kube-proxy modes: iptables, IPVS, nftables
 
 Service implementation comes in three flavors, and **the landscape shifted in 2025–2026.**
 
@@ -196,12 +196,12 @@ Service implementation comes in three flavors, and **the landscape shifted in 20
 
 How to read this:
 
-- **In large clusters, the iptables-mode bottleneck is rule count and update cost.** The more Services and Endpoints, the longer kube-proxy's sync takes — and during that window the rules are not current.
+- **In large clusters, the iptables-mode bottleneck is rule count and update cost.** The more Services and Endpoints, the longer kube-proxy's sync takes, and during that window the rules are not current.
 - **If you run IPVS, you need a migration plan.** Upstream plans default disablement in 1.40 and removal in 1.43; confirm the maintained [KEP-5495 schedule](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md) when planning. The recommended replacement is nftables mode.
 - AL2023 nodes run kernel 6.x, so they satisfy the nftables mode kernel requirement.
-- Even with nftables GA, **the default is still iptables** — you must switch explicitly.
+- Even with nftables GA, **the default is still iptables**; you must switch explicitly.
 
-### conntrack — the most frequent source of incidents
+### conntrack: the most frequent source of incidents
 
 For netfilter to do NAT, it must **remember connections.** If you rewrote the address on the way out, you have to undo it on the way back. The kernel table holding that memory is `nf_conntrack`.
 
@@ -219,7 +219,7 @@ In kube-proxy netfilter modes, Service NAT relies on connection tracking. Howeve
 
 **One EKS-specific caution.** kube-proxy also manages conntrack values, and **EKS ships a `kube-proxy-config` ConfigMap by default that takes precedence over command-line arguments.** So you can raise the sysctl on the node and have kube-proxy set it back. The correct path is to adjust `conntrack.maxPerCore`/`conntrack.min` in the ConfigMap and restart the kube-proxy DaemonSet.
 
-Raising `nf_conntrack_max` **increases node memory use.** Each entry costs memory, so you cannot raise it without bound — it must match node size. Concrete settings are in [EKS Node Kernel Tuning](./03-eks-node-tuning.md).
+Raising `nf_conntrack_max` **increases node memory use.** Each entry costs memory, so you cannot raise it without bound; it must match node size. Concrete settings are in [EKS Node Kernel Tuning](./03-eks-node-tuning.md).
 
 ::: warning Verify the active kube-proxy configuration
 A historical Bottlerocket report shows node sysctl values being overwritten by kube-proxy. When `--config` is used, edit the **active configuration** (`conntrack.maxPerCore` and `conntrack.min`), not CLI flags that it overrides. Setting both to 0 intentionally delegates the ceiling to node sysctl; confirm behavior against the deployed add-on/version and verify the resulting node value. Preserve the node-memory budget.
@@ -235,23 +235,23 @@ There are approaches that reduce the load itself.
 - Cilium can replace kube-proxy/netfilter functions with eBPF maps; measure its own tracking/map pressure and any remaining netfilter path.
 - Connection reuse reduces connection churn; verify both established capacity and timeout behavior.
 
-## overlayfs — How Image Layers Are Composed
+## overlayfs: How Image Layers Are Composed
 
-Container images being layered, and those layers appearing as one filesystem, is **union mount** — specifically `overlayfs`.
+Container images being layered, and those layers appearing as one filesystem, is **union mount**, specifically `overlayfs`.
 
 Three parts:
 
 | Layer | Role |
 |---|---|
-| **lowerdir** | Read-only — image layers (several can stack) |
-| **upperdir** | Writable — the container's changes |
+| **lowerdir** | Read-only: image layers (several can stack) |
+| **upperdir** | Writable: the container's changes |
 | **merged** | The combined view the container sees |
 
 The operationally important property is **copy-up.** Modifying a file from lowerdir copies **the entire file to upperdir first**, then modifies it. So:
 
 - **Modifying a large file slightly still pays the full copy cost.** Changing one byte of a 1GB file copies 1GB
 - Heavy writes inside a container consume node disk (ephemeral storage)
-- **Write-heavy paths belong on volumes** — emptyDir, PVC, and so on
+- **Write-heavy paths belong on volumes** (emptyDir, PVC, and so on)
 
 ## Summary
 
@@ -266,13 +266,13 @@ Next: [Kernel Networking Stack](./02-network-stack.md) walks the full path a pac
 
 ## References
 
-- [Control Group v2 — Linux kernel documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html)
+- [Control Group v2: Linux kernel documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html)
 - [PSI - Pressure Stall Information](https://docs.kernel.org/accounting/psi.html)
-- [namespaces(7) — Linux manual](https://man7.org/linux/man-pages/man7/namespaces.7.html)
+- [namespaces(7): Linux manual](https://man7.org/linux/man-pages/man7/namespaces.7.html)
 - [KEP-127: Support User Namespaces](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/README.md)
-- [bottlerocket-os/bottlerocket#4221 — conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
+- [bottlerocket-os/bottlerocket#4221: conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
 - [NFTables mode for kube-proxy (Kubernetes Blog)](https://kubernetes.io/blog/2025/02/28/nftables-kube-proxy/)
 - [KEP-5495: Deprecate IPVS mode in kube-proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)
-- [Running kube-proxy in nftables Mode — EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)
+- [Running kube-proxy in nftables Mode: EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)
 - [Increase nf_conntrack_max limit on EKS nodes](https://repost.aws/knowledge-center/eks-increase-nf-conntrack-max-limit)
 - [Amazon EKS-Optimized Amazon Linux 2023 AMIs](https://aws.amazon.com/blogs/containers/amazon-eks-optimized-amazon-linux-2023-amis-now-available/)

@@ -1,7 +1,7 @@
 # EKS Spot 운영 적용 실험과 결과 판정
 
 > **마지막 업데이트**: 2026년 9월 14일
-> **실측 상태**: 부분 실측 완료 — 정상 부하, drain, 단일 Spot 회수, PDB 차단, 수동 On-Demand 전환. 7절에 원시 기록과 결과를 정리했습니다.
+> **실측 상태**: 부분 실측 완료(정상 부하, drain, 단일 Spot 회수, PDB 차단, 수동 On-Demand 전환). 7절에 원시 기록과 결과를 정리했습니다.
 > **적용 범위**: EKS Auto Mode, 자체 운영 Karpenter, EKS Managed Node Group의 중단 허용 워크로드
 
 Spot 도입은 할인율보다 **노드가 회수되는 동안 서비스 SLO와 데이터 정합성을 유지하는지**로 판단합니다. On-Demand 기준선을 먼저 측정하고, 같은 부하에서 Spot 혼합 구성의 장애 대응과 실효 비용을 비교합니다. 1–6절의 제안 수치와 기간은 **실험 설계 예시**입니다. 7절의 수치는 별도로 표시한 실제 측정값이며 AWS 보장값이 아닙니다.
@@ -10,7 +10,7 @@ Spot 도입은 할인율보다 **노드가 회수되는 동안 서비스 SLO와 
 
 [원문 실험 기록과 워크로드별 적용](#phase-aware-workloads)에는 제공된 Go 컨트롤러 원문과 Deployment·StatefulSet·DaemonSet·Argo Rollouts의 적용 범위를 정리했습니다.
 
-현재 판정은 **운영 확대 보류 — 회수·전환 구간의 오류와 버전 호환성·중단 처리 보완이 필요**입니다. 합성 HTTP 워크로드로 현재 구성을 측정했으며, 실제 업무 서비스나 지원 버전 구성의 무중단 운영을 입증한 결과는 아닙니다.
+현재 판정은 **운영 확대 보류: 회수·전환 구간의 오류와 버전 호환성·중단 처리 보완이 필요**입니다. 합성 HTTP 워크로드로 현재 구성을 측정했으며, 실제 업무 서비스나 지원 버전 구성의 무중단 운영을 입증한 결과는 아닙니다.
 
 ## 1. 먼저 확인할 동작과 한계
 
@@ -111,7 +111,7 @@ Guaranteed를 유지하면 리소스 설정과 QoS 조건을 보존할 수 있�
 
 ### 원문 실험 기록과 워크로드별 적용 {#phase-aware-workloads}
 
-> **첨부 원문**: [Go 컨트롤러 기반 자동 Phase-Aware Resize — Deployment / StatefulSet / DaemonSet / Argo Rollouts][N1]. Go 코드, Dockerfile, RBAC·배포 매니페스트와 당시 EKS 관측 표가 있는 Notion 문서입니다. 원문 열람에는 Notion 공유 권한이 필요할 수 있습니다.
+> **첨부 원문**: [Go 컨트롤러 기반 자동 Phase-Aware Resize: Deployment / StatefulSet / DaemonSet / Argo Rollouts][N1]. Go 코드, Dockerfile, RBAC·배포 매니페스트와 당시 EKS 관측 표가 있는 Notion 문서입니다. 원문 열람에는 Notion 공유 권한이 필요할 수 있습니다.
 
 원문의 핵심은 **시작 CPU와 운영 CPU를 달리하면서 Guaranteed를 계속 유지하는 것**입니다. 축소가 실제로 적용되면 낮아진 requests로 추가 Pod 배치 여지가 생길 수 있고, steady CPU limit는 사용 상한을 유지합니다. 원문이 설명하는 noisy-neighbor 완화와 bin-packing 개선은 확인할 설계 효과이며, 아래 CPU·QoS 표만으로 성능 개선률이나 노드 밀도·비용 개선을 측정했다고 판단하지 않습니다.
 
@@ -464,7 +464,7 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 |---|---|---|
 | FIS action 시작 | 14:06:40.998 | FIS `startTime` |
 | 중단 통지 | 14:06:41 | EventBridge event `time` |
-| FIS `completed` | 14:06:41.755 | FIS `endTime` — 실제 서비스 회복과 다름 |
+| FIS `completed` | 14:06:41.755 | FIS `endTime` (실제 서비스 회복과 다름) |
 | kubelet node shutdown / 기존 Pod 종료 | 14:08:45 | `KubeletNotReady`, `TerminationByKubelet` |
 | 대체 NodeClaim 생성 | 14:08:48.212 | Karpenter 컨트롤러 로그 |
 | 대체 Node Ready | 14:09:23 | Node condition |
@@ -493,8 +493,8 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 ## 8. 관련 문서와 근거
 
 - [스케일링 전략](./06-scaling-strategies.md)
-- [Kubernetes 버전 로드맵 — MAP와 단계별 CPU resize](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-2026년-4월)
-- [Go Phase-Aware Resize 원문 — 4종 워크로드 적용과 보고된 실험 결과 (Notion)][N1]
+- [Kubernetes 버전 로드맵: MAP와 단계별 CPU resize](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-2026년-4월)
+- [Go Phase-Aware Resize 원문: 4종 워크로드 적용과 보고된 실험 결과 (Notion)][N1]
 - [이벤트 용량 계획](./12-event-capacity-planning.md)
 - [FinOps 비용 관리](./13-finops-cost-platform.md)
 - [트러블슈팅 플레이북](./16-troubleshooting-playbook.md)

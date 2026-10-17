@@ -83,7 +83,7 @@ These are capacity examples, not an exhaustive current catalog or ranking. Check
    - p4d.24xlarge: 8x NVIDIA A100 GPU, 320GB GPU memory
    - p3.16xlarge: 8x NVIDIA V100 GPU, 128GB GPU memory
    - g5.xlarge~g5.48xlarge: NVIDIA A10G GPU, up to 8 GPUs
-   - g4dn.12xlarge: 4 T4 GPUs; g4dn.16xlarge: 1 T4 GPU — size and GPU count do not increase monotonically
+   - g4dn.12xlarge: 4 T4 GPUs; g4dn.16xlarge: 1 T4 GPU (size and GPU count do not increase monotonically)
 
 2. **CPU Optimized Instances**:
    - c6i.32xlarge: 128 vCPU, 256GB memory
@@ -111,7 +111,7 @@ AI/ML workloads require high-performance storage:
 2. **Amazon EFS**:
    - Useful when multiple nodes need access to shared data
    - Performance mode: General Purpose is recommended; previous-generation Max I/O is incompatible with Elastic throughput
-   - Throughput modes: Elastic, Provisioned and Bursting — compare workload needs, pricing and limits
+   - Throughput modes: Elastic, Provisioned and Bursting; compare workload needs, pricing and limits
 
 3. **Amazon FSx for Lustre**:
    - High-performance parallel file system

@@ -518,7 +518,7 @@ For upgrades, review release notes and plugin compatibility, then validate versi
 
 ## Verification Scope
 
-Both original guides—2,279 Korean and 2,226 English lines—their 143-line quizzes and 118 unique code blocks were read. Checks included official chart rendering, five actual loader file includes, eight catalog entities plus one invalid input, TypeScript/eight policy cases, two template-string cases and a small TechDocs build.
+Both original guides (2,279 Korean and 2,226 English lines), their 143-line quizzes and 118 unique code blocks were read. Checks included official chart rendering, five actual loader file includes, eight catalog entities plus one invalid input, TypeScript/eight policy cases, two template-string cases and a small TechDocs build.
 
 No full Backstage app/image, PostgreSQL/OIDC, GitHub/ArgoCD/Kubernetes/AWS API, real template action, deployment, load or HA test was performed. Placeholders and operator prerequisites are explicit.
 

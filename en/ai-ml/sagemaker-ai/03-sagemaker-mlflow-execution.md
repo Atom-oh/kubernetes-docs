@@ -162,6 +162,6 @@ SageMaker reduces Training Job and MLflow operational work, while artifact reten
 - [EKS Pod Identity behavior and restrictions](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
 - [Kubernetes Job failure and termination](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
 
-Previous: [Part 2 — Synthetic PII data and tokenization](02-pii-data-tokenization.md)
+Previous: [Part 2: Synthetic PII data and tokenization](02-pii-data-tokenization.md)
 
-Next: [Part 4 — Unified Studio governance](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
+Next: [Part 4: Unified Studio governance](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)

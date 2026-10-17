@@ -2,18 +2,18 @@
 
 > **Last Updated**: October 12, 2026
 
-The Landing Zone, Account/IAM, EKS, VPC, and Data/Security boundaries covered so far should each be judged independently — but in practice, they all need to be reproducible from a single decision matrix. This document covers how to design that matrix, and how to validate the parts that require real measurement through PoCs.
+The Landing Zone, Account/IAM, EKS, VPC, and Data/Security boundaries covered so far should each be judged independently, but in practice, they all need to be reproducible from a single decision matrix. This document covers how to design that matrix, and how to validate the parts that require real measurement through PoCs.
 
 ## 1. Easily-Missed Decision Factors
 
 No matter how carefully you design boundaries, Accounts, and network structure, you can't judge whether that design is actually correct without the following.
 
-### CUJ-level RTO/RPO targets — the biggest gap
+### CUJ-level RTO/RPO targets: the biggest gap
 
 Without RTO (Recovery Time Objective)/RPO (Recovery Point Objective) targets defined per CUJ (critical user journey), you simply can't judge:
 
 - Whether an A/B EKS Runtime failover is fast enough (the sum of DNS TTL + edge propagation + Route 53 propagation + health-detection delay)
-- Which data ownership model — centralized or workload-owned — is actually recoverable (whether snapshot copy time counts against RTO)
+- Which data ownership model, centralized or workload-owned, is actually recoverable (whether snapshot copy time counts against RTO)
 - Whether the difference between 2-AZ and 3-AZ matters (whether SLOs hold in an N-1 state)
 - Whether the added cost of cell-level isolation is justified
 
@@ -52,7 +52,7 @@ Validate cross-AZ attribution by joining Flow Logs, ENI/IP mappings, Kubernetes 
 
 ## 2. Designing the Decision Matrix
 
-The options covered across these documents — independent boundary judgment, Hybrid Account portfolios, Shared+Dedicated EKS, mixed trust-zone VPCs, Hybrid data, Hybrid key ownership — all set **"reproducible via a decision matrix"** as their condition for validity. Without a decision matrix, no PoC result can be converted into a standard.
+The options covered across these documents (independent boundary judgment, Hybrid Account portfolios, Shared+Dedicated EKS, mixed trust-zone VPCs, Hybrid data, Hybrid key ownership) all set **"reproducible via a decision matrix"** as their condition for validity. Without a decision matrix, no PoC result can be converted into a standard.
 
 Recommended columns for the decision matrix:
 
@@ -116,7 +116,7 @@ Some items can't be finalized on paper and require real measurement. The PoCs be
 
 ## 4. Relationship to AI-Driven Operations
 
-This framework isn't limited to topology choices like Account/VPC/EKS — it can be extended into an operating principle applied to every ADR (Architecture Decision Record). Execution paths for automating infrastructure changes generally fall into:
+This framework isn't limited to topology choices like Account/VPC/EKS; it can be extended into an operating principle applied to every ADR (Architecture Decision Record). Execution paths for automating infrastructure changes generally fall into:
 
 - **IaC-only**: Changes only through human-authored, human-reviewed IaC. Highest reproducibility, but slow for urgent/exploratory work.
 - **AI-assisted IaC**: An agent generates IaC change proposals, executed through the existing review → plan → apply process. Reduces authoring cost, but carries the risk of large generated diffs and drift from actual state.

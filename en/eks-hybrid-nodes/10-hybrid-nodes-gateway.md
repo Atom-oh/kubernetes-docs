@@ -475,7 +475,7 @@ aws eks create-pod-identity-association --region "$AWS_REGION" \
   --no-disable-session-tags
 ```
 
-IRSA remains an alternative with an actual OIDC trust policy and annotation on the rendered ServiceAccount, managed through a reviewed patch/overlay; a value ignored by Helm cannot establish IRSA. Avoid attaching route-write permissions broadly to all node workloads. The binary's EC2 metadata lookups for node identity and its SDK credential chain are separate concerns—do not disable metadata blindly without providing and verifying the required node identity inputs.
+IRSA remains an alternative with an actual OIDC trust policy and annotation on the rendered ServiceAccount, managed through a reviewed patch/overlay; a value ignored by Helm cannot establish IRSA. Avoid attaching route-write permissions broadly to all node workloads. The binary's EC2 metadata lookups for node identity and its SDK credential chain are separate concerns; do not disable metadata blindly without providing and verifying the required node identity inputs.
 
 Auto Mode forwarding uses `NodeClass.spec.advancedNetworking.sourceDestCheck: DisabledPrimaryENI`. Managed/self-managed node bootstrap must disable source/destination check on the intended primary ENI using separately scoped node/operator permissions. `ModifyNetworkInterfaceAttribute` and cluster/role/add-on creation are not part of the gateway workload policy above.
 

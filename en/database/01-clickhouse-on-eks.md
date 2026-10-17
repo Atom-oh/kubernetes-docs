@@ -1,22 +1,22 @@
 # ClickHouse on EKS Measured Benchmark
 
-> **Recorded Test Environment**: ClickHouse 24.8 (as measured — the 24.x series is now end-of-life, see the version note under Test environment), Kubernetes 1.36 (Amazon EKS)
+> **Recorded Test Environment**: ClickHouse 24.8 (as measured; the 24.x series is now end-of-life, see the version note under Test environment), Kubernetes 1.36 (Amazon EKS)
 > **Last Updated**: October 12, 2026
 
-Every benchmark report says "ClickHouse is fast" — but it's surprisingly hard to find numbers measured on **an ordinary EKS node with a default gp3 volume**. This document loads 100 million Kubernetes log rows into a deliberately modest environment — a 4 vCPU node and a default-configuration gp3 100 GiB volume — and measures what happens. These are reported historical results. This page does not include the complete original query_log, every exact query or cache state, so identical numbers are not guaranteed. Preserve exact SQL, settings, versions and raw results for the new-run examples below.
+Every benchmark report says "ClickHouse is fast", but it's surprisingly hard to find numbers measured on **an ordinary EKS node with a default gp3 volume**. This document loads 100 million Kubernetes log rows into a deliberately modest environment (a 4 vCPU node and a default-configuration gp3 100 GiB volume) and measures what happens. These are reported historical results. This page does not include the complete original query_log, every exact query or cache state, so identical numbers are not guaranteed. Preserve exact SQL, settings, versions and raw results for the new-run examples below.
 
 ![Architecture diagram showing the ingest path from the numbers_mt generator into the MergeTree table, and the query path through primary-index pruning, the bloom filter skip index, and column reads served from either the page cache or gp3 directly.](../.gitbook/assets/en-database-01-clickhouse-on-eks-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-database-01-clickhouse-on-eks-0.html)
 
-## TL;DR — measured results
+## TL;DR: measured results
 
 | Measurement | Result |
 |-------------|--------|
 | Ingest (in-server generate + insert) | 100M rows / 106.7 s = **~940K rows/s** |
 | Storage size (LZ4 default) | 15.37 GiB → **7.82 GiB (1.97×)** |
 | Storage size (ZSTD(3)) | 15.37 GiB → **4.16 GiB (3.7×)**, 47% smaller than LZ4 |
-| ORDER BY key-range count (1-hour window) | **4 ms** — counts 59,916 rows while reading only 16,385 of 100M |
+| ORDER BY key-range count (1-hour window) | **4 ms** (counts 59,916 rows while reading only 16,385 of 100M) |
 | ERROR count per pod GROUP BY (2-day window) | **0.36 s** (28M rows scanned) |
 | `LIKE '%timeout%'` full scan | warm cache **2.63 s** / Direct I/O requested **31.5 s** (12×) |
 | trace_id point lookup | full scan 1.13 s → **0.036 s with a bloom filter index (31×)** |
@@ -26,13 +26,13 @@ Every benchmark report says "ClickHouse is fast" — but it's surprisingly hard 
 | Item | Value |
 |------|-------|
 | Cluster | Amazon EKS, Kubernetes 1.36, ap-northeast-2 |
-| Node | **m5.xlarge** (4 vCPU, 16 GiB) — one dedicated node provisioned by Karpenter (benchmark pod ran alone on it) |
+| Node | **m5.xlarge** (4 vCPU, 16 GiB), one dedicated node provisioned by Karpenter (benchmark pod ran alone on it) |
 | Pod resources | requests 2.5 vCPU / 9 Gi, limits 3.5 vCPU / 12 Gi |
 | Storage | EBS **gp3 100 GiB, default settings** (3,000 IOPS / 125 MiB/s baseline), EBS CSI driver |
 | ClickHouse | official image `clickhouse/clickhouse-server:24.8` (24.8.14.39), default configuration |
 | Hourly cost | m5.xlarge on-demand $0.236/h + gp3 100 GiB at $0.0912/GB-month (Seoul region, queried via the Pricing API, 2026-09) |
 
-> **Version note.** 24.8 was the LTS release the measurement was taken on, but ClickHouse's [security policy](https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md) no longer lists any 24.x release as supported (as of October 12, 2026 the supported lines are 26.9, 26.8 LTS, 26.7, and 26.3 LTS). Use a current LTS tag for anything new. The mechanisms measured below — primary-key pruning, LZ4/ZSTD codecs, bloom filter skip indexes — are all present in current releases, but re-run the numbers on the version you deploy before using them for sizing.
+> **Version note.** 24.8 was the LTS release the measurement was taken on, but ClickHouse's [security policy](https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md) no longer lists any 24.x release as supported (as of October 12, 2026 the supported lines are 26.9, 26.8 LTS, 26.7, and 26.3 LTS). Use a current LTS tag for anything new. The mechanisms measured below (primary-key pruning, LZ4/ZSTD codecs, bloom filter skip indexes) are all present in current releases, but re-run the numbers on the version you deploy before using them for sizing.
 
 The environment is intentionally unglamorous. The question this benchmark asks is not "how fast is ClickHouse on a dedicated i-family NVMe box" but "how far do you get on the kind of general-purpose node and default gp3 volume your cluster already has."
 
@@ -103,9 +103,9 @@ spec:
 
 > For production lifecycle/recovery automation, one option is a `ClickHouseInstallation` managed by the [Altinity clickhouse-operator](https://github.com/Altinity/clickhouse-operator) rather than a bare Pod. A bare Pod keeps the measurement target simple here.
 
-## The dataset — 100 million realistic Kubernetes log rows
+## The dataset: 100 million realistic Kubernetes log rows
 
-Uniform random data (generateRandom) distorts compression ratios, so the rows are generated the way real logs look: **repeated templates plus variable fields** — 10 namespaces, one pod name per namespace (the pod suffix is hashed from the same bucket that picks the namespace, so there are only 10 distinct pod values — a simplification that matters for the compression numbers, see Measurement 2), a 0.8% ERROR rate, and timestamps spanning 7 days.
+Uniform random data (generateRandom) distorts compression ratios, so the rows are generated the way real logs look: **repeated templates plus variable fields**, with 10 namespaces, one pod name per namespace (the pod suffix is hashed from the same bucket that picks the namespace, so there are only 10 distinct pod values, a simplification that matters for the compression numbers, see Measurement 2), a 0.8% ERROR rate, and timestamps spanning 7 days.
 
 ```sql
 CREATE TABLE logs
@@ -153,15 +153,15 @@ FROM numbers_mt(100000000)
 SETTINGS max_threads = 3, max_insert_threads = 2, max_memory_usage = 9000000000;
 ```
 
-## Measurement 1 — Ingest: 100M rows in 106.7 seconds
+## Measurement 1. Ingest: 100M rows in 106.7 seconds
 
 ```text
 Elapsed: 106.747 sec  →  ~936,800 rows/s, 7 daily partitions, 36 active parts
 ```
 
-**Read this figure for what it is.** The rows were generated inside the server and inserted directly (INSERT…SELECT), so network transfer and text parsing costs are absent — it measures an **in-server path**. It also includes data-generation CPU work, so it is not a mathematical ceiling for external ingestion. Client, format, network, batching and concurrency can change external throughput in either direction. The headline is still real: within a 3.5 vCPU limit, ClickHouse sorted, compressed, and wrote roughly 940K rows per second — on a 125 MiB/s default gp3 volume. Final compressed size divided by elapsed time is about 75 MiB/s, not a measured physical EBS write rate. Check page cache/writeback, merges and durable-flush conditions separately.
+**Read this figure for what it is.** The rows were generated inside the server and inserted directly (INSERT…SELECT), so network transfer and text parsing costs are absent; it measures an **in-server path**. It also includes data-generation CPU work, so it is not a mathematical ceiling for external ingestion. Client, format, network, batching and concurrency can change external throughput in either direction. The headline is still real: within a 3.5 vCPU limit, ClickHouse sorted, compressed, and wrote roughly 940K rows per second, on a 125 MiB/s default gp3 volume. Final compressed size divided by elapsed time is about 75 MiB/s, not a measured physical EBS write rate. Check page cache/writeback, merges and durable-flush conditions separately.
 
-## Measurement 2 — Compression: which columns spend your money
+## Measurement 2. Compression: which columns spend your money
 
 Overall: 15.37 GiB → 7.82 GiB (**1.97×**, default LZ4). The per-column breakdown is far more interesting:
 
@@ -180,29 +180,29 @@ Sizes and ratios are exactly as `system.parts_columns` reported them (`formatRea
 
 Two lessons jump out:
 
-1. **LowCardinality plus ORDER BY locality is enormous** — namespace is the first ORDER BY key, so identical values run in long streaks: 95.7 MiB collapses to 489 KiB. pod compresses 236× for the same reason, with a caveat: this generator emits exactly one pod name per namespace (10 distinct values), so pod behaves like a second copy of namespace. A real cluster, with tens of pods per namespace and new names on every restart, will compress pod noticeably less.
-2. **High-entropy IDs eat ~40% of your storage** — the 32-character hex trace_id barely compressed with LZ4 in this run (1.0×) and accounts for 3.08 GiB of the 7.82 GiB total (39.4%). When you design a log schema, "do we store IDs as strings" is the single biggest storage-cost lever. Hex encodes four bits of information per byte, leaving compression opportunities for other codecs. UUID/FixedString(16) binary representation reduces the raw width, but measure final storage, codec/index effects and query compatibility.
+1. **LowCardinality plus ORDER BY locality is enormous**: namespace is the first ORDER BY key, so identical values run in long streaks: 95.7 MiB collapses to 489 KiB. pod compresses 236× for the same reason, with a caveat: this generator emits exactly one pod name per namespace (10 distinct values), so pod behaves like a second copy of namespace. A real cluster, with tens of pods per namespace and new names on every restart, will compress pod noticeably less.
+2. **High-entropy IDs eat ~40% of your storage**: the 32-character hex trace_id barely compressed with LZ4 in this run (1.0×) and accounts for 3.08 GiB of the 7.82 GiB total (39.4%). When you design a log schema, "do we store IDs as strings" is the single biggest storage-cost lever. Hex encodes four bits of information per byte, leaving compression opportunities for other codecs. UUID/FixedString(16) binary representation reduces the raw width, but measure final storage, codec/index effects and query compatibility.
 
-### LZ4 vs ZSTD(3) — 47% storage vs 1.9× scans
+### LZ4 vs ZSTD(3): 47% storage vs 1.9× scans
 
 The same data was re-inserted into a `CODEC(ZSTD(3))` table:
 
 | | LZ4 (default) | ZSTD(3) |
 |---|--------------|---------|
 | Compressed size | 7.82 GiB (1.97×) | **4.16 GiB (3.7×)** |
-| Re-compression insert (100M rows) | — | 120.0 s |
+| Re-compression insert (100M rows) | - | 120.0 s |
 | `LIKE '%timeout%'` full scan (warm) | **2.63 s** | 4.9 s |
 
 Storage drops 47%, but the CPU-bound full scan slows by 1.9×. **LZ4 for hot data plus TTL-driven ZSTD recompression** is one option to evaluate. The best codec depends on real data, CPU and I/O constraints.
 
-## Measurement 3 — Queries: what is fast, what is slow, and why
+## Measurement 3. Queries: what is fast, what is slow, and why
 
 Each query ran after dropping the mark/uncompressed caches: ① once with `min_bytes_to_use_direct_io=1` to bypass the page cache (Direct I/O requested), ② three warm runs (minimum reported).
 
 | # | Query pattern | Direct-to-disk | Warm | Rows read (`read_rows`) |
 |---|--------------|----------------|------|-----------|
-| Q1 | `WHERE namespace='payment' AND timestamp BETWEEN …` (1-hour count) | 13 ms | **4 ms** | 16,385 (0.016%) — result 59,916 |
-| Q2 | ERROR count per pod, 2-day GROUP BY (the `LIMIT 10` is trivial here — the dataset has only 10 pods) | 0.57 s | **0.36 s** | 28M |
+| Q1 | `WHERE namespace='payment' AND timestamp BETWEEN …` (1-hour count) | 13 ms | **4 ms** | 16,385 (0.016%), result 59,916 |
+| Q2 | ERROR count per pod, 2-day GROUP BY (the `LIMIT 10` is trivial here: the dataset has only 10 pods) | 0.57 s | **0.36 s** | 28M |
 | Q3 | `message LIKE '%timeout%'` whole-range full scan | **31.5 s** | 2.63 s | 100M |
 | Q4 | duration p50/p99 per namespace, whole range | 1.34 s | **1.03 s** | 100M (no filter) |
 | Q5 | `trace_id = '…'` point lookup (no index) | 24.3 s | 1.13 s | 100M |
@@ -210,11 +210,11 @@ Each query ran after dropping the mark/uncompressed caches: ① once with `min_b
 How to read this:
 
 - **Why Q1 is 4 ms**: PARTITION BY (day) and ORDER BY (namespace, timestamp) line up, so the one-hour `payment` window is a single contiguous key range. The query counts 59,916 rows, yet `system.query_log` shows only 16,385 rows read: since 24.6 ClickHouse counts the granules that lie entirely inside a primary-key range straight from the index and decompresses only the partial granules at the range edges (roughly two granules of 8,192 rows). Verify whether this optimization applies with `EXPLAIN indexes = 1` and actual read_rows; it is not unconditional for every count query.
-- **Q3's 31.5 s (direct) vs 2.63 s (warm)**: reading the ~4 GiB compressed message column from disk works out to 4 GiB ÷ 31.5 s ≈ **130 MiB/s — pinned in the narrow band where the gp3 volume cap (125 MiB/s) and this m5.xlarge's own EBS baseline (1,150 Mbps ≈ 137 MiB/s) sit**; the two limits are too close for this run to say which one bound first. The same query served from the page cache becomes CPU-bound (~38M rows/s). Measured proof that full-scan performance can be a **volume-throughput setting**, not a database property. (See the [EBS gp2 vs gp3 benchmark](../storage/01-ebs-gp2-gp3-benchmark.md).) Q5's no-index run tells the same story: 3.08 GiB of trace_id in 24.3 s ≈ 130 MiB/s.
-- **Why Q4 full-scans 100M rows in ~1 s**: column orientation in its purest form — by column size it touches only duration_ms (289 MiB) and namespace (0.5 MiB), not 7.8 GiB, and the warm run is CPU-bound on 100M Float32 quantiles.
+- **Q3's 31.5 s (direct) vs 2.63 s (warm)**: reading the ~4 GiB compressed message column from disk works out to 4 GiB ÷ 31.5 s ≈ **130 MiB/s, pinned in the narrow band where the gp3 volume cap (125 MiB/s) and this m5.xlarge's own EBS baseline (1,150 Mbps ≈ 137 MiB/s) sit**; the two limits are too close for this run to say which one bound first. The same query served from the page cache becomes CPU-bound (~38M rows/s). Measured proof that full-scan performance can be a **volume-throughput setting**, not a database property. (See the [EBS gp2 vs gp3 benchmark](../storage/01-ebs-gp2-gp3-benchmark.md).) Q5's no-index run tells the same story: 3.08 GiB of trace_id in 24.3 s ≈ 130 MiB/s.
+- **Why Q4 full-scans 100M rows in ~1 s**: column orientation in its purest form: by column size it touches only duration_ms (289 MiB) and namespace (0.5 MiB), not 7.8 GiB, and the warm run is CPU-bound on 100M Float32 quantiles.
 - **The short Q2/Q4 measurements do not isolate physical disk throughput.** A final-size/time ratio above 125 MiB/s does not itself prove a page-cache hit. Dropping mark/uncompressed caches also does not drop the OS page cache. The original run ended before cache/read-method/short-window effects were traced; preserve query_log ProfileEvents together with node/EBS I/O metrics on reruns.
 
-## Measurement 4 — bloom filter skip index: 1.13 s → 0.036 s
+## Measurement 4. bloom filter skip index: 1.13 s → 0.036 s
 
 A trace_id point lookup isn't covered by the ORDER BY key, so by default it's a full scan (1.13 s). Add a skip index:
 
@@ -228,7 +228,7 @@ ALTER TABLE logs MATERIALIZE INDEX trace_bf;  -- asynchronous; wait for system.m
 | Warm lookup time | 1.13 s | **0.036 s (31×)** |
 | Rows read | 100M | **1.08M (98.9% skipped)** |
 | Data read | 3.82 GiB | 42.6 MiB |
-| Index size | — | 119.7 MiB (1.5% of table) |
+| Index size | - | 119.7 MiB (1.5% of table) |
 
 "Jump to a trace ID" is the most common query against an observability log store, and it costs 1.5% extra storage plus a 20-second materialize to get 31×. If you run Grafana on a ClickHouse log backend, evaluate this index against real selectivity, false positives, write/merge costs and query plans.
 
@@ -297,9 +297,9 @@ Export results outside the cluster before deleting the dedicated `bench-database
 
 ## Related reading
 
-- [ClickHouse as a log backend](../observability/logging/04-clickhouse.md) — integration with collection pipelines (Fluent Bit/Vector)
-- [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) — volume/instance throughput limits relevant to interpreting Q3
-- [Databases on Kubernetes Overview](./README.md) — the operator landscape and managed vs self-hosted decision framework
+- [ClickHouse as a log backend](../observability/logging/04-clickhouse.md): integration with collection pipelines (Fluent Bit/Vector)
+- [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md): volume/instance throughput limits relevant to interpreting Q3
+- [Databases on Kubernetes Overview](./README.md): the operator landscape and managed vs self-hosted decision framework
 
 ## Review Sources
 

@@ -344,7 +344,7 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 | `service: {}` 지정 템플릿의 실험 전용 Service 생성/정리 | 보고: `...-2-0-canary` Service 생성, 실험 종료 후 삭제 확인 |
 | 모든 템플릿 healthy 후 AnalysisRun 생성, `interval: 15s`/`count: 3` 반복 측정 | 보고: 15초 간격 measurements 3회 기록, `successCondition` 평가 Successful |
 | 성공 경로: duration 60s 경과 → Experiment Successful → 실험 RS 0으로 스케일 다운 → 다음 step(setWeight 20) 진행 → Rollout Healthy | 보고: 정상 |
-| 실패 경로: 메트릭 악화 시 `failed (2) > failureLimit (1)`로 AnalysisRun Failed → Experiment Failed → Rollout abort (Degraded), stable 유지 | 보고: 정상 — abort 메시지가 원인 메트릭을 그대로 표기 |
+| 실패 경로: 메트릭 악화 시 `failed (2) > failureLimit (1)`로 AnalysisRun Failed → Experiment Failed → Rollout abort (Degraded), stable 유지 | 보고: 정상(abort 메시지가 원인 메트릭을 그대로 표기) |
 
 ## 다음 단계
 

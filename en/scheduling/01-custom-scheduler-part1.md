@@ -503,7 +503,7 @@ In the next chapter, we will learn about implementing custom schedulers using th
 
 The Go command, plugins and configuration are checked locally against the pinned dependency versions. No cluster deployment, image push, AWS call, placement benchmark or HA failover test was performed for this audit.
 
-* [Configure multiple schedulers](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/) — architecture/RBAC pattern; its old image/build examples are not version guidance
+* [Configure multiple schedulers](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/): architecture/RBAC pattern; its old image/build examples are not version guidance
 * [Scheduler configuration](https://kubernetes.io/docs/reference/scheduling/config/)
 * [Scheduling framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
 * [Kubernetes 1.35.8 framework interfaces](https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kube-scheduler/framework/interface.go)

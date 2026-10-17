@@ -678,7 +678,7 @@ Rules are matched in ascending numeric priority. Reservoir targets and fixed rat
 
 The following are three separate request files. Their AWS API shapes were validated locally, not applied to AWS.
 
-**`sampling-production.json` — a general API request policy:**
+**`sampling-production.json`, a general API request policy:**
 
 ```json
 {
@@ -699,7 +699,7 @@ The following are three separate request files. Their AWS API shapes were valida
 }
 ```
 
-**`sampling-health.json` — a higher-priority GET health-check exclusion:**
+**`sampling-health.json`, a higher-priority GET health-check exclusion:**
 
 ```json
 {
@@ -720,7 +720,7 @@ The following are three separate request files. Their AWS API shapes were valida
 }
 ```
 
-**`sampling-adaptive.json` — an optional request-scoped adaptive example:**
+**`sampling-adaptive.json`, an optional request-scoped adaptive example:**
 
 Current [SamplingRateBoost](https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html) supports anomaly-driven temporary increases with a maximum rate and cooldown. `MaxRate: 0.5` is an absolute sampling-rate cap, not a 50% relative increase. This is not retroactive tail sampling or a guarantee to capture all failed requests. Confirm the producer's adaptive-sampling support before using it.
 

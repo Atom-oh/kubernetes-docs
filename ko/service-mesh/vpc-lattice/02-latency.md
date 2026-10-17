@@ -7,13 +7,13 @@
 
 - Lattice 전환이 레이턴시를 악화시키는 요인과 개선시키는 요인이 **동시에** 존재하는 이유
 - 어느 쪽이 이기는지는 환경에 따라 갈리며, 사전에 단정할 수 없다는 점
-- 그래서 무엇을 어떻게 측정해야 답이 나오는가 — PoC 측정 매트릭스
+- 그래서 무엇을 어떻게 측정해야 답이 나오는가: PoC 측정 매트릭스
 
 ## 먼저: 이 문서는 수치를 제시하지 않습니다
 
 지연 변화는 워크로드마다 다릅니다. 프록시 처리·네트워크 경로·연결 재사용·서명·자격 증명 갱신·정책 평가가 모두 달라질 수 있습니다. **이 장에는 Lattice 지연 실측이 없으므로** 크기나 개선 방향을 보장하지 않습니다.
 
-어느 쪽이 이기는지는 이런 것들에 달려 있습니다 — 현재 Envoy sidecar가 노드 CPU를 얼마나 먹고 있는지, 요청이 얼마나 짧은지(고정 오버헤드의 상대적 비중), keepalive를 쓰는지, IAM Auth를 켜는지, AZ를 넘는 비율이 얼마인지. 이 값들은 조직마다 다릅니다.
+어느 쪽이 이기는지는 이런 것들에 달려 있습니다. 현재 Envoy sidecar가 노드 CPU를 얼마나 먹고 있는지, 요청이 얼마나 짧은지(고정 오버헤드의 상대적 비중), keepalive를 쓰는지, IAM Auth를 켜는지, AZ를 넘는 비율이 얼마인지. 이 값들은 조직마다 다릅니다.
 
 그래서 이 문서의 결론은 **"측정하라"이고, 이 문서의 본체는 "무엇을 측정해야 답이 나오는가"입니다.** 아래에서 요인들을 부호와 크기 대별로 정리한 뒤, 그 요인들을 분리해서 관측할 수 있는 측정 매트릭스를 제시합니다.
 
@@ -74,7 +74,7 @@ sidecar를 제거하면 이 경합 자체가 사라집니다. 그래서 **노드
 
 Lattice 데이터 평면은 AWS가 관리하지만 controller 조정·endpoint 등록·health check·정책 전파에는 여전히 시간이 걸립니다. AWS는 auth policy 갱신에 몇 분이 걸릴 수 있다고 명시합니다. 전파 지연이 없어진다고 가정하지 말고 수렴과 rollout을 측정합니다.
 
-## 요인 정리 — 부호와 관측 위치
+## 요인 정리: 부호와 관측 위치
 
 | 요인 | 부호 | 주로 나타나는 지표 | 영향이 큰 조건 |
 |---|---|---|---|
@@ -147,8 +147,8 @@ Auth on/off 차이는 **해당 조건에서 서명·자격 증명 처리·활성
 
 ## 참고 자료
 
-- [Pod 네트워크 실측 벤치마크](../../networking/06-pod-network-benchmark.md) — 같은 노드/같은 AZ/다른 AZ RTT 및 keepalive 영향 실측
-- [Amazon VPC Lattice 요금](https://aws.amazon.com/vpc/lattice/pricing/) — data processing에 inter-AZ 포함
+- [Pod 네트워크 실측 벤치마크](../../networking/06-pod-network-benchmark.md): 같은 노드/같은 AZ/다른 AZ RTT 및 keepalive 영향 실측
+- [Amazon VPC Lattice 요금](https://aws.amazon.com/vpc/lattice/pricing/): data processing에 inter-AZ 포함
 - [Access logs for Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
 - [Monitoring Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-overview.html)
 

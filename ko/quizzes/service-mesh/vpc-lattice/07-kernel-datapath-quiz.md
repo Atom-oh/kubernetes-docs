@@ -17,12 +17,12 @@
 **정답: B) `169.254.0.0/16`은 원래 라우팅되지 않는 대역인데, Lattice 트래픽은 VPC 안의 인그레스 엔드포인트까지 도달해야 하므로 인프라가 유도한다**
 
 **설명:**
-Lattice는 link-local 대역을 "라우팅되지 않는 주소"라는 원래 의미로 쓰는 것이 아니라 **"인프라가 가로챈다"는 신호로 재사용**합니다. 실제로 패킷은 VPC 안의 인그레스 엔드포인트까지 가야 합니다. 같은 이유로 IPv6에서는 link-local(`fe80::/10`)이 아니라 라우팅 가능한 ULA(`fd00:ec2:80::/64`)를 골랐습니다 — 링크 범위로는 부족하기 때문입니다.
+Lattice는 link-local 대역을 "라우팅되지 않는 주소"라는 원래 의미로 쓰는 것이 아니라 **"인프라가 가로챈다"는 신호로 재사용**합니다. 실제로 패킷은 VPC 안의 인그레스 엔드포인트까지 가야 합니다. 같은 이유로 IPv6에서는 link-local(`fe80::/10`)이 아니라 라우팅 가능한 ULA(`fd00:ec2:80::/64`)를 골랐습니다. 링크 범위로는 부족하기 때문입니다.
 </details>
 
 2. 사이드카 메시와 Lattice 트래픽의 충돌이 일어나는 정확한 커널 지점은?
    - A) 노드 net namespace의 `POSTROUTING`
-   - B) Pod net namespace의 `OUTPUT` 훅 — Lattice 트래픽도 outbound이므로 REDIRECT 규칙에 걸림
+   - B) Pod net namespace의 `OUTPUT` 훅: Lattice 트래픽도 outbound이므로 REDIRECT 규칙에 걸림
    - C) NIC 드라이버의 ring buffer
    - D) 노드의 라우팅 테이블
 
@@ -30,7 +30,7 @@ Lattice는 link-local 대역을 "라우팅되지 않는 주소"라는 원래 의
 
 <summary>정답 보기</summary>
 
-**정답: B) Pod net namespace의 `OUTPUT` 훅 — Lattice 트래픽도 outbound이므로 REDIRECT 규칙에 걸림**
+**정답: B) Pod net namespace의 `OUTPUT` 훅: Lattice 트래픽도 outbound이므로 REDIRECT 규칙에 걸림**
 
 **설명:**
 메시 init container는 Pod의 net namespace 안에서 "이 Pod에서 나가는 모든 outbound 트래픽을 Envoy 포트로 REDIRECT"하는 iptables 규칙을 심습니다. Lattice로 향하는 트래픽도 outbound이므로 이 규칙에 걸리고, Envoy는 `169.254.171.x`를 자기 클러스터 설정에서 찾을 수 없어 실패합니다. netfilter 규칙이 net namespace별이라는 성질 때문에 이 충돌이 Pod 안에서 발생합니다.
@@ -54,7 +54,7 @@ Proxy log에 요청이 보이면 통과 사실은 알 수 있지만 유일한 �
 
 4. 예외 CIDR을 등록했는데도 "가끔 실패"하는 증상의 가장 유력한 원인은?
    - A) 규칙 순서가 잘못됨
-   - B) IPv6 대역(`fd00:ec2:80::/64`) 누락 — dual-stack에서 클라이언트가 IPv6로 연결하면 그 경로는 여전히 인터셉트됨
+   - B) IPv6 대역(`fd00:ec2:80::/64`) 누락: dual-stack에서 클라이언트가 IPv6로 연결하면 그 경로는 여전히 인터셉트됨
    - C) Pod를 재시작하지 않음
    - D) Security Group 설정 누락
 
@@ -62,7 +62,7 @@ Proxy log에 요청이 보이면 통과 사실은 알 수 있지만 유일한 �
 
 <summary>정답 보기</summary>
 
-**정답: B) IPv6 대역(`fd00:ec2:80::/64`) 누락 — dual-stack에서 클라이언트가 IPv6로 연결하면 그 경로는 여전히 인터셉트됨**
+**정답: B) IPv6 대역(`fd00:ec2:80::/64`) 누락: dual-stack에서 클라이언트가 IPv6로 연결하면 그 경로는 여전히 인터셉트됨**
 
 **설명:**
 IPv4만 제외하고 dual-stack 클러스터를 운영하면, 클라이언트가 AAAA 레코드를 받아 IPv6로 연결을 시도할 때 그 경로는 여전히 인터셉트됩니다. **증상이 "가끔 실패"인 것이 특징**인데, DNS 응답 순서나 클라이언트의 주소 선택에 따라 갈리기 때문입니다. C도 실제 원인이 될 수 있지만 그 경우는 해당 Pod가 항상 실패하므로 "가끔"이 아닙니다.
@@ -118,7 +118,7 @@ Signing proxy는 local/upstream 연결 구간을 만들지만 pooling과 namespa
 
 8. "일부 노드에서만 Lattice 호출이 실패한다"는 패턴이 진단에 주는 정보는?
    - A) Lattice 서비스 설정 오류
-   - B) 노드 상태 불일치 — SG 차이, 커널 버전 혼재, conntrack 설정 차이, 시각 동기화, Pod 재시작 여부
+   - B) 노드 상태 불일치: SG 차이, 커널 버전 혼재, conntrack 설정 차이, 시각 동기화, Pod 재시작 여부
    - C) auth policy 설정 오류
    - D) DNS 전파 지연
 
@@ -126,7 +126,7 @@ Signing proxy는 local/upstream 연결 구간을 만들지만 pooling과 namespa
 
 <summary>정답 보기</summary>
 
-**정답: B) 노드 상태 불일치 — SG 차이, 커널 버전 혼재, conntrack 설정 차이, 시각 동기화, Pod 재시작 여부**
+**정답: B) 노드 상태 불일치: SG 차이, 커널 버전 혼재, conntrack 설정 차이, 시각 동기화, Pod 재시작 여부**
 
 **설명:**
 전체 실패는 설정·인증 문제이고, **노드 단위 실패는 노드 상태 불일치**입니다. 후보는 노드 그룹별 SG 적용 차이, `kernel-default` AMI로 인한 6.1/6.18 혼재, 부트스트랩 시점에 따른 conntrack 설정 차이, `x-amz-date` 5분 오차를 유발하는 시각 동기화 문제, 그리고 애노테이션 변경이 구 Pod에 미적용된 경우입니다. "일부 노드"라는 패턴 자체가 범위를 좁혀주는 진단 정보입니다.

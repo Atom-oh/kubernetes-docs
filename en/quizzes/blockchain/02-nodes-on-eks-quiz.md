@@ -6,7 +6,7 @@ This quiz tests your understanding of StatefulSet configuration, storage, health
 
 1. What criterion is offered for deciding whether to run blockchain nodes on EKS?
    - A) Whether you have 10 or more nodes
-   - B) Whether there is other workload around the node (indexers, APIs, monitoring) — a node standing alone is simpler on EC2
+   - B) Whether there is other workload around the node (indexers, APIs, monitoring); a node standing alone is simpler on EC2
    - C) Whether the chain is public or private
    - D) Whether you run a validator
 
@@ -14,7 +14,7 @@ This quiz tests your understanding of StatefulSet configuration, storage, health
 
 <summary>Show Answer</summary>
 
-**Answer: B) Whether there is other workload around the node (indexers, APIs, monitoring) — a node standing alone is simpler on EC2**
+**Answer: B) Whether there is other workload around the node (indexers, APIs, monitoring); a node standing alone is simpler on EC2**
 
 **Explanation:**
 Blockchain nodes fit poorly with some Kubernetes strengths (fast rescheduling, horizontal scaling, rolling updates). The reasons to still use EKS are operational standardization, managing multiple chains and environments, and integration with surrounding components. If indexers, APIs, and monitoring are already in the cluster, keeping the node with them is sensible; for running a single validator, EKS's abstraction adds complexity without benefit.
@@ -33,12 +33,12 @@ Blockchain nodes fit poorly with some Kubernetes strengths (fast rescheduling, h
 **Answer: B) The client must flush in-memory state to disk on shutdown, and a forced kill can corrupt the database and require a resync**
 
 **Explanation:**
-The default 30 seconds is usually insufficient. Blockchain clients cache state in memory and must flush it on shutdown. A forced kill (SIGKILL) can leave the DB mid-write and corrupted, requiring a resync that takes hours to days. For the same reason memory limits should be generous — an OOM kill is also a forced kill.
+The default 30 seconds is usually insufficient. Blockchain clients cache state in memory and must flush it on shutdown. A forced kill (SIGKILL) can leave the DB mid-write and corrupted, requiring a resync that takes hours to days. For the same reason memory limits should be generous; an OOM kill is also a forced kill.
 </details>
 
 3. Why does IOPS bottleneck before capacity for blockchain node storage?
    - A) Chain data is stored compressed
-   - B) Traversing and updating the state trie (Merkle Patricia Trie and similar) touches scattered keys — a random access pattern
+   - B) Traversing and updating the state trie (Merkle Patricia Trie and similar) touches scattered keys: a random access pattern
    - C) Blocks are only ever written sequentially
    - D) Snapshots are taken frequently
 
@@ -46,7 +46,7 @@ The default 30 seconds is usually insufficient. Blockchain clients cache state i
 
 <summary>Show Answer</summary>
 
-**Answer: B) Traversing and updating the state trie (Merkle Patricia Trie and similar) touches scattered keys — a random access pattern**
+**Answer: B) Traversing and updating the state trie (Merkle Patricia Trie and similar) touches scattered keys: a random access pattern**
 
 **Explanation:**
 A blockchain node's disk use is heavily random read and write. With capacity to spare but insufficient IOPS, sync falls behind, and a node that is behind cannot serve. That is why gp3's ability to **set IOPS and throughput independently of capacity** is the key advantage. gp2 fixes IOPS per unit of capacity, so raising IOPS meant buying capacity you did not need.
@@ -54,7 +54,7 @@ A blockchain node's disk use is heavily random read and write. With capacity to 
 
 4. Why must sync state not go into the liveness probe?
    - A) Sync checks add RPC load
-   - B) A lagging node gets restarted, falls further behind from the restart, and is restarted again — an infinite loop
+   - B) A lagging node gets restarted, falls further behind from the restart, and is restarted again, an infinite loop
    - C) liveness probes do not support the exec method
    - D) Sync state is only queryable in readiness
 
@@ -62,15 +62,15 @@ A blockchain node's disk use is heavily random read and write. With capacity to 
 
 <summary>Show Answer</summary>
 
-**Answer: B) A lagging node gets restarted, falls further behind from the restart, and is restarted again — an infinite loop**
+**Answer: B) A lagging node gets restarted, falls further behind from the restart, and is restarted again, an infinite loop**
 
 **Explanation:**
-Liveness should only check "is the process alive and responding." Putting sync there kills lagging nodes, and the restart delays sync further so they can never catch up. Conversely **readiness must include sync** — without it, a lagging node takes traffic and returns wrong data based on a stale chain. This split is the crux of blockchain node health checks.
+Liveness should only check "is the process alive and responding." Putting sync there kills lagging nodes, and the restart delays sync further so they can never catch up. Conversely **readiness must include sync**; without it, a lagging node takes traffic and returns wrong data based on a stale chain. This split is the crux of blockchain node health checks.
 </details>
 
 5. You opened P2P inbound but no peers arrive. What is the classic cause?
    - A) A missing Security Group rule
-   - B) The advertised address is not configured — the Pod IP seen inside the container differs from the externally reachable address, so other peers cannot connect
+   - B) The advertised address is not configured: the Pod IP seen inside the container differs from the externally reachable address, so other peers cannot connect
    - C) Only the UDP port was opened, not TCP
    - D) The peer limit is set to 0
 
@@ -78,7 +78,7 @@ Liveness should only check "is the process alive and responding." Putting sync t
 
 <summary>Show Answer</summary>
 
-**Answer: B) The advertised address is not configured — the Pod IP seen inside the container differs from the externally reachable address, so other peers cannot connect**
+**Answer: B) The advertised address is not configured: the Pod IP seen inside the container differs from the externally reachable address, so other peers cannot connect**
 
 **Explanation:**
 P2P protocols advertise their own address to peers. If the address seen inside the container (the Pod IP) differs from the externally reachable address (node public IP, LB address), peers cannot connect to the advertised address. Most clients offer an option like `--nat extip:<addr>`, and **without it, opening inbound brings no peers.** Since each Pod must advertise a different address, initialization logic using the StatefulSet ordinal or downward API is needed.

@@ -1,4 +1,4 @@
-# Part 4: Katib — Hyperparameter Tuning and AutoML Quiz
+# Part 4: Katib (Hyperparameter Tuning and AutoML) Quiz
 
 This quiz tests your understanding of Katib's Experiment/Trial/Suggestion architecture, the search algorithms it supports, early stopping, metrics collection, and the resource-pressure considerations of running Katib on EKS.
 
@@ -106,7 +106,7 @@ StdOut/File/TensorFlowEvent and Custom collectors coexist with Push mode. Arbitr
 **Answer: B) High parallelism means many Trials (and their resource requests, e.g. GPUs) hit the cluster at the same time rather than spread out, producing a short, sharp demand spike**
 
 **Explanation:**
-Each concurrent Trial is a full training job. Demand is concurrency × Pods per Trial × resources per Pod, plus collector and service overhead — which can spike demand sharply even for an Experiment whose total `maxTrialCount` looks modest.
+Each concurrent Trial is a full training job. Demand is concurrency × Pods per Trial × resources per Pod, plus collector and service overhead, which can spike demand sharply even for an Experiment whose total `maxTrialCount` looks modest.
 </details>
 
 8. On EKS, what is a likely explanation if newly created Trial pods sit pending for a while right after a high-`parallelTrialCount` Experiment starts?
@@ -155,10 +155,10 @@ The two operate at different levels: Hyperband's pruning is part of the search a
 <details>
 <summary>Show Answer</summary>
 
-**Answer:** A high `parallelTrialCount` (e.g., 20) can process Trials in fewer rounds when capacity is available but produces a sharp burst of 20 simultaneous GPU requests, which can outrun how fast Karpenter can provision GPU nodes — leaving early Trials pending rather than training, and potentially spiking shared cluster capacity if other workloads are competing for the same GPU NodePool. A low `parallelTrialCount` (e.g., 4) spreads the same 60 Trials over more rounds, giving Karpenter time to provision incrementally and reducing the risk of a capacity spike, potentially increasing elapsed time. Actual time and cost depend on capacity, durations, failures, stopping and node reclamation.
+**Answer:** A high `parallelTrialCount` (e.g., 20) can process Trials in fewer rounds when capacity is available but produces a sharp burst of 20 simultaneous GPU requests, which can outrun how fast Karpenter can provision GPU nodes, leaving early Trials pending rather than training, and potentially spiking shared cluster capacity if other workloads are competing for the same GPU NodePool. A low `parallelTrialCount` (e.g., 4) spreads the same 60 Trials over more rounds, giving Karpenter time to provision incrementally and reducing the risk of a capacity spike, potentially increasing elapsed time. Actual time and cost depend on capacity, durations, failures, stopping and node reclamation.
 
 **Explanation:**
-`parallelTrialCount` and `maxTrialCount` need to be tuned together with cluster autoscaling behavior in mind, not treated as independent settings — especially when Trials request scarce or slow-to-provision resources like GPUs.
+`parallelTrialCount` and `maxTrialCount` need to be tuned together with cluster autoscaling behavior in mind, not treated as independent settings, especially when Trials request scarce or slow-to-provision resources like GPUs.
 </details>
 
 ---

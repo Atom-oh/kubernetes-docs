@@ -37,10 +37,10 @@ VirtualNode는 "이 워크로드가 누구인지(신원), 어디로 나가는지
 </details>
 
 3. 적절한 관측성 전환 과제는 무엇입니까?
-   - A) circuit breaker — 구현 난도가 가장 높기 때문
+   - A) circuit breaker: 구현 난도가 가장 높기 때문
    - B) 앱 추적을 유지하고 기존 proxy가 실제 제공하던 관측 정보를 대체한다
-   - C) traffic mirroring — 대안이 전혀 없기 때문
-   - D) fault injection — 프로덕션 장애 대응에 필수이기 때문
+   - C) traffic mirroring: 대안이 전혀 없기 때문
+   - D) fault injection: 프로덕션 장애 대응에 필수이기 때문
 
 <details>
 

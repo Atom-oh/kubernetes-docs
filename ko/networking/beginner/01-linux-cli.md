@@ -341,12 +341,12 @@ sudo -k
 
 2026년 9월 14–15일에 확인한 1차 문서입니다. 이번 장의 도구를 더 설명하는 자료이며 실습을 대신하거나 선행 학습을 요구하는 링크가 아닙니다.
 
-- [Debian 소개](https://www.debian.org/intro/about) — 배포판, 커널, 유틸리티, 패키지.
-- [GNU C Library 소개](https://www.gnu.org/software/libc/manual/html_node/Introduction.html) — 시스템 라이브러리의 역할.
-- [Debian Reference의 GNU/Linux 튜토리얼](https://www.debian.org/doc/manuals/debian-reference/ch01.en.html) — 셸, 파일 시스템, 권한, 프로세스.
-- [GNU Coreutils 매뉴얼](https://www.gnu.org/software/coreutils/manual/coreutils.html), 특히 [mktemp](https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html) — 파일 명령과 개인 임시 디렉터리.
-- [GNU nano 단축키](https://www.nano-editor.org/dist/latest/cheatsheet.html), [Vim 첫 단계](https://vimhelp.org/usr_02.txt.html) — 편집 모드, 저장, 종료.
-- [Ubuntu Server 패키지 관리](https://ubuntu.com/server/docs/how-to/software/package-management/), [Rocky Linux 9 DNF 안내](https://docs.rockylinux.org/9/guides/package_management/dnf_package_manager/) — 두 배포판의 패키지 경로.
-- [systemd systemctl 매뉴얼](https://www.freedesktop.org/software/systemd/man/systemctl.html), [journalctl 매뉴얼](https://www.freedesktop.org/software/systemd/man/journalctl.html) — 실행 상태, 활성화 설정, 로그 필터.
+- [Debian 소개](https://www.debian.org/intro/about): 배포판, 커널, 유틸리티, 패키지.
+- [GNU C Library 소개](https://www.gnu.org/software/libc/manual/html_node/Introduction.html): 시스템 라이브러리의 역할.
+- [Debian Reference의 GNU/Linux 튜토리얼](https://www.debian.org/doc/manuals/debian-reference/ch01.en.html): 셸, 파일 시스템, 권한, 프로세스.
+- [GNU Coreutils 매뉴얼](https://www.gnu.org/software/coreutils/manual/coreutils.html), 특히 [mktemp](https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html): 파일 명령과 개인 임시 디렉터리.
+- [GNU nano 단축키](https://www.nano-editor.org/dist/latest/cheatsheet.html), [Vim 첫 단계](https://vimhelp.org/usr_02.txt.html): 편집 모드, 저장, 종료.
+- [Ubuntu Server 패키지 관리](https://ubuntu.com/server/docs/how-to/software/package-management/), [Rocky Linux 9 DNF 안내](https://docs.rockylinux.org/9/guides/package_management/dnf_package_manager/): 두 배포판의 패키지 경로.
+- [systemd systemctl 매뉴얼](https://www.freedesktop.org/software/systemd/man/systemctl.html), [journalctl 매뉴얼](https://www.freedesktop.org/software/systemd/man/journalctl.html): 실행 상태, 활성화 설정, 로그 필터.
 
 [퀴즈](../../quizzes/networking/beginner/01-linux-cli-quiz.md)로 이해도를 확인한 뒤 [주소와 인터페이스](02-addressing-interfaces.md)로 이어갑니다.

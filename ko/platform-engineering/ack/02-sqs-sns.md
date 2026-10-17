@@ -8,7 +8,7 @@ SQS 1.8.2 / SNS 1.11.1의 schema 예제입니다. Queue는 queueName과 문자�
 
 email endpoint는 예시 주소입니다. 실제 수신자의 확인이 필요하며 이 검토에서 이메일이나 메시지를 보내지 않았습니다. filterPolicy의 기본 대상은 message attributes이므로 발행자도 event_type을 맞춰야 합니다. content-based deduplication은 FIFO message body를 기준으로 하며 업무 중복 처리를 모두 방지하는 기능이 아닙니다.
 
-## Queue — queue-app-events
+## Queue: queue-app-events
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -36,7 +36,7 @@ spec:
     \   }\n  ]\n}"
 ```
 
-## Queue — queue-app-events-fifo
+## Queue: queue-app-events-fifo
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -55,7 +55,7 @@ spec:
     Environment: Development
 ```
 
-## Topic — topic-app-events
+## Topic: topic-app-events
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -73,7 +73,7 @@ spec:
     value: Development
 ```
 
-## Subscription — subscription-app-email
+## Subscription: subscription-app-email
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -92,7 +92,7 @@ spec:
   filterPolicy: '{"event_type":["order_placed","order_shipped"]}'
 ```
 
-## Subscription — subscription-app-queue
+## Subscription: subscription-app-queue
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1

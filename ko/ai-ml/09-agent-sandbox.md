@@ -1,4 +1,4 @@
-# EKS에서 Agent Sandbox 운영하기 — AI 에이전트를 위한 격리된 상태 유지 런타임
+# EKS에서 Agent Sandbox 운영하기: AI 에이전트를 위한 격리된 상태 유지 런타임
 
 > **지원 버전**: Agent Sandbox v1.0.6(API `v1beta1`), Python SDK `k8s-agent-sandbox` 1.0.6, `cpuOptions.nestedVirtualization`은 Karpenter v1.13.0 이상
 > **마지막 업데이트**: 2026년 10월 16일
@@ -148,7 +148,7 @@ spec:
 
 ## 4. 확장: Template, Warm Pool, Claim
 
-### SandboxTemplate — 플랫폼 정책을 두는 곳
+### SandboxTemplate: 플랫폼 정책을 두는 곳
 
 ```yaml
 apiVersion: extensions.agents.x-k8s.io/v1beta1
@@ -188,7 +188,7 @@ spec:
 
 `Sandbox`를 직접 만들면 이 기본값이 하나도 적용되지 않습니다. 사용자가 `Sandbox`를 직접 만들 수 있다면 승인 제어(ValidatingAdmissionPolicy, Kyverno, Gatekeeper)를 쓰거나, 사용자에게는 `SandboxClaim` RBAC만 주세요.
 
-### SandboxWarmPool — 미리 만들어 둔 용량
+### SandboxWarmPool: 미리 만들어 둔 용량
 
 ```yaml
 apiVersion: extensions.agents.x-k8s.io/v1beta1
@@ -206,7 +206,7 @@ spec:
 
 템플릿의 청사진이 바뀌면 할당되지 않은 Sandbox는 오래된(stale) 상태가 됩니다. `OnReplenish`는 할당되거나 삭제될 때만 교체하고, `Recreate`는 즉시 삭제합니다. 이미 할당된 Sandbox는 소유권이 Claim으로 넘어갔기 때문에 건드리지 않습니다.
 
-### SandboxClaim — 에이전트 세션이 요청하는 것
+### SandboxClaim: 에이전트 세션이 요청하는 것
 
 ```yaml
 apiVersion: extensions.agents.x-k8s.io/v1beta1

@@ -38,7 +38,7 @@ Full nodes, light clients and permissioned data-distribution models differ. Avoi
 
 3. What is the key benefit a Merkle tree provides?
    - A) It compresses block size
-   - B) A Merkle proof of inclusion grows as log N in transaction count N, enabling verification without the full chain — the basis for light clients
+   - B) A Merkle proof of inclusion grows as log N in transaction count N, enabling verification without the full chain, the basis for light clients
    - C) It guarantees transaction ordering
    - D) It speeds up consensus
 
@@ -46,7 +46,7 @@ Full nodes, light clients and permissioned data-distribution models differ. Avoi
 
 <summary>Show Answer</summary>
 
-**Answer: B) A Merkle proof of inclusion grows as log N in transaction count N, enabling verification without the full chain — the basis for light clients**
+**Answer: B) A Merkle proof of inclusion grows as log N in transaction count N, enabling verification without the full chain, the basis for light clients**
 
 **Explanation:**
 Thanks to hashing transactions pairwise upward in a binary tree, proving a transaction's inclusion needs only the sibling hashes. Even in a block with a million transactions, the proof is about 20 hashes. This makes light clients possible and is the basis for the choice "run a full node, or is light verification enough?" when integrating blockchain with existing systems.
@@ -54,7 +54,7 @@ Thanks to hashing transactions pairwise upward in a binary tree, proving a trans
 
 4. What is the fundamental reason consensus requires a cost (PoW's electricity, PoS's stake)?
    - A) To reward validators
-   - B) Sybil defense — without a cost, one party can create unlimited identities and block candidates and paralyze the network
+   - B) Sybil defense: without a cost, one party can create unlimited identities and block candidates and paralyze the network
    - C) To regulate block production rate
    - D) To conserve network bandwidth
 
@@ -62,7 +62,7 @@ Thanks to hashing transactions pairwise upward in a binary tree, proving a trans
 
 <summary>Show Answer</summary>
 
-**Answer: B) Sybil defense — without a cost, one party can create unlimited identities and block candidates and paralyze the network**
+**Answer: B) Sybil defense: without a cost, one party can create unlimited identities and block candidates and paralyze the network**
 
 **Explanation:**
 In an environment allowing anonymous participation, identity alone cannot stop one party creating many identities (a Sybil attack). PoW makes the cost computation; PoS makes it capital plus slashing risk. The BFT family **restricts participants in the first place**, sidestepping the problem and allowing consensus by voting without PoW's electricity or PoS's stake. That is the technical basis for financial services choosing consortium chains.
@@ -81,7 +81,7 @@ In an environment allowing anonymous participation, identity alone cannot stop o
 **Answer: B) The latest data a node returns may not be finalized, so the answer changes on a reorg**
 
 **Explanation:**
-A node answers based on the latest chain it knows, and if that block is later reorganized the answer changes. This leads to real incidents — confirming a deposit against the latest block and acting on it, only for a reorg to erase it; or a load balancer spreading across nodes whose chain heights differ, giving different answers to the same question. So confirmation depth is mandatory in the application, and infrastructure must put sync state in readiness and monitor chain-height divergence.
+A node answers based on the latest chain it knows, and if that block is later reorganized the answer changes. This leads to real incidents: confirming a deposit against the latest block and acting on it, only for a reorg to erase it; or a load balancer spreading across nodes whose chain heights differ, giving different answers to the same question. So confirmation depth is mandatory in the application, and infrastructure must put sync state in readiness and monitor chain-height divergence.
 </details>
 
 6. Why is a persistent volume mandatory for a blockchain node?

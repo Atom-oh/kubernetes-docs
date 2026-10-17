@@ -235,7 +235,7 @@ fields user.username, verb, objectRef.resource, responseStatus.code
 | limit 50
 ```
 
-#### API 요청량 — throttling 발생 여부와 구분
+#### API 요청량(throttling 발생 여부와 구분)
 
 ```text
 fields user.username, verb, objectRef.resource
@@ -1291,13 +1291,13 @@ topk(10, sum by (namespace,pod,container) (rate(container_cpu_cfs_throttled_peri
 / on (namespace,pod,container) (sum by (namespace,pod,container) (rate(container_cpu_cfs_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])) > 0))
 ```
 
-#### 마지막 종료 원인이 OOM인 상태 — 신규 이벤트 수를 의미하지 않음
+#### 마지막 종료 원인이 OOM인 상태(신규 이벤트 수를 의미하지 않음)
 
 ```promql
 max by (namespace,pod,container) (kube_pod_container_status_last_terminated_reason{namespace="diagnostics-example",reason="OOMKilled"} == 1)
 ```
 
-#### 최근 재시작이 증가하고 마지막 종료 원인이 OOM인 컨테이너 — 정확한 OOM 횟수와 구분
+#### 최근 재시작이 증가하고 마지막 종료 원인이 OOM인 컨테이너(정확한 OOM 횟수와 구분)
 
 ```promql
 (max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m])) > 0)
@@ -1330,7 +1330,7 @@ topk(10, sum by (namespace,pod) (max by (namespace,pod,container) (increase(kube
 max by (namespace,pod,container) (kube_pod_container_status_waiting_reason{namespace="diagnostics-example",reason="CrashLoopBackOff"} == 1)
 ```
 
-#### 삭제 중이 아닌 활성 Pod의 Ready=false 상태 — Running Pod 포함
+#### 삭제 중이 아닌 활성 Pod의 Ready=false 상태(Running Pod 포함)
 
 ```promql
 ((1 - max by (namespace,pod) (kube_pod_status_ready{namespace="diagnostics-example",condition="true"})) > 0)
@@ -1346,7 +1346,7 @@ Readiness query는 Running-but-NotReady를 포함하고 종료·삭제 중 Pod�
 
 각 블록을 적절한 log group·기간에 별도로 실행합니다. Kubernetes.* field는 collector schema에 의존하므로 실제 record를 확인합니다. Error 문구·OOM keyword는 진단 단서이며 요청 오류율·전체 장애 이력이 아닙니다.
 
-#### 오류 메시지 표본 — 요청 오류율과 구분
+#### 오류 메시지 표본(요청 오류율과 구분)
 
 ```text
 fields @timestamp, @message, kubernetes.pod_name, kubernetes.namespace_name

@@ -389,7 +389,7 @@ spec:
 
 #### 1. Imbalance Risk
 
-![When too many users hash to the same range, one pod can end up carrying most of the traffic while the others stay nearly empty — a risk specific to consistent-hash load balancing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-5.png)
+![When too many users hash to the same range, one pod can end up carrying most of the traffic while the others stay nearly empty, a risk specific to consistent-hash load balancing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-5.html)
 

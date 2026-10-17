@@ -132,10 +132,10 @@ Distinct label values create distinct series, including when values are hashed. 
 
 9. Which Kubernetes metrics role is correctly matched?
 
-   - A) node-exporter — Kubernetes API object status
-   - B) kube-state-metrics — measured container CPU usage
-   - C) cAdvisor/kubelet metrics — container resource measurements
-   - D) metrics-server — long-term Prometheus TSDB
+   - A) node-exporter: Kubernetes API object status
+   - B) kube-state-metrics: measured container CPU usage
+   - C) cAdvisor/kubelet metrics: container resource measurements
+   - D) metrics-server: long-term Prometheus TSDB
 
 <details>
 <summary>Show answer</summary>

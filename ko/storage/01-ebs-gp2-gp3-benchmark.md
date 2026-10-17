@@ -3,20 +3,20 @@
 > **기존 측정 환경**: Kubernetes 1.36 (Amazon EKS), EBS CSI 드라이버, fio 3.36
 > **마지막 업데이트**: 2026년 10월 16일
 
-"gp2를 gp3로 바꾸면 20% 싸지고 성능은 같거나 낫다"는 AWS 문서의 한 줄은 유명하지만, Kubernetes PVC 위에서 그 차이가 **언제, 어떤 모양으로** 나타나는지 직접 잰 그래프는 찾기 어렵습니다. 이 문서는 EKS 노드 하나에 **같은 100 GiB짜리 gp2 PVC와 gp3 PVC**를 붙이고 fio로 45분간 두들긴 결과입니다. 핵심은 "gp2가 느리다"가 아닙니다 — **gp2는 33분 동안 gp3와 완전히 같고, 그 다음 1초 만에 10분의 1이 됩니다.** 아래 숫자는 기존 실행에서 보고한 값이며 반복 실행의 보장값이 아닙니다. 초기 크레딧·드라이버·이미지·노드 상태를 함께 기록해 비교해야 합니다.
+"gp2를 gp3로 바꾸면 20% 싸지고 성능은 같거나 낫다"는 AWS 문서의 한 줄은 유명하지만, Kubernetes PVC 위에서 그 차이가 **언제, 어떤 모양으로** 나타나는지 직접 잰 그래프는 찾기 어렵습니다. 이 문서는 EKS 노드 하나에 **같은 100 GiB짜리 gp2 PVC와 gp3 PVC**를 붙이고 fio로 45분간 두들긴 결과입니다. 핵심은 "gp2가 느리다"가 아닙니다. **gp2는 33분 동안 gp3와 완전히 같고, 그 다음 1초 만에 10분의 1이 됩니다.** 아래 숫자는 기존 실행에서 보고한 값이며 반복 실행의 보장값이 아닙니다. 초기 크레딧·드라이버·이미지·노드 상태를 함께 기록해 비교해야 합니다.
 
 ![fio 파드가 EBS CSI로 붙인 블록 디바이스를 통해 gp3(3,000 IOPS 고정)와 gp2(베이스라인 300 IOPS + I/O 크레딧 버킷)에 4k 랜덤 I/O를 보내고, 크레딧 잔량이 CloudWatch BurstBalance로 보고되는 구조를 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-storage-01-ebs-gp2-gp3-benchmark-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-storage-01-ebs-gp2-gp3-benchmark-0.html)
 
-## TL;DR — 측정 결과 요약
+## TL;DR: 측정 결과 요약
 
 | 측정 항목 (100 GiB, m5.xlarge) | gp3 | gp2 |
 |-------------------------------|-----|-----|
 | 4k 랜덤 읽기 IOPS (qd32) | **3,001** 평균, 600초 내내 평탄 (min 2,991) | **3,001 → 300**, 1,999초에 절벽 |
 | 4k 랜덤 읽기 p99 레이턴시 (qd32) | 12.9 ms | 109.6 ms (절벽 이후 구간이 지배) |
 | 4k 랜덤 쓰기 IOPS (qd32, 크레딧 소진 후) | **3,025** | 601 (부분 충전된 크레딧 소모분 포함) |
-| 4k 랜덤 읽기 레이턴시 (qd1) | 평균 **0.56 ms** / p99 0.87 ms | 평균 1.65 ms — p50 0.60 / p95 3.39 ms 이중 분포 |
+| 4k 랜덤 읽기 레이턴시 (qd1) | 평균 **0.56 ms** / p99 0.87 ms | 평균 1.65 ms, p50 0.60 / p95 3.39 ms 이중 분포 |
 | 1 MiB 순차 읽기 / 쓰기 | 127 / 126 MiB/s (125 MiB/s 베이스라인) | 130 / 129 MiB/s (≤170 GiB는 128 MiB/s 상한) |
 | 월 비용 (서울 리전, 100 GiB) | **$9.12** | $11.40 |
 
@@ -27,13 +27,13 @@
 | 항목 | 값 |
 |------|-----|
 | 클러스터 | Amazon EKS, Kubernetes 1.36, ap-northeast-2 |
-| 노드 | **m5.xlarge** (4 vCPU, 16 GiB), Karpenter 프로비저닝 — 인스턴스 EBS 한도 베이스라인 6,000 IOPS / 1,150 Mbps(143.75 MB/s ≈137 MiB/s), 버스트 18,750 IOPS / 4,750 Mbps |
+| 노드 | **m5.xlarge** (4 vCPU, 16 GiB), Karpenter 프로비저닝, 인스턴스 EBS 한도 베이스라인 6,000 IOPS / 1,150 Mbps(143.75 MB/s ≈137 MiB/s), 버스트 18,750 IOPS / 4,750 Mbps |
 | 볼륨 | EBS **gp2 100 GiB**와 **gp3 100 GiB** 각 1개, 기본 설정 (`StorageClass` `gp2` / `gp3`, EBS CSI 드라이버) |
 | 파드 | `alpine:3.20` + `fio 3.36`, `direct=1`(페이지 캐시 우회), `libaio` 엔진, 8 GiB 테스트 파일 |
-| 실행 방식 | **두 볼륨을 절대 동시에 측정하지 않음** — 여러 볼륨의 I/O가 인스턴스의 지속·버스트 한도를 공유하므로 간섭을 피하기 위해 |
+| 실행 방식 | **두 볼륨을 절대 동시에 측정하지 않음** (여러 볼륨의 I/O가 인스턴스의 지속·버스트 한도를 공유하므로 간섭을 피하기 위해) |
 | 가격 | gp2 $0.114/GB-월, gp3 $0.0912/GB-월 + 추가 IOPS $0.0057/IOPS-월 + 추가 처리량 $0.0456/MiB/s-월 (서울 리전, 2026-09 Pricing API 조회) |
 
-`nodeSelector`로 m5.xlarge를 고른 이유는 하나입니다 — 인스턴스 쪽 EBS 한도(6,000 IOPS)가 볼륨 한도(3,000)보다 충분히 커서 볼륨 한도를 관찰할 여유를 두기 위해서입니다. 실제 병목 판단에는 노드 전체 I/O와 instance/volume exceeded 지표도 함께 필요합니다. 더 작은 인스턴스(m5.large는 베이스라인 3,600 IOPS)였다면 두 한도가 섞여 해석이 어려워집니다.
+`nodeSelector`로 m5.xlarge를 고른 이유는 하나입니다. 인스턴스 쪽 EBS 한도(6,000 IOPS)가 볼륨 한도(3,000)보다 충분히 커서 볼륨 한도를 관찰할 여유를 두기 위해서입니다. 실제 병목 판단에는 노드 전체 I/O와 instance/volume exceeded 지표도 함께 필요합니다. 더 작은 인스턴스(m5.large는 베이스라인 3,600 IOPS)였다면 두 한도가 섞여 해석이 어려워집니다.
 
 ### 배포 매니페스트
 
@@ -134,7 +134,7 @@ COMMON="--ioengine=libaio --direct=1 --group_reporting --output-format=json"
 fio --name=layout --filename=/mnt/gp3/testfile --size=8G --rw=write --bs=1M $COMMON
 fio --name=layout --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1M $COMMON
 
-# 1. 4k 랜덤 읽기, qd32 — gp3 600초, gp2 2,700초 (크레딧 절벽을 보기 위해 45분)
+# 1. 4k 랜덤 읽기, qd32: gp3 600초, gp2 2,700초 (크레딧 절벽을 보기 위해 45분)
 fio --name=gp3-randread --filename=/mnt/gp3/testfile --size=8G --rw=randread --bs=4k \
     --iodepth=32 --runtime=600  --time_based --write_iops_log=gp3_rr --log_avg_msec=1000 $COMMON
 fio --name=gp2-randread --filename=/mnt/gp2/testfile --size=8G --rw=randread --bs=4k \
@@ -144,22 +144,22 @@ fio --name=gp2-randread --filename=/mnt/gp2/testfile --size=8G --rw=randread --b
 fio --name=gp3-randwrite --filename=/mnt/gp3/testfile --size=8G --rw=randwrite --bs=4k --iodepth=32 --runtime=120 --time_based $COMMON
 fio --name=gp2-randwrite --filename=/mnt/gp2/testfile --size=8G --rw=randwrite --bs=4k --iodepth=32 --runtime=120 --time_based $COMMON
 
-# 3. 4k 랜덤 읽기, qd1, 60초 — 낮은 동시성에서 본 전체 I/O 완료 레이턴시
+# 3. 4k 랜덤 읽기, qd1, 60초: 낮은 동시성에서 본 전체 I/O 완료 레이턴시
 fio --name=gp3-lat --filename=/mnt/gp3/testfile --size=8G --rw=randread --bs=4k --iodepth=1 --runtime=60 --time_based $COMMON
 fio --name=gp2-lat --filename=/mnt/gp2/testfile --size=8G --rw=randread --bs=4k --iodepth=1 --runtime=60 --time_based $COMMON
 
-# 4. 1 MiB 순차 읽기/쓰기, qd8, 60초 — 처리량 상한
+# 4. 1 MiB 순차 읽기/쓰기, qd8, 60초: 처리량 상한
 fio --name=gp3-seqread  --filename=/mnt/gp3/testfile --size=8G --rw=read  --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp3-seqwrite --filename=/mnt/gp3/testfile --size=8G --rw=write --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp2-seqread  --filename=/mnt/gp2/testfile --size=8G --rw=read  --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp2-seqwrite --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 ```
 
-## 측정 1 — 4k 랜덤 읽기 45분: 크레딧 절벽
+## 측정 1. 4k 랜덤 읽기 45분: 크레딧 절벽
 
 ![gp3는 10분 동안 3,000 IOPS로 평탄하고, gp2는 3,000 IOPS를 유지하다 1,999초에 300 IOPS로 수직 낙하하는 IOPS 시계열 차트.](../.gitbook/assets/ko-storage-01-ebs-gp2-gp3-iops-timeline.svg)
 
-fio가 1초 단위로 기록한 IOPS 로그(gp2 2,699개, gp3 600개 샘플)를 그대로 그린 그래프입니다. 아래 표는 각 로그의 첫 1초 샘플(두 볼륨 모두 5,997 — 초기 과도 구간의 값이며 원인은 별도 추적이 필요합니다. 이 샘플 포함 여부에 따라 fio 요약과 표 평균이 달라질 수 있습니다)을 제외한 값입니다.
+fio가 1초 단위로 기록한 IOPS 로그(gp2 2,699개, gp3 600개 샘플)를 그대로 그린 그래프입니다. 아래 표는 각 로그의 첫 1초 샘플(두 볼륨 모두 5,997, 초기 과도 구간의 값이며 원인은 별도 추적이 필요합니다. 이 샘플 포함 여부에 따라 fio 요약과 표 평균이 달라질 수 있습니다)을 제외한 값입니다.
 
 | | gp3 (600초) | gp2 절벽 이전 (0–1,999초) | gp2 절벽 이후 (2,000–2,700초) |
 |---|---|---|---|
@@ -176,7 +176,7 @@ fio가 1초 단위로 기록한 IOPS 로그(gp2 2,699개, gp3 600개 샘플)를 
 
 > **측정 조건 공개**: 기록된 실행 약 13분 전에, Karpenter 퇴거로 중단된 첫 시도가 같은 gp2 볼륨에 약 8분간(14:55–15:03 UTC) 3,000 IOPS 부하를 준 이력이 있습니다. 단순 크레딧 모델로는 이 사전 소모 때문에 절벽이 2,000초보다 앞당겨져야 하는데, 실측은 2,000초에 나왔습니다. 그 차이의 원인은 확인하지 못했습니다(중단 시점의 실제 I/O 지속 시간이 불확실합니다). 따라서 **절벽의 모양(1초 내 90% 하락)과 바닥값(300 IOPS)은 이 실행에서 보고한 결과**로, **정확한 지속 시간은 AWS 문서의 계산값(2,000초)을 계획 수치**로 사용하시기 바랍니다.
 
-## 측정 2 — 크레딧이 바닥난 뒤의 랜덤 쓰기: 3,025 vs 601 IOPS
+## 측정 2. 크레딧이 바닥난 뒤의 랜덤 쓰기: 3,025 vs 601 IOPS
 
 | 4k 랜덤 쓰기, qd32, 120초 | gp3 | gp2 (크레딧 소진 직후) |
 |---|---|---|
@@ -184,11 +184,11 @@ fio가 1초 단위로 기록한 IOPS 로그(gp2 2,699개, gp3 600개 샘플)를 
 | 평균 레이턴시 | 10.3 ms | 52.0 ms |
 | p50 / p95 / p99 | 10.2 / 11.2 / 12.0 ms | 11.1 / 109.6 / 133.7 ms |
 
-gp2가 베이스라인 300이 아니라 601 IOPS를 낸 이유가 이 측정의 진짜 교훈입니다. gp2 쓰기 테스트 직전 120초 동안(gp3 쓰기 테스트 중) gp2는 놀고 있었고, 그동안 **300 크레딧/초 × 120초 = 36,000 크레딧**이 다시 쌓였습니다. 이 36,000개를 120초 테스트 동안 다 쓰면 초당 300개 — 베이스라인 300에 더해 정확히 **600 IOPS**가 나옵니다. 측정값 601.
+gp2가 베이스라인 300이 아니라 601 IOPS를 낸 이유가 이 측정의 진짜 교훈입니다. gp2 쓰기 테스트 직전 120초 동안(gp3 쓰기 테스트 중) gp2는 놀고 있었고, 그동안 **300 크레딧/초 × 120초 = 36,000 크레딧**이 다시 쌓였습니다. 이 36,000개를 120초 테스트 동안 다 쓰면 초당 300개이고, 베이스라인 300에 더해 정확히 **600 IOPS**가 나옵니다. 측정값 601.
 
-즉 gp2의 크레딧 버킷은 "한 번 바닥나면 끝"이 아니라 **쉬는 시간만큼 조금씩 다시 차는 은행 계좌**입니다. 트래픽이 간헐적인 워크로드에서 gp2가 "가끔은 빠르고 가끔은 느린" 이유이고, 그 패턴은 재현이 어려워 디버깅을 괴롭게 만듭니다. p50이 11 ms인데 p95가 110 ms인 분포는 이 해석과 일치합니다 — 크레딧이 남은 초에는 빠르고, 아닌 초에는 큐에 갇힙니다.
+즉 gp2의 크레딧 버킷은 "한 번 바닥나면 끝"이 아니라 **쉬는 시간만큼 조금씩 다시 차는 은행 계좌**입니다. 트래픽이 간헐적인 워크로드에서 gp2가 "가끔은 빠르고 가끔은 느린" 이유이고, 그 패턴은 재현이 어려워 디버깅을 괴롭게 만듭니다. p50이 11 ms인데 p95가 110 ms인 분포는 이 해석과 일치합니다. 크레딧이 남은 초에는 빠르고, 아닌 초에는 큐에 갇힙니다.
 
-## 측정 3 — qd1 레이턴시: 낮은 동시성에서 본 분포
+## 측정 3. qd1 레이턴시: 낮은 동시성에서 본 분포
 
 큐 깊이 1은 애플리케이션이 만드는 동시 대기를 줄입니다. 측정에는 커널·가상화·EBS 서비스·스로틀 대기 등이 포함되므로 물리 SSD 자체의 지연시간과 같지는 않습니다.
 
@@ -201,10 +201,10 @@ gp2가 베이스라인 300이 아니라 601 IOPS를 낸 이유가 이 측정의 
 | 도달한 IOPS | 1,759 | 603 |
 
 - **gp3의 0.56 ms(p99 0.87 ms)가 이 환경에서 EBS 범용 SSD의 실제 왕복 시간입니다.** qd1에서 1,759 IOPS는 상한 3,000에 못 미치므로 스로틀이 걸리지 않았고, 순수하게 레이턴시가 처리율을 결정했습니다(1 ÷ 0.564 ms ≈ 1,773).
-- **gp2의 p50이 0.602 ms라는 점을 보세요.** 절반의 I/O는 gp3와 똑같이 빠릅니다. 비슷한 p50만으로 같은 물리 디바이스나 내부 구현이라고 결론 내릴 수는 없습니다. 나머지 절반이 3.4–3.6 ms로 밀려난 것은 초당 허용량(603 IOPS — 측정 2와 같은 원리로 60초 휴식 동안 쌓인 18,000 크레딧 + 베이스라인 300)을 넘긴 I/O가 스로틀 큐에 잡혔기 때문입니다.
+- **gp2의 p50이 0.602 ms라는 점을 보세요.** 절반의 I/O는 gp3와 똑같이 빠릅니다. 비슷한 p50만으로 같은 물리 디바이스나 내부 구현이라고 결론 내릴 수는 없습니다. 나머지 절반이 3.4–3.6 ms로 밀려난 것은 초당 허용량(603 IOPS: 측정 2와 같은 원리로 60초 휴식 동안 쌓인 18,000 크레딧 + 베이스라인 300)을 넘긴 I/O가 스로틀 큐에 잡혔기 때문입니다.
 - 실무적 결론: **스로틀은 평균이 아니라 분포의 모양으로 나타납니다.** 모니터링에서 평균 레이턴시만 보면 1.6 ms로 "조금 느려졌네" 정도지만, p95는 6배 뛰었습니다. 스토리지 대시보드에 p50과 p95/p99를 함께 두어야 하는 이유입니다.
 
-## 측정 4 — 순차 1 MiB: 처리량 상한은 둘 다 125–128 MiB/s
+## 측정 4. 순차 1 MiB: 처리량 상한은 둘 다 125–128 MiB/s
 
 | 1 MiB 순차, qd8, 60초 | gp3 읽기 | gp3 쓰기 | gp2 읽기 | gp2 쓰기 |
 |---|---|---|---|---|
@@ -300,9 +300,9 @@ kubectl get pvc data-postgres-0 -o jsonpath='{.status.currentVolumeAttributesCla
 
 ## 함께 읽기
 
-- [Storage 개요](./README.md) — EKS 스토리지 선택 기준과 이 벤치마크의 위치
-- [EKS 스토리지 Part 1](../eks/04-eks-storage-part1.md) — EBS CSI 드라이버 설치와 StorageClass 기본
-- [ClickHouse on EKS 실측 벤치마크](../database/01-clickhouse-on-eks.md) — 이 문서의 125 MiB/s 처리량 상한이 실제 DB 풀스캔에서 어떻게 나타나는지
+- [Storage 개요](./README.md): EKS 스토리지 선택 기준과 이 벤치마크의 위치
+- [EKS 스토리지 Part 1](../eks/04-eks-storage-part1.md): EBS CSI 드라이버 설치와 StorageClass 기본
+- [ClickHouse on EKS 실측 벤치마크](../database/01-clickhouse-on-eks.md): 이 문서의 125 MiB/s 처리량 상한이 실제 DB 풀스캔에서 어떻게 나타나는지
 
 ## 검토 근거
 

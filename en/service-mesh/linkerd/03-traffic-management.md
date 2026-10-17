@@ -412,7 +412,7 @@ TrafficSplit and linkerd-smi are deprecated and require their separate extension
 
 The legacy resource's service field names an apex Service, and backends carry relative weights. This is useful when recognizing existing configuration, but the active examples above use HTTPRoute. Service selectors still matter for unmeshed/fallback traffic; an apex selector must not accidentally expose canary Pods to callers outside the traffic policy.
 
-For progressive manual changes, review one configured stage at a time—such as 99/1, 90/10 and 50/50—against real traffic/error/latency evidence. Do not apply several same-name resources in one file and assume they execute a timed rollout; the final applied state wins.
+For progressive manual changes, review one configured stage at a time (such as 99/1, 90/10 and 50/50) against real traffic/error/latency evidence. Do not apply several same-name resources in one file and assume they execute a timed rollout; the final applied state wins.
 
 ### Explicit manual rollback
 

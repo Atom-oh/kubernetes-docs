@@ -209,16 +209,16 @@ profiles:
           weight: 1
 ```
 
-Amazon EKS's control plane is fully managed, so you cannot edit the default kube-scheduler's `KubeSchedulerConfiguration` directly. To use `MostAllocated`, run a *second* scheduler (a `Deployment` running the `kube-scheduler` binary with this config, bound to `system:kube-scheduler`/`system:volume-scheduler` via a dedicated `ServiceAccount`) and point specific pods at it with `spec.schedulerName`, as shown in [Multiple Schedulers](#multiple-schedulers) below — the same pattern used in [Building a Custom Scheduler](../scheduling/01-custom-scheduler-part1.md).
+Amazon EKS's control plane is fully managed, so you cannot edit the default kube-scheduler's `KubeSchedulerConfiguration` directly. To use `MostAllocated`, run a *second* scheduler (a `Deployment` running the `kube-scheduler` binary with this config, bound to `system:kube-scheduler`/`system:volume-scheduler` via a dedicated `ServiceAccount`) and point specific pods at it with `spec.schedulerName`, as shown in [Multiple Schedulers](#multiple-schedulers) below, the same pattern used in [Building a Custom Scheduler](../scheduling/01-custom-scheduler-part1.md).
 
-**Verified test — spread vs. bin-packing behavior.** To confirm the practical difference, a disposable 3-worker `kind` cluster (`kubectl version` v1.37.0, isolated, torn down after the test — no shared infrastructure was touched) was seeded with uneven baseline load using `nodeName`-pinned filler pods (16 CPU allocatable per node): `worker`=12 pods (75%), `worker2`=6 pods (37%), `worker3`=0 pods (0%). Six identical 1-CPU pods were then scheduled twice — once with the default scheduler (`LeastAllocated`) and once with a second scheduler configured with `MostAllocated` — against the same starting state:
+**Verified test: spread vs. bin-packing behavior.** To confirm the practical difference, a disposable 3-worker `kind` cluster (`kubectl version` v1.37.0, isolated, torn down after the test; no shared infrastructure was touched) was seeded with uneven baseline load using `nodeName`-pinned filler pods (16 CPU allocatable per node): `worker`=12 pods (75%), `worker2`=6 pods (37%), `worker3`=0 pods (0%). Six identical 1-CPU pods were then scheduled twice, once with the default scheduler (`LeastAllocated`) and once with a second scheduler configured with `MostAllocated`, against the same starting state:
 
 | Scheduler / strategy | Where the 6 new pods landed | Final CPU utilization (worker / worker2 / worker3) |
 |---|---|---|
-| Default (`LeastAllocated`) | All 6 on `worker3` (the emptiest node) | 75% / 37% / 37% — all three nodes now occupied |
-| `MostAllocated` | 3 on `worker`, 3 on `worker2` (the two busiest nodes) | 93% / 56% / 0% — `worker3` stayed completely idle |
+| Default (`LeastAllocated`) | All 6 on `worker3` (the emptiest node) | 75% / 37% / 37% (all three nodes now occupied) |
+| `MostAllocated` | 3 on `worker`, 3 on `worker2` (the two busiest nodes) | 93% / 56% / 0% (`worker3` stayed completely idle) |
 
-`LeastAllocated` leveled `worker3` up until it matched `worker2`, so every node ends up partially used and none of them can be safely scaled down. `MostAllocated` kept concentrating load on the already-busy nodes and left `worker3` untouched — exactly the node a cluster autoscaler or Karpenter consolidation pass would then terminate.
+`LeastAllocated` leveled `worker3` up until it matched `worker2`, so every node ends up partially used and none of them can be safely scaled down. `MostAllocated` kept concentrating load on the already-busy nodes and left `worker3` untouched: exactly the node a cluster autoscaler or Karpenter consolidation pass would then terminate.
 
 This is why `MostAllocated` is commonly recommended for **batch/short-lived job workloads** running alongside Karpenter or Cluster Autoscaler: bin-packing jobs onto fewer nodes maximizes the number of nodes that go fully idle and become eligible for consolidation, directly reducing compute cost. `LeastAllocated` remains the better default for long-running, latency-sensitive services, since spreading load leaves headroom on every node to absorb traffic bursts or a `kubectl drain` without cascading pressure onto a single packed node.
 

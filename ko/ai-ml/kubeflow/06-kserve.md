@@ -1,4 +1,4 @@
-# Part 6: KServe — Kubernetes 위에서의 모델 서빙
+# Part 6: KServe (Kubernetes 위에서의 모델 서빙)
 
 > **검토 기준**: KServe 0.18.0 / Models Web Application 0.18.0 / Community Distribution 26.03.1
 > **마지막 업데이트**: 2026년 10월 12일

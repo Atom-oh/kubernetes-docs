@@ -6,7 +6,7 @@ This quiz tests your understanding of the consortium choice, privacy, key manage
 
 1. What criterion is offered for judging whether a problem needs blockchain?
    - A) Whether the data volume is large enough
-   - B) Whether you can write "why this problem must have no arbiter" in one sentence — if not, compare alternatives first
+   - B) Whether you can write "why this problem must have no arbiter" in one sentence; if not, compare alternatives first
    - C) Whether there are five or more participating institutions
    - D) Whether real-time processing is required
 
@@ -14,7 +14,7 @@ This quiz tests your understanding of the consortium choice, privacy, key manage
 
 <summary>Show Answer</summary>
 
-**Answer: B) Whether you can write "why this problem must have no arbiter" in one sentence — if not, compare alternatives first**
+**Answer: B) Whether you can write "why this problem must have no arbiter" in one sentence; if not, compare alternatives first**
 
 **Explanation:**
 The chapter uses "agreeing without a trusted arbiter" as a starting question for comparing blockchain's costs and benefits. If one organization controls the data or the parties trust an arbiter, start with database/audit-log alternatives and compare the actual independent-verification and governance requirements. Do not infer universally zero value from institution count. When tamper detection is the main requirement, signed append-only logs, hash chains or WORM storage may satisfy it with simpler operations.
@@ -37,19 +37,19 @@ Public and permissioned systems can use different controls. Consortium membershi
 </details>
 
 3. What substantive value remains when choosing a consortium chain, and why should review define it that way?
-   - A) Censorship resistance — a value regulators also recognize
-   - B) Reduced inter-institution reconciliation cost — because writing "decentralized, operating without trust" collapses under the question "then who controls membership?"
-   - C) Permissionless participation — because it guarantees scalability
-   - D) No arbiter needed — because no operating party remains
+   - A) Censorship resistance, a value regulators also recognize
+   - B) Reduced inter-institution reconciliation cost, because writing "decentralized, operating without trust" collapses under the question "then who controls membership?"
+   - C) Permissionless participation, because it guarantees scalability
+   - D) No arbiter needed, because no operating party remains
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: B) Reduced inter-institution reconciliation cost — because writing "decentralized, operating without trust" collapses under the question "then who controls membership?"**
+**Answer: B) Reduced inter-institution reconciliation cost, because writing "decentralized, operating without trust" collapses under the question "then who controls membership?"**
 
 **Explanation:**
-Going consortium removes much of the public chain's value — censorship resistance, permissionless participation, no arbiter needed — because a party controls membership and that party is effectively an arbiter. What remains substantively is **"making institutions see the same data so reconciliation work disappears,"** which is real value. Defining value that way from the start is defensible in review.
+Going consortium removes much of the public chain's value (censorship resistance, permissionless participation, no arbiter needed) because a party controls membership and that party is effectively an arbiter. What remains substantively is **"making institutions see the same data so reconciliation work disappears,"** which is real value. Defining value that way from the start is defensible in review.
 </details>
 
 4. What is the particular risk of storing data encrypted on a blockchain?
@@ -86,7 +86,7 @@ Use fencing and preserved slashing-protection history. A deliberately distribute
 
 6. What kind of answer does the review question "how do you reverse an incorrect transaction" require?
    - A) Present a technical procedure for rolling back the chain
-   - B) Process, not technology — keep the original and issue a compensating transaction to correct the outcome, the same concept as a reversing entry in accounting
+   - B) Process, not technology: keep the original and issue a compensating transaction to correct the outcome, the same concept as a reversing entry in accounting
    - C) The consortium operator deletes the block
    - D) Explain that immutability is a strength so nothing needs reversing
 
@@ -94,7 +94,7 @@ Use fencing and preserved slashing-protection history. A deliberately distribute
 
 <summary>Show Answer</summary>
 
-**Answer: B) Process, not technology — keep the original and issue a compensating transaction to correct the outcome, the same concept as a reversing entry in accounting**
+**Answer: B) Process, not technology: keep the original and issue a compensating transaction to correct the outcome, the same concept as a reversing entry in accounting**
 
 **Explanation:**
 The immutability marketed as a strength is a problem in financial operations. Incorrect transactions, mistaken transfers, and system errors happen, and institutions have obligations and procedures to correct them. The answer is issuing a compensating transaction rather than "rolling back the chain," and review needs that procedure and its approval authority documented. This also connects to the absence of atomicity when integrating with existing infrastructure (Saga/outbox patterns).
@@ -113,23 +113,23 @@ The immutability marketed as a strength is a problem in financial operations. In
 **Answer: B) Error correction procedures and an exit strategy**
 
 **Explanation:**
-For error correction, "it cannot be reversed" becomes a weakness in review, and the answer must be prepared as process (compensating transactions) rather than technology. The exit strategy is almost never prepared — on consortium dissolution, member withdrawal, or system shutdown, financial data carries retention obligations so **"we turned off the chain" is not the end.** The ledger's export format, retention party, withdrawing-member data handling, and record access must be in the consortium agreement, with the technical design supporting it.
+For error correction, "it cannot be reversed" becomes a weakness in review, and the answer must be prepared as process (compensating transactions) rather than technology. The exit strategy is almost never prepared: on consortium dissolution, member withdrawal, or system shutdown, financial data carries retention obligations so **"we turned off the chain" is not the end.** The ledger's export format, retention party, withdrawing-member data handling, and record access must be in the consortium agreement, with the technical design supporting it.
 </details>
 
 8. What is the most substantive difficulty integrating with existing financial infrastructure, and the direction of response?
-   - A) The throughput gap — solved by adding chain nodes
-   - B) The absence of atomicity — an existing DB transaction and a chain transaction cannot be bound into one atomic unit, so eventual-consistency approaches like Saga/outbox must go into the design early
-   - C) Time synchronization — solved with NTP configuration
-   - D) Protocol differences — solved with a gateway translation
+   - A) The throughput gap: solved by adding chain nodes
+   - B) The absence of atomicity: an existing DB transaction and a chain transaction cannot be bound into one atomic unit, so eventual-consistency approaches like Saga/outbox must go into the design early
+   - C) Time synchronization: solved with NTP configuration
+   - D) Protocol differences: solved with a gateway translation
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: B) The absence of atomicity — an existing DB transaction and a chain transaction cannot be bound into one atomic unit, so eventual-consistency approaches like Saga/outbox must go into the design early**
+**Answer: B) The absence of atomicity: an existing DB transaction and a chain transaction cannot be bound into one atomic unit, so eventual-consistency approaches like Saga/outbox must go into the design early**
 
 **Explanation:**
-A failure between writing to the DB and submitting the chain transaction creates an inconsistency, and they cannot be bound in a distributed transaction. Saga or outbox patterns are needed, connected to the compensating-transaction procedure. Being an architecture decision, it must be **addressed early in design** — bolted on later, data consistency problems surface in production. Adding full-node replicas does not automatically increase base-chain write/consensus capacity, although it can increase aggregate RPC/read capacity and availability.
+A failure between writing to the DB and submitting the chain transaction creates an inconsistency, and they cannot be bound in a distributed transaction. Saga or outbox patterns are needed, connected to the compensating-transaction procedure. Being an architecture decision, it must be **addressed early in design**; bolted on later, data consistency problems surface in production. Adding full-node replicas does not automatically increase base-chain write/consensus capacity, although it can increase aggregate RPC/read capacity and availability.
 </details>
 
 9. Which stage must come before technical validation in a realistic adoption path?

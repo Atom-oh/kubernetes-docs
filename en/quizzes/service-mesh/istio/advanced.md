@@ -278,7 +278,7 @@ Traffic analysis happens only when configured. Automatic analysis failure can ab
 
 ### Question 6: Ambient Resource and Cost Analysis
 
-Using the original assumed inputs—500 Pods, five r5.xlarge nodes, 730 hours/month and $0.252/node-hour—calculate proxy resources and explain whether bill savings follow. Each sidecar uses 50 MB/0.1 vCPU; each ztunnel uses 50 MB/0.1 vCPU; the assumed waypoint uses 200 MB/0.5 vCPU.
+Using the original assumed inputs (500 Pods, five r5.xlarge nodes, 730 hours/month and $0.252/node-hour), calculate proxy resources and explain whether bill savings follow. Each sidecar uses 50 MB/0.1 vCPU; each ztunnel uses 50 MB/0.1 vCPU; the assumed waypoint uses 200 MB/0.5 vCPU.
 
 <details>
 <summary>Sample Answer</summary>

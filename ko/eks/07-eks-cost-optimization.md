@@ -357,7 +357,7 @@ spec:
 Karpenter 비용 최적화 설정:
 
 - **disruption.consolidateAfter**: Pod 추가/제거 후 통합 검토까지의 지연으로, 실제 동작은 정책과 disruption 검사에 따름 (예: `30s`, 기존 `ttlSecondsAfterEmpty`를 대체)
-- **disruption.consolidationPolicy**: 노드 통합 정책 — `WhenEmpty`(빈 노드만 정리) 또는 `WhenEmptyOrUnderutilized`(저사용 노드까지 통합, 기존 `consolidation.enabled: true`에 해당)
+- **disruption.consolidationPolicy**: 노드 통합 정책으로 `WhenEmpty`(빈 노드만 정리) 또는 `WhenEmptyOrUnderutilized`(저사용 노드까지 통합, 기존 `consolidation.enabled: true`에 해당) 중 하나를 지정
 - **template.spec.requirements** (`node.kubernetes.io/instance-type`): 비용 효율적인 인스턴스 유형 지정
 
 #### Horizontal Pod Autoscaler (HPA)

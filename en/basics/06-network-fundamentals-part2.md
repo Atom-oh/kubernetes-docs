@@ -1,4 +1,4 @@
-# Network Fundamentals Part 2 — The Transport Layer and TLS
+# Network Fundamentals Part 2: The Transport Layer and TLS
 
 > **Last Updated**: September 11, 2026
 
@@ -19,7 +19,7 @@ One picture summarizes the heart of this part:
 
 ---
 
-## 3. Transport Layer — End-to-End Delivery
+## 3. Transport Layer: End-to-End Delivery
 
 From here on, your conversation partner is not a "network" but a "process." That is why port numbers appear.
 
@@ -53,10 +53,10 @@ The caveat: being stateless makes UDP easy to abuse for spoofing and amplificati
 
 **How it works:** QUIC redesigns, from scratch on UDP, everything TCP+TLS used to do. Four key properties:
 
-1. **Independent stream delivery** — each stream has its own byte ordering, so loss on one stream need not prevent delivery of another stream’s available data. Packet recovery and congestion control still operate across the connection/path; a stream can block on its own missing bytes, and application or HTTP/3 QPACK dependencies can also cause blocking.
-2. **Built-in encryption** — QUIC integrates the TLS 1.3 handshake and uses its own packet protection rather than TLS records. A normal full handshake takes about 1 RTT. Eligible, accepted resumption can carry **0-RTT early data**, but the handshake still completes later; Retry or additional handshake exchanges can increase latency.
-3. **Connection IDs** — these support connection continuity through address changes, with path validation and endpoint support. Migration restrictions or unavailable paths can still interrupt a Wi-Fi-to-cellular transition; continuity is not guaranteed.
-4. **Implementation flexibility** — QUIC is commonly implemented in user space, allowing transport changes to ship with an application or library. User-space implementation is not a protocol requirement.
+1. **Independent stream delivery**: each stream has its own byte ordering, so loss on one stream need not prevent delivery of another stream’s available data. Packet recovery and congestion control still operate across the connection/path; a stream can block on its own missing bytes, and application or HTTP/3 QPACK dependencies can also cause blocking.
+2. **Built-in encryption**: QUIC integrates the TLS 1.3 handshake and uses its own packet protection rather than TLS records. A normal full handshake takes about 1 RTT. Eligible, accepted resumption can carry **0-RTT early data**, but the handshake still completes later; Retry or additional handshake exchanges can increase latency.
+3. **Connection IDs**: these support connection continuity through address changes, with path validation and endpoint support. Migration restrictions or unavailable paths can still interrupt a Wi-Fi-to-cellular transition; continuity is not guaranteed.
+4. **Implementation flexibility**: QUIC is commonly implemented in user space, allowing transport changes to ship with an application or library. User-space implementation is not a protocol requirement.
 
 **In practice:** HTTP/3 usually uses UDP 443. If that path is blocked, an HTTP client can try HTTP/2 or HTTP/1.1 over TCP when the server supports them; QUIC itself does not turn into TCP. Check reachability, negotiated protocol and implementation/offload behavior before attributing a performance result to QUIC. CPU cost depends on the implementation and workload.
 
@@ -64,7 +64,7 @@ One security caveat: **0-RTT data can be replayed.** Replaying an early-data exc
 
 ---
 
-## 4. Security — TLS
+## 4. Security: TLS
 
 ### TLS
 
@@ -76,9 +76,9 @@ A normal full TLS 1.3 handshake takes about 1 RTT; resumption permits optional e
 
 **In practice:** Three things go wrong over and over.
 
-- **Certificate expiry** — automate renewal and separately monitor expiry and successful certificate deployment.
-- **SNI exposure** — TLS 1.3 alone leaves the ClientHello SNI visible. ECH (Encrypted Client Hello, RFC 9849) can protect the inner ClientHello when supported and configured by both endpoints. QUIC Initial packet keys are publicly derivable, so Initial encryption alone does not hide SNI. ECH also does not hide the destination IP or all traffic metadata.
-- **Termination point design** — document every hop: client to load balancer, load balancer to application, and any service-to-service connection. TLS termination does not automatically encrypt the next hop. Use TLS there when required; use mTLS when both peers must authenticate with certificates. A service mesh can automate this, but is not required for every design.
+- **Certificate expiry**: automate renewal and separately monitor expiry and successful certificate deployment.
+- **SNI exposure**: TLS 1.3 alone leaves the ClientHello SNI visible. ECH (Encrypted Client Hello, RFC 9849) can protect the inner ClientHello when supported and configured by both endpoints. QUIC Initial packet keys are publicly derivable, so Initial encryption alone does not hide SNI. ECH also does not hide the destination IP or all traffic metadata.
+- **Termination point design**: document every hop: client to load balancer, load balancer to application, and any service-to-service connection. TLS termination does not automatically encrypt the next hop. Use TLS there when required; use mTLS when both peers must authenticate with certificates. A service mesh can automate this, but is not required for every design.
 
 **Certificate chains and OCSP stapling:** Typical X.509 validation builds a path from the leaf certificate, through any required intermediates, to a configured trust anchor. The server should send the needed intermediate certificates; the root is normally already trusted by the client. Missing intermediates can cause client-dependent failures, although not every valid chain contains an intermediate. Revocation handling depends on the issuer and client. Where OCSP is supported, stapling lets the server attach a signed status response and can reduce direct client lookups. It is not universal: Let’s Encrypt ended OCSP service in August 2025 and uses CRLs. Match certificate and revocation configuration to the actual CA and clients.
 

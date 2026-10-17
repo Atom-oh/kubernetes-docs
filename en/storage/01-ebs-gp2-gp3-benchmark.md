@@ -3,20 +3,20 @@
 > **Recorded Test Environment**: Kubernetes 1.36 (Amazon EKS), EBS CSI driver, fio 3.36
 > **Last Updated**: October 16, 2026
 
-The AWS one-liner — "move gp2 to gp3, save 20%, get equal or better performance" — is famous, but a graph showing **when and in what shape** that difference appears on a Kubernetes PVC is hard to find. This article attaches **one 100 GiB gp2 PVC and one 100 GiB gp3 PVC** to a single EKS node and hammers both with fio for 45 minutes. The point is not "gp2 is slow." It is this: **gp2 is indistinguishable from gp3 for 33 minutes, and then drops to one tenth within a single second.** These are reported results from the original run, not guaranteed outcomes of a repeat. Record initial credits, driver/image versions and node conditions when comparing runs.
+The AWS one-liner, "move gp2 to gp3, save 20%, get equal or better performance", is famous, but a graph showing **when and in what shape** that difference appears on a Kubernetes PVC is hard to find. This article attaches **one 100 GiB gp2 PVC and one 100 GiB gp3 PVC** to a single EKS node and hammers both with fio for 45 minutes. The point is not "gp2 is slow." It is this: **gp2 is indistinguishable from gp3 for 33 minutes, and then drops to one tenth within a single second.** These are reported results from the original run, not guaranteed outcomes of a repeat. Record initial credits, driver/image versions and node conditions when comparing runs.
 
 ![Architecture diagram: an fio pod sends 4k random I/O through an EBS CSI-attached block device to gp3 (fixed 3,000 IOPS) and gp2 (300 IOPS baseline plus an I/O credit bucket), with the bucket balance reported to CloudWatch BurstBalance.](../.gitbook/assets/en-storage-01-ebs-gp2-gp3-benchmark-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-storage-01-ebs-gp2-gp3-benchmark-0.html)
 
-## TL;DR — What We Measured
+## TL;DR: What We Measured
 
 | Metric (100 GiB, m5.xlarge) | gp3 | gp2 |
 |-----------------------------|-----|-----|
 | 4k random read IOPS (qd32) | **3,001** average, flat for 600 s (min 2,991) | **3,001 → 300**, cliff at 1,999 s |
 | 4k random read p99 latency (qd32) | 12.9 ms | 109.6 ms (dominated by the post-cliff period) |
 | 4k random write IOPS (qd32, after credit depletion) | **3,025** | 601 (includes a partially refilled bucket) |
-| 4k random read latency (qd1) | avg **0.56 ms** / p99 0.87 ms | avg 1.65 ms — bimodal: p50 0.60 / p95 3.39 ms |
+| 4k random read latency (qd1) | avg **0.56 ms** / p99 0.87 ms | avg 1.65 ms, bimodal: p50 0.60 / p95 3.39 ms |
 | 1 MiB sequential read / write | 127 / 126 MiB/s (125 MiB/s baseline) | 130 / 129 MiB/s (128 MiB/s cap for ≤170 GiB) |
 | Monthly cost (Seoul region, 100 GiB) | **$9.12** | $11.40 |
 
@@ -27,10 +27,10 @@ One sentence: **for the same capacity, gp2 sells you 33 minutes of 3,000 IOPS at
 | Item | Value |
 |------|-------|
 | Cluster | Amazon EKS, Kubernetes 1.36, ap-northeast-2 |
-| Node | **m5.xlarge** (4 vCPU, 16 GiB), provisioned by Karpenter — instance EBS limits: baseline 6,000 IOPS / 1,150 Mbps (143.75 MB/s ≈137 MiB/s), burst 18,750 IOPS / 4,750 Mbps |
+| Node | **m5.xlarge** (4 vCPU, 16 GiB), provisioned by Karpenter; instance EBS limits: baseline 6,000 IOPS / 1,150 Mbps (143.75 MB/s ≈137 MiB/s), burst 18,750 IOPS / 4,750 Mbps |
 | Volumes | one EBS **gp2 100 GiB** and one **gp3 100 GiB**, default settings (`StorageClass` `gp2` / `gp3`, EBS CSI driver) |
 | Pod | `alpine:3.20` + `fio 3.36`, `direct=1` (bypasses the page cache), `libaio` engine, 8 GiB test file |
-| Execution | **the two volumes were never measured concurrently** — multiple volumes share the instance's sustained/burst I/O budget, so concurrent tests would introduce interference |
+| Execution | **the two volumes were never measured concurrently**; multiple volumes share the instance's sustained/burst I/O budget, so concurrent tests would introduce interference |
 | Pricing | gp2 $0.114/GB-month, gp3 $0.0912/GB-month + extra IOPS $0.0057/IOPS-month + extra throughput $0.0456/MiB/s-month (Seoul region, Pricing API, September 2026) |
 
 The `nodeSelector` pins m5.xlarge for exactly one reason: its instance-level EBS limit (6,000 IOPS) is comfortably above the volume limit (3,000), to leave headroom for observing the volume. Confirm the bottleneck with total node I/O and instance/volume exceeded metrics as well. On a smaller instance (m5.large has a 3,600 IOPS baseline) the two limits blur together and the results become hard to interpret.
@@ -134,7 +134,7 @@ COMMON="--ioengine=libaio --direct=1 --group_reporting --output-format=json"
 fio --name=layout --filename=/mnt/gp3/testfile --size=8G --rw=write --bs=1M $COMMON
 fio --name=layout --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1M $COMMON
 
-# 1. 4k random read, qd32 — gp3 for 600 s, gp2 for 2,700 s (45 minutes, to catch the credit cliff)
+# 1. 4k random read, qd32: gp3 for 600 s, gp2 for 2,700 s (45 minutes, to catch the credit cliff)
 fio --name=gp3-randread --filename=/mnt/gp3/testfile --size=8G --rw=randread --bs=4k \
     --iodepth=32 --runtime=600  --time_based --write_iops_log=gp3_rr --log_avg_msec=1000 $COMMON
 fio --name=gp2-randread --filename=/mnt/gp2/testfile --size=8G --rw=randread --bs=4k \
@@ -144,22 +144,22 @@ fio --name=gp2-randread --filename=/mnt/gp2/testfile --size=8G --rw=randread --b
 fio --name=gp3-randwrite --filename=/mnt/gp3/testfile --size=8G --rw=randwrite --bs=4k --iodepth=32 --runtime=120 --time_based $COMMON
 fio --name=gp2-randwrite --filename=/mnt/gp2/testfile --size=8G --rw=randwrite --bs=4k --iodepth=32 --runtime=120 --time_based $COMMON
 
-# 3. 4k random read, qd1, 60 s — end-to-end completion latency at low concurrency
+# 3. 4k random read, qd1, 60 s: end-to-end completion latency at low concurrency
 fio --name=gp3-lat --filename=/mnt/gp3/testfile --size=8G --rw=randread --bs=4k --iodepth=1 --runtime=60 --time_based $COMMON
 fio --name=gp2-lat --filename=/mnt/gp2/testfile --size=8G --rw=randread --bs=4k --iodepth=1 --runtime=60 --time_based $COMMON
 
-# 4. 1 MiB sequential read/write, qd8, 60 s — throughput ceiling
+# 4. 1 MiB sequential read/write, qd8, 60 s: throughput ceiling
 fio --name=gp3-seqread  --filename=/mnt/gp3/testfile --size=8G --rw=read  --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp3-seqwrite --filename=/mnt/gp3/testfile --size=8G --rw=write --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp2-seqread  --filename=/mnt/gp2/testfile --size=8G --rw=read  --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 fio --name=gp2-seqwrite --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1M --iodepth=8 --runtime=60 --time_based $COMMON
 ```
 
-## Measurement 1 — 45 Minutes of 4k Random Reads: The Credit Cliff
+## Measurement 1. 45 Minutes of 4k Random Reads: The Credit Cliff
 
 ![IOPS time series: gp3 holds a flat 3,000 IOPS for 10 minutes; gp2 holds 3,000 IOPS and then drops vertically to 300 IOPS at 1,999 seconds.](../.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg)
 
-This is the per-second IOPS log fio recorded (2,699 samples for gp2, 600 for gp3), plotted as is. The table below excludes each log's first one-second sample (5,997 on both volumes — an initial transient whose cause needs separate tracing; including it can change the summary average).
+This is the per-second IOPS log fio recorded (2,699 samples for gp2, 600 for gp3), plotted as is. The table below excludes each log's first one-second sample (5,997 on both volumes, an initial transient whose cause needs separate tracing; including it can change the summary average).
 
 | | gp3 (600 s) | gp2 before the cliff (0–1,999 s) | gp2 after the cliff (2,000–2,700 s) |
 |---|---|---|---|
@@ -176,7 +176,7 @@ How to read it:
 
 > **Disclosure of test conditions**: about 13 minutes before the recorded run, the first attempt (cut short by the Karpenter eviction) had already loaded this same gp2 volume at 3,000 IOPS for roughly 8 minutes (14:55–15:03 UTC). A naive credit model says that pre-drain should have moved the cliff earlier than 2,000 s; we observed it at 2,000 s. We could not pin down the reason (the actual I/O duration before the eviction is uncertain). Treat **the shape of the cliff (a 90% drop within one second) and the floor (300 IOPS) as results reported for this run**, and **use the AWS formula (2,000 s) as the planning number for the exact duration**.
 
-## Measurement 2 — Random Writes After Credit Depletion: 3,025 vs 601 IOPS
+## Measurement 2. Random Writes After Credit Depletion: 3,025 vs 601 IOPS
 
 | 4k random write, qd32, 120 s | gp3 | gp2 (just after depletion) |
 |---|---|---|
@@ -184,11 +184,11 @@ How to read it:
 | Average latency | 10.3 ms | 52.0 ms |
 | p50 / p95 / p99 | 10.2 / 11.2 / 12.0 ms | 11.1 / 109.6 / 133.7 ms |
 
-The real lesson here is why gp2 produced 601 IOPS rather than its 300 baseline. During the 120 seconds immediately before the gp2 write test (while the gp3 write test ran), gp2 was idle and accrued **300 credits/s × 120 s = 36,000 credits**. Spending those 36,000 over a 120-second test adds 300 IOPS on top of the 300 baseline — exactly **600 IOPS**. Measured: 601.
+The real lesson here is why gp2 produced 601 IOPS rather than its 300 baseline. During the 120 seconds immediately before the gp2 write test (while the gp3 write test ran), gp2 was idle and accrued **300 credits/s × 120 s = 36,000 credits**. Spending those 36,000 over a 120-second test adds 300 IOPS on top of the 300 baseline, exactly **600 IOPS**. Measured: 601.
 
-So the gp2 credit bucket is not "empty forever once drained"; it is **a bank account that slowly refills whenever the volume rests**. That is why gp2 under intermittent traffic is "sometimes fast, sometimes slow", a pattern that is painful to debug because it rarely reproduces on demand. The bimodal distribution — p50 at 11 ms, p95 at 110 ms — is the fingerprint: seconds with credits left are fast, seconds without them sit in the queue.
+So the gp2 credit bucket is not "empty forever once drained"; it is **a bank account that slowly refills whenever the volume rests**. That is why gp2 under intermittent traffic is "sometimes fast, sometimes slow", a pattern that is painful to debug because it rarely reproduces on demand. The bimodal distribution (p50 at 11 ms, p95 at 110 ms) is the fingerprint: seconds with credits left are fast, seconds without them sit in the queue.
 
-## Measurement 3 — qd1 Latency: Distribution at Low Concurrency
+## Measurement 3. qd1 Latency: Distribution at Low Concurrency
 
 Queue depth 1 reduces application-generated concurrency. Kernel, virtualization, EBS service and throttling delays can still contribute; it is not a measurement of the physical SSD alone.
 
@@ -201,10 +201,10 @@ Queue depth 1 reduces application-generated concurrency. Kernel, virtualization,
 | Achieved IOPS | 1,759 | 603 |
 
 - **gp3's 0.56 ms (p99 0.87 ms) is the actual round-trip time of EBS general-purpose SSD in this environment.** At qd1, 1,759 IOPS stays below the 3,000 cap, so there was no throttling and latency alone determined throughput (1 ÷ 0.564 ms ≈ 1,773).
-- **Look at gp2's p50: 0.602 ms.** Half of its I/Os are exactly as fast as gp3. Similar p50 values do not establish identical physical devices or service internals. The other half landed at 3.4–3.6 ms because I/Os beyond the per-second allowance (603 IOPS — same arithmetic as Measurement 2: 18,000 credits accrued during the 60-second rest plus the 300 baseline) were held in the throttle queue.
-- Practical conclusion: **throttling shows up in the shape of the distribution, not in the average.** A dashboard showing only mean latency reads 1.6 ms — "a bit slower" — while p95 has jumped 6x. This is why storage dashboards need p50 next to p95/p99.
+- **Look at gp2's p50: 0.602 ms.** Half of its I/Os are exactly as fast as gp3. Similar p50 values do not establish identical physical devices or service internals. The other half landed at 3.4–3.6 ms because I/Os beyond the per-second allowance (603 IOPS; same arithmetic as Measurement 2: 18,000 credits accrued during the 60-second rest plus the 300 baseline) were held in the throttle queue.
+- Practical conclusion: **throttling shows up in the shape of the distribution, not in the average.** A dashboard showing only mean latency reads 1.6 ms ("a bit slower") while p95 has jumped 6x. This is why storage dashboards need p50 next to p95/p99.
 
-## Measurement 4 — Sequential 1 MiB: Both Cap at 125–128 MiB/s
+## Measurement 4. Sequential 1 MiB: Both Cap at 125–128 MiB/s
 
 | 1 MiB sequential, qd8, 60 s | gp3 read | gp3 write | gp2 read | gp2 write |
 |---|---|---|---|---|
@@ -227,7 +227,7 @@ Priced in the Seoul region (Pricing API, September 2026), "how do I get 3,000 IO
 | gp3 100 GiB + 250 MiB/s | $14.82 ($9.12 + 125 × $0.0456) | 3,000 | 250 MiB/s |
 | gp2 1,000 GiB (a volume "sized for IOPS") | $114.00 | 3,000 | 250 MiB/s |
 
-The last row is the most common waste in practice. In the gp2 era, the standard move for a 100 GiB dataset that needed IOPS was to allocate 1,000 GiB. gp3 100 GiB delivers the same 3,000 IOPS for **$9.12** — 12.5× cheaper ($114.00 ÷ $9.12). Decoupling IOPS from capacity is the essence of gp3, and this table is the consequence.
+The last row is the most common waste in practice. In the gp2 era, the standard move for a 100 GiB dataset that needed IOPS was to allocate 1,000 GiB. gp3 100 GiB delivers the same 3,000 IOPS for **$9.12**, 12.5× cheaper ($114.00 ÷ $9.12). Decoupling IOPS from capacity is the essence of gp3, and this table is the consequence.
 
 ## Moving to gp3 on Kubernetes
 
@@ -300,9 +300,9 @@ Until the migration is done, alarm on the CloudWatch EBS metric **`BurstBalance`
 
 ## Related Reading
 
-- [Storage Overview](./README.md) — how to choose EKS storage and where this benchmark fits
-- [EKS Storage Part 1](../eks/04-eks-storage-part1.md) — EBS CSI driver installation and StorageClass basics
-- [ClickHouse on EKS Measured Benchmark](../database/01-clickhouse-on-eks.md) — how the 125 MiB/s throughput ceiling from this article shows up in a real database full scan
+- [Storage Overview](./README.md): how to choose EKS storage and where this benchmark fits
+- [EKS Storage Part 1](../eks/04-eks-storage-part1.md): EBS CSI driver installation and StorageClass basics
+- [ClickHouse on EKS Measured Benchmark](../database/01-clickhouse-on-eks.md): how the 125 MiB/s throughput ceiling from this article shows up in a real database full scan
 
 ## Review Sources
 

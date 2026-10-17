@@ -10,11 +10,11 @@ Upstream 프로젝트는 edge 산출물을 배포하며 stable 배포판과 지�
 
 2026년 8월 25일 공개된 edge-26.8.4 릴리스에는 opaque 프로토콜 처리에서 nil ExternalWorkload를 방어하지 못하던 문제 수정, policy 컨트롤러가 TLSRoute API 버전을 클러스터와 협상(negotiate)하도록 하는 수정, Go 1.26.7 업데이트가 포함되었습니다. 자세한 내용은 [릴리스 노트](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4)를 참고하세요.
 
-### 2026년 8월 업데이트: edge-26.8.2 — Gateway API 1.5.1 지원
+### 2026년 8월 업데이트: edge-26.8.2 (Gateway API 1.5.1 지원)
 
 2026년 8월 14일 공개된 edge-26.8.2 릴리스는 Gateway API 1.5.1 지원(linkerd-kubert 0.27.0 경유)을 추가하고, 테스트된 최대 Kubernetes 버전을 1.36으로 올렸습니다. 그 외 destination 컨트롤러의 중복 Job informer 제거, lease watch 태스크가 죽으면 policy 컨트롤러가 함께 종료되도록 하는 안정성 수정이 포함되었습니다. 자세한 내용은 [릴리스 노트](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2)를 참고하세요.
 
-### 2026년 7월 업데이트: edge-26.7.1 — 미정의 서비스 포트 요청 차단
+### 2026년 7월 업데이트: edge-26.7.1 (미정의 서비스 포트 요청 차단)
 
 edge-26.7.1의 GitHub 릴리스 게시일은 2026년 7월 21일입니다. ServiceProfile이 있어도 목적지 Service에 선언하지 않은 포트의 요청을 거부하는 동작 변경이 포함되었습니다. 업그레이드 전에 실제 Service port 선언을 확인하세요. Gateway API 설치 검사도 추가되었습니다. [릴리스 노트](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1)를 참고하세요.
 

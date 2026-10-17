@@ -46,7 +46,7 @@ Prefix mode needs supported hardware and contiguous blocks. Allocation still con
 
 **Answer: B. 3 × (10 − 1) + 2 = 29**
 
-There are three ENIs with ten IPv4 slots each. Removing each ENI's primary slot leaves 27 ordinary secondary addresses; the historical formula adds two host-network system Pods. It is not a universal current capacity limit—prefixes, SGPP, kubelet caps and resources change the interpretation.
+There are three ENIs with ten IPv4 slots each. Removing each ENI's primary slot leaves 27 ordinary secondary addresses; the historical formula adds two host-network system Pods. It is not a universal current capacity limit; prefixes, SGPP, kubelet caps and resources change the interpretation.
 
 </details>
 

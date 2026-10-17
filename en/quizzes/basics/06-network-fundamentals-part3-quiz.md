@@ -1,4 +1,4 @@
-# Network Fundamentals Part 3 Quiz — Application Protocols
+# Network Fundamentals Part 3 Quiz: Application Protocols
 
 > **Last Updated**: September 14, 2026
 

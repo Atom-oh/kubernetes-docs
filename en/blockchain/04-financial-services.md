@@ -17,15 +17,15 @@ As seen in [Fundamentals](./01-fundamentals.md), blockchain's essence is **"agre
 | Situation | Is blockchain right? |
 |---|---|
 | A single organization owns and controls the data | Usually start with database/audit-log alternatives; compare explicit verification and governance requirements |
-| An arbiter exists and everyone trusts them | **No** — the arbiter's database suffices |
-| Only tamper detection is needed | **Usually no** — hash chains, signed logs, or WORM storage suffice |
+| An arbiter exists and everyone trusts them | **No**: the arbiter's database suffices |
+| Only tamper detection is needed | **Usually no**: hash chains, signed logs, or WORM storage suffice |
 | Multiple mutually distrusting institutions update **shared state** | **Worth evaluating** |
 | Third parties must be able to **verify independently** | **Worth evaluating** |
 | Inter-institution reconciliation cost is genuinely large | **Worth evaluating** |
 
-**"Only tamper detection is needed" is an especially common misconception.** If the goal is an audit trail or integrity proof, you can achieve it without blockchain — a signed append-only log, a hash chain, or object storage WORM (Write Once Read Many) features — with far simpler operations.
+**"Only tamper detection is needed" is an especially common misconception.** If the goal is an audit trail or integrity proof, you can achieve it without blockchain, using a signed append-only log, a hash chain, or object storage WORM (Write Once Read Many) features, with far simpler operations.
 
-[The Amazon QLDB case](./03-managed-blockchain.md) is instructive here. QLDB provided precisely "a cryptographically verifiable ledger with a central trusted party," on the premise that **many problems are satisfied by that.** The service ended, but the problem definition remains valid — many requirements do not need full decentralized consensus.
+[The Amazon QLDB case](./03-managed-blockchain.md) is instructive here. QLDB provided precisely "a cryptographically verifiable ledger with a central trusted party," on the premise that **many problems are satisfied by that.** The service ended, but the problem definition remains valid: many requirements do not need full decentralized consensus.
 
 **Practical recommendation**: if you cannot write "why this problem must have no arbiter" in one sentence, compare the non-blockchain alternatives first.
 
@@ -60,9 +60,9 @@ Here is where honesty is required. Going consortium **removes much of blockchain
 
 So a consortium chain's substantive value narrows to **"making institutions see the same data so reconciliation work disappears."** That is real value, but it is a different story from "decentralized" or "trustless."
 
-**This distinction matters in review.** Write "decentralized, operating without trust" in a proposal and the review asks "then who controls membership?" — and if the answer is "the consortium secretariat," the logic collapses. **Defining the value as "reduced inter-institution reconciliation cost" from the start is defensible.**
+**This distinction matters in review.** Write "decentralized, operating without trust" in a proposal and the review asks "then who controls membership?", and if the answer is "the consortium secretariat," the logic collapses. **Defining the value as "reduced inter-institution reconciliation cost" from the start is defensible.**
 
-## Privacy — The Hardest Problem
+## Privacy: The Hardest Problem
 
 ### The fundamental tension
 
@@ -80,7 +80,7 @@ There are ways to resolve the tension, each with a different price.
 | **Private Data Collection** (Fabric) | Only hashes on the ledger; actual data only on authorized peers | Data distribution and lifecycle burden |
 | **Zero-knowledge proofs (ZKP)** | **Prove a statement true** without revealing its content | Computational cost, circuit design difficulty, verifiability review |
 | **Off-chain storage** | Sensitive data off-chain, only hashes/pointers on-chain | The off-chain store's availability and integrity become a new dependency |
-| **Encrypted storage** | Ciphertext on the chain | **Key management becomes access control** — a key leak exposes the entire past |
+| **Encrypted storage** | Ciphertext on the chain | **Key management becomes access control**; a key leak exposes the entire past |
 
 ### Which to choose
 
@@ -96,7 +96,7 @@ Encrypted records on an append-only/public ledger can remain in historical copie
 
 Privacy regulation's deletion requirements conflict with blockchain immutability.
 
-**The usual response is "do not put personal data on the chain"** — keep only identifiers or hashes on-chain and personal data off-chain where it can be deleted. But a hash is still lookupable by someone who knows the original (rainbow-table attacks), so this is combined with deleting the salt or key to make recovery practically impossible (crypto-shredding).
+**The usual response is "do not put personal data on the chain"**: keep only identifiers or hashes on-chain and personal data off-chain where it can be deleted. But a hash is still lookupable by someone who knows the original (rainbow-table attacks), so this is combined with deleting the salt or key to make recovery practically impossible (crypto-shredding).
 
 ::: warning Needs verification
 **The legal interpretation of privacy regulations' (Korea's PIPA, GDPR, etc.) deletion requirements versus blockchain immutability varies by jurisdiction and case, and this document is not legal advice.**
@@ -104,7 +104,7 @@ Privacy regulation's deletion requirements conflict with blockchain immutability
 Whether hashes or ciphertext constitute personal data, and whether crypto-shredding satisfies a deletion obligation, must be **confirmed with your legal/compliance function and regulators' interpretations.** That confirmation comes before technical design.
 :::
 
-## Key Management — The Heaviest Item in Financial Services
+## Key Management: The Heaviest Item in Financial Services
 
 [Fundamentals](./01-fundamentals.md) said "keys are authority and losing them is final." Here is why that is especially heavy in financial services.
 
@@ -113,9 +113,9 @@ Whether hashes or ciphertext constitute personal data, and whether crypto-shredd
 | Requirement | The conflicting requirement |
 |---|---|
 | The key must be **online** to sign transactions | The key must be **isolated** |
-| Availability — a signing delay means service interruption | Multi-approval — no single party may sign |
-| Backups mandatory — loss is permanent | Backups are an exposure path |
-| Auditable — who signed what | The key itself must not be exposed |
+| Availability: a signing delay means service interruption | Multi-approval: no single party may sign |
+| Backups mandatory: loss is permanent | Backups are an exposure path |
+| Auditable: who signed what | The key itself must not be exposed |
 
 This contradiction is **the hardest part to design** in financial-services blockchain.
 
@@ -125,26 +125,26 @@ This contradiction is **the hardest part to design** in financial-services block
 |---|---|---|
 | **HSM** (CloudHSM, on-premises HSM) | Hardware-backed signing and configurable key protections | Check algorithm support, extractability/wrapping and backup policy for the chosen module |
 | **AWS KMS** | Managed keys, IAM integration, CloudTrail auditing | Verify whether it supports the signature algorithms the blockchain requires |
-| **MPC** (Multi-Party Computation) | Keys held **distributed**, shares combined to sign — no complete key exists anywhere | Implementation complexity, vendor dependency |
+| **MPC** (Multi-Party Computation) | Keys held **distributed**, shares combined to sign; no complete key exists anywhere | Implementation complexity, vendor dependency |
 | **Multisig** | N-of-M signatures required at the protocol level | Needs chain/contract support. Higher transaction cost |
 | **Cold/hot separation** | Bulk offline, only small amounts online | Operational procedure burden |
 
-### Support by curve — it splits along the layer
+### Support by curve: it splits along the layer
 
-**This is the assumption that most often collapses in key management design.** A plan built on "we will use KMS" breaks on algorithm support — and the key point is that **Ethereum's two layers use different curves.**
+**This is the assumption that most often collapses in key management design.** A plan built on "we will use KMS" breaks on algorithm support, and the key point is that **Ethereum's two layers use different curves.**
 
 | Layer | Curve | Used for | AWS KMS / CloudHSM |
 |---|---|---|---|
-| **Execution layer** (accounts, transactions) | **secp256k1** | Transaction signing, EOA accounts | **✅ Supported** — KMS key spec `ECC_SECG_P256K1`, usage restricted to `SIGN_VERIFY` |
+| **Execution layer** (accounts, transactions) | **secp256k1** | Transaction signing, EOA accounts | **✅ Supported**: KMS key spec `ECC_SECG_P256K1`, usage restricted to `SIGN_VERIFY` |
 | **Consensus layer** (validators) | **BLS12-381** | Block proposal and attestation signing | **❌ Not supported** |
 
 KMS `ECC_SECG_P256K1` with `SIGN_VERIFY` can support an **adapted Ethereum ECDSA signing workflow**. Curve support alone is insufficient: validate digest handling, DER-to-chain signature conversion, low-S/recovery requirements and the exact transaction format. Bitcoin signature schemes differ; secp256k1 support does not imply support for every Schnorr/Taproot workflow. Test with no real funds.
 
 **The consensus layer is the problem.** BLS12-381 is not among KMS's key specs and CloudHSM does not support it either. **So a design that puts validator signing keys in KMS/HSM simply does not work.**
 
-AWS's proposed alternative is **Nitro Enclaves** — running a signer such as Web3Signer inside an isolated execution environment so the key never leaves the enclave. Key generation (EIP-2335 format BLS12-381 keystores) also needs a separate approach.
+AWS's proposed alternative is **Nitro Enclaves**: running a signer such as Web3Signer inside an isolated execution environment so the key never leaves the enclave. Key generation (EIP-2335 format BLS12-381 keystores) also needs a separate approach.
 
-**Design implication**: on top of the validator key contradiction covered above (continuously online + isolated + no double signing), there is one more constraint — **the standard answer of "protect the key in an HSM" does not apply.** If you are evaluating validator operations, this is the first branch point away from a KMS-based design.
+**Design implication**: on top of the validator key contradiction covered above (continuously online + isolated + no double signing), there is one more constraint: **the standard answer of "protect the key in an HSM" does not apply.** If you are evaluating validator operations, this is the first branch point away from a KMS-based design.
 
 ::: warning Needs verification
 The support status above is as of the time of research, and **HSM support for BLS12-381 has been a long-discussed topic in the industry, so it may change.** Support by curve for protocols other than Ethereum (chains using Ed25519, for example) also needs separate confirmation.
@@ -156,7 +156,7 @@ The support status above is as of the time of research, and **HSM support for BL
 
 Running a PoS validator adds a problem.
 
-- **The signing key must be online continuously** — signing opportunities arrive every slot
+- **The signing key must be online continuously**, since signing opportunities arrive every slot
 - **Conflicting signatures for the same validator can be slashable.** Multiple uncoordinated signers/key copies create that risk; not every duplicated identical signature is automatically slashed.
 - So **"redundancy for high availability" itself creates the risk**
 
@@ -183,13 +183,13 @@ The questions that actually come up in financial-services review:
 
 ### The two items most often underprepared
 
-**① Error correction — "it cannot be reversed" becomes a weakness in review.**
+**① Error correction: "it cannot be reversed" becomes a weakness in review.**
 
 The immutability marketed as blockchain's strength is **a problem** in financial operations. Incorrect transactions, mistaken transfers, and system errors do happen, and financial institutions have obligations and procedures to correct them.
 
-**The answer is process, not technology.** The standard approach is not "roll back the chain" but **"issue a compensating transaction"** — the original remains and an offsetting transaction is added to correct the outcome. It is the same concept as a reversing entry in accounting. Document that procedure and its approval authority for review.
+**The answer is process, not technology.** The standard approach is not "roll back the chain" but **"issue a compensating transaction"**: the original remains and an offsetting transaction is added to correct the outcome. It is the same concept as a reversing entry in accounting. Document that procedure and its approval authority for review.
 
-**② Exit strategy — almost never prepared.**
+**② Exit strategy: almost never prepared.**
 
 What happens to data and obligations when a consortium dissolves, a member withdraws, or the system is shut down? Financial data carries retention obligations, so **"we turned off the chain" is not the end.**
 
@@ -239,13 +239,13 @@ The point of this table is that **stages 2 and 3 come before technology.** Even 
 
 ## References
 
-- [Hyperledger Fabric — Private data](https://hyperledger-fabric.readthedocs.io/en/latest/private-data/private-data.html)
-- [Hyperledger Fabric — Channels](https://hyperledger-fabric.readthedocs.io/en/latest/channels.html)
+- [Hyperledger Fabric: Private data](https://hyperledger-fabric.readthedocs.io/en/latest/private-data/private-data.html)
+- [Hyperledger Fabric: Channels](https://hyperledger-fabric.readthedocs.io/en/latest/channels.html)
 - [AWS CloudHSM documentation](https://docs.aws.amazon.com/cloudhsm/) / [AWS KMS documentation](https://docs.aws.amazon.com/kms/)
-- [AWS KMS key spec reference](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html) — includes `ECC_SECG_P256K1`
+- [AWS KMS key spec reference](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html): includes `ECC_SECG_P256K1`
 - [Use AWS KMS to securely manage Ethereum accounts (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/use-key-management-service-aws-kms-to-securely-manage-ethereum-accounts-part-1/)
-- [AWS Nitro Enclaves for running Ethereum validators (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/aws-nitro-enclaves-for-running-ethereum-validators-part-1/) — the alternative given BLS12-381 is unsupported
-- [Amazon Managed Blockchain](./03-managed-blockchain.md) — discontinuation risk and mitigation
-- [Blockchain Fundamentals](./01-fundamentals.md) — consensus and finality
-- [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md) — operations
-- [EKS Security](../eks/05-eks-security.md) / [Security](../core/06-security.md) — general security controls
+- [AWS Nitro Enclaves for running Ethereum validators (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/aws-nitro-enclaves-for-running-ethereum-validators-part-1/): the alternative given BLS12-381 is unsupported
+- [Amazon Managed Blockchain](./03-managed-blockchain.md): discontinuation risk and mitigation
+- [Blockchain Fundamentals](./01-fundamentals.md): consensus and finality
+- [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md): operations
+- [EKS Security](../eks/05-eks-security.md) / [Security](../core/06-security.md): general security controls

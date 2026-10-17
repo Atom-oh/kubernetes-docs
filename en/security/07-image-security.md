@@ -255,7 +255,7 @@ Images outside matchImageReferences can be skipped by image verification, so app
 
 <span id="connaisseur"></span>
 
-### Connaisseur alternative — legacy signature path
+### Connaisseur alternative: legacy signature path
 
 **Connaisseur 3.13.0 is not a consumer of default Cosign 3 bundles.** It uses the cosign/v2 verification path with legacy signature tags and SimpleSigning payloads. Use a separate compatibility producer. The [legacy signing script](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh) explicitly sets Cosign 3.1.3 `--new-bundle-format=false --registry-referrers-mode=legacy` while retaining transparency upload/verification. The accompanying signing config explicitly selects Rekor v1 for the legacy verifier’s log format. Supply real approved keys and a digest. This path is separate from secure-build.yaml’s default bundle format; do not feed that workflow’s default output directly to Connaisseur. Legacy flags are deprecated, so plan a coordinated producer/verifier migration. CLI options and both source contracts were checked; registry/signature integration was not executed.
 

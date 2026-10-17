@@ -341,12 +341,12 @@ sudo -k
 
 Primary documentation checked September 14–15, 2026. These explain the tools used here; they are not prerequisites or substitutes for the exercises.
 
-- [Debian: About Debian](https://www.debian.org/intro/about) — distribution, kernel, utilities, and packages.
-- [GNU C Library introduction](https://www.gnu.org/software/libc/manual/html_node/Introduction.html) — what a system library supplies.
-- [Debian Reference, GNU/Linux tutorials](https://www.debian.org/doc/manuals/debian-reference/ch01.en.html) — shell, filesystems, permissions, and processes.
-- [GNU Coreutils manual](https://www.gnu.org/software/coreutils/manual/coreutils.html), especially [mktemp](https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html) — file operations and private scratch directories.
-- [GNU nano shortcuts](https://www.nano-editor.org/dist/latest/cheatsheet.html) and [Vim first steps](https://vimhelp.org/usr_02.txt.html) — editor modes, writing, and quitting.
-- [Ubuntu Server package management](https://ubuntu.com/server/docs/how-to/software/package-management/) and [Rocky Linux 9 DNF guide](https://docs.rockylinux.org/9/guides/package_management/dnf_package_manager/) — the two package paths.
-- [systemd systemctl manual](https://www.freedesktop.org/software/systemd/man/systemctl.html) and [journalctl manual](https://www.freedesktop.org/software/systemd/man/journalctl.html) — runtime state, enablement, and log filters.
+- [Debian: About Debian](https://www.debian.org/intro/about): distribution, kernel, utilities, and packages.
+- [GNU C Library introduction](https://www.gnu.org/software/libc/manual/html_node/Introduction.html): what a system library supplies.
+- [Debian Reference, GNU/Linux tutorials](https://www.debian.org/doc/manuals/debian-reference/ch01.en.html): shell, filesystems, permissions, and processes.
+- [GNU Coreutils manual](https://www.gnu.org/software/coreutils/manual/coreutils.html), especially [mktemp](https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html): file operations and private scratch directories.
+- [GNU nano shortcuts](https://www.nano-editor.org/dist/latest/cheatsheet.html) and [Vim first steps](https://vimhelp.org/usr_02.txt.html): editor modes, writing, and quitting.
+- [Ubuntu Server package management](https://ubuntu.com/server/docs/how-to/software/package-management/) and [Rocky Linux 9 DNF guide](https://docs.rockylinux.org/9/guides/package_management/dnf_package_manager/): the two package paths.
+- [systemd systemctl manual](https://www.freedesktop.org/software/systemd/man/systemctl.html) and [journalctl manual](https://www.freedesktop.org/software/systemd/man/journalctl.html): runtime state, enablement, and log filters.
 
 Continue with [Addresses and interfaces](02-addressing-interfaces.md), after checking your understanding in the [lesson quiz](../../quizzes/networking/beginner/01-linux-cli-quiz.md).

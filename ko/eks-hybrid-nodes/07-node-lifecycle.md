@@ -30,7 +30,7 @@ kubelet:
       ephemeral-storage: "5Gi"
 ```
 
-| 파라미터 | 설명 | 초기 산정 예 — 실측 후 조정 |
+| 파라미터 | 설명 | 초기 산정 예(실측 후 조정) |
 |----------|------|--------|
 | `systemReserved.cpu` | OS 및 시스템 데몬용 CPU | 500m ~ 1000m |
 | `systemReserved.memory` | OS 및 시스템 데몬용 메모리 | 1Gi ~ 2Gi |

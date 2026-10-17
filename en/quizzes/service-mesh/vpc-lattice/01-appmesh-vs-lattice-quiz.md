@@ -37,10 +37,10 @@ A VirtualNode packed "who this workload is (identity), where it goes (backends),
 </details>
 
 3. What is an appropriate observability migration task?
-   - A) Circuit breaking — it is the hardest to implement
+   - A) Circuit breaking: it is the hardest to implement
    - B) Preserve application tracing and replace the telemetry actually supplied by the old proxy
-   - C) Traffic mirroring — there is no alternative at all
-   - D) Fault injection — it is essential for production incident response
+   - C) Traffic mirroring: there is no alternative at all
+   - D) Fault injection: it is essential for production incident response
 
 <details>
 
@@ -65,7 +65,7 @@ Lattice has no native trace span, but application spans remain possible. Correla
 **Answer: B) Traffic keeps flowing, but newly started Pods are not registered as Targets and dead Pods are not deregistered**
 
 **Explanation:**
-The controller's core job is keeping Kubernetes' declared state and Lattice's actual target list in sync — it watches endpoint changes on the Services referenced by `backendRefs` and registers/deregisters Targets. If it stops, Lattice keeps forwarding traffic using the last known target list, but that list goes stale. This is why the availability and IAM permissions of the controller Deployment are directly tied to data path reliability.
+The controller's core job is keeping Kubernetes' declared state and Lattice's actual target list in sync: it watches endpoint changes on the Services referenced by `backendRefs` and registers/deregisters Targets. If it stops, Lattice keeps forwarding traffic using the last known target list, but that list goes stale. This is why the availability and IAM permissions of the controller Deployment are directly tied to data path reliability.
 </details>
 
 5. In an environment that also runs ingress-nginx, which statement about the migration scope is correct?
@@ -97,5 +97,5 @@ The Kubernetes Gateway API was designed to cover both North-South (Ingress) and 
 **Answer: B) So a Pod is not marked Ready until its Lattice Target Group health is Healthy, preventing a rolling update from terminating old Pods before new ones are healthy**
 
 **Explanation:**
-Kubernetes may consider a Pod Ready while the Lattice Target Group does not yet see it as Healthy. If a rolling update terminates old Pods in that state, there is a window with no healthy Target. A Pod readiness gate ties Lattice's view of health to the Pod's Ready condition, preventing this — an important mechanism for zero-downtime during migration.
+Kubernetes may consider a Pod Ready while the Lattice Target Group does not yet see it as Healthy. If a rolling update terminates old Pods in that state, there is a window with no healthy Target. A Pod readiness gate ties Lattice's view of health to the Pod's Ready condition, preventing this, an important mechanism for zero-downtime during migration.
 </details>

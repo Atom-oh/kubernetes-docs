@@ -125,20 +125,20 @@ Fortinet은 침해 지표 확인 시 설정을 침해된 것으로 취급하고 
 
 아래 공식 자료는 2026-10-15에 조회했습니다. 변경 시 해당 제품·브랜치의 최신 경보와 제약을 다시 확인합니다.
 
-- [S01 — Kubernetes: CVE-2025-1974][S01]
-- [S02 — Kubernetes: ingress-nginx retirement statement][S02]
-- [S03 — Palo Alto: CVE-2026-0322][S03]
-- [S04 — Palo Alto: CVE-2025-0108][S04]
-- [S05 — Fortinet: Analysis of SSO abuse on FortiOS][S05]
-- [S06 — CISA: Known Exploited Vulnerabilities Catalog][S06]
-- [S07 — Fortinet: Analysis of threat actor activity][S07]
-- [S08 — NIST SP 800-61r3][S08]
-- [S09 — AWS WAF: Associating a web ACL][S09]
-- [S24 — AWS: Gateway Load Balancers][S24]
-- [S29 — AWS: Centralized inspection with GWLB and TGW][S29]
-- [S30 — AWS: NAT Gateway scenarios][S30]
-- [S33 — EKS: Network security][S33]
-- [S34 — Kubernetes: Network Policies][S34]
+- [S01: Kubernetes: CVE-2025-1974][S01]
+- [S02: Kubernetes: ingress-nginx retirement statement][S02]
+- [S03: Palo Alto: CVE-2026-0322][S03]
+- [S04: Palo Alto: CVE-2025-0108][S04]
+- [S05: Fortinet: Analysis of SSO abuse on FortiOS][S05]
+- [S06: CISA: Known Exploited Vulnerabilities Catalog][S06]
+- [S07: Fortinet: Analysis of threat actor activity][S07]
+- [S08: NIST SP 800-61r3][S08]
+- [S09: AWS WAF: Associating a web ACL][S09]
+- [S24: AWS: Gateway Load Balancers][S24]
+- [S29: AWS: Centralized inspection with GWLB and TGW][S29]
+- [S30: AWS: NAT Gateway scenarios][S30]
+- [S33: EKS: Network security][S33]
+- [S34: Kubernetes: Network Policies][S34]
 
 [S01]: https://kubernetes.io/blog/2025/03/24/ingress-nginx-cve-2025-1974/
 [S02]: https://kubernetes.io/blog/2026/01/29/ingress-nginx-statement/

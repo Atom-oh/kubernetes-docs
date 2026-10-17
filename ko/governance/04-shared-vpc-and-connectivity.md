@@ -2,7 +2,7 @@
 
 > **마지막 업데이트**: 2026년 9월 13일
 
-## 1. Shared VPC의 owner/participant 권한 — 흔히 오해하는 부분
+## 1. Shared VPC의 owner/participant 권한: 흔히 오해하는 부분
 
 Shared VPC(AWS RAM으로 subnet을 여러 Account에 공유)를 도입할 때 가장 많이 오해하는 부분은 "공유하면 양쪽이 동등하게 볼 수 있다"는 가정입니다. 실제로는 리소스별로 owner와 participant의 권한이 크게 다릅니다.
 
@@ -24,7 +24,7 @@ Shared VPC(AWS RAM으로 subnet을 여러 Account에 공유)를 도입할 때 �
 
 **VPC·subnet 태그는 participant에게 공유되지 않습니다.** Load Balancer Controller의 버전·discovery 모드·IAM 권한에 따라 탐색 결과를 검증하세요. 명시적 subnet ID annotation은 선택할 수 있는 예측 가능한 방식이며, 모든 버전의 자동 탐색이 반드시 실패한다는 뜻은 아닙니다.
 
-Security Group은 allow rule만 지원하고, 여러 SG의 rule은 합쳐집니다 — 다른 SG의 넓은 Allow를 중앙 SG로 상쇄할 수 없습니다. 기본 SG당 rule은 60개(inbound/outbound × IPv4/IPv6 각각), ENI당 SG는 5개이며 두 quota는 조정 가능하고, **"rule 수 × ENI당 SG 수 ≤ 1,000"** 제약이 있습니다. Firewall Manager의 공통 SG 정책도 이 예산을 소비합니다.
+Security Group은 allow rule만 지원하고, 여러 SG의 rule은 합쳐집니다. 다른 SG의 넓은 Allow를 중앙 SG로 상쇄할 수 없습니다. 기본 SG당 rule은 60개(inbound/outbound × IPv4/IPv6 각각), ENI당 SG는 5개이며 두 quota는 조정 가능하고, **"rule 수 × ENI당 SG 수 ≤ 1,000"** 제약이 있습니다. Firewall Manager의 공통 SG 정책도 이 예산을 소비합니다.
 
 Participant의 ENI·SG quota는 해당 participant Account에 계산됩니다. 기본 ENI 5,000/AZ와 SG 2,500/Region은 각 Account에서 여전히 병목이 될 수 있으며 조정 가능합니다. quota 용량과 SG 권한 통제는 별도로 검토합니다.
 
@@ -52,7 +52,7 @@ Participant의 ENI·SG quota는 해당 participant Account에 계산됩니다. �
 "모든 워크로드를 하나의 Shared VPC에 몰아넣는 최소 구성"과 "워크로드 그룹별로 전용 Shared VPC를 여러 개 두는 구성"을 비교할 때, 흔히 놓치는 관점이 하나 있습니다.
 
 - **동일 TGW–VPC 쌍에는 VPC attachment1개만 허용됩니다.** 한 VPC는 최대5개의 TGW에 연결할 수 있습니다. attachment의 기본 처리량은 AZ당 각 방향 최대100Gbps/7.5MPPS이며 추가 용량은 SA/TAM과 확인합니다.
-- 최소 구성에서는 여러 워크로드의 on-prem·외부 트래픽이 이 attachment 하나로 집약됩니다 — 장애 영향뿐 아니라 **대역폭·PPS 상한까지 공유**하게 됩니다.
+- 최소 구성에서는 여러 워크로드의 on-prem·외부 트래픽이 이 attachment 하나로 집약됩니다. 장애 영향뿐 아니라 **대역폭·PPS 상한까지 공유**하게 됩니다.
 - 워크로드 그룹별 전용 Shared VPC 구성은 VPC마다 별도 attachment를 가지므로, 이 처리량 상한을 나눠 갖습니다. **TGW 처리량 상한을 분리할 수 있다는 점이 "여러 개의 전용 Shared VPC"를 선택하는 실질적인 이유**입니다.
 
 결국 최소 구성과 전용 구성의 선택은 "비용 vs 격리"보다 **"중앙 네트워크 파이프라인의 변경 위험 vs VPC 단위 공통 장애 위험"의 교환**으로 이해하는 것이 더 정확합니다. 어느 쪽을 택해도 파이프라인 품질에 의존하므로, "중앙 파이프라인의 잘못된 route 변경을 얼마나 빨리 탐지·복구하는가"를 두 안 모두에서 측정해야 실제 선택 기준이 나옵니다. trust zone별로 다르게 적용(일반 워크로드는 최소 구성, on-prem/외부 연동이 많은 워크로드는 전용 구성)하는 절충안도 고려할 수 있습니다.
@@ -86,11 +86,11 @@ VPC CNI custom networking은 AZ ID로 owner subnet과 participant node의 물리
 | Private NAT | 미지원 |
 | 확장 지연 | 최대 60분 (그동안 cross-AZ 처리 발생 가능) |
 | Zonal → Regional 전환 | connection reset, IP 변경 발생 가능 |
-| Constrained AZ | **지원되지 않음** — 사전 확인 필요 |
+| Constrained AZ | **지원되지 않음** (사전 확인 필요) |
 
-Regional NAT Gateway는 Zonal보다 IP·연결 한도가 유리합니다 — Regional은 AZ당 IP 32개(Zonal은 8개), IP 1개당 동일 목적지(dest IP+port+protocol)로 동시 연결 55,000개가 늘어납니다. 이건 특정 SaaS·외부 API처럼 **소수 목적지로 대량 연결이 몰리는 패턴**(결제 대행사, 배송 연동사 등)에서 port exhaustion을 방지하는 데 직접적인 효과가 있습니다.
+Regional NAT Gateway는 Zonal보다 IP·연결 한도가 유리합니다. Regional은 AZ당 IP 32개(Zonal은 8개), IP 1개당 동일 목적지(dest IP+port+protocol)로 동시 연결 55,000개가 늘어납니다. 이건 특정 SaaS·외부 API처럼 **소수 목적지로 대량 연결이 몰리는 패턴**(결제 대행사, 배송 연동사 등)에서 port exhaustion을 방지하는 데 직접적인 효과가 있습니다.
 
-Automatic mode(AWS가 IP/AZ 확장을 관리, 권장)와 Manual mode(직접 관리) 중 하나를 선택할 수 있습니다. **고정 egress IP를 외부 파트너의 allowlist에 등록해야 한다면 Manual mode 또는 IPAM public IPv4 allocation policy 연동이 필요**합니다. Regional NAT Gateway의 라우팅 테이블은 TGW를 유효한 route로 지원하므로, 중앙 TGW inspection과 Regional NAT를 함께 조합할 수 있습니다 — 서로 배타적이지 않습니다.
+Automatic mode(AWS가 IP/AZ 확장을 관리, 권장)와 Manual mode(직접 관리) 중 하나를 선택할 수 있습니다. **고정 egress IP를 외부 파트너의 allowlist에 등록해야 한다면 Manual mode 또는 IPAM public IPv4 allocation policy 연동이 필요**합니다. Regional NAT Gateway의 라우팅 테이블은 TGW를 유효한 route로 지원하므로, 중앙 TGW inspection과 Regional NAT를 함께 조합할 수 있습니다. 서로 배타적이지 않습니다.
 
 ## 5. TGW + Network Firewall (중앙 inspection)
 

@@ -793,7 +793,7 @@ Prometheus가 이 rule을 선택해야 하며 condition/exporter series 누락�
 }
 ```
 
-**기존 RCA 템플릿 — 검증되지 않은 예시이며 실제 사고 보고서가 아닙니다.** 원래 날짜·수량과 언어별 timezone을 보존합니다. PST·KST 예시가 같은 순간을 뜻한다고 주장하지 않습니다. Memory leak·실제 조치·완료 상태를 입증할 원본 근거는 없습니다. 운영에 사용하기 전에 근거로 빈칸을 채워야 합니다.
+**기존 RCA 템플릿: 검증되지 않은 예시이며 실제 사고 보고서가 아닙니다.** 원래 날짜·수량과 언어별 timezone을 보존합니다. PST·KST 예시가 같은 순간을 뜻한다고 주장하지 않습니다. Memory leak·실제 조치·완료 상태를 입증할 원본 근거는 없습니다. 운영에 사용하기 전에 근거로 빈칸을 채워야 합니다.
 
 ```markdown
 ## 인시던트 요약 (예시)
@@ -801,17 +801,17 @@ Prometheus가 이 rule을 선택해야 하며 condition/exporter series 누락�
 - 영향 예시: 노드 3대, Pod 45개
 - 복구 예시: 2024-01-15 15:15 KST (소요 45분이며 측정된 평균 아님)
 
-## 예시 타임라인 — 각 항목에 근거 필요
-- 14:30 — NodeNotReady 알림
-- 14:35 — 조사 시작
-- 14:50 — 가설: memory pressure가 kubelet 종료를 유발; kernel·process 근거로 확인
-- 15:00 — drain/restart 제안; 실제 인가·영향·data 보호 확인을 기록
-- 15:15 — 복구 시점 제안; workload·SLO 검증 근거 필요
+## 예시 타임라인 (각 항목에 근거 필요)
+- 14:30 NodeNotReady 알림
+- 14:35 조사 시작
+- 14:50 가설: memory pressure가 kubelet 종료를 유발; kernel·process 근거로 확인
+- 15:00 drain/restart 제안; 실제 인가·영향·data 보호 확인을 기록
+- 15:15 복구 시점 제안; workload·SLO 검증 근거 필요
 
 ## 원인 가설
 Memory leak이 node memory 고갈을 일으킬 수 있으나 이 템플릿으로 입증되지 않음.
 
-## 후속 제안 — 완료를 주장하지 않음
+## 후속 제안 (완료를 주장하지 않음)
 1. 앱 memory 동작과 적절한 requests/limits 검증.
 2. 알림 threshold 90%→80% 변경의 noise·용량 영향 평가.
 3. Node Problem Detector를 고려하기 전에 기존 node monitoring 확인.

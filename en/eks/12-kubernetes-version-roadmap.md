@@ -133,7 +133,7 @@ SIGs own related areas: Node (runtime/lifecycle), Auth (authentication/authoriza
 
 These are the published version-support fees, not total cluster operating costs. Provisioned Control Plane tiers, compute, Auto Mode/Hybrid Nodes, other capabilities, storage and networking can add charges. At a constant rate for 365 days, the corresponding fees are $876 and $5,256 per cluster: an additional $4,380. A 730-hour monthly illustration gives $73 and $438. These are arithmetic examples, not measured bills.
 
-### Verified support calendar — October 12, 2026 (UTC)
+### Verified support calendar: October 12, 2026 (UTC)
 
 | Version | Upstream release | EKS release | Standard support ends | Extended support ends | Status on review date |
 |---|---|---|---|---|---|
@@ -201,7 +201,7 @@ The December 13, 2023 release announcement lists **49 enhancements: 11 stable, 1
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-6.html)
 
-#### KMS v2 encryption at rest — GA
+#### KMS v2 encryption at rest: GA
 
 KMS v2 improves envelope-encryption performance by deriving single-use data encryption keys from a secret seed and using the KMS plugin when protecting/rotating that seed, rather than requiring a new remote encryption operation for every object write. Both envelope-encryption designs use data-encryption and key-encryption layers; KMS v1 was not a “single-layer” design. The improvement is not a constant-latency guarantee.
 
@@ -226,7 +226,7 @@ resources:
 
 **EKS distinction:** Current AWS guidance provides default KMS v2 envelope encryption for all Kubernetes API data on EKS 1.28 and later, using an AWS-owned key unless a customer-managed key is configured. This covers API data such as Secrets and ConfigMaps, not arbitrary node or EBS volume data. Do not infer it only starts with EKS 1.29 or apply this upstream file to EKS.
 
-#### ReadWriteOncePod — GA
+#### ReadWriteOncePod: GA
 
 `ReadWriteOncePod` constrains a PVC to one Pod across the cluster. `ReadWriteOnce` instead permits multiple Pods on one node. RWOP requires a compatible CSI volume/driver; the upstream minimum sidecars are csi-provisioner 3.0.0, csi-attacher 3.3.0 and csi-resizer 1.3.0. These are feature minimums, not recommended current releases. Select supported versions for the actual cluster and provisioner.
 
@@ -282,7 +282,7 @@ The April 17 release contains **45 enhancements: 17 stable, 18 beta and 10 alpha
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-7.html)
 
-#### ValidatingAdmissionPolicy — GA
+#### ValidatingAdmissionPolicy: GA
 
 ValidatingAdmissionPolicy evaluates CEL inside the API server. It can replace many validation webhooks and their network/certificate/server dependencies, but an incorrect policy, evaluation error or fail-closed configuration can still reject requests. The policy, its binding and optional parameter objects have distinct roles; parameters may be built-in resources or custom resources, not necessarily a required third CRD type.
 
@@ -398,7 +398,7 @@ Additional **validation-list fragments** illustrate effective `runAsNonRoot` inh
   message: Nonempty application name and version labels are required.
 ```
 
-#### Pod Scheduling Readiness — GA
+#### Pod Scheduling Readiness: GA
 
 Scheduling gates hold a Pod out of scheduling consideration. They can be set during creation/admission and removed afterward, but new gates cannot be added after creation. A gated Pod does not by itself trigger ordinary unschedulable-Pod node provisioning; an external approval/provisioning workflow must satisfy the condition. Gates alone are not atomic gang scheduling.
 
@@ -443,7 +443,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
   patch pod "$POD_NAME" --type=json --patch "$gate_patch"
 ```
 
-#### HPA ContainerResource metrics — GA (KEP-2702)
+#### HPA ContainerResource metrics: GA (KEP-2702)
 
 ContainerResource targets a named container, so a logging/proxy sidecar need not distort the application’s utilization signal. The target Deployment must exist in `version-lab` and have an `app` container with appropriate requests. A working resource-metrics provider is required. Utilization is relative to requests, not limits. With multiple metrics, HPA uses the largest replica recommendation; missing metrics/readiness and stabilization can affect scaling. The limits of 2–50 replicas are illustrative capacity inputs, not measured optimal settings.
 
@@ -507,7 +507,7 @@ The August 13 release lists **45 enhancements: 11 stable, 22 beta and 12 alpha**
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-8.html)
 -->
 
-#### AppArmor native fields — GA
+#### AppArmor native fields: GA
 
 AppArmor profiles became configurable through native fields in 1.30 and reached GA in 1.31. This replaces the old per-container beta annotations. The host must actually enable AppArmor, the runtime must support it, and a `Localhost` profile must be loaded on each eligible node. A custom node label only records an operator-verified prerequisite; it does not install or enforce the profile.
 
@@ -555,7 +555,7 @@ spec:
             type: RuntimeDefault
 ```
 
-#### PersistentVolume last phase transition time — GA
+#### PersistentVolume last phase transition time: GA
 
 The PV status field `.status.lastPhaseTransitionTime` records the most recent phase transition. Use it with events and backend evidence for lifecycle diagnosis; it is not a complete transition history or a reconstruction of missing older events. The following command does not modify or delete the volume.
 
@@ -567,13 +567,13 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pv "$PV_NAME" -o jso
 }'
 ```
 
-#### DRA structured parameters — still alpha in 1.31
+#### DRA structured parameters: still alpha in 1.31
 
 The DRA redesign made device information and requests visible to Kubernetes through structured APIs and ResourceSlices, enabling scheduler-side allocation. **Classic DRA was still available in 1.31**, behind the separate, disabled-by-default `DRAControlPlaneController` gate. The released 1.31 source contains that gate; the 1.32 source removes it. The old quiz’s claim that classic DRA was already removed in 1.31 is therefore incorrect.
 
 DRA remained alpha in 1.31 and graduated to beta in 1.32, then its core API became stable in 1.34. The former `resource.k8s.io/v1beta1` example was not a valid representation of the 1.31 API generation. Use the stable DRA example in the 1.34 section for current syntax and verify the installed driver’s DeviceClasses, ResourceSlices, attributes and capabilities. A Kubernetes API does not itself install a GPU driver or implement time-slicing/MIG.
 
-#### Service traffic distribution — beta
+#### Service traffic distribution: beta
 
 The core `v1` Service field `trafficDistribution: PreferClose` requests same-zone endpoint preference. It is a routing preference, not a strict locality rule, geographical-distance calculation or guarantee of eliminating cross-AZ charges. Endpoint availability, the implementing proxy and traffic-policy precedence matter. The selector must match real workload Pods; the example does not create those endpoints.
 
@@ -618,7 +618,7 @@ The December 11 release lists **44 enhancements: 13 stable, 12 beta and 19 alpha
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-9.html)
 
-#### Structured authorization configuration — GA
+#### Structured authorization configuration: GA
 
 `AuthorizationConfiguration` uses `apiserver.config.k8s.io/v1` for stable configuration. It is an alternative to authorization mode flags, not evidence that `--authorization-mode` was removed. Do not combine the flag and configuration-file mechanisms. EKS manages this control-plane configuration; the following file is for an administrator-managed API server, not a resource to apply with kubectl or an EKS customization interface.
 
@@ -651,7 +651,7 @@ authorizers:
 
 Prepare the actual webhook, TLS trust and protected kubeconfig before use. `failurePolicy: Deny` applies to relevant webhook/condition failures, and cached decisions can delay the effect of a backend policy change. Use consistent configuration on all API servers. Configuration reload is supported, but it cannot add or remove Node/RBAC authorizers; validate the complete policy and recovery procedure in a non-production environment.
 
-#### StatefulSet PVC retention policy — GA
+#### StatefulSet PVC retention policy: GA
 
 The relevant 1.32 graduation is **automatic deletion/retention of PVCs created from StatefulSet volume claim templates**, not a new guarantee that every unused PVC protection finalizer disappears immediately. `whenDeleted` controls StatefulSet deletion and `whenScaled` controls scale-down behavior; each supports `Retain` or `Delete`. The defaults retain data. This is a fragment to review in an existing StatefulSet:
 
@@ -664,7 +664,7 @@ spec:
 
 Choosing `Delete` is a data-lifecycle change: PVC deletion can also delete backend storage depending on PV reclaim policy. Pod ownership, garbage collection, CSI operations and finalizers still affect completion. PVC in-use protection long predates 1.32; a stuck claim requires consumer/UID/attachment/controller investigation, not a blanket finalizer removal or an assumed upgrade fix.
 
-#### VolumeAttributesClass — still beta in 1.32
+#### VolumeAttributesClass: still beta in 1.32
 
 VAC entered beta in 1.31 and became GA in 1.34. Its beta API is `storage.k8s.io/v1beta1`; current examples should use the stable API from the 1.34 section when the cluster and CSI driver support it. A class’s parameters are immutable; a PVC changes class references to request different driver-supported attributes such as EBS IOPS or throughput.
 
@@ -684,7 +684,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
 
 AWS’s 1.34 notes distinguish the stable VAC API from earlier beta sidecar support. An EKS control-plane version alone does not prove that any arbitrary EBS CSI release remains compatible with its VAC API.
 
-#### User namespaces — beta, disabled by default in 1.32
+#### User namespaces: beta, disabled by default in 1.32
 
 User namespaces entered beta in 1.30 and became enabled by default in 1.33; GA is 1.36. A Pod opts in with `hostUsers: false`. UID 0 inside the container maps to a non-root host UID chosen by the implementation, not a universal `65534 + offset` formula. This requires a compatible kernel, filesystem and CRI/runtime and does not make every workload or host-access pattern compatible.
 
@@ -733,7 +733,7 @@ The April 23 release lists **64 enhancements: 18 stable, 20 beta, 24 alpha, and 
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-10.html)
 
-#### Native sidecars — GA
+#### Native sidecars: GA
 
 The feature progressed from alpha in 1.28 to beta in 1.29 and GA in 1.33. A restartable init container has `restartPolicy: Always`. Kubelet moves to the next init container after that sidecar’s `started` state becomes true: either its process is running without a startup probe, or the startup probe has succeeded. Readiness is a separate signal. The regular init container below runs **after both sidecars have started**, then the application starts.
 
@@ -808,7 +808,7 @@ During normal graceful termination, main containers stop before sidecars, and si
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-11.html)
 
-#### In-place container resource resize — beta in 1.33
+#### In-place container resource resize: beta in 1.33
 
 In-place resize changes desired CPU/memory allocations without recreating the Pod, but a container restart can still be required by `resizePolicy`. The feature became stable in 1.35. The following current-schema example keeps `Burstable` QoS and sets CPU to `NotRequired`, memory to `RestartContainer`. A memory change therefore requests a container restart by policy; it is not an intrinsic rule that all memory changes always restart.
 
@@ -921,7 +921,7 @@ spec:
       controlledValues: RequestsAndLimits
 ```
 
-#### ServiceCIDR and IPAddress — GA
+#### ServiceCIDR and IPAddress: GA
 
 Upstream Kubernetes can extend its available Service addresses using additional `networking.k8s.io/v1` ServiceCIDR objects when the allocator/API is enabled. The default object named `kubernetes` represents the initial API-server range. Review IPAM, address family and routing overlap before adding ranges; finalizers prevent deletion that would orphan allocated Service IPs. A ServiceCIDR is not a VPC subnet or a Pod-address CIDR.
 
@@ -946,7 +946,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get servicecidrs
 kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get ipaddresses
 ```
 
-#### Topology-aware routing and traffic distribution — GA
+#### Topology-aware routing and traffic distribution: GA
 
 Topology-aware endpoint hints and the Service `trafficDistribution` preference are related but distinct mechanisms. The following uses `PreferClose` for same-zone preference; it is not a strict same-zone guarantee, a regional-distance calculation or a declaration that an annotation is universally deprecated. Ready endpoint distribution, proxy implementation and `internalTrafficPolicy`/`externalTrafficPolicy` can affect the route.
 
@@ -967,7 +967,7 @@ spec:
     targetPort: 8080
 ```
 
-#### Job success policy — GA
+#### Job success policy: GA
 
 A success policy applies to Indexed Jobs. Here index 0 must succeed; that only represents a leader if the application implements the corresponding protocol. Kubernetes does not infer that the distributed result is complete or durable. Failure policies and termination of remaining Pods still matter. The Job template explicitly sets `restartPolicy: Never`, which was missing from the original examples.
 
@@ -999,7 +999,7 @@ spec:
               fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
 ```
 
-#### OCI image volumes — beta, disabled by default in 1.33
+#### OCI image volumes: beta, disabled by default in 1.33
 
 An image volume exposes OCI image content to a Pod, for example model data, without embedding it in the application image. It needs a supporting runtime, appropriate feature configuration and registry pull identity. The mount is read-only; it is not a writable PVC. Review and pin both application and data images. ImageVolume became enabled by default in 1.35 and stable in 1.36, not GA in 1.34.
 
@@ -1053,7 +1053,7 @@ The August 27 release lists **58 enhancements: 23 stable, 22 beta and 13 alpha**
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-12.html)
 
-#### DRA core APIs — GA
+#### DRA core APIs: GA
 
 DeviceClass, ResourceClaim, ResourceClaimTemplate and ResourceSlice are built-in `resource.k8s.io/v1` APIs. They are not DRA core CRDs to install. Drivers publish device inventory through ResourceSlices; the scheduler allocates eligible resources and the kubelet coordinates device preparation with the driver. The architecture diagram is a logical flow and omits the API-server/ResourceSlice transport.
 
@@ -1171,7 +1171,7 @@ spec:
             request: gpu
 ```
 
-#### VolumeAttributesClass — GA
+#### VolumeAttributesClass: GA
 
 VAC uses `storage.k8s.io/v1` from 1.34. These classes target the standard `ebs.csi.aws.com` driver and an existing compatible regional gp3 volume; they are not automatically an Auto Mode storage recipe. Verify driver/sidecar support, API versions, permissions, volume size/type, modification cooldowns and instance EBS limits before changing a PVC’s class.
 
@@ -1381,11 +1381,11 @@ spec:
 
 Schedules use Asia/Seoul explicitly. `Forbid` applies separately to each CronJob; it is not a shared lock across both schedules or other operators. UID/resourceVersion tests protect the API patch, not the entire asynchronous EBS operation. The command refuses an existing modification and reports only that a class was requested. Keep scheduling suspended until workload impact, backend status checks, coordination and recovery are established; no production readiness is claimed.
 
-#### Ordered namespace deletion — GA
+#### Ordered namespace deletion: GA
 
 The change deletes Pods before other namespaced resources, helping avoid cases where security controls such as NetworkPolicies disappear while Pods still run. It does not compute an arbitrary dependency graph or guarantee every namespace deletion finishes: unavailable APIs, controllers and finalizers can still block it. Inspect the actual conditions instead of forcing finalizers away or treating an example transcript as a measured fix.
 
-#### KYAML — client output format, alpha in 1.34
+#### KYAML: client output format, alpha in 1.34
 
 KYAML is **KEP-5295**, not KEP-4222. It is a less ambiguous YAML-compatible output format with explicit delimiters and quoted string values. It is not an API-server admission validator, a global YAML 1.2 migration, or a reason every manifest must remove anchors. It became beta/default-enabled in kubectl 1.35, remained beta in 1.36, and was promoted to stable in 1.37.
 
@@ -1410,7 +1410,7 @@ kubectl --kubeconfig=/dev/null --server=https://127.0.0.1:1 --request-timeout=1s
 
 In kubectl 1.36.2, `KUBECTL_KYAML=false` disables the `-o kyaml` printer, but KYAML-formatted input still parses as YAML with other output formats. It does not change EKS control-plane settings. Schema/admission validation and formatting remain separate checks. The earlier KYAML warning/rejection transcripts were not valid demonstrations of a server feature.
 
-#### MutatingAdmissionPolicy — beta in 1.34
+#### MutatingAdmissionPolicy: beta in 1.34
 
 MAP entered alpha in 1.32, beta in 1.34 (disabled by default), and GA in 1.36. The following is the **current 1.36+ stable form**, not a manifest that can be applied unchanged to 1.34; the historical beta API was `v1beta1` and needed the appropriate serving/gate configuration. EKS control-plane gates remain AWS-managed.
 
@@ -1484,7 +1484,7 @@ The December 17 announcement reports **60 enhancements**, with **17 stable, 19 b
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-15.html)
 
-#### In-place container resource resize — GA
+#### In-place container resource resize: GA
 
 The feature’s path is alpha 1.27, beta 1.33 and stable 1.35. The original alpha was not simply “CPU-only until 1.33.” GA stabilizes the API; it does not guarantee every memory resize, runtime, node policy or application avoids disruption. Use the preceding resize example’s UID/resourceVersion checks and current status fields, and review the versioned limitations.
 
@@ -1527,7 +1527,7 @@ spec:
 
 VPA is separately versioned. `InPlaceOrRecreate` reached GA in VPA 1.6 and may recreate Pods when in-place updates fail; `InPlace` is a VPA 1.7 alpha mode requiring its own gate. Its no-eviction behavior is not a promise that all container resize policies avoid restart or that all recommendations can be applied. The earlier current-VPA example documents those requirements. Kubernetes 1.35 alone does not enable the VPA mode.
 
-#### PreferSameNode traffic distribution — GA
+#### PreferSameNode traffic distribution: GA
 
 The `PreferSameTrafficDistribution` feature is stable in 1.35. `PreferSameNode` expresses a preference for local-node endpoints when available, with fallback; it is different from a strict `internalTrafficPolicy: Local` rule. Verify the actual Service implementation, ready endpoints and traffic-policy precedence. It is not a universal control over ALB/NLB routing or a guarantee of zero cross-zone traffic.
 
@@ -1546,11 +1546,11 @@ spec:
     targetPort: 8080
 ```
 
-#### KYAML — beta, enabled by default in kubectl
+#### KYAML: beta, enabled by default in kubectl
 
 KYAML’s beta/default enablement in 1.35 concerns the `-o kyaml` output format. It does not switch all API-server input to a new strict parser, warn on every YAML anchor, or require an EKS support ticket to change a server feature gate. The preceding local formatting example and native 1.36.2 checks show the actual behavior. KYAML becomes stable in 1.37, not 1.36.
 
-#### Native gang scheduling — alpha, KEP-4671
+#### Native gang scheduling: alpha, KEP-4671
 
 Kubernetes 1.35 introduced native workload-aware/gang scheduling concepts. They remain alpha in 1.36, with `GenericWorkload`/`GangScheduling` and the appropriate API/scheduler enablement required. EKS’s version FAQ does not support alpha features; a self-managed node gate cannot enable an unavailable EKS control-plane API.
 
@@ -1627,7 +1627,7 @@ The April 22 announcement reports **70 enhancements**, including **18 stable, 25
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-17.html)
 -->
 
-#### MutatingAdmissionPolicy — GA
+#### MutatingAdmissionPolicy: GA
 
 MAP’s stable resources are `MutatingAdmissionPolicy` and `MutatingAdmissionPolicyBinding` in `admissionregistration.k8s.io/v1`. In-process CEL avoids a separate webhook for supported mutations, but does not remove policy failures, cost limits, ordering or reinvocation considerations. Determinism is not a universal idempotency guarantee.
 
@@ -2207,7 +2207,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n version-lab \
 
 The local audit ran 50 leaf unit tests with fake Kubernetes/RFC6902 behavior plus schema and host-shell probe fixtures. It did not run the informer loop against EKS, launch BusyBox, measure warmup time or validate cgroup/app performance. VPA 1.7 also provides an alpha CPUStartupBoost feature, but its trigger is Pod Ready plus an optional duration, not this StartupProbePassed contract; it has separate flags and operational trade-offs.
 
-#### Original reported EKS snapshots — provenance not verified
+#### Original reported EKS snapshots: provenance not verified
 
 The earlier chapter claimed EKS 1.36.1, containerd 2.2.3, AL2023, cgroup v2 and arm64/Graviton. Raw execution artifacts/source were not supplied. The original tables and log lines below are preserved as **unverified reported outcomes**, not reruns, current-controller output or independent proof of zero downtime. The two MAP tables repeat the original claim and are not two independent measurements.
 
@@ -2254,11 +2254,11 @@ This table summarizes selected upstream history **through Kubernetes 1.36**, pri
 | Container in-place resize | 1.27 | 1.33 | 1.35 |
 | Pod scheduling readiness | 1.26 | 1.27 | 1.30 |
 | Job success policy | 1.30 | 1.31 | 1.33 |
-| Pod-level resources | 1.32 | 1.34 | — |
+| Pod-level resources | 1.32 | 1.34 | - |
 | ValidatingAdmissionPolicy | 1.26 | 1.28 | 1.30 |
 | MutatingAdmissionPolicy | 1.32 | 1.34 | 1.36 |
 | Structured authorization | 1.29 | 1.30 | 1.32 |
-| AppArmor native fields | — | 1.30 | 1.31 |
+| AppArmor native fields | - | 1.30 | 1.31 |
 | User namespaces | 1.25 | 1.30 | 1.36 |
 | ServiceCIDR/IPAddress | 1.27 | 1.31 | 1.33 |
 | Topology-aware hints | 1.21 | 1.23 | 1.33 |
@@ -2269,7 +2269,7 @@ This table summarizes selected upstream history **through Kubernetes 1.36**, pri
 | VolumeAttributesClass | 1.29 | 1.31 | 1.34 |
 | PV last phase transition | 1.28 | 1.29 | 1.31 |
 | Volume expansion recovery | 1.23 | 1.32 | 1.34 |
-| Gang scheduling | 1.35 | — | — |
+| Gang scheduling | 1.35 | - | - |
 | Minimum topology domains | 1.24 | 1.25 | 1.30 |
 | DRA core | 1.26 | 1.32 | 1.34 |
 | HPA container metrics | 1.20 | 1.27 | 1.30 |
@@ -2277,7 +2277,7 @@ This table summarizes selected upstream history **through Kubernetes 1.36**, pri
 | Node log query | 1.27 | 1.30 | 1.36 |
 | KMS v2 | 1.25 | 1.27 | 1.29 |
 | Kubelet tracing | 1.25 | 1.27 | 1.34 |
-| KYAML | 1.34 | 1.35 | — |
+| KYAML | 1.34 | 1.35 | - |
 
 Important lineage details:
 
@@ -2745,7 +2745,7 @@ DRA drivers, device sharing, topology-aware placement and batch coordination con
 
 Keep a recurring upgrade/rehearsal cadence that fits support deadlines, compatibility and business risk. “Quarterly” and the upstream roughly four-month release cadence are different schedules. Staying on a suitable standard-supported EKS version can avoid the extra version fee, but there is no universal `latest−1` rule that replaces application validation or no-risk obligation to adopt every GA feature immediately.
 
-### Historical planning template — not a current deployment recommendation
+### Historical planning template: not a current deployment recommendation
 
 The earlier Korean chapter included the following example inventory and planned months. The version/count/month values are retained as historical illustrative inputs, not a discovered fleet, executed upgrade or verified component combination. In particular the old Istio/Argo CD/chart versions must not be treated as supported with newer Kubernetes versions. Replace them using actual inventory and current compatibility evidence when making a new plan. The review actions below correct the old automatic-nftables/DRA-CRD/KYAML assumptions without inventing a rerun.
 

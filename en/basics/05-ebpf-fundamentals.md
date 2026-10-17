@@ -233,7 +233,7 @@ long bpf_get_current_comm(void *buf, u32 size);  // Process name
 
 ### 2.6 Program Lifecycle
 
-![Workflow diagram of an eBPF program's lifecycle: a program loaded via the bpf() syscall passes verification, attaches to an event hook, runs repeatedly per event, and ends with an explicit detach and unload — with the verification-failure path shown alongside.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-3.png)
+![Workflow diagram of an eBPF program's lifecycle: a program loaded via the bpf() syscall passes verification, attaches to an event hook, runs repeatedly per event, and ends with an explicit detach and unload, with the verification-failure path shown alongside.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-3.html)
 

@@ -1,4 +1,4 @@
-# Network Fundamentals Part 2 Quiz — Transport and TLS
+# Network Fundamentals Part 2 Quiz: Transport and TLS
 
 > **Last Updated**: September 11, 2026
 

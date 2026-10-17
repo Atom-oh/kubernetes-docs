@@ -1,4 +1,4 @@
-# Network Fundamentals Part 4 — A Request's Journey and the Cloud Mapping
+# Network Fundamentals Part 4: A Request's Journey and the Cloud Mapping
 
 > **Last Updated**: October 12, 2026
 
@@ -21,16 +21,16 @@ This part connects the series’ 25 protocols and mechanisms through an illustra
 
 For a new connection to `https://example.com`, the following is a conceptual dependency guide. It is not a packet trace: DNS queries and handshake packets themselves use the link and routing layers, and cached state or an existing connection can skip work.
 
-1. **Address configuration** — the host already has addresses, routes and resolver settings, from DHCP, static configuration, IPv6 SLAAC/Router Advertisements or another managed mechanism.
-2. **DNS (or DoH)** — resolve the destination when needed. A recursive resolver can use its cache, follow delegations or forward queries; the application need not contact the root. HTTPS records may also advertise connection parameters.
-3. **Neighbor resolution** — for IPv4 over Ethernet, resolve the selected next hop’s MAC with ARP if it is not cached; IPv6 uses Neighbor Discovery. The next hop can be a local destination or a router.
-4. **Ethernet / Wi-Fi** — send frames to that next hop. A default gateway is used only when the selected route calls for it.
-5. **IP routing** — routers forward using their forwarding tables. Routes may be static, connected or learned through BGP, OSPF or another control plane; routing protocols do not run a fresh negotiation for every request.
-6. **Optional NAT** — an IPv4 internet egress path may translate a private address to a public address. Many internal and IPv6 paths do not use NAT; private-to-private NAT also exists.
-7. **TCP or QUIC** — establish or reuse transport. HTTP/1.1 and HTTP/2 commonly use TCP; HTTP/3 uses QUIC over UDP.
-8. **TLS** — authenticate the peer and establish traffic keys according to the handshake mode. For QUIC, TLS 1.3 is integrated with step 7; resumption differs from a fresh certificate-based handshake.
-9. **HTTP** — exchange the request and response using the negotiated version. HTTP/3 requires the QUIC branch; it does not run over the TCP branch.
-10. **Optional application features** — WebSocket, browser-compatible gRPC or WebRTC may create additional connections or reuse/multiplex existing transports, depending on implementation.
+1. **Address configuration**: the host already has addresses, routes and resolver settings, from DHCP, static configuration, IPv6 SLAAC/Router Advertisements or another managed mechanism.
+2. **DNS (or DoH)**: resolve the destination when needed. A recursive resolver can use its cache, follow delegations or forward queries; the application need not contact the root. HTTPS records may also advertise connection parameters.
+3. **Neighbor resolution**: for IPv4 over Ethernet, resolve the selected next hop’s MAC with ARP if it is not cached; IPv6 uses Neighbor Discovery. The next hop can be a local destination or a router.
+4. **Ethernet / Wi-Fi**: send frames to that next hop. A default gateway is used only when the selected route calls for it.
+5. **IP routing**: routers forward using their forwarding tables. Routes may be static, connected or learned through BGP, OSPF or another control plane; routing protocols do not run a fresh negotiation for every request.
+6. **Optional NAT**: an IPv4 internet egress path may translate a private address to a public address. Many internal and IPv6 paths do not use NAT; private-to-private NAT also exists.
+7. **TCP or QUIC**: establish or reuse transport. HTTP/1.1 and HTTP/2 commonly use TCP; HTTP/3 uses QUIC over UDP.
+8. **TLS**: authenticate the peer and establish traffic keys according to the handshake mode. For QUIC, TLS 1.3 is integrated with step 7; resumption differs from a fresh certificate-based handshake.
+9. **HTTP**: exchange the request and response using the negotiated version. HTTP/3 requires the QUIC branch; it does not run over the TCP branch.
+10. **Optional application features**: WebSocket, browser-compatible gRPC or WebRTC may create additional connections or reuse/multiplex existing transports, depending on implementation.
 
 **ICMP** can report certain IP-layer errors, such as an unreachable destination or a packet too large for a path. It does not report every failure: packets or ICMP errors can be filtered, and TLS/application failures use their own mechanisms. Combine allowed, relevant ICMP with transport/application logs and measurements; absence of an ICMP error is not proof of success.
 
@@ -57,9 +57,9 @@ AWS App Mesh support **ended on September 30, 2026**. AWS says the App Mesh cons
 
 **Three decisions to make first** when designing:
 
-1. **IP address plan** — plan CIDRs for networks that must interconnect, including on-premises, Pod and Service ranges. Overlap can require translation or redesign; renumbering has operational cost, but no universal cost ranking applies.
-2. **Outbound path** — match each destination to an internet or private-service path. Compare NAT hourly/data charges, interface-endpoint hourly/data charges, cross-AZ transfer and availability requirements. S3/DynamoDB gateway endpoints have no additional endpoint charge, but endpoints do not replace every internet destination.
-3. **Encryption termination point** — document encryption and authentication on each hop, including the backend connection after a load balancer. Check the workload’s requirements and applicable policy; TLS termination alone does not secure the next hop.
+1. **IP address plan**: plan CIDRs for networks that must interconnect, including on-premises, Pod and Service ranges. Overlap can require translation or redesign; renumbering has operational cost, but no universal cost ranking applies.
+2. **Outbound path**: match each destination to an internet or private-service path. Compare NAT hourly/data charges, interface-endpoint hourly/data charges, cross-AZ transfer and availability requirements. S3/DynamoDB gateway endpoints have no additional endpoint charge, but endpoints do not replace every internet destination.
+3. **Encryption termination point**: document encryption and authentication on each hop, including the backend connection after a load balancer. Check the workload’s requirements and applicable policy; TLS termination alone does not secure the next hop.
 
 ---
 
@@ -96,12 +96,12 @@ When investigating a failure, use each layer’s actual guarantees and observabl
 
 Connect these protocol fundamentals to Linux observations first, then follow the [networking learning path](../networking/README.md#learning-path) through containers and Services to CNI implementations:
 
-- [Kernel Networking Stack](../kernel/02-network-stack.md) — socket/VFS entry paths, buffers, and packet processing
-- [Linux Network Diagnostics Practice](../networking/07-linux-network-diagnostics.md) — interpret observations and test hypotheses | [Quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
-- [eBPF Fundamentals](./05-ebpf-fundamentals.md) — how packets are processed in the kernel
-- [Cilium Networking](../networking/cilium/03-networking.md) — the eBPF-based CNI
-- [Calico BGP Deep Dive](../networking/calico/04-bgp-deep-dive.md) — BGP routing inside the cluster
-- [Amazon VPC CNI](../networking/01-vpc-cni.md) — the VPC CNI and IP allocation
+- [Kernel Networking Stack](../kernel/02-network-stack.md): socket/VFS entry paths, buffers, and packet processing
+- [Linux Network Diagnostics Practice](../networking/07-linux-network-diagnostics.md): interpret observations and test hypotheses | [Quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
+- [eBPF Fundamentals](./05-ebpf-fundamentals.md): how packets are processed in the kernel
+- [Cilium Networking](../networking/cilium/03-networking.md): the eBPF-based CNI
+- [Calico BGP Deep Dive](../networking/calico/04-bgp-deep-dive.md): BGP routing inside the cluster
+- [Amazon VPC CNI](../networking/01-vpc-cni.md): the VPC CNI and IP allocation
 
 ## References
 

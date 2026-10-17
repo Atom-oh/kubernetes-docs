@@ -71,7 +71,7 @@ export AWS_PROFILE=eks-docs
 
 참고: [IAM Identity Center 인증](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html). 이후 명령에서도 승인된 계정·역할·리전을 유지합니다.
 
-#### kubectl과 eksctl — Linux/macOS
+#### kubectl과 eksctl (Linux/macOS)
 
 이 장의 EKS 1.36 예제에는 kubectl **1.36.5**, eksctl **0.231.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
 

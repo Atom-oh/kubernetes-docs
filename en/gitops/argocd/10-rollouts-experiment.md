@@ -344,7 +344,7 @@ The original document reported these results from a 1.8.3 source build and Kuber
 | Experiment-scoped Service for the template with `service: {}` created and cleaned up | Reported: `...-2-0-canary` Service created, confirmed deleted after the experiment |
 | AnalysisRun created after all templates healthy; repeated measurements at `interval: 15s`/`count: 3` | Reported: 3 measurements recorded 15s apart, `successCondition` evaluated Successful |
 | Success path: 60s duration elapsed → Experiment Successful → experiment RSes scaled to 0 → next step (setWeight 20) → Rollout Healthy | Reported: Works |
-| Failure path: degraded metrics → AnalysisRun Failed with `failed (2) > failureLimit (1)` → Experiment Failed → Rollout aborted (Degraded), stable preserved | Reported: Works — the abort message names the offending metric verbatim |
+| Failure path: degraded metrics → AnalysisRun Failed with `failed (2) > failureLimit (1)` → Experiment Failed → Rollout aborted (Degraded), stable preserved | Reported: Works (the abort message names the offending metric verbatim) |
 
 ## Next Steps
 

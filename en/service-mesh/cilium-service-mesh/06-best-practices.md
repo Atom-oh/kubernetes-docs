@@ -544,7 +544,7 @@ spec:
         summary: High pressure in an instrumented BPF map
 ```
 
-A failed `up` scrape indicates target access failure, not necessarily a stopped Agent/Envoy process. If discovery removes a target, its `up` series can disappear entirely; compare expected node/DaemonSet inventory separately. `cilium_proxy_redirects` counts installed redirects and can legitimately be zero—it is not Envoy liveness.
+A failed `up` scrape indicates target access failure, not necessarily a stopped Agent/Envoy process. If discovery removes a target, its `up` series can disappear entirely; compare expected node/DaemonSet inventory separately. `cilium_proxy_redirects` counts installed redirects and can legitimately be zero; it is not Envoy liveness.
 
 The old `cilium_datapath_conntrack_active/max` ratio used nonexistent metrics. CT GC observations are not an instantaneous full-capacity gauge. Map-pressure metrics cover instrumented maps and their emission rules; verify which maps are present. Drop and pressure thresholds above are illustrative and must be calibrated by traffic, reason, duration and expected policy denies.
 

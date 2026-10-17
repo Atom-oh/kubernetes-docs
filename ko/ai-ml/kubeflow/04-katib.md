@@ -1,4 +1,4 @@
-# Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML
+# Part 4: Katib (하이퍼파라미터 튜닝과 AutoML)
 
 > **지원 버전**: Katib 0.19.0, Kubeflow Community Distribution 26.03.1
 > **마지막 업데이트**: 2026년 9월 12일

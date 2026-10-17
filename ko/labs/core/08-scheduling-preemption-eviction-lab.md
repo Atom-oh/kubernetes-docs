@@ -169,7 +169,7 @@ kubectl describe nodes "${SCHED_LAB_WORKERS[@]}" | grep -E "^Name:|cpu\s+[0-9]"
 
 ### 단계
 
-**Step 3.1: 초기화 — 실습 2의 포드만 제거하고 필러는 그대로 유지**
+**Step 3.1: 초기화(실습 2의 포드만 제거하고 필러는 그대로 유지)**
 ```bash
 kubectl -n sched-lab delete pod -l role=batch-default --wait=true
 ```
@@ -288,8 +288,8 @@ kubectl describe nodes "${SCHED_LAB_WORKERS[@]}" | grep -E "^Name:|cpu\s+[0-9]"
 
 | 스케줄러 / 전략 | 새 포드 6개가 배치된 곳 | 최종 CPU 사용률 (A / B / C) |
 |---|---|---|
-| 기본값 (`LeastAllocated`) | C 노드에 6개 전부 배치 | 75% / 37% / 37% — 세 노드 모두 사용 중 |
-| `MostAllocated` | A 노드에 3개, B 노드에 3개 | 93% / 56% / 0% — C 노드는 완전히 그대로 유지 |
+| 기본값 (`LeastAllocated`) | C 노드에 6개 전부 배치 | 75% / 37% / 37% (세 노드 모두 사용 중) |
+| `MostAllocated` | A 노드에 3개, B 노드에 3개 | 93% / 56% / 0% (C 노드는 완전히 그대로 유지) |
 
 절대 사용률은 실습 환경의 호스트 CPU 코어 수에 따라 달라지지만, **패턴**은 그대로 재현되어야 합니다: `LeastAllocated`는 유휴 노드를 이웃 노드 수준까지 채우고, `MostAllocated`는 이미 바쁜 노드에 계속 쌓아 올리며 유휴 노드는 건드리지 않습니다. 이렇게 남은 유휴 노드가 바로 Cluster Autoscaler나 Karpenter의 통합(consolidation) 로직이 종료 대상으로 삼는 노드입니다. 그래서 오토스케일러와 함께 실행되는 배치/단명 Job 워크로드에는 `MostAllocated`가, 모든 노드에 여유 공간을 두고자 하는 장시간 실행·지연 민감형 서비스에는 여전히 `LeastAllocated`가 더 안전한 기본값입니다.
 
@@ -305,7 +305,7 @@ unset SCHED_LAB_DIR SCHED_LAB_KIND SCHED_LAB_WORKERS
 
 ## 참고 자료와 검증 범위
 
-- [Scheduler Configuration — Kubernetes documentation](https://kubernetes.io/docs/reference/scheduling/config/)
+- [Scheduler Configuration: Kubernetes documentation](https://kubernetes.io/docs/reference/scheduling/config/)
 - [NodeResourcesFit scoring strategies](https://kubernetes.io/docs/reference/config-api/kube-scheduler-config.v1/)
 - [Configure Multiple Schedulers](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/)
 

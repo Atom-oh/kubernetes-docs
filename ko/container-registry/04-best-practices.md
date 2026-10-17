@@ -694,7 +694,7 @@ sudo apt-get install -y skopeo
 brew install skopeo
 ```
 
-### skopeo inspect — 원격 이미지 검사
+### skopeo inspect: 원격 이미지 검사
 
 이미지를 pull하지 않고 메타데이터를 확인할 수 있습니다:
 
@@ -712,7 +712,7 @@ skopeo inspect --raw docker://docker.io/library/nginx:1.30.6 | jq .
 skopeo --override-arch arm64 inspect docker://docker.io/library/nginx:1.30.6
 ```
 
-### skopeo copy — 레지스트리 간 이미지 복사
+### skopeo copy: 레지스트리 간 이미지 복사
 
 이미지를 로컬에 pull하지 않고 레지스트리 간 직접 복사합니다:
 
@@ -738,7 +738,7 @@ skopeo copy --all \
   oci-archive:nginx-1.30.6.tar
 ```
 
-### skopeo sync — 대량 레지스트리 동기화
+### skopeo sync: 대량 레지스트리 동기화
 
 명시한 태그만 dry run으로 확인한 뒤 동기화합니다. 태그 없이 repository 전체를 지정하면 모든 태그가 복사될 수 있습니다. `images-by-tag-regex` 값은 목록이 아닌 문자열입니다. `--scoped`는 원본 Registry·경로를 보존해 이름 충돌을 줄이며, 목적지 프로젝트/repository 생성·인증은 별도 준비합니다.
 

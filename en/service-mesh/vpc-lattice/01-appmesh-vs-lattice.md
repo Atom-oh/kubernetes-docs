@@ -5,13 +5,13 @@
 
 ## What This Document Covers
 
-- What problem each model — sidecar and managed data plane — was designed to solve
+- What problem each model (sidecar and managed data plane) was designed to solve
 - How App Mesh resources map to Lattice resources, and why that mapping is not one-to-one
 - The feature gaps that follow from the non-one-to-one parts, and what the AWS Gateway API Controller does in between
 
 ## Why the Two Models Were Designed Differently
 
-### The sidecar model — put a proxy next to the application
+### The sidecar model: put a proxy next to the application
 
 App Mesh and Istio put an Envoy inside the Pod because **some decisions require the application's context.**
 
@@ -19,11 +19,11 @@ A caller-side proxy can maintain connection pools, observe upstream failures and
 
 The customer operates the injected Envoy workloads and any separately deployed SPIRE infrastructure. **AWS operated the App Mesh control plane (support ended September 30, 2026).** Proxy upgrades and resource consumption remain customer workload concerns; do not describe App Mesh as a fully self-operated control plane.
 
-### The managed data plane model — push the proxy into the infrastructure
+### The managed data plane model: push the proxy into the infrastructure
 
 Lattice went the other direction. It pulls the proxy out of the Pod and places it in **infrastructure that AWS operates.** The client Pod sends an ordinary HTTP request knowing nothing, and when that request is addressed to a Lattice service, the infrastructure intercepts and handles it.
 
-The problems this design solves are scale and heterogeneity. Because there is no sidecar, proxies do not multiply with Pod count, and EKS, ECS, EC2, and Lambda can all participate in the service network **the same way.** You cannot put an Envoy inside a Lambda function, but an infrastructure-layer proxy can serve Lambda too. VPC and account boundaries — even overlapping IP ranges — are absorbed by the infrastructure.
+The problems this design solves are scale and heterogeneity. Because there is no sidecar, proxies do not multiply with Pod count, and EKS, ECS, EC2, and Lambda can all participate in the service network **the same way.** You cannot put an Envoy inside a Lambda function, but an infrastructure-layer proxy can serve Lambda too. VPC and account boundaries, even overlapping IP ranges, are absorbed by the infrastructure.
 
 Removing Envoy changes where resilience and telemetry are implemented. Compare **what App Mesh provided with the currently exposed Lattice APIs**, then identify which controls must move into the application or another proxy. Do not infer AWS internal state placement or permanent feature limits from this conceptual topology.
 
@@ -82,7 +82,7 @@ graph TB
 
 Three differences stand out.
 
-1. **Number of proxy traversals**: AS-IS passes through **two** proxies — the caller's Envoy and the receiver's Envoy. TO-BE passes through Lattice **once.**
+1. **Number of proxy traversals**: AS-IS passes through **two** proxies: the caller's Envoy and the receiver's Envoy. TO-BE passes through Lattice **once.**
 2. **Who owns the control plane**: In AS-IS, the App Mesh control plane pushes configuration to each Envoy via xDS and SPIRE issues certificates. In TO-BE these roles move into the AWS-managed domain, and all that remains in the customer cluster is a single Gateway API Controller Deployment.
 3. **Where the connection terminates**: In AS-IS the caller's Envoy connects **directly to the receiver's Pod IP.** In TO-BE it connects to a Lattice address, and it is Lattice that knows the Pod IPs.
 
@@ -100,7 +100,7 @@ Three differences stand out.
 
 ### Why you must not read this as a one-to-one table
 
-**The VirtualNode row is the problem.** An App Mesh VirtualNode expressed three things at once — who this workload is (identity, including backend TLS settings), where it goes (backends), and where it receives (listeners, health checks, connection pools, outlier detection). In Lattice those three scatter to different places.
+**The VirtualNode row is the problem.** An App Mesh VirtualNode expressed three things at once: who this workload is (identity, including backend TLS settings), where it goes (backends), and where it receives (listeners, health checks, connection pools, outlier detection). In Lattice those three scatter to different places.
 
 - Only **part of "where it receives"** (the target set, health checks) becomes a Target Group
 - **"Where it goes"** stops being a resource and becomes a matter of **auth policies and IAM permissions**
@@ -125,7 +125,7 @@ These are **migration checks**, not proofs of what a managed data plane can neve
 
 An important migration task is **observability**: inventory the metrics, access logs and trace context supplied by each existing component, and verify the replacement path end to end.
 
-Circuit breakers and retries have a clear alternative — "add a library to the application" — with a cost you can estimate. Observability looks like it has a clear alternative too, but it is a different kind of work. In AS-IS, the spans Envoy produced automatically came **without touching application code.** Getting the same level of tracing in TO-BE means adding OpenTelemetry instrumentation to every service, and that becomes a work item for application teams.
+Circuit breakers and retries have a clear alternative ("add a library to the application") with a cost you can estimate. Observability looks like it has a clear alternative too, but it is a different kind of work. In AS-IS, the spans Envoy produced automatically came **without touching application code.** Getting the same level of tracing in TO-BE means adding OpenTelemetry instrumentation to every service, and that becomes a work item for application teams.
 
 A client span normally encloses the downstream server span, so subtracting the caller span end from the receiver span start is not a network-latency measurement. Correlate application spans with Lattice log fields such as `requestId`, `duration`, and `requestToTargetDuration` and `responseFromTargetDuration`; clock skew, instrumentation boundaries and network time limit causal attribution. Lattice adds `x-amzn-requestid` for HTTP correlation; that is not an OpenTelemetry span.
 
@@ -135,7 +135,7 @@ You can create Lattice resources directly with the CLI or console, but on EKS yo
 
 | Kubernetes resource | Lattice resource created |
 |---|---|
-| `GatewayClass` (`amazon-vpc-lattice`) | — (declares Lattice as the data plane) |
+| `GatewayClass` (`amazon-vpc-lattice`) | None (declares Lattice as the data plane) |
 | `Gateway` | Points to a **Service Network**. The Gateway name (without namespace) corresponds to the Service Network name; multiple Gateways sharing a name all point to the same Service Network |
 | `HTTPRoute` / `GRPCRoute` | **Lattice Service** + **Listener Rule**. Each Route **gets its own domain name** |
 | `TLSRoute` | A Lattice Service for TLS Passthrough (see [document 04](./04-networking-basics.md)) |
@@ -157,7 +157,7 @@ Two practical points follow.
 
 ### Scope limits of the controller
 
-The Gateway API was designed to cover both North-South (Ingress) and East-West (Mesh) traffic, but **the AWS Gateway API Controller currently focuses only on East-West traffic through Lattice.** Do not expect ALB/NLB-style North-South features — those belong to the AWS Load Balancer Controller.
+The Gateway API was designed to cover both North-South (Ingress) and East-West (Mesh) traffic, but **the AWS Gateway API Controller currently focuses only on East-West traffic through Lattice.** Do not expect ALB/NLB-style North-South features; those belong to the AWS Load Balancer Controller.
 
 This matters especially in environments that also run ingress-nginx. The North-South traffic ingress-nginx handles is not in scope for this migration; only East-West traffic moves to Lattice. A configuration where both paths coexist is the normal outcome.
 
@@ -174,7 +174,7 @@ Next: [Latency Impact Analysis](./02-latency.md) examines how fewer proxy hops a
 
 - [Migrating from AWS App Mesh to Amazon VPC Lattice (AWS Containers Blog)](https://aws.amazon.com/blogs/containers/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/)
 - [aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice)
-- [AWS Gateway API Controller — Understanding the Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/concepts/overview/)
-- [AWS Gateway API Controller — Gateway API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)
+- [AWS Gateway API Controller: Understanding the Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/concepts/overview/)
+- [AWS Gateway API Controller: Gateway API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)
 - [Amazon VPC Lattice User Guide](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
 - [App Mesh Document history](https://docs.aws.amazon.com/app-mesh/latest/userguide/doc-history.html)

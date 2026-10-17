@@ -1,15 +1,15 @@
-# 워크로드 신원 모델 전환 — SPIFFE에서 IAM으로
+# 워크로드 신원 모델 전환: SPIFFE에서 IAM으로
 
 > **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
 > **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
-- SPIFFE/SPIRE가 워크로드 신원 문제를 어떻게 풀었는가 — 특히 attestation이 bootstrapping 문제를 해소하는 원리
+- SPIFFE/SPIRE가 워크로드 신원 문제를 어떻게 풀었는가, 특히 attestation이 bootstrapping 문제를 해소하는 원리
 - SPIFFE 기반 mTLS와 Lattice IAM Auth의 유사점(짧은 수명 자격증명 + 플랫폼 attestation)과 **결정적 차이 2개**
 - 이 차이가 왜 금융권 보안 심의의 핵심 쟁점이 되는가
 
-## 문제의 출발점 — 워크로드는 자신을 어떻게 증명하는가
+## 문제의 출발점: 워크로드는 자신을 어떻게 증명하는가
 
 서비스 A가 서비스 B를 호출할 때 B는 "이 요청이 정말 A에서 왔는가"를 알아야 합니다. 이 문제가 어려운 이유는 **증명에 필요한 비밀을 애초에 어떻게 전달하는가**입니다.
 
@@ -27,7 +27,7 @@ SPIFFE/SPIRE와 Lattice IAM Auth는 **둘 다 이 문제를 "플랫폼이 워크
 
 SPIFFE(Secure Production Identity Framework For Everyone)는 워크로드 신원의 **표준**입니다. 구현이 아니라 규격입니다.
 
-### ① SPIFFE ID — 신원의 이름
+### ① SPIFFE ID: 신원의 이름
 
 URI 형식으로 워크로드를 식별합니다.
 
@@ -39,9 +39,9 @@ spiffe://<trust-domain>/<workload-path>
 
 `trust-domain`은 **신뢰 경계의 이름**입니다. 같은 trust domain에 속한 워크로드끼리는 공통의 신뢰 근원(같은 CA)을 공유합니다. 경로 부분은 조직이 자유롭게 설계하며, Kubernetes 환경에서는 보통 namespace와 ServiceAccount를 반영합니다.
 
-주목할 점은 **이름 안에 네트워크 정보가 없다**는 것입니다. IP도 호스트명도 포트도 없습니다. 이것이 의도된 설계입니다 — 워크로드가 어디로 스케줄되든, IP가 바뀌든, 신원은 그대로입니다. [04번 문서](./04-networking-basics.md)에서 본 "IP 기반 통제에서 신원 기반 통제로"의 이동이 여기서 시작됩니다.
+주목할 점은 **이름 안에 네트워크 정보가 없다**는 것입니다. IP도 호스트명도 포트도 없습니다. 이것이 의도된 설계입니다. 워크로드가 어디로 스케줄되든, IP가 바뀌든, 신원은 그대로입니다. [04번 문서](./04-networking-basics.md)에서 본 "IP 기반 통제에서 신원 기반 통제로"의 이동이 여기서 시작됩니다.
 
-### ② SVID — 신원의 증명서
+### ② SVID: 신원의 증명서
 
 **SPIFFE Verifiable Identity Document**. SPIFFE ID를 담고 있으며 검증 가능한 문서로, 두 형태가 있습니다.
 
@@ -52,7 +52,7 @@ spiffe://<trust-domain>/<workload-path>
 
 **핵심 특성은 짧은 수명입니다.** SVID는 보통 수십 분에서 수 시간 단위로 발급되고 자동 갱신됩니다. 짧은 수명이 중요한 이유는 **폐기(revocation) 문제를 회피**하기 때문입니다. 인증서 폐기 목록(CRL)이나 OCSP는 운영이 까다로운데, 자격증명이 곧 만료된다면 폐기 메커니즘 없이도 침해의 유효 기간이 제한됩니다.
 
-### ③ Workload API — 신원의 전달 통로
+### ③ Workload API: 신원의 전달 통로
 
 워크로드가 자신의 SVID를 받아오는 인터페이스입니다. 핵심은 **Unix Domain Socket(UDS)으로 노출된다**는 점입니다.
 
@@ -109,12 +109,12 @@ graph TB
 
 이것이 SPIRE의 핵심이며, IAM과 비교할 때의 기준점입니다.
 
-**Node Attestation** — Agent가 Server에게 "나는 이 노드다"를 증명합니다. 여기서 사용하는 증거는 **미리 심어둔 비밀이 아니라 플랫폼이 발급한 증명**입니다. AWS에서는 EC2 인스턴스의 IMDS 서명 문서나 인스턴스 신원 문서를 씁니다. Server는 그 증거를 AWS에 대조해 검증할 수 있으므로, 노드에 사전 공유 비밀을 넣어둘 필요가 없습니다.
+**Node Attestation**: Agent가 Server에게 "나는 이 노드다"를 증명합니다. 여기서 사용하는 증거는 **미리 심어둔 비밀이 아니라 플랫폼이 발급한 증명**입니다. AWS에서는 EC2 인스턴스의 IMDS 서명 문서나 인스턴스 신원 문서를 씁니다. Server는 그 증거를 AWS에 대조해 검증할 수 있으므로, 노드에 사전 공유 비밀을 넣어둘 필요가 없습니다.
 
-**Workload Attestation** — Agent가 노드 안의 워크로드를 조사합니다. 순서는 이렇습니다.
+**Workload Attestation**: Agent가 노드 안의 워크로드를 조사합니다. 순서는 이렇습니다.
 
-1. 워크로드가 UDS에 연결합니다 — **자격증명 없이**
-2. Agent가 커널에서 상대 프로세스의 PID를 얻습니다 — **위조 불가**. 커널이 알려주는 사실입니다
+1. 워크로드가 UDS에 연결합니다(**자격증명 없이**)
+2. Agent가 커널에서 상대 프로세스의 PID를 얻습니다(**위조 불가**). 커널이 알려주는 사실입니다
 3. PID로부터 cgroup을 읽어 어느 컨테이너인지 알아냅니다
 4. kubelet/kube-apiserver에 조회해 그 컨테이너가 속한 Pod, namespace, ServiceAccount, 레이블을 확인합니다
 5. 이 속성들을 **selector**로 조합해 Server에 제출합니다
@@ -133,7 +133,7 @@ Lattice IAM Auth의 절차는 [03번 문서](./03-auth-flow.md)에 있습니다.
 | **신원의 이름** | SPIFFE ID (`spiffe://<trust-domain>/ns/<ns>/sa/<sa>`) | IAM Role ARN / assumed-role 세션 ARN |
 | **자격증명의 형태** | X.509-SVID 또는 JWT-SVID | STS 임시 credential (access key + secret + session token) |
 | **증명 방식** | 인증서 개인키 보유 증명 (TLS handshake) | SigV4 요청 서명 (secret key 보유 증명) |
-| **증명 단위** | **connection** — 연결 수립 시 1회 | **요청** — 매 요청 |
+| **증명 단위** | **connection** (연결 수립 시 1회) | **요청** (매 요청) |
 | **attestation 주체** | SPIRE Agent (노드) + SPIRE Server | EKS Pod Identity Agent + EKS Auth API |
 | **attestation 증거** | 커널 PID → cgroup → Pod/ServiceAccount 조회 | ServiceAccount ↔ Role 연결 (EKS Auth API) 또는 OIDC 토큰(IRSA) |
 | **검증 방식** | 상대 워크로드의 Envoy가 SVID 체인을 trust bundle로 검증 | Lattice가 서명 재계산·대조 후 3중 정책 평가 |
@@ -141,17 +141,17 @@ Lattice IAM Auth의 절차는 [03번 문서](./03-auth-flow.md)에 있습니다.
 | **자격 수명** | 수십 분~수 시간, 자동 갱신 | STS 임시 credential, 자동 갱신 |
 | **인가 표현** | Envoy 인가 필터 (SPIFFE ID 기반) | IAM 정책 3중 (identity-based + service network + service) |
 | **관측 수단** | Envoy 메트릭·로그 (SPIFFE ID 단위) | Lattice access log (principal 단위, span 없음) |
-| **운영 부담** | **높음** — SPIRE Server HA, CA 키 관리, CA 로테이션, Registration Entry 관리, Agent 배포·업그레이드, trust bundle 배포 | **낮음** — Pod Identity Agent 애드온 + ServiceAccount↔Role 연결. CA·키 관리 없음 |
+| **운영 부담** | **높음**: SPIRE Server HA, CA 키 관리, CA 로테이션, Registration Entry 관리, Agent 배포·업그레이드, trust bundle 배포 | **낮음**: Pod Identity Agent 애드온 + ServiceAccount↔Role 연결. CA·키 관리 없음 |
 | **멀티 클러스터** | trust domain 설계와 federation 구성 필요 | Pod Identity로 Role 재사용, 클러스터별 추가 설정 최소 |
 | **AWS 외부 워크로드** | 적절한 SPIRE attestor로 가능 | 적절한 IAM credential provider와 지원 Lattice 연결 필요. IAM 자체의 금지는 아님 |
 
-## 유사점 — 왜 이 전환이 가능한가
+## 유사점: 왜 이 전환이 가능한가
 
 대조표만 보면 완전히 다른 체계처럼 보이지만, **구조적으로는 같은 패턴**입니다. 이것이 전환이 성립하는 근거입니다.
 
 ### ① 둘 다 짧은 수명 자격증명을 쓴다
 
-SVID도, STS 임시 credential도 짧은 수명이며 자동 갱신됩니다. 둘 다 같은 이유로 그렇게 설계되었습니다 — **폐기 메커니즘 없이 침해의 유효 기간을 제한**하기 위해서입니다.
+SVID도, STS 임시 credential도 짧은 수명이며 자동 갱신됩니다. 둘 다 같은 이유로 그렇게 설계되었습니다. **폐기 메커니즘 없이 침해의 유효 기간을 제한**하기 위해서입니다.
 
 두 방식 모두 장기 애플리케이션 비밀 배포를 피할 수 있지만 자격 증명 수명·갱신·침해 대응·인가를 여전히 검토해야 합니다. 짧은 수명이 폐기나 긴급 Deny 요구를 없애지는 않습니다.
 
@@ -174,7 +174,7 @@ SVID도, STS 임시 credential도 짧은 수명이며 자동 갱신됩니다. �
 
 유사점이 많으므로, 심의에서 실제로 다투게 되는 것은 **다른 두 지점**입니다. 이 둘은 운영 편의로 해소되지 않는 구조적 차이입니다.
 
-### 차이 (a) — 양방향 상호 인증 vs 단방향 + 요청 인증
+### 차이 (a): 양방향 상호 인증 vs 단방향 + 요청 인증
 
 **AS-IS: 양방향입니다.**
 
@@ -199,7 +199,7 @@ SigV4는 요청의 서명된 필드를 인증하고 mTLS는 TLS peer를 인증�
 
 이것은 나쁜 답이 아닙니다. 실제로 Lattice Service를 만들 수 있는 주체를 IAM으로 엄격히 제한하고, service network association을 통제하고, CloudTrail로 리소스 생성을 감시하면 실질적 위험은 관리됩니다. 그러나 **심의 문서에 "상호 인증"이라고 적혀 있었다면 그 항목은 다시 써야 하고, 통제의 근거를 다른 계층에서 제시해야 합니다.** 이것을 전환 후반에 발견하면 일정이 크게 밀립니다.
 
-### 차이 (b) — 신뢰 근원의 소유권
+### 차이 (b): 신뢰 근원의 소유권
 
 **이것이 금융권 심의에서 더 무거운 항목입니다.**
 
@@ -240,8 +240,8 @@ Lattice IAM Auth로 옮기면 이 논거를 다시 세워야 합니다. 제시�
 | 실행 중 비밀 노출 | 검토 필요 | 단기 개인 키/token도 보호 필요 |
 | 요청별 인가 | 실제 정책 비교 | mTLS 신원으로도 요청별 인가 가능. SigV4만 가능한 것은 아님 |
 | 클라이언트 신원 증명 | 방식 변경 | TLS peer 증명과 요청 서명의 범위·위협 가정이 다름 |
-| **서버 신원 증명** | ⚠️ **약화 — 대체 통제 필요** | 워크로드 신원 체계에서 TLS 서버 인증서 수준으로. 방어선을 리소스 생성 권한 IAM 통제로 이동 |
-| **신뢰 근원 소유권** | ⚠️ **이전 — 논거 재작성 필요** | 고객 CA → AWS IAM/STS |
+| **서버 신원 증명** | ⚠️ **약화: 대체 통제 필요** | 워크로드 신원 체계에서 TLS 서버 인증서 수준으로. 방어선을 리소스 생성 권한 IAM 통제로 이동 |
+| **신뢰 근원 소유권** | ⚠️ **이전: 논거 재작성 필요** | 고객 CA → AWS IAM/STS |
 | End-to-end 암호화 | 신뢰 경계 선택 | HTTPS는 Lattice에서 종료. Passthrough는 endpoint TLS를 유지하지만 인증된 HTTP SigV4 신원은 사용 불가 |
 | 관측성 (추적) | ⚠️ **약화** | Envoy span 소멸. 애플리케이션 계측 필요 ([01번](./01-appmesh-vs-lattice.md)) |
 | AWS 외부 워크로드 | 별도 설계 | 불가능하다고 가정하지 말고 자격 증명과 지원 네트워크 경로 검토 |
@@ -254,7 +254,7 @@ Lattice IAM Auth로 옮기면 이 논거를 다시 세워야 합니다. 제시�
 
 - AWS 외부 워크로드에서는 SPIRE가 계속 유용할 수 있지만 다른 credential/identity 방식도 평가할 수 있습니다.
 - **TLS Passthrough 구성**을 택하면 엔드포인트가 직접 mTLS를 수행해야 하고, 그 인증서를 SPIRE가 계속 공급할 수 있습니다
-- 이 경우 App Mesh는 사라지지만 **SPIRE는 남는** 구성이 됩니다 — App Mesh 지원 종료의 대응과 SPIRE 존속은 별개 결정입니다
+- 이 경우 App Mesh는 사라지지만 **SPIRE는 남는** 구성이 됩니다. App Mesh 지원 종료의 대응과 SPIRE 존속은 별개 결정입니다
 
 SPIRE 운영 부담 자체를 없애는 것이 전환의 목표 중 하나였다면, 위 조건들이 그 목표와 충돌하는지 먼저 확인해야 합니다.
 
@@ -272,7 +272,7 @@ SPIRE 운영 부담 자체를 없애는 것이 전환의 목표 중 하나였다
 
 - [SPIFFE 공식 문서](https://spiffe.io/docs/latest/spiffe-about/overview/)
 - [SPIFFE ID 스펙](https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE-ID.md) / [X.509-SVID 스펙](https://github.com/spiffe/spiffe/blob/main/standards/X509-SVID.md)
-- [SPIRE Concepts — Attestation](https://spiffe.io/docs/latest/spire-about/spire-concepts/)
+- [SPIRE Concepts: Attestation](https://spiffe.io/docs/latest/spire-about/spire-concepts/)
 - [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
 - [Secure Cross-Cluster Communication in EKS with VPC Lattice and Pod Identity IAM Session Tags](https://aws.amazon.com/blogs/containers/secure-cross-cluster-communication-in-eks-with-vpc-lattice-and-pod-identity-iam-session-tags/)
-- [Istio Security — mTLS](../istio/security/01-mtls.md) — sidecar 기반 상호 인증의 동작
+- [Istio Security: mTLS](../istio/security/01-mtls.md): sidecar 기반 상호 인증의 동작

@@ -65,7 +65,7 @@ export AWS_PROFILE=eks-docs
 
 See [IAM Identity Center authentication](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html). Keep using the approved account, role and region for subsequent commands.
 
-#### kubectl and eksctl — Linux/macOS
+#### kubectl and eksctl (Linux/macOS)
 
 This chapter's EKS 1.36 examples use kubectl **1.36.5** and eksctl **0.231.0** as their baseline. Prefer the same kubectl minor as the server; supported skew is ±1 minor. Do not blindly install the newest minor from upstream `stable.txt` for an older EKS cluster.
 

@@ -1,4 +1,4 @@
-# 커널 데이터패스 — link-local 인터셉트의 실제
+# 커널 데이터패스: link-local 인터셉트의 실제
 
 > **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
 > **마지막 업데이트**: 2026년 10월 12일
@@ -23,7 +23,7 @@
 
 이 문서는 [04번 문서](./04-networking-basics.md)와 [Linux 커널 섹션](../../kernel/README.md)을 잇는 계층입니다. 커널 일반 개념은 [컨테이너를 지탱하는 커널 기능](../../kernel/01-container-primitives.md)과 [커널 네트워킹 스택](../../kernel/02-network-stack.md)에 있고, 여기서는 **Lattice 구성에 특화된 부분**만 다룹니다.
 
-## 패킷의 여정 — 사이드카가 없는 경우
+## 패킷의 여정: 사이드카가 없는 경우
 
 먼저 깨끗한 TO-BE 상태입니다. Envoy가 없고 애플리케이션이 직접 서명하는 구성입니다.
 
@@ -54,7 +54,7 @@ graph TB
 
 **③ netfilter 훅이 Pod net namespace 안에서 평가됩니다.** 이것이 다음 절의 충돌이 가능한 이유입니다.
 
-## 충돌 — Envoy iptables 인터셉트
+## 충돌: Envoy iptables 인터셉트
 
 ### 사이드카 메시가 심는 것
 
@@ -98,7 +98,7 @@ Mesh interception은 **Pod netns OUTPUT**에서 일어날 수 있습니다. 이�
 
 **진단 경로**: Lattice 호출이 실패하면 Envoy sidecar log에 문제가 발생한 `169.254.171.x` 대상 요청이 있는지 확인합니다. 이것은 proxy 경유의 증거입니다. 인터셉트를 실패 원인으로 판단하기 전에 반환 오류·route/outbound policy·서명 필드 변경 여부를 함께 확인합니다. 설정된 proxy가 요청을 정상 전달할 수도 있습니다.
 
-### 예외 등록 — 무엇을 어디에
+### 예외 등록: 무엇을 어디에
 
 | 메시 | 설정 |
 |---|---|
@@ -114,13 +114,13 @@ Mesh interception은 **Pod netns OUTPUT**에서 일어날 수 있습니다. 이�
 
 ### 실무 함정 네 개
 
-**① IPv6 누락** — IPv4만 제외하고 dual-stack 클러스터에서 간헐적 실패를 겪는 경우입니다. 클라이언트가 AAAA 레코드를 받아 IPv6로 연결을 시도하면 그 경로는 여전히 인터셉트됩니다. **증상이 "가끔 실패"라서 진단이 어렵습니다** — DNS 응답 순서나 클라이언트의 주소 선택에 따라 갈리기 때문입니다.
+**① IPv6 누락**: IPv4만 제외하고 dual-stack 클러스터에서 간헐적 실패를 겪는 경우입니다. 클라이언트가 AAAA 레코드를 받아 IPv6로 연결을 시도하면 그 경로는 여전히 인터셉트됩니다. **증상이 "가끔 실패"라서 진단이 어렵습니다**. DNS 응답 순서나 클라이언트의 주소 선택에 따라 갈리기 때문입니다.
 
-**② 애노테이션은 새 Pod에만 적용** — Pod 단위 애노테이션은 Pod 생성 시 init container가 읽습니다. 기존 Pod는 재시작해야 합니다.
+**② 애노테이션은 새 Pod에만 적용**: Pod 단위 애노테이션은 Pod 생성 시 init container가 읽습니다. 기존 Pod는 재시작해야 합니다.
 
-**③ 규칙 순서** — netfilter는 체인의 규칙을 **위에서 순서대로** 평가하고 첫 매치에서 동작합니다. 예외 `RETURN` 규칙이 `REDIRECT` 규칙보다 **앞에** 있어야 합니다. 메시의 표준 init container는 이 순서를 맞춰주지만, 직접 규칙을 추가하는 경우 순서를 확인해야 합니다.
+**③ 규칙 순서**: netfilter는 체인의 규칙을 **위에서 순서대로** 평가하고 첫 매치에서 동작합니다. 예외 `RETURN` 규칙이 `REDIRECT` 규칙보다 **앞에** 있어야 합니다. 메시의 표준 init container는 이 순서를 맞춰주지만, 직접 규칙을 추가하는 경우 순서를 확인해야 합니다.
 
-**④ 다른 link-local 서비스와 혼동** — Pod Identity Agent는 `169.254.170.23`, IMDS는 `169.254.169.254`입니다. Lattice는 `169.254.171.0/24`입니다. **같은 `169.254.0.0/16` 안이지만 다른 대역**이므로, 예외를 `169.254.0.0/16` 전체로 넓게 잡으면 IMDS·Pod Identity 트래픽까지 메시 인터셉트에서 빠집니다. 그것이 의도한 것일 수도 있지만(대개 이 트래픽은 인터셉트 대상이 아니어야 합니다), **의도를 명시하고 결정하십시오.**
+**④ 다른 link-local 서비스와 혼동**: Pod Identity Agent는 `169.254.170.23`, IMDS는 `169.254.169.254`입니다. Lattice는 `169.254.171.0/24`입니다. **같은 `169.254.0.0/16` 안이지만 다른 대역**이므로, 예외를 `169.254.0.0/16` 전체로 넓게 잡으면 IMDS·Pod Identity 트래픽까지 메시 인터셉트에서 빠집니다. 그것이 의도한 것일 수도 있지만(대개 이 트래픽은 인터셉트 대상이 아니어야 합니다), **의도를 명시하고 결정하십시오.**
 
 ### 검증
 
@@ -160,7 +160,7 @@ graph TB
     BYPASS["리다이렉트 없이 통과"]
 
     APP3 --> OUT2 --> R1
-    R1 -->|"예 — 프록시 자신의 트래픽"| BYPASS --> OUTNODE
+    R1 -->|"예: 프록시 자신의 트래픽"| BYPASS --> OUTNODE
     R1 -->|"아니오"| R2
     R2 -->|"예"| PRX
     R2 -->|"아니오"| BYPASS
@@ -170,7 +170,7 @@ graph TB
     style OUTNODE fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-aws-samples 레퍼런스 구현의 구조입니다 — init container가 iptables로 **`169.254.171.0/24`로 향하는 트래픽만** 로컬 8080으로 리다이렉트하고, 프록시가 SigV4 서명을 붙여 내보냅니다.
+aws-samples 레퍼런스 구현의 구조입니다. init container가 iptables로 **`169.254.171.0/24`로 향하는 트래픽만** 로컬 8080으로 리다이렉트하고, 프록시가 SigV4 서명을 붙여 내보냅니다.
 
 ### UID 기반 예외가 필수인 이유
 
@@ -197,7 +197,7 @@ aws-samples 레퍼런스 구현의 구조입니다 — init container가 iptable
 
 **규칙 2가 규칙 4보다 앞에 있어야** Lattice 트래픽이 Envoy가 아니라 서명 프록시로 갑니다. 두 init container가 각자 규칙을 심으면 순서가 실행 순서에 의존합니다.
 
-다행히 메시 쪽 순서는 확인이 가능합니다 — Istio의 경우 아래에서 소스로 검증했습니다.
+다행히 메시 쪽 순서는 확인이 가능합니다. Istio의 경우 아래에서 소스로 검증했습니다.
 
 ### Istio의 실제 규칙 순서 (소스 확인)
 
@@ -217,12 +217,12 @@ Istio의 `istio-iptables`(`tools/istio-iptables/pkg/capture/run.go`)가 `ISTIO_O
 그리고 **프록시 UID `RETURN`(3)이 제외 CIDR보다도 먼저**입니다. 즉 Istio 자신도 이 문서에서 설명한 UID 기반 루프 방지를 같은 방식으로 쓰고 있습니다.
 
 ::: warning 확인 필요
-위 순서는 **Istio** 소스에서 확인한 것입니다. **App Mesh의 init container가 심는 실제 규칙 순서는 검증하지 못했습니다** — 별개 구현이며, App Mesh는 2026년 9월 30일 지원이 종료되었습니다.
+위 순서는 **Istio** 소스에서 확인한 것입니다. **App Mesh의 init container가 심는 실제 규칙 순서는 검증하지 못했습니다**. 별개 구현이며, App Mesh는 2026년 9월 30일 지원이 종료되었습니다.
 
 또한 **서명 프록시 init container를 함께 쓰는 구성**은 두 init container가 각자 규칙을 심으므로 순서가 `initContainers` 배열 순서에 의존합니다. 이 조합은 **대상 환경에서 `iptables -t nat -L -n -v`로 실제 규칙을 덤프해 확인**하십시오.
 :::
 
-## conntrack — 이 구성에서의 거동
+## conntrack: 이 구성에서의 거동
 
 ### Lattice 트래픽이 conntrack에 남기는 것
 
@@ -271,12 +271,12 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 
 | 관측 결과 | 의심 지점 |
 |---|---|
-| `tcpdump`에 송신 패킷이 안 보임 | Pod 내부 문제 — 라우팅, 인터셉트, DNS |
+| `tcpdump`에 송신 패킷이 안 보임 | Pod 내부 문제: 라우팅, 인터셉트, DNS |
 | 송신은 보이는데 응답이 없음 | SG(양방향 확인), 라우팅, Lattice 측 |
 | 응답이 오는데 애플리케이션이 못 받음 | 소켓 버퍼, 또는 인터셉트 경로의 문제 |
 | 드롭 카운터 증가 | conntrack 또는 qdisc ([커널 네트워킹 스택](../../kernel/02-network-stack.md)) |
 
-## 노드별 불일치 — "일부 노드에서만 실패한다"
+## 노드별 불일치: "일부 노드에서만 실패한다"
 
 이 증상은 원인이 몇 가지로 좁혀집니다.
 
@@ -285,7 +285,7 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 | **노드 SG가 다름** | 노드 그룹별로 prefix list 인바운드가 적용되었는지 |
 | **커널 버전이 다름** | `kernel-default` AMI라 노드 교체 시점에 따라 6.1/6.18 혼재 ([커널 튜닝](../../kernel/03-eks-node-tuning.md)) |
 | **conntrack 설정이 다름** | 부트스트랩 시점의 ConfigMap 상태에 따라 |
-| **시각 동기화** | `x-amz-date` 5분 오차 — 특정 노드만 403 ([03번 문서](./03-auth-flow.md)) |
+| **시각 동기화** | `x-amz-date` 5분 오차: 특정 노드만 403 ([03번 문서](./03-auth-flow.md)) |
 | **Pod 재시작 여부** | 애노테이션 변경이 구 Pod에 미적용 |
 
 **"일부 노드"라는 패턴 자체가 진단 정보입니다.** 전체 실패는 설정·인증 문제이고, 노드 단위 실패는 노드 상태 불일치입니다.
@@ -302,14 +302,14 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 
 ## 참고 자료
 
-- [Linux 커널 개요](../../kernel/README.md) — 이 문서의 일반 개념 배경
-- [컨테이너를 지탱하는 커널 기능](../../kernel/01-container-primitives.md) — namespace, netfilter, conntrack
-- [커널 네트워킹 스택](../../kernel/02-network-stack.md) — 패킷 경로와 관측 지점
-- [EKS 노드 커널 튜닝](../../kernel/03-eks-node-tuning.md) — conntrack 설정 경로
-- [aws-samples — IAM authentication with VPC Lattice and EKS](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
-- [AWS Gateway API Controller — Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
-- [iptables-extensions(8) — owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
-- [istio/istio — tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go) — 규칙 순서의 1차 근거
+- [Linux 커널 개요](../../kernel/README.md): 이 문서의 일반 개념 배경
+- [컨테이너를 지탱하는 커널 기능](../../kernel/01-container-primitives.md): namespace, netfilter, conntrack
+- [커널 네트워킹 스택](../../kernel/02-network-stack.md): 패킷 경로와 관측 지점
+- [EKS 노드 커널 튜닝](../../kernel/03-eks-node-tuning.md): conntrack 설정 경로
+- [aws-samples: IAM authentication with VPC Lattice and EKS](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
+- [AWS Gateway API Controller: Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
+- [iptables-extensions(8): owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
+- [istio/istio: tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go): 규칙 순서의 1차 근거
 
 
 진단 명령에는 선택한 container/net namespace의 해당 도구와 권한이 필요합니다. 서명 없는 HTTP 요청 거부는 IAM 설정 실패의 증명이 아닙니다. 인가 시험은 검토한 서명 경로를 사용하고 verbose log에서 자격 증명을 제거합니다.

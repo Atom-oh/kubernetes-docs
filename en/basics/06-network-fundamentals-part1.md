@@ -1,4 +1,4 @@
-# Network Fundamentals Part 1 — The Layer Model, Link and Routing Layers
+# Network Fundamentals Part 1: The Layer Model, Link and Routing Layers
 
 > **Last Updated**: September 14, 2026
 
@@ -37,7 +37,7 @@ A few entries refuse to respect clean layer boundaries. TLS sits wedged between 
 
 ---
 
-## 1. Link Layer — Moving Bits Within One Segment
+## 1. Link Layer: Moving Bits Within One Segment
 
 The link layer cares about exactly one thing: **how to hand bits to the device sitting right next to you.** Whether the final destination is the next rack or the other side of the planet, this layer is only responsible for the next hop.
 
@@ -73,7 +73,7 @@ The link layer cares about exactly one thing: **how to hand bits to the device s
 
 **Definition:** A protocol that carries packets over a point-to-point link connecting exactly two nodes.
 
-**How it works:** Unlike Ethernet, no addressing is needed — there is only one node at each end of the link. Instead, PPP provides link establishment, optional authentication, and upper-protocol negotiation (LCP/NCP).
+**How it works:** Unlike Ethernet, no addressing is needed; there is only one node at each end of the link. Instead, PPP provides link establishment, optional authentication, and upper-protocol negotiation (LCP/NCP).
 
 **In practice:** It looks like a relic of the dial-up era, but it survives as PPPoE on a large share of residential internet lines. With standard 1500-byte Ethernet payloads, the usual 6-byte PPPoE header plus 2-byte PPP protocol field leaves 1492 bytes for IP; negotiated larger underlays can preserve 1500. An unaccounted-for reduction to 1492 can cause the MTU problems described above.
 
@@ -89,7 +89,7 @@ The link layer cares about exactly one thing: **how to hand bits to the device s
 
 ---
 
-## 2. Internet and Routing Layer — Crossing Networks
+## 2. Internet and Routing Layer: Crossing Networks
 
 If the link layer gets you "next door," this layer gets you "to the other side of the planet." The central question is: **where should this packet go next?**
 
@@ -97,7 +97,7 @@ If the link layer gets you "next door," this layer gets you "to the other side o
 
 **Definition:** The internet-layer protocol built on 32-bit addresses.
 
-**How it works:** Every packet carries source and destination IPs; each router finds the most specific route (longest prefix match) in its routing table and forwards to the next hop. Delivery is best-effort — no guarantees, no ordering. Those guarantees are the job of the layer above (TCP).
+**How it works:** Every packet carries source and destination IPs; each router finds the most specific route (longest prefix match) in its routing table and forwards to the next hop. Delivery is best-effort: no guarantees, no ordering. Those guarantees are the job of the layer above (TCP).
 
 **In practice:** IPv4 has about 4.3 billion possible addresses, and scarcity made NAT widely used and turned the private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) into the internal-network standard. The first wall large organizations hit during cloud migration is overlap in these private ranges: overlapping on-premises/VPC CIDRs prevent straightforward routing over VPN or Direct Connect without a designed renumbering, translation or proxy solution. IP address design is something to lock down at project kickoff.
 
@@ -144,9 +144,9 @@ For a routed packet, the Ethernet destination is the gateway's MAC while the IP 
 
 **How it works:** With 128-bit addresses, exhaustion is a non-issue. The base header has a fixed 40-byte layout and no header checksum; routers do not fragment IPv6 packets. SLAAC lets hosts self-configure addresses without DHCP, and ARP is replaced by NDP (Neighbor Discovery Protocol).
 
-**In practice:** IPv6 is not backward-compatible with IPv4, so real deployments run dual stack — which means maintaining two sets of firewall rules and security policies. Missing rules on the IPv6 path is a common security gap. A global IPv6 address does not by itself make a workload internet-reachable. AWS still requires routing and permitted security-group/NACL traffic; an egress-only internet gateway can allow outbound IPv6 without unsolicited inbound connections.
+**In practice:** IPv6 is not backward-compatible with IPv4, so real deployments run dual stack, which means maintaining two sets of firewall rules and security policies. Missing rules on the IPv6 path is a common security gap. A global IPv6 address does not by itself make a workload internet-reachable. AWS still requires routing and permitted security-group/NACL traffic; an egress-only internet gateway can allow outbound IPv6 without unsolicited inbound connections.
 
-**Transition mechanisms:** There are three practical ways to coexist with IPv4: **dual stack** (run both side by side — most common, at the cost of duplicated policy), **tunneling** (wrap IPv6 packets in IPv4 to cross v4-only segments), and **NAT64/DNS64** (translate so IPv6-only clients can reach IPv4 servers — mobile carriers use this at scale as 464XLAT). Kubernetes supports dual-stack Services too, so cluster CIDR design can account for an IPv6 range from the start.
+**Transition mechanisms:** There are three practical ways to coexist with IPv4: **dual stack** (run both side by side; most common, at the cost of duplicated policy), **tunneling** (wrap IPv6 packets in IPv4 to cross v4-only segments), and **NAT64/DNS64** (translate so IPv6-only clients can reach IPv4 servers; mobile carriers use this at scale as 464XLAT). Kubernetes supports dual-stack Services too, so cluster CIDR design can account for an IPv6 range from the start.
 
 ### ICMP
 
@@ -154,7 +154,7 @@ For a routed packet, the Ethernet destination is the gateway's MAC while the IP 
 
 **How it works:** ICMP carries control information and can include Echo payloads or quoted original-packet data: destination unreachable, TTL exceeded, fragmentation needed, and so on. `ping` uses Echo Request/Reply; `traceroute` increments TTL (or IPv6 Hop Limit) one hop at a time and reads the returning Time Exceeded messages.
 
-**In practice:** Blanket-blocking ICMP "for security" is common — and it is the direct cause of the MTU black hole mentioned earlier. Classical IPv4 PMTUD uses ICMP Type 3 Code 4, while IPv6 uses ICMPv6 Packet Too Big Type 2. Blocking required messages can cause black holes; PLPMTUD can instead probe packet sizes without relying on ICMP. Preserve required error/discovery traffic according to the IP version and policy.
+**In practice:** Blanket-blocking ICMP "for security" is common, and it is the direct cause of the MTU black hole mentioned earlier. Classical IPv4 PMTUD uses ICMP Type 3 Code 4, while IPv6 uses ICMPv6 Packet Too Big Type 2. Blocking required messages can cause black holes; PLPMTUD can instead probe packet sizes without relying on ICMP. Preserve required error/discovery traffic according to the IP version and policy.
 
 > 📎 For how this failure shows up in EKS, see [EKS Networking Deep Dive](../eks/03-eks-networking-part3.md).
 
@@ -184,7 +184,7 @@ Traceroute primarily explores hops; small successful probes do not validate the 
 
 **How it works:** Every router floods its link state across the area, so routers in the same area converge on consistent link-state information, then each runs Dijkstra's algorithm to compute shortest paths. Interface costs are configured (often derived from bandwidth), and networks are split into areas to scale.
 
-**In practice:** OSPF is an IGP — for internal networks. Convergence is fast and paths are found automatically, but each router maintains link-state information for its attached areas, so at scale, area design determines performance.
+**In practice:** OSPF is an IGP (for internal networks). Convergence is fast and paths are found automatically, but each router maintains link-state information for its attached areas, so at scale, area design determines performance.
 
 ### BGP
 
@@ -202,7 +202,7 @@ Traceroute primarily explores hops; small successful probes do not validate the 
 
 **How it works:** A common case is many private hosts sharing a public address through PAT/NAPT. Translation can also be private-to-private; it is not always public-internet address sharing. A translation table keeps per-session mappings so return packets find their way back to the right internal host.
 
-**In practice:** NAT is the poster child for layering violations: an L3 device that rewrites L4 ports, and it breaks end-to-end connectivity — the internet's original premise. As a result P2P becomes hard, and workarounds such as STUN/TURN become necessary (see WebRTC below). In the cloud, NAT Gateway port exhaustion and data processing charges are the practical issues. For outbound-heavy workloads, VPC endpoints can reduce NAT processing for supported AWS services; compare their hourly/data charges and traffic path before assuming savings.
+**In practice:** NAT is the poster child for layering violations: an L3 device that rewrites L4 ports, and it breaks end-to-end connectivity, the internet's original premise. As a result P2P becomes hard, and workarounds such as STUN/TURN become necessary (see WebRTC below). In the cloud, NAT Gateway port exhaustion and data processing charges are the practical issues. For outbound-heavy workloads, VPC endpoints can reduce NAT processing for supported AWS services; compare their hourly/data charges and traffic path before assuming savings.
 
 ---
 

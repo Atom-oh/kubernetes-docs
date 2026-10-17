@@ -4,7 +4,7 @@
 
 > **Last Updated**: September 13, 2026
 
-This quiz tests your understanding of the EKS Observability Optimization Guide. It covers the three pillars of observability—logging, metrics, and tracing—as well as eBPF-based monitoring and cost optimization strategies.
+This quiz tests your understanding of the EKS Observability Optimization Guide. It covers the three pillars of observability (logging, metrics, and tracing) as well as eBPF-based monitoring and cost optimization strategies.
 
 ---
 

@@ -275,7 +275,7 @@ For EFS, General Purpose and the actual throughput mode, client limits, metadata
 Optimize total workload cost while preserving latency, durability, recovery and ownership requirements. Compute discounts, allocated storage, provisioned performance, request/transfer charges and retained backups are separate costs.
 
 <!-- Diagram repair pending: align each storage service with its actual optimization strategy; do not map S3 to FSx optimization or FSx to EFS optimization.
-![Diagram showing four AWS storage types — EBS, EFS, FSx for Lustre, S3 — each feeding its matching optimization strategy (volume optimization, lifecycle management, EFS optimization, FSx optimization), with all four strategies rolling up into a single cost-monitoring node built on Cost Explorer, Kubernetes cost allocation, and anomaly detection.](../.gitbook/assets/en-eks-04-eks-storage-part3-2.png)
+![Diagram showing four AWS storage types (EBS, EFS, FSx for Lustre, S3), each feeding its matching optimization strategy (volume optimization, lifecycle management, EFS optimization, FSx optimization), with all four strategies rolling up into a single cost-monitoring node built on Cost Explorer, Kubernetes cost allocation, and anomaly detection.](../.gitbook/assets/en-eks-04-eks-storage-part3-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-2.html)
 -->
@@ -519,7 +519,7 @@ The policy checks the **declared encryption parameter on EBS StorageClass create
 
 ## Storage Management Best Practices
 
-![Diagram pairing the four storage lifecycle phases — planning, implementation, operation, optimization — with their matching best-practice areas (planning and design, automation and IaC, backup and disaster recovery, performance and cost optimization), each area listing its three practices in order.](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
+![Diagram pairing the four storage lifecycle phases (planning, implementation, operation, optimization) with their matching best-practice areas (planning and design, automation and IaC, backup and disaster recovery, performance and cost optimization), each area listing its three practices in order.](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-4.html)
 

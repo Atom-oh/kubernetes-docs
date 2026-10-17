@@ -46,7 +46,7 @@ In the early 2010s, companies began breaking down monolithic applications into m
 * Requires redeployment of all services for updates
 * Complex version management
 
-![Diagram showing three services in different languages, each tightly bundling its application code with its own networking library — Hystrix for Java, a Go library, and Requests for Python.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-1.png)
+![Diagram showing three services in different languages, each tightly bundling its application code with its own networking library: Hystrix for Java, a Go library, and Requests for Python.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-1.html)
 
@@ -71,7 +71,7 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **Problems Envoy Solved**:
 
-![Diagram pairing four limitations of pre-Envoy proxies — static file-based configuration, limited metrics, complex restarts, simple routing — with the Envoy capability that solved each one.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-2.png)
+![Diagram pairing four limitations of pre-Envoy proxies (static file-based configuration, limited metrics, complex restarts, simple routing) with the Envoy capability that solved each one.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-2.html)
 
@@ -153,7 +153,7 @@ Kubernetes provides container orchestration, but has limitations in managing com
 
 ### Microservices Challenges
 
-![Four shared microservices challenges — traffic management, security, observability, resilience — are met without Istio by duplicated, inconsistent code in every service, and with Istio by consistent, declarative policy at the infrastructure level.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-5.png)
+![Four shared microservices challenges (traffic management, security, observability, resilience) are met without Istio by duplicated, inconsistent code in every service, and with Istio by consistent, declarative policy at the infrastructure level.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-5.html)
 
@@ -1059,7 +1059,7 @@ spec:
 
 ### Workload Registration Comparison Summary
 
-![Diagram showing three workload types — Kubernetes pods, multi-cluster workloads, and virtual machines — all registered into the Istio service mesh and receiving the same common features: mTLS encryption, traffic management, security policy, and metrics and tracing.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-14.png)
+![Diagram showing three workload types (Kubernetes pods, multi-cluster workloads, and virtual machines) all registered into the Istio service mesh and receiving the same common features: mTLS encryption, traffic management, security policy, and metrics and tracing.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-14.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-14.html)
 

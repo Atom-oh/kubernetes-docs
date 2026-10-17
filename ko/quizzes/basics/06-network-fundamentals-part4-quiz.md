@@ -1,4 +1,4 @@
-# 네트워크 기초 Part 4 퀴즈 — 요청의 여정과 클라우드
+# 네트워크 기초 Part 4 퀴즈: 요청의 여정과 클라우드
 
 > **마지막 업데이트**: 2026년 9월 11일
 
@@ -23,15 +23,15 @@
 </details>
 
 2. kube-proxy를 사용하는 클러스터에서 일반적인 ClusterIP Service 전달을 설명하는 짝은 무엇인가요?
-   - A) CoreDNS — DHCP
-   - B) kube-proxy — NAT + L4 분산
-   - C) CNI 플러그인 — TLS 종료
-   - D) NetworkPolicy — BGP 라우팅
+   - A) CoreDNS: DHCP
+   - B) kube-proxy: NAT + L4 분산
+   - C) CNI 플러그인: TLS 종료
+   - D) NetworkPolicy: BGP 라우팅
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) kube-proxy — NAT + L4 분산**
+**정답: B) kube-proxy: NAT + L4 분산**
 
 **설명:**
 Linux kube-proxy는 iptables·nftables를 설정하며 IPVS 모드는 Kubernetes1.35부터 deprecated입니다. eBPF 기반 Service 구현은 kube-proxy를 대체할 수 있지만 kube-proxy의 eBPF 모드는 아닙니다. Service·EndpointSlice 상태가 적합한 엔드포인트를 제공합니다. Headless Service에는 ClusterIP가 없고 NetworkPolicy에는 지원 구현이 필요합니다.

@@ -5,7 +5,7 @@
 
 ## What This Document Covers
 
-- The four stages a request passes through under Lattice IAM Auth — credential acquisition, request signing, Lattice verification, policy evaluation
+- The four stages a request passes through under Lattice IAM Auth: credential acquisition, request signing, Lattice verification, policy evaluation
 - Distinguish credential, signing, policy and network failures using evidence; no failure-frequency ranking is claimed
 - What it means to move from connection-scoped mutual authentication to **request-scoped signature verification**
 
@@ -32,7 +32,7 @@ sequenceDiagram
     participant Tgt as "Target<br/>(receiving Pod)"
 
     rect rgb(235, 243, 252)
-    Note over App,STS: Stage 1 — credential acquisition
+    Note over App,STS: Stage 1: credential acquisition
     App->>Agent: request credentials
     Agent->>STS: AssumeRoleForPodIdentity
     STS-->>Agent: temporary credentials<br/>(AccessKeyId, SecretKey, SessionToken)
@@ -40,21 +40,21 @@ sequenceDiagram
     end
 
     rect rgb(238, 249, 240)
-    Note over App: Stage 2 — request signing
+    Note over App: Stage 2: request signing
     App->>App: canonical method/path/query/headers<br/>x-amz-content-sha256: UNSIGNED-PAYLOAD
     App->>App: derive signing key<br/>HMAC-SHA256 x4<br/>service = vpc-lattice-svcs
     App->>App: Authorization header +<br/>x-amz-date + x-amz-security-token
     end
 
     rect rgb(253, 246, 233)
-    Note over App,Lat: Stage 3 — Lattice verification
+    Note over App,Lat: Stage 3: Lattice verification
     App->>Lat: HTTPS request<br/>(dst: 169.254.171.0/24)
     Lat->>Lat: terminate TLS
     Lat->>Lat: parse headers, recompute signature, compare
     end
 
     rect rgb(252, 238, 238)
-    Note over Lat,IAM: Stage 4 — logical evaluation<br/>not a depicted remote IAM RPC
+    Note over Lat,IAM: Stage 4: logical evaluation<br/>not a depicted remote IAM RPC
     Lat->>IAM: principal + action(Invoke) + resource + condition
     IAM->>IAM: identity-based policy
     IAM->>IAM: service network auth policy
@@ -88,7 +88,7 @@ graph LR
     style OK fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-## Stage 1 — Credential Acquisition
+## Stage 1: Credential Acquisition
 
 SigV4 signing needs an access key, a secret key, and a session token. A Pod obtains these in one of two ways.
 
@@ -113,9 +113,9 @@ Both approaches ultimately arrive at **temporary credentials issued by STS.** Th
 - If the configured credential provider cannot refresh, signing can fail locally; an already-signed expired request can also be rejected. IRSA uses STS, while Pod Identity obtains credentials through the Agent/EKS Auth path.
 - In other words, **STS becomes a dependency of the East-West data path.** This mirrors where SPIRE Server sat in AS-IS, but the owner shifts from the customer to AWS (documents [05](./05-spiffe-to-iam.md) and [06](./06-constraints.md)).
 
-The latency implication was covered in [document 02](./02-latency.md) — if refresh blocks the request path, it appears in the p99 tail.
+The latency implication was covered in [document 02](./02-latency.md): if refresh blocks the request path, it appears in the p99 tail.
 
-## Stage 2 — Request Signing
+## Stage 2: Request Signing
 
 ### Canonical request → signing key → Authorization header
 
@@ -131,7 +131,7 @@ Because this service name is an input to the signature itself, **getting it wron
 
 ### Three practical pitfalls
 
-#### ① The Host header is signed — beware with custom domains
+#### ① The Host header is signed: beware with custom domains
 
 In SigV4, the `Host` header is **always included in the signature.** Which host the request is addressed to is bound into the signature.
 
@@ -151,7 +151,7 @@ That makes **node clock synchronization a precondition for authentication.** On 
 
 This failure is **intermittent and node-scoped**, making it awkward to diagnose. If "only Pods on one particular node get 403s," check clock synchronization first.
 
-#### ③ Intermediate proxies mutating headers — sign at the last hop
+#### ③ Intermediate proxies mutating headers: sign at the last hop
 
 Because the signature is bound to request content, **if anything modifies a signed element after signing, verification breaks.**
 
@@ -163,9 +163,9 @@ Things that actually cause this:
 
 **The rule: sign at the last hop before Lattice.** No layer that modifies the request may sit between signing and Lattice.
 
-This matters especially **when signing via an egress proxy.** The aws-samples reference implementation demonstrates the pattern — a `sigv4proxy` sidecar listening on 8080, with an init container using iptables to redirect **only traffic destined for `169.254.171.0/24` (the Lattice range)** to local port 8080. The proxy signs and the request goes straight out to Lattice, so nothing sits in between to mutate it. Avoid configurations where a signed request is then handled by another proxy.
+This matters especially **when signing via an egress proxy.** The aws-samples reference implementation demonstrates the pattern: a `sigv4proxy` sidecar listening on 8080, with an init container using iptables to redirect **only traffic destined for `169.254.171.0/24` (the Lattice range)** to local port 8080. The proxy signs and the request goes straight out to Lattice, so nothing sits in between to mutate it. Avoid configurations where a signed request is then handled by another proxy.
 
-## Stage 3 — Lattice Verification
+## Stage 3: Lattice Verification
 
 On an HTTPS listener, Lattice **terminates TLS, parses the headers**, recomputes the signature in the `Authorization` header, and compares.
 
@@ -185,13 +185,13 @@ Authenticated request signing and anonymous network-context authorization are di
 
 One more pitfall: **auth policies are only active when authType is `AWS_IAM`.** With `NONE`, an attached policy is inert. This is the most common cause of "I attached a policy but anyone can still get through."
 
-## Stage 4 — Policy Evaluation
+## Stage 4: Policy Evaluation
 
 For an authenticated principal, evaluate the caller permissions and each applicable Lattice resource policy. **Only resources configured with `AWS_IAM` enforce their auth policy; `NONE` skips that resource policy.** Explicit denies and other IAM controls still apply. Do not turn the three-policy diagram into a universal rule for anonymous or differently configured requests.
 
 | Policy | Attached to | Question it answers | Owner | Gateway API resource |
 |---|---|---|---|---|
-| **identity-based policy** | The caller's IAM Role | "Does this Role have permission to perform `vpc-lattice-svcs:Invoke`?" | Application / platform team | — (directly in IAM) |
+| **identity-based policy** | The caller's IAM Role | "Does this Role have permission to perform `vpc-lattice-svcs:Invoke`?" | Application / platform team | None (directly in IAM) |
 | **service network auth policy** | Service Network | "Is this principal allowed into this service network?" (coarse-grained) | Network / cloud administrator | `IAMAuthPolicy` → `Gateway` |
 | **service auth policy** | Lattice Service | "Is this principal allowed to call this service?" (fine-grained) | Service-owning team | `IAMAuthPolicy` → `HTTPRoute`/`GRPCRoute` |
 
@@ -219,13 +219,13 @@ IAM global condition keys such as `aws:PrincipalOrgID` and `aws:PrincipalTag/<ke
 The list above is compiled from the [service authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/list_vpc-lattice-svcs.html) and policy examples in the Gateway API Controller documentation. Lattice gains features over time, so **confirm the current list in that reference before finalizing a design.**
 :::
 
-Having path, method, and header conditions is practically useful — you can enforce a rule like "only these Roles may call `POST /refund` on the payments service" outside application code. That said, **putting path-based authorization into auth policies means API changes trigger policy changes**, so decide deliberately which layer expresses authorization.
+Having path, method, and header conditions is practically useful: you can enforce a rule like "only these Roles may call `POST /refund` on the payments service" outside application code. That said, **putting path-based authorization into auth policies means API changes trigger policy changes**, so decide deliberately which layer expresses authorization.
 
 ### The dominant 403 failure pattern
 
 A missing `vpc-lattice-svcs:Invoke` permission is **one documented cause** of an authenticated request failing. No incident-frequency dataset was supplied, so it is not ranked as the most common cause.
 
-It is common because it is counterintuitive. It is natural to think "the service's auth policy allows this Role, so we're done" — but **the calling Role itself also needs Invoke permission.** A resource policy alone does not get you through.
+It is common because it is counterintuitive. It is natural to think "the service's auth policy allows this Role, so we're done," but **the calling Role itself also needs Invoke permission.** A resource policy alone does not get you through.
 
 Here is the actual error message from the reference implementation:
 
@@ -236,7 +236,7 @@ on resource: arn:aws:vpc-lattice:us-west-2:111122223333:service/svc-0b13d4b53748
 because no identity-based policy allows the vpc-lattice-svcs:Invoke action
 ```
 
-The last clause — **`because no identity-based policy allows...`** — is the key to diagnosis. The message tells you which policy is missing, so read it first when you hit a 403.
+The last clause, **`because no identity-based policy allows...`**, is the key to diagnosis. The message tells you which policy is missing, so read it first when you hit a 403.
 
 ### 403 diagnosis order
 
@@ -263,8 +263,8 @@ During the migration window, when the AS-IS path (direct in-cluster calls) and t
 
 | Item | AS-IS: App Mesh + SPIRE mTLS | TO-BE: Lattice IAM Auth |
 |---|---|---|
-| **Authentication scope** | **Connection** — once at connection setup | **Request** — every request |
-| **Directionality** | **Bidirectional mutual authentication** (both client and server prove identity) | **Unidirectional** — the client proves itself. The server proves only via its TLS server certificate |
+| **Authentication scope** | **Connection** (once at connection setup) | **Request** (every request) |
+| **Directionality** | **Bidirectional mutual authentication** (both client and server prove identity) | **Unidirectional**: the client proves itself. The server proves only via its TLS server certificate |
 | **Form of identity** | SPIFFE ID in an X.509 SVID (a URI) | IAM Role ARN / assumed-role session ARN |
 | **Means of proof** | Short-lived X.509 certificate (proof of private key possession) | SigV4 signature (proof of secret key possession) |
 | **Who verifies** | The peer workload's Envoy | Lattice (AWS-managed infrastructure) |
@@ -289,17 +289,17 @@ The client-to-Lattice HTTPS connection terminates at Lattice. The target protoco
 - Missing Invoke permission is one possible 403 cause; use the returned reason and correlated logs rather than an unsupported frequency ranking.
 - **Calling the k8s Service DNS directly bypasses auth policy evaluation.** Compensating controls are needed during migration.
 
-Next: [Foundations — Link-Local and SNI](./04-networking-basics.md) goes one layer below "why you must terminate TLS to see headers."
+Next: [Foundations: Link-Local and SNI](./04-networking-basics.md) goes one layer below "why you must terminate TLS to see headers."
 
 ## References
 
 - [Control access to VPC Lattice services using auth policies](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
 - [Actions, resources, and condition keys for Amazon VPC Lattice Services](https://docs.aws.amazon.com/service-authorization/latest/reference/list_vpc-lattice-svcs.html)
-- [AWS Gateway API Controller — IAMAuthPolicy API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
-- [aws-samples — Securing the network and implementing AWS IAM authentication](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
+- [AWS Gateway API Controller: IAMAuthPolicy API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
+- [aws-samples: Securing the network and implementing AWS IAM authentication](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
 - [Implement AWS IAM authentication with Amazon VPC Lattice and Amazon EKS](https://aws.amazon.com/blogs/containers/implement-aws-iam-authentication-with-amazon-vpc-lattice-and-amazon-eks/)
 - [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) / [IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 - [Signing AWS API requests (SigV4)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html)
 
 
-- [Lattice SigV4 authenticated requests](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html) — required unsigned payload header and validity window
+- [Lattice SigV4 authenticated requests](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html): required unsigned payload header and validity window

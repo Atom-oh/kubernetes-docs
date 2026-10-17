@@ -10,11 +10,11 @@ The following entries preserve historical release context. The edge-26.8.2 teste
 
 The edge-26.8.4 release, published August 25, 2026, guards against a nil ExternalWorkload in opaque protocol handling, makes the policy controller negotiate the TLSRoute API version with the cluster, and bumps Go to 1.26.7. See the [release notes](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4) for details.
 
-### August 2026 Update: edge-26.8.2 — Gateway API 1.5.1 Support
+### August 2026 Update: edge-26.8.2 (Gateway API 1.5.1 Support)
 
 The edge-26.8.2 release, published August 14, 2026, adds Gateway API 1.5.1 support (via linkerd-kubert 0.27.0) and bumps the tested maximum Kubernetes version to 1.36. It also includes stability fixes: removing a duplicate Job informer in the destination controller and making the policy controller exit if its lease watch task dies. See the [release notes](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2) for details.
 
-### July 2026 Update: edge-26.7.1 — Requests to Undefined Service Ports Disallowed
+### July 2026 Update: edge-26.7.1 (Requests to Undefined Service Ports Disallowed)
 
 The GitHub release for edge-26.7.1 was published July 21, 2026. It includes a behavior-changing fix that rejects requests to ports not declared by the destination Service even when a ServiceProfile exists. Check actual Service port declarations before upgrading. The release also adds a Gateway API installation check. See the [release notes](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1).
 

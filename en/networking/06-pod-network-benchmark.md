@@ -1,20 +1,20 @@
-# Pod Network Benchmark — Same Node, Same AZ, Cross-AZ, and DNS ndots
+# Pod Network Benchmark: Same Node, Same AZ, Cross-AZ, and DNS ndots
 
 > **Recorded test environment**: Kubernetes 1.36 (Amazon EKS), Amazon VPC CNI v1.21.1, kube-proxy iptables mode
 > **Measurement date**: September 2, 2026 · **Content review**: September 12, 2026
 
 This page preserves the September 2, 2026 benchmark report from `fsi-demo-cluster` (Seoul): Pod-to-Pod RTT, HTTP/gRPC latency, iperf3 throughput and DNS query counts. In these runs, crossing an AZ increased latency while the two inter-node paths reached similar throughput. That does not establish an AZ-independent bandwidth guarantee. Application traffic in Measurements 1–2 used Pod IPs directly; Measurement 3 models its cost, while Measurement 4 used the existing `kube-dns` ClusterIP. The reported 10-query DNS walk depends on this resolver, search list and response sequence, rather than applying to every EKS Pod. Historical versions and measurements are retained; the audit did not rerun the EKS benchmark or verify a billing invoice.
 
-![Client Pod on node A (ap-northeast-2a) reaching a server Pod on the same node, on node B in the same AZ and on node C in ap-northeast-2b — RTT 0.040 / 0.339 / 0.544 ms, single flow 29.97 / 4.96 / 4.96 Gbps.](../.gitbook/assets/en-networking-06-pod-network-benchmark-0.png)
+![Client Pod on node A (ap-northeast-2a) reaching a server Pod on the same node, on node B in the same AZ and on node C in ap-northeast-2b (RTT 0.040 / 0.339 / 0.544 ms, single flow 29.97 / 4.96 / 4.96 Gbps).](../.gitbook/assets/en-networking-06-pod-network-benchmark-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-06-pod-network-benchmark-0.html)
 
 The diagram records this test topology. Its +0.21 ms is a difference between these runs, and its $4.47 is the historical decimal-GB cost model explained below, not a verified charge or a universal per-AZ cost.
 
-## TL;DR — What we measured
+## TL;DR: What we measured
 
 1. **Reported RTT**: same node **0.040 ms** → same AZ **0.339 ms** → cross-AZ **0.544 ms** (ping, average of 200 probes). The observed differences are +0.21 ms between the two inter-node paths and +0.50 ms relative to the same node.
-2. **HTTP p50 / p99** (fortio, 100 qps, 4 connections, keepalive, 60 s): 0.259 / 0.350 ms → 0.461 / 0.667 ms → 0.704 / 0.812 ms — the same ladder seen from the application.
+2. **HTTP p50 / p99** (fortio, 100 qps, 4 connections, keepalive, 60 s): 0.259 / 0.350 ms → 0.461 / 0.667 ms → 0.704 / 0.812 ms, the same ladder seen from the application.
 3. **Reported bandwidth**: one TCP flow reached **4.96 Gbps** on both inter-node paths; eight flows reached **9.94 Gbps**, near the m5.xlarge 10 Gbps burst peak. This is consistent with the ordinary 5 Gbps single-flow limit outside a cluster placement group; other instance features and paths can have different limits.
 4. **Same-node Pod to Pod**: **29.97 Gbps** with one flow (client process CPU 99.8 %, consistent with CPU pressure) and **48.15 Gbps** with eight. In this VPC CNI configuration, traffic traverses the Pods’ veth pairs and host network stack without using the physical NIC.
 5. **Cost model**: the 180 s cross-AZ run sent **223.4 decimal GB**. The original payload-based model estimates **$4.47** at $0.01/GB at each end; it is not an invoice. No step-down toward the 1.25 Gbps baseline was observed within 180 s.
@@ -26,16 +26,16 @@ The diagram records this test topology. Its +0.21 ms is a difference between the
 | Item | Value |
 |---|---|
 | Cluster | Amazon EKS `fsi-demo-cluster`, ap-northeast-2 (Seoul), control plane `v1.36.2-eks-bca9cf6`, two AZs used (2a, 2b) |
-| Nodes | **3 × m5.xlarge** launched fresh by the Karpenter `system` NodePool for this test — a client node in 2a, a server node in 2a, a server node in 2b. 4 vCPU, Intel Xeon Platinum 8175M @ 2.50GHz |
+| Nodes | **3 × m5.xlarge** launched fresh by the Karpenter `system` NodePool for this test: a client node in 2a, a server node in 2a, a server node in 2b. 4 vCPU, Intel Xeon Platinum 8175M @ 2.50GHz |
 | Node OS | Amazon Linux 2023.12.20260817, kernel `6.18.41-94.142.amzn2023.x86_64`, containerd 2.2.5, kubelet v1.36.3-eks-cb19647 |
 | CNI | Amazon VPC CNI `v1.21.1-eksbuild.8` (+ network-policy-agent v1.3.4); `ENABLE_PREFIX_DELEGATION=false`, `ENABLE_POD_ENI=false`, `AWS_VPC_K8S_CNI_EXTERNALSNAT=false`, `NETWORK_POLICY_ENFORCING_MODE=standard`, `WARM_ENI_TARGET=1`, `WARM_IP_TARGET=3` |
 | kube-proxy | `v1.35.3-eksbuild.5`, `mode: "iptables"` |
-| CoreDNS | `v1.14.2-eksbuild.4`, 2 replicas — one per AZ (`10.0.2.106` / 2a, `10.0.3.14` / 2b); Service `kube-dns` ClusterIP `172.20.0.10`; Corefile `kubernetes cluster.local … { pods insecure }`, `forward . /etc/resolv.conf`, `cache 30`, `loadbalance`; **no NodeLocal DNSCache**, no `autopath` plugin |
+| CoreDNS | `v1.14.2-eksbuild.4`, 2 replicas, one per AZ (`10.0.2.106` / 2a, `10.0.3.14` / 2b); Service `kube-dns` ClusterIP `172.20.0.10`; Corefile `kubernetes cluster.local … { pods insecure }`, `forward . /etc/resolv.conf`, `cache 30`, `loadbalance`; **no NodeLocal DNSCache**, no `autopath` plugin |
 | Pod resolv.conf (default) | `search bench-net.svc.cluster.local svc.cluster.local cluster.local ap-northeast-2.compute.internal` / `nameserver 172.20.0.10` / `options ndots:5` |
 | Pod NIC | eth0 MTU **9001** (jumbo frames), TCP congestion control `cubic`, iperf3 `tcp_mss_default: 8949` |
-| EC2 network spec | m5.xlarge "Up to 10 Gigabit" — baseline **1.25 Gbps**, peak **10 Gbps**, 4 vCPU (for comparison: m5.large baseline 0.75 Gbps, peak 10 Gbps, 2 vCPU). Verified with `aws ec2 describe-instance-types`; ENA required |
+| EC2 network spec | m5.xlarge "Up to 10 Gigabit": baseline **1.25 Gbps**, peak **10 Gbps**, 4 vCPU (for comparison: m5.large baseline 0.75 Gbps, peak 10 Gbps, 2 vCPU). Verified with `aws ec2 describe-instance-types`; ENA required |
 | Pricing | usagetype `APN2-DataTransfer-Regional-Bytes`, "Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses", **$0.01/GB** (`aws pricing get-products --region us-east-1`, queried 2026-09) |
-| Tools | `nicolaka/netshoot:v0.14` — iperf **3.19**, fortio **1.69.5**, iputils ping 20250605, tcpdump 4.99.5; DNS client `python:3.12-slim` (Debian 13, **glibc 2.41**, Python 3.12.14) |
+| Tools | `nicolaka/netshoot:v0.14` (iperf **3.19**, fortio **1.69.5**, iputils ping 20250605, tcpdump 4.99.5); DNS client `python:3.12-slim` (Debian 13, **glibc 2.41**, Python 3.12.14) |
 | Test window | 2026-09-02 07:58–08:40 UTC (first Pod at 07:58:22Z, DNS Pods at 08:16:24Z) |
 
 AWS describes burst bandwidth as best effort even while network I/O credits remain; incoming and outgoing traffic have separate credit buckets. A new instance starts with maximum credits, but peak availability and burst duration vary. This 180 s run establishes only that no baseline step-down was observed during its window. The recorded m5.xlarge 1.25 Gbps baseline / 10 Gbps peak also appear in the official [M5 network specifications](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html); current credit behavior is described in the [EC2 bandwidth guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html).
@@ -45,13 +45,13 @@ Fixture placement during the run:
 | Pod | IP | Node | Zone | Role / requests |
 |---|---|---|---|---|
 | `cli` | 10.0.2.109 | ip-10-0-2-128 (nodeclaim `system-76r87`) | ap-northeast-2a | client; 2500m / 1Gi |
-| `srv-same` | 10.0.2.72 | ip-10-0-2-128 — same node as `cli` (required podAffinity) | ap-northeast-2a | server; 200m / 256Mi |
+| `srv-same` | 10.0.2.72 | ip-10-0-2-128, same node as `cli` (required podAffinity) | ap-northeast-2a | server; 200m / 256Mi |
 | `srv-a` | 10.0.2.37 | ip-10-0-2-20 (nodeclaim `system-ksrbg`, podAntiAffinity to `cli`) | ap-northeast-2a | server; 2800m / 1Gi |
 | `srv-b` | 10.0.3.65 | ip-10-0-3-32 (nodeclaim `system-svdvk`) | ap-northeast-2b | server; 2500m / 1Gi |
 | `dns-default` | 10.0.2.5 | ip-10-0-2-20 (podAffinity to `srv-a`) | ap-northeast-2a | glibc resolver, default `ndots:5` |
 | `dns-ndots1` | 10.0.2.143 | ip-10-0-2-20 | ap-northeast-2a | glibc resolver, `dnsConfig.options ndots=1` |
 
-The server Pods run `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"`, and every bench Pod carries `karpenter.sh/do-not-disrupt: "true"`. `srv-a` was first requested as m5.large / 1500m, but Karpenter reported `no instance type has enough resources` — DaemonSet overhead takes 821m of an m5.large's 1930m allocatable — so it was changed to m5.xlarge / 2800m.
+The server Pods run `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"`, and every bench Pod carries `karpenter.sh/do-not-disrupt: "true"`. `srv-a` was first requested as m5.large / 1500m, but Karpenter reported `no instance type has enough resources` (DaemonSet overhead takes 821m of an m5.large's 1930m allocatable), so it was changed to m5.xlarge / 2800m.
 
 ### Fixture manifest
 
@@ -65,7 +65,7 @@ metadata:
   labels:
     bench: net
 ---
-# client — fresh m5.xlarge in ap-northeast-2a
+# client: fresh m5.xlarge in ap-northeast-2a
 apiVersion: v1
 kind: Pod
 metadata:
@@ -86,7 +86,7 @@ spec:
       resources:
         requests: { cpu: "2500m", memory: "1Gi" }
 ---
-# same-node — co-located with cli through required podAffinity
+# same-node: co-located with cli through required podAffinity
 apiVersion: v1
 kind: Pod
 metadata:
@@ -109,7 +109,7 @@ spec:
       resources:
         requests: { cpu: "200m", memory: "256Mi" }
 ---
-# same-AZ — same AZ as cli, different node (podAntiAffinity). m5.large did not fit because of DaemonSet overhead, hence m5.xlarge
+# same-AZ: same AZ as cli, different node (podAntiAffinity). m5.large did not fit because of DaemonSet overhead, hence m5.xlarge
 apiVersion: v1
 kind: Pod
 metadata:
@@ -136,7 +136,7 @@ spec:
       resources:
         requests: { cpu: "2800m", memory: "1Gi" }
 ---
-# cross-AZ — fresh m5.xlarge in ap-northeast-2b
+# cross-AZ: fresh m5.xlarge in ap-northeast-2b
 apiVersion: v1
 kind: Pod
 metadata:
@@ -192,7 +192,7 @@ spec:
       resources: { requests: { cpu: "50m", memory: "64Mi" } }
 ```
 
-## Measurement 1 — RTT and HTTP latency: same node → same AZ → cross-AZ
+## Measurement 1. RTT and HTTP latency: same node → same AZ → cross-AZ
 
 ICMP probes (`ping -c 200 -i 0.05 -q`) characterize the idle path, including endpoint kernel processing and scheduling. The same paths were then exercised with HTTP/1.1 and gRPC. A single fresh-connection `curl` connect / total time is listed for reference.
 
@@ -204,7 +204,7 @@ ICMP probes (`ping -c 200 -i 0.05 -q`) characterize the idle path, including end
 
 Observed differences: same AZ − same node = +0.30 ms, cross-AZ − same AZ = **+0.21 ms**, cross-AZ − same node = +0.50 ms. The reported mdev values are at most 0.017 ms in this sample. curl’s `time_total` measures the transfer operation, not process startup; a single observation is insufficient to characterize its distribution. See the [curl timing definitions](https://curl.se/docs/manpage.html).
 
-### HTTP/1.1 — 100 qps, 4 connections, keepalive, 60 s (6,000 requests), ms
+### HTTP/1.1: 100 qps, 4 connections, keepalive, 60 s (6,000 requests), ms
 
 | Path | avg | **p50** | p90 | p99 | p99.9 | max | min |
 |---|---|---|---|---|---|---|---|
@@ -212,7 +212,7 @@ Observed differences: same AZ − same node = +0.30 ms, cross-AZ − same AZ = *
 | same AZ | 0.468 | **0.461** | 0.560 | 0.667 | 0.783 | 2.823 | 0.336 |
 | cross-AZ | 0.706 | **0.704** | 0.782 | 0.812 | 1.150 | 4.581 | 0.551 |
 
-### gRPC ping — 100 qps, 4 connections, 30 s (3,000 requests), ms
+### gRPC ping: 100 qps, 4 connections, 30 s (3,000 requests), ms
 
 | Path | avg | **p50** | p90 | p99 | p99.9 | max | min |
 |---|---|---|---|---|---|---|---|
@@ -226,7 +226,7 @@ The report describes an approximately 75-byte HTTP echo body with an empty reque
 
 > **Comparison with the mesh benchmark.** The [Istio sidecar vs ambient report](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) records a **+1.29 ms** p50 difference (2.11 − 0.82 ms) for its whole sidecar scenario, not an isolated single proxy. Its Graviton hardware, 200 qps, 16 connections and Fortio 1.69.4 differ from this M5 / 100 qps / four-connection test. The numbers cannot be added or ranked as universal “mesh hop” versus “AZ hop” costs.
 
-### The cost of a new connection — keepalive=false, 100 qps, 4 connections, 30 s (3,000 requests), ms
+### The cost of a new connection: keepalive=false, 100 qps, 4 connections, 30 s (3,000 requests), ms
 
 What happens to latency when every request opens a fresh TCP connection (fortio `-keepalive=false`)?
 
@@ -238,7 +238,7 @@ What happens to latency when every request opens a fresh TCP connection (fortio 
 
 The observed increases are **+0.405 / +0.618 / +0.813 ms**. A new TCP connection adds establishment work, but these measurements do not prove a fixed “one RTT + 0.3 ms” decomposition. Connection reuse is a useful optimization to measure with the real workload; it is not a prerequisite for correctness across AZs. Connection churn can also increase TIME_WAIT state on the active-closing endpoint, depending on how connections close; sockets and TIME_WAIT were not measured here.
 
-### Maximum qps from a fixed connection pool — latency is throughput (closed loop, 16 connections, 20 s)
+### Maximum qps from a fixed connection pool: latency is throughput (closed loop, 16 connections, 20 s)
 
 With `-qps 0` (unlimited, closed loop), the maximum request rate that 16 connections can sustain turns the latency difference into a throughput difference.
 
@@ -250,7 +250,7 @@ With `-qps 0` (unlimited, closed loop), the maximum request rate that 16 connect
 
 For a steady closed loop with about 16 requests in flight and little client think time, Little’s law gives throughput ≈ concurrency / mean latency: 16 / 0.000355 = 45,070 (reported 44,991), 16 / 0.000415 = 38,554 (38,507), and 16 / 0.000624 = 25,641 (25,602). The reported cross-AZ rate is **33.5 % lower** than same-AZ in this test. This relationship does not identify the exclusive cause of latency or predict a universal AZ penalty. Shared CPU contention is a plausible explanation for the worse same-node tail, but no profiling here establishes that cause.
 
-## Measurement 2 — Throughput: the 5 Gbps single-flow cap and the 10 Gbps instance cap
+## Measurement 2. Throughput: the 5 Gbps single-flow cap and the 10 Gbps instance cap
 
 iperf3 3.19, TCP, 20 s per run, `-J`, client `cli`. The CPU columns are iperf3's own per-process figures, where 100 % = one vCPU.
 
@@ -280,14 +280,14 @@ The reported m5.xlarge baseline is 1.25 Gbps, with a best-effort peak up to 10 G
 
 | Item | Value |
 |---|---|
-| Gbps per 10 s interval (18 intervals) | 9.94, 9.93 ×12, 9.92, 9.93 ×4 — **min 9.92, max 9.94** |
+| Gbps per 10 s interval (18 intervals) | 9.94, 9.93 ×12, 9.92, 9.93 ×4 (**min 9.92, max 9.94**) |
 | Total sent | 223,376,179,200 B = **223.4 GB** in 180.0 s (9.93 Gbps) |
 | Retransmits | 44,842 (≈ 249/s; 2,273–2,669 per 10 s interval) |
 | CPU | client 30.7 % (system 30.1 %), server 54.2 % (system 52.2 %) |
 
 **No drop toward 1.25 Gbps was observed within 180 s.** This is not evidence of unlimited credits or guaranteed sustained peak bandwidth. AWS documents variable, best-effort bursts and throttling toward baseline when credits run out. Size long backups and rebalances using the applicable baseline and measured workload requirements, rather than extrapolating this short run.
 
-## Measurement 3 — A model of cross-AZ data-transfer cost
+## Measurement 3. A model of cross-AZ data-transfer cost
 
 This section preserves the report’s cost arithmetic as an estimate. The benchmark supplied payload-byte counts and a public list price, not a Cost and Usage Report (CUR) or invoice.
 
@@ -308,7 +308,7 @@ All four cost rows use the original **decimal conversion, 1 GB = 10⁹ payload b
 - **Balance locality with fault tolerance.** Zone-aware reads or clients can reduce avoidable transfer, but moving all RF3 replicas into one AZ sacrifices AZ failure protection. Retain the required replica/failover design; see [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md).
 - **Measure both billed endpoints.** Track source/destination AZs and metered volume for backups, rebalances and replays. Sum the relevant “in” and “out” usage records, which can belong to different accounts; do not infer a final bill from payload bytes alone.
 
-## Measurement 4 — DNS: the query amplification of ndots:5
+## Measurement 4. DNS: the query amplification of ndots:5
 
 ![One glibc lookup under ndots:5 walks the four search suffixes with A+AAAA pairs (8 NXDOMAIN, 10 queries) before the absolute name answers, versus a trailing-dot lookup that ends in 2 queries.](../.gitbook/assets/en-networking-06-pod-network-benchmark-1.png)
 
@@ -339,19 +339,19 @@ The reported first-process times were: default / `sts` 6.22 ms, default / `sts.`
 
 **How to read it.** In these samples, the external names and the cluster FQDN without a trailing dot produced **10 queries / 8 NXDOMAIN**. The trailing-dot STS median fell 3.78 → 0.80 ms, and the cluster FQDN median 3.63 → 0.46 ms. `kubernetes.default` succeeded on the second search candidate, so it needed only four queries: search expansion does not invariably consume the whole list. [CoreDNS cache](https://coredns.io/plugins/cache/) can cache negative answers, but `cache 30` sets a maximum TTL; response TTLs and minimums still apply, and each replica has its own cache. The Kubernetes plugin’s default TTL is 5 s unless configured otherwise. Sequential queries remain even on cache hits, but this capture does not prove that all warm lookups avoided upstream traffic.
 
-### The walk itself — one cold resolution of `sts.ap-northeast-2.amazonaws.com` (ndots:5, tcpdump, ms from the first packet)
+### The walk itself: one cold resolution of `sts.ap-northeast-2.amazonaws.com` (ndots:5, tcpdump, ms from the first packet)
 
 | t (ms) | Candidate sent to 172.20.0.10 (A + AAAA in parallel) | Answer |
 |---|---|---|
 | 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | NXDomain (authoritative, CoreDNS kubernetes plugin) at 0.92 / 1.14 |
 | 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | NXDomain at 2.01 / 2.26 |
 | 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | NXDomain at 3.15 / 3.41 |
-| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | NXDomain (forwarded to the VPC resolver — non-authoritative) at 3.68 / 3.93 |
+| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | NXDomain (forwarded to the VPC resolver, non-authoritative) at 3.68 / 3.93 |
 | 3.99 | `sts.ap-northeast-2.amazonaws.com.` | **A 10.0.3.84, A 10.0.2.129** at 4.37 (AAAA: no data) |
 
 The table records 10 queries and 8 NXDOMAIN. Its **4.37 ms** runs from the first query to the reported A answer; the AAAA completion time is not listed, so this is not the full 6.22 ms first-process call. Candidate RTTs are not uniformly 0.8–1.1 ms: the fourth pair took 0.21 / 0.46 ms and the final A took 0.38 ms. kube-proxy iptables chooses an endpoint for a new conntrack flow, rather than independently for every packet; A/AAAA requests can share that flow. With two equally selected endpoints, half of new flows would be an illustrative expectation, **not a measured fraction of cross-AZ DNS queries**. The Pod capture showing Service VIP `172.20.0.10` cannot identify the selected backend AZ. The original report attributes the two STS private addresses to interface endpoint ENIs, and records a 2.2 ms forwarded candidate / 5.6 ms wire walk for the cluster FQDN versus 0.4–0.5 ms with its trailing dot; these are separate observations.
 
-### What `ndots:1` does — and its side effect
+### What `ndots:1` does, and its side effect
 
 - **External names in these samples**: 10 → **2 queries**, medians about 3.5–3.8 → **0.5–0.9 ms**. This gain depends on the names and resolver behavior.
 - **Short names can incur an extra failed attempt.** Here `kubernetes.default` has one dot, meeting `ndots:1`, so glibc first tried `kubernetes.default.`. CoreDNS forwarded it and received NXDOMAIN after a reported 1.6 ms, then tried the namespace suffix and finally succeeded with `svc.cluster.local` at `172.20.0.1`: six queries, four NXDOMAIN and a 2.04 ms median versus 1.71 ms. This can disclose internal-looking names upstream. Test every application’s service naming before changing `ndots`; full Service names reduce this ambiguity.
@@ -368,7 +368,7 @@ Under the **same response pattern**, with no application DNS cache and one looku
 - Evaluate [NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) where appropriate. Cache hits stay local; misses can still go upstream. Current [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) already runs node-local CoreDNS as a system service; a pure Auto Mode cluster does not need a CoreDNS Deployment, while non-Auto nodes in a mixed cluster still do.
 - [CoreDNS autopath](https://coredns.io/plugins/autopath/) can do search completion server-side, but its Kubernetes integration requires `pods verified`, visibility of the originating Pod IP and the associated Pod watches/RBAC/memory. The recorded `pods insecure` configuration does not meet those requirements. This optimization was not tested here.
 
-## How to reproduce — revised procedure
+## How to reproduce: revised procedure
 
 Use an approved, isolated lab and an unused namespace dedicated to this test. Save an adapted copy of the first fixture as `bench-net.yaml` and both DNS objects as `bench-dns.yaml`; keep the namespace names consistent. Check NodePool capacity, AZs, scheduling and packet-capture permissions before applying. Do not weaken production admission or security controls to run the test. These bounded commands can still saturate nodes and incur charges.
 
@@ -510,7 +510,7 @@ Repeat with the names in the table and `DNS_POD=dns-ndots1`, changing the captur
 
 ## Caveats
 
-- **The nodes were fresh, but not entirely alone.** Soon after Karpenter launched the three m5.xlarge nodes for this test, consolidation moved a few small Pods from other namespaces onto them (one onto the `cli` node, three onto the `srv-b` node — small internal services and controllers unrelated to the benchmark traffic). They were idle or low-traffic during the runs, and load was limited to bursts of at most 180 s. The `cli` node showed 3901m / 3920m (99 %) of CPU *requested*, which says nothing about actual utilisation.
+- **The nodes were fresh, but not entirely alone.** Soon after Karpenter launched the three m5.xlarge nodes for this test, consolidation moved a few small Pods from other namespaces onto them (one onto the `cli` node, three onto the `srv-b` node; small internal services and controllers unrelated to the benchmark traffic). They were idle or low-traffic during the runs, and load was limited to bursts of at most 180 s. The `cli` node showed 3901m / 3920m (99 %) of CPU *requested*, which says nothing about actual utilisation.
 - **Single run (n = 1 per cell, one day).** There were no independent repetitions to estimate variance. Rankings, ratios and causal explanations are also limited by that sample size; none is an SLA.
 - **Application ClusterIP and traffic distribution were not measured.** The report says Service creation in the benchmark namespace failed with `failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"`. A failing `failurePolicy: Fail` webhook rejects matching requests; its rules, namespace/object selectors and match conditions determine scope. This historical incident is not a statement that today’s cluster cannot create any Service. The benchmark did not bypass the webhook. DNS still used the pre-existing `kube-dns` Service. See the [Troubleshooting Playbook](../ops/16-troubleshooting-playbook.md).
 - **ENA allowance counters were not collected.** `ethtool -S` must target the host’s actual ENA interface with appropriate access; a Pod’s own `eth0` is generally a veth, and `hostNetwork` alone does not prove the right device or permissions. Relevant counters include `bw_in_allowance_exceeded`, `bw_out_allowance_exceeded`, `pps_allowance_exceeded`, `conntrack_allowance_exceeded` and `linklocal_allowance_exceeded`. Retransmits do not substitute for these measurements.
@@ -521,13 +521,13 @@ Repeat with the names in the table and `DNS_POD=dns-ndots1`, changing the captur
 
 ## Related reading
 
-- [Amazon VPC CNI](./01-vpc-cni.md) — the data plane under these measurements: Pods receiving VPC IPs directly, prefix delegation, ENI/IP warming
-- [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md) — zone-aligned placement and AZ failover design that reduce the bill in Measurement 3
-- [Troubleshooting Playbook](../ops/16-troubleshooting-playbook.md) — diagnosis of webhook failures; the incident here is historical
-- [Sidecar vs Ambient Mode Selection Guide](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — separate hardware/workload experiment; its +1.29 ms is a whole-scenario difference
-- [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) — the storage path of the same cluster, measured
-- [Kafka on EKS Measured Benchmark](../data-on-eks/kafka/09-kafka-benchmark.md) — replication traffic, flow limits and availability tradeoffs
-- [Guidebook Roadmap — the measured-benchmark series](../roadmap.md)
+- [Amazon VPC CNI](./01-vpc-cni.md): the data plane under these measurements (Pods receiving VPC IPs directly, prefix delegation, ENI/IP warming)
+- [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md): zone-aligned placement and AZ failover design that reduce the bill in Measurement 3
+- [Troubleshooting Playbook](../ops/16-troubleshooting-playbook.md): diagnosis of webhook failures; the incident here is historical
+- [Sidecar vs Ambient Mode Selection Guide](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md): separate hardware/workload experiment; its +1.29 ms is a whole-scenario difference
+- [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md): the storage path of the same cluster, measured
+- [Kafka on EKS Measured Benchmark](../data-on-eks/kafka/09-kafka-benchmark.md): replication traffic, flow limits and availability tradeoffs
+- [Guidebook Roadmap: the measured-benchmark series](../roadmap.md)
 - [Quiz: Pod Network Benchmark](../quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 

@@ -2,7 +2,7 @@
 
 > **Last Updated**: October 16, 2026
 
-This guidebook tells one continuous story: from the Linux kernel through containers, Kubernetes, Amazon EKS, networking, service mesh, storage, databases, data pipelines, and AI/ML — plus the cross-cutting disciplines of security, GitOps, platform engineering, container registries, observability, and operations. This page is the map, and the recommended paths through it.
+This guidebook tells one continuous story: from the Linux kernel through containers, Kubernetes, Amazon EKS, networking, service mesh, storage, databases, data pipelines, and AI/ML, plus the cross-cutting disciplines of security, GitOps, platform engineering, container registries, observability, and operations. This page is the map, and the recommended paths through it.
 
 ![Learning-flow map of the guidebook's fifteen domains, flowing from foundations (Linux/Container) through orchestration (Kubernetes/EKS), connectivity (Networking/Service Mesh), state (Storage/Database), data and AI (Data Pipeline/AI-ML), to cross-cutting concerns (Security/GitOps/Platform/Container Registry/Observability/Operations).](.gitbook/assets/en-roadmap-0.png)
 
@@ -12,14 +12,14 @@ This guidebook tells one continuous story: from the Linux kernel through contain
 
 | Layer | Domain | Start here | One-liner |
 |-------|--------|-----------|-----------|
-| Foundations | Linux & Container | [Linux Basics](basics/01-linux-basics.md) | Kernel, namespaces, cgroups — what a container actually is |
-| Orchestration | Kubernetes Core Concepts | [Introduction to Kubernetes](basics/04-kubernetes-introduction.md) | Workloads, scheduling, and autoscaling — Kubernetes itself |
+| Foundations | Linux & Container | [Linux Basics](basics/01-linux-basics.md) | Kernel, namespaces, cgroups: what a container actually is |
+| Orchestration | Kubernetes Core Concepts | [Introduction to Kubernetes](basics/04-kubernetes-introduction.md) | Workloads, scheduling, and autoscaling: Kubernetes itself |
 | Orchestration | Amazon EKS | [Introduction to EKS](eks/01-eks-introduction.md) | Cluster creation through Hybrid Nodes and Auto Mode |
 | Connectivity | Networking | [Network Fundamentals](basics/06-network-fundamentals-part1.md) | 25 protocols up through CNI (Cilium/Calico) |
-| Connectivity | Service Mesh | [Istio](service-mesh/istio/README.md) | Istio/Linkerd/Cilium Mesh — with measured mTLS latency |
+| Connectivity | Service Mesh | [Istio](service-mesh/istio/README.md) | Istio/Linkerd/Cilium Mesh, with measured mTLS latency |
 | State | Storage | [Storage Overview](storage/README.md) | EBS gp2 vs gp3, measured with fio |
 | State | Database | [Databases Overview](database/README.md) | The operator landscape and a 100M-row ClickHouse benchmark |
-| Data & AI | Data Pipeline | [Data on EKS Overview](data-on-eks/README.md) | Kafka, Spark, Airflow, and Flink deep dives — with a single-run Kafka benchmark record |
+| Data & AI | Data Pipeline | [Data on EKS Overview](data-on-eks/README.md) | Kafka, Spark, Airflow, and Flink deep dives, with a single-run Kafka benchmark record |
 | Data & AI | AI/ML | [AI/ML Workloads](ai-ml/01-ai-ml-workloads.md) | vLLM, Ray, Kubeflow, MLflow on EKS |
 | Cross-cutting | Security & Policy | [Kyverno](security/01-kyverno-policy-management.md) | AuthN/Z, policy, runtime security, supply chain |
 | Cross-cutting | GitOps | [GitOps](gitops/README.md) | ArgoCD, Flux, progressive delivery |
@@ -32,13 +32,13 @@ This guidebook tells one continuous story: from the Linux kernel through contain
 
 Documents reporting prior runs on AWS resources. Check environment, repetitions, cache state, raw-record availability and limitations, then remeasure for current capacity planning:
 
-- [Istio sidecar vs ambient, measured](service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — P50/P99 latency per mTLS data plane and 503 rates during rollouts
-- [EBS gp2 vs gp3 Measured Benchmark](storage/01-ebs-gp2-gp3-benchmark.md) — a 10x IOPS gap at the same 100 GiB capacity, and the gp2 burst-credit cliff
-- [ClickHouse on EKS Measured Benchmark](database/01-clickhouse-on-eks.md) — 100M-row ingest throughput, compression ratios, query latency
-- [Kafka on EKS Measured Benchmark](data-on-eks/kafka/09-kafka-benchmark.md) — single-run records of 134.74 MiB/s at RF3/acks=all and 337.81 MiB/s at RF1/acks=1 (not confirmed as a sustained RF3 cap), p99 by acks setting, and a recorded 44.49% producer throughput drop during replay consumption
-- [Pod Network Benchmark](networking/06-pod-network-benchmark.md) — the 0.040 → 0.339 → 0.544 ms RTT ladder (same node → same AZ → cross-AZ), a 4.96 Gbps single-flow cap regardless of AZ vs 9.94 Gbps with 8 flows, and `ndots:5`'s 10-query/8-NXDOMAIN amplification
+- [Istio sidecar vs ambient, measured](service-mesh/istio/comparison/03-sidecar-vs-ambient.md): P50/P99 latency per mTLS data plane and 503 rates during rollouts
+- [EBS gp2 vs gp3 Measured Benchmark](storage/01-ebs-gp2-gp3-benchmark.md): a 10x IOPS gap at the same 100 GiB capacity, and the gp2 burst-credit cliff
+- [ClickHouse on EKS Measured Benchmark](database/01-clickhouse-on-eks.md): 100M-row ingest throughput, compression ratios, query latency
+- [Kafka on EKS Measured Benchmark](data-on-eks/kafka/09-kafka-benchmark.md): single-run records of 134.74 MiB/s at RF3/acks=all and 337.81 MiB/s at RF1/acks=1 (not confirmed as a sustained RF3 cap), p99 by acks setting, and a recorded 44.49% producer throughput drop during replay consumption
+- [Pod Network Benchmark](networking/06-pod-network-benchmark.md): the 0.040 → 0.339 → 0.544 ms RTT ladder (same node → same AZ → cross-AZ), a 4.96 Gbps single-flow cap regardless of AZ vs 9.94 Gbps with 8 flows, and `ndots:5`'s 10-query/8-NXDOMAIN amplification
 
-## Share a diagram — exports for LinkedIn and talks
+## Share a diagram: exports for LinkedIn and talks
 
 Interactive diagrams in this guidebook open at `https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`, and the **Export** button in the viewer toolbar (shortcut `E`) produces share-ready files on the spot. Available export items depend on the viewer version, browser capabilities and selection state.
 
@@ -54,14 +54,14 @@ Interactive diagrams in this guidebook open at `https://www.atomai.click/kuberne
 | Vector & motion | **SVG** | Dual-theme (light + dark) vector | Slides that stay crisp at any zoom |
 | Vector & motion | **WebM** | 6-second recording of the trace animation | A LinkedIn post where the flow actually moves in the feed |
 
-Exports strip all viewer state — the Guide panel, Lens, finder, focus, route, story, camera position, radar, presentation mode, and temporary overlays — leaving only the diagram itself. The Share Card keeps your current theme and visual preset and always contains the complete diagram, uncropped. WebM recording needs a trace-animated diagram and MediaRecorder support in your browser; unsupported browsers say so in the menu.
+Exports strip all viewer state (the Guide panel, Lens, finder, focus, route, story, camera position, radar, presentation mode, and temporary overlays), leaving only the diagram itself. The Share Card keeps your current theme and visual preset and always contains the complete diagram, uncropped. WebM recording needs a trace-animated diagram and MediaRecorder support in your browser; unsupported browsers say so in the menu.
 
 ### The 30-second LinkedIn recipe
 
-1. **Open the diagram** — click the "Open full screen ↗" link under any embedded diagram (on GitBook, "🔍 View interactive diagram").
-2. **Check the trace is playing** — the toolbar **Live/Still** toggle should read Live. The motion flowing along the arrows is what the recording captures. Rehearsing a talk? **Presentation stage** (`F`) gives the diagram the whole viewport.
-3. **Export → WebM** for a moving post, or **Export → Share Card** for a static 1200×630 preview — WebM shows "Recording 6 seconds of motion…" and then the file downloads.
-4. **Post** — check the destination platform's current accepted formats and convert WebM if needed. Upload the Share Card as an image and include the source document URL. To point at a specific node, path, or story moment, use **Copy link** in the Semantic Passport or Route Probe, or **Copy moment** on a Story Beat (shown only on diagrams that define story chapters), and drop the deep link into a comment or slide.
+1. **Open the diagram**: click the "Open full screen ↗" link under any embedded diagram (on GitBook, "🔍 View interactive diagram").
+2. **Check the trace is playing**: the toolbar **Live/Still** toggle should read Live. The motion flowing along the arrows is what the recording captures. Rehearsing a talk? **Presentation stage** (`F`) gives the diagram the whole viewport.
+3. **Export → WebM** for a moving post, or **Export → Share Card** for a static 1200×630 preview. WebM shows "Recording 6 seconds of motion…" and then the file downloads.
+4. **Post**: check the destination platform's current accepted formats and convert WebM if needed. Upload the Share Card as an image and include the source document URL. To point at a specific node, path, or story moment, use **Copy link** in the Semantic Passport or Route Probe, or **Copy moment** on a Story Beat (shown only on diagrams that define story chapters), and drop the deep link into a comment or slide.
 
 ### The truth boundary
 
@@ -71,15 +71,15 @@ Exports strip all viewer state — the Guide panel, Lens, finder, focus, route, 
 
 ## Recommended paths
 
-### ① Infrastructure onboarding — "containers to EKS"
+### ① Infrastructure onboarding: "containers to EKS"
 
 Linux Basics → Container Technology → Introduction to Kubernetes → Core Concepts (pods/services/storage/configuration) → EKS Cluster Creation → Network Fundamentals. Check yourself with each document's quiz, and work through the [labs](labs/README.md) in parallel.
 
-### ② Platform / SRE — "a cluster you can operate"
+### ② Platform / SRE: "a cluster you can operate"
 
 EKS operations (upgrades/troubleshooting/resiliency) → Networking (VPC CNI, Cilium) → the Service Mesh comparison guide → Security & Policy → the Observability stack → GitOps → capacity planning and FinOps in the Operations Guide. The measured-benchmark series supplies the evidence this path runs on.
 
-### ③ Data & AI platform — "the stateful world"
+### ③ Data & AI platform: "the stateful world"
 
 Storage → Database → Data Pipeline (Kafka → Spark → Airflow → Flink) → AI/ML (vLLM → Ray → Kubeflow). If you need GPUs and scheduling control, add the Custom Scheduler parts under Kubernetes Core Concepts.
 

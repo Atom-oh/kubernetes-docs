@@ -17,12 +17,12 @@ This quiz tests your understanding of the kernel layer of link-local interceptio
 **Answer: B) `169.254.0.0/16` is nominally non-routable, yet Lattice traffic must reach an ingress endpoint inside the VPC, so the infrastructure steers it there**
 
 **Explanation:**
-Lattice does not use the link-local range in its original sense of "non-routable addresses" — it **reuses the range as a signal meaning "the infrastructure intercepts this."** The packet genuinely has to reach an ingress endpoint inside the VPC. For the same reason, IPv6 uses a routable ULA (`fd00:ec2:80::/64`) rather than link-local (`fe80::/10`) — link scope would be insufficient.
+Lattice does not use the link-local range in its original sense of "non-routable addresses"; it **reuses the range as a signal meaning "the infrastructure intercepts this."** The packet genuinely has to reach an ingress endpoint inside the VPC. For the same reason, IPv6 uses a routable ULA (`fd00:ec2:80::/64`) rather than link-local (`fe80::/10`); link scope would be insufficient.
 </details>
 
 2. At exactly which kernel point does the collision between a sidecar mesh and Lattice traffic occur?
    - A) `POSTROUTING` in the node net namespace
-   - B) The `OUTPUT` hook of the Pod net namespace — Lattice traffic is also outbound, so it matches the REDIRECT rule
+   - B) The `OUTPUT` hook of the Pod net namespace: Lattice traffic is also outbound, so it matches the REDIRECT rule
    - C) The NIC driver's ring buffer
    - D) The node's routing table
 
@@ -30,7 +30,7 @@ Lattice does not use the link-local range in its original sense of "non-routable
 
 <summary>Show Answer</summary>
 
-**Answer: B) The `OUTPUT` hook of the Pod net namespace — Lattice traffic is also outbound, so it matches the REDIRECT rule**
+**Answer: B) The `OUTPUT` hook of the Pod net namespace: Lattice traffic is also outbound, so it matches the REDIRECT rule**
 
 **Explanation:**
 The mesh init container installs iptables rules inside the Pod's net namespace that REDIRECT all outbound traffic to Envoy's port. Lattice-bound traffic is also outbound, so it matches, and Envoy cannot find `169.254.171.x` in its cluster configuration and fails. This collision happens inside the Pod because netfilter rules are per net namespace.
@@ -54,7 +54,7 @@ Seeing a request in a proxy log proves traversal, not a unique failure cause. Ve
 
 4. You registered the exception CIDR but it still fails "occasionally." What is the most likely cause?
    - A) Wrong rule ordering
-   - B) A missing IPv6 range (`fd00:ec2:80::/64`) — on dual-stack, a client connecting over IPv6 is still intercepted
+   - B) A missing IPv6 range (`fd00:ec2:80::/64`): on dual-stack, a client connecting over IPv6 is still intercepted
    - C) Pods were not restarted
    - D) A missing Security Group rule
 
@@ -62,7 +62,7 @@ Seeing a request in a proxy log proves traversal, not a unique failure cause. Ve
 
 <summary>Show Answer</summary>
 
-**Answer: B) A missing IPv6 range (`fd00:ec2:80::/64`) — on dual-stack, a client connecting over IPv6 is still intercepted**
+**Answer: B) A missing IPv6 range (`fd00:ec2:80::/64`): on dual-stack, a client connecting over IPv6 is still intercepted**
 
 **Explanation:**
 Excluding only IPv4 on a dual-stack cluster means a client that receives an AAAA record and connects over IPv6 is still intercepted. **The symptom being "occasional failure" is characteristic**, because it depends on DNS response ordering and the client's address selection. C can also be a real cause, but then that Pod fails consistently rather than "occasionally."
@@ -81,7 +81,7 @@ Excluding only IPv4 on a dual-stack cluster means a client that receives an AAAA
 **Answer: B) The packet the proxy sends out signed is also destined for the Lattice range, so without a UID exception it is redirected to itself and loops**
 
 **Explanation:**
-The signed packet the proxy emits is also destined for `169.254.171.x`. Without the UID exception it matches the REDIRECT rule again and loops. So the proxy runs under a dedicated UID (101 in the reference implementation) and traffic from it is `RETURN`ed via netfilter's `owner` match (`-m owner --uid-owner`). **The proxy container's `runAsUser` and the iptables UID must match** — the most fragile link when customizing manifests.
+The signed packet the proxy emits is also destined for `169.254.171.x`. Without the UID exception it matches the REDIRECT rule again and loops. So the proxy runs under a dedicated UID (101 in the reference implementation) and traffic from it is `RETURN`ed via netfilter's `owner` match (`-m owner --uid-owner`). **The proxy container's `runAsUser` and the iptables UID must match** (the most fragile link when customizing manifests).
 </details>
 
 6. Why does the egress proxy approach put more load on conntrack than the shared-library approach?
@@ -118,7 +118,7 @@ An inbound packet rejected before delivery is absent at the receiver. An outboun
 
 8. What does the pattern "Lattice calls fail only on some nodes" tell you?
    - A) A Lattice service misconfiguration
-   - B) Node state divergence — SG differences, mixed kernel versions, differing conntrack settings, clock synchronization, whether Pods were restarted
+   - B) Node state divergence: SG differences, mixed kernel versions, differing conntrack settings, clock synchronization, whether Pods were restarted
    - C) An auth policy misconfiguration
    - D) DNS propagation delay
 
@@ -126,7 +126,7 @@ An inbound packet rejected before delivery is absent at the receiver. An outboun
 
 <summary>Show Answer</summary>
 
-**Answer: B) Node state divergence — SG differences, mixed kernel versions, differing conntrack settings, clock synchronization, whether Pods were restarted**
+**Answer: B) Node state divergence: SG differences, mixed kernel versions, differing conntrack settings, clock synchronization, whether Pods were restarted**
 
 **Explanation:**
 Total failure points to configuration or authentication; **node-scoped failure points to node state divergence.** Candidates are per-node-group SG differences, mixed 6.1/6.18 kernels from `kernel-default` AMIs, differing conntrack settings depending on bootstrap timing, clock synchronization causing the `x-amz-date` 5-minute skew, and annotation changes not applied to old Pods. The "some nodes" pattern itself narrows the search.

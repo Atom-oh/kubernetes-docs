@@ -57,14 +57,14 @@ Adding 30% to data size leaves only about 23.08% of total capacity free. Divide 
 4. What script must an operator manually run to format storage volumes on a Strimzi-managed Kafka cluster?
    - A) `kafka-storage.sh format` must be run manually on every broker
    - B) `kafka-configs.sh` must be used to apply format settings
-   - C) None — the Strimzi Operator handles this automatically when a broker pod starts
+   - C) None: the Strimzi Operator handles this automatically when a broker pod starts
    - D) `kafka-reassign-partitions.sh --format` must be used
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: C) None — the Strimzi Operator handles this automatically when a broker pod starts**
+**Answer: C) None: the Strimzi Operator handles this automatically when a broker pod starts**
 
 **Explanation:**
 Strimzi/startup scripts manage required initialization of new storage metadata. Existing data is not wiped on every start. Do not arbitrarily format Operator-managed volumes manually.
@@ -87,7 +87,7 @@ This describes the case without a matching autoRebalance mode. Strimzi 1.3 can a
 </details>
 
 6. What data-state requirement must be satisfied before removing a broker?
-   - A) Nothing — Strimzi drains it automatically
+   - A) Nothing: Strimzi drains it automatically
    - B) Partitions on the broker being removed must first be reassigned to the remaining brokers
    - C) The cluster must be restarted
    - D) All topics must be deleted
