@@ -117,7 +117,7 @@ IR was compiled with Python 3.12 / KFP 2.16.1 and checked for dependencies, type
 
 ## Next Steps
 
-With pipelines authored, compiled, and running, the next question is usually where the interactive development work behind those pipeline components happens in the first place. [Part 3: Kubeflow Notebooks](./03-notebooks.md) covers the per-user notebook environments teams use to author and iterate on the code that ends up packaged into pipeline components — and, further down this series, [Part 6: KServe — Model Serving on Kubernetes](./06-kserve.md) covers serving the models those pipelines ultimately produce.
+With pipelines authored, compiled, and running, the next question is usually where the interactive development work behind those pipeline components happens in the first place. [Part 3: Kubeflow Notebooks](./03-notebooks.md) covers the per-user notebook environments teams use to author and iterate on the code that ends up packaged into pipeline components. Further down this series, [Part 6: KServe (Model Serving on Kubernetes)](./06-kserve.md) covers serving the models those pipelines ultimately produce.
 
 [Return to Main Page](./README.md)
 

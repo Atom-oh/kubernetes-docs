@@ -1,4 +1,4 @@
-# Part 4: Katib — Hyperparameter Tuning and AutoML
+# Part 4: Katib (Hyperparameter Tuning and AutoML)
 
 > **Supported Versions**: Katib 0.19.0, Kubeflow Community Distribution 26.03.1
 > **Last Updated**: September 12, 2026

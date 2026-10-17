@@ -23,7 +23,7 @@ This backend translates IR for a Run into Argo Workflow resources. Argo manages 
 2. What is the key architectural difference between the KFP v1 SDK compiler and the KFP v2 SDK compiler?
    - A) v1 compiles to IR YAML; v2 compiles directly to Argo Workflow YAML
    - B) v1 compiles directly to Argo Workflow YAML; v2 compiles to a backend-agnostic Intermediate Representation (IR) YAML
-   - C) There is no difference — both produce identical output
+   - C) There is no difference; both produce identical output
    - D) v2 removed the need for compilation entirely
 
 <details>
@@ -36,7 +36,7 @@ This backend translates IR for a Run into Argo Workflow resources. Argo manages 
 The v1 SDK's `dsl-compile` produced an Argo-specific `Workflow` YAML manifest directly. The v2 SDK compiles to a backend-agnostic IR YAML (`PipelineSpec`) describing the DAG, components, and typed artifacts; this backend translates IR for Run creation, subject to backend version and platform-extension compatibility.
 </details>
 
-3. Which Kubeflow Pipelines component is responsible for recording registered executions and their input/output artifact relationships — enabling lineage tracing in the KFP UI?
+3. Which Kubeflow Pipelines component is responsible for recording registered executions and their input/output artifact relationships, enabling lineage tracing in the KFP UI?
    - A) The Argo Workflow Controller
    - B) The ML Metadata (MLMD) store
    - C) The MinIO artifact store
@@ -71,7 +71,7 @@ KFP v2 gives artifacts first-class types (`Dataset`, `Model`, `Metrics`, etc.). 
 5. What is needed to use S3 instead of MinIO in the reviewed default installation?
    - A) The default is S3; the pattern switches it to MinIO
    - B) Configure pipeline root, provider and credential chain for S3 instead of the bundled MinIO
-   - C) There is no default artifact store — one must always be configured manually
+   - C) There is no default artifact store; one must always be configured manually
    - D) The default is EFS; the pattern switches it to EBS
 
 <details>
@@ -85,7 +85,7 @@ The default bundle includes MinIO, but other installations and imported artifact
 </details>
 
 6. When KFP's artifact store is pointed at S3 instead of in-cluster MinIO, what identity mechanism becomes directly relevant for the actual Run execution ServiceAccount and artifact-accessing components?
-   - A) None — S3 access works without any AWS identity configuration
+   - A) None: S3 access works without any AWS identity configuration
    - B) IRSA or Pod Identity with verified SDK, trust, runtime support and scoped S3 permissions
    - C) A hardcoded AWS access key baked into every component's container image
    - D) Kubernetes RBAC alone is sufficient for S3 access
@@ -154,7 +154,7 @@ File contents, mutable image tags and external state do not automatically invali
 
 <summary>Show Answer</summary>
 
-**Answer: It produces an Intermediate Representation (IR) YAML — a backend-agnostic `PipelineSpec`. After upload and Run creation, this backend translates the IR YAML into an Argo `Workflow`, whose Pod creation is managed by Argo and node placement by Kubernetes.**
+**Answer: It produces an Intermediate Representation (IR) YAML, a backend-agnostic `PipelineSpec`. After upload and Run creation, this backend translates the IR YAML into an Argo `Workflow`, whose Pod creation is managed by Argo and node placement by Kubernetes.**
 
 **Explanation:**
 Compilation produces IR; the package also provides client APIs and Python runtime support. Run creation triggers backend workflow processing. Backend IR versions and platform extensions must be compatible.

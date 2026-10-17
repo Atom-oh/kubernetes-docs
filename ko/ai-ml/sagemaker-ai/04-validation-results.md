@@ -97,6 +97,6 @@ EKS 비교도 SageMaker smoke 결과와 데이터 해시를 먼저 고정한 뒤
 - 상세 검증 기록: `docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md`
 - 실행 패키지: `examples/ai-ml/qwen-pii-finetuning/`
 
-이전: [Part 4 — Unified Studio 거버넌스](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
+이전: [Part 4: Unified Studio 거버넌스](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
 
 처음으로: [SageMaker Qwen PII 가이드북](README.md)

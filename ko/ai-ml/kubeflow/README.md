@@ -41,11 +41,11 @@ CNCF는 [2026년 8월 17일 Kubeflow의 졸업을 발표했습니다](https://ww
 
 ## 현재 제공 중인 문서
 
-1. [Part 1: EKS 아키텍처와 설치](01-architecture-installation.md) — Community 릴리스, 기존 AWS 배포판의 제약, Profile, 신원, 매니페스트 렌더링.
-2. [Part 2: Pipelines](02-pipelines.md) — SDK v2, 컴파일, 실행, 아티팩트 저장.
-3. [Part 3: Notebooks](03-notebooks.md) — 워크로드, Profile, 스토리지, GPU 배치.
-4. [Part 4: Katib](04-katib.md) — Experiment, Trial, 탐색, 조기 종료.
-5. [Part 5: Trainer](05-training-operator.md) — 레거시 Training Operator와 Trainer v2 API.
-6. [Part 6: KServe](06-kserve.md) — 추론 리소스, 배포 모드, 롤아웃.
+1. [Part 1: EKS 아키텍처와 설치](01-architecture-installation.md): Community 릴리스, 기존 AWS 배포판의 제약, Profile, 신원, 매니페스트 렌더링.
+2. [Part 2: Pipelines](02-pipelines.md): SDK v2, 컴파일, 실행, 아티팩트 저장.
+3. [Part 3: Notebooks](03-notebooks.md): 워크로드, Profile, 스토리지, GPU 배치.
+4. [Part 4: Katib](04-katib.md): Experiment, Trial, 탐색, 조기 종료.
+5. [Part 5: Trainer](05-training-operator.md): 레거시 Training Operator와 Trainer v2 API.
+6. [Part 6: KServe](06-kserve.md): 추론 리소스, 배포 모드, 롤아웃.
 
 각 장의 컴포넌트 기준 버전을 확인하세요. 설치를 선택하기 전 [26.03.1 릴리스](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1)와 [고정된 목록](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md), [KFP 2.17.2](https://github.com/kubeflow/pipelines/releases/tag/2.17.2), [KServe 0.21.0](https://github.com/kserve/kserve/releases/tag/v0.21.0)을 확인해야 합니다.

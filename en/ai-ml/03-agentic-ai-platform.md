@@ -276,7 +276,7 @@ if __name__ == "__main__":
         print(app.get_state(config).values["retries"])
 ```
 
-Production thread_id must be bound to authenticated tenant/session identity, with DB authorization, encryption, concurrency and retention controls. :memory: does not survive process exit. SqliteSaver cannot use a PostgreSQL DSN; use the appropriate Postgres saver. Reading get_state_history() alone does not restore execution—use checkpoint configuration and actual resume/replay semantics.
+Production thread_id must be bound to authenticated tenant/session identity, with DB authorization, encryption, concurrency and retention controls. :memory: does not survive process exit. SqliteSaver cannot use a PostgreSQL DSN; use the appropriate Postgres saver. Reading get_state_history() alone does not restore execution; use checkpoint configuration and actual resume/replay semantics.
 
 Validate supervisor output against an allowed enum and handle unknown values/budget exhaustion. Substring COMPLETE must not treat INCOMPLETE as success. Asking a model to use a tool does not itself execute or verify the tool.
 

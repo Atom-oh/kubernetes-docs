@@ -83,7 +83,7 @@ AI/ML 라이프사이클 관리를 위한 DevOps 원칙 적용:
    - p4d.24xlarge: 8x NVIDIA A100 GPU, 320GB GPU 메모리
    - p3.16xlarge: 8x NVIDIA V100 GPU, 128GB GPU 메모리
    - g5.xlarge~g5.48xlarge: NVIDIA A10G GPU, 최대 8개의 GPU
-   - g4dn.12xlarge: T4 4개; g4dn.16xlarge: T4 1개 — 인스턴스 크기와 GPU 수가 단조 증가하지 않음
+   - g4dn.12xlarge: T4 4개; g4dn.16xlarge: T4 1개(인스턴스 크기와 GPU 수가 단조 증가하지 않음)
 
 2. **CPU 최적화 인스턴스**:
    - c6i.32xlarge: 128 vCPU, 256GB 메모리
@@ -111,7 +111,7 @@ AI/ML 워크로드에는 고성능 스토리지가 필요합니다:
 2. **Amazon EFS**:
    - 여러 노드에서 공유 데이터에 액세스해야 하는 경우 유용
    - 성능 모드: General Purpose 권장; Max I/O는 이전 세대이며 Elastic 처리량과 함께 사용할 수 없음
-   - 처리량 모드: Elastic, Provisioned, Bursting — 워크로드와 요금·한도를 비교
+   - 처리량 모드: Elastic, Provisioned, Bursting; 워크로드와 요금·한도를 비교
 
 3. **Amazon FSx for Lustre**:
    - 고성능 병렬 파일 시스템

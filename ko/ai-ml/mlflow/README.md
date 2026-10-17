@@ -34,9 +34,9 @@ Model Registry 등록은 선택적인 수명주기 단계입니다. 모델 URI/a
 
 ## 현재 제공 중인 문서
 
-1. [Part 1: MLflow Tracking](01-tracking.md) — 실험, Run, 오토로깅, MLflow 3의 `LoggedModel` 전환, GenAI 트레이싱
-2. [Part 2: MLflow Model Registry](02-model-registry.md) — Registered Model, Model Version, 별칭(alias), 계보(lineage)
-3. [Part 3: MLflow를 EKS에 배포하기](03-eks-deployment.md) — 트래킹 서버, PostgreSQL 백엔드 저장소, S3 아티팩트 저장소, IAM 접근
+1. [Part 1: MLflow Tracking](01-tracking.md): 실험, Run, 오토로깅, MLflow 3의 `LoggedModel` 전환, GenAI 트레이싱
+2. [Part 2: MLflow Model Registry](02-model-registry.md): Registered Model, Model Version, 별칭(alias), 계보(lineage)
+3. [Part 3: MLflow를 EKS에 배포하기](03-eks-deployment.md): 트래킹 서버, PostgreSQL 백엔드 저장소, S3 아티팩트 저장소, IAM 접근
 
 ## 공식 근거
 

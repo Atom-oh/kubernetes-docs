@@ -33,10 +33,10 @@ Ray 2.59.0은 로컬 클러스터에서 token 인증을 기본으로 켭니다. 
 
 ## 현재 제공 중인 문서
 
-1. [Part 1: Ray Architecture](01-architecture.md) — task, actor, 오브젝트 스토어, head/worker 클러스터 모델
-2. [Part 2: The KubeRay Operator](02-kuberay-operator.md) — RayCluster, RayJob, RayService, Karpenter와의 2단계 오토스케일링 패턴
-3. [Part 3: Ray Train and Ray Tune](03-ray-train-tune.md) — 분산 학습과 하이퍼파라미터 튜닝
-4. [Part 4: Ray Serve](04-ray-serve.md) — 모델 서빙, Ray Serve LLM, RayService 기반 프로덕션 배포
+1. [Part 1: Ray Architecture](01-architecture.md): task, actor, 오브젝트 스토어, head/worker 클러스터 모델
+2. [Part 2: The KubeRay Operator](02-kuberay-operator.md): RayCluster, RayJob, RayService, Karpenter와의 2단계 오토스케일링 패턴
+3. [Part 3: Ray Train and Ray Tune](03-ray-train-tune.md): 분산 학습과 하이퍼파라미터 튜닝
+4. [Part 4: Ray Serve](04-ray-serve.md): 모델 서빙, Ray Serve LLM, RayService 기반 프로덕션 배포
 
 ## 공식 근거
 
