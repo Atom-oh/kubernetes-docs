@@ -3,9 +3,9 @@
 locale, translating only the link titles (never headings' first occurrence
 gets a one-off translation, then reused — see below).
 
-Why this exists: VitePress builds its sidebar purely from SUMMARY.md
-(.vitepress/summary.ts), so a translated page with no nav entry is an orphan
-page nobody can reach. Quizzes and labs for a "section" (e.g. basics/) don't
+Why this exists: GitBook uses SUMMARY.md for navigation, so a translated
+page with no nav entry is an orphan page nobody can reach. Quizzes and labs
+for a "section" (e.g. basics/) don't
 live under that section's own SUMMARY.md heading -- they're flattened into
 two global headings ("## Quiz Collection", "## Lab Guides") shared by every
 section, appended in whatever order sections get backfilled. README.md's
@@ -68,7 +68,7 @@ def _run_kiro_batch(prompt, n, lang):
     for attempt in (1, 2):
         try:
             result = subprocess.run(
-                ["kiro-cli", "chat", prompt, "--model", "gpt-5.6-terra",
+                ["kiro-cli", "chat", prompt, "--model", "gpt-6-luna",
                  "--no-interactive", "--trust-tools=", "--wrap", "never"],
                 capture_output=True, text=True, timeout=90,
             )
