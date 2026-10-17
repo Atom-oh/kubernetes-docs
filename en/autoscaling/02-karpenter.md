@@ -433,11 +433,11 @@ amiSelectorTerms:
 amiSelectorTerms:
   - alias: bottlerocket@latest
 ---
-# Custom AMI (by ID) — amiFamily is required when no alias term is used
+# Custom AMI (by ID): amiFamily is required when no alias term is used
 amiFamily: Custom
 amiSelectorTerms:
   - id: "ami-0123456789abcdef0"
-# Ubuntu: no v1 alias — use amiFamily: Custom with an id/tags/name term
+# Ubuntu: no v1 alias; use amiFamily: Custom with an id/tags/name term
 ```
 
 ### Block Device Configuration

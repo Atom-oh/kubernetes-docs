@@ -32,13 +32,13 @@ gp2 has a baseline of 3 IOPS/GiB (100 GiB → 300 IOPS) and a 5.4M-credit bucket
 
 3. After credit exhaustion, gp2's qd32 average latency measured about 106 ms. Which interpretation is correct?
    - A) The EBS device's response time became slower than 100 ms
-   - B) Per Little's law, 32 outstanding I/Os ÷ 300 IOPS ≈ 106.7 ms — it approximates response time including queueing and service
+   - B) Per Little's law, 32 outstanding I/Os ÷ 300 IOPS ≈ 106.7 ms; it approximates response time including queueing and service
    - C) Network latency spiked
    - D) It is a fio measurement error
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Per Little's law, 32 outstanding I/Os ÷ 300 IOPS ≈ 106.7 ms — it approximates response time including queueing and service**
+**Answer: B) Per Little's law, 32 outstanding I/Os ÷ 300 IOPS ≈ 106.7 ms; it approximates response time including queueing and service**
 
 **Explanation:**
 Average latency = outstanding I/Os ÷ throughput. Keeping 32 I/Os in flight while only 300 complete per second means each I/O waits 106.7 ms on average. The 10.4 ms at 3,000 IOPS is the same arithmetic (32 ÷ 3,000 = 10.7 ms). This assumes average in-flight I/O of 32 and does not separate queueing from service time. Even qd1 includes kernel, virtualization and EBS service delays.
@@ -71,7 +71,7 @@ The gp2 credit bucket is not empty forever once drained; it is a bank account th
 **Answer: B) Similar p50 with a slower tail is consistent with throttling, but does not prove identical physical devices**
 
 **Explanation:**
-Half of gp2's I/Os finished in 0.6 ms, exactly like gp3. The other half landed at 3.4–3.6 ms because I/Os beyond the per-second allowance (about 603 IOPS) were held in the throttle queue. The average alone reads 1.65 ms — "a bit slower" — while p95 jumped 6x. This is why storage dashboards need p50 alongside p95/p99.
+Half of gp2's I/Os finished in 0.6 ms, exactly like gp3. The other half landed at 3.4–3.6 ms because I/Os beyond the per-second allowance (about 603 IOPS) were held in the throttle queue. The average alone reads 1.65 ms ("a bit slower"), while p95 jumped 6x. This is why storage dashboards need p50 alongside p95/p99.
 
 </details>
 
@@ -86,19 +86,19 @@ Half of gp2's I/Os finished in 0.6 ms, exactly like gp3. The other half landed a
 **Answer: A) gp3 hit its 125 MiB/s baseline and gp2 (≤170 GiB) hit its 128 MiB/s cap; the two values happen to be close**
 
 **Explanation:**
-gp3's default throughput is 125 MiB/s; gp2 caps at 128 MiB/s for volumes of 170 GiB or less. gp2's empty credit bucket did not slow the sequential test because EBS counts a 1 MiB I/O as four 256 KiB operations, so 130 MiB/s is only about 520 IOPS — well within the 36,000 credits accrued during the preceding rest. The throughput ceiling engaged before the IOPS ceiling. Note that the m5.xlarge instance EBS bandwidth (≈137 MiB/s) is slightly higher and was not the bottleneck here, but raising gp3 to 250 MiB/s can exceed that baseline during an instance burst; sustained planning must still account for the approximately 137 MiB/s baseline.
+gp3's default throughput is 125 MiB/s; gp2 caps at 128 MiB/s for volumes of 170 GiB or less. gp2's empty credit bucket did not slow the sequential test because EBS counts a 1 MiB I/O as four 256 KiB operations, so 130 MiB/s is only about 520 IOPS, well within the 36,000 credits accrued during the preceding rest. The throughput ceiling engaged before the IOPS ceiling. Note that the m5.xlarge instance EBS bandwidth (≈137 MiB/s) is slightly higher and was not the bottleneck here, but raising gp3 to 250 MiB/s can exceed that baseline during an instance burst; sustained planning must still account for the approximately 137 MiB/s baseline.
 
 </details>
 
 7. For a 100 GiB dataset that needs sustained 3,000 IOPS, which cost comparison using this article's September 2026 Seoul rates is correct?
    - A) gp2 100 GiB ($11.40) is sufficient
-   - B) gp3 100 GiB ($9.12) provides 3,000 IOPS without burst credits, while getting the same baseline on gp2 requires 1,000 GiB ($114.00) — roughly a 12x difference
+   - B) gp3 100 GiB ($9.12) provides 3,000 IOPS without burst credits, while getting the same baseline on gp2 requires 1,000 GiB ($114.00), roughly a 12x difference
    - C) gp3 requires extra paid IOPS, so it costs more than gp2
    - D) Both volumes cost the same per month
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) gp3 100 GiB ($9.12) provides 3,000 IOPS without burst credits, while getting the same baseline on gp2 requires 1,000 GiB ($114.00) — roughly a 12x difference**
+**Answer: B) gp3 100 GiB ($9.12) provides 3,000 IOPS without burst credits, while getting the same baseline on gp2 requires 1,000 GiB ($114.00), roughly a 12x difference**
 
 **Explanation:**
 gp2 100 GiB at $11.40 has a 300 IOPS baseline (the 3,000 burst lasts at most 33 minutes). In the gp2 era, the standard move was to grow the volume to 1,000 GiB for IOPS, at $114.00. gp3 decouples IOPS from capacity and provides the same 3,000 IOPS at $9.12 for 100 GiB. If needed, 6,000 IOPS (+$17.10) or 250 MiB/s (+$5.70) can be purchased separately.

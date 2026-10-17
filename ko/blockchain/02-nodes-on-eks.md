@@ -5,11 +5,11 @@
 
 ## 이 문서에서 다루는 것
 
-- [기초 개념](./01-fundamentals.md)의 운영 특성을 실제 Kubernetes 구성으로 옮기는 방법 — StatefulSet, 스토리지, P2P 노출
+- [기초 개념](./01-fundamentals.md)의 운영 특성을 실제 Kubernetes 구성으로 옮기는 방법: StatefulSet, 스토리지, P2P 노출
 - 동기화 상태를 헬스체크에 넣는 방법과, 그것이 왜 일반 헬스체크로는 안 되는가
 - Ethereum 노드와 Hyperledger Fabric의 운영 차이, 그리고 하드포크를 일정 관리하는 방법
 
-## 시작 질문 — EKS에서 운영해야 하는가
+## 시작 질문: EKS에서 운영해야 하는가
 
 구성을 논하기 전에 이 질문이 먼저입니다. **블록체인 노드는 Kubernetes의 강점과 잘 맞지 않는 부분이 있습니다.**
 
@@ -33,7 +33,7 @@
 
 **판단 기준**: 블록체인 노드 **주변에 다른 워크로드가 있는가**입니다. 인덱서·API·모니터링이 클러스터에 있으면 노드도 함께 두는 것이 합리적이고, 노드만 덩그러니 있으면 EC2가 단순합니다.
 
-## 기본 구성 — StatefulSet과 Headless Service
+## 기본 구성: StatefulSet과 Headless Service
 
 ### 왜 Deployment가 아닌가
 
@@ -46,7 +46,7 @@
 
 [기초 개념](./01-fundamentals.md)에서 본 "안정적인 피어 신원"과 "Pod별 상태 유지" 요구가 정확히 StatefulSet의 제공 사항입니다.
 
-### 불완전한 시험용 구조 — 배포 가능한 manifest가 아님
+### 불완전한 시험용 구조 (배포 가능한 manifest가 아님)
 이 조각에는 필수 StatefulSet selector/template label·image/argument·headless Service·StorageClass와 post-Merge EL/CL Engine API/JWT 설정이 없습니다. 그대로 적용하지 않습니다. **실제 자금이나 validator signing key 없이** 격리된 시험 환경에서 리소스를 완성·검증합니다. JSON-RPC와 Engine API는 사설/인증 경로로 유지하고 P2P 연결 때문에 RPC·signing endpoint가 노출되지 않도록 합니다.
 
 ```yaml
@@ -85,7 +85,7 @@ spec:
 
 **③ 볼륨이 큽니다.** 아래 스토리지 절에서 다룹니다.
 
-## 스토리지 — 가장 중요한 설계 결정
+## 스토리지: 가장 중요한 설계 결정
 
 ### 무엇이 병목인가
 
@@ -105,26 +105,26 @@ spec:
 |---|---|
 | **gp3** | 기본 선택. **IOPS와 throughput을 용량과 독립적으로 설정** 가능한 것이 핵심 이점 |
 | **io2 / io2 Block Express** | 더 높은 IOPS와 일관된 지연이 필요할 때 |
-| **gp2** | 권장하지 않음 — IOPS가 용량에 연동되어 조정 불가 |
-| **인스턴스 스토어 (NVMe)** | 가장 빠르지만 **인스턴스 정지 시 소실** — 재동기화 감수 가능한 경우만 |
+| **gp2** | 권장하지 않음. IOPS가 용량에 연동되어 조정 불가 |
+| **인스턴스 스토어 (NVMe)** | 가장 빠르지만 **인스턴스 정지 시 소실**. 재동기화 감수 가능한 경우만 |
 
 **gp3의 독립 설정이 왜 중요한가**: gp2는 용량당 IOPS가 정해져 있어 IOPS를 늘리려면 필요 없는 용량을 사야 했습니다. gp3는 용량과 IOPS를 따로 정하므로 **실제 필요에 맞출 수 있습니다.** 구체적 차이는 [EBS gp2 vs gp3 실측 벤치마크](../storage/01-ebs-gp2-gp3-benchmark.md)를 참고하십시오.
 
-**인스턴스 스토어의 트레이드오프**는 명확합니다 — 성능은 최고지만 상태가 사라질 수 있습니다. 재동기화 시간을 감수할 수 있고(스냅샷 복원 체계가 있고), 노드가 여러 개라 하나가 재동기화 중이어도 서비스에 문제없다면 선택할 수 있습니다.
+**인스턴스 스토어의 트레이드오프**는 명확합니다. 성능은 최고지만 상태가 사라질 수 있습니다. 재동기화 시간을 감수할 수 있고(스냅샷 복원 체계가 있고), 노드가 여러 개라 하나가 재동기화 중이어도 서비스에 문제없다면 선택할 수 있습니다.
 
-### 용량 계획 — 증가한다는 점이 핵심
+### 용량 계획: 증가한다는 점이 핵심
 
 체인 데이터는 **단조 증가**합니다. 이것이 용량 계획의 성격을 바꿉니다.
 
 | 항목 | 함의 |
 |---|---|
-| 계속 증가 | **볼륨 확장 계획이 필수** — 언젠가 반드시 필요 |
+| 계속 증가 | **볼륨 확장 계획이 필수**. 언젠가 반드시 필요 |
 | 증가율이 프로토콜 활동에 의존 | 여유를 두고 알람 설정 |
-| 프루닝 옵션 | 클라이언트가 과거 데이터를 버리는 모드 제공 — 아카이브가 필요 없으면 사용 |
+| 프루닝 옵션 | 클라이언트가 과거 데이터를 버리는 모드 제공. 아카이브가 필요 없으면 사용 |
 
 **EBS 볼륨은 온라인 확장이 가능**하므로(확장 후 파일시스템 확장 필요), PVC에 `allowVolumeExpansion: true` StorageClass를 쓰고 디스크 사용률 알람을 걸어두는 것이 표준 대응입니다.
 
-### 공식 하드웨어 가이던스 — EIP-7870
+### 공식 하드웨어 가이던스: EIP-7870
 
 [EIP-7870](https://eips.ethereum.org/EIPS/eip-7870)과 [Run a node 안내](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)를 **초기 권고**로 사용하며 EKS instance/EBS volume의 보장값으로 보지 않습니다. 선택한 client·fork·pruning·실측 증가율을 검증합니다.
 
@@ -137,7 +137,7 @@ spec:
 
 읽는 방법에서 중요한 세 가지입니다.
 
-**① 병목은 디스크입니다.** ethereum.org가 명시합니다 — "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." 앞에서 IOPS를 먼저 다룬 이유입니다.
+**① 병목은 디스크입니다.** ethereum.org가 명시합니다. "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." 앞에서 IOPS를 먼저 다룬 이유입니다.
 
 **② EIP-7870은 hardware 권고이며 특정 EBS 설정의 충족 증명이 아닙니다.** EC2/EBS 지연·instance bandwidth·volume IOPS/throughput은 local NVMe와 다릅니다. 선택한 client·storage 설정으로 sync와 정상 처리 성능을 측정합니다.
 
@@ -157,11 +157,11 @@ spec:
 |---|---|
 | **EBS 스냅샷** | 볼륨 전체. 복원 시 초기화 지연(lazy loading) 고려 필요 |
 | **클라이언트 스냅샷 내보내기** | 클라이언트가 제공하는 export. 정합성 보장이 명확 |
-| **재동기화** | 백업 없이 처음부터 — 시간 비용 |
+| **재동기화** | 백업 없이 처음부터 (시간 비용) |
 
 **주의할 점**: 실행 중인 노드의 볼륨을 그냥 스냅샷하면 **데이터베이스가 중간 상태일 수 있습니다.** 정합성 있는 스냅샷을 위해서는 클라이언트를 정지하거나 클라이언트가 제공하는 정합성 보장 메커니즘을 써야 합니다.
 
-## 헬스체크 — 일반 방식으로는 안 되는 이유
+## 헬스체크: 일반 방식으로는 안 되는 이유
 
 동기화 상태를 무시하는 health check는 stale node로 앱 트래픽을 보낼 수 있습니다. 이는 시험할 설계 위험이며 실측 운영 실수 순위는 아닙니다.
 
@@ -179,9 +179,9 @@ spec:
 
 | 프로브 | 무엇을 확인해야 하는가 |
 |---|---|
-| **startup** | 초기 동기화가 진행 중임 — 완료까지 오래 걸리므로 **넉넉한 `failureThreshold`** |
-| **liveness** | 프로세스가 살아있고 응답 — 여기서 동기화를 보면 안 됨 (뒤처졌다고 죽이면 영원히 못 따라감) |
-| **readiness** | **체인 선두에서 N블록 이내** — 서비스 가능 여부 |
+| **startup** | 초기 동기화가 진행 중임. 완료까지 오래 걸리므로 **넉넉한 `failureThreshold`** |
+| **liveness** | 프로세스가 살아있고 응답. 여기서 동기화를 보면 안 됨 (뒤처졌다고 죽이면 영원히 못 따라감) |
+| **readiness** | **체인 선두에서 N블록 이내**, 즉 서비스 가능 여부 |
 
 **liveness와 readiness의 구분이 결정적입니다.**
 
@@ -193,7 +193,7 @@ spec:
 동기화 상태는 클라이언트의 RPC로 확인합니다. 프로토콜·클라이언트마다 메서드가 다르므로 래퍼 스크립트나 사이드카로 판정하는 구성이 일반적입니다.
 
 ```yaml
-# 개념적 형태 — 실제 판정 로직은 클라이언트별로 다릅니다
+# 개념적 형태: 실제 판정 로직은 클라이언트별로 다릅니다
 readinessProbe:
   exec:
     command: ["/bin/sh", "-c", "/scripts/check-sync.sh"]   # 선두와의 블록 차이 판정
@@ -214,7 +214,7 @@ startupProbe:
 
 **임계값(N블록)은 애플리케이션 요구에 따라 정해야 합니다.** [기초 개념](./01-fundamentals.md)의 confirmation depth와 함께 결정할 사항입니다.
 
-## P2P 노출 — 인바운드 연결 받기
+## P2P 노출: 인바운드 연결 받기
 
 ### 왜 인바운드가 필요한가
 
@@ -223,7 +223,7 @@ startupProbe:
 - 피어 수가 늘어 **전파가 빠르고 안정적**
 - 네트워크에 기여 (퍼블릭 체인에서 상호 이익)
 
-검증자라면 특히 중요합니다 — 블록 전파 지연이 성능(보상)에 직접 영향을 줍니다.
+검증자라면 특히 중요합니다. 블록 전파 지연이 성능(보상)에 직접 영향을 줍니다.
 
 ### 방법과 트레이드오프
 
@@ -235,15 +235,15 @@ startupProbe:
 | **Pod별 LoadBalancer (NLB)** | 안정적 주소. **Pod 수만큼 LB 비용** |
 | **인바운드 포기** | 아웃바운드만. 구성 단순, 피어 품질 저하 |
 
-### 공통 함정 — 광고 주소
+### 공통 함정: 광고 주소
 
 P2P 프로토콜은 자기 주소를 다른 피어에게 **광고**합니다. 컨테이너 안에서 본 주소(Pod IP)와 외부에서 접근 가능한 주소(노드 공인 IP, LB 주소)가 **다르면 다른 피어가 접속하지 못합니다.**
 
-대부분의 클라이언트가 광고 주소를 명시하는 옵션을 제공합니다(`--nat extip:<addr>` 형태 등). **이것을 설정하지 않으면 인바운드를 열어도 피어가 오지 않습니다** — 열었는데 안 되는 전형적 원인입니다.
+대부분의 클라이언트가 광고 주소를 명시하는 옵션을 제공합니다(`--nat extip:<addr>` 형태 등). **이것을 설정하지 않으면 인바운드를 열어도 피어가 오지 않습니다**. 열었는데 안 되는 전형적 원인입니다.
 
 Pod별로 다른 주소를 광고해야 하므로, StatefulSet의 ordinal이나 downward API로 각 Pod가 자기 주소를 알아내는 초기화 로직이 필요합니다.
 
-## 리소스 — 버스트가 아니라 지속 부하
+## 리소스: 버스트가 아니라 지속 부하
 
 블록체인 노드는 **꾸준히 CPU와 IOPS를 씁니다.** 블록이 계속 오고, 계속 검증하고, 계속 상태를 갱신합니다.
 
@@ -252,14 +252,14 @@ Pod별로 다른 주소를 광고해야 하므로, StatefulSet의 ordinal이나 
 | **CPU limit** | **신중히.** throttling이 블록 처리 지연으로 이어지고, 검증자는 성능이 보상에 연결됨. [커널 튜닝](../kernel/03-eks-node-tuning.md)의 throttling 진단 참고 |
 | **메모리** | 클라이언트가 상태 캐시에 메모리를 많이 씀. **limit을 넉넉히**, OOM은 DB 손상 위험 |
 | **request = limit** | Guaranteed QoS로 축출 우선순위를 낮춤 |
-| **노드 전용화** | taint/toleration으로 다른 워크로드와 분리 — 노이지 네이버 방지 |
+| **노드 전용화** | taint/toleration으로 다른 워크로드와 분리해 노이지 네이버 방지 |
 | **파일 디스크립터** | 피어 연결 수만큼 소켓. 한도 상향 검토 ([커널 튜닝](../kernel/03-eks-node-tuning.md)) |
 
 **CPU limit에 대한 판단**이 특히 중요합니다. [커널 문서](../kernel/01-container-primitives.md)에서 본 대로 CPU limit은 대역폭 제한이라 주기 내에 할당량을 소진하면 강제로 멈춥니다. 블록 처리가 그 순간에 걸리면 지연이 생기고, 검증자에게는 놓친 기회가 됩니다.
 
 전용 노드는 tenant 간 경합을 줄이지만 kubelet·CNI/CSI·관측성·OS 서비스는 노드를 공유합니다. 앱 CPU limit을 생략해도 reservation과 여유를 유지하고 지속 부하에서 지연·sync·node health를 시험합니다.
 
-## Ethereum 노드 — 두 클라이언트 구조
+## Ethereum 노드: 두 클라이언트 구조
 
 Ethereum이 PoS로 전환한 뒤 노드는 **두 개의 프로세스**로 나뉩니다.
 
@@ -277,24 +277,24 @@ Ethereum이 PoS로 전환한 뒤 노드는 **두 개의 프로세스**로 나뉩
 | **같은 Pod의 두 컨테이너** | `localhost` 통신으로 단순, 함께 스케줄·재시작. 리소스를 함께 요청 |
 | **별개 StatefulSet** | 독립 스케일·업그레이드 가능. Engine API 연결 관리 필요 |
 
-**같은 Pod가 기본 선택**입니다 — 두 클라이언트가 1:1로 짝지어 동작하고 Engine API 지연이 성능에 영향을 주므로, 같은 Pod의 `localhost`가 자연스럽습니다.
+**같은 Pod가 기본 선택**입니다. 두 클라이언트가 1:1로 짝지어 동작하고 Engine API 지연이 성능에 영향을 주므로, 같은 Pod의 `localhost`가 자연스럽습니다.
 
 **클라이언트 다양성**도 언급할 가치가 있습니다. 특정 클라이언트에 버그가 있을 때 네트워크 전체가 영향받지 않도록, 커뮤니티는 클라이언트를 분산할 것을 권장합니다. 여러 노드를 운영한다면 **서로 다른 클라이언트 조합**을 쓰는 것이 방어적입니다.
 
-### 최근 프로토콜 변경 — 운영에 영향을 준 것들
+### 최근 프로토콜 변경: 운영에 영향을 준 것들
 
 다음은 보장된 미래 주기가 아니라 **날짜가 정해진 프로토콜 이력**입니다. 업그레이드 계획 전 [roadmap](https://ethereum.org/roadmap/)·활성화 발표·선택한 client release note를 확인합니다.
 
 | 시점 | 업그레이드 | 운영 관점의 의미 |
 |---|---|---|
 | **2025년 5월 7일** | **Pectra** mainnet | EIP-7251은 해당 validator의 최대 effective balance를 2,048 ETH로 높였으며 consolidation은 record를 바꾸지만 process/VM 수를 반드시 줄이지는 않음 |
-| **2025년 12월 3일** | **Fusaka** 메인넷 (에폭 411392) | 핵심은 **PeerDAS**(Peer Data Availability Sampling) — 블롭 데이터를 전체가 아니라 샘플링으로 검증. 블롭 처리량 확대 |
+| **2025년 12월 3일** | **Fusaka** 메인넷 (에폭 411392) | 핵심은 **PeerDAS**(Peer Data Availability Sampling): 블롭 데이터를 전체가 아니라 샘플링으로 검증. 블롭 처리량 확대 |
 
 Validator identity/key는 **별도 process나 VM과 동일하지 않습니다**. 하나의 validator client가 공유 beacon-node stack에서 여러 키를 관리할 수 있습니다. EIP-7251 consolidation은 validator record·키 관리 작업을 줄일 수 있지만 비례하는 인프라·비용 절감을 증명하지는 않습니다. 실제 client 구성을 측정하고 키 이전 시 slashing protection을 유지합니다.
 
 **PeerDAS는 스토리지·대역폭 계획에 영향**을 줍니다. 블롭 처리 방식이 바뀌면 노드가 보관·전송하는 데이터 양이 달라지므로, 기존 사이징 기준을 재검토해야 합니다.
 
-## Hyperledger Fabric — permissioned 체인의 운영
+## Hyperledger Fabric: permissioned 체인의 운영
 
 Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**이므로 [기초 개념](./01-fundamentals.md)에서 본 대로 합의 방식과 운영 특성이 달라집니다.
 
@@ -315,7 +315,7 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 
 - MSP 서명 인증서와 키
 - TLS 인증서 (peer, orderer, CA 각각)
-- **만료 관리** — 인증서 만료가 실제로 장애를 만듭니다
+- **만료 관리**: 인증서 만료가 실제로 장애를 만듭니다
 
 인증서 만료는 중요한 장애 위험이지만 이 문서에는 빈도 데이터가 없습니다. MSP·TLS credential 갱신을 감시·연습하고 operator/client 버전 호환성을 검증합니다.
 
@@ -326,7 +326,7 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 | [hyperledger-labs/fabric-operator](https://github.com/hyperledger-labs/fabric-operator) | CNCF 오퍼레이터 패턴. CA·Peer·Orderer·Console을 CR로 선언 |
 | [bevel-operator-fabric](https://github.com/hyperledger-bevel/bevel-operator-fabric) | Hyperledger Bevel 프로젝트. Fabric 2.3~3.x 지원 |
 
-오퍼레이터를 쓰면 반복적인 구성 작업이 선언적 리소스 적용으로 바뀝니다. **직접 YAML을 조립하는 것보다 오퍼레이터로 시작하는 것을 권합니다** — Fabric의 구성 복잡도가 높아 수동 관리 시 실수가 잦습니다.
+오퍼레이터를 쓰면 반복적인 구성 작업이 선언적 리소스 적용으로 바뀝니다. **직접 YAML을 조립하는 것보다 오퍼레이터로 시작하는 것을 권합니다**. Fabric의 구성 복잡도가 높아 수동 관리 시 실수가 잦습니다.
 
 ### Ethereum과 Fabric 비교
 
@@ -391,11 +391,11 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 
 ## 참고 자료
 
-- [Ethereum — Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)
-- [EIP-7870: Hardware and Bandwidth Recommendations](https://eips.ethereum.org/EIPS/eip-7870) — 공식 하드웨어 가이던스
+- [Ethereum: Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)
+- [EIP-7870: Hardware and Bandwidth Recommendations](https://eips.ethereum.org/EIPS/eip-7870): 공식 하드웨어 가이던스
 - [Ethereum roadmap](https://ethereum.org/roadmap/) / [Pectra](https://ethereum.org/roadmap/pectra/) / [Fusaka](https://ethereum.org/roadmap/fusaka/)
 - [Pectra Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/04/23/pectra-mainnet)
 - [Fusaka Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/11/06/fusaka-mainnet-announcement)
-- [Hyperledger Fabric — Deploying a production network](https://hyperledger-fabric.readthedocs.io/en/latest/deployment_guide_overview.html)
+- [Hyperledger Fabric: Deploying a production network](https://hyperledger-fabric.readthedocs.io/en/latest/deployment_guide_overview.html)
 - [hyperledger-labs/fabric-operator](https://github.com/hyperledger-labs/fabric-operator) / [bevel-operator-fabric](https://github.com/hyperledger-bevel/bevel-operator-fabric)
 - [EBS gp2 vs gp3 실측 벤치마크](../storage/01-ebs-gp2-gp3-benchmark.md) / [EKS 노드 커널 튜닝](../kernel/03-eks-node-tuning.md)

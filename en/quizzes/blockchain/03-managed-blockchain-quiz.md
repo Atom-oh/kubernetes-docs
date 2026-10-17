@@ -22,7 +22,7 @@ AMB is not universally per-node billed. Dedicated resources, serverless RPC requ
 
 2. What is the most important thing AMB managed nodes do *not* solve?
    - A) CloudWatch metric collection
-   - B) Validator operation — managed nodes are for queries and submission, while PoS staking is a different requirement set of key management, signing availability, and slashing risk
+   - B) Validator operation: managed nodes are for queries and submission, while PoS staking is a different requirement set of key management, signing availability, and slashing risk
    - C) IAM-based access control
    - D) VPC private connectivity
 
@@ -30,7 +30,7 @@ AMB is not universally per-node billed. Dedicated resources, serverless RPC requ
 
 <summary>Show Answer</summary>
 
-**Answer: B) Validator operation — managed nodes are for queries and submission, while PoS staking is a different requirement set of key management, signing availability, and slashing risk**
+**Answer: B) Validator operation: managed nodes are for queries and submission, while PoS staking is a different requirement set of key management, signing availability, and slashing risk**
 
 **Explanation:**
 AMB Access public chain nodes are for reading chain data and submitting transactions. PoS validation adds signing availability and slashing-protection requirements. Uncoordinated signers can produce conflicting slashable messages for the same validator; identical duplicate signatures are not automatically slashable. The ordinary deployment uses a single active signer with fenced failover and preserved slashing history; a distributed signer needs proven coordination. AMB node access does not supply that validator design, so staking needs separate operation or a specialized service.
@@ -38,7 +38,7 @@ AMB Access public chain nodes are for reading chain data and submitting transact
 
 3. What is presented as step 1 of the managed-vs-self-operated decision?
    - A) What does it cost
-   - B) Do you actually need a node — if you only query data, AMB Query or a third-party RPC may suffice
+   - B) Do you actually need a node? If you only query data, AMB Query or a third-party RPC may suffice
    - C) Which chain will you use
    - D) How many operations staff do you have
 
@@ -46,7 +46,7 @@ AMB Access public chain nodes are for reading chain data and submitting transact
 
 <summary>Show Answer</summary>
 
-**Answer: B) Do you actually need a node — if you only query data, AMB Query or a third-party RPC may suffice**
+**Answer: B) Do you actually need a node? If you only query data, AMB Query or a third-party RPC may suffice**
 
 **Explanation:**
 The decision order is ① do you really need a node → ② do you need control → ③ cost → ④ can you mix. Running nodes is a costly, burdensome choice so the need must be confirmed first, and **many cases are filtered out at step 1.** At step 2, needing any of client choice, tuning, archive, or validator participation means self-operating.
@@ -54,7 +54,7 @@ The decision order is ① do you really need a node → ② do you need control 
 
 4. What lesson does the Amazon QLDB case offer for architecture decisions?
    - A) Managed services are always cheaper than self-operating
-   - B) Managed services can also be discontinued, and the migration path offered may not be functionally equivalent — moving to Aurora PostgreSQL loses cryptographic verifiability
+   - B) Managed services can also be discontinued, and the migration path offered may not be functionally equivalent: moving to Aurora PostgreSQL loses cryptographic verifiability
    - C) Ledger databases must be implemented only with blockchain
    - D) AWS services are guaranteed support for five years after GA
 
@@ -62,15 +62,15 @@ The decision order is ① do you really need a node → ② do you need control 
 
 <summary>Show Answer</summary>
 
-**Answer: B) Managed services can also be discontinued, and the migration path offered may not be functionally equivalent — moving to Aurora PostgreSQL loses cryptographic verifiability**
+**Answer: B) Managed services can also be discontinued, and the migration path offered may not be functionally equivalent: moving to Aurora PostgreSQL loses cryptographic verifiability**
 
 **Explanation:**
-QLDB was announced in 2018, went GA in 2019, had end of support announced in July 2024, and **the service ended on July 31, 2025.** AWS's path was Aurora PostgreSQL — ledger-like functionality can be built with extensions, but QLDB's core value of "mathematically proving nothing was tampered with" is not replaced. The lessons: ① managed services carry discontinuation risk ② "a replacement exists" is not "it provides the same thing" ③ the notice period can be short ④ standard technology is easier to move off.
+QLDB was announced in 2018, went GA in 2019, had end of support announced in July 2024, and **the service ended on July 31, 2025.** AWS's path was Aurora PostgreSQL; ledger-like functionality can be built with extensions, but QLDB's core value of "mathematically proving nothing was tampered with" is not replaced. The lessons: ① managed services carry discontinuation risk ② "a replacement exists" is not "it provides the same thing" ③ the notice period can be short ④ standard technology is easier to move off.
 </details>
 
 5. What is the most effective mitigation for service discontinuation risk?
    - A) Deploying to several cloud providers simultaneously
-   - B) Standard protocols plus an abstraction layer — having the application speak a standard RPC interface lets you swap the backend between AMB, self-operated, and third-party
+   - B) Standard protocols plus an abstraction layer: having the application speak a standard RPC interface lets you swap the backend between AMB, self-operated, and third-party
    - C) Not using managed services
    - D) Signing a long-term contract with AWS
 
@@ -78,7 +78,7 @@ QLDB was announced in 2018, went GA in 2019, had end of support announced in Jul
 
 <summary>Show Answer</summary>
 
-**Answer: B) Standard protocols plus an abstraction layer — having the application speak a standard RPC interface lets you swap the backend between AMB, self-operated, and third-party**
+**Answer: B) Standard protocols plus an abstraction layer: having the application speak a standard RPC interface lets you swap the backend between AMB, self-operated, and third-party**
 
 **Explanation:**
 A standard interface such as Ethereum JSON-RPC can make compatible backends easier to replace, while AMB-specific APIs introduce coupling. Keep required data independently and measure resync/migration time. Plan key recovery and exit before use: **KMS private signing keys cannot be exported**. Distinguish public-key download, backups of imported key material, CloudHSM extractability/wrapping rules and account/contract rotation options; a managed-key choice does not by itself provide a portable private-key backup.

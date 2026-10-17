@@ -433,11 +433,11 @@ amiSelectorTerms:
 amiSelectorTerms:
   - alias: bottlerocket@latest
 ---
-# 사용자 정의 AMI (ID 지정) — alias 항목이 없으면 amiFamily가 필수
+# 사용자 정의 AMI (ID 지정): alias 항목이 없으면 amiFamily가 필수
 amiFamily: Custom
 amiSelectorTerms:
   - id: "ami-0123456789abcdef0"
-# Ubuntu: v1 alias 없음 — amiFamily: Custom과 id/tags/name 항목을 사용
+# Ubuntu: v1 alias 없음. amiFamily: Custom과 id/tags/name 항목을 사용
 ```
 
 ### 블록 디바이스 구성

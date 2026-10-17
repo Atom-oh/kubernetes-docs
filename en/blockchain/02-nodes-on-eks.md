@@ -5,11 +5,11 @@
 
 ## What This Document Covers
 
-- Translating the operational characteristics from [Fundamentals](./01-fundamentals.md) into actual Kubernetes configuration — StatefulSets, storage, P2P exposure
+- Translating the operational characteristics from [Fundamentals](./01-fundamentals.md) into actual Kubernetes configuration: StatefulSets, storage, P2P exposure
 - How to put sync state into health checks, and why ordinary health checks do not work
 - The operational differences between Ethereum nodes and Hyperledger Fabric, and how to manage hard fork schedules
 
-## Opening Question — Should You Run This on EKS?
+## Opening Question: Should You Run This on EKS?
 
 Before discussing configuration, this question comes first. **Blockchain nodes fit poorly with some of Kubernetes' strengths.**
 
@@ -33,7 +33,7 @@ There are still reasons to use EKS.
 
 **The decision criterion**: **is there other workload around the blockchain node?** If indexers, APIs, and monitoring are in the cluster, keeping the node with them is sensible; if the node stands alone, EC2 is simpler.
 
-## Base Configuration — StatefulSet and Headless Service
+## Base Configuration: StatefulSet and Headless Service
 
 ### Why not a Deployment
 
@@ -46,7 +46,7 @@ There are still reasons to use EKS.
 
 The "stable peer identity" and "per-Pod state" requirements from [Fundamentals](./01-fundamentals.md) are exactly what StatefulSets provide.
 
-### Incomplete test-only shape — not a deployable manifest
+### Incomplete test-only shape (not a deployable manifest)
 This fragment omits the required StatefulSet selector/template labels, image/arguments, headless Service, StorageClass and post-Merge EL/CL Engine API/JWT configuration. Do not apply it as-is. Complete and validate those resources in an isolated test environment with **no real funds or validator signing keys**. Keep JSON-RPC and the Engine API private/authenticated; P2P reachability must not expose RPC or signing endpoints.
 
 ```yaml
@@ -85,13 +85,13 @@ Three things differ from ordinary workloads.
 
 **③ The volume is large.** Covered in the storage section below.
 
-## Storage — The Most Important Design Decision
+## Storage: The Most Important Design Decision
 
 ### What the bottleneck is
 
 A blockchain node's disk pattern is characterized by **heavy random reads and writes**, because traversing and updating the state trie (Merkle Patricia Trie and similar) touches scattered keys.
 
-So **IOPS becomes the bottleneck before capacity.** With capacity to spare but insufficient IOPS, sync falls behind — and a node that is behind cannot serve.
+So **IOPS becomes the bottleneck before capacity.** With capacity to spare but insufficient IOPS, sync falls behind, and a node that is behind cannot serve.
 
 | Requirement | Why |
 |---|---|
@@ -105,26 +105,26 @@ So **IOPS becomes the bottleneck before capacity.** With capacity to spare but i
 |---|---|
 | **gp3** | Default choice. The key advantage is **setting IOPS and throughput independently of capacity** |
 | **io2 / io2 Block Express** | When you need higher IOPS and more consistent latency |
-| **gp2** | Not recommended — IOPS is tied to capacity and cannot be adjusted |
-| **Instance store (NVMe)** | Fastest but **lost when the instance stops** — only if you can accept a resync |
+| **gp2** | Not recommended: IOPS is tied to capacity and cannot be adjusted |
+| **Instance store (NVMe)** | Fastest but **lost when the instance stops**, so use it only if you can accept a resync |
 
 **Why gp3's independent settings matter**: gp2 fixes IOPS per unit of capacity, so raising IOPS meant buying capacity you did not need. gp3 sets capacity and IOPS separately, so **you can match actual needs.** See the [EBS gp2 vs gp3 Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) for concrete differences.
 
-**The instance store trade-off** is clear — best performance but state can vanish. Choose it if you can accept the resync time (you have a snapshot-restore process) and you run multiple nodes so one resyncing does not break service.
+**The instance store trade-off** is clear: best performance but state can vanish. Choose it if you can accept the resync time (you have a snapshot-restore process) and you run multiple nodes so one resyncing does not break service.
 
-### Capacity planning — growth is the point
+### Capacity planning: growth is the point
 
 Chain data grows **monotonically.** That changes the nature of capacity planning.
 
 | Item | Implication |
 |---|---|
-| Continuous growth | **A volume expansion plan is mandatory** — you will need it eventually |
+| Continuous growth | **A volume expansion plan is mandatory**; you will need it eventually |
 | Growth rate depends on protocol activity | Leave headroom and set alarms |
-| Pruning options | Clients offer modes that discard old data — use them if you do not need archive |
+| Pruning options | Clients offer modes that discard old data; use them if you do not need archive |
 
 **EBS volumes support online expansion** (followed by a filesystem grow), so the standard response is a StorageClass with `allowVolumeExpansion: true` plus disk-utilization alarms.
 
-### Official hardware guidance — EIP-7870
+### Official hardware guidance: EIP-7870
 
 Use [EIP-7870](https://eips.ethereum.org/EIPS/eip-7870) and the [Run a node guide](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) as **starting recommendations**, not a guarantee for an EKS instance or EBS volume. Verify the selected client, fork, pruning and measured growth.
 
@@ -137,11 +137,11 @@ Use [EIP-7870](https://eips.ethereum.org/EIPS/eip-7870) and the [Run a node guid
 
 Three things matter in how you read this.
 
-**① The bottleneck is disk.** ethereum.org states it explicitly — "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." That is why IOPS came first above.
+**① The bottleneck is disk.** ethereum.org states it explicitly: "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." That is why IOPS came first above.
 
 **② EIP-7870 is hardware guidance, not proof that a particular EBS configuration meets it.** EC2/EBS latency, instance bandwidth and volume IOPS/throughput differ from local NVMe. Measure sync and steady-state processing with the selected client and storage profile.
 
-**③ The 2 TB minimum has an expiry date.** ethereum.org notes 2 TB is "likely exceeded by 2027" — **the reason growth must be in your capacity plan.**
+**③ The 2 TB minimum has an expiry date.** ethereum.org notes 2 TB is "likely exceeded by 2027," which is **the reason growth must be in your capacity plan.**
 
 ::: warning Needs verification
 The figures above are for a **full node.** **An archive node needs far more storage, and actual usage varies by client, pruning configuration, and fork.**
@@ -157,11 +157,11 @@ As seen in [Fundamentals](./01-fundamentals.md), **chain data is re-obtainable f
 |---|---|
 | **EBS snapshots** | Whole volume. Consider initialization latency (lazy loading) on restore |
 | **Client snapshot export** | Client-provided export. Consistency guarantees are explicit |
-| **Resync** | No backup, start over — a time cost |
+| **Resync** | No backup, start over (a time cost) |
 
 **A caution**: snapshotting a running node's volume directly can capture **a database mid-write.** For a consistent snapshot you must stop the client or use a consistency mechanism the client provides.
 
-## Health Checks — Why the Ordinary Approach Fails
+## Health Checks: Why the Ordinary Approach Fails
 
 A health check that ignores synchronization can send application traffic to a stale node. This is a design risk to test, not a measured ranking of operational mistakes.
 
@@ -179,9 +179,9 @@ A node behind on sync:
 
 | Probe | What it should check |
 |---|---|
-| **startup** | Initial sync is in progress — it takes a long time, so **a generous `failureThreshold`** |
-| **liveness** | The process is alive and responding — **do not check sync here** (killing a lagging node means it can never catch up) |
-| **readiness** | **Within N blocks of the chain head** — whether it can serve |
+| **startup** | Initial sync is in progress; it takes a long time, so **a generous `failureThreshold`** |
+| **liveness** | The process is alive and responding; **do not check sync here** (killing a lagging node means it can never catch up) |
+| **readiness** | **Within N blocks of the chain head**, i.e. whether it can serve |
 
 **The liveness/readiness split is decisive.**
 
@@ -193,7 +193,7 @@ A node behind on sync:
 Sync state is checked via the client's RPC. The method differs per protocol and client, so judging it with a wrapper script or sidecar is the usual approach.
 
 ```yaml
-# Conceptual form — the actual judgment logic differs per client
+# Conceptual form: the actual judgment logic differs per client
 readinessProbe:
   exec:
     command: ["/bin/sh", "-c", "/scripts/check-sync.sh"]   # block delta vs head
@@ -214,7 +214,7 @@ startupProbe:
 
 **The threshold (N blocks) must be set from application requirements.** Decide it together with the confirmation depth from [Fundamentals](./01-fundamentals.md).
 
-## P2P Exposure — Accepting Inbound Connections
+## P2P Exposure: Accepting Inbound Connections
 
 ### Why inbound matters
 
@@ -223,7 +223,7 @@ Sync works with outbound only. But accepting inbound:
 - Increases peer count, making **propagation faster and more stable**
 - Contributes to the network (mutually beneficial on public chains)
 
-It matters especially for validators — block propagation delay directly affects performance (rewards).
+It matters especially for validators: block propagation delay directly affects performance (rewards).
 
 ### Methods and trade-offs
 
@@ -235,31 +235,31 @@ It matters especially for validators — block propagation delay directly affect
 | **Per-Pod LoadBalancer (NLB)** | Stable address. **LB cost per Pod** |
 | **Skip inbound** | Outbound only. Simple configuration, degraded peer quality |
 
-### A common pitfall — the advertised address
+### A common pitfall: the advertised address
 
 P2P protocols **advertise** their own address to other peers. If the address seen inside the container (the Pod IP) differs from the externally reachable address (node public IP, LB address), **other peers cannot connect.**
 
-Most clients offer an option to specify the advertised address (`--nat extip:<addr>` and similar). **Without it, opening inbound brings no peers** — the classic cause of "I opened it and nothing happened."
+Most clients offer an option to specify the advertised address (`--nat extip:<addr>` and similar). **Without it, opening inbound brings no peers**. This is the classic cause of "I opened it and nothing happened."
 
 Since each Pod must advertise a different address, you need initialization logic where each Pod discovers its own address via the StatefulSet ordinal or the downward API.
 
-## Resources — Sustained Load, Not Bursts
+## Resources: Sustained Load, Not Bursts
 
 Blockchain nodes **use CPU and IOPS steadily.** Blocks keep arriving, verification keeps happening, state keeps updating.
 
 | Item | Recommendation |
 |---|---|
 | **CPU limit** | **Be careful.** Throttling turns into block-processing delay, and for validators performance ties to rewards. See the throttling diagnosis in [Kernel Tuning](../kernel/03-eks-node-tuning.md) |
-| **Memory** | Clients use a lot of memory for state caches. **Be generous with limits** — OOM risks DB corruption |
+| **Memory** | Clients use a lot of memory for state caches. **Be generous with limits**, since OOM risks DB corruption |
 | **request = limit** | Guaranteed QoS lowers eviction priority |
-| **Dedicated nodes** | Separate from other workloads with taints/tolerations — prevents noisy neighbors |
+| **Dedicated nodes** | Separate from other workloads with taints/tolerations to prevent noisy neighbors |
 | **File descriptors** | A socket per peer connection. Consider raising the limit ([Kernel Tuning](../kernel/03-eks-node-tuning.md)) |
 
-**The CPU limit judgment matters most.** As seen in the [kernel documents](../kernel/01-container-primitives.md), a CPU limit is a bandwidth limit, so exhausting the quota within a period forces a stop. If block processing lands in that window, latency appears — and for a validator, a missed opportunity.
+**The CPU limit judgment matters most.** As seen in the [kernel documents](../kernel/01-container-primitives.md), a CPU limit is a bandwidth limit, so exhausting the quota within a period forces a stop. If block processing lands in that window, latency appears, and for a validator, a missed opportunity.
 
 Dedicated nodes reduce tenant contention, but kubelet, CNI/CSI, observability and OS services still share the node. Preserve reservations and headroom even if application CPU limits are omitted; test latency, sync and node health under sustained load.
 
-## Ethereum Nodes — A Two-Client Structure
+## Ethereum Nodes: A Two-Client Structure
 
 After Ethereum's move to PoS, a node is **two processes.**
 
@@ -277,7 +277,7 @@ They communicate over the **Engine API** and share a JWT secret.
 | **Two containers in one Pod** | Simple `localhost` communication, scheduled and restarted together. Resources requested together |
 | **Separate StatefulSets** | Independent scaling and upgrades. Requires managing the Engine API connection |
 
-**One Pod is the default choice** — the two clients operate as a 1:1 pair and Engine API latency affects performance, so `localhost` within a Pod is natural.
+**One Pod is the default choice**: the two clients operate as a 1:1 pair and Engine API latency affects performance, so `localhost` within a Pod is natural.
 
 **Client diversity** is also worth mentioning. So that a bug in one client does not affect the whole network, the community recommends distributing clients. If you run several nodes, using **different client combinations** is defensive.
 
@@ -288,13 +288,13 @@ The following are **dated protocol events**, not a guaranteed future cadence. Ch
 | Date | Upgrade | Operational significance |
 |---|---|---|
 | **May 7, 2025** | **Pectra** mainnet | EIP-7251 raised the maximum effective balance for eligible validators to 2,048 ETH; consolidation changes validator records, not necessarily process/VM count |
-| **December 3, 2025** | **Fusaka** mainnet (epoch 411392) | The headline is **PeerDAS** (Peer Data Availability Sampling) — verifying blob data by sampling rather than in full. Expands blob throughput |
+| **December 3, 2025** | **Fusaka** mainnet (epoch 411392) | The headline is **PeerDAS** (Peer Data Availability Sampling): verifying blob data by sampling rather than in full. Expands blob throughput |
 
 A validator identity/key is **not a separate process or VM**: one validator client can manage many keys on a shared beacon-node stack. EIP-7251 consolidation can reduce validator records/key-management work, but does not prove proportional infrastructure or cost savings. Measure the actual client topology and preserve slashing protection during key migration.
 
 **PeerDAS affects storage and bandwidth planning.** A change in blob handling changes how much data a node retains and transfers, so existing sizing baselines should be revisited.
 
-## Hyperledger Fabric — Operating a Permissioned Chain
+## Hyperledger Fabric: Operating a Permissioned Chain
 
 Fabric is different in character. Being **a consortium chain with known participants**, its consensus and operational characteristics differ, as seen in [Fundamentals](./01-fundamentals.md).
 
@@ -315,7 +315,7 @@ Fabric is different in character. Being **a consortium chain with known particip
 
 - MSP signing certificates and keys
 - TLS certificates (for peers, orderers, and the CA each)
-- **Expiry management** — certificate expiry causes real outages
+- **Expiry management**: certificate expiry causes real outages
 
 Certificate expiry is an important outage risk, but no frequency dataset is supplied here. Monitor and rehearse renewal for MSP and TLS credentials, and validate compatible operator/client versions.
 
@@ -326,7 +326,7 @@ Certificate expiry is an important outage risk, but no frequency dataset is supp
 | [hyperledger-labs/fabric-operator](https://github.com/hyperledger-labs/fabric-operator) | CNCF operator pattern. CA, Peer, Orderer, and Console declared as CRs |
 | [bevel-operator-fabric](https://github.com/hyperledger-bevel/bevel-operator-fabric) | From the Hyperledger Bevel project. Supports Fabric 2.3–3.x |
 
-An operator turns repetitive configuration into applying declarative resources. **Starting with an operator is recommended over assembling YAML by hand** — Fabric's configuration complexity makes manual management error-prone.
+An operator turns repetitive configuration into applying declarative resources. **Starting with an operator is recommended over assembling YAML by hand**, because Fabric's configuration complexity makes manual management error-prone.
 
 ### Ethereum vs Fabric
 
@@ -350,7 +350,7 @@ An operator turns repetitive configuration into applying declarative resources. 
 |---|---|
 | **1. Subscribe** | Protocol official blog, client release notes, operator communities |
 | **2. Register the date** | Put the fork block/time on the team calendar. **Set a target date with margin** |
-| **3. Validate on testnet** | Testnets fork before mainnet — validate there |
+| **3. Validate on testnet** | Testnets fork before mainnet; validate there |
 | **4. Prepare images** | Build and scan images on a fork-supporting version |
 | **5. Upgrade sequentially** | **Complete before** the fork point. With several nodes, one at a time |
 | **6. Monitor at the fork** | Chain height, peer count, whether the fork was recognized |
@@ -391,11 +391,11 @@ Next: [Amazon Managed Blockchain](./03-managed-blockchain.md) examines how much 
 
 ## References
 
-- [Ethereum — Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)
-- [EIP-7870: Hardware and Bandwidth Recommendations](https://eips.ethereum.org/EIPS/eip-7870) — official hardware guidance
+- [Ethereum: Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)
+- [EIP-7870: Hardware and Bandwidth Recommendations](https://eips.ethereum.org/EIPS/eip-7870): official hardware guidance
 - [Ethereum roadmap](https://ethereum.org/roadmap/) / [Pectra](https://ethereum.org/roadmap/pectra/) / [Fusaka](https://ethereum.org/roadmap/fusaka/)
 - [Pectra Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/04/23/pectra-mainnet)
 - [Fusaka Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/11/06/fusaka-mainnet-announcement)
-- [Hyperledger Fabric — Deploying a production network](https://hyperledger-fabric.readthedocs.io/en/latest/deployment_guide_overview.html)
+- [Hyperledger Fabric: Deploying a production network](https://hyperledger-fabric.readthedocs.io/en/latest/deployment_guide_overview.html)
 - [hyperledger-labs/fabric-operator](https://github.com/hyperledger-labs/fabric-operator) / [bevel-operator-fabric](https://github.com/hyperledger-bevel/bevel-operator-fabric)
 - [EBS gp2 vs gp3 Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) / [EKS Node Kernel Tuning](../kernel/03-eks-node-tuning.md)
