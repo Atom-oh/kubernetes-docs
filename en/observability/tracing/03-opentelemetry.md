@@ -1487,7 +1487,7 @@ This is an attribute inventory, not Collector processor YAML. A Resource identif
 
 ### 2. Sampling Strategy
 
-For an advanced example—errors, >2-second latency, a 50% critical-service condition and 5% baseline—treat each positive rule as an OR condition, not first-match priority or a reserved quota. Another rule can retain a trace. If exclusive classes or a span-rate budget are required, design and test that policy explicitly. Head sampling, dropped spans, shard changes and late arrival remain separate limits.
+For an advanced example (errors, >2-second latency, a 50% critical-service condition and 5% baseline), treat each positive rule as an OR condition, not first-match priority or a reserved quota. Another rule can retain a trace. If exclusive classes or a span-rate budget are required, design and test that policy explicitly. Head sampling, dropped spans, shard changes and late arrival remain separate limits.
 
 
 ```yaml

@@ -291,7 +291,7 @@ Start with interoperability, investigation workflow, security/data residency, op
 
 ### 1. Instrumentation Strategy
 
-Instrument meaningful service boundaries—HTTP/gRPC, database clients, messaging and external APIs—using the supported libraries. Add internal/cache/file spans where they answer a concrete diagnostic question. Avoid automatically creating a span for every tiny function or exposing sensitive request/query bodies.
+Instrument meaningful service boundaries (HTTP/gRPC, database clients, messaging and external APIs) using the supported libraries. Add internal/cache/file spans where they answer a concrete diagnostic question. Avoid automatically creating a span for every tiny function or exposing sensitive request/query bodies.
 
 Plan context propagation, span kinds, error-status behavior and asynchronous links along with export. Instrumentation coverage and the sampling decision are separate controls.
 

@@ -235,6 +235,6 @@ Amazon EKS에서 효과적인 관측성을 구현하기 위한 전략:
 - [Grafana OpenTelemetry documentation](https://grafana.com/docs/opentelemetry/)
 - [Amazon EKS monitoring and logging](https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html)
 - [AWS Observability Best Practices](https://aws-observability.github.io/observability-best-practices/)
-- [SRE Workbook — Monitoring](https://sre.google/workbook/monitoring/)
+- [SRE Workbook: Monitoring](https://sre.google/workbook/monitoring/)
 - [Datadog Watchdog](https://docs.datadoghq.com/watchdog/)
 - [Dynatrace Intelligence](https://docs.dynatrace.com/docs/dynatrace-intelligence)

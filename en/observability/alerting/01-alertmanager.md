@@ -115,7 +115,7 @@ The main configuration is `alertmanager.yaml` below. Its receiver credentials ar
 
 Create **two distinct Slack incoming-webhook URLs**, each already configured in Slack for its intended channel: `slack-normal-webhook-url` for `#alerts` and `slack-critical-webhook-url` for `#critical-alerts`. An incoming webhook cannot override its configured channel through a `channel` field. Both files are keys in `notification-credentials`, mounted by the stack, standalone and manual profiles. The URL-to-channel setup is a provider prerequisite; local parsing does not verify Slack delivery.
 
-**Stack profile — `kube-prometheus-stack-values.yaml`:**
+**Stack profile (`kube-prometheus-stack-values.yaml`):**
 
 ```yaml
 grafana:
@@ -225,7 +225,7 @@ kubeEtcd:
   enabled: false
 ```
 
-**Standalone profile — `alertmanager-values.yaml`:**
+**Standalone profile (`alertmanager-values.yaml`):**
 
 ```yaml
 replicaCount: 3
