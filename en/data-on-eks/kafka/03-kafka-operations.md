@@ -1,6 +1,6 @@
 # Part 3: Kafka Operations
 
-> **Last Updated**: September 12, 2026, Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: October 16, 2026, Strimzi 1.3.0 / Kafka 4.3.1.
 > **Validation**: Current release documentation/source, local CRD/merge-patch checks, proposal generation/JSON extraction, Decimal calculations and CLI options. No Kafka reassignment, upgrade or AWS volume changes were executed.
 
 This chapter assumes the authenticated Kafka deployment and broker-only pool from [Part 2](./02-strimzi-operator.md). Operational commands can move real partitions and change resources: inspect current settings, placement and proposals before executing. Do not apply broker-scaling procedures unchanged to controller-role pools.
@@ -103,11 +103,11 @@ kubectl -n kafka get pvc -l strimzi.io/cluster=my-cluster
 
 Expansion depends on the StorageClass/CSI and filesystem. PVC shrink, class changes and volume-ID changes are not this operation. Do not assign kraftMetadata: shared to two volumes.
 
-Before disk removal, inspect replica and metadata placement and move data away. Strimzi 1.2 supports broker-local JBOD movement through remove-disks rebalance mode, with its own fields and prerequisites. deleteClaim: false/Retain is not a backup or recovery proof. Do not manually run kafka-storage.sh format on Operator-managed data.
+Before disk removal, inspect replica and metadata placement and move data away. Strimzi 1.3 supports broker-local JBOD movement through remove-disks rebalance mode, with its own fields and prerequisites. deleteClaim: false/Retain is not a backup or recovery proof. Do not manually run kafka-storage.sh format on Operator-managed data.
 
 ## 4. Broker Scaling: Manual and Automatic Paths
 
-These procedures target **broker-only pools**. Strimzi 1.2 configures a static controller quorum; do not scale controller-role pools the same way. Upstream Kafka dynamic-quorum capability is distinct from Operator support.
+These procedures target **broker-only pools**. Strimzi 1.3 configures a static controller quorum; do not scale controller-role pools the same way. Upstream Kafka dynamic-quorum capability is distinct from Operator support.
 
 | Configuration | Replica-count change on an existing pool |
 | --- | --- |
@@ -390,7 +390,7 @@ Choose an Operator combination supporting **both the current and target Kafka ve
 
 When metadataVersion is omitted, Strimzi can automatically update it to the default after upgrading Kafka binaries. Changing both fields in one update does not inherently corrupt the quorum.
 
-Explicitly retaining the previous metadataVersion can provide a validation/recovery decision window before increasing it. This example upgrades **an existing Kafka 4.2.1 / metadata 4.2-IV1** cluster to 4.3.1 under Strimzi 1.2. It is not an instruction to lower metadata on the already-4.3.1 Part 2 lab.
+Explicitly retaining the previous metadataVersion can provide a validation/recovery decision window before increasing it. This example upgrades **an existing Kafka 4.2.1 / metadata 4.2-IV1** cluster to 4.3.1 under Strimzi 1.3. It is not an instruction to lower metadata on the already-4.3.1 Part 2 lab.
 
 **`upgrade-binaries.patch.yaml`**
 
@@ -435,7 +435,7 @@ Not every spec change restarts Pods: dynamic Kafka configuration or supported vo
 
 ## 8. PDB and Failure Handling
 
-Strimzi 1.2's default Kafka PDB is **one per Kafka cluster, covering Kafka Pods across its node pools**, not one per pool. If generation settings or custom PDBs differ, inspect actual selectors and minAvailable/maxUnavailable.
+Strimzi 1.3's default Kafka PDB is **one per Kafka cluster, covering Kafka Pods across its node pools**, not one per pool. If generation settings or custom PDBs differ, inspect actual selectors and minAvailable/maxUnavailable.
 
 PDBs constrain voluntary eviction. They do not prevent node/AZ failures, direct Pod deletion or every Operator action. min.insync.replicas is not a single switch preventing every form of data loss.
 
@@ -454,7 +454,7 @@ Additional components such as Strimzi Drain Cleaner have their own supported mod
 - [Schema Registry](./04-schema-registry.md)
 - [Kafka overview](./README.md)
 - [Quiz](../../quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
-- [Strimzi 1.2 operations](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3 operations](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Kafka 4.3 design](https://kafka.apache.org/43/design/design/)
 - [Kafka 4.3.1 log directory selection](https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala)
 - [Kafka reassignment command implementation](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java)

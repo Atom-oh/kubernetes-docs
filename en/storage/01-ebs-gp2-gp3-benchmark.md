@@ -1,7 +1,7 @@
 # EBS gp2 vs gp3 Measured Benchmark
 
 > **Recorded Test Environment**: Kubernetes 1.36 (Amazon EKS), EBS CSI driver, fio 3.36
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 The AWS one-liner — "move gp2 to gp3, save 20%, get equal or better performance" — is famous, but a graph showing **when and in what shape** that difference appears on a Kubernetes PVC is hard to find. This article attaches **one 100 GiB gp2 PVC and one 100 GiB gp3 PVC** to a single EKS node and hammers both with fio for 45 minutes. The point is not "gp2 is slow." It is this: **gp2 is indistinguishable from gp3 for 33 minutes, and then drops to one tenth within a single second.** These are reported results from the original run, not guaranteed outcomes of a repeat. Record initial credits, driver/image versions and node conditions when comparing runs.
 
@@ -37,7 +37,7 @@ The `nodeSelector` pins m5.xlarge for exactly one reason: its instance-level EBS
 
 ### Deployment Manifest
 
-The recorded run used `alpine:3.20` / fio 3.36. Alpine 3.20 has left normal support, so the **rerun** example below uses 3.24.1. The package version can change: save the printed fio version and image digest, and keep new results separate from historical measurements. This is for regular EC2 nodes with `ebs.csi.aws.com` and its IAM permissions configured, not the EKS Auto Mode provisioner.
+The recorded run used `alpine:3.20` / fio 3.36. Alpine 3.20 has left normal support, so the **rerun** example below uses 3.24.2. The package version can change: save the printed fio version and image digest, and keep new results separate from historical measurements. This is for regular EC2 nodes with `ebs.csi.aws.com` and its IAM permissions configured, not the EKS Auto Mode provisioner.
 
 ```yaml
 apiVersion: v1
@@ -105,7 +105,7 @@ spec:
     node.kubernetes.io/instance-type: m5.xlarge
   containers:
     - name: fio
-      image: alpine:3.24.1
+      image: alpine:3.24.2
       command: ["sh", "-c", "apk add --no-cache fio && fio --version && sleep infinity"]
       resources:
         requests: { cpu: "1", memory: 1Gi }

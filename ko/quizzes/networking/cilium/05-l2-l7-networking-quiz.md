@@ -1,6 +1,6 @@
 # Cilium L2–L7 네트워킹 및 로드 밸런싱 퀴즈
 
-> **Cilium 1.20.1 · CLI 0.20.0 · 2026-09-12**
+> **Cilium 1.20.3 · CLI 0.20.1 · 2026-10-16**
 
 ## 객관식 문제
 
@@ -288,7 +288,7 @@ hubble:
 : "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
-helm install cilium cilium/cilium --version 1.20.1 --namespace kube-system \
+helm install cilium cilium/cilium --version 1.20.3 --namespace kube-system \
   --values lb-values.yaml \
   --set-string k8sServiceHost="$API_SERVER_HOST" \
   --set k8sServicePort="$API_SERVER_PORT" \

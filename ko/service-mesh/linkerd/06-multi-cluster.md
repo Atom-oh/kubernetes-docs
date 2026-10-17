@@ -1,6 +1,6 @@
 # Linkerd 다중 클러스터
 
-> **검토 기준**: 2026년 9월 11일 · Linkerd edge-26.9.1 / chart 2026.9.1 · Gateway API 1.5.1
+> **검토 기준**: 2026년 10월 16일 · Linkerd edge-26.10.1 / chart 2026.10.1 · Gateway API 1.5.1
 
 Linkerd는 선택한 서비스 정보를 cluster 경계 너머로 미러링합니다. Control plane의 discovery 경로와 적합한 data plane network 경로가 모두 필요합니다. Cluster를 합치거나 애플리케이션 데이터를 복제하거나 모든 요청을 shadow test용으로 복제하는 기능은 아닙니다.
 
@@ -100,11 +100,11 @@ helm repo add linkerd-edge https://helm.linkerd.io/edge
 helm repo update linkerd-edge
 # Initially install gateway/remote-access prerequisites, without peer controllers.
 helm --kube-context west upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 helm --kube-context east upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 kubectl --context west -n linkerd-multicluster get svc linkerd-gateway -o yaml
@@ -132,7 +132,7 @@ linkerd --context west multicluster link-gen --cluster-name west > west-link.yam
 # Review public metadata and target endpoint without printing credential values.
 kubectl --context east apply -f west-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-east-links.yaml \
   --wait --timeout 10m
 kubectl --context east -n linkerd-multicluster get links.multicluster.linkerd.io
@@ -163,7 +163,7 @@ umask 077
 linkerd --context east multicluster link-gen --cluster-name east > east-link.yaml
 kubectl --context west apply -f east-link.yaml
 helm --kube-context west upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-west-links.yaml \
   --wait --timeout 10m
 linkerd --context west multicluster check
@@ -360,7 +360,7 @@ linkerd --context west multicluster link-gen --cluster-name west \
   --gateway=false > west-flat-link.yaml
 kubectl --context east apply -f west-flat-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f flat-base-values.yaml -f flat-east-links.yaml \
   --wait --timeout 10m
 kubectl --context west -n mc-demo label service/web \
@@ -554,8 +554,8 @@ openssl crl2pkcs7 -nocrl -certfile east-trust.pem | openssl pkcs7 -print_certs -
 - [Multicluster reference](https://linkerd.io/docs/reference/multicluster/)와 [설치](https://linkerd.io/docs/tasks/installing-multicluster/)
 - [Pod-to-Pod mode](https://linkerd.io/docs/tasks/pod-to-pod-multicluster/)와 [federated service](https://linkerd.io/docs/tasks/federated-services/)
 - [Deprecated failover extension](https://linkerd.io/docs/tasks/automatic-failover/)
-- [해당 버전 link-gen 구현](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/cmd/link-gen.go)
-- [해당 버전 service-mirror endpoint 처리](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/service-mirror/cluster_watcher.go)
+- [해당 버전 link-gen 구현](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/cmd/link-gen.go)
+- [해당 버전 service-mirror endpoint 처리](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/service-mirror/cluster_watcher.go)
 - [AWS Load Balancer Controller annotation](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
 - [EKS Auto Mode NLB](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)
 - [VPC peering](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html)과 [AWS PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)

@@ -1,7 +1,7 @@
 # Infrastructure Advanced
 
-> **Review baseline**: Terraform 1.15.7, AWS Provider 6.64.0, AWS Load Balancer Controller 3.5.0, Boto3 1.43.92
-> **Last reviewed**: September 11, 2026. Examples were checked locally with schemas and test doubles; no live AWS cutover was performed.
+> **Review baseline**: Terraform 1.15.7, AWS Provider 6.69.1, AWS Load Balancer Controller 3.5.0, Boto3 1.43.92
+> **Last reviewed**: October 16, 2026. Examples were checked locally with schemas and test doubles; no live AWS cutover was performed.
 
 < [Previous: Terraform Infrastructure](01-infrastructure-setup.md) | [Table of Contents](README.md) | [Next: CI Pipelines](03-ci-pipelines.md) >
 
@@ -39,7 +39,7 @@ terraform {
   required_version = ">= 1.10.0"
   backend "s3" {}
   required_providers {
-    aws = { source = "hashicorp/aws", version = "6.64.0" }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
 provider "aws" { region = var.region }
@@ -270,7 +270,7 @@ terraform {
   required_version = ">= 1.10.0"
   backend "s3" {}
   required_providers {
-    aws = { source = "hashicorp/aws", version = "6.64.0" }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
 provider "aws" { region = var.region }

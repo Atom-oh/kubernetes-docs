@@ -1,7 +1,7 @@
 # 고급 주제 및 실제 사례
 
-> **검토 기준**: Cilium 1.20.2, Cilium CLI 0.20.1, Hubble CLI 1.20.2.
-> **최종 검토**: 2026년 10월 15일. Cilium 1.20의 Kubernetes 호환 범위는 1.33–1.36이며 아래 과거 측정은 원래 환경을 유지합니다.
+> **검토 기준**: Cilium 1.20.3, Cilium CLI 0.20.1, Hubble CLI 1.20.2.
+> **최종 검토**: 2026년 10월 16일. Cilium 1.20의 Kubernetes 호환 범위는 1.33–1.36이며 아래 과거 측정은 원래 환경을 유지합니다.
 
 ## 실습 환경 설정
 
@@ -204,7 +204,7 @@ Egress Gateway는 선택된 트래픽을 예측 가능한 게이트웨이 주소
 
 ### 문서화된 과거 확장성 실험
 
-공식 확장성 보고서는 Google Cloud의 **워커 1,000개**, 컨트롤러 3개와 커널 **5.4.0-1009-gcp**를 설명합니다. 설정 부분에 Cilium 버전이 명시되지 않았으므로 이를 Cilium 1.20.2 벤치마크로 다시 표시하면 안 됩니다. 해당 워크로드의 자원 소비와 수렴을 다루는 보고서이며 현재 지원 행렬이나 용량 보장이 아닙니다.
+공식 확장성 보고서는 Google Cloud의 **워커 1,000개**, 컨트롤러 3개와 커널 **5.4.0-1009-gcp**를 설명합니다. 설정 부분에 Cilium 버전이 명시되지 않았으므로 이를 Cilium 1.20.3 벤치마크로 다시 표시하면 안 됩니다. 해당 워크로드의 자원 소비와 수렴을 다루는 보고서이며 현재 지원 행렬이나 용량 보장이 아닙니다.
 
 상태 점검 변경과 높은 롤아웃 동시성은 그 실험의 선택입니다. 인용할 때 실제 테스트 조건을 유지하고 운영 구성은 따로 검증합니다.
 
@@ -323,19 +323,19 @@ kubectl delete namespace "$PERF_NS"
 
 ## 공식 근거
 
-- [Tuning guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/performance/tuning.rst)
-- [Chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/install/kubernetes/cilium/values.yaml)
-- [Chart ConfigMap template](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/install/kubernetes/cilium/templates/cilium-configmap.yaml)
-- [Map sizing](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/ebpf/maps.rst)
-- [Map sizing implementation](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/pkg/option/config.go)
-- [Upgrade guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/upgrade.rst)
-- [Upgrade limitations](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/upgrade-warning.rst)
-- [BGP configuration](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst)
-- [BGP operation](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane-operation.rst)
-- [Bandwidth Manager](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/kubernetes/bandwidth-manager.rst)
-- [Egress Gateway](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/egress-gateway/egress-gateway.rst)
-- [Historical scalability report](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/performance/scalability/report.rst)
-- [Community roadmap](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/community/roadmap.rst)
+- [Tuning guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/operations/performance/tuning.rst)
+- [Chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Chart ConfigMap template](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/install/kubernetes/cilium/templates/cilium-configmap.yaml)
+- [Map sizing](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/ebpf/maps.rst)
+- [Map sizing implementation](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/pkg/option/config.go)
+- [Upgrade guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/operations/upgrade.rst)
+- [Upgrade limitations](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/operations/upgrade-warning.rst)
+- [BGP configuration](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst)
+- [BGP operation](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane-operation.rst)
+- [Bandwidth Manager](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/kubernetes/bandwidth-manager.rst)
+- [Egress Gateway](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/egress-gateway/egress-gateway.rst)
+- [Historical scalability report](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/operations/performance/scalability/report.rst)
+- [Community roadmap](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/community/roadmap.rst)
 - [Linux IP sysctls](https://www.kernel.org/doc/html/latest/networking/ip-sysctl.html)
 
 [메인 페이지로 돌아가기](README.md)

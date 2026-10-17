@@ -1,7 +1,7 @@
 # Part 8: Best Practices
 
-> **Review baseline**: Kafka 4.3.1, Strimzi 1.2.0\
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: Kafka 4.3.1, Strimzi 1.3.0\
+> **Last reviewed**: October 16, 2026
 
 This chapter turns the preceding examples into operational decisions to validate.
 The [benchmark chapter](./09-kafka-benchmark.md) follows it; a checklist is not a
@@ -383,7 +383,7 @@ off-heap, page cache and other workloads in measurements. There is no universal
 “4–8 GB heap is enough” or memory-optimized-instance cost winner.
 
 Kafka tiered storage has been production-ready since 3.9 and is supported by
-Strimzi 1.2. It still needs a compatible **RemoteStorageManager plugin**, its
+Strimzi 1.3. It still needs a compatible **RemoteStorageManager plugin**, its
 dependencies in the image, remote access credentials/permissions, retention,
 cleanup and recovery configuration. Strimzi's custom integration uses
 `spec.kafka.tieredStorage` with its plugin class/path/config. Turning on
@@ -423,7 +423,7 @@ risks, but spreading pods alone does not prevent correlated reclamations.
 Combine broker rack-aware replica placement, node/AZ distribution, replacement
 capacity in the EBS volume's AZ and tested recovery/headroom.
 
-Strimzi 1.2's PDB covers the Kafka cluster's pods and constrains voluntary eviction.
+Strimzi 1.3's PDB covers the Kafka cluster's pods and constrains voluntary eviction.
 It does not guarantee quorum during forced deletion, node failure, Spot reclamation
 or every Operator rolling operation. RF=3/minISR=2, a PDB and On-Demand controllers
 are design inputs, not a proof of zero loss or downtime.
@@ -453,7 +453,7 @@ encrypted-volume inspection, failure recovery or application correctness tests.
 - [Kafka 4.3 tiered storage](https://kafka.apache.org/43/operations/tiered-storage/)
 - [Kafka 4.3.1 keyed partitioner](https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java)
 - [Kafka 4.3.1 topic-description output](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java)
-- [Strimzi 1.2.0 deployment, TLS and tiered-storage guide](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0 deployment, TLS and tiered-storage guide](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Kubernetes NetworkPolicy selector semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [EBS encryption by default](https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html)
 - [EKS Auto Mode StorageClass parameters](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)

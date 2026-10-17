@@ -2,7 +2,7 @@
 
 > **Difficulty**: Beginner
 > **Estimated Time**: 45 minutes
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 ## Learning Objectives
 - Practice Linux process management commands
@@ -202,7 +202,7 @@ metadata:
 spec:
   containers:
   - name: memory-demo
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         memory: "64Mi"

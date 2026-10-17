@@ -1,6 +1,6 @@
 # Runtime Security Quiz
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 
 This quiz tests your understanding of Falco, Seccomp, AppArmor, eBPF-based security, and EKS runtime security.
 
@@ -19,7 +19,7 @@ This quiz tests your understanding of Falco, Seccomp, AppArmor, eBPF-based secur
 **Answer: B. System call (syscall) monitoring**
 
 **Explanation:**
-Falco commonly evaluates Linux syscall events against rules; plugins can provide other event sources. In 0.44.1, container fields come from the container plugin. Verify modern_ebpf kernel/BTF requirements and metadata collection.
+Falco commonly evaluates Linux syscall events against rules; plugins can provide other event sources. In 0.45.0, container fields come from the container plugin. Verify modern_ebpf kernel/BTF requirements and metadata collection.
 
 </details>
 

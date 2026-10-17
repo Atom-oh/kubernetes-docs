@@ -1,6 +1,6 @@
 # Cilium 소개 및 기본 개념 퀴즈
 
-> **기준**: Cilium 1.20.1 / CLI 0.20.0. **마지막 업데이트**: 2026년 9월 12일
+> **기준**: Cilium 1.20.3 / CLI 0.20.1. **마지막 업데이트**: 2026년 10월 16일
 
 ## 객관식 문제
 
@@ -228,7 +228,7 @@ Kubelet은 CRI로 런타임과 통신하고 런타임이 CNI를 호출합니다.
 
 ## 실습 문제
 
-16. 설치한 CLI, 준비한 lab values, 명시적인 context로 Cilium 1.20.1을 새로 설치하는 명령을 작성하세요.
+16. 설치한 CLI, 준비한 lab values, 명시적인 context로 Cilium 1.20.3을 새로 설치하는 명령을 작성하세요.
 
 <details>
 <summary>정답 보기</summary>
@@ -238,7 +238,7 @@ Kubelet은 CRI로 런타임과 통신하고 런타임이 CNI를 호출합니다.
 ```bash
 CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
 cilium version --client
-cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.1 \
+cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.3 \
   --values cilium-lab-values.yaml
 cilium status --context "$CILIUM_LAB_CONTEXT" --wait
 ```

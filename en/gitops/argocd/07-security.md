@@ -1,7 +1,7 @@
 # ArgoCD Security
 
-> **Reviewed Against**: Argo CD 3.5.2, Sealed Secrets 0.40.0/chart 2.20.0, ESO 2.10.0, AVP 1.18.1, KSOPS 4.5.1, SOPS 3.13.3
-> **Last Updated**: September 11, 2026
+> **Reviewed Against**: Argo CD 3.5.2, Sealed Secrets 0.40.0/chart 2.20.0, ESO 2.10.0 (updated to 2.12.0 after release-note review; examples not re-run), AVP 1.18.1, KSOPS 4.5.1, SOPS 3.13.3
+> **Last Updated**: October 16, 2026
 
 ## Table of Contents
 - [SSO Integration](#sso-integration)
@@ -298,7 +298,7 @@ Review and commit only the generated SealedSecret. A truncated Ag... sample is n
 
 ### External Secrets Operator
 
-ESO synchronizes external secret values into destination-cluster Secrets; it does not encrypt plaintext in Git. The 2.10.0 examples use external-secrets.io/v1. AWS jwt.serviceAccountRef below uses IRSA: provision that namespace’s ServiceAccount, IAM role annotation and OIDC trust. Pod Identity uses the controller ServiceAccount association/SDK credential chain instead of this jwt configuration.
+ESO synchronizes external secret values into destination-cluster Secrets; it does not encrypt plaintext in Git. The 2.12.0 examples use external-secrets.io/v1. AWS jwt.serviceAccountRef below uses IRSA: provision that namespace’s ServiceAccount, IAM role annotation and OIDC trust. Pod Identity uses the controller ServiceAccount association/SDK credential chain instead of this jwt configuration.
 
 Sync secrets from external providers:
 
@@ -306,7 +306,7 @@ Sync secrets from external providers:
 # Install External Secrets Operator
 helm repo add external-secrets https://charts.external-secrets.io
 helm upgrade --install external-secrets external-secrets/external-secrets \
-  --version 2.10.0 --namespace external-secrets --create-namespace --wait --timeout 5m
+  --version 2.12.0 --namespace external-secrets --create-namespace --wait --timeout 5m
 ```
 
 IRSA ServiceAccount example: configure the real role ARN/OIDC trust and allow only required secret ARNs for GetSecretValue/DescribeSecret and, when applicable, KMS Decrypt. For Vault, bind its role to this SA/namespace and audience=vault, with a restricted KV policy and appropriate reviewer setup. Vault 1.21+ requires role audiences.

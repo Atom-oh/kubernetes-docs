@@ -1,6 +1,6 @@
 # Amazon EKS 비용 최적화 퀴즈
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 예시는 독립적인 구성 대안이며 실제 실행한 배포나 실측 절감 결과가 아닙니다. 기존 리소스 소유 구성에 변경을 병합하고 같은 워크로드에 모든 예시를 차례로 덮어쓰지 않습니다. 자리표시자 이미지와 애플리케이션 소유 hook을 바꾸고 계정·context·리전·컨트롤러 호환성을 확인한 뒤 운영 전에 동작을 검증합니다.
 
@@ -1429,7 +1429,7 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
 
 짧은 eksctl 명령은 생성 예시이며 운영 네트워크/IAM 기본 구성이 아닙니다. AWS 카탈로그에서 EKS 버전을 선택하고 [생성 가이드](../../eks/02-eks-cluster-creation.md)에 따라 VPC와 API endpoint 노출을 검토하며 컨트롤러 권한은 전용 identity에 둡니다. 노드 그룹 크기 범위는 autoscaler를 설치하거나 지출 상한을 만들지 않습니다. 표준/확장 지원 요금, 선택적인 Provisioned Control Plane 용량, 공유 관리 구성 요소의 의존성도 비교에 포함합니다.
 
-Terraform은 확인한 모듈 **21.25.0**을 사용하며 최소 AWS provider는 **6.59**, 예시 고정 버전은 6.64.0입니다. 환경 기본값을 추측하지 않도록 입력값을 필수로 두었습니다. 소유한 private 네트워크/API 연결 경로, 검토한 access entry, 호환·고정 애드온과 IAM 연결, 관리형 노드 그룹을 제공해야 합니다. 표준 EC2 노드에 맞는 CNI/DNS/proxy 경로가 필요하며 Auto Mode 예시는 아닙니다. autoscaler와 desired-size 소유권을 조율하고 격리 모델에 따라 state/provider identity를 분리합니다. plan/apply 실행이나 운영 준비 완료를 주장하지 않습니다.
+Terraform은 확인한 모듈 **21.25.0**을 사용하며 최소 AWS provider는 **6.59**, 예시 고정 버전은 6.69.1입니다. 환경 기본값을 추측하지 않도록 입력값을 필수로 두었습니다. 소유한 private 네트워크/API 연결 경로, 검토한 access entry, 호환·고정 애드온과 IAM 연결, 관리형 노드 그룹을 제공해야 합니다. 표준 EC2 노드에 맞는 CNI/DNS/proxy 경로가 필요하며 Auto Mode 예시는 아닙니다. autoscaler와 desired-size 소유권을 조율하고 격리 모델에 따라 state/provider identity를 분리합니다. plan/apply 실행이나 운영 준비 완료를 주장하지 않습니다.
 
 **구현 방법:**
 
@@ -1455,7 +1455,7 @@ Terraform은 확인한 모듈 **21.25.0**을 사용하며 최소 AWS provider는
      required_providers {
        aws = {
          source  = "hashicorp/aws"
-         version = "= 6.64.0"
+         version = "= 6.69.1"
        }
      }
    }
@@ -1949,7 +1949,7 @@ Kubernetes 레이블, AWS 리소스 태그, 활성화한 청구 태그는 서로
    ```
 
 3. **Kubecost 설치 및 구성**:
-[본문](../../eks/07-eks-cost-optimization.md)의 검증한 Kubecost 3.2.4 설치 또는 [EKS06 6번 문항](06-eks-monitoring-logging-quiz.md)의 OpenCost 1.121.2/chart 2.5.31을 사용합니다. Kubecost 3.x는 ClickHouse/finops-agent 직접 수집을 사용하므로 2.x Prometheus values나 명령행 라이선스 토큰을 사용하지 않습니다. 소유 배포 하나를 재사용하고 마이그레이션·라이선스·스토리지 요구를 검토합니다.
+[본문](../../eks/07-eks-cost-optimization.md)의 검증한 Kubecost 3.3.1 설치 또는 [EKS06 6번 문항](06-eks-monitoring-logging-quiz.md)의 OpenCost 1.121.2/chart 2.5.31을 사용합니다. Kubecost 3.x는 ClickHouse/finops-agent 직접 수집을 사용하므로 2.x Prometheus values나 명령행 라이선스 토큰을 사용하지 않습니다. 소유 배포 하나를 재사용하고 마이그레이션·라이선스·스토리지 요구를 검토합니다.
 
 4. **Legacy CUR 전달 설정**:
    ```bash
@@ -2271,7 +2271,7 @@ Q4의 검증한 context·계정·태그 범위 수집 스크립트를 재사용�
 **구현 방법:**
 
 1. **Kubecost 설치 및 구성**:
-Q5와 [본문](../../eks/07-eks-cost-optimization.md)의 검증한 설치/할당 데이터 전제 조건을 재사용합니다. Kubecost 3.2.4는 현재 `kubecost/kubecost` chart와 ClickHouse/직접 agent 구조를 사용하며 기능은 에디션/설정에 따릅니다. OpenCost는 별도 선택지입니다. 기존 소유 구성에 두 번째 수집기를 중복 배포하지 않습니다.
+Q5와 [본문](../../eks/07-eks-cost-optimization.md)의 검증한 설치/할당 데이터 전제 조건을 재사용합니다. Kubecost 3.3.1은 현재 `kubecost/kubecost` chart와 ClickHouse/직접 agent 구조를 사용하며 기능은 에디션/설정에 따릅니다. OpenCost는 별도 선택지입니다. 기존 소유 구성에 두 번째 수집기를 중복 배포하지 않습니다.
 
 2. **Karpenter 설치 및 구성**:
 다음을 `karpenter-values.yaml`로 저장하고 계정/역할/클러스터/endpoint/queue를 검토한 기존 값으로 바꾼 뒤 [Karpenter 가이드](../../autoscaling/02-karpenter.md)를 따릅니다. 확인한 예시는 1.14.1이며 호환성 표에서 EKS 1.36은 최소 1.13이 필요합니다. 적용되는 키는 `settings.*`이며 무시되는 `controller.clusterName/clusterEndpoint`가 아닙니다. IRSA trust는 `system:serviceaccount:karpenter:karpenter`와 audience에 맞춰야 하고 상충하는 IRSA/Pod Identity를 혼합하지 않습니다. 컨트롤러/노드 IAM, 노드 접근, 서브넷/보안 그룹, 중단 queue/이벤트 연결, 안정적인 bootstrap 용량을 먼저 준비합니다. 새 Helm 설치와 CRD 업그레이드는 소유권/수명 주기가 다르며 컨트롤러 업그레이드만으로 기존 CRD가 갱신되지 않습니다.
@@ -2597,7 +2597,7 @@ helm install karpenter oci://public.ecr.aws/karpenter/karpenter \
      required_providers {
        aws = {
          source  = "hashicorp/aws"
-         version = "= 6.64.0"
+         version = "= 6.69.1"
        }
        helm = {
          source  = "hashicorp/helm"
@@ -2638,7 +2638,7 @@ helm install karpenter oci://public.ecr.aws/karpenter/karpenter \
      name             = "kubecost"
      repository       = "https://kubecost.github.io/kubecost/"
      chart            = "kubecost"
-     version          = "3.2.4"
+     version          = "3.3.1"
      namespace        = "kubecost"
      create_namespace = true
      values           = [file(var.reviewed_kubecost_values_path)]
@@ -2715,7 +2715,7 @@ VPA 예시는 HPA가 CPU/메모리 utilization 분모를 사용하는 동안 Off
 
 PriorityClass는 스케줄링/선점 우선순위이며 비용 할당이나 가용성을 보장하지 않습니다. priority 지정 권한을 관리하고, 스케줄러 선점의 PDB 준수는 best effort임을 고려하여 disruption·복구를 검토합니다. 비용 관측/권고에서 컨트롤러 동작으로 이어지려면 명시적인 정책/변경 검토 경로가 필요하며 도식 자체가 통합을 구현하지는 않습니다.
 
-Terraform 대안은 Helm provider 3.3.0의 values-file 설정과 AWS provider 6.64.0을 사용합니다. 명시적인 Kubernetes context와 호환 identity·스토리지·라이선스 Secret 참조를 포함한 검토한 values를 제공해야 하며 이런 전제 조건을 생성하지 않습니다. 원문 라이선스/클라우드 자격 증명을 values/state에 넣지 않습니다. 기존 릴리스는 다른 관리자로 중복 설치하지 말고 소유자와 조정합니다. 1,000 USD/80% 예산은 실제 청구 태그 필터를 사용하는 설명용 설정이며 강제 지출 상한이 아닙니다. 이 감사에서는 클러스터/Helm 프로비저닝이나 알림을 실행하지 않았습니다.
+Terraform 대안은 Helm provider 3.3.0의 values-file 설정과 AWS provider 6.69.1을 사용합니다. 명시적인 Kubernetes context와 호환 identity·스토리지·라이선스 Secret 참조를 포함한 검토한 values를 제공해야 하며 이런 전제 조건을 생성하지 않습니다. 원문 라이선스/클라우드 자격 증명을 values/state에 넣지 않습니다. 기존 릴리스는 다른 관리자로 중복 설치하지 말고 소유자와 조정합니다. 1,000 USD/80% 예산은 실제 청구 태그 필터를 사용하는 설명용 설정이며 강제 지출 상한이 아닙니다. 이 감사에서는 클러스터/Helm 프로비저닝이나 알림을 실행하지 않았습니다.
 
 아래 API 예시는 추측한 Kubecost 3.x URL이 아닌 앞에서 구성한 OpenCost 1.121.2를 대상으로 합니다. `/allocation`은 `namespace,controllerKind,controller` 집계를 지원하며 `deployment`는 문서화된 일반 집계 키가 아닙니다. 응답 data는 namespace/Deployment를 직접 키로 갖는 객체가 아닌 allocation-set map의 배열입니다. HTTP/API 오류와 수집 범위를 확인하고 빈 결과를 비용 0이나 과다 프로비저닝 증거로 해석하지 않습니다. 할당량·사용량·requests·byte-hours/core-hours·현재 replica 수는 의미와 기간이 다릅니다. 버전별 스키마와 비교 가능한 워크로드 메트릭을 검토한 후 적정 크기를 판단하며 할당 추정치는 청구 및 유휴/공유 비용 정책과 대조해야 합니다.
 

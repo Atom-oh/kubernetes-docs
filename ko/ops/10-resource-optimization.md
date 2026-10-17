@@ -1,8 +1,8 @@
 # 리소스 최적화: Requests/Limits와 언어별 런타임
 
-> 검토: 2026-09-11. 예제 검증 환경은 Kubernetes 1.36 스키마,
+> 검토: 2026-10-16. 예제 검증 환경은 Kubernetes 1.36 스키마,
 > Java 21 / Spring Boot 4.1.1, Python 3.12 / Gunicorn 26.2.0,
-> Node.js 24.21, Go 1.27.1, Rust 1.98 / Tokio 1.53.1입니다.
+> Node.js 24.22, Go 1.27.2, Rust 1.98 / Tokio 1.53.1입니다.
 
 리소스 크기는 언어 이름이나 고정 비율만으로 정하지 않습니다. 대표 부하·시작·재시작·GC·
 장애 상황에서 처리량과 지연 SLO를 측정하고 requests, limits, 복제본, 런타임 동시성을 함께 조정합니다.
@@ -180,7 +180,7 @@ upperBound를 그대로 메모리 limit으로 쓰거나 uncappedTarget을 실제
 `RequestsAndLimits`는 기존 비율에 따라 limit도 조정할 수 있는 정책이지 upperBound를 limit으로
 복사하는 기능이 아닙니다.
 
-VPA 1.7.1에서 `Auto`는 deprecated인 `Recreate` 동작입니다. in-place 지원은
+VPA 1.8.0에서 `Auto`는 deprecated인 `Recreate` 동작입니다. in-place 지원은
 `InPlaceOrRecreate`/`InPlace`의 조건과 Kubernetes 기능 지원을 확인합니다.
 `Initial`도 새 Pod의 request를 바꾸므로 request 기반 HPA의 분모에 영향을 줍니다.
 “Initial이면 HPA와 무조건 충돌하지 않는다”는 설명은 부정확합니다.
@@ -660,7 +660,7 @@ worker crash 재시작에는 backoff와 종료 중 재생성 방지가 필요하
 
 Go 1.25부터 기본 GOMAXPROCS가 Linux cgroup CPU quota를 고려합니다.
 `go.mod` 언어 버전과 GODEBUG 호환성 기본값도 영향을 주며 새 예제는 `go 1.25.0` 이상을 사용합니다.
-현재 검증은 Go 1.27.1로 수행했습니다.
+현재 검증은 Go 1.27.2로 수행했습니다.
 수동 GOMAXPROCS 환경 변수나 양수 `runtime.GOMAXPROCS(n)` 호출은 자동 갱신을 끕니다.
 조회용 `runtime.GOMAXPROCS(0)`는 변경하지 않습니다.
 
@@ -1023,7 +1023,7 @@ Go 런타임 값, Tokio worker 설정을 로컬에서 실행했습니다. PromQL
 - [JMX exporter 1.6.0](https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0)
 - [Gunicorn settings](https://gunicorn.org/reference/settings/)
 - [Flask changelog](https://flask.palletsprojects.com/en/stable/changes/)
-- [Node.js 24 CLI](https://nodejs.org/download/release/v24.21.0/docs/api/cli.html)
+- [Node.js 24 CLI](https://nodejs.org/download/release/v24.22.0/docs/api/cli.html)
 - [Tokio runtime builder](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
 
 ---

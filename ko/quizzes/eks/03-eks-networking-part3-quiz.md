@@ -1,8 +1,8 @@
 # EKS 네트워킹 퀴즈 - Part 3
 
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
-퀴즈는 [Part 3 문제 해결 개념](../../eks/03-eks-networking-part3.md), 프라이빗 연결, 멀티클러스터 설계와 메시 운영을 다룹니다. 현재 예제는 EKS Kubernetes 1.36, VPC CNI 1.23.0을 기준으로 하며 과거 App Mesh 구성은 별도로 표시합니다. 리소스 생성 예제에는 검토한 IAM·네트워크·소유권 전제가 필요합니다. 이 감사는 로컬 검증이며 EKS 배포 검증이 아닙니다.
+퀴즈는 [Part 3 문제 해결 개념](../../eks/03-eks-networking-part3.md), 프라이빗 연결, 멀티클러스터 설계와 메시 운영을 다룹니다. 현재 예제는 EKS Kubernetes 1.36, VPC CNI 1.23.2를 기준으로 하며 과거 App Mesh 구성은 별도로 표시합니다. 리소스 생성 예제에는 검토한 IAM·네트워크·소유권 전제가 필요합니다. 이 감사는 로컬 검증이며 EKS 배포 검증이 아닙니다.
 
 ### 1. 사이드카 기반 서비스 메시에 애플리케이션을 등록하면 무엇이 바뀌나요?
 
@@ -510,7 +510,7 @@ spec:
 
 </details>
 
-### 8. VPC CNI1.23.0에서 연결 ENI의 MTU를 구성하는 변수는 무엇인가요?
+### 8. VPC CNI1.23.2에서 연결 ENI의 MTU를 구성하는 변수는 무엇인가요?
 
 - A. `ENI_MTU`
 - B. `AWS_VPC_ENI_MTU`
@@ -645,4 +645,4 @@ kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=
 
 </details>
 
-공식 참고: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).
+공식 참고: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI1.23.2](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.2/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).

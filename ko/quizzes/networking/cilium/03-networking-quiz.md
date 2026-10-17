@@ -1,6 +1,6 @@
 # Cilium 네트워킹 검증 실습
 
-기대 결과가 있는 여덟 가지 실습입니다. 기준은 Cilium 1.20.1, CLI 0.20.0, 지원 Kubernetes 1.33–1.36이며 2026년 9월 12일 검토했습니다. “1.30 이상” 모든 버전의 호환성을 주장하지 않습니다.
+기대 결과가 있는 여덟 가지 실습입니다. 기준은 Cilium 1.20.3, CLI 0.20.1, 지원 Kubernetes 1.33–1.36이며 2026년 10월 16일 검토했습니다. “1.30 이상” 모든 버전의 호환성을 주장하지 않습니다.
 
 ## 사전 요구 사항
 
@@ -28,7 +28,7 @@ cilium connectivity test --test-namespace cilium-net-smoke \
   --namespace-labels docs-audit-lab=cilium-networking-03
 ```
 
-CLI 0.20.0은 순번을 붙이므로 기본 단일 suite의 namespace는 `cilium-net-smoke-1`입니다. 실패·생략된 case를 읽습니다. 명령 종료만으로 시험하지 않은 클라우드·기능 조합이 작동한다고 판단하지 않습니다.
+CLI 0.20.1은 순번을 붙이므로 기본 단일 suite의 namespace는 `cilium-net-smoke-1`입니다. 실패·생략된 case를 읽습니다. 명령 종료만으로 시험하지 않은 클라우드·기능 조합이 작동한다고 판단하지 않습니다.
 
 <details>
 <summary>기대 결과와 확인 문제</summary>
@@ -48,7 +48,7 @@ kubectl label namespace cilium-net-lab docs-audit-lab=cilium-networking-03
 
 Namespace가 이미 존재한다면 중단하고 모든 파일·명령에서 일관되게 새 이름을 선택합니다. 다른 사람의 namespace를 다시 label하거나 재사용하지 않습니다.
 
-다음 digest는 공식 CLI 0.20.0 테스트 기본값입니다. 해당 배포 소스는 curl 이미지의 `/usr/bin/pause`와 TCP 8080, `/` readiness의 JSON mock server를 사용합니다. 운영 애플리케이션 추천이 아닌 테스트 이미지입니다. Backend anti-affinity로 frontend와 다른 노드에 배치합니다.
+다음 digest는 공식 CLI 0.20.1 테스트 기본값입니다. 해당 배포 소스는 curl 이미지의 `/usr/bin/pause`와 TCP 8080, `/` readiness의 JSON mock server를 사용합니다. 운영 애플리케이션 추천이 아닌 테스트 이미지입니다. Backend anti-affinity로 frontend와 다른 노드에 배치합니다.
 
 **`lab-app.yaml`**
 
@@ -345,6 +345,6 @@ CLI suite를 실행했다면 생성된 `cilium-net-smoke-1` / `cilium-net-perf-1
 
 공개한 YAML·Helm values, 셸 문법과 CLI/API 계약은 workload를 배포하지 않고 확인했습니다. 호스트 재시작 이후 실제 클러스터, 이미지 실행, Helm 렌더링, 처리량 결과를 주장하지 않습니다. Admission, 이미지 아키텍처·pull 정책, 용량, 실제 datapath와 기대 결과는 준비한 환경에서 검증해야 합니다.
 
-- [CLI 0.20.0 image defaults](https://github.com/cilium/cilium-cli/blob/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/defaults/defaults.go), [test deployments](https://github.com/cilium/cilium-cli/blob/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/connectivity/check/deployment.go), [connectivity/perf flags](https://github.com/cilium/cilium-cli/blob/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go)
-- [Cilium 1.20.1 policy API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml), [L7 behavior](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst), [BGP configuration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst), [BGP CLI](https://github.com/cilium/cilium-cli/blob/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/bgp.go), [agent commands](https://github.com/cilium/cilium/tree/v1.20.1/Documentation/cmdref)
+- [CLI 0.20.1 image defaults](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/defaults/defaults.go), [test deployments](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/connectivity/check/deployment.go), [connectivity/perf flags](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go)
+- [Cilium 1.20.3 policy API](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml), [L7 behavior](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst), [BGP configuration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst), [BGP CLI](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/cli/bgp.go), [agent commands](https://github.com/cilium/cilium/tree/v1.20.3/Documentation/cmdref)
 - [Kubernetes version skew](https://kubernetes.io/releases/version-skew-policy/), [iperf3 invocation](https://software.es.net/iperf/invoking.html), [networking guide](../../../networking/cilium/03-networking.md)

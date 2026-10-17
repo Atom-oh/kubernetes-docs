@@ -1,6 +1,6 @@
 # Linkerd 트래픽 관리
 
-> **검토 기준**: 2026년 9월 11일 · Linkerd edge-26.9.1 · Gateway API 1.5.1 · Flagger 1.45.0
+> **검토 기준**: 2026년 10월 16일 · Linkerd edge-26.10.1 · Gateway API 1.5.1 · Flagger 1.45.0
 
 현재 Linkerd 라우팅은 Gateway API 리소스와 지원되는 annotation을 사용합니다. ServiceProfile은 호환성을 위해 유지되며 TrafficSplit/linkerd-smi는 사용 중단 대상으로 지정되었습니다. 이 경로들은 서로 대체 적용되지 않습니다. 같은 Service의 기존 ServiceProfile은 outbound HTTPRoute보다 우선하며 새로운 retry/timeout/failure-accrual 설정의 적용을 막습니다.
 
@@ -247,7 +247,7 @@ spec:
 
 Annotation은 최대 2회 재시도, 즉 최대 3회 시도와 400ms retry timeout, 2s 전체 request timeout을 지정합니다. 전체 deadline 때문에 재시도 횟수를 모두 사용하기 전에 종료될 수 있습니다. 현재 참조 문서에서 body가 64KiB보다 큰 요청은 재시도하지 않습니다.
 
-**edge-26.9.1에서 `retry.linkerd.io/limit:"0"`을 비활성화 스위치로 사용하지 않습니다.** [해당 버전 parser](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/policy-controller/k8s/index/src/outbound/index/http.rs)를 기준으로 합니다. 해당 버전 parser는 0을 미지정 값으로 처리하므로 retry 조건이 있으면 1회 재시도로 돌아갑니다. 빈 HTTP retry 조건 문자열도 지원되는 재시도 금지 정책이 아닙니다. 여러 method를 처리하는 Service의 기본값에는 retry 설정을 두지 않고 검증한 읽기 route에만 정책을 연결합니다.
+**edge-26.10.1에서 `retry.linkerd.io/limit:"0"`을 비활성화 스위치로 사용하지 않습니다.** [해당 버전 parser](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/policy-controller/k8s/index/src/outbound/index/http.rs)를 기준으로 합니다. 해당 버전 parser는 0을 미지정 값으로 처리하므로 retry 조건이 있으면 1회 재시도로 돌아갑니다. 빈 HTTP retry 조건 문자열도 지원되는 재시도 금지 정책이 아닙니다. 여러 method를 처리하는 Service의 기본값에는 retry 설정을 두지 않고 검증한 읽기 route에만 정책을 연결합니다.
 
 Route의 retry annotation은 Service retry 설정 묶음을 대체하며 timeout annotation도 Service timeout 설정 묶음을 대체합니다. ServiceProfile은 이 annotation보다 우선합니다. Linkerd는 명시적으로 활성화하면 요청별 `l5d-*` header override를 허용할 수 있습니다. 신뢰할 수 없는 client의 정책 override를 허용하거나 해당 header를 인증으로 취급하지 않습니다.
 

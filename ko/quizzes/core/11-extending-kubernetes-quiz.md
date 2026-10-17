@@ -1313,7 +1313,7 @@ webhooks:
 3. **이미지 정책 적용:**
    - 이미지 레지스트리 URL 수정
    - 이미지 태그를 다이제스트로 변환
-   - 예시: `nginx:latest`를 `internal-registry.example.com/nginx:1.30.4`으로 변경
+   - 예시: `nginx:latest`를 `internal-registry.example.com/nginx:1.30.6`으로 변경
 
 4. **볼륨 수정:**
    - 기본 볼륨 마운트 추가
@@ -1756,7 +1756,7 @@ metadata:
   name: my-webapp
   namespace: default
 spec:
-  image: nginx:1.30.4
+  image: nginx:1.30.6
   replicas: 3
   port: 80
   env:

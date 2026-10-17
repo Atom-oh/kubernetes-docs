@@ -1,7 +1,7 @@
 # Kubernetes Scheduling, Preemption, and Eviction
 
-> **Supported Versions**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 example)
-> **Last Updated**: September 17, 2026
+> **Supported Versions**: Kubernetes 1.34 - 1.37 (Descheduler v0.37 example)
+> **Last Updated**: October 16, 2026
 
 In Kubernetes, scheduling is the process of placing pods on appropriate nodes. Preemption is the process of removing lower-priority pods to make room for higher-priority pods, and eviction terminates a Pod; its workload controller may create a replacement that the scheduler places separately. In this chapter, we will learn about Kubernetes scheduling mechanisms, node selection, preemption, eviction, and scheduling optimization methods in Amazon EKS.
 
@@ -88,7 +88,7 @@ EOF
 | **Pod Anti-Affinity** | Place pods away from other pods | Ensuring high availability | 1.6+ |
 | **Taints and Tolerations** | Allow only specific pods on nodes | Dedicated nodes, node isolation | 1.6+ |
 | **Topology Spread Constraints** | Spread pods across topology domains | Distribution across availability zones | 1.16+ (GA in 1.19) |
-| **Priority and Preemption** | Prioritize important workloads | Critical service guarantees | 1.8+ (GA in 1.11) |
+| **Priority and Preemption** | Prioritize important workloads | Critical service guarantees | 1.8+ (GA in 1.14) |
 | **Pod Disruption Budget** | Limit simultaneously disrupted pods | Ensuring high availability | 1.4+ (GA in 1.21) |
 
 ## Basic Scheduling Concepts
@@ -776,7 +776,7 @@ spec:
             app: web
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         resources:
           requests:
             cpu: 100m
@@ -883,7 +883,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 ### Cache Protection Pattern
@@ -962,12 +962,12 @@ The Descheduler is a Kubernetes component that evicts pods from nodes to allow t
 
 ### Helm Installation
 
-Descheduler v0.36.0 is the verified example release, targeting Kubernetes v1.36 and the preceding two minor versions in its test window. Check the compatibility matrix before applying it to another release. Save reviewed Helm values in `descheduler-values.yaml` with `schedule` and `deschedulerPolicy.profiles` (the policy profiles shown below); the old `strategies.*.enabled` values do not configure this API.
+Descheduler v0.37.0 is the verified example release, targeting Kubernetes v1.37 and the preceding two minor versions in its test window. Check the compatibility matrix before applying it to another release. Save reviewed Helm values in `descheduler-values.yaml` with `schedule` and `deschedulerPolicy.profiles` (the policy profiles shown below); the old `strategies.*.enabled` values do not configure this API.
 
 ```bash
 helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
 helm upgrade --install descheduler descheduler/descheduler \
-  --version 0.36.0 --namespace kube-system \
+  --version 0.37.0 --namespace kube-system \
   --values descheduler-values.yaml
 ```
 
@@ -1062,7 +1062,7 @@ spec:
           serviceAccountName: descheduler
           containers:
           - name: descheduler
-            image: registry.k8s.io/descheduler/descheduler:v0.36.0
+            image: registry.k8s.io/descheduler/descheduler:v0.37.0
             args:
             - --policy-config-file=/policy/policy.yaml
             - --v=3

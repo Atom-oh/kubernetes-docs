@@ -1,6 +1,6 @@
 # Dynatrace
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 
 ## Introduction
 
@@ -46,7 +46,7 @@ Before installing, compare the [supported distributions](https://docs.dynatrace.
 |---|---|
 | EKS 1.35 on supported Linux EC2 nodes | The matrix requires OneAgent/ActiveGate **1.329+** and Operator **1.6+**, recommends Operator **1.9+**. This guide pins 1.10.2. |
 | Kubernetes 1.36 | OneAgent/ActiveGate minimum is **1.335**; check the platform and version combination separately. |
-| Kubernetes 1.37 | Not listed in the reviewed Dynatrace matrix; a new Kubernetes release does not establish vendor support. |
+| Kubernetes 1.37 | OneAgent/ActiveGate minimum is **1.335**; outside this guide's validated scope, so check the platform and version combination separately. |
 | EKS Fargate | Application monitoring **without CSI**, using the [Fargate-specific EKS workflow](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/marketplaces/eks-dto); no host OneAgent. |
 | Bottlerocket | Application monitoring and ActiveGate Kubernetes monitoring; OneAgent host monitoring is not supported in the cited distribution table. |
 | EKS Auto Mode | Do not infer full host-agent support from the general EKS entry. Confirm the managed-node OS, privileges and vendor support; this recipe was not validated on Auto Mode. |

@@ -1,7 +1,7 @@
 # Zonal Cluster Operations: Traffic Shifting, Upgrade Rollback, and Data-Layer AZ Affinity
 
-> **Review baseline**: EKS rollback and ARC documentation, Strimzi 1.2.0, Valkey GLIDE 2.5.2, AWS Advanced JDBC Wrapper 4.4.0
-> **Last reviewed**: September 11, 2026. Configuration examples were checked; live cluster cutovers and failure experiments were not performed.
+> **Review baseline**: EKS rollback and ARC documentation, Strimzi 1.3.0, Valkey GLIDE 2.5.2, AWS Advanced JDBC Wrapper 4.4.0
+> **Last reviewed**: October 16, 2026. Configuration examples were checked; live cluster cutovers and failure experiments were not performed.
 
 < [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) | [Next: Troubleshooting Playbook](16-troubleshooting-playbook.md) >
 
@@ -149,7 +149,7 @@ First determine the pod's AZ. The Downward API exposes pod fields; it does not d
 
 - **Brokers:** configure `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` and `broker.rack`.
 - **Consumers:** set `client.rack` to the consumer's rack. If no suitable local replica exists, selection falls back to the leader.
-- **Strimzi 1.2.0:** the following is a **configuration excerpt to merge into an existing Kafka CR**, not a complete deployment. KafkaNodePools, listeners, storage, and other configuration are also required. From Strimzi 1.0 the CR API is `v1`; specify the rack type too.
+- **Strimzi 1.3.0:** the following is a **configuration excerpt to merge into an existing Kafka CR**, not a complete deployment. KafkaNodePools, listeners, storage, and other configuration are also required. From Strimzi 1.0 the CR API is `v1`; specify the rack type too.
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1
@@ -165,7 +165,7 @@ spec:
       replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
 ```
 
-This configures the brokers' `broker.rack`. Set ordinary application consumers' `client.rack` separately. KafkaConnect, MirrorMaker 2, and Bridge have their own CR rack settings. Follow the [Strimzi documentation](https://strimzi.io/docs/operators/1.2.0/configuring.html) to distribute broker placement as well. Follower fetching can increase read latency because of replication lag.
+This configures the brokers' `broker.rack`. Set ordinary application consumers' `client.rack` separately. KafkaConnect, MirrorMaker 2, and Bridge have their own CR rack settings. Follow the [Strimzi documentation](https://strimzi.io/docs/operators/1.3.0/configuring.html) to distribute broker placement as well. Follower fetching can increase read latency because of replication lag.
 
 [KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers) concerns rack-aware partition assignment, a separate mechanism. Check consumer-version and assignor support. See [Kafka on EKS](../data-on-eks/kafka/README.md) for deployment guidance.
 

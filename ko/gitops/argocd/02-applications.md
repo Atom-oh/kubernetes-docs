@@ -1,7 +1,7 @@
 # ArgoCD Application 심층 분석
 
 > **검토 기준**: Argo CD 3.5.2. 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 
@@ -320,7 +320,7 @@ spec:
       # 이미지 오버라이드
       images:
         - my-app=123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-app:v1.2.3
-        - sidecar=docker.io/library/busybox:1.37.0
+        - sidecar=docker.io/library/busybox:1.38.0
 
       # 네임 프리픽스/서픽스
       namePrefix: prod-
@@ -719,7 +719,7 @@ spec:
     spec:
       containers:
         - name: test
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - /bin/sh
             - -c
@@ -754,7 +754,7 @@ spec:
     spec:
       containers:
         - name: notify
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - /bin/sh
             - -c

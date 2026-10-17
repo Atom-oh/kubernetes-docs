@@ -1,7 +1,7 @@
 # ArgoCD 멀티클러스터 배포와 IAM Identity Center
 
-> **검토 기준**: Argo CD 3.5.2 / Helm chart 10.8.4, Terraform 1.15.7 / Helm Provider 3.3.0, ESO 2.10.0\
-> **마지막 검토**: 2026년 9월 11일. 로컬 스키마·렌더링·테스트 대역을 검증했습니다. 실제 EKS 설치, SSO 로그인과 Secrets Manager 조회는 실행하지 않았습니다.
+> **검토 기준**: Argo CD 3.5.5 / Helm chart 10.10.5, Terraform 1.15.7 / Helm Provider 3.3.0, ESO 2.12.0\
+> **마지막 검토**: 2026년 10월 16일. 로컬 스키마·렌더링·테스트 대역을 검증했습니다. 실제 EKS 설치, SSO 로그인과 Secrets Manager 조회는 실행하지 않았습니다.
 
 < [이전: CI 파이프라인](03-ci-pipelines.md) | [목차](README.md) | [다음: GitOps 자동화](05-gitops-automation.md) >
 
@@ -28,7 +28,7 @@ Blue/Green은 클러스터 식별자입니다. 아래 예제의 워커 NodePool�
 
 구체적인 역할·Access Entry 절차는 [Argo CD 설치](../gitops/argocd/01-installation.md)와 [EKS 접근 관리](../eks/02-eks-cluster-creation-part3.md)를 사용합니다. `aws-auth`의 `mapRoles` 전체를 덮어쓰거나 기본적으로 `system:masters`를 부여하지 않습니다.
 
-Argo CD 3.5.2의 `awsAuthConfig.roleARN` 경로는 대상 역할을 AssumeRole하지만 별도의 ExternalId를 설정하는 필드가 없습니다. 대상 trust에 전달되지 않는 `sts:ExternalId` 조건을 넣으면 인증이 실패합니다. 그런 조건이 필요한 환경은 이를 지원하는 별도 인증 경로를 설계해야 합니다.
+Argo CD 3.5.5의 `awsAuthConfig.roleARN` 경로는 대상 역할을 AssumeRole하지만 별도의 ExternalId를 설정하는 필드가 없습니다. 대상 trust에 전달되지 않는 `sts:ExternalId` 조건을 넣으면 인증이 실패합니다. 그런 조건이 필요한 환경은 이를 지원하는 별도 인증 경로를 설계해야 합니다.
 
 ### 실제 endpoint로 선언적 등록
 
@@ -88,7 +88,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -124,7 +124,7 @@ resource "helm_release" "argocd" {
   create_namespace = true
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
-  version          = "10.8.4"
+  version          = "10.10.5"
   timeout          = 900
   wait             = true
   values           = [file("${path.module}/argocd-values.yaml")]
@@ -581,7 +581,7 @@ SSO 사용자와 최소 한 명의 승인된 관리자 및 복구 경로를 확�
 
 ## 시크릿 관리
 
-각 Spoke에 ESO 2.10.0과 v1 CRD를 설치합니다. [01장](01-infrastructure-setup.md)의 `external-secrets` namespace/ServiceAccount에 대한 Pod Identity association과 지정한 secret ARN의 읽기 권한을 재사용합니다. Hub의 역할만 연결해도 Spoke ESO가 그 권한을 받는 것은 아닙니다.
+각 Spoke에 ESO 2.12.0과 v1 CRD를 설치합니다. [01장](01-infrastructure-setup.md)의 `external-secrets` namespace/ServiceAccount에 대한 Pod Identity association과 지정한 secret ARN의 읽기 권한을 재사용합니다. Hub의 역할만 연결해도 Spoke ESO가 그 권한을 받는 것은 아닙니다.
 
 ```yaml
 # fixtures/eso-values.yaml
@@ -601,7 +601,7 @@ serviceMonitor:
 helm repo add external-secrets https://charts.external-secrets.io
 helm repo update
 helm upgrade --install external-secrets external-secrets/external-secrets \
-  --version 2.10.0 --namespace external-secrets --create-namespace \
+  --version 2.12.0 --namespace external-secrets --create-namespace \
   --kube-context "$TARGET_CONTEXT" --values eso-values.yaml
 ```
 
@@ -683,7 +683,7 @@ Hub 설치와 HTTPS 접근 → 대상 역할/Access Entry/RBAC/네트워크 → 
 - [Argo CD Identity Center SAML](https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/identity-center/)
 - [IAM Identity Center 자체 SAML 애플리케이션](https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html)
 - [IAM Identity Center 속성 매핑](https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html)
-- [ESO 2.10 AWS 인증](https://external-secrets.io/v2.10.0/provider/aws-access/)
+- [ESO 2.12 AWS 인증](https://external-secrets.io/v2.12.0/provider/aws-access/)
 - [Helm Provider](https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs)
 - [프로젝트·RBAC](../gitops/argocd/06-projects-rbac.md)
 - [이 장의 퀴즈](../quizzes/ops/04-gitops-multi-cluster-quiz.md)

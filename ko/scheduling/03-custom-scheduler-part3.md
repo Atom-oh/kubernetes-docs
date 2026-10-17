@@ -1,7 +1,7 @@
 # Part 3: 고급 기능
 
-> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.1; Python 클라이언트 API 35.0.0
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.2; Python 클라이언트 API 35.0.0
+> **마지막 업데이트**: 2026년 10월 16일
 
 [Part1 보조 스케줄러](01-custom-scheduler-part1.md)와 [Part2 프레임워크 인터페이스](02-custom-scheduler-part2.md)를 이용한 구현 패턴 예제입니다. 운영 배포 사례나 최적화 실측 보고서가 아닙니다. 로컬 코드·스키마 검사는 GPU 실행, 애플리케이션 준비 상태, 인증서 발급 또는 운영 가용성을 검증하지 않습니다.
 
@@ -181,7 +181,7 @@ spec:
             - '40959'
   containers:
   - name: reservation
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c

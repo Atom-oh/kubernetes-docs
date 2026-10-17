@@ -1,7 +1,7 @@
 # CloudWatch Logs
 
 > **Last Updated**: September 13, 2026
-> **Checked examples**: AWS provider 6.64.0; optional CloudWatch Observability Helm chart 6.6.0; manual AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9. Local configuration, SDK and synthetic-payload checks only. No AWS resources, log delivery, Insights queries or alarms were executed.
+> **Checked examples**: AWS provider 6.69.1; optional CloudWatch Observability Helm chart 6.6.0; manual AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9. Local configuration, SDK and synthetic-payload checks only. No AWS resources, log delivery, Insights queries or alarms were executed.
 
 Amazon CloudWatch Logs manages log ingestion, storage and analysis. You still configure producers, identity, networking, retention, quotas and downstream consumers. EKS control-plane logs, workload logs and EKS Auto Mode managed-component logs are separate collection paths.
 
@@ -124,7 +124,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }

@@ -1,7 +1,7 @@
 # Karpenter
 
 > **Supported Versions**: Karpenter 1.14 LTS (examples: 1.14.1); select Kubernetes/EKS versions using the compatibility and provider support tables.
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -85,7 +85,7 @@ These are independent learning examples for an existing cluster, not a productio
 
 ### Prerequisites
 
-- Use a Kubernetes version supported by your platform and the Karpenter matrix. The published matrix lists minimum Karpenter 1.6 for Kubernetes1.34, 1.9 for1.35 and1.13 for1.36; these minimums do not mean every old Karpenter minor remains maintained. The matrix does not currently establish1.37 compatibility. EKS version availability/support must be checked separately.
+- Use a Kubernetes version supported by your platform and the Karpenter matrix. The published matrix lists minimum Karpenter 1.6 for Kubernetes1.34, 1.9 for1.35 and1.13 for1.36; these minimums do not mean every old Karpenter minor remains maintained. The v1.14 matrix does not include1.37, and the v1.15 matrix requires Karpenter1.15.x for Kubernetes1.37. EKS version availability/support must be checked separately.
 - kubectl configured
 - Cloud provider credentials and permissions
 - Helm (optional)
@@ -352,16 +352,16 @@ AWS’s July22,2026 announcement added EFA network-interface and placement-group
 
 [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1), the first patch on the v1.14 line, was published on August 21, 2026. It is a maintenance release bumping the upstream `sigs.k8s.io/karpenter` version and cherry-picking fixes made since v1.14.0.
 
-### October 2026 Update: v1.15.0 Released
+### October 2026 Update: v1.15.0 Standard Release
 
-[v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) was published on October 10, 2026. Key changes:
+[v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0), a standard (non-LTS) minor, was published on October 10, 2026. Key changes:
 
 - **Node repair becomes a voluntary disruption**: node repair is folded into the disruption machinery, with terminate-first repair when a capacity-constrained NodePool cannot stage a replacement node first. Reboot via `ec2:RebootInstances` is added as a repair action (behind the `RebootForRepair` AWS feature gate), and the previous repair controller remains available through the `--legacy-node-repair` flag.
 - **CEL support in KubeletConfiguration**: `maxPodsExpression`, `kubeReserved` and `systemReserved` accept CEL expressions, and the EC2NodeClass KubeletConfiguration fields were extended.
 - **Broader DRA support**: prioritized alternatives support plus NVIDIA and EFA driver DRA support.
 - Also: an `--aws-feature-gates` flag, default pod topology spread awareness, accounting for instance type volume limits during provisioning, new disruption metrics such as `karpenter_pods_disrupted_total`, and a feature-gated pod deletion cost management controller.
 
-Under the support policy, regular minors are supported only until the next minor, so with v1.15.0 out, v1.14 continues only as an LTS line (through July 2027). See the [v1.15.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) for details.
+Under the support policy, regular minors are supported only until the next minor, so with v1.15.0 out, v1.14 continues only as an LTS line (through July 2027); the examples in this chapter therefore stay on 1.14 LTS (1.14.1). Kubernetes 1.37 requires Karpenter 1.15.x, so if you need Kubernetes 1.37 or move to 1.15, check the [v1.15 compatibility matrix](https://karpenter.sh/v1.15/upgrading/compatibility/) and upgrade guidance first. See the [v1.15.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) for details.
 
 ## Node Classes
 
@@ -620,7 +620,7 @@ spec:
             app: web-server
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -663,7 +663,7 @@ spec:
             topologyKey: kubernetes.io/hostname
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -726,7 +726,7 @@ spec:
         karpenter.sh/nodepool: gpu
       containers:
       - name: gpu-allocation-demo
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sh
         - -c

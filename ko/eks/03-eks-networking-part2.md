@@ -1,7 +1,7 @@
 # EKS 네트워킹 - Part 2: 서비스 및 로드 밸런싱, 네트워크 정책
 
-> **예제 검증 버전**: EKS Kubernetes 1.36, AWS Load Balancer Controller 3.5.0, Gateway API 1.6.0
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 검증 버전**: EKS Kubernetes 1.36, AWS Load Balancer Controller 3.6.0, Gateway API 1.6.0
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개요
 
@@ -135,12 +135,12 @@ set -euo pipefail
 : "${AWS_REGION:?Set the cluster Region}"
 : "${VPC_ID:?Set the cluster VPC ID}"
 curl --fail --show-error --location \
-  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json \
-  --output lbc-iam-policy-v3.5.0.json
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/docs/install/iam_policy.json \
+  --output lbc-iam-policy-v3.6.0.json
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
 helm template aws-load-balancer-controller eks/aws-load-balancer-controller \
-  --version 3.5.0 --namespace kube-system \
+  --version 3.6.0 --namespace kube-system \
   --set-string clusterName="$CLUSTER_NAME" \
   --set-string region="$AWS_REGION" --set-string vpcId="$VPC_ID" \
   --set serviceAccount.create=false \
@@ -150,7 +150,7 @@ helm template aws-load-balancer-controller eks/aws-load-balancer-controller \
 렌더링 결과 검토와 IAM 준비를 마친 뒤 다음 명령을 실행하면 클러스터가 변경됩니다. CRD는 릴리스 절차대로 갱신하며 Helm upgrade가 모든 CRD를 자동 갱신하지는 않습니다.
 ```bash
 helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  --version 3.5.0 --namespace kube-system \
+  --version 3.6.0 --namespace kube-system \
   --set-string clusterName="$CLUSTER_NAME" \
   --set-string region="$AWS_REGION" --set-string vpcId="$VPC_ID" \
   --set serviceAccount.create=false \
@@ -372,20 +372,20 @@ Gateway API는 인프라 소유권(GatewayClass/Gateway)과 애플리케이션 �
 
 ### 사전 요구 사항
 
-예제는 LBC **3.5.0**이 명시한 Gateway API **1.6.0**을 기준으로 합니다. 이전 L4 지원은 2.13.3, L7 지원은 2.14.0부터이므로 “2.13+에서 전부 지원”은 틀립니다. 3.5.0은 CRD를 감지하고 `NLBGatewayAPI`/`ALBGatewayAPI`를 기본 활성화합니다. `EnableGatewayAPI`라는 gate는 없습니다. TCPRoute와 UDPRoute는 이제 standard 채널의 v1 리소스이므로 이전 experimental CRD를 무조건 설치하지 마세요.
+예제는 LBC **3.6.0**이 명시한 Gateway API **1.6.0**을 기준으로 합니다. 3.6.0은 3.5.0과 같은 Gateway API 1.6.0 CRD를 사용하지만 릴리스 노트는 컨트롤러 업그레이드 전에 최신 AWS 제공 CRD(차트 CRD와 LBC Gateway CRD)를 먼저 적용하도록 안내합니다. 이전 L4 지원은 2.13.3, L7 지원은 2.14.0부터이므로 “2.13+에서 전부 지원”은 틀립니다. 3.6.0은 CRD를 감지하고 `NLBGatewayAPI`/`ALBGatewayAPI`를 기본 활성화합니다. `EnableGatewayAPI`라는 gate는 없습니다. TCPRoute와 UDPRoute는 이제 standard 채널의 v1 리소스이므로 이전 experimental CRD를 무조건 설치하지 마세요.
 ```bash
 set -euo pipefail
 curl --fail --show-error --location \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml \
   --output gateway-standard-v1.6.0.yaml
 curl --fail --show-error --location \
-  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/config/crd/gateway/gateway-crds.yaml \
-  --output lbc-gateway-crds-v3.5.0.yaml
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/config/crd/gateway/gateway-crds.yaml \
+  --output lbc-gateway-crds-v3.6.0.yaml
 ```
 클러스터 범위 갱신을 적용하기 전에 다운로드 내용과 기존 CRD 소유권·저장 버전을 검토합니다. 기존 설치는 릴리스 이전 절차를 따르세요. CRD 없이 시작한 컨트롤러는 CRD 준비 후 재시작 또는 재조정하여 활성 상태를 확인합니다.
 ```bash
 kubectl apply --server-side -f gateway-standard-v1.6.0.yaml
-kubectl apply --server-side -f lbc-gateway-crds-v3.5.0.yaml
+kubectl apply --server-side -f lbc-gateway-crds-v3.6.0.yaml
 kubectl get crd gateways.gateway.networking.k8s.io \
   tcproutes.gateway.networking.k8s.io udproutes.gateway.networking.k8s.io \
   loadbalancerconfigurations.gateway.k8s.aws
@@ -548,7 +548,7 @@ spec:
 
 ### QUIC/HTTP3 지원
 
-ALB HTTPS 리스너가 자동으로 HTTP/3가 되지는 않습니다. LBC 3.5.0의 QUIC 지원은 `listenerConfigurations[].quicEnabled`를 사용하는 **NLB UDP/TCP_UDP 리스너**용입니다. IP 대상과 보안 그룹이 연결되지 않은 NLB가 필요하며 백엔드가 직접 QUIC/HTTP3를 종료해야 합니다. 다음은 UDP:443 리스너·UDPRoute가 있는 별도 NLB Gateway에 연결할 구성 요소이지 ALB 설정이나 완성된 배포가 아닙니다. SG 없는 설계 선택 전 대상 측 보안과 헬스체크를 계획하세요.
+ALB HTTPS 리스너가 자동으로 HTTP/3가 되지는 않습니다. LBC 3.6.0의 QUIC 지원은 `listenerConfigurations[].quicEnabled`를 사용하는 **NLB UDP/TCP_UDP 리스너**용입니다. IP 대상과 보안 그룹이 연결되지 않은 NLB가 필요하며 백엔드가 직접 QUIC/HTTP3를 종료해야 합니다. 다음은 UDP:443 리스너·UDPRoute가 있는 별도 NLB Gateway에 연결할 구성 요소이지 ALB 설정이나 완성된 배포가 아닙니다. SG 없는 설계 선택 전 대상 측 보안과 헬스체크를 계획하세요.
 ```yaml
 apiVersion: gateway.k8s.aws/v1
 kind: LoadBalancerConfiguration
@@ -612,7 +612,7 @@ spec:
 
 ### Gateway API vs Ingress 비교
 
-| 기능 | LBC Ingress | LBC 3.5.0 Gateway API |
+| 기능 | LBC Ingress | LBC 3.6.0 Gateway API |
 |---|---|---|
 | 라우팅 | 호스트/경로와 컨트롤러 어노테이션 | HTTPRoute/GRPCRoute 조건과 지원 확장 |
 | L4 | 별도 NLB Service 사용 | TCPRoute/UDPRoute/TLSRoute를 쓰는 별도 NLB Gateway |

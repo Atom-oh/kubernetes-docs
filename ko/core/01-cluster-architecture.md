@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 버전 헤더는 업스트림 Kubernetes 기준입니다. Kubernetes 프로젝트는 최신 세 마이너 버전(1.35–1.37)의 릴리스 브랜치를 유지합니다. upstream 1.34는 유지 관리 모드로 **2026년 10월 27일** 지원 종료(EOL) 전까지 패치 릴리스를 계속 받으며, 이는 EKS의 AWS 지원 종료일과 별도입니다.
 
@@ -792,7 +792,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 **PodDisruptionBudget 예시**:
@@ -1232,7 +1232,7 @@ spec:
     spec:
       containers:
       - name: cluster-autoscaler
-        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.0
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.1
         command:
         - ./cluster-autoscaler
         - --cloud-provider=aws
@@ -1535,12 +1535,12 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 
 ### 2026년 8월 업데이트: Kubernetes v1.37 "Garhwal" 정식 릴리스
 
-2026년 8월 26일 [Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)이 예정대로 정식 릴리스되었습니다. 이번 릴리스에는 총 67개의 개선 사항이 포함되었으며, 그중 16개가 Stable, 23개가 Beta로 승격되었고 나머지는 Alpha로 도입되었습니다. 주요 내용:
+2026년 8월 26일 [Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)이 예정대로 정식 릴리스되었습니다. 이번 릴리스에는 총 67개의 개선 사항이 포함되었으며, 그중 16개가 Stable, 23개가 Beta로 승격되었고 27개가 Alpha로 도입되었으며 1개는 사용 중단·제거 항목입니다. 주요 내용:
 
 - **파드 인증서와 ClusterTrustBundle의 Stable 승격**: 서비스 어카운트 토큰 대신 워크로드에 X.509 인증서를 자동 발급·로테이션하는 PodCertificate 기능과 신뢰 앵커(trust anchor) 배포용 ClusterTrustBundle이 표준 기능이 되었습니다 ([상세 글](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
 - **Metrics API(metrics.k8s.io) GA**: `kubectl top`과 HPA가 사용하는 리소스 메트릭 API가 정식(stable) 버전으로 졸업했습니다 ([상세 글](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
 - 그 외 **Stable**: DRA(Dynamic Resource Allocation) 기능 다수, watchcache 초기화 복원력 개선 등 / **Beta**: HPA scale-to-zero, 매니페스트 기반 어드미션 컨트롤 구성 등 / **Alpha**: 파드 수준 체크포인트·복원 등
-- **사용 중단(deprecation)**: kube-dns와 `kubectl run --filename/-f`가 사용 중단되었고(`ipvs` 모드는 이미 v1.35부터 사용 중단),, 정적(static) 파드의 Secret/ConfigMap 참조가 금지되었습니다. cgroup v1 지원 제거도 계속 진행 중입니다.
+- **사용 중단(deprecation)**: kube-dns와 `kubectl run --filename/-f`가 사용 중단되었고, v1.35부터 사용 중단된 kube-proxy `ipvs` 모드는 v1.40 기본 비활성화·v1.43 제거 일정이 제시되었으며([KEP-5495](https://kep.k8s.io/5495)), 정적(static) 파드의 Secret/ConfigMap 참조가 금지되었습니다. cgroup v1 지원 제거도 계속 진행 중입니다.
 
 업그레이드 전에는 [공식 릴리스 노트](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)에서 사용 중단·제거 항목을 반드시 확인하세요.
 
@@ -1764,7 +1764,7 @@ spec:
     spec:
       containers:
       - name: cloudwatch-agent
-        image: amazon/cloudwatch-agent:1.247347.6b250880
+        image: amazon/cloudwatch-agent:1.300073.0b1828
         # ... 추가 구성
 ```
 

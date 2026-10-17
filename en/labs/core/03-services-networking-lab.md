@@ -59,7 +59,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - name: http
           containerPort: 80
@@ -100,7 +100,7 @@ service_kubectl get service web-clusterip
 
 **Step 1.3: Test access from inside the cluster**
 ```bash
-service_kubectl run http-check --image=busybox:1.37.0 \
+service_kubectl run http-check --image=busybox:1.38.0 \
   --overrides='{"spec":{"automountServiceAccountToken":false}}' \
   --rm -i --restart=Never --pod-running-timeout=120s --command -- sh -c '
 for attempt in 1 2 3 4 5; do
@@ -193,7 +193,7 @@ service_kubectl get service web-nodeport -o jsonpath='{.spec.type}{"\n"}{.spec.p
 
 **Step 3.1: DNS lookup test**
 ```bash
-service_kubectl run dns-check --image=busybox:1.37.0 \
+service_kubectl run dns-check --image=busybox:1.38.0 \
   --overrides='{"spec":{"automountServiceAccountToken":false}}' \
   --rm -i --restart=Never --pod-running-timeout=120s --command -- nslookup web-clusterip
 service_kubectl get service web-clusterip -o jsonpath='{.spec.clusterIP}{"\n"}'
@@ -208,7 +208,7 @@ unset SERVICE_LAB_CLIENT_NAMESPACE
 if SERVICE_LAB_CLIENT_UID=$(kubectl --context "${SERVICE_LAB_CONTEXT:?}" create namespace "$SERVICE_LAB_CLIENT_CANDIDATE" -o jsonpath='{.metadata.uid}'); then
   SERVICE_LAB_CLIENT_NAMESPACE=$SERVICE_LAB_CLIENT_CANDIDATE
   kubectl --context "$SERVICE_LAB_CONTEXT" --namespace "$SERVICE_LAB_CLIENT_NAMESPACE" \
-    run cross-ns-check --image=busybox:1.37.0 \
+    run cross-ns-check --image=busybox:1.38.0 \
     --overrides='{"spec":{"automountServiceAccountToken":false}}' \
     --rm -i --restart=Never --pod-running-timeout=120s --command -- \
     wget -T 5 -qO- "http://web-clusterip.$SERVICE_LAB_NAMESPACE/"

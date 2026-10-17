@@ -238,7 +238,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -396,8 +396,8 @@ Requires the production namespace and a network plugin that enforces NetworkPoli
 - https://kubernetes.io/docs/concepts/services-networking/network-policies/
 - https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
 - https://coredns.io/plugins/kubernetes/
-- https://github.com/fluent/fluent-bit/releases/tag/v5.1.2
-- https://github.com/fluent/fluent-bit/blob/v5.1.2/conf/parsers.conf
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.3
+- https://github.com/fluent/fluent-bit/blob/v5.1.3/conf/parsers.conf
 - https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
 - https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
 - https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html

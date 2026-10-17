@@ -232,7 +232,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
       - name: server
-        image: public.ecr.aws/docker/library/busybox:1.37.0
+        image: public.ecr.aws/docker/library/busybox:1.38.0
         command: [sh, -c]
         args:
         - 'printf "%s\n" eks-validation-ok > /work/index.html && exec httpd -f -p 8080 -h /work'
@@ -285,7 +285,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
       - name: client
-        image: public.ecr.aws/docker/library/busybox:1.37.0
+        image: public.ecr.aws/docker/library/busybox:1.38.0
         command: [sh, -c]
         args:
         - |

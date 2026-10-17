@@ -1,7 +1,7 @@
 # Infrastructure Setup
 
-> **Validation baseline**: Terraform 1.15.7, AWS Provider 6.64.0, EKS module 21.25.0, VPC module 6.7.2, Pod Identity module 2.9.0
-> **Last reviewed**: September 11, 2026. Local schema/mock-plan validation; not a live AWS deployment result.
+> **Validation baseline**: Terraform 1.16.6, AWS Provider 6.69.1, EKS module 21.29.0, VPC module 6.7.3, Pod Identity module 2.9.0
+> **Last reviewed**: October 16, 2026. Local schema/mock-plan validation; not a live AWS deployment result.
 
 < [Table of Contents](./README.md) | [Next: NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md) >
 
@@ -116,7 +116,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -272,7 +272,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -308,7 +308,7 @@ locals {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "6.7.2"
+  version = "6.7.3"
 
   name = "${local.name_prefix}-vpc"
   cidr = var.vpc_cidr
@@ -353,7 +353,7 @@ module "vpc" {
 # VPC endpoints reduce NAT traffic; compare endpoint hourly/data costs for the actual workload
 module "vpc_endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-  version = "6.7.2"
+  version = "6.7.3"
 
   vpc_id = module.vpc.vpc_id
 
@@ -617,7 +617,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -653,7 +653,7 @@ locals {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   name               = local.cluster_name
   kubernetes_version = var.cluster_version
@@ -935,7 +935,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }

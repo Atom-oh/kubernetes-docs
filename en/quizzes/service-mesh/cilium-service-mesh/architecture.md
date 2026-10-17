@@ -1,6 +1,6 @@
 # Cilium Service Mesh Architecture Quiz
 
-Reviewed against Cilium 1.20.1. Read the [architecture guide](../../../service-mesh/cilium-service-mesh/01-architecture.md) for the configuration, qualifications and primary references.
+Reviewed against Cilium 1.20.3. Read the [architecture guide](../../../service-mesh/cilium-service-mesh/01-architecture.md) for the configuration, qualifications and primary references.
 
 ### 1. What is a characteristic of Cilium's architecture?
 

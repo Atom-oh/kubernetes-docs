@@ -2,8 +2,8 @@
 
 < [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) | [Next: Bare Metal OS Setup](./09-bare-metal-os-setup.md) >
 
-> **Validation baseline**: nodeadm 1.0.20; Cilium 1.18.3 CRDs; Prometheus Operator 0.93.1; kube-prometheus-stack 90.0.0; Harbor 2.15.2. These are reviewed references, not a universal supported-version matrix.
-> **Last Updated**: September 13, 2026
+> **Validation baseline**: nodeadm 1.0.20; Cilium 1.18.3 CRDs; Prometheus Operator 0.94.1; kube-prometheus-stack 92.9.0; Harbor 2.15.4. These are reviewed references, not a universal supported-version matrix.
+> **Last Updated**: October 16, 2026
 
 This document covers day-to-day operations and maintenance tasks for EKS Hybrid Nodes environments, including monitoring, backup procedures, and troubleshooting.
 
@@ -11,7 +11,7 @@ This document covers day-to-day operations and maintenance tasks for EKS Hybrid 
 
 Use Harbor's built-in scan-all scheduler instead of a CronJob carrying an admin password and enumerating only the latest tag. In the system-administrator UI, open **Administration → Interrogation Services → Vulnerability → Schedule to scan all**. Hourly/Daily/Weekly/Custom schedules are supported; Daily means midnight in the documented UI. For a 02:00 maintenance window, verify the Custom schedule syntax, time zone and next execution for the deployed version.
 
-Harbor 2.15.2 exposes GET/POST/PUT `/api/v2.0/system/scanAll/schedule`. Use the UI or an approved API integration with trusted CA validation, protected credentials and the required system-level permissions. Project robot permissions do not imply authority to configure global scans. Do not place an admin password in Pod environment/command arguments or disable TLS verification.
+Harbor 2.15.4 exposes GET/POST/PUT `/api/v2.0/system/scanAll/schedule`. Use the UI or an approved API integration with trusted CA validation, protected credentials and the required system-level permissions. Project robot permissions do not imply authority to configure global scans. Do not place an admin password in Pod environment/command arguments or disable TLS verification.
 
 Record scanner availability, vulnerability-database freshness, actual scan completion and failures. Request submission or an empty API response is not a successful vulnerability assessment. Unsupported artifacts need separate handling, and global scans consume resources. Selected-artifact automation must enumerate all required pages and digests, encode repository paths correctly and check every response; a latest-only loop does not cover the registry.
 
@@ -53,7 +53,7 @@ Redis BGSAVE is asynchronous; immediately copying dump.rdb can capture an older 
 
 Keep host, kubelet/container and GPU metrics separate. `node_cpu_seconds_total` and `node_memory_*` come from Node Exporter, not a kubelet endpoint. Use an installed, reviewed Node Exporter/DCGM profile and verify actual host mounts, privileges, node placement and metric availability. Container Insights does not supply Hybrid host-level metrics through EC2 IMDS.
 
-The following discovery example uses the Node Exporter Service labels/port from kube-prometheus-stack 90.0.0 with release `kube-prom` in `monitoring`. The DCGM portion assumes verified Pods labeled `app: nvidia-dcgm-exporter` in `gpu-operator` with a named `metrics` container port; adjust it to the installed exporter. Neither resource installs an exporter. Match the Prometheus resource's monitor/namespace selectors, and avoid scraping the same exporter twice through an existing monitor.
+The following discovery example uses the Node Exporter Service labels/port from kube-prometheus-stack 92.9.0 with release `kube-prom` in `monitoring`. The DCGM portion assumes verified Pods labeled `app: nvidia-dcgm-exporter` in `gpu-operator` with a named `metrics` container port; adjust it to the installed exporter. Neither resource installs an exporter. Match the Prometheus resource's monitor/namespace selectors, and avoid scraping the same exporter twice through an existing monitor.
 
 `attachMetadata.node` makes Node discovery metadata available; it does not automatically copy labels to metrics. It requires Prometheus >=2.37 for ServiceMonitor or >=2.35 for PodMonitor and `list`/`watch` Node permission for Prometheus. The relabeling keeps actual `eks.amazonaws.com/compute-type=hybrid` nodes and creates stable `node`/`compute_type` target labels. Do not infer Hybrid placement from an SSM Node name prefix.
 

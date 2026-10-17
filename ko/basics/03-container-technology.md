@@ -1,6 +1,6 @@
 # 컨테이너 기술
 
-> **지원 버전**: 유지 관리 중인 Linux Docker/CRI 릴리스; Kubernetes CRI v1; Node.js 24 빌드 예제 **마지막 업데이트**: 2026년 9월 11일
+> **지원 버전**: 유지 관리 중인 Linux Docker/CRI 릴리스; Kubernetes CRI v1; Node.js 24 빌드 예제 **마지막 업데이트**: 2026년 10월 16일
 
 컨테이너는 애플리케이션과 그 종속성을 함께 패키징하여 다양한 환경에서 일관되게 실행할 수 있게 해주는 기술입니다. 이 문서에서는 컨테이너의 기본 개념, 작동 원리, 그리고 Kubernetes와의 관계에 대해 설명합니다.
 
@@ -224,7 +224,7 @@ Kubernetes 1.26 이상은 CRI v1을 요구합니다. 지원 중인 containerd/CR
 
 ### 이미지 태그와 다이제스트
 
-* **태그**: 사람이 읽을 수 있는 참조이며 레지스트리 불변성 정책이 없다면 다른 이미지로 재지정 가능 (예: `nginx:1.30.4`)
+* **태그**: 사람이 읽을 수 있는 참조이며 레지스트리 불변성 정책이 없다면 다른 이미지로 재지정 가능 (예: `nginx:1.30.6`)
 * **다이제스트**: 이미지 manifest 또는 다중 플랫폼 index의 콘텐츠 다이제스트(보통 SHA256)이며 config/layer 다이제스트를 참조 (예: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
 
 ## Dockerfile
@@ -271,7 +271,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 # This example assumes a static build written to dist/.
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
@@ -543,7 +543,7 @@ docker network prune
 HEALTHCHECK는 Docker 상태를 기록합니다. 일반 Docker의 재시작 정책은 프로세스 종료에 반응하며 unhealthy만으로 재시작하지 않습니다. Kubernetes는 Dockerfile HEALTHCHECK 대신 liveness/readiness/startup probe를 사용합니다.
 
 ```dockerfile
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 
 # Dockerfile에서 헬스 체크 정의
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -557,7 +557,7 @@ docker run -d \
   --health-interval=30s \
   --health-timeout=3s \
   --health-retries=3 \
-  nginx:1.30.4-alpine
+  nginx:1.30.6-alpine
 
 # 헬스 체크 상태 확인
 docker inspect <container-id> | jq '.[0].State.Health'

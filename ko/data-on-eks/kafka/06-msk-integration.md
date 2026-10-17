@@ -1,7 +1,7 @@
 # Part 6: MSK 통합
 
-> **검토 기준**: MSK Standard/Express Provisioned, MSK Serverless, MSK Connect; Java IAM helper 2.3.8\
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: MSK Standard/Express Provisioned, MSK Serverless, MSK Connect; Java IAM helper 2.3.9\
+> **최종 검토**: 2026년 10월 16일
 
 ## 책임과 준비사항
 
@@ -181,7 +181,7 @@ transactional ID를 허용하거나 idempotence를 끄지 않습니다.
 
 ### Java 클라이언트 설정
 
-`software.amazon.msk:aws-msk-iam-auth:2.3.8`과 의존성을 추가하거나 검증한 릴리스의
+`software.amazon.msk:aws-msk-iam-auth:2.3.9`와 의존성을 추가하거나 검증한 릴리스의
 all-in-one JAR를 사용합니다. 다음을 `iam.properties`로 저장합니다.
 
 ```properties
@@ -306,7 +306,7 @@ IaC/GitOps로 관리할 수 있습니다. 나중에 서비스를 바꾸려면 �
 - [IAM client mechanisms and official language helpers](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
 - [MSK IAM action/resource dependencies](https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html)
 - [IAM use cases](https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html)
-- [aws-msk-iam-auth 2.3.8](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8)
+- [aws-msk-iam-auth 2.3.9](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.9)
 - [MSK Connect](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html)
 - [MSK Connect plugin packaging and Java versions](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html)
 - [MSK Connect client authentication API](https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html)

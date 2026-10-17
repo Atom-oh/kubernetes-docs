@@ -1,7 +1,7 @@
 # ArgoCD Projects and RBAC
 
-> **Reviewed Against**: Argo CD 3.5.2; updated to patch 3.5.4 after release-note review (examples not re-run)
-> **Last Updated**: October 12, 2026
+> **Reviewed Against**: Argo CD 3.5.2; updated to patch 3.5.5 after release-note review (examples not re-run)
+> **Last Updated**: October 16, 2026
 
 ## Table of Contents
 - [AppProject Overview](#appproject-overview)
@@ -574,7 +574,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGOCD_VERSION=v3.5.4
+        ARGOCD_VERSION=v3.5.5
         case "$(uname -m)" in
           x86_64) cli_arch=amd64 ;;
           aarch64|arm64) cli_arch=arm64 ;;

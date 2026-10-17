@@ -1,7 +1,7 @@
 # Amazon EKS 비용 최적화
 
 > **검증 범위**: 현재 AWS 요금·지원 문서 및 Kubernetes 1.36 매니페스트 스키마. 실제 EKS 버전과 애드온은 AWS 지원 카탈로그에서 선택합니다.
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Amazon EKS(Elastic Kubernetes Service)를 사용하면 컨테이너화된 애플리케이션을 쉽게 배포, 관리 및 확장할 수 있지만, 비용을 효과적으로 관리하는 것이 중요합니다. 이 문서에서는 EKS 클러스터의 비용을 최적화하기 위한 다양한 전략과 모범 사례를 다룹니다.
 
@@ -1005,17 +1005,17 @@ Kubecost는 Kubernetes 클러스터의 비용을 모니터링하고 최적화하
 
 #### Kubecost 설치
 
-확인한 chart/애플리케이션은 아래 현재 저장소의 **3.2.4**입니다. Kubecost 3.x는 ClickHouse와 finops-agent 직접 수집을 사용하므로 2.x `cost-analyzer` 설치법이나 번들 Prometheus/node-exporter values를 재사용하지 않습니다. 적용 전 [chart 문서](https://github.com/kubecost/cost-analyzer-helm-chart)에서 라이선스·Kubernetes 호환성·StorageClass/PVC 용량·cluster ID·네트워크 수집·접근 제어를 검토합니다. 기존 2.x는 공식 마이그레이션 절차를 따르며 다음은 제자리 업그레이드 절차가 아닙니다. 실제 설치나 운영 준비 완료를 주장하지 않습니다. [FinOps 플랫폼 가이드](../ops/13-finops-cost-platform.md)는 OpenCost 및 청구 대조도 다룹니다.
+확인한 chart/애플리케이션은 아래 현재 저장소의 **3.3.1**입니다. Kubecost 3.x는 ClickHouse와 finops-agent 직접 수집을 사용하므로 2.x `cost-analyzer` 설치법이나 번들 Prometheus/node-exporter values를 재사용하지 않습니다. 적용 전 [chart 문서](https://github.com/kubecost/cost-analyzer-helm-chart)에서 라이선스·Kubernetes 호환성·StorageClass/PVC 용량·cluster ID·네트워크 수집·접근 제어를 검토합니다. 기존 2.x는 공식 마이그레이션 절차를 따르며 다음은 제자리 업그레이드 절차가 아닙니다. 실제 설치나 운영 준비 완료를 주장하지 않습니다. [FinOps 플랫폼 가이드](../ops/13-finops-cost-platform.md)는 OpenCost 및 청구 대조도 다룹니다.
 
 ```bash
 helm repo add kubecost https://kubecost.github.io/kubecost/
 helm repo update kubecost
-helm show values kubecost/kubecost --version 3.2.4 > kubecost-values.yaml
+helm show values kubecost/kubecost --version 3.3.1 > kubecost-values.yaml
 # Edit this file for the reviewed cluster ID, storage, license, and collection settings.
-helm template kubecost kubecost/kubecost --version 3.2.4 \
+helm template kubecost kubecost/kubecost --version 3.3.1 \
   --namespace kubecost -f kubecost-values.yaml > kubecost-rendered.yaml
 # Install a NEW release only after reviewing the rendered resources and prerequisites.
-helm install kubecost kubecost/kubecost --version 3.2.4 \
+helm install kubecost kubecost/kubecost --version 3.3.1 \
   --namespace kubecost --create-namespace -f kubecost-values.yaml
 ```
 

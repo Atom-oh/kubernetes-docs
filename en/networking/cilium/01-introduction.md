@@ -1,6 +1,6 @@
 # Part 1: Introduction
 
-> **Reviewed baseline**: Cilium 1.20.2 / Cilium CLI 0.20.1 / Hubble CLI 1.20.2. **Last Updated**: October 15, 2026
+> **Reviewed baseline**: Cilium 1.20.3 / Cilium CLI 0.20.1 / Hubble CLI 1.20.2. **Last Updated**: October 16, 2026
 
 ## Lab Environment Setup
 
@@ -50,7 +50,7 @@ kubectl --context "$CILIUM_LAB_CONTEXT" get nodes -o wide
 cilium version --client
 
 # Fresh installation only, after preparing the cluster/CNI ownership and values.
-cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.2 \
+cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.3 \
   --values cilium-lab-values.yaml
 cilium status --context "$CILIUM_LAB_CONTEXT" --wait
 ```
@@ -169,7 +169,7 @@ Verify both positive and negative connections after policy realization. Other al
 - [CNI project](https://github.com/containernetworking/cni)
 - [Kubernetes network plugins and runtime ownership](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
 - [Kubernetes client version skew](https://kubernetes.io/releases/version-skew-policy/)
-- [Cilium identities and terminology](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/gettingstarted/terminology.rst)
+- [Cilium identities and terminology](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/gettingstarted/terminology.rst)
 - [Original Weave repository metadata](https://api.github.com/repos/weaveworks/weave)
 
 Continue to [eBPF](02-ebpf.md) or test your understanding with the [Introduction Quiz](../../quizzes/networking/cilium/01-introduction-quiz.md).

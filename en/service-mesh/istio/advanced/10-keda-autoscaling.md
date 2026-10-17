@@ -1,7 +1,7 @@
 # KEDA-based Autoscaling with Istio Metrics
 
-> **Verification baseline**: KEDA/chart 2.20.2, Istio 1.31.0, Kubernetes 1.32–1.36
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: KEDA/chart 2.20.2, Istio 1.31.0, Kubernetes 1.32–1.37
+> **Last reviewed**: October 16, 2026
 
 This guide explains scaling signals and their limits. It assumes existing workloads, verified metrics and sufficient cluster capacity. Examples targeting the same Deployment are **alternatives**: select one ScaledObject/HPA owner per target, not all the objects on this page.
 
@@ -1169,7 +1169,7 @@ For CloudWatch, inspect returned timestamps, all dimensions, statistic/unit, col
 
 ### Pinned Chart and Actual Compatibility
 
-The published KEDA 2.20 deployment requirement is Kubernetes 1.30+, while the chart metadata has a looser 1.23 floor. Helm accepting a version is not proof of runtime support. Use the intersection with Istio 1.31's 1.32–1.36 support and the managed platform's supported versions.
+The published KEDA 2.20 deployment requirement is Kubernetes 1.30+, while the chart metadata has a looser 1.23 floor. Helm accepting a version is not proof of runtime support. Use the intersection with Istio 1.31's 1.32–1.37 support and the managed platform's supported versions.
 
 For a new installation, or a reviewed upgrade preserving existing values, use these values. Before upgrading, also review the release changes and CRD ownership/migration procedure:
 

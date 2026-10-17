@@ -1,6 +1,6 @@
 # FinOps Cost Visibility Platform
 
-> **Last Updated**: September 12, 2026. OpenCost 1.121.2 / chart 2.5.31, Kubecost 3.2.4, Kyverno 1.19.1.
+> **Last Updated**: October 16, 2026. OpenCost 1.121.3 / chart 2.5.33, Kubecost 3.2.4, Kyverno 1.19.1.
 > **Validation**: Helm rendering, Kubernetes schemas, Terraform mock providers, local cost calculations and policy evaluation. This does not represent an installation on a production cluster or reconciliation against an actual AWS invoice.
 
 < [Previous: Event Capacity Planning](./12-event-capacity-planning.md) | [Contents](./README.md) | [Next: Tekton Pipelines](./14-tekton-pipelines.md) >
@@ -98,13 +98,13 @@ opencost:
 helm repo add opencost https://opencost.github.io/opencost-helm-chart
 helm repo update opencost
 helm upgrade --install opencost opencost/opencost \
-  --version 2.5.31 --namespace opencost --create-namespace \
+  --version 2.5.33 --namespace opencost --create-namespace \
   -f opencost-values.yaml --wait --timeout 10m
 kubectl -n opencost get pods,pvc,svc,servicemonitor
 kubectl -n opencost port-forward service/opencost 9090:9090 9003:9003
 ```
 
-The local UI uses port `9090`; the API uses `9003`. `opencost.prometheus` and `opencost.cloudCost` are not children of exporter. Chart 2.5.31 enables MCP by default, so this baseline explicitly disables it. Design authentication and access scope separately if exposing cost tools through MCP; cost-data MCP is distinct from documentation-search MCP.
+The local UI uses port `9090`; the API uses `9003`. `opencost.prometheus` and `opencost.cloudCost` are not children of exporter. Chart 2.5.33 enables MCP by default, so this baseline explicitly disables it. Design authentication and access scope separately if exposing cost tools through MCP; cost-data MCP is distinct from documentation-search MCP.
 
 ### 2.3 Choosing Kubecost 3.x
 
@@ -178,7 +178,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -474,7 +474,7 @@ opencost:
 kubectl -n opencost create secret generic opencost-cloud-integrations \
   --from-file=cloud-integration.json=cloud-integration.json \
   --dry-run=client -o yaml | kubectl apply -f -
-helm upgrade opencost opencost/opencost --version 2.5.31 \
+helm upgrade opencost opencost/opencost --version 2.5.33 \
   --namespace opencost -f opencost-values.yaml -f opencost-cloud-values.yaml
 ```
 
@@ -592,7 +592,7 @@ This quota is an example resource ceiling, not a dollar budget or a cap on all c
 
 ### 3.2 Windowed allocation API
 
-This uses OpenCost 1.121.2's `/allocation/compute`. Verify the period, aggregation and response structure for the product and version. `includeIdle` and `shareIdle` are booleans; `shareIdle=weighted` is not the documented boolean form.
+This uses OpenCost 1.121.3's `/allocation/compute`. Verify the period, aggregation and response structure for the product and version. `includeIdle` and `shareIdle` are booleans; `shareIdle=weighted` is not the documented boolean form.
 
 ```bash
 curl --fail --silent --show-error --get \
@@ -1359,10 +1359,10 @@ Record period, currency, model-versus-billing source, refresh time, allocation p
 ## 8. References
 
 - [FinOps Foundation definition](https://www.finops.org/introduction/what-is-finops/)
-- [OpenCost 1.121.2 release](https://github.com/opencost/opencost/releases/tag/v1.121.2)
+- [OpenCost 1.121.3 release](https://github.com/opencost/opencost/releases/tag/v1.121.3)
 - [OpenCost Helm chart](https://github.com/opencost/opencost-helm-chart)
 - [OpenCost API](https://opencost.io/docs/integrations/api/)
-- [OpenCost AWS authorizer source](https://github.com/opencost/opencost/blob/v1.121.2/pkg/cloud/aws/authorizer.go)
+- [OpenCost AWS authorizer source](https://github.com/opencost/opencost/blob/v1.121.3/pkg/cloud/aws/authorizer.go)
 - [Kubecost chart and migration](https://github.com/kubecost/cost-analyzer-helm-chart)
 - [AWS Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html)
 - [Data Exports encryption](https://docs.aws.amazon.com/cur/latest/userguide/data-protection.html)

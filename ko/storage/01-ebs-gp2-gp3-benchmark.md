@@ -1,7 +1,7 @@
 # EBS gp2 vs gp3 실측 벤치마크
 
 > **기존 측정 환경**: Kubernetes 1.36 (Amazon EKS), EBS CSI 드라이버, fio 3.36
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 "gp2를 gp3로 바꾸면 20% 싸지고 성능은 같거나 낫다"는 AWS 문서의 한 줄은 유명하지만, Kubernetes PVC 위에서 그 차이가 **언제, 어떤 모양으로** 나타나는지 직접 잰 그래프는 찾기 어렵습니다. 이 문서는 EKS 노드 하나에 **같은 100 GiB짜리 gp2 PVC와 gp3 PVC**를 붙이고 fio로 45분간 두들긴 결과입니다. 핵심은 "gp2가 느리다"가 아닙니다 — **gp2는 33분 동안 gp3와 완전히 같고, 그 다음 1초 만에 10분의 1이 됩니다.** 아래 숫자는 기존 실행에서 보고한 값이며 반복 실행의 보장값이 아닙니다. 초기 크레딧·드라이버·이미지·노드 상태를 함께 기록해 비교해야 합니다.
 
@@ -37,7 +37,7 @@
 
 ### 배포 매니페스트
 
-기존 수치의 실행 환경은 `alpine:3.20` / fio 3.36으로 기록되어 있습니다. Alpine 3.20은 일반 지원이 종료되어 아래 **재실행용** 예제는 3.24.1을 사용합니다. `apk` 설치 버전은 변할 수 있으므로 출력된 fio 버전과 실제 이미지 digest를 저장하고 새 결과를 기존 측정값으로 덮어쓰지 않습니다. 일반 EC2 노드의 `ebs.csi.aws.com` 드라이버·IAM 권한이 준비된 클러스터용이며 EKS Auto Mode의 provisioner와는 다릅니다.
+기존 수치의 실행 환경은 `alpine:3.20` / fio 3.36으로 기록되어 있습니다. Alpine 3.20은 일반 지원이 종료되어 아래 **재실행용** 예제는 3.24.2를 사용합니다. `apk` 설치 버전은 변할 수 있으므로 출력된 fio 버전과 실제 이미지 digest를 저장하고 새 결과를 기존 측정값으로 덮어쓰지 않습니다. 일반 EC2 노드의 `ebs.csi.aws.com` 드라이버·IAM 권한이 준비된 클러스터용이며 EKS Auto Mode의 provisioner와는 다릅니다.
 
 ```yaml
 apiVersion: v1
@@ -105,7 +105,7 @@ spec:
     node.kubernetes.io/instance-type: m5.xlarge
   containers:
     - name: fio
-      image: alpine:3.24.1
+      image: alpine:3.24.2
       command: ["sh", "-c", "apk add --no-cache fio && fio --version && sleep infinity"]
       resources:
         requests: { cpu: "1", memory: 1Gi }

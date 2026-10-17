@@ -1,11 +1,11 @@
 # EKS 클러스터 생성 - Part 4: Terraform을 사용한 클러스터 생성
 
-> **예제 버전**: Amazon EKS 1.36; Terraform 1.15.7; AWS 프로바이더 6.64.0; EKS 모듈 21.25.0
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 버전**: Amazon EKS 1.36; Terraform 1.16.6; AWS 프로바이더 6.69.1; EKS 모듈 21.29.0
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 3개 레이어 Terraform 예제
 
-Terraform은 인프라를 코드로 관리합니다. 이 예제는 AWS 프로바이더 6.x와 고정된 EKS 모듈 **21.25.0**, VPC 모듈 **5.21.0**을 사용합니다. HCL은 Terraform 1.15.7·AWS 프로바이더 6.64.0으로 검사했으며 AWS 배포나 프로덕션 동작은 실행하지 않았습니다. 기존 v20 방식의 `cluster_*` 입력은 모듈 v21과 호환되지 않으므로 아래의 `name`, `kubernetes_version`, `addons` 등 v21 이름을 사용하세요.
+Terraform은 인프라를 코드로 관리합니다. 이 예제는 AWS 프로바이더 6.x와 고정된 EKS 모듈 **21.29.0**, VPC 모듈 **6.7.3**을 사용합니다. HCL은 Terraform 1.16.6·AWS 프로바이더 6.69.1로 검사했으며 AWS 배포나 프로덕션 동작은 실행하지 않았습니다. 기존 v20 방식의 `cluster_*` 입력은 모듈 v21과 호환되지 않으므로 아래의 `name`, `kubernetes_version`, `addons` 등 v21 이름을 사용하세요.
 
 상태를 분리하면 팀별 소유권과 수명주기에 따라 변경을 검토하기 쉽습니다. 의존성이나 운영 영향을 없애지는 않습니다. 네트워크 변경은 클러스터를 중단시킬 수 있고 애드온·접근 정책 변경은 모든 워크로드에 영향을 줄 수 있습니다. 검증된 프로덕션 아키텍처가 아닌 구조 예제입니다.
 
@@ -157,7 +157,7 @@ variable "tags" {
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.21.0"
+  version = "6.7.3"
 
   name = "${var.cluster_name}-vpc"
   cidr = var.vpc_cidr
@@ -302,7 +302,7 @@ variable "cluster_admin_role_arn" {
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
@@ -749,7 +749,7 @@ EKS Pod Identity는 지원되는 워크로드의 선택지이며 IRSA를 보편�
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
@@ -806,7 +806,7 @@ module "eks" {
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
@@ -1165,7 +1165,7 @@ variable "tags" {
 
 ## 검증 참고 자료
 
-- [EKS module v21 migration](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v21.25.0/docs/UPGRADE-21.0.md)
+- [EKS module v21 migration](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v21.29.0/docs/UPGRADE-21.0.md)
 - [S3 backend locking](https://developer.hashicorp.com/terraform/language/backend/s3)
 - [Remote state access](https://developer.hashicorp.com/terraform/language/state/remote-state-data)
 - [Pod Identity role trust](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html)

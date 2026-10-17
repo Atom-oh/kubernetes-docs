@@ -1,6 +1,6 @@
 # Amazon EKS 모니터링 및 로깅 퀴즈
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 퀴즈는 Amazon EKS의 모니터링 및 로깅 기능, 도구, 모범 사례에 대한 이해를 테스트합니다.
 
@@ -42,7 +42,7 @@
 **구현 순서:**
 
 1. [본문](../../eks/06-eks-monitoring-logging.md)의 소유 CloudWatch add-on catalog·schema·신원 확인을 따릅니다. 5+ Auto Monitor·restart 설정을 검토하고 기존에 계측된 workload에 agent를 추가하기 전에 충돌을 확인합니다.
-2. Prometheus 수집·query가 필요하면 본문의 KPS90.1.1 values와 준비한 storage·Grafana Secret·kubelet serving CA를 사용합니다. Operator가 ServiceMonitor·PrometheusRule을 처리하며 독립 Prometheus 설치와 동일하지 않습니다. 설치 후 실제 target을 검증합니다.
+2. Prometheus 수집·query가 필요하면 본문의 KPS92.9.0 values와 준비한 storage·Grafana Secret·kubelet serving CA를 사용합니다. Operator가 ServiceMonitor·PrometheusRule을 처리하며 독립 Prometheus 설치와 동일하지 않습니다. 설치 후 실제 target을 검증합니다.
 3. 명시적 ADOT 경로는 본문의 Operator0.158·Collector0.50 v1beta1 예제와 object config·TLS·준비한 ServiceAccount를 사용합니다. Collector release에는 Operator 설치 manifest가 없습니다. 이 trace 전용 경로는 X-Ray로 span을 보내며 앱 계측·전파도 필요합니다.
 4. AMP는 실제 workspace remote-write endpoint·writer 신원을 구성합니다. Grafana·AMG의 data source·query 신원은 별도이며 AMG12+는 AMP plugin을 사용합니다. Awsemf exporter는 CloudWatch 경로로 게시하고 자동으로 AMP에 보내지 않습니다.
 
@@ -61,7 +61,7 @@ Grafana/AMG -- configured queries --> Prometheus / AMP / CloudWatch / X-Ray
 
 **Terraform 계획 예제:**
 
-다음 resource 예제는 AWS provider6.64.0을 사용합니다. 선택한 account·Region, 기존에 검토한 Grafana workspace 역할, 지원 AMG 버전과 사용 가능한 IAM Identity Center 구성이 전제입니다. 기존 resource는 소유자의 import·변경 절차가 필요합니다. Application log-group 이름은 본문 collector 경로와 일치하며 add-on·다른 stack이 관리하는 group을 중복 소유하지 않습니다.
+다음 resource 예제는 AWS provider 6.69.1을 사용합니다. 선택한 account·Region, 기존에 검토한 Grafana workspace 역할, 지원 AMG 버전과 사용 가능한 IAM Identity Center 구성이 전제입니다. 기존 resource는 소유자의 import·변경 절차가 필요합니다. Application log-group 이름은 본문 collector 경로와 일치하며 add-on·다른 stack이 관리하는 group을 중복 소유하지 않습니다.
 
 ```hcl
 terraform {
@@ -69,7 +69,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -355,7 +355,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -537,7 +537,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -758,7 +758,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -983,7 +983,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -1271,7 +1271,7 @@ kubectl -n opencost port-forward --address 127.0.0.1 svc/opencost 9090:9090
 
 port-forward 실행 중 `http://localhost:9090`에 접속합니다. 이 기본 구성은 임시 exporter 캐시를 사용하고 Cloud Cost 수집과 MCP를 끄며 ClusterIP Service만 노출합니다. 공용 환경에서는 영속성, 용량, 인증/네트워크 접근, RBAC, 수집 상태를 검토해야 합니다. ClusterIP는 테넌트 인가 경계가 아닙니다. 온디맨드 가격 기반 추정치는 실제 청구, 할인, Spot 가격, 크레딧, 공용 비용, 스토리지 및 네트워크 요금과 대조해야 합니다. AWS 청구 연동은 별도 설정이며, 지원되는 AWS service-account/default-SDK 인증에 장기 액세스 키를 내장할 필요는 없습니다.
 
-Kubecost는 별도 선택지입니다. 확인한 **3.2.4** chart는 `https://kubecost.github.io/kubecost/` 저장소의 `kubecost/kubecost`입니다. 기존 `cost-analyzer` 저장소와 2.x Prometheus values를 3.x 설치법으로 사용할 수 없습니다. 3.x는 ClickHouse와 finops-agent 직접 수집을 사용합니다. 설치/업그레이드 전에 라이선스, 스토리지, Kubernetes 호환성, 공식 2.x 마이그레이션 절차를 검토합니다. [FinOps 플랫폼 가이드](../../ops/13-finops-cost-platform.md)와 [Kubecost chart 문서](https://github.com/kubecost/cost-analyzer-helm-chart)를 참고하세요.
+Kubecost는 별도 선택지입니다. 확인한 **3.3.1** chart는 `https://kubecost.github.io/kubecost/` 저장소의 `kubecost/kubecost`입니다. 기존 `cost-analyzer` 저장소와 2.x Prometheus values를 3.x 설치법으로 사용할 수 없습니다. 3.x는 ClickHouse와 finops-agent 직접 수집을 사용합니다. 설치/업그레이드 전에 라이선스, 스토리지, Kubernetes 호환성, 공식 2.x 마이그레이션 절차를 검토합니다. [FinOps 플랫폼 가이드](../../ops/13-finops-cost-platform.md)와 [Kubecost chart 문서](https://github.com/kubecost/cost-analyzer-helm-chart)를 참고하세요.
 
 **레이블, 청구 태그, Cost Category**
 
@@ -1331,7 +1331,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }

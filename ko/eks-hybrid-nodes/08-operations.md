@@ -2,8 +2,8 @@
 
 < [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) | [다음: 베어메탈 서버 OS 설치](./09-bare-metal-os-setup.md) >
 
-> **검증 기준**: nodeadm 1.0.20; Cilium 1.18.3 CRD; Prometheus Operator 0.93.1; kube-prometheus-stack 90.0.0; Harbor 2.15.2. 검토에 사용한 기준이며 모든 제품의 지원 버전 조합을 뜻하지 않습니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **검증 기준**: nodeadm 1.0.20; Cilium 1.18.3 CRD; Prometheus Operator 0.94.1; kube-prometheus-stack 92.9.0; Harbor 2.15.4. 검토에 사용한 기준이며 모든 제품의 지원 버전 조합을 뜻하지 않습니다.
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 문서에서는 EKS Hybrid Nodes 환경의 운영 및 유지보수 절차를 다룹니다.
 
@@ -11,7 +11,7 @@
 
 관리자 비밀번호를 가진 CronJob이 latest 태그만 순회하는 대신 Harbor 내장 scan-all 스케줄러를 사용합니다. 시스템 관리자 UI에서 **Administration → Interrogation Services → Vulnerability → Schedule to scan all**을 엽니다. Hourly/Daily/Weekly/Custom을 지원하며 문서화된 UI의 Daily는 자정입니다. 오전 02:00 작업 창이 필요하면 배포한 버전에 맞는 Custom 문법·시간대·다음 실행 시각을 확인합니다.
 
-Harbor 2.15.2에는 GET/POST/PUT `/api/v2.0/system/scanAll/schedule` API가 있습니다. UI 또는 신뢰할 CA 검증·보호된 자격 증명·필요한 시스템 권한을 갖춘 승인한 API 연동을 사용합니다. 프로젝트 robot 권한이 전체 스캔 설정 권한을 뜻하지 않습니다. 관리자 비밀번호를 Pod 환경 변수·명령 인자에 넣거나 TLS 검증을 끄지 않습니다.
+Harbor 2.15.4에는 GET/POST/PUT `/api/v2.0/system/scanAll/schedule` API가 있습니다. UI 또는 신뢰할 CA 검증·보호된 자격 증명·필요한 시스템 권한을 갖춘 승인한 API 연동을 사용합니다. 프로젝트 robot 권한이 전체 스캔 설정 권한을 뜻하지 않습니다. 관리자 비밀번호를 Pod 환경 변수·명령 인자에 넣거나 TLS 검증을 끄지 않습니다.
 
 스캐너 상태, 취약점 DB 최신성, 실제 완료와 실패를 기록합니다. 요청 제출이나 빈 API 응답은 취약점 평가 성공이 아닙니다. 지원하지 않는 artifact도 별도로 처리해야 하며 전체 스캔은 리소스를 소비합니다. 일부 artifact를 자동화할 때도 필요한 모든 페이지·digest를 열거하고 repository 경로를 올바르게 인코딩하며 모든 응답을 확인합니다. latest만 순회하는 루프는 전체 레지스트리를 검사하지 않습니다.
 
@@ -53,7 +53,7 @@ Redis BGSAVE는 비동기 작업이므로 바로 dump.rdb를 복사하면 이전
 
 호스트, kubelet/container, GPU 지표를 구분합니다. `node_cpu_seconds_total`과 `node_memory_*`는 kubelet endpoint가 아니라 Node Exporter가 제공합니다. 검토한 Node Exporter/DCGM 구성에서 실제 host mount, 권한, 노드 배치와 지표 가용성을 확인합니다. Container Insights는 EC2 IMDS를 통해 Hybrid 호스트 수준 지표를 제공하지 않습니다.
 
-아래 discovery 예시는 `monitoring` namespace의 `kube-prom` 릴리스에 대해 kube-prometheus-stack 90.0.0의 Node Exporter Service label·port를 사용합니다. DCGM 부분은 `gpu-operator` namespace에 `app: nvidia-dcgm-exporter` label과 이름이 `metrics`인 container port를 가진 Pod가 있다는 전제이므로 설치한 exporter와 맞춥니다. Monitor 리소스가 exporter를 설치하지는 않습니다. Prometheus 리소스의 monitor·namespace selector를 확인하고 기존 monitor와 중복 수집하지 않습니다.
+아래 discovery 예시는 `monitoring` namespace의 `kube-prom` 릴리스에 대해 kube-prometheus-stack 92.9.0의 Node Exporter Service label·port를 사용합니다. DCGM 부분은 `gpu-operator` namespace에 `app: nvidia-dcgm-exporter` label과 이름이 `metrics`인 container port를 가진 Pod가 있다는 전제이므로 설치한 exporter와 맞춥니다. Monitor 리소스가 exporter를 설치하지는 않습니다. Prometheus 리소스의 monitor·namespace selector를 확인하고 기존 monitor와 중복 수집하지 않습니다.
 
 `attachMetadata.node`는 Node discovery 메타데이터를 제공하지만 이를 지표 label로 자동 복사하지 않습니다. ServiceMonitor는 Prometheus >=2.37, PodMonitor는 >=2.35와 Prometheus ServiceAccount의 Node `list`/`watch` 권한이 필요합니다. relabeling은 실제 `eks.amazonaws.com/compute-type=hybrid` 노드를 선택하고 `node`·`compute_type` target label을 만듭니다. SSM Node 이름의 접두사로 Hybrid 배치를 추측하지 않습니다.
 

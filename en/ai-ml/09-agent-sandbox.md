@@ -1,7 +1,7 @@
 # Agent Sandbox on EKS — Isolated, Stateful Runtimes for AI Agents
 
 > **Supported Versions**: Agent Sandbox v1.0.6 (API `v1beta1`), Python SDK `k8s-agent-sandbox` 1.0.6, Karpenter v1.13.0+ for `cpuOptions.nestedVirtualization`
-> **Last Updated**: October 13, 2026
+> **Last Updated**: October 16, 2026
 
 [Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox) (`kubernetes-sigs/agent-sandbox`) is a Kubernetes SIG Apps subproject that adds a `Sandbox` custom resource and controller for **isolated, stateful, singleton workloads**. A Sandbox is one Pod with a stable identity, optional persistent storage and lifecycle controls (expiry, suspend and resume) that Deployments and StatefulSets do not model directly. The typical consumers are AI agents that execute LLM-generated code, reinforcement learning (RL) rollouts, notebooks and per-user development environments.
 
@@ -24,19 +24,19 @@ This chapter explains the API as it exists at tag `v1.0.6` and what changes when
 
 An agent platform usually needs thousands of these short-lived or idle-most-of-the-time environments, each owned by one session or user. Modelling each as a StatefulSet of size 1 plus a Service and PVC works but leaves expiry, warm pools, claim latency and isolation defaults to custom code.
 
-### Project status (October 13, 2026)
+### Project status (October 16, 2026)
 
 | Item | Value |
 |------|-------|
 | Repository created | August 12, 2025 |
 | v1.0.0 | August 28, 2026: `v1alpha1` and the conversion webhook removed; all CRDs serve only `v1beta1` |
-| Latest release | v1.0.6 (October 8, 2026); patch releases have shipped weekly since v1.0.0 |
+| Latest release | v1.0.7 (October 15, 2026); patch releases have shipped weekly since v1.0.0. This chapter is based on v1.0.6 |
 | API groups | `agents.x-k8s.io/v1beta1` (core), `extensions.agents.x-k8s.io/v1beta1` (extensions) |
 | Controller namespace | `agent-sandbox-system` |
 | SDKs | Python (`k8s-agent-sandbox`, Python ≥ 3.11), Go (`sigs.k8s.io/agent-sandbox/clients/go/sandbox`), TypeScript |
 | Isolation | Delegated to the Pod's `RuntimeClass` (for example gVisor or Kata Containers) |
 
-The project's version is 1.0, but its API version is still `v1beta1`. Pin releases and read each release's "Breaking Changes / Action Required" section; several patch releases (v1.0.2, v1.0.5, v1.0.6) contain action items.
+The project's version is 1.0, but its API version is still `v1beta1`. Pin releases and read each release's "Breaking Changes / Action Required" section; several patch releases (v1.0.2, v1.0.5, v1.0.6, v1.0.7) contain action items.
 
 ---
 

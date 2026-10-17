@@ -4,10 +4,10 @@
 
 This guide uses Strimzi Operator as a self-managed Kafka option on EKS. The Operator reconciles Pods, storage, listeners, certificates and upgrades; it does not remove responsibility for data, availability and security policy. Part 6 compares managed alternatives such as Amazon MSK.
 
-> **Last Updated**: September 12, 2026. Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: October 16, 2026. Strimzi 1.3.0 / Kafka 4.3.1.
 > **Upgrade requirement**: Strimzi 1.0 and later only support CRD API `v1`. Convert existing `v1beta2` / `v1beta1` / `v1alpha1` resources and prepare CRDs through the official migration procedure before upgrading the Operator. Changing version numbers alone is not an upgrade plan.
 
-Strimzi 1.2.0 supports Kafka 4.2.0, 4.2.1, 4.3.0 and 4.3.1, defaulting to 4.3.1. This guide pins a compatible combination; also check the distribution, Kubernetes version and upgrade path before installation.
+Strimzi 1.3.0 supports Kafka 4.2.0, 4.2.1, 4.2.2, 4.3.0 and 4.3.1, defaulting to 4.3.1. This guide pins a compatible combination; also check the distribution, Kubernetes version and upgrade path before installation.
 
 ## Core Architecture Concepts
 
@@ -74,9 +74,9 @@ Users declare custom resources such as Kafka and KafkaNodePool; Strimzi reconcil
 
 ## References
 
-- [Strimzi 1.2.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)
 
-- [Strimzi Documentation](https://strimzi.io/docs/operators/1.2.0/overview.html)
+- [Strimzi Documentation](https://strimzi.io/docs/operators/1.3.0/overview.html)
 - [Apache Kafka Documentation](https://kafka.apache.org/43/design/design/)
 - [KRaft operations guide](https://kafka.apache.org/43/operations/kraft/)
 - [AWS Data on EKS Project](https://awslabs.github.io/data-on-eks/)

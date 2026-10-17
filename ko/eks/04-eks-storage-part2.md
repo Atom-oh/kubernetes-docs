@@ -1,6 +1,6 @@
 # Part 2: 스토리지 클래스
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 문서는 Amazon EKS 스토리지 시리즈의 두 번째 부분으로, FSx for Lustre, Amazon S3, 스냅샷, 볼륨 확장 및 성능 최적화에 대해 다룹니다.
 
@@ -201,7 +201,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -612,7 +612,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: reader
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -730,7 +730,7 @@ spec:
 
 ### Velero로 백업 예약
 
-검토한 조합은 Velero1.18.2와 AWS plugin1.14.2입니다. 설치 전 CLI 릴리스 checksum·plugin 호환성을 확인합니다. CSI 지원은 Velero에 통합되었지만 이 경로는 여전히 `EnableCSI`가 필요하며 이전 별도 CSI plugin을 추가하지 않습니다. 비공개 백업 버킷·접두사, 네트워크 경로, 제한된 IAM/KMS 권한과 `velero/velero` IRSA 역할을 준비합니다. 다음은 리소스를 생성하지 않고 신규 설치 매니페스트를 검토용으로 렌더링합니다:
+검토한 조합은 Velero1.18.4와 AWS plugin1.14.4입니다. 설치 전 CLI 릴리스 checksum·plugin 호환성을 확인합니다. CSI 지원은 Velero에 통합되었지만 이 경로는 여전히 `EnableCSI`가 필요하며 이전 별도 CSI plugin을 추가하지 않습니다. 비공개 백업 버킷·접두사, 네트워크 경로, 제한된 IAM/KMS 권한과 `velero/velero` IRSA 역할을 준비합니다. 다음은 리소스를 생성하지 않고 신규 설치 매니페스트를 검토용으로 렌더링합니다:
 
 ```bash
 set -euo pipefail
@@ -738,7 +738,7 @@ set -euo pipefail
 : "${VELERO_ROLE_ARN:?Set the reviewed IRSA role for system:serviceaccount:velero:velero}"
 : "${AWS_REGION:?Set the bucket/snapshot Region for this example}"
 velero install --provider aws \
-  --plugins velero/velero-plugin-for-aws:v1.14.2 \
+  --plugins velero/velero-plugin-for-aws:v1.14.4 \
   --bucket "$BACKUP_BUCKET" --prefix eks-storage-demo \
   --backup-location-config "region=$AWS_REGION" \
   --snapshot-location-config "region=$AWS_REGION" \
@@ -819,7 +819,7 @@ kubectl -n storage-demo describe pvc ebs-claim
 
 ## 볼륨 클로닝
 
-현재 EBS CSI는 `dataSource`와 CSI clone capability로 PVC 복제를 지원하며 EBS CSI1.66.0은 숨겨진 스냅샷을 가정하는 방식이 아닌 native EBS volume copy(`CopyVolumes`)를 사용합니다. 사용 전 배포한 드라이버/add-on 지원을 확인하세요. 대상은 독립 볼륨이지만 사용 가능 상태와 초기화 완료 성능은 다릅니다.
+현재 EBS CSI는 `dataSource`와 CSI clone capability로 PVC 복제를 지원하며 EBS CSI1.67.0은 숨겨진 스냅샷을 가정하는 방식이 아닌 native EBS volume copy(`CopyVolumes`)를 사용합니다. 사용 전 배포한 드라이버/add-on 지원을 확인하세요. 대상은 독립 볼륨이지만 사용 가능 상태와 초기화 완료 성능은 다릅니다.
 
 ![소스 PVC를 dataSource로 참조하면 EBS 볼륨 데이터가 백그라운드에서 클론 PVC의 새 EBS 볼륨으로 직접 복사되는 볼륨 클로닝 과정을 보여준다.](../.gitbook/assets/ko-eks-04-eks-storage-part2-10.png)
 
@@ -867,7 +867,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: writer
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sh
         - -c
@@ -936,7 +936,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -1040,7 +1040,7 @@ spec:
         topologyKey: kubernetes.io/hostname
   containers:
   - name: attachment-only
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sleep
     - '3600'
@@ -1089,7 +1089,7 @@ spec:
         topologyKey: kubernetes.io/hostname
   containers:
   - name: attachment-only
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sleep
     - '3600'

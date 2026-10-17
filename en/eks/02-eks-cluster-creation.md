@@ -1,6 +1,6 @@
 # EKS Cluster Creation
 
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 There are several ways to create an Amazon EKS cluster. In this chapter, we will learn in detail how to create an EKS cluster using various tools and methods.
 
@@ -73,7 +73,7 @@ See [IAM Identity Center authentication](https://docs.aws.amazon.com/cli/latest/
 
 #### kubectl and eksctl — Linux/macOS
 
-This chapter's EKS 1.36 examples use kubectl **1.36.4** and eksctl **0.230.0** as their baseline. Prefer the same kubectl minor as the server; supported skew is ±1 minor. Do not blindly install the newest minor from upstream `stable.txt` for an older EKS cluster.
+This chapter's EKS 1.36 examples use kubectl **1.36.5** and eksctl **0.231.0** as their baseline. Prefer the same kubectl minor as the server; supported skew is ±1 minor. Do not blindly install the newest minor from upstream `stable.txt` for an older EKS cluster.
 
 This Bash example selects AMD64/ARM64 and verifies official checksums before installation. It needs `curl`, `tar`, `awk`, and `sha256sum` or `shasum`; installation in `/usr/local/bin` requires administrator permission. Download or checksum failure stops installation.
 
@@ -102,13 +102,13 @@ This Bash example selects AMD64/ARM64 and verifies official checksums before ins
       shasum -a 256 --check "$1"
     fi
   }
-  EKS_KUBECTL_VERSION=v1.36.4
+  EKS_KUBECTL_VERSION=v1.36.5
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl" -o kubectl || exit 1
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl.sha256" -o kubectl.sha256 || exit 1
   printf '%s  kubectl\n' "$(tr -d '[:space:]' < kubectl.sha256)" > selected.sha256
   verify_sha selected.sha256 || exit 1
 
-  EKSCTL_VERSION=0.230.0
+  EKSCTL_VERSION=0.231.0
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/$EKS_TOOL_ARCHIVE" -o "$EKS_TOOL_ARCHIVE" || exit 1
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_checksums.txt" -o eksctl_checksums.txt || exit 1
   awk -v name="$EKS_TOOL_ARCHIVE" '$2 == name {print; count++} END {if (count != 1) exit 1}' \
@@ -126,7 +126,7 @@ Official procedures: [Linux kubectl](https://kubernetes.io/docs/tasks/tools/inst
 
 #### Windows
 
-Follow the [official kubectl installation procedure](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) in PowerShell. For this chapter's AMD64 example, use [kubectl 1.36.4](https://dl.k8s.io/release/v1.36.4/bin/windows/amd64/kubectl.exe) and the `.sha256` file at the same path. Select the Windows ZIP matching your CPU and `eksctl_checksums.txt` from the [eksctl 0.230.0 release](https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0).
+Follow the [official kubectl installation procedure](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) in PowerShell. For this chapter's AMD64 example, use [kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe) and the `.sha256` file at the same path. Select the Windows ZIP matching your CPU and `eksctl_checksums.txt` from the [eksctl 0.231.0 release](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0).
 
 Compare `Get-FileHash -Algorithm SHA256` with the official hash and stop on mismatch. After verification, extract the ZIP, add the executable directory to PATH, and check `kubectl version --client` and `eksctl version`. Do not run PowerShell syntax in Bash.
 
@@ -786,7 +786,7 @@ The following complete example supports **one new cluster**, choosing Auto Mode 
 
 ### EKS Auto Mode Cluster Terraform Configuration
 
-Save as `main.tf`. The example pins AWS provider **6.64.0** and uses EKS **1.36**. Supply existing private subnet IDs explicitly; a custom `Type=Private` tag is not a reliable substitute for verifying routes and connectivity. The precondition checks VPC/AZ relationships during planning, but does not verify private routing, service endpoints, DNS, IP capacity or load-balancer subnet tags.
+Save as `main.tf`. The example pins AWS provider **6.69.1** and uses EKS **1.36**. Supply existing private subnet IDs explicitly; a custom `Type=Private` tag is not a reliable substitute for verifying routes and connectivity. The precondition checks VPC/AZ relationships during planning, but does not verify private routing, service endpoints, DNS, IP capacity or load-balancer subnet tags.
 
 Auto Mode needs compute, load balancing and block storage enabled together, with `bootstrap_self_managed_addons = false`. The cluster role includes `sts:TagSession` and all five required policies. IAM attachment dependencies preserve permissions while EKS deletes managed infrastructure.
 
@@ -796,7 +796,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -1069,15 +1069,15 @@ enable_auto_mode = false
 
 This disables all three Auto Mode capabilities, bootstraps the conventional networking add-ons, selects conventional EC2 node permissions and creates the AL2023 managed node group. It does not install EBS CSI, AWS LBC, Metrics Server or a node autoscaler; configure the components your workload requires separately. Switching this value after deployment changes infrastructure and IAM and requires a separate migration review.
 
-Validation: Terraform **1.15.7** with the signed AWS provider **6.64.0** passed local `terraform validate` with zero errors/warnings. **No plan, apply or AWS API call was executed.** Both modes still need deployment validation; the example is not evidence of production readiness.
+Validation: Terraform **1.16.6** with the signed AWS provider **6.69.1** passed local `terraform validate` with zero errors/warnings. **No plan, apply or AWS API call was executed.** Both modes still need deployment validation; the example is not evidence of production readiness.
 
-References: [AWS provider EKS cluster](https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_cluster.html.markdown), [managed node group](https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_node_group.html.markdown), [Auto Mode role requirements](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html).
+References: [AWS provider EKS cluster](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown), [managed node group](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown), [Auto Mode role requirements](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html).
 
 ## Creating a Cluster Using AWS CDK
 
 Use `aws-cdk-lib/aws-eks-v2` for this **new-stack** example. It creates a native `AWS::EKS::Cluster` and access entry; no Lambda custom resource is needed to enable Auto Mode. Do not treat replacing an existing deployed construct with this example as an in-place migration.
 
-The example uses CDK library **2.269.0**, CLI **2.1141.0** and EKS **1.36**. It imports existing private subnets by attributes without a synthesis-time VPC lookup. Verify the supplied subnet/AZ correspondence, VPC DNS, routing, service access and load-balancer subnet tags before deployment. An imported VPC definition does not validate those conditions.
+The example uses CDK library **2.273.0**, CLI **2.1145.0** and EKS **1.36**. It imports existing private subnets by attributes without a synthesis-time VPC lookup. Verify the supplied subnet/AZ correspondence, VPC DNS, routing, service access and load-balancer subnet tags before deployment. An imported VPC definition does not validate those conditions.
 
 ### EKS Auto Mode Cluster Using TypeScript
 
@@ -1149,7 +1149,7 @@ export class EksAutoModeStack extends cdk.Stack {
       bootstrapSelfManagedAddons: false,
       bootstrapClusterCreatorAdminPermissions: false,
       // All required policies/trust are defined above. Avoid adding the older
-      // BlockStoragePolicy that CDK 2.269.0 otherwise attaches automatically.
+      // BlockStoragePolicy that CDK 2.273.0 otherwise attaches automatically.
       role: clusterRole.withoutPolicyUpdates(),
       compute: {
         nodePools: ['system', 'general-purpose'],
@@ -1173,7 +1173,7 @@ export class EksAutoModeStack extends cdk.Stack {
 }
 ```
 
-The cluster role explicitly includes `sts:TagSession` and the five Auto Mode policies, including `AmazonEKSBlockStoragePolicyV2`. `withoutPolicyUpdates()` keeps CDK 2.269.0 from adding the older block-storage policy; this example is responsible for supplying all required permissions. Dependencies retain those roles until cluster deletion completes. The node role has only the Auto Mode minimal worker and ECR pull policies.
+The cluster role explicitly includes `sts:TagSession` and the five Auto Mode policies, including `AmazonEKSBlockStoragePolicyV2`. `withoutPolicyUpdates()` keeps CDK 2.273.0 from adding the older block-storage policy; this example is responsible for supplying all required permissions. Dependencies retain those roles until cluster deletion completes. The node role has only the Auto Mode minimal worker and ECR pull policies.
 
 `bootstrapSelfManagedAddons: false` avoids overlapping self-managed networking add-ons. Auto Mode manages compute, load balancing and block storage together. The operator access entry is created separately from the cluster execution role.
 
@@ -1216,9 +1216,9 @@ Create a fresh project, save the two files above after initialization, and suppl
 ```bash
 mkdir eks-auto-mode
 cd eks-auto-mode
-npx --yes --package aws-cdk@2.1141.0 cdk init app --language typescript
-npm install --save-exact aws-cdk-lib@2.269.0 constructs@10.5.0
-npm install --save-dev --save-exact aws-cdk@2.1141.0 typescript@5.9.3
+npx --yes --package aws-cdk@2.1145.0 cdk init app --language typescript
+npm install --save-exact aws-cdk-lib@2.273.0 constructs@10.5.0
+npm install --save-dev --save-exact aws-cdk@2.1145.0 typescript@5.9.3
 
 # Save the source files above, then set the required environment values.
 : "${CDK_DEFAULT_ACCOUNT:?Set the intended AWS account ID}"
@@ -1376,7 +1376,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: app
-        image: nginx:1.30.4-alpine
+        image: nginx:1.30.6-alpine
         ports:
         - name: http
           containerPort: 80

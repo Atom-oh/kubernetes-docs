@@ -1,6 +1,6 @@
 # AWS Controllers for Kubernetes (ACK)
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 16, 2026
 
 ## Concepts and Architecture
 
@@ -18,13 +18,13 @@ ACK is not a mandatory successor to CloudFormation or Terraform. AWS holds the a
 
 | Controller | Version |
 | --- | --- |
-| s3 | 1.12.1 |
-| iam | 1.9.0 |
-| sqs | 1.7.0 |
-| sns | 1.10.1 |
-| elbv2 | 1.7.0 |
-| route53 | 1.6.0 |
-| rds | 1.12.0 |
+| s3 | 1.13.1 |
+| iam | 1.10.1 |
+| sqs | 1.8.2 |
+| sns | 1.11.1 |
+| elbv2 | 1.8.2 |
+| route53 | 1.7.1 |
+| rds | 1.13.3 |
 
 These versions were checked against official releases and OCI charts. Consult the official service list for complete coverage and Alpha/Beta/GA status. GA does not imply every AWS API feature or every operational requirement is covered. A CRD's v1alpha1 API string is distinct from controller maturity.
 
@@ -37,7 +37,7 @@ Use the OCI chart path below, rather than the former eks-charts s3-chart path. T
 ```bash
 helm template ack-s3 \
   oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
-  --version 1.12.1 --namespace infra \
+  --version 1.13.1 --namespace infra \
   --set aws.region=us-west-2 \
   --set installScope=namespace --set watchNamespace=infra \
   --set enableCARM=false --set enableCrossNamespace=false \
@@ -145,7 +145,7 @@ The eight original guide files and two quizzes in Korean/English, including 56 u
 - [ACK services](https://aws-controllers-k8s.github.io/community/docs/community/services/)
 - [Resource adoption](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
 - [Retention](https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/)
-- [S3 chart 1.12.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/helm)
-- [Runtime 0.63.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.63.0)
+- [S3 chart 1.13.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.13.1/helm)
+- [Runtime 0.66.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.66.0)
 
 [ACK quiz](../quizzes/platform-engineering/02-ack-quiz.md)

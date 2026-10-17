@@ -34,7 +34,7 @@
 
 </details>
 
-## 3. Velero 1.18.2 restore create -o json에 대한 올바른 설명은?
+## 3. Velero 1.18.4 restore create -o json에 대한 올바른 설명은?
 
 - A) 실제 복원을 완료한다
 - B) 완전히 오프라인으로만 동작한다

@@ -1,6 +1,6 @@
 # Part 1: Prerequisites
 
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 There are several ways to create an Amazon EKS cluster. In this chapter, we will learn how to create an EKS cluster using various tools and methods.
 
@@ -67,7 +67,7 @@ See [IAM Identity Center authentication](https://docs.aws.amazon.com/cli/latest/
 
 #### kubectl and eksctl — Linux/macOS
 
-This chapter's EKS 1.36 examples use kubectl **1.36.4** and eksctl **0.230.0** as their baseline. Prefer the same kubectl minor as the server; supported skew is ±1 minor. Do not blindly install the newest minor from upstream `stable.txt` for an older EKS cluster.
+This chapter's EKS 1.36 examples use kubectl **1.36.5** and eksctl **0.231.0** as their baseline. Prefer the same kubectl minor as the server; supported skew is ±1 minor. Do not blindly install the newest minor from upstream `stable.txt` for an older EKS cluster.
 
 This Bash example selects AMD64/ARM64 and verifies official checksums before installation. It needs `curl`, `tar`, `awk`, and `sha256sum` or `shasum`; installation in `/usr/local/bin` requires administrator permission. Download or checksum failure stops installation.
 
@@ -96,13 +96,13 @@ This Bash example selects AMD64/ARM64 and verifies official checksums before ins
       shasum -a 256 --check "$1"
     fi
   }
-  EKS_KUBECTL_VERSION=v1.36.4
+  EKS_KUBECTL_VERSION=v1.36.5
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl" -o kubectl || exit 1
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl.sha256" -o kubectl.sha256 || exit 1
   printf '%s  kubectl\n' "$(tr -d '[:space:]' < kubectl.sha256)" > selected.sha256
   verify_sha selected.sha256 || exit 1
 
-  EKSCTL_VERSION=0.230.0
+  EKSCTL_VERSION=0.231.0
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/$EKS_TOOL_ARCHIVE" -o "$EKS_TOOL_ARCHIVE" || exit 1
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_checksums.txt" -o eksctl_checksums.txt || exit 1
   awk -v name="$EKS_TOOL_ARCHIVE" '$2 == name {print; count++} END {if (count != 1) exit 1}' \
@@ -120,7 +120,7 @@ Official procedures: [Linux kubectl](https://kubernetes.io/docs/tasks/tools/inst
 
 #### Windows
 
-Follow the [official kubectl installation procedure](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) in PowerShell. For this chapter's AMD64 example, use [kubectl 1.36.4](https://dl.k8s.io/release/v1.36.4/bin/windows/amd64/kubectl.exe) and the `.sha256` file at the same path. Select the Windows ZIP matching your CPU and `eksctl_checksums.txt` from the [eksctl 0.230.0 release](https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0).
+Follow the [official kubectl installation procedure](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) in PowerShell. For this chapter's AMD64 example, use [kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe) and the `.sha256` file at the same path. Select the Windows ZIP matching your CPU and `eksctl_checksums.txt` from the [eksctl 0.231.0 release](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0).
 
 Compare `Get-FileHash -Algorithm SHA256` with the official hash and stop on mismatch. After verification, extract the ZIP, add the executable directory to PATH, and check `kubectl version --client` and `eksctl version`. Do not run PowerShell syntax in Bash.
 

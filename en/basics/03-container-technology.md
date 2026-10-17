@@ -1,6 +1,6 @@
 # Container Technology
 
-> **Supported Versions**: Maintained Linux Docker/CRI releases; Kubernetes CRI v1; Node.js 24 build examples **Last Updated**: September 11, 2026
+> **Supported Versions**: Maintained Linux Docker/CRI releases; Kubernetes CRI v1; Node.js 24 build examples **Last Updated**: October 16, 2026
 
 Containers are a technology that packages applications and their dependencies together, enabling consistent execution across various environments. This document explains the fundamental concepts of containers, how they work, and their relationship with Kubernetes.
 
@@ -218,7 +218,7 @@ Container images are stored and shared in registries. Major registries include:
 
 ### Image Tags and Digests
 
-* **Tag**: Human-readable mutable reference; it can be reassigned unless registry immutability is enforced (e.g., `nginx:1.30.4`)
+* **Tag**: Human-readable mutable reference; it can be reassigned unless registry immutability is enforced (e.g., `nginx:1.30.6`)
 * **Digest**: Content digest of an image manifest or multi-platform index (commonly SHA256); it references config/layer digests (e.g., `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
 
 ## Dockerfile
@@ -265,7 +265,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 # This example assumes a static build written to dist/.
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
@@ -537,7 +537,7 @@ docker network prune
 HEALTHCHECK records Docker health status. Standalone Docker restart policies react to process exit, not health status alone. Kubernetes ignores Dockerfile HEALTHCHECK and uses liveness/readiness/startup probes.
 
 ```dockerfile
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 
 # Define health check in Dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -551,7 +551,7 @@ docker run -d \
   --health-interval=30s \
   --health-timeout=3s \
   --health-retries=3 \
-  nginx:1.30.4-alpine
+  nginx:1.30.6-alpine
 
 # Check health check status
 docker inspect <container-id> | jq '.[0].State.Health'

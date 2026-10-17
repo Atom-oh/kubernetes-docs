@@ -1,6 +1,6 @@
 # Linkerd 아키텍처 퀴즈
 
-2026년 9월 11일 edge-26.9.1 기준으로 검토했습니다. 근거와 적용 한계는 [아키텍처 가이드](../../../service-mesh/linkerd/02-architecture.md)를 확인하세요.
+2026년 10월 16일 edge-26.10.1 기준으로 검토했습니다. 근거와 적용 한계는 [아키텍처 가이드](../../../service-mesh/linkerd/02-architecture.md)를 확인하세요.
 
 ### 1. Linkerd control-plane 구성 요소가 아닌 것은?
 

@@ -1,7 +1,7 @@
 # gRPC 지원
 
-> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.36
-> **마지막 검토**: 2026년 9월 11일
+> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.37
+> **마지막 검토**: 2026년 10월 16일
 
 Istio는 평문 gRPC HTTP/2 요청을 RPC 경로·metadata로 라우팅하고 새 RPC를 적격 endpoint로 분산할 수 있습니다. 장시간 stream은 선택한 backend에 유지되며 복제본 확장만으로 기존 stream이 이동하지 않습니다.
 

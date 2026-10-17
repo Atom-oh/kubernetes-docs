@@ -1,6 +1,6 @@
 # Cilium Service Mesh Security Quiz
 
-Reviewed against Cilium 1.20.1. The [security guide](../../../service-mesh/cilium-service-mesh/03-security.md) distinguishes out-of-band authentication, transport encryption and ztunnel beta, with primary references.
+Reviewed against Cilium 1.20.3. The [security guide](../../../service-mesh/cilium-service-mesh/03-security.md) distinguishes out-of-band authentication, transport encryption and ztunnel beta, with primary references.
 
 ### 1. What does SPIRE provide for Cilium's out-of-band mutual authentication?
 
@@ -14,7 +14,7 @@ Reviewed against Cilium 1.20.1. The [security guide](../../../service-mesh/ciliu
 
 **Answer: B. SVID identity credentials for the agent authentication mechanism**
 
-For the out-of-band beta mechanism, SPIRE supplies SVID identity credentials and Cilium agents authenticate peers separately from the application connection. WireGuard/IPsec encryption is a separate choice. Cilium 1.20.1 also has a distinct ztunnel mTLS beta with its own CA/bootstrap, enrollment and policy limitations.
+For the out-of-band beta mechanism, SPIRE supplies SVID identity credentials and Cilium agents authenticate peers separately from the application connection. WireGuard/IPsec encryption is a separate choice. Cilium 1.20.3 also has a distinct ztunnel mTLS beta with its own CA/bootstrap, enrollment and policy limitations.
 
 </details>
 

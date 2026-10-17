@@ -97,7 +97,7 @@ Fence old writers, measure replication/checkpoint freshness, verify target permi
 <details>
 <summary>Show answer</summary>
 
-No. The task can emit a heartbeat without reading source data. Also inspect partition progress, errors and checkpoint freshness. Distinguish this Apache class from fields supported by Strimzi 1.2's v1 CRD.
+No. The task can emit a heartbeat without reading source data. Also inspect partition progress, errors and checkpoint freshness. Distinguish this Apache class from fields supported by Strimzi 1.3's v1 CRD.
 
 </details>
 

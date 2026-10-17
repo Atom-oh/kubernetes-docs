@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-Examples use SQS 1.7.0 / SNS 1.10.1 schemas. Queue uses queueName and string attributes, with tags as a map. SNS tags are key/value lists; displayName, filterPolicy and rawMessageDelivery are dedicated fields.
+Examples use SQS 1.8.2 / SNS 1.11.1 schemas. Queue uses queueName and string attributes, with tags as a map. SNS tags are key/value lists; displayName, filterPolicy and rawMessageDelivery are dedicated fields.
 
 Change account, region, queue/topic names and policy ARNs together. An SNS→SQS subscription alone does not grant delivery permission. The Queue policy restricts the exact topic ARN and SourceAccount. Apply subscriptions after topic/queue readiness, then test delivery and retries.
 
@@ -115,5 +115,5 @@ spec:
 
 Fields were checked against official versioned CRDs. Schema success does not establish IAM permissions, AWS service constraints, creation, connectivity or recovery. Assign ownership, costs, cleanup and backup responsibilities for retained resources before applying.
 
-- [sqs v1.7.0 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.7.0/config/crd/bases)
-- [sns v1.10.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.10.1/config/crd/bases)
+- [sqs v1.8.2 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.8.2/config/crd/bases)
+- [sns v1.11.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.11.1/config/crd/bases)

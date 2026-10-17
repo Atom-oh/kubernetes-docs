@@ -1,6 +1,6 @@
 # Part 1: Kafka 핵심 개념
 
-> **검토 기준**: 2026-09-12. Apache Kafka 4.3.1 / Strimzi 1.2.0 지원 조합.
+> **검토 기준**: 2026-10-16. Apache Kafka 4.3.1 / Strimzi 1.3.0 지원 조합.
 > **검증**: Kafka 4.3.1 실제 설정 클래스로 19개 유효성·기본값·충돌 조건을 확인했습니다. 브로커나 EKS 클러스터를 실행한 결과는 아닙니다.
 
 ## 1. 브로커·토픽·파티션
@@ -178,4 +178,4 @@ kafka-configs.sh --bootstrap-server "$DOCS_BOOTSTRAP" \
 - [Consumer configurations](https://kafka.apache.org/43/configuration/consumer-configs/)
 - [Producer configurations](https://kafka.apache.org/43/configuration/producer-configs/)
 - [KRaft operations](https://kafka.apache.org/43/operations/kraft/)
-- [Strimzi 1.2.0 release and migration notice](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 release and migration notice](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)

@@ -1,6 +1,6 @@
 # Part 4: Ray Serve로 모델 서빙하기
 
-> **검토 기준**: Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
+> **검토 기준**: Ray 2.58.0 · KubeRay 1.7.1 · 2026-10-16
 
 ## 실습 환경 준비와 검증 범위
 
@@ -116,6 +116,6 @@ API/Dashboard/Client 진입점, model artifact 접근, application 사용자 인
 - [Serve API·proxy 기본값](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
 - [Serve configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
 - [Replica·queue configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
-- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)
 
 [메인 페이지](README.md) · [퀴즈](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

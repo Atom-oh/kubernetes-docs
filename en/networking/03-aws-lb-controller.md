@@ -1,7 +1,7 @@
 # AWS Load Balancer Controller
 
-> **Review baseline**: AWS Load Balancer Controller / Helm chart v3.5.0
-> **Last Updated**: September 11, 2026
+> **Review baseline**: AWS Load Balancer Controller / Helm chart v3.6.0
+> **Last Updated**: October 16, 2026
 
 ## Overview
 
@@ -37,7 +37,7 @@ Install the complete released chart, including RBAC, CRDs, probes, and webhook c
 
 This chapter configures the **self-managed open-source controller**. EKS Auto Mode supplies its own managed load balancing: NLB Services use `eks.amazonaws.com/nlb`, ALB IngressClass uses `eks.amazonaws.com/alb`, and its TargetGroupBinding API differs from `elbv2.k8s.aws/v1beta1`. Check the Auto Mode migration guide rather than changing a class or copying all annotations in place. Explicit classes prevent ambiguity when both models are present.
 
-Use a currently supported EKS Kubernetes release and verify every controller sharing cluster-wide CRDs. LBC **v3.5.0** was released on **2026-08-03**; the verified chart **3.5.0** packages that controller. Gateway API users need **v1.6.0** CRDs before upgrading, and LBC-specific Gateway CRDs now use `gateway.k8s.aws/v1`. This does not mean that an arbitrary latest Gateway API or Kubernetes release is compatible. The old generic “Kubernetes 1.22+” installation floor is not a current EKS support matrix.
+Use a currently supported EKS Kubernetes release and verify every controller sharing cluster-wide CRDs. LBC **v3.6.0** was released on **2026-10-05**; the verified chart **3.6.0** packages that controller. v3.6.0 keeps the same Gateway API **v1.6.0** CRD baseline as v3.5.0, so Gateway API users need v1.6.0 CRDs before upgrading. The release notes ask you to apply the latest AWS-vended LBC CRDs (the chart's `helm show crds` output) before upgrading the controller, and LBC-specific Gateway CRDs use `gateway.k8s.aws/v1`. This does not mean that an arbitrary latest Gateway API or Kubernetes release is compatible. The old generic “Kubernetes 1.22+” installation floor is not a current EKS support matrix.
 
 The controller webhook needs TCP 9443 reachability from the control plane. Set region/VPC values explicitly when IMDS is restricted or the controller runs on Fargate/Hybrid Nodes; choose a supported credential mechanism for that compute type. IP targets need VPC-routable pod addresses and supported endpoint/ENI discovery. Amazon VPC CNI is the common EKS choice, but it is not the only possible CNI configuration. Instance targets require a NodePort-capable Service and appropriate node networking.
 
@@ -45,7 +45,7 @@ The controller webhook needs TCP 9443 reachability from the control plane. Set r
 
 ### 1. Create IAM Policy
 
-Use the IAM policy shipped with **v3.5.0** and the correct AWS partition. Review its broad discovery and security-group permissions, resource/tag conditions, and the features enabled in this deployment. Save the reviewed policy before creating it. Do not treat the upstream policy as a least-privilege guarantee or copy an old v2.8 policy into a current installation. Controller AWS credentials can use **IRSA or EKS Pod Identity** on supported nodes; they are separate from Kubernetes API RBAC.
+Use the IAM policy shipped with **v3.6.0** and the correct AWS partition. Review its broad discovery and security-group permissions, resource/tag conditions, and the features enabled in this deployment. Save the reviewed policy before creating it. Do not treat the upstream policy as a least-privilege guarantee or copy an old v2.8 policy into a current installation. Controller AWS credentials can use **IRSA or EKS Pod Identity** on supported nodes; they are separate from Kubernetes API RBAC.
 
 ### 2. IRSA Setup
 
@@ -64,7 +64,7 @@ eksctl utils associate-iam-oidc-provider --cluster "$CLUSTER_NAME" \
   --region "$AWS_REGION" --approve
 
 curl --fail --location --output iam-policy-upstream.json \
-  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/docs/install/iam_policy.json
 export REVIEWED_POLICY_FILE=iam-policy-reviewed.json
 test -s "$REVIEWED_POLICY_FILE"
 export CONTROLLER_POLICY_ARN="$(aws iam create-policy \
@@ -84,17 +84,17 @@ Reuse existing reviewed policies/roles instead of recreating them. A reused IRSA
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
-helm pull eks/aws-load-balancer-controller --version 3.5.0
+helm pull eks/aws-load-balancer-controller --version 3.6.0
 
 # Review cluster-wide CRD changes and other controllers before applying.
 curl --fail --location --output gateway-api-v1.6.0.yaml \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml
 kubectl apply --server-side -f gateway-api-v1.6.0.yaml
-helm show crds ./aws-load-balancer-controller-3.5.0.tgz > lbc-crds.yaml
+helm show crds ./aws-load-balancer-controller-3.6.0.tgz > lbc-crds.yaml
 kubectl apply --server-side -f lbc-crds.yaml
 
 # Save the values below as controller-values.yaml and replace its cluster/region/VPC.
-helm install aws-load-balancer-controller ./aws-load-balancer-controller-3.5.0.tgz \
+helm install aws-load-balancer-controller ./aws-load-balancer-controller-3.6.0.tgz \
   -n kube-system -f controller-values.yaml --wait --timeout 5m
 ```
 
@@ -467,7 +467,7 @@ stringData:
   clientSecret: your-client-secret
 ```
 
-The OIDC Secret must be in the Ingress namespace. The chart defaults to `clusterSecretsPermissions.allowAllSecrets: false`; grant this controller only the required Secret access. v3.5.0 watches a Secret using a `metadata.name` field selector, so the Role can constrain `resourceNames`. Create the real Secret through the approved secret-management workflow; do not commit a real client secret.
+The OIDC Secret must be in the Ingress namespace. The chart defaults to `clusterSecretsPermissions.allowAllSecrets: false`; grant this controller only the required Secret access. v3.6.0 watches a Secret using a `metadata.name` field selector, so the Role can constrain `resourceNames`. Create the real Secret through the approved secret-management workflow; do not commit a real client secret.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -937,8 +937,9 @@ spec:
 - **v2.16.0 — 2025-11-20:** ALB Target Optimizer and NLB weighted target groups. Target Optimizer requires its target-control agent and configuration; it is not enabled merely by installing LBC.
 - **v2.17.0 — 2025-12-19:** Global Accelerator support through the single `aga.k8s.aws/v1beta1` `GlobalAccelerator` CRD, with nested listeners, endpoint groups and endpoints; Gateway API GA release-candidate status. Global Accelerator needs its additional IAM permissions and feature configuration.
 - **v3.5.0 — 2026-08-03:** Gateway API v1.6.0 conformance and stable v1 TCPRoute/UDPRoute support. LBC Gateway configuration resources use `gateway.k8s.aws/v1`; the still-served v1beta1 version is deprecated.
+- **v3.6.0 — 2026-10-05:** The Gateway API CRD baseline stays at v1.6.0, and the release recommends applying the latest AWS-vended LBC CRDs before upgrading. Adds opt-in Pod-AZ-based IP registration for cross-account TargetGroupBinding and the Ingress `frontend-nlb-status-only` annotation.
 
-Current v3.5 supports QUIC/TCP_QUIC configuration and ALB JWT validation. These are distinct features with protocol-specific constraints. JWT validation is HTTPS-only and its JSON uses **`jwksEndpoint`**, not `jwksUri`. Add the following to the annotations of an HTTPS Ingress with a valid certificate, reachable trusted JWKS endpoint, and reviewed issuer/claims:
+Current v3.6 supports QUIC/TCP_QUIC configuration and ALB JWT validation. These are distinct features with protocol-specific constraints. JWT validation is HTTPS-only and its JSON uses **`jwksEndpoint`**, not `jwksUri`. Add the following to the annotations of an HTTPS Ingress with a valid certificate, reachable trusted JWKS endpoint, and reviewed issuer/claims:
 
 ```yaml
 alb.ingress.kubernetes.io/jwt-validation: >-
@@ -1247,11 +1248,11 @@ aws elbv2 describe-target-groups --query 'TargetGroups[?contains(TargetGroupName
 - [ALB Documentation](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/)
 - [NLB Documentation](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/)
 
-- [LBC v3.5.0 release](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0)
-- [LBC v3.5.0 Ingress annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
-- [LBC v3.5.0 Service annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
-- [TargetGroupBinding ownership](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
-- [Subnet discovery](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/subnet_discovery.md)
+- [LBC v3.6.0 release](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.6.0)
+- [LBC v3.6.0 Ingress annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress/annotations.md)
+- [LBC v3.6.0 Service annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/annotations.md)
+- [TargetGroupBinding ownership](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [Subnet discovery](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/deploy/subnet_discovery.md)
 - [NLB listener weights and connections](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 - [ALB authentication prerequisites](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html)
 - [EKS Auto Mode NLB](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)

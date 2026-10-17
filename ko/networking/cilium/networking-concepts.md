@@ -1,7 +1,7 @@
 # 네트워킹 개념 심층 분석
 
-> **검토 기준**: Cilium 1.20.2.
-> **최종 검토**: 2026년 10월 15일.
+> **검토 기준**: Cilium 1.20.3.
+> **최종 검토**: 2026년 10월 16일.
 
 이 문서는 Cilium을 이해하는 데 필요한 핵심 네트워킹 개념에 대한 심층적인 설명을 제공합니다. 컨테이너 네트워킹, 오버레이, NAT, 라우팅, DNS, 로드 밸런싱과 정책을 다룹니다. 예제는 준비된 테스트 환경의 개념·부분 Helm/API 구성이며 완전한 설치나 마이그레이션 절차가 아닙니다. 관리형 플랫폼마다 허용하는 CNI 기능이 다르므로 [Cilium 개요](README.md)의 플랫폼·버전 전제 조건을 확인합니다.
 
@@ -1278,16 +1278,16 @@ spec:
 
 ## 공식 근거
 
-- [Cilium routing](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/concepts/routing.rst)
-- [Cilium chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/install/kubernetes/cilium/values.yaml)
-- [Kube-proxy replacement](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/kubernetes/kubeproxy-free.rst)
-- [Masquerading](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/concepts/masquerading.rst)
-- [BGP Control Plane](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
-- [Global Services](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/clustermesh/global-services.rst)
-- [Policy language](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/policy/layer3.rst)
-- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/dns.rst)
-- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-ipsec.rst)
-- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-wireguard.rst)
+- [Cilium routing](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/concepts/routing.rst)
+- [Cilium chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Kube-proxy replacement](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Masquerading](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/concepts/masquerading.rst)
+- [BGP Control Plane](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
+- [Global Services](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/network/clustermesh/global-services.rst)
+- [Policy language](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/policy/layer3.rst)
+- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/dns.rst)
+- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-ipsec.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.3/Documentation/security/network/encryption-wireguard.rst)
 - [Kubernetes network model](https://kubernetes.io/docs/concepts/services-networking/)
 - [Services](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)

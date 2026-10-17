@@ -1317,7 +1317,7 @@ webhooks:
 3. **Applying Image Policies:**
    - Modifying image registry URLs
    - Converting image tags to digests
-   - Example: Changing `nginx:latest` to `internal-registry.example.com/nginx:1.30.4`
+   - Example: Changing `nginx:latest` to `internal-registry.example.com/nginx:1.30.6`
 
 4. **Volume Modifications:**
    - Adding default volume mounts
@@ -1760,7 +1760,7 @@ metadata:
   name: my-webapp
   namespace: default
 spec:
-  image: nginx:1.30.4
+  image: nginx:1.30.6
   replicas: 3
   port: 80
   env:

@@ -1,7 +1,7 @@
 # ArgoCD Sync Strategies
 
 > **Review baseline**: Argo CD 3.5.2; updated to patch 3.5.4 after release-note review (examples not re-run)
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 ## Table of Contents
 - [Manual vs Automated Sync](#manual-vs-automated-sync)
@@ -294,7 +294,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: check
-        image: curlimages/curl:8.22.0
+        image: curlimages/curl:8.23.0
         command: ["curl"]
         args: ["--fail", "--show-error", "--silent", "--connect-timeout", "5", "--max-time", "20", "http://existing-data-service:8080/health"]
 ---
@@ -551,7 +551,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: check
-        image: curlimages/curl:8.22.0
+        image: curlimages/curl:8.23.0
         command:
         - sh
         - -c

@@ -113,7 +113,7 @@ NetworkPolicy provides a way to control communication between pods. Using networ
 **Answer: B) CoreDNS**
 
 **Explanation:**
-CoreDNS is a flexible and extensible DNS server used as the DNS server for Kubernetes clusters. Since Kubernetes 1.11, CoreDNS has been used as the default DNS server.
+CoreDNS is a flexible and extensible DNS server used as the DNS server for Kubernetes clusters. CoreDNS reached GA in Kubernetes 1.11 and has been the default DNS server since 1.13.
 </details>
 
 8. Which Linux kernel technology does Cilium utilize?

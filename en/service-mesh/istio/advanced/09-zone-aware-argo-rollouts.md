@@ -1,7 +1,7 @@
 # Zone-Aware Argo Rollouts
 
-> **Verification baseline**: Istio 1.31.0, Argo Rollouts 1.10.0, Kubernetes 1.32–1.36
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Istio 1.31.0, Argo Rollouts 1.10.1, Kubernetes 1.32–1.37
+> **Last reviewed**: October 16, 2026
 > **Difficulty**: Advanced
 
 This guide separates independent zonal canaries from cross-AZ failover. The main example is a **zonal routing/isolation blueprint**: a client cohort selects one zone's stable/canary Services. It does not implement automatic failover to another zone when those endpoints disappear.

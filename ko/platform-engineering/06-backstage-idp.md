@@ -1,6 +1,6 @@
 # Backstage를 활용한 내부 개발자 포털
 
-> **마지막 업데이트**: 2026년 9월 12일 · Backstage 1.54.7 / Helm chart 2.10.0
+> **마지막 업데이트**: 2026년 10월 16일 · Backstage 1.54.7 / Helm chart 2.10.2
 
 ## 역할과 도입 범위
 
@@ -192,10 +192,10 @@ ingress:
 examples/platform/backstage/app-config-configmap.yaml은 위 app-config를 data.app-config.production.yaml로 담습니다. extraAppConfig의 filename과 configMapRef에 일치하며 Secret 값 대신 파일 참조만 포함합니다.
 
 ```bash
-helm template backstage backstage/backstage   --version 2.10.0 --namespace backstage   -f examples/platform/backstage/helm-values.yaml
+helm template backstage backstage/backstage   --version 2.10.2 --namespace backstage   -f examples/platform/backstage/helm-values.yaml
 ```
 
-Helm repository는 공식 backstage.github.io/charts를 먼저 등록합니다. 검토에서는 해당 chart를 내려받아 로컬에서 렌더링했습니다. ServiceAccount는 chart의 최상위 serviceAccount이며 backstage.serviceAccount가 아닙니다. chart 2.10.0에서 기존 backstage.podDisruptionBudget 값은 PDB를 만들지 않으므로 아래 리소스를 별도로 준비합니다.
+Helm repository는 공식 backstage.github.io/charts를 먼저 등록합니다. 검토에서는 해당 chart를 내려받아 로컬에서 렌더링했습니다. ServiceAccount는 chart의 최상위 serviceAccount이며 backstage.serviceAccount가 아닙니다. chart 2.10.2에서 기존 backstage.podDisruptionBudget 값은 PDB를 만들지 않으므로 아래 리소스를 별도로 준비합니다.
 
 ```yaml
 apiVersion: policy/v1
@@ -523,7 +523,7 @@ PostgreSQL snapshot/PITR, TechDocs versioning·복제·lifecycle, config·catalo
 전체 Backstage app/Docker image, PostgreSQL/OIDC, GitHub/ArgoCD/Kubernetes/AWS API, 실제 template action 실행·배포·부하·HA는 검증하지 않았습니다. placeholder와 운영자가 준비할 경로를 명시했습니다.
 
 - [Backstage 1.54.7](https://github.com/backstage/backstage/tree/v1.54.7)
-- [Helm chart 2.10.0](https://github.com/backstage/charts/releases/tag/backstage-2.10.0)
+- [Helm chart 2.10.2](https://github.com/backstage/charts/releases/tag/backstage-2.10.2)
 - [Configuration](https://backstage.io/docs/conf/writing/)
 - [Kubernetes authentication](https://backstage.io/docs/features/kubernetes/authentication/)
 - [Permission policy](https://backstage.io/docs/permissions/writing-a-policy/)

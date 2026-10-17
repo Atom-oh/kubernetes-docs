@@ -1,8 +1,8 @@
 # 설치 및 초기 설정
 
-> **마지막 업데이트**: 2026년 10월 12일 · 설치 버전: Istio 1.31.1
+> **마지막 업데이트**: 2026년 10월 16일 · 설치 버전: Istio 1.31.2
 
-2026년 10월 12일 기준 Istio 1.31.1은 1.31의 최신 patch 릴리스이며 `BackendTLSPolicy`의 평문 fallback 문제를 수정합니다. 아래 Helm 명령은 1.31.0에서 1.31.1로 갱신했습니다. 이전 chart 렌더링 결과가 1.31.1의 모든 값을 검증한 것은 아니므로 적용 전에 선택한 chart를 렌더링하고 검토하세요.
+2026년 10월 16일 기준 Istio 1.31.2는 1.31의 최신 patch 릴리스이며 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) 보안 수정을 포함합니다. 1.31.1의 `BackendTLSPolicy` 평문 fallback 수정도 포함됩니다. 아래 명령은 1.31.1에서 1.31.2로 갱신했습니다. 이전 chart 렌더링 결과가 1.31.2의 모든 값을 검증한 것은 아니므로 적용 전에 선택한 chart를 렌더링하고 검토하세요.
 
 이 문서에서는 Amazon EKS 클러스터에 Istio를 설치하고 초기 설정하는 방법을 다룹니다.
 
@@ -25,7 +25,7 @@ Istio를 설치하기 전에 다음 요구 사항을 충족해야 합니다:
 
 ### 1. Amazon EKS 클러스터
 
-* **Kubernetes 버전**: Istio 1.31.1 예제는 EKS 1.34–1.37 사용 (2026-10-12 검토). Istio 1.31은 1.32–1.37을 지원하며 EKS 1.31–1.33은 연장 지원, 1.34–1.37은 표준 지원 상태입니다. [Istio 매트릭스](https://istio.io/latest/docs/releases/supported-releases/)와 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 함께 확인하세요.
+* **Kubernetes 버전**: Istio 1.31.2 예제는 EKS 1.34–1.37 사용 (2026-10-16 검토). Istio 1.31은 1.32–1.37을 지원하며 EKS 1.31–1.33은 연장 지원, 1.34–1.37은 표준 지원 상태입니다. [Istio 매트릭스](https://istio.io/latest/docs/releases/supported-releases/)와 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 함께 확인하세요.
 * **노드 유형**: 최소 2개의 워커 노드 (권장: 3개 이상)
 * **노드 크기**: 최소 2 vCPU, 4GB RAM (권장: t3.medium 이상)
 
@@ -71,10 +71,10 @@ istioctl은 Istio의 공식 CLI 도구로, 가장 간단한 설치 방법입니�
 
 ```bash
 # 현재 1.31 patch 다운로드
-curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.1 sh -
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.2 sh -
 
 # istioctl을 PATH에 추가
-cd istio-1.31.1
+cd istio-1.31.2
 export PATH=$PWD/bin:$PATH
 
 # 설치 확인
@@ -110,7 +110,7 @@ kubectl logs -n istio-system -l app=istiod
 
 ## Helm을 사용한 설치
 
-이전 검토에서 렌더링한 1.31.0 차트에는 `eks` 플랫폼 프로필이 없었습니다. 아래 chart 예제는 1.31.1로 고정했지만 이번 검토에서 해당 patch chart를 렌더링하지는 않았습니다. 설치 전에 선택한 chart를 검사하세요. 프로필이 있다고 가정하지 않고 `global.platform=eks`를 생략하며 EKS 사전 요구사항과 로드 밸런서 설정을 명시적으로 적용합니다.
+istiod 1.31.0과 1.31.2 chart 아카이브에는 `eks` 플랫폼 프로필(`files/profile-platform-eks.yaml`)이 없습니다(2026-10-16 확인). 아래 chart 예제는 1.31.2로 고정했지만 이번 검토에서 해당 chart를 렌더링하지는 않았습니다. 설치 전에 선택한 chart를 검사하세요. 프로필이 있다고 가정하지 않고 `global.platform=eks`를 생략하며 EKS 사전 요구사항과 로드 밸런서 설정을 명시적으로 적용합니다.
 
 Helm은 Kubernetes 패키지 매니저로, GitOps 워크플로우에 적합합니다.
 
@@ -134,7 +134,7 @@ kubectl create namespace istio-system
 helm install istio-base istio/base \
   -n istio-system \
   --set defaultRevision=default \
-  --version 1.31.1
+  --version 1.31.2
 ```
 
 ### 3. istiod 설치
@@ -145,7 +145,7 @@ istiod는 Istio Control Plane입니다.
 # istiod 차트 설치
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
@@ -160,7 +160,7 @@ helm install istio-ingressgateway istio/gateway \
   -n istio-system \
   --set labels.istio=ingressgateway \
   --set labels.app=istio-ingressgateway \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
@@ -170,7 +170,7 @@ helm install istio-ingressgateway istio/gateway \
 # values.yaml
 global:
   hub: docker.io/istio
-  tag: 1.31.1
+  tag: 1.31.2
 
 autoscaleEnabled: true
 autoscaleMin: 2
@@ -188,7 +188,7 @@ meshConfig:
 # values.yaml 파일을 사용하여 설치
 helm upgrade --install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   -f values.yaml \
   --wait
 ```
@@ -249,7 +249,7 @@ Istio는 다양한 사용 사례에 맞는 여러 프로필을 제공합니다.
 ### 프로필 확인
 
 ```bash
-helm show values istio/istiod --version 1.31.1
+helm show values istio/istiod --version 1.31.2
 istioctl manifest generate --set profile=default > default.yaml
 istioctl manifest generate --set profile=demo > demo.yaml
 diff -u default.yaml demo.yaml
@@ -325,7 +325,7 @@ kubectl get validatingwebhookconfiguration
 
 Istio에는 Bookinfo라는 샘플 애플리케이션이 포함되어 있습니다.
 
-압축을 푼 `istio-1.31.1` 디렉터리에서 기본 네임스페이스를 선택한 후 실행하세요 (`kubectl config set-context --current --namespace=default`). Helm 경로는 위의 선택적 게이트웨이 설치를 먼저 완료하세요. 뒤의 대시보드 명령은 별도로 설치한 텔레메트리 애드온이 필요합니다.
+압축을 푼 `istio-1.31.2` 디렉터리에서 기본 네임스페이스를 선택한 후 실행하세요 (`kubectl config set-context --current --namespace=default`). Helm 경로는 위의 선택적 게이트웨이 설치를 먼저 완료하세요. 뒤의 대시보드 명령은 별도로 설치한 텔레메트리 애드온이 필요합니다.
 
 ### 1. 네임스페이스에 Sidecar 자동 주입 활성화
 

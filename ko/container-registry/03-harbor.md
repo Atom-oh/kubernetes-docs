@@ -1,6 +1,6 @@
 # Harbor
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개요
 
@@ -30,7 +30,7 @@ Harbor는 CNCF Graduated 프로젝트로, 오픈소스 컨테이너 레지스트
 
 ## Helm을 사용한 설치
 
-2026-09-11 검토 기준은 **Harbor 2.15.2 / Helm Chart 1.19.2**입니다. 앱 버전과 Chart 버전은 다릅니다. 다음은 외부 HA 데이터베이스·Redis·공유 스토리지를 준비한 환경의 구성 예시이며, 값 파일만으로 이 의존성을 생성하지 않습니다.
+2026-10-16 검토 기준은 **Harbor 2.15.4 / Helm Chart 1.19.2**입니다. 앱 버전과 Chart 버전은 다르며, 최신 Chart 1.19.2의 기본 appVersion은 2.15.2이므로 Helm 기본 설치는 2.15.3의 보안 수정(예: GHSA-2phj-cp9f-qq6w)을 포함하지 않습니다. 다음은 외부 HA 데이터베이스·Redis·공유 스토리지를 준비한 환경의 구성 예시이며, 값 파일만으로 이 의존성을 생성하지 않습니다.
 
 ### 사전 요구사항
 
@@ -483,7 +483,7 @@ Docker Compose용 offline installer와 Kubernetes용 Helm 설치는 서로 다�
 ### 오프라인 설치
 
 ```bash
-HARBOR_VERSION=2.15.2
+HARBOR_VERSION=2.15.4
 curl --fail --location --remote-name \
   "https://github.com/goharbor/harbor/releases/download/v${HARBOR_VERSION}/harbor-offline-installer-v${HARBOR_VERSION}.tgz"
 # Verify the release checksum/signature before transporting the bundle.
@@ -495,7 +495,7 @@ sha256sum "harbor-offline-installer-v${HARBOR_VERSION}.tgz" > harbor-bundle.sha2
 
 ```bash
 sha256sum -c harbor-bundle.sha256
-tar xzf harbor-offline-installer-v2.15.2.tgz
+tar xzf harbor-offline-installer-v2.15.4.tgz
 cd harbor
 cp harbor.yml.tmpl harbor.yml
 # Set hostname, HTTPS certificate/key, strong admin/DB passwords and data_volume.
@@ -519,7 +519,7 @@ kubeadm config images list --kubernetes-version "$K8S_VERSION" > kubeadm-images.
 
 ```text
 # images.tsv: two columns separated by a TAB; replace the internal hostname.
-docker.io/library/nginx:1.30.4	harbor.airgap.local/k8s-system/dockerhub/library/nginx:1.30.4
+docker.io/library/nginx:1.30.6	harbor.airgap.local/k8s-system/dockerhub/library/nginx:1.30.6
 ```
 
 온라인 환경에서:
@@ -659,8 +659,8 @@ Harbor를 외부 레지스트리의 프록시 캐시로 사용:
 # - Registry: docker-hub (사전 등록된 endpoint)
 
 # 사용 예시
-# 원본: docker.io/library/nginx:1.30.4
-# 캐시: harbor.example.com/docker-hub-cache/library/nginx:1.30.4
+# 원본: docker.io/library/nginx:1.30.6
+# 캐시: harbor.example.com/docker-hub-cache/library/nginx:1.30.6
 ```
 
 Proxy Cache의 cache miss는 업스트림 연결이 필요합니다. 캐시 신선도·업스트림 삭제 처리·인증은 프로젝트 설정에 따라 달라지며, 완전한 폐쇄망에는 사전 반입한 일반 프로젝트 이미지를 사용합니다.
@@ -742,9 +742,9 @@ Chart의 `metrics.enabled`와, Operator CRD가 있는 경우 `metrics.serviceMon
 
 ### 검토한 버전별 근거
 
-- [Harbor 2.15.2 release](https://github.com/goharbor/harbor/releases/tag/v2.15.2)
+- [Harbor 2.15.4 release](https://github.com/goharbor/harbor/releases/tag/v2.15.4)
 - [Helm chart 1.19.2 values](https://github.com/goharbor/harbor-helm/blob/v1.19.2/values.yaml)
-- [Harbor 2.15.2 API schema](https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml)
+- [Harbor 2.15.4 API schema](https://github.com/goharbor/harbor/blob/v2.15.4/api/v2.0/swagger.yaml)
 - [Project role permissions](https://goharbor.io/docs/main/administration/managing-users/user-permissions-by-role/)
 - [Cosign and Notation](https://goharbor.io/docs/main/working-with-projects/working-with-images/sign-images/)
 - [Containerd registry hosts](https://github.com/containerd/containerd/blob/main/docs/hosts.md)

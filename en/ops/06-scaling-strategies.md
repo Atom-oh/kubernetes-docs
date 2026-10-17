@@ -2,14 +2,14 @@
 
 > **Production validation**: Before adopting Spot, use [EKS Spot Production Experiments and Result Assessment](./17-spot-production-experiments.md) to verify reclamation, fallback, correctness, and cost. Configuration examples and projected savings are not measurements.
 
-> **Review baseline**: Prometheus Adapter 0.12.0 / chart 5.3.0, KEDA 2.20.2, VPA 1.7.1 / official chart 0.12.0, Goldilocks 4.16.1 / chart 11.1.0\
-> **Last reviewed**: September 11, 2026. Versioned charts, CRDs, Kubernetes OpenAPI and local rendering were checked. No live installation, load test, SQS/database access or Pod resize was performed.
+> **Review baseline**: Prometheus Adapter 0.12.0 / chart 5.3.0, KEDA 2.21.0, VPA 1.8.0 / official chart 0.14.0, Goldilocks 4.16.2 / chart 11.2.0\
+> **Last reviewed**: October 16, 2026. Versioned charts, CRDs, Kubernetes OpenAPI and local rendering were checked. No live installation, load test, SQS/database access or Pod resize was performed.
 
 < [Previous: GitOps Automation](05-gitops-automation.md) | [Contents](README.md) | [Next: Operational Alerts](07-observability-alerts.md) >
 
 Separate custom-metric HPA, KEDA, VPA and Spot placement. **One autoscaler must own a workload's replica count.** The HPA, RPS ScaledObject and Cron ScaledObject targeting `podinfo` are alternatives; do not apply them together.
 
-KEDA 2.20's installation minimum differs from its published test matrix. Check the minimum Kubernetes 1.30 and tested 1.33–1.35 range, and separately validate newer distributions. Native-object checks here used Kubernetes 1.36.2 OpenAPI; that is not a live compatibility test.
+KEDA 2.21's official deployment docs list a tested Kubernetes range of 1.34–1.36. Check that range, and separately validate newer distributions. Native-object checks here used Kubernetes 1.36.2 OpenAPI; that is not a live compatibility test.
 
 ## 1. HPA and Custom Metrics
 
@@ -273,7 +273,7 @@ podIdentity:
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update
 helm upgrade --install keda kedacore/keda \
-  --version 2.20.2 --namespace keda --create-namespace \
+  --version 2.21.0 --namespace keda --create-namespace \
   --kube-context "$TARGET_CONTEXT" --values keda-values.yaml
 ```
 
@@ -559,7 +559,7 @@ VPA primarily recommends **resource requests**. Limits depend on controlledValue
 
 ### Official chart and recommendation mode
 
-Use official VPA chart 0.12.0 with VPA 1.7.1. Do not install a second VPA over an existing installation; review CRD/RBAC/configuration migration first. The following uses cert-manager/cainjector for webhook certificates.
+Use official VPA chart 0.14.0 with VPA 1.8.0. Do not install a second VPA over an existing installation; review CRD/RBAC/configuration migration first. The following uses cert-manager/cainjector for webhook certificates.
 
 ```yaml
 # fixtures/vpa-values.yaml
@@ -581,7 +581,7 @@ updater:
 
 ```bash
 helm upgrade --install vpa \
-  https://github.com/kubernetes/autoscaler/releases/download/vertical-pod-autoscaler-chart-0.12.0/vertical-pod-autoscaler-0.12.0.tgz \
+  https://github.com/kubernetes/autoscaler/releases/download/vertical-pod-autoscaler-chart-0.14.0/vertical-pod-autoscaler-0.14.0.tgz \
   --namespace vpa --create-namespace --kube-context "$TARGET_CONTEXT" \
   --values vpa-values.yaml
 ```
@@ -617,7 +617,7 @@ spec:
 
 `Off` generates recommendations without applying them to Pods. Check requests/limits, quota and node capacity before applying recommendations. Do not install several alternative VPAs on the same Deployment.
 
-| Mode | VPA 1.7.1 behavior |
+| Mode | VPA 1.8.0 behavior |
 |---|---|
 | `Off` | Recommendations only |
 | `Initial` | Apply at Pod creation |
@@ -626,7 +626,7 @@ spec:
 | `InPlace` | Retry in-place without eviction fallback; separate feature gate required |
 | `Auto` | Deprecated and currently equivalent to Recreate; choose an explicit mode |
 
-Check Kubernetes 1.33+ and other prerequisites for VPA 1.7.1 in-place modes. The older `InPlaceOrRecreate` VPA gate was removed in 1.7, but `InPlace` needs `--feature-gates=InPlace=true`. `minReplicas` is an updater eligibility condition, not a guarantee of that many available Pods.
+Check Kubernetes 1.33+ and other prerequisites for VPA 1.8.0 in-place modes. The older `InPlaceOrRecreate` VPA gate was removed in 1.7, but `InPlace` needs `--feature-gates=InPlace=true`. `minReplicas` is an updater eligibility condition, not a guarantee of that many available Pods.
 
 ### Kubernetes resize
 
@@ -688,7 +688,7 @@ dashboard:
 helm repo add fairwinds-stable https://charts.fairwinds.com/stable
 helm repo update
 helm upgrade --install goldilocks fairwinds-stable/goldilocks \
-  --version 11.1.0 --namespace goldilocks --create-namespace \
+  --version 11.2.0 --namespace goldilocks --create-namespace \
   --kube-context "$TARGET_CONTEXT" --values goldilocks-values.yaml
 ```
 
@@ -896,9 +896,9 @@ Creating a targeted Capacity Reservation does not make a NodePool consume it aut
 ## References
 
 - [HPA behavior](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-- [KEDA 2.20 ScaledObject](https://keda.sh/docs/2.20/reference/scaledobject-spec/)
-- [KEDA 2.20 ScaledJob](https://keda.sh/docs/2.20/reference/scaledjob-spec/)
-- [VPA 1.7.1 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md)
+- [KEDA 2.21 ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/)
+- [KEDA 2.21 ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/)
+- [VPA 1.8.0 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md)
 - [Pod resize](https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/)
 - [ReplicaSet deletion cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
 - [Chapter quiz](../quizzes/ops/06-scaling-strategies-quiz.md)

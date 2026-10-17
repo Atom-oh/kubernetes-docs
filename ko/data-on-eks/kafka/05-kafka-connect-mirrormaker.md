@@ -1,7 +1,7 @@
 # Part 5: Kafka Connect와 MirrorMaker
 
-> **검토 기준**: Strimzi 1.2.0, Kafka 4.3.1, Debezium PostgreSQL 3.6.2.Final, Aiven S3 sink 3.4.3\
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Strimzi 1.3.0, Kafka 4.3.1, Debezium PostgreSQL 3.6.3.Final, Aiven S3 sink 3.4.3\
+> **최종 검토**: 2026년 10월 16일
 
 ## Connect 워커와 커넥터
 
@@ -31,7 +31,7 @@ config 토픽은 **파티션 1개**여야 합니다. 배포마다 고유한 그�
 
 ## Strimzi v1은 apiVersion만 바꾸는 변경이 아님
 
-Strimzi 1.2.0은 `kafka.strimzi.io/v1` API를 제공합니다. 업그레이드 전에 해당
+Strimzi 1.3.0은 `kafka.strimzi.io/v1` API를 제공합니다. 업그레이드 전에 해당
 릴리스의 변환 절차를 수행하며 `v1beta2` 문자열만 바꾸지 않습니다.
 
 | 리소스 | 현재 v1 필드 |
@@ -61,7 +61,7 @@ Topic/User Operator를 사용합니다. ECR 계정·저장소와 DB/S3 예제 �
 
 ECR 인증 토큰은 12시간 뒤 만료되므로 빌드 전에 push Secret을 갱신·관리합니다.
 IRSA 역할만 부여했다고 선택한 이미지 빌더의 ECR 로그인이 검증되는 것은 아닙니다.
-Strimzi 1.2는 기본적으로 Buildah 빌드 기능을 사용하므로 실제 노드에서 빌드 Pod의
+Strimzi 1.3은 Connect 이미지 빌드에 Buildah만 사용하므로 실제 노드에서 빌드 Pod의
 요구사항을 확인합니다.
 
 다음을 `create-topics.py`로 저장·실행하고 생성한 `connect-topics.json`을
@@ -206,14 +206,14 @@ spec:
   build:
     output:
       type: docker
-      image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/connect-cluster:kafka4.3.1-deb3.6.2-s3-3.4.3
+      image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/connect-cluster:kafka4.3.1-deb3.6.3-s3-3.4.3
       pushSecret: ecr-registry-credentials
     plugins:
       - name: debezium-postgres
         artifacts:
           - type: tgz
-            url: https://repo.maven.apache.org/maven2/io/debezium/debezium-connector-postgres/3.6.2.Final/debezium-connector-postgres-3.6.2.Final-plugin.tar.gz
-            sha512sum: eabc5416446a32c3c763749262cd03115fbc2804bf48018348184f660222e9e5c8395306d9e795c9d52cbe246a5386142bdae376d418f6cf1bd5233e83e8ffe7
+            url: https://repo.maven.apache.org/maven2/io/debezium/debezium-connector-postgres/3.6.3.Final/debezium-connector-postgres-3.6.3.Final-plugin.tar.gz
+            sha512sum: 400495c485a1da532c5d7e2dcc3bbb1b7f7dcdbcdc74c82529309cb89a2c37298319ea45ea00414b3ce750a51ad01084e104725e810c55c1a7c1981baff201a0
       - name: aiven-s3
         artifacts:
           - type: zip
@@ -483,8 +483,8 @@ source·checkpoint 커넥터의 replication policy, separator와 offset-syncs �
 검사는 실제 리전 간 연결, DB 권한, ECR 빌드, S3 전달이나 재해복구 전환 성공을
 의미하지 않습니다.
 
-- [Strimzi 1.2.0 CRDs: authoritative resource fields](https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/install/cluster-operator)
-- [Strimzi 1.2.0 deployment guide](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0 CRDs: authoritative resource fields](https://github.com/strimzi/strimzi-kafka-operator/tree/1.3.0/install/cluster-operator)
+- [Strimzi 1.3.0 deployment guide](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Debezium 3.6 PostgreSQL connector](https://debezium.io/documentation/reference/3.6/connectors/postgresql.html)
 - [Aiven S3 connector 3.4.3](https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md)
 - [ECR authorization token lifetime](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html)

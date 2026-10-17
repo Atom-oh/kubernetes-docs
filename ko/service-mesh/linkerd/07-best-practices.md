@@ -1,6 +1,6 @@
 # Linkerd 모범 사례
 
-> **검토 기준**: 2026년 9월 11일 · Linkerd edge-26.9.1 / chart 2026.9.1
+> **검토 기준**: 2026년 10월 16일 · Linkerd edge-26.10.1 / chart 2026.10.1
 
 선택한 버전과 전제 조건은 [설치](01-installation.md), [보안](04-security.md), [관찰성](05-observability.md), [다중 클러스터](06-multi-cluster.md) 가이드를 따릅니다. 이 장은 해당 절차를 운영 검토로 연결하며 특정 환경의 운영 준비 완료를 인증하지 않습니다.
 
@@ -109,10 +109,10 @@ set -euo pipefail
 umask 077
 # Use the same reviewed chart version for the profile and render.
 curl --fail --show-error --location \
-  https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.9.1/charts/linkerd-control-plane/values-ha.yaml \
+  https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.10.1/charts/linkerd-control-plane/values-ha.yaml \
   -o values-ha.yaml
 helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd \
+  --version 2026.10.1 -n linkerd \
   -f reviewed-core-values.yaml -f values-ha.yaml > reviewed-ha.yaml
 ```
 
@@ -188,7 +188,7 @@ Multicluster는 해당 가이드의 원하는 Helm `controllers` 목록과 현�
 
 ### Helm 소유 설치
 
-예제 target은 2026.9.1이며 실제 설치 버전에서 지원되는 경로를 확인한 경우에만 사용합니다.
+예제 target은 2026.10.1이며 실제 설치 버전에서 지원되는 경로를 확인한 경우에만 사용합니다.
 
 ```bash
 set -euo pipefail
@@ -197,13 +197,13 @@ helm get values linkerd-control-plane -n linkerd > current-core-values.yaml
 helm get values linkerd-viz -n linkerd-viz > current-viz-values.yaml
 # Prepare reviewed target values and approved migration steps before these changes.
 helm upgrade linkerd-crds linkerd-edge/linkerd-crds \
-  --version 2026.9.1 -n linkerd --wait --timeout 10m
+  --version 2026.10.1 -n linkerd --wait --timeout 10m
 helm upgrade linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd -f reviewed-core-values.yaml \
+  --version 2026.10.1 -n linkerd -f reviewed-core-values.yaml \
   --wait --timeout 10m
 linkerd check
 helm upgrade linkerd-viz linkerd-edge/linkerd-viz \
-  --version 2026.9.1 -n linkerd-viz -f reviewed-viz-values.yaml \
+  --version 2026.10.1 -n linkerd-viz -f reviewed-viz-values.yaml \
   --wait --timeout 10m
 linkerd viz check
 ```
@@ -357,9 +357,9 @@ Istio와 Linkerd mesh mTLS가 자동 상호 운용한다고 가정하지 않습�
 
 ## 참고 자료
 
-- [선택한 HA profile](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/values-ha.yaml)
+- [선택한 HA profile](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/linkerd-control-plane/values-ha.yaml)
 - [Proxy 설정](https://linkerd.io/docs/reference/proxy-configuration/)
-- [해당 버전 proxy runtime template](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/partials/templates/_proxy.tpl)
+- [해당 버전 proxy runtime template](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/partials/templates/_proxy.tpl)
 - [Upgrade 지침](https://linkerd.io/docs/tasks/upgrade/)
 - [인가 정책](https://linkerd.io/docs/reference/authorization-policy/)
 - [Istio injection](../istio/advanced/07-sidecar-injection.md)과 [ambient mode](../istio/advanced/01-ambient-mode.md)

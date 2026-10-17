@@ -1,6 +1,6 @@
 # Cilium Service Mesh 아키텍처 퀴즈
 
-Cilium 1.20.1 기준으로 검토했습니다. 설정, 적용 조건과 공식 근거는 [아키텍처 본문](../../../service-mesh/cilium-service-mesh/01-architecture.md)을 참고하세요.
+Cilium 1.20.3 기준으로 검토했습니다. 설정, 적용 조건과 공식 근거는 [아키텍처 본문](../../../service-mesh/cilium-service-mesh/01-architecture.md)을 참고하세요.
 
 ### 1. Cilium 아키텍처의 특징은 무엇인가요?
 

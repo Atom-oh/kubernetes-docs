@@ -1,6 +1,6 @@
 # Linkerd Security
 
-> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 · cert-manager examples checked against 1.21.1
+> **Last Updated**: October 16, 2026 · Linkerd edge-26.10.1 · cert-manager examples checked against 1.21.2
 
 Linkerd provides workload authentication, transport encryption and inbound authorization for traffic handled by its proxies. Enrollment, policy, certificate lifecycle and application security still need explicit design. Use the supported Kubernetes/Gateway API combination in the [installation guide](01-installation.md); the examples here assume that installation and existing application workloads.
 
@@ -403,7 +403,7 @@ identity:
 # Merge into the complete reviewed values from the installation guide.
 # In this option, Helm owns the public trust bundle; cert-manager owns the issuer.
 helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd \
+  --version 2026.10.1 -n linkerd \
   -f reviewed-values.yaml -f managed-issuer-values.yaml \
   --set-file identityTrustAnchorsPEM=ca.crt > reviewed-control-plane.yaml
 ```
@@ -505,7 +505,7 @@ HTTP authorization-denial counters are distinct from application login failures.
 - [Manual credential rotation](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)
 - [Managed credential rotation](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)
 - [Proxy metrics](https://linkerd.io/docs/reference/proxy-metrics/)
-- [Released Identity reload/issuer metrics implementation](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/pkg/identity/service.go)
-- [Released chart credential ownership](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/templates/identity.yaml)
+- [Released Identity reload/issuer metrics implementation](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/pkg/identity/service.go)
+- [Released chart credential ownership](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/linkerd-control-plane/templates/identity.yaml)
 - [cert-manager CA Issuer](https://cert-manager.io/docs/configuration/ca/) and [Vault authentication](https://cert-manager.io/docs/configuration/vault/)
 - [Vault intermediate signing](https://developer.hashicorp.com/vault/api-docs/secret/pki#sign-intermediate)

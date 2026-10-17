@@ -1,7 +1,7 @@
 # Kubernetes Cluster Administration
 
 > **Supported Versions**: EKS standard support for Kubernetes 1.34–1.37 (checked October 12, 2026)
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 Kubernetes cluster administration is an important task that includes cluster setup, maintenance, monitoring, troubleshooting, and upgrades. In this chapter, we will explore various aspects of Kubernetes cluster administration and best practices for cluster management in Amazon EKS.
 
@@ -230,7 +230,7 @@ spec:
     - --service-cluster-ip-range=10.96.0.0/12
     - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
     - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    image: registry.k8s.io/kube-apiserver:v1.36.4
+    image: registry.k8s.io/kube-apiserver:v1.36.5
     name: kube-apiserver
 ```
 
@@ -2014,7 +2014,7 @@ By following best practices and utilizing appropriate tools, you can operate a s
 > - [Kubernetes Official Documentation: Cluster Administration](https://kubernetes.io/docs/tasks/administer-cluster/)
 > - [Amazon EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
 > - [Kubernetes Best Practices: Cluster Administration](https://kubernetes.io/docs/setup/best-practices/)
-> - [etcd Documentation: Backup and Recovery](https://etcd.io/docs/v3.5/op-guide/recovery/)
+> - [etcd Documentation: Backup and Recovery](https://etcd.io/docs/v3.6/op-guide/recovery/)
 > - [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
 
 ## Quiz

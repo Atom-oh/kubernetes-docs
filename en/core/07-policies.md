@@ -1,7 +1,7 @@
 # Kubernetes Policies
 
 > **Supported Versions**: Kubernetes 1.35 - 1.37
-> **Last Updated**: February 22, 2026
+> **Last Updated**: October 16, 2026
 
 In Kubernetes, policies are sets of rules that control and regulate the behavior of clusters and workloads. Through policies, you can manage various aspects such as security, resource usage, and network communication. In this chapter, we will learn about the different types of policies in Kubernetes, how to implement them, and policy management in Amazon EKS.
 

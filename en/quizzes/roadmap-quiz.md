@@ -41,7 +41,7 @@ The learning-flow map shows the guidebook's fifteen domains "flowing from founda
 **Answer: D) GitOps (ArgoCD, Flux)**
 
 **Explanation:**
-The measured-benchmark series consists of "documents built on numbers measured on real AWS resources, not spec sheets": Istio sidecar vs ambient (P50/P99 latency per mTLS data plane and 503 rates during rollouts), the EBS gp2 vs gp3 benchmark (a 10x IOPS gap at identical capacity and the gp2 burst-credit cliff), the ClickHouse on EKS benchmark (100M-row ingest throughput, compression ratios, query latency), and the Kafka on EKS benchmark (RF3 ingest ceiling of ≈130–135 MiB/s, among others) plus the Pod Network Benchmark — five entries in this list. GitOps is a cross-cutting domain but has no measured page in the series.
+The measured-benchmark series consists of "documents reporting prior runs on AWS resources": Istio sidecar vs ambient (P50/P99 latency per mTLS data plane and 503 rates during rollouts), the EBS gp2 vs gp3 benchmark (a 10x IOPS gap at identical capacity and the gp2 burst-credit cliff), the ClickHouse on EKS benchmark (100M-row ingest throughput, compression ratios, query latency), and the Kafka on EKS benchmark (single-run RF3/RF1 throughput records, among others) plus the Pod Network Benchmark — five entries in this list. GitOps is a cross-cutting domain but has no measured page in the series.
 
 </details>
 

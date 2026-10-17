@@ -1,6 +1,6 @@
 # Cilium Service Mesh Overview
 
-> **Last Updated**: September 11, 2026 · Cilium/chart 1.20.1 · CLI 0.20.0 · Hubble CLI 1.19.4
+> **Last Updated**: October 16, 2026 · Cilium/chart 1.20.3 · CLI 0.20.1 · Hubble CLI 1.20.2
 
 Cilium combines Kubernetes networking, eBPF policy/load balancing and optional application-layer proxy features. Selected L7 traffic is handled by Cilium's Envoy integration; removing per-application sidecars does not remove the proxy, kernel requirements or operational components.
 
@@ -23,11 +23,11 @@ Envoy can run as a process with the Cilium agent or as the separately managed `c
 
 ### Mutual authentication is not automatic traffic encryption
 
-Cilium 1.20.1 documents **out-of-band mutual authentication as beta and incomplete**. Its mTLS-based identity handshake occurs out of band between agents for Cilium security identities. That does not wrap every application connection in the same TLS transport model as an Istio or Linkerd workload proxy.
+Cilium 1.20.3 documents **out-of-band mutual authentication as beta and incomplete**. Its mTLS-based identity handshake occurs out of band between agents for Cilium security identities. That does not wrap every application connection in the same TLS transport model as an Istio or Linkerd workload proxy.
 
 WireGuard/IPsec are separate encryption mechanisms with their own supported modes and scope. WireGuard is not TLS, and enabling SPIRE alone does not encrypt application data or activate authentication rules for every endpoint. The selected release also documents that mutual authentication is not compatible with ClusterMesh or an external mesh mTLS solution.
 
-Cilium 1.20.1 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
+Cilium 1.20.3 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
 
 Review the [security guide](03-security.md) and the released security model/limitations before adopting this beta path. Treat routing, authentication, authorization and encryption as distinct requirements.
 
@@ -56,7 +56,7 @@ For the selected release:
 - The general Kubernetes e2e compatibility list is **1.33–1.36**. The released EKS CI file lists **1.33–1.35**, with 1.35 as its default. These are distinct evidence sets; newer/provider-unlisted combinations require separate validation.
 - The Helm chart's permissive `kubeVersion >=1.21.0-0` is not the tested support matrix, and a newer Kubernetes release is not automatically covered.
 - Hosts require supported AMD64/AArch64 Linux and normally kernel 5.10 or later, or a documented backport equivalent. L7 redirection and other advanced features have additional kernel/module requirements.
-- The Gateway API reference is **v1.6.1** for this Cilium release. Check required/optional CRDs and the 1.20 TLSRoute upgrade notes before changing them; do not substitute the latest catalog version without compatibility review.
+- The Gateway API reference is **v1.6.3** for this Cilium release. Check required/optional CRDs and the 1.20 TLSRoute upgrade notes before changing them; do not substitute the latest catalog version without compatibility review.
 
 ```bash
 cilium version --client
@@ -73,7 +73,7 @@ The CLI's own version and the running Cilium image version are different informa
 
 | Mode/platform | Required distinction |
 |---|---|
-| Cilium AWS ENI mode | Cilium manages ENI IPAM/native routing; requires IAM, routing and node/Pod enrollment planning. The general 1.20.1 ENI reference documents IPv6 Beta, while the EKS installation page still says IPv4-only; use the IPv4 example here and verify the platform-specific IPv6 prerequisites/support separately |
+| Cilium AWS ENI mode | Cilium manages ENI IPAM/native routing; requires IAM, routing and node/Pod enrollment planning. The general 1.20.3 ENI reference documents IPv6 Beta, while the EKS installation page still says IPv4-only; use the IPv4 example here and verify the platform-specific IPv6 prerequisites/support separately |
 | AWS VPC CNI chaining | AWS VPC CNI retains interface/IPAM responsibility; Cilium attaches its datapath afterward; advanced L7/IPsec limitations must be evaluated |
 | EKS Fargate | Alternate CNIs are not supported; AWS VPC CNI is required |
 | EKS Auto Mode | Alternate CNI and network-policy plugins are not supported |
@@ -107,7 +107,7 @@ umask 077
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 # Preview only: reviewed-cni-values.yaml must describe the existing intended CNI mode.
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system --kube-version 1.35.0 \
   -f reviewed-cni-values.yaml -f cilium-mesh-features.yaml \
   > cilium-mesh-rendered.yaml
@@ -117,7 +117,7 @@ This previews an example compatible Kubernetes version and merges with the insta
 
 | Optional capability | Additional requirements |
 |---|---|
-| Gateway API | kube-proxy replacement, L7 proxy, the required v1.6.1 CRDs and an appropriate load-balancer/host-network design |
+| Gateway API | kube-proxy replacement, L7 proxy, the required v1.6.3 CRDs and an appropriate load-balancer/host-network design |
 | Ingress controller | Its supported configuration and exposure model; not automatically all mesh traffic |
 | Hubble metrics | The selected metric families and a configured collector; Relay/UI do not create Prometheus by themselves |
 | Mutual authentication | Beta review, explicit enablement, SPIRE/storage/connectivity, applicable authentication policy and separately evaluated encryption |
@@ -195,12 +195,12 @@ The selected Hubble CLI rejects combining `--namespace` with `--to-service`. Use
 | [Ingress/Gateway](05-ingress-gateway.md) | External traffic and Gateway API |
 | [Best practices](06-best-practices.md) | Operations, migration and validation |
 
-- [Released Kubernetes compatibility](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/compatibility.rst)
-- [System requirements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
-- [Cilium networking with Istio](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst)
-- [Envoy modes](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst)
-- [Mutual-authentication limits](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [Gateway API prerequisites](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/installation.rst)
-- [EKS ENI requirements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst) and [AWS VPC CNI chaining](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/cni-chaining-aws-cni.rst)
+- [Released Kubernetes compatibility](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/compatibility.rst)
+- [System requirements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
+- [Cilium networking with Istio](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/istio.rst)
+- [Envoy modes](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/proxy/envoy.rst)
+- [Mutual-authentication limits](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Gateway API prerequisites](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/installation.rst)
+- [EKS ENI requirements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/requirements-eks.rst) and [AWS VPC CNI chaining](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/cni-chaining-aws-cni.rst)
 - [EKS alternate CNIs](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html) and [Hybrid Nodes CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [Cilium 1.20.1 ENI IPAM / IPv6 Beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)
+- [Cilium 1.20.3 ENI IPAM / IPv6 Beta](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst)

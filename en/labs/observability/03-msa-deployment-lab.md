@@ -34,7 +34,7 @@
 <span id="verification-5"></span>
 
 > **Difficulty**: Advanced
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 Deploy five runnable Python roles as separate workloads. The [application README](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application) defines code, DB, image and chart inputs. Payments and notifications are synthetic; no actual charge or email/SMS is sent.
 
 ![Separate workloads, transactional outbox, SNS fanout and consumers](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-10.png)
@@ -46,7 +46,7 @@ Deploy five runnable Python roles as separate workloads. The [application README
 | Request/role | Contract |
 |---|---|
 | `POST /orders` | 201 + `id`; order and outbox commit together |
-| `POST /payments` | 200 + `status: completed`; same order/amount/method is idempotent |
+| `POST /payments` | 200 + `status: completed`; same order/amount/method is idempotent; conflicting values return 409 |
 | `GET /orders/{id}` | 200 + same ID, or404 |
 | `notification` | Own SQS queue, persisted synthetic notification |
 | `analytics` | Separate SQS queue, independent persisted result |

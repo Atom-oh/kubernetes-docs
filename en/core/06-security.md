@@ -1,7 +1,7 @@
 # Kubernetes Security
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: February 23, 2026
+> **Last Updated**: October 16, 2026
 
 In Kubernetes, security is a key element for protecting clusters and applications. In this chapter, we'll explore Kubernetes security concepts, authentication and authorization mechanisms, network policies, security contexts, and how to enhance security in Amazon EKS.
 
@@ -155,7 +155,7 @@ spec:
   automountServiceAccountToken: false
   containers:
   - name: my-container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ### OpenID Connect (OIDC)
@@ -468,9 +468,7 @@ ImagePolicyWebhook requires a running policy backend and self-managed API server
 
 Kubernetes auditing provides a mechanism to record and analyze events occurring in the cluster.
 
-#ImagePolicyWebhook requires a running policy backend and self-managed API server admission configuration; this file alone does not enforce registry rules. EKS does not expose arbitrary API-server flags: use supported admission webhooks/policy controllers there.
-
-## Audit Policy
+### Audit Policy
 
 Audit policies define which events to record:
 
@@ -493,9 +491,7 @@ Audit levels:
 - `Request`: Record request metadata and request body
 - `RequestResponse`: Record request metadata, request body, and response body
 
-#ImagePolicyWebhook requires a running policy backend and self-managed API server admission configuration; this file alone does not enforce registry rules. EKS does not expose arbitrary API-server flags: use supported admission webhooks/policy controllers there.
-
-## Audit Log Backends
+### Audit Log Backends
 
 Audit logs can be stored in various backends:
 - File
@@ -606,9 +602,7 @@ Here are best practices for enhancing the security of Kubernetes clusters and wo
 4. **Trusted Registries**: Pull images only from trusted registries.
 5. **Use Latest Images**: Regularly update images to patch known vulnerabilities.
 
-#These podSelectors refer to Pods in `default`. Policies are additive, so another policy can allow more traffic; source egress and destination ingress must both permit a connection. This example omits DNS: add TCP/UDP 53 access to the actual cluster DNS endpoints if the application resolves Service names.
-
-## Secret Management
+### Secret Management
 
 1. **External Secret Management**: Use external secret management systems to securely manage secrets.
 2. **Secret Encryption**: Encrypt secrets stored in etcd.
@@ -638,7 +632,7 @@ To test what you learned in this chapter, try the [Security Quiz](../quizzes/cor
 - [Kubernetes Official Documentation - Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 - [Kubernetes Official Documentation - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Kubernetes Official Documentation - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Kubernetes Official Documentation - Audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
+- [Kubernetes Official Documentation - Audit](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
 - [Amazon EKS Official Documentation - Security](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
 - [Amazon EKS Official Documentation - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 - [Amazon EKS Official Documentation - Secret Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)

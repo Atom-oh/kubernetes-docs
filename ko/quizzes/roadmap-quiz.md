@@ -41,7 +41,7 @@
 **정답: D) GitOps (ArgoCD·Flux)**
 
 **설명:**
-실측 벤치마크 시리즈는 "스펙 시트가 아니라 실제 AWS 리소스에서 직접 측정한 숫자를 담은 문서들"로, Istio sidecar vs ambient 실측(mTLS 데이터플레인별 P50/P99 레이턴시와 rollout 중 503 비율), EBS gp2 vs gp3 실측 벤치마크(IOPS 10배 차이와 gp2 버스트 크레딧 절벽), ClickHouse on EKS 실측 벤치마크(1억 행 ingest 처리량·압축률·쿼리 레이턴시), Kafka on EKS 실측 벤치마크(RF3 ingest 상한 ≈130–135 MiB/s 등) 및 Pod 네트워크 벤치마크까지 다섯 편을 이 목록에 소개합니다. GitOps는 횡단 도메인이지만 이 시리즈에 실측 문서가 없습니다.
+실측 벤치마크 시리즈는 "기존 AWS 실행에서 보고한 수치를 담은 문서들"로, Istio sidecar vs ambient 실측(mTLS 데이터플레인별 P50/P99 레이턴시와 rollout 중 503 비율), EBS gp2 vs gp3 실측 벤치마크(IOPS 10배 차이와 gp2 버스트 크레딧 절벽), ClickHouse on EKS 실측 벤치마크(1억 행 ingest 처리량·압축률·쿼리 레이턴시), Kafka on EKS 실측 벤치마크(RF3/RF1 단일 실행 처리량 기록 등) 및 Pod 네트워크 벤치마크까지 다섯 편을 이 목록에 소개합니다. GitOps는 횡단 도메인이지만 이 시리즈에 실측 문서가 없습니다.
 
 </details>
 

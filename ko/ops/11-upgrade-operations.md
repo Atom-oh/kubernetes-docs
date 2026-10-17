@@ -1,6 +1,6 @@
 # EKS 업그레이드: Auto Mode, 롤백과 Blue/Green
 
-> 검토: 2026-10-12. 명령 검증(2026-09-12): AWS CLI 2.36.44, Pluto 5.24.3, Velero 1.18.2.
+> 검토: 2026-10-16. 명령 검증(2026-09-12, Pluto·Velero는 2026-10-16): AWS CLI 2.36.44, Pluto 5.24.4, Velero 1.18.4.
 > 예시 전환은 1.35 → 1.36이며 실제 대상은 리전에서 조회합니다.
 
 컨트롤 플레인·노드·애드온·앱·데이터를 함께 계획합니다.
@@ -76,7 +76,7 @@ pluto detect-helm --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 pluto detect-api-resources --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 ```
 
-Pluto 5.24.3은 문제 없음 0, deprecated 발견 2, removed 발견 3을 구별합니다.
+Pluto 5.24.4는 문제 없음 0, deprecated 발견 2, removed 발견 3, 대상 버전에서 사용할 수 없는 대체 API 4를 구별합니다.
 이를 모두 “미설치”로 처리하거나 `|| true`로 성공 처리하지 않습니다.
 JSON은 객체이며 항목은 `.items // []`에서 셉니다. 문제 없는 응답에는 items가 없을 수 있습니다.
 `detect-all-in-cluster`도 유효합니다. 공식 release의 OS/architecture와 checksum을 확인합니다.
@@ -330,7 +330,7 @@ snapshot/data-mover 결과, 제외된 볼륨과 DB quiesce/replication을 확인
 PVC/PV 객체만 백업하는 것은 앱·Secret·Service·데이터를 포함한 전체 백업과 다릅니다.
 파일 시스템 백업에는 별도 node-agent와 볼륨 설정이 필요합니다.
 
-Velero 1.18.2의 `restore create`에는 `--dry-run`이 없습니다.
+Velero 1.18.4의 `restore create`에는 `--dry-run`이 없습니다.
 `-o yaml/json`은 Restore를 출력하고 생성하지 않지만 discovery와 Backup 읽기는 수행합니다.
 완전한 오프라인 검사나 복원 성공 시험으로 부르지 않습니다.
 
@@ -806,8 +806,8 @@ Grafana는 [스택 장](./09-observability-stack.md)의 명시적 UID와 완전�
 - [Kubernetes release history](https://kubernetes.io/releases/)
 - [Kubernetes patch releases and support period](https://kubernetes.io/releases/patch-releases/)
 - [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
-- [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
-- [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
+- [Pluto 5.24.4](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.4)
+- [Velero 1.18.4](https://github.com/velero-io/velero/releases/tag/v1.18.4)
 - [NLB listeners](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 
 ---

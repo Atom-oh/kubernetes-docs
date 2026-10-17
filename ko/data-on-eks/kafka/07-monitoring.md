@@ -1,7 +1,7 @@
 # Part 7: 모니터링
 
-> **검토 기준**: Strimzi 1.2.0 / Kafka 4.3.1, 포함된 JMX Exporter 1.6.0·Kafka Exporter 1.9.0, Prometheus Operator 0.93.1, KEDA 2.20.2\
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Strimzi 1.3.0 / Kafka 4.3.1, 포함된 JMX Exporter 1.6.0·Kafka Exporter 1.10.0, Prometheus Operator 0.94.1, KEDA 2.21.0\
+> **최종 검토**: 2026년 10월 16일
 
 ## 각 구성요소의 관찰 대상
 
@@ -465,29 +465,29 @@ kubectl -n kafka get hpa
 ## 대시보드와 검증 범위
 
 버전을 고정한 upstream **Kafka·KRaft·Kafka Exporter·Connect·Cruise Control**
-대시보드를 선택한 exporter 종류·라벨에 맞춰 참고합니다. Strimzi 1.2 예제는
+대시보드를 선택한 exporter 종류·라벨에 맞춰 참고합니다. Strimzi 1.3 예제는
 ZooKeeper 배포 안내가 아닙니다. Import했다고 이 최소 매핑에 모든 쿼리가 존재하지는 않습니다.
 
 JVM·GC, 노드/PVC 용량·I/O, 복제 가용성, 수집 범위, 트래픽 편중, 그룹 진행과
 애플리케이션 지연·오류 SLO를 포함합니다. JVM 내 exporter는 JVM 메트릭도 제공하지만
 호스트/PVC와 애플리케이션 신호는 각각의 수집기에서 가져옵니다.
 
-최종 JMX 규칙과 Kafka Exporter를 격리된 로컬 Kafka 4.3.1에서 검증했습니다.
+최종 JMX 규칙과 Kafka Exporter(1.9.0)를 격리된 로컬 Kafka 4.3.1에서 검증했습니다.
 레코드 15개와 지정한 커밋 위치에 대해 파티션 랙 **3·5·5**를 확인했습니다.
 알람 9개는 정상·결측·실패와 다른 클러스터의 지표가 섞이는 상황으로 검사했습니다.
 이는 운영 TLS 접속, 다중 노드 quorum, Strimzi 조정, 알림 전달과 실제 워크로드에
 대한 KEDA 동작의 성공을 의미하지 않습니다.
 
-- [Strimzi 1.2.0 metrics example](https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/examples/metrics/kafka-metrics.yaml)
-- [Strimzi 1.2.0 Kafka Exporter implementation](https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java)
-- [Strimzi 1.2.0 bundled exporter versions](https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/docker-images/kafka-based/kafka/Dockerfile)
-- [Kafka Exporter 1.9.0](https://github.com/danielqsj/kafka_exporter/tree/v1.9.0)
+- [Strimzi 1.3.0 metrics example](https://github.com/strimzi/strimzi-kafka-operator/blob/1.3.0/examples/metrics/kafka-metrics.yaml)
+- [Strimzi 1.3.0 Kafka Exporter implementation](https://github.com/strimzi/strimzi-kafka-operator/blob/1.3.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java)
+- [Strimzi 1.3.0 bundled exporter versions](https://github.com/strimzi/strimzi-kafka-operator/blob/1.3.0/docker-images/kafka-based/kafka/Dockerfile)
+- [Kafka Exporter 1.10.0](https://github.com/danielqsj/kafka_exporter/tree/v1.10.0)
 - [Archived kafka-lag-exporter project](https://github.com/seglo/kafka-lag-exporter)
-- [KEDA 2.20 Kafka scaler](https://keda.sh/docs/2.20/scalers/apache-kafka/)
-- [KEDA 2.20.2 implementation](https://github.com/kedacore/keda/blob/v2.20.2/pkg/scalers/kafka_scaler.go)
+- [KEDA 2.21 Kafka scaler](https://keda.sh/docs/2.21/scalers/apache-kafka/)
+- [KEDA 2.21.0 implementation](https://github.com/kedacore/keda/blob/v2.21.0/pkg/scalers/kafka_scaler.go)
 - [Prometheus alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
-- [Versioned JMX-based Grafana dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/grafana-dashboards)
-- [Versioned Strimzi Metrics Reporter dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards)
+- [Versioned JMX-based Grafana dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.3.0/examples/metrics/grafana-dashboards)
+- [Versioned Strimzi Metrics Reporter dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.3.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards)
 
 ## 다음 단계
 

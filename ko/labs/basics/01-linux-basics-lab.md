@@ -2,7 +2,7 @@
 
 > **난이도**: 초급
 > **예상 소요 시간**: 45분
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 학습 목표
 - Linux 프로세스 관리 명령어를 실습합니다
@@ -202,7 +202,7 @@ metadata:
 spec:
   containers:
   - name: memory-demo
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         memory: "64Mi"

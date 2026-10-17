@@ -102,7 +102,7 @@ signed annotation은 암호학적 검증이나 승인 자체가 아닙니다. Ar
 
 ---
 
-7. Pipelines 1.16의 controller ServiceMonitor에서 확인할 포트와 counter는?
+7. Pipelines 1.17의 controller ServiceMonitor에서 확인할 포트와 counter는?
    - A) metrics / pipelinerun_count
    - B) http-metrics / tekton_pipelines_controller_pipelinerun_total
    - C) http / 모든 namespace별 counter가 자동 제공

@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-These are separate schema examples for ELBv2 1.7.0 / Route 53 1.6.0 / RDS 1.12.0. They do not place NLB in front of Aurora. The internal NLB/DNS serves an application, while Aurora is a separate application dependency. An end-to-end connected deployment was not tested.
+These are separate schema examples for ELBv2 1.8.2 / Route 53 1.7.1 / RDS 1.13.3. They do not place NLB in front of Aurora. The internal NLB/DNS serves an application, while Aurora is a separate application dependency. An end-to-end connected deployment was not tested.
 
 Prepare infra and authentication/permissions for all three controllers. Replace VPC, private subnets, security groups and hosted-zone IDs with approved values. NLB and database security groups should allow only required sources/ports. An internal NLB does not replace authorization or network controls.
 
@@ -234,8 +234,8 @@ spec:
 
 Fields were checked against official versioned CRDs. Schema success does not establish IAM permissions, AWS service constraints, creation, connectivity or recovery. Assign ownership, costs, cleanup and backup responsibilities for retained resources before applying.
 
-- [elbv2 v1.7.0 CRDs](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.7.0/config/crd/bases)
-- [route53 v1.6.0 CRDs](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.6.0/config/crd/bases)
-- [rds v1.12.0 CRDs](https://github.com/aws-controllers-k8s/rds-controller/tree/v1.12.0/config/crd/bases)
+- [elbv2 v1.8.2 CRDs](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.8.2/config/crd/bases)
+- [route53 v1.7.1 CRDs](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.7.1/config/crd/bases)
+- [rds v1.13.3 CRDs](https://github.com/aws-controllers-k8s/rds-controller/tree/v1.13.3/config/crd/bases)
 - [Aurora PostgreSQL minor versions](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-aurora-postgresql-18-4-17-10-16-14-15-18-14-23/)
 - [Aurora custom endpoints](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.html)

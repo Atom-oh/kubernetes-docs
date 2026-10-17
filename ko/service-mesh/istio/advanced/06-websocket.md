@@ -1,7 +1,7 @@
 # WebSocket 지원
 
-> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.36
-> **마지막 검토**: 2026년 9월 11일
+> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.37
+> **마지막 검토**: 2026년 10월 16일
 
 Istio는 생성한 HTTP connection manager에서 WebSocket upgrade를 활성화합니다. 이 예제는 ingress gateway에서 TLS를 종료하는 HTTP/1.1 Upgrade 경로입니다. HTTP/2 Extended CONNECT와 HTTP/3는 전체 경로의 지원·설정을 별도로 확인해야 합니다.
 

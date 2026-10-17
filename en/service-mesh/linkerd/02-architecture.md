@@ -1,6 +1,6 @@
 # Linkerd Architecture
 
-> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / proxy release/v2.368.0
+> **Last Updated**: October 16, 2026 · Linkerd edge-26.10.1 / proxy release/v2.370.0
 
 This chapter explains the current component roles, identity hierarchy, traffic capture and injection lifecycle. Use the [installation guide](01-installation.md) for the supported release/cluster combination and pinned artifacts. The examples below are configuration illustrations; no live deployment or CA rotation was performed in this audit.
 
@@ -257,7 +257,7 @@ The original spiffe://root.linkerd.cluster.local/ns/.../sa/... string was not th
 
 ### Renewal and rotation
 
-In proxy release/v2.368.0, the identity client normally schedules the next certificate attempt at 70% of the **remaining** validity, clamped by configured minimum/maximum refresh intervals. Error/expiry paths can use the minimum delay. This is not a fixed wall-clock guarantee for every certificate.
+In proxy release/v2.370.0, the identity client normally schedules the next certificate attempt at 70% of the **remaining** validity, clamped by configured minimum/maximum refresh intervals. Error/expiry paths can use the minimum delay. This is not a fixed wall-clock guarantee for every certificate.
 
 That client reuses its loaded key/CSR documents when requesting renewed certificates. Certificate renewal is not the same as private-key rotation, issuer rotation or trust-anchor rotation.
 
@@ -339,5 +339,5 @@ xDS also commonly uses gRPC; protocol naming is not an intrinsic complexity rank
 - [Official architecture](https://linkerd.io/docs/reference/architecture/), [injection](https://linkerd.io/docs/features/proxy-injection/) and [policy reference](https://linkerd.io/docs/reference/authorization-policy/)
 - [Automatic mTLS](https://linkerd.io/docs/features/automatic-mtls/), [protocol handling](https://linkerd.io/docs/features/protocol-detection/) and [load balancing](https://linkerd.io/docs/features/load-balancing/)
 - [Pinned Destination API](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
-- [Kubernetes token validation](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/validator.go) and [identity formatting](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/domain.go)
-- [Pinned certificate refresh implementation](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/proxy/identity-client/src/certify.rs)
+- [Kubernetes token validation](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/validator.go) and [identity formatting](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/domain.go)
+- [Pinned certificate refresh implementation](https://github.com/linkerd/linkerd2-proxy/blob/0cdcc078e66eb27c79b9dfc030fc660042716d31/linkerd/proxy/identity-client/src/certify.rs)

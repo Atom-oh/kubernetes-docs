@@ -1,7 +1,7 @@
 # Amazon EKS 보안
 
 > **지원 버전**: EKS 표준 지원 1.34–1.37; 연장 지원 1.31–1.33 (2026년 10월 12일 확인)
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Amazon EKS(Elastic Kubernetes Service)에서 워크로드를 안전하게 실행하기 위해서는 다양한 보안 계층과 모범 사례를 이해하고 구현해야 합니다. 이 문서에서는 EKS 클러스터의 보안을 강화하기 위한 주요 개념, 구성 요소 및 모범 사례를 다룹니다.
 
@@ -1203,7 +1203,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -1904,7 +1904,7 @@ aws guardduty list-coverage --region "$AWS_REGION" --detector-id "$DETECTOR_ID"
 
 ### Falco Runtime 규칙
 
-Falco는 runtime event를 규칙으로 평가합니다. 아래 교육용 values는 stable chart 9.1.0·Falco 0.44.1, modern eBPF를 지원하는 Linux EC2 노드와 chart의 container metadata plugin을 전제로 합니다. Fargate·Hybrid Nodes·모든 Auto Mode 구성의 배포 검증 결과가 아닙니다. 설치 전에 render된 privileged·host 접근, runtime socket, kernel·BTF 요건, scheduling과 namespace admission 예외를 검토합니다.
+Falco는 runtime event를 규칙으로 평가합니다. 아래 교육용 values는 stable chart 9.2.0·Falco 0.45.0, modern eBPF를 지원하는 Linux EC2 노드와 chart의 container metadata plugin을 전제로 합니다. Fargate·Hybrid Nodes·모든 Auto Mode 구성의 배포 검증 결과가 아닙니다. 설치 전에 render된 privileged·host 접근, runtime socket, kernel·BTF 요건, scheduling과 namespace admission 예외를 검토합니다.
 
 `falco-demo-values.yaml`로 저장합니다. 배포된 Terminal shell in container 규칙을 재정의하는 대신 고유 이름의 shell audit 규칙을 추가합니다. 성공한 exec event·terminal 조건을 포함하며 정상적인 관리자 shell도 matching될 수 있습니다. 출력은 명령 인수를 제외하고 Kubernetes metadata enrichment가 활성화되었다고 가정하지 않습니다:
 
@@ -1932,13 +1932,13 @@ customRules:
       - audit
 ```
 
-검토를 마친 신규 소유 설치에서는 `falcosecurity` repository를 `https://falcosecurity.github.io/charts`로 구성한 뒤 `helm install falco falcosecurity/falco --version 9.1.0 --namespace falco --create-namespace -f falco-demo-values.yaml --wait --timeout 5m`을 사용합니다. 기존 release는 소유자의 upgrade 절차를 따릅니다.
+검토를 마친 신규 소유 설치에서는 `falcosecurity` repository를 `https://falcosecurity.github.io/charts`로 구성한 뒤 `helm install falco falcosecurity/falco --version 9.2.0 --namespace falco --create-namespace -f falco-demo-values.yaml --wait --timeout 5m`을 사용합니다. 기존 release는 소유자의 upgrade 절차를 따릅니다.
 
 Artifact follow를 꺼도 Pod 시작 시 설정된 rule·plugin artifact는 설치합니다. Chart 기본 `falco-rules:5`는 major version tag이므로 chart 고정만으로 불변 rule bundle이 되지 않습니다. 운영 rollout에서는 실제 OCI artifact를 검토·고정합니다. Pod·namespace 출력에는 호환 Kubernetes metadata collector·plugin과 RBAC가 필요하며 규칙에 `%k8s.pod.name`만 쓰면 제공되는 기능이 아닙니다.
 
-실제 Falco 0.44.1·container plugin 0.7.1의 `--validate` 모드에서 모든 runtime collector를 끈 상태로 custom rule과 undefined-macro 거부 사례를 확인했습니다. Parser 경고에 따라 obsolete `evt.dir` 조건도 제거했습니다. Helm render는 확인했지만 syscall capture·kernel driver·BPF attachment·클러스터 설치·실제 알림은 실행하지 않았습니다.
+실제 Falco 0.45.0·container plugin 0.7.4의 `--validate` 모드에서 모든 runtime collector를 끈 상태로 custom rule과 undefined-macro 거부 사례를 확인했습니다. Parser 경고에 따라 obsolete `evt.dir` 조건도 제거했습니다. Helm render는 확인했지만 syscall capture·kernel driver·BPF attachment·클러스터 설치·실제 알림은 실행하지 않았습니다.
 
-공식 참고 자료: [EKS logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [all-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html), [selected-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html), [CSPM standards](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [ASFF events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [V2 events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [GuardDuty EKS Protection](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html), [GuardDuty runtime](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html), [Falco chart 9.1.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.1.0).
+공식 참고 자료: [EKS logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [all-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html), [selected-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html), [CSPM standards](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [ASFF events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [V2 events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [GuardDuty EKS Protection](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html), [GuardDuty runtime](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html), [Falco chart 9.2.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.0).
 
 ## EKS 보안 모범 사례
 

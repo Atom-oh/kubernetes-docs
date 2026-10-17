@@ -51,7 +51,7 @@ KEDA (Kubernetes Event-Driven Autoscaling) includes scalers for external systems
 **Answer: B) Recreate can evict/recreate Pods; Off only provides recommendations**
 
 **Explanation:**
-VPA 1.7.1 deprecates Auto, which currently behaves like Recreate. Recreate can update by eviction/recreation; Off leaves recommendations for review. Explicit InPlaceOrRecreate and feature-gated InPlace are separate modes with different fallback behavior.
+VPA 1.8.0 deprecates Auto, which currently behaves like Recreate. Recreate can update by eviction/recreation; Off leaves recommendations for review. Explicit InPlaceOrRecreate and feature-gated InPlace are separate modes with different fallback behavior.
 
 </details>
 

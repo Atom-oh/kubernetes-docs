@@ -1,7 +1,7 @@
 # ArgoCD 설치 및 구성
 
-> **검토 기준**: Argo CD 3.5.2 / Helm Chart 10.8.4. 매니페스트·CLI 고정 버전은 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
-> **마지막 업데이트**: 2026년 10월 12일
+> **검토 기준**: Argo CD 3.5.2 / Helm Chart 10.8.4. 매니페스트·CLI 고정 버전은 릴리스 노트 검토 후 패치 3.5.5로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 
@@ -40,14 +40,14 @@ manifest·Helm·Kustomize 중 하나를 관리 주체로 선택합니다. 아래
 kubectl create namespace argocd
 
 # ArgoCD 설치 (일반)
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 ```
 
 **HA 모드 설치:**
 
 ```bash
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/ha/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/ha/install.yaml
 ```
 
 **설치 확인:**
@@ -91,7 +91,7 @@ helm install argocd argo/argo-cd --version 10.8.4 \
   -f values.yaml
 ```
 
-Chart 10.8.4가 배포하는 Argo CD는 v3.5.2(`appVersion`)이며, 매니페스트 예제가 고정한 패치 3.5.4가 아니므로 3.5.4의 보안 수정이 빠져 있습니다. Argo CD 3.5.4는 chart 10.9.7부터 포함되며, 이 문서는 그 chart minor 업데이트를 검토하지 않았습니다. 고정 버전을 올리기 전에 chart 변경 기록을 확인합니다.
+Chart 10.8.4가 배포하는 Argo CD는 v3.5.2(`appVersion`)이며, 매니페스트 예제가 고정한 패치 3.5.5가 아니므로 3.5.4의 보안 수정이 빠져 있습니다. Argo CD 3.5.5는 chart 10.10.3부터 포함되며, 이 문서는 그 chart minor 업데이트를 검토하지 않았습니다. 고정 버전을 올리기 전에 chart 변경 기록을 확인합니다.
 
 **values.yaml 예시:**
 
@@ -179,7 +179,7 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 
 patches:
   # API Server 레플리카 증가
@@ -228,7 +228,7 @@ kubectl apply --server-side -k .
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-ARGOCD_VERSION=v3.5.4
+ARGOCD_VERSION=v3.5.5
 case "$(uname -s)" in
   Linux) ARGOCD_OS=linux ;;
   Darwin) ARGOCD_OS=darwin ;;
@@ -261,7 +261,7 @@ argocd version --client
 
 ### Windows
 
-공식 v3.5.4 릴리스의 `argocd-windows-amd64.exe`와 `cli_checksums.txt`를 다운로드하고 PowerShell `Get-FileHash -Algorithm SHA256` 값이 일치하는지 확인합니다. 사용자 소유 디렉터리에 설치해 사용자 PATH에 추가합니다. System32를 기본 설치 위치로 사용하지 않습니다.
+공식 v3.5.5 릴리스의 `argocd-windows-amd64.exe`와 `cli_checksums.txt`를 다운로드하고 PowerShell `Get-FileHash -Algorithm SHA256` 값이 일치하는지 확인합니다. 사용자 소유 디렉터리에 설치해 사용자 PATH에 추가합니다. System32를 기본 설치 위치로 사용하지 않습니다.
 
 ### 자동 완성
 
@@ -556,9 +556,9 @@ kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server --tail=100
 
 ### 검토 근거
 
-- [Argo CD 3.5.4 installation](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/installation.md)
-- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/high_availability.md)
-- [EKS and repository setup](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/declarative-setup.md)
-- [Ingress and gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/ingress.md)
+- [Argo CD 3.5.5 installation](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/installation.md)
+- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/high_availability.md)
+- [EKS and repository setup](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/declarative-setup.md)
+- [Ingress and gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.5/docs/operator-manual/ingress.md)
 - [Chart 10.8.4](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.8.4)
 - [Ingress NGINX retirement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)

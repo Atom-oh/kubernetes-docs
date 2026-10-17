@@ -1,6 +1,6 @@
 # Cilium Service Mesh 개요
 
-> **검토 기준**: 2026년 9월 11일 · Cilium/chart 1.20.1 · CLI 0.20.0 · Hubble CLI 1.19.4
+> **검토 기준**: 2026년 10월 16일 · Cilium/chart 1.20.3 · CLI 0.20.1 · Hubble CLI 1.20.2
 
 Cilium은 Kubernetes networking, eBPF policy/load balancing, 선택적인 application-layer proxy 기능을 결합합니다. 선택한 L7 트래픽은 Envoy 통합이 처리합니다. 애플리케이션별 sidecar를 없애도 proxy, kernel 요구사항, 운영 component가 사라지는 것은 아닙니다.
 
@@ -23,11 +23,11 @@ Envoy는 Cilium agent와 같은 Pod의 process 또는 별도로 관리하는 `ci
 
 ### 상호 인증과 자동 트래픽 암호화는 다름
 
-Cilium 1.20.1은 **out-of-band 상호 인증을 beta이자 미완성 기능**으로 문서화합니다. Cilium security identity에 대한 mTLS 기반 handshake는 agent 사이에서 out of band로 이루어집니다. 각 애플리케이션 연결을 Istio/Linkerd workload proxy와 같은 TLS transport로 감싸는 방식은 아닙니다.
+Cilium 1.20.3은 **out-of-band 상호 인증을 beta이자 미완성 기능**으로 문서화합니다. Cilium security identity에 대한 mTLS 기반 handshake는 agent 사이에서 out of band로 이루어집니다. 각 애플리케이션 연결을 Istio/Linkerd workload proxy와 같은 TLS transport로 감싸는 방식은 아닙니다.
 
 WireGuard/IPsec은 별도 지원 모드와 적용 범위를 가진 암호화 기능입니다. WireGuard는 TLS가 아니며 SPIRE 활성화만으로 application data가 암호화되거나 모든 endpoint에 인증 규칙이 적용되지는 않습니다. 선택한 버전은 mutual authentication과 ClusterMesh/외부 mesh mTLS의 호환성 제한도 명시합니다.
 
-Cilium 1.20.1에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
+Cilium 1.20.3에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
 
 Beta 경로를 사용하기 전에 [보안 가이드](03-security.md)와 해당 버전 보안 모델/제한을 검토합니다. Routing, 인증, 인가, 암호화는 서로 다른 요구사항입니다.
 
@@ -56,7 +56,7 @@ Cilium의 network 모델과 필요한 L7 기능이 환경에 맞으면 유용하
 - 일반 Kubernetes e2e 호환성 목록은 **1.33–1.36**입니다. 릴리스의 EKS CI 파일은 **1.33–1.35**이며 default는 1.35입니다. 다른 근거 집합이므로 더 최신이거나 provider 목록에 없는 조합은 별도 검증이 필요합니다.
 - Helm chart의 느슨한 `kubeVersion >=1.21.0-0`이 검증된 지원 matrix는 아니며 최신 Kubernetes도 자동 포함되지 않습니다.
 - 지원되는 AMD64/AArch64 Linux와 보통 kernel 5.10 이상 또는 문서화된 backport 동등 환경이 필요합니다. L7 redirect와 고급 기능에는 추가 kernel/module 요구사항이 있습니다.
-- 해당 Cilium release의 Gateway API 기준은 **v1.6.1**입니다. CRD 변경 전 필수/선택 CRD와 1.20의 TLSRoute upgrade 주의사항을 확인합니다. 호환성 검토 없이 최신 catalog 버전으로 바꾸지 않습니다.
+- 해당 Cilium release의 Gateway API 기준은 **v1.6.3**입니다. CRD 변경 전 필수/선택 CRD와 1.20의 TLSRoute upgrade 주의사항을 확인합니다. 호환성 검토 없이 최신 catalog 버전으로 바꾸지 않습니다.
 
 ```bash
 cilium version --client
@@ -73,7 +73,7 @@ CLI 자체 버전과 실행 중인 Cilium 이미지 버전은 다른 정보입�
 
 | 모드/플랫폼 | 구분할 점 |
 |---|---|
-| Cilium AWS ENI mode | Cilium이 ENI IPAM/native routing 관리; IAM, 라우팅, node/Pod 등록 계획 필요. 일반 1.20.1 ENI 문서는 IPv6 Beta를 설명하지만 EKS 설치 페이지에는 IPv4 전용 문구가 남아 있으므로, 여기서는 IPv4 예제를 사용하고 플랫폼별 IPv6 전제·지원은 별도 검증 |
+| Cilium AWS ENI mode | Cilium이 ENI IPAM/native routing 관리; IAM, 라우팅, node/Pod 등록 계획 필요. 일반 1.20.3 ENI 문서는 IPv6 Beta를 설명하지만 EKS 설치 페이지에는 IPv4 전용 문구가 남아 있으므로, 여기서는 IPv4 예제를 사용하고 플랫폼별 IPv6 전제·지원은 별도 검증 |
 | AWS VPC CNI chaining | AWS VPC CNI가 interface/IPAM을 유지하고 Cilium datapath가 뒤에 연결됨; 고급 L7/IPsec 제한 검토 필요 |
 | EKS Fargate | 대체 CNI를 지원하지 않으며 AWS VPC CNI 필요 |
 | EKS Auto Mode | 대체 CNI와 network-policy plugin을 지원하지 않음 |
@@ -107,7 +107,7 @@ umask 077
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 # Preview only: reviewed-cni-values.yaml must describe the existing intended CNI mode.
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system --kube-version 1.35.0 \
   -f reviewed-cni-values.yaml -f cilium-mesh-features.yaml \
   > cilium-mesh-rendered.yaml
@@ -117,7 +117,7 @@ helm template cilium cilium/cilium --version 1.20.1 \
 
 | 선택적 기능 | 추가 요구사항 |
 |---|---|
-| Gateway API | kube-proxy replacement, L7 proxy, 필수 v1.6.1 CRD, 적절한 load-balancer/host-network 설계 |
+| Gateway API | kube-proxy replacement, L7 proxy, 필수 v1.6.3 CRD, 적절한 load-balancer/host-network 설계 |
 | Ingress controller | 지원되는 설정과 노출 모델; 모든 mesh 트래픽에 자동 적용되지 않음 |
 | Hubble metrics | 선택한 metric family와 수집기; Relay/UI가 Prometheus를 만들지는 않음 |
 | Mutual authentication | Beta 검토, 명시적 활성화, SPIRE/storage/연결, 해당 인증 정책, 별도 암호화 검토 |
@@ -195,12 +195,12 @@ hubble observe --server localhost:4245 --to-service bookinfo/productpage
 | [Ingress/Gateway](05-ingress-gateway.md) | 외부 트래픽과 Gateway API |
 | [모범 사례](06-best-practices.md) | 운영, 이전, 검증 |
 
-- [해당 버전 Kubernetes 호환성](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/compatibility.rst)
-- [System 요구사항](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
-- [Cilium networking과 Istio](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst)
-- [Envoy mode](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst)
-- [Mutual authentication 제한](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [Gateway API 전제 조건](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/installation.rst)
-- [EKS ENI 요구사항](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst)과 [AWS VPC CNI chaining](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/cni-chaining-aws-cni.rst)
+- [해당 버전 Kubernetes 호환성](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/compatibility.rst)
+- [System 요구사항](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
+- [Cilium networking과 Istio](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/istio.rst)
+- [Envoy mode](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/proxy/envoy.rst)
+- [Mutual authentication 제한](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Gateway API 전제 조건](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/installation.rst)
+- [EKS ENI 요구사항](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/requirements-eks.rst)과 [AWS VPC CNI chaining](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/cni-chaining-aws-cni.rst)
 - [EKS 대체 CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)와 [Hybrid Nodes CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [Cilium 1.20.1 ENI IPAM / IPv6 Beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)
+- [Cilium 1.20.3 ENI IPAM / IPv6 Beta](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst)

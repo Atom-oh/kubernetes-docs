@@ -1,6 +1,6 @@
 # Amazon EMR on EKS 퀴즈
 
-2026년 9월 검토 본문 기준입니다.
+2026년 10월 16일 검토 본문 기준입니다.
 
 ## 1. Virtual cluster는 무엇인가요?
 
@@ -43,7 +43,7 @@ EMR 6.10.0+입니다. 공식 EMR용 chart와 호환 런타임을 설치하고 ku
 <details>
 <summary>정답 보기</summary>
 
-4.0.2-amzn-0입니다. 2026년 4월 출시된 Spark 4.x GA이며, 8.0.0은 EMR 런타임 릴리스 이름입니다.
+4.0.2-amzn-0입니다. 2026년 5월 출시된 Spark 4.x GA이며, 8.0.0은 EMR 런타임 릴리스 이름입니다.
 
 </details>
 

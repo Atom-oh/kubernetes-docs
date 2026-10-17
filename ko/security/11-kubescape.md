@@ -2,8 +2,8 @@
 
 # Kubescape를 활용한 보안 태세 관리
 
-> **마지막 업데이트**: 2026년 9월 13일
-> **검증 기준**: CLI 4.0.14, Operator chart 1.40.4. 차트의 scanner image는 4.0.13으로 CLI와 다릅니다. 정책 bundle은 예제 디렉터리의 SHA-256 기록을 기준으로 합니다.
+> **마지막 업데이트**: 2026년 10월 16일
+> **검증 기준**: CLI 4.0.16, Operator chart 1.40.4. 차트의 scanner image는 4.0.13으로 CLI와 다릅니다. 정책 bundle은 예제 디렉터리의 SHA-256 기록을 기준으로 합니다.
 
 Kubescape는 Kubernetes 구성과 선택한 이미지·런타임 데이터를 평가합니다. **스캔 통과는 보안 보증이나 컴플라이언스 인증이 아니며, 검사하지 못한 항목도 구분**해야 합니다. 이 문서는 로컬 YAML·정책 bundle·실제 CLI·차트 렌더링을 검증했습니다. 실제 클러스터 스캔, node-agent 설치, 이미지 pull/취약점 DB 스캔, SaaS 제출은 실행하지 않았습니다.
 
@@ -29,13 +29,13 @@ CLI는 명시한 파일이나 클러스터를 일회성으로 검사하고 Opera
 
 ### CLI 설치
 
-[공식 4.0.14 release](https://github.com/kubescape/kubescape/releases/tag/v4.0.14)에서 OS/CPU에 맞는 binary를 내려받고 release checksum을 확인합니다. 아래 Linux AMD64 예제는 검토한 archive hash를 고정합니다. ARM64는 다른 archive/hash가 필요합니다.
+[공식 4.0.16 release](https://github.com/kubescape/kubescape/releases/tag/v4.0.16)에서 OS/CPU에 맞는 binary를 내려받고 release checksum을 확인합니다. 아래 Linux AMD64 예제는 검토한 archive hash를 고정합니다. ARM64는 다른 archive/hash가 필요합니다.
 
 ```bash
 curl --fail --location \
-  https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.tar.gz \
+  https://github.com/kubescape/kubescape/releases/download/v4.0.16/kubescape_4.0.16_linux_amd64.tar.gz \
   --output kubescape.tgz
-printf '%s  %s\n' '1d253b70f88e80b74f68af73ccd422f897381468300be7cc486fdd656d907a40' kubescape.tgz | sha256sum --check
+printf '%s  %s\n' '71ed716b13487a6fa57500af6b191ee7fd51eb0b31809ea5994a696b1f36f874' kubescape.tgz | sha256sum --check
 tar -xzf kubescape.tgz kubescape
 ./kubescape version
 ./kubescape scan --help
@@ -155,7 +155,7 @@ kubescape scan framework nsa secure-pod.yaml \
   --format json --output report.json
 ```
 
-형식은 `--format`/`-f`, 파일 경로는 `--output`/`-o`입니다. `-o json > report.json`은 JSON 형식 선택이 아닙니다. 4.0.14는 JSON/SARIF/HTML/PDF/JUnit/gitlab-sast 등 여러 형식을 지원하지만 소비 도구에 맞는 형식을 선택해야 합니다.
+형식은 `--format`/`-f`, 파일 경로는 `--output`/`-o`입니다. `-o json > report.json`은 JSON 형식 선택이 아닙니다. 4.0.16은 JSON/SARIF/HTML/PDF/JUnit/gitlab-sast 등 여러 형식을 지원하지만 소비 도구에 맞는 형식을 선택해야 합니다.
 
 Helm/Kustomize는 먼저 로컬에서 렌더링하고 출력 파일을 검사하면 적용된 values가 명확합니다. 로컬 검사에서는 실제 API defaulting, admission, IAM 권한, 네트워크 연결을 재현하지 못합니다. `--include-api-audit`, `--custom-framework`, `--sort-by`는 검토 CLI에서 알 수 없는 flag였습니다. `scan rbac`를 독립된 현재 CLI subcommand로 제시하지 않습니다.
 
@@ -172,7 +172,7 @@ Helm/Kustomize는 먼저 로컬에서 렌더링하고 출력 파일을 검사하
 
 ### 이미지와 RBAC 분석
 
-이미지 스캔은 `kubescape scan image IMAGE`로 명시적으로 요청합니다. CLI 4.0.14 소스는 Grype 0.104.1과 Syft 1.42.3을 사용하지만 Operator kubevuln은 별도 image/version입니다. registry 접근·credential·platform·DB 갱신과 scan 실패를 확인합니다. host scan은 이미지 스캔과 다르며 추가 host 접근/리소스 생성이 수반될 수 있습니다.
+이미지 스캔은 `kubescape scan image IMAGE`로 명시적으로 요청합니다. CLI 4.0.16 소스는 Grype 0.104.1과 Syft 1.42.3을 사용하지만 Operator kubevuln은 별도 image/version입니다. registry 접근·credential·platform·DB 갱신과 scan 실패를 확인합니다. host scan은 이미지 스캔과 다르며 추가 host 접근/리소스 생성이 수반될 수 있습니다.
 
 RBAC 컨트롤은 수집한 Role/Binding과 API 범위 내에서 평가됩니다. RoleBinding은 해당 namespace에 권한을 부여하며 “모든 namespace” RoleBinding이라는 설명은 틀립니다. 정적 역할 분석만으로 모든 미사용 권한·외부 IAM·유효한 접근 경로를 검증했다고 단정하지 않습니다.
 
@@ -217,7 +217,7 @@ jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
 
 게이트는 `--compliance-threshold`의 **최소 준수 점수**와 `--severity-threshold`의 실패 컨트롤 심각도를 사용합니다. 로컬 점수 55는 threshold 55에서 exit 0, threshold 56에서 exit 1이었습니다. `--min-severity`는 출력 필터이며 현재 gate 계산을 대체하지 않습니다.
 
-**`--fail-threshold`는 4.0.14에서 deprecated로 받아들이지만 값이 실제 게이트에 적용되지 않는 호환용 flag입니다.** 시험에서 실패 findings가 있어도 `--fail-threshold 0`만으로는 exit 0이 나왔습니다. `--scan-images`, `--skip-controls`처럼 여전히 처리되는 flag와 알 수 없는 flag도 구분합니다.
+**`--fail-threshold`는 4.0.16에서 deprecated로 받아들이지만 값이 실제 게이트에 적용되지 않는 호환용 flag입니다.** 시험에서 실패 findings가 있어도 `--fail-threshold 0`만으로는 exit 0이 나왔습니다. `--scan-images`, `--skip-controls`처럼 여전히 처리되는 flag와 알 수 없는 flag도 구분합니다.
 
 <span id="ci-cd-워크플로우"></span>
 <span id="github-actions-워크플로우"></span>
@@ -425,8 +425,8 @@ Exporter 0.2.23의 실제 gauge 예시는 `kubescape_controls_total_cluster_high
 - [Kubescape documentation](https://kubescape.io/docs/)
 - [Frameworks and controls](https://kubescape.io/docs/frameworks-and-controls/)
 - [Operator documentation](https://kubescape.io/docs/operator/)
-- [CLI 4.0.14](https://github.com/kubescape/kubescape/releases/tag/v4.0.14)
-- [Pinned CLI flags](https://github.com/kubescape/kubescape/blob/v4.0.14/cmd/scan/scan.go)
+- [CLI 4.0.16](https://github.com/kubescape/kubescape/releases/tag/v4.0.16)
+- [Pinned CLI flags](https://github.com/kubescape/kubescape/blob/v4.0.16/cmd/scan/scan.go)
 - [Operator chart 1.40.4](https://github.com/kubescape/helm-charts/releases/tag/kubescape-operator-1.40.4)
 - [Policy library](https://github.com/kubescape/regolibrary)
 - [Exporter metrics 0.2.23](https://github.com/kubescape/prometheus-exporter/blob/v0.2.23/metrics/metrics.go)

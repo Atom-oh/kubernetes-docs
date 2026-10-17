@@ -1,6 +1,6 @@
 # ExampleCorp Order System: ACK + kro Integration
 
-> **Last Updated**: September 12, 2026 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
+> **Last Updated**: October 16, 2026 · kro 0.9.4 / AWS Load Balancer Controller 3.6.0
 
 ## Scenario and Verification Scope
 
@@ -16,7 +16,7 @@ ACK manages NLB, TargetGroup, Listener, Route 53 records and Aurora. kro creates
 
 First review the current schemas and lifecycle guidance in the [ACK resource examples](ack/03-elbv2-route53-rds.md). Prepare approved VPC/private subnets/security groups, an internal NLB/Listener, an ip TargetGroup, DNS and Aurora cluster/instances. Read the TargetGroup ARN from `.status.ackResourceMetadata.arn`, not the former `.status.targetGroupARN`.
 
-Prepare AWS LBC, its CRDs, IAM/ServiceAccount and webhook separately. This guide checks OSS LBC 3.5.0's elbv2.k8s.aws/v1beta1 TGB, not EKS Auto Mode's distinct load-balancing APIs. TGB authors can reference TargetGroups within controller IAM permissions, so constrain allowed ARNs, namespaces and write access.
+Prepare AWS LBC, its CRDs, IAM/ServiceAccount and webhook separately. This guide checks OSS LBC 3.6.0's elbv2.k8s.aws/v1beta1 TGB, not EKS Auto Mode's distinct load-balancing APIs. TGB authors can reference TargetGroups within controller IAM permissions, so constrain allowed ARNs, namespaces and write access.
 
 The operator must supply an Order API image satisfying this contract:
 
@@ -234,5 +234,5 @@ Both original guides and all examples were read and compared with current RGD/TG
 
 - [ACK](02-ack.md)
 - [kro](03-kro.md)
-- [AWS LBC 3.5.0 TGB](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
-- [Pod readiness gates](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/pod_readiness_gate.md)
+- [AWS LBC 3.6.0 TGB](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [Pod readiness gates](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/deploy/pod_readiness_gate.md)

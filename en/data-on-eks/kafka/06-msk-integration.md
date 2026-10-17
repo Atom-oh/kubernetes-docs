@@ -1,7 +1,7 @@
 # Part 6: MSK Integration
 
-> **Review baseline**: MSK Standard/Express Provisioned, MSK Serverless, MSK Connect; Java IAM helper 2.3.8\
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: MSK Standard/Express Provisioned, MSK Serverless, MSK Connect; Java IAM helper 2.3.9\
+> **Last reviewed**: October 16, 2026
 
 ## Responsibilities and prerequisites
 
@@ -191,7 +191,7 @@ actions and can belong to the deployment/operator identity.
 
 ### Java client configuration
 
-Add `software.amazon.msk:aws-msk-iam-auth:2.3.8` and its dependencies, or use the
+Add `software.amazon.msk:aws-msk-iam-auth:2.3.9` and its dependencies, or use the
 verified release's all-in-one JAR. Save this as `iam.properties`:
 
 ```properties
@@ -321,7 +321,7 @@ workload credential refresh, broker access, a managed connector deployment or de
 - [IAM client mechanisms and official language helpers](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
 - [MSK IAM action/resource dependencies](https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html)
 - [IAM use cases](https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html)
-- [aws-msk-iam-auth 2.3.8](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8)
+- [aws-msk-iam-auth 2.3.9](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.9)
 - [MSK Connect](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html)
 - [MSK Connect plugin packaging and Java versions](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html)
 - [MSK Connect client authentication API](https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html)

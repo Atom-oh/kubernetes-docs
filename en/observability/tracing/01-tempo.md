@@ -311,7 +311,7 @@ Tempo's `block_retention: 336h` is a retention target enforced asynchronously by
 
 ### S3 and IRSA Setup with Terraform
 
-This AWS provider **6.64.0** example uses SSE-S3 and an **existing** cluster OIDC provider. Replace the account, globally unique bucket name and issuer inputs. It intentionally does not create an EKS cluster, Kafka or a KMS key.
+This AWS provider **6.69.1** example uses SSE-S3 and an **existing** cluster OIDC provider. Replace the account, globally unique bucket name and issuer inputs. It intentionally does not create an EKS cluster, Kafka or a KMS key.
 
 ```hcl
 terraform {
@@ -319,7 +319,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }

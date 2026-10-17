@@ -1,7 +1,7 @@
 # eBPF Technology Deep Dive
 
-> **Review baseline**: Cilium 1.20.2, Linux 5.10+ or a documented equivalent backport (for example RHEL 8.10's 4.18 kernel), tested Kubernetes 1.33–1.36. Individual BPF features have separate requirements.
-> **Last reviewed**: October 15, 2026
+> **Review baseline**: Cilium 1.20.3, Linux 5.10+ or a documented equivalent backport (for example RHEL 8.10's 4.18 kernel), tested Kubernetes 1.33–1.36. Individual BPF features have separate requirements.
+> **Last reviewed**: October 16, 2026
 
 ## Lab Environment Setup
 
@@ -235,7 +235,7 @@ Backend readiness comes from control-plane state and applicable health mechanism
 
 ### Detailed Description of Cilium's Major eBPF Programs
 
-| Cilium 1.20.2 source | Role |
+| Cilium 1.20.3 source | Role |
 |---|---|
 | `bpf/bpf_lxc.c` | Endpoint packet path, policy, conntrack and forwarding |
 | `bpf/bpf_overlay.c` | Overlay packet path |
@@ -587,7 +587,7 @@ Record protocol, packet size, concurrency, policy, encryption, proxy and routing
 
 - [Original BPF paper](https://www.tcpdump.org/papers/bpf-usenix93.pdf), [Linux BPF design Q&A](https://docs.kernel.org/bpf/bpf_design_QA.html), [verifier](https://docs.kernel.org/bpf/verifier.html), [ring buffer](https://docs.kernel.org/bpf/ringbuf.html), [licensing](https://docs.kernel.org/bpf/bpf_licensing.html), [seccomp](https://docs.kernel.org/userspace-api/seccomp_filter.html)
 - [Linux 6.12 BPF loading](https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c), [exec event placement](https://github.com/torvalds/linux/blob/v6.12/fs/exec.c), [libbpf 1.7](https://github.com/libbpf/libbpf/tree/v1.7.0), [bpftool 7.7](https://github.com/libbpf/bpftool/releases/tag/v7.7.0)
-- [Cilium 1.20.2 BPF source](https://github.com/cilium/cilium/tree/v1.20.2/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.2/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.2/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.2/Documentation/cmdref)
+- [Cilium 1.20.3 BPF source](https://github.com/cilium/cilium/tree/v1.20.3/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.3/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.3/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.3/Documentation/cmdref)
 - [Cilium system requirements](https://docs.cilium.io/en/v1.20/operations/system_requirements/), [Kubernetes compatibility](https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/), [kube-proxy replacement](https://docs.cilium.io/en/v1.20/network/kubernetes/kubeproxy-free/), [encryption](https://docs.cilium.io/en/v1.20/security/network/encryption/)
 
 ## Quiz

@@ -1,6 +1,6 @@
 # Linkerd 트래픽 관리 퀴즈
 
-2026년 9월 11일 검토한 [트래픽 관리 가이드](../../../service-mesh/linkerd/03-traffic-management.md)를 기준으로 합니다.
+2026년 10월 16일 검토한 [트래픽 관리 가이드](../../../service-mesh/linkerd/03-traffic-management.md)를 기준으로 합니다.
 
 ### 1. ServiceProfile에서 route별로 설정할 수 없는 것은?
 
@@ -142,7 +142,7 @@
 
 **정답: B**
 
-**설명:** 요청 자체는 정상 전달될 수 있습니다. Client/SDK/다른 proxy의 재시도는 막지 않습니다. 현재 annotation 경로의 limit:0은 edge-26.9.1에서 신뢰할 수 있는 비활성화 스위치가 아닙니다. Service 기본값에 retry를 두지 않고 의도한 읽기 route에만 활성화합니다.
+**설명:** 요청 자체는 정상 전달될 수 있습니다. Client/SDK/다른 proxy의 재시도는 막지 않습니다. 현재 annotation 경로의 limit:0은 edge-26.10.1에서 신뢰할 수 있는 비활성화 스위치가 아닙니다. Service 기본값에 retry를 두지 않고 의도한 읽기 route에만 활성화합니다.
 
 </details>
 

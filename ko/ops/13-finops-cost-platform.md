@@ -1,6 +1,6 @@
 # FinOps 비용 가시성 플랫폼
 
-> **검토 기준**: 2026-09-12. OpenCost 1.121.2 / chart 2.5.31, Kubecost 3.2.4, Kyverno 1.19.1.
+> **검토 기준**: 2026-10-16. OpenCost 1.121.3 / chart 2.5.33, Kubecost 3.2.4, Kyverno 1.19.1.
 > **검증 범위**: Helm 렌더링, Kubernetes 스키마, Terraform 모의 공급자, 로컬 비용 계산·정책 검사. 실제 AWS 청구서 대사와 운영 클러스터 설치를 수행한 결과는 아닙니다.
 
 < [이전: 이벤트 용량 계획](./12-event-capacity-planning.md) | [목차](./README.md) | [다음: Tekton Pipelines](./14-tekton-pipelines.md) >
@@ -98,13 +98,13 @@ opencost:
 helm repo add opencost https://opencost.github.io/opencost-helm-chart
 helm repo update opencost
 helm upgrade --install opencost opencost/opencost \
-  --version 2.5.31 --namespace opencost --create-namespace \
+  --version 2.5.33 --namespace opencost --create-namespace \
   -f opencost-values.yaml --wait --timeout 10m
 kubectl -n opencost get pods,pvc,svc,servicemonitor
 kubectl -n opencost port-forward service/opencost 9090:9090 9003:9003
 ```
 
-UI는 로컬 `9090`, API는 `9003`입니다. `opencost.prometheus`와 `opencost.cloudCost`를 exporter 아래에 넣으면 설정이 적용되지 않습니다. Chart 2.5.31의 MCP 기본값은 활성화이므로 이 예제는 명시적으로 끕니다. 비용 MCP를 사용할 경우 인증·접근 범위를 별도로 설계하십시오. 문서 검색용 MCP와 비용 데이터용 MCP는 별개입니다.
+UI는 로컬 `9090`, API는 `9003`입니다. `opencost.prometheus`와 `opencost.cloudCost`를 exporter 아래에 넣으면 설정이 적용되지 않습니다. Chart 2.5.33의 MCP 기본값은 활성화이므로 이 예제는 명시적으로 끕니다. 비용 MCP를 사용할 경우 인증·접근 범위를 별도로 설계하십시오. 문서 검색용 MCP와 비용 데이터용 MCP는 별개입니다.
 
 ### 2.3 Kubecost 3.x를 선택하는 경우
 
@@ -178,7 +178,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -474,7 +474,7 @@ opencost:
 kubectl -n opencost create secret generic opencost-cloud-integrations \
   --from-file=cloud-integration.json=cloud-integration.json \
   --dry-run=client -o yaml | kubectl apply -f -
-helm upgrade opencost opencost/opencost --version 2.5.31 \
+helm upgrade opencost opencost/opencost --version 2.5.33 \
   --namespace opencost -f opencost-values.yaml -f opencost-cloud-values.yaml
 ```
 
@@ -592,7 +592,7 @@ spec:
 
 ### 3.2 기간별 할당 API
 
-아래 경로는 OpenCost 1.121.2의 `/allocation/compute`를 사용합니다. API의 기간·집계·응답 구조는 제품과 버전별로 확인합니다. `includeIdle`과 `shareIdle`은 boolean이며 `shareIdle=weighted`가 아닙니다.
+아래 경로는 OpenCost 1.121.3의 `/allocation/compute`를 사용합니다. API의 기간·집계·응답 구조는 제품과 버전별로 확인합니다. `includeIdle`과 `shareIdle`은 boolean이며 `shareIdle=weighted`가 아닙니다.
 
 ```bash
 curl --fail --silent --show-error --get \
@@ -1359,10 +1359,10 @@ kube_pod_spec_volumes_persistentvolumeclaims_info
 ## 8. 참고 자료
 
 - [FinOps Foundation definition](https://www.finops.org/introduction/what-is-finops/)
-- [OpenCost 1.121.2 release](https://github.com/opencost/opencost/releases/tag/v1.121.2)
+- [OpenCost 1.121.3 release](https://github.com/opencost/opencost/releases/tag/v1.121.3)
 - [OpenCost Helm chart](https://github.com/opencost/opencost-helm-chart)
 - [OpenCost API](https://opencost.io/docs/integrations/api/)
-- [OpenCost AWS authorizer source](https://github.com/opencost/opencost/blob/v1.121.2/pkg/cloud/aws/authorizer.go)
+- [OpenCost AWS authorizer source](https://github.com/opencost/opencost/blob/v1.121.3/pkg/cloud/aws/authorizer.go)
 - [Kubecost chart and migration](https://github.com/kubecost/cost-analyzer-helm-chart)
 - [AWS Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html)
 - [Data Exports encryption](https://docs.aws.amazon.com/cur/latest/userguide/data-protection.html)

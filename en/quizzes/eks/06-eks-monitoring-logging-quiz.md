@@ -1,6 +1,6 @@
 # Amazon EKS Monitoring and Logging Quiz
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 16, 2026
 
 This quiz tests your understanding of Amazon EKS monitoring and logging features, tools, and best practices.
 
@@ -42,7 +42,7 @@ A combination of tools can be useful, but the required signals and operational c
 **Implementation Sequence:**
 
 1. Follow the [source chapter](../../eks/06-eks-monitoring-logging.md) for the owned CloudWatch add-on catalog/schema/identity checks. Version5+ Auto Monitor and restart settings must be reviewed; do not layer another agent onto already instrumented workloads without checking conflicts.
-2. If Prometheus collection/queries are required, use the source’s KPS90.1.1 values and prepared storage, Grafana Secret and kubelet serving-CA prerequisites. The Operator supplies ServiceMonitor/PrometheusRule handling; a standalone Prometheus installation is not equivalent. Verify actual targets after installation.
+2. If Prometheus collection/queries are required, use the source’s KPS92.9.0 values and prepared storage, Grafana Secret and kubelet serving-CA prerequisites. The Operator supplies ServiceMonitor/PrometheusRule handling; a standalone Prometheus installation is not equivalent. Verify actual targets after installation.
 3. For the explicit ADOT path, use the source’s Operator0.158/Collector0.50 v1beta1 example with object-valued config, TLS and its prepared ServiceAccount. The Collector release does not contain the Operator installation manifest. This traces-only path sends spans to X-Ray; applications still need instrumentation and propagation.
 4. For AMP, configure the real workspace remote-write endpoint and writer identity. Configure Grafana/AMG data-source/query identity separately; AMG12+ uses the AMP plugin. An awsemf exporter publishes through CloudWatch, not automatically to AMP.
 
@@ -61,7 +61,7 @@ These are selectable paths, not a statement that every collector exports to ever
 
 **Terraform Planning Example:**
 
-The following resource example uses AWS provider6.64.0. It assumes the selected account/Region, an existing reviewed Grafana workspace role, supported AMG version and an eligible IAM Identity Center setup. Existing resources need their owner’s import/change procedure. The application log-group name matches the source collector path; do not create a second owner for a group already managed by an add-on or another stack.
+The following resource example uses AWS provider 6.69.1. It assumes the selected account/Region, an existing reviewed Grafana workspace role, supported AMG version and an eligible IAM Identity Center setup. Existing resources need their owner’s import/change procedure. The application log-group name matches the source collector path; do not create a second owner for a group already managed by an add-on or another stack.
 
 ```hcl
 terraform {
@@ -69,7 +69,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -355,7 +355,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -537,7 +537,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -758,7 +758,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -983,7 +983,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -1271,7 +1271,7 @@ kubectl -n opencost port-forward --address 127.0.0.1 svc/opencost 9090:9090
 
 Open `http://localhost:9090` while the port-forward is running. This baseline uses an ephemeral exporter cache, disables Cloud Cost ingestion and MCP, and exposes only a ClusterIP Service. Review persistence, sizing, authentication/network access, RBAC, and scrape health before shared use; ClusterIP is not a tenant authorization boundary. On-demand price estimates need reconciliation with actual billing, discounts, Spot prices, credits, shared costs, storage, and network charges. AWS billing integration is a separate configuration; supported AWS service-account/default-SDK authentication does not require embedding long-lived access keys.
 
-Kubecost is a separate option. Its checked **3.2.4** chart is `kubecost/kubecost` from `https://kubecost.github.io/kubecost/`. The old `cost-analyzer` repository and 2.x Prometheus values are not a 3.x install recipe: 3.x uses ClickHouse and direct finops-agent collection. Review its license, storage, Kubernetes compatibility, and documented 2.x migration before installation or upgrade. See the paired [FinOps platform guide](../../ops/13-finops-cost-platform.md) and [Kubecost chart documentation](https://github.com/kubecost/cost-analyzer-helm-chart).
+Kubecost is a separate option. Its checked **3.3.1** chart is `kubecost/kubecost` from `https://kubecost.github.io/kubecost/`. The old `cost-analyzer` repository and 2.x Prometheus values are not a 3.x install recipe: 3.x uses ClickHouse and direct finops-agent collection. Review its license, storage, Kubernetes compatibility, and documented 2.x migration before installation or upgrade. See the paired [FinOps platform guide](../../ops/13-finops-cost-platform.md) and [Kubecost chart documentation](https://github.com/kubecost/cost-analyzer-helm-chart).
 
 **Labels, billing tags, and categories**
 
@@ -1331,7 +1331,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }

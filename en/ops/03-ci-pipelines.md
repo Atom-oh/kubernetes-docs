@@ -1,7 +1,7 @@
 # EKS-Based CI Pipelines: ECR Build and Push
 
-> **Review baseline**: GitLab Runner 19.3.1 / chart 0.92.1, ARC 0.14.2, runner 2.337.0, Docker 29.8.0, Trivy 0.74.0, Node 24
-> **Last reviewed**: September 11, 2026. Helm/TOML/CI schemas, local test doubles, and a small Next.js standalone application were checked. No real CI job, registry push, or AWS deployment was run.
+> **Review baseline**: GitLab Runner 19.3.1 / chart 0.92.1, ARC 0.15.0, runner 2.337.0, Docker 29.8.0, Trivy 0.76.0, Node 24
+> **Last reviewed**: October 16, 2026. Helm/TOML/CI schemas, local test doubles, and a small Next.js standalone application were checked. No real CI job, registry push, or AWS deployment was run.
 
 < [Previous: NLB Blue/Green](02-infrastructure-advanced.md) | [Table of Contents](README.md) | [Next: ArgoCD Multi-Cluster](04-gitops-multi-cluster.md) >
 
@@ -20,7 +20,7 @@ The Terraform example assumes the CI EKS cluster and the account's GitHub OIDC p
 terraform {
   required_version = ">= 1.10.0"
   required_providers {
-    aws = { source = "hashicorp/aws", version = "6.64.0" }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
 provider "aws" { region = var.region }
@@ -468,7 +468,7 @@ scan:
   <<: *native
   stage: scan
   image:
-    name: docker.io/aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969
+    name: docker.io/aquasec/trivy@sha256:2416d1f74045b57274df1a340eee6b510cacd73c66a6ccb8da092b117eb7d222
     entrypoint: [""]
   needs:
     - job: build
@@ -593,7 +593,7 @@ resources:
 
 ```yaml
 # arc-runner-values.yaml
-# ARC 0.14.2, Kubernetes >=1.29. Dedicated CI cluster, trusted publish jobs only.
+# ARC 0.15.0, Kubernetes >=1.29. Dedicated CI cluster, trusted publish jobs only.
 githubConfigUrl: https://github.com/REPLACE_ORG/REPLACE_REPO
 githubConfigSecret: arc-github-app
 runnerScaleSetName: eks-ci-amd64
@@ -673,18 +673,18 @@ template:
 
 This custom template follows the chart's Kubernetes ≥1.29 native-sidecar DinD layout and pins runner 2.337.0 and Docker 29.8.0. Do not also set `containerMode` when supplying the custom layout. Runner and DinD share work/socket paths and runner externals. The generated runner ServiceAccount has no publishing role. The stock runner image includes Docker/Buildx/jq/git, but not AWS CLI; the workflow below obtains the final digest through Buildx instead.
 
-For ARM, change `runnerScaleSetName` to `eks-ci-arm64` and the node architecture to `arm64`. Use those actual scale-set names in `runs-on`; an organization runner-group name is not automatically the job label. ARC 0.14.2 also exposes `scaleSetLabels` when additional labels are needed.
+For ARM, change `runnerScaleSetName` to `eks-ci-arm64` and the node architecture to `arm64`. Use those actual scale-set names in `runs-on`; an organization runner-group name is not automatically the job label. ARC 0.15.0 also exposes `scaleSetLabels` when additional labels are needed.
 
 ```bash
 helm upgrade --install arc \
   oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller \
-  --version 0.14.2 --namespace arc-systems --values arc-controller-values.yaml
+  --version 0.15.0 --namespace arc-systems --values arc-controller-values.yaml
 helm upgrade --install eks-ci-amd64 \
   oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set \
-  --version 0.14.2 --namespace arc-runners --values arc-runner-values.yaml
+  --version 0.15.0 --namespace arc-runners --values arc-runner-values.yaml
 helm upgrade --install eks-ci-arm64 \
   oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set \
-  --version 0.14.2 --namespace arc-runners --values arc-runner-arm64-values.yaml
+  --version 0.15.0 --namespace arc-runners --values arc-runner-arm64-values.yaml
 ```
 
 `minRunners` is the idle-runner floor added to assigned work, subject to capacity/max limits. Zero reduces idle runner Pods but does not remove the controller/listener or all cluster costs. Nonzero does not guarantee no startup delay. Restrict which repositories/workflows may use the runner scale sets and protect publishing branches/tags.
@@ -779,7 +779,7 @@ jobs:
           cache-to: type=registry,ref=${{ steps.login.outputs.registry }}/${{ env.ECR_CACHE_REPOSITORY }}:${{ matrix.arch }}-protected,mode=max,image-manifest=true,oci-mediatypes=true
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           image-ref: ${{ steps.image.outputs.tag }}
           scan-type: image
           scanners: vuln
@@ -982,7 +982,7 @@ coverage
 
 The Dockerfile copies public assets and `.next/static`, sets a reachable bind address, and runs as the image's non-root `node` user. Private npm credentials can be supplied through a BuildKit secret (`--secret id=npmrc,src=/protected/npmrc`); do not copy `.npmrc` or put secrets in build arguments. A monorepo needs deliberate tracing roots and matching nested `COPY`/server paths; the root-level `server.js` layout here is not universal.
 
-A local Next 16.3.5/React 19.3.0 fixture was built with Node 24.21.0, and the emitted standalone server and copied static file returned HTTP 200. This checks the output contract, not a full application/container/CI deployment.
+A local Next 16.3.5/React 19.3.0 fixture was built with Node 24.22.0, and the emitted standalone server and copied static file returned HTTP 200. This checks the output contract, not a full application/container/CI deployment.
 
 ### Cache behavior
 

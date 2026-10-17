@@ -292,14 +292,14 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
   - name: log-sidecar
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - /bin/sh
     - -c
@@ -446,7 +446,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
 ```
@@ -488,7 +488,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -649,7 +649,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: fluent-bit
-        image: cr.fluentbit.io/fluent/fluent-bit:5.1.2
+        image: cr.fluentbit.io/fluent/fluent-bit:5.1.3
         securityContext:
           runAsUser: 0
           allowPrivilegeEscalation: false
@@ -1060,7 +1060,7 @@ metadata:
 spec:
   containers:
   - name: test-container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - mountPath: /cache
       name: cache-volume
@@ -1140,7 +1140,7 @@ metadata:
 spec:
   containers:
     - name: myfrontend
-      image: nginx:1.30.4
+      image: nginx:1.30.6
       volumeMounts:
       - mountPath: "/var/www/html"
         name: mypd
@@ -1706,7 +1706,7 @@ kubectl get nodes
 kubectl get pods --all-namespaces
 
 # 배포 생성
-kubectl create deployment nginx --image=nginx:1.30.4
+kubectl create deployment nginx --image=nginx:1.30.6
 
 # 서비스 노출
 kubectl expose deployment nginx --port=80 --type=ClusterIP
@@ -1827,8 +1827,8 @@ Kubernetes는 계속 발전하고 있으며, 클라우드 네이티브 애플리
 - https://kubernetes.io/docs/concepts/services-networking/network-policies/
 - https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
 - https://coredns.io/plugins/kubernetes/
-- https://github.com/fluent/fluent-bit/releases/tag/v5.1.2
-- https://github.com/fluent/fluent-bit/blob/v5.1.2/conf/parsers.conf
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.3
+- https://github.com/fluent/fluent-bit/blob/v5.1.3/conf/parsers.conf
 - https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
 - https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
 - https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html

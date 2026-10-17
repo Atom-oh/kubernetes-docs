@@ -1,7 +1,7 @@
 # eBPF 기초와 Kubernetes 활용
 
 > **지원 버전**: 프로그램별 커널/BTF/헬퍼 요구사항 및 도구/Kubernetes 호환성 표 확인
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 eBPF는 Linux 커널 내에서 샌드박스화된 프로그램을 실행할 수 있게 해주는 혁신적인 기술입니다. 이 문서에서는 eBPF의 기본 개념부터 Kubernetes 환경에서의 활용까지 전반적인 내용을 다룹니다.
 
@@ -1057,7 +1057,7 @@ spec:
       type: RuntimeDefault  # 또는 Localhost
   containers:
     - name: app
-      image: nginx:1.30.4
+      image: nginx:1.30.6
 ```
 
 **커스텀 seccomp 프로필**:

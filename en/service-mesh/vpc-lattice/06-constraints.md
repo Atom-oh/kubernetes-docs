@@ -1,7 +1,7 @@
 # Constraints and Decision Points
 
 > **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 
 ## What This Document Covers
 
@@ -81,7 +81,7 @@ Inventory plaintext database/cache/custom TCP protocols. Do not put gRPC over HT
 
 The reason to recommend this is simple: **trying to move everything to Lattice is the most common cause of migration delay.** If you pull "introduce TLS for plaintext TCP services" into migration scope, you need application changes and the schedule leaves your control.
 
-App Mesh also supported TCP routes. Inventory **all traffic that actually depends on App Mesh**, not just HTTP, and complete its replacement before the end-of-support deadline.
+App Mesh also supported TCP routes. Inventory **all traffic that actually depended on App Mesh**, not just HTTP, and replace it. App Mesh support ended on September 30, 2026.
 
 ## Constraint 3 — Application Impact of SigV4 Signing
 
@@ -212,7 +212,7 @@ This constraint cannot be removed, only mitigated.
 | **Recalculate RTO/RPO** | The failure characteristics changed, so revisit the basis for your existing targets |
 | **Integrate AWS Health / status notifications** | Since you cannot remediate directly, early detection is the core of the response |
 
-**"Redundancy for critical paths" and "phased migration" are the most effective in practice** — especially keeping a rollback path. App Mesh end of support means you must eventually remove it, but during the validation window you must be able to roll back.
+**"Redundancy for critical paths" and "phased migration" are the most effective in practice** — especially keeping a rollback path. App Mesh support ended on September 30, 2026, so a rollback to App Mesh cannot be assumed; during the validation window you must be able to roll back to an alternate path such as direct calls or an NLB.
 
 ## Unconfirmed Items
 

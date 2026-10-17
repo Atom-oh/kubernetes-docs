@@ -80,7 +80,7 @@
 
 **Answer: B) It uses official scale-set charts/listeners and matches runs-on to the actual scale-set name**
 
-**Explanation:** Do not mix the legacy CRD model with current scale-set charts. ARC 0.14.2 also supports scaleSetLabels. minRunners concerns idle runners; it does not remove controller/listener costs or guarantee no startup latency.
+**Explanation:** Do not mix the legacy CRD model with current scale-set charts. ARC 0.15.0 also supports scaleSetLabels. minRunners concerns idle runners; it does not remove controller/listener costs or guarantee no startup latency.
 
 </details>
 

@@ -1,6 +1,6 @@
 # Amazon ECR (Elastic Container Registry)
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개요
 
@@ -1103,7 +1103,7 @@ aws ecr create-pull-through-cache-rule \
 aws ecr describe-pull-through-cache-rules
 
 # 테스트 pull (Docker Hub nginx)
-docker pull 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.4
+docker pull 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.6
 
 # 캐시된 리포지토리 확인
 aws ecr describe-repositories \
@@ -1121,8 +1121,8 @@ ECR 캐시의 실제 이미지 URI를 Pod/Helm/Kustomize에 사용하면 노드 
 
 ```yaml
 # 원본 이미지 -> Pull-through 캐시
-# docker.io/library/nginx:1.30.4
-# -> 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.4
+# docker.io/library/nginx:1.30.6
+# -> 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.6
 
 apiVersion: apps/v1
 kind: Deployment
@@ -1139,7 +1139,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.4
+        image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.6
 ```
 
 ---
@@ -1283,7 +1283,7 @@ aws ce get-cost-and-usage --region us-east-1 \
 **2. 멀티스테이지 빌드로 이미지 크기 줄이기:**
 ```dockerfile
 # 빌드 스테이지
-FROM golang:1.27.1 AS builder
+FROM golang:1.27.2 AS builder
 WORKDIR /app
 COPY . .
 RUN CGO_ENABLED=0 go build -o main .

@@ -1,7 +1,7 @@
 # Amazon EKS Cost Optimization
 
 > **Verification Scope**: Current AWS pricing/support documentation; Kubernetes manifests checked against 1.36. Select the actual EKS version and add-ons from the AWS support catalog.
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 16, 2026
 
 Amazon EKS (Elastic Kubernetes Service) makes it easy to deploy, manage, and scale containerized applications, but managing costs effectively is important. This document covers various strategies and best practices for optimizing the costs of your EKS cluster.
 
@@ -1005,17 +1005,17 @@ Kubecost is a dedicated tool for monitoring and optimizing Kubernetes cluster co
 
 #### Kubecost Installation
 
-The checked chart/application is **3.2.4** from the current repository below. Kubecost 3.x uses ClickHouse and direct finops-agent collection; do not reuse a 2.x `cost-analyzer` install or its bundled Prometheus/node-exporter values. Before applying, review licensing, Kubernetes compatibility, storage classes/PVC sizing, cluster ID, network collection, and access control in the [chart documentation](https://github.com/kubecost/cost-analyzer-helm-chart). Follow the documented migration for an existing 2.x release; this is not an in-place upgrade procedure. No live installation or production readiness is claimed. The [FinOps platform guide](../ops/13-finops-cost-platform.md) also covers OpenCost and billing reconciliation.
+The checked chart/application is **3.3.1** from the current repository below. Kubecost 3.x uses ClickHouse and direct finops-agent collection; do not reuse a 2.x `cost-analyzer` install or its bundled Prometheus/node-exporter values. Before applying, review licensing, Kubernetes compatibility, storage classes/PVC sizing, cluster ID, network collection, and access control in the [chart documentation](https://github.com/kubecost/cost-analyzer-helm-chart). Follow the documented migration for an existing 2.x release; this is not an in-place upgrade procedure. No live installation or production readiness is claimed. The [FinOps platform guide](../ops/13-finops-cost-platform.md) also covers OpenCost and billing reconciliation.
 
 ```bash
 helm repo add kubecost https://kubecost.github.io/kubecost/
 helm repo update kubecost
-helm show values kubecost/kubecost --version 3.2.4 > kubecost-values.yaml
+helm show values kubecost/kubecost --version 3.3.1 > kubecost-values.yaml
 # Edit this file for the reviewed cluster ID, storage, license, and collection settings.
-helm template kubecost kubecost/kubecost --version 3.2.4 \
+helm template kubecost kubecost/kubecost --version 3.3.1 \
   --namespace kubecost -f kubecost-values.yaml > kubecost-rendered.yaml
 # Install a NEW release only after reviewing the rendered resources and prerequisites.
-helm install kubecost kubecost/kubecost --version 3.2.4 \
+helm install kubecost kubecost/kubecost --version 3.3.1 \
   --namespace kubecost --create-namespace -f kubecost-values.yaml
 ```
 

@@ -1,7 +1,7 @@
 # Cilium Service Mesh Ingress & Gateway
 
-> **Review baseline**: Cilium 1.20.1; Gateway API 1.6.1; AWS Load Balancer Controller 3.5.0.
-> **Last reviewed**: September 11, 2026. See the [installation prerequisites](./README.md) for the Kubernetes/EKS matrices; a newer release alone does not establish compatibility.
+> **Review baseline**: Cilium 1.20.3; Gateway API 1.6.3; AWS Load Balancer Controller 3.6.0.
+> **Last reviewed**: October 16, 2026. See the [installation prerequisites](./README.md) for the Kubernetes/EKS matrices; a newer release alone does not establish compatibility.
 
 ## Overview
 
@@ -32,7 +32,7 @@ ingressController:
     type: LoadBalancer
 ```
 
-These are Helm **overrides** for an already planned Cilium installation. Merge them with the platform-specific CNI/IPAM and reachable API-server settings from the installation guide. Changing kube-proxy replacement on a running cluster is a migration, not a routine feature toggle. Render and review the pinned 1.20.1 chart before applying changes.
+These are Helm **overrides** for an already planned Cilium installation. Merge them with the platform-specific CNI/IPAM and reachable API-server settings from the installation guide. Changing kube-proxy replacement on a running cluster is a migration, not a routine feature toggle. Render and review the pinned 1.20.3 chart before applying changes.
 
 `ingressController.default` marks the `cilium` **IngressClass as default**; it does not configure a fallback backend. The chart creates class `cilium`; `ingressController.ingressClassName` is not a supported value. Explicit `spec.ingressClassName` avoids dependence on the cluster default.
 
@@ -202,7 +202,7 @@ gatewayAPI:
     sync: true
 ```
 
-Install the **Gateway API 1.6.1 Standard CRDs** before enabling the controller; this is the version used by Cilium 1.20.1's installation reference. Review CRD upgrades for all controllers sharing the cluster. Do not replace the entire Cilium values file with this fragment: it supplements the kube-proxy replacement/L7 prerequisites above.
+Install the **Gateway API 1.6.3 Standard CRDs** before enabling the controller; this is the version used by Cilium 1.20.3's installation reference. Review CRD upgrades for all controllers sharing the cluster. Do not replace the entire Cilium values file with this fragment: it supplements the kube-proxy replacement/L7 prerequisites above.
 
 The supported keys are `gatewayAPI.gatewayClass.create` and `gatewayAPI.secretsNamespace`. `secretNamespace` and `gatewayClassName` at the previous locations are ignored. Certificate references still name Secrets in the Gateway's namespace by default; the controller's synchronized Secret namespace does not relocate the user's reference.
 
@@ -481,7 +481,7 @@ spec:
       port: 9000
 ```
 
-Gateway API 1.6.1 serves TCPRoute at **v1**; the old `v1alpha2` version is not served. TCPRoute forwards an opaque TCP stream and does not inspect HTTP paths. TCP may carry HTTP or TLS, but that does not give this Route HTTP routing or TLS termination semantics. Cilium 1.20.1's L4 Gateway translation uses backend EndpointSlices; do not assume the L7 Envoy frontend's endpoint implementation is identical.
+Gateway API 1.6.3 serves TCPRoute at **v1**; the old `v1alpha2` version is not served. TCPRoute forwards an opaque TCP stream and does not inspect HTTP paths. TCP may carry HTTP or TLS, but that does not give this Route HTTP routing or TLS termination semantics. Cilium 1.20.3's L4 Gateway translation uses backend EndpointSlices; do not assume the L7 Envoy frontend's endpoint implementation is identical.
 
 ### TLSRoute
 
@@ -549,9 +549,9 @@ ingressController:
 
 This NLB is **internal** by design: the only public entry point is CloudFront, which reaches it through a CloudFront VPC origin. Its security group must admit only the VPC-origin security group (or the CloudFront managed prefix list), never a public CIDR.
 
-This overlay describes **AWS LBC-managed NLB → EC2 NodePort → Cilium Ingress Envoy**. It requires AWS LBC 3.5.0, its IAM/subnet/security-group prerequisites, eligible EC2 nodes, a Cilium-supported EKS/CNI configuration, and allocated NodePorts. It is not an EKS Auto Mode or Fargate Cilium installation recipe. `service.k8s.aws/nlb` explicitly selects AWS LBC; the legacy `aws-load-balancer-type: nlb` annotation does not express that ownership.
+This overlay describes **AWS LBC-managed NLB → EC2 NodePort → Cilium Ingress Envoy**. It requires AWS LBC 3.6.0, its IAM/subnet/security-group prerequisites, eligible EC2 nodes, a Cilium-supported EKS/CNI configuration, and allocated NodePorts. It is not an EKS Auto Mode or Fargate Cilium installation recipe. `service.k8s.aws/nlb` explicitly selects AWS LBC; the legacy `aws-load-balancer-type: nlb` annotation does not express that ownership.
 
-Use instance targets for this L7 frontend. The Cilium 1.20.1 shared Ingress Service has a synthetic EndpointSlice (`192.192.192.192:9999`, without Pod target references). AWS LBC's IP target resolver requires Pod target references and skips these endpoints. Simply switching this Service to `ip` does **not** discover the node-local Envoy processes. This is specific to the Cilium L7 frontend; ordinary workload Services and current L4 Gateway EndpointSlices differ.
+Use instance targets for this L7 frontend. The Cilium 1.20.3 shared Ingress Service has a synthetic EndpointSlice (`192.192.192.192:9999`, without Pod target references). AWS LBC's IP target resolver requires Pod target references and skips these endpoints. Simply switching this Service to `ip` does **not** discover the node-local Envoy processes. This is specific to the Cilium L7 frontend; ordinary workload Services and current L4 Gateway EndpointSlices differ.
 
 The TCP health check checks transport reachability at the NodePort, not application `/healthz`, TLS validity or a host-specific HTTP route. Cross-zone balancing uses the current load-balancer attributes annotation and needs cost/traffic review. Do not change an existing Service's controller ownership or LB type in place as an assumed zero-downtime migration.
 
@@ -741,7 +741,7 @@ spec:
       port: 80
 ```
 
-Create `backend-team/shared-api` with Service port 80 before using this alternative. Route → Gateway cross-namespace attachment uses `allowedRoutes`; Route → backend Service cross-namespace references use `ReferenceGrant`. These are distinct permission checks. ReferenceGrant v1 is served in 1.6.1; v1beta1 is also still served.
+Create `backend-team/shared-api` with Service port 80 before using this alternative. Route → Gateway cross-namespace attachment uses `allowedRoutes`; Route → backend Service cross-namespace references use `ReferenceGrant`. These are distinct permission checks. ReferenceGrant v1 is served in 1.6.3; v1beta1 is also still served.
 
 ## Advanced Load Balancing Configuration
 
@@ -881,7 +881,7 @@ Circuit-breaker thresholds are per Envoy cluster/priority, not fleet-wide quotas
 
 ## Comparison with AWS Load Balancer Controller
 
-| Capability | Cilium Ingress/Gateway | AWS Load Balancer Controller 3.5 |
+| Capability | Cilium Ingress/Gateway | AWS Load Balancer Controller 3.6 |
 |---|---|---|
 | Data plane | eBPF Service/L4 forwarding; Envoy for HTTP/TLS features | AWS ALB or NLB |
 | Gateway API | Check the pinned Cilium feature/conformance tables | HTTPRoute/GRPCRoute map to ALB; TCPRoute/UDPRoute/TLSRoute map to NLB; mixed L4/L7 on one Gateway is unsupported |
@@ -890,7 +890,7 @@ Circuit-breaker thresholds are per Envoy cluster/priority, not fleet-wide quotas
 | Customization | Supported Gateway API features and separately managed CECs; generated objects remain controller-owned | AWS listener/rule/target-group features exposed through LBC APIs/annotations |
 | Performance | Measure the actual topology, encryption and workload | Measure the same workload and service limits; no universal latency ranking |
 
-LBC 3.5 documents Gateway API **1.6.0** as its tested baseline; Cilium's installation reference uses **1.6.1**. A cluster sharing these CRDs needs compatibility testing, not an assumption that the latest catalog entry is supported by every controller.
+LBC 3.6 documents Gateway API **1.6.0** as its tested baseline; Cilium's installation reference uses **1.6.3**. A cluster sharing these CRDs needs compatibility testing, not an assumption that the latest catalog entry is supported by every controller.
 
 Choose ALB for required AWS L7 integrations, NLB for the required transport/target behavior, and Cilium features according to the in-cluster routing/policy requirements. NLB currently supports weighted target groups with weights **0–999** for new flows; controller exposure and a particular Route's semantics are separate questions. Ordinary weight changes preserve existing connections, but setting a target group's weight to **0** closes its existing connections after a short period according to AWS documentation. Do not describe that operation as a connection-preserving drain.
 
@@ -955,14 +955,14 @@ histogram_quantile(
 
 ## References
 
-- [Cilium 1.20.1 Ingress](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/ingress.rst)
-- [Cilium traffic, source IP and policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/ingress-reference.rst)
-- [Cilium Gateway API installation](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
-- [Cilium 1.20.1 Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [Gateway API 1.6.1 CRDs](https://github.com/kubernetes-sigs/gateway-api/tree/v1.6.1/config/crd/standard)
-- [AWS LBC 3.5 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md)
-- [AWS LBC 3.5 annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
-- [AWS LBC 3.5 Gateway API](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/gateway/gateway.md)
+- [Cilium 1.20.3 Ingress](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/ingress.rst)
+- [Cilium traffic, source IP and policy](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/ingress-reference.rst)
+- [Cilium Gateway API installation](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
+- [Cilium 1.20.3 Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Gateway API 1.6.3 CRDs](https://github.com/kubernetes-sigs/gateway-api/tree/v1.6.3/config/crd/standard)
+- [AWS LBC 3.6 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/nlb.md)
+- [AWS LBC 3.6 annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/annotations.md)
+- [AWS LBC 3.6 Gateway API](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/gateway/gateway.md)
 - [NLB target group attributes](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html)
 - [NLB listener weights](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
-- [Envoy 1.37 request statistics](https://www.envoyproxy.io/docs/envoy/v1.37.5/configuration/http/http_conn_man/stats)
+- [Envoy 1.38 request statistics](https://www.envoyproxy.io/docs/envoy/v1.38.6/configuration/http/http_conn_man/stats)

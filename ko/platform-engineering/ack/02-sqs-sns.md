@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-SQS 1.7.0 / SNS 1.10.1의 schema 예제입니다. Queue는 queueName과 문자열 attribute를 사용하고 tags는 map입니다. SNS tags는 key/value 목록이며 displayName, filterPolicy, rawMessageDelivery는 전용 필드입니다.
+SQS 1.8.2 / SNS 1.11.1의 schema 예제입니다. Queue는 queueName과 문자열 attribute를 사용하고 tags는 map입니다. SNS tags는 key/value 목록이며 displayName, filterPolicy, rawMessageDelivery는 전용 필드입니다.
 
 계정·region·queue/topic 이름과 policy ARN을 함께 변경하세요. SNS→SQS 구독만 생성해서는 전달 권한이 생기지 않습니다. Queue policy에서 정확한 topic ARN과 SourceAccount를 제한했습니다. topic과 queue가 준비된 후 구독을 적용하고 실제 전달·재시도를 검증합니다.
 
@@ -115,5 +115,5 @@ spec:
 
 표시한 필드는 공식 versioned CRD로 검사했습니다. 스키마 통과는 IAM, AWS 서비스 제약, 실제 생성·연결·복구를 증명하지 않습니다. retain으로 남긴 리소스의 운영·비용·삭제 책임과 백업 계획을 정한 뒤 적용하세요.
 
-- [sqs v1.7.0 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.7.0/config/crd/bases)
-- [sns v1.10.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.10.1/config/crd/bases)
+- [sqs v1.8.2 CRDs](https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.8.2/config/crd/bases)
+- [sns v1.11.1 CRDs](https://github.com/aws-controllers-k8s/sns-controller/tree/v1.11.1/config/crd/bases)

@@ -16,7 +16,7 @@
 Operator installation is separate from creating RayCluster, RayJob, or RayService resources.
 </details>
 
-2. What does chart 1.7.0 install, and what is RayCronJob’s default state?
+2. What does chart 1.7.1 install, and what is RayCronJob’s default state?
    - A) Only three CRDs exist
    - B) An installed RayCronJob CRD always enables scheduling
    - C) Four CRDs, with the RayCronJob feature gate disabled by default

@@ -75,7 +75,7 @@ spec:
   automountServiceAccountToken: false
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command: ["sh", "-ec", "echo APP_ENV=$APP_ENV LOG_LEVEL=$LOG_LEVEL; exec sleep 3600"]
     envFrom:
     - configMapRef:
@@ -103,7 +103,7 @@ spec:
   automountServiceAccountToken: false
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command: ["sh", "-ec", "cat /config/app.properties; exec sleep 3600"]
     volumeMounts:
     - name: config-volume
@@ -172,7 +172,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -ec

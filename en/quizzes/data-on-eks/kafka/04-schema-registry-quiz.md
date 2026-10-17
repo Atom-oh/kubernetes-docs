@@ -29,7 +29,7 @@ One magic byte and a four-byte schema ID, followed by the value. Protobuf also i
 
 </details>
 
-## 4. Which main schema formats does Karapace 6.2.3 support?
+## 4. Which main schema formats does Karapace 6.2.4 support?
 
 <details>
 <summary>Show answer</summary>

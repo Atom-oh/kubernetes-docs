@@ -1,7 +1,7 @@
 # EKS 기반 AI 인프라
 
-> **마지막 업데이트**: 2026년 9월 12일
-> **기준**: GPU Operator26.7.0 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
+> **마지막 업데이트**: 2026년 10월 16일
+> **기준**: GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
 AI 인프라는 notebook, pipeline, 분산 runtime, 장치·node, 저장소·네트워크와 인증을 함께 구성해야 합니다. 도구 이름을 모으거나 Helm release가 성공했다고 전체 플랫폼의 보안·고가용성·model 실행이 검증되지는 않습니다.
 
@@ -23,7 +23,7 @@ JupyterHub, Argo Workflows, Ray, Karpenter를 조합하는 구성 패턴입니�
 
 ### JupyterHub 인증과 notebook profile
 
-검토한 chart4.4.2의 appVersion은5.5.2이며 PyPI 최신 확인 Hub6.0.0과 다릅니다. 로컬 API 검증은 Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0에서 수행했습니다. 운영 chart image의 실제 패키지 조합을 다시 확인해야 합니다.
+검토한 chart4.4.2의 appVersion은5.5.2이며 PyPI 최신 확인 Hub6.1.0(2026-10-14)과 다릅니다. 로컬 API 검증은 Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0에서 수행했습니다. 운영 chart image의 실제 패키지 조합을 다시 확인해야 합니다.
 
 Cognito는 사용할 수 있는 OIDC provider 중 하나입니다. callback URL, token/userInfo endpoint, scope와 안정적인 username claim을 맞추고 접근 허용 규칙을 명시합니다. MFA·기업 federation은 실제 provider에서 구성해야 하며 GenericOAuthenticator 설정만으로 자동 활성화되지 않습니다.
 

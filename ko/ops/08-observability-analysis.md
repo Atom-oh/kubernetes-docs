@@ -1,7 +1,7 @@
 # 관측성 분석: Logs/Metrics/Traces 상관 분석
 
-> **검토 기준**: OTel Go 1.46.0 / otelhttp 0.71.0, Python SDK 1.44.0 / instrumentation 0.65b0, Collector 0.160.0, Alloy 1.19.2, Loki 3.7.7, Tempo 3.0.3, Grafana 13.2.1\
-> **마지막 검토**: 2026년 9월 11일. SDK·로그·exemplar는 메모리 exporter와 HTTP 테스트 대역으로, LogQL은 로컬 Loki의 합성 로그로 확인했습니다. 실제 클러스터나 외부 telemetry backend로 데이터를 내보내지 않았습니다.
+> **검토 기준**: OTel Go 1.46.0 / otelhttp 0.71.0, Python SDK 1.44.0 / instrumentation 0.65b0, Collector 0.162.0, Alloy 1.20.1, Loki 3.7.8, Tempo 3.0.3, Grafana 13.2.4\
+> **마지막 검토**: 2026년 10월 16일. SDK·로그·exemplar는 메모리 exporter와 HTTP 테스트 대역으로, LogQL은 로컬 Loki의 합성 로그로 확인했습니다. 실제 클러스터나 외부 telemetry backend로 데이터를 내보내지 않았습니다.
 
 < [이전: 운영 알림](07-observability-alerts.md) | [목차](README.md) | [다음: 스택 운영](09-observability-stack.md) >
 
@@ -624,7 +624,7 @@ storage:
     max_exemplars: 10000
 ```
 
-Prometheus 3.14의 exemplar 저장에는 다음 feature 설정도 필요합니다. `enable_http2`는 exemplar 저장을 켜는 옵션이 아닙니다.
+Prometheus 3.15의 exemplar 저장에는 다음 feature 설정도 필요합니다. `enable_http2`는 exemplar 저장을 켜는 옵션이 아닙니다.
 
 ```bash
 prometheus --config.file=prometheus.yaml --enable-feature=exemplar-storage
@@ -662,7 +662,7 @@ quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms>=0
 avg_over_time({service_name="correlation-api"} | json | latency_ms>=0 | __error__="" | unwrap latency_ms | __error__="" [5m]) by (route)
 ```
 
-JSON 파싱·숫자 비교·unwrap이 오류를 만들 수 있으므로 적절한 위치의 `__error__=""` 필터가 필요합니다. 이 예제는 먼저 `latency_ms>=0`으로 숫자를 검증합니다. Loki 3.7.7에서 정상 10ms/800ms, 잘못된 숫자와 깨진 JSON을 섞어 테스트했고, 수정한 query는 평균 405ms와 P95 760.5ms를 반환했습니다.
+JSON 파싱·숫자 비교·unwrap이 오류를 만들 수 있으므로 적절한 위치의 `__error__=""` 필터가 필요합니다. 이 예제는 먼저 `latency_ms>=0`으로 숫자를 검증합니다. Loki 3.7.8에서 정상 10ms/800ms, 잘못된 숫자와 깨진 JSON을 섞어 테스트했고, 수정한 query는 평균 405ms와 P95 760.5ms를 반환했습니다.
 
 이것은 unwrap한 값의 범위 집계이며 Prometheus histogram bucket과 다릅니다. 전체 자유 형식 `message`나 raw URL을 집계 label로 쓰면 query 결과의 cardinality도 폭증할 수 있습니다.
 

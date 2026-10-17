@@ -1,7 +1,7 @@
 # Karpenter
 
 > **지원 버전**: Karpenter 1.14 LTS(예제: 1.14.1); Kubernetes/EKS는 호환성 표와 공급자 지원 범위로 선택하세요.
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 - [소개](#소개)
@@ -85,7 +85,7 @@ apiVersion/kind가 없는 YAML은 설명 중인 NodePool·EC2NodeClass spec의 �
 
 ### 사전 요구 사항
 
-- 플랫폼 지원 버전과 Karpenter 호환성 표를 함께 확인하세요. 공개 표의 최소 Karpenter 버전은 Kubernetes1.34에1.6, 1.35에1.9, 1.36에1.13입니다. 최소 버전이라고 모든 구형 마이너가 계속 유지 보수된다는 뜻은 아닙니다. 현재 표는1.37 호환성을 입증하지 않습니다. EKS 제공·지원 버전은 별도로 확인해야 합니다.
+- 플랫폼 지원 버전과 Karpenter 호환성 표를 함께 확인하세요. 공개 표의 최소 Karpenter 버전은 Kubernetes1.34에1.6, 1.35에1.9, 1.36에1.13입니다. 최소 버전이라고 모든 구형 마이너가 계속 유지 보수된다는 뜻은 아닙니다. v1.14 표는1.37을 포함하지 않으며, v1.15 표는 Kubernetes1.37에 Karpenter1.15.x를 요구합니다. EKS 제공·지원 버전은 별도로 확인해야 합니다.
 - kubectl 설정
 - 클라우드 제공업체 자격 증명 및 권한
 - Helm (선택 사항)
@@ -352,16 +352,16 @@ AWS의2026년7월22일 발표는 Karpenter/EKS Auto Mode의 EFA 인터페이스�
 
 2026년 8월 21일 v1.14 라인의 첫 패치인 [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1)이 공개되었습니다. 업스트림 `sigs.k8s.io/karpenter` 버전 갱신과 v1.14.0 이후 수정 사항의 체리픽을 담은 유지 보수 릴리스입니다.
 
-### 2026년 10월 업데이트: v1.15.0 릴리스
+### 2026년 10월 업데이트: v1.15.0 일반 릴리스
 
-2026년 10월 10일 [v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)이 공개되었습니다. 주요 변경:
+2026년 10월 10일 일반(비 LTS) 마이너 [v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)이 공개되었습니다. 주요 변경:
 
 - **노드 복구(node repair)의 자발적 중단(voluntary disruption) 전환**: 노드 복구가 중단 메커니즘의 하나로 통합되고, 용량 제약이 있는 NodePool에는 교체 노드를 먼저 확보하지 못하면 terminate-first로 처리합니다. `ec2:RebootInstances` 기반 재부팅이 복구 동작으로 추가되었고(`RebootForRepair` AWS 기능 게이트), 기존 복구 컨트롤러는 `--legacy-node-repair` 플래그로 유지할 수 있습니다.
 - **KubeletConfiguration CEL 지원**: `maxPodsExpression`, `kubeReserved`, `systemReserved`를 CEL 표현식으로 지정할 수 있고, EC2NodeClass의 KubeletConfiguration 필드가 확장되었습니다.
 - **DRA 지원 확대**: prioritized alternatives 지원과 NVIDIA·EFA 드라이버 DRA 지원이 추가되었습니다.
 - 기타: `--aws-feature-gates` 플래그, 기본 파드 토폴로지 분산 인식, 프로비저닝 시 인스턴스 타입 볼륨 한도 반영, `karpenter_pods_disrupted_total` 등 중단 관련 메트릭 추가, 기능 게이트 기반 파드 삭제 비용(pod deletion cost) 관리 컨트롤러.
 
-지원 정책상 일반 마이너는 다음 마이너까지만 지원되므로 v1.15.0 공개로 v1.14는 LTS 라인(2027년 7월까지)으로서만 유지됩니다. 자세한 내용은 [v1.15.0 릴리스 노트](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)를 참고하세요.
+지원 정책상 일반 마이너는 다음 마이너까지만 지원되므로 v1.15.0 공개로 v1.14는 LTS 라인(2027년 7월까지)으로서만 유지되며, 이 장의 예제는 1.14 LTS(1.14.1)를 유지합니다. Kubernetes 1.37에는 Karpenter 1.15.x가 필요하므로 Kubernetes 1.37이 필요하거나 1.15로 올린다면 [v1.15 호환성](https://karpenter.sh/v1.15/upgrading/compatibility/)과 업그레이드 지침을 먼저 확인하세요. 자세한 내용은 [v1.15.0 릴리스 노트](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)를 참고하세요.
 
 ## 노드 클래스
 
@@ -622,7 +622,7 @@ spec:
             app: web-server
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -665,7 +665,7 @@ spec:
             topologyKey: kubernetes.io/hostname
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -728,7 +728,7 @@ spec:
         karpenter.sh/nodepool: gpu
       containers:
       - name: gpu-allocation-demo
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sh
         - -c

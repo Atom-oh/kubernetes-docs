@@ -2,7 +2,7 @@
 
 > **난이도**: 초급
 > **예상 소요 시간**: 45분
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 학습 목표
 - Dockerfile을 작성하고 이미지를 빌드합니다
@@ -65,7 +65,7 @@ SSI는 NGINX의 문서화된 `hostname` 변수를 읽으며 임의의 환경 변
 **Step 1.2: Dockerfile 작성**
 ```bash
 cat > Dockerfile << 'EOF'
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 ARG LAB_ID
 LABEL io.kubernetes-docs.lab=$LAB_ID
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -216,7 +216,7 @@ EOF
 
 ```bash
 cat > Dockerfile.multi << 'EOF'
-FROM golang:1.27.1 AS build
+FROM golang:1.27.2 AS build
 ARG LAB_ID
 LABEL io.kubernetes-docs.lab=$LAB_ID
 WORKDIR /src

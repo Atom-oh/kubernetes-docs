@@ -1,6 +1,6 @@
 # AWS Controllers for Kubernetes (ACK)
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개념과 아키텍처
 
@@ -18,13 +18,13 @@ ACK가 CloudFormation이나 Terraform의 후속 교체품인 것은 아닙니다
 
 | Controller | Version |
 | --- | --- |
-| s3 | 1.12.1 |
-| iam | 1.9.0 |
-| sqs | 1.7.0 |
-| sns | 1.10.1 |
-| elbv2 | 1.7.0 |
-| route53 | 1.6.0 |
-| rds | 1.12.0 |
+| s3 | 1.13.1 |
+| iam | 1.10.1 |
+| sqs | 1.8.2 |
+| sns | 1.11.1 |
+| elbv2 | 1.8.2 |
+| route53 | 1.7.1 |
+| rds | 1.13.3 |
 
 위 버전은 공식 release와 OCI chart를 확인한 검토 기준입니다. 전체 서비스 목록과 Alpha/Beta/GA 상태는 공식 목록에서 확인하세요. GA가 모든 AWS API 기능이나 사용자의 운영 요구를 지원한다는 뜻은 아닙니다. CRD의 v1alpha1 문자열과 controller의 제품 성숙도도 구분합니다.
 
@@ -37,7 +37,7 @@ ACK chart는 아래 OCI 경로를 사용합니다. 예전 eks-charts repository�
 ```bash
 helm template ack-s3 \
   oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
-  --version 1.12.1 --namespace infra \
+  --version 1.13.1 --namespace infra \
   --set aws.region=us-west-2 \
   --set installScope=namespace --set watchNamespace=infra \
   --set enableCARM=false --set enableCrossNamespace=false \
@@ -145,7 +145,7 @@ finalizer를 비우는 명령을 일반 해결책으로 사용하지 않습니�
 - [ACK services](https://aws-controllers-k8s.github.io/community/docs/community/services/)
 - [Resource adoption](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
 - [Retention](https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/)
-- [S3 chart 1.12.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/helm)
-- [Runtime 0.63.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.63.0)
+- [S3 chart 1.13.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.13.1/helm)
+- [Runtime 0.66.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.66.0)
 
 [ACK 퀴즈](../quizzes/platform-engineering/02-ack-quiz.md)

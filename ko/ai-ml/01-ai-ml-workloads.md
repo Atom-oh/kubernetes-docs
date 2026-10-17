@@ -1,7 +1,7 @@
 # AI/ML 워크로드
 
-> **검토 기준**: GPU Operator 26.7.0 / NVIDIA device plugin 0.20.0 / FSx CSI 1.10.0
-> **마지막 업데이트**: 2026년 9월 12일
+> **검토 기준**: GPU Operator 26.7.2 / NVIDIA device plugin 0.20.1 / FSx CSI 1.11.0
+> **마지막 업데이트**: 2026년 10월 16일
 
 Kubernetes는 AI/ML 워크로드를 실행하기 위한 강력한 플랫폼입니다. 이 장에서는 EKS에서 AI/ML 워크로드를 실행하는 방법과 모범 사례를 알아보겠습니다.
 
@@ -156,7 +156,7 @@ EKS AL2023 NVIDIA AMI에는 driver와 Container Toolkit이 이미 포함되므�
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 helm repo update nvidia
 helm template gpu-operator nvidia/gpu-operator \
-  --version v26.7.0 --namespace gpu-operator \
+  --version v26.7.2 --namespace gpu-operator \
   --set driver.enabled=false --set toolkit.enabled=false \
   > gpu-operator.rendered.yaml
 ```
@@ -236,7 +236,7 @@ sharing:
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
 helm repo update nvdp
 helm template nvdp nvdp/nvidia-device-plugin \
-  --version 0.20.0 --namespace nvidia-device-plugin \
+  --version 0.20.1 --namespace nvidia-device-plugin \
   --set config.default=shared \
   --set-file config.map.shared=device-plugin-sharing.yaml \
   > device-plugin.rendered.yaml
@@ -319,7 +319,7 @@ spec:
       storage: 1200Gi
 ```
 
-동적 방식은 CSI가 StorageClass와 PVC를 받아 새 파일시스템을 만듭니다. static volumeHandle/dnsname을 StorageClass에 넣거나 존재하지 않는 `fsx.aws.k8s.io/Lustre` 객체를 혼합하지 마세요. [드라이버의 동적 예제](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0/examples/kubernetes/dynamic_provisioning)와 FSx deployment type별 throughput·backup 조건을 확인하세요. SCRATCH_2에 persistent 전용 옵션을 섞어서는 안 됩니다.
+동적 방식은 CSI가 StorageClass와 PVC를 받아 새 파일시스템을 만듭니다. static volumeHandle/dnsname을 StorageClass에 넣거나 존재하지 않는 `fsx.aws.k8s.io/Lustre` 객체를 혼합하지 마세요. [드라이버의 동적 예제](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.11.0/examples/kubernetes/dynamic_provisioning)와 FSx deployment type별 throughput·backup 조건을 확인하세요. SCRATCH_2에 persistent 전용 옵션을 섞어서는 안 됩니다.
 
 Alluxio 같은 캐시는 worker DaemonSet 하나만으로 완성되지 않습니다. master·worker 역할, 저장 경로, 메모리, 네트워크, 일관성·보존 정책을 설계해야 합니다. 벤치마크는 실제 PVC를 마운트한 별도 테스트 경로에서 해야 하며, 마운트 없는 `/data` FIO 예제는 해당 FSx 성능을 측정하지 못합니다.
 
@@ -405,8 +405,8 @@ Kubernetes RBAC는 API 접근이고 S3·KMS 권한은 workload IAM입니다. 모
 
 - [EKS accelerated AMIs](https://docs.aws.amazon.com/eks/latest/userguide/ml-eks-optimized-ami.html)
 - [Kubernetes GPU scheduling](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
-- [NVIDIA device plugin 0.20.0](https://github.com/NVIDIA/k8s-device-plugin/tree/v0.20.0)
-- [FSx CSI 1.10.0](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0)
+- [NVIDIA device plugin 0.20.1](https://github.com/NVIDIA/k8s-device-plugin/tree/v0.20.1)
+- [FSx CSI 1.11.0](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.11.0)
 - [EFS performance modes](https://docs.aws.amazon.com/efs/latest/ug/performance.html)
 - [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 

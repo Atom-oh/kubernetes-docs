@@ -1,6 +1,6 @@
 # Kafka Operations Quiz
 
-> **Last Updated**: September 12, 2026, Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: October 16, 2026, Strimzi 1.3.0 / Kafka 4.3.1.
 
 This quiz tests your understanding of storage design, broker scaling, Cruise Control rebalancing, rolling upgrades, and failure handling for a Strimzi-managed Kafka cluster on EKS.
 
@@ -83,7 +83,7 @@ Strimzi/startup scripts manage required initialization of new storage metadata. 
 **Answer: B) The new brokers join the cluster, but existing topic partitions are not automatically reassigned**
 
 **Explanation:**
-This describes the case without a matching autoRebalance mode. Strimzi 1.2 can automatically rebalance after replicas increases on an existing pool when add-brokers automation is configured. Pool creation/deletion is a different event.
+This describes the case without a matching autoRebalance mode. Strimzi 1.3 can automatically rebalance after replicas increases on an existing pool when add-brokers automation is configured. Pool creation/deletion is a different event.
 </details>
 
 6. What data-state requirement must be satisfied before removing a broker?
@@ -163,7 +163,7 @@ This is the operational pattern of explicitly retaining the prior metadataVersio
 **Answer: C) PodDisruptionBudget**
 
 **Explanation:**
-Strimzi 1.2 normally creates one Kafka PDB per cluster covering Kafka Pods across its pools. It constrains voluntary eviction, not node/AZ failures or forced deletion.
+Strimzi 1.3 normally creates one Kafka PDB per cluster covering Kafka Pods across its pools. It constrains voluntary eviction, not node/AZ failures or forced deletion.
 </details>
 
 ## Short Answer Questions

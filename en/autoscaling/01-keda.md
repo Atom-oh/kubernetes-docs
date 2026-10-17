@@ -1,7 +1,7 @@
 # KEDA (Kubernetes Event-driven Autoscaling)
 
-> **Example Version**: KEDA/Helm chart 2.20.2; see the tested Kubernetes matrix below.
-> **Last Updated**: September 11, 2026
+> **Example Version**: KEDA/Helm chart 2.21.0; see the tested Kubernetes matrix below.
+> **Last Updated**: October 16, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -71,11 +71,12 @@ KEDA is based on the Kubernetes operator pattern, monitoring external metric sou
 
 Examples are alternatives, not a single manifest bundle. Prepare referenced workloads, Services, Secrets and images; replace account, queue, URL and image placeholders. Do not attach multiple ScaledObjects/HPAs to the same target. Once autoscaling owns replicas, coordinate GitOps/apply ownership of `spec.replicas`. These recipes have not been deployed or measured in production.
 
-Kubernetes 1.37 introduced beta HPA scale-to-zero for object/external metrics, enabled by default through `HPAScaleToZero`; CPU/memory-only metrics cannot activate from zero. This does not change KEDA 2.20’s operator/HPA split or establish compatibility with Kubernetes 1.37.
+Kubernetes 1.37 introduced beta HPA scale-to-zero for object/external metrics, enabled by default through `HPAScaleToZero`; CPU/memory-only metrics cannot activate from zero. This does not change KEDA 2.21’s operator/HPA split or establish compatibility with Kubernetes 1.37.
 
 ### Prerequisites
 
-- Choose a Kubernetes version supported by your provider and the selected KEDA release. KEDA 2.20 deployment docs state a minimum of 1.30, while its published **tested matrix is 1.33–1.35**. That matrix does not establish compatibility with 1.36/1.37; validate those combinations separately.
+- Choose a Kubernetes version supported by your provider and the selected KEDA release. KEDA 2.21 deployment docs publish a **tested matrix of 1.34–1.36**. That matrix does not establish compatibility with 1.37; validate that combination separately.
+- If you are upgrading from KEDA 2.20, review the [2.21 migration guide](https://keda.sh/docs/2.21/migration/#upgrading-from-keda-220-to-221) first. As the fix for CVE-2026-77524, 2.21 enforces service account token audiences by default (`operator.serviceAccountTokens.mode: enforce-audience`) for Vault Kubernetes authentication and `boundServiceAccountToken`. It also removes the Temporal scaler's deprecated settings and changes the Azure Pipelines `scaleOnInFlight` default. The examples in this chapter do not use those authentication methods or scalers.
 - kubectl configured
 - Helm (optional)
 
@@ -86,13 +87,13 @@ Kubernetes 1.37 introduced beta HPA scale-to-zero for object/external metrics, e
 ```bash
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update
-helm install keda kedacore/keda --version 2.20.2 --namespace keda --create-namespace
+helm install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace
 ```
 
 #### 2. Installation Using YAML Manifests
 
 ```bash
-kubectl apply --server-side -f https://github.com/kedacore/keda/releases/download/v2.20.2/keda-2.20.2.yaml
+kubectl apply --server-side -f https://github.com/kedacore/keda/releases/download/v2.21.0/keda-2.21.0.yaml
 ```
 
 #### 3. Verify Installation
@@ -115,7 +116,7 @@ keda-admission-webhooks-<hash>-<id>        1/1     Running   0          1m
 
 The IRSA values shown later must be merged into the same pinned Helm values before applying an upgrade. Verify the resulting ServiceAccount annotation and restart the operator Pods through your normal rollout when changing identity.
 
-The following values match Helm chart 2.20.2. Two operator replicas provide leader-election standby, not two active reconcilers. Metrics-server redundancy also depends on API aggregation routing and does not imply complete end-to-end high availability. Resource values are a starting point, not measured sizing.
+The following values match Helm chart 2.21.0. Two operator replicas provide leader-election standby, not two active reconcilers. Metrics-server redundancy also depends on API aggregation routing and does not imply complete end-to-end high availability. Resource values are a starting point, not measured sizing.
 
 #### Custom Configuration Using Helm Values File
 
@@ -154,7 +155,7 @@ logging:
 ```
 
 ```bash
-helm upgrade --install keda kedacore/keda --version 2.20.2 --namespace keda --create-namespace -f values.yaml
+helm upgrade --install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace -f values.yaml
 ```
 
 ## Scalers
@@ -871,7 +872,7 @@ spec:
     spec:
       containers:
       - name: sample-app
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
 ---
@@ -1241,7 +1242,7 @@ spec:
 
 1. **Understand multiple triggers**: HPA normally takes the largest replica recommendation; triggers do not sum capacity and errors can inhibit scale-down.
 2. **Set Appropriate Min and Max Replicas**: Set ranges that match workload requirements
-3. **Failure Handling Strategy**: In KEDA 2.20, fallback supports Value and AverageValue triggers except CPU/memory, and applies to ScaledObjects rather than ScaledJobs. Test outage behavior and authentication failures.
+3. **Failure Handling Strategy**: In KEDA 2.21, fallback supports Value and AverageValue triggers except CPU/memory, and applies to ScaledObjects rather than ScaledJobs. Test outage behavior and authentication failures.
 4. **Set Up Monitoring and Alerts**: Monitor KEDA operational status
 
 ```yaml
@@ -1417,4 +1418,4 @@ Using KEDA, you can scale applications more efficiently, optimize resource usage
 
 To test what you've learned in this chapter, try the [topic quiz](../quizzes/autoscaling/05-keda-quiz.md).
 
-Verified references for this revision: [KEDA compatibility](https://keda.sh/docs/2.20/operate/cluster/), [ScaledObject](https://keda.sh/docs/2.20/reference/scaledobject-spec/), [ScaledJob](https://keda.sh/docs/2.20/reference/scaledjob-spec/), [AWS authentication](https://keda.sh/docs/2.20/authentication-providers/aws/), [External scaler gRPC](https://keda.sh/docs/2.20/concepts/external-scalers/), [X counts](https://docs.x.com/x-api/posts/counts/quickstart), [Calendar events](https://developers.google.com/workspace/calendar/api/v3/reference/events/list), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).
+Verified references for this revision: [KEDA compatibility](https://keda.sh/docs/2.21/operate/cluster/), [ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/), [ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/), [AWS authentication](https://keda.sh/docs/2.21/authentication-providers/aws/), [External scaler gRPC](https://keda.sh/docs/2.21/concepts/external-scalers/), [X counts](https://docs.x.com/x-api/posts/counts/quickstart), [Calendar events](https://developers.google.com/workspace/calendar/api/v3/reference/events/list), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).

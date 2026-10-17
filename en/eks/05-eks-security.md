@@ -1,7 +1,7 @@
 # Amazon EKS Security
 
 > **Supported Versions**: EKS standard support 1.34–1.37; extended support 1.31–1.33 (checked October 12, 2026)
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 To securely run workloads on Amazon EKS (Elastic Kubernetes Service), you need to understand and implement various security layers and best practices. This document covers key concepts, components, and best practices for strengthening the security of your EKS cluster.
 
@@ -1201,7 +1201,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -1896,7 +1896,7 @@ Choose manual versus automated agent management deliberately. Automated manageme
 
 ### Falco Runtime Rules
 
-Falco evaluates runtime events against rules. The following training values use stable chart 9.1.0 / Falco 0.44.1, a compatible Linux EC2 node with modern eBPF support, and the chart’s container metadata plugin. This is not a validated deployment for Fargate, Hybrid Nodes or every Auto Mode configuration. Inspect the rendered privileged/host access, runtime sockets, kernel/BTF requirements, scheduling and namespace admission exceptions before installation.
+Falco evaluates runtime events against rules. The following training values use stable chart 9.2.0 / Falco 0.45.0, a compatible Linux EC2 node with modern eBPF support, and the chart’s container metadata plugin. This is not a validated deployment for Fargate, Hybrid Nodes or every Auto Mode configuration. Inspect the rendered privileged/host access, runtime sockets, kernel/BTF requirements, scheduling and namespace admission exceptions before installation.
 
 Save as `falco-demo-values.yaml`. This adds a uniquely named shell audit rule, rather than redefining the shipped Terminal shell in container rule. It includes successful exec events and a terminal check; legitimate administrative shells can match. The output avoids command-line arguments and does not assume Kubernetes metadata enrichment is enabled:
 
@@ -1924,13 +1924,13 @@ customRules:
       - audit
 ```
 
-For a new owned installation after those checks, use `helm install falco falcosecurity/falco --version 9.1.0 --namespace falco --create-namespace -f falco-demo-values.yaml --wait --timeout 5m`, with the `falcosecurity` repository configured as `https://falcosecurity.github.io/charts`. Existing releases need their owner’s upgrade procedure.
+For a new owned installation after those checks, use `helm install falco falcosecurity/falco --version 9.2.0 --namespace falco --create-namespace -f falco-demo-values.yaml --wait --timeout 5m`, with the `falcosecurity` repository configured as `https://falcosecurity.github.io/charts`. Existing releases need their owner’s upgrade procedure.
 
 Disabling artifact follow stops periodic rule updates; the chart still installs its configured rule/plugin artifacts at Pod startup. Its default `falco-rules:5` reference is a major-version tag, so chart pinning alone is not an immutable rule bundle. Review/pin the actual OCI artifacts for a production rollout. Pod/namespace output requires the compatible Kubernetes metadata collector/plugin and RBAC; it is not supplied merely by writing `%k8s.pod.name` in a rule.
 
-The custom rule and an undefined-macro negative control were checked using actual Falco 0.44.1 with container plugin 0.7.1, in `--validate` mode with all runtime collectors disabled. The obsolete `evt.dir` condition was removed after the parser warning. Helm rendering was checked; no syscall capture, kernel driver, BPF attachment, cluster installation or real alert was executed.
+The custom rule and an undefined-macro negative control were checked using actual Falco 0.45.0 with container plugin 0.7.4, in `--validate` mode with all runtime collectors disabled. The obsolete `evt.dir` condition was removed after the parser warning. Helm rendering was checked; no syscall capture, kernel driver, BPF attachment, cluster installation or real alert was executed.
 
-Primary references: [EKS logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [all-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html), [selected-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html), [CSPM standards](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [ASFF events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [V2 events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [GuardDuty EKS Protection](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html), [GuardDuty runtime](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html), [Falco chart 9.1.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.1.0).
+Primary references: [EKS logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [all-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html), [selected-type Config rule](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html), [CSPM standards](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [ASFF events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [V2 events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [GuardDuty EKS Protection](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html), [GuardDuty runtime](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html), [Falco chart 9.2.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.0).
 
 ## EKS Security Best Practices
 

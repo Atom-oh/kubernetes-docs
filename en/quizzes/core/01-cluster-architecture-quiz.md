@@ -199,7 +199,7 @@ etcd uses the Raft consensus algorithm to ensure strong consistency of data in d
 **Answer: iptables**
 
 **Explanation:**
-The default operating mode of kube-proxy is iptables mode. In this mode, kube-proxy uses Linux iptables to implement NAT and route traffic to service IPs to pods. nftables is another Linux mode (stable since v1.33); check kernel and CNI compatibility before migration. IPVS is deprecated since v1.35; userspace mode is removed. Windows uses kernelspace mode.
+The default operating mode of kube-proxy is iptables mode. In this mode, kube-proxy uses Linux iptables to implement NAT and route traffic to service IPs to pods. nftables is another Linux mode (stable since v1.33); check kernel and CNI compatibility before migration. IPVS is deprecated since v1.35 (default disablement planned for v1.40 and removal for v1.43); userspace mode is removed. Windows uses kernelspace mode.
 </details>
 
 14. What is the name of the configuration file for communicating with the API server in a Kubernetes cluster?

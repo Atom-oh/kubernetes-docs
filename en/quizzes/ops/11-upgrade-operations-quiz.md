@@ -34,7 +34,7 @@ Mixed clusters must retain DNS Deployments and add-ons required by non-Auto node
 
 </details>
 
-## 3. Which statement about Velero 1.18.2 restore create -o json is correct?
+## 3. Which statement about Velero 1.18.4 restore create -o json is correct?
 
 - A) It completes an actual restore
 - B) It is entirely offline

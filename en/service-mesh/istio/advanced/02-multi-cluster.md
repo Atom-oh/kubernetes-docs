@@ -1,6 +1,6 @@
 # Multi-cluster
 
-> **Last Updated**: September 11, 2026 · Istio1.31 · Kubernetes1.32–1.36. The installation examples below describe **sidecar** topologies and are independent alternatives. Ambient has different support limits. No cluster, AWS or production-load deployment was performed by this audit.
+> **Last Updated**: October 16, 2026 · Istio1.31 · Kubernetes1.32–1.37. The installation examples below describe **sidecar** topologies and are independent alternatives. Ambient has different support limits. No cluster, AWS or production-load deployment was performed by this audit.
 
 Multi-cluster Service Mesh connects multiple Kubernetes clusters into a unified service mesh.
 

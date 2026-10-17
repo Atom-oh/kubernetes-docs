@@ -1,6 +1,6 @@
 # Harbor
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 ## Overview
 
@@ -41,7 +41,7 @@ Harbor is an open-source, cloud-native container registry that provides enterpri
 
 ## Helm Installation
 
-The reviewed baseline on 2026-09-11 is **Harbor 2.15.2 / Helm chart 1.19.2**. Application and chart versions differ. This example assumes that external HA PostgreSQL, Redis and shared storage already exist; the values file does not provision them.
+The reviewed baseline on 2026-10-16 is **Harbor 2.15.4 / Helm chart 1.19.2**. Application and chart versions differ: the latest chart, 1.19.2, still defaults to appVersion 2.15.2, so a default Helm install does not include the 2.15.3 security fixes (for example, GHSA-2phj-cp9f-qq6w). This example assumes that external HA PostgreSQL, Redis and shared storage already exist; the values file does not provision them.
 
 ### Prerequisites
 
@@ -532,7 +532,7 @@ The Docker Compose offline installer and a Kubernetes Helm deployment are separa
 ### Offline Installer
 
 ```bash
-HARBOR_VERSION=2.15.2
+HARBOR_VERSION=2.15.4
 curl --fail --location --remote-name \
   "https://github.com/goharbor/harbor/releases/download/v${HARBOR_VERSION}/harbor-offline-installer-v${HARBOR_VERSION}.tgz"
 # Verify the release checksum/signature before transporting the bundle.
@@ -544,7 +544,7 @@ On the disconnected host, run the following. A locally generated SHA-256 verifie
 
 ```bash
 sha256sum -c harbor-bundle.sha256
-tar xzf harbor-offline-installer-v2.15.2.tgz
+tar xzf harbor-offline-installer-v2.15.4.tgz
 cd harbor
 cp harbor.yml.tmpl harbor.yml
 # Set hostname, HTTPS certificate/key, strong admin/DB passwords and data_volume.
@@ -568,7 +568,7 @@ Map source and target references explicitly in a TSV file. Basename-only retaggi
 
 ```text
 # images.tsv: two columns separated by a TAB; replace the internal hostname.
-docker.io/library/nginx:1.30.4	harbor.airgap.local/k8s-system/dockerhub/library/nginx:1.30.4
+docker.io/library/nginx:1.30.6	harbor.airgap.local/k8s-system/dockerhub/library/nginx:1.30.6
 ```
 
 On the connected side:
@@ -730,7 +730,7 @@ curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/projects" \
   }'
 ```
 
-Pull the explicit proxy path, for example `harbor.example.com/dockerhub-proxy/library/nginx:1.30.4`. A cache miss requires upstream access. Cached-content freshness, upstream deletion behavior and authentication depend on the proxy project configuration; this is not an offline completeness guarantee.
+Pull the explicit proxy path, for example `harbor.example.com/dockerhub-proxy/library/nginx:1.30.6`. A cache miss requires upstream access. Cached-content freshness, upstream deletion behavior and authentication depend on the proxy project configuration; this is not an offline completeness guarantee.
 
 ### Garbage Collection
 
@@ -816,9 +816,9 @@ Harbor provides a comprehensive, enterprise-grade container registry solution th
 
 ## References
 
-- [Harbor 2.15.2 release](https://github.com/goharbor/harbor/releases/tag/v2.15.2)
+- [Harbor 2.15.4 release](https://github.com/goharbor/harbor/releases/tag/v2.15.4)
 - [Helm chart 1.19.2 values](https://github.com/goharbor/harbor-helm/blob/v1.19.2/values.yaml)
-- [Harbor 2.15.2 API schema](https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml)
+- [Harbor 2.15.4 API schema](https://github.com/goharbor/harbor/blob/v2.15.4/api/v2.0/swagger.yaml)
 - [Project role permissions](https://goharbor.io/docs/main/administration/managing-users/user-permissions-by-role/)
 - [Cosign and Notation](https://goharbor.io/docs/main/working-with-projects/working-with-images/sign-images/)
 - [Containerd registry hosts](https://github.com/containerd/containerd/blob/main/docs/hosts.md)

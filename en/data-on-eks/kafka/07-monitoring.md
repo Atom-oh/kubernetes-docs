@@ -1,7 +1,7 @@
 # Part 7: Monitoring
 
-> **Review baseline**: Strimzi 1.2.0 / Kafka 4.3.1, bundled JMX Exporter 1.6.0 and Kafka Exporter 1.9.0, Prometheus Operator 0.93.1, KEDA 2.20.2\
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: Strimzi 1.3.0 / Kafka 4.3.1, bundled JMX Exporter 1.6.0 and Kafka Exporter 1.10.0, Prometheus Operator 0.94.1, KEDA 2.21.0\
+> **Last reviewed**: October 16, 2026
 
 ## What each component observes
 
@@ -478,7 +478,7 @@ covers general autoscaling behavior.
 
 Use the versioned upstream **Kafka, KRaft, Kafka Exporter, Connect and Cruise Control**
 dashboards as references, matching the selected exporter type and label mapping.
-The Strimzi 1.2 set is not a ZooKeeper deployment guide. Importing a dashboard does
+The Strimzi 1.3 set is not a ZooKeeper deployment guide. Importing a dashboard does
 not guarantee that its queries exist in this focused mapping.
 
 Include JVM/GC, node/PVC capacity and I/O, replication availability, scrape coverage,
@@ -486,23 +486,23 @@ traffic distribution, group progress and application latency/error SLOs. The
 in-process exporter also exposes JVM metrics, but host/PVC and application signals
 come from their corresponding collectors.
 
-The example's final JMX rules and Kafka Exporter were exercised against an isolated
+The example's final JMX rules and Kafka Exporter (1.9.0) were exercised against an isolated
 local Kafka 4.3.1 broker: 15 records and committed offsets produced partition lags
 **3, 5 and 5**. Nine alert rules were tested across normal, missing-data, failure and
 cross-cluster-isolation scenarios. These tests do not prove production TLS access,
 multi-node quorum behavior, Strimzi reconciliation, notification delivery or KEDA
 operation against your actual workload.
 
-- [Strimzi 1.2.0 metrics example](https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/examples/metrics/kafka-metrics.yaml)
-- [Strimzi 1.2.0 Kafka Exporter implementation](https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java)
-- [Strimzi 1.2.0 bundled exporter versions](https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/docker-images/kafka-based/kafka/Dockerfile)
-- [Kafka Exporter 1.9.0](https://github.com/danielqsj/kafka_exporter/tree/v1.9.0)
+- [Strimzi 1.3.0 metrics example](https://github.com/strimzi/strimzi-kafka-operator/blob/1.3.0/examples/metrics/kafka-metrics.yaml)
+- [Strimzi 1.3.0 Kafka Exporter implementation](https://github.com/strimzi/strimzi-kafka-operator/blob/1.3.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java)
+- [Strimzi 1.3.0 bundled exporter versions](https://github.com/strimzi/strimzi-kafka-operator/blob/1.3.0/docker-images/kafka-based/kafka/Dockerfile)
+- [Kafka Exporter 1.10.0](https://github.com/danielqsj/kafka_exporter/tree/v1.10.0)
 - [Archived kafka-lag-exporter project](https://github.com/seglo/kafka-lag-exporter)
-- [KEDA 2.20 Kafka scaler](https://keda.sh/docs/2.20/scalers/apache-kafka/)
-- [KEDA 2.20.2 implementation](https://github.com/kedacore/keda/blob/v2.20.2/pkg/scalers/kafka_scaler.go)
+- [KEDA 2.21 Kafka scaler](https://keda.sh/docs/2.21/scalers/apache-kafka/)
+- [KEDA 2.21.0 implementation](https://github.com/kedacore/keda/blob/v2.21.0/pkg/scalers/kafka_scaler.go)
 - [Prometheus alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
-- [Versioned JMX-based Grafana dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/grafana-dashboards)
-- [Versioned Strimzi Metrics Reporter dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards)
+- [Versioned JMX-based Grafana dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.3.0/examples/metrics/grafana-dashboards)
+- [Versioned Strimzi Metrics Reporter dashboards](https://github.com/strimzi/strimzi-kafka-operator/tree/1.3.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards)
 
 ## Next steps
 

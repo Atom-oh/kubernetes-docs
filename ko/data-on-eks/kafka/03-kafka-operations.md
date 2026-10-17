@@ -1,6 +1,6 @@
 # Part 3: Kafka 운영
 
-> **검토 기준**: 2026-09-12, Strimzi 1.2.0 / Kafka 4.3.1.
+> **검토 기준**: 2026-10-16, Strimzi 1.3.0 / Kafka 4.3.1.
 > **검증 범위**: 현재 릴리스 문서·소스, 로컬 CRD/merge patch, 제안 생성·JSON 추출, Decimal 계산과 CLI 옵션. 실제 Kafka 재배치·업그레이드·AWS 볼륨 변경은 수행하지 않았습니다.
 
 이 장은 [Part 2](./02-strimzi-operator.md)의 인증된 Kafka와 broker 전용 node pool을 기준으로 합니다. 운영 명령은 실제 파티션 이동과 리소스 변경을 일으킬 수 있으므로, 현재 설정·데이터 배치와 제안 결과를 확인한 뒤 실행합니다. controller 역할 풀에 broker 증감 절차를 그대로 적용하지 않습니다.
@@ -103,11 +103,11 @@ kubectl -n kafka get pvc -l strimzi.io/cluster=my-cluster
 
 확장은 StorageClass/CSI와 실제 파일시스템 지원을 확인합니다. PVC shrink는 이 절차가 아니며, class나 volume ID를 바꾸는 것도 단순 증설이 아닙니다. `kraftMetadata: shared`를 두 볼륨에 지정하지 않습니다.
 
-볼륨 제거 전에는 해당 디렉터리의 replica와 metadata 위치를 확인하고 데이터를 이동해야 합니다. Strimzi 1.2의 `remove-disks` rebalance 모드는 broker 내부 JBOD 이동을 지원하지만, 필드와 지원 조건에 맞는 별도 계획이 필요합니다. `deleteClaim: false`/Retain은 백업이나 복구 가능성의 증명이 아닙니다. Strimzi가 관리하는 데이터에 수동 `kafka-storage.sh format`을 실행하지 않습니다.
+볼륨 제거 전에는 해당 디렉터리의 replica와 metadata 위치를 확인하고 데이터를 이동해야 합니다. Strimzi 1.3의 `remove-disks` rebalance 모드는 broker 내부 JBOD 이동을 지원하지만, 필드와 지원 조건에 맞는 별도 계획이 필요합니다. `deleteClaim: false`/Retain은 백업이나 복구 가능성의 증명이 아닙니다. Strimzi가 관리하는 데이터에 수동 `kafka-storage.sh format`을 실행하지 않습니다.
 
 ## 4. 브로커 증감: 수동과 자동 구분
 
-아래 절차는 **broker 전용 pool** 대상입니다. Strimzi 1.2는 controller quorum을 정적으로 구성하므로 controller-role pool을 같은 방식으로 증감하지 않습니다. upstream Kafka의 동적 quorum 기능과 Operator의 지원 범위를 혼동하지 않습니다.
+아래 절차는 **broker 전용 pool** 대상입니다. Strimzi 1.3은 controller quorum을 정적으로 구성하므로 controller-role pool을 같은 방식으로 증감하지 않습니다. upstream Kafka의 동적 quorum 기능과 Operator의 지원 범위를 혼동하지 않습니다.
 
 | 설정 | 기존 풀의 replicas 변경 |
 | --- | --- |
@@ -390,7 +390,7 @@ kafka-topics.sh --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADM
 
 Strimzi는 `metadataVersion`을 명시하지 않은 경우 Kafka binary 업데이트 후 기본 metadata version으로 자동 갱신할 수 있습니다. 두 필드를 같은 변경에 넣으면 무조건 quorum이 깨진다는 설명은 맞지 않습니다.
 
-검증/복구 판단 시간을 확보하려면 이전 metadataVersion을 명시적으로 유지한 뒤 나중에 올리는 패턴을 사용할 수 있습니다. 다음 예제는 **기존 Kafka 4.2.1 / metadata 4.2-IV1**을 Strimzi 1.2에서 4.3.1로 올리는 경우입니다. 이미 4.3.1인 Part 2 실습 클러스터에 이 패치를 적용해 metadata를 낮추는 절차가 아닙니다.
+검증/복구 판단 시간을 확보하려면 이전 metadataVersion을 명시적으로 유지한 뒤 나중에 올리는 패턴을 사용할 수 있습니다. 다음 예제는 **기존 Kafka 4.2.1 / metadata 4.2-IV1**을 Strimzi 1.3에서 4.3.1로 올리는 경우입니다. 이미 4.3.1인 Part 2 실습 클러스터에 이 패치를 적용해 metadata를 낮추는 절차가 아닙니다.
 
 **`upgrade-binaries.patch.yaml`**
 
@@ -435,7 +435,7 @@ kubectl -n kafka get kafka my-cluster -o yaml
 
 ## 8. PDB와 장애 대응
 
-Strimzi 1.2의 기본 Kafka PDB는 **Kafka 클러스터 하나에 하나이며 모든 node pool의 Kafka Pod를 포함**합니다. pool마다 별도 PDB가 생기는 것이 아닙니다. 생성 설정이나 사용자 PDB를 변경한 경우에는 실제 selector·minAvailable/maxUnavailable을 확인합니다.
+Strimzi 1.3의 기본 Kafka PDB는 **Kafka 클러스터 하나에 하나이며 모든 node pool의 Kafka Pod를 포함**합니다. pool마다 별도 PDB가 생기는 것이 아닙니다. 생성 설정이나 사용자 PDB를 변경한 경우에는 실제 selector·minAvailable/maxUnavailable을 확인합니다.
 
 PDB는 자발적 eviction을 제한합니다. 노드 장애·AZ 손실·직접 Pod 삭제·모든 Operator 동작을 막는 안전장치가 아닙니다. `min.insync.replicas`도 모든 데이터 손실을 방지하는 단일 스위치가 아닙니다.
 
@@ -454,7 +454,7 @@ Strimzi Drain Cleaner 같은 추가 구성은 별도 지원 모드와 PDB 동작
 - [Schema Registry](./04-schema-registry.md)
 - [Kafka overview](./README.md)
 - [Quiz](../../quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
-- [Strimzi 1.2 operations](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3 operations](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Kafka 4.3 design](https://kafka.apache.org/43/design/design/)
 - [Kafka 4.3.1 log directory selection](https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala)
 - [Kafka reassignment command implementation](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java)

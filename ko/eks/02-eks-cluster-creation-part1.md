@@ -1,6 +1,6 @@
 # Part 1: 사전 요구 사항
 
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다. 이 장에서는 다양한 도구와 방법을 사용하여 EKS 클러스터를 생성하는 방법을 알아보겠습니다.
 
@@ -73,7 +73,7 @@ export AWS_PROFILE=eks-docs
 
 #### kubectl과 eksctl — Linux/macOS
 
-이 장의 EKS 1.36 예제에는 kubectl **1.36.4**, eksctl **0.230.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
+이 장의 EKS 1.36 예제에는 kubectl **1.36.5**, eksctl **0.231.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
 
 아래 Bash 예제는 AMD64/ARM64를 구분하고 공식 체크섬을 확인한 뒤 설치합니다. `curl`, `tar`, `awk`와 `sha256sum` 또는 `shasum`이 필요하며 `/usr/local/bin` 설치는 관리자 권한이 필요합니다. 다운로드/검증 실패 시 설치를 중단합니다.
 
@@ -102,13 +102,13 @@ export AWS_PROFILE=eks-docs
       shasum -a 256 --check "$1"
     fi
   }
-  EKS_KUBECTL_VERSION=v1.36.4
+  EKS_KUBECTL_VERSION=v1.36.5
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl" -o kubectl || exit 1
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl.sha256" -o kubectl.sha256 || exit 1
   printf '%s  kubectl\n' "$(tr -d '[:space:]' < kubectl.sha256)" > selected.sha256
   verify_sha selected.sha256 || exit 1
 
-  EKSCTL_VERSION=0.230.0
+  EKSCTL_VERSION=0.231.0
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/$EKS_TOOL_ARCHIVE" -o "$EKS_TOOL_ARCHIVE" || exit 1
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_checksums.txt" -o eksctl_checksums.txt || exit 1
   awk -v name="$EKS_TOOL_ARCHIVE" '$2 == name {print; count++} END {if (count != 1) exit 1}' \
@@ -126,7 +126,7 @@ export AWS_PROFILE=eks-docs
 
 #### Windows
 
-PowerShell에서 [공식 kubectl 설치 절차](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)를 따릅니다. 이 장의 AMD64 예제에는 [kubectl 1.36.4](https://dl.k8s.io/release/v1.36.4/bin/windows/amd64/kubectl.exe)와 같은 경로의 `.sha256` 파일을 사용합니다. [eksctl 0.230.0 릴리스](https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0)에서 CPU에 맞는 Windows ZIP과 `eksctl_checksums.txt`를 선택합니다.
+PowerShell에서 [공식 kubectl 설치 절차](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)를 따릅니다. 이 장의 AMD64 예제에는 [kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe)와 같은 경로의 `.sha256` 파일을 사용합니다. [eksctl 0.231.0 릴리스](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0)에서 CPU에 맞는 Windows ZIP과 `eksctl_checksums.txt`를 선택합니다.
 
 `Get-FileHash -Algorithm SHA256` 결과를 공식 해시와 비교하고 불일치하면 중단합니다. 검증 후 ZIP을 풀고 실행 파일 디렉터리를 PATH에 추가한 뒤 `kubectl version --client`, `eksctl version`을 확인합니다. PowerShell 구문을 Bash로 실행하지 않습니다.
 

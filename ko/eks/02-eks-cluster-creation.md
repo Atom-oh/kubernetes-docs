@@ -1,6 +1,6 @@
 # EKS 클러스터 생성
 
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다. 이 장에서는 다양한 도구와 방법을 사용하여 EKS 클러스터를 생성하는 방법을 자세히 알아보겠습니다.
 
@@ -73,7 +73,7 @@ export AWS_PROFILE=eks-docs
 
 #### kubectl과 eksctl — Linux/macOS
 
-이 장의 EKS 1.36 예제에는 kubectl **1.36.4**, eksctl **0.230.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
+이 장의 EKS 1.36 예제에는 kubectl **1.36.5**, eksctl **0.231.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
 
 아래 Bash 예제는 AMD64/ARM64를 구분하고 공식 체크섬을 확인한 뒤 설치합니다. `curl`, `tar`, `awk`와 `sha256sum` 또는 `shasum`이 필요하며 `/usr/local/bin` 설치는 관리자 권한이 필요합니다. 다운로드/검증 실패 시 설치를 중단합니다.
 
@@ -102,13 +102,13 @@ export AWS_PROFILE=eks-docs
       shasum -a 256 --check "$1"
     fi
   }
-  EKS_KUBECTL_VERSION=v1.36.4
+  EKS_KUBECTL_VERSION=v1.36.5
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl" -o kubectl || exit 1
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl.sha256" -o kubectl.sha256 || exit 1
   printf '%s  kubectl\n' "$(tr -d '[:space:]' < kubectl.sha256)" > selected.sha256
   verify_sha selected.sha256 || exit 1
 
-  EKSCTL_VERSION=0.230.0
+  EKSCTL_VERSION=0.231.0
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/$EKS_TOOL_ARCHIVE" -o "$EKS_TOOL_ARCHIVE" || exit 1
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_checksums.txt" -o eksctl_checksums.txt || exit 1
   awk -v name="$EKS_TOOL_ARCHIVE" '$2 == name {print; count++} END {if (count != 1) exit 1}' \
@@ -126,7 +126,7 @@ export AWS_PROFILE=eks-docs
 
 #### Windows
 
-PowerShell에서 [공식 kubectl 설치 절차](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)를 따릅니다. 이 장의 AMD64 예제에는 [kubectl 1.36.4](https://dl.k8s.io/release/v1.36.4/bin/windows/amd64/kubectl.exe)와 같은 경로의 `.sha256` 파일을 사용합니다. [eksctl 0.230.0 릴리스](https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0)에서 CPU에 맞는 Windows ZIP과 `eksctl_checksums.txt`를 선택합니다.
+PowerShell에서 [공식 kubectl 설치 절차](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)를 따릅니다. 이 장의 AMD64 예제에는 [kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe)와 같은 경로의 `.sha256` 파일을 사용합니다. [eksctl 0.231.0 릴리스](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0)에서 CPU에 맞는 Windows ZIP과 `eksctl_checksums.txt`를 선택합니다.
 
 `Get-FileHash -Algorithm SHA256` 결과를 공식 해시와 비교하고 불일치하면 중단합니다. 검증 후 ZIP을 풀고 실행 파일 디렉터리를 PATH에 추가한 뒤 `kubectl version --client`, `eksctl version`을 확인합니다. PowerShell 구문을 Bash로 실행하지 않습니다.
 
@@ -786,7 +786,7 @@ kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 
 ### EKS Auto Mode 클러스터 Terraform 구성
 
-`main.tf`로 저장합니다. AWS provider **6.64.0**, EKS **1.36**을 사용합니다. 기존 프라이빗 서브넷 ID를 명시하며 `Type=Private` 태그만으로 라우팅·연결성을 판단하지 않습니다. precondition은 plan에서 VPC/AZ 관계를 확인하지만 프라이빗 라우팅·서비스 엔드포인트·DNS·IP 여유·로드 밸런서 서브넷 태그까지 검증하지 않습니다.
+`main.tf`로 저장합니다. AWS provider **6.69.1**, EKS **1.36**을 사용합니다. 기존 프라이빗 서브넷 ID를 명시하며 `Type=Private` 태그만으로 라우팅·연결성을 판단하지 않습니다. precondition은 plan에서 VPC/AZ 관계를 확인하지만 프라이빗 라우팅·서비스 엔드포인트·DNS·IP 여유·로드 밸런서 서브넷 태그까지 검증하지 않습니다.
 
 Auto Mode는 컴퓨팅·로드 밸런싱·블록 스토리지를 함께 켜고 `bootstrap_self_managed_addons = false`를 지정해야 합니다. 클러스터 역할에는 `sts:TagSession`과 정책 5개를 포함합니다. IAM 연결 의존성은 EKS가 관리형 인프라를 삭제하는 동안 권한을 유지합니다.
 
@@ -796,7 +796,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -1069,15 +1069,15 @@ enable_auto_mode = false
 
 Auto Mode 기능 3개를 모두 끄고 일반 네트워킹 애드온을 부트스트랩하며 일반 EC2 노드 권한과 AL2023 관리형 노드 그룹을 구성합니다. EBS CSI·AWS LBC·Metrics Server·노드 오토스케일러는 설치하지 않으므로 필요한 기능을 별도로 구성합니다. 배포 후 값을 바꾸면 인프라와 IAM이 변경되므로 별도 마이그레이션 검토가 필요합니다.
 
-검증: Terraform **1.15.7**, 서명된 AWS provider **6.64.0**으로 로컬 `terraform validate`를 수행하여 오류·경고 0건을 확인했습니다. **plan·apply·AWS API 호출은 수행하지 않았습니다.** 두 모드 모두 배포 검증이 필요하며 프로덕션 준비 상태를 입증하는 예제가 아닙니다.
+검증: Terraform **1.16.6**, 서명된 AWS provider **6.69.1**로 로컬 `terraform validate`를 수행하여 오류·경고 0건을 확인했습니다. **plan·apply·AWS API 호출은 수행하지 않았습니다.** 두 모드 모두 배포 검증이 필요하며 프로덕션 준비 상태를 입증하는 예제가 아닙니다.
 
-참고: [AWS provider EKS cluster](https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_cluster.html.markdown) · [managed node group](https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_node_group.html.markdown) · [Auto Mode role requirements](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)
+참고: [AWS provider EKS cluster](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown) · [managed node group](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown) · [Auto Mode role requirements](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)
 
 ## AWS CDK를 사용한 클러스터 생성
 
 이 **새 스택** 예제는 `aws-cdk-lib/aws-eks-v2`로 네이티브 `AWS::EKS::Cluster`와 access entry를 생성합니다. Auto Mode 활성화용 Lambda 커스텀 리소스가 필요하지 않습니다. 이미 배포된 construct를 이 예제로 교체하는 일을 제자리 마이그레이션으로 간주하지 않습니다.
 
-CDK 라이브러리 **2.269.0**, CLI **2.1141.0**, EKS **1.36**을 사용합니다. 합성 중 VPC 조회 없이 기존 프라이빗 서브넷 속성을 가져옵니다. 배포 전 서브넷/AZ 대응 관계, VPC DNS, 라우팅, 서비스 접근과 로드 밸런서 서브넷 태그를 확인해야 합니다. VPC를 가져오는 코드 자체가 이를 검증하지는 않습니다.
+CDK 라이브러리 **2.273.0**, CLI **2.1145.0**, EKS **1.36**을 사용합니다. 합성 중 VPC 조회 없이 기존 프라이빗 서브넷 속성을 가져옵니다. 배포 전 서브넷/AZ 대응 관계, VPC DNS, 라우팅, 서비스 접근과 로드 밸런서 서브넷 태그를 확인해야 합니다. VPC를 가져오는 코드 자체가 이를 검증하지는 않습니다.
 
 ### TypeScript를 사용한 EKS Auto Mode 클러스터
 
@@ -1149,7 +1149,7 @@ export class EksAutoModeStack extends cdk.Stack {
       bootstrapSelfManagedAddons: false,
       bootstrapClusterCreatorAdminPermissions: false,
       // All required policies/trust are defined above. Avoid adding the older
-      // BlockStoragePolicy that CDK 2.269.0 otherwise attaches automatically.
+      // BlockStoragePolicy that CDK 2.273.0 otherwise attaches automatically.
       role: clusterRole.withoutPolicyUpdates(),
       compute: {
         nodePools: ['system', 'general-purpose'],
@@ -1173,7 +1173,7 @@ export class EksAutoModeStack extends cdk.Stack {
 }
 ```
 
-클러스터 역할은 `sts:TagSession`과 `AmazonEKSBlockStoragePolicyV2`를 포함한 Auto Mode 정책 5개를 명시합니다. `withoutPolicyUpdates()`는 CDK 2.269.0이 이전 블록 스토리지 정책을 추가하는 것을 막으므로 필요한 권한 전체를 이 예제에서 제공할 책임이 있습니다. 의존성은 클러스터 삭제 완료까지 역할을 유지합니다. 노드 역할에는 Auto Mode 최소 워커 정책과 ECR 가져오기 정책만 부여합니다.
+클러스터 역할은 `sts:TagSession`과 `AmazonEKSBlockStoragePolicyV2`를 포함한 Auto Mode 정책 5개를 명시합니다. `withoutPolicyUpdates()`는 CDK 2.273.0이 이전 블록 스토리지 정책을 추가하는 것을 막으므로 필요한 권한 전체를 이 예제에서 제공할 책임이 있습니다. 의존성은 클러스터 삭제 완료까지 역할을 유지합니다. 노드 역할에는 Auto Mode 최소 워커 정책과 ECR 가져오기 정책만 부여합니다.
 
 `bootstrapSelfManagedAddons: false`로 자체 관리형 네트워킹 애드온과의 중복을 피합니다. Auto Mode는 컴퓨팅·로드 밸런싱·블록 스토리지를 함께 관리합니다. 운영자 access entry는 클러스터 실행 역할과 별도로 생성됩니다.
 
@@ -1216,9 +1216,9 @@ new EksAutoModeStack(app, 'EksAutoModeStack', {
 ```bash
 mkdir eks-auto-mode
 cd eks-auto-mode
-npx --yes --package aws-cdk@2.1141.0 cdk init app --language typescript
-npm install --save-exact aws-cdk-lib@2.269.0 constructs@10.5.0
-npm install --save-dev --save-exact aws-cdk@2.1141.0 typescript@5.9.3
+npx --yes --package aws-cdk@2.1145.0 cdk init app --language typescript
+npm install --save-exact aws-cdk-lib@2.273.0 constructs@10.5.0
+npm install --save-dev --save-exact aws-cdk@2.1145.0 typescript@5.9.3
 
 # Save the source files above, then set the required environment values.
 : "${CDK_DEFAULT_ACCOUNT:?Set the intended AWS account ID}"
@@ -1378,7 +1378,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: app
-        image: nginx:1.30.4-alpine
+        image: nginx:1.30.6-alpine
         ports:
         - name: http
           containerPort: 80

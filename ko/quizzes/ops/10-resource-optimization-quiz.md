@@ -94,7 +94,7 @@ target/lowerBound/upperBound/uncappedTarget의 의미를 구별합니다. Initia
 
 **정답: B**
 
-Go 1.27.1 런타임과 go.mod 1.25 이상 예제를 검증했습니다. quota 올림과 최소값 조건을 단순 공식으로 축약하지 않습니다.
+Go 1.27.2 런타임과 go.mod 1.25 이상 예제를 검증했습니다. quota 올림과 최소값 조건을 단순 공식으로 축약하지 않습니다.
 
 </details>
 

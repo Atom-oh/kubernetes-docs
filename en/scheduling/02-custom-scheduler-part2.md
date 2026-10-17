@@ -1,7 +1,7 @@
 # Part 2: Implementation
 
-> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.1
-> **Last Updated**: September 11, 2026
+> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.2
+> **Last Updated**: October 16, 2026
 
 Use the [Part1 module setup and complete secondary-scheduler RBAC/Deployment](01-custom-scheduler-part1.md). These are two alternative extension methods for that scheduler. The examples were checked locally; no EKS deployment, GPU execution, TLS rollout or production failover was tested. Revalidate other Kubernetes minors rather than assuming Go-interface compatibility.
 
@@ -649,7 +649,7 @@ func main() {
 2. **Build the image** after saving the shared policy and plugin and running `go mod tidy`. Match the image architecture to the scheduler's Linux workers. Pin registry base images by digest in a release workflow.
 
 ```dockerfile
-FROM golang:1.27.1 AS builder
+FROM golang:1.27.2 AS builder
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
@@ -742,7 +742,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: gpu-reservation-smoke
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command: ["sh", "-c", "sleep 60"]
     resources:
       requests:

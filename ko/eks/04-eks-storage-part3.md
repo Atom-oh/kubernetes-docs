@@ -1,6 +1,6 @@
 # Amazon EKS 스토리지 - Part 3: 모니터링, 문제 해결, 비용 최적화, 보안
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 문서는 Amazon EKS 스토리지 시리즈의 세 번째이자 마지막 부분으로, 스토리지 모니터링, 문제 해결, 비용 최적화 및 보안에 대해 다룹니다.
 
@@ -50,7 +50,7 @@ LogicalDiskUsage·PhysicalDiskUsage도 유효하며 압축 전 논리 byte와 �
 
 ### Prometheus 및 Grafana를 사용한 모니터링
 
-모니터링 소유자의 기존 stack을 재사용합니다. 신규 설치를 검토한다면 배포된 kube-prometheus-stack90.1.1/operator0.93.1은 검증한 참고 조합이지 기존 클러스터의 자동 업그레이드 지시가 아닙니다. 다음은 매니페스트만 렌더링합니다. admin-user/admin-password 키를 가진 `monitoring/grafana-admin`과 본문의 확장 가능한 ebs-gp3 class를 준비합니다. 실제 클러스터 버전·스토리지 크기·보존 기간으로 조정하세요. 알림 전달·Grafana 영속성·가용성·kubelet TLS/인증 기본값은 배포별 검토가 필요합니다:
+모니터링 소유자의 기존 stack을 재사용합니다. 신규 설치를 검토한다면 배포된 kube-prometheus-stack92.9.0/operator0.94.1은 검증한 참고 조합이지 기존 클러스터의 자동 업그레이드 지시가 아닙니다. 다음은 매니페스트만 렌더링합니다. admin-user/admin-password 키를 가진 `monitoring/grafana-admin`과 본문의 확장 가능한 ebs-gp3 class를 준비합니다. 실제 클러스터 버전·스토리지 크기·보존 기간으로 조정하세요. 알림 전달·Grafana 영속성·가용성·kubelet TLS/인증 기본값은 배포별 검토가 필요합니다:
 
 ```yaml
 grafana:
@@ -79,7 +79,7 @@ set -euo pipefail
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm template prometheus prometheus-community/kube-prometheus-stack \
-  --version 90.1.1 --namespace monitoring --kube-version 1.36.0 \
+  --version 92.9.0 --namespace monitoring --kube-version 1.36.0 \
   --include-crds -f monitoring-values.yaml > monitoring-review.yaml
 ```
 
@@ -453,7 +453,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c

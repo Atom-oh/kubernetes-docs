@@ -1,6 +1,6 @@
 # Part 4: Ray Serve
 
-> **Review baseline**: Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
+> **Review baseline**: Ray 2.58.0 · KubeRay 1.7.1 · 2026-10-16
 
 ## Environment and Validation Scope
 
@@ -116,6 +116,6 @@ The checks here cover native configuration/decorators and a tiny single-node HTT
 - [Serve APIs and proxy defaults](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
 - [Serve configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
 - [Replica/queue configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
-- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)
 
 [Main Page](README.md) · [Quiz](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

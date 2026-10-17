@@ -2,9 +2,9 @@
 
 ## Overview and Reviewed Baseline
 
-This section covers Cilium networking, policy and observability. Examples are reviewed against **Cilium/Helm chart 1.20.2**, Cilium CLI **0.20.1** and Hubble CLI **1.20.2**. The Cilium 1.20 Kubernetes compatibility page lists **1.33–1.36** as tested; an upstream 1.37 release does not extend that matrix automatically. Supported hosts are AMD64/AArch64 Linux with kernel **5.10+**, or the documented distribution equivalent such as RHEL 8.10's backported 4.18 kernel. Individual features have additional requirements.
+This section covers Cilium networking, policy and observability. Examples are reviewed against **Cilium/Helm chart 1.20.3**, Cilium CLI **0.20.1** and Hubble CLI **1.20.2**. The Cilium 1.20 Kubernetes compatibility page lists **1.33–1.36** as tested; an upstream 1.37 release does not extend that matrix automatically. Supported hosts are AMD64/AArch64 Linux with kernel **5.10+**, or the documented distribution equivalent such as RHEL 8.10's backported 4.18 kernel. Individual features have additional requirements.
 
-> **Last Updated**: October 15, 2026
+> **Last Updated**: October 16, 2026
 
 ### Historical Release Notes
 
@@ -21,9 +21,10 @@ The dates below are GitHub publication dates in UTC and describe those releases,
 | August 18, 2026 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | Includes ENI interface timing, Service/LB and other fixes |
 | August 18, 2026 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall support and related fixes |
 | September 9, 2026 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | Pre-release; its changelog covers pre.0 to pre.2 because **1.21.0-pre.1 was never published** |
-| September 16, 2026 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | Current stable baseline of this guide; ENI prefix-delegation and secondary-VPC-CIDR fixes, ClusterMesh fixes, and the fix for upgrading clusters created in v1.15 or earlier (`CiliumNodeConfig v2alpha1` CRD version) |
+| September 16, 2026 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | Bug fixes including ENI IPAM prefix-delegation allocation/release and secondary-VPC-CIDR handling, ClusterMesh fixes, policy revision for Pods created right after a policy change, a LocalRedirectPolicy regression, and upgrading clusters created in v1.15 or earlier (`CiliumNodeConfig v2alpha1` CRD version) |
 | September 16, 2026 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | Patch releases of the older supported lines |
 | October 2, 2026 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | Latest 1.21 pre-release; **1.21 is pre-release only (no GA yet)** and items marked 1.21 in this guide may change |
+| October 15, 2026 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API dependency v1.6.3, conntrack GC and handling of CNPs with `nodeSelector`, among other fixes; this guide's current reviewed baseline |
 
 On September 14, 2026, the CNCF blog published a [Cilium 1.20 feature recap](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/) (Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM, and more), covering the same scope as the 1.20.0 announcement summary below.
 
@@ -90,7 +91,7 @@ Choose the actual networking and compute profile before installing anything. The
 | --- | --- |
 | Ordinary EC2 nodes, Cilium ENI replaces VPC CNI | Upstream/partner-managed CNI; AWS's supported EC2 CNI is VPC CNI. Plan CNI ownership, IAM, addressing, routes, bootstrap and node migration |
 | Ordinary EC2 nodes, AWS VPC CNI chaining | VPC CNI owns interfaces/IPAM; Cilium attaches its dataplane afterwards. Existing Pods need recreation, and L7/IPsec have documented limitations |
-| Hybrid Nodes | Follow AWS's specialized CNI guide and AWS-maintained Cilium build matrix; upstream 1.20.2 is not automatically the supported AWS build |
+| Hybrid Nodes | Follow AWS's specialized CNI guide and AWS-maintained Cilium build matrix; upstream 1.20.3 is not automatically the supported AWS build |
 | Auto Mode | Alternate CNI/policy plugins are unsupported; use the managed NodeClass/networking features |
 | Fargate | Alternate CNI/DaemonSet installation is unsupported |
 | Windows | The Cilium agent requirements are Linux; do not apply this recipe to Windows workers |
@@ -130,17 +131,17 @@ serviceAccounts:
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
-helm template cilium cilium/cilium --version 1.20.2 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-eni-values.yaml > cilium-eni-rendered.yaml
 
 # After preparing the cluster and reviewing the rendered configuration:
-helm install cilium cilium/cilium --version 1.20.2 \
+helm install cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-eni-values.yaml
 ```
 
 Manage these settings through the installation owner. A replacement `cilium-config` containing only a few keys can remove other required settings; the old `tunnel=disabled` value is replaced by `routingMode: native`. ENI allocation/permissions and SNAT behavior still require runtime validation; a successful render is not proof of usable EC2 networking.
 
-**IPv6 qualification:** the 1.20.2 ENI IPAM reference describes IPv6 as beta, while its EKS prerequisites page still states IPv4-only ENI integration. This guide keeps an IPv4 example and records that documentation inconsistency rather than treating either statement as proof of production EKS IPv6 compatibility. Review the current ENI/dual-stack subnet requirements before a separate IPv6 design.
+**IPv6 qualification:** the 1.20.3 ENI IPAM reference describes IPv6 as beta, while its EKS prerequisites page still states IPv4-only ENI integration. This guide keeps an IPv4 example and records that documentation inconsistency rather than treating either statement as proof of production EKS IPv6 compatibility. Review the current ENI/dual-stack subnet requirements before a separate IPv6 design.
 
 ### VPC CNI Chaining Alternative
 
@@ -209,9 +210,9 @@ hubble:
 Save as `cilium-values.yaml`, render the pinned chart, then install only on the prepared cluster:
 
 ```bash
-helm template cilium cilium/cilium --version 1.20.2 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-values.yaml > cilium-rendered.yaml
-helm install cilium cilium/cilium --version 1.20.2 \
+helm install cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system -f cilium-values.yaml
 cilium status --wait
 ```
@@ -468,13 +469,13 @@ kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200
 
 ## References
 
-- [Cilium 1.20 Kubernetes compatibility](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/kubernetes/compatibility.rst)
-- [Cilium system requirements](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/operations/system_requirements.rst)
-- [EKS prerequisites](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/installation/requirements-eks.rst)
-- [Cilium ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/eni.rst)
+- [Cilium 1.20 Kubernetes compatibility](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/compatibility.rst)
+- [Cilium system requirements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
+- [EKS prerequisites](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/requirements-eks.rst)
+- [Cilium ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst)
 - [AWS alternate CNI support](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
 - [AWS Hybrid Nodes CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [Cilium L7 policy semantics](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/policy/layer7.rst)
+- [Cilium L7 policy semantics](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
 - [Hubble project](https://github.com/cilium/hubble)
 - [Flannel networking and policy integration](https://github.com/flannel-io/flannel)
 - [Calico comparison terminology](../calico/glossary.md)

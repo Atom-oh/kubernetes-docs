@@ -1,7 +1,7 @@
 # Custom Scheduler 퀴즈 (Part 3)
 
-> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.1; native 1.37 기능은 별도 설명
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.2; native 1.37 기능은 별도 설명
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 퀴즈는 Kubernetes에서 Custom Scheduler를 구현하고 사용하는 방법에 대한 고급 이해를 테스트합니다.
 
@@ -34,7 +34,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m
@@ -53,7 +53,7 @@ spec:
     effect: NoSchedule
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m
@@ -326,7 +326,7 @@ spec:
         restartPolicy: Never
         containers:
         - name: worker
-          image: busybox:1.37.0
+          image: busybox:1.38.0
           command:
           - sh
           - -c
@@ -810,7 +810,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: "500m"
@@ -881,7 +881,7 @@ spec:
           topologyKey: kubernetes.io/hostname
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **InterPodAffinity 플러그인 구성:**
@@ -982,7 +982,7 @@ spec:
   nodeName: worker-node-1  # 특정 노드에 직접 할당
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **nodeName 사용 시 고려 사항:**
@@ -1022,7 +1022,7 @@ spec:
        kubernetes.io/hostname: worker-node-1
      containers:
      - name: nginx
-       image: nginx:1.30.4
+       image: nginx:1.30.6
    ```
 
 2. **nodeAffinity 사용**:
@@ -1043,7 +1043,7 @@ spec:
                - worker-node-1
      containers:
      - name: nginx
-       image: nginx:1.30.4
+       image: nginx:1.30.6
    ```
 
 **다른 옵션들의 문제점:**

@@ -1,6 +1,6 @@
 # Part 1: Kafka Fundamentals
 
-> **Last Updated**: September 12, 2026. Apache Kafka 4.3.1, supported by Strimzi 1.2.0.
+> **Last Updated**: October 16, 2026. Apache Kafka 4.3.1, supported by Strimzi 1.3.0.
 > **Validation**: Nineteen checks used Kafka 4.3.1's actual configuration classes for validity, defaults and conflicts. No broker or EKS cluster was started.
 
 ## 1. Brokers, Topics and Partitions
@@ -178,4 +178,4 @@ kafka-configs.sh --bootstrap-server "$DOCS_BOOTSTRAP" \
 - [Consumer configurations](https://kafka.apache.org/43/configuration/consumer-configs/)
 - [Producer configurations](https://kafka.apache.org/43/configuration/producer-configs/)
 - [KRaft operations](https://kafka.apache.org/43/operations/kraft/)
-- [Strimzi 1.2.0 release and migration notice](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 release and migration notice](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)

@@ -2,8 +2,8 @@
 
 # cert-manager를 활용한 인증서 관리
 
-> **마지막 업데이트**: 2026년 10월 12일
-> **검증 기준**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21의 공개 지원·시험 범위는 Kubernetes 1.33–1.36입니다. Kubernetes 1.37은 이 범위 밖이므로 이 가이드가 호환성을 보장하지 않습니다.
+> **마지막 업데이트**: 2026년 10월 16일
+> **검증 기준**: cert-manager 1.21.2, cmctl 2.6.1, trust-manager 0.25.0, istio-csr 0.18.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21의 공개 지원·시험 범위는 Kubernetes 1.33–1.36입니다. Kubernetes 1.37은 이 범위 밖이므로 이 가이드가 호환성을 보장하지 않습니다.
 
 cert-manager는 인증서 발급·갱신을 Kubernetes 리소스로 관리합니다. **CA 신뢰 배포, 애플리케이션 reload, 인증서 폐기·CRL/OCSP 운영은 별도 책임**입니다. 아래 예제는 로컬 schema·설정·라이브러리 검증을 거쳤으며 외부 CA 발급이나 AWS/Kubernetes 배포 결과가 아닙니다. 별도로 로컬 임시 Vault 2.1.0에서 합성 CA를 사용해 SAN 허용·거부 16개 사례를 시험했습니다.
 
@@ -445,7 +445,7 @@ Sidecar 흐름에서는 istio-agent가 CSR을 만들고 istio-csr가 Certificate
 
 ```bash
 helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
-  --version v0.17.0 --namespace cert-manager --values istio-csr-values.yaml
+  --version v0.18.0 --namespace cert-manager --values istio-csr-values.yaml
 ```
 
 ### Linkerd와 trust-manager

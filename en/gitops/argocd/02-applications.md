@@ -1,7 +1,7 @@
 # ArgoCD Applications
 
 > **Review baseline**: Argo CD 3.5.2; updated to patch 3.5.4 after release-note review (examples not re-run)
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 ## Table of Contents
 - [Application CRD Overview](#application-crd-overview)
@@ -543,7 +543,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: notify
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c
@@ -576,7 +576,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: smoke-test
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c

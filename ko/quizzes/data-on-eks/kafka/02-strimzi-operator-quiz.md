@@ -1,6 +1,6 @@
 # Strimzi Operator 퀴즈
 
-> **검토 기준**: 2026-09-12, Strimzi 1.2.0 / Kafka 4.3.1.
+> **검토 기준**: 2026-10-16, Strimzi 1.3.0 / Kafka 4.3.1.
 
 이 퀴즈는 Strimzi Operator의 기본 개념, 설치 방법, 핵심 CRD, KRaft 노드 역할, EKS 배포 고려사항에 대한 이해도를 테스트합니다.
 
@@ -19,7 +19,7 @@
 **정답: B) Kubernetes 위에서 Apache Kafka를 운영하기 위한 Operator**
 
 **설명:**
-Strimzi 1.2는 CNCF incubating 프로젝트이며 커스텀 리소스의 원하는 상태를 조정합니다. 현재 Kafka Pod 관리는 StrimziPodSet 기반입니다. Operator 사용만으로 모든 운영 정책이나 가용성 보장이 완성되지는 않습니다.
+Strimzi 1.3은 CNCF incubating 프로젝트이며 커스텀 리소스의 원하는 상태를 조정합니다. 현재 Kafka Pod 관리는 StrimziPodSet 기반입니다. Operator 사용만으로 모든 운영 정책이나 가용성 보장이 완성되지는 않습니다.
 </details>
 
 2. Strimzi를 사용하지 않고 Kafka를 StatefulSet으로 직접 운영할 때 겪게 되는 어려움으로 가장 거리가 먼 것은?
@@ -51,7 +51,7 @@ Strimzi 1.2는 CNCF incubating 프로젝트이며 커스텀 리소스의 원하�
 **정답: A) `helm repo add strimzi https://strimzi.io/charts/`**
 
 **설명:**
-공식 chart 저장소를 추가한 뒤 버전을 1.2.0으로 고정해 새 설치합니다. 기존 beta API/CRD가 있는 클러스터는 먼저 공식 전환 절차를 수행해야 하며, namespace만 새로 만들어도 cluster-scoped CRD 충돌은 사라지지 않습니다.
+공식 chart 저장소를 추가한 뒤 버전을 1.3.0으로 고정해 새 설치합니다. 기존 beta API/CRD가 있는 클러스터는 먼저 공식 전환 절차를 수행해야 하며, namespace만 새로 만들어도 cluster-scoped CRD 충돌은 사라지지 않습니다.
 </details>
 
 4. Strimzi Cluster Operator가 기본적으로 감시(watch)하는 네임스페이스 범위는 어떻게 되나요?
@@ -67,10 +67,10 @@ Strimzi 1.2는 CNCF incubating 프로젝트이며 커스텀 리소스의 원하�
 **정답: C) 자신이 배포된 네임스페이스만**
 
 **설명:**
-기본 chart는 release namespace를 감시합니다. 추가 watchNamespaces를 지정하면 1.2 chart는 release namespace도 포함해 중복 제거하고 RoleBinding을 생성합니다. 환경 변수만 바꾸면 필요한 RBAC가 누락될 수 있습니다.
+기본 chart는 release namespace를 감시합니다. 추가 watchNamespaces를 지정하면 1.3 chart는 release namespace도 포함해 중복 제거하고 RoleBinding을 생성합니다. 환경 변수만 바꾸면 필요한 RBAC가 누락될 수 있습니다.
 </details>
 
-5. 현재 Strimzi 1.2의 KRaft 기반 배포에서 지원되지 않는 블록은?
+5. 현재 Strimzi 1.3의 KRaft 기반 배포에서 지원되지 않는 블록은?
    - A) `Kafka.spec.kafka.listeners`
    - B) `Kafka.spec.zookeeper`
    - C) `Kafka.spec.entityOperator`
@@ -83,7 +83,7 @@ Strimzi 1.2는 CNCF incubating 프로젝트이며 커스텀 리소스의 원하�
 **정답: B) `Kafka.spec.zookeeper`**
 
 **설명:**
-현재 Strimzi 1.2는 KRaft를 사용하고 ZooKeeper 블록을 지원하지 않습니다. KafkaNodePool에서 controller와 broker 역할을 정의하며, 예전 활성화 annotation도 필요하지 않습니다.
+현재 Strimzi 1.3은 KRaft를 사용하고 ZooKeeper 블록을 지원하지 않습니다. KafkaNodePool에서 controller와 broker 역할을 정의하며, 예전 활성화 annotation도 필요하지 않습니다.
 </details>
 
 6. `KafkaNodePool.spec.roles`에 지정할 수 있는 값으로 옳지 않은 것은?
@@ -230,7 +230,7 @@ KafkaConnect는 Connect worker 클러스터를 정의하고 KafkaConnector는 �
 
 ## 실습 문제
 
-16. 본문의 operator-values.yaml을 사용하여 Strimzi 1.2.0을 새 kafka namespace에 설치하는 명령을 작성하세요.
+16. 본문의 operator-values.yaml을 사용하여 Strimzi 1.3.0을 새 kafka namespace에 설치하는 명령을 작성하세요.
 
 <details>
 
@@ -241,7 +241,7 @@ KafkaConnect는 Connect worker 클러스터를 정의하고 KafkaConnector는 �
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --version 1.2.0 --namespace kafka --create-namespace \
+  --version 1.3.0 --namespace kafka --create-namespace \
   -f operator-values.yaml --wait --timeout 10m
 kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
 kubectl get crd kafkas.kafka.strimzi.io kafkanodepools.kafka.strimzi.io

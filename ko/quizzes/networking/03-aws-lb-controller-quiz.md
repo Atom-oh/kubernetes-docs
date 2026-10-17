@@ -1,6 +1,6 @@
 # AWS Load Balancer Controller 퀴즈
 
-직접 관리하는 LBC v3.5.0 본문을 기준으로 합니다.
+직접 관리하는 LBC v3.6.0 본문을 기준으로 합니다.
 
 ## 1. AWS Load Balancer Controller는 무엇을 관리하나요?
 

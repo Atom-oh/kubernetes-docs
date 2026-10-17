@@ -1,7 +1,7 @@
 # Operational Alert Configuration
 
-> **Review baseline**: Prometheus 3.14.0, Alertmanager 0.34.0, kube-prometheus-stack 90.1.1 / Prometheus Operator 0.93.1\
-> **Last reviewed**: September 11, 2026. Rule evaluation, templates, routing, inhibition scope and chart wiring were validated locally. No real cluster alert configuration or Slack/PagerDuty notification was performed.
+> **Review baseline**: Prometheus 3.15.0, Alertmanager 0.34.1, kube-prometheus-stack 92.9.0 / Prometheus Operator 0.94.1\
+> **Last reviewed**: October 16, 2026. Rule evaluation, templates, routing, inhibition scope and chart wiring were validated locally. No real cluster alert configuration or Slack/PagerDuty notification was performed.
 
 < [Previous: Scaling](06-scaling-strategies.md) | [Contents](README.md) | [Next: Observability Analysis](08-observability-analysis.md) >
 
@@ -352,7 +352,7 @@ Failed scraping and failed DNS queries are different conditions. `absent(up{job=
 
 ### Network-policy drops
 
-With drop metrics enabled, Cilium 1.20.1 Hubble exports `hubble_drop_total` with reason/protocol and configured context labels.
+With drop metrics enabled, Cilium 1.20.3 Hubble exports `hubble_drop_total` with reason/protocol and configured context labels.
 
 ```promql
 sum by (cluster, reason) (
@@ -577,11 +577,11 @@ prometheus:
         regex: prometheus_replica
 ```
 
-Merge this into the release's **complete reviewed values**, replacing the cluster name and access URL. Do not overwrite an existing installation with this fragment alone. Chart 90.1.1 renders additional alert relabeling into a Secret referenced by Prometheus.
+Merge this into the release's **complete reviewed values**, replacing the cluster name and access URL. Do not overwrite an existing installation with this fragment alone. Chart 92.9.0 renders additional alert relabeling into a Secret referenced by Prometheus.
 
 ```bash
 helm template monitoring prometheus-community/kube-prometheus-stack \
-  --version 90.1.1 --namespace monitoring \
+  --version 92.9.0 --namespace monitoring \
   --values monitoring-values.yaml --values alerting-values.yaml \
   > rendered-monitoring.yaml
 ```

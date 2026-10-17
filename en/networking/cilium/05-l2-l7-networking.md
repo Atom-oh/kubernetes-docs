@@ -1,7 +1,7 @@
 # L2–L7 Networking and Load Balancing
 
-> **Review baseline**: Cilium 1.20.2, CLI 0.20.1; Istio examples use the 1.31 API.
-> **Last reviewed**: October 15, 2026
+> **Review baseline**: Cilium 1.20.3, CLI 0.20.1; Istio examples use the 1.31 API.
+> **Last reviewed**: October 16, 2026
 
 ## Lab Environment Setup
 
@@ -25,7 +25,7 @@ OSI is a conceptual model, not seven Cilium processes or a fixed sequence of pol
 
 ### Actual Layer-specific Features
 
-- **L2:** L2 Announcements is a beta, configured ARP/NDP response mechanism for eligible Service IPs. It needs kube-proxy replacement and appropriate devices/local-network reachability. The elected node receives that Service's traffic; this is not arbitrary MAC/VLAN ACL support or a general L2 bridge/promise to capture every packet. `externalTrafficPolicy: Local` has a documented incompatibility.
+- **L2:** L2 Announcements is a beta, configured ARP/NDP response mechanism for eligible Service IPs. It needs kube-proxy replacement and appropriate devices/local-network reachability. The elected node receives that Service's traffic; this is not arbitrary MAC/VLAN ACL support or a general L2 bridge/promise to capture every packet. `externalTrafficPolicy: Local` has a documented incompatibility; the 1.20.2 release notes include a fix for traffic drops with that combination, so verify the behavior on the version you run.
 - **L3:** IP/identity policy and routing have mode-specific requirements. Multicast is a separately enabled beta feature requiring VXLAN; the documented kernel minimum is 5.10 on AMD64 and 6.0 on AArch64. Do not assume it works in every routing mode.
 - **L4:** TCP/UDP port policy, connection tracking, socket/packet service load balancing and supported affinity operate at different hooks. A socket decision can occur before packet construction.
 - **L7:** Current built-in policy groups are HTTP and DNS. gRPC uses the supported HTTP/2 path. Kafka L7 rules are removed. TLS/SNI features require their documented proxy configuration; encrypted application content is not automatically inspectable.
@@ -377,7 +377,7 @@ Supply the real API endpoint and one persisted per-cluster Maglev seed. The seed
 : "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
-helm install cilium cilium/cilium --version 1.20.2 --namespace kube-system \
+helm install cilium cilium/cilium --version 1.20.3 --namespace kube-system \
   --values lb-values.yaml \
   --set-string k8sServiceHost="$API_SERVER_HOST" \
   --set k8sServicePort="$API_SERVER_PORT" \
@@ -519,10 +519,10 @@ HTTP policy rejection may appear as HTTP 403 rather than a packet DROPPED verdic
 
 These are release-source/schema-checked examples with bounded local fixtures, not a production-tested platform or live-cluster benchmark. Image execution, webhook reachability, mTLS traffic, DSR return paths, NAT behavior and fragmentation still require validation in the prepared environment. Clean up only this run's labeled application resources; do not remove the cluster CNI as lab cleanup.
 
-- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.2/pkg/maps/fragmap/fragmap.go)
-- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.2/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/templates/_helpers.tpl)
-- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
-- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.2 values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml)
+- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.3/pkg/maps/fragmap/fragmap.go)
+- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.3/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/templates/_helpers.tpl)
+- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
+- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.3 values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
 
 
 [Return to Main Page](README.md)

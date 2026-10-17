@@ -1,7 +1,7 @@
 # 네트워크 구성
 
 > **지원 버전**: EKS 1.36 예제; AWS-maintained Cilium 1.18.3-0 기준, 호환 host/kernel 필요
-> **마지막 업데이트**: 2026년 10월 15일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Routing·DNS·TLS·credential·앱 트래픽을 별도로 검증합니다. 아래는 Terraform mock provider 등을 사용해 로컬 schema/fixture로 확인한 예제이며 AWS 리소스·router·firewall·실제 cluster를 변경하지 않았습니다. 그림은 AWS 개념을 바탕으로 이 저장소에서 제작했으며 AWS가 이 구성을 검증한 결과물이 아닙니다.
 
@@ -128,7 +128,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -1132,7 +1132,7 @@ AWS의 RTT ≤200ms/100Mbps는 일반 권장입니다. 이전 50/100ms 구간·�
 - [RouterOS BGP reference](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
 - [FRR 10.7.1 BGP reference source](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
 - [VPN metrics](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
-- [Kubernetes 1.36.2 kubelet server source](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/server/server.go)
+- [Kubernetes 1.36.5 kubelet server source](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/kubelet/server/server.go)
 - [Kubernetes NetworkPolicy semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
 

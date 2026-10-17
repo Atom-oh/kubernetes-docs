@@ -1,7 +1,7 @@
 # Part 4: Schema Registry
 
-> **Review baseline**: Karapace 6.2.3, Apicurio Registry 3.3.3, Strimzi 1.2.0 / Kafka 4.3.1\
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: Karapace 6.2.4, Apicurio Registry 3.3.3, Strimzi 1.3.0 / Kafka 4.3.1\
+> **Last reviewed**: October 16, 2026
 
 ## Why use a schema registry?
 
@@ -37,7 +37,7 @@ corresponding Kafka data, archives and disaster-recovery copies must be readable
 
 | Implementation | Relevant schema formats | API and storage |
 | --- | --- | --- |
-| Karapace 6.2.3 | Avro, JSON Schema, **Protobuf** | Confluent-compatible REST API; Kafka-backed schema storage; also provides a REST proxy |
+| Karapace 6.2.4 | Avro, JSON Schema, **Protobuf** | Confluent-compatible REST API; Kafka-backed schema storage; also provides a REST proxy |
 | Apicurio Registry 3.3.3 | Avro, Protobuf, JSON Schema; additional artifact types | Native API plus `/apis/ccompat/v7` and `/apis/ccompat/v8`; KafkaSQL and SQL storage options |
 | Confluent Schema Registry | Avro, Protobuf, JSON Schema | Confluent API; Kafka-backed storage in the self-managed deployment |
 
@@ -524,7 +524,7 @@ the application's exact serializer version.
 - [Protocol Buffers: updating a message type](https://protobuf.dev/programming-guides/proto3/#updating)
 - [Confluent compatibility rules](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
 - [Confluent serializers and wire format](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html)
-- [Karapace 6.2.3](https://github.com/Aiven-Open/karapace/tree/6.2.3)
+- [Karapace 6.2.4](https://github.com/Aiven-Open/karapace/tree/6.2.4)
 - [Apicurio Registry 3.3.3](https://github.com/Apicurio/apicurio-registry/tree/3.3.3)
 - [Apicurio compatibility API support matrix](https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md)
 - [Apicurio KafkaSQL configuration](https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java)

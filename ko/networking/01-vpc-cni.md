@@ -1,11 +1,11 @@
 # Amazon VPC CNI
 
-> **검토 기준**: VPC CNI / Helm 차트 1.23.0, network policy agent 1.4.1.
-> **최종 검토**: 2026년 10월 12일.
+> **검토 기준**: VPC CNI / Helm 차트 1.23.2, network policy agent 1.4.3.
+> **최종 검토**: 2026년 10월 16일.
 >
 > **현재 EKS 애드온 표기**: AWS는 Kubernetes 1.31–1.37에 `v1.23.1-eksbuild.1`을 표시합니다.
 >
-> **예제 버전 고정값**: 아래 설정 예제는 업스트림/Helm 1.23.0을 사용합니다. 업스트림·Helm·EKS `eksbuild` 버전은 서로 다른 식별자입니다. 실제 클러스터 버전과 리전의 이용 가능성을 확인하세요.
+> **예제 버전 고정값**: 아래 설정 예제는 업스트림/Helm 1.23.2를 사용합니다. 업스트림·Helm·EKS `eksbuild` 버전은 서로 다른 식별자입니다. 실제 클러스터 버전과 리전의 이용 가능성을 확인하세요.
 
 ## 목차
 
@@ -169,16 +169,16 @@ Init·정책 에이전트 구성 요소도 함께 선택되도록 전체 차트�
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
-helm show values eks/aws-vpc-cni --version 1.23.0 > chart-defaults.yaml
+helm show values eks/aws-vpc-cni --version 1.23.2 > chart-defaults.yaml
 helm template aws-vpc-cni eks/aws-vpc-cni --namespace kube-system \
-  --version 1.23.0 -f helm-values.yaml > rendered-cni.yaml
+  --version 1.23.2 -f helm-values.yaml > rendered-cni.yaml
 ```
 
 실제 IP family, CNI ServiceAccount/IAM, 선택한 기능에 맞게 `helm-values.yaml`을 준비합니다. 이 문서의 기본 Linux 예제는 IPv4입니다. 렌더링한 리소스를 검토한 뒤 적용합니다.
 
 ```bash
 helm upgrade --install aws-vpc-cni eks/aws-vpc-cni --namespace kube-system \
-  --version 1.23.0 -f helm-values.yaml --wait --timeout 10m
+  --version 1.23.2 -f helm-values.yaml --wait --timeout 10m
 ```
 
 명령은 새 설치나 Helm 관리 설치를 전제로 합니다. 기존 EKS add-on·bootstrap 관리 객체는 소유 전환 계획이 필요합니다. EKS 파티션·레지스트리 접근과 이미지 pull 전제도 환경에 맞춰야 합니다.
@@ -650,15 +650,15 @@ Pool 비율은 IPv4와 관측된 양수 분모로 한정합니다. 서브넷 고
 
 ## 참고 자료
 
-- [VPC CNI 1.23.0 documentation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
-- [VPC CNI Helm values](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/values.yaml)
-- [Chart version metadata](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/Chart.yaml)
-- [Released CNI manifest](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/config/master/aws-k8s-cni.yaml)
-- [IPAMD implementation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/ipamd.go)
-- [IPAMD introspection server](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/introspect.go)
-- [IPAM datastore](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/datastore/data_store.go)
-- [IPAMD metric definitions](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/utils/prometheusmetrics/prometheusmetrics.go)
-- [Network policy agent 1.4.1](https://github.com/aws/aws-network-policy-agent/blob/v1.4.1/README.md)
+- [VPC CNI 1.23.2 documentation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/README.md)
+- [VPC CNI Helm values](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/charts/aws-vpc-cni/values.yaml)
+- [Chart version metadata](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/charts/aws-vpc-cni/Chart.yaml)
+- [Released CNI manifest](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/config/master/aws-k8s-cni.yaml)
+- [IPAMD implementation](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/ipamd.go)
+- [IPAMD introspection server](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/introspect.go)
+- [IPAM datastore](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/datastore/data_store.go)
+- [IPAMD metric definitions](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/utils/prometheusmetrics/prometheusmetrics.go)
+- [Network policy agent 1.4.3](https://github.com/aws/aws-network-policy-agent/blob/v1.4.3/README.md)
 - [AWS Helm chart index](https://aws.github.io/eks-charts/index.yaml)
 - [EKS security groups for Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 - [SGPP operating considerations](https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html)

@@ -32,7 +32,7 @@ appVersion: "1.30.4"
 replicaCount: 1
 image:
   repository: nginxinc/nginx-unprivileged
-  tag: "1.30.4-alpine"
+  tag: "1.30.6-alpine"
 service:
   port: 8080
 resources:

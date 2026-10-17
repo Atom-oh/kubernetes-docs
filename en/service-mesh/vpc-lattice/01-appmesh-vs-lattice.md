@@ -1,7 +1,7 @@
 # App Mesh vs VPC Lattice Architecture
 
 > **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 
 ## What This Document Covers
 
@@ -17,7 +17,7 @@ App Mesh and Istio put an Envoy inside the Pod because **some decisions require 
 
 A caller-side proxy can maintain connection pools, observe upstream failures and apply configured retries. The exact controls depend on the product and its API; an Envoy capability is not automatically an App Mesh feature. A managed service can also maintain state, so proxy placement alone does not prove a feature is impossible.
 
-The customer operates the injected Envoy workloads and any separately deployed SPIRE infrastructure. **AWS operates the App Mesh control plane.** Proxy upgrades and resource consumption remain customer workload concerns; do not describe App Mesh as a fully self-operated control plane.
+The customer operates the injected Envoy workloads and any separately deployed SPIRE infrastructure. **AWS operated the App Mesh control plane (support ended September 30, 2026).** Proxy upgrades and resource consumption remain customer workload concerns; do not describe App Mesh as a fully self-operated control plane.
 
 ### The managed data plane model — push the proxy into the infrastructure
 
@@ -25,7 +25,7 @@ Lattice went the other direction. It pulls the proxy out of the Pod and places i
 
 The problems this design solves are scale and heterogeneity. Because there is no sidecar, proxies do not multiply with Pod count, and EKS, ECS, EC2, and Lambda can all participate in the service network **the same way.** You cannot put an Envoy inside a Lambda function, but an infrastructure-layer proxy can serve Lambda too. VPC and account boundaries — even overlapping IP ranges — are absorbed by the infrastructure.
 
-Removing Envoy changes where resilience and telemetry are implemented. Compare the **currently exposed App Mesh and Lattice APIs**, then identify which controls must move into the application or another proxy. Do not infer AWS internal state placement or permanent feature limits from this conceptual topology.
+Removing Envoy changes where resilience and telemetry are implemented. Compare **what App Mesh provided with the currently exposed Lattice APIs**, then identify which controls must move into the application or another proxy. Do not infer AWS internal state placement or permanent feature limits from this conceptual topology.
 
 ## AS-IS / TO-BE Architecture
 

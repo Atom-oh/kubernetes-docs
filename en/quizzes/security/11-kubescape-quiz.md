@@ -1,6 +1,6 @@
 # Kubescape Quiz
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 
 ## Questions
 
@@ -72,7 +72,7 @@ CI should pass an existing explicit local file and reject empty/missing targets.
 
 **Answer: B) CLI handles explicit/ad-hoc scans; the Operator runs enabled continuous/scheduled capabilities**
 
-Chart 1.40.4 renders scanner image 4.0.13, while the tested local CLI is 4.0.14. Node/image/runtime/remediation scope and permissions require separate choices and validation.
+Chart 1.40.4 renders scanner image 4.0.13, while the tested local CLI is 4.0.16. Node/image/runtime/remediation scope and permissions require separate choices and validation.
 
 </details>
 
@@ -108,7 +108,7 @@ The synthetic insecure Pod produced compliance 55 and score 62.5. Read summaryDe
 
 **Answer: B) It exits 1 because minimum compliance is unmet**
 
-The same fixture returned exit 0 at threshold 55 and exit 1 at 56. Version 4.0.14 accepts deprecated --fail-threshold but ignores its value; do not use it as a gate.
+The same fixture returned exit 0 at threshold 55 and exit 1 at 56. Version 4.0.16 accepts deprecated --fail-threshold but ignores its value; do not use it as a gate.
 
 </details>
 

@@ -1,6 +1,6 @@
 # Linkerd Traffic Management Quiz
 
-Based on the [maintained traffic guide](../../../service-mesh/linkerd/03-traffic-management.md), reviewed September 11, 2026.
+Based on the [maintained traffic guide](../../../service-mesh/linkerd/03-traffic-management.md), reviewed October 16, 2026.
 
 ### 1. What cannot be configured per route in a ServiceProfile?
 
@@ -142,7 +142,7 @@ Based on the [maintained traffic guide](../../../service-mesh/linkerd/03-traffic
 
 **Answer: B**
 
-**Explanation:** The request can still be forwarded normally. This setting does not stop client/SDK/other-proxy retries. In the current annotation path, limit:0 is not a reliable disable switch in edge-26.9.1; keep Service defaults free of retries and opt in only the intended read routes.
+**Explanation:** The request can still be forwarded normally. This setting does not stop client/SDK/other-proxy retries. In the current annotation path, limit:0 is not a reliable disable switch in edge-26.10.1; keep Service defaults free of retries and opt in only the intended read routes.
 
 </details>
 

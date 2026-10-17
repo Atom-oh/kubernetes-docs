@@ -1,6 +1,6 @@
 # Linkerd 아키텍처
 
-> **마지막 업데이트**: 2026년 9월 11일 · Linkerd edge-26.9.1 / proxy release/v2.368.0
+> **마지막 업데이트**: 2026년 10월 16일 · Linkerd edge-26.10.1 / proxy release/v2.370.0
 
 현재 구성 요소의 역할, identity 계층, 트래픽 캡처와 주입 수명 주기를 설명합니다. 지원 release/cluster 조합과 고정 산출물은 [설치 가이드](01-installation.md)를 확인하세요. 예시는 설정 설명이며 이번 감사에서 실제 배포나 CA 회전을 수행하지 않았습니다.
 
@@ -257,7 +257,7 @@ web-service.my-app.serviceaccount.identity.linkerd.cluster.local
 
 ### 갱신과 회전
 
-Proxy release/v2.368.0의 identity client는 보통 **남은** 유효기간의 70% 뒤에 다음 인증서 요청을 예약하며 설정한 min/max refresh interval로 제한합니다. 오류·만료 경로에는 최소 지연을 사용할 수 있습니다. 모든 인증서에 대한 고정된 시각 보장이 아닙니다.
+Proxy release/v2.370.0의 identity client는 보통 **남은** 유효기간의 70% 뒤에 다음 인증서 요청을 예약하며 설정한 min/max refresh interval로 제한합니다. 오류·만료 경로에는 최소 지연을 사용할 수 있습니다. 모든 인증서에 대한 고정된 시각 보장이 아닙니다.
 
 해당 client는 갱신 요청에 적재한 key/CSR 자료를 재사용합니다. 인증서 갱신과 개인 키·issuer·trust anchor 회전은 같은 작업이 아닙니다.
 
@@ -339,5 +339,5 @@ xDS도 보통 gRPC를 사용하므로 protocol 이름이 본질적인 복잡성 
 - [공식 아키텍처](https://linkerd.io/docs/reference/architecture/), [주입](https://linkerd.io/docs/features/proxy-injection/), [정책 참조](https://linkerd.io/docs/reference/authorization-policy/)
 - [자동 mTLS](https://linkerd.io/docs/features/automatic-mtls/), [protocol 처리](https://linkerd.io/docs/features/protocol-detection/), [load balancing](https://linkerd.io/docs/features/load-balancing/)
 - [고정 Destination API](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
-- [Kubernetes token 검증](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/validator.go)과 [identity 형식](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/domain.go)
-- [고정 인증서 refresh 구현](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/proxy/identity-client/src/certify.rs)
+- [Kubernetes token 검증](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/validator.go)과 [identity 형식](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/domain.go)
+- [고정 인증서 refresh 구현](https://github.com/linkerd/linkerd2-proxy/blob/0cdcc078e66eb27c79b9dfc030fc660042716d31/linkerd/proxy/identity-client/src/certify.rs)

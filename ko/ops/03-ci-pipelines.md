@@ -1,7 +1,7 @@
 # EKS 기반 CI 파이프라인: ECR 빌드 및 푸시
 
-> **검토 기준**: GitLab Runner 19.3.1 / chart 0.92.1, ARC 0.14.2, runner 2.337.0, Docker 29.8.0, Trivy 0.74.0, Node 24
-> **마지막 검토**: 2026년 9월 11일. Helm·TOML·CI 스키마, 로컬 테스트 대역과 작은 Next.js standalone 앱을 확인했습니다. 실제 CI 작업·레지스트리 push·AWS 배포는 실행하지 않았습니다.
+> **검토 기준**: GitLab Runner 19.3.1 / chart 0.92.1, ARC 0.15.0, runner 2.337.0, Docker 29.8.0, Trivy 0.76.0, Node 24
+> **마지막 검토**: 2026년 10월 16일. Helm·TOML·CI 스키마, 로컬 테스트 대역과 작은 Next.js standalone 앱을 확인했습니다. 실제 CI 작업·레지스트리 push·AWS 배포는 실행하지 않았습니다.
 
 < [이전: NLB 블루/그린](02-infrastructure-advanced.md) | [목차](README.md) | [다음: ArgoCD 멀티클러스터](04-gitops-multi-cluster.md) >
 
@@ -20,7 +20,7 @@
 terraform {
   required_version = ">= 1.10.0"
   required_providers {
-    aws = { source = "hashicorp/aws", version = "6.64.0" }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
 provider "aws" { region = var.region }
@@ -468,7 +468,7 @@ scan:
   <<: *native
   stage: scan
   image:
-    name: docker.io/aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969
+    name: docker.io/aquasec/trivy@sha256:2416d1f74045b57274df1a340eee6b510cacd73c66a6ccb8da092b117eb7d222
     entrypoint: [""]
   needs:
     - job: build
@@ -593,7 +593,7 @@ resources:
 
 ```yaml
 # arc-runner-values.yaml
-# ARC 0.14.2, Kubernetes >=1.29. Dedicated CI cluster, trusted publish jobs only.
+# ARC 0.15.0, Kubernetes >=1.29. Dedicated CI cluster, trusted publish jobs only.
 githubConfigUrl: https://github.com/REPLACE_ORG/REPLACE_REPO
 githubConfigSecret: arc-github-app
 runnerScaleSetName: eks-ci-amd64
@@ -673,18 +673,18 @@ template:
 
 이 custom template은 차트의 Kubernetes ≥1.29 native-sidecar DinD 구성을 따르며 runner 2.337.0과 Docker 29.8.0을 고정합니다. 이 설정과 `containerMode`를 동시에 넣지 않습니다. runner와 DinD가 work/socket/externals를 공유하며 생성된 runner 계정에는 AWS 게시 역할이 없습니다. 기본 runner 이미지에는 Docker/Buildx/jq/git이 있지만 AWS CLI는 없어, 아래 workflow는 Buildx로 최종 digest를 확인합니다.
 
-ARM은 `runnerScaleSetName`을 `eks-ci-arm64`, node architecture를 `arm64`로 바꿉니다. `runs-on`에는 실제 scale-set 이름을 사용합니다. 조직 runner group 이름이 자동으로 작업 label이 되지는 않습니다. ARC 0.14.2에는 추가 label을 위한 `scaleSetLabels`도 있습니다.
+ARM은 `runnerScaleSetName`을 `eks-ci-arm64`, node architecture를 `arm64`로 바꿉니다. `runs-on`에는 실제 scale-set 이름을 사용합니다. 조직 runner group 이름이 자동으로 작업 label이 되지는 않습니다. ARC 0.15.0에는 추가 label을 위한 `scaleSetLabels`도 있습니다.
 
 ```bash
 helm upgrade --install arc \
   oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller \
-  --version 0.14.2 --namespace arc-systems --values arc-controller-values.yaml
+  --version 0.15.0 --namespace arc-systems --values arc-controller-values.yaml
 helm upgrade --install eks-ci-amd64 \
   oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set \
-  --version 0.14.2 --namespace arc-runners --values arc-runner-values.yaml
+  --version 0.15.0 --namespace arc-runners --values arc-runner-values.yaml
 helm upgrade --install eks-ci-arm64 \
   oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set \
-  --version 0.14.2 --namespace arc-runners --values arc-runner-arm64-values.yaml
+  --version 0.15.0 --namespace arc-runners --values arc-runner-arm64-values.yaml
 ```
 
 `minRunners`는 배정 작업에 더해 유지할 idle runner 수이며 용량/max 제한을 받습니다. 0은 유휴 runner Pod를 줄이지만 controller/listener나 모든 클러스터 비용을 없애지 않습니다. 0보다 커도 시작 지연이 전혀 없다고 보장하지 않습니다. 이용 가능한 저장소·workflow를 제한하고 게시용 브랜치·태그를 보호합니다.
@@ -779,7 +779,7 @@ jobs:
           cache-to: type=registry,ref=${{ steps.login.outputs.registry }}/${{ env.ECR_CACHE_REPOSITORY }}:${{ matrix.arch }}-protected,mode=max,image-manifest=true,oci-mediatypes=true
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           image-ref: ${{ steps.image.outputs.tag }}
           scan-type: image
           scanners: vuln
@@ -982,7 +982,7 @@ coverage
 
 public과 `.next/static`을 복사하고 접근 가능한 bind address 및 비-root `node` 사용자를 설정합니다. Private npm 인증은 BuildKit secret(`--secret id=npmrc,src=/protected/npmrc`)으로 전달하며 `.npmrc`를 복사하거나 build-arg에 비밀을 넣지 않습니다. Monorepo는 tracing root와 중첩된 COPY/server 경로를 따로 맞춰야 하므로 여기의 root `server.js` 경로를 일반화하지 않습니다.
 
-Node 24.21.0으로 Next 16.3.5/React 19.3.0의 작은 앱을 빌드하고 standalone 서버·정적 파일의 HTTP 200을 확인했습니다. 출력 계약 검증이며 전체 앱·컨테이너·실제 CI 배포를 실행한 결과는 아닙니다.
+Node 24.22.0으로 Next 16.3.5/React 19.3.0의 작은 앱을 빌드하고 standalone 서버·정적 파일의 HTTP 200을 확인했습니다. 출력 계약 검증이며 전체 앱·컨테이너·실제 CI 배포를 실행한 결과는 아닙니다.
 
 ### 캐시 동작
 

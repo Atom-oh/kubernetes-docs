@@ -1,7 +1,7 @@
 # Part 8: 모범 사례
 
-> **검토 기준**: Kafka 4.3.1, Strimzi 1.2.0\
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Kafka 4.3.1, Strimzi 1.3.0\
+> **최종 검토**: 2026년 10월 16일
 
 앞 장의 예제를 운영에서 검증할 결정으로 정리합니다. 다음에는
 [벤치마크 장](./09-kafka-benchmark.md)이 이어집니다. 체크리스트만으로 실제 부하와
@@ -365,7 +365,7 @@ Kafka는 page cache의 도움을 받지만 CPU(TLS·압축 포함), 네트워크
 다른 워크로드를 함께 측정합니다. “heap 4~8GB면 충분”이나 메모리 최적화 인스턴스가
 항상 비용에서 유리하다는 규칙은 없습니다.
 
-Kafka tiered storage는 3.9부터 production-ready이며 Strimzi 1.2도 지원합니다.
+Kafka tiered storage는 3.9부터 production-ready이며 Strimzi 1.3도 지원합니다.
 여전히 호환되는 **RemoteStorageManager 플러그인**과 이미지의 의존성, 원격
 접근·권한, 보존·정리·복구 설정이 필요합니다. Strimzi custom 연동은
 `spec.kafka.tieredStorage`의 class/path/config를 사용합니다.
@@ -402,7 +402,7 @@ bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
 연관된 회수를 막지는 못합니다. 브로커 rack-aware replica 배치, 노드·AZ 분산,
 EBS 볼륨 AZ의 대체 용량과 검증한 복구·여유 용량을 함께 설계합니다.
 
-Strimzi 1.2 PDB는 Kafka 클러스터 Pod의 자발적 eviction을 제한합니다.
+Strimzi 1.3 PDB는 Kafka 클러스터 Pod의 자발적 eviction을 제한합니다.
 강제 삭제, 노드 장애, Spot 회수나 모든 Operator rolling에서 quorum을 보장하지
 않습니다. RF=3/minISR=2, PDB, On-Demand 컨트롤러는 설계 입력이며 무손실·무중단의
 증명은 아닙니다.
@@ -431,7 +431,7 @@ Kafka 4.3.1 설정 클래스, 실제 keyed partitioner, MockConsumer 처리·커
 - [Kafka 4.3 tiered storage](https://kafka.apache.org/43/operations/tiered-storage/)
 - [Kafka 4.3.1 keyed partitioner](https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java)
 - [Kafka 4.3.1 topic-description output](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java)
-- [Strimzi 1.2.0 deployment, TLS and tiered-storage guide](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0 deployment, TLS and tiered-storage guide](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Kubernetes NetworkPolicy selector semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [EBS encryption by default](https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html)
 - [EKS Auto Mode StorageClass parameters](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)

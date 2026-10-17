@@ -1,6 +1,6 @@
 # Cilium Service Mesh 보안
 
-> **마지막 업데이트**: 2026년 9월 11일 · Cilium/chart 1.20.1 · 번들 SPIRE 1.15.2. Kubernetes/EKS 테스트 범위와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
+> **마지막 업데이트**: 2026년 10월 16일 · Cilium/chart 1.20.3 · 번들 SPIRE 1.15.3. Kubernetes/EKS 테스트 범위와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
 
 ## 개요
 
@@ -20,7 +20,7 @@
 
 ### 기존 Cilium mutual authentication
 
-Cilium 1.20.1은 out-of-band 방식을 여전히 **베타·미완성 기능**으로 문서화합니다. Cilium Agent는 SPIRE의 SVID로 Cilium 보안 Identity를 인증합니다. 네트워크 정책에서 인증을 요구한다고 애플리케이션 연결 자체가 TLS로 바뀌지는 않습니다.
+Cilium 1.20.3은 out-of-band 방식을 여전히 **베타·미완성 기능**으로 문서화합니다. Cilium Agent는 SPIRE의 SVID로 Cilium 보안 Identity를 인증합니다. 네트워크 정책에서 인증을 요구한다고 애플리케이션 연결 자체가 TLS로 바뀌지는 않습니다.
 
 ![정책으로 보호되는 트래픽을 진행하기 전에 Agent 사이에서 수행하는 out-of-band 인증 교환의 예시.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-1.png)
 
@@ -30,7 +30,7 @@ Cilium 1.20.1은 out-of-band 방식을 여전히 **베타·미완성 기능**으
 
 ### ztunnel 기반 네이티브 mTLS (2026년 업데이트)
 
-Cilium 1.20.1에는 **Ztunnel Transparent Encryption (Beta)**가 포함되어 있습니다. 필요한 bootstrap·CA 자료를 준비한 뒤 다음 모드 설정으로 선택합니다.
+Cilium 1.20.3에는 **Ztunnel Transparent Encryption (Beta)**가 포함되어 있습니다. 필요한 bootstrap·CA 자료를 준비한 뒤 다음 모드 설정으로 선택합니다.
 
 ```yaml
 encryption:
@@ -240,7 +240,7 @@ HTTP 경로 정책에는 지원되는 검사 가능한 L7 경로가 필요합니
 
 ### Kafka L7 보안 정책
 
-Cilium 1.20.1 L7 스키마는 기존 `rules.kafka` 객체를 거부합니다. 아래 대체 예시는 **네트워크 접근 가능 여부만** 제한합니다.
+Cilium 1.20.3 L7 스키마는 기존 `rules.kafka` 객체를 거부합니다. 아래 대체 예시는 **네트워크 접근 가능 여부만** 제한합니다.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -561,7 +561,7 @@ Cert-manager의 설정된 cluster-resource namespace에 충분한 잔여 수명�
 
 ### Vault 통합
 
-다음은 독립적으로 구성한 SPIRE 1.15.2 Server의 **plugin 설정 조각**이며 완전한 Server 설정이나 Kubernetes Deployment가 아닙니다.
+다음은 독립적으로 구성한 SPIRE 1.15.4 Server의 **plugin 설정 조각**이며 완전한 Server 설정이나 Kubernetes Deployment가 아닙니다.
 
 ```hcl
 plugins {
@@ -875,25 +875,25 @@ hubble:
 
 ## 참고 자료
 
-- [Cilium1.20.1 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [Authentication example/API shape](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
-- [Cilium1.20.1 CNP schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
-- [Cilium1.20.1 ztunnel beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
-- [Ztunnel CA implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go)
-- [Ztunnel bootstrap example](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes-ztunnel/generate-secrets.sh)
-- [Encryption scope/strict mode](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption.rst)
-- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
-- [IPsec and key rotation](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
-- [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [HTTP/DNS policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
-- [Default-deny behavior](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/intro.rst)
-- [Explicit default-deny API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go)
-- [Mutable endpoint audit option](https://github.com/cilium/cilium/blob/v1.20.1/pkg/option/endpoint.go)
-- [Endpoint configuration CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_config.md)
-- [Metrics](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
-- [SPIRE1.15.2 server configuration](https://github.com/spiffe/spire/blob/v1.15.2/doc/spire_server.md)
-- [SPIRE Vault authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_vault.md)
-- [SPIRE disk authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_disk.md)
+- [Cilium1.20.3 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Authentication example/API shape](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
+- [Cilium1.20.3 CNP schema](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+- [Cilium1.20.3 ztunnel beta](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ztunnel.rst)
+- [Ztunnel CA implementation](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ztunnel/ca/ca_server.go)
+- [Ztunnel bootstrap example](https://github.com/cilium/cilium/blob/v1.20.3/examples/kubernetes-ztunnel/generate-secrets.sh)
+- [Encryption scope/strict mode](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption.rst)
+- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-wireguard.rst)
+- [IPsec and key rotation](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ipsec.rst)
+- [Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [HTTP/DNS policy](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
+- [Default-deny behavior](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/intro.rst)
+- [Explicit default-deny API](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/rule.go)
+- [Mutable endpoint audit option](https://github.com/cilium/cilium/blob/v1.20.3/pkg/option/endpoint.go)
+- [Endpoint configuration CLI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/cmdref/cilium-dbg_endpoint_config.md)
+- [Metrics](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/metrics.rst)
+- [SPIRE1.15.4 server configuration](https://github.com/spiffe/spire/blob/v1.15.4/doc/spire_server.md)
+- [SPIRE Vault authority](https://github.com/spiffe/spire/blob/v1.15.4/doc/plugin_server_upstreamauthority_vault.md)
+- [SPIRE disk authority](https://github.com/spiffe/spire/blob/v1.15.4/doc/plugin_server_upstreamauthority_disk.md)
 - [Kafka ACLs](https://kafka.apache.org/41/security/authorization-and-acls/)
 - [AWS STS endpoints](https://docs.aws.amazon.com/general/latest/gr/sts.html)
 - [WireGuard protocol](https://www.wireguard.com/protocol/)

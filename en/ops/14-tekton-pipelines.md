@@ -1,6 +1,6 @@
 # Tekton Pipelines: Kubernetes-Native CI
 
-> **Last Updated**: September 12, 2026. Pipelines 1.16.0, Triggers 0.37.0, Chains 0.29.0, Dashboard 0.72.0, tkn 0.46.0.
+> **Last Updated**: October 16, 2026. Pipelines 1.17.0, Triggers 0.37.1, Chains 0.29.0, Dashboard 0.73.0, tkn 0.46.1.
 > **Validation**: Release CRD schemas, Task dependencies, local scripts and mocked programs. No live EKS installation, image build/push, KMS signing, external webhooks or notifications were executed.
 
 < [Previous: FinOps](./13-finops-cost-platform.md) | [Contents](./README.md) | [Next: Zonal operations](./15-zonal-operations-guide.md) >
@@ -34,7 +34,7 @@ A Task definition is not itself a Pod: executing a TaskRun creates one. Results 
 
 ### 2.1 Versions and installation paths
 
-The official installation minimum is Kubernetes 1.28, while this chapter's security fields and schema validation target Kubernetes 1.36. The upstream minimum is not a recommendation for currently supported EKS versions. Dashboard 0.72.0 explicitly supports Pipelines 1.15 LTS/1.16 and Triggers 0.37 LTS.
+The official installation minimum is Kubernetes 1.28, while this chapter's security fields and schema validation target Kubernetes 1.36. The upstream minimum is not a recommendation for currently supported EKS versions. Dashboard 0.73.0 explicitly supports Pipelines 1.15 LTS/1.17 and Triggers 0.37 LTS.
 
 This is a pinned manual-installation example. The official guide also points to Tekton Operator for production lifecycle management. Choose an owner before mixing manual apply with Operator-managed resources. These commands change a real cluster; review ownership rather than blindly forcing conflicts.
 
@@ -43,7 +43,7 @@ kubectl version -o yaml
 kubectl get storageclass
 
 curl --fail --location \
-  https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.16.0/release.yaml \
+  https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.17.0/release.yaml \
   -o pipelines-release.yaml
 kubectl apply --server-side --field-manager=tekton-install -f pipelines-release.yaml
 kubectl wait --for=condition=Established --timeout=120s \
@@ -53,13 +53,13 @@ kubectl -n tekton-pipelines wait deployment --all \
   --for=condition=Available --timeout=300s
 
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/release.yaml
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.1/release.yaml
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/interceptors.yaml
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.1/interceptors.yaml
 kubectl apply --server-side -f \
   https://infra.tekton.dev/tekton-releases/chains/previous/v0.29.0/release.yaml
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.72.0/release.yaml
+  https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.73.0/release.yaml
 kubectl -n tekton-pipelines port-forward service/tekton-dashboard 9097:9097
 ```
 
@@ -73,7 +73,7 @@ kubectl -n tekton-pipelines port-forward service/tekton-dashboard 9097:9097
 | --- | --- |
 | `feature-flags.coschedule: workspaces` | Co-schedule TaskRuns sharing a PVC Workspace; retain for this RWO example |
 | `disable-affinity-assistant` | Legacy flag removed after v0.68 |
-| `set-security-context: true` | Default in 1.16 for Tekton-injected containers; user Steps need their own compatible contexts |
+| `set-security-context: true` | Default in 1.17 for Tekton-injected containers; user Steps need their own compatible contexts |
 | `results-from: termination-message` | Default path, subject to Kubernetes termination-message limits |
 | `max-result-size` | Applies to `sidecar-logs`; changing it alone does not enlarge the default termination message |
 | Default timeout | Managed in `config-defaults`; this example sets PipelineRun timeouts explicitly |
@@ -273,7 +273,7 @@ spec:
     type: string
   steps:
   - name: checkout
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -324,7 +324,7 @@ spec:
   results: []
   steps:
   - name: vet
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -360,7 +360,7 @@ spec:
   results: []
   steps:
   - name: test
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -614,7 +614,7 @@ spec:
     - name: auth
       mountPath: /auth
   - name: scan
-    image: aquasec/trivy:0.74.0
+    image: aquasec/trivy:0.76.0
     script: |
       #!/bin/sh
       set -eu
@@ -1114,7 +1114,7 @@ ArgoCD syncs Git manifests; kubelets/container runtimes pull application images.
 
 ### 8.1 Execution records and PVCs
 
-`keep` and `keep-since` are options of tools such as tkn deletion commands, not a built-in PipelineRun TTL field. tkn 0.46.0 `pipelinerun delete` has no `--dry-run`. Check retention for logs, scan reports, signatures/provenance and audit data before deleting anything. Do not delete all succeeded Pods without an age policy.
+`keep` and `keep-since` are options of tools such as tkn deletion commands, not a built-in PipelineRun TTL field. tkn 0.46.1 `pipelinerun delete` has no `--dry-run`. Check retention for logs, scan reports, signatures/provenance and audit data before deleting anything. Do not delete all succeeded Pods without an age policy.
 
 This tool prints **review candidates only** in one namespace: successful runs completed over seven days ago and failed runs over fourteen days ago. It uses completion time, not creation time, and requires Chains and archive acknowledgements. `ci.example.com/archive-complete` is an operator-managed annotation recorded after real archival success, not an automatic Tekton field. The script makes no Kubernetes API calls and performs no deletion.
 
@@ -1194,7 +1194,7 @@ Existing PVCs bound directly to Workspaces are not deleted by that annotation. D
 
 ### 8.2 Monitoring
 
-Pipelines 1.16 exports metrics through OpenTelemetry. With `metrics-protocol: prometheus` in `config-observability`, the controller Service port is named **`http-metrics`**. Match both ServiceMonitor selection and Prometheus selection.
+Pipelines 1.17 exports metrics through OpenTelemetry. With `metrics-protocol: prometheus` in `config-observability`, the controller Service port is named **`http-metrics`**. Match both ServiceMonitor selection and Prometheus selection.
 
 **`servicemonitor.yaml`**
 
@@ -1281,7 +1281,7 @@ For Pending Pods, inspect quota, node, PVC and scheduling events. Changing gp3 R
 ## 9. Reuse and Operational Choices
 
 - **Sidecars**: Use DB readiness and real connection checks. A sleep is not readiness evidence. Check native-sidecar feature settings and termination behavior for the installed version.
-- **StepAction**: The feature is stable in 1.16, but the release's storage API remains `tekton.dev/v1beta1`. Connect actual tools, credentials and result paths to the consuming Task.
+- **StepAction**: The feature is stable in 1.17, but the release's storage API remains `tekton.dev/v1beta1`. Connect actual tools, credentials and result paths to the consuming Task.
 - **Catalogs**: Hub service deprecation and CLI internalization are distinct. Hub commands in tkn 0.46 do not guarantee long-term service availability. Manage approved definitions at fixed commits or verified OCI bundle digests and restrict resolver access.
 - **Networking**: NetworkPolicy `to: []` with TCP 443 allows that port to all destinations; it is not an ECR/GitHub domain allowlist. Restrict required DNS, STS/ECR/S3, registry and API paths through the actual CNI/proxy/VPC design.
 - **Spot and cost**: Karpenter uses `karpenter.sh/capacity-type: spot`; EKS Managed Node Groups use their actual `eks.amazonaws.com/capacityType` labels. Account for interruption, retries, quota and storage. No running build Pods does not mean zero total cost.
@@ -1289,13 +1289,13 @@ For Pending Pods, inspect quota, node, PVC and scheduling events. Changing gp3 R
 
 ## 10. References
 
-- [Pipelines 1.16.0](https://github.com/tektoncd/pipeline/releases/tag/v1.16.0)
-- [Triggers 0.37.0](https://github.com/tektoncd/triggers/releases/tag/v0.37.0)
+- [Pipelines 1.17.0](https://github.com/tektoncd/pipeline/releases/tag/v1.17.0)
+- [Triggers 0.37.1](https://github.com/tektoncd/triggers/releases/tag/v0.37.1)
 - [Chains 0.29.0](https://github.com/tektoncd/chains/releases/tag/v0.29.0)
-- [Dashboard 0.72.0](https://github.com/tektoncd/dashboard/releases/tag/v0.72.0)
-- [Pipelines security model](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/security/README.md)
-- [Affinity and PVC lifecycle](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/affinityassistants.md)
-- [Pipelines metrics](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/metrics.md)
+- [Dashboard 0.73.0](https://github.com/tektoncd/dashboard/releases/tag/v0.73.0)
+- [Pipelines security model](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/security/README.md)
+- [Affinity and PVC lifecycle](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/affinityassistants.md)
+- [Pipelines metrics](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/metrics.md)
 - [Chains configuration](https://github.com/tektoncd/chains/blob/v0.29.0/docs/config.md)
 - [SLSA formatter and type hints](https://github.com/tektoncd/chains/blob/v0.29.0/docs/slsa-provenance.md)
 - [BuildKit rootless requirements](https://github.com/moby/buildkit/blob/v0.33.0/docs/rootless.md)

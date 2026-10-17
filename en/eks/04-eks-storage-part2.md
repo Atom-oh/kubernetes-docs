@@ -1,6 +1,6 @@
 # Part 2: Storage Classes
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 This document is the second part of the Amazon EKS storage series, covering FSx for Lustre, Amazon S3, snapshots, volume expansion, and performance optimization.
 
@@ -201,7 +201,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -612,7 +612,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: reader
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -730,7 +730,7 @@ spec:
 
 ### Scheduling Backups with Velero
 
-The reviewed pair is Velero1.18.2 with AWS plugin1.14.2. Verify the CLI release checksum and plugin compatibility before installation. CSI support is integrated into Velero, but `EnableCSI` is still required for this path; do not add the old separate CSI plugin. Prepare a private backup bucket/prefix, network access, scoped IAM/KMS permissions and an IRSA role for `velero/velero`. The following renders a new-install manifest for review without creating resources:
+The reviewed pair is Velero1.18.4 with AWS plugin1.14.4. Verify the CLI release checksum and plugin compatibility before installation. CSI support is integrated into Velero, but `EnableCSI` is still required for this path; do not add the old separate CSI plugin. Prepare a private backup bucket/prefix, network access, scoped IAM/KMS permissions and an IRSA role for `velero/velero`. The following renders a new-install manifest for review without creating resources:
 
 ```bash
 set -euo pipefail
@@ -738,7 +738,7 @@ set -euo pipefail
 : "${VELERO_ROLE_ARN:?Set the reviewed IRSA role for system:serviceaccount:velero:velero}"
 : "${AWS_REGION:?Set the bucket/snapshot Region for this example}"
 velero install --provider aws \
-  --plugins velero/velero-plugin-for-aws:v1.14.2 \
+  --plugins velero/velero-plugin-for-aws:v1.14.4 \
   --bucket "$BACKUP_BUCKET" --prefix eks-storage-demo \
   --backup-location-config "region=$AWS_REGION" \
   --snapshot-location-config "region=$AWS_REGION" \
@@ -819,7 +819,7 @@ CSI handles backend and filesystem expansion where supported. Inspect PVC condit
 
 ## Volume Cloning
 
-Current EBS CSI supports PVC cloning through `dataSource` and the CSI clone capability; EBS CSI1.66.0 uses native EBS volume copy (`CopyVolumes`), not an assumed hidden snapshot. Check the deployed driver/add-on support before using it. The target is independent, but availability and fully initialized performance are different states.
+Current EBS CSI supports PVC cloning through `dataSource` and the CSI clone capability; EBS CSI1.67.0 uses native EBS volume copy (`CopyVolumes`), not an assumed hidden snapshot. Check the deployed driver/add-on support before using it. The target is independent, but availability and fully initialized performance are different states.
 
 
 
@@ -865,7 +865,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: writer
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sh
         - -c
@@ -934,7 +934,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -1034,7 +1034,7 @@ spec:
         topologyKey: kubernetes.io/hostname
   containers:
   - name: attachment-only
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sleep
     - '3600'
@@ -1083,7 +1083,7 @@ spec:
         topologyKey: kubernetes.io/hostname
   containers:
   - name: attachment-only
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sleep
     - '3600'

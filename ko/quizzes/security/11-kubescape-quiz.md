@@ -1,6 +1,6 @@
 # Kubescape 퀴즈
 
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 문제
 
@@ -72,7 +72,7 @@ CI에서는 존재하는 로컬 파일을 명시하고 빈 경로를 거부합�
 
 **정답: B) CLI는 정적 입력/일회성 검사, Operator는 선택한 capability의 지속·예약 검사**
 
-chart 1.40.4의 scanner image는 4.0.13이고 이 문서의 로컬 CLI는 4.0.14입니다. node/image/runtime/remediation 범위와 권한은 별도 선택·검증 대상입니다.
+chart 1.40.4의 scanner image는 4.0.13이고 이 문서의 로컬 CLI는 4.0.16입니다. node/image/runtime/remediation 범위와 권한은 별도 선택·검증 대상입니다.
 
 </details>
 
@@ -108,7 +108,7 @@ chart 1.40.4의 scanner image는 4.0.13이고 이 문서의 로컬 CLI는 4.0.14
 
 **정답: B) 최소 compliance 미달로 exit 1**
 
-같은 fixture는 threshold 55에서 exit 0, 56에서 exit 1이었습니다. --fail-threshold는 4.0.14에서 deprecated로 받아들이지만 실제 게이트 값은 무시하므로 사용하지 않습니다.
+같은 fixture는 threshold 55에서 exit 0, 56에서 exit 1이었습니다. --fail-threshold는 4.0.16에서 deprecated로 받아들이지만 실제 게이트 값은 무시하므로 사용하지 않습니다.
 
 </details>
 

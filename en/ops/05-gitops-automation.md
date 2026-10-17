@@ -1,7 +1,7 @@
 # GitOps Automation: Atlantis, HCP Terraform, Flux, AIOps
 
-> **Review baseline**: Atlantis 0.47.1 / chart 6.15.0, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.5 (Flux pin updated to patch 2.9.6 on October 12, 2026 after release-note review; not re-run)\
-> **Last reviewed**: September 11, 2026. Checked with local CLIs, charts, schemas and test doubles. No actual PR comments, Terraform apply, HCP resource creation, cluster deployment or external AI calls were performed.
+> **Review baseline**: Atlantis 0.48.1 / chart 6.16.1, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.6 (validated on 2.9.5; patch-only pin update, not re-run)\
+> **Last reviewed**: October 16, 2026. Checked with local CLIs, charts, schemas and test doubles. No actual PR comments, Terraform apply, HCP resource creation, cluster deployment or external AI calls were performed.
 
 < [Previous: Multi-Cluster](04-gitops-multi-cluster.md) | [Contents](README.md) | [Next: Scaling](06-scaling-strategies.md) >
 
@@ -65,7 +65,7 @@ fullnameOverride: atlantis
 replicaCount: 1
 image:
   repository: ghcr.io/runatlantis/atlantis
-  tag: v0.47.1
+  tag: v0.48.1
 orgAllowlist: github.com/REPLACE_ORG/eks-infra
 atlantisUrl: https://atlantis.example.com
 defaultTFVersion: 1.15.7
@@ -144,13 +144,13 @@ repoConfig: |
 helm repo add runatlantis https://runatlantis.github.io/helm-charts
 helm repo update
 helm upgrade --install atlantis runatlantis/atlantis \
-  --version 6.15.0 --namespace atlantis --create-namespace \
+  --version 6.16.1 --namespace atlantis --create-namespace \
   --kube-context "$ATLANTIS_CONTEXT" --values atlantis-values.yaml
 ```
 
 These values create a ClusterIP only. Connect `atlantis.example.com` and `/events` through an approved HTTPS proxy/Ingress, then configure the matching GitHub webhook secret. Webhook verification and Web UI authentication are distinct. Do not expand the event route into a general authentication bypass.
 
-Chart 6.15.0 uses `orgAllowlist`, `volumeClaim`, an `environment` map and `containerSecurityContext`. The writable PVC holds checkout, plan and server-lock data; do not overlay it with a read-only ConfigMap. Increasing replicas alone does not make a single-RWO-PVC/BoltDB deployment highly available. Manage retention, backup, recovery and eventual cleanup of retained volumes.
+Chart 6.16.1 uses `orgAllowlist`, `volumeClaim`, an `environment` map and `containerSecurityContext`. The writable PVC holds checkout, plan and server-lock data; do not overlay it with a read-only ConfigMap. Increasing replicas alone does not make a single-RWO-PVC/BoltDB deployment highly available. Manage retention, backup, recovery and eventual cleanup of retained volumes.
 
 ### Server policy and repository projects
 

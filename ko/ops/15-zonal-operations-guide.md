@@ -1,7 +1,7 @@
 # Zonal 클러스터 운영 전략: 트래픽 전환, 업그레이드 롤백, 데이터 AZ 친화
 
-> **검토 기준**: EKS 버전 롤백·ARC 공식 문서, Strimzi 1.2.0, Valkey GLIDE 2.5.2, AWS Advanced JDBC Wrapper 4.4.0
-> **마지막 검토**: 2026년 9월 11일. 설정 예제를 검증했으며 실제 클러스터 전환·장애 실험은 수행하지 않았습니다.
+> **검토 기준**: EKS 버전 롤백·ARC 공식 문서, Strimzi 1.3.0, Valkey GLIDE 2.5.2, AWS Advanced JDBC Wrapper 4.4.0
+> **마지막 검토**: 2026년 10월 16일. 설정 예제를 검증했으며 실제 클러스터 전환·장애 실험은 수행하지 않았습니다.
 
 < [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) | [다음: 트러블슈팅 플레이북](16-troubleshooting-playbook.md) >
 
@@ -153,7 +153,7 @@ TargetGroupBinding의 기본/고급/멀티포트 설정은 [`networking/03-aws-l
 
 - **브로커**: `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector`와 `broker.rack`을 설정합니다.
 - **컨슈머**: `client.rack`을 자신의 rack 값으로 지정합니다. 로컬에 적절한 replica가 없으면 리더로 폴백합니다.
-- **Strimzi 1.2.0**: 아래는 기존 Kafka CR에 병합하는 **설정 발췌**입니다. 전체 배포에는 KafkaNodePool, 리스너, 스토리지 등 추가 설정이 필요합니다. Strimzi 1.0부터 CR API는 `v1`이며 rack 종류도 지정합니다.
+- **Strimzi 1.3.0**: 아래는 기존 Kafka CR에 병합하는 **설정 발췌**입니다. 전체 배포에는 KafkaNodePool, 리스너, 스토리지 등 추가 설정이 필요합니다. Strimzi 1.0부터 CR API는 `v1`이며 rack 종류도 지정합니다.
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1
@@ -169,7 +169,7 @@ spec:
       replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
 ```
 
-이 설정은 브로커의 `broker.rack`을 구성합니다. 일반 컨슈머의 `client.rack`은 별도로 지정합니다. KafkaConnect·MirrorMaker 2·Bridge는 각 CR의 rack 설정을 확인합니다. [Strimzi 공식 설명](https://strimzi.io/docs/operators/1.2.0/configuring.html)에 따라 브로커 배치 분산도 별도로 보장합니다. follower fetch는 복제 지연으로 읽기 지연을 늘릴 수도 있습니다.
+이 설정은 브로커의 `broker.rack`을 구성합니다. 일반 컨슈머의 `client.rack`은 별도로 지정합니다. KafkaConnect·MirrorMaker 2·Bridge는 각 CR의 rack 설정을 확인합니다. [Strimzi 공식 설명](https://strimzi.io/docs/operators/1.3.0/configuring.html)에 따라 브로커 배치 분산도 별도로 보장합니다. follower fetch는 복제 지연으로 읽기 지연을 늘릴 수도 있습니다.
 
 [KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers)의 rack-aware 파티션 할당은 이와 별개입니다. 사용할 컨슈머 버전·assignor 지원을 확인합니다. 배포 전반은 [Kafka on EKS](../data-on-eks/kafka/README.md)를 참고하세요.
 

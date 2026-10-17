@@ -1,6 +1,6 @@
 # Linux 운영 기술
 
-> **지원 버전**: 지원 중인 Linux 배포판의 Bash; 사용 도구는 별도 설치 필요 **마지막 업데이트**: 2026년 9월 11일
+> **지원 버전**: 지원 중인 Linux 배포판의 Bash; 사용 도구는 별도 설치 필요 **마지막 업데이트**: 2026년 10월 16일
 
 이 문서는 Kubernetes 환경에서 효과적으로 작업하기 위한 필수 Linux 운영 기술을 다룹니다.
 
@@ -154,7 +154,7 @@ metadata:
 spec:
   initContainers:
   - name: wait-for-db-dns
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c

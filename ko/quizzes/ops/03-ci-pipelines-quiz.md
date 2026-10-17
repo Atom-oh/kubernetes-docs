@@ -80,7 +80,7 @@
 
 **정답: B) 공식 scale-set 차트와 listener를 사용하고 runs-on을 실제 scale-set 이름에 맞춘다**
 
-**설명:** 레거시 CRD 모델과 현재 scale-set 차트를 섞지 않습니다. ARC 0.14.2에는 scaleSetLabels도 있습니다. minRunners는 유휴 runner 수에 관계하며 controller/listener 비용이나 시작 지연을 없애는 설정은 아닙니다.
+**설명:** 레거시 CRD 모델과 현재 scale-set 차트를 섞지 않습니다. ARC 0.15.0에는 scaleSetLabels도 있습니다. minRunners는 유휴 runner 수에 관계하며 controller/listener 비용이나 시작 지연을 없애는 설정은 아닙니다.
 
 </details>
 

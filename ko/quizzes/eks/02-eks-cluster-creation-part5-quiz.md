@@ -435,7 +435,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: placement-check
-        image: public.ecr.aws/docker/library/busybox:1.37.0
+        image: public.ecr.aws/docker/library/busybox:1.38.0
         command:
         - sleep
         - '3600'
@@ -486,7 +486,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: placement-check
-        image: public.ecr.aws/docker/library/busybox:1.37.0
+        image: public.ecr.aws/docker/library/busybox:1.38.0
         command:
         - sleep
         - '3600'

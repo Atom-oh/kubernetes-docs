@@ -1,7 +1,7 @@
 # ArgoCD 보안
 
-> **검토 기준**: Argo CD 3.5.2, Sealed Secrets 0.40.0/chart 2.20.0, ESO 2.10.0, AVP 1.18.1, KSOPS 4.5.1, SOPS 3.13.3
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2, Sealed Secrets 0.40.0/chart 2.20.0, ESO 2.10.0(릴리스 노트 검토 후 2.12.0으로 갱신, 예제 재실행 안 함), AVP 1.18.1, KSOPS 4.5.1, SOPS 3.13.3
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 
@@ -243,7 +243,7 @@ test -s sealed-secret.yaml
 
 ### External Secrets Operator
 
-ESO는 Git의 시크릿을 암호화하는 도구가 아니라 외부 저장소의 값을 대상 클러스터 Secret으로 동기화합니다. 2.10.0 예제는 external-secrets.io/v1을 사용합니다. 아래 AWS jwt.serviceAccountRef는 IRSA 방식이며, 해당 Namespace의 ServiceAccount에 IAM 역할 주석과 OIDC trust를 준비해야 합니다. Pod Identity를 쓰면 컨트롤러 SA 연결과 SDK credential chain을 사용하며 이 jwt 설정과 혼동하지 않습니다.
+ESO는 Git의 시크릿을 암호화하는 도구가 아니라 외부 저장소의 값을 대상 클러스터 Secret으로 동기화합니다. 2.12.0 예제는 external-secrets.io/v1을 사용합니다. 아래 AWS jwt.serviceAccountRef는 IRSA 방식이며, 해당 Namespace의 ServiceAccount에 IAM 역할 주석과 OIDC trust를 준비해야 합니다. Pod Identity를 쓰면 컨트롤러 SA 연결과 SDK credential chain을 사용하며 이 jwt 설정과 혼동하지 않습니다.
 
 외부 시크릿 관리 시스템과 통합합니다:
 
@@ -252,7 +252,7 @@ ESO는 Git의 시크릿을 암호화하는 도구가 아니라 외부 저장소�
 ```bash
 helm repo add external-secrets https://charts.external-secrets.io
 helm upgrade --install external-secrets external-secrets/external-secrets \
-  --version 2.10.0 --namespace external-secrets --create-namespace --wait --timeout 5m
+  --version 2.12.0 --namespace external-secrets --create-namespace --wait --timeout 5m
 ```
 
 IRSA용 ServiceAccount 예시입니다. 실제 role ARN/OIDC trust를 설정하고 필요한 secret ARN의 GetSecretValue/DescribeSecret 및 해당 시 KMS Decrypt만 허용합니다. Vault 예제에서는 해당 SA/Namespace와 audience=vault에 바인딩한 Vault 역할, 제한된 KV 경로 및 적절한 reviewer 구성을 준비합니다. Vault 1.21+는 역할 audience 설정을 요구합니다.

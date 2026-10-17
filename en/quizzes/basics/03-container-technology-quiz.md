@@ -383,7 +383,7 @@ COPY . .
 RUN npm run build
 
 # Run stage
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 
 # Copy build artifacts to nginx's service directory
 COPY --from=build /app/build /usr/share/nginx/html
@@ -411,7 +411,7 @@ The advantage of this approach is that the final image does not include Node.js 
 
 **Answer:**
 ```dockerfile
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 
 # Copy application (example)
 COPY ./html /usr/share/nginx/html

@@ -1,6 +1,6 @@
 # Part 2: KubeRay 오퍼레이터
 
-> **검토 기준**: KubeRay 1.7.0 · Ray 2.58.0 · 2026-09-12
+> **검토 기준**: KubeRay 1.7.1 · Ray 2.58.0 · 2026-10-16
 
 ## 실습 환경 준비
 
@@ -16,7 +16,7 @@ KubeRay는 Ray CR의 원하는 상태를 바탕으로 Pod·Service 등 하위 �
 
 ## CRD와 기능 게이트
 
-1.7.0 chart에서 확인한 CRD는 **RayCluster, RayJob, RayService, RayCronJob** 네 가지입니다. 모두 `ray.io/v1`을 제공합니다. 앞의 세 CRD에는 deprecated `v1alpha1`도 남아 있으며 새 예제는 `v1`을 사용합니다.
+1.7.1 chart에서 확인한 CRD는 **RayCluster, RayJob, RayService, RayCronJob** 네 가지입니다. 모두 `ray.io/v1`을 제공합니다. 앞의 세 CRD에는 deprecated `v1alpha1`도 남아 있으며 새 예제는 `v1`을 사용합니다.
 
 | 리소스 | 역할과 주의점 |
 |---|---|
@@ -66,7 +66,7 @@ GPU group의 minReplica, CPU/placement 요구 등도 규모에 영향을 줄 수
 ```bash
 helm repo add kuberay https://ray-project.github.io/kuberay-helm/
 helm repo update kuberay
-helm pull kuberay/kuberay-operator --version 1.7.0 --untar --untardir ./vendor
+helm pull kuberay/kuberay-operator --version 1.7.1 --untar --untardir ./vendor
 helm template kuberay-operator ./vendor/kuberay-operator \
   --namespace kuberay-system --include-crds > operator.rendered.yaml
 ```
@@ -77,7 +77,7 @@ helm template kuberay-operator ./vendor/kuberay-operator \
 
 ```bash
 helm upgrade --install kuberay-operator kuberay/kuberay-operator \
-  --version 1.7.0 --namespace kuberay-system --create-namespace
+  --version 1.7.1 --namespace kuberay-system --create-namespace
 kubectl rollout status deployment/kuberay-operator -n kuberay-system
 ```
 
@@ -141,12 +141,12 @@ Dashboard·Ray Client·job 제출 등의 진입점은 신뢰된 주체로 제한
 
 ## 공식 근거
 
-- [KubeRay 1.7.0 release](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
-- [1.7.0 chart values](https://github.com/ray-project/kuberay/blob/v1.7.0/helm-chart/kuberay-operator/values.yaml)
-- [Pod·자원 구성 코드](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/controllers/ray/common/pod.go)
+- [KubeRay 1.7.1 release](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)
+- [1.7.1 chart values](https://github.com/ray-project/kuberay/blob/v1.7.1/helm-chart/kuberay-operator/values.yaml)
+- [Pod·자원 구성 코드](https://github.com/ray-project/kuberay/blob/v1.7.1/ray-operator/controllers/ray/common/pod.go)
 - [Ray 2.58.0 autoscaler 설정 생성](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/autoscaler/_private/kuberay/autoscaling_config.py)
-- [RayJob API](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayjob_types.go)
-- [RayService API](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayservice_types.go)
+- [RayJob API](https://github.com/ray-project/kuberay/blob/v1.7.1/ray-operator/apis/ray/v1/rayjob_types.go)
+- [RayService API](https://github.com/ray-project/kuberay/blob/v1.7.1/ray-operator/apis/ray/v1/rayservice_types.go)
 - [Helm CRD 수명주기](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)
 
 [다음: Train/Tune](03-ray-train-tune.md) · [메인 페이지](README.md) · [퀴즈](../../quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)

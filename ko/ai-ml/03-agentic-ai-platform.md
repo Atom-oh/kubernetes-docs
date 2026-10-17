@@ -1,7 +1,7 @@
 # EKS 기반 Agentic AI 플랫폼 구축
 
 > **검토 기준**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Agentic AI는 단순한 질의응답을 넘어 자율적으로 계획을 세우고, 도구를 사용하며, 반복적으로 목표를 달성하는 AI 시스템입니다. 이 장에서는 EKS에서 Agentic AI 플랫폼의 구성과 운영 경계를 설계하는 방법을 알아보겠습니다.
 
@@ -137,7 +137,7 @@ router_settings:
 
 ## 5. RAG 데이터와 검색 경계
 
-Milvus 최신 확인 릴리스는3.0.1이며, 별도로 검토한 Operator 1.3.9의 기본 Milvus는2.6.11입니다. 같은 버전으로 간주하거나 Operator의 넓은 호환성 표만으로3.x 업그레이드가 검증됐다고 주장하지 마세요. Operator 저장소는 `https://zilliztech.github.io/milvus-operator/`이며 일반 Milvus chart 저장소와 구분됩니다.
+Milvus 최신 확인 릴리스는3.0.3(2026-10-14)이며, 별도로 검토한 Operator 1.3.9의 기본 Milvus는2.6.11입니다. 같은 버전으로 간주하거나 Operator의 넓은 호환성 표만으로3.x 업그레이드가 검증됐다고 주장하지 마세요. Operator 저장소는 `https://zilliztech.github.io/milvus-operator/`이며 일반 Milvus chart 저장소와 구분됩니다.
 
 벡터 차원은 실제 embedding 출력과 같아야 합니다. 모델 이름뿐 아니라 revision·dimensions 옵션·tokenizer·normalization·metric을 기록하고 ingestion/query가 같은 조건을 쓰도록 하세요. index type에 따라 parameter가 다르므로 HNSW의 M/efConstruction을 GPU_IVF_FLAT에 그대로 적용하지 않습니다. GPU index는 이미지·Milvus 버전·장치와 실제 노드 역할을 확인해야 하며 indexNode에 GPU를 요청한다고 자동 가속되지 않습니다.
 
@@ -305,7 +305,7 @@ client.flush()
 client.shutdown()
 ```
 
-Langfuse chart 2.1.0은 app 4.24.0을 가리키며 확인한 최신 server 4.35.0과 별도입니다. 웹·worker, PostgreSQL, Redis/Valkey, 오브젝트 스토리지와 ClickHouse가 필요합니다. 차트는 ClickHouse Operator와 cert-manager 선행 조건을 검사합니다. 이번 오프라인 렌더링은 CRD 존재를 명시한 모의 API 조건으로 수행했으며 실제 설치가 아닙니다. 기본 chart에는 Secret 환경 변수 전달이 있어 파일 전용 정책의 배포본으로 승인한 것이 아닙니다.
+Langfuse chart 2.1.0은 app 4.24.0을 가리키며 확인한 최신 server 4.60.0(2026-10-15)과 별도입니다. 웹·worker, PostgreSQL, Redis/Valkey, 오브젝트 스토리지와 ClickHouse가 필요합니다. 차트는 ClickHouse Operator와 cert-manager 선행 조건을 검사합니다. 이번 오프라인 렌더링은 CRD 존재를 명시한 모의 API 조건으로 수행했으며 실제 설치가 아닙니다. 기본 chart에는 Secret 환경 변수 전달이 있어 파일 전용 정책의 배포본으로 승인한 것이 아닙니다.
 
 DCGM의 FB_USED는 사용량이지 백분율이 아니며 device·driver별 단위와 전체 메모리를 확인해야 합니다. GPU 사용률80%나 온도85C를 모든 workload의 정상/장애 기준으로 고정하지 마세요. 모델 지연·queue·오류·throttling과 실제 장치 한도를 함께 관측합니다.
 

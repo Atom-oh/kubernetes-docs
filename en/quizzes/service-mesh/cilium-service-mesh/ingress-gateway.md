@@ -1,6 +1,6 @@
 # Cilium Service Mesh Ingress & Gateway Quiz
 
-Review baseline: Cilium 1.20.1, Gateway API 1.6.1 and AWS LBC 3.5.0. Read the [guide](../../../service-mesh/cilium-service-mesh/05-ingress-gateway.md) and its primary sources.
+Review baseline: Cilium 1.20.3, Gateway API 1.6.3 and AWS LBC 3.6.0. Read the [guide](../../../service-mesh/cilium-service-mesh/05-ingress-gateway.md) and its primary sources.
 
 ## Quiz Questions
 
@@ -64,7 +64,7 @@ The backend terminates TLS. The Ingress requires a host and path `/`; Cilium use
 
 **Answer: B. `listeners`**
 
-Each listener defines its protocol/port and applicable hostname/TLS/attachment settings. Actual protocol combinations depend on the controller. For example, LBC 3.5 does not support mixing its L4/NLB and L7/ALB listeners in one Gateway.
+Each listener defines its protocol/port and applicable hostname/TLS/attachment settings. Actual protocol combinations depend on the controller. For example, LBC 3.6 does not support mixing its L4/NLB and L7/ALB listeners in one Gateway.
 
 </details>
 
@@ -160,11 +160,11 @@ A usable CEC still needs a Service→Listener→route→Cluster chain. HTTP heal
 
 **Answer: C. Cilium node/proxy costs can coexist with cloud LB charges; compare version-specific features**
 
-Cilium can run behind ALB/NLB, which still incur charges. LBC 3.5 maps HTTP/GRPC Routes to ALB and TCP/UDP/TLS Routes to NLB. Workload mTLS and ACM server certificates are different mechanisms; performance requires comparable measurements.
+Cilium can run behind ALB/NLB, which still incur charges. LBC 3.6 maps HTTP/GRPC Routes to ALB and TCP/UDP/TLS Routes to NLB. Workload mTLS and ACM server certificates are different mechanisms; performance requires comparable measurements.
 
 </details>
 
-### 11. What does TCPRoute do in the guide's Gateway API 1.6.1 baseline?
+### 11. What does TCPRoute do in the guide's Gateway API 1.6.3 baseline?
 
 - A. Inspect HTTP paths
 - B. Terminate TLS by default

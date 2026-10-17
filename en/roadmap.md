@@ -1,6 +1,6 @@
 # Guidebook Roadmap
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 This guidebook tells one continuous story: from the Linux kernel through containers, Kubernetes, Amazon EKS, networking, service mesh, storage, databases, data pipelines, and AI/ML — plus the cross-cutting disciplines of security, GitOps, platform engineering, container registries, observability, and operations. This page is the map, and the recommended paths through it.
 
@@ -19,7 +19,7 @@ This guidebook tells one continuous story: from the Linux kernel through contain
 | Connectivity | Service Mesh | [Istio](service-mesh/istio/README.md) | Istio/Linkerd/Cilium Mesh — with measured mTLS latency |
 | State | Storage | [Storage Overview](storage/README.md) | EBS gp2 vs gp3, measured with fio |
 | State | Database | [Databases Overview](database/README.md) | The operator landscape and a 100M-row ClickHouse benchmark |
-| Data & AI | Data Pipeline | [Data on EKS Overview](data-on-eks/README.md) | Kafka, Spark, Airflow, and Flink deep dives — with a measured Kafka RF3/gp3 ingest ceiling |
+| Data & AI | Data Pipeline | [Data on EKS Overview](data-on-eks/README.md) | Kafka, Spark, Airflow, and Flink deep dives — with a single-run Kafka benchmark record |
 | Data & AI | AI/ML | [AI/ML Workloads](ai-ml/01-ai-ml-workloads.md) | vLLM, Ray, Kubeflow, MLflow on EKS |
 | Cross-cutting | Security & Policy | [Kyverno](security/01-kyverno-policy-management.md) | AuthN/Z, policy, runtime security, supply chain |
 | Cross-cutting | GitOps | [GitOps](gitops/README.md) | ArgoCD, Flux, progressive delivery |
@@ -35,7 +35,7 @@ Documents reporting prior runs on AWS resources. Check environment, repetitions,
 - [Istio sidecar vs ambient, measured](service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — P50/P99 latency per mTLS data plane and 503 rates during rollouts
 - [EBS gp2 vs gp3 Measured Benchmark](storage/01-ebs-gp2-gp3-benchmark.md) — a 10x IOPS gap at the same 100 GiB capacity, and the gp2 burst-credit cliff
 - [ClickHouse on EKS Measured Benchmark](database/01-clickhouse-on-eks.md) — 100M-row ingest throughput, compression ratios, query latency
-- [Kafka on EKS Measured Benchmark](data-on-eks/kafka/09-kafka-benchmark.md) — RF3 ingest ceiling of ≈130–135 MiB/s (= one gp3 volume's write cap) vs 338 MiB/s at RF1, p99 by acks setting, and cold consumers cutting producer throughput by ~45%
+- [Kafka on EKS Measured Benchmark](data-on-eks/kafka/09-kafka-benchmark.md) — single-run records of 134.74 MiB/s at RF3/acks=all and 337.81 MiB/s at RF1/acks=1 (not confirmed as a sustained RF3 cap), p99 by acks setting, and a recorded 44.49% producer throughput drop during replay consumption
 - [Pod Network Benchmark](networking/06-pod-network-benchmark.md) — the 0.040 → 0.339 → 0.544 ms RTT ladder (same node → same AZ → cross-AZ), a 4.96 Gbps single-flow cap regardless of AZ vs 9.94 Gbps with 8 flows, and `ndots:5`'s 10-query/8-NXDOMAIN amplification
 
 ## Share a diagram — exports for LinkedIn and talks

@@ -1,7 +1,7 @@
 # Cilium eBPF Quiz
 
-> **Review baseline**: Cilium 1.20.1; Linux 5.10+ or documented equivalent backports; limit examples use Linux 6.12.
-> **2026-09-12**
+> **Review baseline**: Cilium 1.20.3; Linux 5.10+ or documented equivalent backports; limit examples use Linux 6.12.
+> **2026-10-16**
 
 
 ## eBPF Basic Concepts

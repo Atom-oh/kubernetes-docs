@@ -25,7 +25,7 @@
 <span id="학습-목표"></span>
 
 > **난이도**: 고급
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 16일
 실제 실행 가능한 5개 Python 역할을 별도 workload로 배포합니다. [application README](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)가 코드·DB·이미지·차트 입력의 기준입니다. 결제/알림은 합성 실습이며 실제 결제나 이메일/SMS 발송을 수행하지 않습니다.
 
 ![별도 workload와 트랜잭션 outbox·SNS fanout·큐 소비](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-10.png)
@@ -37,7 +37,7 @@
 | Request/role | Contract |
 |---|---|
 | `POST /orders` | 201 + `id`; order and outbox commit together |
-| `POST /payments` | 200 + `status: completed`; same order/amount/method is idempotent |
+| `POST /payments` | 200 + `status: completed`; same order/amount/method is idempotent; conflicting values return 409 |
 | `GET /orders/{id}` | 200 + same ID, or404 |
 | `notification` | Own SQS queue, persisted synthetic notification |
 | `analytics` | Separate SQS queue, independent persisted result |

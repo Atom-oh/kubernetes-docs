@@ -358,7 +358,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: app
-        image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+        image: nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5
         command:
         - nginx
         args:

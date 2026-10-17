@@ -1,7 +1,7 @@
 # Custom Scheduler Quiz (Part 2)
 
-> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.1
-> **Last Updated**: September 11, 2026
+> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.2
+> **Last Updated**: October 16, 2026
 
 This quiz tests your advanced understanding of implementing and using Custom Schedulers in Kubernetes.
 
@@ -139,7 +139,7 @@ spec:
             operator: Exists
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **Node Affinity Types:**
@@ -266,7 +266,7 @@ spec:
         app: web
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 In the example, both constraints must be satisfied for the candidate placement. For `DoNotSchedule`, calculate:
@@ -342,7 +342,7 @@ spec:
     effect: NoSchedule
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **Toleration Fields:**
@@ -483,7 +483,7 @@ The Go types serialize capitalized field names. With `nodeCacheCapable: false`, 
       "containers": [
         {
           "name": "worker",
-          "image": "busybox:1.37.0",
+          "image": "busybox:1.38.0",
           "resources": {
             "requests": {
               "nvidia.com/gpu": "1"
@@ -661,7 +661,7 @@ spec:
           topologyKey: kubernetes.io/hostname
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 In this example:
@@ -878,7 +878,7 @@ spec:
   priorityClassName: high-priority  # Reference PriorityClass name
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **Preemption Policies:**
@@ -1156,7 +1156,7 @@ spec:
     tolerationSeconds: 600  # Tolerate for 10 minutes
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **Node Controller and Eviction Timing:**

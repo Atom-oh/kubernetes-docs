@@ -1,7 +1,7 @@
 # EKS Networking - Part 2: Services, Load Balancing, and Network Policies
 
-> **Verified Example Versions**: EKS Kubernetes 1.36, AWS Load Balancer Controller 3.5.0, Gateway API 1.6.0
-> **Last Updated**: September 11, 2026
+> **Verified Example Versions**: EKS Kubernetes 1.36, AWS Load Balancer Controller 3.6.0, Gateway API 1.6.0
+> **Last Updated**: October 16, 2026
 
 ## Overview
 
@@ -135,12 +135,12 @@ set -euo pipefail
 : "${AWS_REGION:?Set the cluster Region}"
 : "${VPC_ID:?Set the cluster VPC ID}"
 curl --fail --show-error --location \
-  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json \
-  --output lbc-iam-policy-v3.5.0.json
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/docs/install/iam_policy.json \
+  --output lbc-iam-policy-v3.6.0.json
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
 helm template aws-load-balancer-controller eks/aws-load-balancer-controller \
-  --version 3.5.0 --namespace kube-system \
+  --version 3.6.0 --namespace kube-system \
   --set-string clusterName="$CLUSTER_NAME" \
   --set-string region="$AWS_REGION" --set-string vpcId="$VPC_ID" \
   --set serviceAccount.create=false \
@@ -150,7 +150,7 @@ helm template aws-load-balancer-controller eks/aws-load-balancer-controller \
 After reviewing the rendered resources and satisfying the IAM prerequisites, installation changes the cluster. Upgrade CRDs through the documented release procedure; Helm upgrades do not automatically upgrade every CRD.
 ```bash
 helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  --version 3.5.0 --namespace kube-system \
+  --version 3.6.0 --namespace kube-system \
   --set-string clusterName="$CLUSTER_NAME" \
   --set-string region="$AWS_REGION" --set-string vpcId="$VPC_ID" \
   --set serviceAccount.create=false \
@@ -372,20 +372,20 @@ Gateway API separates infrastructure ownership (GatewayClass/Gateway) from appli
 
 ### Prerequisites
 
-These examples target LBC **3.5.0** with Gateway API **1.6.0**, the version named by that release. Earlier L4 support started at 2.13.3 and L7 at 2.14.0; “2.13+ supports everything” is incorrect. In 3.5.0, the controller detects CRDs and enables `NLBGatewayAPI`/`ALBGatewayAPI` by default. There is no `EnableGatewayAPI` gate. TCPRoute and UDPRoute are now v1 resources in the standard channel; do not blindly install older experimental CRDs.
+These examples target LBC **3.6.0** with Gateway API **1.6.0**, the version named by that release. 3.6.0 uses the same Gateway API 1.6.0 CRDs as 3.5.0, but its release notes say to apply the latest AWS-provided CRDs (the chart CRDs and the LBC Gateway CRDs) before upgrading the controller. Earlier L4 support started at 2.13.3 and L7 at 2.14.0; “2.13+ supports everything” is incorrect. In 3.6.0, the controller detects CRDs and enables `NLBGatewayAPI`/`ALBGatewayAPI` by default. There is no `EnableGatewayAPI` gate. TCPRoute and UDPRoute are now v1 resources in the standard channel; do not blindly install older experimental CRDs.
 ```bash
 set -euo pipefail
 curl --fail --show-error --location \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml \
   --output gateway-standard-v1.6.0.yaml
 curl --fail --show-error --location \
-  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/config/crd/gateway/gateway-crds.yaml \
-  --output lbc-gateway-crds-v3.5.0.yaml
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/config/crd/gateway/gateway-crds.yaml \
+  --output lbc-gateway-crds-v3.6.0.yaml
 ```
 Review the downloads and existing CRD ownership/stored versions before applying these cluster-scoped updates. For an existing installation, follow the release migration procedure. Restart/reconcile the controller after CRDs are established if it started without them.
 ```bash
 kubectl apply --server-side -f gateway-standard-v1.6.0.yaml
-kubectl apply --server-side -f lbc-gateway-crds-v3.5.0.yaml
+kubectl apply --server-side -f lbc-gateway-crds-v3.6.0.yaml
 kubectl get crd gateways.gateway.networking.k8s.io \
   tcproutes.gateway.networking.k8s.io udproutes.gateway.networking.k8s.io \
   loadbalancerconfigurations.gateway.k8s.aws
@@ -548,7 +548,7 @@ spec:
 
 ### QUIC/HTTP3 Support
 
-An ALB HTTPS listener does **not** automatically become HTTP/3. LBC 3.5.0 documents QUIC for **NLB UDP/TCP_UDP listeners** using `listenerConfigurations[].quicEnabled`. This requires IP targets and an NLB without attached security groups. The backend must terminate QUIC/HTTP3 itself. The following is a configuration component for a separate NLB Gateway with UDP:443 and UDPRoute; it is not an ALB configuration or a complete deployment. Plan target-side security and health checks before choosing the no-SG design.
+An ALB HTTPS listener does **not** automatically become HTTP/3. LBC 3.6.0 documents QUIC for **NLB UDP/TCP_UDP listeners** using `listenerConfigurations[].quicEnabled`. This requires IP targets and an NLB without attached security groups. The backend must terminate QUIC/HTTP3 itself. The following is a configuration component for a separate NLB Gateway with UDP:443 and UDPRoute; it is not an ALB configuration or a complete deployment. Plan target-side security and health checks before choosing the no-SG design.
 ```yaml
 apiVersion: gateway.k8s.aws/v1
 kind: LoadBalancerConfiguration
@@ -612,7 +612,7 @@ spec:
 
 ### Gateway API vs Ingress Comparison
 
-| Feature | Ingress with LBC | Gateway API with LBC 3.5.0 |
+| Feature | Ingress with LBC | Gateway API with LBC 3.6.0 |
 |---|---|---|
 | Routing | Host/path plus controller annotations | HTTPRoute/GRPCRoute matches and supported extensions |
 | L4 | Use a separate NLB Service | Separate NLB Gateway with TCPRoute/UDPRoute/TLSRoute |

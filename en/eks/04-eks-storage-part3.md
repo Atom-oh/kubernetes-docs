@@ -1,6 +1,6 @@
 # Amazon EKS Storage - Part 3: Monitoring, Troubleshooting, Cost Optimization, and Security
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 This document is the third and final part of the Amazon EKS storage series, covering storage monitoring, troubleshooting, cost optimization, and security.
 
@@ -50,7 +50,7 @@ LogicalDiskUsage and PhysicalDiskUsage are also valid metrics: they describe unc
 
 ### Monitoring with Prometheus and Grafana
 
-Reuse the monitoring owner’s existing stack. For a new reviewed installation, the published kube-prometheus-stack90.1.1 chart is a verified reference with operator0.93.1; it is not an automatic upgrade instruction for an existing cluster. The following renders manifests only. Prepare `monitoring/grafana-admin` with admin-user/admin-password keys and the chapter’s expandable ebs-gp3 class. Adjust the actual cluster version, storage sizing and retention. Alert delivery, Grafana persistence, availability and kubelet TLS/auth defaults still need deployment-specific review:
+Reuse the monitoring owner’s existing stack. For a new reviewed installation, the published kube-prometheus-stack92.9.0 chart is a verified reference with operator0.94.1; it is not an automatic upgrade instruction for an existing cluster. The following renders manifests only. Prepare `monitoring/grafana-admin` with admin-user/admin-password keys and the chapter’s expandable ebs-gp3 class. Adjust the actual cluster version, storage sizing and retention. Alert delivery, Grafana persistence, availability and kubelet TLS/auth defaults still need deployment-specific review:
 
 ```yaml
 grafana:
@@ -79,7 +79,7 @@ set -euo pipefail
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm template prometheus prometheus-community/kube-prometheus-stack \
-  --version 90.1.1 --namespace monitoring --kube-version 1.36.0 \
+  --version 92.9.0 --namespace monitoring --kube-version 1.36.0 \
   --include-crds -f monitoring-values.yaml > monitoring-review.yaml
 ```
 
@@ -453,7 +453,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c

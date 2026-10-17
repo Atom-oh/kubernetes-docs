@@ -1,7 +1,7 @@
 # ArgoCD Multi-Cluster Deployment and IAM Identity Center
 
-> **Review baseline**: Argo CD 3.5.2 / chart 10.8.4, Terraform 1.15.7 / Helm Provider 3.3.0, ESO 2.10.0\
-> **Last reviewed**: September 11, 2026. Local schemas, rendering and test doubles were checked. No live EKS installation, SSO login or Secrets Manager read was performed.
+> **Review baseline**: Argo CD 3.5.5 / chart 10.10.5, Terraform 1.15.7 / Helm Provider 3.3.0, ESO 2.12.0\
+> **Last reviewed**: October 16, 2026. Local schemas, rendering and test doubles were checked. No live EKS installation, SSO login or Secrets Manager read was performed.
 
 < [Previous: CI Pipelines](03-ci-pipelines.md) | [Contents](README.md) | [Next: GitOps Automation](05-gitops-automation.md) >
 
@@ -28,7 +28,7 @@ Blue and green identify clusters. The example worker NodePools are constrained t
 
 Use the reviewed [Argo CD installation](../gitops/argocd/01-installation.md) and [EKS access management](../eks/02-eks-cluster-creation-part3.md) guides for roles and access entries. Do not replace the complete `aws-auth.mapRoles` value or default to `system:masters`.
 
-The Argo CD 3.5.2 `awsAuthConfig.roleARN` path assumes a role but does not expose an ExternalId field. A trust condition requiring an ExternalId that this path does not send prevents authentication. Design a separate supported authentication path if that condition is required.
+The Argo CD 3.5.5 `awsAuthConfig.roleARN` path assumes a role but does not expose an ExternalId field. A trust condition requiring an ExternalId that this path does not send prevents authentication. Design a separate supported authentication path if that condition is required.
 
 ### Declarative registration using real endpoints
 
@@ -88,7 +88,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -124,7 +124,7 @@ resource "helm_release" "argocd" {
   create_namespace = true
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
-  version          = "10.8.4"
+  version          = "10.10.5"
   timeout          = 900
   wait             = true
   values           = [file("${path.module}/argocd-values.yaml")]
@@ -581,7 +581,7 @@ Disable local admin only after verifying SSO users, at least one approved admini
 
 ## Secret Management
 
-Install ESO 2.10.0 and its v1 CRDs on each spoke. Reuse [chapter 01](01-infrastructure-setup.md)'s Pod Identity association for namespace/ServiceAccount `external-secrets` and named-secret read permissions. A role associated only with the hub is not inherited by spoke ESO Pods.
+Install ESO 2.12.0 and its v1 CRDs on each spoke. Reuse [chapter 01](01-infrastructure-setup.md)'s Pod Identity association for namespace/ServiceAccount `external-secrets` and named-secret read permissions. A role associated only with the hub is not inherited by spoke ESO Pods.
 
 ```yaml
 # fixtures/eso-values.yaml
@@ -601,7 +601,7 @@ serviceMonitor:
 helm repo add external-secrets https://charts.external-secrets.io
 helm repo update
 helm upgrade --install external-secrets external-secrets/external-secrets \
-  --version 2.10.0 --namespace external-secrets --create-namespace \
+  --version 2.12.0 --namespace external-secrets --create-namespace \
   --kube-context "$TARGET_CONTEXT" --values eso-values.yaml
 ```
 
@@ -683,7 +683,7 @@ Verify hub installation/HTTPS, target roles/Access Entries/RBAC/network, cluster
 - [Argo CD Identity Center SAML](https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/identity-center/)
 - [IAM Identity Center customer-managed SAML applications](https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html)
 - [IAM Identity Center attribute mappings](https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html)
-- [ESO 2.10 AWS authentication](https://external-secrets.io/v2.10.0/provider/aws-access/)
+- [ESO 2.12 AWS authentication](https://external-secrets.io/v2.12.0/provider/aws-access/)
 - [Helm Provider](https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs)
 - [Projects and RBAC](../gitops/argocd/06-projects-rbac.md)
 - [Chapter quiz](../quizzes/ops/04-gitops-multi-cluster-quiz.md)

@@ -1,7 +1,7 @@
 # WebSocket Support
 
-> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.37
+> **Last reviewed**: October 16, 2026
 
 Istio enables WebSocket upgrades in its generated HTTP connection manager. This example covers HTTP/1.1 Upgrade with TLS terminated at the ingress gateway. HTTP/2 Extended CONNECT and HTTP/3 need separate support/configuration across the entire path.
 

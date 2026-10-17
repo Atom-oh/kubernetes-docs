@@ -1,7 +1,7 @@
 # Network Policies
 
-> **Review baseline**: Kubernetes 1.35 OpenAPI, Cilium 1.20.1, Calico 3.32.2 and current AWS documentation. Offline checks do not establish cluster compatibility.
-> **Last Updated**: October 15, 2026
+> **Review baseline**: Kubernetes 1.35 OpenAPI, Cilium 1.20.3, Calico 3.32.2 and current AWS documentation. Offline checks do not establish cluster compatibility.
+> **Last Updated**: October 16, 2026
 
 Kubernetes Network Policies are firewall rules that control traffic between Pods. This document covers basic NetworkPolicy and Cilium/Calico extensions. Sections are independent examples; merging every policy would change the effective permissions. No cluster/cloud deployment or live connectivity test was performed.
 
@@ -573,7 +573,7 @@ The Kubernetes NetworkPolicy API has no priority or explicit deny rule. Its allo
 
 ## Cilium Network Policy Extensions {#cilium-network-policy-extensions}
 
-These examples use the released Cilium 1.20.1 policy schema, not an instruction to upgrade every cluster. HTTP rules need a supported L7 proxy path. AWS VPC CNI chaining has documented advanced-feature limitations, including L7 policies; do not assume these HTTP examples work in that mode. A numeric Cilium security identity is an allocation for a label set, not a permanent application ID.
+These examples use the released Cilium 1.20.3 policy schema, not an instruction to upgrade every cluster. HTTP rules need a supported L7 proxy path. AWS VPC CNI chaining has documented advanced-feature limitations, including L7 policies; do not assume these HTTP examples work in that mode. A numeric Cilium security identity is an allocation for a label set, not a permanent application ID.
 
 ### CiliumNetworkPolicy
 
@@ -646,11 +646,11 @@ spec:
             value: application/json
 ```
 
-[HTTP API — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/http.go)
+[HTTP API — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/http.go)
 
 ### L7 Kafka Policy
 
-The released Cilium 1.20.1 CNP schema supports HTTP and DNS L7 rules, but has no `rules.kafka`. The former `role`, `topic` and `clientID` recipe is not a current deployable API. Restrict broker connectivity with network policy, then enforce producer/consumer permissions for `orders` and `events` using Kafka authentication and ACLs. A client ID is not an authenticated principal.
+The released Cilium 1.20.3 CNP schema supports HTTP and DNS L7 rules, but has no `rules.kafka`. The former `role`, `topic` and `clientID` recipe is not a current deployable API. Restrict broker connectivity with network policy, then enforce producer/consumer permissions for `orders` and `events` using Kafka authentication and ACLs. A client ID is not an authenticated principal.
 
 This L4 example assumes an already configured TLS broker listener on TCP 9093, same-namespace clients, and separately authorized client egress/DNS. It does not configure TLS, broker ACLs or topic permissions.
 
@@ -676,7 +676,7 @@ spec:
         protocol: TCP
 ```
 
-[CNP schema — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+[CNP schema — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
 
 ### L7 DNS Policy
 
@@ -1659,12 +1659,12 @@ resource "aws_network_acl_rule" "database_return" {
 
 Choose **AWS VPC CNI chaining** or a separately designed full CNI/IPAM migration. In chaining mode AWS VPC CNI keeps ENI/IPAM responsibility and Cilium attaches its datapath. Preserve `aws-node`; deleting it is not an installation shortcut. Review the existing add-on/Helm owner and avoid overlapping policy-enforcement engines. Existing Pods need a controlled recreation before chaining policy applies; plan disruption and rollback.
 
-The official1.20.1 chaining guide supplies these values, but also documents L7/IPsec limitations. It contains old illustrative outputs; those are not validation of your current EKS environment. Prepare the chart repository/package, verify provenance and render first:
+The official1.20.3 chaining guide supplies these values, but also documents L7/IPsec limitations. It contains old illustrative outputs; those are not validation of your current EKS environment. Prepare the chart repository/package, verify provenance and render first:
 
 ```bash
 # Render locally after verifying the official chart/package provenance.
 # Rendering alone does not change a cluster or validate a migration.
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system \
   --set cni.chainingMode=aws-cni \
   --set cni.exclusive=false \
@@ -1672,7 +1672,7 @@ helm template cilium cilium/cilium --version 1.20.1 \
   --set routingMode=native > cilium-reviewed.yaml
 ```
 
-[AWS VPC CNI chaining — Cilium 1.20.1](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
+[AWS VPC CNI chaining — Cilium 1.20.3](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
 ## Visualization Tools {#visualization-tools}
 

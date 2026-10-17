@@ -29,7 +29,7 @@ magic byte 1바이트와 스키마 ID 4바이트입니다. 뒤에 값이 이어�
 
 </details>
 
-## 4. Karapace 6.2.3은 어떤 주요 스키마 형식을 지원하나요?
+## 4. Karapace 6.2.4는 어떤 주요 스키마 형식을 지원하나요?
 
 <details>
 <summary>정답 보기</summary>
