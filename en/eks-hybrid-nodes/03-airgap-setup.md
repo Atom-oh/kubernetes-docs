@@ -536,7 +536,7 @@ Use `nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml` for the docu
 
 Update automation should **discover candidates**, then require source verification, compatibility review, OS/image scanning, local validation, a representative node canary and approval before promotion. Publish under a new immutable version/build prefix, retain the previous approved cohort, and record rollback limits. Do not run a cron job that silently overwrites production `latest` keys; `nodeadm upgrade` is disruptive and requires workload evacuation.
 
-Historical bandwidth estimates in the earlier quiz—layer caching **50–80%**, compression **30–50%**, platform filtering **50%**—had no attributable measurement. Preserve them only as unverified historical illustrations, not predicted savings. Measure actual bytes for your layer reuse, platform set and compression format; do not recompress approved content while claiming its digest stays unchanged.
+Layer caching, compression and synchronizing images only for the required platforms can reduce transfer volume. Compare actual bytes transferred before and after applying these techniques, and calculate savings for the chosen images and layer reuse. If approved content is recompressed, recheck its digest and submit the changed artifacts through the approval process.
 
 ## Primary references
 

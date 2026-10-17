@@ -20,7 +20,7 @@ Hybrid node join 전에 host·network·credential·cluster access를 준비합�
 
 위 기준이 오래된 Kubernetes 릴리스의 현재 EKS 지원을 뜻하지는 않습니다. 현재 지원되는 EKS·OS/runtime/CNI 조합을 고르세요. AWS는 Ubuntu/RHEL의 hybrid 통합을 지원하며 vendor OS 유지보수 자체를 대신하지 않습니다.
 
-SSM 신규 설치/upgrade에는 **nodeadm 1.0.19+**가 필요합니다. 이전 binary에는 오래된 SSM signing key가 있습니다. 검토한 릴리스는 **v1.0.20**이며, EC2 EKS AMI의 동명 도구가 아닌 hybrid nodeadm을 사용합니다.
+SSM 신규 설치/upgrade에는 <strong>nodeadm 1.0.19+</strong>가 필요합니다. 이전 binary에는 오래된 SSM signing key가 있습니다. 검토한 릴리스는 **v1.0.20**이며, EC2 EKS AMI의 동명 도구가 아닌 hybrid nodeadm을 사용합니다.
 
 ARM의 EKS kube-proxy 1.31+에는 ARMv8.2+crypto가 필요합니다. Pi 5 이전/Cortex-A72는 충족하지 못하지만 Pi 5 CPU만으로 전체 stack이 검증되지는 않습니다. 이전 kube-proxy 1.30 workaround는 2026년 7월 EKS extended support가 종료됐습니다.
 
@@ -37,9 +37,9 @@ Ubuntu 24.04의 과거 Pod 종료/AppArmor 수정에는 containerd 1.7.19+ 또�
 
 ### 용량과 Host 확인
 
-AWS는 **1 vCPU/1 GiB RAM 이상**을 권장하면서 엄격한 보편적 최소값은 없다고 설명합니다. OS/runtime/CNI/agent·image/log·실제 workload 용량을 추가해야 합니다. 이전 퀴즈의 2-core/2GB 최소값은 일치하지 않았습니다.
+AWS는 호스트 사양으로 **1 vCPU와 1 GiB 이상의 메모리**를 권장합니다. 실제 필요한 용량은 실행할 워크로드와 운영 구성에 따라 달라집니다.
 
-이전 disk 20/50/100GB, CPU 2/4-core, RAM 4/8GB는 계획 예시이며 검증된 workload 크기가 아닙니다.
+컨테이너 런타임, CNI, 관리 에이전트와 워크로드의 사용량을 합산해 CPU·메모리 용량을 산정합니다. 디스크는 OS, 컨테이너 이미지, 로그의 저장 공간과 운영 여유를 포함해 확보합니다.
 
 ```bash
 # Run these read-only checks on the intended hybrid host.
@@ -79,7 +79,7 @@ AWS 예제는 Ubuntu 22.04/24.04·RHEL 8/9와 vSphere OVA·QEMU qcow2/raw target
 
 - `K8S_VERSION` validation이 아직 1.26–1.31만 허용합니다. 검토한 current fork를 유지하고 template 때문에 버전을 낮추지 마세요.
 - `NODEADM_ARCH`는 **`amd` 또는 `arm`** 뒤에 `64`를 붙입니다. 이전 `amd64`는 `amd6464`가 됩니다.
-- Packer의 `CREDENTIAL_PROVIDER=iam`은 nodeadm의 **`iam-ra`**로 변환됩니다.
+- Packer의 `CREDENTIAL_PROVIDER=iam`은 nodeadm의 <strong>`iam-ra`</strong>로 변환됩니다.
 - 실제 파일은 `hybrid-nodes-template.pkr.hcl`이며 `general-build.qemu.al2023` source는 없습니다.
 - Mutable `releases/latest` 다운로드, vSphere `insecure_connection=true`, 기본 build password와 전역 변수 요구를 검토합니다. RHEL provisioner의 x86 repository는 고정돼 있어 binary 아키텍처만 바꿔도 ARM build가 되지는 않습니다.
 
@@ -112,7 +112,7 @@ if command -v nvcc >/dev/null 2>&1; then nvcc --version; fi
 
 Control plane의 kubelet·hybrid webhook 접근을 포함해 안정적인 **private 양방향 연결**이 필요합니다. Public API는 node→API 경로를 바꾸며 필요한 private 역방향 경로를 없애지 않습니다.
 
-AWS의 **100 Mbps/RTT ≤200ms**는 일반 권장이지 엄격한 보편적 최소값이 아닙니다. 이전 10Gbps/5ms, packet loss 0.1%/0.01%, MTU 1500/9000은 미검증 계획 예시입니다. 실제 수요·encapsulation/path MTU를 시험하며 모든 NIC를 9000으로 바꾸지 마세요.
+AWS는 연결 성능의 일반적인 기준으로 **100 Mbps 대역폭과 RTT 200ms 이하**를 권장합니다. 필요한 대역폭과 허용 지연 시간·패킷 손실률은 워크로드에 맞게 정하고 실제 연결 경로에서 측정하세요. MTU는 터널 캡슐화에 따른 오버헤드와 경로상의 장비가 지원하는 크기를 확인한 뒤 설정합니다.
 
 Remote node/Pod CIDR은 IPv4 RFC1918/CGNAT이며 서로·VPC·service network와 겹치면 안 됩니다. 각 remote 종류의 CIDR 최대 15개를 **하나의** remote-node-network, **하나의** remote-pod-network wrapper에 넣습니다. Cluster 간 Pod routing 분리도 필요합니다.
 
@@ -413,7 +413,7 @@ EKS Kubernetes API CA 파일과 다릅니다. Node identity를 image에 복제�
 
 고정된 v1.0.20 template은 provisioning의 출발점입니다. SSM template은 role을 만들며 **activation은 만들지 않습니다**. 여러 cluster에 쓰기 전 넓은 DescribeCluster scope와 고정 export 이름을 검토하세요.
 
-IRA의 `CertAttributeTrustPolicy` 값은 `"CN"`이 아닌 literal **`${aws:PrincipalTag/x509Subject/CN}`**입니다. Python `cryptography` helper는 PEM을 정확히 serialize하고 기본 CA 형태·현재 유효성을 확인하며 issuer 권한·revocation 검증은 아닙니다.
+IRA의 `CertAttributeTrustPolicy` 값은 `"CN"`이 아닌 literal <strong>`${aws:PrincipalTag/x509Subject/CN}`</strong>입니다. Python `cryptography` helper는 PEM을 정확히 serialize하고 기본 CA 형태·현재 유효성을 확인하며 issuer 권한·revocation 검증은 아닙니다.
 
 ```bash
 : "${CA_PEM_FILE:?Set the approved CA certificate file, not a private key}"

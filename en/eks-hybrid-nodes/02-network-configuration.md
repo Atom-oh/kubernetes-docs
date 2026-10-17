@@ -1113,7 +1113,7 @@ jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-
 
 `available` is a VPN resource state, not tunnel health. TunnelState is 1 for UP/static or ESTABLISHED/BGP and 0 for other states; aggregates can be fractional. Keep absent data distinct from DOWN and verify both tunnels, routes and actual workload behavior. The query avoids dumping customer gateway configurations/pre-shared keys.
 
-AWS's ≤200ms RTT / 100Mbps guidance is general guidance. The former 50/100ms bands and “Direct Connect always under 10ms” were unverified heuristics, not guarantees.
+AWS's general connectivity recommendation is **100 Mbps bandwidth and RTT of 200ms or less**. When choosing VPN or Direct Connect, assess actual round-trip latency, packet loss, failover paths and workload response times alongside the circuit's nominal bandwidth.
 
 ## References
 
