@@ -6,15 +6,15 @@ las tareas de los operadores e intercambian datos. La coherencia de los checkpoi
 y el comportamiento exactly-once en un sink externo tienen requisitos distintos.
 La parte 3 examina conjuntamente las fuentes, el estado y los sinks.
 
-> **Última actualización**: September 12, 2026
-> Baseline de integración: **Flink 2.2.1 / Java 17 / Operator 1.15.0**.
+> **Última actualización**: 12 de septiembre de 2026
+> Línea base de integración: **Flink 2.2.1 / Java 17 / Operator 1.15.0**.
 
 El ejemplo de Iceberg de la parte 3 usa por separado **Flink 2.1.3 / Iceberg 1.11.0**
 para coincidir con su runtime. Consulte las limitaciones de cada capítulo sobre la
 compatibilidad del SDK del plugin de S3 y las diferencias entre servicios administrados.
 
 La versión estable más reciente de Flink es la 2.3.0. Estos ejemplos usan la 2.2.1
-como baseline para comprobarla junto con las tablas publicadas de compatibilidad de
+como línea base y deben verificarse frente a las tablas publicadas de compatibilidad de
 Operator y conectores. Que un CRD acepte una cadena de versión en un enum no demuestra
 que exista compatibilidad de integración. Elija las versiones de Kubernetes/kubectl
 según el soporte actual de EKS y las políticas de desfase de versiones; «Kubernetes
@@ -28,7 +28,7 @@ según el soporte actual de EKS y las políticas de desfase de versiones; «Kube
 - En el modo Native, el Kubernetes ResourceManager del JobManager solicita y libera
   pods de TaskManager. En el modo Standalone, un administrador externo, como el Operator,
   gestiona los recursos de Kubernetes.
-- Un task slot no equivale a un núcleo de CPU ni exactamente a una subtask del operador.
+- Un task slot no equivale a un núcleo de CPU ni exactamente a una subtarea del operador.
   El encadenamiento y el uso compartido de slots pueden colocar varios operadores en un
   slot; dimensione el estado, la memoria y la CPU por separado.
 

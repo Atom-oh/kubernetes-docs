@@ -523,7 +523,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ### 步骤 1：分析当前 PSP
 
-**仅限历史流程：**以下 PSP 命令/资源适用于仍提供 `policy/v1beta1` 服务的旧集群（最高 Kubernetes 1.24），或保存的 manifest。不要将此 PSP 应用于当前集群。同时盘点之前由 PSP 默认设置/变更的字段；PSA 不会填充它们。
+**仅限历史流程**：以下 PSP 命令/资源适用于仍提供 `policy/v1beta1` 服务的旧集群（最高 Kubernetes 1.24），或保存的 manifest。不要将此 PSP 应用于当前集群。同时盘点之前由 PSP 默认设置/变更的字段；PSA 不会填充它们。
 
 ```bash
 # List current PSPs
@@ -569,7 +569,7 @@ spec:
     rule: RunAsAny
 ```
 
-**映射结果：**Restricted 是候选目标，而不是等效策略。此 PSP 缺少必需的 seccomp 控制，并允许 PSS 可能拒绝的 SELinux 设置。比较每项控制和每个生成的 Pod；三个选定字段无法确定等效性。
+**映射结果**：Restricted 是候选目标，而不是等效策略。此 PSP 缺少必需的 seccomp 控制，并允许 PSS 可能拒绝的 SELinux 设置。比较每项控制和每个生成的 Pod；三个选定字段无法确定等效性。
 
 ### PSP 到 PSS 映射表
 

@@ -1,175 +1,163 @@
 # 可观测性堆栈测验
 
-> **相关文档**: [可观测性堆栈](../../ops/09-observability-stack.md)
+> **相关文档**：[可观测性堆栈](../../ops/09-observability-stack.md)
 
-## 多项选择题
+## 1. 哪项说法应指导新的 Loki 部署？
 
-### 1. LGTM 可观测性堆栈由哪些组件组成？
-
-- A) Linux、Git、Terminal、Make
-- B) Loki（日志）、Grafana（可视化）、Tempo（追踪）、Mimir/Prometheus（指标）
-- C) Lambda、Gateway、Transit、Monitor
-- D) 负载均衡器、Gateway、TLS、Mesh
+- A. SimpleScalable 永远是所有新部署的默认选项
+- B. SimpleScalable 已弃用，并计划在 4.0 中移除；应评估替代方案
+- C. Monolithic 模式无法使用对象存储
+- D. 三个副本会自动保证可用区隔离
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Loki（日志）、Grafana（可视化）、Tempo（追踪）、Mimir/Prometheus（指标）**
+**答案：B**
 
-**解释：**
-LGTM 是 Grafana Labs 的可观测性堆栈，由用于日志聚合的 Loki、用于可视化和仪表板的 Grafana、用于分布式追踪的 Tempo，以及用于指标的 Mimir（或 Prometheus）组成。这些组件可以无缝集成。
+Read/write/backend 拆分描述的是 SSD（Simple Scalable Deployment）架构。新设计还必须评估其生命周期，以及 Monolithic 和 Distributed 模式的容量与运维限制。
 
 </details>
 
-### 2. Loki 的 SimpleScalable 和 Distributed 部署模式有什么区别？
+## 2. Tempo 3 的分布式模式与单体模式有什么区别？
 
-- A) SimpleScalable 仅用于测试
-- B) SimpleScalable 分离读/写路径；Distributed 增加了更细粒度的组件分离
-- C) Distributed 已被弃用
-- D) 它们完全相同
+- A. 两者都会保留旧版 ingester
+- B. Monolithic 模式始终需要 Kafka
+- C. Distributed 模式使用 Kafka；Monolithic 模式可以不使用 Kafka
+- D. 增加 Monolithic chart 副本即可获得受支持的分布式高可用
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) SimpleScalable 分离读/写路径；Distributed 增加了更细粒度的组件分离**
+**答案：C**
 
-**解释：**
-SimpleScalable 模式将 Loki 拆分为可独立扩展的读路径和写路径。Distributed 模式进一步分离组件（ingesters、distributors、queriers 等），以便在大规模场景下获得最大的可扩展性和运维灵活性。
+版本 3 使用 block-builders/live-stores 和 backend-scheduler/workers，取代分布式 ingester/compactor 架构。不要混用其部署模式。
 
 </details>
 
-### 3. Tempo 中基于尾部采样的目的是什么？
+## 3. 尾部采样有哪些限制？
 
-- A) 对日志文件末尾进行采样
-- B) 在看到完整 trace 后再做采样决策
-- C) 降低查询延迟
-- D) 压缩 trace 数据
+- A. 它总能保留每条错误 trace
+- B. 它依据 decision_wait 期间收到的 span 作出决定，无法恢复头部采样已丢弃的数据
+- C. 随机 Service 负载均衡总能让一条 trace 固定经过同一个 sampler
+- D. num_traces 表示每秒 trace 速率
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在看到完整 trace 后再做采样决策**
+**答案：B**
 
-**解释：**
-基于尾部采样会等到 trace 完成后再决定是否存储它。这样可以保留所有错误 trace 或慢 trace，同时对正常 trace 进行采样；而基于头部采样在 trace 开始时就做出决定，因此无法做到这一点。
+延迟到达的 span、缓冲区限制、重启和传输故障都会产生影响。使用多个 sampler 时，需要根据 trace ID 进行路由。
 
 </details>
 
-### 4. OTEL Collector 在可观测性堆栈中扮演什么角色？
+## 4. batch processor 的 send_batch_size 控制什么？
 
-- A) 长期存储指标
-- B) 从应用程序接收、处理并导出 telemetry 数据
-- C) 创建 Grafana 仪表板
-- D) 管理用户身份认证
+- A. 批次大小的上限
+- B. trace 的最长持续时间
+- C. 触发发送的项目数
+- D. 持久存储容量
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 从应用程序接收、处理并导出 telemetry 数据**
+**答案：C**
 
-**解释：**
-OpenTelemetry Collector 充当 telemetry pipeline，从应用程序接收 traces、metrics 和 logs，对它们进行处理（批处理、过滤、丰富），并导出到 Tempo、Prometheus 和 Loki 等后端。
+send_batch_max_size 才是批次大小上限。应将批处理放在内存限制和采样/丢弃处理之后。
 
 </details>
 
-### 5. Amazon Managed Prometheus (AMP) 如何与 Prometheus 集成？
+## 5. 如果 Alloy DaemonSet 的每个 Pod 都收集集群中的所有日志目标，会发生什么？
 
-- A) 它完全替代 Prometheus
-- B) Prometheus 使用 remote_write 将指标发送到 AMP 进行存储
-- C) AMP 作为 Prometheus sidecar 运行
-- D) AMP 只与 CloudWatch 配合使用
+- A. 自动实现完美的高可用去重
+- B. 采集可能重复；应分配目标或配置 source clustering
+- C. Kubernetes API 会自动确保只有一个采集器
+- D. 因为总是需要 hostPath，所以它无法启动
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Prometheus 使用 remote_write 将指标发送到 AMP 进行存储**
+**答案：B**
 
-**解释：**
-AMP 为 Prometheus 指标提供托管且可扩展的存储后端。Prometheus 继续在本地抓取并评估规则，但使用 `remote_write` 将指标发送到 AMP。随后 Grafana 使用 PromQL 查询 AMP。
+Kubernetes logs API source 与读取日志文件的方式不同。单个 Deployment/Recreate 示例可以减少重复，但无法提供高可用或不中断的采集。
 
 </details>
 
-### 6. 推荐的 Loki label 设计策略是什么？
+## 6. Loki 保留策略需要哪些设置？
 
-- A) 为了灵活性，使用尽可能多的 labels
-- B) 使用有界的低基数 labels，以避免索引爆炸
-- C) 避免使用任何 labels
-- D) 只使用 timestamp labels
+- A. 仅设置 retention_period
+- B. 24 小时 TSDB 索引、启用 Compactor 保留策略、delete_request_store 和保留时长
+- C. 将存储桶中的每个对象都设为同一时间过期
+- D. Grafana 仪表板的时间范围
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使用有界的低基数 labels，以避免索引爆炸**
+**答案：B**
 
-**解释：**
-高基数 labels（如用户 ID 或请求 ID）会创建过多 streams 并使索引膨胀。Labels 应保持低基数（namespace、app、environment），而高基数数据应放在日志内容中，以便使用 LogQL 进行过滤。
+删除会延迟并异步执行，Compactor 状态和标记必须能在重启后保留。存储桶级生命周期过期可能会误删索引等必需对象。
 
 </details>
 
-### 7. Promtail 和 Grafana Alloy 在日志收集方面有什么区别？
+## 7. 哪些标签用于标识 AMP 高可用组及其副本？
 
-- A) Promtail 只收集指标
-- B) Alloy 是支持日志、指标和 traces 的统一 agent；Promtail 专用于 Loki
-- C) Promtail 比 Alloy 更新
-- D) Alloy 不支持 Kubernetes
+- A. namespace 和 pod
+- B. cluster 和 __replica__
+- C. service 和 trace_id
+- D. 仅 region
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Alloy 是支持日志、指标和 traces 的统一 agent；Promtail 专用于 Loki**
+**答案：B**
 
-**解释：**
-Promtail 专门用于将日志发送到 Loki。Grafana Alloy（以前称为 Agent）是一个统一 collector，使用 OpenTelemetry 和原生 receivers 处理日志、指标和 traces，从而减少所需 agent 的数量。
+同一抓取数据的副本共享 cluster 值，并使用不同的 __replica__ 值。将彼此独立的抓取覆盖范围归入同一个高可用组可能导致数据丢失。
 
 </details>
 
-### 8. 如何配置 Grafana 中 Loki 和 Tempo 之间的 datasource 链接？
+## 8. 关于 AMP 保留时长，哪项说法正确？
 
-- A) 它们无需配置即可自动链接
-- B) 在 Loki datasource 中配置指向 Tempo datasource 的 derived fields
-- C) 安装单独的链接插件
-- D) 将数据导出到一个公共数据库
+- A. 150 天是不可更改的上限
+- B. 每个 workspace 都可以配置，最长为 1,095 天
+- C. 保留时长始终无限
+- D. 延长保留时长会恢复已删除的指标
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在 Loki datasource 中配置指向 Tempo datasource 的 derived fields**
+**答案：B**
 
-**解释：**
-在 Grafana 的 Loki datasource 设置中，配置 derived fields，并使用正则表达式从日志中提取 trace ID，然后链接到 Tempo datasource。这样会从日志行创建到关联 traces 的可点击链接。
+应根据需求、成本和服务限制设置保留时长。过期数据不会因此恢复。
 
 </details>
 
-### 9. Tempo 的 compactor 组件的目的是什么？
+## 9. 在 Grafana 中将 Loki 日志链接到 Tempo trace，需要什么？
 
-- A) 压缩网络流量
-- B) 合并 trace blocks 并管理保留策略
-- C) 编译 TraceQL 查询
-- D) 减少仪表板加载时间
+- A. 同时安装两者就会自动建立链接
+- B. 正确提取 trace ID，显式配置数据源 UID，并确保 trace 数据可访问
+- C. 将 trace ID 加为普通 Prometheus 标签
+- D. 只启用 HTTP/2
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 合并 trace blocks 并管理保留策略**
+**答案：B**
 
-**解释：**
-compactor 会将较小的 trace blocks 合并为较大的 blocks 以提高存储效率，并通过删除过期数据来应用保留策略。它在 distributed 模式下作为单独进程运行，或在 monolithic binary 内运行。
+请匹配 derivedFields/tracesToLogsV2 映射、时间范围、租户和权限。Exemplar 还需要相应的插桩、OpenMetrics 和存储配置。
 
 </details>
 
-### 10. 配置 OTEL Collector processors 时，batch processor 做什么？
+## 10. chart 渲染成功后还必须检查什么？
 
-- A) 为 traces 分配 batch IDs
-- B) 在导出前将 telemetry 分组为 batches，以提高效率
-- C) 处理数据库批量操作
-- D) 在 Kubernetes 中创建 batch jobs
+- A. 不必检查；所有未知值都会应用
+- B. 实际 PVC、Service、身份、后端配置以及写入/查询路径
+- C. 只需检查 YAML 缩进
+- D. 将每个镜像都替换为 latest
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在导出前将 telemetry 分组为 batches，以提高效率**
+**答案：B**
 
-**解释：**
-batch processor 会累积 telemetry 数据，并根据大小或超时阈值以 batches 发送。这样可以减少发出的请求数量，提高压缩效果，并降低接收后端的负载。
+某些 chart 值可能会被静默忽略。检查 PVC 的 claim 和 accessModes、Service 端口，并区分原生解析器校验与实际环境连通性。
 
 </details>

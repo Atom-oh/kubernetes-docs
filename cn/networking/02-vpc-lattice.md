@@ -618,7 +618,7 @@ aws vpc-lattice get-service --service-identifier "$SERVICE_ID" --query dnsEntry
 
 删除之前，请确认所有使用方、网络关联、Listener/规则、目标组引用和资源所有权。按依赖顺序删除特定 Route/Service association 和 Service 资源，然后删除不再使用的目标组。共享的 Gateway/network 可能会影响其他 namespace 或账户。请保留 Controller，直到 finalizer 和云端清理完成；不要执行不加区分的批量删除。
 
-**删除 IAMAuthPolicy 会在解除 policy 附加前禁用其目标上的 IAM 身份验证 (`NONE`)。**这不是拒绝访问或安全回滚授权的方式。删除 Service 时请保留限制性 policy，并验证剩余的网络/Service 控制措施。
+**删除 IAMAuthPolicy 会在解除 policy 附加前禁用其目标上的 IAM 身份验证 (`NONE`)。这不是拒绝访问或安全回滚授权的方式**。删除 Service 时请保留限制性 policy，并验证剩余的网络/Service 控制措施。
 
 ## 路由和流量管理 {#routing-and-traffic-management}
 

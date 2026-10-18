@@ -319,7 +319,7 @@ IP targets 会将流量发送到符合条件的 Pod IP；instance targets 使用
 | TLS 终止 | 使用 `aws-load-balancer-ssl-cert`，并通过 `aws-load-balancer-ssl-ports` 配置匹配的 Service 监听端口；这是 NLB TLS 终止，不是 ALB HTTP 路由 |
 
 旧式 `aws-load-balancer-internal`、跨区和访问日志注解已弃用，应改用方案/属性设置。目前的 NLB 还支持增强型 CloudWatch 日志传输；应选择其文档化集成，不要假设 S3 注解可以配置该功能。访问日志采用尽力而为方式，并非完整的请求台账。
-**ALB 替代方案：**使用带有已配置 `alb` IngressClass 的 Ingress，并通过 IP targets 指向 ClusterIP 后端。这样可以避免为同一个示例后端意外同时创建 NLB 和 ALB：
+**ALB 替代方案**：使用带有已配置 `alb` IngressClass 的 Ingress，并通过 IP targets 指向 ClusterIP 后端。这样可以避免为同一个示例后端意外同时创建 NLB 和 ALB：
 
 ```yaml
 apiVersion: v1
@@ -385,7 +385,7 @@ NLB 目前支持 TCP、TLS、UDP、TCP_UDP、QUIC 和 TCP_QUIC 监听器。应�
 
 使用一个选择目标命名空间中所有 Pod 的策略，允许同一命名空间内的对等 Pod，并显式添加 DNS 例外。这是 L3/L4 策略，并不能证明租户或节点已完全隔离。
 
-**前提条件：**使用经过批准的传统 IPv4 Linux 测试集群，通过受支持的所有者/配置启用了原生 VPC CNI NetworkPolicy，测试 Pod 由控制器管理，CoreDNS 正常运行，且没有相冲突的组织级策略。不要在此实验中安装 Calico，也不要切换虚构的 `ENABLE_NETWORK_POLICY` 变量。
+**前提条件**：使用经过批准的传统 IPv4 Linux 测试集群，通过受支持的所有者/配置启用了原生 VPC CNI NetworkPolicy，测试 Pod 由控制器管理，CoreDNS 正常运行，且没有相冲突的组织级策略。不要在此实验中安装 Calico，也不要切换虚构的 `ENABLE_NETWORK_POLICY` 变量。
 
 创建两个新命名空间并记录其 UID。以下代码片段应在同一个 Bash 会话中运行：
 
@@ -457,7 +457,7 @@ EOF
     rollout status deployment/network-probe --timeout=180s
 done
 ```
-**基线：**应用策略前，必须确认同一命名空间内和跨命名空间的 TCP 连接都成功。DNS/exec 失败不同于 TCP 连接被拒绝。ICMP ping 不是可移植的 NetworkPolicy 强制执行测试。
+**基线**：应用策略前，必须确认同一命名空间内和跨命名空间的 TCP 连接都成功。DNS/exec 失败不同于 TCP 连接被拒绝。ICMP ping 不是可移植的 NetworkPolicy 强制执行测试。
 
 ```bash
 check_tcp() {
@@ -485,7 +485,7 @@ check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_B"
 check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"
 check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_A"
 ```
-**仅应用于命名空间 A：**空的 peer podSelector 会选择该策略所在命名空间中的 Pod。DNS peer 将 kube-system 命名空间与 CoreDNS Pod 标签组合起来。如使用 NodeLocal DNSCache 或其他 DNS 路径，请相应调整。标准策略附加为异步操作，因此应通过正向控制和对两个阻断方向的测试来确认传播情况：
+**仅应用于命名空间 A**：空的 peer podSelector 会选择该策略所在命名空间中的 Pod。DNS peer 将 kube-system 命名空间与 CoreDNS Pod 标签组合起来。如使用 NodeLocal DNSCache 或其他 DNS 路径，请相应调整。标准策略附加为异步操作，因此应通过正向控制和对两个阻断方向的测试来确认传播情况：
 
 ```bash
 kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NP_NAMESPACE_A" create -f - <<'EOF'
@@ -547,7 +547,7 @@ done
 ```
 成功表示在 DNS 和服务器可用性检查均通过的情况下，所测试的 TCP 路径表现符合预期。这并不能证明每种协议/接口都已被过滤。应单独保留平台的节点、元数据服务和安全组控制。
 
-**扩展：**若要只允许特定的同命名空间 Pod 或端口，请替换/审查宽泛的同命名空间允许规则。添加更窄的策略无法移除现有的宽泛允许规则。对于经过审查的外部 API，可以添加额外的出站策略，选择所需的 CIDR/端口；此文档前缀不是实际目的地：
+**扩展**：若要只允许特定的同命名空间 Pod 或端口，请替换/审查宽泛的同命名空间允许规则。添加更窄的策略无法移除现有的宽泛允许规则。对于经过审查的外部 API，可以添加额外的出站策略，选择所需的 CIDR/端口；此文档前缀不是实际目的地：
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -608,7 +608,7 @@ done
 | 替代 CNI | 改用不同的 IPAM/路由模型 | 需要受支持且经过测试的迁移；不能在原位切换清单 |
 | Fargate | 将节点/IP 分配操作委托出去 | 每个 Pod 仍会消耗子网/VPC 地址；无法修复已耗尽的子网 |
 
-**前缀模式：**普通 IPv4 前缀是 /28 网段，每个前缀占用一个地址槽位。原先“最高 5 倍”的说法是未经验证的通用声明，并非基准测试；应使用实际的实例/CNI/kubelet 限制。Pod 安全组可以共存，但 branch Pod 仍有自身的限制。检查碎片情况，并在需要时预留前缀空间或使用新子网；不要假设空闲单个 IP 的数量能证明存在连续地址块。
+**前缀模式**：普通 IPv4 前缀是 /28 网段，每个前缀占用一个地址槽位。原先“最高 5 倍”的说法是未经验证的通用声明，并非基准测试；应使用实际的实例/CNI/kubelet 限制。Pod 安全组可以共存，但 branch Pod 仍有自身的限制。检查碎片情况，并在需要时预留前缀空间或使用新子网；不要假设空闲单个 IP 的数量能证明存在连续地址块。
 
 **预留池：**`WARM_IP_TARGET` 表示空闲地址余量，`MINIMUM_IP_TARGET` 表示最小总分配量。它们可能会覆盖前缀/ENI 预留目标行为。示例值 5/10 应根据工作负载和 API 调用预算进行调优：
 
@@ -617,7 +617,7 @@ done
 ```
 `MAX_ENI` 会将节点分配量限制在 EC2 实例类型上限以内；将其设为 5 并不会让只支持更少 ENI 的实例类型支持 5 个 ENI。更改限制前，应检查实际分配指标。
 
-**自定义网络：**准备好位于同一 VPC、同一 AZ 的 Pod 子网和 SG 后，应通过现有 CNI 所有者合并此配置。稳定的区域标签为 `topology.kubernetes.io/zone`，而不是已弃用的 beta 标签：
+**自定义网络**：准备好位于同一 VPC、同一 AZ 的 Pod 子网和 SG 后，应通过现有 CNI 所有者合并此配置。稳定的区域标签为 `topology.kubernetes.io/zone`，而不是已弃用的 beta 标签：
 
 ```json
 {
@@ -640,11 +640,11 @@ spec:
 ```
 为每个使用的 AZ 创建匹配的 ENIConfig。必须审查节点注解覆盖。带有正确区域标签的替换节点可以复用现有 ENIConfig，无需每次都重新创建。现有 Pod 不会立即全部切换网络。应验证替换节点，并在检查容量、PDB 和数据后执行迁移。
 
-**CIDR/子网更改：**通过相应的 IaC 所有者添加符合条件且不重叠的 CIDR 和关联子网，然后审查路由、安全、Endpoint 和发现标签。对于控制平面操作，EKS 最多可能需要一小时才能识别新关联的 VPC CIDR。创建 /16 子网也需要一个可用且已关联的 /16 范围；“更大”并不能绕过 VPC 限制。
+**CIDR/子网更改**：通过相应的 IaC 所有者添加符合条件且不重叠的 CIDR 和关联子网，然后审查路由、安全、Endpoint 和发现标签。对于控制平面操作，EKS 最多可能需要一小时才能识别新关联的 VPC CIDR。创建 /16 子网也需要一个可用且已关联的 /16 范围；“更大”并不能绕过 VPC 限制。
 
-**替代 CNI/IPv6：**规划完整的控制平面、DNS、Service/负载均衡器、策略、引导和回滚路径。不要在运行中的集群上应用随时变化的 Calico overlay 清单并禁用 aws-node，将其作为通用切换方式。现有 EKS 集群的 IP 地址族无法简单切换为 IPv6。具体支持情况和 AWS 集成取决于所用的计算/CNI 模式。
+**替代 CNI/IPv6**：规划完整的控制平面、DNS、Service/负载均衡器、策略、引导和回滚路径。不要在运行中的集群上应用随时变化的 Calico overlay 清单并禁用 aws-node，将其作为通用切换方式。现有 EKS 集群的 IP 地址族无法简单切换为 IPv6。具体支持情况和 AWS 集成取决于所用的计算/CNI 模式。
 
-**Fargate：**命名空间标签不会创建配置文件，`eks.amazonaws.com/v1alpha1 kind: FargateProfile` 也不是内置 Kubernetes API。请使用 EKS API 或 eksctl（或明确安装的受支持控制器）。此 API 示例需要一个未使用的配置文件名称、经过审查的私有子网和执行角色：
+**Fargate**：命名空间标签不会创建配置文件，`eks.amazonaws.com/v1alpha1 kind: FargateProfile` 也不是内置 Kubernetes API。请使用 EKS API 或 eksctl（或明确安装的受支持控制器）。此 API 示例需要一个未使用的配置文件名称、经过审查的私有子网和执行角色：
 
 ```bash
 # New profile example; this does not create or enlarge subnet address space.

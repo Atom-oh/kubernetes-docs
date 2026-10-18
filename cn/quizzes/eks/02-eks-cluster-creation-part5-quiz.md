@@ -236,7 +236,7 @@ metadata:
 ```
 对于现有生产 namespace，应先评估 audit/warn 结果和应用兼容性，再强制执行 Restricted。PSA 会进行验证，但不会提供 PSP 旧有的变更/默认值设置行为。应将原有的 host namespace、capability、volume、ID 和 seccomp 控制映射到合适的替代方案。
 
-**Kyverno 替代方案：**以下示例使用基于 CEL 的 `policies.kyverno.io/v1` ValidatingPolicy，适用于经过审核的 Kyverno 1.19.1/chart 3.9.1 路径。Legacy ClusterPolicy 在 1.19 中已弃用；这并不意味着它已被移除。需单独安装兼容的 controller/CRD，并使用经过审核的 `policy-engine-lab` namespace。示例会检查所有普通、init 和 ephemeral 容器：
+**Kyverno 替代方案**：以下示例使用基于 CEL 的 `policies.kyverno.io/v1` ValidatingPolicy，适用于经过审核的 Kyverno 1.19.1/chart 3.9.1 路径。Legacy ClusterPolicy 在 1.19 中已弃用；这并不意味着它已被移除。需单独安装兼容的 controller/CRD，并使用经过审核的 `policy-engine-lab` namespace。示例会检查所有普通、init 和 ephemeral 容器：
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -274,7 +274,7 @@ spec:
       || !has(c.securityContext.privileged) || !c.securityContext.privileged)'
     message: Privileged ephemeralContainers are not allowed.
 ```
-**Gatekeeper 替代方案：**仅有 ConstraintTemplate 并不能强制执行规则。以下模板和 Constraint 是经过审核的 Gatekeeper 3.23.1 示例；`templates.gatekeeper.sh/v1` 和生成的 Constraint API 使用不同的版本：
+**Gatekeeper 替代方案**：仅有 ConstraintTemplate 并不能强制执行规则。以下模板和 Constraint 是经过审核的 Gatekeeper 3.23.1 示例；`templates.gatekeeper.sh/v1` 和生成的 Constraint API 使用不同的版本：
 
 ```yaml
 apiVersion: templates.gatekeeper.sh/v1
@@ -569,9 +569,9 @@ helm template cluster-autoscaler autoscaler/cluster-autoscaler \
 
 应根据实际信任、数据、可用性和治理要求选择租户边界。以下是**可选设计**，并非要求将所有示例组合到一个共享 namespace 中。
 
-**独立集群/账户：**专用 API/control plane 资源可减少耦合，并允许独立选择生命周期，但运维成本较高。它们不会自动隔离共享 IAM、VPC、存储、配额或外部服务，也无法保证一个租户绝不会影响另一个租户。应使用经过审核的集群创建指南，而不是执行两条未经限定的默认 `eksctl create cluster` 命令。
+**独立集群/账户**：专用 API/control plane 资源可减少耦合，并允许独立选择生命周期，但运维成本较高。它们不会自动隔离共享 IAM、VPC、存储、配额或外部服务，也无法保证一个租户绝不会影响另一个租户。应使用经过审核的集群创建指南，而不是执行两条未经限定的默认 `eksctl create cluster` 命令。
 
-**带强制控制的 namespace：**namespace 可以隔离名称，但不能隔离所有安全或容量。平台管理员负责创建新的租户 namespace，并管理其策略标签、配额和 RBAC 边界：
+**带强制控制的 namespace**：namespace 可以隔离名称，但不能隔离所有安全或容量。平台管理员负责创建新的租户 namespace，并管理其策略标签、配额和 RBAC 边界：
 
 ```yaml
 apiVersion: v1
@@ -687,7 +687,7 @@ spec:
 ```
 此策略需要兼容的强制执行引擎，并假定使用常规的 CoreDNS 标签；如果采用 NodeLocal DNSCache 路径，应相应调整。配额是准入限制，并非预留节点或带宽保证。工作负载创建操作可以使用 namespace 本地的 ServiceAccount 和 Secret，因此应通过准入控制限制这些资源，并将平台凭证保留在租户 namespace 之外。共享内核/control plane 资源仍需进行威胁模型审查。
 
-**虚拟集群：**虚拟 API/control plane 可以隔离集群级配置，但运行在共享节点上的工作负载仍共用宿主机内核/CNI/CSI。经过审核的 vCluster 0.36.1 配置使用当前的 `sync.fromHost.nodes` 字段，并将宿主机节点同步保持为禁用状态。创建租户并不需要启用它；启用后可能暴露宿主机元数据。私有/专用节点架构有不同的前置条件和隔离属性。
+**虚拟集群**：虚拟 API/control plane 可以隔离集群级配置，但运行在共享节点上的工作负载仍共用宿主机内核/CNI/CSI。经过审核的 vCluster 0.36.1 配置使用当前的 `sync.fromHost.nodes` 字段，并将宿主机节点同步保持为禁用状态。创建租户并不需要启用它；启用后可能暴露宿主机元数据。私有/专用节点架构有不同的前置条件和隔离属性。
 
 将以下内容保存为 `vcluster-values.yaml`，并将存储类替换为获批且可用的存储类。使用由平台控制的独立宿主机 namespace，避免租户通过宿主机 RoleBinding 修改具有特权的 syncer/controller：
 
@@ -717,7 +717,7 @@ helm template vcluster-tenant-b vcluster/vcluster --version 0.36.1 --kube-versio
 ```
 检查渲染后的 RBAC、存储、资源请求、镜像和同步配置，然后通过经过审核的 Helm/GitOps 所有者进行部署。发布的 chart 默认会渲染 `vcluster-pro:0.36.1`；部署前应审核所选版本、功能可用性和许可。渲染并不能验证授权、持久性、集群启动或生产环境隔离。删除虚拟集群或其宿主机 namespace 前，应备份租户状态，并了解 PVC/PV 的保留行为。
 
-**AWS 身份和治理：**使用租户专属的 IRSA 或受支持的 Pod Identity 角色，并为其设置范围受限的信任和资源权限。这些 AWS 身份与 Kubernetes 授权互为补充。SCP 为受其覆盖的成员账户主体设定权限上限；它既不会授予访问权限，也无法区分 Kubernetes namespace。
+**AWS 身份和治理**：使用租户专属的 IRSA 或受支持的 Pod Identity 角色，并为其设置范围受限的信任和资源权限。这些 AWS 身份与 Kubernetes 授权互为补充。SCP 为受其覆盖的成员账户主体设定权限上限；它既不会授予访问权限，也无法区分 Kubernetes namespace。
 
 以下 S3 拒绝策略示例展示了仅附加到**租户 A 的成员账户/OU**、并针对经过审核的租户 B 存储桶的 SCP。不要将其附加到共享账户后，期待它能区分 A 与 B：
 

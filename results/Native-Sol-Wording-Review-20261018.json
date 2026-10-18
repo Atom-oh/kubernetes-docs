@@ -389,6 +389,860 @@
         "correctAnswersUnchanged": true
       },
       "reviewedAt": "2026-10-18T10:01:48.377953+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+      "targetPath": "cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+      "sourceBlob": "88c2196d0bd9186bf1b2337f01904e1d98a0eeb3",
+      "sourceSha256": "4de42a21fb745eb4204ee00b2c39cad290c8da62cee5b56af5ba14eb7b7df274",
+      "beforeTargetSha256": "486e5f25ee270dfa46fc11165b2b969f5619160a89a2c32c2b53a02859c43198",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0002-preimages/486e5f25ee270dfa46fc11165b2b969f5619160a89a2c32c2b53a02859c43198.md",
+      "sourceGitBlob": "88c2196d0bd9186bf1b2337f01904e1d98a0eeb3",
+      "targetSha256": "9e229de3b5a0fea614b0d3b5ee76b7145869eb736c219591b93b4d40f4ab6aa9",
+      "currentTargetSha256": "9e229de3b5a0fea614b0d3b5ee76b7145869eb736c219591b93b4d40f4ab6aa9",
+      "afterTargetSha256": "9e229de3b5a0fea614b0d3b5ee76b7145869eb736c219591b93b4d40f4ab6aa9",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/9e229de3b5a0fea614b0d3b5ee76b7145869eb736c219591b93b4d40f4ab6aa9.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 97,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": "0–100; independent qualitative complete-page meaning/readability comparison, not inferred from structural validators or threshold requirements",
+      "fullPageRationale": "Complete 87-line English/Chinese pair compared, including all five questions, twenty options, five answers/explanations and guide link. Project profile/blueprint scope, deletion authority, ACTIVE versus tool provisioning, membership tagged union and cleanup/retention distinctions preserved. The only concrete terminology loss found was the secret-access-key distractor and it is repaired.",
+      "findings": [
+        {
+          "scope": "Q4C",
+          "reportedIssue": "The wrong-option distractor loses the specific secret-access-key distinction; preserve it naturally.",
+          "sourceQuestion": "4. What belongs in a CreateProject membershipAssignments member?\n\n   - A) Always both userIdentifier and groupIdentifier\n   - B) Exactly one userIdentifier or groupIdentifier matching the intended profile\n   - C) An IAM secret access key\n   - D) Any IAM role ARN in place of a group profile ID\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B**\n\nIt is a tagged union. Same-request assignments do not promise atomic rollback of all environment provisioning; verify results.\n\n</details>",
+          "beforeQuestion": "4. CreateProject 的 membershipAssignments 成员中应包含什么？\n\n   - A) 始终同时包含 userIdentifier 和 groupIdentifier\n   - B) 根据预期的配置文件，恰好包含一个 userIdentifier 或 groupIdentifier\n   - C) IAM 密钥\n   - D) 用任意 IAM 角色 ARN 代替组配置文件 ID\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B**\n\n这是一个带标签的联合类型。在同一请求中分配成员并不保证所有环境配置失败都会原子回滚；请验证执行结果。\n\n</details>",
+          "finalQuestion": "4. CreateProject 的 membershipAssignments 成员中应包含什么？\n\n   - A) 始终同时包含 userIdentifier 和 groupIdentifier\n   - B) 根据预期的配置文件，恰好包含一个 userIdentifier 或 groupIdentifier\n   - C) IAM 秘密访问密钥\n   - D) 用任意 IAM 角色 ARN 代替组配置文件 ID\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B**\n\n这是一个带标签的联合类型。在同一请求中分配成员并不保证所有环境配置失败都会原子回滚；请验证执行结果。\n\n</details>",
+          "resolution": "Restored the specific secret access key distractor as IAM 秘密访问密钥; generic IAM 密钥 could also mean an access-key identifier. Correct answer B and membership tagged-union conditions are preserved.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+          "cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "codeBlocksAndInlineCodeUnchanged": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/platform-engineering/08-vcluster-quiz.md",
+      "targetPath": "cn/quizzes/platform-engineering/08-vcluster-quiz.md",
+      "sourceBlob": "d47230919c161ebb5fe8275593b9c5cfac8d05f2",
+      "sourceSha256": "208dee146f3b193ed0db2bb9117613513d20c4f6893b2b7d932db8a1b0c9652e",
+      "beforeTargetSha256": "02c386b38c45e647f5abed647ded4d0a36ed63ca85c1b69963f5575dff1db38e",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0002-preimages/02c386b38c45e647f5abed647ded4d0a36ed63ca85c1b69963f5575dff1db38e.md",
+      "sourceGitBlob": "d47230919c161ebb5fe8275593b9c5cfac8d05f2",
+      "targetSha256": "3ac8750a65436d33b0c64c007e63fe7a59d43101f6ad54a3aaeaf10abde17507",
+      "currentTargetSha256": "3ac8750a65436d33b0c64c007e63fe7a59d43101f6ad54a3aaeaf10abde17507",
+      "afterTargetSha256": "3ac8750a65436d33b0c64c007e63fe7a59d43101f6ad54a3aaeaf10abde17507",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/3ac8750a65436d33b0c64c007e63fe7a59d43101f6ad54a3aaeaf10abde17507.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 96,
+      "readabilityScore": 92,
+      "qualityScore": 92,
+      "scoreScale": "0–100; independent qualitative complete-page meaning/readability comparison, not inferred from structural validators or threshold requirements",
+      "fullPageRationale": "Complete 77-line English/Chinese pair compared, including all eight question/answer disclosures and guide link. Verified vCluster 0.37.0, Shared Nodes boundaries, Syncer direction/default caveats, trusted PR previews, pause/PVC/Service retention, snapshots, Backstage/ArgoCD authorization, additive policy limits and deployment-mode criteria. Both awkward phrases are repaired; the remaining concise technical prose is readable without claiming measured guarantees.",
+      "findings": [
+        {
+          "scope": "Q5",
+          "reportedIssue": "Missing Chinese connective makes prose stilted.",
+          "sourceQuestion": "## 5. How do StorageClasses and PVCs work with Shared Nodes?\n\n<details>\n<summary>Show answer</summary>\n\nUse supported fromHost StorageClass configuration and host CSI, synchronizing PVCs to the host. Check binding mode, topology and reclaim/retention. Version 0.37 supports snapshot sync, distinct from removed deploy.volumeSnapshotController.\n\n</details>",
+          "beforeQuestion": "## 5. 共享节点中 StorageClass 和 PVC 如何工作？\n\n<details>\n<summary>显示答案</summary>\n\n使用受支持 fromHost StorageClass 配置和宿主 CSI，将 PVC 同步到宿主。检查绑定模式、拓扑和回收/保留。0.37 支持快照同步，与已移除 deploy.volumeSnapshotController 不同。\n\n</details>",
+          "finalQuestion": "## 5. 共享节点中 StorageClass 和 PVC 如何工作？\n\n<details>\n<summary>显示答案</summary>\n\n使用受支持的 fromHost StorageClass 配置和宿主 CSI，将 PVC 同步到宿主。检查绑定模式、拓扑和回收/保留。0.37 支持快照同步，与已移除 deploy.volumeSnapshotController 不同。\n\n</details>",
+          "resolution": "Inserted the missing connective 的 in 受支持的 fromHost StorageClass 配置; retained host CSI, PVC synchronization, 0.37 snapshot-sync and removed-controller distinction.",
+          "resolved": true
+        },
+        {
+          "scope": "Q7",
+          "reportedIssue": "Literal noun phrase is awkward; express the allowed control-plane ports without changing policy caveats.",
+          "sourceQuestion": "## 7. Does adding NetworkPolicy block all host access?\n\n<details>\n<summary>Show answer</summary>\n\nNo. Allows are additive and cannot be reduced by another deny policy. The Syncer needs host API access. The profile disables workload public egress but retains control-plane port allowances, requiring actual CNI/path validation.\n\n</details>",
+          "beforeQuestion": "## 7. 添加 NetworkPolicy 会阻止所有宿主访问吗？\n\n<details>\n<summary>显示答案</summary>\n\n不会。允许规则可叠加，不能由另一拒绝策略削减。Syncer 需要宿主 API 访问。配置禁用工作负载公共出站，但保留控制平面端口允许，需要实际 CNI/路径验证。\n\n</details>",
+          "finalQuestion": "## 7. 添加 NetworkPolicy 会阻止所有宿主访问吗？\n\n<details>\n<summary>显示答案</summary>\n\n不会。允许规则可叠加，不能由另一拒绝策略削减。Syncer 需要宿主 API 访问。配置禁用工作负载公共出站，但保留对控制平面端口的放行规则，需要实际 CNI/路径验证。\n\n</details>",
+          "resolution": "Replaced 控制平面端口允许 with 对控制平面端口的放行规则; retained additive allows, Syncer host-API needs, workload-public-egress disabling and CNI/path-validation caveats.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/platform-engineering/08-vcluster-quiz.md",
+          "cn/quizzes/platform-engineering/08-vcluster-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "codeBlocksAndInlineCodeUnchanged": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+      "targetPath": "cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+      "sourceBlob": "f29afc337c16261290d1c8d232680f75195ce3cd",
+      "sourceSha256": "0c08c596df05de9a0b0c1895c2d4562256526472aa23811e253f5990d35aed18",
+      "beforeTargetSha256": "55a28e4304f27364e2467421de28f5335612dba9a032d193366b54372b075922",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0002-preimages/55a28e4304f27364e2467421de28f5335612dba9a032d193366b54372b075922.md",
+      "sourceGitBlob": "f29afc337c16261290d1c8d232680f75195ce3cd",
+      "targetSha256": "89e8fb44e3495b4962e163d36543575b751e05e783265911c454ada9d199b5f7",
+      "currentTargetSha256": "89e8fb44e3495b4962e163d36543575b751e05e783265911c454ada9d199b5f7",
+      "afterTargetSha256": "89e8fb44e3495b4962e163d36543575b751e05e783265911c454ada9d199b5f7",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/89e8fb44e3495b4962e163d36543575b751e05e783265911c454ada9d199b5f7.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": "0–100; independent qualitative complete-page meaning/readability comparison, not inferred from structural validators or threshold requirements",
+      "fullPageRationale": "Complete 75-line English/Chinese pair compared, including all four questions, sixteen options, four answers/explanations and guide link. Verified cluster-local failure-containment objective, ARC single-AZ fail-safe behavior, 1,024-packet shared link-local allowance and target-group cross-zone/503/failover distinctions. Correct answer sequence B/B/A/B is preserved and all quantitative conditions remain exact.",
+      "findings": [
+        {
+          "scope": "Q2 heading/explanation",
+          "reportedIssue": "Generic safety label loses the failure-protection term; preserve fail-safe with natural Chinese.",
+          "sourceQuestion": "2. Which statement correctly describes ARC zonal shift's fail-safe behavior?\n   - A) Traffic is blocked immediately for any workload once a zonal shift occurs\n   - B) If a workload's endpoints exist only in the impaired AZ, EKS keeps sending traffic to that AZ anyway\n   - C) Every workload is automatically relocated to another AZ\n   - D) This behavior only occurs on EKS Fargate\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) If a workload's endpoints exist only in the impaired AZ, EKS keeps sending traffic to that AZ anyway**\n\n**Explanation:**\nThis is the fail-safe behavior: a workload deployed to only a single AZ is not protected by zonal shift. Test N-1 load and single-AZ exceptions; this does not mean a practice run always stops that workload.\n\n</details>\n\n---",
+          "beforeQuestion": "2. 哪项说法正确描述了 ARC 可用区转移的安全行为？\n   - A) 发生可用区转移后，任何工作负载的流量都会立即被阻断\n   - B) 如果某工作负载的端点只存在于受影响的 AZ，EKS 仍会继续将流量发送到该 AZ\n   - C) 每个工作负载都会自动迁移到另一个 AZ\n   - D) 这种行为只会出现在 EKS Fargate 上\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 如果某工作负载的端点只存在于受影响的 AZ，EKS 仍会继续将流量发送到该 AZ**\n\n**说明：**\n这是安全行为：只部署在单个 AZ 的工作负载不会受到可用区转移的保护。请测试 N-1 负载和单 AZ 例外；这并不意味着演练时总会停止该工作负载。\n\n</details>\n\n---",
+          "finalQuestion": "2. 哪项说法正确描述了 ARC 可用区转移的故障保护（fail-safe）行为？\n   - A) 发生可用区转移后，任何工作负载的流量都会立即被阻断\n   - B) 如果某工作负载的端点只存在于受影响的 AZ，EKS 仍会继续将流量发送到该 AZ\n   - C) 每个工作负载都会自动迁移到另一个 AZ\n   - D) 这种行为只会出现在 EKS Fargate 上\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 如果某工作负载的端点只存在于受影响的 AZ，EKS 仍会继续将流量发送到该 AZ**\n\n**说明：**\n这是故障保护（fail-safe）行为：只部署在单个 AZ 的工作负载不会受到可用区转移的保护。请测试 N-1 负载和单 AZ 例外；这并不意味着演练时总会停止该工作负载。\n\n</details>\n\n---",
+          "resolution": "Restored the named fail-safe concept as 故障保护（fail-safe）行为 in both question and explanation; retained continuing traffic to impaired single-AZ endpoints, lack of zonal-shift protection, N-1 tests and practice-run limitation.",
+          "resolved": true
+        },
+        {
+          "scope": "Q3A/answer",
+          "reportedIssue": "Natural Chinese word order needed.",
+          "sourceQuestion": "3. What does the EC2 link-local 1,024 packet/sec allowance imply?\n   - A) Check combined DNS/IMDS/NTP traffic and actual DNS metrics\n   - B) Unlimited capacity reserved exclusively for DNS\n   - C) A 100 Gbps-per-AZ limit\n   - D) Proof that CoreDNS is the most common failure\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: A) Check combined DNS/IMDS/NTP traffic and actual DNS metrics**\n\n**Explanation:**\nReview the shared link-local allowance and VPC DNS ENI limit. Verify linklocal_allowance_exceeded and DNS latency instead of inferring cause from Pod density alone.\n\n</details>\n\n---",
+          "beforeQuestion": "3. EC2 link-local 每秒 1,024 个数据包的额度意味着什么？\n   - A) 检查合计 DNS/IMDS/NTP 流量和实际 DNS 指标\n   - B) 为 DNS 专门预留了无限容量\n   - C) 每个 AZ 限制为 100 Gbps\n   - D) 证明 CoreDNS 是最常见的故障\n\n<details>\n<summary>显示答案</summary>\n\n**答案：A) 检查合计 DNS/IMDS/NTP 流量和实际 DNS 指标**\n\n**说明：**\n请检查共享的 link-local 额度和 VPC DNS ENI 限制。应验证 linklocal_allowance_exceeded 和 DNS 延迟，不要仅根据 Pod 密度推断原因。\n\n</details>\n\n---",
+          "finalQuestion": "3. EC2 link-local 每秒 1,024 个数据包的额度意味着什么？\n   - A) 检查 DNS/IMDS/NTP 的总流量和实际 DNS 指标\n   - B) 为 DNS 专门预留了无限容量\n   - C) 每个 AZ 限制为 100 Gbps\n   - D) 证明 CoreDNS 是最常见的故障\n\n<details>\n<summary>显示答案</summary>\n\n**答案：A) 检查 DNS/IMDS/NTP 的总流量和实际 DNS 指标**\n\n**说明：**\n请检查共享的 link-local 额度和 VPC DNS ENI 限制。应验证 linklocal_allowance_exceeded 和 DNS 延迟，不要仅根据 Pod 密度推断原因。\n\n</details>\n\n---",
+          "resolution": "Used DNS/IMDS/NTP 的总流量 for combined traffic in both option A and answer A; retained 1,024 packets/sec, shared allowance, DNS metrics and linklocal_allowance_exceeded.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+          "cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "codeBlocksAndInlineCodeUnchanged": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/gitops/03-gitops-comparison-quiz.md",
+      "targetPath": "cn/quizzes/gitops/03-gitops-comparison-quiz.md",
+      "sourceBlob": "7fbfd6ecef8f0c9d6fd037c5ae1defe8510fff93",
+      "sourceSha256": "65c64dcfcbbdc2b1e0b1dd96475191af3531dc17bf7135b8af7f9b7c425a68d7",
+      "beforeTargetSha256": "db0404cce04aee542bc130151fdd6c7f81e14fc8ed0cfa5654b8ee85407af72f",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0002-preimages/db0404cce04aee542bc130151fdd6c7f81e14fc8ed0cfa5654b8ee85407af72f.md",
+      "sourceGitBlob": "7fbfd6ecef8f0c9d6fd037c5ae1defe8510fff93",
+      "targetSha256": "8e34d62f336894c628d1ea2c37093b993f5db89cd95654454217d8d6421e1d2d",
+      "currentTargetSha256": "8e34d62f336894c628d1ea2c37093b993f5db89cd95654454217d8d6421e1d2d",
+      "afterTargetSha256": "8e34d62f336894c628d1ea2c37093b993f5db89cd95654454217d8d6421e1d2d",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/8e34d62f336894c628d1ea2c37093b993f5db89cd95654454217d8d6421e1d2d.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": "0–100; independent qualitative complete-page meaning/readability comparison, not inferred from structural validators or threshold requirements",
+      "fullPageRationale": "Complete 83-line English/Chinese pair compared, including five questions, twenty options and all disclosed answers/explanations. Current English OCI support supersedes the obsolete target Q2; final answer sequence B/C/B/B/B now matches source. UI differences, optional image controllers/default-bootstrap caveat, Argo Image Updater, visual-management use case and separate ownership when coexisting are fully preserved.",
+      "findings": [
+        {
+          "scope": "Q2",
+          "reportedIssue": "Old Q2 stem/options/answer/explanation contradict current English. Rebuild Q2 from current source with correct C.",
+          "sourceQuestion": "2. Which statement describes current OCI-based deployment-source support?\n   - A) Only ArgoCD supports OCI\n   - B) Only FluxCD supports OCI\n   - C) Both support OCI, with different source/layer/verification settings\n   - D) Neither supports OCI\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: C) Both support OCI, with different source/layer/verification settings**\n\n**Explanation:**\nFluxCD has first-class support for OCI artifacts through its OCIRepository source type, allowing you to store and deploy from OCI-compliant registries. Current Argo CD also supports general OCI Application sources. Compare version, media type, authentication and verification requirements.\n\n</details>",
+          "beforeQuestion": "2. 哪个工具对 OCI 制品作为部署源提供了更好的原生支持？\n   - A) ArgoCD\n   - B) FluxCD\n   - C) 两者提供同等支持\n   - D) 两者都不支持 OCI\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) FluxCD**\n\n**说明：**\nFluxCD 通过其 OCIRepository 源类型为 OCI 制品提供一等支持，使你能够从兼容 OCI 的 registry 存储和部署。ArgoCD 对 OCI 的支持仅限于 Helm chart。\n\n</details>",
+          "finalQuestion": "2. 哪项说法描述了当前对基于 OCI 的部署源的支持？\n   - A) 只有 ArgoCD 支持 OCI\n   - B) 只有 FluxCD 支持 OCI\n   - C) 两者都支持 OCI，但源、层和验证设置有所不同\n   - D) 两者都不支持 OCI\n\n<details>\n<summary>显示答案</summary>\n\n**答案：C) 两者都支持 OCI，但源、层和验证设置有所不同**\n\n**说明：**\nFluxCD 通过其 OCIRepository 源类型为 OCI 制品提供一等支持，使你能够在兼容 OCI 的 registry 中存储制品并将其用作部署源。当前的 Argo CD 也支持通用的 OCI Application 源。应比较版本、媒体类型、认证和验证要求。\n\n</details>",
+          "resolution": "Rebuilt Q2 directly from current English: both products support OCI; source/layer/verification settings differ. Restored only-Argo/only-Flux distractors, correct answer C, general Argo CD OCI Application sources and version/media-type/authentication/verification comparisons. Removed obsolete Helm-only claim.",
+          "resolved": true
+        },
+        {
+          "scope": "Q3 explanation",
+          "reportedIssue": "Restore optional/default-bootstrap caveat.",
+          "sourceQuestion": "3. Which tool provides built-in image automation (automatic Git updates for new images)?\n   - A) ArgoCD (native)\n   - B) FluxCD (native)\n   - C) Both have native support\n   - D) Neither has native support\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) FluxCD (native)**\n\n**Explanation:**\nFlux provides optional Image Reflector and Image Automation controllers. They are not always installed by the default bootstrap. ArgoCD requires the separate Argo Image Updater project for similar functionality.\n\n</details>",
+          "beforeQuestion": "3. 哪个工具提供内置镜像自动化（针对新镜像自动更新 Git）？\n   - A) ArgoCD（原生）\n   - B) FluxCD（原生）\n   - C) 两者都提供原生支持\n   - D) 两者都不提供原生支持\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) FluxCD（原生）**\n\n**说明：**\nFluxCD 通过其 Image Reflector 和 Image Automation controllers 提供内置 Image Automation。ArgoCD 需要单独的 Argo Image Updater 项目才能实现类似功能。\n\n</details>",
+          "finalQuestion": "3. 哪个工具提供内置镜像自动化（针对新镜像自动更新 Git）？\n   - A) ArgoCD（原生）\n   - B) FluxCD（原生）\n   - C) 两者都提供原生支持\n   - D) 两者都不提供原生支持\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) FluxCD（原生）**\n\n**说明：**\nFlux 提供可选的 Image Reflector 和 Image Automation 控制器。默认 bootstrap 并不总会安装这些控制器。ArgoCD 需要单独的 Argo Image Updater 项目才能实现类似功能。\n\n</details>",
+          "resolution": "Restored optional Image Reflector/Image Automation controllers and the condition that default bootstrap does not always install them. Kept separate Argo Image Updater requirement.",
+          "resolved": true
+        },
+        {
+          "scope": "Q5 explanation",
+          "reportedIssue": "Restore missing ownership/same-object caveat.",
+          "sourceQuestion": "5. Can ArgoCD and FluxCD be used together in the same cluster?\n   - A) No, they are mutually exclusive\n   - B) Yes, they can complement each other\n   - C) Only in development environments\n   - D) Only with special configuration\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Yes, they can complement each other**\n\n**Explanation:**\nArgoCD and FluxCD can coexist with separate resource ownership; do not let both reconcile/prune the same objects. A common pattern is using FluxCD for infrastructure management and image automation while using ArgoCD for application deployments with its UI.\n\n</details>",
+          "beforeQuestion": "5. ArgoCD 和 FluxCD 可以在同一个 cluster 中一起使用吗？\n   - A) 不可以，它们互相排斥\n   - B) 可以，它们可以相互补充\n   - C) 仅限开发环境\n   - D) 仅可通过特殊配置实现\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 可以，它们可以相互补充**\n\n**说明：**\nArgoCD 和 FluxCD 可以一起使用。一种常见模式是使用 FluxCD 进行基础设施管理和镜像自动化，同时使用 ArgoCD 通过其 UI 进行应用程序部署。\n\n</details>",
+          "finalQuestion": "5. ArgoCD 和 FluxCD 可以在同一个 cluster 中一起使用吗？\n   - A) 不可以，它们互相排斥\n   - B) 可以，它们可以相互补充\n   - C) 仅限开发环境\n   - D) 仅可通过特殊配置实现\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 可以，它们可以相互补充**\n\n**说明：**\nArgoCD 和 FluxCD 可以在资源所有权明确分离的前提下共存；不要让两者协调或清理同一批对象。一种常见模式是使用 FluxCD 进行基础设施管理和镜像自动化，同时使用 ArgoCD 通过其 UI 进行应用程序部署。\n\n</details>",
+          "resolution": "Restored separate resource ownership and prohibition on both tools reconciling/pruning the same objects; preserved the infrastructure/application coexistence example.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/gitops/03-gitops-comparison-quiz.md",
+          "cn/quizzes/gitops/03-gitops-comparison-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "codeBlocksAndInlineCodeUnchanged": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+      "targetPath": "cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+      "sourceBlob": "68b14e0398f53881cb28776516992add22f7ebfc",
+      "sourceSha256": "dc5631cbace275aeabe564ff0bae91f17369fa9b0b8a66b09eb64dbb913ffe22",
+      "beforeTargetSha256": "21031663a942a83c1ec0351a0dd2d6a8f77a805a6c70fa4d66bd41bc6439e064",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0002-preimages/21031663a942a83c1ec0351a0dd2d6a8f77a805a6c70fa4d66bd41bc6439e064.md",
+      "sourceGitBlob": "68b14e0398f53881cb28776516992add22f7ebfc",
+      "targetSha256": "3ca3b9a4ee6946dd9519e14e54e8fa813fcf55f34fce85bc32e4ee3fe8038f7c",
+      "currentTargetSha256": "3ca3b9a4ee6946dd9519e14e54e8fa813fcf55f34fce85bc32e4ee3fe8038f7c",
+      "afterTargetSha256": "3ca3b9a4ee6946dd9519e14e54e8fa813fcf55f34fce85bc32e4ee3fe8038f7c",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/3ca3b9a4ee6946dd9519e14e54e8fa813fcf55f34fce85bc32e4ee3fe8038f7c.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": "0–100; independent qualitative complete-page meaning/readability comparison, not inferred from structural validators or threshold requirements",
+      "fullPageRationale": "Complete 67-line English/Chinese pair compared, including all eight question/answer disclosures and related-guide link. Platform goals, Start/Advance/Excel teaching scope, DevOps/SRE complementarity, IDP layers, Golden Path approvals, kro/ACK resource responsibilities, five current DORA metrics and guardrail limitations remain intact. Confirmed the repaired DORA sentence against the provided English guide context; no external factual additions.",
+      "findings": [
+        {
+          "scope": "Q7",
+          "reportedIssue": "The substitute direction is reversed/ambiguous: source warns against generic MTTR or individual ranking substitution for actual DORA metrics. Check source guide context and express faithfully.",
+          "sourceQuestion": "## 7. What are current DORA metrics and how should they be used?\n\n<details>\n<summary>Answer and explanation</summary>\n\nChange lead time, deployment frequency, failed deployment recovery time, change fail rate and deployment rework rate. Improve service/team delivery and stability rather than substitute generic MTTR or individual rankings. Measurement can start before Excel.\n</details>",
+          "beforeQuestion": "## 7. 当前的 DORA 指标有哪些，应如何使用？\n\n<details>\n<summary>答案与说明</summary>\n\n变更前置时间、部署频率、失败部署恢复时间、变更失败率和部署返工率。应改进服务/团队的交付和稳定性，而不是用其替代通用 MTTR 或个人排名。衡量可以在达到 Excel 之前开始。\n</details>",
+          "finalQuestion": "## 7. 当前的 DORA 指标有哪些，应如何使用？\n\n<details>\n<summary>答案与说明</summary>\n\n变更前置时间、部署频率、失败部署恢复时间、变更失败率和部署返工率。应使用这些指标改进服务/团队的交付和稳定性，不应以通用 MTTR 代替它们，也不应用于个人排名。衡量可以在达到 Excel 之前开始。\n</details>",
+          "resolution": "Resolved reversed substitution direction: use DORA metrics to improve service/team delivery/stability; generic MTTR must not replace them and they must not rank individuals. Preserved all five metric names and measurement-before-Excel condition. English guide section Metrics and Platform Product Success explicitly confirms this interpretation.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+          "cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "codeBlocksAndInlineCodeUnchanged": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/gitops/argocd/01-installation-quiz.md",
+      "targetPath": "cn/quizzes/gitops/argocd/01-installation-quiz.md",
+      "sourceBlob": "23eb049a465111069f1551dfcd3aef9499d10e5e",
+      "sourceSha256": "07d71ae20cb8a2e61d0362422c16cc59632a79ee9319092c253fb5da5bdd8ecf",
+      "beforeTargetSha256": "e060b622ebe85783d592da4bdd9ea5a36a0f2c06de02a82d91a32436868196fe",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0002-preimages/e060b622ebe85783d592da4bdd9ea5a36a0f2c06de02a82d91a32436868196fe.md",
+      "sourceGitBlob": "23eb049a465111069f1551dfcd3aef9499d10e5e",
+      "targetSha256": "43c4cf7345f5cc81fed05b27e678dc8d16d1c3db4d61390c135c5bc320378f2a",
+      "currentTargetSha256": "43c4cf7345f5cc81fed05b27e678dc8d16d1c3db4d61390c135c5bc320378f2a",
+      "afterTargetSha256": "43c4cf7345f5cc81fed05b27e678dc8d16d1c3db4d61390c135c5bc320378f2a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/43c4cf7345f5cc81fed05b27e678dc8d16d1c3db4d61390c135c5bc320378f2a.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 94,
+      "qualityScore": 94,
+      "scoreScale": "0–100; independent qualitative complete-page meaning/readability comparison, not inferred from structural validators or threshold requirements",
+      "fullPageRationale": "Complete 83-line English/Chinese pair compared, including five questions, twenty options and all disclosed answers/explanations. Restored chart-values/HA workflow scope with alternate production methods and installation owner; kept namespace convention, Repo Server inputs/caching, conditional password flow with exact inline command, and inclusive Core/headless component explanation. Correct answer sequence B/C/B/B/B preserved.",
+      "findings": [
+        {
+          "scope": "Q1",
+          "reportedIssue": "Old generic-production preference omits workflow scope and alternative installation ownership. Reconcile current stem/explanation.",
+          "sourceQuestion": "1. Which installation method fits a team that wants to version HA/settings through chart values?\n   - A) kubectl apply from the raw GitHub URL\n   - B) Helm chart with custom values\n   - C) Docker Compose\n   - D) Manual binary installation\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Helm chart with custom values**\n\n**Explanation:**\nHelm fits a chart-values workflow. Official HA manifests and Kustomize are also viable production installation methods. Choose one owner and keep upgrades under that owner.\n\n</details>",
+          "beforeQuestion": "1. 在生产环境中安装 ArgoCD 的推荐方法是什么？\n   - A) 从原始 GitHub URL 使用 kubectl apply\n   - B) 使用自定义值的 Helm chart\n   - C) Docker Compose\n   - D) 手动安装二进制文件\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 使用自定义值的 Helm chart**\n\n**说明：**\n虽然可以使用官方 manifests 通过 kubectl apply 安装 ArgoCD，但建议在生产环境中使用 Helm chart，因为它可以更轻松地自定义、升级和管理配置值。\n\n</details>",
+          "finalQuestion": "1. 哪种安装方式适合希望通过 chart 配置值对 HA/设置进行版本管理的团队？\n   - A) 从原始 GitHub URL 使用 kubectl apply\n   - B) 使用自定义值的 Helm chart\n   - C) Docker Compose\n   - D) 手动安装二进制文件\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 使用自定义值的 Helm chart**\n\n**说明：**\nHelm 适合基于 chart 配置值的工作流。官方 HA manifests 和 Kustomize 也可用于生产环境安装。应明确唯一的安装管理方，并由其负责后续升级。\n\n</details>",
+          "resolution": "Scoped Q1 to versioning HA/settings through chart values, restored official HA manifests and Kustomize as viable production alternatives, and restored a single installation owner responsible for upgrades. Retained B as the intended chart-values-workflow answer.",
+          "resolved": true
+        },
+        {
+          "scope": "Q4 explanation",
+          "reportedIssue": "Restore the source bootstrap-flow condition, avoiding unconditional statement.",
+          "sourceQuestion": "4. How do you retrieve the initial admin password after installing ArgoCD?\n   - A) It's printed during installation\n   - B) From a Secret named argocd-initial-admin-secret\n   - C) From the ArgoCD ConfigMap\n   - D) It's always \"admin\"\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) From a Secret named argocd-initial-admin-secret**\n\n**Explanation:**\nIn the normal generated-bootstrap-password flow, the initial admin password is generated and stored in a Kubernetes Secret named `argocd-initial-admin-secret`. You can retrieve it using: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d`\n\n</details>",
+          "beforeQuestion": "4. 安装 ArgoCD 后，如何获取初始 admin 密码？\n   - A) 安装期间会打印出来\n   - B) 从名为 argocd-initial-admin-secret 的 Secret 中获取\n   - C) 从 ArgoCD ConfigMap 中获取\n   - D) 始终是 \"admin\"\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 从名为 argocd-initial-admin-secret 的 Secret 中获取**\n\n**说明：**\n初始 admin 密码会自动生成，并存储在名为 `argocd-initial-admin-secret` 的 Kubernetes Secret 中。您可以使用以下命令获取它：`kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d`\n\n</details>",
+          "finalQuestion": "4. 安装 ArgoCD 后，如何获取初始 admin 密码？\n   - A) 安装期间会打印出来\n   - B) 从名为 argocd-initial-admin-secret 的 Secret 中获取\n   - C) 从 ArgoCD ConfigMap 中获取\n   - D) 始终是 \"admin\"\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 从名为 argocd-initial-admin-secret 的 Secret 中获取**\n\n**说明：**\n在通常的引导密码生成流程中，初始 admin 密码会自动生成，并存储在名为 `argocd-initial-admin-secret` 的 Kubernetes Secret 中。您可以使用以下命令获取它：`kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d`\n\n</details>",
+          "resolution": "Restored the normal bootstrap-password-generation-flow condition before the generated initial admin password claim; preserved Secret name and exact retrieval command.",
+          "resolved": true
+        },
+        {
+          "scope": "Q5",
+          "reportedIssue": "Source says including, not exhaustive-only. Retain headless-operation scope.",
+          "sourceQuestion": "5. Which ArgoCD installation mode uses fewer resources but has limited functionality?\n   - A) HA mode\n   - B) Core mode\n   - C) Lite mode\n   - D) Minimal mode\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Core mode**\n\n**Explanation:**\nArgoCD Core installs the components needed for headless operation, including the Application Controller and Repo Server without the API Server, UI, or Dex. This mode is suitable for environments where ArgoCD is managed entirely through Git and the CLI.\n\n</details>",
+          "beforeQuestion": "5. 哪种 ArgoCD 安装模式使用更少的资源，但功能有限？\n   - A) HA mode\n   - B) Core mode\n   - C) Lite mode\n   - D) Minimal mode\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) Core mode**\n\n**说明：**\nArgoCD Core mode 只安装必要组件（Application Controller 和 Repo Server），不包括 API Server、UI 或 Dex。该模式适用于完全通过 Git 和 CLI 管理 ArgoCD 的环境。\n\n</details>",
+          "finalQuestion": "5. 哪种 ArgoCD 安装模式使用更少的资源，但功能有限？\n   - A) HA mode\n   - B) Core mode\n   - C) Lite mode\n   - D) Minimal mode\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) Core mode**\n\n**说明：**\nArgoCD Core mode 安装无界面运行所需的组件，其中包括 Application Controller 和 Repo Server，不包括 API Server、UI 或 Dex。该模式适用于完全通过 Git 和 CLI 管理 ArgoCD 的环境。\n\n</details>",
+          "resolution": "Restored headless-operation scope and inclusive 其中包括 for Application Controller/Repo Server, removing the exhaustive-only claim; retained no API Server/UI/Dex and Git/CLI management scope.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/gitops/argocd/01-installation-quiz.md",
+          "cn/quizzes/gitops/argocd/01-installation-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "codeBlocksAndInlineCodeUnchanged": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+      "targetPath": "cn/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+      "sourceBlob": "37cc66b304134c3309f03fd0eca120e38acbc032",
+      "sourceSha256": "66c42248828d1b8442dcf01c9bf341419590a44a3257b3ec31673f9461497df9",
+      "beforeTargetSha256": "57a4084764a61f99a67a27fbbf109a2bbbfe389dfaca0409f350401f693bae42",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0002-preimages/57a4084764a61f99a67a27fbbf109a2bbbfe389dfaca0409f350401f693bae42.md",
+      "sourceGitBlob": "37cc66b304134c3309f03fd0eca120e38acbc032",
+      "targetSha256": "c58682a2b86d91232f5d38c1662af481edd2327c57a014fdeafe176b3528385a",
+      "currentTargetSha256": "c58682a2b86d91232f5d38c1662af481edd2327c57a014fdeafe176b3528385a",
+      "afterTargetSha256": "c58682a2b86d91232f5d38c1662af481edd2327c57a014fdeafe176b3528385a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/c58682a2b86d91232f5d38c1662af481edd2327c57a014fdeafe176b3528385a.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": "0–100; independent qualitative complete-page meaning/readability comparison, not inferred from structural validators or threshold requirements",
+      "fullPageRationale": "Complete 75-line English/Chinese pair compared, including four questions, sixteen options, all answers/explanations and guide link. Verified CUJ RTO/RPO prerequisite, weighted-forwarding versus group fail-open distinction, PoC-0 independent matrix exercise with exact example targets, and unused-Region controls/cost caveats. The local-example wording now naturally indicates this design rather than machine locality.",
+      "findings": [
+        {
+          "scope": "Q3 explanation",
+          "reportedIssue": "Literal local-example wording can imply machine locality; express that these are example targets in this design while preserving values and non-universal scope.",
+          "sourceQuestion": "3. Why is the \"decision matrix dry-run\" run as PoC-0, before all other PoCs?\n   - A) Because it's the cheapest option\n   - B) Because every other option (independent boundary judgment, Hybrid configurations, etc.) sets \"reproducible via a decision matrix\" as its condition for validity, so no PoC result converts into a standard without one\n   - C) Because it requires AWS SA approval\n   - D) Because it's unrelated to the other PoCs\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Because every other option (independent boundary judgment, Hybrid configurations, etc.) sets \"reproducible via a decision matrix\" as its condition for validity, so no PoC result converts into a standard without one**\n\n**Explanation:**\nThe decision matrix dry-run has two people independently apply the matrix to 10–15 representative workloads, using local example targets of disagreement under 20% and exceptions under 15%. The resulting estimated Account/VPC/cluster counts determine the measurement targets for the remaining PoCs.\n\n</details>\n\n---",
+          "beforeQuestion": "3. 为什么要在其他所有 PoC 之前将“决策矩阵试运行”作为 PoC-0？\n   - A) 因为它是最便宜的选项\n   - B) 因为其他每个选项（独立边界判断、Hybrid 配置等）都把“可通过决策矩阵复现”作为有效条件，所以没有决策矩阵就不能把任何 PoC 结果转化为标准\n   - C) 因为它需要 AWS SA 批准\n   - D) 因为它与其他 PoC 无关\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 因为其他每个选项（独立边界判断、Hybrid 配置等）都把“可通过决策矩阵复现”作为有效条件，所以没有决策矩阵就不能把任何 PoC 结果转化为标准**\n\n**说明：**\n决策矩阵试运行由两人分别对 10–15 个有代表性的工作负载应用该矩阵，本地示例目标为分歧率低于 20%、例外率低于 15%。所得 Account/VPC/集群数量估算用于确定剩余 PoC 的测量目标。\n\n</details>\n\n---",
+          "finalQuestion": "3. 为什么要在其他所有 PoC 之前将“决策矩阵试运行”作为 PoC-0？\n   - A) 因为它是最便宜的选项\n   - B) 因为其他每个选项（独立边界判断、Hybrid 配置等）都把“可通过决策矩阵复现”作为有效条件，所以没有决策矩阵就不能把任何 PoC 结果转化为标准\n   - C) 因为它需要 AWS SA 批准\n   - D) 因为它与其他 PoC 无关\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 因为其他每个选项（独立边界判断、Hybrid 配置等）都把“可通过决策矩阵复现”作为有效条件，所以没有决策矩阵就不能把任何 PoC 结果转化为标准**\n\n**说明：**\n决策矩阵试运行由两人分别对 10–15 个有代表性的工作负载应用该矩阵，本设计采用的示例目标为分歧率低于 20%、例外率低于 15%。所得 Account/VPC/集群数量估算用于确定剩余 PoC 的测量目标。\n\n</details>\n\n---",
+          "resolution": "Replaced machine-local-sounding 本地示例目标 with 本设计采用的示例目标; these remain design-specific example thresholds, with two independent reviewers, 10–15 workloads, disagreement under 20%, exceptions under 15% and estimated resource-count use unchanged.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+          "cn/quizzes/governance/06-decision-framework-and-poc-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "codeBlocksAndInlineCodeUnchanged": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+      "targetPath": "cn/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+      "sourceBlob": "a6dc2395b08ad45d86072dc91ce21aeaf3bcf690",
+      "sourceSha256": "595d83f4ea2bafefea9607697c5b1af10b2812fbf8f993b430f81b4027099355",
+      "beforeTargetSha256": "6c439d0f93a0553ac3bc0adbb78423de6f1e47219b7e40b96b7d3dbf5beeaded",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0003-preimages/6c439d0f93a0553ac3bc0adbb78423de6f1e47219b7e40b96b7d3dbf5beeaded.md",
+      "sourceGitBlob": "a6dc2395b08ad45d86072dc91ce21aeaf3bcf690",
+      "targetSha256": "9e0fd16233a06bf13363910b8e797ee998b4697299d308fca3d5c50e96429c5a",
+      "currentTargetSha256": "9e0fd16233a06bf13363910b8e797ee998b4697299d308fca3d5c50e96429c5a",
+      "afterTargetSha256": "9e0fd16233a06bf13363910b8e797ee998b4697299d308fca3d5c50e96429c5a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/9e0fd16233a06bf13363910b8e797ee998b4697299d308fca3d5c50e96429c5a.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": "0–100; genuine qualitative complete-page meaning/readability comparison, not inferred from validators or threshold requirements",
+      "fullPageRationale": "Independently compared the entire 77-line English/Chinese pair: eight questions and all answers/disclosures, introduction version and Backstage guide link. Verified Component/Resource distinction, template action/skeleton limits, metadata versus user authorization, external PostgreSQL and secret-file prerequisites, TechDocs publication/read permissions, incremental adoption trust boundaries, Roadie 1.8.1 inputs and owner-conditioned PermissionPolicy deletion. The single malformed PR-timing sentence is now natural and faithful; no additional defects require correction.",
+      "findings": [
+        {
+          "scope": "Q7",
+          "reportedIssue": "Malformed Chinese word order; express opening the PR before its merge naturally, retaining main-branch catalog-registration caveat.",
+          "sourceQuestions": {
+            "7": "## 7. What connects GitHub publication and ArgoCD actions?\n\n<details>\n<summary>Show answer</summary>\n\nRegister action modules and configure credentials, permissions and real input/output schemas. Roadie 1.8.1's argocd:create-resources takes the deployment namespace and has no revision input. Do not register a main-branch catalog file immediately after opening its unmerged PR.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "7": "## 7. 是什么将 GitHub 发布与 ArgoCD actions 连接起来？\n\n<details>\n<summary>显示答案</summary>\n\n注册 action 模块，并配置凭证、权限以及真实的输入/输出 schema。Roadie 1.8.1 的 argocd:create-resources 接受部署 namespace，且没有 revision 输入。不要在刚刚为尚未合并的 PR 开启之后，就立即注册 main 分支上的 catalog 文件。\n\n</details>"
+          },
+          "finalQuestions": {
+            "7": "## 7. 是什么将 GitHub 发布与 ArgoCD actions 连接起来？\n\n<details>\n<summary>显示答案</summary>\n\n注册 action 模块，并配置凭证、权限以及真实的输入/输出 schema。Roadie 1.8.1 的 argocd:create-resources 接受部署 namespace，且没有 revision 输入。不要在 PR 刚创建、尚未合并时，就立即注册 main 分支上的 catalog 文件。\n\n</details>"
+          },
+          "resolution": "Repaired malformed word order to PR 刚创建、尚未合并时. Retained the exact warning against immediately registering a main-branch catalog file after opening the unmerged PR, and Roadie version, namespace input and absent revision input.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+          "cn/quizzes/platform-engineering/06-backstage-idp-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "fencedCodeBytesUnchanged": true,
+        "inlineCodeMatchesCurrentSourceExactly": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:29:07.838172+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+      "targetPath": "cn/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+      "sourceBlob": "d1ed8b7ecdf1f557adb576ee232ecb5c1a7258d4",
+      "sourceSha256": "96be4117c5388d38865e6cff1006dfb7601996efb425bf6ce0121935a7ad30a8",
+      "beforeTargetSha256": "5fb153b773ac0b16ba8af706ec5445e4cfcb71328d1882e32f35c00ee7dc14f9",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0003-preimages/5fb153b773ac0b16ba8af706ec5445e4cfcb71328d1882e32f35c00ee7dc14f9.md",
+      "sourceGitBlob": "d1ed8b7ecdf1f557adb576ee232ecb5c1a7258d4",
+      "targetSha256": "d561139e0124940b6861fbe1f21f5933bba1f7693e019c60640467b60ec000a1",
+      "currentTargetSha256": "d561139e0124940b6861fbe1f21f5933bba1f7693e019c60640467b60ec000a1",
+      "afterTargetSha256": "d561139e0124940b6861fbe1f21f5933bba1f7693e019c60640467b60ec000a1",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/d561139e0124940b6861fbe1f21f5933bba1f7693e019c60640467b60ec000a1.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": "0–100; genuine qualitative complete-page meaning/readability comparison, not inferred from validators or threshold requirements",
+      "fullPageRationale": "Independently compared the entire 83-line English/Chinese pair: five questions, twenty options and all disclosed answers/explanations. Sync/Refresh behavior and correct answer sequence B/B/B/B/B preserved. Replaced four obsolete explanations with current source-scoped automated-sync/drift/prune/retry/selfHeal rules and exact immutable/Force/PVC limitations. No code, link, option letter or unsupported technical guarantee added.",
+      "findings": [
+        {
+          "scope": "Q2",
+          "reportedIssue": "Old explanation promises all live-only drift auto-sync. Restore OutOfSync policy, selfHeal for live drift, prune for deletion, failed-identical-commit retry caveat.",
+          "sourceQuestions": {
+            "2": "2. What does enabling the `automated` sync policy do?\n   - A) Automatically deletes the application\n   - B) Enables automatic synchronization when the desired state differs from live state\n   - C) Enables automatic rollback\n   - D) Automatically creates backups\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Enables automatic synchronization when the desired state differs from live state**\n\n**Explanation:**\nWhen `syncPolicy.automated` is enabled, Argo CD applies OutOfSync changes according to policy. Live-only drift needs selfHeal, deletion needs prune, and identical failed commits are not unconditionally retried forever.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "2": "2. 启用 `automated` 同步策略有什么作用？\n   - A) 自动删除应用程序\n   - B) 当期望状态与实际状态不同时启用自动同步\n   - C) 启用自动回滚\n   - D) 自动创建备份\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 当期望状态与实际状态不同时启用自动同步**\n\n**说明：**\n启用 `syncPolicy.automated` 后，每当 ArgoCD 检测到实际状态偏离 Git 中定义的期望状态时，都会自动同步应用程序。\n\n</details>"
+          },
+          "finalQuestions": {
+            "2": "2. 启用 `automated` 同步策略有什么作用？\n   - A) 自动删除应用程序\n   - B) 当期望状态与实际状态不同时启用自动同步\n   - C) 启用自动回滚\n   - D) 自动创建备份\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 当期望状态与实际状态不同时启用自动同步**\n\n**说明：**\n启用 `syncPolicy.automated` 后，Argo CD 会按策略应用处于 OutOfSync 状态的变更。期望状态未变而实际状态发生漂移时，需要 selfHeal；删除资源需要 prune；同一提交同步失败后不会无条件地无限重试。\n\n</details>"
+          },
+          "resolution": "Restored policy-scoped OutOfSync application, live-only drift requiring selfHeal, deletion requiring prune and no unconditional infinite retries of an identical failed commit.",
+          "resolved": true
+        },
+        {
+          "scope": "Q3",
+          "reportedIssue": "Restore tracked resources belonging to THIS Application, not all unmanaged cluster resources.",
+          "sourceQuestions": {
+            "3": "3. What is the purpose of the `prune` option in automated sync?\n   - A) To clean up old Git branches\n   - B) To automatically delete resources that are no longer defined in Git\n   - C) To remove failed deployments\n   - D) To delete the application itself\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) To automatically delete resources that are no longer defined in Git**\n\n**Explanation:**\nWhen `prune: true` is set in automated sync, Argo CD deletes tracked resources belonging to this Application that disappear from the desired source, not every unmanaged resource in the cluster.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "3": "3. 自动同步中的 `prune` 选项有什么用途？\n   - A) 清理旧的 Git 分支\n   - B) 自动删除 Git 中不再定义的资源\n   - C) 移除失败的部署\n   - D) 删除应用程序本身\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 自动删除 Git 中不再定义的资源**\n\n**说明：**\n在自动同步中设置 `prune: true` 时，ArgoCD 会自动删除集群中存在但 Git 仓库中不再定义的 Kubernetes 资源。\n\n</details>"
+          },
+          "finalQuestions": {
+            "3": "3. 自动同步中的 `prune` 选项有什么用途？\n   - A) 清理旧的 Git 分支\n   - B) 自动删除 Git 中不再定义的资源\n   - C) 移除失败的部署\n   - D) 删除应用程序本身\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 自动删除 Git 中不再定义的资源**\n\n**说明：**\n在自动同步中设置 `prune: true` 时，Argo CD 会删除属于此 Application、已被跟踪且从期望源中消失的资源，而不是删除集群中所有未受管理的资源。\n\n</details>"
+          },
+          "resolution": "Restored tracked resources belonging to this specific Application and absent from its desired source; explicitly excluded arbitrary unmanaged cluster resources.",
+          "resolved": true
+        },
+        {
+          "scope": "Q4",
+          "reportedIssue": "Restore automated-sync prerequisite, comparison/windows/authorization/ignore rules and no lost-data/YAML repair guarantees.",
+          "sourceQuestions": {
+            "4": "4. What does `selfHeal: true` do in a sync policy?\n   - A) Automatically fixes YAML syntax errors\n   - B) Automatically syncs when live state deviates from desired state due to manual changes\n   - C) Restarts unhealthy pods\n   - D) Repairs corrupted Git repositories\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Automatically syncs when live state deviates from desired state due to manual changes**\n\n**Explanation:**\nWith automated sync enabled, selfHeal reconciles compared live-only drift, subject to windows, authorization and ignore rules. It does not restore lost data or repair YAML errors.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "4": "4. 同步策略中的 `selfHeal: true` 有什么作用？\n   - A) 自动修复 YAML 语法错误\n   - B) 当实际状态因手动更改而偏离期望状态时自动同步\n   - C) 重启不健康的 Pod\n   - D) 修复损坏的 Git 仓库\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 当实际状态因手动更改而偏离期望状态时自动同步**\n\n**说明：**\n自我修复可确保如果有人在集群中（Git 之外）手动更改资源，ArgoCD 会自动将其还原，使之与 Git 中的期望状态一致。\n\n</details>"
+          },
+          "finalQuestions": {
+            "4": "4. 同步策略中的 `selfHeal: true` 有什么作用？\n   - A) 自动修复 YAML 语法错误\n   - B) 当实际状态因手动更改而偏离期望状态时自动同步\n   - C) 重启不健康的 Pod\n   - D) 修复损坏的 Git 仓库\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 当实际状态因手动更改而偏离期望状态时自动同步**\n\n**说明：**\n启用自动同步后，当期望状态未变而实际状态发生漂移时，selfHeal 会根据比较结果进行协调，但仍受同步窗口、授权和忽略规则的约束。它不会恢复丢失的数据，也不会修复 YAML 错误。\n\n</details>"
+          },
+          "resolution": "Restored automated-sync prerequisite, compared live-only drift, synchronization windows, authorization and ignore-rule constraints. Restored no lost-data restoration or YAML-error repair guarantee.",
+          "resolved": true
+        },
+        {
+          "scope": "Q5",
+          "reportedIssue": "Current source explicitly says replace/create does not bypass immutable fields; Force+Replace candelete/recreate and is not PVC migration. Remove contradictory old claim and translate current qualifiers.",
+          "sourceQuestions": {
+            "5": "5. Which sync option would you use to replace resources instead of applying patches?\n   - A) Force=true\n   - B) Replace=true\n   - C) Recreate=true\n   - D) Update=true\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Replace=true**\n\n**Explanation:**\nThe `Replace=true` sync option tells ArgoCD to use `kubectl replace` instead of `kubectl apply`, which completely replaces the resource rather than patching it. replace/create does not automatically bypass immutable-field restrictions. Force=true with Replace=true can delete/recreate resources and is not a PVC migration shortcut.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "5": "5. 若要替换资源而不是应用补丁，应使用哪个同步选项？\n   - A) Force=true\n   - B) Replace=true\n   - C) Recreate=true\n   - D) Update=true\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) Replace=true**\n\n**说明：**\n`Replace=true` 同步选项会告知 ArgoCD 使用 `kubectl replace` 而不是 `kubectl apply`，从而完全替换资源，而非对其应用补丁。这在处理不可变字段时非常有用。\n\n</details>"
+          },
+          "finalQuestions": {
+            "5": "5. 若要替换资源而不是应用补丁，应使用哪个同步选项？\n   - A) Force=true\n   - B) Replace=true\n   - C) Recreate=true\n   - D) Update=true\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) Replace=true**\n\n**说明：**\n`Replace=true` 同步选项会告知 ArgoCD 使用 `kubectl replace` 而不是 `kubectl apply`，从而完全替换资源，而非对其应用补丁。replace/create 不会自动绕过不可变字段限制。Force=true 与 Replace=true 配合使用时可能删除并重建资源，这并不是 PVC 迁移的捷径。\n\n</details>"
+          },
+          "resolution": "Removed obsolete immutable-field-benefit claim. Restored replace/create not bypassing immutable restrictions, Force=true plus Replace=true potentially deleting/recreating resources and no PVC migration shortcut. Existing exact inline commands preserved.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+          "cn/quizzes/gitops/argocd/03-sync-strategies-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "fencedCodeBytesUnchanged": true,
+        "inlineCodeMatchesCurrentSourceExactly": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:29:07.838172+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/gitops/argocd/08-notifications-quiz.md",
+      "targetPath": "cn/quizzes/gitops/argocd/08-notifications-quiz.md",
+      "sourceBlob": "cfa057af14c104b5d491d9298d6178f5cb43f24d",
+      "sourceSha256": "073a37ffb45951dea5e189090e5379af83085100e9fab7b1f5af8271a9c99c9b",
+      "beforeTargetSha256": "c819188b2a832b73b299d15783891285662be471a823d97f90f1e6af3552bcf2",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0003-preimages/c819188b2a832b73b299d15783891285662be471a823d97f90f1e6af3552bcf2.md",
+      "sourceGitBlob": "cfa057af14c104b5d491d9298d6178f5cb43f24d",
+      "targetSha256": "ca72d1307ac58880ed942a666347db1ff7b8bd95a055632dfed9b3de9f44b48d",
+      "currentTargetSha256": "ca72d1307ac58880ed942a666347db1ff7b8bd95a055632dfed9b3de9f44b48d",
+      "afterTargetSha256": "ca72d1307ac58880ed942a666347db1ff7b8bd95a055632dfed9b3de9f44b48d",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/ca72d1307ac58880ed942a666347db1ff7b8bd95a055632dfed9b3de9f44b48d.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": "0–100; genuine qualitative complete-page meaning/readability comparison, not inferred from validators or threshold requirements",
+      "fullPageRationale": "Independently compared the entire 83-line English/Chinese pair: five questions, twenty options and all disclosed answers/explanations. Controller responsibility, config/secret locations and trigger semantics preserved. Correct sequence B/B/B/B/C preserved while metadata-specific subscription scope and current A distractor are restored. Current provider formats, subscription alternatives and delivery/broadcast/Opsgenie caveats are accurately represented without importing external facts.",
+      "findings": [
+        {
+          "scope": "Q4",
+          "reportedIssue": "Restore specific Application metadata stem and current optionA (replica count); old ConfigMap distractor is valid other subscription method. Restore central ConfigMap/AppProject/semicolon-recipient options in explanation.",
+          "sourceQuestions": {
+            "4": "4. How do you define a subscription directly in a specific Application’s metadata?\n   - A) Change the Application replica count\n   - B) Add annotations to the Application with notification subscriptions\n   - C) Create a NotificationSubscription CRD\n   - D) Configure it in the ArgoCD UI\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Add annotations to the Application with notification subscriptions**\n\n**Explanation:**\nApplications subscribe to notifications via annotations like `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`. This specifies the trigger, service, and recipient. Central ConfigMap `subscriptions` and AppProject annotations are other supported methods. Separate multiple recipients with semicolons.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "4": "4. 如何为 Application 订阅通知？\n   - A) 编辑通知 ConfigMap\n   - B) 为 Application 添加带有通知订阅的注解\n   - C) 创建 NotificationSubscription CRD\n   - D) 在 ArgoCD UI 中进行配置\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 为 Application 添加带有通知订阅的注解**\n\n**说明：**\nApplications 通过注解订阅通知，例如 `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`。这指定了触发器、服务和接收者。\n\n</details>"
+          },
+          "finalQuestions": {
+            "4": "4. 如何直接在特定 Application 的元数据中定义订阅？\n   - A) 更改 Application 的副本数\n   - B) 为 Application 添加带有通知订阅的注解\n   - C) 创建 NotificationSubscription CRD\n   - D) 在 ArgoCD UI 中进行配置\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 为 Application 添加带有通知订阅的注解**\n\n**说明：**\nApplications 通过注解订阅通知，例如 `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`。这指定了触发器、服务和接收者。集中式 ConfigMap 中的 `subscriptions` 和 AppProject 注解也是受支持的订阅方式。多个接收者应以分号分隔。\n\n</details>"
+          },
+          "resolution": "Scoped Q4 to defining a subscription directly in specific Application metadata. Restored A to replica-count change rather than another valid ConfigMap subscription method. Restored central ConfigMap subscriptions, AppProject annotations and semicolon-separated multiple recipients.",
+          "resolved": true
+        },
+        {
+          "scope": "Q5",
+          "reportedIssue": "Replace old provider list with exact current Teams Workflows/GitHub/email/webhooks/SQS source; restore credentials/triggers/templates/subscriptions, no automatic broadcast and announced Opsgenie shutdown migration scope.",
+          "sourceQuestions": {
+            "5": "5. Which notification services does ArgoCD support out of the box?\n   - A) Only Slack\n   - B) Only email\n   - C) Multiple including Slack, Teams, email, webhooks, and more\n   - D) None, all require custom plugins\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: C) Multiple including Slack, Teams, email, webhooks, and more**\n\n**Explanation:**\nArgo CD supports formats for Slack, Teams Workflows, GitHub, email, generic webhooks, SQS, and other services. Credentials, triggers, templates, and subscriptions must be configured before delivery. A template containing several service formats does not automatically broadcast to all of them. Existing Opsgenie integrations need a migration plan for its announced shutdown.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "5": "5. ArgoCD 开箱即用支持哪些通知服务？\n   - A) 仅 Slack\n   - B) 仅电子邮件\n   - C) 包括 Slack、Teams、电子邮件、webhooks 等在内的多种服务\n   - D) 不支持，全部需要自定义插件\n\n<details>\n<summary>显示答案</summary>\n\n**答案：C) 包括 Slack、Teams、电子邮件、webhooks 等在内的多种服务**\n\n**说明：**\nArgoCD notifications 支持许多服务，包括 Slack、Microsoft Teams、Telegram、Opsgenie、Grafana、PagerDuty、GitHub、电子邮件 (SMTP) 和通用 webhooks。\n\n</details>"
+          },
+          "finalQuestions": {
+            "5": "5. ArgoCD 开箱即用支持哪些通知服务？\n   - A) 仅 Slack\n   - B) 仅电子邮件\n   - C) 包括 Slack、Teams、电子邮件、webhooks 等在内的多种服务\n   - D) 不支持，全部需要自定义插件\n\n<details>\n<summary>显示答案</summary>\n\n**答案：C) 包括 Slack、Teams、电子邮件、webhooks 等在内的多种服务**\n\n**说明：**\nArgo CD 支持 Slack、Teams Workflows、GitHub、电子邮件、通用 webhooks、SQS 等服务的通知格式。发送前必须配置凭证、触发器、模板和订阅。一个模板包含多个服务的格式，并不意味着它会自动向所有服务广播通知。现有 Opsgenie 集成需要针对已宣布的停服制定迁移计划。\n\n</details>"
+          },
+          "resolution": "Replaced obsolete provider list with the current source list: Slack, Teams Workflows, GitHub, email, generic webhooks and SQS. Restored delivery prerequisite credentials/triggers/templates/subscriptions, no automatic broadcast across formats and migration planning for existing Opsgenie integrations facing its announced shutdown. No shutdown date or external provider facts added.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/gitops/argocd/08-notifications-quiz.md",
+          "cn/quizzes/gitops/argocd/08-notifications-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "fencedCodeBytesUnchanged": true,
+        "inlineCodeMatchesCurrentSourceExactly": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:29:07.838172+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/gitops/argocd/09-best-practices-quiz.md",
+      "targetPath": "cn/quizzes/gitops/argocd/09-best-practices-quiz.md",
+      "sourceBlob": "dceae72e7a58d129b965e33374c195b6a5c4f614",
+      "sourceSha256": "18fdaee950215280e953c52c390a68ad8c19345576770322c2222de24a89be19",
+      "beforeTargetSha256": "44f83dd87958a36a15c259a39cbcad6f3ae216a51c2587e3eced24c75ba680e4",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0003-preimages/44f83dd87958a36a15c259a39cbcad6f3ae216a51c2587e3eced24c75ba680e4.md",
+      "sourceGitBlob": "dceae72e7a58d129b965e33374c195b6a5c4f614",
+      "targetSha256": "4fec3e9455022e17e63e17a473797c0ea17e63d576d0605322a57ea9d83db988",
+      "currentTargetSha256": "4fec3e9455022e17e63e17a473797c0ea17e63d576d0605322a57ea9d83db988",
+      "afterTargetSha256": "4fec3e9455022e17e63e17a473797c0ea17e63d576d0605322a57ea9d83db988",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/4fec3e9455022e17e63e17a473797c0ea17e63d576d0605322a57ea9d83db988.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": "0–100; genuine qualitative complete-page meaning/readability comparison, not inferred from validators or threshold requirements",
+      "fullPageRationale": "Independently compared the entire 83-line English/Chinese pair: five questions, twenty options and all disclosed answers/explanations. App of Apps now follows the administrator-owned child-Application definition and recovery/write boundaries. Repository separation follows qualified rebuild/CI semantics; common-base reuse and reviewed environment progression are correctly scoped. Secret-encryption/external-manager advice remains intact. Correct B/B/B/B/B answer sequence and source-backed options preserved.",
+      "findings": [
+        {
+          "scope": "Q1",
+          "reportedIssue": "Old claim equates App of Apps with self-managing ArgoCD. Restore administrator-owned root repository declaring childApplications; notmandatory/notselfmanagement, restrictwrites and independent bootstrap/recovery.",
+          "sourceQuestions": {
+            "1": "1. Which pattern uses an administrator-owned root repository to declare multiple child Applications?\n   - A) Manual configuration through the UI\n   - B) App of Apps\n   - C) Using kubectl apply directly\n   - D) Configuration should never change\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) App of Apps**\n\n**Explanation:**\nApp of Apps uses a root Application to manage child Applications. It is not synonymous with self-managing Argo CD and is not required for every installation. Treat it as an administrative capability, restrict repository writes, and retain an independent bootstrap/recovery path.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "1": "1. 管理 ArgoCD 自身配置的推荐方法是什么？\n   - A) 通过 UI 手动配置\n   - B) 使用 ArgoCD 管理 ArgoCD（app-of-apps 模式）\n   - C) 直接使用 kubectl apply\n   - D) 配置永远不应更改\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 使用 ArgoCD 管理 ArgoCD（app-of-apps 模式）**\n\n**说明：**\n“app-of-apps”模式是指让 ArgoCD 管理其自身配置和其他 ArgoCD Application。这样可确保 ArgoCD 的配置受版本控制，并遵循 GitOps 原则。\n\n</details>"
+          },
+          "finalQuestions": {
+            "1": "1. 哪种模式使用管理员拥有的根仓库来声明多个子 Application？\n   - A) 通过 UI 手动配置\n   - B) App of Apps\n   - C) 直接使用 kubectl apply\n   - D) 配置永远不应更改\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) App of Apps**\n\n**说明：**\nApp of Apps 使用根 Application 管理子 Application。它不等同于让 Argo CD 管理自身，也并非每次安装都必须采用。应将其视为管理员能力，限制仓库写入权限，并保留独立的引导/恢复路径。\n\n</details>"
+          },
+          "resolution": "Restored admin-owned root repository declaring child Applications, option/answer B as App of Apps, distinction from Argo CD self-management, no universal-installation requirement, restricted repository writes and independent bootstrap/recovery.",
+          "resolved": true
+        },
+        {
+          "scope": "Q2",
+          "reportedIssue": "Old text implies repository split preventsCI; current onlymayavoid applicationcode rebuilds for deployment-only changes and explicitly requires CI/path/repository design.",
+          "sourceQuestions": {
+            "2": "2. What is the recommended repository structure for GitOps?\n   - A) Mix application code and manifests in the same repo\n   - B) Separate repositories for application code and deployment manifests\n   - C) Store everything in a single file\n   - D) Use only Helm charts from public repositories\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Separate repositories for application code and deployment manifests**\n\n**Explanation:**\nSeparating application code from deployment manifests provides clearer audit trails, allows different teams to manage each, and can avoid rebuilding application code for deployment-only changes. CI triggers, path filters, and repository boundaries still need explicit design.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "2": "2. GitOps 推荐的仓库结构是什么？\n   - A) 将应用程序代码和清单文件混合在同一仓库中\n   - B) 为应用程序代码和部署清单文件使用独立的仓库\n   - C) 将所有内容存储在单个文件中\n   - D) 仅使用来自公共仓库的 Helm chart\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 为应用程序代码和部署清单文件使用独立的仓库**\n\n**说明：**\n将应用程序代码与部署清单文件分离可提供更清晰的审计记录，让不同团队分别管理它们，并避免因部署变更触发 CI。\n\n</details>"
+          },
+          "finalQuestions": {
+            "2": "2. GitOps 推荐的仓库结构是什么？\n   - A) 将应用程序代码和清单文件混合在同一仓库中\n   - B) 为应用程序代码和部署清单文件使用独立的仓库\n   - C) 将所有内容存储在单个文件中\n   - D) 仅使用来自公共仓库的 Helm chart\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 为应用程序代码和部署清单文件使用独立的仓库**\n\n**说明：**\n将应用程序代码与部署清单文件分离可提供更清晰的审计记录，让不同团队分别管理它们，并可能避免因仅涉及部署的变更而重新构建应用程序代码。CI 触发器、路径过滤器和仓库边界仍需明确设计。\n\n</details>"
+          },
+          "resolution": "Restored possible avoidance of application-code rebuilds for deployment-only changes, rather than a guarantee of avoiding CI. Restored explicit CI-trigger/path-filter/repository-boundary design.",
+          "resolved": true
+        },
+        {
+          "scope": "Q3/Q4",
+          "reportedIssue": "Restore specific common-base-reuse stem; use natural deployment-promotion Chinese rather than advertising-like 推广 where appropriate, preserving source workflow/PR review semantics.",
+          "sourceQuestions": {
+            "3": "3. How can you reuse common manifests while expressing environment-specific values?\n   - A) Create separate Applications for each environment\n   - B) Use Kustomize overlays or Helm values files per environment\n   - C) Hardcode values in the manifests\n   - D) Use environment variables in pods\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Use Kustomize overlays or Helm values files per environment**\n\n**Explanation:**\nUsing Kustomize overlays or Helm values files allows you to maintain a common base configuration while customizing specific values (replicas, resources, domains) per environment.\n\n</details>",
+            "4": "4. What is the recommended approach for promoting changes across environments?\n   - A) Direct commits to production branch\n   - B) Pull requests with review from staging to production\n   - C) Manual sync in the UI\n   - D) Automatic promotion without review\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Pull requests with review from staging to production**\n\n**Explanation:**\nUsing pull requests for promotion ensures changes are reviewed before reaching production, provides an audit trail, and allows for automated checks (tests, policy validation) before merging.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "3": "3. 应如何处理特定环境的配置？\n   - A) 为每个环境创建独立的 Application\n   - B) 为每个环境使用 Kustomize overlay 或 Helm values 文件\n   - C) 在清单文件中硬编码值\n   - D) 在 Pod 中使用环境变量\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 为每个环境使用 Kustomize overlay 或 Helm values 文件**\n\n**说明：**\n使用 Kustomize overlay 或 Helm values 文件可让您维护通用基础配置，同时为每个环境自定义特定值（副本数、资源、域名）。\n\n</details>",
+            "4": "4. 在不同环境之间推广变更的推荐方法是什么？\n   - A) 直接提交到生产分支\n   - B) 从预发布环境到生产环境使用经过审查的 Pull Request\n   - C) 在 UI 中手动同步\n   - D) 无需审查即可自动推广\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 从预发布环境到生产环境使用经过审查的 Pull Request**\n\n**说明：**\n使用 Pull Request 进行推广可确保变更在进入生产环境前经过审查，提供审计记录，并允许在合并前执行自动检查（测试、策略验证）。\n\n</details>"
+          },
+          "finalQuestions": {
+            "3": "3. 如何在表达特定环境的配置值时复用通用清单？\n   - A) 为每个环境创建独立的 Application\n   - B) 为每个环境使用 Kustomize overlay 或 Helm values 文件\n   - C) 在清单文件中硬编码值\n   - D) 在 Pod 中使用环境变量\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 为每个环境使用 Kustomize overlay 或 Helm values 文件**\n\n**说明：**\n使用 Kustomize overlay 或 Helm values 文件可让您维护通用基础配置，同时为每个环境自定义特定值（副本数、资源、域名）。\n\n</details>",
+            "4": "4. 在不同环境之间推进变更的推荐方法是什么？\n   - A) 直接提交到生产分支\n   - B) 从预发布环境到生产环境使用经过审查的 Pull Request\n   - C) 在 UI 中手动同步\n   - D) 无需审查即可自动推进变更\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 从预发布环境到生产环境使用经过审查的 Pull Request**\n\n**说明：**\n使用 Pull Request 推进变更可确保变更在进入生产环境前经过审查，提供审计记录，并允许在合并前执行自动检查（测试、策略验证）。\n\n</details>"
+          },
+          "resolution": "Restored Q3 common-manifest reuse while expressing environment-specific values. Changed advertising-like 推广 to natural deployment progression 推进变更 throughout Q4 while retaining reviewed staging-to-production PR, audit trail and pre-merge test/policy checks.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/gitops/argocd/09-best-practices-quiz.md",
+          "cn/quizzes/gitops/argocd/09-best-practices-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "fencedCodeBytesUnchanged": true,
+        "inlineCodeMatchesCurrentSourceExactly": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:29:07.838172+00:00"
+    },
+    {
+      "sourcePath": "en/quizzes/gitops/argocd/07-security-quiz.md",
+      "targetPath": "cn/quizzes/gitops/argocd/07-security-quiz.md",
+      "sourceBlob": "4008072441aac7e3ea165a80fabad94d84ef55df",
+      "sourceSha256": "c004480746cb8f6170bb69b8f60f2023e57023ae174286ee4f41b8cc6b0636c3",
+      "beforeTargetSha256": "88eb4fdcb840760548a24871dca5dad34835865e4e99a61ee4f43940b246936a",
+      "beforeSnapshot": "/tmp/native-sol-cn-batch0003-preimages/88eb4fdcb840760548a24871dca5dad34835865e4e99a61ee4f43940b246936a.md",
+      "sourceGitBlob": "4008072441aac7e3ea165a80fabad94d84ef55df",
+      "targetSha256": "90512c45d3508ff04734f1fd0c6f1ad9040f7ef4d3a6186105cf05f543b38561",
+      "currentTargetSha256": "90512c45d3508ff04734f1fd0c6f1ad9040f7ef4d3a6186105cf05f543b38561",
+      "afterTargetSha256": "90512c45d3508ff04734f1fd0c6f1ad9040f7ef4d3a6186105cf05f543b38561",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/90512c45d3508ff04734f1fd0c6f1ad9040f7ef4d3a6186105cf05f543b38561.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": "0–100; genuine qualitative complete-page meaning/readability comparison, not inferred from validators or threshold requirements",
+      "fullPageRationale": "Independently compared the entire 83-line English/Chinese pair: five questions, twenty options and all disclosed answers/explanations. Corrected every stale section against current English: no automatic Git encryption, ciphertext versus external retrieval and Base64 distinction; controller keys and strict binding; Dex versus direct OIDC; namespaced kinds versus cluster lists/admission; authenticated protected access and frontend/backend TLS separation. Correct B/B/B/B/B sequence preserved, with deliberate current-source repairs to option text and C distractor.",
+      "findings": [
+        {
+          "scope": "Q1",
+          "reportedIssue": "Do not claim ArgoCD forces plaintext or ESO/Vault encryptGit. Restore no automaticGit encryption, Sealed/SOPSciphertext vs externalreference retrieval and Base64not encryption.",
+          "sourceQuestions": {
+            "1": "1. How does ArgoCD handle secrets in Git repositories by default?\n   - A) It encrypts them automatically\n   - B) It does not automatically encrypt Git secrets\n   - C) It uses Kubernetes Secrets API\n   - D) It requires a secrets manager\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) It does not automatically encrypt Git secrets**\n\n**Explanation:**\nArgoCD itself doesn't provide secret encryption. Sealed Secrets/SOPS store ciphertext in Git. ESO/Vault integrations can instead store external references and retrieve values; they do not automatically encrypt Git files. Base64 is not encryption.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "1": "1. 默认情况下，ArgoCD 如何处理 Git 存储库中的 Secret？\n   - A) 它会自动加密它们\n   - B) 它不会对 Secret 进行特殊处理——它们以纯文本形式存储\n   - C) 它使用 Kubernetes Secrets API\n   - D) 它需要一个 secrets manager\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 它不会对 Secret 进行特殊处理——它们以纯文本形式存储**\n\n**说明：**\nArgoCD 本身不提供 Secret 加密。Git 中的 Secret 应在提交到 Git 前使用 Sealed Secrets、SOPS、External Secrets Operator 或 Vault 等工具加密。\n\n</details>"
+          },
+          "finalQuestions": {
+            "1": "1. 默认情况下，ArgoCD 如何处理 Git 存储库中的 Secret？\n   - A) 它会自动加密它们\n   - B) 它不会自动加密 Git 中的 Secret\n   - C) 它使用 Kubernetes Secrets API\n   - D) 它需要一个 secrets manager\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 它不会自动加密 Git 中的 Secret**\n\n**说明：**\nArgoCD 本身不提供 Secret 加密。Sealed Secrets/SOPS 在 Git 中存储密文。ESO/Vault 集成则可以存储外部引用并获取 Secret 值；它们不会自动加密 Git 文件。Base64 不是加密。\n\n</details>"
+          },
+          "resolution": "Restored answer B to no automatic Git-secret encryption rather than forced plaintext. Distinguished Sealed Secrets/SOPS Git ciphertext from ESO/Vault external references and value retrieval; restored no automatic Git-file encryption by external retrieval integrations and Base64 not being encryption.",
+          "resolved": true
+        },
+        {
+          "scope": "Q2",
+          "reportedIssue": "Restore controller publickey stem, default strict name/namespace scope and keypossession trustboundary; not universal cluster-specific keys claim.",
+          "sourceQuestions": {
+            "2": "2. Which tool seals Kubernetes Secrets using a controller public key?\n   - A) SOPS\n   - B) Sealed Secrets\n   - C) Vault\n   - D) KMS\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Sealed Secrets**\n\n**Explanation:**\nSealed Secrets uses controller key pairs. The default strict scope also binds the name/namespace, while the decryption trust boundary depends on possession of the keys. The encrypted SealedSecret can be safely stored in Git and is decrypted by the Sealed Secrets controller in the cluster.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "2": "2. 哪种工具使用集群特定的密钥加密 Kubernetes Secrets？\n   - A) SOPS\n   - B) Sealed Secrets\n   - C) Vault\n   - D) KMS\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) Sealed Secrets**\n\n**说明：**\nSealed Secrets 使用集群特定的密钥对来加密 Secret。加密后的 SealedSecret 可以安全地存储在 Git 中，并由集群中的 Sealed Secrets controller 解密。\n\n</details>"
+          },
+          "finalQuestions": {
+            "2": "2. 哪种工具使用控制器公钥加密 Kubernetes Secrets？\n   - A) SOPS\n   - B) Sealed Secrets\n   - C) Vault\n   - D) KMS\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) Sealed Secrets**\n\n**说明：**\nSealed Secrets 使用控制器密钥对。默认的严格作用域还会绑定名称和 namespace，而解密的信任边界取决于密钥的持有者。加密后的 SealedSecret 可以安全地存储在 Git 中，并由集群中的 Sealed Secrets controller 解密。\n\n</details>"
+          },
+          "resolution": "Restored controller-public-key question, controller key pairs, default strict name/namespace binding and key-possession decryption trust boundary rather than a universal cluster-specific-key claim. Preserved Git-storage/controller-decryption explanation.",
+          "resolved": true
+        },
+        {
+          "scope": "Q3",
+          "reportedIssue": "Restore directOIDC does notalwaysrequireDex.",
+          "sourceQuestions": {
+            "3": "3. What is the purpose of ArgoCD's Dex component?\n   - A) Container image scanning\n   - B) OpenID Connect authentication and SSO\n   - C) Network policy enforcement\n   - D) Secret rotation\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) OpenID Connect authentication and SSO**\n\n**Explanation:**\nDex is an identity service that provides OpenID Connect (OIDC) authentication. It brokers LDAP, SAML, GitHub and other identities through OIDC. Direct OIDC in Argo CD does not always require Dex.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "3": "3. ArgoCD 的 Dex 组件的用途是什么？\n   - A) Container image 扫描\n   - B) OpenID Connect 身份验证和 SSO\n   - C) Network policy 强制执行\n   - D) Secret 轮换\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) OpenID Connect 身份验证和 SSO**\n\n**说明：**\nDex 是一个提供 OpenID Connect (OIDC) 身份验证的身份服务。它使 ArgoCD 能够与各种身份提供商（LDAP、SAML、GitHub 等）集成，以实现单点登录。\n\n</details>"
+          },
+          "finalQuestions": {
+            "3": "3. ArgoCD 的 Dex 组件的用途是什么？\n   - A) Container image 扫描\n   - B) OpenID Connect 身份验证和 SSO\n   - C) Network policy 强制执行\n   - D) Secret 轮换\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) OpenID Connect 身份验证和 SSO**\n\n**说明：**\nDex 是一个提供 OpenID Connect (OIDC) 身份验证的身份服务。它通过 OIDC 对接 LDAP、SAML、GitHub 等身份来源。Argo CD 直接使用 OIDC 时并不总是需要 Dex。\n\n</details>"
+          },
+          "resolution": "Restored Dex brokering LDAP/SAML/GitHub identities through OIDC and the condition that direct OIDC does not always require Dex.",
+          "resolved": true
+        },
+        {
+          "scope": "Q4",
+          "reportedIssue": "Restore namespaced-resource-kind stem/optionC currentrequests-limits, separate cluster lists and no privilegedPod admission inspection.",
+          "sourceQuestions": {
+            "4": "4. How can you restrict which namespaced resource kinds an Application manages?\n   - A) Using Kubernetes ResourceQuotas\n   - B) Using AppProject's namespaceResourceBlacklist or namespaceResourceWhitelist\n   - C) Only changing Pod requests/limits\n   - D) It's not possible in ArgoCD\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Using AppProject's namespaceResourceBlacklist or namespaceResourceWhitelist**\n\n**Explanation:**\nAppProjects can define `namespaceResourceBlacklist` (deny specific resources) or `namespaceResourceWhitelist` (allow only specific resources) to control namespaced kinds. Cluster-scoped resources use separate lists, and this does not inspect privileged Pod settings like an admission policy.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "4": "4. 如何限制 Application 可以创建的 Kubernetes 资源？\n   - A) 使用 Kubernetes ResourceQuotas\n   - B) 使用 AppProject 的 namespaceResourceBlacklist 或 namespaceResourceWhitelist\n   - C) 使用 Pod Security Policies\n   - D) 在 ArgoCD 中无法实现\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 使用 AppProject 的 namespaceResourceBlacklist 或 namespaceResourceWhitelist**\n\n**说明：**\nAppProject 可以定义 `namespaceResourceBlacklist`（拒绝特定资源）或 `namespaceResourceWhitelist`（仅允许特定资源），以控制 Application 可以管理的 Kubernetes 资源类型。\n\n</details>"
+          },
+          "finalQuestions": {
+            "4": "4. 如何限制 Application 管理的命名空间级资源类型？\n   - A) 使用 Kubernetes ResourceQuotas\n   - B) 使用 AppProject 的 namespaceResourceBlacklist 或 namespaceResourceWhitelist\n   - C) 仅更改 Pod 的 requests/limits\n   - D) 在 ArgoCD 中无法实现\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 使用 AppProject 的 namespaceResourceBlacklist 或 namespaceResourceWhitelist**\n\n**说明：**\nAppProject 可以定义 `namespaceResourceBlacklist`（拒绝特定资源）或 `namespaceResourceWhitelist`（仅允许特定资源），以控制命名空间级资源类型。集群级资源使用单独的列表，而且这不会像准入策略一样检查 Pod 的特权设置。\n\n</details>"
+          },
+          "resolution": "Restored namespaced-resource-kind question, current C distractor of only changing Pod requests/limits, separate cluster-scoped lists and no privileged-Pod setting inspection as an admission policy would do.",
+          "resolved": true
+        },
+        {
+          "scope": "Q5",
+          "reportedIssue": "Restore protectedauthenticatedTLS ingress/gateway/internalpaths; frontend TLStermination doesnot validatebackendTLS. Preserve sensitive VPN/IPallowlisting source scope.",
+          "sourceQuestions": {
+            "5": "5. What is the recommended practice for ArgoCD API server exposure?\n   - A) Expose it publicly with basic auth\n   - B) Use protected access paths with TLS and authentication\n   - C) Run it without any authentication\n   - D) Only access it via port-forwarding\n\n<details>\n<summary>Show Answer</summary>\n\n**Answer: B) Use protected access paths with TLS and authentication**\n\n**Explanation:**\nUse authenticated TLS through an Ingress/Gateway or protected internal path. Frontend TLS termination does not itself validate backend TLS. For sensitive environments, additional measures like VPN access or IP whitelisting are recommended.\n\n</details>"
+          },
+          "beforeQuestions": {
+            "5": "5. 公开 ArgoCD API server 的推荐做法是什么？\n   - A) 使用基本身份验证将其公开暴露\n   - B) 将其保留为内部访问，并使用带 TLS 和身份验证的 ingress\n   - C) 在没有任何身份验证的情况下运行它\n   - D) 只能通过 port-forwarding 访问它\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 将其保留为内部访问，并使用带 TLS 和身份验证的 ingress**\n\n**说明：**\nArgoCD API server 应通过配置 TLS termination 和适当身份验证（SSO/OIDC）的 ingress 公开。对于敏感环境，建议采取 VPN 访问或 IP 白名单等额外措施。\n\n</details>"
+          },
+          "finalQuestions": {
+            "5": "5. 暴露 ArgoCD API server 的推荐做法是什么？\n   - A) 使用基本身份验证将其公开暴露\n   - B) 使用带 TLS 和身份验证的受保护访问路径\n   - C) 在没有任何身份验证的情况下运行它\n   - D) 只能通过 port-forwarding 访问它\n\n<details>\n<summary>显示答案</summary>\n\n**答案：B) 使用带 TLS 和身份验证的受保护访问路径**\n\n**说明：**\n通过 Ingress/Gateway 或受保护的内部路径提供经过身份验证的 TLS 访问。仅在前端终止 TLS，并不能验证后端 TLS。对于敏感环境，建议采取 VPN 访问或 IP 白名单等额外措施。\n\n</details>"
+          },
+          "resolution": "Restored protected access paths with TLS/authentication in option and answer B, authenticated Ingress/Gateway or protected internal paths, and frontend TLS termination not itself validating backend TLS. Retained extra VPN/IP-allowlisting scope only for sensitive environments.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/gitops/argocd/07-security-quiz.md",
+          "cn/quizzes/gitops/argocd/07-security-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "allQuestionOrderAndOptionLettersMatchSource": true,
+        "currentAnswerLettersMatchSource": true,
+        "fencedCodeBytesUnchanged": true,
+        "inlineCodeMatchesCurrentSourceExactly": true,
+        "linkDestinationsUnchanged": true,
+        "htmlDisclosureStructureUnchanged": true
+      },
+      "reviewedAt": "2026-10-18T10:29:07.838172+00:00"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -465,7 +1319,7 @@
   "japaneseRestoredNavigationEntriesReviewed": 23,
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
-  "snapshotScope": "Five genuine complete-page reviews. These do not certify the remaining multilingual pages; current target hashes are verified independently.",
+  "snapshotScope": "Seventeen genuine complete-page native Sol reviews. These do not certify the remaining multilingual pages; target hashes are verified independently.",
   "additionalReviewBatches": [
     {
       "reviewedAt": "2026-10-18T10:01:48.377953+00:00",
@@ -486,6 +1340,105 @@
         ],
         "exitCode": 0
       }
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T10:20:13.729451+00:00",
+      "scope": [
+        "cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+        "cn/quizzes/platform-engineering/08-vcluster-quiz.md",
+        "cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+        "cn/quizzes/gitops/03-gitops-comparison-quiz.md",
+        "cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+        "cn/quizzes/gitops/argocd/01-installation-quiz.md",
+        "cn/quizzes/governance/06-decision-framework-and-poc-quiz.md"
+      ],
+      "inputHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+            "cn/quizzes/platform-engineering/08-vcluster-quiz.md",
+            "cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+            "cn/quizzes/gitops/03-gitops-comparison-quiz.md",
+            "cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+            "cn/quizzes/gitops/argocd/01-installation-quiz.md",
+            "cn/quizzes/governance/06-decision-framework-and-poc-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+            "cn/quizzes/platform-engineering/08-vcluster-quiz.md",
+            "cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+            "cn/quizzes/gitops/03-gitops-comparison-quiz.md",
+            "cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+            "cn/quizzes/gitops/argocd/01-installation-quiz.md",
+            "cn/quizzes/governance/06-decision-framework-and-poc-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/platform-engineering/08-vcluster-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/gitops/03-gitops-comparison-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/gitops/argocd/01-installation-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/governance/06-decision-framework-and-poc-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+          "cn/quizzes/platform-engineering/08-vcluster-quiz.md",
+          "cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+          "cn/quizzes/gitops/03-gitops-comparison-quiz.md",
+          "cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+          "cn/quizzes/gitops/argocd/01-installation-quiz.md",
+          "cn/quizzes/governance/06-decision-framework-and-poc-quiz.md"
+        ],
+        "exitCode": 0
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+          "cn/quizzes/platform-engineering/08-vcluster-quiz.md",
+          "cn/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+          "cn/quizzes/gitops/03-gitops-comparison-quiz.md",
+          "cn/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+          "cn/quizzes/gitops/argocd/01-installation-quiz.md",
+          "cn/quizzes/governance/06-decision-framework-and-poc-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n"
+      },
+      "sourceBasedDeliberateAnswerRepair": {
+        "file": "cn/quizzes/gitops/03-gitops-comparison-quiz.md",
+        "question": 2,
+        "beforeCorrectLetter": "B",
+        "finalCorrectLetter": "C",
+        "reason": "Current English Q2 explicitly answers C: both support OCI with different settings."
+      }
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T10:29:07.838172+00:00",
+      "scope": [
+        "cn/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+        "cn/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+        "cn/quizzes/gitops/argocd/08-notifications-quiz.md",
+        "cn/quizzes/gitops/argocd/09-best-practices-quiz.md",
+        "cn/quizzes/gitops/argocd/07-security-quiz.md"
+      ]
     }
   ]
 }

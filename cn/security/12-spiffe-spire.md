@@ -3,7 +3,7 @@
 > **最后更新**：October 16, 2026
 > **验证基线**：SPIRE 1.15.3、hardened chart 0.30.2 / CRD chart 0.6.1、Controller Manager 0.7.0、chart CSI image 0.2.7（也对照当前 CSI 0.2.13 文档进行了检查）、go-spiffe 2.8.1。请单独检查 chart 渲染出的镜像版本。
 
-SPIFFE 定义工作负载身份、凭证、交付和信任格式；SPIRE 则负责实现这些格式。**签发身份不会自动加密流量或授权服务访问。**本指南验证本地配置、架构、库、chart 和图表。未执行实时集群、AWS CA、SPIRE 证明或网格安装。
+SPIFFE 定义工作负载身份、凭证、交付和信任格式；SPIRE 则负责实现这些格式。**签发身份不会自动加密流量或授权服务访问**。本指南验证本地配置、架构、库、chart 和图表。未执行实时集群、AWS CA、SPIRE 证明或网格安装。
 
 ## 概述
 

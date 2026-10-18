@@ -11,9 +11,9 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**B) 使用临时 ReplicaSet 和分析来验证新版本
+**答案**：B) 使用临时 ReplicaSet 和分析来验证新版本
 
-**说明：**Experiment 会启动临时 ReplicaSet，并在结束时将它们缩容至 0。Service 选择器和路由器必须实现预期的隔离。仅创建独立 ReplicaSet 并不能保证真实用户不会受到影响。
+**说明**：Experiment 会启动临时 ReplicaSet，并在结束时将它们缩容至 0。Service 选择器和路由器必须实现预期的隔离。仅创建独立 ReplicaSet 并不能保证真实用户不会受到影响。
 
 </details>
 
@@ -26,9 +26,9 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**C) 中止 Rollout，并保持稳定版本不变
+**答案**：C) 中止 Rollout，并保持稳定版本不变
 
-**说明：**Experiment 步骤会阻塞后续流程。只有 Experiment 以 Successful 阶段结束，Rollout 才会继续；Failed/Error 会中止 Rollout，使其进入 Degraded 状态。Inconclusive 则会设置 InconclusiveExperiment 暂停状态，等待调查和操作员决策。中止不会撤销数据库变更或外部副作用。
+**说明**：Experiment 步骤会阻塞后续流程。只有 Experiment 以 Successful 阶段结束，Rollout 才会继续；Failed/Error 会中止 Rollout，使其进入 Degraded 状态。Inconclusive 则会设置 InconclusiveExperiment 暂停状态，等待调查和操作员决策。中止不会撤销数据库变更或外部副作用。
 
 </details>
 
@@ -41,9 +41,9 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**B) `demo-app-74d8d8b4fb-2-0`
+**答案**：B) `demo-app-74d8d8b4fb-2-0`
 
-**说明：**Experiment 名称格式为 `<rollout-name>-<new-version PodTemplateHash>-<revision>-<step-index>`。它创建的 ReplicaSet 名称为 `<experiment-name>-<template-name>`（例如 `demo-app-74d8d8b4fb-2-0-baseline`），AnalysisRun 名称为 `<experiment-name>-<analysis-name>`。
+**说明**：Experiment 名称格式为 `<rollout-name>-<new-version PodTemplateHash>-<revision>-<step-index>`。它创建的 ReplicaSet 名称为 `<experiment-name>-<template-name>`（例如 `demo-app-74d8d8b4fb-2-0-baseline`），AnalysisRun 名称为 `<experiment-name>-<analysis-name>`。
 
 </details>
 
@@ -56,9 +56,9 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**C) Service 选择器中的 traffic-class 与 Experiment Pod 标签不同
+**答案**：C) Service 选择器中的 traffic-class 与 Experiment Pod 标签不同
 
-**说明：**示例通过标签/选择器明确区分了各自的选择集合。另一个仅选择 app 标签的 Service 仍可能选中 Experiment Pod。若要有意向其发送流量，可在模板上设置 `service` 属性以创建 Experiment 专用 Service，或在配置了 trafficRouting 的 Rollout 上使用 `weight`。
+**说明**：示例通过标签/选择器明确区分了各自的选择集合。另一个仅选择 app 标签的 Service 仍可能选中 Experiment Pod。若要有意向其发送流量，可在模板上设置 `service` 属性以创建 Experiment 专用 Service，或在配置了 trafficRouting 的 Rollout 上使用 `weight`。
 
 </details>
 
@@ -71,9 +71,9 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**A) Rollout 必须配置支持加权 Experiment 的 trafficRouting
+**答案**：A) Rollout 必须配置支持加权 Experiment 的 trafficRouting
 
-**说明：**weight 属于 Rollout 实验步骤模板。必须使用 ALB/Istio 等受支持的路由器；普通 canary 加权并不意味着支持 Experiment 流量拆分。未配置 trafficRouting 时，可通过 `service` 属性创建 Experiment 专用 Service，并自行配置路由。
+**说明**：weight 属于 Rollout 实验步骤模板。必须使用 ALB/Istio 等受支持的路由器；普通 canary 加权并不意味着支持 Experiment 流量拆分。未配置 trafficRouting 时，可通过 `service` 属性创建 Experiment 专用 Service，并自行配置路由。
 
 </details>
 
@@ -86,7 +86,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**B) 两次测量失败后（failed > failureLimit）
+**答案**：B) 两次测量失败后（failed > failureLimit）
 
 **说明：**`failureLimit` 表示允许的失败次数；失败数超过该值时，AnalysisRun 就会被判定为 Failed。1.10.0 的实现会比较 `failed > failureLimit`。同理，超过 `inconclusiveLimit` 会得到 Inconclusive，超过 `consecutiveErrorLimit`（连续采集错误，默认值为 4）会得到 Error。
 
@@ -101,9 +101,9 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**C) spec.templates 中所有 ReplicaSet 都变为健康（可用）时
+**答案**：C) spec.templates 中所有 ReplicaSet 都变为健康（可用）时
 
-**说明：**Experiment 控制器会先为每个模板创建 ReplicaSet，并等待所有 Pod 都可用。随后才启动 duration 计时器并创建 AnalysisRun，因此 Pod 启动缓慢不会占用实验时长。
+**说明**：Experiment 控制器会先为每个模板创建 ReplicaSet，并等待所有 Pod 都可用。随后才启动 duration 计时器并创建 AnalysisRun，因此 Pod 启动缓慢不会占用实验时长。
 
 </details>
 
@@ -116,8 +116,8 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**B) 缩容至 0，并清理通过 `service` 属性创建的任何 Service
+**答案**：B) 缩容至 0，并清理通过 `service` 属性创建的任何 Service
 
-**说明：**Experiment 是临时资源。完成后，默认会先等待 30 秒缩容延迟，再将副本数降为零。生成的 Service 会在可用副本数变为零后删除。根据保留策略，ReplicaSet/AnalysisRun 对象可能仍会保留。成功时 Rollout 会继续；Failed/Error 会中止；Inconclusive 会暂停。
+**说明**：Experiment 是临时资源。完成后，默认会先等待 30 秒缩容延迟，再将副本数降为零。生成的 Service 会在可用副本数变为零后删除。根据保留策略，ReplicaSet/AnalysisRun 对象可能仍会保留。成功时 Rollout 会继续；Failed/Error 会中止；Inconclusive 会暂停。
 
 </details>

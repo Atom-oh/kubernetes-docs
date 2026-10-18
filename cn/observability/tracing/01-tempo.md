@@ -144,7 +144,7 @@ tempo:
 部署前，请解决以下要求：
 
 - 单独创建并拥有 Kafka topic。默认的三个 live-store/block-builder 副本和 `partitions_per_instance: 1` 需要相匹配的分区设计；仅扩展 Pod 并不会重新分配所有 block-builder 分配项。
-- 端到端验证 Kafka 传输和身份验证。**Tempo 3.0.3 的 Kafka 客户端支持 SASL/PLAIN，但不提供 Kafka TLS、SCRAM 或 MSK IAM 配置。**PLAIN 不提供加密。此示例不是可直接用于生产的安全 MSK 配置。网络/代理解决方案必须覆盖所有广播的 broker 端点，而不仅仅是 bootstrap 端点，并且必须在投入生产前进行独立测试。
+- 端到端验证 Kafka 传输和身份验证。**Tempo 3.0.3 的 Kafka 客户端支持 SASL/PLAIN，但不提供 Kafka TLS、SCRAM 或 MSK IAM 配置**。PLAIN 不提供加密。此示例不是可直接用于生产的安全 MSK 配置。网络/代理解决方案必须覆盖所有广播的 broker 端点，而不仅仅是 bootstrap 端点，并且必须在投入生产前进行独立测试。
 - 使用下一节中的 S3 存储桶和角色。设置确切的 ServiceAccount 名称和角色注解；创建一个不相关的 ServiceAccount 并不足够。
 - 使用实际的集群网络控制和经过身份验证的传输，限制 OTLP、查询、memberlist 和组件 RPC 的访问。内部负载均衡器或单独的 `X-Scope-OrgID` header 都不构成身份验证。
 - 为工作负载设置资源、调度、干扰预算和存储/恢复策略。PodDisruptionBudget 限制自愿驱逐；反亲和性控制 Pod 放置。两者都不能证明服务具备可用性。
@@ -204,7 +204,7 @@ helm template tempo grafana-community/tempo-distributed \
 tempo -config.file=tempo.yaml -config.verify=true
 ```
 
-此命令会在服务初始化前退出。它不会连接 Kafka/S3，也不会完整测试任意接收器配置。**在解决前述部署要求之前，不要运行 Helm install。**之后，请在自己的部署流程下使用经过审核的 values 和自有的 release/namespace，并制定回滚/迁移计划。
+此命令会在服务初始化前退出。它不会连接 Kafka/S3，也不会完整测试任意接收器配置。**在解决前述部署要求之前，不要运行 Helm install**。之后，请在自己的部署流程下使用经过审核的 values 和自有的 release/namespace，并制定回滚/迁移计划。
 
 如需进行本地单进程检查，请将此独立文件保存为 `tempo-local.yaml`，并针对你的操作系统/架构使用经验证的官方 Tempo 3.0.3 二进制文件：
 

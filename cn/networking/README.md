@@ -407,9 +407,9 @@ GWLB 通过 Gateway Load Balancer endpoint 将防火墙和 IDS/IPS 等检查设�
 
 ### DNS Resolver 和路由表的实际行为
 
-**DNS 解析器：**AmazonProvidedDNS **就是 Route 53 Resolver**。其地址包括 VPC IPv4 主网络地址加二（对于 `10.0.0.0/16`，即 `10.0.0.2`）以及 `169.254.169.253`；它根据 Resolver 规则解析关联的私有区域和公有名称。CoreDNS 通常提供已配置的 Kubernetes 集群域名，常见的是 `cluster.local`；`kube-dns` 是它的 Service 名称，而不是命名空间或 DNS 区域。外部转发遵循 Corefile 以及 DNS Pod 可见的 resolver 文件。请检查这些设置，不要假定节点的 resolver 文件会未经修改地直接使用。在 Resolver endpoint 设计中，inbound endpoint 接收来自本地部署环境的查询，而 outbound endpoint 和关联的规则会将选定的 VPC 查询转发到本地部署 DNS。Auto Mode 的节点本地解析器不会消除对上游的依赖。
+**DNS 解析器**：AmazonProvidedDNS **就是 Route 53 Resolver**。其地址包括 VPC IPv4 主网络地址加二（对于 `10.0.0.0/16`，即 `10.0.0.2`）以及 `169.254.169.253`；它根据 Resolver 规则解析关联的私有区域和公有名称。CoreDNS 通常提供已配置的 Kubernetes 集群域名，常见的是 `cluster.local`；`kube-dns` 是它的 Service 名称，而不是命名空间或 DNS 区域。外部转发遵循 Corefile 以及 DNS Pod 可见的 resolver 文件。请检查这些设置，不要假定节点的 resolver 文件会未经修改地直接使用。在 Resolver endpoint 设计中，inbound endpoint 接收来自本地部署环境的查询，而 outbound endpoint 和关联的规则会将选定的 VPC 查询转发到本地部署 DNS。Auto Mode 的节点本地解析器不会消除对上游的依赖。
 
-**路由表：**VPC 路由评估通常使用最长前缀匹配。AWS 允许替换 `local` 路由的目标，并添加受支持的、更具体的子网路由以实现设备路由；`local` 并不总是最具体的路由。目标相同的情况下，VPC 静态路由优先于从 virtual private gateway 传播的路由。目标为 TGW 的 VPC 路由是静态路由；TGW 内部的传播属于其独立路由表。无效目标可能导致流量被丢弃的 `blackhole` 条目，因此除了目标地址外，还要检查路由状态。未显式关联路由表的子网会使用 VPC 的主路由表。
+**路由表**：VPC 路由评估通常使用最长前缀匹配。AWS 允许替换 `local` 路由的目标，并添加受支持的、更具体的子网路由以实现设备路由；`local` 并不总是最具体的路由。目标相同的情况下，VPC 静态路由优先于从 virtual private gateway 传播的路由。目标为 TGW 的 VPC 路由是静态路由；TGW 内部的传播属于其独立路由表。无效目标可能导致流量被丢弃的 `blackhole` 条目，因此除了目标地址外，还要检查路由状态。未显式关联路由表的子网会使用 VPC 的主路由表。
 
 > 📎 TGW/Peering 路由优先级和静态路由配置示例见[跨组织 VPC 连接的运维发现](05-cross-org-vpc-connectivity.md#operational-findings)。
 
@@ -440,9 +440,9 @@ ENI、EFA 和 NVLink 服务于不同路径。**ENI** 是连接到某个可用区
 
 HTTP/3（RFC 9114）及其 QUIC 传输协议（RFC 9000）的协议机制见[网络基础第 2 部分](../basics/06-network-fundamentals-part2.md)和[第 3 部分](../basics/06-network-fundamentals-part3.md)。这里仅介绍实际影响 Kubernetes 流量分配的内容。
 
-- **gRPC 和 L4 负载均衡器：**gRPC 会通过 HTTP/2 连接多路复用请求。L4 负载均衡器通常会让已建立的 TCP 连接继续使用其选定的端点；如果该端点是代理，它还可以进一步决定如何路由。仅增加 Pod 不会重新分配现有连接。按 RPC 分配需要兼容的 L7 代理或客户端策略。流式 RPC 仍是一次调用；其中的单条消息不会单独进行负载均衡。
-- **Gateway API 的 GRPCRoute：**Ingress 没有专用于 gRPC 的资源，但 Gateway API 通过 `GRPCRoute` 标准化了服务/方法级路由。支持情况因实现而异（例如支持多少种标头匹配、重试策略等），因此请查看 Controller 自身的文档。
-- **HTTP/3/QUIC 在集群中的实际覆盖范围：**客户端与边缘入口（CDN、负载均衡器）之间是否支持 HTTP/3，与集群内部或 Ingress 到后端连接是否支持 HTTP/3，是两个不同的问题。许多 Ingress/Gateway 实现与后端通信时仍使用 HTTP/1.1 或 HTTP/2；端到端 HTTP/3 是否受支持因实现和版本而异，因此不要一概而论；请查阅实际使用的 Controller 文档。
+- **gRPC 和 L4 负载均衡器**：gRPC 会通过 HTTP/2 连接多路复用请求。L4 负载均衡器通常会让已建立的 TCP 连接继续使用其选定的端点；如果该端点是代理，它还可以进一步决定如何路由。仅增加 Pod 不会重新分配现有连接。按 RPC 分配需要兼容的 L7 代理或客户端策略。流式 RPC 仍是一次调用；其中的单条消息不会单独进行负载均衡。
+- **Gateway API 的 GRPCRoute**：Ingress 没有专用于 gRPC 的资源，但 Gateway API 通过 `GRPCRoute` 标准化了服务/方法级路由。支持情况因实现而异（例如支持多少种标头匹配、重试策略等），因此请查看 Controller 自身的文档。
+- **HTTP/3/QUIC 在集群中的实际覆盖范围**：客户端与边缘入口（CDN、负载均衡器）之间是否支持 HTTP/3，与集群内部或 Ingress 到后端连接是否支持 HTTP/3，是两个不同的问题。许多 Ingress/Gateway 实现与后端通信时仍使用 HTTP/1.1 或 HTTP/2；端到端 HTTP/3 是否受支持因实现和版本而异，因此不要一概而论；请查阅实际使用的 Controller 文档。
 
 ## 网络子页面
 

@@ -416,7 +416,6 @@ Windows 容器资源管理的注意事项：
 
 可以使用 `kubectl top pods` 和 `kubectl top nodes` 命令监控 Windows 节点的资源使用情况。
 </details>
-
 ## 简答题
 
 1. 说明向 Kubernetes 集群添加 Windows 节点的主要步骤和要求。

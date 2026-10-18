@@ -1,27 +1,27 @@
-# Cuestionario del laboratorio de Observability 03
+# Cuestionario del laboratorio 03 de observabilidad
 
 <span id="observability-lab-part-3-msa-deployment-and-canary-quiz"></span>
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
-1. ¿Cuál es el límite de transacción de pedido/outbox?
+1. ¿Cuál es el límite transaccional entre un pedido y el outbox?
    - A) Confirmar el pedido y luego ignorar los fallos de mensajería.
-   - B) Ambos se confirman o se revierten en una transacción de DB.
-   - C) SNS y DB son automáticamente atómicos.
-   - D) Inicializar la DB para cada solicitud.
+   - B) Ambos se confirman o se revierten en una transacción de base de datos.
+   - C) SNS y la base de datos son atómicos automáticamente.
+   - D) Inicializar la base de datos en cada solicitud.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Ambos se confirman o se revierten en una transacción de DB.**
+**Respuesta: B) Ambos se confirman o se revierten en una transacción de base de datos.**
 
-Valide la reversión de DB y la retención de registros de outbox no publicados.
+Valide la reversión de la base de datos y la retención de los registros del outbox que aún no se hayan publicado.
 
 </details>
 
 ---
 
-2. ¿Quién es propietario de la carga de trabajo de payment?
+2. ¿Quién es propietario de la carga de trabajo de pagos?
    - A) Deployment y Rollout simultáneamente.
    - B) Un único Rollout.
    - C) KEDA y Rollout compiten por las réplicas.
@@ -32,16 +32,16 @@ Valide la reversión de DB y la retención de registros de outbox no publicados.
 
 **Respuesta: B) Un único Rollout.**
 
-Mantenga explícitos la propiedad del controller y el estado deseado de Git.
+Mantenga explícitos quién es propietario del controlador y cuál es el estado deseado en Git.
 
 </details>
 
 ---
 
-3. ¿Por qué separar las queues de notification y analytics?
-   - A) Competir en una queue es fanout.
+3. ¿Por qué separar las colas de notificaciones y analítica?
+   - A) Que varios consumidores compitan por una cola es fanout.
    - B) Para que cada consumidor reciba de forma independiente el mismo evento.
-   - C) SQS solo admite una queue.
+   - C) SQS solo admite una cola.
    - D) Elimina todos los duplicados.
 
 <details>
@@ -49,7 +49,7 @@ Mantenga explícitos la propiedad del controller y el estado deseado de Git.
 
 **Respuesta: B) Para que cada consumidor reciba de forma independiente el mismo evento.**
 
-El fanout de SNS y la deduplicación de event-ID de cada consumidor son responsabilidades independientes.
+El fanout de SNS y la deduplicación del ID de evento de cada consumidor son responsabilidades independientes.
 
 </details>
 
@@ -57,7 +57,7 @@ El fanout de SNS y la deduplicación de event-ID de cada consumidor son responsa
 
 4. ¿Qué ocurre con un pago sintético idéntico repetido?
    - A) Crear siempre un nuevo pago.
-   - B) Reutilizar el resultado almacenado; los valores conflictivos devuelven 409.
+   - B) Reutilizar el resultado almacenado; los valores en conflicto devuelven 409.
    - C) Cobrar una tarjeta real.
    - D) Tener éxito siempre, incluso sin un pedido.
 
@@ -72,9 +72,9 @@ El laboratorio no implementa ninguna pasarela de pago real.
 
 ---
 
-5. ¿Qué sucede si ocurre un fallo después de la publicación en SNS, pero antes de la marca en DB?
+5. ¿Qué sucede si ocurre un fallo después de publicar en SNS, pero antes de marcarlo en la base de datos?
    - A) Exactamente una vez es automático.
-   - B) Es posible una nueva entrega, por lo que los consumidores necesitan deduplicación.
+   - B) Es posible una reentrega, por lo que los consumidores necesitan deduplicar.
    - C) Eliminar cada fila de outbox.
    - D) Confirmar siempre el mensaje.
 
@@ -89,9 +89,9 @@ Los efectos secundarios externos requieren contratos de idempotencia adicionales
 
 ---
 
-6. ¿Qué carga de trabajo se escala con el backlog de SQS?
+6. ¿Qué carga de trabajo se escala según la acumulación de mensajes en SQS?
    - A) Siempre solo el productor de API.
-   - B) El consumidor de esa queue.
+   - B) El consumidor de esa cola.
    - C) El administrador de la base de datos.
    - D) El NLB.
 
@@ -100,16 +100,16 @@ Los efectos secundarios externos requieren contratos de idempotencia adicionales
 
 **Respuesta: B) El consumidor de esa queue.**
 
-KEDA lee atributos de la queue; no consume mensajes.
+KEDA lee los atributos de la cola; no consume mensajes.
 
 </details>
 
 ---
 
-7. ¿Qué debe seleccionar la consulta de éxito de canary?
-   - A) Todo el tráfico stable y canary.
-   - B) Solo la nueva revisión de pod-template.
-   - C) Cada namespace.
+7. ¿Qué debe seleccionar la consulta que evalúa el éxito del canary?
+   - A) Todo el tráfico estable y canary.
+   - B) Solo la nueva revisión de la plantilla del pod.
+   - C) Cada espacio de nombres.
    - D) Solo el promedio previo al Deployment.
 
 <details>
@@ -117,7 +117,7 @@ KEDA lee atributos de la queue; no consume mensajes.
 
 **Respuesta: B) Solo la nueva revisión de pod-template.**
 
-No permita que un gran volumen de tráfico stable oculte un canary con fallos.
+No permita que un gran volumen de tráfico estable oculte los fallos del canary.
 
 </details>
 
@@ -134,15 +134,15 @@ No permita que un gran volumen de tráfico stable oculte un canary con fallos.
 
 **Respuesta: B) No deben cumplir la condición de éxito.**
 
-Compruebe conjuntamente los conteos mínimos de solicitudes y la observability.
+Compruebe conjuntamente los recuentos mínimos de solicitudes y la observabilidad.
 
 </details>
 
 ---
 
-9. ¿Qué labels pertenecen a las métricas?
+9. ¿Qué etiquetas conviene incluir en las métricas?
    - A) Cada ID de pedido.
-   - B) Service, ruta acotada, estado y revisión.
+   - B) Servicio, ruta con cardinalidad acotada, estado y revisión.
    - C) Datos de cliente/tarjeta.
    - D) El cuerpo completo de la solicitud.
 
@@ -151,15 +151,15 @@ Compruebe conjuntamente los conteos mínimos de solicitudes y la observability.
 
 **Respuesta: B) Service, ruta acotada, estado y revisión.**
 
-Los ID únicos generan problemas de cardinalidad/privacidad; use la correlación de trace/log de forma adecuada.
+Los ID únicos generan problemas de cardinalidad y privacidad; correlacione mediante trazas y registros según sea necesario.
 
 </details>
 
 ---
 
-10. ¿Qué significa abortar un Rollout?
-   - A) Git revierte automáticamente.
-   - B) Es independiente de la reversión de Git o la restauración de la imagen deseada; restaure explícitamente la fuente de verdad.
+10. ¿Qué implica abortar un Rollout?
+   - A) Git revierte los cambios automáticamente.
+   - B) No revierte los cambios en Git ni restaura la imagen declarada; restaure explícitamente la fuente de verdad.
    - C) Todas las escrituras de DB se revierten.
    - D) La nueva imagen se elimina permanentemente.
 
@@ -168,7 +168,7 @@ Los ID únicos generan problemas de cardinalidad/privacidad; use la correlación
 
 **Respuesta: B) Es independiente de la reversión de Git o la restauración de la imagen deseada; restaure explícitamente la fuente de verdad.**
 
-No use Helm directo y ArgoCD como propietarios simultáneos.
+No gestione el mismo recurso directamente con Helm y mediante ArgoCD a la vez.
 
 </details>
 

@@ -138,7 +138,7 @@ spec:
 
 采用默认 IPv4 VPC CNI SNAT 行为时，Pod 发往 VPC 外部的流量首先使用节点的主 IPv4 地址。具有公有 IPv4 地址且有 IGW 路由的公有节点可以使用不同路径。原生 IPv6 出口可以使用仅出口互联网网关；通过 VPC endpoints 访问 AWS 服务可能不需要互联网 NAT。不要将 NAT 视为每个 Pod 的通用前提条件。
 
-**单可用区 CloudFormation 路由示例：**此示例展示公有/私有路由关联；它不是完整的 EKS VPC。EKS 集群子网至少需要两个 AZ。对于按可用区部署 NAT 的设计，可以考虑每个 AZ 配置一个 NAT gateway 和一条私有路由，以避免跨 AZ 依赖。NAT gateway 和公有 IPv4 地址会产生费用。有关集群部署，请查看概念指南中的完整 EKS VPC 模板。
+**单可用区 CloudFormation 路由示例**：此示例展示公有/私有路由关联；它不是完整的 EKS VPC。EKS 集群子网至少需要两个 AZ。对于按可用区部署 NAT 的设计，可以考虑每个 AZ 配置一个 NAT gateway 和一条私有路由，以避免跨 AZ 依赖。NAT gateway 和公有 IPv4 地址会产生费用。有关集群部署，请查看概念指南中的完整 EKS VPC 模板。
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -489,7 +489,7 @@ aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
 
 对于自管理的 CoreDNS，请通过其 GitOps/清单所有者编辑经过审查的 ConfigMap。启用 `reload` 时，ConfigMap 投影和 reload 间隔之后会检测到 Corefile 更改；不一定需要重启。请监控重新加载错误和 DNS 行为。Deployment 设置的更改可能仍需要 rollout。
 
-**扩缩和资源：**如果所选版本满足 AWS 前提条件，EKS 托管 CoreDNS 支持 `autoScaling` 配置对象。只能保留一个负责管理副本数的控制器。以下 CPU HPA 是**自管理 CoreDNS 的替代方案**，需要 Metrics Server 和 CPU requests；不要与 EKS CoreDNS autoscaling 同时运行：
+**扩缩和资源**：如果所选版本满足 AWS 前提条件，EKS 托管 CoreDNS 支持 `autoScaling` 配置对象。只能保留一个负责管理副本数的控制器。以下 CPU HPA 是**自管理 CoreDNS 的替代方案**，需要 Metrics Server 和 CPU requests；不要与 EKS CoreDNS autoscaling 同时运行：
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -805,7 +805,7 @@ VPA 会建议或更新 Pod 资源 requests。HPA 会更改副本数。**两者**
 | HPA / KEDA | 根据资源/自定义/外部指标或事件调整工作负载副本数 |
 | VPA | 根据更新模式提供 Pod 资源建议/requests |
 
-**Cluster Autoscaler：**使用与集群相同的 Kubernetes 次要版本。对于 EKS 1.36 示例，chart 9.59.0 必须显式使用镜像 `v1.36.1`（其默认镜像为 1.35.0）。首先为 `cluster-autoscaler` ServiceAccount 配置专用身份，并配置经过审查、限定标签范围的 IAM 权限和 ASG 发现标签。安装前请渲染并检查 RBAC、镜像和参数：
+**Cluster Autoscaler**：使用与集群相同的 Kubernetes 次要版本。对于 EKS 1.36 示例，chart 9.59.0 必须显式使用镜像 `v1.36.1`（其默认镜像为 1.35.0）。首先为 `cluster-autoscaler` ServiceAccount 配置专用身份，并配置经过审查、限定标签范围的 IAM 权限和 ASG 发现标签。安装前请渲染并检查 RBAC、镜像和参数：
 
 ```bash
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
@@ -821,7 +821,7 @@ helm template cluster-autoscaler autoscaler/cluster-autoscaler \
 ```
 不要轻率地禁用本地存储保护措施，也不要让 ASG 的 target-tracking/predictive 策略与 Cluster Autoscaler 同时控制同一预期容量。
 
-**Karpenter 替代方案：**单独安装并授权兼容的控制器。将 AMI ID、节点角色和发现标签值替换为该集群中经过审查的资源；AMI 必须兼容 AL2023、Kubernetes 版本和架构。请固定 AMI ID 或经过测试的版本化别名，而不要静默选择 `al2023@latest`。以下限制和整合时间仅为示例，并非实测容量规划或预置速度保证。
+**Karpenter 替代方案**：单独安装并授权兼容的控制器。将 AMI ID、节点角色和发现标签值替换为该集群中经过审查的资源；AMI 必须兼容 AL2023、Kubernetes 版本和架构。请固定 AMI ID 或经过测试的版本化别名，而不要静默选择 `al2023@latest`。以下限制和整合时间仅为示例，并非实测容量规划或预置速度保证。
 
 ```yaml
 # Karpenter NodePool (karpenter.sh/v1)
@@ -864,7 +864,7 @@ spec:
     - tags:
         karpenter.sh/discovery: my-cluster
 ```
-**HPA：**此示例需要在 `autoscaling-lab` 中已有 `my-app` Deployment、Metrics Server 和 CPU requests：
+**HPA**：此示例需要在 `autoscaling-lab` 中已有 `my-app` Deployment、Metrics Server 和 CPU requests：
 
 ```yaml
 # Horizontal Pod Autoscaler
@@ -888,7 +888,7 @@ spec:
         type: Utilization
         averageUtilization: 70
 ```
-**VPA：**首先安装 VPA CRD/控制器。先使用仅提供建议的模式，并在选择明确受支持的更新模式前检查建议：
+**VPA**：首先安装 VPA CRD/控制器。先使用仅提供建议的模式，并在选择明确受支持的更新模式前检查建议：
 
 ```yaml
 # Vertical Pod Autoscaler
@@ -923,15 +923,15 @@ spec:
 
 ### 练习 1：在 EKS 集群中实施网络策略
 
-**场景：**允许 frontend → backend 和 backend → database，同时拒绝 frontend → database。使用 AWS VPC CNI 分配 IP，以保留原本的 Calico 学习目标。
+**场景**：允许 frontend → backend 和 backend → database，同时拒绝 frontend → database。使用 AWS VPC CNI 分配 IP，以保留原本的 Calico 学习目标。
 
-**范围：**现有的、可丢弃的 Linux IPv4 EKS 集群；没有冲突的全局/层级策略；使用标准 CoreDNS；并且由管理员审查 Calico 安装。这是连通性练习，不是生产微服务/数据库方案。本次审计未执行云端安装和流量测试。
+**范围**：现有的、可丢弃的 Linux IPv4 EKS 集群；没有冲突的全局/层级策略；使用标准 CoreDNS；并且由管理员审查 Calico 安装。这是连通性练习，不是生产微服务/数据库方案。本次审计未执行云端安装和流量测试。
 
 
 <details>
 <summary>显示解决方案</summary>
 
-**1. 准备策略引擎。**按照官方 Calico EKS **Amazon VPC networking** 路径操作。通过其配置所有者禁用原生 AWS VPC CNI NetworkPolicy；它与 Calico 执行功能冲突。保留 `aws-node` 网络配置。启用其 `ANNOTATE_POD_IP=true` 设置，并授予其 ServiceAccount patch Pod 的权限。以下专用 RBAC 示例添加了该权限，不会将格式错误的 YAML 追加到附加组件的 ClusterRole 中：
+**1. 准备策略引擎**。按照官方 Calico EKS **Amazon VPC networking** 路径操作。通过其配置所有者禁用原生 AWS VPC CNI NetworkPolicy；它与 Calico 执行功能冲突。保留 `aws-node` 网络配置。启用其 `ANNOTATE_POD_IP=true` 设置，并授予其 ServiceAccount patch Pod 的权限。以下专用 RBAC 示例添加了该权限，不会将格式错误的 YAML 追加到附加组件的 ClusterRole 中：
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -996,7 +996,7 @@ kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n calico-system get pods
 ```
 要求 Calico 组件和聚合 API 均可用，然后在下方验证实际执行情况。节点 `Ready` 状态本身并不足够。此练习不需要可选的 Goldmane/Whisker UI。
 
-**2. 创建自有 namespace 和临时数据库凭证。**后续代码片段请在同一个 Bash 会话中运行。namespace 名称和 UID 都会被记录，以确保清理时不会有意针对其他 namespace：
+**2. 创建自有 namespace 和临时数据库凭证**。后续代码片段请在同一个 Bash 会话中运行。namespace 名称和 UID 都会被记录，以确保清理时不会有意针对其他 namespace：
 
 ```bash
 set -euo pipefail
@@ -1015,7 +1015,7 @@ kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
   create secret generic database-auth \
   --from-file=password="$NETWORK_LAB_DIR/db-password"
 ```
-**3. 部署三个层级。**Python HTTP server 充当 frontend/backend，使两个容器都能使用诊断 TCP 客户端。PostgreSQL 17 镜像使用 `POSTGRES_PASSWORD_FILE` 和 namespace 本地 Secret；它不会执行外部数据库操作。数据库的 `emptyDir` 会在 Pod 替换时**丢失**。不要在这里放置有价值的数据。保留数据库镜像的初始化行为；这不是符合 Restricted 配置文件的生产数据库清单。主要版本镜像标签可变：如需可重复运行，请记录解析后的摘要。
+**3. 部署三个层级**。Python HTTP server 充当 frontend/backend，使两个容器都能使用诊断 TCP 客户端。PostgreSQL 17 镜像使用 `POSTGRES_PASSWORD_FILE` 和 namespace 本地 Secret；它不会执行外部数据库操作。数据库的 `emptyDir` 会在 Pod 替换时**丢失**。不要在这里放置有价值的数据。保留数据库镜像的初始化行为；这不是符合 Restricted 配置文件的生产数据库清单。主要版本镜像标签可变：如需可重复运行，请记录解析后的摘要。
 
 ```bash
 # The HTTP layers are diagnostic stand-ins, not business applications.
@@ -1120,7 +1120,7 @@ for tier in frontend backend database; do
     rollout status "deployment/$tier" --timeout=180s
 done
 ```
-**4. 建立基线。**应用策略前，三个 TCP 路径和 DNS 都必须正常。5432 端口连接成功只证明 TCP 连接可用，并不能证明 SQL 身份验证或应用行为正常。
+**4. 建立基线**。应用策略前，三个 TCP 路径和 DNS 都必须正常。5432 端口连接成功只证明 TCP 连接可用，并不能证明 SQL 身份验证或应用行为正常。
 
 ```bash
 # Distinguish DNS failure from TCP denial. Status 42 means a TCP failure.
@@ -1149,7 +1149,7 @@ check_tcp frontend backend 8080
 check_tcp backend database 5432
 check_tcp frontend database 5432
 ```
-**5. 应用并测试策略。**所选 Pod 会在两个方向上被隔离；未匹配的流量会被拒绝。显式规则允许两个应用流量路径以及 UDP/TCP DNS。要访问实验 namespace 之外的 CoreDNS，需要 namespace 选择器。测试前，请根据 NodeLocal DNSCache 或不同标签调整 DNS 规则。
+**5. 应用并测试策略**。所选 Pod 会在两个方向上被隔离；未匹配的流量会被拒绝。显式规则允许两个应用流量路径以及 UDP/TCP DNS。要访问实验 namespace 之外的 CoreDNS，需要 namespace 选择器。测试前，请根据 NodeLocal DNSCache 或不同标签调整 DNS 规则。
 
 ```bash
 kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<'EOF'
@@ -1230,7 +1230,7 @@ done
 ```
 策略传播是异步的。超时、DNS 失败、缺少诊断二进制文件或数据库不可用，本身都不能证明隔离已成功。此流程先使用正常基线和正向对照；如果观察结果不同，请调查其他策略/路由。
 
-**6. 清理。**确认 UID 后，仅删除自有 namespace。这样会移除测试工作负载、策略、Secret 和临时数据，但不会移除集群范围的 Calico 安装。练习结束后，请删除本地密码文件。除非另有经管理员审查的回滚流程负责，否则保留共享 CNI/RBAC 配置。
+**6. 清理**。确认 UID 后，仅删除自有 namespace。这样会移除测试工作负载、策略、Secret 和临时数据，但不会移除集群范围的 Calico 安装。练习结束后，请删除本地密码文件。除非另有经管理员审查的回滚流程负责，否则保留共享 CNI/RBAC 配置。
 
 ```bash
 CURRENT_NETWORK_UID=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
@@ -1251,15 +1251,15 @@ fi
 
 ### 练习 2：在 EKS 集群中配置 IRSA 和 S3 访问
 
-**场景：**使用 IRSA 而不是节点角色，为一个工作负载授予对现有 S3 bucket 中已批准 `training/` 前缀的只读访问权限。验证实际使用的角色身份，并与一个特意不配置凭证的 Pod 进行比较。
+**场景**：使用 IRSA 而不是节点角色，为一个工作负载授予对现有 S3 bucket 中已批准 `training/` 前缀的只读访问权限。验证实际使用的角色身份，并与一个特意不配置凭证的 Pod 进行比较。
 
-**前提条件：**Bash、jq、AWS CLI、eksctl 和 kubectl；现有且已获授权的 EKS 集群；对新 namespace 和 IAM 角色的管理员访问权限；已批准的非敏感现有 S3 对象。此商业分区示例假设对象不需要额外的客户 KMS 要求。Bucket/KMS 策略、SCP、DNS、STS 和 S3 网络路径可能还会带来其他要求。不会创建、更改或删除任何 S3 对象。
+**前提条件**：Bash、jq、AWS CLI、eksctl 和 kubectl；现有且已获授权的 EKS 集群；对新 namespace 和 IAM 角色的管理员访问权限；已批准的非敏感现有 S3 对象。此商业分区示例假设对象不需要额外的客户 KMS 要求。Bucket/KMS 策略、SCP、DNS、STS 和 S3 网络路径可能还会带来其他要求。不会创建、更改或删除任何 S3 对象。
 
 
 <details>
 <summary>显示解决方案</summary>
 
-**1. 限定实验范围并验证 OIDC。**设置 `EXAMPLE_CLUSTER`、`EXAMPLE_REGION`、`S3_BUCKET` 和 `S3_TEST_KEY`（位于 `training/` 下）。OIDC provider 是集群共享基础设施；清理时不要删除它。如果创建 namespace 或验证 provider 失败，请停止。
+**1. 限定实验范围并验证 OIDC**。设置 `EXAMPLE_CLUSTER`、`EXAMPLE_REGION`、`S3_BUCKET` 和 `S3_TEST_KEY`（位于 `training/` 下）。OIDC provider 是集群共享基础设施；清理时不要删除它。如果创建 namespace 或验证 provider 失败，请停止。
 
 ```bash
 set -euo pipefail
@@ -1305,7 +1305,7 @@ aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$IRSA_PROVI
 jq -e '.ClientIDList | index("sts.amazonaws.com") != null' \
   "$IRSA_LAB_DIR/provider.json" >/dev/null || exit 1
 ```
-**2. 创建唯一且范围受限的角色。**信任关系要求同时满足 `aud=sts.amazonaws.com` 和准确的 namespace/ServiceAccount `sub`。角色创建失败时停止附加策略；记录不可变的 RoleId，以便清理。
+**2. 创建唯一且范围受限的角色**。信任关系要求同时满足 `aud=sts.amazonaws.com` 和准确的 namespace/ServiceAccount `sub`。角色创建失败时停止附加策略；记录不可变的 RoleId，以便清理。
 
 ```bash
 jq -n --arg provider "${IRSA_PROVIDER_ARN:?}" --arg issuer "${IRSA_ISSUER_HOST:?}" \
@@ -1353,7 +1353,7 @@ aws iam put-role-policy --role-name "$IRSA_ROLE_NAME" \
   --policy-name ScopedTrainingS3Read \
   --policy-document "file://$IRSA_LAB_DIR/s3-policy.json" || exit 1
 ```
-**3. 部署并验证。**如果测试失败，请留出时间等待 IAM 传播后再重试。三个容器分别检查身份、前缀列举计数和对象长度；不会记录对象内容或凭证。身份必须与新建角色匹配；否则，S3 操作成功也可能是因为使用了权限更广泛的节点角色。
+**3. 部署并验证**。如果测试失败，请留出时间等待 IAM 传播后再重试。三个容器分别检查身份、前缀列举计数和对象长度；不会记录对象内容或凭证。身份必须与新建角色匹配；否则，S3 操作成功也可能是因为使用了权限更广泛的节点角色。
 
 ```bash
 # JSON construction preserves literal object keys and prevents YAML interpolation errors.
@@ -1398,7 +1398,7 @@ jq -e --arg account "${IRSA_ACCOUNT_ID:?}" --arg role "${IRSA_ROLE_NAME:?}" \
 kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c list-prefix
 kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c object-metadata
 ```
-**4. 受控的负向比较。**新 namespace 的默认 ServiceAccount 不得带有 IRSA 注释或 EKS Pod Identity 关联，也不得注入其他凭证。在此测试客户端中禁用 IMDS 回退，并要求出现特定的缺少凭证错误。随机网络错误或授权错误不能作为有效的负向结果。
+**4. 受控的负向比较**。新 namespace 的默认 ServiceAccount 不得带有 IRSA 注释或 EKS Pod Identity 关联，也不得注入其他凭证。在此测试客户端中禁用 IMDS 回退，并要求出现特定的缺少凭证错误。随机网络错误或授权错误不能作为有效的负向结果。
 
 ```bash
 # Controlled comparison: no IRSA, no Pod Identity association, no IMDS fallback.
@@ -1435,7 +1435,7 @@ grep -F 'Unable to locate credentials' "$IRSA_LAB_DIR/negative-log.txt" >/dev/nu
 ```
 这是凭证提供程序对比测试，并不能证明任意 Pod 都无法访问 IMDS，也不能证明容器构成安全边界。请单独限制节点凭证。IRSA 使用投射的 web-identity token 和 STS 临时凭证；兼容的 SDK 会刷新这些凭证。不要转储所有 `AWS_*` 环境变量或 token 文件。
 
-**5. 仅清理自有资源。**保留记录的 namespace UID 和 IAM RoleId。受保护的清理操作会移除实验 namespace、其内联策略及唯一角色；会保留 S3 bucket/object、共享 OIDC provider 和集群。如果设置只部分成功，请检查 `ownership.json`，仅清理其中实际记录的资源。
+**5. 仅清理自有资源**。保留记录的 namespace UID 和 IAM RoleId。受保护的清理操作会移除实验 namespace、其内联策略及唯一角色；会保留 S3 bucket/object、共享 OIDC provider 和集群。如果设置只部分成功，请检查 `ownership.json`，仅清理其中实际记录的资源。
 
 ```bash
 # Recover the recorded values from ownership.json if this is a later shell.
@@ -1600,7 +1600,7 @@ managedNodeGroups:
 | Canary | 先尝试独立的小型工作负载/节点组 | 必须实际限制工作负载/流量范围；会增加验证和路由工作 |
 | 手动修改主机软件包 | 更改单个主机 | 会导致与 AMI 不一致；应使用经过审查的替代镜像生命周期，而不是不加限定的 SSH/yum 操作说明 |
 
-**替代组示例：**对于现有集群和未占用的组名称，请审查此文件并运行 `eksctl create nodegroup -f green-nodegroup.yaml`。首先确认 AL2023/架构兼容性、附加组件、出口、IP 空间、配额和存储拓扑。
+**替代组示例**：对于现有集群和未占用的组名称，请审查此文件并运行 `eksctl create nodegroup -f green-nodegroup.yaml`。首先确认 AL2023/架构兼容性、附加组件、出口、IP 空间、配额和存储拓扑。
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1619,7 +1619,7 @@ managedNodeGroups:
   labels:
     audit.example.com/pool: green
 ```
-**真正的 canary 会使用单独的 Deployment：**以下是在专用 `update-lab` namespace 中运行的最小 HTTP 探测工作负载，使用独特标签以避免意外加入现有 Service。若要声称应用程序兼容，请先将其替换为实际应用程序中经过审查的 canary。修改主 Deployment 的节点选择器会滚动更新其**所有**副本，并不是范围受限的 canary。
+**真正的 canary 会使用单独的 Deployment**：以下是在专用 `update-lab` namespace 中运行的最小 HTTP 探测工作负载，使用独特标签以避免意外加入现有 Service。若要声称应用程序兼容，请先将其替换为实际应用程序中经过审查的 canary。修改主 Deployment 的节点选择器会滚动更新其**所有**副本，并不是范围受限的 canary。
 
 ```yaml
 apiVersion: apps/v1
@@ -1707,7 +1707,7 @@ value: 1000000
 globalDefault: false
 description: Reviewed priority for critical application Pods
 ```
-**超额预留容量：**使用可抢占的低优先级 Pod 预留 requests。对于此示例，Cluster Autoscaler 配置的 expendable-Pod cutoff 必须低于 `-5`（例如 `-10`），而应用程序 Pod 的优先级必须更高。否则，备用 Pod 可能无法按预期触发容量补充。请使用专用 namespace 和未占用的 PriorityClass 名称：
+**超额预留容量**：使用可抢占的低优先级 Pod 预留 requests。对于此示例，Cluster Autoscaler 配置的 expendable-Pod cutoff 必须低于 `-5`（例如 `-10`），而应用程序 Pod 的优先级必须更高。否则，备用 Pod 可能无法按预期触发容量补充。请使用专用 namespace 和未占用的 PriorityClass 名称：
 
 ```yaml
 apiVersion: scheduling.k8s.io/v1
@@ -1768,9 +1768,9 @@ spec:
 
 为每个节点分配公有 IP 并不是通用安全最佳实践。私有子网可以减少直接暴露于互联网的风险，但仍需考虑路由、安全组、IAM、软件维护和工作负载控制。
 
-**节点身份和元数据：**使用 eksctl 支持的 `disableIMDSv1` 字段，要求使用 IMDSv2。嵌套的 `metadataOptions` 对象并非 eksctl 托管节点组字段；自定义 EC2 MetadataOptions 应放在经过审查的启动模板中。IMDSv2 可以缓解某些 SSRF 路径，但无法阻止所有 Pod 访问节点凭证，尤其是 host-network Pod。请分别检查元数据访问、工作负载身份和主机依赖项。
+**节点身份和元数据**：使用 eksctl 支持的 `disableIMDSv1` 字段，要求使用 IMDSv2。嵌套的 `metadataOptions` 对象并非 eksctl 托管节点组字段；自定义 EC2 MetadataOptions 应放在经过审查的启动模板中。IMDSv2 可以缓解某些 SSRF 路径，但无法阻止所有 Pod 访问节点凭证，尤其是 host-network Pod。请分别检查元数据访问、工作负载身份和主机依赖项。
 
-**最小权限和加密根卷：**此现有集群节点组示例假设 CNI 已有自己的 IRSA/Pod Identity 权限。EBS CSI、日志收集器和应用程序也需要各自经过审查的角色；将这些资源的广泛权限附加到每个节点上有违最小权限原则。
+**最小权限和加密根卷**：此现有集群节点组示例假设 CNI 已有自己的 IRSA/Pod Identity 权限。EBS CSI、日志收集器和应用程序也需要各自经过审查的角色；将这些资源的广泛权限附加到每个节点上有违最小权限原则。
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1795,11 +1795,11 @@ managedNodeGroups:
 ```
 EBS 加密保护的是与 Kubernetes API 数据不同的层。EKS 1.28 及更高版本默认使用 envelope encryption 对所有 Kubernetes API 静态数据进行加密；客户托管 KMS key 是可选项，但会增加授权/权限和密钥生命周期义务。不要将禁用或删除集群密钥作为例行清理操作。
 
-**网络设计：**私有 API endpoint 要求具备可路由的管理员/节点访问路径。公有 API 限制应使用 `publicAccessCidrs`，而不是在集群 SG 上设置入站规则。请检查 AWS 对完整集群/节点 SG 的要求：TCP 443、TCP 10250、TCP/UDP 53，以及工作负载特定路径，并确保方向和对等安全组正确。仅配置两条入站端口规则并不是完整的节点网络设计。
+**网络设计**：私有 API endpoint 要求具备可路由的管理员/节点访问路径。公有 API 限制应使用 `publicAccessCidrs`，而不是在集群 SG 上设置入站规则。请检查 AWS 对完整集群/节点 SG 的要求：TCP 443、TCP 10250、TCP/UDP 53，以及工作负载特定路径，并确保方向和对等安全组正确。仅配置两条入站端口规则并不是完整的节点网络设计。
 
 私有 IPv4 互联网出口可以使用 NAT；VPC endpoints 和原生 IPv6 则具有不同路径。入站流量可以来自负载均衡器或已授权的互联网络。仅使用私有子网既不能证明已完全隔离，也不能证明符合监管要求。
 
-**容器控制：**使用兼容非 root 和只读运行模式的工作负载。此由控制器管理的诊断 Pod 在**新建的专用** `security-lab` namespace 中运行，无需网络或可写根文件系统：
+**容器控制**：使用兼容非 root 和只读运行模式的工作负载。此由控制器管理的诊断 Pod 在**新建的专用** `security-lab` namespace 中运行，无需网络或可写根文件系统：
 
 ```yaml
 apiVersion: apps/v1
@@ -1855,7 +1855,7 @@ spec:
   podSelector: {}
   policyTypes: [Ingress, Egress]
 ```
-**日志记录和检测：**控制平面 CloudWatch 日志有五种可配置类型：
+**日志记录和检测**：控制平面 CloudWatch 日志有五种可配置类型：
 
 ```bash
 # Enable the reviewed set of log types; this example enables all five.

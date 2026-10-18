@@ -1,248 +1,165 @@
-# Cuestionario de introducción a redes de Kubernetes
+# Cuestionario de introducción a las redes de Kubernetes
 
-Este cuestionario evalúa tu comprensión de los fundamentos de redes de Kubernetes, CNI (Container Network Interface) y diversas soluciones de CNI.
+Revisado el 11 de septiembre de 2026. Consulte la [introducción a las redes](../../networking/README.md) y sus referencias oficiales para conocer las condiciones de versión y plataforma.
 
 ## Preguntas del cuestionario
 
-### 1. ¿Cuál NO es un requisito fundamental del modelo de redes de Kubernetes?
+### 1. ¿Qué afirmación NO garantiza el modelo de redes de Kubernetes?
 
-A. Cada Pod puede comunicarse con cualquier otro Pod sin NAT
-B. Cada Node puede comunicarse con cada Pod sin NAT
-C. La IP que un Pod ve como propia es la misma IP que otros ven para él
-D. Cada Pod debe tener una dirección IP estática que persista después de los reinicios
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: D. Cada Pod debe tener una dirección IP estática que persista después de los reinicios**
-
-**Explicación:**
-Los requisitos fundamentales del modelo de redes de Kubernetes son estos tres:
-1. Cada Pod puede comunicarse con cualquier otro Pod sin NAT
-2. Cada Node puede comunicarse con cada Pod sin NAT
-3. La IP que un Pod ve como propia es la misma IP que otros ven para él
-
-Las direcciones IP de los Pods son efímeras: cuando un Pod se reinicia, obtiene una IP nueva. Esta es exactamente la razón por la que se necesitan los Services.
-
-</details>
-
-### 2. ¿Cuál es la función principal de CNI (Container Network Interface)?
-
-A. Comunicarse con el API server de Kubernetes para tomar decisiones de programación de Pods
-B. Crear interfaces de red de contenedores y asignar direcciones IP
-C. Implementar balanceo de carga para los Services de Kubernetes
-D. Descargar y almacenar en caché imágenes de contenedores
+- A. Los Pods normales tienen conectividad directa en la red de Pods, sujeta a la segmentación intencional
+- B. Los agentes del nodo pueden acceder a los Pods de su propio nodo
+- C. Los contenedores de un Pod normal comparten su espacio de nombres de red
+- D. Un Pod recreado siempre conserva la misma IP
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Crear interfaces de red de contenedores y asignar direcciones IP**
+**Respuesta: D. Un Pod recreado siempre conserva la misma IP**
 
-**Explicación:**
-CNI es una interfaz estándar para la conectividad de red de contenedores. Sus funciones principales son:
-- Crear interfaces de red cuando se crean contenedores (pares veth)
-- Asignar direcciones IP (IPAM)
-- Configurar reglas de enrutamiento
-- Limpiar recursos de red cuando se eliminan contenedores
-
-Kubelet llama al plugin de CNI para configurar las redes de los Pods.
+Un Pod de reemplazo puede recibir otra IP, y reiniciar un contenedor dentro del mismo Pod no necesariamente recrea su entorno de red aislado. Los Services proporcionan descubrimiento estable aunque cambien los endpoints. Las políticas de red y el enrutamiento siguen determinando si una conexión concreta puede establecerse.
 
 </details>
 
-### 3. ¿Cuál es la diferencia correcta entre las redes Overlay y Underlay (Native Routing)?
+### 2. ¿Cuál es la función principal de CNI en Kubernetes actualmente?
 
-A. Overlay proporciona mayor rendimiento, mientras que Underlay implica más sobrecarga
-B. Overlay construye una red virtual sobre la red existente, mientras que Underlay enruta directamente en la red física
-C. Overlay usa BGP, mientras que Underlay usa VXLAN
-D. Overlay solo está disponible en AWS, mientras que Underlay es solo para entornos on-premises
+- A. Programar Pods a través del servidor de API
+- B. Proporcionar la interfaz de runtime para configurar la red y las direcciones de los contenedores
+- C. Reemplazar todas las implementaciones de balanceo de carga de Services
+- D. Descargar imágenes de contenedor
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Overlay construye una red virtual sobre la red existente, mientras que Underlay enruta directamente en la red física**
+**Respuesta: B. Proporcionar la interfaz de runtime para configurar la red y las direcciones de los contenedores**
 
-**Explicación:**
-- **Overlay Network**: Usa encapsulación como VXLAN, IPIP para construir una red virtual sobre la red existente. Es sencilla de configurar, pero tiene sobrecarga de encapsulación.
-- **Underlay (Native Routing)**: Enruta directamente en la red física para obtener mayor rendimiento. Usa BGP, etc., y requiere integración con la infraestructura de red.
+kubelet solicita operaciones del entorno aislado mediante CRI; el runtime de contenedores administra e invoca los complementos CNI. Los complementos implementan operaciones de red y pueden delegar IPAM o usar un agente específico del proveedor. Un par veth es una implementación común, no un requisito de todos los CNI.
 
 </details>
 
-### 4. ¿Qué tipo de Service de Kubernetes solo es accesible desde dentro del cluster?
+### 3. ¿Qué distingue el enrutamiento overlay del enrutamiento nativo?
 
-A. NodePort
-B. LoadBalancer
-C. ClusterIP
-D. ExternalName
+- A. Overlay siempre es más rápido
+- B. Overlay encapsula el tráfico sobre otra red; el enrutamiento nativo usa las rutas subyacentes sin esa capa overlay
+- C. El enrutamiento nativo siempre requiere VXLAN
+- D. Solo AWS puede usar una red overlay
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B. Overlay encapsula el tráfico sobre otra red; el enrutamiento nativo usa las rutas subyacentes sin esa capa overlay**
+
+VXLAN/IPIP son ejemplos de encapsulación. El enrutamiento nativo requiere un diseño de rutas adecuado; puede usar BGP, pero no siempre lo necesita. Compare la MTU, el cifrado, las políticas, el tráfico y el hardware antes de afirmar diferencias de rendimiento.
+
+</details>
+
+### 4. ¿Qué tipo de Service predeterminado proporciona una IP virtual interna al clúster?
+
+- A. NodePort
+- B. LoadBalancer
+- C. ClusterIP
+- D. ExternalName
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: C. ClusterIP**
 
-**Explicación:**
-Características de los tipos de Service de Kubernetes:
-- **ClusterIP**: Asigna una IP virtual accesible solo dentro del cluster (predeterminado)
-- **NodePort**: Acceso externo mediante puertos específicos (30000-32767) en todos los nodes
-- **LoadBalancer**: Aprovisiona un balanceador de carga en la nube para el acceso externo
-- **ExternalName**: Crea un registro CNAME para un nombre DNS externo
+ClusterIP es el tipo predeterminado. Su exposición interna habitual no es una frontera de seguridad ni garantiza la conectividad. NodePort usa direcciones/puertos configurados del nodo; LoadBalancer requiere una implementación y puede ser interno; ExternalName proporciona un alias DNS. Los Services headless omiten la IP virtual.
 
 </details>
 
-### 5. ¿Qué CNI utiliza la tecnología eBPF como base?
+### 5. ¿Qué proyecto combina un plano de datos de red basado en eBPF con Hubble?
 
-A. Flannel
-B. Weave Net
-C. Cilium
-D. AWS VPC CNI
+- A. Flannel
+- B. El proyecto original Weave Net
+- C. Cilium
+- D. AWS VPC CNI
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: C. Cilium**
 
-**Explicación:**
-Cilium es un CNI que utiliza eBPF (extended Berkeley Packet Filter) como su tecnología principal. Beneficios de eBPF:
-- Alto rendimiento con procesamiento de red a nivel de kernel
-- Procesamiento de paquetes más eficiente en comparación con iptables
-- Visibilidad de L7 y aplicación de políticas
-- Puede reemplazar kube-proxy
-
-Aunque Calico también admite el modo eBPF, Cilium fue diseñado desde el principio con eBPF como base.
+Cilium usa eBPF e incluye observabilidad mediante Hubble; las funciones L7 aplicables usan Envoy. Otros proyectos también usan eBPF, incluidas las opciones de plano de datos de Calico y el agente de políticas de AWS. El nombre de la tecnología por sí solo no establece una clasificación de rendimiento universal.
 
 </details>
 
-### 6. ¿Cuál NO es una característica de AWS VPC CNI?
+### 6. ¿Qué afirmación NO describe correctamente las capacidades documentadas de políticas de EKS VPC-CNI/Auto Mode?
 
-A. Asigna direcciones IP reales de VPC a cada Pod
-B. Utiliza ENI (Elastic Network Interfaces) de instancias EC2
-C. La cantidad de IP que se puede asignar por Pod está limitada por el tipo de instancia
-D. Admite de forma nativa Network Policy de L7
+- A. VPC CNI usa direcciones de VPC y ENI/prefijos de EC2
+- B. La capacidad de Pods por nodo depende de los límites de la instancia, el modo de asignación y los límites de kubelet
+- C. Las implementaciones compatibles de EKS ofrecen capacidades de políticas de red Standard y Admin
+- D. La ApplicationNetworkPolicy basada en DNS implica la inspección actual de métodos/cuerpos HTTP
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. Admite de forma nativa Network Policy de L7**
+**Respuesta: D. La ApplicationNetworkPolicy basada en DNS implica la inspección actual de métodos/cuerpos HTTP**
 
-**Explicación:**
-Características de AWS VPC CNI:
-- Asigna direcciones IP reales de VPC a los Pods (nativo de VPC)
-- Usa IP secundarias de ENI de EC2
-- El número máximo de Pods está limitado por el tipo de instancia (cantidad de ENI × IP por ENI)
-- Solo admite Network Policy de L3-L4 de forma predeterminada (L7 requiere Calico o Cilium)
-
-Para Network Policy de L7, se necesitan soluciones adicionales como Cilium.
+AWS documenta ApplicationNetworkPolicy de DNS/FQDN para Auto Mode, y Admin ClusterNetworkPolicy para Auto Mode e instalaciones compatibles de EC2/VPC CNI. Los controles de capa de red basados en DNS son distintos de la inspección HTTP. Las condiciones de compatibilidad difieren entre Linux EC2, Windows y Fargate; el complemento estándar de EC2 no es la implementación de Auto Mode.
 
 </details>
 
-### 7. ¿Qué combinación de CNI admite BGP (Border Gateway Protocol)?
+### 7. ¿Qué par ofrece una opción de plano de control BGP?
 
-A. Flannel, Weave Net
-B. Calico, Cilium
-C. AWS VPC CNI, Flannel
-D. Weave Net, AWS VPC CNI
+- A. Flannel y el proyecto original Weave Net
+- B. Calico y Cilium
+- C. AWS VPC CNI y Flannel
+- D. El proyecto original Weave Net y AWS VPC CNI
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Calico, Cilium**
+**Respuesta: B. Calico y Cilium**
 
-**Explicación:**
-CNI que admiten BGP:
-- **Calico**: BGP es una funcionalidad principal; admite peering con switches ToR y Route Reflector
-- **Cilium**: Admite BGP (v1.10+), útil en entornos multi-cluster
-
-CNI que no admiten BGP:
-- **Flannel**: Red overlay sencilla, sin soporte de BGP
-- **Weave Net**: Usa su propio protocolo de enrutamiento, sin soporte de BGP
-- **AWS VPC CNI**: Usa enrutamiento nativo de VPC, sin soporte de BGP
+Calico y Cilium pueden anunciar rutas a pares adecuados. El emparejamiento BGP no proporciona por sí solo descubrimiento de servicios de aplicaciones, autenticación de cargas de trabajo ni cifrado. Verifique la propiedad de las rutas, la API BGP actual del CNI elegido y los requisitos de topología.
 
 </details>
 
-### 8. ¿Qué tipo de tráfico NO está sujeto a Kubernetes Network Policy?
+### 8. ¿Qué tráfico queda fuera del aislamiento normal de NetworkPolicy entre Pods de Kubernetes?
 
-A. Tráfico de un Pod a otro Pod
-B. Tráfico de un Pod a Internet externo
-C. Tráfico localhost entre contenedores en el mismo Pod
-D. Tráfico que llega al Pod desde fuentes externas
+- A. El tráfico entre distintos Pods
+- B. El egreso de un Pod a un endpoint externo
+- C. La comunicación localhost entre contenedores que comparten el espacio de nombres de red de un Pod
+- D. El tráfico externo que entra a un Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Tráfico localhost entre contenedores en el mismo Pod**
+**Respuesta: C. La comunicación localhost entre contenedores que comparten el espacio de nombres de red de un Pod**
 
-**Explicación:**
-Network Policy controla el tráfico entre Pods. Los contenedores dentro del mismo Pod:
-- Comparten el mismo espacio de nombres de red
-- Se comunican mediante localhost (127.0.0.1)
-- No están sujetos a Network Policy
-
-Tráfico sujeto a Network Policy:
-- Tráfico Ingress/Egress entre Pods
-- Tráfico Egress desde un Pod hacia el exterior
-- Tráfico Ingress desde el exterior hacia un Pod
+Los contenedores que comparten el espacio de nombres de red de un Pod pueden comunicarse mediante localhost. NetworkPolicy requiere una implementación que aplique las políticas y tiene excepciones definidas y detalles que dependen de la implementación. No infiera que todos los flujos del host, traducidos o encapsulados se controlan de la misma manera.
 
 </details>
 
-### 9. ¿Cuál es la consideración más importante al elegir un CNI para clusters de Kubernetes a gran escala (más de 500 nodes)?
+### 9. ¿Qué criterio ayuda a evaluar la escalabilidad de un clúster grande?
 
-A. Si se proporciona un dashboard de UI
-B. Escalabilidad del control plane y eficiencia de sincronización de datos
-C. Diseño del logotipo y calidad de la documentación
-D. Frecuencia de lanzamientos de nuevas versiones
+- A. Solo si el proyecto tiene un panel
+- B. La carga del controlador/API, la propagación del estado, los recursos por nodo y el comportamiento ante cambios realistas
+- C. La apariencia del logotipo
+- D. Solo la frecuencia de publicación de versiones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Escalabilidad del control plane y eficiencia de sincronización de datos**
+**Respuesta: B. La carga del controlador/API, la propagación del estado, los recursos por nodo y el comportamiento ante cambios realistas**
 
-**Explicación:**
-Consideraciones al seleccionar un CNI para clusters grandes:
-
-1. **Escalabilidad del Control Plane**:
-   - Calico: El componente Typha reduce la carga del API server
-   - Cilium: Sincronización eficiente con el modo Operator
-
-2. **Sincronización de datos**:
-   - Uso de recursos por agente de node
-   - Tiempo de propagación de actualizaciones de políticas
-
-3. **Rendimiento**:
-   - Las soluciones basadas en eBPF escalan mejor que las basadas en iptables
-   - Degradación del rendimiento a medida que aumenta la cantidad de reglas
+Pruebe la cardinalidad de políticas/endpoints, la propagación de actualizaciones, los cambios frecuentes de conexiones, la recuperación de fallos y la carga real del plano de datos. Un umbral de cantidad de nodos o la etiqueta eBPF por sí solos no demuestran que sea una opción adecuada. Los componentes del producto y los mecanismos de escalado deben coincidir con el modo de instalación elegido.
 
 </details>
 
-### 10. ¿Cuál es la diferencia correcta entre Ingress y Service?
+### 10. ¿Cuál es la relación correcta entre Ingress y Service?
 
-A. Ingress opera en L4, mientras que Service opera en L7
-B. Ingress define reglas de enrutamiento HTTP/HTTPS, mientras que Service proporciona endpoints de red para un conjunto de Pods
-C. Ingress solo admite comunicación interna del cluster, mientras que Service solo admite comunicación externa
-D. Ingress solo admite TCP, mientras que Service solo admite UDP
+- A. Ingress es una API solo L4 y Service solo L7
+- B. Ingress describe el enrutamiento HTTP/HTTPS; Services describen los endpoints de red y el descubrimiento
+- C. Los Services siempre son externos
+- D. Ingress solo admite UDP
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Ingress define reglas de enrutamiento HTTP/HTTPS, mientras que Service proporciona endpoints de red para un conjunto de Pods**
+**Respuesta: B. Ingress describe el enrutamiento HTTP/HTTPS; Services describen los endpoints de red y el descubrimiento**
 
-**Explicación:**
-- **Service**: Proporciona endpoints de red estables para un conjunto de Pods (L4)
-  - Tipos ClusterIP, NodePort, LoadBalancer
-  - Admite protocolos TCP/UDP
-
-- **Ingress**: Define reglas de enrutamiento de tráfico HTTP/HTTPS (L7)
-  - Enrutamiento basado en host
-  - Enrutamiento basado en ruta
-  - Terminación de TLS
-  - Ingress Controller proporciona la implementación real
-
-Ingress finalmente reenvía el tráfico a los Services de backend.
+Ingress necesita un controlador/plano de datos y normalmente referencia backends Service. El plano de datos puede conectarse a IP de Pods de endpoint o a NodePorts, así que la IP virtual del Service no necesariamente agrega un salto de paquete. Los protocolos Service y la compatibilidad del balanceador deben verificarse en la implementación real.
 
 </details>
-
----
-
-## Recursos de aprendizaje adicionales
-
-- [Kubernetes Networking Model](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
-- [CNI Specification](https://github.com/containernetworking/cni/blob/master/SPEC.md)
-- [Network Policy Guide](https://kubernetes.io/docs/concepts/services-networking/network-policies/)

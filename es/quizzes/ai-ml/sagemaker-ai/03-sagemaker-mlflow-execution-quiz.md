@@ -17,7 +17,7 @@ La ruta administrada usa la API actual de SageMaker MLflow App.
 </details>
 
 2. ¿Qué se requiere antes de una ejecución completa?
-   - A) Una ejecución smoke completada y un análisis de los registros en busca de PII sin procesar
+   - A) Una prueba de humo completada y un análisis de los registros en busca de PII sin procesar
    - B) Eliminar la pertenencia al proyecto
    - C) Ejecutar de inmediato el máximo de pasos
    - D) Desactivar la limpieza final
@@ -27,7 +27,7 @@ La ruta administrada usa la API actual de SageMaker MLflow App.
 
 **Respuesta: A**
 
-Revise primero la finalización de smoke, la seguridad de los registros, los resultados agregados y el inventario de adaptadores.
+Revise primero la finalización de la prueba de humo, la seguridad de los registros, los resultados agregados y el inventario de adaptadores.
 </details>
 
 3. ¿Cuál es el contrato de fallo/plazo del Job de EKS?
@@ -41,13 +41,13 @@ Revise primero la finalización de smoke, la seguridad de los registros, los res
 
 **Respuesta: B**
 
-Estos son los valores de configuración de reintentos y plazo del Job. Los fallos del controller o del nodo pueden retrasar la recuperación; no garantizan que todos los recursos desaparezcan en tres horas ni limitan el costo total.
+Estos son los valores de configuración de reintentos y plazo del Job. Los fallos del controlador o del nodo pueden retrasar la liberación de recursos; no garantizan que todos los recursos desaparezcan en tres horas ni limitan el costo total.
 </details>
 
 4. ¿Cuándo debe fallar la verificación de limpieza?
    - A) Cuando no queden recursos
    - B) Cuando queden recursos o los errores impidan confirmar su estado
-   - C) Cuando smoke se complete correctamente
+   - C) Cuando la prueba de humo se complete correctamente
    - D) Cuando coincidan los hashes del conjunto de datos
 
 <details>
@@ -75,7 +75,7 @@ Los dos GPU Jobs se detuvieron antes de enviarse.
 6. ¿Por qué sigue bloqueada la ejecución de GPU al 12 de septiembre de 2026?
    - A) El DLC de PyTorch 2.8 fijado alcanzó el fin de sus parches el 6 de agosto
    - B) El empaquetado del código fuente tiene costo
-   - C) Se eliminaron todas las MLflow App
+   - C) Se eliminaron todas las aplicaciones de MLflow
    - D) Las pruebas unitarias locales necesitan una GPU
 
 <details>
@@ -83,7 +83,7 @@ Los dos GPU Jobs se detuvieron antes de enviarse.
 
 **Respuesta: A**
 
-Valide un DLC compatible, la cohorte de torch y dependencias, y una ejecución smoke de GPU. Eliminar únicamente la comprobación de fecha no constituye una actualización.
+Valide un DLC compatible, la cohorte de torch y dependencias, y una prueba de humo en GPU. Eliminar únicamente la comprobación de fecha no constituye una actualización.
 </details>
 
 7. ¿Qué hace el launcher de SageMaker si no se especifica `--execute`?

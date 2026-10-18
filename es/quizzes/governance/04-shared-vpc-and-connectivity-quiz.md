@@ -6,7 +6,7 @@
 
 1. ¿Cómo se relaciona la propagación de TGW con las tablas de enrutamiento de VPC?
    - A) El límite de 100 prefijos de TGW es un límite fijo de Shared VPC
-   - B) Las rutas de TGW no se propagan automáticamente; el propietario agrega rutas estáticas de VPC cuyo destino es TGW
+   - B) Las rutas de TGW no se propagan automáticamente; el propietario agrega rutas estáticas de VPC con TGW como destino
    - C) Todas las tablas comparten una cuota
    - D) Nunca se alcanza primero la cuota de CIDR
 
@@ -16,15 +16,15 @@
 **Respuesta: B) Las rutas de TGW no se propagan automáticamente; el propietario agrega rutas estáticas de VPC cuyo destino es TGW**
 
 **Explicación:**
-Las tablas de TGW tienen un límite predeterminado combinado de 10,000 rutas; las rutas de VPC no propagadas tienen un valor predeterminado de 500. No confunda el límite de 100 rutas propagadas de VGW con los totales de TGW.
+Las tablas de TGW tienen un límite predeterminado combinado de 10 000 rutas; las rutas de VPC no propagadas tienen un valor predeterminado de 500. No confunda el límite de 100 rutas propagadas de VGW con los totales de TGW.
 
 </details>
 
 ---
 
-2. ¿Qué recurso del propietario no puede describir un participante de Shared VPC?
+2. ¿Qué recurso del propietario no puede consultar un participante de Shared VPC?
    - A) Una subred
-   - B) Su propio security group
+   - B) Su propio grupo de seguridad
    - C) NAT Gateway
    - D) Una tabla de enrutamiento
 
@@ -34,7 +34,7 @@ Las tablas de TGW tienen un límite predeterminado combinado de 10,000 rutas; la
 **Respuesta: C) NAT Gateway**
 
 **Explicación:**
-Los participantes no pueden describir los NAT gateways del propietario. Los inventarios centralizados, los registros y las rutas de lectura delegada aún pueden aportar evidencia de auditoría.
+Los participantes no pueden consultar los NAT gateways del propietario. Los inventarios centralizados, los registros y los mecanismos delegados de solo lectura aún pueden aportar evidencia de auditoría.
 
 </details>
 
@@ -42,14 +42,14 @@ Los participantes no pueden describir los NAT gateways del propietario. Los inve
 
 3. ¿Cómo se debe diseñar el descubrimiento de subredes de LBC para Shared VPC?
    - A) Suponer que todas las versiones funcionan correctamente
-   - B) Validar el modo del controller, los permisos y la visibilidad de etiquetas; considerar ID de subred explícitos
+   - B) Validar el modo del controlador, los permisos y la visibilidad de etiquetas; considerar ID explícitos de subred
    - C) Hacer siempre que el propietario cree Ingress
    - D) Descubrir subredes solo mediante NAT gateways
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Validar el modo del controller, los permisos y la visibilidad de etiquetas; considerar ID de subred explícitos**
+**Respuesta: B) Validar el modo del controlador, los permisos y la visibilidad de etiquetas; considerar ID explícitos de subred**
 
 **Explicación:**
 Las etiquetas del propietario no se comparten automáticamente. Especificar subredes es predecible, pero esto no demuestra que todos los modos de descubrimiento fallen.

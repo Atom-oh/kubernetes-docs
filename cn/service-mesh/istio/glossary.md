@@ -5,7 +5,7 @@
 
 本术语表按分组参考章节整理了与 Istio 和 Service Mesh 相关的关键术语。
 
-> **参考语言：**下方的 Architecture 和 DestinationRule 章节链接使用维护中的英文指南。在本地化译文尚未同步时，这些链接可提供当前参考内容。
+> **参考语言**：下方的 Architecture 和 DestinationRule 章节链接使用维护中的英文指南。在本地化译文尚未同步时，这些链接可提供当前参考内容。
 
 ## 目录
 

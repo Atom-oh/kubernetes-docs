@@ -133,7 +133,7 @@ kubectl -n scheduler-lab get lease custom-scheduler
 kubectl get pods -A --field-selector=spec.schedulerName=custom-scheduler,spec.nodeName= -o wide
 ```
 
-**其他选项：**A、B 和 D 描述了实际的工作负载或协调方面的考量。
+**其他选项**：A、B 和 D 描述了实际的工作负载或协调方面的考量。
 </details>
 
 ### 2. Kubernetes 调度器中“Permit”扩展点的作用是什么？

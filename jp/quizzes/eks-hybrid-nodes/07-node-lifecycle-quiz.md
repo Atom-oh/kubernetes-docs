@@ -6,17 +6,17 @@
 
 1. NodeConfig の kubelet 設定で `systemReserved` と `kubeReserved` を設定する主な目的は何ですか？
    - A) Pod のリソース要求を自動的に調整するため
-   - B) Node の安定性を確保するために、システムプロセスと Kubernetes コンポーネント用のリソースを予約するため
+   - B) Node Allocatable の計算時に、システムプロセスと Kubernetes コンポーネント用のリソースを予約するため
    - C) Node で利用可能な総リソースを増やすため
    - D) Pod のスケジューリング優先度を決定するため
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Node の安定性を確保するために、システムプロセスと Kubernetes コンポーネント用のリソースを予約するため**
+**回答: B) Node Allocatable の計算時に、システムプロセスと Kubernetes コンポーネント用のリソースを予約するため**
 
 **説明:**
-`systemReserved` は OS とシステムデーモン（sshd、udev など）用のリソースを予約し、`kubeReserved` は kubelet と containerd 用のリソースを予約します。これにより、Pod が Node のすべてのリソースを消費することを防ぎ、Node の安定性を維持します。
+`systemReserved` は OS とシステムデーモン（sshd、udev など）用、`kubeReserved` は kubelet と containerd 用のリソースを予約します。この予約によって Node の割り当て可能容量が減ります。ホストプロセス用 cgroup 予約を強制するには追加設定が必要であり、これらのフィールドだけで安定性が保証されるわけではありません。
 
 </details>
 
@@ -24,23 +24,23 @@
 
 2. kubelet の `evictionHard` と `evictionSoft` の違いは何ですか？
    - A) `evictionHard` はソフトリミットで、`evictionSoft` はハードリミットである
-   - B) `evictionHard` は即時退避をトリガーし、`evictionSoft` は猶予期間後に退避する
+   - B) `evictionHard` にはソフトなしきい値の観測猶予がなく、`evictionSoft` ではしきい値が一定時間継続する必要がある
    - C) `evictionHard` は Pod のみを退避し、`evictionSoft` は Node をシャットダウンする
    - D) 両方の設定は名前が異なるだけで同じように動作する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) `evictionHard` は即時退避をトリガーし、`evictionSoft` は猶予期間後に退避する**
+**回答: B) `evictionHard` にはソフトなしきい値の観測猶予がなく、`evictionSoft` ではしきい値が一定時間継続する必要がある**
 
 **説明:**
-`evictionHard` のしきい値に達すると、kubelet はただちに Pod を退避します。`evictionSoft` は、しきい値が `evictionSoftGracePeriod` で指定された期間継続した場合にのみ退避し、Pod の突然の終了を防ぎます。
+必要に応じて kubelet はまず Node レベルのリソース回収を試み、その後 Pod を退避します。ハードしきい値にはソフトなしきい値の観測期間がなく、Pod の終了猶予も与えずに退避します。ソフトしきい値は `evictionSoftGracePeriod` の期間継続する必要があります。`evictionMaxPodGracePeriod` は Pod の終了猶予を別途制限します。これらの設定も、ハード退避や OOM を防ぐものではありません。
 
 </details>
 
 ---
 
-3. Kubernetes の version skew policy によると、EKS control plane がバージョン 1.31 の場合に実行できる最も古い kubelet バージョンは何ですか？
+3. Kubernetes の version skew policy によると、1.31 の API server を使う過去の例で実行できる最も古い kubelet バージョンは何ですか？（現在の EKS バージョンの提供状況は考慮しません）
    - A) 1.27
    - B) 1.28
    - C) 1.29
@@ -94,25 +94,25 @@ nodeadm は hybrid node の初期化中に `eks.amazonaws.com/compute-type=hybri
 
 ---
 
-6. SSM Hybrid Activation の有効期限が切れた場合の正しい対応は何ですか？
+6. SSM activation の有効期限が切れたものの、Node はすでに登録済みです。正しい対応は何ですか？
    - A) 既存の activation の有効期限を延長する
-   - B) 新しい SSM Hybrid Activation を作成し、nodeconfig.yaml を更新する
+   - B) 既存の登録は維持し、新規登録が必要な場合に限って新しい activation を使う
    - C) IAM Roles Anywhere に切り替える
    - D) 自動更新のために kubelet を再起動する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 新しい SSM Hybrid Activation を作成し、nodeconfig.yaml を更新する**
+**回答: B) 既存の登録は維持し、新規登録が必要な場合に限って新しい activation を使う**
 
 **説明:**
-SSM Hybrid Activation は、有効期限が切れた後に有効期限を延長することはできません。新しい activation を作成し、nodeconfig.yaml の `activationCode` と `activationId` を更新し、必要に応じて Node を再登録する必要があります。
+Activation の有効期限切れによってブロックされるのは新規登録です。すでに登録された Node は明示的に登録解除されるまで管理対象のままです。activation の期限切れだけを理由に、正常な Node をアンインストールして再登録しないでください。エージェントの認証情報、ロール権限、接続性はそれぞれ別の要件です。
 
 </details>
 
 ---
 
-7. Kubernetes コンポーネントをアップグレードする正しい順序は何ですか？
+7. Node がすでに control plane と同じマイナーバージョンにある場合、次のマイナーバージョンへ移行する順序は何ですか？
    - A) まず Node をアップグレードし、その後 control plane をアップグレードする
    - B) control plane と Node を同時にアップグレードする
    - C) まず control plane (EKS) をアップグレードし、その後 Node をアップグレードする
@@ -124,7 +124,7 @@ SSM Hybrid Activation は、有効期限が切れた後に有効期限を延長�
 **回答: C) まず control plane (EKS) をアップグレードし、その後 Node をアップグレードする**
 
 **説明:**
-Kubernetes の version skew policy によると、kubelet は API server より新しくすることはできません。常に最初に control plane をアップグレードし、その後 Node をアップグレードする必要があります。control plane より先に Node をアップグレードすると、互換性の問題が発生します。
+Kubernetes の version skew policy では、kubelet を API server より新しいバージョンにはできません。この次のマイナーバージョンへの移行では、Node より先に control plane をアップグレードしてください。遅れている Node を現在の control plane のバージョンまで先に引き上げても、バージョン skew の範囲には抵触しません。
 
 </details>
 
@@ -142,6 +142,6 @@ Kubernetes の version skew policy によると、kubelet は API server より�
 **回答: B) 40 秒**
 
 **説明:**
-`shutdownGracePeriodCriticalPods` は `shutdownGracePeriod` に含まれます。合計 60 秒の猶予期間から critical Pod 用に予約された 20 秒を差し引くと、通常の Pod 終了用に 40 秒が残ります。critical Pod（priority class system-cluster-critical または system-node-critical を持つ Pod）は最後の 20 秒間に終了されます。
+`shutdownGracePeriodCriticalPods` は `shutdownGracePeriod` に含まれます。合計 60 秒から critical Pod 用に確保された 20 秒を差し引くと、通常の Pod グループには 40 秒が割り当てられます。最後の 20 秒は critical Pod 用です。これは設定された時間枠の説明であり、強制終了時に各 Pod の猶予時間が保証されるわけではありません。個々の `terminationGracePeriodSeconds` も適用されます。
 
 </details>

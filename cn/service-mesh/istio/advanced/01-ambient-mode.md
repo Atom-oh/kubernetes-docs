@@ -229,7 +229,7 @@ spec:
 ### HBONE 协议
 
 
-**HBONE（基于 HTTP 的覆盖网络环境）**是 Ambient Mode 使用的隧道协议：
+**HBONE**（基于 HTTP 的覆盖网络环境）是 Ambient Mode 使用的隧道协议：
 
 - **基于 HTTP/2**：兼容现有基础设施
 - **内置 mTLS**：安全通信

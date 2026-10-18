@@ -3,7 +3,7 @@
 > **最后更新**：October 16, 2026
 > **验证基线**：cert-manager 1.21.2、cmctl 2.6.1、trust-manager 0.25.0、istio-csr 0.18.0、aws-privateca-issuer 1.9.2、ACK ACM 1.8.1。cert-manager 1.21 公布的受支持/已测试 Kubernetes 版本范围为 1.33–1.36；Kubernetes 1.37 不在该范围内，因此本指南不声明与其兼容。
 
-cert-manager 将证书签发和续期作为 Kubernetes 资源进行管理。**CA 信任分发、应用重新加载、吊销以及 CRL/OCSP 操作仍是单独的职责。**示例已使用本地 schema、配置和库进行检查；它们不能证明外部 CA 签发或 AWS/Kubernetes 部署已成功。另有一项独立的临时本地 Vault 2.1.0 测试，使用合成 CA 对十六种签发/CSR 签名接受/拒绝场景进行了验证。
+cert-manager 将证书签发和续期作为 Kubernetes 资源进行管理。**CA 信任分发、应用重新加载、吊销以及 CRL/OCSP 操作仍是单独的职责**。示例已使用本地 schema、配置和库进行检查；它们不能证明外部 CA 签发或 AWS/Kubernetes 部署已成功。另有一项独立的临时本地 Vault 2.1.0 测试，使用合成 CA 对十六种签发/CSR 签名接受/拒绝场景进行了验证。
 
 <span id="what-cert-manager-solves"></span>
 <span id="project-status"></span>
@@ -395,7 +395,7 @@ spec:
 
 ### ACM ACME：EAB 和预验证域名
 
-ACM 于 2026 年 7 月 6 日宣布推出 ACME，可签发有效期为 45 天的公有证书。PKI 管理员会准备端点/域名验证以及与 IAM 角色关联的 EAB 凭证，然后注册客户端。**仅更改服务器 URL 并不足够。**请安全存储 HMAC 密钥，并在 cert-manager 的集群资源命名空间中提供 acm-eab Secret/hmac 条目。
+ACM 于 2026 年 7 月 6 日宣布推出 ACME，可签发有效期为 45 天的公有证书。PKI 管理员会准备端点/域名验证以及与 IAM 角色关联的 EAB 凭证，然后注册客户端。**仅更改服务器 URL 并不足够**。请安全存储 HMAC 密钥，并在 cert-manager 的集群资源命名空间中提供 acm-eab Secret/hmac 条目。
 
 ```yaml
 apiVersion: cert-manager.io/v1

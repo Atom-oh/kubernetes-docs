@@ -72,13 +72,13 @@ Bottlerocket 支持的 VMware 变体使用其自身的引导路径，并且不�
 
 ## 需要规划的约束
 
-- **已连接环境：**需要与 AWS 建立可靠的私有双向连接。Hybrid Nodes 并非用于断开连接/间歇性 DDIL 操作。本指南中的“Air-gap”是指具备所需 AWS 连接的受限互联网访问，而非与 AWS 隔离。
-- **地址：**IPv4 RFC1918 或 CGNAT 范围，且 remote node/Pod、VPC 和 service CIDR 之间不得重叠。每个集群最多支持 **15 个 node CIDR 和 15 个 Pod CIDR**。
-- **身份验证：**使用 `API` 或 `API_AND_CONFIG_MAP`，并准备 Hybrid Nodes IAM role/access entries。
-- **API endpoint：**AWS 建议仅使用 public 或仅使用 private。两者均启用时，VPC 外的Node会解析 public endpoint 地址；如果预期路径/访问规则为 private，**可能**会阻止加入。这并不是普遍的 API 禁止。即使是 public API endpoint，也不能免除从 control-plane 到Node的私有连接要求。
-- **Regions：**根据当前概览，除 AWS GovCloud (US) 和 AWS China Regions 外均可用。
-- **主机支持：**请一并审查 OS、架构、CNI 和 kernel。AL2023 适用于本地虚拟化环境，而非通用的裸金属建议。
-- **费用：**Node连接期间，hybrid 费用按报告的 vCPU-hours 计算。启用超线程的裸金属 cores 可能报告为两个 vCPU。空闲工作负载不会自动停止Node费用；集群和其他服务费用另行计算。
+- **已连接环境**：需要与 AWS 建立可靠的私有双向连接。Hybrid Nodes 并非用于断开连接/间歇性 DDIL 操作。本指南中的“Air-gap”是指具备所需 AWS 连接的受限互联网访问，而非与 AWS 隔离。
+- **地址**：IPv4 RFC1918 或 CGNAT 范围，且 remote node/Pod、VPC 和 service CIDR 之间不得重叠。每个集群最多支持 **15 个 node CIDR 和 15 个 Pod CIDR**。
+- **身份验证**：使用 `API` 或 `API_AND_CONFIG_MAP`，并准备 Hybrid Nodes IAM role/access entries。
+- **API endpoint**：AWS 建议仅使用 public 或仅使用 private。两者均启用时，VPC 外的Node会解析 public endpoint 地址；如果预期路径/访问规则为 private，**可能**会阻止加入。这并不是普遍的 API 禁止。即使是 public API endpoint，也不能免除从 control-plane 到Node的私有连接要求。
+- **Regions**：根据当前概览，除 AWS GovCloud (US) 和 AWS China Regions 外均可用。
+- **主机支持**：请一并审查 OS、架构、CNI 和 kernel。AL2023 适用于本地虚拟化环境，而非通用的裸金属建议。
+- **费用**：Node连接期间，hybrid 费用按报告的 vCPU-hours 计算。启用超线程的裸金属 cores 可能报告为两个 vCPU。空闲工作负载不会自动停止Node费用；集群和其他服务费用另行计算。
 
 ## 凭证提供商 {#credential-providers}
 
@@ -93,7 +93,7 @@ Bottlerocket 支持的 VMware 变体使用其自身的引导路径，并且不�
 | 规模 / 成本 | 无 SSM Node注册或每Node管理费用；功能使用定价另计 | 审查 IAM Roles Anywhere quotas 和 PKI 运营要求 |
 | 典型选择 | 没有现有 PKI；注册更简单 | 具有现有 PKI 和受管理的 certificate 生命周期 |
 
-**定价检查日期为 2026 年 9 月 16 日：**SSM 自 2026 年 6 月 30 日起取消了 Advanced Instances Tier。请查阅 [当前 SSM 定价](https://aws.amazon.com/systems-manager/pricing/)以了解 Session Manager 和 Run Command 的使用条款；[EKS Hybrid Nodes vCPU 费用](https://aws.amazon.com/eks/pricing/)仍另行计算。
+**定价检查日期为 2026 年 9 月 16 日**：SSM 自 2026 年 6 月 30 日起取消了 Advanced Instances Tier。请查阅 [当前 SSM 定价](https://aws.amazon.com/systems-manager/pricing/)以了解 Session Manager 和 Run Command 的使用条款；[EKS Hybrid Nodes vCPU 费用](https://aws.amazon.com/eks/pricing/)仍另行计算。
 
 Roles Anywhere profile 必须接受自定义 role session name，并且 trust policy 必须将其绑定到所选的 certificate attribute。其有效 session duration 必须**不超过** IAM role maximum；CreateSession API 允许二者相等。[前提条件](01-prerequisites.md)详细说明了这些约定和安全准备。
 

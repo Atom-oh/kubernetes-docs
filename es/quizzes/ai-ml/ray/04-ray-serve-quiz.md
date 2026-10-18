@@ -17,7 +17,7 @@ Un Ray Pod puede alojar varios actores de réplica.
 </details>
 
 2. ¿Cuál es la ubicación predeterminada del proxy en 2.58.0?
-   - A) Siempre uno en el head
+   - A) Siempre uno en el nodo principal
    - B) EveryNode en los nodos que alojan réplicas
    - C) Cada nodo EC2 incondicionalmente
    - D) Siempre Disabled
@@ -32,9 +32,9 @@ HeadOnly y Disabled son opciones explícitas. Distinga la documentación de arqu
 
 3. ¿En qué se diferencia el Deployment predeterminado de num_replicas="auto"?
    - A) Ambos inician inmediatamente 100 réplicas
-   - B) Predeterminado fijo en 1; auto aplica mínimo 1/máximo 100/objetivo 2
+   - B) El valor fijo predeterminado es 1; auto aplica mínimo 1, máximo 100 y objetivo 2
    - C) Predeterminado GPU 1; auto GPU 100
-   - D) Ninguno admite autoscaling
+   - D) Ninguno admite escalado automático
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -45,8 +45,8 @@ Un AutoscalingConfig construido directamente establece el máximo predeterminado
 </details>
 
 4. ¿Cuál es el alcance de max_queued_requests?
-   - A) Una cola global para todo el cluster
-   - B) Cada llamador, como un proxy o handle
+   - A) Una cola global para todo el clúster
+   - B) Cada invocador, como un proxy o un handle
    - C) Capacidad de KV-cache de GPU
    - D) Cantidad de RayCluster Pods
 
@@ -55,12 +55,12 @@ Un AutoscalingConfig construido directamente establece el máximo predeterminado
 
 **Respuesta: B**
 
-El valor predeterminado -1 es ilimitado; exceder un límite configurado puede rechazar solicitudes HTTP o generar un handle BackPressureError.
+El valor predeterminado -1 es ilimitado; exceder un límite configurado puede hacer que se rechacen solicitudes HTTP o generar un handle BackPressureError.
 </details>
 
 5. ¿Un actor de réplica pendiente siempre crea un nuevo Pod y nodo EC2?
    - A) Siempre uno a uno
-   - B) No; importan la capacidad existente, los límites de grupo, la colocación y la habilitación del autoscaler
+   - B) No; importan la capacidad existente, los límites del grupo, la colocación y si el escalador automático está habilitado
    - C) Se convierte automáticamente en un modelo de CPU
    - D) Serve crea directamente nodos EC2
 
@@ -88,16 +88,16 @@ Las dependencias de inferencia y el acceso/descarga de modelos son independiente
 
 7. ¿Qué afirmación sobre la actualización de RayService es precisa?
    - A) Es obligatoria para cada Deployment de EKS con garantía de ausencia de tiempo de inactividad
-   - B) Es una ruta de ciclo de vida opcional; valide la estrategia, Gateway, capacidad, preparación y draining
+   - B) Es una ruta de ciclo de vida opcional; valide la estrategia, Gateway, capacidad, disponibilidad y drenaje
    - C) Siempre solo edita la imagen de un Pod existente
-   - D) Todas las transmisiones largas siempre se preservan
+   - D) Todos los flujos largos siempre se preservan
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B**
 
-Distinga los cambios de aplicación, las transiciones de cluster y la reconfiguración de actores.
+Distinga los cambios de aplicación, las transiciones de clúster y la reconfiguración de actores.
 </details>
 
 8. ¿Qué verificó la prueba local de Echo?
@@ -116,20 +116,20 @@ Fue una pequeña prueba de CPU de un solo nodo sin un modelo, LLM, GPU ni Deploy
 
 ## Preguntas de respuesta corta
 
-9. ¿Por qué distinguir entre el máximo de solicitudes en curso, el objetivo de autoscaling y el límite de cola del llamador?
+9. ¿Por qué distinguir entre el máximo de solicitudes en curso, el objetivo de escalado automático y el límite de cola del invocador?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Controlan aspectos diferentes: solicitudes asignadas a réplicas, carga objetivo para el escalado y solicitudes en espera por llamador. Una configuración no establece todos los demás límites ni garantías de latencia.
+Controlan aspectos diferentes: solicitudes asignadas a réplicas, carga objetivo para el escalado y solicitudes en espera de cada invocador. Una configuración no establece los demás límites ni garantiza la latencia.
 </details>
 
-10. ¿Por qué los tokens de cluster o ClusterIP no completan la seguridad de la aplicación?
+10. ¿Por qué los tokens de clúster o ClusterIP no completan la seguridad de la aplicación?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Verifique por separado TLS, la autenticación/autorización de cada punto de entrada, los permisos de artefactos de modelo, el manejo de solicitudes/registros sensibles y las políticas de recursos/cola/timeout.
+Verifique por separado TLS, la autenticación y autorización de cada punto de entrada, los permisos de los artefactos del modelo, el tratamiento de solicitudes y registros sensibles, y las políticas de recursos, cola y tiempo de espera.
 </details>
 
 ---

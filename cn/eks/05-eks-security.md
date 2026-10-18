@@ -1410,9 +1410,9 @@ AMI 发行版本并非后续 API 设置变更或原地操作系统更新的完�
 
 ### 最小权限模式
 
-**Kubernetes 命名空间访问：**使用访问条目和范围受限于命名空间的 EKS 访问策略，或使用身份验证章节所示的 RBAC Role/RoleBinding。`eks:AccessKubernetesApi` 允许通过 EKS 控制台查看 Kubernetes 对象；它不是 kubectl 的通用命名空间 RBAC 权限。`eks:namespaces` 是作用于 `AssociateAccessPolicy`/`DisassociateAccessPolicy` 请求的 ArrayOfString 条件，而不是作用于 `AccessKubernetesApi`。仅有 IAM `DescribeCluster`/`ListClusters` 并不能授权 Kubernetes 操作。多个授权会累加；范围较窄的关联不会移除现有的集群范围授权。
+**Kubernetes 命名空间访问**：使用访问条目和范围受限于命名空间的 EKS 访问策略，或使用身份验证章节所示的 RBAC Role/RoleBinding。`eks:AccessKubernetesApi` 允许通过 EKS 控制台查看 Kubernetes 对象；它不是 kubectl 的通用命名空间 RBAC 权限。`eks:namespaces` 是作用于 `AssociateAccessPolicy`/`DisassociateAccessPolicy` 请求的 ArrayOfString 条件，而不是作用于 `AccessKubernetesApi`。仅有 IAM `DescribeCluster`/`ListClusters` 并不能授权 Kubernetes 操作。多个授权会累加；范围较窄的关联不会移除现有的集群范围授权。
 
-**限定存储库范围的拉取：**镜像读取操作可以限制到获准的存储库 ARN。`GetAuthorizationToken` 需要 `Resource: "*"`；该身份验证权限本身不会授予镜像访问权限。
+**限定存储库范围的拉取**：镜像读取操作可以限制到获准的存储库 ARN。`GetAuthorizationToken` 需要 `Resource: "*"`；该身份验证权限本身不会授予镜像访问权限。
 
 ```json
 {
@@ -1438,7 +1438,7 @@ AMI 发行版本并非后续 API 设置变更或原地操作系统更新的完�
 }
 ```
 
-**S3 存储桶 ABAC：**当前的 S3 通用存储桶支持对包括 ListBucket/GetObject 在内的操作使用存储桶标签条件，但**必须先在该存储桶上启用 ABAC**。默认情况下该功能处于禁用状态。以下 IAM 策略使用存储桶的 Environment 标签，而非对象标签：
+**S3 存储桶 ABAC**：当前的 S3 通用存储桶支持对包括 ListBucket/GetObject 在内的操作使用存储桶标签条件，但**必须先在该存储桶上启用 ABAC**。默认情况下该功能处于禁用状态。以下 IAM 策略使用存储桶的 Environment 标签，而非对象标签：
 
 ```json
 {
@@ -1741,7 +1741,7 @@ spec:
 
 这里的 `creationPolicy: Owner` 会使 ExternalSecret 拥有 `eso-db-credentials`；删除 ExternalSecret 可能会通过垃圾回收删除该 Secret。`deletionPolicy: Retain` 适用于后端密钥缺失的情况，并不能防止所有者垃圾回收。请检查 SecretStore/ExternalSecret Ready 状态条件和事件，但不要打印 Secret 数据。
 
-**Pod Identity 替代方案：**将 ESO 控制器自身的 ServiceAccount 与其角色关联，并省略存储区中的 `auth` 块，从而使用控制器凭证链。不要保留 `auth.jwt.serviceAccountRef`，同时期望 ESO 冒用任意与 Pod Identity 关联的账户。按存储区配置的 IRSA 和控制器 Pod Identity 是不同的身份验证路径；请审查由此形成的控制器级信任边界。
+**Pod Identity 替代方案**：将 ESO 控制器自身的 ServiceAccount 与其角色关联，并省略存储区中的 `auth` 块，从而使用控制器凭证链。不要保留 `auth.jwt.serviceAccountRef`，同时期望 ESO 冒用任意与 Pod Identity 关联的账户。按存储区配置的 IRSA 和控制器 Pod Identity 是不同的身份验证路径；请审查由此形成的控制器级信任边界。
 
 ### 轮换与应用重载
 

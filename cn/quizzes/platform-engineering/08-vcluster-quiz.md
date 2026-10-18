@@ -45,7 +45,7 @@
 <details>
 <summary>显示答案</summary>
 
-使用受支持 fromHost StorageClass 配置和宿主 CSI，将 PVC 同步到宿主。检查绑定模式、拓扑和回收/保留。0.37 支持快照同步，与已移除 deploy.volumeSnapshotController 不同。
+使用受支持的 fromHost StorageClass 配置和宿主 CSI，将 PVC 同步到宿主。检查绑定模式、拓扑和回收/保留。0.37 支持快照同步，与已移除 deploy.volumeSnapshotController 不同。
 
 </details>
 
@@ -63,7 +63,7 @@
 <details>
 <summary>显示答案</summary>
 
-不会。允许规则可叠加，不能由另一拒绝策略削减。Syncer 需要宿主 API 访问。配置禁用工作负载公共出站，但保留控制平面端口允许，需要实际 CNI/路径验证。
+不会。允许规则可叠加，不能由另一拒绝策略削减。Syncer 需要宿主 API 访问。配置禁用工作负载公共出站，但保留对控制平面端口的放行规则，需要实际 CNI/路径验证。
 
 </details>
 

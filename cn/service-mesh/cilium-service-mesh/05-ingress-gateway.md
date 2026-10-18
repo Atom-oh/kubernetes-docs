@@ -555,7 +555,7 @@ ingressController:
 
 TCP 健康检查只检查 NodePort 的传输层可达性，不检查应用的 `/healthz`、TLS 有效性或特定主机的 HTTP 路由。跨可用区负载均衡使用当前的负载均衡器属性注解，需要评估成本和流量。不要假定可以在原地更改现有 Service 的控制器所有权或 LB 类型而实现零停机迁移。
 
-**客户端身份和可选的 PROXY protocol：**在 HTTP Envoy 处理过程中，无论外部流量策略为 `Cluster` 还是 `Local`，Cilium 都会保留其前端可见的源地址。该地址是否为原始客户端地址，首先取决于上游 NLB 和目标组属性。Instance TCP targets 通常会保留客户端 IP；并非所有场景都需要 PROXY protocol。如果你的拓扑确实需要它，请将此附加覆盖配置与 NLB 设置协同部署：
+**客户端身份和可选的 PROXY protocol**：在 HTTP Envoy 处理过程中，无论外部流量策略为 `Cluster` 还是 `Local`，Cilium 都会保留其前端可见的源地址。该地址是否为原始客户端地址，首先取决于上游 NLB 和目标组属性。Instance TCP targets 通常会保留客户端 IP；并非所有场景都需要 PROXY protocol。如果你的拓扑确实需要它，请将此附加覆盖配置与 NLB 设置协同部署：
 
 ```yaml
 ingressController:

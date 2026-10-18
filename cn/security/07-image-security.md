@@ -257,7 +257,7 @@ spec:
 
 ### Connaisseur 替代方案：旧版签名路径
 
-**Connaisseur 3.13.0 不支持使用默认 Cosign 3 bundles。**它使用 cosign/v2 验证路径，以及旧版签名标签和 SimpleSigning 负载。请使用独立的兼容性签名生成器。[旧版签名脚本](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)明确设置 Cosign 3.1.3 的 `--new-bundle-format=false --registry-referrers-mode=legacy`，同时保留透明日志上传/验证。配套签名配置明确为旧版验证器的日志格式选择 Rekor v1。请提供真实的获批准密钥和摘要。此路径独立于 secure-build.yaml 的默认 bundle 格式；不要将该工作流的默认输出直接传给 Connaisseur。旧版标志已弃用，因此应规划签名生成器/验证器的协调迁移。已检查 CLI 选项和双方的源格式约定；未执行仓库/签名集成。
+**Connaisseur 3.13.0 不支持使用默认 Cosign 3 bundles**。它使用 cosign/v2 验证路径，以及旧版签名标签和 SimpleSigning 负载。请使用独立的兼容性签名生成器。[旧版签名脚本](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)明确设置 Cosign 3.1.3 的 `--new-bundle-format=false --registry-referrers-mode=legacy`，同时保留透明日志上传/验证。配套签名配置明确为旧版验证器的日志格式选择 Rekor v1。请提供真实的获批准密钥和摘要。此路径独立于 secure-build.yaml 的默认 bundle 格式；不要将该工作流的默认输出直接传给 Connaisseur。旧版标志已弃用，因此应规划签名生成器/验证器的协调迁移。已检查 CLI 选项和双方的源格式约定；未执行仓库/签名集成。
 
 Connaisseur 3.13.0/chart 2.13.0 是另一种选择。在 [values 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)中，validators 和 policy 应置于 application 下，而 deny 是显式定义的静态 validator。其中包含的公钥是合成测试密钥，必须替换为真实的信任密钥。
 

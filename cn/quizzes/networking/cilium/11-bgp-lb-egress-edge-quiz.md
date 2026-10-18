@@ -11,7 +11,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**D) 没有实际作用：ENI IPAM 不会为节点分配 Cilium 管理的 PodCIDR，因此没有可通告的节点级前缀
+   **答案**：D) 没有实际作用：ENI IPAM 不会为节点分配 Cilium 管理的 PodCIDR，因此没有可通告的节点级前缀
 
    `PodCIDR` 通告仅适用于会为每个节点分配 PodCIDR 的 IPAM 模式（cluster-pool、Kubernetes host scope）。使用 ENI 时，Pod IP 已经是由 VPC 路由的 VPC 地址；BGP Control Plane 不会配置云端路由表。
 
@@ -26,7 +26,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**A) 通过 `families[].advertisements`，使用标签选择器匹配 `CiliumBGPAdvertisement` 对象的 `metadata.labels`
+   **答案**：A) 通过 `families[].advertisements`，使用标签选择器匹配 `CiliumBGPAdvertisement` 对象的 `metadata.labels`
 
    ClusterConfig 通过名称关联 PeerConfig；PeerConfig 则通过通告对象上的标签来关联通告。如果没有匹配的通告，会话仍会建立，但不会通告任何路由。
 
@@ -41,7 +41,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**C) 仅从至少有一个本地就绪后端的节点通告；路由随 Pod 所在位置变化
+   **答案**：C) 仅从至少有一个本地就绪后端的节点通告；路由随 Pod 所在位置变化
 
    使用 `Cluster` 时，VIP 会从所有选定节点通告。使用 `Local` 时，没有本地就绪端点的节点会撤回路由。租约属于 L2 announcement，不属于 BGP。
 
@@ -56,7 +56,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**B) 每实例标签从 `vrouter` 改为 `instance_name`，而 1.20 升级说明没有提及此事
+   **答案**：B) 每实例标签从 `vrouter` 改为 `instance_name`，而 1.20 升级说明没有提及此事
 
    1.19.8 指标文档使用 `vrouter`；1.20.2 使用 `instance_name`。筛选旧标签的查询和告警会静默地停止匹配。
 
@@ -71,7 +71,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**A) 合并 communities，并采用最大的 `localPreference`
+   **答案**：A) 合并 communities，并采用最大的 `localPreference`
 
    1.18 之前的行为是“最后匹配优先”。还要记住，`localPreference` 只会发送给 iBGP 对等节点。
 
@@ -86,7 +86,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**D) 1.19
+   **答案**：D) 1.19
 
    它在 1.18 中弃用，并于 1.19 与 `pkg/bgpv1` 一同移除，因此集群必须在升级到 1.19 前迁移到 `cilium.io/v2` CRD。v2alpha1 版 v2 CRD 在 1.20 和 1.21-pre 中仍提供服务，但已弃用。
 
@@ -101,7 +101,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**B) 不支持 BFD；降低 hold 和 keepalive 计时器（CRD 最低值分别为 3 和 1），并为 Agent 重启使用 Graceful Restart
+   **答案**：B) 不支持 BFD；降低 hold 和 keepalive 计时器（CRD 最低值分别为 3 和 1），并为 Agent 重启使用 Graceful Restart
 
    从 1.18 到 1.21-pre 的 CRD 中都没有 BFD 字段。常见的 9/3 计时器是建议使用的激进设置，不是 CRD 最低值。`ebgpMultihop` 只设置 TTL；connect-retry 影响重新连接，而非故障检测。
 
@@ -116,7 +116,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**C) 备份 TLSRoute，并在升级 Cilium 前安装仍包含 `v1alpha2` 的 experimental channel v1.6.1 TLSRoute CRD
+   **答案**：C) 备份 TLSRoute，并在升级 Cilium 前安装仍包含 `v1alpha2` 的 experimental channel v1.6.1 TLSRoute CRD
 
    安装 standard channel v1.6 TLSRoute CRD 后，已存储的 `v1alpha2` 对象将无法读取，因此看起来会消失。
 
@@ -131,7 +131,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**D) 10 到 20 秒
+   **答案**：D) 10 到 20 秒
 
    故障切换时间介于 `leaseDuration - leaseRenewDeadline` 和 `leaseDuration + leaseRenewDeadline` 之间。调成 3s/1s/200ms 可缩短到 2 到 4 秒，但会增加 API QPS，因此应提高客户端速率限制。
 
@@ -146,7 +146,7 @@
     <details>
     <summary>显示答案</summary>
 
-    **答案：**A) 被丢弃
+    **答案**：A) 被丢弃
 
     在 1.20.2 和 1.21.0-pre.3 中，Egress Gateway 都没有基于健康状况的故障切换或回退机制。如果没有匹配的网关，发往目标 CIDR 的流量会被丢弃。
 

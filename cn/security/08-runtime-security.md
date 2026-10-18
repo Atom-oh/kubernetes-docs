@@ -3,7 +3,7 @@
 > **最后更新**：October 16, 2026
 > **验证基线**：Falco 0.45.0 / chart 9.2.0、Falcosidekick 2.35.0 / chart 0.14.0、Tetragon 1.7.1。请验证对实际内核、操作系统和节点类型的支持情况。
 
-运行时安全会观察进程、文件和网络活动，并通过经过测试的策略限制特定操作。**告警不等于已遭入侵的证明；检测和预防需要分别测试。**本指南使用本地 CLI、schema、Helm 和合成事件进行了检查。未使用真实集群、内核 BPF 程序或通知渠道。
+运行时安全会观察进程、文件和网络活动，并通过经过测试的策略限制特定操作。**告警不等于已遭入侵的证明；检测和预防需要分别测试**。本指南使用本地 CLI、schema、Helm 和合成事件进行了检查。未使用真实集群、内核 BPF 程序或通知渠道。
 
 <span id="container-runtime-threats"></span>
 <span id="detection-technologies"></span>

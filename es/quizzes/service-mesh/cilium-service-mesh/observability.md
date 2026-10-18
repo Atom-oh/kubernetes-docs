@@ -1,209 +1,195 @@
 # Cuestionario de observabilidad de Cilium Service Mesh
 
-Este cuestionario evalúa tu comprensión de Hubble, la recopilación de métricas, los mapas de servicios, el monitoreo de Golden Signals y la integración con OpenTelemetry.
+Revisado con Cilium 1.20.3 y Hubble CLI 1.20.2. Consulta la [guía de observabilidad](../../../service-mesh/cilium-service-mesh/04-observability.md) para ver los comandos probados, las definiciones de métricas y sus limitaciones.
 
-## Preguntas del cuestionario
+### 1. ¿Cuál no es un componente principal de Hubble?
 
-### 1. ¿Cuál NO es un componente principal de Hubble?
-
-A. Hubble Observer
-B. Hubble Relay
-C. Hubble Router
-D. Hubble UI
+- **A.** Hubble Observer
+- **B.** Hubble Relay
+- **C.** Hubble Router
+- **D.** Hubble UI
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: C. Hubble Router**
 
-**Explicación:**
-Los componentes principales de Hubble son Hubble Observer (integrado en Cilium Agent), Hubble Relay (agregación de flujos en todo el clúster), Hubble UI (panel de visualización) y Hubble CLI (interfaz de línea de comandos). Hubble Router no es un componente existente.
+Observer, Relay, UI y CLI son los componentes pertinentes de Hubble. Observer y el procesamiento de métricas están integrados en Cilium; Relay agrega servidores conectados. Hubble Router no es un componente con nombre en esta arquitectura.
 
 </details>
 
-### 2. ¿Qué comando filtra y observa únicamente tráfico HTTP en Hubble CLI?
+### 2. ¿Qué comando de Hubble CLI filtra las observaciones existentes para mostrar solo el tráfico HTTP?
 
-A. hubble observe --type http
-B. hubble observe --protocol http
-C. hubble observe --filter http
-D. hubble observe --layer http
+- **A.** `hubble observe --type http`
+- **B.** `hubble observe --protocol http`
+- **C.** `hubble observe --filter http`
+- **D.** `hubble observe --layer http`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. hubble observe --protocol http**
+**Respuesta: B. `hubble observe --protocol http`**
 
-**Explicación:**
-El comando `hubble observe --protocol http` filtra únicamente el tráfico del protocolo HTTP. Otros protocolos (tcp, dns, etc.) se pueden filtrar de la misma manera.
+Esto filtra observaciones HTTP existentes. No habilita la inspección L7 ni descifra TLS arbitrario. La ruta compatible de política o proxy L7 y el tráfico deben proporcionar las observaciones de antemano.
 
 </details>
 
-### 3. ¿Qué configuración debe habilitarse en values.yaml para recopilar métricas de Hubble en Prometheus?
+### 3. ¿Qué ajuste se debe habilitar en values.yaml para recopilar métricas de Hubble en Prometheus?
 
-A. hubble.prometheus.enabled: true
-B. hubble.metrics.enabled
-C. hubble.export.prometheus: true
-D. prometheus.hubble: true
+- **A.** hubble.prometheus.enabled: true
+- **B.** hubble.metrics.enabled
+- **C.** hubble.export.prometheus: true
+- **D.** prometheus.hubble: true
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B. hubble.metrics.enabled**
 
-**Explicación:**
-Para habilitar las métricas de Hubble, especifica los tipos de métricas que se recopilarán (dns, drop, tcp, flow, http, etc.) como una lista en hubble.metrics.enabled. Además, configurar serviceMonitor.enabled: true permite que Prometheus Operator realice el scraping automáticamente.
+`hubble.metrics.enabled` selecciona los manejadores, como `dns` y `httpV2`. Para recopilar los datos en Prometheus también se necesitan el descubrimiento y el scraping operativos, las CRD y el controlador de Prometheus Operator si se usa ServiceMonitor, y selectores coincidentes. Crear el ServiceMonitor no demuestra que Prometheus esté recopilando el destino.
 
 </details>
 
-### 4. ¿Cuál NO es una de las cuatro Golden Signals para el monitoreo?
+### 4. ¿Cuál no es una de las cuatro señales doradas de monitorización?
 
-A. Latency
-B. Traffic
-C. Availability
-D. Saturation
+- **A.** Latencia
+- **B.** Tráfico
+- **C.** Disponibilidad
+- **D.** Saturación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Availability**
+**Respuesta: C. Disponibilidad**
 
-**Explicación:**
-Las cuatro Golden Signals definidas por Google SRE son Latency, Traffic, Errors y Saturation. Availability no está incluida en las Golden Signals y se mide indirectamente mediante la métrica Errors.
+Las cuatro señales se llaman latencia, tráfico, errores y saturación. La disponibilidad aún requiere una SLI explícita; no se puede inferir por completo a partir de un flujo parcial de observaciones HTTP 5xx.
 
 </details>
 
-### 5. ¿Cuál es el comando correcto para observar tráfico denegado por políticas en Hubble?
+### 5. ¿Qué comando selecciona primero los flujos descartados para investigar la causa?
 
-A. hubble observe --denied
-B. hubble observe --verdict DROPPED
-C. hubble observe --blocked
-D. hubble observe --policy-denied
+- **A.** `hubble observe --denied`
+- **B.** `hubble observe --verdict DROPPED`
+- **C.** `hubble observe --blocked`
+- **D.** `hubble observe --policy-denied`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. hubble observe --verdict DROPPED**
+**Respuesta: B. `hubble observe --verdict DROPPED`**
 
-**Explicación:**
-La opción `--verdict DROPPED` filtra el tráfico denegado por Network Policies. Por el contrario, `--verdict FORWARDED` muestra el tráfico permitido.
+`DROPPED` incluye varias causas. Agrega `--drop-reason-desc POLICY_DENIED` para los descartes atribuidos a políticas e investiga por separado los fallos L7 y de la aplicación. `FORWARDED` es una observación del plano de datos, no una prueba de que la operación de negocio haya tenido éxito.
 
 </details>
 
-### 6. ¿Qué función se utiliza en consultas PromQL para medir la latencia HTTP P99?
+### 6. ¿Qué función se usa en consultas PromQL para calcular la latencia HTTP P99?
 
-A. avg()
-B. histogram_quantile()
-C. rate()
-D. sum()
+- **A.** `avg()`
+- **B.** `histogram_quantile()`
+- **C.** `rate()`
+- **D.** `sum()`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. histogram_quantile()**
+**Respuesta: B. `histogram_quantile()`**
 
-**Explicación:**
-Las métricas de percentiles como la latencia P99 usan la función histogram_quantile(). Ejemplo: `histogram_quantile(0.99, rate(hubble_http_request_duration_seconds_bucket[5m]))`. Aquí, 0.99 representa el percentil 99.
+`histogram_quantile` calcula una estimación a partir del histograma. Para agregar una carga de trabajo, suma tasas de buckets compatibles y conserva `le` y las etiquetas elegidas de clúster, espacio de nombres y carga de trabajo; después, calcula el cuantil. Promediar percentiles por instancia no es equivalente.
 
 </details>
 
-### 7. ¿Cuál NO es una función principal proporcionada por Hubble UI?
+### 7. ¿Cuál no es una función principal de Hubble UI?
 
-A. Service Map
-B. Flow Timeline
-C. Auto Scaling
-D. Namespace Filter
+- **A.** Mapa de servicios
+- **B.** Cronología de flujos
+- **C.** Escalado automático
+- **D.** Filtro por espacio de nombres
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Auto Scaling**
+**Respuesta: C. Escalado automático**
 
-**Explicación:**
-Hubble UI proporciona mapas de servicios, Flow Timeline, Namespace Filter, filtro de veredictos y detalles de L7 para flujos individuales. Auto Scaling es una función de gestión de cargas de trabajo, no una función de observabilidad.
+La interfaz muestra relaciones observadas y detalles de flujos, con filtros; no escala cargas de trabajo automáticamente. Las rutas inactivas o no admitidas y los metadatos ausentes pueden dejar vacíos en el mapa.
 
 </details>
 
-### 8. ¿Cuál es la forma correcta de una consulta PromQL para calcular la tasa de errores HTTP en Cilium?
+### 8. ¿Cómo se calcula el porcentaje observado de respuestas HTTP 5xx con httpV2?
 
-A. hubble_http_errors_total / hubble_http_requests_total
-B. sum(rate(hubble_http_responses_total{status=~"5.."}[5m])) / sum(rate(hubble_http_responses_total[5m]))
-C. count(hubble_http_errors) / count(hubble_http_requests)
-D. hubble_http_error_rate
+- **A.** Dividir los contadores de errores y solicitudes acumulados desde el inicio, sin usar tasas
+- **B.** Dividir las tasas de respuesta 5xx coincidentes entre las tasas totales observadas, gestionando los datos ausentes o cero con el mismo ámbito
+- **C.** Contar las series de métricas
+- **D.** Leer un indicador `hubble_http_error_rate` que se proporciona automáticamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. sum(rate(hubble_http_responses_total{status=~"5.."}[5m])) / sum(rate(hubble_http_responses_total[5m]))**
+**Respuesta: B. Dividir las tasas de respuesta 5xx coincidentes entre las tasas totales observadas, gestionando los datos ausentes o cero con el mismo ámbito**
 
-**Explicación:**
-La tasa de errores HTTP se calcula dividiendo el número de respuestas 5xx entre el número total de respuestas. La función rate() calcula tasas por segundo y el filtro de etiqueta status (status=~"5..") selecciona únicamente errores del servidor.
+Con httpV2, `hubble_http_requests_total` incluye el estado y se actualiza a partir de eventos de respuesta. Usa la misma agrupación y límite de observación en el numerador y el denominador. Sustituye un numerador 5xx ausente solo cuando existe un total; conserva el estado NoData si faltan observaciones y excluye los totales de cero al calcular porcentajes.
 
 </details>
 
-### 9. ¿Qué opción se utiliza para observar únicamente tráfico destinado a un servicio específico en Hubble?
+### 9. ¿Qué opción sirve para observar solo el tráfico destinado a un servicio específico de Hubble?
 
-A. --destination-service
-B. --to-service
-C. --target-service
-D. --svc
+- **A.** `--destination-service`
+- **B.** `--to-service`
+- **C.** `--target-service`
+- **D.** `--svc`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. --to-service**
+**Respuesta: B. `--to-service`**
 
-**Explicación:**
-El comando `hubble observe --to-service <service-name>` filtra el tráfico destinado a un servicio específico. Por el contrario, `--from-service` filtra el tráfico que se origina en un servicio específico.
+Los filtros de servicio usan prefijos de nombre con espacio de nombres y metadatos derivados del Service o ClusterIP. En general, `--from-service` no selecciona las llamadas hechas por los Pods detrás de ese Service; usa filtros de carga de trabajo, Pod o etiqueta para los clientes. Si se omite el espacio de nombres, se usa `default`.
 
 </details>
 
-### 10. ¿Qué métrica monitorea la utilización de la tabla de seguimiento de conexiones en Cilium?
+### 10. ¿Qué métrica documentada muestra la presión de los mapas BPF instrumentados?
 
-A. cilium_ct_usage
-B. cilium_datapath_conntrack_active
-C. cilium_connections_total
-D. cilium_ct_table_size
+- **A.** `cilium_ct_usage`
+- **B.** `cilium_bpf_map_pressure`
+- **C.** `cilium_connections_total`
+- **D.** `cilium_datapath_conntrack_active` / `cilium_datapath_conntrack_max`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. cilium_datapath_conntrack_active**
+**Respuesta: B. `cilium_bpf_map_pressure`**
 
-**Explicación:**
-La métrica cilium_datapath_conntrack_active representa el número actual de conexiones activas. Se puede usar con cilium_datapath_conntrack_max para calcular la utilización de la tabla de seguimiento de conexiones.
+`cilium_bpf_map_pressure` informa la presión de los mapas BPF instrumentados y hay umbrales de informe para algunos mapas. No demuestra que estén representados todos los mapas de conntrack (CT). La métrica documentada de entradas de recolección de basura de CT es una instantánea del proceso de recolección, no el antiguo par inventado de métricas de valor activo/máximo.
 
 </details>
 
 ### 11. ¿Qué opción se utiliza para recibir la salida de Hubble en formato JSON?
 
-A. --format json
-B. -o json
-C. --json
-D. --output-type json
+- **A.** `--format json`
+- **B.** `-o json`
+- **C.** `--json`
+- **D.** `--output-type json`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. -o json**
+**Respuesta: B. `-o json`**
 
-**Explicación:**
-El comando `hubble observe -o json` genera la salida en formato JSON. Esto es útil para canalizarla a herramientas como jq y realizar procesamiento adicional.
+`json` es un alias de `jsonpb`. JSON de Protocol Buffers codifica como cadenas los valores de 64 bits, como `latency_ns`; conviértelos a números antes de hacer comparaciones numéricas con jq. También se admiten los formatos de presentación `dict`, `compact` y `table`.
 
 </details>
 
-### 12. ¿Qué protocolo se utiliza al integrar OpenTelemetry Collector con Hubble?
+### 12. ¿Qué ruta admitida permite recopilar registros de flujo de Hubble con OpenTelemetry Collector?
 
-A. HTTP REST API
-B. OTLP (OpenTelemetry Protocol)
-C. Prometheus Remote Write
-D. StatsD
+- **A.** Habilitar `hubble.export.opentelemetry` en el chart
+- **B.** Usar la exportación de archivos de Hubble y un receptor filelog, y luego un exportador de registros admitido
+- **C.** Convertir automáticamente cada flujo en una traza distribuida
+- **D.** Usar el exportador jaeger eliminado para ingerir los registros de flujo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. OTLP (OpenTelemetry Protocol)**
+**Respuesta: B. Usar la exportación de archivos de Hubble y un receptor filelog, y luego un exportador de registros admitido**
 
-**Explicación:**
-Hubble puede exportar datos de flujo a OpenTelemetry Collector mediante OpenTelemetry Protocol (OTLP). Esto permite enrutar datos a varios backends como Jaeger, Prometheus, Loki, etc.
+Cilium 1.20.3 documenta la exportación de registros de flujo a archivos. Un receptor filelog puede recopilar esos archivos y enviar registros mediante un exportador admitido, como OTLP/HTTP a Loki. Las métricas y las trazas de aplicaciones tienen sus propias rutas de recopilación; los antiguos valores de Hubble opentelemetry y los exportadores jaeger/loki eliminados de Collector no los sustituyen.
 
 </details>

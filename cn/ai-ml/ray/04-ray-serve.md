@@ -78,7 +78,7 @@ finally:
 2. Ray 放置 actor/bundle；启用 Ray 自动扩缩容后，KubeRay 可以调整 worker Pod 容量。
 3. Kubernetes 放置 Pod，并在需要时由 Karpenter 等供应器提供节点容量。
 
-**一个待处理的 actor 不会自动变成一个 Pending Pod 或一个 EC2 节点。**现有 Ray Pod 可能有可用容量，也可能因组限制、放置策略和配额而无法继续推进。请检查每一层的需求和就绪状态。
+**一个待处理的 actor 不会自动变成一个 Pending Pod 或一个 EC2 节点**。现有 Ray Pod 可能有可用容量，也可能因组限制、放置策略和配额而无法继续推进。请检查每一层的需求和就绪状态。
 
 ![HTTP/Handle 请求会到达 Serve proxy 和 deployment 副本。Actor 目标、副本 Ray Pod 容量和 Kubernetes 节点供应属于不同层级，actor/Pod/节点之间不存在一对一映射。](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
 

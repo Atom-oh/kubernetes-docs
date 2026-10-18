@@ -412,11 +412,11 @@ tail -f /var/log/amazon/ssm/amazon-ssm-agent.log
 
 ### 准备工作清单
 
-- **冗余连接：**为 Direct Connect 配置冗余，或保留 Site-to-Site VPN 作为备份。
-- **检测中断：**启用 EKS 控制平面 Controller Manager 日志，并为包含 `status="NodeNotReady"` 的 `Recording status change event message for node` 消息创建 CloudWatch 指标筛选条件和告警。当 TGW `BytesIn`/`BytesOut` 或 VGW `TunnelDataIn`/`TunnelDataOut` 低于正常水平时触发告警。CloudWatch Network Monitor 可显示丢包和延迟。
-- **SSM agent 版本：**使用 3.3.808.0 或更高版本，使重试间隔上限为 30 分钟。
-- **区域标签：**设置每个数据中心的 `topology.kubernetes.io/zone`。
-- **调整驱逐时间：**对于不易迁移的应用，请增大 `tolerationSeconds`。值越大，实际发生故障的节点上的 Pod 被迁移的时间也会越晚。
+- **冗余连接**：为 Direct Connect 配置冗余，或保留 Site-to-Site VPN 作为备份。
+- **检测中断**：启用 EKS 控制平面 Controller Manager 日志，并为包含 `status="NodeNotReady"` 的 `Recording status change event message for node` 消息创建 CloudWatch 指标筛选条件和告警。当 TGW `BytesIn`/`BytesOut` 或 VGW `TunnelDataIn`/`TunnelDataOut` 低于正常水平时触发告警。CloudWatch Network Monitor 可显示丢包和延迟。
+- **SSM agent 版本**：使用 3.3.808.0 或更高版本，使重试间隔上限为 30 分钟。
+- **区域标签**：设置每个数据中心的 `topology.kubernetes.io/zone`。
+- **调整驱逐时间**：对于不易迁移的应用，请增大 `tolerationSeconds`。值越大，实际发生故障的节点上的 Pod 被迁移的时间也会越晚。
 
 ```yaml
 # Fragment under the Deployment's spec.template.spec
@@ -427,8 +427,8 @@ tolerations:
     tolerationSeconds: 1800
 ```
 
-- **凭证提供程序：**如果中断频繁且快速重新连接很重要，可考虑使用更长 `durationSeconds` 的 IAM Roles Anywhere。集群内应只使用一个提供程序。
-- **辅助可观测性路径：**配置 ADOT collector 将数据发送到多个后端，以便区域服务不可达时仍能保持可见性。
+- **凭证提供程序**：如果中断频繁且快速重新连接很重要，可考虑使用更长 `durationSeconds` 的 IAM Roles Anywhere。集群内应只使用一个提供程序。
+- **辅助可观测性路径**：配置 ADOT collector 将数据发送到多个后端，以便区域服务不可达时仍能保持可见性。
 
 参考资料：
 - [网络中断期间的主机凭证](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)

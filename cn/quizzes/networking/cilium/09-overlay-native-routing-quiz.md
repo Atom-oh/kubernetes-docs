@@ -13,7 +13,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**B) 发送端点的源安全身份
+   **答案**：B) 发送端点的源安全身份
 
    VNI 携带源身份（`world-ipv4`/`world-ipv6` 会以 `world` 发送，`host` 会改写为 `remote-node`）。接收方也有 ipcache，因此 VNI 是一种优化手段，并非唯一可信来源。`cilium_tunnel_map` 在 1.18 中已从数据路径移除（Agent 只会取消固定残留的 map），其 Go 包在 1.19 中也已删除；隧道端点信息存放在 ipcache 值中。
 
@@ -28,7 +28,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**D) 二者相同：身份都在 VNI 中；Geneve 选项只用于 DSR 服务地址和端口
+   **答案**：D) 二者相同：身份都在 VNI 中；Geneve 选项只用于 DSR 服务地址和端口
 
    Cilium 插入的唯一 Geneve 选项（class `0x014B`，type `0x81`）用于 DSR。外层源端口范围（`tunnelSourcePortRange`）只影响熵，不参与身份传递。
 
@@ -43,7 +43,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**C) 流量型 `cilium_vxlan`/`cilium_geneve` 设备后面的内核 vxlan/geneve 驱动；BPF 设置隧道键并重定向到该设备后，由驱动封装
+   **答案**：C) 流量型 `cilium_vxlan`/`cilium_geneve` 设备后面的内核 vxlan/geneve 驱动；BPF 设置隧道键并重定向到该设备后，由驱动封装
 
    BPF 调用 `bpf_skb_set_tunnel_key` 并重定向到隧道设备的 ifindex；封装由内核驱动完成。在接收端，内核负责解封装，然后 `cil_from_overlay` 读取隧道键。
 
@@ -58,7 +58,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**A) Agent 会因报文必须经过隧道设备而以致命错误退出
+   **答案**：A) Agent 会因报文必须经过隧道设备而以致命错误退出
 
    检查逻辑位于 `daemon_main.go` 中的 `TunnelingEnabled() && EnableAutoDirectRouting`。不存在按子网回退的行为。v1.21.0-pre.3 中的消息措辞为“requires native routing mode”，但仍会导致致命错误。
 
@@ -75,7 +75,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**D) 1355
+   **答案**：D) 1355
 
    路由 MTU 等于基础 MTU 减去 WireGuard 95 字节和隧道 50 字节。单独使用 VXLAN 时为 1450；原生路由搭配 WireGuard 时为 1405；VXLAN 搭配 IPsec（50 + 77）时为 1373。
 
@@ -90,7 +90,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**B) 设置 `tunnelProtocol: geneve` 和 `loadBalancer.dsrDispatch: geneve`
+   **答案**：B) 设置 `tunnelProtocol: geneve` 和 `loadBalancer.dsrDispatch: geneve`
 
    Agent 会拒绝使用 VXLAN 隧道时的 `dsr`/`hybrid`，隧道模式下的 DSR 要求 Geneve dispatch，而 Geneve dispatch 又要求使用 Geneve 隧道协议。
 
@@ -105,7 +105,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**C) Agent 会回退到 veth 并记录警告；显式设置 `netkit` 则会直接失败
+   **答案**：C) Agent 会回退到 veth 并记录警告；显式设置 `netkit` 则会直接失败
 
    `auto`（1.20 新增）会进行探测，并记录“datapath autodiscovery failed, reverting from netkit to veth”后回退。Netkit 还需要 BPF masquerade、KPR，并且不能使用旧式主机路由。
 
@@ -120,7 +120,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**A) 记录 BPF 主机路由需要 BPF masquerade，然后静默回退到旧式主机路由
+   **答案**：A) 记录 BPF 主机路由需要 BPF masquerade，然后静默回退到旧式主机路由
 
    主机路由属于尽力启用的功能。明确要求使用主机路由的功能（netkit、Pod 的 BBR、BIG TCP）如果无法启用，则会直接失败。可通过 `cilium-dbg status` 中 `Routing:` 行的 `Host:` 字段进行验证（`Host: Legacy`）。
 
@@ -135,7 +135,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：**D) 10 Mbit/s
+   **答案**：D) 10 Mbit/s
 
    该值是以 bit 为单位的 Kubernetes quantity。每个 Pod 的出站流量使用 EDT 和 FQ 强制执行；BBR 是可选项。使用 IPsec 时，带宽管理器会被静默禁用。
 
@@ -150,7 +150,7 @@
     <details>
     <summary>显示答案</summary>
 
-    **答案：**C) 原生路由模式下不进行 masquerade，隧道模式下会进行 masquerade（除非 ipcache 条目中有 `skip_tunnel`）
+    **答案**：C) 原生路由模式下不进行 masquerade，隧道模式下会进行 masquerade（除非 ipcache 条目中有 `skip_tunnel`）
 
     这是 `bpf/lib/nat.h` 中决策顺序的第 5 步。设置 `enable-remote-node-masquerade=true`（1.19+，通过 `extraConfig` 配置）后，两种模式都会执行 masquerade。
 

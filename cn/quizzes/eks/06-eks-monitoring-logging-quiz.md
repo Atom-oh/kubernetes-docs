@@ -138,7 +138,7 @@ output "grafana_workspace_id" {
 
 这段配置定义了资源，但没有定义可正常运行的收集或登录路径。请为角色配置针对实际工作区 ARN 的查询权限，分配用户/组，添加数据源，并使用返回的 ID/端点连接收集器。CUSTOMER_MANAGED 明确表示 IAM 管理由所有者负责；旧的 SERVICE_MANAGED/data_sources 片段不能证明通过 API 创建的工作区已拥有这些角色和连接。请另行审核加密、保留期、访问权限和成本要求。本次审计没有执行 Terraform plan/apply、登录或实时遥测查询。
 
-**其他选项为何不正确：**A 低估了 CloudWatch 当前的功能；B 混淆了可视化和收集；D 将安装误当作覆盖范围保证。当脚本的所有权、错误和范围明确时，自定义脚本仍可用于有界自动化和检查。
+**其他选项为何不正确**：A 低估了 CloudWatch 当前的功能；B 混淆了可视化和收集；D 将安装误当作覆盖范围保证。当脚本的所有权、错误和范围明确时，自定义脚本仍可用于有界自动化和检查。
 
 </details>
 
@@ -392,7 +392,7 @@ output "opensearch_domain_arn" {
 
 此数据源不会配置网络、IAM/域策略、FGAC 或数据传送。请将管理与数据摄取分开，不要在代码/状态中存放主密码，并审核任何资源/地址迁移。查询和访问测试需要真实环境；Terraform 验证不会执行这些检查。
 
-**其他选项为何不正确：**手动检查文件有助于诊断，但不是完整的集中式流水线。文件能否保留取决于容器/节点生命周期和卷类型。重复读取器可能导致数据/成本重复，而且仍可能失败；必须测量缓冲和重试的容量，并进行故障测试。
+**其他选项为何不正确**：手动检查文件有助于诊断，但不是完整的集中式流水线。文件能否保留取决于容器/节点生命周期和卷类型。重复读取器可能导致数据/成本重复，而且仍可能失败；必须测量缓冲和重试的容量，并进行故障测试。
 
 参考资料：[ADOT 组件](https://github.com/aws-observability/aws-otel-collector/tree/v0.50.0)、[容器解析器](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.158.0/pkg/stanza/docs/operators/container.md)、[CloudWatch Logs exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awscloudwatchlogsexporter)、[Fluentd OpenSearch 插件](https://github.com/fluent/fluent-plugin-opensearch)。
 
@@ -1193,7 +1193,7 @@ Logs 区域服务需要使用密钥的权限。以下只是供密钥所有者合
 
 **答案：B. 结合资源使用情况、账单分摊和经所有者审核的浪费候选项**
 
-**说明：**将 CPU、内存、存储、请求、限制和工作负载趋势与分摊成本进行比较。与资源所有者一起调查异常和预算偏差。这些信号可以帮助发现优化机会，但不能保证节省成本，也不能证明可以删除某项资源。
+**说明**：将 CPU、内存、存储、请求、限制和工作负载趋势与分摊成本进行比较。与资源所有者一起调查异常和预算偏差。这些信号可以帮助发现优化机会，但不能保证节省成本，也不能证明可以删除某项资源。
 
 **资源效率和成本分摊**
 

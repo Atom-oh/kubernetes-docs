@@ -54,7 +54,7 @@
 
    - A) 始终同时包含 userIdentifier 和 groupIdentifier
    - B) 根据预期的配置文件，恰好包含一个 userIdentifier 或 groupIdentifier
-   - C) IAM 密钥
+   - C) IAM 秘密访问密钥
    - D) 用任意 IAM 角色 ARN 代替组配置文件 ID
 
 <details>

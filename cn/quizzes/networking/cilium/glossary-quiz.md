@@ -20,7 +20,7 @@
 
 **答案：B) 扩展型 Berkeley 数据包过滤器**
 
-**说明：**eBPF 扩展了经典 BPF，可用于网络、跟踪和其他内核钩子。验证器会检查程序属性；但这并不意味着内核或验证器能够免受实现缺陷的影响。
+**说明**：eBPF 扩展了经典 BPF，可用于网络、跟踪和其他内核钩子。验证器会检查程序属性；但这并不意味着内核或验证器能够免受实现缺陷的影响。
 
 </details>
 
@@ -37,7 +37,7 @@
 
 **答案：C) Endpoint**
 
-**说明：**Cilium Endpoint 通常对应一个受管理的 Pod。其 Endpoint ID 在本地 Agent 范围内有效；安全身份可以共享。在所属 Agent 中使用 `cilium-dbg endpoint list`。
+**说明**：Cilium Endpoint 通常对应一个受管理的 Pod。其 Endpoint ID 在本地 Agent 范围内有效；安全身份可以共享。在所属 Agent 中使用 `cilium-dbg endpoint list`。
 
 </details>
 
@@ -54,7 +54,7 @@
 
 **答案：B) 网络驱动程序级别的数据包处理**
 
-**说明：**原生 XDP 在支持该功能的驱动程序的接收路径上执行。PASS 会继续进入协议栈；DROP、TX 和 REDIRECT 则会执行其他操作。通用模式和卸载模式有所不同。Cilium 的 Service 加速有条件限制，并不保证适用于所有情况的数据包速率，也不保证内置 DDoS 防护。
+**说明**：原生 XDP 在支持该功能的驱动程序的接收路径上执行。PASS 会继续进入协议栈；DROP、TX 和 REDIRECT 则会执行其他操作。通用模式和卸载模式有所不同。Cilium 的 Service 加速有条件限制，并不保证适用于所有情况的数据包速率，也不保证内置 DDoS 防护。
 
 </details>
 
@@ -71,7 +71,7 @@
 
 **答案：C) Hubble**
 
-**说明：**Hubble 通过 CLI/UI 和已配置的集成提供流记录、判定结果及受支持的协议指标。Relay 并非持久化存储；外部告警和数据保留需要进行配置，而且事件可能丢失。
+**说明**：Hubble 通过 CLI/UI 和已配置的集成提供流记录、判定结果及受支持的协议指标。Relay 并非持久化存储；外部告警和数据保留需要进行配置，而且事件可能丢失。
 
 </details>
 
@@ -88,7 +88,7 @@
 
 **答案：B) 虚拟可扩展 LAN——L2 覆盖网络**
 
-**说明：**VXLAN 使用 UDP 和 24 位 VNI，在 IP 底层网络之上承载 L2 覆盖网络。该字段有约 1600 万个可能值；这并非 Cilium 对容量的承诺。Cilium 还会在覆盖网络元数据中承载身份信息。
+**说明**：VXLAN 使用 UDP 和 24 位 VNI，在 IP 底层网络之上承载 L2 覆盖网络。该字段有约 1600 万个可能值；这并非 Cilium 对容量的承诺。Cilium 还会在覆盖网络元数据中承载身份信息。
 
 </details>
 
@@ -105,7 +105,7 @@
 
 **答案：B) 在 eBPF 程序之间共享和存储数据**
 
-**说明：**BPF Maps 用于在程序和用户空间之间共享由内核管理的状态或事件。Hash/array map 使用键，而 ring buffer 和其他一些 map 类型不支持常规的查找/更新/删除操作。
+**说明**：BPF Maps 用于在程序和用户空间之间共享由内核管理的状态或事件。Hash/array map 使用键，而 ring buffer 和其他一些 map 类型不支持常规的查找/更新/删除操作。
 
 </details>
 
@@ -122,7 +122,7 @@
 
 **答案：C) Identity**
 
-**说明：**与安全相关的标签决定身份；并非所有元数据标签都会参与其中。在其分配范围内，多个 Endpoint 可以共享一个 Identity。数字 Endpoint ID 仅在 Agent 本地有效，是另一种标识符。
+**说明**：与安全相关的标签决定身份；并非所有元数据标签都会参与其中。在其分配范围内，多个 Endpoint 可以共享一个 Identity。数字 Endpoint ID 仅在 Agent 本地有效，是另一种标识符。
 
 </details>
 
@@ -139,7 +139,7 @@
 
 **答案：A) IP 地址管理——分配和管理 IP 地址**
 
-**说明：**IPAM 会分配和跟踪地址。Cilium 支持特定模式下的所有权管理，例如 cluster-pool、multi-pool、Kubernetes host-scope 和 ENI。GKE 是一个平台，并非通用的独立 ipam.mode 值；请检查托管平台集成。
+**说明**：IPAM 会分配和跟踪地址。Cilium 支持特定模式下的所有权管理，例如 cluster-pool、multi-pool、Kubernetes host-scope 和 ENI。GKE 是一个平台，并非通用的独立 ipam.mode 值；请检查托管平台集成。
 
 </details>
 
@@ -156,7 +156,7 @@
 
 **答案：B) 现代 VPN 协议——节点间流量加密**
 
-**说明：**Cilium WireGuard 可保护受支持的跨节点流量。同节点 Pod 流量不会经过节点隧道，外部流量和节点流量则有各自的适用条件。它并不总是比 IPsec 更快；请在工作负载和保护设置相同的情况下进行比较。
+**说明**：Cilium WireGuard 可保护受支持的跨节点流量。同节点 Pod 流量不会经过节点隧道，外部流量和节点流量则有各自的适用条件。它并不总是比 IPsec 更快；请在工作负载和保护设置相同的情况下进行比较。
 
 </details>
 
@@ -173,7 +173,7 @@
 
 **答案：A) 容器网络接口——容器网络插件的标准接口**
 
-**说明：**CNI 规定了运行时与网络插件之间的接口。在当前版本的 Kubernetes 中，kubelet 使用 CRI，由容器运行时负责管理 CNI 调用。Kubernetes 1.24 移除了 kubelet 直接管理 CNI 的相关标志。
+**说明**：CNI 规定了运行时与网络插件之间的接口。在当前版本的 Kubernetes 中，kubelet 使用 CRI，由容器运行时负责管理 CNI 调用。Kubernetes 1.24 移除了 kubelet 直接管理 CNI 的相关标志。
 
 </details>
 
@@ -185,9 +185,9 @@
 
 <summary>显示答案</summary>
 
-**答案：**Envoy
+**答案**：Envoy
 
-**说明：**Envoy 提供已配置的 HTTP/gRPC 代理功能。DNS 策略使用 Cilium 的 DNS 代理，Kafka L7 规则已被移除。代理的部署和生命周期取决于安装配置，而不是每条任意的 L7 规则都会自动部署一个代理。
+**说明**：Envoy 提供已配置的 HTTP/gRPC 代理功能。DNS 策略使用 Cilium 的 DNS 代理，Kafka L7 规则已被移除。代理的部署和生命周期取决于安装配置，而不是每条任意的 L7 规则都会自动部署一个代理。
 
 </details>
 
@@ -197,9 +197,9 @@
 
 <summary>显示答案</summary>
 
-**答案：**Cilium Agent
+**答案**：Cilium Agent
 
-**说明：**对于符合条件且由 Cilium 管理的节点，Agent 会管理节点本地的 Endpoint、BPF 程序以及策略/数据路径状态。根据所用模式，IPAM 职责由 Agent、Operator 和/或平台共同承担。
+**说明**：对于符合条件且由 Cilium 管理的节点，Agent 会管理节点本地的 Endpoint、BPF 程序以及策略/数据路径状态。根据所用模式，IPAM 职责由 Agent、Operator 和/或平台共同承担。
 
 </details>
 
@@ -209,9 +209,9 @@
 
 <summary>显示答案</summary>
 
-**答案：**L3（网络层）
+**答案**：L3（网络层）
 
-**说明：**L3（网络层）是 OSI 模型的第 3 层，负责使用 IP 地址进行逻辑寻址和数据包路由。IP（互联网协议）和 ICMP（互联网控制消息协议）都在此层运行。Cilium L3 策略可以根据 IP 地址和 CIDR 块筛选流量。L2（数据链路层）使用 MAC 地址，L4（传输层）使用端口号。
+**说明**：L3（网络层）是 OSI 模型的第 3 层，负责使用 IP 地址进行逻辑寻址和数据包路由。IP（互联网协议）和 ICMP（互联网控制消息协议）都在此层运行。Cilium L3 策略可以根据 IP 地址和 CIDR 块筛选流量。L2（数据链路层）使用 MAC 地址，L4（传输层）使用端口号。
 
 </details>
 
@@ -221,9 +221,9 @@
 
 <summary>显示答案</summary>
 
-**答案：**Service
+**答案**：Service
 
-**说明：**Service 提供逻辑后端访问抽象。普通 ClusterIP Service 有虚拟 IP，headless Service 则没有；ExternalName 使用 DNS 别名。没有 selector 的 Service 可以表示由手动管理的端点或外部端点。
+**说明**：Service 提供逻辑后端访问抽象。普通 ClusterIP Service 有虚拟 IP，headless Service 则没有；ExternalName 使用 DNS 别名。没有 selector 的 Service 可以表示由手动管理的端点或外部端点。
 
 </details>
 
@@ -233,9 +233,9 @@
 
 <summary>显示答案</summary>
 
-**答案：**SNAT（源网络地址转换）
+**答案**：SNAT（源网络地址转换）
 
-**说明：**SNAT 会修改源地址。伪装会选择与出站路径/接口关联的地址；排除规则和指定的网关 IP 也会产生影响。并非所有出站 Pod 数据包都会被转换。DNAT 修改的是目标地址。
+**说明**：SNAT 会修改源地址。伪装会选择与出站路径/接口关联的地址；排除规则和指定的网关 IP 也会产生影响。并非所有出站 Pod 数据包都会被转换。DNAT 修改的是目标地址。
 
 </details>
 

@@ -499,7 +499,7 @@ Service 必须未设置 `loadBalancerClass`，或 class 为 `io.cilium/l2-announ
 
 检查方式：运行 `kubectl -n kube-system get lease | grep cilium-l2announce`、`cilium-dbg shell -- db/show l2-announce`、`cilium-dbg shell -- db/show devices`；也可从 LAN 上另一台主机运行 `arping`。
 
-### 5. Node IPAM
+## 5. Node IPAM
 
 Helm 设置 `nodeIPAM.enabled=true`（默认 false；operator 标志 `--enable-node-ipam`；设置后需重启 operator）。带 `loadBalancerClass: io.cilium/node`（或设置 `defaultLBServiceIPAM: nodeipam`）的 Service 会将节点地址写入 `.status.loadBalancer`：存在 ExternalIP 时使用它，否则使用 InternalIP，并遵循 `ipFamilies`。`Cluster` 策略发布所有节点；`Local` 仅发布有 EndpointSlice Pod 的节点。带有标签 `node.kubernetes.io/exclude-from-external-load-balancers` 或污点 `ToBeDeletedByClusterAutoscaler` 的节点会跳过；注解 `io.cilium.nodeipam/match-node-labels` 可限制节点范围。Cilium Ingress/Gateway Service 的 EndpointSlice 是合成的，因此 Node IPAM 不支持其 `Local` 策略。仅在 BGP 和 L2 均无法使用时采用，而且只使用私有节点地址：发布公共节点 IP 会创建 CloudFront-only 规则之外的公网入口。
 

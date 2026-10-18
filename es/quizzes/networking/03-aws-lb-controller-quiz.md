@@ -1,381 +1,215 @@
 # Cuestionario de AWS Load Balancer Controller
 
-Este cuestionario evalúa tu comprensión de la arquitectura de AWS Load Balancer Controller, la configuración de ALB/NLB y las operaciones.
+Basado en la guía de LBC v3.6.0 autoadministrado.
 
-## Preguntas del cuestionario
+## 1. ¿Qué administra AWS Load Balancer Controller?
 
-### 1. ¿Qué componente existente de Kubernetes reemplaza AWS Load Balancer Controller?
-
-A. kube-proxy
-B. in-tree AWS cloud provider
-C. CoreDNS
-D. CNI plugin
+- A. Todas las responsabilidades del proveedor de nube, incluido el ciclo de vida de los nodos
+- B. Recursos de balanceo de carga de AWS compatibles, reconciliados a partir de recursos de Kubernetes
+- C. El reenvío de paquetes de kube-proxy
+- D. Los registros de CoreDNS para todos los Pods
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. in-tree AWS cloud provider**
-
-**Explicación:**
-AWS Load Balancer Controller reemplaza la funcionalidad de load balancer del in-tree AWS cloud provider existente de Kubernetes:
-- Más funcionalidades (configuración avanzada de ALB, NLB)
-- Actualizaciones y correcciones de errores más rápidas
-- Mejor integración con servicios de AWS
-
-El in-tree provider solo admitía ELB Classic básico, mientras que AWS Load Balancer Controller admite todas las funcionalidades de ALB y NLB.
+B. LBC administra los ALB/NLB, grupos de destino, listeners y recursos relacionados compatibles. No reemplaza kube-proxy, el CNI, DNS ni todas las responsabilidades del controlador de nube. El comportamiento del proveedor AWS heredado y EKS Auto Mode son implementaciones distintas; no afirme que LBC implemente todas las funciones de cada producto ELB.
 
 </details>
 
-### 2. ¿Cuál es la diferencia correcta entre las anotaciones de target type `ip` e `instance` en ALB Ingress?
+## 2. ¿En qué se diferencian los destinos `ip` e `instance` de ALB?
 
-A. `ip` apunta directamente a la IP del Pod, `instance` enruta a través de NodePort
-B. `ip` enruta a través de NodePort, `instance` apunta directamente a la IP del Pod
-C. Ambas opciones se comportan de la misma manera
-D. `ip` admite solo IPv4, `instance` admite solo IPv6
+- A. `ip` registra las IP de los Pods; `instance` enruta a través de NodePorts del nodo
+- B. `ip` siempre enruta a través de NodePort
+- C. Son idénticos
+- D. `instance` solo funciona con IPv6
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A. `ip` apunta directamente a la IP del Pod, `instance` enruta a través de NodePort**
-
-**Explicación:**
-Comparación de Target Type:
-
-| Target Type | Comportamiento | Ventajas | Desventajas |
-|-------------|----------|------|------|
-| `ip` | Registra directamente la IP del Pod | Baja latencia, eficiente | Requiere VPC CNI |
-| `instance` | Enruta al NodePort del Node | Universal | Salto adicional |
-
-Al usar el tipo `ip`, se requiere AWS VPC CNI y las IP de los Pods se registran directamente en el Target Group.
+A. Los destinos IP requieren direcciones de Pod compatibles y enrutables en VPC, además del descubrimiento de endpoints/ENI. Amazon VPC CNI es la opción común en EKS, pero es posible usar una configuración compatible con otro CNI. Los destinos de instancia requieren un Service compatible con NodePort y una red de nodos adecuada. El direccionamiento directo no demuestra una ventaja de latencia concreta para todas las cargas de trabajo.
 
 </details>
 
-### 3. ¿Por qué se requiere IRSA (IAM Roles for Service Accounts) para AWS Load Balancer Controller?
+## 3. ¿Por qué necesita el controlador un rol IAM mediante IRSA o EKS Pod Identity?
 
-A. Para la comunicación de Pod a Pod
-B. Para que el controller llame a las API de AWS para crear/administrar recursos
-C. Para la autenticación del API server de Kubernetes
-D. Para la administración de certificados TLS
+- A. Para reemplazar las redes de los Pods
+- B. Para autenticar y autorizar sus llamadas a las API de AWS
+- C. Para reemplazar RBAC de Kubernetes
+- D. Para autenticar todas las solicitudes de backend
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Para que el controller llame a las API de AWS para crear/administrar recursos**
-
-**Explicación:**
-AWS Load Balancer Controller necesita llamar a las API de AWS para:
-- Crear y administrar ALB/NLB
-- Crear Target Groups y registrar targets
-- Configurar Listeners y reglas
-- Administrar security groups
-- Consultar certificados ACM
-
-Con IRSA vinculando IAM Role a Service Account:
-- Los Pods pueden autenticarse en la API de AWS
-- Se aplica el principio de mínimo privilegio
-- Se conceden permisos a Pods específicos, no a Nodes completos
+B. El controlador llama a las API de AWS para crear/administrar balanceadores de carga, grupos de destino, listeners y los grupos de seguridad pertinentes. IRSA y las configuraciones compatibles de Pod Identity son alternativas. Un rol solo concede los permisos de la política asociada; usar un rol no hace automáticamente que la política aplique el principio de privilegio mínimo. RBAC de Kubernetes y la autenticación de aplicaciones son aspectos independientes.
 
 </details>
 
-### 4. ¿Cómo se consolidan varios recursos de Ingress en un único ALB?
+## 4. ¿Cómo pueden varias Ingress compartir un mismo ALB?
 
-A. Desplegarlos en el mismo namespace
-B. Usar la anotación `alb.ingress.kubernetes.io/group.name`
-C. Usar el mismo IngressClass
-D. ALB siempre admite solo un Ingress
+- A. Basta con que estén en el mismo espacio de nombres
+- B. Usar el mismo `alb.ingress.kubernetes.io/group.name`
+- C. Todas las Ingress comparten siempre un ALB
+- D. Establecer el mismo nombre de Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Usar la anotación `alb.ingress.kubernetes.io/group.name`**
-
-**Explicación:**
-Funcionalidad de Ingress Group:
-
-```yaml
-# Ingress 1
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "1"
----
-# Ingress 2
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "2"
-```
-
-Beneficios:
-- Ahorro de costos de ALB (varios servicios comparten un ALB)
-- Administración centralizada
-- Control de prioridad de reglas mediante la especificación de orden
+B. IngressGroup comparte el ALB y el espacio de reglas. Los valores más bajos de `group.order` se evalúan primero; los empates se resuelven por espacio de nombres/nombre. Úselo solo dentro de un límite de confianza aplicado, porque un usuario no confiable que pueda unirse al grupo puede afectar el enrutamiento. Revise el comportamiento de combinación/exclusividad de anotaciones, los límites y los costos; no suponga que siempre se ahorra.
 
 </details>
 
-### 5. ¿Cuál es la anotación para implementar TLS termination en un Service NLB?
+## 5. ¿Qué anotación proporciona un certificado TLS de NLB?
 
-A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`
-B. `alb.ingress.kubernetes.io/certificate-arn`
-C. `service.beta.kubernetes.io/aws-load-balancer-tls-termination`
-D. `nlb.kubernetes.io/ssl-certificate`
+- A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`
+- B. `alb.ingress.kubernetes.io/certificate-arn`
+- C. `service.beta.kubernetes.io/aws-load-balancer-tls-termination`
+- D. `nlb.kubernetes.io/ssl-certificate`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`**
-
-**Explicación:**
-Configuración de TLS termination de NLB:
+A. Este es un ejemplo completo de Service para LBC autoadministrado:
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
+  name: nlb-tls-service
+  namespace: default
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:..."
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: '443'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  selector:
+    app: my-app
   ports:
-    - port: 443
-      targetPort: 8080
+  - name: https
+    port: 443
+    targetPort: 8080
+    protocol: TCP
 ```
 
-`alb.ingress.kubernetes.io/certificate-arn` es la anotación para ALB Ingress.
+Reemplace el ARN del certificado y proporcione Pods de backend coincidentes que escuchen en 8080. TLS hacia el cliente termina en el NLB; aquí `tcp` deja sin TLS la conexión al backend. Use la política de certificado/seguridad y los controles de red adecuados. Auto Mode usa su propia `loadBalancerClass` y el conjunto de anotaciones compatibles.
 
 </details>
 
-### 6. ¿Cuál es el propósito principal del CRD TargetGroupBinding?
+## 6. ¿Para qué sirve un TargetGroupBinding creado por separado?
 
-A. Crear automáticamente nuevos Target Groups
-B. Conectar Target Groups de AWS existentes con Services de Kubernetes
-C. Definir reglas de ALB Listener
-D. Crear automáticamente security groups
+- A. Crear automáticamente todos los balanceadores de carga y listeners
+- B. Registrar los destinos de un Service de Kubernetes en un grupo de destino existente
+- C. Definir reglas de enrutamiento HTTP de listener ALB
+- D. Reemplazar la autorización IAM
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Conectar Target Groups de AWS existentes con Services de Kubernetes**
-
-**Explicación:**
-Casos de uso de TargetGroupBinding:
-1. Migración de infraestructura existente - Aprovechar Target Groups existentes
-2. Uso compartido entre varios clusters - Usar un ALB/NLB en varios clusters
-3. Cuando se necesita la administración directa de Target Groups
+B. El balanceador de carga, el listener y el grupo de destino ya existen y deben coincidir con el Service y con el protocolo, la familia de direcciones y los puertos del destino.
 
 ```yaml
 apiVersion: elbv2.k8s.aws/v1beta1
 kind: TargetGroupBinding
 metadata:
   name: my-tgb
+  namespace: default
 spec:
-  targetGroupARN: arn:aws:elasticloadbalancing:...
+  targetGroupARN: arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-tg/1234567890abcdef
   serviceRef:
     name: my-service
     port: 80
   targetType: ip
 ```
 
+Para compartir un grupo de destino entre varios clústeres/TGB, todos los participantes necesitan `multiClusterTargetGroup: true` desde su creación. De forma predeterminada se supone que hay propiedad completa, y se pueden dar de baja destinos ajenos. `nodeSelector` se aplica a destinos de instancia, no al filtrado de Pods en modo IP. Limite los permisos de TGB a usuarios de confianza.
+
 </details>
 
-### 7. ¿Cuál es la anotación para integrar WAF v2 con ALB Ingress?
+## 7. ¿Qué anotación asocia un Web ACL regional de WAF v2 con un ALB?
 
-A. `alb.ingress.kubernetes.io/waf-acl-id`
-B. `alb.ingress.kubernetes.io/wafv2-acl-arn`
-C. `alb.ingress.kubernetes.io/web-acl`
-D. `alb.ingress.kubernetes.io/firewall-rules`
+- A. `alb.ingress.kubernetes.io/waf-acl-id`
+- B. `alb.ingress.kubernetes.io/wafv2-acl-arn`
+- C. `alb.ingress.kubernetes.io/web-acl`
+- D. `alb.ingress.kubernetes.io/firewall-rules`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `alb.ingress.kubernetes.io/wafv2-acl-arn`**
-
-**Explicación:**
-Integración de AWS WAF v2:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-1:ACCOUNT:regional/webacl/my-acl/xxx
-```
-
-Funcionalidades de WAF v2:
-- Protección contra inyección SQL y XSS
-- Limitación de tasa
-- Bloqueo/autorización según IP
-- Reglas personalizadas
-
-Se requiere la configuración `enableWafv2: true` al instalar el controller.
+B. Proporcione el ARN del Web ACL regional existente en la región del ALB, configure sus reglas y otorgue los permisos necesarios al controlador. La integración de WAF v2 debe estar habilitada; está habilitada de forma predeterminada, así que no siempre es necesario especificar `enableWafv2`. Si la integración está deshabilitada, la anotación no se aplica. WAF y la protección de pago Shield Advanced son funciones distintas.
 
 </details>
 
-### 8. ¿Cuáles son las etiquetas para el descubrimiento automático de subnet en AWS Load Balancer Controller?
+## 8. ¿Cuáles son las etiquetas convencionales para la función de las subredes?
 
-A. `kubernetes.io/cluster/<cluster-name>=owned`
-B. `kubernetes.io/role/elb=1` (pública), `kubernetes.io/role/internal-elb=1` (privada)
-C. `aws:cloudformation:stack-name`
-D. `Name=kubernetes-subnet`
+- A. Solo `kubernetes.io/cluster/CLUSTER_NAME`
+- B. `kubernetes.io/role/elb` para subredes públicas y `kubernetes.io/role/internal-elb` para privadas
+- C. `aws:cloudformation:stack-name`
+- D. Solo `Name=kubernetes-subnet`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `kubernetes.io/role/elb=1` (pública), `kubernetes.io/role/internal-elb=1` (privada)**
-
-**Explicación:**
-Reglas de etiquetado de subnet:
-
-```bash
-# Public subnets (for internet-facing ALB/NLB)
-kubernetes.io/role/elb=1
-
-# Private subnets (for internal ALB/NLB)
-kubernetes.io/role/internal-elb=1
-
-# Cluster ownership (optional)
-kubernetes.io/cluster/<cluster-name>=shared or owned
-```
-
-Sin estas etiquetas, el controller podría no encontrar las subnets adecuadas y la creación del load balancer fallará.
+B. En el descubrimiento de LBC autoadministrado, los valores pueden ser `1` o estar vacíos. Desde v2.12.1+, la alternativa predeterminada basada en accesibilidad puede clasificar subredes a partir de las tablas de rutas cuando faltan etiquetas de función coincidentes. Otras vías de selección son las subredes explícitas y los filtros de etiquetas de IngressClassParams. Auto Mode sigue requiriendo las etiquetas documentadas. Compruebe las etiquetas del clúster, las IP libres y los requisitos de zonas de disponibilidad; las etiquetas no modifican el enrutamiento.
 
 </details>
 
-### 9. ¿Cuál es la anotación para habilitar Sticky Sessions en ALB Ingress?
+## 9. ¿Cómo se configuran las sesiones persistentes de ALB?
 
-A. `alb.ingress.kubernetes.io/sticky-sessions=true`
-B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`
-C. `alb.ingress.kubernetes.io/session-affinity=cookie`
-D. `alb.ingress.kubernetes.io/cookie-based-routing=true`
+- A. `alb.ingress.kubernetes.io/sticky-sessions=true`
+- B. `target-group-attributes` con `stickiness.enabled=true`
+- C. `session-affinity=cookie` en Ingress
+- D. Siempre están habilitadas de forma predeterminada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`**
-
-**Explicación:**
-Configuración de Sticky Session:
-
-```yaml
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/target-group-attributes: >-
-      stickiness.enabled=true,
-      stickiness.lb_cookie.duration_seconds=3600
-```
-
-Se configura como atributos de Target Group:
-- `stickiness.enabled=true` - Habilitar
-- `stickiness.lb_cookie.duration_seconds` - Duración de validez de la cookie
-- `stickiness.type` - lb_cookie o app_cookie
-
-Las Sticky Sessions son útiles para aplicaciones heredadas que necesitan mantener el estado de la sesión.
+B. Establezca `alb.ingress.kubernetes.io/target-type: ip` y combine `stickiness.enabled=true` con los atributos de cookie adecuados en una sola anotación `target-group-attributes`. No repita la clave YAML para el inicio lento ni el retraso de baja, porque las claves duplicadas pueden descartar ajustes. En una acción de reenvío ponderada, configure de manera coherente la persistencia del grupo de destino, según la documentación.
 
 </details>
 
-### 10. ¿Cómo se conserva la IP de origen del cliente en NLB?
+## 10. ¿Qué afirmación sobre la identidad del cliente en NLB es correcta?
 
-A. Usar `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"`
-B. Usar externalTrafficPolicy: Local
-C. Ambos métodos son posibles
-D. NLB siempre conserva la IP del cliente
+- A. Proxy Protocol v2 cambia la dirección de origen del paquete IP por la del cliente
+- B. `externalTrafficPolicy: Local` garantiza la conservación en todos los modos de destino
+- C. Proxy Protocol transporta metadatos; la conservación del origen del paquete es un ajuste independiente con restricciones de red/protocolo
+- D. NLB siempre conserva la IP del cliente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Ambos métodos son posibles**
-
-**Explicación:**
-Métodos para conservar la IP del cliente:
-
-1. **Proxy Protocol v2**:
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: proxy_protocol_v2.enabled=true
-```
-- La aplicación debe admitir Proxy Protocol
-
-2. **externalTrafficPolicy: Local**:
-```yaml
-spec:
-  externalTrafficPolicy: Local
-```
-- Enruta solo a Pods en el mismo Node sin saltos adicionales
-- Es posible una distribución desigual del tráfico
-
-3. **IP Target Type** (modo ip):
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-```
+C. El backend debe analizar Proxy Protocol v2 antes de los datos de la aplicación y admitir las comprobaciones de estado aplicables. `preserve_client_ip.enabled` controla la conservación del origen del paquete cuando es compatible. En modo instancia/NodePort, `externalTrafficPolicy: Local` puede evitar un salto SNAT posterior de kube-proxy; no resuelve todas las rutas de NLB ni los casos de traducción entre familias IP. En destinos NLB ponderados, el cambio normal de pesos afecta a conexiones nuevas, pero asignar peso cero cierra las conexiones existentes al cabo de un período breve.
 
 </details>
 
-### 11. ¿Cuál es la anotación para redirigir HTTP a HTTPS en ALB Ingress?
+## 11. ¿Qué anotación configura la redirección HTTP a HTTPS de ALB?
 
-A. `alb.ingress.kubernetes.io/actions.ssl-redirect`
-B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`
-C. `alb.ingress.kubernetes.io/force-ssl-redirect: "true"`
-D. `alb.ingress.kubernetes.io/http-to-https: "true"`
+- A. `alb.ingress.kubernetes.io/force-ssl-redirect`
+- B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`
+- C. `alb.ingress.kubernetes.io/http-to-https`
+- D. Siempre hace falta una HTTPRoute
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`**
-
-**Explicación:**
-Configuración de redirección SSL:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
-```
-
-Comportamiento:
-- Redirige con 301 las solicitudes que llegan a HTTP(80) hacia HTTPS(443)
-- Recomendado como práctica recomendada de seguridad
-- Requiere certificado ACM
+B. Configure los listeners HTTP y HTTPS de destino, además de un certificado adecuado. Una vez habilitado, los listeners HTTP usan la acción de redirección predeterminada y se omiten sus demás reglas de enrutamiento. Afecta al IngressGroup, así que revise el comportamiento de todo el grupo. La autenticación Cognito/OIDC/JWT requiere HTTPS; una redirección por sí sola no autoriza la aplicación.
 
 </details>
 
-### 12. ¿Cuál NO es algo que se debe verificar cuando AWS Load Balancer Controller no está creando un ALB?
+## 12. ¿Qué debe inspeccionar primero cuando no se crea un ALB?
 
-A. Verificar los permisos de IAM
-B. Verificar las etiquetas de subnet
-C. Verificar la especificación de IngressClass
-D. Verificar los logs de kube-proxy
+- A. Solo los registros de kube-proxy
+- B. El contenido de las cookies de la aplicación
+- C. Los registros/eventos del controlador, la selección de clase, IAM, la elegibilidad de subredes y el estado de webhook/CRD
+- D. Solo la cantidad de réplicas de Pods
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. Verificar los logs de kube-proxy**
-
-**Explicación:**
-Aspectos que se deben verificar cuando falla la creación de ALB:
-
-1. **Permisos de IAM**: Si el IAM Role de Service Account tiene los permisos requeridos
-2. **Etiquetas de subnet**: `kubernetes.io/role/elb=1` o `kubernetes.io/role/internal-elb=1`
-3. **IngressClass**: Especificar `ingressClassName: alb` o mediante anotación
-4. **Logs del controller**: `kubectl logs -n kube-system deployment/aws-load-balancer-controller`
-5. **Eventos de Ingress**: `kubectl describe ingress <name>`
-
-kube-proxy maneja el enrutamiento de Service ClusterIP/NodePort y no está relacionado con la creación de ALB.
+C. Primero compruebe la ruta de reconciliación/plano de control. kube-proxy o un reemplazo eBPF pueden importar más adelante para el tráfico de nodo/servicio, pero no son el primer diagnóstico cuando falla una operación AWS CreateLoadBalancer. Que `kubectl apply` termine bien no demuestra que la reconciliación con AWS haya tenido éxito. Use ID de recursos y espacios de nombres reales, y limite la salida de los registros.
 
 </details>
 
----
-
-## Recursos de aprendizaje adicionales
-
-- [Documentación de AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [Guía del usuario de EKS](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
-- [Referencia de anotaciones de ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.8/guide/ingress/annotations/)
+[Volver a la guía](../../networking/03-aws-lb-controller.md)

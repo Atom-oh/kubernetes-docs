@@ -208,7 +208,7 @@ metadata:
     cni.projectcalico.org/ipv4pools: '["production-pool"]'
 ```
 
-`production-pool` 必须是一个已存在且已启用、地址充足的池。`assignmentMode: Manual` 可以将池排除在自动选择范围之外，同时允许显式请求。**池选择器和此注解都不是安全边界。**已发布的 [IPAM 实现](https://github.com/projectcalico/calico/blob/v3.32.2/libcalico-go/lib/ipam/ipam.go)会有意忽略显式请求启用池时的节点/命名空间池选择器。如果地址范围涉及信任含义，请控制哪些人可以请求这些池。现有 Pod 会保留其地址；更改注解不会重新分配地址。
+`production-pool` 必须是一个已存在且已启用、地址充足的池。`assignmentMode: Manual` 可以将池排除在自动选择范围之外，同时允许显式请求。**池选择器和此注解都不是安全边界**。已发布的 [IPAM 实现](https://github.com/projectcalico/calico/blob/v3.32.2/libcalico-go/lib/ipam/ipam.go)会有意忽略显式请求启用池时的节点/命名空间池选择器。如果地址范围涉及信任含义，请控制哪些人可以请求这些池。现有 Pod 会保留其地址；更改注解不会重新分配地址。
 
 ## 云和平台限制
 
@@ -229,7 +229,7 @@ metadata:
 
 请使用工作负载可能经过的所有路径中的最小可用 MTU，包括加密和 Service 路径。[Calico MTU 指南](https://docs.tigera.io/calico/latest/networking/configuring/mtu)介绍了自动检测以及由 operator/清单管理的配置。`mtuIfacePattern` 用于选择检测时考虑的接口；它不是开关，也不能证明端到端路径 MTU。
 
-**不要盲目叠加 IPIP 和 WireGuard 的开销。**在 Calico 常见的混合部署中，WireGuard 用于已启用的对等节点之间；其他路径则使用 IPIP/VXLAN。请选择适用 MTU 中的最小值。在真实的 1500 字节路径上，IPv4 WireGuard 加 IPIP 意味着 `min(1440, 1480) = 1440`，而不是 `1500 − 60 − 20 = 1420`。外层 IPv6 WireGuard 的开销另为 80 字节。
+**不要盲目叠加 IPIP 和 WireGuard 的开销**。在 Calico 常见的混合部署中，WireGuard 用于已启用的对等节点之间；其他路径则使用 IPIP/VXLAN。请选择适用 MTU 中的最小值。在真实的 1500 字节路径上，IPv4 WireGuard 加 IPIP 意味着 `min(1440, 1480) = 1440`，而不是 `1500 − 60 − 20 = 1420`。外层 IPv6 WireGuard 的开销另为 80 字节。
 
 AKS 有一项已记录的 WireGuard 例外：即使接口显示为 1500，底层路径也可能只有 1400，因此 IPv4 WireGuard 的 MTU 为 1340，IPv6 则为 1320。eBPF NodePort 路径也会使用 VXLAN，因此仅凭 Pod 池未封装，并不能推断工作负载 MTU 为 1500。
 
@@ -240,7 +240,7 @@ AKS 有一项已记录的 WireGuard 例外：即使接口显示为 1500，底层
 kubectl patch installation.operator.tigera.io default --type merge   -p '{"spec":{"calicoNetwork":{"mtu":1450}}}'
 ```
 
-对于由清单管理的安装，文档中指定的设置是 `calico-config.data.veth_mtu`；请更新该 ConfigMap，并按照相应流程滚动更新 Calico node DaemonSet。不要将清单流程应用于由 operator 管理的 Deployment。**更新后的工作负载 MTU 适用于新工作负载。**重启 calico-node 本身不会重新创建应用 Pod，也不能证明其 MTU 已改变。
+对于由清单管理的安装，文档中指定的设置是 `calico-config.data.veth_mtu`；请更新该 ConfigMap，并按照相应流程滚动更新 Calico node DaemonSet。不要将清单流程应用于由 operator 管理的 Deployment。**更新后的工作负载 MTU 适用于新工作负载**。重启 calico-node 本身不会重新创建应用 Pod，也不能证明其 MTU 已改变。
 
 | 底层 IP MTU 示例 | IPIP IPv4 | VXLAN IPv4 | VXLAN IPv6 | WireGuard IPv4 | WireGuard IPv6 |
 |---|---|---|---|---|---|

@@ -6,7 +6,7 @@
 
 准备受支持的 EKS Kubernetes 版本、兼容的 kubectl、Helm 3、元数据数据库和制品存储。`kubectl >=1.34` 这样的最低版本要求并不能证明它与每个 API 服务器都兼容。请根据实际集群检查客户端/服务器版本偏差策略。
 
-本章基于下载的 chart、原生 Helm 渲染以及 MLflow 3.16.0 服务器源代码。**本章并未证明 AWS 资源配置、RDS 连接、S3 上传或 EKS 部署成功。**本地 SQLite/API 检查请参阅[第 1 部分](01-tracking.md)，Registry 检查请参阅[第 2 部分](02-model-registry.md)。
+本章基于下载的 chart、原生 Helm 渲染以及 MLflow 3.16.0 服务器源代码。**本章并未证明 AWS 资源配置、RDS 连接、S3 上传或 EKS 部署成功**。本地 SQLite/API 检查请参阅[第 1 部分](01-tracking.md)，Registry 检查请参阅[第 2 部分](02-model-registry.md)。
 
 ## 为什么要在 EKS 上运行 MLflow 的 Tracking Server
 
@@ -58,7 +58,7 @@ helm template mlflow ./vendor/mlflow --namespace mlflow -f values.reference.yaml
 ### Chart 1.11.7 的重要默认值
 
 - 默认值包括 `replicaCount: 1`、`auth.enabled: false` 和 `ingress.enabled: false`。
-- `backendStore.defaultSqlitePath: ":memory:"` 配置的是内存中的元数据。**这与上游 CLI 新的 SQLite 文件默认值不同。**默认安装的 chart 并不是持久化的生产服务。
+- `backendStore.defaultSqlitePath: ":memory:"` 配置的是内存中的元数据。**这与上游 CLI 新的 SQLite 文件默认值不同**。默认安装的 chart 并不是持久化的生产服务。
 - 外部 PostgreSQL 使用 `backendStore.postgres.*`；凭证引用使用 `backendStore.existingDatabaseSecret.*`。
 - 将 `artifactRoot.s3.*` 与 `artifactRoot.proxiedArtifactStorage: true` 一并检查。原生渲染生成了 `--artifacts-destination=s3://...` 和 `--serve-artifacts`。
 - Basic-auth 数据库设置位于单独的 `auth.postgres.*` 下。更改 Tracking 数据库不会自动共享身份验证状态。

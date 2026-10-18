@@ -7,7 +7,7 @@
 
 ***
 
-凌晨 3 点，寻呼器响起，你打开终端时，你需要的不是概念解释，而是**“根据我现在看到的情况，接下来要输入什么命令。”**本文档从**症状**出发，而不是从概念出发。对于每种症状，它都会在一个区块中汇总“你看到什么 → 运行什么 → 输出是什么样 → 最常见的原因以及如何修复”。
+凌晨 3 点，寻呼器响起，你打开终端时，你需要的不是概念解释，而是“**根据我现在看到的情况，接下来要输入什么命令**。”本文档从**症状**出发，而不是从概念出发。对于每种症状，它都会在一个区块中汇总“你看到什么 → 运行什么 → 输出是什么样 → 最常见的原因以及如何修复”。
 
 下面的输出展示了原始 September 2, 2026 文档记录的环境，以及来自官方文档的信息。本次审查没有重新运行该集群，也没有独立核实原始捕获日志。特别是，[Karpenter 兼容性矩阵](https://karpenter.sh/docs/upgrading/compatibility/)要求 Kubernetes 1.36 使用 Karpenter 1.13 或更高版本。请勿将记录中的 1.4.0 组合重新用于受支持的部署。
 
@@ -221,7 +221,7 @@ kubectl describe pod <pod> -n <ns> | grep -E "Ready|Readiness probe"
 kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc>
 ```
 
-**EndpointSlice 地址和就绪状态彼此独立。**匹配的未就绪 Pod 可能会显示地址且 `ready: false`。不要根据 ENDPOINTS 列推断就绪状态；应检查 `ready`、`serving` 和 `terminating`。
+**EndpointSlice 地址和就绪状态彼此独立**。匹配的未就绪 Pod 可能会显示地址且 `ready: false`。不要根据 ENDPOINTS 列推断就绪状态；应检查 `ready`、`serving` 和 `terminating`。
 
 ```bash
 kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc> -o json | jq -r '
@@ -558,7 +558,7 @@ kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 {"ts":"2026-09-02T07:57:00Z","level":"error","logger":"setup","msg":"problem running manager","error":"failed to wait for gateway.k8s.aws/alb caches to sync kind source: *v1.ListenerSet: timed out waiting for cache to be synced for Kind *v1.ListenerSet"}
 ```
 
-这些日志表明，由于找不到 ListenerSet.gateway.networking.k8s.io/v1，缓存同步失败。**Gateway API 1.5.0 的标准通道包含 ListenerSet。**请在 [LBC v3.2.1 指南](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.2.1/docs/guide/gateway/gateway.md)中检查版本要求、标准 CRD 和 LBC 专用 CRD。如果需要 TCPRoute/UDPRoute 等其他 API，请查看实验性安装要求。影响取决于实际的 webhook 规则、selector 和 failurePolicy。目标更新和新资源协调可能受影响，而现有 LB 数据路径仍可能继续工作。
+这些日志表明，由于找不到 ListenerSet.gateway.networking.k8s.io/v1，缓存同步失败。**Gateway API 1.5.0 的标准通道包含 ListenerSet**。请在 [LBC v3.2.1 指南](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.2.1/docs/guide/gateway/gateway.md)中检查版本要求、标准 CRD 和 LBC 专用 CRD。如果需要 TCPRoute/UDPRoute 等其他 API，请查看实验性安装要求。影响取决于实际的 webhook 规则、selector 和 failurePolicy。目标更新和新资源协调可能受影响，而现有 LB 数据路径仍可能继续工作。
 
 **原因和修复方法**：
 

@@ -362,7 +362,7 @@ grafana:
 
 受支持的方案包括：使用 `grafana.externalUrl` 配置面向浏览器的完整 URL；使用 `grafana.url` 配置集群内反向代理集成。后一种方案还需要配置 Grafana 的根路径/子路径。`grafana.uidPrefix` 用于区分导入的仪表板 UID；它不是租户授权控制项。
 
-已发布的仪表板集合包括健康状况、顶层指标、命名空间/工作负载、Service、路由、authority 和多集群视图。**Authority 指 HTTP host/:authority，而不是授权权限。**请从经过审核的 release 导入仪表板，并验证其数据源、标签、单位和 UID 链接。
+已发布的仪表板集合包括健康状况、顶层指标、命名空间/工作负载、Service、路由、authority 和多集群视图。**Authority 指 HTTP host/:authority，而不是授权权限**。请从经过审核的 release 导入仪表板，并验证其数据源、标签、单位和 UID 链接。
 
 ### 简易仪表板示例
 

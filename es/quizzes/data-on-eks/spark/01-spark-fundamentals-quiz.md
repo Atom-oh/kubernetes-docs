@@ -7,7 +7,7 @@ Repase los modos de implementación, los límites de responsabilidad, los recurs
 <details>
 <summary>Mostrar respuesta</summary>
 
-Se admiten los modos cluster y client; Spark 4.2 documenta Kubernetes 1.34 o posterior. El modo client existe desde la versión 2.4 y no es exclusivo de los notebooks. kubectl debe ser compatible con el servidor de API real.
+Se admiten los modos cluster y client; Spark 4.2 documenta Kubernetes 1.34 o posterior. El modo client existe desde la versión 2.4 y no es exclusivo de los entornos de notebooks. kubectl debe ser compatible con el servidor de API real.
 
 </details>
 
@@ -16,7 +16,7 @@ Se admiten los modos cluster y client; Spark 4.2 documenta Kubernetes 1.34 o pos
 <details>
 <summary>Mostrar respuesta</summary>
 
-El driver solicita los pods de executor a través de la API. El scheduler de Kubernetes elige los nodos y kubelet inicia los contenedores. Los schedulers de Spark del driver asignan las tareas a los executors registrados. Ni el servidor de API ni el driver reemplazan la planificación de Kubernetes.
+El driver solicita los pods de executor a través de la API. El planificador de Kubernetes elige los nodos y los kubelets inician los contenedores. Los planificadores de Spark del driver asignan las tareas a los executors registrados. Ni el servidor de API ni el driver reemplazan la planificación de Kubernetes.
 
 </details>
 
@@ -25,7 +25,7 @@ El driver solicita los pods de executor a través de la API. El scheduler de Kub
 <details>
 <summary>Mostrar respuesta</summary>
 
-No. Siguen existiendo los nodos, Kubernetes, las imágenes, la red, el almacenamiento y la observabilidad. Se necesitan la autenticación de API del submitter y el RBAC de namespace del driver. El ejemplo usa una service account de executor independiente; los permisos de AWS sobre los datos y el RBAC de Kubernetes son distintos.
+No. Siguen existiendo los nodos, Kubernetes, las imágenes, la red, el almacenamiento y la observabilidad. Se necesitan la autenticación de API del cliente que envía la aplicación y los permisos RBAC del driver en el espacio de nombres. El ejemplo usa una cuenta de servicio independiente para los executors; los permisos de AWS para acceder a los datos y el RBAC de Kubernetes son distintos.
 
 </details>
 
@@ -34,7 +34,7 @@ No. Siguen existiendo los nodos, Kubernetes, las imágenes, la red, el almacenam
 <details>
 <summary>Mostrar respuesta</summary>
 
-No. Habilite la asignación dinámica, pero en 4.2 el seguimiento de shuffle ya viene habilitado de forma predeterminada y existe desde la versión 3.0. El ESS estándar de Kubernetes no está admitido; conservar datos mediante decommission o usar ShuffleDataIO fiable y adecuado son alternativas sujetas a condiciones. Los mecanismos superpuestos pueden retrasar la eliminación.
+No. Habilite la asignación dinámica, pero en 4.2 el seguimiento de shuffle ya viene habilitado de forma predeterminada y existe desde la versión 3.0. El ESS estándar de Kubernetes no es compatible; la conservación de datos mediante el retiro ordenado de ejecutores (decommission) y el uso de ShuffleDataIO fiable y adecuado son alternativas sujetas a condiciones. Los mecanismos que se solapan pueden retrasar la eliminación.
 
 </details>
 
@@ -43,7 +43,7 @@ No. Habilite la asignación dinámica, pero en 4.2 el seguimiento de shuffle ya 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Spark 4.2 inserta un hook preStop que ejecuta /opt/decom.sh. La imagen oficial lo incluye; envía SIGPWR a la JVM de executor y espera. La migración de bloques también requiere opciones de almacenamiento para decommission, además de destinos, tiempo y capacidad reales.
+Spark 4.2 inserta un hook preStop que ejecuta /opt/decom.sh. La imagen oficial incluye ese script; este envía una señal SIGPWR a la JVM del executor y espera. La migración de bloques también requiere opciones de almacenamiento para el retiro ordenado, además de destinos, tiempo y capacidad reales.
 
 </details>
 
@@ -70,7 +70,7 @@ batch.size controla los lotes de solicitudes de pods. Los valores mínimo/inicia
 <details>
 <summary>Mostrar respuesta</summary>
 
-Los cores se relacionan con las solicitudes de CPU predeterminadas y la capacidad de tareas del executor; para establecer límites de CPU se necesita limit.cores. En el ejemplo de JVM, un heap de 1 GiB más una sobrecarga mínima de 384 MiB da una solicitud y un límite de 1408 MiB. El submitter lee las plantillas y Spark las compone; no son pods incompletos que deban aplicarse con kubectl.
+Los núcleos de Spark se relacionan con las solicitudes de CPU predeterminadas y la capacidad de tareas del executor; para establecer límites de CPU se necesita limit.cores. En el ejemplo de JVM, un heap de 1 GiB más una sobrecarga mínima de 384 MiB da una solicitud y un límite de 1408 MiB. El cliente que envía la aplicación lee las plantillas y Spark las compone; no son pods incompletos que deban aplicarse con kubectl.
 
 </details>
 
@@ -79,7 +79,7 @@ Los cores se relacionan con las solicitudes de CPU predeterminadas y la capacida
 <details>
 <summary>Mostrar respuesta</summary>
 
-Compruebe los tiempos de espera de seguimiento/inactividad, la terminación forzada, la capacidad de los nodos y el recálculo. El modo client también necesita endpoints del driver accesibles y, cuando corresponda, un propietario real para el pod del driver. Conservar bloques intermedios no reemplaza los checkpoints, la recuperación del driver ni la semántica exactly-once de extremo a extremo.
+Compruebe los tiempos de espera de seguimiento/inactividad, la terminación forzada, la capacidad de los nodos y el recálculo. El modo client también necesita endpoints del driver accesibles y, cuando corresponda, un propietario real para el pod del driver. Conservar bloques intermedios no reemplaza los checkpoints, la recuperación del driver ni la semántica de procesamiento exactamente una vez de extremo a extremo.
 
 </details>
 

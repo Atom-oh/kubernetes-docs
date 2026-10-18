@@ -354,7 +354,7 @@ mtu: 1400  # Illustrative only; replace using validated path MTU and chosen Cili
 
 ---
 
-## Configuración de IAM
+## Configuración de IAM {#iam-configuration}
 
 ### Permisos IAM requeridos
 
@@ -483,7 +483,7 @@ El reenvío de Auto Mode usa `NodeClass.spec.advancedNetworking.sourceDestCheck:
 
 ---
 
-## Instalación y configuración
+## Instalación y configuración {#installation-and-configuration}
 
 ### Paso 1: Etiquetar los nodos del gateway
 
@@ -580,7 +580,7 @@ Un Pod en estado Running, una respuesta de disponibilidad y una métrica de líd
 
 ---
 
-## Configuración del CNI
+## Configuración del CNI {#cni-configuration}
 
 ### Configuración de Cilium VTEP en Hybrid Nodes
 

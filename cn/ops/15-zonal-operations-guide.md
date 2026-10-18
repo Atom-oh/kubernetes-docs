@@ -95,9 +95,9 @@ aws elbv2 modify-listener \
 
 Route 53 加权记录选择的是 **LB DNS 终端节点**，而不是目标组 ARN。TTL、客户端缓存和长连接也会导致 DNS 切换无法即时生效。有关外围配置，请参阅 [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) 和[高级基础设施](02-infrastructure-advanced.md)。
 
-**计划内流量切换和故障响应：**权重变更支持计划内切换，但不能自动检测故障。[ARC 可用区切换](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html)由运维人员发起。**可用区自动切换**需要单独启用、演练并配置告警。EKS 资源切换会改变该集群内受影响 AZ 的终端节点/节点处理方式；它不会改写另一个集群的目标组权重。还应单独规划 LB 资源的切换。
+**计划内流量切换和故障响应**：权重变更支持计划内切换，但不能自动检测故障。[ARC 可用区切换](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html)由运维人员发起。**可用区自动切换**需要单独启用、演练并配置告警。EKS 资源切换会改变该集群内受影响 AZ 的终端节点/节点处理方式；它不会改写另一个集群的目标组权重。还应单独规划 LB 资源的切换。
 
-> **EKS Auto Mode 支持：**根据 [2026 年 7 月的发布公告](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/)，启用集群可用区切换后，Auto Mode 可在切换期间限制受影响 AZ 中的新资源调配和自愿中断。此操作本身不会启用自动切换。**如果从唯一包含工作节点的 AZ 切走，可能导致服务中断。**EKS 切换需要健康 AZ 中的副本、CoreDNS 和备用容量。工作节点只位于一个 AZ 的单元需要将外部单元路由纳入恢复方案。
+> **EKS Auto Mode 支持**：根据 [2026 年 7 月的发布公告](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/)，启用集群可用区切换后，Auto Mode 可在切换期间限制受影响 AZ 中的新资源调配和自愿中断。此操作本身不会启用自动切换。**如果从唯一包含工作节点的 AZ 切走，可能导致服务中断**。EKS 切换需要健康 AZ 中的副本、CoreDNS 和备用容量。工作节点只位于一个 AZ 的单元需要将外部单元路由纳入恢复方案。
 
 ***
 
@@ -105,10 +105,10 @@ Route 53 加权记录选择的是 **LB DNS 终端节点**，而不是目标组 A
 
 [原生 EKS 版本回滚](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)于 2026 年 7 月推出，可在升级完成后的七天内发起回滚，恢复到**紧邻的上一个次要版本**。七天是符合回滚条件的时间窗口，并非恢复时间保证。请检查集群创建版本、支持状态、后续升级、功能兼容性和 Rollback Readiness Insights。
 
-- **Auto Mode：**EKS 先回滚 Auto Mode 节点，然后回滚控制平面。PDB 和 NodePool 中断预算仍然适用；回滚并非即时完成。
-- **托管节点组：**使用 `UpdateNodegroupVersion` 单独回滚。运维人员应单独准备自管理节点和 Hybrid 节点。节点运行的版本不得高于控制平面版本。
-- **附加组件、数据和应用：**回滚不会恢复附加组件版本、etcd 数据、持久卷数据或应用变更。应分别规划兼容性和数据迁移恢复方案。
-- **`--force`：**可以绕过就绪情况洞察，但不能绕过资格前提或 Auto Mode 中断控制。按照常规回滚流程操作前，应先解决问题。
+- **Auto Mode**：EKS 先回滚 Auto Mode 节点，然后回滚控制平面。PDB 和 NodePool 中断预算仍然适用；回滚并非即时完成。
+- **托管节点组**：使用 `UpdateNodegroupVersion` 单独回滚。运维人员应单独准备自管理节点和 Hybrid 节点。节点运行的版本不得高于控制平面版本。
+- **附加组件、数据和应用**：回滚不会恢复附加组件版本、etcd 数据、持久卷数据或应用变更。应分别规划兼容性和数据迁移恢复方案。
+- **`--force`：可以绕过就绪情况洞察**，但不能绕过资格前提或 Auto Mode 中断控制。按照常规回滚流程操作前，应先解决问题。
 
 回滚功能本身不额外收费；现有集群、计算和流量费用仍然适用。验证剩余单元容量和恢复目标后，再选择原地回滚或蓝绿方案。
 
@@ -132,12 +132,12 @@ Route 53 加权记录选择的是 **LB DNS 终端节点**，而不是目标组 A
 
 首先确定 Pod 所在的 AZ。Downward API 可以暴露 Pod 字段，但不会直接查询节点标签。
 
-- **注入节点元数据：**普通 Pod 创建准入发生在调度之前，因此此时还不知道目标节点。[AWS MSK 指南](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/)会处理 **`Pod/binding` 请求**，读取选定节点并注入其 AZ ID。应一起配置 Kyverno 绑定请求筛选器、读取节点的 RBAC 权限，并确保在 Pod 启动前完成注入。
-- **调度后查询：**通过 Downward API 暴露 `spec.nodeName`，并使用受信任的初始化组件读取节点标签。不要向所有应用授予广泛的节点读取权限。
-- **EC2 IMDSv2：**如果有意开放 EC2 元数据访问，应先获取令牌，再读取位置相关信息。不要假设 IMDSv1 GET 可用，也不要不加区分地移除元数据限制。此方法不直接适用于 Fargate。
-- **Operator 支持：**Strimzi 会为其管理的 Broker 和受支持的客户端资源配置机架感知功能，但不会自动在无关应用的 Deployment 中设置 `client.rack`。
+- **注入节点元数据**：普通 Pod 创建准入发生在调度之前，因此此时还不知道目标节点。[AWS MSK 指南](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/)会处理 **`Pod/binding` 请求**，读取选定节点并注入其 AZ ID。应一起配置 Kyverno 绑定请求筛选器、读取节点的 RBAC 权限，并确保在 Pod 启动前完成注入。
+- **调度后查询**：通过 Downward API 暴露 `spec.nodeName`，并使用受信任的初始化组件读取节点标签。不要向所有应用授予广泛的节点读取权限。
+- **EC2 IMDSv2**：如果有意开放 EC2 元数据访问，应先获取令牌，再读取位置相关信息。不要假设 IMDSv1 GET 可用，也不要不加区分地移除元数据限制。此方法不直接适用于 Fargate。
+- **Operator 支持**：Strimzi 会为其管理的 Broker 和受支持的客户端资源配置机架感知功能，但不会自动在无关应用的 Deployment 中设置 `client.rack`。
 
-**不要混用 AZ 名称和 AZ ID。**Kafka 的 `broker.rack` 和 `client.rack` 必须使用匹配的字符串。如果 MSK 使用 AZ ID，不要替换成 `ap-northeast-2a` 这样的名称。GLIDE 的 `client_az` 同样必须与服务器报告的 AZ 值匹配。
+**不要混用 AZ 名称和 AZ ID**。Kafka 的 `broker.rack` 和 `client.rack` 必须使用匹配的字符串。如果 MSK 使用 AZ ID，不要替换成 `ap-northeast-2a` 这样的名称。GLIDE 的 `client_az` 同样必须与服务器报告的 AZ 值匹配。
 
 ### Kafka：KIP-392 跟随者读取
 
@@ -147,9 +147,9 @@ Route 53 加权记录选择的是 **LB DNS 终端节点**，而不是目标组 A
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-10.html)
 
-- **Broker：**配置 `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` 和 `broker.rack`。
-- **消费者：**将 `client.rack` 设置为消费者所在的机架。如果没有合适的本地副本，则回退到 Leader。
-- **Strimzi 1.3.0：**以下内容是应合并到现有 Kafka CR 中的**配置片段**，不是完整部署。还需要 KafkaNodePools、监听器、存储和其他配置。从 Strimzi 1.0 开始，CR API 为 `v1`；还需指定机架类型。
+- **Broker**：配置 `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` 和 `broker.rack`。
+- **消费者**：将 `client.rack` 设置为消费者所在的机架。如果没有合适的本地副本，则回退到 Leader。
+- **Strimzi 1.3.0**：以下内容是应合并到现有 Kafka CR 中的**配置片段**，不是完整部署。还需要 KafkaNodePools、监听器、存储和其他配置。从 Strimzi 1.0 开始，CR API 为 `v1`；还需指定机架类型。
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1
@@ -206,7 +206,7 @@ def cache_config(host: str, client_az: str, credentials=None):
 
 Aurora 的[默认读取器终端节点](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Reader.html)会在读取副本之间平衡**连接**；它不保证优先使用特定 AZ，也不按查询进行负载均衡。如果没有副本，它可能会连接到写入器。仅更改 DNS 不会将已有连接池连接转移到其他实例。
 
-1. **每个 AZ 使用自定义终端节点：**验证实例的 AZ 和读取器角色后，明确选择实例 ID。在此创建示例中，将名称替换为实际资源。
+1. **每个 AZ 使用自定义终端节点**：验证实例的 AZ 和读取器角色后，明确选择实例 ID。在此创建示例中，将名称替换为实际资源。
 
    ```bash
    aws rds create-db-cluster-endpoint \

@@ -13,7 +13,7 @@ Compruebe los roles de ejecución y los límites de recursos de Flink 2.2.1 / Op
 
 </details>
 
-2. ¿Cuatro slots de TaskManager implican que puede haber como máximo cuatro subtasks de operador?
+2. ¿Cuatro slots de TaskManager implican que puede haber como máximo cuatro subtareas de operador?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -73,7 +73,7 @@ Compruebe los roles de ejecución y los límites de recursos de Flink 2.2.1 / Op
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** No. Un controller externo, como Operator, puede reconciliar recursos de Kubernetes.
+**Respuesta:** No. Un controlador externo, como Operator, puede reconciliar recursos de Kubernetes.
 
 **Explicación:** El runtime de Flink no solicita directamente pods de TM mediante la administración de recursos Native. Evalúe por separado los permisos de API para funciones como la alta disponibilidad.
 

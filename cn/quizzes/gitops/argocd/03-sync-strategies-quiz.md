@@ -30,7 +30,7 @@ Refresh 操作从 Git 获取最新的清单，并将其与实际状态进行比�
 **答案：B) 当期望状态与实际状态不同时启用自动同步**
 
 **说明：**
-启用 `syncPolicy.automated` 后，每当 ArgoCD 检测到实际状态偏离 Git 中定义的期望状态时，都会自动同步应用程序。
+启用 `syncPolicy.automated` 后，Argo CD 会按策略应用处于 OutOfSync 状态的变更。期望状态未变而实际状态发生漂移时，需要 selfHeal；删除资源需要 prune；同一提交同步失败后不会无条件地无限重试。
 
 </details>
 
@@ -46,7 +46,7 @@ Refresh 操作从 Git 获取最新的清单，并将其与实际状态进行比�
 **答案：B) 自动删除 Git 中不再定义的资源**
 
 **说明：**
-在自动同步中设置 `prune: true` 时，ArgoCD 会自动删除集群中存在但 Git 仓库中不再定义的 Kubernetes 资源。
+在自动同步中设置 `prune: true` 时，Argo CD 会删除属于此 Application、已被跟踪且从期望源中消失的资源，而不是删除集群中所有未受管理的资源。
 
 </details>
 
@@ -62,7 +62,7 @@ Refresh 操作从 Git 获取最新的清单，并将其与实际状态进行比�
 **答案：B) 当实际状态因手动更改而偏离期望状态时自动同步**
 
 **说明：**
-自我修复可确保如果有人在集群中（Git 之外）手动更改资源，ArgoCD 会自动将其还原，使之与 Git 中的期望状态一致。
+启用自动同步后，当期望状态未变而实际状态发生漂移时，selfHeal 会根据比较结果进行协调，但仍受同步窗口、授权和忽略规则的约束。它不会恢复丢失的数据，也不会修复 YAML 错误。
 
 </details>
 
@@ -78,6 +78,6 @@ Refresh 操作从 Git 获取最新的清单，并将其与实际状态进行比�
 **答案：B) Replace=true**
 
 **说明：**
-`Replace=true` 同步选项会告知 ArgoCD 使用 `kubectl replace` 而不是 `kubectl apply`，从而完全替换资源，而非对其应用补丁。这在处理不可变字段时非常有用。
+`Replace=true` 同步选项会告知 ArgoCD 使用 `kubectl replace` 而不是 `kubectl apply`，从而完全替换资源，而非对其应用补丁。replace/create 不会自动绕过不可变字段限制。Force=true 与 Replace=true 配合使用时可能删除并重建资源，这并不是 PVC 迁移的捷径。
 
 </details>

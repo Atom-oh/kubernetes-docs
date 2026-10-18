@@ -48,7 +48,7 @@ Todos los descendientes deben permanecer en la misma partición que su familia d
 
 **Respuesta: D**
 
-Vuelve a generar las etiquetas de referencia a partir de la fuente transformada. La mera presencia de una cadena todavía no demuestra que la semántica sea correcta ni que la anotación esté completa.
+Vuelva a generar las etiquetas de referencia a partir de la fuente transformada. La mera presencia de una cadena todavía no demuestra que la semántica sea correcta ni que la anotación esté completa.
 
 </details>
 
@@ -71,7 +71,7 @@ Se comparten algunos nombres, plantillas y dominios. La exclusión de entidades,
 5. Después de transformar un documento negativo que solo contiene una centralita excluida por esta política, ¿cuál debería ser su objetivo?
 
    - A) Añadir la centralita como PHONE
-   - B) Dejar vacíos las entidades y `target_tsv`
+   - B) Dejar vacíos tanto el campo de entidades como `target_tsv`
    - C) Añadir un tipo UNKNOWN
    - D) Añadir todos los números como ACCOUNT
 
@@ -80,14 +80,14 @@ Se comparten algunos nombres, plantillas y dominios. La exclusión de entidades,
 
 **Respuesta: B**
 
-Los ejemplos sin entidades son importantes. Define los negativos para el dominio y verifica durante el entrenamiento real que se supervise EOS para las respuestas vacías.
+Los ejemplos sin entidades son importantes. Defina los ejemplos negativos para el dominio y verifique durante el entrenamiento real que se supervise EOS para las respuestas vacías.
 
 </details>
 
 6. ¿Por qué puede este laboratorio rechazar una etiqueta omitida incluso después de volver a calcular los hashes de los archivos?
 
    - A) Los hashes autentican al productor
-   - B) Encuentra todos los datos PII en cualquier documento de cliente
+   - B) Encuentra toda la información de identificación personal (PII) en cualquier documento de cliente
    - C) También vuelve a comprobar el contenido con la semilla y la receta fija de familias
    - D) Mide automáticamente la puntuación F1 del modelo
 
@@ -112,7 +112,7 @@ Esto comprueba la reproducibilidad del ejercicio sintético fijo, no las anotaci
 
 **Respuesta: D**
 
-Incluso con el mismo número de pasos, el modelo puede recibir cantidades y longitudes de datos diferentes. Usa la validación para seleccionar candidatos.
+Incluso con el mismo número de pasos, el modelo puede recibir cantidades y longitudes de datos diferentes. Use la validación para seleccionar candidatos.
 
 </details>
 

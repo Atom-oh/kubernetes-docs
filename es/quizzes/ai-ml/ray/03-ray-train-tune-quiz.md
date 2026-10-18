@@ -5,7 +5,7 @@
 1. ¿Qué no crea Ray Train automáticamente?
    - A) Coordinación subyacente de workers
    - B) Configuración del grupo de procesos del framework
-   - C) Toda la lógica de modelo/partición de datos/guardado y restauración de estado
+   - C) Toda la lógica del modelo, la partición de datos y el guardado y recuperación del estado
    - D) Solicitudes de recursos de Ray
 
 <details>
@@ -13,7 +13,7 @@
 
 **Respuesta: C**
 
-Prepare la integración de modelo/data-loader y la lógica real de modelo, optimizador y checkpoint.
+Prepare la integración del modelo y del cargador de datos, además de la lógica del modelo, el optimizador y los puntos de control.
 </details>
 
 2. ¿Cuál es el valor predeterminado revisado de Train V2 en 2.58.0?
@@ -30,18 +30,18 @@ Prepare la integración de modelo/data-loader y la lógica real de modelo, optim
 Distinga las ejecuciones que seleccionan explícitamente la implementación anterior. Los frameworks son dependencias independientes.
 </details>
 
-3. ¿Qué sucede cuando se configura el trainer_resources heredado en V2?
-   - A) Siempre reserva más CPU para el controller
+3. ¿Qué sucede cuando se configura `trainer_resources`, el parámetro heredado, en V2?
+   - A) Siempre reserva más CPU para el controlador
    - B) Se genera un error de obsolescencia
    - C) Aumenta el número de GPU
-   - D) Cambia el número de pruebas de Tune
+   - D) Cambia el número de trials de Tune
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B**
 
-Los ámbitos de recursos del controller, los workers de entrenamiento y el driver de Tune son distintos.
+Los ámbitos de recursos del controlador, los workers de entrenamiento y el driver de Tune son distintos.
 </details>
 
 4. ¿Qué hace Checkpoint.from_directory?
@@ -55,11 +55,11 @@ Los ámbitos de recursos del controller, los workers de entrenamiento y el drive
 
 **Respuesta: B**
 
-Cree la carga útil de recuperación y cargue el checkpoint devuelto por get_checkpoint.
+Prepare el contenido que se recuperará y cargue el punto de control devuelto por `get_checkpoint`.
 </details>
 
-5. ¿Cuál es la regla de participación de report de V2 en 2.58.0?
-   - A) Solo el rango 0 lo llama
+5. ¿Qué regla de participación en `report` aplica a V2 en 2.58.0?
+   - A) Solo `rank 0` lo llama
    - B) Cada worker alcanza la barrera el mismo número de veces
    - C) Cada métrica se promedia automáticamente
    - D) No puede llamarse sin un checkpoint
@@ -69,12 +69,12 @@ Cree la carga útil de recuperación y cargue el checkpoint devuelto por get_che
 
 **Respuesta: B**
 
-Los demás workers informan checkpoint=None incluso cuando solo el rango 0 guarda archivos.
+Los demás workers informan `checkpoint=None`, aunque solo `rank 0` guarde archivos.
 </details>
 
-6. ¿max_failures=0 deshabilita todos los reintentos?
+6. ¿`max_failures=0` deshabilita todos los reintentos?
    - A) Sí
-   - B) No; los reintentos del controller y de preempción tienen configuraciones separadas
+   - B) No; los reintentos del controlador y por desalojo tienen configuraciones separadas
    - C) Siempre significa reintentos infinitos
    - D) Solo deshabilita los reintentos de Karpenter
 
@@ -83,12 +83,12 @@ Los demás workers informan checkpoint=None incluso cuando solo el rango 0 guard
 
 **Respuesta: B**
 
-Los valores predeterminados revisados para controller_failure_limit y max_preemption_failures son ambos -1.
+Los valores predeterminados revisados de `controller_failure_limit` y `max_preemption_failures` son ambos -1.
 </details>
 
 7. ¿Cuál es el patrón actual de integración de Train/Tune V2?
-   - A) Pasar la instancia de V2 Trainer directamente a Tuner
-   - B) Construir y ajustar un Trainer dentro de una función entrenable; conectar callbacks según sea necesario
+   - A) Pasar directamente la instancia de `Trainer` de V2 a `Tuner`
+   - B) Construir y ajustar un `Trainer` dentro de una función de entrenamiento; conectar callbacks según sea necesario
    - C) Las bibliotecas no pueden combinarse
    - D) Siempre se necesita un clúster de Kubernetes independiente
 
@@ -97,10 +97,10 @@ Los valores predeterminados revisados para controller_failure_limit y max_preemp
 
 **Respuesta: B**
 
-La entrada directa de V2 Trainer generó TuneError en la comprobación nativa. La integración requiere configuración y planificación de recursos.
+Pasar directamente el `Trainer` de V2 produjo un `TuneError` en la comprobación nativa. La integración requiere configuración y planificación de recursos.
 </details>
 
-8. ¿Qué reenvía TuneReportCallback?
+8. ¿Qué reenvía `TuneReportCallback`?
    - A) Una métrica de worker promediada automáticamente
    - B) Una segunda carga de checkpoint
    - C) El diccionario de métricas del primer worker y la ruta de checkpoint existente
@@ -116,20 +116,20 @@ Constrúyalo en una sesión de Tune. Realice la agregación de métricas por sep
 
 ## Preguntas de respuesta corta
 
-9. ¿Por qué planificar conjuntamente los recursos de los drivers de pruebas y los workers de Train?
+9. ¿Por qué planificar conjuntamente los recursos de los drivers de trials y los workers de Train?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Los drivers pueden ocupar recursos requeridos por sus workers anidados o grupos de colocación. Compruebe conjuntamente la concurrencia, los paquetes de workers, los límites del clúster y la viabilidad por nodo.
+Los drivers pueden ocupar recursos que necesitan sus workers anidados o grupos de colocación. Compruebe conjuntamente la concurrencia, los grupos de recursos de los workers, los límites del clúster y la viabilidad en cada nodo.
 </details>
 
-10. ¿Qué no demuestra un ejemplo exitoso de Tune escalar?
+10. ¿Qué no demuestra un ejemplo exitoso de Tune con métricas escalares?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-No demuestra la precisión del modelo, el rendimiento de PyTorch/DDP o GPU, la recuperación de checkpoint multinodo ni el autoescalado de EKS. Comprueba las API y la recopilación de dos resultados de pruebas escalares.
+No demuestra la precisión del modelo, el rendimiento de PyTorch/DDP o GPU, la recuperación de puntos de control multinodo ni el autoescalado de EKS. Comprueba las API y la recopilación de dos resultados de trials con métricas escalares.
 </details>
 
 ---

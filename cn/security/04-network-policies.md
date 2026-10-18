@@ -195,7 +195,7 @@ spec:
               role: frontend
 ```
 
-**注意：**同时使用 `namespaceSelector` 和 `podSelector` 时，AND 与 OR 的区别：
+**注意**：同时使用 `namespaceSelector` 和 `podSelector` 时，AND 与 OR 的区别：
 
 ```yaml
 # OR condition (two separate peer entries)
@@ -542,7 +542,7 @@ spec:
           port: 9090
 ```
 
-**结果：**API 的 ingress 允许 frontend Pod 使用 8080 端口，也允许 monitoring 命名空间中的 Pod 使用 8080/9090 端口。其 egress 规则、实际监听器和其他网络控制措施也必须允许该连接。
+**结果**：API 的 ingress 允许 frontend Pod 使用 8080 端口，也允许 monitoring 命名空间中的 Pod 使用 8080/9090 端口。其 egress 规则、实际监听器和其他网络控制措施也必须允许该连接。
 
 ### 策略评估顺序
 
@@ -1490,7 +1490,7 @@ aws eks update-addon --cluster-name "$CLUSTER_NAME" --addon-name vpc-cni   --con
 
 此功能确实存在，但其资源使用 **`networking.k8s.aws/v1alpha1`**。`ClusterNetworkPolicy` 的作用范围是整个集群，且必须指定 `tier`；下面的命名空间示例使用 `ApplicationNetworkPolicy` 配置基于 DNS 的 egress。EC2 Linux 上支持标准/管理型 VPC CNI 策略，不代表所有计算模式都支持这些策略。DNS 规则仅在 **Auto Mode 启动的 EC2 实例**上强制执行，即使集群是混合模式也如此。
 
-**Auto Mode 前置条件：**应用以下策略之前，先启用其 Network Policy Controller。更新由 EKS 管理的 `vpc-cni` 插件属于另一种路径，并不会为纯 Auto Mode 集群启用策略强制执行。所需设置为 ConfigMap `kube-system/amazon-vpc-cni` 中的 `data.enable-network-policy-controller: "true"`。以下工作流使用 merge patch 保留其他 ConfigMap 数据；仅在 ConfigMap 不存在时才创建，并在读取或写入失败时停止。运行前请检查集群 context 和现有配置。
+**Auto Mode 前置条件**：应用以下策略之前，先启用其 Network Policy Controller。更新由 EKS 管理的 `vpc-cni` 插件属于另一种路径，并不会为纯 Auto Mode 集群启用策略强制执行。所需设置为 ConfigMap `kube-system/amazon-vpc-cni` 中的 `data.enable-network-policy-controller: "true"`。以下工作流使用 merge patch 保留其他 ConfigMap 数据；仅在 ConfigMap 不存在时才创建，并在读取或写入失败时停止。运行前请检查集群 context 和现有配置。
 
 ```bash
 set -euo pipefail

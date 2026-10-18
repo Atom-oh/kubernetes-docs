@@ -23,7 +23,7 @@ sudo bpftool feature probe kernel
 
 必须挂载并能够访问 Tracefs；某些系统会在 `/sys/kernel/debug/tracing` 下提供它。即使以容器 root 身份运行，内核配置、能力、lockdown/LSM 策略和容器限制也可能阻止程序加载或附加。`CAP_BPF` 并不是通用的跟踪权限；具体要求取决于内核、程序类型和 BPF token 委派方式。
 
-**验证范围：**这些示例已通过针对 libbpf 1.7 的主机 C 语法检查、用户空间链接检查和确定性 helper 模拟。Clang BPF 目标编译、运行中内核的 verifier 检查和实时 tracepoint 附加仍需在准备好的 VM 中验证。这些示例并未经过生产环境测试，也不是无损跟踪方案。
+**验证范围**：这些示例已通过针对 libbpf 1.7 的主机 C 语法检查、用户空间链接检查和确定性 helper 模拟。Clang BPF 目标编译、运行中内核的 verifier 检查和实时 tracepoint 附加仍需在准备好的 VM 中验证。这些示例并未经过生产环境测试，也不是无损跟踪方案。
 
 ## eBPF 技术简介与历史背景
 
@@ -102,12 +102,12 @@ CO-RE 使用 BTF 和重定位来适配受支持的类型/字段访问。它不�
 
 ### eBPF 程序生命周期详解
 
-1. **开发：**选择 hook/上下文并定义 maps/license 元数据。并非所有程序都需要 GPL 兼容性，但 GPL-only helper 和某些类型/kfunc 会施加限制。这些跟踪示例使用 GPL 元数据以适配所用 helper。
-2. **编译：**使用目标工具链和头文件生成 BPF ELF 以及所需的调试/BTF 信息。
-3. **打开/加载：**解析 ELF、创建或显式复用 maps、进行重定位并调用 BPF 加载 API。验证和可选的 JIT 会在加载期间进行。
-4. **附加：**使用相应的 API。libbpf 可以根据 `SEC("tracepoint/...")` 推断这些 tracepoint。保持 link/附加状态处于活动状态。
-5. **运行/观察：**事件会调用程序；用户空间读取 maps/buffers。采样和容量限制可能导致观测数据丢失。
-6. **更新/卸载：**只有在明确需要时才保留兼容的 maps/links/pins。销毁此实验的 link 并关闭其对象以释放资源。
+1. **开发**：选择 hook/上下文并定义 maps/license 元数据。并非所有程序都需要 GPL 兼容性，但 GPL-only helper 和某些类型/kfunc 会施加限制。这些跟踪示例使用 GPL 元数据以适配所用 helper。
+2. **编译**：使用目标工具链和头文件生成 BPF ELF 以及所需的调试/BTF 信息。
+3. **打开/加载**：解析 ELF、创建或显式复用 maps、进行重定位并调用 BPF 加载 API。验证和可选的 JIT 会在加载期间进行。
+4. **附加**：使用相应的 API。libbpf 可以根据 `SEC("tracepoint/...")` 推断这些 tracepoint。保持 link/附加状态处于活动状态。
+5. **运行/观察**：事件会调用程序；用户空间读取 maps/buffers。采样和容量限制可能导致观测数据丢失。
+6. **更新/卸载**：只有在明确需要时才保留兼容的 maps/links/pins。销毁此实验的 link 并关闭其对象以释放资源。
 
 在 Linux 6.12 中，具备 BPF 能力的加载路径最多允许 1,000,000 条指令，非特权路径则最多允许 4,096 条指令。verifier 另有 1,000,000 条指令的**分析复杂度**限制。较小的程序也可能无法通过验证。非特权 BPF 通常处于禁用状态；token/能力和程序类型检查仍然适用。
 
@@ -225,11 +225,11 @@ agent 会协调 endpoints、身份、策略和数据路径状态。Operator 负�
 
 以下是相互配合的功能，并非每个数据包都遵循的固定顺序：
 
-1. **入口：**socket hook 可以在数据包产生前解析 Service 后端；TC 处理数据包路径；可选的 XDP 加速可处理受支持的外部流量。
-2. **身份/策略：**IP/身份和 endpoint 策略控制 L3/L4 访问。受支持的 HTTP/gRPC 策略使用 Envoy，DNS 策略使用 DNS 代理；L7 解析/强制执行并非完全由 BPF 完成。
-3. **状态/转换：**conntrack、service/backend、reverse-NAT 和 affinity maps 各有不同用途。并非每个数据包都会重新选择后端。
-4. **转发：**原生路由或配置的 overlay 会承载流量。DSR 分发/返回路径需要满足所选模式的网络前提条件。
-5. **观测：**数据路径计数器/事件和代理事件存在配置要求和采集丢失限制。
+1. **入口**：socket hook 可以在数据包产生前解析 Service 后端；TC 处理数据包路径；可选的 XDP 加速可处理受支持的外部流量。
+2. **身份/策略**：IP/身份和 endpoint 策略控制 L3/L4 访问。受支持的 HTTP/gRPC 策略使用 Envoy，DNS 策略使用 DNS 代理；L7 解析/强制执行并非完全由 BPF 完成。
+3. **状态/转换**：conntrack、service/backend、reverse-NAT 和 affinity maps 各有不同用途。并非每个数据包都会重新选择后端。
+4. **转发**：原生路由或配置的 overlay 会承载流量。DSR 分发/返回路径需要满足所选模式的网络前提条件。
+5. **观测**：数据路径计数器/事件和代理事件存在配置要求和采集丢失限制。
 
 后端就绪状态来自控制平面状态和适用的健康检查机制，而不是通用的 BPF 应用探测。Maglev、affinity、DSR 和加速都是可选功能，并非通用默认设置。
 
@@ -269,11 +269,11 @@ agent 会协调 endpoints、身份、策略和数据路径状态。Operator 负�
 
 ### 基于 eBPF 的功能及其边界
 
-- **策略：**Kubernetes NetworkPolicy 具有 L3/L4 语义；Cilium 资源会增加受支持的功能。无限制的 L4 allow 可能绕过重叠的 L7 限制型 allow；请检查组合策略。
-- **加密：**在 WireGuard/IPsec 模式下，BPF 会将流量导向这些内核功能；加密并非完全由 BPF 指令完成。请为所选模式配置密钥、端口、MTU 和流量覆盖范围。IPsec 和 WireGuard 的密钥操作各不相同。
-- **Service mesh：**用户空间代理提供受支持的 L7 处理。Kafka L7 策略已移除。Beta 工作负载 mTLS/ztunnel 有独立的前提条件，不能由节点加密功能推定已启用。
-- **带宽：**EDT/bandwidth-manager 和拥塞控制无法保证端到端 QoS 或吞吐量。
-- **多集群：**Cluster Mesh 需要连通性、身份、地址和兼容配置；它不会自动同步所有策略对象，也不能解决路由问题。
+- **策略**：Kubernetes NetworkPolicy 具有 L3/L4 语义；Cilium 资源会增加受支持的功能。无限制的 L4 allow 可能绕过重叠的 L7 限制型 allow；请检查组合策略。
+- **加密**：在 WireGuard/IPsec 模式下，BPF 会将流量导向这些内核功能；加密并非完全由 BPF 指令完成。请为所选模式配置密钥、端口、MTU 和流量覆盖范围。IPsec 和 WireGuard 的密钥操作各不相同。
+- **Service mesh**：用户空间代理提供受支持的 L7 处理。Kafka L7 策略已移除。Beta 工作负载 mTLS/ztunnel 有独立的前提条件，不能由节点加密功能推定已启用。
+- **带宽**：EDT/bandwidth-manager 和拥塞控制无法保证端到端 QoS 或吞吐量。
+- **多集群**：Cluster Mesh 需要连通性、身份、地址和兼容配置；它不会自动同步所有策略对象，也不能解决路由问题。
 
 ## 实验：eBPF 程序开发与调试
 

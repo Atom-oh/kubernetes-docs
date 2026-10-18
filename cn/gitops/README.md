@@ -145,7 +145,7 @@ GitOps agent 会持续执行以下操作：
 - 运行状况监控
 - 用于集群群组管理的 ApplicationSet
 
-**适用场景：**需要可视化管理、多集群部署和企业级功能的团队
+**适用场景**：需要可视化管理、多集群部署和企业级功能的团队
 
 ### FluxCD
 
@@ -158,7 +158,7 @@ FluxCD 是一套开放且可扩展的 Kubernetes 持续交付解决方案。
 - 多租户
 - 通知控制器
 
-**适用场景：**倾向于 CLI 优先、轻量级解决方案和镜像自动化工作流的团队
+**适用场景**：倾向于 CLI 优先、轻量级解决方案和镜像自动化工作流的团队
 
 ### Jenkins X / JayeX
 
@@ -170,7 +170,7 @@ Jenkins X / JayeX 为 Kubernetes 上的云原生应用提供 CI/CD。
 - GitOps 推广
 - 基于 Tekton 的流水线
 
-**评估适用场景：**集成式 CI/CD 和预览环境工作流；JayeX/Jenkins X / JayeX 并非只是启用了 GitOps 的 Jenkins
+**评估适用场景**：集成式 CI/CD 和预览环境工作流；JayeX/Jenkins X / JayeX 并非只是启用了 GitOps 的 Jenkins
 
 ### 对比矩阵
 

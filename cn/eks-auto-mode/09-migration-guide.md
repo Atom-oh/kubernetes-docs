@@ -109,7 +109,7 @@ jq '[.items[] | {namespace:.metadata.namespace,name:.metadata.name,node:.spec.no
 
 在自行管理的 AWS Load Balancer Controller 仍拥有资源期间，请保留该控制器。创建/测试新的托管负载均衡器，并在停用旧负载均衡器之前，通过经过审查的蓝绿 DNS 方案切换流量。分别审查类别不可变性、注解和 TargetGroupBinding 所有权；更改 API 组并不是安全的接管操作。
 
-Auto Mode 节点使用节点本地 DNS。**只要仍有任何非 Auto 节点需要 CoreDNS Deployment，就应保留它。**为剩余节点类型保留所需的 CNI/proxy/storage/identity 代理，并限定其放置范围；纯 Auto Mode 的托管组件并不能作为提前移除混合集群依赖的理由。
+Auto Mode 节点使用节点本地 DNS。**只要仍有任何非 Auto 节点需要 CoreDNS Deployment，就应保留它**。为剩余节点类型保留所需的 CNI/proxy/storage/identity 代理，并限定其放置范围；纯 Auto Mode 的托管组件并不能作为提前移除混合集群依赖的理由。
 
 ## 2. 启用 Auto Mode，但不创建不受限的默认节点池
 

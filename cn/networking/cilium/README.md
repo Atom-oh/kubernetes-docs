@@ -141,7 +141,7 @@ helm install cilium cilium/cilium --version 1.20.3 \
 
 请通过安装配置的所有者管理这些设置。仅包含少数几个键的替代 `cilium-config` 可能会移除其他必需设置；旧的 `tunnel=disabled` 值已由 `routingMode: native` 取代。ENI 分配/权限和 SNAT 行为仍需在运行时验证；成功渲染并不能证明 EC2 网络可用。
 
-**IPv6 说明：**1.20.3 的 ENI IPAM 参考文档将 IPv6 标为 Beta，而其 EKS 先决条件页面仍声明 ENI 集成仅支持 IPv4。本指南保留 IPv4 示例，并记录这一文档矛盾，而不将任一说法视为 EKS 生产环境 IPv6 兼容性的证明。在单独设计 IPv6 方案之前，请查阅当前的 ENI/双栈子网要求。
+**IPv6 说明**：1.20.3 的 ENI IPAM 参考文档将 IPv6 标为 Beta，而其 EKS 先决条件页面仍声明 ENI 集成仅支持 IPv4。本指南保留 IPv4 示例，并记录这一文档矛盾，而不将任一说法视为 EKS 生产环境 IPv6 兼容性的证明。在单独设计 IPv6 方案之前，请查阅当前的 ENI/双栈子网要求。
 
 ### VPC CNI Chaining 替代方案
 

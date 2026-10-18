@@ -80,7 +80,7 @@ aws eks update-kubeconfig --name my-cluster --region us-west-2
 
 **答案：C) 至少跨越 2 个可用区的子网**
 
-**说明：**创建 Amazon EKS 集群时，必须指定的 VPC 组件是至少跨越 2 个可用区的子网。这是 AWS 为确保 EKS 集群高可用性而提出的要求。
+**说明**：创建 Amazon EKS 集群时，必须指定的 VPC 组件是至少跨越 2 个可用区的子网。这是 AWS 为确保 EKS 集群高可用性而提出的要求。
 
 **EKS 集群 VPC 要求：**
 
@@ -216,7 +216,7 @@ fi
 
 **答案：B) `eksctl create cluster --name my-cluster --region us-west-2`**
 
-**说明：**使用 eksctl 创建 EKS 集群的正确命令是 `eksctl create cluster --name my-cluster --region us-west-2`。该命令会在指定名称和区域中使用默认设置创建 EKS 集群。
+**说明**：使用 eksctl 创建 EKS 集群的正确命令是 `eksctl create cluster --name my-cluster --region us-west-2`。该命令会在指定名称和区域中使用默认设置创建 EKS 集群。
 
 **eksctl 命令结构：**
 
@@ -648,7 +648,7 @@ eksctl create nodegroup \
 
 **答案：A) `aws eks update-kubeconfig --name my-cluster --region us-west-2`**
 
-**说明：**创建 Amazon EKS 集群后，配置 kubectl 的正确命令是 `aws eks update-kubeconfig --name my-cluster --region us-west-2`。此命令使用 AWS CLI 的 EKS 模块，更新指定集群的 kubeconfig 文件。
+**说明**：创建 Amazon EKS 集群后，配置 kubectl 的正确命令是 `aws eks update-kubeconfig --name my-cluster --region us-west-2`。此命令使用 AWS CLI 的 EKS 模块，更新指定集群的 kubeconfig 文件。
 
 **kubectl 配置过程：**
 
@@ -730,16 +730,16 @@ kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" --context cluster1-west get nodes
 
 ### 练习 1：使用 eksctl 创建 EKS 集群
 
-**场景：**为开发团队准备一个采用常规 EC2 托管节点组的集群。这是一个培训设计，并非已经通过生产就绪测试的证据，也不是经过测量的成本结果。
+**场景**：为开发团队准备一个采用常规 EC2 托管节点组的集群。这是一个培训设计，并非已经通过生产就绪测试的证据，也不是经过测量的成本结果。
 
-**要求：**使用两个 AZ，初始配置两个 `t3.medium` AL2023 节点，扩缩范围为 2–5，节点使用私有网络，并为两个 API endpoint 启用访问且配置经过批准的公共 CIDR。仅设置范围并不会安装自动扩缩器。在选择 `t3.medium` 之前，应检查可突增型实例的 CPU 积分、内存、IP 容量、配额和实际工作负载需求。
+**要求**：使用两个 AZ，初始配置两个 `t3.medium` AL2023 节点，扩缩范围为 2–5，节点使用私有网络，并为两个 API endpoint 启用访问且配置经过批准的公共 CIDR。仅设置范围并不会安装自动扩缩器。在选择 `t3.medium` 之前，应检查可突增型实例的 CPU 积分、内存、IP 容量、配额和实际工作负载需求。
 
 <details>
 <summary>显示答案</summary>
 
-**1. 准备工具和身份。**请使用[第 1 部分](../../eks/02-eks-cluster-creation-part1.md)中经过校验和检查、适用于相应架构的安装说明。本示例已根据 EKS 1.36 和 eksctl 0.230.0 进行审核；运行前请检查该区域提供的 EKS 版本，以及兼容的客户端/附加组件版本。`kubectl` 必须符合版本偏差限制。请使用现有且已获批准、登录用户可承担的操作员 IAM 角色；预置权限和 Kubernetes 访问权限是分开的。
+**1. 准备工具和身份**。请使用[第 1 部分](../../eks/02-eks-cluster-creation-part1.md)中经过校验和检查、适用于相应架构的安装说明。本示例已根据 EKS 1.36 和 eksctl 0.230.0 进行审核；运行前请检查该区域提供的 EKS 版本，以及兼容的客户端/附加组件版本。`kubectl` 必须符合版本偏差限制。请使用现有且已获批准、登录用户可承担的操作员 IAM 角色；预置权限和 Kubernetes 访问权限是分开的。
 
-**2. 生成并审核本地私有配置。**生成的名称用于新培训集群。公共 CIDR 必须是你实际获准使用的出口范围。两个 AZ 是 `us-west-2` 的示例，实际可用情况取决于供应和容量。
+**2. 生成并审核本地私有配置**。生成的名称用于新培训集群。公共 CIDR 必须是你实际获准使用的出口范围。两个 AZ 是 `us-west-2` 的示例，实际可用情况取决于供应和容量。
 
 ```bash
 # Use a dedicated training account/role with reviewed provisioning permissions.
@@ -800,7 +800,7 @@ eksctl create cluster -f "$EKS_LAB_DIR/cluster.yaml" --dry-run \
 
 此配置会专门为实验中的指定操作员授予 cluster-admin 访问权限，并禁用自动授予集群创建者管理员访问权限的行为。它不会创建操作员角色，也不会授予调用者承担该角色的权限。eksctl 会创建所需的集群/节点角色；请审核其生成策略的权限范围。常规基线配置可以将 VPC CNI 权限放在节点角色上。如需增强工作负载隔离，请根据官方 CNI IAM 指南为 `aws-node` 配置专用角色。不要仅仅因为之后可能会使用这些附加组件，就向所有节点添加宽泛的镜像推送、DNS、存储、负载均衡器或日志记录权限。
 
-**3. 仅在审核配置和费用后预置资源。**默认的新 VPC 拓扑可能会创建 NAT 和其他收费基础设施。`eksctl` 使用 CloudFormation 创建 VPC/子网/安全组/角色/集群/节点组资源。失败时可能留下部分资源；请检查其堆栈事件，不要假定系统会自动彻底清理。
+**3. 仅在审核配置和费用后预置资源**。默认的新 VPC 拓扑可能会创建 NAT 和其他收费基础设施。`eksctl` 使用 CloudFormation 创建 VPC/子网/安全组/角色/集群/节点组资源。失败时可能留下部分资源；请检查其堆栈事件，不要假定系统会自动彻底清理。
 
 ```bash
 # Provisioning step: creates billable AWS resources.
@@ -815,7 +815,7 @@ if eksctl create cluster -f "${EKS_LAB_DIR:?}/cluster.yaml" --write-kubeconfig=f
 fi
 ```
 
-**4. 验证实际状态、访问权限和扩缩范围。**等待 `ACTIVE` 节点组/集群状态和 `Ready` 节点，检查不健康的系统 Pod，并验证预期的 AZ 分布。创建请求成功或 RBAC 列表可见都不足以证明集群安全且运行正常。
+**4. 验证实际状态、访问权限和扩缩范围**。等待 `ACTIVE` 节点组/集群状态和 `Ready` 节点，检查不健康的系统 Pod，并验证预期的 AZ 分布。创建请求成功或 RBAC 列表可见都不足以证明集群安全且运行正常。
 
 ```bash
 aws eks describe-cluster --name "${EKS_LAB_CLUSTER:?}" \
@@ -830,9 +830,9 @@ kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" get pods -n kube-system
 kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" auth can-i get nodes
 ```
 
-**5. 仅添加必需组件。**Cluster Autoscaler 需要高级问题 2 中所述的 IAM/服务账户/发现配置；扩缩范围本身不会根据工作负载需求作出响应。`kubectl top` 需要已安装且运行正常的 Metrics Server。在经过审计的 Metrics Server 0.9.0 基线中，支持 Kubernetes 1.34 及更高版本；请验证实际安装的版本。在声称节省成本或正确完成规格配置之前，应先测量有代表性的使用情况。
+**5. 仅添加必需组件**。Cluster Autoscaler 需要高级问题 2 中所述的 IAM/服务账户/发现配置；扩缩范围本身不会根据工作负载需求作出响应。`kubectl top` 需要已安装且运行正常的 Metrics Server。在经过审计的 Metrics Server 0.9.0 基线中，支持 Kubernetes 1.34 及更高版本；请验证实际安装的版本。在声称节省成本或正确完成规格配置之前，应先测量有代表性的使用情况。
 
-**6. 清理此培训集群。**首先移除实验创建的 LoadBalancer Service/Ingress，并等待其控制器释放 AWS 资源；检查 PVC 回收策略和保留的卷。本练习本身不会创建此类应用程序资源。然后仅删除已记录的集群：
+**6. 清理此培训集群**。首先移除实验创建的 LoadBalancer Service/Ingress，并等待其控制器释放 AWS 资源；检查 PVC 回收策略和保留的卷。本练习本身不会创建此类应用程序资源。然后仅删除已记录的集群：
 
 ```bash
 # Only after removing this lab's workloads and checking retained resources.
@@ -852,7 +852,7 @@ fi
 
 ### 练习 2：使用 AWS Management Console 创建 EKS 集群
 
-**场景：**审核一种常规托管节点组设计，该设计可为后续生产部署提供参考。其工作负载规格、路由、IAM、可用性、升级和恢复仍是特定于环境的假设，需要经过测试。本次审计期间未实际预置或进行负载测试。
+**场景**：审核一种常规托管节点组设计，该设计可为后续生产部署提供参考。其工作负载规格、路由、IAM、可用性、升级和恢复仍是特定于环境的假设，需要经过测试。本次审计期间未实际预置或进行负载测试。
 
 <details>
 <summary>显示答案</summary>
@@ -863,7 +863,7 @@ fi
 - EC2 节点角色：信任 `ec2.amazonaws.com`，并附加 `AmazonEKSWorkerNodePolicy` 和 `AmazonEC2ContainerRegistryPullOnly`。在受支持的情况下，为 VPC CNI 配置其专用 IRSA/Pod Identity 角色。如果有意采用较简单的 IPv4 节点角色备用方案，则应明确附加 `AmazonEKS_CNI_Policy`，并记录共享权限的权衡。
 - 预置/操作员身份：使用经过批准、限定资源范围的 IAM 权限，并通过 `iam:PassRole` 使用这些角色。为现有操作员角色添加 EKS access entry，并配置实验所需的访问策略。仅创建 kubeconfig 不会授予任何 Kubernetes 授权。
 
-**2. 审核 VPC 和子网。**以下官方示例仍可作为参考；URL 中的日期不是 EKS 版本：
+**2. 审核 VPC 和子网**。以下官方示例仍可作为参考；URL 中的日期不是 EKS 版本：
 
 ```text
 https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
@@ -873,16 +873,16 @@ https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-e
 
 记录 `VpcId`、`SubnetIds` 和 `SecurityGroups`。`SubnetIds` 同时包含**公共和私有子网**；请检查各路由表，并为节点选择实际的私有子网。输出中的自定义安全组并不能证明所有必需的通信规则都已存在。请审核 EKS 集群安全组、其他安全组以及控制平面/节点通信规则。
 
-**3. 创建常规集群。**在 EKS 控制台中，选择自定义配置路径，并为本练习禁用 Auto Mode。选择 EKS 标准支持中的可用兼容版本（本次审计示例为 1.36）、集群服务角色以及经过审核的 VPC/子网。
+**3. 创建常规集群**。在 EKS 控制台中，选择自定义配置路径，并为本练习禁用 Auto Mode。选择 EKS 标准支持中的可用兼容版本（本次审计示例为 1.36）、集群服务角色以及经过审核的 VPC/子网。
 
 - 选择 API access-entry 身份验证，并授予指定操作员适当的访问权限；不要依赖没有说明的创建者管理员默认行为。
 - 如果采用仅限私有访问的 API，请先验证管理网络的私有路由/DNS。或者同时启用公共和私有访问，并将 `publicAccessCidrs` 限制为获批的管理出口范围。
 - 为此常规 EC2 集群保留兼容的 VPC CNI、kube-proxy 和 CoreDNS 附加组件；审核其配置/权限。启用必需的控制平面日志，并考虑日志费用。
 - 审核并创建集群，然后等待其变为 `ACTIVE`。创建耗时不固定；引用一个预计分钟数不能作为完成验证。
 
-**4. 添加托管节点组。**选择 EC2 节点角色、AL2023 x86_64 AMI，以及受支持的实例类型，例如示例中的 `m5.large`。该示例使用 50 GiB 根磁盘、期望大小 3、最小值 2、最大值 5，并使用经过审核的私有子网。这些只是规格示例，并非生产建议。根据要求配置访问、IMDS 和存储加密；等待节点组变为 `ACTIVE`，并等待节点变为 `Ready`。
+**4. 添加托管节点组**。选择 EC2 节点角色、AL2023 x86_64 AMI，以及受支持的实例类型，例如示例中的 `m5.large`。该示例使用 50 GiB 根磁盘、期望大小 3、最小值 2、最大值 5，并使用经过审核的私有子网。这些只是规格示例，并非生产建议。根据要求配置访问、IMDS 和存储加密；等待节点组变为 `ACTIVE`，并等待节点变为 `Ready`。
 
-**5. 验证访问权限并检查实际 AWS 安全组。**使用控制台中记录的集群名称和获批的操作员角色：
+**5. 验证访问权限并检查实际 AWS 安全组**。使用控制台中记录的集群名称和获批的操作员角色：
 
 ```bash
 CONSOLE_LAB_DIR=$(mktemp -d /tmp/eks-console-lab.XXXXXX)
@@ -901,7 +901,7 @@ aws ec2 describe-security-groups --region "$EXAMPLE_REGION" \
   --group-ids "${REVIEWED_CLUSTER_SG_ID:?Copy the cluster SG ID from the result above}"
 ```
 
-**6. 可选的 NetworkPolicy 练习。**首先验证所选 CNI 及其配置是否强制执行 NetworkPolicy。AWS VPC CNI 的策略支持必须已启用，并且节点/OS 设置必须支持该功能。以下仅拒绝入口流量的默认拒绝策略仅应用于新创建的空实验 namespace；它不会拒绝出口流量，且仅仅因为 `apply` 成功并不能证明策略正在生效。
+**6. 可选的 NetworkPolicy 练习**。首先验证所选 CNI 及其配置是否强制执行 NetworkPolicy。AWS VPC CNI 的策略支持必须已启用，并且节点/OS 设置必须支持该功能。以下仅拒绝入口流量的默认拒绝策略仅应用于新创建的空实验 namespace；它不会拒绝出口流量，且仅仅因为 `apply` 成功并不能证明策略正在生效。
 
 ```bash
 # An optional isolated policy example, after enabling CNI policy enforcement.
@@ -939,7 +939,7 @@ else
 fi
 ```
 
-**7. 控制台清理：**移除实验工作负载，并等待相关云资源释放，然后删除此实验的托管节点组，等待其删除，再删除实验集群。只有在 EKS 资源及外部依赖均已删除后，才能删除实验 VPC CloudFormation 堆栈。仅删除专为此实验创建的 IAM 角色/endpoint；保留共享资源，并检查任何删除失败或保留的资源。本次审核未执行这些操作。
+**7. 控制台清理**：移除实验工作负载，并等待相关云资源释放，然后删除此实验的托管节点组，等待其删除，再删除实验集群。只有在 EKS 资源及外部依赖均已删除后，才能删除实验 VPC CloudFormation 堆栈。仅删除专为此实验创建的 IAM 角色/endpoint；保留共享资源，并检查任何删除失败或保留的资源。本次审核未执行这些操作。
 
 </details>
 
@@ -960,7 +960,7 @@ fi
 
 启动模板可自定义 **EC2 托管节点组**，包括存储、实例元数据和特定于 OS 的用户数据。它们不能配置 EKS 控制平面或 EKS Auto Mode 节点。
 
-**AL2023 用户数据：**使用 MIME multipart 数据。使用 EKS 选择的 AMI（模板中没有 `ImageId`）时，EKS 会提供/合并节点配置。使用自定义 AMI ID 时，请提供高级问题 5 中介绍的完整 `NodeConfig`。AL2023 的 systemd 服务会运行 `nodeadm`；不要调用 `/etc/eks/bootstrap.sh`、再次运行 `nodeadm init` 或手动启动 kubelet。其他软件必须兼容所选 OS，并且其软件包源必须可访问且可信。
+**AL2023 用户数据**：使用 MIME multipart 数据。使用 EKS 选择的 AMI（模板中没有 `ImageId`）时，EKS 会提供/合并节点配置。使用自定义 AMI ID 时，请提供高级问题 5 中介绍的完整 `NodeConfig`。AL2023 的 systemd 服务会运行 `nodeadm`；不要调用 `/etc/eks/bootstrap.sh`、再次运行 `nodeadm init` 或手动启动 kubelet。其他软件必须兼容所选 OS，并且其软件包源必须可访问且可信。
 
 以下最小化自定义配置适用于 EKS 选择的 AL2023 AMI；它只会创建一个应用程序目录：
 
@@ -978,7 +978,7 @@ install -d -m 0755 /opt/company
 --EKS_CUSTOMIZATION--
 ```
 
-**存储：**以下是一个有效的 `LaunchTemplateData` 片段。请确认 AMI 的根设备名称。附加卷不会自动格式化或挂载。两个示例卷都经过加密，并会在实例终止时删除；对于必须在节点替换后保留的应用程序数据，请使用由 CSI 管理的 PV，并采用适当的回收/备份策略。
+**存储**：以下是一个有效的 `LaunchTemplateData` 片段。请确认 AMI 的根设备名称。附加卷不会自动格式化或挂载。两个示例卷都经过加密，并会在实例终止时删除；对于必须在节点替换后保留的应用程序数据，请使用由 CSI 管理的 PV，并采用适当的回收/备份策略。
 
 ```json
 {
@@ -1007,7 +1007,7 @@ install -d -m 0755 /opt/company
 }
 ```
 
-**网络和元数据：**请将示例安全组替换为其规则允许所需控制平面、节点、DNS 和工作负载流量的安全组。提供自定义安全组时，EKS **不会**自动添加集群安全组。应在实例级别或网络接口级别指定安全组，而不是同时在两者上指定。
+**网络和元数据**：请将示例安全组替换为其规则允许所需控制平面、节点、DNS 和工作负载流量的安全组。提供自定义安全组时，EKS **不会**自动添加集群安全组。应在实例级别或网络接口级别指定安全组，而不是同时在两者上指定。
 
 ```json
 {
@@ -1028,7 +1028,7 @@ install -d -m 0755 /opt/company
 
 跳数限制为 1 的前提是 Pod 使用 IRSA 或 EKS Pod Identity，而不是节点凭证。需要从容器访问 IMDSv2 的工作负载可能需要将跳数限制设为 2。此设置和 IMDSv2 都不会为 `hostNetwork` Pod 创建隔离。多个网络接口、置放方式和实例存储设备需要兼容的实例类型，并受 EKS 启动模板限制；它们并非在所有情况下都可互换使用。
 
-**创建节点组：**审核实际 ID、权限和网络路由后，选择 eksctl 配置或 AWS CLI 示例之一。这两个示例是替代方案，不是连续执行的说明：
+**创建节点组**：审核实际 ID、权限和网络路由后，选择 eksctl 配置或 AWS CLI 示例之一。这两个示例是替代方案，不是连续执行的说明：
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1075,7 +1075,7 @@ aws eks create-nodegroup \
 
 仅因某实例属于最新一代就将其用于所有节点，并不足以构成成本分析。应比较工作负载的架构、吞吐量、延迟、内存、区域可用性和中断容忍度。新一代实例可能更经济；对于同等有效工作量，更新或较旧的实例并非总是更便宜。
 
-1. **Spot 和实例类型多样化：**AWS 宣称 Spot 价格相较按需价格最高可优惠 90%；这只是潜在的定价折扣，并非本实验已测得或保证的节省金额。应考虑中断和替换容量。对于 Cluster Autoscaler，同一节点组中的混合实例类型应具有相同的 CPU/内存/GPU 规格，因为调度模拟会使用第一个实例类型。请另行验证对本地磁盘的依赖。
+1. **Spot 和实例类型多样化**：AWS 宣称 Spot 价格相较按需价格最高可优惠 90%；这只是潜在的定价折扣，并非本实验已测得或保证的节省金额。应考虑中断和替换容量。对于 Cluster Autoscaler，同一节点组中的混合实例类型应具有相同的 CPU/内存/GPU 规格，因为调度模拟会使用第一个实例类型。请另行验证对本地磁盘的依赖。
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1094,7 +1094,7 @@ managedNodeGroups:
     maxSize: 5
 ```
 
-2. **Cluster Autoscaler：**最小/最大规格仅设置扩缩范围。需要安装并授权控制器，使其能根据无法调度的 Pod 和可移除容量调整期望容量。不要向所有节点授予宽泛的自动扩缩权限。在此次**新安装**前，应准备 `kube-system/cluster-autoscaler` 服务账户，并配置专用 IRSA 角色（OIDC 信任范围限定为该服务账户）或受支持的 Pod Identity 设置。将扩缩写入权限限制在目标集群的 Auto Scaling group，并使用 `k8s.io/cluster-autoscaler/enabled=true` 和 `k8s.io/cluster-autoscaler/<cluster-name>=owned` 标签标记这些 group。仅有节点组资源标签并不能证明已配置 ASG 发现功能。
+2. **Cluster Autoscaler**：最小/最大规格仅设置扩缩范围。需要安装并授权控制器，使其能根据无法调度的 Pod 和可移除容量调整期望容量。不要向所有节点授予宽泛的自动扩缩权限。在此次**新安装**前，应准备 `kube-system/cluster-autoscaler` 服务账户，并配置专用 IRSA 角色（OIDC 信任范围限定为该服务账户）或受支持的 Pod Identity 设置。将扩缩写入权限限制在目标集群的 Auto Scaling group，并使用 `k8s.io/cluster-autoscaler/enabled=true` 和 `k8s.io/cluster-autoscaler/<cluster-name>=owned` 标签标记这些 group。仅有节点组资源标签并不能证明已配置 ASG 发现功能。
 
 控制器次要版本必须与集群匹配。Chart 9.59.0 默认使用控制器 1.35.0，因此此 EKS 1.36 示例明确选择 1.36.1。其他集群版本需要相匹配的控制器版本。请确认没有现有 CA 安装正在管理相同的 group。
 
@@ -1114,8 +1114,8 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler \
   --wait --timeout 5m
 ```
 
-3. **Fargate 和合理调整规格：**Fargate 可减少主机管理工作，但会根据分配的资源和运行时间收费，而不只是根据测量到的 CPU 使用量收费。应将 profile 与受支持的 Pod 和私有子网网络相匹配，并与 EC2 总成本进行比较。`kubectl top` 需要 Metrics Server，短时间采样不能替代容量规划。
-4. **Graviton：**创建 ARM 节点组前，先测试 ARM64 镜像和依赖项。针对特定代际的“最高提升 40% 价格/性能”说法，并不代表账单普遍降低 40%，也不保证性能相同。
+3. **Fargate 和合理调整规格**：Fargate 可减少主机管理工作，但会根据分配的资源和运行时间收费，而不只是根据测量到的 CPU 使用量收费。应将 profile 与受支持的 Pod 和私有子网网络相匹配，并与 EC2 总成本进行比较。`kubectl top` 需要 Metrics Server，短时间采样不能替代容量规划。
+4. **Graviton**：创建 ARM 节点组前，先测试 ARM64 镜像和依赖项。针对特定代际的“最高提升 40% 价格/性能”说法，并不代表账单普遍降低 40%，也不保证性能相同。
 
 ```bash
 # Metrics Server must already be installed and healthy.
@@ -1131,8 +1131,8 @@ eksctl create nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
   --node-type m6g.large --nodes 2 --node-private-networking
 ```
 
-5. **承诺用量：**Reserved Instance 和 Savings Plans 可以降低符合条件的可预测用量成本。最高 72% 的宣传节省幅度取决于产品、期限、付款方式和用量；未使用的承诺可能抵消节省。
-6. **requests 和 limits：**选择数值前应测量有代表性的工作负载。requests 会影响调度和自动扩缩器决策；limits 过小可能导致 CPU 限流或 OOM 终止。以下是单个容器的示例值：
+5. **承诺用量**：Reserved Instance 和 Savings Plans 可以降低符合条件的可预测用量成本。最高 72% 的宣传节省幅度取决于产品、期限、付款方式和用量；未使用的承诺可能抵消节省。
+6. **requests 和 limits**：选择数值前应测量有代表性的工作负载。requests 会影响调度和自动扩缩器决策；limits 过小可能导致 CPU 限流或 OOM 终止。以下是单个容器的示例值：
 
 ```yaml
 # Fragment inside spec.template.spec.containers[].
@@ -1145,7 +1145,7 @@ resources:
     memory: 256Mi
 ```
 
-7. **成本分配：**使用 Cost Explorer 以及已配置的分配报告/工具。Kubernetes 标签不会自动成为已启用的 AWS 成本分配标签。应将控制平面、适用情况下的 Auto Mode 费用、存储、负载均衡器、NAT、传输和日志记录成本都纳入考量。
+7. **成本分配**：使用 Cost Explorer 以及已配置的分配报告/工具。Kubernetes 标签不会自动成为已启用的 AWS 成本分配标签。应将控制平面、适用情况下的 Auto Mode 费用、存储、负载均衡器、NAT、传输和日志记录成本都纳入考量。
 
 参考资料：[EKS 上的 CA](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)、[CA Chart](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler)、[CA 1.36.1](https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1)、[Spot 定价](https://aws.amazon.com/ec2/spot/)、[Fargate 定价](https://aws.amazon.com/fargate/pricing/)、[Graviton](https://aws.amazon.com/ec2/graviton/)、[Savings Plans](https://aws.amazon.com/savingsplans/)。
 
@@ -1166,7 +1166,7 @@ resources:
 
 对于本问题，要求是 API 仅限私有访问，并且节点/Pod 无法访问出站互联网。应启用私有 endpoint、禁用公共 endpoint、使用没有互联网出口路径的私有节点子网，并提供工作负载所需的服务 endpoint、镜像仓库镜像和管理路径。
 
-**Endpoint 转换：**首先启用私有访问，等待更新成功，然后从指定私有网络测试经过身份验证的 `kubectl` 访问。只有在此之后，才使用下方单独的仅私有访问方案。检查返回的更新，直到状态为 `Successful`，然后重新检查访问。公共 endpoint 由 `publicAccessCidrs` 限制，而不是由集群安全组限制；后者控制私有 endpoint 流量。
+**Endpoint 转换**：首先启用私有访问，等待更新成功，然后从指定私有网络测试经过身份验证的 `kubectl` 访问。只有在此之后，才使用下方单独的仅私有访问方案。检查返回的更新，直到状态为 `Successful`，然后重新检查访问。公共 endpoint 由 `publicAccessCidrs` 限制，而不是由集群安全组限制；后者控制私有 endpoint 流量。
 
 ```bash
 # Separate alternative: run only after verifying private DNS/routing/API access
@@ -1180,7 +1180,7 @@ aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
   --update-id "$PRIVATE_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
 
-**节点位置：**此片段使用现有 VPC 和私有子网；使用前请替换 ID 并验证路由。它不会创建 VPC endpoint，也不会移除现有 NAT 路由。从无法访问私有网络的互联网工作站运行 eksctl，并不能访问仅限私有访问的 Kubernetes API。
+**节点位置**：此片段使用现有 VPC 和私有子网；使用前请替换 ID 并验证路由。它不会创建 VPC endpoint，也不会移除现有 NAT 路由。从无法访问私有网络的互联网工作站运行 eksctl，并不能访问仅限私有访问的 Kubernetes API。
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1207,7 +1207,7 @@ managedNodeGroups:
     privateNetworking: true
 ```
 
-**AWS 服务连接：**以下 ECR 和 S3 示例只是整体设计的一部分。请先审核现有 endpoint，避免重复的私有 DNS 配置冲突。Interface endpoint 需要启用私有 DNS，并允许预期客户端通过 HTTPS 入站；S3 gateway endpoint 需要关联私有路由表，并使用适当的 endpoint/bucket 策略。
+**AWS 服务连接**：以下 ECR 和 S3 示例只是整体设计的一部分。请先审核现有 endpoint，避免重复的私有 DNS 配置冲突。Interface endpoint 需要启用私有 DNS，并允许预期客户端通过 HTTPS 入站；S3 gateway endpoint 需要关联私有路由表，并使用适当的 endpoint/bucket 策略。
 
 ```bash
 # Example fragments for a reviewed no-internet VPC design.
@@ -1243,7 +1243,7 @@ aws ec2 create-vpc-endpoint --region "${EXAMPLE_REGION:?}" \
 
 Endpoint 服务和 DNS 名称因区域/分区而异。请检查每个工作负载的完整依赖项，包括镜像仓库、软件包下载、外部 API 和附加组件功能。单个 AWS 服务的 endpoint 并不能替代通用互联网连接。
 
-**管理：**使用通过路由连接的 VPN/Direct Connect、具有私有访问权限的受控主机，或经过适当配置的 SSM 会话。堡垒机并非必然需要公共 IP。SSM 仍需要其 Agent、IAM 授权和服务连接。
+**管理**：使用通过路由连接的 VPN/Direct Connect、具有私有访问权限的受控主机，或经过适当配置的 SSM 会话。堡垒机并非必然需要公共 IP。SSM 仍需要其 Agent、IAM 授权和服务连接。
 
 私有 API 配合由 NAT 支持的私有节点也是有效的 EKS 设计，但不符合本问题中无互联网出口的要求。同样，仅有子网公共路由并不能证明某个节点可访问互联网；地址分配和安全控制也很重要。
 
@@ -1284,9 +1284,9 @@ fi
 
 记录返回的更新 ID，并重复运行 `describe-update`，直到状态变为终止状态。API 提交成功并不意味着更新完成。继续操作前，应先调查返回的错误。阻止驱逐的 PDB 可能导致 `PodEvictionFailure`；不要只为让命令完成就使用 `--force` 绕过它。
 
-**蓝绿部署：**创建单独且兼容的 AL2023 节点组，测试工作负载调度和就绪情况，然后逐步迁移。只有在应用程序检查、卷/AZ 限制和回滚要求均满足后，才保留旧容量。仅列出节点标签并不构成验证；流量通过 Service endpoint/Pod 路由，而不是按节点组名称路由。创建新节点组后，不要立即自动删除旧节点组。
+**蓝绿部署**：创建单独且兼容的 AL2023 节点组，测试工作负载调度和就绪情况，然后逐步迁移。只有在应用程序检查、卷/AZ 限制和回滚要求均满足后，才保留旧容量。仅列出节点标签并不构成验证；流量通过 Service endpoint/Pod 路由，而不是按节点组名称路由。创建新节点组后，不要立即自动删除旧节点组。
 
-**Canary：**使用小型、单独标记并添加污点的节点组。污点可阻止无关 Pod 落入该组；只有测试工作负载会选择并容忍此污点。如果系统 DaemonSet 的容忍规则允许，它们仍可运行。这是针对现有测试集群的示例配置：
+**Canary**：使用小型、单独标记并添加污点的节点组。污点可阻止无关 Pod 落入该组；只有测试工作负载会选择并容忍此污点。如果系统 DaemonSet 的容忍规则允许，它们仍可运行。这是针对现有测试集群的示例配置：
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1352,7 +1352,7 @@ spec:
               memory: 256Mi
 ```
 
-**中断预算和容量：**以下单独示例假设 `app-namespace` 中存在真实的 `my-app` 工作负载，且通常至少有三个就绪副本。它不是上述单副本 canary 的 PDB：
+**中断预算和容量**：以下单独示例假设 `app-namespace` 中存在真实的 `my-app` 工作负载，且通常至少有三个就绪副本。它不是上述单副本 canary 的 PDB：
 
 ```yaml
 apiVersion: policy/v1

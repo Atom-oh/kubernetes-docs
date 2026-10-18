@@ -3,7 +3,7 @@
 > **Versión de referencia de la revisión**: Airflow 3.3.1 · chart oficial de Helm 1.22.0
 > **Último parche upstream comprobado**: Airflow 3.3.2 (17 de septiembre de 2026); los ejemplos siguen en 3.3.1 · 12 de octubre de 2026
 
-Apache Airflow define las dependencias de los flujos de trabajo como DAG y programa,
+Apache Airflow define las dependencias de los flujos de trabajo como grafos acíclicos dirigidos (DAG) y programa,
 ejecuta y supervisa sus tareas. En EKS, el comportamiento de los pods por tarea depende del **executor y
 del operador**, no solo de instalar un chart de Helm.
 
@@ -11,7 +11,7 @@ Airflow 2 llegó al fin de su vida útil el 22 de abril de 2026. Para implementa
 nuevas, usa una versión 3.x con mantenimiento. El chart 1.22.0 usa **Airflow 3.2.2** de forma
 predeterminada, así que verifica por separado las versiones del chart, la imagen y la
 configuración de Airflow. Esta serie revisa el comportamiento de 3.3.1 y renderiza el chart
-con esa versión especificada.
+con una anulación que fija esa versión.
 
 La versión upstream 3.3.2 se publicó el 17 de septiembre de 2026. Un token Bearer explícito
 tiene prioridad sobre una cookie de sesión, y un token Bearer no válido rechaza la solicitud
@@ -35,7 +35,7 @@ vuelto a validar con 3.3.2.
 
 Los bundles de DAG no sustituyen a git-sync en todos los casos. El chart oficial sigue
 admitiendo git-sync; distingue entre la entrega y el versionado de bundles. La separación
-del análisis tampoco elimina toda latencia, los cuellos de botella de la base de datos ni
+del análisis sintáctico tampoco elimina todos los problemas de latencia, los cuellos de botella de la base de datos ni
 las preocupaciones de alta disponibilidad.
 
 ## Serie

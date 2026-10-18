@@ -78,13 +78,13 @@ env:
 
 ### TCP 优化
 
-**TCP early demux：**这不是通用的吞吐量开关。在文档所述的 Pod 安全组 **strict** 模式场景中，禁用它可使 kubelet TCP 探测能够到达 branch-ENI Pod。此设置属于 `aws-vpc-cni-init`，而非 `aws-node` 主容器。standard 模式不需要此变通方法。只有在确认模式和故障路径后才应用；Helm 片段如下：
+**TCP early demux**：这不是通用的吞吐量开关。在文档所述的 Pod 安全组 **strict** 模式场景中，禁用它可使 kubelet TCP 探测能够到达 branch-ENI Pod。此设置属于 `aws-vpc-cni-init`，而非 `aws-node` 主容器。standard 模式不需要此变通方法。只有在确认模式和故障路径后才应用；Helm 片段如下：
 ```yaml
 init:
   env:
     DISABLE_TCP_EARLY_DEMUX: "true"
 ```
-**Keepalive：**只有应用程序在套接字上启用 TCP keepalive 时，它才会检测不活动/断开的长连接。它与 HTTP 连接池不同，也不会加速短连接。请先读取受影响主机/网络命名空间中的值；在管理员的笔记本电脑上运行 `sysctl` 读取的是该笔记本电脑的设置，而不是 EKS 节点的设置：
+**Keepalive**：只有应用程序在套接字上启用 TCP keepalive 时，它才会检测不活动/断开的长连接。它与 HTTP 连接池不同，也不会加速短连接。请先读取受影响主机/网络命名空间中的值；在管理员的笔记本电脑上运行 `sysctl` 读取的是该笔记本电脑的设置，而不是 EKS 节点的设置：
 ```bash
 sysctl net.ipv4.tcp_keepalive_time net.ipv4.tcp_keepalive_intvl \
   net.ipv4.tcp_keepalive_probes net.ipv4.tcp_rmem net.ipv4.tcp_wmem \
@@ -104,7 +104,7 @@ spec:
         - name: net.ipv4.tcp_keepalive_probes
           value: "6"
 ```
-**缓冲区：**使用以字节为单位的带宽时延积来确定实验规模：`bandwidth_bits_per_second × RTT_seconds / 8`。TCP 自动调优、并行流、套接字覆盖设置和总内存压力都会产生影响。此前的 16,777,216 字节最大值（16 MiB）以及 `4096 87380 16777216` / `4096 65536 16777216` 这些三元组只是示例，并非测得的最优值。从 Kubernetes 1.32 开始，在内核 4.15+ 上，`tcp_rmem`/`tcp_wmem` 属于安全 Pod sysctl；不能假定 `net.core.*` 设置也具有相同的准入/隔离支持。节点级更改应使用节点所有者受控的配置，并比较更改前后的错误、延迟、吞吐量和内存情况。
+**缓冲区**：使用以字节为单位的带宽时延积来确定实验规模：`bandwidth_bits_per_second × RTT_seconds / 8`。TCP 自动调优、并行流、套接字覆盖设置和总内存压力都会产生影响。此前的 16,777,216 字节最大值（16 MiB）以及 `4096 87380 16777216` / `4096 65536 16777216` 这些三元组只是示例，并非测得的最优值。从 Kubernetes 1.32 开始，在内核 4.15+ 上，`tcp_rmem`/`tcp_wmem` 属于安全 Pod sysctl；不能假定 `net.core.*` 设置也具有相同的准入/隔离支持。节点级更改应使用节点所有者受控的配置，并比较更改前后的错误、延迟、吞吐量和内存情况。
 
 ### 节点放置与局部性
 
@@ -328,9 +328,9 @@ kubectl -n "$APP_NAMESPACE" get endpointslices \
 kubectl -n "$APP_NAMESPACE" get networkpolicy
 kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
 ```
-**IP 分配：**增加 `WARM_IP_TARGET` 会预留更多空闲地址，可能加剧子网耗尽。只有在满足已观察到的分配/启动需求且容量充足时，才调整 warm target。如果子网没有连续的 /28 地址段，即使空闲 IP 总数很多，也无法分配前缀。更改节点大小无法扩大子网。确定瓶颈后，再规划子网/前缀预留、受支持的节点密度或分阶段网络迁移。
+**IP 分配**：增加 `WARM_IP_TARGET` 会预留更多空闲地址，可能加剧子网耗尽。只有在满足已观察到的分配/启动需求且容量充足时，才调整 warm target。如果子网没有连续的 /28 地址段，即使空闲 IP 总数很多，也无法分配前缀。更改节点大小无法扩大子网。确定瓶颈后，再规划子网/前缀预留、受支持的节点密度或分阶段网络迁移。
 
-**连通性：**使用应用程序实际采用的 TCP/UDP 协议，对比同节点、跨节点、跨可用区、Pod IP 和 Service 路径。DNS 故障、缺少工具或 ICMP 被阻止，并不能证明是 NetworkPolicy 拒绝。以下示例假设已有获准使用且包含所示工具的诊断 Pod；请根据实际情况调整集群 DNS 后缀和目标 URL。不要仅为运行此示例而在生产 Pod 中安装特权工具：
+**连通性**：使用应用程序实际采用的 TCP/UDP 协议，对比同节点、跨节点、跨可用区、Pod IP 和 Service 路径。DNS 故障、缺少工具或 ICMP 被阻止，并不能证明是 NetworkPolicy 拒绝。以下示例假设已有获准使用且包含所示工具的诊断 Pod；请根据实际情况调整集群 DNS 后缀和目标 URL。不要仅为运行此示例而在生产 Pod 中安装特权工具：
 ```bash
 set -euo pipefail
 : "${APP_NAMESPACE:?Set the affected namespace}"
@@ -341,7 +341,7 @@ kubectl -n "$APP_NAMESPACE" exec "$DIAGNOSTIC_POD" -- nslookup kubernetes.defaul
 kubectl -n "$APP_NAMESPACE" exec "$DIAGNOSTIC_POD" -- curl \
   --fail --show-error --max-time 10 "$TARGET_URL"
 ```
-**DNS：**检查 dnsPolicy/dnsConfig、resolv.conf、DNS Service/EndpointSlices、CoreDNS 事件/日志和上游可达性。`nslookup` 和 `dig` 是可选工具，不保证包含在应用镜像中。Auto Mode 原生 DNS 采用不同的管理路径；没有传统 CoreDNS Deployment 并不自动代表发生故障。在考虑重启之前，请保留托管 add-on 配置和相关证据。
+**DNS**：检查 dnsPolicy/dnsConfig、resolv.conf、DNS Service/EndpointSlices、CoreDNS 事件/日志和上游可达性。`nslookup` 和 `dig` 是可选工具，不保证包含在应用镜像中。Auto Mode 原生 DNS 采用不同的管理路径；没有传统 CoreDNS Deployment 并不自动代表发生故障。在考虑重启之前，请保留托管 add-on 配置和相关证据。
 
 ### Service 和负载均衡问题
 
@@ -349,9 +349,9 @@ kubectl -n "$APP_NAMESPACE" exec "$DIAGNOSTIC_POD" -- curl \
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-5.html)
 
-**Service 路径：**验证命名空间、选择器标签、实际监听端口、Service 端口/targetPort、就绪状态和 EndpointSlice 地址/条件。请使用 EndpointSlices，而不是可能会截断大型后端集合的旧版 Endpoints API。随后检查实际的 service-proxy/CNI 模式，以及任何流量策略/局部性偏好。
+**Service 路径**：验证命名空间、选择器标签、实际监听端口、Service 端口/targetPort、就绪状态和 EndpointSlice 地址/条件。请使用 EndpointSlices，而不是可能会截断大型后端集合的旧版 Endpoints API。随后检查实际的 service-proxy/CNI 模式，以及任何流量策略/局部性偏好。
 
-**负载均衡器/Ingress：**首先确定所属的控制器和类。对于普通 LBC，请检查 Ingress 事件、控制器日志和 AWS 目标运行状况原因代码。Auto Mode 使用托管控制器，诊断路径不同。检查方案/客户端可达性、子网发现/配置、前端和目标 SG 规则、实际目标类型、运行状况检查端口/路径、证书/SNI 和 DNS。子网标签不会创建路由，“控制器处于 Running 状态”也不能证明目标运行状况良好。
+**负载均衡器/Ingress**：首先确定所属的控制器和类。对于普通 LBC，请检查 Ingress 事件、控制器日志和 AWS 目标运行状况原因代码。Auto Mode 使用托管控制器，诊断路径不同。检查方案/客户端可达性、子网发现/配置、前端和目标 SG 规则、实际目标类型、运行状况检查端口/路径、证书/SNI 和 DNS。子网标签不会创建路由，“控制器处于 Running 状态”也不能证明目标运行状况良好。
 ```bash
 set -euo pipefail
 : "${APP_NAMESPACE:?Set the affected namespace}"

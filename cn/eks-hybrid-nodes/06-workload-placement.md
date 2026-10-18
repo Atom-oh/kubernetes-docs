@@ -105,7 +105,7 @@ spec:
   instanceProfile: REPLACE_WITH_APPROVED_EC2_NODE_INSTANCE_PROFILE
 ```
 
-**应用前，请替换所有示例 AWS 资源 ID 和实例配置文件。**请为相应的 Region、架构和 Kubernetes 版本选择获准且不可变的 AL2023 AMI；按 AMI ID 选择时，`amiFamily: AL2023` 会提供引导系列。此处的实例配置文件是预先准备好的 **EC2 节点配置文件**，而不是 SSM/IAM Roles Anywhere Hybrid 角色。子网/安全组必须确实符合预期的私有网络和可用区设置。
+**应用前，请替换所有示例 AWS 资源 ID 和实例配置文件**。请为相应的 Region、架构和 Kubernetes 版本选择获准且不可变的 AL2023 AMI；按 AMI ID 选择时，`amiFamily: AL2023` 会提供引导系列。此处的实例配置文件是预先准备好的 **EC2 节点配置文件**，而不是 SSM/IAM Roles Anywhere Hybrid 角色。子网/安全组必须确实符合预期的私有网络和可用区设置。
 
 可用区限制应放在 `requirements` 中；切勿通过将 AWS 可用区写入模板标签来伪造它。此池的选择性 opt-in taint 会将符合条件的工作负载限制为具有匹配 toleration 的工作负载，但不会授予数据或注册表访问权限。
 
@@ -425,7 +425,7 @@ Karpenter 1.14.1 也会在其**归一化驱逐成本启发式**中读取 `pod-de
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-06-workload-placement-0.html)
 
-> **图表修正：**优先删除云端 Pod 并完整保留本地机房 Pod，是尽力而为的目标，并非不变条件。“空”节点中仍可能包含 DaemonSet Pod。对于 v1 示例，旧的 `WhenUnderutilized` 标签应改为 `WhenEmptyOrUnderutilized`。请阅读上文的排序规则和生命周期条件。
+> **图表修正**：优先删除云端 Pod 并完整保留本地机房 Pod，是尽力而为的目标，并非不变条件。“空”节点中仍可能包含 DaemonSet Pod。对于 v1 示例，旧的 `WhenUnderutilized` 标签应改为 `WhenEmptyOrUnderutilized`。请阅读上文的排序规则和生命周期条件。
 
 ## 主要参考资料
 

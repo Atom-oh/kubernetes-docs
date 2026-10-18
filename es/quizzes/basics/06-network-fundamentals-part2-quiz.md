@@ -1,12 +1,12 @@
 # Cuestionario sobre fundamentos de redes, parte 2: transporte y TLS
 
-> **Última actualización**: September 11, 2026
+> **Última actualización**: 11 de septiembre de 2026
 
 Compruebe su comprensión de TCP, UDP, QUIC y TLS.
 
 ## Preguntas de opción múltiple
 
-1. ¿Cómo evita QUIC la dependencia de entrega head-of-line (HOL) entre flujos de TCP?
+1. ¿Cómo evita QUIC que el bloqueo de cabecera de línea (HOL) de TCP afecte a los demás flujos?
    - A) Restableciendo toda la conexión cuando se pierde un paquete
    - B) Manteniendo un orden de bytes independiente para cada flujo dentro de una conexión
    - C) Renunciando por completo a las garantías de orden
@@ -40,33 +40,33 @@ TLS 1.3 por sí solo no oculta SNI en ClientHello. ECH (RFC 9849) protege el Cli
 
 3. ¿Qué caracteriza el enfoque de BBR para controlar la congestión?
    - A) Ignora la pérdida de paquetes y siempre envía a la velocidad máxima
-   - B) Modela el ancho de banda del cuello de botella y la RTT de propagación para guiar el envío; el comportamiento ante pérdidas/ECN depende de la versión
+   - B) Modela el ancho de banda del cuello de botella y el RTT de propagación para guiar el envío; el comportamiento ante pérdidas/ECN depende de la versión
    - C) Se ejecuta en espacio de usuario en vez de hacerlo en el kernel
    - D) Delega la retransmisión a la capa de enlace
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Modela el ancho de banda del cuello de botella y la RTT de propagación para guiar el envío; el comportamiento ante pérdidas/ECN depende de la versión**
+**Respuesta: B) Modela el ancho de banda del cuello de botella y el RTT de propagación para guiar el envío; el comportamiento ante pérdidas/ECN depende de la versión**
 
 **Explicación:**
-BBR utiliza un modelo de ancho de banda/RTT en lugar de depender únicamente de una ventana de congestión guiada por pérdidas. Sigue necesitando recuperación de pérdidas y respuestas a la congestión específicas de cada versión. El rendimiento depende de la implementación, el tráfico competidor y las condiciones de la ruta; no se garantiza un mayor throughput.
+BBR utiliza un modelo de ancho de banda/RTT en lugar de depender únicamente de una ventana de congestión guiada por pérdidas. Sigue necesitando recuperación de pérdidas y respuestas a la congestión específicas de cada versión. El rendimiento depende de la implementación, el tráfico competidor y las condiciones de la ruta; no se garantiza un caudal mayor.
 
 </details>
 
 4. ¿Qué regla se debe seguir al enviar solicitudes mediante la reanudación de sesiones TLS 1.3/QUIC 0-RTT?
    - A) Enviar solo solicitudes POST
-   - B) Los datos 0-RTT se pueden reproducir; permitir solo operaciones que la aplicación haya evaluado explícitamente como seguras frente a reproducción
+   - B) Los datos 0-RTT se pueden repetir; permitir solo operaciones que la aplicación haya evaluado explícitamente como seguras frente a ataques de repetición
    - C) En 0-RTT se omite la validación de certificados; usarlo solo en redes internas
-   - D) 0-RTT solo funciona sobre UDP; bloquear el fallback a TCP
+   - D) 0-RTT solo funciona sobre UDP; bloquear el uso de TCP como alternativa
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los datos 0-RTT se pueden reproducir; permitir solo operaciones que la aplicación haya evaluado explícitamente como seguras frente a reproducción**
+**Respuesta: B) Los datos 0-RTT se pueden repetir; permitir solo operaciones que la aplicación haya evaluado explícitamente como seguras frente a ataques de repetición**
 
 **Explicación:**
-Los intercambios con datos tempranos se pueden reproducir y provocar que la aplicación procese solicitudes varias veces. Que el método se llame GET o que se afirme que es idempotente no demuestra por sí solo que sea seguro frente a reproducción. Limite los datos tempranos a operaciones aprobadas en el cliente, la CDN y el origen. Un servidor HTTP puede responder 425 Too Early para que la solicitud se vuelva a intentar después del handshake.
+Los intercambios con datos tempranos pueden repetirse y provocar que la aplicación procese solicitudes varias veces. Que el método se llame GET o que se afirme que es idempotente no demuestra por sí solo que sea seguro frente a ataques de repetición. Limite los datos tempranos a operaciones aprobadas en el cliente, la CDN y el origen. Un servidor HTTP puede responder 425 Too Early para que la solicitud se vuelva a intentar después del handshake.
 
 </details>
 

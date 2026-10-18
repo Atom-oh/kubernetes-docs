@@ -390,7 +390,7 @@ Certificate 必须处于 Ready 状态，其 Secret 必须包含预期的键/证�
 
 ### 明确选择信任包所有权
 
-**选项 A：cert-manager 管理颁发者；Helm 管理公共信任包。**将以下内容保存为 `managed-issuer-values.yaml`，并通过完整且经过审核的 chart 值提供根证书包：
+**选项 A：cert-manager 管理颁发者；Helm 管理公共信任包**。将以下内容保存为 `managed-issuer-values.yaml`，并通过完整且经过审核的 chart 值提供根证书包：
 
 ```yaml
 identity:
@@ -410,7 +410,7 @@ helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
 
 使用 `kubernetes.io/tls` 时，chart 预期颁发者 Secret 已存在，而不是由 chart 创建一个 Linkerd 格式的 Secret。使用 `externalCA:false` 时，Helm 仍会创建公共信任 ConfigMap。通过安装工作流进行部署之前，请检查渲染后的对象和现有所有权。
 
-**选项 B：外部控制器也管理信任 ConfigMap。**在这种不同的所有权模式下：
+**选项 B：外部控制器也管理信任 ConfigMap**。在这种不同的所有权模式下：
 
 ```yaml
 identity:

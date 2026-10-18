@@ -147,7 +147,7 @@ fields @timestamp, @message
 | limit 20
 ```
 
-**审计拒绝：**使用发现的 JSON 字段，而不是在原始 JSON 文本中搜索字面字符串 responseStatus.code。请在样例事件中确认字段结构。
+**审计拒绝**：使用发现的 JSON 字段，而不是在原始 JSON 文本中搜索字面字符串 responseStatus.code。请在样例事件中确认字段结构。
 
 ```text
 fields @timestamp, user.username, verb, objectRef.resource, objectRef.namespace, responseStatus.code

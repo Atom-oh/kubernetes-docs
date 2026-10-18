@@ -1,13 +1,13 @@
 # Cuestionario sobre evaluación de PII y canalización de enmascaramiento
 
-> **Última actualización**: September 15, 2026
+> **Última actualización**: 15 de septiembre de 2026
 
 ## Preguntas de opción múltiple
 
-1. El candidato de prueba mejora el F1 hasta 0.8. ¿Por qué no implementarlo de inmediato?
+1. La variante candidata obtiene F1=0.8 con los datos de prueba. ¿Por qué no desplegarla de inmediato?
 
    - A) Su recall es cero
-   - B) Enmascara como cuenta un número de documento negativo, y la evaluación solo tiene dos documentos sintéticos
+   - B) Enmascara como si fuera una cuenta un número de documento negativo, y la evaluación solo incluye dos documentos sintéticos
    - C) Omite todas las entidades gold
    - D) Falló la restauración de ida y vuelta
 
@@ -52,7 +52,7 @@ A pesar de su nombre histórico, mide los pares extraídos de más, no la elimin
 
 </details>
 
-4. ¿Qué debe hacer un parser estricto de serving?
+4. ¿Qué debe hacer un analizador estricto en el servicio de inferencia?
 
    - A) Validar cada fila, tipo, longitud y truncamiento, y devolver fallos explícitos
    - B) Aceptar toda la respuesta si una fila es válida
@@ -64,7 +64,7 @@ A pesar de su nombre histórico, mide los pares extraídos de más, no la elimin
 
 **Respuesta: A**
 
-Que el parser tolerante actual acepte un resultado no equivale a cumplir un contrato estricto. No marque como completos los resultados truncados.
+Que el analizador tolerante actual acepte una respuesta no equivale a cumplir un contrato estricto. No marque como completos los resultados truncados.
 
 </details>
 
@@ -80,7 +80,7 @@ Que el parser tolerante actual acepte un resultado no equivale a cumplir un cont
 
 **Respuesta: B**
 
-La selección puede comprometer la independencia de la prueba final incluso sin actualizaciones de gradientes. Separe la validación de la prueba bloqueada.
+La selección puede comprometer la independencia de la prueba final incluso sin actualizar los gradientes. Separe la validación de la prueba bloqueada.
 
 </details>
 
@@ -88,7 +88,7 @@ La selección puede comprometer la independencia de la prueba final incluso sin 
 
    - A) Contar únicamente 1,024 caracteres del documento
    - B) El coreano y el inglés comparten la misma proporción de caracteres por token
-   - C) Comprobar los presupuestos del tokenizer para la plantilla, las instrucciones, el origen y la respuesta
+   - C) Comprobar los presupuestos de tokens del tokenizador para la plantilla, las instrucciones, el texto de origen y la respuesta
    - D) La configuración se ignora si el modelo admite un contexto más largo
 
 <details>
@@ -96,7 +96,7 @@ La selección puede comprometer la independencia de la prueba final incluso sin 
 
 **Respuesta: C**
 
-Compruebe si se truncaron los targets o la PII del origen, y evalúe los límites y la reconstrucción de offsets al dividir en chunks.
+Compruebe si se truncaron los objetivos o la PII del texto de origen, y evalúe los límites y la reconstrucción de desplazamientos al dividirlo en fragmentos.
 
 </details>
 
@@ -128,7 +128,7 @@ La terminación del Job es distinta de la calidad del servicio y la aprobación 
 
 **Respuesta: A**
 
-La métrica comprueba los valores gold que no quedaron cubiertos. Sin gold, no se puede obtener la misma medida de integridad.
+La métrica comprueba los valores gold que no quedaron cubiertos. Sin datos gold, no se puede obtener la misma medida de exhaustividad.
 
 </details>
 

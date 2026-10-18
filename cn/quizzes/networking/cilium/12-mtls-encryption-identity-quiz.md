@@ -13,7 +13,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**C) 在 1.20 中弃用，在 1.21 中移除
+**答案**：C) 在 1.20 中弃用，在 1.21 中移除
 
 1.20 升级说明将其标为弃用（文档页面标题仍为 “Beta”），并指向 ztunnel。1.21 升级说明表示它在弃用后已移除。策略中的 `authentication` 字段为兼容 CRD 而保留，但在 1.21 中不再使用。
 
@@ -27,7 +27,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**D) 2
+**答案**：D) 2
 
 1 是 `host`，2 是 `world`，6 是 `remote-node`，8 是 `ingress`。ID 9 和 10 将 world 拆分为 IPv4 与 IPv6 变体。
 
@@ -41,7 +41,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**B) 为命名空间添加标签 `io.cilium/mtls-enabled=true`
+**答案**：B) 为命名空间添加标签 `io.cilium/mtls-enabled=true`
 
 启用范围仅限命名空间；不支持在 Pod 级别启用。Istio ambient 标签属于 Istio，而 `authentication.mode` 属于已移除的 Mutual Authentication 机制。
 
@@ -55,7 +55,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**A) 15008
+**答案**：A) 15008
 
 流量在离开 Pod 之前已加密，因此 L4 策略看不到内部端口；只有 HBONE 端口 15008 可以作为匹配目标。15001 和 15006 分别是 Pod 内的出站重定向端口和明文入站重定向端口；4250 是已移除的 Mutual Authentication 握手端口。
 
@@ -69,7 +69,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**C) `internal`
+**答案**：C) `internal`
 
 `internal` 使用 Cilium 内置 CA。1.20 新增的 `spire` 会使用外部 SPIRE Server，并由 Operator 为加入的命名空间注册条目。
 
@@ -83,7 +83,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**B) 51871
+**答案**：B) 51871
 
 Cilium 使用 51871，而不是 WireGuard 默认的 51820。节点安全组必须允许节点之间通过引用节点安全组的方式通信，绝不能使用公共 CIDR。4789 和 8472 是 VXLAN 端口。
 
@@ -97,7 +97,7 @@ Cilium 使用 51871，而不是 WireGuard 默认的 51820。节点安全组必�
 <details>
 <summary>显示答案</summary>
 
-**答案：**A) `encryption.strictMode.ingress.enabled`
+**答案**：A) `encryption.strictMode.ingress.enabled`
 
 Ingress 严格模式会丢弃未经过 WireGuard 隧道进入的集群内部入站流量，因此不支持 IPsec。旧的扁平标志（`encryption.strictMode.enabled` 等）在 1.20 中被移除，改用 `egress.*` 名称。
 
@@ -111,7 +111,7 @@ Ingress 严格模式会丢弃未经过 WireGuard 隧道进入的集群内部入�
 <details>
 <summary>显示答案</summary>
 
-**答案：**D) 在密钥 ID 后加 `+`，例如 `3+ rfc4106(gcm(aes)) ...`
+**答案**：D) 在密钥 ID 后加 `+`，例如 `3+ rfc4106(gcm(aes)) ...`
 
 全局密钥在 1.16 中已弃用（GHSA-pwqm-x5x6-5586）。`encryption.ipsec.interface` 在 1.20 中移除，密钥 ID 范围为 1 到 15。
 
@@ -125,7 +125,7 @@ Ingress 严格模式会丢弃未经过 WireGuard 隧道进入的集群内部入�
 <details>
 <summary>显示答案</summary>
 
-**答案：**A) `doublewrite-readkvstore`，然后 `doublewrite-readcrd`，最后 `crd`
+**答案**：A) `doublewrite-readkvstore`，然后 `doublewrite-readcrd`，最后 `crd`
 
 整个过程中都会同时写入两个存储；读取路径先从 kvstore 切换到 CRD，然后删除 kvstore。每个步骤切换前，都要观察 `cilium_operator_doublewrite_*` 指标，直到 `*_only_identities` 值归零。
 
@@ -139,7 +139,7 @@ Ingress 严格模式会丢弃未经过 WireGuard 隧道进入的集群内部入�
 <details>
 <summary>显示答案</summary>
 
-**答案：**B) CEL 验证规则会在准入时拒绝策略
+**答案**：B) CEL 验证规则会在准入时拒绝策略
 
 CRD 包含 `has(self.spec) || has(self.specs)`，并显示消息 “spec or specs must be provided”。除非现有空策略被更新，否则不会影响它们。
 

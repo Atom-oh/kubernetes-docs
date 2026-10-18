@@ -363,7 +363,7 @@ aws fsx describe-file-systems --region "$AWS_REGION" --file-system-ids "$FSX_FIL
   --query 'FileSystems[0].{Id:FileSystemId,Type:LustreConfiguration.DeploymentType,KmsKeyId:KmsKeyId}' --output json
 ```
 
-对于传输中数据，请使用受支持的 EFS CSI/挂载助手 `tls` 选项，并验证实际挂载路径。FSx 传输加密取决于其受支持的文件系统/客户端/实例配置；请遵循相应服务指南。**S3 HTTPS/TLS 可保护传输；`aws s3 cp --sse AES256` 可选择静态数据加密 SSE-S3。**该标志不会启用 TLS。使用 HTTPS 端点并验证证书，同时审查要求安全传输的存储桶策略。KMS 密钥策略与传输证书管理是两回事。
+对于传输中数据，请使用受支持的 EFS CSI/挂载助手 `tls` 选项，并验证实际挂载路径。FSx 传输加密取决于其受支持的文件系统/客户端/实例配置；请遵循相应服务指南。**S3 HTTPS/TLS 可保护传输；`aws s3 cp --sse AES256` 可选择静态数据加密 SSE-S3。该标志不会启用** TLS。使用 HTTPS 端点并验证证书，同时审查要求安全传输的存储桶策略。KMS 密钥策略与传输证书管理是两回事。
 
 ### 访问控制
 

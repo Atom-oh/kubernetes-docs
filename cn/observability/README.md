@@ -38,7 +38,7 @@
 - 合规
 - 详细调试
 
-**工具作用：**Loki、Elasticsearch/OpenSearch 和 CloudWatch Logs 提供存储/查询后端；Fluent Bit 用于采集和转发记录。
+**工具作用**：Loki、Elasticsearch/OpenSearch 和 CloudWatch Logs 提供存储/查询后端；Fluent Bit 用于采集和转发记录。
 
 ### 2. 指标
 
@@ -56,7 +56,7 @@
 - **Histogram**：观测值的分布（如响应时间）；经典直方图和原生直方图在表示方式和查询语法上有所不同
 - **Summary**：观测次数/总和，以及根据具体实现预先计算的分位数；对实例分位数取平均并不能得出有效的全服务集群分位数
 
-**工具：**Prometheus、VictoriaMetrics、CloudWatch Metrics、Datadog
+**工具**：Prometheus、VictoriaMetrics、CloudWatch Metrics、Datadog
 
 ### 3. 追踪
 
@@ -73,7 +73,7 @@
 - **Span**：单个工作单元
 - **SpanContext**：用于传播追踪上下文的 TraceID、SpanID、追踪标志和 tracestate
 
-**工具：**Tempo、Jaeger、X-Ray、Zipkin、Datadog APM
+**工具**：Tempo、Jaeger、X-Ray、Zipkin、Datadog APM
 
 ## 三大支柱之间的关联
 

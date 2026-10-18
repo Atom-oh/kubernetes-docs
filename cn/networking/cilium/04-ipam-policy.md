@@ -94,7 +94,7 @@ ipv6:
 
 ### Multi-Pool 和 CiliumPodIPPool
 
-文档记录的模式是 `multi-pool`；在 1.20 中，资源 API 仍为 `cilium.io/v2alpha1`（在 **[1.21 预发布版]**中，`CiliumPodIPPool` 以 `cilium.io/v2` 提供，该版本将成为存储版本，`v2alpha1` 将弃用，并且 `spec.ipv4.pool`/`spec.ipv6.pool` 增加了按 CIDR 配置的 `reservedRanges`；这些字段仅存在于 `v2` 中）。不要仅凭 API 后缀推断功能的成熟度。上游 multi-pool 教程还要求设置 `kubeProxyReplacement=true` 和 `bpf.masquerade=true`（如使用 iptables masquerade，则需要设置 `egressMasqueradeInterfaces`）；下方示例包含这些设置。有关分配内部机制、池大小和迁移，请参阅 [IPAM 深入介绍](10-ipam-deep-dive.md)。在使用此模式的新集群上，请提供默认池以处理常规分配：
+文档记录的模式是 `multi-pool`；在 1.20 中，资源 API 仍为 `cilium.io/v2alpha1`（在 **[1.21 预发布版]中**，`CiliumPodIPPool` 以 `cilium.io/v2` 提供，该版本将成为存储版本，`v2alpha1` 将弃用，并且 `spec.ipv4.pool`/`spec.ipv6.pool` 增加了按 CIDR 配置的 `reservedRanges`；这些字段仅存在于 `v2` 中）。不要仅凭 API 后缀推断功能的成熟度。上游 multi-pool 教程还要求设置 `kubeProxyReplacement=true` 和 `bpf.masquerade=true`（如使用 iptables masquerade，则需要设置 `egressMasqueradeInterfaces`）；下方示例包含这些设置。有关分配内部机制、池大小和迁移，请参阅 [IPAM 深入介绍](10-ipam-deep-dive.md)。在使用此模式的新集群上，请提供默认池以处理常规分配：
 
 **`multi-pool-values.yaml`**
 

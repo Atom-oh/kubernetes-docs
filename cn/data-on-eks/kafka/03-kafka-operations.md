@@ -371,7 +371,7 @@ kafka-reassign-partitions.sh \
 
 此辅助工具只验证 JSON 结构，不验证 broker 是否存在、保留的 RF、机架均衡情况或分区清单是否完整。
 
---verify 会检查指定的重新分配/日志目录迁移。**如果不使用 --preserve-throttles，验证完成后可能会清除 broker/topic 限流设置，因此它并非纯只读操作。**如果其他工作也共用这些限制，请协调清理。验证也不能替代完整的副本不足/分区离线健康检查。
+--verify 会检查指定的重新分配/日志目录迁移。**如果不使用 --preserve-throttles，验证完成后可能会清除 broker/topic 限流设置，因此它并非纯只读操作**。如果其他工作也共用这些限制，请协调清理。验证也不能替代完整的副本不足/分区离线健康检查。
 
 ```bash
 kafka-topics.sh --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADMIN_CONFIG" \

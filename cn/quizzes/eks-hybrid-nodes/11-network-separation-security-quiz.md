@@ -12,7 +12,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**B
+**答案**：B
 
 私有路由可以减少暴露，但无法判断客户策略是否允许该管理连接。
 
@@ -26,7 +26,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：**C
+**答案**：C
 
 Kubernetes API 私有端点与 AWS EKS 管理 API 的 PrivateLink 端点是不同的端点。
 
@@ -40,7 +40,7 @@ Kubernetes API 私有端点与 AWS EKS 管理 API 的 PrivateLink 端点是不�
 <details>
 <summary>显示答案</summary>
 
-**答案：**A
+**答案**：A
 
 允许有状态会话的返回流量，并不等于允许一个面向不同 TCP 会话的新入站连接。
 
@@ -54,7 +54,7 @@ Kubernetes API 私有端点与 AWS EKS 管理 API 的 PrivateLink 端点是不�
 <details>
 <summary>显示答案</summary>
 
-**答案：**B
+**答案**：B
 
 如果同时启用公共和私有访问，混合节点可能会使用公共地址。公共访问 CIDR 不会控制私有端点的访问。
 
@@ -68,7 +68,7 @@ Kubernetes API 私有端点与 AWS EKS 管理 API 的 PrivateLink 端点是不�
 <details>
 <summary>显示答案</summary>
 
-**答案：**C
+**答案**：C
 
 DX 默认不会加密传输中的数据。MACsec 链路保护的覆盖范围也不同于应用层端到端 TLS。
 
@@ -82,7 +82,7 @@ DX 默认不会加密传输中的数据。MACsec 链路保护的覆盖范围也�
 <details>
 <summary>显示答案</summary>
 
-**答案：**C
+**答案**：C
 
 节点运行位置并不能决定每种数据的存储与传输位置。Kubernetes 管理操作也可能处理敏感数据。
 
@@ -96,7 +96,7 @@ DX 默认不会加密传输中的数据。MACsec 链路保护的覆盖范围也�
 <details>
 <summary>显示答案</summary>
 
-**答案：**B
+**答案**：B
 
 ENI IP 可能变化。若允许整个共享子网，该范围内的其他资源也可能被纳入允许的源地址。
 
@@ -110,7 +110,7 @@ ENI IP 可能变化。若允许整个共享子网，该范围内的其他资源�
 <details>
 <summary>显示答案</summary>
 
-**答案：**A
+**答案**：A
 
 限制一条命令并不会移除其他访问路径。应结合准入和主机控制，审查该主体的完整权限。
 
@@ -124,7 +124,7 @@ ENI IP 可能变化。若允许整个共享子网，该范围内的其他资源�
 <details>
 <summary>显示答案</summary>
 
-**答案：**C
+**答案**：C
 
 这些记录的覆盖范围各不相同。Kubernetes 审计不会记录所有流式载荷，也不能替代拒绝行为测试或数据分类。
 
@@ -138,7 +138,7 @@ ENI IP 可能变化。若允许整个共享子网，该范围内的其他资源�
 <details>
 <summary>显示答案</summary>
 
-**答案：**B
+**答案**：B
 
 移动 Webhook 并不会消除 kubelet 的连接要求。Hybrid Nodes Gateway 也不是单向安全网关。如果策略与受支持的连接要求冲突，应重新考虑设计或正式审批条件。
 

@@ -3,7 +3,7 @@
 > **最后更新**：October 16, 2026
 > **验证基线**：CLI 4.0.16 和 Operator chart 1.40.4。该 chart 的扫描器镜像为 4.0.13，与 CLI 分开。策略哈希记录在示例目录中。
 
-Kubescape 会评估 Kubernetes 配置以及选定的镜像/运行时数据。**扫描通过并不意味着安全得到保证或获得合规认证；必须单独标明不可用的覆盖范围。**本指南已使用本地 YAML、策略包、实际 CLI 和 chart 渲染进行检查。未执行实时集群扫描、node-agent 安装、注册表镜像/数据库扫描或 SaaS 提交。
+Kubescape 会评估 Kubernetes 配置以及选定的镜像/运行时数据。**扫描通过并不意味着安全得到保证或获得合规认证；必须单独标明不可用的覆盖范围**。本指南已使用本地 YAML、策略包、实际 CLI 和 chart 渲染进行检查。未执行实时集群扫描、node-agent 安装、注册表镜像/数据库扫描或 SaaS 提交。
 
 <span id="what-kubescape-solves"></span>
 <span id="cncf-sandbox-project"></span>
@@ -221,7 +221,7 @@ jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
 
 --compliance-threshold 表示**最低合规度分数**，--severity-threshold 用于失败控制项的严重性阈值。本地分数为 55 时，阈值设为 55 会返回退出码 0，设为 56 则返回退出码 1。--min-severity 会筛选输出，但不会取代当前的门禁计算。
 
-**4.0.16 版接受 --fail-threshold 作为弃用的兼容性标志，但会忽略其值。**测试中，仅提供 --fail-threshold 0 时，即使存在失败项也返回退出码 0。请区分此无效标志与仍会处理的选项（如 --scan-images/--skip-controls）以及真正未知的标志。
+**4.0.16 版接受 --fail-threshold 作为弃用的兼容性标志，但会忽略其值**。测试中，仅提供 --fail-threshold 0 时，即使存在失败项也返回退出码 0。请区分此无效标志与仍会处理的选项（如 --scan-images/--skip-controls）以及真正未知的标志。
 
 <span id="ci-cd-integration-workflow"></span>
 <span id="github-actions-workflow"></span>

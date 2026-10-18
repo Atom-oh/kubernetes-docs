@@ -63,7 +63,7 @@ Component，其 spec.type 为 service 之类的值。catalog 中的 Resource 用
 <details>
 <summary>显示答案</summary>
 
-注册 action 模块，并配置凭证、权限以及真实的输入/输出 schema。Roadie 1.8.1 的 argocd:create-resources 接受部署 namespace，且没有 revision 输入。不要在刚刚为尚未合并的 PR 开启之后，就立即注册 main 分支上的 catalog 文件。
+注册 action 模块，并配置凭证、权限以及真实的输入/输出 schema。Roadie 1.8.1 的 argocd:create-resources 接受部署 namespace，且没有 revision 输入。不要在 PR 刚创建、尚未合并时，就立即注册 main 分支上的 catalog 文件。
 
 </details>
 

@@ -6,7 +6,7 @@
 
 ExampleCorp 是虚构的。本指南定义了一个将 kro 应用图连接到 ACK 管理的基础设施的集成契约。它不是一个端到端实验，不会提供可运行的 Order API 或公共应用镜像。此前虚构的 ECR 镜像并未作为可运行镜像提供。
 
-ACK 管理 NLB、TargetGroup、Listener、Route 53 记录和 Aurora。kro 创建 Service、ConfigMap、TargetGroupBinding (TGB) 和 Deployment 资源。**另一个独立的 AWS Load Balancer Controller (LBC) 负责协调 TGB，并注册/注销 Pod IP 目标。**仅安装 ACK 和 kro 并不能实现这种连接。
+ACK 管理 NLB、TargetGroup、Listener、Route 53 记录和 Aurora。kro 创建 Service、ConfigMap、TargetGroupBinding (TGB) 和 Deployment 资源。**另一个独立的 AWS Load Balancer Controller (LBC) 负责协调 TGB，并注册/注销 Pod IP 目标**。仅安装 ACK 和 kro 并不能实现这种连接。
 
 ![AWS LBC 在 ACK 基础设施和 kro 应用之间协调 TargetGroupBinding](../.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png)
 

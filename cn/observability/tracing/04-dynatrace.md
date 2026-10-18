@@ -55,7 +55,7 @@ flowchart LR
 
 安装 CRD、webhook 和集群 RBAC 需要经授权的部署者。主机 OneAgent/CSI 所需权限不适用于普通的受限应用程序命名空间。请审查 [Operator 安全权限](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/reference/security)、准入例外和受保护的 `dynatrace` 命名空间。不要仅为确保安装成功而授予可选的集群范围 Secrets/ConfigMaps 读取权限。
 
-**现有安装：**请遵循[升级和已存储版本迁移说明](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/guides/deployment-and-configuration/updates-and-maintenance/update-uninstall-operator)。如果集群中存储着 `v1beta1`/`v1beta2` DynaKube，文档规定的迁移路径要求先经过 **Operator 1.7.3，再升级到 1.8+**。仅将 YAML 改为 `v1beta6` 并不会迁移已持久化的对象。请检查 CRD `status.storedVersions`；不要清除它或禁用迁移检查。下面的安装命令适用于**新版本发布**，而非从原先的 1.0 示例直接升级。
+**现有安装**：请遵循[升级和已存储版本迁移说明](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/guides/deployment-and-configuration/updates-and-maintenance/update-uninstall-operator)。如果集群中存储着 `v1beta1`/`v1beta2` DynaKube，文档规定的迁移路径要求先经过 **Operator 1.7.3，再升级到 1.8+**。仅将 YAML 改为 `v1beta6` 并不会迁移已持久化的对象。请检查 CRD `status.storedVersions`；不要清除它或禁用迁移检查。下面的安装命令适用于**新版本发布**，而非从原先的 1.0 示例直接升级。
 
 ```bash
 kubectl get nodes -l monitoring.example.com/dynatrace-host=true
@@ -68,8 +68,8 @@ kubectl create namespace dynatrace
 
 请根据租户的令牌类型，使用当前的[令牌和权限指南](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/tokens-permissions)：
 
-- **最新的 Dynatrace 平台令牌：**使用专用服务用户和文档所述的 `Kubernetes Operator` 与 `Kubernetes Ingest` 策略，并设置环境限制。Operator 权限涵盖所需的 `fleet-management` 和 `settings` 操作；摄取使用相应的 `openpipeline`/`storage` 权限。用户权限和令牌范围都会生效。
-- **Classic 访问令牌：**将 Operator 和摄取凭据分开保存。当前指南记录了安装程序/连接/ActiveGate 令牌所需权限；从 Operator 1.7 起不再需要 `entities.read`，从 1.7 起设置权限为可选。不要沿用旧版的无限制权限清单。
+- **最新的 Dynatrace 平台令牌**：使用专用服务用户和文档所述的 `Kubernetes Operator` 与 `Kubernetes Ingest` 策略，并设置环境限制。Operator 权限涵盖所需的 `fleet-management` 和 `settings` 操作；摄取使用相应的 `openpipeline`/`storage` 权限。用户权限和令牌范围都会生效。
+- **Classic 访问令牌**：将 Operator 和摄取凭据分开保存。当前指南记录了安装程序/连接/ActiveGate 令牌所需权限；从 Operator 1.7 起不再需要 `entities.read`，从 1.7 起设置权限为可选。不要沿用旧版的无限制权限清单。
 - 仅摄取已启用的信号。Classic OTLP 范围为 `openTelemetryTrace.ingest`、`metrics.ingest` 和 `logs.ingest`；部署事件和设置写入使用不同权限。
 
 平台令牌 API 调用使用 `Bearer`；Classic 访问令牌调用使用 `Api-Token`。不要混用它们的范围名称或请求头。请轮换限定范围的凭据，并限制可读取其文件和 Kubernetes Secret 的人员。
@@ -193,7 +193,7 @@ kubectl get dynakube dynakube -n dynatrace -o jsonpath='{.status.conditions}'
 
 Cloud Native Full Stack 通过 webhook/CSI 路径结合主机监控和应用程序代码模块注入。它不是仅限应用程序的 sidecar 模式，也不是通用的节省资源设置。`oneAgent.hostGroup` 用于设置主机组；主机 Agent 的资源覆盖值应放在 `cloudNativeFullStack.oneAgentResources` 下。请验证资源规格，不要沿用随意设定的限制值。
 
-**1.10.2 仍提供 Classic Full Stack。**以下是使用基于主机的注入的完整替代方案。不要将其与同名的 Cloud Native CR 同时应用；请选择一种受支持的模式转换方案并做好规划。两种 Full Stack 方案都需要访问主机。
+**1.10.2 仍提供 Classic Full Stack**。以下是使用基于主机的注入的完整替代方案。不要将其与同名的 Cloud Native CR 同时应用；请选择一种受支持的模式转换方案并做好规划。两种 Full Stack 方案都需要访问主机。
 
 ```yaml
 # dynakube-classic.yaml

@@ -655,10 +655,10 @@ metadata:
 
 | Hop | Required configuration |
 |---|---|
-| SQS → Lambda | Same-region event source mapping; receive/delete/queue-attribute permissions; visibility timeout sized for processing; retries/DLQ |
+| SQS → Lambda | 同一区域的事件源映射；接收/删除/队列属性权限；根据处理时长设置可见性超时；重试/DLQ |
 | Lambda → SNS | Execution-role `sns:Publish` permission on the target topic; signed AWS SDK call |
 | Lambda → EventBridge | `events:PutEvents` on the target bus; inspect `FailedEntryCount` and individual entry errors |
-| Consumer | JSON validation; idempotency key considering Application UID, event, operationStartedAt and current status; SQS partial batch failure response configuration |
+| 消费者 | 验证 JSON；幂等键应纳入 Application UID、事件、operationStartedAt 和当前状态；配置 SQS 部分批次失败响应 |
 
 如果需要 API Gateway webhook，请构建单独进行身份验证的 bridge。仅有 API key/usage plan 并不构成身份验证。本章的审阅没有预配 AWS resource 或发送真实 message。
 

@@ -821,7 +821,7 @@ istioctl x authz check <backend-pod>.default
 
 ### 问题 9：生产可观测性栈设置
 
-说明如何为生产 Kubernetes cluster 以**高可用性（HA）**配置部署 Istio 可观测性栈（Prometheus、Grafana、Jaeger、Kiali）。请包含**持久存储**、**扩缩容**和**备份**策略。
+说明如何为生产 Kubernetes cluster 以**高可用性**（HA）配置部署 Istio 可观测性栈（Prometheus、Grafana、Jaeger、Kiali）。请包含**持久存储**、**扩缩容**和**备份**策略。
 
 <details>
 
@@ -1170,7 +1170,7 @@ sum(rate(orders_total{namespace="default",app="order-service",status="payment_fa
 }
 ```
 
-**告警：**已安装的 Prometheus Operator 会选中此规则。最小流量阈值避免无流量时触发比例告警；缺失/scrape failure 需要单独信号。阈值仅为示例，不是业务 SLO 保证。
+**告警**：已安装的 Prometheus Operator 会选中此规则。最小流量阈值避免无流量时触发比例告警；缺失/scrape failure 需要单独信号。阈值仅为示例，不是业务 SLO 保证。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1

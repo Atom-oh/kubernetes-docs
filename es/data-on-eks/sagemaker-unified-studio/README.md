@@ -16,10 +16,10 @@ proyecto de MLOps de SageMaker AI ni que un dominio de SageMaker AI Studio.
 | Tipo de dominio | Inicio de sesión/administración basados en IAM frente a los basados en IAM Identity Center |
 | Perfil de proyecto / blueprint | Herramientas aprovisionadas al crear el proyecto frente a las habilitadas bajo demanda |
 | Rol de miembro / ejecución | Identidad para acceder al portal/proyecto frente a identidad para ejecutar recursos de AWS |
-| Pertenencia / acceso a datos | Designaciones administrativas frente a permisos de datos de IAM, Lake Formation y el catálogo |
-| Ciclo de vida | Existencia del proyecto, disponibilidad del entorno, acceso real a las herramientas y limpieza de recursos propios |
+| Membresía / acceso a datos | Designaciones administrativas frente a permisos de datos de IAM, Lake Formation y el catálogo |
+| Ciclo de vida | Existencia del proyecto, disponibilidad del entorno, acceso real a las herramientas y limpieza de recursos propiedad del proyecto |
 
-[La parte 4: dominio, proyecto y pertenencia](01-domains-projects-governance.md) explica
+[La parte 4: dominio, proyecto y membresía](01-domains-projects-governance.md) explica
 los fallos registrados del experimento Qwen mediante estos límites. Un proyecto de
 Unified Studio es la opción de gobernanza de esta guía, no una dependencia técnica
 obligatoria para todos los Training Jobs de SageMaker ni para todas las cargas de
@@ -28,14 +28,14 @@ trabajo de entrenamiento de EKS.
 ## Distinguir la evidencia histórica del estado actual
 
 El JSON de validación guardado del 2026-09-01 registra una detención antes del
-entrenamiento, la limpieza de los recursos de App/S3/IAM del experimento y un proyecto
+entrenamiento, la limpieza de los recursos App/S3/IAM del experimento y un proyecto
 de Unified Studio restante. La documentación del 2 de septiembre registra que en ese
 momento se comprobó que seguía en estado ACTIVE.
 **Esta revisión de la documentación no volvió a consultar la cuenta de AWS y no
 afirma que hoy siga quedando un proyecto.**
 
 Antes de reanudar ese experimento, un operador autorizado debe verificar el inventario,
-la pertenencia y el estado de limpieza actuales. No generalice el fallo anterior para
+la membresía y el estado de limpieza actuales. No generalice el fallo anterior para
 conceder privilegios nuevos automáticamente ni para eliminar recursos compartidos.
 
 Guías relacionadas:

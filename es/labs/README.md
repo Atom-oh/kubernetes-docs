@@ -1,13 +1,13 @@
 # Guía de laboratorios
 
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 Esta sección ofrece guías prácticas de laboratorio para practicar Kubernetes y tecnologías relacionadas. Cada laboratorio incluye instrucciones paso a paso y métodos de verificación, lo que le permite confirmar en un entorno real lo que aprendió en la teoría.
 
 ## Lista de laboratorios
 
-| # | Laboratorio | Dificultad | Prerrequisitos |
+| # | Laboratorio | Dificultad | Requisitos previos |
 |---|-----|------------|---------------|
 | 1 | [Laboratorio de fundamentos de Linux](basics/01-linux-basics-lab.md) | Principiante | Acceso a una terminal de Linux |
 | 2 | [Laboratorio de habilidades avanzadas de Linux](basics/02-linux-advanced-lab.md) | Principiante | Fundamentos de Linux completados |
@@ -23,14 +23,14 @@ Esta sección ofrece guías prácticas de laboratorio para practicar Kubernetes 
 | 12 | [Observabilidad E2E: despliegue de MSA y canary](observability/03-msa-deployment-lab.md) | Avanzado | Parte 2 completada |
 | 13 | [Observabilidad E2E: pruebas de carga y autoescalado](observability/04-load-testing-scaling-lab.md) | Intermedio | Parte 3 completada |
 | 14 | [Observabilidad E2E: alertas y AIOps](observability/05-alerting-aiops-lab.md) | Avanzado | Parte 4 completada |
-| 15 | [Observabilidad E2E: análisis de trazado distribuido](observability/06-distributed-tracing-lab.md) | Avanzado | Parte 5 completada |
+| 15 | [Observabilidad E2E: análisis de trazas distribuidas](observability/06-distributed-tracing-lab.md) | Avanzado | Parte 5 completada |
 
 ## Ruta de aprendizaje recomendada
 
 1. **Laboratorios básicos** (1→2→3): aprenda Linux y tecnología de contenedores
 2. **Laboratorios principales** (4→7→5→6): trabaje con los recursos principales de Kubernetes
 3. **Laboratorios de EKS** (8): opere clústeres en un entorno de nube real
-4. **Laboratorios de observabilidad** (9→10→11→12→13→14→15): construya y opere un stack de observabilidad de extremo a extremo
+4. **Laboratorios de observabilidad** (9→10→11→12→13→14→15): construya y opere una pila de observabilidad de extremo a extremo
 
 ## Preparación del entorno de laboratorio
 
@@ -52,7 +52,7 @@ kubectl config current-context
 
 ## Consejos para los laboratorios
 
-- Revise primero los **Prerrequisitos** de cada laboratorio
+- Revise primero los **requisitos previos** de cada laboratorio
 - Después de ejecutar los comandos, compare con la **Salida esperada** para verificar que el funcionamiento sea correcto
 - Use las **pistas** cuando se quede atascado
 - Al terminar el laboratorio, ejecute siempre los comandos de la sección **Limpieza** para eliminar los recursos

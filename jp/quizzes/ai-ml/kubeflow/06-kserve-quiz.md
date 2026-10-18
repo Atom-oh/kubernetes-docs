@@ -46,7 +46,7 @@ Controller、CRD、Web App はそれぞれ別個の成果物です。実際の�
 
 **回答: C) Predictor**
 
-Transformer と Explainer は任意です。runtime/protocol の互換性と実際の説明ルートも依然として重要です。
+Transformer と Explainer は任意です。runtime/protocol の互換性に加え、説明リクエストの実際の経路も確認する必要があります。
 </details>
 
 4. Knative を選択すると、アイドル状態のすべての Predictor は自動的にゼロまでスケールしますか？

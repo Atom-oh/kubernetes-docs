@@ -13,7 +13,7 @@
 
 [交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-0.html)
 
-PrometheusRule 是一种 Kubernetes 资源。**Prometheus Operator 根据命名空间/标签选择器选择资源，并生成规则配置。**Prometheus 会根据采集到的时间序列评估生成的规则。
+PrometheusRule 是一种 Kubernetes 资源。**Prometheus Operator 根据命名空间/标签选择器选择资源，并生成规则配置**。Prometheus 会根据采集到的时间序列评估生成的规则。
 
 此示例使用命名空间和 Helm 发布名称 `monitoring`，并将 Rule 的 `release: monitoring` 标签与生成的选择器相匹配。如果实际发布或选择器不同，请同时修改两者。
 

@@ -32,7 +32,7 @@ IAM 通过配置的 EKS 访问路径对目标人员/自动化身份进行身份�
 
 EKS 集群服务角色和人类开发者角色用途不同。为开发者附加 AmazonEKSClusterPolicy 并不会授予 Kubernetes 访问权限，而 DescribeCluster/ListClusters 权限或 kubeconfig 文件也不会授予工作负载权限。
 
-**限定范围的实施方式：**经过授权的平台运维人员为现有且已批准的开发者 IAM 角色准备以下命名空间和 RBAC。集群必须已经支持访问条目。保留现有管理员/节点映射，并审查身份验证模式迁移；不要用示例 ConfigMap 覆盖 aws-auth。
+**限定范围的实施方式**：经过授权的平台运维人员为现有且已批准的开发者 IAM 角色准备以下命名空间和 RBAC。集群必须已经支持访问条目。保留现有管理员/节点映射，并审查身份验证模式迁移；不要用示例 ConfigMap 覆盖 aws-auth。
 
 ```yaml
 apiVersion: v1
@@ -130,7 +130,7 @@ roleRef:
 
 经过单独审查的只读用户也可以改为关联命名空间范围的 AmazonEKSViewPolicy。添加之前请检查现有访问策略；此操作不会撤销更广泛的 RBAC 或其他访问策略授权。`eks:namespaces` 用于筛选访问策略关联请求，而不是一般的 kubectl 请求。
 
-**验证实际登录：**调用方必须能够发现集群并担任已批准的角色。此操作会创建临时 kubeconfig，而不会替换默认上下文：
+**验证实际登录**：调用方必须能够发现集群并担任已批准的角色。此操作会创建临时 kubeconfig，而不会替换默认上下文：
 
 ```bash
 set -euo pipefail
@@ -169,7 +169,7 @@ kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
 
 NetworkPolicy 使用 Kubernetes 标签和命名空间选择 Pod 并指定允许的流量。它需要具有强制执行能力的网络实现。安全组（包括受支持的 Pod 安全组）仍然是有用的 AWS 控制措施；它们并不限于整个实例。VPC 端点策略管理对受支持 AWS 服务的访问，而不是任意的基于标签的 Pod 流量。
 
-**完整策略示例：**这些清单描述的是一个隔离的演示命名空间，不是应用安装程序，也不是 CNI 的替代方案。示例假设使用标准 Linux EC2 节点、受支持且能强制执行策略的 CNI，以及常见的 CoreDNS Deployment/Pod 标签。Auto Mode 或节点本地 DNS 需要针对实际使用的解析器路径配置规则。如果限制了 CoreDNS 入站流量，其所有者还必须允许这些查询。
+**完整策略示例**：这些清单描述的是一个隔离的演示命名空间，不是应用安装程序，也不是 CNI 的替代方案。示例假设使用标准 Linux EC2 节点、受支持且能强制执行策略的 CNI，以及常见的 CoreDNS Deployment/Pod 标签。Auto Mode 或节点本地 DNS 需要针对实际使用的解析器路径配置规则。如果限制了 CoreDNS 入站流量，其所有者还必须允许这些查询。
 
 由命名空间所有者保存并应用。默认拒绝会隔离两个方向的流量；明确允许客户端出站流量和目标端入站流量，适用于 frontend → API 和 API → database。DNS 需要同时允许 UDP 和 TCP：
 
@@ -399,11 +399,11 @@ spec:
 
 扫描器只能识别其规则和漏洞数据库涵盖的问题；它无法证明不存在任何后门或未来漏洞。签名可以根据配置的信任策略证明完整性和身份关联，但不能证明已签名的软件是安全的。准入控制负责强制执行所选部署策略。使用维护良好的精简基础映像，及时重建以应用补丁，跟踪例外情况，并选择合适的 ECR 基本/增强扫描模式或其他扫描模式。
 
-**AWS Signer 和 Notation：**容器签名平台为 `Notation-OCI-SHA384-ECDSA`。使用 Notation AWS Signer 插件，按摘要为已推送的映像签名。`Aws::ECR::Image` 平台或 `start-signing-job --source-image` 并非受支持的工作流。经审查的 AWS CLI 不接受该选项。
+**AWS Signer 和 Notation**：容器签名平台为 `Notation-OCI-SHA384-ECDSA`。使用 Notation AWS Signer 插件，按摘要为已推送的映像签名。`Aws::ECR::Image` 平台或 `start-signing-job --source-image` 并非受支持的工作流。经审查的 AWS CLI 不接受该选项。
 
 当前 ECR 托管签名也是一种受支持的推送触发式替代方案，可通过注册表签名规则配置。若选择此方案，应配置正确的配置文件/权限，并在提升映像前等待实际签名状态。不能因为映像已推送，就认定异步签名已完成。
 
-**信任配置：**准备经过验证的 Notation/Signer 插件安装、正确分区对应的 AWS Signer 根信任存储，以及经过审查的严格信任策略。以下商业区域示例将信任范围限制为一个仓库和一个已批准的配置文件。请一致地替换所有账户/区域/仓库/配置文件信息；不要仅因为签名者证书链接到 AWS 根证书，就信任该签名者。
+**信任配置**：准备经过验证的 Notation/Signer 插件安装、正确分区对应的 AWS Signer 根信任存储，以及经过审查的严格信任策略。以下商业区域示例将信任范围限制为一个仓库和一个已批准的配置文件。请一致地替换所有账户/区域/仓库/配置文件信息；不要仅因为签名者证书链接到 AWS 根证书，就信任该签名者。
 
 ```json
 {
@@ -430,7 +430,7 @@ spec:
 
 使用 `notation policy import notation-trust-policy.json` 将该策略导入构建环境自有的 Notation 配置。替换前先审查任何现有策略；不要通过未经审查的脚本覆盖开发者共享的信任配置。构建角色需要仓库范围的 ECR 拉取/推送操作、ECR 身份验证，以及所需的 SignPayload/GetRevocationStatus 权限。创建签名配置文件是单独的配置工作；仅使用现有的已批准配置文件时，构建无需 PutSigningProfile。
 
-**CodeBuild 示例：**这是一个 buildspec，不是 CodePipeline 定义。它要求使用自有 Linux 构建映像，并预先安装 Bash、Python、Docker/守护进程访问、AWS CLI、Trivy、Notation 和已固定版本的 AWS Signer 插件。请另行配置项目所需的运行时特权、网络访问、扫描器数据库、IAM 角色、信任存储/策略和现有 ECR 仓库。Dockerfile 和源代码是该构建角色的可信输入。此示例使用已解析的 Git 提交和一个商业 AWS 账户/区域；它没有实现跨账户签名设计。
+**CodeBuild 示例**：这是一个 buildspec，不是 CodePipeline 定义。它要求使用自有 Linux 构建映像，并预先安装 Bash、Python、Docker/守护进程访问、AWS CLI、Trivy、Notation 和已固定版本的 AWS Signer 插件。请另行配置项目所需的运行时特权、网络访问、扫描器数据库、IAM 角色、信任存储/策略和现有 ECR 仓库。Dockerfile 和源代码是该构建角色的可信输入。此示例使用已解析的 Git 提交和一个商业 AWS 账户/区域；它没有实现跨账户签名设计。
 
 ```yaml
 version: 0.2
@@ -511,7 +511,7 @@ artifacts:
 
 `verified-image.json` 包含供 EKS 部署/GitOps 使用者使用的准确摘要引用。它不是 ECS `imagedefinitions.json`，本身也不会部署任何内容。即使签名/验证成功，仍取决于实际注册表访问、信任、撤销状态检查和 AWS Signer 可用性。
 
-**准入：**生产环境的签名验证器必须能够理解所选的 Notation/Signer 签名和信任策略。AWS 文档介绍了 Gatekeeper 与 Ratify 的组合，以及 Kyverno 与 AWS Signer/Notation 的集成。安装通用策略引擎、使用没有 ConstraintTemplate 的裸 Gatekeeper constraint，或为其他签名方案填写公钥字段，都不能证明该集成已建立。在启用强制执行之前，应验证受信任/不受信任的配置文件、未签名映像、摘要不匹配、已撤销/过期的签名、验证器故障和准入失败策略。
+**准入**：生产环境的签名验证器必须能够理解所选的 Notation/Signer 签名和信任策略。AWS 文档介绍了 Gatekeeper 与 Ratify 的组合，以及 Kyverno 与 AWS Signer/Notation 的集成。安装通用策略引擎、使用没有 ConstraintTemplate 的裸 Gatekeeper constraint，或为其他签名方案填写公钥字段，都不能证明该集成已建立。在启用强制执行之前，应验证受信任/不受信任的配置文件、未签名映像、摘要不匹配、已撤销/过期的签名、验证器故障和准入失败策略。
 
 以下独立的 Kyverno 1.19.1 规则仅在 security-demo 中限制**映像引用语法和仓库**。它会检查常规容器、init 容器和临时容器。它**并不**声称会验证签名：
 
@@ -626,7 +626,7 @@ spec:
 
 runAsNonRoot/runAsUser 和 seccomp 与 allowPrivilegeEscalation 和 capabilities 是不同的设置。fsGroup 是 Pod 级别的卷所有权设置，不是容器 capability。只读根文件系统是一项有用且需与应用兼容的加固措施，但它不是 PSS Restricted 的普遍要求，也不会使挂载的 PVC 变为只读。实际应用需要兼容的 UID/GID 和可写的临时/缓存/套接字路径；仅添加这些字段，并不能让面向 root 运行的通用 nginx 映像正常工作。
 
-**另一项限定范围的准入规则：**此 Kyverno 1.19.1 ValidatingPolicy 会检查 security-demo 中所有常规容器、init 容器和临时容器。未设置 privileged 会被视为 false 并接受；设置为 true 则会被拒绝。它使用当前的 v1 policy API，而不是过时的安装清单：
+**另一项限定范围的准入规则**：此 Kyverno 1.19.1 ValidatingPolicy 会检查 security-demo 中所有常规容器、init 容器和临时容器。未设置 privileged 会被视为 false 并接受；设置为 true 则会被拒绝。它使用当前的 v1 policy API，而不是过时的安装清单：
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -699,11 +699,11 @@ Security Hub CSPM 的 FSBP 标准并不是 CIS Kubernetes Benchmark。受支持�
 
 应使用现有的组织/区域所有权来管理检测器、CSPM 标准、Config 记录器和 CloudTrail。不要创建另一个区域检测器、覆盖集中式配置，或在尚未准备好存储桶策略、加密、事件选择器和保留期的情况下启动 trail。CloudTrail 数据事件与默认的管理事件覆盖范围是分开的。本次审查没有配置账户级监控资源。
 
-**EKS 特定检查：**按照源章节所示启用并确认预期的控制面日志类型、更新完成情况和日志到达情况。`eks-cluster-logging-enabled`（所有类型，定期检查）和 `eks-cluster-log-enabled`（可选的已选类型，配置变更触发）都是有效的 Config 规则。应维护 `oldestVersionSupported` 参数，不要假定版本目录会自动更新到当前版本。针对 encryptionConfig 的显式控制发现，并不意味着 EKS 1.28+ API 数据缺少默认 envelope encryption。
+**EKS 特定检查**：按照源章节所示启用并确认预期的控制面日志类型、更新完成情况和日志到达情况。`eks-cluster-logging-enabled`（所有类型，定期检查）和 `eks-cluster-log-enabled`（可选的已选类型，配置变更触发）都是有效的 Config 规则。应维护 `oldestVersionSupported` 参数，不要假定版本目录会自动更新到当前版本。针对 encryptionConfig 的显式控制发现，并不意味着 EKS 1.28+ API 数据缺少默认 envelope encryption。
 
 GuardDuty 审计分析不需要单独导出 CloudWatch 审计日志。Runtime Monitoring 需要受支持的安全代理/数据端点和实际覆盖范围；当前 EKS 支持 EC2 和 Auto Mode，不支持 Fargate 或 Hybrid Nodes。使用当前的 RUNTIME_MONITORING 功能，并审查旧版 EKS_RUNTIME_MONITORING 的迁移情况。不要将 EKS_AUDIT_LOGS 误认为运行时监控。
 
-**CSPM 事件路由示例：**将其保存为 `security-event-pattern.json`。它会选取状态为 NEW/NOTIFIED 的活动 HIGH/CRITICAL ASFF 发现项。它有意不匹配使用不同 OCSF 事件架构的 `Findings Imported V2`：
+**CSPM 事件路由示例**：将其保存为 `security-event-pattern.json`。它会选取状态为 NEW/NOTIFIED 的活动 HIGH/CRITICAL ASFF 发现项。它有意不匹配使用不同 OCSF 事件架构的 `Findings Imported V2`：
 
 ```json
 {
@@ -782,7 +782,7 @@ GuardDuty 审计分析不需要单独导出 CloudWatch 审计日志。Runtime Mo
 
 使用 `aws events put-targets --rule eks-security-alerts --targets file://security-event-targets.json --region us-west-2` 前，应检查现有规则/目标的所有权。除了命令退出状态，还要检查 FailedEntryCount 和 FailedEntries。确认 SNS 订阅、加密权限、重试/死信行为，并执行受控端到端投递测试。本次审计期间未发送任何通知。
 
-**审计调查：**在实际 EKS 日志组中，以下 Logs Insights 示例假设 Kubernetes 审计记录已进行 JSON 字段发现。它聚焦于 RBAC 修改请求；检查 responseStatus.code 以区分成功和被拒绝的请求：
+**审计调查**：在实际 EKS 日志组中，以下 Logs Insights 示例假设 Kubernetes 审计记录已进行 JSON 字段发现。它聚焦于 RBAC 修改请求；检查 responseStatus.code 以区分成功和被拒绝的请求：
 
 ```text
 fields @timestamp, verb, user.username, objectRef.resource, objectRef.namespace, responseStatus.code
@@ -817,9 +817,9 @@ Secrets Manager 和 Parameter Store 可以集中管理 AWS 访问控制和审计
 
 EKS 1.28+ 已使用默认的 KMS v2 envelope encryption 对所有 Kubernetes API 数据进行加密。Secret 清单中的 Base64 仍然只是编码，API/Pod 访问也可能暴露其值。环境变量是一种交付机制，而非加密方式；Secret 更改后，现有进程环境不会自动更新。
 
-**审慎选择所有权和交付方式：**ESO 会写入 Kubernetes Secret。ASCP 与 Secrets Store CSI Driver 会将文件挂载到容器，并可选择同步 Kubernetes Secret。不要让两个控制器同时管理同一个目标 Secret。仅使用文件的 CSI 设计仍需要工作负载/节点访问控制；可选同步还会在 Kubernetes API 中额外生成一份值的副本。
+**审慎选择所有权和交付方式**：ESO 会写入 Kubernetes Secret。ASCP 与 Secrets Store CSI Driver 会将文件挂载到容器，并可选择同步 Kubernetes Secret。不要让两个控制器同时管理同一个目标 Secret。仅使用文件的 CSI 设计仍需要工作负载/节点访问控制；可选同步还会在 Kubernetes API 中额外生成一份值的副本。
 
-**ASCP 示例：**这是针对经过审查的 EKS 1.36 示例新建的、自有 Linux EC2 安装，而不是在情况未知的现有集群上进行部署。首先检查现有版本/CSIDriver 所有权、节点兼容性、特权平台代理的准入、网络访问和调度情况。Fargate 无法运行 CSI 节点 DaemonSet。Hybrid/Auto Mode 的使用需要满足其当前的 provider/node 前提条件；以下本地渲染不能验证这些条件。
+**ASCP 示例**：这是针对经过审查的 EKS 1.36 示例新建的、自有 Linux EC2 安装，而不是在情况未知的现有集群上进行部署。首先检查现有版本/CSIDriver 所有权、节点兼容性、特权平台代理的准入、网络访问和调度情况。Fargate 无法运行 CSI 节点 DaemonSet。Hybrid/Auto Mode 的使用需要满足其当前的 provider/node 前提条件；以下本地渲染不能验证这些条件。
 
 为单独管理的 CSI 1.6.1 driver 使用以下 `secrets-csi-values.yaml` 设置。它明确配置了两种 AWS 令牌受众、可选的 Secret 同步和轮换：
 
@@ -981,7 +981,7 @@ spec:
   filePermission: "0444"
 ```
 
-**ESO 替代方案：**使用源章节中为精确的 eso-reader ServiceAccount 准备的 EKSSecretReader IRSA 角色/信任关系。在其所有者已安装 ESO 2.10.0 和 v1 CRD 的前提下，以下内容会写入另一个目标 eso-db-credentials。后端 ARN、命名空间、角色和 JSON 属性必须引用实际准备好的 secret：
+**ESO 替代方案**：使用源章节中为精确的 eso-reader ServiceAccount 准备的 EKSSecretReader IRSA 角色/信任关系。在其所有者已安装 ESO 2.10.0 和 v1 CRD 的前提下，以下内容会写入另一个目标 eso-db-credentials。后端 ARN、命名空间、角色和 JSON 属性必须引用实际准备好的 secret：
 
 ```yaml
 apiVersion: v1
@@ -1044,11 +1044,11 @@ spec:
 
 这里的 Owner 会将目标 Secret 关联到 ExternalSecret；删除所有者可能会触发垃圾回收。Retain 针对的是后端消失的情况，并不能避免因所有者删除而被清理。ESO 的 serviceAccountRef JWT 方法使用的是 IRSA。控制器 Pod Identity 是另一种设计：应关联控制器的 ServiceAccount 并省略 store auth 块；ESO 无法使用 serviceAccountRef 来模拟另一个关联了 Pod Identity 的账户。
 
-**轮换和重新加载：**CSI 1.6+ 使用 kubelet 的 RequiresRepublish 调用进行轮换。仅设置 requiresRepublish 并不会启用轮换；还必须启用 driver 的 enableSecretRotation 标志。此处的两分钟 rotationPollInterval 是最短缓存时长，并不保证端到端更新恰好在两分钟内完成；实际时间取决于 kubelet 的重新发布。ESO 的刷新间隔是另一个独立的协调周期。应用必须重新打开/监视已更新的文件，或执行受控滚动更新；subPath 挂载和现有环境变量不会自动刷新。
+**轮换和重新加载**：CSI 1.6+ 使用 kubelet 的 RequiresRepublish 调用进行轮换。仅设置 requiresRepublish 并不会启用轮换；还必须启用 driver 的 enableSecretRotation 标志。此处的两分钟 rotationPollInterval 是最短缓存时长，并不保证端到端更新恰好在两分钟内完成；实际时间取决于 kubelet 的重新发布。ESO 的刷新间隔是另一个独立的协调周期。应用必须重新打开/监视已更新的文件，或执行受控滚动更新；subPath 挂载和现有环境变量不会自动刷新。
 
 Secrets Manager 的 rotate-secret 默认会立即轮换。即使使用 `--no-rotate-immediately`，仍可能测试 Lambda 轮换函数并创建/删除 AWSPENDING，而较早设定的按频率/天数轮换计划也可能继续运行。这并不是无害的“仅设置计划”或只读检查。在调用轮换前，应审查目标凭证变更、有效期重叠、应用重新加载和回滚方案。
 
-**不包含秘密值的 Terraform 示例：**Terraform 的 sensitive 仅会抑制所选输出的显示；普通的 secret_string/random_password 值仍可能存储在状态中。以下配置只管理 secret 元数据，并使用现有的已批准 KMS 密钥。对于已存在的 secret，应先通过所有者协调/导入，再由此配置管理：
+**不包含秘密值的 Terraform 示例**：Terraform 的 sensitive 仅会抑制所选输出的显示；普通的 secret_string/random_password 值仍可能存储在状态中。以下配置只管理 secret 元数据，并使用现有的已批准 KMS 密钥。对于已存在的 secret，应先通过所有者协调/导入，再由此配置管理：
 
 ```hcl
 terraform {

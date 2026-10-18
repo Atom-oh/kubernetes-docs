@@ -1,6 +1,6 @@
 # Grafana Loki クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 [ガイド](../../../observability/logging/01-loki.md)の Loki3.7.7/chart18.12.1 の例に基づいています。
 
@@ -150,7 +150,7 @@ LogQL では parsing 後に label-filter stage を使用します。unwrapped nu
 
 ---
 
-9. ingestion429 response の後、最初に何を行うべきですか？
+9. データ取り込み時に 429 レスポンスを受けた後、最初に何を行うべきですか？
 
    - A) capacity を測定せずにすべての limit を増やす
    - B) tenant byte rate/burst、per-stream rate、active-stream limit を区別してから、capacity/client retries を確認する

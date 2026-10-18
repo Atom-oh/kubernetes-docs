@@ -14,7 +14,7 @@
 
 **Respuesta: B**
 
-**Explicación:** Revise la intención por separado y registre su revisión/hash. Ajustar arbitrariamente a la vez la expectativa y la observación hace que la validación se confirme a sí misma.
+**Explicación:** Revise la intención por separado y registre su revisión y hash. Ajustar arbitrariamente a la vez la expectativa y la observación vuelve circular la validación.
 
 </details>
 
@@ -34,7 +34,7 @@
 
 </details>
 
-3. Solo se recopiló un timeout para un flujo prohibido. ¿Cómo se debe normalizar?
+3. Para un flujo prohibido, solo se observó que la solicitud agotó el tiempo de espera. ¿Cómo se debe normalizar?
 
    - A) Mantenerlo como desconocido sin evidencia de denegación por política
    - B) Marcarlo siempre como denegado
@@ -46,7 +46,7 @@
 
 **Respuesta: A**
 
-**Explicación:** Un fallo de enrutamiento, listener o ruta de retorno puede causar un timeout. Para demostrar la denegación, hay que correlacionar la evidencia de política con la sonda.
+**Explicación:** Un fallo de enrutamiento, de listener o de la ruta de retorno puede hacer que la sonda agote el tiempo de espera. Para demostrar la denegación, hay que correlacionar la evidencia de política con la sonda.
 
 </details>
 
@@ -68,7 +68,7 @@
 
 5. Solo se aprueba anunciar 203.0.113.0/24, pero las observaciones también incluyen 0.0.0.0/0. ¿Qué debe ocurrir?
 
-   - A) Aprobarlo porque más rutas es mejor
+   - A) Aprobarlo porque más rutas son mejores
    - B) Rechazar el anuncio inesperado
    - C) Añadirlo automáticamente a la intención
    - D) Ignorar siempre las rutas predeterminadas
@@ -78,7 +78,7 @@
 
 **Respuesta: B**
 
-**Explicación:** Este contrato compara el conjunto exacto anunciado a un peer. No se deben ocultar los anuncios inesperados.
+**Explicación:** Este contrato compara el conjunto exacto anunciado a un homólogo. No se deben ocultar los anuncios inesperados.
 
 </details>
 
@@ -86,7 +86,7 @@
 
    - A) Nada
    - B) Se puede eliminar el original
-   - C) La existencia, el hash, la hora, el collector, el punto de observación y el contenido real
+   - C) La existencia, el hash, la hora, el recopilador, el punto de observación y el contenido real
    - D) Ampliar todos los permisos de cuenta
 
 <details>
@@ -98,7 +98,7 @@
 
 </details>
 
-7. ¿Se pueden comparar los anuncios de peer de FRR y toda la FIB de Linux como si fueran la misma lista de prefijos?
+7. ¿Se pueden comparar las rutas que FRR anuncia a su homólogo y toda la FIB de Linux como si fueran la misma lista de prefijos?
 
    - A) Sus alcances son distintos y requieren normalización e intención por separado
    - B) Siempre son idénticos
@@ -119,7 +119,7 @@
    - A) Solo que el proceso siga activo
    - B) Basta con un flujo permitido
    - C) Solo la puntuación agregada
-   - D) Los flujos permitidos, el aislamiento y el acceso de administración frente a los criterios originales
+   - D) Los flujos permitidos, el aislamiento y el acceso de administración conforme a los criterios originales
 
 <details>
 <summary>Mostrar respuesta</summary>
