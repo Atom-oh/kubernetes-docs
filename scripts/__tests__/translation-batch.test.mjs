@@ -269,6 +269,33 @@ test('valid outputs survive main refresh, including staged new backfill files', 
   assert.deepEqual(f.state().pending, [])
 })
 
+test('main review completed during a run supersedes older outputs and retry queues on refresh', t => {
+  const f = fixture(t, {
+    'en/topic/page.md': source, 'cn/topic/page.md': translated,
+    'en/topic/other.md': source, 'cn/topic/other.md': translated
+  })
+  const sourceBlob = f.git('rev-parse', 'HEAD:en/topic/page.md')
+  f.git('checkout', '-qb', 'reviewed-main')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Reviewed main'))
+  const reviewedState = {
+    version: 1,
+    sources: { 'cn/topic/other.md': sourceBlob, 'cn/topic/page.md': sourceBlob },
+    pending: [], sourceCommit: f.before
+  }
+  f.write(statePath, JSON.stringify(reviewedState, null, 2) + '\n')
+  const latest = f.commit()
+  f.git('checkout', '-q', 'main')
+  f.write('cn/topic/page.md', translated.replace('Translated', 'Older unreviewed output'))
+  f.write(statePath, JSON.stringify({
+    version: 1, sources: {}, pending: ['cn/topic/page.md', 'cn/topic/other.md'],
+    sourceCommit: f.before
+  }))
+  refreshBatch(f.root, latest)
+  assert.match(f.read('cn/topic/page.md'), /Reviewed main/)
+  assert.deepEqual(f.state(), reviewedState)
+  assert.equal(f.git('diff', '--name-only'), '')
+})
+
 test('deleted English pages remove translated counterpart and queued state', t => {
   const f = fixture(t)
   fs.rmSync(path.join(f.root, 'en/topic/page.md'))

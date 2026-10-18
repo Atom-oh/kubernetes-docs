@@ -304,7 +304,11 @@ export function refreshBatch(root, ref = 'origin/main') {
   run(root, 'git', ['checkout', '--detach', latest])
   const main = tree(root, 'HEAD')
   const state = readState(blob(root, main.get(statePath)))
-  const pending = new Set([...state.pending, ...previous.pending])
+  const mainSources = { ...state.sources }
+  const mainPending = new Set(state.pending)
+  const mainCurrent = file => main.has(file) && main.has(sourcePath(file)) && !mainPending.has(file) &&
+    mainSources[file] === main.get(sourcePath(file))?.oid
+  const pending = new Set([...state.pending, ...previous.pending.filter(file => !mainCurrent(file))])
   for (const [file, incoming] of saved) {
     if (file === statePath) continue
     if (file === headingPath) {
@@ -312,6 +316,7 @@ export function refreshBatch(root, ref = 'origin/main') {
       continue
     }
     if (translatedPath(file)) {
+      if (mainCurrent(file)) continue
       const src = sourcePath(file)
       if (!main.has(src)) {
         write(root, file, null); delete state.sources[file]; pending.delete(file)
@@ -321,6 +326,7 @@ export function refreshBatch(root, ref = 'origin/main') {
     } else overlay(root, file, blob(root, base.get(file)), incoming)
   }
   for (const [file, sha] of Object.entries(previous.sources)) {
+    if (mainCurrent(file)) continue
     if (main.get(sourcePath(file))?.oid === sha && !pending.has(file)) state.sources[file] = sha
     else if (main.get(sourcePath(file))?.oid !== sha) pending.add(file)
   }
