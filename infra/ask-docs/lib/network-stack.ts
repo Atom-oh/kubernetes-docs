@@ -13,6 +13,7 @@ export class NetworkStack extends cdk.Stack {
     super(scope, id, props)
     // AWS managed prefix lists in ap-northeast-2 (verified with describe-managed-prefix-lists).
     const S3_PREFIX_LIST = 'pl-78a54011'
+    const DYNAMODB_PREFIX_LIST = 'pl-48a54021'
     const CLOUDFRONT_ORIGIN_FACING_PREFIX_LIST = 'pl-22a6434b'
 
     this.vpc = new ec2.Vpc(this, 'Vpc', {
@@ -35,6 +36,10 @@ export class NetworkStack extends cdk.Stack {
       service: ec2.GatewayVpcEndpointAwsService.S3,
       subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
     })
+    this.vpc.addGatewayEndpoint('DynamoDb', {
+      service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
+    })
 
     const endpointSg = new ec2.SecurityGroup(this, 'EndpointSg', {
       vpc: this.vpc,
@@ -52,6 +57,11 @@ export class NetworkStack extends cdk.Stack {
       ec2.Peer.prefixList(S3_PREFIX_LIST),
       ec2.Port.tcp(443),
       'S3 gateway endpoint'
+    )
+    this.lambdaSecurityGroup.addEgressRule(
+      ec2.Peer.prefixList(DYNAMODB_PREFIX_LIST),
+      ec2.Port.tcp(443),
+      'DynamoDB gateway endpoint'
     )
     endpointSg.addIngressRule(this.lambdaSecurityGroup, ec2.Port.tcp(443), 'from ask-docs Lambda')
 
