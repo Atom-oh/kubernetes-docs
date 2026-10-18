@@ -1,26 +1,26 @@
 # 第 4 部分：Ray Serve
 
-> **审查基线**：Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
+> **审查基准**：Ray 2.58.0 · KubeRay 1.7.1 · 2026-10-16
 
 ## 环境与验证范围
 
-已使用 Python 3.12 和 `ray[serve]==2.58.0` 检查了一个小型 CPU 响应示例。在此环境中，尽管额外安装未提供 Jinja2，HAProxy 模块仍导入了 Jinja2；显式添加 `Jinja2==3.1.6` 修复了导入问题。其他环境可能已通过其他依赖项包含它。
+我们使用 Python 3.12 和 `ray[serve]==2.58.0` 检查了一个小型 CPU 响应示例。在此环境中，HAProxy 模块导入了 Jinja2，但额外安装项并未提供它；显式添加 `Jinja2==3.1.6` 后，导入问题得到解决。其他环境可能已通过其他依赖安装了它。
 
-`ray[llm]` extra 会添加 vLLM 等大型推理依赖项。这里未安装它，且未运行模型权重、GPU 或 EKS 工作负载。以下验证涵盖 Serve 配置、HTTP 响应和 DeploymentHandle 调用。
+`ray[llm]` 额外项会添加 vLLM 等大型推理依赖。本次未安装此额外项，也未运行模型权重、GPU 或 EKS 工作负载。以下验证涵盖 Serve 配置、HTTP 响应和 DeploymentHandle 调用。
 
-## Deployment、Application 与请求路径
+## Deployments、Applications 与请求路径
 
-一个 Serve **Deployment** 管理 actor 副本；它不同于 Kubernetes Deployment。多个副本 actor 可以容纳在一个 Ray Pod 中，因此副本数量与 Pod 数量不可互换。
+Serve **Deployment** 管理 actor 副本；它与 Kubernetes Deployment 不同。一个 Ray Pod 中可以容纳多个副本 actor，因此副本数和 Pod 数不能互换使用。
 
-一个 **Application** 包含一个或多个 deployment 和一个 ingress deployment。DeploymentHandle 可以连接预处理与推理，而无需让每个内部调用都经过 HTTP，也无需为每个 deployment 创建 Kubernetes Service。
+一个 **Application** 包含一个或多个 deployment，以及一个入口 deployment。DeploymentHandles 可以连接预处理和推理，而无需让每个内部调用都经过 HTTP，也无需为每个 deployment 创建一个 Kubernetes Service。
 
-Controller 管理 Serve 控制状态和 actor 生命周期。Proxy 接收 HTTP/gRPC 流量并将其转发至 deployment。2.58.0 的默认 proxy 位置是**承载副本的节点上的 `EveryNode`**。可以显式选择 `HeadOnly` 和 `Disabled`。较旧架构页面中的仅 head 节点默认值不应覆盖当前 API 契约。
+Controller 管理 Serve 控制状态和 actor 生命周期。Proxy 接收 HTTP/gRPC 流量并将其转发到 deployments。2.58.0 中的默认 proxy 位置是**承载副本的节点上的 `EveryNode`**。可以显式选择 `HeadOnly` 和 `Disabled`。较早的架构页面所述的仅 Head 节点默认值不应覆盖当前 API 契约。
 
-应区分 proxy/handle 上的调用方队列与分配给副本的进行中请求。审查 Application 中的同步/异步 handler、阻塞工作、超时和取消行为。
+请区分 proxy/handle 处的调用方队列与分配给副本的正在处理请求。请在应用中检查同步/异步处理程序、阻塞工作、超时和取消行为。
 
-## 小型本地 HTTP/Handle 示例
+## 简单的本地 HTTP/Handle 示例
 
-此示例验证响应 API，而非模型推理。实际检查使用了一个可用的私有 loopback 端口，并确认 HTTP 200 以及 `double(4) == 8`。
+此示例验证响应 API，而非模型推理。实际检查使用了一个可用的私有回环端口，并确认 HTTP 200 和 `double(4) == 8`。
 
 ```python
 import requests
@@ -53,69 +53,69 @@ finally:
     ray.shutdown()
 ```
 
-请在端口 18080 可用的独立练习进程中运行。Ray 逻辑资源和 object store 大小并非整个进程的 OS 内存/CPU 限制。`serve.shutdown()` 会停止已连接的 Serve 实例；请勿将此示例的清理操作用于共享的生产集群。
+请在单独的练习进程中运行，并确保端口 18080 可用。Ray 逻辑资源和对象存储大小并非整个进程的 OS 内存/CPU 限制。`serve.shutdown()` 会停止已连接的 Serve 实例；请勿将此示例中的清理操作用于共享的生产集群。
 
-## 副本、Autoscaling 与 Backpressure
+## 副本、自动扩缩容与背压
 
-区分以下已验证的 2.58.0 默认值：
+请区分以下已验证的 2.58.0 默认值：
 
 | 配置 | 值或含义 |
 |---|---|
-| 默认 deployment | 一个副本，未配置 autoscaling |
-| `num_replicas="auto"` | 应用最小值 1、最大值 100、目标进行中请求数 2 |
+| 默认 deployment | 一个副本，未配置自动扩缩容 |
+| `num_replicas="auto"` | 应用最小值 1、最大值 100、正在处理请求目标值 2 |
 | 直接使用 `AutoscalingConfig()` | 最小值 1，**最大值 1**；省略最大值会限制扩容 |
-| `max_ongoing_requests` | 发送至副本但尚未获得响应的请求；默认值为 5 |
-| `max_queued_requests` | **每个调用方**（proxy/handle）上的队列上限；默认值为 -1，即无限制 |
-| 扩缩容延迟 | 默认扩容 30 秒/缩容 600 秒；并非实际就绪延迟 |
+| `max_ongoing_requests` | 已发送给副本但尚未收到响应的请求；默认值为 5 |
+| `max_queued_requests` | **每个调用方**（proxy/handle）的队列上限；默认值为 -1，即不限制 |
+| 扩缩容延迟 | 默认向上扩容 30 秒/向下扩容 600 秒；不代表实际就绪延迟 |
 
-Autoscaling 目标会观察请求负载；它不同于最大进行中请求数和全局队列上限。超过队列限制时，handle 可能引发 BackPressureError，或默认返回 HTTP 503。Backpressure 配置可以自定义 HTTP 响应。
+自动扩缩容目标会观察请求负载；它不同于正在处理请求的最大值和全局队列上限。超过队列限制时，handle 可能引发 BackPressureError，HTTP 默认返回 503。背压配置可以自定义 HTTP 响应。
 
-请一并调整最小值/最大值、测量窗口/延迟、冷启动、模型加载、batching 和实际处理时间。使用 `min_replicas=0` 缩容至零并不会消除重启延迟。期望的副本数量并不能保证所有副本都已就绪。
+应一并调整最小值/最大值、测量窗口/延迟、冷启动、模型加载、批处理和实际处理时间。将 `min_replicas=0` 设为零扩容并不能消除重启延迟。期望的副本数不保证所有副本都已就绪。
 
 ## EKS 上的控制层
 
 1. Serve 根据请求负载和策略调整 deployment 副本目标。
-2. Ray 放置 actor/bundle；启用的 Ray autoscaling 和 KubeRay 可以调整 worker Pod 容量。
-3. Kubernetes 放置 Pod，并在需要时由 Karpenter 等 provisioner 提供节点容量。
+2. Ray 放置 actor/bundle；启用 Ray 自动扩缩容后，KubeRay 可以调整 worker Pod 容量。
+3. Kubernetes 放置 Pod，并在需要时由 Karpenter 等供应器提供节点容量。
 
-**一个 pending actor 不会自动变成一个 Pending Pod 或一个 EC2 节点。**现有 Ray Pod 可能获得空闲容量，或者 group 上限、放置和 quota 可能阻止进展。请在每一层检查需求和就绪状态。
+**一个待处理的 actor 不会自动变成一个 Pending Pod 或一个 EC2 节点。**现有 Ray Pod 可能有可用容量，也可能因组限制、放置策略和配额而无法继续推进。请检查每一层的需求和就绪状态。
 
-![HTTP/Handle 请求会到达 Serve proxy 和 deployment 副本。Actor 目标、Ray Pod 容量和 Kubernetes 节点预配是彼此独立的层，不存在 actor/Pod/node 的一一映射。](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
+![HTTP/Handle 请求会到达 Serve proxy 和 deployment 副本。Actor 目标、副本 Ray Pod 容量和 Kubernetes 节点供应属于不同层级，actor/Pod/节点之间不存在一对一映射。](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
 
 [交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-04-ray-serve-0.html)
 
 ## GPU 推理与 Ray Serve LLM
 
-普通 GPU 副本使用 `ray_actor_options` 等 Ray 资源设置。请对齐设备、driver、Pod limit 以及 Ray 的 structured-resource/rayStartParams 优先级。如[第 2 部分](02-kuberay-operator.md)所述，Pod limit 并不总是唯一配置的值。
+普通 GPU 副本使用 Ray 资源设置，例如 `ray_actor_options`。请协调设备、驱动程序、Pod 限制，以及 Ray 结构化资源/rayStartParams 的优先级。如[第 2 部分](02-kuberay-operator.md)所述，Pod 限制并不总是唯一的配置值。
 
-`LLMConfig` 和 `build_openai_app` 等 API 提供了独立的 LLM 配置层。2.58.0 文档和软件包显示支持 **vLLM 和 SGLang backend**。已验证的 `ray[llm]` 依赖包括 `vllm[audio]==0.26.0` 和 NIXL 软件包；这并不意味着同时安装了所有 SGLang 依赖。
+`LLMConfig` 和 `build_openai_app` 等 API 提供了独立的 LLM 配置层。2.58.0 文档和软件包显示支持 **vLLM 和 SGLang 后端**。已验证的 `ray[llm]` 依赖包括 `vllm[audio]==0.26.0` 和 NIXL 软件包；这并不意味着所有 SGLang 依赖也都已安装。
 
-请区分 `model_loading_config`、`deployment_config`、`engine_kwargs` 和 `server_cls`。检查 engine 特定字段和支持的组合，而不要假设每个 `vllm serve` CLI 选项都能原样迁移。不同 backend 的 tensor-parallel 选项名称和 worker 放置方式可能不同。部分 API 仍处于 beta 阶段，较旧的 LLMServer/LLMRouter 路径带有弃用通知。
+请区分 `model_loading_config`、`deployment_config`、`engine_kwargs` 和 `server_cls`。请检查引擎专属字段和支持的组合，不要假定每个 `vllm serve` CLI 选项都能原样传递。不同后端的 tensor-parallel 选项名称和 worker 放置方式可能不同。一些 API 处于 beta 阶段，较旧的 LLMServer/LLMRouter 路径则带有弃用通知。
 
-请分别验证模型访问、revision、权重下载、engine/CUDA/driver 兼容性、KV cache 以及 tensor/pipeline-parallel 资源。与 OpenAI 兼容的请求格式并不能确保已建立 authentication、安全性或相同的功能覆盖范围。CPU Echo 检查不能证明 LLM 性能或兼容性。
+请分别验证模型访问权限、版本、权重下载、引擎/CUDA/驱动程序兼容性、KV cache，以及 tensor/pipeline 并行所需资源。与 OpenAI 兼容的请求格式并不能证明身份验证、安全性或功能覆盖完全相同。CPU Echo 检查不能证明 LLM 的性能或兼容性。
 
 ## RayService 与运维更新
 
-RayService 是在 EKS 上对 Serve Application 和 RayCluster 进行声明式生命周期管理的一种选择，并非每个生产 deployment 的通用必需条件。请区分 Application 配置变更和集群变更，以及 `NewCluster` 和基于 Gateway 的增量升级策略。
+RayService 是一种在 EKS 上以声明式方式管理 Serve 应用和 RayClusters 生命周期的选择，并非每个生产部署都必须使用。请区分应用配置变更与集群变更，以及 `NewCluster` 和基于 Gateway 的增量升级策略。
 
-KubeRay 1.7 已启用的增量 feature gate 仍需要 Gateway API/实现、备用容量、就绪状态和 draining 条件。请针对 shutdown 边界测试 streaming 和长时间运行的请求。不要将每次升级都描述为保证零请求丢失。
+KubeRay 1.7 启用的增量功能门控仍需要 Gateway API/实现、备用容量、就绪条件和排空条件。请针对关闭限制测试流式和长时间运行的请求。不要描述成每次升级都能保证请求零丢失。
 
-HTTP 选项等集群范围的启动设置存在动态更新限制。Deployment 变更可以是轻量级重新配置，也可以是 actor 替换。重启/替换的副本会付出模型初始化和状态恢复的成本。
+HTTP 选项等集群级启动设置在动态更新方面存在限制。Deployment 变更可能只需轻量级重新配置，也可能需要替换 actor。重启/替换的副本需要承担模型初始化和状态恢复成本。
 
 ## 访问控制与限制
 
-请分别限制 API/dashboard/client 入口、模型 artifact 访问和 Application 用户访问。Ray 集群 token 和 ClusterIP 不会自动为每个 Serve endpoint 实现 authentication/authorization。审查敏感输入、响应、prompt 和日志，并配置队列、超时和资源边界。
+请分别限制 API/dashboard/client 入口、模型工件访问和应用用户访问。Ray 集群令牌和 ClusterIP 不会自动为每个 Serve 端点实现身份验证/授权。请检查敏感输入、响应、提示词和日志，并配置队列、超时和资源限制。
 
-此处的检查涵盖原生配置/decorator 以及一个微型单节点 HTTP/Handle Application。未执行 autoscaling 负载测试、GPU/LLM 运行、多节点故障转移和 RayService rollout。
+此处的检查涵盖原生配置/装饰器，以及一个小型单节点 HTTP/Handle 应用。未进行自动扩缩容负载测试、GPU/LLM 执行、多节点故障转移或 RayService 滚动更新。
 
 ## 主要来源
 
 - [Serve 2.58.0](https://docs.ray.io/en/releases-2.58.0/serve/index.html)
-- [Autoscaling](https://docs.ray.io/en/releases-2.58.0/serve/autoscaling-guide.html)
+- [自动扩缩容](https://docs.ray.io/en/releases-2.58.0/serve/autoscaling-guide.html)
 - [Serve LLM](https://docs.ray.io/en/releases-2.58.0/serve/llm/index.html)
 - [Serve API 和 proxy 默认值](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
 - [Serve 配置](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
 - [副本/队列配置](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
-- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.1)
 
 [主页](README.md) · [测验](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

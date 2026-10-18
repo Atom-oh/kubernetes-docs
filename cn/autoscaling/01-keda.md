@@ -1,126 +1,82 @@
-# KEDA (Kubernetes Event-driven Autoscaling)
+# KEDA（Kubernetes 事件驱动自动伸缩）
+
+> **示例版本**：KEDA/Helm chart 2.21.0；请参阅下方经过测试的 Kubernetes 版本矩阵。
+> **最后更新**：October 16, 2026
 
 ## 目录
 - [简介](#introduction)
 - [架构](#architecture)
-- [安装与配置](#installation-and-configuration)
-- [Scalers](#scalers)
-- [自定义指标扩缩容](#custom-metric-scaling)
-- [Twitter 指标扩缩容](#twitter-metric-scaling)
-- [Google Calendar 扩缩容](#google-calendar-scaling)
-- [Istio 指标扩缩容](#istio-metric-scaling)
-- [基于 Cron 的扩缩容](#cron-based-scaling)
+- [安装和配置](#installation-and-configuration)
+- [Scaler](#scalers)
+- [自定义指标伸缩](#custom-metric-scaling)
+- [Twitter 指标伸缩](#twitter-metric-scaling)
+- [Google Calendar 伸缩](#google-calendar-scaling)
+- [Istio 指标伸缩](#istio-metric-scaling)
+- [基于 Cron 的伸缩](#cron-based-scaling)
 - [与 Amazon EKS 集成](#integration-with-amazon-eks)
 - [最佳实践](#best-practices)
-- [故障排除](#troubleshooting)
+- [故障排查](#troubleshooting)
 - [结论](#conclusion)
-
-<span id="introduction"></span>
 
 ## 简介
 
-KEDA (Kubernetes Event-driven Autoscaling) 是一个开源项目，可为 Kubernetes 应用实现事件驱动的自动扩缩容。KEDA 扩展了 Kubernetes 原生的 Horizontal Pod Autoscaler (HPA)，使工作负载能够基于 CPU 和内存使用率以外的各种事件源和指标进行扩缩容。
+KEDA（Kubernetes 事件驱动自动伸缩）是一个开源项目，可为 Kubernetes 应用启用事件驱动自动伸缩。KEDA 扩展了 Kubernetes 原生的 Horizontal Pod Autoscaler（HPA），使工作负载能够根据 CPU 和内存使用量以外的各种事件源和指标进行伸缩。
 
 ### KEDA 的主要优势
 
-1. **事件驱动扩缩容**：基于各种事件源（消息队列、数据库、流等）进行扩缩容
-2. **零扩缩容**：在没有活动时缩容到 0 个副本以节省成本
-3. **多样化 Scaler 支持**：内置 50 多个 scalers，并支持自定义 scaler
-4. **Kubernetes Native**：与现有 Kubernetes HPA 集成
-5. **Cloud Neutral**：可在任何 Kubernetes 环境中运行
-6. **简单的部署模型**：通过单个 operator 即可轻松部署
+1. **事件驱动伸缩**：根据各种事件源（消息队列、数据库、流等）进行伸缩
+2. **缩容至零**：支持的事件触发器可以激活空闲工作负载；为该工作负载配置最小值、激活阈值和冷却时间。
+3. **丰富的 Scaler 支持**：支持 50 多种内置 Scaler，也支持自定义 Scaler
+4. **原生 Kubernetes 集成**：与现有 Kubernetes HPA 集成
+5. **云中立**：可在具备所需 API、网络访问和身份配置的兼容 Kubernetes 发行版上运行。
+6. **部署模型**：标准安装包含一个 operator、一个指标 API server 和 admission webhook。
 
-### 与现有扩缩容方法的比较
+### 与现有伸缩方法的比较
 
-| 功能 | KEDA | Kubernetes HPA | Cloud Provider Autoscaler |
+| 功能 | KEDA | Kubernetes HPA | 云提供商自动伸缩器 |
 |---------|------|----------------|---------------------------|
-| 指标来源 | 50+ scalers | CPU、Memory、Custom metrics | 有限指标 |
-| 零扩缩容 | ✅ | ❌ | 部分支持 |
-| 事件驱动 | ✅ | ❌ | 部分支持 |
-| Cloud Neutral | ✅ | ✅ | ❌ |
-| 部署复杂度 | 低 | 非常低 | 中 |
-| Custom Metrics | 简单 | 复杂 | 有限 |
-
-<span id="architecture"></span>
+| 指标来源 | 内置事件 Scaler 和外部 Scaler | 通过适当的适配器提供资源、自定义和外部指标 | 取决于产品 |
+| 缩容至零 | 支持的触发器和配置 | 取决于版本/功能；在 Kubernetes 1.37 beta 中，对象/外部指标支持缩容至零 | 取决于产品 |
+| 事件驱动 | 事件源集成和激活 | 可通过自定义/外部指标适配器实现 | 取决于产品 |
+| 云中立 | ✅ | ✅ | ❌ |
+| 部署复杂度 | Operator、指标 server、webhook 和凭据 | 内置控制器；可能需要适配器 | 取决于产品 |
+| 自定义指标 | Scaler 集成或 HTTP/gRPC 生产器 | 需要适当的指标适配器 | 取决于产品 |
 
 ## 架构
 
-KEDA 基于 Kubernetes operator 模式，监控外部指标源并自动管理 Kubernetes HPA。
+KEDA 基于 Kubernetes operator 模式，可监控外部指标来源并自动管理 Kubernetes HPA。
 
-```mermaid
-flowchart LR
-    %% Node definitions
-    A[KEDA Operator]
-    B[KEDA Metrics Server]
-    C[Horizontal Pod Autoscaler]
-    D[ScaledObject / ScaledJob]
-    E[Deployment / Job]
+![KEDA operator 管理 ScaledObject 的激活和 HPA 生命周期，将 Scaler 结果提供给指标 API server，并直接为 ScaledJob 创建 Job。HPA 管理非零 ScaledObject 副本数；admission webhook 验证资源。](../.gitbook/assets/en-autoscaling-01-keda-0.png)
 
-    F[Message Queues]
-    G[Databases]
-    H[Streaming Platforms]
-    I[Custom Metrics]
-
-    %% Subgraph definitions
-    subgraph K8S["Kubernetes Cluster"]
-        A
-        B
-        C
-        D
-        E
-    end
-
-    subgraph EXT["External Event Sources"]
-        F
-        G
-        H
-        I
-    end
-
-    %% Connection definitions
-    A -->|Watches| D
-    A -->|Creates/Updates| C
-    B -->|Provides Metrics| C
-    D -->|References| E
-    B -->|Polls| F
-    B -->|Polls| G
-    B -->|Polls| H
-    B -->|Polls| I
-    C -->|Scales| E
-
-    %% Style application
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    %% Class application
-    class A,B,C,D,E k8sComponent
-    class F,G,H,I awsService
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-01-keda-0.html)
 
 
 ### 主要组件
 
-1. **KEDA Operator**：监视 ScaledObject 和 ScaledJob 资源并管理 HPA
-2. **KEDA Metrics Server**：从外部指标源收集指标，并将其暴露给 Kubernetes API
-3. **ScaledObject**：定义 Deployment、StatefulSet 等的扩缩容配置
-4. **ScaledJob**：定义 Kubernetes Job 的扩缩容配置
-5. **Triggers/Scalers**：为各种事件源实现扩缩容逻辑
+1. **KEDA Operator**：协调 ScaledObject 及其 HPA，处理零副本激活/停用，并为 ScaledJob 创建 Job。
+2. **KEDA Metrics Server**：通过聚合 Kubernetes API 提供外部指标，并通过 operator 的指标服务获取 Scaler 结果。
+3. **ScaledObject**：定义 Deployment、StatefulSet 等的伸缩配置。
+4. **ScaledJob**：定义 Kubernetes Job 的伸缩配置
+5. **触发器/Scaler**：获取事件源指标并评估是否激活；admission webhook 验证受支持的资源配置。
 
 ### 工作原理
 
-1. 用户创建 ScaledObject 或 ScaledJob，用于定义扩缩容目标和触发器
-2. KEDA Operator 检测到该资源后创建对应的 HPA
-3. KEDA Metrics Server 轮询外部指标源以收集指标
-4. HPA 根据 metrics server 提供的指标对工作负载进行扩缩容
-5. 当没有活动时，KEDA 会缩容到 0 个副本（这是 HPA 无法做到的）
+1. ScaledObject 引用其命名空间中兼容的伸缩目标。KEDA 为其管理一个 HPA；每个目标只使用一个伸缩管理者。
+2. Operator 根据 `pollingInterval` 轮询触发器以判断是否激活，包括工作负载处于零副本时。
+3. 对于非零副本，HPA 通过指标 API server 和 operator 请求外部指标。HPA 同步和指标缓存设置会影响查询频率。
+4. HPA 调整非零副本数；KEDA 处理激活和已配置的缩容至零冷却时间。`cooldownPeriod` 不会取代 HPA 将副本数从 N 缩减到 1 时的稳定窗口。
+5. ScaledJob 采用单独的处理路径：KEDA 根据事件及其伸缩策略创建批处理 Job；它不会为这些 Job 创建 HPA。
 
-<span id="installation-and-configuration"></span>
+## 安装和配置
 
-## 安装与配置
+这些示例是可选方案，并非一组可一次性应用的 manifest。请准备好引用的工作负载、Service、Secret 和镜像；替换账户、队列、URL 和镜像占位符。不要让多个 ScaledObject/HPA 作用于同一个目标。自动伸缩接管副本数后，请协调 GitOps/应用对 `spec.replicas` 的管理权。这些配置示例尚未在生产环境中部署或测量。
+
+Kubernetes 1.37 引入了对象/外部指标的 beta 版 HPA 缩容至零功能，通过 `HPAScaleToZero` 默认启用；仅使用 CPU/内存的指标无法从零副本激活工作负载。这并未改变 KEDA 2.21 中 operator 与 HPA 的分工，也不能据此确认其与 Kubernetes 1.37 兼容。
 
 ### 先决条件
 
-- Kubernetes cluster（v1.16 或更高版本）
+- 选择由你的提供商和所选 KEDA 版本支持的 Kubernetes 版本。KEDA 2.21 部署文档公布的**已测试版本矩阵为 1.34–1.36**。该矩阵不代表与 1.37 兼容；请单独验证这一组合。
+- 如果你要从 KEDA 2.20 升级，请先阅读[2.21 迁移指南](https://keda.sh/docs/2.21/migration/#upgrading-from-keda-220-to-221)。作为 CVE-2026-77524 的修复措施，2.21 默认强制执行服务账户令牌受众验证（`operator.serviceAccountTokens.mode: enforce-audience`），适用于 Vault Kubernetes 身份验证和 `boundServiceAccountToken`。它还移除了 Temporal Scaler 已弃用的设置，并更改了 Azure Pipelines 的 `scaleOnInFlight` 默认值。本章示例不使用这些身份验证方法或 Scaler。
 - 已配置 kubectl
 - Helm（可选）
 
@@ -129,102 +85,106 @@ flowchart LR
 #### 1. 使用 Helm 安装
 
 ```bash
-# Add Helm repository
 helm repo add kedacore https://kedacore.github.io/charts
-
-# Update Helm repository
 helm repo update
-
-# Install KEDA
-helm install keda kedacore/keda --namespace keda --create-namespace
+helm install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace
 ```
 
-#### 2. 使用 YAML Manifests 安装
+#### 2. 使用 YAML Manifest 安装
 
 ```bash
-# Download latest KEDA release
-kubectl apply -f https://github.com/kedacore/keda/releases/download/v2.10.1/keda-2.10.1.yaml
+kubectl apply --server-side -f https://github.com/kedacore/keda/releases/download/v2.21.0/keda-2.21.0.yaml
 ```
 
 #### 3. 验证安装
 
 ```bash
-kubectl get pods -n keda
+kubectl get deployments,pods -n keda
+kubectl wait --for=condition=Available deployment --all -n keda --timeout=180s
+kubectl get apiservice v1beta1.external.metrics.k8s.io
 ```
 
-预期输出：
+示例输出（名称/数量取决于 chart 设置；此处并非实际执行结果）：
 ```
 NAME                                      READY   STATUS    RESTARTS   AGE
-keda-operator-5c6d85d76c-vr4fj            1/1     Running   0          1m
-keda-operator-metrics-apiserver-65f8f8d4d8-9mzrk   1/1     Running   0          1m
+keda-operator-<hash>-<id>                  1/1     Running   0          1m
+keda-operator-metrics-apiserver-<hash>-<id> 1/1     Running   0          1m
+keda-admission-webhooks-<hash>-<id>        1/1     Running   0          1m
 ```
 
 ### 基本配置
 
-KEDA 默认只需最少配置即可工作，但你可以根据需要调整各种设置。
+稍后展示的 IRSA 值必须合并到同一份固定版本的 Helm values 文件中，然后再应用升级。更改身份配置时，请验证最终生成的 ServiceAccount 注解，并通过常规滚动更新流程重启 operator Pod。
 
-#### 使用 Helm Values File 进行自定义配置
+以下 values 与 Helm chart 2.21.0 相匹配。两个 operator 副本提供的是 leader-election 备用实例，而非两个活跃的协调器。Metrics Server 的冗余也取决于 API aggregation 路由，并不意味着端到端完全高可用。资源值只是起始配置，并非经过测量的容量规格。
+
+#### 使用 Helm Values 文件自定义配置
 
 ```yaml
-# values.yaml
 operator:
   replicaCount: 2
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 50m
-      memory: 64Mi
-
 metricsServer:
-  replicaCount: 2
-  resources:
+  replicaCount: 1
+resources:
+  operator:
     limits:
-      cpu: 100m
-      memory: 128Mi
+      cpu: '1'
+      memory: 1000Mi
     requests:
-      cpu: 50m
-      memory: 64Mi
-
+      cpu: 100m
+      memory: 100Mi
+  metricServer:
+    limits:
+      cpu: '1'
+      memory: 1000Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+  webhooks:
+    limits:
+      cpu: '1'
+      memory: 1000Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
 logging:
   operator:
     level: info
   metricServer:
-    level: info
+    level: 0
 ```
 
 ```bash
-helm install keda kedacore/keda --namespace keda --create-namespace -f values.yaml
+helm upgrade --install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace -f values.yaml
 ```
 
-## Scalers
+## Scaler
 
-KEDA 为各种事件源提供 scalers。每个 scaler 都会从特定事件源收集指标，并基于这些指标对工作负载进行扩缩容。
+KEDA 为各种事件源提供 Scaler。每个 Scaler 都会从特定事件源收集指标，并根据这些指标对工作负载进行伸缩。
 
-### 主要 Scalers
+### 主要 Scaler
 
-KEDA 支持 50 多个 scalers，主要包括：
+KEDA 支持 50 多种 Scaler，其中主要包括：
 
-1. **Message Queues**：
+1. **消息队列**：
    - Apache Kafka
    - RabbitMQ
    - AWS SQS
    - Azure Service Bus
    - Google Cloud Pub/Sub
 
-2. **Databases**：
+2. **数据库**：
    - MySQL
    - PostgreSQL
    - MongoDB
    - Redis
 
-3. **Streaming Platforms**：
+3. **流处理平台**：
    - Apache Kafka
    - AWS Kinesis
    - Azure Event Hubs
 
-4. **Cloud Services**：
+4. **云服务**：
    - AWS CloudWatch
    - Azure Monitor
    - Google Cloud Monitoring
@@ -233,11 +193,24 @@ KEDA 支持 50 多个 scalers，主要包括：
    - Prometheus
    - InfluxDB
    - Cron
-   - CPU/Memory
+   - CPU/内存
 
 ### 基本 ScaledObject 示例
 
+在目标命名空间中创建 `rabbitmq-credentials`，并设置 `host` 键，其中包含完整且经过授权的 AMQP/AMQPS 连接 URI。引用的 `rabbitmq-consumer` Deployment 必须已配置为从该队列消费消息。在非隔离网络中，建议使用经过验证的信任链的 TLS；此示例不会部署 broker，也不会生成凭据。
+
 ```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-auth
+  namespace: default
+spec:
+  secretTargetRef:
+  - parameter: host
+    name: rabbitmq-credentials
+    key: host
+---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -257,11 +230,15 @@ spec:
     metadata:
       protocol: amqp
       queueName: hello
-      host: rabbitmq
-      queueLength: "5"
+      mode: QueueLength
+      value: '5'
+    authenticationRef:
+      name: rabbitmq-auth
 ```
 
 ### 基本 ScaledJob 示例
+
+重复使用上文的 `rabbitmq-auth` 和 `rabbitmq-credentials`。请提供一个真实的 worker 镜像，其进程能够处理有限数量的工作、确认消息并退出；否则 Job 将永远无法完成。重试可能导致重复处理，因此请使用应用级幂等机制以及适当的确认/可见性超时。`jobTargetRef` 是一个 JobSpec，而不是另一个嵌套的 Job 或 PodTemplate。
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -277,6 +254,14 @@ spec:
         - name: rabbitmq-worker
           image: rabbitmq-worker:latest
           imagePullPolicy: Always
+          env:
+          - name: RABBITMQ_HOST
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-credentials
+                key: host
+        restartPolicy: Never
+    backoffLimit: 4
   pollingInterval: 15
   maxReplicaCount: 30
   successfulJobsHistoryLimit: 5
@@ -286,18 +271,20 @@ spec:
     metadata:
       protocol: amqp
       queueName: hello
-      host: rabbitmq
-      queueLength: "5"
+      mode: QueueLength
+      value: '5'
+    authenticationRef:
+      name: rabbitmq-auth
 ```
-<span id="custom-metric-scaling"></span>
+## 自定义指标伸缩
 
-## 自定义指标扩缩容
+除各种内置 Scaler 外，KEDA 还支持根据自定义指标灵活地进行伸缩。这样你就可以实现适合自身业务需求的独特伸缩逻辑。
 
-除了各种内置 scalers 之外，KEDA 还提供了基于自定义指标进行扩缩容的灵活性。这使你可以实现符合业务需求的独特扩缩容逻辑。
+### 使用外部指标 API
 
-### 使用 External Metrics API
+计数器示例使用 `rate(...[2m])`，因此其目标单位是每个副本每秒的事件数，而非累计总数。Prometheus 查询必须返回单个数值结果。`ignoreNullValues: false` 会将缺失序列作为错误处理；请审慎判断空结果究竟代表零，还是遥测故障。
 
-你可以使用 Prometheus 等外部指标源实现基于自定义指标的扩缩容：
+你可以使用 Prometheus 等外部指标来源实现基于自定义指标的伸缩：
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -316,14 +303,16 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://prometheus-server.monitoring.svc.cluster.local
-      metricName: custom_metric_total
-      threshold: "100"
-      query: sum(custom_metric_total{namespace="default",pod=~"my-app-.*"})
+      threshold: '100'
+      query: sum(rate(custom_metric_total{namespace="default",pod=~"my-app-.*"}[2m]))
+      ignoreNullValues: 'false'
 ```
 
 ### 使用 HTTP Scaler
 
-你可以从 HTTP endpoint 获取指标用于扩缩容：
+这是用于数值端点数据的 `metrics-api` Scaler，并非单独的 KEDA HTTP add-on；后者会拦截并缓冲请求以激活工作负载。该端点必须能够独立于被伸缩的工作负载持续运行，尤其是在工作负载为零副本时。
+
+你可以从 HTTP 端点获取指标以进行伸缩：
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -341,54 +330,85 @@ spec:
   triggers:
   - type: metrics-api
     metadata:
-      targetValue: "100"
-      url: "http://api.example.com/metrics"
-      valueLocation: "value"
-      method: "GET"
+      targetValue: '100'
+      url: https://metrics.example.com/metrics
+      valueLocation: value
 ```
 
-### 开发自定义 Scalers
+### 开发自定义 Scaler
 
-你可以开发自己的 scaler 并将其与 KEDA 集成。这需要开发一个实现 External Metrics API 的服务：
+下面的 Go 示例是一个**供内置 `metrics-api` Scaler 使用的 HTTP JSON 指标生产器**，不是 Kubernetes external.metrics.k8s.io 的实现，也不是 KEDA 的 external-scaler 协议实现。KEDA `external`/`external-push` 服务则需实现文档规定的 gRPC 方法 `IsActive`、`GetMetricSpec`、`GetMetrics`，并在使用 push 激活时实现 `StreamIsActive`。
 
 1. Metrics Server 实现：
+
+完整的 Go server 会读取 `METRICS_FILE`，这是一个通过原子替换更新的 JSON 快照，包含数值型 `value` 和 RFC3339 格式的 `observed_at`。需要由单独的业务指标生产器写入此文件。缺失/无效/负值或超过两分钟的数据会返回 HTTP503。使用以下 ScaledObject 前，请先构建并部署该服务及匹配的 Service；它不是聚合 Kubernetes API server。
 
 ```go
 package main
 
 import (
-    "net/http"
     "encoding/json"
-
-    "k8s.io/apimachinery/pkg/api/resource"
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/metrics/pkg/apis/external_metrics"
+    "errors"
+    "io"
+    "log"
+    "net/http"
+    "os"
+    "time"
 )
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
-    // Calculate metric value with custom logic
-    metricValue := calculateMetricValue()
+type snapshot struct {
+    Value *float64 `json:"value"`
+    ObservedAt time.Time `json:"observed_at"`
+}
 
-    metric := external_metrics.ExternalMetricValue{
-        TypeMeta: metav1.TypeMeta{
-            Kind:       "ExternalMetricValue",
-            APIVersion: "external.metrics.k8s.io/v1beta1",
-        },
-        MetricName: "custom_metric",
-        Value:      *resource.NewQuantity(metricValue, resource.DecimalSI),
-        Timestamp:  metav1.Now(),
+func metricsHandler(path string) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodGet {
+            w.Header().Set("Allow", "GET")
+            http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+            return
+        }
+        f, err := os.Open(path)
+        if err != nil {
+            http.Error(w, "metric unavailable", http.StatusServiceUnavailable)
+            return
+        }
+        defer f.Close()
+        var v snapshot
+        decoder := json.NewDecoder(io.LimitReader(f, 1<<20))
+        if err = decoder.Decode(&v); err == nil {
+            var extra any
+            if err = decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+                http.Error(w, "invalid snapshot", http.StatusServiceUnavailable)
+                return
+            }
+        } else {
+            http.Error(w, "invalid snapshot", http.StatusServiceUnavailable)
+            return
+        }
+        age := time.Since(v.ObservedAt)
+        if v.Value == nil || *v.Value < 0 || v.ObservedAt.IsZero() || age < -5*time.Second || age > 2*time.Minute {
+            http.Error(w, "stale or invalid metric", http.StatusServiceUnavailable)
+            return
+        }
+        w.Header().Set("Content-Type", "application/json")
+        w.Header().Set("Cache-Control", "no-store")
+        _ = json.NewEncoder(w).Encode(v)
     }
-
-    metricList := external_metrics.ExternalMetricValueList{
-        Items: []external_metrics.ExternalMetricValue{metric},
-    }
-
-    json.NewEncoder(w).Encode(metricList)
 }
 
 func main() {
-    http.HandleFunc("/metrics", metricsHandler)
-    http.ListenAndServe(":8080", nil)
+    path := os.Getenv("METRICS_FILE")
+    if path == "" { log.Fatal("METRICS_FILE is required") }
+    mux := http.NewServeMux()
+    mux.HandleFunc("/metrics", metricsHandler(path))
+    server := &http.Server{
+        Addr: ":8080", Handler: mux,
+        ReadHeaderTimeout: 5 * time.Second,
+        WriteTimeout: 10 * time.Second,
+        IdleTimeout: 60 * time.Second,
+    }
+    log.Fatal(server.ListenAndServe())
 }
 ```
 
@@ -410,84 +430,112 @@ spec:
   triggers:
   - type: metrics-api
     metadata:
-      targetValue: "100"
-      url: "http://custom-metrics-server:8080/metrics"
-      valueLocation: "items.0.value"
+      targetValue: '100'
+      url: http://custom-metrics-server:8080/metrics
+      valueLocation: value
 ```
 
-<span id="twitter-metric-scaling"></span>
+## Twitter 指标伸缩
 
-## Twitter 指标扩缩容
-
-此示例展示如何使用 Twitter API，根据特定 hashtag 或关键词的提及频率对应用进行扩缩容。
+此示例使用 X API（前身为 Twitter）v2 recent-counts 端点。它统计以数据采集时间前 30 秒为结束时间的五分钟窗口内的匹配项；这既不是累计计数，也不是即时发帖速率。必须针对预期用途验证账户访问权限、查询语义、计费和速率限制。
 
 ### 先决条件
 
-- Twitter API keys 和 access tokens
-- 用于收集并暴露指标的服务
+- 一个有权访问近期 Post 计数的 X 开发者应用及其应用 bearer token；此示例不代表已获得 API 访问权限或相关费用已包含在内。
+- 一个用于采集和公开指标的服务
 
 ### 实施步骤
 
-1. 实现 Twitter Metrics Collector Service：
+1. 实现 Twitter 指标采集服务：
+
+将此独立示例保存为采集器镜像中的 `app.py`，并在镜像中安装 Flask、requests 和 Gunicorn 依赖。该部署使用一个 Gunicorn worker 和 `app:create_app()`，以确保后台采集器能够在 WSGI 下实际启动。多个 worker/副本会增加 API 轮询量。计数不完整、遇到速率限制或身份验证错误时，服务会在失败后返回 HTTP503；代码不会默默将截断的搜索页面当作速率使用。请根据你的 API 权限调整轮询频率。
 
 ```python
+import datetime as dt
 import os
+import threading
 import time
-import tweepy
+
+import requests
 from flask import Flask, jsonify
 
-app = Flask(__name__)
+TOKEN = os.environ["X_BEARER_TOKEN"]
+QUERY = os.environ.get("X_QUERY", "#kubernetes")
+POLL_SECONDS = 60
+MAX_AGE_SECONDS = 120
+METRIC_NAME = "tweet_count"
 
-# Twitter API credentials
-consumer_key = os.environ.get("TWITTER_CONSUMER_KEY")
-consumer_secret = os.environ.get("TWITTER_CONSUMER_SECRET")
-access_token = os.environ.get("TWITTER_ACCESS_TOKEN")
-access_token_secret = os.environ.get("TWITTER_ACCESS_TOKEN_SECRET")
 
-# Tweepy authentication
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
-api = tweepy.API(auth)
+def fetch_value():
+    # Five-minute window ending 30 seconds ago; not a lifetime count or live rate.
+    end = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=30)
+    start = end - dt.timedelta(minutes=5)
+    response = requests.get(
+        "https://api.x.com/2/tweets/counts/recent",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+        params={"query": QUERY, "granularity": "minute",
+                "start_time": start.isoformat(), "end_time": end.isoformat()},
+        timeout=(3, 10),
+    )
+    response.raise_for_status()
+    body = response.json()
+    meta = body["meta"]
+    # Never silently scale from a partial result or an API error payload.
+    if body.get("errors") or meta.get("next_token"):
+        raise ValueError("incomplete counts response")
+    value = meta["total_tweet_count"]
+    if type(value) is not int or value < 0:
+        raise ValueError("invalid count")
+    return value
 
-# Metrics storage
-metrics = {
-    "tweet_count": 0,
-    "last_updated": 0
-}
 
-# Background tweet collection
-def collect_tweets():
-    while True:
-        try:
-            # Search for specific hashtag
-            tweets = api.search_tweets(q="#kubernetes", count=100)
-            metrics["tweet_count"] = len(tweets)
-            metrics["last_updated"] = time.time()
-        except Exception as e:
-            print(f"Error collecting tweets: {e}")
+def create_app():
+    app = Flask(__name__)
+    lock = threading.Lock()
+    state = {"value": None, "updated": 0.0, "healthy": False}
 
-        # Update every 15 minutes (considering Twitter API limits)
-        time.sleep(900)
+    def collect():
+        while True:
+            try:
+                value = fetch_value()
+                if type(value) is not int or value < 0:
+                    raise ValueError("invalid metric")
+                with lock:
+                    state.update(value=value, updated=time.monotonic(), healthy=True)
+            except Exception as exc:
+                with lock:
+                    state["healthy"] = False
+                app.logger.warning("Metric refresh failed: %s", type(exc).__name__)
+            time.sleep(POLL_SECONDS)
 
-# Metrics endpoint
-@app.route("/metrics", methods=["GET"])
-def get_metrics():
-    return jsonify({
-        "tweet_count": metrics["tweet_count"]
-    })
+    @app.get("/metrics")
+    def get_metrics():
+        with lock:
+            current = state.copy()
+        if not current["healthy"] or time.monotonic() - current["updated"] > MAX_AGE_SECONDS:
+            return jsonify(error="metric unavailable or stale"), 503
+        response = jsonify({METRIC_NAME: current["value"]})
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    threading.Thread(target=collect, daemon=True).start()
+    return app
+
 
 if __name__ == "__main__":
-    import threading
-    # Start background tweet collection
-    thread = threading.Thread(target=collect_tweets)
-    thread.daemon = True
-    thread.start()
-
-    # Start API server
-    app.run(host="0.0.0.0", port=8080)
+    # Local development only; use a WSGI server for the deployment example.
+    create_app().run(host="127.0.0.1", port=8080)
 ```
 
-2. 部署 Metrics Collector Service：
+2. 部署指标采集服务：
+
+部署前构建并固定采集器镜像版本。将现有令牌文件作为 Secret 输入创建，避免在 shell 参数中放入其内容：
+
+```bash
+kubectl create secret generic twitter-api-secrets --namespace default --from-file=bearer-token=./x-bearer-token
+```
+
+运行此命令时会创建 Kubernetes Secret；本次审计期间并未执行该命令。请勿将源文件纳入版本控制。
 
 ```yaml
 apiVersion: apps/v1
@@ -511,26 +559,34 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: TWITTER_CONSUMER_KEY
+        - name: X_BEARER_TOKEN
           valueFrom:
             secretKeyRef:
               name: twitter-api-secrets
-              key: consumer-key
-        - name: TWITTER_CONSUMER_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: twitter-api-secrets
-              key: consumer-secret
-        - name: TWITTER_ACCESS_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: twitter-api-secrets
-              key: access-token
-        - name: TWITTER_ACCESS_TOKEN_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: twitter-api-secrets
-              key: access-token-secret
+              key: bearer-token
+        command:
+        - gunicorn
+        args:
+        - --bind
+        - 0.0.0.0:8080
+        - --workers
+        - '1'
+        - --threads
+        - '4'
+        - app:create_app()
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
+      automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: Service
@@ -570,107 +626,119 @@ spec:
       valueLocation: "tweet_count"
 ```
 
-<span id="google-calendar-scaling"></span>
+使用默认的 AverageValue 时，计数/目标值比率会在配置的上下限内建议副本数；它并不直接表示处理吞吐量。采集器独立保持一个副本，在不可用时返回 503，并且没有会仅因上游故障而重启它的 liveness probe。生产环境使用仍需经过验证的凭据、限制、生命周期处理和可观测性。
 
-## Google Calendar 扩缩容
+## Google Calendar 伸缩
 
-此示例展示如何使用 Google Calendar API，基于计划事件对应用进行扩缩容。
+此示例统计**未来一小时内与时间窗口重叠的 Google Calendar 事件实例**，包括已经开始且仍在进行的事件。`timeMin` 会筛选事件结束时间，`timeMax` 会筛选开始时间。所有分页都会计入；采集不完整、失败或数据过期时，服务会返回指标不可用，而不是错误地返回零。
 
 ### 先决条件
 
-- Google Calendar API credentials
-- 用于收集并暴露指标的服务
+- 启用 Calendar API，并使用有权读取特定共享日历的服务账户。设置实际日历 ID；`primary` 不能代替将用户日历共享给该服务账户。
+- 一个用于采集和公开指标的服务
 
 ### 实施步骤
 
-1. 实现 Google Calendar Metrics Collector Service：
+1. 实现 Google Calendar 指标采集服务：
+
+将此独立示例保存为单独镜像中的 `app.py`，并安装 Flask、requests、google-auth 和 Gunicorn。单个采集线程会遍历所有分页；遇到重复令牌或达到分页安全上限时，会报告失败。该标量统计的是重叠的事件实例，而非参会者数量或所需副本数。必须向服务账户授予日历访问权限；仅有 OAuth scope 并不能授予该访问权限。
 
 ```python
+import datetime as dt
 import os
+import threading
 import time
-import datetime
+from urllib.parse import quote
+
 from flask import Flask, jsonify
+from google.auth.transport.requests import AuthorizedSession
 from google.oauth2 import service_account
-from googleapiclient.discovery import build
 
-app = Flask(__name__)
+CALENDAR_ID = os.environ["CALENDAR_ID"]
+SERVICE_ACCOUNT_FILE = "/etc/secrets/service-account.json"
+POLL_SECONDS = 300
+MAX_AGE_SECONDS = 360
+METRIC_NAME = "upcoming_events"
 
-# Google Calendar API credentials
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-SERVICE_ACCOUNT_FILE = '/etc/secrets/service-account.json'
-CALENDAR_ID = os.environ.get("CALENDAR_ID")
 
-# Metrics storage
-metrics = {
-    "upcoming_events": 0,
-    "last_updated": 0
-}
-
-# Create Google Calendar API client
-def create_calendar_client():
+def fetch_value():
     credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    return build('calendar', 'v3', credentials=credentials)
+        SERVICE_ACCOUNT_FILE,
+        scopes=["https://www.googleapis.com/auth/calendar.readonly"],
+    )
+    now = dt.datetime.now(dt.timezone.utc)
+    params = {"timeMin": now.isoformat(),
+              "timeMax": (now + dt.timedelta(hours=1)).isoformat(),
+              "singleEvents": "true", "showDeleted": "false",
+              "orderBy": "startTime", "maxResults": 2500}
+    url = f"https://www.googleapis.com/calendar/v3/calendars/{quote(CALENDAR_ID, safe='')}/events"
+    total = 0
+    seen_tokens = set()
+    with AuthorizedSession(credentials) as session:
+        for _ in range(100):
+            response = session.get(url, params=params, timeout=(3, 10))
+            response.raise_for_status()
+            body = response.json()
+            if body.get("error") or body.get("kind") != "calendar#events" or not isinstance(body.get("items", []), list):
+                raise ValueError("invalid events response")
+            total += len(body.get("items", []))
+            token = body.get("nextPageToken")
+            if not token:
+                return total
+            if token in seen_tokens:
+                raise ValueError("repeated page token")
+            seen_tokens.add(token)
+            params["pageToken"] = token
+    raise ValueError("pagination limit exceeded; result is incomplete")
 
-# Background event collection
-def collect_events():
-    while True:
-        try:
-            service = create_calendar_client()
 
-            # Current time
-            now = datetime.datetime.utcnow()
-            # 1 hour later
-            one_hour_later = now + datetime.timedelta(hours=1)
+def create_app():
+    app = Flask(__name__)
+    lock = threading.Lock()
+    state = {"value": None, "updated": 0.0, "healthy": False}
 
-            # Query events within the next hour
-            events_result = service.events().list(
-                calendarId=CALENDAR_ID,
-                timeMin=now.isoformat() + 'Z',
-                timeMax=one_hour_later.isoformat() + 'Z',
-                singleEvents=True,
-                orderBy='startTime'
-            ).execute()
+    def collect():
+        while True:
+            try:
+                value = fetch_value()
+                if type(value) is not int or value < 0:
+                    raise ValueError("invalid metric")
+                with lock:
+                    state.update(value=value, updated=time.monotonic(), healthy=True)
+            except Exception as exc:
+                with lock:
+                    state["healthy"] = False
+                app.logger.warning("Metric refresh failed: %s", type(exc).__name__)
+            time.sleep(POLL_SECONDS)
 
-            events = events_result.get('items', [])
-            metrics["upcoming_events"] = len(events)
-            metrics["last_updated"] = time.time()
-        except Exception as e:
-            print(f"Error collecting events: {e}")
+    @app.get("/metrics")
+    def get_metrics():
+        with lock:
+            current = state.copy()
+        if not current["healthy"] or time.monotonic() - current["updated"] > MAX_AGE_SECONDS:
+            return jsonify(error="metric unavailable or stale"), 503
+        response = jsonify({METRIC_NAME: current["value"]})
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
-        # Update every 5 minutes
-        time.sleep(300)
+    threading.Thread(target=collect, daemon=True).start()
+    return app
 
-# Metrics endpoint
-@app.route("/metrics", methods=["GET"])
-def get_metrics():
-    return jsonify({
-        "upcoming_events": metrics["upcoming_events"]
-    })
 
 if __name__ == "__main__":
-    import threading
-    # Start background event collection
-    thread = threading.Thread(target=collect_events)
-    thread.daemon = True
-    thread.start()
-
-    # Start API server
-    app.run(host="0.0.0.0", port=8080)
+    # Local development only; use a WSGI server for the deployment example.
+    create_app().run(host="127.0.0.1", port=8080)
 ```
 
-2. 部署 Metrics Collector Service：
+2. 部署指标采集服务：
+
+使用真实的共享日历 ID 和现有服务账户 JSON 文件。运行以下命令时会创建 Secret；本次审查期间并未执行该命令。
+
+```bash
+kubectl create secret generic google-calendar-secrets --namespace default --from-file=service-account.json=./service-account.json
+```
 
 ```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: google-calendar-secrets
-  namespace: default
-type: Opaque
-data:
-  service-account.json: <BASE64_ENCODED_SERVICE_ACCOUNT_JSON>
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -693,15 +761,38 @@ spec:
         - containerPort: 8080
         env:
         - name: CALENDAR_ID
-          value: "primary"
+          value: REPLACE_WITH_SHARED_CALENDAR_ID
         volumeMounts:
         - name: google-calendar-credentials
-          mountPath: "/etc/secrets"
+          mountPath: /etc/secrets
           readOnly: true
+        command:
+        - gunicorn
+        args:
+        - --bind
+        - 0.0.0.0:8080
+        - --workers
+        - '1'
+        - --threads
+        - '4'
+        - app:create_app()
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
       volumes:
       - name: google-calendar-credentials
         secret:
           secretName: google-calendar-secrets
+      automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: Service
@@ -740,27 +831,25 @@ spec:
       url: "http://calendar-metrics-collector/metrics"
       valueLocation: "upcoming_events"
 ```
-<span id="istio-metric-scaling"></span>
 
-## Istio 指标扩缩容
+使用默认的 AverageValue 时，计数/目标值比率会在配置的上下限内建议副本数；它并不直接表示处理吞吐量。采集器独立保持一个副本，在不可用时返回 503，并且没有会仅因上游故障而重启它的 liveness probe。生产环境使用仍需经过验证的凭据、限制、生命周期处理和可观测性。
+## Istio 指标伸缩
 
-此示例展示如何基于从 Istio service mesh 收集的指标对应用进行扩缩容。我们将了解如何基于每秒请求数 (RPS) 进行扩缩容。
+此示例展示如何根据从 Istio 服务网格收集的指标对应用进行伸缩。我们将介绍如何根据每秒请求数（RPS）进行伸缩。
 
 ### 先决条件
 
-- 已安装 Istio service mesh
+- 已安装 Istio 服务网格
 - 已安装 Prometheus 并与 Istio 集成
 
 ### 实施步骤
 
-1. 设置 Istio Service Mesh：
+1. 验证现有 Istio sidecar 安装和注入策略。此示例使用网格内路由，不需要虚构的 ingress Gateway 资源：
 
 ```bash
-# Install Istio
-istioctl install --set profile=default -y
-
-# Enable Istio sidecar injection on namespace
-kubectl label namespace default istio-injection=enabled
+istioctl proxy-status
+kubectl get namespace default --show-labels
+kubectl get pods -n default
 ```
 
 2. 部署示例应用：
@@ -783,7 +872,7 @@ spec:
     spec:
       containers:
       - name: sample-app
-        image: nginx:latest
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
 ---
@@ -799,16 +888,16 @@ spec:
   - port: 80
     targetPort: 80
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: sample-app
   namespace: default
 spec:
   hosts:
-  - "*"
+  - sample-app.default.svc.cluster.local
   gateways:
-  - istio-system/ingressgateway
+  - mesh
   http:
   - route:
     - destination:
@@ -838,16 +927,16 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://prometheus.istio-system:9090
-      metricName: istio_requests_per_second
-      threshold: "10"
-      query: sum(rate(istio_requests_total{destination_service="sample-app.default.svc.cluster.local"}[1m]))
+      threshold: '10'
+      query: sum(rate(istio_requests_total{reporter="destination",destination_service="sample-app.default.svc.cluster.local"}[2m]))
+      ignoreNullValues: 'false'
 ```
 
-此配置会根据从 Istio 收集的每秒请求数来扩缩 `sample-app` deployment。当每秒请求数超过 10 时，KEDA 会增加副本；当请求数量下降时，它会减少副本。
+使用默认的 `AverageValue` 指标类型时，每秒 100 个请求的总速率和每个副本每秒 10 个请求的目标值，大约会建议配置 10 个副本，之后还需考虑 HPA 容差、稳定策略和限制。查询选择 destination 报告，避免对同一请求同时统计源代理和目标代理的数据。Prometheus 必须确实采集这些流量。
 
 ### 高级配置
 
-在更复杂的场景中，你可以根据特定路径或 HTTP 方法的请求数量进行扩缩容：
+下一个示例要求使用**自定义且取值范围受限的 `request_path` 遥测标签**；这不是 Istio 指标的默认维度。请先配置并验证该标签（避免 URL 取值导致任意高基数），或者使用前一个不含该标签的查询。这是作用于同一目标的替代 ScaledObject，而非额外的伸缩管理者。
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -868,15 +957,14 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://prometheus.istio-system:9090
-      metricName: istio_requests_per_second_path
-      threshold: "5"
-      query: sum(rate(istio_requests_total{destination_service="sample-app.default.svc.cluster.local",request_path="/api/v1/products"}[1m]))
+      threshold: '5'
+      query: sum(rate(istio_requests_total{reporter="destination",destination_service="sample-app.default.svc.cluster.local",request_path="/api/v1/products"}[2m]))
+      ignoreNullValues: 'false'
 ```
 
-你还可以基于错误率或延迟等其他 Istio 指标进行扩缩容：
+错误率和延迟通常是比伸缩输入更好的告警信号。以下可选示例使用 `metricType: Value` 计算服务级比率，避免分母为零，并限制扩容速度。它假设增加副本确实能缓解已诊断出的过载；否则，下游错误或低样本噪声可能导致有害的伸缩行为。尚未测量其在生产环境中的效果。
 
 ```yaml
-# Error rate based scaling
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -895,16 +983,27 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://prometheus.istio-system:9090
-      metricName: istio_error_rate
-      threshold: "0.05"
-      query: sum(rate(istio_requests_total{destination_service="sample-app.default.svc.cluster.local",response_code=~"5.*"}[1m])) / sum(rate(istio_requests_total{destination_service="sample-app.default.svc.cluster.local"}[1m]))
+      threshold: '0.05'
+      query: (sum(rate(istio_requests_total{reporter="destination",destination_service="sample-app.default.svc.cluster.local",response_code=~"5.*"}[2m]))
+        or vector(0)) / clamp_min(sum(rate(istio_requests_total{reporter="destination",destination_service="sample-app.default.svc.cluster.local"}[2m])),
+        0.001)
+      ignoreNullValues: 'false'
+    metricType: Value
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 60
+        scaleDown:
+          stabilizationWindowSeconds: 300
 ```
 
-<span id="cron-based-scaling"></span>
+## 基于 Cron 的伸缩
 
-## 基于 Cron 的扩缩容
-
-KEDA 支持使用 Cron expressions 进行基于时间的扩缩容。这使你可以根据可预测的流量模式或计划提前扩容应用。
+KEDA 支持使用 Cron 表达式进行基于时间的伸缩。这样，你可以根据可预测的流量模式或时间安排预先调整应用副本数。
 
 ### 基本 Cron Scaler
 
@@ -932,11 +1031,11 @@ spec:
       desiredReplicas: "5"
 ```
 
-此配置会在每小时 30 分时将 `sample-app` deployment 扩容到 5 个副本，并在 45 分时缩容。
+每小时的第 30 至 45 分钟期间，Cron 触发器会请求至少 5 个副本。在此时间段之外，触发器会变为非活动状态；缩容至零需要等待轮询和配置的冷却时间（此处为 30 秒），还要加上控制器调度时间。副本数不保证会在第 45 分钟准时变更。
 
-### 多时区扩缩容
+### 工作时段和非工作时段
 
-你可以使用多个 Cron triggers，在不同时间配置不同的扩缩容行为：
+使用 `minReplicaCount: 2` 作为非工作时段的基准副本数，并使用一个工作日 Cron 时间窗口将副本数设为 5。这样可避免夜间/周末时间窗口重叠。工作时段结束后，HPA 稳定机制可能会延迟缩容。
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -949,37 +1048,22 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: sample-app
-  minReplicaCount: 1
+  minReplicaCount: 2
   maxReplicaCount: 10
   pollingInterval: 15
   cooldownPeriod: 30
   triggers:
-  # High replica count during business hours
   - type: cron
     metadata:
       timezone: Asia/Seoul
       start: 0 9 * * 1-5
       end: 0 18 * * 1-5
-      desiredReplicas: "5"
-  # Low replica count during nights and weekends
-  - type: cron
-    metadata:
-      timezone: Asia/Seoul
-      start: 0 18 * * 1-5
-      end: 0 9 * * 1-5
-      desiredReplicas: "2"
-  # Low replica count on weekends
-  - type: cron
-    metadata:
-      timezone: Asia/Seoul
-      start: 0 0 * * 0,6
-      end: 0 0 * * 1
-      desiredReplicas: "2"
+      desiredReplicas: '5'
 ```
 
-### 将 Cron 与其他 Scalers 结合使用
+### 将 Cron 与其他 Scaler 结合使用
 
-你可以将 Cron scalers 与其他 scalers 结合使用，以设置基线扩缩容行为，并根据实际负载进一步扩缩容：
+你可以将 Cron Scaler 与其他 Scaler 结合使用，以设置基准伸缩行为，并根据实际负载进一步伸缩：
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -997,40 +1081,34 @@ spec:
   pollingInterval: 15
   cooldownPeriod: 30
   triggers:
-  # Set baseline replica count during business hours
   - type: cron
     metadata:
       timezone: Asia/Seoul
       start: 0 9 * * 1-5
       end: 0 18 * * 1-5
-      desiredReplicas: "5"
-  # Additional scaling based on actual load
+      desiredReplicas: '5'
   - type: prometheus
     metadata:
       serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
-      metricName: http_requests_per_second
-      threshold: "10"
+      threshold: '10'
       query: sum(rate(http_requests_total{app="sample-app"}[1m]))
+      ignoreNullValues: 'false'
 ```
-
-<span id="integration-with-amazon-eks"></span>
 
 ## 与 Amazon EKS 集成
 
-KEDA 可与 Amazon EKS 无缝集成，提供基于 AWS 服务的扩缩容。
+配置好 Kubernetes 兼容性、operator 身份、权限和连接后，KEDA 可以使用 AWS 指标对 EKS 工作负载进行伸缩。KEDA 本身不会增加计算容量；请将工作负载伸缩与适当的节点/Fargate 容量设计结合使用。
 
 ### 在 EKS 上安装 KEDA
 
 ```bash
-# Installation using Helm
-helm repo add kedacore https://kedacore.github.io/charts
-helm repo update
-helm install keda kedacore/keda --namespace keda --create-namespace
+helm status keda -n keda
+kubectl get deployment -n keda
 ```
 
-### 基于 AWS 服务的扩缩容
+### 基于 AWS 服务的伸缩
 
-#### 基于 SQS Queue 的扩缩容
+#### 基于 SQS 队列的伸缩
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1040,7 +1118,8 @@ metadata:
   namespace: default
 spec:
   podIdentity:
-    provider: aws-eks
+    provider: aws
+    identityOwner: keda
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -1060,13 +1139,13 @@ spec:
   - type: aws-sqs-queue
     metadata:
       queueURL: https://sqs.us-west-2.amazonaws.com/123456789012/my-queue
-      queueLength: "5"
-      awsRegion: "us-west-2"
+      queueLength: '5'
+      awsRegion: us-west-2
     authenticationRef:
       name: aws-credentials
 ```
 
-#### 基于 CloudWatch Metric 的扩缩容
+#### 基于 CloudWatch 指标的伸缩
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1076,7 +1155,8 @@ metadata:
   namespace: default
 spec:
   podIdentity:
-    provider: aws-eks
+    provider: aws
+    identityOwner: keda
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -1095,48 +1175,47 @@ spec:
   triggers:
   - type: aws-cloudwatch
     metadata:
-      namespace: "AWS/SQS"
-      dimensionName: "QueueName"
-      dimensionValue: "my-queue"
-      metricName: "ApproximateNumberOfMessages"
-      targetValue: "5"
-      minMetricValue: "0"
-      awsRegion: "us-west-2"
+      namespace: AWS/SQS
+      dimensionName: QueueName
+      dimensionValue: my-queue
+      metricName: ApproximateNumberOfMessagesVisible
+      targetMetricValue: '5'
+      minMetricValue: '0'
+      awsRegion: us-west-2
+      metricStat: Average
+      metricStatPeriod: '60'
+      metricCollectionTime: '300'
     authenticationRef:
       name: aws-credentials
 ```
 
-### IRSA (IAM Roles for Service Accounts) 集成
+### IRSA（服务账户 IAM 角色）集成
 
-在 EKS 上使用 KEDA 时，你可以利用 IRSA 管理 AWS 服务权限：
+此示例假设已存在适用于 `system:serviceaccount:keda:keda-operator` 的 IRSA 角色，并且该角色限定于此集群的 OIDC 提供商，且具有 `aud: sts.amazonaws.com`。请授予所选队列的 `sqs:GetQueueAttributes` 权限，以及所需的 CloudWatch 指标读取操作权限（例如 `cloudwatch:GetMetricData`）；不支持资源级权限的 CloudWatch 操作需要使用通配符资源，并可按请求的 Region 进行限制。Consumer 权限需单独配置。以下命令用于检查设置；角色配置应纳入经过审查的基础设施配置中。
 
 ```bash
-# IRSA setup
-eksctl create iamserviceaccount \
-  --name keda-operator \
-  --namespace keda \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonSQSReadOnlyAccess \
-  --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess \
-  --approve
+: "${KEDA_IAM_ROLE_NAME:?Set the existing IRSA role name}"
+aws iam get-role --role-name "$KEDA_IAM_ROLE_NAME" --query Role.AssumeRolePolicyDocument
+kubectl get serviceaccount keda-operator -n keda -o yaml
 ```
 
 ```yaml
-# Helm values file
 serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/keda-operator-role
+  operator:
+    create: true
+    name: keda-operator
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/keda-operator-role
+      eks.amazonaws.com/sts-regional-endpoints: 'true'
 ```
-
-<span id="best-practices"></span>
 
 ## 最佳实践
 
 ### 性能优化
 
-1. **设置适当的轮询间隔**：设置与工作负载特征相匹配的轮询间隔
-2. **优化冷却周期**：防止不必要的扩缩容振荡
-3. **设置 Resource Requests 和 Limits**：为 KEDA 组件分配适当资源
+1. **设置合适的轮询间隔**：根据工作负载特征设置合适的轮询间隔
+2. **分别配置 cooldown 和 HPA 行为**：Cooldown 控制缩容至零；HPA 稳定策略/策略规则控制非零副本数之间的变更。
+3. **设置资源请求和限制**：为 KEDA 组件分配适当的资源
 4. **编写高效查询**：优化指标查询
 
 ```yaml
@@ -1144,38 +1223,58 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: optimized-scaler
+  namespace: default
 spec:
-  pollingInterval: 30  # Poll every 30 seconds (default: 30)
-  cooldownPeriod: 300  # 5-minute cooldown period (default: 300)
-  # Other configuration...
+  pollingInterval: 30
+  cooldownPeriod: 300
+  scaleTargetRef:
+    name: my-app
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+      threshold: '100'
+      query: sum(rate(http_requests_total{namespace="default",app="my-app"}[2m]))
+      ignoreNullValues: 'false'
 ```
 
 ### 提高可靠性
 
-1. **使用多个 Triggers**：基于多个指标源进行扩缩容
-2. **设置适当的最小和最大副本数**：设置与工作负载需求匹配的范围
-3. **故障处理策略**：为指标源故障准备响应计划
-4. **设置监控和告警**：监控 KEDA 运行状态
+1. **了解多个触发器的行为**：HPA 通常采用最大的副本数建议；触发器不会将容量相加，发生错误时还可能阻止缩容。
+2. **设置合适的最小和最大副本数**：设置符合工作负载需求的范围
+3. **故障处理策略**：在 KEDA 2.21 中，fallback 支持 Value 和 AverageValue 触发器（CPU/内存除外），且适用于 ScaledObject，不适用于 ScaledJob。请测试故障期间的行为和身份验证失败情况。
+4. **设置监控和告警**：监控 KEDA 的运行状态
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: reliable-scaler
+  namespace: default
 spec:
-  minReplicaCount: 2  # Maintain minimum 2 replicas
-  maxReplicaCount: 20  # Limit to maximum 20 replicas
+  minReplicaCount: 2
+  maxReplicaCount: 20
   fallback:
-    failureThreshold: 3  # Apply fallback behavior after 3 failures
-    replicas: 5  # Set to 5 replicas on metric source failure
-  # Other configuration...
+    failureThreshold: 3
+    replicas: 5
+  scaleTargetRef:
+    name: my-app
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+      threshold: '100'
+      query: sum(rate(http_requests_total{namespace="default",app="my-app"}[2m]))
+      ignoreNullValues: 'false'
 ```
 
-### 安全加固
+### 强化安全性
 
-1. **应用最小权限原则**：仅授予必要权限
-2. **Secret Management**：安全地管理敏感信息
-3. **应用 Network Policies**：限制对 KEDA 组件的访问
+以下 NetworkPolicy 将对 Twitter 采集器的入站访问限制为来自 KEDA operator 的 TCP8080 流量；它并非完整的 KEDA 控制平面策略。策略生效需要 NetworkPolicy 支持。在限制 KEDA 本身之前，请考虑 API server 对 metrics API/admission webhook 的访问、operator 与 metrics server 之间的流量、DNS、Kubernetes API 以及每个 Scaler 端点。EKS 控制平面并不是一个简单位于 `kube-system` 中的 Pod。
+
+1. **遵循最小权限原则**：仅授予必要权限
+2. **Secret 管理**：安全地管理敏感信息
+3. **应用网络策略**：限制对 KEDA 组件的访问
 4. **配置 RBAC**：设置适当的基于角色的访问控制
 
 ```yaml
@@ -1183,43 +1282,48 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: secure-auth
+  namespace: default
 spec:
   secretTargetRef:
-  - parameter: connectionString
-    name: db-secret
-    key: connection-string
+  - parameter: host
+    name: rabbitmq-credentials
+    key: host
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: keda-network-policy
-  namespace: keda
+  name: twitter-metrics-from-keda
+  namespace: default
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: keda-operator
+      app: twitter-metrics-collector
+  policyTypes:
+  - Ingress
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: kube-system
-  egress:
-  - {}
+          kubernetes.io/metadata.name: keda
+      podSelector:
+        matchLabels:
+          app: keda-operator
+    ports:
+    - protocol: TCP
+      port: 8080
 ```
 
-<span id="troubleshooting"></span>
-
-## 故障排除
+## 故障排查
 
 ### 常见问题
 
-#### 1. 扩缩容不工作
+#### 1. 伸缩不起作用
 
-**症状**：即使指标超过阈值，Pods 也不会扩缩容
+**症状**：即使指标超过阈值，Pod 也不会伸缩
 
 **解决方案**：
-- 检查 KEDA logs
-- 验证与指标源的连接
+- 检查 KEDA 日志
+- 验证指标来源的连接
 - 验证身份验证配置
 
 ```bash
@@ -1227,15 +1331,15 @@ spec:
 kubectl logs -n keda -l app=keda-operator
 
 # Check KEDA metrics server logs
-kubectl logs -n keda -l app=keda-metrics-apiserver
+kubectl logs -n keda -l app=keda-operator-metrics-apiserver
 
 # Check ScaledObject status
 kubectl get scaledobject -n <namespace> <name> -o yaml
 ```
 
-#### 2. 零扩缩容问题
+#### 2. 缩容至零问题
 
-**症状**：没有活动时不会缩容到 0
+**症状**：没有活动时无法缩容至 0
 
 **解决方案**：
 - 检查 minReplicaCount 设置
@@ -1247,16 +1351,16 @@ kubectl get scaledobject -n <namespace> <name> -o yaml
 kubectl get hpa -n <namespace>
 
 # Check metric values directly
-kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/<metric-name>" | jq
+kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/<metric-name>?labelSelector=scaledobject.keda.sh%2Fname%3D<scaledobject-name>" | jq
 ```
 
 #### 3. 身份验证问题
 
-**症状**：无法连接到指标源
+**症状**：无法连接到指标来源
 
 **解决方案**：
 - 验证 TriggerAuthentication 配置
-- 检查 secrets 或环境变量
+- 检查 Secret 或环境变量
 - 验证权限
 
 ```bash
@@ -1264,7 +1368,7 @@ kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/
 kubectl get triggerauthentication -n <namespace> <name> -o yaml
 
 # Check secrets
-kubectl get secret -n <namespace> <name> -o yaml
+kubectl get secret -n <namespace> <name> -o json | jq '{name: .metadata.name, type: .type, keys: ((.data // {}) | keys)}'
 ```
 
 ### 调试工具
@@ -1280,38 +1384,38 @@ kubectl describe scaledobject -n <namespace> <name>
 kubectl describe hpa -n <namespace> <name>
 
 # Check metric values
-kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/<metric-name>"
+kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/<metric-name>?labelSelector=scaledobject.keda.sh%2Fname%3D<scaledobject-name>"
 
 # Check KEDA logs
 kubectl logs -n keda -l app=keda-operator --tail=100
 ```
 
-<span id="conclusion"></span>
-
 ## 结论
 
-KEDA (Kubernetes Event-driven Autoscaling) 是一个强大的工具，可在 Kubernetes 环境中提供事件驱动的自动扩缩容。它扩展了基础的 Kubernetes HPA，使工作负载能够基于各种事件源和指标进行扩缩容。
+KEDA（Kubernetes 事件驱动自动伸缩）是一款功能强大的工具，可在 Kubernetes 环境中提供事件驱动自动伸缩。它扩展了基础 Kubernetes HPA，使工作负载能够根据各种事件源和指标进行伸缩。
 
-本文档介绍了 KEDA 的基本概念、安装方法、各种 scaler 用法、自定义指标扩缩容、与 Twitter 和 Google Calendar 等外部服务的集成、基于 Istio 指标的扩缩容、基于 Cron 的扩缩容、与 Amazon EKS 的集成、最佳实践以及故障排除。
+本文介绍了 KEDA 的基本概念、安装方法、各种 Scaler 的用法、自定义指标伸缩、与 Twitter 和 Google Calendar 等外部服务的集成、基于 Istio 指标的伸缩、基于 Cron 的伸缩、与 Amazon EKS 的集成、最佳实践和故障排查。
 
-使用 KEDA，你可以更高效地扩缩应用，优化资源使用并降低成本。它特别适合用于实现事件驱动架构和 serverless 模式。
+借助 KEDA，你可以更高效地伸缩应用、优化资源使用并降低成本。它尤其适用于实现事件驱动架构和无服务器模式。
 
 ### 后续步骤
 
-- 使用 KEDA 实现 serverless 架构
+- 使用 KEDA 实现无服务器架构
 - 探索与各种事件源的集成
-- 开发自定义 scalers
-- 在多 cluster 环境中利用 KEDA
-- 将 KEDA 与其他 cloud-native 工具集成
+- 开发自定义 Scaler
+- 在多集群环境中利用 KEDA
+- 将 KEDA 与其他云原生工具集成
 
 ## 参考资料
 
 - [KEDA 官方文档](https://keda.sh/docs/)
-- [KEDA GitHub Repository](https://github.com/kedacore/keda)
-- [KEDA Scaler List](https://keda.sh/docs/latest/scalers/)
+- [KEDA GitHub 仓库](https://github.com/kedacore/keda)
+- [KEDA Scaler 列表](https://keda.sh/docs/latest/scalers/)
 - [KEDA Operator Hub](https://operatorhub.io/operator/keda)
-- [AWS EKS Workshop - KEDA](https://www.eksworkshop.com/advanced/autoscaling/keda/)
+- [AWS IRSA 设置](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html)
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试完成[主题测验](../quizzes/autoscaling/05-keda-quiz.md)。
+要检验你对本章内容的掌握情况，请尝试[主题测验](../quizzes/autoscaling/05-keda-quiz.md)。
+
+本次修订核实过的参考资料：[KEDA 兼容性](https://keda.sh/docs/2.21/operate/cluster/)、[ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/)、[ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/)、[AWS 身份验证](https://keda.sh/docs/2.21/authentication-providers/aws/)、[External scaler gRPC](https://keda.sh/docs/2.21/concepts/external-scalers/)、[X 计数](https://docs.x.com/x-api/posts/counts/quickstart)、[Calendar 事件](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)、[HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)。

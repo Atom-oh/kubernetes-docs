@@ -1,39 +1,39 @@
 # 第 3 部分：Kafka 运维
 
-> **最后更新**：2026 年 9 月 12 日，Strimzi 1.2.0 / Kafka 4.3.1。
-> **验证**：当前发布版本的文档/源代码、本地 CRD/合并补丁检查、提案生成/JSON 提取、Decimal 计算和 CLI 选项。未执行 Kafka 重新分配、升级或 AWS 卷更改。
+> **最后更新**：2026 年 10 月 16 日，Strimzi 1.3.0 / Kafka 4.3.1。
+> **验证**：当前版本文档/源代码、本地 CRD/合并补丁检查、提案生成/JSON 提取、Decimal 计算和 CLI 选项。未执行 Kafka 分区重新分配、升级或 AWS 卷变更。
 
-本章假定已部署[第 2 部分](./02-strimzi-operator.md)中启用身份验证的 Kafka 和仅含代理的池。运维命令可能移动真实分区并更改资源：执行前请检查当前设置、放置和提案。不要将代理扩缩容流程原样应用于控制器角色池。
+本章以[第 2 部分](./02-strimzi-operator.md)中已通过身份验证的 Kafka 部署和仅包含 broker 的池为前提。运维命令可能移动实际分区并更改资源：执行前请检查当前设置、放置情况和提案。不要将 broker 扩缩容流程原样用于 controller 角色池。
 
-## 1. 存储性能和持久性
+## 1. 存储性能与持久性
 
-消费者积压并不意味着每次读取都是随机读取。即使顺序读取历史数据，当消费者交错读取不同范围或超出页缓存时，也可能增加物理 I/O 和尾延迟。请测量 IOPS、吞吐量、队列延迟、缓存命中率和实例 EBS 限制。
+Consumer lag 并不意味着所有读取都是随机读取。即使是顺序历史读取，当 consumers 交错读取数据范围或超出页缓存容量时，也可能增加物理 I/O 和尾延迟。请测量 IOPS、吞吐量、队列延迟、缓存命中率和实例 EBS 限制。
 
 | 特性 | gp3 | io2 Block Express |
 | --- | --- | --- |
-| 包含的基准性能 | 3,000 IOPS / 125 MiB/s | 性能随预置 IOPS 而定 |
+| 包含的基准性能 | 3,000 IOPS / 125 MiB/s | 性能取决于预置的 IOPS |
 | 卷最大 IOPS | 80,000 | Nitro 上为 256,000 |
 | 卷最大吞吐量 | 2,000 MiB/s | 4,000 MiB/s |
 | 最大容量 | 64 TiB | 64 TiB |
 | 公布的设计持久性 | 99.8–99.9% | 99.999% |
 | 公布的 AFR 上限 | 0.2% | 0.001% |
 
-这些是卷的设计指标，并非 Kafka 服务 SLA，也不保证能抵御任意故障。最大性能对卷大小、IOPS 比率和实例有要求。Outposts gp3 和非 Nitro io2 的限制不同。
+这些是卷的设计指标，并非 Kafka 服务 SLA，也不保证能抵御任意故障。要达到最大性能，还需满足卷大小、IOPS 比率和实例要求。Outposts gp3 和非 Nitro io2 的限制有所不同。
 
-存储容量也是账单的一部分。还要评估超出所含基准的 gp3 性能和预置 io2 IOPS。根据延迟/持久性要求、测量结果和当前区域价格选择。io2 并非仅按 IOPS 计费，严重的消费者积压也不意味着必然需要 io2。
+存储容量也计入账单。还要评估超出包含基准性能的 gp3 性能，以及预置的 io2 IOPS。请根据延迟/持久性要求、测量结果和当前区域定价进行选择。io2 的费用并非只按 IOPS 计算，consumer lag 较大也不意味着一定需要 io2。
 
-## 2. 保留策略和可用空间
+## 2. 保留时间与可用空间
 
-根据**保留的压缩日志字节数**和实际保留策略进行估算。将短暂峰值当作持续七天的速率会高估存储。分别计算不同主题的保留/复制要求，并考虑压缩整理、索引、内部主题和重新分配期间的临时副本。
+请根据**保留的压缩日志字节数**和实际保留时间进行估算。将短时峰值视为持续七天的速率会高估存储需求。请分别计算保留时间/复制因子不同的主题，并考虑压缩清理、索引、内部主题和临时重新分配副本。
 
-合成场景中，以 **50 MB/s（10⁶ 字节/秒）** 持续七天，RF=3 时会产生 90.72 TB 的复制日志。
+假设持续速率为 **50 MB/s（10⁶ 字节/s）**，持续七天，RF=3，则会产生 90.72 TB 的复制日志。
 
-| 解释 | 容量 | 实际空闲比例 |
+| 解释方式 | 容量 | 实际可用空间比例 |
 | --- | --- | --- |
-| 在数据大小上增加 30% | 117.936 TB | 约 23.08% |
-| 保持总磁盘容量的 30% 空闲 | 129.6 TB，约 117.87 TiB | 30% |
+| 在数据量上增加 30% | 117.936 TB | 约 23.08% |
+| 保留总磁盘容量的 30% 为空闲 | 129.6 TB，约 117.87 TiB | 30% |
 
-之前约 118 TB 的计算适用于第一种解释。第二种使用 `data / (1 - 0.30)`。将 129.6 TB 平均分到三个代理，每个为 43.2 TB，但实际分区倾斜仍然重要。这些是计算示例，并非第 2 部分实验 PVC 的容量建议。
+先前约 118 TB 的计算对于第一种解释是正确的。第二种使用 `data / (1 - 0.30)`。将 129.6 TB 平均分配给三个 broker，每个 broker 为 43.2 TB，但实际分区倾斜仍然重要。这些是计算示例，并非针对第 2 部分实验环境 PVC 的容量建议。
 
 **`storage-sizing.py`**
 
@@ -66,11 +66,11 @@ print(json.dumps({
 }, indent=2))
 ```
 
-## 3. JBOD 扩容和更改
+## 3. JBOD 扩容与变更
 
-Kafka 4.3.1 在放置新日志时通常优先选择分区日志较少的目录。这不是简单的轮询或按字节均衡放置。添加磁盘不会自动重新分布现有数据。
+Kafka 4.3.1 通常优先选择分区日志较少的目录来放置新日志。这并非简单的轮询或按字节均衡放置。添加磁盘不会自动重新分配现有数据。
 
-此合并补丁将第 2 部分的卷 0 从 100Gi 扩为 500Gi，并添加卷 1。它会**替换整个 volumes 数组**：请保留其他现有卷，不要原样应用。现有拓扑/资源设置保持不变。
+此合并补丁将第 2 部分中的卷 0 从 100Gi 扩展到 500Gi，并添加卷 1。它会**替换整个 volumes 数组**：请保留其他所有现有卷，不要原样应用此补丁。现有拓扑/资源设置保持不变。
 
 **`storage-expand.patch.yaml`**
 
@@ -101,21 +101,21 @@ kubectl -n kafka patch kafkanodepool broker --type=merge \
 kubectl -n kafka get pvc -l strimzi.io/cluster=my-cluster
 ```
 
-扩容取决于 StorageClass/CSI 和文件系统。PVC 缩容、更改存储类和卷 ID 不属于此操作。不要为两个卷都指定 kraftMetadata: shared。
+扩容取决于 StorageClass/CSI 和文件系统。缩小 PVC、更改 class 和更改卷 ID 不属于此操作。不要将 kraftMetadata: shared 分配给两个卷。
 
-移除磁盘前，请检查副本和元数据放置并迁出数据。Strimzi 1.2 通过 remove-disks 再平衡模式支持代理内的 JBOD 数据移动，该模式有自己的字段和前提条件。deleteClaim: false/Retain 不是备份，也不能证明可以恢复。不要对 Operator 管理的数据手动运行 kafka-storage.sh format。
+移除磁盘前，请检查副本和元数据的放置情况，并将数据迁出。Strimzi 1.3 支持通过 remove-disks 重新平衡模式移动 broker 本地 JBOD 数据，但有其自身的字段和前提条件。deleteClaim: false/Retain 不能证明数据已备份或可恢复。不要在 Operator 管理的数据上手动运行 kafka-storage.sh format。
 
-## 4. 代理扩缩容：手动和自动方式
+## 4. Broker 扩缩容：手动和自动方式
 
-这些流程针对**仅含代理的池**。Strimzi 1.2 配置静态控制器法定人数；不要以同样方式扩缩控制器角色池。上游 Kafka 的动态法定人数能力与 Operator 对该能力的支持是不同的事。
+这些流程适用于**仅包含 broker 的池**。Strimzi 1.3 使用静态 controller quorum；不要以相同方式扩缩 controller 角色池。上游 Kafka 的动态 quorum 功能与 Operator 支持并不相同。
 
-| 配置 | 现有池中的副本数量更改 |
+| 配置 | 现有池的副本数变更 |
 | --- | --- |
-| 无匹配的 autoRebalance 模式 | 添加代理和移动现有副本是独立操作 |
-| `add-brokers` autoRebalance | 扩容后自动重新分布 |
-| `remove-brokers` autoRebalance | 缩容期间自动协调副本迁出 |
+| 未启用匹配的 autoRebalance 模式 | 添加 broker 与移动现有副本是分开的操作 |
+| `add-brokers` autoRebalance | 扩容后自动重新分配 |
+| `remove-brokers` autoRebalance | 缩容时自动协调副本迁出 |
 
-自动化响应的是**现有池的 replicas 更改**。池的创建/删除不是相同的触发条件。使用 Kafka 4.3+ 时，自动缩容还会封锁代理，防止迁出期间分配新副本。
+自动化会响应**现有池的副本数变更**。创建/删除池不是相同的触发条件。对于 Kafka 4.3 及更高版本，自动缩容还会 cordon broker，以防在迁出期间分配新的副本。
 
 ### 手动扩容
 
@@ -128,17 +128,17 @@ kubectl -n kafka get pods -l strimzi.io/pool-name=broker
 kubectl -n kafka get kafkanodepool broker -o json > broker-pool.json
 ```
 
-仅有 Running 状态的 Pod 还不够：请验证 Operator 的当前 generation、代理注册、ISR 和容量。节点 ID 跨整个集群分配；不要假定 ID 为 0–5 或存在 my-cluster-broker-0 Pod。
+Pod 正在运行还不够：请验证 Operator 的当前 generation、broker 注册状态、ISR 和容量。Node ID 在整个集群范围内分配；不要假设 ID 为 0–5，也不要假设存在 my-cluster-broker-0 Pod。
 
 ### 手动缩容
 
-确定实际要移除的 ID，并迁出**所有副本，包括内部主题**。仅移动 orders/payments 不能证明代理已清空。在减少 replicas 之前，验证完成情况、剩余 RF/ISR、机架分布和容量。
+确定实际要移除的 ID，并迁出**所有副本，包括内部主题**。只移动 orders/payments 并不能证明某个 broker 已空。缩减副本数前，请验证操作已完成、剩余 RF/ISR、机架分布和容量。
 
-strimzi.io/remove-node-ids 可以选择 ID，但无效范围可能回退到默认选择：请与当前 nodeIds 比较。保持启用 Strimzi 的非空代理缩容检查。绕过检查来移除仍含数据的代理不是基准运维流程。
+strimzi.io/remove-node-ids 可以选择 ID，但无效范围可能回退到默认选择：请将其与当前 nodeIds 对比。保持启用 Strimzi 对非空 broker 的缩容检查。绕过检查以移除存有数据的 broker 并非基准运维流程。
 
-## 5. Cruise Control 提案和审批
+## 5. Cruise Control 提案与审批
 
-本示例默认采用手动审批。在保留现有 Kafka 配置的同时添加 Cruise Control。不要通过随意指定 goals 列表而遗漏默认硬性目标，也不要将 skipHardGoalCheck 作为通用默认设置启用。
+此示例默认采用手动审批。添加 Cruise Control 时请保留现有 Kafka 配置。不要通过随意指定 goals 列表省略默认硬性目标，也不要将 skipHardGoalCheck 作为通用默认设置启用。
 
 **`cruise-control.patch.yaml`**
 
@@ -180,16 +180,16 @@ kubectl -n kafka annotate kafkarebalance reviewed-full-rebalance \
 kubectl -n kafka get kafkarebalance reviewed-full-rebalance -w
 ```
 
-指标样本不足或目标不可行都可能阻止进入 ProposalReady。审批前请审核数据移动量、目标、机架和容量。区分手动创建的 auto-approval=false 请求与自动扩缩容生成的请求。如果之前的请求已存在，请为新更改使用唯一名称。
+指标样本不足或目标不可行都可能导致 ProposalReady 无法达成。审批前请检查移动量、目标、机架和容量。请区分手动创建的 auto-approval=false 请求和自动扩缩容生成的请求。如果先前的请求已存在，请为新的变更使用唯一名称。
 
 | 模式 | 用途 |
 | --- | --- |
-| `full` | 在集群范围内基于目标重新分布 |
-| `add-brokers` | 将副本移动到指定的新代理 |
-| `remove-brokers` | 从指定代理迁出副本 |
-| `remove-disks` | 从代理内的 JBOD 卷迁出副本 |
+| `full` | 基于目标在整个集群中重新分配 |
+| `add-brokers` | 将副本移至指定的新 broker |
+| `remove-brokers` | 将副本从指定的 broker 移出 |
+| `remove-disks` | 在 broker 内将副本移出 JBOD 卷 |
 
-添加/移除模式需要代理 ID。范围更窄并不保证执行更快或影响更小。此辅助程序根据代理池快照验证 ID，且**仅创建提案 CR JSON**。它不评估容量、ISR/机架安全性，也不调用 API。
+add/remove 模式需要 broker ID。范围较小并不保证执行更快或影响更小。此辅助工具根据 broker 池快照验证 ID，并且只生成**提案 CR JSON**。它不会评估容量、ISR/机架安全性，也不会调用 API。
 
 **`rebalance_request.py`**
 
@@ -250,9 +250,9 @@ python3 -m json.tool remove-proposal.json
 # Review the generated proposal before creating/approving it.
 ```
 
-### 可选：现有池的自动再平衡
+### 可选：对现有池启用自动重新平衡
 
-此配置可以**在 replicas 更改后，无需另行手动审批就移动数据**。仅在已定义运维策略/目标的情况下启用。失败后也可能出现 status.autoRebalance.state=Idle；请同时检查生成的 KafkaRebalance 结果和 Kafka 状态。
+此配置可以在副本数变更后**无需单独手动审批就移动数据**。只有在已制定明确的运维策略/目标时才启用。status.autoRebalance.state=Idle 也可能出现在故障之后；请同时检查生成的 KafkaRebalance 结果和 Kafka 状态。
 
 **`auto-rebalance.patch.yaml`**
 
@@ -274,9 +274,9 @@ kubectl -n kafka get kafkarebalances -l strimzi.io/cluster=my-cluster
 
 ## 6. 手动 Kafka CLI 替代方案
 
-将 JSON 文件和管理员配置放在运行 CLI 的同一环境中。本地文件不会自动在 kubectl exec 内可用。客户端需要访问所有公布的端点，并具有获准执行管理操作的 TLS/SASL 身份。第 2 部分的 orders 应用用户不是管理员。
+JSON 文件和 admin 配置应与运行 CLI 的环境放在一起。本地文件不会自动出现在 kubectl exec 内部。客户端需要能够访问所有公布的端点，并拥有获准执行管理操作的 TLS/SASL 身份。第 2 部分的 orders 应用用户不是 admin。
 
-本示例仅针对 orders。它不是移除代理所需的完整清单。
+此示例仅针对 orders，不是移除 broker 所需的完整清单。
 
 ```json
 {
@@ -297,7 +297,7 @@ kafka-reassign-partitions.sh \
   --broker-list "$DOCS_BROKER_IDS" --generate > generate-output.txt
 ```
 
---generate 同时打印 Current 和 Proposed JSON。保留原始输出，作为之前放置情况的记录，然后仅将 Proposed 提取到新文件。辅助程序拒绝覆盖现有输出，因此新计划应使用新文件名。
+--generate 会同时打印 Current 和 Proposed JSON。请保留原始输出，作为先前放置情况的记录，然后只提取 Proposed 到新文件中。此辅助工具不会覆盖现有输出；新计划请使用新文件名。
 
 **`extract_reassignment.py`**
 
@@ -369,9 +369,9 @@ kafka-reassign-partitions.sh \
   --reassignment-json-file reassignment.json --verify --preserve-throttles
 ```
 
-辅助程序验证的是 JSON 结构，不验证代理是否存在、RF 是否保留、机架是否均衡或分区清单是否完整。
+此辅助工具只验证 JSON 结构，不验证 broker 是否存在、保留的 RF、机架均衡情况或分区清单是否完整。
 
---verify 检查指定的重新分配/日志目录移动。**不使用 --preserve-throttles 时，完成验证可能会清除代理/主题节流设置，因此该操作并非纯只读。** 请与共享这些限制的其他工作协调清理。验证也不是完整的副本不足/离线分区健康检查。
+--verify 会检查指定的重新分配/日志目录迁移。**如果不使用 --preserve-throttles，验证完成后可能会清除 broker/topic 限流设置，因此它并非纯只读操作。**如果其他工作也共用这些限制，请协调清理。验证也不能替代完整的副本不足/分区离线健康检查。
 
 ```bash
 kafka-topics.sh --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADMIN_CONFIG" \
@@ -384,13 +384,13 @@ kafka-topics.sh --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADM
 
 ## 7. 版本升级
 
-选择同时支持**当前和目标 Kafka 版本**的 Operator 组合。如果它已同时支持两者，无需仅为升级顺序而升级 Operator。如果最新 Operator 不再支持当前 Kafka 版本，应规划受支持的中间版本和 API 转换，而不是直接安装。
+选择同时支持**当前和目标 Kafka 版本**的 Operator 组合。如果当前 Operator 已同时支持这两个版本，仅为安排升级顺序就不需要升级 Operator。如果最新 Operator 不再支持当前 Kafka 版本，请规划中间支持版本和 API 转换，而不是直接安装。
 
-### 软件和 metadataVersion
+### 软件与 metadataVersion
 
-省略 metadataVersion 时，Strimzi 可以在升级 Kafka 二进制文件后自动将其更新为默认值。在一次更新中更改两个字段并不必然破坏法定人数。
+如果省略 metadataVersion，Strimzi 可以在升级 Kafka 二进制文件后自动将其更新为默认值。在同一次更新中更改这两个字段本身并不会导致 quorum 损坏。
 
-显式保留之前的 metadataVersion 可以在提高该值之前提供验证/恢复决策窗口。本示例在 Strimzi 1.2 下将**现有 Kafka 4.2.1 / 元数据 4.2-IV1** 集群升级到 4.3.1。它不是要求降低第 2 部分中已经使用 4.3.1 的实验集群的元数据版本。
+显式保留先前的 metadataVersion，可以在提升它之前留出验证/恢复决策窗口。此示例是在 Strimzi 1.3 下，将**现有 Kafka 4.2.1 / metadata 4.2-IV1**集群升级到 4.3.1。它并非要求降低第 2 部分实验环境中已为 4.3.1 的 metadata。
 
 **`upgrade-binaries.patch.yaml`**
 
@@ -412,9 +412,9 @@ kubectl -n kafka get pods -l 'strimzi.io/cluster=my-cluster,strimzi.io/pool-name
 kubectl -n kafka get kafka my-cluster -o yaml
 ```
 
-同时检查 status.kafkaVersion、status.kafkaMetadataVersion、status.operatorLastSuccessfulVersion、generation 和实际 Pod 镜像。自定义 Kafka、Connect 或 MirrorMaker 镜像也必须准备兼容版本。
+请一并检查 status.kafkaVersion、status.kafkaMetadataVersion、status.operatorLastSuccessfulVersion、generation 和实际 Pod 镜像。自定义 Kafka、Connect 或 MirrorMaker 镜像也必须准备为兼容版本。
 
-验证客户端和恢复计划后，可在合适时提高元数据版本。新元数据/功能可能阻止降级；Git 回滚不能保证恢复。
+验证客户端和恢复计划后，如适用，可提升 metadata。新 metadata/功能可能导致无法降级；Git revert 不能保证恢复。
 
 **`upgrade-metadata.patch.yaml`**
 
@@ -431,13 +431,13 @@ kubectl -n kafka patch kafka my-cluster --type=merge \
 kubectl -n kafka get kafka my-cluster -o yaml
 ```
 
-并非每种 spec 更改都会重启 Pod：动态 Kafka 配置或受支持的卷扩容可能采用其他路径。需要重启时，Operator 的可用性检查也不绝对保证零停机/零损失。请观察数据状态、ISR、控制器法定人数、客户端超时和重试。
+并非每项 spec 变更都会重启 Pod：动态 Kafka 配置或受支持的卷扩容可能采用其他处理路径。需要重启时，Operator 的可用性检查并不等于绝对保证零停机/零数据丢失。请观察数据状态、ISR、controller quorum、客户端超时和重试。
 
-## 8. PDB 和故障处理
+## 8. PDB 与故障处理
 
-Strimzi 1.2 的默认 Kafka PDB 是**每个 Kafka 集群一个，覆盖其各节点池中的 Kafka Pod**，并非每个池一个。如果生成设置或自定义 PDB 不同，请检查实际选择器和 minAvailable/maxUnavailable。
+Strimzi 1.3 的默认 Kafka PDB 是**每个 Kafka 集群一个，覆盖其各个 node pool 中的 Kafka Pod**，而不是每个池一个。如果生成设置或自定义 PDB 不同，请检查实际选择器和 minAvailable/maxUnavailable。
 
-PDB 约束自愿驱逐。它们不能防止节点/可用区故障、直接删除 Pod 或所有 Operator 操作。min.insync.replicas 不是能防止一切数据丢失的单一开关。
+PDB 限制自愿驱逐。它无法防止节点/AZ 故障、直接删除 Pod 或 Operator 的所有操作。min.insync.replicas 并非能够防止所有形式数据丢失的单一开关。
 
 ```bash
 kubectl -n kafka get pdb -l strimzi.io/cluster=my-cluster -o yaml
@@ -445,16 +445,16 @@ kubectl -n kafka get kafka my-cluster -o yaml
 kubectl -n kafka get pods,pvc -l strimzi.io/cluster=my-cluster
 ```
 
-acks=all 在满足同步副本假设的情况下提供更强持久性，但不保证每个应用请求都成功。重启期间，应为领导者/协调器变化、超时、重试和重复处理做好计划。代理重启不一定会让每个消费者组整体停止。
+在同步副本假设成立的情况下，acks=all 能提供更强的持久性，但不能保证每个应用请求都成功。请规划 leader/coordinator 变更、超时、重试以及重启期间的重复处理。Broker 重启不一定会让每个 consumer group 整体停止。
 
-Strimzi Drain Cleaner 等附加组件具有各自支持的模式/PDB 行为。不要仅因操作失败就删除终结器或缩容检查；应先检查原因及剩余的数据/元数据副本。
+Strimzi Drain Cleaner 等其他组件有各自支持的模式/PDB 行为。不要仅因操作失败就移除 finalizer 或缩容检查；请先检查原因以及剩余数据/元数据副本。
 
-## 后续步骤和参考资料
+## 后续步骤与参考资料
 
 - [Schema Registry](./04-schema-registry.md)
-- [Kafka 概述](./README.md)
+- [Kafka 概览](./README.md)
 - [测验](../../quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
-- [Strimzi 1.2 运维](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3 运维](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Kafka 4.3 设计](https://kafka.apache.org/43/design/design/)
 - [Kafka 4.3.1 日志目录选择](https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala)
 - [Kafka 重新分配命令实现](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java)

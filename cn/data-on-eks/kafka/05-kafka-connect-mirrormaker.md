@@ -1,34 +1,128 @@
 # 第 5 部分：Kafka Connect 和 MirrorMaker
 
-> **支持的版本**：Strimzi 0.45+、Kafka 3.9、MirrorMaker 2\
-> **最后更新**：July 9, 2026
+> **审核基线**：Strimzi 1.3.0、Kafka 4.3.1、Debezium PostgreSQL 3.6.3.Final、Aiven S3 sink 3.4.3\
+> **最后审核日期**：October 16, 2026
 
-## Kafka Connect 概述
+## Connect 工作器和连接器
 
-Kafka Connect 是一个无需编写自定义集成代码，即可在 Kafka 与外部系统（数据库、对象存储、搜索引擎等）之间移动数据的框架。你可以通过 connector 配置以声明式方式描述数据管道，其余工作由 Connect 处理。
+Kafka Connect 运行插件，在 Kafka 和外部系统之间移动数据。
+只有在已有合适插件，并且数据库/存储权限、格式和网络前提均已满足时，
+仅配置才足够。
 
-根据数据流动方向，connector 分为两类：
+| 方向 | 示例 | 重要区别 |
+| --- | --- | --- |
+| 源：外部系统 → Kafka | Debezium PostgreSQL CDC | 初始快照和逻辑 WAL 流式传输不同于 JDBC 轮询 |
+| Sink：Kafka → 外部系统 | Aiven S3 sink | 支持的格式和交付行为取决于具体插件 |
 
-* **Source connector** 从外部系统将数据拉取到 Kafka 中。Debezium 是典型示例：它读取数据库的预写日志（或 binlog），并将行级变更事件以 CDC（Change Data Capture）管道的形式流式传输到 Kafka。JDBC Source Connector 采用更简单的基于查询的方法，定期轮询表并将结果写入 Kafka。
-* **Sink connector** 将数据从 Kafka 推送到外部系统。S3 Sink Connector 会将 topic 数据以 JSON 或 Parquet 等格式写入 S3，而 Elasticsearch Sink Connector 会为 topic 记录建立索引，用于搜索和分析。
+在分布式模式下，**Kafka broker** 协调工作器组；当选的工作器 leader 负责计算分配方案。工作器故障会触发重新分配，这可能需要时间并导致重放。连接器任务故障不等同于工作器故障；请检查故障并配置重启行为。
 
-Kafka Connect 支持两种运行模式：
+Standalone Connect 可以在容器或 Kubernetes 上运行，但没有分布式工作器故障转移。Strimzi 的 `KafkaConnect` 管理分布式模式。三个工作器不会让单任务 PostgreSQL 连接器运行三个任务。
 
-* **Distributed mode**：多个 worker 进程（Pod）组成一个组，并作为单个 Connect cluster 运行。一个 worker 担任组协调器，在组内分配 connector 及其 task；如果某个 worker 失效，其 task 会自动重新平衡到仍存活的 worker。connector 生命周期——创建、删除、重新配置——通过 REST API 驱动（默认端口为 8083）。这是 Kubernetes 中唯一使用的模式。
-* **Standalone mode**：单个进程配合基于文件的 offset 存储，适用于本地开发。它不具备高可用性或水平扩展能力，因此绝不会用于 Kubernetes。
+分布式 Connect 使用压缩的 config、source-offset 和 status 主题。config 主题需要**一个分区**。为每个 Connect 部署指定单独的 group ID 和主题名称。这里以 RF=3 为基准，因为有三个 broker；这不是适用于 broker 数量更少集群的通用最低值。复制不是备份。Sink consumer offsets 通常位于 Kafka consumer groups 中，而非 source-offset 存储主题中。
 
-Distributed worker 会将 offset、connector/task 配置和 task 状态持久化到三个内部 topic（`offset.storage.topic`、`config.storage.topic`、`status.storage.topic`）中。如果这些 topic 丢失，cluster 中的每个 connector 都会失去状态，因此生产部署应始终将其 replication factor 设置为至少 3。
+## Strimzi v1 不只是更改 apiVersion
 
-## 在 Strimzi 上部署 Kafka Connect
+Strimzi 1.3.0 提供 `kafka.strimzi.io/v1` API。升级前请按照该版本的迁移流程转换旧资源；不要只是将 `v1beta2` 改名。
 
-Strimzi 通过 `KafkaConnect` CRD 管理 Distributed Connect cluster 本身，并通过 `KafkaConnector` CRD 管理运行在其上的各个 connector 实例。使用 `KafkaConnector` resource 意味着 connector 可以通过 GitOps 部署和进行版本控制，而无需手动调用 REST API。要让 Strimzi 调谐 `KafkaConnector` resource，`KafkaConnect` resource 需要 `strimzi.io/use-connector-resources: "true"` annotation。
+| 资源 | 当前 v1 字段 |
+| --- | --- |
+| KafkaConnect 工作器组 | `spec.groupId` |
+| KafkaConnect 内部主题名称 | `spec.configStorageTopic`、`spec.offsetStorageTopic`、`spec.statusStorageTopic` |
+| KafkaMirrorMaker2 目标和工作器存储 | `spec.target`，并具有自己的 `groupId` 和三个主题名称字段 |
+| KafkaMirrorMaker2 源连接 | `spec.mirrors[].source` |
 
-connector plugin 不包含在基础 Strimzi Kafka Connect image 中，因此你需要自定义 image。Strimzi 推荐的模式无需手写 Dockerfile：你可以在 `KafkaConnect.spec.build` 下声明 plugin artifact（tgz/zip/jar 或 Maven 坐标），Strimzi Operator 会构建 image 并将其推送到你指定的 registry——例如 Amazon ECR。
+旧版 MM2 的 `connectCluster`、`clusters`、`sourceCluster`、`targetCluster` 和
+`heartbeatConnector` 字段不在此 v1 schema 中。Apache MM2 包含 heartbeat connector 实现，但这并不意味着它是可配置的 `KafkaMirrorMaker2` v1 字段。
 
-### KafkaConnect 构建规范
+## 准备 Connect 示例
+
+使用[第 2 部分](./02-strimzi-operator.md)中的三 broker `my-cluster`，其启用了 TLS/SCRAM 和 Topic/User Operators。部署前请替换示例中的 ECR 账户/仓库以及 DB/S3 名称。准备以下额外依赖：
+
+- `debezium-db-credentials`：包含 `password` 键的 Kubernetes Secret。
+- `rds-ca`：包含 `ca.crt` 的 Secret，其中存放受信任的 PostgreSQL/RDS CA 证书链。
+- 一个现有 ECR 仓库、一个最新的 `kubernetes.io/dockerconfigjson` 类型 push Secret（名为 `ecr-registry-credentials`），以及节点的镜像拉取权限。
+- 为 **Connect Pod** 配置 AWS 工作负载身份，并将权限限制在目标 S3 bucket/prefix 范围内。配置 Pod Identity 或 IRSA，并验证插件实际使用的凭证链。构建推送身份和运行时 S3 身份是分开的。
+
+ECR 授权令牌会在 12 小时后过期。请在构建前维护/刷新 push Secret。仅分配 IRSA 角色并不能确保所选镜像构建器能够登录 ECR。Strimzi 1.3 使用 Buildah 构建 Connect 镜像；请检查实际节点上的构建 Pod 要求。
+
+将以下内容保存为 `create-topics.py`，运行该脚本，然后应用 `connect-topics.json`。
+七天的数据保留期是实验环境中的选择；依赖此管道前，请根据故障和恢复要求设定保留期。
+
+```python
+import json
+from pathlib import Path
+
+topics = [
+    ("connect-cluster-configs", 1, "compact"),
+    ("connect-cluster-offsets", 3, "compact"),
+    ("connect-cluster-status", 3, "compact"),
+    ("orders-db.public.orders", 3, "delete"),
+    ("orders-db.public.order_items", 3, "delete"),
+]
+items = []
+for name, partitions, cleanup in topics:
+    config = {"cleanup.policy": cleanup, "min.insync.replicas": 2}
+    if cleanup == "delete":
+        config["retention.ms"] = 604800000
+    items.append({
+        "apiVersion": "kafka.strimzi.io/v1", "kind": "KafkaTopic",
+        "metadata": {"name": name, "namespace": "kafka",
+                     "labels": {"strimzi.io/cluster": "my-cluster"}},
+        "spec": {"partitions": partitions, "replicas": 3, "config": config},
+    })
+Path("connect-topics.json").write_text(json.dumps({"apiVersion": "v1", "kind": "List", "items": items}, indent=2) + "\n")
+```
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaUser
+metadata:
+  name: connect-cluster
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: connect-cluster-
+          patternType: prefix
+        operations: [Read, Write, Create, Describe, DescribeConfigs]
+      - resource:
+          type: topic
+          name: orders-db.
+          patternType: prefix
+        operations: [Read, Write, Describe]
+      - resource:
+          type: group
+          name: connect-cluster
+          patternType: literal
+        operations: [Read]
+      - resource:
+          type: group
+          name: connect-orders-s3-sink
+          patternType: literal
+        operations: [Read]
+      - resource:
+          type: cluster
+        operations: [IdempotentWrite]
+```
+
+将用户资源保存为 `connect-user.yaml`。创建权限仅限于 Connect 内部主题前缀；五个主题由 Topic Operator 使用显式设置预先创建。自动创建源数据主题已禁用。新增表/主题需要进行显式的匹配更新。
+
+## 构建并部署 Connect
+
+保存为 `connect.yaml`。两个下载的插件构件均提供 SHA-512 校验和。
+`spec.build` 是一种受支持的选项；预构建且经过测试的镜像或受支持的插件镜像卷也是其他选项。构建成功并不能证明 DB/S3 可访问。
+
+目录配置提供程序会从允许的路径读取挂载的 Secret；它不需要读取 Kubernetes API Secret 的 RBAC 权限。此方式取代了不完整的 `${secrets:...}` 示例，那个示例既没有配置提供程序，也没有访问权限。
+
+```yaml
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnect
 metadata:
   name: connect-cluster
@@ -36,37 +130,69 @@ metadata:
   annotations:
     strimzi.io/use-connector-resources: "true"
 spec:
-  version: 3.9.0
+  version: 4.3.1
   replicas: 3
-  bootstrapServers: my-cluster-kafka-bootstrap:9093
+  bootstrapServers: my-cluster-kafka-bootstrap.kafka.svc:9093
+  groupId: connect-cluster
+  configStorageTopic: connect-cluster-configs
+  offsetStorageTopic: connect-cluster-offsets
+  statusStorageTopic: connect-cluster-status
   tls:
     trustedCertificates:
       - secretName: my-cluster-cluster-ca-cert
         certificate: ca.crt
+  authentication:
+    type: scram-sha-512
+    username: connect-cluster
+    passwordSecret:
+      secretName: connect-cluster
+      password: password
   config:
-    group.id: connect-cluster
-    offset.storage.topic: connect-cluster-offsets
-    config.storage.topic: connect-cluster-configs
-    status.storage.topic: connect-cluster-status
-    offset.storage.replication.factor: 3
     config.storage.replication.factor: 3
+    offset.storage.replication.factor: 3
     status.storage.replication.factor: 3
+    offset.flush.interval.ms: 60000
+    topic.creation.enable: false
     key.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: true
     value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: true
+    config.providers: dir
+    config.providers.dir.class: org.apache.kafka.common.config.provider.DirectoryConfigProvider
+    config.providers.dir.param.allowed.paths: /mnt/debezium
+  template:
+    pod:
+      volumes:
+        - name: debezium-credentials
+          secret:
+            secretName: debezium-db-credentials
+        - name: rds-ca
+          secret:
+            secretName: rds-ca
+    connectContainer:
+      volumeMounts:
+        - name: debezium-credentials
+          mountPath: /mnt/debezium
+          readOnly: true
+        - name: rds-ca
+          mountPath: /mnt/rds-ca
+          readOnly: true
   build:
     output:
       type: docker
-      image: <account-id>.dkr.ecr.<region>.amazonaws.com/connect-cluster:latest
+      image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/connect-cluster:kafka4.3.1-deb3.6.3-s3-3.4.3
       pushSecret: ecr-registry-credentials
     plugins:
       - name: debezium-postgres
         artifacts:
           - type: tgz
-            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/2.7.3.Final/debezium-connector-postgres-2.7.3.Final-plugin.tar.gz
-      - name: aiven-s3-sink
+            url: https://repo.maven.apache.org/maven2/io/debezium/debezium-connector-postgres/3.6.3.Final/debezium-connector-postgres-3.6.3.Final-plugin.tar.gz
+            sha512sum: 400495c485a1da532c5d7e2dcc3bbb1b7f7dcdbcdc74c82529309cb89a2c37298319ea45ea00414b3ce750a51ad01084e104725e810c55c1a7c1981baff201a0
+      - name: aiven-s3
         artifacts:
           - type: zip
-            url: https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/releases/download/v3.4.0/s3-sink-connector-for-apache-kafka-3.4.0.zip
+            url: https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/releases/download/v3.4.3/s3-sink-connector-for-apache-kafka-3.4.3.zip
+            sha512sum: d355c7d41713dab83384a51e28b6670f63775a0aa394eb0d9e99172d862f53d9e42c54534369cdcfefadfeb4f50e7ffac2029c65dd878f0def3db33058627758
   resources:
     requests:
       cpu: "1"
@@ -76,12 +202,35 @@ spec:
       memory: 2Gi
 ```
 
-每当 `spec.build` 发生变化——例如添加 plugin、升级版本等——Operator 都会自动重新构建 image 并滚动发布 Deployment。`pushSecret` 引用的 Secret 需要包含 registry 凭证（`docker-registry` 类型的 Secret），ECR 推送才能成功；如果需要，你可以通过 IRSA 授予该访问权限。
+```bash
+python3 create-topics.py
+kubectl apply -f connect-topics.json -f connect-user.yaml
+kubectl -n kafka wait --for=condition=Ready --timeout=180s kafkauser/connect-cluster
+kubectl -n kafka wait --for=condition=Ready --timeout=180s \
+  kafkatopic/connect-cluster-configs kafkatopic/connect-cluster-offsets \
+  kafkatopic/connect-cluster-status kafkatopic/orders-db.public.orders \
+  kafkatopic/orders-db.public.order_items
+kubectl apply -f connect.yaml
+kubectl -n kafka wait --for=condition=Ready --timeout=900s kafkaconnect/connect-cluster
+```
 
-### KafkaConnector —— Debezium PostgreSQL source 示例
+设置 `strimzi.io/use-connector-resources: "true"` 后，应通过 CR 管理连接器变更；直接进行 REST 修改可能会被协调过程覆盖。限制对 Connect REST API 的访问以及 Kubernetes 更新权限。此工作器部署中的所有插件共用其挂载的 Secret 和工作负载身份；不同信任域应隔离在不同的 Connect 部署中。
+
+## PostgreSQL CDC 源
+
+应用 `source.yaml` 前，请启用 PostgreSQL 逻辑复制，并配置所需的复制槽/WAL sender、复制用户和表权限。对于 RDS PostgreSQL，启用逻辑复制参数可能需要重启。请按照实际引擎版本的流程操作。监控保留的 WAL：停滞的复制槽可能会占满存储。不要将删除复制槽作为常规重启步骤。
+
+有权限的表所有者在 `orders` 数据库中创建 publication：
+
+```sql
+CREATE PUBLICATION debezium_orders_pub
+FOR TABLE public.orders, public.order_items;
+```
+
+请确保更新/删除事件所需的表具有合适的主键/replica identity。连接器会执行初始快照，然后流式传输 WAL。PostgreSQL 连接器使用一个任务；`tasksMax` 是最大值，不保证并行度。
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnector
 metadata:
   name: orders-db-source
@@ -92,21 +241,32 @@ spec:
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1
   config:
-    database.hostname: orders-db.xxxxxxx.us-east-1.rds.amazonaws.com
+    database.hostname: orders-db.REPLACE.ap-northeast-2.rds.amazonaws.com
     database.port: 5432
     database.user: debezium
-    database.password: "${secrets:kafka/debezium-db-credentials:password}"
+    database.password: "${dir:/mnt/debezium:password}"
     database.dbname: orders
+    database.sslmode: verify-full
+    database.sslrootcert: /mnt/rds-ca/ca.crt
     topic.prefix: orders-db
     plugin.name: pgoutput
     slot.name: debezium_orders
-    table.include.list: public.orders,public.order_items
+    publication.name: debezium_orders_pub
+    publication.autocreate.mode: disabled
+    table.include.list: 'public[.]orders,public[.]order_items'
+    snapshot.mode: initial
 ```
 
-### KafkaConnector —— S3 sink 示例
+挂载的密码不会显示在清单中。请测试凭证轮换以及重启/重新配置行为，不要假定现有 DB 连接会立即采用更改后的 Secret。
+
+## Aiven S3 sink
+
+保存为 `sink.yaml`。实际的 3.4.3 连接器类是
+`io.aiven.kafka.connect.s3.AivenKafkaConnectS3SinkConnector`。
+旧示例中的类 `io.aiven.kafka.connect.s3.S3SinkConnector` 不在该构件中。`flush.size` 和 `rotate.schedule.interval.ms` 也不是它的配置键；不得从其他厂商的 S3 连接器复制这些配置。
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnector
 metadata:
   name: orders-s3-sink
@@ -114,105 +274,154 @@ metadata:
   labels:
     strimzi.io/cluster: connect-cluster
 spec:
-  class: io.aiven.kafka.connect.s3.S3SinkConnector
+  class: io.aiven.kafka.connect.s3.AivenKafkaConnectS3SinkConnector
   tasksMax: 3
   config:
     topics: orders-db.public.orders
-    aws.s3.bucket.name: orders-data-lake
-    aws.s3.region: us-east-1
+    aws.s3.bucket.name: REPLACE-WITH-YOUR-BUCKET
+    aws.s3.region: ap-northeast-2
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: true
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: true
     format.output.type: jsonl
+    format.output.fields: key,value,offset,timestamp
     file.compression.type: gzip
-    flush.size: 10000
-    rotate.schedule.interval.ms: 300000
+    file.max.records: 10000
 ```
 
-`kubectl get kafkaconnector -n kafka` 会显示各个 connector 的状态；`Ready: True` condition 表示其 task 已分配给 worker 且正在运行。
+此配置存储的是 **CDC 事件信封**，包括操作和 before/after 数据，而不是自动物化的当前状态表。源和 sink 使用启用了 schema 信封的 JSON converter。转换器设置应与实际 Kafka 记录保持一致。`file.max.records` 控制记录分组，而工作器的 `offset.flush.interval.ms` 会影响定期刷新；这并不保证每个对象都会在固定期限内到达。
 
-## MirrorMaker 2 架构
+未提供显式凭证选项时，将使用 AWS 默认凭证链。仅为目标位置以及任何所需的 KMS key 授予插件所需的对象/分段上传操作权限。在将归档视为恢复来源之前，请测试正常事件、删除、tombstone、重试和重启重放。S3 对象不会自动提供端到端的 exactly-once 行为。
 
-MirrorMaker 2（MM2）是一个构建在 Kafka Connect 框架之上的 topic 级 cluster 到 cluster 的复制工具。它不仅复制消息：还会保留 source cluster 的 partition，并转换 consumer group offset，这使得在灾难恢复期间实现干净的 consumer failover 成为可能。在内部，MM2 由三个 connector 组成：
+```bash
+kubectl apply -f source.yaml -f sink.yaml
+kubectl -n kafka get kafkaconnector orders-db-source orders-s3-sink -o yaml
+```
 
-* **MirrorSourceConnector**：执行实际的消息复制，同时同步 topic 配置和 ACL。
-* **MirrorCheckpointConnector**：定期将 source cluster 的 consumer group offset 转换为 target cluster 上对应的 offset，并将其记录在 checkpoint topic 中。这种 offset 转换使 failover 到 DR cluster 的 consumer 能够知道“它已处理到什么位置”。
-* **MirrorHeartbeatConnector**：定期发送 heartbeat 消息，以证明 source cluster 存活且复制管道正常运行；这些消息可用于检测复制 lag 或完全断开连接。
+检查当前 generation、conditions、`status.connectorStatus.connector.state` 以及每个任务的 state/trace。还要检查源和目标的实际进度。`Ready=True` 是操作器状态观察结果，并不能证明数据是最新的。
 
-MM2 不会在 target cluster 中逐字复用 source topic 的名称。默认的 `DefaultReplicationPolicy` 将远程 topic 命名为 `<source-cluster-alias>.<topic>`。例如，从别名为 `us-east-1` 的 cluster 复制 `orders` topic，会在 target 上生成名为 `us-east-1.orders` 的远程 topic。该命名约定让 consumer 仅通过 topic 名称就能区分本地生成的消息与镜像消息，同时它也是防止双向设置中发生无限复制循环的机制。
+## MirrorMaker 2 和灾难恢复
 
-## 灾难恢复模式
+MM2 在写入新的目标 offsets 时会保留记录字节和分区编号。它不会保留源 offset 编号，也不会自动迁移 schema registry ID、应用事务、外部 sink 状态或所有安全策略。
 
-### Active-Passive
+| 组件 | 职责和限制 |
+| --- | --- |
+| MirrorSourceConnector | 复制记录并生成 offset-sync 映射；主题/配置/ACL 同步取决于设置 |
+| MirrorCheckpointConnector | 转换源 group offsets 并生成 checkpoints；可以更新符合条件的非活动目标组 |
+| Apache MirrorHeartbeatConnector | 生成 heartbeat 记录；即使不读取源数据，它的任务也可以生成记录，因此仅有 heartbeat 并不能证明源健康或复制完整 |
 
-这是最常见的模式：复制单向运行，从主 Region cluster 到 DR Region cluster。正常运行时，应用程序只与主 cluster 通信，而 DR cluster 保持空闲状态并持续累积复制的数据。当发生区域故障时，你可以使用 MirrorCheckpointConnector 记录的 offset 转换，将 consumer group 迁移到 DR cluster，并从最近可用的 checkpoint 恢复消费。这并非完美的 exactly-once 切换——具体取决于 checkpoint 相对于故障的创建时机，少量消息可能会被重新处理；并且由于 MM2 复制是异步的，故障发生时尚未复制到 DR cluster 的任何消息都会丢失（RPO 受复制 lag 限制，并非为零）——但其核心优势是能够快速恢复，并将数据丢失降至该 lag 窗口内。
+主动-被动模式使用单向复制，并需要明确的切换操作手册。
+如果源无法恢复，故障发生前未复制的记录可能会丢失。重放的记录可能重复；重放窗口不一定很短。测量复制和 checkpoint 的新鲜度，隔离旧写入方，验证目标权限/schema 可用性，更改应用端点/主题订阅，并测试恢复后的消费位置。MM2 不会执行这些应用层步骤。
 
-### Active-Active
+在主动-主动模式下，`DefaultReplicationPolicy` 会为远程主题添加前缀，并检测**返回到其来源链中已有别名的循环**。它不会排除所有带前缀的主题：向第三个集群进行多跳复制可能是合理的。`IdentityReplicationPolicy` 会丢失此命名信息，也不提供等效的循环保护。请使用明确的方向性过滤规则和所有权管理；它不是适用于两个写入方的通用冲突解决系统。
 
-两个 Region 都承载流量，且每个 cluster 都向另一个 cluster 进行双向复制。这带来了实际风险：除非明确阻止，否则从 A → B 镜像的 topic（作为 `A.orders`）可能会从 B → A 立刻再次镜像，从而无限循环。Strimzi/MM2 会通过在 `replication.policy.class` 中设置的命名策略来防止这种情况（默认的 `DefaultReplicationPolicy`，或者当你希望远程 topic 保持原始名称时使用 `IdentityReplicationPolicy`）——已带有远程 cluster 前缀（如 `A.orders`）的 topic 会被排除在进一步镜像之外。将 `topicsPattern` 缩小为仅包含实际需要跨 Region 复制的 topic，可提供第二层保护以防止意外的复制循环。
+## 当前 KafkaMirrorMaker2 v1 示例
 
-### KafkaMirrorMaker2 CR 示例
+此单向模板需要可用的跨集群 DNS/网络访问、三个目标 broker、位于 `kafka` namespace 中列出的源/目标 Secret，以及单独准备的 Kafka ACL。端点字符串是占位符。请在能够访问两个集群的位置运行工作器；`spec.target` 选择的是 Kafka 存储，而不是 Kubernetes 区域。
+
+| 身份 | 需要规划的权限范围 |
+| --- | --- |
+| 源 | 读取/描述所选主题，描述所选 group offsets |
+| 目标 | 连接内部主题和工作器组；写入/创建目标远程主题和 MM2 内部主题；读取 offset 映射/checkpoints；更新所选非活动组的 offsets |
+
+请预先创建具有适当压缩/分区设置的内部主题，或授予所选配置所需的特定创建权限。源和目标凭证可以不同。此示例将 offset-syncs 存储在目标端，并禁用 ACL/配置复制，以便显式管理目标策略。
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaMirrorMaker2
 metadata:
   name: primary-to-dr
   namespace: kafka
 spec:
-  version: 3.9.0
+  version: 4.3.1
   replicas: 3
-  connectCluster: dr-region
-  clusters:
-    - alias: us-east-1
-      bootstrapServers: primary-kafka-bootstrap.us-east-1.example.com:9093
-      tls:
-        trustedCertificates:
-          - secretName: primary-cluster-ca-cert
-            certificate: ca.crt
-      authentication:
-        type: tls
-        certificateAndKey:
-          secretName: mm2-user
-          certificate: user.crt
-          key: user.key
-    - alias: dr-region
-      bootstrapServers: dr-kafka-bootstrap.us-west-2.example.com:9093
-      config:
-        config.storage.replication.factor: 3
-        offset.storage.replication.factor: 3
-        status.storage.replication.factor: 3
+  target:
+    alias: dr-region
+    bootstrapServers: dr-kafka-bootstrap.REPLACE.example.com:9093
+    groupId: primary-to-dr
+    configStorageTopic: primary-to-dr-configs
+    offsetStorageTopic: primary-to-dr-offsets
+    statusStorageTopic: primary-to-dr-status
+    tls:
+      trustedCertificates:
+        - secretName: dr-cluster-ca-cert
+          certificate: ca.crt
+    authentication:
+      type: scram-sha-512
+      username: mm2-target
+      passwordSecret:
+        secretName: mm2-target
+        password: password
+    config:
+      config.storage.replication.factor: 3
+      offset.storage.replication.factor: 3
+      status.storage.replication.factor: 3
   mirrors:
-    - sourceCluster: us-east-1
-      targetCluster: dr-region
+    - source:
+        alias: us-east-1
+        bootstrapServers: primary-kafka-bootstrap.REPLACE.example.com:9093
+        tls:
+          trustedCertificates:
+            - secretName: primary-cluster-ca-cert
+              certificate: ca.crt
+        authentication:
+          type: scram-sha-512
+          username: mm2-source
+          passwordSecret:
+            secretName: mm2-source
+            password: password
       sourceConnector:
         tasksMax: 5
         config:
           replication.factor: 3
           offset-syncs.topic.replication.factor: 3
-          sync.topic.acls.enabled: "true"
-      heartbeatConnector:
-        config:
-          heartbeats.topic.replication.factor: 3
+          offset-syncs.topic.location: target
+          sync.topic.acls.enabled: false
+          sync.topic.configs.enabled: false
+          replication.policy.class: org.apache.kafka.connect.mirror.DefaultReplicationPolicy
       checkpointConnector:
         config:
           checkpoints.topic.replication.factor: 3
-          sync.group.offsets.enabled: "true"
-      topicsPattern: "orders.*|payments.*"
-      groupsPattern: "orders-consumer-.*"
+          offset-syncs.topic.location: target
+          sync.group.offsets.enabled: true
+          sync.group.offsets.interval.seconds: 60
+          emit.checkpoints.interval.seconds: 60
+          replication.policy.class: org.apache.kafka.connect.mirror.DefaultReplicationPolicy
+      topicsPattern: 'orders[.].*|payments[.].*'
+      groupsPattern: 'orders-consumer-.*'
 ```
 
-`connectCluster: dr-region` 告诉 MM2 worker Pod 应使用哪个 cluster（此处为 DR Region）来存储 Connect 自身的内部 topic。启用 `sync.group.offsets.enabled: "true"` 后，MirrorCheckpointConnector 会定期将其转换后的 offset 写入 DR cluster 的 `__consumer_offsets`，这样发生 failover 的 consumer 无需先手动提交 offset 即可恢复消费。
+该模式匹配 `orders.` 和 `payments.` 前缀；不包括裸名称 `orders`、`payments` 或 `orders-db.public.orders`。请根据实际主题清单进行调整。源连接器和 checkpoint 连接器必须使用一致的 replication policy、分隔符和 offset-syncs 位置。
 
-## 跨 Region 复制注意事项
+`sync.group.offsets.enabled=true` 只会使用可转换的 offsets 更新符合条件的**非活动/不存在**的目标组；它不会覆盖正在主动消费的组。consumer 成员关系、权限、映射/checkpoint 是否可用以及已提交的目标位置都会影响结果。切勿仅根据此设置或操作器的 Ready 条件推断故障转移成功。
 
-* **网络成本和延迟**：跨 Region（甚至跨 AZ）复制会产生数据传输成本和往返延迟。通常会在 target Region 中运行 MM2 worker，从 source cluster 拉取数据。调整 batch size（`producer.override.batch.size`）和 compression（`producer.override.compression.type: zstd`）可减少实际传输的数据量，从而直接降低跨 Region 数据传输成本。
-* **`sync.topic.acls.enabled`**：控制是否同时将 source cluster 的 topic ACL 同步到 target。启用后无需维护两套访问控制策略；但如果两个 cluster 的安全态势不同——例如 DR cluster 要求比主 cluster 更严格的访问权限——禁用它并在每一端独立管理 ACL 可能更安全。
-* **监控复制 lag**：MM2 会公开自身的复制健康度 metric。`replication-latency-ms` 报告消息从在 source 上生成到完全复制到 target 的时间，而 checkpoint connector 的 lag 相关 metric 则显示 offset 转换的实时程度。将这些 metric 抓取到 Prometheus 中，并基于 SLA（例如“复制 lag 低于 5 分钟”）设置告警，可让你持续验证 DR cluster 确实处于可供 failover 的状态。
+## 网络和监控
+
+对于运行在目标区域的工作器，源到工作器的 fetch 流量会跨区域传输。压缩工作器的**目标 producer** 不会追溯压缩这些 fetch 流量；源 producer/主题的压缩方式和部署位置很重要。请测量网络两端的流量、CPU 和延迟，不要承诺只调整一个参数就能节省成本。
+
+`replication-latency-ms` 是在目标确认记录时测量的相对于记录时间戳的延迟。时间戳模式、历史重放和时钟偏差都会影响该值。`record-age-ms` 在读取路径上观测。还要监控每个分区的进度、错误、数据新鲜度和 checkpoint 新鲜度；停止或为空的流可能产生过时/缺失的样本。Prometheus 指标名称取决于 exporter 映射，因此 Kafka 指标名称不会自动成为 PromQL 名称。
+
+## 参考资料和验证
+
+这些示例依据已发布的 v1 CRD 和原生连接器配置定义进行检查。本地 MM2 行为检查并不能证明实际的跨区域连接、数据库权限、ECR 构建、S3 交付或成功的灾难恢复切换。
+
+- [Strimzi 1.3.0 CRD：权威资源字段](https://github.com/strimzi/strimzi-kafka-operator/tree/1.3.0/install/cluster-operator)
+- [Strimzi 1.3.0 部署指南](https://strimzi.io/docs/operators/1.3.0/deploying.html)
+- [Debezium 3.6 PostgreSQL 连接器](https://debezium.io/documentation/reference/3.6/connectors/postgresql.html)
+- [Aiven S3 connector 3.4.3](https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md)
+- [ECR 授权令牌有效期](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html)
+- [Kafka 4.3.1 MirrorSourceConnector](https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceConnector.java)
+- [Kafka 4.3.1 MirrorCheckpointTask](https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorCheckpointTask.java)
+- [Kafka 4.3.1 MirrorHeartbeatTask](https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorHeartbeatTask.java)
+- [Kafka 4.3.1 MirrorSourceTask](https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceTask.java)
 
 ## 后续步骤
 
-Kafka Connect 和 MirrorMaker 2 为数据移动和灾难恢复就绪后，下一步是了解此工作负载如何与全托管的 Amazon MSK 服务集成，或如何与其进行比较。相关内容请参阅[第 6 部分：MSK 集成](./06-msk-integration.md)。
+[第 6 部分：MSK 集成](./06-msk-integration.md)比较托管选项。
 
 [返回主页](./README.md)
 
 ## 测验
 
-要测试你在本章所学的内容，请尝试[Topic 测验](../../quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)。
+[主题测验](../../quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)

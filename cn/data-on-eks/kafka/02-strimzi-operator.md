@@ -1,26 +1,26 @@
 # 第 2 部分：Strimzi Operator
 
-> **最后更新**：2026 年 9 月 12 日。Strimzi 1.2.0，Kafka 4.3.1。Strimzi 要求 Kubernetes 1.30 或更高版本；本地模式验证使用了 1.36.2。
-> **验证**：验证了两种 Helm 配置、67 个 Kubernetes/CRD 对象，以及通过 Kafka 原生 JAAS 解析器验证的五种凭证文件场景。未执行实际 EKS 安装、TLS 连接、代理 ACL 强制实施、EBS 或 NLB 预置。
+> **最后更新**：October 16, 2026。Strimzi 1.3.0，Kafka 4.3.1。Strimzi 要求 Kubernetes 1.32 或更高版本；本地架构验证使用了 1.36.2。
+> **验证**：通过 Kafka 原生 JAAS 解析器验证了两种 Helm 配置、67 个 Kubernetes/CRD 对象和五种凭证文件情况。未执行实时 EKS 安装、TLS 连接、broker ACL 强制执行、EBS 或 NLB 预置。
 
-## 1. 范围和前提条件
+## 1. 范围和先决条件
 
-这是一个全新安装示例，包含三个专用控制器和三个代理。它要求三个可用区中都有可调度容量，并具有合适的 StorageClass。升级现有集群是单独的操作。
+这是一个包含三个专用控制器和三个 broker 的全新安装示例。它要求三个 AZ 中都有可调度容量，并且有合适的 StorageClass。升级现有集群是单独的操作。
 
-Strimzi 是 CNCF 孵化项目，通过 Kubernetes Operator 协调 Kafka 资源。当前的 Cluster Operator 管理 StrimziPodSet、Pod、Service 和 PVC。启用 Entity Operator 后，它会运行 Topic Operator 和 User Operator，以协调 KafkaTopic 和 KafkaUser 资源。安装 Operator 并不会自动完成所有再平衡、恢复或可用性策略。
+Strimzi 是一个 CNCF 孵化项目，通过 Kubernetes Operators 协调 Kafka 资源。当前的 Cluster Operator 管理 StrimziPodSets、Pods、Services 和 PVC。启用后，Entity Operator 会运行 Topic Operator 和 User Operator，以协调 KafkaTopic 和 KafkaUser 资源。安装 Operator 并不会自动完成所有重新平衡、恢复或可用性策略。
 
-前提条件：
+先决条件：
 
-- Kubernetes 1.30 或更高版本，以及该集群支持的 kubectl 版本。“任何高于 1.28 的 kubectl 版本”并不适用于所有更新的集群。
-- Helm 3；此处渲染使用了 Helm 3.21.3。
-- 适用于标准 EBS CSI 或 EKS Auto Mode 的卷预置器和 IAM 配置。
-- 三个可用区中均有可调度的节点/容量，并能访问所需的镜像仓库。
+- Kubernetes 1.32 或更高版本，以及受该集群支持的 kubectl 版本。“任何高于 1.28 的 kubectl 版本”并不适用于所有较新的集群。
+- Helm 3；此处渲染使用 Helm 3.21.3。
+- 适用于标准 EBS CSI 或 EKS Auto Mode 的卷预置程序和 IAM 设置。
+- 三个 AZ 中均有可调度节点/容量，并且能够访问所需的镜像注册表。
 
-Strimzi 1.0 及更高版本仅支持 `kafka.strimzi.io/v1`。请先按照官方流程转换旧版 beta 资源并升级 CRD。CRD 属于集群作用域：新建命名空间无法避免与现有定义冲突。Helm 的 `crds/` 目录在首次安装和升级现有 CRD 时的行为不同。以下 helm install 命令不是现有 0.45 集群的升级流程。
+Strimzi 1.0 及更高版本仅支持 `kafka.strimzi.io/v1`。请先转换旧版 beta 资源，并按照官方流程升级 CRD。CRD 的作用范围是整个集群：新建命名空间无法避免与现有定义冲突。Helm 的 `crds/` 目录在初始安装和升级现有 CRD 时的行为不同。以下 helm install 命令不是升级现有 0.45 集群的流程。
 
 ## 2. 安装 Cluster Operator
 
-这些命令会更改真实集群。请确认上下文/命名空间，并将其用于全新安装。
+这些命令会更改实际集群。请确认上下文/命名空间，并仅将其用于全新安装。
 
 **`operator-values.yaml`**
 
@@ -35,7 +35,7 @@ kubectl config current-context
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --version 1.2.0 --namespace kafka --create-namespace \
+  --version 1.3.0 --namespace kafka --create-namespace \
   -f operator-values.yaml --wait --timeout 10m
 kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
 kubectl wait --for=condition=Established --timeout=120s \
@@ -43,15 +43,15 @@ kubectl wait --for=condition=Established --timeout=120s \
   crd/kafkatopics.kafka.strimzi.io crd/kafkausers.kafka.strimzi.io
 ```
 
-默认 chart 监视自身所在的命名空间。若要添加命名空间，请先创建它们，再设置诸如 `watchNamespaces: [kafka-staging]` 的值。Chart 1.2 会添加发布所在的命名空间并去重，同时渲染相应的 RoleBinding。仅使用 kubectl set env 更改监视环境变量可能导致 RBAC 缺失和 Helm 配置漂移。
+默认情况下，chart 会监视其自身的命名空间。如需监视其他命名空间，请先创建这些命名空间，然后设置诸如 `watchNamespaces: [kafka-staging]` 的值。Chart 1.3 会添加/去重 release 命名空间，并渲染相应的 RoleBindings。仅使用 kubectl set env 更改监视环境变量，可能导致缺少 RBAC 并造成 Helm 漂移。
 
-不要让 Helm、OLM 和手动管理同时拥有同一安装的管理权。`watchAnyNamespace: true` 是显式的集群范围选择，本示例未启用。
+不要让 Helm、OLM 和手动管理同时接管同一安装。`watchAnyNamespace: true` 是显式的全集群范围选择，本示例中已禁用。
 
 ## 3. 存储和放置
 
 ### 标准 EBS CSI
 
-此 StorageClass 使用标准 EBS CSI 预置器。应用前请检查同名现有资源。更改预置器不会自动将现有卷迁移到另一个驱动。
+此 StorageClass 使用标准 EBS CSI provisioner。应用前请检查是否存在同名资源。更改 provisioner 不会自动将现有卷迁移到其他驱动程序。
 
 **`storageclass.yaml`**
 
@@ -71,11 +71,11 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-gp3 的基准性能为 3,000 IOPS 和 125 MiB/s。之前的 `throughput: "250"` 示例预置了额外吞吐量，并非基准值。实例的 EBS/网络限制、分区复制和读取模式也很重要。JBOD 不会自动均衡数据，也不会消除实例级别的限制。
+gp3 的基准性能为 3,000 IOPS 和 125 MiB/s。之前的 `throughput: "250"` 示例预置了额外吞吐量；它并非基准值。实例的 EBS/网络限制、分区复制和读取模式也会产生影响。JBOD 不会自动平衡数据，也不会消除实例级限制。
 
-### EKS Auto Mode 备选方案
+### EKS Auto Mode 替代方案
 
-仅在使用 Auto Mode 时选择此独立的 StorageClass，并将**新 NodePool 的卷类**设为 `gp3-kafka-auto`。请使用适用于集群的预置器路径。迁移现有 PVC 需要单独的流程。
+仅当使用 Auto Mode 时才选择这个单独的 StorageClass，并将**新 NodePool 的卷类别**设置为 `gp3-kafka-auto`。请使用适用于集群的 provisioner 路径。迁移现有 PVC 需要单独的流程。
 
 **`storageclass-auto.yaml`**
 
@@ -99,13 +99,13 @@ allowedTopologies:
         values: [auto]
 ```
 
-### 控制器池和代理池
+### 控制器和 broker 池
 
-这些文件引用标准的 `gp3-kafka`。实际角色为 `controller` 和 `broker`；两者可以同时列出，但 `dual-role` 不是独立的枚举值。
+这些文件引用标准的 `gp3-kafka`。实际角色为 `controller` 和 `broker`；可以同时列出这两者，但 `dual-role` 不是单独的枚举值。
 
-两个池都需要三个可用区。选择器匹配实际的自定义 Pod 标签 `docs.example.com/kafka-role` 和集群标签，并设置 `minDomains: 3`。当只有两个可用区具有符合条件的节点时，Pod 可能保持 Pending 状态。在发生故障时，这种严格约束也可能阻止在剩余可用区中调度替代 Pod。
+两个池都需要三个 AZ。选择器会匹配实际的自定义 Pod 标签 `docs.example.com/kafka-role` 以及集群标签，并设置 `minDomains: 3`。如果只有两个 AZ 有符合条件的节点，Pods 可能会保持 Pending 状态。在发生故障时，严格的约束也可能阻止在剩余 AZ 中创建替代 Pods。
 
-独立的池隔离的是 Pod 角色/资源设置，并不一定隔离物理工作节点。若需要物理隔离，请使用节点亲和性。Kafka 机架感知和 Pod 调度运行在不同层面。
+单独的池可以隔离 Pod 角色/资源设置，但不一定会隔离物理工作节点。如果需要物理隔离，请使用节点亲和性。Kafka rack 感知和 Pod 调度属于不同层级。
 
 **`controller-pool.yaml`**
 
@@ -201,13 +201,13 @@ spec:
             docs.example.com/kafka-role: broker
 ```
 
-`kraftMetadata: shared` 选择用于存储 KRaft 元数据的卷；每个池最多只能有一个卷设置此项。`deleteClaim: false` 和 StorageClass Retain 是保留设置，并非备份。删除其他资源后，PVC/PV/EBS 卷可能仍然保留并持续产生费用。
+`kraftMetadata: shared` 用于选择存放 KRaft 元数据的卷；每个池最多只能有一个卷使用它。`deleteClaim: false` 和 StorageClass Retain 是保留设置，不是备份。删除其他资源后，PVC/PV/EBS 卷仍可能保留并继续产生费用。
 
-三个控制器在一个投票成员故障后仍保有两个成员的多数派。三个代理满足的是另一项数据复制目标。奇数数量并不自动意味着安全；多数派可用性和连通性仍然重要。
+三个控制器在一个投票者发生故障后仍可保有两票的多数派。三个 broker 则满足单独的数据复制目标。奇数数量并不会自动保证安全；多数派可用性和连接状况仍然重要。
 
-## 4. 启用身份验证的 Kafka 集群
+## 4. 已启用身份验证的 Kafka 集群
 
-同时启用内部 TLS/SCRAM 监听器和 ACL 授权器。创建 KafkaUser 后通过未经身份验证的明文监听器进行测试，并不能验证该用户的身份验证。
+同时启用内部 TLS/SCRAM listener 和 ACL authorizer。若通过未经身份验证的明文 listener 进行测试，即使创建了 KafkaUser，也无法验证该用户的身份验证。
 
 **`kafka-cluster.yaml`**
 
@@ -245,9 +245,9 @@ spec:
     userOperator: {}
 ```
 
-Strimzi 1.2 使用 KRaft 和节点池；不要添加旧版启用注解或 ZooKeeper 配置块。`rack.topologyKey` 为副本放置提供可用区信息；它不会自动重新分配所有现有分区。
+Strimzi 1.3 使用 KRaft 和 node pools；不要添加旧版激活注解或 ZooKeeper 配置块。`rack.topologyKey` 会为副本放置提供 AZ 信息；它不会自动重新分配所有现有分区。
 
-保持 Kafka 版本与 metadataVersion 兼容：本示例使用 4.3.1 / 4.3-IV0。不要在保留旧镜像覆盖设置的同时更改版本字段。节点 ID 在整个集群中分配；不要假定每个池都有名称以 -0 结尾的 Pod。
+保持 Kafka 版本和 metadataVersion 兼容：此示例使用 4.3.1 / 4.3-IV0。不要在保留旧镜像覆盖设置的同时更改版本字段。节点 ID 会在整个集群中分配；不要假定每个池都有以 -0 结尾的 Pod。
 
 ```bash
 # Use the appropriate StorageClass file for the cluster.
@@ -260,9 +260,9 @@ kubectl -n kafka get kafkanodepools
 kubectl -n kafka get pods,pvc -l strimzi.io/cluster=my-cluster
 ```
 
-Ready=True 是 Operator 观察到的协调结果。请将 observedGeneration 与当前 generation 比较，并检查 Pod 就绪状态、法定人数和客户端连通性。旧的 Ready 条件或仅处于 Running 阶段，并不能证明当前所有组件都健康。
+Ready=True 表示 Operator 观察到的协调结果。请将 observedGeneration 与当前 generation 进行比较，并检查 Pod 就绪状态、quorum 和客户端连接情况。较早的 Ready 条件或单独的 Running 阶段，都不能证明当前所有组件均正常。
 
-## 5. 主题和用户
+## 5. Topic 和用户
 
 **`orders-topic.yaml`**
 
@@ -313,9 +313,9 @@ spec:
         operations: [IdempotentWrite]
 ```
 
-在冒烟测试中，此用户可以向 orders 生产消息/从中消费消息，并读取 order-processor 消费者组。主题 ACL 不会授予消费者组 ACL。集群级 IdempotentWrite 支持幂等生产者操作；它不能替代对其他主题的 Write 权限。对于实际服务，请考虑使用独立的生产者/消费者身份。
+在冒烟测试中，此用户可以向 orders 写入数据/从中读取数据，并读取 order-processor group。Topic ACL 不会授予 group ACL。Cluster IdempotentWrite 支持幂等 producer 操作；它不能替代其他 topic 上的 Write 权限。对于实际服务，请考虑使用单独的 producer/consumer 身份。
 
-User Operator 会创建一个以用户名命名的 Secret，包含 password 和 sasl.jaas.config 条目。同时还必须启用集群授权器和监听器身份验证。KafkaConnect/KafkaConnector 定义独立的工作进程/连接器；第 5 部分介绍这些配置。
+User Operator 会创建一个以用户命名的 Secret，其中包含 password 和 sasl.jaas.config 条目。还必须启用集群 authorizer 和 listener 身份验证。KafkaConnect/KafkaConnector 用于定义单独的 workers/connectors；第 5 部分介绍这些配置。
 
 ```bash
 kubectl apply -f orders-topic.yaml -f order-service-user.yaml
@@ -323,11 +323,11 @@ kubectl -n kafka wait kafkatopic/orders --for=condition=Ready --timeout=5m
 kubectl -n kafka wait kafkauser/order-service --for=condition=Ready --timeout=5m
 ```
 
-## 6. 测试 TLS/SCRAM 连通性
+## 6. 测试 TLS/SCRAM 连接
 
-此文件包含一个临时客户端 Pod 和配置生成代码。凭证从 Secret 卷读取，按 Java properties 格式转义并写入文件，不会将密码放入命令参数、环境变量或日志。Python 初始化容器与 Kafka 容器使用相同的 UID。
+此文件包含一个临时客户端 Pod 和配置生成代码。凭证从 Secret 卷中读取，经过转义以适用于 Java properties，然后写入文件，不会将密码放入命令参数、环境变量或日志中。Python init container 和 Kafka container 使用相同的 UID。
 
-客户端通过 PEM 信任库信任公共 CA，并保留主机名验证。Kafka 镜像固定到 4.3.1 发布版本的摘要。无需在运行时安装软件包，也无需假定 Kafka 镜像中存在 Python。
+客户端通过 PEM truststore 信任公有 CA，并保留主机名验证。Kafka 镜像固定为 4.3.1 版本的 digest。不需要在运行时安装软件包，也不假定 Kafka 镜像中存在 Python。
 
 **`client.yaml`**
 
@@ -512,13 +512,13 @@ kubectl -n kafka exec kafka-client -- \
 kubectl -n kafka delete pod kafka-client
 ```
 
-这是针对新实验主题的连通性冒烟测试。现有主题可能包含较早的记录，因此应检查输出，而不是假定第一条记录就是刚发送的记录。实际验证还应涵盖拒绝未经授权的主题/消费者组访问、身份验证失败、CA 轮换、代理端点访问和恢复。本章的本地验证未发送任何 Kafka 消息。
+这是针对新建实验 topic 的连接冒烟测试。现有 topic 可能包含较早的记录，因此请检查输出，不要假定第一条记录就是刚发送的记录。实际验证还应涵盖对未授权 topic/group 的拒绝、身份验证失败、CA 轮换、broker endpoint 访问和恢复。本章的本地验证没有发送任何 Kafka 消息。
 
 ## 7. 可选：Kubernetes 外部的 VPC 客户端
 
-此合并补丁通过 **AWS Load Balancer Controller** 创建内部 NLB。由于 JSON 合并补丁会替换整个 listeners 数组，因此它包含现有 TLS 监听器。使用前，请将 10.0.0.0/16 替换为实际获准的客户端 CIDR。
+此合并补丁通过 **AWS Load Balancer Controller** 创建内部 NLB。它包含现有 TLS listener，因为 JSON merge patch 会替换整个 listeners 数组。使用前，请将 10.0.0.0/16 替换为实际获批的客户端 CIDR。
 
-configuration.class 会成为所生成 Service 的 loadBalancerClass。匹配的内部/IP 目标注解应用于引导 Service 和每个代理 Service，不假定代理 ID 为 0/1/2。Auto Mode 负载均衡需要单独确认控制器类及支持的选项。
+configuration.class 会成为生成的 Service loadBalancerClass。匹配的 internal/IP-target 注解会应用于 bootstrap 和每个 broker Service，不会假定 broker ID 为 0/1/2。Auto Mode 负载均衡需要单独确认 controller class 和受支持的选项。
 
 **`external-listener.patch.yaml`**
 
@@ -558,14 +558,14 @@ kubectl -n kafka get services -l strimzi.io/cluster=my-cluster
 kubectl -n kafka get kafka my-cluster -o jsonpath='{.status.listeners}'
 ```
 
-此选项创建引导 LoadBalancer Service 和每个代理的 LoadBalancer Service，并产生相应费用。客户端必须能够访问元数据返回的每个代理端点，而不只是引导端点。添加 DNS 记录或切换到 NodePort 并不会自动解决路由、TLS 或节点生命周期要求。
+此选项会创建 bootstrap 和每个 broker 对应的 LoadBalancer Services，并产生相应费用。客户端必须能够访问元数据中返回的每个 broker endpoint，而不仅仅是 bootstrap。添加 DNS 记录或切换到 NodePort 并不能自动解决路由、TLS 或节点生命周期方面的要求。
 
 ## 后续步骤和参考资料
 
 - [Kafka 运维](./03-kafka-operations.md)
-- [Kafka 概述](./README.md)
+- [Kafka 概览](./README.md)
 - [测验](../../quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
-- [Strimzi 1.2.0 部署](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0 部署](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Strimzi v1 API 转换](https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str)
-- [Strimzi 1.2.0 发布](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 发布版本](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)
 - [EBS gp3 性能](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)

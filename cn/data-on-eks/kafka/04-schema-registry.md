@@ -1,56 +1,40 @@
-# 第 4 部分：Schema Registry
+# 第 4 部分：架构注册表
 
-> **支持的版本**：Karapace 4.x、Apicurio Registry 3.x、Confluent Schema Registry（兼容 API）\
-> **最后更新**：July 9, 2026
+> **审查基线**：Karapace 6.2.4、Apicurio Registry 3.3.3、Strimzi 1.3.0 / Kafka 4.3.1\
+> **最后审阅**：October 16, 2026
 
-## 为什么需要 Schema Registry
+## 为什么要使用架构注册表？
 
-Kafka 本身将每条消息都视为不透明的字节数组。它不关心生产者以何种格式将内容写入该数组。问题在于，生产者和消费者通常是由不同团队负责、按不同计划部署的独立应用程序。一旦生产者添加字段或更改类型，任何不了解该变更的消费者要么无法反序列化消息，要么会读取到损坏的值。
+Kafka 将记录键和值存储为字节。因此，生产者和消费者可能会对值的结构或含义产生分歧。并非每次添加字段都会破坏消费者：结果取决于编码方式、读取方和兼容性规则。
 
-### 无 Schema JSON 的问题
+注册表会为架构添加版本，并在注册架构时检查配置的兼容性规则。应用程序必须使用相应的序列化器和验证路径。注册表不会自动检查每条 Kafka 记录，也不会强制执行诸如货币或时间戳含义之类的业务规则。
 
-```json
-{"orderId": "ORD-1001", "amount": 42.5, "currency": "USD"}
-```
+JSON 同样可以有契约：无论是否使用注册表，都可以使用 JSON Schema、CI 检查和带版本的规范。集中式注册表有助于分发和治理该契约；二进制编码则是另一项选择。在声称能节省载荷大小或存储成本之前，请先比较经过测量和压缩的记录。
 
-像这样的原始 JSON 载荷具有人类可读性，但也带来了实际成本：
+### 记录中传输的内容是什么？
 
-* **没有强制执行的契约**：没有任何机制能阻止生产者悄悄地将 `amount` 变为字符串。
-* **仅在运行时验证**：只有当消费者尝试解析载荷时，才会暴露缺失字段或类型不匹配的问题。
-* **载荷大小**：字段名称会在每条消息中重复出现，相比二进制格式更大，并且在高吞吐量下会产生实际的网络/存储成本。
-* **没有版本历史**：无法回答“此 Topic 的 Schema 第 3 版是什么样子？”
+采用常见的 Confluent **架构 ID 载荷封装**时，值以一个魔数字节和一个四字节架构 ID 开头：总计五个字节，后面跟着编码后的值。Protobuf 变体还包含消息索引。JSON Schema 序列化器仍会将值编码为 JSON。其他序列化器模式、基于标头的标识符以及 Apicurio 原生编码都需要各自的配置。
 
-### Schema Registry 解决的问题
+序列化器会注册或查找架构，反序列化器则通过架构标识符检索写入方架构。客户端通常会缓存架构，因此不一定每条记录都要发起 HTTP 请求。冷缓存或新架构仍可能需要访问注册表。只要对应的 Kafka 数据、归档和灾难恢复副本仍需保持可读，就应保留 ID 到架构的映射。
 
-Schema Registry 是一项独立服务，用于集中存储并对 Avro、Protobuf 和 JSON Schema 等结构化格式的 Schema 进行版本管理，同时在不同版本之间强制执行兼容性规则。其流程大致如下：
+## 实现方案比较
 
-1. 在发送消息前，生产者向 Registry 注册（或查询）其 Schema。
-2. Registry 返回一个 Schema ID，生产者仅在载荷前添加该 ID（通常是一个 5 字节的 magic-byte + ID 头部）来序列化载荷，而不是附带完整 Schema。
-3. 消费者读取消息中嵌入的 Schema ID，从 Registry 获取匹配的 Schema，并据此反序列化。
-4. 注册新 Schema 版本时，Registry 会依据兼容性规则进行检查；如果违反规则，会直接拒绝注册。
+| 实现 | 相关架构格式 | API 和存储 |
+| --- | --- | --- |
+| Karapace 6.2.4 | Avro、JSON Schema、**Protobuf** | 与 Confluent 兼容的 REST API；基于 Kafka 的架构存储；还提供 REST 代理 |
+| Apicurio Registry 3.3.3 | Avro、Protobuf、JSON Schema；其他制品类型 | 原生 API，以及 `/apis/ccompat/v7` 和 `/apis/ccompat/v8`；KafkaSQL 和 SQL 存储选项 |
+| Confluent Schema Registry | Avro、Protobuf、JSON Schema | Confluent API；自托管部署中使用基于 Kafka 的存储 |
 
-这使生产者和消费者可以在**不了解彼此部署计划**的情况下独立演进。这也意味着线上的载荷只携带一个 Schema ID，因此 Avro/Protobuf 二进制编码相比 JSON 小得多。
+Karapace 和 Apicurio 发布时采用 Apache-2.0 许可证。该许可证包含一些条件，包括保留所需声明；这并不意味着“没有限制”。Confluent 的代码库区分了采用 Community 许可证的服务器模块和采用 Apache-2.0 许可证的客户端/Avro 模块。请检查实际组件许可证及任何支持合同，不要根据集群大小推断商业条款。
 
-## 主要实现方案对比
-
-| | Karapace | Apicurio Registry | Confluent Schema Registry |
-| --- | --- | --- | --- |
-| **供应商** | Aiven | Red Hat | Confluent |
-| **许可证** | Apache License 2.0 | Apache License 2.0 | Confluent Community License（自 2018 年起不再完全开源） |
-| **支持的格式** | Avro、JSON Schema | Avro、Protobuf、JSON Schema、OpenAPI、AsyncAPI、GraphQL、Kafka Connect Schema 等 | Avro、Protobuf、JSON Schema |
-| **API 兼容性** | 兼容 Confluent REST API | Confluent 兼容模式（`ccompat`） | 原始 API（事实标准） |
-| **存储后端** | Kafka Topic | Kafka Topic 或 SQL（例如 PostgreSQL） | Kafka Topic |
-| **内置 REST Proxy** | 是（Karapace REST Proxy） | 否（仅 Registry） | 独立的商业 REST Proxy |
-| **商业支持条款** | 通过 Aiven 的托管服务或社区提供 | 通过 Red Hat 订阅提供 | 大规模使用时需要 Confluent Platform 许可证 |
-| **与 EKS/Strimzi 的适配性** | 强 — 纯开源、轻量 | 强 — 多格式、多后端 | 需要审查许可证 |
-
-**对于自主管理的 EKS + Strimzi 技术栈，我们建议使用 Karapace 或 Apicurio Registry。** 两者均采用 Apache-2.0 许可证发布，对再分发或修改没有限制。相较之下，Confluent Schema Registry 的 Confluent Community License 明确禁止将其作为竞争性的托管服务提供——自 2018 年起它已不再完全开源。`kafka-avro-serializer` 等客户端库仍由 Confluent 发布，但由于 REST API 兼容，通常只需将 `schema.registry.url` 指向 Karapace 或 Apicurio，无需修改代码。
+API 兼容性很有用，但**只更改 URL 并不构成迁移计划**。请针对保留的记录测试架构 ID、引用、主题命名、身份验证、客户端版本和线上编码。例如，Apicurio 的兼容性 API 并未实现 Confluent 的所有导出器/加密功能；接受可选请求字段并不一定意味着会强制执行其规则。
+Apicurio 能够存储的制品类型，并不代表每个 Kafka 序列化器都支持它。Karapace 也需要配置 broker、身份验证和架构主题；基于 Kafka 并不意味着无需配置。
 
 ## 序列化格式
 
 ### Avro
 
-Avro 使用 JSON 定义其 Schema，并将数据序列化为紧凑的二进制格式。它是 Kafka 生态系统中使用最广泛的格式，其突出特性是**Schema 解析**：**写入者 Schema**（数据写入时所用）和**读取者 Schema**（数据读取时所用）不必完全匹配——Avro 会根据定义明确的规则解析其中的差异。
+将以下规范示例保存为 `order.avsc`。Avro 使用名称、默认值、别名和已定义的类型提升规则，将写入方架构与读取方架构进行解析。时间戳的 `logicalType` 属于其**类型对象**，而不是与字段的 `name` 并列。字段属性放错位置时，可能仍能通过解析，却无法声明逻辑时间戳。
 
 ```json
 {
@@ -58,22 +42,42 @@ Avro 使用 JSON 定义其 Schema，并将数据序列化为紧凑的二进制�
   "name": "Order",
   "namespace": "com.example.orders",
   "fields": [
-    { "name": "orderId", "type": "string" },
-    { "name": "customerId", "type": "string" },
-    { "name": "amount", "type": "double" },
-    { "name": "currency", "type": "string", "default": "USD" },
-    { "name": "createdAt", "type": "long", "logicalType": "timestamp-millis" }
+    {
+      "name": "orderId",
+      "type": "string"
+    },
+    {
+      "name": "customerId",
+      "type": "string"
+    },
+    {
+      "name": "amount",
+      "type": "double"
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "default": "USD"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
   ]
 }
 ```
 
-### Protobuf
+这里的 `amount` 只是一个示例性 double。实际契约必须定义单位、精度和舍入规则；需要精确十进制金额时，应使用合适的整数或十进制表示。
 
-Protobuf Schema 在 `.proto` 文件中定义，并使用 `protoc` 编译，为每种目标语言生成代码。与 Avro 一样，它生成紧凑的二进制编码，但会分配显式字段编号，并且拥有更严格的类型系统，因此通常能在各种语言中生成质量更高的代码。Protobuf 在 Kafka 生态系统中的采用率一直在稳步增长。
+### Protobuf 和 JSON Schema
+
+Protobuf 使用带编号的字段，以及特定于语言的生成代码/运行时 API。请明确指定时间单位；仅有 `int64` 并不能声明逻辑时间戳。不要重复使用已删除的字段编号；应酌情保留已移除的编号和名称。
 
 ```protobuf
 syntax = "proto3";
-
 package com.example.orders;
 
 message Order {
@@ -81,64 +85,155 @@ message Order {
   string customer_id = 2;
   double amount = 3;
   string currency = 4;
-  int64 created_at = 5;
+  int64 created_at_millis = 5;
 }
 ```
 
-### JSON Schema
+JSON Schema 用于验证 JSON。不同注册表对草案版本和兼容性分析的支持各不相同；支持验证并不代表能够针对每个关键字进行完整的演进分析。这些是不同的契约，不能互换编码。
 
-JSON Schema 为 JSON 载荷本身定义验证规则。它具有人类可读性且易于调试，但由于字段名称会在每条消息中重复出现，载荷最终会比 Avro 或 Protobuf 大得多。它适合需要 Schema 验证、但对吞吐量或存储成本不太敏感的工作负载。
-
-### 三种格式对比
-
-| | Avro | Protobuf | JSON Schema |
-| --- | --- | --- | --- |
-| Schema 定义 | JSON | `.proto` IDL | JSON Schema |
-| 载荷大小 | 小 | 小 | 大 |
-| 人类可读 | 仅 Schema | 仅 Schema | 载荷也是 |
-| 跨语言代码生成 | 良好 | 出色 | 良好 |
-| Kafka 生态系统采用率 | 非常高 | 高（增长中） | 中等 |
-| Schema 演进规则 | 写入者/读取者解析 | 基于字段编号 | JSON Schema 验证规则 |
-
-## 兼容性策略
-
-注册新的 Schema 版本时，Registry 会根据配置的兼容模式，将其与上一个版本进行检查。正确理解这四种模式非常重要——这是 Schema 管理中最常被混淆的概念。
-
-| 模式 | 含义 | 部署顺序 |
+| 格式 | 线上表示 | 演进注意事项 |
 | --- | --- | --- |
-| **BACKWARD** | 使用**新** Schema 的读取者必须能够读取使用**旧** Schema 写入的数据 | 先升级**消费者** |
-| **FORWARD** | 使用**旧** Schema 的读取者必须能够读取使用**新** Schema 写入的数据 | 先升级**生产者** |
-| **FULL** | 同时满足 BACKWARD 和 FORWARD | 任意顺序都安全 |
-| **NONE** | 不进行兼容性检查 | 需要手动协调 |
+| Avro | 使用写入方架构解释的二进制数据 | 读取方/写入方解析、默认值、名称和类型提升 |
+| Protobuf | 带编号字段的二进制数据 | 保留字段编号和线上类型；检查应用程序语义 |
+| JSON Schema | JSON | 接受的实例集合、必需字段、附加属性和草案支持情况 |
 
-人们最常弄反的部分是：
+## 兼容性和部署顺序
 
-* **BACKWARD** 表示“新 Schema（作为读取者）可以读取旧数据”。在实践中，这意味着可以安全地**先部署使用新 Schema 的消费者**——即使生产者仍在使用旧 Schema 写入，已升级的消费者也能正常读取。
-* **FORWARD** 表示“旧 Schema（作为读取者）可以读取新数据”。这意味着可以安全地**先将生产者升级到新 Schema**——仍在运行旧 Schema 的消费者会继续正常工作。
+在与 Confluent 兼容的 API 中，可在**主题**级别配置兼容性（或继承全局默认值）。使用默认的 `TopicNameStrategy` 时，主题 `orders` 中的值使用主题 `orders-value`；其他策略可以让多个主题共用一个主题，也可以在同一主题中分离不同的记录类型。
 
-### 向后兼容变更示例
+| 模式 | 必需关系 | 典型架构发布顺序 |
+| --- | --- | --- |
+| BACKWARD | 新读取方可以读取上一版本写入方的数据 | 先部署消费者 |
+| FORWARD | 上一版本读取方可以读取新版本写入方的数据 | 先部署生产者 |
+| FULL | 两个方向都兼容 | 对于受检查的架构关系，任一顺序均可 |
+| NONE | 不进行兼容性检查 | 明确协调并测试 |
 
-向 `Order` Schema 添加一个具有默认值的可选字段与 BACKWARD 兼容：
+非传递模式会与之前的最新版本进行比较。它们的 `_TRANSITIVE` 变体会与所有先前版本进行比较。若要重放更早的保留记录，只检查最新版本可能并不足够。`FULL` 不保证业务语义、应用程序行为或与所有历史版本兼容；`FULL_TRANSITIVE` 扩展的是架构比较范围，并不扩展该保证。
+
+对于 Avro，添加以下字段后，新读取方可以为旧记录提供 `null`：
 
 ```json
-{ "name": "discountCode", "type": ["null", "string"], "default": null }
+{"name":"discountCode","type":["null","string"],"default":null}
 ```
 
-使用新 Schema 的消费者读取缺少此字段的旧数据时，只会得到 `default` 值（`null`）——不会失败。
+默认值是一条**读取方解析**规则，并不意味着写入方可以省略任意必需字段。
 
-### 破坏性变更示例
+| Avro 更改 | 重要条件 |
+| --- | --- |
+| 添加一个没有读取方默认值的字段 | 新读取方无法读取缺少该字段的旧记录 |
+| 删除字段 | 向后兼容；向前兼容性取决于旧读取方是否有默认值 |
+| 将 `double` 更改为 `string` | 不兼容；这不是 Avro 数值类型提升 |
+| 将 `int` 更改为 `long` | 新读取方可以接受旧整数值；反向则不同 |
+| 重命名字段 | 读取方别名或适用的默认值会影响结果；请测试两个方向 |
 
-以下是经典的 BACKWARD 兼容性违规：
+除了注册表的兼容性端点，还应使用有代表性的历史数据运行读取方/写入方测试。它们可以捕获不同类型的故障。
 
-* **添加没有默认值的必填字段**：添加一个没有默认值的新 `discount_code` 字段，意味着新 Schema 的读取者会期望旧数据中存在该字段，但旧数据从未有过该字段，因此会失败。（反过来，*移除*字段与 BACKWARD 兼容，但会破坏 FORWARD——旧 Schema 的读取者仍会期望新数据中包含现已移除的必填字段。）
-* **更改字段类型**：将 `amount` 从 `double` 改为 `string`，意味着现有的二进制编码数据无法再按新类型解码。
-* **重命名字段**（不使用别名）：读取者会以新名称查找字段，但旧数据中只有旧名称。
+## 使用 Strimzi 基线部署 Apicurio
 
-## 在 Strimzi/EKS 上部署
+这是一个**私有实验室部署**，不是经过身份验证的公共注册表。
+它假定 [第 2 部分](./02-strimzi-operator.md) 中的 `my-cluster` 位于命名空间 `kafka`，有三个 broker、Topic/User Operator，以及位于端口 9093 的 TLS/SCRAM 监听器。
+下面的 HTTP API 没有应用程序身份验证。当 CNI 强制执行 NetworkPolicy 时，该 NetworkPolicy 仅允许来自同一命名空间中带有标签的 Pod 访问端口 8080。请限制能够创建或标记这些 Pod 的人员。若要用于共享生产环境，请单独配置 API TLS、身份验证和授权，不要与 Kafka SASL 混为一谈；仅使用内部 Service 并不能提供这些控制。
 
-### 部署 Apicurio Registry（Kafka-Topic Storage）
+### 存储主题和 Kafka 身份
 
-假设由 Strimzi 管理的 Kafka 集群已经在运行，您可以将 Apicurio Registry 作为 Deployment 部署在同一 namespace 中，并由 Kafka-topic 存储引擎提供后端支持。
+保存为 `registry-storage.yaml`。应用程序身份只对三个指定主题和其消费者组前缀进行读写。主题由 Topic Operator 预先创建，因此应用程序不需要创建主题的权限。
+
+```yaml
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: kafkasql-journal
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 3
+  config:
+    cleanup.policy: delete
+    retention.ms: -1
+    retention.bytes: -1
+    min.insync.replicas: 2
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: kafkasql-snapshots
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 3
+  config:
+    cleanup.policy: delete
+    retention.ms: -1
+    retention.bytes: -1
+    min.insync.replicas: 2
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: registry-events
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 3
+  config:
+    cleanup.policy: delete
+    retention.ms: -1
+    retention.bytes: -1
+    min.insync.replicas: 2
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaUser
+metadata:
+  name: apicurio-registry
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: kafkasql-journal
+          patternType: literal
+        operations: [Read, Write, Describe, DescribeConfigs]
+      - resource:
+          type: topic
+          name: kafkasql-snapshots
+          patternType: literal
+        operations: [Read, Write, Describe, DescribeConfigs]
+      - resource:
+          type: topic
+          name: registry-events
+          patternType: literal
+        operations: [Read, Write, Describe, DescribeConfigs]
+      - resource:
+          type: group
+          name: apicurio-registry-
+          patternType: prefix
+        operations: [Read]
+      - resource:
+          type: cluster
+        operations: [IdempotentWrite]
+```
+
+KafkaSQL 3.3.3 会初始化 journal、snapshots 和 events 主题。默认情况下，其 journal 和 snapshot 主题检查要求 `cleanup.policy=delete`、`retention.ms=-1` 和 `retention.bytes=-1`。不要对它们应用通用的 `_schemas` 压缩配置，也不要设置普通的七天事件保留期。这会无限期保留记录，因此要监控磁盘增长，并规划经过测试的备份和清理方案。
+
+KafkaSQL 会根据 journal 和任何可用的 snapshot 重建本地 SQL 状态。snapshots 主题包含的是**快照文件路径**，而不是完整的快照文件。以下实验会禁用定期快照并保留完整 journal；如果 Pod 丢失，就必须重放数据，启动时间也可能很长。持久化/共享快照存储、备份、恢复和 journal 裁剪需要单独设计恢复方案。
+组前缀可以配置，但固定的 `group.id` 并不是保留 KafkaSQL 状态的办法：此版本会生成唯一组，以确保启动时进行重放。
+
+### 部署和 Service
+
+保存为 `registry.yaml`。CA 和 JAAS 值来自 Strimzi Secrets。
+此处显式设置了主机名验证。资源大小和十分钟的启动等待时间是实验室的初始设置；请测量内存用量和重放时间。
 
 ```yaml
 apiVersion: apps/v1
@@ -156,16 +251,88 @@ spec:
       labels:
         app: apicurio-registry
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: apicurio-registry
-          image: quay.io/apicurio/apicurio-registry:3.0.6
+        - name: registry
+          image: quay.io/apicurio/apicurio-registry:3.3.3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
+            - name: management
+              containerPort: 9000
           env:
             - name: APICURIO_STORAGE_KIND
-              value: "kafkasql"
+              value: kafkasql
             - name: APICURIO_KAFKASQL_BOOTSTRAP_SERVERS
-              value: "my-kafka-cluster-kafka-bootstrap.kafka.svc:9092"
+              value: my-cluster-kafka-bootstrap.kafka.svc:9093
+            - name: APICURIO_KAFKASQL_TOPIC_AUTO_CREATE
+              value: "false"
+            - name: APICURIO_KAFKASQL_CONSUMER_GROUP_PREFIX
+              value: apicurio-registry-
+            - name: APICURIO_KAFKASQL_SNAPSHOT_SCHEDULED_ENABLED
+              value: "false"
+            - name: APICURIO_KAFKA_COMMON_SECURITY_PROTOCOL
+              value: SASL_SSL
+            - name: APICURIO_KAFKA_COMMON_SASL_MECHANISM
+              value: SCRAM-SHA-512
+            - name: APICURIO_KAFKA_COMMON_SASL_JAAS_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  name: apicurio-registry
+                  key: sasl.jaas.config
+            - name: APICURIO_KAFKA_COMMON_SSL_TRUSTSTORE_TYPE
+              value: PKCS12
+            - name: APICURIO_KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION
+              value: /etc/kafka-ca/ca.p12
+            - name: APICURIO_KAFKA_COMMON_SSL_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: my-cluster-cluster-ca-cert
+                  key: ca.password
+            - name: APICURIO_KAFKA_COMMON_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM
+              value: HTTPS
+          volumeMounts:
+            - name: kafka-ca
+              mountPath: /etc/kafka-ca
+              readOnly: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          startupProbe:
+            httpGet:
+              path: /health/ready
+              port: management
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: management
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: management
+      volumes:
+        - name: kafka-ca
+          secret:
+            secretName: my-cluster-cluster-ca-cert
+            items:
+              - key: ca.p12
+                path: ca.p12
 ---
 apiVersion: v1
 kind: Service
@@ -176,39 +343,119 @@ spec:
   selector:
     app: apicurio-registry
   ports:
-    - port: 8080
-      targetPort: 8080
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: apicurio-registry-ingress
+  namespace: kafka
+spec:
+  podSelector:
+    matchLabels:
+      app: apicurio-registry
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              docs.example.com/registry-client: "true"
+      ports:
+        - protocol: TCP
+          port: 8080
 ```
-
-Apicurio 也支持使用 SQL 后端（`APICURIO_STORAGE_KIND=sql`）代替 `kafkasql`，因此如果您已经运行 PostgreSQL/RDS 实例，可以改为将 Registry 指向该实例。相比之下，Karapace 始终将 Schema 存储在 Kafka Topic（`_schemas`）中，不需要单独配置后端。
-
-### 注册 Schema
-
-Registry 运行后，可通过其 REST API 注册 Schema（使用 Confluent 兼容端点）：
 
 ```bash
-curl -X POST http://apicurio-registry.kafka.svc:8080/apis/ccompat/v6/subjects/orders-value/versions \
-  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
-  -d '{"schema": "{\"type\":\"record\",\"name\":\"Order\",\"fields\":[{\"name\":\"orderId\",\"type\":\"string\"}]}"}'
+kubectl apply -f registry-storage.yaml
+kubectl -n kafka wait --for=condition=Ready --timeout=180s \
+  kafkatopic/kafkasql-journal kafkatopic/kafkasql-snapshots kafkatopic/registry-events \
+  kafkauser/apicurio-registry
+kubectl apply -f registry.yaml
+kubectl -n kafka rollout status deployment/apicurio-registry --timeout=600s
+kubectl -n kafka port-forward --address=127.0.0.1 service/apicurio-registry 8080:8080
 ```
 
-### 客户端配置
+端口转发需要 Kubernetes 访问权限，并且会在前台持续运行。更改由 Secret 提供的环境变量后，请重启工作负载。对于 SQL 存储，单独设置 `APICURIO_STORAGE_KIND=sql` 并不能完成 PostgreSQL 配置：需要选择 SQL 类型，并提供专用数据库、TLS、凭据和恢复流程。默认的内存 H2 数据库不是持久化的生产存储。
 
-Kafka 生产者/消费者应用程序将其序列化器指向 Registry URL：
+## 注册与应用程序使用的同一架构
+
+在另一个终端中，将 `order.avsc` 注册到 `orders-value` 下。这避免了旧示例中带命名空间的多字段架构与藏在 curl 字符串中的不同单字段架构不匹配的问题。第一个请求会显式配置主题的兼容性；HTTP 请求失败时，curl 会以非零状态退出。
+
+```bash
+# Run from a directory containing the order.avsc above.
+# Keep kubectl port-forward running in a separate terminal.
+REGISTRY_URL="http://127.0.0.1:8080/apis/ccompat/v7"
+python3 - <<'PY'
+import json
+from pathlib import Path
+schema = json.loads(Path("order.avsc").read_text())
+Path("register-order.json").write_text(json.dumps({
+    "schemaType": "AVRO",
+    "schema": json.dumps(schema)
+}) + "\n")
+PY
+curl --fail-with-body --silent --show-error \
+  -X PUT "$REGISTRY_URL/config/orders-value" \
+  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+  --data-binary '{"compatibility":"BACKWARD_TRANSITIVE"}'
+curl --fail-with-body --silent --show-error \
+  -X POST "$REGISTRY_URL/subjects/orders-value/versions" \
+  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+  --data-binary @register-order.json
+curl --fail-with-body --silent --show-error \
+  "$REGISTRY_URL/subjects/orders-value/versions/latest"
+```
+
+## 生产者和消费者设置
+
+以下是应用程序的**附加**属性；这些应用程序已经配置了第 2 部分中的 broker 地址、TLS 信任和各自的 Kafka 身份。注册表 HTTP 凭据与 Kafka SASL 凭据相互独立。请在应用程序中加入版本固定且兼容的 Confluent Avro 序列化器依赖；安装 Kafka 或 Strimzi 并不会自动提供该依赖。
+
+生产者：
 
 ```properties
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
 value.serializer=io.confluent.kafka.serializers.KafkaAvroSerializer
-schema.registry.url=http://apicurio-registry.kafka.svc:8080/apis/ccompat/v6
+schema.registry.url=http://apicurio-registry.kafka.svc:8080/apis/ccompat/v7
+auto.register.schemas=false
 ```
 
-相同的 `KafkaAvroSerializer` 类也适用于 Karapace——只需将 `schema.registry.url` 指向 Karapace 的 REST 端点（默认端口为 8081）。切换 Registry 实现时不需要更改应用程序代码，这正是 Confluent 兼容 API 提供的价值。
+消费者：
 
-## 下一步
+```properties
+key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+value.deserializer=io.confluent.kafka.serializers.KafkaAvroDeserializer
+schema.registry.url=http://apicurio-registry.kafka.svc:8080/apis/ccompat/v7
+specific.avro.reader=false
+```
 
-本部分介绍了当生产者和消费者各自独立演进时，Schema Registry 如何保障它们之间的数据契约安全。第 5 部分将转向 Kafka Connect 和 MirrorMaker——与外部系统集成，以及在集群之间复制数据。
+生产者示例要求先注册匹配的架构。
+当 `specific.avro.reader=false` 时，消费者会使用通用 Avro 记录；使用生成的 SpecificRecord 类则需要匹配的代码和读取方设置。默认主题策略假定应用程序的 Kafka 主题为 `orders`。
+
+更换注册表之前，请使用冷缓存消费者测试保留记录、新版本注册、兼容性拒绝、架构引用以及重启/恢复流程。保留原始架构 ID 映射，或执行明确且受支持的数据/标识符迁移。HTTP 健康检查成功并不等同于序列化测试成功。
+
+## 参考资料和验证
+
+本章示例已根据固定版本的发布配置和 Strimzi/Kubernetes 架构进行检查，并通过本地 Avro 读取方/写入方测试。这些检查不能取代部署镜像、连接实际 TLS broker，或测试应用程序所用的确切序列化器版本。
+
+- [Apache Avro 规范](https://avro.apache.org/docs/1.12.0/specification/)
+- [Protocol Buffers：更新消息类型](https://protobuf.dev/programming-guides/proto3/#updating)
+- [Confluent 兼容性规则](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
+- [Confluent 序列化器和线上格式](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html)
+- [Karapace 6.2.4](https://github.com/Aiven-Open/karapace/tree/6.2.4)
+- [Apicurio Registry 3.3.3](https://github.com/Apicurio/apicurio-registry/tree/3.3.3)
+- [Apicurio 兼容性 API 支持矩阵](https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md)
+- [Apicurio KafkaSQL 配置](https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java)
+- [Apicurio 主题配置验证](https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/util/KafkaAdminUtil.java)
+- [Confluent 组件许可证](https://github.com/confluentinc/schema-registry/blob/master/LICENSE)
+
+## 接下来
+
+[第 5 部分](./05-kafka-connect-mirrormaker.md)将介绍外部集成和跨集群复制。架构存储和 ID 迁移必须与记录复制一并考虑。
 
 [返回主页](./README.md)
 
 ## 测验
 
-要测试您在本章中学到的内容，请尝试 [Topic 测验](../../quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)。
+[主题测验](../../quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
