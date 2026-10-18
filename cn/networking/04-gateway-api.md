@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **API 基线**：Gateway API v1.6 Standard；请选择控制器支持的准确 bundle。
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 概述
 

@@ -1,6 +1,6 @@
 # CloudWatch Logs
 
-> **最后更新**: September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 > **已检查示例**: AWS provider 6.69.1；可选的 CloudWatch Observability Helm chart 6.6.0；手动配置 AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9。仅检查了本地配置、SDK 和合成负载。未执行任何 AWS 资源操作、日志传送、Insights 查询或告警。
 
 Amazon CloudWatch Logs 管理日志摄取、存储和分析。你仍需配置日志生产者、身份、网络、保留期、配额和下游使用方。EKS 控制平面日志、工作负载日志和 EKS Auto Mode 托管组件日志属于独立的收集路径。
@@ -814,7 +814,7 @@ def lambda_handler(event, context):
 
 ### 指标筛选条件和告警
 
-以下可选文件将已部署的、未限定限定符的 Lambda 函数 ARN 与日志连接起来，并创建计数指标/告警。它使用与收集器相同的 JSON 字段，并查询：
+以下可选文件使用已部署且未附带版本或别名限定符的 Lambda 函数 ARN，将其与日志连接起来，并创建计数指标/告警。它使用与收集器相同的 JSON 字段，并查询：
 
 ```hcl
 variable "processor_function_arn" {

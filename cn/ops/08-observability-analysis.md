@@ -1,7 +1,7 @@
 # 可观测性分析：日志、指标和追踪
 
 > **审查基线**：OTel Go 1.46.0 / otelhttp 0.71.0，Python SDK 1.44.0 / instrumentation 0.65b0，Collector 0.162.0，Alloy 1.20.1，Loki 3.7.8，Tempo 3.0.3，Grafana 13.2.4\
-> **最后审查时间**：October 16, 2026。SDK/日志/exemplar 行为通过内存导出器和 HTTP 测试替身进行了测试；LogQL 则针对本地 Loki 中的合成日志进行了测试。没有向真实集群或外部遥测后端导出数据。
+> **最后审查时间**：2026 年 10 月 16 日。SDK/日志/exemplar 行为通过内存导出器和 HTTP 测试替身进行了测试；LogQL 则针对本地 Loki 中的合成日志进行了测试。没有向真实集群或外部遥测后端导出数据。
 
 < [上一章：运维告警](07-observability-alerts.md) | [目录](README.md) | [下一章：堆栈运维](09-observability-stack.md) >
 

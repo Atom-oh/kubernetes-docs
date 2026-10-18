@@ -1,12 +1,12 @@
 # DestinationRule
 
-> **Versión compatible**: Istio 1.28+
+> **Versión revisada**: Istio 1.31.0
 > **Versión de la API**: `networking.istio.io/v1`
-> **Última actualización**: February 19, 2026
+> **Última actualización**: 11 de septiembre de 2026
 
-DestinationRule es un recurso central de Istio que define cómo manejar el tráfico después de que VirtualService lo enruta al destino.
+DestinationRule es un recurso esencial de Istio que define cómo se trata el tráfico después de que VirtualService lo enruta a su destino.
 
-## Tabla de contenido
+## Tabla de contenidos
 
 1. [¿Qué es DestinationRule?](#what-is-destinationrule)
 2. [VirtualService frente a DestinationRule](#virtualservice-vs-destinationrule)
@@ -19,107 +19,35 @@ DestinationRule es un recurso central de Istio que define cómo manejar el tráf
 9. [Prácticas recomendadas](#best-practices)
 10. [Resolución de problemas](#troubleshooting)
 
-<span id="what-is-destinationrule"></span>
+## ¿Qué es DestinationRule? {#what-is-destinationrule}
 
-## ¿Qué es DestinationRule?
+Estos son patrones independientes de configuración para sidecars. DestinationRule y VirtualService son entradas de configuración que istiod compila; no son saltos adicionales que procesen el tráfico. DestinationRule también se aplica cuando no hay un VirtualService. Los subsets solo seleccionan endpoints ya descubiertos para el Service: no crean cargas de trabajo, no aíslan entornos ni asignan porcentajes de tráfico. Usa etiquetas que coincidan con las de las plantillas de pods y rutas explícitas hacia los subsets.
 
-DestinationRule define las **políticas de tráfico después del enrutamiento**. Si VirtualService determina «adónde» enviar el tráfico, DestinationRule determina «cómo» manejarlo.
+DestinationRule define las **políticas de tráfico posteriores al enrutamiento**. Si VirtualService decide «adónde» enviar el tráfico, DestinationRule decide «cómo» tratarlo.
 
-```mermaid
-flowchart LR
-    Client[Client Request]
+![Diagrama donde una solicitud del cliente pasa por la decisión de enrutamiento de VirtualService (¿adónde?) y la política de tráfico de DestinationRule (¿cómo?) antes de llegar a las dos versiones del servicio: el subset v1 y el v2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-0.png)
 
-    subgraph VS[VirtualService]
-        Route[Routing Decision<br/>Where?]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-0.html)
 
-    subgraph DR[DestinationRule]
-        Policy[Traffic Policy<br/>How?]
-    end
-
-    subgraph Services[Services]
-        V1[Version 1]
-        V2[Version 2]
-    end
-
-    Client --> Route
-    Route -->|90%| Policy
-    Route -->|10%| Policy
-    Policy --> V1
-    Policy --> V2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Route routing;
-    class Policy policy;
-    class V1,V2 service;
-```
-
-### Funciones clave de DestinationRule
+### Funciones principales de DestinationRule
 
 | Función | Descripción | Ejemplo |
 |------|-------------|---------|
-| **Definición de Subset** | Agrupar versiones de Service | v1, v2, canary, stable |
-| **Balanceo de carga** | Algoritmo de distribución de carga | ROUND_ROBIN, LEAST_REQUEST |
-| **Connection Pool** | Configuración del grupo de conexiones | Máximo de conexiones, Timeout |
-| **Circuit Breaker** | Aislamiento de fallos | Outlier Detection |
-| **Configuración de TLS** | Política de cifrado | mTLS, SIMPLE TLS |
+| **Definición de subsets** | Agrupa versiones de un servicio | v1, v2, canary, stable |
+| **Balanceo de carga** | Algoritmo para distribuir la carga | ROUND_ROBIN, LEAST_REQUEST |
+| **Grupo de conexiones** | Parámetros del grupo de conexiones | Conexiones máximas, tiempo de espera |
+| **Circuit breaker** | Aislamiento de fallos | Detección de endpoints atípicos |
+| **Configuración de TLS** | Política de cifrado | mTLS, TLS SIMPLE |
 
-<span id="virtualservice-vs-destinationrule"></span>
+## VirtualService frente a DestinationRule {#virtualservice-vs-destinationrule}
 
-## VirtualService frente a DestinationRule
-
-Estos dos recursos trabajan juntos para proporcionar una gestión integral del tráfico.
+Estos dos recursos trabajan juntos para ofrecer una gestión integral del tráfico.
 
 ### Comparación de funciones
 
-```mermaid
-flowchart TD
-    Request[HTTP Request<br/>Host: reviews]
+![Diagrama donde VirtualService evalúa las condiciones HTTP y enruta a un subset con nombre; DestinationRule selecciona ese subset y distribuye la carga entre sus tres pods coincidentes.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-1.png)
 
-    subgraph VS[VirtualService Role]
-        Match{Condition Matching}
-        Route[Routing Decision]
-    end
-
-    subgraph DR[DestinationRule Role]
-        Subset[Subset Selection]
-        Policy[Policy Application]
-    end
-
-    subgraph Pods[Pods]
-        P1[reviews-v1-pod1]
-        P2[reviews-v1-pod2]
-        P3[reviews-v2-pod1]
-    end
-
-    Request --> Match
-    Match -->|headers, path, etc.| Route
-    Route -->|subset: v1<br/>weight: 90%| Subset
-    Route -->|subset: v2<br/>weight: 10%| Subset
-    Subset --> Policy
-    Policy -->|load balancing| P1
-    Policy -->|load balancing| P2
-    Policy -->|load balancing| P3
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef vs fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dr fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Match,Route vs;
-    class Subset,Policy dr;
-    class P1,P2,P3 pod;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-1.html)
 
 ### Separación de responsabilidades
 
@@ -170,49 +98,19 @@ spec:
         simple: ROUND_ROBIN
 ```
 
-<span id="subset-concept"></span>
+## Concepto de Subset {#subset-concept}
 
-## Concepto de Subset
+Un subset define un **grupo lógico** dentro de un servicio. Normalmente se distingue por versión, etapa de despliegue, región, entre otros criterios.
 
-Un Subset define un **grupo lógico** de un Service. Normalmente se distingue por versión, etapa de despliegue, región, etc.
+### La esencia de los subsets
 
-### La esencia de los Subsets
+![Diagrama donde un Service de Kubernetes apunta a dos subsets de DestinationRule, v1 y v2, cada uno resuelto mediante etiquetas que coinciden con las de los pods de esa versión.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-2.png)
 
-```mermaid
-flowchart TB
-    Service[Kubernetes Service<br/>reviews]
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-2.html)
 
-    subgraph DR[DestinationRule Subset Definition]
-        S1[Subset: v1<br/>labels: version=v1]
-        S2[Subset: v2<br/>labels: version=v2]
-    end
+### Casos de uso de los subsets
 
-    subgraph Pods[Actual Pods]
-        P1[reviews-v1-abc<br/>version=v1]
-        P2[reviews-v1-def<br/>version=v1]
-        P3[reviews-v2-xyz<br/>version=v2]
-    end
-
-    Service --> S1
-    Service --> S2
-    S1 -.->|Label Matching| P1
-    S1 -.->|Label Matching| P2
-    S2 -.->|Label Matching| P3
-
-    %% Style definitions
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Service service;
-    class S1,S2 subset;
-    class P1,P2,P3 pod;
-```
-
-### Casos de uso de Subset
-
-#### 1. Enrutamiento basado en versiones
+#### 1. Enrutamiento por versión
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -234,9 +132,7 @@ spec:
 ```
 
 ```yaml
-# Pod labels
-apiVersion: v1
-kind: Pod
+# Pod-template label excerpt
 metadata:
   labels:
     app: reviews
@@ -264,7 +160,7 @@ spec:
       stage: test
 ```
 
-#### 3. Separación regional
+#### 3. Separación por región
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -303,9 +199,7 @@ spec:
       env: staging
 ```
 
-<span id="basic-structure"></span>
-
-## Estructura básica
+## Estructura básica {#basic-structure}
 
 ### Campos obligatorios
 
@@ -326,15 +220,15 @@ spec:
       simple: ROUND_ROBIN
 ```
 
-### Métodos de especificación de Host
+### Formas de especificar el host
 
-**1. Nombre de Service (mismo Namespace)**
+**1. Nombre del Service (mismo espacio de nombres)**
 ```yaml
 spec:
   host: reviews
 ```
 
-**2. FQDN (Namespace diferente)**
+**2. FQDN (espacio de nombres diferente)**
 ```yaml
 spec:
   host: reviews.production.svc.cluster.local
@@ -346,17 +240,15 @@ spec:
   host: "*.example.com"
 ```
 
-**4. Service externo (con ServiceEntry)**
+**4. Servicio externo (con ServiceEntry)**
 ```yaml
 spec:
   host: api.external.com
 ```
 
-<span id="defining-subsets"></span>
+## Definición de subsets {#defining-subsets}
 
-## Definición de Subsets
-
-### Subset simple
+### Subset sencillo
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -374,7 +266,7 @@ spec:
       version: v2
 ```
 
-### Políticas específicas de Subset
+### Políticas específicas de cada subset
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -403,7 +295,7 @@ spec:
           http1MaxPendingRequests: 10
 ```
 
-### Coincidencia compleja de labels
+### Coincidencia compleja de etiquetas
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -425,48 +317,19 @@ spec:
       tier: standard
 ```
 
-<span id="traffic-policy-overview"></span>
+## Descripción general de Traffic Policy {#traffic-policy-overview}
 
-## Descripción general de Traffic Policy
-
-El `trafficPolicy` de DestinationRule proporciona diversas funciones de control de tráfico.
+`trafficPolicy` en DestinationRule proporciona distintas funciones para controlar el tráfico.
 
 ### Jerarquía de Traffic Policy
 
-```mermaid
-flowchart TD
-    DR[DestinationRule]
+![Diagrama de árbol de un DestinationRule cuya trafficPolicy global sirve como valor predeterminado de todos los subsets: v1 la hereda sin cambios, mientras que v2 la sustituye por su propia trafficPolicy.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-3.png)
 
-    subgraph Global[Global Traffic Policy]
-        GP[Applied to all subsets]
-    end
-
-    subgraph Subset1[Subset: v1]
-        SP1[v1-specific policy<br/>Overrides global policy]
-    end
-
-    subgraph Subset2[Subset: v2]
-        SP2[Inherits global policy]
-    end
-
-    DR --> Global
-    Global --> Subset1
-    Global --> Subset2
-
-    %% Style definitions
-    classDef dr fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef global fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class DR dr;
-    class GP global;
-    class SP1,SP2 subset;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-3.html)
 
 ### Componentes de Traffic Policy
 
-#### 1. Load Balancer
+#### 1. Balanceador de carga
 
 ```yaml
 trafficPolicy:
@@ -474,9 +337,9 @@ trafficPolicy:
     simple: ROUND_ROBIN  # LEAST_REQUEST, RANDOM, PASSTHROUGH
 ```
 
-Consulta [Balanceo de carga](06-load-balancing.md) para ver los detalles.
+Consulta [Balanceo de carga](06-load-balancing.md) para obtener más detalles.
 
-#### 2. Connection Pool
+#### 2. Grupo de conexiones
 
 ```yaml
 trafficPolicy:
@@ -489,20 +352,20 @@ trafficPolicy:
       maxRequestsPerConnection: 2
 ```
 
-Consulta [Circuit Breaker](07-circuit-breaker.md) para ver los detalles.
+Consulta [Circuit breaker](07-circuit-breaker.md) para obtener más detalles.
 
-#### 3. Outlier Detection
+#### 3. Detección de endpoints atípicos
 
 ```yaml
 trafficPolicy:
   outlierDetection:
-    consecutiveErrors: 5
+    consecutive5xxErrors: 5
     interval: 30s
     baseEjectionTime: 30s
     maxEjectionPercent: 50
 ```
 
-Consulta [Circuit Breaker](07-circuit-breaker.md) para ver los detalles.
+Consulta [Circuit breaker](07-circuit-breaker.md) para obtener más detalles.
 
 #### 4. Configuración de TLS
 
@@ -512,9 +375,9 @@ trafficPolicy:
     mode: ISTIO_MUTUAL  # DISABLE, SIMPLE, MUTUAL
 ```
 
-Consulta [Seguridad](../security/01-mtls.md) para ver los detalles.
+Consulta [Seguridad](../security/01-mtls.md) para obtener más detalles.
 
-#### 5. Configuración por puerto
+#### 5. Configuración a nivel de puerto
 
 ```yaml
 trafficPolicy:
@@ -529,13 +392,13 @@ trafficPolicy:
       mode: SIMPLE
 ```
 
-<span id="using-with-virtualservice"></span>
+## Uso con VirtualService {#using-with-virtualservice}
 
-## Uso con VirtualService
+VirtualService y DestinationRule trabajan juntos para ofrecer un control integral del tráfico.
 
-VirtualService y DestinationRule trabajan juntos para proporcionar un control integral del tráfico.
+### Patrón básico: despliegue canary
 
-### Patrón básico: despliegue Canary
+En una puesta en producción, aplica primero DestinationRule y confirma que el nuevo subset aparece en la configuración de clusters del proxy; después actualiza VirtualService. Aplicar varios documentos en una sola operación no garantiza el orden de propagación. Elimina las referencias de las rutas antes de borrar un subset.
 
 ```yaml
 # DestinationRule: Subset definition
@@ -573,7 +436,7 @@ spec:
       weight: 10
 ```
 
-### Enrutamiento basado en headers
+### Enrutamiento basado en encabezados
 
 ```yaml
 # DestinationRule
@@ -616,7 +479,7 @@ spec:
         subset: v1
 ```
 
-### Enrutamiento basado en URI + políticas específicas de Subset
+### Enrutamiento por URI y políticas específicas del subset
 
 ```yaml
 # DestinationRule: Different policies per subset
@@ -665,9 +528,7 @@ spec:
         subset: v1
 ```
 
-<span id="practical-examples"></span>
-
-## Ejemplos prácticos
+## Ejemplos prácticos {#practical-examples}
 
 ### Ejemplo 1: gestión de versiones de microservicios
 
@@ -702,10 +563,12 @@ spec:
 
 **Casos de uso**:
 - v1: versión estable (la mayor parte del tráfico)
-- v2: versión Canary (10 % del tráfico)
-- v3: versión de prueba (solo desarrolladores)
+- v2: versión canary (el 10 % del tráfico)
+- v3: versión de prueba (solo para desarrolladores)
 
-### Ejemplo 2: despliegue multirregión
+### Ejemplo 2: despliegue multirregional
+
+Se presupone que la malla ya puede descubrir los endpoints de cada región y acceder a ellos. Las etiquetas personalizadas `region` de los pods seleccionan los subsets; las etiquetas de topología de los nodos proporcionan por separado la localidad de Envoy. Los subsets regionales necesitan rutas explícitas, y la conmutación por error basada en localidad requiere detección de endpoints atípicos y capacidad saludable accesible.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -765,7 +628,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -780,7 +643,7 @@ spec:
         http:
           http1MaxPendingRequests: 20
       outlierDetection:
-        consecutiveErrors: 5
+        consecutive5xxErrors: 5
         interval: 30s
         baseEjectionTime: 30s
 
@@ -795,12 +658,12 @@ spec:
         http:
           http1MaxPendingRequests: 100
       outlierDetection:
-        consecutiveErrors: 10
+        consecutive5xxErrors: 10
         interval: 60s
         baseEjectionTime: 30s
 ```
 
-### Ejemplo 4: integración de Service externo
+### Ejemplo 4: integración con un servicio externo
 
 ```yaml
 # ServiceEntry: Register external API
@@ -812,9 +675,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -833,14 +697,19 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
       mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames:
+      - api.payment-gateway.com
 ```
 
-### Ejemplo 5: Connection Pool de base de datos
+Esta variante espera que la aplicación envíe HTTP al puerto registrado 80; el sidecar origina TLS verificado hacia el puerto 443. Sustituye el host de ejemplo por tu endpoint. Si la aplicación ya envía HTTPS, omite la originación TLS y los ajustes de política exclusivos de HTTP para esa ruta de TLS opaco, a fin de evitar el doble cifrado.
+
+### Ejemplo 5: grupo de conexiones de base de datos
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -857,11 +726,8 @@ spec:
         tcpKeepalive:
           time: 7200s
           interval: 75s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
   subsets:
@@ -877,11 +743,11 @@ spec:
           maxConnections: 100  # More for replicas
 ```
 
-<span id="best-practices"></span>
+Los límites de conexiones TCP anteriores se aplican por cada proxy; no constituyen un presupuesto global de conexiones para la base de datos. PostgreSQL no utiliza los parámetros de conexión HTTP. Los subsets de principal y réplica deben estar incluidos en los endpoints del Service seleccionado, y la aplicación debe elegir correctamente los destinos de lectura y escritura.
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
-### 1. Convenciones de nomenclatura de Subset
+### 1. Convenciones para nombrar subsets
 
 ```yaml
 # ✅ Good example: Meaningful names
@@ -892,7 +758,9 @@ subsets:
 - name: canary
 - name: us-west
 - name: production
+```
 
+```yaml
 # ❌ Bad example: Vague names
 subsets:
 - name: subset1
@@ -900,7 +768,7 @@ subsets:
 - name: new
 ```
 
-### 2. Patrón de política predeterminada + sobrescritura
+### 2. Patrón de política predeterminada y anulación
 
 ```yaml
 # ✅ Good example: Define default policy and override when needed
@@ -926,10 +794,10 @@ spec:
         simple: ROUND_ROBIN
 ```
 
-### 3. Circuit Breaker es esencial
+### 3. Ajusta el aislamiento ante fallos
 
 ```yaml
-# ✅ Always set outlierDetection
+# Tune outlierDetection for the service and failure model
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -939,13 +807,13 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # Required
-      consecutiveErrors: 5
+    outlierDetection:  # Optional policy
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 4. Configuración de Connection Pool
+### 4. Configuración del grupo de conexiones
 
 ```yaml
 # ✅ Connection Pool appropriate for service characteristics
@@ -1010,11 +878,9 @@ spec:
   # ...
 ```
 
-<span id="troubleshooting"></span>
+## Resolución de problemas {#troubleshooting}
 
-## Resolución de problemas
-
-### Subset no funciona
+### El subset no funciona
 
 **Síntoma**:
 ```bash
@@ -1036,24 +902,26 @@ kubectl get destinationrule reviews -o yaml
 kubectl get pods --show-labels | grep reviews
 
 # 4. Verify pods have version=v2 label
-kubectl label pod reviews-v2-xxx version=v2
+kubectl get deployment reviews-v2 -o jsonpath='{.spec.template.metadata.labels}'
 ```
 
-### Traffic Policy no aplicada
+### La política de tráfico no se aplica
 
 ```bash
 # Check Envoy configuration
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local -o json
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local -o json
 
 # Check Circuit Breaker settings
-istioctl proxy-config cluster <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
+istioctl proxy-config clusters <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 ```
 
-### Conflictos de Subset
+### Conflictos entre subsets
+
+Istio puede combinar los fragmentos aplicables de DestinationRule para un mismo host. Los dos subsets distintos que se muestran a continuación no entran en conflicto por sí solos. Si hay nombres de subset duplicados, se utiliza la primera definición sin combinarlas; si hay varios bloques de trafficPolicy de nivel superior, también se conserva solo el primero que se procesa. La búsqueda y visibilidad entre espacios de nombres siguen siendo importantes; una única regla administrada por un responsable es más fácil de entender.
 
 **Problema**:
 ```yaml
-# Multiple DestinationRules for the same host cause conflicts
+# Same-host DestinationRule fragments can merge with restrictions
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -1065,7 +933,7 @@ spec:
     labels:
       version: v1
 ---
-# ❌ Conflict occurs
+# Unique subset names can merge; duplicate names/policies are the problem
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -1106,20 +974,23 @@ istioctl analyze
 istioctl analyze -n production
 
 # Example output
-# Error [IST0101] (DestinationRule reviews.default) Referenced host not found: "reviews"
+# Inspect actual analyzer messages and confirm subset clusters in proxy-config output
 ```
 
 ## Próximos pasos
 
 Después de comprender DestinationRule, continúa con estos temas:
 
-1. **[División de tráfico](04-traffic-splitting.md)**: despliegues Canary y Blue/Green
-2. **[Balanceo de carga](06-load-balancing.md)**: diversos algoritmos y políticas
-3. **[Circuit Breaker](07-circuit-breaker.md)**: aislamiento de fallos y resiliencia
-4. **[Reintento y Timeout](05-retry-timeout.md)**: configuración de reintentos y tiempos de espera
+1. **[División del tráfico](04-traffic-splitting.md)**: despliegues canary y Blue/Green
+2. **[Balanceo de carga](06-load-balancing.md)**: distintos algoritmos y políticas
+3. **[Circuit breaker](07-circuit-breaker.md)**: aislamiento de fallos y resiliencia
+4. **[Reintentos y tiempos de espera](05-retry-timeout.md)**: configuración de reintentos y tiempos de espera
 
 ## Referencias
 
 - [Referencia de Istio DestinationRule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
-- [Gestión de tráfico de Istio](https://istio.io/latest/docs/concepts/traffic-management/)
-- [Configuración de clúster de Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)
+- [Gestión del tráfico de Istio](https://istio.io/latest/docs/concepts/traffic-management/)
+- [Configuración de clusters de Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)
+
+- [Combinación de DestinationRule y despliegue seguro de subsets](https://istio.io/latest/docs/ops/best-practices/traffic-management/)
+- [Originación TLS](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

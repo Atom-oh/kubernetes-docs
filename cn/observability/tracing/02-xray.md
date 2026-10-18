@@ -1,6 +1,6 @@
 # AWS X-Ray
 
-> **最后更新**: September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 
 ## 简介
 
@@ -902,7 +902,7 @@ try (Segment segment = AWSXRay.beginSegment("ProcessOrder")) {
 
 ### 2. 使用 Annotations 和 Metadata
 
-X-Ray 对每条 trace 最多索引 **50 个 annotation**，而不是每个 segment 独立索引 50 个。请有意识地使用低基数值字段。Metadata 不会像 annotation 一样编入索引，但仍会被存储并且可以访问；它不构成数据遮蔽或隐私边界。采集前请移除访问令牌、cookie、私钥、原始请求/响应负载、用户标识符和 SQL 参数。还需要审查 Transaction Search 的 span/日志访问权限和保留期限。collector 的 `index_all_attributes=false` 不会移除未编入索引的属性。
+X-Ray 对每条 trace 最多索引 **50 个 annotation**，而不是每个 segment 独立索引 50 个。请有意识地使用低基数值字段。Metadata 不会像 annotation 一样编入索引，但仍会被存储并且可以访问；它不构成数据遮蔽或隐私边界。采集前请移除访问令牌、cookie、私钥、原始请求/响应负载、用户标识符和 SQL 参数。还需要审查 Transaction Search 的 span/日志访问权限和保留期限。collector 的 index_all_attributes=false 不会移除未编入索引的属性。
 
 ```java
 // Synthetic, bounded examples. Never attach complete request/response bodies.

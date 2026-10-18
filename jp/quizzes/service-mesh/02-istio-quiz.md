@@ -1,6 +1,6 @@
 # Istioクイズ
 
-> **最終更新**: September 11, 2026 · 例の確認環境: Istio 1.31.0 / Argo Rollouts 1.10.0
+> **最終更新**: 2026年9月11日 · 例の確認環境: Istio 1.31.0 / Argo Rollouts 1.10.0
 
 このクイズは[保守されているIstioガイド](../../service-mesh/istio/README.md)を対象とします。互換性は[インストールガイド](../../service-mesh/istio/01-installation.md)で確認してください。一般的なKubernetes最小要件はサポート表ではありません。例は学習補助で、本番テスト済みデプロイではありません。例示の名前空間、ホスト名、ID、バックエンドエンドポイントを検証済み入力に置き換えます。
 
@@ -451,7 +451,7 @@ spec:
 <details>
 <summary>ローカリティ優先は何を提供し、何を保証しませんか？</summary>
 
-ローカリティはエンドポイント/送信元のトポロジー情報で適切な宛先を優先します。前のreviews DestinationRuleの**代替**である以下は、外れ値検出とリージョン/ゾーン優先順位を使います。
+ローカリティはエンドポイント/送信元のトポロジー情報で適切な宛先を優先します。以下は先に示したreviews用DestinationRuleの**代替例**で、外れ値検出とリージョン/ゾーン優先順位を使います。
 
 ```yaml
 apiVersion: networking.istio.io/v1

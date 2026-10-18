@@ -1,10 +1,10 @@
-# Implementación y optimización de vLLM
+# Despliegue y optimización de vLLM
 
-> **Línea base de revisión**: variante de imagen vLLM 0.29.0, CUDA 12.9; benchmark histórico 0.6.4.post1 separado
+> **Base de la revisión**: vLLM 0.29.0, variante de imagen con CUDA 12.9; se presenta por separado el benchmark histórico de 0.6.4.post1
 > **Última versión comprobada**: vLLM 0.31.0 (5 de octubre de 2026), comprobada el 12 de octubre de 2026
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-vLLM es un motor de inferencia de código abierto para modelos generativos y cargas de trabajo multimodales/de pooling compatibles. No debe expandirse como «Vector Language Model». Este capítulo revisa una versión específica y los límites operativos de EKS sin garantías universales de aceleración o compatibilidad con modelos.
+vLLM es un motor de inferencia de código abierto para modelos generativos y para las cargas multimodales y de pooling compatibles. Su nombre no significa «Vector Language Model». Este capítulo examina una versión concreta y los límites de operación en EKS; no ofrece garantías universales de aceleración ni de compatibilidad con modelos.
 
 ## Configuración del entorno de laboratorio
 
@@ -17,17 +17,17 @@ En v0.31.0:
 
 Los ejemplos 0.29.0 de este capítulo no se han vuelto a ejecutar en v0.30.0 ni en v0.31.0. Revise los [cambios de la versión](https://github.com/vllm-project/vllm/releases/tag/v0.31.0) y la compatibilidad antes de actualizar.
 
-La ruta predeterminada de PyPI/Docker de 0.29.0 usa CUDA 13.0, con una imagen v0.29.0-cu129 independiente. Parte del texto de instalación etiquetado aún llama a CUDA 12.9 el valor predeterminado; inspeccione la variante/digest real de la imagen.
+La instalación predeterminada de 0.29.0 mediante PyPI o Docker utiliza CUDA 13.0; la imagen v0.29.0-cu129 se ofrece por separado. Parte de la documentación de instalación de esa versión todavía presenta CUDA 12.9 como opción predeterminada. Compruebe la variante y el digest de la imagen real.
 
-PyPI requiere Python >=3.10, <3.15, mientras que la guía GPU etiquetada enumera 3.10–3.13. Esto no es una garantía para cada combinación de Python/PyTorch/CUDA. La ruta NVIDIA requiere una capacidad de cómputo 7.5 o posterior, lo que excluye V100 (7.0). Los kernels, dtypes y la cuantización pueden imponer requisitos adicionales del dispositivo.
+PyPI requiere Python >=3.10, <3.15, mientras que la guía de GPU de esa versión enumera 3.10–3.13. Esto no garantiza cualquier combinación de Python, PyTorch y CUDA. La opción NVIDIA requiere capacidad de cómputo 7.5 o posterior, por lo que excluye V100 (7.0). Los kernels, los tipos de datos y la cuantización pueden imponer requisitos adicionales al dispositivo.
 
-Siga las condiciones de AMI/driver/device-plugin en [cargas de trabajo AI/ML](01-ai-ml-workloads.md). Una imagen CUDA no es una implementación directa para Trainium/Inferentia; valide Neuron u otros plugins de plataforma por separado. Dimensione GPU, RAM y disco para el modelo, la caché y la concurrencia en vez de tratar g5.2xlarge o 50GB como mínimos universales.
+Siga los requisitos de AMI, controlador y plugin de dispositivo descritos en [cargas de trabajo AI/ML](01-ai-ml-workloads.md). Una imagen CUDA no se puede desplegar directamente en Trainium o Inferentia; valide Neuron u otros plugins de plataforma por separado. Dimensione la GPU, la RAM y el disco según el modelo, la caché y la concurrencia, en lugar de considerar g5.2xlarge o 50GB como mínimos universales.
 
 ## Introducción a vLLM
 
 vLLM es un motor de inferencia LLM con las siguientes características:
 
-![Solicitudes de API, scheduler, cargador de modelos, motor y roles de la caché KV con beneficios de rendimiento condicionales.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-0.png)
+![Funciones de las solicitudes de API, el planificador, el cargador de modelos, el motor y la caché KV, con mejoras de rendimiento sujetas a condiciones.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-0.html)
 
@@ -35,18 +35,18 @@ vLLM es un motor de inferencia LLM con las siguientes características:
 
 | Capacidad | Significado y condiciones |
 | --- | --- |
-| PagedAttention / caché KV | Gestiona bloques de tokens para reducir el desperdicio; los kernels/diseños de caché dependen del modelo/backend |
-| Batching continuo | El scheduler ajusta el trabajo en cada paso; no garantiza admisión inmediata, ni cola ni aceleración fija |
-| TP / PP / DP / EP | El paralelismo tensorial, de pipeline, de datos y de expertos son ejes distintos que requieren compatibilidad de modelo/backend/red |
-| Precisión / cuantización | Distinga dtypes FP16/BF16 de formatos FP8/INT8/INT4/AWQ, y la cuantización de pesos de la cuantización de caché KV |
-| Caché de prefijos / prefill fragmentado | Inspeccione valores predeterminados y anulaciones de modelos compatibles; no es caché de respuesta completa ni mejora de precisión |
-| Salidas estructuradas | response_format o structured_outputs restringe el formato; la veracidad y validez empresarial requieren comprobaciones independientes |
-| Llamada de herramientas | Requiere un modelo/chat template/parser y un bucle de ejecución del cliente; el servidor no ejecuta herramientas automáticamente |
-| LoRA | Requiere compatibilidad del modelo y registro del adaptador; cambiar solo el modelo de la solicitud no carga un adaptador |
+| PagedAttention / caché KV | Gestiona bloques de tokens para reducir el desperdicio; los kernels y la organización de la caché dependen del modelo y del backend |
+| Procesamiento continuo por lotes | El planificador ajusta el trabajo en cada paso; no garantiza admisión inmediata, ausencia de colas ni una aceleración fija |
+| TP / PP / DP / EP | El paralelismo tensorial, de pipeline, de datos y de expertos son ejes distintos que requieren soporte del modelo, del backend y de la red |
+| Precisión / cuantización | Distinga los tipos FP16/BF16 de los formatos FP8/INT8/INT4/AWQ, y la cuantización de pesos de la cuantización de la caché KV |
+| Caché de prefijos / prefill por fragmentos | Compruebe los valores predeterminados de los modelos compatibles y sus ajustes; no almacena respuestas completas ni mejora la precisión |
+| Salidas estructuradas | response_format o structured_outputs restringe el formato; la veracidad y la validez para el negocio requieren comprobaciones independientes |
+| Llamadas a herramientas | Requieren un modelo, una plantilla de chat, un parser y un bucle de ejecución en el cliente; el servidor no ejecuta las herramientas automáticamente |
+| LoRA | Requiere soporte del modelo y registro del adaptador; cambiar únicamente el modelo de la solicitud no carga un adaptador |
 
-0.29.0 establece Model Runner V2 como el runner predeterminado. No es la versión de API compatible con OpenAI ni un «vLLM Engine V2» independiente. Los nombres de familias de modelos no garantizan todos los tamaños, variantes de cuantización o visión; verifique la arquitectura, el artefacto/tokenizer, el chat template y los kernels.
+En 0.29.0, Model Runner V2 es el ejecutor predeterminado. No es la versión de la API compatible con OpenAI ni un «vLLM Engine V2» independiente. El nombre de una familia de modelos no garantiza compatibilidad con todos los tamaños, formatos de cuantización o variantes de visión. Verifique la arquitectura, el artefacto y el tokenizer, la plantilla de chat y los kernels.
 
-### Configuración actual de funcionalidades de CLI
+### Configuración de funciones en la CLI actual
 
 Use vllm serve en lugar de python -m vllm.entrypoints.openai.api_server, que está obsoleto. Las opciones anteriores --speculative-model/--num-speculative-tokens se reemplazan por --speculative-config en la CLI actual.
 
@@ -56,59 +56,59 @@ vllm serve /models/target \
   --speculative-config '{"model":"/models/draft","method":"draft_model","num_speculative_tokens":5}'
 ```
 
-Esto ilustra la sintaxis; no proporciona esos archivos de modelo ni establece una aceleración. La aceptación del borrador, la memoria adicional y los costes de comunicación pueden compensar las ganancias.
+El ejemplo muestra la sintaxis; no proporciona los archivos de los modelos ni demuestra una aceleración. La tasa de aceptación del modelo borrador, la memoria adicional y los costes de comunicación pueden contrarrestar las mejoras.
 
-Registre LoRA al inicio con --enable-lora --lora-modules adapter=/models/adapter. La carga/descarga en tiempo de ejecución requiere la activación independiente VLLM_ALLOW_RUNTIME_LORA_UPDATING y una ruta restringida para operadores. --enable-auto-tool-choice necesita el --tool-call-parser apropiado. Las URL multimodales también requieren controles SSRF, dominios permitidos y límites de descarga/decodificación.
+Registre LoRA al iniciar el servidor con --enable-lora --lora-modules adapter=/models/adapter. La carga y descarga durante la ejecución requieren habilitar por separado VLLM_ALLOW_RUNTIME_LORA_UPDATING y disponer de una vía de acceso restringida para operadores. --enable-auto-tool-choice necesita el --tool-call-parser adecuado. Las URL multimodales también requieren controles contra SSRF, dominios permitidos y límites de descarga y decodificación.
 
 ## Requisitos del sistema
 
-Requisitos del sistema para implementar vLLM en EKS:
+Requisitos del sistema para desplegar vLLM en EKS:
 
-![Memoria KV basada en pesos y arquitectura, sobrecarga adicional, capacidad del dispositivo y requisitos explícitos de artefactos CUDA.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-1.png)
+![Memoria de los pesos y de la caché KV según la arquitectura, sobrecarga adicional, capacidad del dispositivo y requisitos explícitos del artefacto CUDA.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-1.html)
 
-Inicie la estimación de memoria de los pesos con el número de parámetros × bytes almacenados. Los pesos FP16/BF16 por sí solos para 70B son aproximadamente 140GB, por lo que 80GB no es un requisito universal para 70B. Añada la caché KV, activaciones, grafos/espacios de trabajo CUDA y búferes de comunicación, teniendo en cuenta los metadatos de cuantización y tensores replicados.
+Comience a estimar la memoria de los pesos multiplicando el número de parámetros por los bytes almacenados por parámetro. Solo los pesos FP16/BF16 de un modelo 70B ocupan unos 140GB, por lo que 80GB no es un requisito universal para 70B. Añada la caché KV, las activaciones, los grafos y espacios de trabajo de CUDA y los búferes de comunicación, teniendo en cuenta los metadatos de cuantización y los tensores replicados.
 
-A continuación se muestra una estimación común de KV con atención densa. Use el recuento de cabezas KV para GQA/MQA en lugar de sustituir el tamaño oculto de una fórmula exclusiva para MHA.
+A continuación se muestra una estimación habitual de la caché KV para atención densa. En GQA/MQA, utilice el número de cabezas KV; no sustituya ese término por el tamaño oculto de una fórmula que solo sirve para MHA.
 
 ```text
 KV bytes ≈ 2 × layers × KV_heads × head_dim × cached_tokens × bytes_per_element
 ```
 
-cached_tokens suma los tokens retenidos entre solicitudes concurrentes. El sharding/replicación TP, las ventanas deslizantes, MLA y las arquitecturas híbridas necesitan tratamiento independiente. La configuración actual de Qwen2.5-7B tiene 28 capas, 4 cabezas KV y dimensión de cabeza 128: aproximadamente 56KiB/token con dos bytes por elemento, o 224MiB para una secuencia de 4096 tokens. Es una estimación agregada, no memoria medida por GPU ni memoria total del modelo.
+cached_tokens suma los tokens conservados entre todas las solicitudes concurrentes. El particionado o la replicación con TP, las ventanas deslizantes, MLA y las arquitecturas híbridas requieren un tratamiento aparte. La configuración actual de Qwen2.5-7B tiene 28 capas, 4 cabezas KV y una dimensión por cabeza de 128: unos 56KiB por token con dos bytes por elemento, o 224MiB para una secuencia de 4096 tokens. Es una estimación agregada, no una medición por GPU ni de la memoria total del modelo.
 
-p4d.24xlarge usa A100 de 40GB; distinga las instancias p4de A100 de 80GB. Compare p5/g6/g6e y otras opciones con la capacidad regional, los drivers y las necesidades de la carga de trabajo. Reglas fijas como cuatro núcleos de CPU por GPU o RAM equivalente al doble de los pesos no sustituyen la medición.
+p4d.24xlarge utiliza GPU A100 de 40GB; distíngalas de las A100 de 80GB de las instancias p4de. Compare p5/g6/g6e y otras opciones según la capacidad disponible en la región, los controladores y las necesidades de la carga. Reglas fijas como cuatro núcleos de CPU por GPU o una RAM equivalente al doble de los pesos no sustituyen las mediciones.
 
 ## Configuración de infraestructura de EKS
 
-![Rutas ilustrativas de nodo EKS, almacenamiento de modelos, imagen y permisos elegidas para la carga de trabajo.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
+![Esquema ilustrativo de los nodos EKS, el almacenamiento de modelos, las imágenes y los permisos elegidos para la carga de trabajo.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-2.html)
 
 ## Almacenamiento y preparación de modelos
 
-FSx for Lustre es una opción, no obligatoria ni universalmente óptima. Compare NVMe/EBS local, cachés reutilizables, almacenamiento de objetos y sistemas de archivos compartidos según tiempo de carga, coste y concurrencia. emptyDir puede sobrevivir al reinicio de un contenedor, pero no a la eliminación/recreación de un Pod.
+FSx for Lustre es una opción; no es obligatorio ni resulta óptimo en todos los casos. Compare NVMe o EBS locales, cachés reutilizables, almacenamiento de objetos y sistemas de archivos compartidos según el tiempo de carga, el coste y la concurrencia. emptyDir puede sobrevivir al reinicio de un contenedor, pero no a la eliminación y recreación del Pod.
 
-Distinga [PV/PVC de FSx estático y aprovisionamiento dinámico](01-ai-ml-workloads.md#storage-and-caching). snapshot_download de Hugging Face descarga desde Hugging Face, no desde S3. Registre la revisión del repositorio, integridad, licencia y permisos de acceso. Para modelos restringidos, monte tokens como archivos y use una etapa de descarga que lea el archivo. No habilite de forma predeterminada la confianza en código remoto ejecutable.
+Distinga los [PV/PVC estáticos de FSx del aprovisionamiento dinámico](01-ai-ml-workloads.md#storage-and-caching). snapshot_download de Hugging Face descarga desde Hugging Face, no desde S3. Registre la revisión del repositorio, la integridad, la licencia y los permisos de acceso. Para modelos con acceso restringido, monte los tokens como archivos y utilice una etapa de descarga que lea el archivo. No autorice por defecto la ejecución de código remoto.
 
-El siguiente ejemplo usa una revisión verificada de Qwen3-0.6B público sin un token. Su caché emptyDir vuelve a descargar después de la recreación del Pod. Los workers multinodo requieren la misma revisión/ruta de modelo.
+El siguiente ejemplo utiliza una revisión verificada del modelo público Qwen3-0.6B sin token. La descarga a su caché emptyDir se repite cuando se recrea el Pod. Los procesos de trabajo multinodo requieren la misma revisión y ruta del modelo.
 
-## Implementación de vLLM
+## Despliegue de vLLM
 
-### Arquitectura de implementación
+### Arquitectura de despliegue
 
-El siguiente diagrama muestra dos arquitecturas principales para implementar vLLM en EKS:
+El siguiente diagrama muestra dos arquitecturas principales para desplegar vLLM en EKS:
 
-![Servicio de una sola GPU frente a un grupo multinodo fragmentado, que separa el punto de entrada de API, los workers y las rutas de modelo.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-3.png)
+![Servicio con una sola GPU frente a un grupo particionado entre varios nodos, distinguiendo el punto de entrada de la API, los procesos de trabajo y las rutas del modelo.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-3.html)
 
 ### Ejemplo de configuración de una sola GPU
 
-Esta es una **plantilla para revisión antes de la ejecución en GPU**. Prepare el namespace y el driver/plugin de GPU. El digest identifica el artefacto amd64 v0.29.0-cu129; la revisión del modelo identifica la instantánea pública Qwen3-0.6B inspeccionada. La descarga de imagen, la ejecución sin root, la compilación de kernels y la inferencia no se ejecutaron en esta auditoría y requieren validación del entorno.
+Esta es una **plantilla que debe revisarse antes de ejecutarse en GPU**. Prepare el namespace, el controlador de GPU y el plugin. El digest identifica el artefacto amd64 v0.29.0-cu129; la revisión del modelo identifica la instantánea pública de Qwen3-0.6B inspeccionada. Esta auditoría no ejecutó la descarga de la imagen, la ejecución sin root, la compilación de kernels ni la inferencia; esas operaciones requieren validación en el entorno real.
 
-Recreate evita requerir una réplica de GPU adicional, pero provoca tiempo de inactividad durante la actualización. startupProbe permite unos 15 minutos para el inicio; la disponibilidad no es un SLA. El Service es ClusterIP y no crea ingreso público.
+Recreate evita necesitar una réplica con GPU adicional, pero causa una interrupción durante la actualización. startupProbe concede unos 15 minutos para el arranque; la comprobación de disponibilidad no es un SLA. El Service es de tipo ClusterIP y no crea una entrada pública.
 
 ```yaml
 apiVersion: apps/v1
@@ -232,11 +232,11 @@ spec:
       targetPort: http
 ```
 
-### Fragmentación multinodo frente a réplicas independientes
+### Particionado multinodo frente a réplicas independientes
 
-Fragmentar una réplica de modelo requiere TP/PP más coordinación de Ray o multiprocessing. Las réplicas independientes de servidor API cargan cada una el modelo y proporcionan escalado horizontal; son diseños diferentes.
+Particionar una réplica del modelo requiere TP/PP y coordinación mediante Ray o multiprocessing. En cambio, cada réplica independiente del servidor de API carga el modelo y aporta escalado horizontal. Son diseños distintos.
 
-0.29.0 admite multiprocessing --nnodes, --node-rank, --master-addr y --master-port. Los antiguos ejemplos --rank, --tensor-parallel-rank y --distributed-init-method no son estas opciones de CLI. Con dos nodos preparados que proporcionan ocho GPU cada uno, la forma de los comandos es:
+0.29.0 admite las opciones de multiprocessing --nnodes, --node-rank, --master-addr y --master-port. Las opciones antiguas --rank, --tensor-parallel-rank y --distributed-init-method no equivalen a estas opciones de la CLI. Con dos nodos preparados, cada uno con ocho GPU, los comandos tienen esta forma:
 
 ```bash
 # node0: substitute an actual trusted head IP and identical prepared model path.
@@ -249,41 +249,41 @@ vllm serve /models/model --distributed-executor-backend mp \
   --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29500 --headless
 ```
 
-Estos comandos no crean nodos, archivos de modelo ni conectividad. Kubernetes requiere creación concurrente adecuada de workers, DNS antes de la disponibilidad, VLLM_HOST_IP por Pod, conectividad interna y memoria compartida. Ray requiere un clúster funcional y una dependencia Ray compatible antes de iniciar un punto de entrada API con --distributed-executor-backend ray; consulte [Ray](ray/README.md). Mantenga privados los puertos de comunicación interna.
+Estos comandos no crean los nodos, los archivos del modelo ni la conectividad. En Kubernetes debe prepararse la creación concurrente de los procesos de trabajo, el DNS antes de que los Pods estén listos, VLLM_HOST_IP por Pod, la conectividad interna y la memoria compartida. Ray necesita un clúster funcional y una dependencia de Ray compatible antes de iniciar un único punto de entrada de API con --distributed-executor-backend ray; consulte [Ray](ray/README.md). Mantenga privados los puertos de comunicación interna.
 
 ## Optimización del rendimiento
 
-![El ajuste actual de memoria, offload, scheduler y comunicación requiere medición de la carga de trabajo.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
+![El ajuste de memoria, transferencia de datos entre memorias, planificación y comunicación requiere mediciones de la carga real.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-4.html)
 
-### Opciones de memoria, scheduler y comunicación
+### Opciones de memoria, planificación y comunicación
 
-CacheConfig en 0.29.0 usa gpu_memory_utilization con valor predeterminado 0.92; no es un límite estricto para toda la VRAM del proceso. El ejemplo elige explícitamente 0.80. --kv-cache-memory-bytes anula el dimensionamiento automático de caché KV, por lo que debe inspeccionar la precedencia de opciones.
+En 0.29.0, CacheConfig utiliza 0.92 como valor predeterminado de gpu_memory_utilization; no es un límite estricto de toda la VRAM del proceso. El ejemplo selecciona explícitamente 0.80. --kv-cache-memory-bytes prevalece sobre el dimensionamiento automático de la caché KV, por lo que debe comprobar la prioridad de las opciones.
 
---swap-space está ausente de la CLI actual. El offload de CPU de pesos y el offload KV son capacidades/configuraciones independientes, no una garantía de que la RAM del host resuelva los límites de GPU. La caché de prefijos puede estar activada de forma predeterminada para modelos compatibles; el prefill fragmentado también depende del modelo. Los límites de cola, presupuestos de tokens, max-num-seqs y max-model-len son controles distintos.
+--swap-space no existe en la CLI actual. Trasladar los pesos a la memoria de CPU y trasladar la caché KV son capacidades con configuraciones distintas; no garantizan que la RAM del host resuelva los límites de la GPU. La caché de prefijos puede estar activada por defecto en modelos compatibles; el prefill por fragmentos también depende del modelo. Los límites de cola, los presupuestos de tokens, max-num-seqs y max-model-len son controles diferentes.
 
-EFA requiere dispositivos EC2 compatibles, AMI/plugin/red y AWS OFI NCCL/libfabric. No copie flags NCCL_IB_ENABLE_RDMA inventados ni configuraciones arbitrarias de mlx5/GID como valores predeterminados universales. Compruebe las variables actuales de NVIDIA/PyTorch y los logs reales del backend. Las pruebas NCCL de un solo nodo no establecen el rendimiento EFA multinodo.
+EFA requiere dispositivos EC2 compatibles, AMI, plugin y red adecuados, además de AWS OFI NCCL/libfabric. No copie opciones inventadas como NCCL_IB_ENABLE_RDMA ni ajustes arbitrarios de mlx5/GID como valores universales. Compruebe las variables actuales de NVIDIA/PyTorch y los registros reales del backend. Las pruebas de NCCL en un solo nodo no demuestran el rendimiento de EFA entre varios nodos.
 
 ## Medición histórica: Qwen2.5-7B en una sola GPU L4
 
-Estas son mediciones históricas reportadas en el [commit de repositorio del 4 de septiembre de 2026](https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106). Esta auditoría no encontró resultados brutos de solicitudes/logs de servidor ni un artefacto de cliente completo, y no volvió a ejecutar el experimento. Los números reportados se conservan, no se reetiquetan como rendimiento actual de 0.29.0 ni como resultados reproducidos independientemente.
+Estas mediciones históricas se publicaron en el [commit del repositorio del 4 de septiembre de 2026](https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106). Esta auditoría no encontró resultados brutos de solicitudes, registros del servidor ni un artefacto completo del cliente, y no repitió el experimento. Se conservan las cifras publicadas; no se presentan como rendimiento actual de 0.29.0 ni como resultados reproducidos de forma independiente.
 
-![Informe histórico de benchmark L4 con límites sobre logs brutos y reproducción independiente.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
+![Informe histórico del benchmark en L4, con limitaciones por la falta de registros brutos y de reproducción independiente.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html)
 
 ### Configuración
 
-- **Clúster**: un NodePool de Karpenter dedicado (`bench-gpu`, bajo demanda `g6.2xlarge` — 1x NVIDIA L4, 24GB de memoria GPU, 8 vCPU, 32 GiB de RAM), con taint `nvidia.com/gpu=true:NoSchedule` y etiquetado para unirse a los daemonsets existentes de `nvidia-device-plugin`, eliminado inmediatamente después de la ejecución.
-- **Servidor**: `vllm/vllm-openai:v0.6.4.post1` (publicado el 2024-11-15 — desde entonces el proyecto vLLM ha lanzado su motor V1 con caché de prefijos activada de forma predeterminada, así que trátelo como una instantánea de esa línea de versiones, no como vLLM actual), modelo `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. Una precisión (bf16, el dtype nativo del modelo) sin cuantización, decodificación especulativa ni caché de prefijos — los valores predeterminados simples que esta página describe en otro lugar.
-- **Cliente**: un Python `ThreadPoolExecutor` ejecutado como un Job **dentro del clúster** (un nodo independiente sin GPU), que llama a `/v1/chat/completions` mediante el Service ClusterIP `vllm-server`. Sin streaming, `temperature=0`, `max_tokens=128`, 8 prompts cortos rotativos (preguntas sobre conceptos de Kubernetes que solicitan respuestas de 1-2 oraciones). En la práctica, cada respuesta se ejecutó cerca del límite de 128 tokens (una media consistente de ~102 tokens en los tres lotes concurrentes) en lugar de detenerse en 1-2 oraciones — útil para comparar el throughput de forma equivalente entre niveles de concurrencia, pero conviene saberlo antes de leer las cifras de latencia como «tiempo para responder una pregunta corta».
-- **Inicio en frío**: desde el log de inicio del motor vLLM hasta que su endpoint `/health` devolvió `200`, unos 4.5 minutos — dominados por la descarga de los ~15 GB de pesos de Qwen2.5-7B-Instruct desde Hugging Face a la caché efímera del pod. El tiempo de descarga de la imagen no está incluido; no se midió por separado.
+- **Clúster**: un NodePool de Karpenter dedicado (`bench-gpu`, `g6.2xlarge` bajo demanda: 1 NVIDIA L4, 24GB de memoria de GPU, 8 vCPU y 32 GiB de RAM), con el taint `nvidia.com/gpu=true:NoSchedule` y etiquetas para incorporarse a los daemonsets existentes de `nvidia-device-plugin`; se eliminó inmediatamente después de la prueba.
+- **Servidor**: `vllm/vllm-openai:v0.6.4.post1` (publicada el 15 de noviembre de 2024; desde entonces vLLM ha incorporado su motor V1 con caché de prefijos activada por defecto, por lo que debe interpretarse como una instantánea de aquella línea de versiones), modelo `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. Se utilizó una sola precisión, bf16, nativa del modelo, sin cuantización, decodificación especulativa ni caché de prefijos: los valores predeterminados básicos descritos en otras partes de esta página.
+- **Cliente**: un `ThreadPoolExecutor` de Python ejecutado como Job **dentro del clúster**, en otro nodo sin GPU, que enviaba solicitudes a `/v1/chat/completions` mediante el Service ClusterIP `vllm-server`. Sin streaming, con `temperature=0`, `max_tokens=128` y 8 prompts cortos rotativos: preguntas sobre conceptos de Kubernetes que pedían respuestas de 1-2 frases. En la práctica, cada respuesta se acercó al límite de 128 tokens, con una media estable de unos 102 tokens en los tres lotes concurrentes, en lugar de detenerse tras 1-2 frases. Esto permite comparar la tasa de procesamiento entre niveles de concurrencia en condiciones similares, pero conviene tenerlo presente al interpretar la latencia como «tiempo para responder una pregunta corta».
+- **Arranque en frío**: desde el mensaje de inicio del motor vLLM hasta que `/health` devolvió `200`, unos 4.5 minutos, principalmente por la descarga de unos 15 GB de pesos de Qwen2.5-7B-Instruct desde Hugging Face a la caché efímera del Pod. No se incluye el tiempo de descarga de la imagen, que no se midió por separado.
 
-### Reproducir
+### Reproducción
 
 ```yaml
-# NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
+# NodePool (Karpenter) - dedicated, deleted after the run; nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata: { name: bench-gpu }
@@ -330,38 +330,38 @@ spec:
   ports: [{ port: 8000, targetPort: 8000 }]
 ```
 
-Los manifiestos muestran parte del entorno reportado. Omiten la creación del namespace, el EC2NodeClass existente y un script de cliente completo, por lo que no establecen una reproducción completa. nvidia.com/device-plugin.config:default era una condición de esa configuración compartida de DaemonSet, no un requisito universal de etiqueta de programación. La afirmación reportada bajo demanda también necesita la configuración histórica real.
+Los manifiestos muestran una parte del entorno descrito. Omiten la creación del namespace, el EC2NodeClass existente y el script completo del cliente, por lo que no permiten una reproducción completa. nvidia.com/device-plugin.config:default era un requisito de la configuración compartida de aquel DaemonSet, no una etiqueta universal para planificar Pods. La afirmación de que se utilizó capacidad bajo demanda también requiere comprobar la configuración histórica real.
 
 ### Resultados
 
-| Concurrencia | Solicitudes | Tiempo de pared | Latencia p50 / p90 del cliente | Throughput agregado del cliente | Throughput máximo de generación informado por el servidor | Uso de caché KV de GPU |
+| Concurrencia | Solicitudes | Tiempo transcurrido | Latencia p50 / p90 del cliente | Tasa agregada del cliente | Máxima tasa de generación registrada por el servidor | Uso de la caché KV de la GPU |
 |---|---|---|---|---|---|---|
-| 1 (serie) | 10 | ~53.2 s (suma de latencias de solicitudes) | 5.65 s / 7.43 s | ~17-18 tokens/s por solicitud | ~17 tokens/s | 0.1-0.2% |
+| 1 (secuencial) | 10 | ~53.2 s (suma de las latencias de las solicitudes) | 5.65 s / 7.43 s | ~17-18 tokens/s por solicitud | ~17 tokens/s | 0.1-0.2% |
 | 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65-66 tokens/s | 0.4-0.7% |
 | 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123-129 tokens/s | 0.8-1.4% |
 | 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | hasta 243 tokens/s | 1.5-2.6% |
 
-El throughput agregado del cliente es el recuento de tokens de finalización dividido por el tiempo de pared medido. El throughput de generación promedio del servidor es una media de intervalo; su mayor valor registrado no es un «pico verdadero» instantáneo. Las ventanas de tiempo, la contabilidad de tokens y los límites HTTP difieren, por lo que no son métricas directamente intercambiables.
+La tasa agregada del cliente se calcula dividiendo el número de tokens generados en las respuestas por el tiempo transcurrido medido. Avg generation throughput del servidor es una media por intervalo; el mayor valor de sus registros no es un «pico real» instantáneo. Las ventanas temporales, la contabilidad de tokens y los límites de medición HTTP son distintos, por lo que estas métricas no son intercambiables.
 
 ### Interpretación
 
-El p50 reportado aumentó de 5.65s a 7.52s, aproximadamente un 33.1%. El throughput agregado con concurrencia 4→8→16 fue 58.67→109.04→208.08tokens/s. Distinga esta observación de batching de la prueba causal del cuello de botella subyacente.
+El p50 publicado aumentó de 5.65s a 7.52s, aproximadamente un 33.1%. La tasa agregada con concurrencias 4→8→16 fue de 58.67→109.04→208.08tokens/s. Distinga esta observación del procesamiento por lotes de una demostración causal del cuello de botella.
 
-Dividir aproximadamente 300GB/s de ancho de banda entre 15.2GB de pesos ofrece un roofline idealizado cercano a 20 tokens/s. Esta auditoría no tiene evidencia de profiler que mida directamente la ejecución de ancho de banda o FLOP, por lo que no establece «definitivamente limitado por memoria» ni «solicitudes adicionales casi gratuitas». La ocupación de caché KV y el uso total de VRAM son cantidades diferentes.
+Dividir unos 300GB/s de ancho de banda entre 15.2GB de pesos da un límite teórico idealizado cercano a 20 tokens/s. Esta auditoría no dispone de mediciones de un profiler que demuestren directamente el ancho de banda utilizado o la ejecución de FLOP. Por ello, no demuestra que el proceso esté «definitivamente limitado por memoria» ni que las solicitudes adicionales sean «casi gratuitas». La ocupación de la caché KV y el uso total de VRAM son magnitudes distintas.
 
-### Advertencias
+### Limitaciones
 
-Esta es una única ejecución (n=1) en un modelo, una precisión (bf16), un tipo de GPU y una longitud de contexto — trátela como un punto de datos calibrado, no como una afirmación general de rendimiento vLLM/L4. El cliente se ejecutó dentro del clúster (un nodo independiente sin GPU), por lo que la latencia de red refleja saltos intra-clúster, no un llamador externo. La latencia aquí es el tiempo de respuesta HTTP completo de extremo a extremo, no el tiempo hasta el primer token (TTFT) — no se probó streaming. No se ejercitaron la caché de prefijos, la decodificación especulativa, FP8 y el paralelismo tensorial multi-GPU (todos descritos anteriormente en esta página). La reproducción completa necesita los artefactos de ejecución y detalles del entorno que faltan; no extrapole estos números a otro tamaño de modelo, GPU o longitud de prompt.
+Se trata de una sola ejecución (n=1), con un modelo, una precisión (bf16), un tipo de GPU y una longitud de contexto. Interprétela como un único punto de datos calibrado, no como una afirmación general sobre el rendimiento de vLLM o L4. El cliente se ejecutó dentro del clúster, en otro nodo sin GPU, por lo que la latencia de red refleja saltos internos del clúster, no el acceso de un cliente externo. La latencia medida es el tiempo completo de respuesta HTTP de extremo a extremo, no el tiempo hasta el primer token (TTFT); no se probó streaming. No se probaron la caché de prefijos, la decodificación especulativa, FP8 ni el paralelismo tensorial entre varias GPU, descritos antes en esta página. La reproducción completa necesita los artefactos de ejecución y los detalles del entorno que faltan; no extrapole estas cifras a otros tamaños de modelo, GPU o longitudes de prompt.
 
-## Monitorización y logging
+## Monitorización y registros
 
-![Métricas reales en el puerto API 8000 y límites independientes de logging/acceso.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
+![Métricas reales en el puerto 8000 de la API, con controles de acceso y límites independientes para los registros.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-5.html)
 
-### Métricas y logs
+### Métricas y registros
 
-El endpoint /metrics predeterminado usa el puerto 8000 de la API. No invente un puerto 8001 independiente ni --enable-metrics=true. Haga coincidir etiquetas de Service, puertos con nombre y selección de namespace en ServiceMonitor.
+El endpoint /metrics utiliza por defecto el puerto 8000 de la API. No invente un puerto 8001 aparte ni la opción --enable-metrics=true. Las etiquetas del Service, los puertos con nombre y la selección de namespaces deben coincidir con los de ServiceMonitor.
 
 ```promql
 # End-to-end p95 by model
@@ -372,37 +372,37 @@ sum by (model_name) (rate(vllm:generation_tokens_total[5m]))
 sum by (model_name) (vllm:num_requests_waiting)
 ```
 
-vllm:kv_cache_usage_perc es una proporción donde 1 significa 100%, no bytes totales de memoria GPU. Observe errores/cancelaciones de gateway junto con contadores de éxito, y no denomine los períodos inactivos sanos como una interrupción de bajo throughput. Verifique los nombres/etiquetas reales de endpoints. Distinga el framing CRI de los logs de aplicación y evite el logging indiscriminado de prompts/salidas/tokens.
+vllm:kv_cache_usage_perc es una proporción en la que 1 representa el 100%; no expresa los bytes totales de memoria de GPU. Observe los errores y las cancelaciones del gateway junto con los contadores de éxito, y no interprete un periodo de inactividad normal como un fallo por baja tasa de procesamiento. Verifique los nombres y las etiquetas reales de los endpoints. Distinga el formato de encapsulado de CRI de los registros de la aplicación y evite registrar indiscriminadamente prompts, respuestas o tokens.
 
 ## Autoescalado
 
-![Métricas validadas, un propietario de escalado de Pod, réplicas independientes y un propietario independiente de capacidad de nodos.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-10.png)
+![Métricas validadas, un único responsable del escalado de Pods, réplicas independientes y un responsable distinto de la capacidad de los nodos.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-10.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-10.html)
 
 ### Autoescalado y disponibilidad
 
-El escalado de réplicas independientes con HPA/KEDA difiere del escalado del grupo de workers de un modelo fragmentado. Aumentar las réplicas de StatefulSet no reconfigura automáticamente TP/PP. Valide las señales de solicitudes/cola de adaptadores y no use HPA de utilización de CPU sin solicitudes de CPU. Evite propiedad competitiva de Karpenter/Cluster Autoscaler sobre la misma capacidad.
+Escalar réplicas independientes con HPA/KEDA es distinto de escalar el grupo de procesos de trabajo de un modelo particionado. Aumentar las réplicas de un StatefulSet no reconfigura automáticamente TP/PP. Valide las señales de solicitudes y colas de los adaptadores; no utilice HPA basado en utilización de CPU sin configurar las solicitudes de CPU. Evite que Karpenter y Cluster Autoscaler compitan por gestionar la misma capacidad.
 
-Los PDB restringen algunas expulsiones voluntarias, no todos los fallos. Las réplicas independientes pueden abarcar AZ; colocar un grupo TP/PP con mucha comunicación entre AZ tiene implicaciones independientes de latencia/coste. Valide carga de modelos, warmup, drenaje, streams en vuelo y GPU de reserva antes de afirmar actualizaciones sin interrupciones.
+Los PDB restringen determinadas expulsiones voluntarias, no todos los fallos. Las réplicas independientes pueden distribuirse entre zonas de disponibilidad. En cambio, repartir entre zonas un grupo TP/PP que intercambia muchos datos tiene sus propias consecuencias de latencia y coste. Valide la carga del modelo, el calentamiento, el drenaje, los flujos en curso y las GPU de reserva antes de afirmar que las actualizaciones no causan interrupciones.
 
 ## Configuración de seguridad
 
---api-key no protege todos los endpoints. El middleware de esta versión protege los prefijos /v1, /v2, /inference y /cohere; /invocations, /metrics y algunos endpoints operativos necesitan protección adicional. Un gateway autenticado debe permitir solo las rutas/métodos necesarios; restrinja la comunicación distribuida a redes de confianza. CORS no es autenticación.
+--api-key no protege todos los endpoints. El middleware de esta versión protege los prefijos /v1, /v2, /inference y /cohere; /invocations, /metrics y algunos endpoints operativos necesitan protección adicional. Un gateway autenticado debe permitir únicamente las rutas y los métodos necesarios. Restrinja la comunicación distribuida a redes de confianza. CORS no es autenticación.
 
-LoRA en tiempo de ejecución, código de modelo remoto y URL multimodales introducen cada uno límites de confianza/permisos/SSRF. El bloqueo mediante regex de «ignore instructions» no evita toda inyección de prompts ni garantiza la eliminación de PII. Aplique permisos de herramientas/datos independientemente de la salida del modelo.
+LoRA durante la ejecución, el código remoto de los modelos y las URL multimodales introducen límites de confianza, permisos y protección frente a SSRF. Bloquear con expresiones regulares «ignore instructions» no evita toda inyección de prompts ni garantiza eliminar información personal identificable (PII). Aplique permisos de herramientas y datos de forma independiente a la salida del modelo.
 
-Proporcione secretos como archivos y ubique correctamente los campos securityContext de Pod/contenedor. Haga coincidir selectores de NetworkPolicy, DNS, dirección de scraping y tráfico interno con la configuración real. Las anotaciones de Pod no pueden habilitar la auditoría de API-server; no registre cuerpos RequestResponse de Secret. La auditoría de control plane de EKS y los logs de acceso de aplicación son independientes.
+Proporcione los secretos como archivos y sitúe correctamente los campos securityContext de los Pods y contenedores. Ajuste los selectores de NetworkPolicy, el DNS, la dirección de recopilación de métricas y el tráfico interno a la configuración real. Las anotaciones de un Pod no pueden activar la auditoría del servidor de API; no registre cuerpos RequestResponse de Secrets. La auditoría del plano de control de EKS y los registros de acceso de la aplicación son independientes.
 
-## Integración de cliente
+## Integración del cliente
 
-![Las listas de permitidos del gateway autenticado y el acceso independiente de operadores protegen los endpoints internos de vLLM.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
+![Las listas de rutas permitidas del gateway autenticado y el acceso separado de operadores protegen los endpoints internos de vLLM.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-7.html)
 
-### Solicitud de cliente
+### Solicitud del cliente
 
-Después de validar la implementación/disponibilidad, un desarrollador autorizado puede usar kubectl port-forward -n ml-inference service/vllm-demo 8000:8000. Mantenga su vinculación localhost predeterminada. Este ejemplo local no sustituye la autenticación de gateway de producción.
+Tras validar el despliegue y la disponibilidad, un desarrollador autorizado puede ejecutar kubectl port-forward -n ml-inference service/vllm-demo 8000:8000. Mantenga la vinculación predeterminada a localhost. Este ejemplo local no sustituye la autenticación mediante un gateway de producción.
 
 ```python
 import json
@@ -426,15 +426,15 @@ with urllib.request.urlopen(request, timeout=60) as response:
 print(result["choices"][0]["message"]["content"])
 ```
 
-El modelo de la solicitud debe coincidir con served-model-name o /v1/models. Los clientes de producción necesitan credenciales de gateway basadas en archivos, además de manejo de timeout/error/stream. Un campo model del cuerpo JSON no es un encabezado HTTP de modelo, por lo que el enrutamiento por encabezado no lo inspecciona automáticamente.
+El modelo de la solicitud debe coincidir con served-model-name o con /v1/models. Los clientes de producción necesitan credenciales del gateway leídas de archivos, además de gestionar tiempos de espera, errores y streaming. El campo model del cuerpo JSON no es una cabecera HTTP de modelo; el enrutamiento por cabecera no inspecciona ese campo automáticamente.
 
-## Alcance de validación
+## Alcance de la validación
 
-Se inspeccionó la fuente fijada para argumentos de CLI, métricas, autenticación y metadatos de artefactos. Los esquemas de Kubernetes/fixtures HTTP locales no validan la ejecución real de parser/kernel/GPU de vLLM. Esta auditoría no descargó pesos de modelos ni creó servidores GPU/recursos de nube.
+Se inspeccionó el código fuente de la versión fijada para comprobar los argumentos de la CLI, las métricas, la autenticación y los metadatos de los artefactos. Los esquemas de Kubernetes y las pruebas locales con datos HTTP preparados no validan la ejecución real del parser, los kernels o las GPU de vLLM. Esta auditoría no descargó pesos de modelos ni creó servidores con GPU o recursos en la nube.
 
 ## Referencias
 
-- [Versión vLLM 0.29.0 (línea base de revisión)](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [Versión vLLM 0.29.0 (base de la revisión)](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
 - [Versión vLLM 0.31.0 (última comprobada)](https://github.com/vllm-project/vllm/releases/tag/v0.31.0)
 - [Paralelismo y escalado](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md)
 - [Límites de seguridad](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md)
@@ -444,4 +444,4 @@ Se inspeccionó la fuente fijada para argumentos de CLI, métricas, autenticaci�
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario del tema](../quizzes/ai-ml/04-vllm-deployment-quiz.md).
+Para comprobar lo aprendido en este capítulo, resuelva el [cuestionario del tema](../quizzes/ai-ml/04-vllm-deployment-quiz.md).

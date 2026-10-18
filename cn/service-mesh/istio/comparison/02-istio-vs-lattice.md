@@ -1,6 +1,6 @@
 # Istio 与 VPC Lattice
 
-> **最后更新**：September 11, 2026
+> **最后审阅**：2026 年 9 月 11 日
 > **Istio API 基线**：1.31.0；必须另行检查 Kubernetes 兼容性
 
 请比较应用程序的通信、身份、协议和运维要求。Istio 与 VPC Lattice 具有不同的部署和安全边界；功能对照表或不受支持的“零开销”说法不能决定正确的架构。
@@ -692,7 +692,7 @@ list-services 不接受 service-network filter。network analysis tool 检查其
 
 ### 当前带日期的服务定价示例
 
-在 September 11, 2026 检查的官方 US East (N. Virginia) service-pricing example 使用每 service-hour $0.025、每处理 GB $0.025，以及在有文档说明的每 service hourly allowance 后的 request/connection 费用。service-network VPC association 和 service-network endpoint 被列为无额外费用。resource configuration/resource endpoint 有**不同的**定价模型；其 $0.01/GB tier 不是 service data-processing rate。不要将旧的单独 service-network-hour fee 添加到此 service-pricing model。
+官方于 2026 年 9 月 11 日核查的美国东部（北弗吉尼亚）服务定价示例使用每 service-hour $0.025、每处理 GB $0.025，以及在有文档说明的每 service hourly allowance 后的 request/connection 费用。service-network VPC association 和 service-network endpoint 被列为无额外费用。resource configuration/resource endpoint 有**不同的**定价模型；其 $0.01/GB tier 不是 service data-processing rate。不要将旧的单独 service-network-hour fee 添加到此 service-pricing model。
 
 对于明确假设的 HTTP/HTTPS service workload：
 

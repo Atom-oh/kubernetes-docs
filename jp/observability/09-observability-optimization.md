@@ -2,7 +2,7 @@
 
 > **検証済みのサンプルバージョン**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0 · Alertmanager 0.34.0 · OpenCost 1.121.2/chart 2.5.31
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 インシデント時の問い、収集品質、計測されたコストを中心に Observability を最適化します。ノード数だけでは、取り込み量、クエリ負荷、保持コスト、必要な人員を予測できません。この章では、[完全な設定例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization)を使用し、クラスターのインストールについてはデプロイメントガイドにリンクします。ネイティブテストでは合成データを使用します。これらは本番のキャパシティベンチマークではありません。
 

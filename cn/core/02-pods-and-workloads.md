@@ -1,7 +1,7 @@
 # Kubernetes Pod 和工作负载
 
 > **支持的版本**：Kubernetes 1.35、1.36、1.37
-> **最近更新**：October 12, 2026
+> **最近更新**：2026 年 10 月 12 日
 
 本文详细介绍 Pod（Kubernetes 中的基本执行单元）以及用于管理 Pod 的各种工作负载资源。我们将从 Pod 的概念入手，介绍包括 Deployment、StatefulSet、DaemonSet 等在内的各种工作负载资源的特征和用例。
 
@@ -1460,7 +1460,7 @@ spec:
               claimName: backup-pvc
 ```
 
-CronJob 的调度时间是近似值：Job 必须能够容忍重复执行。`Forbid` 仅适用于同一 CronJob 创建的 Job。历史记录限制会删除 Job/Pod 对象，不会删除备份文件。备份示例在 UTC 时间 02:00 运行，并且需要 `backup-pvc`、`postgres-secret` 和可访问的数据库；`pg_dump` 的主版本必须不低于服务器主版本。如果 `PGDATABASE` 与 `PGUSER` 不同，请指定 `PGDATABASE`。请单独测试实际恢复流程。
+CronJob 的调度时间是近似值：Job 必须能够容忍重复执行。`Forbid` 仅适用于同一 CronJob 创建的 Job。历史记录限制会删除 Job/Pod 对象，不会删除备份文件。备份示例在 UTC 时间 02:00 运行，并且需要 `backup-pvc`、`postgres-secret` 和可访问的数据库；`pg_dump` 的主版本必须不低于服务器主版本。如果 `PGDATABASE` 与 `PGUSER` 不同，请指定 PGDATABASE。请单独测试实际恢复流程。
 
 ## 总结
 

@@ -1,13 +1,13 @@
-# Sandbox de agentes en EKS: entornos de ejecución aislados y con estado para agentes de IA
+# Agent Sandbox en EKS: entornos de ejecución aislados y con estado para agentes de IA
 
 > **Versiones compatibles**: Agent Sandbox v1.0.6 (API `v1beta1`), SDK de Python `k8s-agent-sandbox` 1.0.6, Karpenter v1.13.0+ para `cpuOptions.nestedVirtualization`
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
-[Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox) (`kubernetes-sigs/agent-sandbox`) es un subproyecto de Kubernetes SIG Apps que agrega un recurso personalizado `Sandbox` y un controlador para **cargas de trabajo aisladas, con estado y de instancia única**. Un Sandbox es un único Pod con una identidad estable, almacenamiento persistente opcional y controles de ciclo de vida (expiración, suspensión y reanudación) que Deployments y StatefulSets no modelan directamente. Los consumidores habituales son agentes de IA que ejecutan código generado por LLM, ejecuciones de aprendizaje por refuerzo (RL), notebooks y entornos de desarrollo por usuario.
+[Agent Sandbox](https://github.com/kubernetes-sigs/agent-sandbox) (`kubernetes-sigs/agent-sandbox`) es un subproyecto de Kubernetes SIG Apps que incorpora un recurso personalizado `Sandbox` y un controlador para **cargas de trabajo aisladas, con estado y de instancia única**. Cada Sandbox consta de un Pod con identidad estable, almacenamiento persistente opcional y controles de ciclo de vida: caducidad, suspensión y reanudación. Deployments y StatefulSets no modelan directamente estos controles. Sus usuarios habituales son agentes de IA que ejecutan código generado por LLM, ejecuciones de aprendizaje por refuerzo (RL), cuadernos interactivos y entornos de desarrollo individuales.
 
-Este capítulo explica la API tal como existe en la etiqueta `v1.0.6` y qué cambia al ejecutarla en Amazon EKS: opciones de aislamiento del entorno de ejecución, el comportamiento de NetworkPolicy predeterminada con Amazon VPC CNI, la exposición privada del router y IAM.
+Este capítulo describe la API de la etiqueta `v1.0.6` y las particularidades de ejecutarla en Amazon EKS: opciones de aislamiento, comportamiento de la NetworkPolicy predeterminada con Amazon VPC CNI, acceso privado al router y permisos IAM.
 
-> Los datos de este capítulo provienen del código fuente upstream en la etiqueta `v1.0.6` (tipos de CRD, controladores, notas de la versión y modelo de amenazas), la documentación de AWS y el código fuente de Karpenter. Los manifiestos no se ejecutaron en un clúster de EKS para este capítulo; considérelos puntos de partida y pruébelos con su propia configuración de nodos y red.
+> Los datos de este capítulo proceden del código fuente del proyecto en la etiqueta `v1.0.6` —tipos de CRD, controladores, notas de la versión y modelo de amenazas—, de la documentación de AWS y del código de Karpenter. Los manifiestos no se ejecutaron en un clúster de EKS durante la preparación del capítulo. Úselos como punto de partida y pruébelos con su propia configuración de nodos y red.
 
 ---
 
@@ -22,21 +22,21 @@ Este capítulo explica la API tal como existe en la etiqueta `v1.0.6` y qué cam
 | Instancias precalentadas que se asignan bajo demanda | No | No | `SandboxWarmPool` + `SandboxClaim` |
 | Valores predeterminados seguros para código no confiable | No | No | `SandboxTemplate` (sin token de SA, NetworkPolicy administrada) |
 
-Una plataforma de agentes suele necesitar miles de estos entornos de corta duración o inactivos la mayor parte del tiempo, cada uno propiedad de una sesión o un usuario. Modelar cada uno como un StatefulSet de tamaño 1 más un Service y un PVC funciona, pero deja la expiración, los grupos de instancias precalentadas, la latencia de las solicitudes y los valores predeterminados de aislamiento a cargo de código personalizado.
+Una plataforma de agentes suele necesitar miles de entornos de corta duración o que permanecen inactivos la mayor parte del tiempo. Cada uno pertenece a una sesión o a un usuario. Puede modelarlos mediante un StatefulSet de una réplica, un Service y un PVC, pero deberá implementar por su cuenta la caducidad, los grupos de instancias precalentadas, la latencia de asignación y los valores predeterminados de aislamiento.
 
-### Estado del proyecto (October 16, 2026)
+### Estado del proyecto (16 de octubre de 2026)
 
 | Elemento | Valor |
 |------|-------|
-| Creación del repositorio | August 12, 2025 |
-| v1.0.0 | August 28, 2026: se eliminaron `v1alpha1` y el webhook de conversión; todos los CRD solo sirven `v1beta1` |
-| Última versión | v1.0.7 (October 15, 2026); desde v1.0.0 se han publicado versiones de parche cada semana. Este capítulo se basa en v1.0.6 |
+| Creación del repositorio | 12 de agosto de 2025 |
+| v1.0.0 | 28 de agosto de 2026: se eliminaron `v1alpha1` y el webhook de conversión; todos los CRD ofrecen únicamente `v1beta1` |
+| Última versión | v1.0.7 (15 de octubre de 2026); desde v1.0.0 se han publicado versiones de parche cada semana. Este capítulo se basa en v1.0.6 |
 | Grupos de API | `agents.x-k8s.io/v1beta1` (núcleo), `extensions.agents.x-k8s.io/v1beta1` (extensiones) |
 | Namespace del controlador | `agent-sandbox-system` |
 | SDK | Python (`k8s-agent-sandbox`, Python ≥ 3.11), Go (`sigs.k8s.io/agent-sandbox/clients/go/sandbox`), TypeScript |
 | Aislamiento | Delegado al `RuntimeClass` del Pod (por ejemplo, gVisor o Kata Containers) |
 
-La versión del proyecto es 1.0, pero la versión de su API sigue siendo `v1beta1`. Fije las versiones y lea la sección «Breaking Changes / Action Required» de cada versión; varias versiones de parche (v1.0.2, v1.0.5, v1.0.6 y v1.0.7) incluyen acciones necesarias.
+El proyecto está en la versión 1.0, pero su API sigue siendo `v1beta1`. Fije una versión concreta y lea su sección «Breaking Changes / Action Required» para conocer los cambios incompatibles y las acciones necesarias. Varias versiones de parche —v1.0.2, v1.0.5, v1.0.6 y v1.0.7— incluyen estas acciones.
 
 ---
 
@@ -70,14 +70,14 @@ flowchart LR
 | Tipo | Grupo | Nombre corto | Función |
 |------|-------|-----------|------|
 | `Sandbox` | `agents.x-k8s.io` | `sandbox` | Un Pod con identidad estable, PVC opcionales y un Service headless, ciclo de vida y suspensión |
-| `SandboxTemplate` | `extensions.agents.x-k8s.io` | `sandboxtemplate` | Plano reutilizable más políticas de la plataforma (NetworkPolicy y reglas de inyección de variables de entorno y volúmenes) |
-| `SandboxWarmPool` | `extensions.agents.x-k8s.io` | `swp` | Mantiene N Sandboxes sin reclamar, listos a partir de una plantilla; incluye un subrecurso de escalado para HPA |
-| `SandboxClaim` | `extensions.agents.x-k8s.io` | `sandboxclaim` | Solicitud de un Sandbox de un grupo de instancias precalentadas; pasa a ser propietario del Sandbox tras adoptarlo |
+| `SandboxTemplate` | `extensions.agents.x-k8s.io` | `sandboxtemplate` | Definición reutilizable y políticas de la plataforma (NetworkPolicy y reglas de inyección de variables de entorno y volúmenes) |
+| `SandboxWarmPool` | `extensions.agents.x-k8s.io` | `swp` | Mantiene N Sandboxes preparados a partir de una plantilla y pendientes de asignación; incluye un subrecurso de escalado para HPA |
+| `SandboxClaim` | `extensions.agents.x-k8s.io` | `sandboxclaim` | Solicitud de un Sandbox de un grupo de instancias precalentadas; asume la propiedad del Sandbox después de adoptarlo |
 
 Componentes auxiliares:
 
-- **sandbox-router** (opcional): proxy inverso HTTP en Go (`registry.k8s.io/agent-sandbox/sandbox-router-go`) que enruta mediante encabezados `X-Sandbox-ID` o, con `--path-routing-prefix`, mediante la ruta URL. Desde v1.0.2, sus manifiestos se encuentran en `agent-sandbox-system` y admite tokens limitados por ámbito Ed25519 (v2), vinculados al UID del Sandbox, el puerto, el método y la ruta.
-- **sandboxd**: daemon de ejecución dentro del Sandbox (sistema de archivos REST en `:8080`, `ProcessService` gRPC en `:9090`) que los SDK pueden usar para ejecutar comandos, administrar archivos y gestionar procesos interactivos.
+- **sandbox-router** (opcional): proxy inverso HTTP en Go (`registry.k8s.io/agent-sandbox/sandbox-router-go`) que dirige el tráfico mediante los encabezados `X-Sandbox-ID` o, con `--path-routing-prefix`, mediante la ruta URL. Desde v1.0.2, sus manifiestos se encuentran en `agent-sandbox-system` y admite tokens Ed25519 (v2) de alcance limitado, vinculados al UID del Sandbox, el puerto, el método y la ruta.
+- **sandboxd**: daemon de ejecución dentro del Sandbox (API REST para el sistema de archivos en `:8080`, `ProcessService` gRPC en `:9090`) que los SDK pueden usar para ejecutar comandos, administrar archivos y gestionar procesos interactivos.
 
 ---
 
@@ -142,7 +142,7 @@ Las condiciones de estado siguen las convenciones de Gateway API:
 
 `status` también contiene `serviceFQDN`, `podIPs` y `nodeName`.
 
-> **Acción necesaria en v1.0.6**: ahora una regla CEL rechaza los Sandbox cuyo nombre supera los 63 caracteres cuando `spec.service` es `true` (el nombre de un Service es una etiqueta DNS-1035). Los objetos existentes no están exentos, por lo que un Sandbox de ese tipo falla en cada actualización, incluidas las actualizaciones de estado, hasta que se desactive `spec.service` o se vuelva a crear con un nombre más corto.
+> **Acción necesaria en v1.0.6**: una regla CEL rechaza ahora los Sandbox con nombres de más de 63 caracteres cuando `spec.service` es `true`, porque el nombre de un Service debe ser una etiqueta DNS-1035. La regla también se aplica a los objetos existentes. Todas sus actualizaciones, incluidas las de estado, fallarán hasta que deje sin establecer `spec.service` o vuelva a crear el Sandbox con un nombre más corto.
 
 ---
 
@@ -183,12 +183,12 @@ spec:
 Valores predeterminados seguros que se aplican a los Sandbox creados mediante una plantilla (a través de un grupo de instancias precalentadas o una solicitud):
 
 - Si el PodSpec no establece `automountServiceAccountToken`, el controlador lo establece en `false`.
-- Con `networkPolicyManagement: Managed` (el valor predeterminado), el controlador crea **una NetworkPolicy compartida por plantilla**. Editar sus reglas cambia la aplicación de políticas para todos los Sandbox existentes y futuros de esa plantilla.
-- Las solicitudes no pueden inyectar variables de entorno ni plantillas de volúmenes, a menos que la plantilla lo permita.
+- Con `networkPolicyManagement: Managed` (el valor predeterminado), el controlador crea **una NetworkPolicy compartida por plantilla**. Editar sus reglas cambia las restricciones que se aplican para todos los Sandbox existentes y futuros de esa plantilla.
+- Los SandboxClaim no pueden inyectar variables de entorno ni plantillas de volúmenes, a menos que la plantilla lo permita.
 
 Un `Sandbox` independiente no recibe ninguno de estos valores predeterminados. Use controles de admisión (ValidatingAdmissionPolicy, Kyverno o Gatekeeper) si los usuarios pueden crear objetos `Sandbox` directamente, o concédales permisos RBAC solo para `SandboxClaim`.
 
-### SandboxWarmPool: capacidad precargada
+### SandboxWarmPool: capacidad preparada de antemano
 
 ```yaml
 apiVersion: extensions.agents.x-k8s.io/v1beta1
@@ -204,7 +204,7 @@ spec:
     type: OnReplenish          # default; Recreate replaces stale unclaimed Sandboxes at once
 ```
 
-Cuando cambia el plano de la plantilla, los Sandbox sin reclamar quedan obsoletos. `OnReplenish` los reemplaza solo cuando se reclaman o se eliminan; `Recreate` los elimina de inmediato. Los Sandbox que ya se reclamaron nunca se modifican, porque la propiedad pasa a la solicitud.
+Cuando cambia la definición de la plantilla, los Sandbox todavía sin asignar quedan desactualizados. `OnReplenish` los reemplaza únicamente cuando se reclaman o se eliminan; `Recreate` los elimina de inmediato. Los Sandbox ya asignados permanecen intactos, porque su propiedad ha pasado al SandboxClaim.
 
 ### SandboxClaim: lo que solicita una sesión de agente
 
@@ -232,25 +232,25 @@ spec:
 
 ## 5. Aislamiento en EKS: elegir un RuntimeClass
 
-Agent Sandbox es un orquestador. Su modelo de amenazas indica que la fuga del contenedor se mitiga ejecutando los Pod con un entorno de ejecución más robusto seleccionado mediante `runtimeClassName`, que conviene definir en un `SandboxTemplate` para impedir que los usuarios lo eliminen. Con el `runc` predeterminado, el código generado por LLM comparte el kernel del nodo con todos los demás Pod del nodo.
+Agent Sandbox es un orquestador. Su modelo de amenazas indica que un entorno de ejecución más robusto, seleccionado mediante `runtimeClassName`, mitiga los escapes de contenedores. Conviene fijarlo en un `SandboxTemplate` para impedir que los usuarios lo eliminen. Con el entorno predeterminado `runc`, el código generado por LLM comparte el kernel del nodo con todos los demás Pods de ese nodo.
 
 | Opción en EKS | Límite de aislamiento | Requisitos del nodo | Notas |
 |---------------|-------------------|-------------------|-------|
 | `runc` (valor predeterminado) | Namespaces y cgroups de Linux | Cualquiera | No es suficiente para código no confiable en nodos compartidos |
-| gVisor (`runsc`) | Kernel de aplicación en espacio de usuario | Instalar `runsc` y `containerd-shim-runsc-v1`, registrar el controlador `runsc` en containerd | Funciona en instancias virtualizadas comunes; algunas llamadas al sistema y cargas de trabajo se comportan de manera diferente, así que pruébelas |
+| gVisor (`runsc`) | Kernel de aplicación en espacio de usuario | Instalar `runsc` y `containerd-shim-runsc-v1`, registrar el manejador `runsc` en containerd | Funciona en instancias virtualizadas comunes; algunas llamadas al sistema y cargas de trabajo se comportan de manera diferente, así que pruébelas |
 | Kata Containers | Máquina virtual ligera por Pod | Virtualización de hardware: instancias bare metal (`*.metal`) o instancias con virtualización anidada | El límite más robusto de estas opciones; mayor sobrecarga por Pod |
-| Nodos dedicados por tenant | Instancia EC2 | Taints, tolerations y selectores de nodo | Se puede combinar con gVisor o Kata |
+| Nodos dedicados por cliente | Instancia EC2 | Taints, tolerancias y selectores de nodo | Se puede combinar con gVisor o Kata |
 
 Puntos específicos de EKS:
 
 - **EKS Auto Mode**: AWS elige la AMI y se encarga del entorno de ejecución del contenedor; no se puede acceder a las instancias por SSH, así que no es posible agregar `runsc` o Kata allí. Use grupos de nodos administrados, nodos autoadministrados o Karpenter con una AMI personalizada o datos de usuario para los grupos de nodos de Sandbox.
-- **gVisor**: instale los binarios en una AMI personalizada o durante el arranque y registre el controlador del entorno de ejecución. En AL2023, `NodeConfig` de nodeadm acepta TOML insertado en `spec.containerd.config`. containerd 1.x usa la versión de configuración 2 (`plugins."io.containerd.grpc.v1.cri"`), mientras que 2.x usa la versión 3 (`plugins."io.containerd.cri.v1.runtime"`), así que compruebe `containerd --version` en su AMI antes de escribir la sección del entorno de ejecución.
+- **gVisor**: instale los binarios en una AMI personalizada o durante el arranque y registre el manejador del entorno de ejecución. En AL2023, `NodeConfig` de nodeadm acepta configuración TOML incluida directamente en `spec.containerd.config`. containerd 1.x usa la versión de configuración 2 (`plugins."io.containerd.grpc.v1.cri"`), mientras que 2.x usa la versión 3 (`plugins."io.containerd.cri.v1.runtime"`), así que compruebe `containerd --version` en su AMI antes de escribir la sección del entorno de ejecución.
 - **Kata y virtualización anidada**: EC2 admite virtualización anidada (KVM o Hyper-V como L1) en M7i, M7i-flex, M8i, M8id, M8i-flex, C7i, C7i-flex, C8i, C8id, C8i-flex, R7i, R7iz, R8i, R8id, R8i-flex, X8i, I7i e I7ie, habilitada con la opción de CPU `NestedVirtualization=enabled`. AWS recomienda instancias bare metal para cargas de trabajo que requieren alto rendimiento.
   - Karpenter v1.13.0 y versiones posteriores exponen `spec.cpuOptions.nestedVirtualization: enabled` en `EC2NodeClass` y filtran los tipos de instancia para incluir solo los que indican `nested-virtualization`.
-  - La solicitud de containers-roadmap ([#2784](https://github.com/aws/containers-roadmap/issues/2784)) para grupos de nodos administrados se cerró como completada el October 12, 2026, después de que usuarios informaran que se respeta la configuración de la plantilla de lanzamiento. Confírmelo en un nodo de prueba (`grep -cE 'vmx|svm' /proc/cpuinfo`) antes de depender de ello.
+  - La solicitud de containers-roadmap ([#2784](https://github.com/aws/containers-roadmap/issues/2784)) para grupos de nodos administrados se cerró como completada el 12 de octubre de 2026, después de que usuarios informaran que se respeta la configuración de la plantilla de lanzamiento. Verifique la configuración en un nodo de prueba (`grep -cE 'vmx|svm' /proc/cpuinfo`) antes de utilizarla como requisito operativo.
 - **Fargate** ejecuta cada Pod en su propia máquina virtual, pero VPC CNI no puede aplicar políticas de red a los Pod de Fargate, por lo que allí no se aplicaría la NetworkPolicy administrada de la plantilla. Revise las consideraciones de Fargate antes de elegirlo.
 
-Asocie RuntimeClass a los nodos preparados para que un Pod de Sandbox nunca pueda ejecutarse en un nodo sin el controlador:
+Asocie el RuntimeClass a los nodos preparados para impedir que un Pod de Sandbox se programe en un nodo sin el manejador correspondiente:
 
 ```yaml
 apiVersion: node.k8s.io/v1
@@ -282,30 +282,30 @@ spec:
 
 ## 6. Redes en EKS
 
-### Qué hace la política predeterminada administrada
+### Qué restricciones aplica la política predeterminada administrada
 
 Cuando una plantilla no establece `networkPolicy` y mantiene el modo `Managed`, el controlador genera esta política (a partir de `buildDefaultNetworkPolicySpec` en v1.0.6):
 
 | Dirección | Regla |
 |-----------|------|
-| Ingress | Solo desde Pod con la etiqueta `app: sandbox-router` en el namespace `agent-sandbox-system` |
-| Egress (IPv4) | `0.0.0.0/0`, excepto `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16` |
-| Egress (IPv6) | `::/0`, excepto `fc00::/7`, `fe80::/10` |
-| DNS | No permitido: CoreDNS tiene una IP privada y el comentario del código indica que esto es intencional para evitar la detección de servicios internos |
+| Entrada | Solo desde Pods con la etiqueta `app: sandbox-router` en el namespace `agent-sandbox-system` |
+| Salida (IPv4) | `0.0.0.0/0`, excepto `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16` |
+| Salida (IPv6) | `::/0`, excepto `fc00::/7`, `fe80::/10` |
+| DNS | No permitido: CoreDNS tiene una IP privada y el comentario del código indica que esto es intencional para evitar el descubrimiento de servicios internos |
 
 Consecuencias en EKS:
 
-1. **La aplicación requiere un motor de políticas.** Habilite la política de red en el complemento Amazon VPC CNI (versión 1.21.0 o posterior, `enableNetworkPolicy: "true"`). En Auto Mode, establezca `enable-network-policy-controller: "true"` en el ConfigMap `amazon-vpc-cni` de `kube-system`; la configuración `networkPolicy` de NodeClass es opcional. Sin aplicación, el objeto NetworkPolicy existe, pero no bloquea nada.
-2. **Los nombres de host públicos no se resuelven de manera predeterminada.** Los agentes que ejecutan `pip install` o llaman a API públicas por nombre fallarán hasta que se permita DNS o se proporcione al Pod un resolver diferente.
-3. **La lista de rangos privados no corresponde al plan de direcciones de su VPC.** Compruebe qué destinos siguen siendo accesibles con el valor predeterminado:
+1. **Hacer cumplir estas políticas requiere un motor de políticas.** Habilite la política de red en el complemento Amazon VPC CNI (versión 1.21.0 o posterior, `enableNetworkPolicy: "true"`). En Auto Mode, establezca `enable-network-policy-controller: "true"` en el ConfigMap `amazon-vpc-cni` de `kube-system`; la configuración `networkPolicy` de NodeClass es opcional. Si no se hacen cumplir las reglas, el objeto NetworkPolicy existe, pero no bloquea tráfico.
+2. **Los nombres de host públicos no se resuelven de manera predeterminada.** Los agentes que ejecutan `pip install` o llaman a API públicas por nombre fallarán hasta que se permita DNS o se proporcione al Pod otro resolvedor DNS.
+3. **La lista de rangos privados no corresponde al plan de direcciones de la VPC.** Compruebe qué destinos siguen siendo accesibles con el valor predeterminado:
    - Los CIDR de la VPC fuera de RFC1918 (por ejemplo, los CIDR secundarios `100.64.0.0/10` usados para redes personalizadas de VPC CNI) **no** están excluidos.
    - En un clúster IPv4, IMDS (`169.254.169.254`) y Route 53 Resolver (`169.254.169.253`) están bloqueados, como se pretende. El agente de EKS Pod Identity (`169.254.170.23`) también está bloqueado, por lo que las credenciales de Pod Identity no funcionan con la política predeterminada.
    - En un **clúster IPv6**, VPC CNI ignora las reglas IPv4 y aplica solo las reglas IPv6. Las direcciones IPv6 de IMDS, Resolver y Pod Identity Agent (`fd00:ec2::254`, `fd00:ec2::253`, `fd00:ec2::23`) pertenecen a `fc00::/7` y están bloqueadas. Sin embargo, las direcciones de los Pod y los nodos son direcciones unicast globales del CIDR IPv6 de la VPC, que la regla `::/0` permite.
-   - También en un clúster IPv6, VPC CNI aplica políticas solo a la interfaz principal del Pod (`eth0`). Con el egress IPv4 habilitado (`ENABLE_V4_EGRESS=true`), el tráfico IPv4 sale por una interfaz adicional que no filtra ninguna política, incluido el tráfico a `169.254.169.254` y a las direcciones RFC1918. Deshabilite el egress IPv4 en los nodos de Sandbox si no lo necesita y mantenga el límite de saltos de IMDS en 1.
+   - También en un clúster IPv6, VPC CNI aplica políticas solo a la interfaz principal del Pod (`eth0`). Con la salida IPv4 habilitada (`ENABLE_V4_EGRESS=true`), el tráfico IPv4 sale por una interfaz adicional que no filtra ninguna política, incluido el tráfico a `169.254.169.254` y a las direcciones RFC1918. Deshabilite la salida IPv4 en los nodos de Sandbox si no lo necesita y mantenga el límite de saltos de IMDS en 1.
    - Los endpoints de interfaz de VPC tienen IP privadas y están bloqueados. Las llamadas a API de AWS, si las hay, salen mediante NAT hacia endpoints públicos.
-4. **Se bloquean las conexiones directas dentro del clúster.** Ingress solo permite el router, así que un Pod de agente que use el modo in-cluster del SDK (DNS de Service o IP del Pod) necesita una regla de ingress explícita para su namespace.
+4. **Se bloquean las conexiones directas dentro del clúster.** Las reglas de entrada solo permiten tráfico del router, así que un Pod de agente que use el modo del SDK dentro del clúster (DNS de Service o IP del Pod) necesita una regla de entrada explícita para su namespace.
 
-Una política personalizada para un clúster IPv4 cuya VPC usa `10.0.0.0/16` más un CIDR de Pod `100.64.0.0/16` podría verse así. Permite DNS solo a CoreDNS, permite que el namespace del agente se conecte directamente y excluye de egress público todos los rangos de la VPC:
+El siguiente ejemplo es una política personalizada para un clúster IPv4 cuya VPC utiliza `10.0.0.0/16` y un CIDR de Pods `100.64.0.0/16`. Solo permite DNS hacia CoreDNS, autoriza las conexiones directas desde el namespace de los agentes y excluye todos los rangos de la VPC de la salida a destinos públicos:
 
 ```yaml
 spec:
@@ -336,28 +336,28 @@ spec:
           except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 100.64.0.0/10]
 ```
 
-Permitir CoreDNS hace posible que un Sandbox resuelva nombres de Service internos. Si esto supone un riesgo, mantenga DNS bloqueado y proporcione al Pod un resolver explícito (`dnsPolicy: None` con `dnsConfig.nameservers` configurado con un resolver que controle y que sea accesible según las reglas de egress). Para listas de permisos de egress basadas en FQDN, use un CNI o proxy que las admita; Kubernetes NetworkPolicy solo compara bloques IP y selectores. VPC CNI cuenta como máximo 24 combinaciones de puerto y protocolo por CIDR en todas las políticas.
+Permitir el acceso a CoreDNS también permite resolver nombres de Services internos. Si necesita evitarlo, mantenga DNS bloqueado y proporcione al Pod un resolvedor explícito: `dnsPolicy: None` y `dnsConfig.nameservers` con un resolvedor bajo su control y accesible según las reglas de salida. Para autorizar la salida por FQDN, utilice un CNI o un proxy compatible; Kubernetes NetworkPolicy solo filtra bloques IP y selectores. VPC CNI admite un máximo de 24 combinaciones de puerto y protocolo por CIDR, contando todas las políticas.
 
 ### Exponer el router
 
-Los ejemplos del SDK upstream incluyen un «Gateway mode» que envía tráfico a través de un balanceador de carga público en la nube. En EKS, mantenga privado el plano de datos:
+Los ejemplos del SDK del proyecto incluyen un «Gateway mode» que envía el tráfico a través de un balanceador de carga público en la nube. En EKS, mantenga privado el plano de datos:
 
 | Cliente | Ruta |
 |--------|------|
-| Agentes en el mismo clúster | Modo in-cluster del SDK directamente al Pod (agregue la regla de ingress anterior) o Service ClusterIP `sandbox-router-svc` en el puerto 8080 |
+| Agentes en el mismo clúster | Modo del SDK dentro del clúster directamente al Pod (agregue la regla de entrada anterior) o Service ClusterIP `sandbox-router-svc` en el puerto 8080 |
 | Equipo de desarrollo o CI | Modo túnel del SDK (`kubectl port-forward` al Service del router) |
 | Navegador o clientes externos | CloudFront → origen VPC de CloudFront → ALB **interno** → Service del router. El grupo de seguridad del ALB interno solo admite el grupo de seguridad del origen VPC de CloudFront o la lista de prefijos administrada de CloudFront; nada en la ruta, salvo CloudFront, está expuesto a Internet. |
 
-El autorizador predeterminado del router es `AllowAll`. Su modelo de amenazas señala que, sin un autorizador configurado, rechazar literales de IP locales y de metadatos en `X-Sandbox-Pod-IP` es la única defensa contra SSRF. Antes de exponer el router fuera del clúster, habilite la autorización v2 mediante tokens de ámbito limitado (Ed25519, vinculados al UID del Sandbox, el puerto, el método y la ruta; con v2 se rechazan las anulaciones de IP del Pod) y aplique límites de velocidad y conexiones en la capa de ALB o Envoy, ya que el router no lo hace por sí mismo para WebSockets.
+El autorizador predeterminado del router es `AllowAll`. Su modelo de amenazas señala que, sin un autorizador configurado, la única defensa frente a SSRF consiste en rechazar las direcciones IP literales locales y de metadatos en `X-Sandbox-Pod-IP`. Antes de permitir el acceso al router desde fuera del clúster, habilite la autorización v2 con tokens Ed25519 de alcance limitado, vinculados al UID del Sandbox, el puerto, el método y la ruta. La versión v2 rechaza la sustitución de la IP del Pod. Configure también límites de tasa y de conexiones en la capa ALB o Envoy, porque el propio router no los aplica a las conexiones WebSocket.
 
 ---
 
 ## 7. IAM y credenciales
 
 - Mantenga `automountServiceAccountToken: false` (el valor predeterminado de la plantilla). Un agente que pueda acceder a la API de Kubernetes con un token puede intentar escalar privilegios.
-- No proporcione credenciales de AWS a los Pod de Sandbox de manera predeterminada. En un clúster IPv4, la política administrada ya bloquea IMDS y Pod Identity Agent, pero esto no se cumple para el egress IPv4 de clústeres IPv6 (sección 6); exija IMDSv2 con un límite de saltos de 1 en los nodos de Sandbox como segunda barrera.
+- No proporcione credenciales de AWS a los Pods de Sandbox de manera predeterminada. En un clúster IPv4, la política administrada ya bloquea IMDS y Pod Identity Agent, pero esto no se cumple para el tráfico saliente IPv4 de clústeres IPv6 (sección 6); exija IMDSv2 con un límite de saltos de 1 en los nodos de Sandbox como segunda barrera.
 - Si un Sandbox debe llamar a AWS, use un ServiceAccount dedicado con el rol más limitado posible, restrínjalo a un único namespace y modifique NetworkPolicy de manera deliberada (Pod Identity necesita el puerto 80 en `169.254.170.23/32` o `fd00:ec2::23/128` en un clúster IPv6; IRSA necesita el endpoint regional de STS). Documente esto como excepción de política.
-- Conceda a los usuarios finales permisos RBAC solo para `SandboxClaim` en su namespace. Los equipos de la plataforma son propietarios de `SandboxTemplate` y `SandboxWarmPool`.
+- Conceda a los usuarios finales permisos RBAC solo para `SandboxClaim` en su namespace. Los equipos de la plataforma gestionan `SandboxTemplate` y `SandboxWarmPool`.
 
 ---
 
@@ -378,14 +378,14 @@ kubectl -n agent-sandbox-system get deploy agent-sandbox-controller
 # and pin the image to registry.k8s.io/agent-sandbox/sandbox-router-go:${VERSION}
 ```
 
-- Recursos de versión por etiqueta: `sandbox.yaml` (núcleo), `extensions.yaml`, `sandbox-with-extensions.yaml`. Las imágenes del controlador y el router se publican en `registry.k8s.io/agent-sandbox/` con etiquetas `v1.0.x` correspondientes.
+- Archivos publicados para cada etiqueta de versión: `sandbox.yaml` (núcleo), `extensions.yaml`, `sandbox-with-extensions.yaml`. Las imágenes del controlador y el router se publican en `registry.k8s.io/agent-sandbox/` con etiquetas `v1.0.x` correspondientes.
 - Hay un chart de Helm en el repositorio (`helm/`, versión 0.1.2 en v1.0.6) que se instala desde una copia local (`helm install agent-sandbox ./helm/`). No se publica ningún repositorio de charts.
 - **Desde versiones anteriores a v0.5.0**: no se admiten las actualizaciones directas a v1.x. Actualice a v0.5.2 o posterior, migre los objetos almacenados a `v1beta1`, confirme que `status.storedVersions` de cada CRD solo enumera `v1beta1` y luego actualice. Los usuarios de Helm deben aplicar `helm/crds/` antes de `helm upgrade`.
 - Otras acciones necesarias desde v1.0.0:
   - v1.0.0 dejó de escribir la anotación `agents.x-k8s.io/pod-name`; use `.metadata.name`.
   - v1.0.2 movió los manifiestos del router de `default` a `agent-sandbox-system` y modificó la interfaz Go `Authorizer`.
-  - v1.0.6 agregó la regla de 63 caracteres para los nombres y modificó los contratos de scoped-token v2 y `proxy.Lookup`.
-- Desinstalación: al eliminar los CRD, se eliminan en cascada todos los Sandbox, las solicitudes, las plantillas y los grupos del clúster. Primero, enumérelos.
+  - v1.0.6 agregó la regla de 63 caracteres para los nombres y modificó los contratos de los tokens v2 de alcance limitado y `proxy.Lookup`.
+- Desinstalación: al eliminar los CRD, se eliminan en cascada todos los Sandbox, las solicitudes, las plantillas y los grupos del clúster. Revise su lista antes de eliminar los CRD.
 
 ---
 
@@ -422,12 +422,12 @@ finally:
 | Consideración | Qué hacer |
 |---------|-----------|
 | Latencia de las solicitudes | Ajuste el tamaño de los grupos de instancias precalentadas a la demanda; supervise `agent_sandbox_claim_controller_startup_latency_ms` por `launch_type` (precalentado frente a inicio desde cero). Si aumentan los inicios desde cero en clústeres con IPAM lento, incremente `--sandbox-claim-warm-candidate-grace-period`. |
-| Dimensionamiento del grupo | Use las métricas `agent_sandbox_warmpool_size` (por grupo y preparación) y `agent_sandboxes`. El subrecurso de escalado del grupo permite que HPA o KEDA controle `replicas`. |
-| Carga del servidor API | Las reposiciones masivas compiten con las solicitudes. El proyecto documenta manifiestos de APF `FlowSchema`/`PriorityLevelConfiguration` y opciones del controlador (`--api-connections`, `--sandbox-warm-pool-replenish-delay`, ventanas de escritura diferida) expuestas bajo `controller.*` en el chart de Helm. |
+| Dimensionamiento del grupo | Use las métricas `agent_sandbox_warmpool_size` (por grupo y estado de preparación) y `agent_sandboxes`. El subrecurso de escalado del grupo permite que HPA o KEDA controle `replicas`. |
+| Carga del servidor API | Las reposiciones masivas compiten con las solicitudes. El proyecto documenta manifiestos de APF `FlowSchema`/`PriorityLevelConfiguration` y opciones del controlador (`--api-connections`, `--sandbox-warm-pool-replenish-delay`, intervalos de escritura diferida) expuestas bajo `controller.*` en el chart de Helm. |
 | Consolidación de nodos | Karpenter podría consolidar nodos que alojan Pod precalentados inactivos o sesiones activas. Agregue `karpenter.sh/do-not-disrupt: "true"` en los metadatos de Pod de la plantilla para los Pod de sesión y use un NodePool aparte para los nodos de Sandbox. |
 | Suspensión y reanudación | `Suspended` elimina el Pod y conserva los PVC. Los volúmenes EBS son zonales, por lo que un Pod reanudado debe programarse en la zona de disponibilidad del volumen; mantenga capacidad allí o use una clase de almacenamiento que se ajuste a su patrón de reanudación. |
 | Limpieza | Establezca siempre `shutdownTime` (o `shutdown_after_seconds` en el SDK) y `ttlSecondsAfterFinished` en las solicitudes; `Retain` deja objetos para inspeccionarlos. |
-| Uso abusivo de recursos | Establezca requests y limits en la plantilla y configure un `LimitRange` y un `ResourceQuota` por namespace de tenant. |
+| Uso abusivo de recursos | Establezca requests y limits en la plantilla y configure un `LimitRange` y un `ResourceQuota` por namespace de cada cliente. |
 
 ---
 
@@ -438,15 +438,15 @@ finally:
 | Plataforma de agentes autohospedada en EKS que ejecuta código no confiable por sesión | Agent Sandbox con plantillas, nodos gVisor o Kata y router privado |
 | Ejecuciones de RL o evaluación que necesitan miles de entornos aislados de corta duración | Grupos de instancias precalentadas de Agent Sandbox; siga las guías del proyecto sobre optimización del rendimiento y APF |
 | Unos pocos servicios de un solo Pod y larga duración con nombres estables | Un StatefulSet puede ser más sencillo; Agent Sandbox resulta útil cuando se necesita expiración o suspensión |
-| No desea operar entornos de ejecución y nodos para ejecutar código | Considere un servicio administrado de ejecución de código (por ejemplo, Amazon Bedrock AgentCore Code Interpreter) y compare su modelo de aislamiento, red y residencia de datos con sus requisitos |
+| Prefiere no administrar los entornos de ejecución ni los nodos que ejecutan código | Considere un servicio administrado de ejecución de código (por ejemplo, Amazon Bedrock AgentCore Code Interpreter) y compare su modelo de aislamiento, red y residencia de datos con sus requisitos |
 
 ### Lista de comprobación previa a producción
 
 - [ ] Versión fijada (`v1.0.6`) y acciones necesarias de cada versión revisadas antes de actualizar
 - [ ] Todas las plantillas establecen `runtimeClassName`; RuntimeClass incluye `scheduling` para los nodos preparados
 - [ ] Los usuarios solo tienen permisos RBAC para `SandboxClaim`; la creación directa de `Sandbox` está restringida o validada mediante una política de admisión
-- [ ] La aplicación de políticas de red de VPC CNI está habilitada y probada con un Pod de prueba (DNS, IMDS, CIDR de la VPC y otros Sandbox); en clústeres IPv6 también se comprobó la ruta de egress IPv4
-- [ ] Las excepciones de egress abarcan todos los CIDR de la VPC, incluidos los rangos no RFC1918 y los IPv6
+- [ ] La aplicación de políticas de red de VPC CNI está habilitada y probada con un Pod de prueba (DNS, IMDS, CIDR de la VPC y otros Sandbox); en clústeres IPv6 también se comprobó la ruta de salida IPv4
+- [ ] Las exclusiones de la salida a destinos públicos abarcan todos los CIDR de la VPC, incluidos los rangos no RFC1918 y los IPv6
 - [ ] El router solo es accesible de forma privada; la autorización v2 mediante tokens de ámbito limitado está habilitada
 - [ ] Cada solicitud tiene `shutdownTime` o una expiración del SDK; hay cuotas por namespace
 - [ ] Se recopilan métricas del controlador y los grupos de instancias precalentadas y se generan alertas
