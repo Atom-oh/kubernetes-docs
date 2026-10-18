@@ -1,7 +1,7 @@
-# EKS 上の AI Infrastructure
+# EKS 上の AI インフラストラクチャ
 
 > **最終更新**: October 16, 2026
-> **Baselines**: GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
+> **基準バージョン**: GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
 AI Infrastructure は、notebook、pipeline、分散 runtime、device/node、storage/networking、認可を組み合わせます。ツールの一覧や成功した Helm release だけでは、platform の security、availability、または model execution は確立されません。
 
@@ -13,7 +13,7 @@ AI Infrastructure は、notebook、pipeline、分散 runtime、device/node、sto
 
 workload は model/data/execution code を担当し、platform は workflow、runtime、registry を担当し、compute は実際の device、Pod、node capacity を担当します。IAM、networking、storage identity はこれらのレイヤーをまたがります。Spot 対応の NodePool は、capacity も recovery/savings も保証しません。
 
-## JARK Stack
+## JARK スタック
 
 JARK は JupyterHub、Argo Workflows、Ray、Karpenter を組み合わせます。これは自動的に接続される 1 つの product ではなく、integration pattern です。notebook authorization、workflow submission、Ray job、Kubernetes scheduling、node provisioning を明示的に接続してください。
 
@@ -21,7 +21,7 @@ JARK は JupyterHub、Argo Workflows、Ray、Karpenter を組み合わせます�
 
 [インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-1.html)
 
-### JupyterHub Authentication と Notebook Profile
+### JupyterHub の認証とノートブックプロファイル
 
 Chart4.4.2 は appVersion5.5.2 を宣言しており、確認した最新の PyPI Hub6.1.0 (2026-10-14) とは異なります。ローカル API check では Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0 を使用しました。運用中の chart image 内の実際の package combination を確認してください。
 
@@ -50,7 +50,7 @@ c.GenericOAuthenticator.allowed_users = {"replace-with-approved-cognito-sub"}
 
 notebook の CPU/RAM guarantee と limit を区別し、実際の GPU image、label、toleration、driver に合わせてください。古い jupyter/*:gpu tag が CUDA を提供すると仮定しないでください。PVC は利用する Pod と namespace を共有する必要があります。jupyterhub Pod が ml-platform PVC を名前だけで参照することはできません。user ごとの access point、UID/GID、quota、shared-model write permission を確認してください。EFS storage_capacity は物理的な capacity limit ではありません。
 
-### Argo Workflows Data Flow
+### Argo Workflows のデータフロー
 
 以前の workflow は、存在しない template、artifact、script を参照していました。この**小さな dataflow fixture**は 6 つの stage で構成されます。Python source に値を注入するのではなく、environment variable と JSON を介して parameter を渡します。2 つの coefficient から選択しますが、実際の image-classification training、Ray-cluster、external-registry pipeline ではありません。
 
@@ -297,7 +297,7 @@ Ray autoscaling は worker-Pod demand を表現し、Kubernetes scheduler が Po
 
 AL2023 NVIDIA AMI 上で driver を重複させたり、containerd configuration 全体を上書きしたりしないでください。Karpenter limit は絶対的な admission/cost cap ではなく、consolidation は DCGM20% utilization threshold を直接使用しません。request、scheduling feasibility、price、disruption constraint を確認してください。
 
-## DRA API と Support Boundary
+## DRA API とサポート範囲
 
 DRA は DeviceClass、ResourceSlice、ResourceClaim/Template を通じて device attribute、request、allocation を表現します。driver が slice を公開し、scheduler/driver component が claim を allocation と prepare します。手書きの ResourceSlice は実際の GPU を作成しません。Kubernetes API maturity と NVIDIA-driver feature maturity は別のものです。
 
@@ -305,7 +305,7 @@ DRA は DeviceClass、ResourceSlice、ResourceClaim/Template を通じて device
 
 [インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-2.html)
 
-### 現在の Claim Example
+### 現在の Claim 例
 
 確認した Kubernetes1.36.2 resource.k8s.io/v1 schema では requests.exactly を使用します。NVIDIA driver0.5 prerequisite は、GPU allocation(1.34.2+) と ComputeDomains(1.32+) を区別します。EKS が実際に提供する API と patch/platform version を確認してください。「1.31+ ですべての DRA feature」は不正確です。
 
@@ -370,11 +370,11 @@ full-GPU/existing-MIG と ComputeDomain support を、alpha の DynamicMIG、MPS
 
 device plugin も existing MIG、time-slicing、experimental MPS path を support します。GPU sharing は DRA 専用ではありません。3g.20gb は 1 つの instance profile を表し、20GB instance が 3 つあることを表しません。MIG/exclusive allocation は host、driver、privilege、すべての side channel を自動的に isolate しません。MPS/time-slicing は security boundary ではありません。
 
-### Multi-Node NVLink と ComputeDomains
+### マルチノード NVLink と ComputeDomains
 
 GB200 は Grace Hopper ではなく Grace Blackwell です。ComputeDomains は Pod/node 間の MNNVL/IMEX resource を coordination します。rack、EC2 instance、Kubernetes node、Pod を区別し、実際の clique/fabric/device/driver support を確認してください。架空の nvswitchEnabled/graceHopperMode field や scheduling gate は topology を configuration しません。削除する controller のない scheduling gate は Pod を待機状態のままにします。
 
-## Agent Platform と MCP
+## エージェント基盤と MCP
 
 最新の Kagent/LangGraph/Langfuse/Milvus API は [Agentic AI guide](03-agentic-ai-platform.md) を使用してください。GitLab は任意の source/CI platform です。privileged runner と public ingress は baseline requirement ではありません。job identity、networking、secret、image-build permission を分離し、provider credential delivery を検証してください。
 
@@ -382,7 +382,7 @@ MCP は tool listing/calling などの protocol operation を定義します。s
 
 Milvus に GPU resource を request しても、GPU indexing は有効になりません。embedding dimension/model revision、index parameter、deletion/update lifecycle、tenant filter を一致させてください。Langfuse2.x Deployment を最新の 4.x platform installation として使用しないでください。backend dependency、file credential、instrumentation API、sensitive-data retention を確認してください。
 
-## Storage と Networking
+## ストレージとネットワーク
 
 EFS access-point IAM/UID/GID、directory permission、同一 namespace の PVC consumption を確認してください。IAM mount option だけでは controller/mount-identity credential は configuration されません。
 
@@ -394,7 +394,7 @@ Mountpoint CSI2.8.0 は既存の S3 bucket に対する**static PV**を support 
 
 subnet は isolation の一部にすぎません。実際の SG/IAM resource を通じて workload ingress/egress と EFA self-reference requirement を configuration してください。ConfigMap に保存した Terraform 風の YAML は network rule を適用しません。VPC CIDR 全体からの default access を避けてください。
 
-## GPU Observability と Alert
+## GPU の可観測性とアラート
 
 DCGM Exporter4.6.0-4.8.3 は XID_ERRORS を最後の error **code gauge**として定義しています。increase(XID_ERRORS) は error count ではなく、31→13 の code change を reset と誤読する可能性があります。現在の code を observe するか、XID_ERRORS_TOTAL counter を別途有効にしてください。すべての XID が hardware failure を示すわけではありません。
 

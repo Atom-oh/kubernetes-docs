@@ -1,6 +1,6 @@
 # Ambient Mode
 
-> **最后更新**: October 12, 2026 · Istio 1.31。本实验假设使用兼容的 Linux 节点、具备 node-agent/CNI 所需权限，并使用全新的 demo 命名空间。本次审计未运行任何部署命令。
+> **最后更新**: 2026年10月12日 · Istio 1.31。本实验假设使用兼容的 Linux 节点、具备 node-agent/CNI 所需权限，并使用全新的 demo 命名空间。本次审计未运行任何部署命令。
 
 Ambient 最初于 2022 年作为实验性预览版推出，在 Istio 1.18 中首次以 Alpha 形式发布，在 1.22 中达到 Beta，并在 1.24 中实现核心 GA。该预览版并非主线 1.15 版本正式提供的功能。资源节省和迁移安全性取决于实际拓扑、策略和流量。
 
@@ -234,7 +234,7 @@ spec:
 - **基于 HTTP/2**：兼容现有基础设施
 - **内置 mTLS**：安全通信
 - **多路复用**：相同源/目标身份对的 TCP 流共享隧道
-- **网络策略**：HBONE 通常使用 TCP15008；应明确允许所需的网格路径
+- **网络策略**：HBONE 通常使用 TCP 15008；应明确允许所需的网格路径
 
 ![示意图显示应用的普通 TCP 流量由源 ztunnel 封装进 HTTP/2 mTLS HBONE 隧道，在网络中传输后，由目标 ztunnel 解封装为普通 TCP，再到达目标应用。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
 
@@ -246,7 +246,7 @@ spec:
 
 本实验需要兼容的 Linux 节点以及所需的 Istio CNI/ztunnel DaemonSet。EKS Fargate 无法运行这些节点 DaemonSet；应使用受支持的 EC2 后端节点，并检查实际节点/CNI 平台。[平台先决条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)涵盖 CNI 路径、权限和健康探针。使用 SecurityGroupPolicy 的 VPC CNI Pod ENI trunking 可能需要标准强制模式或适当的 exec 探针；应评估其策略影响。GKE、OpenShift、k3s 和其他平台可能需要不同设置。
 
-Istio1.31 支持 Kubernetes1.32–1.37；EKS 兼容性请参阅[安装指南](../01-installation.md)。下文的 Gateway API1.6.0 与 Istio1.31 的依赖项以及官方 ambient 教程相匹配。请检查现有软件包的兼容性；不要仅为了照搬示例而将较新的兼容软件包降级。
+Istio 1.31 支持 Kubernetes 1.32–1.37；EKS 兼容性请参阅[安装指南](../01-installation.md)。下文的 Gateway API 1.6.0 与 Istio 1.31 的依赖项以及官方 ambient 教程相匹配。请检查现有软件包的兼容性；不要仅为了照搬示例而将较新的兼容软件包降级。
 
 ### 1. 安装 Istio（Ambient Mode）
 
@@ -272,7 +272,7 @@ kubectl get pods,daemonsets -n istio-system
 
 ### 2. 启用 Ambient Mode 并部署应用
 
-请使用全新、可随时销毁的命名空间，不要设置 Sidecar 注入/修订版本覆盖。为命名空间添加 ambient 标签不会将现有 Sidecar Pod 转换为 ambient Pod。1.31 发行版中的完整 Bookinfo 清单提供了旧的单 Deployment 示例所缺少的 reviews Service、版本标签、ServiceAccount 和 ratings 依赖；该清单使用 Bookinfo1.20.3 镜像。
+请使用全新、可随时销毁的命名空间，不要设置 Sidecar 注入/修订版本覆盖。为命名空间添加 ambient 标签不会将现有 Sidecar Pod 转换为 ambient Pod。1.31 发行版中的完整 Bookinfo 清单提供了旧的单 Deployment 示例所缺少的 reviews Service、版本标签、ServiceAccount 和 ratings 依赖；该清单使用 Bookinfo 1.20.3 镜像。
 
 ```bash
 kubectl create namespace ambient-demo
@@ -378,7 +378,7 @@ kubectl exec -n ambient-demo deploy/curl -c curl -- \
 
 #### 步骤 2：应用于测试命名空间
 
-此独立 ambient 测试使用 1.31 发行版部署客户端和服务器。httpbin Service 暴露端口8000，并将流量转发到端口8080。
+此独立 ambient 测试使用 1.31 发行版部署客户端和服务器。httpbin Service 暴露端口 8000，并将流量转发到端口 8080。
 
 ```bash
 kubectl create namespace test-ambient
@@ -589,13 +589,13 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 | 里程碑 | 依据 |
 |---|---|
-|2022 年预览版|宣布推出实验性实现；并非主线1.15 功能版本|
+|2022 年预览版|宣布推出实验性实现；并非主线 1.15 功能版本|
 |1.18 Alpha（2023）|首次在 Istio 版本中发布 ambient|
 |1.22 Beta（2024）|Beta 里程碑|
 |1.24 核心 GA（2024）|核心 ztunnel/waypoint/API 里程碑；各项功能仍保留各自的状态|
 
-当前的 [ambient 多集群文档](https://istio.io/latest/docs/ambient/install/multicluster/)说明，**多主、多网络**支持处于 Beta 阶段。Primary/remote 不受支持，单网络部署未经测试；必须在集群间协调 waypoint 命名/配置和 Service 范围。旧的1.26/1.27 路线图以及未注明来源的企业节省数据，都不能作为行为受支持或保证降低成本的依据。
+当前的 [ambient 多集群文档](https://istio.io/latest/docs/ambient/install/multicluster/)说明，**多主、多网络**支持处于 Beta 阶段。Primary/remote 不受支持，单网络部署未经测试；必须在集群间协调 waypoint 命名/配置和 Service 范围。旧的 1.26/1.27 路线图以及未注明来源的企业节省数据，都不能作为行为受支持或保证降低成本的依据。
 
 ## 总结
 
-Ambient 将共享的 L4 传输与选择性启用的 L7 waypoint 处理分开。它可以简化尚未接入网格工作负载的接入和代理生命周期管理，但资源节省、策略保留和可用性仍需要通过等效策略测量，并制定经过验证的迁移计划。还应考虑 Linux/CNI/平台限制、TCP15008 连通性以及各 API 的功能状态。
+Ambient 将共享的 L4 传输与选择性启用的 L7 waypoint 处理分开。它可以简化尚未接入网格工作负载的接入和代理生命周期管理，但资源节省、策略保留和可用性仍需要通过等效策略测量，并制定经过验证的迁移计划。还应考虑 Linux/CNI/平台限制、TCP 15008 连通性以及各 API 的功能状态。

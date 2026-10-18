@@ -1,20 +1,26 @@
-# Cloud Native 運用クイズ
+# クラウドネイティブ運用クイズ
 
-ガイドを読んだ後にこれらのクイズを使用し、概念と実行要件を確認してください。形式はトピックによって異なり、選択式、記述式、演習、上級問題があります。各問題を展開して回答を確認してください。
+ガイドを読んだ後、概念と実行要件を確認するために各クイズを活用してください。形式はトピックによって異なり、選択式、記述式、演習形式、応用問題があります。各問題を展開すると回答が表示されます。
 
-演習では、コマンドを実行する前にガイドのバージョン、前提条件、検証範囲を確認してください。
+演習でコマンドを実行する前に、ガイドに記載されたバージョン、前提条件、検証範囲を確認してください。
 
 ## クイズ一覧
+
+### はじめに
+
+- [LLM による閲覧: llms.txt クイズ](./llm-guide-quiz.md)
+- [ガイドブックのロードマップクイズ](./roadmap-quiz.md)
 
 ### AI/ML
 
 - [AI/ML ワークロードクイズ](./ai-ml/03-ai-ml-workloads-quiz.md)
 - [推論フレームワーククイズ](./ai-ml/04-inference-frameworks-quiz.md)
-- [vLLM Deployment クイズ](./ai-ml/04-vllm-deployment-quiz.md)
+- [vLLM デプロイクイズ](./ai-ml/04-vllm-deployment-quiz.md)
 - [EKS でのモデル学習クイズ](./ai-ml/05-model-training-quiz.md)
 - [EKS 上の AI インフラクイズ](./ai-ml/06-ai-infrastructure-quiz.md)
 - [AI/ML ベストプラクティスクイズ](./ai-ml/07-ai-ml-best-practices-quiz.md)
 - [EKS 上の Agentic AI プラットフォームクイズ](./ai-ml/08-agentic-ai-platform-quiz.md)
+- [LLM Gateway クイズ](./ai-ml/08-llm-gateway-quiz.md)
 - [EKS 上の Kubeflow アーキテクチャとインストールクイズ](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Kubeflow Pipelines クイズ](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Kubeflow Notebooks クイズ](./ai-ml/kubeflow/03-notebooks-quiz.md)
@@ -28,8 +34,12 @@
 - [KubeRay Operator クイズ](./ai-ml/ray/02-kuberay-operator-quiz.md)
 - [Ray Train / Tune クイズ](./ai-ml/ray/03-ray-train-tune-quiz.md)
 - [Ray Serve クイズ](./ai-ml/ray/04-ray-serve-quiz.md)
+- [SageMaker Qwen プラットフォームアーキテクチャクイズ](./ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+- [合成 PII データとトークン化クイズ](./ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+- [SageMaker AI と MLflow の実行クイズ](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+- [SageMaker Qwen の事実検証結果クイズ](./ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
-### 自動スケーリング
+### オートスケーリング
 
 - [Knative クイズ](./autoscaling/03-knative-quiz.md)
 - [KEDA クイズ](./autoscaling/05-keda-quiz.md)
@@ -42,6 +52,17 @@
 - [コンテナ技術クイズ](./basics/03-container-technology-quiz.md)
 - [Kubernetes 入門クイズ](./basics/04-kubernetes-introduction-quiz.md)
 - [eBPF 基礎クイズ](./basics/05-ebpf-fundamentals-quiz.md)
+- [ネットワーク基礎 パート 1: レイヤーモデル、リンク、ルーティング](./basics/06-network-fundamentals-part1-quiz.md)
+- [ネットワーク基礎 パート 2: トランスポートと TLS](./basics/06-network-fundamentals-part2-quiz.md)
+- [ネットワーク基礎 パート 3: アプリケーションプロトコル](./basics/06-network-fundamentals-part3-quiz.md)
+- [ネットワーク基礎 パート 4: 通信経路とクラウド](./basics/06-network-fundamentals-part4-quiz.md)
+
+### コンテナレジストリ
+
+- [Docker Hub クイズ](./container-registry/01-docker-hub-quiz.md)
+- [Amazon ECR クイズ](./container-registry/02-amazon-ecr-quiz.md)
+- [Harbor クイズ](./container-registry/03-harbor-quiz.md)
+- [コンテナレジストリのベストプラクティスクイズ](./container-registry/04-best-practices-quiz.md)
 
 ### Kubernetes コア
 
@@ -54,11 +75,21 @@
 - [ポリシークイズ](./core/07-policies-quiz.md)
 - [スケジューリング、プリエンプション、退避クイズ](./core/08-scheduling-preemption-eviction-quiz.md)
 - [クラスター管理クイズ](./core/09-cluster-administration-quiz.md)
-- [Kubernetes の Windows クイズ](./core/10-windows-in-kubernetes-quiz.md)
+- [Kubernetes 上の Windows クイズ](./core/10-windows-in-kubernetes-quiz.md)
 - [Kubernetes の拡張クイズ](./core/11-extending-kubernetes-quiz.md)
 
 ### EKS 上のデータ
 
+- [最新データパイプラインの構造クイズ](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
+- [Airflow アーキテクチャクイズ](./data-on-eks/airflow/01-architecture-quiz.md)
+- [Helm デプロイと Executor 選択クイズ](./data-on-eks/airflow/02-helm-deployment-quiz.md)
+- [DAG パターンと KubernetesPodOperator クイズ](./data-on-eks/airflow/03-dag-patterns-quiz.md)
+- [MWAA 統合クイズ](./data-on-eks/airflow/04-mwaa-integration-quiz.md)
+- [パート 5: 運用とセキュリティクイズ](./data-on-eks/airflow/05-operations-quiz.md)
+- [Kubernetes 上の Flink アーキテクチャクイズ](./data-on-eks/flink/01-architecture-quiz.md)
+- [Flink Kubernetes Operator クイズ](./data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+- [状態、チェックポイント、ストリーミングパターンのクイズ](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+- [運用、高可用性、マネージド Flink クイズ](./data-on-eks/flink/04-operations-ha-quiz.md)
 - [Kafka 基礎クイズ](./data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
 - [Strimzi Operator クイズ](./data-on-eks/kafka/02-strimzi-operator-quiz.md)
 - [Kafka 運用クイズ](./data-on-eks/kafka/03-kafka-operations-quiz.md)
@@ -67,6 +98,17 @@
 - [MSK 統合クイズ](./data-on-eks/kafka/06-msk-integration-quiz.md)
 - [パート 7: モニタリングクイズ](./data-on-eks/kafka/07-monitoring-quiz.md)
 - [パート 8: ベストプラクティスクイズ](./data-on-eks/kafka/08-best-practices-quiz.md)
+- [パート 9: Kafka ベンチマークレビュークイズ](./data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+- [Unified Studio のドメインとプロジェクトガバナンスクイズ](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+- [Kubernetes 上の Spark 基礎クイズ](./data-on-eks/spark/01-spark-fundamentals-quiz.md)
+- [Spark Operator クイズ](./data-on-eks/spark/02-spark-operator-quiz.md)
+- [EKS 上の Amazon EMR クイズ](./data-on-eks/spark/03-emr-on-eks-quiz.md)
+- [パート 4: パフォーマンスとコストのチューニングクイズ](./data-on-eks/spark/04-performance-tuning-quiz.md)
+- [パート 5: ベストプラクティスとセキュリティクイズ](./data-on-eks/spark/05-best-practices-quiz.md)
+
+### データベース
+
+- [EKS 上の ClickHouse 実測ベンチマーククイズ](./database/01-clickhouse-on-eks-quiz.md)
 
 ### Amazon EKS
 
@@ -93,7 +135,7 @@
 
 ### EKS Auto Mode
 
-- [EKS Auto Mode はじめにクイズ](./eks-auto-mode/01-getting-started-quiz.md)
+- [EKS Auto Mode 入門クイズ](./eks-auto-mode/01-getting-started-quiz.md)
 - [EKS Auto Mode NodePool 設定クイズ](./eks-auto-mode/02-nodepool-configuration-quiz.md)
 - [EKS Auto Mode スケーリング動作クイズ](./eks-auto-mode/03-scaling-behavior-quiz.md)
 - [EKS Auto Mode Spot 戦略クイズ](./eks-auto-mode/04-spot-strategies-quiz.md)
@@ -132,6 +174,17 @@
 - [ArgoCD セキュリティクイズ](./gitops/argocd/07-security-quiz.md)
 - [ArgoCD 通知クイズ](./gitops/argocd/08-notifications-quiz.md)
 - [ArgoCD ベストプラクティスクイズ](./gitops/argocd/09-best-practices-quiz.md)
+- [Argo Rollouts の実験クイズ](./gitops/argocd/10-rollouts-experiment-quiz.md)
+
+### クラウドガバナンス
+
+- [エンタープライズクラウドガバナンス概要クイズ](./governance/00-governance-overview-quiz.md)
+- [Landing Zone、OU、組織統制クイズ](./governance/01-landing-zone-and-ou-quiz.md)
+- [アカウント構成と IAM 境界クイズ](./governance/02-account-and-iam-quiz.md)
+- [マルチアカウント／マルチクラスター EKS アーキテクチャクイズ](./governance/03-eks-multi-account-multi-cluster-quiz.md)
+- [共有 VPC と接続性クイズ](./governance/04-shared-vpc-and-connectivity-quiz.md)
+- [データとセキュリティの境界クイズ](./governance/05-data-security-boundaries-quiz.md)
+- [意思決定フレームワークと PoC 設計クイズ](./governance/06-decision-framework-and-poc-quiz.md)
 
 ### ネットワーキング
 
@@ -146,8 +199,8 @@
 - [Calico アーキテクチャクイズ](./networking/calico/02-architecture-quiz.md)
 - [Calico ネットワーキングモードクイズ](./networking/calico/03-networking-modes-quiz.md)
 - [BGP 詳解クイズ](./networking/calico/04-bgp-deep-dive-quiz.md)
-- [Network Policy クイズ](./networking/calico/05-network-policy-quiz.md)
-- [eBPF Dataplane クイズ](./networking/calico/06-ebpf-dataplane-quiz.md)
+- [ネットワークポリシークイズ](./networking/calico/05-network-policy-quiz.md)
+- [eBPF データプレーンクイズ](./networking/calico/06-ebpf-dataplane-quiz.md)
 - [上級トピッククイズ](./networking/calico/07-advanced-topics-quiz.md)
 - [EKS 統合クイズ](./networking/calico/08-eks-integration-quiz.md)
 - [運用クイズ](./networking/calico/09-operations-quiz.md)
@@ -158,7 +211,7 @@
 - [Cilium 入門と基本概念クイズ](./networking/cilium/01-introduction-quiz.md)
 - [Cilium eBPF クイズ](./networking/cilium/02-ebpf-quiz.md)
 - [Cilium ネットワーキング検証演習](./networking/cilium/03-networking-quiz.md)
-- [Cilium IPAM と Network Policy クイズ](./networking/cilium/04-ipam-policy-quiz.md)
+- [Cilium IPAM とネットワークポリシークイズ](./networking/cilium/04-ipam-policy-quiz.md)
 - [Cilium L2–L7 ネットワーキングとロードバランシングクイズ](./networking/cilium/05-l2-l7-networking-quiz.md)
 - [Cilium セキュリティと可視性クイズ](./networking/cilium/06-security-visibility-quiz.md)
 - [Cilium 上級クイズ](./networking/cilium/07-advanced-topics-quiz.md)
@@ -171,10 +224,10 @@
 - [Prometheus Alertmanager クイズ](./observability/alerting/01-alertmanager-quiz.md)
 - [CloudWatch Alarms クイズ](./observability/alerting/02-cloudwatch-alarms-quiz.md)
 - [Grafana OnCall クイズ](./observability/alerting/03-grafana-oncall-quiz.md)
-- [Grafana Dashboard クイズ](./observability/grafana/grafana-quiz.md)
+- [Grafana ダッシュボードクイズ](./observability/grafana/grafana-quiz.md)
 - [可観測性ラボ パート 1: インフラセットアップクイズ](./observability/labs/01-infrastructure-setup-quiz.md)
 - [可観測性ラボ パート 2: 可観測性スタッククイズ](./observability/labs/02-observability-stack-quiz.md)
-- [可観測性ラボ パート 3: MSA Deployment と Canary クイズ](./observability/labs/03-msa-deployment-quiz.md)
+- [可観測性ラボ パート 3: MSA のデプロイとカナリアリリースクイズ](./observability/labs/03-msa-deployment-quiz.md)
 - [可観測性ラボ パート 4: 負荷テストと自動スケーリングクイズ](./observability/labs/04-load-testing-scaling-quiz.md)
 - [可観測性ラボ パート 5: アラートと AIOps クイズ](./observability/labs/05-alerting-aiops-quiz.md)
 - [可観測性ラボ パート 6: 分散トレーシング分析クイズ](./observability/labs/06-distributed-tracing-quiz.md)
@@ -213,6 +266,7 @@
 - [Tekton Pipelines クイズ](./ops/14-tekton-pipelines-quiz.md)
 - [ゾーンクラスター運用クイズ](./ops/15-zonal-operations-guide-quiz.md)
 - [トラブルシューティングプレイブッククイズ](./ops/16-troubleshooting-playbook-quiz.md)
+- [EKS Spot 本番実験クイズ](./ops/17-spot-production-experiments-quiz.md)
 
 ### プラットフォームエンジニアリング
 
@@ -236,7 +290,7 @@
 - [Kyverno ポリシー管理クイズ](./security/01-kyverno-policy-management-quiz.md)
 - [Kubernetes 認証と認可クイズ](./security/02-kubernetes-auth-authz-quiz.md)
 - [Pod Security Standards クイズ](./security/03-pod-security-standards-quiz.md)
-- [Network Policies クイズ](./security/04-network-policies-quiz.md)
+- [ネットワークポリシークイズ](./security/04-network-policies-quiz.md)
 - [Secrets 管理クイズ](./security/05-secrets-management-quiz.md)
 - [EKS セキュリティのベストプラクティスクイズ](./security/06-eks-security-best-practices-quiz.md)
 - [コンテナイメージセキュリティクイズ](./security/07-image-security-quiz.md)
@@ -268,6 +322,27 @@
 - [Linkerd セキュリティクイズ](./service-mesh/linkerd/security.md)
 - [Linkerd トラフィック管理クイズ](./service-mesh/linkerd/traffic-management.md)
 
+- [App Mesh と VPC Lattice のアーキテクチャ比較クイズ](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+- [レイテンシー影響分析クイズ](./service-mesh/vpc-lattice/02-latency-quiz.md)
+- [IAM 認証フロークイズ](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+- [リンクローカルと SNI の基礎クイズ](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [ワークロード ID 移行クイズ](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+- [制約と判断ポイントのクイズ](./service-mesh/vpc-lattice/06-constraints-quiz.md)
+- [カーネルデータパスクイズ](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
+
 ### ストレージ
 
 - [EBS gp2 と gp3 の計測ベンチマーククイズ](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### ブロックチェーン
+
+- [ブロックチェーン基礎クイズ](./blockchain/01-fundamentals-quiz.md)
+- [EKS 上でのブロックチェーンノード運用クイズ](./blockchain/02-nodes-on-eks-quiz.md)
+- [Amazon Managed Blockchain クイズ](./blockchain/03-managed-blockchain-quiz.md)
+- [金融サービスの観点から考えるクイズ](./blockchain/04-financial-services-quiz.md)
+
+### Linux カーネル
+
+- [コンテナを支えるカーネル機能クイズ](./kernel/01-container-primitives-quiz.md)
+- [カーネルネットワークスタッククイズ](./kernel/02-network-stack-quiz.md)
+- [EKS ノードのカーネルチューニングクイズ](./kernel/03-eks-node-tuning-quiz.md)

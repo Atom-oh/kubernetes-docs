@@ -1,6 +1,6 @@
 # Visión general del trazado distribuido
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 ## Introducción
 
@@ -33,11 +33,11 @@ Considere esta **línea de tiempo ilustrativa**, en milisegundos relativos al in
 
 | Span | Inicio | Fin | Duración |
 |---|---:|---:|---:|
-| Raíz del API gateway | 0 | 650 | 650 |
-| User service | 20 | 70 | 50 |
-| Order service | 100 | 600 | 500 |
-| Payment service, hijo de Order | 250 | 550 | 300 |
-| Notification service, hijo de Order | 500 | 600 | 100 |
+| Raíz de la puerta de enlace de API | 0 | 650 | 650 |
+| Servicio de usuarios | 20 | 70 | 50 |
+| Servicio de pedidos | 100 | 600 | 500 |
+| Servicio de pagos, hijo del servicio de pedidos | 250 | 550 | 300 |
+| Servicio de notificaciones, hijo del servicio de pedidos | 500 | 600 | 100 |
 
 La ventana observada es de 650 ms. Sumar todas las duraciones de los spans da 1.600 ms porque las duraciones de los padres incluyen el trabajo de los hijos y algunos hijos se solapan. No sume la duración inclusiva de un padre a la de sus descendientes para calcular una «ruta crítica». Analice los tiempos reales de inicio/fin y las dependencias, incluidos el trabajo asíncrono y la deriva de reloj.
 
@@ -56,7 +56,7 @@ Un span describe una operación instrumentada:
 | Events | Eventos con marca de tiempo asociados al span | Un evento de excepción registrado |
 | Status | `UNSET`, `OK` o `ERROR` | Deje el estado del Span como UNSET para las solicitudes HTTP correctas, salvo que la instrumentación indique lo contrario |
 
-OpenTelemetry usa **attributes** y **events**, en lugar de tratar los eventos de span como una copia de todos los logs de la aplicación. Los attributes/links iniciales pueden estar presentes en el momento de crear el span; después pueden llegar más events/attributes y actualizaciones de estado. La duración no se conoce cuando el span comienza. Registrar una excepción y establecer el estado de error son operaciones distintas de la API.
+OpenTelemetry usa **attributes** y **events**, en lugar de tratar los eventos de span como una copia de todos los logs de la aplicación. Los atributos y vínculos iniciales pueden estar presentes al crear el span; después pueden añadirse eventos, más atributos y actualizaciones de estado. La duración no se conoce cuando el span comienza. Registrar una excepción y establecer el estado de error son operaciones distintas de la API.
 
 ### 3. Relaciones y jerarquía de spans
 
@@ -123,9 +123,9 @@ El ParentSpanID opcional tiene sus propias reglas y se omite aquí. B3 también 
 | Formato | Campos habituales | Consideración para la selección |
 |---|---|---|
 | W3C Trace Context | `traceparent`, `tracestate` | Interoperabilidad basada en estándares |
-| B3 single | `b3` | Integraciones existentes con Zipkin/B3 |
-| B3 multi | `X-B3-*` | Integraciones existentes y campos visibles por separado |
-| Jaeger legacy | `uber-trace-id` | Compatibilidad heredada; verifique el propagador instalado |
+| B3 de cabecera única | `b3` | Integraciones existentes con Zipkin/B3 |
+| B3 de varias cabeceras | `X-B3-*` | Integraciones existentes y campos visibles por separado |
+| Jaeger heredado | `uber-trace-id` | Compatibilidad con versiones anteriores; verifique el propagador instalado |
 
 Configure ambos extremos de forma coherente y pruebe los límites HTTP/gRPC y de mensajería. Evite propagadores simultáneos en competencia que extraigan padres distintos. Una cabecera estandarizada no garantiza que los proxies, las colas o las tareas asíncronas la preserven.
 

@@ -1,6 +1,6 @@
 # Fundamentos de redes, parte 1: El modelo de capas, las capas de enlace y enrutamiento
 
-> **Última actualización**: September 14, 2026
+> **Última actualización**: 14 de septiembre de 2026
 
 ::: tip Esta es una serie de cuatro partes
 **Parte 1: El modelo de capas, las capas de enlace y enrutamiento** *(este documento)* ·

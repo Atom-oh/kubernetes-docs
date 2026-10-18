@@ -90,11 +90,11 @@ graph TB
     style PASS fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-La interceptación de malla puede ocurrir en **OUTPUT del espacio de nombres de red del Pod**. Que la solicitud interceptada se reenvíe, falle o tenga campos firmados alterados depende de la política de salida de Envoy y de los destinos configurados. Ver una solicitud en el registro de Envoy demuestra que lo atravesó, pero no demuestra por sí solo la causa del fallo.
+La interceptación de malla puede ocurrir en **OUTPUT del espacio de nombres de red del Pod**. Que la solicitud interceptada se reenvíe, falle o tenga campos firmados alterados depende de la política de salida de Envoy y de los destinos configurados. Ver la solicitud en los registros de Envoy demuestra que pasó por el proxy, pero no identifica por sí solo la causa del fallo.
 
 ### Interpretar las pruebas del proxy junto con su configuración
 
-Un proxy restringido puede devolver un error para un destino desconocido; una política de permiso global/tránsito puede reenviarlo. Valide tanto la ruta como el error devuelto en lugar de suponer que cada excepción ausente provoca un 503 inmediato.
+Un proxy restringido puede devolver un error para un destino desconocido; una política allow-any/passthrough puede reenviarlo. Valide tanto la ruta como el error devuelto en lugar de suponer que cada excepción ausente provoca un 503 inmediato.
 
 **Ruta de diagnóstico**: si fallan las llamadas a Lattice, compruebe si los registros del sidecar de Envoy contienen las solicitudes afectadas a `169.254.171.x`. Esto demuestra el paso por el proxy. Correlacione el error devuelto, la política de salida/ruta y cualquier cambio de campos firmados antes de atribuir el fallo a la interceptación; un proxy configurado también puede reenviar la solicitud correctamente.
 
@@ -180,7 +180,7 @@ El paquete firmado que envía el proxy también tiene como destino `169.254.171.
 
 Use un **UID dedicado para el proxy** y una excepción de propietario que coincida. El UID 101 del diagrama es ilustrativo; compruebe el manifiesto real de ejemplo/instalado en vez de suponer que el UID es fijo en todas las versiones. Mantenga sus permisos separados de los de la aplicación.
 
-**Consecuencia práctica**: `runAsUser` del contenedor proxy y el UID de la regla iptables **deben coincidir.** Si cambia uno de los dos, se forma un bucle o se pierde la firma. Esta es la conexión más frágil al personalizar los manifiestos.
+**Consecuencia práctica**: `runAsUser` del contenedor proxy y el UID de la regla iptables **deben coincidir.** Si cambia uno de los dos, se forma un bucle o se pierde la firma. Este es el eslabón más frágil al personalizar los manifiestos.
 
 ### Cuando coexisten dos conjuntos de reglas iptables
 
@@ -286,7 +286,7 @@ Este síntoma reduce las causas posibles a unas pocas.
 | **Difieren las versiones del kernel** | Con AMI `kernel-default`, pueden coexistir las versiones 6.1 y 6.18, según cuándo se hayan sustituido los nodos ([Ajuste del kernel](../../kernel/03-eks-node-tuning.md)) |
 | **Difieren los ajustes de conntrack** | Depende del estado de ConfigMap al iniciar el sistema |
 | **Sincronización de reloj** | Desviación de 5 minutos de `x-amz-date`: errores 403 solo en algunos nodos ([documento 03](./03-auth-flow.md)) |
-| **Reinicio de Pods** | Los cambios de anotación no se aplicaron a los Pods antiguos |
+| **Si se reiniciaron los Pods** | Los cambios de anotación no se aplicaron a los Pods antiguos |
 
 **El patrón de «algunos nodos» es en sí mismo información de diagnóstico.** Un fallo total apunta a la configuración o autenticación; un fallo limitado a nodos apunta a una divergencia de estado entre nodos.
 

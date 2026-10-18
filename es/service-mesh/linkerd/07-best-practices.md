@@ -1,6 +1,6 @@
 # Buenas prácticas de Linkerd
 
-> **Última actualización**: 11 de septiembre de 2026 · Linkerd edge-26.9.1 / charts 2026.9.1
+> **Última actualización**: 16 de octubre de 2026 · Linkerd edge-26.10.1 / charts 2026.10.1
 
 Utilice las guías de [instalación](01-installation.md), [seguridad](04-security.md), [observabilidad](05-observability.md) y [múltiples clústeres](06-multi-cluster.md) para las versiones y los requisitos previos seleccionados. Este capítulo conecta esos procedimientos en una revisión operativa; no certifica que un entorno esté listo para producción.
 
@@ -109,10 +109,10 @@ set -euo pipefail
 umask 077
 # Use the same reviewed chart version for the profile and render.
 curl --fail --show-error --location \
-  https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.9.1/charts/linkerd-control-plane/values-ha.yaml \
+  https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.10.1/charts/linkerd-control-plane/values-ha.yaml \
   -o values-ha.yaml
 helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd \
+  --version 2026.10.1 -n linkerd \
   -f reviewed-core-values.yaml -f values-ha.yaml > reviewed-ha.yaml
 ```
 
@@ -188,7 +188,7 @@ Para múltiples clústeres, conserve la lista deseada de Helm `controllers` y la
 
 ### Instalación gestionada por Helm
 
-La versión de destino del ejemplo siguiente es 2026.9.1; solo puede utilizarse después de verificar la vía desde la versión realmente instalada:
+La versión de destino del ejemplo siguiente es 2026.10.1; solo puede utilizarse después de verificar la vía desde la versión realmente instalada:
 
 ```bash
 set -euo pipefail
@@ -197,13 +197,13 @@ helm get values linkerd-control-plane -n linkerd > current-core-values.yaml
 helm get values linkerd-viz -n linkerd-viz > current-viz-values.yaml
 # Prepare reviewed target values and approved migration steps before these changes.
 helm upgrade linkerd-crds linkerd-edge/linkerd-crds \
-  --version 2026.9.1 -n linkerd --wait --timeout 10m
+  --version 2026.10.1 -n linkerd --wait --timeout 10m
 helm upgrade linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd -f reviewed-core-values.yaml \
+  --version 2026.10.1 -n linkerd -f reviewed-core-values.yaml \
   --wait --timeout 10m
 linkerd check
 helm upgrade linkerd-viz linkerd-edge/linkerd-viz \
-  --version 2026.9.1 -n linkerd-viz -f reviewed-viz-values.yaml \
+  --version 2026.10.1 -n linkerd-viz -f reviewed-viz-values.yaml \
   --wait --timeout 10m
 linkerd viz check
 ```
@@ -330,7 +330,7 @@ kubectl -n linkerd logs deployment/linkerd-identity -c identity --tail=100
 kubectl -n linkerd get events --sort-by=.lastTimestamp
 ```
 
-`linkerd identity` recupera certificados finales públicos; no suponga que existe un archivo fijo `end-entity.crt` en la imagen del proxy. Use `viz routes` de ServiceProfile o los diagnósticos actuales de políticas solo para los recursos realmente configurados. Especifique explícitamente el contenedor del controlador pertinente al leer registros.
+`linkerd identity` recupera certificados finales públicos; no suponga que existe un archivo fijo `end-entity.crt` en la imagen del proxy. Use la vista de rutas de ServiceProfile (`viz routes`) o los diagnósticos actuales de políticas solo para los recursos realmente configurados. Especifique explícitamente el contenedor del controlador pertinente al leer registros.
 
 Después de una corrección específica, verifique la vía que fallaba originalmente, no solo que un comando termine correctamente.
 
@@ -357,9 +357,9 @@ Esto sustituye la receta incondicional de etiquetar namespaces, reiniciar y desi
 
 ## Referencias
 
-- [Perfil de alta disponibilidad seleccionado](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/values-ha.yaml)
+- [Perfil de alta disponibilidad seleccionado](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/linkerd-control-plane/values-ha.yaml)
 - [Configuración del proxy](https://linkerd.io/docs/reference/proxy-configuration/)
-- [Plantilla publicada del entorno de ejecución del proxy](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/partials/templates/_proxy.tpl)
+- [Plantilla publicada del entorno de ejecución del proxy](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/partials/templates/_proxy.tpl)
 - [Guía de actualización](https://linkerd.io/docs/tasks/upgrade/)
 - [Política de autorización](https://linkerd.io/docs/reference/authorization-policy/)
 - [Inyección de Istio](../istio/advanced/07-sidecar-injection.md) y [modo ambient](../istio/advanced/01-ambient-mode.md)

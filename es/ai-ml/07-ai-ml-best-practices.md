@@ -1,15 +1,15 @@
 # Mejores prácticas de IA/ML en EKS
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 > **Líneas base**: inference-perf0.6.1 / SOCI0.15.0 / Karpenter1.14.1 / External Secrets2.10.0
 
 Evalúe las mejoras según la latencia, la tasa de éxito, el rendimiento, el costo y la recuperación para la misma carga de trabajo. Una GPU, un snapshotter o una función de uso compartido no garantiza una mejora de velocidad ni un porcentaje de ahorro determinados.
 
-![Evaluación del benchmarking, la optimización del inicio, los dispositivos, las redes y el almacenamiento, la observabilidad, los costos y la seguridad mediante mediciones y comprobaciones de recuperación.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png)
+![Evaluación del rendimiento, la optimización del inicio, los dispositivos, las redes y el almacenamiento, la observabilidad, los costos y la seguridad mediante mediciones y comprobaciones de recuperación.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-0.html)
 
-## Benchmarking de inferencia de LLM
+## Evaluación del rendimiento de inferencia de LLM
 
 ![Ventanas de medición diferenciadas para la primera salida, los intervalos entre tokens, la latencia de extremo a extremo y el rendimiento/goodput agregado.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-1.png)
 
@@ -19,7 +19,7 @@ Evalúe las mejoras según la latencia, la tasa de éxito, el rendimiento, el co
 | --- | --- |
 | TTFT | Tiempo desde el envío hasta la recepción de la primera **salida no vacía**; el primer frame HTTP/SSE no necesariamente contiene un token |
 | ITL | Intervalos entre tokens/trozos; un fragmento de red puede contener varios tokens |
-| TPOT | Promedio definido por la herramienta después del primer token; no está definido para una o menos tokens de salida |
+| TPOT | Promedio definido por la herramienta después del primer token; no está definido si se generan cero o un solo token |
 | E2E | Tiempo desde la solicitud hasta su finalización; registre los límites de cola, red y posprocesamiento |
 | Rendimiento de solicitudes | Solicitudes completadas correctamente / ventana de medición especificada |
 | Rendimiento de tokens | Suma de los tokens de salida en la ventana / tiempo, no un promedio no ponderado del TPS de las solicitudes |
@@ -29,7 +29,7 @@ Con marcas de tiempo reales de los tokens, el ITL medio es (hora del último tok
 
 ### inference-perf y GenAI-Perf
 
-inference-perf es una herramienta de benchmarking de Kubernetes SIGs/wg-serving. El paquete de PyPI inspeccionado es la versión 0.6.1, mientras que el pyproject de su etiqueta Git todavía indica 0.5.0; se documenta esta discrepancia de metadatos. La CLI real usa --config_file u opciones estructuradas como --server.type, no la interfaz anterior de benchmark --endpoint --prompt-length.
+inference-perf es una herramienta de pruebas comparativas de Kubernetes SIGs/wg-serving. El paquete de PyPI inspeccionado es la versión 0.6.1, mientras que el pyproject de su etiqueta Git todavía indica 0.5.0; se documenta esta discrepancia de metadatos. La CLI real usa --config_file u opciones estructuradas como --server.type, no la interfaz anterior de benchmark --endpoint --prompt-length.
 
 Esta configuración de **simulación interna** no llama a ningún servidor de modelos. La CLI real 0.6.1 completó tres solicitudes con un trabajador. La cantidad de tokens simulada es cero y TTFT/TPOT son nulos, por lo que estos no son resultados de rendimiento de modelos.
 
@@ -64,11 +64,11 @@ storage:
 inference-perf --config_file benchmark-fixture.yaml
 ```
 
-Antes de cambiar a un endpoint real, verifique los tipos de servidor/API, los alias del modelo, el streaming, el tokenizador y la autenticación. La configuración puede contener encabezados secretos y la configuración combinada se registra en los logs, así que valide la entrega y el enmascaramiento de credenciales. Conserve los archivos de salida, las solicitudes/respuestas sin procesar y los errores, respetando la privacidad de los conjuntos de datos y los permisos de uso.
+Antes de cambiar a un endpoint real, verifique los tipos de servidor/API, los alias del modelo, el streaming, el tokenizador y la autenticación. El archivo de configuración puede contener encabezados secretos y la configuración combinada queda registrada en los logs; por ello, valide la entrega y el enmascaramiento de credenciales. Conserve los archivos de salida, las solicitudes/respuestas sin procesar y los errores, respetando la privacidad de los conjuntos de datos y los permisos de uso.
 
 La tasa constante/Poisson mide las llegadas por segundo; la carga concurrente controla la concurrencia. Los mismos valores numéricos no son equivalentes. Pruebe una línea base de una sola solicitud, aumentos graduales de carga acotados, ráfagas y distribuciones realistas. Una curva de saturación por sí sola no demuestra un cuello de botella de CPU/GPU/memoria; inspeccione el perfil, las colas, las redes y la capacidad del cliente.
 
-Use las opciones auditadas de [perfil/endpoint/servicio/token de GenAI-Perf 0.0.16](04-inference-frameworks.md), no combinaciones inventadas de --backend vllm. Las métricas de GPU requieren recopilación por separado; compruebe los límites de CPU/red del generador de carga. Los Jobs de benchmarking necesitan imágenes y claves de configuración verificadas, PVC, plazos y semántica de reintentos que tenga en cuenta la carga duplicada.
+Use las opciones verificadas de [perfil, endpoint, servicio y token de GenAI-Perf 0.0.16](04-inference-frameworks.md), no combinaciones inventadas de --backend vllm. Las métricas de GPU requieren recopilación por separado; compruebe los límites de CPU/red del generador de carga. Los Jobs de pruebas de rendimiento necesitan imágenes y claves de configuración verificadas, PVC, plazos y una semántica de reintentos que tenga en cuenta la carga duplicada.
 
 ## Optimización del inicio de contenedores
 
@@ -96,15 +96,15 @@ Las entradas deben ser diseños OCI, no archivos tar ordinarios de docker-save. 
 
 ### Inicio de Bottlerocket
 
-En 1.64, `bootstrap-containers.<name>.user-data` contiene **datos codificados en base64**, que el contenedor de arranque consume como archivo. El texto de shell sin formato en la configuración no se ejecuta automáticamente. La imagen de origen debe ser real y usar correctamente los almacenes/espacios de nombres de imágenes del host. Una etiqueta estática images-prefetched=true no demuestra que la operación haya tenido éxito.
+En 1.64, `bootstrap-containers.<name>.user-data` contiene **datos codificados en base64**, que el contenedor de arranque consume como archivo. El texto de shell sin formato en la configuración no se ejecuta automáticamente. La imagen de origen debe existir y usar correctamente los almacenes y espacios de nombres de imágenes del host. Una etiqueta estática images-prefetched=true no demuestra que la operación haya tenido éxito.
 
 mode=once pasa a ser off después de la ejecución. Si falla essential=true, se detiene el arranque; false permite que falle, así que ajuste la configuración a las necesidades de preparación. allowed-unsafe-sysctls no es un conmutador de contenedores privilegiados. Incluya el efecto de la precarga en el tiempo de preparación del nodo en las mediciones.
 
 ## Selección de GPU, Neuron y almacenamiento
 
-Parámetros × bytes es solo el límite inferior de los pesos. Incluya la caché KV considerando la arquitectura, las activaciones, el espacio de trabajo, los búferes de comunicación, la fragmentación y las restricciones de particionamiento. Los pesos FP16 de 13B ≈ 26 GB no caben en 24 GB; 70B en FP16 ≈ 140 GB, más que los 24 GB combinados de cuatro GPU. Más CPU de host no amplía la VRAM de GPU sin cambios.
+Parámetros × bytes es solo el límite inferior de los pesos. Incluya la caché KV considerando la arquitectura, las activaciones, el espacio de trabajo, los búferes de comunicación, la fragmentación y las restricciones de particionamiento. Los pesos FP16 de 13B ≈ 26 GB no caben en 24 GB; 70B en FP16 ≈ 140 GB superan los 96 GB combinados de cuatro GPU de 24 GB. Más CPU de host no amplía la VRAM de GPU sin cambios.
 
-Distinga p4d.24xlarge con 8×40 GB de p4de con A100 de 8×80 GB. G5g usa Arm/T4G; verifique la arquitectura de la imagen/kernel. Consulte la [tabla auditada de Inf2](04-inference-frameworks.md) para inf2.48xlarge: 192 vCPU/768 GiB de RAM de host, 12 chips/24 NeuronCores/384 GiB de HBM. Un nombre de familia como P5 no determina la cantidad de GPU en todos los tamaños. Vuelva a comprobar las generaciones, regiones, cuotas y precios disponibles al elegir.
+Distinga p4d.24xlarge, con 8 GPU de 40 GB cada una, de p4de, con 8 GPU A100 de 80 GB cada una. G5g usa Arm/T4G; verifique la arquitectura de la imagen/kernel. Consulte la [tabla auditada de Inf2](04-inference-frameworks.md) para inf2.48xlarge: 192 vCPU/768 GiB de RAM de host, 12 chips/24 NeuronCores/384 GiB de HBM. Un nombre de familia como P5 no determina la cantidad de GPU en todos los tamaños. Vuelva a comprobar las generaciones, regiones, cuotas y precios disponibles al elegir.
 
 LoRA reduce el estado de los adaptadores entrenables, pero mantiene los pesos/activaciones base y es distinto de QLoRA. No use una función que dé por sentado que la mayoría de los modelos LoRA caben en 24 GB. Mida la memoria máxima, la latencia, el rendimiento y los reinicios.
 
@@ -114,9 +114,9 @@ Use la [guía de infraestructura](06-ai-infrastructure.md) para el rendimiento E
 
 ### Verificación de la caché del modelo
 
-Un archivo config.json no demuestra que se haya terminado de descargar los pesos. Verifique **todos los archivos** con un manifiesto de publicación/revisión confiable antes de exponer almacenamiento inmutable de solo lectura. Evite las condiciones de carrera entre descargadores simultáneos y los archivos escritos parcialmente.
+La presencia de config.json no demuestra que haya finalizado la descarga de los pesos. Verifique **todos los archivos** con un manifiesto de publicación/revisión confiable antes de exponer almacenamiento inmutable de solo lectura. Evite las condiciones de carrera entre descargadores simultáneos y los archivos escritos parcialmente.
 
-Este validador local no descarga ni elimina archivos. Las pruebas abarcan archivos completos, revisiones incorrectas, pesos parciales/ausentes, traversal y enlaces simbólicos externos. La confianza en el manifiesto y la inmutabilidad posterior a la verificación siguen siendo requisitos independientes.
+Este validador local no descarga ni elimina archivos. Las pruebas abarcan archivos completos, revisiones incorrectas, pesos parciales/ausentes, ataques de traversal de rutas y enlaces simbólicos externos. La confianza en el manifiesto y la inmutabilidad posterior a la verificación siguen siendo requisitos independientes.
 
 ```python
 from pathlib import Path
@@ -156,7 +156,7 @@ Los puntos de control necesitan el estado del optimizador/RNG/cursor de datos y 
 
 EFA mejora la comunicación para las cargas de trabajo adecuadas; no es obligatorio para todas las ejecuciones de DDP. Verifique las interfaces, la colocación en la misma AZ, driver/libfabric/aws-ofi-nccl, los recursos del Pod, los grupos de seguridad y el transporte real. RAID0/las etiquetas de subred no lo habilitan. Evite NCCL_TIMEOUT no verificado y los ajustes Ring/Simple/IB_DISABLE copiados sin criterio. torchrun --nnodes cuenta nodos, no el WORLD_SIZE total de procesos.
 
-Use el placementGroupSelector real de Karpenter 1.14.1. Una etiqueta aws:ec2:placement-group no es la API de colocación, y aws: no es un espacio de nombres para etiquetas de usuario. Este **ejemplo de esquema** requiere identificadores aprobados de AMI/subred/SG/rol y un placement group existente. El ejemplo especifica amiFamily AL2023, por lo que la sustitución debe ser una AMI de EKS AL2023 validada, no una AMI de otro sistema operativo. No completa la configuración de EFA networkInterfaces.
+Use el placementGroupSelector real de Karpenter 1.14.1. Una etiqueta aws:ec2:placement-group no es la API de colocación, y aws: no es un espacio de nombres para etiquetas de usuario. Este **ejemplo de esquema** requiere identificadores aprobados de AMI/subred/SG/rol y un grupo de ubicación (placement group) existente. El ejemplo especifica amiFamily AL2023, por lo que la sustitución debe ser una AMI de EKS AL2023 validada, no una AMI de otro sistema operativo. No completa la configuración de EFA networkInterfaces.
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -220,7 +220,7 @@ DCGM FB_USED/FREE son gauges en MiB; XID_ERRORS es el último código. Evite FB_
 
 VPA Off proporciona recomendaciones de CPU/memoria, no selección automática de instancias GPU. Se eliminó el anterior script de ajuste de tamaño, que inspeccionaba solo la primera serie y comparaba proporciones de 0–1 con 50/90. Inspeccione los picos, las colas, los SLO y la recuperación tras la eliminación en todas las cargas de trabajo.
 
-Registre los ahorros según la región/términos de SO/compra reales, la utilización, el tiempo de inactividad/fallo, el almacenamiento, la transferencia y las operaciones. Spot/Savings Plans/RI difieren en descuentos y garantías de capacidad. Evite tablas con porcentajes fijos del 60–90 % o sumar porcentajes de ahorro de optimizaciones. Tome las decisiones de compra de compromisos por separado, basándose en líneas base medidas y variabilidad.
+Registre los ahorros con los precios reales por región, sistema operativo y modalidad de compra, además de la utilización, el tiempo de inactividad o fallos, el almacenamiento, la transferencia y la operación. Spot/Savings Plans/RI difieren en descuentos y garantías de capacidad. Evite tablas con porcentajes fijos del 60–90 % o sumar porcentajes de ahorro de optimizaciones. Tome las decisiones de compra de compromisos por separado, basándose en líneas base medidas y variabilidad.
 
 ## Acceso a modelos y gestión de secretos
 
@@ -260,7 +260,7 @@ Los registros de auditoría deben capturar la identidad del usuario/carga de tra
 
 ## Alcance de la verificación
 
-Se revisó toda la prosa original de la guía y el cuestionario, así como los 87 bloques de código únicos. La validación incluye tres solicitudes de simulación nativas de inference-perf, conversión OCI local de SOCI, seis casos de caché, tres esquemas de Karpenter/ESO y cálculos de cron. No se ejecutaron benchmarks de GPU/modelos reales, mediciones del inicio de contenedores, instalaciones de SOCI en el host, recursos en la nube ni proveedores de secretos.
+Se revisó toda la prosa original de la guía y el cuestionario, así como los 87 bloques de código únicos. La validación incluye tres solicitudes de simulación nativas de inference-perf, conversión OCI local de SOCI, seis casos de caché, tres esquemas de Karpenter/ESO y cálculos de cron. No se ejecutaron pruebas de rendimiento con GPU ni modelos reales, mediciones del inicio de contenedores, instalaciones de SOCI en el host, recursos en la nube ni proveedores de secretos.
 
 ## Referencias
 

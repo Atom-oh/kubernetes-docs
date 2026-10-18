@@ -2,7 +2,7 @@
 
 > **Referencia de ejemplo**: Calico Open Source 3.32.2
 >
-> **Última revisión**: October 12, 2026
+> **Última revisión**: 12 de octubre de 2026
 >
 > **Última versión**: Calico 3.33.0, publicada el 1 de octubre, es la versión más reciente de Open Source y se prueba con Kubernetes 1.35–1.37.
 >
@@ -14,13 +14,13 @@ Calico proporciona redes y políticas de red para Kubernetes, con capacidades ad
 
 ### Julio de 2026: Calico para VM en Kubernetes
 
-El [anuncio oficial](https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/) de Tigera tiene fecha de **23 de julio de 2026**. Describe redes de VM/contenedores, continuidad de IP, extensión de puente L2, políticas y observabilidad para migraciones de VMware. Este es un anuncio de producto, no una promesa de que cada capacidad anunciada esté incluida en Calico Open Source. Verifique la edición, topología y estado de la característica exactos: las [notas de la versión Enterprise 3.23](https://docs.tigera.io/calico-enterprise/latest/release-notes/) aún marcan la migración en vivo de KubeVirt como vista previa técnica. La disponibilidad comercial no elimina esa limitación específica de la característica.
+El [anuncio oficial](https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/) de Tigera tiene fecha de **23 de julio de 2026**. Describe redes de VM/contenedores, continuidad de IP, extensión de puente L2, políticas y observabilidad para migraciones de VMware. Este es un anuncio de producto, no una promesa de que cada capacidad anunciada esté incluida en Calico Open Source. Verifique la edición, topología y estado de la característica exactos: las [notas de la versión Enterprise 3.23](https://docs.tigera.io/calico-enterprise/latest/release-notes/) aún marcan la migración en vivo de KubeVirt como vista previa técnica. Que se ofrezca comercialmente no elimina esa limitación específica de la función.
 
 ## Compatibilidad y límites de características
 
 - Calico 3.32.2 se publicó el 30 de agosto de 2026 y se prueba con Kubernetes 1.34–1.36. La versión más reciente 3.33.0 se prueba con Kubernetes 1.35–1.37; la disponibilidad de Kubernetes 1.37 por sí sola no establece compatibilidad para los ejemplos fijados en 3.32.2.
 - El requisito general de Linux es kernel 5.10 o posterior con los módulos requeridos. Consulte la guía de eBPF para conocer arquitecturas compatibles, backports de proveedores y requisitos superiores para características individuales.
-- Los planos de datos de Linux incluyen iptables, nftables y eBPF. Los valores predeterminados dependen del instalador/plataforma; las instalaciones actuales del operador kubeadm autogestionado pueden usar eBPF de forma predeterminada. No existe una garantía general de paridad de características.
+- Los planos de datos de Linux incluyen iptables, nftables y eBPF. Los valores predeterminados dependen del instalador/plataforma; las instalaciones actuales de Calico Operator en clústeres kubeadm autogestionados pueden usar eBPF de forma predeterminada. No existe una garantía general de paridad de características.
 - [Calico para Windows](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations) admite configuraciones específicas de IPv4 VXLAN y BGP, pero no eBPF de Linux, IPIP, IPv6/dual stack, WireGuard ni todas las características de políticas de Linux.
 - Open Source incluye políticas por niveles, agregación de flujos Goldmane y la interfaz de usuario Whisker. Las políticas DNS/FQDN, las políticas de capa de aplicación y otras capacidades avanzadas tienen límites de edición en la [comparación de productos](https://docs.tigera.io/calico/latest/about/calico-product-editions).
 
@@ -33,7 +33,7 @@ El [anuncio oficial](https://www.tigera.io/news/tigera-launches-ebpf-powered-cal
 | Política L7 / DNS | Compruebe las licencias Enterprise/Cloud y el estado de las características | Política HTTP y DNS disponible; se aplican límites específicos del protocolo |
 | BGP | Enrutamiento basado en BIRD en el modo de red aplicable | Anuncio del plano de control BGP; evalúe las rutas y la topología requeridas |
 | Observabilidad | Goldmane/Whisker y métricas de Open Source; las características de pago añaden capacidades | Hubble y métricas |
-| Windows | Configuraciones compatibles con limitaciones significativas | Los agentes Cilium 1.20 requieren Linux; no es un plano de datos beta para Windows |
+| Windows | Configuraciones compatibles con limitaciones significativas | Los agentes Cilium 1.20 requieren Linux; Cilium no ofrece un plano de datos beta para Windows |
 | Reemplazo de kube-proxy | Disponible con el plano de datos eBPF | Disponible cuando se configura |
 | Multiclúster / mesh | Características e integraciones separadas; dependiente de la edición | Cluster Mesh y características opcionales de service mesh; no todas se habilitan mediante la instalación |
 
@@ -67,7 +67,7 @@ Use la [referencia de arquitectura](https://docs.tigera.io/calico/latest/referen
 | Sin encapsular | El underlay debe enrutar direcciones de Pod; BGP es una forma de distribuir rutas | 1500 |
 | CrossSubnet | Una configuración de IPIP o VXLAN que encapsula solo entre subredes de nodos | Aún reserve la sobrecarga de túnel requerida para las rutas que la necesiten |
 
-Estos MTU son ejemplos, no constantes universales. La sobrecarga de IPv6 VXLAN, los underlay jumbo, WireGuard y los límites de rutas de nube cambian el cálculo. IPIP solo admite IPv4, y IPv4 VXLAN también se puede usar cuando IPIP no es adecuado. Compruebe la [configuración de MTU](https://docs.tigera.io/calico/latest/networking/configuring/mtu) y los [requisitos de overlay](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip). La disponibilidad de BGP por sí sola no demuestra que cada salto del underlay pueda enrutar CIDR de Pod; la adyacencia en la misma L2 no es un requisito previo universal para una estructura enrutada sin encapsular. Planifique el underlay, los puertos, la familia de direcciones y la plataforma antes de seleccionar un modo.
+Estos MTU son ejemplos, no constantes universales. La sobrecarga de IPv6 VXLAN, los underlay jumbo, WireGuard y los límites de la ruta de red en la nube cambian el cálculo. IPIP solo admite IPv4, y IPv4 VXLAN también se puede usar cuando IPIP no es adecuado. Compruebe la [configuración de MTU](https://docs.tigera.io/calico/latest/networking/configuring/mtu) y los [requisitos de overlay](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip). La disponibilidad de BGP por sí sola no demuestra que cada salto del underlay pueda enrutar CIDR de Pod; la adyacencia en la misma L2 no es un requisito previo universal para una estructura enrutada sin encapsular. Planifique el underlay, los puertos, la familia de direcciones y la plataforma antes de seleccionar un modo.
 
 ## EKS: conservar Amazon VPC CNI y añadir la política de Calico
 
@@ -203,7 +203,7 @@ spec:
           port: 8080
 ```
 
-El `podSelector` de pares significa Pods frontend en el **mismo espacio de nombres**. No autentica usuarios, permite todo el tráfico del mismo espacio de nombres ni establece una política de salida. El siguiente ejemplo independiente restringe la salida del espacio de nombres de demostración a Pods CoreDNS seleccionados en UDP/TCP 53 y deniega cualquier otra salida:
+El `podSelector` del par de la regla selecciona Pods frontend del **mismo espacio de nombres**. No autentica usuarios, permite todo el tráfico del mismo espacio de nombres ni establece una política de salida. El siguiente ejemplo independiente restringe la salida del espacio de nombres de demostración a Pods CoreDNS seleccionados en UDP/TCP 53 y deniega cualquier otra salida:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -231,11 +231,11 @@ spec:
     - action: Deny
 ```
 
-Confirme primero los endpoints y las etiquetas DNS reales. Este ejemplo basado en selectores se dirige a Pods CoreDNS normales; no es una política para un resolvedor de sistema NodeLocal DNSCache o Auto Mode. El puerto 53 por sí solo no identifica un servidor DNS autorizado. Si también necesita salida de aplicaciones, diseñe y pruebe esas asignaciones explícitas antes de habilitar la denegación final. Una asignación posterior independiente no puede anular un Deny de Calico anterior coincidente.
+Confirme primero los endpoints y las etiquetas DNS reales. Este ejemplo basado en selectores se dirige a Pods CoreDNS normales; no es una política para un resolvedor de sistema NodeLocal DNSCache o Auto Mode. El puerto 53 por sí solo no identifica un servidor DNS autorizado. Si también necesita salida de aplicaciones, diseñe y pruebe esas reglas de permiso explícitas antes de habilitar la denegación final. Una regla Allow posterior e independiente no puede anular una regla Deny anterior de Calico que coincida.
 
 ### La política FQDN es específica de la edición
 
-El campo `destination.domains` usado en las políticas DNS de Calico Enterprise/Cloud **no está en el esquema NetworkPolicy de Open Source 3.32.2**. No lo aplique a esta instalación de Open Source. Para una implementación con derecho a uso, use la [guía de políticas basadas en dominios](https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy), configure servidores DNS confiables y permita la ruta DNS. Restrinja los dominios deliberadamente: `*.amazonaws.com` sería una asignación amplia, no autorización para una cuenta o servicio de AWS. La autorización de DNS a IP no equivale a validar la identidad HTTP Host o TLS.
+El campo `destination.domains` usado en las políticas DNS de Calico Enterprise/Cloud **no está en el esquema NetworkPolicy de Open Source 3.32.2**. No lo aplique a esta instalación de Open Source. Para una implementación con la licencia correspondiente, use la [guía de políticas basadas en dominios](https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy), configure servidores DNS confiables y permita la ruta DNS. Restrinja los dominios deliberadamente: `*.amazonaws.com` sería una regla de permiso amplia, no una autorización para una cuenta o servicio de AWS. Permitir una IP a partir de su nombre DNS no equivale a validar el encabezado HTTP Host ni la identidad TLS.
 
 ## Monitorización y estado de salud
 
@@ -249,7 +249,7 @@ spec:
   prometheusMetricsPort: 9091
 ```
 
-Las métricas están deshabilitadas de forma predeterminada en Felix. Habilitar este listener no crea un trabajo de scraping de Prometheus ni lo hace seguro públicamente; configure el descubrimiento privado y los controles de acceso mediante la [guía de métricas](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics). `flowLogsFileEnabled` no es un campo FelixConfiguration de Open Source. Use la [ruta de logs de flujo Goldmane/Whisker](https://docs.tigera.io/calico/latest/observability/view-flow-logs) compatible en lugar de copiar ajustes de logs de archivos de Enterprise.
+Las métricas están deshabilitadas de forma predeterminada en Felix. Habilitar este listener no crea un trabajo de scraping de Prometheus ni lo hace seguro para el acceso público; configure el descubrimiento privado y los controles de acceso mediante la [guía de métricas](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics). `flowLogsFileEnabled` no es un campo FelixConfiguration de Open Source. Use la [ruta de registros de flujo Goldmane/Whisker](https://docs.tigera.io/calico/latest/observability/view-flow-logs) compatible en lugar de copiar la configuración de registros en archivos de Enterprise.
 
 | Métrica | Significado |
 |---|---|
