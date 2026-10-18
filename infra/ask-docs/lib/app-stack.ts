@@ -49,7 +49,7 @@ export class AppStack extends cdk.Stack {
         MODEL_ID: modelId,
         MAX_QUESTION_CHARS: '500',
         MAX_OUTPUT_TOKENS: '800',
-        TOP_K: '5',
+        TOP_K: '6',
       },
     })
     props.bucket.grantRead(fn, 'index/*')

@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useData } from 'vitepress'
+import MarkdownIt from 'markdown-it'
 
 // Question box for the docs. Calls the same-origin API (CloudFront -> internal ALB -> Lambda).
+// Answers are Markdown from the model: raw HTML is disabled (escaped), and markdown-it rejects
+// javascript:/vbscript:/file:/data: links by default. Images are turned off.
+const md = new MarkdownIt({ html: false, linkify: false, typographer: false }).disable(['image'])
 const { lang } = useData()
 const locale = computed(() => (lang.value.startsWith('ko') ? 'ko' : 'en'))
 const copy = computed(() =>
@@ -15,6 +19,7 @@ const question = ref('')
 const answer = ref('')
 const sources = ref<{ title: string; heading: string; url: string }[]>([])
 const status = ref<'idle' | 'busy' | 'error'>('idle')
+const answerHtml = computed(() => md.render(answer.value))
 
 async function ask() {
   const q = question.value.trim()
@@ -49,12 +54,14 @@ async function ask() {
     <p v-if="status === 'busy'" role="status">{{ copy.busy }}</p>
     <p v-if="status === 'error'" role="alert">{{ copy.error }}</p>
     <div v-if="answer" class="ask-answer">
-      <p class="ask-answer-text">{{ answer }}</p>
+      <!-- eslint-disable-next-line vue/no-v-html -- markdown-it with html disabled, see above -->
+      <div class="ask-answer-text vp-doc" v-html="answerHtml" />
       <div v-if="sources.length">
         <strong>{{ copy.sources }}</strong>
-        <ul>
+        <!-- Numbered so they match the [n] citations in the answer. -->
+        <ol>
           <li v-for="s in sources" :key="s.url"><a :href="s.url">{{ s.title }}{{ s.heading && s.heading !== s.title ? ' · ' + s.heading : '' }}</a></li>
-        </ul>
+        </ol>
       </div>
     </div>
   </section>
@@ -68,6 +75,6 @@ async function ask() {
 .ask-docs button { padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid var(--vp-c-brand-1); background: var(--vp-c-brand-1); color: #fff; cursor: pointer; }
 .ask-docs button:disabled { opacity: 0.5; cursor: not-allowed; }
 .ask-answer { margin-top: 1rem; }
-.ask-answer-text { white-space: pre-wrap; line-height: 1.7; }
-.ask-answer ul { padding-left: 1.25rem; }
+.ask-answer-text { line-height: 1.7; }
+.ask-answer ol { padding-left: 1.5rem; }
 </style>
