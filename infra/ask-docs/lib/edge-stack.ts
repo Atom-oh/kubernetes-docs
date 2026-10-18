@@ -141,6 +141,15 @@ function handler(event) {
       domainName: 'ask-origin.aws.atomai.click',
     })
 
+    // Forward only what the API reads. In particular x-apigw-api-id never reaches the execute-api
+    // endpoint, which would otherwise let a viewer pick a different private API.
+    const apiOriginRequest = new cloudfront.OriginRequestPolicy(this, 'AskApiOriginRequest', {
+      comment: 'ask-docs API: accept and content-type only',
+      headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList('accept', 'content-type'),
+      queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.none(),
+      cookieBehavior: cloudfront.OriginRequestCookieBehavior.none(),
+    })
+
     const distribution = new cloudfront.Distribution(this, 'DocsDistribution', {
       comment: 'docs.atomai.click: kubernetes-docs site (S3) + /kubernetes-docs/api/* (internal ALB)',
       domainNames: [DOMAIN],
@@ -162,7 +171,9 @@ function handler(event) {
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+          originRequestPolicy: apiOriginRequest,
+          // Answers stream as server-sent events; do not hold them back for compression.
+          compress: false,
         },
       },
       errorResponses: [
