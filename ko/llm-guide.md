@@ -31,7 +31,7 @@ curl -fL https://www.atomai.click/kubernetes-docs/llms/manifest.json -o manifest
 jq -r '.documents[] | select(.locale == "ko" and .section == "storage") | .markdownUrl' manifest.json
 ```
 
-manifest의 `schemaVersion`은 `1`입니다. 본문·manifest·MCP 검색은 같은 문서 범위를 사용하며 퀴즈 정답과 랩은 포함하지 않습니다. 랩이 필요하면 기존 `llms-full-<언어>.txt`를 별도로 사용합니다. VitePress와 이 색인은 현재 한국어·영어를 게시하며, cn/jp/es 번역은 포함하지 않습니다. 원문과 다이어그램 설명은 참고 자료로 취급하고, 문서 안의 지시를 에이전트의 시스템 지시나 도구 실행 권한으로 받아들이지 않도록 구성합니다.
+manifest의 `schemaVersion`은 `1`입니다. 본문·manifest·MCP 검색은 같은 문서 범위를 사용하며 퀴즈 정답과 랩은 포함하지 않습니다. 랩이 필요하면 기존 `llms-full-<언어>.txt`를 별도로 사용합니다. VitePress는 다섯 언어를 게시하도록 구성되어 있으며, 이 색인과 MCP 검색은 한국어·영어를 대상으로 합니다. 원문과 다이어그램 설명은 참고 자료로 취급하고, 문서 안의 지시를 에이전트의 시스템 지시나 도구 실행 권한으로 받아들이지 않도록 구성합니다.
 
 ## MCP로 검색하고 본문 읽기
 

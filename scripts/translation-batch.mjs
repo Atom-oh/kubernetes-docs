@@ -381,7 +381,7 @@ export function publishBatch(root, { draft = true } = {}) {
     fs.writeFileSync(body, [
       'GitBook용 cn/jp/es 번역을 최신 main 기준으로 하나의 PR에 누적합니다.',
       '',
-      '본문·목차 번역 모델: Bedrock Mantle `openai.gpt-6-luna` (us-east-1). VitePress 게시 언어: ko/en.',
+      '본문·목차 번역 모델: Bedrock Mantle `openai.gpt-6-luna` (us-east-1). GitBook 번역: cn/jp/es. VitePress 게시 언어: ko/en/cn/jp/es.',
       `대기 또는 재시도 대상: ${state.pending.length}개.`,
       '',
       draft ? '번역·품질 검토가 완료되면 자동으로 리뷰 가능한 상태로 전환됩니다.' :

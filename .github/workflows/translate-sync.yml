@@ -12,6 +12,7 @@ on:
       - 'scripts/bedrock-translation.py'
       - 'scripts/validate-translation.py'
       - 'scripts/repair-markdown-emphasis.py'
+      - 'scripts/sync-translated-anchors.mjs'
       - 'scripts/validate-gitbook-coverage.mjs'
       - 'scripts/review-translation-batch.mjs'
       - 'scripts/requirements-translation.txt'
@@ -48,6 +49,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install Markdown rendering dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Install Bedrock translation dependencies
         run: python3 -m pip install -r scripts/requirements-translation.txt
 
@@ -73,6 +76,7 @@ jobs:
         run: |
           node scripts/translation-batch.mjs refresh
           node scripts/sync-translated-assets.mjs
+          node scripts/sync-translated-anchors.mjs
           git add -- cn jp es .github/translation-state.json .github/i18n-heading-map.json
 
       - name: Quality gate on the complete pending diff
@@ -84,6 +88,7 @@ jobs:
           fi
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
           node scripts/validate-gitbook-coverage.mjs
+          node scripts/sync-translated-anchors.mjs --check
           if node scripts/review-translation-batch.mjs > /tmp/review-result.txt 2>&1; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
