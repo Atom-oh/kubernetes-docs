@@ -38,7 +38,7 @@ El plano de control administrado de EKS es multizona; ARC zonal shift/autoshift 
 - Actualizaciones fallidas del clúster
 - Regresiones de add-ons (CNI/CoreDNS/CSI)
 - Errores de webhooks de admisión
-- Rollouts defectuosos de políticas para todo el clúster
+- Despliegues defectuosos de políticas para todo el clúster
 - Limitación de la API del plano de control
 
 Documenta explícitamente esta lista de fallos y usa como criterio de éxito de la prueba de concepto: «¿este fallo queda realmente contenido en un solo lado después de separar en A/B?». No se puede verificar una afirmación abstracta de «mayor disponibilidad».
@@ -59,7 +59,7 @@ DNS es una dependencia compartida: comprueba las réplicas, su distribución ent
 
 La documentación de AWS lo advierte explícitamente. Cuando se produce un cambio zonal, ocurre automáticamente lo siguiente.
 
-1. Se marca como cordoned los nodos de toda la zona de disponibilidad (se impide programar nuevos Pods)
+1. Todos los nodos de la zona de disponibilidad se marcan como no programables (no se les asignan Pods nuevos)
 2. Se detiene el reequilibrio entre zonas de disponibilidad de los grupos de nodos administrados
 3. Se quitan de EndpointSlice los Pods de esa zona
 4. No se terminan ni desalojan los nodos/Pods (vuelven inmediatamente en cuanto se levanta el cambio)
@@ -92,13 +92,13 @@ Sigue este orden: medir → optimizar → comparar el costo residual.
 2. Evalúa el enrutamiento dentro de una misma zona, `spec.trafficDistribution` del Service, la distribución de topología, los destinos IP del ALB, la localidad de NAT/endpoints y la localidad de los datos. El campo en sí no cambió de nombre. Verifica la compatibilidad y las puertas de funcionalidad para `PreferClose`, `PreferSameZone` y `PreferSameNode` en la versión de Kubernetes/EKS objetivo.
 3. Compara el costo residual entre zonas después de aplicar estas medidas.
 
-La transferencia de datos regional entre zonas de ALB no tiene un cargo adicional por transferencia, así que deshabilitarla no implica ahorro. Deshabilitarla por grupo de destinos elimina la afinidad de destino y la compatibilidad con destinos Lambda. Una zona de disponibilidad vacía puede devolver 503; una zona poblada cuyos destinos no estén sanos se rige por las condiciones de failover de DNS/enrutamiento. Distingue estos casos y conserva el valor predeterminado habilitado cuando no se pueda garantizar capacidad por zona.
+La transferencia de datos regional entre zonas de ALB no tiene un cargo adicional por transferencia, así que deshabilitarla no implica ahorro. Deshabilitarla por grupo de destinos elimina la persistencia de sesiones por destino y la compatibilidad con destinos Lambda. Una zona de disponibilidad vacía puede devolver 503; una zona poblada cuyos destinos no estén sanos se rige por las condiciones de failover de DNS/enrutamiento. Distingue estos casos y conserva el valor predeterminado habilitado cuando no se pueda garantizar capacidad por zona.
 
 ### La estrategia de actualización está directamente relacionada con la razón de A/B
 
 Si la razón real para ejecutar un entorno de ejecución EKS A/B es aislar actualizaciones, debes formalizar lo siguiente:
 
-- La desviación de versión permitida entre los clústeres A y B
+- El desfase de versiones permitido entre los clústeres A y B
 - Una regla para actualizar siempre primero uno de los lados
 - Si se utiliza soporte extendido
 

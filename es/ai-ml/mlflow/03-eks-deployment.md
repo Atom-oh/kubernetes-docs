@@ -4,11 +4,11 @@
 
 ## Configuración del entorno de laboratorio
 
-Prepare una versión de EKS Kubernetes compatible, una versión compatible de kubectl, Helm 3, una base de datos de metadatos y almacenamiento de artefactos. Un límite inferior como `kubectl >=1.34` no establece la compatibilidad con todos los servidores de API. Compruebe la política de desfase entre versiones del cliente y el servidor para el clúster real.
+Prepare un clúster de EKS con una versión de Kubernetes compatible, una versión compatible de kubectl, Helm 3, una base de datos de metadatos y almacenamiento para artefactos. Un límite inferior como `kubectl >=1.34` no establece la compatibilidad con todos los servidores de API. Compruebe la política de desfase entre versiones del cliente y el servidor para el clúster real.
 
-Este capítulo se basa en un chart descargado, la representación nativa de Helm y el código fuente del servidor de MLflow 3.16.0. **No demuestra que se hayan aprovisionado correctamente los recursos de AWS, que haya conectividad con RDS, que se hayan cargado archivos a S3 ni que se haya realizado la implementación en EKS.** Consulte la [Parte 1](01-tracking.md) para las comprobaciones locales de SQLite/API y la [Parte 2](02-model-registry.md) para las comprobaciones del Registry.
+Este capítulo se basa en un chart descargado, la representación nativa de Helm y el código fuente del servidor de MLflow 3.16.0. **No demuestra que se hayan aprovisionado correctamente los recursos de AWS, que haya conectividad con RDS, que se hayan cargado archivos a S3 ni que se haya realizado la implementación en EKS.** Consulte la [Parte 1](01-tracking.md) para las comprobaciones locales de SQLite/API y la [Parte 2](02-model-registry.md) para las comprobaciones del registro de modelos.
 
-## Por qué ejecutar el servidor de Tracking de MLflow en EKS
+## Por qué ejecutar el servidor de seguimiento de MLflow en EKS
 
 Puede reutilizar patrones de implementación de Kubernetes, observabilidad e IAM, asumiendo la responsabilidad de los servidores, las bases de datos, los artefactos, el control de acceso, las copias de seguridad y las actualizaciones. SageMaker MLflow Apps y otros registros administrados son alternativas; sus versiones compatibles, autenticación, características y costos no son necesariamente idénticos.
 
@@ -18,11 +18,11 @@ Compartir con un equipo no requiere automáticamente aprovisionar nuevos recurso
 
 | Capa | Responsabilidad y estado que se debe inspeccionar |
 |---|---|
-| Servidor HTTP | API de SDK, UI, proxy de artefactos; autenticación, autorización, políticas de host/CORS, workers |
+| Servidor HTTP | API del SDK, UI, proxy de artefactos; autenticación, autorización, políticas de host/CORS, workers |
 | Base de datos de metadatos | Metadatos de experimentos/ejecuciones/métricas/modelos/registro; pools, migraciones, copias de seguridad |
 | Almacén de artefactos | Archivos de modelos/datos/gráficos; bucket/prefijo, IAM, cifrado, retención |
 | Almacén de autenticación | Base de datos de usuarios/permisos, secretos de sesión/firma, caché del mecanismo de autenticación seleccionado |
-| Estado opcional de características | Colas, cachés y archivos temporales utilizados por los trabajos habilitados, el tracing/evaluation o las características de gateway |
+| Estado opcional de características | Colas, cachés y archivos temporales utilizados por los trabajos habilitados, el trazado/evaluación o las funciones de gateway |
 
 PostgreSQL más S3 no hace que todas las características sean sin estado. Por ejemplo, las bases de datos SQLite de basic-auth locales al Pod pueden dejar réplicas con distintos usuarios o permisos. Compruebe por separado las cachés de los plugins de OIDC y el almacenamiento de trabajos.
 
@@ -61,8 +61,8 @@ Inspeccione la imagen/digest, ServiceAccount, entrega de credenciales, argumento
 - `backendStore.defaultSqlitePath: ":memory:"` configura metadatos en memoria. **Esto difiere del nuevo valor predeterminado del CLI upstream, que usa un archivo SQLite.** Una instalación predeterminada del chart no es un servicio de producción duradero.
 - PostgreSQL externo utiliza `backendStore.postgres.*`; las referencias a credenciales utilizan `backendStore.existingDatabaseSecret.*`.
 - Compruebe `artifactRoot.s3.*` junto con `artifactRoot.proxiedArtifactStorage: true`. La representación nativa produjo `--artifacts-destination=s3://...` y `--serve-artifacts`.
-- La configuración de la base de datos de basic-auth se encuentra por separado en `auth.postgres.*`. Cambiar la base de datos de Tracking no comparte automáticamente el estado de autenticación.
-- `backendStore.databaseMigration: true` agrega una ruta de init-container del Pod. Planifique las copias de seguridad, una fase de migración coordinada y las comprobaciones de compatibilidad antes de permitir que varias réplicas migren al mismo tiempo.
+- La configuración de la base de datos de basic-auth se encuentra por separado en `auth.postgres.*`. Cambiar la base de datos de seguimiento no comparte automáticamente el estado de autenticación.
+- `backendStore.databaseMigration: true` agrega un contenedor de inicialización del Pod. Planifique las copias de seguridad, una fase de migración coordinada y las comprobaciones de compatibilidad antes de permitir que varias réplicas migren al mismo tiempo.
 
 Completar los nombres sin valores reales ni Secrets no termina la configuración de producción. Algunas referencias a bases de datos/autenticación de este chart se entregan mediante **variables de entorno del contenedor**. SecretKeyRef evita los valores en texto sin formato en Git, pero no elimina la exposición en el entorno del proceso. Si la política prohíbe los valores de secretos en los entornos, prepare archivos de credenciales proporcionados desde Secrets Manager/SSM o un almacén equivalente, y una implementación que utilice esos archivos. No incluya claves estáticas de AWS en los valores de Helm ni en las imágenes.
 
@@ -70,7 +70,7 @@ Completar los nombres sin valores reales ni Secrets no termina la configuración
 
 Limite los permisos de S3 al bucket/prefijo previsto. Según las operaciones reales, compruebe los permisos de `GetObject`, `PutObject`, listado, cargas multiparte y KMS. El modo proxy utiliza los permisos de AWS del servidor; el modo de artefactos directos utiliza los permisos del cliente. Los URI de experimentos existentes no se reescriben simplemente al cambiar las opciones del servidor.
 
-EKS Pod Identity requiere el Agent, una asociación y un SDK compatible, y está destinado a workers Linux EC2. No está disponible universalmente para Pods de Fargate ni de Windows. IRSA sigue siendo otra opción dentro de sus configuraciones compatibles. Especificar un nombre de ServiceAccount o una anotación no completa la configuración de confianza de IAM, la asociación ni la del SDK.
+EKS Pod Identity requiere el Agent, una asociación y un SDK compatible, y está destinado a nodos de trabajo Linux de EC2. No está disponible universalmente para Pods de Fargate ni de Windows. IRSA sigue siendo otra opción dentro de sus configuraciones compatibles. Especificar un nombre de ServiceAccount o una anotación no completa la configuración de confianza de IAM, la asociación ni la del SDK.
 
 Un rol IAM para S3 no autoriza automáticamente el inicio de sesión en PostgreSQL. Verifique el acceso de red a la base de datos, la validación TLS, los usuarios/credenciales o la autenticación IAM de bases de datos configurada por separado. Revise IMDS y la configuración del SDK para evitar la alternativa no deseada de credenciales del rol del nodo.
 
@@ -86,9 +86,9 @@ El endpoint de estado verificado es **`/health`**, implementado como una respues
 
 ## Notas operativas
 
-Antes de escalar las réplicas, comparta o externalice las bases de datos de metadatos/autenticación, los secretos de sesión y las colas/cachés habilitadas; pruebe la conmutación por error. Luego aplique la distribución de topología, PDBs, readiness y límites de recursos. Dos Pods por sí solos no garantizan alta disponibilidad.
+Antes de escalar las réplicas, comparta o externalice las bases de datos de metadatos/autenticación, los secretos de sesión y las colas/cachés habilitadas; pruebe la conmutación por error. Luego aplique restricciones de distribución topológica, presupuestos de interrupción de Pods (PDB), sondas de readiness y límites de recursos. Dos Pods por sí solos no garantizan alta disponibilidad.
 
-Una llamada a la API no siempre equivale a una escritura SQL. Mida en conjunto el registro por lotes, las transacciones, las cargas de traces, el historial de métricas y los pools de conexiones por worker. Los pools de todas las réplicas/workers se acumulan; la configuración de un único pool no describe la demanda total de conexiones a la base de datos.
+Una llamada a la API no siempre equivale a una escritura SQL. Mida en conjunto el registro por lotes, las transacciones, las cargas de trazas, el historial de métricas y los pools de conexiones por proceso de trabajo. Los pools de todas las réplicas/procesos de trabajo se acumulan; la configuración de un único pool no describe la demanda total de conexiones a la base de datos.
 
 Aurora Serverless v2 opera dentro de rangos de capacidad configurados y está sujeto a límites de conexiones, E/S y transacciones. No absorbe ráfagas ilimitadas ni garantiza un menor costo. Compárelo con RDS/Aurora aprovisionado según la carga medida y los requisitos de recuperación.
 
@@ -98,7 +98,7 @@ Haga copias de seguridad de las bases de datos de metadatos/autenticación y de 
 
 - [Versión de mantenimiento de MLflow 3.16.1](https://github.com/mlflow/mlflow/releases/tag/v3.16.1)
 - [Referencia de revisión de MLflow 3.16.0](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
-- [Arquitectura del servidor de Tracking](https://mlflow.org/docs/3.16.0/self-hosting/architecture/tracking-server/)
+- [Arquitectura del servidor de seguimiento](https://mlflow.org/docs/3.16.0/self-hosting/architecture/tracking-server/)
 - [Community chart](https://github.com/community-charts/helm-charts/tree/main/charts/mlflow)
 - [Chart del repositorio de MLflow](https://github.com/mlflow/mlflow/tree/v3.16.0/charts)
 - [Implementación del estado del servidor](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/server/__init__.py)

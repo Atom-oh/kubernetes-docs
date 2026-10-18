@@ -1,6 +1,6 @@
 # Fundamentos de redes, parte 4: el recorrido de una solicitud y su correspondencia en la nube
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
 ::: tip Esta es una serie de cuatro partes
 [Parte 1: El modelo por capas, las capas de enlace y enrutamiento](./06-network-fundamentals-part1.md) ·

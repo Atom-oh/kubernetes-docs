@@ -36,11 +36,11 @@ Esto refleja un patrón que también se ve en otras partes de Kubernetes: separa
 
 La versión 2.2.0 también reemplaza `PodTemplateOverrides` por `RuntimePatches`, elimina `numProcPerNode` de la política Torch y elimina `ElasticPolicy`. No confundas una política Torch del runtime con `trainer.numProcPerNode` por ejecución. Los manifiestos de versiones anteriores de 2.x también pueden requerir una migración.
 
-El progreso/las métricas del runtime en `status.trainerStatus` requieren la **puerta de funciones alpha TrainJobStatus, deshabilitada de forma predeterminada**. El código de entrenamiento debe informar al servidor de estado y tener acceso funcional a TLS y al token proyectado de ServiceAccount. Los valores de entorno de token/CA inyectados son rutas de archivo, no el contenido de secretos. Imprimir solo registros no completa automáticamente las métricas de estado.
+El progreso y las métricas del runtime en `status.trainerStatus` requieren la **feature gate alfa TrainJobStatus, deshabilitada de forma predeterminada**. El código de entrenamiento debe informar al servidor de estado y disponer de acceso funcional a TLS y al token proyectado de ServiceAccount. Los valores de entorno de token/CA inyectados son rutas de archivo, no el contenido de secretos. Imprimir solo registros no completa automáticamente las métricas de estado.
 
 [La versión 2.3.0](https://github.com/kubeflow/trainer/releases/tag/v2.3.0), publicada el 7 de agosto de 2026, cambia los finalizadores/instantáneas del runtime y la ubicación de los CRD de Helm. Sus notas de versión exigen que las instalaciones 2.0/2.1/2.2 pasen por la versión 2.3 antes de actualizar a versiones posteriores. Revisa la propiedad de los CRD en Helm y la migración específica de la versión antes de actualizar; eliminar los CRD existentes no es una solución habitual para una actualización.
 
-Los gráficos OCI publicados también difieren: 2.2 renderiza directamente ocho runtimes predeterminados, mientras que 2.3 los empaqueta en un ConfigMap runtimes.yaml que aplica un Job de instalación posterior a la instalación/actualización. El hook de 2.3 instala kubectl durante la ejecución, aplica recursos de forma forzada en el servidor y elimina los recursos según su etiqueta de administración; también existe un hook previo a la eliminación. Revisa el tratamiento de hooks en GitOps, el acceso a la red y la propiedad de los runtimes. En esta revisión se renderizaron los hooks, pero no se ejecutaron.
+Los charts OCI publicados también difieren: 2.2 renderiza directamente ocho runtimes predeterminados, mientras que 2.3 los empaqueta en un ConfigMap runtimes.yaml que aplica un Job instalador posterior a la instalación o actualización. El hook de 2.3 instala kubectl durante la ejecución, aplica los recursos de forma forzada en el servidor y elimina los recursos según su etiqueta de administración; también existe un hook previo a la eliminación. Revisa el tratamiento de hooks en GitOps, el acceso a la red y la propiedad de los runtimes. En esta revisión se renderizaron los hooks, pero no se ejecutaron.
 
 ### Migración de las API heredadas
 
@@ -58,7 +58,7 @@ En este caso, numNodes representa la cantidad de Pods de entrenamiento, no una c
 
 ## Mecanismos del entrenamiento distribuido en Kubernetes
 
-JobSet y los runtimes componen Jobs/Pods y usan Service/DNS, junto con la configuración de rango/rendezvous, para detectar procesos. Un Service sin cabecera por sí solo no conserva el estado de los procesos ni las direcciones IP; la asignación de nombres estable a los Pods, el nombre de host/subdominio y las condiciones de red siguen siendo importantes.
+JobSet y los runtimes componen Jobs/Pods y usan Service/DNS, junto con la configuración de rank/rendezvous, para detectar procesos. Un Service headless por sí solo no conserva el estado de los procesos ni las direcciones IP; la asignación de nombres estable a los Pods, el nombre de host/subdominio y las condiciones de red siguen siendo importantes.
 
 **Instalar Trainer no habilita automáticamente la programación por grupos (gang scheduling).** El runtime Torch predeterminado de 2.2.0 no tiene podGroupPolicy. Para esas rutas de PodGroup, deben instalarse/configurarse las políticas Coscheduling/Volcano, los CRD y la integración con el scheduler. La admisión de Kueue también es distinta de la programación real de los Pods.
 

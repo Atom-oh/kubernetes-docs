@@ -1,72 +1,76 @@
-# EKS Cluster 创建 - 总结与最佳实践
+# EKS 集群创建——总结与最佳实践
 
-## EKS Cluster 创建方法比较
+> **最后更新**：2026 年 9 月 11 日
 
-我们已经探讨了创建 EKS Cluster（集群）的多种方法。下面比较每种方法的优缺点。
+## EKS 集群创建方式比较
+
+我们已经介绍了多种 EKS 集群创建方式。下面比较各自的优点和缺点。
+
+选择工具时，应综合考虑可复现性、变更可审查性、团队技能和生命周期的责任归属。任何一种方式创建的集群都仍需验证工作负载、网络和安全配置。应为每项资源指定唯一的预期管理方，并审查执行计划或变更集；若不先协调状态，不要把手动修改与 IaC 管理混用。
 
 ### eksctl
 
 **优点：**
-- 最简单、最快速的方法
-- 通过单个命令创建 Cluster
-- 通过 YAML 文件支持声明式配置
-- 支持 node groups 和 Fargate profiles 等多种功能
+- 工作流简洁且面向 EKS；实际速度取决于所请求创建的资源
+- 可以通过一条命令创建集群
+- 支持通过 YAML 文件声明配置
+- 支持节点组、Fargate 配置文件等多种功能
 
 **缺点：**
-- 对于复杂的基础设施需求可能会受限
-- 与现有基础设施集成可能比较困难
+- 可能无法满足复杂的基础设施需求
+- 与现有基础设施集成可能较困难
 
 **适用场景：**
-- 快速原型设计
+- 快速原型验证
 - 开发和测试环境
-- 简单的生产环境
+- 使用经过审查的配置、明确的资源归属和生命周期控制来管理生产环境
 
-### AWS Management Console
+### AWS 管理控制台
 
 **优点：**
-- 通过可视化界面易于理解
-- 分步骤引导式创建 Cluster
-- 可视化确认各种选项
+- 可视化界面直观易懂
+- 逐步引导集群创建
+- 可以直观确认各种选项
 
 **缺点：**
-- 手动流程使自动化变得困难
+- 手动操作难以自动化
 - 重复性任务耗时
 - 配置管理和版本控制较困难
 
 **适用场景：**
 - 学习和探索
-- 一次性创建 Cluster
+- 一次性创建集群
 - 小型团队或项目
 
 ### AWS CLI
 
 **优点：**
-- 可通过脚本实现自动化
+- 可以通过脚本实现自动化
 - 可进行细粒度控制
-- 易于与 AWS services 集成
+- 易于集成其他 AWS 服务
 
 **缺点：**
 - 命令结构复杂
-- 需要执行多个命令
-- 错误处理可能比较困难
+- 需要执行多条命令
+- 错误处理可能较困难
 
 **适用场景：**
-- 自动化脚本的一部分
-- CI/CD pipeline 集成
+- 作为自动化脚本的一部分
+- 集成 CI/CD 流水线
 - 需要细粒度控制的环境
 
 ### Terraform
 
 **优点：**
-- Infrastructure as Code (IaC)
+- 基础设施即代码（IaC）
 - 状态管理和变更跟踪
-- 与各种 AWS services 集成
-- 模块化和可复用性
+- 可与各种 AWS 服务集成
+- 支持模块化和复用
 
 **缺点：**
-- 有学习曲线
+- 有一定的学习曲线
 - 初始设置需要时间
-- 状态管理需要额外的基础设施
+- 状态需要使用受保护的存储、锁定和恢复机制；本地后端本身不需要额外基础设施
 
 **适用场景：**
 - 大规模生产环境
@@ -76,142 +80,154 @@
 ### AWS CDK
 
 **优点：**
-- 使用熟悉的编程语言（TypeScript、Python 等）
-- 高级别抽象
-- 代码复用和模块化
-- 与 AWS services 紧密集成
+- 使用熟悉的编程语言（如 TypeScript、Python）
+- 抽象级别高
+- 代码可复用并支持模块化
+- 与 AWS 服务紧密集成
 
 **缺点：**
-- 有学习曲线
-- 调试可能比较复杂
-- 一些高级功能可能存在限制
+- 有一定的学习曲线
+- 调试可能较复杂
+- Construct 和版本的覆盖范围各不相同；应审查合成后的 CloudFormation 以及自定义资源行为
 
 **适用场景：**
 - 以开发者为中心的环境
-- 复杂的应用程序基础设施
-- 与现有应用程序代码集成
+- 复杂的应用基础设施
+- 与现有应用代码集成
 
-## EKS Cluster 创建最佳实践
+## EKS 集群创建最佳实践
 
 ### 网络
 
 1. **VPC 设计**
-   - 在至少 2 个 Availability Zones 中部署 subnets
-   - 配置 public 和 private subnets
-   - 为每个 subnet 分配足够的 IP addresses（考虑 CIDR block 大小）
-   - 应用适当的 tags（用于 Kubernetes cluster 自动发现）
+   - 在至少 2 个可用区部署子网
+   - 根据实际入口和出口需求选择公有或私有网络布局；纯私有网络设计可使用服务端点和私有连接
+   - 规划可用 IP 地址、CNI 预热池或前缀池以及升级余量；区分子网地址空间与节点 ENI/`maxPods` 限制
+   - 使用所选控制器要求的子网发现标签或配置；标签本身不会创建路由或安全边界
 
-2. **Security Group 配置**
-   - 应用最小权限原则
-   - 仅开放必需的 ports
-   - 限制源 IPs
-   - 使用 security group references
+2. **安全组配置**
+   - 遵循最小权限原则
+   - 仅允许实际所需的 API、kubelet、DNS、Webhook 和应用流量路径；kubelet 使用 TCP 10250，而不是任意放行宽泛的临时端口范围
+   - 限制来源 IP
+   - 使用安全组引用
 
-3. **Network Policies**
-   - 实施 Calico 或 Cilium 等 network policy solutions
-   - 限制 pod-to-pod 通信
-   - 在 namespaces 之间进行隔离
+3. **网络策略**
+   - 选择受支持的策略引擎：VPC CNI 原生网络策略，或合适的 Calico/Cilium 方案；不要启用相互冲突的引擎
+   - 限制 Pod 之间的通信
+   - 使用正向和反向测试验证命名空间的入口/出口限制及 DNS；匹配到的 Kubernetes NetworkPolicy 允许规则是累加生效的
 
 ### 安全
 
-1. **IAM Roles and Policies**
-   - 应用最小权限原则
-   - 为 service accounts 使用 IAM roles
+1. **IAM 角色和策略**
+   - 遵循最小权限原则
+   - 根据计算环境、代理/SDK 和信任要求选择 EKS Pod Identity 或 IRSA，并限定应用权限范围
    - 配置细粒度权限策略
 
 2. **加密**
-   - 启用 EBS volume encryption
-   - 启用 Secrets encryption
-   - 加密传输中的数据 (TLS)
+   - 启用 EBS 卷加密
+   - 验证 EKS 默认的 API 数据信封加密（1.28 及更高版本使用 KMSv2），并确认是否需要客户管理的 KMS 密钥；Base64 编码不等于加密
+   - 使用 TLS 加密传输中的数据
 
-3. **Authentication and Authorization**
-   - 使用 AWS IAM authenticator
-   - 实施 RBAC (Role-Based Access Control)
-   - 分离 service accounts 和 namespaces
+3. **身份验证与授权**
+   - 根据需要使用 EKS IAM 身份验证、访问条目和访问策略；使用 AWS CLI 令牌时，并非必然需要额外安装客户端 `aws-iam-authenticator` 二进制文件
+   - 同时审查 Kubernetes RBAC 授权和 EKS 访问策略授权；两者的允许权限是累加的
+   - 使用 RBAC、Pod 安全控制和网络控制分离身份与命名空间；仅靠命名空间不能实现完整的租户隔离
 
 ### 可扩展性与可用性
 
-1. **Node Group 配置**
-   - 跨多个 Availability Zones 部署 nodes
-   - 配置 auto scaling groups
-   - 使用多种 instance types（包括 Spot instances）
+1. **节点组配置**
+   - 将节点部署到多个可用区
+   - 明确计算资源由谁管理：托管/自管理节点组、Karpenter、Auto Mode 或 Fargate；不能假定所有模式都是由运维人员管理的 ASG
+   - 使用多种实例类型（包括 Spot 实例）
 
 2. **Cluster Autoscaler**
-   - 配置 Cluster Autoscaler 或 Karpenter
-   - 设置适当的扩缩阈值
-   - 配置 scale-down delays
+   - 在需要时使用兼容的 Cluster Autoscaler 或 Karpenter 版本；Auto Mode 会自行管理容量。避免多个控制器同时管理同一资源池
+   - 区分工作负载副本扩缩与节点供给；验证资源请求、无法调度的 Pod 和容量限制
+   - 通过所选控制器调整中断/整合预算和时间参数，并测试应用排空与恢复
 
-3. **High Availability 配置**
-   - 使用多个 Availability Zones
-   - 配置 PodDisruptionBudget
-   - 设置适当的 replica counts
+3. **高可用配置**
+   - 使用多个可用区
+   - 对适用的自愿驱逐设置 PodDisruptionBudget；它不能阻止节点故障或所有强制中断
+   - 根据预期的故障场景设置副本数、拓扑分布、就绪状态和容量
 
-### 监控和日志记录
+### 监控和日志
 
-1. **Control Plane Logging**
-   - 启用所有 log types（API、audit、authenticator、controller manager、scheduler）
+1. **控制平面日志**
+   - 综合考虑五种控制平面日志类型（api、audit、authenticator、controllerManager、scheduler），并配置保留期限、访问控制和成本管理
    - 与 CloudWatch Logs 集成
 
-2. **Node and Pod Monitoring**
-   - 启用 CloudWatch Container Insights
-   - 部署 Prometheus 和 Grafana
-   - 配置 custom metrics
+2. **节点和 Pod 监控**
+   - 根据需要选择 CloudWatch Container Insights/附加组件提供的信号，并确认计算配置受支持
+   - 有计划地使用 Prometheus/Grafana 或现有监控平台；避免重复采集和未经审查的自动插桩
+   - 配置自定义指标
 
-3. **Alerts and Notifications**
-   - 配置 CloudWatch alarms
-   - 设置 SNS topics 和 subscriptions
-   - 为关键事件配置 notifications
+3. **告警和通知**
+   - 配置 CloudWatch 告警
+   - 设置已授权的通知目的地，并确认通知已送达且责任归属明确；不要假定订阅已经确认
+   - 为关键事件配置通知
 
 ### 成本优化
 
-1. **Instance Type 选择**
-   - 选择适合 workloads 的 instance types
-   - 使用 Spot instances
-   - 考虑 Graviton (ARM) instances
+1. **实例类型选择**
+   - 选择适合工作负载的实例类型
+   - 对能够容忍中断的工作负载使用 Spot，并测试容量和故障处理方式
+   - 使用 Graviton 前，先验证应用、镜像、代理和附加组件的架构兼容性
 
-2. **Auto Scaling**
-   - 根据需求配置 automatic scaling
-   - 优化 scale-down policies
-   - 考虑 scheduled scaling
+2. **自动扩缩**
+   - 根据需求配置自动扩缩
+   - 优化缩容策略
+   - 考虑定时扩缩
 
-3. **Resource Requests and Limits**
-   - 设置适当的 CPU 和 memory requests
-   - 配置 resource limits
-   - 设置 resource quotas 和 limit ranges
+3. **资源请求和限制**
+   - 设置适当的 CPU 和内存请求
+   - 根据工作负载行为设置限制；考虑内存 OOM 和 CPU 节流，不要把所有限制都视为不会产生代价的保护措施
+   - 设置资源配额和限制范围
 
 4. **Fargate 使用**
-   - 对适当的 workloads 使用 Fargate
-   - 优化 Fargate profiles
+   - 仅在工作负载适配其调度、网络、存储和权限限制时使用 Fargate
+   - 优化 Fargate 配置文件
    - 评估成本与性能
 
-## 下一步
+## 后续步骤
 
-成功创建 EKS Cluster 后，请考虑以下步骤：
+成功创建 EKS 集群后，可考虑以下步骤：
 
-1. **建立 Cluster Upgrade 策略**
-   - 规划定期 upgrades
-   - 考虑 blue/green deployment strategy
-   - 自动化 upgrade testing
+1. **制定集群升级策略**
+   - 根据 EKS 支持目录以及具体的附加组件、客户端和节点兼容性规划升级，而不只是参照上游 Kubernetes 版本
+   - 比较原地升级与替换集群方案；当前 EKS 控制平面回滚有适用条件，也不会恢复应用数据
+   - 自动化升级测试
 
-2. **Disaster Recovery 规划**
-   - 备份和恢复策略
-   - 考虑 multi-region deployment
+2. **灾难恢复规划**
+   - 定义 RPO/RTO，并备份应用数据、配置和所需密钥；应测试数据一致性和恢复，而不仅是创建快照
+   - 只有明确考虑复制、DNS/故障切换、IAM/KMS 和成本假设后，才选择多区域恢复
    - 测试故障场景
 
-3. **CI/CD Pipeline 集成**
-   - 实施 GitOps workflows
-   - 构建 automated deployment pipelines
-   - 自动化测试和验证
+3. **集成 CI/CD 流水线**
+   - 实施 GitOps 工作流
+   - 构建自动化部署流水线
+   - 自动化测试与验证
 
-4. **Additional Service 集成**
-   - AWS Load Balancer Controller
-   - External DNS
-   - Cert Manager
-   - AWS EBS/EFS CSI drivers
+4. **集成其他服务**
+   - 在所选计算/入口路径需要时使用 AWS Load Balancer Controller；避免与 Auto Mode 管理的控制器重复
+   - 使用具有明确 DNS 所有权和 IAM 权限范围的 ExternalDNS
+   - 需要 Kubernetes 证书签发时使用 cert-manager；ALB 的 ACM 证书管理属于另一条路径
+   - 根据计算环境支持情况和置备责任方选择 EBS/EFS 存储；Auto Mode 的 EBS 和 Fargate 存储路径与常规 EC2 附加组件不同
 
 5. **安全加固**
-   - 实施 vulnerability scanning
-   - Compliance monitoring
-   - 自动化 security policies
+   - 实施漏洞扫描
+   - 进行合规性监控
+   - 自动化安全策略
 
-创建 EKS Cluster 只是你 Kubernetes 旅程的开始。通过持续的管理、监控和优化来维护稳定且高效的 Kubernetes 环境非常重要。
+创建 EKS 集群只是 Kubernetes 之旅的开始。要通过持续管理、监控和优化来维护稳定高效的 Kubernetes 环境。
+
+## 验证参考资料
+
+- [EKS 网络要求](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)
+- [私有 EKS 集群](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)
+- [Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+- [API 数据信封加密](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)
+- [访问策略权限](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)
+- [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
+- [有条件的集群回滚](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+
+实现细节和本地验证的示例请参见[创建方式第 4 部分](02-eks-cluster-creation-part4.md)、[第 5 部分](02-eks-cluster-creation-part5.md)和[网络第 2 部分](03-eks-networking-part2.md)。生产就绪还要求针对相应环境进行验证，并执行故障和恢复测试。

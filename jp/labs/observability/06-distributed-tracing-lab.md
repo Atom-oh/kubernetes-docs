@@ -1,4 +1,4 @@
-# パート 6: 分散トレーシング分析
+# パート6: 分散トレースの分析
 
 <span id="cleanup-steps-table"></span>
 <span id="drill-down-analysis-workflow"></span>
@@ -25,16 +25,15 @@
 <span id="traceql-query-reference"></span>
 <span id="verification"></span>
 
-> **難易度**: 上級 · **推定時間**: 45 分
-> **最終更新**: September 13, 2026
+> **難易度**: 上級 · **所要時間の目安**: 45分
+> **最終更新日**: 2026年9月13日
+メトリクスからexemplarを経由し、トレースとログまで実際のリクエストを1件追跡します。その際、観測した事実と因果関係の仮説を区別してください。この作業には、[パート2](./02-observability-stack-lab.md)の取り込み経路と[パート3](./03-msa-deployment-lab.md)のコンテキスト伝播が必要です。以下のTraceQLは実際のTempo **3.0.3**パーサーで確認しており、現在のOTel属性を使っています。
 
-メトリクスから exemplar を経由して trace とログに至る実際の 1 リクエストを追跡し、観測結果と因果仮説を分けます。これには [パート 2](./02-observability-stack-lab.md) の取り込みパスと、[パート 3](./03-msa-deployment-lab.md) のコンテキスト伝播が必要です。以下の TraceQL は実際の Tempo **3.0.3** パーサーで確認済みであり、現在の OTel 属性を使用します。
+![メトリクスからトレースとログを調査する](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
 
-![メトリクスを trace とログまで調査する](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-0.html)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-0.html)
-
-## 1. TraceQL 検索 {#traceql}
+## 1. TraceQLで検索する {#traceql}
 
 ```traceql
 { resource.service.name = "order-service" && span:duration > 1s }
@@ -54,15 +53,15 @@
 { span:status = error } | select(resource.service.name, span.http.response.status_code, span:duration)
 ```
 
-`span:duration` は個々の span を測定し、`trace:duration` は trace 全体を測定します。明示的な組み込み属性には `span:` を、属性には `span.`/`resource.` を使用します。`>>` は左側の span の子孫である右側の span を検索します。DB span の子孫を検索することは、Service 配下の DB 処理を検索することとは異なります。
+`span:duration`は個々のspanの時間を、`trace:duration`はトレース全体の時間を測定します。組み込み属性を明示するには`span:`を使い、属性には`span.`/`resource.`を使います。`>>`は、左側のspanの子孫にあたる右側のspanを検索します。DB spanの子孫を探すことと、サービスの配下にあるDB処理を探すことは異なります。
 
-`sort(duration)`、SQL の `order by`、`| limit 20`、`{ duration > p99 }` はこの検索構文ではありません。Grafana で結果のソート、検索上限、時間範囲を設定し、計測した p99 は `800ms` のような duration リテラルに置き換えます。`select()` は表示する属性を要求します。保存されなかった span を再作成することはできません。
+`sort(duration)`、SQLの`order by`、`| limit 20`、`{ duration > p99 }`はこの検索構文では使えません。Grafanaで結果の並べ替え、検索上限、時間範囲を設定し、実測したp99を`800ms`のようなdurationリテラルに置き換えてください。`select()`は表示する属性を指定するもので、保存されなかったspanを作り出すことはできません。
 
-古い SDK は `http.status_code`、`http.method`、`db.system`、`db.statement`、または `messaging.operation` を出力する場合があります。現在の `http.response.status_code`、`http.request.method`、`db.system.name`、`db.query.text`、`messaging.operation.type` を使用する前に、実際の span と SDK バージョンを確認してください。クエリ属性の名前を変更しても、収集済みデータは変換されません。クエリテキストは明示的なサニタイズポリシーの下でのみ取得し、パスワード、SQL リテラル、顧客データを除外してください。
+古いSDKは`http.status_code`、`http.method`、`db.system`、`db.statement`、`messaging.operation`などを出力する場合があります。現在の`http.response.status_code`、`http.request.method`、`db.system.name`、`db.query.text`、`messaging.operation.type`を使う前に、実際のspanとSDKバージョンを確認してください。クエリ内の属性名を変えても、収集済みデータは変換されません。明示的なサニタイズポリシーがある場合だけクエリテキストを取得し、パスワード、SQLリテラル、顧客データを除外してください。
 
-## 2. Service graph の前提条件 {#service-graph}
+## 2. Service graphの前提条件 {#service-graph}
 
-Tempo で trace を受信するだけでは、Grafana の Service graph は完成しません。metrics-generator の service-graphs processor を有効化し、そのメトリクスを実際のメトリクスバックエンドに配信して、Grafana Tempo datasource の serviceMap UID をそのバックエンドにリンクしてください。client/server または producer/consumer の span はコンテキストを共有する必要があります。サンプリング、欠落した span、不正確な span kind は、生成される edge に影響します。
+Tempoでトレースを受信しただけでは、GrafanaのService graphは完成しません。metrics-generatorのservice-graphs processorを有効にし、そのメトリクスを実際のメトリクスバックエンドへ送り、Grafana TempoデータソースのserviceMap UIDをそのバックエンドに関連付けてください。client/serverまたはproducer/consumerのspanはコンテキストを共有する必要があります。サンプリング、spanの欠落、不適切なspan kindは、生成されるエッジに影響します。
 
 ```promql
 sum by (client, server) (rate(traces_service_graph_request_total[5m]))
@@ -80,23 +79,23 @@ sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum[5m
 sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[5m]))
 ```
 
-障害カウンターは、最初の障害が発生するまで series を持たない場合があります。対応する request-total series から欠損した分子をゼロで補い、正の分母を必須にすることで、正常な 0% とトラフィックなしまたは取り込み欠落を区別します。
+障害カウンターは、最初の障害が発生するまで系列を持たないことがあります。対応するリクエスト合計系列を使って欠損している分子を0で補い、分母が正の値であることも確認してください。これにより、正常な障害率0%と、トラフィックがない場合やデータが取り込まれていない場合を区別できます。
 
-最後のクエリは、平均 server 側 duration を測定します。client 側 duration には `traces_service_graph_request_client_seconds_*` を使用してください。存在しない `traces_service_graph_request_duration_seconds_*` family をクエリしてはいけません。トラフィックがゼロの間隔は、欠損した証拠として扱います。色と edge の幅は Grafana/dashboard の設定に依存します。固定の 1%/5% の色ルールを想定するのではなく、request/error/duration の値を確認してください。
+最後のクエリはサーバー側の平均処理時間を測定します。クライアント側の処理時間には`traces_service_graph_request_client_seconds_*`を使ってください。存在しない`traces_service_graph_request_duration_seconds_*`系列をクエリしてはいけません。トラフィックがない時間帯は、根拠となる観測がないものとして扱います。色やエッジ幅はGrafana/dashboardの設定で変わるため、固定の1%/5%の色分けを想定せず、リクエスト/エラー/処理時間の値を確認してください。
 
-## 3. waterfall からボトルネック仮説を立てる {#waterfall}
+## 3. ウォーターフォールからボトルネックの仮説を立てる {#waterfall}
 
-| 観測結果 | 次の調査 |
+| 観測 | 次の調査 |
 |---|---|
-| 遅い DB span | クエリプラン、lock、connection pool、DB メトリクスを確認する |
-| 長い client span | DNS/TLS/network/server wait/retry の間隔を比較する |
-| parent と child の間のギャップ | 計装されていない処理、queue、GC、scheduling を確認する |
-| 並列の child span | duration を合計するのではなく、重なりと critical path を分析する |
-| Messaging の遅延 | send/receive/process duration を queue wait と redelivery から分離する |
+| DB spanが遅い | クエリプラン、ロック、接続プール、DBメトリクスを確認する |
+| クライアントspanが長い | DNS/TLS/ネットワーク/サーバー待ち/リトライの時間を比較する |
+| 親spanと子spanの間に空白がある | 計装されていない処理、キュー、GC、スケジューリングを確認する |
+| 子spanが並列に動作している | 時間を合計するのではなく、重複とクリティカルパスを分析する |
+| メッセージングに遅延がある | 送信/受信/処理時間を、キュー待ちと再配信から分ける |
 
-parent の duration には child の duration が含まれます。すべての span を合計すると時間を二重計上します。1.8 秒の DB span だけでは、index の欠落を証明できません。仮説を受け入れる前に、同じ release、トラフィック、時間範囲でログとメトリクスを比較してください。
+親spanの時間には子spanの時間が含まれます。すべてのspanを合計すると、時間を二重に数えてしまいます。DB spanが1.8秒だったという事実だけでは、インデックスがないことの証明になりません。仮説を採用する前に、同じリリース、トラフィック、時間範囲のログとメトリクスを比較してください。
 
-## 4. ログと trace をリンクする {#correlation}
+## 4. ログとトレースを関連付ける {#correlation}
 
 ```logql
 {service_name="order-service"} | json | level="ERROR"
@@ -104,55 +103,55 @@ parent の duration には child の duration が含まれます。すべての 
 {service_name="order-service"} | json | trace_id="0123456789abcdef0123456789abcdef"
 ```
 
-これらのクエリは、実際の `service_name` stream label と JSON の `trace_id` field を前提としています。32 文字の例の trace ID は、実際の request ID に置き換えてください。`traceID`、`traceId`、`trace_id` は異なる field です。trace ID は一意な stream label ではなく、ログ field/structured metadata に保持してください。時間境界は Grafana/HTTP parameters で設定してください。`timestamp >= 2025-...` を LogQL に追加してはいけません。
+これらのクエリは、実際の`service_name`ストリームラベルとJSONの`trace_id`フィールドを前提にしています。例の32文字のトレースIDを、実際のリクエストIDに置き換えてください。`traceID`、`traceId`、`trace_id`はそれぞれ別のフィールドです。トレースIDは一意性の高いストリームラベルではなく、ログフィールド/構造化メタデータに保持してください。時間範囲はGrafana/HTTPパラメーターで指定します。`timestamp >= 2025-...`をLogQLに追加しないでください。
 
-Loki derived field は trace ID を抽出し、Tempo datasource UID にリンクします。Grafana provisioning YAML では、内部リンク式を `$${__value.raw}` としてエスケープしてください。二重引用符で囲んだ regex と広範な shell envsubst は backslash や Grafana 変数を変更することがあります。適切な単一引用符と、限定した置換を使用してください。
+Lokiのderived fieldでトレースIDを抽出し、TempoデータソースUIDにリンクします。Grafanaのprovisioning YAMLでは、内部リンク式を`$${__value.raw}`としてエスケープしてください。二重引用符で囲んだ正規表現や広範囲に適用するshell envsubstは、バックスラッシュやGrafana変数を書き換えることがあります。適切な単一引用符と対象を限定した置換を使ってください。
 
-Tempo の `tracesToLogsV2` は Loki UID、実際の resource-to-log label mapping、time padding、trace-ID filtering を設定します。「Logs for this span」をクリックした後、生成された LogQL を確認してください。リンクが存在することと、同じ request を正常に取得できることは別の確認事項です。
+Tempoの`tracesToLogsV2`には、Loki UID、実際のresource-to-logラベル対応、時間の余白、トレースIDのフィルターを設定します。「Logs for this span」をクリックした後、生成されたLogQLを確認してください。リンクが存在することと、同じリクエストのログを実際に取得できることは別々に検証します。
 
-## 5. Exemplar の意味と検証 {#exemplars}
+## 5. Exemplarの意味と検証 {#exemplars}
 
-![代表的な exemplar を trace とログまで追跡する](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
+![代表的なexemplarからトレースとログをたどる](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-1.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-1.html)
 
-exemplar は aggregate に関連付けられた**代表的な観測値**です。p99 グラフ上の点をクリックしても、その request が正確な percentile 境界を決定したことは証明されません。exemplar の生成、exporter/remote-write による保持、Prometheus の保存、Grafana datasource のリンクがすべて機能する必要があります。サンプリングや保持期間により、trace を利用できない exemplar ID が残る場合があります。
+exemplarは集計値に付与された**代表的な観測値**です。p99グラフの点をクリックしても、そのリクエストが正確なパーセンタイル境界を決めた証拠にはなりません。exemplarの生成、exporter/remote-writeによる保持、Prometheusでの保存、Grafanaデータソースとのリンクがすべて機能する必要があります。サンプリングや保持期間の制約によって、対応するトレースが利用できないexemplar IDが残る場合があります。
 
-実際の Prometheus exemplar API の結果を確認し、返された `trace_id` で Tempo をクエリしてください。Grafana の表示オプションを有効にしたり、存在しない Prometheus ConfigMap を検索したりすることは、取り込みの検証ではありません。インストール済みの Prometheus/chart バージョンとレンダリングされた Prometheus resource/runtime arguments に対して、exemplar-storage の設定を確認してください。
+Prometheus exemplar APIの実際の結果を確認し、返された`trace_id`でTempoをクエリしてください。Grafanaの表示オプションを有効にすることや、存在しないPrometheus ConfigMapを探すことは、データ取り込みの検証にはなりません。インストール済みのPrometheus/chartバージョンと、レンダリングされたPrometheusリソース/実行時引数に照らしてexemplar-storageの設定を確認してください。
 
-## 6. RED と SLI/SLO dashboard {#slo}
+## 6. REDとSLI/SLOのダッシュボード {#slo}
 
-実際のメトリクス名、label、histogram 単位から RED panel を構築します。同じ Service/route のスコープで request rate、failure ratio、duration distribution を比較してください。availability を計算する前に、対象となる request と成功を定義し、4xx response、health check、retry をどのように扱うかを明記してください。
+実際のメトリクス名、ラベル、ヒストグラムの単位を使ってREDパネルを作成します。同じサービス/routeの範囲で、リクエスト率、失敗率、処理時間の分布を比較してください。可用性を計算する前に、対象にするリクエストと成功の条件を定義し、4xx応答、ヘルスチェック、リトライをどう扱うか明記します。
 
-30 日間の SLO には、その期間にわたる実際の retention と観測値が必要です。新しい lab での `[30d]` クエリは、30 日分の証拠を作成しません。トラフィックなし、欠損 series、counter reset を処理し、少量データでの percentile の制約を開示してください。同じ window における許容失敗数と観測された失敗数を使用して error budget を計算します。固定の「99.9% 達成」と主張するのではなく、期間、分母、値を記録してください。
+30日間のSLOには、その期間の実データと保持設定が必要です。新しいラボで`[30d]`クエリを実行しても、30日分の根拠が作られるわけではありません。トラフィックなし、系列の欠落、カウンターのリセットを考慮し、データ量が少ない場合のパーセンタイルの制約を示してください。同じ期間について、許容失敗数と実際の失敗数からエラーバジェットを計算します。固定の「99.9%達成」と主張するのではなく、期間、分母、値を記録してください。
 
 ## 7. フローを検証してからクリーンアップする {#cleanup}
 
-クリーンアップの前に、exemplar ID、Tempo trace ID、ログの trace ID が一致する request を 1 件記録してください。実際の Service graph の依存関係と alert 配信を検証します。推定値で結果を埋めるのではなく、計測値、timestamp、設定バージョンを保持してください。
+クリーンアップの前に、exemplar ID、TempoのトレースID、ログのトレースIDが一致するリクエストを1件記録します。Service graphに実際に表示される依存関係とアラートの配信を検証してください。結果を推定値で埋めず、計測値、タイムスタンプ、設定バージョンを保存します。
 
 | 順序 | アクションと完了条件 |
 |---|---|
-| 1 | k6/Locust、fault injection、AI analysis trigger を停止し、結果を保存する |
-| 2 | GitOps ApplicationSet/parent による再作成を停止し、実際の application を cascade-delete する |
-| 3 | service-cluster LoadBalancer/Ingress、workload、PVC を削除し、外部 LB/volume のクリーンアップを検証する |
-| 4 | 実際の release/namespace 名を使用して、operator をアンインストールする前に telemetry custom resource を削除する |
-| 5 | controller を削除する前に Karpenter NodeClaim を drain/delete し、依存関係が存在する間は API/LB/storage controller を保持する |
-| 6 | 同じ IaC state を使用して destroy plan を確認し、手動で作成した AWS resource には記録済みの正確な ID/ARN を使用する |
-| 7 | 依存関係のクリーンアップ後に EKS/VPC を削除し、managed service の削除と残存 resource を検証する |
+| 1 | k6/Locust、障害注入、AI分析のトリガーを停止し、結果を保存する |
+| 2 | GitOps ApplicationSet/親リソースによる再作成を止め、実際のApplicationをcascade-deleteする |
+| 3 | serviceクラスターのLoadBalancer/Ingress、ワークロード、PVCを削除し、外部LB/ボリュームのクリーンアップを確認する |
+| 4 | 実際のrelease/namespace名を使い、Operatorをアンインストールする前にtelemetryカスタムリソースを削除する |
+| 5 | コントローラーの削除前にKarpenter NodeClaimをdrain/deleteし、依存リソースがある間はAPI/LB/ストレージのコントローラーを残す |
+| 6 | 同じIaC stateを使ってdestroy planをレビューし、手作業で作成したAWSリソースには記録済みの正確なID/ARNを使う |
+| 7 | 依存関係のクリーンアップ後にEKS/VPCを削除し、マネージドサービスの削除と残存リソースを確認する |
 
-共有 namespace や cluster 全体の CRD を削除してはいけません。`latest` の installer URL ではなく、記録したインストールの release/namespace/version を使用してください。バージョン管理された S3 では、現行 object だけでなく古い version と delete marker も確認する必要があります。Aurora snapshot policy、MWAA/DAG bucket、AMG、AMP、OpenSearch、SNS/SQS/DLQ、Lambda/API Gateway、IAM attachment、EBS/LB、log group、alarm を inventory と照合してください。受け付けられた削除リクエストは、削除完了ではありません。
+共有namespaceやクラスター全体のCRDを削除しないでください。`latest`のインストーラーURLではなく、記録されたインストールのrelease/namespace/versionを使います。バージョニングが有効なS3では、現行オブジェクトだけでなく過去のバージョンと削除マーカーも確認してください。Aurora snapshot policy、MWAA/DAG bucket、AMG、AMP、OpenSearch、SNS/SQS/DLQ、Lambda/API Gateway、IAM attachment、EBS/LB、ロググループ、アラームをインベントリと照合します。削除リクエストが受け付けられても、削除が完了したとは限りません。
 
-未確認の自動承認された destroy を使用したり、すべての error を抑制したり、作業ディレクトリ全体を削除したりするのではなく、resource ownership を確認し、証拠/state を保持してください。
+リソースの所有者を確認し、証跡/stateを保持してください。承認確認のないdestroy自動実行、すべてのエラーの抑制、作業ディレクトリ全体の削除は行わないでください。
 
 ## 検証範囲と参考資料
 
-現在の Tempo parser は、受理された 12 件のクエリを検証し、以前の誤った 3 件のクエリを拒否しました。一時的なローカル Loki 3.7.7 は 2 行の合成ログを受信し、どちらの LogQL クエリでも完全に想定どおりの trace ID を取得しました。実際の Service に対する Tempo 検索、Loki の収集、Grafana データリンク、クラウドの削除は実行していません。
+現在のTempoパーサーで12件の有効なクエリを検証し、以前の誤ったクエリ3件が拒否されることも確認しました。一時的なローカルLoki 3.7.7に合成ログを2行送り、両方のLogQLクエリが期待したトレースIDを正確に取得しました。実際のサービスに対するTempo検索、Lokiのログ収集、Grafanaのデータリンク、クラウドリソースの削除は実行していません。
 
 - [TraceQL](https://grafana.com/docs/tempo/latest/traceql/)
 - [Service graph metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/service_graphs/)
 - [OTel HTTP spans](https://opentelemetry.io/docs/specs/semconv/http/http-spans/)
 - [OTel database spans](https://opentelemetry.io/docs/specs/semconv/database/database-spans/)
 - [Loki derived fields](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
-- [Tempo ガイド](../../observability/tracing/01-tempo.md)
-- [Loki ガイド](../../observability/logging/01-loki.md)
-- [シリーズ index](./README.md)
+- [Tempoガイド](../../observability/tracing/01-tempo.md)
+- [Lokiガイド](../../observability/logging/01-loki.md)
+- [シリーズのインデックス](./README.md)

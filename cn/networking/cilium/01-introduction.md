@@ -1,16 +1,16 @@
 # 第 1 部分：简介
 
-> **已审核基线**：Cilium 1.20.3 / Cilium CLI 0.20.1 / Hubble CLI 1.20.2。**最后更新**：October 16, 2026
+> **审核基线**：Cilium 1.20.3 / Cilium CLI 0.20.1 / Hubble CLI 1.20.2。**最后更新**：2026 年 10 月 16 日
 
 ## 实验环境设置
 
 请使用隔离且已准备好的 Kubernetes 环境。Cilium 1.20 将 Kubernetes **1.33–1.36** 列为已测试版本。节点需要运行 AMD64/AArch64 Linux，内核版本为 **5.10+**；或者使用文档中列出的等效环境，例如带回移 4.18 内核的 RHEL 8.10。kind/minikube 虚拟机或容器使用其节点/虚拟机的内核；仅凭工作站的操作系统名称无法确定兼容性。具体功能仍需满足各自的要求。
 
-使用与 API server 版本相差不超过一个次要版本的 kubectl。按照[主指南](README.md)中的说明，安装适用于正确操作系统/架构的 Cilium CLI 和 Hubble CLI 资源，并验证校验和。Helm 可用于渲染/审查配置；本次审核使用的是 Helm 3.21.3。不要重复下载未经校验的 `latest` AMD64 版本，也不要在每章中重新安装发行版。
+使用与 API 服务器版本最多相差一个次要版本的 kubectl。按照[主指南](README.md)中的说明，安装适用于相应操作系统/架构的 Cilium CLI 和 Hubble CLI 可执行文件，并验证校验和。Helm 可用于渲染/审查配置；本次审核使用的是 Helm 3.21.3。不要重复下载未经校验的 `latest` AMD64 版本，也不要在每章中重新安装发行版。
 
 ### 使用选定配置文件安装一次
 
-EKS ENI、VPC CNI chaining 和普通 cluster-pool 配置的前置条件各不相同；请参阅[主指南](README.md)。以下实验值是**普通 IPv4 cluster-pool 方案**，假设 kube-proxy 和 DNS 已正常工作，且集群已有一个已准备好的 CNI 所有者。这不是 EKS 迁移方案。请确认 Pod CIDR 不与 Service、节点或互联网络范围重叠。
+EKS ENI、VPC CNI chaining 和普通 cluster-pool 配置的前置条件各不相同；请参阅[主指南](README.md)。以下实验值是**普通 IPv4 cluster-pool 方案**，假设 kube-proxy 和 DNS 已正常工作，且已有一个准备就绪并负责管理网络的 CNI 组件。这不是 EKS 迁移方案。请确认 Pod CIDR 不与 Service、节点或互联网络范围重叠。
 
 保存为 `cilium-lab-values.yaml`：
 
@@ -98,11 +98,11 @@ CNI 是用于容器网络配置的 CNCF 规范/库/插件生态系统。插件�
 | AWS VPC CNI | VPC 地址分配/网络；在受支持的 EC2 Linux 节点上提供原生策略，并通过单独的 SG-for-Pods 控制 |
 | Weave Net | 原始的 `weaveworks/weave` 仓库已归档；请将其视为历史选项，并单独核实任何拟使用的维护中发行版 |
 
-支持范围请参阅[当前对比](README.md)。不要将没有边界的 Kubernetes 兼容性声明或“非常高/高/中”的性能评级作为部署依据。Service mesh 是可选集成，并非普通 Pod 网络的前置条件。
+支持范围请参阅[当前对比](README.md)。不要将没有边界的 Kubernetes 兼容性声明或“非常高/高/中”的性能评级作为部署依据。服务网格（service mesh）是可选集成，并非普通 Pod 网络的前置条件。
 
 ## 实验：范围限定的 L4 策略
 
-使用选定的 context 和专用命名空间。此示例定义策略，但**不会**部署应用服务器或客户端镜像。请准备由控制器管理的测试工作负载，并使用已批准的镜像/工具：
+使用选定的上下文和专用命名空间。此示例定义策略，但**不会**部署应用服务器或客户端镜像。请准备由控制器管理的测试工作负载，并使用已批准的镜像/工具：
 
 - 一个标记为 `app=backend`、监听 TCP 8080 的后端 Pod。
 - 一个标记为 `app=frontend` 的前端 Pod，以及另一个具有不同标签的客户端；两者都应配备合适的测试客户端。

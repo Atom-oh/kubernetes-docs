@@ -1,252 +1,300 @@
 # Cilium eBPF クイズ
 
-> **対応バージョン**: Cilium 1.17, Linux Kernel 4.19+
-> **最終更新**: February 22, 2026
+> **レビュー基準**: Cilium 1.20.3、Linux 5.10以降または同等のバックポートを文書で確認済みの環境。上限の例ではLinux 6.12を使用。
+> **日付**: 2026-10-16
 
-## eBPF の基本概念
 
-1. **eBPF は何の略ですか？**
+## eBPFの基本概念
+
+1. **eBPFは何の略ですか？**
    - A) Extended Berkeley Packet Filter
    - B) Enhanced Berkeley Process Filter
    - C) Extended Binary Processing Framework
    - D) Enhanced Backend Processing Function
 
    <details>
-   <summary>回答を表示</summary>
+   <summary>解答を表示</summary>
    <p><strong>回答</strong>: A) Extended Berkeley Packet Filter</p>
-   <p><strong>解説</strong>: eBPF は Extended Berkeley Packet Filter の略であり、元の BPF 技術を拡張したものです。</p>
+   <p><strong>解説</strong>: eBPFはExtended Berkeley Packet Filterの略で、従来のBPF技術を拡張したものです。</p>
    </details>
 
-2. **eBPF プログラムはどこで実行されますか？**
-   - A) User Space
-   - B) Kernel Space
-   - C) Hypervisor
-   - D) Container Runtime
+2. **このガイドのLinux eBPFプログラムは、フックが実行されたときどこで動作しますか？**
+   - A) ユーザー空間のみ
+   - B) カーネル内
+   - C) Hubble Relay内
+   - D) コンテナランタイムのプロセス内
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) Kernel Space</p>
-   <p><strong>解説</strong>: eBPF プログラムは Linux kernel 内で安全に実行されます。</p>
+   <summary>解答を表示</summary>
+
+   **回答: B) カーネル内**
+
+   これらのプログラムは、カーネルでサポートされるインタープリターまたはJIT経由でカーネル内で実行されます。ローダーやオブザーバーはユーザー空間で動作します。カーネル内で実行されることが、絶対的な安全性を保証するわけではありません。
+
    </details>
 
-3. **eBPF プログラムの安全性を確保するメカニズムは何ですか？**
-   - A) Sandbox
-   - B) Virtual Machine
-   - C) Static Verifier
-   - D) Containerization
+3. **BPF verifierに受け入れられたことは、何を意味しますか？**
+   - A) カーネルがクラッシュする可能性がなくなった
+   - B) 意図したアプリケーションポリシーが正しいと証明された
+   - C) プログラムが型、メモリアクセス、実行制約に関する検査に合格した
+   - D) これ以上テストする必要がない
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) Static Verifier</p>
-   <p><strong>解説</strong>: eBPF verifier は、無限ループや kernel crash を防ぐために、ロード前にプログラムの安全性を検証します。</p>
+   <summary>解答を表示</summary>
+
+   **回答: C) プログラムが型、メモリアクセス、実行制約に関する検査に合格した**
+
+   verifierは実行を制約しますが、verifier、JIT、ヘルパー、カーネルの不具合や、プログラムロジックの誤りが残る可能性はあります。
+
    </details>
 
-4. **eBPF プログラムがアタッチできる kernel event は何と呼ばれますか？**
-   - A) Triggers
-   - B) Hooks
-   - C) Event Listeners
-   - D) Callbacks
+4. **eBPFプログラムをアタッチできるカーネルイベントを何と呼びますか？**
+   - A) トリガー
+   - B) フック
+   - C) イベントリスナー
+   - D) コールバック
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) Hooks</p>
-   <p><strong>解説</strong>: eBPF プログラムは kernel 内のさまざまな hook point にアタッチされ、event が発生すると実行されます。</p>
+   <summary>解答を表示</summary>
+   <p><strong>回答</strong>: B) フック</p>
+   <p><strong>解説</strong>: eBPFプログラムはカーネル内のさまざまなフックポイントにアタッチされ、イベントが発生すると実行されます。</p>
    </details>
 
-5. **eBPF プログラムと user space application 間でデータを共有するために使用されるものは何ですか？**
-   - A) Shared Memory
-   - B) Pipes
-   - C) BPF Maps
-   - D) Sockets
+5. **BPFプログラムとユーザー空間の間で状態やイベントを共有する仕組みは何ですか？**
+   - A) 環境変数
+   - B) 通常のディスクファイルのみ
+   - C) BPF map
+   - D) Kubernetesアノテーション
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) BPF Maps</p>
-   <p><strong>解説</strong>: BPF Maps は、eBPF プログラムと user space application 間でデータを共有するために使用される key-value store です。</p>
+   <summary>解答を表示</summary>
+
+   **回答: C) BPF map**
+
+   mapにはキーと値の構造、イベントバッファー、参照コンテナーなどがあります。pinは参照を保持するもので、再起動を越えてmapの内容を保持するものではありません。再ロードしてもmapが自動的に再利用されるわけではありません。
+
    </details>
 
-## eBPF と Cilium
+## eBPFとCilium
 
-6. **Cilium が eBPF を使用する主な理由は何ですか？**
-   - A) kernel module なしで networking feature を実装すること
-   - B) より優れた user interface を提供すること
-   - C) より少ない memory を使用すること
-   - D) より簡単な installation process
+6. **eBPFはCiliumのデータパスの実装にどのように役立ちますか？**
+   - A) プログラム可能なカーネルフックとmapにより、データパスを変更するたびに専用モジュールを新たに作る必要がなくなる
+   - B) カーネルモジュールへの依存がすべてなくなる
+   - C) あらゆるクラウドネットワークが自動的に構成される
+   - D) メモリ使用量が必ず減る
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) kernel module なしで networking feature を実装すること</p>
-   <p><strong>解説</strong>: Cilium は eBPF を使用して、kernel module なしで高性能な networking、load balancing、security policy、その他の機能を実装します。</p>
+   <summary>解答を表示</summary>
+
+   **回答: A) プログラム可能なカーネルフックとmapにより、データパスを変更するたびに専用モジュールを新たに作る必要がなくなる**
+
+   Ciliumは、転送、ポリシー、サービス変換にカーネルのサポート対象機能を使用します。必要なカーネル機能を確認し、対象ワークロードでテストする必要があります。
+
    </details>
 
-7. **Cilium で eBPF を使用して実装されていない機能はどれですか？**
-   - A) Network policy enforcement
-   - B) Service load balancing
-   - C) Network packet encryption
-   - D) User authentication
+7. **CiliumのWireGuard/IPsec暗号化モードについて正しい説明はどれですか？**
+   - A) すべての暗号処理がBPF命令で行われる
+   - B) 設定や鍵の操作が不要である
+   - C) すべてのトラフィック経路が常に暗号化される
+   - D) BPFはトラフィックをカーネルのWireGuard/IPsec機能に連携し、カバレッジと鍵管理はモードによって異なる
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: D) User authentication</p>
-   <p><strong>解説</strong>: Cilium は eBPF を使用して Network policy enforcement、Service load balancing、network packet processing を実装しますが、User authentication は通常、他の system で処理されます。</p>
+   <summary>解答を表示</summary>
+
+   **回答: D) BPFはトラフィックをカーネルのWireGuard/IPsec機能に連携し、カバレッジと鍵管理はモードによって異なる**
+
+   BPFによるトラフィック制御とカーネルによる暗号化は別の役割です。ノード間の暗号化を有効にしても、ワークロードのmTLSが自動的に有効になるわけではありません。
+
    </details>
 
-8. **Cilium は kube-proxy を置き換えるためにどの eBPF 機能を使用しますか？**
-   - A) XDP (eXpress Data Path)
-   - B) TC (Traffic Control) BPF
-   - C) Socket BPF
-   - D) Tracing BPF
+8. **kube-proxyの置き換えに、Ciliumが使用できるフックはどれですか？**
+   - A) XDPのみ
+   - B) TCのみ
+   - C) トレーシングプローブのみ
+   - D) ソケットフック、TCのパケット処理経路、オプションのXDPアクセラレーション
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) TC (Traffic Control) BPF</p>
-   <p><strong>解説</strong>: Cilium は主に TC (Traffic Control) BPF プログラムを使用して、kube-proxy の Service load balancing 機能を置き換えます。</p>
+   <summary>解答を表示</summary>
+
+   **回答: D) ソケットフック、TCのパケット処理経路、オプションのXDPアクセラレーション**
+
+   使用される経路はトラフィックと設定によって異なります。パケットが生成される前のソケットフック、パケット処理経路、またはサポート対象のXDPアクセラレーションによって、サービス変換が行われる場合があります。
+
    </details>
 
-9. **Cilium の eBPF ベースの load balancing が kube-proxy より優れている理由は何ですか？**
-   - A) より多くの Service type をサポートする
-   - B) より優れた user interface
-   - C) より低い latency とより高い throughput
-   - D) より簡単な configuration
+9. **Ciliumの設定が高速だという主張は、どのように評価すべきですか？**
+   - A) すべてのBPF map検索のレイテンシーが保証されると考える
+   - B) プロトコル、ルーティング、ポリシー、暗号化、プロキシの設定を記録して、ワークロードを測定する
+   - C) カーネル内で実行されることだけを根拠にする
+   - D) 製品名だけを比較する
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) より低い latency とより高い throughput</p>
-   <p><strong>解説</strong>: Cilium の eBPF ベースの load balancing は Kernel Space で packet を直接処理するため、より低い latency とより高い throughput を実現します。</p>
+   <summary>解答を表示</summary>
+
+   **回答: B) プロトコル、ルーティング、ポリシー、暗号化、プロキシの設定を記録して、ワークロードを測定する**
+
+   カーネルとユーザー空間のコンポーネントが要するコストは、ワークロードによって異なります。合成ベンチマークの結果やフックの選択だけでは、アプリケーションのレイテンシーは保証されません。
+
    </details>
 
-10. **Cilium で eBPF を使用して収集されない metric はどれですか？**
-    - A) Network connection status
-    - B) Packet drop reasons
-    - C) Service response time
-    - D) User login time
+10. **HubbleのHTTP観測情報は、どのように得られますか？**
+    - A) 任意のトラフィックを自動的に復号する
+    - B) CPUのハードウェアカウンターのみを使う
+    - C) サポート対象のL7プロキシ経路とネットワークフロー情報を組み合わせる
+    - D) 設定に関係なく、すべてのパケットを対象にする
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) User login time</p>
-    <p><strong>解説</strong>: Cilium は eBPF を使用して Network connection status、packet drop reason、Service response time などの network 関連の metric を収集しますが、User login time のような application-level metric は収集しません。</p>
+    <summary>解答を表示</summary>
+
+    **回答: C) サポート対象のL7プロキシ経路とネットワークフロー情報を組み合わせる**
+
+    L7の可視性は、プロキシ、ポリシー、可視性の各設定に依存します。フローレコードが自動的にアプリケーショントレースや任意のビジネスメトリクスになるわけではありません。
+
     </details>
 
-## eBPF プログラミング
+## eBPFプログラミング
 
-11. **eBPF プログラムの作成に主に使用される言語は何ですか？**
-    - A) Python
-    - B) Go
-    - C) C
-    - D) Rust
+11. **コンパイラーとツールチェーンについて正しい説明はどれですか？**
+    - A) ClangはCとRustの両方のソースを直接コンパイルする
+    - B) Cでは一般にClangのBPFバックエンドを使い、Rustでは独自のツールチェーンエコシステムを使う
+    - C) ホスト上でCの構文検査に合格すれば、カーネルのverifierにも受け入れられると証明できる
+    - D) BTFが不足しているカーネル機能を補う
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) C</p>
-    <p><strong>解説</strong>: eBPF プログラムは主に C で記述され、LLVM compiler を使用して eBPF bytecode にコンパイルされます。</p>
+    <summary>解答を表示</summary>
+
+    **回答: B) Cでは一般にClangのBPFバックエンドを使い、Rustでは独自のツールチェーンエコシステムを使う**
+
+    ホスト上の構文検査、BPFターゲットへのコンパイル、カーネルでの検証、実行時の動作確認は、それぞれ別の検査です。CO-REで不足しているヘルパーや設定を補うことはできません。
+
     </details>
 
-12. **eBPF プログラムを開発するための framework ではないものはどれですか？**
+12. **eBPFプログラムの開発フレームワークではないものはどれですか？**
     - A) BCC (BPF Compiler Collection)
     - B) libbpf
     - C) bpftrace
     - D) libpcap
 
     <details>
-    <summary>回答を表示</summary>
+    <summary>解答を表示</summary>
     <p><strong>回答</strong>: D) libpcap</p>
-    <p><strong>解説</strong>: libpcap は packet capture library であり、eBPF program development の framework ではありません。BCC、libbpf、bpftrace はすべて eBPF プログラムを開発するための framework です。</p>
+    <p><strong>解説</strong>: libpcapはパケットキャプチャーライブラリであり、eBPFプログラムを開発するためのフレームワークではありません。BCC、libbpf、bpftraceはいずれもeBPFプログラムの開発に使うフレームワークです。</p>
     </details>
 
-13. **eBPF map の type ではないものはどれですか？**
-    - A) Hash Map
-    - B) Array Map
-    - C) LRU Map
-    - D) Graph Map
+13. **eBPF mapの種類ではないものはどれですか？**
+    - A) ハッシュmap
+    - B) 配列map
+    - C) LRU map
+    - D) グラフmap
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) Graph Map</p>
-    <p><strong>解説</strong>: eBPF は hash map、array map、LRU map を含むさまざまな type の map をサポートしていますが、graph map はサポートしていません。</p>
+    <summary>解答を表示</summary>
+    <p><strong>回答</strong>: D) グラフmap</p>
+    <p><strong>解説</strong>: eBPFはハッシュmap、配列map、LRU mapなど、さまざまな種類のmapをサポートしますが、グラフmapはサポートしていません。</p>
     </details>
 
-14. **eBPF プログラム内の instruction の最大数はいくつですか？**
-    - A) 1,000
-    - B) 4,096
-    - C) 10,000
-    - D) Unlimited
+14. **ガイドで説明しているLinux 6.12の上限に一致するのはどれですか？**
+    - A) すべてのプログラムの上限は4,096命令である
+    - B) 100万命令未満なら、どのプログラムも受け入れられる
+    - C) プログラムの長さや解析に関する上限はない
+    - D) BPF機能を使ってロードする経路では最大100万命令、非特権の経路では4,096命令であり、verifierの複雑度は別の上限である
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) 4,096</p>
-    <p><strong>解説</strong>: eBPF プログラムは最大 4,096 個の instruction に制限されています。これは安全性を確保するための制限です。</p>
+    <summary>解答を表示</summary>
+
+    **回答: D) BPF機能を使ってロードする経路では最大100万命令、非特権の経路では4,096命令であり、verifierの複雑度は別の上限である**
+
+    プログラムの長さとverifierによる探索は別の制約です。機能またはトークン、プログラムの種類、その他の検査によってロードが拒否される場合があります。非特権BPFは無効になっていることがよくあります。
+
     </details>
 
-15. **eBPF プログラムを kernel にロードするために使用される system call は何ですか？**
+15. **eBPFプログラムをカーネルにロードするシステムコールは何ですか？**
     - A) bpf()
     - B) ebpf()
     - C) sysfs()
     - D) ioctl()
 
     <details>
-    <summary>回答を表示</summary>
+    <summary>解答を表示</summary>
     <p><strong>回答</strong>: A) bpf()</p>
-    <p><strong>解説</strong>: bpf() system call は、eBPF プログラムを kernel にロードし、eBPF map を作成およびアクセスするために使用されます。</p>
+    <p><strong>解説</strong>: bpf()システムコールは、eBPFプログラムをカーネルにロードし、eBPF mapを作成してアクセスするために使われます。</p>
     </details>
 
-## eBPF のパフォーマンスとモニタリング
+## eBPFのパフォーマンスとモニタリング
 
-16. **XDP (eXpress Data Path) が提供する主な利点は何ですか？**
-    - A) より優れた security
-    - B) より簡単な programming
-    - C) より低い latency
-    - D) より高い compatibility
+16. **ネイティブドライバーのXDPと、その後のskbベースの処理の違いは何ですか？**
+    - A) あらゆるカーネルサブシステムを常にバイパスする
+    - B) 一定のパケットレートを保証する
+    - C) skbが割り当てられる前にパケットを処理できる
+    - D) どのNICでも、汎用モードでも同じように動作する
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) より低い latency</p>
-    <p><strong>解説</strong>: XDP は network driver level で packet を処理し、kernel networking stack をバイパスして非常に低い latency を実現します。</p>
+    <summary>解答を表示</summary>
+
+    **回答: C) skbが割り当てられる前にパケットを処理できる**
+
+    ネイティブXDPは受信処理の早い段階で実行されます。汎用モードやオフロードモードの動作、ドライバーのサポートはそれぞれ異なるため、実際の性能は測定してください。
+
     </details>
 
-17. **Cilium で eBPF プログラムの performance をモニタリングするために使用される tool は何ですか？**
-    - A) top
-    - B) bpftool
-    - C) htop
-    - D) iotop
+17. **説明にある意味と一致するbpftoolコマンドはどれですか？**
+    - A) `bpftool -p map dump` は検索レイテンシーを測定する
+    - B) `bpftool prog profile id ID duration 10 cycles instructions requests` はプロファイリングのメトリクスを要求する
+    - C) `bpftool prog load` は常にトレースポイントをアタッチする
+    - D) `bpftool prog show` は不足しているカーネル機能を有効にする
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) bpftool</p>
-    <p><strong>解説</strong>: bpftool は eBPF プログラムと map の検査および管理に使用される tool であり、performance monitoring にも使用されます。</p>
+    <summary>解答を表示</summary>
+
+    **回答: B) `bpftool prog profile id ID duration 10 cycles instructions requests` はプロファイリングのメトリクスを要求する**
+
+    プロファイリングには、メトリクス名、権限、カーネルおよびPMUのサポートが必要です。整形表示、プログラムのロード、アタッチはそれぞれ別の操作です。
+
     </details>
 
-18. **Cilium の eBPF ベースの network monitoring tool は何ですか？**
-    - A) Prometheus
-    - B) Hubble
-    - C) Grafana
-    - D) Jaeger
+18. **ここでいうHubbleとは何ですか？**
+    - A) カーネルコンパイラー
+    - B) あらゆるアプリケーショントレーシングSDKを置き換えるもの
+    - C) データパスと利用可能なプロキシイベントを使ったCiliumのネットワークオブザーバビリティ機能
+    - D) ポリシーを自動的に同期するもの
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) Hubble</p>
-    <p><strong>解説</strong>: Hubble は、network flow を real-time で観測および分析できる Cilium の eBPF ベースの network monitoring tool です。</p>
+    <summary>解答を表示</summary>
+
+    **回答: C) データパスと利用可能なプロキシイベントを使ったCiliumのネットワークオブザーバビリティ機能**
+
+    Hubbleはフローと、サポート対象のL7イベントを観測します。収集制限やフィルターは結果に影響します。JSON形式であるだけでは、サービスマップとして可視化されるとは限りません。
+
     </details>
 
-19. **eBPF プログラムの performance bottleneck を見つけるために使用される tool は何ですか？**
-    - A) strace
-    - B) ltrace
-    - C) perf
-    - D) gdb
+19. **mapを使うこのラボでは、何をカウントしますか？**
+    - A) 損失なく、実行ファイルのパスごとにすべてのexecve試行をカウントする
+    - B) 容量と計測上の制限の範囲内で、短いcomm名ごとに成功した実行イベントをカウントする
+    - C) default名前空間のPodのみを対象にする
+    - D) 過去の再起動を含め、すべてのプロセスを対象にする
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) perf</p>
-    <p><strong>解説</strong>: perf は、eBPF プログラムの performance bottleneck を見つけるために使用される Linux performance analysis tool です。</p>
+    <summary>解答を表示</summary>
+
+    **回答: B) 容量と計測上の制限の範囲内で、短いcomm名ごとに成功した実行イベントをカウントする**
+
+    sched_process_execは、実行への移行が成功したときに観測されます。名前が重複する場合があります。このホスト全体を対象とする例では、メモリ内の状態に上限があり、一部の損失カウンターを選択して計測します。
+
     </details>
 
-20. **Cilium で eBPF プログラムを debugging するために使用される command は何ですか？**
-    - A) `cilium bpf`
-    - B) `cilium debug`
-    - C) `cilium monitor`
-    - D) `cilium trace`
+20. **エージェント上でサービスのバックエンドmapエントリーを調べるコマンドはどれですか？**
+    - A) `cilium-dbg bpf lb list --backends`
+    - B) `cilium debug --all-kernels`
+    - C) `cilium policy trace --enable`
+    - D) `hubble compile bpf`
 
     <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: A) `cilium bpf`</p>
-    <p><strong>解説</strong>: `cilium bpf` command は、Cilium の eBPF プログラムと map を検査および debugging するために使用されます。</p>
+    <summary>解答を表示</summary>
+
+    **回答: A) `cilium-dbg bpf lb list --backends`**
+
+    対象のノードにあるエージェントでcilium-dbgを使ってください。cilium-dbg map getが表示するのはユーザー空間にキャッシュされた内容です。raw mapを変更せず、適切なデコーダーを使ってください。
+
     </details>
+
+[ガイドを確認する](../../../networking/cilium/02-ebpf.md)。

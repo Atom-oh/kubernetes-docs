@@ -16,46 +16,21 @@ Istio 的流量管理功能可在 Service Mesh 内对流量流向进行精细控
 10. [会话亲和性](10-session-affinity.md)
 11. [出口流量控制](11-egress-control.md)
 12. [ServiceEntry（外部 Service 管理）](12-service-entry.md)
+13. [WorkloadEntry（虚拟机注册）](13-workload-entry.md)
 
 ## 概述
+
+以下配置示例适用于受支持版本的 Istio sidecar 模式。Gateway、VirtualService 和 DestinationRule 是由代理读取的 API 对象，并非额外的网络跳点。流量镜像会额外复制选定请求，而不是 90/10 流量拆分中剩余的那一部分；镜像请求的响应会被丢弃。图示表达的是逻辑配置关系。
+
+这些片段是彼此独立的示例，不应作为一个清单一起应用。请先创建被引用的 Service 和 DestinationRule 子集。不含 `gateways` 列表的 VirtualService 适用于整个网格；入口路由则需要显式绑定 Gateway 并匹配主机名。Ambient 模式应使用受支持的 Gateway API/waypoint 路由。
 
 流量管理是 Istio 的核心功能之一，可在不修改代码的情况下实现以下操作：
 
 ### 核心功能
 
-```mermaid
-flowchart TB
-    Client[Client Request]
+![客户端请求经由 Gateway 进入，由 VirtualService 路由，DestinationRule 应用流量策略后，将请求分发到三个服务版本：主版本、金丝雀版本以及用于影子测试的镜像副本。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-0.png)
 
-    subgraph Istio["Istio Traffic Management"]
-        Gateway[Gateway<br/>External Traffic Entry]
-        VS[VirtualService<br/>Routing Rules]
-        DR[DestinationRule<br/>Traffic Policy]
-    end
-
-    subgraph Services["Services"]
-        V1[Version 1<br/>90%]
-        V2[Version 2<br/>10%]
-        V3[Version 3<br/>Mirror]
-    end
-
-    Client -->|1. Request| Gateway
-    Gateway -->|2. Routing| VS
-    VS -->|3. Apply Policy| DR
-    DR -->|4a. Main Traffic| V1
-    DR -->|4b. Canary| V2
-    DR -->|4c. Shadow| V3
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Gateway,VS,DR istio;
-    class V1,V2,V3 service;
-```
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-0.html)
 
 ### 1. 智能路由
 
@@ -249,7 +224,7 @@ spec:
         maxRequestsPerConnection: 2
     # Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ---
@@ -273,57 +248,9 @@ spec:
 
 ## 流量流向
 
-```mermaid
-flowchart LR
-    User[User]
+![用户请求进入入口 Gateway，依次经过 VirtualService 路由（路径、请求头和权重匹配）以及 DestinationRule 策略（负载均衡、熔断和连接池），最终到达三个后端 Pod 之一。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-1.png)
 
-    subgraph Ingress["Ingress Gateway"]
-        IGW[Gateway<br/>Port 80/443]
-    end
-
-    subgraph VirtualServices["VirtualService Routing"]
-        VS1[Path Matching]
-        VS2[Header Matching]
-        VS3[Weight Distribution]
-    end
-
-    subgraph DestinationRules["DestinationRule Policies"]
-        DR1[Load Balancing]
-        DR2[Circuit Breaker]
-        DR3[Connection Pool]
-    end
-
-    subgraph Pods["Pods"]
-        P1[Pod v1-1]
-        P2[Pod v1-2]
-        P3[Pod v2-1]
-    end
-
-    User -->|Request| IGW
-    IGW --> VS1
-    VS1 --> VS2
-    VS2 --> VS3
-    VS3 --> DR1
-    DR1 --> DR2
-    DR2 --> DR3
-    DR3 --> P1
-    DR3 --> P2
-    DR3 --> P3
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class User user;
-    class IGW gateway;
-    class VS1,VS2,VS3 routing;
-    class DR1,DR2,DR3 policy;
-    class P1,P2,P3 pod;
-```
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-1.html)
 
 ## 学习路径
 
@@ -390,7 +317,7 @@ weight: 100
 # 5% → Monitor → 10% → Monitor → ...
 ```
 
-### 2. 始终设置超时
+### 2. 根据工作负载设置合适的超时
 
 ```yaml
 # ✅ Always set timeout
@@ -400,6 +327,8 @@ http:
       host: reviews
   timeout: 10s
 ```
+
+流式请求可能需要不同的超时设置。较短的 HTTP 截止时间并不适用于所有 gRPC 流或长连接响应。
 
 ### 3. 谨慎使用重试
 
@@ -416,7 +345,7 @@ retries:
 ```yaml
 # ✅ Adjust according to service characteristics
 outlierDetection:
-  consecutiveErrors: 5      # Adjust per service
+  consecutive5xxErrors: 5      # Adjust per service
   interval: 30s
   baseEjectionTime: 30s
   maxEjectionPercent: 50    # Maximum 50% ejection

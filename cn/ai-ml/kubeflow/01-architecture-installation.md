@@ -1,7 +1,7 @@
 # 第 1 部分：Kubeflow 架构与在 EKS 上安装
 
 > **审查基线**：Community Distribution 26.03.1；Dashboard 2.0.0；KFP 2.16.1
-> **最后审阅**：September 12, 2026
+> **最后审阅**：2026 年 9 月 12 日
 > **验证**：使用 kubectl 1.36.2 / Kustomize 5.8.1 在本地渲染了 Profile overlay。未执行 EKS 安装或 AWS 身份流程。
 
 ## 准备环境
