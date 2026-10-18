@@ -1,6 +1,6 @@
 # 告警概述
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
 
 > 审阅基线：Prometheus 3.14.0 与 Alertmanager 0.34.0。示例假定为单集群且时间序列已去重。请先确认实际的 job、标签、exporter 以及指标可用性，然后再调整阈值。仅执行了本地的规则/路由检查；未在任何集群或通知渠道上进行验证。
@@ -26,9 +26,9 @@
 
 指标（metrics）、日志（logs）和追踪（traces）是常见的可观测性信号；此外还存在 profile 等其他信号。规则引擎并不一定直接评估这三者中的全部：
 
-![Common observability signals feed compatible backend rules or derived metrics, then configured notification and incident integrations.](../../.gitbook/assets/en-observability-alerting-readme-0.png)
+![常见可观测性信号进入兼容的后端规则或派生指标，再进入已配置的通知和事件集成。](../../.gitbook/assets/en-observability-alerting-readme-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
 
 - **指标**：系统的量化状态（CPU、内存、请求数等）
 - **日志**：事件的详细记录
@@ -62,9 +62,9 @@ Prometheus 规则评估指标。日志和追踪则通过各后端特定的规则
 
 下图将规则状态与事故响应结合在一起。Prometheus 使用 inactive/pending/firing；确认（acknowledgment）和处理中（work-in-progress）属于 on-call 工具。关闭事故并不会清除处于 firing 状态的规则。时间序列消失同样可以使规则变为非激活状态，绝不能将其视为已恢复的证据：
 
-![Prometheus rule states and separate incident-response states; closing an incident or losing a series does not prove service recovery.](../../.gitbook/assets/en-observability-alerting-readme-1.png)
+![Prometheus 规则状态与独立的事件响应状态；关闭事件或时间序列消失都不能证明服务已恢复。](../../.gitbook/assets/en-observability-alerting-readme-1.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
 
 ### 1. 检测
 
@@ -101,9 +101,9 @@ groups:
 - **基于严重性**：根据严重性采用不同的升级路径
 - **自动升级**：在 on-call 服务中进行配置。Alertmanager 的 repeat_interval 既不检查确认状态，也不轮换响应者
 
-![Illustrative escalation windows implemented in an on-call service, with acknowledgment and backup behavior set by policy.](../../.gitbook/assets/en-observability-alerting-readme-2.png)
+![示意 on-call 服务中的升级时间窗；确认和备份行为由策略设定。](../../.gitbook/assets/en-observability-alerting-readme-2.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
 
 ### 4. 解决
 
@@ -137,9 +137,9 @@ Runbook: https://example.com/runbooks/replace-db-runbook
 
 告警过多可能导致重要告警被忽略。
 
-![Alert fatigue and a review cycle that improves actionability, grouping and the handling of non-urgent work.](../../.gitbook/assets/en-observability-alerting-readme-3.png)
+![告警疲劳以及通过审查改进可操作性、分组和非紧急工作的处理方式。](../../.gitbook/assets/en-observability-alerting-readme-3.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
 
 **防止告警疲劳的策略：**
 
@@ -218,9 +218,9 @@ annotations:
 
 告警应根据各种条件投递给合适的接收者：
 
-![Alert labels select on-call and team receivers before delivery; critical-only matches do not also call the default receiver.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
+![告警标签在投递前选择 on-call 和团队接收者；仅匹配 critical 的告警不会同时发送给默认接收者。](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
 ### 路由树设计
 
@@ -280,9 +280,9 @@ inhibit_rules:
 
 On-Call 指在指定时间段内负责处理系统问题的指定响应者。
 
-![An illustrative four-week rotation with handoffs; actual time zones, staffing, backup and compensation require an agreed policy.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
+![四周轮值交接示意图；实际时区、人员配置、备份和补偿需要协商确定策略。](../../.gitbook/assets/en-observability-alerting-readme-8.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
 
 
 ### On-Call 最佳实践
@@ -309,9 +309,9 @@ On-Call 指在指定时间段内负责处理系统问题的指定响应者。
 
 ### EKS 特有的告警领域
 
-![EKS monitoring scopes and collection limits, separating scrape failures, target absence, readiness and resource signals.](../../.gitbook/assets/en-observability-alerting-readme-4.png)
+![EKS 监控范围和采集限制，区分抓取失败、目标缺失、就绪状态和资源信号。](../../.gitbook/assets/en-observability-alerting-readme-4.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
 
 ### 按层次划分的告警策略
 
@@ -484,9 +484,9 @@ EKS 1.28+ 在 AWS/EKS 中提供部分控制平面指标；这并不会将每个�
 
 ### 方案选择指南
 
-![Select maintained rule, routing and on-call tools by requirements; plan migration for archived OnCall OSS and ending Opsgenie.](../../.gitbook/assets/en-observability-alerting-readme-6.png)
+![根据需求选择仍在维护的规则、路由和 on-call 工具；为已归档的 OnCall OSS 和即将停止服务的 Opsgenie 规划迁移。](../../.gitbook/assets/en-observability-alerting-readme-6.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
 
 #### 按场景推荐的方案
 
@@ -499,9 +499,9 @@ EKS 1.28+ 在 AWS/EKS 中提供部分控制平面指标；这并不会将每个�
 
 各方案可以组合使用。CloudWatch 不会自动直接发送到 Alertmanager。本示例通过 SNS/受支持的集成对接 on-call 服务；若要经由 Alertmanager 路由，则需要单独设计适配器、认证以及重复/解决状态的处理：
 
-![Prometheus uses Alertmanager; CloudWatch uses explicit SNS or service integrations to an on-call service, with no automatic direct bridge.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
+![Prometheus 使用 Alertmanager；CloudWatch 通过显式配置的 SNS 或服务集成连接到 on-call 服务，两者之间没有自动直连通道。](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
 
 **架构示例：**
 

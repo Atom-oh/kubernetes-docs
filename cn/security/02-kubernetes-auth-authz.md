@@ -1,7 +1,7 @@
 # Kubernetes 身份验证和授权系统
 
 > **范围**：Kubernetes 稳定 API 和 Amazon EKS 用户访问管理
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 ## 概述
 

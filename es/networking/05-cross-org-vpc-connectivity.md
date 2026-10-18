@@ -1,8 +1,8 @@
 # Conectividad entre VPC de distintas organizaciones
 
-> **Fecha del informe original**: September 1, 2026
+> **Fecha del informe original**: 1 de septiembre de 2026
 >
-> **Revisión del contenido**: September 12, 2026
+> **Revisión del contenido**: 12 de septiembre de 2026
 
 Este capítulo compara cinco patrones para conectar cuentas de **distintas AWS Organizations**, como un entorno existente y otro entorno de GPU con gobernanza independiente. Las tablas conservan las mediciones comunicadas en el documento anterior. Esta revisión comprueba el comportamiento de AWS y los cálculos; no afirma haber realizado un nuevo despliegue real ni reproducido el benchmark de forma independiente.
 
@@ -22,7 +22,7 @@ La titularidad contractual, las adquisiciones, la gobernanza independiente o los
 
 Las cuotas de recursos EC2 suelen establecerse por **cuenta y región**; una cuenta separada puede proporcionar esa separación sin exigir otra Organization. También deben revisarse la agregación de facturación, los descuentos negociados y la duplicación de la gobernanza. Un límite de Organization no sustituye la autorización de aplicaciones, la segmentación de red ni los controles de auditoría.
 
-En EKS, distinga el acceso IP ordinario a canalizaciones de datos o API de inferencia de la comunicación colectiva entre GPU. Un benchmark de solicitud/respuesta con instancias de CPU no establece el rendimiento de NCCL, el throughput ni RDMA. **El tráfico de EFA que evita el sistema operativo no puede atravesar VPC ni zonas de disponibilidad**; el tráfico IP normal de su interfaz ENA sigue siendo enrutable.
+En EKS, distinga el acceso IP ordinario a canalizaciones de datos o API de inferencia de la comunicación colectiva entre GPU. Un benchmark de solicitud/respuesta con instancias de CPU no establece el rendimiento de NCCL, el caudal ni el rendimiento de RDMA. **El tráfico de EFA que evita el sistema operativo no puede atravesar VPC ni zonas de disponibilidad**; el tráfico IP normal de su interfaz ENA sigue siendo enrutable.
 
 ## Comparación de las cinco opciones {#comparing-the-five-options}
 
@@ -30,14 +30,14 @@ Las columnas PrivateLink y Lattice describen los **patrones probados de servicio
 
 | Aspecto | ① Compartición de TGW mediante RAM | ② VPC Peering | ③ Servicio de endpoint PrivateLink | ④ TGW Peering | ⑤ Servicio HTTP de VPC Lattice |
 |---|---|---|---|---|---|
-| Mecanismo | Compartir un TGW con la cuenta externa | Par de VPC conectado directamente | Endpoint de interfaz del consumidor → NLB/servicio del proveedor | Conectar el TGW de cada propietario | Asociar servicios y VPC cliente con una red de servicios |
-| Solapamiento de direcciones | El enrutamiento directo necesita un plan de direcciones sin ambigüedades | No se pueden conectar por peering CIDR solapados | El acceso a servicios puede gestionar CIDR de VPC solapados | El enrutamiento directo necesita un plan de direcciones sin ambigüedades | El acceso a servicios puede gestionar CIDR de VPC solapados |
+| Mecanismo | Compartir un TGW con la cuenta externa | Par de VPC conectadas directamente | Endpoint de interfaz del consumidor → NLB/servicio del proveedor | Conectar el TGW de cada propietario | Asociar servicios y VPC cliente con una red de servicios |
+| Solapamiento de direcciones | El enrutamiento directo necesita un plan de direcciones sin ambigüedades | No se pueden conectar mediante VPC Peering las VPC con CIDR solapados | El acceso a servicios puede gestionar CIDR de VPC solapados | El enrutamiento directo necesita un plan de direcciones sin ambigüedades | El acceso a servicios puede gestionar CIDR de VPC solapados |
 | Modelo de conexión | Enrutamiento IP bidireccional cuando está permitido | Enrutamiento IP bidireccional cuando está permitido | El consumidor inicia; las respuestas pueden volver por la conexión | Enrutamiento IP bidireccional cuando está permitido | Los clientes inician solicitudes a servicios publicados; el acceso inverso necesita configuración propia |
-| Configuración de rutas | Rutas VPC más tablas y asociaciones TGW | Rutas en ambos lados; VPC Peering no es transitivo | Permisos de endpoint/servicio y controles de red, en lugar de tránsito VPC general | Rutas estáticas explícitas hacia el peer más rutas VPC | Asociaciones y políticas de servicio/red, en lugar de tránsito VPC general |
+| Configuración de rutas | Rutas VPC más tablas y asociaciones TGW | Rutas en ambos lados; VPC Peering no es transitivo | Permisos del endpoint y del servicio, además de controles de red, en lugar de tránsito VPC general | Rutas estáticas explícitas hacia el TGW homólogo, además de rutas VPC | Asociaciones y políticas de servicio/red, en lugar de tránsito VPC general |
 | Control | El propietario del TGW gestiona sus tablas; los consumidores conservan los controles de sus VPC | Cada propietario de VPC | El proveedor controla permisos y destinos del servicio; el consumidor controla sus endpoints | Cada propietario de TGW, con rutas coordinadas | Propietarios de red/servicio y controles de la red cliente |
 | Tiempo de aprovisionamiento del informe original | TGW ~3 min más aceptación | Menos de 1 min | Endpoint ~3 min | ~7 min | ~5 min |
 
-Los tiempos de aprovisionamiento son observaciones del informe original, no SLA ni estimaciones de entrega de extremo a extremo. La fila de rutas describe la topología de dos TGW de este capítulo; no afirma que exista tránsito sin restricciones por cadenas arbitrarias de peers. NAT y el rediseño de direcciones son otras formas de abordar el solapamiento y requieren su propio diseño.
+Los tiempos de aprovisionamiento son observaciones del informe original, no SLA ni estimaciones de entrega de extremo a extremo. La fila de rutas describe la topología de dos TGW de este capítulo; no afirma que exista tránsito sin restricciones a través de cadenas arbitrarias de peering. NAT y el rediseño de direcciones son otras formas de abordar el solapamiento y requieren su propio diseño.
 
 ## Resultados de verificación del informe original {#reported-verification-results}
 
@@ -49,13 +49,11 @@ El informe original afirma que se establecieron los cinco patrones y se intercam
 
 La figura conserva las observaciones originales. El valor de Lattice es **HTTP KA**, mientras que los demás valores mostrados son **TCP_RR**; no constituyen una misma métrica directamente comparable. La etiqueta «GPU» identifica el entorno propuesto, no un benchmark de GPU.
 
-
-
 ## Mediciones de latencia (M1–M7) {#latency-measurements-m1m7}
 
-**Configuración comunicada:** `ap-northeast-2`, ZoneId `apne2-az1` coincidente entre cuentas, `c7g.large` y un único servidor EC2 de respuesta con nginx que devuelve un HTTP 200 fijo. El informe describe tres ENI con subredes y rutas de retorno por trayectoria, cinco rondas intercaladas en turnos rotativos, 1,500 muestras TCP_RR con conexiones persistentes por ruta, 100 muestras ICMP por ruta y 275 muestras HTTP keep-alive por ruta.
+**Configuración comunicada:** `ap-northeast-2`, ZoneId `apne2-az1` coincidente entre cuentas, `c7g.large` y un único servidor EC2 de respuesta con nginx que devuelve un HTTP 200 fijo. El informe describe tres ENI con subredes y rutas de retorno específicas para cada trayectoria; cinco rondas intercaladas con orden de ejecución round-robin; 1.500 muestras TCP_RR con conexiones persistentes por trayectoria, 100 muestras ICMP por ruta y 275 muestras HTTP keep-alive por ruta.
 
-La descripción de nginx identifica al servidor de respuesta HTTP; la página no identifica la implementación TCP_RR ni los tamaños de los mensajes. Aquí no se enlazan muestras brutas, versiones de software/kernel, límites de los intervalos de medición ni la configuración de políticas de rutas de retorno de Linux. Las conexiones persistentes buscan reducir los efectos de establecer conexiones repetidamente, pero sus intervalos de medición no pueden comprobarse de forma independiente a partir de estas tablas.
+La descripción de nginx identifica al servidor de respuesta HTTP; la página no identifica la implementación TCP_RR ni los tamaños de los mensajes. En esta página no se incluyen enlaces a las muestras sin procesar, las versiones del software y del kernel, los límites de los intervalos de medición ni la configuración de las políticas de rutas de retorno de Linux. Las conexiones persistentes buscan reducir los efectos de establecer conexiones repetidamente, pero sus intervalos de medición no pueden comprobarse de forma independiente a partir de estas tablas.
 
 **Todos los valores de latencia siguientes están en milisegundos; TTL es un campo de paquete independiente.** TCP_RR e ICMP son medidas de ida y vuelta de solicitud/respuesta. HTTP KA incluye procesamiento de aplicación. Las dos campañas de medición siguientes deben interpretarse por separado.
 
@@ -100,7 +98,7 @@ El informe original también colocó NLB en cada ruta L3. Es una comparación ú
 | ④ TGW Peering → NLB → EC2 | **1.425** | 1.279 |
 | ⑤ Servicio HTTP Lattice (sin NLB separado en esta prueba) | — | **1.680** |
 
-En esta campaña, PrivateLink/NLB menos Peering/NLB es **+0.036 ms TCP_RR** y **+0.197 ms HTTP KA**. Las medianas TCP_RR del TGW compartido y de los TGW conectados por peering son, respectivamente, **1.93× y 2.17×** la mediana de PrivateLink; las proporciones HTTP son **1.49× y 1.51×**. Son proporciones de latencia, no multiplicadores de throughput ni pruebas de equivalencia de las rutas.
+En esta campaña, PrivateLink/NLB menos Peering/NLB es **+0.036 ms TCP_RR** y **+0.197 ms HTTP KA**. Las medianas TCP_RR del TGW compartido y de los TGW conectados por peering son, respectivamente, **1.93× y 2.17×** la mediana de PrivateLink; las proporciones HTTP son **1.49× y 1.51×**. Son proporciones de latencia, no multiplicadores de caudal ni pruebas de equivalencia de las rutas.
 
 La mediana HTTP de Lattice supera las medianas HTTP del TGW compartido/NLB y de los TGW conectados por peering/NLB en **+0.423 ms y +0.401 ms**. No combine esta campaña con M1–M7 para deducir el coste de un componente: incluso las medianas de Peering/NLB difieren entre ejecuciones.
 
@@ -108,7 +106,7 @@ El informe original también describe una prueba piloto descartada con una insta
 
 ## Hallazgos operativos {#operational-findings}
 
-1. **Compartición externa de RAM:** deben permitirse los principales externos y la cuenta ajena a la Organization debe aceptar la invitación. El valor predeterminado de `allowExternalPrincipals` en la API `CreateResourceShare` es **true**; establecer explícitamente `--allow-external-principals` documenta la intención, pero omitir ese flag literal de CLI no es una causa universal de fallo. Verifique la configuración efectiva de compartición y los permisos.
+1. **Compartición externa de RAM:** deben permitirse los principales externos y la cuenta ajena a la Organization debe aceptar la invitación. En la API `CreateResourceShare`, el valor predeterminado de `allowExternalPrincipals` es **true**; establecer explícitamente `--allow-external-principals` documenta la intención, pero omitir ese flag literal de CLI no es una causa universal de fallo. Verifique la configuración efectiva de compartición y los permisos.
 2. **Aceptación de attachments VPC de TGW compartido:** con `AutoAcceptSharedAttachments` deshabilitado, que es el valor predeterminado, el propietario del TGW debe aceptar el attachment compartido. Habilitarlo cambia ese flujo de trabajo. La aceptación de la compartición RAM y la del attachment TGW son pasos distintos. Los consumidores no pueden modificar las tablas de rutas TGW del propietario, pero siguen controlando sus rutas VPC y sus ajustes de seguridad.
 3. **Aceptación de TGW Peering:** el propietario del TGW receptor acepta la solicitud pendiente **en la región del receptor**, incluso si el peering es de la misma cuenta. Utilice el `TransitGatewayAttachmentId` de esa solicitud; no lo confunda con un ID de TGW o de attachment VPC. Una respuesta `NotFound` no establece una regla que obligue a usar ID diferentes en los dos lados. El retraso de visibilidad de unos dos minutos del informe original es una observación, no una garantía de espera fija.
 4. **Rutas de peering:** el peering directo entre TGW utiliza rutas estáticas configuradas explícitamente, no propagación BGP a través del attachment de peering. Configure las tablas TGW y VPC pertinentes en ambas direcciones. La automatización puede gestionar esas rutas estáticas.
@@ -120,8 +118,8 @@ El informe original también describe una prueba piloto descartada con una insta
 
 | Requisito | Patrón candidato | Comprobaciones importantes |
 |---|---|---|
-| Cada Organization debe conservar su autoridad sobre rutas TGW | ④ TGW Peering | Coordinación de rutas estáticas, plan de direcciones, throughput, disponibilidad, inspección y cargos de transferencia |
-| Se desea exponer un conjunto pequeño de endpoints de inferencia/servicios | ③ Servicio de endpoint PrivateLink | Protocolo/modelo admitido, aceptación del endpoint, autenticación de aplicación, DNS, coste y payload/concurrencia reales |
+| Cada Organization debe conservar su autoridad sobre rutas TGW | ④ TGW Peering | Coordinación de rutas estáticas, plan de direcciones, caudal, disponibilidad, inspección y cargos de transferencia |
+| Se desea exponer un conjunto pequeño de endpoints de inferencia/servicios | ③ Servicio de endpoint PrivateLink | Protocolo/modelo admitido, aceptación del endpoint, autenticación de aplicación, DNS, coste y tamaño real de las cargas útiles y concurrencia |
 | Acceso a servicios entre CIDR solapados | ③ PrivateLink o ⑤ Lattice | Alcance de servicio/recurso; evaluar NAT/rediseño de direcciones si se necesita enrutamiento IP más amplio |
 | Otra cuenta puede usar un hub controlado centralmente | ① Compartición de TGW mediante RAM | Política de compartición externa, ajustes de aceptación y modelo de control TGW del propietario |
 | Un número pequeño de pares VPC directos | ② VPC Peering | CIDR sin solapamiento, mantenimiento de rutas por pares, cuotas y cargos de transferencia |
@@ -131,9 +129,9 @@ Un híbrido de TGW Peering y PrivateLink puede encajar con una gobernanza de red
 
 ## Limitaciones y próximas comprobaciones {#limitations-and-next-checks}
 
-El informe original excluye mediciones de rutas de inspección Network Firewall, latencia entre regiones y throughput/concurrencia. Comunica comprobaciones funcionales de solapamiento sin publicar resultados de latencia para ese caso. Esta página tampoco establece resultados de comunicación colectiva entre GPU, EFA/RDMA, tamaños de payload representativos, estimaciones de incertidumbre ni artefactos completos de reproducción.
+El informe original excluye mediciones de rutas de inspección Network Firewall, latencia entre regiones y caudal/concurrencia. Comunica comprobaciones funcionales de solapamiento sin publicar resultados de latencia para ese caso. Esta página tampoco establece resultados de comunicación colectiva entre GPU, EFA/RDMA, tamaños de payload representativos, estimaciones de incertidumbre ni artefactos completos de reproducción.
 
-Conserve las cifras comunicadas como contexto histórico. Antes del despliegue, valide las políticas de las cuentas destino y el modelo de conexión admitido, las rutas bidireccionales o el acceso a servicios necesarios, el comportamiento ante fallos y el presupuesto de latencia/throughput de la aplicación. Esta revisión no realizó aprovisionamiento AWS ni benchmarks reales.
+Conserve las cifras comunicadas como contexto histórico. Antes del despliegue, valide las políticas de las cuentas destino y el modelo de conexión admitido, las rutas bidireccionales o el acceso a servicios necesarios, el comportamiento ante fallos y el presupuesto de latencia/caudal de la aplicación. Esta revisión no realizó aprovisionamiento AWS ni benchmarks reales.
 
 ## Referencias
 

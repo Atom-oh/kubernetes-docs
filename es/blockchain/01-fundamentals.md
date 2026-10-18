@@ -1,6 +1,6 @@
 # Fundamentos de blockchain
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Qué abarca este documento
 
@@ -12,14 +12,14 @@
 
 El punto de partida para entender blockchain no es la tecnología, sino **las restricciones.**
 
-Pensemos en un sistema distribuido ordinario, por ejemplo, un clúster de etcd de Kubernetes. etcd también llega a un consenso entre nodos, pero bajo una premisa: **los nodos participantes están gestionados por la misma organización y fallan, pero no mienten.** Gestiona nodos que dejan de funcionar y particiones de red (fallos de tipo crash), pero no que un nodo afirme deliberadamente un valor distinto.
+Pensemos en un sistema distribuido ordinario, por ejemplo, un clúster de etcd de Kubernetes. etcd también llega a un consenso entre nodos, pero bajo una premisa: **los nodos participantes están gestionados por la misma organización y fallan, pero no mienten.** Tolera la caída de nodos y las particiones de red (fallos por caída), pero no que un nodo afirme deliberadamente un valor distinto.
 
 La premisa de blockchain es diferente.
 
 | Elemento | etcd (Raft) | Blockchain |
 |---|---|---|
 | **Participantes** | Una misma organización, miembros conocidos | Partes que no se conocen entre sí, con membresía cambiante |
-| **Fallos previstos** | Fallos de tipo crash (caída, partición) | **Fallos bizantinos** (mentiras, colusión, ataques) |
+| **Fallos previstos** | Fallos por caída o partición | **Fallos bizantinos** (mentiras, colusión, ataques) |
 | **Elegibilidad** | Designada por el operador | **Cualquiera**, en las cadenas públicas |
 | **¿Se puede revertir?** | Un operador puede intervenir | Solo lo que permita el protocolo |
 
@@ -45,7 +45,7 @@ Block N-1               Block N                 Block N+1
       hash ────────────────┘
 ```
 
-La propiedad que esto proporciona es la **propagación de la manipulación.** Cambiar una transacción del bloque N → cambia el hash del bloque N → el `prev_hash` del bloque N+1 deja de coincidir → todo lo que viene después deja de ser válido.
+La consecuencia es la **propagación de la manipulación.** Cambiar una transacción del bloque N → cambia el hash del bloque N → el `prev_hash` del bloque N+1 deja de coincidir → todo lo que viene después deja de ser válido.
 
 En una cadena PoW, reescribir el historial requiere reconstruir suficiente trabajo aceptado; otras cadenas usan distintos supuestos de finalidad y gobernanza. Los enlaces de hash hacen que la manipulación sea detectable, pero por sí solos no establecen la finalidad ni hacen que toda blockchain sea inmutable desde el punto de vista económico.
 
@@ -65,7 +65,7 @@ Un árbol de Merkle es un árbol binario que calcula los hashes de las transacci
      tx A     tx B         tx C     tx D
 ```
 
-De ahí se desprende la propiedad de la **prueba de Merkle.** Para demostrar que la transacción C está en este bloque solo necesitas **`H(D)` y `H(AB)`**, no el bloque completo. El receptor calcula `H(C)` → `H(CD)` → `merkle_root` y compara.
+De ahí se desprende la **prueba de Merkle.** Para demostrar que la transacción C está en este bloque solo necesitas **`H(D)` y `H(AB)`**, no el bloque completo. El receptor calcula `H(C)` → `H(CD)` → `merkle_root` y compara.
 
 El tamaño de la prueba crece como **log N** respecto al número de transacciones N. Incluso en un bloque con un millón de transacciones, la prueba consta de unos 20 hashes.
 
@@ -82,7 +82,7 @@ Un algoritmo de consenso decide dos cosas: **quién propone un bloque** y **qué
 | **PoW** (prueba de trabajo) | El nodo que primero resuelve un rompecabezas computacional | **Electricidad y hardware** | Bitcoin |
 | **PoS** (prueba de participación) | Selección con una probabilidad proporcional a la participación | **Capital en staking + penalización por incumplimiento** | Ethereum |
 | **Familia BFT** | Votos según un umbral definido de fallos bizantinos | Supuestos sobre membresía/validadores y cuórum | Tendermint; Fabric 3.x SmartBFT |
-| **Ordenamiento CFT con permisos** | Réplicas conocidas usan consenso tolerante a fallos de tipo crash | No tolera comportamientos arbitrarios de ordenamiento bizantino | Fabric Raft |
+| **Ordenamiento CFT con permisos** | Réplicas conocidas usan consenso tolerante a fallos por caída | No tolera comportamientos arbitrarios de ordenamiento bizantino | Fabric Raft |
 
 ### Por qué se necesita un costo
 
@@ -115,7 +115,7 @@ Los diseños con permisos pueden usar una membresía conocida y una gobernanza e
 
 **Es posible que los datos que devuelve un nodo aún no sean definitivos.**
 
-Si le preguntas a un nodo de blockchain «dime el resultado de esta transacción», responde **en función de la última cadena que conoce.** Si ese último bloque se reorganiza más adelante (una reorganización), la respuesta cambia.
+Si consultas a un nodo de blockchain «dime el resultado de esta transacción», responde **en función de la última cadena que conoce.** Si ese último bloque se reorganiza más adelante (una reorganización), la respuesta cambia.
 
 Los patrones reales de incidentes que esto provoca:
 
@@ -156,7 +156,7 @@ Características:
 | **Persistencia de la lista de pares** | El estado se pierde al reemplazar un Pod |
 | **Anunciar un puerto fijo** | Asignación de puertos del Service |
 
-Por eso los nodos de blockchain suelen usar **StatefulSet + Service sin cabecera**, ya que necesitan nombres estables y orden. Aceptar conexiones P2P entrantes requiere un diseño de exposición adicional. [Ejecución de nodos de blockchain en EKS](./02-nodes-on-eks.md) cubre los detalles.
+Por eso los nodos de blockchain suelen usar **StatefulSet + Service headless**, ya que necesitan nombres estables y orden. Aceptar conexiones P2P entrantes requiere un diseño de exposición adicional. [Ejecución de nodos de blockchain en EKS](./02-nodes-on-eks.md) cubre los detalles.
 
 ## Estado y almacenamiento: por qué reconstruir es difícil
 
@@ -164,7 +164,7 @@ Un nodo de blockchain conserva dos cosas.
 
 | Datos | Naturaleza | Tamaño |
 |---|---|---|
-| **Historial de bloques** | Registro de solo anexado. El pasado es inmutable | Crece continuamente |
+| **Historial de bloques** | Registro al que solo se agregan entradas. El pasado es inmutable | Crece continuamente |
 | **Estado actual** | Saldos, almacenamiento de contratos. Se puede derivar reproduciendo los bloques | Crece, pero es menor que el historial |
 
 **La propiedad clave: el estado se puede reproducir a partir del historial, pero esa reproducción tarda mucho.**
@@ -182,13 +182,13 @@ Reproducir y verificar cada bloque desde el génesis (sincronización completa) 
 
 ### Nodos de archivo: una consideración aparte
 
-Un nodo que puede consultar el «estado en cualquier momento pasado» es un nodo de archivo. Conserva todos los estados intermedios, por lo que necesita **mucho más almacenamiento** que un nodo normal.
+Un nodo que puede consultar el estado en un momento pasado arbitrario es un nodo de archivo. Conserva todos los estados intermedios, por lo que necesita **mucho más almacenamiento** que un nodo normal.
 
 **Aquí se necesita tomar una decisión de diseño**: primero confirma que realmente necesitas capacidades de archivo. La mayoría de las aplicaciones solo necesitan el estado reciente y, si hacen falta consultas históricas, gestionarlas con un servicio de indexación o un almacén de datos es más rentable.
 
 ## Gestión de claves: perderla significa que todo se acaba
 
-En blockchain, **la identidad y la autoridad son la clave privada.** Esto crea una diferencia decisiva respecto a los sistemas existentes.
+En blockchain, **la identidad y la autoridad residen en la clave privada.** Esto crea una diferencia decisiva respecto a los sistemas existentes.
 
 | Sistemas existentes | Blockchain |
 |---|---|
@@ -210,7 +210,7 @@ Resumen de las características operativas que generan estos conceptos:
 | El estado se acumula localmente | **Reemplazar un Pod es muy costoso** | StatefulSet + volumen persistente obligatorios; considerar la afinidad de nodos |
 | La sincronización de la cadena puede ir con retraso | **«Activo» y «capaz de prestar servicio» son cosas distintas** | Incluir el estado de sincronización en la disponibilidad |
 | La finalidad no es inmediata | **Los datos más recientes no son datos definitivos** | La profundidad de confirmación es un acuerdo con la aplicación |
-| Difusión P2P | **Necesita conexiones entrantes e identidad estable** | Service sin cabecera, diseño de exposición adicional |
+| Difusión P2P | **Necesita conexiones entrantes e identidad estable** | Service headless, diseño de exposición adicional |
 | Las bifurcaciones duras activan reglas en un momento definido | Actualizar los binarios compatibles antes de la activación | Las actualizaciones canary y graduales pueden preparar la flota de antemano |
 | Las claves son autoridad | **Perder la clave = pérdida permanente** | KMS/HSM, estrategias de copia de seguridad distintas para las claves y los datos |
 | La verificación redundante es el objetivo | **Consumo constante de CPU e IOPS** | Poco adecuado para configuraciones de recursos orientadas a ráfagas |
@@ -236,7 +236,7 @@ Ethereum implementó Pectra y Fusaka en 2025 y ha avanzado hacia actualizaciones
 
 ## Resumen
 
-- Compara el modelo de consenso y confianza elegido: **etcd/Raft tolera fallos de tipo crash**, algunas blockchains usan BFT y Fabric con permisos puede usar CFT Raft o SmartBFT. La etiqueta blockchain por sí sola no implica tolerancia a fallos bizantinos.
+- Compara el modelo de consenso y confianza elegido: **etcd/Raft tolera fallos por caída**, algunas blockchains usan BFT y Fabric con permisos puede usar CFT Raft o SmartBFT. La etiqueta blockchain por sí sola no implica tolerancia a fallos bizantinos.
 - Muchos diseños de nodo completo replican la verificación; los modelos de cliente ligero y con permisos son distintos, y la capacidad de RPC/lectura puede escalar por separado de las escrituras en la cadena base.
 - La cadena `prev_hash` propaga la manipulación y **los árboles de Merkle** permiten pruebas de inclusión de tamaño log-N (la base de los clientes ligeros).
 - El consenso necesita un costo por la **defensa contra Sybil.** Restringir la participación (consorcio) elimina esa necesidad y permite BFT con mayor rendimiento y finalidad, a costa de la descentralización.
@@ -252,7 +252,7 @@ Siguiente: [Ejecución de nodos de blockchain en EKS](./02-nodes-on-eks.md) trad
 - [Ethereum: prueba de participación](https://ethereum.org/developers/docs/consensus-mechanisms/pos/)
 - [Documentación de Hyperledger Fabric](https://hyperledger-fabric.readthedocs.io/): estructura de una cadena con permisos
 - [Guía para desarrolladores de Bitcoin](https://developer.bitcoin.org/devguide/): PoW y árboles de Merkle
-- [Arquitectura del clúster: etcd y Raft](../core/01-cluster-architecture.md): comparación con el consenso tolerante a fallos de tipo crash
+- [Arquitectura del clúster: etcd y Raft](../core/01-cluster-architecture.md): comparación con el consenso tolerante a fallos por caída
 
 
 - [Servicio de ordenamiento de Fabric](https://hyperledger-fabric.readthedocs.io/en/latest/orderer/ordering_service.html): CFT Raft frente a SmartBFT

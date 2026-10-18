@@ -17,6 +17,8 @@
 
 ## 概述
 
+以下示例是可选的 HTTP sidecar 策略；除非明确给出写入策略，否则假定操作可安全重试。原生 SQL 流量和不透明的应用 HTTPS 不能使用这些 HTTP 重试/超时规则。还应设置调用方截止时间；多个层级的重试会相乘增加后端尝试次数，而且可能超过某一层的本地超时时间。
+
 ### 为什么需要超时和重试？
 
 ![未配置超时/重试时，客户端会一直等待无响应的服务并浪费资源；使用 Istio 超时/重试后，它会在 1 秒后停止，重试另一个实例并成功。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
@@ -87,7 +89,9 @@ spec:
 
 ## 重试配置
 
-> **重要：** 省略 `retries` 并不一定意味着禁用了重试。Istio 的集群范围默认值为 `attempts: 2`，且 `retryOn: connect-failure,refused-stream,unavailable,cancelled`。`attempts` 统计的是**原始请求后的额外重试次数**，因此这可能导致总计三次发送。请在路由上设置 `attempts: 0`，以显式禁用 Proxy 重试。
+> **重要：** 省略 `retries` 并不一定意味着禁用了重试。Istio 1.31.0 渲染出的默认值为 `attempts: 2`，且 `retryOn: connect-failure,refused-stream,unavailable,cancelled,retriable-status-codes`。`attempts` 统计的是**原始请求后的额外重试次数**，因此这可能导致总计三次发送。请在路由上设置 `attempts: 0`，以显式禁用代理重试。
+
+HTTPRetry 参考文档对该列表作了缩写；已发布的重试实现还会对已配置的状态码启用 `retriable-status-codes`。群集默认值可以被覆盖。显式重试策略必须列明目标条件；不要假设所有超时都会触发重试，也不要假设始终有其他健康端点可用。
 
 ### 基本重试
 
@@ -201,7 +205,7 @@ spec:
   - name: writes-no-mesh-retry
     match:
     - method:
-        regex: "^(POST|PATCH)$"
+        regex: "^(POST|PUT|PATCH|DELETE)$"
     route:
     - destination:
         host: order-service
@@ -313,12 +317,28 @@ spec:
   hosts:
   - api.external.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-api-tls
+spec:
+  host: api.external.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.external.com
+      subjectAltNames:
+      - api.external.com
 ```
+
+此发起请求示例由应用调用 `http://api.external.com`；部署时应将主机名替换为实际服务地址。如果应用已经发起 HTTPS，请求中的加密 HTTP 消息就无法用于检查这些重试条件。
 
 ### 示例 3：与 Circuit Breaker 结合使用
 
@@ -372,7 +392,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -426,57 +446,45 @@ spec:
 `reset`、`503` 和超时并不能证明服务器拒绝了请求。服务器可以提交数据库事务，然后仅丢失响应，因此 Proxy 无法确定重放是否安全。出现模糊结果后，应用程序应查询操作状态，而不是盲目地重新发送请求。
 
 ```python
-# Application: Use Idempotency Key
-import uuid
+# Client excerpt: requires an API with an atomic idempotency contract.
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 
-def create_order_with_idempotency(order_data):
-    # Generate unique Idempotency Key
-    idempotency_key = str(uuid.uuid4())
 
-    session = requests.Session()
-    retry_strategy = Retry(
+def create_order_with_idempotency(order_data, idempotency_key):
+    # Persist one key per logical order; reuse it after ambiguous failures.
+    if not idempotency_key:
+        raise ValueError("A persisted operation idempotency key is required")
+    retries = Retry(
         total=3,
         status_forcelist=[500, 502, 503, 504],
-        allowed_methods=["POST"],  # Allow POST retry
-        backoff_factor=1
+        allowed_methods=["POST"],
+        backoff_factor=1,
     )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("http://", adapter)
-
-    headers = {
-        "X-Idempotency-Key": idempotency_key  # Prevent duplicates
-    }
-
-    response = session.post(
-        "http://order-service/orders",
-        json=order_data,
-        headers=headers
-    )
-    return response
-
-# Server side: Validate Idempotency Key
-@app.route('/orders', methods=['POST'])
-def create_order():
-    idempotency_key = request.headers.get('X-Idempotency-Key')
-
-    # Check if already processed in Redis/DB
-    if redis.exists(f"order:idempotency:{idempotency_key}"):
-        # Already processed - return cached result
-        cached_result = redis.get(f"order:result:{idempotency_key}")
-        return jsonify(json.loads(cached_result)), 200
-
-    # Create new order
-    order = create_order_in_db(request.json)
-
-    # Cache Idempotency Key and result (24h TTL)
-    redis.setex(f"order:idempotency:{idempotency_key}", 86400, "1")
-    redis.setex(f"order:result:{idempotency_key}", 86400, json.dumps(order))
-
-    return jsonify(order), 201
+    with requests.Session() as session:
+        adapter = HTTPAdapter(max_retries=retries)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        response = session.post(
+            "http://order-service/orders",
+            json=order_data,
+            headers={"X-Idempotency-Key": idempotency_key},
+            timeout=(3, 10),
+        )
+        response.raise_for_status()
+        return response.json()
 ```
+
+服务器必须以原子方式实施该契约。先执行 Redis `exists` 检查，再创建订单并单独写入缓存，会留下并发重复订单和崩溃时间窗；这不是安全的去重实现。
+
+1. 验证幂等键，并将其绑定到经过身份验证的调用方和请求负载指纹。
+2. 使用数据库唯一约束抢占该键；并发尝试必须串行化。
+3. 在同一事务中提交订单变更以及该键对应的状态/响应。
+4. 对相同键和负载返回已存储结果；若同一键被不同负载重复使用，则拒绝请求。
+5. 通过事务型 outbox 或幂等下游 API 协调不可逆的外部副作用。保留时间应覆盖受支持的重试窗口。
+
+客户端示例假定服务器已实现此契约。仅添加请求标头并不会让 POST 变得安全；Requests 的 timeout 作用于每次尝试的连接/读取阶段，而不是整个重试流程的总截止时间。
 
 请为生产环境写入 API 组合使用以下保障措施：
 
@@ -534,7 +542,7 @@ spec:
   - match:
     - method:
         exact: PUT
-    - headers:
+      headers:
         x-idempotency-key:
           regex: ".+"  # Only when Idempotency Key present
     route:
@@ -575,7 +583,7 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       baseEjectionTime: 30s
 
 # Result: Before the Circuit Breaker opens,
@@ -607,7 +615,7 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       baseEjectionTime: 30s
 ```
 
@@ -661,7 +669,7 @@ spec:
   - route:
     - destination:
         host: api-gateway
-    timeout: 300s  # 5 minutes is too long
+    timeout: 300s  # Illustrative poor fit for a short interactive request; streaming differs
 ```
 
 ### 2. 重试策略
@@ -691,7 +699,7 @@ spec:
   # POST/PATCH - explicitly disable mesh retry
   - match:
     - method:
-        regex: "^(POST|PATCH)$"
+        regex: "^(POST|PUT|PATCH|DELETE)$"
     route:
     - destination:
         host: api-service
@@ -701,7 +709,7 @@ spec:
 
 ### 3. 指数退避
 
-Istio 的默认重试间隔为 25ms，但以下展示了如何配置自定义退避。这仅适用于读取路径——如本页前文所示，`payment` 仍会为写入禁用 mesh 重试：
+Envoy 使用完全抖动的指数退避，默认基准间隔为 25ms；实际延迟不是固定的 25/50/100ms 序列。此示例为读取请求设置自定义基准，并明确禁用写入路径的重试：
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -722,8 +730,12 @@ spec:
       attempts: 5
       perTryTimeout: 2s
       retryOn: connect-failure,refused-stream
-      # Istio automatically increases retry interval
-      # 25ms, 50ms, 100ms, 200ms, 400ms
+      backoff: 100ms
+  - route:
+    - destination:
+        host: payment
+    retries:
+      attempts: 0
 ```
 
 ### 4. 系统总超时计算
@@ -753,19 +765,16 @@ kubectl describe virtualservice <name> -n <namespace>
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | grep timeout
 
 # 3. Test actual timeout
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
-  curl -v --max-time 5 http://backend-service
+kubectl exec -it <pod-name> -n <namespace> -c <app-container> -- \
+  curl -v --max-time 15 http://backend-service
 ```
 
 ### 重试次数过多
 
-```bash
-# Check retry metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/stats/prometheus | grep retry
+请从安装了 curl 的应用容器生成流量，不要以 istio-proxy UID 发起测试（该 UID 可能绕过拦截）。为该测试设置高于路由配置超时的 curl 截止时间。使用由代理 stats matcher 启用的 Envoy 重试计数器测量重试；`UR` 响应标志表示上游远端重置，不是重试计数器。
 
-# Check retries for specific service
-istio_requests_total{destination_service="backend.default.svc.cluster.local",response_flags="UR"}
+```promql
+sum(rate(envoy_cluster_upstream_rq_retry[5m]))
 ```
 
 ### 防止重试风暴
@@ -787,7 +796,7 @@ spec:
         http2MaxRequests: 100
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3  # Fast circuit break
+      consecutive5xxErrors: 3  # Fast circuit break
       interval: 10s
       baseEjectionTime: 30s
 ```
@@ -798,3 +807,11 @@ spec:
 - [Istio Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
 - [Envoy Retry Policy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
 - [RFC 9110: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
+- [主要参考资料 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [主要参考资料 2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/route/retry/retry.go)
+- [主要参考资料 3](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter)
+- [主要参考资料 4](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
+- [主要参考资料 5](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+- [主要参考资料 6](https://raw.githubusercontent.com/psf/requests/main/docs/user/advanced.rst)
+- [主要参考资料 7](https://raw.githubusercontent.com/urllib3/urllib3/main/src/urllib3/util/retry.py)
+- [主要参考资料 8](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

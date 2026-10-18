@@ -1,6 +1,6 @@
 # Backstage 作为内部开发者门户
 
-> **最后更新**：October 16, 2026 · Backstage 1.54.7 / Helm chart 2.10.2
+> **最后更新**：2026 年 10 月 16 日 · Backstage 1.54.7 / Helm chart 2.10.2
 
 ## 角色与采用范围
 

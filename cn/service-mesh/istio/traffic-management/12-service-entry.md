@@ -1,6 +1,6 @@
 # ServiceEntry
 
-ServiceEntry 会在 Istio service mesh 中注册外部服务，使其能够像内部服务一样被管理。
+ServiceEntry 会在 Istio 服务网格中注册外部服务，使其能够像内部服务一样进行管理。
 
 ## 目录
 
@@ -8,89 +8,39 @@ ServiceEntry 会在 Istio service mesh 中注册外部服务，使其能够像�
 2. [ServiceEntry 概述](#serviceentry-overview)
 3. [解析模式](#resolution-modes)
 4. [位置设置](#location-settings)
-5. [实战示例](#practical-examples)
-6. [结合 Egress Gateway](#combining-with-egress-gateway)
+5. [实用示例](#practical-examples)
+6. [与 Egress Gateway 结合使用](#combining-with-egress-gateway)
 7. [安全与 TLS](#security-and-tls)
 8. [监控与控制](#monitoring-and-control)
 9. [最佳实践](#best-practices)
 
-<span id="why-serviceentry"></span>
+## 为什么使用 ServiceEntry？ {#why-serviceentry}
 
-## 为什么使用 ServiceEntry？
+### 管理外部服务的必要性
 
-### 外部服务管理的必要性
+使用 ALLOW_ANY 时，未知的外部目标仍可通过，但可用的策略和遥测信息会减少。ServiceEntry 会注册目标，以便配置兼容的代理策略；它本身不是访问控制规则。
 
-默认情况下，Istio mesh 不控制到外部服务的流量。使用 ServiceEntry：
-
-```mermaid
-flowchart TB
-    subgraph Without["Without ServiceEntry"]
-        A1[Mesh Internal<br/>Service] -->|Unknown Traffic| E1[External API]
-        A1 -.->|No Monitoring| E1
-        A1 -.->|Cannot Apply Policies| E1
-        A1 -.->|No Circuit Breaker| E1
-    end
-
-    subgraph With["With ServiceEntry"]
-        A2[Mesh Internal<br/>Service] -->|Registered Traffic| E2[External API<br/>ServiceEntry]
-        A2 -->|Monitoring Enabled| E2
-        A2 -->|Policy Applied| E2
-        A2 -->|Circuit Breaker| E2
-    end
-
-    %% Style definitions
-    classDef internal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef unknown fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,A2 internal;
-    class E2 external;
-    class E1 unknown;
-```
+注册后可以针对目标配置相关设置；实际监控、TLS 和流量控制仍取决于协议以及已应用的策略。
 
 ### 主要优势
 
-| 功能 | 无 ServiceEntry | 使用 ServiceEntry |
+| 功能 | 不使用 ServiceEntry | 使用 ServiceEntry |
 |---------|---------------------|-------------------|
-| **监控** | 黑洞 | 完整的指标收集 |
-| **流量控制** | 不可行 | Timeout、Retry、Circuit Breaker |
-| **安全** | 有限 | mTLS、证书管理 |
-| **出口控制** | 允许所有外部流量 | 显式允许/阻止 |
+| **监控** | 仅有有限的透传遥测 | 遥测取决于协议；HTTP 需要 L7 可见性 |
+| **流量控制** | 不可用 | 可配置超时、重试、熔断 |
+| **安全** | 应用 TLS 仍可生效 | 需单独配置 TLS/mTLS；不会自动签发外部证书 |
+| **出口控制** | 取决于出站/网络策略 | 提供注册表和路由配置；网络强制执行需另行设置 |
 | **服务发现** | 手动管理 | 自动 DNS 查找 |
 
-<span id="serviceentry-overview"></span>
+## ServiceEntry 概述 {#serviceentry-overview}
 
-## ServiceEntry 概述
+以下示例是彼此独立的 Sidecar 配置方案。ServiceEntry 由 istiod/代理使用，本身不是一个网络跳点。`addresses` 用于归类服务/VIP 流量，`endpoints` 用于标识上游后端。解析模式控制代理如何查找地址，而不控制应用程序的 DNS；使用合成主机名时，应配置 DNS 记录或 DNS 捕获。ServiceEntry 不会将 VM 代理纳入网格，也不会签发其身份凭证。
 
-ServiceEntry 将外部服务添加到 Istio 服务注册表中。
+ServiceEntry 会将外部服务加入 Istio 服务注册表。
 
-```mermaid
-flowchart LR
-    subgraph Mesh["Service Mesh"]
-        App[Application]
-        SE[ServiceEntry<br/>Registration]
-    end
+![网格中的应用通过 ServiceEntry 注册项发送请求；该注册项应用流量控制、监控和安全配置，然后将请求分发到外部 API 和外部数据库。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-1.png)
 
-    subgraph External["External Services"]
-        API[External API<br/>api.example.com]
-        DB[External DB<br/>db.example.com]
-    end
-
-    App -->|1. Request| SE
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| API
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| DB
-
-    %% Style definitions
-    classDef meshService fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef serviceEntry fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App meshService;
-    class SE serviceEntry;
-    class API,DB external;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-12-service-entry-1.html)
 
 ### 基本结构
 
@@ -110,15 +60,13 @@ spec:
   resolution: DNS         # Address resolution method
 ```
 
-<span id="resolution-modes"></span>
+## 解析模式 {#resolution-modes}
 
-## 解析模式
-
-ServiceEntry 支持 4 种地址解析模式。
+Istio 1.31 API 定义了五种解析模式。
 
 ### 1. DNS 解析
 
-这是最常用的模式，可通过 DNS 动态解析 IP 地址。
+这是最常见的模式，通过 DNS 动态解析 IP 地址。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -168,13 +116,13 @@ spec:
 ```
 
 **使用场景**：
-- 旧版系统（无 DNS）
-- 合规性要求使用固定 IP
+- 没有 DNS 的旧系统
+- 合规要求使用固定 IP
 - 内部数据中心服务
 
 ### 3. NONE 解析
 
-不执行地址解析，而是按原样使用客户端提供的地址。
+此模式不执行地址解析，而是按原样使用客户端提供的地址。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -197,17 +145,19 @@ spec:
 - 客户端负载均衡
 - TCP/TLS 代理
 
-### 4. DNS_ROUND_ROBIN 解析（已弃用）
+### 4. DNS_ROUND_ROBIN 解析
 
-使用 DNS round robin（现已整合到 DNS 模式中）。
+此模式受支持，并未弃用。与 DNS 模式返回完整端点集合不同，它在建立新连接时使用 DNS 返回的第一个地址；DNS 记录变化后，现有连接仍会保留。对于由 DNS 提供前端、且端点频繁变化会不断清空连接池的服务，此模式很有用。
 
-<span id="location-settings"></span>
+### 5. DYNAMIC_DNS 解析
 
-## 位置设置
+此模式会在请求到达时，根据 HTTP Host/SNI 解析通配符目标。是否适用取决于 Istio 版本、数据平面和 waypoint 配置；对于无法恢复主机名的透明 TCP 流量，此模式不适用。使用前请核对该模式的具体要求。下方的具体通配符示例使用 Sidecar NONE 模式。
+
+## 位置设置 {#location-settings}
 
 ### MESH_EXTERNAL（外部服务）
 
-注册 mesh 之外的服务。
+注册网格之外的服务。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -226,13 +176,13 @@ spec:
 ```
 
 **特性**：
-- 不应用 mTLS
-- 可通过 Egress Gateway 出站
+- 配置适当的 DestinationRule 和服务器信任后，可以使用外部 TLS/mTLS
+- 可以经由 Egress Gateway 出站
 - 被归类为外部流量
 
 ### MESH_INTERNAL（内部服务）
 
-将其视为 mesh 内部服务（很少使用）。
+将服务视为网格内部服务（较少使用）。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -255,13 +205,11 @@ spec:
 ```
 
 **使用场景**：
-- 将 VM workload 纳入 mesh
+- 将 VM 工作负载纳入网格
 - 多集群环境
 - 混合云配置
 
-<span id="practical-examples"></span>
-
-## 实战示例
+## 实用示例 {#practical-examples}
 
 ### 1. 注册外部 REST API
 
@@ -277,9 +225,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -293,14 +242,23 @@ spec:
   hosts:
   - api.payment-gateway.com
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: api.payment-gateway.com
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: api.payment-gateway.com
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 # DestinationRule: Circuit Breaker
 apiVersion: networking.istio.io/v1
@@ -316,12 +274,16 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
-      mode: SIMPLE  # TLS connection
+      mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames: [api.payment-gateway.com]
 ```
+
+在此 TLS 发起方案中，应用向本地 Sidecar 发送 HTTP，代理再向上游发送经过验证的 HTTPS。不要将此方案与应用自行发起的 HTTPS 混用。启用重试前，支付写入操作必须由应用提供幂等性约定。
 
 ### 2. 注册外部数据库
 
@@ -354,14 +316,16 @@ spec:
         maxConnections: 100
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
 
 ### 3. 注册通配符域名
 
-#### 场景：AWS S3 Bucket 访问
+请在数据库驱动中使用当前 RDS CA bundle 配置 TLS 和证书验证。TCP 注册不会配置数据库身份验证或 SSL 协商。同一端口上存在多个外部数据库时，请使用 DNS 捕获或唯一服务 VIP，避免仅凭端口造成歧义。
+
+#### 场景：访问 AWS S3 存储桶
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -371,8 +335,8 @@ metadata:
 spec:
   hosts:
   - "*.s3.amazonaws.com"
-  - "*.s3.*.amazonaws.com"
-  - "*.s3-*.amazonaws.com"
+  - "*.s3.us-west-2.amazonaws.com"
+  - "s3.us-west-2.amazonaws.com"
   ports:
   - number: 443
     name: https
@@ -381,7 +345,9 @@ spec:
   resolution: NONE  # Use NONE for wildcards
 ```
 
-### 4. 具有多个 endpoint 的外部服务
+只允许在名称开头使用通配符前缀；应列出实际区域端点后缀，不要在名称中间放置 `*`。这是 Sidecar 示例，未涵盖所有 S3 端点系列，也不会授予 IAM 访问权限。
+
+### 4. 注册具有多个端点的外部服务
 
 #### 场景：多区域 API
 
@@ -394,11 +360,38 @@ spec:
   hosts:
   - api.global-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+  endpoints:
+  - address: us-west.api.global-service.com
+    labels:
+      region: us-west
+  - address: eu-central.api.global-service.com
+    labels:
+      region: eu-central
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: multi-region-api
+spec:
+  host: api.global-service.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.global-service.com
+      subjectAltNames: [api.global-service.com]
+  subsets:
+  - name: us-west
+    labels:
+      region: us-west
+  - name: eu-central
+    labels:
+      region: eu-central
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -408,40 +401,32 @@ spec:
   hosts:
   - api.global-service.com
   http:
-  # Region-based routing
   - match:
     - headers:
         x-region:
-          exact: "us-west"
+          exact: us-west
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: us-west.api.global-service.com
-
+        subset: us-west
   - match:
     - headers:
         x-region:
-          exact: "eu-central"
+          exact: eu-central
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: eu-central.api.global-service.com
-
-  # Default routing
+        subset: eu-central
   - route:
     - destination:
         host: api.global-service.com
 ```
 
+两个区域的端点都必须提供相同的规范 API 主机名和证书。仅更改 HTTP Host 标头不会改变代理选择的 DNS 端点。如示例所示，应用在本地使用 HTTP，TLS 则由代理向上游发起。
+
 ### 5. 注册 TCP 服务
 
-#### 场景：外部 Redis Cluster
+#### 场景：外部 Redis 集群
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -450,10 +435,9 @@ metadata:
   name: external-redis
 spec:
   hosts:
-  - redis.external-cluster.com
+  - redis-primary.external-cluster.com
   addresses:
   - 203.0.113.10
-  - 203.0.113.11
   ports:
   - number: 6379
     name: tcp
@@ -464,16 +448,13 @@ spec:
   - address: 203.0.113.10
     labels:
       instance: primary
-  - address: 203.0.113.11
-    labels:
-      instance: replica
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-redis-lb
 spec:
-  host: redis.external-cluster.com
+  host: redis-primary.external-cluster.com
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -483,9 +464,9 @@ spec:
         connectTimeout: 3s
 ```
 
-<span id="combining-with-egress-gateway"></span>
+此示例只选择可写主节点。只读流量应单独注册副本，或使用能够理解 Redis 的集群客户端；通用轮询无法保留 Redis 主从或分片语义。示例 IP 必须替换为可访问的实际端点。
 
-## 结合 Egress Gateway
+## 与 Egress Gateway 结合使用 {#combining-with-egress-gateway}
 
 通过 Egress Gateway 集中控制外部流量。
 
@@ -512,14 +493,15 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
   servers:
   - port:
       number: 443
-      name: https
-      protocol: HTTPS
+      name: tls
+      protocol: TLS
     hosts:
     - api.example.com
     tls:
@@ -535,12 +517,14 @@ spec:
   - api.example.com
   gateways:
   - mesh
-  - egress-gateway
-  http:
+  - istio-system/egress-gateway
+  tls:
   - match:
     - gateways:
       - mesh
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
@@ -548,8 +532,10 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-gateway
+      - istio-system/egress-gateway
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: api.example.com
@@ -557,7 +543,7 @@ spec:
           number: 443
 ```
 
-### TLS Origination（内部 HTTP，外部 HTTPS）
+### TLS 发起（内部 HTTP，外部 HTTPS）
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -571,6 +557,7 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
+    targetPort: 443
   - number: 443
     name: https
     protocol: HTTPS
@@ -591,11 +578,9 @@ spec:
         mode: SIMPLE  # HTTP -> HTTPS conversion
 ```
 
-<span id="security-and-tls"></span>
+## 安全与 TLS {#security-and-tls}
 
-## 安全与 TLS
-
-### 到外部服务的 mTLS
+### 与外部服务建立 mTLS
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -606,9 +591,10 @@ spec:
   hosts:
   - mtls-api.example.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -621,10 +607,14 @@ spec:
   trafficPolicy:
     tls:
       mode: MUTUAL
+      sni: mtls-api.example.com
+      subjectAltNames: [mtls-api.example.com]
       clientCertificate: /etc/certs/client-cert.pem
       privateKey: /etc/certs/client-key.pem
       caCertificates: /etc/certs/ca-cert.pem
 ```
+
+请将这些证书/密钥文件挂载到代理容器，并通过证书管理流程轮换。外部服务器必须信任客户端 CA；ServiceEntry 不会签发这些凭证。这是代理从本地 HTTP 发起的 mTLS，而不是在应用 TLS 之外再套一层 TLS。
 
 ### SNI 路由
 
@@ -633,6 +623,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-sni-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
@@ -657,7 +648,7 @@ spec:
   - api2.example.com
   gateways:
   - mesh
-  - egress-sni-gateway
+  - istio-system/egress-sni-gateway
   tls:
   - match:
     - gateways:
@@ -672,7 +663,7 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-sni-gateway
+      - istio-system/egress-sni-gateway
       port: 443
       sniHosts:
       - api.example.com
@@ -681,13 +672,35 @@ spec:
         host: api.example.com
         port:
           number: 443
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - istio-system/egress-sni-gateway
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: api2.example.com
+        port:
+          number: 443
 ```
 
-<span id="monitoring-and-control"></span>
+按[出口控制](11-egress-control.md)所示安装 Egress Gateway 工作负载和 ClusterIP Service，并为两个外部主机分别注册 ServiceEntry。SNI 路由只配置转发，不会强制所有流量都经过网关；要建立这一边界，请使用网络层强制措施。
 
-## 监控与控制
+## 监控与控制 {#monitoring-and-control}
 
-### 指标收集
+### 收集指标
 
 ```bash
 # Check ServiceEntry traffic
@@ -695,29 +708,31 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
   curl localhost:15000/stats/prometheus | grep "api.example.com"
 
 # Egress traffic metrics
-istio_requests_total{destination_service_name="api.example.com"}
+istio_requests_total{reporter="source",destination_service_name="api.example.com"}
 ```
 
 ### Prometheus 查询
 
-```yaml
+查询前先检查实际指标标签。HTTP 请求数、错误和延迟指标需要 L7 可见性（例如 TLS 发起）；无法解密的 HTTPS/TCP 流量则暴露连接和字节指标。不要假定外部 ServiceEntry 的 namespace 标签为空。
+
+```promql
 # External service request count
-sum(rate(istio_requests_total{destination_service_namespace="",destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service error rate
-sum(rate(istio_requests_total{destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total{destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service response time
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket{destination_service_name="api.example.com"}[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="api.example.com"}[5m])) by (le)
 )
 ```
 
-### 阻止出口流量
+### 检测未注册目标
 
 ```yaml
-# Block all Egress by default
+# Registry/configuration control, not a firewall
 apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
@@ -729,12 +744,12 @@ spec:
     - "./*"  # Allow only same namespace
     - "istio-system/*"  # Allow istio-system
   outboundTrafficPolicy:
-    mode: REGISTRY_ONLY  # Allow only those registered in ServiceEntry
+    mode: REGISTRY_ONLY  # Known Kubernetes and ServiceEntry destinations
 ```
 
-<span id="best-practices"></span>
+Sidecar 导入范围和 REGISTRY_ONLY 都不是安全边界。必须强制控制出口时，请使用网络策略/防火墙，并在适用时使用 AuthorizationPolicy。
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 1. 显式注册 ServiceEntry
 
@@ -760,7 +775,7 @@ spec:
   resolution: DNS
 ```
 
-### 2. 始终应用 Circuit Breaker
+### 2. 根据协议调整韧性设置
 
 ```yaml
 # Always apply Circuit Breaker for external services
@@ -776,12 +791,12 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
 ```
 
-### 3. Timeout 设置
+### 3. 设置超时
 
 ```yaml
 # Set explicit Timeout for external services
@@ -802,7 +817,7 @@ spec:
       perTryTimeout: 5s
 ```
 
-### 4. 使用 Egress Gateway（生产环境）
+### 4. 在生产环境使用 Egress Gateway
 
 ```yaml
 # Control external traffic through Egress Gateway in production
@@ -811,7 +826,7 @@ spec:
 # - Consistent security policies
 ```
 
-### 5. Namespace 隔离
+### 5. 确保命名空间配置可见
 
 ```yaml
 # Isolate ServiceEntry by namespace
@@ -833,8 +848,7 @@ spec:
 ### 6. 文档模板
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
+# Metadata excerpt; replace illustrative SLA/cost values with the actual service contract
 metadata:
   name: external-service
   annotations:
@@ -861,6 +875,15 @@ metadata:
 ## 参考资料
 
 - [Istio ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
-- [Istio Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
-- [Istio TLS Origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
-- [Envoy External Services](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery)
+- [Istio Egress 流量](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+- [Istio TLS 发起](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
+- [Envoy 外部服务](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery)
+
+- [主要参考资料 1](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+- [主要参考资料 2](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [主要参考资料 3](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+- [主要参考资料 4](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [主要参考资料 5](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/)
+- [主要参考资料 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
+- [主要参考资料 7](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
+- [主要参考资料 8](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html)

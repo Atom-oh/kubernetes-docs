@@ -1,7 +1,7 @@
 # AI/ML ワークロード
 
-> **レビュー基準**: GPU Operator 26.7.0 / NVIDIA device plugin 0.20.0 / FSx CSI 1.10.0
-> **最終更新**: September 12, 2026
+> **レビュー基準**: GPU Operator 26.7.2 / NVIDIA device plugin 0.20.1 / FSx CSI 1.11.0
+> **最終更新日**: 2026年10月16日
 
 Kubernetes は AI/ML ワークロードを実行するための強力なプラットフォームです。この章では、EKS で AI/ML ワークロードを実行する方法とベストプラクティスを学びます。
 
@@ -22,9 +22,9 @@ AI/ML ワークロードには、一般的なアプリケーションワーク�
 
 選択したフレームワーク、イメージ、デバイス、Kubernetes バージョンに対するサポートを確認します。
 
-### 1. Large Language Model (LLM) のデプロイ
+### 1. 大規模言語モデル（LLM）のデプロイ
 
-Large Language Model (LLM) は、近年の AI における最も注目すべき技術の一つです。Kubernetes 上で LLM を効率的にデプロイする際の主な考慮事項は次のとおりです。
+大規模言語モデル（LLM）は、近年の AI で特に注目されている技術の一つです。Kubernetes 上に LLM を効率よくデプロイする際は、次の点を検討してください。
 
 - **モデルシャーディング**: 大規模モデルを複数の GPU に分散すること
 - **精度の選択**: FP16/BF16 演算と INT8/INT4 量子化を区別し、精度とデバイスのサポートを検証すること
@@ -33,7 +33,7 @@ Large Language Model (LLM) は、近年の AI における最も注目すべき�
 
 ### 2. AI オーケストレーションフレームワーク
 
-Kubernetes 上で AI/ML ワークロードを管理するための専用オーケストレーションフレームワーク:
+Kubernetes 上で AI/ML ワークロードを管理する専用フレームワークには、次のものがあります。
 
 - **Kubeflow**: 機械学習ワークフローの包括的なプラットフォーム
 - **Ray on Kubernetes**: 分散コンピューティングフレームワーク
@@ -60,7 +60,7 @@ AI/ML ライフサイクル管理に DevOps 原則を適用します。
 
 ### 5. ベクトルデータベースの統合
 
-埋め込みとセマンティック検索のためのベクトルデータベース統合:
+埋め込み表現と意味検索には、次のベクトルデータベースを利用できます。
 
 - **Pinecone**: マネージドベクトル検索
 - **Milvus**: オープンソースのベクトルデータベース
@@ -80,24 +80,24 @@ AI/ML ライフサイクル管理に DevOps 原則を適用します。
 これらはキャパシティの例であり、最新カタログやランキングを網羅するものではありません。リージョンでの可用性、クォータ、CPU アーキテクチャ、GPU メモリ、ソフトウェア互換性を確認してください。
 
 1. **GPU インスタンス**:
-   - p4d.24xlarge: 8x NVIDIA A100 GPU、320GB GPU メモリ
-   - p3.16xlarge: 8x NVIDIA V100 GPU、128GB GPU メモリ
-   - g5.xlarge~g5.48xlarge: NVIDIA A10G GPU、最大 8 GPU
-   - g4dn.12xlarge: 4 T4 GPU、g4dn.16xlarge: 1 T4 GPU — サイズと GPU 数は単調には増加しません
+   - p4d.24xlarge: NVIDIA A100 GPU 8 基、GPU メモリ 320GB
+   - p3.16xlarge: NVIDIA V100 GPU 8 基、GPU メモリ 128GB
+   - g5.xlarge～g5.48xlarge: NVIDIA A10G GPU、最大 8 基
+   - g4dn.12xlarge: T4 GPU 4 基、g4dn.16xlarge: T4 GPU 1 基（インスタンスサイズと GPU 数は比例して増えるとは限りません）
 
 2. **CPU 最適化インスタンス**:
-   - c6i.32xlarge: 128 vCPU、256GB メモリ
-   - c7g.16xlarge: 64 vCPU (AWS Graviton3)、128GB メモリ
+   - c6i.32xlarge: 128 vCPU、メモリ 256GB
+   - c7g.16xlarge: 64 vCPU（AWS Graviton3）、メモリ 128GB
 
 3. **メモリ最適化インスタンス**:
-   - r6i.32xlarge: 128 vCPU、1024GB メモリ
-   - x2gd.16xlarge: 64 vCPU、1024GB メモリ
+   - r6i.32xlarge: 128 vCPU、メモリ 1024GB
+   - x2gd.16xlarge: 64 vCPU、メモリ 1024GB
 
 4. **Inferentia インスタンス**:
-   - inf1.24xlarge: 16 AWS Inferentia チップ、96 vCPU、192GB メモリ
+   - inf1.24xlarge: AWS Inferentia チップ 16 基、96 vCPU、メモリ 192GB
 
 5. **Trainium インスタンス**:
-   - trn1.32xlarge: 16 AWS Trainium チップ、128 vCPU、512GB メモリ
+   - trn1.32xlarge: AWS Trainium チップ 16 基、128 vCPU、メモリ 512GB
 
 ### ストレージ構成
 
@@ -126,11 +126,11 @@ AI/ML ワークロードには高性能ストレージが必要です。
 
 分散学習のためのネットワーク構成:
 
-1. **Cluster Placement Groups**:
+1. **クラスター配置グループ**:
    - ノード間のレイテンシーを最小化
    - 同じアベイラビリティーゾーン内にノードを配置
 
-2. **Enhanced Networking**:
+2. **拡張ネットワーキング**:
    - Elastic Network Adapter (ENA)
    - ENA Express
    - Elastic Fabric Adapter (EFA)
@@ -147,7 +147,7 @@ AI/ML ワークロードには高性能ストレージが必要です。
 
 ### NVIDIA GPU Operator とデバイス割り当て {#nvidia-gpu-operator-and-device-allocation}
 
-EKS AL2023 NVIDIA AMI にはすでにドライバーと Container Toolkit が含まれているため、GPU Operator によるそれらのインストールを無効にします。これらには device plugin/DRA driver は含まれないため、構成が必要です。Bottlerocket NVIDIA AMI には device plugin が含まれます。所有者の重複インストールを避けてください。
+EKS AL2023 NVIDIA AMI にはドライバーと Container Toolkit があらかじめ含まれているため、GPU Operator がこれらをインストールしないよう設定します。一方、device plugin と DRA driver は含まれないため、別途構成が必要です。Bottlerocket NVIDIA AMI には device plugin が含まれます。同じ機能を担うコンポーネントを重複して導入しないでください。
 
 このコマンドは、レビュー済みの Operator chart を**ローカルでレンダリング**します。デプロイ前に ClusterPolicy/RBAC と実際のインストール要件を確認してください。
 
@@ -156,7 +156,7 @@ EKS AL2023 NVIDIA AMI にはすでにドライバーと Container Toolkit が含
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 helm repo update nvidia
 helm template gpu-operator nvidia/gpu-operator \
-  --version v26.7.0 --namespace gpu-operator \
+  --version v26.7.2 --namespace gpu-operator \
   --set driver.enabled=false --set toolkit.enabled=false \
   > gpu-operator.rendered.yaml
 ```
@@ -185,11 +185,11 @@ spec:
 
 ### Kubeflow と分散学習 {#kubeflow-and-distributed-training}
 
-master ブランチのワンラインインストールではなく、依存関係、アイデンティティ、ストレージには固定された [26.03.1 installation guide](kubeflow/01-architecture-installation.md) を使用してください。サービングプロジェクトは KServe であり、KFServing はその旧称です。
+master ブランチにある一行のインストール手順ではなく、依存関係、ID 管理、ストレージを明記した固定版の [26.03.1 インストールガイド](kubeflow/01-architecture-installation.md) を使用してください。モデルサービングのプロジェクトは KServe で、KFServing は旧称です。
 
-分散実行には [Trainer](kubeflow/05-training-operator.md)、レガシーな TFJob/PyTorchJob、または独立した MPI Operator を使用できます。インストール済みの CRD/バージョンに基づき、MPI Operator API とレガシー Training Operator を区別してください。Job controller は Pod を作成し、MPI launcher または torchrun がプロセスを開始します。
+分散ジョブには [Trainer](kubeflow/05-training-operator.md)、従来の TFJob/PyTorchJob、または独立した MPI Operator を使用できます。インストール済みの CRD とバージョンを確認し、MPI Operator API と従来の Training Operator を使い分けてください。Job controller が Pod を作成し、MPI launcher または torchrun が各プロセスを起動します。
 
-単一の Pod で torchrun --nnodes=2 を満たすことはできず、架空の Pod DNS 名は rendezvous を提供しません。実際の学習コード/イメージ、worker 数、Service/DNS、rank/backend、データシャーディング、チェックポイント/タイムアウト/リトライ動作を指定してください。Gang scheduling には別途ポリシー/スケジューラーのサポートが必要です。
+単一の Pod では torchrun --nnodes=2 を実行できず、実在しない Pod DNS 名では rendezvous できません。実際に使用する学習コードとイメージ、worker 数、Service/DNS、rank/backend、データ分割、チェックポイント、タイムアウト、リトライ時の動作を指定してください。Gang scheduling には、別途ポリシーまたはスケジューラーのサポートが必要です。
 
 ![Pod の作成とプロセスの起動は、NCCL、AWS OFI NCCL、libfabric、EFA の通信、および構成済みチェックポイントエクスポートとは別です。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-3.png)
 
@@ -201,7 +201,7 @@ EFA 経由の NCCL では、パスは AWS OFI NCCL plugin → libfabric → EFA 
 
 [KServe](kubeflow/06-kserve.md) の Knative/Standard モード、runtime/モデル形式、URI アクセス、プロトコル、GPU デバイス構成を確認してください。GPU request だけでは GPU 推論は有効になりません。Triton にはモデルリポジトリ、backend 構成、readiness 検証も必要です。
 
-TorchServe はアクティブなメンテナンスや予定されたセキュリティ修正がないと表明しているため、新規デプロイの維持されるデフォルトではありません。認証されていない LoadBalancer を通じて、推論、管理、metrics のポートをまとめて公開しないでください。認証された ingress と、適切な内部管理アクセスを構成してください。
+TorchServe は、現在保守を行っておらず、今後のセキュリティ修正も予定していないと表明しています。そのため、新規デプロイで保守が継続する標準構成としては扱えません。認証されていない LoadBalancer を通じて、推論、管理、metrics のポートをまとめて公開しないでください。認証された ingress と、適切な内部管理アクセスを構成してください。
 
 ![認証されたリクエストパス、モデル/イメージアクセス、個別の replica/リソース調整。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-4.png)
 
@@ -215,7 +215,7 @@ TorchServe はアクティブなメンテナンスや予定されたセキュリ
 
 ### GPU 共有とメモリ
 
-タイムスライシングは、メモリ/障害分離や比例的なパフォーマンス保証なしに、共有 GPU アクセスを公開します。MPS は別の制御デーモンを使用します。レビュー済み plugin のドキュメントでは、サポートは experimental とされ、MIG が有効なデバイスは除外されます。RuntimeClass と privileged MPS Pod だけでは、ノード全体の共有は構成されません。
+タイムスライシングでは GPU を共有できますが、メモリや障害は分離されず、利用時間に応じた性能も保証されません。MPS は別の制御デーモンを使用します。確認した device plugin の資料では、MPS のサポートは実験的で、MIG 有効時は対象外です。RuntimeClass と特権付き MPS Pod を用意するだけでは、ノード全体の共有は構成されません。
 
 これはスタンドアロンの device-plugin 構成です。GPU Operator が plugin を所有している場合は、その所有者の構成パスを使用してください。
 
@@ -236,13 +236,13 @@ sharing:
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
 helm repo update nvdp
 helm template nvdp nvdp/nvidia-device-plugin \
-  --version 0.20.0 --namespace nvidia-device-plugin \
+  --version 0.20.1 --namespace nvidia-device-plugin \
   --set config.default=shared \
   --set-file config.map.shared=device-plugin-sharing.yaml \
   > device-plugin.rendered.yaml
 ```
 
-これにより nvidia.com/gpu.shared が公開され、Pod はそのリソースを整数 1 単位で request します。replicas=2 は GPU メモリの半分を保証しません。実際の GPU ハードウェア上で、選択したノード、割り当て、競合を検証してください。
+この設定により nvidia.com/gpu.shared が公開され、Pod はこのリソースを整数単位で要求できます。replicas=2 にしても、GPU メモリの半分が保証されるわけではありません。実際の GPU を使い、対象ノードでの割り当てと競合を検証してください。
 
 ### 配置とトポロジー {#placement-and-topology}
 
@@ -283,7 +283,7 @@ spec:
 
 ### ストレージとキャッシュ {#storage-and-caching}
 
-静的 FSx CSI プロビジョニングは、既存のファイルシステムを PV/PVC で接続します。ファイルシステム ID、DNS、mount name、容量、namespace を実際の値に置き換えてください。Retain はファイルシステムの自動削除を回避しますが、別途クリーンアップするまで料金は発生し続けます。
+FSx CSI の静的プロビジョニングでは、既存のファイルシステムを PV/PVC に接続します。ファイルシステム ID、DNS 名、マウント名、容量、namespace を実際の値に置き換えてください。reclaim policy を Retain にするとファイルシステムの自動削除は避けられますが、別途クリーンアップするまで料金が発生します。
 
 ```yaml
 apiVersion: v1
@@ -319,9 +319,9 @@ spec:
       storage: 1200Gi
 ```
 
-動的プロビジョニングは StorageClass/PVC からファイルシステムを作成します。静的な volumeHandle/DNS 設定を StorageClass に入れたり、未定義の fsx.aws.k8s.io/Lustre リソースを混在させたりしないでください。[driver の動的な例](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0/examples/kubernetes/dynamic_provisioning) を使用し、デプロイタイプ固有のスループット/バックアップルールを確認してください。SCRATCH_2 は persistent 専用のオプションを使用できません。
+動的プロビジョニングでは StorageClass/PVC からファイルシステムを作成します。静的構成用の volumeHandle/DNS を StorageClass に記述したり、定義されていない fsx.aws.k8s.io/Lustre リソースを混在させたりしないでください。[driver の動的プロビジョニング例](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.11.0/examples/kubernetes/dynamic_provisioning) を参照し、デプロイ方式ごとのスループットとバックアップの条件を確認してください。SCRATCH_2 では永続ストレージ向けのオプションを使用できません。
 
-Alluxio worker DaemonSet だけでは完全なキャッシュデプロイではありません。master/worker の役割、パス、メモリ、ネットワーク、一貫性、保持を設計してください。実際に mount した PVC 上の別のテストパスでベンチマークを実行してください。mount されていない /data に対する FIO は FSx のパフォーマンスを測定しません。
+Alluxio の worker DaemonSet だけではキャッシュ構成は完成しません。master/worker の役割、パス、メモリ、ネットワーク、一貫性、データ保持を設計してください。実際にマウントした PVC 上に別のテストパスを用意してベンチマークを実行してください。マウントされていない /data に対する FIO では FSx の性能を測定できません。
 
 ## モニタリングとロギング
 
@@ -331,9 +331,9 @@ Alluxio worker DaemonSet だけでは完全なキャッシュデプロイでは�
 
 ### Prometheus と Grafana {#prometheus-and-grafana}
 
-DCGM Exporter は GPU metrics を提供し、device-plugin の allocatable capacity とは異なります。Operator が所有する exporter を別の DaemonSet で重複させないでください。containerd のセットアップでは Docker-socket mount は不要です。
+DCGM Exporter が提供するのは GPU のメトリクスであり、device plugin が公開する割り当て可能な容量とは別の情報です。Operator が管理する exporter を別の DaemonSet で重複して起動しないでください。containerd 環境では Docker socket のマウントは不要です。
 
-ServiceMonitor は Pod ラベルを直接選択するのではなく、**Service ラベルと名前付きポート**を選択します。これらの値をインストール済み exporter Service に一致させ、Prometheus も ServiceMonitor の namespace/ラベルを選択するようにしてください。
+ServiceMonitor は Pod のラベルを直接選ぶのではなく、**Service のラベルと名前付きポート**を使って対象を選択します。これらの値を、インストール済み exporter の Service に合わせてください。また、Prometheus 側でも ServiceMonitor の namespace とラベルが選択対象になるよう設定します。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -356,19 +356,19 @@ GPU の utilization/memory/errors を、アプリケーションの requests、e
 
 ### ログ収集
 
-containerd の CRI ログフレーミングとアプリケーション JSON は異なるレイヤーです。Fluent Bit の CRI/multiline parsing、パス、position database/rotation、Kubernetes metadata RBAC を構成してください。削除済みの Elasticsearch/OpenSearch document type や未定義の parser 名をコピーしないでください。CloudWatch/output 統合には、イメージ plugin、ワークロード IAM、ネットワークアクセスが必要です。機密性の高いモデルペイロードと retry-buffer の増加を管理してください。選択した収集パスについては [observability guide](../observability/README.md) を参照してください。
+containerd の CRI ログ形式とアプリケーションの JSON は、ログの異なる層です。Fluent Bit で CRI と複数行ログの解析、ログのパス、position database とローテーション、Kubernetes metadata 用 RBAC を設定してください。削除された Elasticsearch/OpenSearch の document type や、定義されていない parser 名は使わないでください。CloudWatch などへの出力には、必要な plugin を含むイメージ、ワークロード IAM、ネットワーク接続が必要です。機密性の高いモデルデータを含むログと、リトライ用バッファの増大にも注意してください。収集方法は[オブザーバビリティガイド](../observability/README.md)を参照してください。
 
 ## コスト最適化
 
 ### Spot とノードプロビジョニング {#spot-and-node-provisioning}
 
-Spot interruption/capacity shortage には、外部チェックポイント、retry/idempotency、復旧時間の検証が必要です。イメージ/AMI revision、taint/toleration、limits、interruption handling を含め、[Karpenter guide](../autoscaling/02-karpenter.md) の最新の NodePool/EC2NodeClass 構成を使用してください。CPU/GPU node group の混在は EKS Hybrid Nodes 製品とは異なります。
+Spot の中断や容量不足に備え、外部チェックポイント、再試行時の冪等性、復旧時間を検証してください。イメージ/AMI のリビジョン、taint/toleration、上限値、中断処理を含む、[Karpenter ガイド](../autoscaling/02-karpenter.md)の最新 NodePool/EC2NodeClass 構成を使用してください。CPU/GPU の node group を混在させることと、EKS Hybrid Nodes 製品を使うことは別の構成です。
 
 ### HPA とメトリクス {#hpa-and-metrics}
 
-metrics-server が提供する CPU/メモリには HPA Resource metrics を使用します。nvidia.com/gpu の割り当ては GPU-utilization Resource metric ではありません。GPU/request シグナルには exporter と custom/external metrics adapter が必要です。
+metrics-server が提供する CPU/メモリ指標には、HPA の Resource metrics を使用します。nvidia.com/gpu の割り当て量は GPU 使用率を示す Resource metric ではありません。GPU 使用率や GPU request をスケーリング指標にするには、exporter と custom/external metrics adapter が必要です。
 
-この例では、adapter により namespace/Pod ごとに公開される RPS を使用します。対象 Deployment と adapter は別途インストールが必要です。100 RPS は測定を通じて調整する例示的な目標です。同じ replica 数を制御する複数の HPA/KEDA controller を使用せず、スケーリングの所有者を一つ割り当ててください。
+この例では、adapter が namespace/Pod ごとに公開する RPS を使います。対象の Deployment と adapter は別途インストールしてください。100 RPS は例示的な目標値であり、計測結果に基づいて調整します。同じ replica 数を複数の HPA/KEDA controller で制御せず、スケーリングを担う controller を一つに定めてください。
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -397,19 +397,19 @@ spec:
 
 ### データとモデルへのアクセス {#data-and-model-access}
 
-Kubernetes RBAC は API アクセスを制御し、S3/KMS 権限にはワークロード IAM を使用します。大規模モデルの Secret や環境変数内の復号鍵ではなく、オブジェクトストレージ、暗号化、ファイルベースの認証情報を使用してください。Secret の base64 は暗号化ではありません。一つの peer 内の NetworkPolicy namespaceSelector と podSelector は AND であり、別々のエントリは OR です。実際の DNS/ストレージ/metrics の通信方向も許可してください。
+Kubernetes RBAC で API アクセスを制御し、S3/KMS の権限にはワークロード IAM を使用してください。大きなモデルを Secret に格納したり、復号鍵を環境変数に置いたりせず、オブジェクトストレージ、暗号化、ファイルベースの認証情報を利用してください。Secret の base64 エンコードは暗号化ではありません。NetworkPolicy の同一 peer 内の namespaceSelector と podSelector は AND 条件で、別々の peer エントリは OR 条件です。DNS、ストレージ、メトリクスに必要な通信方向も許可してください。
 
 ## 検証と参考資料
 
-この章は、公式 GPU Operator/device-plugin の Helm レンダリングおよび manifest/構成レビューに基づいて修正されました。実際の GPU、FSx の作成/mount、分散学習、サービング、autoscaling の実行は行っていません。対象環境でコンポーネントのバージョンとノード要件を検証してください。
+この章は、公式 GPU Operator/device plugin の Helm レンダリングと manifest/構成のレビューに基づいて修正しました。実機での GPU 利用、FSx の作成やマウント、分散学習、モデルサービング、オートスケーリングは実行していません。対象環境でコンポーネントのバージョンとノード要件を確認してください。
 
-- [EKS accelerated AMIs](https://docs.aws.amazon.com/eks/latest/userguide/ml-eks-optimized-ami.html)
-- [Kubernetes GPU scheduling](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
-- [NVIDIA device plugin 0.20.0](https://github.com/NVIDIA/k8s-device-plugin/tree/v0.20.0)
-- [FSx CSI 1.10.0](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0)
-- [EFS performance modes](https://docs.aws.amazon.com/efs/latest/ug/performance.html)
-- [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [EKS 高速コンピューティング向け AMI](https://docs.aws.amazon.com/eks/latest/userguide/ml-eks-optimized-ami.html)
+- [Kubernetes の GPU スケジューリング](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
+- [NVIDIA device plugin 0.20.1](https://github.com/NVIDIA/k8s-device-plugin/tree/v0.20.1)
+- [FSx CSI 1.11.0](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.11.0)
+- [EFS のパフォーマンスモード](https://docs.aws.amazon.com/efs/latest/ug/performance.html)
+- [Kubernetes の HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[トピッククイズ](../quizzes/ai-ml/03-ai-ml-workloads-quiz.md) に挑戦してください。
+学んだ内容を確認するには、[トピッククイズ](../quizzes/ai-ml/03-ai-ml-workloads-quiz.md)に取り組んでください。

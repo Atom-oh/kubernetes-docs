@@ -10,11 +10,11 @@ Este documento cubre las mejores prácticas y recomendaciones para operar Istio 
 4. [Monitoreo y observabilidad](#monitoring-and-observability)
 5. [Lista de verificación para producción](#production-checklist)
 
-Revisado para Istio 1.31 el 11 de septiembre de 2026. Los fragmentos de `IstioOperator` son entradas para `istioctl install -f`, no recursos de Kubernetes que se aplican con kubectl. Intégrelos en la configuración de instalación existente; use valores de chart equivalentes para Helm. La mayoría de los ejemplos describen sidecars; use políticas waypoint/Gateway API para ambient. Los ajustes de recursos y las duraciones de rollout son puntos de partida que se deben validar bajo carga.
+Revisado para Istio 1.31 el 11 de septiembre de 2026. Los fragmentos de `IstioOperator` son entradas para `istioctl install -f`, no recursos de Kubernetes que se aplican con kubectl. Intégrelos en la configuración de instalación existente; use valores equivalentes del chart de Helm. La mayoría de los ejemplos describen sidecars; en el modo ambient, use políticas waypoint o de Gateway API. Los ajustes de recursos y las duraciones del despliegue progresivo son puntos de partida que se deben validar bajo carga.
 
 ## Optimización del rendimiento {#performance-optimization}
 
-### 1. Optimización de recursos del Control Plane
+### 1. Optimización de recursos del plano de control
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -47,7 +47,7 @@ spec:
 - CPU: Ajuste según el tamaño del clúster
 - Memoria: Mida el número de servicios/proxies, el tamaño de la configuración y la tasa de actualización; no existe una fórmula fija por servicio
 
-### 2. Optimización de recursos del Data Plane
+### 2. Optimización de recursos del plano de datos
 
 ```yaml
 apiVersion: v1
@@ -69,9 +69,9 @@ spec:
 ```
 
 **Recomendaciones**:
-- Workloads normales: CPU 100m, memoria 128Mi
-- Workloads de alto tráfico: CPU 500m, memoria 512Mi
-- Concurrencia del sidecar: normalmente déjela sin configurar para que Istio derive los hilos de trabajo de las solicitudes/límites de CPU
+- Cargas de trabajo normales: CPU 100m, memoria 128Mi
+- Cargas de trabajo con mucho tráfico: CPU 500m, memoria 512Mi
+- Concurrencia del sidecar: normalmente déjela sin configurar para que Istio calcule los hilos de trabajo a partir de las solicitudes y los límites de CPU
 
 ### 3. Optimización del grupo de conexiones
 
@@ -95,8 +95,8 @@ spec:
 ```
 
 **Recomendaciones**:
-- `maxConnections`: Considere las conexiones concurrentes del workload
-- `maxRequestsPerConnection`: 0 significa ilimitado; los valores pequeños aumentan la rotación de conexiones y los handshakes de TLS
+- `maxConnections`: Considere las conexiones concurrentes de la carga de trabajo
+- `maxRequestsPerConnection`: 0 significa ilimitado; los valores pequeños aumentan la rotación de conexiones y las negociaciones de TLS
 - `idleTimeout`: Auméntelo si se necesitan conexiones de larga duración
 
 ### 4. Balanceo de carga por localidad
@@ -126,7 +126,7 @@ spec:
 **Beneficios**:
 - Posible reducción del tráfico entre AZ; el ahorro depende de la distribución del tráfico y de la facturación
 - Menor latencia de red
-- Valide el failover con detección de valores atípicos y capacidad saludable en otras zonas
+- Valide la conmutación por error con detección de instancias anómalas y suficiente capacidad disponible en otras zonas
 
 ### 5. Limitación del alcance del sidecar
 
@@ -166,7 +166,7 @@ spec:
 **Lista de verificación**:
 - Aplique mTLS STRICT a todos los servicios
 - Use PERMISSIVE solo durante los períodos de migración
-- PeerAuthentication controla el mTLS entrante del workload. Configure HTTPS/TLS externo en ServiceEntry y, cuando sea necesario, DestinationRule; no deshabilite globalmente el mTLS de la malla.
+- PeerAuthentication controla mTLS del tráfico entrante a la carga de trabajo. Configure HTTPS/TLS externo en ServiceEntry y, cuando sea necesario, DestinationRule; no deshabilite globalmente el mTLS de la malla.
 
 ### 2. Política de autorización
 
@@ -199,8 +199,8 @@ spec:
 **Mejores prácticas**:
 - Use una política de denegación predeterminada
 - Aplique el principio de mínimo privilegio
-- Autenticación basada en Service Account
-- Aislamiento de Namespace
+- Autenticación basada en cuentas de servicio
+- Aislamiento entre espacios de nombres
 
 ### 3. Control del tráfico de salida
 
@@ -265,7 +265,7 @@ spec:
 
 ## Guía de operaciones {#operations-guide}
 
-### 1. Estrategia de Deployment
+### 1. Estrategia de despliegue
 
 #### Adopción gradual de Istio
 
@@ -308,15 +308,15 @@ spec:
 ```
 
 **Fase 4: Funciones avanzadas (en curso)**
-- Gestión del tráfico (Canary, Circuit Breaker)
+- Gestión del tráfico (actualizaciones canarias, cortacircuitos)
 - Política de autorización
-- Rate Limiting
+- Limitación de tasa
 
 ### 2. Estrategia de actualización
 
-#### Actualización Canary
+#### Actualización canaria
 
-Use el binario objetivo de istioctl 1.31.0 de la guía de instalación; establecer un nombre de revisión no selecciona una versión de imagen. Este ejemplo actualiza desde la versión 1.30.4, conserva los ajustes de instalación existentes y requiere validar cada etapa. Los Gateways se pueden actualizar in situ con el perfil predeterminado; planifique explícitamente su rollout. Una instalación gestionada por Helm debe usar el flujo de trabajo de actualización de Helm.
+Use el binario de istioctl versión 1.31.0 indicado en la guía de instalación; establecer un nombre de revisión no selecciona una versión de imagen. Este ejemplo actualiza desde la versión 1.30.4, conserva los ajustes de instalación existentes y exige validar cada etapa. El perfil predeterminado permite actualizar los gateways in situ; planifique explícitamente su despliegue progresivo. Una instalación gestionada por Helm debe seguir el procedimiento de actualización de Helm.
 
 ```bash
 # 1. Install new version Control Plane
@@ -362,10 +362,10 @@ spec:
 
 **Recomendaciones**:
 - Istiod: Mínimo 3 réplicas
-- Distribuya uniformemente entre las AZ
+- Distribuya uniformemente entre las zonas de disponibilidad
 - Configure PodDisruptionBudget
 
-### 4. Backup y recuperación
+### 4. Copias de seguridad y recuperación
 
 ```bash
 # Preserve the versioned installation input in source control
@@ -378,11 +378,11 @@ istioctl install -f istio-install-backup.yaml
 kubectl apply -f istio-config-backup.yaml
 ```
 
-Para las instalaciones de Helm, preserve las versiones de chart y `helm get values <release> -n <namespace> -o yaml` en su lugar. Haga backup de los Secrets de CA/TLS de forma segura e incluya cualquier recurso Gateway API, EnvoyFilter o WasmPlugin en uso. Vuelva a crear los Namespaces requeridos y revise las instantáneas generadas antes de la restauración.
+En las instalaciones de Helm, conserve las versiones de los charts y use `helm get values <release> -n <namespace> -o yaml`. Proteja las copias de seguridad de los Secrets de CA/TLS e incluya los recursos Gateway API, EnvoyFilter o WasmPlugin que se utilicen. Vuelva a crear los espacios de nombres necesarios y revise las instantáneas generadas antes de restaurar.
 
 ## Monitoreo y observabilidad {#monitoring-and-observability}
 
-### 1. Señales doradas
+### 1. Señales de oro
 
 ```promql
 # 1. Latency (P50, P95, P99)
@@ -402,7 +402,7 @@ sum(rate(istio_requests_total{reporter="destination"}[5m]))
 sum(rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m]))
 ```
 
-### 2. Monitoreo del Control Plane
+### 2. Supervisión del plano de control
 
 ```promql
 # Pilot configuration push time
@@ -415,9 +415,9 @@ pilot_xds
 process_resident_memory_bytes{job="istiod"}
 ```
 
-### 3. Monitoreo del Data Plane
+### 3. Supervisión del plano de datos
 
-Confirme que estas estadísticas de Envoy estén habilitadas en el matcher de estadísticas del proxy. Las etiquetas de los jobs de scraping dependen de la configuración; los ejemplos asumen `job="istiod"`. Una alerta `up` detecta la disponibilidad del scraping, no todos los fallos de preparación.
+Confirme que estas estadísticas de Envoy estén habilitadas en el filtro de estadísticas del proxy. Las etiquetas del trabajo de recolección dependen de la configuración; los ejemplos suponen `job="istiod"`. Una alerta `up` detecta si la recolección está disponible, pero no todos los casos en que una carga de trabajo no está lista.
 
 ```promql
 # Envoy connection count
@@ -474,16 +474,16 @@ groups:
 
 ### Preinstalación
 
-- [ ] Verifique la superposición de soporte de Istio/Kubernetes/EKS (ejemplo 1.31: EKS 1.34–1.37)
+- [ ] Compruebe que se solapen las ventanas de compatibilidad de Istio, Kubernetes y EKS (ejemplo con Istio 1.31: EKS 1.34–1.37)
 - [ ] Seleccione la versión de Istio (se recomienda la versión estable)
 - [ ] Calcule los requisitos de recursos
 - [ ] Revise las políticas de red
-- [ ] Establezca un plan de backup y recuperación
+- [ ] Establezca un plan de copias de seguridad y recuperación
 
 ### Instalación
 
 - [ ] Use el perfil de producción
-- [ ] Configure HA del Control Plane (réplicas >= 3)
+- [ ] Configure alta disponibilidad del plano de control (réplicas >= 3)
 - [ ] Establezca límites de recursos
 - [ ] Configure PodDisruptionBudget
 - [ ] Prepare la pila de monitoreo
@@ -500,25 +500,25 @@ groups:
 
 - [ ] Configure VirtualService
 - [ ] Configure DestinationRule
-- [ ] Configure Circuit Breaker
-- [ ] Configure Retry/Timeout
-- [ ] Configure Rate Limiting
+- [ ] Configure el cortacircuitos
+- [ ] Configure los reintentos y tiempos de espera
+- [ ] Configure la limitación de tasa
 
 ### Observabilidad
 
 - [ ] Integre Prometheus
-- [ ] Configure los dashboards de Grafana
-- [ ] Configure el tracing de Jaeger/Zipkin
+- [ ] Configure los paneles de Grafana
+- [ ] Configure el trazado con Jaeger/Zipkin
 - [ ] Instale Kiali
 - [ ] Configure las reglas de alertas
 
 ### Operaciones
 
 - [ ] Establezca un plan de actualización
-- [ ] Automatice los backups
+- [ ] Automatice las copias de seguridad
 - [ ] Documentación
-- [ ] Escriba una guía de guardia
-- [ ] Prepare el runbook
+- [ ] Escriba una guía para los turnos de guardia
+- [ ] Prepare el manual de operaciones
 
 ### Rendimiento
 
@@ -564,7 +564,7 @@ groups:
    Do: hosts: ["myapp.default.svc.cluster.local"]  # Explicit
    ```
 
-5. **Deployment sin monitoreo**
+5. **Despliegue sin supervisión**
    ```
    Don't deploy to production without checking metrics
    Do require Golden Signals monitoring
@@ -572,9 +572,9 @@ groups:
 
 ## Optimización de costos {#cost-optimization}
 
-- Compare las solicitudes de recursos del sidecar medidas con ztunnel más cualquier capacidad waypoint requerida. El número de Pods por sí solo no establece un porcentaje de ahorro fijo.
-- Mida los bytes entre AZ y use los precios regionales actuales de AWS para la ruta real; los pesos de localidad no se traducen directamente en una reducción de facturación universal.
-- Delimite la configuración innecesaria del proxy y mida los cambios de memoria/tiempo de envío bajo una carga representativa.
+- Compare las solicitudes de recursos medidas del sidecar con las de ztunnel, más la capacidad de waypoint que se requiera. El número de Pods por sí solo no determina un porcentaje de ahorro fijo.
+- Mida los bytes que cruzan zonas de disponibilidad y use los precios regionales vigentes de AWS para la ruta real; los pesos de localidad no se traducen directamente en una reducción universal de la factura.
+- Limite la configuración innecesaria del proxy y mida, bajo una carga representativa, los cambios en el uso de memoria y el tiempo de propagación.
 
 ## Referencias
 
@@ -586,17 +586,17 @@ groups:
 ### Comunidad
 - [Comunidad de Istio](https://istio.io/latest/get-involved/)
 - [Slack de Istio](https://slack.istio.io/)
-- [Issues de GitHub](https://github.com/istio/istio/issues)
+- [Incidencias de GitHub](https://github.com/istio/istio/issues)
 
 ### Recursos adicionales
-- [Mejores prácticas de Deployment de Istio](https://istio.io/latest/docs/ops/best-practices/deployment/)
+- [Mejores prácticas de despliegue de Istio](https://istio.io/latest/docs/ops/best-practices/deployment/)
 - [Mejores prácticas de gestión del tráfico de Istio](https://istio.io/latest/docs/ops/best-practices/traffic-management/)
 
-- [Actualizaciones Canary](https://istio.io/latest/docs/setup/upgrade/canary/)
+- [Actualizaciones canarias](https://istio.io/latest/docs/setup/upgrade/canary/)
 - [Opciones de IstioOperator](https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/)
 - [Opciones globales de la malla](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/)
 - [Definiciones de métricas xDS de Istio (1.31.0)](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/xds/monitoring.go)
-- [Failover por localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [Conmutación por error según localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
 - [Estadísticas de Envoy](https://istio.io/latest/docs/ops/configuration/telemetry/envoy-stats/)
 - [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
 - [Versiones compatibles](https://istio.io/latest/docs/releases/supported-releases/)
