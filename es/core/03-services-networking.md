@@ -1,7 +1,7 @@
 # Servicios y redes
 
 > **Versiones compatibles**: Kubernetes 1.35, 1.36, 1.37
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 En Kubernetes, un Service es una capa de abstracción que proporciona un único punto de acceso a un conjunto de Pods. En este capítulo, exploraremos en detalle los conceptos de redes de Kubernetes, incluidos varios tipos de Service, Ingress, políticas de red y mucho más.
 

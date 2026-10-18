@@ -1,8 +1,8 @@
 # Cuestionario de networking de EKS - Parte 3
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 16 de octubre de 2026
 
-Este cuestionario cubre los [conceptos de resolución de problemas de la Parte 3](../../eks/03-eks-networking-part3.md), la conectividad privada, el diseño multiclúster y las operaciones de mesh. Los ejemplos actuales usan EKS Kubernetes 1.36 y VPC CNI 1.23.0; la configuración histórica de App Mesh se identifica explícitamente. Los ejemplos de creación de recursos requieren prerrequisitos revisados de IAM, red y propiedad. Esta auditoría realiza comprobaciones locales, no un despliegue de EKS.
+Este cuestionario cubre los [conceptos de resolución de problemas de la Parte 3](../../eks/03-eks-networking-part3.md), la conectividad privada, el diseño multiclúster y las operaciones de mesh. Los ejemplos actuales usan EKS Kubernetes 1.36 y VPC CNI 1.23.2; la configuración histórica de App Mesh se identifica explícitamente. Los ejemplos de creación de recursos requieren prerrequisitos revisados de IAM, red y propiedad. Esta auditoría realiza comprobaciones locales, no un despliegue de EKS.
 
 ### 1. ¿Qué cambia cuando una aplicación se inscribe en un service mesh basado en sidecar?
 
@@ -510,7 +510,7 @@ spec:
 
 </details>
 
-### 8. ¿Qué variable configura la MTU de ENI adjunta en VPC CNI 1.23.0?
+### 8. ¿Qué variable configura la MTU de ENI adjunta en VPC CNI 1.23.2?
 
 - A. `ENI_MTU`
 - B. `AWS_VPC_ENI_MTU`
@@ -645,4 +645,4 @@ Para un balanceador de carga, identifique el controlador/clase, esquema, tipo de
 
 </details>
 
-Referencias oficiales: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).
+Referencias oficiales: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI 1.23.2](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.2/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).

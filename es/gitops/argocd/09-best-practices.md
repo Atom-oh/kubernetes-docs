@@ -1,7 +1,7 @@
-# Prácticas recomendadas de ArgoCD
+# Prácticas recomendadas de Argo CD
 
-> **Base de revisión**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1; ejemplos de manifiestos actualizados al parche 3.5.4 (aún incluye Kustomize 5.8.1) después de revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
-> **Última actualización**: October 12, 2026
+> **Base de revisión**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1; ejemplos de manifiestos actualizados al parche 3.5.5 (aún incluye Kustomize 5.8.1) después de revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
+> **Última actualización**: 16 de octubre de 2026
 
 ## Tabla de contenidos
 
@@ -15,7 +15,7 @@
 - [Prácticas recomendadas de EKS](#eks-best-practices)
 - [Lista de verificación de producción](#production-checklist)
 
-## Estructura del repositorio
+## Estructura del repositorio {#repository-structure}
 
 ### Patrón monorepo
 
@@ -128,7 +128,7 @@ gitops-root/
 | Namespace | `{app}` o `{app}-{env}` | `frontend`, `frontend-prod` |
 | Repositorio | `gitops-{scope}` | `gitops-platform` |
 
-## Promoción de entornos
+## Promoción de entornos {#environment-promotion}
 
 ### Estrategia de ramas de Git
 
@@ -232,7 +232,7 @@ jobs:
             Require the repository's validation and approval checks before merging.
 ```
 
-## Gestión de recursos
+## Gestión de recursos {#resource-management}
 
 ### Recursos de componentes
 
@@ -295,7 +295,7 @@ repoServer:
         stabilizationWindowSeconds: 300
 ```
 
-## Ajuste del rendimiento
+## Ajuste del rendimiento {#performance-tuning}
 
 ### Ubicación y significado de la configuración
 
@@ -378,7 +378,7 @@ spec:
     - /spec/replicas
 ```
 
-## Recuperación ante desastres
+## Recuperación ante desastres {#disaster-recovery}
 
 ### Alcance de la copia de seguridad
 
@@ -465,18 +465,18 @@ argocd admin import -n argocd "$ARGO_RESTORE_DIR/data.yaml"
 
 Recupere los ConfigMaps/Secrets complementarios necesarios y las dependencias externas; a continuación, restaure las réplicas de controller desde la configuración de instalación revisada. Inspeccione los diffs/la salud de Applications representativas antes de reanudar las implementaciones individualmente. Una sincronización de todas las aplicaciones, una importación con `--prune` o la eliminación del namespace no es un paso de recuperación predeterminado.
 
-## Estrategias de actualización
+## Estrategias de actualización {#upgrade-strategies}
 
 ### Propiedad de versión e instalación
 
-El ejemplo se dirige a una actualización de parche 3.5.x revisada a 3.5.4, no a un salto incondicional desde 2.x o versiones menores anteriores. Revise cada nota de migración menor/mayor intermedia, combinación de Kubernetes probada y cambio de CRD/RBAC/SSO/CMP en entornos que no sean de producción. Conserve el propietario existente de manifiesto/Helm/GitOps. No aplique este procedimiento autogestionado a la capacidad administrada de Argo CD de EKS.
+El ejemplo se dirige a una actualización de parche 3.5.x revisada a 3.5.5, no a un salto incondicional desde 2.x o versiones menores anteriores. Revise cada nota de migración menor/mayor intermedia, combinación de Kubernetes probada y cambio de CRD/RBAC/SSO/CMP en entornos que no sean de producción. Conserve el propietario existente de manifiesto/Helm/GitOps. No aplique este procedimiento autogestionado a la capacidad administrada de Argo CD de EKS.
 
 ```bash
-# Example: reviewed 3.5.x patch upgrade to 3.5.4, manifest-managed non-HA install.
+# Example: reviewed 3.5.x patch upgrade to 3.5.5, manifest-managed non-HA install.
 kubectl config current-context
 argocd version
 kubectl apply --server-side -n argocd \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/install.yaml
 kubectl rollout status deployment/argocd-server -n argocd --timeout=5m
 kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=5m
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=5m
@@ -490,7 +490,7 @@ Para una instalación de manifiesto HA, use `manifests/ha/install.yaml`; para ov
 
 ### Alternativa para instalaciones gestionadas por Helm
 
-El chart 10.8.4 revisado implementa Argo CD v3.5.2, por lo que esta ruta de Helm no alcanza el parche 3.5.4 usado anteriormente. Argo CD 3.5.4 aparece por primera vez en el chart 10.9.7, una actualización menor del chart que no se ha revisado aquí.
+El chart 10.8.4 revisado implementa Argo CD v3.5.2, por lo que esta ruta de Helm no alcanza el parche 3.5.5 mencionado antes. Argo CD 3.5.5 aparece por primera vez en el chart 10.10.3, una actualización menor del chart que no se ha revisado aquí.
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
@@ -508,7 +508,7 @@ helm upgrade argocd argo/argo-cd --version 10.8.4 \
 
 Dos namespaces en un clúster siguen compartiendo CRD y otros recursos de ámbito de clúster. Cambiar solo el namespace de instalación no reescribe los subjects de ClusterRoleBinding. Kubernetes no tiene un comando `kubectl rename namespace`. Prefiera validar en un clúster independiente y planifique explícitamente las credenciales, los ID de seguimiento/instancia, los controllers activos y el cambio de tráfico. Eliminar el namespace antiguo puede propagarse mediante los finalizers de Application a las cargas de trabajo gestionadas.
 
-## Resolución de problemas
+## Resolución de problemas {#troubleshooting}
 
 ### Inspeccionar la sincronización y las diferencias
 
@@ -566,7 +566,7 @@ kubectl logs -n argocd deployment/argocd-repo-server --tail=100
 
 Los manifiestos renderizados pueden incluir Secrets generados; manténgalos fuera de los logs compartidos. El controller predeterminado es un StatefulSet; inspeccione el Deployment real si la distribución dinámica está habilitada. Limite el registro de depuración temporal al componente afectado y gestione su rollout y eliminación.
 
-## Prácticas recomendadas de EKS
+## Prácticas recomendadas de EKS {#eks-best-practices}
 
 ### Credenciales de AWS
 
@@ -614,7 +614,7 @@ Compruebe las combinaciones actuales/de destino probadas de EKS y Argo CD, la co
 
 Si retiene la sincronización automática, registre la configuración original y cambie su propietario Git/ApplicationSet. Un cambio de Application secundaria solo mediante CLI puede ser revertido por su elemento padre. Después de verificar la conectividad, los diffs y una sincronización de muestra, restaure la política **original** de prune/selfHeal/automated en lugar de habilitar la automatización incondicionalmente.
 
-## Lista de verificación de producción
+## Lista de verificación de producción {#production-checklist}
 
 - [ ] Verifique SSO/RBAC/TLS y el acceso de recuperación antes de deshabilitar el admin predeterminado
 - [ ] Cifre/externalice secretos y limite las credenciales de repositorio/clúster
@@ -629,10 +629,10 @@ Si retiene la sincronización automática, registre la configuración original y
 
 - [Prácticas recomendadas](https://argo-cd.readthedocs.io/en/release-3.5/user-guide/best_practices/)
 - [Alta disponibilidad y escalado](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/high_availability/)
-- [Implementación y alcance de copia de seguridad](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/admin/backup.go)
+- [Implementación y alcance de copia de seguridad](https://github.com/argoproj/argo-cd/blob/v3.5.5/cmd/argocd/commands/admin/backup.go)
 - [Guía de actualización](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/upgrading/overview/)
 - [Valores de Chart 10.8.4](https://github.com/argoproj/argo-helm/blob/argo-cd-10.8.4/charts/argo-cd/values.yaml)
-- [Versión incluida de Kustomize](https://github.com/argoproj/argo-cd/blob/v3.5.4/hack/tool-versions.sh)
+- [Versión incluida de Kustomize](https://github.com/argoproj/argo-cd/blob/v3.5.5/hack/tool-versions.sh)
 - [Programaciones de Velero](https://velero.io/docs/main/backup-reference/#schedule-a-backup)
 
 ## Cuestionario

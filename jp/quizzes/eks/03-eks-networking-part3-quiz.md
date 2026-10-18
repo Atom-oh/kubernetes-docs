@@ -1,8 +1,8 @@
 # EKS ネットワーキングクイズ - パート 3
 
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月16日
 
-このクイズでは、[パート 3 のトラブルシューティングの概念](../../eks/03-eks-networking-part3.md)、プライベート接続、マルチクラスター設計、メッシュ運用を扱います。現在の例では EKS Kubernetes 1.36 と VPC CNI 1.23.0 を使用しています。歴史的な App Mesh 設定は明示的に識別されています。リソース作成例には、レビュー済みの IAM、ネットワーク、および所有権の前提条件が必要です。この監査ではローカルチェックを実行し、EKS のデプロイは行いません。
+このクイズでは、[パート 3 のトラブルシューティングの概念](../../eks/03-eks-networking-part3.md)、プライベート接続、マルチクラスター設計、メッシュ運用を扱います。現在の例では EKS Kubernetes 1.36 と VPC CNI 1.23.2 を使用しています。歴史的な App Mesh 設定は明示的に識別されています。リソース作成例には、レビュー済みの IAM、ネットワーク、および所有権の前提条件が必要です。この監査ではローカルチェックを実行し、EKS のデプロイは行いません。
 
 ### 1. アプリケーションがサイドカー型サービスメッシュに参加すると、何が変わりますか？
 
@@ -343,7 +343,7 @@ cache 30 {
     prefetch 10 2m 10%
 }
 ```
-アップストリーム CoreDNS 1.14.7 では、`denial1000` は受け入れられますが `1024` に正規化され、`success10000` は `9984` に正規化されます。明示的な `1024` は元の実効 denial 容量を維持します。これらの容量は実装上の挙動であり、測定された DNS サイジング推奨ではありません。
+アップストリーム CoreDNS 1.14.7 では、`denial1000` は受け入れられますが 1024 に正規化され、`success10000` は 9984 に正規化されます。明示的な 1024 は元の実効 denial 容量を維持します。これらの容量は実装上の挙動であり、測定された DNS サイジング推奨ではありません。
 
 **単一のスケーリング所有者**を選択してください。正確な add-on バージョン/スキーマでサポートされる場合は EKS 管理の CoreDNS autoscaling を使用するか、別途所有される HPA/cluster-proportional autoscaler を使用します。次の HPA は、metrics-server と CPU request を備えた、意図的に自己管理される Deployment 専用です。別の replica manager と組み合わせないでください。
 ```yaml
@@ -510,7 +510,7 @@ spec:
 
 </details>
 
-### 8. VPC CNI 1.23.0 でアタッチ済み ENI MTU を設定する変数はどれですか？
+### 8. VPC CNI 1.23.2 でアタッチ済み ENI MTU を設定する変数はどれですか？
 
 - A. `ENI_MTU`
 - B. `AWS_VPC_ENI_MTU`
@@ -611,7 +611,7 @@ Service namespace で、`kubernetes.io/service-name=<service>` を使用して E
 <details>
 <summary>回答を表示</summary>
 
-**回答: 25,000,000 bytes、約 23.84 MiB。**
+**回答: 25,000,000 バイト、約 23.84 MiB。**
 
 ```text
 10,000,000,000 bits/s × 0.020 s / 8 = 25,000,000 bytes
@@ -627,7 +627,7 @@ Service namespace で、`kubernetes.io/service-name=<service>` を使用して E
 
 **回答: エビデンスを収集してから、ポジティブコントロールを用いて実際のプロトコルをテストします。**
 
-ContainerCreating をネットワーキングと分類する前に、影響を受けた Pod の event を確認してください。既知のクラスター Service と意図した hostname を解決し、Service/EndpointSlice の selector-port-readiness の一貫性を調査してから、同じ送信元から Pod-IP と Service-URL へのアクセスを比較します。許可されることが既知のパスをテストし、ツールの欠落、DNS の失敗、または停止した backend を policy 拒否と誤認しないようにしてください。ソース chapter の境界付き診断を使用してください。
+ContainerCreating をネットワーキングと分類する前に、影響を受けた Pod の event を確認してください。既知のクラスター Service と意図した hostname を解決し、Service/EndpointSlice の selector-port-readiness の一貫性を調査してから、同じ送信元から Pod-IP と Service-URL へのアクセスを比較します。許可されることが既知のパスをテストし、ツールの欠落、DNS の失敗、または停止した backend を policy 拒否と誤認しないようにしてください。前掲のパート 3 の章にある、範囲を限定した診断方法を使用してください。
 ```bash
 set -euo pipefail
 : "${APP_NAMESPACE:?Set the affected namespace}"
@@ -645,4 +645,4 @@ kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=
 
 </details>
 
-公式リファレンス: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).
+公式リファレンス: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI 1.23.2](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.2/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).

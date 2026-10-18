@@ -1,7 +1,7 @@
 # GitOps 自動化: Atlantis、HCP Terraform、Flux、AIOps
 
-> **レビュー基準**: Atlantis 0.47.1 / chart 6.15.0、HCP Terraform Provider 0.80.0、Sentinel 0.41.0、Flux 2.9.5（Flux はリリースノート確認後、2026年10月12日にパッチ 2.9.6 へピンを更新。再実行は未実施）\
-> **最終レビュー**: 2026年9月11日。ローカル CLI、chart、schema、テストダブルで確認しました。実際の PR コメント、Terraform apply、HCP リソース作成、クラスターへのデプロイ、外部 AI 呼び出しは実行していません。
+> **レビュー基準**: Atlantis 0.48.1 / chart 6.16.1、HCP Terraform Provider 0.80.0、Sentinel 0.41.0、Flux 2.9.6（2.9.5 で検証。パッチ版への pin 更新のみで再実行なし）\
+> **最終レビュー**: 2026年10月16日。ローカル CLI、chart、schema、テストダブルで確認しました。実際の PR コメント、Terraform apply、HCP リソース作成、クラスターへのデプロイ、外部 AI 呼び出しは実行していません。
 
 < [前へ: マルチクラスター](04-gitops-multi-cluster.md) | [目次](README.md) | [次へ: スケーリング](06-scaling-strategies.md) >
 
@@ -65,7 +65,7 @@ fullnameOverride: atlantis
 replicaCount: 1
 image:
   repository: ghcr.io/runatlantis/atlantis
-  tag: v0.47.1
+  tag: v0.48.1
 orgAllowlist: github.com/REPLACE_ORG/eks-infra
 atlantisUrl: https://atlantis.example.com
 defaultTFVersion: 1.15.7
@@ -144,13 +144,13 @@ repoConfig: |
 helm repo add runatlantis https://runatlantis.github.io/helm-charts
 helm repo update
 helm upgrade --install atlantis runatlantis/atlantis \
-  --version 6.15.0 --namespace atlantis --create-namespace \
+  --version 6.16.1 --namespace atlantis --create-namespace \
   --kube-context "$ATLANTIS_CONTEXT" --values atlantis-values.yaml
 ```
 
 これらの values は ClusterIP のみを作成します。承認済みの HTTPS proxy/Ingress を介して `atlantis.example.com` と `/events` を接続し、対応する GitHub webhook secret を設定してください。Webhook の検証と Web UI の認証は別物です。event route を一般的な認証バイパスに拡張しないでください。
 
-Chart 6.15.0 は `orgAllowlist`、`volumeClaim`、`environment` map、`containerSecurityContext` を使用します。書き込み可能な PVC には checkout、plan、server-lock のデータが保持されます。read-only ConfigMap で overlay しないでください。replica を増やすだけでは、単一 RWO PVC/BoltDB のデプロイメントは高可用になりません。retained volume の保持、backup、recovery、最終的な cleanup を管理してください。
+Chart 6.16.1 は `orgAllowlist`、`volumeClaim`、`environment` map、`containerSecurityContext` を使用します。書き込み可能な PVC には checkout、plan、server-lock のデータが保持されます。read-only ConfigMap で overlay しないでください。replica を増やすだけでは、単一 RWO PVC/BoltDB のデプロイメントは高可用になりません。retained volume の保持、backup、recovery、最終的な cleanup を管理してください。
 
 ### Server policy と repository project
 

@@ -1,111 +1,68 @@
 # Inyección de fallos
 
-La inyección de fallos es una técnica que introduce intencionadamente fallos para probar la resiliencia del sistema.
+La inyección de fallos introduce fallos de forma intencionada para comprobar la resiliencia del sistema.
 
-## Tabla de contenido
+## Tabla de contenidos
 
-1. [¿Por qué la inyección de fallos?](#por-qué-la-inyección-de-fallos)
-2. [Cuándo usar la inyección de fallos](#cuándo-usar-la-inyección-de-fallos)
-3. [Descripción general de la inyección de fallos](#descripción-general-de-la-inyección-de-fallos)
-4. [Inyección de retraso](#inyección-de-retraso)
-5. [Inyección de aborto](#inyección-de-aborto)
-6. [Ejemplos prácticos](#ejemplos-prácticos)
-7. [Escenarios del mundo real](#escenarios-del-mundo-real)
-8. [Estrategias de prueba](#estrategias-de-prueba)
-9. [Mejores prácticas](#mejores-prácticas)
+1. [¿Por qué inyectar fallos?](#why-fault-injection)
+2. [Cuándo usar la inyección de fallos](#when-to-use-fault-injection)
+3. [Descripción general de la inyección de fallos](#fault-injection-overview)
+4. [Inyección de retrasos](#delay-injection)
+5. [Inyección de abortos](#abort-injection)
+6. [Ejemplos prácticos](#practical-examples)
+7. [Escenarios del mundo real](#real-world-scenarios)
+8. [Estrategias de prueba](#testing-strategies)
+9. [Buenas prácticas](#best-practices)
 
-<span id="por-qué-la-inyección-de-fallos"></span>
+Estas pruebas alternativas operan en la capa HTTP. Empiece en un espacio de nombres aislado, conserve la configuración completa de enrutamiento sin fallos y defina una vía de limpieza independiente antes de programar la prueba. El porcentaje se aplica a las solicitudes coincidentes, no a un porcentaje de los Pods. Las cabeceras de prueba no autentican al usuario y deben propagarse a la llamada posterior que se quiere evaluar. Las pruebas de SQL/TCP nativo, pérdida de paquetes, preparación de Pods y fallos de nodos requieren otros métodos.
 
-## ¿Por qué la inyección de fallos?
+## ¿Por qué inyectar fallos? {#why-fault-injection}
 
-### Prueba de resiliencia en entornos de producción
+### Probar la resiliencia en entornos de producción
 
-En la arquitectura de microservicios, numerosos servicios dependen unos de otros, y **un único fallo de servicio puede afectar a todo el sistema**. La inyección de fallos es esencial por los siguientes motivos:
+En una arquitectura de microservicios, muchos servicios dependen unos de otros, y **el fallo de un solo servicio puede afectar a todo el sistema**. La inyección de fallos es esencial por los siguientes motivos:
 
-#### 1. **Principio fundamental de Chaos Engineering**
+#### 1. **Principio fundamental de la ingeniería del caos**
 
-Chaos Engineering, originado a partir de Chaos Monkey de Netflix, tiene como objetivo **experimentar fallos de forma proactiva en entornos de producción** y descubrir las debilidades del sistema.
+La ingeniería del caos, popularizada por prácticas como Chaos Monkey de Netflix, busca **experimentar de forma proactiva los fallos en entornos de producción** y descubrir los puntos débiles del sistema.
 
-```mermaid
-flowchart TB
-    subgraph Traditional["Traditional Testing"]
-        DevTest[Development<br/>Environment Testing]
-        StagingTest[Staging<br/>Environment Testing]
-        ProdIssue[Production<br/>Failure Occurs]
-    end
+![Diagrama que compara dos flujos: las pruebas tradicionales pasan de desarrollo y preproducción a un fallo en producción, mientras que la ingeniería del caos inyecta fallos de forma continua para descubrir debilidades, corregirlas de manera proactiva y lograr un sistema resiliente.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-0.png)
 
-    subgraph ChaosEng["Chaos Engineering"]
-        ContTest[Continuous<br/>Fault Injection]
-        Discover[Discover<br/>Weaknesses]
-        Fix[Proactive<br/>Fixes]
-        Resilient[Resilient<br/>System]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-0.html)
 
-    DevTest --> StagingTest --> ProdIssue
-    ContTest --> Discover --> Fix --> Resilient
+#### 2. **Reproducir escenarios reales de producción**
 
-    %% Style definitions
-    classDef traditional fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef chaos fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class DevTest,StagingTest,ProdIssue traditional;
-    class ContTest,Discover,Fix,Resilient chaos;
-```
-
-#### 2. **Reproducción de escenarios reales de producción**
-
-En entornos de producción, pueden ocurrir los siguientes problemas:
+En producción pueden ocurrir los siguientes problemas:
 
 | Escenario | Causa | Prueba de inyección de fallos |
 |----------|-------|---------------------|
-| **Latencia de red** | Latencia de red entre regiones | Inyección de retraso |
-| **Tiempo de espera del Service** | Consultas lentas a la base de datos | Inyección de retraso |
-| **Fallo temporal** | Reinicio del Service, scale down | Inyección de aborto |
-| **Fallo parcial** | Solo fallan algunos pods | Inyección basada en porcentaje |
-| **Fallo en cascada** | El fallo de un Service se propaga a otros | Inyección de fallos combinada |
+| **Latencia de red** | Latencia de red entre regiones | Inyección de retrasos |
+| **Tiempo de espera del servicio** | Consultas lentas a la base de datos | Inyección de retrasos |
+| **Fallo temporal** | Reinicio del servicio o reducción de escala | Inyección de abortos |
+| **Fallo parcial** | Solo fallan algunos Pods | Inyección basada en porcentaje |
+| **Fallo en cascada** | El fallo de un servicio se propaga a otros | Inyección combinada de fallos |
 
-#### 3. **Verificación de la configuración de Circuit Breaker y Timeout**
+#### 3. **Verificar la configuración del disyuntor y los tiempos de espera**
 
-Sin inyección de fallos, es **difícil confirmar si la configuración de Circuit Breaker y Timeout funciona realmente**.
+La inyección de fallos permite comprobar cómo los servicios que realizan las llamadas gestionan los retrasos y los errores. Para probar los reintentos o tiempos de espera del proxy, o la expulsión de endpoints, el fallo debe producirse en una capa que esos mecanismos puedan observar.
 
-```mermaid
-flowchart LR
-    Service[Service A]
-    Dep[Dependent Service B<br/>Fault Injection]
+Verifique por separado el comportamiento del servicio que realiza la llamada y la expulsión de endpoints por el proxy: un aborto inyectado localmente no equivale a un fallo del endpoint upstream. Las respuestas reales del servicio de pedidos determinan lo que reciben sus clientes.
 
-    Service -->|1. Request| Dep
-    Dep -->|2. Delay or Failure| Service
-    Service -->|3. Verify Circuit Breaker<br/>Activation| Monitor[Monitoring]
+#### 4. **Validar que los despliegues sean seguros**
 
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef monitor fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+Al desplegar versiones nuevas, puede comprobar **si son seguras incluso cuando fallan los servicios de los que dependen**:
 
-    %% Apply classes
-    class Service service;
-    class Dep fault;
-    class Monitor monitor;
-```
+- ¿La versión nueva gestiona correctamente los tiempos de espera?
+- ¿Degrada el servicio de forma controlada cuando fallan sus dependencias?
+- ¿Funciona correctamente la gestión de errores?
 
-#### 4. **Validación de Deployments seguros**
+## Cuándo usar la inyección de fallos {#when-to-use-fault-injection}
 
-Al implementar nuevas versiones, puede verificar **si son seguras incluso cuando fallan los servicios dependientes**:
-
-- ¿La nueva versión gestiona correctamente los tiempos de espera?
-- ¿Realiza una degradación gradual cuando fallan los servicios dependientes?
-- ¿La lógica de gestión de errores funciona correctamente?
-
-<span id="cuándo-usar-la-inyección-de-fallos"></span>
-
-## Cuándo usar la inyección de fallos
-
-La inyección de fallos debe utilizarse en las siguientes situaciones:
+La inyección de fallos puede utilizarse en las siguientes situaciones:
 
 ### 1. **Entornos de desarrollo y prueba**
 
-#### Escenario: desarrollo de un nuevo microservicio
+#### Escenario: desarrollar un microservicio nuevo
 
 ```yaml
 # Inject faults into service under development
@@ -135,15 +92,18 @@ spec:
     - destination:
         host: payment-service
         subset: v2
+  - route:
+    - destination:
+        host: payment-service
 ```
 
 **Caso de uso**:
-- Probar cómo reacciona el Service de pedidos cuando el Service de pagos se ralentiza o falla
-- Verificar que se muestren mensajes de error adecuados a los usuarios
+- Probar cómo reacciona el servicio de pedidos cuando el servicio de pagos se ralentiza o falla
+- Comprobar que se muestran mensajes de error adecuados a los usuarios
 
-### 2. **Pruebas de integración en el entorno de Staging**
+### 2. **Pruebas de integración en preproducción**
 
-#### Escenario: verificación final antes del Deployment en producción
+#### Escenario: verificación final antes del despliegue en producción
 
 ```yaml
 # Inject random faults into all dependent services
@@ -170,10 +130,10 @@ spec:
 ```
 
 **Caso de uso**:
-- Verificar la resiliencia de todo el sistema antes del Deployment en producción
-- Confirmar que las alertas de monitoreo funcionen correctamente
+- Comprobar la resiliencia del sistema completo antes del despliegue en producción
+- Confirmar que las alertas de monitorización funcionan correctamente
 
-### 3. **Pruebas de Chaos en el entorno de producción**
+### 3. **Pruebas de caos en producción**
 
 #### Escenario: pruebas periódicas de resiliencia en producción
 
@@ -199,16 +159,21 @@ spec:
     route:
     - destination:
         host: recommendation-service
+  - route:
+    - destination:
+        host: recommendation-service
 ```
 
 **Caso de uso**:
-- Chaos Engineering al estilo de Netflix
-- Verificar la capacidad de respuesta ante fallos reales en producción
-- **Nota**: Comience con tasas muy bajas (1-5%) y supervise el impacto
+- Aplicar ingeniería del caos al estilo de Netflix
+- Comprobar en producción la capacidad real de responder a fallos
+- **Nota**: comenzar con tasas muy bajas (1–5 %) y vigilar el impacto
 
-### 4. **Ajuste de políticas de Timeout y Retry**
+### 4. **Ajustar las políticas de tiempo de espera y reintentos**
 
-#### Escenario: búsqueda de valores de Timeout óptimos
+Istio no aplica la gestión de tiempos de espera ni de reintentos en la misma ruta del lado cliente cuando se habilita la inyección de fallos. Eliminar el tiempo de espera de la ruta en el ejemplo siguiente es intencional; para esta prueba, el cliente debe imponer el plazo límite.
+
+#### Escenario: encontrar valores adecuados para el tiempo de espera
 
 ```yaml
 # Test with various delay times
@@ -229,61 +194,44 @@ spec:
         percentage:
           value: 100.0
         fixedDelay: 10s  # 10 second delay
-    timeout: 5s  # 5 second timeout setting
     route:
+    - destination:
+        host: search-service
+  - route:
     - destination:
         host: search-service
 ```
 
 **Caso de uso**:
-- Probar si la configuración actual de Timeout (5 segundos) es adecuada
-- Verificar que el Timeout funcione cuando hay un retraso de 10 segundos
-- Encontrar un valor óptimo que no perjudique la experiencia del usuario
+- Probar un plazo límite de 5 segundos en la aplicación o el cliente mientras el proxy inyecta un retraso de 10 segundos
+- Para probar el tiempo de espera de una ruta de Istio, usar un servicio upstream que realmente sea lento o inyectar el fallo en otro salto
+- Encontrar un valor adecuado que no perjudique la experiencia del usuario
 
-### 5. **Verificación del funcionamiento de Circuit Breaker**
+### 5. **Verificar la detección de valores atípicos**
 
-#### Escenario: confirmar que Circuit Breaker funciona correctamente
+Un aborto local inyectado se devuelve antes de enviar una solicitud upstream, por lo que no prueba el detector de errores consecutivos por endpoint de ese proxy. Use un backend HTTP controlado que realmente devuelva 503 y observe su expulsión. Por ejemplo, después de desplegar el ejemplo de Istio httpbin en el espacio de nombres de prueba:
 
 ```yaml
-# DestinationRule: Circuit Breaker configuration
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: reviews-circuit-breaker
+  name: httpbin-outlier-test
 spec:
-  host: reviews
+  host: httpbin
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
+      consecutive5xxErrors: 5
+      interval: 5s
       baseEjectionTime: 30s
----
-# VirtualService: Fault injection
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: reviews-fault
-spec:
-  hosts:
-  - reviews
-  http:
-  - fault:
-      abort:
-        percentage:
-          value: 60.0  # 60% failure rate
-        httpStatus: 503
-    route:
-    - destination:
-        host: reviews
+      maxEjectionPercent: 100
+      minHealthPercent: 0
 ```
 
-**Caso de uso**:
-- Verificar que Circuit Breaker se active después de 5 errores consecutivos con una tasa de fallos del 60%
-- Validar la recuperación automática después de 30 segundos
+Envíe solicitudes desde un cliente de aplicación dentro de la malla a `http://httpbin:8000/status/503`. Esta prueba permite deliberadamente que se expulsen todos los endpoints de prueba; la recuperación depende del historial de expulsiones y del estado de salud posterior, no de una espera fija garantizada de 30 segundos. No aplique esta configuración a cargas de trabajo que no formen parte de la prueba.
 
-### 6. **Pruebas para grupos de usuarios específicos**
+### 6. **Probar grupos de usuarios específicos**
 
-#### Escenario: inyectar fallos solo para beta testers
+#### Escenario: inyectar fallos solo para los usuarios de la beta
 
 ```yaml
 # Inject faults only for specific users
@@ -314,42 +262,15 @@ spec:
 
 **Caso de uso**:
 - Probar de forma segura sin afectar a los usuarios reales
-- Mejorar a partir de los comentarios de los beta testers
+- Mejorar el servicio a partir de los comentarios de los usuarios de la beta
 
-<span id="descripción-general-de-la-inyección-de-fallos"></span>
+## Descripción general de la inyección de fallos {#fault-injection-overview}
 
-## Descripción general de la inyección de fallos
+![Diagrama que muestra cómo la solicitud de un cliente puede retrasarse tres segundos dentro de la zona de inyección de fallos antes de llegar lentamente al servicio, o abortarse para devolver directamente al cliente un error HTTP 503.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-2.png)
 
-```mermaid
-flowchart LR
-    Client[Client]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-2.html)
 
-    subgraph FaultInjection["Fault Injection"]
-        Delay[Delay<br/>3 seconds]
-        Abort[Abort<br/>HTTP 503]
-    end
-
-    Service[Service]
-
-    Client --> Delay
-    Client --> Abort
-    Delay -.->|Slow Response| Service
-    Abort -->|Error| Client
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Delay,Abort fault;
-    class Service service;
-```
-
-<span id="inyección-de-retraso"></span>
-
-## Inyección de retraso
+## Inyección de retrasos {#delay-injection}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -370,9 +291,7 @@ spec:
         host: reviews
 ```
 
-<span id="inyección-de-aborto"></span>
-
-## Inyección de aborto
+## Inyección de abortos {#abort-injection}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -393,13 +312,11 @@ spec:
         host: reviews
 ```
 
-<span id="ejemplos-prácticos"></span>
+## Ejemplos prácticos {#practical-examples}
 
-## Ejemplos prácticos
+### 1. Combinar retrasos y abortos
 
-### 1. Combinación de retraso y aborto
-
-En entornos de producción reales, los retrasos y los fallos pueden ocurrir simultáneamente:
+En producción, los retrasos y los fallos pueden ocurrir a la vez:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -425,13 +342,13 @@ spec:
 ```
 
 **Resultado**:
-- El 20% de las solicitudes recibe un retraso de 3 segundos
-- El 10% de las solicitudes recibe un error 503 inmediato
-- El 70% restante se procesa normalmente
+- El 20 % de las solicitudes recibe un retraso de 3 segundos
+- El aborto puede coincidir con el retraso, por lo que algunas solicitudes abortadas se retrasan primero
+- No sume ambos porcentajes como si correspondieran a grupos independientes; mida cuántas solicitudes se solapan
 
 ### 2. Inyección de fallos condicional
 
-Inyecte fallos solo bajo condiciones específicas:
+Inyecte fallos solo cuando se cumplan condiciones específicas:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -465,14 +382,14 @@ spec:
 
 ### 3. Inyección progresiva de fallos
 
-Pruebe aumentando gradualmente la tasa de fallos:
+Pruebe el sistema aumentando gradualmente la tasa de fallos:
 
 ```yaml
 # Stage 1: 5% faults
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage1
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -485,12 +402,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # Stage 2: 10% faults (apply after monitoring)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage2
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -503,12 +422,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # Stage 3: 20% faults (apply after sufficient validation)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage3
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -523,9 +444,9 @@ spec:
         host: api-service
 ```
 
-### 4. Pruebas por código de estado HTTP
+### 4. Probar distintos códigos de estado HTTP
 
-Pruebe con varios códigos de error HTTP:
+Pruebe distintos códigos de error HTTP:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -581,18 +502,18 @@ spec:
         host: payment-service
 ```
 
-## Escenarios del mundo real
+## Escenarios del mundo real {#real-world-scenarios}
 
-### Escenario 1: simulación de consultas lentas a la base de datos
+### Escenario 1: simular una fachada HTTP de base de datos lenta
 
-**Situación**: las consultas a la base de datos se vuelven lentas de forma intermitente
+**Situación**: las consultas a la base de datos se vuelven lentas de manera intermitente
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: database-slow-query
-  namespace: production
+  namespace: chaos-tests
 spec:
   hosts:
   - database-service
@@ -600,49 +521,28 @@ spec:
   - fault:
       delay:
         percentage:
-          value: 15.0  # 15% of queries are slow
+          value: 15.0  # 15% of HTTP requests are delayed
         fixedDelay: 8s   # 8 second delay
     route:
     - destination:
         host: database-service
 ```
 
-**Objetivos de prueba**:
-1. ¿Es adecuada la configuración de Timeout de la aplicación?
-2. ¿Se agota el connection pool?
+**Objetivos de la prueba**:
+1. ¿Son adecuados los tiempos de espera de la aplicación?
+2. ¿Se agota el pool de conexiones?
 3. ¿Se muestran mensajes de error adecuados a los usuarios?
 
 **Resultados esperados**:
-- Un Timeout adecuado permite un fallo rápido (fail-fast)
-- Gestión normal del connection pool
-- Retraso en la respuesta de todo el sistema -> se necesita Circuit Breaker
+- Un límite de tiempo adecuado permite responder al fallo con rapidez
+- El pool de conexiones sigue funcionando con normalidad
+- Si se demora la respuesta de todo el sistema, puede hacer falta un disyuntor
 
-### Escenario 2: prueba de fallo en cascada de microservicios
+### Escenario 2: probar un fallo en cascada de microservicios
 
-**Situación**: verificar si el fallo de un Service se propaga a otros servicios
+**Situación**: comprobar si el fallo de un servicio se propaga a otros servicios
 
-```mermaid
-flowchart LR
-    Frontend[Frontend]
-    OrderService[Order Service]
-    PaymentService[Payment Service<br/>Fault Injection]
-    InventoryService[Inventory Service]
-
-    Frontend --> OrderService
-    OrderService --> PaymentService
-    OrderService --> InventoryService
-
-    PaymentService -->|30% Failure| OrderService
-    OrderService -->|Circuit Breaker| Frontend
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Frontend,OrderService,InventoryService service;
-    class PaymentService fault;
-```
+Verifique por separado el comportamiento del servicio que realiza la llamada y la expulsión de endpoints por el proxy: un aborto inyectado localmente no equivale a un fallo del endpoint upstream. Las respuestas reales del servicio de pedidos determinan lo que reciben sus clientes.
 
 ```yaml
 # Inject faults into payment service
@@ -672,19 +572,19 @@ spec:
   host: order-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**Objetivos de prueba**:
-1. ¿El Service de pedidos gestiona correctamente el fallo de pago?
-2. ¿Se activa Circuit Breaker para que el Service de inventario funcione normalmente?
-3. ¿Se muestran mensajes adecuados al usuario en el frontend?
+**Objetivos de la prueba**:
+1. ¿El servicio de pedidos gestiona correctamente el fallo del servicio de pagos?
+2. ¿El servicio de pedidos mantiene el comportamiento que esperan sus clientes? La expulsión depende de los errores reales que devuelva el servicio de pedidos.
+3. ¿Se muestran mensajes adecuados a los usuarios en el frontend?
 
-### Escenario 3: prueba de situación de límite de tasa de API
+### Escenario 3: simular que una API alcanza el límite de solicitudes
 
-**Situación**: simular que una API externa alcanza el límite de tasa
+**Situación**: simular que una API externa alcanza su límite de solicitudes
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -707,14 +607,17 @@ spec:
     route:
     - destination:
         host: external-api-service
+  - route:
+    - destination:
+        host: external-api-service
 ```
 
-**Objetivos de prueba**:
-1. ¿Los errores 429 se gestionan adecuadamente?
-2. ¿La lógica de Retry usa Exponential Backoff?
-3. ¿Se utiliza caché para reducir las llamadas a la API?
+**Objetivos de la prueba**:
+1. ¿Se gestionan correctamente los errores 429?
+2. ¿La lógica de reintentos aplica una espera exponencial entre intentos?
+3. ¿Se utiliza la caché para reducir las llamadas a la API?
 
-### Escenario 4: simulación de latencia de red entre regiones
+### Escenario 4: simular latencia de red entre regiones
 
 **Situación**: latencia al llamar a servicios en regiones diferentes
 
@@ -738,16 +641,19 @@ spec:
     route:
     - destination:
         host: us-east-service
+  - route:
+    - destination:
+        host: us-east-service
 ```
 
-**Objetivos de prueba**:
-1. Confirmar el impacto de la latencia entre regiones en servicios globales
-2. Determinar si es posible optimizar mediante caché o CDN
-3. ¿Se cumple el objetivo de SLA (p. ej., 95% de las solicitudes en menos de 500 ms)?
+**Objetivos de la prueba**:
+1. Confirmar el impacto de la latencia entre regiones en los servicios globales
+2. Determinar si se puede optimizar con una caché o una CDN
+3. ¿Se cumple el objetivo del SLA (por ejemplo, el 95 % de las solicitudes en menos de 500 ms)?
 
-### Escenario 5: simulación de fallo temporal durante el Deployment
+### Escenario 5: simular una indisponibilidad temporal durante un despliegue
 
-**Situación**: algunos pods no están disponibles temporalmente durante Rolling Update
+**Situación**: algunos Pods no están disponibles temporalmente durante una actualización gradual
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -765,7 +671,7 @@ spec:
     fault:
       abort:
         percentage:
-          value: 25.0  # 25% pods fail (1 out of 4)
+          value: 25.0  # 25% of matching requests fail; Pods remain running
         httpStatus: 503
       delay:
         percentage:
@@ -775,43 +681,25 @@ spec:
     - destination:
         host: app-service
         subset: v2
+  - route:
+    - destination:
+        host: app-service
 ```
 
-**Objetivos de prueba**:
-1. Mantener la disponibilidad durante el Deployment (mínimo 75%)
-2. ¿Readiness Probe funciona correctamente?
-3. ¿Load Balancer enruta el tráfico solo a pods saludables?
+**Objetivos de la prueba**:
+1. Medir cómo responde el servicio que realiza la llamada a los errores inyectados
+2. Probar por separado la preparación de Pods mediante un cambio controlado en el estado de la carga de trabajo
+3. Verificar por separado el enrutamiento a endpoints saludables; un aborto HTTP no marca un Pod como no preparado
 
-## Estrategias de prueba
+## Estrategias de prueba {#testing-strategies}
 
-### 1. Chaos Engineering progresivo
+### 1. Ingeniería del caos progresiva
 
 Aumente gradualmente la tasa de fallos para encontrar los límites del sistema:
 
-```mermaid
-flowchart LR
-    Stage1[Stage 1<br/>1-5% Faults]
-    Stage2[Stage 2<br/>5-10% Faults]
-    Stage3[Stage 3<br/>10-20% Faults]
-    Stage4[Stage 4<br/>20-50% Faults]
+![Flujo de cuatro etapas que aumenta la tasa de inyección de fallos del 1 % al 50 %. Cada etapa pasa a la siguiente cuando la monitorización está limpia; si se detecta un problema, vuelve a un paso común para corregirlo y mejorar el sistema.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-4.png)
 
-    Stage1 -->|Monitoring OK| Stage2
-    Stage2 -->|Monitoring OK| Stage3
-    Stage3 -->|Monitoring OK| Stage4
-
-    Stage1 -.->|Issue Found| Fix[Fix and Improve]
-    Stage2 -.->|Issue Found| Fix
-    Stage3 -.->|Issue Found| Fix
-    Stage4 -.->|Issue Found| Fix
-
-    %% Style definitions
-    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fix fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Stage1,Stage2,Stage3,Stage4 stage;
-    class Fix fix;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-4.html)
 
 **Ejecución paso a paso**:
 
@@ -830,68 +718,95 @@ kubectl apply -f fault-injection-5percent.yaml
 
 ### 2. Pruebas basadas en el tiempo
 
-Inyecte fallos solo durante períodos de tiempo específicos:
+Esta plantilla de programación debe permanecer suspendida hasta preparar sus requisitos previos: un espacio de nombres de prueba; una imagen de runner creada y fijada por la organización, con un shell y una versión compatible de kubectl; una cuenta de servicio existente `chaos-tester` con solo los permisos necesarios sobre el VirtualService de prueba creado previamente; y un ConfigMap `chaos-fixtures` con los manifiestos completos con y sin fallos para ese mismo recurso. La referencia a la imagen del registro es un marcador de posición. Las rutinas de shell definidas con `trap` no se ejecutan tras un SIGKILL ni si se pierde el nodo; establezca una comprobación de limpieza independiente.
+
+Inyecte fallos solo durante periodos específicos:
 
 ```yaml
-# Automate with CronJob
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: fault-injection-scheduler
+  namespace: chaos-tests
 spec:
-  schedule: "0 2 * * *"  # Every day at 2 AM
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 420
+      backoffLimit: 0
       template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
         spec:
+          serviceAccountName: chaos-tester
+          restartPolicy: Never
           containers:
           - name: apply-fault
-            image: bitnami/kubectl
-            command:
-            - /bin/sh
-            - -c
+            image: registry.example.com/ops/chaos-runner:1.0.0
+            command: ["/bin/sh", "-ec"]
+            args:
             - |
-              kubectl apply -f /config/fault-injection.yaml
-              sleep 3600  # Maintain for 1 hour
-              kubectl delete -f /config/fault-injection.yaml
+              cleanup() { kubectl apply -n chaos-tests -f /config/no-fault.yaml; }
+              trap cleanup EXIT
+              trap 'exit 130' INT
+              trap 'exit 143' TERM
+              kubectl apply -n chaos-tests -f /config/fault-injection.yaml
+              sleep 300
+            volumeMounts:
+            - name: fixtures
+              mountPath: /config
+              readOnly: true
+          volumes:
+          - name: fixtures
+            configMap:
+              name: chaos-fixtures
 ```
 
 ### 3. Pipeline de pruebas automatizadas
 
-Intégrelo en el pipeline de CI/CD:
+Integre estas pruebas en un pipeline de CI/CD:
 
 ```yaml
-# GitLab CI example
-stages:
-  - deploy
-  - fault-injection-test
-  - verify
-  - cleanup
+stages: [fault-injection-test]
 
 fault_injection_test:
   stage: fault-injection-test
   script:
-    # Apply Fault Injection
-    - kubectl apply -f tests/fault-injection.yaml
-
-    # Run load test
+    - kubectl apply -n chaos-tests -f tests/fault-injection.yaml
     - k6 run --vus 100 --duration 5m tests/load-test.js
-
-    # Validate metrics
-    - |
-      ERROR_RATE=$(curl -s "http://prometheus:9090/api/v1/query?query=rate(istio_requests_total{response_code=\"500\"}[5m])" | jq '.data.result[0].value[1]')
-      if [ $(echo "$ERROR_RATE > 0.05" | bc) -eq 1 ]; then
-        echo "Error rate too high: $ERROR_RATE"
-        exit 1
-      fi
+    - ./tests/check-fault-metrics.sh
   after_script:
-    # Remove Fault Injection
-    - kubectl delete -f tests/fault-injection.yaml
+    - kubectl apply -n chaos-tests -f tests/no-fault.yaml
 ```
 
-### 4. Monitoreo y alertas
+Guarde el siguiente script como `tests/check-fault-metrics.sh` en el proyecto de prueba. El runner necesita kubectl, k6, curl y jq, además de los manifiestos revisados y la prueba de carga. Elija el servicio y el umbral medido según la hipótesis de la prueba: los errores que se inyectan intencionalmente en una dependencia no hacen que falle automáticamente el SLO de cara al usuario. Si falta la respuesta o es NaN, la comprobación falla. `after_script` de GitLab no está garantizado si se pierde el runner y tiene su propio tiempo de espera; verifique de forma independiente que se haya restaurado la configuración base.
 
-Supervise las métricas clave durante la inyección de fallos:
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+: "${PROMETHEUS_URL:?Set the Prometheus base URL}"
+: "${TEST_DESTINATION:?Set the exact destination_service label}"
+: "${ERROR_THRESHOLD:?Set the error-fraction limit for the hypothesis}"
+QUERY="sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\",response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\"}[5m]))"
+curl -fsSG "$PROMETHEUS_URL/api/v1/query" --data-urlencode "query=$QUERY" |
+  jq -e --argjson limit "$ERROR_THRESHOLD" '
+    .status == "success" and
+    (.data.result | length) == 1 and
+    (.data.result[0].value[1] as $v |
+      $v != "NaN" and $v != "+Inf" and $v != "-Inf" and
+      (($v | tonumber) <= $limit))'
+```
+
+### 4. Monitorización y alertas
+
+Monte o cargue este archivo de reglas en Prometheus, o use el recurso PrometheusRule del operador instalado. Un ConfigMap por sí solo no activa las alertas. Limite las reglas a los servicios de prueba y habilite las estadísticas de Envoy a las que hacen referencia.
+
+Monitorice las métricas clave durante la inyección de fallos:
 
 ```yaml
 # Prometheus alert rules
@@ -906,7 +821,7 @@ data:
       rules:
       # Error rate increase
       - alert: HighErrorRate
-        expr: rate(istio_requests_total{response_code=~"5.."}[5m]) > 0.1
+        expr: sum by (destination_service) (rate(istio_requests_total{reporter="source",response_code=~"5.."}[5m])) / sum by (destination_service) (rate(istio_requests_total{reporter="source"}[5m])) > 0.1
         for: 2m
         annotations:
           summary: "High error rate during fault injection"
@@ -920,22 +835,21 @@ data:
 
       # Response time increase
       - alert: HighLatency
-        expr: histogram_quantile(0.95, rate(istio_request_duration_milliseconds_bucket[5m])) > 3000
+        expr: histogram_quantile(0.95, sum by (destination_service, le) (rate(istio_request_duration_milliseconds_bucket{reporter="source"}[5m]))) > 3000
         for: 5m
         annotations:
           summary: "95th percentile latency > 3s"
 ```
 
-### 5. Inyección de fallos Blue-Green
+### 5. Inyección de fallos en despliegues Blue-Green
 
 Inyecte fallos en el entorno Blue y compárelo con el entorno Green:
 
 ```yaml
-# Blue environment: Fault Injection
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: app-blue-fault
+  name: app-blue-green-test
 spec:
   hosts:
   - app-service
@@ -953,21 +867,7 @@ spec:
     - destination:
         host: app-service
         subset: blue
----
-# Green environment: Normal
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: app-green-normal
-spec:
-  hosts:
-  - app-service
-  http:
-  - match:
-    - headers:
-        x-version:
-          exact: "green"
-    route:
+  - route:
     - destination:
         host: app-service
         subset: green
@@ -978,19 +878,17 @@ spec:
 - Tiempo de respuesta (P50, P95, P99)
 - Indicadores de experiencia del usuario
 
-<span id="mejores-prácticas"></span>
+## Buenas prácticas {#best-practices}
 
-## Mejores prácticas
+### 1. Comience con poco
 
-### 1. Comience poco a poco
+- **Comience con tasas bajas, del 1 al 5 %**
+- Pruebe exhaustivamente en entornos de desarrollo y preproducción
+- Ejecute las pruebas en producción cuando el impacto para el negocio sea bajo
 
-- **Comience inicialmente con tasas bajas de 1-5%**
-- Pruebe exhaustivamente en entornos de desarrollo/Staging
-- Ejecute en producción durante períodos de bajo impacto empresarial
+### 2. La monitorización es esencial
 
-### 2. El monitoreo es esencial
-
-Prepare el dashboard de monitoreo antes de aplicar la inyección de fallos:
+Prepare un panel de monitorización antes de aplicar la inyección de fallos:
 
 ```yaml
 # Grafana dashboard metrics
@@ -1003,8 +901,7 @@ Prepare el dashboard de monitoreo antes de aplicar la inyección de fallos:
 ### 3. Use etiquetas claras
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: payment-fault
   labels:
@@ -1016,28 +913,19 @@ metadata:
     owner: "platform-team"
 ```
 
-### 4. Mecanismo de rollback automático
+### 4. Mecanismo de reversión automática
 
 ```bash
-#!/bin/bash
-# Apply Fault Injection
-kubectl apply -f fault-injection.yaml
-
-# Monitor for 5 minutes
+#!/usr/bin/env bash
+set -euo pipefail
+cleanup() { kubectl apply -n chaos-tests -f tests/no-fault.yaml; }
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+kubectl apply -n chaos-tests -f tests/fault-injection.yaml
 sleep 300
-
-# Check error rate
-ERROR_RATE=$(kubectl exec -it prometheus-pod -- \
-  promtool query instant \
-  'rate(istio_requests_total{response_code="500"}[5m])' | \
-  jq '.data.result[0].value[1]')
-
-# Rollback if threshold exceeded
-if [ $(echo "$ERROR_RATE > 0.1" | bc) -eq 1 ]; then
-  echo "Error rate too high, rolling back..."
-  kubectl delete -f fault-injection.yaml
-  exit 1
-fi
+./tests/check-fault-metrics.sh
+# EXIT restores the full baseline on success or normal failure.
 ```
 
 ### 5. Documentación
@@ -1045,19 +933,18 @@ fi
 Documente todas las pruebas de inyección de fallos:
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: api-fault-test
   annotations:
     # Test purpose
-    test-purpose: "Verify Circuit Breaker activation"
+    test-purpose: "Verify caller error handling; test upstream ejection separately"
 
     # Expected behavior
     expected-behavior: |
-      - Circuit Breaker opens after 5 consecutive errors
+      - Caller handles the injected error according to the test hypothesis
       - Requests fail fast with 503 error
-      - System recovers after 30 seconds
+      - Restore baseline and verify recovery
 
     # Success criteria
     success-criteria: |
@@ -1066,45 +953,36 @@ metadata:
       - No cascading failures
 
     # Rollback plan
-    rollback-plan: "kubectl delete vs api-fault-test"
+    rollback-plan: "Restore the reviewed complete no-fault VirtualService"
 ```
 
 ### 6. Precauciones para el entorno de producción
 
-- **Evaluación del impacto empresarial**: Analice el impacto de la inyección de fallos en los usuarios reales
-- **Expansión gradual**: Aumente lentamente de 1% -> 5% -> 10%
-- **Configuración de alertas**: Alertas inmediatas cuando se superen los umbrales
-- **Preparación para rollback**: Esté listo para realizar rollback inmediatamente en cualquier momento
-- **Evite el horario laboral**: Elija períodos con poco tráfico
+- **Evaluación del impacto para el negocio**: analice el impacto de la inyección de fallos en los usuarios reales
+- **Ampliación gradual**: aumente lentamente del 1 % al 5 % y luego al 10 %
+- **Configuración de alertas**: configure alertas inmediatas si se superan los umbrales
+- **Preparación para la reversión**: esté preparado para revertir los cambios de inmediato
+- **Evite el horario laboral**: elija periodos con poco tráfico
 
 ### 7. Pruebas periódicas
 
-```yaml
-# Weekly automated Chaos Test
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: weekly-chaos-test
-spec:
-  schedule: "0 3 * * 0"  # Every Sunday at 3 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: chaos-tester
-          containers:
-          - name: chaos-test
-            image: chaos-tester:latest
-            env:
-            - name: FAULT_PERCENTAGE
-              value: "5"
-            - name: DURATION
-              value: "1h"
+```bash
+# Change the prepared scheduler to weekly; suspension/prerequisites still apply
+kubectl patch cronjob fault-injection-scheduler -n chaos-tests --type=merge \
+  -p '{"spec":{"schedule":"0 3 * * 0","timeZone":"Etc/UTC"}}'
 ```
 
 ## Referencias
 
 - [Inyección de fallos de Istio](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
-- [Principios de Chaos Engineering](https://principlesofchaos.org/)
-- [Chaos Engineering de Netflix](https://netflix.github.io/chaosmonkey/)
-- [Google SRE - Pruebas de fiabilidad](https://sre.google/sre-book/testing-reliability/)
+- [Principios de la ingeniería del caos](https://principlesofchaos.org/)
+- [Ingeniería del caos de Netflix](https://netflix.github.io/chaosmonkey/)
+- [Google SRE: pruebas de fiabilidad](https://sre.google/sre-book/testing-reliability/)
+
+- [Referencia principal 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Referencia principal 2](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
+- [Referencia principal 3](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter)
+- [Referencia principal 4](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Referencia principal 5](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
+- [Referencia principal 6](https://docs.gitlab.com/ci/yaml/)
+- [Referencia principal 7](https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md)

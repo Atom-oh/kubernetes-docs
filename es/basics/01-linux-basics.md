@@ -1,6 +1,6 @@
 # Conceptos básicos de Linux
 
-> **Versiones compatibles**: Ejemplos revisados: Ubuntu 24.04 LTS, Debian 13, Amazon Linux 2023; los nombres de paquetes/servicios varían según la distribución **Última actualización**: September 15, 2026
+> **Versiones compatibles**: Ejemplos revisados: Ubuntu 24.04 LTS, Debian 13, Amazon Linux 2023; los nombres de paquetes/servicios varían según la distribución **Última actualización**: 15 de septiembre de 2026
 
 Comprender los fundamentos de Linux es esencial para entender Kubernetes y la tecnología de contenedores. Este documento cubre los conceptos principales de Linux que son especialmente importantes en entornos de Kubernetes.
 

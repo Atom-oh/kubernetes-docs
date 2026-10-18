@@ -1,47 +1,47 @@
-# Secrets Management
+# シークレット管理
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 この章では、native Secret、ESO、AWS ストア、Sealed Secrets、Vault、SOPS の責任範囲と統合要件を分けて説明します。[完全なサンプルファイル](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/secrets-management)を使用してください。クラスタ/AWS のインストールおよび実際の認証情報ローテーションは実行していません。
 
-## Table of Contents
+## 目次
 
-- [Kubernetes Native Secrets](#kubernetes-native-secrets)
-- [Encryption, Updates and Audit Boundaries](#encryption-updates-and-audit-boundaries)
+- [Kubernetes ネイティブ Secret](#kubernetes-native-secrets)
+- [暗号化、更新、監査の境界](#encryption-updates-and-audit-boundaries)
 - [External Secrets Operator (ESO)](#external-secrets-operator-eso)
-- [PushSecret (Reverse Sync)](#pushsecret-reverse-sync)
-- [AWS Secrets Manager Integration](#aws-secrets-manager-integration)
-- [AWS Systems Manager Parameter Store Integration](#aws-systems-manager-parameter-store-integration)
+- [PushSecret（逆方向同期）](#pushsecret-reverse-sync)
+- [AWS Secrets Manager との統合](#aws-secrets-manager-integration)
+- [AWS Systems Manager Parameter Store との統合](#aws-systems-manager-parameter-store-integration)
 - [Sealed Secrets](#sealed-secrets)
-- [HashiCorp Vault Integration](#hashicorp-vault-integration)
-- [Vault CSI Driver and Argo CD Vault Plugin](#vault-csi-driver-and-argo-cd-vault-plugin)
+- [HashiCorp Vault との統合](#hashicorp-vault-integration)
+- [Vault CSI Driver と Argo CD Vault Plugin](#vault-csi-driver-and-argo-cd-vault-plugin)
 - [SOPS (Secrets OPerationS)](#sops-secrets-operations)
-- [EKS Pod Identity and IRSA](#eks-pod-identity-and-irsa)
-- [Tool Comparison](#tool-comparison)
-- [Best Practices](#best-practices)
-- [Summary](#summary)
-- [References](#references)
+- [EKS Pod Identity と IRSA](#eks-pod-identity-and-irsa)
+- [ツールの比較](#tool-comparison)
+- [ベストプラクティス](#best-practices)
+- [まとめ](#summary)
+- [参考資料](#references)
 
-## Kubernetes Native Secrets {#kubernetes-native-secrets}
+## Kubernetes ネイティブ Secret {#kubernetes-native-secrets}
 
-### Secret Overview
+### Secret の概要
 
 Secret は、アクセス制御、ストレージ、消費に関するセマンティクスを持つ API オブジェクトです。
 JSON/YAML の `data` 表現には Base64 が使用されますが、エンコードは暗号化ではありません。
 `stringData` は平文入力を受け取り、`data` にマージされます。これはより強力な
 保護メカニズムではなく、server-side apply とも適切に連携しません。実際の認証情報を追跡対象のマニフェスト、シェル履歴、ログに書き込まないでください。
 
-### Secret Types
+### Secret の種類
 
-| Type | Purpose |
+| 種類 | 用途 |
 |---|---|
-| `Opaque` | Application-defined values |
-| `kubernetes.io/service-account-token` | Explicitly created legacy long-lived token; prefer TokenRequest/projected short-lived tokens |
-| `kubernetes.io/dockerconfigjson` | Registry credentials |
-| `kubernetes.io/basic-auth` / `kubernetes.io/ssh-auth` | Basic or SSH authentication data |
-| `kubernetes.io/tls` | Certificate and private key |
+| `Opaque` | アプリケーション固有の値 |
+| `kubernetes.io/service-account-token` | 明示的に作成する従来型の長期トークン。TokenRequest／投影型の短期トークンを推奨 |
+| `kubernetes.io/dockerconfigjson` | コンテナレジストリの認証情報 |
+| `kubernetes.io/basic-auth` / `kubernetes.io/ssh-auth` | Basic／SSH 認証情報 |
+| `kubernetes.io/tls` | 証明書と秘密鍵 |
 
-### Creating Secrets
+### Secret の作成
 
 保護されたファイルと明示的な namespace を使用します。パスは、承認済みの認証情報プロセスを通じて提供されたファイルに置き換えてください。これらのコマンドでは結果の Secret は表示されませんが、オペレーターには引き続き適切な Kubernetes アクセスが必要です。
 
@@ -54,7 +54,7 @@ kubectl -n production create secret generic regcred   --type=kubernetes.io/docke
 
 リテラルフラグは**機密でないフィクスチャ**には便利ですが、コマンド引数内の実際のパスワードは履歴やプロセス検査に現れる可能性があります。
 
-### Using Secrets
+### Secret の利用
 
 `secretKeyRef` は 1 つのキーを選択し、`envFrom.secretRef` はすべてのキーをインポートします。環境変数はすでに実行中のコンテナでは更新されません。マウントされた Secret ボリュームは通常、最終的には更新されますが、`subPath` マウントはその更新を受け取りません。アプリケーションは必要に応じてファイルを再オープン/再ロードする必要があります。同期は再ロードではありません。
 
@@ -103,9 +103,9 @@ spec:
             path: host
 ```
 
-## Encryption, Updates and Audit Boundaries {#encryption-updates-and-audit-boundaries}
+## 暗号化、更新、監査の境界 {#encryption-updates-and-audit-boundaries}
 
-### Limitations of Secrets
+### Secret の制約
 
 - Upstream の自己管理 Kubernetes には、適切な保存時暗号化構成が必要です。**EKS 1.28+ では、AWS 所有の KMS キーによるすべての Kubernetes API データの envelope encryption がデフォルトで有効**であり、customer-managed key のオプションもあります。
 - 保存時暗号化は、認可済みの API リーダー、侵害されたアプリケーション、または Secret を消費する Pod の作成を許可されたプリンシパルを阻止しません。
@@ -113,7 +113,7 @@ spec:
 - プロバイダー認証情報のローテーション、Secret の更新、ファイルの伝播、アプリケーションの再ロードは別個の操作です。
 - API 監査イベントには Secret へのアクセスが記録される場合があります。監査先を保護し、Secret のリクエスト/レスポンス本文をログに記録しないでください。マウント済みファイルの読み取りは、アプリケーションの読み取りごとに 1 つの API 監査イベントとなるわけではありません。
 
-### etcd Encryption Configuration
+### etcd の暗号化設定
 
 `EncryptionConfiguration` ファイルは**自己管理 API server**用であり、EKS managed control plane にインストールできるファイルではありません。複数のプロバイダーがある場合、最初のプロバイダーが新規書き込みを暗号化し、後続のプロバイダーは既存データの復号をサポートします。`identity` は平文の読み取りを許可するため、意図せず最初のプロバイダーとして平文書き込みポリシーにならないようにする必要があります。
 
@@ -122,7 +122,7 @@ spec:
 
 ## External Secrets Operator (ESO) {#external-secrets-operator-eso}
 
-### ESO Overview
+### ESO の概要
 
 ESO は外部の値を Kubernetes Secret に調整します。Store リソースはプロバイダーアクセスを記述し、controller が呼び出しを実行します。SecretStore は独立して実行されるプロキシではありません。
 
@@ -135,7 +135,7 @@ flowchart LR
   K --> A["Application consumption and reload"]
 ```
 
-### ESO Installation
+### ESO のインストール
 
 固定されたベースラインは chart/application の**2.10.0**です。Helm が宣言する Kubernetes 制約は、すべての EKS/add-on の組み合わせに対する互換性テストではありません。
 
@@ -147,11 +147,11 @@ helm upgrade --install external-secrets external-secrets/external-secrets   --ve
 
 提供される values は、デフォルトで PushSecret の調整を無効にします。Chart RBAC は controller 管理権限です。namespace スコープのストアだけでは、cluster-wide controller をテナント分離境界に変えることはできません。
 
-### SecretStore Configuration
+### SecretStore の設定
 
 次の完全なリソースセットは IRSA を使用します。最初に IAM role/trust を作成してください。参照される ServiceAccount は SecretStore と同じ namespace である **production** にあります。ClusterSecretStore では、代わりに `serviceAccountRef` に明示的な namespace が必要です。また、共有ストアを使用できる namespace も制限してください。
 
-### ExternalSecret Definition
+### ExternalSecret の定義
 
 現在の SecretStore/ExternalSecret の例では `external-secrets.io/v1` を使用します。`Periodic` はデフォルトの更新ポリシーです。正の `refreshInterval` は調整をスケジュールしますが、プロバイダーエラー/バックオフがあるため配信期限ではありません。`OnChange` と `CreatedOnce` のトリガーは異なります。`creationPolicy: Owner` は Kubernetes owner reference に影響します。`deletionPolicy: Retain` はプロバイダー削除の処理を説明するものであり、ExternalSecret のあらゆる削除からの保護を意味するものではありません。
 
@@ -216,22 +216,22 @@ spec:
         property: host
 ```
 
-## PushSecret (Reverse Sync) {#pushsecret-reverse-sync}
+## PushSecret（逆方向同期）{#pushsecret-reverse-sync}
 
 PushSecret は、上記の読み取り専用の例には含まれない、別個の逆方向書き込み機能です。バージョン **2.10.0** では依然として API が `external-secrets.io/v1alpha1` として公開されています。すべての ESO リソースを盲目的に v1 へ変更するのではなく、インストール済みの CRD を確認してください。
 
 有効にする前に、別個の writer identity、許可するリモートキー、`updatePolicy`、`deletionPolicy` を選択してください。そうしない場合、ローカル Kubernetes の書き込みによって、他のシステムで使用される認証情報が上書きされる可能性があります。同じキーで pull/push のフィードバックループを避けてください。ストアの読み取り権限は、プロバイダーへの書き込み権限を付与しません。
 
 
-## AWS Secrets Manager Integration {#aws-secrets-manager-integration}
+## AWS Secrets Manager との統合 {#aws-secrets-manager-integration}
 
-### IRSA Setup
+### IRSA の設定
 
 提供される `irsa-trust.json` は、正確な cluster OIDC issuer、`aud`、および `system:serviceaccount:production:external-secrets-reader` subject をバインドします。使用前に、例の account/OIDC ID を置き換え、IAM OIDC provider を作成してください。
 
 `aws-reader-policy.json` は 1 つの Secrets Manager secret と 1 つの SSM parameter を読み取ります。6 つの `?` 文字はサービス生成の secret ARN suffix をカバーします。利用可能な場合は実際の ARN を使用してください。`ListSecrets`、ワイルドカード検出、認証情報の書き込み、ローテーションは許可しません。customer-managed KMS キーには、適切に制限された復号 grant **と**互換性のある KMS key policy が必要です。
 
-### Creating Secrets in AWS Secrets Manager
+### AWS Secrets Manager での Secret 作成
 
 認証情報のペイロードはプライベートファイルに保持してください。次の操作はオペレーターの例であり、AWS に対して実行していません。
 
@@ -242,7 +242,7 @@ aws secretsmanager put-secret-value --region ap-northeast-2   --secret-id produc
 
 保存されたパスワードのみを更新しても、データベースのパスワードは更新されません。Secrets Manager には managed-rotation 統合と Lambda ベースのローテーションがあります。Lambda のレシピには、サポートされるローテーション関数、権限、ネットワークアクセス、ターゲット認証情報の更新ロジックが必要です。コマンド内に ARN と 30 日のスケジュールがあるだけで自動化されるわけではありません。
 
-### Complete AWS ESO Example
+### AWS と ESO の連携例
 
 一致する trust と reader policy で上記のリソースセットを使用してください。結果の値を表示せずに、SecretStore と ExternalSecret の準備完了を待ちます。
 
@@ -275,15 +275,15 @@ kubectl -n production wait externalsecret/database-credentials   --for=condition
 }
 ```
 
-## AWS Systems Manager Parameter Store Integration {#aws-systems-manager-parameter-store-integration}
+## AWS Systems Manager Parameter Store との統合 {#aws-systems-manager-parameter-store-integration}
 
-### Parameter Store Setup
+### Parameter Store のセットアップ
 
 `SecureString` と選択した KMS key を使用してください。CLI 入力には、プライベートな `--cli-input-json file:///secure/input/parameter.json` を使用すると、値を引数に含めずに済みます。ファイルには、実際の `Name`、`Value`、`Type`、および意図した上書き/キー設定が含まれている必要があります。`get-parameter --with-decryption` を通常のステータス確認コマンドとして使用しないでください。平文を返します。
 
 KMS 権限は、AWS-managed の `aws/ssm` キーと customer managed key で異なります。Parameter Store の認可、KMS の認可、パス階層がすべて一致する必要があります。広範な再帰的パス読み取りは、子 parameter を露出させる可能性があります。
 
-### ESO Parameter Store Configuration
+### ESO による Parameter Store の設定
 
 これは明示的に作成した production ServiceAccount を再利用します。reader policy には指定された parameter が含まれます。Secret Manager 権限だけでは SSM をカバーしません。
 
@@ -326,7 +326,7 @@ spec:
 
 ## Sealed Secrets {#sealed-secrets}
 
-### Sealed Secrets Overview
+### Sealed Secrets の概要
 
 公開証明書が暗号化を行います。適切な秘密鍵を保持する者は、認可されたバックアップ/リカバリーオペレーターを含め、誰でも復号できます。controller は数学的に可能な唯一の復号者ではありません。名前やその他のメタデータは可視のままであり、侵害された古いキーは Git 履歴に保持された暗号文を露出させる可能性があります。
 
@@ -339,7 +339,7 @@ flowchart LR
   B["Protected key backup"] -. recovery .-> C
 ```
 
-### Sealed Secrets Installation
+### Sealed Secrets のインストール
 
 chart **2.20.0**、controller/CLI **0.40.0** を使用してください。古い `bitnami-labs.github.io/sealed-secrets` インデックスは、このレビュー中に 404 を返しました。
 
@@ -351,7 +351,7 @@ helm upgrade --install sealed-secrets sealed-secrets/sealed-secrets   --version 
 
 OS/architecture に一致する CLI リリースを選択し、インストール前に公開済みチェックサムを検証してください。Linux arm64 の CLI/crypto の動作はローカルでテストしました。
 
-### Creating SealedSecrets
+### SealedSecret の作成
 
 意図した認証済みクラスタコンテキストから証明書を取得し、その出所を検証してください。攻撃者に置き換えられた証明書による暗号化は安全ではありません。
 
@@ -366,22 +366,22 @@ kubectl -n production create secret generic app-sealed   --from-file=password=/s
 
 実際に生成された `bitnami.com/v1alpha1` SealedSecret を使用してください。`...` で終わる文字列は説明用であり、復号可能な暗号文ではありません。メタデータと template の名前/namespace を一貫させてください。
 
-### Scope Settings
+### スコープの設定
 
 `strict` は namespace と名前をバインドし、`namespace-wide` は namespace 内での名前変更を許可し、`cluster-wide` は他の namespace での使用を許可します。より広いスコープは、そのアクセスを意図する場合にのみ選択してください。各暗号化コマンドに証明書/入力/出力を指定してください。`kubeseal --scope` 単体は完全なワークフローではありません。
 
-### Key Rotation
+### 鍵のローテーション
 
 シーリングキーは controller の構成済みスケジュール（デフォルト 30 日）で更新されます。古いキーは復号用に保持されます。これはアプリケーションのパスワードをローテーションするものではありません。**必要なすべての過去のシーリングキー**のバックアップを、プライベートなファイル権限と Git 外部のストレージで保護してください。`kubeseal --re-encrypt` は controller と現在のキーを使用します。再暗号化しても古い Git 暗号文が消去されたり、すでに漏洩した認証情報が無効化されたりすることはありません。バックアップに依存する前にリカバリーをテストしてください。
 
 
-## HashiCorp Vault Integration {#hashicorp-vault-integration}
+## HashiCorp Vault との統合 {#hashicorp-vault-integration}
 
-### Vault Architecture
+### Vault のアーキテクチャ
 
 Vault の secret engine、認証、audit device は別個の機能です。Agent Injector、Vault CSI provider、Argo CD Vault Plugin は、異なる identity と配信パスを通じて Vault を消費します。AVP は Argo CD repo-server でマニフェストをレンダリングします。runtime Pod secret mount ではありません。
 
-### Vault Installation (Helm)
+### Vault のインストール（Helm）
 
 chart **0.34.1** のデフォルトは Vault 2.0.4 です。この例では、server と injected Agent image を明示的に **2.1.0** に上書きします。chart の TLS 無効な開発用デフォルトを継承するのではなく、TLS を有効にします。
 
@@ -395,7 +395,7 @@ values は**レンダリング専用のベースライン**であり、本番環
 
 開発モードでは便利な初期化/unseal 動作が維持されるため、隔離されたローカルテストのままにする必要があります。レビューでは、HA や Kubernetes 認証の検証ではなく、JSON template のレンダリングをテストする目的だけで loopback dev-TLS を使用しました。
 
-### Kubernetes Authentication Setup
+### Kubernetes 認証の設定
 
 Kubernetes 内で実行される Vault では、サポート対象の Vault バージョンがローカルの projected reviewer token を再読み込みできます。短命トークンを `token_reviewer_jwt` に貼り付け、それが永続的に更新されると想定しないでください。Vault ServiceAccount には、意図した TokenReview 認可（一般的にはレビュー済みの `system:auth-delegator` binding）が必要です。
 
@@ -463,7 +463,7 @@ spec:
           image: registry.example.com/team/app:replace-with-reviewed-tag
 ```
 
-## Vault CSI Driver and Argo CD Vault Plugin {#vault-csi-driver-and-argo-cd-vault-plugin}
+## Vault CSI Driver と Argo CD Vault Plugin {#vault-csi-driver-and-argo-cd-vault-plugin}
 
 ### Vault CSI Driver
 
@@ -473,7 +473,7 @@ Secrets Store CSI Driver と Vault provider の両方をインストールして
 
 オプションの `secretObjects` 同期には Driver の同期機能とボリュームをマウントする Pod が必要です。ローテーションには Driver のローテーションサポートとアプリケーションの再ロード戦略も必要です。同期された Secret をソースとする環境変数は、実行中のコンテナでは依然として更新されません。native AWS ASCP/CSI も別の選択肢です。そのプラットフォームと identity のサポートを個別に評価してください。
 
-### ArgoCD Vault Plugin (AVP)
+### Argo CD Vault Plugin（AVP）
 
 古い `argocd-cm.configManagementPlugins` メカニズムは、現在の Argo CD では廃止されています。repo-server **CMP sidecar** を構成し、その sidecar 内の `/home/argocd/cmp-server/config/plugin.yaml` に `argocd-plugin.yaml` を配置してください。この ConfigManagementPlugin 形式のドキュメントは **Kubernetes CRD ではありません**。
 
@@ -484,11 +484,11 @@ image には AVP **1.18.1** とその依存関係が含まれている必要が�
 
 ## SOPS (Secrets OPerationS) {#sops-secrets-operations}
 
-### SOPS Overview
+### SOPS の概要
 
 SOPS は、構成済みの age/PGP/KMS identity で保護されたデータキーを使用してファイル値を暗号化します。暗号化および復号する権利は、Git アクセスとは別のものです。テスト済みのベースラインは **SOPS 3.13.3 / age 1.3.2** です。
 
-### SOPS Installation and Setup
+### SOPS のインストールと初期設定
 
 OS/architecture 用のチェックサム検証済みバイナリをインストールしてください。制限的な権限で repository 外部に age identity を生成し、その公開 recipient のみを `.sops.yaml` にコピーします。`AGE-SECRET-KEY-...` を Git に含めないでください。
 
@@ -511,7 +511,7 @@ creation_rules:
     age: REPLACE_WITH_YOUR_PUBLIC_AGE_RECIPIENT
 ```
 
-### Encrypting Secrets with SOPS
+### SOPS での Secret の暗号化
 
 recipient を構成した後、保護された入力ファイルを暗号化し、値を表示せずにローカルの往復処理を検証してください。
 
@@ -523,11 +523,11 @@ SOPS_AGE_KEY_FILE=/secure/keys/docs-age.key sops edit app-secret.enc.yaml
 
 `SOPS_AGE_KEY_FILE` の値は秘密鍵ではなくパスです。プライベートな権限とアトミックな出力処理を適用してください。そうしないと、コマンドの失敗により出力先が切り詰められた状態で残る可能性があります。エディターの一時ファイルやバックアップも保護が必要です。
 
-### Encrypted File Format
+### 暗号化ファイルの形式
 
 生成された `sops` メタデータと MAC を保持してください。`ENC[...data:...]` の省略表現は、有効なデプロイ可能ファイルではありません。値が暗号化され、意図したメタデータが読み取り可能なままであることをテストしてください。復号が成功した場合は完全性を検証する必要があります。破損を回避するために MAC チェックを無効にしないでください。
 
-### FluxCD SOPS Integration
+### FluxCD での SOPS 統合
 
 既存の `flux-system/sops-age` Secret を、private identity ファイルから作成してください。キー名は `.agekey` で終わる必要があります。以下の Kustomization はその Secret と、すでに構成済みの GitRepository を参照します。Kubernetes/RBAC および Flux の復号権限は、引き続きセキュリティ境界です。
 
@@ -552,31 +552,31 @@ spec:
       name: sops-age
 ```
 
-### AWS KMS with SOPS
+### SOPS と AWS KMS
 
 有効な KMS key ARN と制限された identity/key policy を使用してください。複数の recipient は通常、すべてのキーが復号を認可する必要があることを自動的に意味するのではなく、代替の復号者を提供します。threshold key group は別の機能です。`sops updatekeys` は recipient を変更し、`sops rotate` はファイルの data key をローテーションします。いずれもファイル内に保存されたアプリケーション/データベース認証情報を変更するものではありません。
 
 
-## EKS Pod Identity and IRSA {#eks-pod-identity-and-irsa}
+## EKS Pod Identity と IRSA {#eks-pod-identity-and-irsa}
 
 ### IRSA (IAM Roles for Service Accounts)
 
 IRSA は cluster OIDC provider と role trust policy を使用します。SDK は projected token を**一時的な AWS 認証情報**と交換します。認証情報なしで AWS を呼び出すわけではありません。サポート対象の SDK/default credential chain と正確な namespace/ServiceAccount binding を使用してください。環境変数/static 認証情報が優先される場合があります。
 
-### EKS Pod Identity (New)
+### EKS Pod Identity
 
 Pod Identity には、service trust principal `pods.eks.amazonaws.com`、`sts:AssumeRole`/`sts:TagSession`、サポート対象の SDK/platform、および association が必要です。IAM role 管理は引き続きあなたの責任です。agent は EKS Auto Mode に組み込まれています。重複してインストールしないでください。選択する前に、現在の Fargate、Windows、hybrid、その他の platform サポートを確認してください。
 
 ESO では、**controller の** ServiceAccount を role に関連付けます。`SecretStore.auth.jwt.serviceAccountRef` は、別の Pod-Identity-associated ServiceAccount になりすますことはできません。したがって、以下の代替ストアでは `auth` を省略しています。IRSA の例と組み合わせて、ストア単位で同じ identity 境界を期待しないでください。
 
-### IRSA vs Pod Identity Comparison
+### IRSA と Pod Identity の比較
 
-| Concern | IRSA | EKS Pod Identity |
+| 比較項目 | IRSA | EKS Pod Identity |
 |---|---|---|
-| Trust | Cluster OIDC issuer, audience and subject | EKS service principal and configured conditions/session tags |
-| Binding | ServiceAccount annotation | EKS association for exact cluster/namespace/ServiceAccount |
-| Credentials | Temporary STS credentials | Temporary credentials delivered through the supported agent/SDK path |
-| Selection | Platform support and existing trust/operating model | Platform support, associations and operating model |
+| 信頼関係 | クラスターの OIDC issuer、audience、subject | EKS service principal と設定済みの条件／セッションタグ |
+| 紐付け | ServiceAccount annotation | 対象クラスター／namespace／ServiceAccount に対する EKS association |
+| 認証情報 | 一時的な STS 認証情報 | サポート対象の agent／SDK 経由で渡される一時認証情報 |
+| 選択基準 | platform のサポート状況と既存の信頼／運用モデル | platform のサポート状況、association、運用モデル |
 
 新しいクラスタか古いクラスタかという年数だけでは、選択ルールになりません。
 
@@ -596,55 +596,55 @@ spec:
       region: ap-northeast-2
 ```
 
-## Tool Comparison {#tool-comparison}
+## ツールの比較 {#tool-comparison}
 
-### Secrets Management Tool Comparison Table
+### シークレット管理ツールの比較
 
-| Tool | Responsibility | Key limitation |
+| ツール | 役割 | 主な制約 |
 |---|---|---|
-| Native Secret | Kubernetes delivery object | Protect API/RBAC/storage and application consumption |
-| ESO | Synchronize external values into Secrets | Sync is not provider credential rotation or app reload |
-| Sealed Secrets | Public-key encryption for Git | Protect private/backup keys; renewal is not credential rotation |
-| Vault | Engines, identity, leases and configured audit | Operate TLS, storage/quorum, unseal, policies and audit devices |
-| SOPS | Encrypted files and recipient/data-key management | Secure decryptor identities and plaintext processing |
+| Native Secret | Kubernetes への値の受け渡し | API／RBAC／保存先と、アプリケーションでの利用を保護する必要がある |
+| ESO | 外部の値を Secret に同期 | 同期は、プロバイダー認証情報のローテーションやアプリケーションの再読み込みではない |
+| Sealed Secrets | Git に保存する値の公開鍵暗号化 | 秘密鍵とバックアップを保護する。鍵の更新は認証情報のローテーションではない |
+| Vault | Secret engine、identity、lease、設定済みの監査 | TLS、ストレージ／quorum、unseal、policy、audit device を運用する必要がある |
+| SOPS | 暗号化ファイルと recipient／data key の管理 | 復号 identity と平文処理を保護する必要がある |
 
-### Recommendations by Use Case
+### ユースケース別の選択
 
 信頼できる情報源、ローテーション/再ロードのニーズ、platform サポート、チームの運用能力、災害復旧、コストに基づいて選択してください。Git には、値を含まない ESO reference、SealedSecret の暗号文、または SOPS の暗号文を保持できます。単一のツールだけでコンプライアンスを確立したり、すべての利用を自動的に監査可能にしたりすることはできません。
 
 
-## Best Practices {#best-practices}
+## ベストプラクティス {#best-practices}
 
-### 1. Secret Creation and Storage
+### 1. Secret の作成と保管
 
 実際の値と秘密鍵を Git、コマンド引数、build output から除外してください。暗号化されたアーティファクトをレビューし、意図しない平文や意図しない recipient が含まれていないか確認してください。
 
-### 2. Principle of Least Privilege
+### 2. 最小権限の原則
 
 API リーダーは、名前付き Secret に対する `get` に制限された Role を使用できます。mounted-file consumer は、マウントを読むだけであれば、そのような Role を必要としません。Pod 作成、exec/debug、controller 管理、外部プロバイダーアクセスも制限してください。namespace の分離は、これらの実際の認可境界によって裏付けられていなければなりません。
 
-### 3. Secret Rotation
+### 3. Secret のローテーション
 
 チェーン全体をテストしてください。ターゲット認証情報を変更し、プロバイダーバージョンを公開し、調整し、必要に応じてファイルを更新/再起動し、アプリケーションを再ロードし、認証を検証して、古い認証情報を安全に無効化します。タイマーだけでは、このチェーンが動作する証拠にはなりません。
 
-### 4. Auditing and Monitoring
+### 4. 監査とモニタリング
 
 Falco syscall event には Kubernetes API audit field が自動的に含まれるわけではありません。Kubernetes audit rule には、適切な audit source/plugin と配信パイプラインが必要です。古い `kevt`/wildcard-list の例では、このセットアップは確立されませんでした。明示的な許可 identity、拒否/成功アクセスのセマンティクス、保護された出力を備えた、テスト済みの audit pipeline を推奨します。`in` リスト内で `*` で終わる文字列が、自動的に prefix match になるわけではありません。すべての kube-system ServiceAccount を認可済みの secret reader と分類しないでください。
 
-### 5. Environment Separation
+### 5. 環境の分離
 
 開発環境と本番環境には、別々のプロバイダーパス、制限された role、namespace store、運用 owner を使用してください。リソース名だけでは分離になりません。
 
-## Summary {#summary}
+## まとめ {#summary}
 
 Native Secret は、そのアクセス、ストレージ、消費、ライフサイクルが制御されている場合、有効な本番環境の配信オブジェクトであり続けます。外部ストアと暗号化ツールは追加の問題を解決しますが、Kubernetes/アプリケーションのセキュリティ要件を取り除くものではありません。
 
-### Key Recommendations
+### 主な推奨事項
 
 定義された信頼できる情報源、最小権限、保護されたキー、検証済みのリカバリー、観測されたローテーション/再ロードプロセスを使用してください。ローカル検証の証跡は、本番デプロイメントの証明とは意図的に分離されています。
 
 
-## References {#references}
+## 参考資料 {#references}
 
 - [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
 - [EKS default envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)
