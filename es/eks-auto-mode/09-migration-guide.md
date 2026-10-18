@@ -1,9 +1,9 @@
 # Migración de Managed Node Groups a Auto Mode
 
-> **Versiones compatibles**: EKS Auto Mode GA; ejemplos revisados para EKS 1.36
-> **Última actualización**: September 12, 2026
+> **Versiones compatibles**: EKS Auto Mode con disponibilidad general; ejemplos revisados para EKS 1.36
+> **Última actualización**: 12 de septiembre de 2026
 
-La migración requiere comprobar las aplicaciones, el almacenamiento y la propiedad de los controladores **antes** de retirar la capacidad antigua. Los ejemplos siguientes son operaciones por etapas con esquemas y fixtures de CLI comprobados localmente; no constituyen un procedimiento de producción verificado sin tiempo de inactividad. Durante esta auditoría no se realizaron modificaciones en la nube ni en el clúster.
+Antes de retirar la capacidad existente, compruebe las aplicaciones, el almacenamiento y qué controlador gestiona cada recurso. Los ejemplos siguientes muestran operaciones por etapas cuyos esquemas y casos de prueba de CLI se comprobaron localmente; no acreditan una migración de producción sin interrupciones. Durante la auditoría descrita en la fuente no se modificaron recursos de nube ni del clúster.
 
 ![Vista general de la migración existente en siete etapas. Valide cada grupo de cargas de trabajo antes de escalar o eliminar la capacidad antigua; la fase final de validación es una auditoría posterior a la limpieza, no la primera comprobación del estado.](../.gitbook/assets/en-eks-auto-mode-09-migration-guide-0.png)
 
@@ -11,11 +11,11 @@ La migración requiere comprobar las aplicaciones, el almacenamiento y la propie
 
 El paso final de validación del diagrama no autoriza el desalojo, el escalado a cero ni la eliminación sin comprobaciones previas del estado y un plan de reversión.
 
-## 1. Inventariar y vincular el contexto operativo
+## 1. Inventariar los recursos y fijar el contexto operativo
 
-Use una combinación de EKS/complementos compatible actualmente. El antiguo mínimo de 1.29 era un límite histórico de disponibilidad de la función, no una recomendación sobre las versiones compatibles actuales. Confirme que sean compatibles VPC CNI, kube-proxy, EBS CSI, el controlador de snapshots y Pod Identity Agent cuando estén instalados; use los mínimos oficiales de migración **y** la lista de compatibilidad para su versión de Kubernetes.
+Utilice una combinación de EKS y complementos que siga siendo compatible. El antiguo mínimo de 1.29 indicaba la versión que incorporó la función, no una recomendación de compatibilidad actual. Compruebe la compatibilidad de VPC CNI, kube-proxy, EBS CSI, el controlador de snapshots y Pod Identity Agent cuando estén instalados. Consulte tanto los mínimos oficiales de migración **como** la lista de compatibilidad para la versión de Kubernetes que utiliza.
 
-Registre la propiedad de los controladores, la ubicación de las cargas de trabajo, los agentes del sistema, los volúmenes/AZ, las clases de balanceadores de carga, IAM, los procedimientos de recuperación y los costos. La protección siguiente comprueba la cuenta, el ARN del clúster/la hora de creación/el endpoint de la API y el ARN del node group/la hora de creación. Son comprobaciones de identidad puntuales, no un bloqueo atómico frente a controladores concurrentes. Un endpoint deliberadamente intermediado requiere una alternativa revisada; no se debe omitir silenciosamente una discrepancia.
+Registre qué controlador gestiona cada recurso, dónde se ejecutan las cargas, los agentes del sistema, los volúmenes y sus AZ, las clases de balanceadores, IAM, los procedimientos de recuperación y los costos. Las comprobaciones siguientes verifican la cuenta y, tanto para el clúster como para el node group, el ARN y la fecha de creación; también verifican el endpoint de la API. Comprueban la identidad en ese momento y no bloquean de forma atómica a otros controladores. Si la API se expone intencionadamente a través de un proxy, revise una alternativa para esta comprobación; no ignore una discrepancia.
 
 ```bash
 set -euo pipefail
@@ -82,7 +82,7 @@ jq '[.items[] | {namespace:.metadata.namespace,name:.metadata.name,node:.spec.no
   > "$WORK_DIR/pod-state.json"
 ```
 
-Los archivos privados contienen metadatos operativos; consérvelos para la recuperación. Los errores de consulta siguen siendo errores. `kubectl top` requiere una API de métricas operativa, y una instantánea actual de CPU no sustituye al historial de las cargas de trabajo.
+Los archivos privados contienen metadatos operativos; consérvelos para la recuperación. Si una consulta falla, trate el resultado como un error. `kubectl top` requiere una API de métricas operativa, y una muestra puntual de CPU no sustituye al historial de la carga.
 
 | Configuración existente | Consideración para la migración |
 |------------------------|---------------------------------|
@@ -93,9 +93,9 @@ Los archivos privados contienen metadatos operativos; consérvelos para la recup
 | CNI alternativo/configuración de red | Compruebe la compatibilidad documentada antes de habilitarlo; un NodeClass no corrige una configuración de red no compatible |
 | Propiedad del escalado/IaC | Coordine Cluster Autoscaler, GitOps y al propietario de IaC original para que no reviertan los cambios de migración |
 
-### Datos, balanceadores de carga y DNS en nodos mixtos
+### Datos, balanceadores de carga y DNS en clústeres con distintos tipos de nodo
 
-Los controladores/controladores utilizan interfaces diferentes:
+Los drivers de almacenamiento y los controladores utilizan interfaces diferentes:
 
 | Recurso | Autogestionado | Auto Mode |
 |----------|--------------|-----------|
@@ -105,19 +105,19 @@ Los controladores/controladores utilizan interfaces diferentes:
 | apiVersion de TargetGroupBinding | `elbv2.k8s.aws/v1beta1` | `eks.amazonaws.com/v1` |
 | Clase de cómputo | `karpenter.k8s.aws/v1 EC2NodeClass` | `eks.amazonaws.com/v1 NodeClass` |
 
-Un PVC existente no cambia de controlador al editar el nombre de su StorageClass, y el controlador administrado no adopta automáticamente un balanceador de carga existente. Para EBS, utilice un plan probado de restauración desde backup/snapshot o el flujo de trabajo actual documentado por AWS de **detención de las cargas de trabajo, Retain y recreación estática de PV/PVC**. Este último reutiliza un volumen EBS, pero recrea los objetos de vinculación de Kubernetes; no cambia el controlador en el mismo lugar. Verifique la restauración de backups, la propiedad del volumen/AZ/KMS, la política de recuperación, los finalizers, las vinculaciones y la coherencia de la aplicación. Aquí no se proporciona ningún script destructivo de migración de volúmenes.
+Editar el nombre de StorageClass de un PVC existente no cambia su driver, y el controlador administrado no adopta automáticamente un balanceador existente. Para EBS, utilice un plan probado de restauración desde backup o snapshot, o el procedimiento actual documentado por AWS: **detener la carga, usar Retain y recrear estáticamente los PV/PVC**. Este último reutiliza el volumen EBS, pero recrea los objetos de vinculación de Kubernetes; no cambia el driver sobre los objetos existentes. Verifique la restauración de backups, los responsables del volumen, la AZ y KMS, la política de recuperación, los finalizers, las vinculaciones y la coherencia de los datos de la aplicación. Esta guía no incluye un script destructivo de migración de volúmenes.
 
-Mantenga el AWS Load Balancer Controller autogestionado mientras sea propietario de recursos. Cree/pruebe el nuevo balanceador de carga administrado y cambie el tráfico mediante un plan DNS blue/green revisado antes de retirar el antiguo. Revise por separado la inmutabilidad de las clases, las anotaciones y la propiedad de TargetGroupBinding; cambiar un grupo de API no es una operación de adopción segura.
+Mantenga el AWS Load Balancer Controller autogestionado mientras gestione recursos. Cree y pruebe el nuevo balanceador administrado y cambie el tráfico mediante un plan DNS blue/green revisado antes de retirar el anterior. Revise por separado la inmutabilidad de las clases, las anotaciones y qué controlador gestiona los TargetGroupBindings; cambiar el grupo de API no basta para transferir su gestión de forma segura.
 
-Los nodos de Auto Mode tienen DNS local al nodo. **Conserve el Deployment de CoreDNS mientras haya nodos que no sean de Auto Mode y lo necesiten.** Mantenga los agentes necesarios de CNI/proxy/almacenamiento/identidad para los tipos de nodo restantes y limite su ubicación; que los componentes de Auto Mode estén administrados no justifica eliminar antes de tiempo dependencias del clúster mixto.
+Los nodos de Auto Mode tienen DNS local. **Conserve el Deployment de CoreDNS mientras lo necesite algún nodo que no utilice Auto Mode.** Mantenga los agentes de CNI, proxy, almacenamiento e identidad que necesiten los demás tipos de nodo y delimite dónde deben ejecutarse. Los componentes administrados de un clúster formado solo por nodos Auto Mode no justifican retirar antes de tiempo las dependencias de un clúster mixto.
 
-## 2. Habilitar Auto Mode sin un pool predeterminado sin restricciones
+## 2. Habilitar Auto Mode sin un pool predeterminado de uso irrestricto
 
 Complete primero la preparación de IAM/acceso en [Introducción](./01-getting-started.md). El rol existente del clúster necesita las políticas documentadas de Compute, **BlockStoragePolicyV2**, LoadBalancing, Networking y Cluster, además de la relación de confianza requerida para `sts:TagSession`. El ejemplo presupone autenticación API o API_AND_CONFIG_MAP, así como un rol/perfil de nodo personalizado preparado con una entrada de acceso EC2.
 
-Esta ruta por etapas empieza **sin pools integrados**. Por tanto, crea su propio NodeClass en el paso siguiente; no suponga que existe `default`. Habilitar un pool de propósito general sin restricciones podría programar cargas de trabajo pendientes existentes antes del cambio previsto. El ejemplo se niega a operar en un clúster que ya ejecuta Auto Mode, en lugar de reemplazar su lista de pools existente.
+Este procedimiento comienza **sin pools integrados**, por lo que crea su propio NodeClass en el siguiente paso; no dé por hecho que existe `default`. Un pool de propósito general sin restricciones podría recibir cargas que ya están pendientes antes del cambio previsto. El ejemplo detiene la operación si el clúster ya ejecuta Auto Mode, en lugar de sustituir su lista de pools.
 
-Use el ID de actualización específico para esperar a que finalice. Que el clúster esté `ACTIVE` por sí solo no demuestra que esta actualización de configuración haya tenido éxito.
+Espere a que finalice la actualización identificada por su ID específico. Que el clúster esté `ACTIVE` no demuestra por sí solo que esa actualización de configuración haya terminado correctamente.
 
 ```bash
 wait_eks_update() {
@@ -168,11 +168,11 @@ jq -e '.cluster.computeConfig.enabled == true and
   "$WORK_DIR/cluster-current.json" >/dev/null
 ```
 
-Compute, block storage y el balanceo de carga administrado deben habilitarse o deshabilitarse conjuntamente. La validación nativa de la solicitud no demuestra que IAM/la admisión del servicio vayan a aceptarla; deténgase si se produce un error y conserve la evidencia de la actualización. No vuelva a ejecutarla a ciegas tras una respuesta incierta. Los cambios del modo de autenticación tienen restricciones independientes de migración/reversión.
+Las funciones de cómputo, almacenamiento en bloque y balanceo de carga administrado deben habilitarse o deshabilitarse juntas. Validar la estructura de la solicitud no demuestra que IAM y el servicio vayan a aceptarla. Si se produce un error, deténgase y conserve los datos de la actualización. No repita la solicitud a ciegas si la respuesta deja dudas sobre su resultado. Los cambios del modo de autenticación tienen sus propias restricciones de migración y reversión.
 
-## 3. Crear un pool selectivo y probar ambos lados
+## 3. Crear un pool selectivo y probar la capacidad antigua y la nueva
 
-Reemplace los marcadores de posición del perfil/subred/grupo de seguridad del NodeClass por recursos existentes revisados. El rol del perfil necesita la entrada de acceso correcta para el nodo; estos manifiestos no crean IAM, VPC ni credenciales de aplicación.
+Sustituya los marcadores del perfil, las subredes y los grupos de seguridad de NodeClass por recursos existentes revisados. El rol del perfil necesita la entrada de acceso adecuada para los nodos. Estos manifiestos no crean recursos de IAM o VPC ni credenciales de aplicación.
 
 ```yaml
 apiVersion: v1
@@ -376,9 +376,9 @@ spec:
       maxUnavailable: 0
 ```
 
-Reemplace `REPLACE_WITH_OLD_NODEGROUP` antes de usar el canary heredado. Los ejemplos completos de nginx usan la imagen revisada sin privilegios y el contexto de seguridad del capítulo de operaciones. Comprueban la ubicación/disponibilidad básica, no el estado, la identidad ni la ruta de tráfico de su aplicación.
+Sustituya `REPLACE_WITH_OLD_NODEGROUP` antes de utilizar el canary del grupo antiguo. Los ejemplos completos de nginx usan la imagen que se ejecuta como usuario no root y el contexto de seguridad revisados en el capítulo de operaciones. Comprueban la ubicación y la disponibilidad básicas, no el estado de la aplicación, su identidad ni su ruta de tráfico.
 
-El canary de Auto selecciona tanto el pool exacto como `eks.amazonaws.com/compute-type=auto`. La existencia de `karpenter.sh/nodepool` por sí sola también coincide con nodos de Karpenter autogestionado. Una toleration permite la ubicación; por sí sola no selecciona un pool.
+El canary de Auto Mode selecciona tanto el pool concreto como `eks.amazonaws.com/compute-type=auto`. Comprobar únicamente que existe `karpenter.sh/nodepool` también seleccionaría nodos de Karpenter autogestionado. Una toleration permite que un Pod se ejecute en un nodo con el taint correspondiente; por sí sola no selecciona un pool.
 
 | Configuración de MNG | Correspondencia en Auto Mode |
 |-------------|-------------------|
@@ -390,11 +390,11 @@ El canary de Auto selecciona tanto el pool exacto como `eks.amazonaws.com/comput
 
 ## 4. Migrar por grupos y detenerse ante un fallo
 
-Empiece con cargas de trabajo representativas de bajo riesgo; después, migre las de staging/no críticas de producción y, una vez aprobadas sus dependencias, las críticas. Cambie la configuración deseada del **controlador propietario/GitOps**, no solo un Pod en ejecución.
+Comience con cargas representativas de bajo riesgo. Después, migre staging y las cargas de producción no críticas; migre las críticas una vez validadas sus dependencias. Cambie **la configuración declarativa gestionada por el controlador o por GitOps**, no solo un Pod en ejecución.
 
-Revise toda la política de ubicación: añadir un selector de Auto y conservar al mismo tiempo un selector del antiguo node group puede hacer que la conjunción impida la programación. No elimine afinidades de Pod, ubicaciones de seguridad ni tolerations no relacionadas mediante `affinity: null`. StatefulSets, Jobs activos y cargas de trabajo con volúmenes locales necesitan su propio procedimiento con conocimiento de los datos.
+Revise todas las reglas de ubicación. Si añade un selector de Auto Mode y conserva el del node group antiguo, ambas condiciones podrían impedir que el Pod se programe. No borre con `affinity: null` afinidades de Pod, restricciones de ubicación por seguridad o tolerations que no estén relacionadas con la migración. Los StatefulSets, los Jobs activos y las cargas con volúmenes locales requieren procedimientos que protejan sus datos.
 
-Para un Deployment con réplicas distintas de cero, esto comprueba el rollout y la disponibilidad observada de las réplicas:
+Para un Deployment con al menos una réplica deseada, lo siguiente comprueba el despliegue y la disponibilidad observada de las réplicas:
 
 ```bash
 : "${WORKLOAD_NAMESPACE:?Select the namespace}"
@@ -431,13 +431,13 @@ kubectl --context "$KUBE_CONTEXT" drain "$NODE_NAME" --ignore-daemonsets --timeo
 printf 'Drain returned successfully. Validate application health before selecting another node.\n'
 ```
 
-No hay ningún ciclo de cordon/desalojo masivo, espera fija para comprobar el estado ni opción de «continuar tras un fallo». El desalojo predeterminado rechaza los Pods no administrados/datos de emptyDir locales, salvo que se gestionen deliberadamente; no añada `--force`, `--disable-eviction` ni `--delete-emptydir-data` para hacer desaparecer un fallo. Un desalojo fallido/interrumpido puede dejar el nodo con cordon: inspecciónelo y restaure la programación solo si así lo indica el plan de recuperación. Valide las aplicaciones afectadas antes de elegir otro nodo.
+Este procedimiento no incluye un bucle de cordon/drain masivo, una espera fija como prueba de buen estado ni una opción para continuar tras un fallo. Por defecto, drain rechaza los Pods sin controlador y los datos locales de emptyDir si no se han gestionado expresamente. No añada `--force`, `--disable-eviction` ni `--delete-emptydir-data` para ocultar un fallo. Un drain fallido o interrumpido puede dejar el nodo marcado como no programable: inspecciónelo y restaure la programación únicamente si lo indica el plan de recuperación. Valide las aplicaciones afectadas antes de seleccionar otro nodo.
 
 ## 5. Reducir la capacidad solo después de retirar las cargas de trabajo antiguas
 
-**Cambiar el tamaño deseado de un MNG no respeta los PDB**: EKS utiliza el escalado de ASG. Esto es distinto del desalojo que se realiza normalmente al actualizar la versión de un managed node group. Reducir a la mitad el tamaño deseado y esperar cinco minutos no es una estabilización segura.
+**Cambiar el número deseado de nodos de un MNG no respeta los PDB**: EKS reduce la capacidad mediante el ASG. Ese proceso difiere del drain habitual durante una actualización de versión del managed node group. Reducir el número deseado a la mitad y esperar cinco minutos no demuestra que el sistema se haya estabilizado.
 
-Coordine con el propietario original del escalado/IaC e impida la programación de nuevas aplicaciones en los nodos antiguos. El ejemplo de la API comprueba que todos los nodos antiguos observados tengan cordon y no contengan Pods activos que no sean de DaemonSet; después solicita que el tamaño mínimo/deseado sea cero. No elimina las condiciones de carrera con controladores que ignoren los cordons o reemplacen nodos; mantenga activas las medidas de ubicación de la migración. Revise todas las dependencias restantes de DaemonSet/sistema y exporte antes los artefactos necesarios de los Jobs completados.
+Coordine el cambio con quien gestione el escalado y la IaC originales e impida que nuevas cargas se programen en los nodos antiguos. El ejemplo de API comprueba que todos los nodos antiguos observados estén marcados como no programables y que no tengan Pods activos ajenos a DaemonSets; después solicita tamaños mínimo y deseado de cero. Siguen siendo posibles las carreras con controladores que ignoren cordon o sustituyan nodos, por lo que debe mantener las restricciones de ubicación de la migración. Revise las dependencias restantes de DaemonSets y del sistema y exporte primero los artefactos necesarios de los Jobs completados.
 
 ```bash
 guard_nodegroup
@@ -465,13 +465,13 @@ update_id=$(jq -er '.update.id' "$WORK_DIR/scale-zero-response.json")
 wait_eks_update "$update_id" "$OLD_NODEGROUP"
 ```
 
-Espere a que desaparezcan los nodos/instancias antiguos reales y vuelva a comprobar el estado de las aplicaciones. Conserve la definición del node group y la configuración de escalado registrada durante el período de reversión acordado. No se garantiza que la capacidad deseada cero pueda recuperarse de inmediato.
+Espere a que desaparezcan los nodos y las instancias antiguos y vuelva a comprobar las aplicaciones. Conserve la definición del node group y su configuración de escalado durante el período de reversión acordado. Un número deseado de cero no garantiza que pueda recuperar capacidad de inmediato.
 
-## 6. Retirar la infraestructura antigua a través de su propietario
+## 6. Retirar la infraestructura antigua mediante su herramienta de gestión
 
-Después de validar correctamente las cargas de trabajo, los datos y el tráfico, y tras un período deliberado de estabilización, elimine el grupo a través de su **propietario original**: Terraform, CloudFormation, eksctl u otro flujo de gestión. Eliminar mediante la API directa de EKS un grupo propiedad de IaC puede dejar drift, stacks, roles de IAM u otros recursos.
+Tras validar las cargas, los datos y el tráfico y completar el período de estabilización previsto, elimine el grupo mediante su **herramienta de gestión original**: Terraform, CloudFormation, eksctl u otro flujo. Eliminar directamente mediante la API de EKS un grupo gestionado por IaC puede dejar diferencias respecto de su configuración declarada, stacks, roles de IAM u otros recursos.
 
-Lo siguiente se aplica únicamente a un grupo **administrado directamente mediante la API** y previamente revisado. Requiere un tamaño deseado cero, vuelve a comprobar el estado de los nodos/cargas de trabajo y rechaza las etiquetas visibles de propiedad de CloudFormation. Esa comprobación no puede detectar todos los propietarios externos de IaC; determinar la propiedad sigue siendo un requisito previo.
+El ejemplo siguiente solo se aplica a un grupo revisado **gestionado directamente mediante la API**. Exige un número deseado de cero, vuelve a comprobar los nodos y las cargas y detiene la operación si encuentra etiquetas de CloudFormation. Esa comprobación no detecta todas las herramientas externas de IaC; determinar quién gestiona el grupo sigue siendo un requisito previo.
 
 ```bash
 guard_nodegroup
@@ -503,21 +503,21 @@ aws eks wait nodegroup-deleted --cluster-name "$CLUSTER_NAME" --nodegroup-name "
   --region "$AWS_REGION"
 ```
 
-El waiter de eliminación debe completarse correctamente. AccessDenied, credenciales caducadas u otros errores de consulta no significan que el recurso esté ausente. Audite por separado los recursos de IAM/red/almacenamiento con propiedad independiente y la facturación; la eliminación del objeto de la API del node group no demuestra que hayan finalizado todos los costos asociados. El período de estabilización anterior de una a dos semanas es una opción de planificación, no un requisito universal.
+El waiter de eliminación debe finalizar correctamente. AccessDenied, las credenciales caducadas y otros errores de consulta no demuestran que el recurso haya desaparecido. Audite por separado los recursos de IAM, red y almacenamiento gestionados de forma independiente, así como la facturación. Que desaparezca el objeto node group de la API no demuestra que hayan terminado todos los costos asociados. El antiguo ejemplo de una o dos semanas de estabilización es una decisión de planificación, no un requisito universal.
 
 ## 7. Validación final y optimización
 
-Conserve las evidencias de validación de cada grupo y realice una auditoría final posterior a la limpieza: estado esperado de controladores/Pods, ubicación, estado de PVC, DNS, tráfico de la aplicación, IAM, registros/métricas y asignación completa de costos. Haga un seguimiento de los costos **durante** la coexistencia, ya que pueden facturarse tanto los dos grupos de cómputo como ambos balanceadores de carga.
+Conserve las pruebas de validación de cada grupo de cargas y realice una auditoría final después de retirar los recursos: disponibilidad esperada de controladores y Pods, ubicación, estado de PVC, DNS, tráfico, IAM, registros, métricas y asignación completa de costos. Mida los costos **durante** la coexistencia: pueden facturarse las dos flotas de cómputo y también los dos balanceadores de carga.
 
-Las antiguas cifras de Pending 0–5 / >10 durante cinco minutos, inicio <90s / >120s, disponibilidad >99.9% / <99.5% y respuesta de API <200ms / >500ms son umbrales de ejemplo no verificados. Use publicadores reales, objetivos de la aplicación y valores de referencia medidos, no métricas predeterminadas supuestas de Auto Mode.
+Los antiguos valores de Pending 0–5 / >10 durante cinco minutos, inicio <90s / >120s, disponibilidad >99.9% / <99.5% y respuesta de API <200ms / >500ms son ejemplos de umbrales sin validación. Defina los umbrales a partir de las fuentes reales de métricas, los objetivos de la aplicación y mediciones de referencia; no los trate como métricas predeterminadas de Auto Mode.
 
 ## Coexistencia con Karpenter autogestionado
 
-AWS admite una migración con coexistencia directa. El requisito previo de **v1.1** es un límite mínimo de versión para la migración; cumpla también la matriz de compatibilidad actual de Kubernetes (por ejemplo, Kubernetes 1.36 requiere al menos Karpenter 1.13). Mantenga en ejecución el controlador existente mientras crea un pool de Auto Mode independiente con taint y migra grupos de cargas de trabajo seleccionados.
+AWS admite migrar mediante coexistencia directa. El requisito de **v1.1** indica la versión mínima que incorporó esa migración; también debe cumplir la matriz de compatibilidad actual de Kubernetes. Por ejemplo, Kubernetes 1.36 requiere al menos Karpenter 1.13. Mantenga el controlador existente en ejecución mientras crea un pool de Auto Mode independiente con un taint y migra los grupos de cargas seleccionados.
 
-No modifique ni elimine los CRD compartidos `nodepools.karpenter.sh` o `nodeclaims.karpenter.sh` durante la migración. Registre la propiedad mediante la referencia de clase y el pool exacto, no mediante la etiqueta genérica de Karpenter. Cuando ya no queden cargas de trabajo antiguas, retire solo los NodePools/NodeClaims antiguos de su propiedad **mientras su controlador pueda completar la finalización**. Confirme que se hayan limpiado sus instancias/dependencias y, después, desinstale el release autogestionado y solo los recursos de IAM/cola que le pertenezcan. No lo desinstale primero ni elimine un namespace como sustituto de la limpieza de recursos.
+No modifique ni elimine los CRD compartidos `nodepools.karpenter.sh` o `nodeclaims.karpenter.sh` durante la migración. Identifique qué controlador gestiona cada recurso mediante su referencia de clase y el pool concreto, no mediante la etiqueta genérica de Karpenter. Una vez retiradas las cargas antiguas, elimine únicamente los NodePools y NodeClaims antiguos correspondientes **mientras su controlador siga disponible para completar los finalizers**. Compruebe que se hayan eliminado sus instancias y dependencias; después desinstale la versión autogestionada y solo sus recursos de IAM y colas. No desinstale primero el controlador ni use la eliminación de un namespace como sustituto de la retirada de recursos.
 
-## Revertir la capacidad y la ubicación antes de retirar la capacidad de Auto
+## Restaurar la capacidad y la ubicación antes de retirar la capacidad de Auto Mode
 
 Esta es una **reversión de la migración de cargas de trabajo/infraestructura**, no una reversión de la versión del plano de control de Kubernetes.
 
@@ -540,7 +540,7 @@ wait_eks_update "$update_id" "$OLD_NODEGROUP"
 4. Restaure el plan revisado de ubicación/tráfico/datos de los controladores. Elimine explícitamente los selectores de Auto incompatibles y conserve las afinidades no relacionadas. Verifique la disponibilidad real de las cargas de trabajo y el comportamiento de la aplicación en el grupo antiguo.
 5. Solo entonces retire el pool/los recursos exactos de Auto propiedad de la migración a través de su propietario. Eliminar un NodePool puede eliminar en cascada sus nodos; nunca lo elimine como primer paso de la reversión ni seleccione todos los nodos con una etiqueta de Karpenter.
 
-Deshabilitar Auto Mode es opcional y es un proceso independiente. Primero resuelva todas las dependencias de cómputo, almacenamiento y balanceadores de carga propiedad de Auto. Si corresponde realizar ese cambio, las tres marcas deben ir en una sola solicitud; este fragmento solo prepara el archivo de solicitud para su revisión:
+Deshabilitar Auto Mode es opcional y requiere un procedimiento separado. Resuelva primero todas las dependencias de cómputo, almacenamiento y balanceadores que gestione Auto Mode. Si procede deshabilitarlo, incluya las tres opciones en una única solicitud. El fragmento siguiente solo prepara el archivo para revisarlo:
 
 ```bash
 jq -n --arg name "$CLUSTER_NAME" '{

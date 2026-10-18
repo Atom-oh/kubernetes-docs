@@ -1,6 +1,6 @@
 # EKS クラスター作成クイズ - パート 4
 
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 
 このクイズでは、Terraform クラスターガイドをスケーリング、ID、ライフサイクル運用と結び付けます。最後のセクションでは Terraform 固有の概念を確認します。例では、レビュー済みのアカウント/Region/kubeconfig、IAM、およびネットワークの前提条件が必要です。この監査ではデプロイしていません。
 
@@ -110,11 +110,11 @@ spec:
 
 現行の EKS CreateNodegroup API には **ON_DEMAND、SPOT、CAPACITY_BLOCK** が含まれます。managed node group は 1 つのキャパシティタイプを使用します。異なるキャパシティプールには別々のグループを使用してください。
 
-On-Demand は Spot の回収を回避しますが、中断または可用性を保証するものではありません。Spot は余剰キャパシティを使用するため、中断に耐えられるワークロードが必要です。広告上の割引は節約を保証しません。Reserved Instances/Savings Plans は請求の取り決めであり、CreateNodegroup の追加 enum 値ではありません。
+On-Demand は Spot の回収を回避しますが、中断または可用性を保証するものではありません。Spot は余剰キャパシティを使用するため、中断に耐えられるワークロードが必要です。提示される割引率も、実際の節約を保証するものではありません。Reserved Instances/Savings Plans は請求の取り決めであり、CreateNodegroup の追加 enum 値ではありません。
 
 Capacity Blocks は、サポートされるインスタンス/Regions 向けの、別個の期限付き予約ワークフローです。予約を対象とするカスタム launch template、一致する AZ/subnet、予約を考慮したスケーリングが必要です。EKS は予約終了の 40 分前にスケジュール済みスケールダウンを作成します。このアクションを変更または削除しないでください。以下の例は通常の On-Demand/Spot の代替であり、Capacity Block のプロビジョニングではありません。
 
-**AWS CLI:** 未使用の node-group 名、既存の private subnets、および承認済みの EC2 node role（必要な CNI ID パスを含む）を使用します。グループがアクティブになるまで待機してから、実際の Node/ワークロードの readiness を確認してください。
+**AWS CLI:** 未使用の node-group 名、既存の private subnets、および承認済みの EC2 node role（CNI のアイデンティティ連携に必要な設定を含む）を使用します。グループがアクティブになるまで待機してから、実際の Node/ワークロードの readiness を確認してください。
 
 ```bash
 set -euo pipefail
@@ -210,12 +210,12 @@ Fargate の料金は、要求リソースと overhead/rounding により決ま�
    * A) maxUnavailable
    * B) maxUnavailablePercentage
    * C) updateStrategy
-   * D) Node-group operation timeout
+   * D) ノードグループ操作のタイムアウト
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) Node-group operation timeout**
+**回答: D) ノードグループ操作のタイムアウト**
 
 `NodegroupUpdateConfig` は、整数の `maxUnavailable`、整数の `maxUnavailablePercentage`、および `updateStrategy`（`DEFAULT` または `MINIMAL`）をサポートします。数または割合のいずれかを設定し、両方は設定しないでください。割合は `maxUnavailable` 自体の有効な値ではありません。
 
@@ -400,7 +400,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:

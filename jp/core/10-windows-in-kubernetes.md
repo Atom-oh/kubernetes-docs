@@ -1,221 +1,156 @@
 # Kubernetes における Windows
 
-> **対応バージョン**: Kubernetes 1.32, 1.33, 1.34
-> **最終更新**: February 11, 2026
+> **確認対象の Kubernetes バージョン**: Kubernetes 1.35、1.36、1.37
+> **最終更新日**: 2026年9月11日
 
-Kubernetes はもともと Linux コンテナ向けに設計されましたが、Windows コンテナの本番環境サポートはバージョン 1.14 から追加されました。この章では、Kubernetes で Windows ワークロードを実行する方法、アーキテクチャ、制限事項、および Amazon EKS における Windows サポートについて説明します。
+Kubernetes はもともと Linux コンテナ向けに設計されましたが、Windows コンテナの本番環境サポートはバージョン 1.14 から追加されました。この章では、Kubernetes で Windows ワークロードを実行する方法、そのアーキテクチャと制限事項、および Amazon EKS の Windows サポートについて説明します。
 
 ## 目次
 1. [Windows コンテナの概要](#windows-container-overview)
 2. [Kubernetes の Windows サポートアーキテクチャ](#kubernetes-windows-support-architecture)
-3. [Windows Node の制限事項](#windows-node-limitations)
-4. [Windows Node のセットアップ](#windows-node-setup)
+3. [Windows ノードの制限事項](#windows-node-limitations)
+4. [Windows ノードのセットアップ](#windows-node-setup)
 5. [Windows コンテナのデプロイ](#deploying-windows-containers)
 6. [ネットワーキング](#networking)
 7. [ストレージ](#storage)
 8. [モニタリングとロギング](#monitoring-and-logging)
 9. [セキュリティ](#security)
-10. [Amazon EKS における Windows サポート](#windows-support-in-amazon-eks)
+10. [Amazon EKS の Windows サポート](#windows-support-in-amazon-eks)
 11. [ベストプラクティス](#best-practices)
 12. [まとめ](#conclusion)
 
-<span id="windows-container-overview"></span>
+## Windows コンテナの概要 {#windows-container-overview}
 
-## Windows コンテナの概要
-
-Windows コンテナは Windows オペレーティングシステム上で実行されるコンテナであり、Windows アプリケーションをコンテナ化してデプロイできます。
+Windows コンテナは Windows オペレーティングシステム上で実行され、Windows アプリケーションのコンテナ化とデプロイを可能にします。
 
 ### Windows コンテナの種類
 
-Windows コンテナには、次の 2 種類があります。
+Windows には 2 種類の分離方式があります。Kubernetes がサポートするのは **プロセス分離のみ** です。以下の Hyper-V の説明は背景知識であり、Kubernetes でデプロイできる選択肢ではありません。
 
-1. **Windows Server Containers**: Linux コンテナと同様に、ホスト OS のカーネルを共有します。軽量で起動も高速ですが、ホストと同じ Windows バージョンが必要です。
+1. **Windows Server Containers**: Linux コンテナと同様に、ホスト OS カーネルを共有します。軽量で起動が速い一方、Microsoft がサポートするホストとイメージの組み合わせを使う必要があります。
+2. **Hyper-V Isolation Containers**: 各コンテナは軽量 VM 内で実行され、より高い分離を提供します。ホストとは異なる Windows バージョンを実行できますが、より多くのリソースを使用します。
 
-2. **Hyper-V Isolation Containers**: 各コンテナは軽量 VM 内で実行され、より高いレベルの分離を提供します。ホストとは異なる Windows バージョンを実行できますが、より多くのリソースを使用します。
+次の図は、2 種類の Windows コンテナのアーキテクチャの違いを示しています。
 
-次の図は、2 種類の Windows コンテナのアーキテクチャ上の違いを示しています。
-
-![複数の Windows アプリが 1 つのコンテナランタイムとホスト OS カーネルを共有する Windows Server Containers と、各アプリが Hyper-V ハイパーバイザーの下で専用の Windows OS カーネルを持つ独自の軽量 VM 内で実行され、その後同じ Windows Server OS と物理ハードウェアに到達する Hyper-V Isolation Containers の比較。](../.gitbook/assets/en-core-10-windows-in-kubernetes-0.png)
+![Windows Server Container では複数の Windows アプリケーションが 1 つのコンテナランタイムとホスト OS カーネルを共有します。Hyper-V Isolation Container では各アプリケーションが専用の Windows OS カーネルを備えた軽量 VM 内で実行され、Hyper-V ハイパーバイザーを経由して同じ Windows Server OS と物理ハードウェアに接続します。](../.gitbook/assets/en-core-10-windows-in-kubernetes-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-0.html)
 
 ### Windows コンテナイメージ
 
-Windows コンテナイメージは、Microsoft が提供するベースイメージに基づいています。
+Windows コンテナイメージは Microsoft が提供するベースイメージを基にしています。
 
-1. **Windows Server Core**: 最小限の Windows Server 環境を提供する軽量イメージ
-2. **Nano Server**: フットプリントがより小さい超軽量イメージ
-3. **Windows**: 完全な Windows Server 環境を提供するイメージ
+1. **Windows Server Core**: 必要最小限の Windows Server 環境を提供する軽量イメージ
+2. **Nano Server**: フットプリントを小さくした超軽量イメージ
+3. **Windows**: より広範な Windows API を提供しますが、コンテナイメージに完全なデスクトップ/GUI サーバーは含まれません。
 
 Dockerfile の例:
 
 ```dockerfile
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
-WORKDIR /app
-COPY . .
-RUN powershell -Command "Install-WindowsFeature Web-Server"
+FROM mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
+COPY website/ C:/inetpub/wwwroot/
 EXPOSE 80
-CMD ["powershell", "-Command", "Start-Service W3SVC; Get-Content -Path 'C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex*' -Wait"]
+# Inherit the IIS image entrypoint (ServiceMonitor.exe).
 ```
 
-<span id="kubernetes-windows-support-architecture"></span>
+## Kubernetes の Windows サポートアーキテクチャ {#kubernetes-windows-support-architecture}
 
-## Kubernetes の Windows サポートアーキテクチャ
-
-Kubernetes の Windows サポートは混在環境に基づいています。Control Plane コンポーネントは常に Linux 上で実行され、Worker Node は Linux または Windows のいずれかにできます。
+Kubernetes の Windows サポートは、Linux と Windows が混在する環境を前提としています。コントロールプレーンのコンポーネントは常に Linux 上で動作し、ワーカーノードには Linux または Windows を使用できます。
 
 ### アーキテクチャの概要
 
 Kubernetes の Windows サポートアーキテクチャは次のとおりです。
 
-1. **Linux Control Plane**: kube-apiserver、kube-controller-manager、kube-scheduler、etcd は常に Linux 上で実行されます。
-2. **Linux Worker Nodes**: システムコンポーネント（CoreDNS、metrics-server など）を実行します。
-3. **Windows Worker Nodes**: Windows アプリケーションワークロードを実行します。
+1. **Linux コントロールプレーン**: kube-apiserver、kube-controller-manager、kube-scheduler、etcd は常に Linux 上で動作します。
+2. **Linux ワーカーノード**: CoreDNS、metrics-server などのシステムコンポーネントを実行します。
+3. **Windows ワーカーノード**: Windows アプリケーションのワークロードを実行します。
 
-![Linux 専用の Control Plane（kube-apiserver、kube-controller-manager、kube-scheduler、etcd）が混在クラスターを管理し、CoreDNS や metrics-server などのシステム Pod を実行する Linux Worker Node と、それぞれ kubelet、kube-proxy、Windows コンテナを実行する 2 つの Windows Worker Node に接続します。](../.gitbook/assets/en-core-10-windows-in-kubernetes-1.png)
+![Linux のみで構成されるコントロールプレーン（kube-apiserver、kube-controller-manager、kube-scheduler、etcd）が混在クラスターを管理します。CoreDNS や metrics-server などのシステム Pod を実行する Linux ワーカーノードと、kubelet、kube-proxy、Windows コンテナをそれぞれ実行する 2 つの Windows ワーカーノードがあります。](../.gitbook/assets/en-core-10-windows-in-kubernetes-1.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-1.html)
 
-### Windows Node コンポーネント
+### Windows ノードのコンポーネント
 
-Windows Node 上で実行される Kubernetes コンポーネント:
+Windows ノードで動作する Kubernetes コンポーネント:
 
-1. **kubelet**: Node 上の Pod とコンテナを管理します
-2. **kube-proxy**: ネットワークルールを管理します
-3. **CNI Plugin**: ネットワーク設定
-4. **CSI Plugin**: ストレージ管理
+1. **kubelet**: ノード上の Pod とコンテナを管理します。
+2. **kube-proxy**: ネットワークルールを管理します。
+3. **CNI プラグイン**: ネットワークを構成します。
+4. **CSI プラグイン**: ストレージを管理します。
 
-<span id="windows-node-limitations"></span>
+## Windows ノードの制限事項 {#windows-node-limitations}
 
-## Windows Node の制限事項
+Kubernetes で Windows ノードを使う際には、次の制限事項に注意してください。
 
-Kubernetes で Windows Node を使用する際に認識しておくべき制限事項がいくつかあります。
+### 機能上の制限
 
-### 機能上の制限事項
+1. `privileged` はサポートされません。ノードエージェントには `hostProcess` と `hostNetwork` を有効にした **HostProcess コンテナ**を使用できますが、ホスト権限を慎重に制限してください。
+2. 通常の Windows Pod は `hostNetwork` を使えません。HostProcess は例外です。
+3. `spec.os.name: windows` を指定する Pod では、`runAsUser`、`fsGroup`、`seccomp`、capabilities、`readOnlyRootFilesystem` など Linux 専用のフィールドを設定しないでください。
+4. OS ごとにイメージと `nodeSelector` を分けて、別々の DaemonSet を使用してください。
+5. メモリを使う `emptyDir`、raw block の `volumeDevices`、PIDPressure、Linux 形式の OOM eviction はサポートされません。
+6. CPU とメモリの制限には Windows 固有の仕組みが使われます。Windows に Linux の OOM killer はありません。メモリが枯渇すると、割り当てエラーやページング、性能低下が発生する可能性があります。
 
-1. **Privileged Containers**: Windows は Privileged Container をサポートしていません。
-2. **Host Network Mode**: Windows Pod は Host Network Mode を使用できません。
-3. **Pod Security Context**: 一部の Security Context 機能（runAsUser、fsGroup など）はサポートされていません。
-4. **DaemonSet**: Windows Node 上で実行する DaemonSet には特別な考慮が必要です。
-5. **emptyDir Volumes**: メモリベースの emptyDir Volume は Windows ではサポートされていません。
-6. **Resource Limits**: CPU Limit は Windows では異なる方法で適用されます。
+### ネットワークの制限
 
-### ネットワーキングの制限事項
-
-1. **Network Mode**: Windows は L3 ネットワーキングのみをサポートします。
-2. **Service Types**: Windows Node には一部の Service Type に関する制限があります。
-3. **Load Balancing**: 一部の Load Balancing 機能は制限される場合があります。
+L2bridge や overlay などのモードについて、Windows HNS/CNI のサポートマトリックスを確認してください。同じ Pod のコンテナはネットワークと localhost を共有しますが、プロセス名前空間やルートファイルシステムは共有しません。選択した OS、CNI、クラスターの組み合わせで NetworkPolicy、Service、DSR がサポートされるか確認してください。
 
 ### オペレーティングシステムのバージョン互換性
 
-Windows コンテナでは、ホスト OS のバージョンに関して重要な互換性の考慮事項があります。
+Kubernetes v1.37 は Windows Server 2022 と 2025 のワーカーノードをサポートします。この章の例では **Windows Server 2022 + ltsc2022** を使用します。Microsoft の互換性マトリックスとディストリビューションのサポートポリシーを確認し、毎月のセキュリティ更新を適用してください。Hyper-V 分離を使っても、Kubernetes の互換性要件を回避することはできません。
 
-| コンテナベースイメージ | 互換性のあるホスト OS バージョン |
-|---------------------|---------------------------|
-| Windows Server 2019 | Windows Server 2019 |
-| Windows Server 2022 | Windows Server 2022 |
+## Windows ノードのセットアップ {#windows-node-setup}
 
-Hyper-V 分離によりこれらの制限を緩和できますが、追加のリソースが必要になります。
-<span id="windows-node-setup"></span>
-
-## Windows Node のセットアップ
-
-Kubernetes クラスターに Windows Node を追加する手順を見ていきましょう。
+Kubernetes クラスターに Windows ノードを追加する手順を説明します。
 
 ### 前提条件
 
-Windows Node をセットアップする前に、次を確認してください。
+サポート対象の Kubernetes/Windows の組み合わせ、Linux コントロールプレーン、Windows 対応 CNI、CRI 互換の containerd が必要です。Docker Engine だけでは CRI を実装しません。組み込みの dockershim は Kubernetes 1.24 で削除されました。EKS ノードを使う場合は、後述する EKS の手順に従ってください。
 
-1. **Kubernetes バージョン**: 1.14 以降
-2. **Windows バージョン**: Windows Server 2019 以降
-3. **Network Plugin**: Windows をサポートする CNI Plugin（Calico、Flannel など）
-4. **Container Runtime**: Docker、containerd など
+### Windows ノードの準備
 
-### Windows Node の準備
-
-Windows Node を準備する手順:
-
-1. **Windows Server のインストール**: Windows Server 2019 以降をインストールします
-2. **Container 機能の有効化**:
+管理者権限の PowerShell で Containers 機能を有効にし、必要に応じて再起動します。以下は **kubeadm で自己管理するワーカーノード**向けの手順です。公式 sig-windows-tools のレビュー済み commit から `hostprocess/Install-Containerd.ps1` と `hostprocess/PrepareNode.ps1` を取得し、実行前に内容を確認してチェックサムを検証してください。サポート対象の containerd patch と、クラスターに適合する kubelet バージョンを選びます。インストーラーが追加する firewall rule を確認し、port 10250 への通信を必要なコントロールプレーン送信元に制限してください。
 
 ```powershell
-Install-WindowsFeature -Name Containers
-Restart-Computer -Force
+$ErrorActionPreference = "Stop"
+$ContainerdVersion = Read-Host "Validated containerd version (without v)"
+$KubernetesVersion = Read-Host "Cluster-compatible Kubernetes version (vX.Y.Z)"
+if (-not $ContainerdVersion -or -not $KubernetesVersion) { throw "Versions required" }
+.\Install-Containerd.ps1 -ContainerDVersion $ContainerdVersion
+.\PrepareNode.ps1 -KubernetesVersion $KubernetesVersion
 ```
 
-3. **Docker のインストール**:
+### kubeadm を使って Windows ノードを参加させる
 
-```powershell
-Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
-Install-Package -Name Docker -ProviderName DockerMsftProvider -Force
-Restart-Computer -Force
-```
-
-4. **Kubernetes コンポーネントのインストール**:
-
-```powershell
-# Create directory
-mkdir -p c:\k
-
-# Download kubelet, kubeadm, kubectl
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kubelet.exe
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kubectl.exe
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kube-proxy.exe
-curl.exe -LO https://github.com/kubernetes-sigs/sig-windows-tools/releases/latest/download/wins.exe
-
-# Move files to C:\k
-mv kubelet.exe C:\k
-mv kubectl.exe C:\k
-mv kube-proxy.exe C:\k
-mv wins.exe C:\k
-```
-
-5. **ネットワークの設定**:
-
-```powershell
-# Set firewall rules
-New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250
-New-NetFirewallRule -Name https -DisplayName 'https' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 443
-New-NetFirewallRule -Name http -DisplayName 'http' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 80
-```
-
-### kubeadm を使用した Windows Node の参加
-
-Linux Control Plane で join token を生成します:
+Linux コントロールプレーンで join token を生成します。
 
 ```bash
 kubeadm token create --print-join-command
 ```
 
-Windows Node で join コマンドを実行します:
+Windows ノードで join command を実行します。
 
 ```powershell
 # Run kubeadm join command
 kubeadm join <control-plane-host>:<control-plane-port> --token <token> --discovery-token-ca-cert-hash sha256:<hash>
 
-# Register and start kubelet service
-sc.exe create kubelet binPath= "C:\k\kubelet.exe --windows-service --kubeconfig=C:\k\config"
-Start-Service kubelet
 ```
 
-### Windows Node ラベルの設定
+### Windows ノードのラベル設定
 
-ワークロードのスケジューリングを制御するため、Windows Node に適切なラベルを設定します:
+kubelet が設定する OS、アーキテクチャ、build のラベルを確認してください。スケジューリングを強制するために OS ラベルを上書きしてはいけません。`spec.os.name` は Pod の OS を宣言しますが、scheduler selector の代わりにはなりません。`nodeSelector` も使用してください。
 
 ```bash
-kubectl label node <windows-node-name> kubernetes.io/os=windows
-kubectl label node <windows-node-name> kubernetes.io/arch=amd64
+kubectl get nodes -L kubernetes.io/os,kubernetes.io/arch,node.kubernetes.io/windows-build
 ```
 
-<span id="deploying-windows-containers"></span>
+## Windows コンテナのデプロイ {#deploying-windows-containers}
 
-## Windows コンテナのデプロイ
-
-Windows コンテナを Kubernetes にデプロイする方法を見ていきましょう。
+Kubernetes に Windows コンテナをデプロイする方法を説明します。
 
 ### Node Selector の使用
 
-Windows ワークロードをデプロイする際は、Windows Node にスケジュールされるよう Node Selector を使用します:
+Windows ワークロードが Windows ノードにスケジュールされるよう、node selector を使用してください。
 
 ```yaml
 apiVersion: apps/v1
@@ -232,11 +167,13 @@ spec:
       labels:
         app: iis
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         resources:
           limits:
             cpu: 1
@@ -250,10 +187,10 @@ spec:
 
 ### Resource Requests と Limits
 
-Windows コンテナの Resource Request と Limit は、Linux コンテナとは異なる方法で処理されます。
+Windows コンテナの resource requests と limits は Linux コンテナとは異なる方法で扱われます。
 
-1. **CPU Limits**: CPU Limit は Windows では異なる方法で適用されます。たとえば、CPU Limit が 1 の場合、単一の CPU コアの 100% を使用できます。
-2. **Memory Limits**: Windows コンテナは Memory Limit を尊重しますが、一部のシステムプロセスにより追加のオーバーヘッドが発生する場合があります。
+1. **CPU limits**: Windows では CPU limit の適用方法が異なります。たとえば CPU limit を 1 にすると、単一の CPU コアの 100% を使用できます。
+2. **メモリ limits**: Windows コンテナはメモリ limits を守りますが、システムプロセスによる追加のオーバーヘッドが発生することがあります。
 
 ### コンテナのカスタマイズ
 
@@ -265,11 +202,13 @@ kind: Pod
 metadata:
   name: windows-custom-script
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
@@ -282,7 +221,7 @@ spec:
 
 ### マルチコンテナ Pod
 
-Windows もマルチコンテナ Pod をサポートしていますが、いくつかの制限があります。
+Windows は複数コンテナの Pod もサポートしますが、いくつか制限があります。
 
 ```yaml
 apiVersion: v1
@@ -290,118 +229,56 @@ kind: Pod
 metadata:
   name: windows-multi-container
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
-  - name: web
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-    ports:
-    - containerPort: 80
+  - name: writer
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'while ($true) { Add-Content C:\shared-logs\app.log "Log at $(Get-Date)"; Start-Sleep 10 }']
+    volumeMounts:
+    - name: logs
+      mountPath: C:\shared-logs
   - name: logger
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      while ($true) {
-        Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
-      }
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'while (-not (Test-Path C:\shared-logs\app.log)) { Start-Sleep 2 }; Get-Content C:\shared-logs\app.log -Wait']
+    volumeMounts:
+    - name: logs
+      mountPath: C:\shared-logs
+      readOnly: true
+  volumes:
+  - name: logs
+    emptyDir: {}
 ```
 
-<span id="networking"></span>
+## ネットワーキング {#networking}
 
-## ネットワーキング
+Windows ノードのネットワークには、Linux ノードとは異なる特性があります。
 
-Windows Node のネットワーキングには、Linux Node とは異なる特性があります。
+次の図は、Windows と Linux のノードが混在する Kubernetes クラスターのネットワークアーキテクチャを示しています。
 
-次の図は、Windows Node と Linux Node が混在する Kubernetes クラスターのネットワーキングアーキテクチャを示しています。
-
-![クライアントリクエストは Kubernetes Service に到達し、Linux Pod と Windows Pod の両方に Load Balancing されます。一方、Pod 自体は Node OS に関係なく 1 つのフラットなメッシュネットワークを形成します。](../.gitbook/assets/en-core-10-windows-in-kubernetes-2.png)
+![クライアントは Service の仮想 IP に接続し、そのデータプレーンが Linux または Windows の Pod endpoint を選択します。異なる OS の Pod 間の接続は、互換性のある CNI のルーティングとポリシーに依存します。Service API オブジェクト自体はパケット処理の中継点ではありません。](../.gitbook/assets/en-core-10-windows-in-kubernetes-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-2.html)
 
-### サポートされる Network Plugin
+### サポートされるネットワークプラグイン
 
-Windows Node でサポートされる Network Plugin:
+Windows ノードでサポートされるネットワークプラグイン:
 
 1. **Flannel**: VXLAN または host-gw モード
 2. **Calico**: VXLAN モード
-3. **Antrea**: OVS ベースのネットワーキング
+3. **Antrea**: OVS ベースのネットワーク
 4. **Azure CNI**: Azure 環境で使用
 5. **AWS VPC CNI**: AWS 環境で使用
 
-### Flannel セットアップ例
+### Flannel のセットアップ例
 
-Flannel を使用した Windows ネットワーク設定:
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: kube-flannel-ds-windows
-  namespace: kube-system
-  labels:
-    tier: node
-    app: flannel
-spec:
-  selector:
-    matchLabels:
-      app: flannel
-  template:
-    metadata:
-      labels:
-        tier: node
-        app: flannel
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                - windows
-      hostNetwork: true
-      containers:
-      - name: kube-flannel
-        image: sigwindowstools/flannel:v0.13.0
-        command:
-        - powershell
-        args:
-        - -file
-        - /opt/bin/flannel-host.ps1
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        volumeMounts:
-        - name: host-run
-          mountPath: /run
-        - name: cni
-          mountPath: /etc/cni/net.d
-        - name: flannel-cfg
-          mountPath: /etc/kube-flannel/
-      volumes:
-      - name: host-run
-        hostPath:
-          path: /run
-      - name: cni
-        hostPath:
-          path: /etc/cni/net.d
-      - name: flannel-cfg
-        configMap:
-          name: kube-flannel-cfg
-```
+Linux 用 Flannel manifest を Windows DaemonSet にコピーしても動作しません。Windows バイナリ、HNS、CNI のパス、RBAC、HostProcess の設定が必要です。ディストリビューションが提供する Windows 向けのインストール手順を使い、Linux 側のネットワーク設定を Windows の win-overlay/win-bridge 設定と調整してください。Flannel Windows VXLAN に必要な VNI 4096/UDP 4789 も確認します。通常のアプリケーション Pod に `hostNetwork` を追加しても、インストール手順の代わりにはなりません。
 
 ### Service の公開
 
-Windows Node 上で Service を公開する方法:
+Windows ノード上の Service を公開する方法:
 
 ```yaml
 apiVersion: v1
@@ -417,9 +294,9 @@ spec:
   type: LoadBalancer
 ```
 
-### Network Policies
+### NetworkPolicy
 
-Windows Node で Network Policy を使用するには、Network Policy をサポートする CNI Plugin（例: Calico）が必要です:
+Windows ノードで NetworkPolicy を使うには、Calico など NetworkPolicy に対応した CNI プラグインが必要です。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -442,30 +319,25 @@ spec:
       port: 80
 ```
 
-<span id="storage"></span>
+## ストレージ {#storage}
 
-## ストレージ
+Windows ノードで利用できるストレージオプションを説明します。
 
-Windows Node で利用できるストレージオプションを見ていきましょう。
+次の図は、Windows ノードで利用できるさまざまなストレージを示しています。
 
-次の図は、Windows Node で利用できるさまざまなストレージオプションを示しています。
-
-![Windows Pod 内の Windows コンテナは、Windows Node 上の emptyDir と hostPath Volume（hostPath は Node ディスクによってバックアップ）に加え、Kubernetes API から配信される ConfigMap と Secret Volume、そして CSI Driver を介して Azure Disk/File、AWS EBS、または SMB 共有に到達する PersistentVolume をマウントします。](../.gitbook/assets/en-core-10-windows-in-kubernetes-3.png)
+![Windows Pod 内のコンテナは Windows ノード上の emptyDir と hostPath volume（hostPath はノードディスクを使用）をマウントできます。また、Kubernetes API から配信される ConfigMap と Secret volume や、CSI driver を介して Azure Disk/File、AWS EBS、SMB 共有に接続する PersistentVolume も利用できます。](../.gitbook/assets/en-core-10-windows-in-kubernetes-3.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-3.html)
 
 ### サポートされる Volume Type
 
-Windows Node でサポートされる Volume Type:
+Windows ノードでサポートされる volume type:
 
-1. **emptyDir**: 一時ストレージ（メモリベースの emptyDir はサポートされません）
-2. **hostPath**: ホスト Node のファイルシステム
-3. **configMap**: 設定データ
+1. **emptyDir**: 一時ストレージ（メモリベースの emptyDir は非対応）
+2. **hostPath**: ホストノードのファイルシステム
+3. **configMap**: 構成データ
 4. **secret**: 機密データ
-5. **azureFile**: Azure File ストレージ
-6. **awsElasticBlockStore**: AWS EBS Volume
-7. **azureDisk**: Azure Disk ストレージ
-8. **CSI**: Container Storage Interface Driver
+5. **CSI/PVC**: Windows 対応の Azure Files、Azure Disk、EBS、SMB CSI driver によるファイルシステム volume。各 driver の OS とファイルシステムの対応を確認してください。
 
 ### emptyDir Volume の例
 
@@ -475,11 +347,13 @@ kind: Pod
 metadata:
   name: windows-emptydir
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: temp-volume
       mountPath: C:\temp
@@ -505,11 +379,13 @@ kind: Pod
 metadata:
   name: windows-hostpath
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: logs-volume
       mountPath: C:\logs
@@ -529,7 +405,7 @@ spec:
       type: DirectoryOrCreate
 ```
 
-### ConfigMap および Secret Volume の例
+### ConfigMap と Secret Volume の例
 
 ```yaml
 apiVersion: v1
@@ -557,23 +433,25 @@ kind: Pod
 metadata:
   name: windows-config-secret
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: config-volume
       mountPath: C:\config
     - name: secret-volume
       mountPath: C:\secret
+      readOnly: true
     command:
     - powershell.exe
     - -Command
     - |
       Get-Content -Path C:\config\config.json
-      Get-Content -Path C:\secret\username
-      Get-Content -Path C:\secret\password
+      if (-not (Test-Path C:\secret\username) -or -not (Test-Path C:\secret\password)) { throw "Secret files missing" }
       while ($true) { Start-Sleep -Seconds 10 }
   volumes:
   - name: config-volume
@@ -586,7 +464,9 @@ spec:
 
 ### CSI Driver の使用
 
-Windows で CSI Driver を使用する例:
+前提条件: Windows 対応の CSI driver とファイルシステムを導入した `windows-csi` を作成します（例: NTFS と WaitForFirstConsumer を使う EBS CSI）。この名前の StorageClass を作るだけでは driver はインストールされません。EBS volume は AZ に結び付くため、raw block ではなくファイルシステムモードを使います。
+
+例:
 
 ```yaml
 apiVersion: v1
@@ -606,11 +486,13 @@ kind: Pod
 metadata:
   name: windows-csi-pod
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: data-volume
       mountPath: C:\data
@@ -625,28 +507,26 @@ spec:
     persistentVolumeClaim:
       claimName: windows-pvc
 ```
-<span id="monitoring-and-logging"></span>
 
-## モニタリングとロギング
+## モニタリングとロギング {#monitoring-and-logging}
 
-Windows Node とコンテナのモニタリングおよびロギング方法を見ていきましょう。
+Windows ノードとコンテナのモニタリングおよびロギング方法を説明します。
 
 ### モニタリング
 
-Windows Node をモニタリングするツール:
+Windows ノードのモニタリングに使うツール:
 
-1. **Prometheus Windows Exporter**: Windows Node メトリクスを収集
+1. **Prometheus Windows Exporter**: Windows ノードのメトリクスを収集
 2. **metrics-server**: 基本的なリソース使用量メトリクスを提供
 3. **Datadog、Dynatrace、New Relic**: 商用モニタリングソリューション
 
-Windows Node への Prometheus Windows Exporter のインストール:
+Windows ノードへの Prometheus Windows Exporter のインストール:
 
 ```powershell
-# Download Windows Exporter
-Invoke-WebRequest -Uri https://github.com/prometheus-community/windows_exporter/releases/download/v0.16.0/windows_exporter-0.16.0-amd64.msi -OutFile windows_exporter.msi
-
-# Install Windows Exporter
-Start-Process msiexec.exe -ArgumentList '/i', 'windows_exporter.msi', 'ENABLED_COLLECTORS=cpu,memory,disk,net,service,os,system', '/quiet' -Wait
+# Download a supported release MSI, verify its checksum, then install locally.
+$ExporterMsi = (Resolve-Path .\windows_exporter.msi).Path
+Start-Process msiexec.exe -ArgumentList "/i `"$ExporterMsi`" ENABLED_COLLECTORS=cpu,memory,logical_disk,net,service,os,system REMOVE=FirewallException /quiet" -Wait
+# Restrict any separately configured port 9182 firewall rule to Prometheus sources.
 ```
 
 Prometheus の設定:
@@ -660,7 +540,7 @@ scrape_configs:
 
 ### ロギング
 
-Windows コンテナログを収集するツール:
+Windows コンテナのログ収集に使うツール:
 
 1. **Fluent Bit**: 軽量ログコレクター
 2. **Fluentd**: ログの収集と転送
@@ -668,14 +548,13 @@ Windows コンテナログを収集するツール:
 4. **Azure Monitor**: Azure 環境で使用
 5. **CloudWatch Logs**: AWS 環境で使用
 
-Windows Node への Fluent Bit のインストール:
+Windows ノードに Fluent Bit をインストールする例:
+
+実際の Elasticsearch endpoint、認証方式、信頼済み CA を設定してください。ServiceAccount には Security event log の読み取り権限と checkpoint path への書き込み権限が必要です。
 
 ```powershell
-# Download Fluent Bit
-Invoke-WebRequest -Uri https://fluentbit.io/releases/1.8/fluent-bit-1.8.11-win64.zip -OutFile fluent-bit.zip
-
-# Extract
-Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
+# Install a supported Windows Fluent Bit release, verify its checksum,
+# and arrange bin/ and conf/ under C:\fluent-bit before continuing.
 
 # Create configuration file
 @"
@@ -687,6 +566,7 @@ Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
 [INPUT]
     Name         winlog
     Channels     Application,System,Security
+    DB           C:\fluent-bit\winlog.db
 
 [OUTPUT]
     Name         es
@@ -694,6 +574,9 @@ Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
     Host         elasticsearch-host
     Port         9200
     Index        windows_logs
+    Suppress_Type_Name On
+    tls          On
+    tls.verify   On
 "@ | Out-File -FilePath C:\fluent-bit\conf\fluent-bit.conf -Encoding ascii
 
 # Register service
@@ -703,68 +586,35 @@ Start-Service fluent-bit
 
 ### アプリケーションログの収集
 
-Windows コンテナのアプリケーションログを収集する例:
+アプリケーションイメージに Microsoft LogMonitor を組み込み、LogMonitorConfig.json で実際のファイル、ETW、Event Log の情報源を指定して IIS ログを stdout に出力します。ServiceMonitor と IIS のライフサイクルが保たれるよう、entrypoint をテストしてください。上の共有ファイル sidecar は volume 共有の例であり、ファイルローテーションや再起動時の重複/欠落レコードには対応しません。本番用 collector には checkpoint とローテーション処理が必要です。`kubectl logs` が取得するのは stdout/stderr であり、IIS のファイルを自動収集するものではありません。
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: windows-logging
-spec:
-  nodeSelector:
-    kubernetes.io/os: windows
-  containers:
-  - name: iis
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-    volumeMounts:
-    - name: logs
-      mountPath: C:\inetpub\logs\LogFiles
-  - name: log-collector
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      while ($true) {
-        Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
-      }
-    volumeMounts:
-    - name: logs
-      mountPath: C:\inetpub\logs\LogFiles
-  volumes:
-  - name: logs
-    emptyDir: {}
-```
+## セキュリティ {#security}
 
-<span id="security"></span>
+Windows ノードとコンテナのセキュリティ上の考慮事項を説明します。
 
-## セキュリティ
+### Windows ノードのセキュリティ
 
-Windows Node とコンテナに関するセキュリティ上の考慮事項を見ていきましょう。
+Windows ノードのセキュリティに関する推奨事項:
 
-### Windows Node のセキュリティ
-
-Windows Node のセキュリティに関する推奨事項:
-
-1. **最新アップデートの適用**: Windows セキュリティアップデートを定期的に適用します
-2. **Firewall の設定**: Windows Defender Firewall を適切に設定します
-3. **最小権限の原則**: 必要最小限の権限のみを付与します
-4. **アンチウイルスソフトウェア**: 適切なアンチウイルスソフトウェアをインストールします
-5. **Group Policy**: セキュリティ強化のために Group Policy を適用します
+1. **最新の更新プログラムを適用する**: Windows のセキュリティ更新を定期的に適用します。
+2. **Firewall を構成する**: Windows Defender Firewall を適切に構成します。
+3. **最小権限の原則**: 必要最小限の権限だけを付与します。
+4. **ウイルス対策ソフトウェア**: 適切なソフトウェアをインストールします。
+5. **Group Policy**: セキュリティを強化するポリシーを適用します。
 
 ### Windows コンテナのセキュリティ
 
 Windows コンテナのセキュリティに関する推奨事項:
 
-1. **最小ベースイメージ**: 可能な限り小さいベースイメージ（Nano Server など）を使用します
-2. **イメージスキャン**: コンテナイメージの脆弱性をスキャンします
-3. **ReadOnlyRootFilesystem**: 可能な場合は読み取り専用の Root Filesystem を使用します
-4. **非 Privileged User**: アプリケーションを非 Privileged User として実行します
-5. **Network Policies**: 適切な Network Policy を適用します
+1. **最小のベースイメージ**: Nano Server など、必要最小限のベースイメージを使います。
+2. **イメージスキャン**: コンテナイメージの脆弱性をスキャンします。
+3. **ファイルシステム権限**: NTFS ACL を制限し、対応する場合は読み取り専用データ mount を使います。Windows では `readOnlyRootFilesystem` はサポートされません。
+4. **非特権ユーザー**: アプリケーションを非特権ユーザーとして実行します。
+5. **NetworkPolicy**: 適切なネットワークポリシーを適用します。
 
 ### RunAsUsername
 
-Windows コンテナでは、`runAsUser` の代わりに `runAsUsername` を使用して、コンテナ内で実行するユーザーを指定できます:
+Windows コンテナ内で実行するユーザーを指定するには、`runAsUser` の代わりに `securityContext.windowsOptions.runAsUserName` を使用できます。
 
 ```yaml
 apiVersion: v1
@@ -772,6 +622,8 @@ kind: Pod
 metadata:
   name: windows-runasusername
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
@@ -779,7 +631,7 @@ spec:
       runAsUserName: "ContainerUser"
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
@@ -790,82 +642,100 @@ spec:
 
 ### Group Managed Service Accounts (gMSA)
 
-gMSA を Windows コンテナでの Active Directory 認証用に設定する手順:
+`gmsaCredentialSpecName` が参照するのは、Secret ではなくクラスター範囲の **GMSACredentialSpec** です。CRD、mutating/validating webhook、ServiceAccount の `use` RBAC 権限を設定してください。例のドメイン名とホスト名を置き換え、CredentialSpec module で AD SID/GUID/NetBIOS/DNS の値を生成します。この例はドメイン参加済みホストを使います。ドメイン非参加ホスト向けのサポート対象のポータブルな ID 設定には、別途構成が必要です。
 
-1. **Active Directory で gMSA を作成**:
+最初に `Get-KdsRootKey` を確認します。新しいキーが必要な場合は、AD 管理者が `Add-KdsRootKey -EffectiveImmediately` を実行し、レプリケーション時間（最大 10 時間）を待ちます。10 時間の過去時刻を指定する方法は、単一 DC のテスト環境に限られます。gMSA はネットワーク資格情報を提供しますが、コンテナをドメイン参加させるものではなく、`whoami` の結果を gMSA 名に変えるものでもありません。実際のサービスで Kerberos 認証を検証し、`klist` を確認してください。
 
 ```powershell
-# Create gMSA
-New-ADServiceAccount -Name WebApp1 -DNSHostName WebApp1.contoso.com -ServicePrincipalNames http/WebApp1.contoso.com -PrincipalsAllowedToRetrieveManagedPassword "Domain Controllers", "Domain Computers"
+# On an authorized AD administration host, after KDS readiness is confirmed:
+Import-Module ActiveDirectory
+New-ADGroup -Name 'WebAppHosts' -SamAccountName 'WebAppHosts' -GroupScope DomainLocal
+Add-ADGroupMember -Identity 'WebAppHosts' -Members 'ContainerHost01$'
+New-ADServiceAccount -Name WebApp1 -DNSHostName WebApp1.contoso.com -ServicePrincipalNames http/WebApp1.contoso.com -PrincipalsAllowedToRetrieveManagedPassword WebAppHosts
+# Install/review the official CredentialSpec PowerShell module first.
+Import-Module CredentialSpec
+New-CredentialSpec -AccountName WebApp1 -Path C:\gmsa-credspec.json
+$spec = Get-Content C:\gmsa-credspec.json -Raw | ConvertFrom-Json
+@{ apiVersion='windows.k8s.io/v1'; kind='GMSACredentialSpec'; metadata=@{name='gmsa-cred-spec'}; credspec=$spec } |
+    ConvertTo-Json -Depth 20 | Set-Content C:\gmsa-resource.json -Encoding utf8
 ```
 
-2. **gMSA 認証情報を Kubernetes に保存**:
+```bash
+# Requires the GMSA CRD and mutating/validating webhooks installed by an administrator.
+kubectl apply -f gmsa-resource.json
+```
 
 ```yaml
 apiVersion: v1
-kind: Secret
+kind: ServiceAccount
 metadata:
-  name: gmsa-cred-spec
-type: microsoft.com/gmsa-credential-spec
-data:
-  credspec.json: <base64-encoded-credential-spec>
-```
-
-3. **Pod に gMSA 設定を適用**:
-
-```yaml
+  name: windows-app
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: use-webapp-gmsa
+rules:
+- apiGroups: [windows.k8s.io]
+  resources: [gmsacredentialspecs]
+  resourceNames: [gmsa-cred-spec]
+  verbs: [use]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: use-webapp-gmsa
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: use-webapp-gmsa
+subjects:
+- kind: ServiceAccount
+  name: windows-app
+  namespace: default
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: windows-gmsa
+  namespace: default
 spec:
+  os:
+    name: windows
+  serviceAccountName: windows-app
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
     windowsOptions:
       gmsaCredentialSpecName: gmsa-cred-spec
+      runAsUserName: 'NT AUTHORITY\NETWORK SERVICE'
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      whoami
-      while ($true) { Start-Sleep -Seconds 10 }
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'whoami; Start-Sleep -Seconds 3600']
 ```
 
-<span id="windows-support-in-amazon-eks"></span>
+## Amazon EKS の Windows サポート {#windows-support-in-amazon-eks}
 
-## Amazon EKS における Windows サポート
+Amazon EKS で Windows ワークロードを実行する方法を説明します。
 
-Amazon EKS で Windows ワークロードを実行する方法を見ていきましょう。
+次の図は、Amazon EKS の Windows サポートアーキテクチャを示しています。
 
-次の図は、Amazon EKS における Windows サポートアーキテクチャを示しています。
-
-![マネージド EKS Control Plane は、Linux Node Group（CoreDNS、VPC CNI、kube-proxy のシステム Pod を実行）と Windows Node Group（Windows アプリケーション Pod を実行）の両方を管理し、AWS IAM、Amazon VPC、CloudWatch と統合されます。Windows アプリケーション Pod は Elastic Load Balancer を通じてエンドユーザーに到達します。](../.gitbook/assets/en-core-10-windows-in-kubernetes-4.png)
+![マネージド EKS コントロールプレーンは、CoreDNS、VPC CNI、kube-proxy のシステム Pod を実行する Linux node group と、Windows アプリケーション Pod を実行する Windows node group を管理します。AWS IAM、Amazon VPC、CloudWatch と連携し、Windows アプリケーション Pod は Elastic Load Balancer を通じて利用者に接続されます。](../.gitbook/assets/en-core-10-windows-in-kubernetes-4.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-4.html)
 
-### EKS での Windows サポートの有効化
+### EKS で Windows サポートを有効にする
 
-Amazon EKS で Windows サポートを有効にする手順:
+EKS は Windows IPAM を担当する VPC resource controller を管理します。古い release-1.11 の controller/webhook manifest をインストールしないでください。クラスター IAM role に `AmazonEKSVPCResourceController` 権限を付与し、現在の AWS 手順に従って `kube-system/amazon-vpc-cni` に `enable-windows-ipam: "true"` を設定します。既存のキーを保持し、該当する場合は管理元の Helm/add-on 手順で構成してください。
 
-1. **VPC CNI Plugin の更新**:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-resource-controller.yaml
-```
-
-2. **Windows VPC Admission Webhook のインストール**:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-admission-webhook.yaml
-```
+CoreDNS 用に Linux ノード、またはサポートされる Fargate 構成を用意します。Windows は EKS Auto Mode、Fargate workload、Hybrid Nodes、IPv6、custom networking、Pod 用 security group をサポートしません。Windows ノードロールの access entry type は `EC2_WINDOWS` です。従来の aws-auth mapping を使う場合は `eks:kube-proxy-windows` group が必要です。
 
 ### Windows Node Group の作成
 
-eksctl を使用して Windows Node Group を作成します:
+eksctl で Windows node group を作成します。
 
 ```bash
 eksctl create nodegroup \
@@ -877,17 +747,17 @@ eksctl create nodegroup \
   --nodes-min 1 \
   --nodes-max 4 \
   --managed \
-  --node-ami-family WindowsServer2019FullContainer
+  --node-ami-family WindowsServer2022FullContainer
 ```
 
-AWS Management Console を使用して Windows Node Group を作成する手順:
+AWS Management Console で Windows node group を作成する手順:
 
-1. EKS コンソールでクラスターを選択します
-2. 「Compute」タブを選択します
-3. 「Add node group」をクリックします
-4. Node Group の詳細を入力します
-5. AMI タイプとして「Windows」を選択します
-6. 残りの設定を構成して作成します
+1. EKS コンソールでクラスターを選択します。
+2. 「Compute」タブを選択します。
+3. 「Add node group」をクリックします。
+4. node group の詳細を入力します。
+5. AMI type として「Windows」を選択します。
+6. 残りの設定を構成して作成します。
 
 ### EKS への Windows アプリケーションのデプロイ
 
@@ -912,11 +782,13 @@ spec:
         tier: backend
         track: stable
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: windows-server-iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         ports:
         - name: http
           containerPort: 80
@@ -943,96 +815,69 @@ spec:
   type: LoadBalancer
 ```
 
-### EKS における Windows コンテナのロギング
+### EKS の Windows コンテナロギング
 
-CloudWatch Logs を使用して Windows コンテナログを収集する例:
+Windows Container Insights は CloudWatch Observability EKS add-on 1.5.0 以降でサポートされます。クラスターと互換性のある add-on バージョンを選び、IAM 権限と Windows agent の構成を確認してください。Windows Application Signals はサポートされません。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: amazon-cloudwatch
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
+kubelet の CRI log path（通常は `C:\var\log\pods` と `C:\var\log\containers`）から Windows の stdout/stderr を収集します。Linux の `/var/log` や Docker parser の設定をコピーせず、ディストリビューション固有のパスを確認してください。EKS は kubelet/kube-proxy のログを **EKS Windows** event log に出力します。.evtx ファイルを通常のコンテナに mount しても、ホストの event API を winlog で取得できるようにはなりません。ホストサービスまたはレビュー済みの HostProcess collector を使用してください。
 
-    [INPUT]
-        Name          tail
-        Tag           kube.*
-        Path          /var/log/containers/*.log
-        Parser        docker
-        DB            /var/fluent-bit/state/flb_container.db
-        Mem_Buf_Limit 50MB
+## ベストプラクティス {#best-practices}
 
-    [FILTER]
-        Name          kubernetes
-        Match         kube.*
-        Kube_URL      https://kubernetes.default.svc:443
-        Merge_Log     On
+Kubernetes で Windows ワークロードを実行するためのベストプラクティスを説明します。
 
-    [OUTPUT]
-        Name          cloudwatch_logs
-        Match         kube.*
-        region        us-west-2
-        log_group_name /aws/eks/my-cluster/windows-logs
-        log_stream_prefix windows-
-        auto_create_group true
-```
+### クラスター設計
 
-<span id="best-practices"></span>
+1. **混在ノードプール**: Linux と Windows のノードを適切に組み合わせます。
+2. **ノードラベルと taint**: ワークロードを分離するため、適切なラベルと taint を使います。
+3. **バージョン互換性**: Kubernetes と Windows のバージョンの互換性を確認します。
+4. **ネットワークプラグインの選定**: Windows に対応したプラグインを選びます。
+5. **高可用性**: 重要なワークロードに高可用性を構成します。
 
-## ベストプラクティス
+### アプリケーション設計
 
-Kubernetes で Windows ワークロードを実行するためのベストプラクティスを見ていきましょう。
+1. **コンテナイメージの最適化**: 小さく効率的なイメージを使います。
+2. **Resource Requests と Limits**: 適切な値を設定します。
+3. **ステートレス設計**: 可能な場合はステートレスなアプリケーションを設計します。
+4. **ロギングとモニタリング**: 効果的なロギングとモニタリングを構成します。
+5. **セキュリティ強化**: 適切な security context とネットワークポリシーを適用します。
 
-### クラスターデザインのベストプラクティス
+### 運用
 
-1. **混在 Node Pool**: Linux Node と Windows Node を適切に組み合わせて使用します
-2. **Node Label と Taint**: ワークロードを分離するため、適切な Node Label と Taint を使用します
-3. **バージョン互換性**: Kubernetes バージョンと Windows バージョンの互換性を確認します
-4. **Network Plugin の選定**: Windows をサポートする適切な Network Plugin を選択します
-5. **高可用性**: 重要なワークロードに高可用性を構成します
-
-### アプリケーションデザインのベストプラクティス
-
-1. **コンテナイメージの最適化**: 小さく効率的なコンテナイメージを使用します
-2. **Resource Requests と Limits**: 適切な Resource Request と Limit を設定します
-3. **ステートレスデザイン**: 可能な場合はステートレスアプリケーションを設計します
-4. **ロギングとモニタリング**: 効果的なロギングとモニタリングを構成します
-5. **セキュリティ強化**: 適切な Security Context と Network Policy を適用します
-
-### 運用のベストプラクティス
-
-1. **定期的な更新**: Windows Node とコンテナイメージを定期的に更新します
-2. **自動化**: デプロイおよび管理タスクを自動化します
-3. **バックアップとリカバリ**: 重要なデータを定期的にバックアップします
-4. **トラブルシューティングツール**: 適切なトラブルシューティングツールとプロセスを構築します
-5. **ドキュメント化**: 設定と手順を文書化します
+1. **定期更新**: Windows ノードとコンテナイメージを定期的に更新します。
+2. **自動化**: デプロイと管理作業を自動化します。
+3. **バックアップと復旧**: 重要なデータを定期的にバックアップします。
+4. **トラブルシューティングツール**: 適切なツールと手順を用意します。
+5. **ドキュメント化**: 構成と手順を記録します。
 
 ### EKS 固有のベストプラクティス
 
-1. **Managed Node Groups**: 可能な場合は Managed Node Group を使用します
-2. **IAM Roles for Service Accounts (IRSA)**: Pod ごとに IAM 権限を管理します
-3. **VPC CNI の設定**: ネットワーキング要件に応じて VPC CNI を設定します
-4. **Security Groups**: 適切な Security Group を設定します
-5. **コスト最適化**: 適切なインスタンスタイプとサイズを選択します
+1. **マネージド Node Group**: 可能な場合はマネージド node group を使います。
+2. **IAM Roles for Service Accounts (IRSA)**: Pod 単位で IAM 権限を管理します。
+3. **VPC CNI の構成**: ネットワーク要件に応じて設定します。
+4. **Security Group**: 適切な security group を構成します。
+5. **コスト最適化**: 適切なインスタンスタイプとサイズを選択します。
 
-<span id="conclusion"></span>
+## まとめ {#conclusion}
 
-## まとめ
+Kubernetes の Windows サポートは進化を続けており、Windows ワークロードを本番環境で実行できます。Windows ノードは Linux ノードと同じクラスター内で動作でき、多様なワークロードを 1 つのクラスターで管理できます。
 
-Kubernetes における Windows サポートは進化を続けており、現在では本番環境で Windows ワークロードを実行できます。Windows Node は同じクラスター内で Linux Node と並行して実行できるため、多様なワークロードを単一の Kubernetes クラスターで管理できます。
+Windows コンテナを使うと、.NET Framework アプリケーション、Windows サービスなど、Windows 固有のワークロードをコンテナ化して Kubernetes のオーケストレーション機能を活用できます。一方、Linux コンテナとは異なる制限があるため、その内容を把握し、適切に対処する必要があります。
 
-Windows コンテナにより、.NET Framework アプリケーション、Windows サービス、その他の Windows 固有ワークロードをコンテナ化し、Kubernetes のオーケストレーション機能を活用できます。ただし、Linux コンテナと比較していくつかの制限があるため、これらの制限を適切に理解して対処することが重要です。
+Amazon EKS は Windows ノードをマネージドサービスとして提供し、Windows ワークロードのデプロイと管理を容易にします。EKS の Windows サポートを活用すると、Windows アプリケーションの最新のコンテナ環境への移行を簡素化できます。
 
-Amazon EKS は Windows Node 向けのマネージドサービスを提供しており、Windows ワークロードのデプロイと管理を容易にします。EKS の Windows サポートを活用することで、Windows アプリケーションを最新のコンテナ環境へ移行するプロセスを簡素化できます。
-
-Kubernetes に Windows を正常に実装するには、適切な計画、設計、運用のベストプラクティスに従うことが重要です。これにより、Windows と Linux のワークロードを効率的に管理し、Kubernetes のすべての利点を活用できます。
+Kubernetes で Windows を導入するには、適切な計画、設計、運用のベストプラクティスに従ってください。これにより Windows と Linux のワークロードを効率よく管理し、Kubernetes の利点を活用できます。
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[Kubernetes における Windows クイズ](../quizzes/core/10-windows-in-kubernetes-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[Kubernetes の Windows クイズ](../quizzes/core/10-windows-in-kubernetes-quiz.md)に挑戦してください。
+
+## 検証用リファレンス
+
+- https://kubernetes.io/docs/concepts/windows/intro/
+- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/adding-windows-nodes/
+- https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
+- https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/
+- https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility
+- https://github.com/microsoft/windows-container-tools/tree/main/LogMonitor
+- https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html
+- https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html

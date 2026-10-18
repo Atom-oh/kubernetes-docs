@@ -1,8 +1,8 @@
-# Limitación de tasa
+# Limitación de solicitudes
 
-> **Última actualización**: 11 de septiembre de 2026 · Istio 1.31. Ejemplos independientes; elija una política local por carga/listener. Las aplicaciones sidecar usan HTTP 8080 en `default`; los gateways seleccionan uno dedicado con `istio: ingressgateway` en `istio-system`. Verifique etiquetas/listeners antes de aplicar. No se desplegaron ni probaron con carga.
+> **Última actualización**: 11 de septiembre de 2026 · Istio 1.31. Los ejemplos son independientes: elija una sola política local por carga de trabajo y listener. Las aplicaciones con sidecar usan HTTP en el puerto 8080, dentro del namespace `default`; los ejemplos de gateway seleccionan un gateway dedicado con la etiqueta `istio: ingressgateway`, en `istio-system`. Compruebe las etiquetas y los listeners reales antes de aplicar la configuración. Estas configuraciones no se han desplegado ni sometido a pruebas de carga.
 
-La limitación de tasa restringe solicitudes para proteger servicios de sobrecarga, asegurar uso justo y controlar costes.
+La limitación de solicitudes restringe la frecuencia de las peticiones para proteger los servicios frente a la sobrecarga, distribuir los recursos de forma equitativa y controlar los costes.
 
 ## Índice
 
@@ -16,7 +16,7 @@ La limitación de tasa restringe solicitudes para proteger servicios de sobrecar
 
 ## Descripción general {#overview}
 
-Se necesita limitación en estas situaciones:
+La limitación de solicitudes resulta útil en las siguientes situaciones:
 
 ![Tres clientes envían tráfico a un limitador token bucket, que reenvía solicitudes permitidas a dos Pods y rechaza exceso con 429.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-0.png)
 
@@ -24,19 +24,19 @@ Se necesita limitación en estas situaciones:
 
 ### Objetivos
 
-1. **Protección del servicio**: Evitar sobrecarga
-2. **Equidad**: Requiere un modelo deliberado de descriptores/identidad; un bucket compartido no implica equidad por cliente.
-3. **Control de costes**: Gestionar costes de llamadas a API externas
-4. **Reducir abuso**: Limita solicitudes HTTP seleccionadas; no sustituye protección edge/DDoS ni evita agotamiento de conexiones/TLS.
+1. **Protección del servicio**: Evitar la sobrecarga.
+2. **Equidad**: Diseñar expresamente los descriptores y el modelo de identidad; un bucket compartido no garantiza un reparto equitativo entre clientes.
+3. **Control de costes**: Gestionar el coste de las llamadas a API externas.
+4. **Reducción del abuso**: Limitar las solicitudes HTTP seleccionadas. Este control no sustituye la protección perimetral o frente a DDoS, ni evita el agotamiento de conexiones o recursos TLS.
 
 ## Tipos de limitación {#rate-limiting-types}
 
 ### 1. Limitación local
 
 **Características**:
-- Cada proxy Envoy limita de forma independiente
-- Respuesta rápida sin llamadas adicionales
-- En entornos distribuidos, el límite total se aplica por instancia
+- Cada proxy Envoy aplica el límite de forma independiente.
+- Responde con rapidez, sin llamadas de red adicionales.
+- En un entorno distribuido, el límite se aplica a cada instancia.
 
 ```yaml
 # 100 req/s limit per pod
@@ -47,9 +47,9 @@ Se necesita limitación en estas situaciones:
 ### 2. Limitación global
 
 **Características**:
-- Usa servidor centralizado
-- Contadores compartidos por dominio/descriptor y ventana; importa el comportamiento de backend/fallo
-- Ligera latencia por llamada externa
+- Utiliza un servidor centralizado de limitación de solicitudes.
+- Comparte contadores para un dominio, un descriptor y una ventana definidos; el comportamiento del backend y ante fallos afecta al resultado.
+- Añade una pequeña latencia por la llamada al servicio externo.
 
 ```yaml
 # Shared descriptor quota:100 per backend second-window
@@ -58,16 +58,16 @@ Se necesita limitación en estas situaciones:
 
 ### Comparación
 
-| Característica | Local | Global |
+| Característica | Limitación local | Limitación global |
 |----------------|---------------------|----------------------|
-| **Alcance de cuota** | Por bucket local configurado | Dominio/descriptor compartido |
+| **Alcance de la cuota** | Cada bucket local configurado | Dominio y descriptor compartidos |
 | **Rendimiento** | Muy rápido | Algo más lento |
-| **Complejidad** | Baja | Alta, requiere servicio externo |
-| **Uso** | Protección general | Control preciso |
+| **Complejidad** | Baja | Alta: requiere un servicio externo |
+| **Caso de uso** | Protección general | Control preciso de las solicitudes |
 
 ## Limitación local {#local-rate-limiting}
 
-### Algoritmo token bucket
+### Algoritmo de bucket de tokens
 
 ![Cada segundo se añaden tokens; cada solicitud comprueba si hay uno y lo consume para pasar, o se rechaza con 429.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-1.png)
 
@@ -123,9 +123,9 @@ spec:
 ```
 
 **Parámetros principales**:
-- `max_tokens`: Máximo de tokens del bucket, permite ráfagas
-- `tokens_per_fill`: Tokens añadidos por fill_interval
-- `fill_interval`: Intervalo de reposición
+- `max_tokens`: Número máximo de tokens que puede contener el bucket; permite absorber ráfagas.
+- `tokens_per_fill`: Tokens que se añaden en cada fill_interval.
+- `fill_interval`: Intervalo entre reposiciones de tokens.
 
 **Ejemplo**:
 ```yaml
@@ -215,7 +215,7 @@ spec:
                     prefix: /api/v1/admin
 ```
 
-`rate_limits` genera entradas `header_match` y `descriptors` elige buckets coincidentes. El campo existe en la API Envoy fijada por Istio 1.31; aquí sustituye la búsqueda local de acciones de ruta/vhost. Los valores de ruta son claves literales de descriptor; la coincidencia de prefijo real está en `headers`. Los prefijos también coinciden con rutas más largas que empiezan igual. El bucket fallback limita solicitudes no coincidentes; `always_consume_default_token_bucket: false` evita limitar adicionalmente usuarios de 100 req/s al fallback de 10 req/s.
+`rate_limits` genera entradas `header_match`, y `descriptors` selecciona los buckets de tokens correspondientes. Este campo está disponible en la versión de la API de Envoy incluida en Istio 1.31. Al configurarlo aquí, sustituye la búsqueda de acciones de limitación de solicitudes en rutas y virtual hosts que realiza el filtro local. Los valores de ruta son claves literales de descriptor; la coincidencia por prefijo se define en `headers`. Cada prefijo también coincide con rutas más largas que comiencen por el mismo texto. El bucket predeterminado limita las solicitudes que no coinciden con ningún descriptor; `always_consume_default_token_bucket: false` evita que el límite predeterminado de 10 solicitudes/s se aplique también al grupo que dispone de 100 solicitudes/s.
 
 ### Limitación por cabeceras
 
@@ -292,25 +292,25 @@ spec:
                     exact: free
 ```
 
-Los descriptores de nivel son buckets compartidos por nivel en cada proxy, no por usuario. Un upstream autenticado debe retirar cabeceras de nivel del cliente e insertar un nivel confiable, y el servicio debe impedir bypass. Niveles ausentes/desconocidos usan fallback acotado. Una cabecera premium sola no autentica.
+Los descriptores de nivel comparten un bucket por nivel en cada proxy local, en lugar de asignar uno a cada usuario. Un componente autenticado situado antes del servicio debe eliminar las cabeceras de nivel enviadas por el cliente e insertar un nivel fiable. El servicio también debe impedir que se eluda ese recorrido. Si el nivel falta o es desconocido, se aplica el bucket predeterminado, que tiene un límite. Una cabecera premium, por sí sola, no autentica al usuario.
 
 ## Limitación global {#global-rate-limiting}
 
-Consulta un servicio compartido de decisión sobre dominio/descriptor. Puede abarcar réplicas gateway, pero no automáticamente cada solicitud del clúster. Almacenamiento de contadores, límites de ventana, failover y política de fallos afectan la garantía real.
+La limitación global consulta a un servicio de decisión compartido para un dominio y un descriptor. La cuota puede abarcar varias réplicas del gateway, pero no incluye automáticamente todas las solicitudes del clúster. El almacenamiento de los contadores, los límites entre ventanas, la conmutación ante fallos y la política de errores determinan las garantías reales.
 
 ### Arquitectura
 
-![Clientes pasan por un ingress gateway Istio, que consulta un servidor central de límites respaldado por caché en memoria antes de reenviar al backend.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
+![Diagrama de arquitectura: los clientes envían solicitudes a través de un ingress gateway de Istio, que consulta a un servidor central de límites respaldado por una caché en memoria antes de reenviar el tráfico permitido a los servicios de backend.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-2.html)
 
 ### Método de configuración
 
-La limitación global requiere desplegar servicio externo e integrarlo mediante EnvoyFilter.
+La limitación global requiere desplegar un servicio externo de limitación de solicitudes e integrarlo mediante EnvoyFilter.
 
-La caché del diagrama debe respaldarse con contadores compartidos como Redis; cachés independientes en proceso no crean cuota global. El Deployment supone un **servicio Redis TCP ya disponible** en `redis-ratelimit.istio-system.svc.cluster.local:6379` dentro de laboratorio aislado. Aprovisionamiento, autenticación/TLS, persistencia/HA y failover son requisitos separados; no se crea aquí. Configure REDIS_AUTH/REDIS_TLS/certificados del servicio fijado mediante Secrets/montajes apropiados.
+La caché del diagrama debe utilizar un almacén de contadores compartido, como Redis. Las cachés independientes de cada proceso no establecen una cuota global. El siguiente Deployment presupone un **servicio Redis TCP ya disponible** en `redis-ratelimit.istio-system.svc.cluster.local:6379`, dentro de un laboratorio aislado. El aprovisionamiento, la autenticación/TLS, la persistencia, la alta disponibilidad y la conmutación ante fallos de ese backend son requisitos aparte; el ejemplo no lo crea. Para un backend protegido, configure las opciones REDIS_AUTH, REDIS_TLS y de certificados de la versión fijada del servicio mediante los Secrets y los volúmenes montados adecuados.
 
-La imagen corresponde al commit publicado 8fe6ea42 del 24 de agosto de 2026, fijado por digest de manifiesto y disponible para linux/amd64 y linux/arm64. Upstream usa etiquetas de commit, no releases semánticas posteriores a v1.4.0; no afirma una release productiva/estable certificada. Revise y pruebe actualizaciones. Deployment pide sidecar explícito: verifique selección del injector y acceso gateway a gRPC bajo políticas reales.
+La imagen corresponde al commit publicado 8fe6ea42, del 24 de agosto de 2026. Está fijada mediante el digest de su manifiesto y está disponible para linux/amd64 y linux/arm64. El proyecto utiliza etiquetas de commit en lugar de versiones semánticas posteriores a v1.4.0; esto no acredita una versión estable ni certificada para producción. Revise y pruebe cada actualización. El Deployment solicita expresamente la inyección de un sidecar: compruebe que el inyector lo selecciona y que el gateway puede acceder a su Service gRPC con las políticas de malla y red vigentes.
 
 #### 1. Desplegar el servicio de límites
 
@@ -459,7 +459,7 @@ spec:
 
 #### 3. Añadir acciones al VirtualHost del gateway
 
-Aplique el conjunto una vez al mismo gateway dedicado. Cubre deliberadamente todos sus virtual hosts HTTP; en uno compartido, limite a un vhost generado verificado. Genera descriptores globales, por prefijo y por IP correspondientes al ConfigMap. `remote_address` es una IP downstream confiable, no identidad de usuario; configure la cadena proxy/XFF real y considere NAT antes de usarla como cuota.
+Aplique este conjunto de acciones una sola vez al mismo gateway dedicado que utiliza el filtro. La configuración abarca deliberadamente todos sus virtual hosts HTTP. Si el gateway es compartido, restrinja la coincidencia a un virtual host generado cuyo nombre haya comprobado. Las acciones generan descriptores globales, por prefijo de ruta y por IP de cliente, de acuerdo con el ConfigMap. `remote_address` representa una IP fiable del cliente que se conecta al proxy, no la identidad del usuario. Antes de emplearla para asignar cuotas, configure la cadena real de confianza de proxies/XFF y tenga en cuenta NAT.
 
 
 ```yaml
@@ -494,40 +494,40 @@ spec:
           - remote_address: {}
 ```
 
-El filtro usa el clúster gRPC generado por Istio, con descubrimiento normal y TLS de malla. No añade un clúster manual en texto plano. `failure_mode_deny: true` normalmente devuelve HTTP 500 ante error de decisión y 429 al exceder límites; false puede permitir ante fallo. El presupuesto 100ms es ilustrativo: alinee timeouts Redis, latencia y plazos del llamante. Pruebe contadores entre ventanas, reinicio/failover Redis y cambios de réplicas. Confirme recarga/reinicio tras cambiar ConfigMap; un Pod Running no prueba política cargada.
+El filtro utiliza el clúster gRPC generado por Istio, por lo que se aplican el descubrimiento de servicios y la política TLS de la malla habituales. No se añade un clúster manual en texto plano. Con `failure_mode_deny: true`, un error del servicio de decisión suele devolver HTTP 500, mientras que una respuesta que indique un exceso de cuota devuelve HTTP 429. Con false, las solicitudes pueden permitirse cuando el servicio falla. El presupuesto de 100 ms es orientativo: ajústelo a los tiempos de espera de Redis, la latencia y los plazos del cliente que realiza la llamada. Compruebe los contadores al pasar de una ventana a otra, al reiniciar Redis, durante la conmutación ante fallos y al cambiar el número de réplicas del servicio. Tras modificar el ConfigMap, confirme que la configuración se ha recargado o reinicie el servicio; que un Pod esté en ejecución no demuestra que la política se haya cargado.
 
 ### Parámetros principales
 
 | Parámetro | Descripción |
 |-----------|-------------|
-| `domain` | Dominio de configuración del servicio, debe coincidir con ConfigMap |
-| `failure_mode_deny` | Rechazar o no cuando falla el servicio de decisión |
-| `timeout` | Espera de respuesta del servicio |
-| `rate_limit_service` | Endpoint gRPC externo |
+| `domain` | Dominio de configuración del servicio de límites; debe coincidir con el ConfigMap. |
+| `failure_mode_deny` | Determina si se rechazan las solicitudes cuando falla el servicio de límites. |
+| `timeout` | Tiempo máximo de espera de la respuesta del servicio de límites. |
+| `rate_limit_service` | Endpoint gRPC del servicio externo de límites. |
 
 ### Criterios para elegir global o local
 
-**Usar local**:
-- Configuración sencilla
-- Respuesta rápida
-- Sin dependencias externas
-- Alcance por bucket; réplicas/distribución afectan throughput agregado
+**Use la limitación local cuando necesite**:
+- Una configuración sencilla.
+- Una respuesta rápida.
+- Evitar dependencias externas.
+- Un límite por bucket, teniendo en cuenta que el número de réplicas y el reparto del tráfico afectan al rendimiento agregado.
 
-**Usar global**:
-- Límites compartidos para descriptores elegidos
-- Reglas complejas por usuario/IP/ruta
-- Gestión central
-- Requiere servicio externo, con más complejidad
-- Pequeña latencia por gRPC
+**Use la limitación global cuando necesite**:
+- Límites compartidos para los descriptores seleccionados.
+- Reglas complejas por usuario, IP o ruta.
+- Gestión centralizada.
+- Un servicio externo, con la complejidad adicional que conlleva.
+- Aceptar una pequeña latencia por la llamada gRPC.
 
 **Recomendaciones**:
-- **API Gateway productivo**: Global para control preciso
-- **Protección de microservicios**: Local para respuesta rápida
-- **Híbrido**: Global en gateway, local dentro
+- **API Gateway en producción**: Limitación global cuando se necesite un control preciso.
+- **Protección de microservicios**: Limitación local para responder con rapidez.
+- **Modelo híbrido**: Limitación global en el gateway y local en los servicios internos.
 
 ## Ejemplos prácticos {#practical-examples}
 
-### Ejemplo 1: Limitar API Gateway
+### Ejemplo 1: Limitación de solicitudes en API Gateway
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -615,7 +615,7 @@ spec:
                     prefix: /graphql
 ```
 
-El ejemplo local clasifica prefijos; `/protected` no exige autenticación por sí solo. Cada réplica gateway tiene buckets independientes. Rutas desconocidas usan fallback. `rate_limits` propio evita depender de un nombre de ruta generado adivinado.
+Este ejemplo de limitación local en el gateway clasifica las solicitudes por prefijo de ruta; `/protected` no exige autenticación por sí mismo. Cada réplica del gateway dispone de buckets independientes. Las rutas desconocidas utilizan el bucket predeterminado. El campo `rate_limits` del propio filtro local evita depender de un nombre supuesto de ruta generada.
 
 ### Ejemplo 2: Límites por nivel de usuario
 
@@ -706,7 +706,7 @@ spec:
                     exact: free
 ```
 
-Las cuotas enterprise/premium/free se comparten por nivel y bucket de proxy configurado. Requieren los mismos controles de cabecera confiable y anti-bypass. No interprete 1000 req/s como asignación independiente de cada usuario enterprise.
+Las cuotas enterprise, premium y free del ejemplo se comparten por nivel en cada bucket del proxy configurado. Requieren los mismos controles de cabeceras fiables y de prevención de accesos que eludan el control descritos en el ejemplo anterior. La cuota de 1000 solicitudes/s no es una asignación independiente para cada usuario enterprise.
 
 ### Ejemplo 3: Proteger API externa
 
@@ -769,13 +769,13 @@ spec:
                 denominator: HUNDRED
 ```
 
-El ejemplo egress supone ServiceEntry/DestinationRule `api.external.com` HTTP 80→TLS 443 de [protección externa](01-outlier-detection.md#protecting-external-services-serviceentry). Verifique vhost `api.external.com:80`. El listener instala filtro inactivo; solo ese vhost recibe bucket habilitado. Los demás hosts HTTP salientes no se limitan aquí. HTTPS opaco de aplicación no puede clasificarse con HTTP. Cada llamante tiene bucket propio: no es cuota compartida del proveedor/cuenta. La cabecera marca respuestas rechazadas; no configura logging.
+Este ejemplo de tráfico saliente presupone el ServiceEntry y el DestinationRule de `api.external.com` que convierten HTTP en el puerto 80 a TLS en el 443, descritos en [protección de servicios externos](01-outlier-detection.md#protecting-external-services-serviceentry). Compruebe que el virtual host generado se llama `api.external.com:80`. El listener instala un filtro inactivo, y solo ese virtual host recibe un bucket habilitado. El ejemplo no limita los demás hosts HTTP de salida. Un filtro HTTP no puede clasificar el tráfico HTTPS de la aplicación cuando permanece cifrado. Cada cliente que realiza llamadas dispone de su propio bucket; no se establece una cuota compartida del proveedor o de la cuenta. La cabecera de respuesta identifica los rechazos, pero no configura el registro de eventos.
 
 ## Monitorización {#monitoring}
 
 ### Métricas Prometheus
 
-Combine la anotación en la plantilla Pod de aplicación/gateway y despliegue proxies nuevos. Use recogida de [métricas](../observability/01-metrics.md); las consultas suponen etiquetas `namespace`/`pod` y un scrape por proxy. Descubra nombres reales porque el prefijo local depende de `stat_prefix`.
+Incorpore la anotación a la plantilla de Pods de la aplicación o del gateway correspondiente y despliegue nuevos proxies. Utilice la configuración de recopilación descrita en [métricas](../observability/01-metrics.md). Las consultas presuponen las etiquetas de recopilación `namespace` y `pod`, y una sola recopilación por proxy. Compruebe los nombres reales de las métricas, ya que el prefijo local depende de `stat_prefix`.
 
 ```yaml
 spec:
@@ -789,7 +789,7 @@ spec:
             - ".*ratelimit.*"
 ```
 
-En orden: rechazos locales aplicados/s, decisiones bajo límite/s, fracción aplicada de solicitudes consultadas, y resultados globales sobre límite/OK/error/fail-open por segundo. `rate_limited` cuenta ausencia de tokens incluso sin enforcement; `enforced` cuenta rechazos efectivos. `over_limit` no es total de llamadas globales. Los contadores globales pertenecen al clúster destino enrutado, no necesariamente al del servicio de límites.
+Las consultas muestran, en este orden: rechazos locales efectivos por segundo, decisiones dentro del límite por segundo, proporción de solicitudes consultadas que se rechazan y, finalmente, resultados globales por segundo: exceso de cuota, OK, error y solicitudes permitidas ante un fallo. `rate_limited` cuenta las decisiones por falta de tokens incluso cuando no se aplican los rechazos; `enforced` cuenta los rechazos efectivos. `over_limit` no representa el número total de llamadas globales. Los contadores del filtro global pertenecen al clúster de destino al que se dirige la solicitud, que no tiene por qué ser el clúster del servicio de límites.
 
 ```promql
 sum by (namespace, pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="default"}[5m]))
@@ -807,11 +807,11 @@ rate(envoy_cluster_ratelimit_error{namespace="istio-system"}[5m])
 rate(envoy_cluster_ratelimit_failure_mode_allowed{namespace="istio-system"}[5m])
 ```
 
-Para políticas locales de gateway use `namespace="istio-system"`; restrinja etiquetas Pod/clúster/prefijo. Denominador cero, estadística ausente o scrape fallido necesitan manejo explícito de no-data. La aplicación puede devolver 429 por sí misma, así que ese estado no demuestra aplicación de esta cuota.
+Para las políticas locales del gateway, utilice `namespace="istio-system"` y restrinja las etiquetas de Pod, clúster y prefijo a la política elegida. Defina cómo tratar un denominador cero, una estadística ausente o un fallo de recopilación. La propia aplicación puede devolver HTTP 429; esa respuesta, por sí sola, no demuestra que el filtro haya aplicado una cuota.
 
-### Dashboard Grafana
+### Panel de Grafana
 
-El objeto requiere UID `prometheus` y etiquetas anteriores. Use [provisioning de archivo](../observability/04-dashboards.md); una etiqueta ConfigMap no es un cargador.
+Este objeto de panel requiere una fuente de datos con el UID `prometheus` y las etiquetas anteriores. Siga el procedimiento de [aprovisionamiento de paneles desde archivos](../observability/04-dashboards.md). Una etiqueta de ConfigMap, por sí sola, no carga el panel.
 
 ```json
 {
@@ -883,7 +883,7 @@ El objeto requiere UID `prometheus` y etiquetas anteriores. Use [provisioning de
 
 ## Resolución de problemas {#troubleshooting}
 
-### Los límites no funcionan
+### La limitación de solicitudes no funciona
 
 ```bash
 # 1. Check EnvoyFilter
@@ -898,7 +898,7 @@ istioctl proxy-config routes <pod-name> -n <namespace> -o json
 istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep -E "rate_limit|ratelimit"
 ```
 
-### Fallo de conexión de límites globales
+### Fallo de conexión con el servicio de límites globales
 
 ```bash
 # Check Rate Limit Service
@@ -914,10 +914,10 @@ istioctl proxy-config clusters <gateway-pod> -n istio-system --fqdn ratelimit.is
 kubectl get endpointslice -n istio-system -l kubernetes.io/service-name=ratelimit
 ```
 
-El comando Redis requiere contenedor cliente autorizado existente con redis-cli y TLS/autenticación adecuados. La imagen de límites fijada es distroless, sin shell ni redis-cli. Inspeccione logs, `/healthcheck`, configuración cargada, selectores, política de malla y descriptores iguales. Un Pod verde o log predeterminado vacío no prueba enforcement.
+El comando de Redis requiere un contenedor cliente ya disponible y autorizado, que disponga de redis-cli y de la configuración TLS y de autenticación del backend. La imagen fijada del servicio de límites es distroless: no incluye un intérprete de comandos ni redis-cli. Revise los registros del servicio y `/healthcheck`, la configuración cargada, los selectores de namespace, la política de malla y la correspondencia de los descriptores. Un Pod que parezca funcionar o un registro predeterminado de proxy vacío no demuestra que se apliquen los límites.
 
 ## Referencias
 
-- [Limitación de tasa Istio](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
-- [Limitación Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter)
-- [Limitación global Envoy](https://github.com/envoyproxy/ratelimit)
+- [Limitación de solicitudes en Istio](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
+- [Limitación de solicitudes en Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter)
+- [Servicio de límites globales de Envoy](https://github.com/envoyproxy/ratelimit)

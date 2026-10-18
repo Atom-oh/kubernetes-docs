@@ -1,6 +1,6 @@
 # Amazon EKS 成本优化测验
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 示例是彼此独立的配置选项，并非实际执行的部署或经过测量的节省效果。请将更改合并到现有资源所属方的配置中；不要在同一工作负载上依次应用所有示例。请替换占位应用镜像和由应用负责的钩子，验证账户/上下文/Region 及控制器的兼容性，并在用于实际运维前测试行为。
 
@@ -295,7 +295,7 @@ HPA 需要资源指标和 requests；使用 CPU 和 memory 目标时，它会选
 **其他实施注意事项**
 
 - eksctl 配置可以为系统工作负载定义一个按需型组，并为应用定义一个多样化的 Spot 组。仅设置标签不能隔离工作负载。请有意配置 selectors/tolerations；在系统控制器能够运行之前，不要给唯一的引导节点添加污点。
-- 在现有 Terraform 模块中，`aws_eks_node_group` 可以设置 `capacity_type = "SPOT"` 和 `scaling_config`。集群、节点 IAM 角色/策略、子网和 provider 必须已经定义。请协调 desired_size 的所有权与 autoscaler。
+- 在现有 Terraform 模块中，`aws_eks_node_group` 可以设置 `capacity_type = "SPOT"` 和 `scaling_config`。集群、节点 IAM 角色/策略、子网和 provider 必须已经定义。请协调 `desired_size` 的所有权与 autoscaler。
 - EKS 节点组标签不能替代 Cluster Autoscaler 使用的**实际 ASG**发现标签。更改前请检查 ASG，并确认其现有标签的所有者。将 autoscaler 策略绑定到专用控制器身份；附加到节点角色的附加组件权限并非预期的身份。
 - 将 AWS 读取/发现操作与两个扩缩写入操作分开。按照[官方 EKS 策略](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)中的做法，将 `autoscaling:SetDesiredCapacity` 和 `autoscaling:TerminateInstanceInAutoScalingGroup` 限制到带有经过审核的启用/集群所有权标签的 ASG。
 
@@ -2457,5 +2457,3 @@ else:
 
 其他选项都忽略了衡量、工作负载信号或协调的所有权。相互竞争的控制器会损害稳定性和成本可预测性。
 </details>
-
-</source_document>

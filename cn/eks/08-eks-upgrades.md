@@ -1,6 +1,6 @@
 # Amazon EKS 升级
 
-> **最后更新**：October 12, 2026
+> **最后更新**：2026年10月12日
 
 让 Amazon EKS 集群保持最新状态，对于安全性、稳定性以及利用新功能都很重要。本文档介绍了安全升级 EKS 集群的策略、最佳实践和分步指南。
 
@@ -19,7 +19,7 @@
 
 ## EKS 升级概述 {#eks-upgrade-overview}
 
-![Tree diagram of the four pillars of an EKS upgrade: version management policy, the components that get upgraded (control plane, node groups, add-ons, self-managed components), the one-minor-version-at-a-time upgrade path versus an unsupported version skip, and the five-step upgrade order.](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
+![树状图展示 EKS 升级的四大支柱：版本管理策略、待升级的组件（控制平面、节点组、附加组件、自行管理的组件）、逐个次要版本升级与不受支持的跳版本，以及五步升级顺序。](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-0.html)
 
@@ -58,7 +58,7 @@ EKS 集群必须一次升级一个次要版本：
 4. 按照已验证的依赖顺序升级节点、客户端/控制器和剩余附加组件，每一步都要检查。Auto Mode 自主管理其内置功能，并在控制平面升级后启动节点更新。
 5. 验证实际节点版本、工作负载就绪状态、流量、存储和 SLO。
 
-对于 kubelet 1.25 及更高版本，上游允许其最多落后 API server 三个次要版本，但不能更新；API server 版本混合时，允许的范围会缩小。EKS 文档既说明了升级前节点版本对齐建议，也说明了支持的版本偏差范围。本操作手册选择对齐作为准备策略；它并不声称 EKS API 一律拒绝所有受支持的版本偏差。附加组件并非一律都要“在控制平面升级之前”或“之后”升级。回滚采用不同的先升级节点顺序，详见下文。
+对于 kubelet 1.25 及更高版本，上游允许其最多落后 API server 三个次要版本，但不能高于 API server；API server 版本混合时，允许的范围会缩小。EKS 文档既说明了升级前节点版本对齐建议，也说明了支持的版本偏差范围。本操作手册选择对齐作为准备策略；它并不声称 EKS API 一律拒绝所有受支持的版本偏差。附加组件并非一律都要“在控制平面升级之前”或“之后”升级。回滚采用不同的先升级节点顺序，详见下文。
 
 ## 升级规划与准备 {#upgrade-planning-and-preparation}
 
@@ -593,7 +593,7 @@ kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o custom-columns=NA
 
 清点实际组件负责人和升级路径。控制平面升级不会自动升级 EKS 托管的附加组件；负责人需选择并发起兼容的更新。必需的过渡版本可以先于控制平面变更安装。Auto Mode 内置功能由 AWS 单独管理；不要像所有集群都使用相同的 DaemonSet/Deployment 一样，安装或更新重复的节点网络/存储/DNS 组件。
 
-![Diagram showing how add-on upgrades split into AWS managed add-ons (check versions, then upgrade with update-addon or eksctl), self-managed add-ons (Helm or kubectl), key add-on guides (CoreDNS, kube-proxy, VPC CNI), and troubleshooting (common issues and troubleshooting steps).](../.gitbook/assets/en-eks-08-eks-upgrades-4.png)
+![图示展示附加组件升级的几条路径：AWS 托管附加组件（检查版本后使用 update-addon 或 eksctl 升级）、自行管理的附加组件（Helm 或 kubectl）、关键附加组件指南（CoreDNS、kube-proxy、VPC CNI），以及故障排除。](../.gitbook/assets/en-eks-08-eks-upgrades-4.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-4.html)
 
@@ -749,7 +749,7 @@ kubectl --context "$KUBE_CONTEXT" get events -n kube-system --sort-by='.lastTime
 
 升级完成后，需要验证集群是否正常运行，并解决可能出现的任何问题。
 
-![Tree diagram splitting post-upgrade work into Upgrade Validation (cluster version, cluster state, workload validation, functional testing) and Upgrade Troubleshooting (common upgrade issues, troubleshooting steps, rollback procedure).](../.gitbook/assets/en-eks-08-eks-upgrades-5.png)
+![树状图展示升级后的工作：升级验证（集群版本、集群状态、工作负载验证、功能测试）和升级故障排除（常见升级问题、故障排除步骤、回滚流程）。](../.gitbook/assets/en-eks-08-eks-upgrades-5.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-5.html)
 

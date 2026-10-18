@@ -4,82 +4,48 @@
 
 ## 目次
 
+2026年9月11日に、Linux EC2 ベースの EKS ノードと AWS Load Balancer Controller を対象に確認しました。以下の NLB passthrough、ALB 終端、NLB 終端は互いに代替となる設計です。重複する Service/Gateway リソースを同時に適用しないでください。[インストール](01-installation.md)の設定に合わせて gateway Pod のラベルと target port を指定します。Service の変更は、管理元の Helm/istioctl 設定にマージしてください。EKS Auto Mode は独自のロードバランサー連携とサポート対象 annotation を使用します。Fargate では Istio CNI/ztunnel を実行できません。
+
 1. [AWS Load Balancer 統合](04-aws-integration.md#aws-load-balancer-integration)
 2. [Istio と他のソリューションの比較](04-aws-integration.md#istio-vs-other-solutions-comparison)
 3. [EKS 固有の最適化](04-aws-integration.md#eks-specific-optimization)
 4. [ベストプラクティス](04-aws-integration.md#best-practices)
 
-<span id="aws-load-balancer-integration"></span>
-
-## AWS Load Balancer 統合
+## AWS Load Balancer 統合 {#aws-load-balancer-integration}
 
 Istio Ingress Gateway は AWS Load Balancer と統合し、外部トラフィックを処理できます。
 
 ### Network Load Balancer (NLB) 統合
 
-NLB は Layer 4（TCP/UDP）のロードバランサーであり、高性能かつ低レイテンシーが求められる場合に適しています。
+NLB は Layer 4（TCP/UDP）のロードバランサーで、高性能と低レイテンシーが必要な場合に適しています。
 
 #### NLB アーキテクチャ
 
-```mermaid
-flowchart TB
-    Client[Client]
+![クライアントの HTTPS リクエストは AWS Network Load Balancer に到達し、NLB は TCP 443 を EKS クラスター内の 2 つの Istio Ingress Gateway Envoy Pod に転送します。各 gateway は Service A と Service B の Pod に HTTP/HTTPS でルーティングします。](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-0.png)
 
-    subgraph AWS["AWS Cloud"]
-        NLB[Network Load Balancer<br/>Layer 4]
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-04-aws-integration-0.html)
 
-        subgraph EKS["EKS Cluster"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1<br/>Envoy Proxy]
-                IGW2[Gateway Pod 2<br/>Envoy Proxy]
-            end
-
-            subgraph Apps["Applications"]
-                App1[Service A<br/>Pod]
-                App2[Service B<br/>Pod]
-            end
-        end
-    end
-
-    Client -->|HTTPS Request| NLB
-    NLB -->|TCP 443| IGW1
-    NLB -->|TCP 443| IGW2
-    IGW1 -->|HTTP/HTTPS| App1
-    IGW1 -->|HTTP/HTTPS| App2
-    IGW2 -->|HTTP/HTTPS| App1
-    IGW2 -->|HTTP/HTTPS| App2
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client default;
-    class NLB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
-
-#### NLB 設定
+#### NLB の設定
 
 **1. AWS Load Balancer Controller をインストールする**
 
 ```bash
 # Create IAM policy
-curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+curl -fsSL -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json
 
 aws iam create-policy \
     --policy-name AWSLoadBalancerControllerIAMPolicy \
     --policy-document file://iam_policy.json
+
+# Associate the cluster OIDC provider once before creating IRSA
+eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
 
 # IRSA setup
 eksctl create iamserviceaccount \
   --cluster=my-cluster \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
-  --attach-policy-arn=arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+  --attach-policy-arn="arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy" \
   --override-existing-serviceaccounts \
   --approve
 
@@ -89,12 +55,15 @@ helm repo update
 
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
+  --version 3.5.0 \
   --set clusterName=my-cluster \
+  --set region=us-west-2 \
+  --set vpcId="<VPC_ID>" \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller
 ```
 
-**2. NLB を使用した Istio Ingress Gateway の設定**
+**2. NLB を使った Istio Ingress Gateway の設定**
 
 ```yaml
 # istio-ingress-nlb.yaml
@@ -109,10 +78,7 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 
-    # TLS configuration
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account:certificate/cert-id"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    # TCP passthrough: TLS terminates at Istio; no ACM TLS listener here
 
     # Health check configuration
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "http"
@@ -120,18 +86,13 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/healthz/ready"
 
     # Additional configuration
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+    service.beta.kubernetes.io/aws-load-balancer-attributes: "load_balancing.cross_zone.enabled=true"
 spec:
   type: LoadBalancer
   selector:
     app: istio-ingressgateway
     istio: ingressgateway
   ports:
-  - name: status-port
-    port: 15021
-    protocol: TCP
-    targetPort: 15021
   - name: http2
     port: 80
     protocol: TCP
@@ -175,67 +136,28 @@ spec:
 
 #### NLB の利点
 
-* **高性能**: 1 秒あたり数百万件のリクエストを処理
-* **低レイテンシー**: Layer 4 で動作し、高速に応答
-* **静的 IP**: Elastic IP の割り当てが可能
-* **プロトコルサポート**: TCP、UDP、TLS
-* **コスト効率**: ALB より低コスト
+* **高性能**: 1 秒あたり数百万件のリクエストを処理できます。
+* **低レイテンシー**: Layer 4 で動作し、高速に応答します。
+* **静的 IP**: Elastic IP を割り当てられます。
+* **プロトコルサポート**: TCP、UDP、TLS に対応します。
+* **容量計画**: 接続数/転送バイトを測定し、リージョンごとの料金と比較してください。
 
 #### NLB のユースケース
 
-* WebSocket、gRPC、その他の長時間接続
+* WebSocket、gRPC などの長時間接続
 * 1 秒あたり数百万件のリクエストの処理
 * 静的 IP が必要な場合
 * TLS 終端を Istio で行う場合
 
 ### Application Load Balancer (ALB) 統合
 
-ALB は Layer 7（HTTP/HTTPS）のロードバランサーであり、高度なルーティング機能が必要な場合に適しています。
+ALB は Layer 7（HTTP/HTTPS）のロードバランサーで、高度なルーティング機能が必要な場合に適しています。
 
 #### ALB アーキテクチャ
 
-```mermaid
-flowchart TB
-    Client[Client]
+この例では、クライアントの HTTPS リクエストを ALB が受け取り、ACM 証明書で TLS を終端して、HTTP/1.1 で Istio gateway に転送します。その後 Envoy がアプリケーションにルーティングします。
 
-    subgraph AWS["AWS Cloud"]
-        ALB[Application Load Balancer<br/>Layer 7]
-
-        subgraph EKS["EKS Cluster"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1]
-                IGW2[Gateway Pod 2]
-            end
-
-            subgraph Apps["Applications"]
-                App1[Service A]
-                App2[Service B]
-            end
-        end
-    end
-
-    Client -->|HTTPS| ALB
-    ALB -->|HTTP/2| IGW1
-    ALB -->|HTTP/2| IGW2
-    IGW1 -->|Internal routing| App1
-    IGW1 -->|Internal routing| App2
-    IGW2 -->|Internal routing| App1
-    IGW2 -->|Internal routing| App2
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client default;
-    class ALB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
-
-#### ALB 設定
+#### ALB の設定
 
 **1. Ingress リソースで ALB を作成する**
 
@@ -284,6 +206,26 @@ spec:
               number: 80
 ```
 
+この ALB 設計では、gateway Service を ClusterIP に設定し、NLB も重複して作成されないようにします。ALB は TLS を終端し、既定では HTTP/1.1 で転送します。この HTTP gateway には HTTPS redirect を設定しないでください。アプリケーションの route 用に `my-alb-gateway` に bind した VirtualService を追加します。
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: my-alb-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "myapp.example.com"
+```
+
 **2. パスベースのルーティング**
 
 ```yaml
@@ -322,38 +264,36 @@ spec:
 
 #### ALB の利点
 
-* **高度なルーティング**: パス、Header、Query String ベースのルーティング
+* **高度なルーティング**: Path、Header、Query String に基づくルーティング
 * **WAF 統合**: AWS WAF によるセキュリティ強化
 * **認証統合**: Cognito、OIDC との統合
 * **ACM 統合**: 証明書の自動管理
-* **コンテナ向けに最適化**: ECS、EKS 向けに最適化
+* **コンテナ向けに最適化**: ECS、EKS 向けの最適化
 
 #### ALB のユースケース
 
 * HTTP/HTTPS のみのトラフィック
 * パスベースのルーティングが必要な場合
 * WAF セキュリティが必要な場合
-* 単一のロードバランサーで複数ドメインを処理する場合
+* 1 つのロードバランサーで複数ドメインを扱う場合
 
 ### NLB と ALB の比較
 
-| プロパティ            | NLB                                    | ALB                                      |
-| ------------------- | -------------------------------------- | ---------------------------------------- |
-| **OSI レイヤー**       | Layer 4（TCP/UDP）                      | Layer 7（HTTP/HTTPS）                     |
-| **性能**     | 1 秒あたり数百万リクエスト        | 1 秒あたり数万リクエスト |
-| **レイテンシー**         | 非常に低い                               | 低い                                      |
-| **静的 IP**       | サポート（Elastic IP）                 | 非サポート                            |
-| **TLS 終端** | TCP としてパススルー（Istio で処理） | ALB で処理可能                    |
-| **ルーティング**         | IP/Port ベース                          | Path、Host、Header ベース                 |
-| **WAF 統合** | 利用不可                          | 利用可能                                |
-| **コスト**            | 低い                                  | 比較的高い                        |
-| **WebSocket**       | ネイティブサポート                         | サポート                                |
-| **gRPC**            | ネイティブサポート                         | HTTP/2 が必要                          |
-| **推奨用途** | 高性能、WebSocket、gRPC      | HTTP ルーティング、WAF、認証        |
+| 項目 | NLB | ALB |
+| --- | --- | --- |
+| **OSI レイヤー** | Layer 4（TCP/UDP） | Layer 7（HTTP/HTTPS） |
+| **容量** | トラフィックと容量設定による | トラフィックと容量設定による |
+| **レイテンシー** | 非常に低い | 低い |
+| **静的 IP** | 対応（Elastic IP） | 非対応 |
+| **TLS 終端** | TCP passthrough または NLB の TLS listener | ALB で終端可能 |
+| **ルーティング** | IP/port ベース | Path、Host、Header ベース |
+| **WAF 統合** | 非対応 | 対応 |
+| **コスト** | NLCU 使用量とリージョン料金 | LCU 使用量とリージョン料金 |
+| **WebSocket** | ネイティブ対応 | 対応 |
+| **gRPC** | ネイティブ対応 | HTTP/2 が必要 |
+| **推奨用途** | 高性能、WebSocket、gRPC | HTTP ルーティング、WAF、認証 |
 
-<span id="istio-vs-other-solutions-comparison"></span>
-
-## Istio と他のソリューションの比較
+## Istio と他のソリューションの比較 {#istio-vs-other-solutions-comparison}
 
 ### Istio と VPC Lattice
 
@@ -361,92 +301,55 @@ VPC Lattice は AWS のマネージドアプリケーションネットワーキ
 
 #### アーキテクチャの比較
 
-```mermaid
-flowchart TB
-    subgraph Istio["Istio Architecture"]
-        direction TB
-        ICP[istiod<br/>Control Plane]
+![Istio ではコントロールプレーンが Envoy sidecar に設定を配布し、sidecar は mTLS で直接 mesh を形成します。一方 AWS VPC Lattice では、マネージド service network が sidecar のないアプリケーション Pod 間で平文 HTTP をルーティングします。](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-2.png)
 
-        subgraph IPods["Pods"]
-            IA1[App<br/>+ Envoy]
-            IA2[App<br/>+ Envoy]
-        end
-
-        ICP -.->|Config| IA1
-        ICP -.->|Config| IA2
-        IA1 <-->|mTLS| IA2
-    end
-
-    subgraph VPCLattice["VPC Lattice Architecture"]
-        direction TB
-        LSN[Service Network<br/>Managed Service]
-
-        subgraph LPods["Pods"]
-            LA1[App<br/>No sidecar]
-            LA2[App<br/>No sidecar]
-        end
-
-        LA1 -->|HTTP| LSN
-        LA2 -->|HTTP| LSN
-        LSN -->|Routing| LA1
-        LSN -->|Routing| LA2
-    end
-
-    %% Style definitions
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class ICP controlPlane;
-    class IA1,IA2 k8sComponent;
-    class LSN controlPlane;
-    class LA1,LA2 userApp;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-04-aws-integration-2.html)
 
 #### 機能比較
 
-| プロパティ               | Istio                                | VPC Lattice                 |
-| ---------------------- | ------------------------------------ | --------------------------- |
-| **管理**         | 自己管理                         | AWS 管理（フルマネージド） |
-| **Sidecar**            | 必須（Sidecar または Ambient）        | 不要                |
-| **リソースオーバーヘッド**  | 高い（Pod ごとに Envoy）                 | 低い（Sidecar なし）            |
-| **複雑性**         | 高い                                 | 低い                         |
-| **学習曲線**     | 急                                | 緩やか                      |
-| **トラフィック管理** | 非常に高度（きめ細かな制御） | 基本（十分な機能） |
-| **mTLS**               | 自動、きめ細かな制御      | サポート                   |
-| **可観測性**      | 豊富なメトリクス、トレース                 | 基本メトリクス               |
-| **Fault Injection**    | サポート                            | 非サポート               |
-| **Circuit Breaker**    | きめ細かな制御                 | 基本機能         |
-| **Rate Limiting**      | ローカル + グローバル                       | 基本機能         |
-| **Multi-cluster**      | 強力なサポート                       | クロス VPC 接続      |
-| **クロスアカウント**      | 複雑                              | シンプル（ネイティブサポート）     |
-| **コスト**               | コンピューティングコスト（EC2）                   | サービス利用コスト          |
-| **ベンダーロックイン**     | なし（オープンソース）                   | AWS ロックイン                 |
-| **Kubernetes 専用**    | はい                                  | いいえ（EC2、Lambda など）      |
+| 項目 | Istio | VPC Lattice |
+| --- | --- | --- |
+| **管理** | 自己管理 | AWS 管理（フルマネージド） |
+| **Sidecar** | sidecar mode では使用し、ambient では不要 | 不要 |
+| **リソースオーバーヘッド** | sidecar/ambient の構成により異なる | 低い（sidecar なし） |
+| **複雑さ** | 高い | 低い |
+| **学習曲線** | 急 | 緩やか |
+| **トラフィック管理** | 高度（きめ細かな制御） | 基本機能（必要十分な機能） |
+| **mTLS** | 管理された workload identity/certificate | TLS passthrough を使ったアプリケーション管理 |
+| **可観測性** | 豊富なメトリクスと trace | 基本的なメトリクス |
+| **Fault Injection** | 対応 | 非対応 |
+| **Circuit Breaker** | きめ細かな制御 | 同等の Istio policy API はありません。service quota とは別の機能です。 |
+| **Rate Limiting** | Local + Global | 同等の Istio policy API はありません。service quota とは別の機能です。 |
+| **Multi-cluster** | 強力なサポート | VPC 間接続 |
+| **クロスアカウント** | 複雑 | シンプル（ネイティブ対応） |
+| **コスト** | EC2 の計算コスト | サービス利用料 |
+| **ベンダーロックイン** | なし（オープンソース） | AWS にロックイン |
+| **Kubernetes 専用** | いいえ（VM にも対応） | いいえ（EC2、Lambda などにも対応） |
 
-#### Istio を選択する場合
+VPC Lattice の TLS passthrough はアプリケーションの TLS/mTLS を維持しますが、その listener では IAM identity ベースの認証を強制できず、Lambda target も利用できません。HTTPS listener と TLS passthrough では、実現できるセキュリティ機能が異なります。
+
+#### Istio を選ぶ場合
 
 **Istio が適しているケース:**
 
 1. **きめ細かなトラフィック制御が必要**
-   * Canary deployment、A/B テスト、Traffic Mirroring
-   * 複雑なルーティングルール（Header、Cookie ベースなど）
-   * Chaos Engineering 向けの Fault Injection
-2. **強力なセキュリティ要件**
+   * Canary deployment、A/B test、Traffic Mirroring
+   * Header、Cookie などに基づく複雑なルーティングルール
+   * Chaos Engineering 用の Fault Injection
+2. **強いセキュリティ要件がある**
    * サービス間の自動 mTLS 暗号化
    * きめ細かな認可ポリシー
    * JWT 検証、RBAC
 3. **高度な可観測性が必要**
-   * 詳細なメトリクス（Latency P50/P95/P99）
-   * 分散トレーシング（Jaeger、Zipkin）
-   * サービストポロジーの可視化（Kiali）
-4. **Multi-cluster Mesh**
-   * 複数の EKS クラスター間の通信
-   * クラスター間フェイルオーバー
-   * グローバルロードバランシング
-5. **ベンダー独立性**
-   * 他のクラウドまたはオンプレミスへ移行できる可能性
+   * P50/P95/P99 latency などの詳細なメトリクス
+   * Jaeger、Zipkin などによる分散 tracing
+   * Kiali によるサービス topology の可視化
+4. **Multi-cluster mesh が必要**
+   * 複数 EKS クラスター間の通信
+   * クラスター間の failover
+   * グローバルな負荷分散
+5. **ベンダーに依存しない構成が必要**
+   * 他のクラウドやオンプレミスへ移行できる可能性
    * Kubernetes 標準の利用
 
 **例: Istio の高度なトラフィック管理**
@@ -495,134 +398,101 @@ spec:
       value: 100
 ```
 
-#### VPC Lattice を選択する場合
+#### VPC Lattice を選ぶ場合
 
 **VPC Lattice が適しているケース:**
 
 1. **シンプルなサービス接続**
-   * 基本的なロードバランシングとルーティングのみが必要
-   * 迅速な実装が重要
-2. **低い運用オーバーヘッド**
-   * AWS マネージドサービスを優先する
-   * Sidecar 管理の負担がない
-3. **クロス VPC/アカウント通信**
-   * 複数の AWS アカウントをまたぐサービスの接続
-   * VPC ピアリングなしの通信
+   * 基本的なロードバランシングとルーティングだけが必要
+   * 迅速な導入を重視
+2. **運用オーバーヘッドを抑えたい**
+   * AWS マネージドサービスを優先
+   * sidecar 管理の負担を避けたい
+3. **VPC/アカウントをまたいだ通信**
+   * 複数 AWS アカウントのサービスを接続
+   * VPC peering なしで通信
 4. **混在環境**
    * EKS + EC2 + Lambda の混在環境
-   * Kubernetes 以外も含む多様なコンピューティングタイプの利用
-5. **コスト最適化**
-   * Sidecar のリソースコスト削減
+   * Kubernetes 以外のコンピューティングも利用
+5. **コストを最適化したい**
+   * sidecar のリソースコストを削減
    * 小規模サービス
 
 #### Istio と VPC Lattice の併用
 
-この 2 つのソリューションは相互排他的ではなく、併用できます。
+2 つのソリューションは相互排他的ではなく、併用できます。
 
-```mermaid
-flowchart TB
-    subgraph Account1["AWS Account 1"]
-        subgraph EKS1["EKS Cluster 1 (Istio)"]
-            Istiod1[istiod]
-            App1[Service A<br/>+ Envoy]
-            App2[Service B<br/>+ Envoy]
+![AWS Account 1 内の EKS クラスターでは Istio が sidecar と mTLS を構成し、VPC Lattice service network がアカウントをまたいで、そのクラスターのトラフィックを AWS Account 2 の sidecar のない service と Lambda function にルーティングします。](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-3.png)
 
-            Istiod1 -.->|Config| App1
-            Istiod1 -.->|Config| App2
-        end
-    end
-
-    subgraph Account2["AWS Account 2"]
-        subgraph EKS2["EKS Cluster 2"]
-            App3[Service C<br/>No sidecar]
-        end
-
-        Lambda[Lambda<br/>Function]
-    end
-
-    VPCLattice[VPC Lattice<br/>Service Network]
-
-    App1 <-->|Internal mTLS| App2
-    App1 -->|VPC Lattice| VPCLattice
-    VPCLattice -->|Routing| App3
-    VPCLattice -->|Routing| Lambda
-
-    %% Style definitions
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Istiod1,VPCLattice controlPlane;
-    class App1,App2 k8sComponent;
-    class App3,Lambda userApp;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-04-aws-integration-3.html)
 
 **ユースケース:**
 
-* **クラスター内**: きめ細かなトラフィック管理とセキュリティには Istio
-* **クロスクラスター/クロスアカウント**: シンプルな接続には VPC Lattice
-* **混在環境**: Istio クラスターと Lambda/EC2 の接続には VPC Lattice を使用
+* **クラスター内**: きめ細かなトラフィック管理とセキュリティに Istio を使用
+* **クラスター間/アカウント間**: シンプルな接続に VPC Lattice を使用
+* **混在環境**: Istio クラスターと Lambda/EC2 の接続に VPC Lattice を使用
 
-### Istio と Cilium（eBPF ベース）
+### Istio と Cilium（eBPF ベース）の比較
 
-Cilium は eBPF を使用する Kubernetes のネットワーキングおよびセキュリティソリューションです。
+Cilium は eBPF を使う Kubernetes のネットワークおよびセキュリティソリューションです。
 
 #### アーキテクチャの比較
 
-| プロパティ             | Istio                             | Cilium                         |
-| -------------------- | --------------------------------- | ------------------------------ |
-| **テクノロジースタック** | Envoy Proxy（Sidecar）             | eBPF（カーネルレベル）            |
-| **主な目的**  | Service Mesh                      | CNI + Service Mesh             |
-| **ネットワーキング**       | Kubernetes CNI の上で動作 | CNI 自体を提供            |
-| **性能**      | 良好                              | 優れている（カーネルレベル）       |
-| **リソース使用量**   | 高い（Sidecar）                    | 低い（カーネルレベル）             |
-| **L7 機能**      | 非常に強力                     | 基本                          |
-| **可観測性**    | 豊富                              | Hubble（基本）                 |
-| **学習曲線**   | 急                             | 急                          |
-| **成熟度**         | 高い                              | 中程度（Service Mesh 機能） |
+| 項目 | Istio | Cilium |
+| --- | --- | --- |
+| **技術スタック** | Envoy Proxy（sidecar） | eBPF（kernel level） |
+| **主な目的** | Service Mesh | CNI + Service Mesh |
+| **ネットワーク** | Kubernetes CNI の上で動作 | CNI 自体を提供 |
+| **性能** | 良好 | 高い（kernel level） |
+| **リソース使用量** | 高い（sidecar） | 低い（kernel level） |
+| **L7 機能** | 非常に強力 | 基本的 |
+| **可観測性** | 豊富 | Hubble（基本的） |
+| **学習曲線** | 急 | 急 |
+| **成熟度** | 高い | 中程度（Service Mesh 機能） |
 
 #### 機能比較
 
-| 機能                | Istio                           | Cilium                              |
-| ---------------------- | ------------------------------- | ----------------------------------- |
-| **Network Policy**     | Kubernetes + Istio              | Kubernetes + Cilium（より強力） |
-| **L7 Load Balancing**  | 非常にきめ細かい               | 基本                               |
-| **mTLS**               | 自動、きめ細かな制御 | サポート                           |
-| **トラフィック管理** | 非常に高度                   | 基本                               |
-| **可観測性**      | Prometheus、Jaeger、Kiali       | Hubble                              |
-| **性能**        | 良好                            | 優れている                           |
-| **Multi-cluster**      | 強力                          | Cluster Mesh                        |
+| 機能 | Istio | Cilium |
+| --- | --- | --- |
+| **NetworkPolicy** | Kubernetes + Istio | Kubernetes + Cilium（より強力） |
+| **L7 Load Balancing** | きめ細かく制御 | 基本的 |
+| **mTLS** | workload 間の自動 mTLS | 相互認証と WireGuard/IPsec 暗号化は別の機能 |
+| **トラフィック管理** | 非常に高度 | 基本的 |
+| **可観測性** | Prometheus、Jaeger、Kiali | Hubble |
+| **性能** | 良好 | 高い |
+| **Multi-cluster** | 強力 | Cluster Mesh |
 
-#### 選択ガイド
+#### どちらを選ぶか
 
-**Istio を選択する場合:**
+**Istio を選ぶ場合:**
 
-* L7 トラフィック管理が中核要件である
-* 強力な Service Mesh 機能が必要
+* L7 トラフィック管理が中核要件
+* 強力な service mesh 機能が必要
 * 豊富な可観測性とデバッグツールが必要
 
-**Cilium を選択する場合:**
+**Cilium を選ぶ場合:**
 
-* CNI の置き換えを検討している
-* ネットワークセキュリティが主な関心事である
-* パフォーマンス最適化が重要である
-* eBPF テクノロジーを活用したい
+* CNI の置き換えを検討中
+* ネットワークセキュリティが主な関心事
+* 性能最適化が重要
+* eBPF を活用したい
 
 **併用する場合:**
 
-* Cilium を CNI、Istio を Service Mesh として使用できる
-* ただし、機能の重複と複雑性の増加を考慮する
+* Cilium を CNI、Istio を Service Mesh として利用できます。
+* ただし、機能の重複と複雑さの増加を考慮してください。
 
-<span id="eks-specific-optimization"></span>
+## EKS 固有の最適化 {#eks-specific-optimization}
 
-## EKS 固有の最適化
+VPC CNI Pod ENI trunking と SecurityGroupPolicy を使う ambient workload では、[EKS ambient の前提条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/#amazon-elastic-kubernetes-service-eks)を確認してください。厳格な pod security group 強制は link-local health probe を壊す可能性があります。文書化されている選択肢には標準の enforcing mode と exec probe があります。CNI mode を変更する前に、ポリシーへの影響を評価してください。
 
 ### IAM Roles for Service Accounts (IRSA) 統合
 
-Istio ワークロードが AWS サービスへ安全にアクセスできるよう、IRSA を設定します。
+EC2 ベースのノードでは、AWS API credential に EKS Pod Identity も使用できます。Pod Identity Agent と互換性のある AWS SDK が必要で、IRSA role annotation は使いません。どちらの方式も Istio SPIFFE workload identity の代わりにはなりません。
 
-#### IRSA 設定
+Istio workload が AWS service に安全にアクセスできるよう IRSA を設定します。
+
+#### IRSA の設定
 
 ```bash
 # 1. Create OIDC provider
@@ -659,7 +529,8 @@ eksctl create iamserviceaccount \
     --cluster my-cluster \
     --namespace default \
     --name my-app-sa \
-    --attach-policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/MyAppS3Policy \
+    --role-name my-app-role \
+    --attach-policy-arn "arn:aws:iam::<ACCOUNT_ID>:policy/MyAppS3Policy" \
     --approve
 ```
 
@@ -699,9 +570,9 @@ spec:
 
 ### AWS Certificate Manager (ACM) 統合
 
-Istio Gateway で ACM 証明書を使用する方法を説明します。
+ACM certificate を Istio Gateway で使用する方法を説明します。
 
-#### NLB での TLS 終端
+#### NLB で TLS を終端する
 
 ```yaml
 apiVersion: v1
@@ -722,26 +593,52 @@ spec:
   ports:
   - name: https
     port: 443
-    targetPort: 8443
+    targetPort: 8080
 ```
 
-#### Istio での TLS 終端（ACM Private CA）
+これは別の構成です。ACM の TLS は NLB で終端し、target には平文 HTTP が届きます。TLS Gateway を Service port 443 の HTTP listener に置き換えてください。この backend には SIMPLE TLS や HTTPS redirect を使わないでください。
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: nlb-terminated-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: http-after-nlb
+      protocol: HTTP
+    hosts:
+    - "myapp.example.com"
+```
+
+#### Istio で TLS を終端する（ACM Private CA）
 
 ```bash
-# 1. Issue certificate from ACM Private CA
-aws acm-pca issue-certificate \
-    --certificate-authority-arn arn:aws:acm-pca:region:account:certificate-authority/ca-id \
-    --csr file://csr.pem \
-    --signing-algorithm "SHA256WITHRSA" \
-    --validity Value=365,Type="DAYS"
+# Generate a private key and CSR locally; clients must trust this private CA
+openssl req -new -newkey rsa:2048 -nodes \
+  -keyout private-key.pem -out csr.pem \
+  -subj '/CN=myapp.example.com' -addext 'subjectAltName=DNS:myapp.example.com'
 
-# 2. Create Kubernetes Secret
+CA_ARN='arn:aws:acm-pca:region:account:certificate-authority/ca-id'
+CERT_ARN=$(aws acm-pca issue-certificate \
+  --certificate-authority-arn "$CA_ARN" \
+  --csr fileb://csr.pem \
+  --signing-algorithm SHA256WITHRSA \
+  --validity Value=365,Type=DAYS \
+  --query CertificateArn --output text)
+aws acm-pca wait certificate-issued \
+  --certificate-authority-arn "$CA_ARN" --certificate-arn "$CERT_ARN"
+aws acm-pca get-certificate \
+  --certificate-authority-arn "$CA_ARN" --certificate-arn "$CERT_ARN" \
+  --output json > issued-certificate.json
+jq -r '.Certificate + "\n" + .CertificateChain' issued-certificate.json > certificate-chain.pem
 kubectl create secret tls my-tls-secret \
-    --cert=certificate.pem \
-    --key=private-key.pem \
-    -n istio-system
-
-# 3. Use in Gateway
+  --cert=certificate-chain.pem --key=private-key.pem -n istio-system
 ```
 
 ```yaml
@@ -765,28 +662,30 @@ spec:
     - "myapp.example.com"
 ```
 
+証明書を発行しただけでは Secret の作成や更新は行われません。更新と Secret の変更を自動化してください。ACM ARN を Istio の `credentialName` に直接指定することはできません。
+
 ### CloudWatch Container Insights 統合
 
-Istio メトリクスを CloudWatch に送信して、統合モニタリングを実装します。
+Istio のメトリクスを CloudWatch に送信し、統合モニタリングを構成します。
 
-#### CloudWatch Agent 設定
+#### CloudWatch Agent の設定
 
 ```bash
-# 1. Attach IAM policy
+# For EC2-backed EKS; OIDC association is required for this IRSA path
+kubectl create namespace amazon-cloudwatch --dry-run=client -o yaml | kubectl apply -f -
 eksctl create iamserviceaccount \
-    --cluster my-cluster \
-    --namespace amazon-cloudwatch \
-    --name cloudwatch-agent \
-    --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
-    --approve
-
-# 2. Install CloudWatch Agent
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cloudwatch-namespace.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
+  --cluster my-cluster --namespace amazon-cloudwatch --name cwagent-prometheus \
+  --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy --approve
+curl -fsSL -o prometheus-eks.yaml \
+  https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/service/cwagent-prometheus/prometheus-eks.yaml
+# Review/pin this manifest; merge the Istio scrape jobs and EMF declarations below before applying
+kubectl apply -f prometheus-eks.yaml
+kubectl rollout status deployment/cwagent-prometheus -n amazon-cloudwatch
 ```
 
-#### Prometheus メトリクススクレイピング
+namespace と ServiceAccount だけでは agent はデプロイされません。公式 manifest が Deployment、RBAC、mount する ConfigMap を提供します。デプロイツールが ServiceAccount を置き換える場合は IRSA annotation を維持してください。既存環境では collector を重複デプロイせず、管理元の設定を更新します。
+
+#### Prometheus のメトリクススクレイピング
 
 ```yaml
 # prometheus-config.yaml
@@ -805,12 +704,12 @@ data:
     # Istio Control Plane metrics
     - job_name: 'istiod'
       kubernetes_sd_configs:
-      - role: endpoints
+      - role: pod
         namespaces:
           names:
           - istio-system
       relabel_configs:
-      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+      - source_labels: [__meta_kubernetes_pod_label_app, __meta_kubernetes_pod_container_port_name]
         action: keep
         regex: istiod;http-monitoring
 
@@ -823,30 +722,41 @@ data:
       - source_labels: [__meta_kubernetes_pod_container_port_name]
         action: keep
         regex: '.*-envoy-prom'
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        regex: ([^:]+)(?::\d+)?;(\d+)
-        replacement: $1:15090
-        target_label: __address__
+```
+
+custom CloudWatch metrics を公開するには、`prometheus-cwagentconfig` の `logs.metrics_collected.prometheus.emf_processor.metric_declaration` に宣言をマージします。scrape 用 ConfigMap だけでは custom CloudWatch metric は公開されません。manifest の `prometheus_config_path` と他の設定を保持し、agent を再デプロイ/再起動してください。例:
+
+```json
+{
+  "source_labels": ["job"],
+  "label_matcher": "^envoy-stats$",
+  "dimensions": [["ClusterName", "job"]],
+  "metric_selectors": ["^istio_requests_total$", "^istio_tcp_received_bytes_total$"]
+}
 ```
 
 #### CloudWatch Logs Insights クエリ
 
-```sql
--- Istio error log analysis
+以下は別々の query として実行します。log collector が取り込んだ proxy log が必要です。Prometheus collection では access log は収集されません。レイテンシー query は数値の `request_duration_ms` field を含む構造化 JSON を前提とします（Envoy の `%DURATION%` から設定するか、使用形式を先に parse してください）。
+
+```text
+# Istio error log analysis
 fields @timestamp, @message
 | filter @logStream like /istio-proxy/
 | filter @message like /error/
 | sort @timestamp desc
 | limit 100
 
--- Request latency analysis
+```
+
+```text
+# Request latency analysis
 fields @timestamp, request_duration_ms
 | filter @logStream like /istio-proxy/
 | stats avg(request_duration_ms), max(request_duration_ms), pct(request_duration_ms, 95) by bin(5m)
 ```
 
-### EKS 最適化設定
+### EKS の最適化設定
 
 #### 1. Pod リソースの最適化
 
@@ -857,10 +767,10 @@ kind: IstioOperator
 spec:
   meshConfig:
     defaultConfig:
+      concurrency: 2  # Envoy worker threads, not a connection-pool limit
       proxyMetadata:
         # EKS optimization
         ISTIO_META_DNS_CAPTURE: "true"
-        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
   values:
     global:
       proxy:
@@ -871,11 +781,11 @@ spec:
           limits:
             cpu: 2000m
             memory: 1024Mi
-        # Connection pool settings
-        concurrency: 2
 ```
 
 #### 2. Cluster Autoscaler の考慮事項
+
+HPA は replica 数を調整し、Metrics Server と resource request が必要です。Cluster Autoscaler/Karpenter はノード数を調整します。競合する HPA を追加せず、既存の chart 管理下の HPA を構成してください。
 
 ```yaml
 # Istio Gateway Autoscaling
@@ -921,58 +831,56 @@ spec:
       app: istio-ingressgateway
 ```
 
-<span id="best-practices"></span>
+## ベストプラクティス {#best-practices}
 
-## ベストプラクティス
+### 1. Load Balancer の選択ガイド
 
-### 1. Load Balancer 選択ガイド
+**NLB を使う場合:**
 
-**NLB を使用する場合:**
-
-* gRPC、WebSocket、その他の長時間接続
+* gRPC、WebSocket などの長時間接続
 * 1 秒あたり数百万件のリクエストの処理
 * 静的 IP が必要
-* Istio で TLS 終端を行う
+* Istio で TLS を終端
 
-**ALB を使用する場合:**
+**ALB を使う場合:**
 
 * HTTP/HTTPS のみ
 * パスベースのルーティング
-* WAF セキュリティが必要
-* Cognito 認証統合
+* WAF によるセキュリティが必要
+* Cognito 認証の統合
 
 ### 2. TLS 終端の場所
 
-**Load Balancer で終端する場合（推奨）:**
+**Load Balancer で終端する場合:**
 
-* ACM 証明書の自動更新
-* 容易な管理
-* Istio 負荷の削減
+* ACM certificate の自動更新
+* 管理が簡単
+* Istio の負荷を軽減
 
 **Istio で終端する場合:**
 
 * エンドツーエンド暗号化が必要
-* きめ細かな TLS ポリシー制御
-* mTLS の使用
+* きめ細かな TLS policy 制御が必要
+* mTLS を使用
 
 ### 3. コスト最適化
 
-* **Spot Instances**: Istio Gateway ワークロードに使用
+* **Spot Instances**: Istio Gateway workload に使用
 * **Graviton Instances**: ARM ベースのインスタンスでコストを削減
-* **Resource Limits**: 適切な Sidecar リソース制限を設定
-* **Ambient Mode**: Sidecar のオーバーヘッドを排除するために検討
+* **Resource Limits**: 適切な sidecar resource limit を設定
+* **Ambient Mode**: sidecar のオーバーヘッドをなくす選択肢として検討
 
 ### 4. セキュリティ
 
-* **IRSA**: IAM ロールで AWS サービスにアクセス
-* **Security Groups**: 最小権限の原則
-* **mTLS**: サービス間の暗号化を有効化
-* **Network Policy**: Cilium または Calico とともに使用
+* **IRSA**: IAM role で AWS service にアクセス
+* **Security Groups**: 最小権限の原則を適用
+* **mTLS**: service 間の暗号化を有効化
+* **NetworkPolicy**: Amazon VPC CNI、Cilium、Calico で強制します。プラットフォームの対応状況を確認してください。
 
 ### 5. モニタリング
 
-* **CloudWatch**: 統合されたログとメトリクス
-* **X-Ray**: 分散トレーシング
+* **CloudWatch**: ログとメトリクスを一元化
+* **X-Ray**: 分散 tracing
 * **Prometheus + Grafana**: 詳細なメトリクス
 * **Kiali**: Service Mesh の可視化
 
@@ -982,12 +890,26 @@ AWS 統合が完了したら、次のドキュメントを参照してくださ�
 
 1. [**Traffic Management**](traffic-management/README.md): 高度なトラフィック管理機能
 2. [**Security**](security/README.md): mTLS と認証/認可
-3. [**Observability**](observability/README.md): メトリクス、ログ、トレースの収集
+3. [**Observability**](observability/README.md): メトリクス、ログ、trace の収集
 
-## 参照
+## 参考資料
 
 * [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-* [EKS ベストプラクティス - ネットワーキング](https://aws.github.io/aws-eks-best-practices/networking/)
-* [VPC Lattice ドキュメント](https://docs.aws.amazon.com/vpc-lattice/)
-* [Cilium ドキュメント](https://docs.cilium.io/)
+* [EKS ベストプラクティス - ネットワーキング](https://docs.aws.amazon.com/eks/latest/best-practices/networking.html)
+* [VPC Lattice のドキュメント](https://docs.aws.amazon.com/vpc-lattice/)
+* [Cilium のドキュメント](https://docs.cilium.io/)
 * [AWS Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)
+
+* [Annotations](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
+* [Ingress annotations](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/)
+* [v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0)
+* [AWS Load Balancer Controller chart metadata](https://raw.githubusercontent.com/aws/eks-charts/master/stable/aws-load-balancer-controller/Chart.yaml)
+* [Helm での AWS Load Balancer Controller のインストール - Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html)
+* [VPC Lattice service の TLS listener - Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)
+* [issue-certificate](https://docs.aws.amazon.com/cli/latest/reference/acm-pca/issue-certificate.html)
+* [get-certificate](https://docs.aws.amazon.com/cli/latest/reference/acm-pca/get-certificate.html)
+* [ContainerInsights Prometheus Setup](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup.html)
+* [追加 Prometheus source のスクレイピングとメトリクスのインポート - Amazon CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html)
+* [EKS Pod Identity による Pod から AWS service へのアクセス](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+* [Kubernetes network policy で Pod traffic を制限する - Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+* [DNS Proxying](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)

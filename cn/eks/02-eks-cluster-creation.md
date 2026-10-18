@@ -1,12 +1,12 @@
 # EKS 集群创建
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 创建 Amazon EKS 集群有多种方法。本章将详细介绍如何使用各种工具和方法创建 EKS 集群。
 
 本章中的创建方法是可选方案。为新的专用集群选择其中一种，不要同时使用多个工具管理相同的资源。请将示例名称、账户、角色、VPC、子网和 CIDR 替换为经批准的实际值。除非另有说明，Shell 示例使用 Bash；如果前置条件失败，请停止操作。本次审计未执行任何 AWS 资源预置或工作负载测量。
 
-**当前版本：** EKS 1.37 于 October 1, 2026 开始提供。
+**当前版本：** EKS 1.37 于 2026 年 10 月 1 日开始提供。
 
 **示例基线：** 以下示例保留了经过审核的 EKS 1.36 基线。选择其他版本时，请查阅[当前 EKS 版本日历](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)和组件兼容性文档。
 
@@ -776,7 +776,7 @@ aws eks describe-nodegroup --cluster-name "$EKS_CLUSTER_NAME" \
 kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 ```
 
-单独设置 `minSize`/`maxSize` 并不会根据 Pod 需求启用节点扩缩容。请检查状态和运行状况错误，然后根据需要配置自动扩缩容器。创建失败时，请检查记录的名称/ARN 和相关资源。本次审计未执行这些创建和等待命令。
+单独设置 `minSize`/`maxSize` 并不会根据 Pod 需求启用节点扩缩容。请检查状态和运行状况错误，然后根据需要配置节点自动扩缩容工具。创建失败时，请检查记录的名称/ARN 和相关资源。本次审计未执行这些创建和等待命令。
 
 参考：[CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html)、[CreateNodegroup API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)、[Auto Mode IAM 和创建](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
@@ -788,7 +788,7 @@ kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 
 保存为 `main.tf`。此示例固定使用 AWS provider **6.69.1** 和 EKS **1.36**。明确提供现有私有子网 ID；自定义 `Type=Private` 标签不能可靠地替代对路由和连通性的验证。前置条件会在规划期间检查 VPC/AZ 关系，但不会验证私有路由、服务端点、DNS、IP 容量或负载均衡器子网标签。
 
-Auto Mode 需要同时启用计算、负载均衡和块存储，并将 `bootstrap_self_managed_addons` 设置为 `false`。集群角色包含 `sts:TagSession` 和所有五项必需策略。IAM 附加依赖关系可在 EKS 删除托管基础设施期间保留所需权限。
+Auto Mode 需要同时启用计算、负载均衡和块存储，并将 `bootstrap_self_managed_addons = false`。集群角色包含 `sts:TagSession` 和所有五项必需策略。IAM 附加依赖关系可在 EKS 删除托管基础设施期间保留所需权限。
 
 ```hcl
 terraform {
@@ -1057,7 +1057,7 @@ aws eks update-kubeconfig --name "$(terraform output -raw cluster_name)" \
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
 
-apply 前请审查状态/后端、拟议的 IAM 和网络更改以及所有计费资源。`terraform validate` 无法验证 AWS 账户权限、配额、路由或所选节点能否运行您的工作负载。节点组扩缩容范围不会安装基于 Pod 需求的自动扩缩容器。
+apply 前请审查状态/后端、拟议的 IAM 和网络更改以及所有计费资源。`terraform validate` 无法验证 AWS 账户权限、配额、路由或所选节点能否运行您的工作负载。节点组扩缩容范围不会安装根据 Pod 需求自动扩缩节点的工具。
 
 ### 传统 Terraform 配置
 
@@ -1067,7 +1067,7 @@ apply 前请审查状态/后端、拟议的 IAM 和网络更改以及所有计�
 enable_auto_mode = false
 ```
 
-这会禁用全部三项 Auto Mode 功能，启动传统网络附加组件，选择传统 EC2 节点权限并创建 AL2023 托管节点组。它不会安装 EBS CSI、AWS LBC、Metrics Server 或节点自动扩缩容器；请单独配置工作负载所需的组件。部署后更改此值会改变基础设施和 IAM，因此需要单独进行迁移审查。
+这会禁用全部三项 Auto Mode 功能，启动传统网络附加组件，选择传统 EC2 节点权限并创建 AL2023 托管节点组。它不会安装 EBS CSI、AWS LBC、Metrics Server 或节点自动扩缩容工具；请单独配置工作负载所需的组件。部署后更改此值会改变基础设施和 IAM，因此需要单独进行迁移审查。
 
 验证：Terraform **1.16.6** 使用已签名的 AWS provider **6.69.1** 在本地通过 `terraform validate`，错误/警告均为零。**未执行 plan、apply 或 AWS API 调用。** 两种模式仍需进行部署验证；此示例不代表已达到生产就绪状态。
 
