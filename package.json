@@ -16,6 +16,7 @@
     "docs:validate": "npm run docs:test && npm run docs:news:check && node scripts/validate-local-links.mjs && node scripts/validate-image-assets.mjs && node scripts/validate-language-parity.mjs"
   },
   "devDependencies": {
+    "markdown-it": "^14.3.3",
     "medium-zoom": "^1.1.0",
     "mermaid": "^11.16.0",
     "sitemap": "^8.0.3",
