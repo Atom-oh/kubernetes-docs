@@ -69,4 +69,10 @@ test('progressCopy localizes Korean and English labels', () => {
     value: '2/10',
     reset: 'Reset progress'
   })
+  // VitePress route.path carries the site base.
+  assert.equal(progressCopy('/kubernetes-docs/en/quizzes/core/example', 2, 10).label, 'Review progress')
+  assert.equal(progressCopy('/kubernetes-docs/ko/quizzes/core/example', 2, 10).label, '복습 진행')
+  assert.equal(progressCopy('/kubernetes-docs/jp/quizzes/core/example', 2, 10).label, '復習の進捗')
+  assert.equal(progressCopy('/kubernetes-docs/cn/quizzes/core/example', 2, 10).reset, '重置进度')
+  assert.equal(progressCopy('/kubernetes-docs/es/quizzes/core/example', 2, 10).label, 'Progreso del repaso')
 })

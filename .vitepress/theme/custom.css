@@ -8,6 +8,20 @@
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* Han characters take Korean glyph forms from the Korean families above;
+   Chinese and Japanese pages list their own families first. */
+:root:lang(zh) {
+  --vp-font-family-base: 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC',
+    'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root:lang(ja) {
+  --vp-font-family-base: 'Inter', 'Noto Sans JP', 'Noto Sans CJK JP',
+    'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', ui-sans-serif,
+    system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
 .vp-doc .news-log {
   border: 1px solid var(--vp-c-divider);
   border-radius: 10px;
@@ -24,7 +38,9 @@
 
 /* Some devices only have a regular Korean face. Preserve emphasis there,
    too; VitePress otherwise permits synthetic italics but not bold. */
-body:lang(ko) {
+body:lang(ko),
+body:lang(zh),
+body:lang(ja) {
   font-synthesis: weight style;
 }
 

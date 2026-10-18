@@ -25,11 +25,19 @@ export function writeReviewedAnswers(storage, key, reviewedAnswers) {
   storage.setItem(key, JSON.stringify(values))
 }
 
+const PROGRESS_COPY = {
+  ko: { label: '복습 진행', reset: '진도 초기화' },
+  en: { label: 'Review progress', reset: 'Reset progress' },
+  cn: { label: '复习进度', reset: '重置进度' },
+  jp: { label: '復習の進捗', reset: '進捗をリセット' },
+  es: { label: 'Progreso del repaso', reset: 'Restablecer progreso' }
+}
+
 export function progressCopy(routePath, reviewed, total) {
-  const isEnglish = routePath.startsWith('/en/')
-  return isEnglish
-    ? { label: 'Review progress', value: `${reviewed}/${total}`, reset: 'Reset progress' }
-    : { label: '복습 진행', value: `${reviewed}/${total}`, reset: '진도 초기화' }
+  // VitePress route paths include the site base (/kubernetes-docs/en/...), so
+  // take the first segment that names a locale rather than the first segment.
+  const locale = routePath.split('/').find((segment) => Object.hasOwn(PROGRESS_COPY, segment)) ?? 'ko'
+  return { label: PROGRESS_COPY[locale].label, value: `${reviewed}/${total}`, reset: PROGRESS_COPY[locale].reset }
 }
 
 export function initQuizProgress(documentRoot, routePath, storage = window.localStorage) {

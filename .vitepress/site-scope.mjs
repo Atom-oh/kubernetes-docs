@@ -1,4 +1,24 @@
+// Locales with hand-edited source text. llms.txt, the docs MCP server and the
+// ko/en parity checks cover only these.
 export const supportedLocales = ['ko', 'en']
+
+// Machine translations of en (translation workflows). They are published too,
+// but cover only part of en: pages they lack redirect to the English page and
+// links to them point at English (scripts/build-vitepress-locales.mjs and
+// .vitepress/translation-fallback.mjs).
+export const translatedLocales = ['cn', 'jp', 'es']
+
+// Every locale VitePress publishes, in language-menu order.
+export const publishedLocales = [...supportedLocales, ...translatedLocales]
+
+// Per-locale codes: page lang attribute, hreflang, Open Graph locale.
+export const localeCodes = {
+  ko: { lang: 'ko-KR', hreflang: 'ko', ogLocale: 'ko_KR' },
+  en: { lang: 'en-US', hreflang: 'en', ogLocale: 'en_US' },
+  cn: { lang: 'zh-CN', hreflang: 'zh-CN', ogLocale: 'zh_CN' },
+  jp: { lang: 'ja-JP', hreflang: 'ja', ogLocale: 'ja_JP' },
+  es: { lang: 'es-ES', hreflang: 'es', ogLocale: 'es_ES' }
+}
 
 const baseSrcExclude = [
   'README.md',
@@ -9,20 +29,17 @@ const baseSrcExclude = [
   'docs/**', // internal plans/specs — never publish
   'assets/**', // diagram sources and maintenance READMEs are not articles
   'examples/**', // runnable code packages referenced by path, not pages; leaked into the sitemap
-  'public/llms/**', // generated raw Markdown — copied as static files
-  'cn/**',
-  'jp/**',
-  'es/**'
+  'public/llms/**' // generated raw Markdown — copied as static files
 ]
 
 export function createVitepressBuildScope(locale) {
-  if (locale && !supportedLocales.includes(locale)) {
+  if (locale && !publishedLocales.includes(locale)) {
     throw new Error(`Unsupported VitePress locale: ${locale}`)
   }
 
-  const locales = locale ? [locale] : supportedLocales
-  const excludedPublishedLocales = supportedLocales
-    .filter((supportedLocale) => !locales.includes(supportedLocale))
+  const locales = locale ? [locale] : publishedLocales
+  const excludedPublishedLocales = publishedLocales
+    .filter((publishedLocale) => !locales.includes(publishedLocale))
     .map((excludedLocale) => `${excludedLocale}/**`)
 
   return {

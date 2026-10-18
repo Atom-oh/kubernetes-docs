@@ -13,11 +13,12 @@ import test from 'node:test'
 import { parseSitemap } from 'sitemap'
 
 import {
+  BUILD_ORDER,
   checkBuildResources,
-  LEGACY_LOCALES,
+  FALLBACK_LOCALES,
   markArchmapsNoindex,
   mergeLocaleOutputs,
-  writeLegacyLocaleRedirects
+  writeTranslationFallbackRedirects
 } from '../build-vitepress-locales.mjs'
 
 const sitemap = (url) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -159,8 +160,8 @@ test('indexed ko/en README URLs redirect to their live section without changing 
     }
     assert.equal(await readFile(path.join(dist, 'en/networking/cilium/01-introduction.html'), 'utf8'), 'Article')
 
-    // Retired-language redirects still point directly to the live English
-    // directory, rather than chaining through a newly generated README alias.
+    // A section the translation lacks redirects straight to the live English
+    // directory, rather than chaining through a README alias.
     const retired = await readFile(path.join(dist, 'cn/networking/cilium/README.html'), 'utf8')
     assert.equal(retired.match(/http-equiv="refresh" content="0; url=([^"]+)"/)?.[1],
       'https://docs.atomai.click/kubernetes-docs/en/networking/cilium/')
@@ -265,7 +266,7 @@ if (paused && Archify.guidedViews && Archify.guidedViews.isPlaying()) { Archify.
   }
 })
 
-test('legacy cn/jp/es URLs get redirect stubs to the English page', async () => {
+test('untranslated cn/jp/es pages get redirect stubs to the English page', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'legacy-redirects-'))
   const dist = path.join(root, 'dist')
 
@@ -275,9 +276,9 @@ test('legacy cn/jp/es URLs get redirect stubs to the English page', async () => 
     await writeFile(path.join(dist, 'en', 'networking', 'calico', 'index.html'), 'section')
     await writeFile(path.join(dist, 'en', 'networking', 'calico', '02-architecture.html'), 'page')
 
-    const written = await writeLegacyLocaleRedirects(dist)
+    const written = await writeTranslationFallbackRedirects(dist)
     // 3 locales × (root index + README, section index + README, one page)
-    assert.equal(written, LEGACY_LOCALES.length * 5)
+    assert.equal(written, FALLBACK_LOCALES.length * 5)
 
     const page = await readFile(
       path.join(dist, 'cn', 'networking', 'calico', '02-architecture.html'),
@@ -301,13 +302,56 @@ test('legacy cn/jp/es URLs get redirect stubs to the English page', async () => 
   }
 })
 
-test('writeLegacyLocaleRedirects is a no-op without an English build', async () => {
-  const root = await mkdtemp(path.join(tmpdir(), 'legacy-redirects-missing-'))
+test('translated pages survive the merge and their README aliases stay in the locale', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'translated-merge-'))
+  const en = path.join(root, 'en-build')
+  const cn = path.join(root, 'cn-build')
+  const dist = path.join(root, 'dist')
+
   try {
-    assert.equal(await writeLegacyLocaleRedirects(root), 0)
+    for (const [base, files] of [
+      [en, ['en/index.html', 'en/networking/calico/index.html', 'en/networking/calico/02-architecture.html', 'en/kernel/01-basics.html']],
+      [cn, ['cn/index.html', 'cn/networking/calico/index.html', 'cn/networking/calico/02-architecture.html']]
+    ]) {
+      for (const file of files) {
+        await mkdir(path.dirname(path.join(base, file)), { recursive: true })
+        await writeFile(path.join(base, file), `Content of ${file}`)
+      }
+      await writeFile(path.join(base, 'sitemap.xml'), sitemap('https://docs.atomai.click/kubernetes-docs/en/'))
+    }
+
+    await mergeLocaleOutputs([cn, en], dist)
+
+    // Real translations are kept.
+    assert.equal(
+      await readFile(path.join(dist, 'cn/networking/calico/02-architecture.html'), 'utf8'),
+      'Content of cn/networking/calico/02-architecture.html'
+    )
+    // A translated section's README alias points at the translated index.
+    const readme = await readFile(path.join(dist, 'cn/networking/calico/README.html'), 'utf8')
+    assert.match(readme, /url=https:\/\/docs\.atomai\.click\/kubernetes-docs\/cn\/networking\/calico\/"/)
+    // A page cn lacks redirects to English, in cn and in the other translations.
+    for (const locale of ['cn', 'jp', 'es']) {
+      const stub = await readFile(path.join(dist, locale, 'kernel/01-basics.html'), 'utf8')
+      assert.match(stub, /url=https:\/\/docs\.atomai\.click\/kubernetes-docs\/en\/kernel\/01-basics"/)
+    }
   } finally {
     await rm(root, { recursive: true, force: true })
   }
+})
+
+test('writeTranslationFallbackRedirects is a no-op without an English build', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'legacy-redirects-missing-'))
+  try {
+    assert.equal(await writeTranslationFallbackRedirects(root), 0)
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('en builds last so its root index and 404 pages win the merge', () => {
+  assert.equal(BUILD_ORDER.at(-1), 'en')
+  assert.deepEqual([...BUILD_ORDER].sort(), ['cn', 'en', 'es', 'jp', 'ko'])
 })
 
 test('markArchmapsNoindex is a no-op when the archmaps directory is absent', async () => {

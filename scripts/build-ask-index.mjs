@@ -8,8 +8,20 @@ import { gzipSync } from 'node:zlib'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SITE = 'https://docs.atomai.click/kubernetes-docs'
 const LOCALES = ['ko', 'en']
+// Machine translations of en. Not indexed: their questions search the English chunks, and the index
+// only records which English pages have a translation so answers can link to it.
+const TRANSLATED_LOCALES = ['cn', 'jp', 'es']
 const EXCLUDE = [/^quizzes\//, /\/quizzes\//, /^news\//, /^SUMMARY\.md$/, /^README\.md$/]
 const MAX_CHUNK_CHARS = 2400
+
+// VitePress serves README.md as the directory index (see the rewrites in .vitepress/site-scope.mjs).
+function pageUrl(locale, relPath) {
+  return `${SITE}/${locale}/${relPath.replace(/(^|\/)README\.md$/, '$1').replace(/\.md$/, '')}`
+}
+
+function pageTitle(relPath, raw) {
+  return (raw.match(/^#\s+(.+)$/m)?.[1] ?? relPath).trim()
+}
 
 async function walk(dir, rel = '') {
   const out = []
@@ -32,10 +44,10 @@ function stripMarkdown(text) {
 }
 
 function chunkFile(locale, relPath, raw) {
-  const pageTitle = (raw.match(/^#\s+(.+)$/m)?.[1] ?? relPath).trim()
-  const url = `${SITE}/${locale}/${relPath.replace(/\.md$/, '')}`
+  const title = pageTitle(relPath, raw)
+  const url = pageUrl(locale, relPath)
   const sections = []
-  let current = { heading: pageTitle, lines: [] }
+  let current = { heading: title, lines: [] }
   for (const line of raw.split('\n')) {
     if (/^#{2,3}\s+/.test(line)) {
       sections.push(current)
@@ -54,9 +66,9 @@ function chunkFile(locale, relPath, raw) {
       chunks.push({
         id: `${locale}/${relPath}#${i}-${part}`,
         locale,
-        title: pageTitle,
+        title,
         heading: sec.heading,
-        url: sec.heading === pageTitle ? url : `${url}#${slug(sec.heading)}`,
+        url: sec.heading === title ? url : `${url}#${slug(sec.heading)}`,
         text: body.slice(start, start + MAX_CHUNK_CHARS),
       })
     }
@@ -69,17 +81,32 @@ function slug(heading) {
 }
 
 const all = []
+const pages = {}
 for (const locale of LOCALES) {
   const dir = path.join(root, locale)
+  pages[locale] = new Set()
   for (const rel of await walk(dir)) {
     if (EXCLUDE.some((re) => re.test(rel))) continue
+    pages[locale].add(rel)
     all.push(...chunkFile(locale, rel, await readFile(path.join(dir, rel), 'utf8')))
+  }
+}
+
+// English page URL -> { cn: { url, title }, ... } for the pages each translation has.
+const translations = {}
+for (const locale of TRANSLATED_LOCALES) {
+  const dir = path.join(root, locale)
+  for (const rel of await walk(dir)) {
+    if (EXCLUDE.some((re) => re.test(rel)) || !pages.en.has(rel)) continue
+    const raw = await readFile(path.join(dir, rel), 'utf8')
+    ;(translations[pageUrl('en', rel)] ??= {})[locale] = { url: pageUrl(locale, rel), title: pageTitle(rel, raw) }
   }
 }
 
 const outDir = path.join(root, 'build', 'ask-index')
 await mkdir(outDir, { recursive: true })
-const payload = { generatedAt: new Date().toISOString(), count: all.length, chunks: all }
+const payload = { generatedAt: new Date().toISOString(), count: all.length, chunks: all, translations }
 const gz = gzipSync(Buffer.from(JSON.stringify(payload)))
 await writeFile(path.join(outDir, 'chunks.json.gz'), gz)
-console.log(`chunks: ${all.length} (${LOCALES.map((l) => `${l}=${all.filter((c) => c.locale === l).length}`).join(', ')}), gz ${gz.length} bytes`)
+const translated = TRANSLATED_LOCALES.map((l) => `${l}=${Object.values(translations).filter((t) => t[l]).length}`)
+console.log(`chunks: ${all.length} (${LOCALES.map((l) => `${l}=${all.filter((c) => c.locale === l).length}`).join(', ')}), translated pages: ${translated.join(', ')}, gz ${gz.length} bytes`)
