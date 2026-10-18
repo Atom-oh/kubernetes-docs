@@ -5,6 +5,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { publishedLocales } from '../.vitepress/site-scope.mjs'
 import { resolveLocalTarget, stripFencedCode } from './validate-local-links.mjs'
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
@@ -114,10 +115,11 @@ export async function validateImageAssets(repositoryRoot, locales = ['ko', 'en']
 
 async function main() {
   const repositoryRoot = path.resolve(process.cwd())
-  const failures = await validateImageAssets(repositoryRoot)
+  // Every published locale: VitePress renders these images on all of them.
+  const failures = await validateImageAssets(repositoryRoot, publishedLocales)
 
   if (failures.length === 0) {
-    console.log('Referenced PNG validation passed for ko/en.')
+    console.log(`Referenced PNG validation passed for ${publishedLocales.join('/')}.`)
     return
   }
 

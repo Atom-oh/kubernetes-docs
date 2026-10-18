@@ -3,7 +3,8 @@ import path from 'node:path'
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
-import { vitepressBuildScope } from './site-scope.mjs'
+import { localeCodes, publishedLocales, vitepressBuildScope } from './site-scope.mjs'
+import { translationFallbackLinks } from './translation-fallback.mjs'
 import { GA_ID } from './theme/analytics.mjs'
 import {
   breadcrumbTrail,
@@ -60,7 +61,7 @@ function buildLastUpdatedIndex() {
       index.set(normalizeSitemapUrl(clean), lastUpdated)
     }
   }
-  for (const locale of ['ko', 'en']) {
+  for (const locale of publishedLocales) {
     if (fs.existsSync(locale)) walk(locale)
   }
   return index
@@ -71,6 +72,31 @@ function normalizeSitemapUrl(url: string) {
 }
 
 const lastUpdatedIndex = buildLastUpdatedIndex()
+
+const ARCHMAP_CAPTIONS: Record<string, string> = {
+  ko: '전체 화면으로 열기 ↗',
+  en: 'Open full screen ↗',
+  cn: '全屏打开 ↗',
+  jp: '全画面で開く ↗',
+  es: 'Abrir a pantalla completa ↗'
+}
+
+// cn/jp/es: machine translations of en with their own SUMMARY.md sidebars.
+// They have no LLM guide page, so they get no nav entry.
+const translatedLocaleConfig = {
+  cn: {
+    label: '简体中文',
+    description: '动手学习 Kubernetes 和 Amazon EKS：核心概念、网络、服务网格、可观测性、测验和实验。'
+  },
+  jp: {
+    label: '日本語',
+    description: 'Kubernetes と Amazon EKS の実践的な学習資料: コア概念、ネットワーク、サービスメッシュ、オブザーバビリティ、クイズ、ラボ。'
+  },
+  es: {
+    label: 'Español',
+    description: 'Formación práctica de Kubernetes y Amazon EKS: conceptos básicos, redes, service mesh, observabilidad, cuestionarios y laboratorios.'
+  }
+}
 
 const config = defineConfig({
   title: 'Cloud Native Operations',
@@ -102,6 +128,8 @@ const config = defineConfig({
           }
         }
       })
+      // cn/jp/es links to pages they have not translated yet go to English.
+      translationFallbackLinks(md)
       // Content links target README.md (GitBook convention). The README→index
       // rewrites change the emitted routes, but VitePress does not map link
       // hrefs through rewrites — normalize them here so rendered links match.
@@ -134,7 +162,9 @@ const config = defineConfig({
           const match = href && href.match(ARCHMAP)
           if (!match) continue
           const base = match[1]
-          const caption = base.startsWith('ko-') ? '전체 화면으로 열기 ↗' : 'Open full screen ↗'
+          // cn/jp/es pages embed the en-* viewers, so the caption follows the page, not the viewer.
+          const pageLocale = (state.env?.relativePath ?? '').split('/')[0]
+          const caption = ARCHMAP_CAPTIONS[pageLocale] ?? ARCHMAP_CAPTIONS[base.startsWith('ko-') ? 'ko' : 'en']
           // The static PNG paragraph directly above describes the same diagram.
           // The iframe replaces the image, but its alt text is the only prose
           // description of the diagram on the page — keep it as the accessible
@@ -245,8 +275,9 @@ const config = defineConfig({
     // VitePress derives xhtml:link alternates from the locales config, but with
     // per-locale builds it only sees one locale at a time and emits wrong
     // pairs (e.g. hreflang="en-US" for both / and /en/). The <head> already
-    // carries correct ko/en/x-default alternates for every page, so drop the
-    // sitemap ones rather than ship contradictory signals.
+    // carries correct alternates (every locale with the page, plus x-default)
+    // for every page, so drop the sitemap ones rather than ship contradictory
+    // signals.
     transformItems: (items) =>
       items.map(({ links, ...item }) => {
         const lastmod = lastUpdatedIndex.get(normalizeSitemapUrl(item.url))
@@ -288,7 +319,19 @@ const config = defineConfig({
         sidebar: summarySidebar('en'),
         nav: [{ text: 'AI · MCP guide', link: '/en/llm-guide' }]
       }
-    }
+    },
+    ...Object.fromEntries(
+      Object.entries(translatedLocaleConfig).map(([locale, { label, description }]) => [
+        locale,
+        {
+          label,
+          lang: localeCodes[locale].lang,
+          link: `/${locale}/`,
+          description,
+          themeConfig: { sidebar: summarySidebar(locale) }
+        }
+      ])
+    )
   },
   themeConfig: {
     ...(DISABLE_SEARCH ? {} : { search: { provider: 'local' as const } }),

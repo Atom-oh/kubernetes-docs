@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { supportedLocales } from './site-scope.mjs'
+import { localeCodes, publishedLocales, supportedLocales } from './site-scope.mjs'
 
 export const siteHostname = 'https://docs.atomai.click/kubernetes-docs/'
 
@@ -160,26 +160,27 @@ function cleanUrlPath(relativePath) {
 }
 
 // hreflang alternates for a rendered page (rewritten relativePath, e.g.
-// "ko/networking/index.md"). Emitted only when the counterpart source file
-// exists on disk — per-locale builds exclude the other locale from the page
-// list, so existence is checked against the source tree, where a rendered
+// "ko/networking/index.md"): every published locale that has the page, plus
+// x-default (ko, or en when ko lacks it). Emitted only when at least one other
+// locale has the page. Per-locale builds exclude the other locales from the
+// page list, so existence is checked against the source tree, where a rendered
 // ".../index.md" is a ".../README.md" on disk.
 export function localeAlternates(relativePath, { fileExists = defaultFileExists } = {}) {
   const [locale, ...rest] = relativePath.split('/')
-  if (!supportedLocales.includes(locale) || rest.length === 0) return []
+  if (!publishedLocales.includes(locale) || rest.length === 0) return []
 
   const pagePath = rest.join('/')
   const sourcePath = pagePath.replace(/(^|\/)index\.md$/, '$1README.md')
 
-  const otherLocale = supportedLocales.find((l) => l !== locale)
-  if (!fileExists(`${otherLocale}/${sourcePath}`)) return []
+  const available = publishedLocales.filter((l) => l === locale || fileExists(`${l}/${sourcePath}`))
+  if (available.length < 2) return []
 
   const urlFor = (l) => `${siteHostname}${cleanUrlPath(`${l}/${pagePath}`)}`
-  const koFirst = ['ko', 'en'].filter((l) => l === locale || l === otherLocale)
+  const fallback = available.includes('ko') ? 'ko' : available.includes('en') ? 'en' : locale
 
   return [
-    ...koFirst.map((l) => ({ hreflang: l, href: urlFor(l) })),
-    { hreflang: 'x-default', href: urlFor('ko') }
+    ...available.map((l) => ({ hreflang: localeCodes[l].hreflang, href: urlFor(l) })),
+    { hreflang: 'x-default', href: urlFor(fallback) }
   ]
 }
 
@@ -211,8 +212,10 @@ export function canonicalUrl(relativePath) {
 }
 
 // Older pages put version metadata and the update date on one quote line.
+// cn/jp/es translate the label but keep the English date (cn uses a
+// full-width colon).
 const KO_DATE_RE = /^>[^\r\n]*?\*\*마지막 업데이트\*\*\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/m
-const EN_DATE_RE = /^>[^\r\n]*?\*\*(?:Supported Versions|Last Updated)\*\*\s*:\s*([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/m
+const EN_DATE_RE = /^>[^\r\n]*?\*\*(?:Supported Versions|Last Updated|最后更新|最終更新|Última actualización)\*\*\s*[:：]\s*([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/m
 const EN_MONTHS = [
   'january', 'february', 'march', 'april', 'may', 'june',
   'july', 'august', 'september', 'october', 'november', 'december'
@@ -245,7 +248,7 @@ export function socialHeadTags({ title, description, url, locale }) {
     ['meta', { property: 'og:title', content: title }],
     ['meta', { property: 'og:url', content: url }],
     ['meta', { property: 'og:image', content: ogImageUrl }],
-    ['meta', { property: 'og:locale', content: locale === 'en' ? 'en_US' : 'ko_KR' }],
+    ['meta', { property: 'og:locale', content: (localeCodes[locale] ?? localeCodes.ko).ogLocale }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: title }],
     ['meta', { name: 'twitter:image', content: ogImageUrl }]
@@ -295,7 +298,7 @@ function titleCase(segment) {
 // → site root, "eks", page. Directory names are the only label source available.
 export function breadcrumbTrail(relativePath, pageTitle) {
   const [locale, ...rest] = relativePath.split('/')
-  if (!supportedLocales.includes(locale) || rest.length === 0) return []
+  if (!publishedLocales.includes(locale) || rest.length === 0) return []
 
   // A section index page *is* its last directory, so that directory must not
   // appear both as a crumb and as the page itself.
@@ -323,7 +326,7 @@ export function structuredData({ title, description, url, locale, lastUpdated, c
       '@type': 'TechArticle',
       headline: title,
       ...(description ? { description } : {}),
-      inLanguage: locale === 'en' ? 'en-US' : 'ko-KR',
+      inLanguage: (localeCodes[locale] ?? localeCodes.ko).lang,
       mainEntityOfPage: { '@type': 'WebPage', '@id': url },
       ...(lastUpdated ? { dateModified: lastUpdated } : {}),
       isPartOf: { '@type': 'WebSite', name: siteName, url: siteHostname }

@@ -1,9 +1,10 @@
 name: Docs build (on demand)
 
-# Runs the full two-locale VitePress build on a GitHub runner, so a local
+# Runs the full five-locale VitePress build on a GitHub runner, so a local
 # machine does not have to provide the disk and memory a full build needs.
 # Use it to check a branch before opening a PR, or to compare build resources
-# across variants (the step summary reports peak memory, time and disk use).
+# across variants (the step summary and job log report peak memory, time and
+# disk use).
 on:
   workflow_dispatch:
     inputs:
@@ -17,7 +18,7 @@ on:
           - no-search-no-mermaid
         default: full
       upload_dist:
-        description: Upload the built site as an artifact (about 2.5 GB)
+        description: Upload the built site as an artifact (several GB)
         type: boolean
         default: false
 
