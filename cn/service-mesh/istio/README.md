@@ -1,6 +1,6 @@
 # Istio
 
-> **最后更新**: October 16, 2026
+> **最后更新**: 2026 年 10 月 16 日
 
 在 Amazon EKS 上使用 Istio Service Mesh 的实用指南。
 

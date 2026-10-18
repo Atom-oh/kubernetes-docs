@@ -1,6 +1,6 @@
 # EKS 上的 AI 基础设施
 
-> **最近更新**：October 16, 2026
+> **最近更新**：2026 年 10 月 16 日
 > **基线版本**：GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
 AI 基础设施由 notebooks、pipelines、分布式运行时、设备/节点、存储/网络和授权组成。工具列表或成功的 Helm release 并不能证明平台具备安全性、可用性或模型执行能力。

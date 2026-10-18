@@ -1,6 +1,6 @@
 # 路由
 
-Istio 的高级路由功能可根据各种请求属性对流量进行精细控制。
+Istio 的高级路由功能可根据不同请求属性对流量进行细粒度控制。
 
 ## 目录
 
@@ -11,54 +11,19 @@ Istio 的高级路由功能可根据各种请求属性对流量进行精细控�
 5. [基于查询参数的路由](#query-parameter-based-routing)
 6. [基于 HTTP 方法的路由](#http-method-based-routing)
 7. [基于来源的路由](#source-based-routing)
-8. [优先级和回退](#priority-and-fallback)
-9. [实际示例](#practical-examples)
-10. [故障排除](#troubleshooting)
+8. [优先级与回退](#priority-and-fallback)
+9. [实用示例](#practical-examples)
+10. [故障排查](#troubleshooting)
 
-<span id="routing-overview"></span>
+## 路由概览 {#routing-overview}
 
-## 路由概览
+以下示例分别用于 sidecar 路由。请创建其中命名的 Service 和 subset，并确保每个 host 只应用一个彼此重叠的 VirtualService。如果没有设置 `gateways`，路由将应用于 mesh sidecar；针对外部 host 的入口示例还需要绑定到现有 Gateway，并匹配其 hostname。Header、查询参数和来源工作负载标签只是路由输入，不能证明用户身份。应通过身份验证和 AuthorizationPolicy 强制执行租户/用户权限。
 
 VirtualService 路由规则由**匹配条件**和**路由目标**组成。
 
-```mermaid
-flowchart LR
-    Request[Incoming Request]
+![Diagram showing how an incoming request is evaluated against ordered match conditions in an Istio VirtualService and routed to the corresponding destination service, with a default fallback rule applied when no earlier condition matches.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-02-routing-0.png)
 
-    subgraph VirtualService["VirtualService Routing"]
-        Match1[Match Condition 1<br/>URI = /api/v1]
-        Match2[Match Condition 2<br/>Header = Mobile]
-        Match3[Match Condition 3<br/>Default]
-
-        Route1[Route 1<br/>→ api-v1]
-        Route2[Route 2<br/>→ mobile-app]
-        Route3[Route 3<br/>→ web-app]
-    end
-
-    Request --> Match1
-    Request --> Match2
-    Request --> Match3
-
-    Match1 -->|Match| Route1
-    Match2 -->|Match| Route2
-    Match3 -->|Match| Route3
-
-    Route1 --> Service1[API v1<br/>Service]
-    Route2 --> Service2[Mobile App<br/>Service]
-    Route3 --> Service3[Web App<br/>Service]
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef match fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef route fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Match1,Match2,Match3 match;
-    class Route1,Route2,Route3 route;
-    class Service1,Service2,Service3 service;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-02-routing-0.html)
 
 ### 基本结构
 
@@ -89,9 +54,7 @@ spec:
         host: web-app
 ```
 
-<span id="match-conditions"></span>
-
-## 匹配条件
+## 匹配条件 {#match-conditions}
 
 ### 匹配条件类型
 
@@ -100,8 +63,8 @@ spec:
 | **uri** | 请求路径 | `exact`、`prefix`、`regex` |
 | **scheme** | HTTP/HTTPS | `exact`、`prefix`、`regex` |
 | **method** | HTTP 方法 | `exact`、`prefix`、`regex` |
-| **authority** | Host Header | `exact`、`prefix`、`regex` |
-| **headers** | HTTP Header | `exact`、`prefix`、`regex` |
+| **authority** | Host header | `exact`、`prefix`、`regex` |
+| **headers** | HTTP headers | `exact`、`prefix`、`regex` |
 | **queryParams** | 查询参数 | `exact`、`prefix`、`regex` |
 | **sourceLabels** | 来源工作负载标签 | 标签选择器 |
 | **gateways** | Gateway 名称 | 列表 |
@@ -113,12 +76,16 @@ spec:
 match:
 - uri:
     exact: "/login"
+```
 
+```yaml
 # prefix: Prefix match
 match:
 - uri:
     prefix: "/api/"
+```
 
+```yaml
 # regex: Regular expression match
 match:
 - uri:
@@ -142,7 +109,9 @@ http:
   route:
   - destination:
       host: api-debug
+```
 
+```yaml
 # OR condition: Use multiple match blocks
 http:
 - match:
@@ -155,9 +124,7 @@ http:
       host: api-service
 ```
 
-<span id="uri-based-routing"></span>
-
-## 基于 URI 的路由
+## 基于 URI 的路由 {#uri-based-routing}
 
 ### 前缀匹配
 
@@ -280,9 +247,7 @@ spec:
         host: image-service
 ```
 
-<span id="header-based-routing"></span>
-
-## 基于 Header 的路由
+## 基于 Header 的路由 {#header-based-routing}
 
 ### 基于 User-Agent 的路由
 
@@ -295,16 +260,6 @@ spec:
   hosts:
   - reviews
   http:
-  # Mobile devices
-  - match:
-    - headers:
-        user-agent:
-          regex: ".*Mobile.*"
-    route:
-    - destination:
-        host: reviews
-        subset: mobile
-
   # Tablet devices
   - match:
     - headers:
@@ -314,6 +269,16 @@ spec:
     - destination:
         host: reviews
         subset: tablet
+
+  # Mobile devices
+  - match:
+    - headers:
+        user-agent:
+          regex: ".*Mobile.*"
+    route:
+    - destination:
+        host: reviews
+        subset: mobile
 
   # Desktop (default)
   - route:
@@ -408,9 +373,7 @@ spec:
         subset: v1
 ```
 
-<span id="query-parameter-based-routing"></span>
-
-## 基于查询参数的路由
+## 基于查询参数的路由 {#query-parameter-based-routing}
 
 ### 基本查询参数匹配
 
@@ -500,9 +463,7 @@ spec:
         subset: production
 ```
 
-<span id="http-method-based-routing"></span>
-
-## 基于 HTTP 方法的路由
+## 基于 HTTP 方法的路由 {#http-method-based-routing}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -554,9 +515,9 @@ spec:
         host: api-read-service
 ```
 
-<span id="source-based-routing"></span>
+## 基于来源的路由 {#source-based-routing}
 
-## 基于来源的路由
+`sourceLabels` 和 `sourceNamespace` 用于选择哪些来源 sidecar 接收配置；它们不是入口 Gateway 上经过身份验证的逐请求匹配条件。显式设置顶层 Gateway 列表时，必须包含 `mesh`，这些 selector 才会生效。数据库示例假定 Service 使用 HTTP，不适用于不透明的 SQL 协议。
 
 ### 基于 Namespace 的路由
 
@@ -586,13 +547,12 @@ spec:
         host: database
         subset: staging
 
-  # Block other namespaces
-  - route:
-    - destination:
-        host: access-denied
+  # Illustrative HTTP rejection; enforce identity policy at the destination
+  - directResponse:
+      status: 403
 ```
 
-### 基于 Service Account 的路由
+### 基于来源工作负载标签的路由
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -603,7 +563,7 @@ spec:
   hosts:
   - payment-service
   http:
-  # Allow access only from specific Service Account
+  # Select configuration for matching source workload labels
   - match:
     - sourceLabels:
         app: frontend
@@ -624,13 +584,11 @@ spec:
         subset: v1
 ```
 
-<span id="priority-and-fallback"></span>
-
-## 优先级和回退
+## 优先级与回退 {#priority-and-fallback}
 
 ### 匹配规则优先级
 
-Istio 会**从上到下**评估 VirtualService HTTP 路由规则。
+Istio 按**从上到下**的顺序评估 VirtualService 的 HTTP 路由规则。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -676,6 +634,8 @@ spec:
 
 ### 回退策略
 
+此处的回退是指最终处理未匹配请求的路由。某条路由匹配后，即使上游请求失败，也不会从头开始检查后续路由。应另行配置重试/异常实例检测，或使用 rollout 控制器处理故障恢复。
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -694,14 +654,9 @@ spec:
     - destination:
         host: myapp
         subset: canary
-    fault:
-      abort:
-        percentage:
-          value: 0
-        httpStatus: 503
     # No fallback on canary failure - return error
 
-  # Default requests - with fallback
+  # Default route for requests that did not match the canary condition
   - route:
     - destination:
         host: myapp
@@ -709,9 +664,7 @@ spec:
       weight: 100
 ```
 
-<span id="practical-examples"></span>
-
-## 实际示例
+## 实用示例 {#practical-examples}
 
 ### 示例 1：多租户路由
 
@@ -723,6 +676,7 @@ metadata:
 spec:
   hosts:
   - api.example.com
+  - tenant-b.api.example.com
   http:
   # Tenant A (identified by header)
   - match:
@@ -786,7 +740,7 @@ spec:
         host: myapp
         subset: beta
 
-  # Experimental features (employees only)
+  # Workloads labeled role=employee with the feature header
   - match:
     - headers:
         x-feature-experimental:
@@ -805,7 +759,7 @@ spec:
         subset: stable
 ```
 
-### 示例 3：地理路由
+### 示例 3：地理位置路由
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -850,7 +804,7 @@ spec:
   - match:
     - headers:
         x-country-code:
-          regex: "DE|FR|UK|IT|ES"
+          regex: "DE|FR|GB|IT|ES"
     route:
     - destination:
         host: content-service
@@ -865,6 +819,8 @@ spec:
 
 ### 示例 4：API Gateway 模式
 
+对外开放前，请将 `api-gateway` 绑定到实际 Gateway，并对受保护路径配置 [JWT 身份验证和授权](../security/02-authentication.md)。匹配 `Bearer ...` 这段文本并不等于验证了令牌。缺少凭据时，受保护路径不得回退到公共/通用路由。如果地理位置/租户 Header 会影响访问决策，它们必须来自可信且经过身份验证的来源。
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -876,13 +832,10 @@ spec:
   gateways:
   - api-gateway
   http:
-  # APIs requiring authentication
+  # Route protected paths; JWT/authorization must be enforced separately
   - match:
     - uri:
         prefix: "/api/v1/protected/"
-      headers:
-        authorization:
-          regex: "Bearer .*"
     route:
     - destination:
         host: protected-api-service
@@ -921,17 +874,14 @@ spec:
     - destination:
         host: health-service
 
-  # 404 handling
-  - route:
-    - destination:
-        host: error-service
+  # 404 response for unmatched paths
+  - directResponse:
+      status: 404
 ```
 
-<span id="troubleshooting"></span>
+## 故障排查 {#troubleshooting}
 
-## 故障排除
-
-### 路由未生效
+### 路由不起作用
 
 ```bash
 # 1. Check VirtualService status
@@ -977,7 +927,9 @@ http:
   route:
   - destination:
       host: api-service
+```
 
+```yaml
 # ✅ Correct order
 http:
 - match:  # Specific rules first
@@ -991,34 +943,30 @@ http:
       host: myapp
 ```
 
-#### 2. 正则表达式语法错误
+#### 2. 正则表达式匹配范围
+
+RE2 会匹配整个字符串。`/api/v[1-3]` 语法有效，并匹配 `/api/v1`，但不匹配 `/api/v1/users`；`/` 无需转义。若要匹配版本根路径及其后代路径：
 
 ```yaml
-# ❌ Incorrect regex
 match:
 - uri:
-    regex: "/api/v[1-3]"  # Missing anchor
-
-# ✅ Correct regex
-match:
-- uri:
-    regex: "^/api/v[1-3].*"
+    regex: "^/api/v[1-3](/.*)?$"
 ```
 
-#### 3. Header 大小写敏感问题
+#### 3. Header 名称
+
+HTTP Header 名称在网络传输时不区分大小写，但 Istio 匹配 map 的键必须使用小写。除非表达式另有说明，Header 值仍区分大小写。
 
 ```yaml
-# HTTP headers are case-insensitive
-# Istio automatically converts to lowercase
 match:
 - headers:
-    X-Custom-Header:  # Automatically converted to x-custom-header
+    x-custom-header:
       exact: "value"
 ```
 
 ## 最佳实践
 
-### 1. 将特定规则放在前面
+### 1. 将具体规则放在前面
 
 ```yaml
 # ✅ Good example
@@ -1046,21 +994,23 @@ http:
       host: frontend
 ```
 
-### 2. 尽量减少使用正则表达式
+### 2. 尽量少用正则表达式
 
 ```yaml
 # ❌ Avoid - complex regex degrades performance
 match:
 - uri:
     regex: "^/(api|admin|public)/v[0-9]+/(users|products|orders)/[a-zA-Z0-9_-]+$"
+```
 
+```yaml
 # ✅ Recommended - use prefix or exact
 match:
 - uri:
     prefix: "/api/v1/"
 ```
 
-### 3. 清晰命名
+### 3. 使用清晰的命名
 
 ```yaml
 # ✅ Use clear names
@@ -1074,9 +1024,13 @@ metadata:
 spec:
   hosts:
   - product-api.example.com
+  http:
+  - route:
+    - destination:
+        host: product-api-service
 ```
 
-### 4. 文档
+### 4. 编写文档
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1103,6 +1057,8 @@ spec:
 
 ### 5. 测试策略
 
+将 GATEWAY_URL 设为已安装入口的地址/端口，并根据当前部署的单个示例调整 Host 和 Header。仅供 mesh 使用的示例必须先绑定到该 Gateway，才能通过这些外部 curl 命令进行测试。排查结束后，请恢复临时设置的 proxy debug 日志级别。
+
 ```bash
 # Routing rule test script
 #!/bin/bash
@@ -1114,10 +1070,10 @@ curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v1/users
 curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v2/users
 
 # Mobile user test
-curl -H "User-Agent: Mobile" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "User-Agent: Mobile" "http://$GATEWAY_URL/"
 
 # Header-based test
-curl -H "x-canary: true" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "x-canary: true" "http://$GATEWAY_URL/"
 ```
 
 ## 参考资料

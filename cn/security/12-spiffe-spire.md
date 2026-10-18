@@ -1,6 +1,6 @@
 # 使用 SPIFFE/SPIRE 实现工作负载身份
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 > **验证基线**：SPIRE 1.15.3、hardened chart 0.30.2 / CRD chart 0.6.1、Controller Manager 0.7.0、chart CSI image 0.2.7（也对照当前 CSI 0.2.13 文档进行了检查）、go-spiffe 2.8.1。请单独检查 chart 渲染出的镜像版本。
 
 SPIFFE 定义工作负载身份、凭证、交付和信任格式；SPIRE 则负责实现这些格式。**签发身份不会自动加密流量或授权服务访问**。本指南验证本地配置、架构、库、chart 和图表。未执行实时集群、AWS CA、SPIRE 证明或网格安装。
@@ -38,7 +38,7 @@ ID 包含 scheme、信任域和可选路径。不允许查询、片段、端口�
 
 CN 并非 SPIFFE 身份。本地 go-spiffe 测试拒绝了仅含 CN、包含多个 SPIFFE URI、已过期以及信任域错误的情况。受众验证可以限制接收方，但不能检测重放：同一个有效承载令牌再次通过了验证。应根据需要采用适当的 TLS/令牌使用策略和重放防护。
 
-信任包包含 X.509 权威机构、JWT 验证密钥和元数据。PEM、SPIFFE bundle JSON 和任意 YAML 不能互换。公共 bundle 不得包含工作负载或 CA 私钥。
+信任包包含 X.509 证书颁发机构、JWT 验证密钥和元数据。PEM、SPIFFE bundle JSON 和任意 YAML 不能互换。公共 bundle 不得包含工作负载或 CA 私钥。
 
 <span id="spire-server"></span>
 <span id="spire-agent"></span>
@@ -329,7 +329,7 @@ UpstreamAuthority "aws_pca" {
 ```
 
 
-SPIRE 管理中间 CA 并为叶证书签名。使用[策略示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/aws-pca-policy.json)，将 DescribeCertificateAuthority/IssueCertificate/GetCertificate 的权限限定到预期的 CA ARN。请为实际 CA 选择签名算法/模板。supplemental_bundle_path 包含额外的 PEM 权威机构，不是备用区域。请区分 aws_kms KeyManager 和 UpstreamAuthority 插件。
+SPIRE 管理中间 CA 并为叶证书签名。使用[策略示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/aws-pca-policy.json)，将 DescribeCertificateAuthority/IssueCertificate/GetCertificate 的权限限定到预期的 CA ARN。请为实际 CA 选择签名算法/模板。supplemental_bundle_path 包含额外的 PEM 格式证书颁发机构证书，不是备用区域。请区分 aws_kms KeyManager 和 UpstreamAuthority 插件。
 
 ## 最佳实践与故障排除
 

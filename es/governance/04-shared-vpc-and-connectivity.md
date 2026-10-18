@@ -8,19 +8,19 @@ Al adoptar una VPC compartida (subredes compartidas entre cuentas mediante AWS R
 
 | Recurso | Permiso del participante | Permiso del propietario |
 |---|---|---|
-| Subred | Solo describir | Completo |
-| Tabla de rutas | Solo describir | Completo |
-| NACL | Solo describir (las que haya creado el propietario) | Completo |
+| Subred | Solo puede describirla | Completo |
+| Tabla de rutas | Solo puede describirla | Completo |
+| NACL | Solo puede describir las que haya creado el propietario | Completo |
 | **NAT Gateway** | **Ni siquiera puede describirlo** | Completo |
-| Internet Gateway | Solo describir (no puede ni describir IGW de solo salida) | Completo |
-| Asociación de TGW | No puede crearla | Solo el propietario |
-| ENI | Completo para las propias | Solo describir las de otros |
-| Security Group | Completo para las propias y puede usar las compartidas por el propietario | Solo describir las de otros |
-| Flow Logs | Solo las ENI propias | Subred y todas las ENI posibles (pero el propietario no puede describir ni eliminar los Flow Logs creados por un participante) |
+| Internet Gateway | Solo puede describirlo (no puede ni consultar los IGW de solo salida) | Completo |
+| Conexión de TGW | No puede crearla | Solo el propietario |
+| ENI | Control total de las propias | Solo puede describir las de otros |
+| Grupo de seguridad (SG) | Control total de los propios y permiso para usar los compartidos por el propietario | Solo puede describir los de otros |
+| Flow Logs | Solo puede crear registros para sus propias ENI | Puede crear registros para la subred y todas las ENI (pero ni siquiera el propietario puede describir o eliminar los registros creados por un participante) |
 
 De esta tabla se derivan dos consecuencias prácticas.
 
-**La propiedad de Flow Logs es asimétrica.** Los registros de VPC/subred administrados por el propietario central pueden coexistir con los registros de ENI de los participantes, con una finalidad, retención y responsabilidad de coste explícitas. AWS no exige una SCP que prohíba todos los registros de los participantes. Flow Logs observa el tráfico; no lo bloquea.
+**La propiedad de Flow Logs es asimétrica.** Los registros de VPC/subred administrados por el propietario central pueden coexistir con los registros de ENI de los participantes, con una finalidad, retención y responsabilidad de coste explícitas. AWS no exige una SCP que prohíba todos los registros de los participantes. Flow Logs permite observar el tráfico; no lo bloquea.
 
 **Las etiquetas de VPC y subred no se comparten con los participantes.** Pruebe el descubrimiento con la versión, el modo y los permisos de IAM reales de Load Balancer Controller. Las anotaciones explícitas con ID de subred son una opción predecible; esto no significa que todos los modos de descubrimiento o versiones deban fallar.
 
@@ -45,28 +45,28 @@ El orden de los cuellos de botella depende de la carga de trabajo. Separe las cu
 | Subredes y tablas de rutas por VPC | 200 de cada una; ajustable | Cantidad de configuración |
 | CIDR de IPv4 por VPC | 5; ajustable hasta 50 | Evalúe también el consumo y la fragmentación de direcciones |
 
-**Las rutas de TGW no se propagan automáticamente a las tablas de rutas de VPC.** El propietario de la VPC añade rutas estáticas con el TGW como destino; la propagación de asociaciones se administra en las tablas de rutas de TGW. Por tanto, es incorrecto afirmar que «más de 100 prefijos de TGW detienen la VPC compartida». Que una ruta predeterminada preserve o evite la inspección depende de las asociaciones de rutas y las rutas de retorno reales.
+**Las rutas de TGW no se propagan automáticamente a las tablas de rutas de VPC.** El propietario de la VPC añade rutas estáticas con el TGW como destino; la propagación de rutas de las conexiones se administra en las tablas de rutas de TGW. Por tanto, es incorrecto afirmar que «más de 100 prefijos de TGW detienen la VPC compartida». Que una ruta predeterminada preserve o evite la inspección depende de las asociaciones de rutas y las rutas de retorno reales.
 
 ### Grupo mínimo de VPC compartida frente a varias VPC compartidas por grupo de cargas de trabajo
 
 Al comparar «una configuración mínima que agrupa todas las cargas de trabajo en una sola VPC compartida» con «varias VPC compartidas dedicadas, una por grupo de cargas de trabajo», hay una perspectiva fácil de pasar por alto.
 
-- **Solo se permite una asociación de VPC para cada par TGW–VPC.** Una VPC puede conectarse a un máximo de 5 TGW. La capacidad predeterminada de una asociación es de hasta 100 Gbps en cada dirección/7.5 MPPS por zona de disponibilidad; consulte con SA/TAM para ampliar la capacidad.
-- En la configuración mínima, el tráfico local y externo de todas las cargas de trabajo converge en esta única asociación; se comparten tanto el **radio de impacto** como los **límites de ancho de banda y PPS**.
-- La configuración por grupo de cargas de trabajo asigna a cada VPC su propia asociación, repartiendo ese límite de rendimiento. **Poder repartir el límite de rendimiento del TGW es la verdadera razón práctica para elegir «varias VPC compartidas dedicadas».**
+- **Solo se permite una conexión de TGW para cada par TGW–VPC.** Una VPC puede conectarse a un máximo de 5 TGW. La capacidad predeterminada de una conexión es de hasta 100 Gbps en cada dirección/7.5 MPPS por zona de disponibilidad; consulte con SA/TAM para ampliar la capacidad.
+- En la configuración mínima, el tráfico hacia redes locales (on-premises) y externas de todas las cargas de trabajo converge en esta única conexión; se comparten tanto el **radio de impacto** como los **límites de ancho de banda y PPS**.
+- La configuración por grupo de cargas de trabajo asigna a cada VPC su propia conexión al TGW, repartiendo ese límite de rendimiento. **Poder repartir el límite de rendimiento del TGW es la verdadera razón práctica para elegir «varias VPC compartidas dedicadas».**
 
-En última instancia, es mejor entender la elección entre una configuración mínima y otra por grupo como un **equilibrio entre «riesgo de cambios en la canalización de red central» y «riesgo de fallo compartido a nivel de VPC»**, no como «coste frente a aislamiento». Ambas dependen de la calidad de la canalización central; por tanto, el factor decisivo es medir «con qué rapidez podemos detectar y recuperar un cambio incorrecto de una ruta central» en ambas opciones. También conviene considerar una opción híbrida (configuración mínima para las cargas de trabajo generales y configuración dedicada para las cargas con mucho tráfico local/externo, separadas por zona de confianza).
+En última instancia, conviene entender la elección entre una configuración mínima y otra por grupo como un **equilibrio entre el riesgo de modificar la infraestructura de red central y el riesgo de un fallo compartido a nivel de VPC**, no como «coste frente a aislamiento». Ambas dependen de la calidad de esa infraestructura; por tanto, el factor decisivo es medir «cuánto tardamos en detectar y corregir una modificación incorrecta de una ruta central» en ambas opciones. También conviene considerar una opción híbrida (configuración mínima para cargas generales y configuraciones dedicadas para cargas con mucho tráfico local o externo, separadas por zona de confianza).
 
 ### Cuotas principales de Transit Gateway
 
 | Cuota | Valor predeterminado | Ajustable |
 |---|---|---|
 | TGW / cuenta | 5 | Sí |
-| Asociaciones / TGW | 5,000 | Sí |
+| Conexiones / TGW | 5,000 | Sí |
 | **TGW / VPC** | **5** | **No** |
 | Tablas de rutas de TGW / TGW | 20 | Sí |
 | Rutas totales / TGW | 10,000 | Consulte con SA/TAM |
-| **Asociaciones para el mismo par TGW–VPC** | **1** | **No** |
+| **Conexiones para el mismo par TGW–VPC** | **1** | **No** |
 
 **Compruebe la MTU de toda la ruta.** TGW admite 8,500 bytes para las rutas de VPC/DX/Connect/peering; VPN tiene límites de túnel distintos. Al migrar de peering de VPC a TGW, pruebe los ajustes de trama jumbo de ambos extremos y PMTUD. La limitación de MSS afecta a TCP y no resuelve problemas de MTU en todos los protocolos de paquetes, como UDP.
 
@@ -128,7 +128,7 @@ No son opciones mutuamente excluyentes: son patrones que se eligen para cada con
 | Opción | Adecuada para | Restricciones |
 |---|---|---|
 | VPC Peering | Conectividad bidireccional directa entre un número reducido de VPC | Límite de NAU con peering de 128,000 (→512,000), sin CIDR solapados y sin transitividad |
-| Transit Gateway | Muchas VPC, conexiones locales y externas, inspección central | Calcule por separado los totales de las tablas de TGW, las rutas estáticas de VPC, las asociaciones por par y el rendimiento |
+| Transit Gateway | Muchas VPC, redes locales (on-premises) y externas, inspección central | Calcule por separado los totales de las tablas de TGW, las rutas estáticas de VPC, las asociaciones por par y el rendimiento |
 | PrivateLink | Exponer un servicio específico en una dirección | Coste del endpoint y operaciones permanentes para el proveedor y el consumidor |
 | **VPC Lattice** | Conectividad a nivel de aplicación entre servicios y recursos, incluidos casos con CIDR solapados | Compare los protocolos, la autorización y el coste con alternativas como PrivateLink/NAT |
 | Enrutamiento local dentro de la misma VPC | Misma zona de confianza y recursos que pueden compartir una VPC | Comparte los fallos de rutas/DNS/IP |
@@ -156,7 +156,7 @@ Evalúe por separado el tráfico de larga duración para servicios y recursos. L
 |---|---|
 | Controles de política distribuidos | SG/NACL/rutas/NetworkPolicy + Flow Logs |
 | Firewall distribuido por VPC | Firewall independiente para cada VPC |
-| Inspección central mediante TGW | Inspección masiva del tráfico en la ruta de Transit Gateway |
+| Inspección central mediante TGW | Inspección centralizada del tráfico que atraviesa Transit Gateway |
 | **Híbrida** | Distribuida dentro de una zona de confianza y centralizada entre zonas de confianza o rutas reguladas |
 
 Documente la propiedad, el acceso, la retención y el coste duplicado de los registros de VPC compartida. Los registros del propietario y los participantes se pueden recopilar de forma centralizada; prohibir los registros de los participantes no es un requisito previo.

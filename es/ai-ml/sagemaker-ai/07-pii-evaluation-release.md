@@ -1,6 +1,6 @@
 # Taller: evaluación de modelos de PII y canalizaciones de enmascaramiento
 
-> **Última actualización**: September 15, 2026
+> **Última actualización**: 15 de septiembre de 2026
 
 El ejemplo ejecutable usa registros sintéticos y predicciones construidas manualmente en CPU. Sus cifras no representan el rendimiento de un modelo entrenado.
 
@@ -147,14 +147,14 @@ Las métricas `entity` y `per_type` del paquete comparan conjuntos de pares `(TY
 | Exhaustividad por tipo | Encontrar categorías de PII omitidas | Informar el número de entidades poco frecuentes evaluadas |
 | Precisión por tipo | Identificar texto no sensible que se está enmascarando | Requiere una política de anotación coherente |
 | Tasa de filtración de documentos | Documentos con algún elemento de referencia sin cubrir | No puede medir PII ausente de las etiquetas de referencia |
-| Tasa de filtración de entidades | Cobertura de todas las apariciones coincidentes de un valor de referencia | Infiera los segmentos buscando valores, en vez de usar anotaciones de desplazamientos |
+| Tasa de filtración de entidades | Cobertura de todas las apariciones coincidentes de un valor de referencia | Deduce las ubicaciones de los segmentos mediante la búsqueda por valor, en lugar de usar posiciones de referencia anotadas |
 | `over_redaction_rate` | FP / pares predichos | No es la fracción de caracteres eliminados innecesariamente |
 | `hallucination_rate` | Candidatos TSV permitidos que no aparecen en la fuente | Excluye del denominador los tipos no permitidos y la prosa común |
-| Éxito del análisis | Estado del procesamiento del formato proporcionado por quien llama | El asistente actual acepta algunas salidas con solo un subconjunto de filas válidas |
+| Éxito del parseo | Estado del procesamiento del formato proporcionado por quien llama | La función auxiliar actual acepta algunas salidas aunque solo contengan un subconjunto de filas válidas |
 
-Diseña un analizador estricto para servir el modelo que valide cada fila y devuelva fallos explícitos para filas mal formadas, respuestas truncadas y entradas que superen el límite de longitud. Descartar silenciosamente filas incorrectas no debe convertirse en “no se encontró PII”. El `parse.success_rate` actual no demuestra que se haya implementado ese comportamiento estricto.
+Diseña un analizador estricto para producción que valide cada fila y devuelva fallos explícitos para filas mal formadas, respuestas truncadas y entradas que superen el límite de longitud. Descartar silenciosamente filas incorrectas no debe convertirse en “no se encontró PII”. El valor actual de `parse.success_rate` no demuestra que se haya implementado ese comportamiento estricto.
 
-Sin anotaciones de referencia en documentos activos, no se dispone de la misma tasa de filtración basada en datos de referencia. Observa muestras revisadas, detectores residuales y tasas de abstención/revisión, e identifica qué mide realmente cada uno.
+Sin anotaciones de referencia para documentos reales en producción, no se dispone de la misma tasa de filtración basada en datos de referencia. Observa muestras revisadas, detectores residuales y tasas de abstención/revisión, e identifica qué mide realmente cada uno.
 
 ## 5. Convertir los errores en el siguiente experimento de datos
 
@@ -163,7 +163,7 @@ Investiga los errores a nivel de documento en un espacio de trabajo de evaluaci�
 | Error observado | Qué examinar primero | Siguiente experimento |
 | --- | --- | --- |
 | Encuentra nombres, pero omite cuentas | Recuentos por tipo y anotaciones faltantes | Añadir casos de entrenamiento con contexto de cuenta |
-| Falla con nombres separados por espacios u OCR | Alineación de la forma superficial en la fuente y las etiquetas | Aumentar juntos la fuente y las etiquetas |
+| Falla con nombres separados por espacios u OCR | Alineación de la forma superficial en la fuente y las etiquetas | Ampliar conjuntamente los textos fuente y sus etiquetas |
 | Etiqueta números de documento como cuentas | Cobertura de casos negativos y contrastes contextuales | Añadir contextos numéricos positivos/negativos emparejados |
 | Omite PII al final de documentos largos | Truncamiento del prompt y presupuesto de respuesta | Evaluar límites de fragmentos, solapamiento y reconstrucción de desplazamientos |
 | Resultados deficientes con nombres desconocidos | Solapamiento de entidades entre entrenamiento y prueba | Evaluación con entidades excluidas del entrenamiento y nuevas familias de entrenamiento |
@@ -179,7 +179,7 @@ No copies ejemplos de prueba fallidos al entrenamiento y anuncies mejoras en esa
 
 - Verifica que el truncamiento no elimine todos los tokens objetivo supervisados durante el entrenamiento.
 - No consideres ausente durante la inferencia la PII de una región de entrada que se haya truncado.
-- El fragmentado requiere desplazamientos de origen, conciliación de duplicados, tratamiento de entidades que atraviesan límites y gestión de apariciones repetidas.
+- La división en fragmentos requiere desplazamientos en el texto original, conciliación de duplicados, tratamiento de entidades que atraviesan límites y gestión de apariciones repetidas.
 - Prueba deliberadamente PII que cruce los límites; no des por sentado que el solapamiento basta.
 - Informa explícitamente del desbordamiento de entrada y de las respuestas incompletas, en lugar de etiquetar como completo un resultado parcial.
 
@@ -201,7 +201,7 @@ Elige criterios específicos para la tarea de F1, exhaustividad y latencia **ant
 
 ## 8. De los artefactos de SageMaker a un paquete de servicio
 
-Que un Training Job llegue a `Completed` describe la finalización del trabajo de entrenamiento. La creación del endpoint, la carga del adaptador, la validación de la salida y la aprobación del resultado enmascarado son pasos independientes.
+Que un trabajo de entrenamiento de SageMaker llegue al estado `Completed` solo indica que ese trabajo terminó. La creación del endpoint, la carga del adaptador, la validación de la salida y la aprobación del resultado enmascarado son pasos independientes.
 
 1. Conserva los adaptadores, la configuración y los resultados agregados de `/opt/ml/model` y MLflow.
 2. Registra junto al adaptador la revisión exacta del modelo base/tokenizador, la plantilla de chat, la configuración de cuantización y la versión del analizador.
@@ -209,13 +209,13 @@ Que un Training Job llegue a `Completed` describe la finalización del trabajo d
 4. Observa la longitud, el formato de salida y las tasas de error en un flujo de trabajo sombra o de canario limitado.
 5. Versiona conjuntamente la combinación de **modelo + tokenizador + analizador + política** para poder revertirla como una unidad.
 
-Este capítulo no implementa ni despliega un endpoint o un contenedor de versiones estricto. Un despliegue real también debe probar la exposición de la fuente/respuesta/asignación a través de CloudWatch, el registro automático/trazado de MLflow, los errores y el trazado de solicitudes. Los adaptadores reciben la influencia de sus datos de entrenamiento y requieren su propia revisión antes de compartirlos.
+Este capítulo no implementa ni despliega un endpoint o un contenedor de versiones estricto. Un despliegue real también debe probar, mediante CloudWatch, la exposición del texto de origen, la respuesta y la asignación; el registro automático y las trazas de MLflow; el manejo de errores; y el trazado de solicitudes. Los adaptadores reciben la influencia de sus datos de entrenamiento y requieren su propia revisión antes de compartirlos.
 
 ## Comprueba lo que has aprendido
 
 1. ¿Por qué no desplegar inmediatamente el candidato con mayor F1? **Añade enmascaramiento en un documento negativo, y dos documentos sintéticos no constituyen una evaluación representativa.**
 2. ¿Un 100 % de ida y vuelta significa que se eliminó toda la PII? **No. Puede que solo se hayan restaurado correctamente los valores reemplazados.**
-3. ¿Qué ocurre si la misma prueba seleccionó varios rangos? **Participó en la selección y ya no es una prueba final independiente.**
+3. ¿Qué ocurre si se utilizó la misma prueba para elegir entre varios valores de rango? **Participó en la selección y ya no es una prueba final independiente.**
 4. ¿Un candidato que coincide con la fuente necesariamente es PII? **No; el número de documento es un contraejemplo.**
 5. ¿Se puede calcular la tasa de filtración de este evaluador solo a partir de las salidas del modelo en tráfico sin etiquetar? **No; requiere anotaciones de referencia.**
 

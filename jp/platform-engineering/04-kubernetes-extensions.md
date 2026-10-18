@@ -1,6 +1,6 @@
 # Kubernetes 拡張メカニズム
 
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月16日
 
 ## 拡張ポイントの選択
 
@@ -15,7 +15,7 @@ Kubernetes には、API とワークロードの動作を拡張する複数の�
 | CNI | コンテナネットワーク | 実際の interface、IPAM、route、クリーンアップ |
 | CSI | Volume のライフサイクルと node へのマウント | capability に適した RPC と backend/node 操作 |
 
-選択した API、library、distribution の互換性を確認してください。レビュー対象の controller-runtime 0.25.0 の go.mod は Go 1.26.0 と Kubernetes Go module 0.37.0 を使用しています（2026 年 10 月 12 日時点の最新リリースは v0.25.2）。以下の Scheduler interface に関する注記は Kubernetes 1.36.2 のソースに照らして確認しました。scheduler-plugins 0.35.7 がこれと置き換え可能であると仮定しないでください。
+選択した API、library、distribution の互換性を確認してください。レビュー対象の controller-runtime 0.25.2（2026年10月16日時点の最新リリース）の go.mod は、Go 1.26.0 と Kubernetes Go module 0.37.0 を使用しています。以下の Scheduler interface に関する注記は Kubernetes 1.36.2 のソースに照らして確認しました。scheduler-plugins 0.35.7 がこれと置き換え可能であると仮定しないでください。
 
 ## CRD とインスタンス
 
@@ -88,7 +88,7 @@ metadata:
   namespace: example
 spec:
   replicas: 2
-  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  image: nginxinc/nginx-unprivileged:1.30.6-alpine
   port: 8080
 ```
 
@@ -359,7 +359,7 @@ StorageClass/PVC は driver deployment ではありません。provisioner 名�
 - [Aggregation](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/)
 - [Scheduler framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
 - [Framework 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go)
-- [controller-runtime 0.25.0](https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.0)
+- [controller-runtime 0.25.2](https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.2)
 - [Operator SDK](https://sdk.operatorframework.io/docs/installation/)
 - [CNI 1.3.1 source](https://github.com/containernetworking/cni/blob/v1.3.1/SPEC.md)
 - [CSI 1.13.0](https://github.com/container-storage-interface/spec/blob/v1.13.0/spec.md)

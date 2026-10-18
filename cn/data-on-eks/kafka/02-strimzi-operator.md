@@ -1,6 +1,6 @@
 # 第 2 部分：Strimzi Operator
 
-> **最后更新**：October 16, 2026。Strimzi 1.3.0，Kafka 4.3.1。Strimzi 要求 Kubernetes 1.32 或更高版本；本地架构验证使用了 1.36.2。
+> **最后更新**：2026 年 10 月 16 日。Strimzi 1.3.0，Kafka 4.3.1。Strimzi 要求 Kubernetes 1.32 或更高版本；本地架构验证使用了 1.36.2。
 > **验证**：通过 Kafka 原生 JAAS 解析器验证了两种 Helm 配置、67 个 Kubernetes/CRD 对象和五种凭证文件情况。未执行实时 EKS 安装、TLS 连接、broker ACL 强制执行、EBS 或 NLB 预置。
 
 ## 1. 范围和先决条件
