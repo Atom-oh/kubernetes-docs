@@ -123,7 +123,7 @@ spec:
 
 `payment-service` accepts non-idempotent writes (charge submission), so a single
 retry policy applied to every method would let the mesh replay a POST on `reset`
-or `5xx` — exactly the ambiguous-replay risk this page warns against. Split the
+or `5xx`, exactly the ambiguous-replay risk this page warns against. Split the
 route by method instead: retry read-only status checks generously, and disable
 mesh retry entirely for the write path.
 

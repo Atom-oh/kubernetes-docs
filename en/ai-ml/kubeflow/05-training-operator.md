@@ -15,9 +15,9 @@ Distributed training on Kubernetes has gone through a real architectural shift i
 
 The Training Operator that Kubeflow consolidated in 2021 took a **framework-specific CRD** approach. Each supported ML framework got its own Custom Resource Definition, each with its own controller implementing that framework's particular distributed-training semantics:
 
-* **`PyTorchJob`** — the controller understood PyTorch's distributed launch conventions, injecting environment variables like `MASTER_ADDR`, `RANK`, and `WORLD_SIZE` into each worker Pod so `torch.distributed` could form a process group.
-* **`TFJob`** — the controller instead constructed a `TF_CONFIG` environment variable (a JSON blob describing the cluster's task roles — chief, worker, parameter server) that TensorFlow's distribution strategies expect.
-* **`MPIJob`** — the controller handled launching an MPI job across Pods, coordinating an `mpirun`-style launcher against a set of worker Pods.
+* **`PyTorchJob`**: the controller understood PyTorch's distributed launch conventions, injecting environment variables like `MASTER_ADDR`, `RANK`, and `WORLD_SIZE` into each worker Pod so `torch.distributed` could form a process group.
+* **`TFJob`**: the controller instead constructed a `TF_CONFIG` environment variable (a JSON blob describing the cluster's task roles: chief, worker, parameter server) that TensorFlow's distribution strategies expect.
+* **`MPIJob`**: the controller handled launching an MPI job across Pods, coordinating an `mpirun`-style launcher against a set of worker Pods.
 
 Beyond these three, the v1 Training Operator also shipped CRDs for a handful of other frameworks. Each CRD encoded a different framework's idea of "how workers find each other and agree on their roles" directly into a separate controller, so adding a framework required integration, while shared Job-controller plumbing could still be reused.
 
@@ -25,10 +25,10 @@ Beyond these three, the v1 Training Operator also shipped CRDs for a handful of 
 
 Kubeflow Trainer v2 replaces this with a single, unified API built around two concepts instead of one CRD per framework:
 
-* **`TrainJob`** — describes *what* to run: the training script/entrypoint, arguments, resource counts (e.g., number of workers), and a reference to the runtime that should execute it. This is the object an ML practitioner creates for an individual training run.
-* **`TrainingRuntime` / `ClusterTrainingRuntime`** — describes *how* to run it: a reusable, framework-specific execution template covering the container image, the distributed launch mechanics (how workers discover each other, what env vars or launcher process gets used), and default resource shape. A platform team defines a small set of these once — say, a PyTorch DDP runtime, an MPI runtime — and many different `TrainJob`s reference the same runtime across many training runs.
+* **`TrainJob`**: describes *what* to run: the training script/entrypoint, arguments, resource counts (e.g., number of workers), and a reference to the runtime that should execute it. This is the object an ML practitioner creates for an individual training run.
+* **`TrainingRuntime` / `ClusterTrainingRuntime`**: describes *how* to run it: a reusable, framework-specific execution template covering the container image, the distributed launch mechanics (how workers discover each other, what env vars or launcher process gets used), and default resource shape. A platform team defines a small set of these once (say, a PyTorch DDP runtime, an MPI runtime), and many different `TrainJob`s reference the same runtime across many training runs.
 
-This mirrors a pattern seen elsewhere in Kubernetes: separating a reusable "template" resource from the "instance" that consumes it, similar in spirit to how a `StorageClass` is a reusable template that many `PersistentVolumeClaim`s reference. The practical benefit is that a platform team can own and version the tricky distributed-launch mechanics in one place (the runtime), while ML practitioners submitting jobs only need to supply their script and ask for a runtime by name — the runtime reduces repeated setup, while training code must still handle compatible distributed initialization, data sharding, checkpointing and recovery.
+This mirrors a pattern seen elsewhere in Kubernetes: separating a reusable "template" resource from the "instance" that consumes it, similar in spirit to how a `StorageClass` is a reusable template that many `PersistentVolumeClaim`s reference. The practical benefit is that a platform team can own and version the tricky distributed-launch mechanics in one place (the runtime), while ML practitioners submitting jobs only need to supply their script and ask for a runtime by name. The runtime reduces repeated setup, while training code must still handle compatible distributed initialization, data sharding, checkpointing and recovery.
 
 ### Differences Between 2.2.0 and 2.3.0
 
@@ -83,7 +83,7 @@ Official OCI Trainer Helm charts 2.2.0 and 2.3.0 were pulled and rendered with d
 
 ## Next Steps
 
-With the shift from framework-specific CRDs to the unified `TrainJob`/runtime model in place, [Part 6: KServe — Model Serving on Kubernetes](./06-kserve.md) covers what happens to a model once training against a `TrainJob` completes: serving it for inference.
+With the shift from framework-specific CRDs to the unified `TrainJob`/runtime model in place, [Part 6: KServe (Model Serving on Kubernetes)](./06-kserve.md) covers what happens to a model once training against a `TrainJob` completes: serving it for inference.
 
 [Return to Main Page](./README.md)
 

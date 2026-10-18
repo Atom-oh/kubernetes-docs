@@ -255,7 +255,7 @@ spec:
 
 <span id="connaisseur"></span>
 
-### Connaisseur 대안 — legacy 서명 경로
+### Connaisseur 대안: legacy 서명 경로
 
 **Connaisseur 3.13.0은 기본 Cosign 3 bundle을 소비하는 대안이 아닙니다.** 이 버전은 cosign/v2 검증 경로와 legacy signature tag·SimpleSigning payload를 사용합니다. 별도 compatibility producer가 필요합니다. [legacy 서명 스크립트](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)는 Cosign 3.1.3에 `--new-bundle-format=false --registry-referrers-mode=legacy`를 명시하고 transparency upload/검증을 유지합니다. 동봉한 signing config는 Rekor v1을 명시하며 legacy verifier가 소비하는 로그 형식을 유지합니다. 실제 승인 key와 digest를 제공해야 합니다. 이 경로는 아래 secure-build.yaml의 기본 bundle 경로와 별도이며, 해당 기본 workflow의 결과를 그대로 Connaisseur에 넣으면 안 됩니다. Legacy 옵션은 deprecated이므로 verifier와 producer를 함께 업그레이드하는 마이그레이션 계획이 필요합니다. CLI 옵션과 양쪽 소스 계약은 확인했지만 실제 registry/signature 연동을 실행하지 않았습니다.
 

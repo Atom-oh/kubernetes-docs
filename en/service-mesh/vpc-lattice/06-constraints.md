@@ -6,7 +6,7 @@
 ## What This Document Covers
 
 - Six constraints you must answer before finalizing a design, and the alternatives for each
-- The decision tree they form together — where one choice closes off another
+- The decision tree they form together: where one choice closes off another
 - A pre-migration checklist
 
 ## Constraint Summary
@@ -22,7 +22,7 @@
 
 Constraints 1 and 2 are **current capability and trust-boundary choices**, not predictions that AWS can never add features. Separate service listeners, resource connectivity and controller support.
 
-## Constraint 1 — TLS Passthrough and Authenticated HTTP Identity
+## Constraint 1: TLS Passthrough and Authenticated HTTP Identity
 
 ### The principle
 
@@ -53,11 +53,11 @@ TLS passthrough cannot evaluate encrypted HTTP SigV4 identity or HTTP path/heade
 The criterion is **whether regulation requires end-to-end encryption or workload-to-workload mutual authentication.**
 
 - **If not, choose A.** IAM Auth's authorization granularity and observability benefits are substantial, and this is how Lattice is designed to be used.
-- **If yes, choose B.** But choosing B means redesigning where authorization is expressed — Lattice only knows SNI, so authorization must happen in the application or in endpoint mTLS certificate validation. And as noted in [document 05](./05-spiffe-to-iam.md), **SPIRE may still be necessary.**
+- **If yes, choose B.** But choosing B means redesigning where authorization is expressed. Lattice only knows SNI, so authorization must happen in the application or in endpoint mTLS certificate validation. And as noted in [document 05](./05-spiffe-to-iam.md), **SPIRE may still be necessary.**
 
-Mixing is possible. **You can split A and B per service** — B for services under regulation, A for the rest. The cost is operating two authorization models simultaneously.
+Mixing is possible. **You can split A and B per service**: B for services under regulation, A for the rest. The cost is operating two authorization models simultaneously.
 
-## Constraint 2 — Choose Service or Resource Connectivity
+## Constraint 2: Choose Service or Resource Connectivity
 
 ### The principle
 
@@ -71,7 +71,7 @@ Early in planning, **find every East-West communication that uses plaintext TCP.
 
 Inventory plaintext database/cache/custom TCP protocols. Do not put gRPC over HTTP/2 (h2c) in the same unsupported category; validate its exact HTTP listener/route/target configuration.
 
-### The alternative — a Hybrid configuration
+### The alternative: a Hybrid configuration
 
 | Traffic type | Path |
 |---|---|
@@ -83,7 +83,7 @@ The reason to recommend this is simple: **trying to move everything to Lattice i
 
 App Mesh also supported TCP routes. Inventory **all traffic that actually depended on App Mesh**, not just HTTP, and replace it. App Mesh support ended on September 30, 2026.
 
-## Constraint 3 — Application Impact of SigV4 Signing
+## Constraint 3: Application Impact of SigV4 Signing
 
 If you chose IAM Auth (Constraint 1, alternative A), **someone must attach signatures to requests.** Deciding who is the choice with the most direct impact on application teams.
 
@@ -95,15 +95,15 @@ If you chose IAM Auth (Constraint 1, alternative A), **someone must attach signa
 
 ### Practical recommendation
 
-**If you have multiple languages or limited application-team capacity, start with ②.** The aws-samples reference implementation provides validated manifests — a `sigv4proxy` sidecar on 8080 with an init container redirecting only traffic bound for `169.254.171.0/24` to the proxy.
+**If you have multiple languages or limited application-team capacity, start with ②.** The aws-samples reference implementation provides validated manifests: a `sigv4proxy` sidecar on 8080 with an init container redirecting only traffic bound for `169.254.171.0/24` to the proxy.
 
-The irony of ② is plain: **you migrated to remove the Envoy sidecar and gained a signing sidecar.** That said, `sigv4proxy` is far lighter than Envoy, has no xDS control plane, and has static configuration. If "eliminate sidecars" was the core goal, you need ① — and then you need an application change plan.
+The irony of ② is plain: **you migrated to remove the Envoy sidecar and gained a signing sidecar.** That said, `sigv4proxy` is far lighter than Envoy, has no xDS control plane, and has static configuration. If "eliminate sidecars" was the core goal, you need ①, and then you need an application change plan.
 
 An auth-off comparison is only for an isolated, explicitly approved test path with no business traffic and compensating network/application controls. Do not disable production authorization merely to make migration or benchmarking easier.
 
 **Whichever approach you take, check the three pitfalls in [document 03](./03-auth-flow.md) (Host header, x-amz-date clock, sign at the last hop).**
 
-## Constraint 4 — Envoy iptables Exception During Coexistence
+## Constraint 4: Envoy iptables Exception During Coexistence
 
 Verify the installed mesh policy and observed forwarding behavior before choosing an exclusion or an explicitly configured proxy path. Unknown destinations are not rejected by every Envoy configuration.
 
@@ -124,7 +124,7 @@ Mesh iptables rules may intercept Lattice-bound traffic. Whether it forwards, fa
 
 Validate this setting **before** starting the migration. It is the number one cause of a first Lattice call failing.
 
-## Constraint 5 — Per-Hop Charges Are Dominated by Call Chain Depth
+## Constraint 5: Per-Hop Charges Are Dominated by Call Chain Depth
 
 ### The billing structure
 
@@ -159,7 +159,7 @@ In AS-IS (App Mesh) the structure was different. App Mesh itself had no per-requ
 
 **The last two items matter most.** Lattice's strength is communication crossing cluster, VPC, and account boundaries; for traffic within the same cluster it offers little benefit while adding cost and latency. **Sending only boundary-crossing traffic through Lattice and leaving intra-cluster traffic on ClusterIP** is often the right answer for both cost and performance.
 
-But here you meet the constraint from [document 03](./03-auth-flow.md) — **calling the k8s Service DNS directly inside the cluster bypasses auth policy evaluation.** So if you choose "internal traffic does not go through Lattice," you must **separately design authorization for internal traffic** via NetworkPolicy or the application layer. This is where cost optimization and authorization consistency conflict.
+But here you meet the constraint from [document 03](./03-auth-flow.md): **calling the k8s Service DNS directly inside the cluster bypasses auth policy evaluation.** So if you choose "internal traffic does not go through Lattice," you must **separately design authorization for internal traffic** via NetworkPolicy or the application layer. This is where cost optimization and authorization consistency conflict.
 
 ### Data needed for cost estimation
 
@@ -175,7 +175,7 @@ Collect these before migrating. Without them, cost estimation is impossible.
 
 Preserve or add application tracing across the migration. Lattice does not create a native span, but this does not eliminate application traces or make call-chain analysis impossible.
 
-## Constraint 6 — Failure Domain Concentration and STS Dependency
+## Constraint 6: Failure Domain Concentration and STS Dependency
 
 ### The failure domain concentrates
 
@@ -197,7 +197,7 @@ With IAM Auth, **credential acquisition and refresh depend on the configured pro
 - If refresh fails and no valid credentials remain, the client may fail before dispatch or send a request that Lattice rejects; distinguish these outcomes rather than assuming every failure is an HTTP 403
 - An outage on the actual credential-delivery path can interrupt service calls after valid cached credentials are exhausted; do not fall back to unsigned requests
 
-In AS-IS, SPIRE Server occupied this position. **The existence of the dependency is not new — the owner shifts from the customer to AWS** (the same structure as difference (b) in [document 05](./05-spiffe-to-iam.md)).
+In AS-IS, SPIRE Server occupied this position. **The existence of the dependency is not new; the owner shifts from the customer to AWS** (the same structure as difference (b) in [document 05](./05-spiffe-to-iam.md)).
 
 ### Mitigations
 
@@ -212,22 +212,22 @@ This constraint cannot be removed, only mitigated.
 | **Recalculate RTO/RPO** | The failure characteristics changed, so revisit the basis for your existing targets |
 | **Integrate AWS Health / status notifications** | Since you cannot remediate directly, early detection is the core of the response |
 
-**"Redundancy for critical paths" and "phased migration" are the most effective in practice** — especially keeping a rollback path. App Mesh support ended on September 30, 2026, so a rollback to App Mesh cannot be assumed; during the validation window you must be able to roll back to an alternate path such as direct calls or an NLB.
+**"Redundancy for critical paths" and "phased migration" are the most effective in practice**, especially keeping a rollback path. App Mesh support ended on September 30, 2026, so a rollback to App Mesh cannot be assumed; during the validation window you must be able to roll back to an alternate path such as direct calls or an NLB.
 
 ## Unconfirmed Items
 
 ::: warning Needs verification
 The following could not be confirmed against official documentation. Verify them directly if they affect your design.
 
-**① API Gateway bridging** — confirm the exact REST/HTTP API integration type. Do not assume a Lattice service-network ARN is a VPC Link target or that an ALB/NLB can directly target a Lattice link-local address. A bridging design needs an explicitly implemented proxy/consumer and supported private connectivity, with its own auth and failure behavior.
+**① API Gateway bridging**: confirm the exact REST/HTTP API integration type. Do not assume a Lattice service-network ARN is a VPC Link target or that an ALB/NLB can directly target a Lattice link-local address. A bridging design needs an explicitly implemented proxy/consumer and supported private connectivity, with its own auth and failure behavior.
 
-**② Quotas** — verify the required resource count, target count, bandwidth, connection and request limits in the [current quota reference](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html) and the account/Region. Do not treat old default numbers or adjustability as universal.
+**② Quotas**: verify the required resource count, target count, bandwidth, connection and request limits in the [current quota reference](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html) and the account/Region. Do not treat old default numbers or adjustability as universal.
 
-**③ AZ behavior** — AWS documents client-side DNS AZ affinity, but backend targets can span AZs. Do not infer same-AZ target selection from that DNS behavior; measure it for the chosen targets and client path.
+**③ AZ behavior**: AWS documents client-side DNS AZ affinity, but backend targets can span AZs. Do not infer same-AZ target selection from that DNS behavior; measure it for the chosen targets and client path.
 
-**④ TLS policy behavior** — confirmed: anonymous-principal policies can apply; authenticated HTTP SigV4 identity cannot. See Constraint 1.
+**④ TLS policy behavior** (confirmed): anonymous-principal policies can apply; authenticated HTTP SigV4 identity cannot. See Constraint 1.
 
-**⑤ ECH/ESNI** — AWS explicitly excludes these for TLS listeners; see [document 04](./04-networking-basics.md).
+**⑤ ECH/ESNI**: AWS explicitly excludes these for TLS listeners; see [document 04](./04-networking-basics.md).
 :::
 
 **By contrast, the following are confirmed**: the link-local ranges (`169.254.171.0/24`, `fd00:ec2:80::/64`), the SigV4 service name (`vpc-lattice-svcs`), the three listener protocols (HTTP/HTTPS/TLS_PASSTHROUGH), the condition key list, the App Mesh end-of-support date (September 30, 2026), that cross-AZ charges are included in data processing, and that trace spans are not supported.
@@ -293,7 +293,7 @@ graph TD
 | **Config** | Evaluated Pod readiness gates (zero-downtime rolling updates) |
 | **Verify** | Confirmed unconfirmed items ①–⑤ against current official documentation |
 | **Verify** | Confirmed current quota values and unit prices for your region |
-| **Operations** | Observability plan — how to cope with the absent Lattice span (application OpenTelemetry instrumentation) |
+| **Operations** | Observability plan: how to cope with the absent Lattice span (application OpenTelemetry instrumentation) |
 | **Operations** | Secured a rollback path; defined the phased migration order |
 | **Operations** | Tested behavior on STS refresh failure |
 | **Operations** | Recalculated RTO/RPO |
@@ -302,18 +302,18 @@ graph TD
 
 - Distinguish TLS authenticated identity from anonymous policy, and service listeners from TCP resource connectivity.
 - **The first decision governs everything.** Whether regulation requires end-to-end encryption or mutual authentication determines the rest of the design, so agree with security reviewers before technical work begins.
-- **Do not try to move everything to Lattice.** A hybrid — plaintext TCP on NLB, intra-cluster traffic on ClusterIP — is often the right answer for cost, latency, and schedule. But you must separately design authorization for internal traffic.
+- **Do not try to move everything to Lattice.** A hybrid (plaintext TCP on NLB, intra-cluster traffic on ClusterIP) is often the right answer for cost, latency, and schedule. But you must separately design authorization for internal traffic.
 - **The cost model shifts from compute resources to request count.** Cost is proportional to request count × chain depth, so chatty communication and deep chains get expensive.
 - Preserve application tracing; lack of a native Lattice span does not prevent call-chain measurement.
-- Failure domain concentration and the STS dependency cannot be removed — **mitigate with phased migration and a secured rollback path.**
+- Failure domain concentration and the STS dependency cannot be removed; **mitigate with phased migration and a secured rollback path.**
 
 ## References
 
 - [Amazon VPC Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/)
 - [Amazon VPC Lattice endpoints and quotas](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html)
 - [Control access to VPC Lattice services using auth policies](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
-- [AWS Gateway API Controller — IAMAuthPolicy](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
-- [AWS Gateway API Controller — Pod Readiness Gates](https://www.gateway-api-controller.eks.aws.dev/latest/guides/pod-readiness-gates/)
+- [AWS Gateway API Controller: IAMAuthPolicy](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
+- [AWS Gateway API Controller: Pod Readiness Gates](https://www.gateway-api-controller.eks.aws.dev/latest/guides/pod-readiness-gates/)
 - [aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice)
 - [Comparing the Costs of Common Network Architecture Patterns with Amazon VPC Lattice](https://repost.aws/articles/AR9Tt9m6kKR6mF5Ohj5K-3Og/comparing-the-costs-of-common-network-architecture-patterns-with-amazon-vpc-lattice)
 - [App Mesh Document history](https://docs.aws.amazon.com/app-mesh/latest/userguide/doc-history.html)

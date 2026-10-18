@@ -22,7 +22,7 @@ These are current API/trust-boundary choices. They do not prove that every TLS a
 
 2. Which decision must be made first in the migration design?
    - A) Whether to sign with a shared library or an egress proxy
-   - B) Whether regulation requires end-to-end encryption or workload mutual authentication — this splits HTTPS listener + IAM Auth from TLS Passthrough, and most later design decisions depend on it
+   - B) Whether regulation requires end-to-end encryption or workload mutual authentication; this splits HTTPS listener + IAM Auth from TLS Passthrough, and most later design decisions depend on it
    - C) The number of Lattice services and the estimated cost
    - D) The node Security Group's prefix list configuration
 
@@ -30,7 +30,7 @@ These are current API/trust-boundary choices. They do not prove that every TLS a
 
 <summary>Show Answer</summary>
 
-**Answer: B) Whether regulation requires end-to-end encryption or workload mutual authentication — this splits HTTPS listener + IAM Auth from TLS Passthrough, and most later design decisions depend on it**
+**Answer: B) Whether regulation requires end-to-end encryption or workload mutual authentication; this splits HTTPS listener + IAM Auth from TLS Passthrough, and most later design decisions depend on it**
 
 **Explanation:**
 This decision depends on organizational security requirements. TLS Passthrough prevents Lattice from authenticating SigV4 callers or inspecting HTTP fields for L7 routing; its auth policies are limited to anonymous principals. Authenticated workload identity and authorization therefore need an endpoint/application design, which may include mTLS and SPIRE. An HTTPS listener leads instead to the signing-approach decision. Agree on these boundaries with security reviewers before choosing the design.

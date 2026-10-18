@@ -115,7 +115,7 @@ helm install alertmanager prometheus-community/alertmanager   --version 1.43.1 -
 
 **서로 다른 Slack incoming-webhook URL 2개**를 만들고 Slack에서 각 URL의 대상 채널을 미리 지정합니다. `slack-normal-webhook-url`은 `#alerts`, `slack-critical-webhook-url`은 `#critical-alerts`용입니다. Incoming webhook의 설정된 채널을 `channel` 필드로 덮어쓸 수 없습니다. 두 파일은 `notification-credentials`의 키이며 stack·standalone·수동 profile에서 마운트합니다. URL과 채널 연결은 provider 선행 조건이고 로컬 파싱으로 Slack 전달을 검증하지 않습니다.
 
-**Stack profile — `kube-prometheus-stack-values.yaml`:**
+**Stack profile (`kube-prometheus-stack-values.yaml`):**
 
 ```yaml
 grafana:
@@ -225,7 +225,7 @@ kubeEtcd:
   enabled: false
 ```
 
-**Standalone profile — `alertmanager-values.yaml`:**
+**Standalone profile (`alertmanager-values.yaml`):**
 
 ```yaml
 replicaCount: 3

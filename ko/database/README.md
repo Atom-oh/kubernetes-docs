@@ -35,14 +35,14 @@
 
 ## K8s에서 데이터베이스를 돌릴 때의 4대 운영 포인트
 
-1. **스토리지** — 볼륨 타입 선택이 곧 성능 예산입니다. [EBS gp2 vs gp3 실측](../storage/01-ebs-gp2-gp3-benchmark.md)에서 보듯 같은 용량에서도 IOPS가 10배 차이 납니다. DB 워크로드는 gp3 이상 + 프로비저닝 IOPS 검토가 기본입니다.
-2. **토폴로지** — `topologySpreadConstraints`로 복제본을 AZ에 분산하고, AZ 간 데이터 전송 비용과 복제 지연을 함께 계산해야 합니다.
-3. **리소스 격리** — Guaranteed QoS가 필요한 경우 모든 컨테이너의 CPU·메모리 request/limit을 일치시킵니다. 다만 이는 OOM·CPU throttling·노드 장애를 없애지 않습니다. CPU limit 정책과 캐시·백그라운드 작업·쿼리 메모리 여유를 실제 부하에 맞춰 정합니다.
-4. **백업과 복구 리허설** — Operator의 백업 기능(예: CloudNativePG의 지원되는 Barman Cloud 플러그인 → S3)을 켜는 것만으로는 부족하고, 복구를 정기적으로 리허설해야 합니다.
+1. **스토리지**: 볼륨 타입 선택이 곧 성능 예산입니다. [EBS gp2 vs gp3 실측](../storage/01-ebs-gp2-gp3-benchmark.md)에서 보듯 같은 용량에서도 IOPS가 10배 차이 납니다. DB 워크로드는 gp3 이상 + 프로비저닝 IOPS 검토가 기본입니다.
+2. **토폴로지**: `topologySpreadConstraints`로 복제본을 AZ에 분산하고, AZ 간 데이터 전송 비용과 복제 지연을 함께 계산해야 합니다.
+3. **리소스 격리**: Guaranteed QoS가 필요한 경우 모든 컨테이너의 CPU·메모리 request/limit을 일치시킵니다. 다만 이는 OOM·CPU throttling·노드 장애를 없애지 않습니다. CPU limit 정책과 캐시·백그라운드 작업·쿼리 메모리 여유를 실제 부하에 맞춰 정합니다.
+4. **백업과 복구 리허설**: Operator의 백업 기능(예: CloudNativePG의 지원되는 Barman Cloud 플러그인 → S3)을 켜는 것만으로는 부족하고, 복구를 정기적으로 리허설해야 합니다.
 
 ## 함께 읽기
 
-- [ClickHouse — 로그 백엔드 관점](../observability/logging/04-clickhouse.md) — Observability 파이프라인에서의 ClickHouse
+- [ClickHouse: 로그 백엔드 관점](../observability/logging/04-clickhouse.md): Observability 파이프라인에서의 ClickHouse
 - [Kubernetes 스토리지 기본](../core/04-storage.md) / [Storage 섹션](../storage/README.md)
 - [EKS 스토리지 Part 1](../eks/04-eks-storage-part1.md)
 

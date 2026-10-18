@@ -78,7 +78,7 @@ EOF
 
 ## Kubernetes Security Architecture
 
-![Three defense-in-depth layers — infrastructure security (host, container runtime, network) feeding API server security, the cluster security pipeline of authentication, authorization, admission control and audit logging plus data encryption, and the workload security controls derived from them: RBAC, Pod Security Standards, network policy and image security.](../.gitbook/assets/en-core-06-security-0.png)
+![Three defense-in-depth layers: infrastructure security (host, container runtime, network) feeding API server security, the cluster security pipeline of authentication, authorization, admission control and audit logging plus data encryption, and the workload security controls derived from them: RBAC, Pod Security Standards, network policy and image security.](../.gitbook/assets/en-core-06-security-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-0.html)
 
@@ -187,7 +187,7 @@ A method where an authentication proxy is placed in front of the API server to h
 
 If authentication is the process of verifying "who you are," authorization is the process of determining "what you can do." Kubernetes supports various authorization modes:
 
-![An authenticated user or service sends an authorization request to the API server, which evaluates it with one of four authorization modes — RBAC, ABAC, Node, or Webhook — and the decision either processes or denies the request; RBAC itself is built from Roles/ClusterRoles bound to subjects via RoleBindings/ClusterRoleBindings.](../.gitbook/assets/en-core-06-security-2.png)
+![An authenticated user or service sends an authorization request to the API server, which evaluates it with one of four authorization modes (RBAC, ABAC, Node, or Webhook), and the decision either processes or denies the request; RBAC itself is built from Roles/ClusterRoles bound to subjects via RoleBindings/ClusterRoleBindings.](../.gitbook/assets/en-core-06-security-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-2.html)
 

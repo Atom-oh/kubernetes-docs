@@ -53,7 +53,7 @@ Prefix delegation is not a universal requirement for a large cluster, and does n
 For ordinary secondary-IPv4 mode, each ENI has a primary address and additional addresses available to the CNI. The primary ENI also carries the node's primary address. Additional ENIs can supply more secondary Pod addresses. Custom networking changes which interfaces/subnets supply Pod addresses; prefix and branch-ENI modes have different allocation rules.
 
 ```text
-Linux EC2 node — ordinary secondary-IPv4 illustration
+Linux EC2 node (ordinary secondary-IPv4 illustration)
 ├── Primary ENI: node primary IP + secondary IPs for Pods
 ├── Additional ENI: its primary IP + secondary IPs for Pods
 └── Additional ENI: its primary IP + secondary IPs for Pods

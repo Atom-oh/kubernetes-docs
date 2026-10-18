@@ -41,7 +41,7 @@ The learning-flow map shows the guidebook's fifteen domains "flowing from founda
 **Answer: D) GitOps (ArgoCD, Flux)**
 
 **Explanation:**
-The measured-benchmark series consists of "documents reporting prior runs on AWS resources": Istio sidecar vs ambient (P50/P99 latency per mTLS data plane and 503 rates during rollouts), the EBS gp2 vs gp3 benchmark (a 10x IOPS gap at identical capacity and the gp2 burst-credit cliff), the ClickHouse on EKS benchmark (100M-row ingest throughput, compression ratios, query latency), and the Kafka on EKS benchmark (single-run RF3/RF1 throughput records, among others) plus the Pod Network Benchmark — five entries in this list. GitOps is a cross-cutting domain but has no measured page in the series.
+The measured-benchmark series consists of "documents reporting prior runs on AWS resources": Istio sidecar vs ambient (P50/P99 latency per mTLS data plane and 503 rates during rollouts), the EBS gp2 vs gp3 benchmark (a 10x IOPS gap at identical capacity and the gp2 burst-credit cliff), the ClickHouse on EKS benchmark (100M-row ingest throughput, compression ratios, query latency), and the Kafka on EKS benchmark (single-run RF3/RF1 throughput records, among others) plus the Pod Network Benchmark: five entries in this list. GitOps is a cross-cutting domain but has no measured page in the series.
 
 </details>
 
@@ -71,7 +71,7 @@ Path ③ runs "Storage → Database → Data Pipeline (Kafka → Spark → Airfl
 **Answer: A) With each document's quiz, working through the labs in parallel**
 
 **Explanation:**
-Path ① reads "Linux Basics → Container Technology → Introduction to Kubernetes → Core Concepts (pods/services/storage/configuration) → EKS Cluster Creation → Network Fundamentals" and says to "check yourself with each document's quiz, and work through the labs in parallel" — the labs start at `labs/README.md`. The measured-benchmark series is introduced as the evidence for path ②, Platform / SRE.
+Path ① reads "Linux Basics → Container Technology → Introduction to Kubernetes → Core Concepts (pods/services/storage/configuration) → EKS Cluster Creation → Network Fundamentals" and says to "check yourself with each document's quiz, and work through the labs in parallel"; the labs start at `labs/README.md`. The measured-benchmark series is introduced as the evidence for path ②, Platform / SRE.
 
 </details>
 
@@ -101,19 +101,19 @@ Every interactive diagram opens at `https://www.atomai.click/kubernetes-docs/arc
 **Answer: B) It appears only after a Route Probe (`R`) has resolved a path between two nodes, and it follows only authored, directed relationships**
 
 **Explanation:**
-In the Export menu table, the Route Share Card is a 1200×630 PNG (download only) that "Appears only after a Route Probe (`R`) has resolved a path between two nodes". The truth-boundary section adds that "A Route Share Card follows only authored, directed relationships. It never infers a route from geometry, and it refuses to export a stale or unreachable route." Upstream/downstream reachability belongs to the separate Reach Share Card — and even that must not be presented as impact analysis, blast radius, breakage, or runtime causality.
+In the Export menu table, the Route Share Card is a 1200×630 PNG (download only) that "Appears only after a Route Probe (`R`) has resolved a path between two nodes". The truth-boundary section adds that "A Route Share Card follows only authored, directed relationships. It never infers a route from geometry, and it refuses to export a stale or unreachable route." Upstream/downstream reachability belongs to the separate Reach Share Card, and even that must not be presented as impact analysis, blast radius, breakage, or runtime causality.
 
 </details>
 
 8. What position does the roadmap's "truth boundary" take on exported files such as the Share Card?
-   - A) Exports are communication assets — not evidence that an architecture was validated — and the Share Card never claims validation
+   - A) Exports are communication assets (not evidence that an architecture was validated), and the Share Card never claims validation
    - B) The Share Card carries an automatic "validated" badge and can serve as validation evidence
    - C) Exports are the official deliverable and replace the published HTML
    - D) The Reach Share Card measures runtime failure propagation and can go straight into an incident report
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) Exports are communication assets — not evidence that an architecture was validated — and the Share Card never claims validation**
+**Answer: A) Exports are communication assets (not evidence that an architecture was validated), and the Share Card never claims validation**
 
 **Explanation:**
 The first bullet of the section states: "Exports are communication assets. They are not evidence that an architecture was validated, and they do not replace the published HTML or the author's own validation. The Share Card never claims validation." Likewise, a Reach Share Card shows only *authored reachability*, so it must not be presented as impact analysis, blast radius, breakage, or runtime causality.

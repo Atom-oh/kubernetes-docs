@@ -875,13 +875,13 @@ spec:
 
 ## Performance and Monitoring
 
-### mTLS Performance Impact — Measured on EKS
+### mTLS Performance Impact: Measured on EKS
 
 The following historical benchmark compares complete data-plane paths, including encryption and proxy processing. The numbers below were measured by this guidebook on a dedicated EKS cluster (Graviton m7g.xlarge, fortio at 200 qps for 60s over 16 connections, Code 200 100% in every case):
 
 | Case (mTLS STRICT) | P50 | P90 | P99 | P50 overhead vs no-mesh |
 |--------------------|-----|-----|-----|-------------------------|
-| no-mesh (plaintext baseline) | 0.82ms | 1.73ms | 1.97ms | — |
+| no-mesh (plaintext baseline) | 0.82ms | 1.73ms | 1.97ms | - |
 | sidecar | 2.11ms | 2.89ms | 3.91ms | **+1.29ms** |
 | ambient L4 (ztunnel only) | 0.86ms | 1.74ms | 1.98ms | **+0.04ms (negligible)** |
 | ambient L7 (waypoint) | 2.68ms | 3.63ms | 3.98ms | **+1.86ms** |

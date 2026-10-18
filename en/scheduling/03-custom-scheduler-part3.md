@@ -224,7 +224,7 @@ Set the `controller.kubernetes.io/pod-deletion-cost` annotation on each Pod. Cos
 
 The diagram shows cost ordering **only when assignment, phase, readiness and other relevant conditions are comparable**; it is not a guaranteed deletion sequence.
 
-![The ReplicaSet controller sorts pods by their pod-deletion-cost annotation and deletes the lowest-cost pods first — Pod-3 (cost -10) before Pod-4 (cost 0) — while higher-cost Pod-1 and Pod-2 survive the scale-down.](../.gitbook/assets/en-scheduling-03-custom-scheduler-part3-0.png)
+![The ReplicaSet controller sorts pods by their pod-deletion-cost annotation and deletes the lowest-cost pods first, Pod-3 (cost -10) before Pod-4 (cost 0), while higher-cost Pod-1 and Pod-2 survive the scale-down.](../.gitbook/assets/en-scheduling-03-custom-scheduler-part3-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-scheduling-03-custom-scheduler-part3-0.html)
 

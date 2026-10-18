@@ -62,7 +62,7 @@ pluto detect-api-resources --kube-context "$KUBE_CONTEXT" --target-versions "k8s
 
 An earlier nonzero exit stops this shell block for investigation; complete the remaining checks after handling that result. API-resource detection depends on stored annotations and cannot observe all runtime requests. The kube-no-trouble project provides the `kubent` binary, not `kubectl-no-trouble`.
 
-**Historical API-removal examples** — migration history, not current EKS upgrade targets:
+**Historical API-removal examples** (migration history, not current EKS upgrade targets):
 
 | Kubernetes release | Removed serving API / migration |
 | --- | --- |
@@ -79,7 +79,7 @@ For kubelet 1.25 and newer, upstream policy permits up to three older minors tha
 Use reviewed infrastructure definitions to prepare a separate environment with representative networking, IAM, compute types, data and controllers. Record production differences, cost and cleanup ownership. Start in development/staging and exercise business functions, scaling, recovery and alerting; do not incidentally run fault injection in production. The old 1.27→1.28 example is historical, not a current provisioning recommendation.
 
 ```markdown
-# EKS upgrade plan — fill from evidence, not assumed results
+# EKS upgrade plan: fill from evidence, not assumed results
 
 - Account / Region / cluster ARN / kube context: TBD
 - Current / target minor and EKS support status: TBD
@@ -735,7 +735,7 @@ Rollback preserves etcd/workload/PV data rather than restoring a backup; add-ons
 The original timestamp below is preserved. The scenario and purported cause lack supplied incident evidence, so they remain an illustration with hypotheses:
 
 ```markdown
-# Upgrade troubleshooting report — illustrative, not a verified incident
+# Upgrade troubleshooting report (illustrative, not a verified incident)
 
 ## Problem description
 

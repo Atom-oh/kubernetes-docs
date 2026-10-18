@@ -11,7 +11,7 @@ In this document, we will learn about services, load balancing, and network poli
 
 Kubernetes provides the following service types:
 
-![Four Kubernetes Service types — ClusterIP, NodePort, LoadBalancer, and ExternalName — each mapped one-to-one to the access method it enables, from internal-only cluster access to an external load balancer or DNS CNAME.](../.gitbook/assets/en-eks-03-eks-networking-part2-0.png)
+![Four Kubernetes Service types (ClusterIP, NodePort, LoadBalancer, and ExternalName), each mapped one-to-one to the access method it enables, from internal-only cluster access to an external load balancer or DNS CNAME.](../.gitbook/assets/en-eks-03-eks-networking-part2-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-0.html)
 

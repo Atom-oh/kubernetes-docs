@@ -48,7 +48,7 @@ v1 Training Operator는 `PyTorchJob`, `TFJob`, `MPIJob` 등 프레임워크당 �
 **정답: B) 프레임워크별 CRD를 통합 `TrainJob` API와 재사용 가능한 `TrainingRuntime`/`ClusterTrainingRuntime` 템플릿으로 대체한다**
 
 **설명:**
-프레임워크마다 CRD와 컨트롤러를 두는 대신, Trainer v2는 `TrainJob`(무엇을 실행할지)과 `TrainingRuntime`/`ClusterTrainingRuntime`(어떻게 실행할지 — 재사용 가능한 프레임워크별 실행 템플릿)을 도입해 작업 제출과 분산 실행 메커니즘을 분리합니다.
+프레임워크마다 CRD와 컨트롤러를 두는 대신, Trainer v2는 `TrainJob`(무엇을 실행할지)과 `TrainingRuntime`/`ClusterTrainingRuntime`(어떻게 실행할지, 즉 재사용 가능한 프레임워크별 실행 템플릿)을 도입해 작업 제출과 분산 실행 메커니즘을 분리합니다.
 
 </details>
 
@@ -138,7 +138,7 @@ Kubeflow Community Distribution 26.03.1은 Trainer v2와 함께 레거시 Traini
 **정답:** 호환되는 Trial 템플릿·런타임·상태 조건·메트릭 수집이 설정된 경우 Katib은 `TrainJob`을 생성하여, 해당 Trial에서 선택된 하이퍼파라미터 값을 스크립트 인자로 주입하고, 보고된 메트릭을 읽어 탐색 방향을 결정합니다.
 
 **설명:**
-Katib 자체는 분산 실행 메커니즘을 알 필요가 없습니다 — 플랫폼 팀이 이미 정의해둔 런타임을 대상으로 Trial마다 `TrainJob`을 찍어내며, 하이퍼파라미터 탐색 로직과 학습 실행 메커니즘을 분리해 둡니다.
+Katib 자체는 분산 실행 메커니즘을 알 필요가 없습니다. 플랫폼 팀이 이미 정의해둔 런타임을 대상으로 Trial마다 `TrainJob`을 찍어내며, 하이퍼파라미터 탐색 로직과 학습 실행 메커니즘을 분리해 둡니다.
 
 </details>
 

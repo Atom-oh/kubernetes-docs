@@ -30,7 +30,7 @@ Account partitioning을 정한 뒤에는 Kubernetes 워크로드를 어느 Accou
 
 두 번째 패턴에서는 클러스터 Account의 IAM role과 다른 Account의 데이터 접근 권한을 구분합니다. Shared VPC를 쓰는 경우 EKS를 생성하는 participant는 **Cluster Account**이며, DB·SQS만 소유한 Workload Account와 다를 수 있습니다. Pod Identity target-role chaining, 서비스 resource policy, IRSA를 요구에 맞게 선택합니다.
 
-### EKS 관련 quota — 여유 있는 항목과 먼저 막히는 항목
+### EKS 관련 quota: 여유 있는 항목과 먼저 막히는 항목
 
 | Quota | 기본값 | 조정 가능 여부 |
 |---|---|---|

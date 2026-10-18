@@ -15,7 +15,7 @@ This section covers standardization decisions for large multi-account, multi-EKS
 
 ## 2. Why Account, VPC, EKS, and Data Boundaries Should Be Considered Separately
 
-The most common mistake is creating Accounts per team or brand, and automatically attaching a dedicated VPC and dedicated EKS cluster to each Account — a **fixed 1:1 formula**. The rule is simple, but even a small workload ends up carrying the fixed cost of an entire cluster, and every organizational reshuffle turns into an infrastructure migration.
+The most common mistake is creating Accounts per team or brand, and automatically attaching a dedicated VPC and dedicated EKS cluster to each Account: a **fixed 1:1 formula**. The rule is simple, but even a small workload ends up carrying the fixed cost of an entire cluster, and every organizational reshuffle turns into an infrastructure migration.
 
 The alternative this section proposes is **judging each boundary independently**.
 
@@ -26,7 +26,7 @@ The alternative this section proposes is **judging each boundary independently**
 | EKS | Runtime blast radius, tenant isolation requirements, SLO |
 | Data | Data ownership, regulatory boundary, backup/recovery responsibility |
 
-This makes fine-grained judgments possible, such as "this workload doesn't need its own VPC, but regulatory requirements mean it needs a dedicated Account." There's a cost, too — you now have to maintain judging criteria per boundary, and exceptions can multiply.
+This makes fine-grained judgments possible, such as "this workload doesn't need its own VPC, but regulatory requirements mean it needs a dedicated Account." There's a cost, too: you now have to maintain judging criteria per boundary, and exceptions can multiply.
 
 <span id="_3-four-conditions-where-aws-forces-boundaries-together"></span>
 
@@ -65,7 +65,7 @@ The recommended approach is to keep one **stable Workload ID**, and manage domai
 | [Data and Security Boundaries](./05-data-security-boundaries.md) | Cross-account backup/restore constraints, isolating the PII data tier |
 | [Decision Framework and PoC Design](./06-decision-framework-and-poc.md) | Building a decision matrix, easily-missed decision factors, PoC measurement metrics |
 
-Each document prioritizes verified facts — "AWS services actually behave this way under this condition" — over opinion, and clearly marks the parts that still require organizational judgment.
+Each document prioritizes verified facts ("AWS services actually behave this way under this condition") over opinion, and clearly marks the parts that still require organizational judgment.
 
 ## References
 

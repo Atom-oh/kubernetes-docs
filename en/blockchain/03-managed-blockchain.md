@@ -5,7 +5,7 @@
 ## What This Document Covers
 
 - Which burdens of [self-operation](./02-nodes-on-eks.md) Amazon Managed Blockchain (AMB) takes on, and what it cannot do
-- Criteria for choosing managed versus self-operated — and one variable you must include in that judgment
+- Criteria for choosing managed versus self-operated, and one variable you must include in that judgment
 - What the shift in AWS's ledger and blockchain portfolio implies for architecture decisions
 
 ## What AMB Consists Of
@@ -64,7 +64,7 @@ This is the crux of the decision.
 
 | Situation | Recommendation |
 |---|---|
-| **Only reading** chain data | **AMB Query** — no node needed at all |
+| **Only reading** chain data | **AMB Query** (no node needed at all) |
 | Queries plus submission, limited operations staff | **AMB Access managed nodes** |
 | Specific client or tuning needed | **Self-operate** |
 | **Validator/staking** | **Self-operate** (or a specialized staking service) |
@@ -75,15 +75,15 @@ This is the crux of the decision.
 
 ### Decision order
 
-**Step 1 — do you actually need a node?** If you only query data, AMB Query or a third-party RPC provider may be enough. Running nodes is a costly, burdensome choice, so **confirm the need first.**
+**Step 1: do you actually need a node?** If you only query data, AMB Query or a third-party RPC provider may be enough. Running nodes is a costly, burdensome choice, so **confirm the need first.**
 
-**Step 2 — do you need control?** If you need any of client choice, tuning, archive, or validator participation, self-operate.
+**Step 2: do you need control?** If you need any of client choice, tuning, archive, or validator participation, self-operate.
 
-**Step 3 — cost?** Price the selected offering: dedicated resources, serverless requests or Query APIs as applicable. Compare EC2/EKS, storage, transfer, redundancy and staff costs under equivalent coverage and availability. There is no measured universal crossover based only on node count.
+**Step 3: cost?** Price the selected offering: dedicated resources, serverless requests or Query APIs as applicable. Compare EC2/EKS, storage, transfer, redundancy and staff costs under equivalent coverage and availability. There is no measured universal crossover based only on node count.
 
-**Step 4 — can you mix?** Usually yes, and often sensible in practice — for instance, managed for general queries and self-operated for special purposes.
+**Step 4: can you mix?** Usually yes, and often sensible in practice: for instance, managed for general queries and self-operated for special purposes.
 
-## The Shift in AWS's Ledger and Blockchain Portfolio — A Variable You Must Consider
+## The Shift in AWS's Ledger and Blockchain Portfolio: A Variable You Must Consider
 
 This is the most important part of this document. **Deciding on technical comparison alone misses a risk.**
 
@@ -98,11 +98,11 @@ Amazon QLDB (Quantum Ledger Database) was a managed ledger database providing **
 | July 2024 | End of support announced |
 | **July 31, 2025** | **Service ended** |
 
-The migration path AWS offered was **Amazon Aurora PostgreSQL.** But there is an important point here — **moving to Aurora PostgreSQL loses the cryptographic verifiability that was QLDB's core value.** Ledger-like functionality can be implemented with extensions, but the part that "mathematically proves nothing was tampered with" is not replaced.
+The migration path AWS offered was **Amazon Aurora PostgreSQL.** But there is an important point here: **moving to Aurora PostgreSQL loses the cryptographic verifiability that was QLDB's core value.** Ledger-like functionality can be implemented with extensions, but the part that "mathematically proves nothing was tampered with" is not replaced.
 
 ### What this implies
 
-QLDB and AMB are different services, and **QLDB's end of support did not by itself imply AMB's** — AMB's own end of support was announced separately (see below). The lessons for architecture decisions still apply.
+QLDB and AMB are different services, and **QLDB's end of support did not by itself imply AMB's**; AMB's own end of support was announced separately (see below). The lessons for architecture decisions still apply.
 
 | Lesson | Practical application |
 |---|---|
@@ -139,15 +139,15 @@ One of AMB's substantive benefits is AWS ecosystem integration.
 
 | Integration | Use |
 |---|---|
-| **IAM** | Access control — IAM policies applied to chain node access |
+| **IAM** | Access control: IAM policies applied to chain node access |
 | **CloudWatch** | Metrics and logs |
 | **CloudTrail** | Auditing management API calls |
 | **VPC endpoints / PrivateLink** | Private connectivity |
 | **KMS** | Key management |
 
-**IAM integration is particularly useful.** A self-operated node's RPC endpoint needs its own authentication scheme (or network-layer control only), whereas AMB can be controlled via IAM — meaning it is managed consistently with your internal permission model.
+**IAM integration is particularly useful.** A self-operated node's RPC endpoint needs its own authentication scheme (or network-layer control only), whereas AMB can be controlled via IAM, meaning it is managed consistently with your internal permission model.
 
-For private connectivity, concepts from the [VPC Lattice section](../service-mesh/vpc-lattice/README.md) may apply — though **whether AMB and Lattice integrate directly is a separate item to confirm** (the same character as the unconfirmed items in [VPC Lattice Constraints](../service-mesh/vpc-lattice/06-constraints.md)).
+For private connectivity, concepts from the [VPC Lattice section](../service-mesh/vpc-lattice/README.md) may apply, though **whether AMB and Lattice integrate directly is a separate item to confirm** (the same character as the unconfirmed items in [VPC Lattice Constraints](../service-mesh/vpc-lattice/06-constraints.md)).
 
 ## Comparison With Self-Operation
 
@@ -164,7 +164,7 @@ For private connectivity, concepts from the [VPC Lattice section](../service-mes
 | **Cost structure** | Depends on offering: provisioned node/component costs or serverless request/API charges; measure equivalent coverage and usage |
 | **IAM integration** | **Built in** | Build it yourself |
 | **Service lifecycle risk** | Managed offering availability/support can change | Open-source/client maintenance, protocol and infrastructure dependencies also remain |
-| **Portability** | Possible on standard protocols | — |
+| **Portability** | Possible on standard protocols | - |
 
 ## Summary
 
@@ -185,7 +185,7 @@ Next: [Financial Services Perspective](./04-financial-services.md) covers regula
 - [Amazon Managed Blockchain FAQs](https://aws.amazon.com/managed-blockchain/faqs/)
 - [AMB Query document history](https://docs.aws.amazon.com/managed-blockchain/latest/ambq-dg/doc-history.html)
 - [AMB Access Polygon document history](https://docs.aws.amazon.com/managed-blockchain/latest/ambp-dg/doc-history.html)
-- [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md) — the burdens when self-operating
+- [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md): the burdens when self-operating
 
 - [AMB pricing by offering](https://aws.amazon.com/managed-blockchain/pricing/)
-- [AWS KMS asymmetric key specifications](https://docs.aws.amazon.com/kms/latest/developerguide/asymmetric-key-specs.html) — public key access does not export the private key
+- [AWS KMS asymmetric key specifications](https://docs.aws.amazon.com/kms/latest/developerguide/asymmetric-key-specs.html): public key access does not export the private key

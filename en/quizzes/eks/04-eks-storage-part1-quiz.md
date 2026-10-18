@@ -585,7 +585,7 @@ spec:
         persistentVolumeClaim:
           claimName: config-storage
 ```
-**3. Parallel ML data.** Prepare the supported Lustre client/kernel, CSI/IAM and filesystem/S3 integration. This SCRATCH_2 example is for rebuildable data; it omits persistent-only per-unit throughput and automatic-backup settings. `s3ImportPath` is a valid FSx CSI 1.10.0 parameter—replace the bucket/prefix with an owned, accessible dataset and review supported integration/Region settings. LZ4 is a storage feature, not proof of a measured compression or throughput improvement.
+**3. Parallel ML data.** Prepare the supported Lustre client/kernel, CSI/IAM and filesystem/S3 integration. This SCRATCH_2 example is for rebuildable data; it omits persistent-only per-unit throughput and automatic-backup settings. `s3ImportPath` is a valid FSx CSI 1.10.0 parameter; replace the bucket/prefix with an owned, accessible dataset and review supported integration/Region settings. LZ4 is a storage feature, not proof of a measured compression or throughput improvement.
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass

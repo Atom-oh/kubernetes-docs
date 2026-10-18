@@ -41,22 +41,22 @@ This LZ4 result was about 3.07 GiB raw → 3.08 GiB compressed. Hex stores only 
 **Answer: B) ZSTD(3) storage was 47% smaller, but the CPU-bound full scan was about 1.9× slower than LZ4**
 
 **Explanation:**
-Measured: LZ4 7.82 GiB (1.97×) vs ZSTD(3) 4.16 GiB (3.7×) — 47% less storage — while the warm `LIKE '%timeout%'` full scan slowed from 2.63 s to 4.9 s. LZ4 for recent partitions plus TTL-driven ZSTD recompression is an option to validate against the real data and CPU/I/O balance.
+Measured: LZ4 7.82 GiB (1.97×) vs ZSTD(3) 4.16 GiB (3.7×), 47% less storage, while the warm `LIKE '%timeout%'` full scan slowed from 2.63 s to 4.9 s. LZ4 for recent partitions plus TTL-driven ZSTD recompression is an option to validate against the real data and CPU/I/O balance.
 
 </details>
 
 4. The `LIKE '%timeout%'` full scan (Q3) took 31.5 s when bypassing the page cache. What bottleneck does this number point to?
    - A) ClickHouse's string-search algorithm is inefficient
-   - B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s — consistent with a volume/instance EBS throughput constraint, but not enough to identify the sole bottleneck
+   - B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s, consistent with a volume/instance EBS throughput constraint, but not enough to identify the sole bottleneck
    - C) The m5.xlarge's 4 vCPUs were saturated
    - D) EBS CSI driver overhead dominated
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s — consistent with a volume/instance EBS throughput constraint, but not enough to identify the sole bottleneck**
+**Answer: B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s, consistent with a volume/instance EBS throughput constraint, but not enough to identify the sole bottleneck**
 
 **Explanation:**
-The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can be a volume-throughput setting rather than a database property — gp3 throughput can be provisioned up to 2,000 MiB/s for an extra fee (reaching it requires at least 8,000 IOPS as well) — but on this m5.xlarge the instance's approximately 137 MiB/s baseline and burst state must also be checked. Review node and volume capacity together for sustained demand.
+The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can be a volume-throughput setting rather than a database property; gp3 throughput can be provisioned up to 2,000 MiB/s for an extra fee (reaching it requires at least 8,000 IOPS as well), but on this m5.xlarge the instance's approximately 137 MiB/s baseline and burst state must also be checked. Review node and volume capacity together for sustained demand.
 
 </details>
 
@@ -92,16 +92,16 @@ The rows were generated inside the server and inserted directly, which is more f
 
 7. Q4 (duration p50/p99 per namespace) scans all 100M rows yet finishes in about 1 second warm. Which property makes that possible?
    - A) The result was precomputed in a materialized view
-   - B) Column-oriented storage — it reads only duration_ms (289 MiB) and namespace (0.5 MiB), not the table's full 7.8 GiB
+   - B) Column-oriented storage: it reads only duration_ms (289 MiB) and namespace (0.5 MiB), not the table's full 7.8 GiB
    - C) The quantile function reads only 8,192 disk rows and never processes the remaining rows
    - D) Partition pruning limited it to one day of data
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Column-oriented storage — it reads only duration_ms (289 MiB) and namespace (0.5 MiB), not the table's full 7.8 GiB**
+**Answer: B) Column-oriented storage: it reads only duration_ms (289 MiB) and namespace (0.5 MiB), not the table's full 7.8 GiB**
 
 **Explanation:**
-A row-oriented database would have to read entire rows for this query; a columnar engine reads only the columns the aggregation needs. The scan covered the whole time range (so no partition pruning — D is wrong), and `quantile` processes all input rows while using a reservoir of at most 8,192 samples for an approximation. Sampling does not remove the input-column scan. Evaluate quantileExact separately when exact values are required.
+A row-oriented database would have to read entire rows for this query; a columnar engine reads only the columns the aggregation needs. The scan covered the whole time range (so no partition pruning; D is wrong), and `quantile` processes all input rows while using a reservoir of at most 8,192 samples for an approximation. Sampling does not remove the input-column scan. Evaluate quantileExact separately when exact values are required.
 
 </details>
 
@@ -109,13 +109,13 @@ A row-oriented database would have to read entire rows for this query; a columna
    - A) When there is no platform team and no database operations experience
    - B) When a standard managed service suffices and there is a single tenant
    - C) When managed offerings are limited or carry a large cost multiple, and a platform team can own operator-based operations including backup and restore rehearsals
-   - D) When the data is small — under 100 GiB
+   - D) When the data is small (under 100 GiB)
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C) When managed offerings are limited or carry a large cost multiple, and a platform team can own operator-based operations including backup and restore rehearsals**
 
 **Explanation:**
-This is the managed-vs-self-hosted framework from the [Database section overview](../../database/README.md), not from the benchmark article itself. ClickHouse is Apache-2.0 with a mature community operator (Altinity), which is what makes self-hosting a realistic option — the precondition is that operator plus a team to run it. Conversely, with scarce operations staffing or an adequate managed option, managed wins — and a team operating a raw StatefulSet must implement the same lifecycle and recovery responsibilities itself.
+This is the managed-vs-self-hosted framework from the [Database section overview](../../database/README.md), not from the benchmark article itself. ClickHouse is Apache-2.0 with a mature community operator (Altinity), which is what makes self-hosting a realistic option; the precondition is that operator plus a team to run it. Conversely, with scarce operations staffing or an adequate managed option, managed wins, and a team operating a raw StatefulSet must implement the same lifecycle and recovery responsibilities itself.
 
 </details>

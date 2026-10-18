@@ -1,4 +1,4 @@
-# 기반 개념 — link-local과 SNI 퀴즈
+# 기반 개념: link-local과 SNI 퀴즈
 
 이 퀴즈는 link-local/ULA 주소, SNI의 원리, 프로토콜 지원 범위에 대한 이해도를 테스트합니다.
 
@@ -53,10 +53,10 @@ Envoy 정책에 따라 미등록 대상을 거부하거나 전달합니다. 규�
 </details>
 
 4. 안정적인 서비스 신원·인가에 목적지 IP만으로 부족한 이유는 무엇입니까?
-   - A) 목적지 IP가 암호화되기 때문 — 대안은 없다
+   - A) 목적지 IP가 암호화되기 때문이며, 대안은 없다
    - B) IP만 의존하지 말고 서비스 신원·DNS/request 상관관계·검토한 network 규칙을 사용한다
-   - C) flow log가 비활성화되기 때문 — flow log를 켜면 해결된다
-   - D) VPC CNI가 IP를 재사용하기 때문 — IP 할당 정책을 변경하면 된다
+   - C) flow log가 비활성화되기 때문이며, flow log를 켜면 해결된다
+   - D) VPC CNI가 IP를 재사용하기 때문이며, IP 할당 정책을 변경하면 된다
 
 <details>
 

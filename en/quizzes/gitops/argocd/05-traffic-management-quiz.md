@@ -142,7 +142,7 @@ Adding a `pause` step without a duration creates an indefinite pause that requir
 **Answer: B) Manipulate an HTTPRoute via the Gateway API plugin (`trafficRouting.plugins`)**
 
 **Explanation:**
-Kong has no native Argo Rollouts integration — there is no `trafficRouting.kong` field. This chapter uses argoproj-labs' Gateway API plugin, which manipulates a standard HTTPRoute resource. Other Gateway API-compliant controllers, such as Traefik and kgateway, use the same plugin.
+Kong has no native Argo Rollouts integration; there is no `trafficRouting.kong` field. This chapter uses argoproj-labs' Gateway API plugin, which manipulates a standard HTTPRoute resource. Other Gateway API-compliant controllers, such as Traefik and kgateway, use the same plugin.
 
 </details>
 

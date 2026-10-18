@@ -1,4 +1,4 @@
-# Network Fundamentals Part 4 Quiz — The Journey and the Cloud
+# Network Fundamentals Part 4 Quiz: The Journey and the Cloud
 
 > **Last Updated**: September 11, 2026
 
@@ -23,15 +23,15 @@ This is a dependency summary, not a packet trace. DNS messages already use link/
 </details>
 
 2. In a cluster using kube-proxy, which pairing describes ordinary ClusterIP Service forwarding?
-   - A) CoreDNS — DHCP
-   - B) kube-proxy — NAT + L4 load balancing
-   - C) CNI plugin — TLS termination
-   - D) NetworkPolicy — BGP routing
+   - A) CoreDNS: DHCP
+   - B) kube-proxy: NAT + L4 load balancing
+   - C) CNI plugin: TLS termination
+   - D) NetworkPolicy: BGP routing
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) kube-proxy — NAT + L4 load balancing**
+**Answer: B) kube-proxy: NAT + L4 load balancing**
 
 **Explanation:**
 On Linux, kube-proxy programs iptables or nftables; its IPVS mode is deprecated since Kubernetes1.35. An eBPF-based Service implementation can replace kube-proxy, but is not a kube-proxy eBPF mode. Service/EndpointSlice state supplies eligible endpoints. Headless Services do not use a ClusterIP, and NetworkPolicy needs a supporting implementation.

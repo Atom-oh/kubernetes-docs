@@ -53,7 +53,7 @@ RTO includes copy, restore, and application validation actually performed after 
 
 ## 3. Isolating the PII Data Tier
 
-Storage that's placed directly inside a VPC (RDS, etc.) fits well in a separate VPC from the general serving tier. The purpose is to separate the scope of routing, inspection, direct access, and incident containment. **A separate VPC alone isn't sufficient** — you also need IAM, SG, KMS key policy, logging, and approved access paths working together.
+Storage that's placed directly inside a VPC (RDS, etc.) fits well in a separate VPC from the general serving tier. The purpose is to separate the scope of routing, inspection, direct access, and incident containment. **A separate VPC alone isn't sufficient**; you also need IAM, SG, KMS key policy, logging, and approved access paths working together.
 
 > **Shared VPC audit access**: Participants cannot describe owner NAT gateways, but owner-provided route/NAT inventories, Config, Flow Logs, and delegated read access can provide evidence. Dedicated VPCs can simplify ownership; Shared VPC is not inherently unauditable.
 
@@ -80,11 +80,11 @@ Choose KMS key type and recovery permissions for the selected copy/restore path 
 
 ## 4. Secrets Manager / KMS Cross-Account
 
-Both the secret's resource policy and the caller's identity policy are required. Cross-account secrets need a customer-managed KMS key, and that key requires both the owner's key policy and the caller's IAM policy. In other words, centralized secret/key management needs more than just policy and rotation — it requires **jointly operating permissions and recovery responsibility across both Accounts.**
+Both the secret's resource policy and the caller's identity policy are required. Cross-account secrets need a customer-managed KMS key, and that key requires both the owner's key policy and the caller's IAM policy. In other words, centralized secret/key management needs more than just policy and rotation; it requires **jointly operating permissions and recovery responsibility across both Accounts.**
 
 ## 5. AWS-Native Security Telemetry vs. Existing CNAPP
 
-If your organization already has a CNAPP (Cloud-Native Application Protection Platform) and is adopting AWS-native capabilities, the safer approach isn't "replace the product" — it's to **compare current coverage against AWS-native capabilities by security purpose, and fill only confirmed gaps.** Purposes can be grouped as:
+If your organization already has a CNAPP (Cloud-Native Application Protection Platform) and is adopting AWS-native capabilities, the safer approach isn't "replace the product"; it's to **compare current coverage against AWS-native capabilities by security purpose, and fill only confirmed gaps.** Purposes can be grouped as:
 
 - Organizational preventive controls
 - Configuration posture
@@ -99,7 +99,7 @@ Some confirmed facts:
 - Distinguish Security Hub CSPM standards, controls, and ASFF findings from other Security Hub capabilities. Names alone do not establish identical feature scope or Config dependencies.
 - Most Security Hub CSPM controls require AWS Config recording. Review this alongside Control Tower 4.0 managed-baseline dependencies, without turning it into a Config prerequisite for the IAM Identity Center service itself.
 - **Security Hub CSPM doesn't retroactively collect findings generated before activation, and only processes findings in Regions where it's enabled.** For full coverage of the documented CIS AWS Foundations Benchmark security checks, you need to enable it in every supported Region. GuardDuty is also enabled per Region.
-- GuardDuty and Security Hub are both available in the Seoul Region, but the finding types/control coverage differ by Region — comparisons should be based on actual Seoul Region coverage.
+- GuardDuty and Security Hub are both available in the Seoul Region, but the finding types/control coverage differ by Region; comparisons should be based on actual Seoul Region coverage.
 
 ## 6. Services Confirmed to Support Resource Creation in a Shared Subnet
 

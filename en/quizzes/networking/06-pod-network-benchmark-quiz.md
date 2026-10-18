@@ -3,10 +3,10 @@
 These questions refer to the September 2, 2026 report, not universal performance or billing guarantees.
 
 1. Measured with `ping -c 200 -i 0.05`, how did the average Pod-to-Pod RTT change from same node → different node in the same AZ → different AZ?
-   - A) 0.040 ms → 0.544 ms → 0.339 ms — cross-AZ was faster than same-AZ
+   - A) 0.040 ms → 0.544 ms → 0.339 ms: cross-AZ was faster than same-AZ
    - B) All three paths sat within noise of about 0.3 ms
    - C) In this run, 0.040 ms → 0.339 ms → 0.544 ms: about +0.30 ms and +0.21 ms between adjacent placements
-   - D) 0.040 ms → 0.339 ms → 5.4 ms — the AZ boundary pushed RTT into whole milliseconds
+   - D) 0.040 ms → 0.339 ms → 5.4 ms: the AZ boundary pushed RTT into whole milliseconds
 
 <details>
 <summary>Show Answer</summary>
@@ -52,7 +52,7 @@ The reported means were 0.355 / 0.415 / 0.624 ms. Dividing 16 by those durations
 
 4. At the same 100 qps / 4 connections, switching to `-keepalive=false` (a new TCP connection per request) changed the cross-AZ HTTP p50 how?
    - A) 0.704 ms → 1.517 ms (+0.813 ms), more than double; connection establishment adds work, but this experiment does not isolate each component
-   - B) No change — the kernel reuses connections anyway
+   - B) No change; the kernel reuses connections anyway
    - C) 0.704 ms → 0.813 ms, a small increase
    - D) p50 was unchanged; only p99 got worse
 
@@ -67,8 +67,8 @@ The keepalive-disabled medians were 0.664 / 1.079 / 1.517 ms, increases of 0.405
 </details>
 
 5. What does the report estimate for 223,376,179,200 payload bytes using its explicit decimal-GB conversion and $0.01/GB at each EC2 endpoint?
-   - A) $0 — traffic inside a Region is free
-   - B) $2.23 — $0.01 per GB, charged once
+   - A) $0 (traffic inside a Region is free)
+   - B) $2.23 ($0.01 per GB, charged once)
    - C) About $4.47 in the report's decimal-GB payload model, applying $0.01/GB at both the sending and receiving end; an actual invoice was not verified
    - D) Traffic up to the 1.25 Gbps baseline is free; only the burst above it is billed
 
@@ -83,9 +83,9 @@ The exact payload was 223,376,179,200 bytes. The historical model divides by 10�
 </details>
 
 6. In the default `ndots:5` Pod (glibc 2.41), one cold resolution of `sts.ap-northeast-2.amazonaws.com` (3 dots) produced how many DNS queries and NXDOMAIN answers in tcpdump?
-   - A) 2 queries, 0 NXDOMAIN — with 3 dots the name is queried as absolute straight away
+   - A) 2 queries, 0 NXDOMAIN: with 3 dots the name is queried as absolute straight away
    - B) In the recorded lookup, 10 queries and 8 NXDOMAIN: four failed search candidates each used A+AAAA, then the absolute name succeeded
-   - C) 5 queries, 4 NXDOMAIN — one A query per candidate
+   - C) 5 queries, 4 NXDOMAIN: one A query per candidate
    - D) 4 queries, 2 NXDOMAIN
 
 <details>

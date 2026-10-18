@@ -70,7 +70,7 @@ Auth on/off does not isolate HMAC alone. Repeat matched runs, keep load and conn
 
 5. Which statement about cross-AZ traffic is correct?
    - A) It is both a latency degradation factor and a separate additional billing factor
-   - B) It is a latency degradation factor, but traffic through Lattice incurs no separate inter-AZ charge — it is included in the data processing charge
+   - B) It is a latency degradation factor, but traffic through Lattice incurs no separate inter-AZ charge; it is included in the data processing charge
    - C) It affects neither latency nor billing
    - D) Lattice always selects a Target in the caller's AZ, so it need not be considered
 
@@ -78,10 +78,10 @@ Auth on/off does not isolate HMAC alone. Repeat matched runs, keep load and conn
 
 <summary>Show Answer</summary>
 
-**Answer: B) It is a latency degradation factor, but traffic through Lattice incurs no separate inter-AZ charge — it is included in the data processing charge**
+**Answer: B) It is a latency degradation factor, but traffic through Lattice incurs no separate inter-AZ charge; it is included in the data processing charge**
 
 **Explanation:**
-Cross-AZ increases latency due to physical distance (measured baseline: same-AZ 0.339 ms vs cross-AZ 0.544 ms), but on the billing side Lattice does not charge a separate inter-AZ fee — it is folded into data processing. D is wrong: whether Lattice's Target selection considers the caller's AZ is not confirmed in official documentation and must be measured in a PoC, which is exactly why the matrix includes an AZ axis.
+Cross-AZ increases latency due to physical distance (measured baseline: same-AZ 0.339 ms vs cross-AZ 0.544 ms), but on the billing side Lattice does not charge a separate inter-AZ fee; it is folded into data processing. D is wrong: whether Lattice's Target selection considers the caller's AZ is not confirmed in official documentation and must be measured in a PoC, which is exactly why the matrix includes an AZ axis.
 </details>
 
 6. Why is warm-up needed in the measurement design, and why should first-request latency still be recorded separately?

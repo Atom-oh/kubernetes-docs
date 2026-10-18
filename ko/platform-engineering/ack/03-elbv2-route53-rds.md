@@ -16,7 +16,7 @@ manageMasterUserPassword=true로 RDS의 Secrets Manager 통합을 요청하며 �
 
 DBInstance 이름이나 Role tag가 writer/reader를 고정하지 않습니다. 실제 writer는 cluster membership 상태로 확인하며 failover로 바뀔 수 있습니다. promotionTier는 승격 우선순위이며 고정 역할 보장이 아닙니다. custom READER endpoint는 지정 인스턴스가 현재 reader인 경우에만 대상으로 사용하므로 failover 후 가용 대상과 연결 재시도를 확인합니다. AZ 이름처럼 보이는 endpoint 이름만으로 AZ 제한이 구현되지 않습니다.
 
-## LoadBalancer — loadbalancer-app-nlb
+## LoadBalancer: loadbalancer-app-nlb
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
@@ -37,7 +37,7 @@ spec:
   - sg-0123456789abcdef0
 ```
 
-## TargetGroup — targetgroup-app-tg
+## TargetGroup: targetgroup-app-tg
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
@@ -57,7 +57,7 @@ spec:
   healthCheckPort: '8080'
 ```
 
-## Listener — listener-app-listener
+## Listener: listener-app-listener
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
@@ -80,7 +80,7 @@ spec:
         name: app-tg
 ```
 
-## RecordSet — recordset-app-dns
+## RecordSet: recordset-app-dns
 
 ```yaml
 apiVersion: route53.services.k8s.aws/v1alpha1
@@ -100,7 +100,7 @@ spec:
     evaluateTargetHealth: true
 ```
 
-## DBSubnetGroup — dbsubnetgroup-app-db-subnets
+## DBSubnetGroup: dbsubnetgroup-app-db-subnets
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -118,7 +118,7 @@ spec:
   - subnet-0123456789abcdef1
 ```
 
-## DBCluster — dbcluster-app-aurora
+## DBCluster: dbcluster-app-aurora
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -144,7 +144,7 @@ spec:
   deletionProtection: true
 ```
 
-## DBInstance — dbinstance-app-db-1
+## DBInstance: dbinstance-app-db-1
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -165,7 +165,7 @@ spec:
   promotionTier: 0
 ```
 
-## DBInstance — dbinstance-app-db-2
+## DBInstance: dbinstance-app-db-2
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -186,7 +186,7 @@ spec:
   promotionTier: 1
 ```
 
-## DBInstance — dbinstance-app-db-3
+## DBInstance: dbinstance-app-db-3
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
@@ -207,7 +207,7 @@ spec:
   promotionTier: 2
 ```
 
-## DBClusterEndpoint — dbclusterendpoint-app-selected-readers
+## DBClusterEndpoint: dbclusterendpoint-app-selected-readers
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1

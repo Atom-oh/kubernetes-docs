@@ -1,4 +1,4 @@
-# 02. Routing Policy and Measured Convergence — Quiz
+# 02. Routing Policy and Measured Convergence Quiz
 
 > **Last Updated**: September 15, 2026
 

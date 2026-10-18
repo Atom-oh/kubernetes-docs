@@ -34,9 +34,9 @@ Model Registry registration is an optional lifecycle step. Serving systems consu
 
 ## Currently Covered
 
-1. [Part 1: MLflow Tracking](01-tracking.md) — experiments, runs, autologging, the MLflow 3 `LoggedModel` shift, and GenAI tracing
-2. [Part 2: MLflow Model Registry](02-model-registry.md) — Registered Models, Model Versions, aliases, and lineage
-3. [Part 3: Deploying MLflow on EKS](03-eks-deployment.md) — tracking server, PostgreSQL backend store, S3 artifact store, and IAM access
+1. [Part 1: MLflow Tracking](01-tracking.md): experiments, runs, autologging, the MLflow 3 `LoggedModel` shift, and GenAI tracing
+2. [Part 2: MLflow Model Registry](02-model-registry.md): Registered Models, Model Versions, aliases, and lineage
+3. [Part 3: Deploying MLflow on EKS](03-eks-deployment.md): tracking server, PostgreSQL backend store, S3 artifact store, and IAM access
 
 ## Primary Sources
 

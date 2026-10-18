@@ -37,17 +37,17 @@ EKS 직접 운영을 검토할 때 다음 가능성과 제약을 함께 평가�
 
 ## 현재 다루는 주제
 
-- [모던 데이터 파이프라인 해부](01-data-pipeline-anatomy.md) — 소스부터 소비까지 5개 계층으로 파이프라인 전체 구조를 조망하고, 각 딥다이브가 어느 계층을 다루는지 매핑하는 도입 문서입니다.
-- [Kafka on EKS](kafka/README.md) — Strimzi Operator를 사용해 Apache Kafka를 EKS에 배포하고 운영하는 방법을 8개 파트로 심층 다루고, Part 9에서 gp3 위 3-브로커 RF3 클러스터의 ingest 상한을 실측합니다.
-- [Spark on EKS](spark/README.md) — Spark-on-Kubernetes 기초, Spark Operator 생태계, Amazon EMR on EKS, 성능/비용 튜닝을 5개 파트로 다룹니다.
-- [Airflow on EKS](airflow/README.md) — Airflow 3의 아키텍처, Helm 기반 배포와 Executor 선택, KubernetesPodOperator를 활용한 DAG 패턴, Amazon MWAA 연동을 5개 파트로 다룹니다.
-- [Flink on EKS](flink/README.md) — Kubernetes 위에서의 Flink 아키텍처, Flink Kubernetes Operator, 상태 관리/체크포인팅, 운영 및 고가용성을 4개 파트로 다룹니다.
-- [SageMaker Unified Studio 거버넌스](sagemaker-unified-studio/README.md) — domain, project profile, project, catalog asset, membership과 삭제 lifecycle을 다룹니다.
+- [모던 데이터 파이프라인 해부](01-data-pipeline-anatomy.md): 소스부터 소비까지 5개 계층으로 파이프라인 전체 구조를 조망하고, 각 딥다이브가 어느 계층을 다루는지 매핑하는 도입 문서입니다.
+- [Kafka on EKS](kafka/README.md): Strimzi Operator를 사용해 Apache Kafka를 EKS에 배포하고 운영하는 방법을 8개 파트로 심층 다루고, Part 9에서 gp3 위 3-브로커 RF3 클러스터의 ingest 상한을 실측합니다.
+- [Spark on EKS](spark/README.md): Spark-on-Kubernetes 기초, Spark Operator 생태계, Amazon EMR on EKS, 성능/비용 튜닝을 5개 파트로 다룹니다.
+- [Airflow on EKS](airflow/README.md): Airflow 3의 아키텍처, Helm 기반 배포와 Executor 선택, KubernetesPodOperator를 활용한 DAG 패턴, Amazon MWAA 연동을 5개 파트로 다룹니다.
+- [Flink on EKS](flink/README.md): Kubernetes 위에서의 Flink 아키텍처, Flink Kubernetes Operator, 상태 관리/체크포인팅, 운영 및 고가용성을 4개 파트로 다룹니다.
+- [SageMaker Unified Studio 거버넌스](sagemaker-unified-studio/README.md): domain, project profile, project, catalog asset, membership과 삭제 lifecycle을 다룹니다.
 
 ## 다음 단계
 
-1. [Kafka on EKS](kafka/README.md) — Strimzi 기반 Kafka 딥다이브
-2. [Spark on EKS](spark/README.md) — Spark Operator와 EMR on EKS 딥다이브
-3. [Airflow on EKS](airflow/README.md) — Helm 기반 Airflow 배포와 DAG 패턴 딥다이브
-4. [Flink on EKS](flink/README.md) — Flink Kubernetes Operator와 스트리밍 패턴 딥다이브
-5. [SageMaker Unified Studio 거버넌스](sagemaker-unified-studio/README.md) — 관리형 데이터·AI 작업 공간과 EKS 파이프라인을 연결하는 거버넌스 가이드
+1. [Kafka on EKS](kafka/README.md): Strimzi 기반 Kafka 딥다이브
+2. [Spark on EKS](spark/README.md): Spark Operator와 EMR on EKS 딥다이브
+3. [Airflow on EKS](airflow/README.md): Helm 기반 Airflow 배포와 DAG 패턴 딥다이브
+4. [Flink on EKS](flink/README.md): Flink Kubernetes Operator와 스트리밍 패턴 딥다이브
+5. [SageMaker Unified Studio 거버넌스](sagemaker-unified-studio/README.md): 관리형 데이터·AI 작업 공간과 EKS 파이프라인을 연결하는 거버넌스 가이드

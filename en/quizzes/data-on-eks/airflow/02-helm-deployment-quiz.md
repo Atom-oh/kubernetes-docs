@@ -106,7 +106,7 @@ Defaults are pollingInterval=5s and cooldownPeriod=30s. The example explicitly c
 <details>
 <summary>Show answer</summary>
 
-A numeric value rendered by the chart, 4 in this example—not a database column named worker_concurrency. Count the relevant running/queued tasks for the worker's queues/executors, divide and round up.
+A numeric value rendered by the chart (4 in this example), not a database column named worker_concurrency. Count the relevant running/queued tasks for the worker's queues/executors, divide and round up.
 
 </details>
 

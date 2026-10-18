@@ -5,7 +5,7 @@
 
 ## 이 섹션에서 다루는 것
 
-- 컨테이너와 Kubernetes가 실제로 무엇에 올라타 있는가 — namespace, cgroup, netfilter, conntrack의 커널 기능들
+- 컨테이너와 Kubernetes가 실제로 무엇에 올라타 있는가: namespace, cgroup, netfilter, conntrack의 커널 기능들
 - 패킷이 Pod에서 나가 NIC에 닿기까지 커널 안에서 지나는 경로와, 그 경로의 각 지점에서 무엇을 관측하고 조정할 수 있는가
 - EKS 노드에서 커널 파라미터가 워크로드 성능·안정성에 미치는 영향과, 무엇을 건드려야 하고 무엇을 두어야 하는가
 
@@ -47,13 +47,13 @@ Kubernetes 문서는 대부분 **선언적 API 위에서** 설명됩니다. Pod�
 
 ## 관련 문서
 
-- [Linux 기초](../basics/01-linux-basics.md) / [Linux 운영 기술](../basics/02-linux-advanced.md) — 명령어와 기본 운영
-- [컨테이너 기술](../basics/03-container-technology.md) — 컨테이너 런타임과 이미지 계층
-- [eBPF 기초와 실무 활용](../basics/05-ebpf-fundamentals.md) — eBPF 프로그램 타입과 활용
-- [네트워크 기초 4부작](../basics/06-network-fundamentals-part1.md) — 계층 모델부터 클라우드까지
-- [Pod 네트워크 실측 벤치마크](../networking/06-pod-network-benchmark.md) — 이 섹션의 이론에 대응하는 실측값
-- [리소스 최적화](../ops/10-resource-optimization.md) — request/limit 설계
-- [VPC Lattice 커널 데이터패스](../service-mesh/vpc-lattice/07-kernel-datapath.md) — link-local 인터셉트의 커널 계층
+- [Linux 기초](../basics/01-linux-basics.md) / [Linux 운영 기술](../basics/02-linux-advanced.md): 명령어와 기본 운영
+- [컨테이너 기술](../basics/03-container-technology.md): 컨테이너 런타임과 이미지 계층
+- [eBPF 기초와 실무 활용](../basics/05-ebpf-fundamentals.md): eBPF 프로그램 타입과 활용
+- [네트워크 기초 4부작](../basics/06-network-fundamentals-part1.md): 계층 모델부터 클라우드까지
+- [Pod 네트워크 실측 벤치마크](../networking/06-pod-network-benchmark.md): 이 섹션의 이론에 대응하는 실측값
+- [리소스 최적화](../ops/10-resource-optimization.md): request/limit 설계
+- [VPC Lattice 커널 데이터패스](../service-mesh/vpc-lattice/07-kernel-datapath.md): link-local 인터셉트의 커널 계층
 
 ## 정확성에 대한 안내
 

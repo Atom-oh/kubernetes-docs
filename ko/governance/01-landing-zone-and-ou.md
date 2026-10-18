@@ -16,7 +16,7 @@ CentralConfigBaseline
         └─▶ BackupCentralVaultBaseline
 ```
 
-`IdentityCenterBaseline`(Identity Center 연동)을 쓰려면 `CentralSecurityRolesBaseline`이 먼저 활성화되어 있어야 하고, 그것은 다시 `CentralConfigBaseline`(AWS Config)을 요구합니다. **비활성화는 반드시 역순**입니다 — 오른쪽 세 개(IdentityCenter/BackupAdmin/BackupCentralVault)를 모두 끈 뒤에야 SecurityRoles를, 그것을 끈 뒤에야 Config를 끌 수 있습니다.
+`IdentityCenterBaseline`(Identity Center 연동)을 쓰려면 `CentralSecurityRolesBaseline`이 먼저 활성화되어 있어야 하고, 그것은 다시 `CentralConfigBaseline`(AWS Config)을 요구합니다. **비활성화는 반드시 역순**입니다. 오른쪽 세 개(IdentityCenter/BackupAdmin/BackupCentralVault)를 모두 끈 뒤에야 SecurityRoles를, 그것을 끈 뒤에야 Config를 끌 수 있습니다.
 
 > **적용 범위**: 이 체인은 Control Tower 4.0이 관리하는 IdentityCenterBaseline의 의존 관계입니다. IAM Identity Center 서비스 자체가 AWS Config를 요구한다는 뜻은 아닙니다. 내부 파이프라인으로 별도 관리하는 Identity Center와 Control Tower 연동을 구분하세요.
 
@@ -82,8 +82,8 @@ Organizations가 지원하는 정책 유형은 서로 역할이 다르고, 기�
 | 전략 | 구성 | quota 관점 평가 |
 |---|---|---|
 | Root-heavy | 조직 전체 공통 SCP를 Root에 연결, OU가 상속 | 신규 Account가 즉시 상속받지만 예외를 만들기 어려움 |
-| OU별 완성형 직접 연결 | 각 OU에 필요한 SCP 전체를 직접 연결, 상위 의존 최소화 | 상속을 쓰지 않으므로 OU 하나에서 10개 한도를 그대로 소비 — 한도 도달 시 정책을 병합해야 함 |
-| **Layered bundle** | Root에는 예외 없는 최소 SCP만, 나머지는 OU별 버전 관리되는 정책 묶음 + 만료되는 예외 | 상속을 적극 활용해 OU별 direct-attach 한도를 절약 — **quota 관점에서 가장 확장성이 좋음** |
+| OU별 완성형 직접 연결 | 각 OU에 필요한 SCP 전체를 직접 연결, 상위 의존 최소화 | 상속을 쓰지 않으므로 OU 하나에서 10개 한도를 그대로 소비하며, 한도 도달 시 정책을 병합해야 함 |
+| **Layered bundle** | Root에는 예외 없는 최소 SCP만, 나머지는 OU별 버전 관리되는 정책 묶음 + 만료되는 예외 | 상속을 적극 활용해 OU별 direct-attach 한도를 절약하며, **quota 관점에서 가장 확장성이 좋음** |
 
 정책 문서와 attachment 목록은 Git revision·배포 manifest·CloudTrail 변경 기록으로 버전 추적합니다. Sid에 버전을 넣는 것은 선택입니다. 상속된 SCP/RCP, resource policy, permission boundary 등은 개별 평가 범위가 다르므로 단일 simulation이 전체 권한을 증명한다고 가정하지 않습니다.
 

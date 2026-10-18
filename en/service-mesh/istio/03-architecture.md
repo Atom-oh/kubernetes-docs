@@ -412,7 +412,7 @@ kubectl apply -f deployment-injected.yaml
 
 ### iptables Rules Detail
 
-**Simplified rule sketch — not a script to execute**:
+**Simplified rule sketch (not a script to execute)**:
 
 ```bash
 #!/bin/bash

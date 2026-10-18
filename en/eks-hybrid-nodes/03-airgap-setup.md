@@ -305,7 +305,7 @@ The named-principal policy requires a signed request. **nodeadm's ordinary HTTPS
 1. Use an authenticated preparation agent/CLI to fetch the approved files, then provide them through an organization-controlled HTTPS artifact service with appropriate network access controls and a certificate for its own hostname.
 2. Use the preinstalled-image path, with no runtime binary mirror dependency.
 
-A private S3 object URL returning `403` is not repaired by a DNS override. Do not put bearer presigned URLs or credentials into manifests, process arguments or published logs. If an organization chooses unauthenticated reads of nonsecret binaries restricted to a private network, that is a separate, explicitly reviewed policy—not the named-principal policy above.
+A private S3 object URL returning `403` is not repaired by a DNS override. Do not put bearer presigned URLs or credentials into manifests, process arguments or published logs. If an organization chooses unauthenticated reads of nonsecret binaries restricted to a private network, that is a separate, explicitly reviewed policy, not the named-principal policy above.
 
 Save as `publish-plan.sh`. Run only after the bucket owner approves the candidate and permissions; this script **writes S3 objects**:
 

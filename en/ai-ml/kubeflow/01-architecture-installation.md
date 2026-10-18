@@ -14,7 +14,7 @@ The 26.03.1 release reports Kubernetes 1.36 CI coverage and Kind 0.32+ use. This
 
 Kubeflow comprises independently released ML components. The Community Distribution assembles their revisions and shared services. Some workloads use CRDs; other operations use application APIs, databases, and object storage. The dashboard is a UI entry point, not the scheduler or universal dispatcher.
 
-### CNCF Graduation — August 17, 2026
+### CNCF Graduation: August 17, 2026
 
 The [CNCF announcement](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/) records graduation, an independent security audit, and formal governance. This supports an assessment of project maturity. It does not replace threat modeling, tenant isolation tests, or a deployment-specific compliance assessment.
 

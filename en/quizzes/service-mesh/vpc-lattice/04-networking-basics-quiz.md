@@ -1,4 +1,4 @@
-# Foundations — Link-Local and SNI Quiz
+# Foundations: Link-Local and SNI Quiz
 
 This quiz tests your understanding of link-local/ULA addressing, how SNI works, and Lattice's protocol support.
 
@@ -17,7 +17,7 @@ This quiz tests your understanding of link-local/ULA addressing, how SNI works, 
 **Answer: B) IPv4 `169.254.171.0/24` is link-local, while IPv6 `fd00:ec2:80::/64` is not link-local but a Unique Local Address (ULA)**
 
 **Explanation:**
-The IPv4 range falls inside `169.254.0.0/16` (RFC 3927, link-local), but the IPv6 range is not `fe80::/10` (link-local) — it is `fd00:ec2:80::/64` inside the `fc00::/7` ULA range (RFC 4193). Link-local addresses have link scope. ULAs have global address scope under RFC 6724, but are intended for private routing rather than global Internet reachability; they are not the deprecated site-local address class. These address classifications do not by themselves describe AWS's special Lattice ingress implementation.
+The IPv4 range falls inside `169.254.0.0/16` (RFC 3927, link-local), but the IPv6 range is not `fe80::/10` (link-local); it is `fd00:ec2:80::/64` inside the `fc00::/7` ULA range (RFC 4193). Link-local addresses have link scope. ULAs have global address scope under RFC 6724, but are intended for private routing rather than global Internet reachability; they are not the deprecated site-local address class. These address classifications do not by themselves describe AWS's special Lattice ingress implementation.
 </details>
 
 2. How should the Lattice address ranges be interpreted?
@@ -53,10 +53,10 @@ Some Envoy policies reject unknown destinations and others forward them. Inspect
 </details>
 
 4. Why is destination IP alone insufficient for stable service identity and authorization?
-   - A) Destination IPs become encrypted — there is no alternative
+   - A) Destination IPs become encrypted; there is no alternative
    - B) Use service-aware identity, DNS/request correlation and reviewed network rules rather than relying on IP alone
-   - C) Flow logs get disabled — enabling them solves it
-   - D) The VPC CNI reuses IPs — changing the IP allocation policy solves it
+   - C) Flow logs get disabled; enabling them solves it
+   - D) The VPC CNI reuses IPs; changing the IP allocation policy solves it
 
 <details>
 

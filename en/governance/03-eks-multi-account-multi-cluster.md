@@ -29,7 +29,7 @@ Threshold breaches trigger review. Compare quota increases, cleanup, and partiti
 
 ## 2. A/B EKS Runtime: Splitting the Blast Radius Across Two Clusters
 
-Deploying the same CUJ (critical user journey) to two independent EKS clusters, so that a failure on one cluster still leaves the other serving traffic, is commonly called an "A/B EKS Runtime." This is **not an official AWS-recommended pattern — it's a working hypothesis the organization must validate itself.** To actually improve availability, you need to satisfy the conditions below first.
+Deploying the same CUJ (critical user journey) to two independent EKS clusters, so that a failure on one cluster still leaves the other serving traffic, is commonly called an "A/B EKS Runtime." This is **not an official AWS-recommended pattern; it's a working hypothesis the organization must validate itself.** To actually improve availability, you need to satisfy the conditions below first.
 
 ### Define what you're protecting against, first
 
@@ -80,9 +80,9 @@ Technical constraints to check as well:
 
 The math of "2-AZ needs roughly 2x, 3-AZ (N-1 basis) needs roughly 1.5x pre-provisioned capacity" is arithmetically correct, but easy to get wrong in three ways.
 
-1. **Node addition delay** — placeholder Pods and priority can reserve existing capacity, but do not eliminate node provisioning, image pulls, or application startup time.
-2. **The risk that new capacity in the healthy AZ can be constrained by other customers' demand** — this isn't speculation; AWS's documentation explicitly notes the "compute capacity constraint risk that new nodes might not be added to a healthy AZ during zonal impairment."
-3. **Dependencies and AZ placement** — every required CUJ hop must remain reachable and sufficiently provisioned from surviving AZs. Combine topology spread, affinity, and cross-zone fallback as needed; test whether strict affinity blocks recovery.
+1. **Node addition delay**: placeholder Pods and priority can reserve existing capacity, but do not eliminate node provisioning, image pulls, or application startup time.
+2. **The risk that new capacity in the healthy AZ can be constrained by other customers' demand**: this isn't speculation; AWS's documentation explicitly notes the "compute capacity constraint risk that new nodes might not be added to a healthy AZ during zonal impairment."
+3. **Dependencies and AZ placement**: every required CUJ hop must remain reachable and sufficiently provisioned from surviving AZs. Combine topology spread, affinity, and cross-zone fallback as needed; test whether strict affinity blocks recovery.
 
 ### Cross-AZ cost optimization
 
@@ -106,9 +106,9 @@ Without this, A/B is nothing more than "two clusters," and the redundancy loses 
 
 ### Worker AZ count and control plane subnets are separate concepts
 
-Creating a cluster requires subnets in at least two distinct AZs, but worker nodes can be placed in just a single AZ. This means EKS itself doesn't prohibit a "single-AZ worker configuration" — judge that separately from the zonal-shift exception rule mentioned above.
+Creating a cluster requires subnets in at least two distinct AZs, but worker nodes can be placed in just a single AZ. This means EKS itself doesn't prohibit a "single-AZ worker configuration"; judge that separately from the zonal-shift exception rule mentioned above.
 
-## 3. Full Workload Cell — An Alternative for Stronger Isolation
+## 3. Full Workload Cell: An Alternative for Stronger Isolation
 
 If you need stronger isolation than an A/B EKS Runtime provides, you can split and replicate ingress, compute, data, and required dependencies together as a "Cell" unit, containing blast radius within the Cell. Partitioning, consistency, capacity, and operational cost grow substantially, so this is realistic **only for workloads that can support independent data partitioning and replication.**
 

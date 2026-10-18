@@ -17,15 +17,15 @@
 | 상황 | 블록체인이 맞는가 |
 |---|---|
 | 한 조직이 데이터를 소유·제어 | 일반적으로 database/audit-log 대안부터 시작하되 구체적인 검증·governance 요구 비교 |
-| 중재자가 있고 모두가 그를 신뢰 | **아니오** — 중재자의 DB로 충분합니다 |
-| 변조 감지만 필요 | **대개 아니오** — 해시 체인, 서명 로그, WORM 스토리지로 충분 |
+| 중재자가 있고 모두가 그를 신뢰 | **아니오**. 중재자의 DB로 충분합니다 |
+| 변조 감지만 필요 | **대개 아니오**. 해시 체인, 서명 로그, WORM 스토리지로 충분 |
 | 서로 신뢰하지 않는 복수 기관이 **공유 상태**를 갱신 | **검토 가치 있음** |
 | 제3자가 **독립적으로 검증**할 수 있어야 함 | **검토 가치 있음** |
 | 기관 간 대조(reconciliation) 비용이 실제로 큼 | **검토 가치 있음** |
 
-**"변조 감지만 필요"가 특히 흔한 오해**입니다. 감사 추적이나 무결성 증명이 목적이면 블록체인 없이도 됩니다 — 서명된 append-only 로그, 해시 체인, 객체 스토리지의 WORM(Write Once Read Many) 기능으로 달성할 수 있고 운영이 훨씬 단순합니다.
+**"변조 감지만 필요"가 특히 흔한 오해**입니다. 감사 추적이나 무결성 증명이 목적이면 블록체인 없이도 됩니다. 서명된 append-only 로그, 해시 체인, 객체 스토리지의 WORM(Write Once Read Many) 기능으로 달성할 수 있고 운영이 훨씬 단순합니다.
 
-여기서 [Amazon QLDB의 사례](./03-managed-blockchain.md)가 시사적입니다. QLDB는 정확히 "중앙 신뢰 주체가 있지만 암호학적으로 검증 가능한 원장"을 제공했고, **그것으로 충분한 문제가 많다**는 전제의 서비스였습니다. 서비스는 종료되었지만 그 문제 정의 자체는 유효합니다 — 많은 요구가 완전한 탈중앙 합의를 필요로 하지 않습니다.
+여기서 [Amazon QLDB의 사례](./03-managed-blockchain.md)가 시사적입니다. QLDB는 정확히 "중앙 신뢰 주체가 있지만 암호학적으로 검증 가능한 원장"을 제공했고, **그것으로 충분한 문제가 많다**는 전제의 서비스였습니다. 서비스는 종료되었지만 그 문제 정의 자체는 유효합니다. 많은 요구가 완전한 탈중앙 합의를 필요로 하지 않습니다.
 
 **실무 권고**: "이 문제에 중재자가 없어야 하는 이유"를 한 문장으로 쓸 수 없으면, 블록체인이 아닌 대안을 먼저 비교하십시오.
 
@@ -62,7 +62,7 @@
 
 **심의에서 이 구분이 중요합니다.** 제안서에 "탈중앙화로 신뢰 없이 운영"이라고 쓰면 심의에서 "그럼 멤버십은 누가 통제하는가"라는 질문을 받고, 답이 "컨소시엄 사무국"이면 논리가 무너집니다. **처음부터 "기관 간 대조 비용 절감"으로 가치를 정의하는 것이 방어 가능합니다.**
 
-## 프라이버시 — 가장 어려운 문제
+## 프라이버시: 가장 어려운 문제
 
 ### 근본적 긴장
 
@@ -80,7 +80,7 @@
 | **Private Data Collection** (Fabric) | 원장에는 해시만, 실제 데이터는 승인된 peer에만 | 데이터 배포·수명 관리 부담 |
 | **영지식 증명 (ZKP)** | 내용을 공개하지 않고 **명제의 참을 증명** | 계산 비용, 회로 설계 난도, 검증 가능성 심의 |
 | **오프체인 저장** | 민감 데이터는 체인 밖, 체인에는 해시·포인터만 | 오프체인 저장소의 가용성·무결성이 새 의존성 |
-| **암호화 저장** | 체인에 암호문 저장 | **키 관리가 곧 접근 제어** — 키 유출 시 과거 전부 노출 |
+| **암호화 저장** | 체인에 암호문 저장 | **키 관리가 곧 접근 제어**. 키 유출 시 과거 전부 노출 |
 
 ### 어느 것을 고를 것인가
 
@@ -96,7 +96,7 @@ Append-only/public ledger의 암호문은 이력 사본에 남을 수 있으며 
 
 개인정보 규제의 삭제 요구와 블록체인의 불변성이 충돌합니다.
 
-**일반적인 대응은 "개인정보를 체인에 넣지 않는 것"**입니다 — 체인에는 식별자나 해시만 두고, 개인정보는 오프체인에 두어 삭제 가능하게 합니다. 다만 해시도 원본을 아는 상태에서는 조회 가능(rainbow table 공격)하므로, 솔트나 키를 삭제해 사실상 복원 불가하게 만드는 방식(crypto-shredding)을 함께 씁니다.
+**일반적인 대응은 "개인정보를 체인에 넣지 않는 것"**입니다. 체인에는 식별자나 해시만 두고, 개인정보는 오프체인에 두어 삭제 가능하게 합니다. 다만 해시도 원본을 아는 상태에서는 조회 가능(rainbow table 공격)하므로, 솔트나 키를 삭제해 사실상 복원 불가하게 만드는 방식(crypto-shredding)을 함께 씁니다.
 
 ::: warning 확인 필요
 개인정보보호 규제(국내 개인정보보호법, GDPR 등)의 **삭제 요구와 블록체인 불변성의 법적 해석은 관할과 사안에 따라 다르며, 이 문서는 법률 자문이 아닙니다.**
@@ -104,7 +104,7 @@ Append-only/public ledger의 암호문은 이력 사본에 남을 수 있으며 
 해시·암호문이 개인정보에 해당하는지, crypto-shredding이 삭제 의무를 충족하는지는 **법무·컴플라이언스 부서와 규제 당국 해석을 통해 확인**해야 합니다. 기술적 설계보다 이 확인이 먼저입니다.
 :::
 
-## 키 관리 — 금융권에서 가장 무거운 항목
+## 키 관리: 금융권에서 가장 무거운 항목
 
 [기초 개념](./01-fundamentals.md)에서 "키가 곧 권한이고 잃으면 끝"이라고 했습니다. 금융권에서 이것이 왜 특별히 무거운지 봅니다.
 
@@ -113,9 +113,9 @@ Append-only/public ledger의 암호문은 이력 사본에 남을 수 있으며 
 | 요구 | 상충하는 요구 |
 |---|---|
 | 거래 서명에 키가 **온라인**에 있어야 함 | 키는 **격리**되어야 함 |
-| 가용성 — 서명이 지연되면 서비스 중단 | 다중 승인 — 단일 주체가 서명할 수 없어야 함 |
-| 백업 필수 — 잃으면 영구 손실 | 백업이 유출 경로 |
-| 감사 가능 — 누가 서명했는지 | 키 자체는 노출 불가 |
+| 가용성: 서명이 지연되면 서비스 중단 | 다중 승인: 단일 주체가 서명할 수 없어야 함 |
+| 백업 필수: 잃으면 영구 손실 | 백업이 유출 경로 |
+| 감사 가능: 누가 서명했는지 | 키 자체는 노출 불가 |
 
 이 모순이 금융권 블록체인에서 **가장 설계가 어려운 부분**입니다.
 
@@ -125,24 +125,24 @@ Append-only/public ledger의 암호문은 이력 사본에 남을 수 있으며 
 |---|---|---|
 | **HSM** (CloudHSM, on-premises HSM) | Hardware 기반 서명과 설정 가능한 키 보호 | 선택한 module의 algorithm·extractability/wrapping·backup 정책 확인 |
 | **AWS KMS** | 관리형 키, IAM 통합, CloudTrail 감사 | 블록체인이 요구하는 서명 알고리즘 지원 여부 확인 필요 |
-| **MPC** (Multi-Party Computation) | 키를 **분산 보관**하고 조각을 모아 서명 — 완전한 키가 어디에도 없음 | 구현 복잡도, 벤더 의존 |
+| **MPC** (Multi-Party Computation) | 키를 **분산 보관**하고 조각을 모아 서명. 완전한 키가 어디에도 없음 | 구현 복잡도, 벤더 의존 |
 | **멀티시그** | 프로토콜 수준에서 N-of-M 서명 요구 | 체인·컨트랙트 지원 필요. 거래 비용 증가 |
 | **콜드/핫 분리** | 대량은 오프라인, 소량만 온라인 | 운영 절차 부담 |
 
-### 곡선별 지원 현황 — 계층에 따라 갈립니다
+### 곡선별 지원 현황: 계층에 따라 갈립니다
 
 **이것이 키 관리 설계에서 가장 자주 무너지는 가정입니다.** "KMS를 쓴다"는 계획이 알고리즘 미지원으로 깨지는데, 중요한 점은 **Ethereum의 두 계층이 서로 다른 곡선을 쓴다**는 것입니다.
 
 | 계층 | 곡선 | 용도 | AWS KMS / CloudHSM |
 |---|---|---|---|
-| **실행 계층** (계정·거래) | **secp256k1** | 거래 서명, EOA 계정 | **✅ 지원** — KMS 키 스펙 `ECC_SECG_P256K1`, 용도는 `SIGN_VERIFY` 전용 |
+| **실행 계층** (계정·거래) | **secp256k1** | 거래 서명, EOA 계정 | **✅ 지원**: KMS 키 스펙 `ECC_SECG_P256K1`, 용도는 `SIGN_VERIFY` 전용 |
 | **컨센서스 계층** (검증자) | **BLS12-381** | 블록 제안·증명 서명 | **❌ 미지원** |
 
 KMS `ECC_SECG_P256K1`의 `SIGN_VERIFY`는 **Ethereum ECDSA 형식에 맞춘 서명 흐름**에 사용할 수 있습니다. Curve 지원만으로는 부족하며 digest 처리·DER의 chain signature 변환·low-S/recovery 요구·정확한 transaction 형식을 검증해야 합니다. Bitcoin 서명 방식도 다르므로 secp256k1 지원이 모든 Schnorr/Taproot 흐름 지원을 뜻하지 않습니다. 실제 자금 없이 시험합니다.
 
 **컨센서스 계층이 문제입니다.** BLS12-381은 KMS의 키 스펙에 없고 CloudHSM도 지원하지 않습니다. **즉 검증자 서명 키를 KMS/HSM에 넣는 설계는 성립하지 않습니다.**
 
-AWS가 제시하는 대안은 **Nitro Enclaves**입니다 — 격리된 실행 환경 안에서 Web3Signer 같은 서명기를 돌려, 키가 엔클레이브를 떠나지 않게 하는 구조입니다. 키 생성(EIP-2335 형식 BLS12-381 키스토어) 역시 별도 방식이 필요합니다.
+AWS가 제시하는 대안은 **Nitro Enclaves**입니다. 격리된 실행 환경 안에서 Web3Signer 같은 서명기를 돌려, 키가 엔클레이브를 떠나지 않게 하는 구조입니다. 키 생성(EIP-2335 형식 BLS12-381 키스토어) 역시 별도 방식이 필요합니다.
 
 **설계 함의**: 앞서 다룬 검증자 키의 모순(온라인 상시 + 격리 + 이중 서명 금지)에 **"HSM으로 키를 보호한다"는 표준 답이 통하지 않는다**는 제약이 하나 더 붙습니다. 검증자 운영을 검토한다면 이것이 KMS 기반 설계와 갈리는 첫 분기점입니다.
 
@@ -156,7 +156,7 @@ AWS가 제시하는 대안은 **Nitro Enclaves**입니다 — 격리된 실행 �
 
 PoS 검증자를 운영하는 경우 추가 문제가 있습니다.
 
-- **서명 키가 상시 온라인**이어야 합니다 — 매 슬롯에 서명 기회가 오므로
+- **서명 키가 상시 온라인**이어야 합니다(매 슬롯에 서명 기회가 오므로)
 - **같은 validator의 충돌하는 서명은 slashing 대상이 될 수 있습니다.** 조정되지 않은 signer/키 복제본이 위험을 만들며 동일 서명 중복이 항상 자동 slashing인 것은 아닙니다.
 - 즉 **"고가용성을 위한 이중화"가 오히려 위험**을 만드는 구조입니다
 
@@ -183,13 +183,13 @@ PoS 검증자를 운영하는 경우 추가 문제가 있습니다.
 
 ### 특히 준비가 부족한 두 항목
 
-**① 오류 정정 — "되돌릴 수 없다"가 심의에서 약점이 됩니다.**
+**① 오류 정정: "되돌릴 수 없다"가 심의에서 약점이 됩니다.**
 
 블록체인의 장점으로 홍보되는 불변성이 금융 운영에서는 **문제**입니다. 잘못된 거래, 착오 송금, 시스템 오류가 실제로 발생하고 금융기관은 이를 정정할 의무와 절차를 갖고 있습니다.
 
-**답은 기술이 아니라 절차입니다.** "체인을 되돌린다"가 아니라 "**보정 거래(compensating transaction)를 발행한다**"가 표준 접근입니다 — 원 거래는 남고 상계 거래를 추가해 결과를 정정합니다. 회계의 역분개와 같은 개념입니다. 심의에는 이 절차와 승인 권한을 문서화해 제시해야 합니다.
+**답은 기술이 아니라 절차입니다.** "체인을 되돌린다"가 아니라 "**보정 거래(compensating transaction)를 발행한다**"가 표준 접근입니다. 원 거래는 남고 상계 거래를 추가해 결과를 정정합니다. 회계의 역분개와 같은 개념입니다. 심의에는 이 절차와 승인 권한을 문서화해 제시해야 합니다.
 
-**② exit 전략 — 거의 항상 준비가 안 되어 있습니다.**
+**② exit 전략: 거의 항상 준비가 안 되어 있습니다.**
 
 컨소시엄이 해산하거나 특정 기관이 탈퇴할 때, 또는 시스템을 종료할 때 데이터와 의무는 어떻게 되는가. 금융 데이터는 보존 기간 의무가 있으므로 **"체인을 껐다"로 끝나지 않습니다.**
 
@@ -239,13 +239,13 @@ PoS 검증자를 운영하는 경우 추가 문제가 있습니다.
 
 ## 참고 자료
 
-- [Hyperledger Fabric — Private data](https://hyperledger-fabric.readthedocs.io/en/latest/private-data/private-data.html)
-- [Hyperledger Fabric — Channels](https://hyperledger-fabric.readthedocs.io/en/latest/channels.html)
+- [Hyperledger Fabric: Private data](https://hyperledger-fabric.readthedocs.io/en/latest/private-data/private-data.html)
+- [Hyperledger Fabric: Channels](https://hyperledger-fabric.readthedocs.io/en/latest/channels.html)
 - [AWS CloudHSM 문서](https://docs.aws.amazon.com/cloudhsm/) / [AWS KMS 문서](https://docs.aws.amazon.com/kms/)
-- [AWS KMS 키 스펙 참조](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html) — `ECC_SECG_P256K1` 포함
+- [AWS KMS 키 스펙 참조](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html): `ECC_SECG_P256K1` 포함
 - [Use AWS KMS to securely manage Ethereum accounts (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/use-key-management-service-aws-kms-to-securely-manage-ethereum-accounts-part-1/)
-- [AWS Nitro Enclaves for running Ethereum validators (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/aws-nitro-enclaves-for-running-ethereum-validators-part-1/) — BLS12-381 미지원에 대한 대안
-- [Amazon Managed Blockchain](./03-managed-blockchain.md) — 서비스 종료 위험과 완화
-- [블록체인 기초 개념](./01-fundamentals.md) — 합의와 파이널리티
-- [EKS에서 블록체인 노드 운영](./02-nodes-on-eks.md) — 운영 체계
-- [EKS 보안](../eks/05-eks-security.md) / [보안](../core/06-security.md) — 일반 보안 통제
+- [AWS Nitro Enclaves for running Ethereum validators (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/aws-nitro-enclaves-for-running-ethereum-validators-part-1/): BLS12-381 미지원에 대한 대안
+- [Amazon Managed Blockchain](./03-managed-blockchain.md): 서비스 종료 위험과 완화
+- [블록체인 기초 개념](./01-fundamentals.md): 합의와 파이널리티
+- [EKS에서 블록체인 노드 운영](./02-nodes-on-eks.md): 운영 체계
+- [EKS 보안](../eks/05-eks-security.md) / [보안](../core/06-security.md): 일반 보안 통제

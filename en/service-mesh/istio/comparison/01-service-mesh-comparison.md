@@ -83,7 +83,7 @@ The former text described a **three-node EKS 1.28, m5.xlarge, 100-service, 1,000
 
 | Original entry | p50 | p95 | p99 | CPU claim | Memory claim |
 |---|---:|---:|---:|---:|---:|
-| Baseline |0.1 ms|0.2 ms|0.3 ms|—|—|
+| Baseline |0.1 ms|0.2 ms|0.3 ms|-|-|
 | Linkerd |+0.5 ms|+0.8 ms|+1.2 ms|+3–8%|+20–50 MB|
 | Istio |+1.0 ms|+2.5 ms|+3.5 ms|+5–15%|+50–150 MB|
 | Kong Mesh |+0.8 ms|+2.0 ms|+3.0 ms|+5–12%|+40–120 MB|

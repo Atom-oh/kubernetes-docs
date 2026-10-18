@@ -76,7 +76,7 @@ Use GenAI-Perf0.0.16's audited [profile/endpoint/service/token options](04-infer
 
 [View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-2.html)
 
-Measure image transfer, unpacking, model download/loading and readiness separately. Unsourced“always5–15minutes” and“80–95%savings” tables were removed.45GB/1Gbps≈360seconds is only idealized transfer arithmetic, excluding compressed size, protocol, disk and concurrency overhead—not a measured pull time.
+Measure image transfer, unpacking, model download/loading and readiness separately. Unsourced“always5–15minutes” and“80–95%savings” tables were removed.45GB/1Gbps≈360seconds is only idealized transfer arithmetic, excluding compressed size, protocol, disk and concurrency overhead, not a measured pull time.
 
 External model artifacts may reduce image changes/pulls but add download and cache-management costs. Prepared images can be appropriate in some environments. Initialization must propagate failures and verify revision, checksums and completion. The former S3 sync followed by a successful echo could mask download failure and was removed.
 
@@ -256,7 +256,7 @@ CloudTrail Secrets Manager API records do not capture every application read of 
 
 NetworkPolicy requires CNI enforcement. Verify selector AND/OR semantics, default namespace-name labels and both TCP/UDP DNS. The10.0.0.0/8 health-check opening and“internet443means S3-only” rule were removed. With prepared models, restrict runtime egress to necessary paths and distinguish inference/management APIs at the gateway.
 
-Audit logs should capture user/workload identity, model revision, action, outcome and request ID, redacting prompts/secrets as appropriate. Parsing containerd CRI logs as Docker or retaining only lines containing request can lose audit events. Verify actual collectors, parsers, IAM, buffers, retention and delivery failures—not just a ConfigMap.
+Audit logs should capture user/workload identity, model revision, action, outcome and request ID, redacting prompts/secrets as appropriate. Parsing containerd CRI logs as Docker or retaining only lines containing request can lose audit events. Verify actual collectors, parsers, IAM, buffers, retention and delivery failures, not just a ConfigMap.
 
 ## Verification Scope
 

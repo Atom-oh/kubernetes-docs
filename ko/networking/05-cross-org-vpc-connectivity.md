@@ -67,9 +67,9 @@ nginx 설명은 HTTP 응답자를 가리키며 이 페이지에는 TCP_RR 구현
 | M2 | ② VPC Peering → EC2 | 0.125 | **0.048** | 0.057 | 0.011 | 0.080 | 127 |
 | M3 | ① 공유 TGW(RAM) → EC2 | 0.535 | **0.619** | 0.695 | 0.141 | 0.686 | 126 |
 | M4 | ④ TGW Peering(두 TGW) → EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
-| M5 | ③ PrivateLink → NLB → EC2 | 미측정 | **0.961** | 1.084 | 0.035 | 0.711 | — |
-| M6 | ⑤ VPC Lattice → EC2 타깃 | 미측정 | 해당 HTTP 서비스에서는 미측정 | — | — | **1.635** | — |
-| M7 | ② Peering → NLB → EC2 (NLB 홉 분리) | 미측정 | **0.841** | 0.909 | 0.119 | 0.883 | — |
+| M5 | ③ PrivateLink → NLB → EC2 | 미측정 | **0.961** | 1.084 | 0.035 | 0.711 | - |
+| M6 | ⑤ VPC Lattice → EC2 타깃 | 미측정 | 해당 HTTP 서비스에서는 미측정 | - | - | **1.635** | - |
+| M7 | ② Peering → NLB → EC2 (NLB 홉 분리) | 미측정 | **0.841** | 0.909 | 0.119 | 0.883 | - |
 
 ### 보고된 중앙값 간 차이
 
@@ -80,9 +80,9 @@ nginx 설명은 HTTP 응답자를 가리키며 이 페이지에는 TCP_RR 구현
 | Peering과 동일 VPC 기준선 | M2 − M1 | -0.001 | +0.004 | -0.007 |
 | 공유 TGW 경로와 Peering | M3 − M2 | +0.571 | +0.410 | +0.606 |
 | 두 TGW 경로와 Peering | M4 − M2 | +0.551 | +0.787 | +0.408 |
-| NLB를 둔 Peering과 직접 Peering | M7 − M2 | +0.793 | — | +0.803 |
-| PrivateLink/NLB와 Peering/NLB | M5 − M7 | +0.120 | — | -0.172 |
-| Lattice HTTP 서비스와 직접 Peering HTTP | M6 − M2 | — | — | +1.555 |
+| NLB를 둔 Peering과 직접 Peering | M7 − M2 | +0.793 | - | +0.803 |
+| PrivateLink/NLB와 Peering/NLB | M5 − M7 | +0.120 | - | -0.172 |
+| Lattice HTTP 서비스와 직접 Peering HTTP | M6 − M2 | - | - | +1.555 |
 
 - M2는 동일 VPC 기준선에 가깝지만 표만으로 통계적 동등성이나 오버헤드 0을 증명할 수 없습니다.
 - 두 TGW 경로의 TCP_RR 중앙값은 공유 TGW 하나인 경로보다 낮습니다. 따라서 보편적인 “TGW 홉당 0.4~0.6ms”나 선형 홉 비용 공식은 이 자료로 뒷받침되지 않습니다.
@@ -100,7 +100,7 @@ nginx 설명은 HTTP 응답자를 가리키며 이 페이지에는 TCP_RR 구현
 | ③ PrivateLink → NLB → EC2 | **0.658** | 0.845 |
 | ① 공유 TGW → NLB → EC2 | **1.273** | 1.257 |
 | ④ TGW Peering → NLB → EC2 | **1.425** | 1.279 |
-| ⑤ Lattice HTTP 서비스 (이 시험에서는 별도 NLB 없음) | — | **1.680** |
+| ⑤ Lattice HTTP 서비스 (이 시험에서는 별도 NLB 없음) | - | **1.680** |
 
 이 회차의 PrivateLink/NLB − Peering/NLB 차이는 **TCP_RR +0.036ms, HTTP KA +0.197ms**입니다. 공유 TGW와 peering TGW의 TCP_RR 중앙값은 PrivateLink의 각각 **1.93배, 2.17배**이고 HTTP 비율은 **1.49배, 1.51배**입니다. 이는 지연 비율이지 처리량 배수나 경로 동등성 증명이 아닙니다.
 

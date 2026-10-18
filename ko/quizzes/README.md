@@ -8,7 +8,7 @@
 
 ### 소개
 
-- [LLM과 함께 읽기 — llms.txt 퀴즈](./llm-guide-quiz.md)
+- [LLM과 함께 읽기: llms.txt 퀴즈](./llm-guide-quiz.md)
 - [가이드북 로드맵 퀴즈](./roadmap-quiz.md)
 
 ### AI/ML
@@ -24,7 +24,7 @@
 - [Kubeflow 아키텍처와 EKS 설치 퀴즈](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Kubeflow Pipelines 퀴즈](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Kubeflow Notebooks 퀴즈](./ai-ml/kubeflow/03-notebooks-quiz.md)
-- [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML 퀴즈](./ai-ml/kubeflow/04-katib-quiz.md)
+- [Part 4: Katib 하이퍼파라미터 튜닝과 AutoML 퀴즈](./ai-ml/kubeflow/04-katib-quiz.md)
 - [Kubeflow Trainer와 분산 학습 퀴즈](./ai-ml/kubeflow/05-training-operator-quiz.md)
 - [KServe 퀴즈](./ai-ml/kubeflow/06-kserve-quiz.md)
 - [MLflow Tracking 퀴즈](./ai-ml/mlflow/01-tracking-quiz.md)
@@ -52,10 +52,10 @@
 - [컨테이너 기술 퀴즈](./basics/03-container-technology-quiz.md)
 - [Kubernetes 소개 퀴즈](./basics/04-kubernetes-introduction-quiz.md)
 - [eBPF 기초 퀴즈](./basics/05-ebpf-fundamentals-quiz.md)
-- [네트워크 기초 Part 1 퀴즈 — 계층 모델과 링크·라우팅](./basics/06-network-fundamentals-part1-quiz.md)
-- [네트워크 기초 Part 2 퀴즈 — 전송 계층과 TLS](./basics/06-network-fundamentals-part2-quiz.md)
-- [네트워크 기초 Part 3 퀴즈 — 애플리케이션 프로토콜](./basics/06-network-fundamentals-part3-quiz.md)
-- [네트워크 기초 Part 4 퀴즈 — 요청의 여정과 클라우드](./basics/06-network-fundamentals-part4-quiz.md)
+- [네트워크 기초 Part 1 퀴즈: 계층 모델과 링크·라우팅](./basics/06-network-fundamentals-part1-quiz.md)
+- [네트워크 기초 Part 2 퀴즈: 전송 계층과 TLS](./basics/06-network-fundamentals-part2-quiz.md)
+- [네트워크 기초 Part 3 퀴즈: 애플리케이션 프로토콜](./basics/06-network-fundamentals-part3-quiz.md)
+- [네트워크 기초 Part 4 퀴즈: 요청의 여정과 클라우드](./basics/06-network-fundamentals-part4-quiz.md)
 
 ### 컨테이너 레지스트리
 
@@ -325,7 +325,7 @@
 - [App Mesh와 VPC Lattice 아키텍처 대비 퀴즈](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
 - [레이턴시 영향 분석 퀴즈](./service-mesh/vpc-lattice/02-latency-quiz.md)
 - [IAM 인증 절차 상세 퀴즈](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
-- [기반 개념 — link-local과 SNI 퀴즈](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [기반 개념: link-local과 SNI 퀴즈](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
 - [워크로드 신원 모델 전환 퀴즈](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
 - [제약사항과 의사결정 포인트 퀴즈](./service-mesh/vpc-lattice/06-constraints-quiz.md)
 - [커널 데이터패스 퀴즈](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)

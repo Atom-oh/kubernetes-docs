@@ -109,4 +109,4 @@ Connect these deliverables in your own environment:
 
 Keep original evidence in an approved location and use consistent aliases in public notes. Do not publish raw packets, logs, accounts or topology inventories indiscriminately.
 
-**Next:** [Chapter 1 — Protocol and implementation projects](01-protocol-projects.md)
+**Next:** [Chapter 1: Protocol and implementation projects](01-protocol-projects.md)

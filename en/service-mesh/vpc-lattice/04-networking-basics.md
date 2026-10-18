@@ -1,4 +1,4 @@
-# Foundations — Link-Local and SNI
+# Foundations: Link-Local and SNI
 
 > **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
 > **Last Updated**: September 13, 2026
@@ -6,7 +6,7 @@
 ## What This Document Covers
 
 - What link-local addresses are, why Lattice chose them, and the two operational problems that follow
-- Why SNI must be sent in plaintext — the chicken-and-egg problem of certificate selection
+- Why SNI must be sent in plaintext: the chicken-and-egg problem of certificate selection
 - Distinguish service-listener visibility from TCP resource connectivity and its separate access model
 
 ## Link-Local Addresses
@@ -28,7 +28,7 @@ The pattern is already familiar to anyone who has used EC2.
 
 | Address | Purpose |
 |---|---|
-| `169.254.169.254` | **EC2 Instance Metadata Service (IMDS)** — the instance's own metadata and IAM Role credentials |
+| `169.254.169.254` | **EC2 Instance Metadata Service (IMDS)**: the instance's own metadata and IAM Role credentials |
 | `169.254.170.2` | ECS task credential endpoint |
 | `169.254.170.23` | **EKS Pod Identity Agent** (IPv4) |
 | `fd00:ec2::23` | EKS Pod Identity Agent (IPv6) |
@@ -38,18 +38,18 @@ AWS assigns these addresses special behavior, but they do not all share one scop
 
 For Lattice, describe the **documented VPC-specific addressing behavior**, not a general definition of link-local addressing or an inferred AWS internal implementation.
 
-### Lattice's ranges — IPv4 and IPv6 are different in kind
+### Lattice's ranges: IPv4 and IPv6 are different in kind
 
 A VPC Lattice service's DNS name resolves to two kinds of addresses.
 
 | Range | Kind | Nature |
 |---|---|---|
 | `169.254.171.0/24` | IPv4 | **link-local** (within `169.254.0.0/16`) |
-| `fd00:ec2:80::/64` | IPv6 | **Unique Local Address (ULA)** (within `fc00::/7`, RFC 4193) — **not** link-local |
+| `fd00:ec2:80::/64` | IPv6 | **Unique Local Address (ULA)** (within `fc00::/7`, RFC 4193), **not** link-local |
 
 > IPv6 ULA is **not link-local and not the deprecated site-local address class**. ULA addresses can be routed within private networks and have global address scope; intended routing reachability is distinct from address scope. For Lattice, follow AWS DNS and connectivity documentation rather than deriving the implementation from the address prefix.
 
-Despite the naming difference, the properties that matter operationally are shared by both ranges — **they are not globally unique, they are reused within each VPC, and they are intercepted by the infrastructure.**
+Despite the naming difference, the properties that matter operationally are shared by both ranges: **they are not globally unique, they are reused within each VPC, and they are intercepted by the infrastructure.**
 
 ### Why Lattice uses this approach
 
@@ -59,7 +59,7 @@ The mechanism is:
 
 1. The client resolves the Lattice service's DNS name
 2. DNS returns an address in `169.254.171.x` (or the `fd00:ec2:80::` range)
-3. The client connects to that address normally — **the application does not know Lattice exists**
+3. The client connects to that address normally; **the application does not know Lattice exists**
 4. Packets destined for that range are **directed to a Lattice ingress endpoint inside the VPC**
 5. Lattice evaluates listener rules, picks a Target, and forwards to the actual Pod IP
 
@@ -69,13 +69,13 @@ Traffic traverses the infrastructure without touching application code, Pod spec
 
 The design is elegant but has costs. Both problems must be in your migration plan.
 
-### Problem 1 — Conflict with Envoy iptables interception
+### Problem 1: Conflict with Envoy iptables interception
 
 Sidecar meshes (App Mesh, Istio) **have an init container install iptables rules** to steer Pod traffic into the proxy. Typically this takes the form "redirect all outbound traffic from this Pod to Envoy's port."
 
 A broad outbound REDIRECT can capture Lattice traffic. Whether this is a problem depends on the mesh policy, configured routes and signing design. Verify those before adding an explicit CIDR bypass.
 
-The fix is **registering an exception CIDR** — excluding the Lattice range from interception so that traffic bypasses Envoy.
+The fix is **registering an exception CIDR**: excluding the Lattice range from interception so that traffic bypasses Envoy.
 
 | Mesh | How to register the exception |
 |---|---|
@@ -84,9 +84,9 @@ The fix is **registering an exception CIDR** — excluding the Lattice range fro
 
 During coexistence, verify the mesh outbound policy, registered external destinations, signing path and both address families. Some Envoy configurations forward unknown destinations, while restricted configurations reject them. A CIDR exclusion is one deliberate bypass design, not proof that every coexisting mesh fails without it.
 
-The reverse use is also possible. The egress proxy pattern in [document 03](./03-auth-flow.md) uses iptables to select **only the Lattice range** and send it to the signing proxy — the same tool used for the opposite purpose.
+The reverse use is also possible. The egress proxy pattern in [document 03](./03-auth-flow.md) uses iptables to select **only the Lattice range** and send it to the signing proxy: the same tool used for the opposite purpose.
 
-### Problem 2 — Destination-IP-based observability and control become meaningless
+### Problem 2: Destination-IP-based observability and control become meaningless
 
 Link-local addresses are **not globally unique and do not identify a service.** That breaks the assumptions of existing operational tooling.
 
@@ -100,11 +100,11 @@ Link-local addresses are **not globally unique and do not identify a service.** 
 
 **The alternative is to move the control layer.**
 
-- **Express authorization with auth policies, not IPs** — principal, path, method, and header conditions ([document 03](./03-auth-flow.md))
-- **Observe with Lattice access logs, not flow logs** — those record which service was called
+- **Express authorization with auth policies, not IPs**: principal, path, method, and header conditions ([document 03](./03-auth-flow.md))
+- **Observe with Lattice access logs, not flow logs**: those record which service was called
 - **Open Security Groups with managed prefix lists, not CIDRs** (below)
 
-This is not a tooling swap but a **shift in the control model** — from "control by IP and port" to "control by identity and policy." A substantial part of the network team's existing operational assets simply does not work in this range. In financial-sector environments this can escalate into a question of organizational responsibility boundaries, so it should be agreed with the network team early.
+This is not a tooling swap but a **shift in the control model**: from "control by IP and port" to "control by identity and policy." A substantial part of the network team's existing operational assets simply does not work in this range. In financial-sector environments this can escalate into a question of organizational responsibility boundaries, so it should be agreed with the network team early.
 
 ### Open Security Groups with prefix lists
 
@@ -125,7 +125,7 @@ aws ec2 describe-managed-prefix-lists --region "$AWS_REGION" \
 
 In reviewed IaC, allow the applicable Lattice prefix list **only on required target/health-check ports and protocols**, on the actual target SG (node or Pod SG as configured). Avoid all-protocol ingress. Separately verify client/service-network association SGs; no SG is changed by the lookup above.
 
-## SNI — Server Name Indication
+## SNI (Server Name Indication)
 
 ### Why the domain must be sent in plaintext
 
@@ -141,13 +141,13 @@ SNI is a TLS extension that carries **the domain name of the server you want to 
 
 Ordinary TLS sends SNI in ClientHello so the server can select a certificate before reading HTTP. This is not the only conceivable design: ECH encrypts an inner ClientHello using a key obtained in advance. Lattice TLS passthrough currently requires visible SNI and does not support ECH/ESNI.
 
-In short, **SNI's plaintext exposure is not a design mistake but a deliberate compromise to break the circularity.** And thanks to that compromise, **middleboxes that do not terminate TLS can still learn the destination domain** — the basis of TLS Passthrough routing.
+In short, **SNI's plaintext exposure is not a design mistake but a deliberate compromise to break the circularity.** And thanks to that compromise, **middleboxes that do not terminate TLS can still learn the destination domain**; this is the basis of TLS Passthrough routing.
 
 ### What Lattice does with SNI
 
 On a TLS Passthrough listener, Lattice does not terminate TLS. So **on what basis does it pick a Target?** SNI. It reads the plaintext SNI field of the `ClientHello` and routes on that alone.
 
-## HTTPS Listener vs TLS Passthrough — What Lattice Can See
+## HTTPS Listener vs TLS Passthrough: What Lattice Can See
 
 | Information | HTTPS listener (TLS Terminate) | TLS Passthrough |
 |---|---|---|
@@ -198,7 +198,7 @@ For HTTP/2 and gRPC **service target protocol versions, AWS requires an HTTPS li
 
 See the current [resource configuration](https://docs.aws.amazon.com/vpc-lattice/latest/ug/resource-configuration.html) and [TLS listener](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html) references. Controller support for those AWS APIs must be checked separately from service availability.
 
-## Security Note — Implications of Plaintext SNI
+## Security Note: Implications of Plaintext SNI
 
 ### What is exposed
 
@@ -209,9 +209,9 @@ Since this is intra-VPC communication, external observers are not the concern, b
 - **Internal observers can see service call relationships.** Anyone able to observe traffic within the VPC can reconstruct the call graph from SNI.
 - **Flow log destination IPs are meaningless but SNI is meaningful.** This also means the "destination-IP observability breaks" problem above can be partly compensated with SNI-based observability.
 
-### ECH — the answer to plaintext SNI exposure
+### ECH: the answer to plaintext SNI exposure
 
-**Encrypted Client Hello (ECH)** is a standard that encrypts the `ClientHello` itself to prevent SNI exposure. It distributes the server's public key in advance via DNS and encrypts the sensitive parts of the `ClientHello` with it — **using DNS to sidestep** the chicken-and-egg problem described above.
+**Encrypted Client Hello (ECH)** is a standard that encrypts the `ClientHello` itself to prevent SNI exposure. It distributes the server's public key in advance via DNS and encrypts the sensitive parts of the `ClientHello` with it, **using DNS to sidestep** the chicken-and-egg problem described above.
 
 ::: note TLS passthrough requirement
 AWS explicitly states that TLS listeners do not support ECH or ESNI, require a custom domain and use SNI to select the service. Check idle/lifetime limits and target TCP health checks before migrating long-lived protocols.
@@ -219,7 +219,7 @@ AWS explicitly states that TLS listeners do not support ECH or ESNI, require a c
 
 ### Impact on environments with SNI-based control appliances
 
-Many organizations, including in the financial sector, operate **appliances that control traffic based on SNI** — allowed-domain whitelists, SNI-based logging, per-domain policy enforcement. Adopting Lattice affects such environments in two directions.
+Many organizations, including in the financial sector, operate **appliances that control traffic based on SNI** (allowed-domain whitelists, SNI-based logging, per-domain policy enforcement). Adopting Lattice affects such environments in two directions.
 
 | Configuration | Impact from the SNI-appliance perspective |
 |---|---|
@@ -234,7 +234,7 @@ Many organizations, including in the financial sector, operate **appliances that
 - A link-local address is a **marker meaning "the infrastructure handles this packet."** It is the same family as IMDS and the Pod Identity Agent, and it is how Lattice intervenes in traffic without a sidecar.
 - IPv4 is `169.254.171.0/24` (link-local), but **IPv6 is `fd00:ec2:80::/64`, a ULA rather than link-local.** Lattice traffic must route within the VPC, and link scope is insufficient.
 - Validate coexistence routing and service-aware attribution; use reviewed prefix-list IaC and correlate network/application logs.
-- SNI is plaintext because of the **chicken-and-egg problem of certificate selection** — a deliberate compromise that also makes TLS Passthrough routing possible.
+- SNI is plaintext because of the **chicken-and-egg problem of certificate selection**, a deliberate compromise that also makes TLS Passthrough routing possible.
 - Without TLS termination Lattice cannot authenticate encrypted HTTP SigV4 headers; anonymous network-context policies and endpoint authentication remain separate controls.
 - Raw TCP is not a service-listener protocol; TCP resource configurations are a separate supported connectivity model.
 
@@ -244,15 +244,15 @@ Next: [Workload Identity Migration](./05-spiffe-to-iam.md) examines how far IAM 
 
 - [Managing DNS resolution with Amazon VPC Lattice and VPC resources](https://aws.amazon.com/blogs/networking-and-content-delivery/managing-dns-resolution-with-amazon-vpc-lattice-and-vpc-resources/)
 - [Amazon VPC Lattice DNS migration strategies and best practices](https://aws.amazon.com/blogs/networking-and-content-delivery/amazon-vpc-lattice-dns-migration-strategies-and-best-practices/)
-- [AWS Gateway API Controller — Deploy the controller (prefix list setup)](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
-- [AWS Gateway API Controller — TLS Passthrough](https://www.gateway-api-controller.eks.aws.dev/latest/guides/tls-passthrough/)
+- [AWS Gateway API Controller: Deploy the controller (prefix list setup)](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
+- [AWS Gateway API Controller: TLS Passthrough](https://www.gateway-api-controller.eks.aws.dev/latest/guides/tls-passthrough/)
 - [Enabling end-to-end encryption with Amazon VPC Lattice TLS passthrough](https://aws.amazon.com/blogs/networking-and-content-delivery/enabling-end-to-end-encryption-with-amazon-vpc-lattice-tls-passthrough/)
 - [HTTPS listeners for VPC Lattice services](https://docs.aws.amazon.com/vpc-lattice/latest/ug/https-listeners.html)
-- [RFC 3927 — IPv4 Link-Local Addresses](https://datatracker.ietf.org/doc/html/rfc3927) / [RFC 4193 — Unique Local IPv6 Unicast Addresses](https://datatracker.ietf.org/doc/html/rfc4193)
-- [RFC 6066 — TLS Extensions: Server Name Indication](https://datatracker.ietf.org/doc/html/rfc6066)
+- [RFC 3927: IPv4 Link-Local Addresses](https://datatracker.ietf.org/doc/html/rfc3927) / [RFC 4193: Unique Local IPv6 Unicast Addresses](https://datatracker.ietf.org/doc/html/rfc4193)
+- [RFC 6066: TLS Extensions: Server Name Indication](https://datatracker.ietf.org/doc/html/rfc6066)
 - [Network Fundamentals Part 2: Transport Layer and TLS](../../basics/06-network-fundamentals-part2.md)
 
 
-- [Target groups and protocol versions](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-groups.html) — HTTPS target certificate behavior and HTTP/2/gRPC listener requirements
+- [Target groups and protocol versions](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-groups.html): HTTPS target certificate behavior and HTTP/2/gRPC listener requirements
 
 TLS listener operating limits also matter: only a default forward rule is supported, Lambda targets are excluded, connection duration is limited to 10 minutes, and service idle timeout is configurable from 60–600 seconds. TCP target-group health checks are **disabled by default**; enabling them requires a supported probe protocol/version. Verify the current API/Region settings before adopting long-lived connections.

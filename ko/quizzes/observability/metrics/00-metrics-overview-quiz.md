@@ -132,10 +132,10 @@ Object storage는 Mimir 구조의 일부일 뿐 무제한 용량 보장이 아�
 
 9. Kubernetes 메트릭 역할의 올바른 연결은 무엇인가요?
 
-   - A) node-exporter — Kubernetes API 객체 상태
-   - B) kube-state-metrics — 실제 컨테이너 CPU 사용량
-   - C) cAdvisor/kubelet 메트릭 — 컨테이너 자원 측정
-   - D) metrics-server — 장기 Prometheus TSDB
+   - A) node-exporter: Kubernetes API 객체 상태
+   - B) kube-state-metrics: 실제 컨테이너 CPU 사용량
+   - C) cAdvisor/kubelet 메트릭: 컨테이너 자원 측정
+   - D) metrics-server: 장기 Prometheus TSDB
 
 <details>
 <summary>정답 보기</summary>

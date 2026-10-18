@@ -1,4 +1,4 @@
-# Part 6: KServe — Model Serving on Kubernetes
+# Part 6: KServe (Model Serving on Kubernetes)
 
 > **Review baseline**: KServe 0.18.0 / Models Web Application 0.18.0 / Community Distribution 26.03.1
 > **Last Updated**: October 12, 2026

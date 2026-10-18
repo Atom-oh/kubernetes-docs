@@ -8,12 +8,12 @@ The moment you run stateful workloads on Kubernetes, storage stops being "someth
 
 | Document | What it covers |
 |----------|----------------|
-| [EBS gp2 vs gp3 Measured Benchmark](./01-ebs-gp2-gp3-benchmark.md) | Why two identical 100GiB volumes differ by 10x in performance — fio-measured IOPS/latency/throughput and the gp2 burst-credit cliff |
+| [EBS gp2 vs gp3 Measured Benchmark](./01-ebs-gp2-gp3-benchmark.md) | Why two identical 100GiB volumes differ by 10x in performance: fio-measured IOPS/latency/throughput and the gp2 burst-credit cliff |
 
 The Kubernetes storage fundamentals and hands-on EKS configuration are covered in depth elsewhere in this book. Read this section together with:
 
-- [Kubernetes Storage](../core/04-storage.md) — PV/PVC, StorageClass, dynamic provisioning, access modes
-- [EKS Storage Part 1: EBS, EFS](../eks/04-eks-storage-part1.md) — CSI driver installation and basic usage
+- [Kubernetes Storage](../core/04-storage.md): PV/PVC, StorageClass, dynamic provisioning, access modes
+- [EKS Storage Part 1: EBS, EFS](../eks/04-eks-storage-part1.md): CSI driver installation and basic usage
 - [EKS Storage Part 2: FSx for Lustre, S3, snapshots, performance](../eks/04-eks-storage-part2.md)
 - [EKS Storage Part 3: monitoring, troubleshooting, cost](../eks/04-eks-storage-part3.md)
 
@@ -29,7 +29,7 @@ application write()
         → EBS service and volume (per-volume IOPS/throughput limits)
 ```
 
-The volume's own limits and the **instance-level EBS bandwidth/IOPS limits** are separate budgets. An m5.xlarge has a baseline of roughly 6,000 IOPS — driving three gp3 volumes at 3,000 IOPS simultaneously requests 9,000 IOPS, above that sustained baseline. Check instance burst capacity and all other volume traffic as well.
+The volume's own limits and the **instance-level EBS bandwidth/IOPS limits** are separate budgets. An m5.xlarge has a baseline of roughly 6,000 IOPS, so driving three gp3 volumes at 3,000 IOPS simultaneously requests 9,000 IOPS, above that sustained baseline. Check instance burst capacity and all other volume traffic as well.
 
 ## Choosing AWS storage
 
@@ -47,9 +47,9 @@ RWO permits multiple Pods on one node; it is not a single-Pod guarantee. Excepti
 
 Storage is where the gap between the datasheet and lived experience is widest. The classic traps:
 
-1. **Small gp2 burst credits** — volumes with a baseline below 3,000 IOPS can burst using available credits. Duration depends on initial balance, capacity and load. A full 100 GiB volume at 3,000 IOPS calculates to about 33 minutes; a short test can miss post-depletion performance.
-2. **Volume limits vs instance limits** — see the stack diagram above.
-3. **Conclusions change with iodepth** — a queue-depth-1 latency test and a queue-depth-32 IOPS test describe entirely different properties of the same volume.
+1. **Small gp2 burst credits**: volumes with a baseline below 3,000 IOPS can burst using available credits. Duration depends on initial balance, capacity and load. A full 100 GiB volume at 3,000 IOPS calculates to about 33 minutes; a short test can miss post-depletion performance.
+2. **Volume limits vs instance limits**: see the stack diagram above.
+3. **Conclusions change with iodepth**: a queue-depth-1 latency test and a queue-depth-32 IOPS test describe entirely different properties of the same volume.
 
 [The EBS gp2 vs gp3 measured benchmark](./01-ebs-gp2-gp3-benchmark.md) demonstrates each of these traps with fio.
 

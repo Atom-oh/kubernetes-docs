@@ -95,6 +95,6 @@ Run the EKS comparison as a separate smoke/full sequence after freezing the Sage
 - Detailed validation record: `docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md`
 - Runnable package: `examples/ai-ml/qwen-pii-finetuning/`
 
-Previous: [Part 4 — Unified Studio governance](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
+Previous: [Part 4: Unified Studio governance](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
 
 Start over: [SageMaker Qwen PII guidebook](README.md)

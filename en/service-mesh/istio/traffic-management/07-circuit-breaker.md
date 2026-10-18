@@ -602,7 +602,7 @@ istioctl proxy-config clusters <pod-name> -o json | \
 
 #### Circuit Breaker's Role and Limitations
 
-![Circuit Breaker node linked to what it does — isolate failing services, prevent cascading failures, protect resources, attempt auto recovery — and, via dashed links, what it does not: duplicate prevention, data consistency, transactions, idempotency.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
+![Circuit Breaker node linked to what it does (isolate failing services, prevent cascading failures, protect resources, attempt auto recovery) and, via dashed links, what it does not: duplicate prevention, data consistency, transactions, idempotency.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.html)
 

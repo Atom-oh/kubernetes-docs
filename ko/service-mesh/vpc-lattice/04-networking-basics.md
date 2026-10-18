@@ -1,12 +1,12 @@
-# 기반 개념 — link-local과 SNI
+# 기반 개념: link-local과 SNI
 
 > **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
 > **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
-- link-local 주소가 무엇이고, Lattice가 왜 그것을 골랐는가 — 그리고 그 선택에서 파생되는 두 가지 운영 문제
-- SNI가 왜 평문으로 전송되어야 하는가 — 인증서 선택의 닭-달걀 문제
+- link-local 주소가 무엇이고, Lattice가 왜 그것을 골랐는가, 그리고 그 선택에서 파생되는 두 가지 운영 문제
+- SNI가 왜 평문으로 전송되어야 하는가: 인증서 선택의 닭-달걀 문제
 - 서비스 listener의 가시성과 TCP resource connectivity의 별도 접근 모델을 구분
 
 ## link-local 주소
@@ -28,7 +28,7 @@ link-local 주소는 **하나의 링크(같은 브로드캐스트 도메인) 안
 
 | 주소 | 용도 |
 |---|---|
-| `169.254.169.254` | **EC2 Instance Metadata Service (IMDS)** — 인스턴스 자신의 메타데이터와 IAM Role credential |
+| `169.254.169.254` | **EC2 Instance Metadata Service (IMDS)**: 인스턴스 자신의 메타데이터와 IAM Role credential |
 | `169.254.170.2` | ECS 태스크 credential 엔드포인트 |
 | `169.254.170.23` | **EKS Pod Identity Agent** (IPv4) |
 | `fd00:ec2::23` | EKS Pod Identity Agent (IPv6) |
@@ -38,28 +38,28 @@ AWS는 이 주소에 특별한 동작을 부여하지만 범위와 구현이 모
 
 Lattice는 **문서화된 VPC별 주소 동작**으로 설명하고 이를 link-local의 일반 정의나 추정한 AWS 내부 구현과 동일시하지 않습니다.
 
-### Lattice의 주소 대역 — IPv4와 IPv6는 성격이 다릅니다
+### Lattice의 주소 대역: IPv4와 IPv6는 성격이 다릅니다
 
 VPC Lattice 서비스의 DNS 이름은 두 종류의 주소로 해석됩니다.
 
 | 대역 | 종류 | 성격 |
 |---|---|---|
 | `169.254.171.0/24` | IPv4 | **link-local** (`169.254.0.0/16` 안) |
-| `fd00:ec2:80::/64` | IPv6 | **Unique Local Address (ULA)** (`fc00::/7` 안, RFC 4193) — link-local이 **아님** |
+| `fd00:ec2:80::/64` | IPv6 | **Unique Local Address (ULA)** (`fc00::/7` 안, RFC 4193), link-local이 **아님** |
 
 > IPv6 ULA는 **link-local도, 폐기된 site-local 주소 클래스도 아닙니다**. ULA는 사설망에서 라우팅할 수 있고 주소 scope는 global이며 의도한 라우팅 도달성과 주소 scope는 구분해야 합니다. Lattice 구현은 주소 prefix만으로 추론하지 말고 AWS DNS·연결 문서를 따릅니다.
 
-이름은 다르지만 실무적으로 중요한 성질은 두 대역이 공유합니다 — **전역적으로 고유하지 않고, 각 VPC 안에서 재사용되며, 인프라가 가로채는 대상**이라는 점입니다.
+이름은 다르지만 실무적으로 중요한 성질은 두 대역이 공유합니다. **전역적으로 고유하지 않고, 각 VPC 안에서 재사용되며, 인프라가 가로채는 대상**이라는 점입니다.
 
 ### 왜 Lattice가 이 방식을 쓰는가
 
-[01번 문서](./01-appmesh-vs-lattice.md)에서 본 대로 Lattice는 **sidecar 없이** 트래픽을 처리해야 합니다. 사이드카가 없다면 누가 트래픽을 가로챌 것인가 — 이 질문에 대한 답이 link-local 주소입니다.
+[01번 문서](./01-appmesh-vs-lattice.md)에서 본 대로 Lattice는 **sidecar 없이** 트래픽을 처리해야 합니다. 사이드카가 없다면 누가 트래픽을 가로챌 것인가? 이 질문에 대한 답이 link-local 주소입니다.
 
 구조는 이렇게 됩니다.
 
 1. 클라이언트가 Lattice 서비스의 DNS 이름을 조회합니다
 2. DNS가 `169.254.171.x`(또는 `fd00:ec2:80::` 대역) 주소를 응답합니다
-3. 클라이언트가 그 주소로 평범하게 연결합니다 — **애플리케이션은 Lattice의 존재를 모릅니다**
+3. 클라이언트가 그 주소로 평범하게 연결합니다. **애플리케이션은 Lattice의 존재를 모릅니다**
 4. 그 대역으로 향하는 패킷은 **VPC 안의 Lattice 인그레스 엔드포인트로 유도**됩니다
 5. Lattice가 listener rule을 평가해 Target을 고르고, 실제 Pod IP로 전달합니다
 
@@ -69,7 +69,7 @@ VPC Lattice 서비스의 DNS 이름은 두 종류의 주소로 해석됩니다.
 
 이 설계는 우아하지만 대가가 있습니다. 두 문제 모두 전환 계획에 반드시 들어가야 합니다.
 
-### 문제 1 — Envoy iptables 인터셉트와의 충돌
+### 문제 1: Envoy iptables 인터셉트와의 충돌
 
 sidecar 메시(App Mesh, Istio)는 Pod의 트래픽을 프록시로 유도하기 위해 **init container가 iptables 규칙을 심습니다.** 전형적으로 "이 Pod에서 나가는 모든 outbound 트래픽을 Envoy의 포트로 리다이렉트"하는 형태입니다.
 
@@ -86,7 +86,7 @@ sidecar 메시(App Mesh, Istio)는 Pod의 트래픽을 프록시로 유도하기
 
 역방향 활용도 가능합니다. [03번 문서](./03-auth-flow.md)의 egress proxy 패턴은 iptables로 **Lattice 대역만 골라** 서명 프록시로 보냅니다. 같은 도구를 반대 목적으로 쓰는 것입니다.
 
-### 문제 2 — 목적지 IP 기반 관측과 통제가 무의미해진다
+### 문제 2: 목적지 IP 기반 관측과 통제가 무의미해진다
 
 link-local 주소는 **전역적으로 고유하지 않고, 서비스를 식별하지도 않습니다.** 이것이 기존 운영 도구들의 전제를 깨뜨립니다.
 
@@ -125,7 +125,7 @@ aws ec2 describe-managed-prefix-lists --region "$AWS_REGION" \
 
 검토한 IaC에서 실제 target SG(설정에 따라 node/Pod SG)에 해당 Lattice prefix list의 **필요한 target·health-check 포트와 프로토콜만** 허용합니다. 전체 프로토콜 ingress는 피합니다. Client/service-network association SG도 별도로 확인하며 위 조회 명령은 SG를 변경하지 않습니다.
 
-## SNI — Server Name Indication
+## SNI (Server Name Indication)
 
 ### 왜 도메인을 평문으로 실어보내야 하는가
 
@@ -141,13 +141,13 @@ SNI는 TLS `ClientHello`에 **접속하려는 서버의 도메인 이름을 평�
 
 일반 TLS는 HTTP를 읽기 전에 인증서를 선택하도록 ClientHello에 SNI를 보냅니다. 이것만이 가능한 설계는 아니며 ECH는 미리 얻은 키로 inner ClientHello를 암호화합니다. 현재 Lattice TLS passthrough는 보이는 SNI를 요구하고 ECH/ESNI를 지원하지 않습니다.
 
-정리하면 **SNI의 평문 노출은 설계 실수가 아니라 순환을 끊기 위한 의도적 타협**입니다. 그리고 이 타협 덕분에 **TLS를 종료하지 않는 중간 장비도 목적지 도메인만은 알 수 있게** 되었습니다 — 이것이 TLS Passthrough 라우팅의 기반입니다.
+정리하면 **SNI의 평문 노출은 설계 실수가 아니라 순환을 끊기 위한 의도적 타협**입니다. 그리고 이 타협 덕분에 **TLS를 종료하지 않는 중간 장비도 목적지 도메인만은 알 수 있게** 되었습니다. 이것이 TLS Passthrough 라우팅의 기반입니다.
 
 ### Lattice가 SNI로 하는 일
 
 TLS Passthrough listener에서 Lattice는 TLS를 종료하지 않습니다. 그러면 **무엇을 근거로 Target을 고를 것인가?** 답이 SNI입니다. `ClientHello`의 평문 SNI 필드를 읽어 그것만으로 라우팅합니다.
 
-## HTTPS listener vs TLS Passthrough — Lattice가 볼 수 있는 정보
+## HTTPS listener vs TLS Passthrough: Lattice가 볼 수 있는 정보
 
 | 정보 | HTTPS listener (TLS Terminate) | TLS Passthrough |
 |---|---|---|
@@ -198,7 +198,7 @@ HTTP/2·gRPC **서비스 target protocol version에는 AWS가 HTTPS listener를 
 
 현재 [resource configuration](https://docs.aws.amazon.com/vpc-lattice/latest/ug/resource-configuration.html)과 [TLS listener](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html) 문서를 확인합니다. AWS API의 controller 지원과 서비스 가용성은 별도 확인 사항입니다.
 
-## 보안 참고 — SNI 평문 노출의 함의
+## 보안 참고: SNI 평문 노출의 함의
 
 ### 무엇이 노출되는가
 
@@ -209,7 +209,7 @@ VPC 내부 통신이므로 외부 관찰자를 걱정할 상황은 아니지만,
 - **내부 관찰자에게 서비스 호출 관계가 보입니다.** VPC 내에서 트래픽을 관측할 수 있는 주체는 SNI로 호출 그래프를 재구성할 수 있습니다.
 - **flow log의 목적지 IP는 무의미하지만 SNI는 유의미합니다.** 앞에서 본 "목적지 IP 기반 관측이 깨진다"는 문제를 SNI 기반 관측으로 일부 보완할 수 있다는 뜻이기도 합니다.
 
-### ECH — SNI 평문 노출에 대한 해법
+### ECH: SNI 평문 노출에 대한 해법
 
 **Encrypted Client Hello (ECH)**는 `ClientHello` 자체를 암호화해 SNI 노출을 막는 표준입니다. 서버의 공개키를 DNS로 미리 배포해 그 키로 `ClientHello`의 민감한 부분을 암호화하는 방식으로, 앞의 닭-달걀 문제를 **DNS를 이용해 우회**합니다.
 
@@ -219,7 +219,7 @@ AWS는 TLS listener의 ECH·ESNI 미지원, custom domain 필요, SNI 기반 서
 
 ### SNI 기반 통제 장비를 쓰는 환경에 미치는 영향
 
-금융권을 포함해 많은 조직이 **SNI를 보고 트래픽을 통제하는 장비**를 운영합니다 — 허용 도메인 화이트리스트, SNI 기반 로깅, 도메인별 정책 적용 등. 이런 환경에서 Lattice 도입은 두 방향으로 영향을 줍니다.
+금융권을 포함해 많은 조직이 **SNI를 보고 트래픽을 통제하는 장비**를 운영합니다(허용 도메인 화이트리스트, SNI 기반 로깅, 도메인별 정책 적용 등). 이런 환경에서 Lattice 도입은 두 방향으로 영향을 줍니다.
 
 | 구성 | SNI 통제 장비 관점의 영향 |
 |---|---|
@@ -244,15 +244,15 @@ AWS는 TLS listener의 ECH·ESNI 미지원, custom domain 필요, SNI 기반 서
 
 - [Managing DNS resolution with Amazon VPC Lattice and VPC resources](https://aws.amazon.com/blogs/networking-and-content-delivery/managing-dns-resolution-with-amazon-vpc-lattice-and-vpc-resources/)
 - [Amazon VPC Lattice DNS migration strategies and best practices](https://aws.amazon.com/blogs/networking-and-content-delivery/amazon-vpc-lattice-dns-migration-strategies-and-best-practices/)
-- [AWS Gateway API Controller — Deploy the controller (prefix list 설정)](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
-- [AWS Gateway API Controller — TLS Passthrough](https://www.gateway-api-controller.eks.aws.dev/latest/guides/tls-passthrough/)
+- [AWS Gateway API Controller: Deploy the controller (prefix list 설정)](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
+- [AWS Gateway API Controller: TLS Passthrough](https://www.gateway-api-controller.eks.aws.dev/latest/guides/tls-passthrough/)
 - [Enabling end-to-end encryption with Amazon VPC Lattice TLS passthrough](https://aws.amazon.com/blogs/networking-and-content-delivery/enabling-end-to-end-encryption-with-amazon-vpc-lattice-tls-passthrough/)
 - [HTTPS listeners for VPC Lattice services](https://docs.aws.amazon.com/vpc-lattice/latest/ug/https-listeners.html)
-- [RFC 3927 — IPv4 Link-Local Addresses](https://datatracker.ietf.org/doc/html/rfc3927) / [RFC 4193 — Unique Local IPv6 Unicast Addresses](https://datatracker.ietf.org/doc/html/rfc4193)
-- [RFC 6066 — TLS Extensions: Server Name Indication](https://datatracker.ietf.org/doc/html/rfc6066)
+- [RFC 3927: IPv4 Link-Local Addresses](https://datatracker.ietf.org/doc/html/rfc3927) / [RFC 4193: Unique Local IPv6 Unicast Addresses](https://datatracker.ietf.org/doc/html/rfc4193)
+- [RFC 6066: TLS Extensions: Server Name Indication](https://datatracker.ietf.org/doc/html/rfc6066)
 - [네트워크 기초 Part 2: 전송 계층과 TLS](../../basics/06-network-fundamentals-part2.md)
 
 
-- [Target group과 protocol version](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-groups.html) — HTTPS target 인증서 동작과 HTTP/2/gRPC listener 요구
+- [Target group과 protocol version](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-groups.html): HTTPS target 인증서 동작과 HTTP/2/gRPC listener 요구
 
 TLS listener 운영 제한도 확인합니다. Default forward rule만 지원하고 Lambda target은 제외되며 연결 수명은 10분, service idle timeout은 60–600초로 설정할 수 있습니다. TCP target-group health check는 **기본 비활성화**이고 활성화 시 지원되는 probe protocol/version이 필요합니다. 장시간 연결 도입 전 현재 API/Region 설정을 확인합니다.

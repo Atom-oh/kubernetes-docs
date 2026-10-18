@@ -28,7 +28,7 @@ Istio AuthorizationPolicy provides fine-grained access control for services. The
 - **Operation**: HTTP method, path, port
 - **Conditions**: Custom conditions (headers, JWT claims, etc.)
 
-![A flowchart showing an Istio AuthorizationPolicy evaluating a request through three sequential checks — Service Account, Namespace, and HTTP Method — where matching all three allows the request and any mismatch denies it immediately.](../../../.gitbook/assets/en-service-mesh-istio-security-03-authorization-0.png)
+![A flowchart showing an Istio AuthorizationPolicy evaluating a request through three sequential checks (Service Account, Namespace, and HTTP Method), where matching all three allows the request and any mismatch denies it immediately.](../../../.gitbook/assets/en-service-mesh-istio-security-03-authorization-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-03-authorization-0.html)
 

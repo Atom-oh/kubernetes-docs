@@ -7,7 +7,7 @@
 
 - The path one `send()` travels inside the kernel until it reaches the wire, and what each point does
 - How socket file descriptors connect to the Virtual File System (VFS), and how TCP buffers, windows, and queue observations differ
-- Where you can attach hooks — and why the position of XDP, TC, and netfilter creates performance differences
+- Where you can attach hooks, and why the position of XDP, TC, and netfilter creates performance differences
 - Why Pod-to-Pod traffic actually takes different paths on the same node, the same AZ, and across AZs
 
 ## Why You Need to Know the Path
@@ -24,7 +24,7 @@
 
 Knowing the path lets you read this table backwards to decide where to look.
 
-## Sockets and VFS — from FD to Protocol {#socket-vfs-bridge}
+## Sockets and VFS: from FD to Protocol {#socket-vfs-bridge}
 
 `socket()` returns a file descriptor (FD), an index in the process's descriptor table. For a socket, that entry references a **`struct file`**, whose socket file operations and `private_data` connect it to a **`struct socket`**. An Internet TCP socket in turn has a **`struct sock`** carrying protocol state. Sharing the file abstraction lets sockets participate in `close()`, descriptor duplication, and readiness polling; **a socket is not a disk file**, and ordinary TCP data does not go through the disk page cache or block I/O.
 
@@ -46,7 +46,7 @@ Thus `read()`/`write()` use VFS dispatch to socket file operations, while socket
 
 TCP provides a byte stream: one `write()` need not correspond to one packet or one peer `read()`. A successful `send()` reports bytes accepted locally, not proof that the peer application has consumed them ([socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html), [tcp(7)](https://man7.org/linux/man-pages/man7/tcp.7.html)).
 
-## Transmit Path — from send() to the Wire
+## Transmit Path: from send() to the Wire
 
 This is a simplified **locally generated TCP/IP path toward a physical NIC**, not a mandatory itinerary for every packet. Loopback and virtual devices, forwarding, XDP/AF_XDP or other bypass paths, netfilter flowtable offload, and NIC offloads can skip, move, or combine work. Hooks only do work when configured; NAT can trigger another route lookup.
 
@@ -69,7 +69,7 @@ graph TB
 
 What actually happens at each stage is the basis for diagnosis.
 
-### ① Syscall entry — the source of fixed overhead
+### ① Syscall entry: the source of fixed overhead
 
 An ordinary `send()` call enters the kernel through a syscall. Entry/exit has a per-call overhead component; total cost also depends on copying, protocol work, scheduling, and whether the call blocks.
 
@@ -77,7 +77,7 @@ That component can matter for many small writes. Requesting 64 bytes ten thousan
 
 Application buffering or `sendmsg()` scatter/gather can combine buffers into one call; `sendmmsg()` batches messages, while `io_uring` can batch submissions. Their semantics differ, and batching does not define TCP packet boundaries.
 
-### ② Socket layer — sk_buff and buffers
+### ② Socket layer: sk_buff and buffers
 
 Despite its name, **`sk_buff` is not a socket's entire send or receive buffer**. It describes packet data and metadata, including header offsets and references to linear data or page fragments. An skb can be cloned, split, or coalesced; GSO/GRO mean it need not correspond to one wire packet. See the kernel's [`sk_buff` documentation](https://docs.kernel.org/networking/skbuff.html).
 
@@ -105,7 +105,7 @@ The TCP sysctls describe policy, not current occupancy of every socket:
 
 `SO_RCVBUF` sets `SOCK_RCVBUF_LOCK`, disabling receive autotuning for that socket; `SO_SNDBUF` sets `SOCK_SNDBUF_LOCK`, preventing normal send-buffer expansion. These are configuration flags, not mutexes. Raising a TCP sysctl does not undo an application's explicit setting. Linux normally doubles the accepted `SO_*BUF` request for bookkeeping and returns the doubled value through `getsockopt()` (subject to minimums/caps); that value is neither currently allocated memory nor guaranteed payload capacity. Do not treat `tcp_rmem[2]` as the maximum permitted explicit `SO_RCVBUF` request, or double every `tcp_*mem` value. See [IP sysctls](https://docs.kernel.org/networking/ip-sysctl.html), [socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html), and Linux v6.12 [`net/core/sock.c`](https://github.com/torvalds/linux/blob/v6.12/net/core/sock.c) / [`tcp_input.c`](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_input.c).
 
-### BDP — Reasoning with Units {#tcp-bdp-reasoning}
+### BDP: Reasoning with Units {#tcp-bdp-reasoning}
 
 For a hypothetical **1 Gbit/s** path with **40 ms RTT**, the bandwidth-delay product is:
 
@@ -118,7 +118,7 @@ This estimates payload in flight to sustain that rate under an idealized steady-
 
 **BDP is a diagnostic scale, not a sysctl recipe.** An application producing data slowly, CPU pressure, loss, pacing, changing RTT, or a path limit can dominate; extra queueing may increase latency and memory use. Compare observations in the [TCP buffer lab](../networking/07-linux-network-diagnostics.md#tcp-buffer-lab) before drawing a conclusion.
 
-### ③ Transport (TCP) — where congestion control lives
+### ③ Transport (TCP): where congestion control lives
 
 TCP coordinates reliability, flow control, and congestion control.
 
@@ -135,17 +135,17 @@ The congestion control algorithm lives here. Two examples differ in how they con
 
 Neither model establishes which algorithm will be faster for a workload, and BBR does not make loss or recovery irrelevant. Inspect the active algorithm and RTT/cwnd with `ss -ti`; any comparison must identify the kernel version, load, and path. Versioned implementations: [`tcp_cubic.c`](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_cubic.c), [`tcp_bbr.c`](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_bbr.c).
 
-### ④ Network layer (IP) — route lookup
+### ④ Network layer (IP): route lookup
 
 Finds the path to the destination in the routing table. **This lookup is per net namespace**, so the routing table you see inside a Pod is not the node's ([Container Kernel Features](./01-container-primitives.md)).
 
-### ⑤ netfilter — where rules are evaluated
+### ⑤ netfilter: where rules are evaluated
 
 Locally generated traffic can encounter `OUTPUT` and `POSTROUTING`; traffic entering from a Pod's veth can instead take `PREROUTING` → `FORWARD` → `POSTROUTING` in the node namespace. Service DNAT and egress MASQUERADE depend on the configured dataplane and hooks, not one universal path.
 
 Long, linearly evaluated iptables chains can add lookup work as Services grow. The actual cost depends on the rules, lookup structure, and dataplane mode; a rule count alone is not a latency measurement. A configured netfilter flowtable fast path can bypass later forwarding hooks ([netfilter flowtable](https://docs.kernel.org/networking/nf_flowtable.html)).
 
-### ⑥ qdisc — where drops actually happen
+### ⑥ qdisc: where drops actually happen
 
 A qdisc (queueing discipline) **queues packets before handing them to the NIC and decides order and rate.**
 
@@ -168,7 +168,7 @@ qdiscs differ in character.
 
 **Bufferbloat** is excessive queueing delay: a larger queue can absorb a burst but also hold data longer. `fq_codel` monitors sojourn time and signals congestion through drops or ECN marking when applicable. A larger queue is not automatically an improvement ([tc-fq_codel(8)](https://man7.org/linux/man-pages/man8/tc-fq_codel.8.html)).
 
-### ⑦ Driver and NIC — offloads
+### ⑦ Driver and NIC: offloads
 
 On a typical physical NIC path, the driver maps packet data for DMA, prepares descriptors referring to that memory in a transmit ring, and notifies the NIC. The NIC does not consume a C `sk_buff` structure directly; the driver retains bookkeeping until completion.
 
@@ -183,7 +183,7 @@ Offloads change where work occurs and what host observations represent.
 
 TSO/GRO can reduce per-segment work. **Read-only observation**: `ethtool -k <iface>` reports configured features; it does not prove that every packet uses them. Host captures may show large GSO/GRO units or an unfinished transmit checksum, so a large captured packet or an apparent bad checksum alone does not prove a wire fault ([segmentation offloads](https://docs.kernel.org/networking/segmentation-offloads.html), [checksum offloads](https://docs.kernel.org/networking/checksum-offloads.html)).
 
-## Receive Path — from Interrupt to Application
+## Receive Path: from Interrupt to Application
 
 The diagram shows a common physical-NIC receive path using driver NAPI and optional native XDP, followed by local TCP delivery. `XDP_PASS` continues into the stack; drop, redirect, and transmit actions take other paths. Generic XDP runs with an skb already present. Loopback, virtual devices, hardware offload, busy polling, and threaded NAPI can change this sequence.
 
@@ -207,7 +207,7 @@ graph TB
     style NFP fill:#fdecea,stroke:#d93025
 ```
 
-### NAPI — the mechanism preventing interrupt storms
+### NAPI: the mechanism preventing interrupt storms
 
 Interrupting per packet can lead under high load to a state where **the system does nothing but handle interrupts** (livelock).
 
@@ -237,7 +237,7 @@ If the application does not drain received data fast enough, unread bytes accumu
 
 A persistently growing `Recv-Q` is a reason to investigate reader progress, CPU scheduling, and downstream application work alongside network evidence. One snapshot does not prove the application is the sole cause. A larger buffer may only postpone backpressure and retain more data.
 
-## Comparing Hook Points — XDP, TC, netfilter
+## Comparing Hook Points: XDP, TC, netfilter
 
 All are "intercept and process a packet," but **position determines performance and what is possible.**
 
@@ -256,7 +256,7 @@ XDP does not automatically receive all socket/stack context, but BPF maps can ma
 
 A dataplane can combine hooks for different work; Cilium's actual attachment points depend on its configuration and supported features ([Cilium eBPF](../networking/cilium/02-ebpf.md), [Cilium L2-L7 Networking](../networking/cilium/05-l2-l7-networking.md)).
 
-## Pod-to-Pod — Why the Path Differs
+## Pod-to-Pod: Why the Path Differs
 
 In Kubernetes, Pod-to-Pod traffic **actually traverses different kernel paths** depending on placement. This is the cause of the RTT ladder measured in the [Pod Network Benchmark](../networking/06-pod-network-benchmark.md) (same node 0.040 ms → same AZ 0.339 ms → cross AZ 0.544 ms).
 
@@ -268,7 +268,7 @@ Pod A [net ns A] → veth A → (node net ns) → veth B → Pod B [net ns B]
 
 In the illustrated ordinary veth/routed same-node path, traffic need not traverse the physical NIC. Other dataplanes, overlays, SR-IOV or policy/service detours can change that path; virtual devices still have kernel driver processing.
 
-That is why same-node single-flow throughput reached **29.97 Gbps** in the benchmark (while cross-node hit the EC2 single-flow limit at 4.96 Gbps). The bottleneck was not the network but **CPU** — one client core at 99.8%.
+That is why same-node single-flow throughput reached **29.97 Gbps** in the benchmark (while cross-node hit the EC2 single-flow limit at 4.96 Gbps). The bottleneck was not the network but **CPU**: one client core at 99.8%.
 
 ### Pods on different nodes (VPC CNI)
 
@@ -278,7 +278,7 @@ Pod A → veth → node net ns → ENI → VPC network → target ENI → veth �
 
 With Amazon VPC CNI, Pods receive **real VPC IPs**, so there is no overlay encapsulation. Avoiding encap/decap cost and MTU loss versus overlay CNIs (VXLAN and friends) is VPC CNI's structural advantage ([VPC CNI](../networking/01-vpc-cni.md)).
 
-This ordinary cross-node path uses physical network devices and is subject to **EC2 instance network limits** — single-flow caps, total instance bandwidth, and PPS limits. The exact queueing and hook path still depends on the device and dataplane.
+This ordinary cross-node path uses physical network devices and is subject to **EC2 instance network limits**: single-flow caps, total instance bandwidth, and PPS limits. The exact queueing and hook path still depends on the device and dataplane.
 
 ### Crossing an AZ
 
@@ -301,7 +301,7 @@ Each layer needs different things watched.
 | Socket | `ss -tinm`, `ss -ltn` | TCP state, stream queues versus listener backlog, RTT/cwnd, socket memory |
 | TCP global | `nstat` / `netstat -s` | Retransmits, out-of-order, buffer overruns |
 | netfilter | `iptables-save`, `nft list ruleset` | Rule count and content |
-| conntrack | `conntrack -S` | `insert_failed` — correlate with count/max and logs; not unique to exhaustion |
+| conntrack | `conntrack -S` | `insert_failed`: correlate with count/max and logs; not unique to exhaustion |
 | qdisc | `tc -s qdisc show dev <if>` | That qdisc's drops, backlog, shaping and requeue counters |
 | Interface | `ip -s link`, `ethtool -S <if>` | Interface and NIC counters |
 | Offloads | `ethtool -k <if>` | TSO/GRO/checksum state |
@@ -347,15 +347,15 @@ Next: [EKS Node Kernel Tuning](./03-eks-node-tuning.md) covers which parameters 
 
 ## References
 
-- [Linux Networking Documentation — Kernel](https://docs.kernel.org/networking/index.html)
-- [NAPI — Linux kernel documentation](https://docs.kernel.org/networking/napi.html)
+- [Linux Networking Documentation: Kernel](https://docs.kernel.org/networking/index.html)
+- [NAPI: Linux kernel documentation](https://docs.kernel.org/networking/napi.html)
 - [Scaling in the Linux Networking Stack (RSS/RPS/RFS)](https://docs.kernel.org/networking/scaling.html)
-- [XDP — eXpress Data Path](https://docs.kernel.org/networking/af_xdp.html)
-- [Linux v6.12 socket implementation](https://github.com/torvalds/linux/blob/v6.12/net/socket.c) — FD, VFS operations, and socket API entry points
-- [Socket API and options — socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html)
-- [TCP — tcp(7)](https://man7.org/linux/man-pages/man7/tcp.7.html)
-- [Socket observation — ss(8)](https://man7.org/linux/man-pages/man8/ss.8.html)
+- [XDP (eXpress Data Path)](https://docs.kernel.org/networking/af_xdp.html)
+- [Linux v6.12 socket implementation](https://github.com/torvalds/linux/blob/v6.12/net/socket.c): FD, VFS operations, and socket API entry points
+- [Socket API and options: socket(7)](https://man7.org/linux/man-pages/man7/socket.7.html)
+- [TCP: tcp(7)](https://man7.org/linux/man-pages/man7/tcp.7.html)
+- [Socket observation: ss(8)](https://man7.org/linux/man-pages/man8/ss.8.html)
 - [Pod Network Benchmark](../networking/06-pod-network-benchmark.md)
 - [eBPF Fundamentals](../basics/05-ebpf-fundamentals.md)
-- [Linux segmentation offloads](https://docs.kernel.org/networking/segmentation-offloads.html) — hardware TSO and software GSO
-- [Linux IP sysctls](https://docs.kernel.org/networking/ip-sysctl.html) — TCP buffer sizing and socket overrides
+- [Linux segmentation offloads](https://docs.kernel.org/networking/segmentation-offloads.html): hardware TSO and software GSO
+- [Linux IP sysctls](https://docs.kernel.org/networking/ip-sysctl.html): TCP buffer sizing and socket overrides

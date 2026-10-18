@@ -1,4 +1,4 @@
-# Agent Sandbox on EKS — Isolated, Stateful Runtimes for AI Agents
+# Agent Sandbox on EKS: Isolated, Stateful Runtimes for AI Agents
 
 > **Supported Versions**: Agent Sandbox v1.0.6 (API `v1beta1`), Python SDK `k8s-agent-sandbox` 1.0.6, Karpenter v1.13.0+ for `cpuOptions.nestedVirtualization`
 > **Last Updated**: October 16, 2026
@@ -148,7 +148,7 @@ Status conditions follow Gateway API conventions:
 
 ## 4. Extensions: Template, Warm Pool and Claim
 
-### SandboxTemplate — where platform policy lives
+### SandboxTemplate: where platform policy lives
 
 ```yaml
 apiVersion: extensions.agents.x-k8s.io/v1beta1
@@ -188,7 +188,7 @@ Secure defaults that apply to Sandboxes created through a template (by a warm po
 
 A bare `Sandbox` gets none of these defaults. Use admission control (ValidatingAdmissionPolicy, Kyverno or Gatekeeper) if users may create `Sandbox` objects directly, or grant them RBAC only for `SandboxClaim`.
 
-### SandboxWarmPool — pre-created capacity
+### SandboxWarmPool: pre-created capacity
 
 ```yaml
 apiVersion: extensions.agents.x-k8s.io/v1beta1
@@ -206,7 +206,7 @@ spec:
 
 When the template's blueprint changes, unclaimed Sandboxes become stale. `OnReplenish` replaces them only as they are claimed or deleted; `Recreate` deletes them immediately. Sandboxes already claimed are never touched, because ownership moves to the claim.
 
-### SandboxClaim — what an agent session asks for
+### SandboxClaim: what an agent session asks for
 
 ```yaml
 apiVersion: extensions.agents.x-k8s.io/v1beta1

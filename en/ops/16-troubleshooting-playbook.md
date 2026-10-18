@@ -1,6 +1,6 @@
 # Kubernetes/EKS Troubleshooting Playbook: Symptom → Diagnosis → Cause → Fix
 
-> **Versions recorded for the original examples**: Original Amazon EKS 1.36 output example — control plane v1.36.2-eks-bca9cf6, platform version eks.9, Karpenter 1.4, VPC CNI v1.21, CoreDNS v1.14
+> **Versions recorded for the original examples**: Original Amazon EKS 1.36 output example (control plane v1.36.2-eks-bca9cf6, platform version eks.9, Karpenter 1.4, VPC CNI v1.21, CoreDNS v1.14)
 > **Last reviewed**: September 11, 2026
 
 < [Previous: Zonal Cluster Operations](15-zonal-operations-guide.md) | [Table of Contents](./README.md) >
@@ -149,7 +149,7 @@ For node diagnosis, first inspect kubelet events/logs and the credential provide
 
 **Symptom**: a container repeatedly exits and RESTARTS grows. The usual backoff doubles from 10 seconds up to 300 seconds, but feature gates and kubelet configuration can change it. Check the restart policy in [Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/).
 
-**Diagnosis**: look at three things in order — **termination reason and exit code**, **logs of the previous container**, **Events**.
+**Diagnosis**: look at three things in order: **termination reason and exit code**, **logs of the previous container**, **Events**.
 
 ```bash
 # (1) Why did it die: lastState.terminated
@@ -179,15 +179,15 @@ A roughly 36-hour lifetime distinguishes this from an immediate startup failure;
 
 | Exit Code | Reason | Meaning | Fix |
 |---|---|---|---|
-| `0` | `Completed` | Process exited normally — in a Deployment this means the app is not staying in the foreground | Keep a long-running entrypoint in the foreground, or switch to a Job |
+| `0` | `Completed` | Process exited normally; in a Deployment this means the app is not staying in the foreground | Keep a long-running entrypoint in the foreground, or switch to a Job |
 | `1` | `Error` | App exited on its own (config error, dependency connection failure) | The stack trace is in `logs --previous` |
-| `126` | `Error` | Command found but not executable under a shell entrypoint — missing execute bit, or the shell reporting `cannot execute binary file: Exec format error` (architecture mismatch) | `chmod +x` in the Dockerfile; check arm64/amd64 with `kubectl get nodes -L kubernetes.io/arch` and use a multi-arch image |
-| `127` | `Error` | Command not found under a shell entrypoint — path typo, or the binary was never copied into the final image stage | Compare `command`/`args` with what is actually in the image (`kubectl debug ... -- ls <path>`) |
+| `126` | `Error` | Command found but not executable under a shell entrypoint: missing execute bit, or the shell reporting `cannot execute binary file: Exec format error` (architecture mismatch) | `chmod +x` in the Dockerfile; check arm64/amd64 with `kubectl get nodes -L kubernetes.io/arch` and use a multi-arch image |
+| `127` | `Error` | Command not found under a shell entrypoint: path typo, or the binary was never copied into the final image stage | Compare `command`/`args` with what is actually in the image (`kubectl debug ... -- ls <path>`) |
 | `137` | `OOMKilled` | OOM termination; distinguish a container limit from node memory pressure | Raise the limit or fix the leak. For the JVM check `-XX:MaxRAMPercentage` → [Resource Optimization](10-resource-optimization.md) |
-| `137` | `Error` | SIGKILL for another reason — liveness failed and the container did not exit within `terminationGracePeriodSeconds` | Review preStop/graceful shutdown |
+| `137` | `Error` | SIGKILL for another reason: liveness failed and the container did not exit within `terminationGracePeriodSeconds` | Review preStop/graceful shutdown |
 | `143` | `Error` | Exited on SIGTERM (may be a normal rollout/eviction) | If it repeats, find who is killing it in Events |
 
-- If the image execs the binary directly (no shell in between), an architecture mismatch does not produce exit 126 at all — the container never starts, and `lastState.terminated` shows Reason `StartError` with `exec format error` in the message. The fix is the same: a multi-arch image, or a nodeSelector on `kubernetes.io/arch`.
+- If the image execs the binary directly (no shell in between), an architecture mismatch does not produce exit 126 at all. The container never starts, and `lastState.terminated` shows Reason `StartError` with `exec format error` in the message. The fix is the same: a multi-arch image, or a nodeSelector on `kubernetes.io/arch`.
 
 **Probe failures**: these events show a restart triggered by liveness failure. Causes include wrong paths/ports, but also real application failure, overload, or deadlock. Inspect the response and application before relaxing the probe.
 
@@ -199,7 +199,7 @@ Normal   Killing    kubelet  Container app failed liveness probe, will be restar
 - If the app is slow to start, add a **`startupProbe`** instead of inflating liveness `initialDelaySeconds` (liveness does not start until the startup probe succeeds).
 - A TCP refusal such as `Readiness probe failed: dial tcp 10.0.2.45:8080: connect: connection refused` means first check whether the container port and the probe port differ.
 
-**Configuration reference errors** — strictly speaking not a crash loop; the pod stops at `CreateContainerConfigError`:
+**Configuration reference errors**: strictly speaking not a crash loop; the pod stops at `CreateContainerConfigError`.
 
 ```
 Warning  Failed  kubelet  Error: configmap "app-config" not found
@@ -237,7 +237,7 @@ An unset `ready` is unknown and must be interpreted as ready by consumers. `publ
 | Observation | Cause | Fix |
 |---|---|---|
 | Repeated `Readiness probe failed` in Events | Wrong probe path/port, or the app is still waiting on a dependency (DB, etc.) | Point the probe at the app's real health endpoint. Keep dependency waits in readiness, out of liveness |
-| Condition `Ready False` with reason `ReadinessGatesNotReady` | Waiting on a pod readiness gate — typically the AWS Load Balancer Controller's `target-health.elbv2.k8s.aws/*` gate | Find out why the Target Group health check fails → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
+| Condition `Ready False` with reason `ReadinessGatesNotReady` | Waiting on a pod readiness gate, typically the AWS Load Balancer Controller's `target-health.elbv2.k8s.aws/*` gate | Find out why the Target Group health check fails → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
 | `1/2` Running, only the app container Ready | Sidecar (istio-proxy, etc.) not ready, or the sidecar started after the app and initial connections failed | Check sidecar logs; check injector/version-supported startup ordering and readiness; native-sidecar conversion alone does not fix readiness |
 | Ready, yet the EndpointSlice is empty | Service selector does not match the pod labels | → [5. Service unreachable](#5-service-is-unreachable) |
 
@@ -334,7 +334,7 @@ df -h /var/lib/containerd
 crictl ps -a | head
 ```
 
-A node that **never appears** in `kubectl get nodes` (join failure: IAM role/access entry, subnet routing, security group, AMI mismatch) is a separate topic → [EKS Advanced Debugging — Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-diagnosis), [EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues). For Karpenter nodes, start with the NodeClaim check in [section 10](#10-eks-karpenter-does-not-launch-a-node).
+A node that **never appears** in `kubectl get nodes` (join failure: IAM role/access entry, subnet routing, security group, AMI mismatch) is a separate topic → [EKS Advanced Debugging: Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-diagnosis), [EKS Troubleshooting: Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues). For Karpenter nodes, start with the NodeClaim check in [section 10](#10-eks-karpenter-does-not-launch-a-node).
 
 <span id="7-pvc-stuck-in-pending"></span>
 
@@ -367,11 +367,11 @@ The StorageClass list is an environment example. Distinguish Auto Mode’s ebs.c
 | `FailedBinding: no persistent volumes available for this claim and no storage class is set` | No `storageClassName` and no default StorageClass | Set `storageClassName: gp3` on the PVC, or annotate an SC with `storageclass.kubernetes.io/is-default-class: "true"` |
 | `ProvisioningFailed: storageclass.storage.k8s.io "<name>" not found` | Misspelled StorageClass, manifest copied from another cluster | Use the real name from `kubectl get sc` |
 | `ProvisioningFailed: error generating accessibility requirements: no topology key found for node <node>` | The EBS CSI node plugin has not registered on the node the pod landed on (no driver in `CSINode`) | Check the DRIVERS column of `kubectl get csinode <node>`; confirm the `ebs-csi-node` DaemonSet is running on that node |
-| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | The EBS CSI controller's IRSA/Pod Identity lacks permission | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied) — the subject is `ebs-csi-controller-sa` |
+| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | The EBS CSI controller's IRSA/Pod Identity lacks permission | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied) (the subject is `ebs-csi-controller-sa`) |
 | Pod-side `node(s) had volume node affinity conflict` | The existing PV (EBS) is in AZ `ap-northeast-2a` but schedulable nodes are in another AZ | EBS cannot cross AZs. Read the zone with `kubectl get pv <pv> -o jsonpath='{.spec.nodeAffinity}'` and provide capacity there (NodePool zone requirement or nodeSelector) |
 | Pod-side `FailedAttachVolume: Multi-Attach error for volume` | An RWO volume is still attached to the previous node (StatefulSet rescheduled after node failure) | Check stale attachments with `kubectl get volumeattachments`. If the node is gone, wait a few minutes for cleanup |
 
-`WaitForFirstConsumer`, StorageClass and dynamic provisioning concepts are in [Storage](../core/04-storage.md#storage-classes); EBS/EFS CSI error patterns are in [EKS Advanced Debugging — Storage Troubleshooting](../eks/11-eks-advanced-debugging.md#6-storage-troubleshooting).
+`WaitForFirstConsumer`, StorageClass and dynamic provisioning concepts are in [Storage](../core/04-storage.md#storage-classes); EBS/EFS CSI error patterns are in [EKS Advanced Debugging: Storage Troubleshooting](../eks/11-eks-advanced-debugging.md#6-storage-troubleshooting).
 
 <span id="8-eks-irsa--pod-identity-accessdenied"></span>
 
@@ -386,7 +386,7 @@ An error occurred (AccessDenied) when calling the AssumeRoleWithWebIdentity oper
 
 Or the S3/DynamoDB call itself is denied with `... is not authorized to perform: s3:GetObject`, where the denied principal is not the service account role but the **node IAM role** (`assumed-role/<node-role>/i-0abc...`). This indicates that the SDK selected node credentials. Check injection, SDK version, provider precedence, and explicit credentials; node-role fallback is unavailable when IMDS access is blocked.
 
-**Diagnosis** — first determine which mechanism is in use. The pod's environment variables tell you.
+**Diagnosis**: first determine which mechanism is in use. The pod's environment variables tell you.
 
 ```bash
 # Service account annotation (IRSA)
@@ -428,9 +428,9 @@ aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 | `Not authorized to perform sts:AssumeRoleWithWebIdentity` | IRSA trust policy: wrong `Federated` OIDC provider ARN, or the `sub` (`system:serviceaccount:<ns>:<sa>`)/`aud` (`sts.amazonaws.com`) condition does not match | Fix the trust policy. If the cluster was recreated the OIDC issuer changed, so the provider must be recreated too |
 | Pod Identity, but `AssumeRole` denied | Trust policy principal is not `pods.eks.amazonaws.com`, or `sts:TagSession` is missing | Allow both `sts:AssumeRole` and `sts:TagSession` in the trust policy |
 | Env is fine, only a specific API is `AccessDenied` | Denial from identity/resource policies, SCPs, boundaries, session or VPC endpoint policies | Check caller/resource and explicit Deny; relevant CloudTrail data events may require logging configuration |
-| Pod Identity env present but the SDK says `Unable to locate credentials` | SDK too old to support the container credential provider (`FULL_URI`) | Upgrade the SDK — minimum supported versions are listed in the EKS docs |
+| Pod Identity env present but the SDK says `Unable to locate credentials` | SDK too old to support the container credential provider (`FULL_URI`) | Upgrade the SDK (minimum supported versions are listed in the EKS docs) |
 
-How IRSA and Pod Identity work and how to set them up is in [EKS Security Best Practices](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts) and [EKS Security](../eks/05-eks-security.md#eks-pod-identity); token expiry and webhook issues are in [EKS Advanced Debugging — Control Plane Debugging](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging).
+How IRSA and Pod Identity work and how to set them up is in [EKS Security Best Practices](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts) and [EKS Security](../eks/05-eks-security.md#eks-pod-identity); token expiry and webhook issues are in [EKS Advanced Debugging: Control Plane Debugging](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging).
 
 <span id="9-eks-enivpc-cni-ip-exhaustion"></span>
 
@@ -472,7 +472,7 @@ In IPv4 secondary-IP mode, `WARM_ENI_TARGET=1` is the default target for spare E
 | `aws-node` in `CrashLoopBackOff` on that node | CNI failure itself (missing `AmazonEKS_CNI_Policy`, version mismatch) | `kubectl logs -n kube-system <aws-node-pod> -c aws-node`, and `/var/log/aws-routed-eni/ipamd.log` on the node |
 | Using Security Groups for Pods and short of `vpc.amazonaws.com/pod-eni` | Branch ENI limit | Move to instances that support trunk ENIs; confirm `ENABLE_POD_ENI=true` |
 
-IPAM behavior (warm pool, prefix delegation, custom networking) is in [VPC CNI — IP Address Management](../networking/01-vpc-cni.md#ip-address-management); step-by-step IP exhaustion handling is in [EKS Advanced Debugging — Networking Diagnostics](../eks/11-eks-advanced-debugging.md#5-networking-diagnostics) and [EKS Troubleshooting — VPC CNI Issues](../eks/09-eks-troubleshooting.md#networking-issues).
+IPAM behavior (warm pool, prefix delegation, custom networking) is in [VPC CNI: IP Address Management](../networking/01-vpc-cni.md#ip-address-management); step-by-step IP exhaustion handling is in [EKS Advanced Debugging: Networking Diagnostics](../eks/11-eks-advanced-debugging.md#5-networking-diagnostics) and [EKS Troubleshooting: VPC CNI Issues](../eks/09-eks-troubleshooting.md#networking-issues).
 
 <span id="10-eks-karpenter-does-not-launch-a-node"></span>
 
@@ -519,16 +519,16 @@ The recorded example has CPU_LIMIT 8 / CPU_USED 8, but `exceed limits` does not 
 | `key node.kubernetes.io/instance-type, ... In [X] not in ... In [Y Z]` | The pod demands an instance type the NodePool does not allow | Align one side. Usually the pod-side requirement is too narrow |
 | Large `daemonset overhead={...}` and `Insufficient` | Not enough capacity left after subtracting DaemonSet reservations | Include larger instances in the requirements |
 | NodeClaim `LAUNCHED=True, REGISTERED=False` for several minutes | EC2 started but the node cannot join (EC2NodeClass subnet/SG selectors, node IAM role access entry, AMI) | Conditions/Events in `kubectl describe nodeclaim <name>`, EC2 console system log |
-| `InsufficientInstanceCapacity` in Karpenter logs | No EC2 capacity for that AZ/instance type (ICE — Insufficient Capacity Error) | Widen instance types, AZs, and capacity-type (spot/on-demand) |
+| `InsufficientInstanceCapacity` in Karpenter logs | No EC2 capacity for that AZ/instance type (ICE: Insufficient Capacity Error) | Widen instance types, AZs, and capacity-type (spot/on-demand) |
 | No events, Karpenter logs quiet | The pod is not a Karpenter candidate (`nodeSelector` points at MNG labels, or scheduling constraints unrelated to Karpenter) | Re-check every node-related constraint in the pod spec |
 
-NodePool/EC2NodeClass structure and detailed troubleshooting are in [Karpenter — Troubleshooting](../autoscaling/02-karpenter.md#troubleshooting) and [EKS Advanced Debugging — Karpenter Provisioning Issues](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues).
+NodePool/EC2NodeClass structure and detailed troubleshooting are in [Karpenter: Troubleshooting](../autoscaling/02-karpenter.md#troubleshooting) and [EKS Advanced Debugging: Karpenter Provisioning Issues](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues).
 
 <span id="11-no-service-can-be-created-failed-calling-webhook"></span>
 
 ### 11. No Service can be created: failed calling webhook
 
-**Symptom**: any `kubectl apply`/`create` of a Service — in any namespace, including ones that have nothing to do with load balancers — is rejected by the API server. Deployments that ship a Service, Helm installs, and ArgoCD syncs stall right there, while **existing Services keep working**, so nothing looks wrong at the pod level.
+**Symptom**: any `kubectl apply`/`create` of a Service (in any namespace, including ones that have nothing to do with load balancers) is rejected by the API server. Deployments that ship a Service, Helm installs, and ArgoCD syncs stall right there, while **existing Services keep working**, so nothing looks wrong at the pod level.
 
 ```
 Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": failed to call webhook:
@@ -565,9 +565,9 @@ These logs show cache synchronization failing because ListenerSet.gateway.networ
 | Observation | Cause | Fix |
 |---|---|---|
 | `no endpoints available for service "aws-load-balancer-webhook-service"` | Zero Ready pods in the webhook Deployment (CrashLoop, unschedulable, replicas 0) | **Make the controller healthy first** (next row). Confirm addresses and ready conditions in EndpointSlice and test an actual webhook request |
-| `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` in the logs | The Gateway API CRDs this controller version requires are not installed | (a) Install the Gateway API CRDs that controller version requires — ListenerSet is in the standard channel in Gateway API 1.5.0, (b) until the CRDs are present, disable the controller's Gateway API feature via its Helm feature-gate values (check the exact gate names in that version's `values.yaml`), (c) pin a controller version that matches the installed CRDs |
+| `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` in the logs | The Gateway API CRDs this controller version requires are not installed | (a) Install the Gateway API CRDs that controller version requires (ListenerSet is in the standard channel in Gateway API 1.5.0), (b) until the CRDs are present, disable the controller's Gateway API feature via its Helm feature-gate values (check the exact gate names in that version's `values.yaml`), (c) pin a controller version that matches the installed CRDs |
 | Endpoints exist, but `connection refused` / `context deadline exceeded` / `x509` | Path to the webhook port blocked (NetworkPolicy/security group), certificate expired or mismatched | Check the API server → pod webhook-port path, `clientConfig.caBundle`, and certificate renewal |
-| You must create a Service right now | — | **Only as a conscious emergency measure with the blast radius understood**: patch the `failurePolicy` of `mservice.elbv2.k8s.aws` to `Ignore`. Services created meanwhile do NOT get the controller's mutation (the default `loadBalancerClass` is not injected), so after recovery **revert to `Fail`** and review the Services created in between |
+| You must create a Service right now | - | **Only as a conscious emergency measure with the blast radius understood**: patch the `failurePolicy` of `mservice.elbv2.k8s.aws` to `Ignore`. Services created meanwhile do NOT get the controller's mutation (the default `loadBalancerClass` is not injected), so after recovery **revert to `Fail`** and review the Services created in between |
 
 What not to do: label a Service with `app.kubernetes.io/name=aws-load-balancer-controller` to dodge the `objectSelector`. It passes the webhook, but that Service **misses the mutation** and the label now lies. That selector exists only so the controller's own Service can be created.
 
@@ -660,7 +660,7 @@ kubectl rollout status deploy/<name> -n <ns>
 kubectl rollout history deploy/<name> -n <ns>
 ```
 
-Valid `--profile` values for `kubectl debug` are `legacy`, `general`, `baseline`, `restricted`, `netadmin`, and `sysadmin` (the default is `legacy` or `general` depending on your kubectl version — check `kubectl debug --help`); under a restricted policy, use a compatible image/security context with --profile=restricted; other admission policies can still reject it. Privileged node debugging requires separate authorization.
+Valid `--profile` values for `kubectl debug` are `legacy`, `general`, `baseline`, `restricted`, `netadmin`, and `sysadmin` (the default is `legacy` or `general` depending on your kubectl version; check `kubectl debug --help`); under a restricted policy, use a compatible image/security context with --profile=restricted; other admission policies can still reject it. Privileged node debugging requires separate authorization.
 
 ***
 
@@ -670,16 +670,16 @@ This playbook is the front door that decides "where to go next." Once the cause 
 
 | Narrowed-down area | Concept document | Deep troubleshooting |
 |---|---|---|
-| Pod lifecycle, probes, restart policy | [Pods and Workloads](../core/02-pods-and-workloads.md#pod-lifecycle) | [EKS Advanced Debugging — Workload Debugging](../eks/11-eks-advanced-debugging.md#4-workload-debugging) |
-| Service, EndpointSlice, CoreDNS, NetworkPolicy | [Services and Networking](../core/03-services-networking.md), [Network Policies](../security/04-network-policies.md) | [EKS Troubleshooting — Networking Issues](../eks/09-eks-troubleshooting.md#networking-issues) |
-| PV/PVC/StorageClass, EBS CSI | [Storage](../core/04-storage.md) | [EKS Troubleshooting — Storage Issues](../eks/09-eks-troubleshooting.md#storage-issues) |
-| Node join, kubelet, resource pressure | [Cluster Architecture](../core/01-cluster-architecture.md) | [EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues) |
+| Pod lifecycle, probes, restart policy | [Pods and Workloads](../core/02-pods-and-workloads.md#pod-lifecycle) | [EKS Advanced Debugging: Workload Debugging](../eks/11-eks-advanced-debugging.md#4-workload-debugging) |
+| Service, EndpointSlice, CoreDNS, NetworkPolicy | [Services and Networking](../core/03-services-networking.md), [Network Policies](../security/04-network-policies.md) | [EKS Troubleshooting: Networking Issues](../eks/09-eks-troubleshooting.md#networking-issues) |
+| PV/PVC/StorageClass, EBS CSI | [Storage](../core/04-storage.md) | [EKS Troubleshooting: Storage Issues](../eks/09-eks-troubleshooting.md#storage-issues) |
+| Node join, kubelet, resource pressure | [Cluster Architecture](../core/01-cluster-architecture.md) | [EKS Troubleshooting: Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues) |
 | Karpenter NodePool/NodeClaim | [Karpenter](../autoscaling/02-karpenter.md) | [Scaling Strategies](06-scaling-strategies.md) |
 | VPC CNI IPAM, prefix delegation, custom networking | [VPC CNI](../networking/01-vpc-cni.md) | [EKS Networking Part 3: Troubleshooting](../eks/03-eks-networking-part3.md) |
-| IRSA, Pod Identity, RBAC | [EKS Security Best Practices](../security/06-eks-security-best-practices.md), [Kubernetes Authentication and Authorization](../security/02-kubernetes-auth-authz.md) | [EKS Troubleshooting — IAM and Authentication Issues](../eks/09-eks-troubleshooting.md#iam-and-authentication-issues) |
+| IRSA, Pod Identity, RBAC | [EKS Security Best Practices](../security/06-eks-security-best-practices.md), [Kubernetes Authentication and Authorization](../security/02-kubernetes-auth-authz.md) | [EKS Troubleshooting: IAM and Authentication Issues](../eks/09-eks-troubleshooting.md#iam-and-authentication-issues) |
 | Where the logs are and how to find them | [Logging Overview](../observability/logging/README.md) | [Observability Analysis](08-observability-analysis.md) |
-| requests/limits, OOM, JVM memory | [Resource Optimization](10-resource-optimization.md) | [EKS Troubleshooting — Performance Issues](../eks/09-eks-troubleshooting.md#performance-issues) |
-| Incident response process, severity, first-5-minutes checklist | — | [EKS Advanced Debugging — Incident Response Framework](../eks/11-eks-advanced-debugging.md#1-incident-response-framework) |
+| requests/limits, OOM, JVM memory | [Resource Optimization](10-resource-optimization.md) | [EKS Troubleshooting: Performance Issues](../eks/09-eks-troubleshooting.md#performance-issues) |
+| Incident response process, severity, first-5-minutes checklist | - | [EKS Advanced Debugging: Incident Response Framework](../eks/11-eks-advanced-debugging.md#1-incident-response-framework) |
 
 ***
 
@@ -689,20 +689,20 @@ Official documentation behind the quoted strings and the rules of thumb in this 
 
 **Kubernetes**
 
-- [Taints and Tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) — the `node.kubernetes.io/*` taints the node controller adds automatically (section 6)
-- [Debugging Kubernetes Nodes with kubectl](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/) and the [`kubectl debug` reference](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/) — node debug pods and `--profile` values (sections 2, 6, cheat sheet)
-- [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/) — ephemeral containers, `--copy-to`, `--target` (cheat sheet)
-- [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/) — why `v1 Endpoints` is deprecated since 1.33 (section 4)
-- [Debug Services](https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/) and [Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/) — selector/port/DNS checks and `ndots` (section 5)
+- [Taints and Tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/): the `node.kubernetes.io/*` taints the node controller adds automatically (section 6)
+- [Debugging Kubernetes Nodes with kubectl](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/) and the [`kubectl debug` reference](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/): node debug pods and `--profile` values (sections 2, 6, cheat sheet)
+- [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/): ephemeral containers, `--copy-to`, `--target` (cheat sheet)
+- [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/): why `v1 Endpoints` is deprecated since 1.33 (section 4)
+- [Debug Services](https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/) and [Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/): selector/port/DNS checks and `ndots` (section 5)
 
 **Amazon EKS / AWS**
 
-- [Amazon VPC CNI plugin README](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/README.md) — `WARM_ENI_TARGET`, `WARM_IP_TARGET`, `MINIMUM_IP_TARGET`, `ENABLE_PREFIX_DELEGATION` semantics and precedence (section 9)
-- [Assign more IP addresses to Amazon EKS nodes with prefixes](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html) — prefix delegation and max-pods recalculation (section 9)
-- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) and [IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) — trust policy shapes and injected environment variables (section 8)
-- [Detect node health issues and enable automatic node repair](https://docs.aws.amazon.com/eks/latest/userguide/node-health.html) — the Node Monitoring Agent conditions shown in section 6
-- [Troubleshoot problems with Amazon EKS clusters and nodes](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html) — node join failures, `AccessDenied`, CNI errors
-- [Karpenter — Troubleshooting](https://karpenter.sh/docs/troubleshooting/) — NodePool limits, requirement mismatches, NodeClaim launch/registration failures (section 10)
+- [Amazon VPC CNI plugin README](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/README.md): `WARM_ENI_TARGET`, `WARM_IP_TARGET`, `MINIMUM_IP_TARGET`, `ENABLE_PREFIX_DELEGATION` semantics and precedence (section 9)
+- [Assign more IP addresses to Amazon EKS nodes with prefixes](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html): prefix delegation and max-pods recalculation (section 9)
+- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) and [IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html): trust policy shapes and injected environment variables (section 8)
+- [Detect node health issues and enable automatic node repair](https://docs.aws.amazon.com/eks/latest/userguide/node-health.html): the Node Monitoring Agent conditions shown in section 6
+- [Troubleshoot problems with Amazon EKS clusters and nodes](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html): node join failures, `AccessDenied`, CNI errors
+- [Karpenter: Troubleshooting](https://karpenter.sh/docs/troubleshooting/): NodePool limits, requirement mismatches, NodeClaim launch/registration failures (section 10)
 
 ***
 

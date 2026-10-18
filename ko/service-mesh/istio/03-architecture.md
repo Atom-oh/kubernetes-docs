@@ -412,7 +412,7 @@ kubectl apply -f deployment-injected.yaml
 
 ### iptables 규칙 상세
 
-**단순화한 규칙 설명 — 실행할 스크립트가 아님**:
+**단순화한 규칙 설명(실행할 스크립트가 아님)**:
 
 ```bash
 #!/bin/bash

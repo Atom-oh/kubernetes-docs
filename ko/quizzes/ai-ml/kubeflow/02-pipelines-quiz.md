@@ -23,7 +23,7 @@
 2. KFP v1 SDK 컴파일러와 KFP v2 SDK 컴파일러의 핵심적인 아키텍처 차이는 무엇인가요?
    - A) v1은 IR YAML로 컴파일하고, v2는 Argo Workflow YAML로 직접 컴파일한다
    - B) v1은 Argo Workflow YAML로 직접 컴파일하고, v2는 백엔드에 종속되지 않는 중간 표현(IR) YAML로 컴파일한다
-   - C) 차이가 없다 — 둘 다 동일한 결과물을 생성한다
+   - C) 차이가 없다. 둘 다 동일한 결과물을 생성한다
    - D) v2에서는 컴파일 과정 자체가 완전히 없어졌다
 
 <details>
@@ -85,7 +85,7 @@ KFP v2는 아티팩트에 `Dataset`, `Model`, `Metrics` 등 1급 타입을 부�
 </details>
 
 6. KFP의 아티팩트 저장소를 클러스터 내부 MinIO 대신 S3로 연결할 때, 실제 Run의 파이프라인 실행 ServiceAccount와 아티팩트 접근 컴포넌트에 직접적으로 관련되는 신원(identity) 메커니즘은 무엇인가요?
-   - A) 없음 — AWS 신원 설정 없이도 S3 접근이 가능하다
+   - A) 없음: AWS 신원 설정 없이도 S3 접근이 가능하다
    - B) 실제 SDK·신뢰·런타임 조건을 충족한 IRSA 또는 Pod Identity로 S3 권한을 구성한다
    - C) 모든 컴포넌트의 컨테이너 이미지에 하드코딩된 AWS 액세스 키
    - D) S3 접근에는 Kubernetes RBAC만으로 충분하다

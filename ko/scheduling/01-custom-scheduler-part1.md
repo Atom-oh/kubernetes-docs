@@ -515,7 +515,7 @@ func ScoreGPU(node *v1.Node, pod *v1.Pod) int64 {
 
 Go 명령·플러그인·설정은 고정된 의존성 버전으로 로컬 검증합니다. 이번 감사에서 클러스터 배포, 이미지 push, AWS 호출, 배치 벤치마크 또는 HA 장애 전환 테스트는 실행하지 않았습니다.
 
-* [다중 스케줄러 구성](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/) — 구조·RBAC 패턴 참고용이며 오래된 이미지·빌드 예제는 버전 지침으로 사용하지 않음
+* [다중 스케줄러 구성](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/): 구조·RBAC 패턴 참고용이며 오래된 이미지·빌드 예제는 버전 지침으로 사용하지 않음
 * [스케줄러 설정](https://kubernetes.io/docs/reference/scheduling/config/)
 * [스케줄링 프레임워크](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
 * [Kubernetes 1.35.8 프레임워크 인터페이스](https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kube-scheduler/framework/interface.go)

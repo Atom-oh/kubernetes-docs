@@ -33,10 +33,10 @@ Ray 2.59.0 enables token authentication by default for local clusters. Calling `
 
 ## Currently Covered
 
-1. [Part 1: Ray Architecture](01-architecture.md) — tasks, actors, the object store, and the head/worker cluster model
-2. [Part 2: The KubeRay Operator](02-kuberay-operator.md) — RayCluster, RayJob, RayService, and the two-tier autoscaling pattern with Karpenter
-3. [Part 3: Ray Train and Ray Tune](03-ray-train-tune.md) — distributed training and hyperparameter tuning
-4. [Part 4: Ray Serve](04-ray-serve.md) — model serving, Ray Serve LLM, and RayService-based production deployment
+1. [Part 1: Ray Architecture](01-architecture.md): tasks, actors, the object store, and the head/worker cluster model
+2. [Part 2: The KubeRay Operator](02-kuberay-operator.md): RayCluster, RayJob, RayService, and the two-tier autoscaling pattern with Karpenter
+3. [Part 3: Ray Train and Ray Tune](03-ray-train-tune.md): distributed training and hyperparameter tuning
+4. [Part 4: Ray Serve](04-ray-serve.md): model serving, Ray Serve LLM, and RayService-based production deployment
 
 ## Primary Sources
 

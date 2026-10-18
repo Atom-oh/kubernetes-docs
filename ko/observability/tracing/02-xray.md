@@ -678,7 +678,7 @@ Head sampling은 완료된 응답을 알기 전에 결정합니다. 미래의 HT
 
 다음은 별도 요청 파일 3개입니다. 로컬에서 AWS API 구조를 검증했으며 AWS에 적용하지 않았습니다.
 
-**`sampling-production.json` — 일반 API 요청 정책:**
+**`sampling-production.json` (일반 API 요청 정책):**
 
 ```json
 {
@@ -699,7 +699,7 @@ Head sampling은 완료된 응답을 알기 전에 결정합니다. 미래의 HT
 }
 ```
 
-**`sampling-health.json` — 더 높은 우선순위의 GET health-check 제외:**
+**`sampling-health.json` (더 높은 우선순위의 GET health-check 제외):**
 
 ```json
 {
@@ -720,7 +720,7 @@ Head sampling은 완료된 응답을 알기 전에 결정합니다. 미래의 HT
 }
 ```
 
-**`sampling-adaptive.json` — 선택적인 요청 범위 adaptive 예제:**
+**`sampling-adaptive.json` (선택적인 요청 범위 adaptive 예제):**
 
 현재 [SamplingRateBoost](https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html)는 이상 징후에 따른 임시 sampling 증가의 최대 rate·cooldown을 지원합니다. `MaxRate: 0.5`는 절대 sampling rate 상한이며 기존 비율의 50% 증가가 아닙니다. 사후 tail sampling이나 모든 실패 요청 수집 보장이 아니므로 사용 전 producer의 adaptive-sampling 지원을 확인합니다.
 

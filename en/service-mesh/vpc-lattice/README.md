@@ -13,7 +13,7 @@
 
 This section is about **understanding concepts**. How to create Lattice resources and install the AWS Gateway API Controller is already covered in [VPC Lattice](../../networking/02-vpc-lattice.md), and the feature-by-feature comparison with Istio lives in [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md). What those two documents do not cover is what this section addresses: **"why was it designed this way" and "what follows from that design."**
 
-There is urgency behind it. **AWS App Mesh support ended on September 30, 2026**, and the App Mesh console and App Mesh resources are no longer accessible. New customer onboarding had been closed since September 24, 2024. For any organization that ran App Mesh, this migration is no longer optional — the deadline has passed.
+There is urgency behind it. **AWS App Mesh support ended on September 30, 2026**, and the App Mesh console and App Mesh resources are no longer accessible. New customer onboarding had been closed since September 24, 2024. For any organization that ran App Mesh, this migration is no longer optional; the deadline has passed.
 
 But App Mesh and Lattice are **not two implementations of the same thing.** The data plane sits in a different place (inside the Pod vs. AWS infrastructure), identity is proven at a different granularity (connection vs. request), and the root of trust is owned by a different party (customer CA vs. AWS IAM/STS). If you approach it by swapping resource names one at a time, you will discover functional gaps and failed security reviews late in the migration. The purpose of this section is to surface those gaps **first**.
 
@@ -31,23 +31,23 @@ But App Mesh and Lattice are **not two implementations of the same thing.** The 
 | 1 | [App Mesh vs VPC Lattice Architecture](./01-appmesh-vs-lattice.md) | When the data plane moves from the Pod into the infrastructure, what survives and what disappears? |
 | 2 | [Latency Impact Analysis](./02-latency.md) | Both degrading and improving factors exist. Which one wins in our environment? |
 | 3 | [IAM Authentication Flow in Detail](./03-auth-flow.md) | What happens across the four stages from signing a request to authorizing it? |
-| 4 | [Foundations — Link-Local and SNI](./04-networking-basics.md) | How is traffic intercepted without a sidecar? What do you lose by not terminating TLS? |
-| 5 | [Workload Identity Migration — SPIFFE to IAM](./05-spiffe-to-iam.md) | Can IAM do what SPIRE was doing? What is not replaced? |
+| 4 | [Foundations: Link-Local and SNI](./04-networking-basics.md) | How is traffic intercepted without a sidecar? What do you lose by not terminating TLS? |
+| 5 | [Workload Identity Migration: SPIFFE to IAM](./05-spiffe-to-iam.md) | Can IAM do what SPIRE was doing? What is not replaced? |
 | 6 | [Constraints and Decision Points](./06-constraints.md) | Which capability, trust, cost and recovery choices must be settled? |
 | 7 | [Kernel Datapath](./07-kernel-datapath.md) | How do Pod routing, proxy rules and connection tracking affect the path? |
 
-Reading in order from 1 is recommended. Document 4 (link-local, SNI) is prerequisite knowledge for the constraints in 3 and 6 — it is placed later, but if network fundamentals are unfamiliar, read 4 first.
+Reading in order from 1 is recommended. Document 4 (link-local, SNI) is prerequisite knowledge for the constraints in 3 and 6. It is placed later, but if network fundamentals are unfamiliar, read 4 first.
 
 ## A Note on Accuracy
 
 The factual claims in this section are based on AWS official documentation, the AWS Gateway API Controller documentation, the `aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice` reference implementation, and the SPIFFE/SPIRE documentation.
 
-Anything not confirmed against official documentation is not stated as fact — it is marked with a `Needs verification` block. Lattice is a service that keeps gaining features, and in particular **quotas and pricing vary by region and over time.** Before finalizing a design, check current values directly in the Service Quotas console and on the [VPC Lattice pricing page](https://aws.amazon.com/vpc/lattice/pricing/).
+Anything not confirmed against official documentation is not stated as fact; it is marked with a `Needs verification` block. Lattice is a service that keeps gaining features, and in particular **quotas and pricing vary by region and over time.** Before finalizing a design, check current values directly in the Service Quotas console and on the [VPC Lattice pricing page](https://aws.amazon.com/vpc/lattice/pricing/).
 
 ## Related Documents
 
-- [VPC Lattice](../../networking/02-vpc-lattice.md) — Lattice resource configuration and Gateway API Controller installation
-- [Gateway API](../../networking/04-gateway-api.md) — the Kubernetes Gateway API standard
-- [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md) — feature, cost, and operational complexity comparison
-- [Istio Security — mTLS](../istio/security/01-mtls.md) — how sidecar-based mutual authentication works
-- [Pod Network Benchmark](../../networking/06-pod-network-benchmark.md) — measured same-AZ and cross-AZ latency baselines
+- [VPC Lattice](../../networking/02-vpc-lattice.md): Lattice resource configuration and Gateway API Controller installation
+- [Gateway API](../../networking/04-gateway-api.md): the Kubernetes Gateway API standard
+- [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md): feature, cost, and operational complexity comparison
+- [Istio Security: mTLS](../istio/security/01-mtls.md): how sidecar-based mutual authentication works
+- [Pod Network Benchmark](../../networking/06-pod-network-benchmark.md): measured same-AZ and cross-AZ latency baselines

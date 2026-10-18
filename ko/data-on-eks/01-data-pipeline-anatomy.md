@@ -1,4 +1,4 @@
-# 모던 데이터 파이프라인 해부 — 5개 역할
+# 모던 데이터 파이프라인 해부: 5개 역할
 
 > **마지막 업데이트**: 2026년 9월 12일
 
@@ -12,13 +12,13 @@ Kafka·Spark·Airflow·Flink가 파이프라인에서 맡는 역할과 계층 �
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-01-data-pipeline-anatomy-0.html)
 
-## 1. 소스 — 변경과 부하
+## 1. 소스: 변경과 부하
 
 소스에는 애플리케이션 DB, 로그, IoT 장치와 외부 API가 있습니다. 전체 스냅샷, 증분 질의, 로그 기반 CDC 중 필요한 방식을 선택합니다. 로그 기반 CDC는 해당 DB의 복제 로그와 보존·권한 설정에 의존하며, 스키마 변경의 지원 범위는 connector와 데이터 형식별로 다릅니다.
 
 읽기 복제본과 로그 기반 추출은 운영 DB 부하를 줄이는 선택지입니다. 모든 DB·connector 조합에서 지원되는 것은 아니므로 초기 snapshot 부하, 복제 지연, 로그 누락 시 복구 방법을 함께 확인합니다.
 
-## 2. 수집 — 배치와 이벤트
+## 2. 수집: 배치와 이벤트
 
 | 방식 | 동작 | 예시 | 지연을 결정하는 요소 |
 | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ Kafka에서 **실제로 남아 있는 레코드**는 offset을 조정해 다시 
 
 [Kafka 운영 8개 장과 Part 9 벤치마크](./kafka/README.md)에서 EKS 운영 선택을 이어서 다룹니다.
 
-## 3. 저장 — 원본과 조회 모델
+## 3. 저장: 원본과 조회 모델
 
 | 선택 | 예시 | 설계 관점 |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ Kafka에서 **실제로 남아 있는 레코드**는 offset을 조정해 다시 
 
 **ETL**은 추출 → 변환 → 대상 적재, **ELT**는 추출 → 대상 적재 → 대상 안에서 변환입니다. 이미 정제한 결과를 웨어하우스로 옮기는 작업을 그 이유만으로 ELT라고 부르지 않습니다. 레이크와 웨어하우스를 함께 쓴다는 사실만으로 ETL/ELT가 결정되지 않습니다.
 
-## 4. 처리 — 유한 입력과 지속 입력
+## 4. 처리: 유한 입력과 지속 입력
 
 Spark는 배치 처리와 Structured Streaming을 지원합니다. Flink도 스트림과 bounded 입력 처리를 지원합니다. 배치/스트림은 도구를 서로 배타적으로 나누는 분류가 아닙니다.
 
@@ -53,7 +53,7 @@ Spark는 배치 처리와 Structured Streaming을 지원합니다. Flink도 스�
 
 [Spark](./spark/README.md)와 [Flink](./flink/README.md) 문서에서 처리 엔진별 운영을 다룹니다.
 
-## 5. 소비 — 결과 계약
+## 5. 소비: 결과 계약
 
 BI, 보고서, ML 학습·추론용 feature store와 데이터 API가 결과를 소비합니다. “대시보드 5분 지연 허용”, “정산은 마감 이후 수정 규칙 필요”, “추천 피처는 1초 목표”처럼 소비자별 요구를 측정 가능한 계약으로 바꿉니다. 이 숫자는 예시이며 제품의 성능 보장이 아닙니다.
 
@@ -71,7 +71,7 @@ Kafka·Spark·Flink는 해당 Operator/배포 방식을, Airflow는 Helm chart�
 
 계층 설명은 Abhishek Agrawal의 “Anatomy of a Modern Data Pipeline” 인포그래픽에서 출발했으며, 본문의 계약·운영 설명은 별도로 검토했습니다.
 
-- [ETL과 ELT — AWS](https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html)
+- [ETL과 ELT (AWS)](https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html)
 - [Kafka 전달 보장과 log compaction](https://kafka.apache.org/43/design/design/)
 - [Flink 상태와 checkpoint](https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/)
 - [Spark Structured Streaming](https://spark.apache.org/docs/latest/streaming/index.html)

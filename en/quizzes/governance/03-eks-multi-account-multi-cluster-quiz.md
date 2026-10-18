@@ -34,7 +34,7 @@ Cluster-specific failure containment can justify the design. Shared VPC, DNS, Ac
 **Answer: B) If a workload's endpoints exist only in the impaired AZ, EKS keeps sending traffic to that AZ anyway**
 
 **Explanation:**
-This is the fail-safe behavior — a workload deployed to only a single AZ is not protected by zonal shift. Test N-1 load and single-AZ exceptions; this does not mean a practice run always stops that workload.
+This is the fail-safe behavior: a workload deployed to only a single AZ is not protected by zonal shift. Test N-1 load and single-AZ exceptions; this does not mean a practice run always stops that workload.
 
 </details>
 

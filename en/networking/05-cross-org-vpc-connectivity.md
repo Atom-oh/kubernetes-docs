@@ -65,9 +65,9 @@ The nginx description identifies the HTTP responder; the page does not identify 
 | M2 | ② VPC Peering → EC2 | 0.125 | **0.048** | 0.057 | 0.011 | 0.080 | 127 |
 | M3 | ① Shared TGW (RAM) → EC2 | 0.535 | **0.619** | 0.695 | 0.141 | 0.686 | 126 |
 | M4 | ④ TGW Peering (two TGWs) → EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
-| M5 | ③ PrivateLink → NLB → EC2 | not measured | **0.961** | 1.084 | 0.035 | 0.711 | — |
-| M6 | ⑤ VPC Lattice → EC2 target | not measured | not measured for this HTTP service | — | — | **1.635** | — |
-| M7 | ② Peering → NLB → EC2 (NLB hop isolation) | not measured | **0.841** | 0.909 | 0.119 | 0.883 | — |
+| M5 | ③ PrivateLink → NLB → EC2 | not measured | **0.961** | 1.084 | 0.035 | 0.711 | - |
+| M6 | ⑤ VPC Lattice → EC2 target | not measured | not measured for this HTTP service | - | - | **1.635** | - |
+| M7 | ② Peering → NLB → EC2 (NLB hop isolation) | not measured | **0.841** | 0.909 | 0.119 | 0.883 | - |
 
 ### Differences Between Reported Medians
 
@@ -78,9 +78,9 @@ These are **differences of path medians**, not isolated one-way hop costs or mea
 | Peering vs same-VPC baseline | M2 − M1 | -0.001 | +0.004 | -0.007 |
 | Shared TGW path vs peering | M3 − M2 | +0.571 | +0.410 | +0.606 |
 | Two-TGW path vs peering | M4 − M2 | +0.551 | +0.787 | +0.408 |
-| Peering with NLB vs direct peering | M7 − M2 | +0.793 | — | +0.803 |
-| PrivateLink/NLB vs peering/NLB | M5 − M7 | +0.120 | — | -0.172 |
-| Lattice HTTP service vs direct peering HTTP | M6 − M2 | — | — | +1.555 |
+| Peering with NLB vs direct peering | M7 − M2 | +0.793 | - | +0.803 |
+| PrivateLink/NLB vs peering/NLB | M5 − M7 | +0.120 | - | -0.172 |
+| Lattice HTTP service vs direct peering HTTP | M6 − M2 | - | - | +1.555 |
 
 - M2 is close to the same-VPC baseline, but the tables do not establish statistical equivalence or zero overhead.
 - The two-TGW path's TCP_RR median is lower than the single shared-TGW path's median. The data therefore do not support a universal “0.4–0.6 ms per TGW hop” or a linear hop-cost formula.
@@ -98,7 +98,7 @@ The original report also placed NLBs on each L3 path. This is a useful compariso
 | ③ PrivateLink → NLB → EC2 | **0.658** | 0.845 |
 | ① Shared TGW → NLB → EC2 | **1.273** | 1.257 |
 | ④ TGW Peering → NLB → EC2 | **1.425** | 1.279 |
-| ⑤ Lattice HTTP service (no separate NLB in this test) | — | **1.680** |
+| ⑤ Lattice HTTP service (no separate NLB in this test) | - | **1.680** |
 
 In this campaign, PrivateLink/NLB minus Peering/NLB is **+0.036 ms TCP_RR** and **+0.197 ms HTTP KA**. The shared-TGW and peered-TGW TCP_RR medians are respectively **1.93× and 2.17×** the PrivateLink median; the HTTP ratios are **1.49× and 1.51×**. These are latency ratios, not throughput multipliers or proof that the paths are equivalent.
 

@@ -16,7 +16,7 @@
 - [ ] `kind` v0.20+ (this lab installs it locally if missing)
 - [ ] Completed [Scheduling, Preemption, and Eviction](../../core/08-scheduling-preemption-eviction.md), especially the [NodeResourcesFit Scoring Strategy](../../core/08-scheduling-preemption-eviction.md#noderesourcesfit-scoring-strategy-leastallocated-vs-mostallocated) section
 
-This lab creates its own throwaway multi-node `kind` cluster — it does not reuse an existing cluster, since the experiment needs at least 3 worker nodes with independently observable CPU allocation. Everything is deleted at the end of the lab. Run commands in order in the same shell; stop if a step fails.
+This lab creates its own throwaway multi-node `kind` cluster; it does not reuse an existing cluster, since the experiment needs at least 3 worker nodes with independently observable CPU allocation. Everything is deleted at the end of the lab. Run commands in order in the same shell; stop if a step fails.
 
 ```bash
 SCHED_LAB_DIR=$(mktemp -d /tmp/k8s-docs-sched.XXXXXX)
@@ -58,7 +58,7 @@ export KUBECONFIG="$SCHED_LAB_DIR/kubeconfig"
 kubectl wait --for=condition=Ready nodes --all --timeout=120s
 kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"  cpu="}{.status.allocatable.cpu}{"\n"}{end}'
 ```
-All four nodes report the same allocatable CPU (kind nodes are containers sharing the host, so allocatable reflects the host, not a real per-node hardware split — expect a value like `cpu=16` on every node; the exact number depends on your machine).
+All four nodes report the same allocatable CPU (kind nodes are containers sharing the host, so allocatable reflects the host, not a real per-node hardware split; expect a value like `cpu=16` on every node; the exact number depends on your machine).
 
 **Step 1.2: Record the worker node names**
 ```bash
@@ -161,7 +161,7 @@ kubectl describe nodes "${SCHED_LAB_WORKERS[@]}" | grep -E "^Name:|cpu\s+[0-9]"
 ```
 
 ### Expected Outcome
-All 6 pods land on node **C** (the emptiest one), bringing it up to roughly the same utilization as B. This is `LeastAllocated` in action: the default scheduler keeps picking the node with the most free capacity for each new pod, so utilization converges across nodes instead of concentrating on a few. After this step, all three worker nodes carry some load — none of them is a clean candidate for scale-down.
+All 6 pods land on node **C** (the emptiest one), bringing it up to roughly the same utilization as B. This is `LeastAllocated` in action: the default scheduler keeps picking the node with the most free capacity for each new pod, so utilization converges across nodes instead of concentrating on a few. After this step, all three worker nodes carry some load, and none of them is a clean candidate for scale-down.
 
 ---
 
@@ -169,7 +169,7 @@ All 6 pods land on node **C** (the emptiest one), bringing it up to roughly the 
 
 ### Steps
 
-**Step 3.1: Reset — remove the pods scheduled in Lab 2, keep the filler baseline**
+**Step 3.1: Reset (remove the pods scheduled in Lab 2, keep the filler baseline)**
 ```bash
 kubectl -n sched-lab delete pod -l role=batch-default --wait=true
 ```
@@ -251,7 +251,7 @@ EOF
 kubectl apply -f "$SCHED_LAB_DIR/most-allocated-scheduler.yaml"
 kubectl -n kube-system rollout status deployment/most-allocated-scheduler --timeout=120s
 ```
-Match `image: registry.k8s.io/kube-scheduler:v1.37.0` to your cluster's actual minor version — check with `kubectl version`. A scheduler binary more than one minor version away from the API server may refuse to start or behave unpredictably.
+Match `image: registry.k8s.io/kube-scheduler:v1.37.0` to your cluster's actual minor version; check with `kubectl version`. A scheduler binary more than one minor version away from the API server may refuse to start or behave unpredictably.
 
 **Step 3.3: Schedule the same 6 pods, this time via `schedulerName`**
 ```bash
@@ -288,10 +288,10 @@ This exact procedure was run once while writing this lab, on a 3-worker kind clu
 
 | Scheduler / strategy | Where the 6 new pods landed | Final CPU utilization (A / B / C) |
 |---|---|---|
-| Default (`LeastAllocated`) | All 6 on node C | 75% / 37% / 37% — all three nodes occupied |
-| `MostAllocated` | 3 on node A, 3 on node B | 93% / 56% / 0% — node C stayed completely idle |
+| Default (`LeastAllocated`) | All 6 on node C | 75% / 37% / 37% (all three nodes occupied) |
+| `MostAllocated` | 3 on node A, 3 on node B | 93% / 56% / 0% (node C stayed completely idle) |
 
-Your absolute percentages will vary with your host's CPU count, but the **pattern** should reproduce: `LeastAllocated` fills the idle node until it matches its neighbors, while `MostAllocated` keeps piling onto the already-busy nodes and leaves the idle one untouched. That idle node is exactly what a Cluster Autoscaler or Karpenter consolidation pass would then terminate — which is why `MostAllocated` is the better fit for batch/short-lived job workloads that run alongside an autoscaler, while `LeastAllocated` remains the safer default for long-running, latency-sensitive services that want headroom on every node.
+Your absolute percentages will vary with your host's CPU count, but the **pattern** should reproduce: `LeastAllocated` fills the idle node until it matches its neighbors, while `MostAllocated` keeps piling onto the already-busy nodes and leaves the idle one untouched. That idle node is exactly what a Cluster Autoscaler or Karpenter consolidation pass would then terminate, which is why `MostAllocated` is the better fit for batch/short-lived job workloads that run alongside an autoscaler, while `LeastAllocated` remains the safer default for long-running, latency-sensitive services that want headroom on every node.
 
 ---
 
@@ -305,7 +305,7 @@ unset SCHED_LAB_DIR SCHED_LAB_KIND SCHED_LAB_WORKERS
 
 ## References and Verification Scope
 
-- [Scheduler Configuration — Kubernetes documentation](https://kubernetes.io/docs/reference/scheduling/config/)
+- [Scheduler Configuration: Kubernetes documentation](https://kubernetes.io/docs/reference/scheduling/config/)
 - [NodeResourcesFit scoring strategies](https://kubernetes.io/docs/reference/config-api/kube-scheduler-config.v1/)
 - [Configure Multiple Schedulers](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/)
 

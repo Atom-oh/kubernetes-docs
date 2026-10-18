@@ -1,4 +1,4 @@
-# Network Fundamentals Part 1 Quiz — Layer Model, Link and Routing
+# Network Fundamentals Part 1 Quiz: Layer Model, Link and Routing
 
 > **Last Updated**: September 14, 2026
 

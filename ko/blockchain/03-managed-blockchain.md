@@ -5,7 +5,7 @@
 ## 이 문서에서 다루는 것
 
 - Amazon Managed Blockchain(AMB)이 [자체 운영](./02-nodes-on-eks.md)의 어떤 부담을 대신해 주고 무엇을 못 하는가
-- 관리형과 자체 운영의 선택 기준 — 그리고 이 판단에 반드시 넣어야 할 변수
+- 관리형과 자체 운영의 선택 기준, 그리고 이 판단에 반드시 넣어야 할 변수
 - AWS 원장·블록체인 서비스 포트폴리오의 변화가 아키텍처 결정에 시사하는 것
 
 ## AMB의 구성
@@ -64,7 +64,7 @@ AMB의 구성요소별 **지원 프레임워크·체인 목록, 리전 가용성
 
 | 상황 | 권고 |
 |---|---|
-| 체인 데이터를 **읽기만** 함 | **AMB Query** — 노드 자체가 불필요 |
+| 체인 데이터를 **읽기만** 함 | **AMB Query** (노드 자체가 불필요) |
 | 조회 + 거래 제출, 운영 인력 제한적 | **AMB Access 관리형 노드** |
 | 특정 클라이언트·튜닝이 필요 | **자체 운영** |
 | **검증자·스테이킹** | **자체 운영** (또는 전문 스테이킹 서비스) |
@@ -75,15 +75,15 @@ AMB의 구성요소별 **지원 프레임워크·체인 목록, 리전 가용성
 
 ### 의사결정 순서
 
-**1단계 — 노드가 정말 필요한가?** 데이터 조회만이면 AMB Query나 서드파티 RPC 제공자로 충분할 수 있습니다. 노드 운영은 비용과 부담이 큰 선택이므로 **필요성을 먼저 확인**하십시오.
+**1단계: 노드가 정말 필요한가?** 데이터 조회만이면 AMB Query나 서드파티 RPC 제공자로 충분할 수 있습니다. 노드 운영은 비용과 부담이 큰 선택이므로 **필요성을 먼저 확인**하십시오.
 
-**2단계 — 통제가 필요한가?** 클라이언트 선택, 튜닝, 아카이브, 검증자 참여 중 하나라도 필요하면 자체 운영입니다.
+**2단계: 통제가 필요한가?** 클라이언트 선택, 튜닝, 아카이브, 검증자 참여 중 하나라도 필요하면 자체 운영입니다.
 
-**3단계 — 비용은?** 선택한 제공 방식의 전용 자원·serverless request·Query API 요금을 적용합니다. 같은 기능 범위와 가용성 조건에서 EC2/EKS·storage·transfer·redundancy·운영 인력 비용을 비교하며 node 수만으로 결정되는 보편적 손익분기 실측은 없습니다.
+**3단계: 비용은?** 선택한 제공 방식의 전용 자원·serverless request·Query API 요금을 적용합니다. 같은 기능 범위와 가용성 조건에서 EC2/EKS·storage·transfer·redundancy·운영 인력 비용을 비교하며 node 수만으로 결정되는 보편적 손익분기 실측은 없습니다.
 
-**4단계 — 혼합 가능한가?** 대개 가능하고, 실무에서 합리적인 경우가 많습니다 — 예를 들어 일반 조회는 관리형, 특수 용도는 자체 운영.
+**4단계: 혼합 가능한가?** 대개 가능하고, 실무에서 합리적인 경우가 많습니다. 예를 들어 일반 조회는 관리형, 특수 용도는 자체 운영.
 
-## AWS 원장·블록체인 포트폴리오의 변화 — 반드시 고려할 변수
+## AWS 원장·블록체인 포트폴리오의 변화: 반드시 고려할 변수
 
 이 문서에서 가장 중요한 부분입니다. **기술 비교만으로 결정하면 놓치는 리스크**가 있습니다.
 
@@ -98,7 +98,7 @@ Amazon QLDB(Quantum Ledger Database)는 **암호학적으로 검증 가능한 �
 | 2024년 7월 | 지원 종료 발표 |
 | **2025년 7월 31일** | **서비스 종료** |
 
-AWS가 제시한 마이그레이션 경로는 **Amazon Aurora PostgreSQL**이었습니다. 그런데 여기에 중요한 지점이 있습니다 — **Aurora PostgreSQL로 옮기면 QLDB의 핵심 가치였던 암호학적 검증 가능성을 잃습니다.** 원장 유사 기능은 확장으로 구현할 수 있지만, "변조되지 않았음을 수학적으로 증명"하는 부분은 대체되지 않습니다.
+AWS가 제시한 마이그레이션 경로는 **Amazon Aurora PostgreSQL**이었습니다. 그런데 여기에 중요한 지점이 있습니다. **Aurora PostgreSQL로 옮기면 QLDB의 핵심 가치였던 암호학적 검증 가능성을 잃습니다.** 원장 유사 기능은 확장으로 구현할 수 있지만, "변조되지 않았음을 수학적으로 증명"하는 부분은 대체되지 않습니다.
 
 ### 이것이 시사하는 것
 
@@ -139,7 +139,7 @@ AMB의 실질적 이점 중 하나가 AWS 생태계 통합입니다.
 
 | 연계 | 용도 |
 |---|---|
-| **IAM** | 접근 제어 — 체인 노드 접근에 IAM 정책 적용 |
+| **IAM** | 접근 제어: 체인 노드 접근에 IAM 정책 적용 |
 | **CloudWatch** | 메트릭·로그 |
 | **CloudTrail** | 관리 API 호출 감사 |
 | **VPC 엔드포인트 / PrivateLink** | 사설 연결 |
@@ -147,7 +147,7 @@ AMB의 실질적 이점 중 하나가 AWS 생태계 통합입니다.
 
 **IAM 통합이 특히 유용합니다.** 자체 운영 노드의 RPC 엔드포인트는 별도 인증 체계를 만들어야 하는데(또는 네트워크 계층으로만 통제), AMB는 IAM으로 통제할 수 있습니다. 사내 권한 체계와 일관되게 관리된다는 뜻입니다.
 
-사설 연결 관련해서는 [VPC Lattice 섹션](../service-mesh/vpc-lattice/README.md)에서 다룬 개념들이 적용될 수 있습니다 — 다만 **AMB와 Lattice의 직접 연계 지원 여부는 별개 확인이 필요한 항목**입니다([VPC Lattice 제약사항](../service-mesh/vpc-lattice/06-constraints.md)의 미확정 항목과 같은 성격).
+사설 연결 관련해서는 [VPC Lattice 섹션](../service-mesh/vpc-lattice/README.md)에서 다룬 개념들이 적용될 수 있습니다. 다만 **AMB와 Lattice의 직접 연계 지원 여부는 별개 확인이 필요한 항목**입니다([VPC Lattice 제약사항](../service-mesh/vpc-lattice/06-constraints.md)의 미확정 항목과 같은 성격).
 
 ## 자체 운영과의 비교 정리
 
@@ -164,7 +164,7 @@ AMB의 실질적 이점 중 하나가 AWS 생태계 통합입니다.
 | **비용 구조** | 제공 방식에 따라 provisioned node/component 비용 또는 serverless request/API 요금. 동일한 기능 범위와 사용량 비교 필요 |
 | **IAM 통합** | **기본 제공** | 직접 구축 |
 | **서비스 수명 위험** | 관리형 제공 방식의 가용성/지원 변경 가능 | Open-source/client 유지보수·protocol·인프라 의존성도 존재 |
-| **이전 가능성** | 표준 프로토콜이면 가능 | — |
+| **이전 가능성** | 표준 프로토콜이면 가능 | - |
 
 ## 정리
 
@@ -185,7 +185,7 @@ AMB의 실질적 이점 중 하나가 AWS 생태계 통합입니다.
 - [Amazon Managed Blockchain FAQs](https://aws.amazon.com/managed-blockchain/faqs/)
 - [AMB Query 문서 이력](https://docs.aws.amazon.com/managed-blockchain/latest/ambq-dg/doc-history.html)
 - [AMB Access Polygon 문서 이력](https://docs.aws.amazon.com/managed-blockchain/latest/ambp-dg/doc-history.html)
-- [EKS에서 블록체인 노드 운영](./02-nodes-on-eks.md) — 자체 운영 시의 부담
+- [EKS에서 블록체인 노드 운영](./02-nodes-on-eks.md): 자체 운영 시의 부담
 
 - [제공 방식별 AMB 요금](https://aws.amazon.com/managed-blockchain/pricing/)
-- [AWS KMS 비대칭 키 명세](https://docs.aws.amazon.com/kms/latest/developerguide/asymmetric-key-specs.html) — public key 접근과 private key export는 다름
+- [AWS KMS 비대칭 키 명세](https://docs.aws.amazon.com/kms/latest/developerguide/asymmetric-key-specs.html): public key 접근과 private key export는 다름

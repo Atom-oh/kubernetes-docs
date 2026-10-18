@@ -8,7 +8,7 @@ Change account, region, queue/topic names and policy ARNs together. An SNS→SQS
 
 The email endpoint is illustrative and requires recipient confirmation. This audit sent no email or messages. filterPolicy defaults to message attributes, so publishers must supply event_type accordingly. FIFO content-based deduplication uses the message body and does not prevent every business-level duplicate.
 
-## Queue — queue-app-events
+## Queue: queue-app-events
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -36,7 +36,7 @@ spec:
     \   }\n  ]\n}"
 ```
 
-## Queue — queue-app-events-fifo
+## Queue: queue-app-events-fifo
 
 ```yaml
 apiVersion: sqs.services.k8s.aws/v1alpha1
@@ -55,7 +55,7 @@ spec:
     Environment: Development
 ```
 
-## Topic — topic-app-events
+## Topic: topic-app-events
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -73,7 +73,7 @@ spec:
     value: Development
 ```
 
-## Subscription — subscription-app-email
+## Subscription: subscription-app-email
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1
@@ -92,7 +92,7 @@ spec:
   filterPolicy: '{"event_type":["order_placed","order_shipped"]}'
 ```
 
-## Subscription — subscription-app-queue
+## Subscription: subscription-app-queue
 
 ```yaml
 apiVersion: sns.services.k8s.aws/v1alpha1

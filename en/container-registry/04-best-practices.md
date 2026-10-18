@@ -678,7 +678,7 @@ sudo apt-get install -y skopeo
 brew install skopeo
 ```
 
-### skopeo inspect — Remote Image Inspection
+### skopeo inspect: Remote Image Inspection
 
 Inspect image metadata without pulling the image:
 
@@ -696,7 +696,7 @@ skopeo inspect --raw docker://docker.io/library/nginx:1.30.6 | jq .
 skopeo --override-arch arm64 inspect docker://docker.io/library/nginx:1.30.6
 ```
 
-### skopeo copy — Cross-Registry Image Copy
+### skopeo copy: Cross-Registry Image Copy
 
 Copy images directly between registries without pulling locally:
 
@@ -722,7 +722,7 @@ skopeo copy --all \
   oci-archive:nginx-1.30.6.tar
 ```
 
-### skopeo sync — Bulk Registry Synchronization
+### skopeo sync: Bulk Registry Synchronization
 
 Preview explicit tags before synchronization. Specifying a repository without a tag can copy all its tags. Each `images-by-tag-regex` value is a string, not a list. `--scoped` retains source registry/path components to avoid name collisions; prepare destination projects/repositories and authentication separately.
 

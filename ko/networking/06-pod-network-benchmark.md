@@ -1,4 +1,4 @@
-# Pod 네트워크 실측 벤치마크 — 같은 노드·같은 AZ·다른 AZ, 그리고 DNS ndots
+# Pod 네트워크 실측 벤치마크: 같은 노드·같은 AZ·다른 AZ, 그리고 DNS ndots
 
 > **기록된 측정 환경**: Kubernetes 1.36 (Amazon EKS), Amazon VPC CNI v1.21.1, kube-proxy iptables 모드
 > **측정일**: 2026년 9월 2일 · **마지막 업데이트**: 2026년 9월 12일
@@ -11,7 +11,7 @@
 
 그림은 당시 테스트 배치입니다. +0.21 ms는 해당 실행 간 차이이고, $4.47은 아래에서 설명하는 과거의 십진 GB 비용 모델입니다. 검증된 청구액이나 AZ 하나당 고정 비용이 아닙니다.
 
-## TL;DR — 측정 결과 요약
+## TL;DR: 측정 결과 요약
 
 1. **기록된 RTT**: 같은 노드 **0.040 ms** → 같은 AZ **0.339 ms** → 다른 AZ **0.544 ms**(ping 200회 평균). 두 노드 간 경로의 관측 차이는 +0.21 ms, 같은 노드 대비는 +0.50 ms였습니다.
 2. **HTTP p50 / p99** (fortio, 100 qps, 커넥션 4개, keepalive, 60 s): 0.259 / 0.350 ms → 0.461 / 0.667 ms → 0.704 / 0.812 ms. 같은 사다리를 애플리케이션 관점에서 본 값입니다.
@@ -26,16 +26,16 @@
 | 항목 | 값 |
 |------|-----|
 | 클러스터 | Amazon EKS `fsi-demo-cluster`, ap-northeast-2 (서울), 컨트롤 플레인 `v1.36.2-eks-bca9cf6`, AZ 2개(2a, 2b) 사용 |
-| 노드 | Karpenter `system` NodePool이 이 테스트를 위해 새로 띄운 **m5.xlarge × 3** — 2a 클라이언트 노드, 2a 서버 노드, 2b 서버 노드. 4 vCPU, Intel Xeon Platinum 8175M @ 2.50GHz |
+| 노드 | Karpenter `system` NodePool이 이 테스트를 위해 새로 띄운 **m5.xlarge × 3**: 2a 클라이언트 노드, 2a 서버 노드, 2b 서버 노드. 4 vCPU, Intel Xeon Platinum 8175M @ 2.50GHz |
 | 노드 OS | Amazon Linux 2023.12.20260817, 커널 `6.18.41-94.142.amzn2023.x86_64`, containerd 2.2.5, kubelet v1.36.3-eks-cb19647 |
 | CNI | Amazon VPC CNI `v1.21.1-eksbuild.8` (+ network-policy-agent v1.3.4); `ENABLE_PREFIX_DELEGATION=false`, `ENABLE_POD_ENI=false`, `AWS_VPC_K8S_CNI_EXTERNALSNAT=false`, `NETWORK_POLICY_ENFORCING_MODE=standard`, `WARM_ENI_TARGET=1`, `WARM_IP_TARGET=3` |
 | kube-proxy | `v1.35.3-eksbuild.5`, `mode: "iptables"` |
-| CoreDNS | `v1.14.2-eksbuild.4`, 2 replicas — AZ마다 1개(`10.0.2.106` / 2a, `10.0.3.14` / 2b); Service `kube-dns` ClusterIP `172.20.0.10`; Corefile `kubernetes cluster.local … { pods insecure }`, `forward . /etc/resolv.conf`, `cache 30`, `loadbalance`; **NodeLocal DNSCache 없음**, `autopath` 플러그인 없음 |
+| CoreDNS | `v1.14.2-eksbuild.4`, 2 replicas, AZ마다 1개(`10.0.2.106` / 2a, `10.0.3.14` / 2b); Service `kube-dns` ClusterIP `172.20.0.10`; Corefile `kubernetes cluster.local … { pods insecure }`, `forward . /etc/resolv.conf`, `cache 30`, `loadbalance`; **NodeLocal DNSCache 없음**, `autopath` 플러그인 없음 |
 | Pod resolv.conf (기본) | `search bench-net.svc.cluster.local svc.cluster.local cluster.local ap-northeast-2.compute.internal` / `nameserver 172.20.0.10` / `options ndots:5` |
 | Pod NIC | eth0 MTU **9001**(점보 프레임), TCP 혼잡 제어 `cubic`, iperf3 `tcp_mss_default: 8949` |
-| EC2 네트워크 사양 | m5.xlarge "Up to 10 Gigabit" — 베이스라인 **1.25 Gbps**, 피크 **10 Gbps**, 4 vCPU (비교: m5.large 베이스라인 0.75 Gbps, 피크 10 Gbps, 2 vCPU). `aws ec2 describe-instance-types`로 확인, ENA 필수 |
+| EC2 네트워크 사양 | m5.xlarge "Up to 10 Gigabit": 베이스라인 **1.25 Gbps**, 피크 **10 Gbps**, 4 vCPU (비교: m5.large 베이스라인 0.75 Gbps, 피크 10 Gbps, 2 vCPU). `aws ec2 describe-instance-types`로 확인, ENA 필수 |
 | 요금 | usagetype `APN2-DataTransfer-Regional-Bytes` "Regional Data Transfer - in/out/between AZs or when using public IP or Elastic IP addresses" **$0.01/GB** (`aws pricing get-products --region us-east-1`, 2026-09 조회) |
-| 도구 | `nicolaka/netshoot:v0.14` — iperf **3.19**, fortio **1.69.5**, iputils ping 20250605, tcpdump 4.99.5; DNS 클라이언트 `python:3.12-slim` (Debian 13, **glibc 2.41**, Python 3.12.14) |
+| 도구 | `nicolaka/netshoot:v0.14` (iperf **3.19**, fortio **1.69.5**, iputils ping 20250605, tcpdump 4.99.5); DNS 클라이언트 `python:3.12-slim` (Debian 13, **glibc 2.41**, Python 3.12.14) |
 | 측정 시각 | 2026-09-02 07:58–08:40 UTC (첫 Pod 07:58:22Z, DNS Pod 08:16:24Z) |
 
 AWS는 네트워크 I/O 크레딧이 남아 있어도 버스트 대역폭은 best effort라고 설명하며, 송신과 수신의 크레딧 버킷은 별개입니다. 새 인스턴스는 최대 크레딧으로 시작하지만 피크 가용성과 지속 시간은 달라집니다. 이번 180초 실행은 그 기간에 베이스라인으로의 하락이 없었다는 것만 보여 줍니다. 기록된 m5.xlarge의 베이스라인 1.25 Gbps / 피크 10 Gbps는 공식 [M5 네트워크 사양](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html)에도 있으며, 버스트 동작은 [EC2 대역폭 가이드](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html)를 참고하세요.
@@ -45,13 +45,13 @@ AWS는 네트워크 I/O 크레딧이 남아 있어도 버스트 대역폭은 bes
 | Pod | IP | 노드 | Zone | 역할 / requests |
 |---|---|---|---|---|
 | `cli` | 10.0.2.109 | ip-10-0-2-128 (nodeclaim `system-76r87`) | ap-northeast-2a | 클라이언트; 2500m / 1Gi |
-| `srv-same` | 10.0.2.72 | ip-10-0-2-128 — `cli`와 같은 노드 (required podAffinity) | ap-northeast-2a | 서버; 200m / 256Mi |
+| `srv-same` | 10.0.2.72 | ip-10-0-2-128, `cli`와 같은 노드 (required podAffinity) | ap-northeast-2a | 서버; 200m / 256Mi |
 | `srv-a` | 10.0.2.37 | ip-10-0-2-20 (nodeclaim `system-ksrbg`, `cli`에 podAntiAffinity) | ap-northeast-2a | 서버; 2800m / 1Gi |
 | `srv-b` | 10.0.3.65 | ip-10-0-3-32 (nodeclaim `system-svdvk`) | ap-northeast-2b | 서버; 2500m / 1Gi |
 | `dns-default` | 10.0.2.5 | ip-10-0-2-20 (`srv-a`에 podAffinity) | ap-northeast-2a | glibc 리졸버, 기본 `ndots:5` |
 | `dns-ndots1` | 10.0.2.143 | ip-10-0-2-20 | ap-northeast-2a | glibc 리졸버, `dnsConfig.options ndots=1` |
 
-서버 Pod는 `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"`를 실행하고, 모든 벤치 Pod에 `karpenter.sh/do-not-disrupt: "true"`를 붙였습니다. `srv-a`는 처음에 m5.large / 1500m으로 요청했지만 Karpenter가 `no instance type has enough resources`를 보고했습니다 — m5.large의 allocatable 1930m 중 DaemonSet 오버헤드가 821m이어서 — 그래서 m5.xlarge / 2800m으로 바꿨습니다.
+서버 Pod는 `sh -c "iperf3 -s -p 5201 & exec fortio server -http-port 8080 -grpc-port 8079 -tcp-port 8078"`를 실행하고, 모든 벤치 Pod에 `karpenter.sh/do-not-disrupt: "true"`를 붙였습니다. `srv-a`는 처음에 m5.large / 1500m으로 요청했지만 Karpenter가 `no instance type has enough resources`를 보고했습니다. m5.large의 allocatable 1930m 중 DaemonSet 오버헤드가 821m이어서 m5.xlarge / 2800m으로 바꿨습니다.
 
 ### 배포 매니페스트
 
@@ -65,7 +65,7 @@ metadata:
   labels:
     bench: net
 ---
-# 클라이언트 — ap-northeast-2a의 새 m5.xlarge
+# 클라이언트: ap-northeast-2a의 새 m5.xlarge
 apiVersion: v1
 kind: Pod
 metadata:
@@ -86,7 +86,7 @@ spec:
       resources:
         requests: { cpu: "2500m", memory: "1Gi" }
 ---
-# same-node — required podAffinity로 cli와 같은 노드에
+# same-node: required podAffinity로 cli와 같은 노드에
 apiVersion: v1
 kind: Pod
 metadata:
@@ -109,7 +109,7 @@ spec:
       resources:
         requests: { cpu: "200m", memory: "256Mi" }
 ---
-# same-AZ — cli와 같은 AZ, 다른 노드(podAntiAffinity). m5.large는 DaemonSet 오버헤드 때문에 들어가지 않아 m5.xlarge
+# same-AZ: cli와 같은 AZ, 다른 노드(podAntiAffinity). m5.large는 DaemonSet 오버헤드 때문에 들어가지 않아 m5.xlarge
 apiVersion: v1
 kind: Pod
 metadata:
@@ -136,7 +136,7 @@ spec:
       resources:
         requests: { cpu: "2800m", memory: "1Gi" }
 ---
-# cross-AZ — ap-northeast-2b의 새 m5.xlarge
+# cross-AZ: ap-northeast-2b의 새 m5.xlarge
 apiVersion: v1
 kind: Pod
 metadata:
@@ -192,7 +192,7 @@ spec:
       resources: { requests: { cpu: "50m", memory: "64Mi" } }
 ```
 
-## 측정 1 — RTT와 HTTP 레이턴시: 같은 노드 → 같은 AZ → 다른 AZ
+## 측정 1. RTT와 HTTP 레이턴시: 같은 노드 → 같은 AZ → 다른 AZ
 
 ICMP(`ping -c 200 -i 0.05 -q`)는 엔드포인트 커널 처리와 스케줄링을 포함한 유휴 경로를 관찰합니다. 이후 같은 경로를 HTTP/1.1과 gRPC로 측정했습니다. 참고용으로 새 연결을 쓰는 `curl` 1회의 connect / total도 적었습니다.
 
@@ -204,7 +204,7 @@ ICMP(`ping -c 200 -i 0.05 -q`)는 엔드포인트 커널 처리와 스케줄링�
 
 관측 차이는 같은 AZ − 같은 노드 = +0.30 ms, 다른 AZ − 같은 AZ = **+0.21 ms**, 다른 AZ − 같은 노드 = +0.50 ms입니다. 이 표본의 mdev는 모두 0.017 ms 이하였습니다. curl의 `time_total`은 전송 작업 시간이며 프로세스 기동 시간은 포함하지 않습니다. 1회 값으로 분포를 판단할 수는 없습니다. [curl 시간 정의](https://curl.se/docs/manpage.html)를 참고하세요.
 
-### HTTP/1.1 — 100 qps, 커넥션 4개, keepalive, 60 s (요청 6,000개), ms
+### HTTP/1.1: 100 qps, 커넥션 4개, keepalive, 60 s (요청 6,000개), ms
 
 | 경로 | avg | **p50** | p90 | p99 | p99.9 | max | min |
 |---|---|---|---|---|---|---|---|
@@ -212,7 +212,7 @@ ICMP(`ping -c 200 -i 0.05 -q`)는 엔드포인트 커널 처리와 스케줄링�
 | 같은 AZ | 0.468 | **0.461** | 0.560 | 0.667 | 0.783 | 2.823 | 0.336 |
 | 다른 AZ | 0.706 | **0.704** | 0.782 | 0.812 | 1.150 | 4.581 | 0.551 |
 
-### gRPC ping — 100 qps, 커넥션 4개, 30 s (요청 3,000개), ms
+### gRPC ping: 100 qps, 커넥션 4개, 30 s (요청 3,000개), ms
 
 | 경로 | avg | **p50** | p90 | p99 | p99.9 | max | min |
 |---|---|---|---|---|---|---|---|
@@ -226,7 +226,7 @@ ICMP(`ping -c 200 -i 0.05 -q`)는 엔드포인트 커널 처리와 스케줄링�
 
 > **메시 벤치마크와의 비교.** [Istio sidecar vs ambient 기록](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)의 p50 **+1.29 ms**(2.11 − 0.82 ms)는 사이드카 시나리오 전체의 차이이며 프록시 하나의 독립 비용이 아닙니다. Graviton 하드웨어·200 qps·커넥션 16개·Fortio 1.69.4로, 여기의 M5·100 qps·커넥션 4개와 조건이 다릅니다. 두 값을 보편적인 “메시 홉”과 “AZ 홉” 비용으로 더하거나 순위를 매길 수 없습니다.
 
-### 새 커넥션의 비용 — keepalive=false, 100 qps, 커넥션 4개, 30 s (요청 3,000개), ms
+### 새 커넥션의 비용: keepalive=false, 100 qps, 커넥션 4개, 30 s (요청 3,000개), ms
 
 요청마다 TCP 커넥션을 새로 맺으면(fortio `-keepalive=false`) 지연은 어떻게 변할까요?
 
@@ -238,7 +238,7 @@ ICMP(`ping -c 200 -i 0.05 -q`)는 엔드포인트 커널 처리와 스케줄링�
 
 관측 증가분은 **+0.405 / +0.618 / +0.813 ms**입니다. 새 TCP 연결은 수립 작업을 추가하지만 이 측정만으로 “RTT 한 번 + 0.3 ms”라는 고정 분해를 입증할 수는 없습니다. 연결 재사용은 실제 부하로 평가할 유용한 최적화이며 AZ 간 호출의 정확성을 위한 필수 조건은 아닙니다. 연결 종료 방식에 따라 active close를 수행한 쪽에 TIME_WAIT가 늘 수 있지만, 소켓 상태나 TIME_WAIT 수는 여기서 측정하지 않았습니다.
 
-### 고정 커넥션 풀의 최대 qps — 지연이 곧 처리량 (closed-loop, 커넥션 16개, 20 s)
+### 고정 커넥션 풀의 최대 qps: 지연이 곧 처리량 (closed-loop, 커넥션 16개, 20 s)
 
 `-qps 0`(무제한, 닫힌 루프)으로 16개 커넥션이 낼 수 있는 최대 요청률을 재면 지연 차이가 처리량 차이로 바뀝니다.
 
@@ -250,7 +250,7 @@ ICMP(`ping -c 200 -i 0.05 -q`)는 엔드포인트 커널 처리와 스케줄링�
 
 평균 약 16개 요청이 진행 중이고 클라이언트 대기 시간이 작은 정상상태 폐루프에서는 Little의 법칙으로 처리량 ≈ 동시성 / 평균 지연을 얻습니다. 16 / 0.000355 = 45,070(기록 44,991), 16 / 0.000415 = 38,554(38,507), 16 / 0.000624 = 25,641(25,602)입니다. 이 테스트의 다른 AZ 요청률은 같은 AZ보다 **33.5% 낮았습니다**. 이 관계가 지연의 단독 원인이나 보편적인 AZ 페널티를 입증하지는 않습니다. 같은 노드의 꼬리 지연이 더 큰 원인으로 CPU 경합을 의심할 수 있지만 프로파일링으로 확인하지 않았습니다.
 
-## 측정 2 — 처리량: 단일 플로우 5 Gbps 상한과 인스턴스 10 Gbps 상한
+## 측정 2. 처리량: 단일 플로우 5 Gbps 상한과 인스턴스 10 Gbps 상한
 
 iperf3 3.19, TCP, 실행당 20초, `-J`, 클라이언트 `cli`. CPU 열은 iperf3가 보고하는 프로세스별 값으로 100% = vCPU 1개입니다.
 
@@ -280,14 +280,14 @@ iperf3 3.19, TCP, 실행당 20초, `-J`, 클라이언트 `cli`. CPU 열은 iperf
 
 | 항목 | 값 |
 |---|---|
-| 10초 구간별 Gbps (18구간) | 9.94, 9.93 ×12, 9.92, 9.93 ×4 — **최소 9.92, 최대 9.94** |
+| 10초 구간별 Gbps (18구간) | 9.94, 9.93 ×12, 9.92, 9.93 ×4 (**최소 9.92, 최대 9.94**) |
 | 총 전송 | 223,376,179,200 B = **223.4 GB** / 180.0 s (9.93 Gbps) |
 | 재전송 | 44,842 (≈ 249/s; 10초 구간당 2,273–2,669) |
 | CPU | 클라이언트 30.7 % (system 30.1 %), 서버 54.2 % (system 52.2 %) |
 
 **180초 동안 1.25 Gbps로의 하락은 관측되지 않았습니다.** 무제한 크레딧이나 지속적인 피크 대역폭 보장을 뜻하지는 않습니다. AWS는 가변적인 best-effort 버스트와 크레딧 소진 시 베이스라인 제한을 설명합니다. 장시간 백업과 리밸런스는 이 짧은 실행을 외삽하지 말고 해당 베이스라인과 실제 부하 요구를 기준으로 계획하세요.
 
-## 측정 3 — AZ 간 데이터 전송 비용 모델
+## 측정 3. AZ 간 데이터 전송 비용 모델
 
 이 절은 원문의 비용 산술을 추정 모델로 보존합니다. 벤치마크에 제공된 것은 페이로드 바이트 수와 공개 정가이며, 비용 및 사용량 보고서(CUR)나 청구서가 아닙니다.
 
@@ -308,7 +308,7 @@ iperf3 3.19, TCP, 실행당 20초, `-J`, 클라이언트 `cli`. CPU 열은 iperf
 - **지역성과 장애 내성을 함께 고려합니다.** 존 인식 읽기나 클라이언트 배치로 불필요한 전송을 줄일 수 있지만 RF3 복제본을 모두 한 AZ에 모으면 AZ 장애 보호를 잃습니다. 필요한 복제·장애 전환 설계를 유지하세요. [Zonal 클러스터 운영 전략](../ops/15-zonal-operations-guide.md)을 참고하세요.
 - **과금되는 양 끝을 측정합니다.** 백업·리밸런스·리플레이의 출발/목적 AZ와 계량 사용량을 기록하고 관련 “in”·“out” 항목을 합산합니다. 서로 다른 계정에 청구될 수도 있으므로 페이로드 바이트만으로 최종 요금을 단정하지 마세요.
 
-## 측정 4 — DNS: ndots:5가 만드는 쿼리 증폭
+## 측정 4. DNS: ndots:5가 만드는 쿼리 증폭
 
 ![glibc 리졸버가 ndots:5에서 search 접미사 4개를 A+AAAA 쿼리로 차례로 시도해 NXDOMAIN 8개를 받은 뒤 마지막에 절대 이름으로 답을 얻는 10쿼리 경로와, 끝에 점을 붙였을 때 A+AAAA 2쿼리로 바로 끝나는 경로를 대비한 시퀀스 다이어그램.](../.gitbook/assets/ko-networking-06-pod-network-benchmark-1.png)
 
@@ -339,14 +339,14 @@ iperf3 3.19, TCP, 실행당 20초, `-J`, 클라이언트 `cli`. CPU 열은 iperf
 
 **읽는 법.** 이 표본의 외부 이름과 끝점 없는 클러스터 FQDN은 **10쿼리 / NXDOMAIN 8개**였습니다. 끝점을 붙인 STS의 중앙값은 3.78 → 0.80 ms, 클러스터 FQDN은 3.63 → 0.46 ms로 줄었습니다. `kubernetes.default`는 두 번째 후보에서 성공해 4쿼리만 필요했으므로 항상 search 목록 전체를 소비하지는 않습니다. [CoreDNS cache](https://coredns.io/plugins/cache/)는 음성 응답도 캐시하지만 `cache 30`은 최대 TTL입니다. 응답 TTL과 최소 TTL이 적용되고 replica마다 캐시가 별개입니다. Kubernetes 플러그인의 기본 TTL은 별도 설정이 없으면 5초입니다. 캐시 히트에서도 순차 질의는 남지만, 이 캡처가 모든 웜 조회에서 업스트림을 피했음을 입증하지는 않습니다.
 
-### 실제 순서 — `sts.ap-northeast-2.amazonaws.com` 콜드 풀이 1회 (ndots:5, tcpdump, 첫 패킷 기준 ms)
+### 실제 순서: `sts.ap-northeast-2.amazonaws.com` 콜드 풀이 1회 (ndots:5, tcpdump, 첫 패킷 기준 ms)
 
 | t (ms) | 172.20.0.10으로 보낸 후보 (A + AAAA 병렬) | 응답 |
 |---|---|---|
 | 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | NXDomain (권한 응답, CoreDNS kubernetes 플러그인) 0.92 / 1.14 |
 | 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | NXDomain 2.01 / 2.26 |
 | 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | NXDomain 3.15 / 3.41 |
-| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | NXDomain (VPC 리졸버로 forward — 비권한) 3.68 / 3.93 |
+| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | NXDomain (VPC 리졸버로 forward, 비권한) 3.68 / 3.93 |
 | 3.99 | `sts.ap-northeast-2.amazonaws.com.` | **A 10.0.3.84, A 10.0.2.129** 4.37 (AAAA: no data) |
 
 표에는 쿼리 10개와 NXDOMAIN 8개가 기록되어 있습니다. **4.37 ms**는 첫 질의부터 A 응답까지이며 AAAA 완료 시각은 없으므로 프로세스 첫 호출 6.22 ms 전체와 같지 않습니다. 후보별 RTT도 일률적인 0.8–1.1 ms가 아닙니다. 네 번째 쌍은 0.21 / 0.46 ms, 마지막 A는 0.38 ms였습니다. kube-proxy iptables는 패킷마다가 아니라 새 conntrack 플로우에 대해 엔드포인트를 선택하며 A/AAAA가 같은 플로우를 사용할 수 있습니다. 엔드포인트 둘을 같은 확률로 고르면 새 플로우의 절반이라는 모델을 세울 수 있지만, **AZ 간 DNS 쿼리 비율을 측정한 결과는 아닙니다**. Service VIP `172.20.0.10`을 본 Pod 캡처만으로 선택된 백엔드 AZ를 알 수 없습니다. 원문은 STS 사설 주소 둘을 인터페이스 엔드포인트 ENI로 설명하며, 별도로 클러스터 FQDN의 포워딩 후보 2.2 ms / 패킷 walk 5.6 ms와 끝점 사용 시 0.4–0.5 ms를 기록합니다.
@@ -368,7 +368,7 @@ iperf3 3.19, TCP, 실행당 20초, `-J`, 클라이언트 `cli`. CPU 열은 iperf
 - 적합한 환경에서 [NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)를 평가합니다. 히트는 로컬이지만 미스는 업스트림으로 갈 수 있습니다. 현재 [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)는 이미 노드 로컬 CoreDNS 시스템 서비스를 사용합니다. 순수 Auto Mode 클러스터에는 CoreDNS Deployment가 불필요하지만, 혼합 클러스터의 비 Auto 노드에는 여전히 필요합니다.
 - [CoreDNS autopath](https://coredns.io/plugins/autopath/)는 서버에서 search를 처리할 수 있지만 Kubernetes 연동에는 `pods verified`, 원래 Pod IP 식별, 관련 Pod watch·RBAC·메모리가 필요합니다. 기록된 `pods insecure` 구성은 이 조건을 충족하지 않습니다. 여기서는 이 최적화를 시험하지 않았습니다.
 
-## 재현 방법 — 보완된 절차
+## 재현 방법: 보완된 절차
 
 승인된 격리 실습 환경과 이 테스트 전용의 사용하지 않는 네임스페이스를 사용합니다. 첫 픽스처를 환경에 맞게 복사해 `bench-net.yaml`, DNS 객체 두 개를 `bench-dns.yaml`로 저장하고 네임스페이스 이름을 맞춥니다. 적용 전에 NodePool 용량·AZ·스케줄링·패킷 캡처 권한을 확인하세요. 실험을 위해 운영 환경의 admission이나 보안 통제를 약화하지 마세요. 시간이 제한된 명령도 노드를 포화시키고 요금을 발생시킬 수 있습니다.
 
@@ -510,7 +510,7 @@ kubectl -n "$BENCH_NS" exec -i "$DNS_POD" -c app -- \
 
 ## 해석 시 주의사항
 
-- **새 노드였지만 완전히 혼자는 아니었습니다.** Karpenter가 이 테스트용으로 띄운 m5.xlarge 3대에 곧 consolidation이 다른 네임스페이스의 작은 Pod 몇 개를 옮겨 왔습니다(`cli` 노드에 1개, `srv-b` 노드에 3개 — 소규모 내부 서비스와 컨트롤러이며, 벤치마크 트래픽과는 무관합니다). 측정 중 유휴·저트래픽이었고 부하는 최대 180초 버스트로 제한했습니다. `cli` 노드의 CPU *요청*은 3901m / 3920m(99%)였지만 실제 사용량이 그렇다는 뜻은 아닙니다.
+- **새 노드였지만 완전히 혼자는 아니었습니다.** Karpenter가 이 테스트용으로 띄운 m5.xlarge 3대에 곧 consolidation이 다른 네임스페이스의 작은 Pod 몇 개를 옮겨 왔습니다(`cli` 노드에 1개, `srv-b` 노드에 3개; 소규모 내부 서비스와 컨트롤러이며, 벤치마크 트래픽과는 무관합니다). 측정 중 유휴·저트래픽이었고 부하는 최대 180초 버스트로 제한했습니다. `cli` 노드의 CPU *요청*은 3901m / 3920m(99%)였지만 실제 사용량이 그렇다는 뜻은 아닙니다.
 - **하루에 셀당 한 번(n = 1) 측정했습니다.** 분산 추정을 위한 독립 반복이 없습니다. 순위·비율·인과 설명도 이 표본 크기의 제약을 받으며 SLA로 사용할 수 없습니다.
 - **애플리케이션 ClusterIP와 트래픽 분산은 측정하지 않았습니다.** 기록에 따르면 벤치마크 네임스페이스의 Service 생성이 `failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"`로 실패했습니다. `failurePolicy: Fail`인 실패 웹훅은 매칭되는 요청을 거부하며, 범위는 rules·namespace/object selector·match condition에 달려 있습니다. 과거 사건을 현재 클러스터의 모든 Service 생성이 불가능하다는 뜻으로 읽으면 안 됩니다. 웹훅은 우회하지 않았고 DNS는 기존 `kube-dns` Service를 사용했습니다. [트러블슈팅 플레이북](../ops/16-troubleshooting-playbook.md)을 참고하세요.
 - **ENA allowance 카운터는 수집하지 않았습니다.** `ethtool -S`는 적절한 권한으로 호스트의 실제 ENA 인터페이스를 대상으로 해야 합니다. Pod 자신의 `eth0`는 대개 veth이며 `hostNetwork`만으로 올바른 장치나 권한이 보장되지 않습니다. 관련 카운터는 `bw_in_allowance_exceeded`, `bw_out_allowance_exceeded`, `pps_allowance_exceeded`, `conntrack_allowance_exceeded`, `linklocal_allowance_exceeded`입니다. 재전송 수는 이를 대신하지 못합니다.
@@ -521,13 +521,13 @@ kubectl -n "$BENCH_NS" exec -i "$DNS_POD" -c app -- \
 
 ## 함께 읽기
 
-- [Amazon VPC CNI](./01-vpc-cni.md) — 이 측정의 데이터 플레인: Pod가 VPC IP를 직접 받는 구조, prefix delegation, ENI/IP 워밍
-- [Zonal 클러스터 운영 전략](../ops/15-zonal-operations-guide.md) — 측정 3의 요금을 줄이는 존 정렬 배치와 AZ 장애 전환 설계
-- [트러블슈팅 플레이북](../ops/16-troubleshooting-playbook.md) — 웹훅 실패 진단; 이 문서의 사건은 과거 기록
-- [사이드카 vs Ambient 모드 선택 가이드](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — 별도의 하드웨어·부하 실험; +1.29 ms는 시나리오 전체의 차이
-- [EBS gp2 vs gp3 실측 벤치마크](../storage/01-ebs-gp2-gp3-benchmark.md) — 같은 클러스터의 스토리지 경로 실측
-- [Kafka on EKS 실측 벤치마크](../data-on-eks/kafka/09-kafka-benchmark.md) — 복제 트래픽·플로우 한도·가용성의 관계
-- [가이드북 로드맵 — 실측 벤치마크 시리즈](../roadmap.md)
+- [Amazon VPC CNI](./01-vpc-cni.md): 이 측정의 데이터 플레인(Pod가 VPC IP를 직접 받는 구조, prefix delegation, ENI/IP 워밍)
+- [Zonal 클러스터 운영 전략](../ops/15-zonal-operations-guide.md): 측정 3의 요금을 줄이는 존 정렬 배치와 AZ 장애 전환 설계
+- [트러블슈팅 플레이북](../ops/16-troubleshooting-playbook.md): 웹훅 실패 진단; 이 문서의 사건은 과거 기록
+- [사이드카 vs Ambient 모드 선택 가이드](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md): 별도의 하드웨어·부하 실험; +1.29 ms는 시나리오 전체의 차이
+- [EBS gp2 vs gp3 실측 벤치마크](../storage/01-ebs-gp2-gp3-benchmark.md): 같은 클러스터의 스토리지 경로 실측
+- [Kafka on EKS 실측 벤치마크](../data-on-eks/kafka/09-kafka-benchmark.md): 복제 트래픽·플로우 한도·가용성의 관계
+- [가이드북 로드맵: 실측 벤치마크 시리즈](../roadmap.md)
 - [퀴즈: Pod 네트워크 실측 벤치마크](../quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 

@@ -1,6 +1,6 @@
 # Feature Flags와 OpenFeature
 
-> **검토 기준**: flagd 0.16.3, OpenFeature Operator 0.9.3, Flagger 1.45.0 — SDK별 버전은 예제 절에 명시
+> **검토 기준**: flagd 0.16.3, OpenFeature Operator 0.9.3, Flagger 1.45.0; SDK별 버전은 예제 절에 명시
 > **마지막 업데이트**: 2026년 9월 11일
 
 Feature Flag는 코드 배포와 기능 릴리스를 분리하여 프로덕션 환경에서 기능을 안전하게 제어할 수 있게 하는 핵심 기술입니다. 이 문서에서는 CNCF 프로젝트인 OpenFeature 표준과 Kubernetes 네이티브 Feature Flag 관리 방법을 다룹니다.

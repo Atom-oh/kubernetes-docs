@@ -897,4 +897,4 @@ The agent and Hubble exporter need Prometheus discovery/scraping in addition to 
 - [Kafka ACLs](https://kafka.apache.org/41/security/authorization-and-acls/)
 - [AWS STS endpoints](https://docs.aws.amazon.com/general/latest/gr/sts.html)
 - [WireGuard protocol](https://www.wireguard.com/protocol/)
-- [NIST Zero Trust Architecture — further reading](https://www.nist.gov/publications/zero-trust-architecture)
+- [NIST Zero Trust Architecture (further reading)](https://www.nist.gov/publications/zero-trust-architecture)

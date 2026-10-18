@@ -162,6 +162,6 @@ SageMaker는 Training Job과 MLflow 관리 부담을 줄여 주지만 artifact �
 - [EKS Pod Identity의 동작과 제약](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
 - [Kubernetes Job의 실패·종료](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
 
-이전: [Part 2 — 합성 PII 데이터와 토큰화](02-pii-data-tokenization.md)
+이전: [Part 2: 합성 PII 데이터와 토큰화](02-pii-data-tokenization.md)
 
-다음: [Part 4 — Unified Studio 거버넌스](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
+다음: [Part 4: Unified Studio 거버넌스](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)

@@ -1,6 +1,6 @@
 # Kubernetes/EKS 트러블슈팅 플레이북: 증상 → 진단 → 원인 → 조치
 
-> **기존 출력의 기록 버전**: Amazon EKS 1.36의 기존 출력 예시 — 컨트롤 플레인 v1.36.2-eks-bca9cf6, 플랫폼 버전 eks.9, Karpenter 1.4, VPC CNI v1.21, CoreDNS v1.14
+> **기존 출력의 기록 버전**: Amazon EKS 1.36의 기존 출력 예시(컨트롤 플레인 v1.36.2-eks-bca9cf6, 플랫폼 버전 eks.9, Karpenter 1.4, VPC CNI v1.21, CoreDNS v1.14)
 > **마지막 검토**: 2026년 9월 11일
 
 < [이전: Zonal 클러스터 운영 전략](15-zonal-operations-guide.md) | [목차](./README.md) >
@@ -149,7 +149,7 @@ Warning  Failed   kubelet  Error: ImagePullBackOff
 
 **증상**: 컨테이너가 반복 종료하며 RESTARTS가 증가합니다. 일반적인 백오프는 10초부터 두 배씩 증가해 300초에 도달하지만 feature gate와 kubelet 설정에 따라 달라집니다. [Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)의 restart 정책을 확인합니다.
 
-**진단**: 세 가지를 순서대로 봅니다 — **종료 이유와 exit code**, **이전 컨테이너의 로그**, **Events**.
+**진단**: 세 가지를 순서대로 봅니다: **종료 이유와 exit code**, **이전 컨테이너의 로그**, **Events**.
 
 ```bash
 # (1) 왜 죽었는가: lastState.terminated
@@ -162,7 +162,7 @@ kubectl logs <pod> -n <ns> -c <container> --previous --tail=100
 kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
 ```
 
-기존 문서의 출력 예시 — 메모리 limit 128Mi로 기록된 컨테이너:
+기존 문서의 출력 예시(메모리 limit 128Mi로 기록된 컨테이너):
 
 ```
     Last State:     Terminated
@@ -179,15 +179,15 @@ kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
 
 | Exit Code | Reason | 의미 | 조치 |
 |---|---|---|---|
-| `0` | `Completed` | 프로세스가 정상 종료 — Deployment라면 앱이 포그라운드로 안 떠 있음 | 장기 서비스는 엔트리포인트를 포그라운드로, 또는 Job으로 전환 |
+| `0` | `Completed` | 프로세스가 정상 종료(Deployment라면 앱이 포그라운드로 안 떠 있음) | 장기 서비스는 엔트리포인트를 포그라운드로, 또는 Job으로 전환 |
 | `1` | `Error` | 앱이 스스로 종료 (설정 오류, 의존 서비스 연결 실패) | `logs --previous`에 스택트레이스가 있음 |
-| `126` | `Error` | 셸 엔트리포인트에서 커맨드는 찾았지만 실행 불가 — 실행 권한 누락, 또는 셸이 `cannot execute binary file: Exec format error`를 낸 경우(아키텍처 불일치) | Dockerfile에서 `chmod +x`; `kubectl get nodes -L kubernetes.io/arch`로 arm64/amd64 확인 후 멀티아치 이미지 사용 |
-| `127` | `Error` | 셸 엔트리포인트에서 커맨드를 찾을 수 없음 — 경로 오타, 또는 최종 이미지 스테이지에 바이너리가 복사되지 않음 | `command`/`args`와 이미지 안의 실제 파일을 비교 (`kubectl debug ... -- ls <path>`) |
+| `126` | `Error` | 셸 엔트리포인트에서 커맨드는 찾았지만 실행 불가: 실행 권한 누락, 또는 셸이 `cannot execute binary file: Exec format error`를 낸 경우(아키텍처 불일치) | Dockerfile에서 `chmod +x`; `kubectl get nodes -L kubernetes.io/arch`로 arm64/amd64 확인 후 멀티아치 이미지 사용 |
+| `127` | `Error` | 셸 엔트리포인트에서 커맨드를 찾을 수 없음: 경로 오타, 또는 최종 이미지 스테이지에 바이너리가 복사되지 않음 | `command`/`args`와 이미지 안의 실제 파일을 비교 (`kubectl debug ... -- ls <path>`) |
 | `137` | `OOMKilled` | OOM으로 종료됨. 컨테이너 limit 또는 노드 메모리 압박을 구분 | limit 상향 또는 누수 수정. JVM은 `-XX:MaxRAMPercentage` 확인 → [리소스 최적화](10-resource-optimization.md) |
-| `137` | `Error` | limit이 아닌 다른 이유의 SIGKILL — liveness 실패 후 `terminationGracePeriodSeconds` 안에 안 죽음 | preStop/graceful shutdown 점검 |
+| `137` | `Error` | limit이 아닌 다른 이유의 SIGKILL: liveness 실패 후 `terminationGracePeriodSeconds` 안에 안 죽음 | preStop/graceful shutdown 점검 |
 | `143` | `Error` | SIGTERM을 받고 종료 (정상 롤링/축출 과정일 수 있음) | 반복되면 누가 죽이는지 Events 확인 |
 
-- 셸 없이 바이너리를 직접 실행하는 이미지라면 아키텍처 불일치는 exit 126으로 나오지 않습니다 — 컨테이너가 아예 시작되지 못하고 `lastState.terminated`에 Reason `StartError`, 메시지에 `exec format error`가 찍힙니다. 조치는 같습니다: 멀티아치 이미지, 또는 `kubernetes.io/arch` nodeSelector.
+- 셸 없이 바이너리를 직접 실행하는 이미지라면 아키텍처 불일치는 exit 126으로 나오지 않습니다. 컨테이너가 아예 시작되지 못하고 `lastState.terminated`에 Reason `StartError`, 메시지에 `exec format error`가 찍힙니다. 조치는 같습니다: 멀티아치 이미지, 또는 `kubernetes.io/arch` nodeSelector.
 
 **프로브 실패**: 아래 이벤트는 liveness 검사 실패로 재시작했다는 뜻입니다. 경로·포트 오류뿐 아니라 실제 앱 장애, 과부하, 교착도 원인일 수 있습니다. 프로브를 완화하기 전에 응답과 앱 상태를 확인합니다.
 
@@ -199,7 +199,7 @@ Normal   Killing    kubelet  Container app failed liveness probe, will be restar
 - 앱 기동이 느려서 죽는다면 liveness의 `initialDelaySeconds`를 늘리는 대신 **`startupProbe`** 를 추가합니다(startupProbe가 성공할 때까지 liveness는 시작되지 않음).
 - `Readiness probe failed: dial tcp 10.0.2.45:8080: connect: connection refused`처럼 TCP 거부라면 컨테이너 포트와 프로브 포트가 다른지 먼저 봅니다.
 
-**설정 참조 오류** — 정확히는 CrashLoop이 아니라 `CreateContainerConfigError`로 멈춥니다:
+**설정 참조 오류**: 정확히는 CrashLoop이 아니라 `CreateContainerConfigError`로 멈춥니다.
 
 ```
 Warning  Failed  kubelet  Error: configmap "app-config" not found
@@ -237,7 +237,7 @@ kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc> -o json |
 | 관찰 | 원인 | 조치 |
 |---|---|---|
 | Events에 `Readiness probe failed` 반복 | 프로브 경로/포트 오류, 앱이 아직 의존 서비스(DB 등) 대기 중 | 프로브 대상 URL을 앱의 실제 헬스 엔드포인트로. 의존성 대기는 readiness에 두고 liveness에서는 빼기 |
-| Conditions에 `Ready False`, 사유가 `ReadinessGatesNotReady` | Pod readiness gate 대기 — AWS Load Balancer Controller의 `target-health.elbv2.k8s.aws/*` 게이트가 대표적 | Target Group 헬스체크 실패 원인 확인 → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
+| Conditions에 `Ready False`, 사유가 `ReadinessGatesNotReady` | Pod readiness gate 대기(AWS Load Balancer Controller의 `target-health.elbv2.k8s.aws/*` 게이트가 대표적) | Target Group 헬스체크 실패 원인 확인 → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
 | `1/2` Running, 앱 컨테이너만 Ready | 사이드카(istio-proxy 등) 미준비 또는 사이드카가 앱보다 늦게 떠서 초기 연결 실패 | 사이드카 로그 확인, 주입기·사이드카 버전이 지원하는 시작 순서와 readiness 설정 확인. native sidecar 전환만으로 Ready 실패가 해결되지는 않음 |
 | Ready인데도 EndpointSlice가 비어 있음 | Service 셀렉터가 파드 라벨과 불일치 | → [5. Service 접근 불가](#5-service에-접근이-안-됨) |
 
@@ -334,7 +334,7 @@ df -h /var/lib/containerd
 crictl ps -a | head
 ```
 
-`kubectl get nodes`에 노드가 **아예 나타나지 않는** 경우(조인 실패: IAM 역할/access entry, 서브넷 라우팅, 보안 그룹, AMI 불일치)는 별도 주제입니다 → [EKS 고급 디버깅 — 노드 조인 실패 진단](../eks/11-eks-advanced-debugging.md#node-join-diagnosis), [EKS 문제 해결 — 노드 및 파드 문제](../eks/09-eks-troubleshooting.md#노드-및-파드-문제). Karpenter 노드라면 [10번](#10-eks-karpenter가-노드를-만들지-않음)의 NodeClaim 확인을 먼저 합니다.
+`kubectl get nodes`에 노드가 **아예 나타나지 않는** 경우(조인 실패: IAM 역할/access entry, 서브넷 라우팅, 보안 그룹, AMI 불일치)는 별도 주제입니다 → [EKS 고급 디버깅: 노드 조인 실패 진단](../eks/11-eks-advanced-debugging.md#node-join-diagnosis), [EKS 문제 해결: 노드 및 파드 문제](../eks/09-eks-troubleshooting.md#노드-및-파드-문제). Karpenter 노드라면 [10번](#10-eks-karpenter가-노드를-만들지-않음)의 NodeClaim 확인을 먼저 합니다.
 
 <span id="7-pvc가-pending"></span>
 
@@ -367,11 +367,11 @@ gp3    ebs.csi.aws.com         Delete          WaitForFirstConsumer   true      
 | `FailedBinding: no persistent volumes available for this claim and no storage class is set` | `storageClassName`을 안 썼고 기본 StorageClass도 없음 | PVC에 `storageClassName: gp3` 지정, 또는 SC에 `storageclass.kubernetes.io/is-default-class: "true"` 어노테이션 |
 | `ProvisioningFailed: storageclass.storage.k8s.io "<name>" not found` | StorageClass 이름 오타, 다른 클러스터에서 가져온 매니페스트 | `kubectl get sc`의 실제 이름으로 수정 |
 | `ProvisioningFailed: error generating accessibility requirements: no topology key found for node <node>` | 파드가 배정된 노드에 EBS CSI 노드 플러그인이 아직 등록되지 않음(`CSINode`에 드라이버 없음) | `kubectl get csinode <node>`의 DRIVERS 열 확인, `ebs-csi-node` 데몬셋이 그 노드에 떠 있는지 확인 |
-| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI 컨트롤러의 IRSA/Pod Identity 권한 없음 | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied) — 대상은 `ebs-csi-controller-sa` |
+| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI 컨트롤러의 IRSA/Pod Identity 권한 없음 | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied) (대상은 `ebs-csi-controller-sa`) |
 | 파드 쪽 `node(s) had volume node affinity conflict` | 기존 PV(EBS)는 AZ `ap-northeast-2a`에 있는데 스케줄 가능한 노드는 다른 AZ | EBS는 AZ를 못 넘음. `kubectl get pv <pv> -o jsonpath='{.spec.nodeAffinity}'`로 zone 확인 후 해당 AZ에 노드 확보(NodePool zone requirement 또는 nodeSelector) |
 | 파드 쪽 `FailedAttachVolume: Multi-Attach error for volume` | RWO 볼륨이 이전 노드에서 아직 detach 안 됨(노드 장애 후 StatefulSet 재스케줄) | `kubectl get volumeattachments`로 stale attachment 확인. 노드가 사라졌으면 attachment가 정리될 때까지 수 분 대기 |
 
-`WaitForFirstConsumer`, StorageClass, 동적 프로비저닝 개념은 [스토리지](../core/04-storage.md#스토리지-클래스storageclass)에, EBS/EFS CSI 오류 패턴은 [EKS 고급 디버깅 — 스토리지](../eks/11-eks-advanced-debugging.md#6-스토리지-문제-해결)에 있습니다.
+`WaitForFirstConsumer`, StorageClass, 동적 프로비저닝 개념은 [스토리지](../core/04-storage.md#스토리지-클래스storageclass)에, EBS/EFS CSI 오류 패턴은 [EKS 고급 디버깅: 스토리지](../eks/11-eks-advanced-debugging.md#6-스토리지-문제-해결)에 있습니다.
 
 <span id="8-eks-irsa--pod-identity-accessdenied"></span>
 
@@ -386,7 +386,7 @@ An error occurred (AccessDenied) when calling the AssumeRoleWithWebIdentity oper
 
 또는 S3/DynamoDB 호출 자체가 `... is not authorized to perform: s3:GetObject` 로 거부되는데, 거부된 주체가 서비스 계정 역할이 아니라 **노드 IAM 역할**(`assumed-role/<node-role>/i-0abc...`)인 경우. 이는 SDK가 노드 자격 증명을 선택했다는 단서입니다. 주입 누락 외에도 SDK 버전·공급자 우선순위·명시적 자격 증명을 확인합니다. IMDS 접근이 차단돼 있으면 노드 역할로 폴백하지 못합니다.
 
-**진단** — 어떤 방식을 쓰는지부터 확인합니다. 파드 환경 변수에 답이 있습니다.
+**진단**: 어떤 방식을 쓰는지부터 확인합니다. 파드 환경 변수에 답이 있습니다.
 
 ```bash
 # 서비스 계정 어노테이션 (IRSA)
@@ -428,9 +428,9 @@ aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 | `Not authorized to perform sts:AssumeRoleWithWebIdentity` | IRSA 신뢰 정책의 `Federated` OIDC provider ARN 또는 `sub` 조건(`system:serviceaccount:<ns>:<sa>`)/`aud`(`sts.amazonaws.com`) 불일치 | 신뢰 정책 수정. 클러스터를 재생성했다면 OIDC issuer가 바뀌어 provider도 새로 만들어야 함 |
 | Pod Identity인데 `AssumeRole` 거부 | 신뢰 정책 Principal이 `pods.eks.amazonaws.com`이 아니거나 `sts:TagSession` 누락 | 신뢰 정책에 `sts:AssumeRole` + `sts:TagSession` 모두 허용 |
 | env는 정상, 특정 API만 `AccessDenied` | 권한 정책, 리소스 정책, SCP, boundary, session/VPC endpoint 정책 등의 거부 | 사용 주체와 요청 리소스를 확인하고 명시적 Deny까지 추적. CloudTrail data event는 수집 설정이 필요할 수 있음 |
-| Pod Identity env 있는데 SDK가 `Unable to locate credentials` | SDK가 너무 오래되어 컨테이너 자격 증명 공급자(`FULL_URI`)를 지원 안 함 | SDK 업그레이드 — 지원 최소 버전은 EKS 문서 참고 |
+| Pod Identity env 있는데 SDK가 `Unable to locate credentials` | SDK가 너무 오래되어 컨테이너 자격 증명 공급자(`FULL_URI`)를 지원 안 함 | SDK 업그레이드(지원 최소 버전은 EKS 문서 참고) |
 
-IRSA와 Pod Identity의 동작 원리·설정 방법은 [EKS 보안 모범 사례](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts)와 [EKS 보안](../eks/05-eks-security.md#eks-pod-identity)에, 토큰 만료·webhook 이슈는 [EKS 고급 디버깅 — 컨트롤 플레인 디버깅](../eks/11-eks-advanced-debugging.md#2-컨트롤-플레인-디버깅)에 있습니다.
+IRSA와 Pod Identity의 동작 원리·설정 방법은 [EKS 보안 모범 사례](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts)와 [EKS 보안](../eks/05-eks-security.md#eks-pod-identity)에, 토큰 만료·webhook 이슈는 [EKS 고급 디버깅: 컨트롤 플레인 디버깅](../eks/11-eks-advanced-debugging.md#2-컨트롤-플레인-디버깅)에 있습니다.
 
 <span id="9-eks-enivpc-cni-ip-고갈"></span>
 
@@ -472,7 +472,7 @@ IPv4 secondary-IP 모드에서 `WARM_ENI_TARGET=1`은 여분 ENI 용량을 유�
 | `aws-node`가 해당 노드에서 `CrashLoopBackOff` | CNI 자체 장애(IAM 정책 `AmazonEKS_CNI_Policy` 누락, 버전 불일치) | `kubectl logs -n kube-system <aws-node-pod> -c aws-node`, 노드의 `/var/log/aws-routed-eni/ipamd.log` |
 | Security Groups for Pods 사용 중 `vpc.amazonaws.com/pod-eni` 부족 | branch ENI 한계 | 트렁크 ENI를 지원하는 인스턴스로, `ENABLE_POD_ENI=true` 확인 |
 
-IPAM 동작(warm pool, prefix delegation, custom networking)은 [VPC CNI — IP 주소 관리](../networking/01-vpc-cni.md#ip-주소-관리)에, 단계별 IP 고갈 대응은 [EKS 고급 디버깅 — 네트워킹 진단](../eks/11-eks-advanced-debugging.md#5-네트워킹-진단)과 [EKS 문제 해결 — VPC CNI 문제](../eks/09-eks-troubleshooting.md#네트워킹-문제)에 있습니다.
+IPAM 동작(warm pool, prefix delegation, custom networking)은 [VPC CNI: IP 주소 관리](../networking/01-vpc-cni.md#ip-주소-관리)에, 단계별 IP 고갈 대응은 [EKS 고급 디버깅: 네트워킹 진단](../eks/11-eks-advanced-debugging.md#5-네트워킹-진단)과 [EKS 문제 해결: VPC CNI 문제](../eks/09-eks-troubleshooting.md#네트워킹-문제)에 있습니다.
 
 <span id="10-eks-karpenter가-노드를-만들지-않음"></span>
 
@@ -519,16 +519,16 @@ FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool 
 | `key node.kubernetes.io/instance-type, ... In [X] not in ... In [Y Z]` | 파드가 요구한 인스턴스 타입이 NodePool 허용 목록에 없음 | 둘 중 하나를 맞춤. 파드 쪽 requirement가 너무 좁은 경우가 많음 |
 | `daemonset overhead={...}`가 크고 `Insufficient` | 데몬셋 예약분을 뺀 뒤 남는 용량이 부족 | 더 큰 인스턴스를 requirements에 포함 |
 | NodeClaim `LAUNCHED=True, REGISTERED=False`가 수 분 지속 | EC2는 떴는데 노드가 조인 못 함 (EC2NodeClass의 subnet/SG 셀렉터, 노드 IAM 역할 access entry, AMI) | `kubectl describe nodeclaim <name>`의 Conditions/Events, EC2 콘솔의 시스템 로그 |
-| Karpenter 로그에 `InsufficientInstanceCapacity` | 해당 AZ/인스턴스 타입의 EC2 용량 없음 (ICE — Insufficient Capacity Error) | 인스턴스 타입·AZ·capacity-type(spot/on-demand) 범위 확대 |
+| Karpenter 로그에 `InsufficientInstanceCapacity` | 해당 AZ/인스턴스 타입의 EC2 용량 없음 (ICE: Insufficient Capacity Error) | 인스턴스 타입·AZ·capacity-type(spot/on-demand) 범위 확대 |
 | 이벤트 없음, Karpenter 로그도 조용 | 파드가 Karpenter 대상이 아님 (`nodeSelector`가 MNG 라벨을 가리킴, 또는 Karpenter와 무관한 스케줄 제약) | 파드 spec에서 노드 관련 제약 전체를 다시 확인 |
 
-NodePool/EC2NodeClass 구조와 상세 문제 해결은 [Karpenter — 문제 해결](../autoscaling/02-karpenter.md#문제-해결)과 [EKS 고급 디버깅 — Karpenter 프로비저닝 문제](../eks/11-eks-advanced-debugging.md#karpenter-프로비저닝-문제)에 있습니다.
+NodePool/EC2NodeClass 구조와 상세 문제 해결은 [Karpenter: 문제 해결](../autoscaling/02-karpenter.md#문제-해결)과 [EKS 고급 디버깅: Karpenter 프로비저닝 문제](../eks/11-eks-advanced-debugging.md#karpenter-프로비저닝-문제)에 있습니다.
 
 <span id="11-어떤-service도-만들-수-없음-failed-calling-webhook"></span>
 
 ### 11. 어떤 Service도 만들 수 없음: failed calling webhook
 
-**증상**: 어느 네임스페이스에서든 — 로드밸런서와 아무 상관 없는 네임스페이스라도 — Service를 `kubectl apply`/`create` 하면 API 서버가 거부합니다. Service가 들어 있는 Deployment 배포, Helm 설치, ArgoCD sync가 그 자리에서 멈추는데, **기존 Service는 계속 정상 동작**하므로 파드 상태만 보면 아무 이상이 없습니다.
+**증상**: 어느 네임스페이스에서든(로드밸런서와 아무 상관 없는 네임스페이스라도) Service를 `kubectl apply`/`create` 하면 API 서버가 거부합니다. Service가 들어 있는 Deployment 배포, Helm 설치, ArgoCD sync가 그 자리에서 멈추는데, **기존 Service는 계속 정상 동작**하므로 파드 상태만 보면 아무 이상이 없습니다.
 
 ```
 Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": failed to call webhook:
@@ -565,9 +565,9 @@ kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 | 관찰 | 원인 | 조치 |
 |---|---|---|
 | `no endpoints available for service "aws-load-balancer-webhook-service"` | 웹훅 Deployment에 Ready 파드가 0개 (CrashLoop, 스케줄 실패, replicas 0) | **컨트롤러를 먼저 살립니다** (아래 행). 복구 확인은 EndpointSlice의 주소·ready 조건 및 실제 webhook 요청으로 |
-| 로그에 `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` | 컨트롤러 버전이 요구하는 Gateway API CRD가 미설치 | (a) 그 컨트롤러 버전이 요구하는 Gateway API CRD 설치 — Gateway API 1.5.0의 `ListenerSet`은 standard 채널, (b) CRD를 갖추기 전까지 Helm의 feature-gate 값으로 컨트롤러의 Gateway API 기능을 끈다 (정확한 gate 이름은 해당 버전의 `values.yaml`에서 확인), (c) 설치된 CRD와 맞는 컨트롤러 버전으로 고정 |
+| 로그에 `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` | 컨트롤러 버전이 요구하는 Gateway API CRD가 미설치 | (a) 그 컨트롤러 버전이 요구하는 Gateway API CRD 설치(Gateway API 1.5.0의 `ListenerSet`은 standard 채널), (b) CRD를 갖추기 전까지 Helm의 feature-gate 값으로 컨트롤러의 Gateway API 기능을 끈다 (정확한 gate 이름은 해당 버전의 `values.yaml`에서 확인), (c) 설치된 CRD와 맞는 컨트롤러 버전으로 고정 |
 | endpoints는 있는데 `connection refused` / `context deadline exceeded` / `x509` | 웹훅 포트로의 경로 차단(NetworkPolicy/보안 그룹), 인증서 만료·불일치 | API 서버 → 파드 웹훅 포트 경로, `clientConfig.caBundle`과 인증서 갱신 상태 확인 |
-| 지금 당장 Service를 만들어야 함 | — | **영향 범위를 이해한 의식적인 비상조치로만**: `mservice.elbv2.k8s.aws`의 `failurePolicy`를 `Ignore`로 패치. 그 사이 만든 Service는 컨트롤러의 mutation(기본 `loadBalancerClass` 주입)을 받지 못하므로, 복구 후 **반드시 `Fail`로 되돌리고** 그동안 만든 Service를 점검 |
+| 지금 당장 Service를 만들어야 함 | - | **영향 범위를 이해한 의식적인 비상조치로만**: `mservice.elbv2.k8s.aws`의 `failurePolicy`를 `Ignore`로 패치. 그 사이 만든 Service는 컨트롤러의 mutation(기본 `loadBalancerClass` 주입)을 받지 못하므로, 복구 후 **반드시 `Fail`로 되돌리고** 그동안 만든 Service를 점검 |
 
 하지 말아야 할 것: Service에 `app.kubernetes.io/name=aws-load-balancer-controller` 라벨을 붙여 `objectSelector`를 피해 가는 것. 웹훅은 통과하지만 그 Service는 **해당 mutation을 받지 못하고**, 라벨이 거짓말을 하게 됩니다. 이 selector는 컨트롤러 자신의 Service를 만들기 위한 예외일 뿐입니다.
 
@@ -660,7 +660,7 @@ kubectl rollout status deploy/<name> -n <ns>
 kubectl rollout history deploy/<name> -n <ns>
 ```
 
-`kubectl debug`의 `--profile` 값은 `legacy`, `general`, `baseline`, `restricted`, `netadmin`, `sysadmin`이며(기본값은 kubectl 버전에 따라 `legacy` 또는 `general` — `kubectl debug --help`로 확인), restricted 정책을 적용한 네임스페이스에서는 `--profile=restricted`와 호환 이미지·보안 컨텍스트가 필요하며, 다른 admission 정책까지 통과한다는 보장은 없습니다. 노드 디버그의 privileged 작업은 별도 허용이 필요합니다.
+`kubectl debug`의 `--profile` 값은 `legacy`, `general`, `baseline`, `restricted`, `netadmin`, `sysadmin`이며(기본값은 kubectl 버전에 따라 `legacy` 또는 `general`, `kubectl debug --help`로 확인), restricted 정책을 적용한 네임스페이스에서는 `--profile=restricted`와 호환 이미지·보안 컨텍스트가 필요하며, 다른 admission 정책까지 통과한다는 보장은 없습니다. 노드 디버그의 privileged 작업은 별도 허용이 필요합니다.
 
 ***
 
@@ -670,16 +670,16 @@ kubectl rollout history deploy/<name> -n <ns>
 
 | 좁혀진 영역 | 개념 문서 | 심화 문제 해결 |
 |---|---|---|
-| 파드 라이프사이클, 프로브, 재시작 정책 | [파드와 워크로드](../core/02-pods-and-workloads.md#파드-라이프사이클) | [EKS 고급 디버깅 — 워크로드 디버깅](../eks/11-eks-advanced-debugging.md#4-워크로드-디버깅) |
-| Service, EndpointSlice, CoreDNS, NetworkPolicy | [서비스와 네트워킹](../core/03-services-networking.md), [네트워크 정책](../security/04-network-policies.md) | [EKS 문제 해결 — 네트워킹 문제](../eks/09-eks-troubleshooting.md#네트워킹-문제) |
-| PV/PVC/StorageClass, EBS CSI | [스토리지](../core/04-storage.md) | [EKS 문제 해결 — 스토리지 문제](../eks/09-eks-troubleshooting.md#스토리지-문제) |
-| 노드 조인, kubelet, 리소스 압박 | [클러스터 아키텍처](../core/01-cluster-architecture.md) | [EKS 문제 해결 — 노드 및 파드 문제](../eks/09-eks-troubleshooting.md#노드-및-파드-문제) |
+| 파드 라이프사이클, 프로브, 재시작 정책 | [파드와 워크로드](../core/02-pods-and-workloads.md#파드-라이프사이클) | [EKS 고급 디버깅: 워크로드 디버깅](../eks/11-eks-advanced-debugging.md#4-워크로드-디버깅) |
+| Service, EndpointSlice, CoreDNS, NetworkPolicy | [서비스와 네트워킹](../core/03-services-networking.md), [네트워크 정책](../security/04-network-policies.md) | [EKS 문제 해결: 네트워킹 문제](../eks/09-eks-troubleshooting.md#네트워킹-문제) |
+| PV/PVC/StorageClass, EBS CSI | [스토리지](../core/04-storage.md) | [EKS 문제 해결: 스토리지 문제](../eks/09-eks-troubleshooting.md#스토리지-문제) |
+| 노드 조인, kubelet, 리소스 압박 | [클러스터 아키텍처](../core/01-cluster-architecture.md) | [EKS 문제 해결: 노드 및 파드 문제](../eks/09-eks-troubleshooting.md#노드-및-파드-문제) |
 | Karpenter NodePool/NodeClaim | [Karpenter](../autoscaling/02-karpenter.md) | [스케일링 전략](06-scaling-strategies.md) |
 | VPC CNI IPAM, prefix delegation, custom networking | [VPC CNI](../networking/01-vpc-cni.md) | [EKS 네트워킹 Part 3: 문제 해결](../eks/03-eks-networking-part3.md) |
-| IRSA, Pod Identity, RBAC | [EKS 보안 모범 사례](../security/06-eks-security-best-practices.md), [Kubernetes 인증 및 권한 부여](../security/02-kubernetes-auth-authz.md) | [EKS 문제 해결 — IAM 및 인증 문제](../eks/09-eks-troubleshooting.md#iam-및-인증-문제) |
+| IRSA, Pod Identity, RBAC | [EKS 보안 모범 사례](../security/06-eks-security-best-practices.md), [Kubernetes 인증 및 권한 부여](../security/02-kubernetes-auth-authz.md) | [EKS 문제 해결: IAM 및 인증 문제](../eks/09-eks-troubleshooting.md#iam-및-인증-문제) |
 | 로그가 어디 있고 어떻게 찾는가 | [Logging 개요](../observability/logging/README.md) | [관측성 분석](08-observability-analysis.md) |
-| requests/limits, OOM, JVM 메모리 | [리소스 최적화](10-resource-optimization.md) | [EKS 문제 해결 — 성능 문제](../eks/09-eks-troubleshooting.md#성능-문제) |
-| 장애 대응 절차, 심각도, 첫 5분 체크리스트 | — | [EKS 고급 디버깅 — 장애 대응 프레임워크](../eks/11-eks-advanced-debugging.md#1-장애-대응-프레임워크) |
+| requests/limits, OOM, JVM 메모리 | [리소스 최적화](10-resource-optimization.md) | [EKS 문제 해결: 성능 문제](../eks/09-eks-troubleshooting.md#성능-문제) |
+| 장애 대응 절차, 심각도, 첫 5분 체크리스트 | - | [EKS 고급 디버깅: 장애 대응 프레임워크](../eks/11-eks-advanced-debugging.md#1-장애-대응-프레임워크) |
 
 ***
 
@@ -689,20 +689,20 @@ kubectl rollout history deploy/<name> -n <ns>
 
 **Kubernetes**
 
-- [Taints and Tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) — 노드 컨트롤러가 자동으로 붙이는 `node.kubernetes.io/*` taint (6번)
-- [Debugging Kubernetes Nodes With Kubectl](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/), [`kubectl debug` 레퍼런스](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/) — 노드 디버그 파드와 `--profile` 값 (2번, 6번, 치트시트)
-- [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/) — 임시 컨테이너, `--copy-to`, `--target` (치트시트)
-- [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/) — `v1 Endpoints`가 1.33부터 deprecated인 이유 (4번)
-- [Debug Services](https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/), [Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/) — 셀렉터/포트/DNS 점검과 `ndots` (5번)
+- [Taints and Tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/): 노드 컨트롤러가 자동으로 붙이는 `node.kubernetes.io/*` taint (6번)
+- [Debugging Kubernetes Nodes With Kubectl](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/), [`kubectl debug` 레퍼런스](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/): 노드 디버그 파드와 `--profile` 값 (2번, 6번, 치트시트)
+- [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/): 임시 컨테이너, `--copy-to`, `--target` (치트시트)
+- [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/): `v1 Endpoints`가 1.33부터 deprecated인 이유 (4번)
+- [Debug Services](https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/), [Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/): 셀렉터/포트/DNS 점검과 `ndots` (5번)
 
 **Amazon EKS / AWS**
 
-- [Amazon VPC CNI plugin README](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/README.md) — `WARM_ENI_TARGET`, `WARM_IP_TARGET`, `MINIMUM_IP_TARGET`, `ENABLE_PREFIX_DELEGATION`의 의미와 우선순위 (9번)
-- [Assign more IP addresses to Amazon EKS nodes with prefixes](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html) — prefix delegation과 max-pods 재계산 (9번)
-- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html), [IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) — 신뢰 정책 형태와 주입되는 환경 변수 (8번)
-- [Detect node health issues and enable automatic node repair](https://docs.aws.amazon.com/eks/latest/userguide/node-health.html) — 6번에 나온 Node Monitoring Agent 컨디션
-- [Troubleshoot problems with Amazon EKS clusters and nodes](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html) — 노드 조인 실패, `AccessDenied`, CNI 오류
-- [Karpenter — Troubleshooting](https://karpenter.sh/docs/troubleshooting/) — NodePool limits, requirements 불일치, NodeClaim 기동/등록 실패 (10번)
+- [Amazon VPC CNI plugin README](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/README.md): `WARM_ENI_TARGET`, `WARM_IP_TARGET`, `MINIMUM_IP_TARGET`, `ENABLE_PREFIX_DELEGATION`의 의미와 우선순위 (9번)
+- [Assign more IP addresses to Amazon EKS nodes with prefixes](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html): prefix delegation과 max-pods 재계산 (9번)
+- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html), [IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html): 신뢰 정책 형태와 주입되는 환경 변수 (8번)
+- [Detect node health issues and enable automatic node repair](https://docs.aws.amazon.com/eks/latest/userguide/node-health.html): 6번에 나온 Node Monitoring Agent 컨디션
+- [Troubleshoot problems with Amazon EKS clusters and nodes](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html): 노드 조인 실패, `AccessDenied`, CNI 오류
+- [Karpenter: Troubleshooting](https://karpenter.sh/docs/troubleshooting/): NodePool limits, requirements 불일치, NodeClaim 기동/등록 실패 (10번)
 
 ***
 

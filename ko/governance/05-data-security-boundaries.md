@@ -53,7 +53,7 @@ RTO에는 사고 후 실제 수행하는 copy·restore·애플리케이션 검�
 
 ## 3. 개인정보 저장 계층 분리
 
-VPC에 직접 배치되는 저장소(RDS 등)는 일반 서빙 계층과 별도 VPC에 두는 것이 목적에 맞습니다. 목적은 route·inspection·직접 접근 주체·incident containment 범위를 분리하는 것입니다. 다만 **별도 VPC만으로는 충분하지 않습니다** — IAM, SG, KMS key policy, logging, 승인된 접근 경로를 함께 적용해야 합니다.
+VPC에 직접 배치되는 저장소(RDS 등)는 일반 서빙 계층과 별도 VPC에 두는 것이 목적에 맞습니다. 목적은 route·inspection·직접 접근 주체·incident containment 범위를 분리하는 것입니다. 다만 **별도 VPC만으로는 충분하지 않습니다**. IAM, SG, KMS key policy, logging, 승인된 접근 경로를 함께 적용해야 합니다.
 
 > **Shared VPC의 감사 경로**: participant는 owner의 NAT Gateway를 describe할 수 없지만 owner가 제공하는 route/NAT inventory·Config·Flow Logs와 위임된 읽기 권한으로 증거를 구성할 수 있습니다. 전용 VPC는 소유권을 단순화하는 선택지이며 Shared VPC가 본질적으로 감사 불가능하다는 뜻은 아닙니다.
 

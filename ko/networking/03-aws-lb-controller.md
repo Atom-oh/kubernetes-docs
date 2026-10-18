@@ -934,10 +934,10 @@ spec:
 
 ## 버전별 주요 업데이트
 
-- **v2.16.0 — 2025-11-20:** ALB Target Optimizer와 NLB 가중치 대상 그룹. Target Optimizer에는 대상 제어 에이전트와 구성이 필요하며 LBC 설치만으로 활성화되지 않습니다.
-- **v2.17.0 — 2025-12-19:** 리스너·엔드포인트 그룹·엔드포인트를 포함한 단일 `aga.k8s.aws/v1beta1` `GlobalAccelerator` CRD와 Gateway API GA 릴리스 후보 지원. Global Accelerator에는 추가 IAM 권한과 기능 구성이 필요합니다.
-- **v3.5.0 — 2026-08-03:** Gateway API v1.6.0 적합성과 안정 v1 TCPRoute/UDPRoute 지원. LBC Gateway 구성 리소스는 `gateway.k8s.aws/v1`을 사용하며, 여전히 제공되는 v1beta1은 deprecated입니다.
-- **v3.6.0 — 2026-10-05:** Gateway API CRD 기준은 v1.6.0으로 그대로이며, 업그레이드 전 최신 AWS 제공 LBC CRD 적용을 권장합니다. 교차 계정 TargetGroupBinding의 파드 AZ 기반 IP 등록(opt-in)과 Ingress `frontend-nlb-status-only` 어노테이션이 추가되었습니다.
+- **v2.16.0 (2025-11-20):** ALB Target Optimizer와 NLB 가중치 대상 그룹. Target Optimizer에는 대상 제어 에이전트와 구성이 필요하며 LBC 설치만으로 활성화되지 않습니다.
+- **v2.17.0 (2025-12-19):** 리스너·엔드포인트 그룹·엔드포인트를 포함한 단일 `aga.k8s.aws/v1beta1` `GlobalAccelerator` CRD와 Gateway API GA 릴리스 후보 지원. Global Accelerator에는 추가 IAM 권한과 기능 구성이 필요합니다.
+- **v3.5.0 (2026-08-03):** Gateway API v1.6.0 적합성과 안정 v1 TCPRoute/UDPRoute 지원. LBC Gateway 구성 리소스는 `gateway.k8s.aws/v1`을 사용하며, 여전히 제공되는 v1beta1은 deprecated입니다.
+- **v3.6.0 (2026-10-05):** Gateway API CRD 기준은 v1.6.0으로 그대로이며, 업그레이드 전 최신 AWS 제공 LBC CRD 적용을 권장합니다. 교차 계정 TargetGroupBinding의 파드 AZ 기반 IP 등록(opt-in)과 Ingress `frontend-nlb-status-only` 어노테이션이 추가되었습니다.
 
 현재 v3.6은 QUIC/TCP_QUIC 구성과 ALB JWT 검증을 지원합니다. 서로 다른 기능이며 프로토콜별 제약이 있습니다. JWT 검증은 HTTPS 전용이고 JSON은 `jwksUri`가 아니라 **`jwksEndpoint`**를 사용합니다. 유효한 인증서, 도달 가능한 신뢰하는 JWKS 엔드포인트와 검토된 issuer/claim을 갖춘 HTTPS Ingress 어노테이션에 다음을 추가하세요.
 

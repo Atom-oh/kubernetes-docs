@@ -41,11 +41,11 @@ The team remains responsible for component/CRD upgrades, tenant authorization, p
 
 ## Currently Covered
 
-1. [Part 1: Architecture and installation on EKS](01-architecture-installation.md) — current community release, legacy AWS distribution limitations, Profiles, identity, and manifest rendering.
-2. [Part 2: Pipelines](02-pipelines.md) — SDK v2, compilation, execution, and artifact storage.
-3. [Part 3: Notebooks](03-notebooks.md) — workloads, Profiles, storage, and GPU placement.
-4. [Part 4: Katib](04-katib.md) — experiments, trials, search, and early stopping.
-5. [Part 5: Trainer](05-training-operator.md) — legacy Training Operator and Trainer v2 APIs.
-6. [Part 6: KServe](06-kserve.md) — inference resources, deployment modes, and rollouts.
+1. [Part 1: Architecture and installation on EKS](01-architecture-installation.md): current community release, legacy AWS distribution limitations, Profiles, identity, and manifest rendering.
+2. [Part 2: Pipelines](02-pipelines.md): SDK v2, compilation, execution, and artifact storage.
+3. [Part 3: Notebooks](03-notebooks.md): workloads, Profiles, storage, and GPU placement.
+4. [Part 4: Katib](04-katib.md): experiments, trials, search, and early stopping.
+5. [Part 5: Trainer](05-training-operator.md): legacy Training Operator and Trainer v2 APIs.
+6. [Part 6: KServe](06-kserve.md): inference resources, deployment modes, and rollouts.
 
 Use each chapter's component baseline. Check the [26.03.1 release](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1), [pinned inventory](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md), [KFP 2.17.2](https://github.com/kubeflow/pipelines/releases/tag/2.17.2), and [KServe 0.21.0](https://github.com/kserve/kserve/releases/tag/v0.21.0) before selecting an installation.

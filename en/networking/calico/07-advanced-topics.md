@@ -271,7 +271,7 @@ Choose the actual interface for the desired IP family. Public keys, handshakes a
 
 The earlier locales provided different, unverified figures. No test date, hardware, acceleration configuration, software versions or raw results were supplied. Preserve them as historical reported values, not current Calico/WireGuard performance guarantees.
 
-**Record A — earlier English guide:**
+**Record A (earlier English guide):**
 
 | Metric | WireGuard | IPsec (AES-GCM) |
 | --- | --- | --- |
@@ -280,7 +280,7 @@ The earlier locales provided different, unverified figures. No test date, hardwa
 | CPU usage change | +10–15% | +30–50% |
 
 
-**Record B — earlier Korean guide:**
+**Record B (earlier Korean guide):**
 
 | Metric | WireGuard | IPsec (AES-GCM) |
 | --- | --- | --- |

@@ -5,7 +5,7 @@
 
 ## 이 문서에서 다루는 것
 
-- Lattice IAM Auth에서 요청 하나가 통과하기까지의 4단계 — credential 획득, 요청 서명, Lattice 검증, 정책 평가
+- Lattice IAM Auth에서 요청 하나가 통과하기까지의 4단계: credential 획득, 요청 서명, Lattice 검증, 정책 평가
 - 증거로 자격 증명·서명·정책·네트워크 실패를 구분하며 장애 빈도 순위는 주장하지 않음
 - connection 단위 상호 인증에서 **요청 단위 서명 검증**으로 바뀌는 것의 의미
 
@@ -32,7 +32,7 @@ sequenceDiagram
     participant Tgt as "Target<br/>(수신 Pod)"
 
     rect rgb(235, 243, 252)
-    Note over App,STS: 1단계 — credential 획득
+    Note over App,STS: 1단계: credential 획득
     App->>Agent: credential 요청
     Agent->>STS: AssumeRoleForPodIdentity
     STS-->>Agent: 임시 credential<br/>(AccessKeyId, SecretKey, SessionToken)
@@ -40,21 +40,21 @@ sequenceDiagram
     end
 
     rect rgb(238, 249, 240)
-    Note over App: 2단계 — 요청 서명
+    Note over App: 2단계: 요청 서명
     App->>App: method/path/query/header 정규화<br/>x-amz-content-sha256: UNSIGNED-PAYLOAD
     App->>App: signing key 파생<br/>HMAC-SHA256 4회<br/>service = vpc-lattice-svcs
     App->>App: Authorization 헤더 +<br/>x-amz-date + x-amz-security-token
     end
 
     rect rgb(253, 246, 233)
-    Note over App,Lat: 3단계 — Lattice 검증
+    Note over App,Lat: 3단계: Lattice 검증
     App->>Lat: HTTPS 요청<br/>(dst: 169.254.171.0/24)
     Lat->>Lat: TLS 종료
     Lat->>Lat: 헤더 파싱 → 서명 재계산 → 대조
     end
 
     rect rgb(252, 238, 238)
-    Note over Lat,IAM: 4단계 — 논리적 평가<br/>원격 IAM RPC를 나타내는 것이 아님
+    Note over Lat,IAM: 4단계: 논리적 평가<br/>원격 IAM RPC를 나타내는 것이 아님
     Lat->>IAM: principal + action(Invoke) + resource + condition
     IAM->>IAM: identity-based policy
     IAM->>IAM: service network auth policy
@@ -88,7 +88,7 @@ graph LR
     style OK fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-## 1단계 — credential 획득
+## 1단계: credential 획득
 
 SigV4 서명에는 access key, secret key, session token이 필요합니다. Pod가 이것을 얻는 방법은 두 가지입니다.
 
@@ -113,9 +113,9 @@ SigV4 서명에는 access key, secret key, session token이 필요합니다. Pod
 - 설정된 credential provider가 갱신하지 못하면 로컬 서명이 실패할 수 있으며 만료 자격 증명으로 서명한 요청도 거부될 수 있습니다. IRSA는 STS를, Pod Identity는 Agent/EKS Auth 경로를 이용합니다.
 - 즉 **STS는 East-West 데이터 경로의 의존성**이 됩니다. AS-IS에서 SPIRE Server가 그 위치에 있었던 것과 대응되지만, 소유자가 고객에서 AWS로 바뀝니다 ([05번](./05-spiffe-to-iam.md), [06번](./06-constraints.md) 문서).
 
-레이턴시 관점의 함의는 [02번 문서](./02-latency.md)에서 다뤘습니다 — 갱신이 요청 경로를 블로킹하면 p99 꼬리에 나타납니다.
+레이턴시 관점의 함의는 [02번 문서](./02-latency.md)에서 다뤘습니다. 갱신이 요청 경로를 블로킹하면 p99 꼬리에 나타납니다.
 
-## 2단계 — 요청 서명
+## 2단계: 요청 서명
 
 ### canonical request → signing key → Authorization 헤더
 
@@ -131,7 +131,7 @@ SigV4 서명은 세 단계로 진행됩니다.
 
 ### 실무 함정 3개
 
-#### ① Host 헤더가 서명 대상이다 — custom domain 사용 시 주의
+#### ① Host 헤더가 서명 대상이다: custom domain 사용 시 주의
 
 SigV4에서 `Host` 헤더는 **항상 서명 대상에 포함**됩니다. 요청이 어느 호스트로 향하는지가 서명에 묶여 있다는 뜻입니다.
 
@@ -151,7 +151,7 @@ SigV4에서 `Host` 헤더는 **항상 서명 대상에 포함**됩니다. 요청
 
 이 실패는 **간헐적이고 노드 단위로 발생**해서 진단이 까다롭습니다. "특정 노드의 Pod만 403이 난다"면 시각 동기화를 먼저 확인하십시오.
 
-#### ③ 중간 프록시의 헤더 변조 — 서명은 최종 홉에서
+#### ③ 중간 프록시의 헤더 변조: 서명은 최종 홉에서
 
 서명은 요청 내용에 묶여 있으므로, **서명 이후에 서명 대상을 건드리는 주체가 있으면 검증이 깨집니다.**
 
@@ -163,9 +163,9 @@ SigV4에서 `Host` 헤더는 **항상 서명 대상에 포함**됩니다. 요청
 
 **원칙: 서명은 Lattice로 나가는 최종 홉에서 해야 합니다.** 서명한 뒤에 요청을 손보는 계층이 사이에 있으면 안 됩니다.
 
-이 원칙은 **egress proxy 방식으로 서명할 때 특히 중요합니다.** aws-samples 레퍼런스 구현이 이 패턴을 보여줍니다 — `sigv4proxy` 사이드카를 8080에서 띄우고, init container가 iptables로 **`169.254.171.0/24`(Lattice 대역)로 향하는 트래픽만** 로컬 8080으로 리다이렉트합니다. 프록시가 서명을 붙인 뒤 곧바로 Lattice로 나가므로 사이에 변조 주체가 없습니다. 프록시가 서명한 요청을 다시 다른 프록시가 처리하는 구성은 피해야 합니다.
+이 원칙은 **egress proxy 방식으로 서명할 때 특히 중요합니다.** aws-samples 레퍼런스 구현이 이 패턴을 보여줍니다. `sigv4proxy` 사이드카를 8080에서 띄우고, init container가 iptables로 **`169.254.171.0/24`(Lattice 대역)로 향하는 트래픽만** 로컬 8080으로 리다이렉트합니다. 프록시가 서명을 붙인 뒤 곧바로 Lattice로 나가므로 사이에 변조 주체가 없습니다. 프록시가 서명한 요청을 다시 다른 프록시가 처리하는 구성은 피해야 합니다.
 
-## 3단계 — Lattice 검증
+## 3단계: Lattice 검증
 
 Lattice는 HTTPS listener에서 **TLS를 종료한 뒤 헤더를 파싱해** `Authorization` 헤더의 서명을 재계산하고 대조합니다.
 
@@ -185,13 +185,13 @@ AWS는 **익명 principal** 기반 TLS passthrough auth policy를 허용하지�
 
 또 하나의 함정: **auth policy는 authType이 `AWS_IAM`일 때만 활성화됩니다.** `NONE`이면 정책을 붙여도 무효입니다. "정책을 넣었는데 아무나 접근된다"의 가장 흔한 원인입니다.
 
-## 4단계 — 정책 평가
+## 4단계: 정책 평가
 
 인증된 principal은 호출자 권한과 적용되는 Lattice 리소스 정책을 평가합니다. **`AWS_IAM`으로 설정된 리소스만 auth policy를 적용하며 `NONE`은 해당 리소스 정책을 건너뜁니다.** 명시적 Deny와 기타 IAM 제어도 적용됩니다. 세 정책 그림을 익명 요청이나 다른 설정에도 적용되는 보편 규칙으로 해석하면 안 됩니다.
 
 | 정책 | 붙는 곳 | 답하는 질문 | 관리 주체 | Gateway API 리소스 |
 |---|---|---|---|---|
-| **identity-based policy** | 호출자의 IAM Role | "이 Role이 `vpc-lattice-svcs:Invoke`를 할 권한이 있는가" | 애플리케이션 팀 / 플랫폼 팀 | — (IAM에서 직접) |
+| **identity-based policy** | 호출자의 IAM Role | "이 Role이 `vpc-lattice-svcs:Invoke`를 할 권한이 있는가" | 애플리케이션 팀 / 플랫폼 팀 | 없음 (IAM에서 직접) |
 | **service network auth policy** | Service Network | "이 서비스 네트워크에 들어올 수 있는 principal인가" (coarse-grained) | 네트워크·클라우드 관리자 | `IAMAuthPolicy` → `Gateway` |
 | **service auth policy** | Lattice Service | "이 서비스를 호출할 수 있는 principal인가" (fine-grained) | 서비스 소유 팀 | `IAMAuthPolicy` → `HTTPRoute`/`GRPCRoute` |
 
@@ -263,8 +263,8 @@ AWS Gateway API Controller 문서가 명시하는 중요한 제약입니다.
 
 | 항목 | AS-IS: App Mesh + SPIRE mTLS | TO-BE: Lattice IAM Auth |
 |---|---|---|
-| **인증 단위** | **connection** — 연결 수립 시 1회 | **요청** — 매 요청 |
-| **방향성** | **양방향 상호 인증** (클라이언트·서버 모두 증명) | **단방향** — 클라이언트가 자신을 증명. 서버는 TLS 서버 인증서로만 증명 |
+| **인증 단위** | **connection** (연결 수립 시 1회) | **요청** (매 요청) |
+| **방향성** | **양방향 상호 인증** (클라이언트·서버 모두 증명) | **단방향**: 클라이언트가 자신을 증명. 서버는 TLS 서버 인증서로만 증명 |
 | **신원의 형태** | X.509 SVID의 SPIFFE ID (URI) | IAM Role ARN / assumed-role 세션 ARN |
 | **증명 수단** | 짧은 수명 X.509 인증서 (개인키 보유 증명) | SigV4 서명 (secret key 보유 증명) |
 | **검증 주체** | 상대 워크로드의 Envoy | Lattice (AWS 관리 인프라) |
@@ -289,17 +289,17 @@ Client-to-Lattice HTTPS 연결은 Lattice에서 종료됩니다. Target protocol
 - Invoke 권한 누락은 가능한 403 원인 중 하나입니다. 근거 없는 빈도 순위 대신 반환 사유와 상관 log를 사용합니다.
 - **k8s Service DNS로 직접 호출하면 auth policy가 평가되지 않습니다.** 전환 기간 중 보완이 필요합니다.
 
-다음: [기반 개념 — link-local과 SNI](./04-networking-basics.md)에서 "왜 TLS를 종료해야 헤더를 볼 수 있는가"의 아래 계층을 봅니다.
+다음: [기반 개념: link-local과 SNI](./04-networking-basics.md)에서 "왜 TLS를 종료해야 헤더를 볼 수 있는가"의 아래 계층을 봅니다.
 
 ## 참고 자료
 
 - [Control access to VPC Lattice services using auth policies](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
 - [Actions, resources, and condition keys for Amazon VPC Lattice Services](https://docs.aws.amazon.com/service-authorization/latest/reference/list_vpc-lattice-svcs.html)
-- [AWS Gateway API Controller — IAMAuthPolicy API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
-- [aws-samples — Securing the network and implementing AWS IAM authentication](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
+- [AWS Gateway API Controller: IAMAuthPolicy API Reference](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/iam-auth-policy/)
+- [aws-samples: Securing the network and implementing AWS IAM authentication](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
 - [Implement AWS IAM authentication with Amazon VPC Lattice and Amazon EKS](https://aws.amazon.com/blogs/containers/implement-aws-iam-authentication-with-amazon-vpc-lattice-and-amazon-eks/)
 - [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) / [IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 - [Signing AWS API requests (SigV4)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html)
 
 
-- [Lattice SigV4 인증 요청](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html) — 필수 unsigned payload header와 유효 범위
+- [Lattice SigV4 인증 요청](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html): 필수 unsigned payload header와 유효 범위

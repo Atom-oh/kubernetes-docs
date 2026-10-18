@@ -1290,7 +1290,7 @@ metadata:
 
 They do not automatically tag EC2/EBS resources or activate AWS billing tags. The billing owner must apply actual AWS resource tags, then activate eligible cost-allocation keys. Allow for billing processing delays and verify their appearance in Cost Explorer/CUR. AWS split cost allocation is a separate opt-in path that creates EKS Pod-level records and AWS-generated attributes such as `aws:eks:namespace`; it does not make every namespace label an EC2 tag. Review its data-source prerequisites and increased report volume.
 
-Cost allocation tag backfill can cover up to 12 months **when those resources were tagged historically**; it cannot invent missing historical tags. A Cost Category classifies billing records using reviewed rules—it is not a dashboard. Its CLI creation operation is `aws ce create-cost-category-definition`, not `create-cost-category`. Use keys and values that actually appear in the billing dataset, and separately configure saved Cost Explorer reports or dashboards.
+Cost allocation tag backfill can cover up to 12 months **when those resources were tagged historically**; it cannot invent missing historical tags. A Cost Category classifies billing records using reviewed rules; it is not a dashboard. Its CLI creation operation is `aws ce create-cost-category-definition`, not `create-cost-category`. Use keys and values that actually appear in the billing dataset, and separately configure saved Cost Explorer reports or dashboards.
 
 **Read-only inventory of unattached volumes**
 

@@ -934,10 +934,10 @@ spec:
 
 ## Notable Version Updates
 
-- **v2.16.0 — 2025-11-20:** ALB Target Optimizer and NLB weighted target groups. Target Optimizer requires its target-control agent and configuration; it is not enabled merely by installing LBC.
-- **v2.17.0 — 2025-12-19:** Global Accelerator support through the single `aga.k8s.aws/v1beta1` `GlobalAccelerator` CRD, with nested listeners, endpoint groups and endpoints; Gateway API GA release-candidate status. Global Accelerator needs its additional IAM permissions and feature configuration.
-- **v3.5.0 — 2026-08-03:** Gateway API v1.6.0 conformance and stable v1 TCPRoute/UDPRoute support. LBC Gateway configuration resources use `gateway.k8s.aws/v1`; the still-served v1beta1 version is deprecated.
-- **v3.6.0 — 2026-10-05:** The Gateway API CRD baseline stays at v1.6.0, and the release recommends applying the latest AWS-vended LBC CRDs before upgrading. Adds opt-in Pod-AZ-based IP registration for cross-account TargetGroupBinding and the Ingress `frontend-nlb-status-only` annotation.
+- **v2.16.0 (2025-11-20):** ALB Target Optimizer and NLB weighted target groups. Target Optimizer requires its target-control agent and configuration; it is not enabled merely by installing LBC.
+- **v2.17.0 (2025-12-19):** Global Accelerator support through the single `aga.k8s.aws/v1beta1` `GlobalAccelerator` CRD, with nested listeners, endpoint groups and endpoints; Gateway API GA release-candidate status. Global Accelerator needs its additional IAM permissions and feature configuration.
+- **v3.5.0 (2026-08-03):** Gateway API v1.6.0 conformance and stable v1 TCPRoute/UDPRoute support. LBC Gateway configuration resources use `gateway.k8s.aws/v1`; the still-served v1beta1 version is deprecated.
+- **v3.6.0 (2026-10-05):** The Gateway API CRD baseline stays at v1.6.0, and the release recommends applying the latest AWS-vended LBC CRDs before upgrading. Adds opt-in Pod-AZ-based IP registration for cross-account TargetGroupBinding and the Ingress `frontend-nlb-status-only` annotation.
 
 Current v3.6 supports QUIC/TCP_QUIC configuration and ALB JWT validation. These are distinct features with protocol-specific constraints. JWT validation is HTTPS-only and its JSON uses **`jwksEndpoint`**, not `jwksUri`. Add the following to the annotations of an HTTPS Ingress with a valid certificate, reachable trusted JWKS endpoint, and reviewed issuer/claims:
 
