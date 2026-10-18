@@ -163,6 +163,8 @@ function handler(event) {
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+          // Answers stream as server-sent events; do not hold them back for compression.
+          compress: false,
         },
       },
       errorResponses: [

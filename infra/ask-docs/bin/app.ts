@@ -19,6 +19,8 @@ const appStack = new AppStack(app, 'AskDocsApp', {
   lambdaSecurityGroup: network.lambdaSecurityGroup,
   bucket: data.bucket,
   conversationTable: data.conversationTable,
+  executeApiEndpoint: network.executeApiEndpoint,
+  executeApiEndpointIps: network.executeApiEndpointIps,
 })
 appStack.addStackDependency(network)
 appStack.addStackDependency(data)

@@ -1,5 +1,7 @@
 import * as cdk from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as iam from 'aws-cdk-lib/aws-iam'
+import * as cr from 'aws-cdk-lib/custom-resources'
 import { Construct } from 'constructs'
 
 // Private network for the docs Q&A API. No internet gateway, no NAT:
@@ -8,6 +10,8 @@ export class NetworkStack extends cdk.Stack {
   public readonly vpc: ec2.Vpc
   public readonly albSecurityGroup: ec2.SecurityGroup
   public readonly lambdaSecurityGroup: ec2.SecurityGroup
+  public readonly executeApiEndpoint: ec2.InterfaceVpcEndpoint
+  public readonly executeApiEndpointIps: string[]
 
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props)
@@ -74,7 +78,7 @@ export class NetworkStack extends cdk.Stack {
     })
 
     // Internal ALB: only CloudFront origin-facing addresses may reach it (CLAUDE.md allows the
-    // CloudFront managed prefix list). Egress is restricted to the Lambda target path.
+    // CloudFront managed prefix list). Egress only to the execute-api endpoint below.
     this.albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSg', {
       vpc: this.vpc,
       description: 'Internal ALB for ask-docs: CloudFront origin-facing only',
@@ -85,6 +89,41 @@ export class NetworkStack extends cdk.Stack {
       ec2.Port.tcp(443),
       'CloudFront origin-facing'
     )
+
+    // An ALB Lambda target cannot stream a response, so the ALB forwards the API to a private API
+    // Gateway (STREAM transfer mode) through this endpoint's ENIs. Private DNS stays off: nothing in
+    // the VPC calls execute-api by name, and the ALB sets the API's Host header itself.
+    const apiEndpointSg = new ec2.SecurityGroup(this, 'ApiEndpointSg', {
+      vpc: this.vpc,
+      description: 'execute-api interface endpoint: from the internal ALB only',
+      allowAllOutbound: false,
+    })
+    apiEndpointSg.addIngressRule(this.albSecurityGroup, ec2.Port.tcp(443), 'from the internal ALB')
+    this.albSecurityGroup.addEgressRule(apiEndpointSg, ec2.Port.tcp(443), 'execute-api endpoint')
+    this.executeApiEndpoint = new ec2.InterfaceVpcEndpoint(this, 'ExecuteApi', {
+      vpc: this.vpc,
+      service: ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
+      subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      privateDnsEnabled: false,
+      securityGroups: [apiEndpointSg],
+      open: false, // no VPC-CIDR ingress; only the ALB rule above
+    })
+
+    // The ALB target group takes IP addresses, so look up the endpoint ENIs' private IPs (one per AZ).
+    const endpointEnis = new cr.AwsCustomResource(this, 'ExecuteApiEndpointIps', {
+      onUpdate: {
+        service: 'EC2',
+        action: 'describeNetworkInterfaces',
+        parameters: { NetworkInterfaceIds: this.executeApiEndpoint.vpcEndpointNetworkInterfaceIds },
+        physicalResourceId: cr.PhysicalResourceId.of(this.executeApiEndpoint.vpcEndpointId),
+        outputPaths: ['NetworkInterfaces.0.PrivateIpAddress', 'NetworkInterfaces.1.PrivateIpAddress'],
+      },
+      policy: cr.AwsCustomResourcePolicy.fromStatements([
+        new iam.PolicyStatement({ actions: ['ec2:DescribeNetworkInterfaces'], resources: ['*'] }),
+      ]),
+      installLatestAwsSdk: false,
+    })
+    this.executeApiEndpointIps = [0, 1].map((i) => endpointEnis.getResponseField(`NetworkInterfaces.${i}.PrivateIpAddress`))
 
     new cdk.CfnOutput(this, 'VpcId', { value: this.vpc.vpcId })
   }
