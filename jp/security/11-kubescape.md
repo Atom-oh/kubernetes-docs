@@ -1,7 +1,7 @@
-# KubescapeによるSecurity Posture Management
+# Kubescape によるセキュリティ態勢の管理
 
-> **最終更新**: September 13, 2026
-> **検証ベースライン**: CLI 4.0.14およびOperator chart 1.40.4。chartのscanner imageはCLIとは別の4.0.13です。Policy hashはexample directoryに記録されています。
+> **最終更新**: 2026年10月16日
+> **検証ベースライン**: CLI 4.0.16およびOperator chart 1.40.4。chartのscanner imageはCLIとは別の4.0.13です。Policy hashはexample directoryに記録されています。
 
 KubescapeはKubernetes設定と、選択されたimage/runtimeデータを評価します。**scanの成功はsecurityの保証でもcompliance認定でもありません。利用できないcoverageは別途特定する必要があります。** このガイドは、local YAML、policy bundle、実際のCLI、およびchart renderingで確認しました。live cluster scan、node-agent installation、registry image/DB scan、SaaS送信は実施していません。
 
@@ -32,13 +32,13 @@ CLIは明示的なfileまたはcluster scanを実行します。Operatorは有�
 
 ### CLIのインストール
 
-[公式4.0.14 release](https://github.com/kubescape/kubescape/releases/tag/v4.0.14)からOS/CPUに対応するassetをdownloadし、そのchecksumを検証します。このLinux AMD64の例では確認済みのarchive hashを固定しています。ARM64には異なるarchive/hashが必要です。
+[公式4.0.16 release](https://github.com/kubescape/kubescape/releases/tag/v4.0.16)からOS/CPUに対応するassetをdownloadし、そのchecksumを検証します。このLinux AMD64の例では確認済みのarchive hashを固定しています。ARM64には異なるarchive/hashが必要です。
 
 ```bash
 curl --fail --location \
-  https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.tar.gz \
+  https://github.com/kubescape/kubescape/releases/download/v4.0.16/kubescape_4.0.16_linux_amd64.tar.gz \
   --output kubescape.tgz
-printf '%s  %s\n' '1d253b70f88e80b74f68af73ccd422f897381468300be7cc486fdd656d907a40' kubescape.tgz | sha256sum --check
+printf '%s  %s\n' '71ed716b13487a6fa57500af6b191ee7fd51eb0b31809ea5994a696b1f36f874' kubescape.tgz | sha256sum --check
 tar -xzf kubescape.tgz kubescape
 ./kubescape version
 ./kubescape scan --help
@@ -100,9 +100,9 @@ kubescapeScheduler:
 <span id="mitre-att-ck-framework"></span>
 <span id="framework-comparison"></span>
 
-## Security Framework
+## セキュリティフレームワーク
 
-### FrameworkとControl
+### フレームワークとコントロール
 
 Framework名とcontrol数はpolicy bundleに依存します。確認したdownloadにはNSA、MITRE、SOC2、ArmoBest、DevOpsBest、AllControls、およびversion付きCIS frameworkが含まれていました。NSAには26個のcontrolが含まれており、すべてがlocal Podに適用できるわけではありません。
 
@@ -128,7 +128,7 @@ kubescape list controls --framework NSA --search container
 
 C-0036/0039は、wildcard-RBAC/risky-ServiceAccount controlではありません。Severityもbundleに依存します。確認したC-0057はHighであり、常にCriticalではありません。
 
-### Custom Framework
+### カスタムフレームワーク
 
 `--use-from`はlocal policy objectをloadします。YAML名と解決されていないcontrol ID listが、実行可能なframeworkであるとは限りません。exampleの`policies/nsa.json`は、license、provenance、SHA recordを備えたテスト済みbundleです。`kubescape policy init`や`kubescape policy test`など、現在のCLI featureを使用して新しいRego controlを作成・テストし、その後organizational requirementをレビューしてください。
 
@@ -139,14 +139,14 @@ C-0036/0039は、wildcard-RBAC/risky-ServiceAccount controlではありません
 <span id="image-vulnerability-scanning"></span>
 <span id="rbac-visualization-and-analysis"></span>
 
-## CLI Scanning
+## CLIスキャン
 
 ![Kubescapeの入力、評価、score field、およびreport format](../.gitbook/assets/en-security-11-kubescape-1.png)
 
 [インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-1.html)
 
 
-### ClusterとLocal Inputの比較
+### クラスター入力とローカル入力の違い
 
 ```bash
 # This accesses the current cluster; check authorization and scope first.
@@ -158,11 +158,11 @@ kubescape scan framework nsa secure-pod.yaml \
   --format json --output report.json
 ```
 
-`--format/-f`はformatを選択し、`--output/-o`はfile名を指定します。`-o json > report.json`はJSON outputを選択しません。Version 4.0.14はJSON/SARIF/HTML/PDF/JUnit/gitlab-sastなどのformatをサポートします。受信側toolが想定するものを選択してください。
+`--format/-f`はformatを選択し、`--output/-o`はfile名を指定します。`-o json > report.json`はJSON outputを選択しません。Version 4.0.16はJSON/SARIF/HTML/PDF/JUnit/gitlab-sastなどのformatをサポートします。受信側toolが想定するものを選択してください。
 
 有効なvalueを明示するため、scanの前にHelm/Kustomizeをlocalでrenderしてください。Local checkはAPI defaulting、admission、IAM authorization、network behaviorを再現しません。確認したCLIでは、`--include-api-audit`、`--custom-framework`、`--sort-by`は不明でした。`scan rbac`を現在の独立したsubcommandとして提示しないでください。
 
-### 実際のLocal Result
+### ローカルスキャンの結果
 
 `insecure-pod.yaml`は、**deployment recipeではなくsynthetic scan fixtureです**。存在しない`runAsRoot`ではなく、実際のprivileged/runAsUser fieldを使用します。`secure-pod.yaml`もconfigurationのみを示します。実際にdeploymentする前にapplication imageを置き換えてください。
 
@@ -173,9 +173,9 @@ kubescape scan framework nsa secure-pod.yaml \
 
 これらのvalueは、添付されたpolicy snapshotと1つのlocal Podに適用されます。cluster securityやexploitabilityを測定するものではありません。
 
-### ImageおよびRBAC Analysis
+### イメージとRBACの分析
 
-`kubescape scan image IMAGE`でimage scanを明示的に要求してください。CLI 4.0.14はsource dependencyでGrype 0.104.1およびSyft 1.42.3を使用します。Operatorのkubevuln componentは別途version管理されています。registry credential、platform、database freshness、scan errorを検証してください。Host scanはimage scanとは異なり、追加のhost access/resource creationを必要とする場合があります。
+`kubescape scan image IMAGE`でimage scanを明示的に要求してください。CLI 4.0.16はsource dependencyでGrype 0.104.1およびSyft 1.42.3を使用します。Operatorのkubevuln componentは別途version管理されています。registry credential、platform、database freshness、scan errorを検証してください。Host scanはimage scanとは異なり、追加のhost access/resource creationを必要とする場合があります。
 
 RBAC controlは、認可されたAPI scope内で収集したRole/Bindingを評価します。RoleBindingはそのnamespace内でaccessを付与し、すべてのnamespaceに付与するわけではありません。Static analysisだけでは、未使用のpermission、外部IAM authorization、またはすべての有効なaccess pathを確立できません。
 
@@ -186,7 +186,7 @@ RBAC controlは、認可されたAPI scope内で収集したRole/Bindingを評�
 <span id="runtime-threat-detection-node-agent-with-ebpf"></span>
 <span id="kubernetes-api-attack-detection"></span>
 
-## Operator Mode（In-Cluster）
+## Operatorモード（クラスター内）
 
 ![Kubescape Operatorの連携とaggregated storage API](../.gitbook/assets/en-security-11-kubescape-2.png)
 
@@ -210,7 +210,7 @@ kubectl get pods,pvc -n kubescape
 <span id="viewing-risk-scores"></span>
 <span id="prioritization-strategy"></span>
 
-## Risk Scoring
+## リスクスコア
 
 `summaryDetails.complianceScore`と`summaryDetails.score`は異なるaggregateです。complianceが高いほどpassしたcheckが多いことを示します。risk scoreは同じvalueでも、単純に`100-compliance`でもありません。架空のseverity weightやresponse SLAを、汎用的なKubescape formulaとして提示しないでください。
 
@@ -221,7 +221,7 @@ jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
 
 `--compliance-threshold`は**最低compliance score**として、`--severity-threshold`はfailed-control severityに使用してください。local score 55はthreshold 55でexit 0、56でexit 1を返しました。`--min-severity`はoutputをfilterしますが、現在のgate calculationの代わりにはなりません。
 
-**Version 4.0.14はdeprecated compatibility flagとして`--fail-threshold`を受け付けますが、そのvalueを無視します。** テストでは、`--fail-threshold 0`のみを指定すると、failed findingがあってもexit 0が返りました。その無効なflagを、`--scan-images`/`--skip-controls`のように引き続き処理されるoptionや、本当に不明なflagと区別してください。
+**Version 4.0.16はdeprecated compatibility flagとして`--fail-threshold`を受け付けますが、そのvalueを無視します。** テストでは、`--fail-threshold 0`のみを指定すると、failed findingがあってもexit 0が返りました。その無効なflagを、`--scan-images`/`--skip-controls`のように引き続き処理されるoptionや、本当に不明なflagと区別してください。
 
 <span id="ci-cd-integration-workflow"></span>
 <span id="github-actions-workflow"></span>
@@ -231,14 +231,14 @@ jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
 
 <span id="cicd-integration"></span>
 
-## CI/CD Integration
+## CI/CD連携
 
 ![最低compliance、severity、command exitに基づくCI gate](../.gitbook/assets/en-security-11-kubescape-3.png)
 
 [インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-3.html)
 
 
-### 共通Security Gate
+### 共通のセキュリティゲート
 
 ```bash
 #!/usr/bin/env bash
@@ -296,7 +296,7 @@ input不足、scan error、threshold failureはnonzeroを返します。`continu
 
 [検証済みworkflow](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/kubescape/github-actions.yaml)はbinary/checksumを固定し、local policy snapshotで`k8s/rendered.yaml`のみをscanします。projectは先にそのfileを生成する必要があります。存在しない場合、jobはfailureになります。permissionは`contents:read`であり、PR commentやSaaS送信は行いません。
 
-### GitLabおよびJenkins
+### GitLab と Jenkins
 
 どちらのsystemでも、同じ`scan-manifests.sh` exit codeを保持してreportをarchiveできます。汎用のKubescape JSONはGitLab SASTやCode Quality schemaではありません。統合SAST reportでは、現在の`--format gitlab-sast` outputを受信側versionで検証してください。Jenkinsの`readJSON`/`publishHTML`にはpluginが必要です。pipelineが生成していないHTML fileをpublishしないでください。
 
@@ -318,9 +318,9 @@ host-scanningおよびremediation permission/mutationを有効化する前にレ
 <span id="accepted-risks-documentation"></span>
 <span id="inline-resource-exceptions"></span>
 
-## Control Exception Handling
+## コントロール例外の処理
 
-### CLI Exception
+### CLIの例外設定
 
 ```json
 [
@@ -352,7 +352,7 @@ host-scanningおよびremediation permission/mutationを有効化する前にレ
 
 これはCLIが使用する**JSON array**であり、ConfigMap wrapperではありません。テスト済みの`alertOnly` exceptionは、failureとcompliance 55を維持したままC-0057をacknowledgedとしました。`--exclude-controls C-0057`はcontrolを評価から除外し、denominatorとscoreを変更しました。exceptionはremediationではありません。
 
-### In-Cluster Exception
+### クラスター内の例外設定
 
 ```yaml
 apiVersion: kubescape.io/v1beta1
@@ -393,7 +393,7 @@ spec:
 
 scope、pass/fail/unavailable check、policy hash、tool image、exception owner、expiry dateを記録してください。scoreは同等のinput/policy間でのみ比較してください。Node scan、image scan、runtime detectionは別個のevidence sourceです。
 
-### Prometheus Integration
+### Prometheus連携
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -426,7 +426,7 @@ spec:
 <span id="references"></span>
 <span id="related-documentation"></span>
 
-## まとめとReference
+## まとめと参考資料
 
 Local validationでは、binary/checksum、policy snapshot、threshold boundary/severity/deprecated gate、exception/exclusion behavior、公開済みshell gate、Helm rendering、SecurityException schema、PodMonitor targeting、GitHub Actions syntax、30件のdiagram browser caseを対象にしました。実際のAWS/Kubernetes/registry/notification/SaaS operationは実施していません。
 
@@ -434,8 +434,8 @@ Local validationでは、binary/checksum、policy snapshot、threshold boundary/
 - [Kubescape documentation](https://kubescape.io/docs/)
 - [Frameworkとcontrol](https://kubescape.io/docs/frameworks-and-controls/)
 - [Operator documentation](https://kubescape.io/docs/operator/)
-- [CLI 4.0.14](https://github.com/kubescape/kubescape/releases/tag/v4.0.14)
-- [固定されたCLI flag](https://github.com/kubescape/kubescape/blob/v4.0.14/cmd/scan/scan.go)
+- [CLI 4.0.16](https://github.com/kubescape/kubescape/releases/tag/v4.0.16)
+- [固定されたCLI flag](https://github.com/kubescape/kubescape/blob/v4.0.16/cmd/scan/scan.go)
 - [Operator chart 1.40.4](https://github.com/kubescape/helm-charts/releases/tag/kubescape-operator-1.40.4)
 - [Policy library](https://github.com/kubescape/regolibrary)
 - [Exporter metrics 0.2.23](https://github.com/kubescape/prometheus-exporter/blob/v0.2.23/metrics/metrics.go)

@@ -1,6 +1,6 @@
 # 第 5 部分：集群访问、验证、升级和删除
 
-> **最后更新**：September 11, 2026
+> **最后更新**：2026年9月11日
 
 本指南介绍现有 EKS 集群。请使用经过授权的账户/Region 和私有 kubeconfig。本指南中的示例已对照当前 AWS 文档和本地解析器进行审查；本次审计未执行任何 AWS 更改、集群工作负载操作或生产恢复测试。
 
@@ -35,13 +35,13 @@ aws eks update-kubeconfig "${KUBECONFIG_ARGS[@]}"
 ```
 这会在已记录的审查目录下写入一个私有 kubeconfig，而不会更改默认上下文。如果不指定 `--kubeconfig`，AWS CLI 会根据 `KUBECONFIG` 或默认路径 `~/.kube/config` 选择输出位置；并非所有环境中的路径都固定不变。
 
-<!-- Audit 2026-09-11: parent asset repair required. Material correction:access-policy andRBACpermissionsareadditive;RBACcannotnarrowAmazonEKSClusterAdminPolicy. Arrow3narrowandfooter--asprincipal effectiveEKSpermissionsclaimarewrong;testactualIAMcredentials. Rebuilddiagramasalternative/additiveauthorizationpaths.
+<!-- Audit 2026-09-11: parent asset repair required. Material correction: access-policy and RBAC permissions are additive; RBAC cannot narrow AmazonEKSClusterAdminPolicy. The narrowing in Arrow 3 and the footer's --as principal effective EKS permissions claim are wrong; test actual IAM credentials. Rebuild the diagram as alternative/additive authorization paths.
 ![Diagram of the access configuration flow: kubeconfig, IAM principal, access entry, RBAC rules and binding, then an access test.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-0.html)
 -->
 
-Access entry 可以使用 EKS 访问策略、带有 RBAC 的 Kubernetes 组，或同时使用两者。它们的权限是**叠加的**：命名空间 RoleBinding 无法缩小 EKS 集群管理员访问策略的权限。此示例使用自定义组和命名空间 RBAC，不添加范围宽泛的访问策略。
+访问条目可以使用 EKS 访问策略、带有 RBAC 的 Kubernetes 组，或同时使用两者。它们的权限是**叠加的**：命名空间 RoleBinding 无法缩小 EKS 集群管理员访问策略的权限。此示例使用自定义组和命名空间 RBAC，不添加范围宽泛的访问策略。
 ### 等待 EKS 更新
 
 配置/版本更改是异步的。请使用返回的更新 ID；遇到错误时停止，不要将一次 `ACTIVE`/`InProgress` 状态视为操作已完成的证明：
@@ -165,7 +165,7 @@ NODE_DELETE_ALLOWED=$(kubectl --kubeconfig "$DEVELOPER_KUBECONFIG" auth can-i de
   exit 1
 }
 ```
-访问条目最终会保持一致；检查错误，并在重试前留出传播时间。`kubectl --as`/`--as-group` 模拟测试的是 Kubernetes RBAC，而不是 IAM 主体的 EKS 访问策略权限。同样，`auth can-i --list` 并不能完整列出 EKS 访问策略授予的权限。IAM 用户可以作为主体，但建议优先使用具有临时凭证的角色；现有用户需要通过单独配置的凭证路径进行访问。
+访问条目的配置最终会保持一致；请先检查错误，并在重试前留出传播时间。`kubectl --as`/`--as-group` 模拟测试的是 Kubernetes RBAC，而不是 IAM 主体的 EKS 访问策略权限。同样，`auth can-i --list` 并不能完整列出 EKS 访问策略授予的权限。IAM 用户可以作为主体，但建议优先使用具有临时凭证的角色；现有用户需要通过单独配置的凭证路径进行访问。
 ### 方法 2：旧版 aws-auth 迁移
 
 ![示意图：对比 IAM 主体映射到 Kubernetes API 的两种方式：EKS 访问条目和 aws-auth ConfigMap。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-1.png)
@@ -183,7 +183,7 @@ kubectl --kubeconfig "$ADMIN_KUBECONFIG" -n kube-system edit configmap aws-auth
 
 ### 检查预期的计算资源和系统组件
 
-<!-- Audit 2026-09-11: parent asset repair required. Footercriteriaareincomplete:RunningdoesnotmeanReady,defaultStorageClassnotuniversallyrequired,LoadBalancerdoesnotproveAWSLBCwithoutclass/ownership,loggroupexistencedoesnotprovedelivery. Mainflowusableaftercaption/footercorrection.
+<!-- Audit 2026-09-11: parent asset repair required. Footer criteria are incomplete: Running does not mean Ready, a default StorageClass is not universally required, LoadBalancer does not prove AWS LBC without class/ownership, and log group existence does not prove delivery. The main flow is usable after caption/footer correction.
 ![Cluster validation diagram checking nodes and system pods, deploying a test app and exposing it, then reviewing logs.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-2.html)
@@ -336,7 +336,7 @@ aws logs describe-log-streams --region "$EXAMPLE_REGION" \
 Worker kubelet/container 日志需要各自的采集路径。仅启用 EKS 控制平面日志并不会自动启用这些日志。
 ## 集群升级
 
-<!-- Audit 2026-09-11: parent asset repair required. Materialcorrection:footerincorrectlydeniesEKScontrolplanerollback;currentAWSsupportsconditionalpreviousminorrollbackwithin7days. Stale1.31copytarget/1.29→1.30→1.31; trackupdateIDSuccessful,notACTIVEalone. Preservecompatiblecomponentsequence/preflight.
+<!-- Audit 2026-09-11: parent asset repair required. Material correction: the footer incorrectly denies EKS control plane rollback; AWS currently supports conditional rollback to the previous minor version within 7 days. The 1.31 copy target/1.29→1.30→1.31 sequence is stale; track the update ID’s Successful status, not ACTIVE alone. Preserve the compatible component sequence/preflight.
 ![Upgrade process diagram from planning and version checks through the control plane, node groups, add-ons, and function tests.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-3.html)
@@ -418,7 +418,7 @@ aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGI
 目前，EKS 支持在原地升级后的七天内有条件地回滚到上一个次要版本。这不会回退 etcd、工作负载配置或持久数据。请准备好兼容的节点/附加组件，并检查所有回滚资格条件；Auto Mode 会处理自己的节点回滚。不要依赖“一律无法降级”之类的笼统说法，也不要认为撤销操作无条件可用。
 ## 集群删除
 
-<!-- Audit 2026-09-11: parent asset repair required. Bulkall-namespacesservicedeleteexampleandunconditionalPVCdeleteflowneedownedinventory/dataretentionguards;RetainvsDelete/CSIcleanupwaits matter. Specifyallownedgroups/profileswaitersandoriginalIaCowner;retentionbackupbeforedeletion.
+<!-- Audit 2026-09-11: parent asset repair required. The bulk all-namespaces service deletion example and unconditional PVC deletion flow need owned-resource inventory/data retention guards; Retain vs Delete/CSI cleanup waits matter. Specifyallownedgroups/profileswaitersandoriginalIaCowner;retentionbackupbeforedeletion.
 ![Deletion process diagram clearing load balancers and PVCs, deleting node groups and Fargate profiles, then the cluster, then checking leftovers.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-4.html)

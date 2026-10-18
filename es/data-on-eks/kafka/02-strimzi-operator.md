@@ -1,13 +1,13 @@
 # Parte 2: Operador Strimzi
 
-> **Última actualización**: October 16, 2026. Strimzi 1.3.0, Kafka 4.3.1. Strimzi requiere Kubernetes 1.32 o posterior; la validación local del esquema utilizó 1.36.2.
-> **Validación**: Dos configuraciones de Helm, 67 objetos de Kubernetes/CRD y cinco casos de archivos de credenciales procesados mediante el analizador JAAS nativo de Kafka. No se realizó ninguna instalación activa en EKS, conexión TLS, aplicación de ACL del broker ni aprovisionamiento de EBS o NLB.
+> **Última actualización**: 16 de octubre de 2026. Strimzi 1.3.0, Kafka 4.3.1. Strimzi requiere Kubernetes 1.32 o posterior; la validación local del esquema se realizó con Kubernetes 1.36.2.
+> **Validación**: Se procesaron dos configuraciones de Helm, 67 objetos de Kubernetes/CRD y cinco casos de archivos de credenciales con el analizador JAAS nativo de Kafka. No se realizó ninguna instalación en un clúster EKS activo, no se establecieron conexiones TLS, no se verificó la aplicación de ACL del broker ni se aprovisionaron recursos de EBS o NLB.
 
 ## 1. Alcance y requisitos previos
 
-Este es un ejemplo de instalación nueva con tres controladores dedicados y tres brokers. Requiere capacidad programable en tres AZ y una StorageClass adecuada. La actualización de un clúster existente es una operación aparte.
+Este es un ejemplo de instalación nueva con tres controladores dedicados y tres brokers. Requiere capacidad disponible para programar cargas en tres AZ y una StorageClass adecuada. La actualización de un clúster existente es una operación aparte.
 
-Strimzi es un proyecto incubador de CNCF que reconcilia recursos de Kafka mediante Kubernetes Operators. El Cluster Operator actual administra StrimziPodSets, Pods, Services y PVC. Cuando está habilitado, el Entity Operator ejecuta los Topic y User Operators para reconciliar recursos KafkaTopic y KafkaUser. Instalar un Operator no completa automáticamente todas las políticas de reequilibrio, recuperación o disponibilidad.
+Strimzi es un proyecto de CNCF en fase de incubación que reconcilia recursos de Kafka mediante Kubernetes Operators. El Cluster Operator actual gestiona StrimziPodSets, Pods, Services y PVC. Cuando está habilitado, el Entity Operator ejecuta los Topic Operator y User Operator para reconciliar recursos KafkaTopic y KafkaUser. La instalación de un Operator no aplica automáticamente todas las políticas de reequilibrio, recuperación o disponibilidad.
 
 Requisitos previos:
 
@@ -16,11 +16,11 @@ Requisitos previos:
 - El aprovisionador de volúmenes y la configuración de IAM adecuados para EBS CSI estándar o EKS Auto Mode.
 - Nodos/capacidad programables en tres AZ y acceso a los registros de imágenes necesarios.
 
-Strimzi 1.0 y posteriores solo admiten `kafka.strimzi.io/v1`. Primero, convierte los recursos beta antiguos y actualiza los CRD mediante el procedimiento oficial. Los CRD tienen alcance de clúster: un espacio de nombres nuevo no evita los conflictos con definiciones existentes. El directorio `crds/` de Helm tiene un comportamiento distinto en la instalación inicial y en las actualizaciones de CRD existentes. El siguiente comando helm install no es un procedimiento de actualización para un clúster 0.45 existente.
+Strimzi 1.0 y posteriores solo admiten `kafka.strimzi.io/v1`. Primero, convierta los recursos beta antiguos y actualice los CRD siguiendo el procedimiento oficial. Los CRD tienen alcance de clúster: un espacio de nombres nuevo no evita los conflictos con definiciones existentes. El directorio `crds/` de Helm tiene un comportamiento distinto en la instalación inicial y en las actualizaciones de CRD existentes. El siguiente comando helm install no es un procedimiento de actualización para un clúster 0.45 existente.
 
 ## 2. Instalar el Cluster Operator
 
-Estos comandos modifican un clúster real. Confirma el contexto y el espacio de nombres, y úsalos para una instalación nueva.
+Estos comandos modifican un clúster real. Confirme el contexto y el espacio de nombres antes de utilizar estos comandos para una instalación nueva.
 
 **`operator-values.yaml`**
 
@@ -43,15 +43,15 @@ kubectl wait --for=condition=Established --timeout=120s \
   crd/kafkatopics.kafka.strimzi.io crd/kafkausers.kafka.strimzi.io
 ```
 
-El chart predeterminado observa su propio espacio de nombres. Para otros espacios de nombres, créalos primero y define valores como `watchNamespaces: [kafka-staging]`. El chart 1.3 agrega/elimina duplicados del espacio de nombres de la versión y genera los RoleBindings correspondientes. Cambiar solo la variable de entorno de observación mediante kubectl set env puede dejar RBAC faltante y generar discrepancias con Helm.
+El chart predeterminado vigila su propio espacio de nombres. Para vigilar otros espacios de nombres, créelos primero y establezca valores como `watchNamespaces: [kafka-staging]`. El chart 1.3 añade el espacio de nombres de la release sin duplicarlo y genera los RoleBindings correspondientes. Cambiar únicamente la variable de entorno de observación con kubectl set env puede dejar permisos RBAC incompletos y provocar divergencias respecto de la configuración de Helm.
 
-No superpongas la administración de la misma instalación mediante Helm, OLM y gestión manual. `watchAnyNamespace: true` es una decisión explícita que abarca todo el clúster; está deshabilitada en este ejemplo.
+No combine la gestión de una misma instalación mediante Helm, OLM y administración manual. `watchAnyNamespace: true` es una decisión explícita que abarca todo el clúster y está desactivada en este ejemplo.
 
 ## 3. Almacenamiento y ubicación
 
 ### EBS CSI estándar
 
-Esta StorageClass usa el aprovisionador EBS CSI estándar. Antes de aplicarla, comprueba si ya existen recursos con el mismo nombre. Cambiar el aprovisionador no migra automáticamente los volúmenes existentes a otro controlador.
+Esta StorageClass usa el aprovisionador EBS CSI estándar. Antes de aplicarla, compruebe si ya existen recursos con el mismo nombre. Cambiar el aprovisionador no migra automáticamente los volúmenes existentes a otro controlador.
 
 **`storageclass.yaml`**
 
@@ -71,11 +71,11 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-El rendimiento base de gp3 es de 3,000 IOPS y 125 MiB/s. El ejemplo anterior con `throughput: "250"` aprovisionaba rendimiento adicional; no era el valor base. También son importantes los límites de EBS/red de la instancia, la replicación de las particiones y los patrones de lectura. JBOD no equilibra automáticamente los datos ni elimina los límites de la instancia.
+El rendimiento de referencia de gp3 es de 3000 IOPS y 125 MiB/s. El ejemplo anterior con `throughput: "250"` aprovisionaba rendimiento adicional; no era el valor base. También son importantes los límites de EBS/red de la instancia, la replicación de las particiones y los patrones de lectura. JBOD no equilibra automáticamente los datos ni elimina los límites de la instancia.
 
 ### Alternativa EKS Auto Mode
 
-Elige esta StorageClass independiente solo para Auto Mode y establece `gp3-kafka-auto` para las **clases de volumen de los NodePool nuevos**. Usa la ruta del aprovisionador adecuada para el clúster. La migración de los PVC existentes requiere un procedimiento aparte.
+Elija esta StorageClass independiente solo para Auto Mode y establezca `gp3-kafka-auto` como **clase de volumen de los NodePool nuevos**. Utilice la ruta del aprovisionador adecuada para el clúster. La migración de los PVC existentes requiere un procedimiento aparte.
 
 **`storageclass-auto.yaml`**
 
@@ -103,9 +103,9 @@ allowedTopologies:
 
 Estos archivos hacen referencia a `gp3-kafka` estándar. Los roles reales son `controller` y `broker`; se pueden enumerar ambos juntos, pero `dual-role` no es un valor de enumeración independiente.
 
-Ambos pools requieren tres AZ. Los selectores coinciden con la etiqueta personalizada real del Pod `docs.example.com/kafka-role` y con la etiqueta del clúster, junto con `minDomains: 3`. Los Pods pueden permanecer en estado Pending si solo hay nodos aptos en dos AZ. La restricción estricta también puede impedir la creación de Pods de reemplazo en las AZ restantes durante una interrupción.
+Ambos pools requieren tres AZ. Los selectores coinciden con la etiqueta personalizada real del Pod `docs.example.com/kafka-role` y con la etiqueta del clúster; las restricciones topológicas establecen `minDomains: 3`. Los Pods pueden permanecer en estado Pending si solo hay nodos aptos en dos AZ. La restricción estricta también puede impedir la creación de Pods de reemplazo en las AZ restantes durante una interrupción.
 
-Los pools separados aíslan los roles y la configuración de recursos de los Pods, pero no necesariamente los nodos de trabajo físicos. Usa afinidad de nodos si se requiere separación física. La conciencia de rack de Kafka y la programación de Pods operan en capas distintas.
+Los grupos separados aíslan los roles y la configuración de recursos de los Pods, pero no necesariamente los nodos de trabajo físicos. Utilice afinidad de nodos si necesita separación física. La distribución de réplicas por rack de Kafka y la programación de Pods operan en capas distintas.
 
 **`controller-pool.yaml`**
 
@@ -201,13 +201,13 @@ spec:
             docs.example.com/kafka-role: broker
 ```
 
-`kraftMetadata: shared` selecciona el volumen que se utilizará para los metadatos de KRaft; como máximo, un volumen del pool puede tenerlo. `deleteClaim: false` y Retain en la StorageClass son opciones de retención, no copias de seguridad. Los PVC/PV/volúmenes de EBS pueden permanecer y seguir generando costos después de que se eliminen otros recursos.
+`kraftMetadata: shared` selecciona el volumen que se utilizará para los metadatos de KRaft; como máximo, un volumen del pool puede tenerlo. `deleteClaim: false` y el valor Retain de la StorageClass son opciones de retención, no copias de seguridad. Los PVC/PV/volúmenes de EBS pueden permanecer y seguir generando costos después de que se eliminen otros recursos.
 
-Tres controladores conservan una mayoría de dos tras el fallo de un votante. Tres brokers satisfacen un objetivo independiente de replicación de datos. Los números impares no son automáticamente seguros; la disponibilidad de la mayoría y la conectividad siguen siendo importantes.
+Tres controladores conservan una mayoría de dos tras el fallo de un miembro votante. Tres brokers satisfacen un objetivo independiente de replicación de datos. Los números impares no son automáticamente seguros; la disponibilidad de la mayoría y la conectividad siguen siendo importantes.
 
 ## 4. Clúster de Kafka autenticado
 
-Habilita juntos un listener interno TLS/SCRAM y el autorizador ACL. Crear un KafkaUser mientras se prueba mediante un listener de texto sin cifrar y sin autenticación no valida la autenticación de ese usuario.
+Habilite a la vez un listener interno TLS/SCRAM y el autorizador de ACL. Crear un KafkaUser mientras se prueba mediante un listener de texto sin cifrar y sin autenticación no valida la autenticación de ese usuario.
 
 **`kafka-cluster.yaml`**
 
@@ -245,9 +245,9 @@ spec:
     userOperator: {}
 ```
 
-Strimzi 1.3 usa KRaft y pools de nodos; no agregues anotaciones de activación heredadas ni bloques de ZooKeeper. `rack.topologyKey` proporciona información de AZ para ubicar las réplicas; no reasigna automáticamente todas las particiones existentes.
+Strimzi 1.3 usa KRaft y grupos de nodos; no agregue anotaciones de activación heredadas ni bloques de ZooKeeper. `rack.topologyKey` proporciona información de AZ para distribuir las réplicas; no reasigna automáticamente todas las particiones existentes.
 
-Mantén la compatibilidad entre la versión de Kafka y metadataVersion: este ejemplo usa 4.3.1 / 4.3-IV0. No cambies el campo de versión mientras conservas una sobrescritura de imagen antigua. Los ID de nodo se asignan en todo el clúster; no des por sentado que todos los pools tienen un Pod cuyo nombre termina en -0.
+Mantenga la compatibilidad entre la versión de Kafka y metadataVersion: este ejemplo usa 4.3.1 / 4.3-IV0. No cambie el campo de versión mientras conserve una sobrescritura de imagen antigua. Los ID de nodo se asignan en todo el clúster; no dé por sentado que todos los grupos tienen un Pod cuyo nombre termina en -0.
 
 ```bash
 # Use the appropriate StorageClass file for the cluster.
@@ -260,7 +260,7 @@ kubectl -n kafka get kafkanodepools
 kubectl -n kafka get pods,pvc -l strimzi.io/cluster=my-cluster
 ```
 
-Ready=True es el resultado de reconciliación observado por el Operator. Compara observedGeneration con la generación actual y comprueba que los Pods estén listos, así como el quorum y la conectividad de los clientes. Una condición Ready antigua o una fase Running por sí sola no demuestra que todos los componentes estén en buen estado ahora.
+Ready=True es el resultado de reconciliación observado por el Operator. Compare observedGeneration con la generación actual y compruebe que los Pods estén listos, además del quorum y la conectividad de los clientes. Una condición Ready antigua o una fase Running, por sí solas, no demuestran que todos los componentes estén en buen estado en este momento.
 
 ## 5. Topic y usuario
 
@@ -313,9 +313,9 @@ spec:
         operations: [IdempotentWrite]
 ```
 
-Para la prueba básica, este usuario puede producir/consumir mensajes de orders y leer el grupo order-processor. Las ACL de topic no otorgan ACL de grupo. IdempotentWrite a nivel de clúster admite operaciones de productor idempotentes; no sustituye el permiso Write en otros topics. Para servicios reales, considera usar identidades independientes de productor y consumidor.
+Para la prueba de humo, este usuario puede producir y consumir mensajes de orders, y leer el grupo order-processor. Las ACL de topic no otorgan ACL de grupo. IdempotentWrite a nivel de clúster admite operaciones de productor idempotentes; no sustituye el permiso Write en otros topics. Para servicios reales, considere utilizar identidades independientes para productores y consumidores.
 
-El User Operator crea un Secret con el nombre del usuario que incluye las entradas password y sasl.jaas.config. También deben estar habilitados el autorizador del clúster y la autenticación del listener. KafkaConnect/KafkaConnector definen workers/conectores independientes; la Parte 5 cubre esas configuraciones.
+El User Operator crea un Secret con el nombre del usuario que contiene las entradas password y sasl.jaas.config. También deben estar habilitados el autorizador del clúster y la autenticación del listener. KafkaConnect/KafkaConnector definen workers/conectores independientes; la Parte 5 cubre esas configuraciones.
 
 ```bash
 kubectl apply -f orders-topic.yaml -f order-service-user.yaml
@@ -327,7 +327,7 @@ kubectl -n kafka wait kafkauser/order-service --for=condition=Ready --timeout=5m
 
 Este archivo incluye un Pod de cliente temporal y código para generar la configuración. Las credenciales se leen desde un volumen Secret, se escapan para las propiedades de Java y se escriben en un archivo, sin poner contraseñas en argumentos de comandos, variables de entorno ni registros. El contenedor init de Python y el contenedor Kafka usan el mismo UID.
 
-El cliente confía en la CA pública mediante un almacén de confianza PEM y mantiene la verificación del nombre de host. La imagen de Kafka está fijada al digest de la versión 4.3.1. No se necesita instalar paquetes durante la ejecución ni suponer que la imagen de Kafka contiene Python.
+El cliente confía en la CA pública mediante un almacén de confianza PEM y mantiene la verificación del nombre de host. La imagen de Kafka está fijada por digest a la versión 4.3.1. No se necesita instalar paquetes durante la ejecución ni suponer que la imagen de Kafka contiene Python.
 
 **`client.yaml`**
 
@@ -512,13 +512,13 @@ kubectl -n kafka exec kafka-client -- \
 kubectl -n kafka delete pod kafka-client
 ```
 
-Esta es una prueba básica de conectividad para un topic de laboratorio nuevo. Un topic existente puede contener registros anteriores, así que inspecciona la salida en lugar de suponer que el primer registro es el que acabas de enviar. Una validación real también debería comprobar el rechazo de topics/grupos no autorizados, los fallos de autenticación, la rotación de CA, el acceso a los endpoints de los brokers y la recuperación. Durante la validación local de este capítulo no se enviaron mensajes a Kafka.
+Esta es una prueba de humo de conectividad para un topic nuevo del laboratorio. Un topic existente puede contener registros anteriores, así que revise la salida en lugar de suponer que el primer registro es el que acaba de enviar. Una validación real también debe comprobar el rechazo de topics y grupos no autorizados, los fallos de autenticación, la rotación de CA, el acceso a los endpoints de los brokers y la recuperación. Durante la validación local de este capítulo no se enviaron mensajes a Kafka.
 
 ## 7. Opcional: clientes en la VPC fuera de Kubernetes
 
-Este parche de combinación crea NLB internos mediante **AWS Load Balancer Controller**. Incluye el listener TLS existente porque el parche de combinación JSON reemplaza la matriz completa de listeners. Antes de usarlo, reemplaza 10.0.0.0/16 por los CIDR de cliente aprobados que correspondan.
+Este parche de combinación crea NLB internos mediante **AWS Load Balancer Controller**. Incluye el listener TLS existente porque un parche JSON de tipo merge reemplaza la matriz completa de listeners. Antes de utilizarlo, sustituya 10.0.0.0/16 por los CIDR de cliente aprobados que correspondan.
 
-configuration.class se convierte en el loadBalancerClass del Service generado. Las anotaciones coincidentes para la opción interna y los destinos IP se aplican al Service de bootstrap y a cada Service de broker, sin suponer que los ID de broker sean 0/1/2. El balanceo de carga de Auto Mode requiere confirmar por separado la clase del controlador y las opciones compatibles.
+La propiedad configuration.class se convierte en el campo loadBalancerClass del Service generado. Las anotaciones para el esquema interno y los destinos IP se aplican tanto al Service de bootstrap como a cada Service de broker, sin suponer que los ID de broker sean 0/1/2. El balanceo de carga de Auto Mode requiere confirmar por separado la clase del controlador y las opciones compatibles.
 
 **`external-listener.patch.yaml`**
 
@@ -558,7 +558,7 @@ kubectl -n kafka get services -l strimzi.io/cluster=my-cluster
 kubectl -n kafka get kafka my-cluster -o jsonpath='{.status.listeners}'
 ```
 
-Esta opción crea Services LoadBalancer de bootstrap y por broker, con los costos correspondientes. Los clientes deben poder acceder a todos los endpoints de broker devueltos en los metadatos, no solo al de bootstrap. Agregar registros DNS o cambiar a NodePort no resuelve automáticamente los requisitos de enrutamiento, TLS o ciclo de vida de los nodos.
+Esta opción crea Services de tipo LoadBalancer para bootstrap y para cada broker, con los costos correspondientes. Los clientes deben poder acceder a todos los endpoints de broker que devuelven los metadatos, no solo al de bootstrap. Añadir registros DNS o cambiar a NodePort no resuelve automáticamente los requisitos de enrutamiento, TLS ni ciclo de vida de los nodos.
 
 ## Próximos pasos y referencias
 

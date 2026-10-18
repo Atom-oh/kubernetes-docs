@@ -1,33 +1,33 @@
-# Linkerdアーキテクチャ
+# Linkerd アーキテクチャ
 
-> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 / proxy release/v2.368.0
+> **最終更新**: 2026年10月16日 · Linkerd edge-26.10.1 / proxy release/v2.370.0
 
-現コンポーネントの役割、ID階層、通信捕捉、注入ライフサイクルを説明します。対応release/cluster構成と固定成果物は[インストールガイド](01-installation.md)を使います。以下は設定例で、監査では実デプロイやCA rotationをしていません。
+この章では、現在のコンポーネントの役割、ID階層、トラフィックの捕捉と注入のライフサイクルを説明します。対応するリリースとクラスターの組み合わせ、および固定バージョンの成果物は[インストールガイド](01-installation.md)を参照してください。以下の例は設定を示すもので、この監査では実際のデプロイやCAローテーションを行っていません。
 
 ## 全体アーキテクチャ
 
-![Linkerdの中核3 Deploymentとメッシュpeer 2つの簡略図。policy controllerはDestination内で別表示せず、接続の一部を示す。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
+![Linkerdの中核となる3つのDeploymentと、メッシュに参加する2つのピアを示す簡略図。policy controllerはDestinationとともに動作するため別個には描かず、一部の接続だけを示しています。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
 
 [インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-0.html)
 
-デフォルトcontrol-plane名前空間はlinkerdです。固定チャートの中核はlinkerd-destination、linkerd-identity、linkerd-proxy-injectorの3 Deploymentです。DestinationにはpolicyとServiceProfile-validatorコンテナもあり、論理役割と独立Deploymentは同じではありません。任意Viz/multiclusterは独自ライフサイクルを持ちます。
+デフォルトのコントロールプレーン名前空間は `linkerd` です。固定したチャートに含まれる中核のDeploymentは、`linkerd-destination`、`linkerd-identity`、`linkerd-proxy-injector` の3つです。DestinationにはpolicyとServiceProfile-validatorの各コンテナも含まれます。論理上のcontrollerの役割と、独立したDeploymentは同じではありません。任意のVizおよびmulticlusterコンポーネントには、それぞれ独自のライフサイクルがあります。
 
-データプレーンは参加アプリに併設するRustプロキシです。このreleaseはnative sidecarがデフォルトです。Identity Deploymentは意図的に通常proxyとstartup wait無効を使うため、containersとinitContainers両方を確認します。
+データプレーンは、メッシュに参加したアプリケーションと並んで動作するRust製プロキシを使用します。このリリースではnative sidecarがデフォルトです。Identity Deploymentでは意図的に通常のproxyを使い、startup waitを無効にしています。そのため、状態を調べるときは `containers` と `initContainers` の両方を確認してください。
 
 ## コントロールプレーン
 
 ### Destination Controller
 
-Destinationは検出状態を監視し、streaming APIでendpoint、期待ID、profile情報を提供します。現デフォルトはEndpointSliceです。ServiceProfileは従来設定として残り、Gateway APIルーティング/認可にはpolicy controllerも関わります。現routingをSMI TrafficSplitだけと説明したり、Destinationが旧拡張リソースを直接監視すると想定したりしないでください。
+Destinationはサービス検出の状態を監視し、ストリーミングAPIを通じてエンドポイントアドレス、期待されるID、profile情報を提供します。現在のデフォルトではEndpointSliceを使います。ServiceProfileは従来の設定方法として残っています。Gateway APIのルーティングと認可にはpolicy controllerも関与します。現在のLinkerdルーティングをSMI TrafficSplitだけで説明したり、Destinationがその旧拡張リソースを直接監視すると想定したりしないでください。
 
 | 責務 | 意味 |
 |---|---|
-| 検出 | 要求Serviceのendpoint追加/削除とメタデータ |
-| 期待ID | 送信proxyが選択peerを認証するための情報 |
-| Profile | メトリクス、再試行、timeout用の対応route/profile設定 |
-| 負荷分散入力 | endpointと設定重み。実遅延観測と要求/接続選択はproxyが行う |
+| 検出 | 要求されたServiceのエンドポイント追加・削除とメタデータ |
+| 期待されるID | 送信側proxyが選択したピアを認証するための情報 |
+| Profile | メトリクス、再試行、タイムアウト用にサポートされるルート/profile設定 |
+| 負荷分散の入力 | エンドポイントと設定された重み。実行時の遅延観測と要求・接続の選択はproxyが行う |
 
-以下はGoでなく**Protocol Buffersサービス抜粋**です。message定義とimportは固定proxy APIにあります。
+以下はGoソースではなく、**Protocol Buffersのサービス定義の抜粋**です。メッセージ定義とimportは、固定バージョンのproxy APIにあります。
 
 ```protobuf
 // Excerpt: message definitions/imports are in the linked API source.
@@ -37,21 +37,21 @@ service Destination {
 }
 ```
 
-Getはdestination更新、GetProfileはprofile更新をstreamします。streamやローカルcacheが設定を即時化したり、利用不能endpointへの対処を不要にしたりはしません。
+`Get` はDestinationの更新をストリーム配信し、`GetProfile` はprofileの更新をストリーム配信します。ストリームもローカルキャッシュも設定変更を即時反映させるものではなく、利用できないエンドポイントへの対処も不要にはなりません。
 
 ### Identity Controller
 
-デフォルトKubernetes IDフロー:
+デフォルトのKubernetes IDフローは次のとおりです。
 
-1. Proxy起動でローカル秘密鍵/CSR素材を確立。
-2. Identity clientがCSR、要求ID、ServiceAccount tokenを送信。
-3. IdentityがKubernetes TokenReviewでtokenを検証しDNS形式IDを導出。
-4. 設定された**issuer署名認証情報**（通常中間issuer）がworkload証明書へ署名。
-5. Clientが証明書/chainを読込み、期限前に更新。
+1. Proxyの起動時に、ローカルの秘密鍵とCSRの素材を用意します。
+2. Identity clientがCSR、要求するID、ServiceAccount tokenを送信します。
+3. IdentityがKubernetes TokenReviewでtokenを検証し、DNS形式のIDを導出します。
+4. 設定された**issuer署名認証情報**（通常は中間issuer）がworkload証明書に署名します。
+5. Clientが返された証明書とチェーンを読み込み、有効期限前に更新します。
 
-trust anchorはchain検証の基盤です。その秘密鍵はIdentity controllerに不要で、rootが全workload CSRのonline署名者になるわけではありません。
+Trust anchorは証明書チェーン検証の基盤です。その秘密鍵はLinkerdのIdentity controllerには必要ありません。root CAがすべてのworkload CSRにオンライン署名するわけではありません。
 
-以下は所有者用**Helm values断片**です。
+以下はインストールを管理する担当者向けの**Helm values設定断片**です。
 
 ```yaml
 identity:
@@ -61,17 +61,17 @@ identity:
     scheme: linkerd.io/tls
 ```
 
-linkerd.io/tlsがデフォルトissuer schemeです。kubernetes.io/tls統合は対応する外部管理Secret形式を使います。所有者/キーを合わせずschemeを変えたり、部分identity ConfigMapでlinkerd-configのvalues全体を上書きしたりしないでください。
+`linkerd.io/tls` がデフォルトのissuer schemeです。`kubernetes.io/tls` との統合では、外部管理するSecretに対応した形式を使います。認証情報の所有者と鍵を合わせずにschemeを変更しないでください。また、一部だけのidentity ConfigMapで `linkerd-config` のvalues全体を上書きしないでください。
 
 ### Proxy Injector
 
-![Linkerd CNIなしの適格Podの概念的admissionフロー。API serverがinjector変更を適用し、native proxy配置と除外は本文で説明する。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
+![Linkerd CNIを使わない適格なPodに対するadmissionフローの概念図。API serverがinjectorによる変更を適用し、native proxyの配置と除外条件は本文で説明しています。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
 
 [インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-3.html)
 
-injectorはmutating admission webhookです。応答はAPI serverが適用する変更を記述し、図は概念でwire形式例ではありません。実Webhook選択、Pod上書き、platform適格性は引き続き適用されます。
+Injectorはmutating admission webhookです。その応答はAPI serverが適用する変更を記述します。この図は概念図であり、wire形式の例ではありません。実際のwebhookの選択、Podによる上書き、プラットフォームの適格性も引き続き影響します。
 
-選択名前空間を有効にします。
+選択した名前空間を有効にします。
 
 ```yaml
 apiVersion: v1
@@ -82,7 +82,7 @@ metadata:
     linkerd.io/inject: enabled
 ```
 
-Deploymentの上書きは**Podテンプレート**へ置きます。既存定義内の断片です。
+Deploymentでは、上書き設定を**Pod template**に記述します。以下は既存のworkload定義の中に置く設定断片です。
 
 ```yaml
 spec:
@@ -97,18 +97,18 @@ spec:
         config.linkerd.io/proxy-log-level: warn,linkerd=info
 ```
 
-enabled|disabledではなくenabledかdisabledの1リテラル値を使います。アノテーション追加は既存Podを変更しません。Webhookは指定system名前空間を除外し、明示Pod上書きで有効な注入を無効にもできます。
+`enabled|disabled` という値ではなく、`enabled` または `disabled` のどちらか1つをそのまま指定します。Annotationを追加しても既存Podは変更されません。導入済みwebhookは指定されたシステム名前空間を除外し、明示的なPod上書きによって、通常なら有効な注入を無効にすることもできます。
 
-| 注入/設定項目 | 役割 |
+| 注入・設定される項目 | 役割 |
 |---|---|
-| linkerd-init | Linkerd CNIなしの場合のPodネットワーク捕捉設定 |
-| linkerd-proxy | データプレーンproxy。このreleaseでは通常再起動可能initコンテナ |
-| 投影ID tokenとローカルID保存 | Bootstrapとworkload証明書用。proxy鍵は共有workload Secretとして配布されない |
-| 環境/プローブ/リソース | 注入で生成する版固有runtime設定 |
+| linkerd-init | Linkerd CNIを使わない場合にPodネットワークを捕捉するための設定 |
+| linkerd-proxy | データプレーンproxy。このリリースでは通常、再起動可能なinit containerとして動作 |
+| 投影されたidentity tokenとローカルidentity保存領域 | Bootstrapとworkload証明書に使用。Proxyの鍵は共有workload Secretとして配布されない |
+| 環境変数・probe・リソース | 注入で生成される、バージョン固有の実行時設定 |
 
 ### Policy Controller
 
-policyは受信認可と対応送信/要求ルーティングを制御します。例はapp:webラベルとhttpという宣言ポートのPodを選び、my-appのメッシュapi-gateway ServiceAccountを認可します。
+Policyは受信トラフィックの認可と、サポート対象の送信・要求ルーティング動作を制御します。この例は `app:web` ラベルと `http` という名前付きportを宣言したPodを選択し、`my-app` 名前空間のメッシュに参加した `api-gateway` ServiceAccountを認可します。
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta3
@@ -139,11 +139,11 @@ spec:
     name: api-gateway
 ```
 
-Serverは既存Pod/port対を選び、アプリ、Service、listenerを作りません。名前付きportは存在が必要です。該当ポリシーか明示代替アクセス方針で許可しなければ、選択通信はデフォルト拒否です。強制前に範囲を段階的にテストします。
+Serverは既存のPodとportの組み合わせを選択します。アプリケーション、Service、listenerを作成するものではありません。指定する名前付きportは実在する必要があります。適用されるpolicyか、明示的に選択した別のアクセスpolicyで許可されない限り、選択されたトラフィックはデフォルトで拒否されます。強制適用する前に、policyの対象範囲を段階的に適用してテストしてください。
 
-AuthorizationPolicyはServerか対応routeを対象にできます。ServiceAccount参照は便利な認証要件で、MeshTLSAuthenticationとNetworkAuthenticationは追加ID/ネットワーク集合を表します。1 policy内の全required認証参照に一致が必要です。他の認可可能policyも確認します。
+AuthorizationPolicyはServerまたはサポート対象のrouteを対象にできます。ServiceAccount参照は便利な認証要件です。MeshTLSAuthenticationとNetworkAuthenticationを使うと、追加のIDやネットワーク集合を表現できます。1つのpolicy内に指定した必須認証参照はすべて一致する必要があります。トラフィックを許可できる他のpolicyも確認してください。
 
-既存ServerAuthorization手順では以下は対応**代替**で、前の認可と一緒に適用する追加要件ではありません。
+既存のServerAuthorization手順を使う場合は、次の設定がサポートされた**代替手段**です。直前の認可設定と併せて追加する要件ではありません。
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta1
@@ -161,31 +161,31 @@ spec:
         namespace: my-app
 ```
 
-リリースCRDはServerAuthorization v1beta1を提供し、旧例のv1beta2ではありません。Server v1beta2は提供継続し、例は現storage v1beta3です。AuthorizationPolicyが柔軟な推奨インターフェースです。別API groupのIstio同名リソースと混同しないでください。
+リリースに含まれるCRDが提供するServerAuthorizationのAPIは `v1beta1` であり、元の例にある `v1beta2` ではありません。Serverの `v1beta2` は引き続き提供され、この例では現在の保存バージョンである `v1beta3` を使います。より柔軟なAuthorizationPolicyが推奨インターフェイスです。異なるAPI groupにあるIstioの同名リソースと、これらのLinkerdリソースを混同しないでください。
 
 ## データプレーン
 
-### Proxy動作とプロトコル範囲
+### Proxyの動作とプロトコルの範囲
 
-linkerd2-proxyはRust製のメッシュ専用proxyです。HTTP/1.1、HTTP/2、gRPC、TCP対応です。HTTPルーティング/メトリクスは見えるHTTPが必要で、アプリ開始TLSは不透明、UDP/QUICやskip通信はTCP proxy経路の対象外です。
+`linkerd2-proxy` はRustで実装された、メッシュ専用のproxyです。HTTP/1.1、HTTP/2、gRPC、TCPをサポートします。HTTPレベルのルーティングとメトリクスには、内容を認識できるHTTP通信が必要です。アプリケーションが開始するTLS通信の内容はproxyから見えず、UDP/QUICや捕捉をskipした通信はTCP proxy経路の対象外です。
 
-適格なメッシュTCP peerには転送mTLSを提供します。文書化されたメッシュ転送はTLS 1.3で、アプリTLSパススルーは別層です。未参加peerや明示捕捉迂回は別検討です。デフォルト受信policyは未参加の平文も受け、自動mTLSは全sourceの認証必須と同義ではありません。
+メッシュに参加した通信可能なTCPピア間では、Linkerdが転送層のmTLSを提供します。文書化されたメッシュ転送ではTLS 1.3を使います。アプリケーションが開始するTLSのパススルーは別の層です。メッシュに参加していないピアと、明示的に捕捉を迂回する通信は、別途考慮する必要があります。デフォルトの受信policyは、メッシュに参加していない相手からの平文通信を受け入れます。自動mTLSは、すべての送信元に対して認証を必須にすることと同じではありません。
 
-proxyはHTTP要求に遅延対応負荷分散、不透明TCPに接続単位分散を使います。endpoint重み/route規則とruntime遅延推定は別です。EWMAを全要求が決定的に最速の1先へ行く保証と解釈しないでください。
+ProxyはHTTP要求を遅延を考慮して負荷分散し、内容が見えないTCP通信は接続単位で負荷分散します。エンドポイントの重みやルーティング規則と、実行時に推定する遅延は別の情報です。EWMAを、すべての要求が決定論的に最速の単一エンドポイントへ送られる保証と解釈しないでください。
 
-普遍的10MBメモリ、p99<1ms、固定binary size保証はありません。測定は版/build、architecture、接続数、policy/設定、workload、計装に依存します。
+メモリ10MB未満、p99が1ms未満、またはバイナリサイズが一定であるという普遍的な保証はありません。測定値はバージョンとbuild、アーキテクチャ、接続数、policyと設定、workload、計測方法によって異なります。
 
-### Proxyトラフィックフロー
+### Proxyのトラフィックフロー
 
-![新しいメッシュ接続のHTTP要求。送信proxyが宛先を検出/選択し、両proxyがmTLSを確立、受信policyを経てアプリへ届く。既存接続は再利用可能。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
+![新しいメッシュ接続上でのHTTP要求。送信側proxyが宛先を検出して選択し、両proxyがmTLSを確立した後、受信側policyを通過してアプリケーションに届きます。既存の接続を再利用する場合もあります。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
 
 [インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-5.html)
 
-送信検出、routing/balancing、再試行、timeoutと受信認可は異なります。新接続は検出/mTLS設定を行い、既存接続やcache設定を再利用できます。安全な再試行は特に書込でアプリ/プロトコルの判断です。
+送信側の検出、ルーティングと負荷分散、再試行、タイムアウトは、受信側の認可とは異なる処理です。新しい接続では宛先の検出とmTLSの確立が行われます。既存の接続とキャッシュ済み設定が再利用される場合もあります。安全に要求を再試行できるかはアプリケーションとプロトコルによって判断してください。特に書き込み要求では注意が必要です。
 
-### 通信捕捉: linkerd-initまたはCNI
+### トラフィックの捕捉: linkerd-initまたはCNI
 
-生成proxy-initまたはLinkerd CNI設定を使います。次は概念順序で、**実行するhost iptablesコマンドではありません**。
+生成されたproxy-initまたはLinkerd CNIの設定を使用してください。以下は概念上の順序であり、**ホスト上で実行するiptablesコマンドではありません**。
 
 ```text
 Inside the Pod network namespace:
@@ -198,13 +198,13 @@ Linkerd CNI: installs the Linkerd-specific capture setup through the CNI chain.
 linkerd-init: performs the setup at Pod startup when Linkerd CNI is not used.
 ```
 
-旧例は全TCP REDIRECT後にproxy UID迂回を追加しており、proxy自身の送信を保護できませんでした。host名前空間への適用もPod固有Linkerd設定ではありません。実装は追加除外/chainを含み、設定iptablesモードをサポートします。
+以前の例では、全TCP通信をREDIRECTするルールより後にproxy UIDの迂回ルールを追加していました。この順序ではproxy自身の送信トラフィックを保護できません。また、これらのルールをホスト名前空間に適用しても、Podごとに設定するLinkerdの手順にはなりません。実際の実装には追加の除外設定やchainがあり、設定されたiptablesモードにも対応します。
 
-opaque portはプロトコル検出をskipしつつproxy転送を維持します。skip portはproxyとメッシュ機能を迂回します。server-firstでは適切なopaque/protocol設定の代わりにskipしないでください。
+Opaque portはプロトコル検出をskipしますが、proxyによる転送処理は維持します。Skip portはproxyとメッシュ機能を迂回します。サーバーが先に送信を開始する通信では、正しいopaque/protocol設定の代わりにskipを使用しないでください。
 
-### Proxyを手組みせず生成Podを確認
+### Proxyを手作業で組み立てず、生成されたPodを確認する
 
-旧手組みPodはidentity/bootstrap素材が欠け、利用できない上流stable-2.16.0イメージを前提としていました。選択CLIと導入済みcontrol-plane設定で生成/確認します。
+以前の手作業によるPod例は、identity/bootstrapの素材が不足しており、上流に存在しない `stable-2.16.0` イメージを前提としていました。選択したCLIと導入済みコントロールプレーンの設定で、構成を生成するか確認してください。
 
 ```bash
 # The input is a complete, reviewed application manifest.
@@ -219,7 +219,7 @@ linkerd inject --manual --native-sidecar \
   web.yaml > web-manually-injected.yaml
 ```
 
-デフォルトinjectはアノテーション変換です。edge-26.9.1のmanual生成も入力設定アノテーションを消費し、観測CPU request 700m指定は100m CLIフラグより優先され、入力log-levelも適用されました。競合入力を更新/削除して実proxyフィールドを確認します。manual生成proxyは後のアノテーション編集で自動再生成されません。短縮containerを完全導入としてコピーせず、所有者経由で生成workloadを更新します。
+デフォルトのinject modeはAnnotationの変換です。edge-26.9.1では手動生成でも既存の入力設定Annotationを読み取ります。実際に観測されたケースでは、CPU request `700m` のAnnotationがCLI flagの `100m` より優先され、入力されたlog-level Annotationも適用されました。競合する入力を更新または削除し、生成結果のproxyフィールドを確認してください。手動で生成したproxyは、後からAnnotationを編集しても自動再生成されません。短縮したcontainer定義を完全なインストール設定としてコピーせず、所有するリソースを通して生成workloadを更新してください。
 
 ```bash
 : "${APP_POD:?Set an application Pod name in my-app}"
@@ -227,23 +227,23 @@ kubectl -n my-app get pod "$APP_POD" -o json |
   jq '{pod: .metadata.name, proxies: ([.spec.containers[]?, .spec.initContainers[]?] | map(select(.name == "linkerd-proxy") | {image, restartPolicy, resources, startupProbe, readinessProbe, livenessProbe}))}'
 ```
 
-native sidecarはrestartPolicy: AlwaysのinitContainersです。CNI経路設定時はlinkerd-initが省略されます。proxy healthは設定admin port（既定4191）の/liveと/readyです。native startup/readinessとアプリreadinessは別です。
+Native sidecarは `restartPolicy: Always` を指定した `initContainers` に現れます。設定でCNIを使う経路を選ぶと `linkerd-init` は省略されます。Proxyのhealth endpointは、設定されたadmin port（デフォルト `4191`）の `/live` と `/ready` です。Native sidecarのstartup/readinessとアプリケーションのreadinessは別々に確認してください。
 
-## 証明書階層
+## 証明書の階層
 
-| 素材 | デフォルトの役割/保存 |
+| 素材 | デフォルトの役割・保存場所 |
 |---|---|
-| Trust anchor証明書/bundle | 公開信頼基盤。linkerd-identity-trust-roots ConfigMapのca-bundle.crt |
-| Root CA秘密鍵 | PKI所有者の素材。Linkerd実行に不要 |
-| Issuer証明書/秘密鍵 | linkerd-identity-issuer Secret。既定crt.pem/key.pem |
-| Kubernetes TLS issuer統合 | tls.crt/tls.keyと一致schemeを使う意図的代替 |
-| Workload鍵/証明書 | Proxyローカル認証素材。公称24h、自動更新 |
+| Trust anchor証明書・bundle | 公開された信頼の基点。`linkerd-identity-trust-roots` ConfigMapの `ca-bundle.crt` |
+| Root CA秘密鍵 | PKI所有者が管理する素材。Linkerdの実行には不要 |
+| Issuer証明書・秘密鍵 | `linkerd-identity-issuer` Secret。デフォルト形式では `crt.pem` と `key.pem` |
+| Kubernetes TLS issuer統合 | `tls.crt` と `tls.key` およびそれらに合うschemeを使う、意図的に設定する代替方式 |
+| Workloadの鍵・証明書 | Proxy内に保存される認証情報。有効期間は公称24時間で、自動更新される |
 
-issuer/trust anchorの期限はPKI設定によります。既定CLI生成root/issuerは1年で、カスタム10年例はデフォルトや普遍的推奨ではありません。固定例時刻をコピーせず実日付を確認します。
+Issuerとtrust anchorの有効期間は、設定されたPKIによって異なります。CLIで生成するデフォルトのrootとissuerの有効期間は1年です。独自に設定した10年の例は、デフォルトでも普遍的な推奨値でもありません。固定の例示日時をコピーせず、実際の証明書の日付を確認してください。
 
-### KubernetesワークロードID
+### Kubernetes workload identity
 
-デフォルトKubernetes ID機構ではDNS形式です。
+デフォルトのKubernetes ID機構では、IDはDNS形式です。
 
 ```text
 <service-account>.<namespace>.serviceaccount.identity.<linkerd-namespace>.<identity-trust-domain>
@@ -251,15 +251,15 @@ issuer/trust anchorの期限はPKI設定によります。既定CLI生成root/is
 web-service.my-app.serviceaccount.identity.linkerd.cluster.local
 ```
 
-同じServiceAccountの複数PodはIDを共有し、ローカル認証情報は各自が持ちます。identity trust domainは設定可能な概念で、変更したKubernetes DNS suffixと必ずしも同じではありません。
+同じServiceAccountを使うPodはIDを共有しますが、それぞれが独自のローカル認証情報を持ちます。Identity trust domainは設定可能な概念であり、変更後のKubernetes DNS suffixと必ず同一とは限りません。
 
-元のspiffe://root.linkerd.cluster.local/ns/.../sa/...はデフォルト形式ではありません。SPIFFE/SPIRE IDは別の[外部ワークロード・メッシュ拡張経路](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/)で対応します。Kubernetes TokenReviewをそのID/bootstrapモデルに置換しないでください。
+元の `spiffe://root.linkerd.cluster.local/ns/.../sa/...` という文字列は、デフォルトのKubernetes ID形式ではありません。SPIFFE/SPIRE形式のIDは、独立した[外部workloadをメッシュに追加する経路](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/)でサポートされます。Kubernetes TokenReviewの代わりに、そのID/bootstrap方式を使わないでください。
 
 ### 更新とローテーション
 
-proxy release/v2.368.0のidentity clientは通常、設定最小/最大更新間隔で制限し、**残存**有効期間の70%時点に次の証明書試行を予定します。error/期限切れ経路は最小遅延を使う場合があります。全証明書の固定時刻保証ではありません。
+Proxy release/v2.370.0では、Identity clientは通常、設定された更新間隔の最小値と最大値に収まるよう調整したうえで、**残りの**有効期間の70%が経過した時点に次の証明書取得を試みるよう予定します。エラー時や期限切れの場合は最小遅延が使われることがあります。すべての証明書に対して固定された時刻を保証するものではありません。
 
-clientは更新要求時に読込済み鍵/CSRを再利用します。証明書更新と秘密鍵、issuer、trust anchorのrotationは同じではありません。
+このclientは証明書の更新を要求する際、読み込み済みの鍵とCSRのdocumentを再利用します。証明書の更新は、秘密鍵、issuer、trust anchorのローテーションとは異なります。
 
 ```bash
 set -euo pipefail
@@ -272,15 +272,15 @@ kubectl -n linkerd get secret linkerd-identity-issuer -o json |
   base64 -d | openssl x509 -noout -dates
 ```
 
-完全なtrust anchor移行には複数段階があります。
+Trust anchorを完全に移行するには、複数の段階が必要です。
 
-1. 現有効root、issuer、全consumer、導入/PKI所有者を棚卸し。
-2. 所有者設定で旧rootと並べ新rootを追加。対象proxy/control planeとmulticluster peerが重複bundleを実読込することを確認。
-3. 新root署名のissuerへrotationし、identityが読込したことを確認。
-4. 設定ソースに応じconsumerを更新/再作成し、実新認証情報と対象経路mTLSを確認。
-5. 必要peerが旧rootに依存しなくなってから削除し、最終bundleを伝播・再検証。
+1. 現在有効なroot、issuer、すべての利用者、インストールおよびPKIの管理者を洗い出します。
+2. 管理者の設定を通して、新しいrootを古いrootと併せて追加します。対象のproxyとコントロールプレーンコンポーネント、およびmulticluster peerが、両方を含むbundleを実際に読み込んだことを確認してください。
+3. 新しいrootで署名された認証情報にissuerを切り替え、Identity serviceがそれを読み込んだことを確認します。
+4. 設定の管理元に応じて利用者を更新または再作成し、新しい認証情報と対象経路上のmTLS通信を実際に確認します。
+5. 必要なpeerが古いrootに依存しなくなってから古いrootを削除し、最終bundleを配布して再確認します。
 
-旧ConfigMap更新と1名前空間再起動はissuer移行と旧root除去の前で終わり、完全rotationではありませんでした。Helm/cert-manager/trust-managerと競合する直接変更を避けます。期限切れrootには通常の有効root切り替えでなく復旧手順が必要です。
+以前のConfigMap更新と、1つの名前空間の再起動だけでは、issuerの切り替えと古いrootの削除まで行っておらず、完全なローテーション手順ではありません。Helm/cert-manager/trust-managerの管理と競合する直接変更は避けてください。すでに期限切れのrootには、有効なrootの通常の切り替えではなく、復旧手順が必要です。
 
 ```bash
 linkerd check
@@ -290,54 +290,54 @@ kubectl -n linkerd get events --field-selector reason=IssuerUpdated
 kubectl -n my-app get pods -o wide
 ```
 
-IssuerUpdatedは1観測で、全proxy/remote cluster移行の証明ではありません。cert-managerはissuer更新、trust-managerはbundle配布を自動化できますが、root切り替えは協調検証が必要です。実PKI設計の[手動](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)または[管理された認証情報手順](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)に従います。この章はrotationを実行していません。
+`IssuerUpdated` eventは観測情報の1つであり、すべてのproxyやリモートクラスターで移行が完了した証明ではありません。cert-managerはissuerの更新を自動化でき、trust-managerはbundleを配布できますが、rootの切り替えには関係する対象を調整した検証が必要です。実際のPKI設計に応じて、[手動の手順](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)または[認証情報を管理する手順](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)に従ってください。この章ではローテーションを実施していません。
 
-## サイドカー注入の詳細
+## Sidecar注入の詳細
 
-![Pod作成前にnamespace意図、Podテンプレート上書き、適格性を組み合わせて判断する。アノテーションは全Pod注入の保証ではない。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
+![Namespaceの意図、Pod templateの上書き、適格性に基づきPod作成前に注入を判断します。Annotationを設定しても、すべてのPodへの注入が保証されるわけではありません。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
 
 [インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-8.html)
 
-controller workloadではPodテンプレートアノテーションと結果Podを確認します。1 YAML map内のmetadata重複キーは上書き/競合するため、namespace/workload例は別リソース/断片として保持します。
+Controllerが管理するworkloadでは、Pod templateのAnnotationを使用し、作成されたPodを確認してください。1つのYAML mappingで同じmetadata keyを重複させると、片方が上書きされるか競合します。Namespaceとworkloadの例は、別々のリソースまたは設定断片として記述してください。
 
-先のresource/logアノテーションは意図するrequests/limitsとlog設定で、実消費測定ではありません。opaque-port上書きはDBポート2つを追加するだけでなくデフォルトリストを置換するため、必要port全部を保持します。skip-portは意図的にメッシュ処理から外します。
+前述のresource/log Annotationが指定するのは、意図するproxyのrequest/limitとlog設定であり、実際の消費量の測定値ではありません。Opaque portの上書きは、database portを2つ追加するだけではなく、デフォルトのport一覧を置き換えます。必要なportをすべて残してください。Skip portの上書きは、対象トラフィックを意図的にメッシュ処理から除外します。
 
-## コンポーネント間通信
+## コンポーネント間の通信
 
-![検出、ID検証、policy、admissionという一部制御通信の役割。現デフォルトはEndpointSliceとTokenReviewを使い、ポート表はopaque TCPも含む。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
+![検出、Identity検証、policy、admissionに関する、一部のコントロールプレーン通信を示します。現在のデフォルトではEndpointSliceとTokenReviewを使い、port表はopaque TCPも扱います。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
 
 [インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-9.html)
 
-| コンポーネント/経路 | 既定ポート | プロトコル/目的 |
+| コンポーネント・経路 | デフォルトport | プロトコル・用途 |
 |---|---|---|
-| Destination Service | 8086 | 検出/profileのstreaming gRPC |
-| Identity Service | 8080 | 証明書API gRPC |
-| Policy Service | 8090 | Policy gRPC |
+| Destination Service | 8086 | 検出/profile情報を配信するstreaming gRPC |
+| Identity Service | 8080 | 証明書APIのgRPC |
+| Policy Service | 8090 | Policy用gRPC |
 | Proxy Injector | Service 443 → Pod 8443 | HTTPS admission webhook |
-| Proxy inbound | 4143 | HTTP/gRPC/opaqueを含む捕捉TCP |
-| Proxy outbound | 4140 | 捕捉送信TCP |
-| Proxy admin | 4191 | HTTPメトリクスとhealth |
+| Proxy inbound | 4143 | HTTP/gRPCまたはopaque通信を含む、捕捉されたTCP |
+| Proxy outbound | 4140 | 捕捉された送信TCP |
+| Proxy admin | 4191 | HTTPメトリクスとhealth endpoint |
 
-ポートは設定可能で、一律ネットワーク許可ではありません。adminはEnvoy型routing設定インターフェースではなく、policy/設定はcontrol-plane APIで届きます。
+これらのportは変更でき、一律にネットワークアクセスを許可するための規則ではありません。Admin endpointはEnvoyのようなルーティング設定インターフェイスではありません。Policyと設定はコントロールプレーンAPIを通じて配信されます。
 
 ## Istioアーキテクチャとの比較
 
 | 観点 | Linkerd | Istio |
 |---|---|---|
-| 制御の配置 | この版では中核3 Deployment内に複数論理controller | 主要制御は統一Istiod、加えてmode固有component |
-| データプレーン | 専用Rust proxy | Envoy sidecarまたはambient ztunnelと選択waypoint |
-| 設定 | Linkerd streaming gRPC APIと対応resource | Envoy xDSと対応Istio/Gateway API設定 |
-| 拡張 | 対応Linkerd機能/API範囲を確認 | mode/版固有Envoy/Wasm/Luaと接続を確認 |
-| リソース/性能比較 | 同等workloadと実設定で測定 | 同等workloadと実設定で測定 |
+| コントロールプレーンの構成 | このリリースでは中核となる3つのDeploymentに複数の論理controllerを配置 | 主要な制御機能を統合したIstiodと、モード別のコンポーネント |
+| データプレーン | メッシュ専用のRust proxy | Envoy sidecar、または選択したwaypointとambient ztunnel |
+| 設定 | LinkerdのストリーミングgRPC APIとサポート対象resource | Envoy用xDS、およびサポート対象のIstio/Gateway API設定 |
+| 拡張 | サポート対象のLinkerd機能/APIの範囲を確認 | モードとバージョンごとのEnvoy/Wasm/Lua対応、および接続方法を確認 |
+| リソース・性能の比較 | 条件を揃えたworkloadと実設定を測定 | 条件を揃えたworkloadと実設定を測定 |
 
-xDSも通常gRPCを使い、プロトコル名は本質的複雑さの順位ではありません。CRD数は版/拡張で変わり、runtime負荷を測りません。requests/limitsは設定予約/上限で、観測メモリ/遅延ではありません。同じworkload、通信、protocol、policy、障害予算を比較して選びます。[保守されている比較](../istio/comparison/README.md)を参照してください。
+xDSも一般にgRPCを使います。プロトコル名だけで本質的な複雑さの優劣は決まりません。CRDの数はバージョンや拡張によって変わり、実行時のオーバーヘッドを示す指標ではありません。Requests/limitsは設定された予約値や上限であり、観測されたメモリ使用量や遅延ではありません。製品を選ぶ前に、同じworkload、トラフィック、プロトコル、policy、障害時の許容条件を比較してください。[保守されている比較資料](../istio/comparison/README.md)も参照してください。
 
 ## 次のステップと出典
 
 - [トラフィック管理](03-traffic-management.md)、[セキュリティ](04-security.md)、[可観測性](05-observability.md)
 - [アーキテクチャクイズ](../../quizzes/service-mesh/linkerd/architecture.md)
-- [公式アーキテクチャ](https://linkerd.io/docs/reference/architecture/)、[注入](https://linkerd.io/docs/features/proxy-injection/)、[policy参照](https://linkerd.io/docs/reference/authorization-policy/)
+- [公式アーキテクチャ](https://linkerd.io/docs/reference/architecture/)、[proxy注入](https://linkerd.io/docs/features/proxy-injection/)、[policyリファレンス](https://linkerd.io/docs/reference/authorization-policy/)
 - [自動mTLS](https://linkerd.io/docs/features/automatic-mtls/)、[プロトコル処理](https://linkerd.io/docs/features/protocol-detection/)、[負荷分散](https://linkerd.io/docs/features/load-balancing/)
-- [固定Destination API](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
-- [Kubernetes token検証](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/validator.go)と[ID形式](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/domain.go)
-- [固定証明書更新実装](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/proxy/identity-client/src/certify.rs)
+- [固定バージョンのDestination API](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
+- [Kubernetes token検証](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/validator.go)と[ID形式](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/controller/identity/domain.go)
+- [固定バージョンの証明書更新実装](https://github.com/linkerd/linkerd2-proxy/blob/0cdcc078e66eb27c79b9dfc030fc660042716d31/linkerd/proxy/identity-client/src/certify.rs)

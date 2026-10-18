@@ -1,7 +1,7 @@
 # Operaciones de clústeres por zona: cambio de tráfico, reversión de actualizaciones y afinidad de la capa de datos con la AZ
 
-> **Base de la revisión**: documentación de reversión de EKS y ARC, Strimzi 1.2.0, Valkey GLIDE 2.5.2, AWS Advanced JDBC Wrapper 4.4.0
-> **Última revisión**: September 11, 2026. Se comprobaron los ejemplos de configuración; no se realizaron cambios de tráfico entre clústeres reales ni experimentos de fallos.
+> **Base de la revisión**: documentación de reversión de EKS y ARC, Strimzi 1.3.0, Valkey GLIDE 2.5.2, AWS Advanced JDBC Wrapper 4.4.0
+> **Última revisión**: 16 de octubre de 2026. Se comprobaron los ejemplos de configuración; no se realizaron cambios de tráfico entre clústeres reales ni experimentos de fallos.
 
 < [Anterior: Tekton Pipelines](14-tekton-pipelines.md) | [Índice](./README.md) | [Siguiente: Manual de solución de problemas](16-troubleshooting-playbook.md) >
 
@@ -30,7 +30,7 @@ Aquí, zonal describe la **ubicación de los nodos de trabajo y de las aplicacio
 | Actualizaciones | El plano de control y los nodos cambian por etapas, gestionando el desfase de versiones | Actualizar celdas secuencialmente exige versiones compatibles y capacidad en las celdas restantes |
 | Complejidad operativa | Un clúster | Varios clústeres y enrutamiento coordinado |
 
-Consulte la [guía de arquitectura basada en celdas para Amazon EKS](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/) de AWS. Minimice las dependencias entre celdas y dimensione las sanas para absorber el tráfico de la celda averiada. Seleccionar equilibradores por celda mediante DNS y ponderar grupos de destino detrás de un equilibrador son diseños de enrutamiento distintos. Mida los costes según las rutas reales de tráfico y las reglas de cobro de cada servicio.
+Consulte la [guía de arquitectura basada en celdas para Amazon EKS](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/) de AWS. Minimice las dependencias entre celdas y dimensione las celdas sanas para absorber el tráfico de la celda averiada. Seleccionar equilibradores por celda mediante DNS y ponderar grupos de destino detrás de un equilibrador son diseños de enrutamiento distintos. Mida los costes según las rutas reales de tráfico y las reglas de cobro de cada servicio.
 
 Guías relacionadas: [Infraestructura avanzada](02-infrastructure-advanced.md) y [Resiliencia de EKS](../eks/10-eks-resiliency.md).
 
@@ -97,13 +97,13 @@ Los registros ponderados de Route 53 seleccionan **endpoints DNS de equilibrador
 
 **Cambios planificados y respuesta ante fallos:** modificar los pesos permite transiciones planificadas, pero no detecta fallos automáticamente. [ARC zonal shift](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html) lo inicia el operador. **Zonal autoshift** requiere activación, prácticas y configuración de alarmas por separado. Un desplazamiento del recurso EKS cambia el tratamiento de endpoints y nodos de la AZ afectada dentro de ese clúster; no reescribe los pesos de los grupos de destino de otro clúster. Planifique también por separado el desplazamiento del recurso equilibrador.
 
-> **Compatibilidad con EKS Auto Mode:** tras el [lanzamiento de July 2026](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/), habilitar zonal shift en el clúster permite que Auto Mode limite el aprovisionamiento nuevo y las interrupciones voluntarias en la AZ afectada durante un desplazamiento. Esto no habilita autoshift por sí solo. **Desviar el tráfico de la única AZ que contiene nodos de trabajo puede causar una interrupción.** El desplazamiento de EKS necesita réplicas, CoreDNS y capacidad de reserva en AZ sanas. Una celda cuyos nodos de trabajo ocupan una sola AZ necesita enrutamiento externo entre celdas como parte de la recuperación.
+> **Compatibilidad con EKS Auto Mode:** tras el [lanzamiento de julio de 2026](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/), habilitar zonal shift en el clúster permite que Auto Mode limite el aprovisionamiento nuevo y las interrupciones voluntarias en la AZ afectada durante un desplazamiento. Esto no habilita autoshift por sí solo. **Desviar el tráfico de la única AZ que contiene nodos de trabajo puede causar una interrupción.** El desplazamiento de EKS necesita réplicas, CoreDNS y capacidad de reserva en AZ sanas. Una celda cuyos nodos de trabajo ocupan una sola AZ necesita enrutamiento externo entre celdas como parte de la recuperación.
 
 ***
 
 ## Actualizaciones: condiciones para la actualización in situ y la reversión nativa {#upgrades-conditions-for-in-place-and-native-rollback}
 
-La [reversión nativa de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), introducida en July 2026, permite volver a la **versión secundaria inmediatamente anterior si se inicia dentro de los siete días posteriores a la finalización de la actualización**. Siete días es una ventana de elegibilidad, no una garantía de tiempo de recuperación. Compruebe la versión de creación, el estado de soporte, las actualizaciones posteriores, la compatibilidad de funciones y Rollback Readiness Insights.
+La [reversión nativa de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), introducida en julio de 2026, permite volver a la **versión secundaria inmediatamente anterior si se inicia dentro de los siete días posteriores a la finalización de la actualización**. Siete días es una ventana de elegibilidad, no una garantía de tiempo de recuperación. Compruebe la versión de creación, el estado de soporte, las actualizaciones posteriores, la compatibilidad de funciones y Rollback Readiness Insights.
 
 - **Auto Mode:** EKS revierte primero los nodos de Auto Mode y después el plano de control. Siguen aplicándose los PDB y los presupuestos de interrupción de NodePool; la reversión no es instantánea.
 - **Grupos de nodos administrados:** reviértalos por separado con `UpdateNodegroupVersion`. Los operadores preparan por separado los nodos autoadministrados y Hybrid. Los nodos no deben ejecutar una versión más reciente que el plano de control.
@@ -132,10 +132,10 @@ Prefiera lecturas locales cuando exista una réplica adecuada en la misma AZ y l
 
 Determine primero la AZ del Pod. Downward API expone campos del Pod; no consulta directamente las etiquetas del nodo.
 
-- **Inyección de metadatos del nodo:** la admisión ordinaria de creación de Pods ocurre antes de la planificación, por lo que todavía no se conoce el nodo de destino. La [guía de AWS MSK](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/) procesa **solicitudes `Pod/binding`** para leer el nodo elegido e inyectar su ID de AZ. Configure conjuntamente los filtros de solicitudes binding de Kyverno, el RBAC de lectura de nodos y la finalización antes del inicio del Pod.
-- **Consulta posterior a la planificación:** exponga `spec.nodeName` mediante Downward API y utilice un componente de inicialización de confianza para leer etiquetas de nodos. No conceda a todas las aplicaciones un acceso amplio de lectura de nodos.
+- **Inyección de metadatos del nodo:** la admisión ordinaria de creación de Pods ocurre antes de que se programe el Pod, por lo que todavía no se conoce el nodo de destino. La [guía de AWS MSK](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/) procesa **solicitudes `Pod/binding`** para leer el nodo elegido e inyectar su ID de AZ. Configure conjuntamente los filtros de solicitudes binding de Kyverno, el RBAC de lectura de nodos y la finalización antes del inicio del Pod.
+- **Consulta tras la programación:** exponga `spec.nodeName` mediante Downward API y utilice un componente de inicialización de confianza para leer etiquetas de nodos. No conceda a todas las aplicaciones un acceso amplio de lectura de nodos.
 - **EC2 IMDSv2:** cuando se permita deliberadamente acceder a los metadatos de EC2, obtenga un token antes de leer la información de ubicación. No suponga que funciona un GET de IMDSv1 ni elimine indiscriminadamente las restricciones de metadatos. Esto no se aplica directamente a Fargate.
-- **Compatibilidad del operador:** Strimzi configura la conciencia de racks en los brokers que administra y en los recursos cliente compatibles. No configura automáticamente `client.rack` en Deployments de aplicaciones ajenas.
+- **Compatibilidad del operador:** Strimzi configura la información de rack en los brokers que administra y en los recursos de cliente compatibles. No configura automáticamente `client.rack` en Deployments de aplicaciones ajenas.
 
 **No mezcle nombres e ID de AZ.** `broker.rack` y `client.rack` de Kafka deben utilizar cadenas coincidentes. Si MSK utiliza ID de AZ, no los sustituya por un nombre como `ap-northeast-2a`. Asimismo, `client_az` de GLIDE debe coincidir con los valores de AZ comunicados por los servidores.
 
@@ -149,7 +149,7 @@ Determine primero la AZ del Pod. Downward API expone campos del Pod; no consulta
 
 - **Brokers:** configure `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` y `broker.rack`.
 - **Consumidores:** establezca `client.rack` en el rack del consumidor. Si no existe una réplica local adecuada, la selección vuelve al líder.
-- **Strimzi 1.2.0:** lo siguiente es un **fragmento de configuración que debe combinarse con un CR Kafka existente**, no un despliegue completo. También se requieren KafkaNodePools, listeners, almacenamiento y otras configuraciones. Desde Strimzi 1.0, la API del CR es `v1`; especifique también el tipo de rack.
+- **Strimzi 1.3.0:** lo siguiente es un **fragmento de configuración que debe combinarse con un CR Kafka existente**, no un despliegue completo. También se requieren KafkaNodePools, listeners, almacenamiento y otras configuraciones. Desde Strimzi 1.0, la API del CR es `v1`; especifique también el tipo de rack.
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1
@@ -165,7 +165,7 @@ spec:
       replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
 ```
 
-Esto configura `broker.rack` de los brokers. Configure por separado `client.rack` de los consumidores de aplicaciones ordinarias. KafkaConnect, MirrorMaker 2 y Bridge tienen sus propios ajustes de rack en sus CR. Siga también la [documentación de Strimzi](https://strimzi.io/docs/operators/1.2.0/configuring.html) para distribuir la ubicación de los brokers. Leer de una réplica seguidora puede aumentar la latencia de lectura debido al retraso de replicación.
+Esto configura `broker.rack` de los brokers. Configure por separado `client.rack` de los consumidores de aplicaciones ordinarias. KafkaConnect, MirrorMaker 2 y Bridge tienen sus propios ajustes de rack en sus CR. Siga también la [documentación de Strimzi](https://strimzi.io/docs/operators/1.3.0/configuring.html) para distribuir la ubicación de los brokers. Leer de una réplica seguidora puede aumentar la latencia de lectura debido al retraso de replicación.
 
 [KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers) se refiere a la asignación de particiones consciente del rack, que es un mecanismo separado. Compruebe la compatibilidad de la versión del consumidor y del asignador. Consulte [Kafka en EKS](../data-on-eks/kafka/README.md) para las indicaciones de despliegue.
 
@@ -220,7 +220,7 @@ El [endpoint lector predeterminado](https://docs.aws.amazon.com/AmazonRDS/latest
 
 2. **AWS Advanced JDBC Wrapper 4.4.0:** [`fastestResponse`](https://github.com/aws/aws-advanced-jdbc-wrapper/blob/4.4.0/docs/using-the-jdbc-driver/HostSelectionStrategies.md) selecciona un host mediante el tiempo de respuesta medido. Cargue también el plugin `fastestResponseStrategy`. Esto no impone una restricción por etiqueta de AZ; no se garantiza que el host más rápido sea local.
 
-El [issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) se **cerró en May 2025** después de discutir que la función de tiempo de respuesta de 2.5.5 satisfacía la solicitud. No es una petición de función abierta que demuestre que los endpoints personalizados sean la única solución.
+El [issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) se **cerró en mayo de 2025** después de discutir que la función de tiempo de respuesta de 2.5.5 satisfacía la solicitud. No es una petición de función abierta que demuestre que los endpoints personalizados sean la única solución.
 
 ### Opciones complementarias de la capa Service de Kubernetes
 
@@ -240,7 +240,7 @@ El [issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) s
 | Lecturas de caché | Estrategia GLIDE adecuada para la frescura de datos y los metadatos de AZ | Verificar la alternativa remota y la carga del primario |
 | Lecturas de base de datos | Lista mantenida de lectores locales o selección por tiempo de respuesta | Gestionar la ausencia de lectores locales y las reconexiones |
 
-Mida las referencias de carga, coste y tiempo de recuperación; después ensaye el cambio de tráfico y la reversión fuera de producción. La optimización de la ruta de lectura también puede introducirse de forma independiente: valide la coherencia, las alternativas ante fallos y el coste en un alcance pequeño antes de ampliarlo.
+Establezca mediciones de referencia para la carga, el coste y el tiempo de recuperación; después ensaye los cambios de tráfico y la reversión fuera de producción. La optimización de la ruta de lectura también puede introducirse de forma independiente: valide la coherencia, las alternativas ante fallos y el coste en un alcance pequeño antes de ampliarlo.
 
 ***
 

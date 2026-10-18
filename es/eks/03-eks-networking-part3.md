@@ -1,7 +1,7 @@
 # Parte 3: Solución de problemas
 
 > **Versiones del ejemplo verificadas**: EKS Kubernetes 1.36, Amazon VPC CNI 1.23.2
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Descripción general
 
@@ -44,7 +44,7 @@ EKS admite varios modos de redes, cada uno con distintas características de ren
    * Cada nodo tiene un límite en la cantidad de direcciones IP que puede asignar.
 2. **Redes personalizadas**:
    * Permiten asignar a los Pods direcciones IP de subredes específicas.
-   * Pueden usar CIDR secundarios de VPC enrutados correctamente mediante subredes ENIConfig de la misma VPC y zona de disponibilidad. No amplían una subred existente en el sitio.
+   * Pueden usar CIDR secundarios de VPC enrutados correctamente mediante subredes ENIConfig de la misma VPC y zona de disponibilidad. No amplían una subred existente in situ.
    * Ofrecen un control más detallado de la topología de red.
 3. **Complementos CNI alternativos**:
    * Se pueden usar complementos CNI alternativos, como Calico y Cilium.

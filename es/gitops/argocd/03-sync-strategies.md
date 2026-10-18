@@ -1,7 +1,7 @@
 # Estrategias de sincronización de ArgoCD
 
 > **Base de la revisión**: Argo CD 3.5.2; actualizado al parche 3.5.4 después de revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Tabla de contenido
 - [Sincronización manual frente a automatizada](#manual-vs-automated-sync)
@@ -13,7 +13,7 @@
 - [Políticas de reintento](#retry-policies)
 - [Sincronización selectiva](#selective-sync)
 
-## Sincronización manual frente a automatizada
+## Sincronización manual frente a automatizada {#manual-vs-automated-sync}
 
 Los ejemplos son fragmentos de políticas independientes. Conserva el origen/destino/proyecto de una Application real y selecciona únicamente las opciones necesarias. La sincronización aplica cambios; Refresh actualiza la comparación desde las fuentes/caché. Synced es independiente de la salud y de la disponibilidad real del servicio.
 
@@ -81,9 +81,9 @@ spec:
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-0.html)
 
-## Políticas de sincronización automática
+## Políticas de sincronización automática {#auto-sync-policies}
 
-automated: {} o una marca enabled omitida/nula habilita la sincronización automática; enabled: false la deshabilita. La corrección de desviaciones solo del estado activo requiere selfHeal, y prune es independiente. Las combinaciones fallidas idénticas de commit/parámetros no se reintentan indefinidamente de forma predeterminada; configura una política de reintento. Cambia la plantilla propietaria para las Applications administradas por ApplicationSet.
+La presencia de automated: {} o la omisión de enabled (o su valor nulo) habilita la sincronización automática; enabled: false la deshabilita. La corrección de desviaciones solo del estado activo requiere selfHeal, y prune es independiente. Las combinaciones fallidas idénticas de commit/parámetros no se reintentan indefinidamente de forma predeterminada; configura una política de reintento. Cambia la plantilla propietaria para las Applications administradas por ApplicationSet.
 
 ### Prune
 
@@ -151,7 +151,7 @@ spec:
       allowEmpty: false  # Prevent auto-prune from deleting everything on an empty render
 ```
 
-## Opciones de sincronización
+## Opciones de sincronización {#sync-options}
 
 Las opciones de sincronización proporcionan un control detallado del comportamiento de sincronización.
 
@@ -171,7 +171,7 @@ Las opciones de sincronización proporcionan un control detallado del comportami
 
 `Validate=false` omite la validación del esquema durante apply; no instala un CRD ausente. Argo CD omite automáticamente la ejecución en seco de un CR cuando su CRD se instala en la misma sincronización. Usa `SkipDryRunOnMissingResource=true` solo para un caso justificado, como un CRD creado por otro controlador, y verifica que el CRD esté disponible.
 
-`PruneLast=true` programa prune en una onda implícita final después de que se despliegan y están Healthy los demás recursos. `FailOnSharedResource=true` comprueba el rastreo por otra Application de Argo CD; no detecta todos los conflictos de propiedad con otros controladores de Kubernetes o Flux.
+`PruneLast=true` programa prune en una onda implícita final después de que se despliegan y están Healthy los demás recursos. `FailOnSharedResource=true` comprueba si otra Application de Argo CD también rastrea el recurso; no detecta todos los conflictos de propiedad con otros controladores de Kubernetes o Flux.
 
 ### Opciones a nivel de Application
 
@@ -212,7 +212,7 @@ metadata:
 
 ### Apply del lado del servidor
 
-Argo CD 3.5.4 invoca --server-side --force-conflicts. Se rastrea la propiedad de los campos, pero esto no garantiza que se rechacen los conflictos; revisa la posible apropiación de propiedad.
+Argo CD 3.5.4 invoca --server-side --force-conflicts. Se rastrea la propiedad de los campos, pero esto no garantiza que se rechacen los conflictos; revisa la posible transferencia forzada de la propiedad de campos.
 
 Usa Kubernetes server-side apply para una mejor detección de conflictos:
 
@@ -232,7 +232,7 @@ metadata:
 
 **Beneficios**:
 - Mejor rastreo de propiedad de los campos
-- Argo CD puede resolver a la fuerza los conflictos de propiedad; inspecciona los límites previstos de los administradores
+- Argo CD puede resolver a la fuerza los conflictos de propiedad de campos; inspecciona los límites previstos entre los gestores de campos
 - Funciona bien con CRD y webhooks
 
 ### Replace y Force
@@ -247,7 +247,7 @@ metadata:
 
 Los cambios inmutables necesitan un plan de migración/recreación específico para el recurso. No lo uses como atajo para la migración de la clase de almacenamiento de PVC. Revisa la retención/los datos/la disponibilidad antes de eliminar. Replace tiene prioridad sobre ServerSideApply.
 
-## Ondas y fases de sincronización
+## Ondas y fases de sincronización {#sync-waves-and-phases}
 
 Las ondas de sincronización controlan el orden en que se aplican los recursos.
 
@@ -294,7 +294,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: check
-        image: curlimages/curl:8.22.0
+        image: curlimages/curl:8.23.0
         command: ["curl"]
         args: ["--fail", "--show-error", "--silent", "--connect-timeout", "5", "--max-time", "20", "http://existing-data-service:8080/health"]
 ---
@@ -328,7 +328,7 @@ Un Job que solo imprime pg_dump en stdout no es un procedimiento de copia de seg
 
 ### Ejemplo mínimo de ordenamiento funcional
 
-Este ejemplo mínimo ordena Namespace → ConfigMap → Service → un Deployment con preparación dentro de la misma fase Sync. Un objeto Service Healthy no prueba que haya endpoints preparados; la sonda del Deployment comprueba la preparación de la carga de trabajo. Prepara el acceso a Argo Project/RBAC y al registro de imágenes.
+Este ejemplo mínimo ordena Namespace → ConfigMap → Service → un Deployment con una sonda de disponibilidad dentro de la misma fase Sync. Un objeto Service en estado Healthy no demuestra que tenga endpoints listos; la sonda del Deployment comprueba que la carga de trabajo esté lista. Prepara el acceso a Argo Project/RBAC y al registro de imágenes.
 
 ```yaml
 apiVersion: v1
@@ -409,9 +409,9 @@ spec:
             drop: [ALL]
 ```
 
-Para una base de datos, prepara primero la autenticación, la persistencia, el Service y la preparación real. HPA necesita solicitudes de CPU y disponibilidad de métricas. No coloques un Service/ConfigMap requerido para la preparación en una onda posterior.
+Para una base de datos, prepara primero la autenticación, la persistencia y el Service, y verifica que esté realmente disponible. HPA necesita solicitudes de CPU y disponibilidad de métricas. No coloques un Service/ConfigMap requerido para la preparación en una onda posterior.
 
-## Ventanas de sincronización
+## Ventanas de sincronización {#sync-windows}
 
 Este ejemplo permite las Applications prod-* del proyecto de producción el domingo de 02:00 a 06:00 KST, con una congelación de 03:00 a 04:00. Sustituye el repositorio/destino por el ámbito autorizado real.
 
@@ -460,7 +460,7 @@ Para una nueva solicitud de sincronización automática:
 
 Los selectores de Application/namespace/clúster usan OR de forma predeterminada; no hay clasificación por especificidad. Usa andOperator: true cuando todos los selectores proporcionados deban coincidir. La zona horaria predeterminada es UTC; un comentario de KST no la cambia.
 
-Las excepciones manuales dependen de que todas las ventanas de bloqueo pertinentes permitan manualSync y de que quien realiza la llamada tenga derechos de sincronización. --force no es una omisión. Una autorización de 24 h siempre activa no es un interruptor de emergencia activado manualmente y también puede permitir la sincronización automática. La ejecución continua más allá del límite de una ventana depende de syncOverrun, la hora de inicio y las ventanas pertinentes; no garantiza la finalización ni la reversión.
+Las excepciones manuales dependen de que todas las ventanas de bloqueo pertinentes permitan manualSync y de que quien realiza la llamada tenga derechos de sincronización. La opción --force no permite eludir estas restricciones. Una autorización de 24 h siempre activa no es un interruptor de emergencia activado manualmente y también puede permitir la sincronización automática. La ejecución continua más allá del límite de una ventana depende de syncOverrun, la hora de inicio y las ventanas pertinentes; no garantiza la finalización ni la reversión.
 
 ```bash
 argocd proj windows list production -o yaml
@@ -473,9 +473,9 @@ argocd app get my-app
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-4.html)
 
-## Personalización de diferencias
+## Personalización de diferencias {#diffing-customization}
 
-Ignora solo campos reales propiedad de otro controlador, delimitados por nombre/namespace. Por ejemplo, excluye las réplicas de un Deployment administrado por HPA. No uses de forma predeterminada exclusiones amplias de imágenes, de todas las anotaciones/recursos o de todos los administradores.
+Ignora solo campos reales propiedad de otro controlador, delimitados por nombre/namespace. Por ejemplo, excluye las réplicas de un Deployment administrado por HPA. No uses de forma predeterminada exclusiones amplias de imágenes, de todas las anotaciones/recursos o de todos los gestores de campos.
 
 ```yaml
 spec:
@@ -490,11 +490,11 @@ spec:
     syncOptions: [RespectIgnoreDifferences=true]
 ```
 
-ignoreDifferences controla la comparación; RespectIgnoreDifferences lo extiende a la sincronización, pero la creación inicial sin un objeto activo sigue usando el manifiesto deseado. Inspecciona los campos realmente administrados antes de seleccionar un administrador. Las exclusiones de comparación globales/de estado no deshabilitan la evaluación de salud y no deben ocultar la manipulación de imágenes.
+ignoreDifferences controla la comparación; RespectIgnoreDifferences lo extiende a la sincronización, pero la creación inicial sin un objeto activo sigue usando el manifiesto deseado. Inspecciona los campos realmente administrados antes de seleccionar un gestor de campos. Las exclusiones de comparación globales/de estado no deshabilitan la evaluación de salud y no deben ocultar la manipulación de imágenes.
 
 Consulta los [ejemplos de ignore-difference de Application](02-applications.md#ignore-differences) para conocer reglas delimitadas.
 
-## Políticas de reintento
+## Políticas de reintento {#retry-policies}
 
 limit: 5 permite cinco reintentos después del intento inicial, hasta seis intentos en total. Los retrasos comienzan en 5s,10s,20s,40s,80s; maxDuration limita un backoff individual, no toda la sincronización ni el hook. El reintento de Application y backoffLimit/activeDeadlineSeconds de Job son capas distintas.
 
@@ -551,7 +551,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: check
-        image: curlimages/curl:8.22.0
+        image: curlimages/curl:8.23.0
         command:
         - sh
         - -c
@@ -565,7 +565,7 @@ spec:
           exit 1
 ```
 
-## Sincronización selectiva
+## Sincronización selectiva {#selective-sync}
 
 La selección explícita mediante --resource/--label omite hooks e historial. ApplyOutOfSyncOnly/--apply-out-of-sync-only conserva hooks/historial en 3.5.4. --label selecciona recursos; --selector(-l) selecciona Applications.
 
