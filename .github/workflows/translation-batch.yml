@@ -29,6 +29,8 @@ jobs:
       TRANSLATION_BEFORE: ${{ inputs.before }}
       TRANSLATION_SECTION: ${{ inputs.section }}
       TRANSLATION_LANGUAGES: ${{ inputs.langs || 'cn jp es' }}
+      TRANSLATION_MODEL: openai.gpt-6-luna
+      TRANSLATION_REGION: us-east-1
       ANTHROPIC_MODEL: us.anthropic.claude-fable-5
       CLAUDE_CODE_USE_BEDROCK: 1
       ANTHROPIC_BEDROCK_BASE_URL: https://bedrock-runtime.us-east-1.amazonaws.com
@@ -41,6 +43,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Bedrock translation dependencies
+        run: python3 -m pip install -r scripts/requirements-translation.txt
 
       - name: Verify CLIs
         run: |
@@ -48,7 +55,9 @@ jobs:
             npm install -g @anthropic-ai/claude-code
           fi
           command -v gh
-          command -v kiro-cli
+
+      - name: Verify Luna model access before touching the translation queue
+        run: python3 scripts/bedrock-translation.py preflight
 
       - name: Preserve pending work in one draft PR on latest main
         run: node scripts/translation-batch.mjs prepare

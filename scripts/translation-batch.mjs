@@ -228,30 +228,36 @@ export async function translateBatch(root, pairs, translate = (src, file, lang) 
   new Promise((resolve, reject) => {
     const child = spawn('bash', ['scripts/translate.sh', src, file, lang], { cwd: root, stdio: 'inherit' })
     child.on('error', reject)
-    child.on('close', code => code === 0 ? resolve() : reject(new Error(`Translation exited ${code}`)))
+    child.on('close', code => code === 0 ? resolve() :
+      reject(Object.assign(new Error(`Translation exited ${code}`), { fatal: code === 78 })))
   })) {
   for (const [src, file, lang] of pairs) {
     if (sourcePath(file) !== src || file.split('/')[0] !== lang) throw new Error('Invalid translation pair')
   }
   const failures = []
+  const attempted = []
+  let fatalError
   let index = 0
   const worker = async () => {
-    while (index < pairs.length) {
+    while (index < pairs.length && !fatalError) {
       const [src, file, lang] = pairs[index++]
+      attempted.push([src, file, lang])
       const original = current(root, file)
       write(root, file, null)
       try {
         await translate(src, file, lang)
         run(root, 'python3', ['scripts/validate-translation.py', src, file])
-      } catch {
+      } catch (error) {
         write(root, file, original)
         failures.push(file)
         console.warn(`Translation failed; preserved previous content: ${file}`)
+        if (error.fatal) fatalError = error
       }
     }
   }
   await Promise.all([worker(), worker()])
-  recordBatch(root, pairs, failures)
+  recordBatch(root, attempted, failures)
+  if (fatalError) throw fatalError
   return failures
 }
 
@@ -351,7 +357,7 @@ export function publishBatch(root, { draft = true } = {}) {
     fs.writeFileSync(body, [
       'GitBook용 cn/jp/es 번역을 최신 main 기준으로 하나의 PR에 누적합니다.',
       '',
-      '본문·목차 번역 모델: `gpt-6-luna`. VitePress 게시 언어: ko/en.',
+      '본문·목차 번역 모델: Bedrock Mantle `openai.gpt-6-luna` (us-east-1). VitePress 게시 언어: ko/en.',
       `대기 또는 재시도 대상: ${state.pending.length}개.`,
       '',
       draft ? '번역·품질 검토가 완료되면 자동으로 리뷰 가능한 상태로 전환됩니다.' :
