@@ -6,7 +6,7 @@ Este cuestionario evalúa tu comprensión de los componentes de AMB, la frontera
 
 1. ¿Cómo deben compararse las ofertas de AMB?
    - A) Las tres resuelven el mismo problema con distintos precios
-   - B) Distinguir Fabric y los nodos dedicados de las API Access y Query sin servidor, cada una con facturación y capacidades específicas
+   - B) Distinguir Fabric y los nodos dedicados de las API sin servidor de Access y Query, cada una con facturación y capacidades específicas
    - C) Se dividen en entornos de desarrollo, pruebas y producción
    - D) Se dividen en cadenas públicas, privadas e híbridas
 
@@ -14,7 +14,7 @@ Este cuestionario evalúa tu comprensión de los componentes de AMB, la frontera
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Distinguir Fabric y los nodos dedicados de las API Access y Query sin servidor, cada una con facturación y capacidades específicas**
+**Respuesta: B) Distinguir Fabric y los nodos dedicados de las API sin servidor de Access y Query, cada una con facturación y capacidades específicas**
 
 **Explicación:**
 AMB no siempre se factura por nodo. Los recursos dedicados, las solicitudes RPC sin servidor y las API Query indexadas tienen precios y cobertura distintos.
@@ -22,7 +22,7 @@ AMB no siempre se factura por nodo. Los recursos dedicados, las solicitudes RPC 
 
 2. ¿Cuál es el aspecto más importante que los nodos administrados de AMB *no* resuelven?
    - A) La recopilación de métricas de CloudWatch
-   - B) La operación de validadores: los nodos administrados se usan para consultar y enviar datos, mientras que el staking PoS requiere un conjunto distinto de medidas para la gestión de claves y la disponibilidad de firma, además de gestionar el riesgo de slashing
+   - B) La operación de validadores: los nodos administrados se usan para consultar datos y enviar transacciones, mientras que el staking PoS requiere un conjunto distinto de medidas para la gestión de claves y la disponibilidad de firma, además de gestionar el riesgo de slashing
    - C) El control de acceso basado en IAM
    - D) La conectividad privada de VPC
 
@@ -30,10 +30,10 @@ AMB no siempre se factura por nodo. Los recursos dedicados, las solicitudes RPC 
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) La operación de validadores: los nodos administrados se usan para consultar y enviar datos, mientras que el staking PoS requiere un conjunto distinto de medidas para la gestión de claves y la disponibilidad de firma, además de gestionar el riesgo de slashing**
+**Respuesta: B) La operación de validadores: los nodos administrados se usan para consultar datos y enviar transacciones, mientras que el staking PoS requiere un conjunto distinto de medidas para la gestión de claves y la disponibilidad de firma, además de gestionar el riesgo de slashing**
 
 **Explicación:**
-Los nodos de cadenas públicas de AMB Access sirven para leer datos de la cadena y enviar transacciones. La validación PoS añade requisitos de disponibilidad de firma y protección contra el slashing. Los firmantes sin coordinación pueden producir mensajes conflictivos que expongan al validador al slashing; las firmas duplicadas idénticas no se penalizan automáticamente. La implementación habitual usa un único firmante activo, con failover protegido y el historial de slashing preservado; un firmante distribuido necesita coordinación probada. El acceso a nodos de AMB no proporciona ese diseño de validación, por lo que el staking requiere una operación independiente o un servicio especializado.
+Los nodos de cadenas públicas de AMB Access sirven para leer datos de la cadena y enviar transacciones. La validación PoS añade requisitos de disponibilidad de firma y protección contra el slashing. Los firmantes sin coordinación pueden producir mensajes conflictivos que expongan al validador al slashing; las firmas duplicadas idénticas no se penalizan automáticamente. La implementación habitual usa un único firmante activo, con conmutación por error protegida mediante fencing y el historial de slashing preservado; un firmante distribuido necesita coordinación probada. El acceso a nodos de AMB no proporciona ese diseño de validación, por lo que el staking requiere una operación independiente o un servicio especializado.
 </details>
 
 3. ¿Qué se presenta como el primer paso para decidir entre administrar el servicio y autogestionarlo?

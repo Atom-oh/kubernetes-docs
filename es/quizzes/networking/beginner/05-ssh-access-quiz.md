@@ -6,22 +6,22 @@
 [Lección y fuentes principales](../../../networking/beginner/05-ssh-access.md) | [Curso](../../../networking/beginner/README.md)
 
 Elige la respuesta más segura que esté justificada y explica qué pruebas
-inspeccionarías. Los comandos son ejercicios de interpretación para las VM
+inspeccionarías. Los comandos son ejercicios de interpretación para las máquinas virtuales
 desechables.
 
 1. Ubuntu 24.04 muestra `ssh.socket` activo, mientras que una guía de Rocky menciona `sshd.service`. ¿Qué deberías hacer?
 
    - A) Deshabilitar todos los sockets para que ambas distribuciones sean idénticas.
    - B) Usar `sshd.service` en todas partes porque el ejecutable se llama `sshd`.
-   - C) Inspeccionar las unidades instaladas en el guest; Ubuntu usa `ssh.service` y puede activar el socket, mientras que Rocky usa `sshd.service`.
-   - D) Cambiar el puerto SSH antes de comprobar cualquier listener.
+   - C) Inspeccionar las unidades instaladas en el sistema invitado; Ubuntu usa `ssh.service` y puede activar el socket, mientras que Rocky usa `sshd.service`.
+   - D) Cambiar el puerto SSH antes de comprobar cualquier puerto de escucha.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: C**
 
-**Explicación:** Los nombres del ejecutable y de la unidad de servicio no tienen que coincidir. La activación del socket de Ubuntu puede ser responsable del listener, por lo que deshabilitarlo o cambiar las asociaciones a ciegas puede interrumpir el acceso. Esta lección comprueba la sintaxis, el estado del servicio/socket y TCP 22, sin cambiar las direcciones de escucha existentes.
+**Explicación:** Los nombres del ejecutable y de la unidad de servicio no tienen que coincidir. La activación del socket de Ubuntu puede ser responsable del puerto de escucha, por lo que deshabilitarlo o cambiar los parámetros de escucha a ciegas puede interrumpir el acceso. Esta lección comprueba la sintaxis, el estado del servicio/socket y TCP 22, sin cambiar las direcciones en las que ya escucha el servicio.
 
 </details>
 
@@ -37,7 +37,7 @@ desechables.
 
 **Respuesta: A**
 
-**Explicación:** Las claves de host identifican el servidor; las claves de usuario autentican una cuenta de usuario. Una consola confiable proporciona una ruta de comparación independiente. Un escaneo puede obtener una clave, pero no autenticar a su propietario. Si hay una discrepancia, investiga la VM/dirección y un posible cambio de identidad en vez de omitir las comprobaciones.
+**Explicación:** Las claves de host identifican el servidor; las claves de usuario autentican una cuenta de usuario. Una consola confiable proporciona una ruta de comparación independiente. Un escaneo puede obtener una clave, pero no autenticar a su propietario. Si hay una discrepancia, investiga la máquina virtual o la dirección y un posible cambio de identidad en vez de omitir las comprobaciones.
 
 </details>
 
@@ -57,7 +57,7 @@ desechables.
 
 </details>
 
-4. Ya tienes una sesión SSH abierta. ¿Qué debe ocurrir antes de deshabilitar la autenticación por contraseña e interactiva de teclado?
+4. Ya tienes una sesión SSH abierta. ¿Qué debe ocurrir antes de deshabilitar la autenticación mediante contraseña y la autenticación interactiva por teclado?
 
    - A) Nada; una conexión existente demuestra que los próximos inicios de sesión funcionarán.
    - B) Debe funcionar una segunda conexión independiente que use solo la clave, con el uso compartido de conexiones deshabilitado; también se deben verificar las rutas SSH de administración necesarias.
@@ -69,7 +69,7 @@ desechables.
 
 **Respuesta: B**
 
-**Explicación:** Las sesiones existentes autenticadas o multiplexadas pueden ocultar una ruta rota de inicio de sesión nuevo. Usa explícitamente la clave, `IdentitiesOnly`, autenticación solo de clave pública y sin conexión compartida. Se espera que la frase de contraseña de la clave privada siga siendo local. Mantén abierta la consola y la sesión original para recuperarte.
+**Explicación:** Las sesiones existentes autenticadas o multiplexadas pueden ocultar una ruta de acceso defectuosa para los nuevos inicios de sesión. Usa explícitamente la clave, `IdentitiesOnly`, autenticación solo de clave pública y sin reutilizar una conexión compartida. Se espera que la frase de contraseña de la clave privada siga siendo local. Mantén abierta la consola y la sesión original para recuperarte.
 
 </details>
 
@@ -85,15 +85,15 @@ desechables.
 
 **Respuesta: A**
 
-**Explicación:** El comportamiento de primer valor de OpenSSH y las reglas Match específicas de conexión son distintas de «gana el último archivo». `-C` proporciona el usuario, el origen y el endpoint local que se usan para evaluar los ajustes efectivos. Una comprobación de sintaxis por sí sola no demuestra que la política deseada sea efectiva. Elimina solo el archivo creado por el curso si no puedes establecer su precedencia prevista.
+**Explicación:** En OpenSSH, los valores posteriores no siempre prevalecen; también hay que tener en cuenta el orden de lectura y las reglas Match específicas de la conexión. `-C` proporciona el usuario, el origen y el punto de conexión local que se usan para evaluar los ajustes efectivos. Una comprobación de sintaxis por sí sola no demuestra que la política deseada sea efectiva. Elimina solo el archivo creado por el curso si no puedes establecer su precedencia prevista.
 
 </details>
 
 6. ¿Qué afirmación sobre el endurecimiento de seguridad es correcta?
 
-   - A) `PasswordAuthentication no` también deshabilita siempre la autenticación interactiva de teclado.
+   - A) `PasswordAuthentication no` también deshabilita siempre la autenticación interactiva por teclado.
    - B) `PermitRootLogin no` significa que sudo deja de funcionar.
-   - C) Comprueba explícitamente los valores de contraseña, autenticación interactiva de teclado, clave pública e inicio de sesión de root, y conserva el acceso de usuarios normales mediante clave y sudo.
+   - C) Comprueba explícitamente los ajustes de autenticación mediante contraseña, mediante teclado interactivo y mediante clave pública, así como el inicio de sesión de root, y conserva el acceso de usuarios normales mediante clave y sudo.
    - D) Es necesario desactivar PAM globalmente para iniciar sesión con clave.
 
 <details>
@@ -101,7 +101,7 @@ desechables.
 
 **Respuesta: C**
 
-**Explicación:** Los métodos por contraseña e interactivo de teclado son distintos. También son distintos el inicio directo de sesión SSH de root y el acceso sudo autorizado de un usuario normal. La lección no deshabilita PAM. Los cambios globales de autenticación requieren comprobar todas las cuentas y rutas de administración necesarias, no solo la IP del laboratorio.
+**Explicación:** La autenticación mediante contraseña y la autenticación interactiva por teclado son métodos distintos. También son distintos el inicio directo de sesión SSH de root y el acceso sudo autorizado de un usuario normal. La lección no deshabilita PAM. Los cambios globales de autenticación requieren comprobar todas las cuentas y rutas de administración necesarias, no solo la IP del laboratorio.
 
 </details>
 
@@ -117,7 +117,7 @@ desechables.
 
 **Respuesta: D**
 
-**Explicación:** El método de archivo propio permite una reversión exacta sin reemplazar otra configuración. Compara los resultados efectivos para usuarios normales, root y los casos de administración registrados. Si hubo cambios concurrentes, concílialos en vez de restaurar a ciegas un directorio antiguo. Las sesiones existentes por sí solas no validan la recuperación.
+**Explicación:** Eliminar únicamente el archivo añadido por el curso permite revertir el cambio con precisión sin reemplazar otra configuración. Compara los resultados efectivos para usuarios normales, root y los casos de administración registrados. Si hubo cambios concurrentes, concílialos en vez de restaurar a ciegas un directorio antiguo. Las sesiones existentes por sí solas no validan la recuperación.
 
 </details>
 
@@ -133,7 +133,7 @@ desechables.
 
 **Respuesta: B**
 
-**Explicación:** Eliminar una copia del cliente no revoca una clave pública instalada en un servidor. Primero revoca la entrada exacta del servidor y conserva los cambios ajenos. Un directorio solo se elimina si la lección lo creó y está vacío. La reversión de la instalación de paquetes es independiente y utiliza la instantánea del guest si se requiere una restauración completa.
+**Explicación:** Eliminar una copia del cliente no revoca una clave pública instalada en un servidor. Primero revoca la entrada exacta del servidor y conserva los cambios ajenos. Un directorio solo se elimina si la lección lo creó y está vacío. La reversión de la instalación de paquetes es independiente y utiliza la instantánea de la máquina virtual si se requiere una restauración completa.
 
 </details>
 

@@ -29,7 +29,7 @@ Harbor es un proyecto Graduated de CNCF, el nivel de madurez más alto de CNCF. 
 **Respuesta: B) Trivy**
 
 **Explicación:**
-A partir de Harbor 2.2, Trivy reemplazó a Clair como escáner de vulnerabilidades predeterminado. Trivy es un escáner de código abierto de Aqua Security que detecta vulnerabilidades en imágenes de contenedor, incluidos paquetes del sistema operativo y dependencias de aplicaciones. Harbor sigue admitiendo escáneres conectables si se prefieren otras alternativas.
+A partir de Harbor 2.2, Trivy reemplazó a Clair como escáner de vulnerabilidades predeterminado. Trivy es un escáner de código abierto de Aqua Security que detecta vulnerabilidades en imágenes de contenedor, incluidos paquetes del sistema operativo y dependencias de aplicaciones. Harbor sigue admitiendo escáneres integrables si se prefieren otras alternativas.
 
 </details>
 
@@ -51,33 +51,33 @@ El chart oficial de Helm de Harbor es el método de instalación recomendado par
 
 4. En el modelo RBAC de Harbor, ¿qué permisos tiene un Project Maintainer frente a un Developer?
    - A) Maintainer puede publicar imágenes; Developer no puede
-   - B) Maintainer puede analizar/eliminar imágenes; Developer puede publicarlas/descargarlas, pero no administrar miembros del proyecto
+   - B) Maintainer puede analizar y eliminar imágenes; Developer puede subirlas y descargarlas, pero no administrar miembros del proyecto
    - C) Maintainer y Developer tienen permisos idénticos
    - D) Developer tiene más permisos que Maintainer
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Maintainer puede analizar/eliminar imágenes; Developer puede publicarlas/descargarlas, pero no administrar miembros del proyecto**
+**Respuesta: B) Maintainer puede analizar y eliminar imágenes; Developer puede subirlas y descargarlas, pero no administrar miembros del proyecto**
 
 **Explicación:**
-El RBAC a nivel de proyecto de Harbor define varios roles: Project Admin, Maintainer, Developer y Guest. Maintainer puede analizar y eliminar imágenes, y administrar etiquetas, pero no puede editar la configuración del proyecto ni administrar miembros. Developer puede publicar y descargar imágenes, pero no tiene esos privilegios administrativos. Project Admin tiene control completo, incluida la administración de miembros.
+El RBAC a nivel de proyecto de Harbor define varios roles: Project Admin, Maintainer, Developer y Guest. Maintainer puede analizar y eliminar imágenes, además de administrar etiquetas, pero no puede editar la configuración del proyecto ni administrar miembros. Developer puede subir y descargar imágenes, pero carece de esos privilegios administrativos. Project Admin tiene control completo, incluida la administración de miembros.
 
 </details>
 
 5. ¿Para qué se usan las cuentas robot de Harbor?
    - A) Tareas administrativas automatizadas
-   - B) Cuentas de servicio no humanas con credenciales limitadas y acotadas para sistemas CI/CD
+   - B) Cuentas de servicio no humanas con credenciales con permisos acotados para sistemas CI/CD
    - C) Administración de los componentes internos de Harbor
    - D) Replicación de imágenes entre instancias de Harbor
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cuentas de servicio no humanas con credenciales limitadas y acotadas para sistemas CI/CD**
+**Respuesta: B) Cuentas de servicio no humanas con credenciales con permisos acotados para sistemas CI/CD**
 
 **Explicación:**
-Las cuentas robot proporcionan autenticación entre sistemas para flujos de trabajo automatizados, como las canalizaciones CI/CD. Se pueden configurar para que caduquen, y tienen permisos de alcance de proyecto, como publicar/descargar repositorios, sin necesitar credenciales de usuarios humanos. Así se siguen las prácticas de seguridad recomendadas: se evitan credenciales compartidas y se permite rotarlas.
+Las cuentas robot proporcionan autenticación entre sistemas para flujos de trabajo automatizados, como las canalizaciones CI/CD. Se pueden configurar con una fecha de caducidad y permisos acotados al proyecto, como subir y descargar repositorios, sin usar credenciales de usuarios humanos. Así se siguen las prácticas de seguridad recomendadas: se evitan credenciales compartidas y se permite rotarlas.
 
 </details>
 
@@ -93,7 +93,7 @@ Las cuentas robot proporcionan autenticación entre sistemas para flujos de trab
 **Respuesta: B) Push envía imágenes a registros remotos; pull las obtiene de registros remotos**
 
 **Explicación:**
-La replicación push envía proactivamente imágenes de Harbor a registros remotos (útil para distribuirlas en ubicaciones periféricas). La replicación pull obtiene imágenes de registros remotos y las introduce en Harbor (útil para reflejar registros externos o para la recuperación ante desastres). La replicación manual y la programada admiten flujos pull. La replicación basada en eventos sigue eventos de artefactos en el Harbor local; no se suscribe a cambios arbitrarios de registros externos.
+La replicación push envía proactivamente imágenes de Harbor a registros remotos (útil para distribuirlas en ubicaciones periféricas). La replicación pull obtiene imágenes de registros remotos y las incorpora a Harbor (útil para reflejar registros externos o para la recuperación ante desastres). La replicación manual y la programada admiten flujos pull. La replicación basada en eventos sigue eventos de artefactos en el Harbor local; no se suscribe a cambios arbitrarios de registros externos.
 
 </details>
 
@@ -115,17 +115,17 @@ Harbor almacena las firmas creadas por Cosign y Notation. Notary v1 se eliminó 
 
 8. ¿Para qué sirve la función de caché proxy de Harbor?
    - A) Almacenar en caché consultas DNS
-   - B) Actuar como caché pull-through para registros remotos, como Docker Hub
+   - B) Actuar como caché de paso (pull-through) para registros remotos, como Docker Hub
    - C) Almacenar en caché dependencias de charts de Helm
    - D) Acelerar las operaciones internas de Harbor
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Actuar como caché pull-through para registros remotos, como Docker Hub**
+**Respuesta: B) Actuar como caché de paso (pull-through) para registros remotos, como Docker Hub**
 
 **Explicación:**
-La caché proxy de Harbor crea un proxy en caché para registros externos. Cuando los usuarios descargan imágenes a través de Harbor, estas se almacenan en la caché local. Las descargas posteriores de la misma imagen se sirven desde esa caché, lo que reduce el uso de ancho de banda externo, mejora el rendimiento de descarga y reduce las solicitudes upstream. Aun así, se aplican las reglas de fallos de caché, comprobaciones de vigencia y límites de cuenta upstream.
+La caché proxy de Harbor crea un proxy en caché para registros externos. Cuando los usuarios descargan imágenes a través de Harbor, estas se almacenan en la caché local. Las descargas posteriores de la misma imagen se sirven desde esa caché, lo que reduce el uso de ancho de banda externo, mejora el rendimiento de descarga y reduce las solicitudes al registro de origen. Aun así, hay que considerar las imágenes que no estén en caché, las comprobaciones de vigencia y los límites de las cuentas del registro de origen.
 
 </details>
 

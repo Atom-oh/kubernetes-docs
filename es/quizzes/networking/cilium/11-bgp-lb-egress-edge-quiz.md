@@ -1,4 +1,4 @@
-# Cuestionario sobre el plano de control BGP, las IP de Load Balancer y el egreso: parte 11
+# Cuestionario sobre el plano de control BGP, las IP de los balanceadores de carga y el egreso: parte 11
 
 > **Cilium 1.20.2 · 2026-10-15**
 
@@ -13,7 +13,7 @@
 
    **Respuesta: D) Nada útil: ENI IPAM no asigna a los nodos un PodCIDR propio de Cilium, así que no hay ningún prefijo por nodo que anunciar**
 
-   El anuncio `PodCIDR` solo funciona con modos de IPAM que asignan un PodCIDR por nodo (cluster-pool, alcance host de Kubernetes). Con ENI, las IP de los pods ya son direcciones de la VPC que esta enruta, y BGP Control Plane nunca programa tablas de rutas de la nube.
+   El anuncio `PodCIDR` solo funciona con modos de IPAM que asignan un PodCIDR por nodo (cluster-pool, ámbito de host de Kubernetes). Con ENI, las IP de los pods ya son direcciones de la VPC que esta enruta, y BGP Control Plane nunca programa tablas de rutas de la nube.
 
    </details>
 
@@ -88,7 +88,7 @@
 
    **Respuesta: D) 1.19**
 
-   Quedó obsoleta en 1.18 y se eliminó junto con `pkg/bgpv1` en 1.19, por lo que los clústeres deben migrar a las CRD `cilium.io/v2` antes de actualizar a 1.19. Las copias v2alpha1 de las CRD v2 siguen disponibles, pero están obsoletas en 1.20 y 1.21-pre.
+   Quedó obsoleta en 1.18 y se eliminó junto con `pkg/bgpv1` en 1.19, por lo que los clústeres deben migrar a las CRD `cilium.io/v2` antes de actualizar a 1.19. Las copias v2alpha1 de las CRD v2 siguen expuestas a través de la API, pero están obsoletas en 1.20 y 1.21-pre.
 
    </details>
 
@@ -133,7 +133,7 @@
 
    **Respuesta: D) De 10 a 20 segundos**
 
-   La conmutación por error ocurre entre `leaseDuration - leaseRenewDeadline` y `leaseDuration + leaseRenewDeadline`. Ajustar los valores a 3 s/1 s/200 ms da de 2 a 4 segundos, pero aumenta las QPS de la API; por tanto, eleva el límite de frecuencia del cliente.
+   La conmutación por error ocurre entre `leaseDuration - leaseRenewDeadline` y `leaseDuration + leaseRenewDeadline`. Ajustar los valores a 3 s/1 s/200 ms da de 2 a 4 segundos, pero aumenta la cantidad de consultas por segundo (QPS) a la API; por tanto, eleva el límite de QPS del cliente.
 
    </details>
 

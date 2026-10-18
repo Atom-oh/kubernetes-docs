@@ -93,7 +93,7 @@ Una regla de ciclo de vida de ECR con varios patrones en `tagPatternList` aplica
 **Respuesta: A) Las políticas de ciclo de vida son más sencillas porque cada repositorio tiene requisitos de retención uniformes**
 
 **Explicación:**
-La estrategia A usa repositorios separados por entorno (por ejemplo, `myapp-dev`, `myapp-prod`). Así se simplifican las políticas de ciclo de vida porque cada repositorio contiene imágenes con requisitos de retención uniformes. El compromiso es administrar varios repositorios y posiblemente duplicar imágenes entre ellos.
+La estrategia A usa repositorios separados por entorno (por ejemplo, `myapp-dev`, `myapp-prod`). Así se simplifican las políticas de ciclo de vida porque cada repositorio contiene imágenes con requisitos de retención uniformes. A cambio, hay que administrar varios repositorios y posiblemente duplicar imágenes entre ellos.
 
 </details>
 
@@ -129,7 +129,7 @@ Kubelet descarga la imagen antes de que se inicie la aplicación, usando las cre
 
 </details>
 
-9. ¿Qué impide habilitar etiquetas inmutables en un repositorio de ECR?
+9. ¿Qué se evita al habilitar etiquetas inmutables en un repositorio de ECR?
    - A) Eliminar cualquier imagen del repositorio
    - B) Publicar imágenes nuevas con la misma etiqueta que una imagen existente
    - C) Descargar imágenes sin autenticación

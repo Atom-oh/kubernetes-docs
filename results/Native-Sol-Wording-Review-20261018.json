@@ -8375,6 +8375,1240 @@
         "existingCanonicalHeadingIdsRetained": true
       },
       "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0024-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+      "targetPath": "cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+      "sourceBlob": "38732a9d2dcbd0ebcf0f9971b9dd957886339603",
+      "sourceSha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f",
+      "beforeTargetSha256": "34a0c8e2f0244461658a6fc1c5d546e50d01504d640518980ae40f2f9ee8e30e",
+      "beforeSnapshot": "/tmp/preimages/34a0c8e2f0244461658a6fc1c5d546e50d01504d640518980ae40f2f9ee8e30e.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "38732a9d2dcbd0ebcf0f9971b9dd957886339603",
+      "targetSha256": "013964e6fd1a702d3599454b5aff08077a24f94f662e8067b2748ce4f7584c2a",
+      "currentTargetSha256": "013964e6fd1a702d3599454b5aff08077a24f94f662e8067b2748ce4f7584c2a",
+      "afterTargetSha256": "013964e6fd1a702d3599454b5aff08077a24f94f662e8067b2748ce4f7584c2a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/013964e6fd1a702d3599454b5aff08077a24f94f662e8067b2748ce4f7584c2a.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0025-source-snapshots/faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actual initial and final complete reads covered the introduction/link and all twenty questions and answers, including the exact complete CRD YAML. CRD input schemas remain separate from controller behavior; repeat/conflict reconciliation, finalizer cleanup opportunity, scope/UID/controller adoption checks and deletion ordering remain. Mutating AdmissionReview/optional JSONPatch UID/version/Base64 constraints are distinct from validating admission. Filter/Score, tied-node selection, PostBind notification and Unreserve failure paths remain distinct. Current Istio labels/revision precedence, API aggregation TLS/authn/authz/discovery/storage responsibilities, required top-level spec versus required image, status/scale paths and controller-populated status are preserved. VAP 1.30/CEL/binding and validating-webhook production selection/configuration, matching both deployments and scale subresources, remain. controller-runtime does not supply API types/schemes/RBAC/domain logic and exact version alignment matters. Conversion is conditional and preserves served/storage/storedVersions meaning. Idempotent finalizer-before-external-create cleanup, owned-field/status conflict retries and non-runnable pseudocode limits remain. Primary fencing prevents an old primary from writing; quorum, WAL recovery, storage/migration/failure design and scheduler-minor interface/profile-name/failure testing are retained without claiming YAML installs plugins or workload creation guarantees data safety. All code, source inline tokens, link destination and hierarchy were compared; natural question-heading terminology changes preserve canonical IDs.",
+      "findings": [
+        {
+          "location": "Q1/Q11/Q14/Q16 and general controller/API prose",
+          "finding": "Ordinary English schema, type/scheme, namespace/scope and manager/client terms made Chinese prose artificial.",
+          "resolution": "Used input/resource 字段模式, 类型注册方案（scheme）, 管理器/客户端/缓存 and natural namespace/controller terms, retaining exact schema paths, required fields, status paths and API tokens.",
+          "resolved": true
+        },
+        {
+          "location": "Q4/Q8/Q10 and scheduler questions",
+          "finding": "变更 webhook, 信息性阶段 and 平局选择 obscured mutating admission, notification stage and tied node-score selection.",
+          "resolution": "Used 变更准入 Webhook, 通知阶段 and 并列评分节点的选择; retained optional patch, successful-bind and Unreserve/failure conditions.",
+          "resolved": true
+        },
+        {
+          "location": "Q17-Q20 scope, cleanup and database/scheduler prose",
+          "finding": "Generic English and 主节点隔离 were vague about controlled writes and owned failure paths.",
+          "resolution": "Rendered validating server/namespace selection, idempotent owned-finalizer cleanup, old-primary write fencing, quorum mechanism and exact-minor scheduler interface constraints naturally without adding operational guarantees.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+          "cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 4. 变更 webhook 可以返回什么？",
+            "after": "## 4. 变更准入 Webhook 可以返回什么？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 5. Filter plugin 的作用是什么？",
+            "after": "## 5. Filter 插件的作用是什么？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 11. CRD schema 和必填字段应定义在哪里？",
+            "after": "## 11. CRD 字段模式和必填字段应定义在哪里？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 13. VAP 与验证 webhook 有何不同？",
+            "after": "## 13. VAP 与验证准入 Webhook 有何不同？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 15. conversion webhook 的用途是什么？",
+            "after": "## 15. 转换 Webhook 的用途是什么？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 17. 应如何将 Deployment 验证 webhook 限定到 production？",
+            "after": "## 17. 应如何将 Deployment 验证 Webhook 限定到 production？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 20. 应如何实现和验证自定义 scheduler？",
+            "after": "## 20. 应如何实现和验证自定义调度器？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0025-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+      "targetPath": "cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+      "sourceBlob": "34ada5224862c6d3fb1be23ce679feb03c0f8261",
+      "sourceSha256": "546f7f61f94d1a3ed6a88b57f04e09a657f07b0ec9e206b606a225befc0ba785",
+      "beforeTargetSha256": "4137772fbed474f28200f148e609b4eab13b38b93dd1af55dbf2b7fb785480e9",
+      "beforeSnapshot": "/tmp/preimages/4137772fbed474f28200f148e609b4eab13b38b93dd1af55dbf2b7fb785480e9.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "34ada5224862c6d3fb1be23ce679feb03c0f8261",
+      "targetSha256": "2780e30b7fa18e4f25db47829800f7695c37b5e46ac6364f548c55faa233462d",
+      "currentTargetSha256": "2780e30b7fa18e4f25db47829800f7695c37b5e46ac6364f548c55faa233462d",
+      "afterTargetSha256": "2780e30b7fa18e4f25db47829800f7695c37b5e46ac6364f548c55faa233462d",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/2780e30b7fa18e4f25db47829800f7695c37b5e46ac6364f548c55faa233462d.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0025-source-snapshots/546f7f61f94d1a3ed6a88b57f04e09a657f07b0ec9e206b606a225befc0ba785.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Both complete source/target reads covered all twelve stems, forty-eight choices, twelve answers, explanations, version baseline and navigation URL. Answers B/D/C/B/B/C/B/B/C/B/B/B remain. HTTP Connection Manager still needs route configuration/RDS, router filter and Cluster references; policy body fields are not arbitrary application authorization. Cilium 1.20.3 L7 schema supports HTTP/DNS and rejects old Kafka rules, with separate L4 reachability and Kafka TLS/SASL/ACL authorization. Maglev external selection, unavailable backend connection limits and excluded socket east-west path remain. 90:10 weights stay probabilistic and do not ensure exact windows or user sessions; service/port/listener resolution and accepted routes are required. retry_on token versus per_try_timeout/backoff, safe GET-only retries and removed caller overrides are preserved. DNS queries do not authorize returned connections or guarantee anti-exfiltration/DoH. Enabled/enforced rate fractions default to 0% including route overrides; buckets are Envoy-process-local shared by its threads. 301 may change method and needs separate working HTTPS path; approved GET/HEAD shadowing still copies data/risks side effects. summed weights/deprecated total_weight do not advance rollout/rollback or guarantee quotas. Header AND/precedence is not authentication. Code-like fields and class paths remain exact; generic prose and question headings are now natural.",
+      "findings": [
+        {
+          "location": "Q3 L7 rule schema",
+          "finding": "L7 规则架构 mistranslated the field schema as system architecture.",
+          "resolution": "Used L7 规则字段模式（schema）, retaining rejected rules.kafka and the separate Kafka broker ACL/L4 responsibilities.",
+          "resolved": true
+        },
+        {
+          "location": "Q5 weight explanation",
+          "finding": "每十个请求恰好九个请求会被选中 did not specify which backend and weakened the probability versus count distinction.",
+          "resolution": "Explicitly stated that ten requests are not guaranteed to split exactly nine/one across the corresponding backends; kept 90:10 and no session guarantee.",
+          "resolved": true
+        },
+        {
+          "location": "Q8 enabled/enforced and Q11 promotion",
+          "finding": "Fractions became 分数 and automatic promotion became vague 自动提升.",
+          "resolution": "Used 启用/执行比例（enabled/enforced） and 自动推进发布, retaining default 0%, process-local ownership and absence of rollout/rollback guarantees.",
+          "resolved": true
+        },
+        {
+          "location": "Q1/Q3/Q4/Q8/Q9/Q12 generic prose",
+          "finding": "Filter/broker/socket/listener/header and worker words remained mixed with Chinese.",
+          "resolution": "Translated ordinary terms naturally while keeping exact Envoy paths, API fields, method tokens and class/resource names.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+          "cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "### 1. 在 CiliumEnvoyConfig 中用于定义 HTTP 路由规则的 Envoy filter 是什么？",
+            "after": "### 1. 在 CiliumEnvoyConfig 中用于定义 HTTP 路由规则的 Envoy 过滤器是什么？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "### 8. 在 CiliumEnvoyConfig 中用于配置本地速率限制的 filter 是什么？",
+            "after": "### 8. 在 CiliumEnvoyConfig 中用于配置本地速率限制的过滤器是什么？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "### 9. 在 Gateway API 中，使用哪种 filter 类型配置 HTTP -> HTTPS 重定向？",
+            "after": "### 9. 在 Gateway API 中，使用哪种过滤器类型配置 HTTP -> HTTPS 重定向？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "### 12. 在 Gateway API HTTPRoute 的 matches 部分中，哪个字段用于配置基于 header 的路由？",
+            "after": "### 12. 在 Gateway API HTTPRoute 的 matches 部分中，哪个字段用于配置基于标头的路由？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "D",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "D",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 12
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0025-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/ai-ml/ray/01-architecture.md",
+      "targetPath": "cn/ai-ml/ray/01-architecture.md",
+      "sourceBlob": "daa51650707ecd14cbc70f036dcf0cab4d947d65",
+      "sourceSha256": "2dfa5df21439b95582c8370a2554ea21ad9779378a36615b9c94c60b111232f9",
+      "beforeTargetSha256": "e36be3ef146277ef18eb1072efac940ecc3cf1166126564f519c8157d55af1d2",
+      "beforeSnapshot": "/tmp/preimages/e36be3ef146277ef18eb1072efac940ecc3cf1166126564f519c8157d55af1d2.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "daa51650707ecd14cbc70f036dcf0cab4d947d65",
+      "targetSha256": "51d9613292fd7fbccd818083a9b6750fce35f8127c4e28555a30fc0035f11d93",
+      "currentTargetSha256": "51d9613292fd7fbccd818083a9b6750fce35f8127c4e28555a30fc0035f11d93",
+      "afterTargetSha256": "51d9613292fd7fbccd818083a9b6750fce35f8127c4e28555a30fc0035f11d93",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/51d9613292fd7fbccd818083a9b6750fce35f8127c4e28555a30fc0035f11d93.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0025-source-snapshots/2dfa5df21439b95582c8370a2554ea21ad9779378a36615b9c94c60b111232f9.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "The complete initial and final comparison covered all paragraphs/headings, exact Python, image alt/destination, interactive diagram and eight primary-source/navigation links. The Ray 2.58.0/Python 3.12/NumPy 2.2.6 local exercise remains API-only, two logical CPUs/80 MiB store with additional process memory and shutdown, not GPU/network/recovery/performance proof. Remote submission, upstream ObjectRef dependency, incidental worker caches, idempotent side effects and stateful actor handles remain; stateless is an attribute description rather than an invocation mode. max_restarts=0, constructor reexecution versus durable state, and concurrency modes are intact. Read-only same-node NumPy shared views do not imply universal zero-copy/GPU/cross-node sharing. Head/worker/GCS/driver ownership and placement are distinct; each task fits one node and logical resources are not OS thread/core limits. Autoscaler provisioning is not promised for local init. GCS metadata recovery is separate from actor/object restoration, external Redis versus RocksDB alpha is retained, put/spill are not recomputation/backup, and framework collectives are not all object-store traffic. KubeRay CR reconciliation, Ray scheduling, Kubernetes scheduling and real EC2 provisioning remain separate; it does not dispatch an application automatically to a library. Headings and every protected token/code/link are unchanged.",
+      "findings": [
+        {
+          "location": "Tasks: stateless description",
+          "finding": "以无状态方式调用任务 invented a separate stateless invocation mode.",
+          "resolution": "Used 将任务称为“无状态”, keeping the no-purity/no-side-effect guarantee and retry idempotency caveat.",
+          "resolved": true
+        },
+        {
+          "location": "Cluster autoscaler and Kubernetes layers",
+          "finding": "自动配置更多 worker and 实际配置 EC2 suggested editing configuration rather than provisioning compute.",
+          "resolution": "Used 自动创建更多工作节点 and 实际创建 EC2 实例, preserving configured-component conditions and separate Ray/Kubernetes/EC2 layers.",
+          "resolved": true
+        },
+        {
+          "location": "Process, concurrency, scheduling and recovery prose/image alt",
+          "finding": "Generic worker/head/driver/async/threaded/tensor/placement/thread/lineage/trial/serving/collective words disrupted Chinese readability.",
+          "resolution": "Translated ordinary concepts with retained meaningful Ray terms and parentheticals, preserving object-owner identity, node locality, resource bounds, recovery limitations and framework communication distinctions.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/ai-ml/ray/01-architecture.md",
+          "cn/ai-ml/ray/01-architecture.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0025-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/platform-engineering/03-kro-quiz.md",
+      "targetPath": "cn/quizzes/platform-engineering/03-kro-quiz.md",
+      "sourceBlob": "3cc4dd5c743a88e624e7a97cb4a54d620900630b",
+      "sourceSha256": "d30af0ff6165ec1830681dfd74faf56ac6ca0781db331a14d0e8bbe172f92742",
+      "beforeTargetSha256": "b83bcb976ab6def47ba53788db97b12536aa9ef65a56870d4267bbee0f11d10a",
+      "beforeSnapshot": "/tmp/preimages/b83bcb976ab6def47ba53788db97b12536aa9ef65a56870d4267bbee0f11d10a.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "3cc4dd5c743a88e624e7a97cb4a54d620900630b",
+      "targetSha256": "c6732b1bf8e087fb46cee8101aa315484940d6146f195fc83ec76efe06da882a",
+      "currentTargetSha256": "c6732b1bf8e087fb46cee8101aa315484940d6146f195fc83ec76efe06da882a",
+      "afterTargetSha256": "c6732b1bf8e087fb46cee8101aa315484940d6146f195fc83ec76efe06da882a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/c6732b1bf8e087fb46cee8101aa315484940d6146f195fc83ec76efe06da882a.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0025-source-snapshots/d30af0ff6165ec1830681dfd74faf56ac6ca0781db331a14d0e8bbe172f92742.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "The complete original and final reads covered all twenty questions/answers, exact three YAML fences and navigation link for kro 0.9.4. RGD-generated schema/API instances are distinct; spec.resources id/template-or-externalRef, schema.spec/metadata, includeWhen Boolean conditions, status projection and unsupported old fields remain. Dependencies infer an acyclic graph; downstream dependents wait for readyWhen and are deleted first through ApplySet/finalizer waves, while external references are not deleted. apply is desired-state mutation rather than compile/readiness/transaction proof, and current RGD/GraphRevision compilation controls progress. Helm renders/manages releases while kro reconciles references, with compatibility rather than universal superiority. Actual consumed schema types/defaults/bounds, direct resource-ID references, inventory/metadata/apply-order, and separate OpenAPI validation/CEL type/runtime checks are intact. Active/Established preconditions, disabled ingress, Deployment-only readyWhen, image/namespace/policy checks and missing-value projection limits remain. Per-environment/fleet setup and unused autoscaling fields do not create HPA. Neither tool performs automatic backup/restore/failover/database schema migration; Git spec rollback does not restore a database and latest failed GraphRevision does not automatically fall back. All code/inline tokens/links/hierarchy/IDs remain protected.",
+      "findings": [
+        {
+          "location": "Q1/Q11/Q15/Q20 schema meanings",
+          "finding": "API/OpenAPI schema and database schema migration were rendered as 架构.",
+          "resolution": "Used API/OpenAPI 字段模式 and 数据库模式迁移, keeping schema validation separate from graph compilation and runtime readiness.",
+          "resolved": true
+        },
+        {
+          "location": "Q7 readiness and Q8 deletion",
+          "finding": "依赖项/依赖资源 could invert the direction of dependents.",
+          "resolution": "Explicitly identified 依赖其他资源的下游资源 as the resources waiting for readyWhen and removed first during deletion.",
+          "resolved": true
+        },
+        {
+          "location": "Q3/Q5/Q18 comparison, inclusion and missing values",
+          "finding": "Literal Helm comparison, 条件式资源纳入/修剪资源 and 缺少值时解析可能会等待 were awkward.",
+          "resolution": "Used kro supplements alongside Helm, conditional creation/retention/removal and expression resolution may wait for missing values to become available, retaining lifecycle and non-comprehensive-health limits.",
+          "resolved": true
+        },
+        {
+          "location": "Reconciliation, inventory and ordinary release/resource prose",
+          "finding": "Mixed release/chart/external-reference wording and 协调 weakened consistent natural language.",
+          "resolution": "Used natural release/resource inventory/外部引用 and 调谐 wording, preserving API identifiers, ownership and no-guarantee caveats.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/platform-engineering/03-kro-quiz.md",
+          "cn/quizzes/platform-engineering/03-kro-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 3. kro 与 Helm 一起提供什么功能？",
+            "after": "## 3. kro 在 Helm 之外补充哪些能力？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 5. 如何配置条件式资源纳入？",
+            "after": "## 5. 如何按条件决定是否创建或保留资源？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          },
+          {
+            "type": "sourceMeaningQuestionHeadingWordingCorrection",
+            "before": "## 15. 如何验证输入架构？",
+            "after": "## 15. 如何验证输入字段模式？",
+            "reason": "Natural translation of the exact English question; meaning, heading hierarchy and existing canonical IDs retained."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0025-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/service-mesh/istio/advanced/07-sidecar-injection.md",
+      "targetPath": "cn/service-mesh/istio/advanced/07-sidecar-injection.md",
+      "sourceBlob": "1835a84b9e8c332426a584b88dea0253611c2e7e",
+      "sourceSha256": "27b65121f61c76dd93062183d7f3053015b36a51efa559085c0af5fc412912aa",
+      "beforeTargetSha256": "b3251b807769a6c09d2ad99e3087df2e8093a0bd0146f0f7453bf0c8b141d3c9",
+      "beforeSnapshot": "/tmp/preimages/b3251b807769a6c09d2ad99e3087df2e8093a0bd0146f0f7453bf0c8b141d3c9.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "1835a84b9e8c332426a584b88dea0253611c2e7e",
+      "targetSha256": "b0e1deb9b8e6f6e2864afce2358ae2c1274986d1bb5ef87c6aea459bd6fa22f4",
+      "currentTargetSha256": "b0e1deb9b8e6f6e2864afce2358ae2c1274986d1bb5ef87c6aea459bd6fa22f4",
+      "afterTargetSha256": "b0e1deb9b8e6f6e2864afce2358ae2c1274986d1bb5ef87c6aea459bd6fa22f4",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/b0e1deb9b8e6f6e2864afce2358ae2c1274986d1bb5ef87c6aea459bd6fa22f4.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0026-source-snapshots/27b65121f61c76dd93062183d7f3053015b36a51efa559085c0af5fc412912aa.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "I read every original and final English/Chinese paragraph, all seven exact fenced examples and every reference/link. Istio 1.31.0/Kubernetes 1.32–1.37 and October 16 baseline remain. Automatic admission modifies new Pods rather than existing sidecars or Deployment templates; manual kube-inject renders configuration. One namespace mode, installed revision/tag with matching injector, legacy-label precedence, namespace-disable/Pod-false overrides and installer default-enable exception are preserved. Availability/PDB/capacity and separate ambient enrollment are retained. Pod/template labels rather than deprecated annotations do not override namespace disable or create an application; examples remain fragments. All three actual exported files and explicit revision/default remain required for the verified no-cluster-discovery rendering; omitted revision may wait even with local files. Original versus generated resource ownership, deliberate manual/automatic injection, admission inspection and diff exit 1 not approval remain. Exact requests/limits remain workload tuning rather than sizing, missing corresponding limits may remove them, and LimitRange/Quota/throttling checks remain. Future-exclusion does not remove old proxies or ambient capture. Native initContainers/Always and Kubernetes stable/default versus Istio Alpha distinctions remain, without assuming universal 2/2 READY. Controller/admission failures and proxy readiness/logs/xDS/enrollment proof are separate. Chinese wording now distinguishes revision tags from Kubernetes labels and skipped discovery from failure to find a cluster; all heading text/IDs, code and URLs are preserved.",
+      "findings": [
+        {
+          "location": "Namespace revision/tag paragraph",
+          "finding": "Repeated 修订版本或标签对应的修订版本标签 conflated revision tags and namespace labels.",
+          "resolution": "Specified that the namespace revision label must point to a revision or revision-tag alias with a matching injector; existing labels and installed revision are recorded first.",
+          "resolved": true
+        },
+        {
+          "location": "Manual local-render verification",
+          "finding": "不会发现集群 implied no cluster could be found rather than rendering without cluster discovery.",
+          "resolution": "Used 无需进行集群配置探测, retaining explicit revision and all three local files and the omitted-revision waiting caveat.",
+          "resolved": true
+        },
+        {
+          "location": "Injection ownership, fragments, resource limits and exclusions",
+          "finding": "应有意选择...负责, 选择注入, 猜测的镜像 and 协调标签 were overly literal.",
+          "resolution": "Used deliberate choice of the responsible injection method, selected eligible Pods, example-fragment caution and reviewed/consistent labels; translated ordinary mesh/request/limit prose while retaining all conditions.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/service-mesh/istio/advanced/07-sidecar-injection.md",
+          "cn/service-mesh/istio/advanced/07-sidecar-injection.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0026-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/labs/observability/01-infrastructure-setup-lab.md",
+      "targetPath": "cn/labs/observability/01-infrastructure-setup-lab.md",
+      "sourceBlob": "4e0814f70c0f3bfe5b186dc9030a1f997ba4ee48",
+      "sourceSha256": "ec6b620d832d12c2779114e35179536361fda06bb3f926041883e30f31e817c7",
+      "beforeTargetSha256": "fbec65033db461352b0e32c26831be5247754e2e99344a2c5da12fcfd46662c7",
+      "beforeSnapshot": "/tmp/preimages/fbec65033db461352b0e32c26831be5247754e2e99344a2c5da12fcfd46662c7.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "4e0814f70c0f3bfe5b186dc9030a1f997ba4ee48",
+      "targetSha256": "69f942a3619866a8d8d58b9b26392d2ce71f0dae6ef6be7a35274ebf9578fd36",
+      "currentTargetSha256": "69f942a3619866a8d8d58b9b26392d2ce71f0dae6ef6be7a35274ebf9578fd36",
+      "afterTargetSha256": "69f942a3619866a8d8d58b9b26392d2ce71f0dae6ef6be7a35274ebf9578fd36",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/69f942a3619866a8d8d58b9b26392d2ce71f0dae6ef6be7a35274ebf9578fd36.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0026-source-snapshots/ec6b620d832d12c2779114e35179536361fda06bb3f926041883e30f31e817c7.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actual complete initial/final comparison covered every section, exact eight fenced commands, all explicit legacy spans/canonical IDs, diagram/links and source validation limits. Reviewed AWS CLI/eksctl/kubectl/Helm/Python versions and EKS 1.36 standard versus 1.31 extended support remain. Approved temporary-role/account checks, least-scoped planned operations, no blanket FullAccess/long-lived keys, private two-AZ VPC network/address/SG/NACL preparation and nonoverlapping service CIDRs are intact. EKS generation access entries/OIDC/AL2023/encrypted gp3/narrow client CIDR remains lab configuration rather than measured capacity; partial failures need inspection and the two contexts must select distinct clusters. EBS/network-policy-enforcing CNI/AWSLBC requirements and actual issuer/provider ARN matching remain. Aurora single writer is not Multi-AZ HA; source-supported Region engine version, actual service-node SG, separate app/KEDA/Collector identities and approved change set are retained. Part2 identity inputs versus Part3 build/push are distinct. Authorized private master-Secret connection JSON, verify-full/CA path and dedicated lab_runtime DML/no existing-password overwrite remain. Resource ownership inventory, retained snapshots/PVC/IAM relations and usage-based costs remain; AMG monthly users are not fabricated workspace hourly totals. Local schema/CloudFormation/PostgreSQL checks do not claim live AWS, quota or creation-duration execution. Date, resource ownership and generic network/database terms are natural; code/URLs/IDs unchanged, first section heading wording retains its explicit prerequisites ID.",
+      "findings": [
+        {
+          "location": "Date and temporary-role paragraph",
+          "finding": "English date and duplicated 不要为本练习为每个服务 were unnatural.",
+          "resolution": "Localized September 13, 2026 and stated 本练习不要向所有服务授予 FullAccess, retaining the prohibition and no long-lived-key requirement.",
+          "resolved": true
+        },
+        {
+          "location": "Environment heading and final resource inventory",
+          "finding": "归属清单 and IAM 附加关系 lacked clear resource ownership/association meaning.",
+          "resolution": "Used 资源归属/资源归属清单 and IAM 关联关系, retaining each inventory item and canonical heading ID.",
+          "resolved": true
+        },
+        {
+          "location": "Network/OIDC/Aurora and validation prose",
+          "finding": "Generic English service CIDR/access entry/context/issuer/provider/writer/master/stack/schema/lint disrupted readability.",
+          "resolution": "Rendered ordinary concepts in Chinese with meaningful technical parentheticals, preserving exact API fields, single-writer condition, approved credential handling and local-only validation boundary.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/labs/observability/01-infrastructure-setup-lab.md",
+          "cn/labs/observability/01-infrastructure-setup-lab.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## 1. 验证环境与归属 {#prerequisites}",
+            "after": "## 1. 验证环境与资源归属 {#prerequisites}",
+            "reason": "Natural expression of the English resource ownership or reconciliation heading; explicit IDs and hierarchy preserved."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [
+            "cleanup",
+            "exercise-1-environment-setup",
+            "exercise-2-managed-cluster-eks-setup",
+            "exercise-3-service-cluster-eks-setup",
+            "exercise-4-aws-managed-services-setup",
+            "exercise-5-argocd-setup-on-managed-cluster",
+            "exercise-6-argo-rollouts-setup-on-service-cluster",
+            "exercise-7-irsa-configuration",
+            "learning-objectives",
+            "next-steps",
+            "references",
+            "steps",
+            "steps-1",
+            "steps-2",
+            "steps-3",
+            "steps-4",
+            "steps-5",
+            "steps-6",
+            "summary",
+            "troubleshooting",
+            "verification",
+            "verification-1",
+            "verification-2",
+            "verification-3",
+            "verification-4",
+            "verification-5"
+          ],
+          "target": [
+            "cleanup",
+            "exercise-1-environment-setup",
+            "exercise-2-managed-cluster-eks-setup",
+            "exercise-3-service-cluster-eks-setup",
+            "exercise-4-aws-managed-services-setup",
+            "exercise-5-argocd-setup-on-managed-cluster",
+            "exercise-6-argo-rollouts-setup-on-service-cluster",
+            "exercise-7-irsa-configuration",
+            "learning-objectives",
+            "next-steps",
+            "references",
+            "steps",
+            "steps-1",
+            "steps-2",
+            "steps-3",
+            "steps-4",
+            "steps-5",
+            "steps-6",
+            "summary",
+            "troubleshooting",
+            "verification",
+            "verification-1",
+            "verification-2",
+            "verification-3",
+            "verification-4",
+            "verification-5"
+          ],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0026-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/ai-ml/kubeflow/03-notebooks.md",
+      "targetPath": "cn/ai-ml/kubeflow/03-notebooks.md",
+      "sourceBlob": "7ba8d19a97119f3a64246ca09a1d3bd810a3a7b0",
+      "sourceSha256": "3e6d2370276ccf01227a2ad167e0a1b10d25baec2e46a9d87760e8d2b4e0cdf9",
+      "beforeTargetSha256": "29467fde1fbc001b2ce066e801b65ddae2251cc44bfc65c49c4d66fab88d45c2",
+      "beforeSnapshot": "/tmp/preimages/29467fde1fbc001b2ce066e801b65ddae2251cc44bfc65c49c4d66fab88d45c2.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "7ba8d19a97119f3a64246ca09a1d3bd810a3a7b0",
+      "targetSha256": "d649fd46270ed5701d5ebf3b81f9beb7488e51ceabd516eb01e664ee0eb54fba",
+      "currentTargetSha256": "d649fd46270ed5701d5ebf3b81f9beb7488e51ceabd516eb01e664ee0eb54fba",
+      "afterTargetSha256": "d649fd46270ed5701d5ebf3b81f9beb7488e51ceabd516eb01e664ee0eb54fba",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/d649fd46270ed5701d5ebf3b81f9beb7488e51ceabd516eb01e664ee0eb54fba.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0026-source-snapshots/3e6d2370276ccf01227a2ad167e0a1b10d25baec2e46a9d87760e8d2b4e0cdf9.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Complete original and final reads included every paragraph, heading, exact bash, diagram/URLs and validation statement. Notebooks 1.11.0/Distribution 26.03.1 and September 12 remain. Web app creates Notebook CR; controller owns StatefulSet/Service/optional VirtualService and Kubernetes creates/schedules Pods; dashboard is not a universal proxy. Namespaced API/GitOps and reconciled owned StatefulSet remain. Workspaces is a separate v2 API rather than drop-in CRD; release beta wording is distinguished from alpha.3 tagged images without asserting GA/EOL. Profile/RBAC/Istio are partial access controls, not universal network/storage/AWS isolation. Only mounted-home data persists, package/kernel state and image compatibility caveats remain; RWO is node-scoped versus RWOP Pod exclusivity, EBS/EFS constraints retained. Culling defaults false/1440/1 minutes, incomplete browser and shell-GPU detection applies to both, failed/empty kernel responses keep possibly stale activity, and actual-image/policy checks remain. Stop annotation presence even false means zero, removing annotation resumes; culling does not delete PVC or guarantee node termination/cost cessation. Admission injection is separate. GPU/node/plugin/taint constraints and conditional Karpenter provisioning remain. allowCustomImage true and direct-API bypass need RBAC/admission constraints; image ports/prefix/UID/home/probe/dependency/digest/runtime differences remain. Locally rendered overlay/source inspection is not actual notebook/GPU/PVC/idle/EKS execution. Wording is natural after the qualifier, Git tag, provisioning and generic-concept corrections; code/URLs/hierarchy/canonical IDs are intact.",
+      "findings": [
+        {
+          "location": "Idle culler detection qualifier",
+          "finding": "The second clause said GPU work cannot be detected at all, whereas English says detection of both browser closure and shell GPU work is not comprehensive.",
+          "resolution": "Used 无法全面检测浏览器关闭或 shell 进程中的 GPU 工作, preserving the bounded qualifier for both cases and all stale-activity caveats.",
+          "resolved": true
+        },
+        {
+          "location": "Workspaces tagged manifests",
+          "finding": "打了标签的 controller/backend/frontend manifests could suggest Kubernetes labels.",
+          "resolution": "Used 该发行版本标签下的控制器/后端/前端清单, retaining v2.0.0-alpha.3 and the release-wording-versus-image distinction.",
+          "resolved": true
+        },
+        {
+          "location": "Prerequisite and GPU provisioning paragraphs",
+          "finding": "容量置备器 and 进行置备 were literal and omitted what capacity is provided.",
+          "resolution": "Used 提供节点容量的工具 and conditional node creation for eligible Pending Pods/matching NodePools, retaining EC2/quota/network/bootstrap constraints and separate notebook-stop/node-scale-down operations.",
+          "resolved": true
+        },
+        {
+          "location": "Date, ordinary controller/storage/culling/spawner/admission prose",
+          "finding": "English date and ordinary Dashboard/reconciliation/home/culling/admission/taint terms made prose uneven.",
+          "resolution": "Localized the date, used natural technical Chinese with needed parentheticals and 调谐, preserving exact fields, default values, paths, annotations, image contracts and no-live-execution limits.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/ai-ml/kubeflow/03-notebooks.md",
+          "cn/ai-ml/kubeflow/03-notebooks.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## Notebook 协调流程",
+            "after": "## Notebook 调谐流程",
+            "reason": "Natural expression of the English resource ownership or reconciliation heading; explicit IDs and hierarchy preserved."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0026-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/security/04-network-policies-quiz.md",
+      "targetPath": "cn/quizzes/security/04-network-policies-quiz.md",
+      "sourceBlob": "ce70247142426155e414eed95046827833dd783d",
+      "sourceSha256": "6dcbd243d3ac53295a7bddba81bd92f404c541800444baf8fa058a694d4d9beb",
+      "beforeTargetSha256": "092301fee40aff223716fd2815c9e890fe1a79eff33dab1b03fd747c00949305",
+      "beforeSnapshot": "/tmp/preimages/092301fee40aff223716fd2815c9e890fe1a79eff33dab1b03fd747c00949305.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "ce70247142426155e414eed95046827833dd783d",
+      "targetSha256": "0d2aded7ac989ce42173bba67b7a95e8d150bbd58c7fdb6685443f6eeaa938d1",
+      "currentTargetSha256": "0d2aded7ac989ce42173bba67b7a95e8d150bbd58c7fdb6685443f6eeaa938d1",
+      "afterTargetSha256": "0d2aded7ac989ce42173bba67b7a95e8d150bbd58c7fdb6685443f6eeaa938d1",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/0d2aded7ac989ce42173bba67b7a95e8d150bbd58c7fdb6685443f6eeaa938d1.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0027-source-snapshots/6dcbd243d3ac53295a7bddba81bd92f404c541800444baf8fa058a694d4d9beb.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Native whole-page semantic comparison and final reread covered the dated introduction, all 12 question stems, all 48 alternatives, every answer and explanation, both YAML fences, explicit Q5 span and final guide link. Q1 now identifies the Pod selected by a directional policy rather than a policy selecting a direction. Ingress and egress remain independent; source egress and destination ingress both need permission, and other connectivity controls can block. Q2–3 preserve the exact selector fields, empty selector scope and YAML. Q4 preserves the supported L7 proxy requirement, TLS non-inspection, untrusted role/API-key headers and AWS VPC CNI chaining limitations. Q5–7 retain the joint B+C default-deny baseline, additive allows, cluster scope versus actual endpoint targets, empty peer selector, same-peer AND/different-peer OR and nonautomatic custom labels. Q8 retains actual resolver queries, TCP and UDP53, TTL/search/shared-IP limits and domain matching not proving SaaS tenant identity. Q9 preserves shared localhost and implementation-specific host/protocol limits. Q10 preserves identity reallocation and relevant label-set/namespace/cluster/propagation context. Q11 retains both endpoint policies, reviewed application ports, DNS/health/monitoring and implicitly allowed return traffic. Q12 keeps except local to one ipBlock allow rule and actual NAT/CNI/Service path caveats. Chinese prose is clear without converting API fields or adding security guarantees; all B/B/B/B/D/B/A/A/B/A/C/B answer labels and negative alternatives remain faithful.",
+      "findings": [
+        {
+          "location": "Q1 option B, answer and explanation",
+          "finding": "没有选择该方向的策略 obscured that the policy selects a Pod and isolates a particular direction.",
+          "resolution": "Reworded as 某方向没有选中该 Pod 的策略 and retained separate ingress/egress evaluation and both ends permitting Pod traffic.",
+          "resolved": true
+        },
+        {
+          "location": "Title, date, Q4–12 explanations and selected question headings",
+          "finding": "Ordinary English namespace, proxy, resolver/cache/search suffix, identity label-set, container/network-namespace and application-tier prose impeded Chinese readability.",
+          "resolution": "Localized these concepts into natural Chinese while preserving API identifiers, protocol names, numeric identity reallocation, peer logic, DNS/TTL/TLS/tenant caveats and the additive policy/NAT constraints.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/security/04-network-policies-quiz.md",
+          "cn/quizzes/security/04-network-policies-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "# Network Policies 测验",
+            "after": "# 网络策略测验",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 5. 什么可以为两个方向创建覆盖整个 namespace 的默认拒绝基线？",
+            "after": "### 5. 什么可以为两个方向创建覆盖整个命名空间的默认拒绝基线？",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 7. 如何在 NetworkPolicy 中允许来自特定 namespace 的所有 Pod？",
+            "after": "### 7. 如何在 NetworkPolicy 中允许来自特定命名空间的所有 Pod？",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 8. CiliumNetworkPolicy 中哪个字段定义基于 FQDN 的 egress 规则？",
+            "after": "### 8. CiliumNetworkPolicy 中哪个字段定义基于 FQDN 的出站规则？",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 10. Cilium 的基于 Identity 的策略有什么优势？",
+            "after": "### 10. Cilium 的基于身份的策略有什么优势？",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 11. 三层架构中 backend tier 的正确网络策略是什么？",
+            "after": "### 11. 三层架构中后端层的正确网络策略是什么？",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 12. 在 NetworkPolicy 中使用 ipBlock 指定 CIDR ranges 时，哪个字段用于排除特定 IP？",
+            "after": "### 12. 在 NetworkPolicy 中使用 ipBlock 指定 CIDR 范围时，哪个字段用于排除特定 IP？",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "target": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 12
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [
+            "_5-what-is-the-correct-networkpolicy-for-implementing-a-default-deny-policy"
+          ],
+          "target": [
+            "_5-what-is-the-correct-networkpolicy-for-implementing-a-default-deny-policy"
+          ],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0027-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+      "targetPath": "cn/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+      "sourceBlob": "868ea14f4f281cab20c8ce2eccc65d45a416cd35",
+      "sourceSha256": "e773f0bd8115ac7654167f0026ab87018e63531304890c2b9991450480a65351",
+      "beforeTargetSha256": "430271c643a6e8e9de07ddda71413b8db6b51aa554b3142b6972a2aa315be413",
+      "beforeSnapshot": "/tmp/preimages/430271c643a6e8e9de07ddda71413b8db6b51aa554b3142b6972a2aa315be413.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "868ea14f4f281cab20c8ce2eccc65d45a416cd35",
+      "targetSha256": "ec25ad7d265693ff818e8fe16020701f60ed75f0f1faa6ac3a866a9ca350f1d6",
+      "currentTargetSha256": "ec25ad7d265693ff818e8fe16020701f60ed75f0f1faa6ac3a866a9ca350f1d6",
+      "afterTargetSha256": "ec25ad7d265693ff818e8fe16020701f60ed75f0f1faa6ac3a866a9ca350f1d6",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/ec25ad7d265693ff818e8fe16020701f60ed75f0f1faa6ac3a866a9ca350f1d6.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0027-source-snapshots/e773f0bd8115ac7654167f0026ab87018e63531304890c2b9991450480a65351.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the complete original English and Chinese, then the complete final 11-question page against the frozen English, including every choice/answer/explanation, baseline and return link. Q1 keeps vLLM an engine rather than the invented expansion and rejects a guaranteed speedup or queue-free execution. Q2 retains 70B FP16/BF16 weights about 140GB, architecture/precision/parallelism accounting, GQA/MQA KV-head versus MHA hidden-size formulas and NVIDIA 7.5 plus extra kernel requirements. Q3 keeps container restart versus Pod recreation, FSx/EBS/worker path distinctions and Hugging Face versus S3. Q4 preserves TP/PP/independent model replicas, nnodes/node-rank, headless worker as a source technical term without inventing a Kubernetes Service, real Ray cluster and process topology versus Pod count. Q5 retains limited voluntary PDB evictions, Recreate GPU savings with downtime and startupProbe gating. Q6 now preserves can form queues rather than asserting queues necessarily form; prefix KV, chunked prefill, sequence/token/context distinctions, default 0.92/example 0.80 and absent swap-space stay exact. Q7–9 preserve API8000 metric names/units, KV ratio 1=100%, TTFT/e2e/gateway distinctions, internal transport security, EFA dependencies and measured bottlenecks with HPA/KEDA versus NodePool ownership. Q10 explicitly describes URL-path-prefix authentication for /v1,/v2,/inference,/cohere, other paths/OPTIONS bypass, LoRA opt-in and trusted operator path, and unsafe Secret RequestResponse/fake Pod audit examples. Q11 preserves 5.65s to 7.52s, p50 about 33.1%, throughput, historical 0.6.4.post1, missing raw logs/no rerun and interval average versus instantaneous peak/roofline estimate versus profiler evidence. No current GPU execution is asserted. All B/B/C/B/C/B/B/C/C/B/B answers and incorrect-option meanings remain unchanged.",
+      "findings": [
+        {
+          "location": "Q10 option B, answer and explanation",
+          "finding": "前缀认证 could be read as authentication based on a credential prefix rather than middleware applied to URL path prefixes.",
+          "resolution": "Specified 基于路径前缀的认证保护 and identified the four unchanged path prefixes, retaining bypass and separate gateway/permission/network protections.",
+          "resolved": true
+        },
+        {
+          "location": "Q2–4, Q6, Q8–11 ordinary technical prose",
+          "finding": "KV cache/kernel/revision/provisioning/multiprocessing/step/prefill/profiler prose remained partly untranslated or literal; Q6 会形成 overstated the source possibility.",
+          "resolution": "Used KV 缓存, 计算内核, 模型修订版本, 静态/动态存储供应方式, 多进程, 进程会合机制, 词元, 分块预填充 and 性能分析器; corrected queue wording to 可能形成, preserving every API token, number and caveat.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+          "cn/quizzes/ai-ml/04-vllm-deployment-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 10. 在 0.29.0 中，哪项 API key／安全相关陈述是正确的？",
+            "after": "### 10. 在 0.29.0 中，哪项 API 密钥／安全相关陈述是正确的？",
+            "reason": "Localized or clarified the existing source question wording; preserved heading level/order and all explicit IDs."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "C",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "B",
+            "C",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 11
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0027-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+      "targetPath": "cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+      "sourceBlob": "67c25fd973ac96324fcb3e3fc3b157a23fe363cd",
+      "sourceSha256": "13332dec3e9d1612373f38a25816b6a19e35dfd95125a5de6bd3bdd04b152074",
+      "beforeTargetSha256": "a443508b2cfa595ccb49f38e8bccc24183c27beb551e95023d2127924eae972a",
+      "beforeSnapshot": "/tmp/preimages/a443508b2cfa595ccb49f38e8bccc24183c27beb551e95023d2127924eae972a.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "67c25fd973ac96324fcb3e3fc3b157a23fe363cd",
+      "targetSha256": "5eb754d93f69c17560bba672b5416da35d9fc69cf054cad0c63722a09d94ca76",
+      "currentTargetSha256": "5eb754d93f69c17560bba672b5416da35d9fc69cf054cad0c63722a09d94ca76",
+      "afterTargetSha256": "5eb754d93f69c17560bba672b5416da35d9fc69cf054cad0c63722a09d94ca76",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/5eb754d93f69c17560bba672b5416da35d9fc69cf054cad0c63722a09d94ca76.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0027-source-snapshots/13332dec3e9d1612373f38a25816b6a19e35dfd95125a5de6bd3bdd04b152074.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Complete initial source/target reading and final entire paired semantic reread covered the September 15 date, all eight numbered questions, 32 alternatives, eight explanations, each inline mathematical/configuration expression and return URL. Q1 keeps four-bit frozen supported weights, BF16 computation, trained adapters and separately budgeted memory; double quantization concerns quantization constants. Q2 preserves rank16/alpha32, shapes, 45,056 adapter versus 1,572,864 base parameters, alpha/r=2 and different rank-stabilized scaling. Q3 preserves 30.5B total/3.3B per-token active parameters, ideal decimal 15.25GB excluding other memory and eight per-token experts not only eight model-wide adapter targets. Q4 now describes cumulative training-sample participation rather than visual presentations, retaining no packing/incomplete last batch, microbatch1, accumulation8, one worker, 80 updates, effective batch8, 640 presentations, 0.4 epoch, 200 updates per epoch and full label not convergence. Q5 retains prompt/pad exclusion, EOS im_end supervision after actual template/truncation and all-ignored negatives being invalid. Q6 keeps locked test after validation/freeze, current trainer testing before/after every run including smoke not already safe HPO, original-family split before train-only augmentation and tiny overfit not generalization. Q7 preserves Transformers4.57.6 ModuleList/nn.Linear expert implementation, seven suffixes versus 18,624 targets, router exclusion and all-linear/target_parameters differences. Q8 now treats cohort as the full Python/CUDA/driver/dependencies/toolkit/MLflow version combination, preserving repository/tag/digest verification, authorized GPU smoke procedure, unvalidated replacement guard, August6,2026 PyTorch2.8 patch end, alternate repositories, old torch pin potentially undoing migration and CPU/image lookup not proving successful GPU execution. All B/C/A/D/B/A/C/D answer labels and wrong-choice distinctions remain exact. Generic Chinese wording is natural while intentional library/configuration and math identifiers remain unchanged.",
+      "findings": [
+        {
+          "location": "Q8 option D and explanation",
+          "finding": "MLflow 队列 and 可替代队列 mistranslated a compatible dependency/version cohort as a queue.",
+          "resolution": "Replaced with Python/CUDA/驱动程序、依赖项、工具包和 MLflow 的整套版本组合 and explained that a newer catalog entry is not yet a validated replacement configuration for this package.",
+          "resolved": true
+        },
+        {
+          "location": "Q4 question, alternatives and explanation",
+          "finding": "样例呈现次数 misleadingly sounded like rendering/displaying examples.",
+          "resolution": "Used 训练样本累计参与次数 and 累计参与 for every option, preserving 80/1,280/6,400/640 counts, effective batches and all epoch fractions.",
+          "resolved": true
+        },
+        {
+          "location": "Q2–7 rank, microbatch, completion loss, attention and smoke prose",
+          "finding": "Ordinary training concepts remained mixed English unnecessarily.",
+          "resolution": "Localized 秩, 微批大小, 词元, 仅针对补全文本计算损失, 损失掩码, 注意力投影 and 冒烟测试 while preserving all source code expressions and mathematical counts.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+          "cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "C",
+            "A",
+            "D",
+            "B",
+            "A",
+            "C",
+            "D"
+          ],
+          "target": [
+            "B",
+            "C",
+            "A",
+            "D",
+            "B",
+            "A",
+            "C",
+            "D"
+          ],
+          "matched": true,
+          "expectedCount": 8
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0027-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/ai-ml/kubeflow/06-kserve.md",
+      "targetPath": "cn/ai-ml/kubeflow/06-kserve.md",
+      "sourceBlob": "7037d93c3d4fb075f4b2715417c9cb655d7e5370",
+      "sourceSha256": "69384635c5976e441f01cde332249ddd64a1299956ee64bf5dd254d15df234c8",
+      "beforeTargetSha256": "0425be6b76cf9a984b2c01487f66a608e768338c0b345e7c52614a0a3133b9d2",
+      "beforeSnapshot": "/tmp/preimages/0425be6b76cf9a984b2c01487f66a608e768338c0b345e7c52614a0a3133b9d2.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "7037d93c3d4fb075f4b2715417c9cb655d7e5370",
+      "targetSha256": "4097a9b88662342eb46f40d81b6aeb5601340c80b15ae7b4c08229eeac6d1657",
+      "currentTargetSha256": "4097a9b88662342eb46f40d81b6aeb5601340c80b15ae7b4c08229eeac6d1657",
+      "afterTargetSha256": "4097a9b88662342eb46f40d81b6aeb5601340c80b15ae7b4c08229eeac6d1657",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/4097a9b88662342eb46f40d81b6aeb5601340c80b15ae7b4c08229eeac6d1657.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0027-source-snapshots/69384635c5976e441f01cde332249ddd64a1299956ee64bf5dd254d15df234c8.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read all original and final source/target paragraphs, the complete two-mode table, diagram alt text/URL, interactive link, source references and final series/quiz links. Kept KServe/Models Web Application0.18.0 and Community Distribution26.03.1 baseline distinct from public0.21.0 September25 and0.20.0 August6 checked October12. Separate artifacts require compatibility without always matching/differing version numbers. InferenceService remains one API among distinct runtimes/ModelMesh/LLMInferenceService; predictor is required and transformer/explainer optional, explanations are not attached to every prediction, and URI alone is insufficient. Default runtime-config emits no objects, enabled rendering emits12 runtimes and catalog presence proves neither security support nor compatibility. TorchServe notice is translated only as the frozen source states. Deprecated mode aliases, Standard code fallback versus Knative OCI chart default, five table rows, KPA/minReplicas0 conditions, HPA minimum1, KEDA external activation and nonzero startup latency remain exact, without availability/latency guarantees. Metric-provider dependencies and GPU requests not automatically creating GPU metrics remain explicit. Canary percentages are restricted to Knative Revision routing, with previous already-live versus new revisions, Knative request routing and KServe not being the request proxy. Standard weighted routing requires separately designed/owned services/gateway/mesh or rollout tooling; a percentage neither proves quality nor automatically promotes/rolls back. GPU scheduling is distinct from actual model-device configuration. Karpenter creates nodes for eligible Pending Pods within NodePool/quota/available-capacity conditions, separately from Pod autoscalers and EC2 reclamation; other workloads/disruption can retain costs at zero model Pods. Local chart rendering and code inspection are preserved without inventing live model download, GPU, autoscaling or canary tests. Headings, API fields, versions, all URLs and diagram destinations are unchanged.",
+      "findings": [
+        {
+          "location": "Version compatibility and validation paragraphs",
+          "finding": "CRD schemas and schema/config were untranslated, while controller/chart terminology was literal or mixed.",
+          "resolution": "Used CRD 字段模式, 字段模式和配置, 控制器 and explicit Helm Chart names, preserving actual artifact names and inspection-only scope.",
+          "resolved": true
+        },
+        {
+          "location": "Deployment mode fallback paragraph and table",
+          "finding": "代码回退值 sounded like a code-version rollback, and minimum one lacked the replica noun.",
+          "resolution": "Clarified 代码的默认回退模式是 Standard versus OCI chart default Knative and 默认一个副本, preserving deprecated aliases and conditional scaling-to-zero semantics.",
+          "resolved": true
+        },
+        {
+          "location": "Canary section",
+          "finding": "上一个已推出的修订版本 and 推广/回滚 sounded like a public launch or marketing promotion.",
+          "resolution": "Used 先前已上线的修订版本 and 不会自动推进发布或回滚, retaining Knative revision targets, separate Standard ownership and no quality/automation guarantee.",
+          "resolved": true
+        },
+        {
+          "location": "GPU inference provisioning paragraph",
+          "finding": "Karpenter 会进行供应 omitted what is supplied and blurred node versus Pod scaling ownership.",
+          "resolution": "Specified creating nodes for eligible Pending Pods according to NodePool/quota/available capacity, then retained separate Pod-scaling and EC2-creation/reclamation loops and continuing-cost caveats.",
+          "resolved": true
+        },
+        {
+          "location": "Environment, metrics and diagram prose",
+          "finding": "Ordinary networking, health checks, reconciliation and provider concepts remained awkward mixed English.",
+          "resolution": "Localized 网络组件, 健康检查, 调谐过程, 指标适配器/提供程序 and 服务/网关/服务网格 without changing product/API names, URL targets or technical boundaries.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/ai-ml/kubeflow/06-kserve.md",
+          "cn/ai-ml/kubeflow/06-kserve.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json"
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0027-wording-findings.json"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -8452,9 +9686,9 @@
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
   "snapshotScope": {
-    "wholePagesReviewed": 117,
+    "wholePagesReviewed": 128,
     "remainingLocaleReviews": "IN_PROGRESS; these actual individual reviews do not certify all 693 pages per locale",
-    "lastVerifiedAt": "2026-10-18T12:37:47.588041+00:00",
+    "lastVerifiedAt": "2026-10-18T13:00:31.177202+00:00",
     "allAddedReviewSourceAndTargetHashesIndependentlyVerified": true
   },
   "additionalReviewBatches": [
@@ -10151,6 +11385,214 @@
       },
       "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
       "artifact": "/tmp/native-sol-cn-batch0024-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T12:53:12.775095+00:00",
+      "scope": [
+        "cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+        "cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+        "cn/ai-ml/ray/01-architecture.md",
+        "cn/quizzes/platform-engineering/03-kro-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+            "cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+            "cn/ai-ml/ray/01-architecture.md",
+            "cn/quizzes/platform-engineering/03-kro-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+            "cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+            "cn/ai-ml/ray/01-architecture.md",
+            "cn/quizzes/platform-engineering/03-kro-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/ai-ml/ray/01-architecture.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/platform-engineering/03-kro-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+          "cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+          "cn/ai-ml/ray/01-architecture.md",
+          "cn/quizzes/platform-engineering/03-kro-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+          "cn/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+          "cn/ai-ml/ray/01-architecture.md",
+          "cn/quizzes/platform-engineering/03-kro-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0025-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T12:55:48.379821+00:00",
+      "scope": [
+        "cn/service-mesh/istio/advanced/07-sidecar-injection.md",
+        "cn/labs/observability/01-infrastructure-setup-lab.md",
+        "cn/ai-ml/kubeflow/03-notebooks.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/service-mesh/istio/advanced/07-sidecar-injection.md",
+            "cn/labs/observability/01-infrastructure-setup-lab.md",
+            "cn/ai-ml/kubeflow/03-notebooks.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/service-mesh/istio/advanced/07-sidecar-injection.md",
+            "cn/labs/observability/01-infrastructure-setup-lab.md",
+            "cn/ai-ml/kubeflow/03-notebooks.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/service-mesh/istio/advanced/07-sidecar-injection.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/labs/observability/01-infrastructure-setup-lab.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/ai-ml/kubeflow/03-notebooks.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/service-mesh/istio/advanced/07-sidecar-injection.md",
+          "cn/labs/observability/01-infrastructure-setup-lab.md",
+          "cn/ai-ml/kubeflow/03-notebooks.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/service-mesh/istio/advanced/07-sidecar-injection.md",
+          "cn/labs/observability/01-infrastructure-setup-lab.md",
+          "cn/ai-ml/kubeflow/03-notebooks.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0026-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:00:23.156856+00:00",
+      "scope": [
+        "cn/quizzes/security/04-network-policies-quiz.md",
+        "cn/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+        "cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+        "cn/ai-ml/kubeflow/06-kserve.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/security/04-network-policies-quiz.md",
+            "cn/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+            "cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+            "cn/ai-ml/kubeflow/06-kserve.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/security/04-network-policies-quiz.md",
+            "cn/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+            "cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+            "cn/ai-ml/kubeflow/06-kserve.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/security/04-network-policies-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/ai-ml/04-vllm-deployment-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/ai-ml/kubeflow/06-kserve.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/security/04-network-policies-quiz.md",
+          "cn/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+          "cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+          "cn/ai-ml/kubeflow/06-kserve.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/security/04-network-policies-quiz.md",
+          "cn/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+          "cn/quizzes/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop-quiz.md",
+          "cn/ai-ml/kubeflow/06-kserve.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0027-review-20261018.json"
     }
   ],
   "additionalReportedFindingCorrections": [

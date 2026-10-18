@@ -1,6 +1,6 @@
 # AWS X-Ray クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 [AWS X-Ray](../../../observability/tracing/02-xray.md)
 

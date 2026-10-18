@@ -1,298 +1,194 @@
-# EKS Hybrid Nodes Node Bootstrapping Quiz
+# EKS Hybrid Nodes nodeadmブートストラップクイズ
 
-> **関連ドキュメント**: [Node Bootstrapping](../../eks-hybrid-nodes/04-node-bootstrap.md)
+> **関連ドキュメント**: [Node bootstrap](../../eks-hybrid-nodes/04-node-bootstrap.md)
+> **最終更新日**: 2026年9月12日
 
-## Multiple Choice Questions
+### 1. Hybrid nodeadmの役割は何ですか？
 
-### 1. What is the primary role of nodeadm?
+A. EKS control planeを作成する
 
-A. EKS cluster を作成する
-B. kubelet や containerd などの node component をインストールし、bootstrap する
-C. Pod の scheduling decision を行う
-D. cluster network policy を管理する
+B. `aws/eks-hybrid`実装を使ってHybrid Nodeのcomponentをインストールし、初期化する
+
+C. アプリケーションPodをスケジュールする
+
+D. CNI controllerを置き換える
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. kubelet や containerd などの node component をインストールし、bootstrap する**
+**解答: B. `aws/eks-hybrid`実装を使ってHybrid Nodeのcomponentをインストールし、初期化する**
 
-**説明:**
-nodeadm は EKS node bootstrapping の公式ツールです。kubelet、containerd、aws-iam-authenticator など、必要な component をインストールして設定します。
-
-```bash
-# Install nodeadm
-curl -L -o nodeadm https://github.com/awslabs/amazon-eks-ami/releases/download/nodeadm-v0.1.0/nodeadm-linux-amd64
-chmod +x nodeadm
-sudo mv nodeadm /usr/local/bin/
-
-# Initialize node with nodeadm
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-```
-
-**nodeadm の機能:**
-- Kubernetes component のインストール (kubelet, containerd)
-- AWS IAM Authenticator の設定
-- kubelet certificate bootstrapping
-- Node label と taint の設定
+**解説:** EC2用の`amazon-eks-ami` nodeadmではなく、Hybrid用installerを使います。initの前に依存関係をインストールし、OS/runtimeに合う配布元を選び、承認済みbinaryであることを確認してください。現在のSSM新規インストールとupgradeにはnodeadm 1.0.19以降が必要です。
 
 </details>
 
-### 2. What are the 3 required cluster information pieces when initializing a Hybrid Node with nodeadm?
+### 2. 通常のHybrid NodeConfigで使うcluster入力はどれですか？
 
-A. Cluster name、VPC ID、Subnet ID
-B. Cluster name、API server endpoint、CA certificate
-C. Cluster name、IAM role、Security group
-D. Cluster name、Region、Availability zone
+A. cluster名とRegion、およびサポート対象のcredential provider
+
+B. VPC IDとsubnet IDのみ
+
+C. 手書きのname、endpoint、CAという3つの必須field
+
+D. IAM userのaccess keyとpassword
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. Cluster name、API server endpoint、CA certificate**
+**解答: A. cluster名とRegion、およびサポート対象のcredential provider**
 
-**説明:**
-nodeadm configuration file で必要な項目:
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  cluster:
-    name: my-cluster                    # Required 1
-    region: us-west-2
-    apiServerEndpoint: https://xxxxx.eks.amazonaws.com  # Required 2
-    certificateAuthority: LS0tLS1CRUdJTi...             # Required 3
-```
-
-```bash
-# Get required information from EKS
-aws eks describe-cluster --name my-cluster \
-  --query "cluster.{name:name,endpoint:endpoint,ca:certificateAuthority.data}" \
-  --output json
-```
+**解説:** ドキュメントにあるHybrid configは`spec.cluster.name`と`spec.cluster.region`に加えて、`spec.hybrid.ssm`または`spec.hybrid.iamRolesAnywhere`を使います。準備済みのHybrid roleがcluster discovery権限を提供します。通常のHybrid初期化でraw PEMのCAを手作業でコピーする必要がある、という説明は正しくありません。
 
 </details>
 
-### 3. What authentication method is used for IAM in EKS Hybrid Nodes?
+### 3. nodeadmでサポートされるcredential providerの組み合わせはどれですか？
 
-A. Static token
-B. x509 certificate のみ
-C. IAM Roles Anywhere または IAM user credentials
-D. LDAP authentication
+A. IAM user keyとLDAP
+
+B. static Kubernetes tokenとローカルpassword
+
+C. SSM hybrid activationとIAM Roles Anywhere
+
+D. EC2 instance profileとkubeconfig password
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: C. IAM Roles Anywhere または IAM user credentials**
+**解答: C. SSM hybrid activationとIAM Roles Anywhere**
 
-**説明:**
-EKS Hybrid Nodes では、on-premises からの AWS IAM authentication が必要です。IAM Roles Anywhere により、on-premises server から IAM role を使用できます。
-
-```bash
-# Create IAM Roles Anywhere Trust Anchor
-aws rolesanywhere create-trust-anchor \
-  --name hybrid-nodes-anchor \
-  --source "sourceType=CERTIFICATE_BUNDLE,sourceData={x509CertificateData=$CERT_DATA}"
-
-# Create IAM Roles Anywhere Profile
-aws rolesanywhere create-profile \
-  --name hybrid-node-profile \
-  --role-arns arn:aws:iam::123456789012:role/HybridNodeRole \
-  --duration-seconds 3600
-```
-
-```yaml
-# Using IAM Roles Anywhere in nodeadm Configuration
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  iam:
-    mode: rolesAnywhere
-    rolesAnywhere:
-      trustAnchorArn: arn:aws:rolesanywhere:us-west-2:123456789012:trust-anchor/xxxxx
-      profileArn: arn:aws:rolesanywhere:us-west-2:123456789012:profile/xxxxx
-      roleArn: arn:aws:iam::123456789012:role/HybridNodeRole
-```
+**解説:** `ssm`または`iam-ra`のどちらか一方を選びます。SSM設定では`spec.hybrid.ssm`の下に`activationCode`と`activationId`を置きます。IAM Roles Anywhereでは`spec.hybrid.iamRolesAnywhere`を使います。どちらも、準備済みのHybrid roleとcluster accessが必要です。
 
 </details>
 
-### 4. Which is NOT a valid kubelet configuration option in NodeConfig?
+### 4. kubeletの設定fieldではないものはどれですか？
 
-A. maxPods
-B. clusterDNS
-C. clusterCIDR
-D. podScheduler
+A. `maxPods`
+
+B. `clusterDNS`
+
+C. `clusterDomain`
+
+D. `podScheduler`
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: D. podScheduler**
+**解答: D. `podScheduler`**
 
-**説明:**
-`podScheduler` は NodeConfig の kubelet configuration option ではありません。Scheduling は control plane の kube-scheduler によって処理されます。
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  kubelet:
-    config:
-      maxPods: 110              # Maximum Pods per node
-      clusterDNS:               # Cluster DNS servers
-        - 10.100.0.10
-      clusterDomain: cluster.local
-      evictionHard:             # Pod eviction thresholds
-        memory.available: "100Mi"
-        nodefs.available: "10%"
-    flags:
-      - "--node-labels=location=onprem"
-      - "--register-with-taints=dedicated=hybrid:NoSchedule"
-```
+**解説:** `podScheduler`はkubelet設定fieldではありません。schedulerはcontrol planeで動作します。以前の選択肢にあった`clusterCIDR`もkubelet設定fieldとして不適切だったため、旧問題は曖昧でした。NodeConfigのkubelet設定はCNI IPAMの計画に代わるものではありません。
 
 </details>
 
-### 5. What components are required when registering a Hybrid Node using SSM (Systems Manager)?
+### 5. init-command-completedのautomation recordで確認できることは何ですか？
 
-A. SSM Agent と activation code
-B. CloudWatch Agent のみ
-C. AWS CLI のみ
-D. EC2 instance profile
+A. Nodeが恒久的にReadyである
+
+B. その時点でinit commandが完了し、ローカルcheckが通ったこと。cluster readinessは別途確認が必要
+
+C. すべてのimage pullとcredential更新がテスト済みである
+
+D. identityを含めてhostを安全にcloneできる
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: A. SSM Agent と activation code**
+**解答: B. その時点でinit commandが完了し、ローカルcheckが通ったこと。cluster readinessは別途確認が必要**
 
-**説明:**
-SSM で on-premises server を管理するには、SSM Agent をインストールし、hybrid activation を通じて登録する必要があります。
-
-```bash
-# 1. Create SSM hybrid activation (AWS Console or CLI)
-aws ssm create-activation \
-  --default-instance-name "hybrid-node" \
-  --iam-role service-role/AmazonEC2RunCommandRoleForManagedInstances \
-  --registration-limit 10
-
-# Output: ActivationId, ActivationCode
-
-# 2. Install and register SSM Agent on on-premises server
-sudo amazon-ssm-agent -register \
-  -code "activation-code" \
-  -id "activation-id" \
-  -region "us-west-2"
-
-# 3. Start SSM Agent
-sudo systemctl start amazon-ssm-agent
-sudo systemctl enable amazon-ssm-agent
-```
-
-```yaml
-# Use SSM mode in nodeadm
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  hybrid:
-    ssm: true
-    ssmActivationId: "activation-id"
-    ssmActivationCode: "activation-code"
-```
+**解説:** automation recordをhost/config/binaryに紐付け、処理が中断された場合はstarted状態を保持し、状態不明のまま自動再実行しないでください。`network-online.target`や`RemainAfterExit`は、AWSへの接続性やNode readinessの証明にはなりません。
 
 </details>
 
-### 6. What is the purpose of providing the CA certificate in nodeadm configuration?
+### 6. Kubernetes API serverのCAは何のために使われますか？
 
-A. node 間の traffic を暗号化する
-B. kubelet が API server の信頼性を検証する
-C. Pod 間の mTLS を設定する
-D. Harbor registry authentication
+A. TLS handshakeごとにkubelet client certificateを自動発行する
+
+B. registry login credentialとして使う
+
+C. server certificateへの信頼を検証する。client certificateの承認・発行は別の処理
+
+D. Hybrid IAM roleを置き換える
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. kubelet が API server の信頼性を検証する**
+**解答: C. server certificateへの信頼を検証する。client certificateの承認・発行は別の処理**
 
-**説明:**
-CA (Certificate Authority) certificate は、接続時に kubelet が EKS API server の信頼性を検証するために使用されます。
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  cluster:
-    name: my-cluster
-    apiServerEndpoint: https://xxxxx.eks.amazonaws.com
-    certificateAuthority: |
-      LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM...
-      # Base64 encoded CA certificate
-```
-
-**Certificate flow:**
-```
-kubelet ----TLS connection----> EKS API Server
-   |                              |
-   |-- Verify server cert with CA |
-   |                              |
-   |<-- Issue client certificate --|
-```
-
-```bash
-# Get CA certificate from EKS cluster
-aws eks describe-cluster --name my-cluster \
-  --query "cluster.certificateAuthority.data" \
-  --output text | base64 -d > ca.crt
-
-# View CA certificate contents
-openssl x509 -in ca.crt -text -noout
-```
+**解説:** serverのhostnameとCA chainを検証してください。信頼性の確認に`curl -k`を使ってはいけません。cluster CA、private registry CA、IAM Roles Anywhereのhost identityは、それぞれ異なる信頼用途です。
 
 </details>
 
-### 7. When a node fails to join the cluster after running nodeadm init, what should be checked first?
+### 7. join失敗または初期化が一部だけ完了した場合、適切な対応はどれですか？
 
-A. Pod deployment status
-B. kubelet log と network connectivity
-C. Deployment configuration
-D. ConfigMap contents
+A. `nodeadm status`を実行してから、すぐに`uninstall --force`する
+
+B. 範囲を限定してprivateなkubelet logとnodeadm debugを確認し、identity/networkを検証してから記録済み状態を調整する
+
+C. 共有cluster内のCilium CRDをすべて削除する
+
+D. Node objectを削除すればSSMも登録解除されるとみなす
 
 <details>
 <summary>解答を表示</summary>
 
-**解答: B. kubelet log と network connectivity**
+**解答: B. 範囲を限定してprivateなkubelet logとnodeadm debugを確認し、identity/networkを検証してから記録済み状態を調整する**
 
-**説明:**
-node の参加に失敗した場合は、まず kubelet log と network connectivity を確認します。
+**解説:** 確認したCLIには`nodeadm status`ではなく`nodeadm debug`があります。debugはAWS/cluster serviceへ接続するため、出力を非公開に保ってください。Node objectを削除してもkubeletは停止せず、SSMも登録解除されません。uninstallは管理された削除操作であり、一般的な認証修復手段ではありません。
 
-```bash
-# 1. Check kubelet service status
-sudo systemctl status kubelet
+</details>
 
-# 2. Check kubelet logs
-sudo journalctl -u kubelet -f
+### 8. Bottlerocket Pod Identityについて正しい説明はどれですか？
 
-# 3. Check for common error patterns
-sudo journalctl -u kubelet | grep -E "error|failed|unable"
+A. Ubuntuと同様にNodeConfigとnodeadmを使う
 
-# 4. Check resource status (memory, disk)
-free -h
-df -h
+B. `settings.hybrid.ssm`だけで、ドキュメントにあるbootstrap要件をすべて満たす
 
-# 5. Test network connectivity
-curl -vk https://<eks-api-endpoint>:443
+C. Bottlerocket 1.39.0以降ではprovider bootstrapのcredential-file対応と`hybrid-bottlerocket` agent DaemonSetを使う
 
-# 6. Check DNS resolution
-nslookup <eks-api-endpoint>
+D. Base64形式のuser dataはprivate keyを暗号化する
 
-# 7. Check firewall rules
-sudo iptables -L -n | grep 443
+<details>
+<summary>解答を表示</summary>
 
-# 8. Check nodeadm status
-sudo nodeadm status
-```
+**解答: C. Bottlerocket 1.39.0以降ではprovider bootstrapのcredential-file対応と`hybrid-bottlerocket` agent DaemonSetを使う**
 
-**一般的な失敗原因:**
-- API server endpoint にアクセスできない (firewall)
-- CA certificate の不一致
-- IAM authentication failure
-- DNS resolution failure
-- Time synchronization issues (NTP)
+**解説:** Bottlerocketには別個のsettings/bootstrap-container入力があります。互換性のあるagentの最低versionは`v1.3.7-eksbuild.2`で、一時credentialのpathは`/var/eks-hybrid/.aws/credentials`です。現行の互換add-onを選び、user dataを保護してください。encodingは暗号化ではありません。
+
+</details>
+
+### 9. Cilium lifecycleの適切な操作はどれですか？
+
+A. 既存のcluster-pool CIDRをその場で変更する
+
+B. Hybrid Nodeに対象を絞ったpreflightを行い、upgrade前にDaemonSetのcoverageとvalidation Deploymentのreadinessを確認する
+
+C. 古いHelm値をすべて見直さず再利用する
+
+D. Node一台を直すため、`cilium`を含む名前のCRDをすべてuninstallする
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B. Hybrid Nodeに対象を絞ったpreflightを行い、upgrade前にDaemonSetのcoverageとvalidation Deploymentのreadinessを確認する**
+
+**解説:** preflightには別個のNode selectorがあります。既存のpool elementとmask sizeは変更しないでください。拡張する場合は、レビュー済みの新しいpool entryを追加し、それに対応するEKS/routingの変更を行います。CNI/CRDの削除は、所有者が管理する影響の大きい作業です。
+
+</details>
+
+### 10. 確認対象のreleaseで`nodeadm uninstall --force`は何を意味しますか？
+
+A. `/var/lib/kubelet`を含め、mount中のpathをすべて必ず削除する
+
+B. 一般的な確認省略機能であり、drainの代わりになる
+
+C. 追加のdefault pathを削除するが、v1.0.9以降で保護される`/var/lib/kubelet`の動作は変わらない
+
+D. 新しいreplacement Nodeの状態を自動確認する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: C. 追加のdefault pathを削除するが、v1.0.9以降で保護される`/var/lib/kubelet`の動作は変わらない**
+
+**解説:** mount中のkubelet pathを無条件に削除しないでください。workloadを退避し、dataとprovider/CNIのcleanupを確認して、復旧用の証跡を保持します。承認済みの再インストールでは、uninstall後にinitだけを実行するのではなく、install → config check → initの順で行います。
 
 </details>

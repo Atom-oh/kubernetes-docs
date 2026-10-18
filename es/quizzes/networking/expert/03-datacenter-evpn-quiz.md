@@ -6,8 +6,8 @@ Vuelve al [cuaderno de trabajo](../../../networking/expert/03-datacenter-evpn.md
 Elige una respuesta y menciona el control positivo que permitiría distinguir una
 prueba negativa válida de un laboratorio averiado.
 
-1. Una trama tiene una ruta de acceso bloqueada inesperadamente. ¿Qué requisito previo se debería investigar antes de suponer que EVPN tiene la culpa?
-   - A) Membresía de VLAN, estado real de STP y estado de los miembros de LAG cuando esas funciones estén implementadas.
+1. La estructura de la red presenta una ruta de acceso bloqueada de forma inesperada. ¿Qué requisito previo se debería investigar antes de suponer que EVPN tiene la culpa?
+   - A) Pertenencia a VLAN, estado real de STP y estado de los miembros de LAG cuando esas funciones estén implementadas.
    - B) Solo los temporizadores hold de BGP.
    - C) Si un único flujo usa todos los miembros de LACP a la vez.
 
@@ -16,12 +16,12 @@ prueba negativa válida de un laboratorio averiado.
 
 **Respuesta: A**
 
-**Explicación:** La conexión del inquilino y el reenvío local son requisitos previos para un overlay. El hashing de LACP no garantiza que un flujo use todos los miembros. Los pequeños laboratorios seleccionados no implementan LACP ni una topología STP redundante, por lo que no pueden demostrar que esas funciones se hayan probado.
+**Explicación:** La conexión del tenant y el reenvío local son requisitos previos para un overlay. El hashing de LACP no garantiza que un flujo use todos los miembros. Los pequeños laboratorios seleccionados no implementan LACP ni una topología STP redundante, por lo que no pueden demostrar que esas funciones se hayan probado.
 
 </details>
 
 2. En un paquete VXLAN que transporta tráfico de h1 a h2, ¿qué identifica normalmente el endpoint de encapsulación remoto?
-   - A) La IP de destino externa debe ser la IP de inquilino de h2.
+   - A) La IP de destino externa debe ser la IP del tenant de h2.
    - B) La IP del VTEP remoto es el destino externo, mientras que el VNI identifica el segmento virtual.
    - C) El RD se coloca en el campo de destino IP externo.
 
@@ -30,7 +30,7 @@ prueba negativa válida de un laboratorio averiado.
 
 **Respuesta: B**
 
-**Explicación:** Distingue el transporte externo del tráfico interno del inquilino. Captura el par de VTEP, el VNI y las direcciones internas, y compáralos con la tabla de asignación. Un ping de administración nunca reemplaza estas pruebas de la ruta del inquilino.
+**Explicación:** Distingue el transporte externo del tráfico interno del tenant. Captura el par de VTEP, el VNI y las direcciones internas, y compáralos con la tabla de asignación. Un ping de administración nunca reemplaza estas pruebas de la ruta del tenant.
 
 </details>
 
@@ -49,8 +49,8 @@ prueba negativa válida de un laboratorio averiado.
 </details>
 
 4. ¿Qué correspondencia entre tipo de ruta y función es correcta?
-   - A) Tipo 2 transporta MAC/IP opcional; tipo 3 proporciona información de participación IMET; tipo 5 transporta un prefijo IP.
-   - B) Tipo 2 transporta solo una ruta OSPF de underlay; tipo 3 garantiza un servicio de inquilino enrutado.
+   - A) El tipo 2 transporta una dirección MAC y, opcionalmente, una IP; el tipo 3 proporciona información de participación en IMET; el tipo 5 transporta un prefijo IP.
+   - B) Tipo 2 transporta solo una ruta OSPF de underlay; tipo 3 garantiza un servicio enrutado del tenant.
    - C) El tipo 5 debe aparecer en todos los laboratorios que solo usan bridging.
 
 <details>
@@ -58,13 +58,13 @@ prueba negativa válida de un laboratorio averiado.
 
 **Respuesta: A**
 
-**Explicación:** Relaciona cada tipo de ruta con el modelo de servicio. Genera tráfico de host antes de esperar que se aprendan hosts; inspecciona el estado de replicación/FDB para L2 y sigue la importación de Type-5 para la etapa B. Un tipo que no requiera el modelo elegido se puede justificar como N/A, no marcarlo falsamente como aprobado.
+**Explicación:** Relaciona cada tipo de ruta con el modelo de servicio. Genera tráfico desde los hosts antes de esperar que se aprendan sus direcciones; inspecciona el estado de replicación/FDB para L2 y sigue la importación de Type-5 para la etapa B. Un tipo que no requiera el modelo elegido se puede justificar como N/A, no marcarlo falsamente como aprobado.
 
 </details>
 
 5. ¿Qué distingue IRB simétrico de la mera presencia de BGP EVPN?
    - A) Cualquier sesión EVPN habilita automáticamente un gateway anycast.
-   - B) IRB simétrico requiere enrutamiento del inquilino en ambos extremos con un L3VNI entre ellos.
+   - B) IRB simétrico requiere enrutamiento del tenant en ambos extremos con un L3VNI entre ellos.
    - C) IRB simétrico significa que los dos VTEP usan RDs idénticos.
 
 <details>
@@ -76,7 +76,7 @@ prueba negativa válida de un laboratorio averiado.
 
 </details>
 
-6. La topología upstream de la etapa A selecciona EOS/Cumulus, pero quieres usar la ruta de FRR del cuaderno. ¿Qué se requiere?
+6. La topología base de la etapa A selecciona EOS/Cumulus, pero quieres usar la ruta de FRR del cuaderno. ¿Qué se requiere?
    - A) Usar cualquier contenedor antiguo de FRR; todos los proveedores tienen el mismo datapath.
    - B) Cambiar la etiqueta de imagen sin preparar interfaces de Linux bridge/VTEP.
    - C) Sobrescribir explícitamente s1 y s2 para FRR, usar la combinación admitida de clab/kernel, registrar versiones/digests y verificar los objetos de datapath generados.
@@ -100,7 +100,7 @@ prueba negativa válida de un laboratorio averiado.
 
 **Respuesta: A**
 
-**Explicación:** Un host inactivo o un fabric averiado puede producir la misma sonda negativa. Exige que ambos pares previstos funcionen, que la conexión sea correcta y que se explique la ruta bloqueada. Las rutas o sondas faltantes no demuestran por sí solas el contrato de servicio/aislamiento solicitado.
+**Explicación:** Un host inactivo o una estructura de red averiada pueden producir la misma sonda negativa. Exige que ambos pares previstos funcionen, que la conexión sea correcta y que se explique la ruta bloqueada. Las rutas o sondas faltantes no demuestran por sí solas el contrato de servicio/aislamiento solicitado.
 
 </details>
 
@@ -114,7 +114,7 @@ prueba negativa válida de un laboratorio averiado.
 
 **Respuesta: B**
 
-**Explicación:** El comportamiento automático del RT puede invalidar un experimento de eliminación ingenuo. Comprueba que la membresía original ya no sea efectiva y que ninguna ruta exportada coincida con el RT temporal. Para restaurar, añade el RT original y luego elimina solo la entrada temporal de la lista roja de importación de s1.
+**Explicación:** El comportamiento automático del RT puede invalidar un experimento de eliminación ingenuo. Comprueba que la membresía original ya no sea efectiva y que ninguna ruta exportada coincida con el RT temporal. Para restaurar, añade el RT original y luego elimina solo la entrada temporal de la lista de importación de la VRF `red` en s1.
 
 </details>
 
@@ -128,14 +128,14 @@ prueba negativa válida de un laboratorio averiado.
 
 **Respuesta: C**
 
-**Explicación:** Registra el tamaño de encapsulación, la fragmentación externa, los errores y los cambios de adyacencia. El modelo y la implementación determinan el efecto; un cuaderno de trabajo no debe inventar un resultado fijo de pérdida. Restaura el estado previo conocido de interfaz de 1600 bytes y repite ambas medidas y los controles de VRF.
+**Explicación:** Registra el tamaño de encapsulación, la fragmentación externa, los errores y los cambios de adyacencia. El modelo y la implementación determinan el efecto; un cuaderno de trabajo no debe inventar un resultado fijo de pérdida. Restaura el estado previo conocido de interfaz de 1600 bytes y vuelve a probar ambos tamaños y los controles de VRF.
 
 </details>
 
 10. ¿Qué pruebas respaldan la inyección y recuperación correctas de un fallo RT?
-    - A) Durante el fallo, la ruta global permanece, la importación/prueba roja falla, azul y el gateway local de h2 funcionan; después de restaurar, vuelven el conjunto original de RT, la ruta y la prueba roja.
-    - B) Solo una tabla global vacía.
-    - C) La inicialización repetida y la poda global terminan eliminando los errores.
+   - A) Durante el fallo, la ruta global permanece, fallan la importación y la sonda de `red`, y `blue` y el gateway local de h2 funcionan; después de restaurar, vuelven el conjunto original de RT, la ruta y la sonda de `red`.
+   - B) Solo una tabla global vacía.
+   - C) La inicialización repetida y la poda global terminan eliminando los errores.
 
 <details>
 <summary>Mostrar respuesta</summary>

@@ -1,166 +1,156 @@
-# Calico 用語集クイズ
+# Calico用語集クイズ
 
-> **関連ドキュメント**: [Calico 用語集](../../../networking/calico/glossary.md)
-> **最終更新**: February 22, 2026
+> **関連ドキュメント**: [Calico用語集](../../../networking/calico/glossary.md)
+> **最終更新日**: 2026年9月12日
 
 ## クイズ
 
-1. Calico アーキテクチャにおける Felix の主な役割は何ですか？
-   - A) etcd データベースを管理する
-   - B) 各 node 上でネットワークポリシールールとルートをプログラミングする
-   - C) Service トラフィックをロードバランシングする
-   - D) Service の DNS 名前解決を提供する
+1. CalicoのアーキテクチャにおけるFelixの主な役割は何ですか？
+   - A) etcd databaseを管理する
+   - B) 各Nodeでnetwork policy ruleとrouteを設定する
+   - C) Service trafficをload balanceする
+   - D) ServiceのDNS名前解決を提供する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 各 node 上でネットワークポリシールールとルートをプログラミングする**
+**解答: B) 各Nodeでnetwork policy ruleとrouteを設定する**
 
-**解説:**
-Felix は Calico の node ごとのエージェント（DaemonSet として実行）であり、各 node 上でネットワークポリシールール（iptables または eBPF）、ルート、ACL をプログラミングします。データストアを監視してポリシーと endpoint の更新を検知し、それらをカーネルレベルのルールに変換します。
+**解説:** Felixは、選択されたpolicy dataplaneと該当するrouteを各Nodeに設定します。CNI pluginが通常のPod interfaceを作成・設定し、IPAMを呼び出します。Felixはendpointの状態を追跡してruleを設定しますが、各packetをuserspaceで転送するものではありません。
 
 </details>
 
-2. BIRD とは何の略で、Calico ではどのような機能を果たしますか？
-   - A) Binary Internet Routing Daemon - コンテナ DNS を管理する
-   - B) BIRD Internet Routing Daemon - BGP を通じてルーティング情報を配布する
-   - C) Basic Internal Route Distribution - Service discovery を処理する
-   - D) Broadcast IP Routing Distributor - マルチキャストトラフィックを管理する
+2. CalicoにおけるBIRDの名称と機能は何ですか？
+   - A) Binary Internet Routing Daemon — container DNSを管理する
+   - B) BIRD Internet Routing Daemon — BGPを通じてrouting情報を配布する
+   - C) Basic Internal Route Distribution — Service discoveryを処理する
+   - D) Broadcast IP Routing Distributor — multicast trafficを管理する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) BIRD Internet Routing Daemon - BGP を通じてルーティング情報を配布する**
+**解答: B) BIRD Internet Routing Daemon — BGPを通じてrouting情報を配布する**
 
-**解説:**
-BIRD（BIRD Internet Routing Daemon - 再帰的頭字語）は、node 間でルーティング情報を配布するために Calico が使用する BGP デーモンです。BGP ピアリングセッションを確立し、Pod CIDR ルートをアドバタイズすることで、オーバーレイカプセル化なしに直接的な Pod 間通信を実現します。
+**解説:** BIRDは、BGPを有効にしたCalico profileでrouteを交換します。trafficが直接routingされるかtunnelを使うかは、routing/encapsulationの設計によって決まります。BGPが有効だからといってoverlayがないとは限りません。
 
 </details>
 
-3. Calico デプロイメントにおける Typha の機能は何ですか？
-   - A) Pod 間トラフィックを暗号化する
-   - B) データストアの更新をキャッシュし、Felix インスタンスへファンアウトする
-   - C) Ingress のロードバランシングを提供する
-   - D) 証明書ローテーションを管理する
+3. CalicoのdeploymentでTyphaは何をしますか？
+   - A) Pod間trafficを暗号化する
+   - B) datastore更新をcacheし、Felix instanceにfan-outする
+   - C) ingress load balancingを提供する
+   - D) certificate rotationを管理する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) データストアの更新をキャッシュし、Felix インスタンスへファンアウトする**
+**解答: B) datastore更新をcacheし、Felix instanceにfan-outする**
 
-**解説:**
-Typha は、Felix インスタンスとデータストア（Kubernetes API または etcd）の間でキャッシュプロキシとして機能します。複数の Felix インスタンスからの watch を単一の watch に集約し、その後すべての接続済み Felix デーモンに更新を配布することで、データストアの負荷を軽減します。
+**解説:** Typhaはdatastoreの変更をcacheしてFelixへ配布することで、clientごとのwatch負荷を減らします。複数replicaや複数のsyncer/watch typeを構成できます。唯一のwatchをすべての環境で必須にするものでも、policy federation serviceでもありません。インストール済みprofileのscalingはoperatorが管理します。
 
 </details>
 
-4. Calico における IPPool と IPAM の違いは何ですか？
-   - A) 名前が異なるだけで、同じもの
-   - B) IPPool は利用可能な CIDR 範囲を定義し、IPAM はそれらの範囲からの割り当てを管理する
-   - C) IPPool は IPv4 用で、IPAM は IPv6 用
-   - D) IPPool は IPAM に置き換えられ非推奨になっている
+4. CalicoのIPPoolとIPAMはどのように異なりますか？
+   - A) 名前が異なるだけで、同じものである
+   - B) IPPoolは利用可能なCIDR範囲を定義し、IPAMはその範囲からの割り当てを管理する
+   - C) IPPoolはIPv4用で、IPAMはIPv6用である
+   - D) IPPoolはIPAMに置き換えられ、非推奨である
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) IPPool は利用可能な CIDR 範囲を定義し、IPAM はそれらの範囲からの割り当てを管理する**
+**解答: B) IPPoolは利用可能なCIDR範囲を定義し、IPAMはその範囲からの割り当てを管理する**
 
-**解説:**
-IPPool は、NAT やカプセル化設定とともに、Pod への割り当てに利用可能な IP アドレス範囲（CIDR）を定義する Calico リソースです。IPAM（IP Address Management）は、これらのプールから個々の IP を Pod や node に実際に割り当てる処理を管理するシステムです。
+**解説:** IPPoolはaddress rangeに加えて、encapsulation、NAT、allocationの適格性を定義します。Calico IPAMは、サポート対象の用途で適格なpoolからaddressを割り当てます。VPC CNIのpolicy-only modeで使うallocatorではなく、IPPoolはKubernetes NodeのPodCIDR別名でもありません。
 
 </details>
 
-5. GlobalNetworkPolicy は Kubernetes NetworkPolicy とどのように異なりますか？
-   - A) GlobalNetworkPolicy は IPv6 でのみ機能する
-   - B) GlobalNetworkPolicy はクラスター全体をスコープとし、tier や deny ルールなどの追加機能をサポートする
-   - C) GlobalNetworkPolicy は Kubernetes NetworkPolicy と同様に namespace をスコープとする
-   - D) GlobalNetworkPolicy は非推奨である
+5. GlobalNetworkPolicyはKubernetes NetworkPolicyとどのように異なりますか？
+   - A) GlobalNetworkPolicyはIPv6でのみ動作する
+   - B) GlobalNetworkPolicyはcluster scopeで、tierやdeny ruleなどの追加機能をサポートする
+   - C) GlobalNetworkPolicyはKubernetes NetworkPolicyと同様にnamespace scopeである
+   - D) GlobalNetworkPolicyは非推奨である
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) GlobalNetworkPolicy はクラスター全体をスコープとし、tier や deny ルールなどの追加機能をサポートする**
+**解答: B) GlobalNetworkPolicyはcluster scopeで、tierやdeny ruleなどの追加機能をサポートする**
 
-**解説:**
-GlobalNetworkPolicy は、namespace の制限なしにクラスター全体へ適用される Calico 固有のリソースです。Kubernetes NetworkPolicy と異なり、明示的な deny ルール、順序付けのためのポリシー tier、アプリケーションレイヤー（L7）ルール、HostEndpoint など namespace に属さないリソース用のセレクターをサポートします。
+**解説:** GlobalNetworkPolicyはcluster scopeであり、selectorによって適用対象のworkloadやHostEndpointを定義します。Calicoのaction、order、tierを追加しますが、すべてのPodに自動適用されるわけではなく、必要なintegrationなしにL7 inspectionを有効にするものでもありません。
 
 </details>
 
-6. Calico のポリシーモデルにおける Tier とは何ですか？
-   - A) トラフィックを分離するためのネットワークセグメント
-   - B) ポリシー評価順序を制御する階層的なグループ化
-   - C) Calico Enterprise の料金レベル
-   - D) ネットワーク暗号化の種類
+6. Calicoのpolicy modelにおけるTierとは何ですか？
+   - A) trafficを分離するnetwork segment
+   - B) policyの評価順序を制御する階層的なgroup
+   - C) Calico Enterpriseの料金level
+   - D) network暗号化の種類
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) ポリシー評価順序を制御する階層的なグループ化**
+**解答: B) policyの評価順序を制御する階層的なgroup**
 
-**解説:**
-Tier は、Calico ネットワークポリシーを整理し、順序付ける方法を提供します。上位の Tier にあるポリシーは、下位の Tier より先に評価されます。これにより、アプリケーションチームのポリシーより優先されるプラットフォームレベルのセキュリティポリシーなどのパターンが可能となり、マルチテナントのポリシー管理をサポートします。
+**解説:** Tierはpolicyを優先度別にgroup化します。数値の小さいtier orderから評価し、そのtier内ではpolicy orderに従います。Allow/Denyは終端actionです。Passは次に該当するtierへ処理を渡し、最終的にはprofileへ進みます。security/platform/applicationなどの名前は利用者が定義するもので、必須のdefault階層ではありません。
 
 </details>
 
-7. Calico において WorkloadEndpoint は何を表しますか？
+7. CalicoのWorkloadEndpointは何を表しますか？
    - A) Kubernetes Service endpoint
-   - B) Pod または VM ワークロードに関連付けられたネットワークインターフェース
-   - C) 外部 API endpoint
-   - D) ストレージマウントポイント
+   - B) PodまたはVM workloadに関連付けられたnetwork interface
+   - C) 外部API endpoint
+   - D) storage mount point
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Pod または VM ワークロードに関連付けられたネットワークインターフェース**
+**解答: B) PodまたはVM workloadに関連付けられたnetwork interface**
 
-**解説:**
-WorkloadEndpoint は、ワークロード（Pod、VM、またはコンテナ）に接続されたネットワークインターフェースを表します。インターフェースの IP アドレス、実行されるホスト、ポリシー選択用のラベル、適用される profile/ポリシーに関する情報を含みます。Calico は Pod 用の WorkloadEndpoint を自動的に作成します。
+**解説:** WorkloadEndpointは、policyの計算に使うIP/MAC/interface情報、label、profile参照を持つworkload interfaceを表します。通常、そのlifecycleはpluginまたはorchestratorが管理します。Service EndpointSliceでも、実効policy判定をすべて列挙した保存一覧でもありません。
 
 </details>
 
-8. Calico における BGPPeer と BGPConfiguration の関係は何ですか？
-   - A) 同じリソースのエイリアスである
-   - B) BGPConfiguration はグローバル BGP 設定を行い、BGPPeer は特定のピアリングセッションを定義する
-   - C) BGPPeer は内部ピア用、BGPConfiguration は外部用
-   - D) BGPConfiguration は BGPPeer に置き換えられ非推奨になっている
+8. CalicoのBGPPeerとBGPConfigurationはどのような関係ですか？
+   - A) 同じresourceの別名である
+   - B) BGPConfigurationはglobal BGP設定を行い、BGPPeerは個別のpeering sessionを定義する
+   - C) BGPPeerは内部peer用で、BGPConfigurationは外部peer用である
+   - D) BGPConfigurationはBGPPeerに置き換えられ、非推奨である
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) BGPConfiguration はグローバル BGP 設定を行い、BGPPeer は特定のピアリングセッションを定義する**
+**解答: B) BGPConfigurationはglobal BGP設定を行い、BGPPeerは個別のpeering sessionを定義する**
 
-**解説:**
-BGPConfiguration は、AS 番号、node 間メッシュの有効化、ロギングなど、クラスター全体の BGP 設定を定義するグローバルリソースです。BGPPeer リソースは、IP アドレス、AS 番号、node セレクターを含め、外部ルーターまたは route reflector との特定の BGP ピアリング関係を定義します。
+**解説:** defaultのBGPConfigurationは、ASNやmesh/service advertisement設定などのcluster defaultを定義します。サポート対象のNode単位のoverrideは別設定です。BGPPeerはpeer addressまたはselectorによって、意図するpeering関係を指定します。それだけでsessionや必要なrouteが確立したと保証されるわけではありません。
 
 </details>
 
-9. Calico の NetworkSet とは何ですか？また、Cilium での同等機能は何ですか？
-   - A) Service のグループ。Cilium ServiceGroup に相当する
-   - B) ポリシーで使用する名前付き IP アドレス/CIDR セット。CIDR ルールを持つ Cilium CiliumNetworkPolicy に類似する
-   - C) namespace のコレクション。Cilium ClusterPolicy に相当する
-   - D) DNS ゾーン設定。Cilium DNSPolicy に相当する
+9. CalicoのNetworkSetとは何ですか？Ciliumで関連する概念はどれですか？
+   - A) Serviceのgroup。Cilium ServiceGroupに相当する
+   - B) label付きIP/CIDR set。CIDR policy参照に使うCiliumCIDRGroupが関連する概念である
+   - C) namespace collection。Cilium ClusterPolicyに相当する
+   - D) DNS zone設定。Cilium DNSPolicyに相当する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) ポリシーで使用する名前付き IP アドレス/CIDR セット。CIDR ルールを持つ Cilium CiliumNetworkPolicy に類似する**
+**解答: B) label付きIP/CIDR set。CIDR policy参照に使うCiliumCIDRGroupが関連する概念である**
 
-**解説:**
-NetworkSet は、ネットワークポリシーから参照できる、IP アドレス、CIDR、またはドメインの名前付きコレクションを定義する Calico リソースです。同じ外部 IP のセットが複数のポリシーに現れる場合、これによりポリシー管理が簡素化されます。Cilium は、CiliumNetworkPolicy の CIDR ベースルールを通じて同様の機能を実現します。
+**解説:** CalicoのNetworkSetはnamespace scope、GlobalNetworkSetはcluster scopeであり、どちらもlabel付きIP/CIDR setを提供します。CiliumCIDRGroupはcluster scopeで、Cilium CIDR ruleから`cidrGroupRef`または`cidrGroupSelector`を使って参照できます。関連する概念ですがAPIは異なり、DNS ruleでも相互に置き換えられるmanifestでもありません。
 
 </details>
 
-10. Calico における HostEndpoint の目的は何ですか？
-    - A) コンテナ endpoint を定義する
-    - B) ホストインターフェース（Pod 以外のトラフィック）にネットワークポリシーを適用する
-    - C) ホスト用の DNS を設定する
-    - D) node ラベルを管理する
+10. CalicoのHostEndpointの目的は何ですか？
+    - A) container endpointを定義する
+    - B) host interface（Pod以外のtraffic）にnetwork policyを適用する
+    - C) hostのDNSを設定する
+    - D) Node labelを管理する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) ホストインターフェース（Pod 以外のトラフィック）にネットワークポリシーを適用する**
+**解答: B) host interface（Pod以外のtraffic）にnetwork policyを適用する**
 
-**解説:**
-HostEndpoint は、ホスト node 自体にあるネットワークインターフェース（Pod ではない）を表します。これにより、Calico ネットワークポリシーはホストプロセスへの、およびホストプロセスからのトラフィックを制御でき、Pod として実行されない kubelet、SSH、その他のシステムデーモンといった node レベルの Service を保護できます。
+**解説:** HostEndpointは、host trafficおよび設定されている場合はforwarded trafficにpolicyを適用するためのhost interfaceを表します。作成・enforceする前に、profile、failsafe、管理経路を確認してください。workload policyとhost policyのscopeは異なりますが、forwarded Pod trafficも影響を受けることがあります。
 
 </details>

@@ -35,7 +35,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 
 </details>
 
-4. ¿Una actualización mediante savepoint es siempre la opción más segura, lenta y con interrupción total?
+4. ¿Una actualización mediante savepoint es siempre la opción más segura y la más lenta, con interrupción total?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -62,7 +62,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** No. La configuración efectiva de Session/trabajo requiere prerrequisitos de checkpoints, almacenamiento y recuperación.
+**Respuesta:** No. La configuración efectiva de Session/trabajo debe cumplir los requisitos de checkpoints, almacenamiento y recuperación.
 
 **Explicación:** Comprueba el validador y la ruta de restauración, no solo la cadena del modo.
 
@@ -84,7 +84,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** Combina las tasas objetivo de los operadores anteriores multiplicadas por las relaciones de salida de las aristas y propaga los objetivos de procesamiento de la acumulación de trabajo.
+**Respuesta:** Combina las tasas objetivo de los operadores anteriores, multiplicadas por los ratios de salida de sus aristas, y propaga los objetivos de procesamiento del backlog.
 
 **Explicación:** Importan la selectividad de salida y la capacidad futura requerida.
 
@@ -95,7 +95,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** El modelo principal de paralelismo usa tasas/tiempo ocupado, pero también existen presión de memoria/GC, cuotas y ajustes opcionales de memoria.
+**Respuesta:** El modelo principal de paralelismo usa tasas y tiempo ocupado, pero también considera la presión de memoria/GC, las cuotas y los ajustes opcionales de memoria.
 
 **Explicación:** El ajuste de memoria está deshabilitado de forma predeterminada; aun así, esto es distinto de HPA basado en CPU.
 
@@ -106,7 +106,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** No. Las preferencias de alineación del autoscaler para equilibrar grupos de claves/particiones son distintas del intervalo permitido por Flink.
+**Respuesta:** No. Las preferencias de alineación del autoscaler para equilibrar key-groups y particiones son distintas del intervalo permitido por Flink.
 
 **Explicación:** Comprueba el modo de alineación, las entradas con claves y las particiones de origen. Cambiar el paralelismo máximo de un estado existente requiere revisar la compatibilidad.
 
@@ -117,7 +117,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** No. Cuando es posible, usa API de requisitos de recursos in situ; algunas condiciones requieren volver a implementar.
+**Respuesta:** No. Cuando es posible, usa API para ajustar requisitos de recursos in-place; algunas condiciones requieren volver a implementar.
 
 **Explicación:** El escalado in situ no garantiza que no haya reinicios de tareas ni costos de recuperación del estado.
 
@@ -134,7 +134,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 
 </details>
 
-13. ¿Una configuración de registros del chart demuestra que están instalados los JAR de reporter y los servidores de recopilación?
+13. ¿Una configuración de logging del chart demuestra que están instalados los JAR de los reporters y los servidores de recopilación?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -150,7 +150,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** La existencia del espacio de nombres de destino, las cuentas de servicio/Roles/RoleBindings generados para trabajos y otras concesiones.
+**Respuesta:** La existencia del espacio de nombres de destino, las cuentas de servicio/Roles/RoleBindings generados para trabajos y otros permisos.
 
 **Explicación:** Una lista vacía observa todos los espacios de nombres. El alcance de observación por sí solo no aísla completamente a los inquilinos.
 
@@ -174,7 +174,7 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 
 **Respuesta:** Sí. El chart revisado crea recursos Certificate e Issuer y no tiene un Job interno para generar certificados.
 
-**Explicación:** Comprueba los controladores/webhook/cainjector y que Certificate esté Ready; no te limites a verificar la existencia de las CRD.
+**Explicación:** Comprueba los controladores/webhook/cainjector y que el recurso Certificate llegue al estado Ready; no te limites a verificar la existencia de las CRD.
 
 </details>
 
@@ -211,14 +211,14 @@ Comprueba la instalación, la recuperación de estado y el escalado automático 
 
 </details>
 
-20. Para una acumulación de 6000 registros, ¿cómo cambia la tasa objetivo adicional al reducir `catch-up.duration` de 600 a 60 segundos?
+20. Para 6000 registros pendientes, ¿cómo cambia la tasa objetivo adicional al reducir `catch-up.duration` de 600 a 60 segundos?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:** Aumenta de 10 a 100 registros por segundo.
 
-**Explicación:** Un objetivo de recuperación más corto requiere más capacidad. No es un período de gracia para ignorar la acumulación; el valor cero deshabilita el escalado basado en la acumulación.
+**Explicación:** Un objetivo de recuperación más corto requiere más capacidad. No es un período de gracia para ignorar los registros pendientes; el valor cero deshabilita el escalado basado en el backlog.
 
 </details>
 

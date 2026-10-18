@@ -1,13 +1,13 @@
 # Cuestionario de integración de GPU en EKS Hybrid Nodes
 
-> **Documento relacionado**: [GPU Integration](../../eks-hybrid-nodes/05-gpu-integration.md)
-> **Última actualización**: October 12, 2026
+> **Documento relacionado**: [Integración de GPU](../../eks-hybrid-nodes/05-gpu-integration.md)
+> **Última actualización**: 12 de octubre de 2026
 
 ### 1. ¿Qué afirmación describe correctamente MIG?
 
 A. Combina varias GPU físicas en una
 
-B. Crea instancias de cómputo/memoria respaldadas por hardware compatibles, mientras persisten las consideraciones de SLO de host/driver y aplicación
+B. Crea instancias compatibles de cómputo y memoria respaldadas por hardware, pero siguen aplicándose las consideraciones de SLO del host, el driver y la aplicación
 
 C. Garantiza aislamiento completo para cada tenant y cada fallo
 
@@ -16,9 +16,9 @@ D. Es idéntico al time-slicing de software
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Crea instancias de cómputo/memoria respaldadas por hardware compatibles, mientras persisten las consideraciones de SLO de host/driver y aplicación**
+**Respuesta: B. Crea instancias compatibles de cómputo y memoria respaldadas por hardware, pero siguen aplicándose las consideraciones de SLO del host, el driver y la aplicación**
 
-**Explicación:** MIG proporciona aislamiento de memoria/fallos y recursos en la capa de hardware de la GPU. Los perfiles/límites compatibles dependen de la SKU de GPU y del driver. Esto no establece seguridad completa del host compartido ni una garantía de latencia de la aplicación.
+**Explicación:** MIG proporciona aislamiento de memoria y recursos, y contención de fallos, en la capa de hardware de la GPU. Los perfiles/límites compatibles dependen de la SKU de GPU y del driver. Esto no establece seguridad completa del host compartido ni una garantía de latencia de la aplicación.
 
 </details>
 
@@ -37,11 +37,11 @@ D. 1g significa una GPU física completa
 
 **Respuesta: B. 4g.20gb**
 
-**Explicación:** Los ejemplos de A10040GB incluyen1g.5gb,2g.10gb,3g.20gb,4g.20gb y7g.40gb.4g.40gb pertenece al conjunto A10080GB. El componente g cuenta los segmentos de cómputo del perfil; las etiquetas nominales de memoria no son garantías exactas de memoria utilizable.
+**Explicación:** Los ejemplos de A10040GB incluyen 1g.5gb, 2g.10gb, 3g.20gb, 4g.20gb y 7g.40gb. El perfil 4g.40gb pertenece al conjunto A10080GB. El componente g cuenta los segmentos de cómputo del perfil; las etiquetas nominales de memoria no son garantías exactas de memoria utilizable.
 
 </details>
 
-### 3. ¿Qué proporciona time-slicing replicas:4?
+### 3. ¿Qué proporciona time-slicing con replicas:4?
 
 A. Cuatro GPU físicas y cuatro regiones de memoria privadas
 
@@ -98,11 +98,11 @@ D. Inspeccionar únicamente el campo antiguo resourceHandles
 
 </details>
 
-### 6. ¿Qué afirmación sobre la propiedad de GPU Operator26.7 es correcta?
+### 6. ¿Qué afirmación sobre el modelo de gestión de GPU Operator 26.7 es correcta?
 
 A. GPUCluster y ClusterPolicy siempre deben ejecutarse juntos
 
-B. Elija ClusterPolicy para la administración de device-plugin o un nuevo flujo de trabajo GPUCluster para DRA administrado; no pueden coexistir
+B. Elija ClusterPolicy para gestionar el plugin de dispositivos o un nuevo flujo de trabajo GPUCluster para DRA administrado; no pueden coexistir
 
 C. Establecer driver.enabled:false instala un driver de host ausente
 
@@ -111,9 +111,9 @@ D. El nodeSelector del controlador restringe automáticamente cada operando
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Elija ClusterPolicy para la administración de device-plugin o un nuevo flujo de trabajo GPUCluster para DRA administrado; no pueden coexistir**
+**Respuesta: B. Elija ClusterPolicy para gestionar el plugin de dispositivos o un nuevo flujo de trabajo GPUCluster para DRA administrado; no pueden coexistir**
 
-**Explicación:** GPUCluster es un singleton de ámbito de clúster llamado gpu-cluster. El flujo de trabajo de DRA administrado no es una migración in situ desde ClusterPolicy/DRA independiente. Prepare los componentes adecuados de driver/CDI/detección y revise las etiquetas de los operandos por separado.
+**Explicación:** GPUCluster es una instancia única de ámbito de clúster llamada gpu-cluster. El flujo de trabajo de DRA administrado no es una migración in situ desde ClusterPolicy/DRA independiente. Prepare los componentes necesarios del driver, de CDI y de detección; revise por separado las etiquetas de cada componente gestionado.
 
 </details>
 
@@ -121,7 +121,7 @@ D. El nodeSelector del controlador restringe automáticamente cada operando
 
 A. Cada variante de H100 tiene memoria idéntica
 
-B. NVIDIA enumera80GB/3.35TB/s para H100SXM y141GB/4.8TB/s para H200SXM; los resultados de la aplicación aún requieren medición
+B. NVIDIA enumera 80GB/3.35TB/s para H100SXM y 141GB/4.8TB/s para H200SXM; los resultados de la aplicación aún requieren medición
 
 C. H200 no admite MIG
 
@@ -130,7 +130,7 @@ D. H200 siempre duplica el rendimiento de cada aplicación
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. NVIDIA enumera80GB/3.35TB/s para H100SXM y141GB/4.8TB/s para H200SXM; los resultados de la aplicación aún requieren medición**
+**Respuesta: B. NVIDIA enumera 80GB/3.35TB/s para H100SXM y 141GB/4.8TB/s para H200SXM; los resultados de la aplicación aún requieren medición**
 
 **Explicación:** Estas son especificaciones de SKU del proveedor, no benchmarks de auditoría. Las variantes H100NVL/PCIe difieren. El tamaño del modelo, la precisión, el batching, el software, la interconexión y la contención también afectan al rendimiento real.
 
@@ -138,18 +138,18 @@ D. H200 siempre duplica el rendimiento de cada aplicación
 
 ### 8. ¿Qué límite de implementación de GPU en EKS es correcto?
 
-A. Instale un NVIDIA device plugin adicional en cada nodo de Auto Mode
+A. Instale un plugin de dispositivos de NVIDIA adicional en cada nodo de Auto Mode
 
 B. DRA no es compatible con ningún tipo de nodo de EKS
 
-C. Use una cohorte de asignación Hybrid con ámbito definido; el Auto Mode de EKS actual no admite el driver NVIDIA DRA y ya administra su device plugin
+C. Use una cohorte de asignación Hybrid con ámbito definido; el Auto Mode de EKS actual no admite el driver NVIDIA DRA y ya administra su plugin de dispositivos
 
 D. Publique cada GPU física a través de tantos administradores como sea posible
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Use una cohorte de asignación Hybrid con ámbito definido; el Auto Mode de EKS actual no admite el driver NVIDIA DRA y ya administra su device plugin**
+**Respuesta: C. Use una cohorte de asignación Hybrid con ámbito definido; el Auto Mode de EKS actual no admite el driver NVIDIA DRA y ya administra su plugin de dispositivos**
 
 **Explicación:** AWS recomienda DRA para implementaciones nuevas compatibles de capacidad estática de EKS 1.34+. Use los prerrequisitos de driver documentados y evite la propiedad duplicada de dispositivos. La madurez de la API de Kubernetes es independiente de los feature gates de cada proveedor.
 
@@ -157,7 +157,7 @@ D. Publique cada GPU física a través de tantos administradores como sea posibl
 
 ### 9. Un contenedor solicita una GPU DRA. ¿Cómo debe establecer CUDA_VISIBLE_DEVICES?
 
-A. Establezca siempre0,1,2,3
+A. Establezca siempre los índices 0, 1, 2 y 3
 
 B. Establezca cada índice físico detectado en el host
 
@@ -174,21 +174,21 @@ D. Deje que el administrador de dispositivos/runtime exponga los dispositivos as
 
 </details>
 
-### 10. ¿Qué demuestran los smoke Jobs suspendidos y las comprobaciones de esquema locales?
+### 10. ¿Qué demuestran los Jobs de prueba rápida suspendidos y las comprobaciones locales de esquema?
 
 A. El driver y el modelo de GPU se han ejecutado correctamente
 
 B. Todas las cargas de trabajo de GPU cumplen sus SLO de latencia
 
-C. Los manifests/la configuración revisados superan comprobaciones locales acotadas; la validación de GPU real requiere aprobación y ejecución del propietario
+C. Los manifiestos y la configuración revisados superan comprobaciones locales acotadas; la validación de GPU real requiere aprobación y ejecución por parte del responsable
 
 D. No se necesitará verificación de limpieza
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Los manifests/la configuración revisados superan comprobaciones locales acotadas; la validación de GPU real requiere aprobación y ejecución del propietario**
+**Respuesta: C. Los manifiestos y la configuración revisados superan comprobaciones locales acotadas; la validación de GPU real requiere aprobación y ejecución por parte del responsable**
 
-**Explicación:** Reemplace la imagen deliberadamente inutilizable con un digest aprobado y verifique runtime/ubicación/seguridad antes de reanudar un Job. Capture los resultados y verifique la despreparación/liberación del claim durante la limpieza. La visibilidad de nvidia-smi por sí sola no es un benchmark de CUDA/LLM.
+**Explicación:** Reemplace la imagen deliberadamente inutilizable por un digest aprobado y verifique el entorno de ejecución, la ubicación y la seguridad antes de reanudar un Job. Capture los resultados y verifique la retirada de la preparación y la liberación del claim durante la limpieza. La visibilidad de nvidia-smi por sí sola no es un benchmark de CUDA/LLM.
 
 </details>

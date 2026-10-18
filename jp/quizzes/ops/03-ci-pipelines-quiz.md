@@ -1,175 +1,165 @@
-# CI Pipelines クイズ
+# CIパイプラインのクイズ
 
-> **関連ドキュメント**: [CI Pipelines](../../ops/03-ci-pipelines.md)
+> **関連ドキュメント**: [CIパイプライン](../../ops/03-ci-pipelines.md)
 
 ## 選択問題
 
-### 1. ECR lifecycle policies の主な目的は何ですか？
+### 1. リリースイメージとBuildKit cacheで、別々のECR repositoryを使うのはなぜですか？
 
-- A) container image を自動的にビルドすること
-- B) image の保持を管理し、ストレージコストを削減すること
-- C) image の脆弱性をスキャンすること
-- D) 複数のリージョン間で image をレプリケートすること
+- A) Cache imageにはIAM認証が不要だから
+- B) 不変のrelease tagと更新可能なcache参照では、異なるpolicyが必要だから
+- C) ECRではtagを1つしか使えないから
+- D) Cacheを使えばscanが不要になるから
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) image の保持を管理し、ストレージコストを削減すること**
+**解答: B) 不変のrelease tagと更新可能なcache参照では、異なるpolicyが必要だから**
 
-**解説:**
-ECR lifecycle policies は、経過日数や数などのルールに基づいて古い images を自動的に期限切れにして削除します。これにより、重要な images（production tags など）を無期限に保持しつつ、ストレージの無制限な増加を防ぎ、コストを削減できます。
+**解説:** この例ではアプリケーション用repositoryをIMMUTABLE、build cache用repositoryをMUTABLEにします。commit SHA形式のtagだけでは上書きを防げません。deploymentでは検証済みdigestを使います。
 
 </details>
 
-### 2. GitLab Runner を EKS 上で実行する場合、分離のために推奨される executor type はどれですか？
+### 2. GitLab Kubernetes executorでjobごとに別のPodを作ると、何が得られますか？
 
-- A) Shell executor
-- B) Docker executor
-- C) Kubernetes executor
-- D) SSH executor
+- A) privileged jobを含めた完全な分離
+- B) Nodeへのアクセスに関するすべてのリスクの除去
+- C) jobごとのlifecycleとresourceの分離。ただし完全なsecurity boundaryが保証されるわけではない
+- D) 信頼できないPRに対する、継承されたAWS publish権限
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C) Kubernetes executor**
+**解答: C) jobごとのlifecycleとresourceの分離。ただし完全なsecurity boundaryが保証されるわけではない**
 
-**解説:**
-Kubernetes executor は各 CI job を個別の Pod で実行し、jobs 間に強力な分離を提供します。jobs の完了後にリソースを自動的にクリーンアップし、node selectors や tolerations などの Kubernetes 機能を活用できます。
+**解説:** このガイドのprivileged DinD設定は、信頼されたprotected job向けです。Podの分離、専用CI Node、最小権限roleはそれぞれ別のcontrolであり、どれか一つだけで任意の信頼できないcodeが安全だと証明できるわけではありません。
 
 </details>
 
-### 3. GitHub Actions Runner Controller (ARC) とは何ですか？
+### 3. `poll_interval`と`check_interval`はどのように異なりますか？
 
-- A) GitHub-hosted runner service
-- B) self-hosted GitHub runners のための Kubernetes operator
-- C) GitHub API client library
-- D) container registry controller
+- A) `poll_interval`はKubernetes Podの状態を確認し、`check_interval`はcoordinatorによるjob pollingに関係する
+- B) 同じ設定の別名である
+- C) どちらもDocker image cacheを期限切れにする
+- D) `poll_interval`はPodを再起動する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) self-hosted GitHub runners のための Kubernetes operator**
+**解答: A) `poll_interval`はKubernetes Podの状態を確認し、`check_interval`はcoordinatorによるjob pollingに関係する**
 
-**解説:**
-ARC は、workflow の需要に基づいて self-hosted GitHub Actions runners を自動的にスケールする Kubernetes operator です。jobs がキューに入ると runner pods を作成し、完了後にクリーンアップします。
+**解説:** Kubernetes executorはjob Podがreadyになるのを待つ間、`poll_interval`を使います。Runner全体の`check_interval`は別のpolling経路を制御するため、一方を変更しても他方の代わりにはなりません。
 
 </details>
 
-### 4. multi-platform container builds (linux/amd64, linux/arm64) の利点は何ですか？
+### 4. GitLab managerとbuild PodのAWS roleを分けるのはなぜですか？
 
-- A) image sizes が小さくなる
-- B) build times が速くなる
-- C) 異なる CPU architectures (x86 and Graviton) のサポート
-- D) security scanning が向上する
+- A) managerにすべてのAWS権限を付与するため
+- B) Pod IdentityがServiceAccountを自動作成するため
+- C) build Podが長期鍵を保存する必要があるため
+- D) managerのS3 cacheアクセスとbuild PodのECR publishアクセスを別々に制限するため
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C) 異なる CPU architectures (x86 and Graviton) のサポート**
+**解答: D) managerのS3 cacheアクセスとbuild PodのECR publishアクセスを別々に制限するため**
 
-**解説:**
-multi-platform builds は、x86 (amd64) と ARM (arm64/Graviton) processors の両方で動作する images を作成します。これにより、Graviton instances を使用したコスト最適化が可能になり、多様な deployment environments をサポートできます。
+**解説:** `RoleARN`を指定しない場合、この例のS3 cacheはmanagerのcredential chainを使います。build Podには別のECR roleを割り当てます。ServiceAccountは別途作成が必要です。また、AWS Pod Identityのtokenは通常のKubernetes API tokenとは別です。
 
 </details>
 
-### 5. BuildKit cache は container build performance をどのように向上させますか？
+### 5. 現行のARCの例では、jobをどのように受け付けて振り分けますか？
 
-- A) すべての build steps をスキップすることによって
-- B) layer artifacts をキャッシュし、変更されていない layers を再利用することによって
-- C) images をより小さく圧縮することによって
-- D) すべての operations を並列化することによって
+- A) RunnerDeploymentとHorizontalRunnerAutoscalerだけをinstallする
+- B) 公式のscale-set chart/listenerを使い、`runs-on`を実際のscale-set名に一致させる
+- C) organizationのrunner-group名は常にjob labelになる
+- D) `minRunners=0`にすればクラスターのcostがすべてなくなる
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) layer artifacts をキャッシュし、変更されていない layers を再利用することによって**
+**解答: B) 公式のscale-set chart/listenerを使い、`runs-on`を実際のscale-set名に一致させる**
 
-**解説:**
-BuildKit は build artifacts と layer outputs をインテリジェントにキャッシュします。source files が変更されていない場合、再ビルドする代わりに cached layers を再利用します。Cache は registries、S3、または local storage に保存して、builds 間で共有できます。
+**解説:** 旧CRDモデルと現行のscale-set chartを混在させないでください。ARC 0.15.0は`scaleSetLabels`もサポートします。`minRunners`が制御するのはidle runnerであり、controller/listenerのcostがなくなるわけでも、起動待ちがなくなる保証でもありません。
 
 </details>
 
-### 6. Kaniko は主に何に使用されますか？
+### 6. どのGitHub jobが、この例のAWS OIDC credentialを取得しますか？
 
-- A) Container orchestration
-- B) Docker daemon なしで container images をビルドすること
-- C) Container runtime security
-- D) Image vulnerability scanning
+- A) すべての外部PR test
+- B) 任意のPR codeを実行する`pull_request_target` job
+- C) testに合格した後の、信頼されたpush publish job
+- D) 起動したすべてのself-hosted runner
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Docker daemon なしで container images をビルドすること**
+**解答: C) testに合格した後の、信頼されたpush publish job**
 
-**解説:**
-Kaniko は Docker daemon や privileged mode を必要とせずに、Dockerfiles から container images をビルドします。これにより、Docker-in-Docker の実行がセキュリティ上の懸念を生む、または利用できない CI/CD environments に最適です。
+**解説:** PR testはpublish credentialを要求せず、GitHub-hosted runnerで実行します。role trustでは正確なrepositoryとmain/protected tagを制限し、ARC PodにはAWS publish roleを継承させません。
 
 </details>
 
-### 7. GitLab CI において、`services` keyword の目的は何ですか？
+### 7. scanからpublishまでの契約を守る順序はどれですか？
 
-- A) deployment targets を定義すること
-- B) テスト用に補助 containers（databases など）を起動すること
-- C) GitLab Pages を設定すること
-- D) monitoring をセットアップすること
+- A) build → 同じimageのscan成功 → publish → 承認済みdigestからindexを作成
+- B) publish → scan失敗を無視 → latestをdeploy
+- C) sourceをscan → 別のimageをbuild → 常にpublish
+- D) JSON fileが1つでもあればscan成功とみなす
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) テスト用に補助 containers（databases など）を起動すること**
+**解答: A) build → 同じimageのscan成功 → publish → 承認済みdigestからindexを作成**
 
-**解説:**
-`services` keyword は、main job container と並行して実行される containers を定義します。これらは、tests がやり取りする必要のある databases (PostgreSQL, MySQL) や caches (Redis) などの test dependencies によく使用されます。
+**解説:** GitLabはarchitectureごとの1対1 dependencyを通じてimage archiveを渡します。GitHubはローカルでbuildしたimageをpush前にscanします。Trivy errorや脆弱性gateの失敗時はpublishしません。また、標準のTrivy JSONをGitLab report schemaだと誤表示しません。
 
 </details>
 
-### 8. CI/CD で container build cache を保存するための推奨アプローチは何ですか？
+### 8. native runnerとQEMUを正しく比較している説明はどれですか？
 
-- A) local disk のみ
-- B) --cache-to と --cache-from flags を使用した registry-based cache
-- C) CI/CD では cache を使用しない
-- D) cache を git repository に保存する
+- A) platform flagを指定するだけで、異なるCPU向けの命令を必ず実行できる
+- B) QEMU自体がアプリケーションのcross compilerである
+- C) AMD64 imageはtagを変えるだけでARM64になる
+- D) native runnerは対象CPU上でbuildし、QEMUは別のCPUの命令をemulateする
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) --cache-to と --cache-from flags を使用した registry-based cache**
+**解答: D) native runnerは対象CPU上でbuildし、QEMUは別のCPUの命令をemulateする**
 
-**解説:**
-registry-based caching は build cache layers を container registry に保存し、異なる CI runners 間でアクセスできるようにします。BuildKit の `--cache-to` と `--cache-from` flags により、このパターンを使って一貫した build acceleration を実現できます。
+**解説:** manager/jobのNode selector、runner tag、helperのarchitectureを一致させてください。最終indexは個別に確認したplatform digestを参照する必要があります。cross-compilationには意図して設定したtoolchainとDockerfileが必要です。
 
 </details>
 
-### 9. GitHub ARC を設定する際、`minRunners` setting は何を制御しますか？
+### 9. Next.jsのstandalone例で必要なものは何ですか？
 
-- A) 最大 concurrent jobs
-- B) 維持される idle runners の最小数
-- C) Runner memory allocation
-- D) Job timeout duration
+- A) どのbuildでも`npm ci --omit=dev`だけで十分
+- B) standalone output、build dependency、copyしたstatic asset、正しいserver path
+- C) `public`と`.next/static`は常にstandaloneへ自動copyされる
+- D) どのmonorepoもrootの`server.js`から起動する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 維持される idle runners の最小数**
+**解答: B) standalone output、build dependency、copyしたstatic asset、正しいserver path**
 
-**解説:**
-`minRunners` は、warm runners の baseline が常に利用可能であることを保証し、job startup latency を低減します。これを 0 より大きく設定すると、時間に敏感な workflows の cold-start delays を防げますが、idle resource costs は増加します。
+**解説:** この例は単一のapp rootとnpm lockfileを前提とします。runtime layoutへ`public`と`.next/static`をcopyし、`0.0.0.0`にbindします。monorepoでは独自のtracing rootと、出力先の階層を確認する必要があります。
 
 </details>
 
-### 10. CI/CD runners に long-lived credentials の代わりに IAM roles を使用することの security benefit は何ですか？
+### 10. Kanikoとrootless BuildKitについて正しい説明はどれですか？
 
-- A) 認証が速くなる
-- B) credential の自動ローテーションと exposure risk の低減
-- C) 設定がより簡単になる
-- D) Cross-account access
+- A) daemonlessなら、すべてのbuildがrootなしで完全に分離される
+- B) privileged DinD imageの名前を変えればrootless設定が完了する
+- C) 保守状況とNodeのuser namespace、mount、security policyの対応を確認する
+- D) `no-process-sandbox`はprocess分離を強化する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) credential の自動ローテーションと exposure risk の低減**
+**解答: C) 保守状況とNodeのuser namespace、mount、security policyの対応を確認する**
 
-**解説:**
-IAM roles は自動的にローテーションされる temporary credentials を提供し、long-lived access keys が漏えいまたは侵害されるリスクを排除します。Pod Identity または IRSA と組み合わせることで、runners は secrets を保存せずに scoped permissions を取得できます。
+**解説:** GoogleのKaniko repositoryはarchiveされています。任意で使うrootless BuildKitの設定には、別途検証したrunnerが必要です。`no-process-sandbox`はdaemon containerのprocess分離とcleanupを弱めます。また、registry cacheだけではすべてのcache mountが自動的に永続化されるわけではありません。
 
 </details>
