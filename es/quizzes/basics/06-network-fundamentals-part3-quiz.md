@@ -18,20 +18,20 @@ Comprueba tus conocimientos sobre los 10 protocolos de la capa de aplicación, d
 **Respuesta: B) Si se puede acceder a UDP 443 y realmente se negoció HTTP/3**
 
 **Explicación:**
-HTTP/3 suele usar QUIC sobre UDP 443. Si esa ruta está bloqueada, cuando sea posible, el cliente puede usar HTTP/2 o HTTP/1.1 basados en TCP. Verifique el protocolo negociado antes de comparar el rendimiento. La pérdida, el RTT, la carga de trabajo, la implementación y el comportamiento de la CPU/descarga influyen en el resultado; esta pregunta no establece la causa de un incidente real.
+HTTP/3 suele usar QUIC sobre UDP 443. Si esa ruta está bloqueada, cuando sea posible, el cliente puede usar HTTP/2 o HTTP/1.1 basados en TCP. Verifique el protocolo negociado antes de comparar el rendimiento. La pérdida, el RTT, la carga de trabajo, la implementación y el comportamiento de la CPU y de la descarga de trabajo al hardware influyen en el resultado; esta pregunta no establece la causa de un incidente real.
 
 </details>
 
 2. ¿Qué factor puede retrasar la conmutación por error de DNS después de cambiar un registro autoritativo?
    - A) DNS usa únicamente TCP, por lo que el costo del protocolo de enlace es alto
-   - B) Las respuestas almacenadas previamente en caché, la caché de la aplicación y las conexiones existentes pueden durar más que el cambio del registro
+   - B) Las respuestas almacenadas previamente en caché, la caché de la aplicación y las conexiones existentes pueden seguir vigentes después del cambio del registro
    - C) Los servidores de nombres raíz deben aprobar la actualización
    - D) Los registros A no se pueden cambiar
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Las respuestas almacenadas previamente en caché, la caché de la aplicación y las conexiones existentes pueden durar más que el cambio del registro**
+**Respuesta: B) Las respuestas almacenadas previamente en caché, la caché de la aplicación y las conexiones existentes pueden seguir vigentes después del cambio del registro**
 
 **Explicación:**
 Reducir el TTL ahora no acorta la duración de una respuesta que ya se almacenó en caché con un TTL anterior más largo. La detección de fallos, las actualizaciones de registros, la caché de la aplicación y la reutilización de conexiones también afectan a la recuperación. En condiciones de fallo definidas, los resolutores pueden servir datos obsoletos (RFC 8767). Los diseños de DNS, balanceador de carga y anycast requieren medir el comportamiento ante fallos y la convergencia.
@@ -88,17 +88,17 @@ Los niveles de QoS pertenecen a MQTT y no reparan los protocolos de enlace de We
 
 6. ¿Qué asociación identifica correctamente las funciones de los tres mecanismos de autenticación de dominios de correo electrónico (SPF, DKIM y DMARC)?
     - A) SPF: firma de mensajes / DKIM: publicación de las IP de remitentes permitidas / DMARC: aplicación del cifrado
-    - B) SPF: autorizar hosts para identidades de sobre/HELO / DKIM: firmar el contenido cubierto con una clave de dominio / DMARC: alinear el dominio visible de From con SPF o DKIM aprobados y publicar una política
+    - B) SPF: autorizar hosts para identidades de sobre/HELO / DKIM: firmar el contenido cubierto con una clave de dominio / DMARC: alinear el dominio visible de From con SPF o DKIM que hayan superado la comprobación y publicar una política
     - C) SPF: autenticación del servidor receptor / DKIM: cifrado del transporte / DMARC: filtrado de spam
     - D) SPF: administración de la cola de correo / DKIM: validación de registros MX / DMARC: aplicación de TLS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) SPF: autorizar hosts para identidades de sobre/HELO / DKIM: firmar el contenido cubierto con una clave de dominio / DMARC: alinear el dominio visible de From con SPF o DKIM aprobados y publicar una política**
+**Respuesta: B) SPF: autorizar hosts para identidades de sobre/HELO / DKIM: firmar el contenido cubierto con una clave de dominio / DMARC: alinear el dominio visible de From con SPF o DKIM que hayan superado la comprobación y publicar una política**
 
 **Explicación:**
-SPF comprueba el dominio del sobre/HELO y DKIM verifica el contenido cubierto para el dominio firmante. DMARC requiere al menos un mecanismo aprobado alineado con el dominio visible de From; no exige que ambos se aprueben. Estos mecanismos ayudan a proteger los dominios, pero no garantizan la entrega ni impiden la suplantación mediante nombres para mostrar o dominios parecidos.
+SPF comprueba el dominio del sobre/HELO y DKIM verifica el contenido cubierto para el dominio que firma. DMARC requiere al menos un mecanismo que haya superado la comprobación y esté alineado con el dominio visible de From; no exige que ambos la superen. Estos mecanismos ayudan a proteger los dominios, pero no garantizan la entrega ni impiden la suplantación mediante nombres para mostrar o dominios parecidos.
 
 </details>
 
@@ -150,7 +150,7 @@ El encuadre por fragmentos identifica el final sin cerrar la conexión. El emiso
 
 </details>
 
-10. Una respuesta HTTP/1.1 `200` válida a HEAD incluye `Content-Length: 500`. ¿Debe el cliente leer 500 bytes del cuerpo después de la sección de encabezados?
+10. Una respuesta HTTP/1.1 válida a HEAD incluye `Content-Length: 500`. ¿Debe el cliente leer 500 bytes del cuerpo después de la sección de encabezados?
    - A) No; una respuesta a HEAD no tiene cuerpo de mensaje y el campo describe la longitud que tendría una respuesta GET correspondiente
    - B) Sí; Content-Length siempre prevalece sobre el método
    - C) Sí, pero solo si Content-Type es text/plain

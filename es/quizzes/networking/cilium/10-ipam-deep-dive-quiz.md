@@ -2,7 +2,7 @@
 
 > **Cilium 1.20.2 (estable, 2026-09-16) · 2026-10-15**. Los elementos marcados [versión preliminar 1.21] provienen de v1.21.0-pre.3.
 
-1. **Una operación CNI ADD asigna una IP al Pod mediante `POST /ipam`, pero el plugin CNI se bloquea antes de crear el endpoint. ¿Cuándo libera el agente esa IP, si no hay ningún reinicio?**
+1. **Una operación CNI ADD asigna una IP al Pod mediante `POST /ipam`, pero el plugin CNI falla antes de crear el endpoint. ¿Cuándo libera el agente esa IP, si no hay ningún reinicio?**
    - A) Cuando vence el temporizador de expiración de 10 minutos establecido durante la asignación
    - B) Solo cuando el agente se reinicia y restaura los endpoints
    - C) Inmediatamente, porque se cerró la conexión REST
@@ -78,7 +78,7 @@
    **Respuesta: A) La asignación falla con un error y un evento porque debe coincidir exactamente un pool por familia**
 
    **Explicación:**
-   La selección por selectores requiere exactamente un pool coincidente por familia. Varias coincidencias producen un error (`multiple CiliumPodIPPools match pod ...`) y el Pod queda en `ContainerCreating`. Corrígelo afinando los selectores o anotando explícitamente el Pod o el espacio de nombres.
+   La selección por selectores requiere exactamente un pool coincidente por familia. Varias coincidencias producen un error (`multiple CiliumPodIPPools match pod ...`) y el Pod queda en `ContainerCreating`. Corrija el problema ajustando los selectores o anotando explícitamente el Pod o el espacio de nombres.
 
    </details>
 
@@ -100,7 +100,7 @@
 
 7. **¿Cómo transfiere el asignador ENI de 1.20 al agente el estado de las interfaces EC2?**
    - A) El operador escribe IP individuales en `spec.ipam.pool` y el agente informa el uso en `status.ipam.used`, igual que en 1.19, sin escribir el estado ENI
-   - B) El agente llama directamente a la API de EC2 con sus propias credenciales y el operador solo recolecta ENI como basura
+   - B) El agente llama directamente a la API de EC2 con sus propias credenciales y el operador solo limpia los ENI no utilizados
    - C) El operador escribe ENI en `status.eni.enis`; el agente los convierte en CIDR /32 y /28 en `spec.ipam.pools.allocated` (pool `default`) e informa la demanda en `spec.ipam.pools.requested`
    - D) Cada ENI se convierte en su propio CiliumPodIPPool, seleccionado con la anotación `ip-pool` y creado por el operador
 
@@ -110,14 +110,14 @@
    **Respuesta: C) El operador escribe ENI en `status.eni.enis`; el agente los convierte en CIDR /32 y /28 en `spec.ipam.pools.allocated` (pool `default`) e informa la demanda en `spec.ipam.pools.requested`**
 
    **Explicación:**
-   En 1.20, ENI pasó al asignador de varios pools: solo el operador llama a EC2; el agente deriva CIDR asignados del inventario de ENI y vuelve a escribir la capacidad solicitada. El modelo `spec.ipam.pool` / `status.ipam.used` corresponde al asignador CRD de 1.19 y 1.18. El modo ENI no usa CiliumPodIPPool ni la anotación `ip-pool`.
+   En 1.20, ENI pasó al asignador de varios pools: solo el operador llama a EC2; el agente calcula los CIDR asignados a partir del inventario de ENI y actualiza el campo de capacidad solicitada. El modelo `spec.ipam.pool` / `status.ipam.used` corresponde al asignador CRD de 1.19 y 1.18. El modo ENI no usa CiliumPodIPPool ni la anotación `ip-pool`.
 
    </details>
 
-8. **[Versión preliminar 1.21] Actualmente pasas `--aws-use-primary-address` directamente al operador de Cilium. ¿Qué debes hacer antes de pasar a 1.21?**
+8. **[Versión preliminar 1.21] Actualmente, se pasa `--aws-use-primary-address` directamente al operador de Cilium. ¿Qué debe hacerse antes de migrar a 1.21?**
    - A) Nada; la marca solo está obsoleta y sigue funcionando como marca del operador en 1.21
    - B) Eliminarla y establecer `eni.nodeSpec.usePrimaryAddress=true` (marca del agente `--eni-use-primary-address`)
-   - C) Configurarla en CiliumPodIPPool para el pool predeterminado bajo `spec.ipv4.pool[]`
+   - C) Configurarla en `CiliumPodIPPool` para el pool predeterminado bajo `spec.ipv4.pool[]`
    - D) Pasarla al agente como `--aws-use-primary-address`, conservando el mismo nombre
 
    <details>
@@ -158,6 +158,6 @@
     **Respuesta: A) Marca el pool posterior como Conflicting (`cilium.io/PoolConflict`) y no asigna nada desde él**
 
     **Explicación:**
-    LB IPAM no combina ni rechaza pools superpuestos. El posterior se marca como Conflicting, se muestra en la columna de salida `Conflicting` y en la métrica `lbipam_conflicting_pools` (el prefijo exacto en tiempo de ejecución, `cilium_` o `cilium_operator_`, no está verificado), y no se asigna ninguna IP desde él. Editar un pool activo también puede reasignar IP de Service existentes, así que es preferible agregar un pool o establecer `disabled: true`.
+    LB IPAM no combina ni rechaza pools superpuestos. El pool posterior se marca como Conflicting, se muestra en la columna de salida `Conflicting` y en la métrica `lbipam_conflicting_pools` (el prefijo exacto en tiempo de ejecución, `cilium_` o `cilium_operator_`, no está verificado), y no se asigna ninguna IP desde él. Editar un pool activo también puede reasignar IP de Service existentes, así que es preferible agregar un pool o establecer `disabled: true`.
 
     </details>

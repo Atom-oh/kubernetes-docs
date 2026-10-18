@@ -73,7 +73,7 @@ NAT con traducción de puertos (PAT/NAPT) reescribe tanto las direcciones IP com
 5. En una organización que adopta IPv6 mediante doble pila, ¿qué brecha de seguridad se debe comprobar?
    - A) IPv6 no admite cifrado
    - B) Solo se mantienen reglas de firewall IPv4 y faltan las reglas para la ruta IPv6
-   - C) Las direcciones IPv6 son más fáciles de explorar
+   - C) Las direcciones IPv6 son más fáciles de escanear
    - D) SLAAC deshabilita el servidor DHCP
 
 <details>

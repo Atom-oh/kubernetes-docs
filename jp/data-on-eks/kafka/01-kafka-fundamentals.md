@@ -1,6 +1,6 @@
 # パート 1: Kafka の基礎
 
-> **最終更新**: September 12, 2026. Apache Kafka 4.3.1、Strimzi 1.2.0 でサポート。
+> **最終更新**: 2026年10月16日。Apache Kafka 4.3.1、Strimzi 1.3.0 でサポート。
 > **検証**: 19 項目のチェックで、Kafka 4.3.1 の実際の設定クラスを用いて有効性・デフォルト値・競合を確認しました。broker や EKS クラスターは起動していません。
 
 ## 1. Broker、Topic、Partition
@@ -19,7 +19,7 @@ Kafka はイベントを partition ログに保存し、producer と consumer �
 
 ![3 つの consumers に 3 つの partitions を割り当てた KafkaConsumer group の例。一般に、1 つの consumer が複数の partitions を担当することもあります。](../../.gitbook/assets/en-data-on-eks-kafka-01-kafka-fundamentals-0.png)
 
-[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-kafka-01-kafka-fundamentals-0.html)
+[インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-kafka-01-kafka-fundamentals-0.html)
 
 3:3 の図はあくまで一例です。KafkaConsumer の `subscribe()` による自動グループ割り当てでは、1 つの partition は同時に 1 つのグループメンバーにのみ割り当てられ、1 つのメンバーが複数の partition を保持することがあります。手動の `assign()` の利用は別に管理されます。複数のグループが同じ topic を独立して消費できます。Kafka 4.x の Share Groups／KafkaShareConsumer は、異なる共有および確認応答モデルを使用します。
 
@@ -178,4 +178,4 @@ kafka-configs.sh --bootstrap-server "$DOCS_BOOTSTRAP" \
 - [Consumer configurations](https://kafka.apache.org/43/configuration/consumer-configs/)
 - [Producer configurations](https://kafka.apache.org/43/configuration/producer-configs/)
 - [KRaft operations](https://kafka.apache.org/43/operations/kraft/)
-- [Strimzi 1.2.0 release and migration notice](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 のリリースと移行に関する注意](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)

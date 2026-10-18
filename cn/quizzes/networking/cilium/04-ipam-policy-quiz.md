@@ -97,7 +97,7 @@
    </details>
 
 7. **在命名空间级别的 CiliumNetworkPolicy 中，endpointSelector 会选择什么？**
-   - A) 该命名空间中作为策略对象的端点
+   - A) 该命名空间中作为策略主体的端点
    - B) 要创建的 Kubernetes Service
    - C) 任意命名空间中的主机节点
    - D) 要继承的其他策略
@@ -105,7 +105,7 @@
    <details>
    <summary>显示答案</summary>
 
-   **答案：A) 该命名空间中作为策略对象的端点**
+   **答案：A) 该命名空间中作为策略主体的端点**
 
    它会选择策略适用的端点。资源作用域和选择器与 ingress/egress 中描述的流量对端是不同的概念。
 
@@ -267,16 +267,16 @@
 
 18. **哪种通配符说明符合该版本的实现？**
     - A) `*.example.com` 也能匹配 example.com 和 a.b.example.com
-    - B) `*.example.com` 匹配一个子域标签；`**.example.com` 匹配一个或多个层级，且两者都不包含顶级域名本身
+    - B) `*.example.com` 匹配一个子域标签；`**.example.com` 匹配一个或多个层级，且两者都不匹配根域名本身
     - C) 每个星号都始终可以匹配点号
     - D) matchName 和 matchPattern 会分配 DNS 地址
 
     <details>
     <summary>显示答案</summary>
 
-    **答案：B) `*.example.com` 匹配一个子域标签；`**.example.com` 匹配一个或多个层级，且两者都不包含顶级域名本身**
+    **答案：B) `*.example.com` 匹配一个子域标签；`**.example.com` 匹配一个或多个层级，且两者都不匹配根域名本身**
 
-    实现会对规范化后的 DNS 名称进行锚定匹配。精确名称、单标签通配符和多层级前缀的含义各不相同；单独使用 matchName 可以包含顶级域名本身。
+    实现会对规范化后的 DNS 名称进行锚定匹配。精确名称、单标签通配符和多层级前缀的含义各不相同；单独使用 matchName 可以匹配根域名本身。
 
     </details>
 

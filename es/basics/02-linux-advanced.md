@@ -1,6 +1,6 @@
 # Habilidades de operaciones de Linux
 
-> **Versiones compatibles**: Bash en distribuciones de Linux con mantenimiento; los comandos presuponen que las herramientas indicadas están instaladas **Última actualización**: October 16, 2026
+> **Versiones compatibles**: Bash en distribuciones de Linux con mantenimiento; los comandos presuponen que las herramientas indicadas están instaladas **Última actualización**: 16 de octubre de 2026
 
 Este documento cubre habilidades esenciales de operaciones de Linux para trabajar eficazmente en entornos de Kubernetes.
 
@@ -233,7 +233,7 @@ ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:8080:localhost:80 user@server
 ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:6443:kubernetes-api:6443 user@bastion
 ```
 
-En los túneles de API, conserve la CA original y el nombre del servidor TLS en kubeconfig. Al conectarse a 127.0.0.1, establezca tls-server-name con el nombre real del certificado de API; mantenga habilitada la verificación TLS.
+En los túneles de API, conserve la CA original y el nombre del servidor TLS en kubeconfig. Al conectarse a 127.0.0.1, establezca tls-server-name con el nombre real del servidor incluido en el certificado de la API; mantenga habilitada la verificación TLS.
 
 ### 4.3 Uso de un host bastión
 
@@ -353,7 +353,7 @@ spec:
 
 ***
 
-El almacenamiento local no se puede trasladar a otro nodo si falla un nodo. Esta StorageClass no aprovisiona discos; el PVC puede permanecer en estado Pending hasta que se programe un Pod consumidor. Ajuste la capacidad del PV al sistema de archivos real: el valor anunciado no constituye una cuota de directorio. La limpieza y reutilización de recursos retenidos son acciones independientes que debe realizar el operador.
+Si un nodo falla, el almacenamiento local no se puede mover a otro nodo. Esta StorageClass no aprovisiona discos; el PVC puede permanecer en estado Pending hasta que se programe un Pod consumidor. Ajuste la capacidad del PV al sistema de archivos real: el valor anunciado no constituye una cuota de directorio. La limpieza y reutilización de recursos retenidos son acciones independientes que debe realizar el operador.
 
 <span id="7-curl-and-api-calls"></span>
 
@@ -380,7 +380,7 @@ curl --fail --silent --show-error --cacert "$CACERT" \
 unset TOKEN
 ```
 
-El ServiceAccount necesita permiso RBAC para listar pods en ese namespace. Es posible que estos archivos no existan si automountServiceAccountToken: false. Los tokens proyectados se renuevan, por lo que los clientes de larga duración deben volver a leer el archivo; no registre tokens.
+El ServiceAccount necesita permisos RBAC para listar Pods en ese espacio de nombres. Es posible que estos archivos no estén montados si automountServiceAccountToken: false. Los tokens proyectados se renuevan, por lo que los clientes de larga duración deben volver a leer el archivo; no registre tokens.
 
 ### 7.3 Opciones útiles de curl
 

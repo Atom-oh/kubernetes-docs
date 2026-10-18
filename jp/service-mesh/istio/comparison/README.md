@@ -1,314 +1,139 @@
 # 比較ガイド
 
-> **最終更新**: July 7, 2026
-> **対象読者**: アーキテクト、DevOps エンジニア、Platform エンジニア
+> **最終レビュー日**: 2026年9月11日
+> **対象読者**: アーキテクト、DevOps エンジニア、プラットフォームエンジニア
 
-このセクションでは、さまざまな Service Mesh およびネットワーキングソリューションを比較し、各ソリューションの長所・短所と適切なユースケースを紹介します。
+メッシュを選ぶ前に、必要なトラフィック、ID、プラットフォーム、運用上の契約を比較してください。組織の規模、機能の星評価、固定のリソースオーバーヘッド率だけでは、適合性を判断できません。アーキテクチャの比較とは別に、バージョンサポートとリリースチャネルの選択も確認してください。
 
 ## 目次
 
 ### 1. [Service Mesh ソリューションの比較](01-service-mesh-comparison.md)
 
-Kubernetes 環境で利用できる主要な Service Mesh ソリューションの比較:
+詳細な比較では、Istio、Linkerd、Kong Mesh/Kuma、Consul service mesh を扱います。ネットワーキング機能とメッシュ機能を合わせて評価する場合は、メンテナンスされている [Cilium service mesh ガイド](../../cilium-service-mesh/README.md)も検討してください。
 
-* **Istio** - 機能が豊富なエンタープライズグレードの Service Mesh
-* **Linkerd** - 軽量で使いやすい Service Mesh
-* **Kong Mesh** - Kuma ベースのユニバーサル Service Mesh
-* **Consul Connect** - HashiCorp の Service Mesh ソリューション
+データプレーン／コントロールプレーン、サポート対象のトラフィックポリシー、ID と暗号化、可観測性、Kubernetes／VM サポート、マルチクラスター構成、ライフサイクル、商用ディストリビューションの契約条件を比較します。製品に固定の高／中／低の順位を付けるのではなく、同等のポリシーとトラフィックでリソース使用量を測定してください。
 
-**比較基準**:
+### 2. [Istio と VPC Lattice](02-istio-vs-lattice.md)
 
-* アーキテクチャとコンポーネント
-* パフォーマンスとリソース使用量
-* 機能セット（トラフィック管理、セキュリティ、可観測性）
-* 学習曲線と運用の複雑さ
-* マルチクラスター対応
-* スケーラビリティとプラットフォーム対応
+Istio は、Kubernetes と、文書化された VM 統合を備えるデプロイ可能なメッシュです。VPC Lattice は、サポート対象の EC2、コンテナ、Lambda ターゲットを含むサービスやリソース向けの、AWS マネージド型アプリケーションネットワーキングサービスです。すべてのアプリケーションをサーバーレスにする必要はありません。
 
-### 2. [Istio vs VPC Lattice](02-istio-vs-lattice.md)
+プロトコル／ルーティングの動作、各 TLS 境界での ID、リージョン接続性、各所有者の責務、実際の課金対象を比較してください。ネットワークがマネージドであっても、アプリケーション、DNS、IAM、ターゲットのヘルス、コストの運用が不要になるわけではありません。
 
-Kubernetes Service Mesh（Istio）と AWS ネイティブのサービスネットワーキング（VPC Lattice）の比較:
+### 3. [Sidecar と Ambient](03-sidecar-vs-ambient.md)
 
-**Istio Service Mesh**:
+このガイドには、mTLS、NetworkPolicy、レイテンシー、ロールアウト障害を扱う、記録済みの EKS 実験が含まれます。各実験の結論には、実際に使ったバージョン、ワークロード、測定時間、未加工の 503 結果を紐付けてください。リトライ後にクライアントから見える結果は別の測定値です。リトライは障害を隠すことがあり、非冪等な操作を重複実行する可能性もあります。
 
-* Kubernetes 中心の Service Mesh
-* 豊富なトラフィック管理および可観測性機能
-* クラウドニュートラル
+これらの観測結果を、意図するワークロード向けのテスト設計に利用してください。sidecar と waypoint の信頼性に普遍的な優劣を付ける根拠にも、コア／セミコア／周辺という配置ルールを必須にする根拠にもなりません。
 
-**AWS VPC Lattice**:
+## 選定基準
 
-* AWS ネイティブのサービスネットワーキング
-* サーバーレスアーキテクチャ
-* シンプルなマルチアカウント/VPC 接続
+| 要件 | 評価候補 | 必要な根拠 |
+|---|---|---|
+| きめ細かな L7 トラフィック制御とポリシー | Istio、および必要とする機能を備えた正確な Linkerd／Kong／Consul／Cilium の構成 | サポート対象 API、プロトコル動作、生成設定、アップグレードテスト |
+| Kubernetes に焦点を当てたメッシュ | Linkerd、または適切な範囲に絞った Istio デプロイメント | 実際の運用負荷、ID のライフサイクル、機能範囲、同等負荷での測定 |
+| 既存の Cilium ネットワーキング | Cilium の eBPF データパスと、プロキシを使う L7 機能 | カーネル／CNI 互換性、有効な L7 機能、認証／暗号化の要件が別途満たされること |
+| AWS サービス／リソースへの接続 | VPC Lattice | リージョン内のネットワーク／エンドポイント経路、ターゲットサポート、IAM／TLS 契約、サービス／リソース所有者の責務 |
+| VM またはハイブリッドワークロード | Istio VM 統合、Linkerd mesh expansion、Kong Universal モード、または Consul のサポート対象ランタイム | ワークロード ID、DNS、IP／API 到達性、ランタイム固有の制約 |
+| マルチクラスターまたはマルチクラウド | 選択したメッシュと外部ネットワーキングのサポート対象構成 | 信頼境界、設定配布、データ復旧、レイテンシー、転送料金 |
+| 詳細な可観測性 | 選択したメッシュと、適切なメトリクス／ログ／トレースのバックエンド | 実際のテレメトリラベル、アプリケーションのトレース伝播、サンプリング、保持、アクセス制御 |
 
-**比較基準**:
+これらは評価候補であり、自動的な製品推奨ではありません。トレースバックエンドやダッシュボードは、別途設定する依存関係です。必要なコンテキスト伝播／計装がなければ、どのメッシュもアプリケーション全体の完全なトレースを生成しません。
 
-* アーキテクチャとデプロイメントモデル
-* トラフィック管理機能
-* セキュリティモデル
-* 運用オーバーヘッド
-* コスト構造
-* ハイブリッドおよびマルチクラウド対応
+## アーキテクチャのクイック比較
 
-### 3. [Sidecar vs Ambient モード選択ガイド](03-sidecar-vs-ambient.md)
+| ソリューション | データプレーン | プラットフォームと運用上の考慮事項 |
+|---|---|---|
+| Istio | Envoy sidecar。Ambient はノードごとの ztunnel と、任意の Envoy waypoint を使用 | Kubernetes と文書化された VM 統合。モードごとに機能／トポロジーのサポートが異なる。セルフマネージドまたはベンダーディストリビューション |
+| Linkerd | Rust 製の linkerd2-proxy | Kubernetes に加え、ExternalWorkload と互換性のある ID／ネットワーキングを使う、文書化された非 Kubernetes の mesh expansion に対応。「VM 非対応」ではない |
+| Kong Mesh | Envoy データプレーンプロキシ | Kubernetes と Universal VM／ベアメタルモード。セルフホスト型またはマネージド型グローバルコントロールプレーンの選択肢があり、機能はエディションごとに異なる |
+| Consul service mesh | Consul の検出／コントロールプレーンと Envoy sidecar | Kubernetes、VM、その他のランタイムとの文書化された統合。選択したエディション／バージョンとプロキシ互換性を確認 |
+| Cilium | eBPF ネットワークデータパスと、L7 用の Envoy などのプロキシ | 有効なコンポーネントとプラットフォームサポートを確認。L7 実装が完全にプロキシ不要というわけではない |
 
-EKS 1.36 において Istio の sidecar モードと ambient モードを選択するための、テスト結果に基づく意思決定ガイド:
+Cilium 1.20.1 では、帯域外の相互認証が、帯域外ハンドシェイクを行う **Beta** 機能として文書化されています。トラフィック暗号化には、別途 WireGuard／IPsec の設定が必要です。この認証機能は、すべてのアプリケーション接続を Istio 形式の TLS セッションで自動的に包む機能と同じではありません。文書化されている Cluster Mesh および外部 mTLS の制約も考慮してください。
 
-* mTLS、NetworkPolicy、レイテンシー、ゼロダウンタイムロールアウト（waypoint 503）の 4 要件に対するテスト結果
-* sidecar よりも ambient waypoint 経由で高い 503 率を示す測定データ
-* ワークロード階層（コア / セミコア / 周辺）ごとの段階的な混在デプロイメントの推奨
+Cilium 1.20.1 には、独立した[ztunnel 透過暗号化の Beta 機能](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)もあり、`encryption.type: ztunnel` で選択します。名前空間単位で参加対象を登録する TCP ワークロード mTLS を提供し、通信する両方のエンドポイントを登録する必要があります。ClusterMesh と hostNetwork を使う Pod は対象外です。また、公開済みガイドでは、HBONE ポート 15008 を対象にする場合を除き、この経路では通常の L4 ポリシーが機能しないとされています。これは、独自の CA／ブートストラップ要件を持つ、別個のデプロイメント選択肢です。
 
-**比較基準**:
+Linkerd のプロジェクト上のマイルストーンバージョンと、実際にインストールするアーティファクトは別の選択です。公式リリースページには Linkerd 2.20 と、それに対応する edge リリースが掲載されています。オープンソースプロジェクトは edge アーティファクトを公開し、stable アーティファクトはベンダーが提供します。古いドキュメントリンクからアーティファクトやチャネルを推測せず、リリースガイダンス、Kubernetes 互換性、更新／サポート条件、サブスクリプション費用を確認してください。
 
-* mTLS の強制と検証
-* HBONE ポートに対する NetworkPolicy の相互作用
-* ロールアウト中の 503 率（測定値）
-* 非冪等 API におけるリトライポリシーのリスク
+### Istio と VPC Lattice
 
-## 選択ガイド
+| 観点 | Istio | VPC Lattice |
+|---|---|---|
+| デプロイメント | 運用するコントロールプレーン／データプレーン、または選択したベンダーディストリビューション | AWS がネットワークサービスを運用。利用者はサービス／リソース、アクセス、ターゲットを設定 |
+| プラットフォーム | 明示的なネットワーク／信頼の前提条件を持つ Kubernetes／VM 統合 | サポート対象サービスターゲット／リソース設定と文書化されたクライアント経路を伴う AWS ネットワーキング |
+| トラフィック／セキュリティモデル | モード固有のメッシュルーティング、ワークロード ID、ポリシー | リスナー／ルール／ターゲットとサービス認証ポリシーの契約。リソース設定には異なる制御がある |
+| 運用 | プロキシ／コントロールプレーンのライフサイクル、容量、証明書、ポリシー、テレメトリ | IAM／共有、DNS／エンドポイント、ターゲットヘルス、コントローラー統合、クォータ、テレメトリは引き続き利用者の作業 |
+| コスト | コンピューティング、ロードバランサー、転送、ストレージ／テレメトリ、任意のサポート | 適用されるプロビジョニング／使用量の課金項目に、周辺インフラと運用費を加算 |
+| ハイブリッド統合 | 明示的なゲートウェイ／信頼／ID の設計 | 明示的なリージョン内エンドポイント／ネットワーク経路と TLS／認証境界が必要。クロスクラウドメッシュ連携は自動ではない |
 
-### Service Mesh の選択基準
+機能評価や単一ベンダーの「エンタープライズサポート」欄は設けません。提供可否、ライセンス、サポートは実際のディストリビューション／契約によって異なり、統合機能が文書化されていても特定の構成が認証済みとは限りません。
 
-![Service Mesh を選択するための 2 つの判断経路を示すフローチャート。Kubernetes プラットフォーム優先の経路は Istio、Linkerd、または Consul/Kong Mesh に至り、AWS 中心の経路は VPC Lattice、EKS 上の Istio、Istio マルチクラスター、またはリージョナルソリューションに至ります。](../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png)
-
-### ユースケース別の推奨
-
-#### 大企業
-
-**推奨**: Istio
-
-* 豊富な機能セット
-* きめ細かなトラフィック制御
-* 強力なセキュリティ（Authorization Policies、mTLS）
-* マルチクラスター連携
-* 広範なエコシステムとコミュニティ
-
-**代替**: Kong Mesh（ユニバーサル control plane が必要な場合）
-
-#### スタートアップ / クイックスタート
-
-**推奨**: Linkerd
-
-* シンプルなインストールと運用
-* 低いリソースオーバーヘッド
-* 短い学習曲線
-* 自動 mTLS とメトリクス
-
-**代替**: VPC Lattice（AWS 中心のアーキテクチャの場合）
-
-#### AWS ネイティブアーキテクチャ
-
-**推奨**: VPC Lattice
-
-* フルマネージドサービス
-* 運用オーバーヘッドなし
-* AWS サービス統合（Lambda、ECS、EKS）
-* シンプルなクロス VPC/アカウント接続
-
-**代替**: EKS 上の Istio（より豊富な機能が必要な場合）
-
-#### マルチクラウド / ハイブリッド
-
-**推奨**: Istio または Consul Connect
-
-* クラウドニュートラル
-* VM ワークロード対応
-* マルチクラスター連携
-* 一貫したポリシーと可観測性
-
-#### レガシーシステム統合
-
-**推奨**: Consul Connect または Kong Mesh
-
-* VM ワークロードを優先したサポート
-* 段階的な移行が可能
-* Service Discovery 統合
-* 多様なプラットフォーム対応
-
-#### 強力な可観測性要件
-
-**推奨**: Istio
-
-* 豊富なメトリクス（Prometheus、OpenTelemetry）
-* 分散トレーシング（Jaeger、Zipkin、Tempo）
-* 詳細なアクセスログ
-* Kiali 統合
-* Grafana ダッシュボード
-
-**代替**: Linkerd（シンプルな可観測性要件の場合）
-
-## クイック比較表
-
-### Service Mesh の比較
-
-| 基準               | Istio        | Linkerd        | Kong Mesh   | Consul Connect |
-| ---------------------- | ------------ | -------------- | ----------- | -------------- |
-| **アーキテクチャ**       | Envoy proxy  | Linkerd2-proxy | Envoy proxy | Consul proxy   |
-| **リソース使用量**     | 高         | 低            | 中      | 中         |
-| **学習曲線**     | 急        | 緩やか        | 中      | 中         |
-| **機能の豊富さ**   | 5/5          | 3/5            | 4/5         | 4/5         |
-| **マルチクラスター**      | 優秀    | 対応済み      | 優秀   | 優秀      |
-| **VM 対応**         | 限定的      | なし           | 優秀   | 優秀      |
-| **コミュニティ**          | 非常に大規模   | 中規模         | 中規模      | 大規模          |
-| **エンタープライズサポート** | Google Cloud | Buoyant        | Kong        | HashiCorp      |
-
-### Istio vs VPC Lattice の比較
-
-| 基準                   | Istio             | VPC Lattice                 |
-| -------------------------- | ----------------- | --------------------------- |
-| **デプロイメントモデル**       | 自己管理      | フルマネージド               |
-| **プラットフォーム**               | Kubernetes        | AWS (EKS, ECS, EC2, Lambda) |
-| **運用の複雑さ** | 高              | 低                         |
-| **機能の豊富さ**       | 5/5               | 3/5                         |
-| **トラフィック制御**        | 非常にきめ細かい | 基本                       |
-| **コストモデル**             | リソースベース    | 使用量ベース                 |
-| **ベンダーロックイン**         | 低               | 高（AWS）                  |
-| **マルチクラウド**            | 対応済み         | AWS のみ                    |
-
-## 関連リソース
-
-### Istio ドキュメント
-
-* [Istio アーキテクチャ](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture)
-* [Istio トラフィック管理](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/)
-* [Istio セキュリティ](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/)
-* [Istio 可観測性](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/)
-
-### VPC Lattice ドキュメント
-
-* [VPC Lattice の概要](https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice)
-
-### 外部リファレンス
-
-* [Istio 公式ドキュメント](https://istio.io/latest/docs/)
-* [Linkerd 公式ドキュメント](https://linkerd.io/2.15/overview/)
-* [Kong Mesh 公式ドキュメント](https://docs.konghq.com/mesh/)
-* [Consul Connect ドキュメント](https://www.consul.io/docs/connect)
-* [AWS VPC Lattice ドキュメント](https://docs.aws.amazon.com/vpc-lattice/)
-
-## 移行ガイド
+## 移行ガイダンス
 
 ### Linkerd から Istio
 
-* より多くの機能が必要な場合
-* 段階的な移行: namespace ごとに移行
-* Annotation ベースの設定から Istio CRD への移行
+設定を移す前に、トラフィック API、リトライ／タイムアウト動作、認可、ID、証明書、テレメトリを調査します。Linkerd は CRD に加えてアノテーションも使います。移行は、アノテーションを Istio CRD に機械的に変換する作業ではありません。共存経路をテストしたうえで、サービスまたは名前空間の単位で段階的に移行し、同じ Pod でトラフィック捕捉が重複したり、メッシュ sidecar を二重に注入したりしないようにしてください。
 
-### 基本的な Kubernetes から Service Mesh
+### Kubernetes からメッシュへ
 
-* トラフィック管理、セキュリティ、可観測性のニーズの増加
-* Canary デプロイメント: 一部の Service から開始
-* sidecar injection の影響を評価
+ワークロード ID、ポリシー、レジリエンス、可観測性など、満たせていない要件を出発点にしてください。サービス数だけでメッシュが必要とは判断できません。既存の Service、メンテナンスされている Ingress／Gateway API 実装、NetworkPolicy、アプリケーション計装で要件を満たせる場合があります。対象を限定したワークロードで、sidecar 注入または Ambient への登録、起動／ドレイン、ポリシー適用、ロールバックをテストしてください。
 
-### VPC Lattice から Istio（またはその逆）
+### Istio と VPC Lattice
 
-* マルチクラウド要件と AWS ネイティブを優先する要件の比較
-* 機能の豊富さと運用のシンプルさの比較
-* ハイブリッドアプローチ: 同時利用が可能
+明示的に設定したサービス経路の中で、クラスター内には Istio、クラスター間には Lattice を使うハイブリッド構成が可能です。すべての TLS 終端と呼び出し元 ID を対応付けてください。Lattice の IAM 認証リクエストには文書化された署名／認可経路が必要です。メッシュ mTLS だけでは SigV4 ID もエンドツーエンドの SPIFFE 伝播も実現しません。同じルート、ターゲット、DNS リソースを複数のコントローラーに競合して管理させないでください。
 
 ## FAQ
 
 <details>
+<summary>Service Mesh は常に必要ですか？</summary>
 
-<summary>Q1: Service Mesh は本当に必要ですか？</summary>
-
-**回答**: Service Mesh は、以下のケースで推奨されます:
-
-* 数十以上のマイクロサービス
-* きめ細かなトラフィック制御（Canary、A/B Testing）が必要
-* 強力なセキュリティ要件（mTLS、Authorization）
-* 分散トレーシングと可観測性
-* マルチクラスター通信
-
-**小規模なサービス**または**シンプルなアーキテクチャ**では、基本的な Kubernetes Service と Ingress で十分な場合があります。
+すでに満たされていないネットワーキング、ID、ポリシー、可観測性の要件を特定してください。小規模なサービスにも強い ID 制御が必要なことがあり、大規模なシステムでは必要な制御を別の方法で実装済みの場合もあります。実際の運用費／リソース費と効果を比較してください。
 
 </details>
 
 <details>
+<summary>Istio と Linkerd のどちらを選ぶべきですか？</summary>
 
-<summary>Q2: Istio と Linkerd のどちらを選ぶべきですか？</summary>
-
-**Istio を選択**:
-
-* 豊富な機能が必要な場合
-* 大企業環境
-* きめ細かなトラフィック制御とポリシー
-* マルチクラスター連携
-
-**Linkerd を選択**:
-
-* シンプルで迅速な開始が必要な場合
-* リソース効率が重要な場合
-* 基本的な Service Mesh 機能のみが必要な場合
-* 運用の複雑さを最小化する場合
+必要なルーティング／セキュリティ／可観測性機能、プラットフォームサポート、運用手順を具体的に比較してください。Linkerd は「基本機能」や Kubernetes 専用ワークロードに限定されず、Istio の sidecar モードと Ambient モードでもリソース特性や機能範囲が異なります。同じ代表的なワークロードを実行して、決定前にリリース／サポートの選択肢も確認してください。
 
 </details>
 
 <details>
+<summary>VPC Lattice が候補になるのはどのような場合ですか？</summary>
 
-<summary>Q3: VPC Lattice はいつ使用すべきですか？</summary>
-
-**VPC Lattice を推奨**:
-
-* AWS 中心のアーキテクチャ
-* EKS + ECS + Lambda の混在環境
-* サーバーレス優先戦略
-* 運用オーバーヘッドの最小化
-* シンプルなマルチ VPC/アカウント接続
-
-**Istio を推奨**（VPC Lattice の代わりに）:
-
-* マルチクラウド戦略
-* きめ細かなトラフィック制御が必要
-* 豊富な可観測性要件
-* Kubernetes 中心のアーキテクチャ
+サポート対象のサービス／リソースモデルと AWS ネットワーキング／認証の契約が、アプリケーションに適合する場合です。コンテナ、EC2、Lambda の混在が関係する場合があります。「AWS 中心」または「サーバーレス」というだけでは十分ではありません。リージョン、クライアント経路、ターゲットタイプ、プロトコル、ID、コストの前提を確認してください。
 
 </details>
 
 <details>
+<summary>どの程度のオーバーヘッドを見込むべきですか？</summary>
 
-<summary>Q4: Service Mesh のパフォーマンスオーバーヘッドはどの程度ですか？</summary>
-
-**Istio**:
-
-* レイテンシー増加: 1-3ms（平均）
-* CPU オーバーヘッド: 5-15%
-* メモリ: Pod あたり +50-150MB
-
-**Linkerd**:
-
-* レイテンシー増加: 0.5-1ms（平均）
-* CPU オーバーヘッド: 3-8%
-* メモリ: Pod あたり +20-50MB
-
-**VPC Lattice**:
-
-* マネージドサービスのためインフラオーバーヘッドなし
-* 追加のネットワークホップによるわずかなレイテンシー増加
-* 使用量ベースのコストが発生
+あらゆる製品に当てはまるレイテンシー、CPU 比率、Pod あたりのメモリ量はありません。同等のポリシー、TLS、トラフィック、並行性、ノード／プロキシ／waypoint 数、障害時の動作を測定してください。再現可能なベンチマークでは、元のバージョンと生データを保持します。ネットワークがマネージドでも処理経路、可観測性作業、課金対象の使用量が増え、インフラへの影響がゼロになるわけではありません。
 
 </details>
 
 <details>
+<summary>複数のメッシュを共存させられますか？</summary>
 
-<summary>Q5: 複数の Service Mesh を同時に使用できますか？</summary>
-
-**回答**: 技術的には可能ですが、推奨されません。
-
-**課題**:
-
-* sidecar の競合の可能性
-* 複雑なトラブルシューティング
-* 二重のオーバーヘッド
-* 責任分離が不明確
-
-**例外的なユースケース**:
-
-* **Istio + VPC Lattice**: クラスター内部には Istio、クラスター間/外部接続には VPC Lattice
-* **段階的な移行**: Linkerd から Istio（namespace ごとに移行）
+クラスター／ワークロード群を分離するか、明示的な移行／ハイブリッド境界を設ければ共存できます。同じ Pod／ネットワーク経路上に複数のインターセプターを置くと、競合する可能性があります。名前空間を分ければ相互運用できると決めつけず、トラフィックの所有者、信頼／ID の変換、テレメトリ、ロールバックを定義してください。
 
 </details>
 
-***
+## 関連リソース
 
-**次のステップ**: 詳細な比較ドキュメントを読み、環境に最も適したソリューションを選択してください。
+- [Istio アーキテクチャ](../03-architecture.md)
+- [トラフィック管理](../traffic-management/README.md)
+- [セキュリティ](../security/README.md)
+- [可観測性](../observability/README.md)
+- [VPC Lattice](../../../networking/02-vpc-lattice.md)
+- [Linkerd](../../linkerd/README.md)
+- [Cilium service mesh](../../cilium-service-mesh/README.md)
+
+## 公式リファレンス
+
+- [Istio ドキュメント](https://istio.io/latest/docs/)および[VM 統合](https://istio.io/latest/docs/setup/install/virtual-machine/)
+- [Linkerd 概要](https://linkerd.io/docs/overview/)、[mesh expansion](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/)、[リリースチャネル](https://linkerd.io/releases/)
+- [Kong Mesh](https://developer.konghq.com/mesh/)および[アーキテクチャ](https://developer.konghq.com/mesh/architecture/)
+- [Consul service mesh](https://developer.hashicorp.com/consul/docs/connect)
+- [Cilium 1.20.1 mesh アーキテクチャのソース](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/index.rst)および[相互認証のステータス](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [VPC Lattice の構成要素と責務](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)

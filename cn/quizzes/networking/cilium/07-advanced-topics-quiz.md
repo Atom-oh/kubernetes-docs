@@ -1,7 +1,7 @@
 # Cilium 高级测验
 
 > **复习基准版本**：Cilium 1.20.3；Cilium CLI 0.20.1；Hubble CLI 1.20.2。
-> **最后审阅日期**：October 16, 2026。
+> **最后审阅日期**：2026年10月16日。
 
 [返回指南](../../../networking/cilium/07-advanced-topics.md)
 
@@ -10,16 +10,16 @@
 1. **本课程讨论的 Linux eBPF 数据路径程序在哪里执行？**
 
    - A) 仅在浏览器中
-   - B) 在 Linux 内核支持的挂载点上
+   - B) 在 Linux 内核支持的钩子处
    - C) 仅在 Envoy 内部
    - D) 在 Kubernetes API 服务器中
 
    <details>
    <summary>显示答案</summary>
 
-   **答案：B) 在 Linux 内核支持的挂载点上**
+   **答案：B) 在 Linux 内核支持的钩子处**
 
-   Cilium 会将 eBPF 程序挂载到内核挂载点。用户空间组件负责加载和管理这些程序。
+   Cilium 会将 eBPF 程序附加到内核钩子上。用户空间组件负责加载和管理这些程序。
 
    </details>
 
@@ -339,7 +339,7 @@
 
 ## 性能和故障排查
 
-21. **哪种机制可以在原生驱动挂载点处理受支持的外部 Service 转发？**
+21. **哪种机制可以在原生驱动钩子处处理受支持的外部 Service 转发？**
 
    - A) Grafana 仪表板
    - B) XDP 加速

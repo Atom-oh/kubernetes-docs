@@ -1,6 +1,6 @@
 # ExampleCorp 订单系统：ACK + kro 集成
 
-> **最后更新**：October 16, 2026 · kro 0.9.4 / AWS Load Balancer Controller 3.6.0
+> **最后更新**：2026年10月16日 · kro 0.9.4 / AWS Load Balancer Controller 3.6.0
 
 ## 场景和验证范围
 

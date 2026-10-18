@@ -1,14 +1,14 @@
 # Cuestionario de Kubeflow Pipelines
 
-Este cuestionario evalúa tu comprensión de la arquitectura de Kubeflow Pipelines, el modelo de compilación YAML de KFP v2 IR, los conceptos principales (Pipeline, Component, Run, Experiment, Artifact, MLMD), las consideraciones de almacenamiento de Artifact en EKS y el comportamiento de la caché.
+Este cuestionario evalúa tu comprensión de la arquitectura de Kubeflow Pipelines, el modelo de compilación YAML de IR de KFP v2, los conceptos principales (Pipeline, Component, Run, Experiment, Artifact, MLMD), el almacenamiento de artefactos en EKS y el comportamiento de la caché.
 
 ## Preguntas de opción múltiple
 
-1. ¿Qué motor administra la secuenciación de workflows y la creación de Pods en el backend de KFP 2.16.1 de código abierto utilizado aquí?
+1. ¿Qué motor administra la secuenciación de flujos de trabajo y la creación de Pods en el backend de KFP 2.16.1 de código abierto utilizado aquí?
    - A) Apache Airflow
    - B) Argo Workflows
    - C) Tekton Pipelines
-   - D) Kubernetes CronJobs directamente, sin un motor de workflow subyacente
+   - D) Kubernetes CronJobs directamente, sin un motor de flujos de trabajo subyacente
 
 <details>
 
@@ -17,12 +17,12 @@ Este cuestionario evalúa tu comprensión de la arquitectura de Kubeflow Pipelin
 **Respuesta: B) Argo Workflows**
 
 **Explicación:**
-Este backend traduce IR para un Run en recursos de Argo Workflow. Argo administra el orden y la creación de Pods; el scheduler de Kubernetes ubica los Pods en nodos. Cargar un pipeline por sí solo no crea un Run.
+Este backend traduce IR para una ejecución (Run) en recursos de Argo Workflow. Argo administra el orden y la creación de Pods; el planificador de Kubernetes ubica los Pods en nodos. Cargar un pipeline por sí solo no crea una ejecución.
 </details>
 
-2. ¿Cuál es la diferencia arquitectónica clave entre el compilador de KFP v1 SDK y el compilador de KFP v2 SDK?
+2. ¿Cuál es la diferencia arquitectónica clave entre el compilador del SDK de KFP v1 y el del SDK de KFP v2?
    - A) v1 compila a IR YAML; v2 compila directamente a Argo Workflow YAML
-   - B) v1 compila directamente a Argo Workflow YAML; v2 compila a un Intermediate Representation (IR) YAML independiente del backend
+   - B) v1 compila directamente a YAML de Argo Workflow; v2 compila a YAML de una representación intermedia (IR) independiente del backend
    - C) No hay diferencia — ambos producen resultados idénticos
    - D) v2 eliminó por completo la necesidad de compilación
 
@@ -30,29 +30,29 @@ Este backend traduce IR para un Run en recursos de Argo Workflow. Argo administr
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) v1 compila directamente a Argo Workflow YAML; v2 compila a un Intermediate Representation (IR) YAML independiente del backend**
+**Respuesta: B) v1 compila directamente a YAML de Argo Workflow; v2 compila a YAML de una representación intermedia (IR) independiente del backend**
 
 **Explicación:**
-El `dsl-compile` de v1 SDK producía directamente un manifiesto YAML `Workflow` específico de Argo. v2 SDK compila a un IR YAML independiente del backend (`PipelineSpec`) que describe el DAG, los componentes y los artifacts tipados; este backend traduce IR para la creación de Run, sujeto a la compatibilidad de la versión del backend y de las extensiones de plataforma.
+El comando `dsl-compile` del SDK v1 producía directamente un manifiesto YAML `Workflow` específico de Argo. El SDK v2 compila a un IR YAML independiente del backend (`PipelineSpec`) que describe el DAG, los componentes y los artefactos tipados; este backend traduce IR para crear una ejecución, sujeto a la compatibilidad de la versión del backend y de las extensiones de plataforma.
 </details>
 
-3. ¿Qué componente de Kubeflow Pipelines es responsable de registrar ejecuciones registradas y sus relaciones de artifact de entrada/salida, lo que permite el rastreo de linaje en la UI de KFP?
+3. ¿Qué componente de Kubeflow Pipelines registra las ejecuciones y las relaciones entre sus artefactos de entrada y salida para permitir el rastreo del linaje en la interfaz de KFP?
    - A) El Argo Workflow Controller
-   - B) El almacén ML Metadata (MLMD)
-   - C) El almacén de artifacts MinIO
+   - B) El almacén de ML Metadata (MLMD)
+   - C) El almacén de artefactos MinIO
    - D) El compilador de KFP SDK
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El almacén ML Metadata (MLMD)**
+**Respuesta: B) El almacén de ML Metadata (MLMD)**
 
 **Explicación:**
-MLMD almacena relaciones de ejecución/artifact registradas, no todos los efectos secundarios externos ni la integridad de los bytes de los archivos. Registra las revisiones y los hashes del código y los datos para lograr reproducibilidad.
+MLMD almacena las relaciones registradas entre ejecuciones y artefactos, pero no todos los efectos secundarios externos ni la integridad de los bytes de los archivos. Registra las revisiones y los hashes del código y los datos para lograr reproducibilidad.
 </details>
 
-4. En KFP v2 SDK, ¿cómo declara un componente que produce un artifact tipado de tipo `Dataset` para que lo consuman los componentes posteriores?
+4. En el SDK de KFP v2, ¿cómo declara un componente que produce un artefacto `Dataset` tipado para que lo consuman los componentes posteriores?
    - A) Devolviendo un diccionario de Python simple
    - B) Declarando un parámetro tipado como `Output[Dataset]`
    - C) Escribiendo en una ruta codificada de forma fija `/tmp/dataset.csv` sin declaración de tipo
@@ -65,28 +65,28 @@ MLMD almacena relaciones de ejecución/artifact registradas, no todos los efecto
 **Respuesta: B) Declarando un parámetro tipado como `Output[Dataset]`**
 
 **Explicación:**
-KFP v2 proporciona a los artifacts tipos de primera clase (`Dataset`, `Model`, `Metrics`, etc.). Un parámetro de componente tipado como `Output[Dataset]` declara el tipo y la conexión; el runtime prepara las rutas y transfiere ese artifact a cualquier componente posterior que declare un parámetro `Input[Dataset]` coincidente.
+KFP v2 ofrece tipos de primera clase para los artefactos, como `Dataset`, `Model` y `Metrics`. Un parámetro de componente tipado como `Output[Dataset]` declara el tipo y su conexión; el entorno de ejecución prepara las rutas y transfiere el artefacto a los componentes posteriores que declaren el parámetro coincidente `Input[Dataset]`.
 </details>
 
 5. ¿Qué se necesita para usar S3 en lugar de MinIO en la instalación predeterminada revisada?
    - A) El valor predeterminado es S3; el patrón lo cambia a MinIO
-   - B) Configurar el pipeline root, el proveedor y la cadena de credenciales para S3 en lugar de MinIO incluido
-   - C) No hay un almacén de artifacts predeterminado — siempre se debe configurar uno manualmente
+   - B) Configurar la raíz del pipeline, el proveedor y la cadena de credenciales para S3 en lugar del MinIO incluido
+   - C) No hay un almacén de artefactos predeterminado — siempre se debe configurar uno manualmente
    - D) El valor predeterminado es EFS; el patrón lo cambia a EBS
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configurar el pipeline root, el proveedor y la cadena de credenciales para S3 en lugar de MinIO incluido**
+**Respuesta: B) Configurar la raíz del pipeline, el proveedor y la cadena de credenciales para S3 en lugar del MinIO incluido**
 
 **Explicación:**
-El paquete predeterminado incluye MinIO, pero otras instalaciones y los URI de artifact importados pueden diferir. Usa la guía actual del object store de KFP. S3 tiene cargos de almacenamiento/solicitudes/transferencia; la guía de distribución de AWS heredada no es una receta de instalación verificada para la versión actual.
+El paquete predeterminado incluye MinIO, pero otras instalaciones y los URI de artefactos importados pueden diferir. Usa la guía vigente del almacén de objetos de KFP. S3 tiene cargos de almacenamiento/solicitudes/transferencia; la guía de distribución de AWS heredada no es una receta de instalación verificada para la versión actual.
 </details>
 
-6. Cuando el almacén de artifacts de KFP apunta a S3 en lugar de MinIO dentro del clúster, ¿qué mecanismo de identidad pasa a ser directamente relevante para el ServiceAccount de ejecución de Run real y los componentes que acceden a artifacts?
+6. Cuando el almacén de artefactos de KFP apunta a S3 en lugar de MinIO dentro del clúster, ¿qué mecanismo de identidad es directamente relevante para la cuenta de servicio (ServiceAccount) que utilizan los Pods de la ejecución (Run) y para los componentes que acceden a los artefactos?
    - A) Ninguno — el acceso a S3 funciona sin ninguna configuración de identidad de AWS
-   - B) IRSA o Pod Identity con SDK, confianza, soporte de runtime y permisos de S3 restringidos verificados
+   - B) IRSA o Pod Identity, con el SDK, la relación de confianza, la compatibilidad del entorno de ejecución y los permisos de S3 de alcance limitado debidamente verificados
    - C) Una clave de acceso de AWS codificada de forma fija en la imagen de contenedor de cada componente
    - D) Solo Kubernetes RBAC es suficiente para el acceso a S3
 
@@ -94,13 +94,13 @@ El paquete predeterminado incluye MinIO, pero otras instalaciones y los URI de a
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) IRSA o Pod Identity con SDK, confianza, soporte de runtime y permisos de S3 restringidos verificados**
+**Respuesta: B) IRSA o Pod Identity, con el SDK, la relación de confianza, la compatibilidad del entorno de ejecución y los permisos de S3 de alcance limitado debidamente verificados**
 
 **Explicación:**
-Una vez que las lecturas/escrituras de artifacts van directamente a AWS en lugar de al endpoint de MinIO dentro del clúster, el ServiceAccount bajo el que se ejecutan los Pods del pipeline KFP necesita un rol de IRSA o una asociación de EKS Pod Identity con permisos sobre ese bucket de S3.
+Cuando las lecturas y escrituras de artefactos se dirigen directamente a AWS en lugar del endpoint de MinIO dentro del clúster, el ServiceAccount con el que se ejecutan los Pods del pipeline de KFP necesita un rol de IRSA o una asociación de EKS Pod Identity con permisos sobre ese bucket de S3.
 </details>
 
-7. En el pipeline de ejemplo de dos pasos (`prepare_data` -> `train_model`), ¿cómo se pasa el artifact `Dataset` del primer componente al segundo?
+7. En el pipeline de ejemplo de dos pasos (`prepare_data` -> `train_model`), ¿cómo se pasa el artefacto `Dataset` del primer componente al segundo?
    - A) Escribiéndolo en una variable global compartida entre ambos componentes
    - B) Mediante `train_model(input_dataset=prep_task.outputs["output_dataset"])`, conectando la salida declarada del primer componente con la entrada tipada del segundo
    - C) Almacenándolo en una variable de entorno
@@ -113,12 +113,12 @@ Una vez que las lecturas/escrituras de artifacts van directamente a AWS en lugar
 **Respuesta: B) Mediante `train_model(input_dataset=prep_task.outputs["output_dataset"])`, conectando la salida declarada del primer componente con la entrada tipada del segundo**
 
 **Explicación:**
-Dentro de la función decorada con `@dsl.pipeline`, `prep_task.outputs["output_dataset"]` se refiere al parámetro `Output[Dataset]` declarado por `prepare_data`, y pasarlo al parámetro `input_dataset: Input[Dataset]` de `train_model` es cómo el SDK conecta la dependencia de artifact entre los dos Pods que se ejecutan de forma independiente.
+Dentro de la función decorada con `@dsl.pipeline`, `prep_task.outputs["output_dataset"]` se refiere al parámetro `Output[Dataset]` declarado por `prepare_data`, y pasarlo al parámetro `input_dataset: Input[Dataset]` de `train_model` es cómo el SDK conecta la dependencia del artefacto entre los dos Pods que se ejecutan de forma independiente.
 </details>
 
 8. ¿Cómo decide KFP si reutilizar un resultado en caché en lugar de volver a ejecutar un componente?
    - A) Siempre vuelve a ejecutar cada componente independientemente de las entradas
-   - B) Calcula un hash de las entradas del componente (valores de parámetros, nombres/ID de artifacts de entrada y la imagen/comando del contenedor, especificaciones de salida y configuración relacionada) y reutiliza las salidas en caché ante un hash coincidente de una ejecución exitosa anterior
+   - B) Calcula un hash de las entradas del componente (valores de parámetros, nombres/ID de artefactos de entrada y la imagen/comando del contenedor, especificaciones de salida y configuración relacionada) y reutiliza las salidas almacenadas en caché cuando el hash coincide con el de una ejecución anterior que finalizó correctamente
    - C) Vuelve a ejecutar componentes solo si el nombre del pipeline ha cambiado
    - D) El almacenamiento en caché se basa únicamente en el tiempo de reloj transcurrido desde la última ejecución
 
@@ -126,10 +126,10 @@ Dentro de la función decorada con `@dsl.pipeline`, `prep_task.outputs["output_d
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Calcula un hash de las entradas del componente (valores de parámetros, nombres/ID de artifacts de entrada y la imagen/comando del contenedor, especificaciones de salida y configuración relacionada) y reutiliza las salidas en caché ante un hash coincidente de una ejecución exitosa anterior**
+**Respuesta: B) Calcula un hash de las entradas del componente (valores de parámetros, nombres/ID de artefactos de entrada y la imagen/comando del contenedor, especificaciones de salida y configuración relacionada) y reutiliza las salidas almacenadas en caché cuando el hash coincide con el de una ejecución anterior que finalizó correctamente**
 
 **Explicación:**
-La clave 2.16.1 utiliza valores de parámetros, ID de artifact y configuración de contenedor/salida, no un hash nuevo de los bytes de los archivos. Modificar bytes o una etiqueta de imagen puede dejar la clave sin cambios. La búsqueda se limita al nombre del pipeline y al namespace.
+La clave 2.16.1 utiliza valores de parámetros, ID de artefactos y configuración del contenedor y las salidas, no un hash nuevo de los bytes de los archivos. Modificar bytes o una etiqueta de imagen puede dejar la clave sin cambios. La búsqueda se limita al nombre del pipeline y al namespace.
 
 El contenido de los archivos, las etiquetas de imagen mutables y el estado externo no invalidan automáticamente la clave. Registra las versiones/hashes de datos como entradas explícitas o deshabilita la caché.
 </details>
@@ -142,27 +142,27 @@ El contenido de los archivos, las etiquetas de imagen mutables y el estado exter
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Por componente, mediante `set_caching_options(enable_caching=False)` en la tarea; por Run, mediante un envío de cliente autenticado con `enable_caching=False`.**
+**Respuesta: Por componente, mediante `set_caching_options(enable_caching=False)` en la tarea; por ejecución, al enviarla con un cliente autenticado y `enable_caching=False`.**
 
 **Explicación:**
-`prep_task.set_caching_options(enable_caching=False)` deshabilita la caché para una tarea de componente específica dentro de la función del pipeline. Como alternativa, la caché de todo el envío del pipeline puede deshabilitarse en el momento del envío de Run, en lugar de componente por componente.
+`prep_task.set_caching_options(enable_caching=False)` deshabilita la caché para una tarea de componente específica dentro de la función del pipeline. Como alternativa, la caché de todo el pipeline puede deshabilitarse al enviar la ejecución, en lugar de hacerlo componente por componente.
 </details>
 
-10. ¿Qué produce realmente el paso de compilación de KFP SDK y qué sucede con esa salida una vez que llega al servidor de API de KFP?
+10. ¿Qué produce realmente el paso de compilación del SDK de KFP y qué sucede con esa salida una vez que llega al servidor de la API de KFP?
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Produce un Intermediate Representation (IR) YAML — un `PipelineSpec` independiente del backend. Después de la carga y la creación de Run, este backend traduce el IR YAML a un `Workflow` de Argo, cuya creación de Pods es administrada por Argo y cuya ubicación en nodos es administrada por Kubernetes.**
+**Respuesta: Produce un YAML de representación intermedia (IR), es decir, un `PipelineSpec` independiente del backend. Después de la carga y la creación de una ejecución, este backend traduce el IR YAML a un `Workflow` de Argo, cuya creación de Pods es administrada por Argo y cuya ubicación en nodos es administrada por Kubernetes.**
 
 **Explicación:**
-La compilación produce IR; el paquete también proporciona API de cliente y soporte de runtime de Python. La creación de Run activa el procesamiento de workflow del backend. Las versiones de IR del backend y las extensiones de plataforma deben ser compatibles.
+La compilación produce IR; el paquete también ofrece API de cliente y soporte del entorno de ejecución de Python. La creación de una ejecución activa el procesamiento del flujo de trabajo en el backend. Las versiones de IR del backend y las extensiones de plataforma deben ser compatibles.
 </details>
 
 ## Preguntas prácticas
 
-11. Escribe una función `@dsl.component` llamada `prepare_data` que declare un único parámetro `Output[Dataset]` y escriba un pandas DataFrame en él como CSV.
+11. Escribe una función `@dsl.component` llamada `prepare_data` que declare un único parámetro `Output[Dataset]` y escriba en él un DataFrame de pandas en formato CSV.
 
 <details>
 
@@ -182,7 +182,7 @@ def prepare_data(output_dataset: Output[Dataset]):
 ```
 
 **Explicación:**
-`output_dataset: Output[Dataset]` declara una salida de artifact tipado; el runtime prepara `output_dataset.path` como la ubicación de almacenamiento en la que escribe el componente, que los componentes posteriores pueden declarar entonces como un `Input[Dataset]`.
+`output_dataset: Output[Dataset]` declara una salida de artefacto tipado; el entorno de ejecución prepara `output_dataset.path` como la ubicación de almacenamiento en la que escribe el componente, que los componentes posteriores pueden declarar entonces como un `Input[Dataset]`.
 </details>
 
 12. Escribe una función `@dsl.pipeline` que conecte la salida de `prepare_data` con el parámetro `input_dataset` de un componente `train_model`.
@@ -202,7 +202,7 @@ def data_prep_train_pipeline():
 ```
 
 **Explicación:**
-`prep_task.outputs["output_dataset"]` hace referencia al artifact producido por el parámetro `Output[Dataset]` de `prepare_data` (llamado `output_dataset`), y pasarlo como argumento `input_dataset` de `train_model` crea la arista del DAG entre los dos componentes.
+`prep_task.outputs["output_dataset"]` hace referencia al artefacto producido por el parámetro `Output[Dataset]` de `prepare_data` (llamado `output_dataset`), y pasarlo como argumento `input_dataset` de `train_model` crea la arista del DAG entre los dos componentes.
 </details>
 
 13. Escribe el código para deshabilitar la caché en una única tarea de pipeline llamada `prep_task`.

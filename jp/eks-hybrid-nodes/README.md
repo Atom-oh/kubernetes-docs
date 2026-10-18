@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes
 
 > **サポート対象バージョン**: 現在 EKS がサポートするバージョン。例は EKS 1.36 / nodeadm 1.0.20 向けにレビュー済み
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月12日
 
 Amazon EKS Hybrid Nodes は、顧客が運用するオンプレミスまたはエッジのノードを、AWS が管理する EKS control plane に接続します。ホスト、オペレーティングシステム、接続性、ワークロードの運用は引き続きお客様が担います。このガイドでは、サポート対象のインターフェイスと設定例を区別しています。特定のオンプレミス本番デプロイメントがテスト済みであることを示すものではありません。
 
@@ -93,7 +93,7 @@ Bottlerocket のサポート対象 VMware バリアントは独自のブート�
 | スケール / コスト | SSM のノード登録料金またはノード単位の管理料金は不要。機能使用料金は別 | IAM Roles Anywhere の quota と PKI 運用要件を確認 |
 | 一般的な選択 | 既存の PKI がない場合。より簡単な登録 | 既存の PKI と管理された証明書ライフサイクル |
 
-**料金確認日: September 16, 2026:** SSM は 2026 年 6 月 30 日付で Advanced Instances Tier を廃止しました。Session Manager および Run Command の利用規約については[最新の SSM 料金](https://aws.amazon.com/systems-manager/pricing/)を確認してください。[EKS Hybrid Nodes の vCPU 料金](https://aws.amazon.com/eks/pricing/)は別です。
+**料金確認日: 2026年9月16日:** SSM は 2026 年 6 月 30 日付で Advanced Instances Tier を廃止しました。Session Manager および Run Command の利用規約については[最新の SSM 料金](https://aws.amazon.com/systems-manager/pricing/)を確認してください。[EKS Hybrid Nodes の vCPU 料金](https://aws.amazon.com/eks/pricing/)は別です。
 
 Roles Anywhere profile はカスタム role session name を受け入れる必要があり、trust policy は選択した certificate attribute にそれをバインドする必要があります。その実効セッション期間は IAM role の最大値を**超えてはなりません**。CreateSession API では同じ値が許可されます。[前提条件](01-prerequisites.md)で、これらの契約と安全な準備について詳しく説明しています。
 

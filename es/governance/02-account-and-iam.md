@@ -19,13 +19,13 @@ Trate la marca como metadato si solo se necesita separar costos y promuévala a 
 
 > **Planificación de una escisión**: se admite compartir subredes dentro de una misma organización. Prepare una migración de red independiente antes de salir. Los recursos existentes pueden seguir funcionando después de dejar de compartir, pero la creación de nuevos recursos y el reemplazo o escalado de servicios administrados pueden verse afectados. Dejar de compartir no elimina ni detiene de inmediato todos los recursos.
 
-## 2. Relación entre las cuentas y el runtime de EKS
+## 2. Relación entre las cuentas y el entorno de ejecución de EKS
 
 Una vez decidida la partición de cuentas, hay que decidir en qué cuenta se ejecutará el clúster EKS que aloja las cargas de trabajo de Kubernetes.
 
 | Opción | Configuración | Ventajas | Desventajas |
 |---|---|---|---|
-| EKS dedicado por cuenta de cargas de trabajo | Cada cuenta de cargas de trabajo es propietaria de su propio clúster EKS | La titularidad de la cuenta y la del runtime, así como sus radios de impacto, quedan alineadas | Incluso las cargas pequeñas necesitan un clúster, lo que aumenta el número de clústeres que hay que administrar y la capacidad ociosa |
+| EKS dedicado por cuenta de cargas de trabajo | Cada cuenta de cargas de trabajo es propietaria de su propio clúster EKS | La responsabilidad sobre la cuenta y el entorno de ejecución queda alineada, al igual que el radio de impacto | Incluso las cargas pequeñas necesitan un clúster, lo que aumenta el número de clústeres que hay que administrar y la capacidad ociosa |
 | **Cuenta de cargas de trabajo + cuenta de clúster compartido** | Los recursos como Lambda/SQS/DB residen en cada cuenta de cargas de trabajo, mientras que las cargas de Kubernetes se ejecutan en EKS compartido en una cuenta de clúster independiente | Los límites de cuenta y el número de clústeres EKS que se deben administrar se pueden decidir por separado | La identidad entre cuentas, la red y la titularidad del clúster se vuelven más complejas |
 
 En el segundo patrón, distinga los roles IAM de la cuenta del clúster del acceso a los datos de otra cuenta. Con una VPC compartida, la cuenta que crea EKS es la **cuenta del clúster**, que puede ser distinta de la cuenta de cargas de trabajo que solo es propietaria de una base de datos o una cola. Elija según corresponda el encadenamiento de roles de destino con Pod Identity, las políticas de recursos del servicio o IRSA.
@@ -77,21 +77,21 @@ Los elementos siguientes no son opciones mutuamente excluyentes; se combinan seg
 
 | Método | Configuración | Adecuado para |
 |---|---|---|
-| Rol del runtime | Asociar un rol de IAM a un entorno de ejecución (EC2/Lambda/ECS, etc.) | Cargas de trabajo que no son de EKS |
+| Rol del entorno de ejecución | Asociar un rol de IAM a un entorno de ejecución (EC2/Lambda/ECS, etc.) | Cargas de trabajo que no son de EKS |
 | **EKS Pod Identity** | Asociar un Pod a un rol de IAM mediante una asociación de Pod Identity | Cargas de trabajo de EKS compatibles (dirección recomendada) |
 | IRSA | Tokens de cuentas de servicio de Kubernetes + proveedor OIDC de IAM | Clústeres/cadenas de herramientas existentes que necesitan compatibilidad |
 | **Rol de destino entre cuentas** | El rol de origen asume un rol de la cuenta de destino | Rutas que deben ejecutarse con permisos del rol de destino |
 
 Permita claves de acceso estáticas solo como excepción para integraciones heredadas que no admitan roles ni federación, y documente de forma explícita el propósito, el propietario, la fecha de vencimiento y la rotación.
 
-El rol principal de la asociación de Pod Identity está en la cuenta del clúster. Al establecer `targetRoleArn`, se encadenan dos roles, mientras que las políticas de recursos compatibles pueden autorizar directamente a ese rol de origen. IRSA también puede federarse directamente con un proveedor OIDC/rol de una cuenta de destino. La reutilización de roles y el diseño de etiquetas y políticas de sesión determinan el número de roles; «exactamente dos por carga de trabajo» no es una regla universal. Los roles de cargas de trabajo para las API de AWS se cuentan por separado de las entradas de acceso para el acceso a la API de Kubernetes.
+El rol principal de la asociación de Pod Identity está en la cuenta del clúster. Al establecer targetRoleArn, se encadenan dos roles, mientras que las políticas de recursos compatibles pueden autorizar directamente a ese rol de origen. IRSA también puede federarse directamente con un proveedor OIDC/rol de una cuenta de destino. La reutilización de roles y el diseño de etiquetas y políticas de sesión determinan el número de roles; «exactamente dos por carga de trabajo» no es una regla universal. Los roles de cargas de trabajo para las API de AWS se cuentan por separado de las entradas de acceso para el acceso a la API de Kubernetes.
 
 ## 5. Acceso a la API de Kubernetes
 
 | Método | Configuración | Estado |
 |---|---|---|
 | **Entradas de acceso de EKS** | Administrar el acceso al clúster por principal de IAM mediante entradas de acceso, con una política de acceso o una asignación de grupo de Kubernetes para RBAC | Dirección recomendada |
-| ConfigMap `aws-auth` | Administrar la asignación de principales de IAM a identidades de Kubernetes mediante el ConfigMap `aws-auth` del clúster | Mantener solo como excepción durante la migración de clústeres heredados |
+| ConfigMap aws-auth | Administrar la asignación de principales de IAM a identidades de Kubernetes mediante el ConfigMap `aws-auth` del clúster | Mantener solo como excepción durante la migración de clústeres heredados |
 
 **Unión de permisos**: las concesiones de las políticas de acceso y de RBAC de Kubernetes se combinan; ninguna restringe a la otra. Registre la ruta principal de cada principal y las concesiones adicionales intencionales, y revise las superposiciones. Las comprobaciones automatizadas son opciones útiles de implementación, no requisitos previos para usar la API.
 

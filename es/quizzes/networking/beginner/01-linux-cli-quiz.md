@@ -5,13 +5,13 @@
 
 [Volver a la lección](../../../networking/beginner/01-linux-cli.md) | [Preparación del curso](../../../networking/beginner/README.md)
 
-Elige una respuesta antes de abrir su explicación. Estos escenarios usan la máquina virtual desechable y el cuaderno privado de la lección 1. Los comandos de las preguntas sirven para interpretar, no son instrucciones para ejecutar en tu host.
+Elige una respuesta antes de abrir su explicación. Estos escenarios usan la máquina virtual desechable y el cuaderno privado de la lección 1. Los comandos de las preguntas sirven para interpretar, no son instrucciones para ejecutar en el equipo anfitrión.
 
 1. `cat /etc/os-release` identifica Ubuntu 24.04, mientras que `uname -r` imprime otro número de versión. ¿Qué explicación encaja?
 
    - A) Uno de los comandos debe estar averiado porque Linux solo tiene un número de versión.
    - B) Ubuntu es una biblioteca y `uname` identifica el terminal.
-   - C) Ubuntu es una distribución; `uname -r` informa sobre el kernel en ejecución. Las bibliotecas y el shell son componentes de espacio de usuario independientes.
+   - C) Ubuntu es una distribución; `uname -r` informa sobre el núcleo (kernel) en ejecución. Las bibliotecas y el shell son componentes independientes del espacio de usuario.
    - D) Instalar un editor nuevo siempre reemplaza el kernel.
 
 <details>
@@ -19,7 +19,7 @@ Elige una respuesta antes de abrir su explicación. Estos escenarios usan la má
 
 **Respuesta: C**
 
-**Explicación:** Una distribución reúne un kernel, bibliotecas, herramientas, repositorios y configuración. El kernel administra los recursos y expone llamadas al sistema; una biblioteca proporciona funciones reutilizables, algunas de las cuales usan esas llamadas. Bash interpreta comandos en el espacio de usuario. Sus versiones no tienen por qué coincidir con la versión de la distribución. Debian es la familia de la que deriva Ubuntu, pero esa relación no garantiza que los valores predeterminados sean idénticos.
+**Explicación:** Una distribución reúne un núcleo, bibliotecas, herramientas, repositorios y configuración. El núcleo administra los recursos y expone llamadas al sistema; una biblioteca proporciona funciones reutilizables, algunas de las cuales usan esas llamadas. Bash interpreta comandos en el espacio de usuario. Sus versiones no tienen por qué coincidir con la versión de la distribución. Debian es la familia de la que deriva Ubuntu, pero esa relación no garantiza que los valores predeterminados sean idénticos.
 
 </details>
 
@@ -27,7 +27,7 @@ Elige una respuesta antes de abrir su explicación. Estos escenarios usan la má
 
    - A) Solo `archive/saved.txt`; `cp` eliminó el borrador.
    - B) `notes/draft.txt` y `archive/saved.txt`; `notes/copy.txt` ya no existe.
-   - C) Los tres archivos; `mv` es otra forma de escribir copy.
+   - C) Los tres archivos; `mv` es otra forma de copiar.
    - D) Archivos en `/notes` y `/archive`, porque las rutas relativas empiezan en `/`.
 
 <details>
@@ -35,7 +35,7 @@ Elige una respuesta antes de abrir su explicación. Estos escenarios usan la má
 
 **Respuesta: B**
 
-**Explicación:** `cp` deja el origen en su lugar y crea una copia; `mv` cambia la ubicación/el nombre de la copia. Las rutas relativas empiezan en el directorio de trabajo, por eso es importante comprobar `pwd`. `-i` pregunta antes de sobrescribir un destino existente; no proporciona un historial general de deshacer. Más adelante, la copia guardada puede recuperar el borrador.
+**Explicación:** `cp` deja el origen en su lugar y crea una copia; `mv` cambia la ubicación o el nombre de la copia. Las rutas relativas empiezan en el directorio de trabajo, por eso es importante comprobar `pwd`. `-i` pregunta antes de sobrescribir un destino existente; no proporciona un historial general de deshacer. Más adelante, la copia guardada puede recuperar el borrador.
 
 </details>
 
@@ -163,7 +163,7 @@ Elige una respuesta antes de abrir su explicación. Estos escenarios usan la má
 
 **Respuesta: B**
 
-**Explicación:** El estado de ejecución y la habilitación son cosas distintas. `start` afecta a la operación actual, mientras que `enable` crea enlaces de habilitación y no inicia por sí mismo una unidad, a menos que se combine con `--now`. Una unidad estática no está averiada por definición. Lea `Loaded`, `Active` y los registros pertinentes en vez de cambiar servicios del sistema para forzar una salida concreta.
+**Explicación:** El estado de ejecución y la habilitación son cosas distintas. `start` afecta a la operación actual, mientras que `enable` crea enlaces de habilitación y no inicia por sí mismo una unidad, a menos que se combine con `--now`. Una unidad estática no está averiada por definición. Lee `Loaded`, `Active` y los registros pertinentes en vez de cambiar servicios del sistema para forzar una salida concreta.
 
 </details>
 
