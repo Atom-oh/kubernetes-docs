@@ -1,7 +1,7 @@
 # Cilium Service Mesh Ingress 与 Gateway
 
 > **审查基线**：Cilium 1.20.3；Gateway API 1.6.3；AWS Load Balancer Controller 3.6.0。
-> **最后审阅日期**：October 16, 2026。Kubernetes/EKS 版本矩阵请参阅[安装前提条件](./README.md)；仅有较新的版本并不能证明兼容性。
+> **最后审阅日期**：2026年10月16日。Kubernetes/EKS 版本矩阵请参阅[安装前提条件](./README.md)；仅有较新的版本并不能证明兼容性。
 
 ## 概述
 
@@ -809,7 +809,7 @@ spec:
       enforcing_consecutive_5xx: 100
 ```
 
-这是一个完整且独立的 CEC 链：Service 端口 80 → 命名 Listener → HTTP 路由 → EDS Cluster。Cilium 会为引用的 Service 提供 xDS 端点配置。在 `default` 中创建 `my-service`，并确保其后端已就绪；不要再将其分配给其他 CEC 或生成的 Ingress/Gateway 配置。CEC 定制不是修改控制器所拥有资源的补丁机制。
+这是一个完整且独立的 CEC 链：Service 端口 80 → 命名 Listener → HTTP 路由 → EDS Cluster。Cilium 会为引用的 Service 提供 xDS 端点配置。在 `default/my-service` 中创建相应 Service，并确保其后端已就绪；不要再将其分配给其他 CEC 或生成的 Ingress/Gateway 配置。CEC 定制不是修改控制器所拥有资源的补丁机制。
 
 每个后端都必须实际接受 `Host: health-check.local` 和 `/health`。Envoy 状态码范围不包括上限，因此 `[200, 300)` 覆盖所有 2xx 响应。主动健康检查和被动异常检测是不同的机制；弹出限制和 panic 行为无法保证排除所有故障端点。请根据后端数量和故障模型进行验证。
 
@@ -913,7 +913,7 @@ kubectl -n kube-system exec ds/cilium -- cilium-dbg envoy admin metrics -f downs
 
 首先按照[可观测性指南](./04-observability.md)启用并抓取 Cilium Envoy Prometheus 端点。多个集群将数据发送到同一个 Prometheus 时，请配置稳定的 `cluster` 目标标签。原生 Cilium Envoy 镜像会公开 `envoy_http_conn_manager_prefix`，其生成值可能是 `listener-insecure`、`listener-secure` 和特定端口的变体，而不是固定的 `cilium-gateway` 值。同一个 Envoy 上的多个 Gateway 可能会重复使用这些前缀；以下示例描述的是**被抓取的代理/HCM**，不保证能按 Gateway 单独计量。构建仪表板前，请检查实际标签。
 
-以下三个查询分别显示已启动请求速率、被归类为 5xx 的已完成响应计数百分比，以及以**秒**为单位的 p99 持续时间。只有在匹配的观测分母中才会用 0 补全缺失的 5xx 分子；没有流量/遥测数据时不会将其当作正常的零值。大于零的分母筛选器会省略空闲序列。Envoy 的 `downstream_rq_time` 直方图以**毫秒**为单位，因此需要除以 1000。计算分位数前，请在保留 `le` 标签的同时聚合直方图桶。仍需单独监控低样本数量、抓取间隔缺失和直方图缺失等情况。
+以下三个查询分别显示已启动请求速率、被归类为 5xx 的已完成响应计数百分比，以及以**秒**为单位的 p99 持续时间。只有在匹配的观测分母中才会用 0 补全缺失的 5xx 分子；没有流量/遥测数据时不会将其当作正常的零值。大于零的分母筛选器会省略空闲序列。Envoy 的 `downstream_rq_time` 直方图以**毫秒**为单位，因此需按 `/ 1000` 换算为秒。计算分位数前，请在保留 `le` 标签的同时聚合直方图桶。仍需单独监控低样本数量、抓取间隔缺失和直方图缺失等情况。
 
 ```promql
 sum by (cluster, instance, envoy_http_conn_manager_prefix) (

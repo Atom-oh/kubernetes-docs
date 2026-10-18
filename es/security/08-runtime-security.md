@@ -1,7 +1,7 @@
 # Seguridad en tiempo de ejecución
 
-> **Última actualización**: September 13, 2026
-> **Base de validación**: Falco 0.44.1 / chart 9.1.0, Falcosidekick 2.35.0 / chart 0.14.0, Tetragon 1.7.1. Verifique la compatibilidad con el kernel, el SO y el tipo de nodo reales.
+> **Última actualización**: 16 de octubre de 2026
+> **Base de validación**: Falco 0.45.0 / chart 9.2.0, Falcosidekick 2.35.0 / chart 0.14.0, Tetragon 1.7.1. Verifique la compatibilidad con el kernel, el SO y el tipo de nodo reales.
 
 La seguridad en tiempo de ejecución observa la actividad de procesos, archivos y red, y restringe operaciones seleccionadas mediante políticas probadas. **Una alerta no es prueba de una vulneración; la detección y la prevención requieren pruebas separadas.** Esta guía se verificó con CLI locales, esquemas, Helm y eventos sintéticos. No se utilizó ningún clúster real, programa BPF del kernel ni canal de notificación.
 
@@ -27,11 +27,11 @@ eBPF por sí solo no garantiza baja sobrecarga ni seguridad. Mida hooks, volumen
 
 Falco evalúa eventos frente a reglas. Una ruta típica de syscall es `Linux event → modern eBPF/kmod capture → Falco filter/rule → JSON output → Falcosidekick → notification/storage`. Slack y PagerDuty son integraciones posteriores, no clientes nativos de Slack dentro del motor de reglas de Falco.
 
-La distribución 0.44.1 incluye el plugin de contenedores 0.7.1. Proporciona campos como container.id, por lo que deshabilitar todos los plugins evita que las reglas que usan esos campos se compilen o ejecuten. Verifique los sockets del runtime, la recopilación de metadatos de Kubernetes y los permisos de acceso.
+La distribución 0.45.0 incluye el plugin de contenedor 0.7.4. Proporciona campos como container.id, por lo que deshabilitar todos los plugins evita que las reglas que usan esos campos se compilen o ejecuten. Verifique los sockets del runtime, la recopilación de metadatos de Kubernetes y los permisos de acceso.
 
 ### Instalación de Falco (EKS)
 
-Este ejemplo se dirige a nodos Linux EC2 cuyo acceso al host administra. No suponga que un DaemonSet puede ejecutarse en Fargate u otros hosts restringidos. Verifique los requisitos de kernel/BTF/capacidades de eBPF moderno. El chart 9.1.0 admite los tipos explícitos de driver `modern_ebpf` y `kmod`; no conserve la configuración antigua `ebpf`.
+Este ejemplo se dirige a nodos Linux EC2 cuyo acceso al host administra. No suponga que un DaemonSet puede ejecutarse en Fargate u otros hosts restringidos. Verifique los requisitos de kernel/BTF/capacidades de eBPF moderno. El chart 9.2.0 admite los tipos explícitos de driver `modern_ebpf` y `kmod`; no conserve la configuración antigua `ebpf`.
 
 Descargue el [directorio de ejemplo](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security) y ejecute estos comandos desde `examples/security/runtime-security`. El [README de ejemplo](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md) describe los tres archivos de valores y las reglas.
 
@@ -42,7 +42,7 @@ helm upgrade --install falcosidekick falcosecurity/falcosidekick \
   --version 0.14.0 --namespace falco --create-namespace \
   --values falcosidekick-values.yaml
 helm upgrade --install falco falcosecurity/falco \
-  --version 9.1.0 --namespace falco \
+  --version 9.2.0 --namespace falco \
   --values falco-values.yaml
 ```
 
@@ -90,7 +90,7 @@ customRules:
 ```
 
 
-La configuración envía HTTP al Service ClusterIP de falcosidekick instalado por separado. Compartir un namespace no autentica ni cifra el tráfico. Configure la política de acceso y TLS/mTLS según el límite de confianza real, y verifique la conectividad del nodo/Falco. Falco usa campos snake_case como json_output y http_output. Las configuraciones antiguas jsonOutput/httpOutput y las opciones grpc eliminadas fallan con el esquema 0.44.1.
+La configuración envía HTTP al Service ClusterIP de falcosidekick instalado por separado. Compartir un namespace no autentica ni cifra el tráfico. Configure la política de acceso y TLS/mTLS según el límite de confianza real, y verifique la conectividad del nodo/Falco. Falco usa campos snake_case como json_output y http_output. Las configuraciones antiguas jsonOutput/httpOutput y las opciones grpc eliminadas fallan con el esquema 0.45.0.
 
 ### Estructura de reglas de Falco
 
@@ -122,7 +122,7 @@ Estas reglas definen sus propias macros requeridas y evitan reemplazar nombres d
 ```
 
 
-Después de eliminar los eventos enter, Falco 0.44.1 advierte que evt.dir está obsoleto. Estos ejemplos seleccionan directamente los eventos exitosos de exec y lectura. Los clientes legítimos de Kubernetes leen tokens de cuentas de servicio, por lo que la señal de lectura por sí sola no es «acceso no autorizado». Combínela con líneas base de cargas de trabajo, binarios aprobados e identidad de Pod.
+Después de eliminar los eventos enter, Falco 0.45.0 advierte que evt.dir está obsoleto. Estos ejemplos seleccionan directamente los eventos exitosos de exec y lectura. Los clientes legítimos de Kubernetes leen tokens de cuentas de servicio, por lo que la señal de lectura por sí sola no es «acceso no autorizado». Combínela con líneas base de cargas de trabajo, binarios aprobados e identidad de Pod.
 
 ### Escritura de reglas personalizadas
 
@@ -476,7 +476,7 @@ Las comprobaciones locales cubrieron dos reglas de Falco, cuatro casos de esquem
 ## Referencias
 
 - [Instalación de Falco en Kubernetes](https://falco.org/docs/setup/kubernetes/)
-- [Configuración de Falco 0.44.1](https://github.com/falcosecurity/falco/blob/0.44.1/falco.yaml)
+- [Configuración de Falco 0.45.0](https://github.com/falcosecurity/falco/blob/0.45.0/falco.yaml)
 - [Configuración de Falcosidekick 2.35.0](https://github.com/falcosecurity/falcosidekick/blob/2.35.0/config_example.yaml)
 - [Políticas de trazado de Tetragon](https://tetragon.io/docs/concepts/tracing-policy/)
 - [Aplicación de Tetragon](https://tetragon.io/docs/concepts/enforcement/)

@@ -1,30 +1,30 @@
-# 第3部: ネットワーキングモード
+# Part 3: ネットワーキングモード
 
-> **レビュー基準**: Calico Open Source 3.32.2 / operator 1.42.6。Kubernetes 1.34–1.36がCalico 3.32のテスト済み範囲です。
-> **最終更新**: September 12, 2026。以下の過去のベンチマーク値は、新たな測定値ではなく未検証の報告として保持しています。
+> **レビュー基準**: Calico Open Source 3.32.2／operator 1.42.6。Kubernetes 1.34～1.36 は Calico 3.32 のテスト対象範囲です。
+> **最終更新日**: 2026 年 9 月 12 日。以下の過去のベンチマーク値は、検証されていない報告として保持しており、新たに測定した値ではありません。
 
-## 対象範囲とモード選択
+## 適用範囲とモードの選択
 
-この章はCalicoが担当するLinux PodネットワーキングとIPAMを扱います。EKSのポリシー専用モードではAmazon VPC CNIがPodネットワークを引き続き担当し、Calico IPPoolを作成してもオーバーレイへ切り替わりません。例は代替設計であり、一緒に適用したり、入門演習で作成済みのプールの上に適用したりするマニフェストではありません。監査ではクラスター移行やネットワークベンチマークを行っていません。
+この章では、Calico が所有する Linux Pod ネットワーキングと IPAM を扱います。EKS のポリシー専用モードでは、Pod ネットワーキングの所有者は引き続き Amazon VPC CNI です。Calico IPPool を作成しても、そのインストールがオーバーレイに切り替わるわけではありません。以下の例は互いに代替となる設計であり、すべてを同時に適用したり、導入ラボですでに作成したプールの上に適用したりするマニフェストではありません。このレビューではクラスター移行やネットワークベンチマークを実施していません。
 
 | 選択肢 | 意味 | 重要な境界 |
 |---|---|---|
-| IPIP | IPv4-in-IPv4、IPプロトコル4 | Calico IPIPはIPv4専用。アンダーレイで許可が必要 |
-| VXLAN | 内側のEthernetをUDPで搬送。Calicoのデフォルトポートは4789 | 外側IPv4とIPv6ではオーバーヘッドが異なる。ポート/VNIは設定可能 |
-| 直接 / 非カプセル化 | PodネットワークのオーバーレイなしにPod IPパケットをルーティング | アンダーレイと復路でPodアドレスへのルーティングが必要 |
-| CrossSubnet | IPIPまたはVXLANの設定 | 該当ノードアドレスが異なる設定済みサブネットにある場合のみノード間通信をカプセル化 |
+| IPIP | IPv4-in-IPv4。IP プロトコル番号 4 を使用 | Calico の IPIP は IPv4 専用です。アンダーレイで許可されている必要があります。 |
+| VXLAN | 内側の Ethernet フレームを UDP で運ぶ方式。Calico の既定ポートは 4789 | 外側が IPv4 か IPv6 かでオーバーヘッドが異なります。ポートと VNI は変更できます。 |
+| Direct／カプセル化なし | Pod ネットワークのオーバーレイを使わず Pod IP パケットをルーティング | アンダーレイと返信経路で Pod アドレスをルーティングできる必要があります。 |
+| CrossSubnet | IPIP または VXLAN の設定値 | 対象ノードアドレスが設定済みの異なるサブネットにある場合にのみ、ノード間通信をカプセル化します。 |
 
-`Always`は設定プール内アドレスへの該当ノード間通信を対象とし、同一ノード通信に物理トンネルは不要です。`Never`はそのカプセル化を無効にし、すべてのネットワークを無効にするものではありません。CrossSubnetはAZ、リージョン、WANリンクの検出器ではありません。同一AZの2サブネットでもカプセル化が必要な場合があります。Calicoが使うノードアドレスとサブネットマスクを確認してください。
+`Always` は設定済みプール内の対象アドレスに対するノード間通信に関するものです。同一ノード内の通信に物理トンネルは不要です。`Never` はそのカプセル化を無効にするもので、ネットワーキング全体を無効にする意味ではありません。CrossSubnet は AZ、リージョン、WAN リンクを検出する仕組みではありません。同じ AZ 内でもサブネットが異なればカプセル化が必要になる場合があります。Calico が使用するノードアドレスとサブネットマスクを確認してください。
 
-デフォルトはインストール/プロバイダーとデータプレーンに依存します。「全クラウドでIPIPがデフォルト」という普遍的規則も、Directが常に最速という保証もありません。[オーバーレイガイド](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)が対応ルーティング経路を説明します。
+既定値はインストール方法／プロバイダーとデータプレーンによって異なります。「どのクラウドでも IPIP が既定」や「Direct が常に最速」という共通ルールや保証はありません。[オーバーレイガイド](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)で、対応するルーティング経路を確認してください。
 
-### ルーティングとカプセル化は別の選択
+### ルーティングとカプセル化は別の選択肢
 
-デフォルトではFelixがVXLANプールの経路を、confd/BIRDがIPIPと非カプセル化プールのクラスター経路を設定します。Calico 3.32は非VXLAN経路にも`Installation.spec.calicoNetwork.clusterRoutingMode: Felix`をサポートします。対応する低レベル設定はFelixの`programClusterRoutes: Enabled`とBGPの`programClusterRoutes: Disabled`です。Operator管理ならOperator設定を使用します。外部BGP広告には引き続きBGPが必要です。静的経路や適切なルーティングファブリックでもアンダーレイ到達性を提供できるため、すべての非カプセル化設計でBGPや同一L2隣接が必須ではありません。
+既定では Felix が VXLAN プールのルートを設定し、confd/BIRD が IPIP およびカプセル化なしのプールに対するクラスター経路を設定します。Calico 3.32 は、これらの VXLAN 以外の経路に対して `Installation.spec.calicoNetwork.clusterRoutingMode: Felix` もサポートします。対応する低レベル設定は Felix の `programClusterRoutes: Enabled` と BGP の `programClusterRoutes: Disabled` です。operator がインストールを管理している場合は operator 設定を使用してください。外部 BGP 広告には引き続き BGP が必要です。静的ルートや適切にルーティングされたファブリックでもアンダーレイ到達性を提供できます。したがって、カプセル化なしのすべての設計で BGP や同一 L2 隣接性が必須というわけではありません。
 
 ## パケット構造とオーバーヘッド
 
-以下は**アンダーレイのIP MTU**を使用します。外側EthernetヘッダーはこのIP MTUに含まれません。IPv4オプションや追加の内側VLANタグがない前提です。TCPオプションや他のカプセル化により、ペイロードはさらに減る場合があります。
+以下の計算では**アンダーレイ IP MTU**を使います。外側 Ethernet ヘッダーはその IP MTU に含まれません。IPv4 オプションや追加の内側 VLAN タグはないものとします。TCP オプションなどの追加カプセル化があると、ペイロードはさらに小さくなる場合があります。
 
 ```text
 Direct: outer Ethernet | Pod IP | TCP or UDP | payload
@@ -32,46 +32,46 @@ IPIP:   outer Ethernet | outer IPv4 | Pod IPv4 | TCP or UDP | payload
 VXLAN:  outer Ethernet | outer IP | UDP | VXLAN | inner Ethernet | Pod IP | TCP or UDP | payload
 ```
 
-| トランスポート | Pod IPパケットに加わるオーバーヘッド | アンダーレイIP MTUが1500の場合のPod IP MTU |
-|---|---|---|
+| 転送方式 | Pod IP パケットに加わるオーバーヘッド | アンダーレイ IP MTU が 1500 の場合の Pod IP MTU |
+|---|---:|---:|
 | Direct、他のトンネルなし | 0 | 1500 |
-| IPIP、外側IPv4 | 20 | 1480 |
-| VXLAN、外側IPv4 | 20 + 8 + 8 + 14 = 50 | 1450 |
-| VXLAN、外側IPv6 | 40 + 8 + 8 + 14 = 70 | 1430 |
-| WireGuard、外側IPv4 | 60 | 1440 |
-| WireGuard、外側IPv6 | 80 | 1420 |
+| IPIP、外側 IPv4 | 20 | 1480 |
+| VXLAN、外側 IPv4 | 20 + 8 + 8 + 14 = 50 | 1450 |
+| VXLAN、外側 IPv6 | 40 + 8 + 8 + 14 = 70 | 1430 |
+| WireGuard、外側 IPv4 | 60 | 1440 |
+| WireGuard、外側 IPv6 | 80 | 1420 |
 
-VXLANのMTUオーバーヘッド内の14バイトは**内側Ethernetヘッダー**で、外側ではありません。通常のTCPは最低20バイト、UDPは8バイトのヘッダーを持ちます。この前提では1500バイトのIPv4 IPパケットに、最大1460バイトのTCPペイロードか1472バイトのUDPペイロードを格納できます。元の共通ラベル「TCP/UDP = 20バイト」は誤りでした。
+VXLAN のオーバーヘッド 14 バイトは**内側 Ethernet ヘッダー**であり、外側 Ethernet ヘッダーではありません。TCP の最小ヘッダーは 20 バイト、UDP は 8 バイトです。したがって、この前提では 1500 バイトの IPv4 IP パケットに含められる TCP ペイロードは最大 1460 バイト、UDP ペイロードは最大 1472 バイトです。以前の共有資料で「TCP/UDP = 20 バイト」としたラベルは誤りでした。
 
-IPIPのプロトコル番号は4であり、TCP/UDPポート4ではありません。Calicoの通常のVXLAN VNIは4096、デフォルトUDPポートは4789ですが、どちらも設定可能です。他の現行VXLAN実装は8472を使う場合があり、古いソフトウェアに限りません。[IP-in-IP](https://www.rfc-editor.org/rfc/rfc2003)と[VXLAN](https://www.rfc-editor.org/rfc/rfc7348)を参照してください。
+IPIP のプロトコル番号は 4 であり、TCP/UDP のポート番号 4 ではありません。Calico の通常の VXLAN VNI は 4096、既定 UDP ポートは 4789 ですが、どちらも変更できます。他の現在の VXLAN 実装が 8472 を使う場合もあり、古いソフトウェアに限った値ではありません。[IP-in-IP](https://www.rfc-editor.org/rfc/rfc2003) と [VXLAN](https://www.rfc-editor.org/rfc/rfc7348) を参照してください。
 
-### パケット経路の図解
+### パケット経路の図
 
-![IPv4パケットが送信元カーネルのIPIPトンネルと宛先カーネルのカプセル化解除経路を通る。](../../.gitbook/assets/en-networking-calico-03-networking-modes-2.png)
+![IPv4 パケットは送信元カーネルの IPIP トンネルを通り、宛先カーネルのデカプセル化経路を通過します。](../../.gitbook/assets/en-networking-calico-03-networking-modes-2.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-2.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-2.html)
 
-「Felix」の列はFelixが設定するカーネルのルーティング/ポリシーを表し、パケットはFelixデーモンを通りません。これはIPv4ノード間経路であり、同一ノード通信でも暗号化の仕組みでもありません。
+図中の「Felix」列は、Felix がカーネルに設定したルーティング／ポリシーを示します。パケットが Felix デーモンを通過するわけではありません。これは IPv4 のノード間経路であり、同一ノード内の通信や暗号化を示すものではありません。
 
-![2つのCalico VTEPが内側フレームをUDP上でカプセル化・カプセル化解除する。](../../.gitbook/assets/en-networking-calico-03-networking-modes-3.png)
+![2 つの Calico VTEP が UDP 経由で内側のフレームをカプセル化し、デカプセル化します。](../../.gitbook/assets/en-networking-calico-03-networking-modes-3.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-3.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-3.html)
 
-4789とVNI 4096は図のデフォルト値です。50バイトのオーバーヘッドと1450 MTUは、示したヘッダー前提の外側IPv4・1500バイト経路に適用され、すべてのネットワークやアドレスファミリーには当てはまりません。
+4789 と VNI 4096 は図示した既定値です。50 バイトのオーバーヘッドと MTU 1450 は、指定したヘッダー前提の外側 IPv4、1500 バイト経路にのみ当てはまり、すべてのネットワークやアドレスファミリーに適用されるわけではありません。
 
-### CrossSubnetの例
+### CrossSubnet の例
 
-ノードアドレスが10.0.1.10/24と10.0.1.11/24なら、同一サブネット経路は非カプセル化にできます。10.0.2.20/24のピアにはCrossSubnet設計でカプセル化が必要です。したがって、クラウドのサブネット名が正しく見えても、ノードマスクが誤っていれば結果が変わります。CrossSubnetはVPC間/リージョン間接続を確立せず、暗号化も提供しません。
+ノードアドレスが 10.0.1.10/24 と 10.0.1.11/24 の場合、同じサブネット内の経路はカプセル化なしにできます。10.0.2.20/24 のピアとの通信は、CrossSubnet 設計ではカプセル化が必要です。そのため、クラウド上のサブネット名が正しく見えていても、ノードのマスクを誤ると結果が変わります。CrossSubnet は VPC／リージョン間の接続を確立せず、暗号化も提供しません。
 
-![同一サブネットのノードは非カプセル化経路を使い、設定された2つのノードサブネット間はIPIPで通信する。](../../.gitbook/assets/en-networking-calico-03-networking-modes-1.png)
+![同一サブネットのノード間ではカプセル化しない経路を使い、別々に構成した 2 つのノードサブネット間では IPIP が通信を運びます。](../../.gitbook/assets/en-networking-calico-03-networking-modes-1.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-1.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-1.html)
 
-この選択はサブネットアドレス/マスクで決まります。図の1500/1480はIPv4・1500バイトのアンダーレイを前提とします。ワークロードは取り得る経路全体の最小MTUを使うべきです。同一サブネットのフローだからといって、インターフェースMTUが動的に増えるわけではありません。
+この選択はサブネットのアドレス／マスクで決まります。図の 1500／1480 は IPv4 の 1500 バイトアンダーレイを前提としていますが、ワークロードでは利用可能な経路全体で最小の MTU を使ってください。同一サブネットのフローになっても、インターフェイス MTU が動的に増えるわけではありません。
 
-### ノード診断
+### ノードの診断
 
-読み取り専用の以下のコマンドは、通常のアプリケーションPodではなく、許可された**Linuxノードのネットワーク名前空間**で実行します。インターフェースは有効なモードに応じてのみ存在します。表示値は実際のインストールに依存します。
+以下の読み取り専用コマンドは、通常のアプリケーション Pod ではなく、認可された**Linux ノードのネットワーク名前空間**で実行してください。インターフェイスは有効にしたモードに応じて存在します。コマンド出力の値は実際のインストールによって異なります。
 
 ```bash
 ip link show tunl0
@@ -80,19 +80,19 @@ bridge fdb show dev vxlan.calico
 ip route show
 ```
 
-典型的なローカルPod経路は`10.244.1.5/32 dev cali…`のようなホスト経路です。/24や/26全体を1つのPodのvethへルーティングしないでください。集約ブロックは代わりにblackhole経路と、より具体的なPod経路を持つ場合があります。リモートブロックはトンネルまたは次ホップのノード/ルーターを使え、経路プロトコルラベルはBIRDとFelixのどちらが設定するかに依存します。
+ローカル Pod のルートは、通常 `10.244.1.5/32 dev cali…` のようなホストルートです。1 つの Pod の veth に /24 や /26 全体をルーティングしないでください。集約ブロックには、ブラックホールルートと、より具体的な Pod ルートが設定される場合があります。リモートブロックではトンネルまたは次ホップのノード／ルーターを使うことがあり、ルートのプロトコル表示は BIRD と Felix のどちらが経路を設定したかで異なります。
 
-![Direct、IPIP、VXLANで、Pod間パケットの包み方の経路が異なる。](../../.gitbook/assets/en-networking-calico-03-networking-modes-5.png)
+![Direct、IPIP、VXLAN では、Pod 間で異なるパケットのラッパーを使います。](../../.gitbook/assets/en-networking-calico-03-networking-modes-5.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-5.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-5.html)
 
-これらはIPv4・1500バイトのアンダーレイの例です。図はパケットの包み方を比較し、実測速度や同一のコントロールプレーン動作を比較するものではありません。ワークロードMTUの選択では、他のカプセル化やService経路も含める必要があります。
+これは IPv4、アンダーレイ MTU 1500 の例です。図はパケットのラッパーを比較するもので、測定済みの速度や同一のコントロールプレーン動作を示すものではありません。ワークロードの MTU を選ぶ際は、他のカプセル化や Service 経路も含めてください。
 
-## 所有者を通じたプール設定
+## 所有者に応じてプールを構成する
 
-`kubectl …projectcalico.org`の例は入門で使う集約Calico API（または適切なネイティブv3設定）を前提とします。なければ論理Calicoリソースには対応calicoctlを使います。OperatorコマンドはOperatorインストールにのみ適用します。プール範囲はServiceやノード/アンダーレイ範囲とも競合してはいけません。
+`kubectl …projectcalico.org` の例は、導入章で使用した集約 Calico API（または適切な native-v3 構成）を前提としています。この API がない場合、論理 Calico リソースには対応する calicoctl を使用してください。operator のコマンドは operator 管理のインストールにのみ適用されます。プールの範囲は Service やノード／アンダーレイの既存範囲とも競合しないようにしてください。
 
-設定所有者は1つにします。`Installation.spec.calicoNetwork.ipPools`内のプールはOperatorが調整するため、競合するIPPoolオブジェクトを適用せず、所有者を通じてその期待リストを編集します。単独プールはCalico IPPool APIを使います。どちらも、まず実際のクラスターPod CIDR、非重複、IPAMタイプ、既存割り当てを確認してください。
+構成の管理者を一つにしてください。`Installation.spec.calicoNetwork.ipPools` に記載したプールは operator が調整します。競合する IPPool オブジェクトを apply せず、管理者を通じて意図したリストを編集してください。スタンドアロンのプールは Calico IPPool API で管理します。どちらの場合も、実際のクラスター Pod CIDR、範囲の重複がないこと、IPAM の種類、既存の割り当てを先に確認してください。
 
 ```bash
 kubectl get installation.operator.tigera.io default -o yaml
@@ -100,7 +100,7 @@ kubectl get ippools.projectcalico.org -o yaml
 calicoctl ipam show --show-blocks
 ```
 
-Operator所有プールでは、これは既存`ipPools`リストの**エントリ断片**です。他エントリとInstallationフィールドを保持します。入門演習の割り当て済み/16プールの上に作成しないでください。
+operator が所有するプールの場合、これは既存の `ipPools` リストに入れる**設定断片**です。他のエントリや Installation のフィールドを保持してください。導入ラボですでに割り当て済みの /16 プールを上書きして作らないでください。
 
 ```yaml
 - name: mode-demo-pool
@@ -111,7 +111,7 @@ Operator所有プールでは、これは既存`ipPools`リストの**エント�
   nodeSelector: all()
 ```
 
-単独の新規計画プールの同等IPv4リソースは以下です。Operatorエントリの代替であり、重複プールの追加ではありません。CIDRは実クラスターに合い、既存プールと衝突しないようにすべき例です。
+スタンドアロンで新たに計画するプールには、以下の IPv4 リソースを使用できます。これは operator エントリに代わる選択肢であり、範囲が重なる別プールを追加するものではありません。CIDR は例示値です。実際のクラスターに適合し、既存プールと重ならない値に置き換えてください。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -127,9 +127,9 @@ spec:
   nodeSelector: all()
 ```
 
-同じCIDRの複数リソースでなく、1行を選択します。
+CIDR が同じリソースを複数作るのではなく、表のいずれか一行を選択してください。
 
-| IPv4設計 | IPPool `ipipMode` | IPPool `vxlanMode` | Operator `encapsulation` |
+| IPv4 設計 | IPPool `ipipMode` | IPPool `vxlanMode` | operator の `encapsulation` |
 |---|---|---|---|
 | IPIP Always | Always | Never | IPIP |
 | IPIP CrossSubnet | CrossSubnet | Never | IPIPCrossSubnet |
@@ -137,13 +137,13 @@ spec:
 | VXLAN CrossSubnet | Never | CrossSubnet | VXLANCrossSubnet |
 | Direct | Never | Never | None |
 
-1つのプールでIPIPとVXLANを両方有効にはできません。`encapsulation`はOperatorのプールフィールドで、単独IPPoolのフィールド名ではありません。通常の集約APIインストールでは重複プール作成は拒否されます。ネイティブv3 CRD（技術プレビュー）では重複検証が非同期で、作成したプールにDisabled条件が付く場合があります。作成成功は割り当て可能の証明ではありません。
+一つのプール内で IPIP と VXLAN を両方有効にすることはできません。`encapsulation` は operator プールのフィールドであり、スタンドアロン IPPool のフィールド名ではありません。通常の集約 API を使うインストールでは、重複するプールの作成は拒否されます。native v3 CRD（テクニカルプレビュー）では重複検証が非同期で行われ、作成されたプールに Disabled 条件が付く場合があります。作成処理の成功は、割り当てに使用できる証明にはなりません。
 
-Calico 3.32のInstallationスキーマは、コントローラー検証とプラットフォーム制約の下で最大25エントリのプールリストを許可します。IPv4プールが必ず1つという旧例を、現在の普遍的上限として使わないでください。
+Calico 3.32 の Installation スキーマでは、controller の検証とプラットフォーム制約に従って、最大 25 エントリまでのプールリストが許可されます。「IPv4 プールは必ず一つだけ」とする古い例を、現在も共通の上限として扱わないでください。
 
-### 外部BGPを使う直接ルーティング
+### 外部 BGP を使う Direct ルーティング
 
-外部BGPを使う設計では、オーバーレイを外す前に実際のピアと復路を設定します。ピア宣言だけでは物理ルーターは設定されず、経路の受理も証明されません。この別トポロジー例は、BGP無効のVXLAN演習への追加ではありません。
+外部 BGP を使う設計では、オーバーレイを削除する前に実際のピアと返信ルートを構成してください。ピア宣言だけでは物理ルーターは設定されず、経路が受理された証明にもなりません。以下は独立したトポロジー例であり、BGP を無効にした VXLAN ラボへの追加設定ではありません。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -156,21 +156,21 @@ spec:
   nodeSelector: rack == 'rack1'
 ```
 
-文書用アドレスとAS番号を置き換え、対象ノードにラベルを付け、ラックごとに経路フィルター/ASループ処理を検証します。`natOutgoing: false`が適切なのは、復路と必要な外部NATを設計済みの場合だけです。BGP単体でプライベートPodアドレスがインターネットでルーティング可能になるわけではありません。メッシュ/RR変更には[BGP移行ガイダンス](02-architecture.md)と[BGP詳解](04-bgp-deep-dive.md)を参照してください。
+ドキュメント用アドレスと AS 番号を置き換え、対象ノードにラベルを付け、各ラックでルートフィルター／AS ループ処理を検証してください。`natOutgoing: false` が適切なのは、返信ルーティングと必要な外部 NAT を設計している場合のみです。BGP を構成しても、プライベート Pod アドレスが自動的にインターネットから到達可能になるわけではありません。メッシュ／RR の変更は[BGP 移行ガイダンス](02-architecture.md)と[BGP 詳細ガイド](04-bgp-deep-dive.md)を参照してください。
 
-![非カプセル化Podパケットが、例ではBGPで経路を提供するルーティング済みアンダーレイを通過する。](../../.gitbook/assets/en-networking-calico-03-networking-modes-4.png)
+![この例では、BGP が提供するルートを使い、カプセル化されていない Pod パケットがルーティング済みアンダーレイを通過します。](../../.gitbook/assets/en-networking-calico-03-networking-modes-4.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-4.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-4.html)
 
-これはBGPベース設計の例で、全Direct設計にBGPを要求するものではありません。1500はそのパスMTUを利用でき、他のトンネルがない前提です。eBPF Serviceの引き渡しや暗号化で、ワークロードMTUがさらに小さくなる場合があります。
+これは BGP ベースの設計例であり、すべての Direct 設計で BGP が必要という意味ではありません。1500 は、使用可能な経路 MTU が 1500 で他のトンネルがない前提です。eBPF Service の引き渡しや暗号化により、ワークロード MTU がさらに小さくなる場合があります。
 
-## NATとプール選択
+## NAT とプールの選択
 
-`natOutgoing: true`では、通常Calicoは宛先が**すべてのCalico IPPoolの外側**にある場合に、そのプールの送信元アドレスにSNATします。単なる「クラスターを出るか」の判定ではありません。無効プールでもNATしない宛先範囲を示す場合があり、削除でNAT動作が変わります。追加Felix設定でホストIPを除外することもできます。NATはNetworkPolicyの許可を与えません。[送信NAT](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)を参照してください。
+`natOutgoing: true` の場合、Calico では通常、そのプール内の送信元アドレスが**すべての Calico IPPool の外部**を宛先とするとき SNAT します。単に「クラスター外へ出るか」という判定ではありません。無効化されたプールであっても、NAT しない宛先範囲の特定に使われる場合があります。そのプールを削除すると NAT の動作が変わる可能性があります。Felix の追加設定でホスト IP を除外することもできます。NAT は NetworkPolicy による許可を与えるものではありません。[送信方向の NAT](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)を参照してください。
 
 ### トポロジーに基づく自動割り当て
 
-これは/16クラスター範囲内の、互いに重複しない2つの/18プールを使う別の計画例です。割り当て済みの親/16プールと共存させてはいけません。例を適合させるためだけに使用中の親プールを削除しないでください。
+これは /16 のクラスター範囲内に互いに重ならない 2 つの /18 プールを設ける、別個の計画例です。割り当て済みの親 /16 プールと同時に使用してはいけません。この例を成立させるために、使用中の親プールを削除しないでください。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -196,11 +196,11 @@ spec:
   nodeSelector: topology.kubernetes.io/zone == 'ap-northeast-2b'
 ```
 
-自動割り当てでは、対象全ノードが適格プールに一致することを確認します。セレクターはPodをスケジュールしません。上のゾーンラベルは割り当てプールを選び、CrossSubnetは引き続きノードアドレス/マスクでカプセル化を判断します。
+自動割り当てでは、対象にする各ノードが少なくとも一つの割り当て可能なプールに一致することを確認してください。selector は Pod のスケジューリングを行いません。上記のゾーンラベルは割り当て先プールを選びますが、CrossSubnet は引き続きノードのアドレス／マスクを使ってカプセル化の要否を決めます。
 
-### 名前空間またはPodからの明示的プール要求
+### Namespace または Pod から明示的にプールを要求する
 
-要求前に適切なプールを作成して確認してください。この断片は名前空間の既存所有者を通じてアノテーションを追加し、名前空間全体の置換ではありません。Podアノテーションは名前空間アノテーションより優先され、名前空間アノテーションはCNIプール設定より優先されます。
+適切なプールを先に作成し、使用可能であることを確認してから要求してください。次の断片は Namespace の既存の管理者を通じてアノテーションを追加する例であり、Namespace 全体を置き換えるマニフェストではありません。Pod のアノテーションは Namespace のアノテーションに優先し、Namespace のアノテーションは CNI プール設定に優先します。
 
 ```yaml
 metadata:
@@ -208,48 +208,48 @@ metadata:
     cni.projectcalico.org/ipv4pools: '["production-pool"]'
 ```
 
-`production-pool`は十分なアドレスがある既存の有効プールでなければなりません。`assignmentMode: Manual`で自動選択から除外しつつ明示要求を許可できます。**プールセレクターもこのアノテーションもセキュリティ境界ではありません。** リリース済み[IPAM実装](https://github.com/projectcalico/calico/blob/v3.32.2/libcalico-go/lib/ipam/ipam.go)は、有効なプールが明示要求された場合、ノード/名前空間のプールセレクターを意図的に無視します。アドレス範囲に信頼上の意味がある場合、プールを要求できる主体を制御してください。既存Podはアドレスを保持し、アノテーション変更で再採番されません。
+`production-pool` は、アドレスに十分な余裕がある有効な既存プールでなければなりません。`assignmentMode: Manual` で自動選択対象から除外しつつ、明示的な要求には利用させることができます。**プール selector もこのアノテーションもセキュリティ境界ではありません。** リリース版の [IPAM 実装](https://github.com/projectcalico/calico/blob/v3.32.2/libcalico-go/lib/ipam/ipam.go)は、有効なプールを明示的に要求された場合、ノード／Namespace のプール selector を意図的に無視します。アドレス範囲が信頼性に関わる場合は、プールを要求できる主体を制御してください。既存 Pod はアドレスを維持します。アノテーションを変更しても既存 Pod のアドレスは再割り当てされません。
 
 ## クラウドとプラットフォームの境界
 
 | 環境 | ガイダンス |
 |---|---|
-| 自己管理AWS EC2 | 選択モードのIPプロトコル4またはVXLAN UDP到達性、経路、送信元/送信先チェック、復路を確認 |
-| Amazon VPC CNIを使うEKS | デフォルトPodネットワークはVPC CNIで、Calico VXLANではない。ポリシー専用Calicoはこれらのプールを所有しない |
-| 完全CalicoネットワークのEKS | Calico CNI/IPAMを使う別の計画されたインストール。[公式EKS手順](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)を使用 |
-| Calico所有ネットワークのAzure | CalicoオーバーレイガイドはIPIP未対応の場所でVXLANをサポート。UDR設定は未対応IPIPカプセル化を解決しない |
-| AKS | 汎用Calicoオーバーレイを前提にせず、具体的にサポートされたAzure CNI/ポリシー統合を使用 |
-| GCE / GKE | 自己管理GCEルーティングはマネージドGKEと異なる。[GKE Dataplane V2はCiliumを使用](https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2) |
-| オンプレミス | Direct、静的/BGPルーティング、オーバーレイの選択はアンダーレイ到達性に依存。普遍的な最速の選択肢はない |
-| OpenStack Neutron統合 | 引用したCalicoオーバーレイガイドはこの統合を除外。プラットフォーム手順なしにKubernetesオーバーレイのガイダンスをコピーしない |
+| 自己管理 AWS EC2 | 選択したモードに応じて、IP プロトコル 4 または VXLAN UDP の到達性、ルート、送信元／宛先チェック、返信経路を確認します。 |
+| Amazon VPC CNI を使う EKS | 既定の Pod ネットワーキングは VPC CNI であり、Calico VXLAN ではありません。ポリシー専用 Calico はこれらのプールを所有しません。 |
+| フル Calico ネットワーキングを使う EKS | Calico CNI/IPAM を使う独立した計画済みインストールです。[公式 EKS 手順](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)に従ってください。 |
+| Calico 管理ネットワークを使う Azure | Calico のオーバーレイガイドでは IPIP がサポートされない環境で VXLAN をサポートしています。UDR の構成は、サポート外の IPIP カプセル化を修正する方法ではありません。 |
+| AKS | 汎用 Calico オーバーレイを想定せず、対応する Azure CNI／ポリシー統合を使ってください。 |
+| GCE／GKE | 自己管理 GCE のルーティングとマネージド GKE は異なります。[GKE Dataplane V2 は Cilium を使用します](https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2)。 |
+| オンプレミス | Direct、静的／BGP ルーティング、オーバーレイのどれを使うかはアンダーレイの到達性で決まります。一律の最速構成はありません。 |
+| OpenStack Neutron 統合 | 参照した Calico オーバーレイガイドはこの統合を対象外としています。プラットフォーム固有の手順なしに Kubernetes 用オーバーレイの説明を流用しないでください。 |
 
-この章はEKS Auto ModeやFargate向けのカスタムCNI手順を提供しません。VXLAN例でのBGP無効化は、その構成では不要という意味で、AWSにBGP対応サービスがないという意味ではありません。WindowsにもCalico IPIPやVXLAN CrossSubnet非対応などの別の制限があります。
+この章は EKS Auto Mode や Fargate 用のカスタム CNI 手順を提供しません。VXLAN の例で BGP を無効にするのは、その構成で BGP が不要という意味であり、AWS に BGP 対応サービスがないという意味ではありません。Windows にも個別の制約があり、Calico IPIP と VXLAN CrossSubnet はサポートされません。
 
-## MTUの設定と検証
+## MTU の構成と検証
 
-暗号化とService経路を含め、ワークロードが取り得る経路全体の最小利用可能MTUを使用します。[Calico MTUガイド](https://docs.tigera.io/calico/latest/networking/configuring/mtu)は自動検出とOperator/マニフェストの所有権を説明します。`mtuIfacePattern`は検出で考慮するインターフェースを選び、有効/無効スイッチではなく、エンドツーエンドのパスMTUの証明でもありません。
+ワークロードが通る可能性のある経路全体について、暗号化や Service 経路も含め、使用可能な最小 MTU を使ってください。[Calico の MTU ガイド](https://docs.tigera.io/calico/latest/networking/configuring/mtu)では、自動検出と operator／マニフェストの管理方法を説明しています。`mtuIfacePattern` は検出対象とするインターフェイスを選ぶものであり、オン／オフのスイッチではありません。エンドツーエンドの経路 MTU を証明するものでもありません。
 
-**IPIPとWireGuardのオーバーヘッドを無条件に加算しないでください。** 通常のCalico混在デプロイでは、有効ピア間はWireGuard、他の経路はIPIP/VXLANを使います。該当する最小MTUを選択します。実際に1500バイトの経路なら、IPv4 WireGuardとIPIPは`min(1440, 1480) = 1440`であり、`1500 − 60 − 20 = 1420`ではありません。外側IPv6のWireGuardには別途80バイトのオーバーヘッドがあります。
+**IPIP と WireGuard のオーバーヘッドを安易に足し合わせないでください。** Calico の通常の混在構成では、有効化したピア間で WireGuard を使い、それ以外の経路では IPIP／VXLAN を使用します。該当する経路のうち最小の MTU を選んでください。実際に 1500 バイトの経路がある場合、IPv4 WireGuard と IPIP の組み合わせは `min(1440, 1480) = 1440` であり、`1500 − 60 − 20 = 1420` ではありません。外側 IPv6 の WireGuard は別途 80 バイトのオーバーヘッドがあります。
 
-AKSにはWireGuardの文書化された例外があります。インターフェースが1500でも基盤経路が1400の場合があり、IPv4 WireGuardで1340、IPv6で1320となります。eBPF NodePort経路もVXLANを使うため、非カプセル化Podプールだけで1500バイトのワークロードMTUを意味するわけではありません。
+AKS には WireGuard の既知の例外があります。インターフェイス表示が 1500 でも基盤経路が 1400 の場合があり、そのとき IPv4 WireGuard は 1340、IPv6 は 1320 になります。eBPF NodePort 経路でも VXLAN を使うため、Pod プールがカプセル化なしだからといってワークロード MTU が 1500 とは限りません。
 
-Operatorインストールでは、**この特定のIPv4 VXLAN経路に1450が適切と判断した後**、既存の期待状態へマージします。
+operator 管理のインストールで、**この IPv4 VXLAN 経路に 1450 が適切だと確認できた場合**は、既存の意図した状態へ次をマージします。
 
 
 ```bash
 kubectl patch installation.operator.tigera.io default --type merge   -p '{"spec":{"calicoNetwork":{"mtu":1450}}}'
 ```
 
-マニフェスト管理では、文書化された設定は`calico-config.data.veth_mtu`です。ConfigMapを更新し、手順に従ってCalicoノードDaemonSetをロールアウトします。Operator所有Deploymentにマニフェスト手順を適用しないでください。**更新したワークロードMTUは新しいワークロードに適用されます。** calico-node再起動だけではアプリケーションPodは再作成されず、MTU変更も証明されません。
+マニフェスト管理のインストールでは、文書化された設定は `calico-config.data.veth_mtu` です。ConfigMap を更新し、その手順に従って Calico node DaemonSet をロールアウトしてください。operator 管理の Deployment にマニフェスト手順を適用しないでください。**更新したワークロード MTU は新しいワークロードに適用されます。** calico-node を再起動しても、アプリケーション Pod は自動的に再作成されず、MTU が変更された証明にもなりません。
 
-| アンダーレイIP MTUの例 | IPIP IPv4 | VXLAN IPv4 | VXLAN IPv6 | WireGuard IPv4 | WireGuard IPv6 |
-|---|---|---|---|---|---|
+| アンダーレイ IP MTU の例 | IPIP IPv4 | VXLAN IPv4 | VXLAN IPv6 | WireGuard IPv4 | WireGuard IPv6 |
+|---:|---:|---:|---:|---:|---:|
 | 9000 | 8980 | 8950 | 8930 | 8940 | 8920 |
-| 9001、AWS経路が実際にサポートする場合 | 8981 | 8951 | 8931 | 8941 | 8921 |
+| 9001（AWS 経路全体が実際に対応する場合） | 8981 | 8951 | 8931 | 8941 | 8921 |
 
-ジャンボ対応は経路全体で成立する必要があり、インターフェース設定だけでは不十分です。ワークロード経路の検証では、ノードだけでなく診断ワークロードから確認してください。
+ジャンボフレームのサポートは経路全体で成立する必要があり、インターフェイス設定だけでは不十分です。ワークロードの経路を検証するときはノードだけでなく、診断用ワークロードからも確認してください。
 
-以下の制限付き確認は、iputilsと必要権限を持つ承認済みLinux診断Podを前提とします。実際のPod名/アドレスを設定してください。以下のペイロードサイズは**IPv4 ICMP**の例で、IPv4の20バイトとICMPの8バイトを加算します。IPv6では計算が異なり、プローブ成功は全ECMP経路の安全を証明しません。
+以下の制限付きチェックは、iputils と必要な権限を備えた認可済み Linux 診断 Pod を前提にしています。実際の Pod 名／アドレスに置き換えてください。以下のペイロードサイズは**IPv4 ICMP**の例であり、IPv4 ヘッダー 20 バイトと ICMP ヘッダー 8 バイトを加えます。IPv6 は別の計算が必要です。プローブが成功しても、すべての ECMP 経路が安全だとは証明できません。
 
 ```bash
 CHECK_NS=calico-demo
@@ -265,13 +265,13 @@ kubectl -n "$CHECK_NS" exec "$CHECK_POD" -- ping -4 -c 3 -W 2 -M do -s 1452 "$DE
 kubectl -n "$CHECK_NS" exec "$CHECK_POD" -- ping -4 -c 3 -W 2 -M do -s 1422 "$DEST_IPV4"
 ```
 
-3つのペイロードはIPパケットサイズ1500、1480、1450をテストします。失敗はMTUだけでなくポリシー/ICMPフィルタリングも反映し得ます。パケットキャプチャでは適切な権限でIPv4のfragmentation-neededとIPv6のPacket Too Bigメッセージを調べてください。元のIPv4専用フィルターはIPv6をカバーしませんでした。
+3 つのペイロードで、IP パケットサイズ 1500、1480、1450 をテストします。失敗は MTU だけでなく、ポリシーや ICMP のフィルタリングが原因の場合もあります。パケットキャプチャでは、適切なキャプチャ権限を使い、IPv4 の fragmentation-needed と IPv6 の Packet Too Big メッセージを調べてください。以前の IPv4 専用フィルターは IPv6 を対象にしていませんでした。
 
-## 意図的なモード変更とアドレス移行
+## モード変更やアドレス移行は計画的に行う
 
-カプセル化変更はPod CIDRやブロックサイズの変更とは異なります。Calicoはカプセル化設定変更をサポートしますが、進行中の接続が中断される場合があります。保守変更前にアンダーレイ権限、経路、実際のMTU、データプレーン対応、復旧を検証します。汎用移行手順として全ノードや名前空間内の全Deploymentを再起動しないでください。
+カプセル化の変更と Pod CIDR／ブロックサイズの変更は別の作業です。Calico はカプセル化構成の変更に対応しますが、進行中の接続が中断される可能性があります。メンテナンス作業の前に、アンダーレイの許可、ルート、実際の MTU、データプレーンの対応状況、復旧手順を検証してください。汎用の移行手順として、すべてのノードや Namespace 内のすべての Deployment を再起動しないでください。
 
-Operator管理プールは既存の期待Installationリストで`encapsulation`を変更し、他プール/設定をすべて保持します。**単独IPv4 IPPoolに限り**、以下のモードのみの例はCIDRと割り当て設定を保持し、2つのカプセル化フィールドを同時に変更します。
+operator 管理のプールでは、他のプールと設定を保ったまま、既存の Installation リスト内の `encapsulation` を変更してください。**スタンドアロンの IPv4 IPPool 専用**の以下のモード変更例では CIDR と割り当て設定を維持し、2 つのカプセル化フィールドを一緒に変更します。
 
 ```bash
 POOL_NAME=mode-demo-pool
@@ -279,19 +279,19 @@ kubectl get ippool.projectcalico.org "$POOL_NAME" -o yaml > pool-before.yaml
 kubectl patch ippool.projectcalico.org "$POOL_NAME" --type merge   -p '{"spec":{"ipipMode":"Never","vxlanMode":"Always"}}'
 ```
 
-無中断を保証するものではありません。計画したDirectからIPIP CrossSubnetへの移行が適切なら、フィールド対は`ipipMode: CrossSubnet` / `vxlanMode: Never`です。変更にプールCIDR置換は不要です。検証済みMTU/アドレス計画に必要な場合だけ、選択したアプリケーションワークロードを、それぞれのロールアウトと準備状態戦略で再作成します。[PodDisruptionBudget](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)はDeploymentコントローラーのローリング更新を制限しません。
+これで無停止が保証されるわけではありません。Direct から IPIP-CrossSubnet への移行が適切に計画されている場合、対応するフィールドの組み合わせは `ipipMode: CrossSubnet`／`vxlanMode: Never` です。変更のためにプール CIDR を置き換える必要はありません。検証済みの MTU／アドレス計画で必要な場合に限って対象アプリケーションのワークロードを再作成し、それぞれのロールアウトと Readiness 戦略を使ってください。[PodDisruptionBudget](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) は Deployment コントローラーのローリングアップデートを制限しません。
 
-### 別のIPPool/CIDR移行
+### IPPool／CIDR を別途移行する
 
-[プール移行手順](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)は、CalicoがIPAMを担当し、オーケストレーター/ネットワーク設計がサポートする場合のみ使用します。
+Calico が IPAM を所有し、オーケストレーター／ネットワーク設計が対応する場合に限り、[プール移行手順](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)を使ってください。
 
-1. 既存プール、Kubernetes/kube-proxyのクラスターCIDR、明示プール要求、全割り当てを棚卸しします。クラスターCIDR外の新プールはNATを変えたり通信を壊したりする場合があります。旧例の10.245/16が入門の10.244/16クラスターと自動的に互換になるわけではありません。
-2. 所有者を通じて確認済みの非重複プールを追加し、旧プールを撤回する前に新しい割り当てをテストします。旧ワークロードのため既存プールを保持します。
-3. 適切な所有者を通じて旧プールへの新規割り当てを停止します。単独プールの`spec.disabled: true`はIPAMから除外します。Operatorの`nodeSelector: "!all()"`は**自動選択**を無効にしますが、旧プールへの明示要求はセレクターを迂回するため、それらも削除します。
-4. 選択したワークロードを管理されたバッチで移行し、アドレス、MTU、経路、ポリシー、アプリケーション準備状態を確認します。Pod再作成はアプリケーションを中断し、IPを変える場合があり、新プールはシームレスなロールバックを保証しません。
-5. 該当するトンネルやLoadBalancer用途も含め、残る割り当てと依存関係を把握してから旧プールを廃止します。Pod一覧だけでは不十分です。所有者から削除する際はNAT/ルーティングへの影響も考慮します。
+1. 既存プール、Kubernetes／kube-proxy のクラスター CIDR、明示的なプール要求、すべての割り当てを棚卸しします。クラスター CIDR の外に新しいプールを置くと NAT が変わったり、通信が壊れたりする可能性があります。以前の例の 10.245/16 は、導入時の 10.244/16 クラスターと自動的に互換になるわけではありません。
+2. 所有者を通じて重複のないことを検証したプールを追加し、古いプールを無効にする前に新しい割り当てをテストします。既存ワークロードのために古いプールも保持します。
+3. 適切な所有者を通じて、古いプールへの新規割り当てを停止します。スタンドアロンでは `spec.disabled: true` で IPAM からプールを除外します。operator の `nodeSelector: "!all()"` は**自動選択**を無効にしますが、古いプールへの明示要求は selector を迂回します。そうした要求も削除してください。
+4. 対象ワークロードを管理されたバッチで移行し、アドレス、MTU、ルート、ポリシー、アプリケーションの Readiness を確認します。Pod を再作成するとアプリケーションが中断したり IP アドレスが変わったりする可能性があります。新プールを追加してもシームレスなロールバックは保証されません。
+5. 残りの割り当てや、トンネル／LoadBalancer の利用を含む依存関係を確認してから古いプールを廃止します。Pod 一覧だけでは不十分です。owner からプールを取り除いたときの NAT／ルーティングへの影響も考慮してください。
 
-有用な読み取り専用確認は次のとおりです。
+読み取り専用の確認には次のコマンドを使えます。
 
 
 ```bash
@@ -301,40 +301,40 @@ calicoctl ipam show --show-borrowed
 kubectl get pods --all-namespaces -o wide
 ```
 
-プールのブロックサイズは別の移行事項です。チュートリアルのマニフェストを置き換えることで、既存プールの不変な割り当て構造を変更しないでください。「モード即時適用のため」にcalico-nodeを再起動する旧コピー例は、ワークロードMTUやアプリケーション復旧を証明していませんでした。
+プールのブロックサイズ変更は別の移行作業です。チュートリアルのマニフェストを置き換えて、既存プールの不変な割り当て構造を変更しないでください。「モードをすぐ反映する」ために calico-node を再起動するという古い例も、ワークロードの MTU やアプリケーションの復旧を証明していません。
 
-## 過去のベンチマーク報告 — 出所未検証
+## 過去のベンチマーク報告（出典未検証）
 
-以前の英語と韓国語ページは異なる数値を含み、生の結果、完全なソフトウェアバージョン、配置、再現可能な実行環境を提供していませんでした。両記録を以下に保持しますが、1つの実験や検証済み性能保証として扱えません。この監査では再実行していません。
+以前の英語版と韓国語版には異なる数値が記載されており、生データ、ソフトウェアの完全なバージョン、配置、再現可能なテスト手順は示されていません。両方の記録を以下に保持しますが、同一の実験として扱ったり、検証済みの性能保証と見なしたりできません。このレビューでは再測定していません。
 
-### 記録A: 以前の英語ページ
+### 記録 A: 以前の英語版
 
-報告環境: **AWS上の3 × c5.xlarge**、記載上10 Gbpsネットワーク、iperf3 TCP、**1ストリームで60秒間**。配置グループ、Calico/カーネルバージョン、レイテンシー収集方法は提供されていません。
+報告された環境は AWS の **c5.xlarge 3 台**、公称ネットワーク 10 Gbps、iperf3 TCP、**60 秒間の単一ストリーム**です。プレイスメントグループ、Calico／カーネルのバージョン、レイテンシー計測方法は示されていません。
 
-| 報告メトリクス | Direct | IPIP | VXLAN |
-|---|---|---|---|
+| 報告指標 | Direct | IPIP | VXLAN |
+|---|---:|---:|---:|
 | スループット、Gbps | 9.41 | 9.12 | 8.89 |
-| p99レイテンシー、µs | 45 | 52 | 61 |
-| CPU、Gbpsあたり% | 2.1 | 2.8 | 3.4 |
+| p99 レイテンシー、µs | 45 | 52 | 61 |
+| Gbps あたり CPU、% | 2.1 | 2.8 | 3.4 |
 
-AWSは、指定例外を除き、クラスター配置グループ外で通常5 Gbpsの単一フロー制限を文書化しています。したがって9 Gbps超という報告値を新デプロイの予測に使うには、欠けた配置/経路条件が必要です。「最大10 Gbps」も持続ベースライン帯域を示しません。[EC2帯域幅](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html)を参照してください。
+AWS は、クラスターのプレイスメントグループ外では、指定された例外を除き単一フローを通常 5 Gbps に制限すると説明しています。そのため、この報告の 9 Gbps 超の値を新規デプロイの予測に使うには、不足しているプレイスメント／経路条件を確認する必要があります。「最大 10 Gbps」という表示も、持続的な基準帯域を証明するものではありません。[EC2 の帯域幅](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html)を参照してください。
 
-### 記録B: 以前の韓国語ページ
+### 記録 B: 以前の韓国語版
 
-| 報告メトリクス | Direct | IPIP | VXLAN | 記載された方法 |
-|---|---|---|---|---|
+| 報告指標 | Direct | IPIP | VXLAN | 記載された方法 |
+|---|---:|---:|---:|---|
 | スループット、Gbps | 9.8 | 9.2 | 8.5 | iperf3、MTU 1500 |
-| レイテンシー、µs（統計不明） | 35 | 42 | 55 | netperf TCP_RR |
-| CPU使用率 | 低 | 中 | 中〜高 | 10 Gbps時 |
-| PPS、毎秒百万パケット | 1.8 | 1.5 | 1.2 | 64バイトパケット |
+| レイテンシー、µs（統計量は不明） | 35 | 42 | 55 | netperf TCP_RR |
+| CPU 使用率 | 低 | 中 | 中～高 | 10 Gbps 時 |
+| PPS、百万 packet／秒 | 1.8 | 1.5 | 1.2 | 64 バイトのパケット |
 
-ハードウェア、サンプル数、「64バイト」の正確な解釈は提供されていません。netperfのTCP_RRテストは通常**毎秒トランザクション数**を報告します。明示的に根拠を示した逆数から平均リクエスト/レスポンス周期時間を推定できますが、p99や独立した片方向ネットワークレイテンシーではありません。報告されたマイクロ秒値の生出力/変換が欠けています。
+ハードウェア、サンプル数、「64 bytes」の正確な意味は示されていません。netperf の TCP_RR テストは通常、**1 秒あたりのトランザクション数**を報告します。根拠を明示してその逆数を計算すれば、リクエスト／応答サイクルの平均時間を推定できますが、p99 や片方向だけのネットワークレイテンシーではありません。記載されたマイクロ秒値の生出力や換算根拠もありません。
 
-ヘッダーサイズだけではどのモードが速いか決まりません。NICオフロード、カーネル/データプレーン、パケットサイズ、CPU、経路、接続再利用、投入負荷で結果は変わります。未検証の履歴として保持し、それでモードを順位付けせず対象環境を測定してください。
+ヘッダーサイズだけでどのモードが速いかは決まりません。NIC オフロード、カーネル／データプレーン、パケットサイズ、CPU、ルート、接続再利用、負荷によって結果は変わります。これらの記録は未検証の過去情報として保持し、出典のないグラフからモードの順位を決めず、対象環境を測定してください。
 
-### 新しい実験のための制限付きクライアントプローブ
+### 新しい実験用の限定的なクライアントプローブ
 
-対応するiperf3/netperfバージョン、稼働中のサーバーリスナー、必要なポリシー権限を持つ専用テストPodを準備します。コマンドはクライアントプローブだけで、どちらの記録の完全再現でもありません。バージョン、ノード/AZ配置、MTU、リクエスト/レスポンスサイズ、生出力、繰り返し実行を記録します。この例では選択したサーバーがIPv4アドレスを持つことを確認してください。
+バージョンをそろえた iperf3/netperf、待ち受け中のサーバー、必要なポリシー権限を持つテスト専用 Pod を用意してください。以下のコマンドはクライアントプローブの例であり、過去のどちらの記録も完全再現するものではありません。バージョン、ノード／AZ 配置、MTU、要求／応答サイズ、生出力、反復結果を記録してください。この例では選択するサーバーに IPv4 アドレスがあることを確認します。
 
 ```bash
 set -euo pipefail
@@ -351,6 +351,6 @@ kubectl -n "$BENCH_NS" exec "$CLIENT_POD" --   iperf3 -c "$SERVER_IP" -t 30 -P 4
 kubectl -n "$BENCH_NS" exec "$CLIENT_POD" --   netperf -H "$SERVER_IP" -t TCP_RR -l 60 > netperf-result.txt
 ```
 
-iperf3例は4ストリームを使うため、記録Aの単一ストリーム方式とは異なります。[netperfマニュアル](https://github.com/HewlettPackard/netperf/blob/master/doc/netperf.txt)が報告単位とオプションのレイテンシー出力を定義します。テスト負荷を分離し、終了後は所有するテストサーバー/リソースだけを停止してください。出典のないグラフを再現するために本番ネットワークモードを変更しないでください。
+iperf3 の例は 4 ストリームを使うため、記録 A の単一ストリーム方式とは異なります。[netperf マニュアル](https://github.com/HewlettPackard/netperf/blob/master/doc/netperf.txt)で報告単位と任意のレイテンシー出力を確認してください。負荷を分離して実施し、終了後は自分が所有するテスト用サーバー／リソースだけを停止してください。引用根拠のないグラフを再現する目的で本番ネットワークモードを変更しないでください。
 
-[Calicoの概要](README.md) · [アーキテクチャ](02-architecture.md) · [次: BGP詳解](04-bgp-deep-dive.md) · [ネットワーキングモードクイズ](../../quizzes/networking/calico/03-networking-modes-quiz.md)
+[Calico の概要](README.md) · [アーキテクチャ](02-architecture.md) · [次へ: BGP 詳細](04-bgp-deep-dive.md) · [ネットワーキングモードのクイズ](../../quizzes/networking/calico/03-networking-modes-quiz.md)

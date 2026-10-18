@@ -1,6 +1,6 @@
 # 日志收集器对比
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026年9月13日
 
 本指南对比 Fluent Bit、Grafana Alloy 和 OpenTelemetry Collector，并说明如何从已停止维护的 Promtail 安装迁移。请根据收集器实际的输入、输出插件、部署所需权限和故障行为来选型，而不是依据假想的内存占用或每秒事件数排名。
 
@@ -13,7 +13,7 @@
 3. [Promtail](#promtail)
 4. [Grafana Alloy](#grafana-alloy)
 5. [OpenTelemetry Collector](#opentelemetry-collector)
-6. [对比与选型 (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/05-collectors#comparison-and-selection-guide)
+6. [对比与选型](#comparison-and-selection-guide)
 
 <span id="overview"></span>
 
@@ -774,7 +774,7 @@ service:
 
 请使用适合该集群、由运维方自行定义的 PriorityClass，而不要把保留的 `system-cluster-critical`/`system-node-critical` 类别当作通用的日志方案建议。专用节点、优先级和预留容量并不能保证在所有故障期间都可用。
 
-## 对比与选型指南
+## 对比与选型指南 {#comparison-and-selection-guide}
 
 ### 功能对比表
 

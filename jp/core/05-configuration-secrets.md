@@ -1,7 +1,7 @@
 # 設定と Secret
 
-> **サポート対象バージョン**: Kubernetes 1.32, 1.33, 1.34
-> **最終更新**: February 22, 2026
+> **サポート対象バージョン**: Kubernetes 1.35、1.36、1.37
+> **最終更新**: 2026年10月16日
 
 Kubernetes では、設定管理はアプリケーション設定をコードから分離して管理するうえで重要な要素です。この章では、ConfigMap、Secret、環境変数、Volume を通じた設定のマウントなど、Kubernetes の設定管理方法を詳しく説明します。
 
@@ -10,7 +10,7 @@ Kubernetes では、設定管理はアプリケーション設定をコードか
 このドキュメントの例に沿って進めるには、次のツールと環境が必要です。
 
 ### 必要なツール
-- kubectl v1.34 以降
+- API サーバーとのマイナーバージョン差が 1 以内の kubectl
 - 動作する Kubernetes クラスター（EKS、minikube、kind など）
 
 ### 設定例のセットアップ
@@ -32,7 +32,7 @@ kubectl -n config-demo create secret generic app-secrets \
   --from-literal=API_KEY=abcdef123456
 
 # Create Pod using ConfigMap and Secret
-kubectl -n config-demo apply -f - <<EOF
+kubectl -n config-demo apply -f - <<'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
@@ -41,7 +41,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: ["sh", "-c", "env | sort && sleep 3600"]
+    command: ["sh", "-c", 'test -n "$DB_PASSWORD" && echo "Secret available" && sleep 3600']
     env:
     - name: APP_ENV
       valueFrom:
@@ -73,7 +73,7 @@ kubectl -n config-demo logs config-test-pod
 3. [環境変数](#environment-variables)
 4. [Volume を通じた設定のマウント](#mounting-configuration-through-volumes)
 5. [設定のベストプラクティス](#configuration-best-practices)
-6. [外部設定管理ツール (English)](https://www.atomai.click/kubernetes-docs/en/core/05-configuration-secrets#eks-configuration-management-tools)
+6. [Amazon EKS での設定管理](#configuration-management-in-amazon-eks)
 
 ## ConfigMap
 
@@ -86,9 +86,9 @@ ConfigMap は、設定データをキーと値のペアで保存する API オ�
 | 機能 | ConfigMap | Secret |
 |---------|-----------|--------|
 | **目的** | 一般的な設定データ | 機密性の高い設定データ |
-| **保存形式** | プレーンテキスト | Base64 エンコード（デフォルト） |
-| **サイズ上限** | 1MB | 1MB |
-| **暗号化** | デフォルトではなし | etcd 暗号化をサポート |
+| **API 表現** | UTF-8 の `data` または Base64 の `binaryData` | Base64 の `data`。書き込み時は `stringData` も使用可能 |
+| **サイズ上限** | 1 MiB | 1 MiB |
+| **保存時の暗号化** | API サーバーまたはプラットフォームの設定による | API サーバーまたはプラットフォームの設定による |
 | **Volume タイプ** | configMap | secret |
 | **ユースケース** | 環境変数、設定ファイル | パスワード、トークン、証明書 |
 | **自動更新** | Volume としてマウント時に遅延する可能性あり | Volume としてマウント時に遅延する可能性あり |
@@ -283,7 +283,7 @@ spec:
 
 ### ConfigMap の更新
 
-ConfigMap が更新されると、Volume としてマウントされた ConfigMap の内容は自動的に更新されます。ただし、環境変数として使用された ConfigMap を更新するには Pod の再起動が必要です。
+変更可能な ConfigMap と Secret を通常の Volume としてマウントした場合、内容は最終的に更新されます。反映までの時間は kubelet の同期間隔と変更検出・キャッシュの設定によって異なります。アプリケーション側でファイルを読み直すか再読み込みする必要があります。`subPath` マウントには更新が反映されません。実行中プロセスの環境変数は変わらないため、新しい値を使うには Deployment のロールアウトなどで Pod を再作成します。
 
 ```bash
 kubectl edit configmap my-config
@@ -337,7 +337,7 @@ Secret はさまざまな方法で作成できます。
 kubectl create secret generic my-secret --from-literal=username=admin --from-literal=password=secret
 
 # Create from files
-kubectl create secret generic my-secret --from-file=username.txt --from-file=password.txt
+kubectl create secret generic my-secret --from-file=username=username.txt --from-file=password=password.txt
 
 # Create TLS secret
 kubectl create secret tls my-tls-secret --cert=path/to/cert.crt --key=path/to/key.key
@@ -393,7 +393,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "env" ]
+    command: ["/bin/sh", "-c", 'test -n "$USERNAME" && echo "Secret available"']
     env:
     # Use single key-value pair
     - name: USERNAME
@@ -451,8 +451,10 @@ Secret はデフォルトで Base64 エンコードされていますが、こ�
 
 1. **etcd 暗号化**: etcd に保存される Secret を暗号化します。
 2. **RBAC**: Secret へのアクセスを制限します。
-3. **NetworkPolicy**: Secret にアクセスできる Pod を制限します。
+3. **NetworkPolicy**: 対応する環境では、API や外部ストアへのネットワークアクセスを制限します。Secret オブジェクトへの認可は NetworkPolicy ではなく RBAC で制御します。
 4. **外部 Secret 管理ツール**: AWS Secrets Manager、HashiCorp Vault などの外部 Secret 管理ツールを使用します。
+
+ここに示す認証情報はすべて学習用のダミー値です。Secret の内容や Base64 化した実値をログに出したり、コミットしたりしないでください。CLI 引数に値を直接記述するのではなく、保護された入力ファイルまたは外部の Secret 管理サービスを使用します。Secret を使う Pod を作成できるユーザーは、Secret を直接読み取る権限がなくても、その値を取得できる場合があります。
 
 #### etcd 暗号化の設定
 
@@ -469,6 +471,8 @@ resources:
           secret: <base64 encoded key>
     - identity: {}
 ```
+
+セルフマネージドクラスターでは、このファイルを `--encryption-provider-config` で読み込み、暗号化キーを保護したうえで、既存の Secret を再書き込みして暗号化します。この設定ファイルは `kubectl apply` で適用する Kubernetes リソースではありません。EKS の暗号化は AWS が管理します（以下を参照）。
 
 <span id="environment-variables"></span>
 
@@ -517,7 +521,7 @@ spec:
       valueFrom:
         configMapKeyRef:
           name: my-config
-          key: environment
+          key: key1
   restartPolicy: Never
 ```
 
@@ -532,7 +536,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "env" ]
+    command: ["/bin/sh", "-c", 'test -n "$DATABASE_PASSWORD" && echo "Secret available"']
     env:
     - name: DATABASE_PASSWORD
       valueFrom:
@@ -696,11 +700,11 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "cat /etc/nginx/nginx.conf" ]
+    command: [ "/bin/sh", "-c", "cat /etc/config/config.properties" ]
     volumeMounts:
     - name: config-volume
-      mountPath: /etc/nginx/nginx.conf
-      subPath: nginx.conf
+      mountPath: /etc/config/config.properties
+      subPath: config.properties
   volumes:
   - name: config-volume
     configMap:
@@ -755,14 +759,18 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: my-config-v1
+immutable: true
 data:
+  log_level: INFO
   # Configuration data
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: my-config-v2
+immutable: true
 data:
+  log_level: DEBUG
   # Updated configuration data
 ```
 
@@ -782,7 +790,11 @@ kubectl rollout restart deployment/my-deployment
 
 設定オプションとその影響を文書化します。これはチームメンバーが設定を理解し、管理するのに役立ちます。
 
-## Amazon EKS における設定管理
+### リソース要求と QoS
+
+リソース要求はスケジューリングと実行時の割り当てを導きますが、アプリケーションがその量を必ず消費するという意味ではありません。CPU limit は CPU 使用を抑制し、memory limit は OOM による終了を引き起こすことがあります。クイズのコンテナ単位の例では、Guaranteed になるにはすべてのコンテナで CPU と memory の request/limit がそれぞれ等しくなければなりません。BestEffort ではどちらも設定せず、それ以外は Burstable です。Pod 単位のリソース設定も QoS に影響する場合があります。ノードのメモリ逼迫による退避では、priority と request に対する使用量も考慮されます。[リソース管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)と [Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)を参照してください。
+
+## Amazon EKS における設定管理 {#configuration-management-in-amazon-eks}
 
 Amazon EKS では、Kubernetes の基本的な設定管理機能に加えて、AWS のさまざまなサービスを使用し、設定と Secret を管理できます。このセクションでは、EKS で設定を管理するさまざまな方法と AWS サービスとの統合について説明します。
 
@@ -792,7 +804,7 @@ Amazon EKS では、Kubernetes の基本的な設定管理機能に加えて、A
 
 ### AWS Secrets Manager との統合
 
-AWS Secrets Manager は、データベース認証情報、API キー、その他の機密情報を安全に保存および管理できるサービスです。EKS では、External Secrets Operator または AWS Secrets and Configuration Provider（ASCP）を使用して、AWS Secrets Manager の Secret を Kubernetes Secret に同期できます。
+AWS Secrets Manager は、データベース認証情報、API キー、その他の Secret を安全に保存・管理するサービスです。External Secrets Operator は Kubernetes Secret の状態を調整し、Secrets Store CSI Driver と組み合わせた ASCP は外部の値をファイルとしてマウントします。Kubernetes Secret への同期と自動ローテーションには、CSI Driver のオプション設定が必要です。
 
 #### External Secrets Operator のインストール
 
@@ -807,7 +819,7 @@ helm install external-secrets external-secrets/external-secrets \
 #### SecretStore を作成する
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: aws-secretsmanager
@@ -826,7 +838,7 @@ spec:
 #### ExternalSecret を作成する
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: database-credentials
@@ -864,13 +876,15 @@ eksctl create iamserviceaccount \
   --cluster my-cluster \
   --namespace my-namespace \
   --name my-serviceaccount \
-  --attach-policy-arn arn:aws:iam::aws:policy/SecretsManagerReadWrite \
+  --attach-policy-arn arn:aws:iam::123456789012:policy/ReadAppDatabaseSecret \
   --approve
 ```
 
+まず `prod/db/credentials` の完全な ARN に対象を限定し、`secretsmanager:GetSecretValue` と `secretsmanager:DescribeSecret` を許可する `ReadAppDatabaseSecret` policy を作成します。カスタマー管理キーが必要な場合に限り、対象を絞った `kms:Decrypt` を追加してください。IAM trust policy は、このクラスター、namespace、ServiceAccount に一致させます。SecretStore を作成する前に、ESO と v1 CRD、namespace、ServiceAccount を用意します。
+
 ### AWS Parameter Store の使用
 
-AWS Systems Manager Parameter Store は、設定データと Secret 値を階層的に保存および管理できるサービスです。Parameter Store は Secrets Manager より低コストで、シンプルな設定値の保存に適しています。
+AWS Systems Manager Parameter Store は、設定データと Secret 値を階層的に保存・管理するサービスです。ローテーション、ライフサイクル、アクセス要件に応じて Parameter Store と Secrets Manager を選択してください。料金はパラメータの tier と API 使用量によって異なります。
 
 #### ASCP（AWS Secrets and Configuration Provider）のインストール
 
@@ -911,6 +925,7 @@ metadata:
   name: parameter-store-pod
   namespace: my-namespace
 spec:
+  serviceAccountName: parameter-reader
   containers:
   - name: app
     image: my-app:latest
@@ -927,11 +942,15 @@ spec:
         secretProviderClass: aws-parameters
 ```
 
+`parameter-reader` には、2 つの parameter ARN に対する `ssm:GetParameters` を許可する IRSA ロールまたは Pod Identity の関連付けを設定し、必要な場合は対象を絞った KMS 復号権限を付与します。先ほどの Secrets Manager ロールには SSM 権限がありません。ASCP が利用できるのは対応するノードとアドオンの組み合わせに限られ、CSI マウントは Fargate では動作しません。Hybrid Nodes では、明示的にサポートされたアドオンのバージョンと認証情報の設定が必要です。
+
 ### AWS AppConfig による動的設定
 
 AWS AppConfig はアプリケーション設定を管理およびデプロイするサービスです。AppConfig を使用すると、アプリケーションを再デプロイせずに設定を動的に更新できます。
 
 #### AppConfig Agent の Sidecar パターン
+
+アプリケーションは agent のローカル HTTP endpoint から設定を取得し、定期的に再取得して反映する必要があります。共有 `emptyDir` を用意するだけでは、agent は `/config/config.json` に書き込みません。先に application、environment、configuration profile、deployment を作成し、対象の設定に対する `appconfig:StartConfigurationSession` と `appconfig:GetLatestConfiguration` を Pod の IAM identity に許可します。
 
 ```yaml
 apiVersion: apps/v1
@@ -949,47 +968,45 @@ spec:
       labels:
         app: my-app
     spec:
+      serviceAccountName: appconfig-reader
       containers:
       - name: app
         image: my-app:latest
         env:
-        - name: CONFIG_PATH
-          value: /config/config.json
-        volumeMounts:
-        - name: config-volume
-          mountPath: /config
+        - name: CONFIG_URL
+          value: http://localhost:2772/applications/MyApp/environments/Production/configurations/MyConfig
       - name: appconfig-agent
-        image: public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.0
+        image: public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.x
         env:
-        - name: AWS_APPCONFIG_EXTENSION_POLL_INTERVAL_SECONDS
-          value: "45"
-        - name: AWS_APPCONFIG_EXTENSION_POLL_TIMEOUT_SECONDS
-          value: "15"
-        - name: AWS_APPCONFIG_EXTENSION_HTTP_PORT
+        - name: SERVICE_REGION
+          value: us-west-2
+        - name: POLL_INTERVAL
+          value: "45s"
+        - name: REQUEST_TIMEOUT
+          value: "15s"
+        - name: HTTP_PORT
           value: "2772"
-        - name: AWS_APPCONFIG_EXTENSION_PREFETCH_LIST
-          value: '{"Applications":[{"ApplicationId":"MyApp","Environments":[{"EnvironmentId":"Production","Configurations":[{"ConfigurationProfileId":"MyConfig","VersionNumber":null}]}]}]}'
-        volumeMounts:
-        - name: config-volume
-          mountPath: /config
-      volumes:
-      - name: config-volume
-        emptyDir: {}
+        - name: HTTP_HOST
+          value: localhost
+        - name: PREFETCH_LIST
+          value: MyApp:Production:MyConfig
 ```
+
+アプリケーション image は `CONFIG_URL` からの設定取得と、sidecar の起動中に再試行する処理を実装している必要があります。デプロイ前に `appconfig-reader` と権限を絞った AWS identity を作成し、本番ではテスト済みの agent バージョンまたは digest を固定してください。ここに示すのはコンテナ agent の設定であり、Lambda extension の環境変数ではありません。
 
 ### EKS Fargate Profile による設定
 
-EKS Fargate を使用すると、ノードを管理せずに Kubernetes Pod を実行できます。Fargate Profile を使用して Pod 実行環境を設定できます。
+EKS Fargate を使用すると、ノードを管理せずに Kubernetes Pod を実行できます。Fargate Profile は EKS API リソースであり、Kubernetes ネイティブのオブジェクトではありません。次の `eksctl` 設定では、プライベートサブネット ID と Pod execution role を置き換え、`eksctl create fargateprofile -f fargate-profile.yaml` で作成します。
 
 ```yaml
-apiVersion: eks.amazonaws.com/v1beta1
-kind: FargateProfile
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
 metadata:
-  name: my-profile
-  namespace: my-namespace
-spec:
-  clusterName: my-cluster
-  podExecutionRoleArn: arn:aws:iam::123456789012:role/my-pod-execution-role
+  name: my-cluster
+  region: us-west-2
+fargateProfiles:
+- name: my-profile
+  podExecutionRoleARN: arn:aws:iam::123456789012:role/my-pod-execution-role
   selectors:
   - namespace: my-namespace
     labels:
@@ -1001,33 +1018,30 @@ spec:
 
 ### AWS KMS による Secret の暗号化
 
-Kubernetes Secret はデフォルトで Base64 エンコードされますが、これは暗号化ではありません。AWS KMS（Key Management Service）を使用して、EKS クラスターの Secret を暗号化できます。
+<span id="secret-encryption-with-aws-kms"></span>
 
-#### KMS キーを作成する
+Kubernetes 1.28 以降の EKS クラスターでは、Secret と ConfigMap を含むすべての Kubernetes API データが、AWS 所有キーを使って[デフォルトで envelope encryption により暗号化](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)されます。カスタマー管理 KMS キーは任意であり、暗号化を有効にするために必須ではありません。
 
-```bash
-# Create KMS key
-aws kms create-key --description "EKS Secret Encryption Key"
-
-# Store key ID
-KEY_ID=$(aws kms create-key --query KeyMetadata.KeyId --output text)
-
-# Create key alias
-aws kms create-alias --alias-name alias/eks-secrets --target-key-id $KEY_ID
-```
-
-#### EKS クラスターに暗号化設定を適用する
+対象となる既存クラスターにカスタマー管理キーを関連付けるには、`update-cluster-config` ではなく `associate-encryption-config` を使用します。適用前にキーのリージョン、policy、権限、関連付けの制約を確認してください。次の例ではキーを 1 つ作成し、返された ARN を再利用します。
 
 ```bash
-# Apply encryption configuration
-aws eks update-cluster-config \
-  --name my-cluster \
-  --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:us-west-2:123456789012:key/'$KEY_ID'"}}]'
+set -eu
+KEY_ARN=$(aws kms create-key --region us-west-2 \
+  --description "EKS customer-managed encryption key" \
+  --query KeyMetadata.Arn --output text)
+aws kms create-alias --region us-west-2 \
+  --alias-name alias/eks-secrets --target-key-id "$KEY_ARN"
+
+aws eks associate-encryption-config --region us-west-2 \
+  --cluster-name my-cluster \
+  --encryption-config "resources=secrets,provider={keyArn=$KEY_ARN}"
 ```
+
+更新 ID を使って `aws eks describe-update` で完了を確認し、`aws eks describe-cluster --name my-cluster --region us-west-2 --query cluster.encryptionConfig` の結果も確認します。カスタマー管理設定が表示されないことは、デフォルト暗号化が無効であることを意味しません。
 
 ### AWS IAM による Secret アクセス制御
 
-IRSA（IAM Roles for Service Accounts）を使用して IAM ロールを Kubernetes ServiceAccount に関連付けると、Pod は AWS サービスに安全にアクセスできます。
+IRSA（IAM Roles for Service Accounts）を使って IAM ロールを Kubernetes ServiceAccount に関連付けると、Pod は AWS サービスに安全にアクセスできます。
 
 #### ServiceAccount を作成する
 
@@ -1060,7 +1074,7 @@ spec:
 
 EKS で設定を管理するときは、次のベストプラクティスを検討してください。
 
-1. **IRSA を使用する**: AWS サービスにアクセスする際は、常に IRSA を使用して Pod に最小限の権限を付与します。
+1. **ワークロード ID を使用する**: 対応するコンピューティング環境では EKS Pod Identity または IRSA を使い、権限を必要最小限にします。Fargate アプリケーションには IRSA を使用します。Pod execution role はインフラストラクチャ用であり、アプリケーションの認証情報には使いません。
 
 2. **Secret を暗号化する**: KMS を使用して EKS クラスター内の Secret を暗号化します。
 
@@ -1087,16 +1101,15 @@ apiVersion: secretsmanager.services.k8s.aws/v1alpha1
 kind: Secret
 metadata:
   name: my-secret
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
   name: my-secret
   description: "My secret created via ACK"
-  forceDeleteWithoutRecovery: true
-  generateSecretString:
-    excludeCharacters: "\"@/\\"
-    excludePunctuation: true
-    includeSpace: false
-    passwordLength: 16
+  recoveryWindowInDays: 30
 ```
+
+ACK Secrets Manager controller と、それに必要な IAM ロールおよび CRD を先にインストールしてください。この manifest が管理するのは Secrets Manager の Secret コンテナの metadata であり、password の生成や Kubernetes Secret の作成は行いません。管理された Secret の運用手順を通じて値を登録してください。
 
 #### eksctl
 
@@ -1121,30 +1134,23 @@ eksctl create cluster -f cluster.yaml
 
 AWS CDK（Cloud Development Kit）は、プログラミング言語を使用して AWS リソースを定義するためのツールです。CDK を使用して EKS クラスターと関連リソースを定義できます。
 
+この補助関数は既存の CDK EKS cluster と Secret construct を使用し、その Secret の読み取り権限だけを付与します。namespace は事前に作成し、クラスターには互換性のある kubectl provider を設定してください。
+
 ```typescript
-import * as cdk from 'aws-cdk-lib';
 import * as eks from 'aws-cdk-lib/aws-eks';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
-const app = new cdk.App();
-const stack = new cdk.Stack(app, 'EksStack');
-
-// Create EKS cluster
-const cluster = new eks.Cluster(stack, 'Cluster', {
-  version: eks.KubernetesVersion.V1_21,
-  secretsEncryptionKey: new kms.Key(stack, 'Key'),
-});
-
-// Create service account
-const serviceAccount = cluster.addServiceAccount('ServiceAccount', {
-  name: 'my-service-account',
-  namespace: 'my-namespace',
-});
-
-// Attach IAM policy
-serviceAccount.role.addManagedPolicy(
-  iam.ManagedPolicy.fromAwsManagedPolicyName('SecretsManagerReadWrite')
-);
+export function addSecretReader(
+  cluster: eks.Cluster,
+  secret: secretsmanager.ISecret,
+): eks.ServiceAccount {
+  const serviceAccount = cluster.addServiceAccount('SecretReader', {
+    name: 'my-service-account',
+    namespace: 'my-namespace',
+  });
+  secret.grantRead(serviceAccount);
+  return serviceAccount;
+}
 ```
 
 ## まとめ

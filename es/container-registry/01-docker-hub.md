@@ -1,6 +1,6 @@
 # Docker Hub
 
-> **Última actualización**: September 11, 2026
+> **Última actualización**: 11 de septiembre de 2026
 
 ## Descripción general
 
@@ -359,7 +359,7 @@ Las imágenes públicas de Docker Hub pueden presentar riesgos de seguridad:
 2. **Cuentas de mantenedores comprometidas**: imágenes legítimas tomadas por atacantes
 3. **Malware incorporado**: mineros de criptomonedas, puertas traseras o código para la exfiltración de datos
 4. **Imágenes base vulnerables**: imágenes obsoletas con CVE conocidos
-5. **Imágenes infladas**: paquetes innecesarios que aumentan la superficie de ataque
+5. **Imágenes con demasiados paquetes**: los paquetes innecesarios amplían la superficie de ataque
 
 ### Identificación de imágenes de confianza
 

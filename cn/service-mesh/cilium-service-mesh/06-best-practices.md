@@ -1,7 +1,7 @@
 # Cilium Service Mesh 最佳实践
 
 > **评审基线**：Cilium 1.20.3 和 Cilium CLI 0.20.1。
-> **最后评审时间**：October 16, 2026。有关 Kubernetes、EKS 和可选组件的兼容性检查，请参阅单独的[安装指南](./README.md)。
+> **最后评审时间**：2026年10月16日。有关 Kubernetes、EKS 和可选组件的兼容性检查，请参阅单独的[安装指南](./README.md)。
 
 ## 概述
 
@@ -828,7 +828,7 @@ EKS Auto Mode 和 Fargate 不支持这种替代 CNI DaemonSet 安装路径。EKS
 
 ### 节点操作系统和容量
 
-EKS 已于 **November 26, 2025** 停止发布 EKS 优化的 AL2 AMI；1.32 是最后一个支持的 Kubernetes 系列版本。请选择适用且受支持的 AL2023 或 Bottlerocket AMI，并核实其实际内核/架构及 Cilium 功能要求。通用 Linux 兼容性条目中提及 AL2，并不代表当前仍支持相应的 EKS AMI 生命周期。
+EKS 已于 **2025年11月26日** 停止发布 EKS 优化的 AL2 AMI；1.32 是最后一个支持的 Kubernetes 系列版本。请选择适用且受支持的 AL2023 或 Bottlerocket AMI，并核实其实际内核/架构及 Cilium 功能要求。通用 Linux 兼容性条目中提及 AL2，并不代表当前仍支持相应的 EKS AMI 生命周期。
 
 应根据实测的 CPU、内存、网络/数据包限制、ENI/IP 容量、可用性和成本选择实例系列和规格。先前固定推荐 m6i/c6i/r6i 的做法并非基准测试结果。如果使用混合架构，请在 AMD64 和 Arm64 上分别验证每个 DaemonSet 和工作负载镜像。
 

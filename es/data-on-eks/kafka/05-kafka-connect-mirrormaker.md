@@ -1,7 +1,7 @@
 # Parte 5: Kafka Connect y MirrorMaker
 
 > **Línea base de revisión**: Strimzi 1.3.0, Kafka 4.3.1, Debezium PostgreSQL 3.6.3.Final, Aiven S3 sink 3.4.3\
-> **Última revisión**: October 16, 2026
+> **Última revisión**: 16 de octubre de 2026
 
 ## Workers y conectores de Connect
 

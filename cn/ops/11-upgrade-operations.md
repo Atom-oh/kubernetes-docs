@@ -1,6 +1,6 @@
 # EKS 升级：Auto Mode、回滚与蓝绿部署
 
-> **最后更新**：October 16, 2026。命令于 September 12, 2026 检查（Pluto 和 Velero 于 October 16, 2026 检查），使用 AWS CLI 2.36.44、Pluto 5.24.4 和 Velero 1.18.4。
+> **最后更新**：2026 年 10 月 16 日。命令于 2026 年 9 月 12 日检查（Pluto 和 Velero 于 2026 年 10 月 16 日检查），使用 AWS CLI 2.36.44、Pluto 5.24.4 和 Velero 1.18.4。
 > 示例升级路径为 1.35 → 1.36；请确认实际区域可用性。
 
 请一并规划控制平面、节点、附加组件、应用和数据。
@@ -8,14 +8,13 @@
 
 ## 1. 版本与管理职责
 
-截至 October 12, 2026，上游 Kubernetes 为最近三个次要版本（1.35–1.37）维护发布分支，
-而不是当前版本加上之前的三个版本。每个次要版本大约有 14 个月的补丁支持，其中最后两个月处于维护模式；1.34 将处于
-维护模式，直至其生命周期于 October 27, 2026 结束。
+截至 2026 年 10 月 12 日，上游 Kubernetes 为最近三个次要版本（1.35–1.37）维护发布分支，
+而不是“当前版本加上之前三个版本”。每个次要版本大约获得 14 个月的补丁支持，最后两个月为维护模式；1.34 将持续处于维护模式，直至其于 2026 年 10 月 27 日终止生命周期。
 EKS 有单独的生命周期：通常提供 14 个月标准
 支持和 12 个月延长支持。请确认确切日期、策略和区域可用性。
 
-标准支持期间，EKS 普通基础控制平面费用为 $0.10/小时；延长支持期间的总费用为
-$0.60/小时（$0.10 + $0.50）。额外费用不是 $0.60。
+标准支持期间，EKS 基础控制平面费用为 $0.10/小时；延长支持期间的总费用为
+$0.60/小时（$0.10 + $0.50）。延长支持增加的费用为 $0.50/小时，并非 $0.60/小时。
 Auto Mode、计算、存储、网络以及单独预置的控制平面容量需额外付费。
 
 ```bash
@@ -37,7 +36,7 @@ EKS 控制平面每次只能升级一个次要版本，不能跳过中间版本�
 并分别检查 EKS 托管节点、Fargate、自管理节点和 Hybrid 的要求。
 使用与控制平面相差不超过一个次要版本的 kubectl。
 
-| Deployment | 更新职责 |
+| 部署形态 | 更新职责 |
 |---|---|
 | 纯 Auto Mode | 由服务管理节点、网络、块存储和 LB 功能 |
 | 普通/自管理/Hybrid 节点 | 规划节点、CNI、DNS、代理、驱动和控制器更新 |
@@ -62,7 +61,7 @@ CLI 标志和指标采用不同的策略。请对照迁移指南以及实际安�
 ## 2. 升级前审查
 
 升级洞察有时间和覆盖范围方面的限制。官方升级指南仍指出，
-某些升级洞察问题暂时不再要求使用 `--force`。
+针对某些升级洞察问题，暂时无需再提供 `--force`。
 请将此情况与下文阻止操作的回滚就绪状态 ERROR/UNKNOWN 区分开来。
 API 接受请求并不代表已完成就绪状态审查。
 
@@ -294,8 +293,8 @@ spec:
 EKS 托管备份并不意味着客户可以从任意 etcd 快照自行恢复。
 请分别处理 Git/IaC、Kubernetes 对象、PV 数据、外部数据库、权限、加密密钥
 和恢复流程。先准备 Velero BackupStorageLocation、插件/CSI 快照配置
-和 IAM。此 Schedule 明确选择了 production。
-默认 Backup CLI 包含 `*` namespace；它不会自动排除所有 velero。
+和 IAM。该 Schedule 明确将 production 选为目标。
+默认 Backup CLI 将 `*`（所有命名空间）纳入范围，不会自动排除 velero 命名空间。
 
 ```yaml
 # backup-schedule.yaml
@@ -345,7 +344,7 @@ velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
 分别测试恢复创建、Pod 启动、卷挂载、完整性和应用行为。
 测试清理时不要删除原始备份。
 
-## 4. 控制平面和节点更新
+## 4. 控制平面与节点更新
 
 本节使用[基础设施章节](./01-infrastructure-setup.md)中已有的集群层。
 不要在新的 state 中创建重复集群，也不要重建 VPC/IAM。
@@ -469,7 +468,7 @@ Node/Pod annotation 和 budget 并不能阻止所有中断、到期或 terminati
 
 DaemonSet 会在符合条件的节点上运行。不要将强制删除/绕过 PDB 自动化用作通用补救措施。
 
-## 5. 原生 Kubernetes 版本回滚
+## 5. Kubernetes 原生版本回滚
 
 EKS 支持在升级完成后的七天内发起回滚至上一个次要版本。
 “控制平面永远不能回滚”这一说法已不再正确。
@@ -598,7 +597,7 @@ argocd app wait api-my-cluster-green --sync --health --timeout 300
 argocd app rollback 使用 deployment history ID，而不是 SHA。
 否则，自动同步/ApplicationSet 的期望状态可能会再次更改它。
 
-### 直接测试 Green
+### 直接验证 Green
 
 Pod 正在运行且 TCP 可连通，并不能证明 DB/消息/readiness 行为正常。
 请使用直接通往 Green 的路径，并保留服务主机名的 SNI/Host 和证书验证。
@@ -778,7 +777,7 @@ histogram_quantile(0.99,
 ```
 
 比较历史数据时，分子、分母和 buckets 应使用相同的 offset。
-`[30m] offset 1h` 覆盖的是现在之前 90–60 分钟，而不是 60–30 分钟。
+[30m] offset 1h 覆盖的是现在之前 90–60 分钟，而不是 60–30 分钟。
 请比较相同的样本群体：blue/green 的流量、路由、样本数量和负载可能不同。
 七十二小时无法覆盖完整的每周模式。请根据工作负载周期和回滚资格窗口选择观察时长。
 
@@ -786,7 +785,7 @@ histogram_quantile(0.99,
 不要将不完整的面板 YAML/JSON 作为可完整导入的仪表板呈现。
 记录升级前/后的版本、update ID、计划/实际时间、故障和恢复结果。
 
-本次审查检查了合成 preflight/wait/routing 用例、官方 CLI 解析器、Velero 仅 GET 输出行为
+本次审查检查了合成的 preflight/wait/routing 用例、官方 CLI 解析器、Velero 仅 GET 模式下的输出行为
 以及 manifests/queries。未执行真实的 EKS 升级/回滚、NLB 变更、
 快照/恢复或应用负载测试。
 

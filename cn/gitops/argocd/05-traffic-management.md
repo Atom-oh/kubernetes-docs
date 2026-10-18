@@ -1,7 +1,7 @@
 # ArgoCD 流量管理
 
 > **审阅依据**：Argo CD 3.5.2、Argo Rollouts 1.10.0、Helm chart 2.43.1；经发布说明审阅后更新至 Argo CD 3.5.4 和 chart 2.43.6（Rollouts 仍为 1.10.0；未重新运行示例）
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 ## 目录
 - [Argo Rollouts 概述](#argo-rollouts-overview)
@@ -227,7 +227,7 @@ spec:
     targetPort: 8080
 ```
 
-`previewReplicaCount` 限制预览容量；新 ReplicaSet 会在晋级前扩展到 `spec.replicas`。当 `autoPromotionEnabled` 为 false 时，`autoPromotionSeconds` 会被忽略。所需的晋级前分析示例也省略了 `autoPromotionSeconds`，使其与基于时间的自动晋级示例相互独立。此示例省略了 `scaleDownDelaySeconds`，避免固定的缩容截止时间取消晋级后分析。ALB 目标注册/注销和连接排空仍可能造成中断；请验证实际数据平面。
+`previewReplicaCount` 限制预览容量；新 ReplicaSet 会在晋级前扩展到 `spec.replicas`。当 autoPromotionEnabled 为 false 时，`autoPromotionSeconds` 会被忽略。所需的晋级前分析示例也省略了 autoPromotionSeconds，使其与基于时间的自动晋级示例相互独立。此示例省略了 scaleDownDelaySeconds，避免固定的缩容截止时间取消晋级后分析。ALB 目标注册/注销和连接排空仍可能造成中断；请验证实际数据平面。
 
 ### 蓝绿流程
 

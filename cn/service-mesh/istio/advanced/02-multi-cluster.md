@@ -1,6 +1,6 @@
 # 多集群
 
-> **最后更新**：October 16, 2026 · Istio1.31 · Kubernetes1.32–1.37。以下安装示例描述的是 **sidecar** 拓扑，彼此为独立的替代方案。Ambient 的支持限制有所不同。本次审计未执行任何集群、AWS 或生产负载部署。
+> **最后更新**：2026年10月16日 · Istio 1.31 · Kubernetes1.32–1.37。以下安装示例描述的是 **sidecar** 拓扑，彼此为独立的替代方案。Ambient 的支持限制有所不同。本次审计未执行任何集群、AWS 或生产负载部署。
 
 多集群 Service Mesh 将多个 Kubernetes 集群连接为一个统一的服务网格。
 
@@ -207,7 +207,7 @@
 **缺点**：
 
 * 弹性控制方式不同；监听器规则 API 中没有与逐跳重试/异常检测配置等效的功能
-* 受 AWS 锁定
+* 存在 AWS 厂商锁定问题
 * 支持 Header/方法/路径和加权目标路由，但匹配类型和限制与 Istio 不同
 * 指标/日志接口不同；完整链路追踪需要应用集成
 
@@ -333,7 +333,7 @@ Lattice 服务、资源配置和服务网络均为区域级。跨区域/本地�
 
 ### 共同前提条件
 
-请在 Istio1.31 发行版目录中操作，并准备好两个现有的兼容集群以及已审核的 kubeconfig 上下文。这些示例假设使用默认 revision；如果实际安装使用了其他 revision，请在命名空间标签和网关生成时保留该 revision。两个 Kubernetes API 以及所需的数据/控制平面路径都必须可访问。安装前规划共享信任：多主集群签发者必须链接到受信任的共同根证书（或明确支持的信任设计）；meshID 字符串相同并不能建立证书信任。请遵循[官方前提条件和 CA 准备说明](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/)，并妥善保护私有 CA 材料。请单独分发应用/网格配置；远程 Secret 不会复制这些配置。
+请在 Istio 1.31 发行版目录中操作，并准备好两个现有的兼容集群以及已审核的 kubeconfig 上下文。这些示例假设使用默认 revision；如果实际安装使用了其他 revision，请在命名空间标签和网关生成时保留该 revision。两个 Kubernetes API 以及所需的数据/控制平面路径都必须可访问。安装前规划共享信任：多主集群签发者必须链接到受信任的共同根证书（或明确支持的信任设计）；meshID 字符串相同并不能建立证书信任。请遵循[官方前提条件和 CA 准备说明](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/)，并妥善保护私有 CA 材料。请单独分发应用/网格配置；远程 Secret 不会复制这些配置。
 
 ```bash
 export CTX_CLUSTER1=cluster1
@@ -483,7 +483,7 @@ istioctl create-remote-secret \
 
 ## 跨集群通信 {#cross-cluster-communication}
 
-使用远程发现，并确保 Service/命名空间名称匹配且 DNS 可见性符合要求。Istiod 不会在集群之间复制 Service 对象或 Deployment。本实验在两个集群中都定义 Service，只在 cluster2 中部署后端，并从 cluster1 中注入的客户端调用它。在不同网络中，Istio 会选择 East-West Gateway 和 SNI/mTLS 路径；不要将其替换为指向 port15443 的 HTTP ServiceEntry。
+使用远程发现，并确保 Service/命名空间名称匹配且 DNS 可见性符合要求。Istiod 不会在集群之间复制 Service 对象或 Deployment。本实验在两个集群中都定义 Service，只在 cluster2 中部署后端，并从 cluster1 中注入的客户端调用它。在不同网络中，Istio 会选择 East-West Gateway 和 SNI/mTLS 路径；不要将其替换为指向 port 15443 的 HTTP ServiceEntry。
 
 将以下内容保存为 `shared-httpbin-service.yaml`：
 
@@ -691,7 +691,7 @@ spec:
 
 这是针对两个现有区域 NLB 的**手动 Route53 别名故障转移配置**。它不会部署工作负载、负载均衡器、TLS 监听器、复制机制或健康服务。请先为每个目标组配置实际的应用就绪/健康检查。不要将此记录所有者与前面不完整的 ExternalDNS 注释结合，也不要虚构健康检查 ID。
 
-此示例对 NLB 别名使用 `EvaluateTargetHealth`，不另配公共 HTTPS 健康检查。如果需要更深入的应用/数据健康检查，请设计合适的端点/告警健康信号；旧的 HTTP80 Service 与 HTTPS443 探测并不匹配。仅限私有网络的端点不能简单地由公共 Route53 HTTP 检查器进行检测。
+此示例对 NLB 别名使用 `EvaluateTargetHealth`，不另配公共 HTTPS 健康检查。如果需要更深入的应用/数据健康检查，请设计合适的端点/告警健康信号；旧的 HTTP 80 Service 与 HTTPS 443 探测并不匹配。仅限私有网络的端点不能简单地由公共 Route53 HTTP 检查器进行检测。
 
 ```bash
 # Existing, healthy NLBs and a DNS zone controlled by this workflow
@@ -726,11 +726,11 @@ aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
   --change-batch file://failover-config.json
 ```
 
-更改 DNS 前，请检查现有记录以及恢复/回滚计划。别名 A 记录并不构成完整的 IPv6 配置；使用 dualstack 还需要适当的 AAAA 记录和可达性。DNS 缓存、连接复用、目标组健康语义以及所有目标均不健康时的行为都会影响故障转移。请与应用/数据恢复一并测试。DNS 或 Istio 本身都无法单独保证15分钟 RPO 或1小时 RTO。
+更改 DNS 前，请检查现有记录以及恢复/回滚计划。别名 A 记录并不构成完整的 IPv6 配置；使用 dualstack 还需要适当的 AAAA 记录和可达性。DNS 缓存、连接复用、目标组健康语义以及所有目标均不健康时的行为都会影响故障转移。请与应用/数据恢复一并测试。DNS 或 Istio 本身都无法单独保证15 分钟 RPO 或1 小时 RTO。
 
 ## 性能与成本比较 {#performance-and-cost-comparison}
 
-旧版延迟/RPS/CPU/内存表没有可复现的基准测试来源、发行版本、硬件或负载条件。成本表还比较了不同的流量规模（10TB 对比5TB）和随意设定的人员预算。因此这些表无法证明哪种架构更便宜/更快，也不能通过修改标签冒充最新测量结果。
+旧版延迟/RPS/CPU/内存表没有可复现的基准测试来源、发行版本、硬件或负载条件。成本表还比较了不同的流量规模（10 TB 对比 5 TB）和随意设定的人员预算。因此这些表无法证明哪种架构更便宜/更快，也不能通过修改标签冒充最新测量结果。
 
 | 组件 | 明确测量或定价 |
 |---|---|
@@ -740,7 +740,7 @@ aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
 |Lattice 服务|预置服务时长、请求数和数据处理量；资源配置/端点有各自的计费模型|
 |运维/DR|实际工程投入、事件/恢复演练以及业务影响假设|
 
-请使用 [Lattice 定价](https://aws.amazon.com/vpc/lattice/pricing/)和实际账单数据。VPC 对等连接不会自动免除跨区域传输费用。Lattice 文档说明其服务内不会额外收取跨 AZ 数据传输费，但这不等于没有数据处理成本。Ambient 并不保证节省90%资源；请使用相同策略进行测量。固定的人员数量或每小时$1,000的停机损失门槛都不能决定架构选择。
+请使用 [Lattice 定价](https://aws.amazon.com/vpc/lattice/pricing/)和实际账单数据。VPC 对等连接不会自动免除跨区域传输费用。Lattice 文档说明其服务内不会额外收取跨 AZ 数据传输费，但这不等于没有数据处理成本。Ambient 并不保证节省90% 的资源；请使用相同策略进行测量。固定的人员数量或每小时 1,000 美元的停机损失门槛都不能决定架构选择。
 
 ## 故障排查 {#troubleshooting}
 

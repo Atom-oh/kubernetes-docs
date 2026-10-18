@@ -1,6 +1,6 @@
 # EKS 网络测验 - 第 2 部分
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 这些答案采用[第 2 部分](../../eks/03-eks-networking-part2.md)中的控制器所有权和前置条件：LBC 3.6.0 和 Gateway API 1.6.0。命令均为示例，运行时会更改资源；本地 schema/mock 测试不等同于 EKS 部署。请替换账户/Region/资源占位符，使用预期的 kubeconfig，并保留平台对 IAM/Helm/IaC 的所有权。
 
@@ -647,7 +647,7 @@ Client application → client proxy → Pod network → destination proxy → de
 
 对于 Istio，应根据计算类型选择一种有文档说明的 sidecar/ambient 安装方式。Fargate 无法运行某些模式所需的节点 DaemonSet/特权组件；请验证支持情况，不要宣称其普遍兼容。不要在同一命名空间中启用两个网格注入器。应通过受支持的 Helm/安装/工作负载设置配置代理资源，而不是用无关的 `pilot.resources` 覆盖注入器 ConfigMap。Prometheus/Tracing 部署和网格导出配置应分开处理；已移除的 `IstioOperator.addonComponents.prometheus` 和虚构的 App Mesh `Mesh.spec.tracing` 都不是可用的安装方案。
 
-**历史比较**：AWS 已于 **September 30, 2026** 结束 App Mesh 支持；其控制台和资源现已不可用。现有 App Mesh 部署必须迁移；不要将其作为新的 EKS 默认方案引入。其历史上的 Fargate 集成不代表未来仍会受支持。ECS Service Connect 是 ECS 的选项，并非 EKS 的直接替代品。请使用受支持的 EKS 网格/数据平面设计，并验证路由、重试、证书、授权、Tracing 和故障处理方面的功能对等性。
+**历史比较**：AWS 已于 **2026年9月30日** 结束 App Mesh 支持；其控制台和资源现已不可用。现有 App Mesh 部署必须迁移；不要将其作为新的 EKS 默认方案引入。其历史上的 Fargate 集成不代表未来仍会受支持。ECS Service Connect 是 ECS 的选项，并非 EKS 的直接替代品。请使用受支持的 EKS 网格/数据平面设计，并验证路由、重试、证书、授权、Tracing 和故障处理方面的功能对等性。
 
 本文档没有提供经过验证的测量来源来支持“通常小于 10 ms”的延迟和“10–15%”的 CPU/内存开销数据。此处将其保留为**未经验证的历史估算**，不是基准测试结果或容量保证。加入网格前后，应使用相同的请求组合、TLS、遥测采样和负载，测量 p50/p95/p99 延迟、吞吐量、错误率及 CPU/内存。测试中应包括代理滚动更新、节点丢失、控制平面丢失、证书轮换和重试放大。
 
