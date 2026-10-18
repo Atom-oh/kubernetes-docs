@@ -90,7 +90,10 @@ def complete(prompt, max_output_tokens, timeout=600):
 def document_prompt(source, lang):
     return f"""Translate the following Markdown document into {LANGUAGES[lang]}.
 Return only the complete translated Markdown, without an enclosing code fence.
+Do not add response envelopes such as <final> or echo the <source_document>
+wrapper tags. Preserve literal tags documented inside the source itself.
 Translate prose only. Preserve heading levels, tables, Markdown structure,
+including every table row, column separator and escaped pipe,
 code fences and ALL code bytes, URLs, file paths and image targets exactly.
 Preserve HTML comments (including news-dashboard markers), tag names and
 attributes. Translate visible details/summary text, including quiz answers.

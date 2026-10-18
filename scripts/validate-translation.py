@@ -57,6 +57,8 @@ def code_blocks(text):
 def link_targets(text):
     patterns = [
         r"!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))",
+        # Linked images also have an enclosing destination, such as a video URL.
+        r"\[\s*!\[[^\]]*]\([^)]*\)\s*]\(\s*(?:<([^>]+)>|([^\s)]+))",
         r"<(?:a|img)\b[^>]*?\b(?:href|src)=[\"']([^\"']+)[\"']",
         r"^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))",
     ]
@@ -65,6 +67,60 @@ def link_targets(text):
         for match in re.finditer(pattern, text, re.MULTILINE | re.IGNORECASE):
             targets.append(next(value for value in match.groups() if value is not None))
     return Counter(targets)
+
+
+def introduced_document_wrappers(source, translated):
+    """Reject response envelopes without rejecting XML documented in the source."""
+    pattern = r"</?(?:source_document|translated_document|final|analysis|response)\b[^>]*>"
+    source_tags = Counter(tag.lower() for tag in re.findall(pattern, source, re.IGNORECASE))
+    translated_tags = Counter(tag.lower() for tag in re.findall(pattern, translated, re.IGNORECASE))
+    return list((translated_tags - source_tags).elements())
+
+
+def table_shapes(text):
+    """Keep pipe-table row/column counts, excluding fenced examples."""
+    tables = []
+    previous = None
+    active = None
+    fence = None
+    for original in text.splitlines():
+        line = re.sub(r"^\s*(?:>\s*)*", "", original).strip()
+        marker = re.match(r"(`{3,}|~{3,})(.*)$", line)
+        if fence is not None:
+            if (marker and marker.group(1)[0] == fence[0]
+                    and len(marker.group(1)) >= len(fence) and not marker.group(2).strip()):
+                fence = None
+            continue
+        if marker:
+            fence = marker.group(1)
+            previous = active = None
+            continue
+        # An escaped pipe is cell content; an even number of backslashes does
+        # not escape the separator.
+        cells = []
+        start = 0
+        escaped = False
+        for index, char in enumerate(line):
+            if char == "|" and not escaped:
+                cells.append(line[start:index].strip())
+                start = index + 1
+            escaped = char == "\\" and not escaped
+        cells.append(line[start:].strip())
+        if line.startswith("|"):
+            cells.pop(0)
+        if line.endswith("|") and not escaped and cells[-1] == "":
+            cells.pop()
+        is_row = len(cells) > 1
+        is_separator = is_row and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells)
+        if is_separator and previous is not None:
+            active = [len(previous), len(cells)]
+            tables.append(active)
+        elif active is not None and is_row:
+            active.append(len(cells))
+        else:
+            active = None
+        previous = cells if is_row else None
+    return tables
 
 
 def main():
@@ -102,6 +158,14 @@ def main():
         return 1
     if link_targets(src) != link_targets(dst):
         print(f"link/image target mismatch: {dst_path}", file=sys.stderr)
+        return 1
+
+    wrappers = introduced_document_wrappers(src, dst)
+    if wrappers:
+        print(f"unexpected translation wrapper {wrappers[0]}: {dst_path}", file=sys.stderr)
+        return 1
+    if table_shapes(src) != table_shapes(dst):
+        print(f"table row/column mismatch: {dst_path}", file=sys.stderr)
         return 1
 
     ratio = len(dst) / max(len(src), 1)
