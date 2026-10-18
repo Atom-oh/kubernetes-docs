@@ -41,7 +41,7 @@ function defaultFileExists(relativeSourcePath) {
 // still carry their source file names. target="_self" makes VitePress skip the
 // link in its dead-link check and router: the English page belongs to another
 // locale build, so it needs a full page load, not client-side navigation.
-export function translationFallbackLinks(md) {
+export function translationFallbackLinks(md, options) {
   md.core.ruler.push('translation_fallback_links', (state) => {
     const pagePath = state.env?.relativePath
     if (!pagePath) return
@@ -49,7 +49,7 @@ export function translationFallbackLinks(md) {
       if (blockToken.type !== 'inline' || !blockToken.children) continue
       for (const token of blockToken.children) {
         if (token.type !== 'link_open') continue
-        const fallback = translationFallbackHref(pagePath, token.attrGet('href'))
+        const fallback = translationFallbackHref(pagePath, token.attrGet('href'), options)
         if (!fallback) continue
         token.attrSet('href', fallback)
         token.attrSet('target', '_self')
