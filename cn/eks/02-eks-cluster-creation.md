@@ -1,66 +1,66 @@
 # EKS 集群创建
 
-> **最后更新**: October 12, 2026
+> **最后更新**：October 16, 2026
 
-创建 Amazon EKS 集群有多种方法。本章将详细学习如何使用不同的工具和方法创建 EKS 集群。
+创建 Amazon EKS 集群有多种方法。本章将详细介绍如何使用各种工具和方法创建 EKS 集群。
 
-本章中的创建方法互为替代方案。为一个新的专用集群选择一种方法，不要同时使用多个工具管理相同资源。请将示例名称、账户、角色、VPC、子网和 CIDR 替换为已批准的实际值。除非另有说明，Shell 示例使用 Bash；如前置条件失败，请停止操作。本次审计期间未执行 AWS 预置或工作负载测量。
+本章中的创建方法是可选方案。为新的专用集群选择其中一种，不要同时使用多个工具管理相同的资源。请将示例名称、账户、角色、VPC、子网和 CIDR 替换为经批准的实际值。除非另有说明，Shell 示例使用 Bash；如果前置条件失败，请停止操作。本次审计未执行任何 AWS 资源预置或工作负载测量。
 
-**当前版本：**EKS 1.37 于 2026 年 10 月 1 日可用。
+**当前版本：** EKS 1.37 于 October 1, 2026 开始提供。
 
-**示例基线：**以下示例保留经过审核的 EKS 1.36 基线。选择其他版本时，请参阅[当前 EKS 版本日历](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)和组件兼容性文档。
+**示例基线：** 以下示例保留了经过审核的 EKS 1.36 基线。选择其他版本时，请查阅[当前 EKS 版本日历](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)和组件兼容性文档。
 
 ## 目录
 
-1. [前置条件](#prerequisites)
+1. [先决条件](#prerequisites)
 2. [使用 eksctl 创建集群](#creating-a-cluster-using-eksctl)
-3. [使用 AWS Management Console 创建集群](#creating-a-cluster-using-aws-management-console)
+3. [使用 AWS 管理控制台创建集群](#creating-a-cluster-using-aws-management-console)
 4. [使用 AWS CLI 创建集群](#creating-a-cluster-using-aws-cli)
 5. [使用 Terraform 创建集群](#creating-a-cluster-using-terraform)
 6. [使用 AWS CDK 创建集群](#creating-a-cluster-using-aws-cdk)
-7. [配置集群访问](#configuring-cluster-access)
+7. [配置集群访问权限](#configuring-cluster-access)
 8. [集群验证](#cluster-validation)
 9. [集群升级](#cluster-upgrade)
-10. [集群删除](#cluster-deletion)
+10. [删除集群](#cluster-deletion)
 
-## 前置条件
+## 先决条件
 
-创建 EKS 集群前，需要满足以下前置条件：
+创建 EKS 集群前，需要满足以下先决条件：
 
 ### 1. AWS 账户
 
-需要有效的 AWS 账户。如果您没有 AWS 账户，可以在 [AWS 网站](https://aws.amazon.com/)注册。
+需要有效的 AWS 账户。如果您还没有 AWS 账户，可以在 [AWS 网站](https://aws.amazon.com/)注册。
 
 ### 2. IAM 权限
 
-所需权限取决于工具及其管理的资源。在所有资源上授予 `eks:*`、`ec2:*`、`iam:*` 和 `cloudformation:*` 的策略并非所需的最小权限策略。
+所需权限取决于所使用的工具及其管理的资源。授予 `eks:*`、`ec2:*`、`iam:*` 和 `cloudformation:*` 且适用于所有资源的策略，并不是必需的最小权限策略。
 
-| 任务 | 要审核的权限范围 |
+| 任务 | 需审查的权限范围 |
 | --- | --- |
 | EKS 集群/节点组管理 | 所需的 EKS 操作和目标资源 |
-| 传递现有 IAM 角色 | 已批准角色 ARN 和服务条件的 `iam:PassRole` |
-| 创建 IAM 角色/策略/OIDC 提供商 | 工具管理的 IAM 资源以及名称/标签范围 |
-| 创建网络 | 新 VPC、子网和安全组的 EC2 操作 |
+| 传递现有 IAM 角色 | 针对经批准角色 ARN 和服务条件的 `iam:PassRole` |
+| 创建 IAM 角色/策略/OIDC 提供商 | 工具管理的 IAM 资源及名称/标签范围 |
+| 创建网络 | 针对新 VPC、子网和安全组的 EC2 操作 |
 | 使用 eksctl/CDK | 相关 CloudFormation 堆栈、执行角色和引导资源 |
 
-预置身份、集群服务角色和节点角色彼此独立。SCP、权限边界和会话策略仍然适用。请根据合成的模板/计划审核组织的预置权限。Auto Mode 角色要求与传统节点组不同。
+预置身份、集群服务角色和节点角色彼此独立。SCP、权限边界和会话策略仍然适用。请根据合成模板/计划审查组织的预置权限。Auto Mode 的角色要求与传统节点组不同。
 
-参考资料：[EKS IAM 操作和资源](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html)、[Auto Mode 角色](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
+参考：[EKS IAM 操作和资源](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html)、[Auto Mode 角色](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
 ### 3. 工具安装
 
 #### AWS CLI
 
-选择适合您的 OS/CPU 的软件包，并按照[官方 AWS CLI v2 安装指南](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)进行签名验证。对于现有 v1/v2 安装，请先查看其更新/迁移流程。
+为您的操作系统/CPU 选择相应的软件包，并按照[官方 AWS CLI v2 安装指南](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)验证签名。如果已安装 v1/v2，请先查看其更新/迁移流程。
 
 | 环境 | 官方软件包/安装方法 |
 | --- | --- |
 | macOS | 已签名的 `AWSCLIV2.pkg` |
-| Linux x86_64 | 带 PGP 签名验证的 `awscli-exe-linux-x86_64.zip` |
-| Linux ARM64 | 带 PGP 签名验证的 `awscli-exe-linux-aarch64.zip` |
+| Linux x86_64 | 使用 PGP 签名验证的 `awscli-exe-linux-x86_64.zip` |
+| Linux ARM64 | 使用 PGP 签名验证的 `awscli-exe-linux-aarch64.zip` |
 | Windows | 适用于受支持 Windows 版本的 MSI 安装程序 |
 
-不要在 ARM 上不加修改地使用 Linux x86_64 软件包。使用 `aws --version` 检查活动 CLI。如果您的组织使用 IAM Identity Center，请按如下方式配置已批准的 profile。否则，请遵循其联合身份验证流程，而不是假定使用长期访问密钥。
+不要在 ARM 上原样使用 Linux x86_64 软件包。使用 `aws --version` 检查当前 CLI。如果组织使用 IAM Identity Center，请按如下方式配置经批准的配置文件。否则请遵循其联合身份验证流程，不要假定使用长期访问密钥。
 
 ```bash
 aws configure sso --profile eks-docs
@@ -69,13 +69,13 @@ aws sts get-caller-identity --profile eks-docs
 export AWS_PROFILE=eks-docs
 ```
 
-请参阅 [IAM Identity Center 身份验证](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html)。后续命令继续使用已批准的账户、角色和区域。
+请参阅 [IAM Identity Center 身份验证](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html)。后续命令继续使用经批准的账户、角色和区域。
 
-#### kubectl 和 eksctl — Linux/macOS
+#### kubectl 和 eksctl（Linux/macOS）
 
-本章的 EKS 1.36 示例以 kubectl **1.36.4** 和 eksctl **0.230.0** 为基线。应优先使用与服务器相同的 kubectl 次版本；支持的版本偏差为 ±1 个次版本。不要为较旧的 EKS 集群盲目从上游 `stable.txt` 安装最新次版本。
+本章的 EKS 1.36 示例以 kubectl **1.36.5** 和 eksctl **0.231.0** 为基线。最好使用与服务器相同的 kubectl 次要版本；支持的版本偏差为 ±1 个次要版本。对于较旧的 EKS 集群，不要盲目安装上游 `stable.txt` 中的最新次要版本。
 
-此 Bash 示例会选择 AMD64/ARM64，并在安装前验证官方校验和。它需要 `curl`、`tar`、`awk` 以及 `sha256sum` 或 `shasum`；安装到 `/usr/local/bin` 需要管理员权限。下载或校验和失败将停止安装。
+此 Bash 示例会选择 AMD64/ARM64，并在安装前验证官方校验和。需要 `curl`、`tar`、`awk` 以及 `sha256sum` 或 `shasum`；在 `/usr/local/bin` 安装需要管理员权限。下载或校验和验证失败时将停止安装。
 
 ```bash
 (
@@ -102,13 +102,13 @@ export AWS_PROFILE=eks-docs
       shasum -a 256 --check "$1"
     fi
   }
-  EKS_KUBECTL_VERSION=v1.36.4
+  EKS_KUBECTL_VERSION=v1.36.5
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl" -o kubectl || exit 1
   curl -fL "https://dl.k8s.io/release/$EKS_KUBECTL_VERSION/bin/$EKS_TOOL_OS/$EKS_TOOL_ARCH/kubectl.sha256" -o kubectl.sha256 || exit 1
   printf '%s  kubectl\n' "$(tr -d '[:space:]' < kubectl.sha256)" > selected.sha256
   verify_sha selected.sha256 || exit 1
 
-  EKSCTL_VERSION=0.230.0
+  EKSCTL_VERSION=0.231.0
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/$EKS_TOOL_ARCHIVE" -o "$EKS_TOOL_ARCHIVE" || exit 1
   curl -fL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_checksums.txt" -o eksctl_checksums.txt || exit 1
   awk -v name="$EKS_TOOL_ARCHIVE" '$2 == name {print; count++} END {if (count != 1) exit 1}' \
@@ -126,32 +126,32 @@ export AWS_PROFILE=eks-docs
 
 #### Windows
 
-请在 PowerShell 中遵循[官方 kubectl 安装流程](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)。对于本章的 AMD64 示例，请使用 [kubectl 1.36.4](https://dl.k8s.io/release/v1.36.4/bin/windows/amd64/kubectl.exe)及同一路径中的 `.sha256` 文件。从 [eksctl 0.230.0 发布版本](https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0)选择与您的 CPU 匹配的 Windows ZIP 和 `eksctl_checksums.txt`。
+按照 PowerShell 中的[官方 kubectl 安装流程](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)操作。本章的 AMD64 示例使用 [kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe) 以及同一路径下的 `.sha256` 文件。请从 [eksctl 0.231.0 发行版](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0)中选择与 CPU 匹配的 Windows ZIP 文件和 `eksctl_checksums.txt`。
 
-将 `Get-FileHash -Algorithm SHA256` 与官方哈希值比较，并在不匹配时停止。验证后，解压 ZIP，将可执行文件目录添加到 PATH，并检查 `kubectl version --client` 和 `eksctl version`。不要在 Bash 中运行 PowerShell 语法。
+将 `Get-FileHash -Algorithm SHA256` 的结果与官方哈希值比较，若不匹配则停止操作。验证后，解压 ZIP 文件，将可执行文件目录添加到 PATH，并检查 `kubectl version --client` 和 `eksctl version`。不要在 Bash 中运行 PowerShell 语法。
 
-还要为 AWS CLI 示例准备 `jq` 用于生成 JSON。本次审计期间未实际下载/安装客户端或登录。
+还需为 AWS CLI 示例中的 JSON 生成准备 `jq`。本次审计未实际下载/安装客户端或登录。
 
 ### 4. VPC 和子网
 
-区域 EKS 集群需要同一 VPC 中不同 AZ 的至少两个子网。每个集群子网至少需要为 EKS 提供六个可用 IP；AWS 建议至少十六个。为节点、Pod、负载均衡器和升级规划额外地址。启用 VPC DNS 主机名和 DNS 解析。
+区域级 EKS 集群需要同一 VPC 中至少两个位于不同 AZ 的子网。每个集群子网至少需要六个可用 IP 地址才能供 EKS 使用；AWS 建议至少保留十六个。还需为节点、Pod、负载均衡器和升级规划额外地址。启用 VPC DNS 主机名和 DNS 解析。
 
-并非每个 EKS 集群都必须访问互联网。节点和工作负载需要通过 NAT/互联网路径或所需的 VPC 端点及镜像，访问 Kubernetes API、镜像和所需 AWS 服务。私有 Kubernetes endpoint 可从具有适当 DNS 和路由的 VPC 或已连接网络访问。
+并非所有 EKS 集群都必须具备互联网访问。节点和工作负载需要通过 NAT/互联网路径，或必要的 VPC 端点和镜像副本，访问 Kubernetes API、镜像和所需的 AWS 服务。通过适当的 DNS 和路由，可从 VPC 或已连接网络访问私有 Kubernetes 端点。
 
 #### EKS 集群的 VPC 标签
 
-`kubernetes.io/cluster/<cluster-name>` VPC 标签是一种旧机制，而非通用的当前 EKS 创建要求。请遵循所选 controller 的子网发现规则来进行负载均衡：
+`kubernetes.io/cluster/<cluster-name>` VPC 标签是一种旧机制，并非当前创建所有 EKS 集群的通用要求。对于负载均衡，请遵循所选控制器的子网发现规则：
 
-- 公共负载均衡器的子网：`kubernetes.io/role/elb=1`
+- 公有负载均衡器的子网：`kubernetes.io/role/elb=1`
 - 内部负载均衡器的子网：`kubernetes.io/role/internal-elb=1`
 
 标签不会配置路由、安全组或可用 IP 容量。请参阅 [VPC/子网要求](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)和[无互联网访问的集群](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)。
 
 ## 使用 eksctl 创建集群
 
-eksctl 是创建和管理 EKS 集群最简单的方法。eksctl 使用 CloudFormation 创建 EKS 集群及相关资源。
+eksctl 是创建和管理 EKS 集群的最简单方法。eksctl 使用 CloudFormation 创建 EKS 集群和相关资源。
 
-将此 shell 的 eksctl kubeconfig 存储在专用路径。
+将 eksctl kubeconfig 存储在此 Shell 专用的路径中。
 
 ```bash
 EKS_CLIENT_DIR=$(mktemp -d /tmp/eks-client.XXXXXX)
@@ -160,15 +160,15 @@ EKS_KUBECONFIG="$EKS_CLIENT_DIR/kubeconfig"
 export KUBECONFIG="$EKS_KUBECONFIG"
 ```
 
-### 基本集群创建
+### 创建基本集群
 
-从经过审核的配置文件创建基本集群：
+从经过审查的配置文件创建基本集群：
 
 ```bash
 eksctl create cluster --config-file cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-运行此命令前，请阅读并编辑下面的 `cluster.yaml`。它明确选择 EKS 1.36、AL2023、现有 VPC 子网和节点组容量。将示例标识符和文档 CIDR 替换为实际的已批准值。这些是选定设置，并非关于每个 eksctl 版本默认值的声明。
+运行此命令前，请阅读并编辑下面的 `cluster.yaml`。文件中明确选择了 EKS 1.36、AL2023、现有 VPC 子网和节点组容量。请将示例标识符和文档 CIDR 替换为实际的经批准值。这些是明确选择的设置，并不代表所有 eksctl 版本的默认值。
 
 ### 使用配置文件创建集群
 
@@ -244,7 +244,7 @@ accessConfig:
 eksctl create cluster -f cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-上述配置展示了 EC2 节点和可选的应用程序 Fargate profile。CoreDNS 保留在 EC2 上；将其移至 Fargate 需要同时审核 CoreDNS 计算设置和该 profile。
+上述配置展示了 EC2 节点和可选的应用 Fargate 配置文件。CoreDNS 保留在 EC2 上；若要将其迁移到 Fargate，除了配置文件外，还需审查 CoreDNS 计算设置。
 
 ### 创建托管节点组
 
@@ -262,7 +262,7 @@ eksctl create nodegroup \
   --managed --node-ami-family AmazonLinux2023 --node-private-networking
 ```
 
-或者，您可以使用配置文件：
+也可以使用配置文件：
 
 ```yaml
 # nodegroup.yaml
@@ -290,19 +290,19 @@ eksctl create nodegroup -f nodegroup.yaml
 
 ### 创建 EKS Auto Mode 集群
 
-EKS Auto Mode 于 2024 年全面推出，并自动化 Kubernetes 集群基础设施以降低运维开销。AWS 管理其计算、网络和存储功能。
+EKS Auto Mode 于 2024 年正式推出，可自动管理 Kubernetes 集群基础设施，降低运维开销。AWS 管理其计算、网络和存储功能。
 
 #### EKS Auto Mode 的主要功能
 
-- **自动节点管理**：根据工作负载要求自动添加/删除节点
-- **增强的安全性**：不可变 AMI、SELinux enforcing mode、只读根文件系统
-- **节点维护**：节点会因到期和漂移而被替换。二十一天并非 control plane 次版本升级周期
+- **自动节点管理**：根据工作负载需求自动添加/移除节点
+- **增强安全性**：不可变 AMI、SELinux 强制模式、只读根文件系统
+- **节点维护**：节点会因到期和配置偏差而被替换。21 天不是控制平面次要版本升级周期
 - **集成组件**：默认提供 Pod 网络、DNS、存储和 GPU 支持
-- **成本优化**：自动终止未使用实例并整合工作负载
+- **成本优化**：自动终止未使用的实例并整合工作负载
 
-#### 基本 Auto Mode 集群创建
+#### 创建基本 Auto Mode 集群
 
-先审核以下 `auto-cluster.yaml` 中的 CIDR 和网络。不要使用自行管理的 add-on 重复配置 Auto Mode 的网络、DNS 和块存储。混合集群需要为每种计算类型明确放置位置和组件范围。
+请先检查下面 `auto-cluster.yaml` 中的 CIDR 和网络配置。不要使用自行管理的附加组件重复配置 Auto Mode 的网络、DNS 和块存储。混合集群需要为每种计算类型明确指定放置位置和组件作用范围。
 
 ```bash
 eksctl create cluster --config-file auto-cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
@@ -349,21 +349,21 @@ accessConfig:
 eksctl create cluster -f auto-cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-#### Auto Mode 与传统方法比较
+#### Auto Mode 与传统方案对比
 
 | 功能 | 传统 EKS | EKS Auto Mode |
 |---------|-----------------|---------------|
-| 节点管理 | 托管节点组或客户管理的节点 | AWS 管理的节点生命周期 |
+| 节点管理 | 托管节点组或客户管理的节点 | AWS 管理节点生命周期 |
 | 扩缩容 | 配置 Cluster Autoscaler、自行管理的 Karpenter 或其他策略 | 托管节点自动扩缩容 |
-| 升级 | 规划 control plane、节点和 add-on 更新 | AWS 管理节点/组件更新；根据支持策略规划 control plane 次版本 |
+| 升级 | 规划控制平面、节点和附加组件更新 | AWS 管理节点/组件更新；按支持策略规划控制平面次要版本 |
 | 安全性 | 用户配置 | 默认增强安全性 |
-| 网络 | CNI plugin 设置 | 自动网络配置 |
-| 存储 | 需要安装 CSI 并配置权限 | 托管 EBS provisioner `ebs.csi.eks.amazonaws.com` |
-| GPU 支持 | 选择兼容的加速 AMI 和所需 device plugin | 为受支持实例提供托管驱动程序/plugin |
+| 网络 | 设置 CNI 插件 | 自动配置网络 |
+| 存储 | 需要安装 CSI 并配置权限 | 托管 EBS 预置程序 `ebs.csi.eks.amazonaws.com` |
+| GPU 支持 | 选择兼容的加速 AMI 和所需设备插件 | 为受支持的实例提供托管驱动程序/插件 |
 
-#### Auto Mode 集群验证
+#### 验证 Auto Mode 集群
 
-集群创建后，您可以使用以下命令检查其状态：
+集群创建完成后，可以使用以下命令检查其状态：
 
 ```bash
 # Check cluster status
@@ -381,7 +381,7 @@ kubectl get pods -n kube-system
 
 #### 创建自定义节点池
 
-在 Auto Mode 中，除默认节点池外，您还可以创建自定义节点池：
+在 Auto Mode 中，除了默认节点池，还可以创建自定义节点池：
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -420,20 +420,20 @@ spec:
     consolidateAfter: 30s
 ```
 
-> **注意**：在 Auto Mode 中，不能使用 `EC2NodeClass`、`amiFamily` 或自定义 `userData` (`/etc/eks/bootstrap.sh`)。AWS 管理节点 AMI 和 bootstrap；子网、安全组和临时存储则通过 `eks.amazonaws.com/v1` `NodeClass` 定义。
+> **注意**：在 Auto Mode 中，不能使用 `EC2NodeClass`、`amiFamily` 或自定义 `userData`（`/etc/eks/bootstrap.sh`）。AWS 管理节点 AMI 和引导过程；子网、安全组和临时存储则通过 `eks.amazonaws.com/v1` `NodeClass` 定义。
 
-GPU 示例保留 p3，它位于当前官方支持列表中。请检查 AZ 容量、配额以及 GPU 内存/型号要求。GPU Pod 必须请求 `nvidia.com/gpu` 并容忍上述 taint。此 YAML 已经过审核；未预置或基准测试 GPU 节点。
+GPU 示例保留了 p3，该实例类型仍在当前官方支持列表中。请检查 AZ 容量、配额以及 GPU 显存/型号要求。GPU Pod 必须请求 `nvidia.com/gpu` 并容忍上述污点。此 YAML 已经过审查；未预置或基准测试任何 GPU 节点。
 
 #### Auto Mode 限制
 
-- 无法通过 SSH 或 SSM 直接访问节点
-- 默认到期时间为 336 小时（14 天），支持的 `expireAfter` 设置最长为 21 天。请一并审核 draining、PDB/NodePool 阻塞因素和默认的 24 小时终止宽限期
+- 不支持通过 SSH 或 SSM 直接访问节点
+- 默认到期时间为 336 小时（14 天），`expireAfter` 设置最多支持 21 天。请同时考虑排空、PDB/NodePool 阻塞因素和默认 24 小时的终止宽限期
 - 无法修改默认节点池和节点类
-- 某些实例类型可能存在限制
+- 可能存在某些实例类型限制
 
 #### Auto Mode 监控
 
-托管基础设施不会自动配置每个工作负载的 CloudWatch 指标。`cluster_node_count` 属于 **ContainerInsights**，而不是 `AWS/EKS`，并且需要已配置的 Container Insights 收集管道。请为您的环境配置收集并查询含有实际数据的时间范围。
+托管基础设施不会自动配置所有工作负载的 CloudWatch 指标。`cluster_node_count` 属于 **ContainerInsights**，而不是 `AWS/EKS`，并且需要配置 Container Insights 收集管道。请为您的环境配置收集，并查询包含实际数据的时间范围。
 
 ```bash
 # Requires a configured Container Insights collection pipeline and metric data.
@@ -447,11 +447,11 @@ aws cloudwatch get-metric-statistics \
   --period 3600 --statistics Average
 ```
 
-空结果不能证明节点数为零或 Auto Mode 发生故障。请先检查收集、维度和时间范围。本次审计未运行 CloudWatch 查询或测量。请参阅[官方 Container Insights 指标目录](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)。
+结果为空并不能证明节点数为零或 Auto Mode 运行失败。请先检查数据收集、维度和时间范围。本次审计未运行 CloudWatch 查询或测量。请参阅[官方 Container Insights 指标目录](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)。
 
-### 创建 Fargate profile
+### 创建 Fargate 配置文件
 
-要创建 Fargate profile，请运行以下命令：
+要创建 Fargate 配置文件，请运行以下命令：
 
 ```bash
 eksctl create fargateprofile \
@@ -462,7 +462,7 @@ eksctl create fargateprofile \
   --labels env=fargate
 ```
 
-或者，您可以使用配置文件：
+也可以使用配置文件：
 
 ```yaml
 # fargate.yaml
@@ -485,144 +485,143 @@ eksctl create fargateprofile -f fargate.yaml
 
 ### 更新集群
 
-审核 control plane、节点和 add-on 兼容性，然后遵循[集群升级](#cluster-upgrade)。
+请先审查控制平面、节点和附加组件的兼容性，然后按照[集群升级](#cluster-upgrade)中的说明操作。
 
 ### 删除集群
 
-审核工作负载、负载均衡器、数据保留和所属工具，然后遵循[集群删除](#cluster-deletion)。
+请先审查工作负载、负载均衡器、数据保留要求和资源所属工具，然后按照[删除集群](#cluster-deletion)中的说明操作。
 
+## 使用 AWS 管理控制台创建集群
 
-## 使用 AWS Management Console 创建集群
+使用 AWS 管理控制台创建 EKS 集群的步骤如下：
 
-使用 AWS Management Console 创建 EKS 集群的步骤如下：
-
-1. 登录 [AWS Management Console](https://console.aws.amazon.com/)。
+1. 登录 [AWS 管理控制台](https://console.aws.amazon.com/)。
 2. 搜索“EKS”，或从服务列表中选择“Elastic Kubernetes Service”。
-3. 在“Clusters”页面上，单击“Create cluster”按钮。
+3. 在“Clusters”页面，单击“Create cluster”按钮。
 
 ### 创建 EKS Auto Mode 集群（快速配置）
 
-EKS Auto Mode 可减少基础设施设置。工作负载身份、网络、容量、可用性和恢复仍需进行明确配置和验证。
+EKS Auto Mode 可减少基础设施设置工作。工作负载身份、网络、容量、可用性和恢复仍需明确配置和验证。
 
 #### 1. 选择快速配置
 
-4. 确保已选择“Quick configuration”选项。
+4. 确认已选择“Quick configuration”选项。
 5. 输入以下信息：
-   - **Cluster name**：输入集群的唯一名称。
-   - **Kubernetes version**：选择要使用的 Kubernetes 版本（建议使用最新版本）。
+   - **集群名称**：输入集群的唯一名称。
+   - **Kubernetes 版本**：选择要使用的 Kubernetes 版本（建议使用最新版本）。
 
 #### 2. 配置 IAM 角色
 
-6. **Cluster IAM role** 选择：
+6. **选择集群 IAM 角色**：
    - 对于第一个 Auto Mode 集群，请使用“Create recommended role”选项。
-   - 如果已有角色，可以重复使用它。
+   - 如果已有角色，也可以重复使用。
    - 建议的角色名称：`AmazonEKSAutoClusterRole`
 
-7. **Node IAM role** 选择：
+7. **选择节点 IAM 角色**：
    - 对于第一个 Auto Mode 集群，请使用“Create recommended role”选项。
    - 建议的角色名称：`AmazonEKSAutoNodeRole`
 
 #### 3. 配置网络
 
 8. **选择 VPC**：
-   - 创建新 VPC：选择“Create VPC”选项为 EKS 创建新的 VPC。
-   - 使用现有 VPC：选择此前创建的 EKS VPC。
+   - 创建新 VPC：选择“Create VPC”选项，为 EKS 创建新的 VPC。
+   - 使用现有 VPC：选择之前为 EKS 创建的 VPC。
 
 9. **子网配置**（可选）：
    - EKS Auto Mode 会自动选择 VPC 中的私有子网。
-   - 可以根据需要添加或删除子网。
+   - 可以根据需要添加或移除子网。
 
-#### 4. 审核配置并创建
+#### 4. 检查配置并创建
 
-10. 选择 **View quick configuration defaults** 以审核所有配置值。
-11. 单击 **Create cluster**。（创建集群大约需要 15 分钟）
+10. 选择 **View quick configuration defaults**，查看所有配置值。
+11. 单击 **Create cluster**。（集群创建大约需要 15 分钟）
 
 ### 使用自定义配置创建集群
 
-如果需要更精细的控制，可以使用自定义配置。
+如果需要更精细地控制，可以使用自定义配置。
 
 ### 集群配置
 
-4. 在“Configure cluster”页面上，输入以下信息：
-   - **Cluster name**：输入集群的唯一名称。
-   - **Kubernetes version**：选择要使用的 Kubernetes 版本。
-   - **Cluster service role**：创建新角色或选择现有角色。
+4. 在“Configure cluster”页面，输入以下信息：
+   - **集群名称**：输入集群的唯一名称。
+   - **Kubernetes 版本**：选择要使用的 Kubernetes 版本。
+   - **集群服务角色**：创建新角色或选择现有角色。
    - **EKS Auto Mode**：选中复选框以启用 Auto Mode。
-   - **Tags**：如有需要，添加标签。
+   - **标签**：根据需要添加标签。
    - 单击“Next”按钮。
 
 ### 指定网络
 
-5. 在“Specify networking”页面上，输入以下信息：
+5. 在“Specify networking”页面，输入以下信息：
    - **VPC**：创建新 VPC 或选择现有 VPC。
-   - **Subnets**：选择要用于集群的子网。至少 2 个子网必须位于不同的可用区。
-   - **Security groups**：选择要用于集群的安全组。
-   - **Cluster endpoint access**：配置对集群 API server endpoint 的访问。
-     - **Public**：可从互联网访问 API server。
-     - **Private**：从 VPC 或已连接网络访问需要适当的 DNS 和路由。
-     - **Public and Private**：可从互联网和 VPC 内部访问 API server。
+   - **子网**：选择集群要使用的子网。至少需要两个位于不同可用区的子网。
+   - **安全组**：选择集群要使用的安全组。
+   - **集群端点访问**：配置对集群 API Server 端点的访问。
+     - **公有**：可通过互联网访问 API Server。
+     - **私有**：需要通过适当的 DNS 和路由从 VPC 或已连接网络访问。
+     - **公有和私有**：可从互联网和 VPC 内部访问 API Server。
    - 单击“Next”按钮。
 
 ### 配置日志记录
 
-6. 在“Configure logging”页面上，输入以下信息：
-   - **Control plane logging**：选择要启用的日志类型。
-     - API server 日志
+6. 在“Configure logging”页面，输入以下信息：
+   - **控制平面日志记录**：选择要启用的日志类型。
+     - API Server 日志
      - 审计日志
-     - Authenticator 日志
-     - Controller manager 日志
-     - Scheduler 日志
+     - 身份验证器日志
+     - 控制器管理器日志
+     - 调度程序日志
    - 单击“Next”按钮。
 
-### 选择 Add-on
+### 选择附加组件
 
-以下 add-on 描述传统计算。Auto Mode 管理重叠的网络、DNS 和块存储功能；请根据集群中的计算类型选择组件。
+以下附加组件介绍传统计算方式。Auto Mode 管理重叠的网络、DNS 和块存储功能；请根据集群中的计算类型选择组件。
 
-7. 在“Select add-ons”页面上，输入以下信息：
-   - **Amazon VPC CNI**：用于 Pod 网络的 CNI plugin。
+7. 在“Select add-ons”页面，输入以下信息：
+   - **Amazon VPC CNI**：用于 Pod 网络的 CNI 插件。
    - **CoreDNS**：集群内的 DNS 服务。
-   - **kube-proxy**：提供网络代理和负载均衡。
-   - **Storage/networking add-ons**：传统计算需要安装适当组件和 IAM 权限。Auto Mode 提供托管 EBS/网络/DNS 功能；不要在 Auto Mode 节点上安装重叠组件。
+   - **kube-proxy**：提供网络代理和负载均衡功能。
+   - **存储/网络附加组件**：传统计算方式需要安装适当的组件并配置 IAM 权限。Auto Mode 提供托管 EBS/网络/DNS 功能；不要在 Auto Mode 节点上安装重复组件。
    - 单击“Next”按钮。
 
-### 审核并创建
+### 检查并创建
 
-8. 在“Review and create”页面上，审核配置并单击“Create”按钮。
+8. 在“Review and create”页面，检查配置并单击“Create”按钮。
 
 ### 为非 Auto Mode 集群添加节点组
 
-对于传统 EC2 计算，请在创建集群后添加节点组。其他受支持选项（如 Fargate profile）具有各自的设置；并非每个非 Auto Mode 集群都必须使用托管节点组。
+对于传统 EC2 计算方式，请在集群创建后添加节点组。其他受支持的选项（如 Fargate 配置文件）有各自的设置流程；并非所有非 Auto Mode 集群都必须使用托管节点组。
 
 ### 添加节点组
 
-1. 在“Node group configuration”页面上，输入以下信息：
-   - **Node group name**：输入节点组的唯一名称。
-   - **Node IAM role**：创建新角色或选择现有角色。
+1. 在“Node group configuration”页面，输入以下信息：
+   - **节点组名称**：输入节点组的唯一名称。
+   - **节点 IAM 角色**：创建新角色或选择现有角色。
    - 单击“Next”按钮。
 
-2. 在“Set compute and scaling configuration”页面上，输入以下信息：
-   - **AMI type**：选择要用于节点的 AMI 类型。
-   - **Instance type**：选择要用于节点的 EC2 实例类型。
-   - **Disk size**：指定节点的磁盘大小。
-   - **Node count**：指定节点的最小、最大和所需数量。
+2. 在“Set compute and scaling configuration”页面，输入以下信息：
+   - **AMI 类型**：选择节点要使用的 AMI 类型。
+   - **实例类型**：选择节点要使用的 EC2 实例类型。
+   - **磁盘大小**：指定节点的磁盘大小。
+   - **节点数量**：指定节点的最小数量、最大数量和期望数量。
    - 单击“Next”按钮。
 
-3. 在“Specify networking”页面上，输入以下信息：
-   - **Subnets**：选择要用于节点组的子网。
-   - **Remote access configuration**：除非已批准的管理路径要求，否则保持 SSH 禁用；未审核源安全组时不要指定 SSH key。
+3. 在“Specify networking”页面，输入以下信息：
+   - **子网**：选择节点组要使用的子网。
+   - **远程访问配置**：除非经批准的管理路径有需要，否则请禁用 SSH；在检查来源安全组之前，不要指定 SSH 密钥。
    - 单击“Next”按钮。
 
-4. 在“Review and create”页面上，审核配置并单击“Create”按钮。
+4. 在“Review and create”页面，检查配置并单击“Create”按钮。
 
 ## 使用 AWS CLI 创建集群
 
-这些示例会创建一个**新集群**。请选择 Auto Mode 或传统 EKS；不要使用相同名称连续运行两个创建命令。请使用 Bash、`jq`、当前 AWS CLI v2 和已授权的 AWS 角色。EKS 1.36 是已验证的示例版本；选择其他版本前，请审核区域支持和兼容性。
+以下示例会创建一个**新集群**。请选择 Auto Mode 或传统 EKS；不要使用相同名称连续运行两条创建命令。使用 Bash、`jq`、当前版本的 AWS CLI v2 和获得授权的 AWS 角色。EKS 1.36 是经过验证的示例版本；选择其他版本前，请检查区域支持情况和兼容性。
 
-两个子网必须位于同一 VPC 的不同 AZ。请分别准备 DNS、空闲 IP、安全组和节点对镜像/服务的访问。实际 API 字段名为 `endpointPrivateAccess` 和 `endpointPublicAccess`。创建者管理员访问将引导此专用示例；请通过 access entry 管理后续访问。
+两个子网必须位于同一 VPC 的不同 AZ。请单独准备 DNS、可用 IP、安全组以及节点访问镜像/服务所需的条件。实际 API 字段名称为 `endpointPrivateAccess` 和 `endpointPublicAccess`。此专用示例通过创建者管理员访问权限完成引导；后续访问应通过访问条目管理。
 
 ### 准备通用输入
 
-为选定模式预先创建集群角色，并验证所需的 `iam:PassRole` 和 service-linked role 创建权限。执行创建命令前，请审核账户、区域、子网和已批准 CIDR。
+为所选模式预先创建集群角色，并验证所需的 `iam:PassRole` 和创建服务相关角色的权限。执行创建命令前，请检查账户、区域、子网和经批准的 CIDR。
 
 ```bash
 : "${EKS_CLUSTER_NAME:?Choose a unique new cluster name}"
@@ -640,9 +639,9 @@ aws sts get-caller-identity
 
 ### 创建 EKS Auto Mode 集群
 
-集群角色需要针对 `eks.amazonaws.com` 的 `sts:AssumeRole` 和 `sts:TagSession` 信任关系，以及 `AmazonEKSClusterPolicy`、`AmazonEKSComputePolicy`、`AmazonEKSBlockStoragePolicyV2`、`AmazonEKSLoadBalancingPolicy` 和 `AmazonEKSNetworkingPolicy`，或等效的自定义权限。
+集群角色需要对 `eks.amazonaws.com` 提供 `sts:AssumeRole` 和 `sts:TagSession` 信任，并附加 `AmazonEKSClusterPolicy`、`AmazonEKSComputePolicy`、`AmazonEKSBlockStoragePolicyV2`、`AmazonEKSLoadBalancingPolicy` 和 `AmazonEKSNetworkingPolicy`，或具备等效自定义权限。
 
-节点角色信任 `ec2.amazonaws.com`，并使用 `AmazonEKSWorkerNodeMinimalPolicy` 加 `AmazonEC2ContainerRegistryPullOnly`。请通过 Pod Identity/IRSA 单独授予工作负载 AWS 权限。请同时启用计算、负载均衡和块存储，并禁用默认自行管理 add-on 的 bootstrap。
+节点角色信任 `ec2.amazonaws.com`，并使用 `AmazonEKSWorkerNodeMinimalPolicy` 和 `AmazonEC2ContainerRegistryPullOnly`。通过 Pod Identity/IRSA 单独授予工作负载 AWS 权限。请同时启用计算、负载均衡和块存储，并禁用默认自行管理附加组件的引导。
 
 ```bash
 : "${EKS_AUTO_NODE_ROLE_ARN:?Pre-created Auto Mode node role}"
@@ -683,7 +682,7 @@ EKS_CREATED_CLUSTER_ARN=$(aws eks create-cluster --region "${EKS_REGION:?}" \
 : "${EKS_CREATED_CLUSTER_ARN:?Creation failed; inspect the error before continuing}"
 ```
 
-#### 验证创建和访问
+#### 验证创建结果和访问权限
 
 ```bash
 : "${EKS_CREATED_CLUSTER_ARN:?Create and verify the new cluster first}"
@@ -696,7 +695,7 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 kubectl --kubeconfig "$EKS_KUBECONFIG" get nodes
 ```
 
-在工作负载需要节点前，Auto Mode 可能没有节点。检查 NodePool/NodeClass 状态和后续 Pod 调度。集群 `ACTIVE` 并不能证明应用程序健康，也不能保证固定的创建时长。
+在工作负载需要容量之前，Auto Mode 可能没有节点。请检查 NodePool/NodeClass 状态以及后续 Pod 调度情况。集群状态为 `ACTIVE` 并不代表应用运行正常，也不保证固定的创建时长。
 
 ```bash
 kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodepools.karpenter.sh
@@ -705,7 +704,7 @@ kubectl --kubeconfig "$EKS_KUBECONFIG" get nodeclasses.eks.amazonaws.com
 
 ### 创建传统集群
 
-仅当未选择 Auto Mode 时才使用此替代方案。集群角色需要传统 EKS 集群权限；EC2 节点角色以及 CNI/add-on 权限是独立的。引导默认网络 add-on 不会安装 EBS CSI 或 AWS LBC。
+仅在未选择 Auto Mode 时使用此替代方案。集群角色需要传统 EKS 集群权限；EC2 节点角色以及 CNI/附加组件权限彼此独立。引导默认网络附加组件不会安装 EBS CSI 或 AWS LBC。
 
 ```bash
 jq -n \
@@ -740,7 +739,7 @@ EKS_CREATED_CLUSTER_ARN=$(aws eks create-cluster --region "${EKS_REGION:?}" \
 : "${EKS_CREATED_CLUSTER_ARN:?Creation failed; inspect the error before continuing}"
 ```
 
-#### 等待创建并配置 kubeconfig
+#### 等待创建完成并配置 kubeconfig
 
 ```bash
 : "${EKS_CREATED_CLUSTER_ARN:?Create and verify the new cluster first}"
@@ -755,7 +754,7 @@ kubectl --kubeconfig "$EKS_KUBECONFIG" get nodes
 
 #### 创建托管节点组
 
-为 EC2 节点角色准备 worker-node 和 ECR pull 权限，以及独立的 CNI 角色或已审核的节点角色 CNI 权限。不要不加修改地重复使用 Auto Mode 最小节点角色。私有子网还需要 NAT 或所需 VPC 端点。此 AL2023 示例默认不启用 SSH。
+为 EC2 节点角色准备工作节点和 ECR 拉取权限，并准备单独的 CNI 角色或经过审查的节点角色 CNI 权限。不要原样重复使用 Auto Mode 最小节点角色。私有子网还需要 NAT 或必要的 VPC 端点。此 AL2023 示例默认不启用 SSH。
 
 ```bash
 : "${EKS_MANAGED_NODE_ROLE_ARN:?Pre-created conventional EC2 node role}"
@@ -777,20 +776,19 @@ aws eks describe-nodegroup --cluster-name "$EKS_CLUSTER_NAME" \
 kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 ```
 
-仅使用 `minSize`/`maxSize` 不会启用基于 Pod 需求的节点扩缩容。检查状态和健康错误，然后根据需要配置 autoscaler。创建失败时，请检查记录的名称/ARN 和相关资源。本次审计未执行这些创建和等待命令。
+单独设置 `minSize`/`maxSize` 并不会根据 Pod 需求启用节点扩缩容。请检查状态和运行状况错误，然后根据需要配置自动扩缩容器。创建失败时，请检查记录的名称/ARN 和相关资源。本次审计未执行这些创建和等待命令。
 
-参考资料：[CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html)、[CreateNodegroup API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)、[Auto Mode IAM 和创建](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
-
+参考：[CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html)、[CreateNodegroup API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)、[Auto Mode IAM 和创建](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
 ## 使用 Terraform 创建集群
 
-以下完整示例支持**一个新集群**，并在第一次 apply 前选择 Auto Mode 或传统托管节点组。不要将替代方案作为第二个集群资源追加，也不要在没有迁移计划的情况下切换现有集群。Terraform state 及其 provider lock 文件属于此特定部署。
+以下完整示例支持**一个新集群**，需在首次 apply 前选择 Auto Mode 或传统托管节点组。不要将另一种方案作为第二个集群资源附加，也不要在没有迁移计划的情况下切换现有集群。Terraform 状态及其提供商锁定文件属于此特定部署。
 
 ### EKS Auto Mode 集群 Terraform 配置
 
-保存为 `main.tf`。该示例将 AWS provider 固定为 **6.64.0**，并使用 EKS **1.36**。请明确提供现有私有子网 ID；自定义 `Type=Private` 标签不能可靠地替代对路由和连接性的验证。前置条件会在规划期间检查 VPC/AZ 关系，但不会验证私有路由、服务 endpoint、DNS、IP 容量或负载均衡器子网标签。
+保存为 `main.tf`。此示例固定使用 AWS provider **6.69.1** 和 EKS **1.36**。明确提供现有私有子网 ID；自定义 `Type=Private` 标签不能可靠地替代对路由和连通性的验证。前置条件会在规划期间检查 VPC/AZ 关系，但不会验证私有路由、服务端点、DNS、IP 容量或负载均衡器子网标签。
 
-Auto Mode 需要同时启用计算、负载均衡和块存储，并设置 `bootstrap_self_managed_addons = false`。集群角色包含 `sts:TagSession` 和全部五项所需策略。IAM attachment 依赖关系会在 EKS 删除托管基础设施期间保留权限。
+Auto Mode 需要同时启用计算、负载均衡和块存储，并将 `bootstrap_self_managed_addons` 设置为 `false`。集群角色包含 `sts:TagSession` 和所有五项必需策略。IAM 附加依赖关系可在 EKS 删除托管基础设施期间保留所需权限。
 
 ```hcl
 terraform {
@@ -798,7 +796,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -1024,16 +1022,16 @@ output "cluster_arn" {
 }
 ```
 
-operator access entry 向已批准的 IAM 角色授予集群管理权限；创建者不会自动获得 Kubernetes 管理员访问权限。该 operator role 必须已经存在，并且使用 kubectl 的人员必须能够 assume 它。
+操作员访问条目会向经批准的 IAM 角色授予集群管理权限；创建者不会自动获得 Kubernetes 管理员访问权限。该操作员角色必须预先存在，运行 kubectl 的人员必须能够代入该角色。
 
-传统节点替代方案将 CNI 权限包含在节点角色中，作为初始 bootstrap 基线。这是共享权限边界，而非强化的生产工作负载身份设计。投入生产前，请审核专用 CNI 角色并限制 Pod 对 IMDS 的访问。应用程序 AWS 权限应属于工作负载特定身份；不要将无关 add-on 权限附加到每个节点。
+传统节点方案在节点角色中包含了 CNI 权限，作为初始引导基线。这是一个共享权限边界，并非经过加固的生产工作负载身份设计。投入生产前，请审查专用 CNI 角色，并限制 Pod 对 IMDS 的访问。应用的 AWS 权限应配置在特定工作负载身份上；不要向每个节点附加无关的附加组件权限。
 
 ### 运行 Terraform
 
-使用一个新的工作目录和经过身份验证的预置角色。将示例 ID 和文档 CIDR 替换为目标账户的资源和已批准的客户端 CIDR。默认选择 Auto Mode：
+使用全新的工作目录和通过身份验证的预置角色。请将示例 ID 和文档 CIDR 替换为目标账户中的资源和经批准的客户端 CIDR。默认选择 Auto Mode：
 
 ```hcl
-# terraform.tfvars — replace every example identifier before planning.
+# terraform.tfvars: replace every example identifier before planning.
 cluster_name       = "eks-docs-unique-name"
 region             = "us-west-2"
 vpc_id             = "vpc-0123456789abcdef0"
@@ -1059,32 +1057,31 @@ aws eks update-kubeconfig --name "$(terraform output -raw cluster_name)" \
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
 
-在 apply 前，审核 state/backend、拟议的 IAM 和网络更改，以及所有可计费资源。`terraform validate` 无法验证 AWS 账户权限、配额、路由或所选节点是否能运行您的工作负载。节点组扩缩容边界不会安装基于 Pod 需求的 autoscaler。
+apply 前请审查状态/后端、拟议的 IAM 和网络更改以及所有计费资源。`terraform validate` 无法验证 AWS 账户权限、配额、路由或所选节点能否运行您的工作负载。节点组扩缩容范围不会安装基于 Pod 需求的自动扩缩容器。
 
 ### 传统 Terraform 配置
 
-对于**新的传统集群**，请使用相同的完整 `main.tf`，并在第一次 plan 前在 `terraform.tfvars` 中设置以下值：
+对于**新的传统集群**，使用同一份完整的 `main.tf`，并在首次 plan 前将 `terraform.tfvars` 中的值设置为：
 
 ```hcl
 enable_auto_mode = false
 ```
 
-这会禁用全部三项 Auto Mode 功能，引导传统网络 add-on，选择传统 EC2 节点权限，并创建 AL2023 托管节点组。它不会安装 EBS CSI、AWS LBC、Metrics Server 或节点 autoscaler；请单独配置工作负载所需的组件。部署后切换此值会改变基础设施和 IAM，并需要单独的迁移审核。
+这会禁用全部三项 Auto Mode 功能，启动传统网络附加组件，选择传统 EC2 节点权限并创建 AL2023 托管节点组。它不会安装 EBS CSI、AWS LBC、Metrics Server 或节点自动扩缩容器；请单独配置工作负载所需的组件。部署后更改此值会改变基础设施和 IAM，因此需要单独进行迁移审查。
 
-验证：Terraform **1.15.7** 和已签名的 AWS provider **6.64.0** 以零错误/警告通过了本地 `terraform validate`。**未执行 plan、apply 或 AWS API 调用。**两种模式仍需要部署验证；该示例并不能证明生产就绪。
+验证：Terraform **1.16.6** 使用已签名的 AWS provider **6.69.1** 在本地通过 `terraform validate`，错误/警告均为零。**未执行 plan、apply 或 AWS API 调用。** 两种模式仍需进行部署验证；此示例不代表已达到生产就绪状态。
 
-参考资料：[AWS provider EKS cluster](https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_cluster.html.markdown)、[托管节点组](https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_node_group.html.markdown)、[Auto Mode 角色要求](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
-
+参考：[AWS provider EKS 集群](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown)、[托管节点组](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown)、[Auto Mode 角色要求](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
 ## 使用 AWS CDK 创建集群
 
-对此**新堆栈**示例使用 `aws-cdk-lib/aws-eks-v2`。它会创建原生 `AWS::EKS::Cluster` 和 access entry；无需 Lambda custom resource 即可启用 Auto Mode。不要将已部署的现有 construct 替换为此示例并视为原地迁移。
+此**新堆栈**示例使用 `aws-cdk-lib/aws-eks-v2`。它会创建原生 `AWS::EKS::Cluster` 和访问条目；启用 Auto Mode 不需要 Lambda 自定义资源。不要将用此示例替换现有已部署构造视为原地迁移。
 
-该示例使用 CDK library **2.269.0**、CLI **2.1141.0** 和 EKS **1.36**。它通过属性导入现有私有子网，而不进行 synthesis-time VPC lookup。部署前请验证所提供的子网/AZ 对应关系、VPC DNS、路由、服务访问和负载均衡器子网标签。导入的 VPC 定义不会验证这些条件。
+此示例使用 CDK 库 **2.273.0**、CLI **2.1145.0** 和 EKS **1.36**。它通过属性导入现有私有子网，无需在合成时查找 VPC。部署前请验证所提供的子网/AZ 对应关系、VPC DNS、路由、服务访问和负载均衡器子网标签。导入的 VPC 定义不会验证这些条件。
 
-### 使用 TypeScript 的 EKS Auto Mode 集群
+### 使用 TypeScript 创建 EKS Auto Mode 集群
 
-保存为 `lib/eks-auto-mode-stack.ts`。调用方提供现有且已批准的 operator role；只有该角色获得此集群的管理员访问权限。工作负载权限仍然独立。
+保存为 `lib/eks-auto-mode-stack.ts`。调用方提供现有且经批准的操作员角色；只有该角色会获得此集群的管理员访问权限。工作负载权限仍需单独配置。
 
 ```typescript
 import * as cdk from 'aws-cdk-lib';
@@ -1152,7 +1149,7 @@ export class EksAutoModeStack extends cdk.Stack {
       bootstrapSelfManagedAddons: false,
       bootstrapClusterCreatorAdminPermissions: false,
       // All required policies/trust are defined above. Avoid adding the older
-      // BlockStoragePolicy that CDK 2.269.0 otherwise attaches automatically.
+      // BlockStoragePolicy that CDK 2.273.0 otherwise attaches automatically.
       role: clusterRole.withoutPolicyUpdates(),
       compute: {
         nodePools: ['system', 'general-purpose'],
@@ -1176,13 +1173,13 @@ export class EksAutoModeStack extends cdk.Stack {
 }
 ```
 
-集群角色显式包含 `sts:TagSession` 和五项 Auto Mode 策略，包括 `AmazonEKSBlockStoragePolicyV2`。`withoutPolicyUpdates()` 阻止 CDK 2.269.0 添加旧的块存储策略；此示例负责提供所有必需权限。依赖关系会在集群删除完成前保留这些角色。节点角色仅具有 Auto Mode 最小 worker 和 ECR pull 策略。
+集群角色明确包含 `sts:TagSession` 和五项 Auto Mode 策略，其中包括 `AmazonEKSBlockStoragePolicyV2`。`withoutPolicyUpdates()` 可防止 CDK 2.273.0 添加较旧的块存储策略；此示例负责提供所有必需权限。依赖关系会将这些角色保留到集群删除完成。节点角色仅附加了 Auto Mode 最小工作节点策略和 ECR 拉取策略。
 
-`bootstrapSelfManagedAddons: false` 可避免重叠的自行管理网络 add-on。Auto Mode 会一并管理计算、负载均衡和块存储。operator access entry 与集群执行角色分开创建。
+`bootstrapSelfManagedAddons: false` 可避免添加重复的自行管理网络附加组件。Auto Mode 会一并管理计算、负载均衡和块存储。操作员访问条目独立于集群执行角色创建。
 
 ### CDK 应用程序入口点
 
-保存为 `bin/eks-auto-mode.ts`；请将 shebang 保留在第一行。环境值为必需项，以防意外使用示例账户、VPC 或角色值。
+保存为 `bin/eks-auto-mode.ts`；请将 shebang 保留在第一行。环境变量为必填项，以避免意外使用示例账户、VPC 或角色值。
 
 ```typescript
 #!/usr/bin/env node
@@ -1214,14 +1211,14 @@ new EksAutoModeStack(app, 'EksAutoModeStack', {
 
 ### CDK 部署
 
-创建一个新项目，初始化后保存上述两个文件，并提供目标账户/区域的值。使用已经身份验证且获得授权的 AWS 角色。部署前审核合成的 IAM/网络配置和 diff。CDK library/CLI 是独立的软件包，并不共享相同版本号。
+创建一个全新的项目，初始化后保存上面的两个文件，并提供目标账户/区域的值。使用通过身份验证且已获授权的 AWS 角色。部署前请检查合成后的 IAM/网络配置和差异。CDK 库和 CLI 是不同的软件包，版本号并不相同。
 
 ```bash
 mkdir eks-auto-mode
 cd eks-auto-mode
-npx --yes --package aws-cdk@2.1141.0 cdk init app --language typescript
-npm install --save-exact aws-cdk-lib@2.269.0 constructs@10.5.0
-npm install --save-dev --save-exact aws-cdk@2.1141.0 typescript@5.9.3
+npx --yes --package aws-cdk@2.1145.0 cdk init app --language typescript
+npm install --save-exact aws-cdk-lib@2.273.0 constructs@10.5.0
+npm install --save-dev --save-exact aws-cdk@2.1145.0 typescript@5.9.3
 
 # Save the source files above, then set the required environment values.
 : "${CDK_DEFAULT_ACCOUNT:?Set the intended AWS account ID}"
@@ -1248,13 +1245,13 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$CDK_DEFAULT_REGI
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
 
-本次审计使用虚拟标识符在本地编译了两个 TypeScript 文件并合成堆栈：已验证全部三项 Auto Mode 功能、范围限定的 API CIDR、所需角色和一个 operator access entry。未生成 Lambda/custom resource。缺少必需输入会被拒绝。**未执行 bootstrap、lookup、deploy、集群创建或 AWS API 调用**，因此账户配额、网络和工作负载可用性仍需在部署时检查。
+审计在本地使用虚拟标识符编译了两个 TypeScript 文件并合成堆栈：已验证三项 Auto Mode 功能、限定范围的 API CIDR、所需角色和一个操作员访问条目。未生成 Lambda/自定义资源。缺少必需输入时会拒绝执行。**未执行 bootstrap、查找、部署、集群创建或 AWS API 调用**，因此账户配额、网络和工作负载可用性仍需在部署时检查。
 
-参考资料：[EKS V2 construct library](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html)、[Auto Mode 集群角色](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)、[Auto Mode 创建](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
+参考：[EKS V2 构造库](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html)、[Auto Mode 集群角色](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)、[Auto Mode 创建](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
-## 配置集群访问
+## 配置集群访问权限
 
-设置由所选方法生成的集群名称、区域和专用 kubeconfig 路径。对于 Terraform/CDK 示例，请在 `EKS_OPERATOR_ROLE_ARN` 中设置已批准的 operator role。使用 CLI 创建者访问时可省略它。写入 kubeconfig 不会授予 Kubernetes 权限。
+设置所选方法生成的集群名称、区域和专用 kubeconfig 路径。对于 Terraform/CDK 示例，请在 `EKS_OPERATOR_ROLE_ARN` 中设置经批准的操作员角色。使用 CLI 创建者访问权限时可以省略该变量。写入 kubeconfig 不会授予 Kubernetes 权限。
 
 ```bash
 : "${EKS_CLUSTER_NAME:?Use the selected cluster name}"
@@ -1278,7 +1275,7 @@ aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 
 ### RBAC 配置
 
-对新的 IAM 访问使用 access entry。此示例向新角色授予现有 `dev` namespace 的只读访问权限；不要重复由创建工具管理的 operator entry。身份验证模式必须是 `API` 或 `API_AND_CONFIG_MAP`。旧版 `aws-auth` 方法已弃用；不要覆盖其整个 ConfigMap。需要时请遵循官方迁移流程。
+对于新的 IAM 访问权限，请使用访问条目。此示例会向现有 `dev` 命名空间中的新角色授予读取权限；不要重复创建由集群创建工具管理的操作员条目。身份验证模式必须为 `API` 或 `API_AND_CONFIG_MAP`。旧版 `aws-auth` 方法已弃用；不要覆盖整个 ConfigMap。需要迁移时，请遵循官方迁移流程。
 
 ```bash
 # A new reader identity, distinct from the operator already granted by IaC.
@@ -1321,12 +1318,11 @@ eks_kubectl create -f "$EKS_ACCESS_DIR/rbac.yaml"
 fi
 ```
 
-此 reader role 不授予 Secret API 访问或修改权限。请以该角色进行身份验证并检查 `kubectl auth can-i`；其他 RBAC/EKS policy 授权可能会增加权限。[EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
-
+此读取角色既不授予 Secret API 访问权限，也不授予修改权限。请以该角色进行身份验证并检查 `kubectl auth can-i`；其他 RBAC/EKS 策略授权可能会增加权限。[EKS 访问条目](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
 
 ## 集群验证
 
-使用 `eks_kubectl` 及访问部分中的同一专用 kubeconfig。仅能访问 control plane 并不能证明节点或工作负载健康。
+使用访问部分中的 `eks_kubectl` 和同一个专用 kubeconfig。仅能访问控制平面并不能证明节点或工作负载运行正常。
 
 ### 基本验证
 
@@ -1337,9 +1333,9 @@ eks_kubectl get pods -n kube-system
 eks_kubectl get events --sort-by='.lastTimestamp'
 ```
 
-### Auto Mode 特定验证
+### Auto Mode 专项验证
 
-AWS 管理 Auto Mode provisioning controller。不要期望在 `karpenter` namespace 中存在自行管理的 controller Pod。检查 NodePool/NodeClass 条件和事件，以及需要容量的工作负载对应的 NodeClaim。
+AWS 管理 Auto Mode 预置控制器。不要期望在 `karpenter` 命名空间中看到自行管理的控制器 Pod。检查 NodePool/NodeClass 条件和事件，并检查需要容量的工作负载对应的 NodeClaims。
 
 ```bash
 eks_kubectl get nodepools.karpenter.sh
@@ -1347,9 +1343,9 @@ eks_kubectl get nodeclasses.eks.amazonaws.com
 eks_kubectl get nodeclaims.karpenter.sh
 ```
 
-### 部署示例应用程序
+### 部署示例应用
 
-使用新 namespace 检查镜像访问、调度、HTTP 就绪状态和 Service。仅 Fargate 的配置首先需要与此 namespace 匹配的 profile。
+使用新命名空间检查镜像访问、调度、HTTP 就绪状态和 Service。仅使用 Fargate 的配置必须先创建匹配此命名空间的配置文件。
 
 ```bash
 EKS_SAMPLE_DIR=$(mktemp -d /tmp/eks-validate.XXXXXX)
@@ -1380,7 +1376,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: app
-        image: nginx:1.30.4-alpine
+        image: nginx:1.30.6-alpine
         ports:
         - name: http
           containerPort: 80
@@ -1415,13 +1411,13 @@ eks_kubectl -n "$EKS_SAMPLE_NAMESPACE" get pods,services
 eks_kubectl -n "$EKS_SAMPLE_NAMESPACE" port-forward --address 127.0.0.1 service/sample-app-service 8080:80
 ```
 
-在端口转发运行期间，打开 `http://127.0.0.1:8080`，然后使用 Ctrl-C 停止。此操作检查 ClusterIP 访问，而非外部负载均衡器。对于 NLB，请选择 Auto Mode 的 `eks.amazonaws.com/nlb` 或已安装且已授权的 AWS LBC 的 `service.k8s.aws/nlb`，并另行审核网络/成本前置条件。本次审计未执行部署或端口转发。
+端口转发运行期间，打开 `http://127.0.0.1:8080`，然后按 Ctrl-C 停止。这会检查 ClusterIP 访问，而非外部负载均衡器。对于 NLB，请选择 Auto Mode 的 `eks.amazonaws.com/nlb`，或已安装且获得授权的 AWS LBC 的 `service.k8s.aws/nlb`，并单独检查网络/成本先决条件。本次审计未执行部署或端口转发。
 
 ## 集群升级
 
-首先审核升级洞察、已删除 API、webhook/add-on 兼容性、节点版本、备用 IP 和恢复计划。将滞后节点提升到当前 control plane 版本，然后每次升级一个受支持的次版本。某些组件需要在 control plane 之前进行兼容更新。
+首先检查升级洞察、已移除的 API、Webhook/附加组件兼容性、节点版本、备用 IP 和恢复计划。先将滞后的节点升级到当前控制平面版本，然后每次推进一个受支持的次要版本。某些组件需要在控制平面升级前更新到兼容版本。
 
-Auto Mode 不会每 21 天升级 control plane 次版本。operator 需要规划次版本升级，并根据版本支持策略考虑自动升级。
+Auto Mode 不会每隔 21 天升级控制平面次要版本。操作员需规划次要版本升级，并考虑版本支持策略下的自动升级。
 
 ```bash
 aws eks describe-cluster-versions --region "${EKS_REGION:?}" --output table
@@ -1442,7 +1438,7 @@ aws eks describe-update --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 # eksctl upgrade cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" --version "$NEXT_MINOR_VERSION" --approve
 ```
 
-仅在更新报告 `Successful` 后再继续处理 data plane。AWS 会逐步更新 Auto Mode 节点；传统托管节点组需要单独更新。
+只有在更新报告 `Successful` 后，才能继续升级数据平面。AWS 会逐步更新 Auto Mode 节点；传统托管节点组需要单独更新。
 
 ```bash
 # Conventional managed node group only, after the control plane update is Successful.
@@ -1451,15 +1447,15 @@ aws eks update-nodegroup-version --cluster-name "${EKS_CLUSTER_NAME:?}" \
   --kubernetes-version "${NEXT_MINOR_VERSION:?}"
 ```
 
-根据各自机制规划自行管理/Hybrid Node 更新、Fargate Pod 替换、add-on 更新和 kubectl 更新。检查 PDB 和备用容量，而不要用 force flag 隐藏失败。符合条件的 control plane 升级可在七天内回滚一个次版本，但须受节点/add-on/API 兼容性和支持策略限制；回滚不能替代应用程序数据恢复。
+应分别根据相应机制规划自行管理/Hybrid Node 更新、Fargate Pod 替换、附加组件更新和 kubectl 更新。请检查 PDB 和备用容量，不要使用强制标志掩盖故障。符合条件的控制平面升级可在七天内回退一个次要版本，但需满足节点/附加组件/API 兼容性和支持策略限制；回退无法替代应用数据恢复。
 
-[升级流程](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [回滚条件](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+[升级流程](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [回退条件](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
 
-## 集群删除
+## 删除集群
 
-在目标账户和区域中，通过原始所属工具/state 进行删除。先在 controller 仍运行时移除工作负载和 Ingress/LoadBalancer Service，然后验证完成情况。决定如何保留或恢复 PVC/PV、snapshot 和日志。不要使用 force 选项绕过 timeout 或 finalizer。
+请在目标账户和区域中，通过原始所有者工具/状态删除集群。首先在相关控制器仍运行时移除工作负载和 Ingress/LoadBalancer Service，然后确认操作已完成。确定如何保留或恢复 PVC/PV、快照和日志。不要使用强制选项绕过超时或 finalizer。
 
-### 清理示例 namespace
+### 清理示例命名空间
 
 ```bash
 EKS_SAMPLE_CLEANUP_OK=true
@@ -1488,7 +1484,7 @@ else
 fi
 ```
 
-如果清理失败，请停止并调查。将目标 ARN 与创建结果或所属 IaC state 进行比较，而不只是未审核的当前 lookup。
+如果清理失败，请停止并调查。将目标 ARN 与创建结果或所属 IaC 状态比较，不要仅依赖未经审查的当前查询结果。
 
 ```bash
 : "${EKS_EXPECTED_CLUSTER_ARN:?Copy the ARN from the creation result or owning IaC state}"
@@ -1512,7 +1508,7 @@ fi
 
 ### 使用 eksctl 删除
 
-对由 eksctl 创建的集群使用此方法。
+对通过 eksctl 创建的集群使用此方法。
 
 ```bash
 if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
@@ -1522,7 +1518,7 @@ fi
 
 ### 使用 AWS CLI 删除
 
-对于直接使用 CLI 创建的集群，请设置上面列出的所属节点组/profile 名称，并对每个资源重复操作。删除集群前请等待删除完成，并验证没有资源残留。
+对于直接通过 CLI 创建的集群，请设置上面列出的所属节点组/配置文件名称，并对每个资源重复操作。等待删除完成并确认资源均已清除后，再删除集群。
 
 ```bash
 # For a cluster created directly with the AWS CLI, after workload/data cleanup.
@@ -1554,7 +1550,7 @@ fi
 
 ### 使用 Terraform 删除
 
-使用原始配置、backend 和 workspace；仅针对目标资源/账户 apply 已审核的 destruction plan。
+使用原始配置、后端和工作区；仅针对目标资源/账户应用经过审查的销毁计划。
 
 ```bash
 if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
@@ -1565,7 +1561,7 @@ fi
 
 ### 使用 CDK 删除
 
-使用原始 application、输入、账户和区域，并验证目标 stack。
+使用原始应用、输入、账户和区域，并验证目标堆栈。
 
 ```bash
 if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
@@ -1574,21 +1570,21 @@ if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
 fi
 ```
 
-完成后，验证 EKS/CloudFormation 状态以及任何剩余的 ELB、磁盘、NAT、日志和 IAM 资源。在托管基础设施删除完成前保留 Auto Mode 角色/策略。不要假定集群删除会移除属于其他位置的 VPC、IAM 角色、日志或保留的数据。本次审计未执行删除命令。
+完成后，请验证 EKS/CloudFormation 状态以及任何剩余的 ELB、磁盘、NAT、日志和 IAM 资源。在托管基础设施删除完成之前，请保留 Auto Mode 角色/策略。不要假定集群删除会清除其他地方拥有的 VPC、IAM 角色、日志或保留数据。本次审计未执行任何删除命令。
 
-## 结论
+## 总结
 
-创建 EKS 集群有多种方法，每种都有其优缺点：
+创建 EKS 集群有多种方法，各有优缺点：
 
-- **EKS Auto Mode**：自动化基础设施操作；应用程序就绪状态仍需验证
-- **eksctl**：简单快速地创建集群
-- **AWS Management Console**：通过 GUI 直观地创建
+- **EKS Auto Mode**：自动化基础设施运维；仍需验证应用是否就绪
+- **eksctl**：简单、快速地创建集群
+- **AWS 管理控制台**：通过 GUI 直观地创建集群
 - **AWS CLI**：适用于脚本自动化
-- **Terraform**：将基础设施作为代码进行管理
+- **Terraform**：以代码形式管理基础设施
 - **AWS CDK**：使用编程语言定义基础设施
 
-对于生产环境，请选择符合您要求的计算模型和基础设施工具，并验证 IAM、连接性、容量、中断和恢复行为。模板或集群创建成功并不能证明生产就绪。
+对于生产环境，请选择符合要求的计算模型和基础设施工具，并验证 IAM、连通性、容量、中断和恢复行为。模板成功合成或集群成功创建，并不能证明已达到生产就绪状态。
 
 ### 审计验证范围
 
-已阅读两个完整语言版本，并根据官方文档和 schema 进行了检查。验证涵盖 shell/JSON/YAML、CDK 编译/synthesis、Terraform validate 和模拟的失败路径。未执行 AWS 预置、升级、删除、应用程序运行时/负载测试或成本测量。
+已阅读两个完整语言版本，并根据官方文档和架构对其进行了检查。验证范围包括 Shell/JSON/YAML、CDK 编译/合成、Terraform validate 和模拟故障路径。未执行 AWS 资源预置、升级、删除、应用运行时/负载测试或成本测量。

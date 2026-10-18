@@ -1,130 +1,238 @@
 # 第 8 部分：最佳实践
 
-> **支持的版本**：Apache Kafka 3.9、Strimzi 0.45+\
-> **最后更新**：July 9, 2026
+> **审查基线**：Kafka 4.3.1，Strimzi 1.3.0\
+> **最近审查日期**：October 16, 2026
 
-在本系列深入讲解中，我们涵盖了 Kafka 基础知识、Strimzi 运维、schema registry、Kafka Connect/MirrorMaker、MSK 集成以及监控。本最终文档按类别汇总了生产就绪最佳实践，并将前面七个部分的关键内容整合为一份上线检查清单。
+本章将前文中的示例转化为需要验证的运维决策。
+后续是[基准测试章节](./09-kafka-benchmark.md)；清单不能替代针对实际工作负载和故障的测试。
 
-## 1. 分区设计
+## 分区设计与测量
 
-### 确定分区数量
+对于传统消费者组，同一时间，一个分区最多分配给该组的一个成员。因此，若要让 20 个独立消费的成员都保持繁忙，至少需要 20 个分区。此外，还要测量每个分区的吞吐量、键倾斜、记录大小、复制开销、恢复时间以及 broker/controller 容量。共享组和应用内部并行处理的语义不同；不要把这条规则当作对所有消费者 API 的普遍描述。
 
-从某个 topic **预期的最大 consumer 并行度**开始考虑。给定 consumer group 中的一个分区在同一时刻只能由一个 consumer 实例消费，因此应确定预计将 consumer group 扩展到什么规模，并至少配置相同数量的分区。如果计划在峰值时扩展至 20 个 consumer 实例，则至少需要 20 个分区。
+分区增多会增加元数据、副本、缓冲区和恢复方面的工作。其成本不符合某个通用的每分区内存/文件描述符公式。历史上的 4,000/200,000 经验法则并非当前普遍适用的限制。应依据测得的稳态和故障行为选择分区数量，包括每个 broker 上的副本分配情况，而不仅仅是逻辑 topic 分区数。
 
-过度分区会带来实际成本，应予以避免：
+### 统计分区数，而不是 topic 标题行数
 
-- **更多打开的文件句柄**：每个分区都会保持多个日志段文件（`.log`、`.index`、`.timeindex`）处于打开状态，因此每个 broker 的打开文件描述符数量会随分区数量线性增长。
-- **更大的内存压力**：broker 上的 producer/consumer 批处理缓冲区及每个复制线程缓冲区都会随分区数量增加。
-- **更慢的再平衡和故障转移**：broker 故障时 controller 必须执行的 leader 选举工作量会随分区数量增加，consumer group 再平衡也会耗时更长。
+`grep -c "PartitionCount"` 统计的是**topic 摘要行**，而不是分区。将以下内容保存为 `partition_summary.py`。它会读取当前 CLI 的分区行（包括 `Leader: none`），并分别报告逻辑分区、副本放置情况和领导权。
 
-Confluent 的经典经验法则是，每个 broker 约 **4,000 个分区、每个 cluster 约 200,000 个分区**作为软上限——这是 ZooKeeper controller 是元数据瓶颈时期的指导建议。得益于更快的 controller 元数据路径，基于 KRaft 的 cluster（Kafka 3.x+ controller quorum）可处理更高得多的分区数量；但原则依然成立：不要仅仅因为可以就过度分区，并应通过真实负载测试验证工作负载的实际上限。
+```python
+import collections
+import json
+from pathlib import Path
+import re
+import sys
 
-```bash
-# Check total partition count and distribution per broker
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe | grep -c "PartitionCount"
+def summarize(text):
+    pattern = re.compile(
+        r"^\s*Topic:\s+(\S+)\s+Partition:\s+(\d+)\s+Leader:\s+(none|-?\d+)"
+        r"\s+Replicas:[ \t]*([\d,]*)[ \t]+Isr:[ \t]*([\d,]*)"
+    )
+    partitions = {}
+    topics = collections.Counter()
+    leaders = collections.Counter()
+    replicas = collections.Counter()
+    offline = []
+    for line in text.splitlines():
+        if not re.search(r"\bPartition:", line):
+            continue
+        match = pattern.match(line)
+        if not match:
+            raise ValueError("Unrecognized partition row; check Kafka CLI version/output.")
+        topic, partition, leader, replica_text, _ = match.groups()
+        key = (topic, int(partition))
+        if key in partitions:
+            raise ValueError("Duplicate topic/partition row.")
+        replica_ids = [int(x) for x in replica_text.split(",") if x]
+        if not replica_ids or len(set(replica_ids)) != len(replica_ids):
+            raise ValueError("Missing or duplicate replica IDs.")
+        partitions[key] = True
+        topics[topic] += 1
+        replicas.update(replica_ids)
+        if leader == "none" or int(leader) < 0:
+            offline.append({"topic": topic, "partition": int(partition)})
+        else:
+            leaders[int(leader)] += 1
+    if not partitions:
+        raise ValueError("No partition rows; empty visibility is not proof of a healthy cluster.")
+    return {
+        "visible_topics": len(topics),
+        "logical_partitions": len(partitions),
+        "replica_assignments": sum(replicas.values()),
+        "partitions_by_topic": dict(sorted(topics.items())),
+        "leaders_by_broker": dict(sorted(leaders.items())),
+        "replicas_by_broker": dict(sorted(replicas.items())),
+        "offline_partitions": offline,
+    }
 
-# Inspect partition/leader distribution for a specific topic
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic orders
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python3 partition_summary.py topics.txt")
+    print(json.dumps(summarize(Path(sys.argv[1]).read_text()), indent=2))
 ```
 
-### 选择分区键
+```bash
+set -euo pipefail
+: "${KAFKA_BOOTSTRAP_SERVERS:?Set the reachable TLS bootstrap endpoints}"
+# Run from a Kafka 4.3.1 client installation. admin.properties is local to this client.
+bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --describe > topics.txt
+python3 partition_summary.py topics.txt
+```
 
-选择具有**高基数且分布均匀**的键，以避免热点分区。默认 partitioner 使用 murmur2 对键进行哈希，并对分区数量取模；因此低基数的键（例如仅有少数几个不同取值的 `country` 或 `status`）会使与主要流量值对应的少数分区过载，而其他分区则处于空闲状态。优先选择具有足够高基数的字段（例如 `user_id`），或者为低基数键添加盐值（追加随机后缀或由时间戳派生的后缀）以实现更均匀的分布。
+结果仅涵盖调用身份可见的 topic，以及命令筛选器返回的 topic（包括返回的内部 topic）。查询失败或结果为空，并不能证明集群没有分区或运行正常。使用适用于此管理读取操作的凭据；不要假定 broker Pod ID 或明文的 `localhost:9092` 监听器。
 
-### 谨慎处理分区数量变更
+### 保留键的含义
 
-增加**带键** topic 的分区数量会破坏键到分区的映射。由于 `partition_count` 一旦发生改变，`hash(key) % partition_count` 的结果也会改变，因此同一个键在变更后可能落到与之前不同的分区。这会导致两个具体问题：
+Java producer 默认的键控映射使用**序列化后的键字节**，并按 `toPositive(murmur2(keyBytes)) % partitionCount` 计算；除非显式指定分区、自定义 partitioner，或使用忽略键的配置改变这一行为。如果映射一致性很重要，其他客户端也必须使用兼容的 partitioner/serializer。
 
-- **顺序被破坏**：Kafka 仅保证分区内的顺序，因此同一键的消息一旦被拆分到多个分区，consumer 就无法再依赖键级别的顺序。
-- **共分区被破坏**：Kafka Streams（以及类似工具）中的 join 要求被连接的 topic 共享相同的分区数量和分区方案。仅变更 join 一侧的分区会导致其失效。
+高基数本身并不能保证流量均衡：一个非常活跃的客户仍可能占据主导地位。随机加盐或按时间戳加盐会改变每个键的顺序、连接和压缩身份。只有在数据契约允许这些变化时才使用；如有需要，还应明确制定重新组合/排序策略。
 
-在容量规划时应预留分区数量余量；如果生产 topic 已依赖基于键的顺序或 join，则与其增加现有 topic 的分区，不如迁移到新的 topic。
+增加分区数可能会重新映射部分键，但不会重新分配旧记录。这可能破坏跨分区的键顺序以及共分区连接的假设。具体要求取决于连接/拓扑；并非所有 Streams 连接都使用相同的共分区方式。对于对顺序敏感或有状态的工作负载，应规划并测试重新分区/迁移，通常需要使用新 topic。
 
-## 2. Producer 调优
+## Producer 调优
 
-| 设置 | 推荐值 | 目的 |
-|---------|--------------------|---------|
-| `acks` | `all`（适用于持久性至关重要的 topic） | 等待所有同步副本（ISR）的确认，以便 broker 故障时不会丢失数据 |
-| `min.insync.replicas`（topic/broker 设置） | `2`（使用 replication.factor=3 时） | 与 `acks=all` 结合时，要求写入至少到达 2 个副本后才成功——在 topic（`kafka-configs.sh --entity-type topics`）或 broker 默认设置中配置，而非作为 producer client 属性 |
-| `linger.ms` | `5`–`20` | 用少量延迟换取更大的批次和更高吞吐量 |
-| `batch.size` | `32768`–`65536`（32–64KB） | 提高每批次的最大字节数，以增加每个请求的吞吐量 |
-| `enable.idempotence` | `true` | 防止由 producer 重试引起的重复写入 |
-| `compression.type` | `lz4` 或 `zstd` | 降低网络和存储成本 |
+将此配置视为经过测量的起始配置，并将其添加到现有的已认证客户端配置中，而不是视为通用的最佳配置。
 
 ```properties
-# Producer settings for durability-critical topics (orders, payments, etc.)
-# (min.insync.replicas is a topic/broker setting, not a producer property — shown here for reference only)
 acks=all
 enable.idempotence=true
+max.in.flight.requests.per.connection=5
 compression.type=lz4
 linger.ms=10
 batch.size=32768
-retries=2147483647
 delivery.timeout.ms=120000
 ```
 
-除非以与之不兼容的方式显式覆盖 `acks` 或 `retries`，否则 `enable.idempotence=true` **自 Kafka 3.0 起一直为默认值**。它会为 producer 分配唯一的 producer ID 和每分区序列号，使 broker 能够透明地去除由瞬态网络错误引发的重试重复项。这不同于完整的 exactly-once 语义——幂等性仅消除 producer 到 broker 跳转期间的重复；真正的端到端 exactly-once 还需要使用事务 API（`transactional.id`）。
+- `acks=all` 会等待当前 ISR。RF=3 且 topic/broker 的 `min.insync.replicas=2` 时，如果 ISR 少于两个，写入会被拒绝，而不是无限期等待第二个副本。只有在剩余副本/仲裁以及其他依赖项仍满足要求时，才能容忍一次故障。
+- `enable.idempotence=true` 会抑制受支持的 producer 重试所产生的重复记录。它要求 acks、重试次数和 `max.in.flight.requests.per.connection` 设置彼此兼容。显式设置兼容的属性不会禁用它。
+- Kafka 4.3 的默认 linger 为 5 ms；此处的 10 ms 和 32 KiB 是示例调优值。`batch.size` 是每分区的批处理/分配设置，不是记录或请求大小的硬性上限。排队时间和交付期限也会影响延迟。
+- 使用具有代表性的数据、CPU 和延迟对比 lz4、zstd、gzip 或不压缩的情况。不要假定某种编解码器的总成本始终最低。
 
-对于大多数工作负载，`lz4` 在 CPU 开销和压缩比之间提供了良好平衡。`zstd` 的压缩效果更佳——适用于 JSON/文本占比较高的 payload——但会带来稍高的 CPU 使用率。`gzip` 压缩效果良好，但 CPU 开销很大，因此通常不建议用于高吞吐量 producer。
+`min.insync.replicas` 属于 topic/broker 配置，而不是 producer 属性。`delivery.timeout.ms` 限制交付尝试的时长；重试次数很高并不意味着交付时间无限。始终监控发送失败。
 
-## 3. Consumer 调优
+幂等性不会对任意应用程序重新提交操作或外部数据库副作用进行去重。Kafka 的消费-转换-生产精确一次处理还需要适当的事务生命周期、原子提交输出/输入偏移量、fencing，以及 read-committed 消费者。仅设置 `transactional.id` 字符串并不足够。
 
-### 避免再平衡风暴
+## Consumer 处理与成员关系
 
-如果处理耗时超过 `max.poll.interval.ms`（默认 5 分钟），consumer 会被强制从其 group 中移除，从而触发再平衡。当多个 consumer 同时变慢时，这可能会级联为反复中断 group 的“再平衡风暴”。
+此配置明确使用 **`group.protocol=classic`**，以便客户端心跳/会话设置生效。使用 `group.protocol=consumer` 时，这些时间间隔由 broker 的消费者组配置控制。
 
 ```properties
-# Tune poll-related settings around your actual per-batch processing time
+group.id=order-processor
+group.protocol=classic
+enable.auto.commit=false
 max.poll.records=200
 max.poll.interval.ms=600000
 session.timeout.ms=45000
 heartbeat.interval.ms=15000
 ```
 
-降低 `max.poll.records` 会减少单次 `poll()` 调用返回的记录数量，从而缩短两次 poll 之间的处理窗口。提高 `max.poll.interval.ms` 可在移除 consumer 前为慢处理留出更多余量。更稳健的解决方案是从架构上将繁重处理完全移出 poll 循环，交由独立的 worker thread pool 执行，而 poll 只负责获取并移交工作。
+应限制实际处理时间，而不仅仅是记录数量。处理一条缓慢的记录仍可能超过 `max.poll.interval.ms`。动态成员和静态成员的重新分配时机并不完全相同：静态成员可能在 poll 超时后停止发送心跳，而重新分配会推迟到其会话过期之后。
 
-### 手动提交 offset
+### 持久处理后再提交
 
-对于 at-least-once 处理至关重要的 pipeline（订单处理、支付），自动提交（`enable.auto.commit=true`）可能会在相应记录实际完成处理之前提交 offset——如果 consumer 在两者之间崩溃，从 pipeline 的角度看，该记录实际上就丢失了，尽管它已被“提交”。
-
-```properties
-enable.auto.commit=false
-```
+自动提交并不知道异步外部操作何时完成。顺序正确的同步循环可以使用自动提交，但不要以为它能跟踪工作线程池的进度。以下 helper 展示了禁用自动提交后，显式执行“同步处理后再提交”的方法。
 
 ```java
-while (true) {
-    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
-    for (ConsumerRecord<String, String> record : records) {
-        process(record);          // business logic
+import java.time.Duration;
+import java.util.Properties;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+public final class ConsumerExamples {
+    public static void setStaticIdentity(Properties props, String instanceId) {
+        if (instanceId == null || instanceId.isBlank() || instanceId.contains("${")) {
+            throw new IllegalArgumentException("Supply a resolved, stable, unique consumer instance ID.");
+        }
+        props.setProperty(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
     }
-    consumer.commitSync();        // commit only after processing succeeds
+
+    public static int processOneBatch(
+            Consumer<String, String> consumer,
+            java.util.function.Consumer<ConsumerRecord<String, String>> processDurably) {
+        var records = consumer.poll(Duration.ofMillis(500));
+        for (var record : records) {
+            processDurably.accept(record);
+        }
+        if (!records.isEmpty()) {
+            consumer.commitSync();
+        }
+        return records.count();
+    }
 }
 ```
 
-### 静态 group 成员资格
-
-Kubernetes 上的 Consumer Pod 经常重启——滚动部署、OOMKilled 重启、节点替换。默认情况下，consumer 离开并重新加入 group 会触发完整再平衡，因此频繁的短暂重启会导致整个 group 反复发生不必要的处理暂停。设置 `group.instance.id` 可启用静态成员资格：如果 consumer 在 `session.timeout.ms` 内重新连接，它将恢复之前的分区分配，完全不会发生再平衡。
-
-```properties
-group.instance.id=${POD_NAME}
-session.timeout.ms=45000
+```java
+// props already includes bootstrap, TLS/SCRAM, deserializers and the profile below.
+try (var consumer = new KafkaConsumer<String, String>(props)) {
+    consumer.subscribe(List.of("orders"));
+    while (!Thread.currentThread().isInterrupted()) {
+        ConsumerExamples.processOneBatch(consumer, application::processDurably);
+    }
+}
 ```
 
-`group.instance.id` 必须对每个 Pod 唯一——通常来自 StatefulSet Pod 名称或通过 downward API 注入。
+`application.processDurably` 是应用代码，只有在所需操作成功后才能返回。处理/提交失败时，应停止并恢复，或显式跳转到正确的位置；**不要捕获错误后继续 poll，越过处理失败的记录**。重启可能会重放已处理的记录，因此外部操作需要合适的幂等/事务策略。使用 KafkaConsumer 支持的 wakeup/close 模式配置关闭流程。
 
-## 4. 安全性
+KafkaConsumer 通常不是线程安全的。将工作交给其他线程需要有界队列、分区顺序、在 consumer 线程上执行 pause/resume、跟踪连续完成的偏移量，以及处理重新均衡。仅仅将工作移到线程池并不能提高可靠性。
 
-### mTLS（传输加密 + 双向认证）
+### 解析稳定的静态成员 ID
 
-部署 Kafka cluster 时，Strimzi 会自动配置并轮换自己的 cluster CA。将 listener 的类型设置为 `tls` 会加密 client-broker 流量，而为 `KafkaUser` 指定 `tls` 认证类型会使 Strimzi 签发由该 cluster CA 签名的 client 证书。
+Java `Properties` **不会**展开 `group.instance.id=${POD_NAME}`。
+在创建 consumer 之前，应在应用程序/配置代码中解析环境变量：
+
+```java
+// One consumer instance per stable logical member in this example.
+ConsumerExamples.setStaticIdentity(props, System.getenv("KAFKA_GROUP_INSTANCE_ID"));
+```
+
+对于每个 StatefulSet Pod 运行一个 consumer 的情况，可以使用来自 `metadata.name` 的 Downward API 值作为稳定的逻辑身份。Deployment 的 Pod 名称在许多发布过程中都会变化；一个 Pod 中的多个 consumer 需要使用不同的 ID。每个活动 consumer 实例都需要唯一 ID，只有由替代实例接替时才应有意复用 ID。活动 ID 重复可能导致成员被 fencing。
+
+对于兼容的短暂重启，静态成员关系可以避免不必要的重新均衡；但它并不保证 Pod 在计时器到期前返回时分配情况一定不变。拓扑、成员关系和订阅也会影响结果，而较长的会话超时时间会延迟真正故障成员的恢复。
+
+## 身份验证、授权与网络
+
+### 区分两种 CA 和监听器属性
+
+使用 Strimzi 管理的默认 CA 时：
+
+- **cluster CA** 为 broker/内部组件证书签名；客户端信任相应的服务器证书链。
+- **clients CA** 为用于 mTLS 的 `KafkaUser` 客户端证书签名。
+- `user.crt`/`user.key` 是客户端凭据。用户 Secret 中的 clients-CA 证书不能替代 broker 信任链。
+
+监听器的网络暴露类型包括 `type: internal`、`loadbalancer` 等。
+加密配置为 `tls: true`，客户端身份验证配置为
+`authentication.type: tls`。不存在名为 `tls` 的监听器暴露类型。
+
+以下内容是现有 `spec.kafka.listeners` 数组中的**一个附加监听器条目**，不是 Part 2 中 TLS/SCRAM 监听器的替代项。添加前请检查完整的目标 Kafka 资源：
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+name: mtls
+port: 9094
+type: internal
+tls: true
+authentication:
+  type: tls
+networkPolicyPeers:
+- namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: kafka-clients
+  podSelector:
+    matchLabels:
+      app: order-service
+```
+
+两个选择器位于**同一个 peer** 中，因此 Pod 必须满足 `app=order-service` **并且**位于 `kafka-clients` 命名空间。两个独立的 peer 条目表示 OR 关系：匹配策略所在命名空间中的 Pod，或者所选命名空间中的所有 Pod。NetworkPolicy 的规则是叠加的，需要 CNI 执行策略，而且不能覆盖另一条同样允许流量的策略。还应考虑 egress 以及实际的外部/节点流量路径。
+
+此独立的 mTLS 用户会保留现有 SCRAM 用户的身份：
+
+```yaml
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaUser
 metadata:
-  name: order-service
+  name: order-service-mtls
+  namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
 spec:
@@ -133,120 +241,114 @@ spec:
   authorization:
     type: simple
     acls:
-      - resource:
-          type: topic
-          name: orders
-          patternType: literal
-        operations: ["Read", "Write", "Describe"]
-      - resource:
-          type: group
-          name: order-service-group
-        operations: ["Read"]
+    - resource:
+        type: topic
+        name: orders
+        patternType: literal
+      operations:
+      - Read
+      - Write
+      - Describe
+    - resource:
+        type: group
+        name: order-processor-mtls
+        patternType: literal
+      operations:
+      - Read
+    - resource:
+        type: cluster
+      operations:
+      - IdempotentWrite
 ```
 
-### SASL/SCRAM
+User Operator 必须对其进行协调，而且必须启用 broker 的 simple authorizer。通过受控的轮换流程，将用户凭据和 broker 信任证书分发到应用程序所在的命名空间；Kubernetes 不能直接挂载另一个命名空间中的 Secret。确认当前 generation、TLS/身份验证成功，以及允许/拒绝的操作。仅提交 YAML 并不会授予可用的访问权限。
 
-对于分发和轮换 client 证书不切实际的环境（旧版应用、第三方工具），基于用户名/密码的 SASL/SCRAM（`scram-sha-512`）是可靠的替代方案。将 listener 的认证类型设置为 `scram-sha-512`，并为相应的 `KafkaUser` 设置相同的 `authentication.type`；Strimzi 会自动将凭证生成到 Secret 中。
+现有 SCRAM 路径仍需要 TLS 来加密连接，并需要密码轮换。Kafka ACL 和 NetworkPolicy 互不能替代对方。
 
-### 声明式 ACL 管理
+### 明确加密新配置的持久存储
 
-如上面的 `KafkaUser` 示例所示，`authorization.type: simple` 加上 `acls` 列表使你能够通过 GitOps 将 ACL 作为代码管理，而不是手动对 broker 执行 `kafka-acls.sh`。为 topic 接入新服务只需提交一个新的 `KafkaUser` 资源。
-
-### 网络策略
-
-Strimzi listener 支持 `networkPolicyPeers`，可限制哪些 Pod 能够访问给定 listener 端口（例如 9092/9093/9094）。
-
-```yaml
-listeners:
-  - name: tls
-    port: 9093
-    type: internal
-    tls: true
-    networkPolicyPeers:
-      - podSelector:
-          matchLabels:
-            app: order-service
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: kafka-clients
-```
-
-Strimzi 会在后台将其转换为标准 Kubernetes `NetworkPolicy`，因此只有匹配指定 selector 的 Pod 才能访问该 listener 端口。
-
-### 静态加密
-
-EBS 卷加密**并非** EBS CSI driver 自动应用的功能——需要通过以下任一种方式显式启用：
-
-- 启用账户/区域级别的 **“默认 EBS 加密”**设置，以便此后创建的每个卷都会自动加密。
-- 在 `StorageClass` 上设置 `encrypted: "true"`（以及可选的 `kmsKeyId`）。
+对于标准 EBS CSI driver，请使用加密的 StorageClass，和/或账户/Region 级别的 EBS 默认加密设置。此示例还会保留卷，并等待调度后再选择 AZ：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: gp3-encrypted
+  name: gp3-kafka-encrypted
 provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
 parameters:
   type: gp3
-  encrypted: "true"
-  kmsKeyId: arn:aws:kms:us-east-1:123456789012:key/xxxxxxxx
+  encrypted: 'true'
 ```
 
-由于 Kafka cluster 通常承载对合规性敏感的数据，因此应将用于 broker PVC 的显式加密 `StorageClass` 作为默认配置，而非事后补救。
+对于 Auto Mode，请使用独立的 `ebs.csi.eks.amazonaws.com` provisioner 和 Part 2 中的拓扑约束，同时指定 `encrypted: "true"`。不要根据 Auto Mode 关于节点/临时磁盘加密的说明推断动态 PVC 已加密；其 StorageClass 参数参考中 `encrypted` 的默认值为 false。请确认实际创建的 EBS 卷是否加密，以及使用了哪个 KMS key。
 
-## 5. 成本优化
+客户管理的密钥需要提供实际 ARN 和相应的角色/密钥授权，而不是 `key/xxxxxxxx`。更改 StorageClass 或启用账户默认设置不会追溯加密现有卷。替换持久存储之前，应规划受支持的数据/快照迁移，并验证恢复访问权限。
 
-### 合理调整实例类型大小
+## 容量、分层与保留期
 
-大多数 Kafka 工作负载对**内存——尤其是 OS page cache——的敏感度远高于 CPU**。Kafka 旨在从 page cache 为大多数读取提供服务，因此在 consumer 读取近期数据这一常见场景中，broker heap 之后剩余的 RAM（通常 4–8GB 已足够）直接决定吞吐量。因此，内存优化实例（例如 `r6g`/`r7g` Graviton 系列）通常比计算优化实例提供更好的性价比。
+Kafka 能从 page cache 中受益，但 CPU（包括 TLS/压缩）、网络、存储吞吐量/IOPS 和 cgroup 内存限制中的任何一项都可能成为主要瓶颈。测量时应将 heap、off-heap、page cache 和其他工作负载都纳入考虑。不存在通用的“4–8 GB heap 就够了”结论，也不存在内存优化型实例在成本上必胜的说法。
 
-### 分层存储
+Kafka 分层存储自 3.9 起已可用于生产，并受 Strimzi 1.3 支持。它仍然需要兼容的 **RemoteStorageManager 插件**、镜像中包含其依赖项、远程访问凭据/权限，以及保留、清理和恢复配置。Strimzi 的自定义集成通过 `spec.kafka.tieredStorage` 配置插件类/路径/参数。单独启用 `remote.log.storage.system.enable` 并不会将 Kafka 连接到 S3。请阅读相应版本的功能限制，并测试远程存储不可用和恢复的情况。
 
-由 KIP-405 定义的分层存储会将较旧的日志段从本地磁盘卸载到 S3 等远程存储，从而降低每个 broker 所需的本地 EBS 容量。它早在 Apache Kafka 3.6 中作为早期访问功能推出，并在 **Kafka 3.9 中达到生产就绪（GA）**，但默认未启用——它仍是必须显式开启（`remote.log.storage.system.enable=true`）的可选功能。在 Strimzi 中依赖它之前，请查看该 Strimzi 发布版本对分层存储的支持和成熟度说明，并首先在非生产 cluster 中进行全面验证。
+### 保留期是一项数据决策
 
-### 调整日志保留
-
-应根据实际业务需求为每个 topic 设置 `retention.ms`/`retention.bytes`，而不是保留默认值，因为在 EBS 上过度保留数据会产生直接且持续的成本。仅需要每个键最新值的 topic（状态快照、类似缓存的数据）应使用 `cleanup.policy=compact`，以避免存储无限增长。
+以下示例会将现有 topic 的保留期更改为三天或**每个分区 50 GiB**，以先达到的限制为准。删除按 segment 粒度异步进行，并非立即达到精确的字节上限。
 
 ```bash
-# Example: tighten retention for a specific topic
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-configs.sh --bootstrap-server localhost:9092 \
-  --alter --entity-type topics --entity-name application-logs \
+: "${KAFKA_BOOTSTRAP_SERVERS:?Set the reachable TLS bootstrap endpoints}"
+bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --describe \
+  --entity-type topics --entity-name application-logs
+# After reviewing retention/recovery requirements: shortening retention can delete data.
+bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --alter \
+  --entity-type topics --entity-name application-logs \
   --add-config retention.ms=259200000,retention.bytes=53687091200
 ```
 
-### 使用 Spot 实例
+降低保留期可能会不可逆地删除重放或恢复所需的记录。对于 `cleanup.policy=compact`，清理是异步的，并会在 tombstone/cleaner 行为允许的范围内保留每个键的最新值；高键基数以及活动中/尚未清理的 segment 仍可能持续增长。压缩不是硬性的存储上限。`compact,delete` 还会应用删除保留策略，这可能会删除旧键的最后一个值。应明确设计状态重建和 tombstone 保留要求。
 
-对于开发/预发布环境或关键性较低的 Strimzi cluster，在 Spot 实例上运行 broker node pool 可显著降低成本。但是，**KRaft controller node pool 应保留在 On-Demand 实例上**。失去 controller quorum 的多数节点会使整个 cluster 的元数据管理停止，这一风险不值得为节省 Spot 成本而承担。使用 Pod topology spread constraints 将 broker node pool 分散到多个 AZ/节点上，以避免 Spot 回收事件一次性移除同一分区的多个副本。
+### Spot 与中断
 
-## 6. 上线检查清单
+在此生产基线中，应让 controller quorum 运行在适当且可靠的容量上。对于能够承受其风险的工作负载，可以考虑使用 Broker Spot 容量，但仅分散 Pod 并不能防止相关联的回收事件。应结合 broker 感知机架的副本放置、节点/AZ 分布、EBS 卷所在 AZ 中的替代容量，以及经过测试的恢复和余量。
 
-将本系列深入讲解第 1 至第 8 部分的关键项目汇总为一份生产前检查清单：
+Strimzi 1.3 的 PDB 覆盖 Kafka 集群的 Pod，并限制自愿驱逐。它无法保证在强制删除、节点故障、Spot 回收或每一种 Operator 滚动操作期间都能维持 quorum。RF=3/minISR=2、PDB 和 On-Demand controller 都是设计输入，并不能证明不会丢失数据或发生停机。
 
-- [ ] **架构**：以 KRaft 模式运行，且 controller 和 broker node pool 分离（第 1、2 部分）
-- [ ] **复制**：生产 topic 使用 `replication.factor=3` 和 `min.insync.replicas=2`，可容忍单个 broker 故障（第 1 部分）
-- [ ] **分区设计**：分区数量按预期最大 consumer 并行度确定，而非过度拆分（第 8 部分）
-- [ ] **Strimzi 版本固定**：Operator 和 Kafka 版本被显式固定，不会在自动升级时漂移（第 2 部分）
-- [ ] **存储**：broker `StorageClass` 使用带加密（`encrypted: "true"`）的 gp3（或 io2）（第 3、8 部分）
-- [ ] **PodDisruptionBudget**：PDB 确保在滚动重启和节点替换期间保持 quorum/多数派可用性（第 3 部分）
-- [ ] **滚动升级演练**：已在预发布环境实际执行过滚动升级流程（第 3 部分）
-- [ ] **Schema 兼容性**：根据每个 topic 的需求，有意设置 schema registry 兼容模式（BACKWARD/FORWARD/FULL）（第 4 部分）
-- [ ] **DR/复制**：已记录基于 Kafka Connect/MirrorMaker2 的灾难恢复或跨区域复制方案，并且已测试故障转移（第 5 部分）
-- [ ] **MSK 与自管理决策**：托管 MSK 与 Strimzi 自管理之间的选择已记录，并说明了运维和成本依据（第 6 部分）
-- [ ] **监控/告警**：已为 broker 指标和 consumer lag 配置 dashboard 和告警规则（第 7 部分）
-- [ ] **自动扩缩容**：consumer 工作负载通过 KEDA 或等效机制根据 lag 扩缩容（第 7 部分）
-- [ ] **Producer/consumer 配置审查**：已根据工作负载需求审查 `acks`、`enable.idempotence`、offset 提交策略和静态 group 成员资格（第 8 部分）
-- [ ] **安全性**：已部署 mTLS 或 SASL/SCRAM、基于 `KafkaUser` 的 ACL，以及 listener `NetworkPolicy`（第 8 部分）
-- [ ] **成本审查**：定期重新评估实例类型、保留策略和 Spot 使用情况（第 8 部分）
-- [ ] **负载测试**：已按预期峰值吞吐量对 broker 和 consumer 扩展能力进行实际负载测试
+## 投入生产使用前应保留的证据
 
-满足此检查清单是判定 cluster 已准备好在 EKS 上投入生产运行的合理标准。
+- 版本/API 兼容性、升级/回滚以及证书轮换演练。
+- 故障条件下测得的分区、副本、CPU/内存/网络/存储限制。
+- 经过测试的授权边界、客户端身份以及 Secret/信任证书轮换。
+- Schema/历史数据兼容性、处理/提交行为和重复处理。
+- 具有实测 RPO/RTO 以及所需 Schema/key 的恢复/故障切换证据。
+- 抓取/告警/通知覆盖情况、consumer 容量和应用 SLO。
+- 保留策略、存储加密、成本假设以及明确指定的运维负责人。
 
----
+根据工作负载应用相关控制，并记录仍然存在的限制。完成通用清单不能证明已满足生产就绪要求。
+
+## 参考资料与验证
+
+这些示例通过 Kafka 4.3.1 配置类、实际的键控 partitioner 和 MockConsumer 处理/提交测试，以及已发布的资源 Schema 和 topic 输出样例进行了检查。它们不能替代真实的 TLS/CNI 执行验证、加密卷检查、故障恢复或应用正确性测试。
+
+- [Kafka 4.3 producer 配置](https://kafka.apache.org/43/configuration/producer-configs/)
+- [Kafka 4.3 consumer 配置](https://kafka.apache.org/43/configuration/consumer-configs/)
+- [Kafka 4.3 分层存储](https://kafka.apache.org/43/operations/tiered-storage/)
+- [Kafka 4.3.1 键控 partitioner](https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java)
+- [Kafka 4.3.1 topic 描述输出](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java)
+- [Strimzi 1.3.0 部署、TLS 和分层存储指南](https://strimzi.io/docs/operators/1.3.0/deploying.html)
+- [Kubernetes NetworkPolicy 选择器语义](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [默认启用 EBS 加密](https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html)
+- [EKS Auto Mode StorageClass 参数](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)
+
+## 后续步骤
+
+[第 9 部分：Kafka 基准测试](./09-kafka-benchmark.md)
 
 [返回主页](./README.md)
 
 ## 测验
 
-要测试你在本章所学内容，请尝试[Topic 测验](../../quizzes/data-on-eks/kafka/08-best-practices-quiz.md)。
+[Topic 测验](../../quizzes/data-on-eks/kafka/08-best-practices-quiz.md)

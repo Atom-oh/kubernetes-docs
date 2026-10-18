@@ -1,17 +1,17 @@
 # 配置与 Secret
 
-> **支持的版本**: Kubernetes 1.32, 1.33, 1.34
-> **最后更新**: February 22, 2026
+> **支持的版本**：Kubernetes 1.35、1.36、1.37
+> **最后更新**：October 16, 2026
 
-在 Kubernetes 中，配置管理是将应用程序设置与代码分离管理的重要部分。本章将详细介绍 Kubernetes 配置管理方法，包括 ConfigMap、Secret、环境变量，以及通过 volume 挂载配置。
+在 Kubernetes 中，配置管理是将应用程序设置与代码分开管理的重要组成部分。本章将详细探讨 Kubernetes 配置管理方法，包括 ConfigMap、Secret、环境变量，以及通过卷挂载配置。
 
 ## 实验环境设置
 
-要跟随本文档中的示例操作，你需要以下工具和环境：
+要跟随本文档中的示例操作，你需要准备以下工具和环境：
 
 ### 必需工具
-- kubectl v1.34 或更高版本
-- 可用的 Kubernetes 集群（EKS、minikube、kind 等）
+- 与 API server 的版本相差不超过一个次要版本的 kubectl
+- 可正常使用的 Kubernetes 集群（EKS、minikube、kind 等）
 
 ### 配置示例设置
 
@@ -32,7 +32,7 @@ kubectl -n config-demo create secret generic app-secrets \
   --from-literal=API_KEY=abcdef123456
 
 # Create Pod using ConfigMap and Secret
-kubectl -n config-demo apply -f - <<EOF
+kubectl -n config-demo apply -f - <<'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
@@ -41,7 +41,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: ["sh", "-c", "env | sort && sleep 3600"]
+    command: ["sh", "-c", 'test -n "$DB_PASSWORD" && echo "Secret available" && sleep 3600']
     env:
     - name: APP_ENV
       valueFrom:
@@ -62,7 +62,7 @@ kubectl -n config-demo logs config-test-pod
 
 ## 配置管理概览
 
-![集群管理员、GitOps pipeline 和外部系统会创建 ConfigMap 与 Secret，Pod 会将其作为环境变量、volume 挂载和 image pull secret 使用；同时，ConfigMap 可为 sidecar 自动重新加载提供数据，Secret 则可支持 KSOPS 加密和 Vault Injector 动态注入等高级功能。](../.gitbook/assets/en-core-05-configuration-secrets-0.png)
+![集群管理员、GitOps 流水线和外部系统创建 ConfigMap 和 Secret，Pod 将它们作为环境变量、卷挂载和镜像拉取 Secret 使用；ConfigMap 还可用于边车自动重新加载，Secret 则可用于 KSOPS 加密和 Vault Injector 动态注入等高级功能。](../.gitbook/assets/en-core-05-configuration-secrets-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-0.html)
 
@@ -71,31 +71,31 @@ kubectl -n config-demo logs config-test-pod
 1. [ConfigMap](#configmap)
 2. [Secret](#secret)
 3. [环境变量](#environment-variables)
-4. [通过 Volume 挂载配置](#mounting-configuration-through-volumes)
+4. [通过卷挂载配置](#mounting-configuration-through-volumes)
 5. [配置最佳实践](#configuration-best-practices)
-6. [外部配置管理工具 (English)](https://www.atomai.click/kubernetes-docs/en/core/05-configuration-secrets#eks-configuration-management-tools)
+6. [Amazon EKS 中的配置管理](#configuration-management-in-amazon-eks)
 
 ## ConfigMap
 
-> **核心概念**：ConfigMap 以键值对形式存储配置数据，将应用程序代码与配置分离。
+> **核心概念**：ConfigMap 以键值对的形式存储配置数据，将应用程序代码与配置分离。
 
-ConfigMap 是以键值对形式存储配置数据的 API 对象。使用 ConfigMap 可将配置数据与 container image 分离，使应用程序更具可移植性。
+ConfigMap 是以键值对形式存储配置数据的 API 对象。使用 ConfigMap 可以将配置数据与容器镜像分离，让应用程序更具可移植性。
 
 ### ConfigMap 与 Secret 对比
 
 | 特性 | ConfigMap | Secret |
 |---------|-----------|--------|
 | **用途** | 通用配置数据 | 敏感配置数据 |
-| **存储格式** | 纯文本 | Base64 编码（默认） |
-| **大小限制** | 1MB | 1MB |
-| **加密** | 默认无 | 支持 etcd 加密 |
-| **Volume 类型** | configMap | secret |
-| **使用场景** | 环境变量、配置文件 | 密码、token、证书 |
-| **自动更新** | 作为 volume 挂载时可能存在延迟 | 作为 volume 挂载时可能存在延迟 |
+| **API 表示形式** | UTF-8 `data` 或 base64 编码的 `binaryData` | base64 编码的 `data`；写入时可使用 `stringData` |
+| **大小限制** | 1 MiB | 1 MiB |
+| **静态加密** | 取决于 API server/平台配置 | 取决于 API server/平台配置 |
+| **卷类型** | configMap | secret |
+| **使用场景** | 环境变量、配置文件 | 密码、令牌、证书 |
+| **自动更新** | 作为卷挂载时可能存在延迟 | 作为卷挂载时可能存在延迟 |
 
 ### ConfigMap 创建方法
 
-可以通过多种方式创建 ConfigMap：
+ConfigMap 可以通过多种方式创建：
 
 1. **命令式创建**：
 
@@ -134,9 +134,9 @@ data:
 
 ### ConfigMap 使用方法
 
-可以通过以下方式使用 ConfigMap：
+ConfigMap 可以通过以下方式使用：
 
-1. **作为环境变量使用**：
+1. **用作环境变量**：
 
 ```yaml
 apiVersion: v1
@@ -160,13 +160,13 @@ spec:
         name: my-config
 ```
 
-![ConfigMap 的键值数据（key1、key2、config.properties）可由 Pod 通过三种方式使用——作为环境变量、作为挂载的 volume，或作为命令行参数；环境变量路径会解析为 env.key1/env.key2，volume 路径则会解析为 container 内 /etc/config 下的文件。](../.gitbook/assets/en-core-05-configuration-secrets-1.png)
+![Pod 可通过三种方式使用 ConfigMap 的键值数据（key1、key2、config.properties）——将其作为环境变量、挂载卷或命令行参数；环境变量方式会解析为 env.key1/env.key2，卷方式则会在容器内 /etc/config 下生成文件。](../.gitbook/assets/en-core-05-configuration-secrets-1.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-1.html)
 
-### ConfigMap 创建
+### 创建 ConfigMap
 
-可以通过多种方式创建 ConfigMap：
+ConfigMap 可以通过多种方式创建：
 
 #### 命令式
 
@@ -204,11 +204,11 @@ data:
     }
 ```
 
-### ConfigMap 使用
+### 使用 ConfigMap
 
-可以通过以下方式在 Pod 中使用 ConfigMap：
+ConfigMap 可以通过以下方式在 Pod 中使用：
 
-#### 作为环境变量使用
+#### 用作环境变量
 
 ```yaml
 apiVersion: v1
@@ -234,7 +234,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### 作为 Volume 挂载
+#### 挂载为卷
 
 ```yaml
 apiVersion: v1
@@ -256,7 +256,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### 仅挂载特定键
+#### 仅挂载指定键
 
 ```yaml
 apiVersion: v1
@@ -281,9 +281,9 @@ spec:
   restartPolicy: Never
 ```
 
-### ConfigMap 更新
+### 更新 ConfigMap
 
-更新 ConfigMap 时，作为 volume 挂载的 ConfigMap 内容会自动更新。但作为环境变量使用的 ConfigMap 需要重启 Pod 后才会更新。
+作为完整卷挂载的可变 ConfigMap 和 Secret 最终会更新；更新延迟取决于 kubelet 同步以及变更检测/缓存设置。应用程序必须重新读取或重新加载文件。`subPath` 挂载不会接收更新。运行中的进程不会改变环境变量值；要使用新值，需要重新创建 Pod（例如，执行 Deployment 滚动更新）。
 
 ```bash
 kubectl edit configmap my-config
@@ -307,28 +307,28 @@ kubectl apply -f updated-configmap.yaml
 
 ## Secret
 
-Secret 是存储密码、OAuth token 和 SSH key 等敏感信息的 API 对象。Secret 与 ConfigMap 类似，但为存储敏感数据提供了额外的安全功能。
+Secret 是用于存储密码、OAuth 令牌和 SSH 密钥等敏感信息的 API 对象。Secret 与 ConfigMap 类似，但提供了额外的安全功能来存储敏感数据。
 
-![Kubernetes Secret 支持的类型（Opaque、TLS、dockerconfigjson、basic-auth）及其 Base64 编码和可选的 etcd 加密存储，以及 Pod 使用它的三种方式：作为环境变量、挂载的 volume 或 image pull secret。](../.gitbook/assets/en-core-05-configuration-secrets-2.png)
+![Kubernetes Secret 支持的类型（Opaque、TLS、dockerconfigjson、basic-auth）及其 base64 编码和可选的 etcd 加密存储，以及 Pod 使用它的三种方式：作为环境变量、挂载卷或镜像拉取 Secret。](../.gitbook/assets/en-core-05-configuration-secrets-2.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-2.html)
 
 ### Secret 类型
 
-Kubernetes 提供多种 Secret 类型：
+Kubernetes 提供多种类型的 Secret：
 
-- **Opaque**：默认类型，存储任意用户定义的数据。
-- **kubernetes.io/service-account-token**：存储 service account token。
+- **Opaque**：默认类型，用于存储用户定义的任意数据。
+- **kubernetes.io/service-account-token**：存储 ServiceAccount 令牌。
 - **kubernetes.io/dockercfg**：存储 `.dockercfg` 文件的序列化形式。
 - **kubernetes.io/dockerconfigjson**：存储 `.docker/config.json` 文件的序列化形式。
-- **kubernetes.io/basic-auth**：存储 basic authentication 的凭据。
-- **kubernetes.io/ssh-auth**：存储 SSH authentication 的凭据。
-- **kubernetes.io/tls**：存储 TLS 证书和 key。
-- **bootstrap.kubernetes.io/token**：存储 bootstrap token 数据。
+- **kubernetes.io/basic-auth**：存储基本身份验证凭据。
+- **kubernetes.io/ssh-auth**：存储 SSH 身份验证凭据。
+- **kubernetes.io/tls**：存储 TLS 证书和密钥。
+- **bootstrap.kubernetes.io/token**：存储引导令牌数据。
 
-### Secret 创建
+### 创建 Secret
 
-可以通过多种方式创建 Secret：
+Secret 可以通过多种方式创建：
 
 #### 命令式
 
@@ -337,7 +337,7 @@ Kubernetes 提供多种 Secret 类型：
 kubectl create secret generic my-secret --from-literal=username=admin --from-literal=password=secret
 
 # Create from files
-kubectl create secret generic my-secret --from-file=username.txt --from-file=password.txt
+kubectl create secret generic my-secret --from-file=username=username.txt --from-file=password=password.txt
 
 # Create TLS secret
 kubectl create secret tls my-tls-secret --cert=path/to/cert.crt --key=path/to/key.key
@@ -364,7 +364,7 @@ data:
   password: c2VjcmV0  # secret
 ```
 
-或者，你可以使用 `stringData` 字段提供未编码的值：
+也可以使用 `stringData` 字段提供未编码的值：
 
 ```yaml
 apiVersion: v1
@@ -378,11 +378,11 @@ stringData:
   password: secret
 ```
 
-### Secret 使用
+### 使用 Secret
 
-可以通过以下方式在 Pod 中使用 Secret：
+Secret 可以通过以下方式在 Pod 中使用：
 
-#### 作为环境变量使用
+#### 用作环境变量
 
 ```yaml
 apiVersion: v1
@@ -393,7 +393,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "env" ]
+    command: ["/bin/sh", "-c", 'test -n "$USERNAME" && echo "Secret available"']
     env:
     # Use single key-value pair
     - name: USERNAME
@@ -408,7 +408,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### 作为 Volume 挂载
+#### 挂载为卷
 
 ```yaml
 apiVersion: v1
@@ -430,7 +430,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Image Pull Secret
+#### 镜像拉取 Secret
 
 ```yaml
 apiVersion: v1
@@ -447,12 +447,14 @@ spec:
 
 ### Secret 安全注意事项
 
-Secret 默认采用 Base64 编码，但这并不是加密。为增强 Secret 安全性，请考虑以下方法：
+Secret 默认使用 base64 编码，但这并非加密。为增强 Secret 的安全性，可考虑以下方法：
 
-1. **etcd 加密**：加密存储在 etcd 中的 Secret。
+1. **etcd 加密**：对存储在 etcd 中的 Secret 加密。
 2. **RBAC**：限制对 Secret 的访问。
-3. **Network Policy**：限制可以访问 Secret 的 Pod。
+3. **网络策略**：在支持的情况下，限制对 API 或外部存储的网络访问；Secret 对象的授权由 RBAC 强制执行，而非 NetworkPolicy。
 4. **外部 Secret 管理工具**：使用 AWS Secrets Manager、HashiCorp Vault 等外部 Secret 管理工具。
+
+此处展示的所有凭据都是用于学习的虚构值。不要记录 Secret 内容，也不要提交真实值或其 base64 等效内容；应优先使用受保护的输入文件或外部 Secret 管理器，而不是在 CLI 参数中直接提供字面值。即使用户没有直接读取 Secret 的权限，只要他们能创建使用该 Secret 的 Pod，就可能获取该 Secret。
 
 #### etcd 加密配置
 
@@ -470,13 +472,13 @@ resources:
     - identity: {}
 ```
 
-<span id="environment-variables"></span>
+对于自行管理的集群，请使用 `--encryption-provider-config` 加载此文件，保护加密密钥，并重写现有 Secret 以将其加密。它不是可通过 `kubectl apply` 应用的资源。EKS 会管理自己的加密（见下文）。
 
 ## 环境变量
 
-环境变量是向 container 传递配置信息的简单方式。Kubernetes 提供了多种设置环境变量的方法。
+环境变量是向容器传递配置信息的简单方式。Kubernetes 提供多种设置环境变量的方法。
 
-![Kubernetes 可从四种来源填充 Container 的环境变量：直接静态值、ConfigMap 键或完整 envFrom 引用、Secret 键或完整 envFrom 引用，以及 Downward API 的字段引用或资源引用。](../.gitbook/assets/en-core-05-configuration-secrets-3.png)
+![Kubernetes 可通过四种来源为 Container 填充环境变量——直接设置静态值、引用 ConfigMap 的键或完整的 envFrom、引用 Secret 的键或完整的 envFrom，以及 Downward API 的字段或资源引用。](../.gitbook/assets/en-core-05-configuration-secrets-3.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-3.html)
 
@@ -517,7 +519,7 @@ spec:
       valueFrom:
         configMapKeyRef:
           name: my-config
-          key: environment
+          key: key1
   restartPolicy: Never
 ```
 
@@ -532,7 +534,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "env" ]
+    command: ["/bin/sh", "-c", 'test -n "$DATABASE_PASSWORD" && echo "Secret available"']
     env:
     - name: DATABASE_PASSWORD
       valueFrom:
@@ -544,7 +546,7 @@ spec:
 
 ### 通过 Downward API 设置
 
-Downward API 允许你将 Pod 和 container 信息作为环境变量公开。
+Downward API 允许将 Pod 和容器信息作为环境变量公开。
 
 ```yaml
 apiVersion: v1
@@ -583,17 +585,15 @@ spec:
   restartPolicy: Never
 ```
 
-<span id="mounting-configuration-through-volumes"></span>
+## 通过卷挂载配置
 
-## 通过 Volume 挂载配置
+通过卷将配置文件挂载到容器中，与环境变量相比，能提供更加灵活的配置管理方式。
 
-通过 volume 将配置文件挂载到 container 中，提供了比环境变量更灵活的配置管理方法。
-
-![Pod 定义由 ConfigMap 或 Secret 支持的 Volume；其 Container 通过引用这些 Volume 的 Volume Mount 挂载它们；并提供四种挂载选项——完整 volume 挂载、仅特定键（items）、只读（readOnly）和 subPath 挂载。](../.gitbook/assets/en-core-05-configuration-secrets-4.png)
+![Pod 定义由 ConfigMap 或 Secret 提供支持的 Volumes；Container 通过引用这些 Volumes 的 Volume Mounts 挂载它们；并且提供四种挂载选项——完整卷挂载、仅挂载指定键（items）、只读挂载（readOnly）和 subPath 挂载。](../.gitbook/assets/en-core-05-configuration-secrets-4.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-4.html)
 
-### ConfigMap Volume
+### ConfigMap 卷
 
 ```yaml
 apiVersion: v1
@@ -615,7 +615,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Secret Volume
+### Secret 卷
 
 ```yaml
 apiVersion: v1
@@ -637,7 +637,7 @@ spec:
   restartPolicy: Never
 ```
 
-### 特定文件挂载
+### 挂载指定文件
 
 ```yaml
 apiVersion: v1
@@ -696,11 +696,11 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "cat /etc/nginx/nginx.conf" ]
+    command: [ "/bin/sh", "-c", "cat /etc/config/config.properties" ]
     volumeMounts:
     - name: config-volume
-      mountPath: /etc/nginx/nginx.conf
-      subPath: nginx.conf
+      mountPath: /etc/config/config.properties
+      subPath: config.properties
   volumes:
   - name: config-volume
     configMap:
@@ -708,19 +708,17 @@ spec:
   restartPolicy: Never
 ```
 
-<span id="configuration-best-practices"></span>
-
 ## 配置最佳实践
 
 在 Kubernetes 中管理配置时，请考虑以下最佳实践：
 
 ### 1. 将配置与代码分离
 
-分别管理应用程序代码和配置。这样在更改配置时无需重新构建应用程序。
+分别管理应用程序代码和配置。这样在更改配置时就不需要重新构建应用程序。
 
-### 2. 特定环境的配置管理
+### 2. 按环境管理配置
 
-针对开发、测试和生产等不同环境分别管理配置。你可以使用 namespace 隔离环境，并为每个环境使用不同的 ConfigMap 和 Secret。
+针对开发、测试和生产等不同环境分别管理配置。可以使用命名空间隔离环境，并为每个环境使用不同的 ConfigMap 和 Secret。
 
 ```yaml
 apiVersion: v1
@@ -742,33 +740,37 @@ data:
   log_level: INFO
 ```
 
-### 3. 对敏感信息使用 Secret
+### 3. 使用 Secret 存储敏感信息
 
-始终使用 Secret 存储密码、API key 和证书等敏感信息。ConfigMap 仅用于非敏感配置数据。
+始终使用 Secret 存储密码、API 密钥和证书等敏感信息。ConfigMap 仅用于非敏感配置数据。
 
 ### 4. 保持不可变性
 
-更改配置时，请创建新版本，而不是修改现有版本。这使回滚更容易，并可跟踪配置变更历史。
+更改配置时，应创建新版本，而不是修改现有版本。这样可以更轻松地回滚，也便于跟踪配置变更历史。
 
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: my-config-v1
+immutable: true
 data:
+  log_level: INFO
   # Configuration data
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: my-config-v2
+immutable: true
 data:
+  log_level: DEBUG
   # Updated configuration data
 ```
 
-### 5. 在配置变更时重启 Pod
+### 5. 配置变更时重启 Pod
 
-作为环境变量使用的配置需要重启 Pod 后才能更新。使用 Deployment 执行 rolling update。
+作为环境变量使用的配置需要重启 Pod 才能更新。使用 Deployment 执行滚动更新。
 
 ```bash
 kubectl rollout restart deployment/my-deployment
@@ -776,23 +778,27 @@ kubectl rollout restart deployment/my-deployment
 
 ### 6. 验证配置
 
-在应用配置前对其进行验证。无效配置可能导致应用程序失败。
+应用配置前先验证配置。无效配置可能导致应用程序故障。
 
-### 7. 记录配置
+### 7. 记录配置文档
 
 记录配置选项及其影响。这有助于团队成员理解和管理配置。
 
+### 资源请求与 QoS
+
+Requests 指导调度和运行时资源分配，但不会强制应用程序使用相应数量的资源。CPU 限制会限制 CPU 使用，而内存限制可能触发 OOM 终止。对于测验中的容器级示例，Guaranteed 要求每个容器的 CPU 和内存 requests/limits 相等；BestEffort 不设置这两者，其他配置则属于 Burstable。Pod 级资源也会影响 QoS。节点压力驱逐还会考虑优先级以及相对于 requests 的资源使用量。请参阅[资源管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)和[Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)。
+
 ## Amazon EKS 中的配置管理
 
-在 Amazon EKS 中，除 Kubernetes 的基本配置管理功能外，还可以使用 AWS 的各种服务来管理配置和 Secret。本节介绍在 EKS 中管理配置以及与 AWS 服务集成的多种方法。
+在 Amazon EKS 中，除了 Kubernetes 的基本配置管理功能外，还可以使用 AWS 的各种服务来管理配置和 Secret。本节将介绍在 EKS 中管理配置的多种方式，以及与 AWS 服务的集成。
 
-![Amazon EKS 集群使用原生 Kubernetes ConfigMap 和 Secret，同时集成 AWS Secrets Manager、Parameter Store、AppConfig、KMS 和 IAM；External Secrets Operator、ASCP、IRSA 和 ACK 等集成工具可创建或挂载 Secret、使用 KMS 对其加密，并向 Pod 授予范围受限的 IAM 权限。](../.gitbook/assets/en-core-05-configuration-secrets-5.png)
+![Amazon EKS 集群使用原生 Kubernetes ConfigMap 和 Secret，同时集成 AWS Secrets Manager、Parameter Store、AppConfig、KMS 和 IAM；External Secrets Operator、ASCP、IRSA 和 ACK 等集成工具可创建或挂载 Secret、使用 KMS 加密，并为 Pod 授予受限的 IAM 权限。](../.gitbook/assets/en-core-05-configuration-secrets-5.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-5.html)
 
-### AWS Secrets Manager 集成
+### 集成 AWS Secrets Manager
 
-AWS Secrets Manager 是一项可让你安全存储和管理数据库凭据、API key 及其他敏感信息的服务。在 EKS 中，你可以使用 External Secrets Operator 或 AWS Secrets and Configuration Provider (ASCP) 将 AWS Secrets Manager 中的 Secret 同步到 Kubernetes Secret。
+AWS Secrets Manager 是一项服务，可用于安全地存储和管理数据库凭据、API 密钥及其他 Secret 信息。External Secrets Operator 用于协调 Kubernetes Secret。ASCP 配合 Secrets Store CSI Driver 可将外部值作为文件挂载；同步 Kubernetes Secret 和自动轮换则需要配置相应的可选驱动程序功能。
 
 #### 安装 External Secrets Operator
 
@@ -807,7 +813,7 @@ helm install external-secrets external-secrets/external-secrets \
 #### 创建 SecretStore
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: aws-secretsmanager
@@ -826,7 +832,7 @@ spec:
 #### 创建 ExternalSecret
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: database-credentials
@@ -849,9 +855,9 @@ spec:
       property: password
 ```
 
-#### IRSA（IAM Roles for Service Accounts）设置
+#### 设置 IRSA（IAM Roles for Service Accounts）
 
-External Secrets Operator 需要适当的 IAM 权限才能访问 AWS Secrets Manager。你可以使用 IRSA 将 IAM role 与 Kubernetes service account 关联。
+External Secrets Operator 需要适当的 IAM 权限才能访问 AWS Secrets Manager。可以使用 IRSA 将 IAM 角色与 Kubernetes ServiceAccount 关联。
 
 ```bash
 # Create OIDC provider
@@ -864,13 +870,15 @@ eksctl create iamserviceaccount \
   --cluster my-cluster \
   --namespace my-namespace \
   --name my-serviceaccount \
-  --attach-policy-arn arn:aws:iam::aws:policy/SecretsManagerReadWrite \
+  --attach-policy-arn arn:aws:iam::123456789012:policy/ReadAppDatabaseSecret \
   --approve
 ```
 
+先创建 `ReadAppDatabaseSecret`，授予 `secretsmanager:GetSecretValue` 和 `secretsmanager:DescribeSecret` 权限，并将其限制在 `prod/db/credentials` 的完整 ARN 上；只有在客户管理的密钥有此要求时，才添加受限的 `kms:Decrypt` 权限。IAM 信任策略必须与此集群、命名空间和 ServiceAccount 匹配。在创建 SecretStore 之前，先安装 ESO/v1 CRD，并创建命名空间和 ServiceAccount。
+
 ### 使用 AWS Parameter Store
 
-AWS Systems Manager Parameter Store 是一项可让你分层存储和管理配置数据及 Secret 值的服务。Parameter Store 比 Secrets Manager 更便宜，适合存储简单的配置值。
+AWS Systems Manager Parameter Store 是一项服务，可用于分层存储和管理配置数据及 Secret 值。应根据轮换、生命周期和访问要求，在 Parameter Store 与 Secrets Manager 之间进行选择；费用取决于参数层级和 API 使用量。
 
 #### 安装 ASCP（AWS Secrets and Configuration Provider）
 
@@ -911,6 +919,7 @@ metadata:
   name: parameter-store-pod
   namespace: my-namespace
 spec:
+  serviceAccountName: parameter-reader
   containers:
   - name: app
     image: my-app:latest
@@ -927,11 +936,15 @@ spec:
         secretProviderClass: aws-parameters
 ```
 
-### 使用 AWS AppConfig 进行动态配置
+创建 `parameter-reader`，并为其配置 IRSA 角色或 Pod Identity 关联，授予对这两个参数 ARN 的 `ssm:GetParameters` 权限，以及（如有需要）受限的 KMS 解密权限。前面创建的 Secrets Manager 角色不提供 SSM 权限。ASCP 需要受支持的节点/附加组件组合；CSI 挂载无法在 Fargate 上使用。Hybrid Nodes 需要明确支持的附加组件版本和凭据配置。
 
-AWS AppConfig 是一项管理和部署应用程序配置的服务。使用 AppConfig 可在不重新部署应用程序的情况下动态更新配置。
+### 使用 AWS AppConfig 实现动态配置
 
-#### AppConfig Agent Sidecar 模式
+AWS AppConfig 是一项用于管理和部署应用程序配置的服务。使用 AppConfig 可以动态更新配置，而无需重新部署应用程序。
+
+#### AppConfig Agent 边车模式
+
+应用程序从 Agent 的本地 HTTP 端点获取配置，并且必须刷新/重新加载配置。仅共享一个 emptyDir 并不会让 Agent 写入 `/config/config.json`。请先创建应用程序/环境/配置文件和 Deployment，并为 Pod 身份授予所需配置对应的 `appconfig:StartConfigurationSession` 和 `appconfig:GetLatestConfiguration` 权限。
 
 ```yaml
 apiVersion: apps/v1
@@ -949,47 +962,47 @@ spec:
       labels:
         app: my-app
     spec:
+      serviceAccountName: appconfig-reader
       containers:
       - name: app
         image: my-app:latest
         env:
-        - name: CONFIG_PATH
-          value: /config/config.json
-        volumeMounts:
-        - name: config-volume
-          mountPath: /config
+        - name: CONFIG_URL
+          value: http://localhost:2772/applications/MyApp/environments/Production/configurations/MyConfig
       - name: appconfig-agent
-        image: public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.0
+        image: public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.x
         env:
-        - name: AWS_APPCONFIG_EXTENSION_POLL_INTERVAL_SECONDS
-          value: "45"
-        - name: AWS_APPCONFIG_EXTENSION_POLL_TIMEOUT_SECONDS
-          value: "15"
-        - name: AWS_APPCONFIG_EXTENSION_HTTP_PORT
+        - name: SERVICE_REGION
+          value: us-west-2
+        - name: POLL_INTERVAL
+          value: "45s"
+        - name: REQUEST_TIMEOUT
+          value: "15s"
+        - name: HTTP_PORT
           value: "2772"
-        - name: AWS_APPCONFIG_EXTENSION_PREFETCH_LIST
-          value: '{"Applications":[{"ApplicationId":"MyApp","Environments":[{"EnvironmentId":"Production","Configurations":[{"ConfigurationProfileId":"MyConfig","VersionNumber":null}]}]}]}'
-        volumeMounts:
-        - name: config-volume
-          mountPath: /config
-      volumes:
-      - name: config-volume
-        emptyDir: {}
+        - name: HTTP_HOST
+          value: localhost
+        - name: PREFETCH_LIST
+          value: MyApp:Production:MyConfig
 ```
 
-### 使用 EKS Fargate Profile 配置
+应用程序镜像必须实现 CONFIG_URL 获取逻辑，并在边车启动期间进行重试。部署前，请创建 `appconfig-reader` 并为其配置受限的 AWS 身份；在生产环境中，请固定使用经过测试的 Agent 版本/摘要。这些是容器 Agent 的设置，不是 Lambda 扩展环境变量。
 
-使用 EKS Fargate 可在无需管理 node 的情况下运行 Kubernetes Pod。你可以使用 Fargate profile 配置 Pod 执行环境。
+### 使用 EKS Fargate Profile 管理配置
+
+使用 EKS Fargate 可在无需管理节点的情况下运行 Kubernetes Pod。你可以使用 Fargate Profile 配置 Pod 的执行环境。
+
+Fargate Profile 是 EKS API 资源，而不是原生 Kubernetes 对象。例如，将私有子网 ID 和执行角色替换为实际值后，使用此 `eksctl` 配置并运行 `eksctl create fargateprofile -f fargate-profile.yaml`：
 
 ```yaml
-apiVersion: eks.amazonaws.com/v1beta1
-kind: FargateProfile
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
 metadata:
-  name: my-profile
-  namespace: my-namespace
-spec:
-  clusterName: my-cluster
-  podExecutionRoleArn: arn:aws:iam::123456789012:role/my-pod-execution-role
+  name: my-cluster
+  region: us-west-2
+fargateProfiles:
+- name: my-profile
+  podExecutionRoleARN: arn:aws:iam::123456789012:role/my-pod-execution-role
   selectors:
   - namespace: my-namespace
     labels:
@@ -1001,35 +1014,30 @@ spec:
 
 ### 使用 AWS KMS 加密 Secret
 
-Kubernetes Secret 默认采用 Base64 编码，这并不是加密。你可以使用 AWS KMS（Key Management Service）加密 EKS 集群中的 Secret。
+运行 Kubernetes 1.28 或更高版本的 EKS 集群会使用 AWS 所有者密钥，对[所有 Kubernetes API 数据默认进行信封加密](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)，其中包括 Secret 和 ConfigMap。客户管理的 KMS 密钥是可选项；启用加密不需要客户管理的密钥。
 
-#### 创建 KMS Key
-
-```bash
-# Create KMS key
-aws kms create-key --description "EKS Secret Encryption Key"
-
-# Store key ID
-KEY_ID=$(aws kms create-key --query KeyMetadata.KeyId --output text)
-
-# Create key alias
-aws kms create-alias --alias-name alias/eks-secrets --target-key-id $KEY_ID
-```
-
-#### 将加密配置应用于 EKS 集群
+要将客户管理的密钥关联到符合条件的现有集群，请使用 `associate-encryption-config`，而不是 `update-cluster-config`。应用前，请检查密钥的区域、策略、权限和关联限制。以下示例创建一个密钥并重复使用其返回的 ARN：
 
 ```bash
-# Apply encryption configuration
-aws eks update-cluster-config \
-  --name my-cluster \
-  --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:us-west-2:123456789012:key/'$KEY_ID'"}}]'
+set -eu
+KEY_ARN=$(aws kms create-key --region us-west-2 \
+  --description "EKS customer-managed encryption key" \
+  --query KeyMetadata.Arn --output text)
+aws kms create-alias --region us-west-2 \
+  --alias-name alias/eks-secrets --target-key-id "$KEY_ARN"
+
+aws eks associate-encryption-config --region us-west-2 \
+  --cluster-name my-cluster \
+  --encryption-config "resources=secrets,provider={keyArn=$KEY_ARN}"
 ```
+
+使用返回的更新 ID 执行 `aws eks describe-update` 检查是否完成，并检查 `aws eks describe-cluster --name my-cluster --region us-west-2 --query cluster.encryptionConfig` 的结果。未配置客户管理的密钥，并不意味着默认加密已禁用。
 
 ### 使用 AWS IAM 控制 Secret 访问
 
-使用 IRSA（IAM Roles for Service Accounts）将 IAM role 与 Kubernetes service account 关联，可使 Pod 安全访问 AWS 服务。
+使用 IRSA（IAM Roles for Service Accounts）将 IAM 角色与 Kubernetes ServiceAccount 关联，可让 Pod 安全地访问 AWS 服务。
 
-#### 创建 Service Account
+#### 创建 ServiceAccount
 
 ```yaml
 apiVersion: v1
@@ -1041,7 +1049,7 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-iam-role
 ```
 
-#### 在 Pod 中使用 Service Account
+#### 在 Pod 中使用 ServiceAccount
 
 ```yaml
 apiVersion: v1
@@ -1060,47 +1068,46 @@ spec:
 
 在 EKS 中管理配置时，请考虑以下最佳实践：
 
-1. **使用 IRSA**：访问 AWS 服务时，始终使用 IRSA 向 Pod 授予最小权限。
+1. **使用工作负载身份**：在受支持的计算环境中使用 EKS Pod Identity 或 IRSA，并授予受限权限。Fargate 应用程序使用 IRSA；其 Pod 执行角色用于基础设施，而非应用程序凭据。
 
 2. **加密 Secret**：使用 KMS 加密 EKS 集群中的 Secret。
 
-3. **外部 Secret 管理**：使用 AWS Secrets Manager 或 Parameter Store 等外部 Secret 管理服务管理敏感信息。
+3. **外部 Secret 管理**：使用 AWS Secrets Manager 或 Parameter Store 等外部 Secret 管理服务来管理敏感信息。
 
 4. **配置版本管理**：使用 AWS AppConfig 或 Parameter Store 管理配置版本。
 
-5. **特定环境的配置隔离**：分别管理开发、测试和生产环境的配置。使用 Kubernetes namespace 和 AWS resource tag。
+5. **按环境隔离配置**：分别管理开发、测试和生产环境的配置。使用 Kubernetes 命名空间和 AWS 资源标签。
 
-6. **最小化 IAM Policy**：访问 AWS 服务时遵循最小权限原则。
+6. **精简 IAM 策略**：访问 AWS 服务时遵循最小权限原则。
 
-7. **配置自动化**：使用 AWS CloudFormation、AWS CDK 或 Terraform 等工具自动化配置管理。
+7. **配置自动化**：使用 AWS CloudFormation、AWS CDK 或 Terraform 等工具实现配置管理自动化。
 
 ### EKS 配置管理工具
 
-让我们看看有助于管理 EKS 配置的工具：
+下面来看看有助于在 EKS 中管理配置的工具：
 
 #### AWS Controllers for Kubernetes (ACK)
 
-ACK 是一款可让你从 Kubernetes 管理 AWS resource 的工具。使用 ACK，你可以通过 Kubernetes manifest 创建和管理 AWS resource。
+ACK 是一款可从 Kubernetes 管理 AWS 资源的工具。使用 ACK，可以通过 Kubernetes 清单创建和管理 AWS 资源。
 
 ```yaml
 apiVersion: secretsmanager.services.k8s.aws/v1alpha1
 kind: Secret
 metadata:
   name: my-secret
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
   name: my-secret
   description: "My secret created via ACK"
-  forceDeleteWithoutRecovery: true
-  generateSecretString:
-    excludeCharacters: "\"@/\\"
-    excludePunctuation: true
-    includeSpace: false
-    passwordLength: 16
+  recoveryWindowInDays: 30
 ```
+
+请先安装 ACK Secrets Manager 控制器及其 IAM 角色/CRD。此清单管理 Secret 容器元数据；它不会生成密码，也不会创建原生 Kubernetes Secret。请通过受控的 Secret 管理工作流填充 Secret 值。
 
 #### eksctl
 
-eksctl 是用于创建和管理 EKS 集群的 command-line 工具。你可以使用 eksctl 管理集群配置。
+eksctl 是一个用于创建和管理 EKS 集群的命令行工具。你可以使用 eksctl 管理集群配置。
 
 ```yaml
 # cluster.yaml
@@ -1119,55 +1126,48 @@ eksctl create cluster -f cluster.yaml
 
 #### AWS CDK
 
-AWS CDK（Cloud Development Kit）是一款使用编程语言定义 AWS resource 的工具。你可以使用 CDK 定义 EKS 集群及相关 resource。
+AWS CDK (Cloud Development Kit) 是一款可使用编程语言定义 AWS 资源的工具。你可以使用 CDK 定义 EKS 集群及相关资源。
+
+此辅助函数适用于已有的 CDK EKS 集群和 Secret 构造，仅授予对该 Secret 的读取权限。命名空间必须已存在，并且集群必须配置兼容的 kubectl Provider。
 
 ```typescript
-import * as cdk from 'aws-cdk-lib';
 import * as eks from 'aws-cdk-lib/aws-eks';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
-const app = new cdk.App();
-const stack = new cdk.Stack(app, 'EksStack');
-
-// Create EKS cluster
-const cluster = new eks.Cluster(stack, 'Cluster', {
-  version: eks.KubernetesVersion.V1_21,
-  secretsEncryptionKey: new kms.Key(stack, 'Key'),
-});
-
-// Create service account
-const serviceAccount = cluster.addServiceAccount('ServiceAccount', {
-  name: 'my-service-account',
-  namespace: 'my-namespace',
-});
-
-// Attach IAM policy
-serviceAccount.role.addManagedPolicy(
-  iam.ManagedPolicy.fromAwsManagedPolicyName('SecretsManagerReadWrite')
-);
+export function addSecretReader(
+  cluster: eks.Cluster,
+  secret: secretsmanager.ISecret,
+): eks.ServiceAccount {
+  const serviceAccount = cluster.addServiceAccount('SecretReader', {
+    name: 'my-service-account',
+    namespace: 'my-namespace',
+  });
+  secret.grantRead(serviceAccount);
+  return serviceAccount;
+}
 ```
 
 ## 总结
 
-本章介绍了 Kubernetes 配置管理方法。ConfigMap 和 Secret 提供了管理应用程序配置的基本方式，你可以通过环境变量和 volume 将这些配置传递给 container。我们还介绍了配置管理最佳实践和外部配置管理工具。
+本章介绍了 Kubernetes 配置管理方法。ConfigMap 和 Secret 提供了管理应用程序配置的基本方式，你可以通过环境变量和卷将这些配置传递给容器。我们还介绍了配置管理最佳实践和外部配置管理工具。
 
-在 Amazon EKS 环境中，通过将 AWS 服务与 Kubernetes 的基本配置管理功能结合使用，可以实现更强大、更安全的配置管理。你可以集成 AWS Secrets Manager、Parameter Store、KMS 和 IAM 等服务来安全管理 Secret，并通过 IRSA 向 Pod 授予最小权限。此外，还可以使用 AWS AppConfig 在不重新部署应用程序的情况下动态更新配置。
+在 Amazon EKS 环境中，除了 Kubernetes 的基本配置管理功能，还可以结合 AWS 服务实现更强大、更安全的配置管理。通过集成 AWS Secrets Manager、Parameter Store、KMS 和 IAM 等服务，可以安全地管理 Secret，并通过 IRSA 向 Pod 授予最低限度的权限。此外，使用 AWS AppConfig 还可以动态更新配置，而无需重新部署应用程序。
 
-有效的配置管理对于提升 Kubernetes 应用程序的可维护性、可扩展性和安全性至关重要。应根据应用程序需求选择合适的配置管理策略，并遵循最佳实践。在 EKS 环境中，可以通过与 AWS 服务集成构建更强大的配置管理解决方案。
+有效的配置管理对于提升 Kubernetes 应用程序的可维护性、可扩展性和安全性至关重要。应根据应用程序的需求选择适当的配置管理策略，并遵循最佳实践。在 EKS 环境中，可以通过与 AWS 服务集成，构建更强大的配置管理解决方案。
 
 下一章将介绍 Kubernetes 安全性。
 
 ## 测验
 
-要测试你在本章所学的内容，请尝试 [配置与 Secret 测验](../quizzes/core/05-configuration-secrets-quiz.md)。
+要测试你对本章内容的掌握情况，请尝试[配置与 Secret 测验](../quizzes/core/05-configuration-secrets-quiz.md)。
 
 ## 参考资料
 
 - [Kubernetes 官方文档 - ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/)
 - [Kubernetes 官方文档 - Secret](https://kubernetes.io/docs/concepts/configuration/secret/)
 - [Kubernetes 官方文档 - 环境变量](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/)
-- [Kubernetes 官方文档 - 配置 Pod 以使用 ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
-- [Kubernetes 官方文档 - 使用 Secret 安全分发凭据](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/)
+- [Kubernetes 官方文档 - 配置 Pod 使用 ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
+- [Kubernetes 官方文档 - 使用 Secret 安全地分发凭据](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/)
 - [Helm 官方文档](https://helm.sh/docs/)
 - [Kustomize 官方文档](https://kustomize.io/)
 - [External Secrets Operator 官方文档](https://external-secrets.io/latest/)
