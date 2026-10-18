@@ -59,6 +59,7 @@ jobs:
               github,
               context: {
                 ...context,
+                repo: context.repo,
                 payload: { ...context.payload, workflow_run: run }
               }
             })
