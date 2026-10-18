@@ -1,8 +1,8 @@
 # Almacenamiento de Amazon EKS - Parte 3: Supervisión, solución de problemas, optimización de costos y seguridad
 
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
-Este documento es la tercera y última parte de la serie sobre almacenamiento de Amazon EKS. Abarca la supervisión del almacenamiento, la solución de problemas, la optimización de costos y la seguridad.
+Este es el tercer y último documento de la serie sobre almacenamiento de Amazon EKS. Abarca la supervisión, la solución de problemas, la optimización de costos y la seguridad del almacenamiento.
 
 ## Tabla de contenido
 
@@ -10,47 +10,47 @@ Este documento es la tercera y última parte de la serie sobre almacenamiento de
 2. [Solución de problemas de almacenamiento](#storage-troubleshooting)
 3. [Optimización de costos de almacenamiento](#storage-cost-optimization)
 4. [Seguridad del almacenamiento](#storage-security)
-5. [Prácticas recomendadas de administración del almacenamiento](#storage-management-best-practices)
+5. [Prácticas recomendadas para administrar el almacenamiento](#storage-management-best-practices)
 
 ## Supervisión del almacenamiento {#storage-monitoring}
 
-Combine observaciones del backend, Kubernetes y las aplicaciones. Los contadores de E/S del backend no miden el espacio libre del sistema de archivos, y la disponibilidad de Kubernetes no confirma la coherencia de la base de datos. Registre las unidades, dimensiones, períodos de agregación y el comportamiento ante datos faltantes antes de crear una alarma.
+Combine las observaciones del backend, Kubernetes y las aplicaciones. Los contadores de E/S del backend no miden el espacio libre del sistema de archivos, y que Kubernetes indique que un recurso está listo no confirma la coherencia de la base de datos. Antes de crear una alarma, registre las unidades, dimensiones, períodos de agregación y el comportamiento esperado cuando falten datos.
 
-<!-- Diagram repair pending: ServiceMonitor configures Prometheus discovery; node-exporter is not a PVC usage exporter.
-![Diagram showing three parallel EKS storage-monitoring pipelines: AWS CloudWatch turning EBS, EFS and FSx for Lustre metrics into key monitoring metrics, alarms and a dashboard; Prometheus feeding ServiceMonitor/PodMonitor discovery into Grafana plus PrometheusRule alert rules; and a volume-usage exporter DaemonSet driving custom metrics and alerts.](../.gitbook/assets/en-eks-04-eks-storage-part3-0.png)
+<!-- Pendiente de reparar el diagrama: ServiceMonitor configura el descubrimiento de Prometheus; node-exporter no exporta el uso de PVC.
+![Diagrama que muestra tres flujos paralelos de supervisión del almacenamiento en EKS: CloudWatch de AWS convierte las métricas de EBS, EFS y FSx for Lustre en métricas clave, alarmas y un panel; Prometheus envía el descubrimiento de ServiceMonitor/PodMonitor a Grafana y a las reglas de alerta PrometheusRule; y un DaemonSet que exporta el uso de volúmenes genera métricas y alertas personalizadas.](../.gitbook/assets/en-eks-04-eks-storage-part3-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-0.html)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-0.html)
 -->
 
 ### Supervisión con CloudWatch
 
-EBS/EFS/FSx publican sus métricas de servicio sin necesidad de un exportador de Kubernetes. El acceso a consultas y visualizaciones de CloudWatch sigue requiriendo los permisos de IAM adecuados. Una llamada get-dashboard recupera la definición de un dashboard que ya existe; no crea un dashboard ni habilita métricas.
+EBS, EFS y FSx publican sus métricas de servicio sin necesidad de un exportador de Kubernetes. Para consultar y visualizar datos en CloudWatch también se necesitan los permisos de IAM adecuados. Una llamada a get-dashboard recupera la definición de un panel que ya existe; no crea un panel ni habilita métricas.
 
 #### Métricas de volúmenes EBS
 
 | Métrica | Interpretación correcta |
 |---|---|
-| VolumeReadBytes / VolumeWriteBytes | La suma representa los bytes transferidos durante el período seleccionado; divídala por los segundos del período para obtener bytes/s |
-| VolumeReadOps / VolumeWriteOps | La suma representa las operaciones completadas; divídala por los segundos del período para obtener IOPS |
-| VolumeTotalReadTime / VolumeTotalWriteTime | La suma representa los segundos acumulados de operación; divídala por la suma de operaciones correspondiente para obtener el promedio de segundos por operación, teniendo en cuenta los casos con cero operaciones |
-| VolumeQueueLength | Indicador de E/S pendiente; Average/Maximum ayudan a distinguir entre colas sostenidas y picos |
+| VolumeReadBytes / VolumeWriteBytes | La suma corresponde a los bytes transferidos durante el período seleccionado; divídala por los segundos del período para obtener bytes/s |
+| VolumeReadOps / VolumeWriteOps | La suma corresponde a las operaciones completadas; divídala por los segundos del período para obtener IOPS |
+| VolumeTotalReadTime / VolumeTotalWriteTime | La suma corresponde a los segundos acumulados de operación; divídala por la suma de operaciones correspondiente para calcular los segundos promedio por operación, teniendo en cuenta que puede haber cero operaciones |
+| VolumeQueueLength | Indicador de E/S pendiente; Average/Maximum permiten distinguir entre colas sostenidas y picos |
 | BurstBalance | Créditos restantes para gp2, st1 y sc1; no es una métrica de créditos de gp3 |
 
-En las conexiones Nitro compatibles, las métricas actuales también incluyen VolumeAvgIOPS (Ops/s), VolumeAvgThroughput (KiB/s), VolumeAvgReadLatency/VolumeAvgWriteLatency (milisegundos) y comprobaciones de E/S excedidas o bloqueadas. Compruebe las restricciones de Multi-Attach, cómputo y zona de cada métrica. Las métricas estándar de volumen se publican para los volúmenes conectados; la ausencia de datos no equivale automáticamente a un uso cero. Los contadores de tiempo existentes pueden superar el período de reloj cuando las operaciones se superponen.
+En las conexiones Nitro compatibles, las métricas actuales también incluyen VolumeAvgIOPS (Ops/s), VolumeAvgThroughput (KiB/s), VolumeAvgReadLatency/VolumeAvgWriteLatency (milisegundos) y comprobaciones de E/S excedidas o bloqueadas. Compruebe las restricciones de Multi-Attach, cómputo y zona de cada métrica. Las métricas estándar de volumen se publican para los volúmenes adjuntos; la falta de datos no equivale automáticamente a un uso de cero. Los contadores de tiempo existentes pueden superar el período de reloj cuando se solapan operaciones.
 
 #### Métricas de sistemas de archivos EFS
 
-TotalIOBytes, DataReadIOBytes, DataWriteIOBytes y MetadataIOBytes describen bytes, no una velocidad de transferencia ya normalizada. Divida la suma correspondiente por el período para obtener bytes/s. MeteredIOBytes refleja la medición del rendimiento de EFS, incluidos los descuentos por lectura; no es intercambiable con los bytes transferidos sin procesar. PermittedThroughput es una tasa. Compare períodos y unidades coincidentes, y supervise ClientConnections, PercentIOLimit según el modo y las clases de almacenamiento cuando sea necesario. BurstCreditBalance se aplica al rendimiento Bursting, no al rendimiento Elastic.
+TotalIOBytes, DataReadIOBytes, DataWriteIOBytes y MetadataIOBytes expresan bytes, no una tasa de transferencia ya normalizada. Divida la suma correspondiente por el período para obtener bytes/s. MeteredIOBytes refleja la medición del rendimiento de EFS e incluye los descuentos por lectura; no equivale a los bytes transferidos sin procesar. PermittedThroughput es una tasa. Compare períodos y unidades coincidentes y, cuando corresponda, supervise ClientConnections, PercentIOLimit según el modo y las clases de almacenamiento. BurstCreditBalance se aplica al rendimiento Bursting, no al rendimiento Elastic.
 
 #### Métricas de FSx for Lustre
 
-DataReadBytes/DataWriteBytes y DataReadOperations/DataWriteOperations usan FileSystemId; Sum/período da el rendimiento o las operaciones/s. **NetworkThroughputUtilization es válida**: corresponde a cada servidor de almacenamiento de objetos (OSS), tiene las dimensiones FileSystemId y FileServer e informa el porcentaje de utilización. FreeDataStorageCapacity es por OST y tiene las dimensiones FileSystemId y StorageTargetId. Inspeccione los desequilibrios por destino y los indicadores de capacidad alineados; sumar un indicador a lo largo del tiempo no proporciona la capacidad libre actual.
+DataReadBytes/DataWriteBytes y DataReadOperations/DataWriteOperations usan FileSystemId; Sum/período proporciona el rendimiento o las operaciones/s. **NetworkThroughputUtilization es válida**: se mide por servidor de almacenamiento de objetos (OSS), utiliza las dimensiones FileSystemId y FileServer e informa el porcentaje de utilización. FreeDataStorageCapacity se mide por OST con FileSystemId y StorageTargetId. Revise los desequilibrios por destino y los indicadores de capacidad correspondientes; sumar un indicador a lo largo del tiempo no proporciona la capacidad libre actual.
 
-LogicalDiskUsage y PhysicalDiskUsage también son métricas válidas: describen bytes lógicos sin comprimir y bytes físicos comprimidos. Su agregación a nivel del sistema de archivos ayuda a evaluar la compresión; no convierte los precios de capacidad aprovisionada en precios basados únicamente en el uso.
+LogicalDiskUsage y PhysicalDiskUsage también son métricas válidas: representan bytes lógicos sin comprimir y bytes físicos comprimidos. La agregación a nivel del sistema de archivos ayuda a evaluar la compresión, pero no convierte el precio de la capacidad aprovisionada en un precio basado únicamente en el uso.
 
 ### Supervisión con Prometheus y Grafana
 
-Reutilice la pila existente del responsable de la supervisión. Para una nueva instalación revisada, el chart publicado kube-prometheus-stack92.9.0 es una referencia verificada con operator0.94.1; no es una instrucción para actualizar automáticamente un clúster existente. Lo siguiente solo representa los manifiestos. Prepare `monitoring/grafana-admin` con las claves admin-user/admin-password y la clase ebs-gp3 ampliable de este capítulo. Ajuste la versión real del clúster, el tamaño del almacenamiento y la retención. La entrega de alertas, la persistencia de Grafana, la disponibilidad y los valores predeterminados de TLS/autenticación de kubelet aún requieren una revisión específica para el despliegue:
+Reutilice la pila de supervisión que ya administra el responsable del entorno. Para una instalación nueva y revisada, el chart publicado kube-prometheus-stack 92.9.0 es una referencia verificada con operator 0.94.1; no es una instrucción para actualizar automáticamente un clúster existente. Lo siguiente solo renderiza manifiestos. Prepare `monitoring/grafana-admin` con las claves admin-user/admin-password y la clase ebs-gp3 ampliable de este capítulo. Ajuste la versión real del clúster, el tamaño del almacenamiento y la retención. La entrega de alertas, la persistencia y disponibilidad de Grafana, y los valores predeterminados de TLS/autenticación de kubelet aún requieren una revisión específica para el despliegue:
 
 ```yaml
 grafana:
@@ -83,7 +83,7 @@ helm template prometheus prometheus-community/kube-prometheus-stack \
   --include-crds -f monitoring-values.yaml > monitoring-review.yaml
 ```
 
-Un ServiceMonitor selecciona **Services** y, a continuación, sus endpoints; tanto su namespaceSelector como los selectores de ServiceMonitor de la instancia de Prometheus deben coincidir. De forma predeterminada, el chart de Helm de EBS CSI1.66 establece controller.enableMetrics en false. Para una instalación administrada mediante ese chart, revise estos valores con su responsable actual; habilitan el endpoint de métricas 3301 del driver, los Services de métricas de sidecar y los ServiceMonitors generados. Haga coincidir la etiqueta de la versión con el selector real de Prometheus:
+Un ServiceMonitor selecciona **Services** y después sus endpoints; tanto su namespaceSelector como los selectores de ServiceMonitor de la instancia de Prometheus deben coincidir. De forma predeterminada, el chart de Helm de EBS CSI 1.66 establece controller.enableMetrics en false. Si la instalación se administra con ese chart, revise estos valores junto con su responsable actual: habilitan el endpoint de métricas 3301 del driver, los Services de métricas de los sidecars y los ServiceMonitors generados. Haga coincidir la etiqueta de la versión con el selector real de Prometheus:
 
 ```yaml
 controller:
@@ -93,7 +93,7 @@ controller:
       release: prometheus
 ```
 
-Es posible que un complemento administrado de EKS exponga otras opciones de configuración; inspeccione su versión/configuración y los recursos reales en lugar de aplicarle valores de Helm. El ServiceMonitor independiente siguiente es una **alternativa** únicamente si el responsable ya expone el Service mostrado y no ha creado un monitor coincidente. No lo despliegue junto con un monitor generado equivalente:
+Un complemento administrado de EKS puede exponer opciones de configuración diferentes; inspeccione su versión/configuración y los recursos reales en lugar de aplicarle valores de Helm. El ServiceMonitor independiente que se muestra a continuación es una **alternativa** solo si el responsable ya expone el Service indicado y no ha creado un monitor equivalente. No lo implemente junto con un monitor generado equivalente:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -126,15 +126,15 @@ kubectl -n kube-system get endpointslice \
 kubectl -n monitoring get prometheus -o yaml
 ```
 
-Confirme que el destino seleccionado esté Up y exponga las métricas previstas. El driver y el provisioner/attacher/resizer/snapshotter tienen endpoints de métricas separados; un único Service del driver no recopila las métricas de todos los sidecars. La latencia de las operaciones de la API de CSI es distinta de la latencia de E/S de datos de la aplicación/EBS.
+Confirme que el destino seleccionado esté Up y exponga las métricas previstas. El driver y el provisioner/attacher/resizer/snapshotter tienen endpoints de métricas separados; un Service del driver no recopila las métricas de todos los sidecars. La latencia de las operaciones de la API de CSI es distinta de la latencia de E/S de datos de la aplicación/EBS.
 
 ### Uso del sistema de archivos y alertas
 
-Use métricas autenticadas de kubelet para kubelet_volume_stats_* cuando el driver de CSI implemente las estadísticas de volumen necesarias. kube-state-metrics proporciona información sobre el estado de los objetos y las solicitudes, y node-exporter proporciona métricas del sistema de archivos del host; instalar otro DaemonSet de node-exporter no crea métricas de uso por PVC. kube-prometheus-stack ya incluye una opción para node-exporter. Evite duplicar sus montajes y privilegios de host.
+Use métricas autenticadas de kubelet para kubelet_volume_stats_* cuando el driver de CSI implemente las estadísticas de volumen necesarias. kube-state-metrics proporciona información sobre el estado de los objetos y las solicitudes; node-exporter proporciona métricas del sistema de archivos del host. Instalar otro DaemonSet de node-exporter no crea métricas de uso por PVC. kube-prometheus-stack ya incluye una opción para node-exporter. Evite duplicar sus montajes del host y privilegios.
 
-Es posible que los volúmenes de bloques sin procesar y los drivers que no admiten estadísticas no publiquen la capacidad del sistema de archivos. Las solicitudes de PVC/punto de acceso de EFS no son cuotas por directorio; la capacidad informada puede describir el sistema de archivos compartido. container_fs_usage_bytes no es una medición universal de PVC. Verifique el recopilador, el montaje y la correspondencia entre los espacios de nombres y los claims, y gestione las métricas faltantes por separado.
+Los volúmenes de bloques sin sistema de archivos y los drivers que no admiten estadísticas quizá no publiquen la capacidad del sistema de archivos. Las solicitudes de PVC o puntos de acceso de EFS no son cuotas por directorio; la capacidad informada puede corresponder al sistema de archivos compartido. container_fs_usage_bytes no es una medición universal de PVC. Compruebe el recopilador, el montaje y la correspondencia de espacio de nombres/claim, y trate las métricas faltantes por separado.
 
-Las siguientes reglas eliminan duplicados de scrapes equivalentes usando max en lugar de sumar claims duplicados. Los datos federados deben incluir una etiqueta de clúster fiable. Se excluyen las series con capacidad cero. Las predicciones utilizan indicadores y tendencias recientes; revise las interrupciones de scrape, la recreación o el cambio de tamaño de los claims y los cambios en la carga de trabajo antes de actuar. Adapte los selectores para conjuntos de datos estáticos o de solo lectura, u otros claims que no deberían generar una alerta para un operador:
+Las siguientes reglas deduplican los scrapes equivalentes usando max en vez de sumar claims duplicados. Los datos federados deben incluir una etiqueta de clúster fiable. Se excluyen las series con capacidad cero. Las previsiones usan indicadores y tendencias recientes; antes de actuar, revise las interrupciones de scraping, la recreación o redimensión de claims y los cambios de las cargas de trabajo. Adapte los selectores para conjuntos de datos estáticos o de solo lectura, y para otros claims que no deban generar una página para un operador:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -175,19 +175,19 @@ spec:
           $labels.persistentvolumeclaim }}; this is not a guarantee.
 ```
 
-Las etiquetas de espacio de nombres/versión deben coincidir con el selector de reglas de Prometheus. Valide la sintaxis de las reglas y los escenarios sintéticos; luego, verifique la cobertura de métricas en vivo y el enrutamiento de alertas en el despliegue previsto. En esta revisión no se ejecutó ninguna recopilación de métricas en vivo ni entrega de alertas.
+Las etiquetas de namespace/release deben coincidir con el selector de la regla de Prometheus. Valide la sintaxis de las reglas y escenarios sintéticos; después, compruebe la cobertura de métricas en vivo y el enrutamiento de alertas en el despliegue previsto. En esta revisión no se ejecutaron recopilación de métricas en vivo ni entrega de alertas.
 
 ## Solución de problemas de almacenamiento {#storage-troubleshooting}
 
-Empiece por la identidad del objeto y los eventos. Pending, ContainerCreating y las E/S lentas pueden tener causas distintas; la descarga de imágenes, la planificación y la disponibilidad de la aplicación no necesariamente indican fallos de almacenamiento. El diagrama es una guía de triaje, no una correspondencia exhaustiva entre síntomas y causas.
+Empiece por la identidad del objeto y sus eventos. Pending, ContainerCreating y una E/S lenta pueden tener causas distintas; los problemas al descargar imágenes, programar Pods o iniciar aplicaciones no necesariamente indican un fallo de almacenamiento. El diagrama sirve como guía de diagnóstico inicial, no como una relación exhaustiva entre síntomas y causas.
 
-![Cuatro problemas comunes de almacenamiento de EKS (PVC pendiente, fallo de aprovisionamiento, problemas de montaje y problemas de rendimiento) organizados en dos grupos que conducen a comprobaciones de diagnóstico y acciones correctivas compartidas: registros del driver de CSI, permisos de IAM y StorageClass para el grupo de aprovisionamiento; estado del nodo para el grupo de montaje y rendimiento.](../.gitbook/assets/en-eks-04-eks-storage-part3-1.png)
+![Cuatro problemas habituales de almacenamiento en EKS (PVC pendiente, fallo de aprovisionamiento, problemas de montaje y problemas de rendimiento) se agrupan de dos en dos para aplicar comprobaciones y soluciones comunes: registros del driver CSI, permisos de IAM y StorageClass para el aprovisionamiento; estado del nodo para el montaje y el rendimiento.](../.gitbook/assets/en-eks-04-eks-storage-part3-1.png)
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-1.html)
 
 ### Aprovisionamiento y WaitForFirstConsumer
 
-Use el espacio de nombres, el claim y el consumidor previsto reales de la carga de trabajo. Inspeccione la clase a la que se hace referencia, los eventos del controlador, la identidad del driver/permisos de KMS, las cuotas y los límites de conexión de los nodos, en lugar de conceder acceso amplio basándose en suposiciones:
+Use el espacio de nombres, claim y consumidor previsto que correspondan a la carga de trabajo real. Inspeccione la clase referenciada, los eventos del controlador, la identidad del driver y los permisos de KMS, las cuotas y los límites de adjuntos del nodo, en vez de conceder acceso amplio basándose en una suposición:
 
 ```bash
 set -euo pipefail
@@ -212,19 +212,19 @@ kubectl -n kube-system get pod "$CSI_CONTROLLER_POD" \
 kubectl -n kube-system logs "$CSI_CONTROLLER_POD" -c "$CSI_CONTAINER" --since=15m --tail=200
 ```
 
-WaitForFirstConsumer deja intencionalmente un PVC nuevo en Pending hasta que un consumidor que pueda planificarse determine la topología. Un PVC nuevo sin vincular todavía no tiene una AZ a la que haya que mover un grupo de nodos. Inspeccione los selectores del Pod, la afinidad, los taints, los recursos y la topología del almacenamiento. El uso de spec.nodeName omite el planificador y puede impedir esta ruta de vinculación; use restricciones de planificación compatibles. Una vez vinculado, la afinidad de AZ/nodo de un PV de EBS es importante. No elimine un claim ni edite la capacidad del PV solo para quitarlo de Pending.
+WaitForFirstConsumer deja intencionalmente un PVC nuevo en Pending hasta que un consumidor programable determina la topología. Un PVC nuevo sin enlazar aún no tiene una zona de disponibilidad a la que haya que trasladar un grupo de nodos. Revise los selectores del Pod, la afinidad, los taints, los recursos y la topología del almacenamiento. Usar spec.nodeName evita el scheduler y puede impedir esta ruta de enlace; utilice restricciones de programación compatibles. Una vez enlazado, importan la zona de disponibilidad y la afinidad de nodo del PV de EBS. No elimine el claim ni edite la capacidad del PV solo para salir de Pending.
 
-### Fallos de montaje
+### Errores de montaje
 
-Distinga entre errores de conexión, errores de publicación/montaje en el nodo, clientes de sistema de archivos faltantes, errores de identidad/permisos y permisos de la aplicación. Al consultar los registros, seleccione el driver/sidecar de CSI pertinente; los registros predeterminados de un Pod con varios contenedores no muestran todos los componentes. Inspeccione VolumeAttachment, el driver/handle del PV vinculado y el nodo asignado, según sea necesario.
+Distinga entre errores de adjunto, publicación/montaje en el nodo, falta de clientes del sistema de archivos, errores de identidad/permisos y permisos de la aplicación. Al leer registros, seleccione el contenedor pertinente del driver CSI o del sidecar; los registros predeterminados de un Pod con varios contenedores no representan todos sus componentes. Cuando sea necesario, inspeccione VolumeAttachment, el driver/handle del PV enlazado y el nodo asignado.
 
-Para los registros del nodo, use el mecanismo de acceso/diagnóstico compatible con el responsable del nodo. El acceso mediante SSH como ec2-user y journalctl no son universales en Bottlerocket, Auto Mode u otros entornos de cómputo administrados. Un contenedor auxiliar privilegiado amazonlinux:2 no sustituye la configuración correcta del cliente/CSI; AL2 ya superó el fin del soporte de su sistema operativo en 2026. Reutilice la prueba compatible de consumidor de CSI del capítulo e inspeccione sus eventos antes de considerar un montaje manual independiente a nivel del nodo, aprobado por separado.
+Para los registros del nodo, use el mecanismo de acceso/diagnóstico admitido por quien administra el nodo. El acceso SSH como ec2-user y journalctl no son universales en Bottlerocket, Auto Mode ni otros entornos de cómputo administrados. Un contenedor auxiliar privilegiado amazonlinux:2 no sustituye la configuración correcta del driver/cliente CSI; el soporte de sistema operativo de AL2 terminó en 2026. Reutilice la prueba de consumidor CSI admitida en este capítulo y revise sus eventos antes de considerar un montaje manual independiente en el nodo, que requiere aprobación aparte.
 
-En EFS, inspeccione los destinos de montaje/DNS y TCP2049 desde el cliente de montaje real. Lustre requiere TCP988 y1018–1023, además de las reglas de cliente/servidor del servicio; las configuraciones de EFA tienen requisitos adicionales de referencias a grupos de seguridad. Compruebe también el tráfico de retorno de NACL y las rutas. Que falle el ping ICMP no demuestra que NFS no esté disponible, y no se garantiza que un contenedor de AWS CLI incluya las utilidades ping/telnet/mount. Una prueba de red de un Pod puede usar un origen/grupo de seguridad distinto del que usa un montaje de CSI originado en el nodo.
+Para EFS, inspeccione los destinos de montaje/DNS y la conexión TCP 2049 desde el cliente de montaje real. Lustre requiere TCP 988 y 1018–1023, además de las reglas de servicio entre cliente y servidor; las configuraciones EFA tienen requisitos adicionales de referencias entre grupos de seguridad. Compruebe también el tráfico de retorno de NACL y las rutas. Que falle ICMP ping no demuestra que NFS no esté disponible, y no se garantiza que un contenedor con AWS CLI incluya utilidades ping/telnet/mount. Una prueba de red desde un Pod puede usar un origen/grupo de seguridad distinto del montaje CSI iniciado por el nodo.
 
-### E/S lentas
+### E/S lenta
 
-Compruebe el tamaño de operación medido, la puesta en cola, la concurrencia de la aplicación, el rendimiento aprovisionado del volumen, los límites de EBS de la instancia y el estado de inicialización. El siguiente cálculo de tiempo portátil en Python usa intervalos cerrados de cinco minutos; VolumeReadOps Sum/300 equivale a IOPS de lectura, a diferencia de Average, que se interpreta directamente como una tasa:
+Compruebe el tamaño de las operaciones medidas, la cola, la concurrencia de la aplicación, el rendimiento aprovisionado del volumen, los límites EBS de la instancia y el estado de inicialización. El siguiente cálculo portátil en Python usa intervalos cerrados de cinco minutos; la suma de VolumeReadOps dividida por 300 da las IOPS de lectura, a diferencia de interpretar directamente Average como una tasa:
 
 ```bash
 set -euo pipefail
@@ -253,7 +253,7 @@ if not points:
 PY
 ```
 
-La prueba de escritura del sistema de archivos debe usar un directorio desechable aprobado en el montaje verificado. Guarde este script en el entorno de prueba previsto; crea un archivo único de 64 MiB y solo limpia su propio archivo/directorio. La lectura puede servirse desde la caché, así que estos tiempos no demuestran el rendimiento del almacenamiento en frío. No sobrescriba `/data/test` con un nombre predecible ni escriba ceros en bruto en un dispositivo con datos activos:
+La prueba de escritura del sistema de archivos debe usar un directorio desechable aprobado en el montaje verificado. Guarde este script en el entorno de prueba previsto: crea un archivo único de 64 MiB y elimina únicamente el archivo/directorio que creó. La lectura puede servirse desde la caché, por lo que estos tiempos no demuestran el rendimiento del almacenamiento en frío. No sobrescriba una ruta predecible como `/data/test` ni escriba ceros en bruto en un dispositivo con datos activos:
 
 ```bash
 set -euo pipefail
@@ -266,37 +266,37 @@ time dd if=/dev/zero of="$STORAGE_TEST_PATH/payload" bs=1M count=64 conv=fsync
 time dd if="$STORAGE_TEST_PATH/payload" of=/dev/null bs=1M
 ```
 
-En esta revisión no se ejecutó ningún benchmark de almacenamiento. Considere la fragmentación una hipótesis que requiere pruebas; recrear/formatear un sistema de archivos es una migración de datos, no una solución inicial rutinaria. No cambie un planificador de E/S supuesto para nvme0n1: podría ser otro volumen o el dispositivo raíz, y los nombres/compatibilidad de los planificadores modernos blk-mq varían.
+En esta revisión no se ejecutó ninguna prueba de rendimiento del almacenamiento. Trate la fragmentación como una hipótesis que requiere pruebas; recrear o formatear un sistema de archivos es una migración de datos, no una primera medida rutinaria. No cambie un scheduler de E/S suponiendo que el dispositivo es nvme0n1: podría ser otro volumen o el dispositivo raíz, y los nombres/compatibilidad de schedulers modernos blk-mq varían.
 
-En EFS son importantes General Purpose, el modo de rendimiento real, los límites de clientes, la demanda de metadatos y la concurrencia. Use las opciones compatibles del asistente de montaje de la Parte 2, incluidas las opciones hard/TLS y un comportamiento adecuado de timeout/reintento. Agrupar archivos o usar accesos más secuenciales puede ayudar con una carga de trabajo medida, pero cambiar la organización de los datos de la aplicación no siempre es beneficioso.
+En EFS importan el modo General Purpose, el modo de rendimiento real, los límites del cliente, la demanda de metadatos y la concurrencia. Use las opciones admitidas del asistente de montaje descritas en la Parte 2, incluidas hard/TLS y el comportamiento apropiado de timeout/reintentos. Agrupar archivos o aumentar el acceso secuencial puede ayudar a una carga de trabajo medida, pero cambiar el diseño de los datos de una aplicación no siempre resulta beneficioso.
 
 ## Optimización de costos de almacenamiento {#storage-cost-optimization}
 
-Optimice el costo total de la carga de trabajo sin dejar de cumplir los requisitos de latencia, durabilidad, recuperación y propiedad. Los descuentos de cómputo, el almacenamiento asignado, el rendimiento aprovisionado, los cargos por solicitudes/transferencia y las copias de seguridad retenidas son costos independientes.
+Optimice el costo total de la carga de trabajo sin sacrificar los requisitos de latencia, durabilidad, recuperación y propiedad. Los descuentos de cómputo, el almacenamiento asignado, el rendimiento aprovisionado, las solicitudes/transferencias y las copias de seguridad retenidas son costos distintos.
 
-<!-- Diagram repair pending: align each storage service with its actual optimization strategy; do not map S3 to FSx optimization or FSx to EFS optimization.
-![Diagram showing four AWS storage types (EBS, EFS, FSx for Lustre, S3), each feeding its matching optimization strategy (volume optimization, lifecycle management, EFS optimization, FSx optimization), with all four strategies rolling up into a single cost-monitoring node built on Cost Explorer, Kubernetes cost allocation, and anomaly detection.](../.gitbook/assets/en-eks-04-eks-storage-part3-2.png)
+<!-- Pendiente de reparar el diagrama: asocie cada servicio de almacenamiento con su estrategia de optimización real; no asigne a S3 la optimización de FSx ni a FSx la optimización de EFS.
+![Diagrama de cuatro tipos de almacenamiento de AWS (EBS, EFS, FSx for Lustre y S3), cada uno conectado con su estrategia de optimización correspondiente (optimización de volúmenes, administración del ciclo de vida, optimización de EFS y optimización de FSx); las cuatro estrategias convergen en un nodo de supervisión de costos basado en Cost Explorer, asignación de costos de Kubernetes y detección de anomalías.](../.gitbook/assets/en-eks-04-eks-storage-part3-2.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-2.html)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-2.html)
 -->
 
-### Tipo de volumen, tamaño y migración
+### Tipo, tamaño y migración de volúmenes
 
-Compare gp3 con el perfil real de costo/rendimiento de gp2; considere los tipos HDD solo para patrones de acceso adecuados. Aprovisione un margen de capacidad medido y alertas, no un tamaño máximo arbitrario. La capacidad de EBS/PVC generalmente se amplía, no se reduce; reducir la capacidad asignada requiere una migración compatible a un volumen nuevo más pequeño, con validación de los datos.
+Compare gp3 con el perfil real de costo/rendimiento de gp2; considere tipos HDD solo para patrones de acceso adecuados. Aprovisione una reserva de capacidad y alarmas basadas en mediciones, no un tamaño máximo arbitrario. La capacidad de EBS/PVC normalmente aumenta, pero no disminuye; para reducirla se requiere una migración compatible a un volumen nuevo más pequeño y la validación de los datos.
 
-Crear una StorageClass gp3 o marcarla como predeterminada **no migra los volúmenes gp2 existentes**. Cambiar la clase predeterminada también afecta a otros claims nuevos. Reutilice la clase con nombre explícito de la Parte 1. Para los volúmenes existentes, elija el flujo de trabajo de modificación compatible con el driver desplegado o una migración de copia de seguridad/restauración probada a un claim nuevo; inspeccione la propiedad, la coherencia de la aplicación y la reversión antes de cambiar el almacenamiento.
+Crear una StorageClass gp3 o establecerla como predeterminada **no migra los volúmenes gp2 existentes**. Cambiar la clase predeterminada también afecta a claims nuevos no relacionados. Reutilice la clase nombrada explícitamente en la Parte 1. Para volúmenes existentes, elija el flujo de modificación admitido por el driver implementado o una migración probada mediante copia de seguridad/restauración a un claim nuevo; antes de cambiar el almacenamiento, revise la propiedad, la coherencia de la aplicación y el plan de reversión.
 
 ### Ciclo de vida y retención
 
-Una VolumeSnapshotClass define el comportamiento del driver y la retención; no programa las instantáneas ni las elimina en función de su antigüedad. Use la programación y la política de retención del responsable de las copias de seguridad. La Parte 2 explica el ciclo de vida de las instantáneas CSI de Velero, incluida la eliminación incluso cuando la clase original era Retain.
+Una VolumeSnapshotClass define el comportamiento del driver y la retención; no programa snapshots ni los elimina por antigüedad. Use la programación y política de retención del responsable de las copias de seguridad. La Parte 2 explica el ciclo de vida de snapshots CSI de Velero, incluida su eliminación aunque la clase original tenga Retain.
 
-Un PV marcado como Available o Released no es necesariamente descartable, y Bound no demuestra que esté en uso activo. Antes de limpiar recursos, inventaríe claimRef/UID, los responsables de las cargas de trabajo, las instantáneas, las obligaciones de retención y los recursos reales del backend. Retain puede dejar recursos con cargos; el comportamiento de Delete depende del driver. Eliminar un punto de acceso de EFS no equivale a eliminar su sistema de archivos/datos. La organización por niveles de archivos en S3/Archive también requiere un plan de restauración/acceso compatible con la aplicación.
+Un PV marcado Available o Released no se puede descartar automáticamente, y Bound no demuestra que esté en uso. Antes de limpiar, inventaríe claimRef/UID, responsables de las cargas de trabajo, snapshots, obligaciones de retención y recursos reales del backend. Retain puede dejar recursos facturables; el comportamiento de Delete depende del driver. Eliminar un punto de acceso de EFS no equivale a eliminar el sistema de archivos o sus datos. La clasificación por niveles de datos en S3/Archive también requiere un plan de acceso/restauración compatible con la aplicación.
 
 ### Optimización de costos de EFS
 
-AWS recomienda Elastic throughput para cargas de trabajo impredecibles o con picos. Compárelo con Provisioned para una demanda sostenida conocida y con Bursting para su modelo de tamaño/créditos, usando E/S medidas reales y los precios vigentes. General Purpose es el modo de rendimiento recomendado. Los puntos de acceso pueden compartir un sistema de archivos con identidades POSIX distintas; no reservan capacidad por PVC ni proporcionan facturación automática por aplicación.
+AWS recomienda el rendimiento Elastic para cargas de trabajo impredecibles o con picos. Compárelo con Provisioned cuando la demanda sostenida sea conocida y con Bursting según su modelo de tamaño/créditos, usando la E/S medida y los precios actuales. General Purpose es el modo de rendimiento recomendado. Los puntos de acceso permiten compartir un sistema de archivos con identidades POSIX distintas; no reservan capacidad por PVC ni facturan automáticamente por aplicación.
 
-Lea la configuración de ciclo de vida existente completa antes de proponer un cambio:
+Lea toda la configuración de ciclo de vida existente antes de proponer un cambio:
 
 ```bash
 set -euo pipefail
@@ -308,27 +308,27 @@ aws efs describe-lifecycle-configuration --region "$AWS_REGION" \
   --file-system-id "$EFS_FILE_SYSTEM_ID" --output json > efs-lifecycle-before.json
 ```
 
-Una solicitud put-lifecycle-configuration actualiza la configuración del sistema de archivos; conserve en la matriz revisada todas las transiciones existentes previstas. Una matriz vacía deshabilita la administración del ciclo de vida. Cada objeto de política contiene una transición. Archive requiere una configuración compatible de General Purpose/Elastic y una transición posterior a IA. Incluya en el análisis de costos los cargos de acceso y duración mínima de IA/Archive; no sobrescriba sin más una política existente con un único ejemplo de 30 días.
+Una solicitud put-lifecycle-configuration actualiza la configuración del sistema de archivos; conserve todas las transiciones existentes que deban mantenerse en la matriz revisada. Una matriz vacía desactiva la administración del ciclo de vida. Cada objeto de política contiene una transición. Archive requiere una configuración compatible de General Purpose/Elastic y una transición posterior a IA. Incluya en el análisis de costos los cargos de acceso a IA/Archive y su duración mínima; no sobrescriba a ciegas una política existente con un único ejemplo de 30 días.
 
 ### FSx for Lustre y atribución de costos
 
-Elija scratch solo para datos que puedan recrearse y use opciones de despliegue/almacenamiento persistentes para el ciclo de vida necesario. LZ4 puede reducir el tamaño físico de los datos, pero no reduce automáticamente la factura de una asignación SSD ya aprovisionada; evalúe el modelo de precios de almacenamiento seleccionado, la tasa de compresión y los efectos en el rendimiento/CPU. La integración con un repositorio S3 requiere comportamientos de importación/exportación/liberación configurados, no solo un nombre de bucket.
+Elija scratch solo para datos que puedan recrearse, y las opciones persistentes de despliegue/almacenamiento para el ciclo de vida requerido. LZ4 puede reducir el tamaño físico de los datos, pero no reduce automáticamente la factura de una asignación SSD ya aprovisionada; evalúe el modelo de precios de almacenamiento seleccionado, la tasa de compresión y los efectos en el rendimiento/CPU. La integración con un repositorio S3 requiere una configuración de importación/exportación/liberación, no solo el nombre de un bucket.
 
-Cost Explorer y las herramientas de asignación de costos de Kubernetes requieren datos de facturación configurados, etiquetas de asignación de costos activadas cuando corresponda y una correspondencia probada entre el PVC/PV y los ID de recursos en la nube. Las etiquetas del espacio de nombres no etiquetan automáticamente todos los cargos de AWS. Haga seguimiento de los volúmenes/instantáneas retenidos, los costos de solicitudes/transferencia y la retención de telemetría. Las instancias reservadas de EC2/Compute Savings Plans pueden cambiar los costos de cómputo elegibles; no reducen automáticamente la factura independiente de almacenamiento de EBS/EFS/FSx.
+Cost Explorer y las herramientas de asignación de costos de Kubernetes requieren datos de facturación configurados, etiquetas de asignación de costos activadas cuando corresponda y una correspondencia probada entre PVC/PV e identificadores de recursos en la nube. Las etiquetas de namespace no asignan automáticamente cada cargo de AWS. Haga seguimiento de volúmenes/snapshots retenidos, costos de solicitudes/transferencias y retención de telemetría. Las instancias reservadas de EC2 o Compute Savings Plans pueden cambiar costos de cómputo elegibles; no reducen automáticamente la factura separada del almacenamiento EBS/EFS/FSx.
 
 ## Seguridad del almacenamiento {#storage-security}
 
-Proteja por separado el backend, la ruta del nodo/montaje y el plano de control de Kubernetes. Un nombre de clase, una política de espacio de nombres o una raíz de contenedor de solo lectura no protegen por sí solos el contenido de un PVC con permisos de escritura.
+Proteja por separado el backend, la ruta del nodo/montaje y el plano de control de Kubernetes. El nombre de una clase, una política de namespace o una raíz de contenedor de solo lectura no protegen por sí solos el contenido de un PVC escribible.
 
-<!-- Diagram repair pending: TLS, at-rest key management, IAM, network rules, RBAC and admission are distinct controls; neither RBAC nor PSS proves backend encryption.
-![Diagram showing EBS/FSx, EFS, and S3 storage security feeding data-at-rest and data-in-transit encryption that converge on AWS KMS key management, security groups and IAM roles leading through Kubernetes RBAC to OPA Gatekeeper/Kyverno policy enforcement, and the pod security context enforced by Pod Security Standards.](../.gitbook/assets/en-eks-04-eks-storage-part3-3.png)
+<!-- Pendiente de reparar el diagrama: TLS, administración de claves en reposo, IAM, reglas de red, RBAC y admisión son controles distintos; ni RBAC ni PSS demuestran el cifrado del backend.
+![Diagrama en el que la seguridad del almacenamiento EBS/FSx, EFS y S3 contempla cifrado de datos en reposo y en tránsito, que converge en la administración de claves AWS KMS; los grupos de seguridad y roles de IAM pasan por RBAC de Kubernetes hasta la aplicación de políticas OPA Gatekeeper/Kyverno; y el contexto de seguridad del Pod se aplica mediante Pod Security Standards.](../.gitbook/assets/en-eks-04-eks-storage-part3-3.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-3.html)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-3.html)
 -->
 
 ### Cifrado de datos
 
-El cifrado de EBS se solicita al aprovisionar un volumen; cambiar una StorageClass no cifra retroactivamente un volumen existente. Este ejemplo de clase nueva solicita almacenamiento gp3 cifrado, con vinculación de topología diferida y retención explícita. Si se requiere una clave administrada por el cliente, añada un kmsKeyId real y revisado, y prepare su política de clave/concesiones del driver; un ARN de ejemplo no es una clave funcional.
+El cifrado de EBS se solicita al aprovisionar un volumen; cambiar una StorageClass no cifra retroactivamente un volumen existente. Este ejemplo de una clase nueva solicita almacenamiento gp3 cifrado con enlace de topología diferido y retención explícita. Si se requiere una clave administrada por el cliente, agregue un kmsKeyId real y revisado y prepare su política de clave y permisos para el driver; un ARN de ejemplo no es una clave operativa.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -345,9 +345,9 @@ parameters:
   csi.storage.k8s.io/fstype: ext4
 ```
 
-Configure el cifrado de EFS al crear el sistema de archivos mediante el flujo de trabajo de infraestructura protegido de la Parte 1. Los datos existentes sin cifrar requieren una migración compatible a un sistema de archivos cifrado, no una opción de montaje. FSx for Lustre cifra automáticamente los datos en reposo: los sistemas de archivos scratch usan claves administradas por el servicio; una clave de KMS administrada por AWS/administrada por el cliente que se pueda seleccionar es una opción de **sistema de archivos persistente**. No pase kms-key-id de cliente al ejemplo SCRATCH_2.
+Configure el cifrado de EFS al crear el sistema de archivos mediante el flujo de infraestructura protegido de la Parte 1. Los datos existentes sin cifrar requieren una migración admitida a un sistema de archivos cifrado, no una opción de montaje. FSx for Lustre cifra automáticamente los datos en reposo: los sistemas scratch usan claves administradas por el servicio; elegir una clave KMS administrada por AWS o por el cliente es una opción de **sistemas de archivos persistentes**. No pase un customer kms-key-id al ejemplo SCRATCH_2.
 
-Inspeccione los recursos reales en la nube, haga coincidir los ID de EBS con volumeHandles de PV vinculados y confirme la cuenta/Región. Una respuesta de FSx scratch sin una clave de cliente seleccionada no demuestra que el almacenamiento esté sin cifrar:
+Inspeccione los recursos reales de la nube, asocie los ID de EBS con los volumeHandles de PV enlazados y confirme la cuenta/región. Una respuesta de FSx para un sistema scratch sin una clave de cliente seleccionada no demuestra que el almacenamiento no esté cifrado:
 
 ```bash
 set -euo pipefail
@@ -363,15 +363,15 @@ aws fsx describe-file-systems --region "$AWS_REGION" --file-system-ids "$FSX_FIL
   --query 'FileSystems[0].{Id:FileSystemId,Type:LustreConfiguration.DeploymentType,KmsKeyId:KmsKeyId}' --output json
 ```
 
-Para los datos en tránsito, use la opción `tls` compatible de EFS CSI/asistente de montaje y verifique la ruta de montaje real. El cifrado en tránsito de FSx depende de la configuración compatible del sistema de archivos/cliente/instancia; siga las indicaciones del servicio. **S3 HTTPS/TLS protege el transporte; `aws s3 cp --sse AES256` selecciona el cifrado en reposo SSE-S3.** Esa marca no habilita TLS. Use endpoints HTTPS y validación de certificados, y revise las políticas de bucket que exigen un transporte seguro. La política de clave de KMS es distinta de la administración de certificados de transporte.
+Para los datos en tránsito, use la opción `tls` admitida por EFS CSI/asistente de montaje y compruebe la ruta de montaje real. El cifrado en tránsito de FSx depende de la configuración admitida de sistema de archivos/cliente/instancia; siga las indicaciones del servicio. **S3 HTTPS/TLS protege el transporte; `aws s3 cp --sse AES256` selecciona el cifrado en reposo SSE-S3.** Ese indicador no habilita TLS. Use endpoints HTTPS con validación de certificados y revise las políticas del bucket que exigen transporte seguro. La política de clave KMS es distinta de la administración de certificados de transporte.
 
 ### Control de acceso
 
-Use la identidad CSI preparada en la Parte 1: el rol de Pod Identity/IRSA compatible del controlador y los permisos exactos del driver, además de las concesiones de KMS cuando corresponda. No vuelva a crear una ServiceAccount existente de un complemento administrado mediante un comando eksctl no relacionado ni transfiera los permisos del controlador a todos los nodos/aplicaciones. La identidad a nivel de Pod de Mountpoint, los montajes IAM de EFS y las identidades POSIX/puntos de acceso del sistema de archivos siguen rutas de autorización distintas.
+Use la identidad CSI preparada en la Parte 1: el rol de Pod Identity/IRSA admitido por el controlador y los permisos exactos del driver, además de las concesiones de KMS que correspondan. No vuelva a crear la ServiceAccount de un complemento administrado existente mediante un comando de eksctl no relacionado ni traslade los permisos del controlador a todos los nodos/aplicaciones. La identidad de nivel de Pod de Mountpoint, los montajes EFS con IAM y las identidades POSIX/de puntos de acceso del sistema de archivos tienen rutas de autorización distintas.
 
-Para el acceso de red, permita que el grupo de seguridad real del origen cliente/nodo alcance los destinos de montaje de EFS por TCP2049. Lustre requiere las reglas documentadas de TCP988 y1018–1023 entre clientes y servidores de archivos, incluido el tráfico propio/de cliente requerido. En cambio, Lustre habilitado para EFA requiere las reglas especificadas de todo el tráfico, con referencias a grupos de seguridad; un CIDR abierto a Internet no es un sustituto. Inspeccione las rutas, DNS, NACL y el origen real del montaje de CSI, además de los grupos de seguridad. Una NetworkPolicy de Kubernetes no controla automáticamente todas las conexiones al sistema de archivos originadas en el nodo.
+Para el acceso de red, permita que el grupo de seguridad de origen del cliente/nodo real llegue a los destinos de montaje EFS por TCP 2049. Lustre requiere las reglas TCP 988 y 1018–1023 documentadas entre los clientes y servidores de archivos, incluido el tráfico necesario entre miembros. Lustre con EFA requiere, en cambio, las reglas especificadas de todo el tráfico referenciadas por grupos de seguridad; un CIDR abierto a Internet no las sustituye. Inspeccione también rutas, DNS, NACL y el origen de montaje CSI real, además de los grupos de seguridad. Una NetworkPolicy de Pod de Kubernetes no controla automáticamente todas las conexiones al sistema de archivos iniciadas por los nodos.
 
-El lector con ámbito de espacio de nombres siguiente puede inspeccionar objetos PVC; no puede crearlos, cambiar su tamaño ni eliminarlos. El acceso a PV de ámbito de clúster requiere un ClusterRole revisado por separado. Ninguno de los dos roles controla directamente los bytes de los archivos. Un principal capaz de crear Pods en un espacio de nombres podría montar sus PVC, por lo que también deben controlarse la creación de Pods, la identidad de las cargas de trabajo, los permisos POSIX/de puntos de acceso y el aislamiento entre inquilinos:
+El lector con alcance de namespace que se muestra a continuación puede inspeccionar objetos PVC; no puede crearlos, redimensionarlos ni eliminarlos. El acceso a PV con alcance de clúster necesita un ClusterRole revisado por separado. Ninguno de los roles controla directamente los bytes de archivos. Un principal con permiso para crear Pods en un namespace podría montar sus PVC; por ello también se deben controlar la creación de Pods, la identidad de las cargas de trabajo, los permisos POSIX/de puntos de acceso y el aislamiento entre inquilinos:
 
 ```yaml
 apiVersion: v1
@@ -411,9 +411,9 @@ roleRef:
   name: pvc-reader
 ```
 
-### Contexto de seguridad de Pod
+### Contexto de seguridad del Pod
 
-Este ejemplo completo separa runAsUser/runAsGroup/fsGroup/seccomp a nivel de Pod de allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem a nivel de contenedor. Usa una clase cifrada preparada y un PVC declarado, en lugar de un volumen de datos indefinido y una imagen nginx sin rutas de ejecución escribibles proporcionadas. La versión de la política del espacio de nombres corresponde al ejemplo revisado de Kubernetes1.36; use la versión de política apropiada para su clúster.
+Este ejemplo completo separa runAsUser/runAsGroup/fsGroup/seccomp a nivel de Pod de allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem a nivel de contenedor. Usa una clase cifrada preparada y un PVC declarado, en vez de un volumen data indefinido y una imagen nginx con rutas de ejecución escribibles que no se habían definido. La versión de la política del namespace corresponde al ejemplo revisado para Kubernetes 1.36; use la versión adecuada para su clúster.
 
 ```yaml
 apiVersion: v1
@@ -481,11 +481,11 @@ spec:
       claimName: secure-data
 ```
 
-Una raíz de solo lectura no hace que `/data` sea de solo lectura: esta carga de trabajo comprueba intencionalmente que el PVC permita escritura. El comportamiento de fsGroup depende de CSI/sistema de archivos; un punto de acceso de EFS puede imponer una identidad POSIX distinta. Los perfiles SELinux/AppArmor requieren compatibilidad real del nodo/entorno de ejecución y una política preparada. No copie etiquetas MCS ni nombres de perfiles arbitrarios. Pod Security Standards restringe la configuración de los Pods; no cifra los volúmenes en la nube ni concede permisos de IAM. Los agentes de supervisión/CSI de nodo con acceso al host necesitan su propio diseño de seguridad/espacio de nombres revisado.
+Una raíz de solo lectura no vuelve de solo lectura a `/data`: esta carga de trabajo comprueba intencionalmente un PVC escribible. El comportamiento de fsGroup depende de CSI y del sistema de archivos; un punto de acceso EFS puede imponer otra identidad POSIX. Los perfiles SELinux/AppArmor requieren compatibilidad real del nodo/entorno de ejecución y una política preparada. No copie etiquetas MCS ni nombres de perfiles arbitrarios. Pod Security Standards restringe la configuración del Pod, pero no cifra volúmenes en la nube ni concede permisos IAM. Los agentes de supervisión/nodo CSI con acceso al host necesitan su propio diseño de seguridad/namespace revisado.
 
 ### Aplicación de políticas de seguridad
 
-Un patrón de nombre de PVC o una lista de permitidos de StorageClass por sí solos no pueden demostrar el cifrado de EBS. La siguiente **Kyverno ValidatingPolicy** usa la API publicada `policies.kyverno.io/v1`, comprobada con Kyverno1.19.1 y su CRD. Requiere que estén instalados el controlador/CRD y que la propiedad de admisión sea adecuada. Los ejemplos anteriores de ClusterPolicy están obsoletos en esa versión; realice la migración de forma intencional en lugar de asumir compatibilidad de API.
+Un patrón de nombre de PVC o una lista de StorageClass permitidas por sí solos no demuestran que EBS esté cifrado. La siguiente **Kyverno ValidatingPolicy** usa la API servida `policies.kyverno.io/v1`, verificada con Kyverno 1.19.1 y su CRD. Requiere que el controlador/CRD esté instalado y que la administración de admisión tenga los permisos adecuados. En esa versión, los ejemplos antiguos de ClusterPolicy están obsoletos; migre intencionalmente en vez de dar por supuesta la compatibilidad de API.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -515,36 +515,36 @@ spec:
     message: EBS StorageClasses must explicitly request encryption.
 ```
 
-La política comprueba el **parámetro de cifrado declarado en las operaciones de creación/actualización de StorageClass de EBS**, incluido el provisioner de Auto Mode. No inspecciona los volúmenes existentes de AWS, los PV estáticos, el contenido de las instantáneas ni las rutas de omisión fuera de su ámbito. Restrinja la administración de StorageClass/PV y use comprobaciones de cumplimiento del backend además de la admisión. Despliéguela tras probarla con recursos representativos y supervise los informes de políticas/el estado del webhook antes de aplicar la política ampliamente. El cifrado de datos existentes aún requiere su propia migración.
+La política comprueba el **parámetro de cifrado declarado al crear/actualizar una StorageClass de EBS**, incluido el aprovisionador Auto Mode. No inspecciona volúmenes AWS existentes, PV estáticos, contenido de snapshots ni rutas que evadan las condiciones de coincidencia. Restrinja la administración de StorageClass/PV y complemente la admisión con comprobaciones de cumplimiento del backend. Antes de aplicar la política ampliamente, pruébela con recursos representativos y supervise los informes de políticas y el estado del webhook. El cifrado de datos existentes requiere su propia migración.
 
-## Prácticas recomendadas de administración del almacenamiento {#storage-management-best-practices}
+## Prácticas recomendadas para administrar el almacenamiento {#storage-management-best-practices}
 
-![Diagrama que relaciona las cuatro fases del ciclo de vida del almacenamiento (planificación, implementación, operación y optimización) con sus áreas correspondientes de prácticas recomendadas (planificación y diseño, automatización e IaC, copias de seguridad y recuperación ante desastres, rendimiento y optimización de costos); cada área enumera sus tres prácticas en orden.](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
+![Diagrama que relaciona las cuatro fases del ciclo de vida del almacenamiento (planificación, implementación, operación y optimización) con sus áreas de prácticas recomendadas (planificación y diseño, automatización e IaC, copias de seguridad y recuperación ante desastres, rendimiento y optimización de costos), cada una con sus tres prácticas en el orden indicado.](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-4.html)
 
 ### Planificación y capacidad
 
-Documente por separado la latencia/IOPS/velocidad de transferencia, el crecimiento de la capacidad, los patrones de lectura/escritura, la concurrencia, la disponibilidad, la durabilidad y el RPO/RTO. Elija almacenamiento en bloques, NFS compartido, Lustre paralelo o acceso a objetos en función de esos requisitos. Use un margen medido y procedimientos de ampliación limitados; un escalador automático o el cambio de tamaño de un PVC no proporcionan replicación de aplicaciones ni una reducción arbitraria de la capacidad.
+Documente por separado la latencia, IOPS/rendimiento, crecimiento de capacidad, patrones de lectura/escritura, concurrencia, disponibilidad, durabilidad y RPO/RTO. Según esos requisitos, elija almacenamiento de bloques, NFS compartido, Lustre paralelo o acceso a objetos. Use margen basado en mediciones y procedimientos de expansión acotados; un escalador automático o el redimensionamiento de PVC no proporciona replicación de aplicaciones ni reduce arbitrariamente la capacidad.
 
 ### Copias de seguridad y recuperación ante desastres
 
-Use una programación compatible con identidades de copia de seguridad únicas y un responsable de la retención. Una línea cron de shell que cree repetidamente una instantánea con nombre fijo falla después de que exista el primer objeto; una copia de seguridad de Velero de una sola ejecución llamada daily-backup no es una programación. Con la instalación de Velero/CSI revisada y los requisitos de coherencia de la base de datos de la Parte 2, este comando genera una programación diaria para su revisión:
+Use una programación compatible, identidades de copia de seguridad únicas y un responsable de retención. Una línea cron de shell que intenta crear repetidamente un snapshot con el mismo nombre falla después de crear el primer objeto; una copia de Velero puntual llamada daily-backup no constituye una programación. Con la instalación Velero/CSI revisada y los requisitos de coherencia de bases de datos de la Parte 2, este comando genera una programación diaria para revisión:
 
 ```bash
 velero schedule create storage-daily --schedule="0 0 * * *" \
   --include-namespaces=storage-demo --ttl=720h0m0s -o yaml > storage-schedule-review.yaml
 ```
 
-Despliegue la configuración a través de su responsable después de revisarla; luego, genere alertas ante copias de seguridad faltantes o fallidas y pruebe restauraciones aisladas. Una copia de seguridad en S3 puede hacer referencia a instantáneas nativas en lugar de contener todos los bytes del volumen. La recuperación entre zonas/regiones requiere datos, claves, drivers/asignaciones de almacenamiento accesibles y validación de la aplicación. Conserve el origen hasta que se complete correctamente una transición controlada; registre el tiempo de recuperación medido en lugar de afirmar un RPO/RTO basándose en una programación.
+Tras revisarlo, impleméntelo mediante el responsable y genere alertas por copias faltantes/fallidas; pruebe restauraciones aisladas. Una copia de seguridad en S3 puede hacer referencia a snapshots nativos en lugar de contener todos los bytes del volumen. La recuperación entre zonas/regiones requiere datos accesibles, claves, correspondencias de driver/almacenamiento y validación de la aplicación. Conserve el origen hasta que se complete un cambio controlado; registre el tiempo de recuperación medido en vez de atribuir un RPO/RTO a una programación.
 
 ### Infraestructura como código y GitOps
 
-Use los ejemplos protegidos de creación de sistemas de archivos de la Parte 1/Parte 2 o un módulo Terraform/CloudFormation propio con versiones de proveedor/esquema revisadas, configuración de subred/destino de montaje/grupo de seguridad y protección contra eliminación. Un recurso de Terraform que solo crea un sistema de archivos no proporciona una ruta de montaje lista para EKS. Separe la retención de copias de seguridad del comportamiento de destrucción/poda de IaC.
+Use los ejemplos protegidos de creación de sistemas de archivos de la Parte 1/Parte 2 o un módulo Terraform/CloudFormation propio con versiones de proveedor/esquema revisadas, configuración de subredes/destinos de montaje/grupos de seguridad y protección contra eliminación. Un recurso Terraform que solo cree el sistema de archivos no deja una ruta de montaje lista para EKS. Mantenga separadas la retención de copias y las acciones destroy/prune de IaC.
 
-Los valores de Helm son entradas específicas del chart: un valor personalizado `storage.encrypted: true` no hace nada a menos que una plantilla lo asigne al campo real compatible del recurso. Renderice y valide la StorageClass/PVC/carga de trabajo resultantes antes del despliegue. La poda de GitOps, la desinstalación del chart y la configuración de retención de claims pueden tener distintos efectos sobre los datos; documente qué sistema es responsable de cada recurso y pruebe los cambios de ciclo de vida con datos desechables.
+Los valores de Helm son entradas específicas de cada chart: el valor personalizado `storage.encrypted: true` no hace nada a menos que una plantilla lo convierta en el campo admitido del recurso real. Renderice y valide StorageClass/PVC/carga de trabajo antes del despliegue. El pruning de GitOps, la desinstalación del chart y la retención de claims pueden tener efectos distintos sobre los datos; documente qué sistema es responsable de cada recurso y pruebe los cambios del ciclo de vida con datos desechables.
 
-Por ejemplo, este recurso de sistema de archivos solicita cifrado y rendimiento Elastic, conserva la política educativa de IA a 30 días y añade una protección contra la destrucción de Terraform. Sustituya el token de creación por un valor estable y específico del proyecto, configure el proveedor/cuenta/Región y añada los recursos de red/destinos de montaje revisados. prevent_destroy es una protección para operaciones de Terraform, no una copia de seguridad ni una protección contra todas las eliminaciones externas:
+Por ejemplo, este recurso de sistema de archivos solicita cifrado y rendimiento Elastic, conserva la política de ejemplo de transición a IA a los 30 días y añade una protección contra destroy de Terraform. Sustituya el token de creación por uno estable y específico del proyecto, configure el proveedor/la cuenta/la región y añada los recursos revisados de red/destino de montaje. prevent_destroy es una protección frente a operaciones de Terraform, no una copia de seguridad ni una defensa contra toda eliminación externa:
 
 ```hcl
 resource "aws_efs_file_system" "example" {
@@ -569,13 +569,13 @@ resource "aws_efs_file_system" "example" {
 
 ### Revisión continua
 
-Revise los cuellos de botella, los límites de aprovisionamiento, los costos de retención y los controles de seguridad a medida que cambien las cargas de trabajo. Mantenga los informes de limpieza en modo de solo lectura hasta verificar la propiedad de los recursos, la copia de seguridad/recuperación y los efectos de la eliminación. Genere alertas y proponga cambios acotados antes de automatizarlos. Los ejemplos del capítulo son configuraciones de referencia verificadas localmente; el rendimiento del backend, el despliegue de la admisión y la recuperación siguen requiriendo validación en el entorno previsto.
+A medida que cambien las cargas de trabajo, revise los cuellos de botella, límites de aprovisionamiento, costos de retención y controles de seguridad. Mantenga los informes de limpieza en modo de solo lectura hasta verificar la propiedad de los recursos y los efectos sobre copias de seguridad, recuperación y eliminación. Antes de automatizar cambios, genere alertas y proponga ajustes acotados. Los ejemplos del capítulo son configuraciones de referencia verificadas localmente; el rendimiento del backend, el despliegue de admisión y la recuperación aún deben validarse en el entorno previsto.
 
 ## Conclusión
 
-En este documento, abordamos la supervisión, la solución de problemas, la optimización de costos y la seguridad del almacenamiento de Amazon EKS. Una administración eficaz del almacenamiento es fundamental para garantizar el rendimiento, la fiabilidad y la rentabilidad del clúster de EKS.
+En este documento se trataron la supervisión, la solución de problemas, la optimización de costos y la seguridad del almacenamiento de Amazon EKS. Administrarlo correctamente es fundamental para mantener el rendimiento, la fiabilidad y la rentabilidad del clúster de EKS.
 
-Los requisitos de almacenamiento varían según la aplicación, por lo que es importante comprender las características de la carga de trabajo y seleccionar la solución de almacenamiento adecuada. Además, debe administrar eficazmente los recursos de almacenamiento mediante revisiones periódicas de supervisión, solución de problemas, optimización de costos y seguridad.
+Los requisitos de almacenamiento varían según la aplicación, por lo que es importante comprender las características de la carga de trabajo y seleccionar la solución de almacenamiento adecuada. Además, administre eficazmente los recursos de almacenamiento mediante revisiones periódicas de supervisión, solución de problemas, costos y seguridad.
 
 ## Referencias
 
@@ -583,15 +583,15 @@ Los requisitos de almacenamiento varían según la aplicación, por lo que es im
 - [Solución de problemas de almacenamiento de Kubernetes](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-application/#debugging-pods)
 - [Seguridad del almacenamiento de Kubernetes](https://kubernetes.io/docs/concepts/security/)
 
-- [Métricas de CloudWatch de EBS](https://docs.aws.amazon.com/ebs/latest/userguide/using_cloudwatch_ebs.html)
+- [Métricas de CloudWatch para EBS](https://docs.aws.amazon.com/ebs/latest/userguide/using_cloudwatch_ebs.html)
 - [Dimensiones de métricas de FSx Lustre](https://docs.aws.amazon.com/fsx/latest/LustreGuide/fs-metrics.html)
 - [Modos de rendimiento de EFS](https://docs.aws.amazon.com/efs/latest/ug/performance.html)
 - [API del ciclo de vida de EFS](https://docs.aws.amazon.com/efs/latest/APIReference/API_PutLifecycleConfiguration.html)
 - [Cifrado en reposo de FSx](https://docs.aws.amazon.com/fsx/latest/LustreGuide/encryption-at-rest.html)
-- [Acceso de red de FSx](https://docs.aws.amazon.com/fsx/latest/LustreGuide/limit-access-security-groups.html)
+- [Acceso de red a FSx](https://docs.aws.amazon.com/fsx/latest/LustreGuide/limit-access-security-groups.html)
 - [Cifrado en reposo de S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html)
-- [Migración CEL de Kyverno](https://kyverno.io/docs/guides/migration-to-cel/)
+- [Migración de CEL de Kyverno](https://kyverno.io/docs/guides/migration-to-cel/)
 
 ## Cuestionario
 
-Para poner a prueba lo que aprendió en este capítulo, pruebe el [cuestionario del tema](../quizzes/eks/04-eks-storage-part3-quiz.md).
+Para poner a prueba lo aprendido en este capítulo, responda el [cuestionario del tema](../quizzes/eks/04-eks-storage-part3-quiz.md).

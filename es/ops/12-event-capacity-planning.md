@@ -3,20 +3,20 @@
 > **Última actualización**: 12 de septiembre de 2026, con KEDA 2.20.2 y Karpenter AWS provider autogestionado 1.14.1.
 > Las cifras se calculan a partir de supuestos declarados, no son benchmarks de producción.
 
-Los PM/planificadores proporcionan demanda, calendario y objetivos de latencia y fallos. Operaciones valida rendimiento de aplicación, nodos, base de datos, red y colas, cuotas y tiempo de preparación. El tipo de evento no garantiza multiplicadores de tráfico ni un calentamiento fijo. Use límites de tasa, salas de espera y contrapresión cuando sea necesario; escalar no es el único control de sobrecarga.
+Los responsables de producto y planificación proporcionan la demanda, el calendario y los objetivos de latencia y fallos. Operaciones valida rendimiento de aplicación, nodos, base de datos, red y colas, cuotas y tiempo de preparación. El tipo de evento no garantiza multiplicadores de tráfico ni un calentamiento fijo. Use límites de tasa, salas de espera y contrapresión cuando sea necesario; escalar no es el único control de sobrecarga.
 
 ## 1. Entradas y unidades
 
 | Entrada | Qué verificar |
 |---|---|
 | RPM/RPS pico | Unidades, comportamiento del usuario, aciertos de caché, amplificación por reintentos y demanda por API |
-| Rendimiento por Pod | Capacidad SLO medida con entradas, requests y concurrencia representativos |
+| Rendimiento por Pod | Capacidad medida frente al SLO con datos de entrada, solicitudes y concurrencia representativas |
 | Capacidad de nodo | Allocatable real menos DaemonSets; restricciones CPU, memoria y plazas Pod |
 | Objetivo ante fallos | Definir tráfico objetivo durante pérdida de Pod/nodo/AZ |
 | Tiempo | Zona IANA, offset UTC explícito e intervalos reales de actividad de nodos/reservas |
-| Coste | Fecha del precio, región, SO, tenancy, reservas sin usar y otros servicios/impuestos |
+| Coste | Fecha del precio, región, SO, modelo de tenencia, reservas sin usar y otros servicios/impuestos |
 
-La calculadora verifica redondeo, unidades, doble cómputo de reservas y pérdida de AZ. Supone un perfil Pod uniforme; agregue otras cargas y valide topología, volúmenes y puertos por separado. Añadir 30% de capacidad difiere de dejar 30% sin usar. La prueba de pérdida de AZ cubre el pico base, no demanda adicional simultánea.
+La calculadora verifica redondeo, unidades, doble cómputo de reservas y pérdida de AZ. Supone un perfil Pod uniforme; agregue otras cargas y valide topología, volúmenes y puertos por separado. Añadir 30% de capacidad difiere de dejar 30% sin usar. La prueba de pérdida de una AZ cubre el pico base, no demanda adicional simultánea.
 
 `scenario.json`
 
@@ -192,13 +192,13 @@ if __name__ == "__main__":
 python3 capacity.py scenario.json
 ```
 
-El ejemplo calcula 200 Pods base, 260 con capacidad adicional y al menos 26 nodos. Sin embargo, perder la AZ mayor de las de 15/11 nodos deja 11 y 330,000 RPM, por debajo del pico base de 600,000 RPM. No apruebe ignorando hallazgos. Otro cálculo con diez nodos en cada una de tres AZ cubre el pico base con el mismo perfil, pero sigue necesitando pruebas de ubicación y recuperación.
+El ejemplo calcula 200 Pods base, 260 con capacidad adicional y al menos 26 nodos. Sin embargo, perder la AZ mayor de las de 15/11 nodos deja 11 y 330.000 RPM, por debajo del pico base de 600.000 RPM. No apruebe ignorando hallazgos. Otro cálculo con diez nodos en cada una de tres AZ cubre el pico base con el mismo perfil, pero sigue necesitando pruebas de ubicación y recuperación.
 
 Distinga instancias que consumen reservas de plazas sin usar. Coincidir en hardware no asocia automáticamente una instancia existente a una reserva targeted. Verifique CapacityReservationId y cantidades disponibles reales; el supuesto de consumo de la calculadora necesita validación. Costes desconocidos de otros servicios mantienen el presupuesto total en null. El subtotal EC2 no es el coste completo del evento.
 
 ### Evidencia de precios
 
-El 2026-09-12, AWS Price List API devolvió estos precios horarios On-Demand de Seúl para Linux/tenancy compartida sin software preinstalado. Excluyen descuentos contractuales, Spot e impuestos.
+El 2026-09-12, AWS Price List API devolvió estos precios horarios On-Demand de Seúl para Linux y modelo de tenencia compartida sin software preinstalado. Excluyen descuentos contractuales, Spot e impuestos.
 
 | Tipo | vCPU | Memoria | USD/hora |
 |---|---:|---:|---:|
@@ -257,7 +257,7 @@ Sustituya cuenta/ARN de cola y adjunte permisos de lectura al rol del operador. 
 
 ## 3. KEDA: un propietario por carga
 
-No adjunte varios ScaledObjects/HPA a un Deployment. Los ejemplos se dirigen a tres cargas distintas: order-api, order-worker y frontend. Mantenga el autoscaling base por métricas y elimine/actualice el Cron del evento después.
+No adjunte varios ScaledObjects/HPA a un Deployment. Los ejemplos se dirigen a tres cargas distintas: order-api, order-worker y frontend. Mantenga el escalado automático base guiado por métricas y elimine/actualice el Cron del evento después.
 
 No escale una API solo por pedidos completados: su número puede estancarse o bajar bajo saturación, sugiriendo erróneamente reducir réplicas. Relacione solicitudes entrantes, backlog y espera con capacidad real. Se supone un contador de aplicación http_requests_total y etiquetas de scrape namespace/service. No asuma que los exporters NGINX estándar aportan métricas de rutas/vistas de página. Este Prometheus es por clúster; añada alcance de clúster para un backend compartido.
 
@@ -331,11 +331,11 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-El umbral 3,000 son solicitudes por Pod y minuto, coincidiendo con las unidades ilustrativas. Sustitúyalo por evidencia de carga. La consulta debe devolver un valor. ignoreNullValues=false evita ocultar observaciones ausentes como demanda cero. Pruebe errores/datos ausentes del HPA y respuesta manual fuera de producción.
+El umbral de 3.000 representa solicitudes por Pod y minuto, coincidiendo con las unidades ilustrativas. Sustitúyalo por evidencia de carga. La consulta debe devolver un valor. ignoreNullValues=false evita ocultar observaciones ausentes como demanda cero. Pruebe errores/datos ausentes del HPA y respuesta manual fuera de producción.
 
 Cron usa cinco campos Linux, sin año. Dejar instalado el ejemplo del 27 de noviembre lo repite el año siguiente. Retire de Git la configuración tras un evento único. Las zonas IANA siguen el horario de verano: Nueva York en mayo es EDT, no EST. Pruebe límites, ventanas superpuestas y horas ambiguas.
 
-HPA combina recomendaciones por métrica tomando el máximo y después aplica mínimos/máximos y restricciones de comportamiento. Cron aporta un suelo de demanda, no garantiza Pods Ready. El techo procede de maxReplicaCount y otros límites, no de las demás métricas. Políticas o capacidad pueden retrasar el objetivo.
+HPA combina recomendaciones por métrica tomando el máximo y después aplica mínimos/máximos y restricciones de comportamiento. Cron aporta un suelo de demanda, no garantiza Pods en estado Ready. El techo procede de maxReplicaCount y otros límites, no de las demás métricas. Políticas o capacidad pueden retrasar el objetivo.
 
 ![KEDA expone métricas Cron y de solicitudes; HPA aplica recomendaciones y límites.](../.gitbook/assets/en-ops-12-event-capacity-planning-1.png)
 
@@ -433,9 +433,9 @@ spec:
 
 ## 4. Preaprovisionamiento dinámico frente a estático
 
-weight y limits de NodePool no crean nodos calientes por sí solos. Los pools dinámicos responden a demanda de planificación Pod. Preescalar la aplicación real y validar inicialización es el enfoque base. Karpenter autogestionado también admite pools estáticos mediante spec.replicas. No son un Warm Pool de instancias detenidas de EC2 Auto Scaling.
+weight y limits de NodePool no crean nodos precalentados por sí solos. Los pools dinámicos responden a demanda de planificación de Pods. Preescalar la aplicación real y validar inicialización es el enfoque base. Karpenter autogestionado también admite pools estáticos mediante spec.replicas. Esto es distinto de un Warm Pool de instancias detenidas de EC2 Auto Scaling.
 
-Este NodeClass es para Karpenter autogestionado. Establezca rol IAM, etiquetas de subred/SG y versión reales. El alias fija una release verificada mediante el parámetro público SSM de Seúl EKS 1.36 AL2023 x86_64. Revalide para otras versiones/arquitecturas. Decida explícitamente si permite fallback al faltar o agotarse reservas.
+Este NodeClass es para Karpenter autogestionado. Configure un rol IAM y use las etiquetas reales de subred/SG y la versión del clúster. El alias fija una versión verificada mediante el parámetro público SSM de Seúl EKS 1.36 AL2023 x86_64. Revalide para otras versiones/arquitecturas. Decida explícitamente si permite fallback al faltar o agotarse reservas.
 
 ```yaml
 # nodeclass.yaml
@@ -468,7 +468,7 @@ spec:
 
 ### Opción A: pool dinámico con preescalado de la aplicación
 
-reserved significa capacidad ODCR/capacity-block, no descuentos Reserved Instance. Karpenter prioriza reservas entre tipos permitidos y luego alternativas admitidas. El ejemplo excluye Spot, pero On-Demand no garantiza uptime ni capacidad nueva disponible. weight expresa preferencia de aprovisionamiento entre pools dinámicos compatibles, no ubicación forzada en nodos existentes.
+reserved significa capacidad ODCR/capacity-block, no descuentos Reserved Instance. Karpenter prioriza reservas entre tipos permitidos y luego alternativas admitidas. El ejemplo excluye Spot, pero On-Demand no garantiza disponibilidad continua del servicio ni capacidad nueva disponible. weight expresa preferencia de aprovisionamiento entre pools dinámicos compatibles, no ubicación forzada en nodos existentes.
 
 ```yaml
 # dynamic-nodepool.yaml
@@ -666,19 +666,19 @@ kubectl --context "$DOCS_CONTEXT" scale nodepool event-static-b --replicas=10
 kubectl --context "$DOCS_CONTEXT" scale nodepool event-static-c --replicas=10
 ```
 
-Si GitOps gestiona replicas, actualice también su estado deseado. Verifique Nodes estáticos Ready antes de activar ubicación y escalado del evento. No traslade cargas activas a capacidad de cero réplicas ni active Cron antes de preparar. Incluya el tiempo previo de preparación en entradas de coste node_start/reservation_start.
+Si GitOps gestiona replicas, actualice también su estado deseado. Antes de activar la ubicación y el escalado del evento, verifique que los nodos estáticos estén en estado Ready. No traslade cargas activas a capacidad de cero réplicas ni active Cron antes de preparar. Incluya el tiempo previo de preparación en entradas de coste node_start/reservation_start.
 
 ### Uso de Pods de relleno
 
-Los Pods de baja prioridad pueden ser candidatos a preemption, sin garantizar ubicación/readiness instantáneas. Mantener su número deseado puede recrearlos tras ser desplazados y aprovisionar más nodos. Revise retención/caducidad y relevo, retire demanda de relleno y verifique readiness de la aplicación. Compruebe requests excesivos, selectores ausentes y conflictos con autoscalers base.
+Los Pods de baja prioridad pueden ser desalojados antes que otros, pero eso no garantiza una ubicación ni una puesta en servicio inmediatas. Mantener su número deseado puede recrearlos tras ser desplazados y aprovisionar más nodos. Revise retención/caducidad y relevo, retire demanda de relleno y verifique que la aplicación esté lista. Compruebe requests excesivos, selectores ausentes y conflictos con los escaladores automáticos existentes.
 
-![El relevo elimina demanda de relleno y valida readiness de la aplicación tras revisar la retención de nodos.](../.gitbook/assets/en-ops-12-event-capacity-planning-0.png)
+![El relevo elimina la demanda de relleno y comprueba que la aplicación esté lista tras revisar la retención de los nodos.](../.gitbook/assets/en-ops-12-event-capacity-planning-0.png)
 
 [Abrir diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-12-event-capacity-planning-0.html)
 
 ## 5. Capacity Reservations: capacidad y facturación
 
-targeted requiere seleccionar explícitamente la reserva; no es una ACL restringida a un NodePool. Verifique cuenta/permisos de compartición, AZ, tipo, plataforma, tenancy y activación. Compruebe selectores, status.capacityReservations y CapacityReservationId real. La capacidad reservada no garantiza readiness, SLO ni ejecución sin fallos.
+targeted requiere seleccionar explícitamente la reserva; no es una ACL restringida a un NodePool. Verifique cuenta/permisos de compartición, AZ, tipo, plataforma, modelo de tenencia y activación. Compruebe selectores, status.capacityReservations y CapacityReservationId real. La capacidad reservada no garantiza que la aplicación esté lista, que se cumpla el SLO ni que la ejecución esté libre de fallos.
 
 El Terraform siguiente crea reservas inmediatas. Un end_date futuro no implica inicio futuro. Aplicar en D-30 puede generar cargos de capacidad sin usar antes del evento. Las reservas futuras tienen otras reglas de elegibilidad, compromiso e inicio. Establezca az_counts según el plan aprobado de capacidad y presupuesto.
 
@@ -689,7 +689,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -777,9 +777,9 @@ No facture una plaza reservada ocupada una segunda vez además de su instancia. 
 
 ## 6. Tiempos de arranque e imágenes
 
-Mida por separado polling KEDA, sincronización HPA, reconciliación, capacidad/bootstrap EC2, CNI, conexión de volúmenes, descarga de imágenes y calentamiento. Distinga cantidades deseadas y Ready en el flujo. El número de nodos no equivale universalmente a Pods dividido entre diez.
+Mida por separado polling KEDA, sincronización HPA, reconciliación, capacidad/bootstrap EC2, CNI, conexión de volúmenes, descarga de imágenes y calentamiento. Distinga las cantidades deseadas y las que están en estado Ready en el flujo. La cantidad de nodos no siempre equivale a dividir el número de Pods entre diez.
 
-![HPA cambia demanda; aprovisionamiento, registro kubelet y readiness Pod son etapas distintas.](../.gitbook/assets/en-ops-12-event-capacity-planning-2.png)
+![HPA cambia demanda; aprovisionamiento, registro kubelet y estado Ready de los Pods son etapas distintas.](../.gitbook/assets/en-ops-12-event-capacity-planning-2.png)
 
 [Abrir diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-12-event-capacity-planning-2.html)
 
@@ -792,9 +792,9 @@ Preescalar réplicas reales valida inicialización y carga de dependencias, no s
 | Planificación | Demanda, SLO, objetivos de fallo, dependencias, presupuesto, cuotas y viabilidad de reservas |
 | Pruebas no productivas | Carga representativa, fallos/recuperación, distribución de arranque y métricas ausentes |
 | Preparación | Renderizar/validar ajustes fijados, registrar propiedad GitOps y valores para restaurar la base |
-| Activación | Preparar capacidad en ventana de facturación aprobada; verificar nodos, ubicación, readiness y SLO |
+| Activación | Preparar capacidad en ventana de facturación aprobada; verificar nodos, ubicación, estado Ready y SLO |
 | Evento | Observar deseado/disponible, errores, latencia, antigüedad de backlog, restricciones y coste |
-| Finalización | Restaurar Cron/suelos, vaciar backlog/sesiones/jobs y verificar nodos/reservas reales |
+| Finalización | Restaurar Cron y los valores base, vaciar acumulaciones, sesiones y trabajos, y verificar los nodos y las reservas reales |
 
 Renderizado, esquemas y dry-run del servidor no prueban disponibilidad EC2 real ni calentamiento. Las pruebas reales de preescalado pueden crear recursos y cargos y pertenecen a pruebas no productivas separadas. Establezca y verifique contexto y región antes de cambiar.
 
@@ -822,7 +822,7 @@ Después del evento, restaure Cron/suelos temporales conservando triggers base. 
 
 ## 8. Observación y análisis posterior
 
-Compare demanda, deseado/disponible de Deployment, recomendaciones HPA, errores y latencia para el mismo alcance. Una métrica objetivo no es un número objetivo de Pods; contar series gauge Running no cuenta Pods Ready.
+Compare demanda, deseado/disponible de Deployment, recomendaciones HPA, errores y latencia para el mismo alcance. Una métrica objetivo no es un número objetivo de Pods; contar series gauge Running no cuenta Pods en estado Ready.
 
 ```promql
 max(kube_deployment_spec_replicas{namespace="ecommerce",deployment="order-api"})

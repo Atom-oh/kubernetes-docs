@@ -1,6 +1,6 @@
 # Ciliumサービスメッシュのセキュリティ
 
-> **最終更新**: September 11, 2026 · Cilium/chart 1.20.1 · 同梱SPIRE 1.15.2。テスト済みKubernetes/EKS版とプラットフォーム要件は[概要](./README.md)を参照してください。
+> **最終更新**: 2026年10月16日 · Cilium/chart 1.20.3 · 同梱SPIRE 1.15.3。テスト済みKubernetes/EKS版とプラットフォーム要件は[概要](./README.md)を参照してください。
 
 ## 概要
 
@@ -20,7 +20,7 @@
 
 ### 従来のCilium相互認証
 
-帯域外方式はCilium 1.20.1でも**ベータ/未完成**と文書化されています。CiliumエージェントはSPIRE提供SVIDでCiliumセキュリティIDを認証します。ネットワークポリシールールが認証を要求しても、アプリ接続自体がTLSになるわけではありません。
+帯域外方式はCilium 1.20.3でも**ベータ/未完成**と文書化されています。CiliumエージェントはSPIRE提供SVIDでCiliumセキュリティIDを認証します。ネットワークポリシールールが認証を要求しても、アプリ接続自体がTLSになるわけではありません。
 
 ![ポリシーで保護された通信を進める前の、エージェント間帯域外認証交換の例。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
@@ -30,7 +30,7 @@
 
 ### ztunnelによるネイティブmTLS（2026年更新）
 
-Cilium 1.20.1には **Ztunnel Transparent Encryption（ベータ）** があります。必要なブートストラップ/CA素材を準備してから、次のモード断片で選択します。
+Cilium 1.20.3には **Ztunnel Transparent Encryption（ベータ）** があります。必要なブートストラップ/CA素材を準備してから、次のモード断片で選択します。
 
 ```yaml
 encryption:
@@ -240,7 +240,7 @@ HTTPパスポリシーには対応する検査可能L7経路が必要です。�
 
 ### Kafka L7セキュリティポリシー
 
-旧`rules.kafka`オブジェクトはCilium 1.20.1 L7スキーマで拒否されます。以下の置換は**ネットワーク到達性だけ**を制限します。
+旧`rules.kafka`オブジェクトはCilium 1.20.3 L7スキーマで拒否されます。以下の置換は**ネットワーク到達性だけ**を制限します。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -561,7 +561,7 @@ cert-manager設定のクラスターリソース名前空間にある`cilium-ca-
 
 ### Vault統合
 
-以下は独立設定したSPIRE 1.15.2サーバーの**プラグイン断片**のみで、完全なサーバー設定やKubernetes Deploymentではありません。
+以下は独立設定したSPIRE 1.15.4サーバーの**プラグイン断片**のみで、完全なサーバー設定やKubernetes Deploymentではありません。
 
 ```hcl
 plugins {
@@ -875,25 +875,25 @@ hubble:
 
 ## 参考資料
 
-- [Cilium1.20.1相互認証](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [認証例/API構造](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
-- [Cilium1.20.1 CNPスキーマ](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
-- [Cilium1.20.1 ztunnelベータ](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
-- [Ztunnel CA実装](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go)
-- [Ztunnelブートストラップ例](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes-ztunnel/generate-secrets.sh)
-- [暗号化範囲/strictモード](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption.rst)
-- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
-- [IPsecと鍵ローテーション](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
-- [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [HTTP/DNSポリシー](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
-- [デフォルト拒否動作](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/intro.rst)
-- [明示的デフォルト拒否API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go)
-- [変更可能エンドポイント監査オプション](https://github.com/cilium/cilium/blob/v1.20.1/pkg/option/endpoint.go)
-- [エンドポイント設定CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_config.md)
-- [メトリクス](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
-- [SPIRE1.15.2サーバー設定](https://github.com/spiffe/spire/blob/v1.15.2/doc/spire_server.md)
-- [SPIRE Vault authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_vault.md)
-- [SPIRE disk authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_disk.md)
+- [Cilium1.20.3相互認証](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [認証例/API構造](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
+- [Cilium1.20.3 CNPスキーマ](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+- [Cilium1.20.3 ztunnelベータ](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ztunnel.rst)
+- [Ztunnel CA実装](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ztunnel/ca/ca_server.go)
+- [Ztunnelブートストラップ例](https://github.com/cilium/cilium/blob/v1.20.3/examples/kubernetes-ztunnel/generate-secrets.sh)
+- [暗号化範囲/strictモード](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption.rst)
+- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-wireguard.rst)
+- [IPsecと鍵ローテーション](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ipsec.rst)
+- [Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [HTTP/DNSポリシー](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
+- [デフォルト拒否動作](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/intro.rst)
+- [明示的デフォルト拒否API](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/rule.go)
+- [変更可能エンドポイント監査オプション](https://github.com/cilium/cilium/blob/v1.20.3/pkg/option/endpoint.go)
+- [エンドポイント設定CLI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/cmdref/cilium-dbg_endpoint_config.md)
+- [メトリクス](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/metrics.rst)
+- [SPIRE1.15.4サーバー設定](https://github.com/spiffe/spire/blob/v1.15.4/doc/spire_server.md)
+- [SPIRE Vault authority](https://github.com/spiffe/spire/blob/v1.15.4/doc/plugin_server_upstreamauthority_vault.md)
+- [SPIRE disk authority](https://github.com/spiffe/spire/blob/v1.15.4/doc/plugin_server_upstreamauthority_disk.md)
 - [Kafka ACL](https://kafka.apache.org/41/security/authorization-and-acls/)
 - [AWS STSエンドポイント](https://docs.aws.amazon.com/general/latest/gr/sts.html)
 - [WireGuardプロトコル](https://www.wireguard.com/protocol/)

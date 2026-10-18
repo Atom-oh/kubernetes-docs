@@ -1,8 +1,8 @@
 # Cuestionario de redes de EKS - Parte 2
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 16 de octubre de 2026
 
-Estas respuestas usan la propiedad del controlador y los requisitos previos de la [Parte 2](../../eks/03-eks-networking-part2.md): LBC 3.5.0 y Gateway API 1.6.0. Los comandos son ejemplos que modifican recursos al ejecutarse; las pruebas locales de esquemas/simulaciones no constituyen una implementación de EKS. Sustituya los marcadores de posición de cuenta/Región/recurso, use el kubeconfig previsto y preserve la propiedad de IAM/Helm/IaC de la plataforma.
+Estas respuestas usan la propiedad del controlador y los requisitos previos de la [Parte 2](../../eks/03-eks-networking-part2.md): LBC 3.6.0 y Gateway API 1.6.0. Los comandos son ejemplos que modifican recursos al ejecutarse; las pruebas locales de esquemas/simulaciones no constituyen una implementación de EKS. Sustituya los marcadores de posición de cuenta/Región/recurso, use el kubeconfig previsto y respete la responsabilidad de IAM/Helm/IaC definida por la plataforma.
 
 ### 1. ¿Qué tipo de balanceador de carga de AWS aprovisiona AWS Load Balancer Controller de forma predeterminada para los recursos Ingress de Kubernetes?
 
@@ -16,7 +16,7 @@ A. Classic Load Balancer (CLB) B. Network Load Balancer (NLB) C. Application Loa
 
 **Explicación:** AWS Load Balancer Controller aprovisiona de forma predeterminada un Application Load Balancer (ALB) para los recursos Ingress de Kubernetes. ALB es un balanceador de carga de capa 7 que gestiona tráfico HTTP/HTTPS y proporciona características como el enrutamiento basado en rutas, el enrutamiento basado en hosts y la terminación TLS para cumplir los requisitos de los recursos Ingress.
 
-LBC debe seleccionar la clase Ingress; otro controlador puede implementar un Ingress de forma diferente. El esquema público siguiente requiere subredes públicas configuradas intencionalmente, acceso de clientes mediante SG y Services de backend listos.
+LBC debe seleccionar la clase Ingress; otro controlador puede implementar un Ingress de forma diferente. El esquema público del ejemplo requiere que las subredes públicas, el acceso de los clientes mediante SG y los Services de backend listos se hayan configurado de forma deliberada.
 
 **Características principales:**
 
@@ -306,7 +306,7 @@ Verifique la conectividad de referencia y las rutas TCP permitidas/denegadas ant
 
 **Respuesta: `alb.ingress.kubernetes.io/security-groups`**
 
-Combine este fragmento de anotación en el Ingress previsto. Los ID de SG son inequívocos; una búsqueda por nombre coincide con la etiqueta `Name` de AWS, no con el atributo EC2 `groupName`.
+Combine este fragmento de anotación en el Ingress previsto. Los ID de SG identifican el grupo sin ambigüedad; la búsqueda por nombre usa la etiqueta `Name` de AWS, no el atributo EC2 `groupName`.
 ```yaml
 metadata:
   annotations:
@@ -327,7 +327,7 @@ La política IAM de la versión incluye los permisos EC2/ELB necesarios para tod
 
 **Respuesta: `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true`**
 
-Para los grupos de destino TCP/TLS, el atributo es configurable: los destinos de instancia se habilitan de forma predeterminada, los destinos IP se deshabilitan de forma predeterminada. Los grupos de destino UDP/TCP_UDP/QUIC/TCP_QUIC siempre conservan la IP de cliente y no pueden deshabilitarla. Este ejemplo TCP de destino IP IPv4 cambia el caso configurable:
+Para los grupos de destino TCP/TLS, el atributo es configurable: los destinos de instancia se habilitan de forma predeterminada, los destinos IP se deshabilitan de forma predeterminada. Los grupos de destino UDP/TCP_UDP/QUIC/TCP_QUIC siempre conservan la IP de cliente y no pueden deshabilitarla. Este ejemplo de TCP sobre IPv4 con destinos IP modifica el caso configurable:
 ```yaml
 apiVersion: v1
 kind: Service
@@ -426,7 +426,7 @@ aws wafv2 create-web-acl --region "$AWS_REGION" \
   --cli-binary-format raw-in-base64-out \
   --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=eks-ingress-training
 ```
-Las reglas administradas de SQLi/XSS, bots, reputación, basadas en tasa y personalizadas proporcionan sus respectivas protecciones solo después de configurarse y ajustarse; los cargos/características varían. Revise los falsos positivos en modo Count antes de habilitar la aplicación. Allow predeterminado sigue siendo permisivo mientras una regla cuenta.
+Las reglas administradas contra SQLi/XSS, bots y reputación, así como las reglas basadas en tasa y las personalizadas, solo ofrecen sus respectivas protecciones después de configurarse y ajustarse; los cargos y las funciones varían. Revise los falsos positivos en modo Count antes de habilitar la aplicación. Allow predeterminado sigue siendo permisivo mientras una regla cuenta.
 
 Los atributos `access_logs.s3.*` de ALB configuran logs de acceso de ALB en S3, no logs de WAF ni CloudWatch Logs. Configure los registros de WAF por separado con un destino aprobado de CloudWatch Logs/S3/Firehose y los permisos necesarios; las solicitudes muestreadas y las métricas de CloudWatch son independientes de los logs de solicitudes completos. Use la política IAM de controlador de versión revisada para la asociación y un rol de administración de seguridad separado para creación de ACL/reglas/logs. Aplique permisos de recursos con alcance donde sea compatible; no pegue una política comodín independiente sin restricciones como un rol completo de controlador.
 
@@ -647,7 +647,7 @@ Esta es una ruta lógica de sidecar, no una promesa de que cada paquete atravies
 
 Para Istio, elija una instalación documentada de sidecar/ambient para el tipo de cómputo. Fargate no puede ejecutar los DaemonSets/componentes privilegiados de nodo requeridos por algunos modos; verifique la compatibilidad en lugar de afirmar compatibilidad universal. No habilite dos inyectores de malla en un namespace. Configure recursos de proxy mediante configuraciones compatibles de Helm/instalación/carga de trabajo, no sobrescribiendo un ConfigMap de inyector con `pilot.resources` no relacionado. Mantenga la implementación de Prometheus/tracing y la configuración de exportación de malla separadas; los eliminados `IstioOperator.addonComponents.prometheus` y el inventado `App Mesh Mesh.spec.tracing` no son recetas de instalación utilizables.
 
-**Comparación histórica:** AWS finalizó el soporte de App Mesh el **September 30, 2026**; su consola y recursos ya no están disponibles. Una implementación existente de App Mesh debe migrar; no la introduzca como una nueva opción predeterminada de EKS. Su integración histórica con Fargate no es una garantía de compatibilidad futura. ECS Service Connect es una opción de ECS, no un reemplazo directo de EKS. Use un diseño de malla/plano de datos de EKS compatible y verifique la paridad de características para enrutamiento, reintentos, certificados, autorización, tracing y manejo de fallas.
+**Comparación histórica:** AWS finalizó el soporte de App Mesh el **30 de septiembre de 2026**; su consola y recursos ya no están disponibles. Una implementación existente de App Mesh debe migrar; no la introduzca como una nueva opción predeterminada de EKS. Su integración histórica con Fargate no es una garantía de compatibilidad futura. ECS Service Connect es una opción de ECS, no un reemplazo directo de EKS. Use un diseño de malla/plano de datos de EKS compatible y verifique la paridad de características para enrutamiento, reintentos, certificados, autorización, tracing y manejo de fallas.
 
 Las cifras originales de latencia «normalmente <10 ms» y sobrecarga de CPU/memoria «10–15 %» no tienen una fuente de medición verificada en este documento. Se conservan aquí como **estimaciones históricas no verificadas**, no como benchmarks ni garantías de dimensionamiento. Mida la latencia p50/p95/p99, el rendimiento, los errores y CPU/memoria con la misma combinación de solicitudes, TLS, muestreo de telemetría y carga antes/después de la inscripción. Incluya pruebas de despliegue de proxy, pérdida de nodo, pérdida de plano de control, rotación de certificados y amplificación por reintentos.
 
@@ -691,7 +691,7 @@ Problemas con las demás opciones:
 
 </details>
 
-### 12. ¿Cómo se habilitan los controladores Gateway de LBC 3.5.0?
+### 12. ¿Cómo se habilitan los controladores Gateway de LBC 3.6.0?
 
 - A. Siempre pase `--enable-gateway-api`
 - B. Detecte CRD compatibles con las gates reales habilitadas de forma predeterminada
@@ -755,7 +755,7 @@ Problemas con las demás opciones:
 </details>
 El listener `my-nlb-gateway` y el Service de backend deben existir en `gateway-demo`. TLSRoute con esta implementación no proporciona enrutamiento NLB basado en SNI; use el comportamiento TLS específico de la versión en lugar de suponer que todas las implementaciones de Gateway API se comportan igual.
 
-### 14. ¿Cómo configura LBC 3.5.0 un certificado estático para un ALB Gateway?
+### 14. ¿Cómo configura LBC 3.6.0 un certificado estático para un ALB Gateway?
 
 - A. Cree cualquier Secret llamado tls-cert
 - B. Use el ARN de ACM en LoadBalancerConfiguration

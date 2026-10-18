@@ -1,32 +1,30 @@
-# mTLS
+# mTLS {#mtls}
 
-Mutual TLS (mTLS) es una funcionalidad de seguridad central de Istio que cifra y autentica automáticamente la comunicación entre servicios.
+Mutual TLS (mTLS) es una función de seguridad fundamental de Istio que cifra y autentica automáticamente la comunicación entre servicios.
 
-## Índice
+## Índice {#table-of-contents}
 
 1. [Descripción general de mTLS](#mtls-overview)
 2. [Modos de mTLS](#mtls-modes)
-3. [Administración de certificados](#certificate-management)
+3. [Gestión de certificados](#certificate-management)
 4. [Configuración de PeerAuthentication](#peerauthentication-configuration)
 5. [Integración de mTLS con servicios de AWS](#mtls-integration-with-aws-services)
 6. [mTLS con servicios externos](#mtls-with-external-services)
 7. [Estrategia de migración](#migration-strategy)
 8. [Problemas comunes y soluciones](#common-issues-and-solutions)
-9. [Rendimiento y monitoreo](#performance-and-monitoring)
+9. [Rendimiento y supervisión](#performance-and-monitoring)
 
-<span id="mtls-overview"></span>
-
-## Descripción general de mTLS
+## Descripción general de mTLS {#mtls-overview}
 
 <p align="center">
   <img src="https://istio.io/latest/docs/concepts/security/id-prov.svg" alt="Aprovisionamiento de identidad de Istio" width="700">
 </p>
 
-Istio aplica automáticamente mTLS a la comunicación entre servicios, implementando una red Zero Trust.
+Auto mTLS selecciona TLS para los pares compatibles de la malla. En modo sidecar, utilice `STRICT` para rechazar el tráfico sin cifrar en el proxy receptor y AuthorizationPolicy para restringir las identidades. Auto mTLS por sí solo no constituye una política completa de confianza cero. El flujo de identidad siguiente describe los sidecars; el modo ambient utiliza ztunnel y, opcionalmente, waypoints.
 
-### Seguridad basada en identidad
+### Seguridad basada en identidad {#identity-based-security}
 
-Istio utiliza el estándar **SPIFFE (Secure Production Identity Framework for Everyone)** para asignar identidades sólidas a cada workload:
+Istio utiliza el estándar **SPIFFE (Secure Production Identity Framework for Everyone)** para asignar identidades sólidas a cada carga de trabajo:
 
 ```
 spiffe://cluster.local/ns/default/sa/productpage
@@ -40,50 +38,22 @@ spiffe://cluster.local/ns/default/sa/productpage
 ```
 
 **Proceso de aprovisionamiento de identidad**:
-1. Kubernetes crea un Pod y asigna un ServiceAccount
-2. Istio Agent se inicia dentro del Pod
-3. Agent envía una CSR (Certificate Signing Request) a Istiod
-4. Istiod emite un certificado X.509 según el SPIFFE ID
-5. Agent entrega el certificado a Envoy (protocolo SDS)
-6. Renovación automática de certificados (TTL predeterminado: 24 horas)
+1. Kubernetes crea un pod y le asigna una ServiceAccount.
+2. Istio Agent se inicia dentro del pod.
+3. Agent envía una CSR (solicitud de firma de certificado) a Istiod.
+4. Istiod emite un certificado X.509 basado en el SPIFFE ID.
+5. Agent entrega el certificado a Envoy mediante el protocolo SDS.
+6. Los certificados se renuevan automáticamente; el TTL predeterminado es de 24 horas.
 
-```mermaid
-flowchart LR
-    subgraph Pod1["Pod A"]
-        App1[Application]
-        Envoy1[Envoy<br/>Proxy]
-    end
+![El sidecar Envoy de cada pod recibe un certificado X.509 de istiod y cifra el tráfico entre pods con mTLS. El tráfico local de la aplicación hacia y desde cada sidecar permanece sin cifrar.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-0.png)
 
-    subgraph Pod2["Pod B"]
-        Envoy2[Envoy<br/>Proxy]
-        App2[Application]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-01-mtls-0.html)
 
-    Istiod[istiod<br/>Certificate Issuance]
+## Modos de mTLS {#mtls-modes}
 
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
+Estos ejemplos son alternativas. Una política sin selector en el espacio de nombres raíz de la malla, normalmente `istio-system`, se aplica a toda la malla. Ambient cifra el tráfico capturado de la malla mediante HBONE; no admite `DISABLE`, mientras que `STRICT` rechaza el tráfico que intenta eludir ese plano de datos.
 
-    Istiod -.->|Certificate| Envoy1
-    Istiod -.->|Certificate| Envoy2
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Istiod control;
-```
-
-<span id="mtls-modes"></span>
-
-## Modos de mTLS
-
-### Modo STRICT (recomendado)
+### Modo STRICT (recomendado) {#strict-mode-recommended}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -96,7 +66,7 @@ spec:
     mode: STRICT  # Only mTLS allowed
 ```
 
-### Modo PERMISSIVE (para migración)
+### Modo PERMISSIVE (para migración) {#permissive-mode-for-migration}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -109,7 +79,7 @@ spec:
     mode: PERMISSIVE  # Both mTLS and plaintext allowed
 ```
 
-### Modo DISABLE
+### Modo DISABLE {#disable-mode}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -122,86 +92,48 @@ spec:
     mode: DISABLE  # mTLS disabled
 ```
 
-<span id="certificate-management"></span>
+## Gestión de certificados {#certificate-management}
 
-## Administración de certificados
+### Certificado de la CA predeterminada de Istio {#istio-default-ca-certificate}
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/cert-hierarchy.svg" alt="Jerarquía de certificados" width="600">
-</p>
+De forma predeterminada, istiod crea una CA raíz autofirmada y la utiliza directamente para firmar los certificados de las cargas de trabajo. Utilizar una CA raíz mantenida sin conexión y una CA intermedia independiente para la firma es una decisión de despliegue en producción; esa jerarquía no se crea automáticamente.
 
-### Certificado de CA predeterminado de Istio
+El agente solicita de forma predeterminada un certificado de **24 horas** y programa su renovación aproximadamente a la mitad de su vigencia, con una variación aleatoria. La CA puede limitar la duración solicitada. Los certificados raíz e intermedios tienen ciclos de vida independientes. Examine el certificado emitido para comprobar su algoritmo y su vigencia reales.
 
-Istio genera automáticamente una CA raíz autofirmada durante la instalación. El diagrama anterior muestra la jerarquía de certificados de Istio:
-
-- **CA raíz**: Ancla de confianza de nivel superior
-- **CA intermedia**: CA intermedia para emitir certificados de workload
-- **Certificados de workload**: Certificados mTLS para cada servicio (renovación automática)
-
-```mermaid
-flowchart TD
-    subgraph IstioCA["Istio CA (istiod)"]
-        RootCA[Root CA<br/>Self-signed]
-        IntermediateCA[Intermediate CA<br/>Workload Certificate Issuance]
-    end
-
-    subgraph Workloads["Workloads"]
-        Cert1[Service A<br/>Certificate]
-        Cert2[Service B<br/>Certificate]
-        Cert3[Service C<br/>Certificate]
-    end
-
-    RootCA -->|Sign| IntermediateCA
-    IntermediateCA -->|Issue| Cert1
-    IntermediateCA -->|Issue| Cert2
-    IntermediateCA -->|Issue| Cert3
-
-    %% Style definitions
-    classDef ca fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef cert fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class RootCA,IntermediateCA ca;
-    class Cert1,Cert2,Cert3 cert;
-```
-
-**Propiedades predeterminadas del certificado**:
-- Período de validez: **90 días** (renovación automática: 24 horas antes de la expiración)
-- Tamaño de clave: RSA de 2048 bits
-- Algoritmo de firma: SHA-256
-
-### Verificación de certificados
+### Verificación de certificados {#certificate-verification}
 
 ```bash
 # 1. Check CA certificate
-kubectl get secret istio-ca-secret -n istio-system -o yaml
+kubectl get secret istio-ca-secret -n istio-system -o jsonpath='{.data.ca-cert\.pem}' | \
+  base64 -d | openssl x509 -noout -issuer -subject -dates
 
 # 2. Check workload certificate
 istioctl proxy-config secret <pod-name> -n <namespace>
 
 # 3. Certificate details
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -text -noout
 
 # 4. Check certificate expiration date
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -noout -dates
 ```
 
-### Uso de certificados de CA personalizados
+### Uso de certificados de CA personalizados {#using-custom-ca-certificates}
 
-En entornos de producción, se recomienda usar CA internas empresariales o CA públicas.
+Utilice una PKI privada capaz de emitir SAN de tipo URI para SPIFFE. Los certificados ACME públicos no son adecuados para la identidad de las cargas de trabajo. Este ejemplo de OpenSSL prepara una malla de prueba nueva; cree `istio-system` y `cacerts` antes de instalar istiod. En producción, proteja la clave raíz y manténgala sin conexión.
 
-#### Paso 1: Generar el certificado y la clave de CA
+#### Paso 1: Generar el certificado y la clave de la CA {#step-1-generate-ca-certificate-and-key}
 
 ```bash
 # 1. Generate Root CA
+umask 077
 openssl genrsa -out root-key.pem 4096
 
 openssl req -new -x509 -days 3650 -key root-key.pem \
-  -out root-cert.pem \
+  -out root-cert.pem -addext "basicConstraints=critical,CA:TRUE" \
   -subj "/C=US/ST=California/L=San Francisco/O=MyOrg/OU=IT/CN=Root CA"
 
 # 2. Generate Intermediate CA
@@ -212,8 +144,8 @@ openssl req -new -key ca-key.pem -out ca-cert.csr \
 
 # 3. Sign Intermediate CA with Root CA
 cat > ca-extensions.txt <<EOF
-basicConstraints=CA:TRUE
-keyUsage=keyCertSign,cRLSign
+basicConstraints=critical,CA:TRUE,pathlen:0
+keyUsage=critical,keyCertSign,cRLSign
 EOF
 
 openssl x509 -req -days 1825 -in ca-cert.csr \
@@ -224,7 +156,7 @@ openssl x509 -req -days 1825 -in ca-cert.csr \
 cat ca-cert.pem root-cert.pem > cert-chain.pem
 ```
 
-#### Paso 2: Crear un Secret de Kubernetes
+#### Paso 2: Crear un Secret de Kubernetes {#step-2-create-kubernetes-secret}
 
 ```bash
 kubectl create secret generic cacerts -n istio-system \
@@ -234,17 +166,11 @@ kubectl create secret generic cacerts -n istio-system \
   --from-file=cert-chain.pem=cert-chain.pem
 ```
 
-#### Paso 3: Reiniciar Istio
+#### Paso 3: Instalar la malla nueva {#step-3-install-the-new-mesh}
 
-```bash
-# Restart istiod to load new CA certificate
-kubectl rollout restart deployment/istiod -n istio-system
+Tras crear `cacerts`, instale una versión compatible y fijada de Istio siguiendo la [guía de instalación](../01-installation.md). No utilice este procedimiento de instalación inicial para sustituir la raíz de una malla en funcionamiento.
 
-# Restart all workloads to issue new certificates
-kubectl rollout restart deployment -n <namespace>
-```
-
-#### Paso 4: Verificación
+#### Paso 4: Verificación {#step-4-verification}
 
 ```bash
 # Verify CA certificate is loaded correctly
@@ -252,67 +178,15 @@ kubectl logs -l app=istiod -n istio-system | grep "Use plugged-in cert"
 
 # Verify workload certificates are issued by new CA
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -noout -issuer
 ```
 
-### Integración con AWS Certificate Manager (ACM)
+### Integración con AWS Private CA {#aws-private-ca-integration}
 
-Puede usar ACM Private CA para administrar los certificados de Istio.
+Utilice **cert-manager → AWS Private CA issuer → istio-csr** para firmar los certificados de las cargas de trabajo. Prepare un clúster nuevo sin Istio, una Private CA activa y permisos IAM para la ServiceAccount del emisor limitados a esa CA (`DescribeCertificateAuthority`, `GetCertificate`, `IssueCertificate`). Utilice EKS Pod Identity o IRSA. La CA debe permitir los SAN de SPIFFE y la vigencia solicitada.
 
-#### Paso 1: Crear una ACM Private CA
-
-```bash
-# Create ACM Private CA
-aws acm-pca create-certificate-authority \
-  --certificate-authority-configuration \
-    "KeyAlgorithm=RSA_4096,SigningAlgorithm=SHA256WITHRSA,Subject={CommonName=Istio CA}" \
-  --certificate-authority-type ROOT \
-  --tags Key=Name,Value=istio-root-ca
-
-# Save CA ARN
-CA_ARN=$(aws acm-pca list-certificate-authorities \
-  --query 'CertificateAuthorities[0].Arn' --output text)
-
-# Generate Root CA certificate
-aws acm-pca get-certificate-authority-csr \
-  --certificate-authority-arn $CA_ARN \
-  --output text > ca.csr
-
-aws acm-pca issue-certificate \
-  --certificate-authority-arn $CA_ARN \
-  --csr fileb://ca.csr \
-  --signing-algorithm SHA256WITHRSA \
-  --template-arn arn:aws:acm-pca:::template/RootCACertificate/V1 \
-  --validity Value=10,Type=YEARS
-
-# Install certificate
-CERT_ARN=$(aws acm-pca list-certificates \
-  --certificate-authority-arn $CA_ARN \
-  --query 'Certificates[0].Arn' --output text)
-
-aws acm-pca get-certificate \
-  --certificate-authority-arn $CA_ARN \
-  --certificate-arn $CERT_ARN \
-  --output text > root-cert.pem
-
-aws acm-pca import-certificate-authority-certificate \
-  --certificate-authority-arn $CA_ARN \
-  --certificate fileb://root-cert.pem
-```
-
-#### Paso 2: Instalar Cert-Manager + AWS PCA Issuer
-
-```bash
-# Install Cert-Manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
-
-# Install AWS PCA Issuer
-helm repo add awspca https://cert-manager.github.io/aws-privateca-issuer
-helm install aws-pca-issuer awspca/aws-privateca-issuer -n cert-manager
-```
-
-#### Paso 3: Crear AWSPCAIssuer
+Instale una versión de cert-manager compatible con Kubernetes; la versión 1.21 admite Kubernetes 1.33–1.36. Instale después AWS Private CA issuer. Sustituya el ARN siguiente por el de la CA seleccionada; un archivo YAML por sí solo no expande las variables del shell.
 
 ```yaml
 apiVersion: awspca.cert-manager.io/v1beta1
@@ -320,87 +194,68 @@ kind: AWSPCAClusterIssuer
 metadata:
   name: istio-ca
 spec:
-  arn: ${CA_ARN}
+  arn: arn:aws:acm-pca:us-west-2:123456789012:certificate-authority/REPLACE_WITH_CA_ID
   region: us-west-2
 ```
 
-#### Paso 4: Usar en Istio
+Cree `istio-root-ca` en el espacio de nombres `cert-manager` a partir de un paquete verificado de certificados raíz públicos (`ca.pem`). Configure después istio-csr con estos valores de Helm:
 
 ```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: istio-ca-cert
-  namespace: istio-system
-spec:
-  secretName: cacerts
-  commonName: "Istio CA"
-  isCA: true
-  duration: 87600h  # 10 years
-  renewBefore: 720h  # 30 days
-  issuerRef:
-    kind: AWSPCAClusterIssuer
-    name: istio-ca
+# istio-csr Helm values fragment
+app:
+  certmanager:
+    issuer:
+      group: awspca.cert-manager.io
+      kind: AWSPCAClusterIssuer
+      name: istio-ca
+  tls:
+    rootCAFile: /var/run/secrets/istio-csr/ca.pem
+volumeMounts:
+- name: root-ca
+  mountPath: /var/run/secrets/istio-csr
+  readOnly: true
+volumes:
+- name: root-ca
+  secret:
+    secretName: istio-root-ca
 ```
 
-### Política de renovación de certificados
+Siga la [guía de instalación actual de istio-csr](https://cert-manager.io/docs/usage/istio-csr/installation/) para obtener el chart completo y el manifiesto de instalación de Istio compatibles con la versión. Este último deshabilita la CA de istiod (`ENABLE_CA_SERVER=false`), establece el endpoint de CA en `cert-manager-istio-csr.cert-manager.svc:443` y monta el certificado emitido para el servicio istiod y la raíz fijada. Utilice `istioctl install -f` con ese manifiesto. Para ambient también debe configurar en istio-csr las ServiceAccount de ztunnel de confianza. Esa guía no admite instalar istio-csr después de una instalación de Istio ya existente.
+
+Un recurso `Certificate` de cert-manager suele crear `tls.crt`, `tls.key` y, en algunos casos, `ca.crt`. Llamar `cacerts` a su Secret **no** genera los archivos `ca-cert.pem`, `ca-key.pem`, `root-cert.pem` y `cert-chain.pem` que necesita Istio. La integración mediante istio-csr evita depender de ese Secret incompatible.
+
+### Política de renovación de certificados {#certificate-renewal-policy}
+
+El agente sidecar controla la duración que solicita y la ventana de rotación. Lo siguiente es una entrada para `istioctl`; aplíquela mediante el flujo de instalación y reinicie gradualmente los proxies seleccionados cuando cambie su configuración de arranque:
 
 ```yaml
-# Configure certificate policy with Istio Operator
+# Input to istioctl install -f; not kubectl apply
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
-metadata:
-  name: istio-control-plane
-  namespace: istio-system
 spec:
   meshConfig:
-    certificates:
-      - secretName: dns.istio-system-service-account
-        dnsNames:
-          - istiod.istio-system.svc
-          - istiod.istio-system
-    caCertificates:
-      - secretName: cacerts
-        certProvider: cert-manager
-  values:
-    pilot:
-      env:
-        # Workload certificate TTL (default: 24 hours)
-        CITADEL_CERT_TTL: "24h"
-        # Certificate renewal grace period (default: 15 minutes)
-        CITADEL_GRACE_PERIOD: "15m"
+    defaultConfig:
+      proxyMetadata:
+        SECRET_TTL: "24h"
+        SECRET_GRACE_PERIOD_RATIO: "0.5"
 ```
 
-### Rotación de certificados
+`SECRET_TTL` tiene un valor predeterminado de 24h y `SECRET_GRACE_PERIOD_RATIO` de 0.5; la renovación también incluye una variación aleatoria. Son ajustes del agente, no los antiguos ejemplos de `CITADEL_CERT_TTL`/`CITADEL_GRACE_PERIOD`. El emisor real del certificado puede acortar su vigencia.
 
-```bash
-# 1. Generate new CA certificate (repeat steps above)
+### Rotación de certificados {#certificate-rotation}
 
-# 2. Update existing Secret
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=ca-cert.pem=new-ca-cert.pem \
-  --from-file=ca-key.pem=new-ca-key.pem \
-  --from-file=root-cert.pem=new-root-cert.pem \
-  --from-file=cert-chain.pem=new-cert-chain.pem \
-  --dry-run=client -o yaml | kubectl apply -f -
+La renovación de certificados de las cargas de trabajo, la renovación de una CA intermedia bajo la misma raíz y la sustitución de la raíz son operaciones distintas. Para cambiar la raíz:
 
-# 3. Restart istiod (zero-downtime rolling update)
-kubectl rollout restart deployment/istiod -n istio-system
+1. Distribuya un paquete con **las raíces antigua y nueva** a todas las cargas de trabajo, gateways y clústeres afectados. Verifique la confianza activa antes de cambiar el emisor.
+2. Incorpore el nuevo emisor y emita certificados nuevos para las cargas de trabajo mientras ambas raíces sigan siendo de confianza.
+3. Compruebe el estado de SDS, las cadenas de certificados, el tráfico entre clústeres y los certificados antiguos que aún queden. Tenga en cuenta las cargas de trabajo desconectadas y las conexiones de larga duración.
+4. Retire la raíz antigua solo cuando hayan terminado la migración y la ventana de reversión.
 
-# 4. Gradual workload certificate renewal
-# Method 1: Wait for automatic renewal (within 24 hours)
-# Method 2: Manual rolling restart
-for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
-  echo "Restarting deployments in namespace: $ns"
-  kubectl rollout restart deployment -n $ns
-done
-```
+Utilice el procedimiento de rotación admitido por el proveedor de CA elegido. Sobrescribir `cacerts` y reiniciar en un solo paso no garantiza la continuidad del servicio. Evite reiniciar todos los espacios de nombres para forzar la renovación.
 
-<span id="peerauthentication-configuration"></span>
+## Configuración de PeerAuthentication {#peerauthentication-configuration}
 
-## Configuración de PeerAuthentication
-
-### Configuración global
+### Configuración global {#global-configuration}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -413,7 +268,7 @@ spec:
     mode: STRICT
 ```
 
-### Configuración a nivel de Namespace
+### Configuración por espacio de nombres {#namespace-level-configuration}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -426,7 +281,7 @@ spec:
     mode: STRICT
 ```
 
-### Configuración a nivel de workload
+### Configuración por carga de trabajo {#workload-level-configuration}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -443,7 +298,7 @@ spec:
     mode: STRICT
 ```
 
-### Configuración a nivel de puerto
+### Configuración por puerto {#port-level-configuration}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -462,52 +317,19 @@ spec:
       mode: DISABLE  # mTLS disabled for port 8080
 ```
 
-<span id="mtls-integration-with-aws-services"></span>
+## Integración de mTLS con servicios de AWS {#mtls-integration-with-aws-services}
 
-## Integración de mTLS con servicios de AWS
-
-### AWS Application Load Balancer (ALB) y mTLS
+### AWS Application Load Balancer (ALB) y mTLS {#aws-application-load-balancer-alb-and-mtls}
 
 ALB admite mTLS basado en certificados de cliente.
 
-```mermaid
-flowchart LR
-    Client[Client<br/>Client Cert]
-    ALB[ALB<br/>mTLS Termination]
-    Gateway[Istio Gateway<br/>TLS]
-    Service[Backend Service<br/>Envoy mTLS]
+![Un cliente presenta un certificado que AWS ALB verifica al terminar la conexión TLS. ALB reenvía el tráfico mediante TLS al Istio Gateway, que lo vuelve a cifrar con mTLS de Envoy hacia el servicio backend.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-2.png)
 
-    Client <-->|mTLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-01-mtls-2.html)
 
-    %% Style definitions
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+#### Configurar el listener de ALB y el gateway {#configure-the-alb-listener-and-gateway}
 
-    %% Class applications
-    class Client client;
-    class ALB aws;
-    class Gateway,Service istio;
-```
-
-#### Paso 1: Configurar mTLS en ALB
-
-```bash
-# 1. Create Trust Store (upload CA certificate)
-aws elbv2 create-trust-store \
-  --name istio-client-trust-store \
-  --ca-certificates-bundle-s3-bucket my-bucket \
-  --ca-certificates-bundle-s3-key ca-bundle.pem
-
-# 2. Configure mTLS on ALB listener
-aws elbv2 modify-listener \
-  --listener-arn arn:aws:elasticloadbalancing:region:account:listener/app/my-alb/xxx \
-  --mutual-authentication Mode=verify,TrustStoreArn=arn:aws:elasticloadbalancing:region:account:truststore/istio-client-trust-store/xxx
-```
-
-#### Paso 2: Configuración de AWS Load Balancer Controller
+Cree un almacén de confianza de ALB a partir del paquete de certificados de las CA de clientes y utilice su nombre más abajo. AWS Load Balancer Controller gestiona este Ingress y los ajustes de su listener. El deployment del gateway debe existir previamente con la etiqueta `istio: ingressgateway`, un Secret TLS `gateway-cert` y un VirtualService asociado a `istio-system/public-gateway` que dirija `api.example.com` a la aplicación.
 
 ```yaml
 apiVersion: v1
@@ -515,27 +337,47 @@ kind: Service
 metadata:
   name: istio-gateway
   namespace: istio-system
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-    # mTLS configuration
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account:certificate/xxx"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
-    service.beta.kubernetes.io/aws-load-balancer-mutual-authentication: '[{"port": 443, "mode": "verify", "trustStore": "arn:aws:elasticloadbalancing:region:account:truststore/istio-client-trust-store/xxx"}]'
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     istio: ingressgateway
   ports:
   - name: https
     port: 443
     targetPort: 8443
-```
-
-#### Paso 3: Verificar el certificado de cliente en Istio Gateway
-
-```yaml
+  - name: status-port
+    port: 15021
+    targetPort: 15021
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: istio-edge
+  namespace: istio-system
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:123456789012:certificate/REPLACE_WITH_CERT_ID
+    alb.ingress.kubernetes.io/mutual-authentication: '[{"port":443,"mode":"verify","trustStore":"istio-client-trust-store","ignoreClientCertificateExpiry":false}]'
+    alb.ingress.kubernetes.io/backend-protocol: HTTPS
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-port: '15021'
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz/ready
+spec:
+  ingressClassName: alb
+  rules:
+  - host: api.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: istio-gateway
+            port:
+              number: 443
+---
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
@@ -546,288 +388,113 @@ spec:
     istio: ingressgateway
   servers:
   - port:
-      number: 8443
+      number: 443
       name: https
       protocol: HTTPS
     tls:
-      mode: SIMPLE  # ALB already completed mTLS verification
+      mode: SIMPLE
       credentialName: gateway-cert
     hosts:
-    - "*.example.com"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio-envoy-custom
-  namespace: istio-system
-data:
-  custom-bootstrap.yaml: |
-    static_resources:
-      listeners:
-      - name: http_listener
-        address:
-          socket_address:
-            address: 0.0.0.0
-            port_value: 8443
-        filter_chains:
-        - filters:
-          - name: envoy.filters.network.http_connection_manager
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-              # Verify client certificate headers forwarded from ALB
-              forward_client_cert_details: APPEND_FORWARD
-              set_current_client_cert_details:
-                subject: true
-                cert: true
-                chain: true
-                dns: true
-                uri: true
+    - api.example.com
 ```
 
-#### Paso 4: Reenviar la información del certificado de cliente
+El modo `verify` de ALB valida el certificado del cliente durante la negociación TLS. Su modo `passthrough` reenvía la cadena de certificados para que la aplicación la valide, pero también termina TLS. Los grupos de destino HTTPS cifran el tráfico de ALB al gateway, aunque **ALB no valida los certificados de los destinos**. Restrinja el tráfico hacia los destinos al grupo de seguridad de ALB y a los puertos de comprobación de estado. Un Service ClusterIP por sí solo no impide que otros pods del clúster lleguen al gateway.
 
-ALB reenvía la información del certificado de cliente como encabezados HTTP:
+ALB genera `X-Amzn-Mtls-Clientcert-Serial-Number`, `-Subject`, `-Issuer`, `-Validity` y `-Leaf`. Estas cabeceras HTTP son afirmaciones de identidad emitidas por el perímetro de confianza; no representan una sesión TLS del cliente en Envoy. Impida el acceso directo al origen y elimine las cabeceras de identidad proporcionadas por el cliente que puedan entrar en conflicto. En los backends, exija la identidad autenticada del gateway dentro de la malla y aplique después la autorización de la aplicación a los atributos verificados. La mera presencia de una cabecera o una cadena Subject no basta. Un ConfigMap arbitrario con YAML de arranque de Envoy no configura el gateway.
 
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: verify-client-cert
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  - when:
-    - key: request.headers[x-amzn-mtls-clientcert-serial-number]
-      values: ["*"]
-    - key: request.headers[x-amzn-mtls-clientcert-subject]
-      values: ["CN=trusted-client,O=MyOrg*"]
-```
+### Amazon CloudFront y mTLS {#amazon-cloudfront-and-mtls}
 
-**Encabezados reenviados por ALB**:
-- `X-Amzn-Mtls-Clientcert-Serial-Number`: Número de serie del certificado
-- `X-Amzn-Mtls-Clientcert-Subject`: Subject DN del certificado
-- `X-Amzn-Mtls-Clientcert-Issuer`: Issuer DN del certificado
-- `X-Amzn-Mtls-Clientcert-Validity`: Período de validez
-- `X-Amzn-Mtls-Clientcert-Leaf`: Certificado de cliente (PEM)
+CloudFront admite mTLS nativo para los clientes. Utilice un almacén de confianza de CloudFront con el paquete aprobado de certificados de las CA de clientes y `ViewerMtlsConfig.Mode=required` para exigir un certificado válido. El almacén lee el paquete de S3 cuando se crea o actualiza; modificar solo el objeto de S3 no lo renueva. Actualmente, mTLS para los clientes requiere HTTP/2 en lugar de HTTP/3, y todos los comportamientos de caché deben rechazar o redirigir HTTP.
 
-### Amazon CloudFront y mTLS
+#### Actualizar la distribución seleccionada {#update-the-selected-distribution}
 
-CloudFront admite la verificación de certificados de cliente.
-
-```mermaid
-flowchart LR
-    Client[Client<br/>Client Cert]
-    CloudFront[CloudFront<br/>mTLS + Edge]
-    ALB[ALB<br/>TLS]
-    Gateway[Istio Gateway]
-    Service[Backend Service<br/>Envoy mTLS]
-
-    Client <-->|mTLS| CloudFront
-    CloudFront <-->|TLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
-
-    %% Style definitions
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class CloudFront,ALB aws;
-    class Gateway,Service istio;
-```
-
-#### Paso 1: Crear una distribución de CloudFront
+El ejemplo siguiente conserva la configuración existente completa y utiliza su ETag. Antes de aplicarlo, revise la distribución seleccionada, los ajustes HTTPS del origen, todos los comportamientos de caché y el almacén de confianza. Utilice una AWS CLI actual que admita la API de mTLS para clientes.
 
 ```bash
-# 1. Upload Trust Store (CA certificate) to S3
-aws s3 cp ca-bundle.pem s3://my-bucket/ca-bundle.pem
-
-# 2. Create CloudFront distribution
-cat > cloudfront-config.json <<EOF
-{
-  "CallerReference": "istio-mtls-$(date +%s)",
-  "Origins": {
-    "Quantity": 1,
-    "Items": [
-      {
-        "Id": "istio-gateway",
-        "DomainName": "k8s-istiosystem-istiogateway-xxx.elb.us-west-2.amazonaws.com",
-        "CustomOriginConfig": {
-          "HTTPPort": 80,
-          "HTTPSPort": 443,
-          "OriginProtocolPolicy": "https-only",
-          "OriginSslProtocols": {
-            "Quantity": 1,
-            "Items": ["TLSv1.2"]
-          }
-        }
-      }
-    ]
-  },
-  "DefaultCacheBehavior": {
-    "TargetOriginId": "istio-gateway",
-    "ViewerProtocolPolicy": "https-only",
-    "TrustedSigners": {
-      "Enabled": false,
-      "Quantity": 0
-    },
-    "ForwardedValues": {
-      "QueryString": true,
-      "Headers": {
-        "Quantity": 1,
-        "Items": ["*"]
-      }
-    },
-    "MinTTL": 0
-  },
-  "ViewerCertificate": {
-    "CloudFrontDefaultCertificate": false,
-    "ACMCertificateArn": "arn:aws:acm:us-east-1:account:certificate/xxx",
-    "SSLSupportMethod": "sni-only",
-    "MinimumProtocolVersion": "TLSv1.2_2021"
-  }
-}
-EOF
-
-aws cloudfront create-distribution --distribution-config file://cloudfront-config.json
-
-# 3. Configure mTLS on CloudFront
-DIST_ID=$(aws cloudfront list-distributions --query 'DistributionList.Items[0].Id' --output text)
-
-aws cloudfront update-distribution \
-  --id $DIST_ID \
-  --distribution-config '{
-    "ViewerCertificate": {
-      "ACMCertificateArn": "arn:aws:acm:us-east-1:account:certificate/xxx",
-      "SSLSupportMethod": "sni-only",
-      "MinimumProtocolVersion": "TLSv1.2_2021",
-      "CertificateSource": "acm"
-    },
-    "CustomOriginConfig": {
-      "OriginSslProtocols": {
-        "Quantity": 1,
-        "Items": ["TLSv1.2"]
+# Existing distribution and trust store selected explicitly by the operator.
+DIST_ID=REPLACE_WITH_DISTRIBUTION_ID
+TRUST_STORE_ID=REPLACE_WITH_TRUST_STORE_ID
+aws cloudfront get-distribution-config --id "$DIST_ID" --output json > dist-before.json
+ETAG=$(jq -r '.ETag' dist-before.json)
+jq --arg trust "$TRUST_STORE_ID" '
+  .DistributionConfig
+  | .HttpVersion = "http2"
+  | .DefaultCacheBehavior.ViewerProtocolPolicy = "https-only"
+  | (if .CacheBehaviors.Quantity > 0 then
+       .CacheBehaviors.Items |= map(.ViewerProtocolPolicy = "https-only")
+     else . end)
+  | .ViewerMtlsConfig = {
+      Mode: "required",
+      TrustStoreConfig: {
+        TrustStoreId: $trust,
+        AdvertiseTrustStoreCaNames: true,
+        IgnoreCertificateExpiry: false
       }
     }
-  }'
+' dist-before.json > dist-mtls.json
+# Review the complete diff before applying to the selected distribution.
+diff -u <(jq '.DistributionConfig' dist-before.json) dist-mtls.json || true
+aws cloudfront update-distribution --id "$DIST_ID" --if-match "$ETAG" \
+  --distribution-config file://dist-mtls.json
 ```
 
-#### Paso 2: Verificar el certificado con CloudFront Function
+#### Reenviar y autorizar la identidad del certificado {#forward-and-authorize-certificate-identity}
+
+Utilice una política de solicitudes al origen para reenviar únicamente las cabeceras `CloudFront-Viewer-Cert-*` necesarias: `Present`, `Sha256`, `Serial-Number`, `Issuer`, `Subject` y, de forma opcional, `Validity`/`Pem`. La cabecera PEM solo está disponible para el origen, no para las funciones de borde. Para respuestas específicas de cada usuario, deshabilite la caché o utilice una clave de caché que tenga en cuenta la identidad. Una política de solicitudes al origen no modifica la clave de caché.
+
+Una CloudFront Function opcional para viewer-request puede aplicar una lista de identidades permitidas **después de la verificación mTLS nativa**. Una huella digital identifica el certificado; los números de serie solo son únicos dentro de un mismo emisor. Mantenga la lista sincronizada con la rotación de los certificados de clientes:
 
 ```javascript
+// Additional authorization after native CloudFront viewer mTLS verification.
 function handler(event) {
-    var request = event.request;
-    var headers = request.headers;
-
-    // Headers forwarded by CloudFront after client certificate verification
-    var clientCertSerial = headers['cloudfront-viewer-tls-client-cert-serial-number'];
-    var clientCertSubject = headers['cloudfront-viewer-tls-client-cert-subject'];
-
-    if (!clientCertSerial || !clientCertSubject) {
-        return {
-            statusCode: 403,
-            statusDescription: 'Forbidden',
-            body: 'Client certificate required'
-        };
+    var fingerprint = event.request.headers['cloudfront-viewer-cert-sha256'];
+    var allowed = ['REPLACE_WITH_VERIFIED_CERT_SHA256'];
+    if (!fingerprint || allowed.indexOf(fingerprint.value) === -1) {
+        return {statusCode: 403, statusDescription: 'Forbidden'};
     }
-
-    // Check allowed certificate serial numbers
-    var allowedSerials = ['1234567890ABCDEF', 'FEDCBA0987654321'];
-    if (!allowedSerials.includes(clientCertSerial.value)) {
-        return {
-            statusCode: 403,
-            statusDescription: 'Forbidden',
-            body: 'Invalid client certificate'
-        };
-    }
-
-    // Forward certificate information to Istio
-    headers['x-client-cert-serial'] = clientCertSerial;
-    headers['x-client-cert-subject'] = clientCertSubject;
-
-    return request;
+    return event.request;
 }
 ```
 
-#### Paso 3: Verificar los encabezados de CloudFront en Istio
+Exija que el origen acepte tráfico únicamente de la distribución prevista mediante los controles de acceso al origen, el diseño de red y la autenticación del origen admitidos. Un backend no debe confiar en estas cabeceras cuando proceden de cualquier cliente. La validación del certificado del cliente termina en CloudFront; HTTPS hacia el origen constituye otra sesión TLS. Consulte la [configuración de mTLS de CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/enable-mtls-distributions.html) y las [cabeceras de certificados](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewer-mtls-headers.html).
 
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: verify-cloudfront-client-cert
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  - when:
-    - key: request.headers[x-client-cert-serial]
-      values:
-      - "1234567890ABCDEF"
-      - "FEDCBA0987654321"
-    - key: request.headers[x-client-cert-subject]
-      values: ["CN=trusted-client,O=MyOrg*"]
-```
+### Seguridad entre varios saltos TLS {#security-across-multiple-tls-hops}
 
-### Arquitectura mTLS de extremo a extremo
+El diagrama siguiente utiliza sesiones TLS independientes. Su título histórico «End-to-End mTLS» no significa que el certificado del cliente sea la identidad de una carga de trabajo de la malla. Los saltos de CloudFront a ALB y de ALB al gateway utilizan TLS con autenticación del servidor y cifrado, además de afirmaciones de identidad reenviadas; no transportan la sesión mTLS del cliente a través de todos los saltos.
 
-mTLS en toda la ruta desde el cliente hasta el backend:
+![La conexión mTLS del cliente termina en CloudFront. El tráfico continúa mediante TLS por ALB y el Istio Gateway, y la malla Istio establece después mTLS de Envoy entre cada par de los tres servicios backend.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-4.png)
 
-```mermaid
-flowchart TB
-    Client[Client<br/>Client Cert]
-
-    subgraph AWS ["AWS Edge"]
-        CF[CloudFront<br/>mTLS Verification]
-        ALB[ALB<br/>Header Forwarding]
-    end
-
-    subgraph EKS ["EKS Cluster"]
-        Gateway[Istio Gateway<br/>Header Validation]
-
-        subgraph Mesh ["Service Mesh"]
-            ServiceA[Service A<br/>Envoy mTLS]
-            ServiceB[Service B<br/>Envoy mTLS]
-            ServiceC[Service C<br/>Envoy mTLS]
-        end
-    end
-
-    Client <-->|1\. mTLS| CF
-    CF -->|2\. TLS + Headers| ALB
-    ALB -->|3\. TLS + Headers| Gateway
-    Gateway <-->|4\. mTLS| ServiceA
-    ServiceA <-->|5\. mTLS| ServiceB
-    ServiceB <-->|6\. mTLS| ServiceC
-
-    %% Style definitions
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% Class applications
-    class Client client;
-    class CF,ALB aws;
-    class Gateway,ServiceA,ServiceB,ServiceC istio;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-01-mtls-4.html)
 
 **Seguridad por segmento**:
-1. **Cliente -> CloudFront**: mTLS (verificación del certificado de cliente)
-2. **CloudFront -> ALB**: TLS + encabezados con información del certificado
-3. **ALB -> Istio Gateway**: TLS + encabezados con información del certificado
-4. **Dentro de Istio Mesh**: mTLS automático (Envoy a Envoy)
+1. **Cliente -> CloudFront**: mTLS, con verificación del certificado del cliente.
+2. **CloudFront -> ALB**: TLS y cabeceras con información del certificado.
+3. **ALB -> Istio Gateway**: TLS y cabeceras con información del certificado.
+4. **Dentro de la malla Istio**: mTLS automático entre proxies Envoy.
 
-<span id="mtls-with-external-services"></span>
+## mTLS con servicios externos {#mtls-with-external-services}
 
-## mTLS con servicios externos
+### Integración con sistemas heredados {#legacy-system-integration}
 
-### Integración con sistemas heredados
+Para un servidor heredado que admita HTTPS convencional, un sidecar puede iniciar TLS. La aplicación envía `http://legacy.external.com:80`; el proxy se conecta al puerto 443. Si la aplicación ya envía HTTPS, mantenga ese tráfico opaco y no añada otra capa TLS con esta regla. Las CA privadas del servidor necesitan un paquete explícito de CA de confianza.
 
 ```yaml
-# When legacy system doesn't support mTLS
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: legacy-system
+  namespace: default
+spec:
+  hosts: [legacy.external.com]
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+  - number: 80
+    targetPort: 443
+    name: http
+    protocol: HTTP
+---
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: legacy-system
@@ -836,89 +503,63 @@ spec:
   host: legacy.external.com
   trafficPolicy:
     tls:
-      mode: SIMPLE  # Use one-way TLS only
----
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: legacy-system
-  namespace: default
-spec:
-  hosts:
-  - legacy.external.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
+      mode: SIMPLE
+      sni: legacy.external.com
+      subjectAltNames: [legacy.external.com]
 ```
 
-### Autenticación de cliente mTLS para API externas
+### Autenticación de cliente mTLS para API externas {#external-api-mtls-client-authentication}
 
-Cuando Istio necesita presentar un certificado de cliente a una API externa:
+Para iniciar mTLS a partir de HTTP, coloque la cadena de certificados del cliente, su clave y el paquete de confianza del servidor en el **espacio de nombres del proxy cliente**. El ejemplo de sidecar con `credentialName` requiere el selector de carga de trabajo del DestinationRule siguiente. Los SAN del certificado deben coincidir con `api.external.com`.
+
+```bash
+kubectl create secret generic client-mtls-credential -n default \
+  --from-file=tls.crt=client-chain.pem \
+  --from-file=tls.key=client-key.pem \
+  --from-file=ca.crt=server-ca.pem
+```
 
 ```yaml
-# 1. Create client certificate Secret
-apiVersion: v1
-kind: Secret
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
 metadata:
-  name: client-mtls-credential
-  namespace: istio-system
-type: kubernetes.io/tls
-data:
-  tls.crt: <base64-encoded-cert>
-  tls.key: <base64-encoded-key>
-  ca.crt: <base64-encoded-ca>
+  name: external-api
+  namespace: default
+spec:
+  hosts: [api.external.com]
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+  - number: 80
+    targetPort: 443
+    name: http
+    protocol: HTTP
 ---
-# 2. Configure client certificate in DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-api-mtls
   namespace: default
 spec:
   host: api.external.com
+  workloadSelector:
+    matchLabels:
+      app: external-api-client
   trafficPolicy:
     tls:
-      mode: MUTUAL  # Use mTLS
-      clientCertificate: /etc/certs/tls.crt
-      privateKey: /etc/certs/tls.key
-      caCertificates: /etc/certs/ca.crt
----
-# 3. Register external API with ServiceEntry
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: external-api
-  namespace: default
-spec:
-  hosts:
-  - api.external.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
+      mode: MUTUAL
+      credentialName: client-mtls-credential
+      sni: api.external.com
+      subjectAltNames: [api.external.com]
 ```
 
-### mTLS externo mediante Egress Gateway
+La carga de trabajo seleccionada envía `http://api.external.com:80`; solo su proxy inicia mTLS. Este método y el del egress gateway descrito a continuación son alternativas.
+
+### mTLS externo mediante egress gateway {#external-mtls-via-egress-gateway}
+
+Instale un egress gateway siguiendo la [guía de control de salida](../traffic-management/11-egress-control.md). Este ejemplo presupone el Service `istio-egressgateway.istio-system.svc.cluster.local`, el puerto de servicio 443 y la etiqueta de pod del gateway `istio: egressgateway`. Mantenga el ServiceEntry anterior visible desde ambos espacios de nombres, omita el DestinationRule del cliente directo y cree el Secret de credenciales del cliente en `istio-system` para el gateway.
 
 ```yaml
-# 1. Deploy Egress Gateway
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  components:
-    egressGateways:
-    - name: istio-egressgateway
-      enabled: true
-      k8s:
-        serviceAnnotations:
-          networking.istio.io/exportTo: "*"
----
-# 2. Gateway resource
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
@@ -930,76 +571,85 @@ spec:
   servers:
   - port:
       number: 443
-      name: tls
-      protocol: TLS
-    hosts:
-    - api.external.com
+      name: https
+      protocol: HTTPS
+    hosts: [api.external.com]
     tls:
-      mode: ISTIO_MUTUAL  # mTLS inside mesh
+      mode: ISTIO_MUTUAL
 ---
-# 3. Route traffic with VirtualService
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: to-egress-gateway
+  namespace: default
+spec:
+  host: istio-egressgateway.istio-system.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+      sni: api.external.com
+---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: external-api-through-egress
   namespace: default
 spec:
-  hosts:
-  - api.external.com
-  gateways:
-  - mesh  # From inside mesh
-  - istio-system/egress-gateway  # To Egress Gateway
+  hosts: [api.external.com]
+  gateways: [mesh, istio-system/egress-gateway]
   http:
   - match:
-    - gateways:
-      - mesh
-      port: 443
+    - gateways: [mesh]
+      port: 80
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
         port:
           number: 443
   - match:
-    - gateways:
-      - istio-system/egress-gateway
+    - gateways: [istio-system/egress-gateway]
       port: 443
     route:
     - destination:
         host: api.external.com
         port:
-          number: 443
+          number: 80
 ---
-# 4. DestinationRule (from Egress Gateway to external)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: external-api-mtls
+  name: external-api-from-egress
   namespace: istio-system
 spec:
   host: api.external.com
+  workloadSelector:
+    matchLabels:
+      istio: egressgateway
   trafficPolicy:
     tls:
       mode: MUTUAL
-      clientCertificate: /etc/istio/egress-certs/tls.crt
-      privateKey: /etc/istio/egress-certs/tls.key
-      caCertificates: /etc/istio/egress-certs/ca.crt
+      credentialName: client-mtls-credential
+      sni: api.external.com
+      subjectAltNames: [api.external.com]
 ```
 
-<span id="migration-strategy"></span>
+El tráfico sigue esta ruta: HTTP de la aplicación:80 → ISTIO_MUTUAL del gateway:443 → MUTUAL del servidor externo:443; el puerto 80 de ServiceEntry se asigna a targetPort 443. Verifique los secretos SDS del gateway, los clústeres generados, la validación de SAN del servidor y el tráfico de prueba. Dirigir el tráfico a través de un gateway no impide eludirlo; aplique las restricciones de salida por separado mediante los controles de red correspondientes.
 
-## Estrategia de migración
+## Estrategia de migración {#migration-strategy}
 
-### Paso 1: Comprobar el estado actual
+### Paso 1: Comprobar el estado actual {#step-1-check-current-state}
 
 ```bash
 # Check current mTLS configuration
 kubectl get peerauthentication -A
 
 # Check mTLS status by service
-istioctl authn tls-check <pod-name> -n <namespace>
+istioctl proxy-config clusters <pod-name> -n <namespace> -o json
 ```
 
-### Paso 2: Cambiar al modo PERMISSIVE
+Utilice esta secuencia únicamente para una migración planificada. Limite cualquier excepción de tráfico sin cifrar al espacio de nombres o a la carga de trabajo más pequeña que la necesite. No reduzca la protección de una malla que ya utilice STRICT solo para diagnosticar un fallo.
+
+### Paso 2: Cambiar al modo PERMISSIVE {#step-2-switch-to-permissive-mode}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -1012,19 +662,11 @@ spec:
     mode: PERMISSIVE  # Allow both mTLS and plaintext
 ```
 
-### Paso 3: Monitoreo
+### Paso 3: Supervisión {#step-3-monitoring}
 
-```bash
-# Verify mTLS connections
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/stats/prometheus | grep ssl
+Utilice las métricas `istio_requests_total`/`istio_tcp_connections_opened_total` emitidas por el destino y agrupadas por `connection_security_policy` para localizar el tráfico sin cifrar observado. Genere tráfico representativo y examine los clústeres y certificados efectivos de los proxies. La ausencia de métricas no demuestra que no existan clientes que envíen tráfico sin cifrar.
 
-# Verify plaintext connections
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/stats/prometheus | grep plaintext
-```
-
-### Paso 4: Cambiar al modo STRICT
+### Paso 4: Cambiar al modo STRICT {#step-4-switch-to-strict-mode}
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -1037,11 +679,9 @@ spec:
     mode: STRICT  # Only mTLS allowed
 ```
 
-<span id="common-issues-and-solutions"></span>
+## Problemas comunes y soluciones {#common-issues-and-solutions}
 
-## Problemas comunes y soluciones
-
-### 1. Error de conexión mTLS
+### 1. Fallo de conexión mTLS {#1-mtls-connection-failure}
 
 **Síntomas**:
 ```
@@ -1061,7 +701,7 @@ kubectl get destinationrule -A -o yaml | grep -A 5 "trafficPolicy"
 istioctl proxy-config secret <pod-name> -n <namespace>
 
 # 4. Verify TLS connection
-istioctl authn tls-check <source-pod> <dest-service> -n <namespace>
+istioctl proxy-config clusters <source-pod> -n <namespace> --fqdn <dest-service> -o json
 
 # 5. Check Envoy logs in detail
 kubectl logs <pod-name> -c istio-proxy -n <namespace> | grep -E "(TLS|SSL|certificate)"
@@ -1073,7 +713,7 @@ kubectl logs <pod-name> -c istio-proxy -n <namespace> | grep -E "(TLS|SSL|certif
 ```yaml
 # Problem: PeerAuthentication is STRICT, DestinationRule is DISABLE
 # Solution: Change DestinationRule to ISTIO_MUTUAL
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: fix-mtls
@@ -1093,7 +733,7 @@ kubectl label namespace default istio-injection=enabled
 kubectl rollout restart deployment/<deployment-name> -n default
 ```
 
-### 2. Problema de expiración de certificados
+### 2. Expiración de certificados {#2-certificate-expiration-issue}
 
 **Síntomas**:
 ```
@@ -1106,7 +746,7 @@ x509: certificate has expired
 ```bash
 # Check workload certificate expiration date
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -noout -dates
 
 # Check CA certificate expiration
@@ -1117,149 +757,46 @@ kubectl get secret istio-ca-secret -n istio-system -o json | \
 for pod in $(kubectl get pods -n default -o jsonpath='{.items[*].metadata.name}'); do
   echo "Pod: $pod"
   istioctl proxy-config secret $pod -n default -o json 2>/dev/null | \
-    jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+    jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
     base64 -d 2>/dev/null | openssl x509 -noout -dates 2>/dev/null || echo "No cert found"
 done
 ```
 
 **Soluciones**:
 
-```bash
-# 1. Restart istiod (trigger new certificate issuance)
-kubectl rollout restart deployment/istiod -n istio-system
+Restablezca primero la conectividad con la CA, la confianza válida y la hora del nodo; examine los registros del agente y de istiod para investigar los fallos de renovación. Reiniciar istiod no repara por sí solo una CA expirada. Si una carga de trabajo seleccionada no puede recuperarse después de resolver la causa, realice un reinicio gradual y controlado respetando su presupuesto de interrupciones.
 
-# 2. Restart specific workload (renew certificate)
-kubectl delete pod <pod-name> -n <namespace>
+### 3. Desfase de reloj (sincronización de hora) {#3-clock-skew-time-synchronization-issue}
 
-# 3. Renew CA certificate (see "Certificate Rotation" section above)
-```
-
-### 3. Desfase de reloj (problema de sincronización de hora)
-
-**Síntomas**:
-```
-certificate is not valid yet
-certificate verify failed
-```
-
-**Causa**: Error de verificación del certificado debido a una diferencia de hora entre Pods/nodos
-
-**Verificación**:
+Los errores `certificate is not valid yet` o de certificado expirado pueden indicar problemas con el reloj del nodo. Compare la hora UTC con `NotBefore`/`NotAfter` del certificado; no existe una tolerancia TLS universal de ±5 minutos. En el nodo EC2 afectado, examine chrony en lugar de consultar la dirección NTP como si fuera HTTP:
 
 ```bash
-# Check node time
-kubectl get nodes -o wide
-for node in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
-  echo "Node: $node"
-  kubectl debug node/$node -it --image=busybox -- date
-done
-
-# Check pod time
-kubectl exec -it <pod-name> -c istio-proxy -n <namespace> -- date
-
-# Check time difference (acceptable range: +/- 5 minutes)
+date -u
+chronyc tracking
+chronyc sources -v
+# Amazon Time Sync NTP: 169.254.169.123 (not an HTTP metadata URL)
 ```
 
-**Soluciones**:
+Repare el servicio de sincronización de hora configurado en el nodo según su sistema operativo (`chronyd` o `chrony`). No invente una variable de entorno de período de gracia del certificado para eludir las comprobaciones de vigencia.
 
-```bash
-# 1. NTP configuration (node level)
-sudo systemctl restart chrony
-sudo chronyc tracking
+### 4. Dependencia circular {#4-circular-dependency}
 
-# 2. NTP sync is default on EKS
-# Verify Amazon Time Sync Service usage
-curl http://169.254.169.123/latest/meta-data/system
+Un ciclo de llamadas Service A → B → A no provoca por sí mismo un fallo de mTLS. Examine las trazas distribuidas, los plazos de la aplicación, los reintentos, los errores de conexión y los registros de los proxies para distinguir la recursión o el agotamiento de recursos de un problema de negociación TLS. `istioctl analyze` comprueba la configuración, pero no reconstruye el grafo de llamadas en ejecución. Aumentar el tiempo de espera de conexión TCP no resuelve un ciclo de dependencias.
 
-# 3. Add grace period to certificate start time
-# Istio Operator configuration
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    pilot:
-      env:
-        CERT_NOTBEFORE_GRACE_DURATION: "10m"  # Start time grace period
-```
+### 5. Mezcla de protocolos (mTLS y tráfico sin cifrar) {#5-mixed-protocol-mtls--plaintext}
 
-### 4. Dependencia circular
+`WRONG_VERSION_NUMBER` suele indicar una incompatibilidad entre TLS y tráfico sin cifrar en un puerto. Examine los protocolos de los puertos del Service, el esquema utilizado por la aplicación, PeerAuthentication, DestinationRule y los clústeres reales de los proxies. Retire una configuración TLS explícita incorrecta o corrija el protocolo del destino; utilice mTLS automático para los pares habituales de la malla. Una excepción PERMISSIVE con alcance limitado sirve para una migración intencionada, no como solución universal.
 
-**Síntomas**:
-```
-upstream connect error or disconnect/reset before headers
-```
+### 6. mTLS con servicios headless {#6-headless-service-mtls}
 
-**Causa**: Tiempo de espera del handshake mTLS durante llamadas de Service A -> Service B -> Service A
+Los servicios headless también admiten mTLS automático. Compruebe primero el descubrimiento de endpoints y el nombre del puerto del servicio. La regla explícita siguiente es opcional y no puede reparar metadatos ausentes de endpoints ni una incompatibilidad de protocolo de la aplicación.
 
-**Verificación**:
-
-```bash
-# Check service call chain
-istioctl analyze -n <namespace>
-
-# Check Envoy clusters
-istioctl proxy-config cluster <pod-name> -n <namespace>
-```
+**Síntomas**: Fallo de conexión mTLS en servicios headless
 
 **Solución**:
 
 ```yaml
-# Set appropriate timeout in DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: service-with-timeout
-spec:
-  host: myservice.default.svc.cluster.local
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        connectTimeout: 30s  # Increase connection timeout
-    tls:
-      mode: ISTIO_MUTUAL
-```
-
-### 5. Protocolo mixto (mTLS + texto sin cifrar)
-
-**Síntomas**:
-```
-SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
-```
-
-**Causa**: Algunos servicios usan mTLS, mientras que otros usan texto sin cifrar
-
-**Verificación**:
-
-```bash
-# Check mTLS status for all services
-for svc in $(kubectl get svc -n default -o jsonpath='{.items[*].metadata.name}'); do
-  echo "Service: $svc"
-  istioctl authn tls-check $(kubectl get pod -n default -l app=test -o jsonpath='{.items[0].metadata.name}') $svc.default.svc.cluster.local -n default
-done
-```
-
-**Solución**:
-
-```yaml
-# Gradual migration with PERMISSIVE mode
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: migration-policy
-  namespace: default
-spec:
-  mtls:
-    mode: PERMISSIVE  # Allow both mTLS and plaintext
-```
-
-### 6. mTLS de Headless Service
-
-**Síntomas**: Error de conexión mTLS en Headless Service
-
-**Solución**:
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: headless-service-mtls
@@ -1275,89 +812,103 @@ spec:
         mode: ISTIO_MUTUAL
 ```
 
-### 7. Conflicto entre mTLS y NetworkPolicy
+### 7. Conflicto entre mTLS y NetworkPolicy {#7-mtls-and-networkpolicy-conflict}
 
-**Síntomas**: Error de conexión mTLS después de aplicar NetworkPolicy
-
-**Solución**:
+El mTLS de sidecar utiliza el puerto de destino de la aplicación; **15008 corresponde a HBONE de ambient**, no a un puerto universal de mTLS de sidecar. Este ejemplo de sidecar permite gateway → productpage:9080, productpage → reviews/details:9080, istiod:15012 y DNS del clúster. Antes de aplicarlo, adapte las etiquetas, todas las dependencias reales, la recopilación de métricas, las sondas y NodeLocal DNS. Ambient requiere su propio tratamiento del CNI y de las políticas de red.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-istio-mtls
+  name: productpage-sidecar
   namespace: default
 spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
+  podSelector:
+    matchLabels:
+      app: productpage
+  policyTypes: [Ingress, Egress]
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: istio-system  # Allow istiod
-    - podSelector: {}  # Allow pods in same namespace
+          kubernetes.io/metadata.name: istio-system
+      podSelector:
+        matchLabels:
+          istio: ingressgateway
     ports:
     - protocol: TCP
-      port: 15008  # Envoy mTLS port
-    - protocol: TCP
-      port: 15012  # Pilot discovery
+      port: 9080
   egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: reviews
+    - podSelector:
+        matchLabels:
+          app: details
+    ports:
+    - protocol: TCP
+      port: 9080
   - to:
     - namespaceSelector:
         matchLabels:
-          name: istio-system
+          kubernetes.io/metadata.name: istio-system
+      podSelector:
+        matchLabels:
+          app: istiod
     ports:
     - protocol: TCP
       port: 15012
   - to:
-    - podSelector: {}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     ports:
+    - protocol: UDP
+      port: 53
     - protocol: TCP
-      port: 15008
+      port: 53
 ```
 
-<span id="performance-and-monitoring"></span>
+## Rendimiento y supervisión {#performance-and-monitoring}
 
-## Rendimiento y monitoreo
+### Impacto de mTLS en el rendimiento: mediciones en EKS {#mtls-performance-impact-measured-on-eks}
 
-### Impacto de mTLS en el rendimiento
+La prueba histórica siguiente compara rutas completas del plano de datos, incluidos el cifrado y el procesamiento de los proxies. Esta guía obtuvo los valores siguientes en un clúster EKS dedicado: Graviton m7g.xlarge, fortio a 200 qps durante 60s con 16 conexiones y Code 200 al 100% en todos los casos.
 
-| Métrica | Texto sin cifrar | mTLS | Aumento |
-|--------|-----------|------|----------|
-| **Latencia (p50)** | 5ms | 6ms | +20% |
-| **Latencia (p99)** | 15ms | 18ms | +20% |
-| **Uso de CPU** | 10% | 15% | +50% |
-| **Uso de memoria** | 100MB | 120MB | +20% |
-| **Rendimiento (RPS)** | 10000 | 8500 | -15% |
+| Caso (mTLS STRICT) | P50 | P90 | P99 | Sobrecoste P50 respecto a la referencia sin malla |
+|--------------------|-----|-----|-----|-------------------------|
+| sin malla (referencia sin cifrar) | 0.82ms | 1.73ms | 1.97ms | - |
+| sidecar | 2.11ms | 2.89ms | 3.91ms | **+1.29ms** |
+| ambient L4 (solo ztunnel) | 0.86ms | 1.74ms | 1.98ms | **+0.04ms (despreciable)** |
+| ambient L7 (waypoint) | 2.68ms | 3.63ms | 3.98ms | **+1.86ms** |
+
+No existe un coeficiente único según el cual «mTLS cueste un +20%». En esta ejecución, ambient L4 añadió 0.04ms al P50. Como los casos difieren en el procesamiento L7 y en las rutas de los proxies, estos valores no aíslan el coste de la criptografía TLS ni demuestran que sea cero. Consulte la [comparación con mediciones entre sidecar y ambient](../comparison/03-sidecar-vs-ambient.md) para conocer la metodología, las tasas de 503 durante los reinicios graduales y los pasos de reproducción. Debe repetir las mediciones para otras cargas de trabajo.
 
 **Métodos de optimización**:
 
-1. **Aceleración de hardware (AES-NI)**:
+1. **Aceleración criptográfica adecuada para la arquitectura**: AES-NI es una extensión de x86; Graviton utiliza extensiones criptográficas de Arm. Verifique las funciones de la CPU y mida el cifrado y la carga de trabajo reales.
 ```bash
-# Check AES-NI support on CPU
-grep -m1 -o aes /proc/cpuinfo
-
-# Recommended EC2 instance types:
-# - c5.*, c6i.*, c7g.*: AES-NI supported
-# - m5.*, m6i.*, r5.*: General purpose
+lscpu
+rg -m 1 "^(flags|Features)" /proc/cpuinfo
 ```
 
-2. **Usar TLS 1.3** (handshake más rápido):
+2. **Utilizar TLS 1.3**, que permite una negociación más rápida:
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
-    defaultConfig:
-      proxyMetadata:
-        TLS_MIN_PROTOCOL_VERSION: TLSv1_3
+    meshMTLS:
+      minProtocolVersion: TLSV1_3
 ```
 
-3. **Agrupación de conexiones**:
+3. **Reutilizar conexiones mediante un pool**:
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: connection-pool
@@ -1367,76 +918,42 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100
-        connectTimeout: 30ms
+        connectTimeout: 1s
       http:
         http1MaxPendingRequests: 1024
         http2MaxRequests: 1024
-        maxRequestsPerConnection: 10
+        maxRequestsPerConnection: 0  # No request-count cap; reuse connections
         idleTimeout: 900s
 ```
 
-### Métricas de Prometheus
+### Métricas de Prometheus {#prometheus-metrics}
 
-**Métricas de conexión mTLS**:
+Mida por separado la adopción, los errores de la aplicación, la renovación de certificados y las negociaciones TLS. Las métricas HTTP siguientes requieren telemetría L7 de sidecars o waypoints; la telemetría L4 de ztunnel no puede informar del estado HTTP. Las métricas de certificados del agente requieren recopilar datos del endpoint del agente sidecar, normalmente el puerto 15020 y la ruta `/stats/prometheus`. Pueden no existir para certificados montados desde archivos u otros planos de datos. Confirme los nombres y las etiquetas de las métricas en su despliegue.
 
 ```promql
-# mTLS connection success rate
-sum(rate(istio_tcp_connections_opened_total{connection_security_policy="mutual_tls"}[5m])) by (destination_service_name)
+# Observed HTTP request share protected by mTLS (destination reporter).
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",connection_security_policy="mutual_tls"}[5m]))
 /
-sum(rate(istio_tcp_connections_opened_total[5m])) by (destination_service_name)
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination"}[5m]))
 
-# mTLS handshake time (p99)
-histogram_quantile(0.99,
-  sum(rate(envoy_listener_ssl_connection_handshake_duration_bucket[5m])) by (le)
-)
+# Remaining sidecar workload certificate lifetime in seconds.
+istio_agent_cert_expiry_seconds{resource_name="default"}
 
-# Days until first certificate expires
-envoy_server_days_until_first_cert_expiring
-
-# mTLS error rate
-sum(rate(istio_requests_total{response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
+# HTTP 5xx fraction on mTLS-protected requests; not TLS handshake failures.
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
 /
-sum(rate(istio_requests_total{connection_security_policy="mutual_tls"}[5m]))
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",connection_security_policy="mutual_tls"}[5m]))
 ```
 
-### Panel de Grafana
+La proporción de tráfico cifrado respecto al total describe la **adopción en el tráfico observado**, no el éxito de las negociaciones TLS. Un HTTP 5xx puede ser un fallo de la aplicación sobre una conexión TLS perfectamente válida. Envoy expone los contadores TLS `handshake`, `connection_error` y `fail_verify_*` en las estadísticas SSL de listeners y clústeres. El antiguo ejemplo `ssl_connection_handshake_duration_bucket` no es un histograma estándar de Envoy. Habilite las estadísticas necesarias del proxy y examine los nombres realmente exportados antes de crear consultas.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio-mtls-dashboard
-  namespace: istio-system
-data:
-  dashboard.json: |
-    {
-      "dashboard": {
-        "title": "Istio mTLS Monitoring",
-        "panels": [
-          {
-            "title": "mTLS Connection Success Rate",
-            "targets": [{
-              "expr": "sum(rate(istio_tcp_connections_opened_total{connection_security_policy=\"mutual_tls\"}[5m])) / sum(rate(istio_tcp_connections_opened_total[5m]))"
-            }]
-          },
-          {
-            "title": "Certificate Expiration",
-            "targets": [{
-              "expr": "envoy_server_days_until_first_cert_expiring"
-            }]
-          },
-          {
-            "title": "mTLS Handshake Duration (p99)",
-            "targets": [{
-              "expr": "histogram_quantile(0.99, sum(rate(envoy_listener_ssl_connection_handshake_duration_bucket[5m])) by (le))"
-            }]
-          }
-        ]
-      }
-    }
-```
+### Panel de Grafana {#grafana-dashboard}
 
-### Alertas de expiración de certificados
+Cree paneles para la adopción de mTLS, el tiempo de vigencia restante de los certificados de las cargas de trabajo en segundos, los HTTP 5xx sobre mTLS y los contadores reales de verificación TLS. Utilice las expresiones anteriores con la fuente de datos de Prometheus configurada. Para aprovisionar el dashboard, debe montar su JSON mediante el proveedor de dashboards de Grafana o configurar un sidecar de dashboards; crear un ConfigMap por sí solo no carga el dashboard. Un archivo aprovisionado contiene el objeto del dashboard directamente, sin el contenedor `{ "dashboard": ... }` de la API HTTP.
+
+### Alertas de expiración de certificados {#certificate-expiration-alerts}
+
+El ejemplo siguiente presupone certificados de cargas de trabajo con sidecar de 24 horas y renovación automática, y un Prometheus Operator que seleccione este PrometheusRule. Ajuste los umbrales al TTL emitido y al calendario de renovación. Configure alertas independientes para fallos de recopilación y ausencia de las series esperadas: la ausencia de métricas de certificados no significa que estén en buen estado. El gauge del agente expresado en segundos puede ser negativo; el gauge de Envoy que expresa días enteros hasta la expiración no es adecuado para una alerta de siete días sobre certificados de 24 horas ni ofrece una señal fiable de expiración negativa.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1447,44 +964,38 @@ metadata:
 spec:
   groups:
   - name: istio-certificates
-    interval: 30s
     rules:
-    - alert: IstioCertificateExpiringSoon
-      expr: envoy_server_days_until_first_cert_expiring < 7
-      for: 1h
+    - alert: IstioWorkloadCertificateExpiringSoon
+      expr: istio_agent_cert_expiry_seconds{resource_name="default"} < 3600
+      for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "Istio certificate expiring in {{ $value }} days"
-        description: "Certificate for {{ $labels.pod }} will expire in {{ $value }} days"
-
-    - alert: IstioCertificateExpired
-      expr: envoy_server_days_until_first_cert_expiring < 0
-      for: 5m
+        summary: "Workload certificate has less than one hour remaining"
+    - alert: IstioWorkloadCertificateExpired
+      expr: istio_agent_cert_expiry_seconds{resource_name="default"} < 0
+      for: 1m
       labels:
         severity: critical
       annotations:
-        summary: "Istio certificate has expired"
-        description: "Certificate for {{ $labels.pod }} has expired"
-
-    - alert: IstioMTLSConnectionFailure
+        summary: "Workload certificate has expired"
+    - alert: IstioHTTP5xxOverMTLS
       expr: |
-        sum(rate(istio_requests_total{response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
+        sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
         /
-        sum(rate(istio_requests_total{connection_security_policy="mutual_tls"}[5m])) > 0.05
+        sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",connection_security_policy="mutual_tls"}[5m])) > 0.05
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High mTLS connection failure rate"
-        description: "mTLS error rate is {{ $value | humanizePercentage }} for {{ $labels.destination_service_name }}"
+        summary: "HTTP 5xx fraction exceeds 5% on mTLS traffic"
 ```
 
-### Registro y depuración
+### Registros y depuración {#logging-and-debugging}
 
 ```bash
 # 1. Change Envoy log level dynamically
-istioctl proxy-config log <pod-name> -n <namespace> --level connection:debug,tls:debug
+istioctl proxy-config log <pod-name> -n <namespace> --level connection:debug
 
 # 2. Filter mTLS-related logs
 kubectl logs <pod-name> -c istio-proxy -n <namespace> | grep -E "(TLS|SSL|certificate|handshake)"
@@ -1502,34 +1013,41 @@ istioctl dashboard envoy <pod-name>.<namespace>
 # Check ssl metrics at http://localhost:15000/stats/prometheus
 ```
 
-### Prácticas recomendadas
+Después de recopilar los diagnósticos, restaure el nivel de registro anterior. Las imágenes mínimas de proxy pueden no incluir curl; utilice el reenvío local de puertos para examinar el endpoint de administración.
+
+### Prácticas recomendadas {#best-practices}
 
 1. **Entorno de producción**:
-   - Usar el modo STRICT
-   - Usar certificados de CA personalizados
-   - Configurar la renovación automática de certificados
-   - Configurar alertas de expiración
+   - Utilizar el modo STRICT.
+   - Utilizar certificados de CA personalizados.
+   - Configurar la renovación automática de certificados.
+   - Configurar alertas de expiración.
 
 2. **Optimización del rendimiento**:
-   - Usar TLS 1.3
-   - Habilitar la agrupación de conexiones
-   - Usar instancias compatibles con AES-NI
+   - Utilizar TLS 1.3.
+   - Habilitar la reutilización de conexiones mediante un pool.
+   - Utilizar aceleración criptográfica adecuada para la CPU.
 
-3. **Monitoreo**:
-   - Realizar seguimiento de la expiración de certificados
-   - Monitorear la tasa de éxito de las conexiones mTLS
-   - Realizar seguimiento de la latencia del handshake
+3. **Supervisión**:
+   - Realizar un seguimiento de la expiración de los certificados.
+   - Supervisar por separado la adopción de mTLS y los errores de verificación TLS.
+   - Realizar un seguimiento de los contadores reales de negociación y de la renovación de certificados.
 
 4. **Seguridad**:
-   - Rotación periódica de CA
-   - Principio de mínimo privilegio
-   - Usar junto con NetworkPolicy
+   - Rotar las CA periódicamente.
+   - Aplicar el principio de mínimo privilegio.
+   - Combinar estas medidas con NetworkPolicy.
 
-## Referencias
+## Referencias {#references}
 
-- [Istio mTLS](https://istio.io/latest/docs/concepts/security/#mutual-tls-authentication)
+- [mTLS de Istio](https://istio.io/latest/docs/concepts/security/#mutual-tls-authentication)
 - [Referencia de PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
 - [TLS de DestinationRule](https://istio.io/latest/docs/reference/config/networking/destination-rule/#ClientTLSSettings)
 - [Cert-Manager](https://cert-manager.io/docs/)
 - [AWS Certificate Manager](https://docs.aws.amazon.com/acm/)
-- [AWS ALB mTLS](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/mutual-authentication.html)
+- [mTLS de AWS ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/mutual-authentication.html)
+
+- [Requisitos de una CA personalizada](https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/)
+- [Ajustes de certificados del agente](https://istio.io/latest/docs/reference/commands/pilot-agent/)
+- [Anotaciones de AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/)
+- [Estadísticas TLS de Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)

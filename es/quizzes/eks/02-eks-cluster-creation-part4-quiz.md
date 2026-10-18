@@ -1,8 +1,8 @@
 # Cuestionario de creación de clústeres de EKS - Parte 4
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
-Este cuestionario conecta la guía de clústeres con Terraform con las operaciones de escalado, identidades y ciclo de vida. La sección final verifica conceptos específicos de Terraform. Los ejemplos requieren una cuenta/Region/kubeconfig, IAM y prerrequisitos de red revisados; no se implementaron durante esta auditoría.
+Este cuestionario conecta la guía de clústeres con Terraform con las operaciones de escalado, identidades y ciclo de vida. La sección final verifica conceptos específicos de Terraform. Los ejemplos requieren una cuenta/región/kubeconfig, IAM y prerrequisitos de red revisados; no se implementaron durante esta auditoría.
 
 ## Preguntas de conceptos básicos
 
@@ -21,7 +21,7 @@ Cluster Autoscaler ajusta el tamaño de los grupos de nodos/ASG predefinidos y d
 
 Ambos consideran las solicitudes de cargas de trabajo no programables y las restricciones de colocación. Ninguno es simplemente «porcentaje de CPU frente a recuento de Pods», y ninguno redimensiona una instancia de EC2 en ejecución en el mismo lugar. Karpenter puede reemplazar capacidad con instancias de distinto tamaño; VPA administra por separado las solicitudes de recursos de Pods.
 
-**Ejemplo de Cluster Autoscaler:** para EKS 1.36, use una versión secundaria coincidente y una ServiceAccount dedicada con IAM y etiquetas de detección revisados. El chart 9.59.0 necesita la anulación explícita de la imagen v1.36.1. Renderice RBAC, la imagen y los argumentos antes de la instalación:
+**Ejemplo de Cluster Autoscaler:** para EKS 1.36, use la misma versión secundaria que el clúster y una ServiceAccount dedicada con IAM y etiquetas de detección revisados. El chart 9.59.0 necesita la anulación explícita de la imagen v1.36.1. Renderice RBAC, la imagen y los argumentos antes de la instalación:
 
 ```bash
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
@@ -93,7 +93,7 @@ spec:
 | Eliminación | Requiere comprobaciones de programación e interrupción | Sujeta a consolidación, presupuestos y controles de interrupción |
 | Afirmación histórica de tiempo en la guía original | 2–10 minutos, sin verificar | Menos de 1 minuto, sin verificar |
 
-Los números de tiempo originales se conservan como **afirmaciones históricas sin verificar**, no como puntos de referencia reproducidos en esta auditoría ni como rendimiento actual garantizado. El arranque de nodos, las imágenes, las cuotas y las restricciones de las cargas de trabajo afectan a ambas herramientas. No infiera de esa tabla una clasificación universal de coste, simplicidad o latencia.
+Las duraciones originales se conservan como **afirmaciones históricas no verificadas**, no como puntos de referencia reproducidos en esta auditoría ni como rendimiento actual garantizado. El arranque de nodos, las imágenes, las cuotas y las restricciones de las cargas de trabajo afectan a ambas herramientas. No infiera de esa tabla una clasificación universal de coste, simplicidad o latencia.
 
 </details>
 
@@ -108,13 +108,13 @@ Los números de tiempo originales se conservan como **afirmaciones históricas s
 
 **Respuesta: C) ON_DEMAND, SPOT, CAPACITY_BLOCK**
 
-La API actual de EKS CreateNodegroup incluye **ON_DEMAND, SPOT y CAPACITY_BLOCK**. Un grupo de nodos administrado usa un tipo de capacidad; use grupos separados para grupos de capacidad distintos.
+La API actual de EKS CreateNodegroup incluye **ON_DEMAND, SPOT y CAPACITY_BLOCK**. Un grupo de nodos administrado usa un tipo de capacidad; use un grupo separado para cada tipo.
 
-On-Demand evita la recuperación de Spot, pero no es una garantía de interrupción ni de disponibilidad. Spot usa capacidad sobrante y requiere cargas de trabajo tolerantes a interrupciones; los descuentos anunciados no son ahorros garantizados. Reserved Instances/Savings Plans son acuerdos de facturación, no valores de enumeración adicionales de CreateNodegroup.
+On-Demand no está sujeto a la recuperación de capacidad de Spot, pero eso no garantiza que no haya interrupciones ni la disponibilidad. Spot usa capacidad sobrante y requiere cargas de trabajo tolerantes a interrupciones; los descuentos anunciados no son ahorros garantizados. Reserved Instances/Savings Plans son acuerdos de facturación, no valores de enumeración adicionales de CreateNodegroup.
 
-Los Capacity Blocks son un flujo de trabajo independiente de reserva limitada en el tiempo para instancias/Regions compatibles. Requieren una plantilla de lanzamiento personalizada dirigida a la reserva, una AZ/subred coincidente y escalado consciente de la reserva. EKS crea una reducción de escala programada 40 minutos antes de que finalice la reserva; no modifique ni elimine esa acción. Los ejemplos siguientes son alternativas convencionales de On-Demand/Spot, no aprovisionamiento de Capacity Block.
+Los Capacity Blocks son un flujo de trabajo independiente de reserva limitada en el tiempo para instancias/regiones compatibles. Requieren una plantilla de lanzamiento personalizada dirigida a la reserva, una zona de disponibilidad (AZ) y una subred que correspondan a la reserva, además de un escalado que tenga en cuenta la reserva. EKS crea una reducción de escala programada 40 minutos antes de que finalice la reserva; no modifique ni elimine esa acción. Los ejemplos siguientes son alternativas convencionales de On-Demand/Spot, no aprovisionamiento de Capacity Block.
 
-**AWS CLI:** use un nombre de grupo de nodos sin utilizar, subredes privadas existentes y un rol de nodo de EC2 aprobado (incluida la ruta de identidad de CNI necesaria). Espere a que el grupo se active y luego verifique la preparación real de Node/carga de trabajo:
+**AWS CLI:** use un nombre de grupo de nodos sin utilizar, subredes privadas existentes y un rol de nodo de EC2 aprobado (incluida la ruta de identidad de CNI necesaria). Espere a que el grupo se active y luego verifique el estado real del nodo y de las cargas de trabajo:
 
 ```bash
 set -euo pipefail
@@ -153,7 +153,7 @@ managedNodeGroups:
   maxSize: 5
   spot: true
 ```
-Use afinidad/selectores y toleraciones para colocar las cargas de trabajo adecuadas. Los grupos de nodos administrados tienen manejo integrado de reequilibrio/drenaje de Spot; Node Termination Handler no es un requisito adicional universal. Los PDB no pueden impedir que EC2 recupere una instancia de Spot, y no todos los Pods reciben la ventana completa de interrupción. Planifique puntos de control, capacidad de reserva y recuperación ante interrupciones.
+Use reglas de afinidad, selectores y toleraciones para colocar las cargas de trabajo adecuadas. Los grupos de nodos administrados integran el reequilibrio y el drenaje ante interrupciones de Spot; Node Termination Handler no es un requisito adicional universal. Los PDB no pueden impedir que EC2 recupere una instancia de Spot, y no todos los Pods reciben la ventana completa de interrupción. Planifique puntos de control, capacidad de reserva y recuperación ante interrupciones.
 
 </details>
 
@@ -265,9 +265,9 @@ Un PDB no es una garantía general de disponibilidad. Las eliminaciones directas
 
 Las actualizaciones del plano de control de EKS proceden **una versión secundaria a la vez**, como 1.34 → 1.35 → 1.36. Confirme que EKS ofrezca cada destino; una versión upstream de Kubernetes no prueba la disponibilidad de EKS. No infiera una política de actualización futura de versiones principales a partir del flujo de trabajo actual de Kubernetes 1.x.
 
-Antes de actualizar el plano de control, lleve los nodos administrados y Fargate a su versión secundaria actual según lo requerido por el procedimiento de EKS; actualice los nodos autoadministrados/híbridos según lo recomendado. Los kubelets nunca deben ser más recientes que el servidor de API. El límite general de desfase para Kubernetes 1.28+ permite kubelets hasta tres versiones secundarias más antiguos, pero eso no es una recomendación para ignorar los prerrequisitos de actualización de EKS.
+Antes de actualizar el plano de control, lleve los nodos administrados y Fargate a su versión secundaria actual según lo requerido por el procedimiento de EKS; actualice los nodos autoadministrados/híbridos según lo recomendado. La versión del kubelet nunca debe ser superior a la del servidor de API. El límite general de desfase para Kubernetes 1.28+ permite que los kubelets estén hasta tres versiones secundarias por detrás, pero eso no es una recomendación para ignorar los prerrequisitos de actualización de EKS.
 
-Primero revise las perspectivas, las API eliminadas, la compatibilidad de complementos, la capacidad y las copias de seguridad de aplicaciones/datos. EKS no proporciona acceso normal de shell de administrador a su etcd administrado para un comando de snapshot hecho por usted mismo; use procedimientos compatibles de copia de seguridad/restauración de clústeres/recursos y datos persistentes. Este comando solo impone el paso de una versión secundaria; no reemplaza esas comprobaciones:
+Primero revise los resultados de EKS Upgrade Insights, las API eliminadas, la compatibilidad de complementos, la capacidad y las copias de seguridad de aplicaciones/datos. EKS no proporciona acceso normal de shell de administrador a su etcd administrado para crear manualmente una instantánea; use procedimientos compatibles de copia de seguridad/restauración de clústeres/recursos y datos persistentes. Este comando solo impone el paso de una versión secundaria; no reemplaza esas comprobaciones:
 
 ```bash
 set -euo pipefail
@@ -291,7 +291,7 @@ CLUSTER_UPDATE_ID=$(aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" \
 aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
   --update-id "$CLUSTER_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
-Espere a que ese ID de actualización tenga éxito, y luego actualice los nodos y los componentes de clúster compatibles en su orden documentado. Haga coincidir la versión secundaria de Cluster Autoscaler con el clúster y kubectl dentro de su desfase compatible.
+Espere a que ese ID de actualización tenga éxito, y luego actualice los nodos y los componentes de clúster compatibles en su orden documentado. Mantenga Cluster Autoscaler en la misma versión secundaria que el clúster y use kubectl dentro del desfase de versión compatible.
 
 EKS actual ofrece reversión condicional a la versión secundaria anterior durante siete días después de una actualización in situ completada. No está disponible para un clúster creado en esa versión ni para una actualización automática al final del soporte extendido. Primero prepare nodos/complementos compatibles; Auto Mode administra la reversión de sus nodos. La reversión no retrocede etcd, las cargas de trabajo ni los datos persistentes. Consulte los requisitos oficiales de preparación para la reversión en lugar de tratarla como una deshacer incondicional.
 
@@ -308,7 +308,7 @@ Depende de dónde esté configurado el tipo de instancia:
 
 * Un tipo establecido en `instanceTypes` del grupo de nodos administrado no es un campo de `UpdateNodegroupConfig`. Cree un grupo de reemplazo, valide la capacidad y migre las cargas de trabajo antes de retirar el antiguo.
 * Si el grupo se creó originalmente con **su plantilla de lanzamiento personalizada**, con el tipo de instancia en esa plantilla en lugar de en el campo de grupo de EKS, puede actualizar a una nueva versión de la **misma plantilla**. EKS recicla los nodos. No modifique la plantilla generada por EKS ni suponga que puede cambiar a ID de plantilla arbitrarios.
-* Para ASG autoadministrados, una actualización de plantilla de lanzamiento/actualización de instancias también necesita un diseño de drenaje y ciclo de vida consciente de Kubernetes; el reemplazo de EC2 por sí solo no es una migración consciente de PDB.
+* Para ASG autoadministrados, actualizar la plantilla de lanzamiento o renovar instancias requiere también un diseño de ciclo de vida y drenaje que tenga en cuenta Kubernetes; el reemplazo de EC2 por sí solo no considera los PDB.
 
 Revise la arquitectura de AMI, los controladores, los límites de IP de Pod, las etiquetas/toleraciones, la topología de almacenamiento, las cuotas y los PDB. Para recursos propiedad de Terraform, realice el cambio mediante el estado propietario e inspeccione las acciones de reemplazo; no haga un cambio de CLI fuera de banda y suponga que el estado sigue siendo correcto.
 
@@ -323,7 +323,7 @@ Establezca el acceso privado como verdadero y el acceso público como falso. En 
 
 Antes de deshabilitar el acceso público, verifique DNS, rutas y reglas de seguridad desde la red conectada del administrador hasta el endpoint privado. Un sistema puede alcanzarlo desde la VPC **u otra red correctamente conectada**; no necesita residir físicamente en la VPC. Esto cambia el endpoint de la API de Kubernetes, no el acceso a la API de servicio AWS EKS independiente.
 
-Para un clúster propiedad de API, la operación de CLI equivalente es:
+Para un clúster administrado mediante la API, la operación de CLI equivalente es:
 
 ```bash
 set -euo pipefail
@@ -400,7 +400,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -435,7 +435,7 @@ spec:
 ```
 Inspeccione las condiciones de HPA, la disponibilidad de métricas, los motivos de Pending y las decisiones del escalador automático bajo una prueba de carga aprobada. El uso de memoria puede no disminuir proporcionalmente al aumentar las réplicas, así que valide esa métrica para la aplicación. Estos valores de solicitud/límite son ejemplos, no dimensionamiento medido.
 
-No añada políticas independientes de seguimiento de destino de CPU/memoria de ASG al mismo bucle de capacidad deseada. Pueden competir con CA y tener distinto comportamiento de drenaje. EC2 no proporciona utilización de memoria normal de forma predeterminada; cualquier diseño independiente sin CA necesita una métrica personalizada publicada correctamente y un namespace personalizado, no una métrica de memoria supuesta de `AWS/EC2`. No se requiere tal política de ASG para esta solución HPA+CA.
+No añada políticas independientes de seguimiento de destino de CPU/memoria de ASG al mismo bucle de capacidad deseada. Pueden competir con CA y comportarse de manera distinta al drenar nodos. EC2 no proporciona métricas de utilización de memoria de forma predeterminada; cualquier diseño independiente sin CA necesita una métrica personalizada publicada correctamente y un namespace personalizado, no una métrica de memoria supuesta de `AWS/EC2`. No se requiere tal política de ASG para esta solución HPA+CA.
 
 </details>
 
@@ -448,9 +448,9 @@ No añada políticas independientes de seguimiento de destino de CPU/memoria de 
 
 Cree capacidad de reemplazo, pruébela, migre gradualmente y retire el grupo antiguo solo después de validar la aplicación/los datos. Mantenga la capacidad antigua y el estado compatible mientras siga siendo necesaria la reversión; compartir un clúster no es aislamiento completo ni una garantía de cero tiempo de inactividad.
 
-Revise cuotas, IP de subred, imágenes/arquitectura, etiquetas, toleraciones, sobrecarga de daemon, PDB, datos locales y restricciones de AZ/asociación de volúmenes. La pertenencia a StatefulSet no hace por sí sola que un volumen sea portátil. Investigue los fallos de DNS antes de cambiar TTL o añadir una malla de servicios. Confirme que los recopiladores de monitoreo/registros realmente cubran los nuevos nodos.
+Revise cuotas, IP de subred, imágenes/arquitectura, etiquetas, toleraciones, sobrecarga de daemon, PDB, datos locales y restricciones de AZ/asociación de volúmenes. Pertenecer a un StatefulSet no hace que un volumen sea portátil. Investigue los fallos de DNS antes de cambiar TTL o añadir una malla de servicios. Confirme que los recopiladores de monitoreo/registros realmente cubran los nuevos nodos.
 
-El siguiente ejemplo de CLI es para **grupos propiedad de API**, con nombres de grupo green sin utilizar. Para grupos propiedad de Terraform o eksctl/CloudFormation, realice cambios equivalentes mediante ese propietario para evitar desviaciones y stacks huérfanos.
+El siguiente ejemplo de CLI es para **grupos administrados directamente mediante la API**, con nombres de grupos verdes que no estén en uso. Para grupos administrados mediante Terraform o eksctl/CloudFormation, realice los cambios mediante el gestor correspondiente para evitar desviaciones y stacks huérfanos.
 
 ```bash
 set -euo pipefail
@@ -557,7 +557,7 @@ Use Terraform 1.10+ para archivos de bloqueo de S3. El bloqueo de DynamoDB está
 
 </details>
 
-14. ¿Un aws_eks_pod_identity_association crea la Kubernetes ServiceAccount?
+14. ¿El recurso aws_eks_pod_identity_association crea el objeto ServiceAccount de Kubernetes?
    * A) Sí, con cluster-admin
    * B) No; el namespace/ServiceAccount y la ruta de agente/SDK compatible son prerrequisitos independientes
    * C) Sí, e instala Metrics Server

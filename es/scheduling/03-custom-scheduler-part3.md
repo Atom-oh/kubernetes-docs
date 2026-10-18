@@ -1,372 +1,410 @@
-# Part 3: Advanced Features
+# Parte 3: Funciones avanzadas
 
-## Custom Scheduler Implementation Cases in EKS
+> **Base de los ejemplos**: Kubernetes 1.35.8, Go 1.27.2; API del cliente de Python 35.0.0
+> **Última actualización**: 16 de octubre de 2026
 
-En esta sección, exploraremos casos reales de implementación de custom schedulers en EKS.
+Estos son patrones de implementación ilustrativos que usan el [scheduler secundario de la Parte 1](01-custom-scheduler-part1.md) y las [interfaces del framework de la Parte 2](02-custom-scheduler-part2.md). No describen un despliegue de producción ni una optimización medida. Las comprobaciones locales del código y los esquemas no demuestran que se ejecute una GPU, que la aplicación esté lista, que se aprovisionen certificados ni que haya disponibilidad en producción.
 
-### Case 1: GPU Workload Optimization Scheduler
+## Casos de implementación de schedulers personalizados en EKS
 
-En clusters de EKS que ejecutan workloads de AI/ML, la utilización eficiente de los recursos GPU es importante. El siguiente es un caso de implementación de un custom scheduler que optimiza workloads de GPU.
+En esta sección se desarrollan políticas de programación de ejemplo para EKS. La capacidad real, el inventario de dispositivos, los patrones de tráfico y el comportamiento ante fallos deben verificarse en el clúster de destino.
 
-#### GPU Workload Optimization Scheduler Architecture
+### Caso 1: scheduler para optimizar cargas de trabajo GPU
 
-El siguiente diagrama muestra la arquitectura del GPU workload optimization scheduler:
+En los clústeres EKS que ejecutan cargas de trabajo de IA/ML, es importante utilizar eficazmente los recursos GPU. A continuación se presenta un caso de implementación de un scheduler personalizado para optimizar cargas de trabajo GPU.
 
-#### GPU Workload Scheduling Workflow
+#### Arquitectura del scheduler de optimización de cargas GPU
 
-El siguiente diagrama muestra el flujo de trabajo de scheduling de workloads de GPU:
+El diseño puede combinar una política de colocación con telemetría opcional. El ejemplo implementado más abajo usa solicitudes en caché; el diagrama no demuestra que exista un recopilador de utilización funcional.
 
-#### Requirements
+#### Flujo de programación de cargas GPU
 
-1. Selección de Node basada en requisitos de memoria GPU
-2. Selección de Node basada en el modelo de GPU (por ejemplo, NVIDIA A100, V100, T4, etc.)
-3. Selección de Node considerando la utilización de GPU
-4. Optimización del uso compartido de GPU en instancias multi-GPU
+El scheduler observa el estado de los Pods mediante la API. Las extensiones basadas en métricas que aparecen en el flujo requieren un recopilador independiente y validado.
 
-#### Implementation Approach
+#### Requisitos
 
-Este caso usa el enfoque de plugin del scheduler framework.
+1. Aplicar los requisitos de memoria GPU/modelo mediante etiquetas de nodo verificadas y afinidad de nodo obligatoria.
+2. Conservar `NodeResourcesFit` para las solicitudes GPU efectivas y las solicitudes ya asignadas o asumidas.
+3. Preferir la consolidación en nodos adecuados usando la instantánea del scheduler; ponderar la utilización en vivo requiere una integración aparte que aquí no está implementada.
+4. Compartir GPU requiere una política adecuada de asignación con device-plugin/MIG/compartición temporal o DRA. Una función de puntuación de nodos no particiona dispositivos ni impone límites de memoria GPU por proceso.
 
-1. **Etiquetado de Node**: Agregue información relacionada con GPU como labels a cada Node.
+#### Enfoque de implementación
+
+Este caso usa el enfoque de plugins del framework del scheduler.
+
+1. **Verifique el inventario antes de asignar etiquetas.** Las claves `training.example.com` que aparecen a continuación son etiquetas de laboratorio definidas por el administrador, no etiquetas de descubrimiento de NVIDIA. El valor de memoria debe describir la memoria mínima por dispositivo apto en un nodo GPU homogéneo y sin recursos compartidos. Lea los recuentos de recursos GPU de `status.allocatable`; una etiqueta con un recuento no representa la capacidad disponible.
 
 ```bash
-# Add GPU model label
-kubectl label node <node-name> gpu.nvidia.com/model=A100
+kubectl get nodes -o custom-columns='NAME:.metadata.name,GPUS:.status.allocatable.nvidia\.com/gpu'
 
-# Add GPU memory label
-kubectl label node <node-name> gpu.nvidia.com/memory=40960
-
-# Add GPU count label
-kubectl label node <node-name> gpu.nvidia.com/count=8
+# Set only after verifying the actual node and per-device inventory.
+: "${NODE_NAME:?Select a verified GPU node}"
+: "${GPU_MODEL:?Set the observed model label value}"
+: "${GPU_MEMORY_MIB:?Set verified minimum memory per GPU in MiB}"
+kubectl label node "$NODE_NAME" \
+  "training.example.com/gpu-model=$GPU_MODEL" \
+  "training.example.com/gpu-memory-mib=$GPU_MEMORY_MIB" --overwrite
 ```
 
-2. **Implementación de Custom Scheduler Plugin**:
+2. **Añada un plugin de puntuación sin reemplazar los filtros predeterminados.** Guarde a continuación `packing/plugin.go`. Usa los recursos GPU asignables menos las solicitudes existentes/asumidas y las entrantes; no usa etiquetas de inventario total ni utilización en vivo. Una puntuación cero no excluye un nodo.
 
 ```go
-// GPUTopologyPlugin is a scheduler plugin that considers GPU topology.
-type GPUTopologyPlugin struct {
-    handle framework.Handle
+package packing
+
+import (
+	"context"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	resourcehelper "k8s.io/component-helpers/resource"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
+const Name = "GPUPacking"
+const gpu v1.ResourceName = "nvidia.com/gpu"
+
+type Plugin struct{}
+
+var _ fwk.ScorePlugin = &Plugin{}
+
+func (*Plugin) Name() string { return Name }
+
+func (*Plugin) Score(_ context.Context, _ fwk.CycleState, pod *v1.Pod, info fwk.NodeInfo) (int64, *fwk.Status) {
+	if pod == nil || info == nil || info.Node() == nil {
+		return 0, fwk.NewStatus(fwk.Error, "missing node")
+	}
+	requests := resourcehelper.PodRequests(pod, resourcehelper.PodResourcesOptions{})
+	request := requests[gpu]
+	needed, exact := request.AsInt64()
+	if !exact || needed < 0 {
+		return 0, fwk.NewStatus(fwk.Error, "GPU request must be a non-negative integer")
+	}
+	if needed == 0 {
+		return 0, nil
+	}
+	allocatable := info.GetAllocatable().GetScalarResources()[gpu]
+	requested := info.GetRequested().GetScalarResources()[gpu]
+	remaining := allocatable - requested - needed
+	if remaining < 0 {
+		// Score cannot exclude a node. NodeResourcesFit must remain enabled.
+		return 0, nil
+	}
+	if remaining >= 10 {
+		return 0, nil
+	}
+	return 100 - remaining*10, nil
 }
 
-// Filter filters nodes based on GPU requirements.
-func (gtp *GPUTopologyPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, node *framework.NodeInfo) *framework.Status {
-    // Check GPU requirements
-    gpuReq := getGPURequest(pod)
-    if gpuReq == 0 {
-        return framework.NewStatus(framework.Success, "")
-    }
+func (*Plugin) ScoreExtensions() fwk.ScoreExtensions { return nil }
 
-    // Check node's GPU info
-    gpuCount := getGPUCount(node.Node())
-    if gpuCount < gpuReq {
-        return framework.NewStatus(framework.Unschedulable, "Not enough GPUs")
-    }
-
-    // Check GPU model requirements
-    requiredModel := getRequiredGPUModel(pod)
-    if requiredModel != "" && getGPUModel(node.Node()) != requiredModel {
-        return framework.NewStatus(framework.Unschedulable, "GPU model mismatch")
-    }
-
-    // Check GPU memory requirements
-    memReq := getGPUMemoryRequest(pod)
-    if memReq > 0 && getGPUMemory(node.Node()) < memReq {
-        return framework.NewStatus(framework.Unschedulable, "Not enough GPU memory")
-    }
-
-    return framework.NewStatus(framework.Success, "")
-}
-
-// Score assigns scores to nodes based on GPU topology.
-func (gtp *GPUTopologyPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    nodeInfo, err := gtp.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, fmt.Sprintf("Error getting node info: %v", err))
-    }
-
-    node := nodeInfo.Node()
-
-    // Return default score if no GPU requirements
-    gpuReq := getGPURequest(pod)
-    if gpuReq == 0 {
-        return 0, framework.NewStatus(framework.Success, "")
-    }
-
-    // Check GPU utilization
-    gpuUtilization := getGPUUtilization(node)
-
-    // Calculate score based on GPU count
-    gpuCount := getGPUCount(node)
-
-    // Assign higher score to nodes with available GPUs slightly more than requested
-    // This is for efficient GPU resource utilization
-    score := 100 - int64(math.Abs(float64(gpuCount-gpuReq))*10)
-    if score < 0 {
-        score = 0
-    }
-
-    // Assign higher score to nodes with low GPU utilization
-    utilizationScore := int64((1.0 - gpuUtilization) * 100)
-
-    // Final score is weighted average of both scores
-    finalScore := (score * 7 + utilizationScore * 3) / 10
-
-    return finalScore, framework.NewStatus(framework.Success, "")
+func New(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, error) {
+	return &Plugin{}, nil
 }
 ```
 
-3. **Configuración del Scheduler**:
-
-```yaml
-apiVersion: kubescheduler.config.k8s.io/v1beta1
-kind: KubeSchedulerConfiguration
-clientConnection:
-  kubeconfig: /etc/kubernetes/scheduler.conf
-profiles:
-- schedulerName: gpu-scheduler
-  plugins:
-    filter:
-      enabled:
-      - name: GPUTopologyPlugin
-    score:
-      enabled:
-      - name: GPUTopologyPlugin
-        weight: 10
-  pluginConfig:
-  - name: GPUTopologyPlugin
-    args: {}
-```
-
-4. **Especificación de requisitos de GPU en Pod Spec**:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-pod
-  annotations:
-    gpu.nvidia.com/model: "A100"
-    gpu.nvidia.com/memory: "40960"
-spec:
-  schedulerName: gpu-scheduler
-  containers:
-  - name: gpu-container
-    image: nvidia/cuda:11.6.0-base-ubuntu20.04
-    resources:
-      limits:
-        nvidia.com/gpu: 2
-```
-
-### Case 2: Network Locality Optimization Scheduler
-
-En clusters de EKS, puede implementar un custom scheduler que considere la localidad de red para optimizar los costos de red.
-
-#### Network Locality Optimization Scheduler Architecture
-
-El siguiente diagrama muestra la arquitectura del network locality optimization scheduler.
-
-#### Network Locality Optimization Workflow
-
-El siguiente diagrama muestra el flujo de trabajo del network locality optimization scheduler.
-
-## Scale-Down Optimization with Pod Deletion Cost
-
-Pod Deletion Cost, introducido en Kubernetes 1.22, es una característica que le permite controlar qué pods se eliminan primero cuando recursos de workload como ReplicaSet, Deployment o StatefulSet reducen su escala. Esto es útil para optimizar la disponibilidad y el rendimiento de la aplicación.
-
-### Pod Deletion Cost Concept
-
-Pod Deletion Cost asigna un valor de costo a cada pod mediante la anotación `controller.kubernetes.io/pod-deletion-cost`. Durante la reducción de escala, los pods con costos más bajos se eliminan primero.
-
-**Características clave**:
-
-* Valor predeterminado: 0
-* Rango: -2147483648 a 2147483647 (rango int32)
-* Valor más alto = Pod más importante (se elimina más tarde)
-* Valor más bajo = Pod menos importante (se elimina primero)
-
-### Pod Deletion Cost Architecture
-
-El siguiente diagrama muestra cómo funciona Pod Deletion Cost durante la reducción de escala:
-
-```mermaid
-flowchart TB
-    subgraph "ReplicaSet Controller"
-        Controller[ReplicaSet Controller]
-        ScaleDown[Scale-down Request]
-    end
-
-    subgraph "Pod Selection Process"
-        GetPods[Get Pod List]
-        CheckCost{Check Pod Deletion Cost<br/>Annotation}
-        SortPods[Sort by Cost]
-        SelectPods[Select Low Cost Pods]
-    end
-
-    subgraph "Pods"
-        Pod1["Pod-1<br/>cost: 100"]
-        Pod2["Pod-2<br/>cost: 50"]
-        Pod3["Pod-3<br/>cost: -10"]
-        Pod4["Pod-4<br/>cost: 0"]
-    end
-
-    Deleted[Deleted Pods]
-
-    ScaleDown --> Controller
-    Controller --> GetPods
-    GetPods --> CheckCost
-    CheckCost --> SortPods
-    SortPods --> SelectPods
-
-    Pod1 & Pod2 & Pod3 & Pod4 --> CheckCost
-    SelectPods -->|Delete first| Pod3
-    SelectPods -->|Delete next| Pod4
-    Pod3 --> Deleted
-    Pod4 --> Deleted
-
-    classDef controller fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef deleted fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    class Controller,ScaleDown controller;
-    class GetPods,CheckCost,SortPods,SelectPods process;
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class Deleted deleted;
-```
-
-### Use Cases
-
-#### 1. Protecting Warmed-Up Cache Pods
-
-Cuando las aplicaciones cargan caché al inicio, puede priorizar mantener los pods con caché precalentada para optimizar el rendimiento.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-pod-warmed-up
-  annotations:
-    controller.kubernetes.io/pod-deletion-cost: "100"  # Cache warmed up
-spec:
-  containers:
-  - name: app
-    image: my-app:latest
-    lifecycle:
-      postStart:
-        exec:
-          command:
-          - /bin/sh
-          - -c
-          - |
-            # Cache warm-up
-            /app/warm-cache.sh
-            # Increase deletion cost after warm-up complete
-            kubectl annotate pod $HOSTNAME \
-              controller.kubernetes.io/pod-deletion-cost=100 --overwrite
-```
-
-#### 2. Protecting Pods with Active Connections
-
-Proteja pods con conexiones WebSocket o de larga duración:
+Regístrelo en `cmd/gpu-packing-scheduler/main.go` y luego utilice el flujo de creación de imágenes de la Parte 1 con `CGO_ENABLED=0 go build -buildvcs=false -o custom-scheduler ./cmd/gpu-packing-scheduler`.
 
 ```go
-// Go example: Dynamically update deletion cost based on active connection count
 package main
 
 import (
-    "context"
-    "fmt"
-    "os"
-    "time"
+	"os"
 
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/client-go/kubernetes"
-    "k8s.io/client-go/rest"
+	"example.com/custom-scheduler/packing"
+	"k8s.io/component-base/cli"
+	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 )
 
-type ConnectionTracker struct {
-    activeConnections int
-    k8sClient         *kubernetes.Clientset
-    podName           string
-    namespace         string
-}
-
-func NewConnectionTracker() (*ConnectionTracker, error) {
-    config, err := rest.InClusterConfig()
-    if err != nil {
-        return nil, err
-    }
-
-    clientset, err := kubernetes.NewForConfig(config)
-    if err != nil {
-        return nil, err
-    }
-
-    return &ConnectionTracker{
-        k8sClient: clientset,
-        podName:   os.Getenv("POD_NAME"),
-        namespace: os.Getenv("POD_NAMESPACE"),
-    }, nil
-}
-
-func (ct *ConnectionTracker) UpdateDeletionCost() error {
-    // Set deletion cost proportional to active connection count
-    // 10 cost per connection, max 1000
-    cost := ct.activeConnections * 10
-    if cost > 1000 {
-        cost = 1000
-    }
-
-    pod, err := ct.k8sClient.CoreV1().Pods(ct.namespace).Get(
-        context.TODO(),
-        ct.podName,
-        metav1.GetOptions{},
-    )
-    if err != nil {
-        return err
-    }
-
-    if pod.Annotations == nil {
-        pod.Annotations = make(map[string]string)
-    }
-
-    pod.Annotations["controller.kubernetes.io/pod-deletion-cost"] = fmt.Sprintf("%d", cost)
-
-    _, err = ct.k8sClient.CoreV1().Pods(ct.namespace).Update(
-        context.TODO(),
-        pod,
-        metav1.UpdateOptions{},
-    )
-
-    return err
-}
-
-func (ct *ConnectionTracker) StartPeriodicUpdate() {
-    ticker := time.NewTicker(30 * time.Second)
-    defer ticker.Stop()
-
-    for range ticker.C {
-        if err := ct.UpdateDeletionCost(); err != nil {
-            fmt.Printf("Failed to update deletion cost: %v\n", err)
-        }
-    }
-}
-
-func (ct *ConnectionTracker) OnConnectionOpen() {
-    ct.activeConnections++
-}
-
-func (ct *ConnectionTracker) OnConnectionClose() {
-    ct.activeConnections--
-    if ct.activeConnections < 0 {
-        ct.activeConnections = 0
-    }
+func main() {
+	command := app.NewSchedulerCommand(app.WithPlugin(packing.Name, packing.New))
+	os.Exit(cli.Run(command))
 }
 ```
 
-#### 3. Protecting Pods with Data Locality
+La idea original de ponderar 70:30 la consolidación y la utilización se puede expresar con la fórmula ilustrativa `(packingScore * 7 + utilizationScore * 3) / 10`, donde `utilizationScore = (1 - utilization) * 100`. **No está conectada a este binario.** Una implementación real necesita una instantánea coherente y reciente por dispositivo, valores finitos entre 0 y 1, latencia de recopilación acotada y una política explícita para datos faltantes. La telemetría faltante no equivale a una utilización cero; la utilización tampoco equivale a la capacidad GPU sin asignar.
 
-Proteja pods que almacenan en caché o usan datos en Nodes específicos:
+3. **Configuración del scheduler**:
+
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
+  plugins:
+    score:
+      enabled:
+      - name: GPUPacking
+        weight: 10
+```
+
+4. **Exprese los requisitos estrictos de colocación en el Pod.** Sustituya el modelo/memoria del ejemplo por datos de inventario verificados. `Gt: "40959"` significa una etiqueta entera de al menos 40960 MiB. La imagen BusyBox de abajo solo mantiene una reserva de recursos GPU si se ejecuta en un laboratorio preparado; no ejecuta CUDA ni valida la GPU.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-reservation-demo
+  namespace: scheduler-lab
+spec:
+  schedulerName: custom-scheduler
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: training.example.com/gpu-model
+            operator: In
+            values:
+            - A100
+          - key: training.example.com/gpu-memory-mib
+            operator: Gt
+            values:
+            - '40959'
+  containers:
+  - name: reservation
+    image: busybox:1.38.0
+    command:
+    - sh
+    - -c
+    - sleep 60
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+        nvidia.com/gpu: 2
+      limits:
+        memory: 128Mi
+        nvidia.com/gpu: 2
+```
+
+### Caso 2: scheduler para optimizar la localidad de red
+
+En los clústeres EKS se puede implementar un scheduler personalizado que tenga en cuenta la localidad de red para optimizar los costos de red.
+
+#### Arquitectura del scheduler de optimización de localidad de red
+
+Un diseño de localidad de red puede combinar la topología con información medida sobre dependencias; las integraciones son ilustrativas.
+
+#### Flujo de trabajo para optimizar la localidad de red
+
+Evalúe las restricciones estrictas de colocación antes de las puntuaciones de localidad opcionales; el tráfico real y los requisitos de dominios de fallo determinan las compensaciones.
+
+Antes de crear otro scheduler, empiece por la afinidad de Pods obligatoria/preferida, la distribución de topología y la topología del almacenamiento. Modele las dependencias reales entre servicios y las zonas de disponibilidad aptas; la colocación conjunta puede reducir parte del tráfico entre zonas, pero también aumentar la concentración de fallos o la contención. Ni las etiquetas de colocación ni una puntuación de programación demuestran menor latencia ni ahorro.
+
+Los diagramas muestran posibles integraciones, no una implementación completa de políticas de red, service mesh o CloudWatch. Mantenga la recopilación de métricas fuera de las llamadas de puntuación por nodo, limite el tiempo de vigencia de los datos y los timeouts, y vuelva a evaluar el equilibrio entre costo y disponibilidad con tráfico real. Este capítulo no incluye un scheduler de localidad de red desplegado.
+
+## Optimización de reducción de escala con Pod Deletion Cost
+
+Pod Deletion Cost es una **preferencia de mejor esfuerzo para reducir la escala de ReplicaSet**, incluidos los Pods administrados por los ReplicaSets de un Deployment. Apareció como función alfa en 1.21 y pasó a beta habilitada de forma predeterminada en 1.22; sigue siendo beta en la documentación de referencia. No controla la eliminación de ordinales de StatefulSet, la eliminación de Pods independientes, la expulsión ni los fallos de nodo.
+
+### Concepto de Pod Deletion Cost
+
+Defina la anotación `controller.kubernetes.io/pod-deletion-cost` en cada Pod. Los costos se comparan **dentro del mismo ReplicaSet**, no globalmente entre Deployments o nodos. Un costo mayor favorece conservar el Pod solo cuando las condiciones de mayor prioridad lo permiten.
+
+**Propiedades clave:**
+
+* Si falta la anotación, el costo es 0; los valores decimales válidos abarcan el rango int32 con signo, incluidos los negativos. Si la función está habilitada, se rechazan los valores no válidos.
+* En el controlador fijado, la asignación, la fase del Pod y su estado de disponibilidad tienen prioridad sobre el costo; la colocación de réplicas y otros desempates se evalúan después.
+* No hay un orden de eliminación garantizado. Los costos iguales en la plantilla no distinguen entre réplicas.
+* Evite actualizaciones frecuentes impulsadas por métricas. Prefiera cambios generales de estado de la aplicación o una actualización antes de una reducción de escala controlada por la aplicación.
+
+### Arquitectura de Pod Deletion Cost
+
+El diagrama muestra el orden por costo **solo cuando la asignación, la fase, el estado de disponibilidad y otras condiciones relevantes son comparables**; no garantiza una secuencia de eliminación.
+
+![El controlador de ReplicaSet ordena los Pods según la anotación pod-deletion-cost y elimina primero los de costo más bajo: Pod-3 (costo -10) antes que Pod-4 (costo 0), mientras Pod-1 y Pod-2, con costos mayores, sobreviven a la reducción de escala.](../.gitbook/assets/en-scheduling-03-custom-scheduler-part3-0.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-scheduling-03-custom-scheduler-part3-0.html)
+
+### Casos de uso
+
+#### 1. Proteger Pods con caché precalentada
+
+Este Deployment inicia cada Pod con costo 0. Es un contrato para **su aplicación**: sustituya la imagen e implemente `/readyz` en el puerto 8080 para que la disponibilidad refleje el precalentamiento real. En esta auditoría no se compiló ni ejecutó esa aplicación. No asigne un costo alto solo porque haya transcurrido cierto tiempo de espera.
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: deletion-cost-lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache-app
+  namespace: deletion-cost-lab
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: cache-app
+  template:
+    metadata:
+      labels:
+        app: cache-app
+      annotations:
+        controller.kubernetes.io/pod-deletion-cost: '0'
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: app
+        image: registry.example.com/training/cache-app:validated
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+```
+
+Cuando una réplica específica ya esté realmente precalentada, un operador/controlador autorizado puede actualizar la anotación de ese Pod. Actualizar en cambio la plantilla del Deployment inicia un rollout y crea otro ReplicaSet.
+
+```bash
+: "${POD_NAME:?Select a verified warm replica of cache-app}"
+kubectl -n deletion-cost-lab annotate pod "$POD_NAME" \
+  controller.kubernetes.io/pod-deletion-cost=100 --overwrite
+```
+
+El Deployment de ejemplo no monta ningún token de API. Los auxiliares dinámicos opcionales de abajo requieren un cliente de Kubernetes configurado y autorizado por separado. El RBAC de namespace con `patch pods` no se limita automáticamente al Pod que realiza la llamada; use un controlador de confianza o una identidad/política de admisión restringida de forma adecuada. Este ejemplo no instala una política de producción de ese tipo.
+
+#### 2. Proteger Pods con conexiones activas
+
+El recuento de conexiones activas puede servir como una señal para conservar un Pod; aun así, se requieren el cierre ordenado y el drenaje porque el costo no impide su eliminación. Esta biblioteca serializa las actualizaciones, usa categorías amplias, verifica el UID del Pod, modifica solo la anotación y omite las señales que no hayan cambiado. Supone que hay un solo escritor de esa anotación y que ya existe un objeto de anotaciones en la plantilla del Pod.
+
+Pase un cliente `client-go` configurado y el nombre/namespace/UID admitidos del Pod. En una integración dentro del Pod, esos identificadores se pueden obtener mediante Downward API; obtenerlos no concede permisos de API. Llame a `UpdateDeletionCost(ctx)` en una transición controlada o antes de una reducción de escala que usted administre, no con cada evento de conexión.
+
+```go
+package deletioncost
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"sync"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+)
+
+const Annotation = "controller.kubernetes.io/pod-deletion-cost"
+
+type ConnectionTracker struct {
+	client                  kubernetes.Interface
+	namespace, podName      string
+	uid                     types.UID
+	connectionsMu, updateMu sync.Mutex
+	activeConnections       int64
+	lastCost                int32
+	lastCostSet             bool
+}
+
+func NewConnectionTracker(client kubernetes.Interface, namespace, podName string, uid types.UID) (*ConnectionTracker, error) {
+	if client == nil || namespace == "" || podName == "" || uid == "" {
+		return nil, fmt.Errorf("client and admitted Pod namespace/name/UID are required")
+	}
+	return &ConnectionTracker{client: client, namespace: namespace, podName: podName, uid: uid}, nil
+}
+
+func (t *ConnectionTracker) OnConnectionOpen() {
+	t.connectionsMu.Lock()
+	defer t.connectionsMu.Unlock()
+	t.activeConnections++
+}
+
+func (t *ConnectionTracker) OnConnectionClose() {
+	t.connectionsMu.Lock()
+	defer t.connectionsMu.Unlock()
+	if t.activeConnections > 0 {
+		t.activeConnections--
+	}
+}
+
+// Illustrative coarse policy, not a benchmark or an availability guarantee.
+func CostForConnections(count int64) int32 {
+	switch {
+	case count <= 0:
+		return 0
+	case count < 10:
+		return 100
+	case count < 100:
+		return 500
+	default:
+		return 1000
+	}
+}
+
+// Call at an application-controlled transition or before a controlled scale-down,
+// not for every request. Assumes a single owner of this Pod's cost annotation.
+func (t *ConnectionTracker) UpdateDeletionCost(parent context.Context) (bool, error) {
+	t.updateMu.Lock()
+	defer t.updateMu.Unlock()
+	if err := parent.Err(); err != nil {
+		return false, err
+	}
+	t.connectionsMu.Lock()
+	cost := CostForConnections(t.activeConnections)
+	t.connectionsMu.Unlock()
+	if t.lastCostSet && t.lastCost == cost {
+		return false, nil
+	}
+
+	// The Deployment template must already contain an annotations object.
+	// JSON Pointer escapes the slash in the annotation key as ~1.
+	patch, err := json.Marshal([]map[string]any{
+		{"op": "test", "path": "/metadata/uid", "value": string(t.uid)},
+		{"op": "add", "path": "/metadata/annotations/controller.kubernetes.io~1pod-deletion-cost", "value": strconv.FormatInt(int64(cost), 10)},
+	})
+	if err != nil {
+		return false, err
+	}
+	ctx, cancel := context.WithTimeout(parent, 3*time.Second)
+	defer cancel()
+	_, err = t.client.CoreV1().Pods(t.namespace).Patch(ctx, t.podName, types.JSONPatchType, patch, metav1.PatchOptions{})
+	if err != nil {
+		return false, err
+	}
+	t.lastCost, t.lastCostSet = cost, true
+	return true, nil
+}
+```
+
+#### 3. Proteger Pods con localidad de datos
+
+Una señal de localidad puede favorecer una réplica con datos útiles en caché. En el manifiesto de abajo todas las réplicas empiezan con costo 50, así que no hay distinción por costo hasta que un controlador de confianza actualice Pods individuales. El costo no monta, conserva ni restaura datos; las restricciones de almacenamiento y la recuperación de la aplicación siguen siendo responsabilidades independientes.
 
 ```yaml
 apiVersion: apps/v1
@@ -400,7 +438,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: processor
-        image: data-processor:latest
+        image: registry.example.com/training/data-processor:validated
         env:
         - name: POD_NAME
           valueFrom:
@@ -412,49 +450,34 @@ spec:
               fieldPath: metadata.namespace
 ```
 
-#### 4. Prioritizing Deletion of Newly Started Pods
+#### 4. Dar prioridad a la eliminación de Pods recién iniciados
 
-Los pods iniciados recientemente pueden no estar completamente precalentados todavía, por lo que se eliminan primero:
+Un costo inicial negativo puede favorecer la eliminación de una réplica recién iniciada cuando coinciden los demás criterios del controlador. Elija ese costo en la plantilla **antes** del despliegue inicial y luego actualice un Pod individual después de una transición real de disponibilidad/estado. Un `sleep` fijo en postStart no demuestra que la caché esté lista, y cambiar una plantilla de Deployment existente provoca un rollout.
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-pod-new
-  annotations:
-    controller.kubernetes.io/pod-deletion-cost: "-50"  # New pods have low cost
+# Deployment Pod-template fragment, chosen before initial deployment.
 spec:
-  containers:
-  - name: app
-    image: my-app:latest
-    lifecycle:
-      postStart:
-        exec:
-          command:
-          - /bin/sh
-          - -c
-          - |
-            # Initially low cost
-            sleep 60
-            # Change to normal cost after 1 minute
-            kubectl annotate pod $HOSTNAME \
-              controller.kubernetes.io/pod-deletion-cost=0 --overwrite
+  template:
+    metadata:
+      annotations:
+        controller.kubernetes.io/pod-deletion-cost: "-50"
 ```
 
-### Integration with Horizontal Pod Autoscaler
+### Integración con Horizontal Pod Autoscaler
 
-Al usarlo con HPA, puede aprovechar Pod Deletion Cost para proteger pods importantes durante la reducción de escala:
+HPA ajusta el número de réplicas deseado; los controladores de Deployment/ReplicaSet eligen qué Pods eliminar. El costo de eliminación es una señal para esa selección, no una entrada de HPA ni una garantía de protección. Este HPA apunta al Deployment `cache-app` de arriba y requiere métricas funcionales de recursos de CPU y solicitudes de CPU. `selectPolicy: Min` elige la política de reducción de escala más restrictiva.
 
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: app-hpa
+  name: cache-app
+  namespace: deletion-cost-lab
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: app
+    name: cache-app
   minReplicas: 3
   maxReplicas: 10
   metrics:
@@ -466,7 +489,7 @@ spec:
         averageUtilization: 70
   behavior:
     scaleDown:
-      stabilizationWindowSeconds: 300  # 5-minute stabilization period
+      stabilizationWindowSeconds: 300
       policies:
       - type: Percent
         value: 50
@@ -477,242 +500,364 @@ spec:
       selectPolicy: Min
 ```
 
-### Dynamic Pod Deletion Cost Update Pattern
+### Patrón de actualización dinámica de Pod Deletion Cost
 
-Puede actualizar dinámicamente el deletion cost cuando la importancia de un pod cambia en tiempo real:
+Esta política alternativa combina entradas recientes por Pod (solicitudes, caché y latencia) en señales generales de 100 puntos. Las ponderaciones son ilustrativas, no resultados de rendimiento medidos. No hay un recopilador ficticio ni un ciclo de sondeo en segundo plano: proporcione muestras reales con el UID del Pod y una marca temporal `observed_at` que incluya zona horaria. Si los datos faltan, no son válidos, están obsoletos o corresponden a otro Pod, se genera un error y la anotación no cambia.
+
+Pase un `ApiClient` de Kubernetes para Python que ya esté configurado; la firma de llamada se comprobó con la versión 35.0.0 del cliente. Usa JSON Patch explícitamente, una prueba de UID y timeouts acotados de conexión/lectura. Elija un solo responsable/política para la anotación, en vez de ejecutar ambos ejemplos sobre el mismo Pod.
 
 ```python
-# Python example: Dynamic deletion cost update based on metrics
-from kubernetes import client, config
-import time
-import os
+from datetime import datetime, timezone
+import math
+import threading
+
+ANNOTATION_PATH = (
+    "/metadata/annotations/controller.kubernetes.io~1pod-deletion-cost"
+)
+
+
+def calculate_cost(metrics, now):
+    """Illustrative coarse hint from a real, fresh per-Pod sample."""
+    observed = datetime.fromisoformat(metrics["observed_at"].replace("Z", "+00:00"))
+    if observed.tzinfo is None or now.tzinfo is None:
+        raise ValueError("timestamps must include a timezone")
+    age = (now - observed).total_seconds()
+    if age < -5 or age > 60:
+        raise ValueError("metrics timestamp is in the future or stale")
+
+    active = metrics["active_requests"]
+    if isinstance(active, bool) or not isinstance(active, int) or active < 0:
+        raise ValueError("active_requests must be a non-negative integer")
+    hit_rate = metrics["cache_hit_rate"]
+    latency = metrics["avg_response_time_ms"]
+    for value in (hit_rate, latency):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError("metrics must be finite numbers")
+    if not 0 <= hit_rate <= 1 or latency < 0:
+        raise ValueError("invalid hit rate or latency")
+
+    raw_cost = active * 5 + int(hit_rate * 100)
+    raw_cost += 50 if latency < 100 else 20 if latency < 500 else 0
+    # Coarse buckets reduce annotation churn. Weights are an example policy.
+    return min(1000, (raw_cost // 100) * 100)
+
 
 class DeletionCostManager:
-    def __init__(self):
-        config.load_incluster_config()
-        self.v1 = client.CoreV1Api()
-        self.pod_name = os.environ.get('POD_NAME')
-        self.namespace = os.environ.get('POD_NAMESPACE')
+    """Uses a configured Kubernetes Python ApiClient; starts no background loop."""
 
-    def calculate_cost(self, metrics):
-        """
-        Calculate deletion cost based on metrics
-        - Active request count
-        - Cache hit rate
-        - Average response time
-        """
-        base_cost = 0
+    def __init__(self, api_client, namespace, pod_name, pod_uid):
+        if api_client is None or not all((namespace, pod_name, pod_uid)):
+            raise ValueError("API client and admitted Pod namespace/name/UID required")
+        self.api_client = api_client
+        self.namespace = namespace
+        self.pod_name = pod_name
+        self.pod_uid = pod_uid
+        self._last_cost = None
+        self._lock = threading.Lock()
 
-        # Higher cost for more active requests
-        active_requests = metrics.get('active_requests', 0)
-        base_cost += active_requests * 5
-
-        # Higher cost for higher cache hit rate
-        cache_hit_rate = metrics.get('cache_hit_rate', 0)
-        base_cost += int(cache_hit_rate * 100)
-
-        # Higher cost for faster response time (optimized pod)
-        avg_response_time = metrics.get('avg_response_time_ms', 1000)
-        if avg_response_time < 100:
-            base_cost += 50
-        elif avg_response_time < 500:
-            base_cost += 20
-
-        # Limit to max 1000
-        return min(base_cost, 1000)
-
-    def update_deletion_cost(self, cost):
-        """Update pod's deletion cost annotation"""
-        try:
-            pod = self.v1.read_namespaced_pod(
-                name=self.pod_name,
-                namespace=self.namespace
+    def update_from_metrics(self, metrics, now=None):
+        # A single writer should own this annotation. The Pod template must
+        # already create the annotations object with an initial deletion cost.
+        if metrics["pod_uid"] != self.pod_uid:
+            raise ValueError("metrics belong to a different Pod UID")
+        now = now or datetime.now(timezone.utc)
+        cost = calculate_cost(metrics, now)
+        with self._lock:
+            if cost == self._last_cost:
+                return False
+            patch = [
+                {"op": "test", "path": "/metadata/uid", "value": self.pod_uid},
+                {"op": "add", "path": ANNOTATION_PATH, "value": str(cost)},
+            ]
+            # Explicit JSON Patch media type; preserve unrelated Pod fields.
+            self.api_client.call_api(
+                "/api/v1/namespaces/{namespace}/pods/{name}",
+                "PATCH",
+                path_params={"namespace": self.namespace, "name": self.pod_name},
+                header_params={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json-patch+json",
+                },
+                body=patch,
+                response_type="V1Pod",
+                auth_settings=["BearerToken"],
+                _return_http_data_only=True,
+                _request_timeout=(3, 5),
             )
-
-            if pod.metadata.annotations is None:
-                pod.metadata.annotations = {}
-
-            pod.metadata.annotations['controller.kubernetes.io/pod-deletion-cost'] = str(cost)
-
-            self.v1.patch_namespaced_pod(
-                name=self.pod_name,
-                namespace=self.namespace,
-                body=pod
-            )
-
-            print(f"Updated deletion cost to {cost}")
-        except Exception as e:
-            print(f"Error updating deletion cost: {e}")
-
-    def run(self, get_metrics_func):
-        """Periodically collect metrics and update deletion cost"""
-        while True:
-            try:
-                metrics = get_metrics_func()
-                cost = self.calculate_cost(metrics)
-                self.update_deletion_cost(cost)
-            except Exception as e:
-                print(f"Error in main loop: {e}")
-
-            time.sleep(30)  # Update every 30 seconds
-
-# Usage example
-def get_app_metrics():
-    """Collect application metrics (implementation required)"""
-    return {
-        'active_requests': 15,
-        'cache_hit_rate': 0.85,
-        'avg_response_time_ms': 120
-    }
-
-if __name__ == '__main__':
-    manager = DeletionCostManager()
-    manager.run(get_app_metrics)
+            self._last_cost = cost
+            return True
 ```
 
-### Monitoring and Debugging
+### Supervisión y depuración
 
-Cómo verificar que Pod Deletion Cost funciona correctamente:
+Estos comandos inspeccionan anotaciones y validan una solicitud de reducción de escala sin cambiar el número de réplicas. Una ejecución de prueba en el servidor **no simula qué Pod elegirá ReplicaSet para eliminar**. Para experimentar con una reducción real, use una carga aislada bajo su control, tenga en cuenta que HPA podría sobrescribir el número de réplicas y compare los UID de los Pods y sus ReplicaSets propietarios antes y después. Un evento `Killing` de kubelet por sí solo no demuestra que se haya respetado el orden del costo de eliminación.
 
 ```bash
-# 1. Check pod's deletion cost
-kubectl get pods -o custom-columns=\
-NAME:.metadata.name,\
-DELETION_COST:.metadata.annotations.controller\.kubernetes\.io/pod-deletion-cost
+kubectl -n deletion-cost-lab get pods -l app=cache-app \
+  -o custom-columns='NAME:.metadata.name,UID:.metadata.uid,COST:.metadata.annotations.controller\.kubernetes\.io/pod-deletion-cost'
 
-# 2. Check all pod deletion costs for a specific Deployment
-kubectl get pods -l app=my-app -o json | \
-  jq -r '.items[] | "\(.metadata.name): \(.metadata.annotations["controller.kubernetes.io/pod-deletion-cost"] // "0")"'
+kubectl -n deletion-cost-lab get pods -l app=cache-app -o json | \
+  jq -r '.items[] | [.metadata.name, .metadata.uid, (.metadata.annotations["controller.kubernetes.io/pod-deletion-cost"] // "0")] | @tsv'
 
-# 3. Scale-down simulation
-kubectl scale deployment my-app --replicas=3
-
-# 4. Check which pods were deleted
-kubectl get events --field-selector involvedObject.kind=Pod,reason=Killing \
-  --sort-by='.lastTimestamp'
+# Server-side dry run changes no replicas and does not predict victim selection.
+kubectl -n deletion-cost-lab scale deployment/cache-app --replicas=3 --dry-run=server
+kubectl -n deletion-cost-lab get replicasets,pods -l app=cache-app
 ```
 
-### Prometheus Metrics Collection
+### Recopilación de métricas de Prometheus
+
+`kube_pod_annotations` procede de **kube-state-metrics**, no de la aplicación. Habilite la lista permitida de anotaciones específica en el exportador existente y conserve sus otros indicadores y claves permitidas. El destino de scraping existente de Prometheus debe estar en buen estado; lo siguiente es un fragmento de argumentos, no un Deployment nuevo.
 
 ```yaml
-# ServiceMonitor for Pod Deletion Cost metrics
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: pod-deletion-cost-monitor
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: my-app
-  endpoints:
-  - port: metrics
-    interval: 30s
-    relabelings:
-    - sourceLabels: [__meta_kubernetes_pod_annotation_controller_kubernetes_io_pod_deletion_cost]
-      targetLabel: pod_deletion_cost
+# Fragment to merge into the existing kube-state-metrics container arguments.
+# Preserve its other arguments and allowlisted keys.
+args:
+- --metric-annotations-allowlist=pods=[controller.kubernetes.io/pod-deletion-cost]
 ```
 
-### Grafana Dashboard
+La métrica exportada es un indicador con valor 1 y una **etiqueta** `annotation_controller_kubernetes_io_pod_deletion_cost`. Cambiar con relabeling una anotación no convierte su valor en una métrica numérica. La ausencia de una serie puede indicar que no se recopiló; no se debe suponer que equivale a costo 0.
+
+### Panel de Grafana
+
+Este es un objeto JSON de panel para importar, no el contenedor `{"dashboard": ...}` que requiere la API HTTP. Sustituya `PROMETHEUS_UID` por el UID real del origen de datos. Los paneles cuentan Pods según etiquetas explícitas de anotación, incluidos valores negativos; no grafican el valor 1 del indicador como si fuera el costo de eliminación. Compruebe la lista permitida de kube-state-metrics antes de interpretar los resultados.
 
 ```json
 {
-  "dashboard": {
-    "title": "Pod Deletion Cost Monitoring",
-    "panels": [
-      {
-        "title": "Pod Deletion Cost Distribution",
-        "targets": [
-          {
-            "expr": "kube_pod_annotations{annotation_controller_kubernetes_io_pod_deletion_cost!=\"\"}"
-          }
-        ],
-        "type": "graph"
+  "id": null,
+  "uid": "pod-deletion-cost-hints",
+  "title": "Pod Deletion Cost Hints",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Pods by explicit deletion cost",
+      "type": "piechart",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
       },
-      {
-        "title": "Pods by Deletion Cost Range",
-        "targets": [
-          {
-            "expr": "count(kube_pod_annotations{annotation_controller_kubernetes_io_pod_deletion_cost=~\"[0-9]+\"}) by (annotation_controller_kubernetes_io_pod_deletion_cost)"
-          }
-        ],
-        "type": "piechart"
-      }
-    ]
-  }
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_UID"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count by (annotation_controller_kubernetes_io_pod_deletion_cost) (kube_pod_annotations{namespace=\"deletion-cost-lab\",annotation_controller_kubernetes_io_pod_deletion_cost=~\"-?[0-9]+\"})",
+          "legendFormat": "{{annotation_controller_kubernetes_io_pod_deletion_cost}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 2,
+      "title": "Pods with an explicit cost",
+      "type": "stat",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_UID"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(kube_pod_annotations{namespace=\"deletion-cost-lab\",annotation_controller_kubernetes_io_pod_deletion_cost!=\"\"})",
+          "legendFormat": "",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {}
+    }
+  ]
 }
 ```
 
-### Best Practices
+### Prácticas recomendadas
 
-1. **Use rangos de costo consistentes**: Defina y use rangos de costo consistentes dentro de su equipo.
-   * `-100 to -1`: Eliminar primero (pods nuevos, pods en precalentamiento)
-   * `0`: Predeterminado (pods normales)
-   * `1 to 100`: Importancia media (pods con conexiones activas)
-   * `100 to 1000`: Alta importancia (pods con caché precalentada, pods con muchas conexiones)
-2. **Actualizaciones dinámicas**: Actualice dinámicamente el deletion cost cuando cambie el estado del pod.
-3. **Establezca límites superiores**: Establezca límites superiores en el deletion cost para prevenir problemas con valores excesivamente grandes.
-4. **Monitoreo**: Supervise la distribución de deletion costs para verificar que funcionen como se espera.
-5. **Pruebas**: Pruebe el comportamiento de reducción de escala en un entorno de staging antes de aplicarlo a producción.
-6. **Documentación**: Documente qué significa cada rango de costo.
+1. **Use rangos de costo coherentes**: Defina y utilice rangos de costo uniformes para el equipo.
+   * `-100 to -1`: Eliminar primero (Pods nuevos o que aún se están precalentando)
+   * `0`: Predeterminado (Pods normales)
+   * `1 to 100`: Importancia media (Pods con conexiones activas)
+   * `100 to 1000`: Importancia alta (Pods con caché precalentada o muchas conexiones)
+2. **Limite las actualizaciones**: Use cambios generales de estado o actualice antes de una reducción de escala controlada; evite escribir con cada solicitud o muestra de métricas.
+3. **Establezca límites superiores**: Limite el costo de eliminación para evitar problemas con valores excesivamente grandes.
+4. **Supervise**: Observe la distribución de los costos de eliminación para confirmar que funciona como se espera.
+5. **Pruebe**: Pruebe el comportamiento de reducción de escala en un entorno de preproducción antes de aplicarlo en producción.
+6. **Documente**: Explique el significado de cada rango de costo.
 
-### Limitations
+### Limitaciones
 
-* **Interacción con Pod Disruption Budget**: PDB tiene prioridad cuando se usan juntos.
-* **Versión de Kubernetes**: Solo disponible en 1.22 y superiores.
-* **Limitación de tipo de workload**: Solo funciona con workloads que usan el ReplicaSet controller (Deployment, ReplicaSet).
-* **Fallo de Node**: El deletion cost no se considera cuando un Node falla por completo.
+* **Alcance de PDB**: Una reducción de escala normal de ReplicaSet/Deployment elimina Pods directamente y no está bloqueada por un PDB. Los PDB rigen las solicitudes realizadas mediante la API de eviction; ninguno de los mecanismos garantiza que un Pod sobreviva a un fallo.
+* **Versión/función**: alfa en 1.21 y beta habilitada de forma predeterminada desde 1.22; la base de referencia 1.35.8 citada habilita PodDeletionCost. No interprete esto como una razón para desplegar una versión menor antigua sin soporte.
+* **Carga de trabajo/propiedad**: la preferencia se aplica dentro de un ReplicaSet. Los Pods independientes, la selección de ordinales de StatefulSet y la eliminación de una carga de trabajo completa siguen rutas distintas.
+* **Asincronía**: las actualizaciones concurrentes, los cambios de disponibilidad y otros criterios de selección pueden invalidar la preferencia esperada. Un Pod nuevo necesita su propia anotación; la señal no es un estado persistente de la aplicación.
 
-## Custom Scheduler Monitoring and Debugging
+## Supervisión y depuración de schedulers personalizados
 
-Después de implementar un custom scheduler, el monitoreo y la depuración son importantes. Esta sección cubre cómo monitorear y depurar custom schedulers.
+Después de implementar un scheduler personalizado, es importante supervisarlo y depurarlo. En esta sección se explica cómo hacerlo.
 
-### Monitoring Architecture
+### Arquitectura de supervisión
 
-El siguiente diagrama muestra la arquitectura para monitorear custom schedulers en EKS.
+La arquitectura ilustra una posible elección de integraciones de supervisión; la configuración concreta que sigue utiliza el endpoint HTTPS del propio scheduler y Prometheus Operator.
 
-### Key Monitoring Metrics
+### Métricas clave de supervisión
 
-El siguiente diagrama muestra las métricas clave de monitoreo para custom schedulers y sus relaciones:
+Use la latencia de intentos, el resultado de los intentos y la profundidad de la cola como señales distintas; sus nombres y unidades se verifican más abajo.
 
-### Logging
+### Registros
 
-Puede entender las decisiones de scheduling revisando los logs del custom scheduler:
-
-```bash
-kubectl logs -n kube-system -l app=custom-scheduler
-```
-
-### Checking Events
-
-Puede revisar eventos relacionados con el scheduling de pods:
+Puede comprender las decisiones de programación consultando los registros del scheduler personalizado:
 
 ```bash
-kubectl get events --field-selector involvedObject.name=<pod-name>
+kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 ```
 
-### Metrics Collection
+### Comprobación de eventos
 
-Puede recopilar métricas del custom scheduler usando Prometheus:
+Puede consultar los eventos relacionados con la programación de Pods:
+
+```bash
+kubectl -n scheduler-lab get events --field-selector involvedObject.name=<pod-name>
+```
+
+### Recopilación de métricas
+
+El ejemplo de abajo supervisa el **scheduler secundario**, que expone por sí mismo métricas HTTPS en el puerto 10259; no necesita un sidecar de métricas. AMP, CloudWatch, recopiladores de registros y el enrutamiento de alertas que aparecen en la ilustración requieren integraciones configuradas por separado.
+
+Requisitos previos: una pila existente de Prometheus Operator con acceso de descubrimiento, un certificado de servidor para `custom-scheduler.scheduler-lab.svc` y su clave privada en el Secret `custom-scheduler-serving-tls` de `scheduler-lab`. Coloque la CA pública en `monitoring/custom-scheduler-ca`, bajo la clave `ca.crt`. El Secret `monitoring/scheduler-scrape-token` debe contener un token válido, de **corta duración y con rotación periódica**, para la ServiceAccount de Prometheus; aquí no se implementan su aprovisionamiento ni rotación.
+
+Aplique el siguiente **parche de combinación estratégica** al Deployment completo de la Parte 1 solo después de preparar esa PKI. Conserva la imagen/configuración/ServiceAccount existente y monta la clave del servidor. Use el proceso de rollout que tenga bajo control; en esta auditoría no se ejecutó ningún rollout TLS.
 
 ```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-scheduler
+  namespace: scheduler-lab
+spec:
+  template:
+    spec:
+      containers:
+      - name: custom-scheduler
+        args:
+        - --config=/etc/scheduler/config.yaml
+        - --tls-cert-file=/etc/scheduler-serving/tls.crt
+        - --tls-private-key-file=/etc/scheduler-serving/tls.key
+        volumeMounts:
+        - name: serving-tls
+          mountPath: /etc/scheduler-serving
+          readOnly: true
+      volumes:
+      - name: serving-tls
+        secret:
+          secretName: custom-scheduler-serving-tls
+          defaultMode: 288
+```
+
+El Service expone el puerto HTTPS nombrado. Sustituya la ServiceAccount de ejemplo `monitoring/prometheus` por la identidad real del recolector. El ClusterRole adicional solo permite la solicitud GET al recurso no asociado a una API `/metrics`; no proporciona permisos de descubrimiento. Asegúrese de que el recurso Prometheus seleccione las etiquetas/namespace de este ServiceMonitor.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-scheduler
+  namespace: scheduler-lab
+  labels:
+    app: custom-scheduler
+spec:
+  selector:
+    app: custom-scheduler
+  ports:
+  - name: https
+    port: 10259
+    targetPort: https
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: custom-scheduler-metrics
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: custom-scheduler-metrics
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: custom-scheduler-metrics
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: custom-scheduler
   namespace: monitoring
+  labels:
+    app: custom-scheduler
 spec:
+  namespaceSelector:
+    matchNames:
+    - scheduler-lab
   selector:
     matchLabels:
       app: custom-scheduler
   endpoints:
-  - port: metrics
+  - port: https
+    path: /metrics
+    scheme: https
     interval: 15s
+    tlsConfig:
+      serverName: custom-scheduler.scheduler-lab.svc
+      ca:
+        configMap:
+          name: custom-scheduler-ca
+          key: ca.crt
+    authorization:
+      type: Bearer
+      credentials:
+        name: scheduler-scrape-token
+        key: token
 ```
 
-### Dashboard Configuration
+### Configuración del panel
 
-Puede visualizar métricas del custom scheduler usando Grafana:
+La métrica estable `scheduler_scheduling_attempt_duration_seconds` tiene las etiquetas `result` y `profile`; su histograma estima la latencia de intentos. `scheduler_schedule_attempts_total` es un contador, por lo que debe usarse una tasa para medir el rendimiento. El valor bruto `_count` no representa una duración. El scheduler secundario es distinto de `kubectl get --raw /metrics`, que devuelve métricas del servidor de API.
+
+Sustituya `PROMETHEUS_UID` e importe el JSON incrustado, o configure un proveedor/sidecar de paneles de Grafana que lea este ConfigMap. Crear solo el ConfigMap no carga el panel en Grafana. La etiqueta `grafana_dashboard: "1"` es una convención común de proveedor y debe coincidir con la configuración del entorno; no se ejecutaron la importación real ni las consultas.
 
 ```yaml
 apiVersion: v1
@@ -720,148 +865,104 @@ kind: ConfigMap
 metadata:
   name: custom-scheduler-dashboard
   namespace: monitoring
+  labels:
+    grafana_dashboard: '1'
 data:
   custom-scheduler-dashboard.json: |
     {
-      "annotations": {
-        "list": [
-          {
-            "builtIn": 1,
-            "datasource": "-- Grafana --",
-            "enable": true,
-            "hide": true,
-            "iconColor": "rgba(0, 211, 255, 1)",
-            "name": "Annotations & Alerts",
-            "type": "dashboard"
-          }
-        ]
+      "id": null,
+      "uid": "custom-scheduler",
+      "title": "Custom Scheduler",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
       },
-      "editable": true,
-      "gnetId": null,
-      "graphTooltip": 0,
-      "id": 1,
-      "links": [],
       "panels": [
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
+          "id": 1,
+          "title": "Successful scheduling attempt p95",
+          "type": "timeseries",
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
             "y": 0
           },
-          "hiddenSeries": false,
-          "id": 2,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMETHEUS_UID"
           },
-          "lines": true,
-          "linewidth": 1,
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.0",
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
           "targets": [
             {
-              "expr": "scheduler_scheduling_duration_seconds_count",
-              "interval": "",
-              "legendFormat": "",
-              "refId": "A"
+              "refId": "A",
+              "expr": "histogram_quantile(0.95, sum by (le, profile) (rate(scheduler_scheduling_attempt_duration_seconds_bucket{profile=\"custom-scheduler\",result=\"scheduled\"}[5m])))",
+              "legendFormat": "{{profile}}",
+              "instant": false
             }
           ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Scheduling Duration",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
             },
+            "overrides": []
+          },
+          "options": {}
+        },
+        {
+          "id": 2,
+          "title": "Scheduling attempts per second",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PROMETHEUS_UID"
+          },
+          "targets": [
             {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
+              "refId": "A",
+              "expr": "sum by (result) (rate(scheduler_schedule_attempts_total{profile=\"custom-scheduler\"}[5m]))",
+              "legendFormat": "{{result}}",
+              "instant": false
             }
           ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "options": {}
         }
-      ],
-      "schemaVersion": 26,
-      "style": "dark",
-      "tags": [],
-      "templating": {
-        "list": []
-      },
-      "time": {
-        "from": "now-6h",
-        "to": "now"
-      },
-      "timepicker": {},
-      "timezone": "",
-      "title": "Custom Scheduler Dashboard",
-      "uid": "custom-scheduler",
-      "version": 1
+      ]
     }
 ```
 
-## Conclusion
+## Conclusión
 
-Los custom schedulers son una forma poderosa de personalizar el comportamiento de scheduling de Kubernetes para requisitos específicos. En EKS, puede implementar custom schedulers mediante varios métodos, incluido el enfoque de múltiples schedulers, el enfoque de scheduler extender y el enfoque de plugin del scheduler framework.
+Los schedulers personalizados permiten adaptar el comportamiento de programación de Kubernetes a requisitos específicos. En EKS se pueden implementar con varios métodos, como el enfoque de varios schedulers, el de scheduler extender o el de plugin del framework del scheduler.
 
-Los custom schedulers se pueden utilizar en diversos casos, como la optimización de workloads de GPU y la optimización de localidad de red. Al implementar custom schedulers, también es importante configurar herramientas de monitoreo y depuración.
+Pueden utilizarse en distintos casos, como la optimización de cargas GPU y de la localidad de red. Al implementarlos, también es importante configurar herramientas de supervisión y depuración.
 
-## Quiz
+## Referencias y alcance de la validación
 
-Para comprobar lo que ha aprendido en este capítulo, intente el [cuestionario del tema](../quizzes/scheduling/02-custom-scheduler-part3-quiz.md).
+* [Costo y limitaciones de eliminación de ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
+* [Presupuestos de interrupción de Pods](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
+* [Ruta de eliminación de ReplicaSet fijada](https://github.com/kubernetes/kubernetes/blob/v1.35.8/pkg/controller/replicaset/replica_set.go)
+* [Orden de eliminación fijado](https://github.com/kubernetes/kubernetes/blob/v1.35.8/pkg/controller/controller_utils.go)
+* [Métricas del scheduler](https://github.com/kubernetes/kubernetes/blob/v1.35.8/pkg/scheduler/metrics/metrics.go)
+* [Métricas de Pods de kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)
+* [API del cliente de Kubernetes para Python](https://github.com/kubernetes-client/python/blob/v35.0.0/kubernetes/client/api_client.py)
+
+Las pruebas locales usan Pods sintéticos, clientes de API simulados y datos aritméticos de prueba. No representan nuevas ejecuciones de benchmarks, utilización GPU real, eliminación de Pods en vivo, precalentamiento de aplicaciones, rotación de certificados/tokens ni disponibilidad en producción.
+
+## Cuestionario
+
+Para comprobar lo aprendido en este capítulo, responda el [cuestionario del tema](../quizzes/scheduling/02-custom-scheduler-part3-quiz.md).
