@@ -3,7 +3,7 @@
 < [Previous: Node Bootstrap](./04-node-bootstrap.md) | [Table of Contents](./README.md) | [Next: Workload Placement](./06-workload-placement.md) >
 
 > **Supported Versions**: DRA GPU examples require Kubernetes 1.34.2+ on a supported EKS version. Reviewed interfaces: GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0.
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 18, 2026
 
 This chapter integrates prepared NVIDIA GPU hosts with EKS Hybrid Nodes. It covers allocation, GPU Operator ownership, MIG and time-slicing. **No GPU, driver installation, model download or inference benchmark was executed for this audit.** The examples require an approved OS/kernel/driver/toolkit/runtime/image combination and testing on the actual hardware.
 
@@ -326,6 +326,12 @@ After the owner replaces the image, verifies placement/runtime/security and appr
 Do not set `CUDA_VISIBLE_DEVICES=0,1,2,3` for a one-device claim. The device manager/runtime supplies the assigned devices; CUDA's process-visible indices may differ from physical GPU indices. A manual override can hide or misidentify the allocation and does not grant extra GPUs.
 
 `nvidia-smi -L` confirms device visibility only. Validate a bounded CUDA operation and the actual application separately on approved hardware; no such execution or performance result is claimed here.
+
+### Measured demo
+
+[![V4 demo video: Hybrid GPU inference (silent, 2 min 14 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v4-gpu.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v4-gpu.mp4)
+
+Separate from the smoke Jobs above, this silent video runs a vLLM (v0.19.1, `Qwen/Qwen2.5-0.5B-Instruct`) inference Pod on a Hybrid GPU node with the device plugin (v0.17.1) and calls it from a client Job on a cloud node. It is a real terminal recording made on October 18, 2026 in a simulated environment (a g6.xlarge NVIDIA L4 host joined from an on-premises VPC connected over TGW; not a supported production setup). In the recorded run only the GPU node advertised `nvidia.com/gpu` 1, the inference Pod ran a single container (no `istio-proxy`, `hostNetwork=false`) and the response took under 1 s. The first vLLM image pull (9.6 GB over a NAT path) took 4 min 35 s outside the recording. This is a functional check, not a performance result. See the [1-hour session deck](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) for the full walkthrough.
 
 ## MIG and time-slicing
 

@@ -678,6 +678,12 @@ Pod IP가 바뀔 때 target을 갱신하는 주체는 Gateway가 아니라 **AWS
 
 [AWS Ingress 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html)는 리전에서 시작하는 트래픽에는 ALB와 Load Balancer Controller를, 온프레미스에서 시작하는 트래픽에는 온프레미스 쪽 Ingress를 권장합니다. Gateway를 사용하면 Cilium `l7Proxy=false`가 필요해 Cilium Ingress와 Gateway API를 같은 설치에서 쓸 수 없으므로, 온프레미스 진입은 L4 `LoadBalancer` Service(Cilium LB IPAM/BGP 등)나 기존 하드웨어 LB와 NodePort 조합을 검토합니다.
 
+#### 데모 영상: ALB ip target과 역방향 경로
+
+[![V3 데모 영상: ALB ip target과 온프레미스 역방향 경로 (무음, 3분 12초)](../.gitbook/assets/ko-eks-hybrid-nodes-demo-v3-alb-reverse.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v3-alb-reverse.mp4)
+
+부하 중 Hybrid Pod를 rollout restart해 ALB `ip` target이 새 Pod IP로 바뀌는 과정과, 온프레미스 호스트에서 시작하는 세 경로를 보여 주는 무음 영상입니다. 2026년 10월 18일 시뮬레이션 환경(온프레미스를 TGW로 연결한 EC2 호스트로 대체, 프로덕션 지원 구성 아님)에서 녹화했습니다. 녹화 회차에서는 rollout restart 후 50초에 새 Pod IP만 healthy로 남았고 부하 174건 중 오류 0, 온프레미스에서 `/cloud` 3/3, `/hybrid` 3/3, NodePort 경로는 3회 모두 실패했습니다. 위 표의 54초, 276건, 4초, 191건 중 1건은 같은 날 앞선 측정 회차(02:11 UTC)의 값입니다. 전체 흐름은 [1시간 세션 덱](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)에서 볼 수 있습니다.
+
 ---
 
 ## 고가용성 및 페일오버
@@ -740,6 +746,12 @@ kubectl --context "$KUBE_CONTEXT" get ciliumvtepconfig hybrid-gateway -o yaml
 ```
 
 두 Gateway가 모두 실패하면 별도 underlay/API/Cilium 장애와 구분합니다. Gateway를 거치지 않는 node/control-plane 또는 intra-Hybrid 경로도 자체 네트워크·DNS·종속성이 정상일 때만 유지됩니다. 리더 복구 후 실제 VPC route ENI와 양방향 앱 probe를 다시 확인합니다.
+
+#### 데모 영상: Gateway 리더 전환
+
+[![V1 데모 영상: Gateway 리더 전환 (무음, 2분 58초)](../.gitbook/assets/ko-eks-hybrid-nodes-demo-v1-gateway-failover.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v1-gateway-failover.mp4)
+
+리더 Gateway Pod를 삭제하고 Lease 인계, VPC 라우트 ENI 교체, 1초 간격 probe 결과를 보여 주는 무음 영상입니다. 2026년 10월 18일 시뮬레이션 환경(온프레미스를 TGW로 연결한 EC2 호스트로 대체, 프로덕션 지원 구성 아님)에서 실제 터미널을 녹화했습니다. 녹화 회차는 Lease 인계 5초, probe 60개 중 2개 실패였고, 영상 끝에 나오는 이전 측정 3회(2026년 10월 15일)는 인계 3초, 5초, 5초와 실패 60개 중 1, 60개 중 1, 45개 중 2입니다. AWS 문서의 예상치 약 3~5초와 마찬가지로 보장값이 아닙니다. 전체 흐름은 [1시간 세션 덱](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)에서 볼 수 있습니다.
 
 ### 단일 Gateway 장애와 여러 데이터센터
 

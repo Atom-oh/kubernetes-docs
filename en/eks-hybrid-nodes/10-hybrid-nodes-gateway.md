@@ -736,6 +736,12 @@ An on-premises client enters through a load balancer and reaches Pods on Region 
 
 The [AWS Ingress guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html) recommends ALB with the Load Balancer Controller for traffic that originates in the Region and on-premises Ingress for traffic that originates on-premises. Because the gateway requires Cilium `l7Proxy=false`, Cilium Ingress and Gateway API are not available in the same installation; for on-premises entry consider an L4 `LoadBalancer` Service (Cilium LB IPAM/BGP) or an existing hardware LB with NodePort.
 
+#### Demo video: ALB ip targets and the reverse path
+
+[![V3 demo video: ALB ip targets on Hybrid Pods and the reverse path from on-premises (silent, 3 min 12 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v3-alb-reverse.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v3-alb-reverse.mp4)
+
+A silent video that rollout-restarts the Hybrid Pods under load so the ALB `ip` targets move to the new Pod IPs, then exercises the three paths that start from an on-premises host. Recorded on October 18, 2026 in a simulated environment (EC2 hosts standing in for on-premises over TGW; not a supported production setup). In the recorded run only the new Pod IPs remained healthy 50 s after the rollout restart, 0 of 174 requests failed, and from on-premises `/cloud` returned 3/3, `/hybrid` 3/3 and the NodePort path failed all 3 attempts. The 54 s, 276-request, 4 s and 1-of-191 figures in the tables above come from an earlier measurement run the same day (02:11 UTC). See the [1-hour session deck](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) for the full walkthrough.
+
 ### Pattern 6: Comparison --- With vs Without Gateway
 
 Native/BGP/static routing and this gateway are different owned datapaths. The gateway adds an active-standby VXLAN hop and aggregate route automation while keeping underlay, CIDR, firewall, IAM and application responsibilities. The comparison and migration sections below describe their boundaries; neither approach automatically guarantees webhook/LB availability.
@@ -776,6 +782,12 @@ During the failover window:
 - **VPC-to-hybrid traffic**: Drops until VPC routes are updated (packets go to the failed gateway's ENI)
 - **Hybrid-to-VPC traffic**: Drops until CiliumVTEPConfig is updated (Cilium sends to old gateway IP)
 - **Intra-hybrid and node/control-plane paths**: Paths that do not traverse the gateway can continue only if their own underlay, CNI, DNS and dependencies remain healthy; a shared AZ/network failure can affect them too.
+
+#### Demo video: gateway leader failover
+
+[![V1 demo video: gateway leader failover (silent, 2 min 58 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v1-gateway-failover.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v1-gateway-failover.mp4)
+
+A silent video that deletes the leader gateway Pod and shows the Lease handover, the VPC route ENI switch and 1-second probe results. It is a real terminal recording made on October 18, 2026 in a simulated environment (EC2 hosts standing in for on-premises over TGW; not a supported production setup). In the recorded run the Lease handover took 5 s and 2 of 60 probes failed. The three earlier runs shown at the end (October 15, 2026) measured 3 s, 5 s and 5 s handovers with 1 of 60, 1 of 60 and 2 of 45 probes failed. Like the roughly 3 to 5 s estimate in the AWS documentation, these are not guarantees. See the [1-hour session deck](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) for the full walkthrough.
 
 ### Single Gateway Failure and Multiple Data Centers
 

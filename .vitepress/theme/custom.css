@@ -301,6 +301,19 @@ body:lang(ja) {
   }
 }
 
+.VPDoc .demo-video {
+  margin: 16px 0 4px;
+}
+
+.VPDoc .demo-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: #000;
+}
+
 /* The static PNG kept alongside the embed (see archify_embed in config.ts) is
    the narrow-screen fallback, so it stays hidden while the iframe is shown. */
 .VPDoc .vp-doc p.archmap-embed__fallback {
