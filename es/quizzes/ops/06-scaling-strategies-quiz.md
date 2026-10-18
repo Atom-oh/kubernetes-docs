@@ -173,4 +173,3 @@ Metrics-server solo proporciona métricas de CPU y memoria. Prometheus Adapter e
 HPA y VPA pueden entrar en conflicto si ambos gestionan la misma dimensión de recursos. Algunas opciones son usar VPA solo para recomendaciones, o usar métricas de carga de trabajo como RPS o la longitud de la cola para que HPA escale mientras VPA ajusta los recursos. El modo Initial también cambia las solicitudes de recursos de los pods nuevos, por lo que no elimina las interacciones con el denominador de utilización de CPU. Valida también los efectos sobre los reinicios y la planificación.
 
 </details>
-

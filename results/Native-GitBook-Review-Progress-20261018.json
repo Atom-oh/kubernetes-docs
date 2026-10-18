@@ -34296,7 +34296,7 @@
           "sourcePath": "en/quizzes/ops/06-scaling-strategies-quiz.md",
           "sourceBlob": "15b06ab33862bd12120a3c91d8759156640fdbc9",
           "sourceSha256": "d65045cc39be225087fa0739a9bc08d203cf3bce8c89ce67736bea5310f94528",
-          "targetSha256": "3f41e9358a8bb886dcaccafaa812029ca46a4eff0ee594f1bf09f0899390fe7e",
+          "targetSha256": "a39f12817f295edd00f16796245869236fb3e7639746366a2353fea95c5827f8",
           "reviewer": "native GPT-6 Luna",
           "score": 96,
           "completePageComparison": true,
@@ -34304,12 +34304,12 @@
             "source_path": "en/quizzes/ops/06-scaling-strategies-quiz.md",
             "target_path": "es/quizzes/ops/06-scaling-strategies-quiz.md",
             "source_blob": "15b06ab33862bd12120a3c91d8759156640fdbc9",
-            "target_sha256": "3f41e9358a8bb886dcaccafaa812029ca46a4eff0ee594f1bf09f0899390fe7e",
+            "target_sha256": "a39f12817f295edd00f16796245869236fb3e7639746366a2353fea95c5827f8",
             "fidelity_score": 98,
             "readability_score": 94,
             "overall_score": 96,
             "review_status": "passed",
-            "review_scope": "The complete frozen English quiz and final Spanish translation were compared question by question for all ten keyed answers and explanations, all caveats and formula/field names; the structural validator passed after removing the target-only footer link.",
+            "review_scope": "Re-read the complete frozen English source and final Spanish target question by question across all ten answer keys, explanations, version markers, formula/field names and caveats. Confirmed semantic content remains unchanged and accurate after removing exactly one redundant final LF. The translation validator, emphasis check, owned-anchor repair and diff check passed.",
             "concrete_findings": [
               "Questions 2, 3, 4, 5, 6, 8, 9 and 10 were materially stale against the current English source: they overstated KEDA exclusivity, used removed VPA mode Auto, overpromised Pod Deletion Cost, misdescribed HPA rounding, Spot interruption handling, in-place resize maturity, metrics exposure and HPA/VPA interaction.",
               "The Spanish target also contained an unrelated return link to the Airflow guide that is absent from the source."
@@ -34318,10 +34318,11 @@
               "Rewrote the full Spanish quiz against the frozen source, including KEDA external-metric nuance; Recreate/Off and VPA version milestones; best-effort Pod Deletion Cost; HPA formula limits; node-mode-specific Spot handling; alpha/beta/stable in-place resize dates; configured/available metrics; and Initial-mode CPU denominator caveats.",
               "Removed the unrelated Airflow link and retained only the source-related document link."
             ],
-            "notes": "All ten correct-option keys and every question, option, explanation, technical version, numeric boundary and caveat were compared. Preserved the exact scaling formula, `pollingInterval`, `resizePolicy`, metrics API and related source links. Final reviewed bytes saved.",
+            "notes": "Prior genuine full-page review remains valid: the only change since that review was removal of a superfluous final blank line. Complete source/target reread performed after this byte-only correction; original 98 fidelity / 94 readability / 96 overall scores retained without rescoring. Final bytes saved.",
             "reviewer": "native GPT-6 Luna",
             "completePageComparison": true,
-            "final_snapshot": "/tmp/native-reviewed-target-snapshots/3f41e9358a8bb886dcaccafaa812029ca46a4eff0ee594f1bf09f0899390fe7e.md"
+            "final_snapshot": "/tmp/native-reviewed-target-snapshots/a39f12817f295edd00f16796245869236fb3e7639746366a2353fea95c5827f8.md",
+            "source_sha256": "d65045cc39be225087fa0739a9bc08d203cf3bce8c89ce67736bea5310f94528"
           }
         },
         "es/quizzes/ops/07-observability-alerts-quiz.md": {
@@ -38662,5 +38663,171 @@
     "auditPath": "/tmp/native-current-render-audit-20261018.json",
     "auditTime": "2026-10-18T12:45:42.586Z",
     "scope": "Actual VitePress configuration including default syntax highlighting"
-  }
+  },
+  "checkpointByteCorrections": [
+    {
+      "path": "es/quizzes/ops/06-scaling-strategies-quiz.md",
+      "beforeTargetSha256": "3f41e9358a8bb886dcaccafaa812029ca46a4eff0ee594f1bf09f0899390fe7e",
+      "afterTargetSha256": "a39f12817f295edd00f16796245869236fb3e7639746366a2353fea95c5827f8",
+      "change": "Removed exactly one redundant final LF",
+      "completeNativeSourceAndFinalTargetReread": true,
+      "originalActualScoresRetained": {
+        "fidelity": 98,
+        "readability": 94,
+        "overall": 96
+      },
+      "actualRenderAndHeadingRecheck": {
+        "time": "2026-10-18T12:51:50.417Z",
+        "source": "en/quizzes/ops/06-scaling-strategies-quiz.md",
+        "target": "es/quizzes/ops/06-scaling-strategies-quiz.md",
+        "renderer": "Actual VitePress configuration including default syntax highlighting",
+        "snapshots": {
+          "en/quizzes/ops/06-scaling-strategies-quiz.md": {
+            "sha256": "d65045cc39be225087fa0739a9bc08d203cf3bce8c89ce67736bea5310f94528",
+            "errors": [],
+            "bold": [],
+            "headings": [
+              {
+                "id": "scaling-strategies-quiz",
+                "level": "h1",
+                "line": 0
+              },
+              {
+                "id": "multiple-choice-questions",
+                "level": "h2",
+                "line": 4
+              },
+              {
+                "id": "_1-what-is-required-to-use-custom-metrics-with-hpa",
+                "level": "h3",
+                "line": 6
+              },
+              {
+                "id": "_2-what-does-keda-add-around-the-native-hpa-control-loop",
+                "level": "h3",
+                "line": 23
+              },
+              {
+                "id": "_3-what-is-the-difference-between-vpa-modes-recreate-and-off",
+                "level": "h3",
+                "line": 40
+              },
+              {
+                "id": "_4-what-is-pod-deletion-cost-and-how-does-it-affect-scaling",
+                "level": "h3",
+                "line": 57
+              },
+              {
+                "id": "_5-when-using-hpa-with-custom-metrics-what-is-the-formula-for-calculating-desired-replicas",
+                "level": "h3",
+                "line": 74
+              },
+              {
+                "id": "_6-what-is-the-recommended-strategy-for-spot-node-interruption-handling",
+                "level": "h3",
+                "line": 91
+              },
+              {
+                "id": "_7-in-keda-what-does-pollinginterval-configure",
+                "level": "h3",
+                "line": 108
+              },
+              {
+                "id": "_8-what-kubernetes-feature-enables-vpa-to-resize-pods-without-restart-in-newer-versions",
+                "level": "h3",
+                "line": 125
+              },
+              {
+                "id": "_9-what-is-the-benefit-of-using-prometheus-adapter-over-metrics-server-for-hpa",
+                "level": "h3",
+                "line": 142
+              },
+              {
+                "id": "_10-what-should-you-consider-when-combining-hpa-and-vpa",
+                "level": "h3",
+                "line": 159
+              }
+            ],
+            "htmlIds": [],
+            "links": [
+              "../../ops/06-scaling-strategies.md"
+            ]
+          },
+          "es/quizzes/ops/06-scaling-strategies-quiz.md": {
+            "sha256": "a39f12817f295edd00f16796245869236fb3e7639746366a2353fea95c5827f8",
+            "errors": [],
+            "bold": [],
+            "headings": [
+              {
+                "id": "cuestionario-sobre-estrategias-de-escalado",
+                "level": "h1",
+                "line": 0
+              },
+              {
+                "id": "preguntas-de-opcion-multiple",
+                "level": "h2",
+                "line": 4
+              },
+              {
+                "id": "_1-¿que-se-requiere-para-usar-metricas-personalizadas-con-hpa",
+                "level": "h3",
+                "line": 6
+              },
+              {
+                "id": "_2-¿que-anade-keda-al-bucle-de-control-nativo-de-hpa",
+                "level": "h3",
+                "line": 23
+              },
+              {
+                "id": "_3-¿cual-es-la-diferencia-entre-los-modos-de-vpa-«recreate»-y-«off»",
+                "level": "h3",
+                "line": 40
+              },
+              {
+                "id": "_4-¿que-es-pod-deletion-cost-y-como-afecta-al-escalado",
+                "level": "h3",
+                "line": 57
+              },
+              {
+                "id": "_5-al-usar-hpa-con-metricas-personalizadas-¿cual-es-la-formula-para-calcular-las-replicas-deseadas",
+                "level": "h3",
+                "line": 74
+              },
+              {
+                "id": "_6-¿cual-es-la-estrategia-recomendada-para-gestionar-las-interrupciones-de-nodos-spot",
+                "level": "h3",
+                "line": 91
+              },
+              {
+                "id": "_7-en-keda-¿que-configura-pollinginterval",
+                "level": "h3",
+                "line": 108
+              },
+              {
+                "id": "_8-¿que-funcion-de-kubernetes-permite-que-vpa-redimensione-pods-sin-reiniciarlos-en-versiones-recientes",
+                "level": "h3",
+                "line": 125
+              },
+              {
+                "id": "_9-¿que-ventaja-ofrece-prometheus-adapter-frente-a-metrics-server-para-hpa",
+                "level": "h3",
+                "line": 142
+              },
+              {
+                "id": "_10-¿que-debes-tener-en-cuenta-al-combinar-hpa-y-vpa",
+                "level": "h3",
+                "line": 159
+              }
+            ],
+            "htmlIds": [],
+            "links": [
+              "../../ops/06-scaling-strategies.md"
+            ]
+          }
+        },
+        "headingHierarchyPreserved": true
+      },
+      "noSemanticGradeAssignedByHost": true
+    }
+  ]
 }
