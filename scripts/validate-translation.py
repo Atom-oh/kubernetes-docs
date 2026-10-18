@@ -71,10 +71,27 @@ def link_targets(text):
 
 def introduced_document_wrappers(source, translated):
     """Reject response envelopes without rejecting XML documented in the source."""
-    pattern = r"</?(?:source_document|translated_document|final|analysis|response)\b[^>]*>"
-    source_tags = Counter(tag.lower() for tag in re.findall(pattern, source, re.IGNORECASE))
-    translated_tags = Counter(tag.lower() for tag in re.findall(pattern, translated, re.IGNORECASE))
+    # A truncated closing tag (for example "</final" without ">") also reaches
+    # the Vue compiler as malformed HTML.
+    pattern = r"<(/?)(source_document|translated_document|final|analysis|response)\b[^>\n]*(>|(?=\n|$))"
+    # Count the tag's identity and terminator, rather than localized prose
+    # following a documented unterminated tag.
+    def tags(text):
+        return Counter(
+            f"<{closing}{name.lower()}{terminator}"
+            for closing, name, terminator in re.findall(pattern, text, re.IGNORECASE)
+        )
+    source_tags = tags(source)
+    translated_tags = tags(translated)
     return list((translated_tags - source_tags).elements())
+
+
+def answer_tag_counts(text):
+    """Preserve GitBook quiz answer containers without counting anchor spans."""
+    return Counter(
+        (closing, name.lower())
+        for closing, name in re.findall(r"<(/?)(details|summary)\b[^>]*>", text, re.IGNORECASE)
+    )
 
 
 def table_shapes(text):
@@ -163,6 +180,9 @@ def main():
     wrappers = introduced_document_wrappers(src, dst)
     if wrappers:
         print(f"unexpected translation wrapper {wrappers[0]}: {dst_path}", file=sys.stderr)
+        return 1
+    if answer_tag_counts(src) != answer_tag_counts(dst):
+        print(f"answer container tag mismatch: {dst_path}", file=sys.stderr)
         return 1
     if table_shapes(src) != table_shapes(dst):
         print(f"table row/column mismatch: {dst_path}", file=sys.stderr)
