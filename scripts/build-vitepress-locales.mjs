@@ -177,7 +177,7 @@ const SITE_ROOT = 'https://docs.atomai.click/kubernetes-docs/'
 // static hosts have no server-side redirects, hence stubs.
 export const FALLBACK_LOCALES = translatedLocales
 
-function redirectStub(target) {
+export function redirectStub(target) {
   return [
     '<!doctype html>',
     '<html lang="en"><head><meta charset="utf-8">',
@@ -189,7 +189,7 @@ function redirectStub(target) {
   ].join('\n')
 }
 
-async function listHtmlFiles(directory, prefix = '') {
+export async function listHtmlFiles(directory, prefix = '') {
   const files = []
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const relative = prefix ? `${prefix}/${entry.name}` : entry.name
