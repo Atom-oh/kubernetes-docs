@@ -1,0 +1,54 @@
+name: Docs build (on demand)
+
+# Runs the full two-locale VitePress build on a GitHub runner, so a local
+# machine does not have to provide the disk and memory a full build needs.
+# Use it to check a branch before opening a PR, or to compare build resources
+# across variants (the step summary reports peak memory, time and disk use).
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: Build variant to measure
+        type: choice
+        options:
+          - full
+          - no-search
+          - no-mermaid
+          - no-search-no-mermaid
+        default: full
+      upload_dist:
+        description: Upload the built site as an artifact (about 2.5 GB)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-build-${{ github.ref }}-${{ inputs.variant }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+      VP_DISABLE_SEARCH: ${{ contains(inputs.variant, 'no-search') && '1' || '' }}
+      VP_DISABLE_MERMAID: ${{ contains(inputs.variant, 'no-mermaid') && '1' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - env:
+          VARIANT: ${{ inputs.variant }}
+        run: bash scripts/ci/measured-docs-build.sh "$VARIANT"
+      - if: ${{ inputs.upload_dist }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-dist-${{ inputs.variant }}
+          path: .vitepress/dist
+          retention-days: 3
