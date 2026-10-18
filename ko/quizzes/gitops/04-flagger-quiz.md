@@ -30,7 +30,7 @@ stepWeight는 분석 중 가중치 증가량이고 maxWeight는 분석 단계의
 **정답: B) 한 revision 분석에서 실패 검사 수가 threshold에 도달할 때**
 
 **설명:**
-Flagger는 각 분석 단계에서 정의된 메트릭(request-success-rate, request-duration 등)을 평가합니다. 실패 검사는 해당 revision에서 누적되며 성공할 때마다 초기화되는 연속 실패 수가 아닙니다. threshold에 도달하면 후속 조정에서 rollback합니다. primary 갱신 중 장애처럼 건강한 canary를 유지해야 하는 예외 복구 단계도 있습니다.
+Flagger는 각 분석 단계에서 정의된 메트릭(request-success-rate, request-duration 등)을 평가합니다. 실패 검사 수는 해당 revision에서 누적되며 성공할 때마다 초기화되는 연속 실패 수가 아닙니다. threshold에 도달하면 후속 조정에서 rollback합니다. primary 갱신 중 장애처럼 건강한 canary를 유지해야 하는 예외 복구 단계도 있습니다.
 
 </details>
 

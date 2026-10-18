@@ -239,7 +239,7 @@ A persistently growing `Recv-Q` is a reason to investigate reader progress, CPU 
 
 ## Comparing Hook Points: XDP, TC, netfilter
 
-All are "intercept and process a packet," but **position determines performance and what is possible.**
+All "intercept and process a packet," but **position determines performance and what is possible.**
 
 | Item | **XDP** | **TC (eBPF)** | **netfilter** |
 |---|---|---|---|

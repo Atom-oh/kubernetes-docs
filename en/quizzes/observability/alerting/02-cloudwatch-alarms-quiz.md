@@ -21,7 +21,7 @@ CloudWatch Alarms have three states:
 - **ALARM**: Metric has violated the defined threshold
 - **INSUFFICIENT_DATA**: Not enough data to evaluate the alarm
 
-These states automatically transition based on metric values and alarm configuration.
+Alarms automatically transition between these states based on metric values and alarm configuration.
 
 </details>
 
@@ -42,13 +42,13 @@ These states automatically transition based on metric values and alarm configura
 - `evaluation-periods`: Number of periods used to evaluate the alarm (e.g., 3)
 - `datapoints-to-alarm`: Number of datapoints that must violate the threshold to transition to ALARM state (e.g., 2)
 
-For example, with evaluation-periods=3 and datapoints-to-alarm=2, it means "ALARM if threshold is violated in 2 or more of the 3 periods". This is called "M of N" alarms.
+For example, evaluation-periods=3 and datapoints-to-alarm=2 mean "ALARM if the threshold is violated in 2 or more of the 3 periods". This is called an "M of N" alarm.
 
 </details>
 
 ---
 
-3. What is the basic ratio for ALB target error rate when requests are positive in CloudWatch Metric Math?
+3. What is the basic ratio for ALB target error rate when the request count is positive in CloudWatch Metric Math?
    - A) `errors + requests`
    - B) `(errors / requests) * 100`
    - C) `errors - requests`
@@ -149,7 +149,7 @@ CloudWatch Alarm Actions can directly execute the following AWS native operation
 - Auto Scaling Actions: Trigger scale out/in policies
 - SNS Actions: Send messages to topics
 
-EKS pod restart is not directly supported and requires a separately authorized Lambda/workflow and Kubernetes API path.
+An EKS pod restart is not directly supported and requires a separately authorized Lambda/workflow and Kubernetes API path.
 
 </details>
 
@@ -223,7 +223,7 @@ Event pattern for detecting CloudWatch Alarm state changes in EventBridge:
 }
 ```
 
-Using this pattern, you can trigger Lambda functions, Step Functions, SSM Automation, etc. when alarm state changes to ALARM to implement automated response.
+Using this pattern, you can trigger Lambda functions, Step Functions, SSM Automation, etc. when the alarm state changes to ALARM to implement an automated response.
 
 </details>
 

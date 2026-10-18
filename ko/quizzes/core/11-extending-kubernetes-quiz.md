@@ -15,7 +15,7 @@
 **정답: B) CustomResourceDefinition(CRD) 생성**
 
 **설명:**
-Kubernetes에서 커스텀 리소스를 정의하는 가장 일반적인 방법은 CustomResourceDefinition(CRD)을 생성하는 것입니다. CRD는 Kubernetes API를 확장하여 새로운 리소스 유형을 정의할 수 있게 해주는 메커니즘입니다.
+Kubernetes에서 커스텀 리소스를 정의하는 가장 일반적인 방법은 CustomResourceDefinition(CRD)를 생성하는 것입니다. CRD는 Kubernetes API를 확장하여 새로운 리소스 유형을 정의할 수 있게 해주는 메커니즘입니다.
 
 CRD를 사용하면 다음과 같은 이점이 있습니다:
 - 기존 Kubernetes API 서버를 수정하지 않고도 새로운 리소스 유형을 추가할 수 있습니다.
@@ -74,7 +74,7 @@ spec:
 **정답: B) 복잡한 애플리케이션의 운영 지식을 자동화된 소프트웨어로 인코딩**
 
 **설명:**
-Kubernetes 오퍼레이터(Operator)의 주요 목적은 복잡한 애플리케이션의 운영 지식을 자동화된 소프트웨어로 인코딩하는 것입니다. 오퍼레이터 패턴은 사람 운영자(human operator)가 복잡한 애플리케이션을 관리하는 방식을 소프트웨어로 구현한 것입니다.
+Kubernetes 오퍼레이터(Operator)의 주요 목적은 복잡한 애플리케이션의 운영 지식을 자동화된 소프트웨어로 인코딩하는 것입니다. 오퍼레이터 패턴은 운영자(human operator)가 복잡한 애플리케이션을 관리하는 방식을 소프트웨어로 구현한 것입니다.
 
 오퍼레이터의 주요 특징:
 - 커스텀 리소스와 커스텀 컨트롤러를 결합하여 애플리케이션별 로직을 구현합니다.
@@ -394,7 +394,7 @@ OpenAPI v3 Schema는 다음과 같은 다양한 검증 기능을 제공합니다
 **정답: B) 스펙(spec)과 상태(status) 업데이트의 분리 및 RBAC 제어 가능**
 
 **설명:**
-Kubernetes에서 커스텀 리소스의 상태(status) 하위 리소스를 활성화하는 주요 이점은 스펙(spec)과 상태(status) 업데이트의 분리 및 RBAC(Role-Based Access Control)을 통한 접근 제어가 가능하다는 것입니다.
+Kubernetes에서 커스텀 리소스의 상태(status) 하위 리소스를 활성화하는 주요 이점은 스펙(spec)과 상태(status) 업데이트를 분리하고 RBAC(Role-Based Access Control)을 통해 접근을 제어할 수 있다는 것입니다.
 
 상태 하위 리소스를 활성화하면 다음과 같은 이점이 있습니다:
 
@@ -775,7 +775,7 @@ CRD 적합 사례:
 
 ## 주관식 문제
 
-1. CustomResourceDefinition(CRD)을 사용하여 커스텀 리소스를 정의하는 방법과 해당 리소스의 검증 규칙을 설정하는 방법을 설명하세요.
+1. CustomResourceDefinition(CRD)를 사용하여 커스텀 리소스를 정의하는 방법과 해당 리소스의 검증 규칙을 설정하는 방법을 설명하세요.
 
 <details>
 <summary>정답 보기</summary>
@@ -1038,7 +1038,7 @@ API 서버의 CRD 스키마 검증이 잘못된 cronSpec/replicas를 거부합�
 
 **Kubernetes 오퍼레이터 패턴의 핵심 개념:**
 
-오퍼레이터 패턴은 애플리케이션별 운영 지식을 소프트웨어로 인코딩하여 복잡한 애플리케이션을 자동으로 관리하는 Kubernetes 확장 메커니즘입니다. 이 패턴은 사람 운영자(human operator)가 복잡한 시스템을 관리하는 방식을 모방합니다.
+오퍼레이터 패턴은 애플리케이션별 운영 지식을 소프트웨어로 인코딩하여 복잡한 애플리케이션을 자동으로 관리하는 Kubernetes 확장 메커니즘입니다. 이 패턴은 운영자(human operator)가 복잡한 시스템을 관리하는 방식을 모방합니다.
 
 **1. 핵심 개념:**
 

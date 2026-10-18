@@ -76,7 +76,7 @@ FixedRate, ReservoirSize and Priority are sampling fields. RetentionDays is not 
 
 **Explanation:**
 
-X-Ray indexes up to50annotations per trace. Metadata is not indexed as annotations, but unindexed does not mean secret or inaccessible. Use deliberate bounded fields and remove sensitive payloads, identifiers, tokens and SQL parameters before collection. index_all_attributes=false is not a redaction processor.
+X-Ray indexes up to 50 annotations per trace. Metadata is not indexed as annotations, but unindexed does not mean secret or inaccessible. Use deliberate bounded fields and remove sensitive payloads, identifiers, tokens and SQL parameters before collection. index_all_attributes=false is not a redaction processor.
 
 </details>
 
@@ -114,7 +114,7 @@ Receivers, processors and exporters must be connected in the appropriate logs/me
 
 **Explanation:**
 
-Red represents server faults, yellow client errors, purple throttling such as HTTP429, and green successful traffic. These categories are not arbitrary latency thresholds or a claim that every red service has crossed a user-defined high-error-rate alarm.
+Red represents server faults, yellow client errors, purple throttling such as HTTP 429, and green successful traffic. These categories are not arbitrary latency thresholds or a claim that every red service has crossed a user-defined high-error-rate alarm.
 
 </details>
 
@@ -133,7 +133,7 @@ Red represents server faults, yellow client errors, purple throttling such as HT
 
 **Explanation:**
 
-The guide sends OTLP with mTLS to ADOT, whose awsxray exporter calls the signed classic X-Ray API. X-Ray supports W3C128-bit IDs; a special X-Ray ID generator/propagator is not universally mandatory. The alternative native OTLP HTTPS endpoint requires SigV4 and Transaction Search. Configure propagation for the actual integration.
+The guide sends OTLP with mTLS to ADOT, whose awsxray exporter calls the signed classic X-Ray API. X-Ray supports W3C 128-bit IDs; a special X-Ray ID generator/propagator is not universally mandatory. The alternative native OTLP HTTPS endpoint requires SigV4 and Transaction Search. Configure propagation for the actual integration.
 
 </details>
 
@@ -152,7 +152,7 @@ The guide sends OTLP with mTLS to ADOT, whose awsxray exporter calls the signed 
 
 **Explanation:**
 
-Response-time values are in seconds. >2 excludes exactly2seconds; >=2 includes it. These are X-Ray filter expressions, not shell commands or Logs Insights QL. duration is also a documented X-Ray keyword and must not be presented as an invented invalid keyword.
+Response-time values are in seconds. >2 excludes exactly 2 seconds; >=2 includes it. These are X-Ray filter expressions, not shell commands or Logs Insights QL. duration is also a documented X-Ray keyword and must not be presented as an invented invalid keyword.
 
 </details>
 

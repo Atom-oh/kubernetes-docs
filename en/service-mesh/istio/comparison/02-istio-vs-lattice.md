@@ -585,7 +585,7 @@ Choose the Service-only metric from list-metrics and copy its exact Service dime
 aws cloudwatch get-metric-statistics --region "$AWS_REGION"   --namespace AWS/VpcLattice --metric-name TotalRequestCount   --dimensions "Name=Service,Value=$SERVICE_DIMENSION"   --start-time "$START_TIME" --end-time "$END_TIME"   --period 60 --statistics Sum
 ```
 
-Missing metrics are not automatically zero traffic or a healthy service. Lattice's AWS namespace contains its published service metrics; applications can separately publish custom metrics or derive log metrics. “Custom metrics are impossible” is therefore not a useful general claim.
+Missing metrics do not automatically indicate zero traffic or a healthy service. Lattice's AWS namespace contains its published service metrics; applications can separately publish custom metrics or derive log metrics. “Custom metrics are impossible” is therefore not a useful general claim.
 
 ### Access Logs and Request Correlation
 
@@ -626,7 +626,7 @@ Istio 1.31 supports Kubernetes 1.32–1.37; use the intersection with the actual
 
 For Lattice, define the service/resource model, actual client association or endpoint path, target lifecycle, listener protocol and authentication boundaries. A service does not have to be a Lambda function, and a meshed EKS application can call Lambda through a separately supported integration. Lambda cannot itself host an Istio sidecar; that is different from declaring every EKS-plus-Lambda architecture incompatible with Istio.
 
-A complete service setup requires, in order appropriate to the owners:
+A complete service setup requires, in an order appropriate to the owners:
 
 1. Existing network connectivity, DNS, security groups and authorized management/client roles.
 2. The service network and the intended client VPC association or service-network endpoint.

@@ -90,7 +90,7 @@ Maturity words are quoted from the release notes or in-tree documentation (`.. i
 
 **1.19** (2934 commits): policy default local cluster enabled; mutual authentication disabled by default; multi-pool IPAM stable; OCI Helm charts; ztunnel beta; strict encryption modes for IPsec and WireGuard; Kafka policy fields deprecated and `FromRequires/ToRequires` removed; BGPv1 removed; MCS-API CRDs installed automatically (`clustermesh.mcsapi.installCRDs`); certificate generation reworked so the CronJob is no longer a Helm hook (Argo CD and `--wait` friendly); Gateway API 1.4; GAMMA GRPCRoute.
 
-**1.20** (2026-07-29): Gateway API 1.6.1 (ListenerSet, BackendTLSPolicy, TCPRoute/UDPRoute, ExternalAuth, CORS); datapath plugins; `bpf.datapathMode=auto`; egress gateway IPv6 egress IP; BGP via `cilium-dbg shell -- bgp/*` and GoBGP 4.6.1; ENI IPv6 (beta); cluster-pool to multi-pool in-place migration; `PreferSameZone`/`PreferSameNode` traffic distribution; Maglev weights via `service.cilium.io/weight` (0 drains); MCS-API stable; `cluster-mesh` policy entity; Kubernetes ClusterNetworkPolicy admin/baseline tiers; ConfigMap drift detection; `cilium-cni` binary reduced from 77 MB to 16 MB; K8s 1.36, Envoy 1.37.x. **Removed in 1.20**: Envoy Go extensions (proxylib), Kafka-aware L7 policy, `CiliumNodeConfig` `v2alpha1`, `clustermesh.enableMCSAPISupport` (use `clustermesh.mcsapi.enabled`), certificate-as-values for Cluster Mesh, `cilium-docker-plugin`, the old `encryption.strictMode.*` flags (now `encryption.strictMode.egress.*`), `--node-port-algorithm`/`--node-port-mode`, `--ces-slice-mode`, `encryption.ipsec.interface`. **Behavior changes**: `bpf.tproxy=true` is incompatible with netkit; in-cluster NodePort access from Pods without SocketLB (or with `socketLB.hostNamespaceOnly=true`) is now load-balanced at the client Pod, so both client egress and backend ingress policy must allow it; empty `CiliumNetworkPolicy`/`CiliumClusterwideNetworkPolicy` (no `spec`/`specs`) are rejected at admission; Cluster Mesh auto-generated certificates default to one year validity with a CronJob regenerating every four months; certgen enforces CA validity >= leaf validity (`certgen.enforceCAValidityThroughoutLeavesDuration=false` disables the check).
+**1.20** (2026-07-29): Gateway API 1.6.1 (ListenerSet, BackendTLSPolicy, TCPRoute/UDPRoute, ExternalAuth, CORS); datapath plugins; `bpf.datapathMode=auto`; egress gateway IPv6 egress IP; BGP via `cilium-dbg shell -- bgp/*` and GoBGP 4.6.1; ENI IPv6 (beta); cluster-pool to multi-pool in-place migration; `PreferSameZone`/`PreferSameNode` traffic distribution; Maglev weights via `service.cilium.io/weight` (0 drains); MCS-API stable; `cluster-mesh` policy entity; Kubernetes ClusterNetworkPolicy admin/baseline tiers; ConfigMap drift detection; `cilium-cni` binary reduced from 77 MB to 16 MB; K8s 1.36, Envoy 1.37.x. **Removed in 1.20**: Envoy Go extensions (proxylib), Kafka-aware L7 policy, `CiliumNodeConfig` `v2alpha1`, `clustermesh.enableMCSAPISupport` (use `clustermesh.mcsapi.enabled`), certificate-as-values for Cluster Mesh, `cilium-docker-plugin`, the old `encryption.strictMode.*` flags (now `encryption.strictMode.egress.*`), `--node-port-algorithm`/`--node-port-mode`, `--ces-slice-mode`, `encryption.ipsec.interface`. **Behavior changes**: `bpf.tproxy=true` is incompatible with netkit; in-cluster NodePort access from Pods without SocketLB (or with `socketLB.hostNamespaceOnly=true`) is now load-balanced at the client Pod, so both client egress and backend ingress policy must allow it; empty `CiliumNetworkPolicy`/`CiliumClusterwideNetworkPolicy` (no `spec`/`specs`) are rejected at admission; Cluster Mesh auto-generated certificates default to one year of validity with a CronJob regenerating every four months; certgen enforces CA validity >= leaf validity (`certgen.enforceCAValidityThroughoutLeavesDuration=false` disables the check).
 
 **1.21 pre-release** (v1.21.0-pre.3): delta xDS (`envoy.xdsMode=delta-split`); Cilium Network Driver (DRA, SR-IOV); Gateway API session persistence; AWS managed prefix lists in policy; KVStoreMesh unconditionally enabled; Cluster Mesh `authMode` default `cluster`; mutual authentication removed; `encryption.nodeEncryption` (WireGuard) deprecated with removal planned for 1.22; `--aws-use-primary-address` operator flag removed (use `eni.nodeSpec.usePrimaryAddress`); `cec.cilium.io/*` annotations from Gateway/GAMMA infrastructure metadata are no longer propagated to generated `CiliumEnvoyConfig`; the operator performs automatic storage-version migration of obsolete objects; Kubernetes libraries 1.37. The pre.2 release note "Enable BPF masquerading by default" is not reflected in the pre.3 tree (see Validation Limits).
 
@@ -164,7 +164,7 @@ The Helm chart is available from two locations:
 | `oci://quay.io/cilium/charts/cilium` | Documented as recommended since 1.19; charts are cosign-signed and can be pinned by digest |
 | `https://helm.cilium.io/` (`helm repo add cilium`) | Classic repository, fully supported |
 
-Chart versions have no `v` prefix (`--version 1.20.2`), image tags do. OCI registries do not support `helm search`; list versions with `crane ls quay.io/cilium/charts/cilium`. Verify a chart signature:
+Chart versions have no `v` prefix (`--version 1.20.2`); image tags do. OCI registries do not support `helm search`; list versions with `crane ls quay.io/cilium/charts/cilium`. Verify a chart signature:
 
 ```bash
 cosign verify \
@@ -238,7 +238,7 @@ Notes:
 
 ### 6.3 AMIs
 
-The 1.20.2 system requirements list Amazon Linux 2 and Bottlerocket as supported "all", Ubuntu >= 20.04, RHEL >= 8.6, Talos >= 1.5.0 and Flatcar (with a DHCP caveat for ENI). Amazon Linux 2023 is not listed by name; its kernel is newer than the 5.10 minimum, but that is an inference, not an upstream statement. AWS's Hybrid Nodes documentation notes that Ubuntu 20.04 and RHEL 8 do not meet the kernel requirement for Cilium 1.18.3.
+The 1.20.2 system requirements list Amazon Linux 2 and Bottlerocket as supported ("all" versions), Ubuntu >= 20.04, RHEL >= 8.6, Talos >= 1.5.0 and Flatcar (with a DHCP caveat for ENI). Amazon Linux 2023 is not listed by name; its kernel is newer than the 5.10 minimum, but that is an inference, not an upstream statement. AWS's Hybrid Nodes documentation notes that Ubuntu 20.04 and RHEL 8 do not meet the kernel requirement for Cilium 1.18.3.
 
 ### 6.4 EKS Hybrid Nodes
 
@@ -402,7 +402,7 @@ Components (v1.20.2 `intro.rst`, `values.yaml`):
 
 ### 9.1 Data path
 
-Remote Pods appear in the local ipcache with the remote node as tunnel endpoint (overlay) or are routed by the underlay (native routing). Because identities include the cluster ID, a policy decision in cluster 1 for traffic from a Pod in cluster 2 uses the remote Pod's numeric identity and works without any gateway. This is why non-overlapping Pod CIDRs and node-IP connectivity are mandatory.
+Remote Pods appear in the local ipcache with the remote node as the tunnel endpoint (overlay) or are routed by the underlay (native routing). Because identities include the cluster ID, a policy decision in cluster 1 for traffic from a Pod in cluster 2 uses the remote Pod's numeric identity and works without any gateway. This is why non-overlapping Pod CIDRs and node-IP connectivity are mandatory.
 
 ## 10. Cluster Mesh Configuration
 
@@ -526,11 +526,11 @@ cilium connectivity test --context $CLUSTER1 --multi-cluster $CLUSTER2
 
 ## 11. Global Services, Affinity and EndpointSlice Sync
 
-A Global Service is the same Service name and namespace in each cluster with the annotation `service.cilium.io/global: "true"`. Backends from all clusters are merged.
+A Global Service uses the same Service name and namespace in each cluster and has the annotation `service.cilium.io/global: "true"`. Backends from all clusters are merged.
 
 | Annotation | Effect |
 |---|---|
-| `service.cilium.io/global: "true"` | Make the Service global. If any cluster omits or sets it false, that cluster's Service stays local |
+| `service.cilium.io/global: "true"` | Make the Service global. If any cluster omits it or sets it to false, that cluster's Service stays local |
 | `service.cilium.io/shared: "false"` | Do not export this cluster's backends, but still consume remote ones. If both are global with shared on both sides, each cluster sees local plus remote; a cluster with `shared: "false"` exports nothing |
 | `service.cilium.io/affinity: none\|local\|remote` | `local`: use healthy local backends, fall back to remote only if all local are unavailable; `remote` is the mirror image; `none` (default) no preference |
 | `service.cilium.io/global-sync-endpoint-slices: "true"` | **Beta.** Also create EndpointSlices for remote backends so third-party controllers can see them; requires Helm `clustermesh.enableEndpointSliceSynchronization=true` and an operator restart. Headless global Services get it by default |
@@ -615,7 +615,7 @@ Upstream's `eks-clustermesh-prep.rst` uses `eksctl`, two VPCs with non-overlappi
 - Peer the VPCs (or use a Transit Gateway) and add routes in the private route tables to the peer CIDR.
 - Security group rules reference the node security groups of both clusters (or private CIDRs); never `0.0.0.0/0` or `::/0`.
 - Expose clustermesh-apiserver through an internal NLB (`aws-load-balancer-scheme: internal`) or NodePort over the peering link, with `loadBalancerSourceRanges` set to the peer VPC CIDR.
-- ENI mode gives VPC-routable Pod IPs, so native routing needs only that `ipv4NativeRoutingCIDR` covers both VPCs' Pod ranges. In overlay mode, only node-to-node reachability (UDP 8472) is needed.
+- ENI mode gives VPC-routable Pod IPs, so native routing requires only that `ipv4NativeRoutingCIDR` cover both VPCs' Pod ranges. In overlay mode, only node-to-node reachability (UDP 8472) is needed.
 - Use distinct `cluster.name`/`cluster.id` per EKS cluster and the same `maxConnectedClusters`. In ENI mode keep `cluster.id` below 128, because the chart rejects 128-255 (and 384-511 with `maxConnectedClusters: 511`) unless `extraConfig.allow-unsafe-policy-skb-usage=true` is set (`validate.yaml:160-168`).
 
 ## 15. Labs
@@ -682,7 +682,7 @@ Prerequisites: any Cilium 1.20.2 cluster with at least two nodes.
 2. Apply a `CiliumNodeConfig` in `kube-system` selecting that label with a harmless `defaults` key such as `debug: "true"`.
 3. Delete the agent Pod on the labelled node and on one unlabelled node.
 
-Verify: the recreated agent on the labelled node reports the override in its effective configuration (`cilium-dbg config`), the unlabelled one does not.
+Verify: the recreated agent on the labelled node reports the override in its effective configuration (`cilium-dbg config`); the unlabelled one does not.
 
 Cleanup: delete the CiliumNodeConfig, remove the label and recreate the agent Pod again.
 

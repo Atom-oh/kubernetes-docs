@@ -19,7 +19,7 @@ This quiz tests your understanding of Strimzi Operator fundamentals, installatio
 **Answer: B) An Operator for running Apache Kafka on Kubernetes**
 
 **Explanation:**
-Strimzi 1.3 is a CNCF incubating project that reconciles desired state in custom resources. Current Kafka Pod management uses StrimziPodSet. An Operator does not automatically complete every operating policy or availability guarantee.
+Strimzi 1.3 is a CNCF incubating project that reconciles desired state in custom resources. Current Kafka Pod management uses StrimziPodSet. An Operator does not automatically implement every operating policy or fulfill every availability guarantee.
 </details>
 
 2. Which of the following is LEAST accurate as a challenge of running Kafka directly as a StatefulSet without Strimzi?

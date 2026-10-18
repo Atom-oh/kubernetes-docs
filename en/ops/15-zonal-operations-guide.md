@@ -240,7 +240,7 @@ Aurora's [default reader endpoint](https://docs.aws.amazon.com/AmazonRDS/latest/
 | Cache reads | GLIDE strategy matching freshness and AZ metadata | Verify remote fallback and primary load |
 | DB reads | Maintained local reader list or response-time selection | Handle missing local readers and reconnection |
 
-Measure load, cost, and recovery-time baselines, then rehearse traffic shifts and rollback outside production. Read-path optimization can also be introduced independently: validate consistency, fallback, and cost on a small scope before expanding.
+Measure load, cost, and recovery-time baselines, then rehearse traffic shifts and rollback outside production. Read-path optimization can also be introduced independently: validate consistency, fallback, and cost within a small scope before expanding.
 
 ***
 

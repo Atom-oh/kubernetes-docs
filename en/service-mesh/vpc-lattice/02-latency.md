@@ -60,15 +60,15 @@ This is why you must audit your applications' HTTP client settings (connection p
 
 A single request in AS-IS passes through a proxy **twice**: once at the caller's Envoy (routing decision, mTLS initiation, metrics) and once at the receiver's Envoy (mTLS termination, authorization, metrics). Each traversal is a full userspace receive-process-send cycle.
 
-This removes the two **customer-managed sidecar traversals** in the illustrated path. Lattice internal implementation, signing proxies and changed network routes prevent treating this as a guaranteed reduction in end-to-end latency.
+This removes the two **customer-managed sidecar traversals** in the illustrated path. Lattice's internal implementation, signing proxies and changed network routes prevent treating this as a guaranteed reduction in end-to-end latency.
 
 ### 2. Envoy sidecar CPU contention goes away
 
 This is the factor most often underestimated in practice.
 
-There is one Envoy sidecar per Pod, and each consumes node CPU. When a node is under CPU pressure, the Envoy process waits to be scheduled, and that wait time is added directly to request latency. The characteristic of this phenomenon is that **it barely shows in the average and shows heavily in the tail.** Most requests are scheduled immediately; some wait milliseconds to tens of milliseconds.
+There is one Envoy sidecar per Pod, and each consumes node CPU. When a node is under CPU pressure, the Envoy process waits to be scheduled, and that wait time is added directly to request latency. The characteristic of this phenomenon is that **it barely shows up in the average and is pronounced in the tail.** Most requests are scheduled immediately; some wait milliseconds to tens of milliseconds.
 
-Removing the sidecar removes the contention itself. So **on clusters with high Pod density and tight CPU, p99 may improve.** At the same time, more CPU and memory become available per node, creating room to increase Pod density.
+Removing the sidecar removes the contention itself. So **on clusters with high Pod density and limited CPU resources, p99 may improve.** At the same time, more CPU and memory become available per node, creating room to increase Pod density.
 
 ### 3. Configuration convergence changes
 

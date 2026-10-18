@@ -350,12 +350,12 @@ Kubernetes에는 두 가지 유형의 어드미션 컨트롤러가 있습니다:
 
 Kubernetes에는 여러 내장 어드미션 컨트롤러가 있습니다:
 
-1. **NamespaceLifecycle**: 삭제 중인 네임스페이스에 리소스 생성을 방지
+1. **NamespaceLifecycle**: 삭제 중인 네임스페이스에 리소스가 생성되는 것을 방지
 2. **LimitRanger**: 포드 및 컨테이너에 기본 리소스 제한 설정
 3. **ServiceAccount**: Pod의 서비스 계정 기본값/존재 여부를 확인하고 automount 설정에 따라 projected 토큰 볼륨을 추가합니다. 기본 계정 생성은 별도 컨트롤러 역할입니다.
 4. **DefaultStorageClass**: PVC에 기본 스토리지 클래스 할당
 5. **ResourceQuota**: 네임스페이스별 리소스 사용량 제한
-6. **PodSecurity**: 네임스페이스 Pod Security Standards를 적용하며 PodSecurityPolicy는 1.25에서 제거되었습니다.
+6. **PodSecurity**: 네임스페이스에 Pod Security Standards를 적용하며 PodSecurityPolicy는 1.25에서 제거되었습니다.
 7. **NodeRestriction**: 노드가 수정할 수 있는 리소스 제한
 
 ### 웹훅 어드미션 컨트롤러
@@ -637,7 +637,7 @@ func main() {
 
 ### 스케줄러 프레임워크
 
-Kubernetes 1.15부터 도입된 스케줄러 프레임워크는 플러그인을 통해 스케줄링 파이프라인의 다양한 단계를 확장할 수 있습니다:
+Kubernetes 1.15부터 도입된 스케줄러 프레임워크는 플러그인을 통해 스케줄링 파이프라인의 다양한 단계를 확장할 수 있게 합니다:
 
 1. **Queue Sort**: 스케줄링 큐의 포드 정렬
 2. **Pre-filter**: 필터링 전 포드 및 클러스터 상태 검사
@@ -740,7 +740,7 @@ spec:
 
 ### AWS 클라우드 컨트롤러 매니저
 
-AWS CCM은 AWS 위의 **자체 관리 Kubernetes**를 위한 외부 클라우드 컨트롤러입니다. Kubernetes 버전에 맞는 cloud-provider-aws 릴리스를 선택하고 공식 기존 클러스터 설치 절차의 ServiceAccount/RBAC, IAM, 클러스터 태그, 노드 이름 및 `--cloud-provider=external` 전환 조건을 확인합니다. 현재 이미지 경로는 `registry.k8s.io/provider-aws/cloud-controller-manager`입니다. VPC/서브넷 태그는 임의의 cloud.conf 키로 대신할 수 없습니다.
+AWS CCM은 AWS에서 실행되는 **자체 관리 Kubernetes**를 위한 외부 클라우드 컨트롤러입니다. Kubernetes 버전에 맞는 cloud-provider-aws 릴리스를 선택하고 공식 기존 클러스터 설치 절차의 ServiceAccount/RBAC, IAM, 클러스터 태그, 노드 이름 및 `--cloud-provider=external` 전환 조건을 확인합니다. 현재 이미지 경로는 `registry.k8s.io/provider-aws/cloud-controller-manager`입니다. VPC/서브넷 태그는 임의의 cloud.conf 키로 대신할 수 없습니다.
 
 EKS의 AWS 관리 컨트롤 플레인에 이 DaemonSet을 설치하거나 scheduler.conf를 마운트할 수 없습니다. EKS에서는 서비스가 관리하는 클라우드 통합과 지원되는 AWS Load Balancer Controller 또는 Auto Mode 기능을 사용하며 동일 리소스를 여러 컨트롤러가 소유하지 않게 합니다.
 

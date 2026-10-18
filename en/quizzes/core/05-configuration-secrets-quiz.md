@@ -65,7 +65,7 @@ Requests reserve scheduling capacity and affect runtime resource allocation; a p
 **Answer: D) As a network interface**
 
 **Explanation:**
-Methods for providing Secret data to pods in Kubernetes include as environment variables, as a mounted volume, and as image registry credentials. Providing Secrets through a network interface is not supported in Kubernetes.
+Methods for providing Secret data to pods in Kubernetes include providing it as environment variables, as a mounted volume, and as image registry credentials. Providing Secrets through a network interface is not supported in Kubernetes.
 </details>
 
 5. Which is NOT a supported input option of `kubectl create configmap`?
@@ -81,7 +81,7 @@ Methods for providing Secret data to pods in Kubernetes include as environment v
 **Answer: D) `--from-url`**
 
 **Explanation:**
-Methods for creating ConfigMaps in Kubernetes include from literal values (`--from-literal`), from a file (`--from-file`), and from a directory (`--from-file=<directory>`). There is no `--from-url` flag for this command. ConfigMaps can of course be created through Kubernetes REST API requests, or by applying a manifest fetched from a URL.
+Methods for creating ConfigMaps in Kubernetes include creating them from literal values (`--from-literal`), from a file (`--from-file`), and from a directory (`--from-file=<directory>`). There is no `--from-url` flag for this command. ConfigMaps can of course be created through Kubernetes REST API requests, or by applying a manifest fetched from a URL.
 </details>
 
 6. What field is used to specify a pod's service account in Kubernetes?

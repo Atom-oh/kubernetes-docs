@@ -37,7 +37,7 @@ D. 1g means one entire physical GPU
 
 **Answer: B. 4g.20gb**
 
-**Explanation:** The A10040GB examples include1g.5gb,2g.10gb,3g.20gb,4g.20gb and7g.40gb.4g.40gb belongs to the A10080GB set. The g component counts profile compute slices; nominal memory labels are not exact usable-memory guarantees.
+**Explanation:** The A10040GB examples include 1g.5gb, 2g.10gb, 3g.20gb, 4g.20gb and 7g.40gb.4g.40gb belongs to the A10080GB set. The g component counts profile compute slices; nominal memory labels are not exact usable-memory guarantees.
 
 </details>
 
@@ -98,7 +98,7 @@ D. Inspect the old resourceHandles field only
 
 </details>
 
-### 6. Which GPU Operator26.7 ownership statement is correct?
+### 6. Which GPU Operator 26.7 ownership statement is correct?
 
 A. GPUCluster and ClusterPolicy should always run together
 

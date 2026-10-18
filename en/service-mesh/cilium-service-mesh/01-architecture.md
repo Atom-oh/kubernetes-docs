@@ -199,7 +199,7 @@ The `services` entry also arranges backend synchronization through EDS. `backend
 
 ### CiliumClusterwideEnvoyConfig
 
-This independent example targets an existing **`default/rate-limited-service:8080`**. It applies a local token bucket with an initial burst of 1,000 requests and refill of 100 tokens per second. It explicitly enables and enforces the filter for 100% of requests.
+This independent example targets an existing **`default/rate-limited-service:8080`**. It applies a local token bucket with an initial burst of 1,000 requests and a refill of 100 tokens per second. It explicitly enables and enforces the filter for 100% of requests.
 
 ```yaml
 apiVersion: cilium.io/v2

@@ -535,7 +535,7 @@ http:
 
 #### 4. Enable Istio Injection
 
-Istio sidecar must be injected into Rollout Pods:
+An Istio sidecar must be injected into Rollout Pods:
 
 ```bash
 # Method 1: Namespace level
@@ -1009,7 +1009,7 @@ kubectl argo rollouts abort reviews
 
 ### Blue/Green Deployment with Argo Rollouts
 
-Argo Rollouts also supports Blue/Green strategy:
+Argo Rollouts also supports the Blue/Green strategy:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -1544,7 +1544,7 @@ spec:
 
 ## Progressive Rollout
 
-Progressive rollout automatically increases traffic ratio over time. Using Argo Rollouts' Canary strategy enables automated progressive deployment.
+Progressive rollout automatically increases the traffic ratio over time. Using Argo Rollouts' Canary strategy enables automated progressive deployment.
 
 ### Manual Progressive Rollout
 

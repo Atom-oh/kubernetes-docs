@@ -85,7 +85,7 @@ The USE method measures resource health through Utilization (percentage busy), S
 **Answer: B) Trace IDs attached to metric samples enabling metric-to-trace correlation**
 
 **Explanation:**
-Exemplars attach contextual labels, often a trace ID, to selected metric observations. When viewing a histogram or counter in Grafana, configured exemplar links can open the associated retained trace. They do not guarantee every observation is traced or identify the exact P99 request.
+Exemplars attach contextual labels, often a trace ID, to selected metric observations. When you view a histogram or counter in Grafana, configured exemplar links can open the associated retained trace. They do not guarantee every observation is traced or identify the exact P99 request.
 
 </details>
 

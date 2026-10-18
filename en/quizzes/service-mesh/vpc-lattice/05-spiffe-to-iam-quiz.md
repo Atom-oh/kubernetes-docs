@@ -1,6 +1,6 @@
 # Workload Identity Migration Quiz
 
-This quiz tests your understanding of SPIFFE/SPIRE structure, the attestation principle, and the similarities and decisive differences versus IAM Auth.
+This quiz tests your understanding of SPIFFE/SPIRE structure, the attestation principle, and the similarities with and decisive differences from IAM Auth.
 
 ## Multiple Choice Questions
 
@@ -84,7 +84,7 @@ X.509-SVID delivery includes key material; IAM credentials include a secret acce
 Client proof actually becomes finer-grained (per-request SigV4 verification). The problem is server proof: all the client can confirm is that the TLS certificate is valid and the domain matches, with no step confirming "is this really that team's service" within a workload identity system. The response is to strictly limit via IAM who can create Lattice Services, control service network associations, and monitor with CloudTrail. If your review documentation said "mutual authentication," that item must be rewritten.
 </details>
 
-6. Why is decisive difference (b), the transfer of root-of-trust ownership, a heavy item in financial-sector reviews?
+6. Why is decisive difference (b), the transfer of root-of-trust ownership, a weighty consideration in financial-sector reviews?
    - A) AWS IAM is less secure than SPIRE
    - B) Many organizations' security standards require, or are read as requiring, that the root of trust of an authentication system be under their own control, and running your own CA was the most direct way to satisfy that
    - C) CloudTrail does not provide an audit trail

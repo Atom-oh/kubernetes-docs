@@ -99,7 +99,7 @@ Choose an answer before opening its explanation. These scenarios use the disposa
 
 **Answer: C**
 
-**Explanation:** You may be in the wrong directory or editing a file owned by another account. The notebook lives in your own scratch directory and normally needs no elevation. `sudo` elevates a permitted command, root by default; it is not a diagnosis. `sudo whoami` followed by `whoami` shows that a single elevated command does not permanently turn the normal shell into root.
+**Explanation:** You may be in the wrong directory or editing a file owned by another account. The notebook lives in your own scratch directory and normally needs no elevation. `sudo` elevates a permitted command, as root by default; it is not a diagnosis. `sudo whoami` followed by `whoami` shows that a single elevated command does not permanently turn the normal shell into root.
 
 </details>
 

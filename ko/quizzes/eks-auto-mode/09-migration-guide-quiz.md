@@ -186,7 +186,7 @@ Pending은 unschedulable과 같지 않고 Running은 app readiness가 아닙니�
 **정답: B) 호환 Karpenter를 공존 중 유지하고 old 소유 리소스 finalization 후 uninstall**
 
 **설명:**
-AWS는 직접 공존 이전을 문서화합니다. v1.1 migration 최소값은 현재 Kubernetes 호환 조건을 대체하지 않습니다. 별도 NodeClass reference·taint Auto pool을 사용하고 공유 NodePool/NodeClaim CRD를 변경·삭제하지 마세요. 기존 controller가 finalization할 수 있는 동안 그 소유 pool/claim을 정리하고 인스턴스·의존성 정리를 확인한 뒤 해당 release/IAM/queue만 제거합니다.
+AWS는 직접 공존 이전을 문서화합니다. v1.1 migration 최소값은 현재 Kubernetes 호환 조건을 대체하지 않습니다. 별도 NodeClass reference·taint가 있는 Auto pool을 사용하고 공유 NodePool/NodeClaim CRD를 변경·삭제하지 마세요. 기존 controller가 finalization할 수 있는 동안 그 소유 pool/claim을 정리하고 인스턴스·의존성 정리를 확인한 뒤 해당 release/IAM/queue만 제거합니다.
 
 </details>
 

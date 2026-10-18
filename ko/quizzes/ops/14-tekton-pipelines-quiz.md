@@ -28,7 +28,7 @@ Task/Pipeline은 정의, Run은 실행 인스턴스입니다. 같은 Pod의 Step
 
 **정답: B) 실행별 PVC를 사용할 수 있으며 RWO/RWX 자체는 신뢰 경계가 아니다**
 
-volumeClaimTemplate으로 실행별 PVC를 만들고 신뢰 수준이 다른 실행과 writable 저장소를 공유하지 않습니다. 작은 값은 Result, 큰 보고서는 아티팩트 저장소를 사용합니다.
+volumeClaimTemplate으로 실행별 PVC를 만들고 신뢰 수준이 다른 실행과 writable 저장소를 공유하지 않습니다. 작은 값에는 Result를, 큰 보고서에는 아티팩트 저장소를 사용합니다.
 
 </details>
 

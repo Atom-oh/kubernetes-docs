@@ -28,7 +28,7 @@ By the end, you should be able to:
 - Match a guest interface to the correct hypervisor NIC without guessing a name.
 - Inspect links, addresses, routes, and neighbors, add one temporary IPv4 address to each lab NIC, and undo precisely those changes.
 
-**Execution contract:** run commands only **inside the named practice VM**, as a normal user unless a line includes `sudo`. Never configure the physical host or documentation host. Commands labelled “each VM” mean repeat separately in its own console; variables are local to that shell. Examples are illustrative, **not live-tested VM results**. Stop on an unexpected error before continuing.
+**Execution contract:** run commands only **inside the named practice VM**, as a normal user unless a line includes `sudo`. Never configure the physical host or documentation host. Commands labelled “each VM” mean you should repeat them separately in each VM's console; variables are local to that shell. Examples are illustrative, **not live-tested VM results**. Stop on an unexpected error before continuing.
 
 ## Follow one message from application to cable
 
@@ -91,7 +91,7 @@ Our lab NIC has no DHCP server and needs neither gateway nor DNS for literal-IP 
 
 IPv6 uses **128-bit** addresses written in hexadecimal groups separated by colons. Leading zeroes in a group may be omitted, and `::` can compress one run of all-zero groups. `::1` is loopback; an address beginning `fe80:` is commonly a link-local address, usable only on its link. Multiple interfaces may have link-local addresses, so a destination may require a zone such as `%interface-name` to identify the link. Interface names must come from the guest, not this example.
 
-`2001:db8::/32` is IPv6 documentation space (RFC 3849), not an address to configure here. Ordinary IPv6 LAN prefixes are commonly `/64`. IPv6 uses ICMPv6 Neighbor Discovery instead of ARP and has no IPv4-style broadcast. Router advertisements, SLAAC, and DHCPv6 are separate configuration topics. A link-local IPv6 address alone does not prove Internet access. Leave existing IPv6 settings enabled and unchanged while learning the IPv4 exercise.
+`2001:db8::/32` is IPv6 documentation space (RFC 3849), not an address to configure here. Ordinary IPv6 LAN prefixes are commonly `/64`. IPv6 uses ICMPv6 Neighbor Discovery instead of ARP and has no IPv4-style broadcast. Router advertisements, SLAAC, and DHCPv6 are separate configuration topics. A link-local IPv6 address alone does not prove Internet access. Leave existing IPv6 settings enabled and unchanged while working through the IPv4 exercise.
 
 ## Inspect before selecting an interface
 
@@ -120,7 +120,7 @@ lo            UNKNOWN  00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
 
 Read a row as interface name, operational state, MAC address, then flags. Match the **full MAC** against the hypervisor record, separately for each guest. NIC order, PCI attachment, image settings, and OS naming rules can change names. Neither “the second row” nor a guessed `eth1`/`ens19` is reliable. `lo` is loopback inside the guest and is not a virtual Ethernet NIC.
 
-The flag `UP` means administratively enabled. `LOWER_UP` indicates lower-layer carrier. A device may be administratively up but lack carrier; in that case inspect the virtual cable and internal-network attachment. The displayed operational state `UNKNOWN`, especially on loopback, is not automatically failure. Save the original administrative state before changing anything.
+The flag `UP` means administratively enabled. `LOWER_UP` indicates lower-layer carrier. A device may be administratively up but lack carrier; in that case inspect the virtual cable and internal-network attachment. The displayed operational state `UNKNOWN`, especially on loopback, is not automatically a failure. Save the original administrative state before changing anything.
 
 ## Record the boundary and baseline on each VM
 
@@ -247,7 +247,7 @@ ping -4 -c 3 -W 2 -I "$LAB_IF" "$LAB_PEER"
 ip -4 neigh show dev "$LAB_IF"
 ```
 
-`ping -4` uses IPv4 ICMP echo, `-c 3` limits it to three requests, `-W 2` sets the reply timeout in seconds, and `-I` selects the lab interface. The usual iputils packaging allows this echo test as a normal user. A permission error concerns tool/capability configuration, not proof that the network is down.
+`ping -4` uses IPv4 ICMP echo, `-c 3` limits it to three requests, `-W 2` sets the reply timeout in seconds, and `-I` selects the lab interface. The usual iputils packaging allows this echo test as a normal user. A permission error concerns tool/capability configuration; it is not proof that the network is down.
 
 Expect replies and a summary of transmitted/received packets on a correctly configured path that allows ICMP. Timing varies; do not copy a claimed latency from a sample. An illustrative neighbor entry is:
 

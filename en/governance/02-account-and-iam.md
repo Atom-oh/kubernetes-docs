@@ -15,9 +15,9 @@ The most common candidates for how to split Accounts are team, brand, domain, an
 
 In practice, starting with a Hybrid portfolio and deciding shared vs. dedicated with a reproducible decision matrix each time is the common pattern (see [Decision Framework](./06-decision-framework-and-poc.md) for how to design that matrix).
 
-Treat brand as metadata if only cost separation is needed, and promote it to an Account axis only when there's a strong boundary: regulatory, independent quota, permissions, or carve-out potential. A workload that aggregates data across domains and serves it via API can be a candidate for its own Workload Account if it has independent SLO, quota, data access, and lifecycle. **A separate Account doesn't necessarily mean a separate EKS cluster.**
+Treat brand as metadata if only cost separation is needed, and promote it to an Account axis only when there's a strong boundary: regulatory, independent quota, permissions, or carve-out potential. A workload that aggregates data across domains and serves it via API can be a candidate for its own Workload Account if it has an independent SLO, quota, data access, and lifecycle. **A separate Account doesn't necessarily mean a separate EKS cluster.**
 
-> **Carve-out planning**: Subnet sharing is supported within one Organization. Prepare an independent network migration before leaving. Existing resources may continue after unsharing, but new creation and managed-service replacement/scaling can be affected. Unsharing does not immediately delete or stop every resource.
+> **Carve-out planning**: Subnet sharing is supported within one Organization. Prepare an independent network migration before leaving. Existing resources may continue after unsharing, but new resource creation and managed-service replacement/scaling can be affected. Unsharing does not immediately delete or stop every resource.
 
 ## 2. Account and EKS Runtime Relationship
 

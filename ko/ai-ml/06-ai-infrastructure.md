@@ -23,7 +23,7 @@ JupyterHub, Argo Workflows, Ray, Karpenter를 조합하는 구성 패턴입니�
 
 ### JupyterHub 인증과 notebook profile
 
-검토한 chart4.4.2의 appVersion은5.5.2이며 PyPI 최신 확인 Hub6.1.0(2026-10-14)과 다릅니다. 로컬 API 검증은 Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0에서 수행했습니다. 운영 chart image의 실제 패키지 조합을 다시 확인해야 합니다.
+검토한 chart4.4.2의 appVersion은 5.5.2이며 PyPI에서 최신 버전으로 확인한 Hub6.1.0(2026-10-14)과 다릅니다. 로컬 API 검증은 Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0에서 수행했습니다. 운영 chart image의 실제 패키지 조합을 다시 확인해야 합니다.
 
 Cognito는 사용할 수 있는 OIDC provider 중 하나입니다. callback URL, token/userInfo endpoint, scope와 안정적인 username claim을 맞추고 접근 허용 규칙을 명시합니다. MFA·기업 federation은 실제 provider에서 구성해야 하며 GenericOAuthenticator 설정만으로 자동 활성화되지 않습니다.
 
@@ -291,7 +291,7 @@ fixture의 MSE0은 네 개 합성 sample의 결과이며 실제 모델 품질 �
 
 ### Ray와 Karpenter
 
-[Ray 가이드](ray/README.md)의 검토한2.58/KubeRay1.7 경로를 사용합니다. GCS는 Global Control Service이며 task/actor scheduling은 raylet들과 연계됩니다. head에도 CPU를 광고하면 workload가 실행될 수 있습니다. CPU/GPU/Neuron worker에 서로 다른 미검증 Ray/Python 버전을 섞지 않고 Neuron image에도 Ray와 지원 framework를 준비합니다.
+[Ray 가이드](ray/README.md)에서 검토한 2.58/KubeRay1.7 경로를 사용합니다. GCS는 Global Control Service이며 task/actor scheduling은 raylet들과 연계됩니다. head에도 CPU를 광고하면 workload가 실행될 수 있습니다. CPU/GPU/Neuron worker에 서로 다른 미검증 Ray/Python 버전을 섞지 않고 Neuron image에도 Ray와 지원 framework를 준비합니다.
 
 Ray autoscaler는 worker Pod 요구를, Kubernetes scheduler는 배치를, Karpenter는 지원 node capacity를 다룹니다. Ray worker가 Karpenter API를 직접 호출하는 구조가 아닙니다. memory·GPU product label과 실제 node를 맞추고, p4d40GB A100을80GB label로 선택하지 않습니다.
 
@@ -307,7 +307,7 @@ DRA는 DeviceClass, ResourceSlice, ResourceClaim/Template로 장치 속성·요�
 
 ### 현재 claim 예제
 
-검토한 Kubernetes1.36.2의 resource.k8s.io/v1 스키마에서 requests.exactly를 사용합니다. NVIDIA driver0.5 지원표는 GPU allocation에1.34.2 이상, ComputeDomain에는1.32 이상을 구분합니다. EKS에서 실제 제공하는 API와 patch/platform version도 확인하세요. “1.31+면 모든 DRA 기능 가능”이라는 설명은 맞지 않습니다.
+검토한 Kubernetes1.36.2의 resource.k8s.io/v1 스키마에서 requests.exactly를 사용합니다. NVIDIA driver0.5 지원표는 GPU allocation에는 1.34.2 이상, ComputeDomain에는 1.32 이상을 명시합니다. EKS에서 실제 제공하는 API와 patch/platform version도 확인하세요. “1.31+면 모든 DRA 기능 가능”이라는 설명은 맞지 않습니다.
 
 다음은 장치 inventory 명령을 실행할 단일 GPU claim과 Pod의 **스키마 예제**입니다. ml-workloads namespace, gpu.nvidia.com DeviceClass, driver/CDI·node와 권한을 별도로 준비해야 하며 이번 검토에서는 GPU에서 실행하지 않았습니다.
 
@@ -368,7 +368,7 @@ Operator26.7 관리 경로는 GPUCluster(singleton 이름 gpu-cluster)를 사용
 
 full GPU/기존 MIG 할당과 ComputeDomain 지원, DynamicMIG·MPS·TimeSlicingSettings 같은 alpha 기능을 구분하세요. 확인한0.5 feature-gate code는 뒤의 세 기능을 기본false/Alpha로 선언합니다. 일부 gate의 문서 GA 표기와 source의 Beta 표기도 달라 exact release의 지원표·코드·설정을 함께 기록해야 합니다. GPU Operator25.3 하나로 모든 기능이 지원된다고 단정하지 않습니다.
 
-Device Plugin도 기존 MIG·time-slicing·실험적 MPS 경로를 제공합니다. DRA만 GPU 공유가 가능하다는 비교는 잘못입니다.3g.20gb는 GPU instance 하나의 profile이며20GB짜리 instance3개가 아닙니다. MIG/전체 GPU 할당도 host·driver·권한·side channel 전체 격리를 자동 보장하지 않으며 MPS나 time-slicing을 보안 경계로 사용하지 않습니다.
+Device Plugin도 기존 MIG·time-slicing·실험적 MPS 경로를 제공합니다. DRA에서만 GPU 공유가 가능하다는 비교는 잘못입니다.3g.20gb는 GPU instance 하나의 profile이며20GB짜리 instance3개가 아닙니다. MIG/전체 GPU 할당도 host·driver·권한·side channel 전체 격리를 자동 보장하지 않으며 MPS나 time-slicing을 보안 경계로 사용하지 않습니다.
 
 ### Multi-Node NVLink와 ComputeDomain
 
@@ -380,13 +380,13 @@ GB200은 Grace Blackwell이며 Grace Hopper와 다릅니다. ComputeDomain은 �
 
 MCP는 tool 목록/호출 등의 protocol이며 표준 Kubernetes 자동 검색 controller나 OIDC gateway 배포본의 이름이 아닙니다. 기존 ghcr.io/anthropics/mcp-gateway:latest 이미지와 mcp.anthropic.com/tool label/config는 검증된 protocol 구현이 아니므로 제거했습니다. 사용할 실제 server/gateway의 release·transport·인증·권한·timeout·도구 입력 schema를 확인합니다. URL 환경 변수 하나로 tool 호출·인증이 구현되지는 않습니다.
 
-Milvus에 GPU resource만 요청해 GPU index가 활성화되지는 않습니다. embedding dimension/model revision·index parameters·삭제 갱신·tenant filter를 맞춥니다. Langfuse2.x Deployment를 현재4.x platform 설치법으로 취급하지 않고 backend 의존성·파일 credential·계측 API와 민감 데이터 보존을 검토합니다.
+Milvus에 GPU resource만 요청한다고 GPU index가 활성화되지는 않습니다. embedding dimension/model revision·index parameters·삭제 갱신·tenant filter를 맞춥니다. Langfuse2.x Deployment를 현재4.x platform 설치법으로 취급하지 않고 backend 의존성·파일 credential·계측 API와 민감 데이터 보존을 검토합니다.
 
 ## 저장소와 네트워크
 
 EFS access point의 IAM/UID/GID·directory permission과 Pod namespace·PVC 경로를 확인합니다. IAM mount 옵션은 controller와 실제 mount 주체의 credential 설정을 대신하지 않습니다.
 
-FSx CSI의 검토한 parameter와 파일시스템 capacity 단위를 사용합니다. PERSISTENT_2에 임의 s3ImportPath/s3ExportPath를 넣거나 유효하지 않은10Ti 용량을 복사하지 않습니다. 기존 filesystem과 새 동적 filesystem, DRA·backup의 호환 조건은 [storage 가이드](01-ai-ml-workloads.md)에서 구분합니다.
+검토한 FSx CSI parameter와 파일시스템 capacity 단위를 사용합니다. PERSISTENT_2에 임의 s3ImportPath/s3ExportPath를 넣거나 유효하지 않은10Ti 용량을 복사하지 않습니다. 기존 filesystem과 새 동적 filesystem, DRA·backup의 호환 조건은 [storage 가이드](01-ai-ml-workloads.md)에서 구분합니다.
 
 Mountpoint CSI2.8.0은 기존 S3 bucket의 **static PV**를 지원합니다. StorageClass/PVC만으로 bucket을 동적 생성하는 예제는 제거했습니다. Mountpoint는 완전한 POSIX filesystem이 아니므로 rename·random write·lock·checkpoint protocol을 확인해야 합니다.2.8의 지원표에서 AL2/Ubuntu22.04 지원이 제거됐으며, branch 직접 설치 대신 EKS add-on이나 공식 chart를 사용하도록 명시합니다.
 

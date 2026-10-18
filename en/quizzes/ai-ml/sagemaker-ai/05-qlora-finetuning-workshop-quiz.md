@@ -85,7 +85,7 @@ A negative record should teach the model to finish its answer without extracting
 
 **Answer: A**
 
-Tune with validation and keep test locked for the final comparison. The current trainer evaluates test before and after every run, including smoke, so it is not already a safe HPO loop. A teaching tuning path needs a separate modification. Split original families before augmentation and augment training descendants only; a tiny overfit check diagnoses the learning path rather than proving generalization.
+Tune with validation and keep the test set locked for the final comparison. The current trainer evaluates the test set before and after every run, including smoke, so it is not already a safe HPO loop. A teaching tuning path needs a separate modification. Split original families before augmentation and augment training descendants only; a tiny overfit check diagnoses the learning path rather than proving generalization.
 </details>
 
 7. What is the correct way to check the current seven LoRA target suffixes for the Qwen3 MoE implementation in Transformers 4.57.6?

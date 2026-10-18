@@ -126,7 +126,7 @@ ValidatingAdmissionPolicy는 1.30부터 stable이며 API server 안에서 CEL을
 <details>
 <summary>정답 보기</summary>
 
-manager, client/cache, reconcile 구성과 leader election 등을 제공합니다. 사용자 API 타입·scheme·RBAC와 도메인 로직을 대신 만들어 주지는 않으며 library/Kubernetes Go module 버전을 맞춥니다.
+manager, client/cache, reconcile 구성과 leader election 등을 제공합니다. 사용자 API 타입·scheme·RBAC와 도메인 로직을 대신 만들어 주지는 않으며 library/Kubernetes Go module 버전은 맞춰야 합니다.
 
 </details>
 
@@ -212,7 +212,7 @@ spec:
 <details>
 <summary>정답 보기</summary>
 
-rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용하고 `deployments`와 `deployments/scale`을 모두 매칭해 HPA 및 `kubectl scale` 갱신도 제한을 검사하도록 합니다.
+rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용하고 `deployments`와 `deployments/scale`을 모두 매칭해 HPA 및 `kubectl scale` 갱신 시에도 제한을 검사하도록 합니다.
 
 </details>
 
@@ -221,7 +221,7 @@ rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector�
 <details>
 <summary>정답 보기</summary>
 
-NotFound를 정상 종료하고 삭제 중이면 idempotent cleanup 후 자신의 finalizer만 제거합니다. 외부 자원을 만들기 전 finalizer를 저장하고, 기존 child 소유권을 확인한 뒤 관리 필드만 조정합니다. conflict를 재시도하고 관찰한 상태가 바뀔 때 status를 patch합니다. 의사코드를 완성된 실행 controller로 표시하지 않습니다.
+NotFound이면 정상 종료하고 삭제 중이면 idempotent cleanup 후 자신의 finalizer만 제거합니다. 외부 자원을 만들기 전 finalizer를 저장하고, 기존 child 소유권을 확인한 뒤 관리 필드만 조정합니다. conflict를 재시도하고 관찰한 상태가 바뀔 때 status를 patch합니다. 의사코드를 완성된 실행 controller로 표시하지 않습니다.
 
 </details>
 

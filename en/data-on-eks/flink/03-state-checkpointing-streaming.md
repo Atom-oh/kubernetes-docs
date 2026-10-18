@@ -284,7 +284,7 @@ The 5.0.0 builder defaults its transaction timeout to **one hour**. Match the br
 allowed maximum and allow enough time for worst-case checkpoints/restarts/recovery.
 A configuration label cannot restore exactly-once guarantees after transaction expiry.
 
-A 60-second checkpoint interval is not an upper bound of 60 seconds of added latency.
+A 60-second checkpoint interval is not an upper bound of 60 seconds on added latency.
 Waiting, checkpoint duration, commit, failures/retries and consumer lag contribute.
 Short intervals increase commit/metadata load. Default INCREMENTING naming creates
 new IDs; optional POOLING reuses IDs and requires Kafka 3+, extra topic-read

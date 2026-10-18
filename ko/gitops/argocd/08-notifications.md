@@ -141,7 +141,7 @@ data:
 
 ### Grafana
 
-필요한 annotation 작성 권한을 가진 Service Account token을 사용합니다. 이 버전의 apiUrl은 /api를 포함하며 엔진이 annotations를 덧붙입니다. 관리자 토큰이나 불필요한 장기 만료를 기본값으로 사용하지 않습니다.
+필요한 annotation 작성 권한을 가진 Service Account token을 사용합니다. 이 버전의 apiUrl은 /api를 포함하며 엔진이 annotations를 덧붙입니다. 관리자 토큰이나 불필요하게 긴 만료 기간을 기본값으로 사용하지 않습니다.
 
 ```yaml
 apiVersion: v1

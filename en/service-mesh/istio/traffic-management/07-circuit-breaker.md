@@ -598,7 +598,7 @@ istioctl proxy-config clusters <pod-name> -o json | \
 
 ### Circuit Breaker Does Not Guarantee Data Consistency
 
-**Core Principle**: Circuit Breaker is a tool for **failure isolation**, not for **duplicate request prevention** or **data consistency guarantee**.
+**Core Principle**: Circuit Breaker is a tool for **failure isolation**, not for **duplicate request prevention** or **guaranteeing data consistency**.
 
 #### Circuit Breaker's Role and Limitations
 

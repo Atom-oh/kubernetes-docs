@@ -89,7 +89,7 @@ Kubernetes NetworkPolicy는 자신의 네임스페이스에 있는 Pod를 선택
 
 ### 기본 구조
 
-`policyTypes`를 명시합니다. 생략하면 기본 Ingress에 실제 egress 규칙이 하나 이상 있을 때 Egress를 추가합니다. 빈 규칙 배열만으로 양쪽 방향 격리가 되는 것은 아닙니다.
+`policyTypes`를 명시합니다. 생략하면 Ingress가 기본으로 적용되며, 실제 egress 규칙이 하나 이상 있을 때 Egress를 추가합니다. 빈 규칙 배열만으로 양쪽 방향 격리가 되는 것은 아닙니다.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -559,7 +559,7 @@ spec:
           port: 9090
 ```
 
-**결과:** `app: api` Pod는 frontend Pod의 8080 접근과 monitoring 네임스페이스의 8080, 9090 접근 모두 허용됩니다.
+**결과:** `app: api` Pod에 대한 frontend Pod의 8080 접근과 monitoring 네임스페이스의 8080, 9090 접근이 모두 허용됩니다.
 
 ### 정책 평가 순서
 
@@ -1417,7 +1417,7 @@ spec:
 
 ### kubectl exec을 사용한 테스트
 
-컨텍스트·네임스페이스·기존 Pod·컨테이너를 명시합니다. DNS 성공이 TCP 성공은 아니며 연결 거부·수신기 장애·TLS 오류·정책 drop을 구분합니다. 다음은 응답 본문을 출력하지 않는 연결 확인이며 이번 검토에서는 실제 클러스터에 실행하지 않았습니다.
+컨텍스트·네임스페이스·기존 Pod·컨테이너를 명시합니다. DNS 성공이 TCP 성공을 뜻하지는 않으며 연결 거부·수신기 장애·TLS 오류·정책 drop을 구분합니다. 다음은 응답 본문을 출력하지 않는 연결 확인이며 이번 검토에서는 실제 클러스터에서 실행하지 않았습니다.
 
 ```bash
 # Both Pods already exist in the approved test environment.
@@ -1435,7 +1435,7 @@ kubectl --context="$CONTEXT" -n "$NAMESPACE" exec "$ALLOW_POD" \
 
 ### 자동화된 테스트 스크립트
 
-이 스크립트는 기존 Pod 두 개에서 제한 시간 있는 curl만 실행하며 클러스터 리소스를 생성·삭제하지 않습니다. `CONTEXT`, `NAMESPACE`, `ALLOW_POD`, `DENIED_POD`, `PROBE_CONTAINER`와 민감 정보 없는 `/health` URL인 `TARGET_URL`을 설정합니다. 양쪽 컨테이너에 `sh`·`curl`이 있어야 하고 첫 Pod는 같은 목적지에 허용된 양성 대조군입니다. 앱 상태 검사가 아니므로 HTTP 오류 응답도 네트워크 도달을 의미합니다.
+이 스크립트는 기존 Pod 두 개에서 제한 시간이 있는 curl만 실행하며 클러스터 리소스를 생성·삭제하지 않습니다. `CONTEXT`, `NAMESPACE`, `ALLOW_POD`, `DENIED_POD`, `PROBE_CONTAINER`와 민감 정보 없는 `/health` URL인 `TARGET_URL`을 설정합니다. 양쪽 컨테이너에 `sh`·`curl`이 있어야 하고 첫 Pod는 같은 목적지에 허용된 양성 대조군입니다. 앱 상태 검사가 아니므로 HTTP 오류 응답도 네트워크 도달을 의미합니다.
 
 종료1은 차단 대상의 예상 밖 연결, 종료2는 오류/판정 불가, 종료3은 추가 근거가 필요한 timeout입니다. timeout을 자동 PASS로 처리하지 않습니다. 동일 출발지·목적지·포트·시각의 CNI 정책 drop과 대조하고 엔드포인트 상태·라우팅·SG/NACL도 확인합니다. 로컬 mock 시험은 실제 정책 집행 검증이 아닙니다.
 
@@ -1740,7 +1740,7 @@ Enterprise 관리 UI에는 해당 제품·라이선스와 실제 서비스/TLS/�
 
 ### Kube-hunter를 사용한 보안 테스트
 
-kube-hunter는 클러스터 노출·보안 scanner이며 NetworkPolicy 허용/거부 검증기를 대신하지 않습니다. 침투적 트래픽을 만들 수 있으므로 명시적으로 승인한 대상·범위와 검토한 릴리스/이미지를 사용합니다. 일반 정책 문서에서 버전을 고정하지 않은 scanner를 운영 네임스페이스에 배포하지 않습니다. 이번 검토는 scanner를 실행하지 않았습니다.
+kube-hunter는 클러스터 노출·보안 scanner이며 NetworkPolicy 허용/거부 검증기를 대신하지 않습니다. 침투적 트래픽을 만들 수 있으므로 명시적으로 승인한 대상·범위와 검토한 릴리스/이미지를 사용합니다. 일반 정책 문서에서 버전을 고정하지 않은 scanner를 운영 네임스페이스에 배포하지 않습니다. 이번 검토에서는 scanner를 실행하지 않았습니다.
 
 ## 모범 사례
 

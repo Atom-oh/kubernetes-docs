@@ -329,7 +329,7 @@ spec:
       - api.external.com
 ```
 
-TLS Origination 예제이므로 앱은 `http://api.external.com`으로 호출하며 실제 서비스 호스트로 바꾸세요. 앱이 HTTPS를 직접 시작하면 암호화된 HTTP 메시지를 재시도 조건으로 검사할 수 없습니다.
+TLS Origination 예제이므로 앱에서 `http://api.external.com`으로 호출하고, 호스트는 실제 서비스 호스트로 바꾸세요. 앱이 HTTPS를 직접 시작하면 암호화된 HTTP 메시지를 재시도 조건으로 검사할 수 없습니다.
 
 ### 예제 3: Circuit Breaker와 함께 사용
 

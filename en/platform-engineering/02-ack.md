@@ -102,7 +102,7 @@ spec:
 
 The runtime accepts adopt and adopt-or-create. adopt reads existing state into spec/status; adopt-or-create can create a missing resource. Subsequent normal reconciliation can mutate an adopted resource, so adoption is not merely read access. Read-only behavior is a separate feature with its own gate and lifecycle. The former resource-imported:"true" annotation does not configure adoption. Official documentation also identifies AdoptedResource as the older approach.
 
-The retention value is **retain**. The current runtime does not accept orphan. Precedence is the individual CR's services.k8s.aws/deletion-policy, the namespace's service-specific deletion-policy, then controller default. Retaining AWS resources leaves ongoing cost, ownership and backup responsibilities.
+The retention value is **retain**. The current runtime does not accept orphan. Precedence is the individual CR's services.k8s.aws/deletion-policy, the namespace's service-specific deletion-policy, then the controller default. Retaining AWS resources leaves ongoing cost, ownership and backup responsibilities.
 
 ## Observability, Scaling and Recovery
 

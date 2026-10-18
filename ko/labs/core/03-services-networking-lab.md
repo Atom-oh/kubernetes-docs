@@ -115,11 +115,11 @@ exit 1
 
 - ClusterIP는 내부 가상 주소이며 보안 경계가 아닙니다. 라우팅에 따른 접근 가능성은 네트워크 구성에 달려 있습니다.
 - 전체 DNS 형식은 `<서비스>.<네임스페이스>.svc.<클러스터 도메인>`이며 `cluster.local`은 흔한 기본값입니다.
-- 일반적인 Pod DNS 검색 설정에서는 같은 namespace가 `<서비스>`, 다른 namespace가 `<서비스>.<네임스페이스>`를 사용할 수 있습니다.
+- 일반적인 Pod DNS 검색 설정에서는 같은 namespace의 Pod가 `<서비스>`, 다른 namespace의 Pod가 `<서비스>.<네임스페이스>`를 사용할 수 있습니다.
 </details>
 
 ### 검증
-deprecated Endpoints 대신 EndpointSlice를 확인합니다. ready backend 주소를 확인하세요. 갱신은 비동기이고 slice·주소 계열별로 나뉠 수 있으므로 ready 복제본3개가 모든 출력에서 정확히3행을 뜻하지는 않습니다.
+deprecated Endpoints 대신 EndpointSlice를 확인합니다. ready backend 주소를 확인하세요. 갱신은 비동기이고 slice·주소 계열별로 나뉠 수 있으므로 ready 복제본 3개가 모든 출력에서 정확히 3행을 뜻하지는 않습니다.
 
 ```bash
 service_kubectl get endpointslices -l kubernetes.io/service-name=web-clusterip -o wide

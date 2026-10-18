@@ -146,7 +146,7 @@ Measure latency, IOPS, I/O size, queue depth and throughput, then match the volu
 | st1 |500MiB/s | Throughput-oriented HDD, sequential/burst behavior |
 | sc1 |250MiB/s | Infrequent sequential HDD access |
 
-The previous16,000IOPS/1,000MiB/s gp3 settings remain valid examples; they are not universal current maxima. gp2 size affects baseline/burst performance, while gp3 performance can be provisioned separately subject to its ratios. No volume type is automatically optimal for all databases, logs or web servers. RAID0 is a separate tradeoff, discussed below, not a default CSI optimization.
+The previous 16,000 IOPS/1,000 MiB/s gp3 settings remain valid examples; they are not universal current maxima. gp2 size affects baseline/burst performance, while gp3 performance can be provisioned separately subject to its ratios. No volume type is automatically optimal for all databases, logs or web servers. RAID0 is a separate tradeoff, discussed below, not a default CSI optimization.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -179,7 +179,7 @@ parameters:
 
 FSx for Lustre provides a managed parallel filesystem for supported HPC, ML, analytics and media workloads. Choose deployment type, client/kernel, capacity, provisioned throughput and network together. Marketing aggregate maxima are not the performance of an arbitrary small PVC.
 
-SCRATCH_1/SCRATCH_2 target reproducible temporary data; SCRATCH_2 does not gain persistent-server replication simply by using a PV. PERSISTENT_1/PERSISTENT_2 have different supported storage and throughput choices. For example, PERSISTENT_2 SSD offers125/250/500/1000MB/s/TiB; do not apply a generic200MB/s/TiB or1,000GB/s statement to every filesystem. Those previous aggregate claims were not measurements verified by this review.
+SCRATCH_1/SCRATCH_2 target reproducible temporary data; SCRATCH_2 does not gain persistent-server replication simply by using a PV. PERSISTENT_1/PERSISTENT_2 have different supported storage and throughput choices. For example, PERSISTENT_2 SSD offers 125/250/500/1000 MB/s/TiB; do not apply a generic 200 MB/s/TiB or 1,000 GB/s statement to every filesystem. Those previous aggregate claims were not measurements verified by this review.
 
 Prepare the managed add-on or an owned compatible driver as in the chapter. The example below preserves the supported `s3ImportPath` parameter; imports/exports need compatible deployment, permissions and repository policies/tasks. CSI creation alone is not automatic bidirectional S3 synchronization:
 
@@ -230,7 +230,7 @@ Use `s3.csi.aws.com`, an existing bucket, empty storageClassName on both objects
 
 **Answer: C**
 
-CSI2.8 supports pod-level Pod Identity and IRSA; driver credentials are ignored for that volume. The role, association/trust, agent where needed and bucket/KMS permissions must exist. A ServiceAccount annotation alone is not an IAM role.
+CSI 2.8 supports pod-level Pod Identity and IRSA; driver credentials are ignored for that volume. The role, association/trust, agent where needed and bucket/KMS permissions must exist. A ServiceAccount annotation alone is not an IAM role.
 
 </details>
 
@@ -278,7 +278,7 @@ S3 has strong read/list consistency. Optional Mountpoint caching changes what th
 
 **Answer: D**
 
-EBS CSI1.66 uses the real native volume-copy path. Ordinary PVC dataSource requires the same namespace; EBS copies remain in the source AZ. Set the class explicitly and request at least the source size. Availability precedes completed background initialization; quiesce applications for the required consistency.
+EBS CSI 1.66 uses the real native volume-copy path. Ordinary PVC dataSource requires the same namespace; EBS copies remain in the source AZ. Set the class explicitly and request at least the source size. Availability precedes completed background initialization; quiesce applications for the required consistency.
 
 </details>
 
@@ -310,7 +310,7 @@ The driver maps io2 multiwriter block capability to Multi-Attach; there is no ge
 
 **Answer: A**
 
-Velero1.18 owns its CSI snapshot lifecycle. Configure backup TTL deliberately and use a separate retention/archive process when required. Its integrated CSI support still needs EnableCSI; backup metadata, native CSI snapshots and copied volume data are different things.
+Velero 1.18 owns its CSI snapshot lifecycle. Configure backup TTL deliberately and use a separate retention/archive process when required. Its integrated CSI support still needs EnableCSI; backup metadata, native CSI snapshots and copied volume data are different things.
 
 </details>
 
@@ -323,11 +323,11 @@ Velero1.18 owns its CSI snapshot lifecycle. Configure backup TTL deliberately an
 
 **Answer: Striping, with no redundancy**
 
-RAID0 distributes blocks across volumes and aggregates usable capacity. One member failure can make the whole array unusable; it is not a backup or HA solution. Two equal volumes can theoretically supply roughly twice one volume’s performance only if the application, filesystem, CPU and instance EBS limits allow it. This is a theoretical bound, not a measured2× result.
+RAID0 distributes blocks across volumes and aggregates usable capacity. One member failure can make the whole array unusable; it is not a backup or HA solution. Two equal volumes can theoretically supply roughly twice one volume’s performance only if the application, filesystem, CPU and instance EBS limits allow it. This is a theoretical bound, not a measured 2× result.
 
 A filesystem-mode PVC mounted at `/volume1` is a directory, not a raw disk for mdadm. A real block design needs `volumeMode: Block`, `volumeDevices`, exact volume identity, an authorized storage component, and an explicit empty-device initialization versus existing-array assembly procedure. Never format on every application restart. Plan same-node/AZ attachment, rescheduling, permissions, growth and consistent multi-volume backup/restore.
 
-The previous privileged Pod’s unconditional mdadm/mkfs sequence is therefore unsuitable as a copy/paste recipe. The old2–4-volume and4/64/128KiB stripe examples are tuning candidates without verified measurements, not universal optima. Compare a suitable single gp3/io2 volume, reproducible instance-store scratch data or FSx before accepting this extra complexity.
+The previous privileged Pod’s unconditional mdadm/mkfs sequence is therefore unsuitable as a copy/paste recipe. The old 2–4-volume and 4/64/128 KiB stripe examples are tuning candidates without verified measurements, not universal optima. Compare a suitable single gp3/io2 volume, reproducible instance-store scratch data or FSx before accepting this extra complexity.
 
 </details>
 
@@ -338,7 +338,7 @@ The previous privileged Pod’s unconditional mdadm/mkfs sequence is therefore u
 
 **Answer: Maximum NFS read/write RPC payload sizes**
 
-They are not TCP socket-buffer sizes. AWS recommends1,048,576bytes (1MiB) for both, with `hard,timeo=600,retrans=2,noresvport` through the supported NFS/EFS mount path. timeo is in tenths of a second, so600 means60seconds. On a hard mount, retrans=2 does not mean abandoning the operation after two attempts. Do not prescribe smaller values for random I/O or packet loss without workload evidence. Configure options on the StorageClass/PV, not Pod volumes; EFS does not support nconnect.
+They are not TCP socket-buffer sizes. AWS recommends 1,048,576 bytes (1 MiB) for both, with `hard,timeo=600,retrans=2,noresvport` through the supported NFS/EFS mount path. timeo is in tenths of a second, so 600 means 60 seconds. On a hard mount, retrans=2 does not mean abandoning the operation after two attempts. Do not prescribe smaller values for random I/O or packet loss without workload evidence. Configure options on the StorageClass/PV, not Pod volumes; EFS does not support nconnect.
 
 Reuse the chapter’s owned EFS filesystem and access-point setup:
 
@@ -367,7 +367,7 @@ parameters:
   ensureUniqueDirectory: 'true'
 ```
 
-If conducting an authorized write test, use a verified disposable directory and a unique file, not a predictable `/efs/testfile` that could overwrite data. The GNU dd example below writes64MiB and cleans up only its own file/directory. Its read may hit client cache, so these timings alone do not establish cold EFS throughput:
+If conducting an authorized write test, use a verified disposable directory and a unique file, not a predictable `/efs/testfile` that could overwrite data. The GNU dd example below writes 64 MiB and cleans up only its own file/directory. Its read may hit client cache, so these timings alone do not establish cold EFS throughput:
 
 ```bash
 set -euo pipefail
@@ -391,7 +391,7 @@ No EFS performance test was run in this review. Correlate client/application lat
 
 **Answer: They describe different properties and conditions**
 
-The EBS SLA is an availability/service-credit agreement, not a universal99.999% data-durability SLA. Its Region-level commitment uses a99.99% threshold for qualifying concurrent deployments across multiple AZs; the single-volume commitment uses99.9%. Read the agreement’s definitions, exclusions and credit conditions rather than treating either number as an unconditional guarantee.
+The EBS SLA is an availability/service-credit agreement, not a universal 99.999% data-durability SLA. Its Region-level commitment uses a 99.99% threshold for qualifying concurrent deployments across multiple AZs; the single-volume commitment uses 99.9%. Read the agreement’s definitions, exclusions and credit conditions rather than treating either number as an unconditional guarantee.
 
 | Published design characteristic | Volume types |
 |---|---|
@@ -435,7 +435,7 @@ Design for a PostgreSQL workload with high I/O demand, scheduled backups, verifi
 
 #### Storage and database
 
-The original25,000IOPS allocation is retained as an illustrative io2 setting; sufficiency requires measurement and instance limits. Encryption uses the configured/default EBS key. If selecting a customer managed key, prepare the real ARN/key policy/driver grants instead of a fake kmsKeyId.
+The original 25,000 IOPS allocation is retained as an illustrative io2 setting; sufficiency requires measurement and instance limits. Encryption uses the configured/default EBS key. If selecting a customer managed key, prepare the real ARN/key policy/driver grants instead of a fake kmsKeyId.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -565,7 +565,7 @@ spec:
           storage: 100Gi
 ```
 
-This uses the verified PostgreSQL14.24 image contract from Part1: UID/GID999, a mounted password file, writable socket/tmp volumes and a PGDATA subdirectory. Major14 reaches end of support on November12,2026; this preserved teaching version is not a default for a new production deployment. Choose and test an appropriate supported major and a migration plan. One StatefulSet replica is not HA; pg_isready is a connection readiness check, not a data-integrity or recovery test.
+This uses the verified PostgreSQL 14.24 image contract from Part 1: UID/GID 999, a mounted password file, writable socket/tmp volumes and a PGDATA subdirectory. Major 14 reaches end of support on November 12, 2026; this preserved teaching version is not a default for a new production deployment. Choose and test an appropriate supported major and a migration plan. One StatefulSet replica is not HA; pg_isready is a connection readiness check, not a data-integrity or recovery test.
 
 #### Backup and retention
 
@@ -587,7 +587,7 @@ spec:
 
 Wait for readyToUse and inspect restoreSize/content/driver before treating it as recoverable. Snapshot encryption follows the source/key configuration; unsupported encrypted/tagSpecification keys in VolumeSnapshotClass do not configure it. The current driver supports specific snapshot tag parameters, which must be checked against that driver’s release rather than copied from volume-class parameters.
 
-The following emits a daily Velero schedule with a30-day TTL. Apply through the backup owner after checking the CSI class selection and database consistency hooks/protocol. Velero TTL may delete its CSI snapshots even with an original Retain class. Alert on failed/missing backups and regularly test restores; a schedule alone does not prove recoverability:
+The following emits a daily Velero schedule with a 30-day TTL. Apply through the backup owner after checking the CSI class selection and database consistency hooks/protocol. Velero TTL may delete its CSI snapshots even with an original Retain class. Alert on failed/missing backups and regularly test restores; a schedule alone does not prove recoverability:
 
 ```bash
 velero schedule create database-daily --schedule="0 1 * * *" \
@@ -596,7 +596,7 @@ velero schedule create database-daily --schedule="0 1 * * *" \
 
 #### Bounded expansion planning
 
-Do not blindly grow by50% every six hours from stale metrics. The review-only planner below requires a Bound claim, matching expandable class, no pending resize, fresh metrics identifying the same PVC UID and valid filesystem byte counts. It supports common decimal/binary Kubernetes quantities and rejects unsupported input. At80% usage it proposes at least1.5× requested capacity, with an illustrative500Gi cap and UID/resourceVersion/current-size preconditions. It does not patch Kubernetes.
+Do not blindly grow by 50% every six hours from stale metrics. The review-only planner below requires a Bound claim, matching expandable class, no pending resize, fresh metrics identifying the same PVC UID and valid filesystem byte counts. It supports common decimal/binary Kubernetes quantities and rejects unsupported input. At 80% usage it proposes at least 1.5× requested capacity, with an illustrative 500Gi cap and UID/resourceVersion/current-size preconditions. It does not patch Kubernetes.
 
 Capture fresh `pvc.json` and `storageclass.json` from the exact objects. `trusted-metrics.json` must contain namespace, pvcName, pvcUID, observedAt (timezone-aware), usedBytes and capacityBytes from the actual mounted filesystem. A caller-supplied UID does not by itself prove metric provenance. Validate collector/mount mapping, quota, cost and driver constraints before any operator/controller applies a reviewed patch.
 
@@ -657,7 +657,7 @@ If the resource changes, regenerate the plan; do not remove failed preconditions
 
 #### Recovery candidate
 
-Never make a retrying Job scale down and delete the live claim as its first restore step. Use a separate candidate sized at least restoreSize; the100Gi example assumes this recovery point is no larger. If the original claim was expanded, adjust the candidate accordingly:
+Never make a retrying Job scale down and delete the live claim as its first restore step. Use a separate candidate sized at least restoreSize; the 100Gi example assumes this recovery point is no larger. If the original claim was expanded, adjust the candidate accordingly:
 
 ```yaml
 apiVersion: v1
@@ -682,7 +682,7 @@ Schedule an isolated compatible PostgreSQL consumer with the required credential
 
 #### Monitoring
 
-PostgreSQL5432 speaks the database protocol, not Prometheus HTTP. Prepare a reviewed postgres-exporter workload labelled `app: postgres-exporter`, with a named `metrics` port9187 and appropriately scoped database credentials. This Service and ServiceMonitor select that exporter; they do not install it. Ensure Prometheus selects this ServiceMonitor/namespace and that NetworkPolicy/TLS/auth settings match the deployment:
+PostgreSQL port 5432 speaks the database protocol, not Prometheus HTTP. Prepare a reviewed postgres-exporter workload labelled `app: postgres-exporter`, with a named `metrics` port 9187 and appropriately scoped database credentials. This Service and ServiceMonitor select that exporter; they do not install it. Ensure Prometheus selects this ServiceMonitor/namespace and that NetworkPolicy/TLS/auth settings match the deployment:
 
 ```yaml
 apiVersion: v1

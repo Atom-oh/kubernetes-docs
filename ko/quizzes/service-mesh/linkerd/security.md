@@ -78,7 +78,7 @@
 
 **정답: C**
 
-**설명:** 수동으로 10년 root를 제공할 수 있지만 자동적인 모범 사례는 아닙니다. 체인의 모든 만료를 추적하고 issuer 수명과 갱신이 CA에 맞는지 확인합니다. Root 교체에는 linked cluster를 포함한 모든 사용자에게 겹치는 trust bundle을 배포해야 합니다.
+**설명:** 수동으로 10년 root를 제공할 수 있지만 자동으로 모범 사례가 되는 것은 아닙니다. 체인의 모든 만료를 추적하고 issuer 수명과 갱신이 CA에 맞는지 확인합니다. Root 교체에는 linked cluster를 포함한 모든 사용자에게 겹치는 trust bundle을 배포해야 합니다.
 
 </details>
 
@@ -142,7 +142,7 @@
 
 **정답: B**
 
-**설명:** Identity에는 workload 인증서에 서명할 intermediate CA가 필요합니다. rotationPolicy, Secret 형식/소유권, CA 수명을 확인하고 Identity가 결과를 읽는지 검증합니다. 요청에 isCA:true가 있다고 일반 Vault leaf 서명 경로가 CA를 발급함이 증명되지는 않습니다.
+**설명:** Identity에는 workload 인증서에 서명할 intermediate CA가 필요합니다. rotationPolicy, Secret 형식/소유권, CA 수명을 확인하고 Identity가 결과를 읽는지 검증합니다. 요청에 isCA:true가 있다고 일반 Vault leaf 서명 경로가 CA를 발급한다는 것이 증명되지는 않습니다.
 
 </details>
 

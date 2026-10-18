@@ -423,7 +423,7 @@ WHERE timestamp >= now() - INTERVAL 1 DAY
 GROUP BY namespace, pod_name;
 ```
 
-`message_bytes` counts message text bytes, not compressed table storage or network billing. Matching “Back-off” messages counts log events, not authoritative container restart counts; use Kubernetes state metrics for that. A SQL `SELECT` is a snapshot query. A dashboard becomes periodically refreshed through its refresh interval, not through a special live-stream property of this query.
+`message_bytes` counts message text bytes, not compressed table storage or network billing. Matching “Back-off” messages counts log events, not authoritative container restart counts; use Kubernetes state metrics for that. A SQL `SELECT` is a snapshot query. A dashboard is refreshed periodically according to its refresh interval, not through a special live-stream property of this query.
 
 ## Grafana Integration
 

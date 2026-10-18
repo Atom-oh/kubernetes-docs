@@ -468,7 +468,7 @@ OPA Gatekeeper can also apply various other policies such as requiring specific 
 
 **Answer:**
 
-mTLS (mutual TLS) is a method where both client and server authenticate each other using certificates. Here's how to implement mTLS in Kubernetes and its benefits:
+mTLS (mutual TLS) is a method where both client and server authenticate each other using certificates. Here's how to implement mTLS in Kubernetes, along with its benefits:
 
 **Implementation Methods:**
 
@@ -487,7 +487,7 @@ mTLS (mutual TLS) is a method where both client and server authenticate each oth
 
 2. **Use with Network Policies**: NetworkPolicy restricts L3/L4 reachability; the mesh authenticates certificates. Enroll workloads, enforce mTLS, and apply mesh authorization to restrict authenticated identities.
 
-3. **Certificate Management**: Use tools like cert-manager to manage certificate lifecycle.
+3. **Certificate Management**: Use tools like cert-manager to manage the certificate lifecycle.
    ```yaml
    apiVersion: cert-manager.io/v1
    kind: Certificate

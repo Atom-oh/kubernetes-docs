@@ -56,7 +56,7 @@ Follow one real request from metrics through an exemplar to its trace and logs, 
 
 `span:duration` measures an individual span; `trace:duration` measures the whole trace. Use `span:` for explicit intrinsics and `span.`/`resource.` for attributes. `>>` finds right-hand spans that descend from left-hand spans. Searching for descendants of a DB span is different from finding DB work beneath a service.
 
-`sort(duration)`, SQL `order by`, `| limit 20` and `{ duration > p99 }` are not this search syntax. Configure result sorting, search limit and time range in Grafana, and substitute a measured p99 with a duration literal such as `800ms`. `select()` requests displayed attributes; it cannot recreate spans that were never stored.
+`sort(duration)`, SQL `order by`, `| limit 20` and `{ duration > p99 }` are not part of this search syntax. Configure result sorting, search limit and time range in Grafana, and substitute a measured p99 with a duration literal such as `800ms`. `select()` requests displayed attributes; it cannot recreate spans that were never stored.
 
 Older SDKs may emit `http.status_code`, `http.method`, `db.system`, `db.statement` or `messaging.operation`. Inspect actual spans and SDK versions before using current `http.response.status_code`, `http.request.method`, `db.system.name`, `db.query.text` or `messaging.operation.type`. Renaming a query attribute does not transform collected data. Capture query text only under an explicit sanitization policy; exclude passwords, SQL literals and customer data.
 
@@ -140,7 +140,7 @@ Before cleanup, record one request whose exemplar ID, Tempo trace ID and log tra
 | 6 | Review destroy plans using the same IaC state; use recorded exact IDs/ARNs for manually created AWS resources |
 | 7 | Delete EKS/VPC after dependency cleanup, then verify managed-service deletion and residual resources |
 
-Do not delete shared namespaces or cluster-wide CRDs. Use the recorded installation release/namespace/version, not a `latest` installer URL. Versioned S3 requires checking old versions and delete markers as well as current objects. Reconcile Aurora snapshot policy, MWAA/DAG bucket, AMG, AMP, OpenSearch, SNS/SQS/DLQ, Lambda/API Gateway, IAM attachments, EBS/LBs, log groups and alarms against your inventory. Accepted deletion requests are not completed deletion.
+Do not delete shared namespaces or cluster-wide CRDs. Use the recorded installation release/namespace/version, not a `latest` installer URL. Versioned S3 requires checking old versions and delete markers as well as current objects. Reconcile Aurora snapshot policy, MWAA/DAG bucket, AMG, AMP, OpenSearch, SNS/SQS/DLQ, Lambda/API Gateway, IAM attachments, EBS/LBs, log groups and alarms against your inventory. Accepted deletion requests do not mean deletion is complete.
 
 Review resource ownership and preserve evidence/state instead of using an unchecked auto-approved destroy, suppressing every error, or deleting the whole work directory.
 

@@ -43,7 +43,7 @@ kubectl wait --for=condition=Established --timeout=120s \
   crd/kafkatopics.kafka.strimzi.io crd/kafkausers.kafka.strimzi.io
 ```
 
-기본 chart는 배포된 namespace를 감시합니다. 추가 namespace가 필요하면 먼저 namespace를 만들고 Helm values에 `watchNamespaces: [kafka-staging]`처럼 지정합니다. 1.3 chart는 이 목록에 release namespace를 추가·중복 제거하고 대응 RoleBinding도 렌더링합니다. `kubectl set env`로 감시 범위만 바꾸는 방식은 RBAC 누락과 Helm drift를 만들 수 있습니다.
+기본 chart는 배포된 namespace를 감시합니다. 추가 namespace가 필요하면 먼저 namespace를 만들고 Helm values에 `watchNamespaces: [kafka-staging]`처럼 지정합니다. 1.3 chart는 이 목록에 release namespace를 추가하고 중복을 제거하며 대응 RoleBinding도 렌더링합니다. `kubectl set env`로 감시 범위만 바꾸는 방식은 RBAC 누락과 Helm drift를 만들 수 있습니다.
 
 다른 배포 도구가 관리하는 설치에 Helm·OLM·수동 YAML을 중복 적용하지 않습니다. `watchAnyNamespace: true`는 명시적인 cluster-wide 선택이며 이 예제에서는 사용하지 않습니다.
 
@@ -51,7 +51,7 @@ kubectl wait --for=condition=Established --timeout=120s \
 
 ### 표준 EBS CSI 경로
 
-다음 StorageClass는 표준 EBS CSI provisioner를 사용합니다. 기존 같은 이름의 StorageClass가 있다면 속성과 소유권을 먼저 확인합니다. provisioner 변경으로 기존 볼륨을 다른 드라이버로 자동 이관할 수 없습니다.
+다음 StorageClass는 표준 EBS CSI provisioner를 사용합니다. 기존에 같은 이름의 StorageClass가 있다면 속성과 소유권을 먼저 확인합니다. provisioner 변경으로 기존 볼륨을 다른 드라이버로 자동 이관할 수 없습니다.
 
 **`storageclass.yaml`**
 
@@ -75,7 +75,7 @@ gp3의 기본 성능은 3,000 IOPS와 125 MiB/s입니다. 이전 예제의 `thro
 
 ### EKS Auto Mode 대안
 
-Auto Mode를 사용할 때만 다음 별도 StorageClass를 선택하고, **새 NodePool의 volume class**를 `gp3-kafka-auto`로 맞춥니다. 표준 CSI 예제와 둘 중 맞는 경로를 선택합니다. 이미 만들어진 PVC의 스토리지 이관은 별도로 설계해야 합니다.
+Auto Mode를 사용할 때만 다음 별도 StorageClass를 선택하고, **새 NodePool의 volume class**를 `gp3-kafka-auto`로 맞춥니다. 표준 CSI 예제와 이 대안 중 맞는 경로를 선택합니다. 이미 만들어진 PVC의 스토리지 이관은 별도로 설계해야 합니다.
 
 **`storageclass-auto.yaml`**
 
@@ -101,7 +101,7 @@ allowedTopologies:
 
 ### Controller와 broker 풀
 
-다음 두 파일은 표준 `gp3-kafka`를 참조합니다. `roles`의 실제 값은 `controller`와 `broker`이며, 둘을 함께 넣을 수 있지만 `dual-role`이라는 별도 문자열 값은 아닙니다.
+다음 두 파일은 표준 `gp3-kafka`를 참조합니다. `roles`의 실제 값은 `controller`와 `broker`이며, 둘을 함께 넣을 수 있지만 `dual-role`이라는 별도 문자열 값은 없습니다.
 
 두 풀 모두 세 AZ를 요구합니다. 실제 Pod에 추가하는 `docs.example.com/kafka-role` label과 cluster label을 selector에 사용하고 `minDomains: 3`을 지정합니다. 노드가 두 AZ에만 있으면 이 요구를 충족하지 못해 Pod가 Pending이 될 수 있습니다. AZ 장애 후 엄격한 제약 때문에 대체 Pod가 다른 두 AZ에 배치되지 못할 수도 있습니다.
 
@@ -201,7 +201,7 @@ spec:
             docs.example.com/kafka-role: broker
 ```
 
-`kraftMetadata: shared`는 해당 볼륨에 KRaft 메타데이터를 함께 저장한다는 의미이며, 한 풀에서 최대 한 볼륨에 지정합니다. `deleteClaim: false`와 StorageClass `Retain`은 보존 정책입니다. 백업·복구 검증을 대신하지 않으며 리소스를 삭제한 뒤에도 PVC/PV/EBS가 남아 비용이 계속될 수 있습니다.
+`kraftMetadata: shared`는 해당 볼륨에 KRaft 메타데이터를 함께 저장한다는 의미이며, 한 풀에서 최대 한 볼륨에 지정합니다. `deleteClaim: false`와 StorageClass `Retain`은 보존 정책입니다. 백업·복구 검증을 대신하지 않으며 리소스를 삭제한 뒤에도 PVC/PV/EBS가 남아 비용이 계속 발생할 수 있습니다.
 
 controller 3개는 한 voter 손실에도 과반수 2개를 유지하기 위한 선택입니다. broker 3개는 별도 데이터 복제 요구입니다. 홀수라는 사실만으로 안전해지는 것은 아니며, voter의 과반수와 연결성이 필요합니다.
 

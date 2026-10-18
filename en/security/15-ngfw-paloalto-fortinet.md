@@ -39,7 +39,7 @@ The manual guide says HTTP health checks cannot be used and recommends HTTPS/TCP
 
 AWS also documents HTTPS-health failure for targets supporting only TLS 1.3; the health endpoint must support an earlier version such as TLS 1.2. This health requirement is separate from inspected application TLS support. [S26]
 
-The same guide states that GWLB traffic is treated as intrazone and that the default intrazone rule allows all traffic. Review the default action and applied profiles so traffic outside intended policies is denied. Enabling interfaces alone does not complete blocking policy. [S20]
+The same guide states that GWLB traffic is treated as intrazone and that the default intrazone rule allows all traffic. Review the default action and applied profiles so traffic outside intended policies is denied. Enabling interfaces alone does not complete the blocking policy. [S20]
 
 ### Fortinet: validate interfaces and policies together
 
@@ -144,7 +144,7 @@ PAN-OS fixed-release/ETA tables can change by branch. Rather than turning a stat
 
 ## 8. PoC acceptance criteria
 
-Proposed common criteria; compare usability, operating costs and performance after mandatory checks pass.
+These are proposed common criteria; compare usability, operating costs and performance after mandatory checks pass.
 
 1. Supported image, license, branch and official integration agree.
 2. Restricted management access and administrator/configuration changes are observable.

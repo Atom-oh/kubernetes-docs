@@ -18,7 +18,7 @@ Distinguish AWS-managed responsibilities from operator ownership, design Auto Mo
 |3: Observability and diagnosis |25min | Nodes8 + signal correlation8 + scenarios9 |
 |4: IaC/GitOps |10min | IaC5 + ArgoCD5 |
 
-Total120minutes. Verify current APIs, prepared lab environment, account/region/kubeconfig, permissions and cost limits using the [Auto Mode guide](../eks-auto-mode/README.md). Lecture-only delivery can use captured events, NodeClaims and metrics. Actual FIS fault injection or node deletion is not automatically executed by this curriculum.
+Total: 120 minutes. Verify current APIs, prepared lab environment, account/region/kubeconfig, permissions and cost limits using the [Auto Mode guide](../eks-auto-mode/README.md). Lecture-only delivery can use captured events, NodeClaims and metrics. Actual FIS fault injection or node deletion is not automatically executed by this curriculum.
 
 Line counts and keyword occurrence counts do not establish documentation quality or adequate coverage, so the old assessment table was removed. Use the references below and supplement organization-specific Terragrunt/operating procedures for the versions in use.
 
@@ -78,7 +78,7 @@ Compare Pod selectors/affinity, requests, taints/tolerations and pool constraint
 
 ### 1-3. Scaling (15min)
 
-Follow the [scaling guide](../eks-auto-mode/03-scaling-behavior.md): unschedulable Pods, pool constraints, node provisioning and Pod readiness.40–90seconds is not guaranteed; measure image pulls, IP/quota/capacity and volume dependencies.
+Follow the [scaling guide](../eks-auto-mode/03-scaling-behavior.md): unschedulable Pods, pool constraints, node provisioning and Pod readiness.40–90 seconds is not guaranteed; measure image pulls, IP/quota/capacity and volume dependencies.
 
 Compare WhenEmpty, WhenEmptyOrUnderutilized and consolidateAfter, including workloads whose requests differ from utilization. Consolidation does not replace manual optimization or load validation. Drift does not guarantee immediate one-at-a-time replacement for every change.
 
@@ -102,7 +102,7 @@ VPA Off is recommendation-only. Pool separation follows team, availability, auth
 
 ### 2-4. Node Lifecycle (5min)
 
-Distinguish AWS-documented **default expiry336h(14days), default NodeClaim termination grace24h and maximum managed-instance lifetime21days** using the [lifecycle guide](../eks-auto-mode/07-node-lifecycle.md). The former720h(30day) example is not Auto Mode's baseline, nor is any lifetime a guaranteed uptime.
+Distinguish AWS-documented **default expiry of 336h (14 days), default NodeClaim termination grace of 24h and maximum managed-instance lifetime of 21 days** using the [lifecycle guide](../eks-auto-mode/07-node-lifecycle.md). The former 720h (30-day) example is not Auto Mode's baseline, nor is any lifetime a guaranteed uptime.
 
 Budgets rate-limit voluntary drift/emptiness/consolidation; they cannot defer all expiration/interruption/repair outside business hours. Inspect stored NodeClaim values, PDBs, termination time and application recovery.
 
@@ -172,7 +172,7 @@ Prepare account/cluster checks, supported APIs/images, telemetry and cleanup pro
 
 ## Review Evidence
 
-Checks cover the120minute schedule, links, NodePool structural schema and node-alert rules. No cluster creation, node replacement, FIS experiment, savings measurement or observability-backend deployment was performed.
+Checks cover the 120-minute schedule, links, NodePool structural schema and node-alert rules. No cluster creation, node replacement, FIS experiment, savings measurement or observability-backend deployment was performed.
 
 - [Auto Mode NodePool defaults](https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html)
 - [Managed instance maximum lifetime](https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html)

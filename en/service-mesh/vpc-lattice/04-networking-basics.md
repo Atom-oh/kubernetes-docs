@@ -207,7 +207,7 @@ TLS protects the content of communication, but **which domain you connected to i
 Since this is intra-VPC communication, external observers are not the concern, but two things are worth knowing.
 
 - **Internal observers can see service call relationships.** Anyone able to observe traffic within the VPC can reconstruct the call graph from SNI.
-- **Flow log destination IPs are meaningless but SNI is meaningful.** This also means the "destination-IP observability breaks" problem above can be partly compensated with SNI-based observability.
+- **Flow log destination IPs are meaningless but SNI is meaningful.** This also means the "destination-IP observability breaks" problem above can be partly compensated for with SNI-based observability.
 
 ### ECH: the answer to plaintext SNI exposure
 

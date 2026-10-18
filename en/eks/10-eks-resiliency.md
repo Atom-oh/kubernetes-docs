@@ -93,7 +93,7 @@ The image above is an explicit application placeholder, not a published artifact
 
 ### PodDisruptionBudget (PDB)
 
-PDB constrains supported voluntary evictions for matching Pods. It does not preserve a Pod count through AZ/hardware failure, direct Pod deletion, or a Deployment’s own rolling update/scale-down. Controller strategy, placement and spare capacity are separate controls.
+A PDB constrains supported voluntary evictions for matching Pods. It does not preserve a Pod count through AZ/hardware failure, direct Pod deletion, or a Deployment’s own rolling update/scale-down. Controller strategy, placement and spare capacity are separate controls.
 
 ```yaml
 apiVersion: policy/v1
@@ -706,7 +706,7 @@ A traffic dial is the percentage of traffic already directed to that regional en
 
 The sidecar multi-primary/multiple-network design needs a shared trusted identity model, distinct cluster/network names, reachable remote Kubernetes APIs and east-west gateways, compatible services/namespaces and data behavior. A ServiceEntry alone does not establish federation. Keep gateway access limited to the intended networks; a Layer-7 TLS-terminating load balancer is incompatible with AUTO_PASSTHROUGH.
 
-The following IstioOperator is **istioctl installation input**, not an in-cluster operator to kubectl apply. Prepare the corresponding Tokyo configuration and the full official gateway/discovery setup. DNS capture/auto-allocation flags do not substitute for that setup.
+The following IstioOperator is **istioctl installation input**, not an in-cluster operator to apply with kubectl. Prepare the corresponding Tokyo configuration and the full official gateway/discovery setup. DNS capture/auto-allocation flags do not substitute for that setup.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -1110,7 +1110,7 @@ spec:
         - name: PODS_AFFECTED_PERC
           value: '100'
 ```
-TARGET_HOSTNAMES is a JSON-array string. Runtime/socket/privilege assumptions must match the selected Linux test nodes; the sample is not portable to every EKS node type. Scope the selected workload so this percentage cannot target unrelated Pods. Observe ChaosResult and application health; a resource existing is not a successful experiment.
+TARGET_HOSTNAMES is a JSON-array string. Runtime/socket/privilege assumptions must match the selected Linux test nodes; the sample is not portable to every EKS node type. Scope the selected workload so this percentage cannot target unrelated Pods. Observe ChaosResult and application health; the existence of a resource is not evidence of a successful experiment.
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n resilience-demo get chaosengine,chaosresult

@@ -59,7 +59,7 @@
 { span:status = error } | select(resource.service.name, span.http.response.status_code, span:duration)
 ```
 
-`span:duration`은 개별 span, `trace:duration`은 전체 trace 시간입니다. `span:`으로 intrinsic을, `span.`/`resource.`로 사용자 속성을 명시합니다. `>>`는 왼쪽 span의 descendant인 오른쪽 span을 찾습니다. DB span 이후 자식을 찾는 쿼리와 서비스 아래 DB span을 찾는 쿼리는 다릅니다.
+`span:duration`은 개별 span의 시간, `trace:duration`은 전체 trace 시간입니다. `span:`으로 intrinsic을, `span.`/`resource.`로 사용자 속성을 명시합니다. `>>`는 왼쪽 span의 descendant인 오른쪽 span을 찾습니다. DB span 이후 자식을 찾는 쿼리와 서비스 아래 DB span을 찾는 쿼리는 다릅니다.
 
 `sort(duration)`, SQL의 `order by`, `| limit 20`, `{ duration > p99 }`는 이 검색 문법이 아닙니다. Grafana의 결과 정렬·검색 limit·시간 범위를 설정하고, p99 측정값을 `800ms`처럼 실제 duration literal로 바꿔 검색합니다. `select()`는 표시할 속성을 추가하며 저장된 모든 span을 자동으로 만들어내지 않습니다.
 

@@ -39,9 +39,9 @@
 ---
 
 3. public API client CIDR 설정은?
-   - A) 항상0.0.0.0/0
+   - A) 항상 0.0.0.0/0
    - B) 승인된 좁은 실제 출발지 범위
-   - C) 임의 문서 예제IP를 운영에 사용
+   - C) 임의 문서 예제 IP를 운영에 사용
    - D) 인증 대신 CIDR만 있으면 된다
 
 <details>
@@ -73,15 +73,15 @@ provider ARN과 issuer host/path도 같은 provider를 가리켜야 합니다.
 ---
 
 5. Aurora 접근 경계는?
-   - A) public writer와전체인터넷
-   - B) private subnet과 실제 서비스 client SG의5432접근
+   - A) public writer와 전체 인터넷
+   - B) private subnet과 실제 서비스 client SG의 5432 접근
    - C) SG 이름이 비슷하면 된다
    - D) Multi-AZ writer가 자동으로 생긴다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) private subnet과 실제 서비스 client SG의5432접근**
+**정답: B) private subnet과 실제 서비스 client SG의 5432 접근**
 
 단일 writer는 실습 선택이며 HA 보장이 아닙니다.
 
@@ -90,15 +90,15 @@ provider ARN과 issuer host/path도 같은 provider를 가리켜야 합니다.
 ---
 
 6. 애플리케이션 DB 계정은?
-   - A) master계정을모든Pod에
-   - B) lab table DML만 가진 별도runtime계정
-   - C) 비밀번호없이public연결
-   - D) 매실행마다기존비밀번호덮기
+   - A) master 계정을 모든 Pod에
+   - B) lab table DML만 가진 별도 runtime 계정
+   - C) 비밀번호 없이 public 연결
+   - D) 매 실행마다 기존 비밀번호 덮기
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) lab table DML만 가진 별도runtime계정**
+**정답: B) lab table DML만 가진 별도 runtime 계정**
 
 bootstrap은 기존 role을 덮지 않으며 실패 시 candidate 파일을 검증합니다.
 
@@ -107,27 +107,27 @@ bootstrap은 기존 role을 덮지 않으며 실패 시 candidate 파일을 검�
 ---
 
 7. 특수문자 비밀번호의 전달 방식은?
-   - A) DSN문자열에그대로연결
-   - B) JSON의 원본 값을 URL.create의 password인자로 전달
-   - C) 여러번URLencode
-   - D) 로그에출력해복사
+   - A) DSN 문자열에 그대로 연결
+   - B) JSON의 원본 값을 URL.create의 password 인자로 전달
+   - C) 여러 번 URLencode
+   - D) 로그에 출력해 복사
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) JSON의 원본 값을 URL.create의 password인자로 전달**
+**정답: B) JSON의 원본 값을 URL.create의 password 인자로 전달**
 
-TLS verify-full과 실제CA경로도 함께 확인합니다.
+TLS verify-full과 실제 CA 경로도 함께 확인합니다.
 
 </details>
 
 ---
 
 8. 클러스터 생성 중 실패하면?
-   - A) 새이름으로계속생성
+   - A) 새 이름으로 계속 생성
    - B) 같은 이름의 부분 생성 리소스·state·소유권을 확인
-   - C) 실패면과금0이라고가정
-   - D) 모든VPC삭제
+   - C) 실패면 과금 0이라고 가정
+   - D) 모든 VPC 삭제
 
 <details>
 <summary>정답 보기</summary>
@@ -141,15 +141,15 @@ CLI 실패가 리소스 미생성을 뜻하지 않습니다.
 ---
 
 9. gp3 StorageClass 확인의 의미는?
-   - A) 이름만있으면항상동작
-   - B) EBS CSI·권한·실제class설정·volume정리를 확인
-   - C) 공유class를무조건덮기
-   - D) PVC삭제와snapshot삭제는같다
+   - A) 이름만 있으면 항상 동작
+   - B) EBS CSI·권한·실제 class 설정·volume 정리를 확인
+   - C) 공유 class를 무조건 덮기
+   - D) PVC 삭제와 snapshot 삭제는 같다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) EBS CSI·권한·실제class설정·volume정리를 확인**
+**정답: B) EBS CSI·권한·실제 class 설정·volume 정리를 확인**
 
 공유 객체 변경과 리소스 삭제 책임을 구분합니다.
 
@@ -158,10 +158,10 @@ CLI 실패가 리소스 미생성을 뜻하지 않습니다.
 ---
 
 10. 실습 비용 산정은?
-   - A) 항상시간당2.5달러
+   - A) 항상 시간당 2.5달러
    - B) 실제 리전·사용량·보존·NAT/LB/storage/snapshot 등을 포함
-   - C) AMG월사용자요금을workspace시간요금으로환산
-   - D) NodePoollimit이절대예산이다
+   - C) AMG 월 사용자 요금을 workspace 시간 요금으로 환산
+   - D) NodePool limit이 절대 예산이다
 
 <details>
 <summary>정답 보기</summary>

@@ -91,7 +91,7 @@ PDB constrains some voluntary evictions. The example Recreate strategy avoids an
 
 **Answer: B. Scheduling occurs step by step and queues can form under token/cache/capacity limits**
 
-Prefix caching reuses supported prefix KV state. Chunked prefill, max-num-seqs, token budgets and context limits differ. CacheConfig defaults gpu_memory_utilization to 0.92; the example sets 0.80. --swap-space is absent from current CLI.
+Prefix caching reuses supported prefix KV state. Chunked prefill, max-num-seqs, token budgets and context limits differ. CacheConfig defaults gpu_memory_utilization to 0.92; the example sets 0.80. --swap-space is absent from the current CLI.
 </details>
 
 ### 7. What should current metrics configuration use?
@@ -166,7 +166,7 @@ The inspected middleware guards /v1,/v2,/inference,/cohere prefixes; other paths
 
 **Answer: B. p50 increased about 33.1% while aggregate throughput rose in that test range; an old report without raw logs is not current-version proof**
 
-The reported data is one 0.6.4.post1 run. This audit did not locate raw request/server logs or rerun it. A maximum logged interval average is not instantaneous peak; a roofline calculation is an estimate, not profiler evidence.
+The reported data is one 0.6.4.post1 run. This audit did not locate raw request/server logs or rerun it. A maximum logged interval average is not an instantaneous peak; a roofline calculation is an estimate, not profiler evidence.
 </details>
 
 ---

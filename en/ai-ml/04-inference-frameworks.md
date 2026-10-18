@@ -49,7 +49,7 @@ Avoid sharing one EBS RWO PVC between replicas on different nodes. Choose per-re
 
 The inspected NIM 2.0.12 documentation exposes `/v1/metrics`, passing through native vLLM backend metrics. Inspect actual names, units and labels instead of copying invented nim_* names or `/metrics`. A Grafana ConfigMap needs the corresponding datasource/sidecar and Prometheus scraping. Do not display seconds unchanged in a millisecond panel.
 
-Define workload-specific SLOs for TTFT, ITL, end-to-end latency, successful throughput and queueing. With uniform token intervals, the approximation is `TTFT + (output tokens - 1) × ITL`, plus separate network/postprocessing overhead. Targets such as 500ms or GPU80% are not universal health standards.
+Define workload-specific SLOs for TTFT, ITL, end-to-end latency, successful throughput and queueing. With uniform token intervals, the approximation is `TTFT + (output tokens - 1) × ITL`, plus separate network/postprocessing overhead. Targets such as 500ms or 80% GPU utilization are not universal health standards.
 
 GenAI-Perf 0.0.16 uses the profile subcommand and synthetic-input-tokens-mean/output-tokens-mean options. The following command would load a prepared internal endpoint and was not executed in this audit. Prepare perf_analyzer, tokenizer and other distribution dependencies first.
 
@@ -125,17 +125,17 @@ spec:
     type: worker
 ```
 
-Disaggregation requires compatible prefill/decode roles, KV connectors/formats, model revisions and networking. Arbitrary mixtures of backends or GPUs are not automatically interoperable. KV-aware routing balances locality and load; a fixed0.7/0.3 formula is not a universal implementation. Redis is not the mandatory KV tensor store for all Dynamo deployments.
+Disaggregation requires compatible prefill/decode roles, KV connectors/formats, model revisions and networking. Arbitrary mixtures of backends or GPUs are not automatically interoperable. KV-aware routing balances locality and load; a fixed 0.7/0.3 formula is not a universal implementation. Redis is not the mandatory KV tensor store for all Dynamo deployments.
 
 The inspected platform chart's cluster-wide operator manages CRDs through a crd-apply init container. upgradeCRD=false selects external management; it does not remove the CRD requirement. Check planner, discovery, NATS/etcd, Grove/KAI and other release-specific settings. Chart rendering does not verify CRD application, authorization or live discovery.
 
 ## AIBrix
 
-Version0.7.0 uses Envoy Gateway, a gateway plugin, controller-manager and metadata services. KubeRay is optional for Ray-based capabilities. The former standalone aibrix-registry server and /v1/lora/register API are not the inspected0.7.0 installation path.
+Version 0.7.0 uses Envoy Gateway, a gateway plugin, controller-manager and metadata services. KubeRay is optional for Ray-based capabilities. The former standalone aibrix-registry server and /v1/lora/register API are not the inspected 0.7.0 installation path.
 
 ### ModelAdapter and PodAutoscaler
 
-Actual ModelAdapter fields include baseModel, podSelector and artifactURL. Omitting replicas loads the adapter on all matching Pods;1 selects one Pod; other values are rejected. Replace the example bucket/revision and base model with approved values. Verify controller download permissions, runtime compatibility, adapter capacity/lifecycle and tenant authorization separately.
+Actual ModelAdapter fields include baseModel, podSelector and artifactURL. Omitting replicas loads the adapter on all matching Pods; 1 selects one Pod; other values are rejected. Replace the example bucket/revision and base model with approved values. Verify controller download permissions, runtime compatibility, adapter capacity/lifecycle and tenant authorization separately.
 
 ```yaml
 apiVersion: model.aibrix.ai/v1alpha1
@@ -152,7 +152,7 @@ spec:
   replicas: 1
 ```
 
-PodAutoscaler0.7.0 uses metricsSources and HPA/KPA/APA strategies, not an arbitrary autoscaler ConfigMap. This CPU example requires metrics-server, workload CPU requests and the controller. It does not validate GPU queue-based scaling. Avoid competing scaler owners for the same target.
+PodAutoscaler 0.7.0 uses metricsSources and HPA/KPA/APA strategies, not an arbitrary autoscaler ConfigMap. This CPU example requires metrics-server, workload CPU requests and the controller. It does not validate GPU queue-based scaling. Avoid competing scaler owners for the same target.
 
 ```yaml
 apiVersion: autoscaling.aibrix.ai/v1alpha1
@@ -178,11 +178,11 @@ spec:
 
 Use the audited [Ray Serve](ray/04-ray-serve.md) and [KubeRay](ray/02-kuberay-operator.md) APIs. KubeRay reconciliation, Ray worker autoscaling and Serve replica autoscaling have different roles. Do not use RayCluster as a normal Deployment HPA scale target or guess generated cluster/Serve Service names and selectors.
 
-Code and dependencies must reach execution workers, not just the head. user_config does not automatically change constructor arguments; implement the appropriate reconfigure path. A compatible API needs the actual chat template, streaming, cancellation, finish reasons, usage and errors. Concatenating role strings and ignoring stream=true is insufficient. The old Ray2.9/operator1.1 examples and unconditional trust_remote_code=True were removed.
+Code and dependencies must reach execution workers, not just the head. user_config does not automatically change constructor arguments; implement the appropriate reconfigure path. A compatible API needs the actual chat template, streaming, cancellation, finish reasons, usage and errors. Concatenating role strings and ignoring stream=true is insufficient. The old Ray 2.9/operator 1.1 examples and unconditional trust_remote_code=True were removed.
 
 ## SGLang
 
-Version0.5.19 RadixAttention reuses KV for common prefixes; arbitrary overlapping middle substrings are not interchangeable cached prefixes. Model, KV format and access policies must match. Current grammar backends include default XGrammar and alternatives Outlines/Llguidance. “Always10x faster because of compressed FSM” is not a general conclusion.
+Version 0.5.19 RadixAttention reuses KV for common prefixes; arbitrary overlapping middle substrings are not interchangeable cached prefixes. Model, KV format and access policies must match. Current grammar backends include default XGrammar and alternatives Outlines/Llguidance. “Always 10x faster because of compressed FSM” is not a general conclusion.
 
 ![SGLang APIs/runtime, common-prefix KV caching and the selected grammar backend.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-3.png)
 
@@ -239,13 +239,13 @@ SGLang's function/system/user/assistant/gen DSL APIs remain in this release. Dec
 
 ## Hugging Face TGI
 
-The official repository declares **maintenance mode**; the latest inspected release is3.3.7(December19,2025). It accepts minor fixes, documentation and maintenance and directs new engine adoption toward vLLM/SGLang and others. It is no longer a generic default recommendation for a new project. Validate model, template, streaming, metrics and SLO compatibility when migrating existing deployments.
+The official repository declares **maintenance mode**; the latest inspected release is 3.3.7 (December 19, 2025). It accepts minor fixes, documentation and maintenance and directs new engine adoption toward vLLM/SGLang and others. It is no longer a generic default recommendation for a new project. Validate model, template, streaming, metrics and SLO compatibility when migrating existing deployments.
 
 Adding --quantize=awq does not automatically produce AWQ weights from an ordinary model. Use a supported model prepared in that format. Floating tags, missing gated-model credentials and short liveness deadlines undermine reproducibility and successful startup.
 
 ## Ollama
 
-In0.34.0, pulling a model and serving it are separate operations. A postStart hook with sleep10 does not ensure readiness. Prestage approved models or use a separate preparation procedure with health checks, bounded retries and failure handling. Record mutable model tags and storage permissions.
+In 0.34.0, pulling a model and serving it are separate operations. A postStart hook with sleep10 does not ensure readiness. Prestage approved models or use a separate preparation procedure with health checks, bounded retries and failure handling. Record mutable model tags and storage permissions.
 
 The local Ollama API does not provide user authentication; put authorization and path controls in front before exposing it. A server bound only to Pod localhost cannot be reached through its Service. OLLAMA_HOST changes the listening scope, not authentication. Scope model-management and inference endpoints separately.
 
@@ -253,13 +253,13 @@ A Modelfile defines the base model, system prompt and generation settings; it do
 
 ## LiteLLM
 
-Use the audited1.100.1 Router configuration in the [Agentic AI guide](03-agentic-ai-platform.md). A provider gateway is a different layer from an inference engine. Calling an alias gpt-4-equivalent does not establish equivalent quality. Fallback must first satisfy allowed-provider and data-egress policies.
+Use the audited 1.100.1 Router configuration in the [Agentic AI guide](03-agentic-ai-platform.md). A provider gateway is a different layer from an inference engine. Calling an alias gpt-4-equivalent does not establish equivalent quality. Fallback must first satisfy allowed-provider and data-egress policies.
 
 Wire the actual configuration file into the proxy command and configure client credentials, DB/Redis and callbacks as needed. A dummy key or ClusterIP is not authentication; drop_params=true can remove meaningful request conditions. Distinguish requests, success, failure, retries and cache costs.
 
 ## AWS Neuron and Inferentia2
 
-Distinguish chips, NeuronCores and host RAM/HBM. Each Inferentia2 chip has two NeuronCore-v2 cores and32GiB HBM.
+Distinguish chips, NeuronCores and host RAM/HBM. Each Inferentia2 chip has two NeuronCore-v2 cores and 32GiB HBM.
 
 | Instance | Chips | NeuronCores-v2 | Device HBM (GiB) | Host RAM (GiB) | vCPU |
 | --- | --- | --- | --- | --- | --- |
@@ -270,21 +270,21 @@ Distinguish chips, NeuronCores and host RAM/HBM. Each Inferentia2 chip has two N
 
 ### Device Allocation and Plugin Paths
 
-aws.amazon.com/neuron allocates **whole devices**; aws.amazon.com/neuroncore allocates **cores**. The former inf2.xlarge example requested neuron:2, eight CPUs and24Gi RAM on a node with one device, four vCPUs and16Gi RAM; it cannot schedule. NEURON_RT_VISIBLE_CORES selects runtime scope and does not create unallocated devices. Check precedence with NUM_CORES and logical-core policy against the chosen release.
+aws.amazon.com/neuron allocates **whole devices**; aws.amazon.com/neuroncore allocates **cores**. The former inf2.xlarge example requested neuron:2, eight CPUs and 24Gi RAM on a node with one device, four vCPUs and 16Gi RAM; it cannot schedule. NEURON_RT_VISIBLE_CORES selects runtime scope and does not create unallocated devices. Check precedence with NUM_CORES and logical-core policy against the chosen release.
 
-The inspected official Helm1.10.0 includes device-plugin, scheduler and node-problem-detector options. Inspect rendered DaemonSets, hostPaths, RBAC and recovery behavior before installation. This command only generates local output.
+The inspected official Helm 1.10.0 includes device-plugin, scheduler and node-problem-detector options. Inspect rendered DaemonSets, hostPaths, RBAC and recovery behavior before installation. This command only generates local output.
 
 ```bash
 helm template neuron-audit oci://public.ecr.aws/neuron/neuron-helm-chart   --version 1.10.0 --namespace kube-system --include-crds > neuron-rendered.yaml
 ```
 
-SDK2.32.0 documents two separate paths: **NxD Inference plugin0.5.x with vLLM0.16 for Inf2/Trn1/Trn2**, and the **new vLLM Neuron beta0.24.0.1.1.0 for Trn2/Trn3 only**. The detailed NxD guide still shows0.5.0/SDK2.29 while the overview shows0.5.3; verify the chosen plugin tag, DLC and exact dependencies. Installing the newest beta on Inf2 or adding pip install to an old2.18 DLC is not compatibility validation.
+SDK 2.32.0 documents two separate paths: **NxD Inference plugin 0.5.x with vLLM 0.16 for Inf2/Trn1/Trn2**, and the **new vLLM Neuron beta 0.24.0.1.1.0 for Trn2/Trn3 only**. The detailed NxD guide still shows 0.5.0/SDK 2.29 while the overview shows 0.5.3; verify the chosen plugin tag, DLC and exact dependencies. Installing the newest beta on Inf2 or adding pip install to an old 2.18 DLC is not compatibility validation.
 
 Neuron compilation requires supported model implementations, shape/batch/sequence buckets, TP, compiler/SDK, hardware and cache artifacts. Calling torch_neuronx.trace on a generic Transformers model with an unused tp_degree dictionary does not implement distributed causal-LM serving. Compiler output files and tokenizer directories are different artifacts. No compiler or Neuron instance was executed in this audit.
 
 ## Performance, Cost and Operations
 
-The unsourced A100 ranking table and fixed40–70% savings claims were removed. Compare the same model/revision/precision, input/output-token distribution, concurrency, success rate, SLO, warmup and dated prices. One million requests/day over30days is30million requests: a hypothetical monthly48,000 dollars is1.60 dollars per1,000 requests. The previous0.80 figure was arithmetically wrong; this illustration is not current AWS pricing.
+The unsourced A100 ranking table and fixed 40–70% savings claims were removed. Compare the same model/revision/precision, input/output-token distribution, concurrency, success rate, SLO, warmup and dated prices. One million requests/day over 30 days is 30 million requests: a hypothetical monthly cost of 48,000 dollars is 1.60 dollars per 1,000 requests. The previous 0.80 figure was arithmetically wrong; this illustration is not current AWS pricing.
 
 Regress actual payloads, templates, streaming, usage and failure behavior when changing engines. Distinguish sharded model groups from independent replicas, and check whether StatefulSet ordered readiness blocks mutually waiting workers. StatefulSet alone does not configure TP/PP, rendezvous or NCCL.
 

@@ -3,7 +3,7 @@
 > **지원 버전**: Kubernetes 1.34 - 1.37 (Descheduler v0.37 예시)
 > **마지막 업데이트**: 2026년 10월 16일
 
-Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 파드를 종료하며 워크로드 컨트롤러가 생성한 대체 파드를 스케줄러가 별도로 배치할 수 있습니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
+Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 파드를 종료하는 과정으로, 워크로드 컨트롤러가 생성한 대체 파드를 스케줄러가 별도로 배치할 수 있습니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
 
 ## 실습 환경 설정
 
@@ -189,7 +189,7 @@ Kubernetes 스케줄러는 플러그인 아키텍처를 사용하여 확장 가�
 `NodeResourcesFit`은 필터 플러그인(노드에 포드가 요청한 CPU/메모리를 수용할 여력이 있는지 확인)이자 스코어 플러그인입니다. 스코어 플러그인으로서의 동작은 `KubeSchedulerConfiguration`의 `scoringStrategy.type`으로 제어합니다.
 
 - **`LeastAllocated`** (기본값): 이미 적게 할당된 노드일수록 높은 점수를 줍니다. 새 포드는 가장 비어 있는 노드로 유도되어 부하가 고르게 분산됩니다.
-- **`MostAllocated`**: 포드가 들어갈 여력이 있는 한, 이미 많이 할당된 노드일수록 높은 점수를 줍니다. 새 포드는 가장 바쁜 노드부터 채워지고 다른 노드는 비워둔 채로 남습니다.
+- **`MostAllocated`**: 포드가 들어갈 여력이 있는 한, 이미 많이 할당된 노드일수록 높은 점수를 줍니다. 새 포드는 가장 바쁜 노드에 우선 배치되고 다른 노드는 비워둔 채로 남습니다.
 - **`RequestedToCapacityRatio`**: 두 전략 사이를 원하는 곡선으로 설정할 수 있는 구성형 전략으로, GPU 같은 확장 리소스에 단순 최소/최대가 아닌 커스텀 형태가 필요할 때 유용합니다.
 
 ```yaml
@@ -218,7 +218,7 @@ Amazon EKS는 컨트롤 플레인이 완전관리형이므로 기본 kube-schedu
 | 기본값 (`LeastAllocated`) | 가장 비어 있던 `worker3`에 6개 전부 배치 | 75% / 37% / 37% (세 노드 모두 사용 중) |
 | `MostAllocated` | 가장 바쁜 두 노드에 분산: `worker`에 3개, `worker2`에 3개 | 93% / 56% / 0% (`worker3`는 완전히 그대로 유지) |
 
-`LeastAllocated`는 `worker3`의 사용률을 `worker2`와 같아질 때까지 끌어올려서 결국 세 노드 모두 일부라도 사용 중인 상태가 되어, 어느 노드도 안전하게 스케일 다운할 수 없게 됩니다. 반면 `MostAllocated`는 이미 바쁜 노드에 계속 부하를 집중시켜 `worker3`를 완전히 비워둔 채로 남겼습니다. 이는 클러스터 오토스케일러나 Karpenter의 통합(consolidation) 로직이 바로 종료 대상으로 삼을 노드입니다.
+`LeastAllocated`는 `worker3`의 사용률을 `worker2`의 사용률과 같아질 때까지 끌어올려서 결국 세 노드 모두 일부라도 사용 중인 상태가 되어, 어느 노드도 안전하게 스케일 다운할 수 없게 됩니다. 반면 `MostAllocated`는 이미 바쁜 노드에 계속 부하를 집중시켜 `worker3`를 완전히 비워둔 채로 남겼습니다. 이는 클러스터 오토스케일러나 Karpenter의 통합(consolidation) 로직이 바로 종료 대상으로 삼을 노드입니다.
 
 이런 이유로 Karpenter나 Cluster Autoscaler와 함께 실행되는 **배치/단명 Job 워크로드**에는 `MostAllocated`가 흔히 권장됩니다. Job을 적은 수의 노드에 빈패킹하면 완전히 비게 되는 노드 수가 늘어나 통합(consolidation) 대상이 되기 쉬워지고, 이는 곧바로 컴퓨팅 비용 절감으로 이어집니다. 반면 장시간 실행되는 지연 민감형 서비스에는 여전히 `LeastAllocated`가 더 나은 기본값입니다. 부하를 분산해 두면 모든 노드에 여유 공간이 남아 트래픽 급증이나 `kubectl drain` 시 한 노드에만 부하가 쏠려 연쇄적인 압박이 생기는 것을 막을 수 있습니다.
 
@@ -355,7 +355,7 @@ spec:
     image: nginx
 ```
 
-위 예시에서 `frontend` 포드는 다른 `app=frontend` 레이블이 있는 포드와 다른 호스트에 배치됩니다. 이는 고가용성을 위해 같은 애플리케이션의 인스턴스를 여러 노드에 분산시키는 데 유용합니다.
+위 예시에서 `frontend` 포드는 `app=frontend` 레이블이 있는 다른 포드와 다른 호스트에 배치됩니다. 이는 고가용성을 위해 같은 애플리케이션의 인스턴스를 여러 노드에 분산시키는 데 유용합니다.
 
 ### 어피니티 유형
 
@@ -883,7 +883,7 @@ topologySpreadConstraints:
 
 ## Pod Deletion Cost
 
-Pod Deletion Cost는 ReplicaSet 컨트롤러가 축소 시 사용하는 best-effort 선호값입니다. HPA는 원하는 복제본 수를 바꾸며 개별 삭제 파드를 직접 선택하지 않습니다. 이 어노테이션은 Job·StatefulSet을 보호하거나 축출을 막지 않으며 삭제 순서를 보장하지도 않습니다.
+Pod Deletion Cost는 ReplicaSet 컨트롤러가 축소 시 사용하는 best-effort 선호값입니다. HPA는 원하는 복제본 수를 바꾸며 삭제할 개별 파드를 직접 선택하지 않습니다. 이 어노테이션은 Job·StatefulSet을 보호하거나 축출을 막지 않으며 삭제 순서를 보장하지도 않습니다.
 
 ![HPA가 원하는 복제본 수를 줄이면 ReplicaSet 컨트롤러가 pod-deletion-cost를 삭제 선호값으로 고려하며, 높은 값이 축출·삭제 면제를 보장하지는 않음을 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-9.png)
 
@@ -903,7 +903,7 @@ metadata:
 
 ### 캐시 보호 패턴
 
-CPU 사용률 HPA를 사용할 캐시는 명시적인 CPU 요청이 필요합니다. 아래는 스케줄링 예시이며 완전한 Redis 운영 구성이 아닙니다:
+CPU 사용률 HPA를 사용할 캐시에는 명시적인 CPU 요청이 필요합니다. 아래는 스케줄링 예시이며 완전한 Redis 운영 구성이 아닙니다:
 
 ```yaml
 apiVersion: apps/v1
@@ -984,7 +984,7 @@ Descheduler는 실행 중인 클러스터에서 포드를 재분산시키는 도
 
 ### Helm을 사용한 설치
 
-검증한 예시 릴리스는 Descheduler v0.37.0이며 Kubernetes v1.37과 이전 두 마이너 버전이 테스트 범위입니다. 다른 릴리스에는 호환성 표를 확인하세요. 검토한 `schedule`과 아래 정책의 `profiles`를 `deschedulerPolicy.profiles` 아래 넣어 `descheduler-values.yaml`로 저장합니다. 이전 `strategies.*.enabled` 값은 이 API를 구성하지 않습니다.
+검증한 예시 릴리스는 Descheduler v0.37.0이며 Kubernetes v1.37과 이전 두 마이너 버전이 테스트 범위입니다. 다른 릴리스에 대해서는 호환성 표를 확인하세요. 검토한 `schedule`과 아래 정책의 `profiles`를 `deschedulerPolicy.profiles` 아래에 넣어 `descheduler-values.yaml`로 저장합니다. 이전 `strategies.*.enabled` 값은 이 API를 구성하지 않습니다.
 
 ```bash
 helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/

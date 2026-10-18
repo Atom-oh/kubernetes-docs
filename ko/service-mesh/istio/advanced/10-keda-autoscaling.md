@@ -28,7 +28,7 @@ Kubernetes HPA는 해당 API를 통해 resource·custom·external metric과 다�
 | `istio_request_bytes_sum` | 누적 HTTP request bytes | Rate로 처리량을 측정하고 reporter/workload 범위를 지정 |
 | `envoy_cluster_upstream_rq_pending_overflow` | Client-side cluster overflow counter | Pool limit·의존성을 진단한 뒤 어떤 workload를 확장할지 판단 |
 
-보정한 demand/backlog metric을 시작점으로 삼습니다. Latency·error·circuit-breaker 사건은 replica를 늘려도 해결되지 않는 downstream 장애에서 발생할 수 있습니다. Stateful membership·storage·앱 의미도 제약하므로 stateful/latency-sensitive 분류만으로 안전한 정책이 결정되지 않습니다.
+보정한 demand/backlog metric을 시작점으로 삼습니다. Latency·error·circuit-breaker 사건은 replica를 늘려도 해결되지 않는 downstream 장애에서 발생할 수 있습니다. Stateful membership·storage·앱 의미도 제약이 되므로 stateful/latency-sensitive 분류만으로 안전한 정책이 결정되지 않습니다.
 
 ## 아키텍처
 
@@ -1067,7 +1067,7 @@ Istio HTTP latency가 SQS job 처리 시간은 아닙니다.0-replica worker에 
 
 ### 6. 모니터링
 
-Scaler 상태에는 **operator** metric을 노출·수집해야 합니다. Metrics adapter metric만으로 모든 operator counter를 얻을 수 없습니다. KEDA의 `namespace` metric label은 scale 대상 namespace이므로 exporter Pod namespace로 덮어쓰지 않습니다.
+Scaler 상태를 모니터링하려면 **operator** metric을 노출·수집해야 합니다. Metrics adapter metric만으로 모든 operator counter를 얻을 수 없습니다. KEDA의 `namespace` metric label은 scale 대상 namespace이므로 exporter Pod namespace로 덮어쓰지 않습니다.
 
 기존 Prometheus 설정에 병합할 scrape 조각이며 EndpointSlice·Service·Pod에 대한 namespace 범위 discovery RBAC가 필요합니다.
 
@@ -1096,7 +1096,7 @@ scrape_configs:
     target_label: exporter_pod
 ```
 
-HA operator Pod들을 하나의 load-balanced Service로 번갈아 수집하지 않고 각 endpoint를 발견합니다. 실제 Service/port 이름, target label, TLS/mesh 접근과 scrape 결과를 확인하세요. Prometheus Operator라면 생성된 ConfigMap을 덮어쓰지 말고 동등한 ServiceMonitor를 선택되도록 구성합니다.
+HA operator Pod들을 하나의 load-balanced Service로 번갈아 수집하지 않고 각 endpoint를 발견합니다. 실제 Service/port 이름, target label, TLS/mesh 접근과 scrape 결과를 확인하세요. Prometheus Operator라면 생성된 ConfigMap을 덮어쓰지 말고 동등한 ServiceMonitor가 선택되도록 구성합니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1163,7 +1163,7 @@ promtool query instant http://127.0.0.1:9090 'sum(rate(istio_requests_total{repo
 
 로컬 port-forward가 KEDA Pod의 연결이나 credential을 증명하지는 않습니다. 실제 component 경로의 provider error, DNS, TLS/mesh policy, metric 존재/label과 aggregated API 가용성을 확인합니다.
 
-느린 scaling은 pollingInterval을 줄이기 전에 source age·lookback·HPA sync/behavior·scheduling·image pull·readiness를 확인합니다. 양수 minimum의 일반1→N에는 activation threshold가 속도 조절이 아닙니다. 불안정한 count는 workload의 실제 반응과 HPA 안정화/속도 제한을 조사하며 cooldownPeriod로 일반 downscale을 제어하지 않습니다.
+Scaling이 느리면 pollingInterval을 줄이기 전에 source age·lookback·HPA sync/behavior·scheduling·image pull·readiness를 확인합니다. 양수 minimum의 일반1→N에는 activation threshold가 속도 조절 수단이 아닙니다. Count가 불안정하면 workload의 실제 반응과 HPA 안정화/속도 제한을 조사하며 cooldownPeriod로 일반 downscale을 제어하지 않습니다.
 
 CloudWatch는 반환 timestamp, 모든 dimension, statistic/unit, 수집 창, offset과 IAM을 확인합니다. 두 번째 metric의 threshold를 높인다고 수동 대기 backup이 되지는 않습니다.
 

@@ -18,7 +18,7 @@ Test your understanding of Grafana 13.2.1 configuration and operation.
 **Answer: C) Environment variables**
 
 **Explanation:**
-Grafana data sources can be provisioned through YAML files in the provisioning directory, sidecar approach using ConfigMaps, or the Grafana API. Environment variables can supply grafana.ini settings and values such as URLs or credentials inside data source provisioning YAML. Variables alone do not create a data source object.
+Grafana data sources can be provisioned through YAML files in the provisioning directory, a sidecar approach using ConfigMaps, or the Grafana API. Environment variables can supply grafana.ini settings and values such as URLs or credentials inside data source provisioning YAML. Variables alone do not create a data source object.
 
 </details>
 
@@ -78,7 +78,7 @@ The USE Method is a methodology for analyzing system resources. It monitors Util
 
 ---
 
-5. What is the role of evaluation interval in Grafana Alerting?
+5. What is the role of the evaluation interval in Grafana Alerting?
    - A) Alert message delivery interval
    - B) Alert rule evaluation frequency
    - C) Data retention period
@@ -90,7 +90,7 @@ The USE Method is a methodology for analyzing system resources. It monitors Util
 **Answer: B) Alert rule evaluation frequency**
 
 **Explanation:**
-Evaluation interval determines how often alert rules are evaluated. For example, setting it to 1m checks conditions every minute. This affects alert sensitivity and resource usage. Too short increases resource usage; too long delays problem detection.
+The evaluation interval determines how often alert rules are evaluated. For example, setting it to 1m checks conditions every minute. This affects alert sensitivity and resource usage. Too short an interval increases resource usage; too long an interval delays problem detection.
 
 </details>
 
@@ -144,7 +144,7 @@ Using dashboard variables allows monitoring multiple clusters, namespaces, and s
 **Answer: B) Linking metrics and trace data**
 
 **Explanation:**
-Exemplars link selected metric observations to TraceIDs; they do not capture every request. By storing sample TraceIDs in histogram or counter metrics, clicking a specific point on a metric graph in Grafana allows you to immediately query the trace data from that moment.
+Exemplars link selected metric observations to TraceIDs; they do not capture every request. With sample TraceIDs stored in histogram or counter metrics, clicking a specific point on a metric graph in Grafana allows you to immediately query the trace data from that moment.
 
 </details>
 

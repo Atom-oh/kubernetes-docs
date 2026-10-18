@@ -404,7 +404,7 @@ spec:
 
 #### Why Is This Dangerous?
 
-1. **Duplicate Creation**: POST request actually succeeded but response was lost due to network issues, Proxy retries creating **duplicate records**.
+1. **Duplicate Creation**: The POST request actually succeeded but the response was lost due to network issues; the Proxy retries, creating **duplicate records**.
 2. **Incorrect State Changes**: Business-critical operations like **payments, inventory deductions** can execute multiple times.
 3. **Unverifiable**: Istio Proxy has no way to confirm if the request succeeded.
 

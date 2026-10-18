@@ -145,7 +145,7 @@ The setting disables automatic mesh sessions. Establish and verify replacement R
 **Answer: C) ClusterIPs, ExternalIPs, and LoadBalancer IPs**
 
 **Explanation:**
-The fields are serviceClusterIPs, serviceExternalIPs and serviceLoadBalancerIPs. They advertise existing addresses; allocation, endpoint health and return routing are separate prerequisites. A cloud load-balancer hostname is not a BGP prefix. Kubernetes spec.externalIPs is deprecated since 1.36, not removed.
+The fields are serviceClusterIPs, serviceExternalIPs and serviceLoadBalancerIPs. They advertise existing addresses; allocation, endpoint health and return routing are separate prerequisites. A cloud load-balancer hostname is not a BGP prefix. Kubernetes spec.externalIPs has been deprecated since 1.36, not removed.
 
 </details>
 
@@ -181,7 +181,7 @@ The TCP MD5 signature option authenticates BGP traffic using a shared secret ref
 
 </details>
 
-12. What is Graceful Restart in BGP context?
+12. What is Graceful Restart in the BGP context?
     - A) A method to restart BGP without losing configuration
     - B) A mechanism to preserve forwarding state during BGP daemon restart
     - C) A way to gradually add new BGP peers

@@ -163,7 +163,7 @@ Aggregate compatible classic buckets and retain `le`. Quantiles interpolate with
 predict_linear(node_filesystem_avail_bytes{job="node-exporter",mountpoint="/",fstype!~"tmpfs|overlay"}[6h], 86400)
 ```
 
-Prometheus 3 renamed `holt_winters` to `double_exponential_smoothing`. This is **Holt linear smoothing, not seasonal triple-exponential prediction**, and requires Gauge float samples. Optional expression: `double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`. The evaluating server needs `--enable-feature=promql-experimental-functions`. The local audit checked its parser syntax; experimental value evaluation is not claimed as passed.
+Prometheus 3 renamed `holt_winters` to `double_exponential_smoothing`. This is **Holt linear smoothing, not seasonal triple-exponential prediction**, and requires Gauge float samples. Optional expression: `double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`. The evaluating server needs `--enable-feature=promql-experimental-functions`. The local audit checked its parser syntax; experimental value evaluation is not claimed to have passed.
 
 ### Operational examples
 

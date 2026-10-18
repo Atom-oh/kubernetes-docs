@@ -44,7 +44,7 @@
 | 안정적인 DNS | ✗ | ✓ Headless Service와 함께 `node-0.svc...` |
 | 순차적 기동·종료 | ✗ | ✓ |
 
-[기초 개념](./01-fundamentals.md)에서 본 "안정적인 피어 신원"과 "Pod별 상태 유지" 요구가 정확히 StatefulSet의 제공 사항입니다.
+[기초 개념](./01-fundamentals.md)에서 본 "안정적인 피어 신원"과 "Pod별 상태 유지" 요구를 StatefulSet이 충족합니다.
 
 ### 불완전한 시험용 구조 (배포 가능한 manifest가 아님)
 이 조각에는 필수 StatefulSet selector/template label·image/argument·headless Service·StorageClass와 post-Merge EL/CL Engine API/JWT 설정이 없습니다. 그대로 적용하지 않습니다. **실제 자금이나 validator signing key 없이** 격리된 시험 환경에서 리소스를 완성·검증합니다. JSON-RPC와 Engine API는 사설/인증 경로로 유지하고 P2P 연결 때문에 RPC·signing endpoint가 노출되지 않도록 합니다.
@@ -122,7 +122,7 @@ spec:
 | 증가율이 프로토콜 활동에 의존 | 여유를 두고 알람 설정 |
 | 프루닝 옵션 | 클라이언트가 과거 데이터를 버리는 모드 제공. 아카이브가 필요 없으면 사용 |
 
-**EBS 볼륨은 온라인 확장이 가능**하므로(확장 후 파일시스템 확장 필요), PVC에 `allowVolumeExpansion: true` StorageClass를 쓰고 디스크 사용률 알람을 걸어두는 것이 표준 대응입니다.
+**EBS 볼륨은 온라인 확장이 가능**하므로(확장 후 파일시스템 확장 필요), PVC에 `allowVolumeExpansion: true`가 설정된 StorageClass를 쓰고 디스크 사용률 알람을 걸어두는 것이 표준 대응입니다.
 
 ### 공식 하드웨어 가이던스: EIP-7870
 
@@ -135,7 +135,7 @@ spec:
 | **디스크** | **2 TB NVMe SSD** | **4 TB NVMe SSD** (DRAM-less·QLC 드라이브는 **비권장**) |
 | **대역폭** | 25+ Mbit/s | 50 Mbit/s 하향 / 15+ Mbit/s 상향 (**검증자는 상향 25+**) |
 
-읽는 방법에서 중요한 세 가지입니다.
+이 표를 읽을 때 중요한 세 가지입니다.
 
 **① 병목은 디스크입니다.** ethereum.org가 명시합니다. "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." 앞에서 IOPS를 먼저 다룬 이유입니다.
 
@@ -319,7 +319,7 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 
 인증서 만료는 중요한 장애 위험이지만 이 문서에는 빈도 데이터가 없습니다. MSP·TLS credential 갱신을 감시·연습하고 operator/client 버전 호환성을 검증합니다.
 
-**③ 오퍼레이터 활용.** Fabric은 Kubernetes 오퍼레이터 생태계가 있습니다.
+**③ 오퍼레이터 활용.** Fabric에는 Kubernetes 오퍼레이터 생태계가 있습니다.
 
 | 오퍼레이터 | 특성 |
 |---|---|

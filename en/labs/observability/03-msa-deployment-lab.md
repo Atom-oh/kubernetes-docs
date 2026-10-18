@@ -35,7 +35,7 @@
 
 > **Difficulty**: Advanced
 > **Last Updated**: October 16, 2026
-Deploy five runnable Python roles as separate workloads. The [application README](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application) defines code, DB, image and chart inputs. Payments and notifications are synthetic; no actual charge or email/SMS is sent.
+Deploy five runnable Python roles as separate workloads. The [application README](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application) defines code, DB, image and chart inputs. Payments and notifications are synthetic; no actual charge is made and no email/SMS is sent.
 
 ![Separate workloads, transactional outbox, SNS fanout and consumers](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-10.png)
 
@@ -68,7 +68,7 @@ docker buildx build --platform linux/amd64 \
   --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" --push .
 docker buildx imagetools inspect "$IMAGE_REPOSITORY:$IMAGE_TAG"
 ```
-Use the immutable version selected in Part1. Update existing Secrets through the organization’s rotation procedure without printing values or placing them in chart files. The Dockerfile pins a base digest, UID10001 and a bounded build context.
+Use the immutable version selected in Part1. Update existing Secrets through the organization’s rotation procedure without printing values or placing them in chart files. The Dockerfile pins a base digest, UID 10001 and a bounded build context.
 
 The generated `m6i.large` nodes use AMD64. Use an AMD64 or cross-platform-capable Buildx builder and verify `linux/amd64` in the pushed manifest before deployment. The audit's local ARM64 smoke test does not validate the AMD64 build.
 
@@ -107,9 +107,9 @@ Compare CloudWatch/Loki JSON trace_id, actual Tempo spans and Prometheus exempla
 ![Manual inspection, canary-only analysis, promotion or abort](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-1.html)
-A single Rollout owns payment-service. With five replicas, the20% step is replica-based and does not guarantee20% of actual requests. Generate traffic to the new revision during the manual pause before analysis. Queries select `rollouts-pod-template-hash`, require at least five recent requests and99% success, and reject empty/NaN/Inf/multi-series results.
+A single Rollout owns payment-service. With five replicas, the 20% step is replica-based and does not guarantee 20% of actual requests. Generate traffic to the new revision during the manual pause before analysis. Queries select `rollouts-pod-template-hash`, require at least five recent requests and 99% success, and reject empty/NaN/Inf/multi-series results.
 
-Actual Rollouts1.10.0 condition evaluation and PromQL were tested, but cluster promotion was not executed. Abort is not a Git revert or desired-image restoration. For optional ArgoCD, follow its [installation guide](../../gitops/argocd/01-installation.md), point to this repository’s real chart path/reviewed revision, and avoid simultaneous direct-Helm ownership. Reference existing Secrets rather than committing them. App-of-apps sync waves alone do not guarantee child readiness.
+Actual Rollouts 1.10.0 condition evaluation and PromQL were tested, but cluster promotion was not executed. Abort is not a Git revert or desired-image restoration. For optional ArgoCD, follow its [installation guide](../../gitops/argocd/01-installation.md), point to this repository’s real chart path/reviewed revision, and avoid simultaneous direct-Helm ownership. Reference existing Secrets rather than committing them. App-of-apps sync waves alone do not guarantee child readiness.
 
 ### Exercise the manual pause
 
@@ -143,7 +143,7 @@ kubectl argo rollouts get rollout payment-service --context service -n msa --wat
 
 Keep the --watch display in a separate terminal and stop it with Ctrl+C when needed. Run traffic and promote/abort commands in another terminal.
 
-While Paused, continue the traffic from section4 and verify that at least five recent requests reached the new rollouts-pod-template-hash revision in Prometheus. Missing traffic/query failures are not success. After inspection, advance the manual pause below so the configured AnalysisRun and subsequent steps execute. Do not use --full: it skips analysis and pauses.
+While Paused, continue the traffic from section 4 and verify that at least five recent requests reached the new rollouts-pod-template-hash revision in Prometheus. Missing traffic/query failures do not indicate success. After inspection, advance the manual pause below so the configured AnalysisRun and subsequent steps execute. Do not use --full: it skips analysis and pauses.
 
 ```bash
 kubectl argo rollouts promote payment-service --context service -n msa
@@ -166,4 +166,4 @@ Continue to [Part4](./04-load-testing-scaling-lab.md). Follow [Part6](./06-distr
 
 ## Validation scope
 
-Checks covered local SQLite/PostgreSQL, three HTTP services, OTel correlation, SNS/SQS SDK stubs, container smoke, Helm/CRD and PromQL/Argo conditions. Actual AuroraTLS, EKS/IRSA, SNS fanout, KEDA/Karpenter and canary traffic splits were not exercised.
+Checks covered local SQLite/PostgreSQL, three HTTP services, OTel correlation, SNS/SQS SDK stubs, container smoke, Helm/CRD and PromQL/Argo conditions. Actual Aurora TLS, EKS/IRSA, SNS fanout, KEDA/Karpenter and canary traffic splits were not exercised.

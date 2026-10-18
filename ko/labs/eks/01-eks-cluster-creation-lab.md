@@ -346,7 +346,7 @@ eksctl utils describe-stacks --region "$AWS_REGION" --cluster "$CLUSTER_NAME"
 <details>
 <summary>kubectl이 클러스터에 연결되지 않습니다</summary>
 
-역할 자격 증명, access entry, DNS와 워크스테이션의 현재 외부 출발지 주소가 승인된 CIDR에 포함되는지 확인하세요. 전용 kubeconfig를 다시 만들어야 한다면 먼저 클러스터 식별자를 확인하고 이 실습 경로에만 기록합니다.
+역할 자격 증명, access entry, DNS를 확인하고 워크스테이션의 현재 외부 출발지 주소가 승인된 CIDR에 포함되는지 확인하세요. 전용 kubeconfig를 다시 만들어야 한다면 먼저 클러스터 식별자를 확인하고 이 실습 경로에만 기록합니다.
 
 ```bash
 check_account

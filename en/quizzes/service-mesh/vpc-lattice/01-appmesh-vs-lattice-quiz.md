@@ -33,7 +33,7 @@ Generic Envoy/Istio features are not automatically App Mesh features. Inventory 
 **Answer: B) The identity, backend, connection pool, and outlier detection attributes VirtualNode carried either scatter to several places or disappear**
 
 **Explanation:**
-A VirtualNode packed "who this workload is (identity), where it goes (backends), and where it receives (listeners, health checks, connection pools, outlier detection)" into a single resource. In Lattice only the target set and health checks become a Target Group; "where it goes" becomes a matter of auth policies and IAM permissions; "who it is" becomes an IAM Role; and connection pools and outlier detection have no corresponding resource at all. The mapping table maps resource names, not capabilities.
+A VirtualNode packed "who this workload is (identity), where it goes (backends), and where it receives traffic (listeners, health checks, connection pools, outlier detection)" into a single resource. In Lattice only the target set and health checks become a Target Group; "where it goes" becomes a matter of auth policies and IAM permissions; "who it is" becomes an IAM Role; and connection pools and outlier detection have no corresponding resource at all. The mapping table maps resource names, not capabilities.
 </details>
 
 3. What is an appropriate observability migration task?
@@ -97,5 +97,5 @@ The Kubernetes Gateway API was designed to cover both North-South (Ingress) and 
 **Answer: B) So a Pod is not marked Ready until its Lattice Target Group health is Healthy, preventing a rolling update from terminating old Pods before new ones are healthy**
 
 **Explanation:**
-Kubernetes may consider a Pod Ready while the Lattice Target Group does not yet see it as Healthy. If a rolling update terminates old Pods in that state, there is a window with no healthy Target. A Pod readiness gate ties Lattice's view of health to the Pod's Ready condition, preventing this, an important mechanism for zero-downtime during migration.
+Kubernetes may consider a Pod Ready while the Lattice Target Group does not yet see it as Healthy. If a rolling update terminates old Pods in that state, there is a window with no healthy Target. A Pod readiness gate ties Lattice's view of health to the Pod's Ready condition, preventing this—an important mechanism for achieving zero downtime during migration.
 </details>

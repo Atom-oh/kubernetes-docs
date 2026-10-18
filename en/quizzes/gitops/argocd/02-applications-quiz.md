@@ -14,7 +14,7 @@ This quiz tests your understanding of ArgoCD Applications and their configuratio
 **Answer: B) To specify the desired state of an application and its sync settings**
 
 **Explanation:**
-An ArgoCD Application is a Kubernetes custom resource that defines the source (Git repo, path, revision) and destination (cluster, namespace) of an application, along with sync policy. Health is controller-reported status; custom resource health checks are configured separately in argocd-cm.
+An ArgoCD Application is a Kubernetes custom resource that defines the source (Git repo, path, revision) and destination (cluster, namespace) of an application, along with a sync policy. Health is controller-reported status; custom resource health checks are configured separately in argocd-cm.
 
 </details>
 

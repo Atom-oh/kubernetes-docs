@@ -226,7 +226,7 @@ ds 같은 시간 context가 없을 수 있으므로 모든 task에 `{{ ds }}`가
 Workload namespace/RBAC를 적용하고 DAG 전달·파싱을 확인한 뒤 UI나 CLI에서
 kpo_smoke를 실행합니다. Task 상태, KPO_SMOKE_OK 로그, 선택한 image와 실제 Pod의
 serviceAccountName·resources를 확인합니다. 성공 후 Pod 삭제는 설정된 동작입니다.
-장기 로그 보존은 Part 5의 원격 로그 구성이 필요합니다.
+장기 로그 보존에는 Part 5의 원격 로그 구성이 필요합니다.
 
 ### 삭제·중단·재시작
 

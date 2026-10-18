@@ -1,6 +1,6 @@
 # Linux Basics Quiz
 
-This quiz tests your understanding of Linux fundamental concepts that form the foundation of Kubernetes and container technology.
+This quiz tests your understanding of fundamental Linux concepts that form the foundation of Kubernetes and container technology.
 
 ## Multiple Choice Questions
 
@@ -122,7 +122,7 @@ OverlayFS is a union mount file system that overlays multiple directories to pre
 `net.ipv4.ip_forward` is the setting that enables IP packet forwarding in the Linux kernel. Set it to 1 when the node must forward IPv4 packets between interfaces; same-network-namespace localhost traffic does not require forwarding. This parameter must be enabled when setting up Kubernetes nodes, and can be set with the command `sysctl -w net.ipv4.ip_forward=1`.
 </details>
 
-8. In a systemd unit file, which directive is used to define that a service should start after a specific service?
+8. In a systemd unit file, which directive is used to specify that a service should start after a specific service?
    - A) Requires
    - B) Wants
    - C) After
@@ -135,7 +135,7 @@ OverlayFS is a union mount file system that overlays multiple directories to pre
 **Answer: C) After**
 
 **Explanation:**
-In systemd unit files, `After` defines that the current unit should start after the specified unit. After= only sets ordering when both units are started; pair Wants=network-online.target with After= and a distribution wait-online implementation when startup requires network readiness. It does not continuously monitor network availability. `Requires` defines a strong dependency, `Wants` defines a weak dependency, and `Before` indicates that the current unit should start before another unit.
+In systemd unit files, `After` specifies that the current unit should start after the specified unit. After= only sets ordering when both units are started; pair Wants=network-online.target with After= and a distribution wait-online implementation when startup requires network readiness. It does not continuously monitor network availability. `Requires` defines a strong dependency, `Wants` defines a weak dependency, and `Before` indicates that the current unit should start before another unit.
 </details>
 
 9. Which kernel parameter sends bridged IPv4 traffic through iptables when the selected CNI requires bridge netfilter?
@@ -300,7 +300,7 @@ sudo ip netns delete mynetns
 ```
 
 **Explanation:**
-The first command creates a new network namespace named "mynetns". The second command executes the `ip link list` command within that namespace to list network interfaces. A newly created network namespace contains only the loopback interface (lo) by default, and this interface is initially in down state.
+The first command creates a new network namespace named "mynetns". The second command executes the `ip link list` command within that namespace to list network interfaces. A newly created network namespace contains only the loopback interface (lo) by default, and this interface is initially in the down state.
 </details>
 
 21. Write the command to check the cgroup information of a specific process (PID: 1234).
@@ -315,10 +315,10 @@ cat /proc/1234/cgroup
 ```
 
 **Explanation:**
-In Linux, you can check the cgroup information of a specific process through the `/proc/<PID>/cgroup` file. This file shows all cgroup hierarchies and controller information the process belongs to. Alternatively, you can use the `systemd-cgls` command to view the cgroup hierarchy in tree format.
+In Linux, you can check the cgroup information of a specific process through the `/proc/<PID>/cgroup` file. This file shows all cgroup hierarchies the process belongs to and their controller information. Alternatively, you can use the `systemd-cgls` command to view the cgroup hierarchy in tree format.
 </details>
 
-22. Write a chmod command to give the file "example.sh" read, write, execute permissions to the owner, read and execute permissions to the group, and read-only permission to other users.
+22. Write a chmod command to grant read, write, execute permissions on the file "example.sh" to the owner, read and execute permissions to the group, and read-only permission to other users.
 
 <details>
 
@@ -410,7 +410,7 @@ sudo modprobe br_netfilter
 Creating a `.conf` file in the `/etc/modules-load.d/` directory causes the systemd-modules-load service to automatically load those modules at boot. The `overlay` module supports the OverlayFS file system used for container image layers, and the `br_netfilter` module allows bridge traffic to pass through iptables, when required by the selected CNI configuration.
 </details>
 
-26. Write a journalctl command to view real-time logs of the kubelet service while filtering only error level and above messages.
+26. Write a journalctl command to view real-time logs of the kubelet service while filtering for only messages at error level and above.
 
 <details>
 
@@ -470,7 +470,7 @@ root            hard    nofile          65536
 ```
 
 **Explanation:**
-`/etc/security/limits.conf` is a configuration file used by PAM (Pluggable Authentication Modules) to define per-user resource limits. `*` matches ordinary users (root needs an explicit entry), `soft` is the default limit, `hard` is the maximum limit. `nofile` specifies the number of file descriptors that can be opened. Choose limits from workload needs. PAM settings do not update running processes or ordinary systemd system services; configure LimitNOFILE in the service drop-in instead.
+`/etc/security/limits.conf` is a configuration file used by PAM (Pluggable Authentication Modules) to define per-user resource limits. `*` matches ordinary users (root needs an explicit entry), `soft` is the default limit, `hard` is the maximum limit. `nofile` specifies the number of file descriptors that can be opened. Choose limits based on workload needs. PAM settings do not update running processes or ordinary systemd system services; configure LimitNOFILE in the service drop-in instead.
 </details>
 
 ## Advanced Questions
@@ -510,7 +510,7 @@ root            hard    nofile          65536
   - Security enhancement: Reduce security risks by removing unnecessary privileges
   - Examples: `CAP_NET_ADMIN` (network configuration changes), `CAP_SYS_ADMIN` (system administration tasks), etc.
 
-These three technologies combine to allow containers to run in an isolated environment from the host system and other containers, with limited resource usage and enhanced security.
+These three technologies combine to allow containers to run in an environment isolated from the host system and other containers, with limited resource usage and enhanced security.
 </details>
 
 30. Explain how OverlayFS manages container image layers and describe the relationship between read-only and writable layers.
@@ -536,7 +536,7 @@ OverlayFS is a union mount file system that overlays multiple directories to pre
 
 3. **Benefits**:
   - **Space efficiency**: Multiple containers share the same base image layers, saving disk space.
-  - **Fast start time**: When starting a new container, only the writable layer needs to be created, not copying the entire file system.
+  - **Fast start time**: When starting a new container, only the writable layer needs to be created; the entire file system does not need to be copied.
   - **Image version management**: Images can be updated by adding new layers to the base image.
 
 In this way, OverlayFS efficiently manages container image layers, allowing containers to have independent file systems while sharing base images.
@@ -585,17 +585,17 @@ It is important to grant only the minimum necessary capabilities to containers f
   - Restricting these capabilities significantly reduces container escape risk.
 
 3. **Defense in Depth Strategy**:
-  - Least privilege principle is part of defense in depth security strategy.
-  - Used with other security mechanisms (seccomp, AppArmor, SELinux, etc.) provides stronger security.
+  - The least privilege principle is part of a defense in depth security strategy.
+  - Using it with other security mechanisms (seccomp, AppArmor, SELinux, etc.) provides stronger security.
 
 4. **Regulatory Compliance**:
   - Many security standards and regulations require the least privilege principle.
-  - Granting only minimum necessary capabilities to containers helps meet these requirements.
+  - Granting only the minimum necessary capabilities to containers helps meet these requirements.
 
 5. **Problem Isolation**:
   - Granting limited capabilities to containers prevents issues in one container from spreading to other containers or the host system.
 
-In production environments, it is good security practice to accurately identify the capabilities a container needs and remove all other capabilities. Docker's `--cap-drop`, `--cap-add` options or Kubernetes' `securityContext.capabilities` field can be used for this.
+In production environments, it is good security practice to accurately identify the capabilities a container needs and remove all other capabilities. Docker's `--cap-drop` and `--cap-add` options or Kubernetes' `securityContext.capabilities` field can be used for this.
 </details>
 
 32. Explain the structure of a systemd service unit file and the role of main sections ([Unit], [Service], [Install]), and write a basic unit file for a training service, explaining why kubelet’s packaged unit/drop-ins should be preserved.

@@ -142,7 +142,7 @@ ERROR/UNKNOWN은 차단하고 WARNING은 advisory입니다. force를 기본 복�
 
 **정답: B**
 
-가중치는 0–999 상대값입니다. 일반 변경과 0 전환을 구별하며 TLS listener의 TG stickiness 미지원도 확인합니다.
+가중치는 0–999의 상대값입니다. 일반 변경과 0 전환을 구별하며 TLS listener의 TG stickiness 미지원도 확인합니다.
 
 </details>
 

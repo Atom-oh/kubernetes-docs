@@ -113,7 +113,7 @@ Lattice's strength is communication crossing cluster, VPC, and account boundarie
 **Answer: B) Both paths have local and shared dependencies; assess affected services, AZs, policies and recovery controls**
 
 **Explanation:**
-A proxy failure can be local, but shared mesh config can fail broadly. A Lattice failure is not automatically all East-West traffic, and customer policy/target/controller remediation still exists.
+A proxy failure can be local, but shared mesh config can fail broadly. A Lattice failure does not automatically affect all East-West traffic, and customer policy/target/controller remediation still exists.
 </details>
 
 8. Which of the following is marked as `Needs verification` because it could not be confirmed in official documentation?

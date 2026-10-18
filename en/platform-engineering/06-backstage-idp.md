@@ -8,7 +8,7 @@ Backstage is an open-source developer portal framework originating at Spotify, l
 
 Software Catalog models ownership, APIs and resource relationships. Software Templates execute configured actions over prepared skeletons. TechDocs handles documentation building, publication and reading. Search needs configured collators and indexing backends. Colocating code and documentation does not automatically keep the content current.
 
-When comparing Port, Cortex, Humanitec, OpsLevel or other products, evaluate current hosting, data boundaries, extension APIs and staffing/subscription/infrastructure costs. Avoid unverified plugin/adoption counts, universal rankings or claims that Backstage costs only infrastructure. License terms and operating costs are different concerns.
+When comparing Port, Cortex, Humanitec, OpsLevel or other products, evaluate current hosting, data boundaries, extension APIs and staffing/subscription/infrastructure costs. Avoid unverified plugin/adoption counts, universal rankings or claims that Backstage incurs only infrastructure costs. License terms and operating costs are different concerns.
 
 ## Architecture and Plugins
 
@@ -34,7 +34,7 @@ yarn build:backend
 
 Review the generated packages/backend/Dockerfile. The current template extracts skeleton.tar.gz, installs production dependencies, extracts bundle.tar.gz and runs packages/backend. Merely copying dist and running node packages/backend/dist does not match that bundle format.
 
-Match host/container Node major and native-module ABI, and verify OS/architecture images. Do not create a second UID-1000 user that conflicts with the image's node user. Prepare ECR/push permissions and image digests separately; do not bake credentials into images, build arguments or environment variables. With external TechDocs builds, reader images need not run the document build toolchain.
+Match host/container Node major versions and native-module ABIs, and verify OS/architecture images. Do not create a second UID-1000 user that conflicts with the image's node user. Prepare ECR/push permissions and image digests separately; do not bake credentials into images, build arguments or environment variables. With external TechDocs builds, reader images need not run the document build toolchain.
 
 ## EKS Configuration with Credential Files
 

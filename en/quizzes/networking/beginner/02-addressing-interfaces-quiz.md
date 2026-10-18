@@ -154,7 +154,7 @@ Use the isolated two-VM lab contract. Choose an answer before opening its explan
 10. A manually added address displays `valid_lft forever`. Will it survive reboot, and what should cleanup remove?
 
    - A) Yes; delete the guest's entire address table.
-   - B) No persistence is implied; delete the exact successfully added IP/prefix from its identified lab NIC, and restore down only if that NIC was originally down.
+   - B) No persistence is implied; delete the exact successfully added IP/prefix from its identified lab NIC, and restore the down state only if that NIC was originally down.
    - C) Yes; only reinstalling Linux can remove it.
    - D) Delete the management default route first.
 

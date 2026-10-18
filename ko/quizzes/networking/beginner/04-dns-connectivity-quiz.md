@@ -47,7 +47,7 @@
 
 **정답: A) NXDOMAIN은 부정 DNS 응답이며 시간 초과는 제한 시간에 유효 응답이 없었다는 뜻**
 
-**설명:** NXDOMAIN에는 철자·resolver view·부정 캐시를, 시간 초과에는 경로·resolver 접근·정책을 조사합니다. Dig는 NXDOMAIN을 받아도 0으로 끝날 수 있으므로 셸 종료 상태만 보지 말고 DNS 상태와 응답 내용을 읽으세요.
+**설명:** NXDOMAIN이면 철자·resolver view·부정 캐시를, 시간 초과이면 경로·resolver 접근·정책을 조사합니다. Dig는 NXDOMAIN을 받아도 0으로 끝날 수 있으므로 셸 종료 상태만 보지 말고 DNS 상태와 응답 내용을 읽으세요.
 
 </details>
 

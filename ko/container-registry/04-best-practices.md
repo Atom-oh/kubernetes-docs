@@ -85,7 +85,7 @@ image: nginx@sha256:<검증한 64자리 digest>
 
 **Kubernetes Admission Controller로 :latest 검사:**
 
-다음은 공식 Kyverno 예제의 Audit 정책입니다. 일반·init·ephemeral 컨테이너를 검사합니다. 설치한 Kyverno에서 태그 생략·Registry 포트·digest 사례를 시험한 뒤 Enforce로 전환합니다. 이 검사는 불변성이나 신뢰한 서명자를 증명하지 않습니다.
+다음은 공식 Kyverno 예제의 Audit 정책입니다. 일반·init·ephemeral 컨테이너를 검사합니다. 설치한 Kyverno에서 태그 생략·Registry 포트·digest 사례를 시험한 뒤 Enforce로 전환합니다. 이 검사는 불변성이나 신뢰하는 서명자를 증명하지 않습니다.
 
 ```yaml
 apiVersion: kyverno.io/v1
@@ -256,7 +256,7 @@ docker build \
 
 ### containerd 레지스트리 미러 설정
 
-다음은 동일한 Docker Hub repository 경로를 제공하는 신뢰한 mirror 예제입니다. containerd 2.x는 images 플러그인의 config_path, 1.x는 CRI 플러그인의 config_path를 사용합니다. `resolve`는 태그→digest 결정을 mirror에 신뢰하므로 신뢰한 mirror에만 부여합니다. ECR/Harbor의 프로젝트 prefix와 인증을 이 설정이 자동 변환하지는 않습니다.
+다음은 동일한 Docker Hub repository 경로를 제공하는 신뢰하는 mirror 예제입니다. containerd 2.x는 images 플러그인의 config_path, 1.x는 CRI 플러그인의 config_path를 사용합니다. `resolve`는 태그→digest 결정을 mirror에 맡기므로 신뢰하는 mirror에만 부여합니다. ECR/Harbor의 프로젝트 prefix와 인증을 이 설정이 자동 변환하지는 않습니다.
 
 ```toml
 # containerd 2.x: /etc/containerd/config.toml
@@ -436,7 +436,7 @@ Harbor 보존 정책은 보존 조건의 OR 합집합이며 ECR과 다른 문법
 
 ### 이미지 크기 최적화
 
-다음 Node.js 예제는 빌드에 필요한 devDependencies를 builder에 설치하고 런타임에는 production 의존성만 복사합니다. `npm ci --omit=dev`를 빌드 전에 실행하면 TypeScript·번들러 등이 없어 빌드가 실패할 수 있습니다. 소스의 build 스크립트, lockfile, dist 경로를 확인하고 `.dockerignore`에 node_modules·비밀 파일을 제외합니다.
+다음 Node.js 예제는 빌드에 필요한 devDependencies를 builder에 설치하고 런타임에는 production 의존성만 복사합니다. `npm ci --omit=dev`를 빌드 전에 실행하면 TypeScript·번들러 등이 없어 빌드가 실패할 수 있습니다. 소스의 build 스크립트, lockfile, dist 경로를 확인하고 `.dockerignore`에 node_modules·비밀 파일을 제외하도록 설정합니다.
 
 ```dockerfile
 FROM node:24.22.0-alpine3.23 AS builder
@@ -551,7 +551,7 @@ ECR의 12시간 토큰을 고정 문자열로 보관해 주기적으로 복사�
 
 ### GitHub Actions + ECR
 
-다음은 Linux/amd64 단일 플랫폼을 로컬 Docker에 빌드하고 **그 이미지**를 Trivy로 검사한 뒤 ECR에 push·서명하는 예제입니다. 실제 ECR repository, OIDC IAM 역할의 `aud`/`sub` 제한, push 권한, 지원되는 Runner를 먼저 준비합니다. 액션은 검토한 릴리스 commit으로 고정했습니다. 같은 commit 태그를 재빌드해 불변 태그와 충돌하면 기존 검증 digest를 재사용하거나 새 build ID를 부여합니다.
+다음은 Linux/amd64 단일 플랫폼 이미지를 로컬 Docker에 빌드하고 **그 이미지**를 Trivy로 검사한 뒤 ECR에 push·서명하는 예제입니다. 실제 ECR repository, OIDC IAM 역할의 `aud`/`sub` 제한, push 권한, 지원되는 Runner를 먼저 준비합니다. 액션은 검토한 릴리스 commit으로 고정했습니다. 같은 commit 태그를 재빌드해 불변 태그와 충돌하면 기존 검증 digest를 재사용하거나 새 build ID를 부여합니다.
 
 ```yaml
 name: Build scan and publish to ECR
@@ -617,7 +617,7 @@ jobs:
 
 ### GitLab CI + Harbor
 
-이 Docker executor 예제는 TLS를 사용하는 DinD를 전제로 합니다. 격리된 전용 Runner에서 필요한 privileged 설정과 `/certs/client` 공유 볼륨을 준비합니다. `HARBOR_USERNAME`·`HARBOR_PASSWORD`는 보호된 마스킹 변수의 프로젝트 Robot이며, 모든 Runner가 Harbor CA를 신뢰해야 합니다. 빌드 tar가 scan과 publish에 같은 artifact로 전달되고 publish는 scan 성공 후에만 실행됩니다.
+이 Docker executor 예제는 TLS를 사용하는 DinD를 전제로 합니다. 격리된 전용 Runner에서 필요한 privileged 설정과 `/certs/client` 공유 볼륨을 준비합니다. `HARBOR_USERNAME`·`HARBOR_PASSWORD`는 보호된 마스킹 변수로 설정한 프로젝트 Robot의 자격 증명이며, 모든 Runner가 Harbor CA를 신뢰해야 합니다. 빌드 tar가 scan과 publish에 같은 artifact로 전달되고 publish는 scan 성공 후에만 실행됩니다.
 
 ```yaml
 stages: [build, scan, publish]
@@ -789,7 +789,7 @@ skopeo copy --all oci-archive:pause-3.10.tar \
 | crane | 원격 이미지 조회·복사 | 설치 버전의 copy/export 및 서명 지원 |
 | ctr | containerd 이미지 저장소·import/export | 런타임 socket 권한, namespace, 플랫폼 선택 |
 
-`--all`은 플랫폼 manifest 선택 옵션이며 서명·SBOM 등 referrer 전체 복사의 보장이 아닙니다. digest 보존이 필요하면 `--preserve-digests`를 사용하고 실패를 무시하지 않습니다. 에어갭 반입은 [Harbor](03-harbor.md)의 매핑·체크섬·DB·CA·복구 검증 절차와 함께 수행합니다.
+`--all`은 플랫폼 manifest 선택 옵션이며 서명·SBOM 등 referrer 전체 복사를 보장하지 않습니다. digest 보존이 필요하면 `--preserve-digests`를 사용하고 실패를 무시하지 않습니다. 에어갭 반입은 [Harbor](03-harbor.md)의 매핑·체크섬·DB·CA·복구 검증 절차와 함께 수행합니다.
 
 ## 요약
 

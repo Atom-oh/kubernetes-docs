@@ -45,7 +45,7 @@ Tag immutability guarantees that once an image is pushed with a specific tag, th
 **Answer: B) It reduces external network traffic, improves pull latency, and mitigates rate limiting**
 
 **Explanation:**
-Registry mirrors and pull-through caches store copies of external images locally. Benefits include: reduced bandwidth costs and external dependencies, faster pull times from local network, avoidance of rate limits (like Docker Hub's limits), and improved reliability when external registries are unavailable. Cache misses/refreshes still depend on upstream access. Disconnected networks need a complete preloaded mirror and a tested update process.
+Registry mirrors and pull-through caches store copies of external images locally. Benefits include reduced bandwidth costs and external dependencies, faster pull times from the local network, avoidance of rate limits (like Docker Hub's limits), and improved reliability when external registries are unavailable. Cache misses/refreshes still depend on upstream access. Disconnected networks need a complete preloaded mirror and a tested update process.
 
 </details>
 
@@ -157,6 +157,6 @@ A pull-through cache only stores images after they're first requested, caching t
 **Answer: B) When different security, compliance, geographic, or operational requirements exist for different image categories**
 
 **Explanation:**
-Multiple registries are justified when: separating public and private images, meeting compliance requirements (e.g., regulated data in specific regions), optimizing latency for global deployments, isolating production from development images, or using specialized registries for different purposes (e.g., ECR for AWS workloads, Harbor for on-premises). The trade-off is increased operational complexity.
+Multiple registries are justified when separating public and private images, meeting compliance requirements (e.g., regulated data in specific regions), optimizing latency for global deployments, isolating production from development images, or using specialized registries for different purposes (e.g., ECR for AWS workloads, Harbor for on-premises). The trade-off is increased operational complexity.
 
 </details>

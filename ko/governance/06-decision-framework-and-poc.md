@@ -67,7 +67,7 @@ cross-AZ 비용 귀속은 Flow Logs·ENI/IP·Kubernetes workload identity와 CUR
 
 ## 3. POC 설계 패턴
 
-서면 검토만으로 확정할 수 없는 항목은 실측이 필요합니다. 아래 POC는 우선순위 순서로 배치했습니다.
+서면 검토만으로 확정할 수 없는 항목은 실측이 필요합니다. 아래 POC는 우선순위에 따라 배치했습니다.
 
 ### POC-0. 판정표 dry-run (다른 POC보다 먼저 수행)
 

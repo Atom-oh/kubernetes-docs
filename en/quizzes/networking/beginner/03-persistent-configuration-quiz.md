@@ -126,7 +126,7 @@ Use the [lesson](../../../networking/beginner/03-persistent-configuration.md) to
 
 </details>
 
-9. Where is the lesson's example `10.77.0.1` default gateway and `10.77.0.53` resolver appropriate?
+9. Where are the lesson's example `10.77.0.1` default gateway and `10.77.0.53` resolver appropriate?
    - A) On the existing NAT/DHCP management NIC as an automatic improvement
    - B) On the isolated course NIC even though those services do not exist
    - C) On a separate prepared practice VM whose administrator confirms those services and whose practice uplink has no competing management default route

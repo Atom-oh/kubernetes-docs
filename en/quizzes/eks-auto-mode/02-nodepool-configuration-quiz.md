@@ -64,7 +64,7 @@ Auto Mode uses AWS-managed Bottlerocket variants. It does not expose an `amiFami
 
 </details>
 
-### 4. Which NodePool label selects GPU manufacturer in Auto Mode?
+### 4. Which NodePool label selects the GPU manufacturer in Auto Mode?
 
 - A) karpenter.k8s.aws/gpu-vendor
 - B) eks.amazonaws.com/instance-gpu-manufacturer

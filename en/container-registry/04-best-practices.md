@@ -463,7 +463,7 @@ Docker Hub uses Docker Scout; ECR provides AWS-native Basic scanning or Inspecto
 
 ### Admission Controllers
 
-Combine [image signature verification](../security/07-image-security.md) with [Kyverno registry policies](../security/01-kyverno-policy-management.md). A registry allowlist does not verify signatures or scan vulnerabilities. Vulnerability attestations require trusted signers, the actual predicate schema/fields and scan freshness. Do not assume a `criticalCount` field exists or apply a truncated public key.
+Combine [image signature verification](../security/07-image-security.md) with [Kyverno registry policies](../security/01-kyverno-policy-management.md). A registry allowlist does not verify signatures or scan for vulnerabilities. Vulnerability attestations require trusted signers, the actual predicate schema/fields and scan freshness. Do not assume a `criticalCount` field exists or apply a truncated public key.
 
 Test normal/init/ephemeral containers and CREATE/UPDATE coverage in Audit before Enforce. A Gatekeeper constraint requires its matching ConstraintTemplate to be installed first.
 

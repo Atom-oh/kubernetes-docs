@@ -17,7 +17,7 @@ This quiz tests your understanding of AMB's components, the managed/self-operate
 **Answer: B) Distinguish Fabric/dedicated nodes, serverless Access and Query APIs, with offering-specific billing and capabilities**
 
 **Explanation:**
-AMB is not universally per-node billed. Dedicated resources, serverless RPC requests and indexed Query APIs have different pricing and coverage.
+AMB is not universally billed per node. Dedicated resources, serverless RPC requests and indexed Query APIs have different pricing and coverage.
 </details>
 
 2. What is the most important thing AMB managed nodes do *not* solve?

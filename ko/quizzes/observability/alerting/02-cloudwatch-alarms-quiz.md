@@ -48,7 +48,7 @@ CloudWatch Alarm은 세 가지 상태를 가집니다:
 
 ---
 
-3. CloudWatch Metric Math에서 ALB의 오류율을 계산하는 요청이 양수일 때의 기본 비율 표현식은?
+3. CloudWatch Metric Math에서 요청 수가 양수일 때 ALB의 오류율을 계산하는 기본 비율 표현식은?
    - A) `errors + requests`
    - B) `(errors / requests) * 100`
    - C) `errors - requests`

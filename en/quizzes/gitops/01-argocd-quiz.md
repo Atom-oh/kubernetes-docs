@@ -211,7 +211,7 @@ spec:
 ## Question 8: Troubleshooting
 
 <details>
-<summary>What should you check when an ArgoCD application is in "OutOfSync" state?</summary>
+<summary>What should you check when an ArgoCD application is in an "OutOfSync" state?</summary>
 
 **Answer:**
 1. **Check Git Repository Status**:

@@ -170,7 +170,7 @@ ps aux --sort=-%mem | head -10
 
 **Step 3.3: 임시 서비스에 실제 제한 적용**
 
-systemd와 cgroup v2 memory controller를 사용할 수 있는 VM에서 자동 이름의 임시 서비스에128MiB 메모리 상한과 swap 허용량0을 설정합니다. 의도적으로 OOM을 일으키지 않고16MiB를 접근한 뒤 `--wait --collect`로 완료를 기다리고 임시 unit을 정리합니다. 상위 cgroup 제한이 더 엄격할 수 있습니다.
+systemd와 cgroup v2 memory controller를 사용할 수 있는 VM에서 이름이 자동으로 지정되는 임시 서비스에 128MiB 메모리 상한과 swap 허용량 0을 설정합니다. 의도적으로 OOM을 일으키지 않고 16MiB에 접근한 뒤 `--wait --collect`로 완료를 기다리고 임시 unit을 정리합니다. 상위 cgroup 제한이 더 엄격할 수 있습니다.
 
 ```bash
 sudo systemd-run --wait --collect --pipe \
@@ -188,7 +188,7 @@ print("Touched allocation bytes:", len(data))
 '
 ```
 
-128M의 `memory.max` 설정값은134217728바이트이고 할당 크기는16777216바이트입니다. 설정·산술상의 예상값이며 이번 감사의 실측 결과가 아닙니다. 다음 매니페스트는 출력만 하며 Kubernetes Pod를 생성하지 않습니다.
+128M의 `memory.max` 설정값은 134217728바이트이고 할당 크기는 16777216바이트입니다. 설정·산술상의 예상값이며 이번 감사의 실측 결과가 아닙니다. 다음 매니페스트는 출력만 하며 Kubernetes Pod를 생성하지 않습니다.
 
 **Step 3.4: Kubernetes에서의 리소스 제한 연계**
 ```bash
@@ -251,7 +251,7 @@ ls -la "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 chmod 0644 "${LINUX_LAB_DIR:?Run Step 4.1 first}/test.txt"
 ```
 
-실행 비트를 추가해도 임의의 텍스트가 유효한 프로그램이 되지는 않습니다. 0644는 경로 접근이 가능하면 그룹·기타 사용자에게 읽기를 허용하며 이 실습의 mktemp 디렉터리는 접근을 제한합니다. Kubernetes Secret 볼륨 기본값은0644이지만 실제 권한은 소비하는 사용자·그룹과 필요한 접근에 맞춰야 합니다.
+실행 비트를 추가해도 임의의 텍스트가 유효한 프로그램이 되지는 않습니다. 0644는 경로 접근이 가능하면 그룹·기타 사용자에게 읽기를 허용하며 이 실습의 mktemp 디렉터리는 접근을 제한합니다. Kubernetes Secret 볼륨 기본값은 0644이지만 실제 권한은 사용하는 사용자·그룹과 필요한 접근에 맞춰야 합니다.
 
 **Step 4.3: 소유자 변경**
 ```bash

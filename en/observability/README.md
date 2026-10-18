@@ -123,7 +123,7 @@ An exemplar requires both a label set and an observation value (`0.42`); its tim
 
 OpenTelemetry (OTel) provides vendor-neutral APIs, SDKs, instrumentation and Collector tooling. Supported signals and automatic instrumentation vary by language, framework and component version.
 
-![Applications in any of four languages instrument via auto- or manual instrumentation, send data through the OpenTelemetry collector's receive, process, and export stages, and land in one of five observability backends.](../.gitbook/assets/en-observability-readme-3.png)
+![Applications in any of four languages are instrumented via auto- or manual instrumentation and send data through the OpenTelemetry collector's receive, process, and export stages to one of five observability backends.](../.gitbook/assets/en-observability-readme-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-3.html)
 

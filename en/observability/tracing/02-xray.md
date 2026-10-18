@@ -410,7 +410,7 @@ Metrics, application logs and traces require their own connected pipelines and b
 
 These examples use the authenticated collector Service above. Producers need access to that Service and their mounted client TLS files; they do not need the collector's AWS credentials. The examples create synthetic spans and perform no payment, database or AWS business operation.
 
-The exact validation baselines are Python SDK/exporter1.44.0 with Flask3.1.3, Go SDK/exporter1.44.0 with Go1.26.8, and Java1.66.0 API sources. These pins are not a universal AWS compatibility matrix or a claim that every language has the same latest release. Python and Go were exercised locally; Java API/configuration was checked against the tagged source, but no JDK/Maven compilation was available in this audit.
+The exact validation baselines are Python SDK/exporter 1.44.0 with Flask 3.1.3, Go SDK/exporter 1.44.0 with Go 1.26.8, and Java 1.66.0 API sources. These pins are not a universal AWS compatibility matrix or a claim that every language has the same latest release. Python and Go were exercised locally; Java API/configuration was checked against the tagged source, but no JDK/Maven compilation was available in this audit.
 
 Use these settings for the finite demo process. The endpoint includes `/v1/traces` for OTLP/HTTP. Keep the client private key in a mounted protected file. Root spans are sampled for this finite demonstration and remote parent decisions are honored; select a measured production sampler instead of copying an all-roots demo setting into unrestricted production traffic. Generic SDK samplers do not automatically fetch X-Ray centralized rules.
 

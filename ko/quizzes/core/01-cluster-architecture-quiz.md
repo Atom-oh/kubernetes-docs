@@ -33,7 +33,7 @@ kube-proxy는 노드 구성 요소로, 컨트롤 플레인의 구성 요소가 �
 **정답: B) etcd**
 
 **설명:**
-etcd는 Kubernetes API 상태를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소로, Kubernetes의 "소스 오브 트루스"로 작동합니다. 모든 클러스터 상태, 구성, 메타데이터가 etcd에 저장되며, 다른 모든 컨트롤 플레인 구성 요소는 etcd에서 정보를 읽고 쓰기 위해 kube-apiserver를 통해 상호 작용합니다.
+etcd는 Kubernetes API 상태를 저장하는 일관성이 있고 고가용성을 갖춘 키-값 저장소로, Kubernetes의 "소스 오브 트루스"로 작동합니다. 모든 클러스터 상태, 구성, 메타데이터가 etcd에 저장되며, 다른 모든 컨트롤 플레인 구성 요소는 etcd에서 정보를 읽고 쓰기 위해 kube-apiserver를 통해 상호 작용합니다.
 </details>
 
 3. 다음 중 Kubernetes 노드 구성 요소가 아닌 것은 무엇인가요?
@@ -97,7 +97,7 @@ cloud-controller-manager는 클라우드별 컨트롤 로직을 포함하는 컨
 **정답: B) kubelet**
 
 **설명:**
-kubelet은 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리합니다. kubelet은 다양한 메커니즘을 통해 파드 스펙(PodSpec)을 받아 컨테이너가 해당 스펙에 따라 건강하게 실행되도록 보장합니다. 주요 기능으로는 PodSpec에 따른 컨테이너 실행, 컨테이너 상태 모니터링 및 보고, 컨테이너 라이프사이클 관리, 볼륨 마운트 관리, 노드 상태 보고, 컨테이너 헬스 체크 수행 등이 있습니다.
+kubelet은 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리합니다. kubelet은 다양한 메커니즘을 통해 파드 스펙(PodSpec)을 받아 컨테이너가 해당 스펙에 따라 정상적으로 실행되도록 보장합니다. 주요 기능으로는 PodSpec에 따른 컨테이너 실행, 컨테이너 상태 모니터링 및 보고, 컨테이너 라이프사이클 관리, 볼륨 마운트 관리, 노드 상태 보고, 컨테이너 헬스 체크 수행 등이 있습니다.
 </details>
 
 7. Kubernetes에서 서비스 IP에 대한 네트워크 규칙을 유지하고 연결 포워딩을 수행하는 노드 구성 요소는 무엇인가요?
@@ -274,7 +274,7 @@ profiles:
 ```
 
 **설명:**
-이 YAML 파일은 KubeSchedulerConfiguration 객체를 정의합니다. leaderElection.leaderElect: true는 리더 선출을 활성화하고, profiles 섹션에서 custom-scheduler라는 이름의 스케줄러 프로필을 정의합니다. plugins 섹션에서는 score 플러그인 중 NodeResourcesBalancedAllocation의 가중치를 2로 설정하고, 기본 NodeUnschedulable 필터는 활성 상태로 유지합니다. 이를 비활성화하면 cordon된 노드에도 스케줄링될 수 있습니다.
+이 YAML 파일은 KubeSchedulerConfiguration 객체를 정의합니다. leaderElection.leaderElect: true로 리더 선출을 활성화하고, profiles 섹션에서 custom-scheduler라는 이름의 스케줄러 프로필을 정의합니다. plugins 섹션에서는 score 플러그인 중 NodeResourcesBalancedAllocation의 가중치를 2로 설정하고, 기본 NodeUnschedulable 필터는 활성 상태로 유지합니다. 이를 비활성화하면 cordon된 노드에도 스케줄링될 수 있습니다.
 </details>
 
 18. 다음 요구사항을 충족하는 고가용성 etcd 클러스터 구성을 위한 etcd 시작 명령어를 작성하세요:

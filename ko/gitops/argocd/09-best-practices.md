@@ -140,7 +140,7 @@ patches:
 
 ```
 
-위 예제는 애플리케이션 저장소에 실제 base 리소스와 patch 파일이 있다는 전제입니다. `labels`로 selector를 바꾸지 않도록 했습니다. HPA를 새로 생성하려면 `resources`에 HPA manifest를 추가하고 Git의 고정 `replicas` 설정을 제거합니다. 존재하지 않는 HPA를 patch만으로 생성할 수는 없습니다. base의 컨테이너 이미지 이름은 `my-app`이라는 전제이며 이름/태그 변환은 overlay에서 함께 합니다. base에서 먼저 이름을 바꾸면 이전 이름을 찾는 overlay가 태그를 갱신하지 못할 수 있습니다.
+위 예제는 애플리케이션 저장소에 실제 base 리소스와 patch 파일이 있다는 전제로 작성되었습니다. `labels`로 selector를 바꾸지 않도록 했습니다. HPA를 새로 생성하려면 `resources`에 HPA manifest를 추가하고 Git의 고정 `replicas` 설정을 제거합니다. 존재하지 않는 HPA를 patch만으로 생성할 수는 없습니다. base의 컨테이너 이미지 이름은 `my-app`이라는 전제이며 이름/태그 변환은 overlay에서 함께 합니다. base에서 먼저 이름을 바꾸면 이전 이름을 찾는 overlay가 태그를 갱신하지 못할 수 있습니다.
 
 ## 환경 승격 전략
 
@@ -389,7 +389,7 @@ repoServer:
 - repo-server RPC timeout(180초), 도구 실행 timeout(2분), Git 요청 timeout(30초)은 다른 제한입니다. 무조건 늘리기 전에 느린 단계와 취소 동작을 확인합니다.
 - `reposerver.parallelism.limit`는 캐시 TTL이 아니라 동시 manifest 생성 제한입니다. 메모리·프로세스 한도와 함께 부하 시험합니다.
 - 기본 periodic reconciliation은 120초 + 최대 60초 jitter입니다. 예제의 300초 + 60초는 5–6분이며 Git webhook 등 다른 refresh 원인은 별개입니다.
-- `application.resourceTrackingMethod`는 리소스 추적 방식입니다. 새로고침 간격이 아닙니다. 기존 tracking 방식의 변경은 마이그레이션 영향을 확인합니다.
+- `application.resourceTrackingMethod`는 리소스 추적 방식입니다. 새로고침 간격이 아닙니다. 기존 tracking 방식을 변경할 때는 마이그레이션 영향을 확인합니다.
 
 ### 여러 대상 클러스터의 샤딩
 
@@ -633,7 +633,7 @@ manifest 출력에는 생성된 Secret이 포함될 수 있으므로 공유 로�
 
 ### AWS 자격 증명
 
-ServiceAccount에 role ARN 하나를 적는 것으로 대상 EKS 접근이 완성되지는 않습니다. controller/server의 EKS 인증, 대상 role assume 권한, EKS access entry 또는 기존 인증 매핑, Kubernetes RBAC를 함께 구성합니다. repo-server는 S3/OCI/CMP 등 실제 AWS 접근이 필요할 때만 별도 최소 권한 역할을 줍니다. IRSA OIDC trust 또는 Pod Identity association도 필요하며, Pod 이미지 pull 권한과 동일시하지 않습니다. [설치 장의 EKS 통합](01-installation.md#amazon-eks-통합)을 기준으로 실제 대상과 서비스 계정을 맞춥니다.
+ServiceAccount에 role ARN 하나를 적는 것으로 대상 EKS 접근이 완성되지는 않습니다. controller/server의 EKS 인증, 대상 role assume 권한, EKS access entry 또는 기존 인증 매핑, Kubernetes RBAC를 함께 구성합니다. repo-server에는 S3/OCI/CMP 등 실제 AWS 접근이 필요할 때만 별도 최소 권한 역할을 줍니다. IRSA OIDC trust 또는 Pod Identity association도 필요하며, Pod 이미지 pull 권한과 동일시하지 않습니다. [설치 장의 EKS 통합](01-installation.md#amazon-eks-통합)을 기준으로 실제 대상과 서비스 계정을 맞춥니다.
 
 ### 내부 ALB와 HTTPS
 

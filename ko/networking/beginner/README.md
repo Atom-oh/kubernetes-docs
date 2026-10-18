@@ -23,7 +23,7 @@
 | 7 | [관측과 성능](07-monitoring-performance.md) · [퀴즈](../../quizzes/networking/beginner/07-monitoring-performance-quiz.md) | 소켓·패킷·트래픽을 관측하고 측정 결과의 한계를 설명한다 | 2–3시간 |
 | 8 | [종합 실습과 클라우드 연결](08-container-cloud-capstone.md) · [퀴즈](../../quizzes/networking/beginner/08-container-cloud-capstone-quiz.md) | 작은 장애를 재현·분리·복구하고 다음 학습 경로를 고른다 | 3–4시간 |
 
-각 장의 완료 기준을 충족하고 퀴즈 해설을 자신의 말로 설명한 뒤 넘어가세요. 1장에서 패키지 작업을 배운 다음 [게스트 도구 준비](#guest-tools)로 돌아와 2–4장 전에 완료합니다. 커널 튜닝과 CNI 구현 비교는 기본 실습을 마친 뒤 선택합니다.
+각 장의 완료 기준을 충족하고 퀴즈 해설을 자신의 말로 설명한 뒤 넘어가세요. 1장에서 패키지 작업을 배운 다음 [게스트 도구 준비](#guest-tools)로 돌아와 2–4장 전에 준비를 완료합니다. 커널 튜닝과 CNI 구현 비교는 기본 실습을 마친 뒤 선택합니다.
 
 ## 시작 전: 실습 VM 준비 {#lab-environment}
 
@@ -174,7 +174,7 @@ python3 --version
 
 선택한 도구 경로와 Python 3.9 이상을 확인합니다. 추가한 패키지를 기록하세요. 이것은 명령 사용 가능성 확인이지 네트워크 통신 성공의 증거가 아닙니다. 4장에서 필요한 명령이 없으면 여기로 돌아옵니다.
 
-이후 장을 위해 도구를 유지합니다. 패키지 이름을 지정해 제거해도 의존성·설정·캐시·로그의 정확한 역작업은 아닙니다. 원래 있던 제공 패키지를 제거하거나 광범위한 autoremove를 정리 수단으로 사용하지 마세요. 이 준비를 완전히 되돌리려면 의존하는 실습을 마친 뒤 `before-guest-tools`로 복원합니다. 스냅샷 이후의 다른 게스트 작업도 사라집니다.
+이후 장을 위해 도구를 유지합니다. 패키지 이름을 지정해 제거해도 의존성·설정·캐시·로그까지 정확히 되돌리는 것은 아닙니다. 원래 있던 제공 패키지를 제거하거나 광범위한 autoremove를 정리 수단으로 사용하지 마세요. 이 준비를 완전히 되돌리려면 의존하는 실습을 마친 뒤 `before-guest-tools`로 복원합니다. 스냅샷 이후의 다른 게스트 작업도 사라집니다.
 
 2026년 9월 15일 확인한 배포판 1차 자료: Ubuntu Noble의 [iproute2](https://packages.ubuntu.com/noble/amd64/iproute2/filelist), [ping](https://packages.ubuntu.com/noble/amd64/iputils-ping/filelist), [dig](https://packages.ubuntu.com/noble/amd64/bind9-dnsutils/filelist), [tracepath](https://packages.ubuntu.com/noble/amd64/iputils-tracepath/filelist), [traceroute](https://packages.ubuntu.com/noble/amd64/traceroute/filelist), [netcat](https://packages.ubuntu.com/noble/amd64/netcat-openbsd/filelist), [curl](https://packages.ubuntu.com/noble/amd64/curl/filelist) 파일 목록과 [Python 패키지 의존성](https://packages.ubuntu.com/noble/python3), Rocky 9의 [iproute](https://git.rockylinux.org/staging/rpms/iproute/-/blob/r9/SPECS/iproute.spec), [iputils](https://git.rockylinux.org/staging/rpms/iputils/-/blob/r9/SPECS/iputils.spec), [BIND 도구](https://git.rockylinux.org/staging/rpms/bind/-/blob/r9/SPECS/bind.spec), [Ncat](https://git.rockylinux.org/staging/rpms/nmap/-/blob/r9/SPECS/nmap.spec), [curl 제공 패키지](https://git.rockylinux.org/staging/rpms/curl/-/blob/r9/SPECS/curl.spec) 명세입니다. 실제 게스트 조회로 맞는 아키텍처·버전을 선택하며 예시 x86_64 파일 목록이 그 아키텍처 사용을 요구하는 것은 아닙니다.
 

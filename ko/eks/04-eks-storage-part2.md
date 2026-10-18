@@ -27,7 +27,7 @@ FSx for Lustre는 지원되는 HPC/ML/분석 워크로드용 병렬 파일 시�
 
 ### FSx for Lustre CSI 드라이버 설치
 
-인프라 소유자가 관리하는 지원 EKS add-on 또는 배포된 Helm 릴리스를 사용합니다. 아래 관리형 예제는 `CSI_ADDON_NAME=aws-fsx-csi-driver`로 설정합니다. `kube-system/fsx-csi-controller-sa`용 검토한 FSx 드라이버 권한과 Pod Identity 신뢰·agent를 준비합니다. IRSA도 OIDC 신뢰와 대응 add-on 역할 옵션으로 지원됩니다. Pod Identity agent는 해당 신원 방식에 필요하며 IRSA의 필수 조건은 아닙니다. Fargate는 지원 FSx CSI 노드 환경이 아니므로 Linux 커널·Lustre 클라이언트·실제 컴퓨팅 지원을 확인하세요.
+인프라 소유자가 관리하는 지원 EKS add-on 또는 배포된 Helm 릴리스를 사용합니다. 아래 관리형 예제는 `CSI_ADDON_NAME=aws-fsx-csi-driver`로 설정합니다. `kube-system/fsx-csi-controller-sa`용으로 검토한 FSx 드라이버 권한과 Pod Identity 신뢰·agent를 준비합니다. IRSA도 OIDC 신뢰와 대응 add-on 역할 옵션으로 지원됩니다. Pod Identity agent는 해당 신원 방식에 필요하며 IRSA의 필수 조건은 아닙니다. Fargate는 지원 FSx CSI 노드 환경이 아니므로 Linux 커널·Lustre 클라이언트·실제 컴퓨팅 지원을 확인하세요.
 
 `eksctl --role-only`는 Kubernetes ServiceAccount를 생성하지 않습니다. 관리형 add-on은 계정을 만들지만 Helm은 실제 계정을 생성·참조하고 신원을 연결해야 합니다. 계정을 준비하지 않은 상태에서 role-only와 `serviceAccount.create=false`를 조합하지 마세요.
 ```bash
@@ -168,7 +168,7 @@ parameters:
 
 ### PVC 생성 및 파드에 마운트
 
-읽기 전용 소비자는 마운트 접근만 확인하며 GPU 작업·처리량 벤치마크가 아닙니다. 이 점검에 CUDA 이미지는 필요하지 않습니다. UID/GID1000의 파일 권한과 실제 클라이언트 네트워크 경로를 준비합니다.
+읽기 전용 소비자 예제는 마운트 접근만 확인하며 GPU 작업·처리량 벤치마크가 아닙니다. 이 점검에 CUDA 이미지는 필요하지 않습니다. UID/GID1000의 파일 권한과 실제 클라이언트 네트워크 경로를 준비합니다.
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -233,7 +233,7 @@ spec:
 
 ### 정적 프로비저닝을 사용한 FSx for Lustre 마운트
 
-기존 파일 시스템의 실제 ID·DNSName·MountName·용량을 사용하며 동적 PVC의 대안입니다. 조회한 값으로 아래 자리표시자를 바꾸고 예약된 static PV/PVC를 바인딩합니다. `storageClassName: ""`는 기본 동적 프로비저닝을 막습니다. 소비자는 `fsx-static-claim`을 사용해야 합니다.
+이 방식은 기존 파일 시스템의 실제 ID·DNSName·MountName·용량을 사용하며 동적 PVC의 대안입니다. 조회한 값으로 아래 자리표시자를 바꾸고 예약된 static PV/PVC를 바인딩합니다. `storageClassName: ""`는 기본 동적 프로비저닝을 막습니다. 소비자는 `fsx-static-claim`을 사용해야 합니다.
 ```bash
 set -euo pipefail
 : "${AWS_REGION:?Set the filesystem Region}"
@@ -355,7 +355,7 @@ Part1의 전용 `storage-demo` 네임스페이스를 재사용합니다. 기존 
 }
 ```
 
-아래 ServiceAccount는 **IRSA** 예제입니다. 예시 ARN을 해당 클러스터·`system:serviceaccount:storage-demo:s3-access-sa`·STS audience만 허용하는 OIDC 신뢰가 준비된 역할로 교체하세요. Annotation만으로 역할·신뢰가 생성되지는 않습니다. **EKS Pod Identity**를 선택하면 IRSA annotation을 생략하고 지원 agent와 이 애플리케이션 계정의 검토한 association을 준비합니다. 두 방식을 우발적인 fallback으로 함께 구성하지 마세요. 매니페스트에 정적 AWS 키를 넣지 않습니다.
+아래 ServiceAccount는 **IRSA** 예제입니다. 예시 ARN을 해당 클러스터·`system:serviceaccount:storage-demo:s3-access-sa`·STS audience만 허용하는 OIDC 신뢰가 준비된 역할의 ARN으로 교체하세요. Annotation만으로 역할·신뢰가 생성되지는 않습니다. **EKS Pod Identity**를 선택하면 IRSA annotation을 생략하고 지원 agent와 이 애플리케이션 계정의 검토한 association을 준비합니다. 두 방식을 우발적인 fallback으로 함께 구성하지 마세요. 매니페스트에 정적 AWS 키를 넣지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -369,7 +369,7 @@ metadata:
 
 ### S3 액세스를 위한 파드 구성
 
-아래 제한 시간·읽기 전용 목록 조회 Job은 공식 AWS CLI 이미지와 준비한 계정을 사용합니다. 실행 전에 버킷·리전을 교체하세요. 전용 쓰기 가능 디렉터리는 비특권 CLI 프로세스를 지원합니다. 종료 상태만으로 애플리케이션이 모든 대상 객체를 읽을 수 있다고 입증되지는 않으므로 Job·로그와 대표적인 허용 객체를 별도로 확인합니다.
+아래 제한 시간이 있는 읽기 전용 목록 조회 Job은 공식 AWS CLI 이미지와 준비한 계정을 사용합니다. 실행 전에 버킷·리전을 교체하세요. 전용 쓰기 가능 디렉터리는 비특권 CLI 프로세스를 지원합니다. 종료 상태만으로 애플리케이션이 모든 대상 객체를 읽을 수 있다고 입증되지는 않으므로 Job·로그와 대표적인 허용 객체를 별도로 확인합니다.
 
 ```yaml
 apiVersion: batch/v1
@@ -749,7 +749,7 @@ velero install --provider aws \
 
 이 CLI dry-run에도 유효한 kubeconfig 형식이 필요하지만 렌더링은 권한·백업 테스트가 아닙니다. 기존 Velero·CRD 설치를 덮어쓰지 마세요. 기본 ServiceAccount는 IRSA annotation과 함께 생성됩니다. 대신 `--service-account-name`을 사용하면 이미 존재하는 계정을 선택하며 `--sa-annotations`를 무시합니다. Pod Identity는 별도 association·agent 설정이 필요한 대안입니다. 정적 자격 증명 파일은 필요하지 않습니다.
 
-CSI class 선택은 드라이버당 기본 class 하나만 레이블로 지정하거나 지원 backup/schedule annotation을 사용합니다. 다음 class를 기존 class들과 함께 검토하세요:
+CSI class를 선택할 때는 드라이버당 기본 class 하나만 레이블로 지정하거나 지원 backup/schedule annotation을 사용합니다. 다음 class를 기존 class들과 함께 검토하세요:
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -772,7 +772,7 @@ velero schedule create storage-demo-daily --schedule="0 1 * * *" \
 
 Schedule 명령도 YAML만 출력합니다. 소유자 경로로 검토한 schedule을 배포한 후 실제 Backup phase·오류·snapshot/data mover 완료와 복구 테스트를 확인합니다. 예약 스냅샷만으로 임의 시점 DB PITR을 제공하지는 않습니다.
 
-복구는 과거 시각을 하드코딩하지 말고 실제 검증한 백업을 선택합니다. `-o yaml`이어도 API 검색과 선택한 Backup 조회를 수행하므로 대상 클러스터의 읽기 권한이 필요합니다. 아래 미리보기는 요청 리소스 유형을 제한하고 네임스페이스를 매핑합니다. 제출 전에 의존성과 plugin restore action을 확인하세요. 대상 네임스페이스 격리·이름 충돌·StorageClass/CSI driver/KMS/AZ 매핑을 검토해야 하며 완성된 프로덕션 복구 절차는 아닙니다:
+복구 시에는 과거 시각을 하드코딩하지 말고 실제 검증한 백업을 선택합니다. `-o yaml`이어도 API 검색과 선택한 Backup 조회를 수행하므로 대상 클러스터의 읽기 권한이 필요합니다. 아래 미리보기는 요청 리소스 유형을 제한하고 네임스페이스를 매핑합니다. 제출 전에 의존성과 plugin restore action을 확인하세요. 대상 네임스페이스 격리·이름 충돌·StorageClass/CSI driver/KMS/AZ 매핑을 검토해야 하며 완성된 프로덕션 복구 절차는 아닙니다:
 
 ```bash
 set -euo pipefail
@@ -987,7 +987,7 @@ EC2 서비스는 볼륨 유형·리전 조건에 따라 적격 io1/io2를 같은
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-04-eks-storage-part2-11.html)
 -->
 
-공유 블록 장치는 애플리케이션 쓰기를 조정하지 않습니다. 일반 ext4/XFS를 여러 노드가 독립적으로 읽기/쓰기 마운트하면 안 되며 조정된 애플리케이션·클러스터 파일 시스템과 fencing 설계가 필요합니다. io2는 NVMe reservation fencing을 지원하지만 애플리케이션이 올바르게 사용해야 합니다. 아래 연결 데모는 **장치 I/O·포맷을 수행하지 않습니다**. 일치하는 레이블·anti-affinity로 볼륨 AZ의 적합한 노드 두 개가 필요합니다. 실제 부하는 sleep 컨테이너가 아닌 검토한 장치 접근·동시성 조정이 필요합니다:
+공유 블록 장치는 애플리케이션 쓰기를 조정하지 않습니다. 일반 ext4/XFS를 여러 노드가 독립적으로 읽기/쓰기 마운트하면 안 되며 조정된 애플리케이션·클러스터 파일 시스템과 fencing 설계가 필요합니다. io2는 NVMe reservation fencing을 지원하지만 애플리케이션이 올바르게 사용해야 합니다. 아래 연결 데모는 **장치 I/O·포맷을 수행하지 않습니다**. 일치하는 레이블·anti-affinity로 볼륨 AZ의 적합한 노드 두 개가 필요합니다. 실제 부하에는 sleep 컨테이너가 아닌 검토한 장치 접근·동시성 조정이 필요합니다:
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -1146,7 +1146,7 @@ io2 Multi-Attach는 서비스 조건에 따라 크기·IOPS 변경을 지원하�
 - 새 파일은 순차 쓰기합니다. 기존 객체 교체는 `allow-overwrite`와 truncating open이 필요하며 임의 랜덤 갱신은 여전히 미지원입니다.
 - Availability Zone의 S3 Express One Zone directory bucket은 `incremental-upload` append와 개별 파일의 atomic rename을 지원합니다. 이 Mountpoint 버전에서 general purpose bucket의 파일 rename과 모든 directory rename은 미지원입니다. Local Zone directory bucket은 기능 지원이 다릅니다. 교체 rename에도 overwrite 권한·옵션이 필요합니다.
 - 삭제는 `allow-delete`와 IAM 권한으로 허용하는 선택 기능이며 읽기 전용 예제는 둘 다 허용하지 않습니다. Append가 항상 “새 객체 버전 생성”인 것은 아닙니다.
-- Hard/symbolic link·chmod/chown·extended attribute·POSIX 잠금·장치 파일·일반 sparse-file 의미론을 지원하지 않습니다. 누락된 기능에 DB 정확성을 의존시키면 안 됩니다.
+- Hard/symbolic link·chmod/chown·extended attribute·POSIX 잠금·장치 파일·일반 sparse-file 의미론을 지원하지 않습니다. DB 정확성이 누락된 기능에 의존해서는 안 됩니다.
 
 ### 캐시 설정
 

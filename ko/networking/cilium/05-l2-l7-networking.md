@@ -136,7 +136,7 @@ kubectl -n cilium-l2l7-demo exec client -- \
   curl --fail --silent --show-error --max-time 5 http://app1-service/
 ```
 
-Outsider의 기준 연결도 확인합니다. Service는 80을 노출하지만 backend는 **8080**을 수신하므로 Pod ingress 정책은 backend port를 사용합니다. 이전의 없거나 맞지 않는 앱 설정과 정책 label·entrypoint가 다른 client Pod를 교정한 예제입니다.
+Outsider의 기준 연결도 확인합니다. Service는 80을 노출하지만 backend는 **8080**을 수신하므로 Pod ingress 정책은 backend port를 사용합니다. 이전에 누락되었거나 맞지 않았던 앱 설정과 정책 label·entrypoint가 다른 client Pod를 교정한 예제입니다.
 
 **`app1-http.yaml`**
 
@@ -494,9 +494,9 @@ extraConfig:
 ```
 
 
-8192는 용량 예시이며 flow별 fragment 수 한도가 아닙니다. 용량 진단에는 `cilium_ipv4_frag_datagrams` / `cilium_ipv6_frag_datagrams`와 pressure를 확인합니다. Pressure가 재조립 성공·공격 차단 카운터는 아닙니다.
+8192는 용량 예시이며 flow별 fragment 수 한도가 아닙니다. 용량을 진단할 때는 `cilium_ipv4_frag_datagrams` / `cilium_ipv6_frag_datagrams`와 pressure를 확인합니다. Pressure가 재조립 성공·공격 차단 카운터는 아닙니다.
 
-올바른 packet 크기와 작동하는 PMTUD 경로를 우선합니다. PMTUD는 관련 오류 신호와 네트워크 동작에 의존하며 어디서나 자동 최적 크기를 보장하지 않습니다. Cilium `MTU`는 **기반 네트워크 override**입니다. [네트워킹 가이드](03-networking.md)처럼 일반 VXLAN 오버헤드는 IPv4 underlay 50바이트, IPv6 70바이트이며 1500 경로의 기반 값을 무조건 1450으로 설정하면 두 번 뺄 수 있습니다.
+올바른 packet 크기와 작동하는 PMTUD 경로를 우선합니다. PMTUD는 관련 오류 신호와 네트워크 동작에 의존하며 어디서나 최적 크기를 자동으로 보장하지 않습니다. Cilium `MTU`는 **기반 네트워크 override**입니다. [네트워킹 가이드](03-networking.md)처럼 일반 VXLAN 오버헤드는 IPv4 underlay 50바이트, IPv6 70바이트이며 1500 경로의 기반 값을 무조건 1450으로 설정하면 두 번 뺄 수 있습니다.
 
 ## 관측과 문제 해결
 

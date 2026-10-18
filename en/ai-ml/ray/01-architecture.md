@@ -36,7 +36,7 @@ Remote values are immutable and can be stored or replicated in node-local object
 
 ## Small Local Example
 
-This checks API behavior, not training performance or a benchmark.
+This checks API behavior, not training performance, and is not a benchmark.
 
 ```python
 import ray

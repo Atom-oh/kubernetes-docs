@@ -123,7 +123,7 @@ The `sourceRepos` field in ArgoCD Projects specifies which git repositories can 
 
 </details>
 
-### 8. What is the benefit of using Matrix generator in ApplicationSets?
+### 8. What is the benefit of using the Matrix generator in ApplicationSets?
 
 - A) It performs mathematical calculations
 - B) It combines two child generators to produce matching parameter combinations

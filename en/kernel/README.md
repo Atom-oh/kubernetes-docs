@@ -41,7 +41,7 @@ But the knowledge you need when diagnosing an incident lives one layer below.
 
 ## How to Read This Section
 
-Document 1 is prerequisite for 2 and 3. Without cgroups and namespaces, the tuning items in 3 will not make sense in their given places.
+Document 1 is a prerequisite for 2 and 3. Without cgroups and namespaces, the tuning items in 3 will not make sense in their given places.
 
 If you came here to diagnose a network problem, **document 2 plus the network section of document 3** is enough. For resource problems (OOM, CPU throttling), the path is **the cgroup section of document 1 → the memory/CPU sections of document 3**.
 

@@ -90,7 +90,7 @@ alias가 cache라면 cache.enabled 같은 실제 Boolean 경로를 사용합니�
 
 - A) 삭제 후
 - B) template 렌더링 후 일반 리소스 upgrade 전
-- C) 항상 새 Pod가 Ready인 후
+- C) 항상 새 Pod가 Ready가 된 후
 - D) rollback 후에만
 
 <details>

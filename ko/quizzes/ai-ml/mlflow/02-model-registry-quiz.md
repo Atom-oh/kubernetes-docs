@@ -69,7 +69,7 @@
 
 **정답: A**
 
-기존 stage는 None/Staging/Production/Archived입니다. 새 흐름은 alias/tag와 명시적 권한을 설계합니다.
+기존 stage는 None/Staging/Production/Archived입니다. 새 흐름에서는 alias/tag와 명시적 권한을 설계합니다.
 </details>
 
 6. 모델 로깅과 함께 등록하려면 무엇을 사용하나요?

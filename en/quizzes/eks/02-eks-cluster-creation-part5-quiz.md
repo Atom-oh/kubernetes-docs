@@ -95,7 +95,7 @@ EKS Pod Identity is another role-to-ServiceAccount mechanism with a different ag
 
 Cluster Autoscaler adjusts discovered existing node groups/ASGs. It needs a compatible installation, Kubernetes RBAC, dedicated AWS permissions and correct discovery tags; it is not installed merely by setting min/max sizes.
 
-It considers scheduling requests/constraints for scale-out and relocation/disruption conditions for scale-in. Not every Pending Pod can be solved by adding nodes, and its scale-down utilization logic is not the same as a CPU-usage HPA threshold.
+It considers scheduling requests/constraints for scale-out and relocation/disruption conditions for scale-in. Not every Pending Pod can be scheduled by adding nodes, and its scale-down utilization logic is not the same as a CPU-usage HPA threshold.
 
 HPA adjusts replicas and VPA recommends/changes Pod requests; both can indirectly alter node demand. Karpenter is a separate capacity provisioner using NodePools/NodeClaims, not a universally faster replacement or an ASG controller. Validate the control loops and workload constraints.
 
@@ -158,7 +158,7 @@ aws eks describe-addon-configuration --region "$EXAMPLE_REGION" \
   --addon-name amazon-cloudwatch-observability --addon-version "$CLOUDWATCH_ADDON_VERSION" \
   --query configurationSchema --output text > cloudwatch-addon-schema.json
 ```
-Save the following as `cloudwatch-addon-values.yaml`. It was rendered with official chart 6.6.0. The full Linux `dataplane-log.conf` override collects only kubelet journal records; empty application/host files disable those default log routes. Other global Fluent Bit sections retain their defaults. The add-on also collects Container Insights metrics, so this is not a log-only agent installation. Application Signals auto-monitoring is explicitly disabled to avoid automatically instrumenting services for this exercise.
+Save the following as `cloudwatch-addon-values.yaml`. It was rendered with the official chart 6.6.0. The full Linux `dataplane-log.conf` override collects only kubelet journal records; empty application/host files disable those default log routes. Other global Fluent Bit sections retain their defaults. The add-on also collects Container Insights metrics, so this is not a log-only agent installation. Application Signals auto-monitoring is explicitly disabled to avoid automatically instrumenting services for this exercise.
 
 ```yaml
 manager:

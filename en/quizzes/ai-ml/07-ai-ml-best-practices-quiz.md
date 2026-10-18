@@ -34,7 +34,7 @@ Check exact instance-size devices/memory, CPU/RAM/network, model state/activatio
 EFA is a high-performance path for suitable workloads, not every DDP prerequisite. EFA communication requires the same AZ; cluster placement groups are recommended for performance. Verify drivers/plugins/security groups/interfaces.
 </details>
 
-## 5. Does a dataset over10TB always require FSx?
+## 5. Does a dataset over 10TB always require FSx?
 
 <details>
 <summary>Answer and explanation</summary>
@@ -50,12 +50,12 @@ No single size cutoff decides. Compare I/O, concurrency, metadata, latency, dura
 No. Check device-specific limits, clocks, power, throttle reasons and workload. DCGMFB_USED is MiB and XID_ERRORS is a last-code gauge; not every XID means hardware failure.
 </details>
 
-## 7. Are 120 seconds grace and a/drain call sufficient for Spot inference?
+## 7. Are 120 seconds of grace and a /drain call sufficient for Spot inference?
 
 <details>
 <summary>Answer and explanation</summary>
 
-EC2 does not always guarantee 120 seconds and an arbitrary vLLM/drain API cannot be assumed. Test gateway readiness, SIGTERM, streams, retries, duplicates and cache reloads.
+EC2 does not always guarantee 120 seconds and an arbitrary vLLM /drain API cannot be assumed. Test gateway readiness, SIGTERM, streams, retries, duplicates and cache reloads.
 </details>
 
 ## 8. How is mean ITL calculated?
@@ -63,7 +63,7 @@ EC2 does not always guarantee 120 seconds and an arbitrary vLLM/drain API cannot
 <details>
 <summary>Answer and explanation</summary>
 
-With actual token timestamps and at least two tokens:(last-first)/(tokens-1). Account for multi-token chunks and empty/single-token outputs; distinguish the tool-specific TPOT definition.
+With actual token timestamps and at least two tokens: (last-first)/(tokens-1). Account for multi-token chunks and empty/single-token outputs; distinguish the tool-specific TPOT definition.
 </details>
 
 ## 9. What does a saturation test demonstrate?
@@ -87,7 +87,7 @@ A local OCI image-layout directory/archive, not a generic docker-save tar. conve
 <details>
 <summary>Answer and explanation</summary>
 
-Use 0 9 * * 1-5 with 8h duration.0 9-17 * * 1-5 starts hourly and extends through01:00nextday. Budgets limit voluntary disruption, not Spot reclamation, failures or forceful expiration.
+Use 0 9 * * 1-5 with 8h duration.0 9-17 * * 1-5 starts hourly and extends through 01:00 the next day. Budgets limit voluntary disruption, not Spot reclamation, failures or forceful expiration.
 </details>
 
 ## 12. Does ESO refresh automatically issue credentials, reload apps and audit every read?

@@ -438,7 +438,7 @@ zone "s3.ap-northeast-2.amazonaws.com" {
 };
 ```
 
-This BIND fragment covers the shown service zones, not the Kubernetes API hostname automatically. Add the actual cluster endpoint's DNS name/suffix and other required names from the verified service inventory. Resolver outbound rules handle the on-premises zone; that zone must be authoritative/reachable on the selected DNS servers, not forwarded back into the same loop.
+This BIND fragment covers the shown service zones but does not automatically cover the Kubernetes API hostname. Add the actual cluster endpoint's DNS name/suffix and other required names from the verified service inventory. Resolver outbound rules handle the on-premises zone; that zone must be authoritative/reachable on the selected DNS servers, not forwarded back into the same loop.
 
 ### CoreDNS Custom Domain Configuration
 
@@ -657,14 +657,14 @@ The VPC CNI is not compatible with hybrid nodes, so **hybrid nodes always run Ci
 | Criterion | ① Hybrid-only cluster (Cilium only) | ② Mixed mode (VPC CNI in the cloud + Cilium on hybrid) | ③ Cilium on cloud nodes too |
 |---|---|---|---|
 | AWS support | Supported (Cilium on hybrid nodes) | Supported. The AWS-recommended mixed mode design | Cloud side unsupported: Cilium running on nodes in AWS Cloud is not supported by AWS |
-| Webhook placement | Runs on hybrid nodes. The control plane connects to pod IPs, so the on-premises pod CIDR must be routable with BGP or static routes | Run on cloud nodes. The on-premises pod CIDR does not need to be routable | Depends on the IPAM and routing of Cilium in the cloud; must be validated yourself |
+| Webhook placement | Runs on hybrid nodes. The control plane connects to pod IPs, so the on-premises pod CIDR must be routable with BGP or static routes | Run on cloud nodes. The on-premises pod CIDR does not need to be routable | Depends on the IPAM and routing of Cilium in the cloud; you must validate it yourself |
 | Cloud to on-premises pod traffic | Not applicable | Routable on-premises pod CIDR or the [Hybrid Nodes gateway](10-hybrid-nodes-gateway.md) | Design tunnels or routing yourself. The Hybrid Nodes gateway requires the VPC CNI (or Auto Mode built-in networking) on cloud nodes, including the gateway nodes, so it cannot be used |
 | Bursting and Auto Mode | Not possible without cloud capacity | Karpenter can add cloud nodes. Auto Mode uses built-in networking | Auto Mode cannot replace its CNI. Cilium on Karpenter nodes is also self-operated |
 | Policy and observability | One CNI (NetworkPolicy, Cilium policies, Hubble) | Each CNI enforces standard Kubernetes NetworkPolicy. Cilium-specific policies and Hubble exist only on the hybrid side | One CNI, but incident response and upgrades for the cloud side are on you or a vendor |
 
 How to choose:
 
-- **Cloud nodes present: ②.** The mixed design within AWS support. Run webhooks in the cloud and use bursting and the Hybrid Nodes gateway. In mixed mode, run at least one CoreDNS replica on each side; features where the control plane or VPC must reach hybrid pod IPs (ALB/NLB IP targets, Metrics Server, AMP collection) need a routable on-premises pod CIDR ([Mixed-Mode Webhook Operations](08-operations.md#mixed-mode-webhook-operations)).
+- **Cloud nodes present: ②.** The mixed design is within AWS support. Run webhooks in the cloud and use bursting and the Hybrid Nodes gateway. In mixed mode, run at least one CoreDNS replica on each side; features where the control plane or VPC must reach hybrid pod IPs (ALB/NLB IP targets, Metrics Server, AMP collection) need a routable on-premises pod CIDR ([Mixed-Mode Webhook Operations](08-operations.md#mixed-mode-webhook-operations)).
 - **On-premises only: ①.** Simpler with one CNI, but webhooks run on hybrid nodes, so a [routable pod CIDR](#routable-pod-cidr-configuration) is required.
 - **Consider ③ carefully.** Cilium on cloud nodes is outside AWS support, and the Hybrid Nodes gateway and Auto Mode cannot be used. Consider it only with a vendor support agreement and when a single CNI outweighs these limits.
 

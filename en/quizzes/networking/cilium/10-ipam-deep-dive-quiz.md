@@ -14,7 +14,7 @@
    **Answer: A) After the 10 minute expiration timer set at allocation expires**
 
    **Explanation:**
-   The CNI plugin requests the allocation with the expiration flag set, so the agent starts a 10 minute timer (`defaults.IPAMExpiration`). Endpoint creation stops the timer; if it never happens, the timer releases the IP. The 180 second value belongs to ENI excess-IP release in the operator.
+   The CNI plugin requests the allocation with the expiration flag set, so the agent starts a 10-minute timer (`defaults.IPAMExpiration`). Endpoint creation stops the timer; if it never happens, the timer releases the IP. The 180-second value belongs to ENI excess-IP release in the operator.
 
    </details>
 
@@ -30,7 +30,7 @@
    **Answer: C) 65,536 nodes, 256 addresses each**
 
    **Explanation:**
-   Nodes per pool CIDR is `2^(nodeMask - poolMask) = 2^(24 - 8) = 65,536`, and each block holds `2^(32 - 24) = 256` addresses. Usable Pod IPs are fewer because the network/broadcast addresses and the router, health and ingress addresses are taken out of the block.
+   The number of nodes per pool CIDR is `2^(nodeMask - poolMask) = 2^(24 - 8) = 65,536`, and each block holds `2^(32 - 24) = 256` addresses. Usable Pod IPs are fewer because the network/broadcast addresses and the router, health and ingress addresses are taken out of the block.
 
    </details>
 
@@ -110,7 +110,7 @@
    **Answer: C) The operator writes ENIs to `status.eni.enis`; the agent converts them to /32 and /28 CIDRs in `spec.ipam.pools.allocated` (pool `default`) and reports demand in `spec.ipam.pools.requested`**
 
    **Explanation:**
-   1.20 moved ENI to the multi-pool allocator: only the operator calls EC2, the agent derives allocated CIDRs from the ENI inventory and writes requested capacity back. The `spec.ipam.pool` / `status.ipam.used` model is the 1.19 and 1.18 CRD allocator. ENI mode has no CiliumPodIPPool or `ip-pool` annotation.
+   1.20 moved ENI to the multi-pool allocator: only the operator calls EC2; the agent derives allocated CIDRs from the ENI inventory and writes requested capacity back. The `spec.ipam.pool` / `status.ipam.used` model is the 1.19 and 1.18 CRD allocator. ENI mode has no CiliumPodIPPool or `ip-pool` annotation.
 
    </details>
 

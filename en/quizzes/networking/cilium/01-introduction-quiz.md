@@ -210,7 +210,7 @@ It creates workloads/policies and needs an approved test environment and permiss
 **Answer: Security identity (Cilium identity)**
 
 **Explanation:**
-Only the relevant/selected label set determines the identity in its allocation scope. Namespace-derived labels can differ; same app labels alone do not establish identity equality. The numeric ID is allocated rather than a permanent globally meaningful hash.
+Only the relevant/selected label set determines the identity in its allocation scope. Namespace-derived labels can differ; the same app labels alone do not establish identity equality. The numeric ID is allocated rather than being a permanent globally meaningful hash.
 
 </details>
 
@@ -360,7 +360,7 @@ hubble observe --server 127.0.0.1:4245 --verdict DROPPED
 ```
 
 **Explanation:**
-If the release is GitOps-managed, change the owner’s Helm values instead of an imperative CLI update; skip enable when already enabled. Keep the foreground port-forward active, and configure client TLS if Relay uses it. HTTP events need a supported L7 proxy path, and DROPPED is not every application failure. Use cilium hubble ui in a separate terminal with the same explicit context for UI access.
+If the release is GitOps-managed, change the owner’s Helm values instead of performing an imperative CLI update; skip the enable step when already enabled. Keep the foreground port-forward active, and configure client TLS if Relay uses it. HTTP events need a supported L7 proxy path, and DROPPED does not represent every application failure. Use cilium hubble ui in a separate terminal with the same explicit context for UI access.
 
 </details>
 

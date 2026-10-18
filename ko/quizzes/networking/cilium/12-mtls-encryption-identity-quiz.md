@@ -43,7 +43,7 @@
 
 **정답: B) 네임스페이스에 `io.cilium/mtls-enabled=true` 레이블을 붙인다**
 
-가입은 네임스페이스 단위만 지원하며 Pod 단위 가입은 지원되지 않습니다. Istio ambient 레이블은 Istio의 것이고, `authentication.mode`는 제거된 Mutual Authentication 방식이었습니다.
+가입은 네임스페이스 단위로만 지원하며 Pod 단위 가입은 지원되지 않습니다. Istio ambient 레이블은 Istio의 것이고, `authentication.mode`는 제거된 Mutual Authentication 방식이었습니다.
 
 </details>
 
@@ -85,7 +85,7 @@
 
 **정답: B) 51871**
 
-Cilium은 WireGuard 기본값 51820이 아니라 51871을 씁니다. 노드 보안 그룹은 공개 CIDR이 아니라 노드 보안 그룹 자기 참조로 노드 간에 허용해야 합니다. 4789와 8472는 VXLAN 포트입니다.
+Cilium은 WireGuard 기본값 51820이 아니라 51871을 씁니다. 노드 보안 그룹에서는 공개 CIDR이 아니라 노드 보안 그룹 자기 참조로 노드 간 통신을 허용해야 합니다. 4789와 8472는 VXLAN 포트입니다.
 
 </details>
 

@@ -83,7 +83,7 @@ Constrain subscriptions and IAM publish permissions to the same boundary.
 
 **Answer: B) JSON-tagged lowercase/camelCase keys differ from capitalized Go template field access.**
 
-The actual0.34.0 template serialization and valid/invalid payloads were tested.
+The actual 0.34.0 template serialization and valid/invalid payloads were tested.
 
 </details>
 

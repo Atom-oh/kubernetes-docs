@@ -51,7 +51,7 @@ pollingInterval은 KEDA가 외부 메트릭 소스(SQS 큐 길이, Kafka 컨슈�
 **정답: B) 권장 값만 계산하고 실제 적용은 하지 않음**
 
 **설명:**
-updateMode: "Off"는 VPA가 리소스 사용 패턴을 분석하여 주로 권장 resource requests를 계산하지만, 실제로 Pod에 적용하지는 않습니다. 이 모드는 현재 설정이 적절한지 확인하거나, 권장 값을 수동으로 검토한 후 적용할 때 유용합니다.
+updateMode: "Off"로 설정하면 VPA가 리소스 사용 패턴을 분석하여 주로 권장 resource requests를 계산하지만, 실제로 Pod에 적용하지는 않습니다. 이 모드는 현재 설정이 적절한지 확인하거나, 권장 값을 수동으로 검토한 후 적용할 때 유용합니다.
 
 </details>
 
@@ -102,7 +102,7 @@ HPA와 VPA를 CPU/메모리에 대해 동시에 설정하면 서로 충돌할 �
 **정답: B) Pod 객체를 유지하면서 지원되는 리소스 변경 가능**
 
 **설명:**
-KEP-1287은 Kubernetes 1.27 alpha, 1.33 beta, 1.35 stable로 발전했습니다. Pod를 유지하더라도 resizePolicy가 RestartContainer이면 컨테이너는 재시작할 수 있고 노드 용량·QoS·지원 모드에 따라 지연되거나 거부될 수 있습니다. VPA 갱신 모드도 별도로 맞춰야 합니다.
+KEP-1287은 Kubernetes 1.27 alpha, 1.33 beta, 1.35 stable로 발전했습니다. Pod를 유지하더라도 resizePolicy가 RestartContainer이면 컨테이너는 재시작할 수 있고 리소스 변경은 노드 용량·QoS·지원 모드에 따라 지연되거나 거부될 수 있습니다. VPA 갱신 모드도 별도로 맞춰야 합니다.
 
 </details>
 
@@ -153,7 +153,7 @@ stabilizationWindowSeconds는 HPA가 스케일 다운 결정 시 지정된 시�
 **정답: B) 스케일 다운 시 어떤 Pod를 먼저 삭제할지 우선순위 지정**
 
 **설명:**
-이 annotation은 같은 ReplicaSet 내부의 best-effort 삭제 선호입니다. 미할당·Pod phase·Ready 상태 등을 먼저 비교한 뒤 낮은 cost를 선호합니다. Job/StatefulSet, 서로 다른 Deployment, eviction이나 Spot 노드 소실을 막는 보호 장치가 아닙니다.
+이 annotation은 같은 ReplicaSet 내부의 best-effort 삭제 선호도를 나타냅니다. 미할당·Pod phase·Ready 상태 등을 먼저 비교한 뒤 낮은 cost를 선호합니다. Job/StatefulSet, 서로 다른 Deployment, eviction이나 Spot 노드 소실을 막는 보호 장치가 아닙니다.
 
 </details>
 

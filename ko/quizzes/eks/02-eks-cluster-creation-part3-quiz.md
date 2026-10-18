@@ -2,7 +2,7 @@
 
 > **마지막 업데이트**: 2026년 9월 11일
 
-이 퀴즈는 EKS 네트워킹, 노드 용량, 멀티테넌시, 오토스케일링과 노드 보안을 다룹니다. 명령과 매니페스트는 학습용 예제이며, 이번 검토에서 클라우드 배포와 종단 간 동작을 실행하지 않았습니다. 사용 전에 대상 계정·리전·kubeconfig, 호환 애드온 버전과 리소스 소유권을 확인하세요.
+이 퀴즈는 EKS 네트워킹, 노드 용량, 멀티테넌시, 오토스케일링과 노드 보안을 다룹니다. 명령과 매니페스트는 학습용 예제이며, 이번 검토에서 클라우드 배포와 종단 간 동작 검증을 수행하지 않았습니다. 사용 전에 대상 계정·리전·kubeconfig, 호환 애드온 버전과 리소스 소유권을 확인하세요.
 
 ## 기본 개념 문제
 
@@ -138,7 +138,7 @@ egress도 격리하려면 실제 DNS 경로와 애플리케이션 의존성을 �
 
 IPv4 VPC CNI의 기본 SNAT 동작에서는 VPC 외부로 향하는 Pod 트래픽이 먼저 노드의 기본 IPv4 주소를 사용합니다. 퍼블릭 IPv4와 IGW 경로가 있는 퍼블릭 노드는 다른 경로를 사용할 수 있습니다. 네이티브 IPv6 egress는 egress-only Internet Gateway를 사용할 수 있고, VPC Endpoint를 통한 AWS 서비스 접근에는 인터넷 NAT가 필요하지 않을 수 있습니다. NAT를 모든 Pod의 보편적인 필수조건으로 설명하면 안 됩니다.
 
-**단일 AZ CloudFormation 라우팅 예제:** 퍼블릭·프라이빗 라우팅 테이블 연결을 설명하며 완전한 EKS VPC가 아닙니다. EKS 클러스터 서브넷은 최소 두 AZ가 필요합니다. AZ 단위 NAT 설계는 다른 AZ 의존성을 피하도록 AZ별 NAT Gateway와 프라이빗 경로를 고려하세요. NAT Gateway와 퍼블릭 IPv4에는 요금이 발생합니다. 클러스터 배포에는 개념 문서의 완전한 EKS VPC 템플릿을 검토하세요.
+**단일 AZ CloudFormation 라우팅 예제:** 퍼블릭·프라이빗 라우팅 테이블 연결을 설명하며 완전한 EKS VPC가 아닙니다. EKS 클러스터 서브넷은 최소 두 AZ가 필요합니다. AZ 단위 NAT 설계에서는 다른 AZ 의존성을 피하도록 AZ별 NAT Gateway와 프라이빗 경로를 고려하세요. NAT Gateway와 퍼블릭 IPv4에는 요금이 발생합니다. 클러스터 배포에는 개념 문서의 완전한 EKS VPC 템플릿을 검토하세요.
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -282,7 +282,7 @@ eksctl의 관리 VPC 생성에서 `vpc.nat.gateway: Single`은 유효하지만 �
 
 SecurityGroupPolicy는 `podSelector` **또는** `serviceAccountSelector`로 Pod를 선택하므로 전용 ServiceAccount 생성은 필수가 아닙니다. `ENIConfig`는 커스텀 네트워킹 리소스이며 Pod 보안 그룹만 사용하는 데 필요하지 않습니다.
 
-아래 ServiceAccount 셀렉터 방식은 먼저 전용 `pod-sg-lab` 네임스페이스를 만들고 SG 자리표시자를 올바른 VPC의 검토된 기존 보안 그룹으로 바꾼 뒤 선행조건을 충족해야 합니다. 대기하는 클라이언트는 선택 관계를 보여 주며 DB 연결 성공을 입증하지 않습니다. 일치하는 ServiceAccount 레이블과 Pod의 `serviceAccountName`을 모두 지정했습니다.
+아래 ServiceAccount 셀렉터 방식을 사용하려면 먼저 전용 `pod-sg-lab` 네임스페이스를 만들고 SG 자리표시자를 올바른 VPC의 검토된 기존 보안 그룹으로 바꾼 뒤 선행조건을 충족해야 합니다. 대기하는 클라이언트는 선택 관계를 보여 주며 DB 연결 성공을 입증하지 않습니다. 일치하는 ServiceAccount 레이블과 Pod의 `serviceAccountName`을 모두 지정했습니다.
 
 ```yaml
 apiVersion: vpcresources.k8s.aws/v1beta1
@@ -366,7 +366,7 @@ Linux IPv4 prefix 모드에서는 `/28` 하나(주소 16개)가 ENI 보조 주�
 * `WARM_PREFIX_TARGET`은 여유 prefix 수, `WARM_IP_TARGET`은 여유 IP 수, `MINIMUM_IP_TARGET`은 최소 총 할당량입니다. 뒤의 두 설정을 사용하면 `WARM_PREFIX_TARGET`보다 우선합니다. 시작 지연과 미사용 주소 소비를 함께 고려하세요.
 * 교체 노드 그룹과 제어된 cordon/drain 마이그레이션을 계획합니다. 환경변수만 바꾸고 모든 Pod를 재시작하는 것으로 끝내면 안 됩니다. PDB·볼륨·여유 용량·롤백을 확인하고 새 노드를 검증한 후 기존 그룹을 제거하세요.
 
-아래는 **새 클러스터 구성 예제**이며 기존 클러스터의 업데이트 명령이 아닙니다. API는 프라이빗 접근만 허용하므로 관리자의 라우팅 경로가 필요합니다. 버전을 생략하면 EKS 호환 기본 CNI 빌드를 선택하므로, 배포 전 실제 선택 버전을 기록·검토하세요. `withOIDC`는 eksctl의 CNI IAM 통합에 사용되며 생성되는 역할을 확인해야 합니다. 크기 상한·하한은 오토스케일러를 설치하지 않습니다.
+아래는 **새 클러스터 구성 예제**이며 기존 클러스터의 업데이트 명령이 아닙니다. API는 프라이빗 접근만 허용하므로 관리자의 라우팅 경로가 필요합니다. 버전을 생략하면 EKS 호환 기본 CNI 빌드를 선택하므로, 배포 전 실제 선택 버전을 기록·검토하세요. `withOIDC`는 eksctl의 CNI IAM 통합에 사용되며 생성되는 역할을 확인해야 합니다. 크기 상한·하한을 설정해도 오토스케일러가 설치되지는 않습니다.
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -411,7 +411,7 @@ managedNodeGroups:
 
 `coredns` ConfigMap의 `data.Corefile`에 DNS 설정이 저장됩니다. 올바른 **설정 소유자**는 EKS 관리형 애드온인지 자체 관리 CoreDNS인지에 따라 다릅니다.
 
-관리형 애드온은 AWS 콘솔과 `aws eks update-addon --configuration-values` 모두 지원 필드를 변경할 수 있습니다. ConfigMap 직접 수정은 애드온 업데이트에서 덮어써질 수 있으므로 전체 커스텀 Corefile을 애드온의 `corefile` 설정 키에 저장하세요. 기존 다른 설정 키를 보존하고 정확한 애드온 버전의 스키마를 검토합니다.
+관리형 애드온의 지원 필드는 AWS 콘솔과 `aws eks update-addon --configuration-values` 모두에서 변경할 수 있습니다. ConfigMap 직접 수정은 애드온 업데이트에서 덮어써질 수 있으므로 전체 커스텀 Corefile을 애드온의 `corefile` 설정 키에 저장하세요. 기존 다른 설정 키를 보존하고 정확한 애드온 버전의 스키마를 검토합니다.
 
 새 로컬 작업 디렉터리에서 수정 전 현재 설정을 저장합니다:
 
@@ -651,7 +651,7 @@ spec:
 
 아래 기존 계열 예시는 워크로드 특성을 설명하며 현재 가격·성능 순위가 아닙니다. `m5`는 범용, `r5`는 메모리 최적화, `c5`는 컴퓨팅 최적화입니다. Graviton 대안은 Arm 호환 이미지와 의존성이 필요합니다. GPU 워크로드에는 적절한 가속기 AMI와 디바이스 플러그인도 필요합니다. 인스턴스 스토어 데이터는 임시적이며 레이블만으로 DB 내구성이나 배치를 제공하지 않습니다.
 
-아래는 검토된 기존 클러스터에 사용하는 **대안별 노드 그룹 구성 파일**입니다(`eksctl create nodegroup -f ...`). 미사용 그룹 이름과 필요한 egress·Endpoint가 있는 프라이빗 서브넷을 사용하고 실제 리전·AZ 제공 여부를 확인합니다. 상한·하한 설정은 Cluster Autoscaler를 설치하지 않습니다. 크기 0인 배치 그룹은 올바른 오토스케일러 또는 수동 확장이 필요합니다.
+아래는 검토된 기존 클러스터에 사용하는 **대안별 노드 그룹 구성 파일**입니다(`eksctl create nodegroup -f ...`). 미사용 그룹 이름과 필요한 egress·Endpoint가 있는 프라이빗 서브넷을 사용하고 실제 리전·AZ 제공 여부를 확인합니다. 상한·하한을 설정해도 Cluster Autoscaler가 설치되지는 않습니다. 크기 0인 배치 그룹은 올바른 오토스케일러 또는 수동 확장이 필요합니다.
 
 **웹 서버**
 
@@ -915,7 +915,7 @@ spec:
         memory: 500Mi
       controlledResources: ["cpu", "memory"]
 ```
-`Off`는 Pod 리소스를 변경하지 않습니다. 권장값 적용은 VPA·Kubernetes 버전과 설정에 따라 재생성 또는 지원되는 in-place resizing을 사용할 수 있으므로 모든 모드가 재시작한다고 설명하면 안 됩니다. CPU 사용률 HPA가 같은 워크로드를 제어할 때 CPU requests를 변경하면 사용률 분모를 통해 피드백이 발생합니다. 이 권장 전용 예제는 통합 설계를 검토하기 전 충돌을 피합니다.
+`Off`는 Pod 리소스를 변경하지 않습니다. 권장값 적용에는 VPA·Kubernetes 버전과 설정에 따라 재생성 또는 지원되는 in-place resizing을 사용할 수 있으므로 모든 모드가 재시작한다고 설명하면 안 됩니다. CPU 사용률 HPA가 같은 워크로드를 제어할 때 CPU requests를 변경하면 사용률 분모를 통해 피드백이 발생합니다. 이 권장 전용 예제는 통합 설계를 검토하기 전 충돌을 피합니다.
 
 </details>
 
@@ -1548,7 +1548,7 @@ managedNodeGroups:
   minSize: 0
   maxSize: 20
 ```
-서로 다른 워크로드 크기는 메모리·컴퓨팅·범용 인스턴스를 하나의 자동 확장 그룹에 섞는 대신 분리합니다:
+크기가 서로 다른 워크로드는 메모리·컴퓨팅·범용 인스턴스를 하나의 자동 확장 그룹에 섞는 대신 분리합니다:
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -1749,7 +1749,7 @@ spec:
           readOnlyRootFilesystem: true
           capabilities: {drop: [ALL]}
 ```
-이는 요청 용량 1 CPU·1000Mi를 확보하며 미리 초기화된 애플리케이션 상태가 아니고 노드 비용이 발생합니다. 이미지 pull·볼륨 연결·애플리케이션 초기화를 없애지 않습니다. 관측한 수요에 맞춰 크기를 정하고 테스트 후 소유한 예약 Deployment·PriorityClass를 제거하세요.
+이는 요청 용량 1 CPU·1000Mi를 확보하지만 애플리케이션을 미리 초기화하지는 않으며 노드 비용이 발생합니다. 이미지 pull·볼륨 연결·애플리케이션 초기화를 없애지 않습니다. 관측한 수요에 맞춰 크기를 정하고 테스트 후 소유한 예약 Deployment·PriorityClass를 제거하세요.
 
 기존의 불완전한 v1.23 Deployment 대신 기본 문제 10의 완전하게 렌더링된 Cluster Autoscaler 구성을 사용합니다. Karpenter는 별도로 관리하는 용량의 대안이며 NodePool이 유효하고 권한이 구성된 EC2NodeClass를 참조해야 합니다. KEDA·HPA는 워크로드 복제본을 조절하여 두 노드 오토스케일러에 수요를 만들 수 있습니다. 같은 리소스에 모든 확장 기능을 켜기보다 제어 루프의 상호작용을 검증하세요.
 

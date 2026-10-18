@@ -47,7 +47,7 @@ Connect service-cluster applications to management-cluster metrics, logs and tra
 
 Service Prometheus scrapes metrics and sends mTLS remote-write to management Prometheus. Collectors receive CRI/JSON logs and OTLP traces, forwarding to the authenticated management endpoint. Management Collector sends to Loki/Tempo; the CloudWatch addon supplies structured logs for AIOps. Grafana UIDs consistently use `prometheus`, `loki` and `tempo`.
 
-Backends are single durable lab instances, not HA or measured capacity. Two-day Prometheus and24-hour Loki/Tempo retention do not establish a30-day SLO.
+Backends are single durable lab instances, not HA or measured capacity. Two-day Prometheus and 24-hour Loki/Tempo retention do not establish a 30-day SLO.
 
 ## 2. Private TLS and network inputs {#tls-network}
 
@@ -82,7 +82,7 @@ helm upgrade --install lab-tempo grafana-community/tempo --version 3.0.0   --kub
 ```
 Prometheus web requires mTLS, so default kubelet HTTPS probes cannot provide the client certificate. Use the `promtool check ready/healthy --http.config.file=...` exec probes/client Secret; Operator probe merging was verified. Grafana and Tempo metrics-generator also use client certificates.
 
-Loki uses Monolithic/TSDB-v13/filesystem-PVC. Tempo3 uses live-store/backend scheduler/worker, not mixed Tempo2 ingester/compactor settings. Grafana uses one replica, PVC and a private admin Secret rather than a known shared password. Grafana disables the unused dashboard sidecar, API token and RBAC; datasource files remain mounted from the designated Secret.
+Loki uses Monolithic/TSDB-v13/filesystem-PVC. Tempo 3 uses live-store/backend scheduler/worker, not mixed Tempo 2 ingester/compactor settings. Grafana uses one replica, PVC and a private admin Secret rather than a known shared password. Grafana disables the unused dashboard sidecar, API token and RBAC; datasource files remain mounted from the designated Secret.
 
 ## 4. Collectors, endpoints and service collection {#collectors}
 

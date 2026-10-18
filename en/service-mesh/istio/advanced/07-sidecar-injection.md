@@ -63,7 +63,7 @@ kubectl diff -f deployment-injected.yaml
 kubectl apply -f deployment-injected.yaml
 ```
 
-In Istio1.31, omitting `--revision` can trigger a default-revision cluster watcher even with local files and leave the command waiting. Specify the actual revision matching the exported configuration, or `default` for a non-revisioned installation. Rendering with an explicit revision and all three local configuration files was verified without cluster discovery.
+In Istio 1.31, omitting `--revision` can trigger a default-revision cluster watcher even with local files and leave the command waiting. Specify the actual revision matching the exported configuration, or `default` for a non-revisioned installation. Rendering with an explicit revision and all three local configuration files was verified without cluster discovery.
 
 `deployment.yaml` must contain the original application resources. Keep it separate from generated output and regenerate from that source after configuration/version changes. Choose automatic or manual injection ownership deliberately and inspect admission results; do not stack ad hoc edits onto generated proxy containers. A `kubectl diff` exit 1 normally means a difference was found, not that applying it has been approved or validated.
 
@@ -81,7 +81,7 @@ metadata:
     sidecar.istio.io/proxyMemoryLimit: "256Mi"
 ```
 
-Set request and corresponding limit deliberately: specifying proxyCPU/proxyMemory without the corresponding limit can remove that limit. Verify the rendered proxy resources, namespace LimitRange/ResourceQuota, CPU throttling and memory use. Pod-template changes affect newly created Pods.
+Set the request and corresponding limit deliberately: specifying proxyCPU/proxyMemory without the corresponding limit can remove that limit. Verify the rendered proxy resources, namespace LimitRange/ResourceQuota, CPU throttling and memory use. Pod-template changes affect newly created Pods.
 
 ## Excluding from Injection
 
@@ -111,7 +111,7 @@ kubectl get pods -n "$INJECTION_NAMESPACE" -o json |
 istioctl proxy-status
 ```
 
-Native sidecars use `spec.initContainers` with `restartPolicy: Always`; classic sidecars use `spec.containers`. Kubernetes native sidecars are stable from 1.33 and default-enabled in 1.32, while Istio's `sidecar.istio.io/nativeSidecar` annotation is still documented Alpha. Confirm the installed injector behavior instead of assuming a universal 2/2 READY display.
+Native sidecars use `spec.initContainers` with `restartPolicy: Always`; classic sidecars use `spec.containers`. Kubernetes native sidecars are stable from 1.33 and default-enabled in 1.32, while Istio's `sidecar.istio.io/nativeSidecar` annotation is still documented as Alpha. Confirm the installed injector behavior instead of assuming a universal 2/2 READY display.
 
 If Pods are not created, inspect controller events, webhook reachability/certificates, namespace/object selectors, revision availability and resource admission limits. If a proxy is present, inspect readiness, logs and xDS synchronization separately. A proxy name alone does not prove correct mesh enrollment.
 

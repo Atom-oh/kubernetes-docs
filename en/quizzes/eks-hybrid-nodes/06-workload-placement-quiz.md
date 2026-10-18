@@ -117,11 +117,11 @@ D. Automatic replica repair without other controllers
 
 </details>
 
-### 7. Can an on-premises Pod with deletion-cost1000 be deleted before a cloud Pod with cost0?
+### 7. Can an on-premises Pod with deletion-cost 1000 be deleted before a cloud Pod with cost 0?
 
-A. No;1000 makes it eviction-proof
+A. No; 1000 makes it eviction-proof
 
-B. No;the cost is the first ReplicaSet comparison
+B. No; the cost is the first ReplicaSet comparison
 
 C. Yes;assignment,phase and readiness precede deletion cost in the reviewed controller
 
@@ -130,7 +130,7 @@ D. Only if the cost annotation is absent
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Yes;assignment,phase and readiness precede deletion cost in the reviewed controller**
+**Answer: C. Yes; assignment, phase and readiness precede deletion cost in the reviewed controller**
 
 **Explanation:** Unassigned, Pending/Unknown and NotReady criteria can take precedence. Deletion cost is a best-effort preference among the same ReplicaSet's Pods, not protection from every controller, rollout, eviction or failure.
 
@@ -151,24 +151,24 @@ D. Deletion cost can only be changed before scheduling
 
 **Answer: C. A normal CREATE request is usually not yet bound to a node, so eventual node location is unavailable**
 
-**Explanation:** A post-binding process can inspect spec.nodeName. A production webhook also needs a valid backend, Service,TLS and scoped policy; an incomplete fail-closed webhook can block Pod creation.
+**Explanation:** A post-binding process can inspect spec.nodeName. A production webhook also needs a valid backend, Service, TLS and scoped policy; an incomplete fail-closed webhook can block Pod creation.
 
 </details>
 
-### 9. Does Karpenter1.14.1 read pod-deletion-cost?
+### 9. Does Karpenter 1.14.1 read pod-deletion-cost?
 
-A. No;only ReplicaSet can ever read it
+A. No; only ReplicaSet can ever read it
 
 B. Yes,as part of a normalized eviction-cost heuristic with other inputs;it is not a disruption prohibition
 
-C. Yes,and1000 guarantees1000times more protection
+C. Yes, and 1000 guarantees 1000 times more protection
 
-D. Yes,andit replaces PDBs and all disruption budgets
+D. Yes, and it replaces PDBs and all disruption budgets
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Yes,as part of a normalized eviction-cost heuristic with other inputs;it is not a disruption prohibition**
+**Answer: B. Yes, as part of a normalized eviction-cost heuristic with other inputs; it is not a disruption prohibition**
 
 **Explanation:** The tagged Karpenter source includes the annotation in its Pod eviction cost. Candidate evaluation, node state, priority and lifecycle constraints still matter; cost annotations do not guarantee that an empty node will be removed immediately.
 

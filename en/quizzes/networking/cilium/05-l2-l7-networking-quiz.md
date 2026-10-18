@@ -90,7 +90,7 @@
 
    **Answer: B) kubeProxyReplacement: true**
 
-   Use the boolean/current true value and the full replacement prerequisites, including API reachability. The old strict/partial vocabulary is not the current contract.
+   Use the boolean/current true value and satisfy the full replacement prerequisites, including API reachability. The old strict/partial vocabulary is not the current contract.
 
    </details>
 
@@ -329,7 +329,7 @@ spec:
         protocol: TCP
 ```
 
-This only permits the two source workloads to the assumed broker listener TCP9092; replace the port with the real configured listener. It does not enforce the topic operations. Authenticate distinct broker principals and configure the required produce/consume and consumer-group authorization in Kafka. `rules.kafka` is removed, so presenting the old YAML as complete authorization would be incorrect.
+This only permits traffic from the two source workloads to the assumed broker listener TCP9092; replace the port with the real configured listener. It does not enforce the topic operations. Authenticate distinct broker principals and configure the required produce/consume and consumer-group authorization in Kafka. `rules.kafka` is removed, so presenting the old YAML as complete authorization would be incorrect.
 
 </details>
 

@@ -67,7 +67,7 @@ The result is a platform that retains the full power of Kubernetes (scheduling, 
 | Observability | Configure metrics, logs and tracing exporters | CloudWatch and supported tracing integrations | Configure supported AWS/OpenTelemetry collection |
 | Cost basis | Allocated cluster, storage, load-balancer and supporting resources | Requests/duration plus selected features | Allocated task/Pod CPU and memory, plus associated resources |
 
-This table scopes Lambda to standard compute. Eligible asynchronous/event-source invocations on Lambda Managed Instances can allow up to90minutes (with service-specific exceptions); they have different operating constraints. Pod scale-to-zero does not itself remove EC2 nodes, persistent storage or load-balancer charges.
+This table scopes Lambda to standard compute. Eligible asynchronous/event-source invocations on Lambda Managed Instances can allow up to 90 minutes (with service-specific exceptions); they have different operating constraints. Pod scale-to-zero does not itself remove EC2 nodes, persistent storage or load-balancer charges.
 
 ### Learning Objectives
 
@@ -98,7 +98,7 @@ Serving has control-plane components in `knative-serving` and a Queue Proxy in e
 | Component | Role |
 |-----------|------|
 | **Activator** | Receives requests when a Revision is scaled to zero. Buffers requests, triggers scale-up, then proxies the buffered requests once pods are ready. Also acts as a load balancer when the system is in "burst capacity" mode. |
-| **Autoscaler** | Collects concurrency and RPS metrics from Queue Proxy sidecars. KPA and its reconciler drive the target scale; the optional HPA integration manages Kubernetes HPA resources. The Serving Controller reconciles workload resources, not a universal intermediate for every scale decision. |
+| **Autoscaler** | Collects concurrency and RPS metrics from Queue Proxy sidecars. KPA and its reconciler drive the target scale; the optional HPA integration manages Kubernetes HPA resources. The Serving Controller reconciles workload resources; it is not a universal intermediate for every scale decision. |
 | **Queue Proxy** | Injected as a sidecar into every Knative pod. Enforces `containerConcurrency` limits, reports real-time concurrency to the Autoscaler, performs health checking, and handles graceful shutdown during scale-down. |
 | **Controller** | Reconciles Knative CRDs (Service, Configuration, Revision, Route) into underlying Kubernetes resources (Deployments, Services, Ingress objects). Manages revision creation and garbage collection. |
 | **Webhook** | Validates and defaults Knative resource specifications on admission. Ensures that invalid configurations are rejected before they reach the Controller. |
@@ -131,7 +131,7 @@ The installation snippets target an isolated test environment and contain placeh
 
 ### Prerequisites
 
-- An existing, provider-supported EKS version validated with the selected Knative components. The examples use Serving/Eventing/Kourier1.23.0 and Operator1.23.1; this is not an open-ended Kubernetes1.28+ compatibility claim.
+- An existing, provider-supported EKS version validated with the selected Knative components. The examples use Serving/Eventing/Kourier 1.23.0 and Operator 1.23.1; this is not an open-ended Kubernetes 1.28+ compatibility claim.
 - `kubectl` configured with cluster admin access.
 - (Optional) `helm` v3.12+ for Helm-based installations.
 
@@ -194,7 +194,7 @@ kubectl get deployments,pods,services -n knative-serving
 
 ### Step 3: Install Kourier (Lightweight Ingress)
 
-Kourier is an Envoy-based networking implementation for Knative. It is a suitable option when its supported features meet the workload; resource or latency advantages require measurement.
+Kourier is an Envoy-based networking implementation for Knative. It is a suitable option when its supported features meet the workload's requirements; resource or latency advantages require measurement.
 
 The Operator installs Kourier from the selected Serving bundle. In this workflow the gateway Service is in `knative-serving`. A standalone manual Kourier manifest normally uses `kourier-system`; do not apply it on top of the Operator-managed installation. Inspect the managed resources:
 
@@ -257,7 +257,7 @@ kubectl patch knativeserving knative-serving -n knative-serving --type merge --p
 
 ### Step 5: TLS with cert-manager
 
-Serving1.23 includes the cert-manager integration in its controller. The old separate net-certmanager repository is archived; do not install a nonexistent1.16/1.23 release from it. Install and configure a compatible cert-manager separately before enabling the integration, including its own Route53 DNS01 identity and least-privilege zone access.
+Serving 1.23 includes the cert-manager integration in its controller. The old separate net-certmanager repository is archived; do not install a nonexistent 1.16/1.23 release from it. Install and configure a compatible cert-manager separately before enabling the integration, including its own Route53 DNS01 identity and least-privilege zone access.
 
 ```bash
 kubectl get deployments -n cert-manager
@@ -480,7 +480,7 @@ Traffic splitting allows you to gradually shift traffic between Revisions. This 
 
 #### Canary Deployment
 
-These are alternative exercises starting from the complete base Service above and its ready `order-api-v1` Revision. Replace images and names with verified artifacts; every template change needs a new unused Revision name. The JSON patch preserves environment, ServiceAccount, probes and resource settings instead of replacing the whole containers list. It assumes the base example’s single ingress container is index0. A0% tag makes a route available for testing, not a guarantee of full warm capacity.
+These are alternative exercises starting from the complete base Service above and its ready `order-api-v1` Revision. Replace images and names with verified artifacts; every template change needs a new unused Revision name. The JSON patch preserves environment, ServiceAccount, probes and resource settings instead of replacing the whole containers list. It assumes the base example’s single ingress container is at index 0. A 0% tag makes a route available for testing; it is not a guarantee of full warm capacity.
 
 Save as `canary-template.patch.json`:
 
@@ -798,7 +798,7 @@ spec:
 
 #### SinkBinding
 
-The selected Eventing configuration uses inclusion mode. Opt only the demo namespace into binding injection, and ensure the subject Deployment exists in that namespace with matching metadata labels/name. Changes to an already-running workload may require its normal rollout before new injected environment is used:
+The selected Eventing configuration uses inclusion mode. Opt only the demo namespace into binding injection, and ensure the subject Deployment exists in that namespace with matching metadata labels/name. Changes to an already-running workload may require its normal rollout before the newly injected environment is used:
 
 ```bash
 kubectl label namespace knative-demo bindings.knative.dev/include=true --overwrite
@@ -865,7 +865,7 @@ def emit_order_event(order_id, event_type, data, event_id):
 
 #### KafkaSource
 
-KafkaSource/KafkaChannel require the matching Kafka extension and an existing configured Kafka cluster (including bootstrap/TLS/SASL and sufficient brokers for the requested replication factor). Merge these1.23.2 addon URLs with any existing additionalManifests in the KnativeEventing resource; do not simultaneously enable another management path for the same addon. Save as eventing-kafka.patch.yaml:
+KafkaSource/KafkaChannel require the matching Kafka extension and an existing configured Kafka cluster (including bootstrap/TLS/SASL and sufficient brokers for the requested replication factor). Merge these 1.23.2 addon URLs with any existing additionalManifests in the KnativeEventing resource; do not simultaneously enable another management path for the same addon. Save as eventing-kafka.patch.yaml:
 
 ```yaml
 spec:
@@ -923,7 +923,7 @@ spec:
 
 #### SQSSource (AWS)
 
-The1.23 core IntegrationSource supports SQS and replaces the archived TriggerMesh example here. It is an alpha API; verify the installed CRD and adapter images. The dedicated queue and its IAM role must already exist. This source consumes/deletes messages when run; no source was deployed during the audit:
+The 1.23 core IntegrationSource supports SQS and replaces the archived TriggerMesh example here. It is an alpha API; verify the installed CRD and adapter images. The dedicated queue and its IAM role must already exist. This source consumes/deletes messages when run; no source was deployed during the audit:
 
 ```bash
 # Verify the core IntegrationSource CRD
@@ -1106,7 +1106,7 @@ def create_app():
 
 ### Channel/Subscription Pattern
 
-Create all referenced subscribers/reply Channels first. A reply destination receives a valid CloudEvent returned by the subscriber; an empty204 receipt does not produce a reply event. Kafka durability also depends on broker replication/retention/acknowledgements and failure handling, not merely the KafkaChannel kind.
+Create all referenced subscribers/reply Channels first. A reply destination receives a valid CloudEvent returned by the subscriber; an empty 204 receipt does not produce a reply event. Kafka durability also depends on broker replication/retention/acknowledgements and failure handling, not merely the KafkaChannel kind.
 
 The Channel/Subscription pattern provides direct pub-sub without content-based filtering. Every Subscription on a Channel receives every event.
 
@@ -1170,7 +1170,7 @@ spec:
 
 ### Dead Letter Sink
 
-When the configured delivery policy cannot deliver an event to its subscriber, the implementation can attempt the configured DLS. The handler must persist/process before acknowledging; a DLS Service name or S3_BUCKET variable alone does not create storage behavior, permissions or a no-loss guarantee.
+When the configured delivery policy cannot deliver an event to its subscriber, the implementation can attempt delivery to the configured DLS. The handler must persist/process before acknowledging; a DLS Service name or S3_BUCKET variable alone does not create storage behavior, permissions or a no-loss guarantee.
 
 ```yaml
 apiVersion: v1
@@ -1292,7 +1292,7 @@ def create_app(s3_client=None):
     return app
 ```
 
-The handler stores the original body as Base64 and only CloudEvents transport headers, so binary events are preserved and Authorization/Cookie headers are excluded. A deterministic `(source, id)` key plus conditional put avoids overwriting an existing event;412 acknowledges an existing key, while409 and other storage failures return503 for delivery-policy retry. Retention/deletion and producer ID reuse affect deduplication; this is not an exactly-once business-processing guarantee. Requests over1MiB are rejected. The code was tested with local mocks, not a live bucket or Eventing deployment.
+The handler stores the original body as Base64 and only CloudEvents transport headers, so binary events are preserved and Authorization/Cookie headers are excluded. A deterministic `(source, id)` key plus conditional put avoids overwriting an existing event; 412 acknowledges an existing key, while 409 and other storage failures return 503 for delivery-policy retry. Retention/deletion and producer ID reuse affect deduplication; this is not an exactly-once business-processing guarantee. Requests over 1MiB are rejected. The code was tested with local mocks, not a live bucket or Eventing deployment.
 
 ### Event Filtering
 
@@ -1403,7 +1403,7 @@ Both KEDA and Knative enable event-driven scaling on Kubernetes, but they operat
 | Scale based on Prometheus metrics | **KEDA** | KEDA's Prometheus scaler is mature and well-tested. |
 | Event-driven microservices with CloudEvents | **Knative** | Eventing provides Broker/Trigger, dead letter handling, and CloudEvents support. |
 | Scheduled Jobs / event-driven batch | **CronJob / KEDA** | Use Kubernetes CronJob for a Job on a schedule; ScaledJob creates Jobs for event demand. A KEDA Cron trigger supplies a window-based replica target rather than scaling a CronJob. |
-| CPU/memory plus zero activation | **Requires an external activation signal** | CPU/memory-only metrics cannot measure an absent worker; combine an appropriate event trigger rather than promising zero activation from those metrics alone. |
+| CPU/memory plus zero activation | **Requires an external activation signal** | CPU/memory-only metrics cannot measure an absent worker; combine them with an appropriate event trigger rather than promising zero activation from those metrics alone. |
 | Serverless platform for developers | **Knative** | Higher-level abstraction; developers deploy with `kn service create`. |
 
 ### Using KEDA and Knative Together
@@ -1572,7 +1572,7 @@ This Operator fragment requires three eligible zones and enough capacity; DoNotS
 
 ### Monitoring with Prometheus
 
-Knative1.23 uses OpenTelemetry and metric export is off by default. This example assumes an existing Prometheus/Prometheus Operator deployment. Enable its OTLP receiver (`--web.enable-otlp-receiver`, or the equivalent supported Operator setting), restrict access appropriately, and configure resource-attribute promotion. The following is a **native Prometheus configuration fragment**, not Helm values; check support in your installed Prometheus version:
+Knative 1.23 uses OpenTelemetry and metric export is off by default. This example assumes an existing Prometheus/Prometheus Operator deployment. Enable its OTLP receiver (`--web.enable-otlp-receiver`, or the equivalent supported Operator setting), restrict access appropriately, and configure resource-attribute promotion. The following is a **native Prometheus configuration fragment**, not Helm values; check support in your installed Prometheus version:
 
 ```yaml
 otlp:
@@ -2002,7 +2002,7 @@ data:
 
 ### Cost Optimization with Scale-to-Zero
 
-1. **Enable scale-to-zero for non-critical services.** Development, staging, and low-traffic production services should scale to zero when idle. The original60–80% figure is retained only as an unsourced historical estimate, not a measured result or current savings promise. Allocated node/storage/load-balancer costs and commitments must be evaluated separately.
+1. **Enable scale-to-zero for non-critical services.** Development, staging, and low-traffic production services should scale to zero when idle. The original 60–80% figure is retained only as an unsourced historical estimate, not a measured result or current savings promise. Allocated node/storage/load-balancer costs and commitments must be evaluated separately.
 
 2. **Use `scale-down-delay` for bursty workloads.** If traffic comes in bursts separated by short idle periods, setting a scale-down delay (e.g., 5-15 minutes) avoids repeated cold starts without keeping pods running indefinitely.
 
@@ -2026,13 +2026,13 @@ The original illustrative figures below are preserved without treating them as m
 | Staging |20|20 Pods ×24h|Average3 Pods ×12h|~92%|
 | Production at night |10|10 Pods ×24h|2 Pods ×8h at night|~33%|
 
-The stated percentages are not all implied by the displayed assumptions. With zero Pods during the remaining hours, development is720→40 Pod-hours (94.4%) and staging480→36 (92.5%). If production means10 Pods for16 daytime hours plus2 for8 nighttime hours, it is240→176 (26.7%). These are conditional arithmetic checks, not rerun benchmarks.
+The stated percentages are not all implied by the displayed assumptions. With zero Pods during the remaining hours, development is 720→40 Pod-hours (94.4%) and staging 480→36 (92.5%). If production means 10 Pods for 16 daytime hours plus 2 for 8 nighttime hours, it is 240→176 (26.7%). These are conditional arithmetic checks, not rerun benchmarks.
 
-The original GPU illustration assumed p3.2xlarge at$3.06/hour:24hours=$73.44/day,4hours=$12.24/day, approximately83% less. The rate has no verified Region/date provenance here and is not a current quote. A zero-replica Service does not guarantee immediate GPU-node termination; include retention delays, baseline replicas, model storage and node/commitment costs.
+The original GPU illustration assumed p3.2xlarge at $3.06/hour: 24 hours=$73.44/day, 4 hours=$12.24/day, approximately 83% less. The rate has no verified Region/date provenance here and is not a current quote. A zero-replica Service does not guarantee immediate GPU-node termination; include retention delays, baseline replicas, model storage and node/commitment costs.
 
 ### Knative with GPU Workloads
 
-For a model PVC, populate it first and use CSI/access modes compatible with concurrent Pods/nodes/AZs (such as suitable ReadOnlyMany/ReadWriteMany storage), or per-Pod copies. RWO does not mean one Pod, but can block cross-node attachment. The example mounts models read-only, so persistent-volume-write is not enabled. min-scale0 permits cold activation; choose a positive baseline only when the latency/cost policy calls for it. The averaging window is not the request timeout.
+For a model PVC, populate it first and use CSI/access modes compatible with concurrent Pods/nodes/AZs (such as suitable ReadOnlyMany/ReadWriteMany storage), or per-Pod copies. RWO does not mean one Pod, but can block cross-node attachment. The example mounts models read-only, so persistent-volume-write is not enabled. min-scale 0 permits cold activation; choose a positive baseline only when the latency/cost policy calls for it. The averaging window is not the request timeout.
 
 The PodSpec extensions below must be enabled for node selectors, tolerations and the optional read-only PVC example. Save as serving-gpu-features.patch.yaml and merge into the existing Operator resource. The referenced gpu NodePool must expose sufficient allocatable CPU/memory/GPU capacity after system and Queue Proxy overhead, with the required driver/device plugin. These are unverified model-serving examples, not measured GPU sizing.
 

@@ -189,7 +189,7 @@ stringData:
 
 ### Grafana
 
-Use a service-account token with the required annotation-write permissions. This engine expects apiUrl including /api and appends annotations. Avoid making an administrator token or unnecessarily long lifetime the default.
+Use a service-account token with the required annotation-write permissions. This engine expects apiUrl to include /api and appends annotations. Avoid making an administrator token or an unnecessarily long lifetime the default.
 
 ```yaml
 apiVersion: v1

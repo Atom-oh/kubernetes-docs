@@ -47,7 +47,7 @@ vminsert routes writes, vmstorage stores data, and vmselect queries it. The Oper
 
 **Answer: C**
 
-Its queue buffers outages but is finite: the configured disk cap drops oldest queued data, and an emptyDir is lost with Pod replacement. Persistence and monitoring remain separate design choices.
+Its queue buffers data during outages but is finite: the configured disk cap drops the oldest queued data, and an emptyDir is lost with Pod replacement. Persistence and monitoring remain separate design choices.
 
 </details>
 

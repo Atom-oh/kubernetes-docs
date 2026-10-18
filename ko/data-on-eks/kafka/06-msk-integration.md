@@ -279,7 +279,7 @@ Kinesis Data Streams는 자체 API를 사용합니다. `bootstrap.servers`를 Ki
 
 “Kafka는 Connect를 통해서만 AWS와 연동한다”는 설명은 틀립니다. 기존
 Kinesis Data Analytics 대신 현재 명칭인 **Amazon Managed Service for Apache Flink**를
-사용합니다. Kinesis sink는 Kafka 레코드를 Kinesis에 쓰고 source는 반대로 이동합니다.
+사용합니다. Kinesis sink는 Kafka 레코드를 Kinesis에 쓰고 source는 반대로 이동시킵니다.
 유지보수되고 선택한 런타임과 호환되는 플러그인을 고른 뒤 순서, partition key,
 레코드 크기 제한과 중복 처리를 검증합니다. 프로토콜 차이가 특정 브리지 제품
 하나만 사용해야 한다는 뜻은 아닙니다.

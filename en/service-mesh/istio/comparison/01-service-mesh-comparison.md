@@ -443,7 +443,7 @@ spec:
 
 The Server selects an actual declared Pod port and defaults here to deny. The inbound HTTPRoute selects GET requests under `/reviews/`; the AuthorizationPolicy requires the productpage ServiceAccount. Target API groups are explicit: omitting a group means the core group, not an inferred Linkerd Server. A missing/wrong reference does not create an authorization grant.
 
-The checked edge CRDs serve Server v1beta3 and older versions, including v1beta1; the older API is not claimed removed. Use the API versions supported by the selected artifact. The namespace/pod default `all-unauthenticated` policy is distinct from automatic encryption between meshed peers, and from this explicit Server policy.
+The checked edge CRDs serve Server v1beta3 and older versions, including v1beta1; the older API is not claimed to have been removed. Use the API versions supported by the selected artifact. The namespace/pod default `all-unauthenticated` policy is distinct from automatic encryption between meshed peers, and from this explicit Server policy.
 
 ### Kong Mesh: Enable mTLS with Deliberate Permissions
 
@@ -664,7 +664,7 @@ The original 100-Pod/m5.xlarge table assigned a $300 baseline and these addition
 
 No Region, node count, operating hours, purchase model, allocation formula or billing data supported those prices. Resource requests do not automatically buy fractional EC2 nodes, and released headroom does not necessarily reduce a bill. Retain these only as former hypothetical inputs; do not use them to choose the cheapest product.
 
-The former staffing assumptions were initial setup 40/8/20/24 hours, monthly operations 20/5/10/12 hours, monthly troubleshooting 15/3/8/10 hours and quarterly upgrades 8/2/4/5 hours for Istio/Linkerd/Kong/Consul respectively. They are not measured team productivity, and initial setup is not a recurring monthly expense.
+The former staffing assumptions were initial setup 40/8/20/24 hours, monthly operations 20/5/10/12 hours, monthly troubleshooting 15/3/8/10 hours and quarterly upgrades 8/2/4/5 hours for Istio/Linkerd/Kong/Consul respectively. They are not measurements of team productivity, and initial setup is not a recurring monthly expense.
 
 A meaningful cost model uses actual retained capacity, HA and autoscaling constraints, load balancers/transfer, storage/telemetry, platform charges, support subscriptions and observed engineering effort. Compare the same workload, security and availability requirement and state every unit/rate/date. Calculate ROI only from a substantiated difference and migration cost.
 

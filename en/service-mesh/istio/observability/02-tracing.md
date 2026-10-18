@@ -602,7 +602,7 @@ The key to distributed tracing is correctly propagating trace context between se
 
 ### Required HTTP Headers
 
-Propagate the format configured for the proxy/backend; W3C and B3 are alternatives or explicitly configured multi-format propagation. Also forward `x-request-id`. B3 remains supported; a debug `X-B3-Flags: 1` must not be enabled indiscriminately.
+Propagate the format configured for the proxy/backend; W3C and B3 are alternatives or can be explicitly configured for multi-format propagation. Also forward `x-request-id`. B3 remains supported; a debug `X-B3-Flags: 1` must not be enabled indiscriminately.
 
 #### W3C Trace Context (Recommended)
 

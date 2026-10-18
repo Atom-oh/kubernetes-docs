@@ -95,7 +95,7 @@ Route Reflector(RR)는 iBGP의 full-mesh 요구사항을 해결합니다.
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-04-bgp-deep-dive-4.html)
 
-> 그림은 클라이언트 6개와 RR 2개, 총 8노드의 13세션입니다. 그림의 2N+1은 N을 클라이언트 수로, full-mesh 공식은 전체 노드 수로 사용하므로 구분하세요. 자동 mesh는 명시적 대체 토폴로지 검증 후에 끕니다.
+> 그림은 클라이언트 6개와 RR 2개, 총 8노드의 13세션을 나타냅니다. 그림의 2N+1은 N을 클라이언트 수로, full-mesh 공식은 N을 전체 노드 수로 사용하므로 구분하세요. 자동 mesh는 명시적 대체 토폴로지 검증 후에 끕니다.
 
 **Route Reflector 동작 원리:**
 
@@ -117,7 +117,7 @@ T=500, R=2: 498×2+1 = 997 (동일한 전체 500노드 full-mesh: 124,750)
 
 ### Route Reflector 구성
 
-전환에는 준비된 워크로드 없는 RR 노드를 사용합니다. Cluster ID를 설정하면 해당 노드는 즉시 자동 mesh에서 제외되므로 사용 중인 노드를 그대로 바꾸면 연결이 끊길 수 있습니다. 아래 Kubernetes datastore 방식은 기존 노드 IP와 다른 필드를 보존합니다.
+전환에는 워크로드가 없는 준비된 RR 노드를 사용합니다. Cluster ID를 설정하면 해당 노드는 즉시 자동 mesh에서 제외되므로 사용 중인 노드를 그대로 바꾸면 연결이 끊길 수 있습니다. 아래 Kubernetes datastore 방식은 기존 노드 IP와 다른 필드를 보존합니다.
 
 #### 1. 준비된 RR 노드에 레이블·annotation 설정
 
@@ -319,7 +319,7 @@ Kubernetes가 ClusterIP를 할당합니다. `spec.externalIPs`는 운영자가 �
 
 ### Calico 자체 LoadBalancer IPAM
 
-Calico 3.32의 `calico-kube-controllers`에는 LoadBalancer 컨트롤러가 있습니다. `allowedUses: [LoadBalancer]`인 IPPool이 필요하며 일반 Pod 풀에서 자동으로 주소를 가져오는 것은 아닙니다. 해당 컨트롤러가 활성화되어 있는지 확인하세요. 아래 독립적인 bare-metal 예시는 `calico-demo` namespace와 지정 포트에서 준비된 `app=my-app` endpoint를 전제로 합니다. 문서용 CIDR을 소유한 실제 라우팅 가능 범위로 바꾸고 기존 BGPConfiguration 필드를 유지하며 병합하세요.
+Calico 3.32의 `calico-kube-controllers`에는 LoadBalancer 컨트롤러가 있습니다. `allowedUses: [LoadBalancer]`인 IPPool이 필요하며 일반 Pod 풀에서 자동으로 주소를 가져오는 것은 아닙니다. 해당 컨트롤러가 활성화되어 있는지 확인하세요. 아래 독립적인 bare-metal 예시는 `calico-demo` namespace와 지정 포트에서 준비된 `app=my-app` endpoint를 전제로 합니다. 문서용 CIDR을 실제로 소유한 라우팅 가능 범위로 바꾸고 기존 BGPConfiguration 필드를 유지하며 병합하세요.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -358,7 +358,7 @@ spec:
       targetPort: 8443
 ```
 
-명시한 `projectcalico.org/loadBalancerIPs` 주소가 적합한 풀에 속하고 사용 가능해야 합니다. 요청 주소를 할당할 수 없어도 다른 주소로 자동 fallback하지 않습니다. 주소 할당과 BGP 광고는 별도 단계입니다. `assignIPs: RequestedServicesOnly`로 변경하면 기존 annotation 없는 Service의 주소가 해제될 수 있으므로 기존 컨트롤러·풀 소유권과 할당 상태를 먼저 확인하세요.
+명시한 `projectcalico.org/loadBalancerIPs` 주소가 적합한 풀에 속하고 사용 가능해야 합니다. 요청 주소를 할당할 수 없어도 다른 주소로 자동 fallback하지 않습니다. 주소 할당과 BGP 광고는 별도 단계입니다. `assignIPs: RequestedServicesOnly`로 변경하면 annotation이 없는 기존 Service의 주소가 해제될 수 있으므로 기존 컨트롤러·풀 소유권과 할당 상태를 먼저 확인하세요.
 
 MetalLB를 할당자로 선택할 수도 있으며 현재 IP 요청 annotation은 `metallb.io/loadBalancerIPs`입니다. 같은 VIP에 대한 할당자·BGP speaker 소유권이 경쟁하지 않도록 설계하세요. AWS가 관리하는 로드 밸런서 IP를 로컬 소유 풀처럼 광고하지 않습니다.
 
@@ -532,7 +532,7 @@ spec:
 
 Calico는 BGP에 TCP MD5 signature를 지원합니다. 공유 비밀을 가진 피어의 트래픽을 인증하지만 암호화나 인증된 피어가 보낸 경로의 정당성을 보장하지 않습니다.
 
-`calico-node`가 실행되는 namespace에 비밀 관리 절차로 `bgp-secrets`를 준비하세요. 여기의 operator 설치는 `calico-system`이며 manifest 설치는 `kube-system`일 수 있습니다. 아래 예시는 `datacenter-password` 키가 필요합니다. 다른 예시가 참조하는 `mesh-password` 및 랙·leaf별 키도 별도로 준비하고 상대 라우터에 일치하는 비밀을 설정해야 합니다. Calico 서비스 계정의 Secret 읽기 권한도 확인하세요.
+`calico-node`가 실행되는 namespace에 비밀 관리 절차로 `bgp-secrets`를 준비하세요. 여기의 operator 설치 namespace는 `calico-system`이며 manifest 설치 namespace는 `kube-system`일 수 있습니다. 아래 예시는 `datacenter-password` 키가 필요합니다. 다른 예시가 참조하는 `mesh-password` 및 랙·leaf별 키도 별도로 준비하고 상대 라우터에 일치하는 비밀을 설정해야 합니다. Calico 서비스 계정의 Secret 읽기 권한도 확인하세요.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -632,7 +632,7 @@ spec:
   maxRestartTime: 120s
 ```
 
-해당 BIRD fork의 기본 제안 Hold Time은 240초이며 상대가 제안한 값과 작은 쪽으로 협상합니다. keepalive 간격을 지정하지 않으면 협상된 Hold Time의 1/3을 사용합니다. 명시적 `keepaliveTime`은 전송 간격만 바꾸며 Hold Time을 자동으로 그 3배로 바꾸지 않습니다. 실제 협상 타이머를 확인하고 그 안에 맞는 간격을 선택하세요.
+해당 BIRD fork의 기본 제안 Hold Time은 240초이며 이 값과 상대가 제안한 값 중 작은 쪽으로 협상합니다. keepalive 간격을 지정하지 않으면 협상된 Hold Time의 1/3을 사용합니다. 명시적 `keepaliveTime`은 전송 간격만 바꾸며 Hold Time을 자동으로 그 3배로 바꾸지 않습니다. 실제 협상 타이머를 확인하고 그 안에 맞는 간격을 선택하세요.
 
 `BGPPeer`에는 `holdTime` 필드가 없습니다. 기존 60/180·10/30·3/9 표는 검증된 Calico 기본값이나 장애 감지 보장이 아닙니다. BIRD 자체의 BFD 지원이 Calico의 BFD CRD·설정 필드 지원을 뜻하지 않으므로 임의의 필드를 추가하지 말고 별도 통합의 지원·실행 조건을 확인해야 합니다.
 
@@ -657,7 +657,7 @@ spec:
 
 Calico는 일반적으로 로컬 IPAM 주소를 할당 블록으로 집계하며 현재 BIRD 집계 템플릿은 우선순위가 높은 more-specific 경로도 허용합니다. borrowed 주소·이동 경로에는 host route가 필요할 수 있습니다. `prefixAdvertisements`는 기존 경로에 태그를 붙일 뿐 `/26`들을 새 `/16` 경로로 만들지 않습니다.
 
-큰 블록은 블록 경로 수와 주소 활용도·할당 세분성의 교환 관계입니다. 기존 IPPool의 `blockSize`는 변경할 수 없으므로 새 풀이 필요하면 [네트워킹 모드](03-networking-modes.md)의 마이그레이션 절차를 따르세요. 기존 기본 풀에 새 blockSize를 덮어쓰거나 포함한 모든 목적지에 도달하지 못하는 라우터에서 집계 경로를 광고하면 안 됩니다.
+큰 블록은 블록 경로 수와 주소 활용도·할당 세분성의 교환 관계입니다. 기존 IPPool의 `blockSize`는 변경할 수 없으므로 새 풀이 필요하면 [네트워킹 모드](03-networking-modes.md)의 마이그레이션 절차를 따르세요. 기존 기본 풀에 새 blockSize를 덮어쓰거나 집계 경로에 포함된 모든 목적지에 도달하지 못하는 라우터에서 집계 경로를 광고하면 안 됩니다.
 
 ## BGP 디버깅
 

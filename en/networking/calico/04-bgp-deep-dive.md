@@ -420,7 +420,7 @@ For an existing annotation, update it through the configuration owner after revi
 | Type | Address owner and prerequisite |
 | --- | --- |
 | ClusterIP | Kubernetes allocates it; advertising the Service CIDR exposes a route into the service network. |
-| ExternalIP | The operator must already own and route the assigned address. `spec.externalIPs` is deprecated since Kubernetes 1.36; existing support is not removal. |
+| ExternalIP | The operator must already own and route the assigned address. `spec.externalIPs` has been deprecated since Kubernetes 1.36; it remains supported and has not been removed. |
 | LoadBalancer IP | A compatible controller allocates it. Calico can allocate owned VIPs itself, or interoperate with an explicitly chosen allocator. A cloud LB hostname is not an IP prefix. |
 
 With the default aggregation behavior, Cluster-mode Services use configured aggregate advertisements, while Local-mode Services use host routes (`/32` or `/128`) from nodes with ready local endpoints. Explicit host-prefix ranges and Calico 3.32’s `serviceLoadBalancerAggregation` setting can change the advertised routes; inspect the actual RIB/export rather than inferring it solely from the Service type. Validate endpoints, the Service dataplane, upstream ECMP and return paths. This is distinct from Pod IPAM block advertisement.
@@ -877,7 +877,7 @@ spec:
 ### Operational Recommendations
 
 1. Label nodes consistently for BGP topology
-2. Document AS number allocation scheme
+2. Document the AS number allocation scheme
 3. Implement BGP monitoring and alerting
 4. Test failover scenarios regularly
 5. Inspect negotiated timers and test recovery; a shorter keepalive is not a guaranteed shorter Hold Time.

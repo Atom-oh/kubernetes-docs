@@ -20,7 +20,7 @@ Helm 3.19.0 이상을 사용합니다. Chart의 현재 릴리스 변경 기록�
 Kubernetes 요구와 별개로 Airflow 3.3.1의 테스트 목록은 1.30–1.35입니다.
 Chart 1.16.0 README는 1.29+였으므로 “1.16부터 1.30+”라는 이력도 정정합니다.
 Chart.yaml이 모든 최소 버전을 강제하여 반드시 설치를 거부한다고 가정하지 않습니다.
-실제 1.29 대상으로도 템플릿은 렌더링됐지만 지원을 증명하지는 않습니다.
+실제로 1.29를 대상으로도 템플릿은 렌더링됐지만 지원을 증명하지는 않습니다.
 
 ## 2. 설치 전 연결과 Secret 준비
 
@@ -181,7 +181,7 @@ kubectl -n airflow create secret generic airflow-result-backend \
 ```
 
 celery-values.yaml은 독립적인 **전체 profile**입니다. 신규 설치에서는 앞의 install 명령에
-이 파일을 선택합니다. 실행 중 배포의 executor 변경은 drain·이행·복구 계획 후 수행합니다.
+이 파일을 선택합니다. 실행 중인 배포의 executor 변경은 drain·이행·복구 계획 후 수행합니다.
 
 ```yaml
 airflowVersion: 3.3.1
@@ -245,7 +245,7 @@ SELECT ceil(COUNT(*)::decimal / 4) FROM task_instance WHERE (state='running' OR 
 ```
 
 worker_concurrency는 DB column이 아니라 chart가 넣는 **숫자 4**입니다.
-running/queued 상태를 해당 worker queue 범위로 세어 필요한 worker 수를 계산합니다.
+running/queued 상태의 task를 해당 worker queue 범위에서 세어 필요한 worker 수를 계산합니다.
 결과가 25여도 maxReplicaCount=20이면 그 이상으로 늘지 않으므로 backlog가 남을 수 있습니다.
 쿼리 오류·인증 실패를 0개 작업으로 해석하지 말고 ScaledObject와 HPA 상태를 확인합니다.
 

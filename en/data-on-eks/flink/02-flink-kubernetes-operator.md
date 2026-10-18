@@ -129,7 +129,7 @@ Distinguish this from externally managed TM Deployments in Standalone mode.
 The 1.15.0 condition is **Running**, not Available. It becomes True for an observed
 RUNNING application job or a READY Session JM Deployment. It does not prove data
 correctness, successful checkpoints or target throughput.
-This implementation does not populate condition observedGeneration. After updating
+This implementation does not populate the condition's observedGeneration. After updating
 an existing CR, do not treat a retained Running=True as proof that the new spec
 was reconciled. Also inspect reconciliation status and actual image/config/job state.
 

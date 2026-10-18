@@ -51,7 +51,7 @@ Strimzi 1.3은 CNCF incubating 프로젝트이며 커스텀 리소스의 원하�
 **정답: A) `helm repo add strimzi https://strimzi.io/charts/`**
 
 **설명:**
-공식 chart 저장소를 추가한 뒤 버전을 1.3.0으로 고정해 새 설치합니다. 기존 beta API/CRD가 있는 클러스터는 먼저 공식 전환 절차를 수행해야 하며, namespace만 새로 만들어도 cluster-scoped CRD 충돌은 사라지지 않습니다.
+공식 chart 저장소를 추가한 뒤 버전을 1.3.0으로 고정해 새로 설치합니다. 기존 beta API/CRD가 있는 클러스터는 먼저 공식 전환 절차를 수행해야 하며, namespace만 새로 만들어도 cluster-scoped CRD 충돌은 사라지지 않습니다.
 </details>
 
 4. Strimzi Cluster Operator가 기본적으로 감시(watch)하는 네임스페이스 범위는 어떻게 되나요?
@@ -67,7 +67,7 @@ Strimzi 1.3은 CNCF incubating 프로젝트이며 커스텀 리소스의 원하�
 **정답: C) 자신이 배포된 네임스페이스만**
 
 **설명:**
-기본 chart는 release namespace를 감시합니다. 추가 watchNamespaces를 지정하면 1.3 chart는 release namespace도 포함해 중복 제거하고 RoleBinding을 생성합니다. 환경 변수만 바꾸면 필요한 RBAC가 누락될 수 있습니다.
+기본 chart는 release namespace를 감시합니다. 추가 watchNamespaces를 지정하면 1.3 chart는 release namespace도 포함해 중복을 제거하고 RoleBinding을 생성합니다. 환경 변수만 바꾸면 필요한 RBAC가 누락될 수 있습니다.
 </details>
 
 5. 현재 Strimzi 1.3의 KRaft 기반 배포에서 지원되지 않는 블록은?

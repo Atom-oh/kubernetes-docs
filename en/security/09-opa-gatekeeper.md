@@ -316,7 +316,7 @@ Check policy input, match scope, CRD/template errors, webhook certificates/netwo
 
 ## Validation Scope and Related Reading
 
-Gator 3.23.1 executed 33 policy cases and three enforcement modes. Checks covered the pinned Helm render, eight Gatekeeper CRD objects and audit/webhook PodMonitor bindings. They did not execute Kubernetes admission, EKS networking, live audit-cache synchronization or API failover. Separate native mutation validation is recorded in the review report.
+Gator 3.23.1 executed 33 policy cases and three enforcement modes. Checks covered the pinned Helm render, eight Gatekeeper CRD objects and audit/webhook PodMonitor bindings. They did not exercise Kubernetes admission, EKS networking, live audit-cache synchronization or API failover. Separate native mutation validation is recorded in the review report.
 
 - [Gatekeeper quiz](../quizzes/security/09-opa-gatekeeper-quiz.md)
 - [Kyverno](./01-kyverno-policy-management.md)

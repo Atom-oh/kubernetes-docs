@@ -189,7 +189,7 @@ __cluster_metadata is KRaft's internal metadata Raft log, commonly visible as a 
 **Answer: `enable.idempotence` (the idempotent producer, `enable.idempotence=true`)**
 
 **Explanation:**
-Producer IDs, epochs and sequences suppress duplicates of the same retried transmission. They do not generally deduplicate an application submitting a business event as a new send. Transactions require logical-writer identity/fencing, atomic output/input-offset commits and read_committed consumption.
+Producer IDs, epochs and sequences suppress duplicates of the same retried transmission. They do not generally deduplicate a business event that an application submits as a new send. Transactions require logical-writer identity/fencing, atomic output/input-offset commits and read_committed consumption.
 </details>
 
 13. What is the term for the situation where traffic concentrates on a small number of partitions because the chosen partition key has low cardinality (few distinct values)?

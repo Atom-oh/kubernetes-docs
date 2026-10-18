@@ -11,7 +11,7 @@
 
 아래 출력은 기존 문서에 기록된 2026년 9월 2일 환경의 예시와 공식 문서의 메시지를 설명하기 위한 것입니다. 이번 검토에서 해당 클러스터를 다시 실행하거나 원본 수집 로그를 재검증하지 않았습니다. 특히 [Karpenter 호환성 표](https://karpenter.sh/docs/upgrading/compatibility/)는 Kubernetes 1.36에 Karpenter 1.13 이상을 요구합니다. 기록된 1.4.0 조합을 지원되는 배포 구성으로 재사용하지 않습니다.
 
-깊은 원인 분석(컨트롤 플레인 로그, CloudWatch Logs Insights 쿼리, 노드 조인 실패 8가지 원인 등)은 이미 [EKS 문제 해결](../eks/09-eks-troubleshooting.md)과 [EKS 고급 디버깅](../eks/11-eks-advanced-debugging.md)에 있습니다. 이 문서는 그 앞단에서 **어느 페이지로 들어가야 하는지를 30초 안에 결정하는 것**이 목적이며, 해당 내용을 반복하지 않고 링크합니다.
+깊은 원인 분석(컨트롤 플레인 로그, CloudWatch Logs Insights 쿼리, 노드 조인 실패 8가지 원인 등)은 이미 [EKS 문제 해결](../eks/09-eks-troubleshooting.md)과 [EKS 고급 디버깅](../eks/11-eks-advanced-debugging.md)에 있습니다. 이 문서의 목적은 그 앞단에서 **어느 페이지로 들어가야 하는지를 30초 안에 결정하는 것**이며, 해당 내용을 반복하지 않고 링크합니다.
 
 ## 목차
 
@@ -52,7 +52,7 @@
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-16-troubleshooting-playbook-0.html)
 
-먼저 컨텍스트와 네임스페이스를 확인합니다. `<pod>`, `<ns>` 등은 실제 값으로 치환하는 자리표시자입니다. Pod phase와 컨테이너 상태는 다르므로 `Running`을 전부 제외하면 CrashLoop나 readiness 실패를 놓칠 수 있습니다. 아래는 완료된 파드를 제외하고 phase 또는 Ready 조건이 비정상인 파드를 조회합니다.
+먼저 컨텍스트와 네임스페이스를 확인합니다. `<pod>`, `<ns>` 등은 실제 값으로 치환하는 자리표시자입니다. Pod phase와 컨테이너 상태는 다르므로 `Running`을 전부 제외하면 CrashLoop나 readiness 실패를 놓칠 수 있습니다. 아래 명령은 완료된 파드를 제외하고 phase 또는 Ready 조건이 비정상인 파드를 조회합니다.
 
 ```bash
 # phase와 Ready 조건을 함께 확인
@@ -173,7 +173,7 @@ kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
     Restart Count:  3
 ```
 
-약 36시간 실행 후 종료됐다는 사실은 즉시 시작 실패와 구분하는 단서입니다. 이것만으로 메모리 누수를 확정하지 않습니다. 트래픽 급증·배치 작업·노드 OOM·limit 변경 등도 확인하고 메모리 시계열과 커널/cgroup 이벤트를 대조합니다.
+약 36시간 실행 후 종료됐다는 사실은 시작 직후의 실패와 구분하는 단서입니다. 이것만으로 메모리 누수를 확정하지 않습니다. 트래픽 급증·배치 작업·노드 OOM·limit 변경 등도 확인하고 메모리 시계열과 커널/cgroup 이벤트를 대조합니다.
 
 **exit code 읽는 법**:
 
@@ -324,7 +324,7 @@ StorageReady=True (DiskIsReady)
 | `MemoryPressure=True` (`KubeletHasInsufficientMemory`) | `node.kubernetes.io/memory-pressure` | 실제 사용량이 예약을 초과하거나 시스템 예약 부족. limit만 지정하면 request도 기본 지정될 수 있음 | requests 설정 강제(LimitRange), `kube-reserved`/`system-reserved` 확인 |
 | `PIDPressure=True` (`KubeletHasInsufficientPID`) | `node.kubernetes.io/pid-pressure` | 포크 폭주(스레드 누수) | 해당 파드 찾아 재시작, `podPidsLimit` 설정 |
 
-아래는 호스트에 셸·journalctl·crictl이 설치된 일반 Linux 워커용 예제이며 privileged 디버그 Pod를 만듭니다. Bottlerocket/EKS Auto Mode의 불변 호스트에 같은 chroot 절차를 가정하지 않습니다. [Auto Mode 진단](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)의 debug container·콘솔 로그 절차를 사용합니다.
+아래는 호스트에 셸·journalctl·crictl이 설치된 일반 Linux 워커용 예제이며 privileged 디버그 Pod를 만듭니다. Bottlerocket/EKS Auto Mode의 불변 호스트에서도 같은 chroot 절차를 사용할 수 있다고 가정하지 않습니다. [Auto Mode 진단](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)의 debug container·콘솔 로그 절차를 사용합니다.
 
 ```bash
 kubectl debug node/<node> -it --image=busybox --profile=sysadmin -- chroot /host
@@ -590,7 +590,7 @@ kube_deployment_status_replicas_available{
 
 메트릭이 수집되지 않으면 이 식도 결과가 없으므로 별도의 `absent_over_time(...[5m])` 또는 scrape 장애 알림이 필요합니다. Deployment Available만으로 Service selector·인증서·네트워크 경로까지 보장하지는 않습니다. EndpointSlice 조건과 webhook 경로도 점검합니다. 복제본을 여러 AZ에 분산하고 PDB를 적용하면 일부 노드 장애에 도움이 되지만, 모든 복제본의 잘못된 설정을 해결해 주지는 않습니다.
 
-기존 [Pod 네트워크 벤치마크](../networking/06-pod-network-benchmark.md)의 ClusterIP 측정 제외 사유는 해당 문서의 측정 범위로 남깁니다. 이번 검토에서 그 장애를 다시 실행하지는 않았습니다.
+기존 [Pod 네트워크 벤치마크](../networking/06-pod-network-benchmark.md)의 ClusterIP 측정 제외 사유는 해당 문서의 측정 범위로 남깁니다. 이번 검토에서 그 장애를 다시 재현하지는 않았습니다.
 
 ***
 

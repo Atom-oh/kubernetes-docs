@@ -82,7 +82,7 @@ MLflow Tracing은 **2.14.0(2024-06-17)**에 이미 도입됐습니다. 3.x에서
 
 Trace는 요청의 retrieval·tool·LLM 호출 같은 작업을 span으로 표현합니다. parent/child 구조와 span link를 구분합니다. 토큰 수집은 integration과 provider 응답에 의존하며, 검색·도구 span에 항상 LLM 토큰/비용이 있는 것은 아닙니다. 비용 추정은 모델 식별·사용량·가격 정보가 있어야 하며 실제 청구 총액과 동일하지 않습니다.
 
-자동 계측과 수동 span을 함께 사용할 수 있습니다. 입력·출력·예외·tool argument·reasoning에 민감정보가 포함될 수 있으므로 수집 범위, 접근 권한, redaction, 보존 기간을 정합니다. integration을 설치한 것만으로 모든 경로가 연결되거나 비용이 완전 집계되지는 않습니다.
+자동 계측과 수동 span을 함께 사용할 수 있습니다. 입력·출력·예외·tool argument·reasoning에 민감정보가 포함될 수 있으므로 수집 범위, 접근 권한, redaction, 보존 기간을 정합니다. integration을 설치한 것만으로 모든 경로가 연결되거나 비용이 완전히 집계되지는 않습니다.
 
 ## Backend Store와 Artifact Store
 

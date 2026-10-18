@@ -63,7 +63,7 @@ kubectl diff -f deployment-injected.yaml
 kubectl apply -f deployment-injected.yaml
 ```
 
-Istio1.31에서 `--revision`을 생략하면 로컬 파일이 있어도 기본 revision watcher가 cluster에 접속하여 대기할 수 있습니다. 내보낸 설정에 맞는 실제 revision을 명시하고, revision 없는 기본 설치는 `default`를 사용합니다. 명시한 revision과 세 로컬 설정 파일로 실행한 렌더는 cluster 조회 없이 검증했습니다.
+Istio 1.31에서 `--revision`을 생략하면 로컬 파일이 있어도 기본 revision watcher가 cluster에 접속하여 대기할 수 있습니다. 내보낸 설정에 맞는 실제 revision을 명시하고, revision 없는 기본 설치는 `default`를 사용합니다. 명시한 revision과 세 로컬 설정 파일로 실행한 렌더는 cluster 조회 없이 검증했습니다.
 
 `deployment.yaml`은 원본 애플리케이션 리소스여야 합니다. 생성된 출력과 분리하고 설정/버전 변경 때 원본에서 다시 렌더링하세요. 자동·수동 주입의 관리 방식을 명확히 하고 admission 결과를 확인하며 생성된 proxy container에 임의 수정을 중첩하지 않습니다. `kubectl diff`의 exit 1은 보통 차이가 있다는 뜻이며 적용 승인이나 검증 성공을 뜻하지 않습니다.
 
@@ -111,7 +111,7 @@ kubectl get pods -n "$INJECTION_NAMESPACE" -o json |
 istioctl proxy-status
 ```
 
-Native sidecar는 `spec.initContainers`와 `restartPolicy: Always`, classic sidecar는 `spec.containers`를 사용합니다. Kubernetes native sidecar는1.33부터 stable이고1.32에서도 기본 활성화되지만, Istio의 `sidecar.istio.io/nativeSidecar` annotation은 아직 Alpha로 문서화되어 있습니다. READY가 항상2/2일 것으로 가정하지 말고 실제 injector 결과를 확인하세요.
+Native sidecar는 `spec.initContainers`와 `restartPolicy: Always`, classic sidecar는 `spec.containers`를 사용합니다. Kubernetes native sidecar는 1.33부터 stable이고 1.32에서도 기본 활성화되지만, Istio의 `sidecar.istio.io/nativeSidecar` annotation은 아직 Alpha로 문서화되어 있습니다. READY가 항상 2/2일 것으로 가정하지 말고 실제 injector 결과를 확인하세요.
 
 Pod 생성 자체가 실패하면 controller event, webhook 연결/인증서, namespace/object selector, revision 존재 여부와 리소스 admission 제한을 확인합니다. Proxy가 있으면 readiness·로그·xDS 동기화를 별도로 확인하세요. Proxy 이름만으로 올바른 mesh enrollment가 증명되지는 않습니다.
 

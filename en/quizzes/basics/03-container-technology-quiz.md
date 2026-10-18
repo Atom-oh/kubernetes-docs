@@ -1,6 +1,6 @@
 # Container Technology Quiz
 
-This quiz tests your understanding of container technology fundamentals, how they work, and their relationship with Kubernetes.
+This quiz tests your understanding of container technology fundamentals, how containers work, and their relationship with Kubernetes.
 
 Answer for ordinary Linux process-isolated containers. VM-backed runtimes such as Kata/Fargate and Windows support differ.
 
@@ -83,7 +83,7 @@ Container images consist of multiple layers, with each layer representing change
 **Answer: B) Reducing final image size**
 
 **Explanation:**
-The main purpose of multi-stage builds is to reduce the final image size. The build stage includes all necessary tools for source code compilation, dependency installation, etc., while the run stage brings only the build artifacts to create a small image with minimal runtime environment. This excludes build tools and intermediate files from the final image.
+The main purpose of multi-stage builds is to reduce the final image size. The build stage includes all necessary tools for source code compilation, dependency installation, etc., while the run stage brings only the build artifacts to create a small image with a minimal runtime environment. This excludes build tools and intermediate files from the final image.
 </details>
 
 6. What is Docker's default network driver?
@@ -195,7 +195,7 @@ Container lifecycle states include Created, Running, Paused, Restarting, Exited,
 **Answer: D) unless-stopped**
 
 **Explanation:**
-The `unless-stopped` restart policy always restarts the container unless it was explicitly stopped. The container starts automatically even when the Docker daemon restarts, but if the user manually stopped it with the `docker stop` command, the container will not start after daemon restart. A manual stop suppresses always until a daemon restart or an explicit container start; unlike unless-stopped, it starts again after a daemon restart.
+The `unless-stopped` restart policy always restarts the container unless it was explicitly stopped. The container starts automatically even when the Docker daemon restarts, but if the user manually stopped it with the `docker stop` command, the container will not start after daemon restart. A manual stop suppresses restarts under always until a daemon restart or an explicit container start; unlike with unless-stopped, the container starts again after a daemon restart.
 </details>
 
 13. Which Docker command checks the file system changes between a container and its original image?
@@ -400,10 +400,10 @@ This multi-stage Dockerfile consists of two stages:
 1. Build stage: Uses Node.js image to build the React application.
 2. Run stage: Uses lightweight nginx image to serve the built static files.
 
-The advantage of this approach is that the final image does not include Node.js runtime, npm packages, source code, etc., significantly reducing image size. The final image contains only built static files and nginx, making it smaller and more secure.
+The advantage of this approach is that the final image does not include the Node.js runtime, npm packages, source code, etc., significantly reducing image size. The final image contains only built static files and nginx, making it smaller and more secure.
 </details>
 
-24. Write a Dockerfile that includes container health checks. Configure it to check the HTTP endpoint /health every 30 seconds, treat as failed if no response within 3 seconds, and mark as unhealthy after 3 failures.
+24. Write a Dockerfile that includes container health checks. Configure it to check the HTTP endpoint /health every 30 seconds, treat the check as failed if there is no response within 3 seconds, and mark the container as unhealthy after 3 failures.
 
 <details>
 
@@ -434,7 +434,7 @@ Meaning of each HEALTHCHECK directive option:
 - `--retries=3`: Mark container as unhealthy after 3 consecutive failures
 - `CMD`: Health check command to execute. Uses wget to check /health endpoint
 
-Docker marks unhealthy but does not restart a standalone container solely for that status. An orchestrator may react to supported health signals; Kubernetes requires its own probes and does not use Dockerfile HEALTHCHECK. The example must provide an HTTP 200 /health endpoint.
+Docker marks a container as unhealthy but does not restart a standalone container solely for that status. An orchestrator may react to supported health signals; Kubernetes requires its own probes and does not use Dockerfile HEALTHCHECK. The example must provide an HTTP 200 /health endpoint.
 </details>
 
 25. Write Docker commands to check the environment variables, network settings, and process list of a running container for debugging purposes.
@@ -485,7 +485,7 @@ When debugging containers, combine these commands to diagnose issues:
 - `docker inspect` checks detailed container metadata
 - `docker top` views container processes from the host perspective
 - `docker diff` checks files changed compared to the image
-Using these tools effectively helps understand container internal state and resolve issues.
+Using these tools effectively helps you understand a container's internal state and resolve issues.
 </details>
 
 Dockerfile exercises require the reader’s matching package-lock.json, server.js/static build script and html directory. Exclude node_modules/.git/.env via .dockerignore. React static output may be build or dist; use the actual tool’s output. SSR apps do not run by copying static files into NGINX. The /health example tests a static NGINX response, not backend readiness.
@@ -529,7 +529,7 @@ Namespaces and cgroups play complementary roles:
 
     - cgroups limit the system resources (CPU, memory, disk I/O, etc.) that containers can use, providing physical resource isolation. This prevents one container from using excessive resources and affecting other containers or the host system.
 
-These two technologies work together to allow containers to run in isolated environments with limited resource usage. This isolation is lighter than virtual machines but security depends on kernel exposure, privileges and runtime configuration; it is not a complete isolation guarantee.
+These two technologies work together to allow containers to run in isolated environments with limited resource usage. This isolation is lighter than that provided by virtual machines but security depends on kernel exposure, privileges and runtime configuration; it is not a complete isolation guarantee.
 </details>
 
 27. Explain how the container image layering system works and how the Copy-on-Write (CoW) strategy contributes to container efficiency.
@@ -555,7 +555,7 @@ Copy-on-Write is an optimization strategy that delays copy operations until data
 
 1. **Container start**: When a container starts, a thin writable layer is added on top of existing image layers.
 2. **Read operations**: When reading a file, the system searches layers from top to bottom and uses the first version of the file found.
-3. **Write operations**: When modifying a file, the file is first copied to the writable layer then modified (Copy-on-Write). The original file remains unchanged.
+3. **Write operations**: When a file is modified, it is first copied to the writable layer and then modified (Copy-on-Write). The original file remains unchanged.
 4. **Delete operations**: Deleting a lower-layer file creates a whiteout in the writable layer; a file that exists only in the upper layer can be removed there.
 
 **Contribution to efficiency**:
@@ -565,7 +565,7 @@ Copy-on-Write is an optimization strategy that delays copy operations until data
     - Each container only needs to store its own changed data.
 
 2. **Faster startup time**:
-    - When starting a new container, only the writable layer needs to be created, not copying the entire file system.
+    - When a new container is started, only the writable layer needs to be created; the entire file system does not need to be copied.
     - This significantly reduces container startup time.
 
 3. **Memory efficiency**:
@@ -574,7 +574,7 @@ Copy-on-Write is an optimization strategy that delays copy operations until data
 4. **Network efficiency**:
     - Already existing layers don't need to be downloaded again during image download.
 
-Thanks to these efficiencies, containers can start lighter and faster than virtual machines, and more containers can run on the same host.
+Thanks to these efficiencies, containers can be lighter and start faster than virtual machines, and more containers can run on the same host.
 </details>
 
 28. Explain the entire container lifecycle and describe the container behavior and state transition methods in each state (Created, Running, Paused, Restarting, Exited, Dead).

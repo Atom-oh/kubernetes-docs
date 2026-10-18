@@ -16,7 +16,7 @@
 **정답: B) eBPF**
 
 **설명:**
-Cilium은 지원 kernel hook에 검증된 eBPF 프로그램을 로드합니다. 네트워킹/관측성 기능을 구현하지만 모든 대안보다 높은 성능을 보장하지는 않으므로 선택한 워크로드와 설정을 측정해야 합니다.
+Cilium은 지원 kernel hook에 검증된 eBPF 프로그램을 로드합니다. 네트워킹/관측성 기능을 구현하지만 모든 대안보다 높은 성능을 보장하지는 않으므로 선택한 워크로드와 설정에서 성능을 측정해야 합니다.
 
 </details>
 
@@ -332,7 +332,7 @@ kubectl --context "$CILIUM_LAB_CONTEXT" get ccnp -o yaml
 ```
 
 **설명:**
-Endpoint 식별자와 realized 상태는 선택한 agent/노드에 속합니다. cilium-dbg가 지원하는 Pod 식별자를 사용하세요. kubectl은 desired 정책 리소스를 읽으며 적용 성공의 증거가 아닙니다. cilium-dbg policy get은 deprecated이고 관리 cilium endpoint/policy/monitor 명령과 동일하지 않습니다.
+Endpoint 식별자와 realized 상태는 선택한 agent/노드에 속합니다. cilium-dbg가 지원하는 Pod 식별자를 사용하세요. kubectl은 desired 정책 리소스를 읽으며 그 결과가 적용 성공의 증거는 아닙니다. cilium-dbg policy get은 deprecated이고 관리 cilium endpoint/policy/monitor 명령과 동일하지 않습니다.
 
 </details>
 

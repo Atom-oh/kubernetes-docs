@@ -5,7 +5,7 @@
 > **지원 버전**: 호환 Karpenter를 사용하는 지원 EKS 버전. Kubernetes 1.36.5와 Karpenter/provider 1.14.1(검토 고정 버전) 인터페이스 확인.
 > **마지막 업데이트**: 2026년 10월 16일
 
-이 문서는 Hybrid·클라우드 노드에 워크로드를 배치하고 cloud bursting과 Pod deletion cost의 한계를 설명합니다. 예제는 로컬로 검증한 구성·패치 방식입니다. 감사 중 클라우드 용량 생성, 노드 변경, 애플리케이션·GPU 워크로드 실행을 수행하지 않았습니다.
+이 문서는 Hybrid·클라우드 노드에 워크로드를 배치하는 방법과 cloud bursting과 Pod deletion cost의 한계를 설명합니다. 예제는 로컬로 검증한 구성·패치 방식입니다. 감사 중 클라우드 용량 생성, 노드 변경, 애플리케이션·GPU 워크로드 실행을 수행하지 않았습니다.
 
 ## 배치 제약과 허용
 
@@ -308,7 +308,7 @@ Required hostname anti-affinity는 충분한 용량이 있을 때 matching repli
 
 ## Pod deletion cost는 선호도
 
-`controller.kubernetes.io/pod-deletion-cost`는 Pod의 정수 annotation입니다. 유효 범위는 **−2147483648~2147483647**, 없으면 기본값0이며 음수도 허용됩니다. ReplicaSet 축소 시 해당 Pod 집합 안에서 낮은 값을 **best-effort**로 먼저 제거합니다.
+`controller.kubernetes.io/pod-deletion-cost`는 Pod의 정수 annotation입니다. 유효 범위는 **−2147483648~2147483647**이며, 값이 없으면 기본값은 0이고 음수도 허용됩니다. ReplicaSet 축소 시 해당 Pod 집합 안에서 낮은 값을 **best-effort**로 먼저 제거합니다.
 
 확인한 Kubernetes1.36.5 컨트롤러에서 deletion cost보다 먼저 비교하는 항목은 다음과 같습니다.
 
@@ -419,7 +419,7 @@ Karpenter1.14.1도 Pod priority와 함께 **정규화된 eviction-cost 계산**�
 | `WhenEmptyOrUnderutilized` | 해당 제약에 따라 통합 과정에서 워크로드 이동 가능 |
 | PDB / disruption budget / lifecycle 설정 | 서로 적용 범위가 다르며 cost annotation으로 대체하지 않음 |
 
-빈 노드가 즉시 사라진다는 보장은 없습니다. 조정 주기, disruption budget, finalizer와 cloud 종료 과정이 남습니다. Affinity·spread 선호도 통합 기회를 줄일 수 있습니다. 모든 HPA 축소가 같은 수의 cloud node 삭제를 만든다고 가정하지 말고 함께 평가합니다.
+빈 노드가 즉시 사라진다는 보장은 없습니다. 조정 주기, disruption budget, finalizer와 cloud 종료 과정이 남습니다. Affinity·spread 선호도 통합 기회를 줄일 수 있습니다. 모든 HPA 축소가 같은 수의 cloud node 삭제로 이어진다고 가정하지 말고 함께 평가합니다.
 
 ![조건부 축소 흐름. Deletion cost는 선호도이며 적격 빈 cloud node는 이후 Karpenter가 제거할 수 있다.](../.gitbook/assets/ko-eks-hybrid-nodes-06-workload-placement-0.png)
 

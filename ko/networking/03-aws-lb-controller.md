@@ -35,7 +35,7 @@ RBAC, CRD, 프로브와 웹훅 인증서를 포함한 전체 릴리스 차트를
 
 ### 관리 주체와 호환성
 
-이 장은 **직접 관리하는 오픈소스 컨트롤러**를 구성합니다. EKS Auto Mode에는 별도의 관리형 로드밸런싱이 있습니다. NLB Service는 `eks.amazonaws.com/nlb`, ALB IngressClass는 `eks.amazonaws.com/alb`를 사용하며 TargetGroupBinding API도 `elbv2.k8s.aws/v1beta1`과 다릅니다. 클래스를 제자리 변경하거나 모든 어노테이션을 복사하지 말고 Auto Mode 마이그레이션 가이드를 확인하세요. 두 모델을 함께 사용할 때는 명시적인 클래스로 관리 주체를 구분합니다.
+이 장에서는 **직접 관리하는 오픈소스 컨트롤러**를 구성합니다. EKS Auto Mode에는 별도의 관리형 로드밸런싱이 있습니다. NLB Service는 `eks.amazonaws.com/nlb`, ALB IngressClass는 `eks.amazonaws.com/alb`를 사용하며 TargetGroupBinding API도 `elbv2.k8s.aws/v1beta1`과 다릅니다. 클래스를 제자리 변경하거나 모든 어노테이션을 복사하지 말고 Auto Mode 마이그레이션 가이드를 확인하세요. 두 모델을 함께 사용할 때는 명시적인 클래스로 관리 주체를 구분합니다.
 
 현재 지원되는 EKS Kubernetes 릴리스를 사용하고 클러스터 전체 CRD를 공유하는 모든 컨트롤러를 확인하세요. LBC **v3.6.0**은 **2026-10-05**에 공개되었으며 검증한 차트 **3.6.0**이 해당 컨트롤러를 포함합니다. v3.6.0도 v3.5.0과 같은 Gateway API **v1.6.0** CRD를 기준으로 하므로 Gateway API 사용자는 업그레이드 전에 v1.6.0 CRD가 필요합니다. 릴리스 노트는 컨트롤러 업그레이드 전에 최신 AWS 제공 LBC CRD(차트의 `helm show crds` 결과)를 먼저 적용하도록 권장하며, LBC 전용 Gateway CRD는 `gateway.k8s.aws/v1`을 사용합니다. 임의의 최신 Gateway API나 Kubernetes 릴리스와 호환된다는 뜻은 아닙니다. 예전의 일반적인 “Kubernetes 1.22+” 설치 하한을 현재 EKS 지원 매트릭스로 해석하면 안 됩니다.
 
@@ -45,7 +45,7 @@ RBAC, CRD, 프로브와 웹훅 인증서를 포함한 전체 릴리스 차트를
 
 ### 1. IAM 정책 생성
 
-**v3.6.0**에 포함된 IAM 정책과 올바른 AWS 파티션을 사용하세요. 넓은 조회·보안 그룹 권한, 리소스/태그 조건과 이 배포에서 활성화할 기능을 검토하고 검토본을 저장한 뒤 정책을 생성합니다. upstream 정책을 최소 권한 보장으로 간주하거나 현재 설치에 오래된 v2.8 정책을 복사하지 마세요. 지원되는 노드에서는 **IRSA 또는 EKS Pod Identity**로 AWS 자격 증명을 제공할 수 있으며 Kubernetes API RBAC와는 별도입니다.
+**v3.6.0**에 포함된 IAM 정책과 올바른 AWS 파티션을 사용하세요. 넓은 조회·보안 그룹 권한, 리소스/태그 조건과 이 배포에서 활성화할 기능을 검토하고 검토본을 저장한 뒤 정책을 생성합니다. upstream 정책이 최소 권한을 보장한다고 간주하거나 현재 설치에 오래된 v2.8 정책을 복사하지 마세요. 지원되는 노드에서는 **IRSA 또는 EKS Pod Identity**로 AWS 자격 증명을 제공할 수 있으며 Kubernetes API RBAC와는 별도입니다.
 
 ### 2. IRSA 설정
 
@@ -75,7 +75,7 @@ eksctl create iamserviceaccount --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
   --attach-policy-arn "$CONTROLLER_POLICY_ARN" --approve
 ```
 
-기존 검토된 정책/역할은 재생성하지 말고 재사용하세요. IRSA 역할을 재사용하면 이 클러스터의 OIDC 공급자와 의도한 서비스 계정에 대한 신뢰 구문이 필요합니다. 기존 서비스 계정은 변경 전에 소유권과 어노테이션을 검토하세요. Pod Identity에는 별도의 에이전트/연결과 역할 신뢰 구성이 필요하며 정적 액세스 키를 차트 values에 복사하지 마세요.
+이미 검토된 정책/역할은 재생성하지 말고 재사용하세요. IRSA 역할을 재사용하면 이 클러스터의 OIDC 공급자와 의도한 서비스 계정에 대한 신뢰 구문이 필요합니다. 기존 서비스 계정은 변경 전에 소유권과 어노테이션을 검토하세요. Pod Identity에는 별도의 에이전트/연결과 역할 신뢰 구성이 필요하며 정적 액세스 키를 차트 values에 복사하지 마세요.
 
 ## 설치
 
@@ -939,7 +939,7 @@ spec:
 - **v3.5.0 (2026-08-03):** Gateway API v1.6.0 적합성과 안정 v1 TCPRoute/UDPRoute 지원. LBC Gateway 구성 리소스는 `gateway.k8s.aws/v1`을 사용하며, 여전히 제공되는 v1beta1은 deprecated입니다.
 - **v3.6.0 (2026-10-05):** Gateway API CRD 기준은 v1.6.0으로 그대로이며, 업그레이드 전 최신 AWS 제공 LBC CRD 적용을 권장합니다. 교차 계정 TargetGroupBinding의 파드 AZ 기반 IP 등록(opt-in)과 Ingress `frontend-nlb-status-only` 어노테이션이 추가되었습니다.
 
-현재 v3.6은 QUIC/TCP_QUIC 구성과 ALB JWT 검증을 지원합니다. 서로 다른 기능이며 프로토콜별 제약이 있습니다. JWT 검증은 HTTPS 전용이고 JSON은 `jwksUri`가 아니라 **`jwksEndpoint`**를 사용합니다. 유효한 인증서, 도달 가능한 신뢰하는 JWKS 엔드포인트와 검토된 issuer/claim을 갖춘 HTTPS Ingress 어노테이션에 다음을 추가하세요.
+현재 v3.6은 QUIC/TCP_QUIC 구성과 ALB JWT 검증을 지원합니다. 서로 다른 기능이며 프로토콜별 제약이 있습니다. JWT 검증은 HTTPS 전용이고 JSON은 `jwksUri`가 아니라 **`jwksEndpoint`**를 사용합니다. 유효한 인증서, 도달 가능하고 신뢰할 수 있는 JWKS 엔드포인트와 검토된 issuer/claim을 갖춘 HTTPS Ingress 어노테이션에 다음을 추가하세요.
 
 ```yaml
 alb.ingress.kubernetes.io/jwt-validation: >-
@@ -1149,7 +1149,7 @@ spec:
 
 ## 트러블슈팅
 
-아래 이름 변수는 실제 네임스페이스와 리소스 목록에서 설정하세요. 인프라 변경 전에 컨트롤러 이벤트/오류 사유를 확인합니다. 선택적 exec 상태 검사는 애플리케이션 이미지에 curl이 있다고 가정하며 없으면 승인된 진단 컨테이너를 사용하세요. 근거 수집 시 로그와 자격 증명을 보호합니다. 502에는 연결 재설정, 잘못된 응답이나 TLS 원인도 있으므로 모든 비정상 대상이 같은 HTTP 상태를 만든다고 가정하지 말고 ALB 액세스 로그의 오류 세부 내용을 확인하세요.
+아래 이름 변수는 실제 네임스페이스와 리소스 목록을 참고하여 설정하세요. 인프라 변경 전에 컨트롤러 이벤트/오류 사유를 확인합니다. 선택적 exec 상태 검사는 애플리케이션 이미지에 curl이 있다고 가정하며 없으면 승인된 진단 컨테이너를 사용하세요. 근거 수집 시 로그와 자격 증명을 보호합니다. 502에는 연결 재설정, 잘못된 응답이나 TLS 원인도 있으므로 모든 비정상 대상이 같은 HTTP 상태를 만든다고 가정하지 말고 ALB 액세스 로그의 오류 세부 내용을 확인하세요.
 
 ### 일반적인 문제
 

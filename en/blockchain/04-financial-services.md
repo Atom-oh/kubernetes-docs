@@ -25,7 +25,7 @@ As seen in [Fundamentals](./01-fundamentals.md), blockchain's essence is **"agre
 
 **"Only tamper detection is needed" is an especially common misconception.** If the goal is an audit trail or integrity proof, you can achieve it without blockchain, using a signed append-only log, a hash chain, or object storage WORM (Write Once Read Many) features, with far simpler operations.
 
-[The Amazon QLDB case](./03-managed-blockchain.md) is instructive here. QLDB provided precisely "a cryptographically verifiable ledger with a central trusted party," on the premise that **many problems are satisfied by that.** The service ended, but the problem definition remains valid: many requirements do not need full decentralized consensus.
+[The Amazon QLDB case](./03-managed-blockchain.md) is instructive here. QLDB provided precisely "a cryptographically verifiable ledger with a central trusted party," on the premise that **many problems are solved by that.** The service ended, but the problem definition remains valid: many requirements do not need full decentralized consensus.
 
 **Practical recommendation**: if you cannot write "why this problem must have no arbiter" in one sentence, compare the non-blockchain alternatives first.
 
@@ -101,7 +101,7 @@ Privacy regulation's deletion requirements conflict with blockchain immutability
 ::: warning Needs verification
 **The legal interpretation of privacy regulations' (Korea's PIPA, GDPR, etc.) deletion requirements versus blockchain immutability varies by jurisdiction and case, and this document is not legal advice.**
 
-Whether hashes or ciphertext constitute personal data, and whether crypto-shredding satisfies a deletion obligation, must be **confirmed with your legal/compliance function and regulators' interpretations.** That confirmation comes before technical design.
+Whether hashes or ciphertext constitute personal data, and whether crypto-shredding satisfies a deletion obligation, must be **confirmed with your legal/compliance function and checked against regulators' interpretations.** That confirmation comes before technical design.
 :::
 
 ## Key Management: The Heaviest Item in Financial Services
@@ -117,7 +117,7 @@ Whether hashes or ciphertext constitute personal data, and whether crypto-shredd
 | Backups mandatory: loss is permanent | Backups are an exposure path |
 | Auditable: who signed what | The key itself must not be exposed |
 
-This contradiction is **the hardest part to design** in financial-services blockchain.
+This contradiction is **the hardest part to design for** in financial-services blockchain.
 
 ### Available mechanisms
 
@@ -230,7 +230,7 @@ The point of this table is that **stages 2 and 3 come before technology.** Even 
 
 - **Filter out cases where blockchain is not the answer first.** If you cannot write "why this must have no arbiter" in one sentence, compare alternatives. If only tamper detection is needed, signed logs or WORM suffice.
 - The decisive reasons financial services go consortium are **KYC/AML obligations and data sovereignty.** Throughput and governance are secondary benefits.
-- Choosing consortium **removes much of blockchain's original value.** What remains substantively is **"reduced inter-institution reconciliation cost,"** and defining value that way is defensible in review.
+- Choosing a consortium **removes much of blockchain's original value.** What remains substantively is **"reduced inter-institution reconciliation cost,"** and defining value that way is defensible in review.
 - Choose privacy mechanisms for the actual data model. Historic ciphertext copies can outlive key rotation; validate retention, private-data purge and legal obligations explicitly.
 - Key management must balance isolation and signing availability. For PoS validators, uncoordinated signers can produce **conflicting slashable messages**; an identical duplicate signature is not automatically slashable. Use fenced failover with preserved slashing history, or a proven coordinated distributed-signing design.
 - The two items most underprepared in review are **error correction** (the answer is a compensating-transaction procedure, not technology) and **an exit strategy** (retention obligations mean "we turned it off" is not the end).

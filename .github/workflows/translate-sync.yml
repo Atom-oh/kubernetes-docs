@@ -1,16 +1,18 @@
-name: Translate Sync (cn/jp/es)
+name: GitBook Translation Sync (cn/jp/es)
 
 on:
   push:
     branches: [main]
     paths:
       - 'en/**/*.md'
-      - '.github/workflows/translate*.yml'
-      - '.github/workflows/translation-batch.yml'
+      - '.github/workflows/translate-sync.yml'
       - 'scripts/translation-batch.mjs'
       - 'scripts/translate.sh'
       - 'scripts/sync-nav.py'
       - 'scripts/bedrock-translation.py'
+      - 'scripts/validate-translation.py'
+      - 'scripts/validate-gitbook-coverage.mjs'
+      - 'scripts/review-translation-batch.mjs'
       - 'scripts/requirements-translation.txt'
   workflow_dispatch: {}
 
@@ -19,7 +21,81 @@ permissions:
   pull-requests: write
 
 jobs:
-  sync:
-    uses: ./.github/workflows/translation-batch.yml
-    with:
-      before: ${{ github.event.before || '' }}
+  translate:
+    runs-on: kubernetes-docs-claude-arm
+    # All three GitBook locales share one execution, branch and PR.
+    concurrency:
+      group: gitbook-translation-batch
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TRANSLATION_BEFORE: ${{ github.event.before || '' }}
+      TRANSLATION_MODEL: openai.gpt-6-luna
+      TRANSLATION_REGION: us-east-1
+      ANTHROPIC_MODEL: us.anthropic.claude-fable-5
+      CLAUDE_CODE_USE_BEDROCK: 1
+      ANTHROPIC_BEDROCK_BASE_URL: https://bedrock-runtime.us-east-1.amazonaws.com
+      AWS_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Bedrock translation dependencies
+        run: python3 -m pip install -r scripts/requirements-translation.txt
+
+      - name: Verify CLIs
+        run: |
+          if ! command -v claude >/dev/null 2>&1; then
+            npm install -g @anthropic-ai/claude-code
+          fi
+          command -v gh
+
+      - name: Verify Luna model access before touching the translation queue
+        run: python3 scripts/bedrock-translation.py preflight
+
+      - name: Preserve pending work in one draft PR on latest main
+        run: node scripts/translation-batch.mjs prepare
+
+      - name: Translate queued pages with gpt-6-luna
+        run: |
+          node scripts/translation-batch.mjs translate
+          node scripts/sync-translated-assets.mjs
+
+      - name: Reconcile main changes before review
+        run: |
+          node scripts/translation-batch.mjs refresh
+          node scripts/sync-translated-assets.mjs
+          git add -- cn jp es .github/translation-state.json .github/i18n-heading-map.json
+
+      - name: Quality gate on the complete pending diff
+        id: gate
+        run: |
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          node scripts/validate-gitbook-coverage.mjs
+          if node scripts/review-translation-batch.mjs > /tmp/review-result.txt 2>&1; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+          cat /tmp/review-result.txt
+
+      - name: Update the same PR after quality review
+        if: steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'true'
+        run: node scripts/translation-batch.mjs publish
+
+      - name: Retain draft and retry queue when review fails
+        if: steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'false'
+        run: |
+          echo "::warning::Quality score must be 85-100. Pending work remains in the draft PR; re-run Translate Sync to retry."
+          exit 1

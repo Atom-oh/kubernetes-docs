@@ -5,7 +5,7 @@
 
 ## 개요
 
-Gateway API는 Kubernetes의 차세대 인그레스 API로, 기존 Ingress API의 한계를 극복하고 더 표현력 있고 확장 가능한 네트워크 라우팅 기능을 제공합니다. SIG-Network에서 개발하며, 다양한 구현체(Istio, Cilium, Envoy Gateway 등)에서 지원됩니다.
+Gateway API는 Kubernetes의 차세대 인그레스 API로, 기존 Ingress API의 한계를 극복하고 표현력이 더 높고 확장 가능한 네트워크 라우팅 기능을 제공합니다. SIG-Network에서 개발하며, 다양한 구현체(Istio, Cilium, Envoy Gateway 등)에서 지원됩니다.
 
 ### Ingress API의 한계
 
@@ -553,7 +553,7 @@ spec:
 
 v1.6 Standard 스키마에는 `timeouts`가 있지만 `HTTPRoute.rules.retry`는 없습니다. Experimental 스키마에는 재시도 필드가 추가되며 별도의 admission·구현체 요구사항이 있습니다. 아래 예제는 GET 요청의 시간 예산만 설정합니다. `backendRequest`는 0이 아닌 전체 `request` 예산을 넘을 수 없습니다.
 
-재시도 필드를 생략했다고 클라이언트, Gateway, 메시 프록시나 SDK가 재시도하지 않는다는 뜻은 아닙니다. 특히 비멱등 쓰기는 적용되는 각 계층을 구성·검증하세요. Experimental v1.6의 `retry.attempts` 최소값은 1이므로 0을 넣어 재시도를 비활성화할 수 없습니다. 구현체의 문서화된 제어와 애플리케이션 멱등성 동작을 사용하세요.
+재시도 필드를 생략했다고 클라이언트, Gateway, 메시 프록시나 SDK가 재시도하지 않는다는 뜻은 아닙니다. 특히 비멱등 쓰기의 경우 적용되는 각 계층을 구성·검증하세요. Experimental v1.6의 `retry.attempts` 최소값은 1이므로 0을 넣어 재시도를 비활성화할 수 없습니다. 구현체의 문서화된 제어와 애플리케이션 멱등성 동작을 사용하세요.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -810,7 +810,7 @@ Gateway API는 **2026-01-23의 LBC v3.0.0**에서 GA가 되었습니다. 기존 
 
 지원이 종료된 컨트롤러는 2026년 3월 유지보수가 끝난 Kubernetes community **ingress-nginx**입니다. Kubernetes Ingress API나 F5의 다른 NGINX 제품이 종료되었다는 뜻은 아닙니다.
 
-v3.0 릴리스 노트의 `keepTLSSecret=false` 우회 방법은 cert-manager 소유권 버그가 있는 **이전 버전에 남는 사용자**에게 적용되었습니다. v3.0으로 업그레이드하면 추가 작업 없이 수정이 포함됩니다. 과거의 우회 방법을 모든 업그레이드에 적용하지 말고 현재 차트의 인증서 관리 옵션을 따르세요.
+v3.0 릴리스 노트의 `keepTLSSecret=false` 우회 방법은 cert-manager 소유권 버그가 있는 **이전 버전을 계속 사용하는 사용자**에게 적용되었습니다. v3.0으로 업그레이드하면 추가 작업 없이 수정이 포함됩니다. 과거의 우회 방법을 모든 업그레이드에 적용하지 말고 현재 차트의 인증서 관리 옵션을 따르세요.
 
 ### LBC v3.4.0 마이그레이션 도구
 
@@ -836,7 +836,7 @@ lbc-migrate -f ingress.yaml --output-dir ./gateway-output/
 
 #### 1단계: 기존 Ingress 분석
 
-다음은 Istio Gateway API로 수동 변환하는 방법을 설명하기 위한 **과거 community ingress-nginx 입력**입니다. 새 ingress-nginx 설치 권장이나 앞의 LBC 전용 변환기 입력이 아닙니다. 설정 이름뿐 아니라 실제 요청 동작을 보존해야 합니다.
+다음은 Istio Gateway API로 수동 변환하는 방법을 설명하기 위한 **과거 community ingress-nginx 입력**입니다. 새 ingress-nginx 설치를 권장하는 예제나 앞의 LBC 전용 변환기 입력이 아닙니다. 설정 이름뿐 아니라 실제 요청 동작을 보존해야 합니다.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1090,7 +1090,7 @@ spec:
 
 이 구성은 ALB 뒤에서 Istio Gateway 동작이 필요한 애플리케이션을 위한 구조입니다. ConfigMap은 Istio의 문서화된 infrastructure 매개변수로 생성 Service를 ClusterIP로 설정합니다. ALB Ingress는 해당 Service와 **같은 네임스페이스**에 있고 생성 이름인 `internal-gateway-istio`를 참조합니다.
 
-애플리케이션 HTTPRoute는 레이블이 있는 `production` 네임스페이스에서 기존 `api-service:80`을 참조합니다. ACM ARN과 LBC/네트워크 사전 조건을 맞추세요. 예제 TLS는 ALB에서 종료하며 Istio 구간은 HTTP입니다. 보안 제어에서 실제 게이트웨이 트래픽·상태 검사 포트를 허용해야 합니다. 15021의 `/healthz/ready`는 Gateway 준비 상태를 확인하며 모든 애플리케이션의 상태 검사는 아닙니다. Route 상태와 애플리케이션 응답을 별도로 확인하세요.
+애플리케이션 HTTPRoute는 레이블이 있는 `production` 네임스페이스에서 기존 `api-service:80`을 참조합니다. ACM ARN과 LBC/네트워크 사전 조건을 맞추세요. 예제에서는 TLS를 ALB에서 종료하며 Istio 구간은 HTTP입니다. 보안 제어에서 실제 게이트웨이 트래픽·상태 검사 포트를 허용해야 합니다. 15021의 `/healthz/ready`는 Gateway 준비 상태를 확인하며 모든 애플리케이션의 상태 검사는 아닙니다. Route 상태와 애플리케이션 응답을 별도로 확인하세요.
 
 ```yaml
 apiVersion: v1

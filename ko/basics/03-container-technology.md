@@ -19,7 +19,7 @@
 * [컨테이너 오케스트레이션](03-container-technology.md#컨테이너-오케스트레이션)
 * [AWS에서의 컨테이너](03-container-technology.md#aws에서의-컨테이너)
 
-> 아래 Linux 명령은 Linux Docker 호스트를 기준으로 합니다. Docker Desktop에서는 데몬이 VM 안에서 실행되므로 호스트 PID/파일 경로를 데스크톱 OS에서 그대로 조회할 수 없습니다. 이미지 실행은 CPU 아키텍처/OS/커널 호환성이 필요합니다. Kata/Fargate 같은 VM 기반 실행 환경은 여기서 설명하는 기본 프로세스 격리 모델과 구분합니다.
+> 아래 Linux 명령은 Linux Docker 호스트를 기준으로 합니다. Docker Desktop에서는 데몬이 VM 안에서 실행되므로 호스트 PID/파일 경로를 데스크톱 OS에서 그대로 조회할 수 없습니다. 이미지 실행에는 CPU 아키텍처/OS/커널 호환성이 필요합니다. Kata/Fargate 같은 VM 기반 실행 환경은 여기서 설명하는 기본 프로세스 격리 모델과 구분합니다.
 
 ## 컨테이너란?
 
@@ -126,7 +126,7 @@ fi
 
 ### OverlayFS를 통한 레이어 관리
 
-Docker Engine 29.0 이상 새 설치는 containerd 이미지 저장소/snapshotter가 기본입니다. 기존 설치는 classic overlay2가 유지될 수 있으므로 docker info로 확인합니다. GraphDriver.Data 경로는 모든 설치에서 제공되지 않습니다.
+Docker Engine 29.0 이상을 새로 설치한 경우 containerd 이미지 저장소/snapshotter가 기본입니다. 기존 설치는 classic overlay2가 유지될 수 있으므로 docker info로 확인합니다. GraphDriver.Data 경로는 모든 설치에서 제공되지 않습니다.
 
 OCI 이미지 레이어 형식은 저장 구현과 독립적입니다. OverlayFS는 흔한 Linux 백엔드이며 런타임은 다른 스토리지 드라이버/snapshotter도 사용할 수 있습니다.
 
@@ -248,7 +248,7 @@ VOLUME /app/data
 CMD ["node", "server.js"]
 ```
 
-Node.js 14는 지원이 종료되어 예제는 지원 중인 Node.js 24를 사용합니다. 네이티브 모듈은 Alpine의 musl 호환성을 확인합니다. .dockerignore를 준비하여 호스트 node_modules나 자격 증명을 이미지에 복사하지 않습니다. EXPOSE는 메타데이터이며 포트를 공개하지 않습니다. 포트 공개는 docker run -p 또는 오케스트레이터 설정이 필요합니다.
+Node.js 14는 지원이 종료되어 예제는 지원 중인 Node.js 24를 사용합니다. 네이티브 모듈은 Alpine의 musl 호환성을 확인합니다. .dockerignore를 준비하여 호스트 node_modules나 자격 증명을 이미지에 복사하지 않습니다. EXPOSE는 메타데이터이며 포트를 공개하지 않습니다. 포트 공개에는 docker run -p 또는 오케스트레이터 설정이 필요합니다.
 
 ```text
 # .dockerignore

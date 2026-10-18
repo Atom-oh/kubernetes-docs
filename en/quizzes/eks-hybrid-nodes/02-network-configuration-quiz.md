@@ -18,7 +18,7 @@
 **Answer: B) A reviewed Direct Connect/VPN design with actual routes and firewall access**
 
 **Explanation:**
-The control plane must reach the kubelet and applicable Pod endpoints as well as nodes reaching AWS. A public Kubernetes API endpoint does not remove that private reverse-path requirement. Direct Connect does not inherently encrypt every connection or guarantee latency. Confirm the VPN's actual tunnel state, not only resource state `available`. The related guide establishes the account/context and private WORK_DIR for these read-only diagnostics.
+The control plane must reach the kubelet and applicable Pod endpoints, and nodes must reach AWS. A public Kubernetes API endpoint does not remove that private reverse-path requirement. Direct Connect does not inherently encrypt every connection or guarantee latency. Confirm the VPN's actual tunnel state, not only resource state `available`. The related guide establishes the account/context and private WORK_DIR for these read-only diagnostics.
 ```bash
 : "${VPN_ID:?Select the reviewed VPN connection}"
 : "${TUNNEL_IP:?Select its actual AWS tunnel outside IP}"

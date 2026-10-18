@@ -20,13 +20,13 @@
 
 ### Spot 중단과 PDB
 
-Spot 용량은 회수될 수 있으므로 상관된 용량 손실에 대비해야 합니다. 중단 알림은 best effort이며 stop/terminate는 일반적으로2분 전에 알리지만 hibernation은 즉시 시작합니다. EKS managed node group은 교체·rebalance를 시도하지만 중단 노드를 drain하기 전에 교체 노드가 Ready가 된다고 보장하지 않습니다.
+Spot 용량은 회수될 수 있으므로 상관된 용량 손실에 대비해야 합니다. 중단 알림은 best effort이며 stop/terminate는 일반적으로 2분 전에 알리지만 hibernation은 즉시 시작합니다. EKS managed node group은 교체·rebalance를 시도하지만 중단 노드를 drain하기 전에 교체 노드가 Ready가 된다고 보장하지 않습니다.
 
-PodDisruptionBudget은 자발적인 Eviction API 작업을 제한합니다. EC2 중단·node 장애·직접 Pod 삭제·모든 controller update를 막지는 않습니다. 아래 PDB는 Rollouts가 생성·관리하는 리소스가 아니라 앱 운영자가 정의하고 Kubernetes가 status를 계산합니다.
+PodDisruptionBudget은 자발적인 Eviction API 작업을 제한합니다. EC2 중단·node 장애·직접 Pod 삭제·모든 controller update를 막지는 않습니다. 아래 PDB는 Rollouts가 생성·관리하는 리소스가 아니며 앱 운영자가 정의하고 Kubernetes가 status를 계산합니다.
 
-건강한 Pod9개에 **정수 `minAvailable: 6`**이라면 설명용 자발적 disruption 여유는3개입니다. 건강한 Pod가6개로 줄면 여유는0개입니다. “33% minimum이6개를 요구”하는 계산이 아닙니다. Expected Pod9개에서 `minAvailable: "33%"`는 올림하여3개이며, percentage `maxUnavailable`는 의미와 controller scale 조건이 다릅니다.
+건강한 Pod 9개에 **정수 `minAvailable: 6`**이라면 설명용 자발적 disruption 여유는 3개입니다. 건강한 Pod가 6개로 줄면 여유는 0개입니다. “33% minimum이 6개를 요구”하는 계산이 아닙니다. Expected Pod 9개에서 `minAvailable: "33%"`는 올림하여 3개이며, percentage `maxUnavailable`는 의미와 controller scale 조건이 다릅니다.
 
-이를 zone마다 `minAvailable: 1`로 나누면 보호 수준도 바뀝니다. 한 zone이 사라지면 나머지 두 budget은 전체6개를 유지하는 대신 zone마다 건강한 Pod1개까지 자발적 eviction을 허용할 수 있습니다. 독립 운영에 유용할 수 있지만 다른 가용성·용량 정책입니다. Stable과 canary를 함께 선택하는 budget은 각 weighted destination의 용량을 따로 보장하지도 않습니다.
+이를 zone마다 `minAvailable: 1`로 나누면 보호 수준도 바뀝니다. 한 zone이 사라지면 나머지 두 budget은 전체 6개를 유지하는 대신 zone마다 건강한 Pod 1개까지 자발적 eviction을 허용할 수 있습니다. 독립 운영에 유용할 수 있지만 다른 가용성·용량 정책입니다. Stable과 canary를 함께 선택하는 budget은 각 weighted destination의 용량을 따로 보장하지도 않습니다.
 
 ### 목표와 제약
 
@@ -40,7 +40,7 @@ PodDisruptionBudget은 자발적인 Eviction API 작업을 제한합니다. EC2 
 
 ## 아키텍처 개요
 
-공통 `test` Service가 DNS 이름을 제공합니다. 주입된 client에는 VirtualService가 **명시적인 client Pod label**로 zone route를 선택합니다. 각 route는 해당 zone의 stable/canary Service를 가리키며, 별도 Rollout이 Service hash와 자신의 named route weight를 관리합니다.
+공통 `test` Service가 DNS 이름을 제공합니다. 주입된 client의 경우 VirtualService가 **명시적인 client Pod label**로 zone route를 선택합니다. 각 route는 해당 zone의 stable/canary Service를 가리키며, 별도 Rollout이 Service hash와 자신의 named route weight를 관리합니다.
 
 Istiod는 설정을 Envoy에 반영하며 VirtualService·DestinationRule 객체가 network hop인 것은 아닙니다. Mesh 밖 client는 공통 Service의 일반 Kubernetes endpoint 선택을 사용하여 규칙을 우회할 수 있으므로 routing label은 보안 경계가 아닙니다.
 
@@ -58,7 +58,7 @@ Rollouts1.10은 지정한 route weight와 지원되는 managed destination을 �
 
 `sourceLabels`는 Istiod가 mesh 설정을 만들 때 source workload를 선택하며 runtime request-header 조건이 아닙니다. Node의 `topology.kubernetes.io/zone` label은 Pod에 자동 복사되지 않습니다. `routing.example.com/zone: a` 같은 Pod label을 사용한다면 실제 AZ 배치도 검증해야 합니다.
 
-이 selector는 mesh client용이며 ingress gateway로 들어오는 일반 외부 요청을 분류하지 않습니다. `mesh` gateway 범위를 유지합니다. 예제는 알 수 없는 client cohort에 다른 zone을 조용히 선택하는 대신503을 반환합니다.
+이 selector는 mesh client용이며 ingress gateway로 들어오는 일반 외부 요청을 분류하지 않습니다. `mesh` gateway 범위를 유지합니다. 예제는 알 수 없는 client cohort에 다른 zone을 조용히 선택하는 대신 503을 반환합니다.
 
 ### 3. 선택된 Pool 밖으로는 Locality가 이동하지 않음
 
@@ -288,11 +288,11 @@ spec:
         string: No reviewed client-zone route
 ```
 
-트래픽을 보내기 전에 각 controller가 의도한 hash·건강한 endpoint를 선택했는지 확인합니다. 초기 weight는 조정되지 않은90/10이 아닌100/0입니다. 각 named route는 mesh 재시도를 명시적으로 끄며 앱의 retry 동작은 별도입니다.
+트래픽을 보내기 전에 각 controller가 의도한 hash·건강한 endpoint를 선택했는지 확인합니다. 초기 weight는 조정되지 않은 90/10이 아닌 100/0입니다. 각 named route는 mesh 재시도를 명시적으로 끄며 앱의 retry 동작은 별도입니다.
 
 ### 4. Zone별 Rollout
 
-Workload·replica 수·requests/limits·pause는 demo 입력값입니다. Replica3개가 자동으로 node3개에 분산되지는 않습니다. 실제 배포에는 node-level spread/anti-affinity, 용량, PDB와 stable/canary 여유를 검토해야 합니다.
+Workload·replica 수·requests/limits·pause는 demo 입력값입니다. Replica 3개가 자동으로 node 3개에 분산되지는 않습니다. 실제 배포에는 node-level spread/anti-affinity, 용량, PDB와 stable/canary 여유를 검토해야 합니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -626,7 +626,7 @@ spec:
             value: zone-rollouts-demo
 ```
 
-각 Rollout은 별도 selector, image/revision 상태, Service와 Analysis argument를 가집니다. 첫5% gate 뒤에는 의도적으로 promote해야 하는 무기한 pause가 있습니다. 강제 zone affinity 때문에 해당 AZ에 용량이 없으면 Pod는 Pending으로 남으며 건강한 다른 AZ로 이동하지 않습니다.
+각 Rollout은 별도 selector, image/revision 상태, Service와 Analysis argument를 가집니다. 첫 5% gate 뒤에는 의도적으로 promote해야 하는 무기한 pause가 있습니다. 강제 zone affinity 때문에 해당 AZ에 용량이 없으면 Pod는 Pending으로 남으며 건강한 다른 AZ로 이동하지 않습니다.
 
 ### 5. 명시적인 PDB
 
@@ -668,7 +668,7 @@ spec:
       zone: c
 ```
 
-Zone마다 최소1개라는 기존 예시 입력을 유지합니다. 앞의 전체 최소6개와 동등하지 않으며 weighted revision 각각을 보호하지 않습니다. 자발적인 유지보수 전에 `currentHealthy`·`desiredHealthy`·`disruptionsAllowed`를 확인하세요.
+Zone마다 최소 1개라는 기존 예시 입력을 유지합니다. 앞의 전체 최소 6개와 동등하지 않으며 weighted revision 각각을 보호하지 않습니다. 자발적인 유지보수 전에 `currentHealthy`·`desiredHealthy`·`disruptionsAllowed`를 확인하세요.
 
 ### 6. Zone별 Analysis
 
@@ -708,15 +708,15 @@ spec:
     count: 5
 ```
 
-기존 가이드의 성공 정의인 **HTTP2xx**를 분자로 사용합니다. 모두5xx인 창은 빈 분자가 아닌0이 되고, 무트래픽·누락 데이터는 finite-value/volume gate를 통과하지 않습니다. Source proxy를 수집하고 provider가 해당 Prometheus에 접근할 수 있어야 하며 실제 label이 selector와 일치해야 합니다.
+기존 가이드의 성공 정의인 **HTTP 2xx**를 분자로 사용합니다. 모두 5xx인 창은 빈 분자가 아닌 0이 되고, 무트래픽·누락 데이터는 finite-value/volume gate를 통과하지 않습니다. Source proxy를 수집하고 provider가 해당 Prometheus에 접근할 수 있어야 하며 실제 label이 selector와 일치해야 합니다.
 
-`http://test.zone-rollouts-demo.svc.cluster.local:8080/color`로 대표성 있는 mesh 트래픽을 지속합니다. Caller label이 zone을 선택하고 controller가 해당 zone의 stable/canary weight를 정합니다.5분 warm-up은2분 metric lookback보다 길며20개 요청 추정값·측정 횟수는 설명용이지 통계적 신뢰도가 아닙니다.
+`http://test.zone-rollouts-demo.svc.cluster.local:8080/color`로 대표성 있는 mesh 트래픽을 지속합니다. Caller label이 zone을 선택하고 controller가 해당 zone의 stable/canary weight를 정합니다.5분 warm-up은 2분 metric lookback보다 길며 20개 요청 추정값·측정 횟수는 설명용이지 통계적 신뢰도가 아닙니다.
 
 ## 트래픽 흐름
 
 ### 정상 Zonal 경로
 
-검토한 AZ에 배치되고 올바른 label을 가진 client A에는 `zone-a-route`가 적용되어 A의 stable/canary Service를 선택합니다. 실제 비율은 표본·session·readiness에 따라 달라지며 요청10개마다 정확한 비율을 보장하지 않습니다.
+검토한 AZ에 배치되고 올바른 label을 가진 client A에는 `zone-a-route`가 적용되어 A의 stable/canary Service를 선택합니다. 실제 비율은 표본·session·readiness에 따라 달라지며 요청 10개마다 정확한 비율을 보장하지 않습니다.
 
 ### Zone 손실
 
@@ -751,7 +751,7 @@ spec:
       maxEjectionPercent: 100
 ```
 
-Locality priority는 일치하는 region/zone을 우선하고 이후 트래픽을 적격한 건강한 endpoint로 전환할 수 있지만 고정된 AZ 순환 순서는 아닙니다. 현재 필드는 `consecutive5xxErrors`이며 연속 오류 감지는 트래픽으로 발생하고 `interval`은 주기적 감지 작업에 적용됩니다. 모든 endpoint를 제외하면 오류가 생길 수 있으며 이미 실패한 요청을 자동 재생하지 않습니다. [Zone-Aware Routing](../resilience/03-zone-aware-routing.md)을 참고하세요.
+Locality priority는 일치하는 region/zone을 우선하고 이후 트래픽을 적격한 건강한 endpoint로 전환할 수 있지만 고정된 AZ 순환 순서는 아닙니다. 현재 필드는 `consecutive5xxErrors`이며 연속 오류 감지는 트래픽을 통해 이루어지고 `interval`은 주기적 감지 작업에 적용됩니다. 모든 endpoint를 제외하면 오류가 생길 수 있으며 이미 실패한 요청을 자동 재생하지 않습니다. [Zone-Aware Routing](../resilience/03-zone-aware-routing.md)을 참고하세요.
 
 ## 문제 해결
 
@@ -779,7 +779,7 @@ kubectl logs -n argo-rollouts deployment/argo-rollouts
 
 ### 1. 버전 변경을 명시적으로 조율
 
-Promote는 기존 pause를 재개하며 새 image를 배포하거나 다른 AZ의 건강 상태를 증명하지 않습니다. Git에서 한 zone의 desired image를 바꾸고(격리된 lab에서는 직접 변경), Analysis·workload 상태를 관찰한 뒤 다음 zone의 진행을 판단합니다. 고정5분 대기만으로 충분한 검증이 되지는 않습니다.
+Promote는 기존 pause를 재개하며 새 image를 배포하거나 다른 AZ의 건강 상태를 증명하지 않습니다. Git에서 한 zone의 desired image를 바꾸고(격리된 lab에서는 직접 변경), Analysis·workload 상태를 관찰한 뒤 다음 zone의 진행을 판단합니다. 고정 5분 대기만으로 충분한 검증이 되지는 않습니다.
 
 ```bash
 # Git 변경의 격리된 lab 대안이며 Zone A에만 적용합니다.
@@ -793,7 +793,7 @@ Abort는 Git의 desired image를 되돌리지 않습니다. GitOps가 zone별 ma
 
 ### 2. Continuous Analysis 대안
 
-지속적인 감시가 필요하면 inline step 일정을 의도적으로 교체합니다. Background template의 count는 생략하고 `startingStep: 2`는 세 번째 step입니다.
+지속적인 감시가 필요하면 inline step 일정을 의도적으로 교체합니다. Background template의 count는 생략하며, `startingStep: 2`는 세 번째 step을 가리킵니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -884,7 +884,7 @@ spec:
         summary: Demo client A is using a B/C destination Service; inspect route/placement assumptions
 ```
 
-첫 규칙은5xx/zero-status 실패를 확인합니다.4xx도 Analysis의2xx 비율을 낮추지만 이 오류 규칙을 발동하지는 않습니다. 트래픽 부족/누락에는 별도로 설계한 expected-traffic·telemetry-health 신호가 필요하며, 데이터가 없다고 canary가 건강하다는 뜻은 아닙니다.
+첫 규칙은 5xx/zero-status 실패를 확인합니다.4xx도 Analysis의 2xx 비율을 낮추지만 이 오류 규칙을 발동하지는 않습니다. 트래픽 부족/누락에는 별도로 설계한 expected-traffic·telemetry-health 신호가 필요하며, 데이터가 없다고 canary가 건강하다는 뜻은 아닙니다.
 
 두 번째는 일반적인 물리 cross-AZ 감지기가 아닌 **demo routing invariant 경고**입니다. 실제 source Deployment가 `zone-client-a`이고 A에 배치되며 B/C Service의 zone selector가 유지된다고 가정합니다. 물리 zone 측정에는 routing/observability 가이드의 검증된 node/endpoint locality 또는 명시적으로 보강한 telemetry를 사용하세요.
 

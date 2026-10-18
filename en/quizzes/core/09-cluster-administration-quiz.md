@@ -114,7 +114,7 @@ etcdutl snapshot restore snapshot.db \
    - Marks the node as unschedulable.
    - New pods will not be scheduled on the node.
    - Already running pods continue to run.
-   - `SchedulingDisabled` indicator appears in node status.
+   - The `SchedulingDisabled` indicator appears in node status.
 
 2. **`kubectl drain <node_name>`:**
    - Marks the node as unschedulable (includes cordon).
@@ -921,7 +921,7 @@ The command/script and application names must exist and match your plan. It does
    Verify that remaining nodes can handle all workloads when one node is removed.
 
 3. **Perform Backup:**
-   Perform etcd database backup before updates.
+   Perform an etcd database backup before updates.
 
 **Rolling Update Best Practices:**
 
@@ -948,7 +948,7 @@ The command/script and application names must exist and match your plan. It does
 **Notes:**
 - In cloud environments, you can leverage managed Kubernetes services' (EKS, GKE, AKS, etc.) node update features.
 - If there are multiple node groups, perform updates by group.
-- Specially monitor the status of critical system pods (CoreDNS, kube-proxy, etc.).
+- Pay special attention to monitoring the status of critical system pods (CoreDNS, kube-proxy, etc.).
 </details>
 
 5. Write a script that identifies pods with high resource usage in the cluster and generates a report with that information.
@@ -1108,7 +1108,7 @@ Other important optimization settings and best practices:
 - **Use dedicated disks**: Use dedicated disks for etcd data to prevent I/O contention with other applications.
 - **Proper memory allocation**: etcd caches data in memory for performance, so sufficient memory must be allocated.
 - **Optimize cluster size**: Typically 3-5 etcd members provide optimal performance and availability.
-- **Minimize network latency**: Balance inter-member latency with fault isolation; placing every member in one zone loses quorum under that zone failure.
+- **Minimize network latency**: Balance inter-member latency with fault isolation; placing every member in one zone loses quorum if that zone fails.
 - **Regular backup and compaction**: Perform regular backups and compaction to ensure data safety and efficient disk space usage.
 
 `--max-request-bytes`, `--quota-backend-bytes`, and `--max-txn-ops` are real settings. Option D also contains the unsupported `--max-result-buffer`; configuration limits, retention and internal snapshots should not be mistaken for a backup strategy.
@@ -1174,9 +1174,9 @@ Audit policies select events and detail levels. A metadata catch-all can retain 
 Kubernetes audit policies support the following audit levels:
 
 - **None**: Does not log the event.
-- **Metadata**: Logs only request metadata (user, timestamp, resource, action, etc.) and excludes request/response body.
-- **Request**: Logs metadata and request body but excludes response body.
-- **RequestResponse**: Logs metadata, request body, and response body.
+- **Metadata**: Logs only request metadata (user, timestamp, resource, action, etc.) and excludes the request/response body.
+- **Request**: Logs metadata and the request body but excludes the response body.
+- **RequestResponse**: Logs metadata, the request body, and the response body.
 
 Example of an effective audit policy:
 ```yaml

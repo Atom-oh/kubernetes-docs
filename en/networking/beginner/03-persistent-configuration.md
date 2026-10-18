@@ -20,7 +20,7 @@ Complete [addressing and interfaces](02-addressing-interfaces.md) and prepare th
 
 Run the commands **inside the named VM**, never on the workstation hosting the VMs. Do not install or enable a second network manager to follow an alternative branch. If a required tool is absent, return to lab preparation.
 
-You will be able to identify configuration ownership, persist a static address, explain when DHCP/gateway/DNS settings are appropriate, verify after reboot, and undo only your lab changes. First take a VM snapshot and keep the console open. Perform each step separately; an error means inspect it before proceeding.
+You will be able to identify configuration ownership, persist a static address, explain when DHCP/gateway/DNS settings are appropriate, verify after reboot, and undo only your lab changes. First take a VM snapshot and keep the console open. Perform each step separately; an error means you should inspect it before proceeding.
 
 ## 1. Identify the NIC and the owner
 
@@ -170,7 +170,7 @@ resolvectl status
 
 Expect the local `192.0.2.0/24` route, the correct `.10` or `.20` address, no default route/DNS introduced by the lab NIC, and the original management path still available. Confirm the trial only after those checks. Configure both VMs before requiring a successful peer ping.
 
-`try` and `apply` operate on the **merged configuration**, not only the new file, and can reapply networking across devices. Console access remains necessary even when the management definition was not edited. `try` intends to revert an unconfirmed trial, but [Netplan documents rollback bugs](https://netplan.readthedocs.io/en/stable/netplan-try/). Timeout or Ctrl+C is **not proof of recovery**; inspect runtime state and the files on disk.
+`try` and `apply` operate on the **merged configuration**, not only the new file, and can reapply networking across devices. Console access remains necessary even when the management definition was not edited. `try` is intended to revert an unconfirmed trial, but [Netplan documents rollback bugs](https://netplan.readthedocs.io/en/stable/netplan-try/). Timeout or Ctrl+C is **not proof of recovery**; inspect runtime state and the files on disk.
 
 ### Netplan recovery and rollback
 
@@ -285,7 +285,7 @@ sudo nmcli connection modify uuid "$OLD_LAB_UUID" connection.autoconnect "$OLD_A
 sudo nmcli --wait 30 connection up uuid "$OLD_LAB_UUID" ifname "$LAB_IF"
 ```
 
-Use the recorded `yes` or `no`, not a guessed value. If the previous profile was inactive, omit the `up` line. If no previous profile existed, no old profile needs restoring: verify that the lesson address is gone. Return the lab link's original up/down state if necessary, and compare management addressing/routes/DNS with the initial record. Do not delete all Ethernet profiles or restart networking globally.
+Use the recorded `yes` or `no`, not a guessed value. If the previous profile was inactive, omit the `up` line. If no previous profile existed, no old profile needs restoring: verify that the lesson address is gone. Restore the lab link's original up/down state if necessary, and compare management addressing/routes/DNS with the initial record. Do not delete all Ethernet profiles or restart networking globally.
 
 ## 3. DHCP, gateways and DNS: when the settings belong
 
@@ -334,7 +334,7 @@ sudo nmcli --wait 60 connection up id beginner-practice-dhcp ifname "$PRACTICE_I
 nmcli -f GENERAL,IP4,DHCP4 device show "$PRACTICE_IF"
 ```
 
-The name must be unused. Record its UUID and use branch B's UUID-based rollback to delete only this new profile. Because this example is `autoconnect no`, the settings are saved but activation is manual after a reboot. If adapting an existing **dedicated practice profile** from static to DHCP, set `ipv4.method auto` and clear `ipv4.addresses`, `ipv4.gateway`, `ipv4.routes`, `ipv4.dns` and `ipv4.dns-search` in the same `connection modify` operation; otherwise old static values can coexist with DHCP. Record the old values first and restore them to undo that adaptation.
+The name must be unused. Record its UUID and use branch B's UUID-based rollback to delete only this new profile. Because this example uses `autoconnect no`, the settings are saved but activation is manual after a reboot. If adapting an existing **dedicated practice profile** from static to DHCP, set `ipv4.method auto` and clear `ipv4.addresses`, `ipv4.gateway`, `ipv4.routes`, `ipv4.dns` and `ipv4.dns-search` in the same `connection modify` operation; otherwise old static values can coexist with DHCP. Record the old values first and restore them to undo that adaptation.
 
 ### Durable gateway and DNS settings on a routed practice network
 

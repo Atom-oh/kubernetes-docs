@@ -125,7 +125,7 @@ tolerations:
   effect: NoSchedule
 ```
 
-이 selector는 의도적으로 `on-demand`를 요구하며 `reserved` 용량은 포함하지 않습니다. 나중에 capacity reservation을 사용한다면 label과 예약 구성을 다시 검토하세요. On-Demand 자체도 데이터 내구성이나 용량 가용성 보장은 아닙니다.
+이 selector는 의도적으로 `on-demand`를 요구하며 `reserved` 용량은 포함하지 않습니다. 나중에 capacity reservation을 사용한다면 label과 예약 구성을 다시 검토하세요. On-Demand 자체도 데이터 내구성이나 용량 가용성을 보장하지는 않습니다.
 
 ## 호환되는 용량 다양화
 
@@ -248,7 +248,7 @@ spec:
 
 ## 실제 남은 시간 안의 Graceful Shutdown
 
-EC2는 일반적으로 stop/terminate interruption 전에 2분 경고를 보내지만 best effort입니다. Hibernation은 즉시 시작하는 다른 동작을 가집니다. 모든 Pod에 2분이 보장된다고 해석하지 마세요. 감지, 축출, 애플리케이션 처리와 라우팅 변경이 시간을 사용하며 장애로 경고를 처리하지 못할 수도 있습니다.
+EC2는 일반적으로 stop/terminate interruption 전에 2분 경고를 보내지만 best effort입니다. Hibernation은 즉시 시작된다는 점에서 동작이 다릅니다. 모든 Pod에 2분이 보장된다고 해석하지 마세요. 감지, 축출, 애플리케이션 처리와 라우팅 변경이 시간을 사용하며 장애로 경고를 처리하지 못할 수도 있습니다.
 
 `terminationGracePeriodSeconds`는 Kubernetes 종료 예산이며 EC2 회수 기한을 늘리지 않습니다. `preStop`은 그 예산 안에서 일반 종료 신호보다 먼저 실행됩니다. 무조건 `sleep 90`을 실행하면 120초 예산 대부분을 소비하며 애플리케이션 종료나 체크포인트를 구현하지도 않습니다.
 
@@ -360,7 +360,7 @@ PDB는 자발적인 애플리케이션 축출을 제한할 뿐 EC2가 회수하�
 | CI/CD | $500/월 | $150/월 | 70% |
 | 비중요 API | $3,000/월 | $1,200/월 | 60% |
 
-AWS는 EC2 Spot 가격을 최대 90% 할인으로 안내하지만 최소 할인율이나 전체 워크로드 절감 보장은 아닙니다. Spot Instance Advisor는 지난 한 달의 interruption·절감 데이터를 AZ 평균으로 요약하며 지연될 수 있습니다. 계산에는 현재 AZ별 Spot Price History나 실제 청구 데이터를 사용하세요. 과거 interruption 구간은 다음 작업의 예측값이 아닙니다.
+AWS는 EC2 Spot 가격을 최대 90% 할인으로 안내하지만 최소 할인율이나 전체 워크로드 절감을 보장하지는 않습니다. Spot Instance Advisor는 지난 한 달의 interruption·절감 데이터를 AZ 평균으로 요약하며 지연될 수 있습니다. 계산에는 현재 AZ별 Spot Price History나 실제 청구 데이터를 사용하세요. 과거 interruption 구간은 다음 작업의 예측값이 아닙니다.
 
 같은 유효 작업량, 리전, 기간과 가용성 목표를 비교합니다.
 
@@ -377,7 +377,7 @@ Actual total =
 Net savings = Baseline total - Actual total
 ```
 
-시간당 단가에는 시간을 같은 단위로 사용하고 변동 가격은 실제 청구 사용 구간으로 가중하세요. 청구된 Spot·fallback 시간에 실제 지불한 재시도, 용량 중첩과 복구 작업이 포함돼야 합니다. 이미 포함된 작업을 다시 일반적인 “interrupt overhead”로 빼서 이중 계산하지 마세요.
+시간당 단가를 적용할 때는 시간을 같은 단위로 사용하고 변동 가격은 실제 청구 사용 구간으로 가중하세요. 청구된 Spot·fallback 시간에 실제 지불한 재시도, 용량 중첩과 복구 작업이 포함돼야 합니다. 이미 포함된 작업을 다시 일반적인 “interrupt overhead”로 빼서 이중 계산하지 마세요.
 
 기타 비용에는 관련 Auto Mode 관리 요금, control-plane, EBS, 네트워크/NAT, 전송, 로그와 라이선스를 일관되게 포함합니다. Auto Mode 요금은 EC2 구매 옵션에 추가됩니다. 이전 `중단 횟수 × 복구 시간 × 인스턴스 수` 단축식은 단위와 중단 횟수가 이미 클러스터 전체 기준인지 모호했습니다.
 

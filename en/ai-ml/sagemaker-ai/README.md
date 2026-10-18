@@ -19,7 +19,7 @@ The model emits `TYPE<TAB>ORIGINAL` candidates. Python code validates and replac
 
 Start with data and evaluation if you can use Python 3.12 and JSONL. Neither CPU exercise needs an AWS account or model weights. The training walkthrough and GPU-check procedure are distinct from evidence of completed GPU training.
 
-The new augmentation exercise splits 40 synthetic families before augmenting training only. Its separate dataset does not overwrite the historical generator 1.0.0 corpus of 2,200 records. Tiny exercise or oracle scores are not real-world model-performance claims.
+The new augmentation exercise splits 40 synthetic families before augmenting only the training data. Its separate dataset does not overwrite the historical generator 1.0.0 corpus of 2,200 records. Tiny exercise or oracle scores are not real-world model-performance claims.
 
 ## SageMaker execution readiness
 

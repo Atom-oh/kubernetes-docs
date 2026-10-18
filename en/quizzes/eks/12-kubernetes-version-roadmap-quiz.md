@@ -16,7 +16,7 @@ Use the [source chapter](../../eks/12-kubernetes-version-roadmap.md) for version
 
 **Answer: B) About three minor releases per year, roughly four months apart**
 
-Upstream minor releases normally arrive about three times per year; patch releases have a separate cadence. The upstream patch-support policy is roughly 14 months (12 normal +2 maintenance). EKS standard support also lasts14 months, but starts from EKS availability, so the two calendars must not be conflated.
+Upstream minor releases normally arrive about three times per year; patch releases have a separate cadence. The upstream patch-support policy is roughly 14 months (12 normal +2 maintenance). EKS standard support also lasts 14 months, but starts from EKS availability, so the two calendars must not be conflated.
 
 </details>
 
@@ -88,7 +88,7 @@ The feature was alpha 1.27, beta 1.33 and stable 1.35. Container resizePolicy co
 
 **Answer: B) DRA was still alpha; structured APIs evolved while classic allocation remained behind a separate gate**
 
-The1.31 release and source retain DRAControlPlaneController as a disabled alpha gate. It is removed in 1.32; DRA core becomes beta in 1.32 and stable in 1.34. The original quiz’s removal-in 1.31 answer was wrong. Current v1 requests use exactly, and actual drivers/ResourceSlices/attributes must be verified.
+The 1.31 release and source retain DRAControlPlaneController as a disabled alpha gate. It is removed in 1.32; DRA core becomes beta in 1.32 and stable in 1.34. The original quiz’s removal-in 1.31 answer was wrong. Current v1 requests use exactly, and actual drivers/ResourceSlices/attributes must be verified.
 
 </details>
 
@@ -124,7 +124,7 @@ ValidatingAdmissionPolicy uses a policy and binding, with optional parameter obj
 
 **Answer: B) A kubectl output format: alpha 1.34, beta 1.35–1.36, stable 1.37**
 
-KYAML is KEP-5295. Native kubectl 1.36.2 tests accepted ordinary YAML anchors and emitted KYAML. KUBECTL_KYAML=false disabled that output printer, while KYAML input still parsed with JSON output. Formatting is separate from schema/admission validation. Upstream1.37 was already released by this review date; this does not imply EKS 1.37 availability.
+KYAML is KEP-5295. Native kubectl 1.36.2 tests accepted ordinary YAML anchors and emitted KYAML. KUBECTL_KYAML=false disabled that output printer, while KYAML input still parsed with JSON output. Formatting is separate from schema/admission validation. Upstream 1.37 was already released by this review date; this does not imply EKS 1.37 availability.
 
 </details>
 

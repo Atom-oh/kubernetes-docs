@@ -570,7 +570,7 @@ image:
 
 The real application chart must use `image.repository`, `tag` and `digest` when constructing the container image URI. Adding a digest value does not make an existing chart consume it. Check that the rendered manifest points to the approved digest. Align Setters paths, policy markers and the GitRepository name.
 
-The current ImageUpdateAutomation commit template uses **`.Changed`**. Do not replace it with the removed `.Updated`. Automation pushes to its dedicated `flux/image-updates` branch; PR creation and approval into main require another workflow. Align Git write permissions and branch protection. Tag selection does not replace vulnerability/signature verification.
+The current ImageUpdateAutomation commit template uses **`.Changed`**. Do not replace it with the removed `.Updated`. Automation pushes to its dedicated `flux/image-updates` branch; PR creation and approval for merging into main require another workflow. Align Git write permissions and branch protection. Tag selection does not replace vulnerability/signature verification.
 
 ### Sources, Helm and notifications
 
@@ -702,7 +702,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-Input contains `unit`, `periodSeconds` and `points`; each point has a UTC Unix timestamp and finite nonnegative value. Supply at least 30 baseline points plus the observation. Ratios are in 0–1. The collector must check API errors, pagination and partial results and select one clearly defined aggregate series.
+Input contains `unit`, `periodSeconds` and `points`; each point has a UTC Unix timestamp and finite nonnegative value. Supply at least 30 baseline points plus the observation. Ratios are in the range 0–1. The collector must check API errors, pagination and partial results and select one clearly defined aggregate series.
 
 The observation is excluded from the median/MAD baseline. The margins are **illustrative thresholds**, not a trained model or a seasonal forecasting system. The tool sorts points and rejects gaps, duplicates and stale observations. `review_required` is not permission to execute; `actionTaken` remains `none`.
 

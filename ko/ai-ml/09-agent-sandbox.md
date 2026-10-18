@@ -183,7 +183,7 @@ spec:
 템플릿을 거쳐(웜 풀이나 Claim으로) 만들어진 Sandbox에는 다음 보안 기본값이 적용됩니다.
 
 - PodSpec에 `automountServiceAccountToken`이 없으면 컨트롤러가 `false`로 설정합니다.
-- `networkPolicyManagement: Managed`(기본값)이면 컨트롤러가 **템플릿마다 공유 NetworkPolicy 하나**를 만듭니다. 규칙을 고치면 그 템플릿에서 나온 기존·신규 Sandbox 전체의 적용이 바뀝니다.
+- `networkPolicyManagement: Managed`(기본값)이면 컨트롤러가 **템플릿마다 공유 NetworkPolicy 하나**를 만듭니다. 규칙을 고치면 그 템플릿에서 나온 기존·신규 Sandbox 전체에 적용되는 규칙이 바뀝니다.
 - 템플릿이 허용하지 않는 한 Claim은 환경 변수나 볼륨 템플릿을 주입할 수 없습니다.
 
 `Sandbox`를 직접 만들면 이 기본값이 하나도 적용되지 않습니다. 사용자가 `Sandbox`를 직접 만들 수 있다면 승인 제어(ValidatingAdmissionPolicy, Kyverno, Gatekeeper)를 쓰거나, 사용자에게는 `SandboxClaim` RBAC만 주세요.
@@ -355,8 +355,8 @@ CoreDNS를 허용하면 샌드박스가 내부 Service 이름을 해석할 수 �
 ## 7. IAM과 자격 증명
 
 - `automountServiceAccountToken: false`(템플릿 기본값)를 유지하세요. 토큰으로 Kubernetes API에 접근할 수 있는 에이전트는 권한 상승을 시도할 수 있습니다.
-- 기본적으로 샌드박스 Pod에 AWS 자격 증명을 주지 마세요. IPv4 클러스터에서는 관리형 정책이 이미 IMDS와 Pod Identity Agent를 막지만, IPv6 클러스터의 IPv4 egress에는 해당하지 않습니다(6절). 두 번째 방어선으로 샌드박스 노드에는 IMDSv2 필수와 홉 제한 1을 유지하세요.
-- 샌드박스가 AWS를 호출해야 한다면 가장 좁은 역할을 가진 전용 ServiceAccount를 한 네임스페이스에만 두고, NetworkPolicy를 의도적으로 변경하세요(Pod Identity는 `169.254.170.23/32`, IPv6 클러스터에서는 `fd00:ec2::23/128`의 80번 포트, IRSA는 리전 STS 엔드포인트). 이 변경은 정책 예외로 기록하세요.
+- 기본적으로 샌드박스 Pod에 AWS 자격 증명을 주지 마세요. IPv4 클러스터에서는 관리형 정책이 이미 IMDS와 Pod Identity Agent를 막지만, IPv6 클러스터의 IPv4 egress에는 해당하지 않습니다(6절). 두 번째 방어선으로 샌드박스 노드에는 IMDSv2 필수 설정과 홉 제한 1을 유지하세요.
+- 샌드박스가 AWS를 호출해야 한다면 권한 범위가 가장 좁은 역할을 가진 전용 ServiceAccount를 한 네임스페이스에만 두고, NetworkPolicy를 의도적으로 변경하세요(Pod Identity는 `169.254.170.23/32`, IPv6 클러스터에서는 `fd00:ec2::23/128`의 80번 포트, IRSA는 리전 STS 엔드포인트). 이 변경은 정책 예외로 기록하세요.
 - 최종 사용자에게는 자신의 네임스페이스에서 `SandboxClaim` RBAC만 주세요. `SandboxTemplate`과 `SandboxWarmPool`은 플랫폼 팀이 소유합니다.
 
 ---

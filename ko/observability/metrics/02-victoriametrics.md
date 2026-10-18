@@ -502,7 +502,7 @@ subjects:
 
 ### vmagent 샤딩
 
-모든 member는 같은 discovery/relabel 설정과 `0`부터 `membersCount-1`까지의 서로 다른 안정적인 ordinal이 필요합니다. `vmagent-0`처럼 ordinal로 끝나는 StatefulSet Pod 이름도 허용됩니다. **Deployment의 임의 Pod 이름은 안정적인 shard 번호가 아닙니다.** 위 replica 1개 예제에는 sharding flag를 넣지 않았습니다. 다음은 인자 참고이며 별도 배포 manifest가 아닙니다. Scrape 복제와 storage 복제는 다르며 중복 scrape에는 적절한 dedup이 필요합니다.
+모든 member에는 같은 discovery/relabel 설정과 `0`부터 `membersCount-1`까지의 서로 다른 안정적인 ordinal이 필요합니다. `vmagent-0`처럼 ordinal로 끝나는 StatefulSet Pod 이름도 허용됩니다. **Deployment의 임의 Pod 이름은 안정적인 shard 번호가 아닙니다.** 위 replica 1개 예제에는 sharding flag를 넣지 않았습니다. 다음은 인자 참고이며 별도 배포 manifest가 아닙니다. Scrape 복제와 storage 복제는 다르며 중복 scrape에는 적절한 dedup이 필요합니다.
 
 ```yaml
 args:
@@ -581,7 +581,7 @@ data:
 
 규칙은 node-exporter와 kube-state-metrics가 이미 수집되고 있다고 가정합니다. 앞의 최소 application-Pod discovery가 이를 설치하지는 않습니다. 재시작 횟수만으로 `CrashLoopBackOff`를 증명할 수 없어 이름을 `PodRestartsHigh`로 정했습니다. CPU 기록은 누적 counter 평균이 아니라 rate를 계산한 ratio입니다.
 
-`datasource.url`·`remoteRead.url`은 query API base를, `remoteWrite.url`은 recording/alert-state series를 보존할 write base를 사용합니다. remoteRead라는 flag 이름이 모든 Prometheus Remote Read protocol 지원을 뜻하지는 않습니다. Alertmanager가 별도로 존재하고 접근 가능해야 하며 알림 routing도 별도입니다. Evaluator HA에는 external label·알림 중복 제거·alert state 복원 동작을 검토합니다.
+`datasource.url`·`remoteRead.url`은 query API base를, `remoteWrite.url`은 recording/alert-state series를 보존할 write base를 사용합니다. remoteRead라는 flag 이름이 모든 Prometheus Remote Read protocol 지원을 뜻하지는 않습니다. Alertmanager가 별도로 존재하고 접근 가능해야 하며 알림 routing도 별도입니다. Evaluator HA에서는 external label·알림 중복 제거·alert state 복원 동작을 검토합니다.
 
 ## MetricsQL
 
@@ -868,7 +868,7 @@ vmbackup -storageDataPath=/storage \
 
 ## 다운샘플링
 
-Enterprise storage downsampling과 OSS **추가 파생 series를 기록하는 것**은 다릅니다. Recording rule은 raw 데이터를 삭제·압축하지 않으며 저장 series를 늘릴 수 있습니다. 수집 시 stream aggregation도 대안이지만 grouping·counter reset·입력 keep/drop 의미를 검토한 뒤 원본 폐기를 결정해야 합니다.
+Enterprise storage downsampling과 OSS에서 **추가 파생 series를 기록하는 것**은 다릅니다. Recording rule은 raw 데이터를 삭제·압축하지 않으며 저장 series를 늘릴 수 있습니다. 수집 시 stream aggregation도 대안이지만 grouping·counter reset·입력 keep/drop 의미를 검토한 뒤 원본 폐기를 결정해야 합니다.
 
 ### 파생 Series 기록
 

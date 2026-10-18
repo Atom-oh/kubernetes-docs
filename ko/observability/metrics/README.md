@@ -272,7 +272,7 @@ time() - max(example_batch_last_success_timestamp_seconds{job="example_batch"})
 
 `/users/{id}`처럼 제한된 경로 template을 사용합니다. 사용자·요청·세션 ID와 계속 변하는 타임스탬프는 일반 메트릭 레이블로 사용하지 않는 것이 좋으며, 민감 정보 노출 위험도 있습니다. 상세 구분이 사라져도 되는 경우에만 상태 코드를 그룹화합니다. 요청별 문맥은 적절히 통제한 로그·트레이스에서 다룹니다.
 
-다음 범위를 제한한 쿼리는 현재 선택 가능한 시계열을 셉니다. TSDB에 보관된 모든 과거 시계열 수는 아닙니다.
+다음과 같이 범위를 제한한 쿼리는 현재 선택 가능한 시계열을 셉니다. TSDB에 보관된 모든 과거 시계열 수는 아닙니다.
 
 ```promql
 topk(10, count by (__name__) ({job="example-app"}))

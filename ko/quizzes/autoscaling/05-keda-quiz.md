@@ -20,7 +20,7 @@ KEDA(Kubernetes Event-driven Autoscaling)는 Kubernetes 애플리케이션을 �
 5. **클라우드 중립적**: 필요한 API·인증·통신 경로를 갖춘 호환 Kubernetes 환경에서 실행합니다.
 6. **배포 모델**: 기본 설치는 오퍼레이터·메트릭 API 서버·어드미션 웹훅을 포함합니다.
 
-KEDA2.21 예제의 공개 Kubernetes 테스트 범위는1.34–1.36입니다. Kubernetes1.37 HPA도 object/external 메트릭의 제로 스케일링을 beta로 지원하므로 KEDA만 가능한 기능은 아닙니다.
+KEDA 2.21 예제의 공개 Kubernetes 테스트 범위는 1.34–1.36입니다. Kubernetes 1.37 HPA도 object/external 메트릭의 제로 스케일링을 beta로 지원하므로 KEDA만 가능한 기능은 아닙니다.
 </details>
 
 ## 문제 2: KEDA 아키텍처
@@ -37,7 +37,7 @@ KEDA2.21 예제의 공개 Kubernetes 테스트 범위는1.34–1.36입니다. Ku
 - **TriggerAuthentication**: 외부 시스템 인증 정보
 - **ClusterTriggerAuthentication**: 클러스터 레벨 인증
 
-ScaledObject는 KEDA가 활성화·제로 처리를, HPA가 0보다 큰 복제본을 관리합니다. 폴링·HPA 동기화·메트릭 캐시는 다릅니다. 워크로드당 스케일링 소유자는 하나여야 합니다.
+ScaledObject에서는 KEDA가 활성화·제로 처리를, HPA가 0보다 큰 복제본을 관리합니다. 폴링·HPA 동기화·메트릭 캐시는 다릅니다. 워크로드당 스케일링 소유자는 하나여야 합니다.
 </details>
 
 ## 문제 3: 스케일러 유형
@@ -234,7 +234,7 @@ spec:
       desiredReplicas: '50'
 ```
 
-Cron 구간은 복제본 하한을 제안하고 HPA는 합산이 아닌 가장 큰 제안을 선택합니다. 제로 축소는 쿨다운·컨트롤러 실행을 기다립니다. 두 번째 예제는 매년11월24일 일정이며 블랙 프라이데이를 자동 계산하지 않습니다. Cron에는 연도 필드가 없으므로 일회성 일정은 사용 후 재검토·제거해야 합니다.
+Cron 구간은 복제본 하한을 제안하고 HPA는 합산이 아닌 가장 큰 제안을 선택합니다. 제로 축소는 쿨다운·컨트롤러 실행을 기다립니다. 두 번째 예제는 매년 11월 24일 일정이며 블랙 프라이데이를 자동 계산하지 않습니다. Cron에는 연도 필드가 없으므로 일회성 일정은 사용 후 재검토·제거해야 합니다.
 </details>
 
 ## 문제 7: ScaledJob 구성
@@ -413,7 +413,7 @@ spec:
    kubectl get secret <auth-secret> -o json | jq '{name: .metadata.name, type: .type, keys: ((.data // {}) | keys)}'
    ```
 
-오퍼레이터 Pod 안에서 /manager를 하나 더 시작하는 명령은 연결 시험이 아니므로 제거했습니다. 기존 로그·리소스 조건·APIService 상태를 확인하세요. KEDA 메트릭은2.20에서 확인했으며 HPA 복제본 메트릭에는 kube-state-metrics와 구성된 스크레이퍼가 필요합니다.
+오퍼레이터 Pod 안에서 /manager를 하나 더 시작하는 명령은 연결 시험이 아니므로 제거했습니다. 기존 로그·리소스 조건·APIService 상태를 확인하세요. KEDA 메트릭은 2.20에서 확인했으며 HPA 복제본 메트릭에는 kube-state-metrics와 구성된 스크레이퍼가 필요합니다.
 </details>
 
 ## 문제 10: Amazon EKS 통합
@@ -481,7 +481,7 @@ spec:
    - 제로 스케일링으로 비용 절약
    - 적절한 스케일링 임계값 설정
 
-트리거 목록 YAML은 별도 ScaledObject에 넣는 조각이며 본문의 aws-credentials 인증을 가정합니다. CloudWatch RequestCount의 Sum/60초는 RPS가 아닌 기간별 건수입니다. IRSA에는 올바르게 제한된 기존 OIDC 신뢰·조회 권한이 필요하고 소비자 권한은 별도입니다. 스크레이프 주석만으로 CloudWatch Container Insights가 설치·구성되지는 않으며 수집기·IAM·내보내기 목적지를 설정해야 합니다. 워크로드가0개가 되어도 노드나 모든 비용이 자동 제거되지는 않습니다.
+트리거 목록 YAML은 별도 ScaledObject에 넣는 조각이며 본문의 aws-credentials 인증을 가정합니다. CloudWatch RequestCount의 Sum/60초는 RPS가 아닌 기간별 건수입니다. IRSA에는 올바르게 제한된 기존 OIDC 신뢰·조회 권한이 필요하고 소비자 권한은 별도입니다. 스크레이프 주석만으로 CloudWatch Container Insights가 설치·구성되지는 않으며 수집기·IAM·내보내기 목적지를 설정해야 합니다. 워크로드가 0개가 되어도 노드나 모든 비용이 자동 제거되지는 않습니다.
 </details>
 
 ---

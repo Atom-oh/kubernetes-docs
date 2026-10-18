@@ -965,7 +965,7 @@ spec:
 
 ### A/B 테스트 시나리오
 
-같은 안정적인 타겟팅 키와 규칙은 같은 변형에 배정됩니다. 다음 CR을 소스에 추가하거나
+같은 안정적인 타겟팅 키와 규칙을 사용하면 같은 변형에 배정됩니다. 다음 CR을 소스에 추가하거나
 기존 플래그 맵에 병합합니다. 가중치 34/33/33은 정확한 사용자 수를 보장하는 할당량이 아닙니다.
 
 ```yaml
@@ -1906,7 +1906,7 @@ kubectl patch featureflag kill-switches -n flag-demo --type=json -p "$FLAG_PATCH
 echo 'Configuration updated; verify GitOps reconciliation and actual consumer behavior.'
 ```
 
-반환된 Kubernetes 성공 응답은 설정 변경의 성공입니다. 캐시·동기화가 지연되거나
+반환된 Kubernetes 성공 응답은 설정 변경의 성공을 의미합니다. 캐시·동기화가 지연되거나
 오래된 규칙을 유지하는 소비자가 있을 수 있으므로 실제 앱 동작과 리비전도 확인합니다.
 플래그 변경과 워크로드 롤백이 자동으로 하나의 트랜잭션이 되는 것은 아닙니다.
 

@@ -7,7 +7,7 @@
 <details>
 <summary>정답 및 설명</summary>
 
-KV cache 블록 관리와 메모리 낭비입니다. 가중치 압축이나 고정된2–4배 처리량을 보장하지 않습니다.
+KV cache 블록 관리와 메모리 낭비입니다. 가중치 압축이나 고정된 2–4배 처리량을 보장하지 않습니다.
 </details>
 
 ## 2. Inference Gateway와 학습 실행기의 역할은 어떻게 다른가요?
@@ -66,7 +66,7 @@ kagent.dev/v1alpha2의 spec.type과 declarative/BYO 구조입니다. declarative
 아닙니다. scheduler가 단계별로 요청을 편입하지만 token budget·KV cache·동시성·queue 조건에 따라 기다릴 수 있습니다. 성능 향상은 실제 workload에서 측정해야 합니다.
 </details>
 
-## 9. Chunk size 1000을 언제1000token이라고 해석할 수 있나요?
+## 9. Chunk size 1000을 언제 1000token이라고 해석할 수 있나요?
 
 <details>
 <summary>정답 및 설명</summary>
@@ -119,7 +119,7 @@ from_conn_string은 context manager로 사용해야 합니다. :memory:는 영�
 <details>
 <summary>정답 및 설명</summary>
 
-TP는 레이어 내부 텐서 연산을, PP는 레이어 구간을 나눕니다. 무조건2의 거듭제곱이나 고정 모델 크기별GPU 수로 결정하지 말고 architecture·backend·통신·메모리를 확인해야 합니다.
+TP는 레이어 내부 텐서 연산을, PP는 레이어 구간을 나눕니다. 무조건 2의 거듭제곱이나 고정 모델 크기별 GPU 수로 결정하지 말고 architecture·backend·통신·메모리를 확인해야 합니다.
 </details>
 
 ## 16. 실습: 현재 vLLM 배포를 구성할 때 무엇을 검증하나요?
@@ -143,7 +143,7 @@ TP는 레이어 내부 텐서 연산을, PP는 레이어 구간을 나눕니다.
 <details>
 <summary>정답 및 설명</summary>
 
-원래 질문과 search_query를 분리하고 retry count와 recursion limit을 정합니다. 근거가 있으면 generate, 재시도 한도 내면 rewrite, 끝까지 없으면 abstain으로 종료합니다. 본문의 실제 LangGraph 예제는 이 경로와 SQLite 재접속을 로컬 callback으로 검증했습니다.
+원래 질문과 search_query를 분리하고 retry count와 recursion limit을 정합니다. 근거가 있으면 generate, 재시도 한도 이내면 rewrite, 끝까지 없으면 abstain으로 종료합니다. 본문의 실제 LangGraph 예제는 이 경로와 SQLite 재접속을 로컬 callback으로 검증했습니다.
 </details>
 
 ## 19. 심화: 금융 상담용 agent의 안전한 경계는 무엇인가요?

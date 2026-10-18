@@ -47,7 +47,7 @@ Pod 레이블 (k8s:app=web, k8s:io.kubernetes.pod.namespace=shop, ...)
         +--> 도착 노드: 정책 맵 조회 (로컬 endpoint, 원격 identity, 포트, 프로토콜)
 ```
 
-도착 측 조회 키는 로컬 endpoint, 원격 identity, 포트, 프로토콜입니다. identity는 패킷과 함께 이동하거나(오버레이의 터널 메타데이터), 네이티브 라우팅에서는 ipcache로 출발 IP에서 복원합니다. 그래서 오래되었거나 빠진 ipcache 항목은 정책 증상으로 나타납니다.
+도착 측 조회 키는 로컬 endpoint, 원격 identity, 포트, 프로토콜입니다. identity는 패킷과 함께 이동하거나(오버레이의 터널 메타데이터), 네이티브 라우팅에서는 ipcache를 통해 출발 IP에서 복원됩니다. 그래서 오래되었거나 빠진 ipcache 항목은 정책 증상으로 나타납니다.
 
 ### 32비트 숫자 identity 레이아웃
 
@@ -237,7 +237,7 @@ Kubernetes ClusterNetworkPolicy와 함께 쓰면 tier 순서는 Admin tier, Netw
 
 ### 실전 정책 패턴
 
-**DNS와 FQDN egress를 허용하는 default deny**(네임스페이스 `demo`). egress 규칙으로 endpoint를 선택하면 egress가 default-deny가 되므로 DNS를 명시적으로, 프록시가 응답을 볼 수 있도록 DNS 규칙과 함께 허용해야 합니다.
+**DNS와 FQDN egress를 허용하는 default deny**(네임스페이스 `demo`). egress 규칙으로 endpoint를 선택하면 egress가 default-deny가 되므로 프록시가 응답을 볼 수 있도록 DNS 규칙으로 DNS를 명시적으로 허용해야 합니다.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -344,7 +344,7 @@ selector가 기대보다 적은 identity를 매칭한다면 보통 identity-rele
 
 ### 빈 정책의 CEL 거부 (1.20)
 
-1.20에서 CNP와 CCNP CRD는 CEL 규칙 `has(self.spec) || has(self.specs)`와 메시지 "spec or specs must be provided"를 가집니다. 두 필드가 모두 없는 정책을 만들거나 수정하면 admission 단계에서 거부됩니다. 기존 빈 정책은 수정하기 전까지 영향이 없습니다. 관련된 이전 변경: 1.19부터 `FromRequires`/`ToRequires`는 비어 있어야 하며 Kafka/proxylib L7 정책은 1.20에서 제거되었습니다.
+1.20에서 CNP와 CCNP CRD는 CEL 규칙 `has(self.spec) || has(self.specs)`와 메시지 "spec or specs must be provided"를 가집니다. 두 필드가 모두 없는 정책을 만들거나 수정하면 admission 단계에서 거부됩니다. 기존 빈 정책은 수정하기 전까지 영향을 받지 않습니다. 관련된 이전 변경: 1.19부터 `FromRequires`/`ToRequires`는 비어 있어야 하며 Kafka/proxylib L7 정책은 1.20에서 제거되었습니다.
 
 ### Host policy
 
@@ -358,7 +358,7 @@ CNP egress `toPorts[].listener`가 포트를 CEC/CCEC Envoy listener로 리다�
 
 ### 동작 방식 (1.18-1.20)
 
-규칙에 `authentication: {mode: required}`를 둡니다. 데이터패스에서 이 플래그가 붙은 정책 매치는 BPF 맵 `cilium_auth_map`(524288 항목, 키는 로컬 identity, 원격 identity, 원격 노드, auth 타입)을 조회합니다. 만료되지 않은 항목이 없으면 패킷은 드롭(`DROP_POLICY_AUTH_REQUIRED`, -189)되고 agent에 신호가 갑니다. agent의 `pkg/auth` 매니저가 **원격 노드의 agent**로 포트 4250(`authentication.mutual.port`)에 대역 외 TLS 1.3 연결을 열고, SPIRE agent 소켓에서 받은 SPIFFE SVID(`spiffe://spiffe.cilium/identity/<numeric-id>`)를 제시하며, 상대 인증서를 검증하고, 가장 빠른 만료 시각을 auth 맵에 저장합니다. 이후 재전송된 패킷이 통과합니다. 핵심: 핸드셰이크는 **agent 사이**에서 이루어지며 연결 단위도 데이터 경로 위도 아니었고, WireGuard나 IPsec을 함께 켜지 않으면 애플리케이션 트래픽은 암호화되지 않았습니다. 알려진 한계: ClusterMesh 불가, SPIRE만 테스트됨, 외부 mTLS와 상호운용 불가.
+규칙에 `authentication: {mode: required}`를 둡니다. 데이터패스에서 이 플래그가 붙은 정책 매치는 BPF 맵 `cilium_auth_map`(524288 항목, 키는 로컬 identity, 원격 identity, 원격 노드, auth 타입)을 조회합니다. 만료되지 않은 항목이 없으면 패킷은 드롭(`DROP_POLICY_AUTH_REQUIRED`, -189)되고 agent에 신호가 갑니다. agent의 `pkg/auth` 매니저가 **원격 노드의 agent**로 포트 4250(`authentication.mutual.port`)에 대역 외 TLS 1.3 연결을 열고, SPIRE agent 소켓에서 받은 SPIFFE SVID(`spiffe://spiffe.cilium/identity/<numeric-id>`)를 제시하며, 상대 인증서를 검증하고, 가장 빠른 만료 시각을 auth 맵에 저장합니다. 이후 재전송된 패킷이 통과합니다. 핵심: 핸드셰이크는 **agent 사이**에서 이루어지며 연결 단위로 수행되지도 데이터 경로 위에서 이루어지지도 않았고, WireGuard나 IPsec을 함께 켜지 않으면 애플리케이션 트래픽은 암호화되지 않았습니다. 알려진 한계: ClusterMesh 불가, SPIRE만 테스트됨, 외부 mTLS와 상호운용 불가.
 
 ### 타임라인과 조치
 
@@ -635,7 +635,7 @@ hubble:
 
 ## 실습
 
-이 실습들은 이번 검토에서 실제 클러스터에 실행하지 않았습니다(검증 한계 참조). 일회용 클러스터를 사용하세요. 보안 그룹 관련 내용은 노드 보안 그룹 자기 참조 규칙을 전제로 하며, 어떤 포트도 `0.0.0.0/0`이나 `::/0`에 열지 마세요.
+이 실습들은 이번 검토에서 실제 클러스터에서 실행하지 않았습니다(검증 한계 참조). 일회용 클러스터를 사용하세요. 보안 그룹 관련 내용은 노드 보안 그룹 자기 참조 규칙을 전제로 하며, 어떤 포트도 `0.0.0.0/0`이나 `::/0`에 열지 마세요.
 
 ### 실습 1: Identity, ipcache, 레이블 제외
 
@@ -645,7 +645,7 @@ hubble:
 2. `kubectl get ciliumidentities`: `web` 레이블 집합에 하나, `db`에 하나의 identity가 있고 각 replica가 공유해야 합니다.
 3. `kubectl -n kube-system exec ds/cilium -- cilium-dbg identity list`로 `web`과 `db`의 ID를 기록합니다.
 4. `web` Pod IP 하나로 `cilium-dbg bpf ipcache list | grep <podIP>`를 실행합니다. 항목의 identity가 `web` identity와 같아야 합니다.
-5. `kubectl label pod <pod> release=r2 --overwrite`로 `web` Pod 하나의 레이블을 바꿉니다. 해당 Pod에 새 identity가 생기고 `kubectl get ciliumidentities`가 하나 늘어나 레이블 churn을 보여 줍니다.
+5. `kubectl label pod <pod> release=r2 --overwrite`로 `web` Pod 하나의 레이블을 바꿉니다. 해당 Pod에 새 identity가 생기고 `kubectl get ciliumidentities` 결과의 identity 수가 하나 늘어나 레이블 churn을 보여 줍니다.
 6. 정리: 네임스페이스를 삭제합니다. Helm으로 identity-relevant 레이블을 바꿨다면 `helm upgrade`(`--reuse-values`는 클러스터가 이미 이 차트 버전 1.20.2일 때만 유효하며, 아니면 저장한 값을 명시적으로 전달)로 되돌리고 agent를 재시작합니다(identity는 agent 재시작 뒤에야 바뀝니다).
 
 ### 실습 2: WireGuard와 strict ingress
@@ -678,7 +678,7 @@ hubble:
 3. `app=client`에서 8080 ingress만 허용하는 CNP를 적용합니다. 세 번째 Pod에서 서버로 curl하고 `hubble observe --verdict AUDIT -n pol`을 실행하면 세 번째 Pod에 대해 `AUDIT` verdict가 보이고 요청은 여전히 성공합니다.
 4. `PolicyAuditMode=Disabled`로 끄고 반복하면 요청이 드롭됩니다(`hubble observe --verdict DROPPED`).
 5. `CiliumCIDRGroup`(위 매니페스트)과 `cidrGroupRef`를 쓰는 egress `toCIDRSet` 규칙을 추가하고, `cilium-dbg identity list`에 CIDR 파생 identity가 보이고 flow에 그룹이 주석으로 붙는지 확인합니다.
-6. `app=client`에 대한 `ingressDeny` 규칙을 추가하면 allow 규칙이 있어도 클라이언트가 드롭됩니다(deny 우선).
+6. `app=client`에 대한 `ingressDeny` 규칙을 추가하면 allow 규칙이 있어도 클라이언트의 트래픽이 드롭됩니다(deny 우선).
 7. 정리: 네임스페이스와 CCG 삭제.
 
 ### 실습 5: Hubble export, 마스킹, cert-manager
@@ -723,7 +723,7 @@ hubble:
 
 ## 검증 한계와 출처
 
-실습은 이번 검토에서 실제 클러스터에 실행하지 않았고 아래 태그의 업스트림 소스와 문서를 기준으로 확인했습니다. Tetragon, ztunnel `ca.type=spire` end-to-end 흐름, IPsec ESP/UDP 방화벽 요구사항, 남아 있는 `authentication` 정책 필드의 런타임 동작은 확인하지 못했으며 본문에 표시했습니다. **[1.21 pre-release]** 항목은 v1.21.0-pre.3 기준이며 GA 전에 바뀔 수 있습니다. 의도적으로 옮기지 않은 업스트림 불일치: FQDN 호스트명당 IP 한도(문서 대 코드 기본값), 산문과 `values.yaml`이 다른 Hubble 인증서 기본 유효기간, 저장 버전은 `v2`인데 `v2alpha1`을 보여 주는 `CiliumCIDRGroup` 문서, `policyCIDRMatchMode` 값 주석.
+실습은 이번 검토에서 실제 클러스터에서 실행하지 않았고 아래 태그의 업스트림 소스와 문서를 기준으로 확인했습니다. Tetragon, ztunnel `ca.type=spire` end-to-end 흐름, IPsec ESP/UDP 방화벽 요구사항, 남아 있는 `authentication` 정책 필드의 런타임 동작은 확인하지 못했으며 본문에 표시했습니다. **[1.21 pre-release]** 항목은 v1.21.0-pre.3 기준이며 GA 전에 바뀔 수 있습니다. 의도적으로 옮기지 않은 업스트림 불일치: FQDN 호스트명당 IP 한도(문서 대 코드 기본값), 산문과 `values.yaml`이 다른 Hubble 인증서 기본 유효기간, 저장 버전은 `v2`인데 `v2alpha1`을 보여 주는 `CiliumCIDRGroup` 문서, `policyCIDRMatchMode` 값 주석.
 
 - [1.20 업그레이드 노트](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/operations/upgrade-current.inc), [Mutual Authentication (1.20)](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml), [정책 개요](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/kubernetes/policy.rst)
 - [투명 암호화](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/network/encryption.rst), [WireGuard](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/network/encryption-wireguard.rst), [IPsec](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/network/encryption-ipsec.rst), [CNP CEL 규칙](https://github.com/cilium/cilium/blob/v1.20.2/pkg/k8s/apis/cilium.io/v2/cnp_types.go)

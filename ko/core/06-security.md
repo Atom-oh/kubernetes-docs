@@ -164,7 +164,7 @@ spec:
 
 외부 ID 제공자(예: Google, Microsoft Entra ID)를 통한 인증을 지원합니다. 이는 기업 환경에서 Single Sign-On(SSO)을 구현하는 데 유용합니다.
 
-ID 제공자에 맞는 신뢰할 수 있는 client-go ExecCredential 로그인 플러그인을 설치하고 해당 로그인 절차를 완료하세요. 아래 kubeconfig 사용자 일부의 실행 파일은 자리 표시자이므로 설치한 플러그인과 문서화된 인수로 교체합니다. EKS IAM 인증은 `aws eks get-token` 등의 AWS 서명 토큰을 사용하며 IAM 자체가 일반 OIDC ID 제공자인 것은 아닙니다.
+ID 제공자에 맞는 신뢰할 수 있는 client-go ExecCredential 로그인 플러그인을 설치하고 해당 로그인 절차를 완료하세요. 아래 kubeconfig 사용자 설정 일부에 있는 실행 파일은 자리 표시자이므로 설치한 플러그인과 문서화된 인수로 교체합니다. EKS IAM 인증은 `aws eks get-token` 등의 AWS 서명 토큰을 사용하며 IAM 자체가 일반 OIDC ID 제공자인 것은 아닙니다.
 
 ```yaml
 users:
@@ -394,7 +394,7 @@ spec:
 
 네트워크 정책을 사용하려면 클러스터의 네트워크 플러그인이 네트워크 정책을 지원해야 합니다. Calico, Cilium, Antrea 등의 CNI 플러그인은 네트워크 정책을 지원합니다.
 
-이 podSelector는 `default`의 파드를 선택합니다. 정책은 허용 규칙의 합집합이므로 다른 정책이 더 많은 트래픽을 허용할 수 있으며 출발지 egress와 목적지 ingress 양쪽이 허용해야 합니다. 이 예시는 DNS를 포함하지 않으므로 Service 이름 조회가 필요하면 실제 클러스터 DNS의 TCP/UDP 53도 허용하세요.
+이 podSelector는 `default`의 파드를 선택합니다. 정책은 허용 규칙의 합집합이므로 다른 정책이 더 많은 트래픽을 허용할 수 있으며 출발지 egress와 목적지 ingress 양쪽이 트래픽을 허용해야 합니다. 이 예시는 DNS를 포함하지 않으므로 Service 이름 조회가 필요하면 실제 클러스터 DNS의 TCP/UDP 53도 허용하세요.
 
 ## 시크릿 관리
 
@@ -561,7 +561,7 @@ aws ec2 authorize-security-group-ingress \
   --cidr 10.0.0.0/16
 ```
 
-환경에 맞는 VPC/CIDR로 바꾸고 해당 보안 그룹을 대상 리소스에 연결해야 합니다. 그룹 생성만으로 기존 노드·파드를 보호하지 않습니다. 파드 보안 그룹에는 지원되는 VPC CNI 설정과 SecurityGroupPolicy가 추가로 필요합니다.
+환경에 맞는 VPC/CIDR로 바꾸고 해당 보안 그룹을 대상 리소스에 연결해야 합니다. 그룹 생성만으로는 기존 노드·파드를 보호할 수 없습니다. 파드 보안 그룹에는 지원되는 VPC CNI 설정과 SecurityGroupPolicy가 추가로 필요합니다.
 
 ### AWS WAF
 
@@ -575,7 +575,7 @@ aws wafv2 associate-web-acl \
 
 ### AWS GuardDuty
 
-AWS GuardDuty를 사용하여 EKS 클러스터의 보안 위협을 탐지하고 대응할 수 있습니다.
+AWS GuardDuty를 사용하여 EKS 클러스터의 보안 위협을 탐지하고 이에 대응할 수 있습니다.
 
 먼저 대상 계정·리전의 detector를 확인하세요. EKS 감사 로그 분석(`EKS_AUDIT_LOGS`)과 Runtime Monitoring(`RUNTIME_MONITORING`)은 별도 기능입니다. Runtime Monitoring은 지원 노드의 에이전트 적용도 필요하며 자동 EKS 에이전트 관리는 `EKS_ADDON_MANAGEMENT`를 사용합니다. 기존 `EKS_RUNTIME_MONITORING` 사용자는 두 런타임 기능을 동시에 켜지 말고 마이그레이션 절차를 따라야 합니다.
 

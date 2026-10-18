@@ -110,7 +110,7 @@ Outputs are `train.jsonl`, `validation.jsonl`, `test.jsonl`, and `augmentation-m
 | validation | 8 | 8 | 4 / 4 | 4 |
 | test | 8 | 8 | 4 / 4 | 4 |
 
-The 40 families are stratified by language and positive/negative status, assigning 6/2/2 families in each stratum. Training includes a base and two variants; validation/test retain bases only. The 50% negative and 50/50 language mix make the exercise comparable; they are not estimates of production prevalence.
+The 40 families are stratified by language and positive/negative status, with 6/2/2 families assigned in each stratum. Training includes a base and two variants; validation/test retain bases only. The 50% negative and 50/50 language mix make the exercise comparable; they are not estimates of production prevalence.
 
 The compact exercise covers PERSON, EMAIL, and PHONE. It has a different purpose from the historical nine-type generator. It cannot evaluate quality on RRN, CARD, or other types absent from this small set.
 
@@ -225,7 +225,7 @@ Prepare the following together for an actual training release:
 4. A source bundle containing that configuration and a matching local submission configuration.
 5. A validated supported runtime and in-job observations of input hashes/counts.
 
-The current bundler/uploader use fixed package paths. Generating `--output-dir` does not automatically wire that directory into SageMaker training. Integrate and validate a new dataset release in a separate working copy, then follow the [QLoRA workshop](05-qlora-finetuning-workshop.md) and [execution contract](03-sagemaker-mlflow-execution.md).
+The current bundler/uploader use fixed package paths. Generating the `--output-dir` directory does not automatically wire that directory into SageMaker training. Integrate and validate a new dataset release in a separate working copy, then follow the [QLoRA workshop](05-qlora-finetuning-workshop.md) and [execution contract](03-sagemaker-mlflow-execution.md).
 
 Compare original versus augmented training with the same validation set, decoding, and comparison budget. Identical step counts can still expose different numbers of examples or tokens when data size/length changes; record example/token budgets too.
 

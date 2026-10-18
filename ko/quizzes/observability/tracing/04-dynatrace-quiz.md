@@ -32,7 +32,7 @@
 
 **정답: B) Dynatrace Operator.**
 
-Helm 또는 manifest로 Operator를 설치하므로 서로 경쟁하는 모니터링 모드가 아닙니다. 검토 기준 Operator/chart는 1.10.2이며 배포 CRD는 v1beta5·v1beta6을 제공하고 storage는 v1beta6입니다. 기존 v1beta2는 현재 제공 API가 아닙니다. 컴포넌트 버전과 업데이트 동작은 별도 검토가 필요합니다.
+Helm과 manifest는 Operator를 설치하는 방식이므로 서로 경쟁하는 모니터링 모드가 아닙니다. 검토 기준 Operator/chart는 1.10.2이며 배포 CRD는 v1beta5·v1beta6을 제공하고 storage는 v1beta6입니다. 기존 v1beta2는 현재 제공 API가 아닙니다. 컴포넌트 버전과 업데이트 동작은 별도 검토가 필요합니다.
 
 </details>
 

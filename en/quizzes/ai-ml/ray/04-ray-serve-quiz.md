@@ -55,7 +55,7 @@ A directly constructed AutoscalingConfig defaults max to 1, so specify the inten
 
 **Answer: B**
 
-Default -1 is unlimited; exceeding a configured bound can reject HTTP requests or raise handle BackPressureError.
+The default of -1 is unlimited; exceeding a configured bound can reject HTTP requests or raise a handle BackPressureError.
 </details>
 
 5. Does a pending replica actor always create a new Pod and EC2 node?
@@ -124,7 +124,7 @@ It was a tiny single-node CPU test without a model, LLM, GPU, or cloud deploymen
 They control different things: requests assigned to replicas, target load for scaling, and waiting requests per caller. One setting does not establish all other bounds or latency guarantees.
 </details>
 
-10. Why do cluster tokens or ClusterIP not complete application security?
+10. Why do cluster tokens or ClusterIP not provide complete application security?
 
 <details>
 <summary>Show Answer</summary>

@@ -1,6 +1,6 @@
 # AI Infrastructure on EKS Quiz
 
-15questions on current APIs and operational boundaries.
+15 questions on current APIs and operational boundaries.
 
 ## 1. What is JARK, and is it automatically complete?
 
@@ -39,7 +39,7 @@ DRA provides structured requests, attributes and allocation through DeviceClass/
 <details>
 <summary>Answer and explanation</summary>
 
-3g.20gb describes one profile, not three20GB devices. MIG partitions hardware but does not replace host/driver/authorization isolation. MPS/time-slicing are not security boundaries.
+3g.20gb describes one profile, not three 20GB devices. MIG partitions hardware but does not replace host/driver/authorization isolation. MPS/time-slicing are not security boundaries.
 </details>
 
 ## 6. Can one GPU Operator version establish all DRA support?
@@ -47,7 +47,7 @@ DRA provides structured requests, attributes and allocation through DeviceClass/
 <details>
 <summary>Answer and explanation</summary>
 
-No. Check Kubernetes APIs, drivers/hardware/CDI and individual gates. Operator26.7 GPUCluster is mutually exclusive with ClusterPolicy; standalone0.5 has an opt-in guard against device-plugin collisions.
+No. Check Kubernetes APIs, drivers/hardware/CDI and individual gates. Operator 26.7 GPUCluster is mutually exclusive with ClusterPolicy; standalone 0.5 has an opt-in guard against device-plugin collisions.
 </details>
 
 ## 7. What should be checked when integrating Langfuse?
@@ -55,7 +55,7 @@ No. Check Kubernetes APIs, drivers/hardware/CDI and individual gates. Operator26
 <details>
 <summary>Answer and explanation</summary>
 
-Verify current SDK/backend dependencies, DB/ClickHouse/object storage, file credentials, tracing and sensitive-data retention. Old2.x Deployments or trace() calls are not current4.x APIs.
+Verify current SDK/backend dependencies, DB/ClickHouse/object storage, file credentials, tracing and sensitive-data retention. Old 2.x Deployments or trace() calls are not current 4.x APIs.
 </details>
 
 ## 8. How should EFS, FSx and Mountpoint be selected?
@@ -63,7 +63,7 @@ Verify current SDK/backend dependencies, DB/ClickHouse/object storage, file cred
 <details>
 <summary>Answer and explanation</summary>
 
-Compare I/O, authorization, namespace/PVC scope, capacity and filesystem semantics. EFS requests are not quotas; Mountpoint CSI2.8 uses static PVs for existing buckets and is not fully POSIX.
+Compare I/O, authorization, namespace/PVC scope, capacity and filesystem semantics. EFS requests are not quotas; Mountpoint CSI 2.8 uses static PVs for existing buckets and is not fully POSIX.
 </details>
 
 ## 9. How should EFA bandwidth and interface counts be interpreted?
@@ -87,7 +87,7 @@ FB_USED/FREE are MiB gauges; a high ratio is not necessarily OOM. XID_ERRORS is 
 <details>
 <summary>Answer and explanation</summary>
 
-It uses workload requests, scheduling feasibility, prices and disruption constraints rather than a DCGM20% threshold. Limits/budgets are not absolute cost/failure guarantees; verify termination and recovery.
+It uses workload requests, scheduling feasibility, prices and disruption constraints rather than a DCGM 20% threshold. Limits/budgets are not absolute cost/failure guarantees; verify termination and recovery.
 </details>
 
 ## 12. Who publishes ResourceSlices, and what do they represent?

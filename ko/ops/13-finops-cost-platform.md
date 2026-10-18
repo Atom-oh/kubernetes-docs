@@ -561,7 +561,7 @@ spec:
       message: "Set positive CPU and memory requests for each regular container."
 ```
 
-`Audit`는 위반을 차단하지 않습니다. background scan의 보고서와 적용 범위를 확인하고 소유자와 개선한 뒤 필요한 정책만 `Deny`로 전환합니다. 사용자에게 경고도 보내려면 `Warn` 동작을 별도로 선택합니다. 로컬 CLI는 Audit 정책에서도 테스트 위반을 실패로 반환할 수 있으므로 이를 실제 admission 차단과 혼동하지 않습니다.
+`Audit`는 위반을 차단하지 않습니다. background scan의 보고서와 적용 범위를 확인하고 소유자와 위반 사항을 개선한 뒤 필요한 정책만 `Deny`로 전환합니다. 사용자에게 경고도 보내려면 `Warn` 동작을 별도로 선택합니다. 로컬 CLI는 Audit 정책에서도 테스트 위반을 실패로 반환할 수 있으므로 이를 실제 admission 차단과 혼동하지 않습니다.
 
 요청량 정책은 **일반 컨테이너 각각의 양수 CPU·메모리 request**만 검사합니다. init container·Pod-level resource 예산과 limit 전략은 별도 정책입니다. 모든 서비스에 CPU 4개·메모리 8Gi 상한을 일률 적용한다고 적정 크기가 검증되지는 않습니다.
 
@@ -902,7 +902,7 @@ namespace annotation의 문자열을 `label_replace`로 바꾼다고 숫자 시�
 
 다음 스크립트는 Python 3.12 표준 라이브러리만 사용합니다. UTC 기준 완료된 날짜까지 조회하며, `--as-of`는 **제외되는 종료 날짜**입니다. 매월 1일에는 직전 완료 월을 보고합니다. API가 비어 있거나 기간 전체가 아닌 여러 step을 반환하면 실패하고 0 USD로 위장하지 않습니다. 실제 데이터 보관 범위와 누락까지 자동 입증하지 않으므로 API warnings와 importer 시각을 확인해야 합니다.
 
-기본 동작은 JSON 파일 생성이며 Slack을 전송하지 않습니다. `--send`와 `--webhook-file`을 함께 지정해야 전송합니다. 서로 다른 채널에는 각각의 incoming webhook이 필요하며 payload의 `channel`로 덮어쓰는 방식은 사용하지 않습니다.
+기본 동작은 JSON 파일 생성이며 Slack으로 메시지를 전송하지 않습니다. `--send`와 `--webhook-file`을 함께 지정해야 전송합니다. 서로 다른 채널에는 각각의 incoming webhook이 필요하며 payload의 `channel`로 덮어쓰는 방식은 사용하지 않습니다.
 
 **`report_costs.py`**
 

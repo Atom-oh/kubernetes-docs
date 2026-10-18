@@ -75,7 +75,7 @@ workload_kubectl apply -f "$WORKLOADS_LAB_DIR/nginx-pod.yaml"
 ```
 
 **Step 1.2: Pod 상태 확인**
-Running phase만으로 준비 상태를 뜻하지 않습니다. 로그·exec 전에 HTTP readiness probe를 기다리고, 시간 초과를 성공으로 처리하지 말고 원인을 확인하세요.
+Running phase만으로 준비 상태라고 볼 수는 없습니다. 로그·exec 전에 HTTP readiness probe를 기다리고, 시간 초과를 성공으로 처리하지 말고 원인을 확인하세요.
 
 ```bash
 workload_kubectl wait --for=condition=Ready pod/nginx-lab --timeout=120s
@@ -106,7 +106,7 @@ workload_kubectl get pod nginx-lab -o wide
 ### 단계
 
 **Step 2.1: Deployment 생성**
-Deployment는 maxUnavailable0·maxSurge1로 의도적인 잘못된 이미지 롤아웃 중 기존 ready 복제본을 유지하도록 설정합니다. surge·종료 중 Pod와 별도 Pod를 위한 여유 용량이 필요합니다. 다른 장애에서의 가용성을 보장하는 것은 아닙니다.
+Deployment는 maxUnavailable 0·maxSurge 1로 의도적으로 잘못된 이미지를 롤아웃하는 동안 기존 ready 복제본을 유지하도록 설정합니다. surge·종료 중 Pod와 별도 Pod를 위한 여유 용량이 필요합니다. 다른 장애에서의 가용성을 보장하는 것은 아닙니다.
 
 ```bash
 cat > "${WORKLOADS_LAB_DIR:?}/nginx-deployment.yaml" << 'EOF'

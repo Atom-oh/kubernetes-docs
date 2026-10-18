@@ -26,7 +26,7 @@ The out-of-band mechanism is still documented as **beta/incomplete** in Cilium 1
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
-Authentication records are cached for identity relationships. The diagram is not a new certificate/handshake for every HTTP request or necessarily every application connection. Apply explicit authorization rules as well as authentication requirements.
+Authentication records are cached for identity relationships. The diagram does not represent a new certificate/handshake for every HTTP request or necessarily every application connection. Apply explicit authorization rules as well as authentication requirements.
 
 ### Native mTLS via ztunnel (2026 Update)
 
@@ -67,7 +67,7 @@ A namespace label, healthy proxy or packet observed on port 15008 alone does not
 
 ### When to Choose Cilium vs. Istio for mTLS
 
-Choose against the required identity, authorization and traffic coverage. An existing Cilium deployment may use identity policy plus WireGuard/IPsec, or evaluate the separate ztunnel beta within its limitations. Account for the additional proxies, CA and operational dependencies actually enabled.
+Choose based on the required identity, authorization and traffic coverage. An existing Cilium deployment may use identity policy plus WireGuard/IPsec, or evaluate the separate ztunnel beta within its limitations. Account for the additional proxies, CA and operational dependencies actually enabled.
 
 Istio provides workload-proxy mTLS in sidecar and ambient modes with their own feature/platform boundaries. `PeerAuthentication` `STRICT` is an inbound mTLS requirement; it does not by itself issue identities, install proxies or authorize every caller. Do not reduce the comparison to a single encryption switch. The [sidecar/ambient chapter](../istio/comparison/03-sidecar-vs-ambient.md) preserves its actual measured versions and scenarios.
 
@@ -368,7 +368,7 @@ spec:
       mode: disabled
 ```
 
-The Prometheus rule is **disabled authentication**, not “authenticate if possible.” It grants only the stated monitoring workload and port. TLS on either application's listening port is a separate application configuration.
+The Prometheus rule specifies **disabled authentication**, not “authenticate if possible.” It grants only the stated monitoring workload and port. TLS on either application's listening port is a separate application configuration.
 
 ### SPIFFE ID-Based Authentication
 

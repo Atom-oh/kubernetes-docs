@@ -56,7 +56,7 @@ D. Fortio SocketCount가 waypoint upstream 풀을 직접 측정한다
 
 **해설:**
 
-HTTP 503 비율은 sidecar 0.54%, L7 약 2.55%이며 표본의 비율 차이는 약 4.72배입니다. 제품 고유의 배수가 아닙니다. HTTP 503 0건은 전체 실패 0건이 아닙니다. Fortio 비HTTP 코드 -1만으로 구체적인 reset/EOF/timeout 원인을 알 수 없습니다. SocketCount는 client 소켓이며 가장 많았던 것은 L4(1,652)가 아닌 L7(2,486)입니다. 요청 QPS × 시간으로 정확한 완료 호출 수가 보장되지 않고, 다른 롤아웃 횟수도 인과 비교를 제한합니다.
+HTTP 503 비율은 sidecar 0.54%, L7 약 2.55%이며 표본의 비율 차이는 약 4.72배입니다. 제품 고유의 배수가 아닙니다. HTTP 503 0건은 전체 실패 0건이 아닙니다. Fortio 비HTTP 코드 -1만으로 구체적인 reset/EOF/timeout 원인을 알 수 없습니다. SocketCount는 client 소켓이며 가장 많았던 것은 L4(1,652)가 아닌 L7(2,486)입니다. 요청 QPS × 시간으로 정확한 완료 호출 수가 보장되지 않고, 서로 다른 롤아웃 횟수도 인과 비교를 제한합니다.
 
 **참고 자료:**
 
@@ -143,7 +143,7 @@ D. 평균 CPU가 가장 낮은 모드를 선택한다
 
 **해설:**
 
-Sidecar와 waypoint Envoy는 L7 retry를 수행하지만 ztunnel은 HTTP 503을 해석하거나 HTTP 요청을 replay할 수 없습니다. 양쪽 쓰기 retry를 동일하게 끄고 upstream_rq_retry, 실제 전달 수, 안정적인 명령 ID와 client 집계를 기록하세요. 부하, 버전, 리소스와 롤아웃 노출도 통제하고 반복해야 합니다. 관측을 더 공정하게 분리하지만 한 번의 실행으로 제품 고유 안정성이 증명되지는 않습니다.
+Sidecar와 waypoint Envoy는 L7 retry를 수행하지만 ztunnel은 HTTP 503을 해석하거나 HTTP 요청을 replay할 수 없습니다. 양쪽 쓰기 retry를 동일하게 끄고 upstream_rq_retry, 실제 전달 수, 안정적인 명령 ID와 client 집계를 기록하세요. 부하, 버전, 리소스와 롤아웃 노출도 통제하고 실험을 반복해야 합니다. 관측을 더 공정하게 분리하지만 한 번의 실행으로 제품 고유 안정성이 증명되지는 않습니다.
 
 **참고 자료:**
 
@@ -173,7 +173,7 @@ D. 인가 정책이 더 이상 필요 없다
 
 **해설:**
 
-릴리스 Cilium 1.20.1 문서는 이 방식을 Beta로 표시하고 애플리케이션 데이터 경로와 분리된 out-of-band handshake로 설명합니다. 인증 정책만으로 payload가 암호화되지는 않습니다. 지원되는 WireGuard/IPsec 암호화의 플랫폼·트래픽 범위 제한을 별도로 확인하세요. Cilium 1.20.1에는 namespace 등록, TCP 전용, 정책·플랫폼 제약을 가진 별도의 ztunnel 암호화 베타도 있습니다. 이 out-of-band 인증 정책 설정으로 활성화되는 기능은 아닙니다.
+Cilium 1.20.1 릴리스 문서는 이 방식을 Beta로 표시하고 애플리케이션 데이터 경로와 분리된 out-of-band handshake로 설명합니다. 인증 정책만으로 payload가 암호화되지는 않습니다. 지원되는 WireGuard/IPsec 암호화의 플랫폼·트래픽 범위 제한을 별도로 확인하세요. Cilium 1.20.1에는 namespace 등록, TCP 전용, 정책·플랫폼 제약을 가진 별도의 ztunnel 암호화 베타도 있습니다. 이 out-of-band 인증 정책 설정으로 활성화되는 기능은 아닙니다.
 
 **참고 자료:**
 

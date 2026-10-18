@@ -382,7 +382,7 @@ spec:
 
 ### 3. Progressive Fault Injection
 
-Test by gradually increasing fault rate:
+Test by gradually increasing the fault rate:
 
 ```yaml
 # Stage 1: 5% faults
@@ -530,7 +530,7 @@ spec:
 
 **Test Objectives**:
 1. Are application timeout settings appropriate?
-2. Does connection pool get exhausted?
+2. Does the connection pool get exhausted?
 3. Are appropriate error messages displayed to users?
 
 **Expected Results**:
@@ -578,9 +578,9 @@ spec:
 ```
 
 **Test Objectives**:
-1. Does order service handle payment failure gracefully?
+1. Does the order service handle payment failure gracefully?
 2. Does the order service preserve its caller-facing behavior? Ejection depends on actual errors returned by order-service.
-3. Are appropriate user messages displayed on frontend?
+3. Are appropriate user messages displayed on the frontend?
 
 ### Scenario 3: Testing API Rate Limit Situation
 
@@ -649,7 +649,7 @@ spec:
 **Test Objectives**:
 1. Confirm inter-region latency impact in global services
 2. Determine if optimization through caching or CDN is possible
-3. Is SLA target met (e.g., 95% of requests within 500ms)?
+3. Is the SLA target met (e.g., 95% of requests within 500ms)?
 
 ### Scenario 5: Simulating Temporary Failure During Deployment
 
@@ -695,7 +695,7 @@ spec:
 
 ### 1. Progressive Chaos Engineering
 
-Gradually increase fault rate to find system limits:
+Gradually increase the fault rate to find system limits:
 
 ![Workflow showing four escalating fault-injection stages from 1% to 50%, each advancing to the next once monitoring is clean, with every stage falling back to a shared fix-and-improve step whenever an issue is found.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-4.png)
 
@@ -769,7 +769,7 @@ spec:
 
 ### 3. Automated Testing Pipeline
 
-Integrate into CI/CD pipeline:
+Integrate into a CI/CD pipeline:
 
 ```yaml
 stages: [fault-injection-test]
@@ -843,7 +843,7 @@ data:
 
 ### 5. Blue-Green Fault Injection
 
-Inject faults into Blue environment and compare with Green environment:
+Inject faults into the Blue environment and compare with the Green environment:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -888,7 +888,7 @@ spec:
 
 ### 2. Monitoring is Essential
 
-Prepare monitoring dashboard before applying Fault Injection:
+Prepare a monitoring dashboard before applying Fault Injection:
 
 ```yaml
 # Grafana dashboard metrics

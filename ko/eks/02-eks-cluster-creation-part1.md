@@ -19,7 +19,7 @@ Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다.
 
 ## 사전 요구 사항
 
-EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항이 필요합니다:
+EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항을 충족해야 합니다:
 
 <!-- Audit 2026-09-11: restore after parent repairs legacy wildcard IAM, mandatory internet and VPC ownership-tag labels.
 ![AWS 계정과 IAM 권한에서 시작해 AWS CLI, kubectl, eksctl 도구 설치와 서로 다른 가용 영역의 서브넷 2개 이상 및 태그 지정이 필요한 VPC까지, EKS 클러스터 생성 전 사전 요구 사항을 보여준다.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part1-10.png)
@@ -73,7 +73,7 @@ export AWS_PROFILE=eks-docs
 
 #### kubectl과 eksctl (Linux/macOS)
 
-이 장의 EKS 1.36 예제에는 kubectl **1.36.5**, eksctl **0.231.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
+이 장의 EKS 1.36 예제는 kubectl **1.36.5**, eksctl **0.231.0**을 기준으로 합니다. kubectl은 서버와 같은 마이너 버전을 권장하며 허용되는 차이는 ±1 마이너입니다. 업스트림 `stable.txt`의 최신 마이너를 이전 EKS 클러스터에 무조건 설치하지 않습니다.
 
 아래 Bash 예제는 AMD64/ARM64를 구분하고 공식 체크섬을 확인한 뒤 설치합니다. `curl`, `tar`, `awk`와 `sha256sum` 또는 `shasum`이 필요하며 `/usr/local/bin` 설치는 관리자 권한이 필요합니다. 다운로드/검증 실패 시 설치를 중단합니다.
 

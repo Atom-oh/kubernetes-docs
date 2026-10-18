@@ -75,7 +75,7 @@ Auto Mode에는 해당 커스텀 AMI 인터페이스나 SSH/SSM 접근이 없습
 **정답: B) 적격 claim이 해당 graceful-disruption 제어 아래 교체될 수 있음**
 
 **설명:**
-`Drifted` condition, reason과 현재 정책을 확인합니다. 10% budget은 올림하며 다른 활성 상한과 결합하므로 한 개씩 교체한다는 뜻은 아닙니다. 배치/PDB 제약과 grace 의미도 고려합니다. 모든 NodePool 변경이 drift를 유발하지는 않습니다. 호환 requirement 확장, weight/limit/disruption 같은 동작 설정은 desired-state drift와 다릅니다. `amiFamily`는 Auto Mode 필드가 아닙니다.
+`Drifted` condition, reason과 현재 정책을 확인합니다. 10% budget은 올림해 계산하며 다른 활성 상한과 결합하므로 한 개씩 교체한다는 뜻은 아닙니다. 배치/PDB 제약과 grace 의미도 고려합니다. 모든 NodePool 변경이 drift를 유발하지는 않습니다. 호환 requirement 확장, weight/limit/disruption 같은 동작 설정은 desired-state drift와 다릅니다. `amiFamily`는 Auto Mode 필드가 아닙니다.
 
 </details>
 
@@ -115,7 +115,7 @@ terminationGracePeriod: 24h
 **정답: C) Graceful 작업과 forceful expiration은 다른 제어 경로이며 보편적인 전체 순서는 없음**
 
 **설명:**
-Graceful controller는 consolidation보다 drift를 먼저 평가하지만 expiration은 별도 forceful 경로입니다. 전체 `drift > expiration > consolidation`이나 먼저 조건을 만족한 작업 승리는 문서화된 보장이 아닙니다. 5일 된 노드가 7일 만료 전에 consolidate될 수 있고, 8일 된 만료 claim은 충분히 활용 중이어도 종료를 시작할 수 있습니다.
+Graceful controller는 consolidation보다 drift를 먼저 평가하지만 expiration은 별도 forceful 경로입니다. 전체 `drift > expiration > consolidation`이나 먼저 조건을 만족한 작업이 우선한다는 것은 문서화된 보장이 아닙니다. 5일 된 노드가 7일 만료 전에 consolidate될 수 있고, 8일 된 만료 claim은 충분히 활용 중이어도 종료를 시작할 수 있습니다.
 
 </details>
 
@@ -132,7 +132,7 @@ Graceful controller는 consolidation보다 drift를 먼저 평가하지만 expir
 **정답: C) 관리형 수정 확인·영향 claim 식별·health 확인을 포함한 단일 리소스 절차**
 
 **설명:**
-관리형 이미지·수정 가용성을 확인한 뒤 대상 context에서 단일 NodeClaim UID·node mapping·PDB·영구 상태·여유/확보 가능 용량을 확인합니다. 적합하면 관리형 drift를 사용하며 수동 교체는 별도로 검토하고 다음 노드 전에 health·이미지를 재확인합니다. 장식용 `SecurityPatch` tag는 패치 trigger 보장이 아니고 label 일괄 삭제는 rolling update가 아닙니다. `--delete-emptydir-data`는 local 데이터를 버릴 수 있습니다.
+관리형 이미지·수정 가용성을 확인한 뒤 대상 context에서 단일 NodeClaim UID·node mapping·PDB·영구 상태·여유/확보 가능 용량을 확인합니다. 적합하면 관리형 drift를 사용하며 수동 교체는 별도로 검토하고 다음 노드로 넘어가기 전에 health·이미지를 재확인합니다. 장식용 `SecurityPatch` tag는 패치 trigger 보장이 아니고 label 일괄 삭제는 rolling update가 아닙니다. `--delete-emptydir-data`는 local 데이터를 버릴 수 있습니다.
 
 연결된 본문에서 `KUBE_CONTEXT`를 설정합니다. 아래는 증거만 수집하는 명령입니다.
 
@@ -166,7 +166,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pdb -A -o json |
 **정답: B) 아니요. Auto Mode 관리형 인스턴스 최대 21일은 계속 적용**
 
 **설명:**
-Upstream 문법은 Auto Mode 서비스 수명을 무효화하는 권한이 아닙니다. Auto Mode 데이터베이스·장기 작업을 한 인스턴스에서 영구 실행하기 위해 `Never`를 권장하거나, 검증 없이 특정 admission 응답을 보장해서는 안 됩니다. Checkpoint·외부 영구 스토리지·복구를 설계하세요. Drift·interruption 등 다른 작업으로 더 일찍 종료될 수도 있습니다.
+Upstream 문법은 Auto Mode 서비스 수명을 무효화하는 권한이 아닙니다. Auto Mode에서 데이터베이스·장기 작업을 한 인스턴스에서 영구 실행하기 위해 `Never`를 권장하거나, 검증 없이 특정 admission 응답을 보장해서는 안 됩니다. Checkpoint·외부 영구 스토리지·복구를 설계하세요. Drift·interruption 등 다른 작업으로 더 일찍 종료될 수도 있습니다.
 
 </details>
 

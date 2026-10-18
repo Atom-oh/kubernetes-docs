@@ -596,7 +596,7 @@ Kubernetes API logs and host-file tailing are different inputs. File tailing nee
 
 Keep trace/request/user IDs in log bodies or appropriate structured metadata, not indexed Loki stream labels. Consider churn and retention for Pod/instance labels too.
 
-Do not reuse the removed Collector `loki` exporter. An alternative for native OTLP logs is an `otlphttp` exporter targeting `http://<loki>/otlp`, connected to a logs pipeline and compatible Loki structured-metadata/schema settings. That is distinct from the stdout-log path above.
+Do not reuse the removed Collector `loki` exporter. An alternative for native OTLP logs is an `otlphttp` exporter targeting `http://<loki>/otlp`, connected to a logs pipeline and used with compatible Loki structured-metadata/schema settings. That is distinct from the stdout-log path above.
 
 ### Metrics and exemplar storage
 
@@ -658,7 +658,7 @@ quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms>=0
 avg_over_time({service_name="correlation-api"} | json | latency_ms>=0 | __error__="" | unwrap latency_ms | __error__="" [5m]) by (route)
 ```
 
-JSON parsing, numeric comparison and unwrap can introduce errors, requiring correctly placed `__error__=""` filters. These queries first validate `latency_ms>=0`. Against Loki 3.7.8 with valid 10ms/800ms values, a nonnumeric value and malformed JSON, the corrected queries returned mean 405ms and P95 760.5ms.
+JSON parsing, numeric comparison and unwrap can introduce errors, requiring correctly placed `__error__=""` filters. These queries first validate `latency_ms>=0`. Against Loki 3.7.8 with valid 10ms/800ms values, a nonnumeric value and malformed JSON, the corrected queries returned a mean of 405ms and a P95 of 760.5ms.
 
 These are range aggregations of unwrapped values, not Prometheus histogram buckets. Grouping by unrestricted messages or raw URLs can also cause high query-result cardinality.
 

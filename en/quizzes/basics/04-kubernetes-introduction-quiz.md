@@ -214,7 +214,7 @@ Both use the same standard Kubernetes API.
 
 ## Practical Questions
 
-16. Write an nginx Deployment with 3 replicas, port80, requests of CPU100m/memory128Mi and limits of CPU200m/memory256Mi.
+16. Write an nginx Deployment with 3 replicas, port 80, requests of CPU 100m/memory 128Mi and limits of CPU 200m/memory 256Mi.
 
 <details>
 <summary>Show Answer</summary>
@@ -377,7 +377,7 @@ spec:
       port: 3306
 ```
 
-Requires the production namespace and a network plugin that enforces NetworkPolicy. Allows are additive, so other policies can grant additional access. This policy does not isolate egress.
+Requires the production namespace and a network plugin that enforces NetworkPolicy. Allow rules are additive, so other policies can grant additional access. This policy does not isolate egress.
 </details>
 
 ---

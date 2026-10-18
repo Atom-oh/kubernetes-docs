@@ -236,7 +236,7 @@ test:
   enabled: false
 ```
 
-The tenant gateway exposes only the listed data APIs and nonsensitive `/` readiness. Valid tenant credentials still receive403 for `/ingester/shutdown`, `/flush`, `/config`, ring/memberlist/status, deletion and ruler administration paths. Use separately authorized internal access/port-forward for administration. Review any additional client API before extending the allowlist, and keep direct backend access blocked.
+The tenant gateway exposes only the listed data APIs and nonsensitive `/` readiness. Valid tenant credentials still receive 403 for `/ingester/shutdown`, `/flush`, `/config`, ring/memberlist/status, deletion and ruler administration paths. Use separately authorized internal access/port-forward for administration. Review any additional client API before extending the allowlist, and keep direct backend access blocked.
 
 
 
@@ -620,7 +620,7 @@ Tenant stream rules take precedence over global stream rules; among matching rul
 | Stream-limit rejection | Inspect actual label combinations and churn; use the correct local/global stream-limit setting for the deployment. Do not treat 10,000 as a universal default. |
 | Ingester OOM | Active streams, chunks, WAL replay, cache/buffer sizes and node/container limits. Avoid duplicate `ingester:` YAML keys or mixing Helm resources into runtime YAML. |
 | S3 errors | Effective workload identity, bucket/region, account/resource restrictions, KMS policy, DNS/endpoints and object availability. Do not “fix” them with public buckets or static access keys. |
-| “Ingester is shutting down” on writes | Check actual lifecycle state **and WAL disk pressure**:3.7.7 can return the same error when the WAL disk-full threshold(default0.9) throttles writes. Recover capacity; do not blindly disable the safeguard. |
+| “Ingester is shutting down” on writes | Check actual lifecycle state **and WAL disk pressure**: 3.7.7 can return the same error when the WAL disk-full threshold (default 0.9) throttles writes. Recover capacity; do not blindly disable the safeguard. |
 | No org ID / unexpected tenant | Gateway authentication, header overwrite and direct-backend bypass. `auth_enabled: true` requires a tenant ID; it does not validate a password. |
 
 Use a securely configured LogCLI connection or an authenticated HTTPS gateway. For example, keep credentials in a protected netrc file and use your trusted CA rather than putting a password in a command or disabling certificate verification:

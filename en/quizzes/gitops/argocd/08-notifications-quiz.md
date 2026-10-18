@@ -1,6 +1,6 @@
 # ArgoCD Notifications Quiz
 
-This quiz tests your understanding of ArgoCD notification system and alerting.
+This quiz tests your understanding of the ArgoCD notification system and alerting.
 
 1. What component handles notifications in ArgoCD?
    - A) Application Controller

@@ -94,7 +94,7 @@
 
 **정답: B**
 
-**설명:** gateways는 설정한 대상 gateway probe를 표시하며 모든 애플리케이션의 건강 상태는 아닙니다. Probe는 source mirror controller가 수행합니다. Flat-only Link에는 gateway가 필요하지 않으므로 Link/endpoint/Pod 연결을 진단합니다.
+**설명:** gateways는 설정한 대상 gateway probe를 표시하며 모든 애플리케이션의 건강 상태를 나타내는 것은 아닙니다. Probe는 source mirror controller가 수행합니다. Flat-only Link에는 gateway가 필요하지 않으므로 Link/endpoint/Pod 연결을 진단합니다.
 
 </details>
 

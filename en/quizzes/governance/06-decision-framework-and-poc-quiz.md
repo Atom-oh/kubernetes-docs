@@ -40,7 +40,7 @@ Weighted forwarding does not automatically transfer an empty/unhealthy group’s
 
 ---
 
-3. Why is "decision matrix dry-run" run as PoC-0, before all other PoCs?
+3. Why is the "decision matrix dry-run" run as PoC-0, before all other PoCs?
    - A) Because it's the cheapest option
    - B) Because every other option (independent boundary judgment, Hybrid configurations, etc.) sets "reproducible via a decision matrix" as its condition for validity, so no PoC result converts into a standard without one
    - C) Because it requires AWS SA approval

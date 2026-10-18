@@ -23,7 +23,7 @@ Harbor 2.15.4에는 GET/POST/PUT `/api/v2.0/system/scanAll/schedule` API가 있�
 
 [공식 Harbor Velero 절차](https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md)는 repository read-only 모드와 지정한 Kubernetes 리소스/PV를 사용합니다. 결과는 **application-consistent가 아닌 crash-consistent**이며 Redis를 제외합니다. 동기화되지 않은 메타데이터·세션이 유실되거나 작업 정리가 필요할 수 있습니다. 내부 DB를 대상으로 하며 외부 관리형 DB는 포함하지 않습니다. 지원하는 snapshot/file-backup/data-movement 플러그인을 선택하고 복구 위치에서 모든 볼륨·object 데이터에 접근할 수 있는지 확인합니다. snapshot 참조만으로 별도 위치에 복원 가능한 복사본이 되지는 않습니다.
 
-다음은 확인한 내부 PostgreSQL Pod의 **DB 구성 요소 dump 예시**입니다. pg_dump/pg_restore와 로컬 인증이 이미 구성되어 있어야 합니다. 외부 DB는 해당 시스템의 인증된 백업·복원 절차를 사용합니다. 자격 증명을 명령 인자에 전달하지 않습니다. 오류에서 중단하고 부분 파일을 비공개로 보관하며 완료된 dump로 처리하지 않습니다.
+다음은 확인한 내부 PostgreSQL Pod의 **DB 구성 요소 dump 예시**입니다. pg_dump/pg_restore와 로컬 인증이 이미 구성되어 있어야 합니다. 외부 DB는 해당 시스템의 인증된 백업·복원 절차를 사용합니다. 자격 증명을 명령 인자에 전달하지 않습니다. 오류가 발생하면 중단하고 부분 파일을 비공개로 보관하며 완료된 dump로 처리하지 않습니다.
 
 ```bash
 set -euo pipefail
@@ -45,7 +45,7 @@ mv "$BACKUP_DIR/registry.dump.partial" "$BACKUP_DIR/registry.dump"
 printf 'Database archive created: %s; full Harbor recovery requires separate evidence.\n' "$BACKUP_DIR"
 ```
 
-archive 목록을 읽었다고 복원이 입증되지는 않습니다. 호환되는 PostgreSQL/Harbor 버전으로 복원을 시험하고 artifact pull, 메타데이터, 권한과 연동을 검증합니다. 전체 백업 인벤토리를 보호·체크섬 검증하고 read-only 모드, 작업과 upload/GC 활동을 조정합니다. 실패한 작업의 상태를 확인하지 않은 채 read-only를 자동 해제하지 않습니다.
+archive 목록을 읽었다고 복원이 입증되지는 않습니다. 호환되는 PostgreSQL/Harbor 버전으로 복원을 시험하고 artifact pull, 메타데이터, 권한과 연동을 검증합니다. 전체 백업 인벤토리를 보호하고 체크섬을 검증하며 read-only 모드, 작업과 upload/GC 활동을 조정합니다. 실패한 작업의 상태를 확인하지 않은 채 read-only를 자동 해제하지 않습니다.
 
 Redis BGSAVE는 비동기 작업이므로 바로 dump.rdb를 복사하면 이전 세대 파일일 수 있습니다. 별도 설계에서 Redis persistence를 포함한다면 담당자와 완료·상태·세대를 검증합니다. Redis를 제외하는 공식 튜토리얼과 해당 맞춤 설계를 무심코 섞지 않습니다. 이 장에서는 백업·복원을 실행하지 않았습니다.
 
@@ -143,7 +143,7 @@ and
 
 `ping`은 ICMP RTT와 Linux iputils의 RTT mdev를 보고합니다. 이 분산 지표는 단방향 지연 변동이나 iperf3 UDP jitter와 같지 않습니다. ICMP 필터링·우선순위는 실제 애플리케이션 트래픽과 다를 수 있습니다. 1,000개 패킷의 손실 비율 단위는 0.1%이며, 손실 0개를 관측했다고 장기 손실률 <0.01%가 입증되지는 않습니다.
 
-승인된 private test server에서 iperf3가 준비되어 있어야 합니다. 시험 시간과 전송률 상한을 조정하고 결과를 보호합니다. EKS API endpoint에 iperf3를 실행하지 않습니다. 다음 예시는 Bash, Python3, iputils ping, GNU timeout과 해당 옵션을 지원하는 iperf3가 필요합니다. 오류가 나면 중단하며 도구 누락, 잘못된 JSON, iperf3 오류는 성능 시험 통과가 아닙니다.
+승인된 private test server에서 iperf3가 준비되어 있어야 합니다. 시험 시간과 전송률 상한을 조정하고 결과를 보호합니다. EKS API endpoint에 iperf3를 실행하지 않습니다. 다음 예시에는 Bash, Python3, iputils ping, GNU timeout과 해당 옵션을 지원하는 iperf3가 필요합니다. 오류가 나면 중단하며 도구 누락, 잘못된 JSON, iperf3 오류는 성능 시험 통과가 아닙니다.
 
 ```bash
 set -euo pipefail
@@ -331,7 +331,7 @@ Bottlerocket은 선택한 버전의 `hybrid-bottlerocket` 설정을 사용합니
 
 ## 혼합 모드 웹훅 운영
 
-AWS가 지원하는 혼합 모드 패턴은 cloud node의 VPC CNI와 Hybrid Node의 Cilium/Calico를 구분합니다. 이 패턴의 webhook은 cloud 배치를 권장합니다. Hybrid에 배치한 webhook에는 routable remote Pod CIDR와 control-plane 접근이 필요하므로 모든 webhook이 특정 위치에서만 또는 어디서나 동작한다고 가정하지 않습니다.
+AWS가 지원하는 혼합 모드 패턴은 cloud node의 VPC CNI와 Hybrid Node의 Cilium/Calico를 구분합니다. 이 패턴에서는 webhook의 cloud 배치를 권장합니다. Hybrid에 배치한 webhook에는 routable remote Pod CIDR와 control-plane 접근이 필요하므로 모든 webhook이 특정 위치에서만 또는 어디서나 동작한다고 가정하지 않습니다.
 
 ### CoreDNS 배치
 
@@ -427,8 +427,8 @@ tolerations:
     tolerationSeconds: 1800
 ```
 
-- **자격 증명 방식:** 단절이 잦고 복구 후 빠른 재연결이 중요하면 IAM Roles Anywhere와 긴 `durationSeconds`를 검토합니다. 클러스터 안에서는 한 방식만 쓰는 것이 권장입니다.
-- **보조 관측 경로:** 리전 서비스에 닿지 않아도 볼 수 있도록 ADOT collector를 여러 backend로 보내도록 구성합니다.
+- **자격 증명 방식:** 단절이 잦고 복구 후 빠른 재연결이 중요하면 IAM Roles Anywhere와 긴 `durationSeconds`를 검토합니다. 클러스터 안에서는 한 방식만 쓰는 것이 권장됩니다.
+- **보조 관측 경로:** 리전 서비스에 닿지 않아도 볼 수 있도록 ADOT collector가 데이터를 여러 backend로 보내도록 구성합니다.
 
 참고:
 - [Host credentials through network disconnections](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)

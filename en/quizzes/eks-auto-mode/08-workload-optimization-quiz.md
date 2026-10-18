@@ -150,7 +150,7 @@ spec:
 **Answer: B) An illustrative consolidation debounce/churn trade-off**
 
 **Explanation:**
-It does not make a GPU Ready or guarantee warm capacity. `WhenEmpty` narrows consolidation; drift, expiration and interruption are separate. Match model warm-up, desired capacity and cost to measured behavior. The guide's inference template stays at zero replicas until a reviewed image/runtime/probes are supplied. A 4 CPU/16Gi Pod also cannot fit a g5.xlarge after system reservations.
+It does not make a GPU Ready or guarantee warm capacity. `WhenEmpty` narrows consolidation; drift, expiration and interruption are separate. Match model warm-up, desired capacity and cost to measured behavior. The guide's inference template stays at zero replicas until a reviewed image, a reviewed runtime and reviewed probes are supplied. A 4 CPU/16Gi Pod also cannot fit a g5.xlarge after system reservations.
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool

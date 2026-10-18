@@ -89,7 +89,7 @@ ClusterRole은 네임스페이스 리소스의 재사용 권한도 정의할 수
 **정답: B) aws-auth**
 
 **설명:**
-`kube-system/aws-auth`는 레거시 IAM 매핑입니다. 현재는 EKS access entry를 사용하고 필요한 RBAC 또는 EKS access policy를 부여합니다. 전환 중 두 모드를 함께 사용할 때 동일 principal은 access entry가 우선합니다. 기존 ConfigMap 전체를 덮어쓰면 노드 매핑 등을 잃을 수 있습니다.
+`kube-system/aws-auth`는 레거시 IAM 매핑입니다. 현재는 EKS access entry를 사용하고 필요한 RBAC 또는 EKS access policy를 부여합니다. 전환 중 두 모드를 함께 사용할 때 동일 principal에 대해서는 access entry가 우선합니다. 기존 ConfigMap 전체를 덮어쓰면 노드 매핑 등을 잃을 수 있습니다.
 
 </details>
 
@@ -217,7 +217,7 @@ Pod get/list/watch만 정의한 Role과 해당 네임스페이스의 RoleBinding
 <details>
 <summary>정답 보기</summary>
 
-**정답: TokenRequest API는 장수명 정적 토큰보다 더 안전한 시간 제한, 대상 바인딩 토큰을 생성합니다.**
+**정답: TokenRequest API는 장수명 정적 토큰보다 더 안전한, 수명이 제한되고 대상에 바인딩된 토큰을 생성합니다.**
 
 **설명:**
 요청한 수명과 audience가 적용되며, 실제 만료 시각은 서버 응답으로 확인합니다. 서버가 요청 수명을 조정할 수 있습니다. Pod projected 토큰은 kubelet이 갱신하지만 애플리케이션이 파일을 다시 읽어야 합니다. 일반 TokenRequest 호출 자체가 자동 파일 갱신을 제공하는 것은 아니며, 토큰은 계속 비밀 bearer 자격 증명입니다.

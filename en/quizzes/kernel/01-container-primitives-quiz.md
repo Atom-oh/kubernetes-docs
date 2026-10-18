@@ -17,7 +17,7 @@ This quiz tests your understanding of namespaces, cgroup v2, netfilter, and conn
 **Answer: B) A container is a convention combining namespaces, cgroups, capabilities, and more, so isolation is selective, and isolation a runtime omits becomes a silent hole**
 
 **Explanation:**
-There is no `struct container` and no single syscall that creates one. A runtime starts a process while applying namespaces (isolation), cgroups (limits), capabilities/seccomp/LSM (privileges), overlayfs (filesystem), and netfilter (network) together. Two conclusions follow from it being a combination: isolation is not all-or-nothing but selective (a Pod sharing the network namespace while separating mounts is the example), and since the kernel does not know "make a container," a runtime that does not apply a seccomp profile simply runs without one.
+There is no `struct container` and no single syscall that creates one. A runtime starts a process while applying namespaces (isolation), cgroups (limits), capabilities/seccomp/LSM (privileges), overlayfs (filesystem), and netfilter (network) together. Two conclusions follow from it being a combination: isolation is not all-or-nothing but selective (a Pod sharing the network namespace while separating mounts is the example), and since the kernel does not understand the instruction "make a container," a runtime that does not apply a seccomp profile simply runs without one.
 </details>
 
 2. Why can two containers in a Pod reach each other over `localhost` while being unable to bind the same port?
@@ -81,7 +81,7 @@ A CPU limit is a bandwidth limit. `cpu.max` of `20000 100000` means "up to 20ms 
 **Answer: B) nftables is GA in 1.33, IPVS is deprecated in 1.35 (planned default disablement in 1.40 and removal in 1.43), and the default is still iptables**
 
 **Explanation:**
-nftables mode matured alpha 1.29 → beta 1.31 → **GA 1.33**, offering O(1) lookup and incremental rule updates (requires kernel 5.13+ on workers; AL2023 satisfies it). IPVS mode was **deprecated in 1.35 (December 2025)**; upstream plans default disablement in 1.40 and removal in 1.43. These are future targets: check the [maintained KEP-5495 schedule](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md). The recommended replacement is nftables, but **the default is still iptables**, so switching is an explicit decision.
+nftables mode matured through alpha 1.29 → beta 1.31 → **GA 1.33**, offering O(1) lookup and incremental rule updates (requires kernel 5.13+ on workers; AL2023 satisfies it). IPVS mode was **deprecated in 1.35 (December 2025)**; upstream plans default disablement in 1.40 and removal in 1.43. These are future targets: check the [maintained KEP-5495 schedule](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md). The recommended replacement is nftables, but **the default is still iptables**, so switching is an explicit decision.
 </details>
 
 6. How should suspected conntrack exhaustion be verified?
@@ -113,7 +113,7 @@ Tracking can apply to non-NAT traffic too. Headless Service DNS avoids VIP DNAT 
 **Answer: B) The `kube-proxy-config` ConfigMap that EKS ships by default takes precedence over command-line arguments, so raising the sysctl alone can be reverted by kube-proxy**
 
 **Explanation:**
-kube-proxy also manages conntrack values, and EKS ships a `kube-proxy-config` ConfigMap by default that takes precedence over CLI arguments. The correct path is adjusting `conntrack.maxPerCore`/`conntrack.min` in the ConfigMap and restarting the kube-proxy DaemonSet. `maxPerCore` is used because being per-core rather than absolute, it scales proportionally across node sizes. D is wrong: `nf_conntrack_max` is node-global and cannot be changed from a Pod spec.
+kube-proxy also manages conntrack values, and EKS ships a `kube-proxy-config` ConfigMap by default that takes precedence over CLI arguments. The correct path is adjusting `conntrack.maxPerCore`/`conntrack.min` in the ConfigMap and restarting the kube-proxy DaemonSet. `maxPerCore` is used because, being per-core rather than absolute, it scales proportionally across node sizes. D is wrong: `nf_conntrack_max` is node-global and cannot be changed from a Pod spec.
 </details>
 
 8. What operational problem does overlayfs copy-up create?

@@ -36,7 +36,7 @@ Kiali reads Istio resources from the Kubernetes API and queries Prometheus; isti
   <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service Graph" width="900">
 </p>
 
-Kiali is an **observability console** for Istio service mesh. It visualizes service topology in real-time, analyzes traffic flow, and validates Istio configurations.
+Kiali is an **observability console** for the Istio service mesh. It visualizes service topology in real-time, analyzes traffic flow, and validates Istio configurations.
 
 ### Kiali's Core Value
 
@@ -222,7 +222,7 @@ Detailed information per Kubernetes Service:
 
 #### 5. Istio Configuration Validation (Istio Config)
 
-Kiali validates supported Istio resources using available cluster state. The view-only example can inspect configuration; editing requires separately authorized permissions. A green check means the implemented checks passed, not proof of runtime correctness.
+Kiali validates supported Istio resources using available cluster state. The view-only example can inspect configuration; editing requires separately authorized permissions. A green check means the implemented checks passed, but is not proof of runtime correctness.
 
 **Validation Targets**:
 - VirtualService
@@ -404,7 +404,7 @@ spec:
 
 ### Official Istio Dashboards
 
-The catalog below was checked against the downloaded **Istio1.31.0 revisions**, not just dashboard titles. Select the revision for the installed Istio release and map its Prometheus datasource when importing. A dashboard's newest revision is not automatically compatible with an older mesh.
+The catalog below was checked against the downloaded **Istio 1.31.0 revisions**, not just dashboard titles. Select the revision for the installed Istio release and map its Prometheus datasource when importing. A dashboard's newest revision is not automatically compatible with an older mesh.
 
 | Dashboard | ID | Verified revision | Scope |
 |---|---:|---:|---|
@@ -416,13 +416,13 @@ The catalog below was checked against the downloaded **Istio1.31.0 revisions**, 
 | Istio Wasm Extension | 13277 | 287 | Wasm VM/runtime/cache/remote-loading state |
 | Istio Ztunnel | 21306 | 97 | Ambient L4 connections, bytes, DNS, xDS and process resources |
 
-The Service dashboard's `service` variable is a service host and its1.31 revision has `srcns`/`dstns` filters, rather than a generic `namespace` variable. The Workload dashboard has `namespace` and `workload`. Inspect the downloaded revision's variables before configuring deep links. IDs7636,11829 and13277 are respectively **Service, Performance and Wasm**, not Workload, generic Mesh and Gateway.
+The Service dashboard's `service` variable is a service host and its 1.31 revision has `srcns`/`dstns` filters, rather than a generic `namespace` variable. The Workload dashboard has `namespace` and `workload`. Inspect the downloaded revision's variables before configuring deep links. IDs 7636, 11829 and 13277 are respectively **Service, Performance and Wasm**, not Workload, generic Mesh and Gateway.
 
 Import through Grafana's dashboard UI and choose the datasource. For a fresh test environment, Istio's pinned `samples/addons/grafana.yaml` bundles its dashboards; that sample is not production-hardened. For an existing deployment, use its documented provisioning mechanism rather than installing a second Grafana.
 
 ### Community Loki Dashboard14876
 
-The verified catalog entry is **Grafana Loki Dashboard for Istio Service Mesh**, revision3. It uses a `pattern` parser for a specific Envoy text format, with `status_code` and `req_id`, and variables for datasource/label/job/instance. Its panels include request/status counts, bytes, recent requests, duration and visitor/path/user-agent summaries. It does not establish mTLS security or provide every panel previously claimed here.
+The verified catalog entry is **Grafana Loki Dashboard for Istio Service Mesh**, revision 3. It uses a `pattern` parser for a specific Envoy text format, with `status_code` and `req_id`, and variables for datasource/label/job/instance. Its panels include request/status counts, bytes, recent requests, duration and visitor/path/user-agent summaries. It does not establish mTLS security or provide every panel previously claimed here.
 
 ```bash
 curl -fL -o istio-loki-dashboard.json \
@@ -433,7 +433,7 @@ Review the file, then import it through the UI and bind its Loki datasource. Cre
 
 ### Metric Alert Rules
 
-The following is a **Prometheus Operator PrometheusRule**, not Grafana-managed alert provisioning. Grafana-managed rules use query-data/condition/UID fields; configure them in Grafana and export the supported format when choosing that route. The Operator below selects rules in `istio-system`. Thresholds are examples to tune against SLOs and traffic volume; HTTP5xx is not the complete definition of a gRPC/application failure.
+The following is a **Prometheus Operator PrometheusRule**, not Grafana-managed alert provisioning. Grafana-managed rules use query-data/condition/UID fields; configure them in Grafana and export the supported format when choosing that route. The Operator below selects rules in `istio-system`. Thresholds are examples to tune against SLOs and traffic volume; HTTP 5xx is not the complete definition of a gRPC/application failure.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -583,7 +583,7 @@ spec:
   type: ClusterIP
 ```
 
-For long-term storage, merge a remote-write block only after deploying and securing the destination. The URL below assumes a VictoriaMetrics Service in `observability`; adapt it to the actual backend. Two Prometheus replicas scrape the same targets, so remote storage needs an intentional HA/deduplication design and replica labels. Merely changing `replicas` to2 does not make summed remote metrics correct. Verify persistence, failure behavior and capacity in the target environment.
+For long-term storage, merge a remote-write block only after deploying and securing the destination. The URL below assumes a VictoriaMetrics Service in `observability`; adapt it to the actual backend. Two Prometheus replicas scrape the same targets, so remote storage needs an intentional HA/deduplication design and replica labels. Merely changing `replicas` to 2 does not make summed remote metrics correct. Verify persistence, failure behavior and capacity in the target environment.
 
 ```yaml
 spec:
@@ -600,7 +600,7 @@ spec:
 
 #### Golden Signals
 
-Latency is milliseconds. Saturation examples show active connections and a breaker state gauge; there is no standard `cx_max` metric for an automatic utilization denominator.
+Latency is in milliseconds. Saturation examples show active connections and a breaker state gauge; there is no standard `cx_max` metric for an automatic utilization denominator.
 
 ```promql
 # 1. Latency
@@ -981,7 +981,7 @@ spec:
           workload: var-workload
 ```
 
-For the Jaeger HTTP query endpoint from the tracing chapter, the current configuration belongs under `external_services.tracing`, with `use_grpc: false` for port16686. Validate backend/API compatibility and authentication before enabling it; OAuth2 injection is supported only with HTTP transport. Jaeger and Tempo integration are optional, separate configurations. Kiali custom dashboards have their own schema; Grafana JSON cannot be inserted as an `external_services.custom_dashboards` list.
+For the Jaeger HTTP query endpoint from the tracing chapter, the current configuration belongs under `external_services.tracing`, with `use_grpc: false` for port 16686. Validate backend/API compatibility and authentication before enabling it; OAuth2 injection is supported only with HTTP transport. Jaeger and Tempo integration are optional, separate configurations. Kiali custom dashboards have their own schema; Grafana JSON cannot be inserted as an `external_services.custom_dashboards` list.
 
 ```yaml
 spec:

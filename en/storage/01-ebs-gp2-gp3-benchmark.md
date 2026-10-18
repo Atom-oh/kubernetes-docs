@@ -169,7 +169,7 @@ This is the per-second IOPS log fio recorded (2,699 samples for gp2, 600 for gp3
 
 How to read it:
 
-- **Before the cliff, gp2 is indistinguishable from gp3.** Both deliver 3,001 IOPS, both sit at a p50 of 10.0–10.2 ms. "gp2 is slow" is simply false here: a gp2 volume with credits is a 3,000 IOPS volume.
+- **Before the cliff, gp2 is indistinguishable from gp3.** Both deliver 3,001 IOPS; both sit at a p50 of 10.0–10.2 ms. "gp2 is slow" is simply false here: a gp2 volume with credits is a 3,000 IOPS volume.
 - **The cliff took one second.** 3,001 IOPS at 1,998 s, 2,659 at 1,999 s, 300 at 2,000 s. It does not degrade gradually; 90% of the capacity disappears as if a switch were flipped. From the application's point of view this is the incident pattern "database queries suddenly got 10x slower and nobody deployed anything."
 - **The numbers line up with the AWS documentation to within a second.** A 100 GiB gp2 volume has a baseline of 3 IOPS/GiB × 100 = **300 IOPS**, a 5.4M-credit bucket, and a burst duration of `5,400,000 ÷ (3,000 − 300) = 2,000 s`. The AWS table lists "100 GiB → 2,000 seconds"; we measured 1,999.
 - **The 106 ms latency is not the volume being slow.** Little's law (average latency = outstanding I/Os ÷ throughput) gives 32 ÷ 300 = 106.7 ms. We keep 32 I/Os in flight while only 300 per second complete, so the queue grows. The 10.4 ms at 3,000 IOPS is the same arithmetic (32 ÷ 3,000 = 10.7 ms). **This approximates total response time when average in-flight I/O is about 32; it does not separate queueing from service time.** Compare the same fio `slat`, `clat` or `lat` metric across runs.
@@ -186,7 +186,7 @@ How to read it:
 
 The real lesson here is why gp2 produced 601 IOPS rather than its 300 baseline. During the 120 seconds immediately before the gp2 write test (while the gp3 write test ran), gp2 was idle and accrued **300 credits/s × 120 s = 36,000 credits**. Spending those 36,000 over a 120-second test adds 300 IOPS on top of the 300 baseline, exactly **600 IOPS**. Measured: 601.
 
-So the gp2 credit bucket is not "empty forever once drained"; it is **a bank account that slowly refills whenever the volume rests**. That is why gp2 under intermittent traffic is "sometimes fast, sometimes slow", a pattern that is painful to debug because it rarely reproduces on demand. The bimodal distribution (p50 at 11 ms, p95 at 110 ms) is the fingerprint: seconds with credits left are fast, seconds without them sit in the queue.
+So the gp2 credit bucket is not "empty forever once drained"; it is **a bank account that slowly refills whenever the volume rests**. That is why gp2 under intermittent traffic is "sometimes fast, sometimes slow", a pattern that is painful to debug because it rarely reproduces on demand. The bimodal distribution (p50 at 11 ms, p95 at 110 ms) is the fingerprint: seconds with credits left are fast; seconds without them sit in the queue.
 
 ## Measurement 3. qd1 Latency: Distribution at Low Concurrency
 
@@ -217,7 +217,7 @@ One more thing: this node's (m5.xlarge) instance-level EBS bandwidth baseline is
 
 ## In Dollars
 
-Priced in the Seoul region (Pricing API, September 2026), "how do I get 3,000 IOPS" leaves no reason to stay on gp2.
+At Seoul region prices (Pricing API, September 2026), "how do I get 3,000 IOPS" leaves no reason to stay on gp2.
 
 | Configuration | Monthly cost | Sustainable IOPS | Throughput |
 |---------------|--------------|------------------|------------|
@@ -270,7 +270,7 @@ parameters:
   type: gp3
 ```
 
-Save the VAC above as `gp3-baseline-volumeattributesclass.yaml`. Check API discovery with `kubectl api-resources --api-group=storage.k8s.io` and install compatible EBS CSI/external-provisioner/resizer versions. Select the PVC's namespace. Specifying only type can retain higher throughput from gp2 rather than reducing to the gp3 baseline, with an additional charge.
+Save the VAC above as `gp3-baseline-volumeattributesclass.yaml`. Check API discovery with `kubectl api-resources --api-group=storage.k8s.io` and install compatible EBS CSI/external-provisioner/resizer versions. Select the PVC's namespace. Specifying only type can retain higher throughput from gp2 rather than reducing it to the gp3 baseline, with an additional charge.
 
 ```bash
 kubectl apply -f gp3-baseline-volumeattributesclass.yaml

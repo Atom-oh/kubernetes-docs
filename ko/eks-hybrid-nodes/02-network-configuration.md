@@ -48,7 +48,7 @@ printf 'Private diagnostics: %s\n' "$WORK_DIR"
 
 ## CIDR 범위 요구 사항
 
-Remote node/Pod는 겹치지 않는 IPv4 **RFC1918 또는 CGNAT**이며 VPC·Service CIDR과도 분리합니다. 각 remote 종류는 최대 15개 CIDR을 지원합니다. 현재 EKS API는 기존 cluster의 remote-network 구성도 지원하므로 생성 시점 전용이 아닙니다.
+Remote node/Pod는 겹치지 않는 IPv4 **RFC1918 또는 CGNAT** 대역을 사용하며 VPC·Service CIDR과도 분리합니다. 각 remote 종류는 최대 15개 CIDR을 지원합니다. 현재 EKS API는 기존 cluster의 remote-network 구성도 지원하므로 생성 시점 전용이 아닙니다.
 
 | Network 동작 | 의미 |
 |--------------|------|
@@ -118,7 +118,7 @@ Private DNS는 TLS rewrite가 아닙니다. `hybrid-assets.eks.amazonaws.com`을
 
 ## VPC 프라이빗 엔드포인트 (인터넷 제한 환경) {#vpc-프라이빗-엔드포인트-에어갭-프라이빗-환경}
 
-여기서 “에어갭”은 필요한 AWS 연결을 유지하며 인터넷 접근을 제한한다는 뜻이지 disconnected cluster가 아닙니다.
+여기서 “에어갭”은 필요한 AWS 연결을 유지하며 인터넷 접근을 제한한다는 뜻이며 disconnected cluster를 뜻하지 않습니다.
 
 다음 완전한 Terraform 예제는 기존 VPC·endpoint subnet·TGW를 사용합니다. VPN/DX 회선·TGW attachment·on-prem route·EKS private DNS 구성을 만들지는 않습니다. VPC DNS support/hostnames와 실제 AZ 분리를 확인하세요. 서로 다른 subnet ID 두 개만으로 AZ 다양성이 입증되지는 않습니다.
 
@@ -489,7 +489,7 @@ PY
 
 ### CoreDNS 배치와 Locality
 
-AWS는 혼합 cluster에서 cloud/hybrid에 각각 최소 한 replica를 권장합니다. 각 위치 두 개는 복원력 선택지이며 네 replica가 보편적인 최소값·보장은 아닙니다.
+AWS는 혼합 cluster에서 cloud/hybrid에 각각 최소 한 replica를 권장합니다. 각 위치의 replica 두 개는 복원력 선택지이며 네 replica가 보편적인 최소값·보장은 아닙니다.
 
 모든 DNS 대상 node의 실제 zone label을 확인합니다. Hybrid node에는 owner가 정한 `topology.kubernetes.io/zone: onprem-dc1` 같은 값이 필요합니다. Compute-type label이 zone이나 taint를 자동 생성하지는 않습니다. Pod template `spec` 조각을 병합할 때 기존 affinity/toleration을 지우지 마세요.
 
@@ -624,7 +624,7 @@ kube-proxy **iptables 모드**의 대표 chain 경로입니다.
 KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 ```
 
-적격 equal-weight endpoint 3개와 별도 affinity/locality 정책이 없다면 조건부 확률 1/3, 남은 packet의 1/2, 나머지 선택이 대략 균등한 분배를 만듭니다. 아래는 설명용이며 실측 출력이나 모든 dataplane의 rule 구조가 아닙니다.
+적격 equal-weight endpoint가 3개이고 별도 affinity/locality 정책이 없다면 조건부 확률 1/3, 남은 packet의 1/2, 나머지 선택이 대략 균등한 분배를 만듭니다. 아래는 설명용이며 실측 출력이나 모든 dataplane의 rule 구조가 아닙니다.
 
 ```text
 # KUBE-SERVICES chain (nat table)
@@ -687,7 +687,7 @@ VPC CNI는 hybrid 노드와 호환되지 않으므로 **hybrid 노드에는 항�
 
 AWS 전용 CNI 지원 페이지는 AWS-maintained Cilium 1.17/1.18을 안내합니다. 여기서는 호환 kernel/OS의 1.18.3-0을 참고하며 upstream 1.19로 무조건 바꾸지 않습니다. 다른 AWS 페이지는 Calico BGP·보존된 예제도 언급합니다. Calico 프로젝트가 deprecated됐다는 증거는 아니므로 기존 배포의 지원 범위를 확인하세요.
 
-**기존 Cilium release의 정확한 버전**을 소유한 관리 도구에서 values를 병합하고 operator/agent rollout을 검토하며 BGP를 활성화합니다.
+**기존 Cilium release의 정확한 버전**을 관리하는 도구에서 values를 병합하고 operator/agent rollout을 검토하며 BGP를 활성화합니다.
 
 ```yaml
 bgpControlPlane:
@@ -698,7 +698,7 @@ operator:
 
 AWS 예제의 `v2alpha1`은 검토한 1.18.3 CRD에서 계속 served 상태이며 `v2`도 지원됩니다. 이 예제 때문에 CRD를 교체할 필요는 없습니다. Cilium 1.19 이상에서는 `cilium.io/v2` BGP CRD를 사용하세요(`v2alpha1` BGP CRD는 deprecated). 레거시 `CiliumBGPPeeringPolicy`는 1.19에서 제거되었습니다.
 
-아래는 hybrid node를 선택하고 peer advertisement selector와 advertisement label을 연결하며 Pod CIDR만 광고합니다.
+아래 예제는 hybrid node를 선택하고 peer advertisement selector와 advertisement label을 연결하며 Pod CIDR만 광고합니다.
 
 ```yaml
 apiVersion: cilium.io/v2alpha1
@@ -852,7 +852,7 @@ RouterOS 7.20+는 BGP instance를 명시합니다. FRR traditional 기본값은 
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-2.html)
 
-Cilium **cluster-pool IPAM**에서는 할당된 `CiliumNode.spec.ipam.podCIDRs`를 모두 읽습니다. 등록 순서대로 할당된다는 보장은 없습니다. `/16`은 산술적으로 `/25` block 512개, 각 block은 주소 128개지만 지원 node 512개·node당 application Pod IP 128개를 보장하지 않습니다. 예약 주소·node/CNI 사용·kubelet/resource 제한도 고려해야 합니다.
+Cilium **cluster-pool IPAM**에서는 할당된 `CiliumNode.spec.ipam.podCIDRs`를 모두 읽습니다. 등록 순서대로 할당된다는 보장은 없습니다. `/16`은 산술적으로 `/25` block 512개로 나뉘고 각 block은 주소 128개를 포함하지만 지원 node 512개·node당 application Pod IP 128개를 보장하지 않습니다. 예약 주소·node/CNI 사용·kubelet/resource 제한도 고려해야 합니다.
 
 다음은 검토한 새 pool의 Cilium Helm-values 조각이며 kubelet 전체의 `podCIDR` 설정이 아닙니다. 이전을 간단히 하려고 기존 할당 CIDR·block size를 바꾸지 마세요.
 
@@ -865,7 +865,7 @@ ipam:
     clusterPoolIPv4MaskSize: 25
 ```
 
-`.addresses[0]`은 Cilium-internal 주소일 수 있어 next hop으로 쓰면 안 됩니다. 아래는 Kubernetes Node와 IPv4 InternalIP를 대조하고 모든 Pod prefix를 승인된 remote 범위와 검증합니다. 중첩·누락을 거부하며 실행 shell이 아닌 **JSON candidate**를 생성합니다.
+`.addresses[0]`은 Cilium-internal 주소일 수 있어 next hop으로 쓰면 안 됩니다. 아래 예제는 Kubernetes Node와 IPv4 InternalIP를 대조하고 모든 Pod prefix를 승인된 remote 범위와 대조해 검증합니다. 중첩·누락을 거부하며 실행 shell이 아닌 **JSON candidate**를 생성합니다.
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes \

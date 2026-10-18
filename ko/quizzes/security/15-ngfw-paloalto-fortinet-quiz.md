@@ -48,7 +48,7 @@
 
 **정답: D) 실제 template·target group·장비 응답을 맞춘다**
 
-**설명:** 수동 가이드에는 HTTP 금지와 뒤의 HTTP profile 문장이 엇갈립니다. 자동 설정으로 옮기지 말고 선택 버전·template의 TCP/HTTPS 지원과 실제 응답을 확인합니다.
+**설명:** 수동 가이드에서는 HTTP 금지 문장과 뒤의 HTTP profile 문장이 엇갈립니다. 자동 설정으로 옮기지 말고 선택 버전·template의 TCP/HTTPS 지원과 실제 응답을 확인합니다.
 
 </details>
 

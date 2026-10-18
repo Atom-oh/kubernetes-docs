@@ -236,14 +236,14 @@ For predictable workloads, you can reduce costs by using Savings Plans or Reserv
 
 #### Compute Savings Plans
 
-Compute Savings Plans offer up to 66% discount from on-demand rates with a 1-year or 3-year commitment:
+Compute Savings Plans offer up to a 66% discount from on-demand rates with a 1-year or 3-year commitment:
 
 - **Flexibility**: Applies regardless of instance family, size, OS, tenancy, and region
 - **Includes EC2, Fargate, and Lambda**: Applies across multiple compute services
 
 #### EC2 Instance Savings Plans
 
-EC2 Instance Savings Plans offer up to 72% discount for instance families in a specific region:
+EC2 Instance Savings Plans offer up to a 72% discount for instance families in a specific region:
 
 - **Moderate Flexibility**: Applies across sizes and OS within an instance family in a specific region
 - **Higher Discount Rate**: Offers higher discount rate than Compute Savings Plans
@@ -283,7 +283,7 @@ When choosing between Fargate and EC2, consider costs:
 - On-demand: $0.0416 per hour
 - Spot: ~$0.0125 per hour (assuming 70% discount)
 
-**Allocation correction:** EKS Fargate adds 256 MB for Kubernetes components and rounds up to a supported configuration. Under these assumptions, 2 vCPU/4 GB requests require **2 vCPU/5 GB** provisioned capacity: `2 × 0.04048 + 5 × 0.004445 = 0.103185 USD/hour` using the same historical rates. This is arithmetic, not a new price quote. Linux Fargate billing starts with image download and has a one-minute minimum. An EC2 `t3.medium` has nominal 2 vCPU/4 GiB capacity, but its allocatable resources are smaller after OS/Kubernetes/DaemonSet reservations; it cannot be assumed to fit this Pod, and sustained CPU can incur T3 credit charges. Compare a capacity plan that actually schedules the workload, including EBS, networking, cluster fees, utilization, and operations. This table does not establish an equivalent-service winner.
+**Allocation correction:** EKS Fargate adds 256 MB for Kubernetes components and rounds up to a supported configuration. Under these assumptions, 2 vCPU/4 GB requests require **2 vCPU/5 GB** provisioned capacity: `2 × 0.04048 + 5 × 0.004445 = 0.103185 USD/hour` using the same historical rates. This is arithmetic, not a new price quote. Linux Fargate billing starts with image download and has a one-minute minimum. An EC2 `t3.medium` has a nominal capacity of 2 vCPU/4 GiB, but its allocatable resources are smaller after OS/Kubernetes/DaemonSet reservations; it cannot be assumed to fit this Pod, and sustained CPU can incur T3 credit charges. Compare a capacity plan that actually schedules the workload, including EBS, networking, cluster fees, utilization, and operations. This table does not establish an equivalent-service winner.
 
 ### Auto Scaling Optimization
 
@@ -740,7 +740,7 @@ Optimize outbound traffic passing through NAT gateway:
 
 ## Resource Management and Governance
 
-Effective resource management and governance is important for controlling EKS cluster costs. You can effectively manage resources using the following strategies.
+Effective resource management and governance are important for controlling EKS cluster costs. You can effectively manage resources using the following strategies.
 
 ![Tree diagram of EKS resource management and governance branching into resource requests and limits optimization, namespaces and resource quotas, and cost allocation and tagging, each listing its practices such as request/limit settings, namespace separation with ResourceQuota and LimitRange, and resource tagging, Kubernetes labels, and Kubecost.](../.gitbook/assets/en-eks-07-eks-cost-optimization-5.png)
 
@@ -851,7 +851,7 @@ spec:
 Apply AWS resource tags and activate eligible billing keys through the billing owner. An EKS cluster tag does not automatically propagate to its EC2 instances, ASGs, EBS volumes, or load balancers. Verify actual tag coverage and billing processing delays; these explicit tagging examples do not establish complete cluster cost attribution:
 
 - Tag by team, project, environment, cost center, etc.
-- Implement consistent tagging strategy
+- Implement a consistent tagging strategy
 
 ```bash
 # Tag EKS cluster
@@ -943,8 +943,8 @@ The 2025 dates are historical syntax examples, not a current cost report; choose
 
 Use AWS Cost Anomaly Detection to detect abnormal cost increases:
 
-1. Log in to AWS Management Console
-2. Navigate to AWS Cost Management service
+1. Log in to the AWS Management Console
+2. Navigate to the AWS Cost Management service
 3. Select "Cost Anomaly Detection"
 4. Click "Create anomaly monitor"
 5. Configure monitor type and notification preferences
@@ -1066,7 +1066,7 @@ You can create custom cost dashboards to comprehensively monitor EKS cluster cos
 Create custom cost dashboards using Prometheus and Grafana:
 
 1. Collect resource usage metrics in Prometheus
-2. Create cost dashboard in Grafana
+2. Create a cost dashboard in Grafana
 3. Use a separately implemented, authenticated billing-data pipeline or supported data source for Cost Explorer/CUR results; Prometheus usage metrics do not become actual billing data by adding a panel. Do not expose billing credentials in browser dashboard JSON
 
 #### Cost Optimization Score
@@ -1122,7 +1122,7 @@ Utilize automation to optimize costs:
 
 Optimize costs for development and test environments:
 
-- Auto shutdown environments when not in use
+- Automatically shut down environments when not in use
 - Use spot instances
 - Set resource limits
 - Consider using shared environments
@@ -1258,8 +1258,8 @@ This Job selects **managed-node-group Spot nodes**. Karpenter uses `karpenter.sh
 Optimize costs for web applications:
 
 - Implement auto-scaling
-- Use CDN to reduce traffic
-- Implement caching strategy
+- Use a CDN to reduce traffic
+- Implement a caching strategy
 - Consider serverless architecture
 
 ```yaml
@@ -1293,10 +1293,10 @@ spec:
 
 Optimize costs for database workloads:
 
-- Select appropriate instance type
+- Select an appropriate instance type
 - Configure storage auto-scaling
 - Consider using read replicas
-- Consider adding caching layer
+- Consider adding a caching layer
 
 ### Cost Optimization for Financial Services
 
@@ -1312,17 +1312,17 @@ Optimize costs while meeting regulatory compliance requirements:
 
 #### High Availability and Cost Balance
 
-Maintain balance between high availability requirements and costs:
+Maintain a balance between high availability requirements and costs:
 
 - Multi-AZ deployment for critical workloads
 - Consider single-AZ deployment for non-critical workloads
-- Implement cost-efficient approach for disaster recovery environments
+- Implement a cost-efficient approach for disaster recovery environments
 
 #### Security Requirements and Cost Balance
 
-Maintain balance between security requirements and costs:
+Maintain a balance between security requirements and costs:
 
-- Implement security controls using risk-based approach
+- Implement security controls using a risk-based approach
 - Reduce operational costs through security automation
 - Select cost-efficient security tools and services
 

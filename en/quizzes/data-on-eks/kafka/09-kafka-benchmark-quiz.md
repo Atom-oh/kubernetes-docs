@@ -61,7 +61,7 @@ No. About 63.2% x padding makes the distribution unusual; neither ratios nor ord
 <details>
 <summary>Show answer</summary>
 
-The producer falls 44.49%, from 103.36 to 57.37 MiB/s, but shares a 1.9-CPU client/NIC with the consumer. Low broker CPU does not exclude client contention. EC2 rx/tx credits are separate: F1 rx136 MiB/s≈1.141 Gbps and tx108≈0.906 Gbps are each below 1.25 Gbps. Do not add them to claim bursting.
+The producer's throughput falls 44.49%, from 103.36 to 57.37 MiB/s, but the producer shares a 1.9-CPU client/NIC with the consumer. Low broker CPU does not exclude client contention. EC2 rx/tx credits are separate: F1 rx136 MiB/s≈1.141 Gbps and tx108≈0.906 Gbps are each below 1.25 Gbps. Do not add them to claim bursting.
 
 </details>
 

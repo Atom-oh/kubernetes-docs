@@ -404,7 +404,7 @@ spec:
         protocol: TCP
 ```
 
-The Cilium 1.20.3 L7 policy API supports HTTP and DNS; the old `rules.kafka` API is absent. The released CRD rejects this Kafka rules object. Removing its L7 rules would leave only L4 permission, not topic-level authorization. This replacement only permits the listed clients to the preconfigured broker listener on TCP 9092. Configure Kafka TLS/SASL and broker ACLs for topics, consumer groups and operations separately; network policy cannot distinguish produce from fetch here.
+The Cilium 1.20.3 L7 policy API supports HTTP and DNS; the old `rules.kafka` API is absent. The released CRD rejects this Kafka rules object. Removing its L7 rules would leave only L4 permission, not topic-level authorization. This replacement only permits the listed clients to connect to the preconfigured broker listener on TCP 9092. Configure Kafka TLS/SASL and broker ACLs for topics, consumer groups and operations separately; network policy cannot distinguish produce from fetch here.
 
 #### DNS L7 Policy
 
@@ -980,7 +980,7 @@ spec:
     lb_policy: ROUND_ROBIN
 ```
 
-This bucket has burst capacity 1,000 and refills 100 tokens per second **per Envoy process**, shared across its workers. It is not a whole-cluster quota. Both enable/enforce percentages are explicit. `enable_x_ratelimit_headers: DRAFT_VERSION_03` requests the filter's actual limit/remaining/reset headers; an invented dynamic-metadata key does not provide a reliable remaining-token count.
+This bucket has a burst capacity of 1,000 and refills 100 tokens per second **per Envoy process**, shared across its workers. It is not a whole-cluster quota. Both enable/enforce percentages are explicit. `enable_x_ratelimit_headers: DRAFT_VERSION_03` requests the filter's actual limit/remaining/reset headers; an invented dynamic-metadata key does not provide a reliable remaining-token count.
 
 ### Per-Route Rate Limiting
 
@@ -1481,7 +1481,7 @@ spec:
     lb_policy: ROUND_ROBIN
 ```
 
-The mirror receives 100% of **selected GET/HEAD** requests; the fallback for other methods has no mirror policy. Test with synthetic or approved read-only traffic and an isolated shadow backend that cannot mutate production state or send external side effects. Mirroring consumes resources, copies request data, and may append `-shadow` to the authority unless configured otherwise. Mirror responses are not returned to the caller, but this does not guarantee zero user impact.
+The mirror receives 100% of **selected GET/HEAD** requests; the fallback for other methods has no mirror policy. Test with synthetic or approved read-only traffic and an isolated shadow backend that cannot mutate production state or cause external side effects. Mirroring consumes resources, copies request data, and may append `-shadow` to the authority unless configured otherwise. Mirror responses are not returned to the caller, but this does not guarantee zero user impact.
 
 ## Next Steps
 

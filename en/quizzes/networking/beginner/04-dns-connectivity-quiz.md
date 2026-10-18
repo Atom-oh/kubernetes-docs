@@ -62,7 +62,7 @@ Use the [lesson](../../../networking/beginner/04-dns-connectivity.md) to disting
 
 **Answer: C) DNS TTL is a cache lifetime; other caches can retain earlier data, and IP TTL is unrelated**
 
-**Explanation:** Clearing one local service's DNS cache does not clear application or upstream caches. Changing the authoritative TTL does not rewrite a previously cached lifetime. IP TTL limits forwarding hops; the units and mechanism differ from DNS TTL seconds.
+**Explanation:** Clearing one local service's DNS cache does not clear application or upstream caches. Changing the authoritative TTL does not rewrite a previously cached lifetime. IP TTL limits forwarding hops; the units and mechanism differ from those of DNS TTL, which is measured in seconds.
 
 </details>
 

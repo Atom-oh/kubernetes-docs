@@ -17,7 +17,7 @@ Agent Sandbox v1.0.6 API(`v1beta1`)와, 그 기본값이 Amazon EKS에서 어떻
 **정답: B. Pod 오케스트레이션. 격리는 Pod의 `RuntimeClass`(예: gVisor, Kata Containers)가 담당**
 
 **설명:**
-프로젝트는 스스로를 샌드박스 오케스트레이터라고 설명합니다. 위협 모델은 컨테이너 탈출 대책으로 `runtimeClassName`으로 고른 보안 런타임을 권장하며, 사용자가 빼지 못하도록 `SandboxTemplate`에 설정하라고 합니다. 기본 `runc`에서는 샌드박스 코드가 노드 커널을 공유합니다.
+프로젝트는 스스로를 샌드박스 오케스트레이터라고 설명합니다. 위협 모델은 컨테이너 탈출에 대비해 `runtimeClassName`으로 고른 보안 런타임을 권장하며, 사용자가 빼지 못하도록 `SandboxTemplate`에 설정하라고 합니다. 기본 `runc`에서는 샌드박스 코드가 노드 커널을 공유합니다.
 
 </details>
 

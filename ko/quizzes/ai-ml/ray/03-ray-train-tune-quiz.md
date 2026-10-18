@@ -97,7 +97,7 @@ Rank 0만 checkpoint를 저장하더라도 다른 worker도 checkpoint=None으�
 
 **정답: B**
 
-직접 V2 Trainer 전달은 native 검사에서 TuneError였으며 연결 코드와 자원 계획이 필요합니다.
+V2 Trainer를 직접 전달하면 native 검사에서 TuneError가 발생했으며 연결 코드와 자원 계획이 필요합니다.
 </details>
 
 8. TuneReportCallback이 하는 일은?

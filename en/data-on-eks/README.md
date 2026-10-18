@@ -6,7 +6,7 @@
 
 This section covers operating Kafka, Spark, Airflow and Flink on Amazon EKS and connecting them with AWS managed services. Helm charts, Kubernetes Operators and executors provide different deployment, observability, scaling and ownership models.
 
-Compare self-operation with managed choices such as Amazon MSK, EMR and MWAA based on operating capacity, required features, availability and total cost. EMR on EKS manages job execution while leaving responsibility for the underlying EKS cluster. SageMaker Unified Studio is a managed data/AI workspace and governance integration, not software deployed into EKS.
+Compare self-managed operation with managed choices such as Amazon MSK, EMR and MWAA based on operating capacity, required features, availability and total cost. EMR on EKS manages job execution while leaving responsibility for the underlying EKS cluster. SageMaker Unified Studio is a managed data/AI workspace and governance integration, not software deployed into EKS.
 
 ## Data Workload Categories
 

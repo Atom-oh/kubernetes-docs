@@ -71,7 +71,7 @@ VPC Lattice 서비스의 DNS 이름은 두 종류의 주소로 해석됩니다.
 
 ### 문제 1: Envoy iptables 인터셉트와의 충돌
 
-sidecar 메시(App Mesh, Istio)는 Pod의 트래픽을 프록시로 유도하기 위해 **init container가 iptables 규칙을 심습니다.** 전형적으로 "이 Pod에서 나가는 모든 outbound 트래픽을 Envoy의 포트로 리다이렉트"하는 형태입니다.
+sidecar 메시(App Mesh, Istio)에서는 Pod의 트래픽을 프록시로 유도하기 위해 **init container가 iptables 규칙을 심습니다.** 전형적으로 "이 Pod의 모든 outbound 트래픽을 Envoy의 포트로 리다이렉트"하는 형태입니다.
 
 넓은 outbound REDIRECT는 Lattice 트래픽을 capture할 수 있습니다. 문제 여부는 mesh policy·설정한 route·서명 설계에 달려 있으므로 명시적 CIDR bypass를 추가하기 전에 확인합니다.
 
@@ -139,7 +139,7 @@ SNI는 TLS `ClientHello`에 **접속하려는 서버의 도메인 이름을 평�
 4. 그런데 클라이언트가 원하는 도메인은 HTTP `Host` 헤더에 있고, **`Host` 헤더는 TLS 안에 암호화되어 들어옵니다**
 5. 즉 **암호화를 시작하려면 도메인을 알아야 하고, 도메인을 알려면 암호화를 시작해야 합니다**
 
-일반 TLS는 HTTP를 읽기 전에 인증서를 선택하도록 ClientHello에 SNI를 보냅니다. 이것만이 가능한 설계는 아니며 ECH는 미리 얻은 키로 inner ClientHello를 암호화합니다. 현재 Lattice TLS passthrough는 보이는 SNI를 요구하고 ECH/ESNI를 지원하지 않습니다.
+일반 TLS에서는 HTTP를 읽기 전에 인증서를 선택할 수 있도록 ClientHello에 SNI를 담아 보냅니다. 이것만이 가능한 설계는 아니며 ECH는 미리 얻은 키로 inner ClientHello를 암호화합니다. 현재 Lattice TLS passthrough는 보이는 SNI를 요구하고 ECH/ESNI를 지원하지 않습니다.
 
 정리하면 **SNI의 평문 노출은 설계 실수가 아니라 순환을 끊기 위한 의도적 타협**입니다. 그리고 이 타협 덕분에 **TLS를 종료하지 않는 중간 장비도 목적지 도메인만은 알 수 있게** 되었습니다. 이것이 TLS Passthrough 라우팅의 기반입니다.
 

@@ -81,7 +81,7 @@ In an environment allowing anonymous participation, identity alone cannot stop o
 **Answer: B) The latest data a node returns may not be finalized, so the answer changes on a reorg**
 
 **Explanation:**
-A node answers based on the latest chain it knows, and if that block is later reorganized the answer changes. This leads to real incidents: confirming a deposit against the latest block and acting on it, only for a reorg to erase it; or a load balancer spreading across nodes whose chain heights differ, giving different answers to the same question. So confirmation depth is mandatory in the application, and infrastructure must put sync state in readiness and monitor chain-height divergence.
+A node answers based on the latest chain it knows, and if that block is later reorganized the answer changes. This leads to real incidents: confirming a deposit against the latest block and acting on it, only for a reorg to erase it; or a load balancer spreading across nodes whose chain heights differ, giving different answers to the same question. So confirmation depth is mandatory in the application, and infrastructure must include sync state in readiness checks and monitor chain-height divergence.
 </details>
 
 6. Why is a persistent volume mandatory for a blockchain node?
@@ -97,7 +97,7 @@ A node answers based on the latest chain it knows, and if that block is later re
 **Answer: B) State is replayable from history, but that replay takes a long time during which the node cannot serve**
 
 **Explanation:**
-A node's state (balances, contract storage) can be derived by replaying block history, so it is theoretically rebuildable. But a full sync verifying and replaying from genesis takes time proportional to the chain's age, and at hundreds of GB to several TB that can be days. Losing state on Pod replacement means the node cannot serve during that time, so a persistent volume is not optional but mandatory.
+A node's state (balances, contract storage) can be derived by replaying block history, so it is theoretically rebuildable. But a full sync verifying and replaying from genesis takes time proportional to the chain's age, and with hundreds of GB to several TB of data, that can take days. Losing state on Pod replacement means the node cannot serve during that time, so a persistent volume is not optional but mandatory.
 </details>
 
 7. How should hard-fork client upgrades be managed?
@@ -113,7 +113,7 @@ A node's state (balances, contract storage) can be derived by replaying block hi
 **Answer: B) Canary and roll out fork-compatible clients before activation; assess incompatible rollback separately afterward**
 
 **Explanation:**
-The protocol activates at a defined point, but installing a compatible client early need not leave the current chain. Complete fleet readiness before the external deadline.
+The protocol activates at a defined point, but installing a compatible client early need not mean leaving the current chain. Complete fleet readiness before the external deadline.
 </details>
 
 8. How does key management in blockchain differ decisively from password management in existing systems?

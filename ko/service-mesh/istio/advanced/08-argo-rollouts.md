@@ -42,7 +42,7 @@ Rollout은 canary 또는 blue/green 전략으로 ReplicaSet을 관리하는 별�
 
 ### 2. VirtualService 관리 범위
 
-Rollouts는 지정한 named route의 weight를 조정하고 자신이 관리하는 Experiment destination을 추가/제거할 수 있습니다. 지원되는 라우팅 필드를 보존하며 전체 destination 배열을 무조건 덮어쓰지는 않습니다. 추가 subset은 `additionalSubsetNames`와 올바른 weight 합계가 필요하고, 등록하지 않은 destination은 제거될 수 있습니다. Managed route마다 하나의 Rollout을 지정하고 GitOps와 수정 범위를 조율하세요.
+Rollouts는 지정한 named route의 weight를 조정하고 자신이 관리하는 Experiment destination을 추가/제거할 수 있습니다. 지원되는 라우팅 필드를 보존하며 전체 destination 배열을 무조건 덮어쓰지는 않습니다. 추가 subset에는 `additionalSubsetNames`와 올바른 weight 합계가 필요하고, 등록하지 않은 destination은 제거될 수 있습니다. Managed route마다 하나의 Rollout을 지정하고 GitOps와 수정 범위를 조율하세요.
 
 ### 3. Host-level과 Subset-level 분할
 
@@ -318,7 +318,7 @@ Ingress Gateway를 가정하지 않는 **mesh 내부 HTTP 라우팅**입니다. 
 
 표준 Service-level metric에 `reporter="source"`와 destination Service namespace를 지정합니다. 이 데이터셋에서 source proxy를 중복 scrape하지 않고 실제 label 값이 selector와 일치한다고 가정합니다.
 
-Rollout 전체에 실제 테스트 트래픽을 유지하세요.5분 warm-up은2분 lookback보다 길어 이전 selector 데이터가 첫 gate에 섞이지 않도록 합니다. 최소 트래픽 조건은 counter increase의 추정값이며 통계적 유의성을 증명하지 않습니다. 트래픽 부족이나 telemetry 누락을 성공으로 처리하지 않아야 합니다.
+Rollout 전체에 실제 테스트 트래픽을 유지하세요.5분 warm-up은 2분 lookback보다 길어 이전 selector 데이터가 첫 gate에 섞이지 않도록 합니다. 최소 트래픽 조건은 counter increase의 추정값이며 통계적 유의성을 증명하지 않습니다. 트래픽 부족이나 telemetry 누락을 성공으로 처리하지 않아야 합니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -354,7 +354,7 @@ spec:
     count: 5
 ```
 
-Availability 계산은4xx를 포함한 non-5xx/non-zero HTTP 응답 비율이며 업무 성공을 증명하지 않습니다. gRPC status SLO가 아닌 HTTP demo입니다. 중복 scrape·지연·counter reset·겹치는 시간 창도 결과 해석에 고려해야 합니다.
+Availability 계산은 4xx를 포함한 non-5xx/non-zero HTTP 응답 비율이며 업무 성공을 증명하지 않습니다. gRPC status SLO가 아닌 HTTP demo입니다. 중복 scrape·지연·counter reset·겹치는 시간 창도 결과 해석에 고려해야 합니다.
 
 ### 배포 워크플로우
 
@@ -381,7 +381,7 @@ kubectl argo rollouts abort test -n rollouts-demo
 kubectl argo rollouts retry rollout test -n rollouts-demo
 ```
 
-Promote는 의도한 pause를 재개하며 실패한 Analysis 조사 대신 사용할 명령이 아닙니다. Abort는 desired Pod template을 바꾸지 않습니다. 특히 GitOps controller가 이를 다시 적용할 수 있으므로 retry/undo 전에 원하는 버전을 일치시키세요.
+Promote는 의도한 pause를 재개하며 실패한 Analysis를 조사하는 대신 사용할 명령이 아닙니다. Abort는 desired Pod template을 바꾸지 않습니다. 특히 GitOps controller가 이를 다시 적용할 수 있으므로 retry/undo 전에 원하는 버전을 일치시키세요.
 
 ## 트래픽 라우팅 전략
 
@@ -431,7 +431,7 @@ spec:
       - pause: {}
 ```
 
-Released1.10은 primary의 retry policy를 복사하지 않고 이 header route를 생성합니다. 멱등적인 demo 요청에만 사용하고 생성된 route를 확인하세요. 이 조각은 읽기 method를 강제하거나 쓰기 재시도를 막는 보장이 아닙니다. 실제 쓰기 서비스에는 별도로 제어·검증한 retry/authorization 설계가 필요합니다.
+Released1.10은 primary의 retry policy를 복사하지 않고 이 header route를 생성합니다. 멱등적인 demo 요청에만 사용하고 생성된 route를 확인하세요. 이 조각은 읽기 method를 강제하거나 쓰기 재시도를 막는다고 보장하지 않습니다. 실제 쓰기 서비스에는 별도로 제어·검증한 retry/authorization 설계가 필요합니다.
 
 `x-beta-user` 헤더는 인증된 tester 신원이 아닙니다. 노출 대상을 제한해야 한다면 신뢰할 수 있는 인증 경계를 사용하세요. Rollouts의 managed-route 목록 밖에 직접 만든 header route는 abort/완료 시 자동 제거되지 않으며 계속 canary endpoint로 연결될 수 있습니다.
 
@@ -610,11 +610,11 @@ spec:
       - pause: {}
 ```
 
-`startingStep: 2`는0-based이므로 이 조각의 세 번째 step(`setWeight: 30`)입니다. 앞선 pause가2분 데이터 창을 준비합니다. 이후 step과 함께 실행되며 rollout에 의해 종료/완료되거나 실패 조건에 도달할 때까지 동작합니다. 전체 경로의 즉각적인 rollback 보장이 아닙니다.
+`startingStep: 2`는 0-based이므로 이 조각의 세 번째 step(`setWeight: 30`)입니다. 앞선 pause가 2분 데이터 창을 준비합니다. 이후 step과 함께 실행되며 rollout에 의해 종료/완료되거나 실패 조건에 도달할 때까지 동작합니다. 전체 경로의 즉각적인 rollback 보장이 아닙니다.
 
 ### 3. 복합 메트릭
 
-더 엄격한 대안으로 트래픽 수,99% non-5xx/non-zero availability,0.5초 이하 p95,1% 이하 error rate를 요구합니다. 여기의 availability와 error-rate 조건은 서로 보완적이며 수치는 여전히 workload별 근거가 필요합니다.
+더 엄격한 대안으로 트래픽 수, 99% non-5xx/non-zero availability, 0.5초 이하 p95, 1% 이하 error rate를 요구합니다. 여기의 availability와 error-rate 조건은 서로 보완적이며 수치는 여전히 workload별 근거가 필요합니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -674,7 +674,7 @@ spec:
     count: 5
 ```
 
-Istio duration histogram은 milliseconds이므로 query에서1000으로 나눈 뒤 seconds와 비교합니다. Instant-vector의 빈 값·복수 값·NaN·Inf를 방어합니다. 겹치는 lookback 창은 독립적인 통계 표본이 아닙니다.
+Istio duration histogram은 milliseconds이므로 query에서 1000으로 나눈 뒤 seconds와 비교합니다. Instant-vector의 빈 값·복수 값·NaN·Inf를 방어합니다. 겹치는 lookback 창은 독립적인 통계 표본이 아닙니다.
 
 ### 4. 사전/사후 검사
 
@@ -818,7 +818,7 @@ spec:
     initialDelay: 5m
 ```
 
-앱이 소유한 `smoke-test` AnalysisTemplate을 구현·검증해야 하며 이 가이드에서 제공하지 않습니다. `service-name`/`namespace` argument를 선언하고 적절한 identity·network 접근·기능 검증으로 preview revision을 검사해야 합니다. Post-promotion template은5분 기다린 뒤2분 창을 조회합니다. 이전 연결/데이터가 즉시 사라진다고 가정하지 말고 전파 상태와 `test-active`의 지속적인 트래픽을 확인하세요. 이 조각을 완성된 smoke-test 배포로 복사하지 마세요.
+앱이 소유한 `smoke-test` AnalysisTemplate을 구현·검증해야 하며 이 가이드에서는 이를 제공하지 않습니다. `service-name`/`namespace` argument를 선언하고 적절한 identity·network 접근·기능 검증으로 preview revision을 검사해야 합니다. Post-promotion template은 5분 기다린 뒤 2분 창을 조회합니다. 이전 연결/데이터가 즉시 사라진다고 가정하지 말고 전파 상태와 `test-active`의 지속적인 트래픽을 확인하세요. 이 조각을 완성된 smoke-test 배포로 복사하지 마세요.
 
 `autoPromotionEnabled` 기본값은 true이며 예제는 명시적으로 비활성화합니다. `scaleDownDelaySeconds`는 이전 ReplicaSet의 scale-down을 늦추며 모든 revision history 삭제나 기존 연결 이동을 뜻하지 않습니다. Service/endpoint 전파와 upstream load balancer 동작으로 장애가 생길 수 있습니다.
 
@@ -848,7 +848,7 @@ spec:
       - pause: {}
 ```
 
-첫 Experiment step에서 controller가 Experiment ReplicaSet/Service를 만들고 각각5%씩 전달하여 stable 대상에90%를 남깁니다. Experiment Pod hash는 부모 Rollout hash와 다릅니다. 이 조각은10분 노출을 구성할 뿐 통계적으로 유효한 비교를 자동 수행하지 않습니다. 실제 비교 AnalysisTemplate을 추가하고 Experiment가 생성한 자체 identity/Service를 argument로 사용하세요.
+첫 Experiment step에서 controller가 Experiment ReplicaSet/Service를 만들고 각각 5%씩 전달하여 stable 대상에 90%를 남깁니다. Experiment Pod hash는 부모 Rollout hash와 다릅니다. 이 조각은 10분 노출을 구성할 뿐 통계적으로 유효한 비교를 자동 수행하지 않습니다. 실제 비교 AnalysisTemplate을 추가하고 Experiment가 생성한 자체 identity/Service를 argument로 사용하세요.
 
 ### 3. 느린 점진적 Rollout
 
@@ -886,7 +886,7 @@ spec:
           value: rollouts-demo
 ```
 
-표시한 pause 합은24시간이며 readiness·Analysis·전파 시간이 추가됩니다. 긴 시간표가 대표성 있는 트래픽, 실패 감지, 용량과 검토한 복구 절차를 대신하지 않습니다.
+표시한 pause 합은 24시간이며 readiness·Analysis·전파 시간이 추가됩니다. 긴 시간표가 대표성 있는 트래픽, 실패 감지, 용량과 검토한 복구 절차를 대신하지 않습니다.
 
 ## 문제 해결
 
@@ -954,7 +954,7 @@ spec:
 
 ### Step·측정·용량
 
-요청량·위험·복구 시간을 바탕으로 비율과 pause를 정합니다. 보편적인 최소30초 interval,5회 샘플 신뢰도, 마지막 구간의 빠른 승급 규칙은 없습니다. CanaryStep마다 동작 하나를 두고 retry와 schema/data 호환성을 함께 조율하세요.
+요청량·위험·복구 시간을 바탕으로 비율과 pause를 정합니다. 보편적인 최소 30초 interval, 5회 샘플 신뢰도, 마지막 구간의 빠른 승급 규칙은 없습니다. CanaryStep마다 동작 하나를 두고 retry와 schema/data 호환성을 함께 조율하세요.
 
 ```yaml
 spec:
@@ -974,7 +974,7 @@ spec:
             memory: 256Mi
 ```
 
-`revisionHistoryLimit`는 보존 설정이지 최소 두 개라는 보편적 규칙이 아닙니다. `progressDeadlineSeconds`는 진행 부족을 다루며 pause와 Analysis lifecycle은 별도로 이해해야 합니다. 명시적으로 false인 `progressDeadlineAbort`는 진행 deadline에 자동 abort하지 않습니다. Request/limit2배 비율도 기존 예시 입력일 뿐입니다.
+`revisionHistoryLimit`는 보존 설정이지 최소 두 개라는 보편적 규칙이 아닙니다. `progressDeadlineSeconds`는 진행 부족을 다루며 pause와 Analysis lifecycle은 별도로 이해해야 합니다. 명시적으로 false인 `progressDeadlineAbort`는 진행 deadline에 자동 abort하지 않습니다. Request/limit 2배 비율도 기존 예시 입력일 뿐입니다.
 
 Replica 세 개가 AZ별 하나를 의미하지 않습니다. Zone 분산에는 검토한 topology 제약·용량이 필요하며 [Zone-Aware Argo Rollouts](09-zone-aware-argo-rollouts.md)를 참고하세요. Traffic routing은 단순 surge 계산보다 더 많은 stable/canary 용량을 요구할 수 있습니다. PDB는 자발적 eviction을 제한하며 모든 장애나 controller scaling을 막지 않습니다.
 

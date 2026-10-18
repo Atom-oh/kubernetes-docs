@@ -412,7 +412,7 @@ extenders:
 **Wire 계약:**
 * Filter·prioritize는 `ExtenderArgs`의 `Pod`와, `nodeCacheCapable`에 따라 전체 `Nodes` 또는 `NodeNames`를 사용합니다.
 * Filter는 `Nodes`·`NodeNames`, 실패 map, `Error`를 반환합니다.
-* Prioritize는 `[{"Host":"node-a","Score":7}]` 같은 배열 자체를 반환하며 점수는100이 아닌0–10입니다. 오류 시 해당 extender 점수가 제외되므로 필수 제약을 점수로 강제할 수 없습니다.
+* Prioritize는 `[{"Host":"node-a","Score":7}]` 같은 배열 자체를 반환하며 점수는 100이 아닌 0–10입니다. 오류 시 해당 extender 점수가 제외되므로 필수 제약을 점수로 강제할 수 없습니다.
 * Bind는 `PodName`·`PodNamespace`·`PodUID`·`Node`를 받습니다. 실제 바인딩 성공 후에만 성공을 반환하세요. nil만 반환하는 `customBind`는 바인딩 구현이 아닙니다.
 * Preempt는 후보 victim map을 담은 `ExtenderPreemptionArgs`를 받고 `ExtenderPreemptionResult.NodeNameToMetaVictims`를 반환합니다. 임의의 `podsToPreempt` envelope가 아닙니다.
 
@@ -507,7 +507,7 @@ D. 노드의 리소스 제한을 설정
 **정답: A. 요청된 CPU·메모리 비율이 균형 잡힌 노드에 높은 점수 부여**
 
 **설명:**
-`NodeResourcesBalancedAllocation`은 실측 CPU·메모리 사용률이 아닌 **유효 요청량/allocatable 비율**을 균형 있게 평가합니다. 고정 구현에서 포함된 리소스가 두 개이면:
+`NodeResourcesBalancedAllocation`은 실측 CPU·메모리 사용률이 아닌 **유효 요청량/allocatable 비율**을 균형 있게 평가합니다. 고정 구현에 포함된 리소스가 두 개이면:
 
 ```
 cpuFraction = min(requestedCPU / allocatableCPU, 1)
@@ -518,7 +518,7 @@ score = int((1 - std) * 100)
 
 요청량 합계에는 신규 Pod와 스케줄러가 계산한 기존 요청이 포함됩니다. 전체 플러그인은 버전별 리소스 옵션도 처리합니다. 리소스가 두 개보다 많으면 모집단 표준편차를 사용합니다.
 
-실측이 아닌 산술 예제로 비율80%/80%는100,90%/50%는80,30%/90%는70점입니다. 다른 플러그인과 가중치도 최종 노드 선택에 영향을 줍니다.
+실측이 아닌 산술 예제에서 비율 80%/80%는 100, 90%/50%는 80, 30%/90%는 70점입니다. 다른 플러그인과 가중치도 최종 노드 선택에 영향을 줍니다.
 
 **스케줄러 구성에서 NodeResourcesBalancedAllocation 플러그인 활성화:**
 ```yaml
@@ -577,7 +577,7 @@ leaderElection:
 3. **확장성 개선**: 리소스 사용 균형이 좋은 클러스터는 더 효율적으로 확장될 수 있습니다.
 
 **산술 도우미 (`scoring/formulas.go`):**
-점수 식과 본문에서 다룬 선택적인70:30 GPU 가중치를 확인합니다. 전체 스케줄러 플러그인은 아닙니다. CPU millicore, init·sidecar, overhead, 기능별 처리를 포함한 기본 리소스 계산을 유지하세요.
+점수 식과 본문에서 다룬 선택적인 70:30 GPU 가중치를 확인합니다. 전체 스케줄러 플러그인은 아닙니다. CPU millicore, init·sidecar, overhead, 기능별 처리를 포함한 기본 리소스 계산을 유지하세요.
 
 ```go
 package scoring
@@ -797,9 +797,9 @@ NodeResourcesFit 플러그인은 다음과 같은 스코어링 전략을 지원�
 3. **RequestedToCapacityRatio**: 설정한 구간별 선형 shape로 요청량/allocatable 비율을 평가합니다. 위 식은 단일 리소스 설명용입니다.
 
 **커스텀 구현 주의점:**
-upstream `NodeResourcesFit`을 유지하세요. 점수 가중치 map에 나열된 리소스만 검사하면 필수 리소스를 빠뜨릴 수 있고 CPU `Quantity.Value()`는 millicore 정밀도를 잃습니다. 일반 컨테이너만 합산하면 init·sidecar·overhead를 놓치며 비율을 스케일링 전에 정수로 바꾸면 점수가 모두0이 될 수 있습니다.
+upstream `NodeResourcesFit`을 유지하세요. 점수 가중치 map에 나열된 리소스만 검사하면 필수 리소스를 빠뜨릴 수 있고 CPU `Quantity.Value()`는 millicore 정밀도를 잃습니다. 일반 컨테이너만 합산하면 init·sidecar·overhead를 놓치며 비율을 스케일링 전에 정수로 바꾸면 점수가 모두 0이 될 수 있습니다.
 
-Part1의 로컬 검사는 실제 고정 버전 fit 함수를 사용합니다. 2코어 노드에1500m 요청이 있으면 추가1코어는 맞지 않지만250m는 CPU limit이 더 커도 적합합니다. 합성 리소스 계산 테스트이며 클러스터 벤치마크가 아닙니다.
+Part1의 로컬 검사는 실제 고정 버전 fit 함수를 사용합니다. 2코어 노드에 1500m 요청이 있으면 추가 1코어는 적합하지 않지만 250m는 CPU limit이 더 커도 적합합니다. 합성 리소스 계산 테스트이며 클러스터 벤치마크가 아닙니다.
 
 **리소스 요청 및 제한 예시:**
 ```yaml
@@ -918,7 +918,7 @@ leaderElection:
 **완전한 기본 구현 사용:**
 전처리를 포함한 `InterPodAffinity`를 유지합니다. namespace 선택, 신규 required 조건, 기존 Pod의 required anti-affinity, 토폴로지, self-affinity의 첫 Pod 처리를 고려합니다. `*v1.Affinity` 자체는 Clone이 있는 framework StateData가 아니며 상태가 없다고 필수 검사를 조용히 건너뛰면 안 됩니다.
 
-예제에서는 선택한 네임스페이스에 적합한 `app=cache` Pod가 있어야 합니다. preferred anti-affinity는 분리를 보장하지 않습니다. `hardPodAffinityWeight`는 점수에 영향을 주며 required 조건을 완화하지 않습니다. 실제 워크로드로 규모·배치의 균형을 검증하세요. 같은 위치에 둔다고 최소 지연 시간을 입증하지는 않습니다.
+예제에서는 선택한 네임스페이스에 적합한 `app=cache` Pod가 있어야 합니다. preferred anti-affinity는 분리를 보장하지 않습니다. `hardPodAffinityWeight`는 점수에 영향을 주며 required 조건을 완화하지 않습니다. 실제 워크로드로 규모·배치의 균형을 검증하세요. 같은 위치에 둔다고 해서 최소 지연 시간이 입증되지는 않습니다.
 
 **파드 어피니티 및 안티-어피니티 사용 사례:**
 1. **고가용성**: 같은 애플리케이션의 인스턴스를 다른 노드, 영역, 리전에 분산
@@ -1064,7 +1064,7 @@ D. Deployment 전체의 Pod를 정렬하는 전역 스케줄러
 
 **정답: B. Deployment가 소유한 것을 포함한 ReplicaSet**
 
-같은 ReplicaSet 내부에서 best effort로 비교합니다. 없으면0이며 음수를 포함한 signed int32 값이 유효합니다. 할당·phase·준비 상태가 우선할 수 있으므로 높은 비용의 unready Pod가 낮은 비용의 ready Pod보다 먼저 삭제될 수 있습니다. 1.21 alpha,1.22부터 beta·기본 활성화입니다.
+같은 ReplicaSet 내부에서 best effort로 비교합니다. 값이 없으면 0이며 음수를 포함한 signed int32 값이 유효합니다. 할당·phase·준비 상태가 우선할 수 있으므로 높은 비용의 unready Pod가 낮은 비용의 ready Pod보다 먼저 삭제될 수 있습니다. 1.21 alpha,1.22부터 beta·기본 활성화입니다.
 </details>
 
 ### 12. 본문의 삭제 비용 갱신 방식과 일치하는 것은 무엇인가요?

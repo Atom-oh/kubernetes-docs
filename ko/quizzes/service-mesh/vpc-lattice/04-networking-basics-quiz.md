@@ -113,5 +113,5 @@ TLS passthrough에는 SNI와 일치하는 custom domain이 필요합니다. AWS�
 **정답: B) Passthrough는 endpoint TLS를 유지하지만 HTTP SigV4 신원을 검사하지 못하며 익명 네트워크 문맥 정책은 별개이다**
 
 **설명:**
-제약은 인증된 HTTP 신원과 L7 검사이지 모든 auth policy의 부재가 아닙니다. Listener·endpoint 제어를 명시 선택하며 backend HTTPS 암호화가 Lattice의 target 인증서 검증을 의미하지는 않습니다.
+제약은 인증된 HTTP 신원과 L7 검사이지 모든 auth policy의 부재가 아닙니다. Listener·endpoint 제어를 명시적으로 선택하며 backend HTTPS 암호화가 Lattice의 target 인증서 검증을 의미하지는 않습니다.
 </details>

@@ -52,7 +52,7 @@ kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/re
 linkerd check --pre --linkerd-cni-enabled="$CNI_ENABLED"
 ```
 
-Gateway API bundle은 필요할 때 기존 CRD 소유권과 모든 사용 controller를 검토한 뒤 적용하세요. Linkerd CNI를 선택하면 control plane 이전에 설치·검증하고 아래의 CNI 대응 검사를 사용합니다. 실제 출력과 종료 코드를 확인하세요. 과거의 긴 “모두 정상” 예시는 사용자 클러스터의 검사 결과가 아닙니다.
+Gateway API bundle은 필요할 때 기존 CRD 소유권과 이를 사용하는 모든 controller를 검토한 뒤 적용하세요. Linkerd CNI를 선택하면 control plane 이전에 설치·검증하고 아래의 CNI 대응 검사를 사용합니다. 실제 출력과 종료 코드를 확인하세요. 과거의 긴 “모두 정상” 예시는 사용자 클러스터의 검사 결과가 아닙니다.
 
 ## Linkerd CLI 설치
 
@@ -121,7 +121,7 @@ Move-Item $Download (Join-Path (Get-Location) "linkerd.exe") -Force
 .\linkerd.exe version --client
 ```
 
-이후 Bash 예제는 구성된 WSL 환경 같은 적절한 shell이나 PowerShell 명령 변환이 필요합니다. 이번 감사에서 PowerShell이나 Windows workload를 실행하지 않았습니다.
+이후 Bash 예제를 실행하려면 구성된 WSL 환경 같은 적절한 shell을 사용하거나 PowerShell 명령으로 변환해야 합니다. 이번 감사에서 PowerShell이나 Windows workload를 실행하지 않았습니다.
 
 ## 컨트롤 플레인 설치
 
@@ -278,7 +278,7 @@ linkerd viz check
 linkerd viz dashboard
 ```
 
-Helm은 다음을 viz-values.yaml로 저장하고 render된 PVC, Deployment와 resource 설정을 검사합니다:
+Helm을 사용할 때는 다음을 viz-values.yaml로 저장하고 render된 PVC, Deployment와 resource 설정을 검사합니다:
 
 ```yaml
 prometheus:
@@ -350,7 +350,7 @@ prometheusUrl: http://prometheus.monitoring.svc.cluster.local:9090
 
 edge-26.10.1에는 linkerd jaeger 하위 명령이 없습니다. 공개 linkerd-jaeger chart 이력은 2025.9.4에서 끝나므로 2026.10.1에 대응하는 확장이 아닙니다. 기존 install/check/upgrade/uninstall 명령 대신 별도로 관리하는 collector/backend와 선택한 proxy tracing 구성을 사용합니다.
 
-Tracing에는 들어오는 trace context, 앱의 전파와 호환 collector/export protocol이 필요합니다. Viz topology·metric graph는 distributed trace가 아닙니다. 전체 경로는 [관측성 가이드](05-observability.md)와 [공식 tracing 문서](https://linkerd.io/docs/features/distributed-tracing/)를 확인하세요. 이번 설치 감사가 미검증 collector/Jaeger의 종단 동작을 입증하지는 않습니다. 기존 설치에 linkerd-jaeger release가 있다면 데이터·리소스를 조사하고 마이그레이션한 뒤 원래 소유 도구로 정리하세요. 현재 CLI로 제거된 확장을 관리할 수는 없습니다.
+Tracing에는 들어오는 trace context, 앱의 전파와 호환 collector/export protocol이 필요합니다. Viz topology·metric graph는 distributed trace가 아닙니다. 전체 경로에 대해서는 [관측성 가이드](05-observability.md)와 [공식 tracing 문서](https://linkerd.io/docs/features/distributed-tracing/)를 확인하세요. 이번 설치 감사가 미검증 collector/Jaeger의 종단 동작을 입증하지는 않습니다. 기존 설치에 linkerd-jaeger release가 있다면 데이터·리소스를 조사하고 마이그레이션한 뒤 원래 소유 도구로 정리하세요. 현재 CLI로 제거된 확장을 관리할 수는 없습니다.
 
 ### Multicluster
 
@@ -455,7 +455,7 @@ kubectl -n linkerd-viz get pods,services -o wide
 
 설치한 확장만 검사하세요. check --proxy는 데이터 플레인 검사이며 “모든 확장 포함”을 뜻하지 않습니다. 이 검사들이 애플리케이션 업무 로직을 검증하지도 않습니다.
 
-샘플 앱은 고정된 manifest를 검토하고 선택한 namespace에 annotation을 적용한 뒤 대상 workload를 재생성합니다. 변경 가능한 emojivoto URL과 모든 live Deployment의 왕복 편집은 재현 가능한 입력이 아닙니다. Image·architecture, Service port, readiness와 실제 HTTP/TCP 결과를 확인하세요.
+샘플 앱의 고정된 manifest를 검토하고 선택한 namespace에 annotation을 적용한 뒤 대상 workload를 재생성합니다. 변경 가능한 emojivoto URL과 모든 live Deployment의 왕복 편집은 재현 가능한 입력이 아닙니다. Image·architecture, Service port, readiness와 실제 HTTP/TCP 결과를 확인하세요.
 
 ```bash
 kubectl annotate namespace my-app linkerd.io/inject=enabled
@@ -472,7 +472,7 @@ my-app을 실제 namespace·Deployment로 바꾸세요. Metrics/tap/top은 확�
 
 ### 업그레이드 계획
 
-정확한 target CLI/chart를 선택하고 release note, 호환성, 지원 version skew와 현재 상태를 확인합니다. 여기의 target이 모든 과거 2.14/2.16 설치에서 직접 업그레이드된다는 보장은 아닙니다. 필요한 중간 단계와 vendor 절차를 따르세요. Edge tag는 semantic version 보장이 아닙니다. 각 소유 도구로 CLI, CRD/control plane, 설치한 확장, data-plane proxy 순서로 갱신하세요.
+정확한 target CLI/chart를 선택하고 release note, 호환성, 지원 version skew와 현재 상태를 확인합니다. 모든 과거 2.14/2.16 설치를 여기의 target으로 직접 업그레이드할 수 있다는 보장은 없습니다. 필요한 중간 단계와 vendor 절차를 따르세요. Edge tag는 semantic version 보장이 아닙니다. 각 소유 도구로 CLI, CRD/control plane, 설치한 확장, data-plane proxy 순서로 갱신하세요.
 
 기존 설치에는 check와 check --proxy를 사용합니다. check --pre는 namespace·설정 전제가 있는 신규 설치 검사이며 업그레이드 계획을 대체하지 않습니다. 기존 trust credential을 보존하고 제거된 CRD version을 검토하세요.
 
@@ -544,7 +544,7 @@ kubectl -n linkerd get events --sort-by='.lastTimestamp'
 kubectl -n linkerd describe pod "$LINKERD_POD"
 ```
 
-주입 실패는 CA bundle, webhook 선택·network, 설정 거부나 Pod security 때문일 수 있으며 언제나 Service 연결 문제는 아닙니다. Pending은 anti-affinity, taint, volume, quota와 resource 등의 원인이 있습니다. Limit·보안 설정을 바꾸기 전에 실제 event를 확인하세요.
+주입 실패는 CA bundle, webhook 선택·network, 설정 거부나 Pod security 때문일 수 있으며 언제나 Service 연결 문제는 아닙니다. Pending은 anti-affinity, taint, volume, quota와 resource 등의 이유로 발생할 수 있습니다. Limit·보안 설정을 바꾸기 전에 실제 event를 확인하세요.
 
 ### 인증서
 

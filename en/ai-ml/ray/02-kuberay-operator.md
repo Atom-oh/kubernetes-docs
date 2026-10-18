@@ -4,7 +4,7 @@
 
 ## Lab Environment Setup
 
-Prepare supported Kubernetes, compatible kubectl, and Helm 3. GPU hardware and Karpenter are not prerequisites for reviewing a CPU configuration. Actual EKS capacity can come from existing managed node groups, Karpenter, Cluster Autoscaler, or the cluster's chosen provisioning setup.
+Prepare a supported Kubernetes version, a compatible kubectl version, and Helm 3. GPU hardware and Karpenter are not prerequisites for reviewing a CPU configuration. Actual EKS capacity can come from existing managed node groups, Karpenter, Cluster Autoscaler, or the cluster's chosen provisioning setup.
 
 Validation here covers the official chart download and native Helm rendering, CRD schema checks, and Ray 2.58.0's autoscaler configuration generator. **It does not establish API-server admission/CEL, controller reconciliation, live autoscaling, or GPU execution.**
 
@@ -45,7 +45,7 @@ Enable Ray autoscaling with `enableInTreeAutoscaling: true`. KubeRay configures 
 
 The Ray autoscaler examines tasks, actors, placement/resource requests, and desired worker-group size; KubeRay adjusts Pods. With `numOfHosts`, one group replica can correspond to several Ray Pods, so `replicas == Pod count` is not universal.
 
-Kubernetes places Pods, while a provisioner such as Karpenter supplies EC2 capacity for unschedulable requirements. A Pending Pod caused by image pulls, PVCs, permissions, or quotas is not necessarily fixed by adding a node. Karpenter consolidation and drift handling are separate control behavior too.
+Kubernetes places Pods, while a provisioner such as Karpenter supplies EC2 capacity for unschedulable requirements. A Pending Pod caused by image pulls, PVCs, permissions, or quotas is not necessarily fixed by adding a node. Karpenter consolidation and drift handling are separate control behaviors too.
 
 The Ray 2.58.0 configuration generator defaults the global idle timeout to 60 seconds; group-level idle timeouts can override behavior. Min/max replicas, activity, polling, and draining conditions mean it is not a promise to delete a Pod exactly 60 seconds later.
 

@@ -117,7 +117,7 @@ Requests 기반 배치 가능성과 비용을 평가하며 실측 CPU 임계값 
 **정답: A) Compute Savings Plans**
 
 **설명:**
-Compute Savings Plans는 패밀리·크기·리전·OS·tenancy 유연성을 제공합니다. EC2 Instance Savings Plans는 패밀리·리전 약정이며 그 안의 크기·OS·tenancy 유연성이 있습니다. 광고 최대는 각각 66%·72%이며 예상 요율이 아닙니다. USD/hour 약정을 지속되는 적격 미커버 사용량·기존 약정·향후 변경과 맞추세요. 이전 3개월/70% coverage 전략은 검증되지 않은 계획 예시입니다. Spot·별도 Auto Mode 요금은 EC2 Savings Plans 할인을 받지 않으며 별도 ARM plan이나 GPU 전체 제외 규칙도 없습니다.
+Compute Savings Plans는 패밀리·크기·리전·OS·tenancy 유연성을 제공합니다. EC2 Instance Savings Plans는 패밀리·리전 약정이며 그 안의 크기·OS·tenancy 유연성이 있습니다. 광고상 최대 할인율은 각각 66%·72%이며 예상 요율이 아닙니다. USD/hour 약정을 지속되는 적격 미커버 사용량·기존 약정·향후 변경과 맞추세요. 이전 3개월/70% coverage 전략은 검증되지 않은 계획 예시입니다. Spot·별도 Auto Mode 요금은 EC2 Savings Plans 할인을 받지 않으며 별도 ARM plan이나 GPU 전체 제외 규칙도 없습니다.
 
 </details>
 

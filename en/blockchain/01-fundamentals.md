@@ -73,7 +73,7 @@ Proof size grows as **log N** in the transaction count N. Even in a block with a
 
 ## Consensus: Who Writes the Next Block
 
-A consensus algorithm decides two things: **who proposes a block**, and **which side is canonical on a conflict**.
+A consensus algorithm decides two things: **who proposes a block**, and **which side is canonical in a conflict**.
 
 ### Main approaches
 
@@ -125,7 +125,7 @@ The real incident patterns this creates:
 | A health check confirming only "node alive" | A node behind on sync **returns stale data** |
 | A load balancer spreading across several nodes | Chain heights differ per node → **different answers to the same question** |
 
-**So application design must include a "process after N confirmations" (confirmation depth), and that value depends on the chain's finality characteristics.** This cannot be solved by infrastructure alone; it is a contract with the application.
+**So application design must include a "process after N confirmations" rule (confirmation depth), and that value depends on the chain's finality characteristics.** This cannot be solved by infrastructure alone; it is a contract with the application.
 
 What infrastructure can do:
 
@@ -139,7 +139,7 @@ Blockchain nodes communicate **peer-to-peer rather than client-server.** That cr
 
 ### Gossip protocols
 
-When a new block or transaction appears, it is **propagated to neighboring peers**, who propagate to theirs. That is how everyone comes to know.
+When a new block or transaction appears, it is **propagated to neighboring peers**, who propagate it to theirs. That is how everyone comes to know.
 
 Characteristics:
 

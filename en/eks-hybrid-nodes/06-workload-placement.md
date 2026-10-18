@@ -288,7 +288,7 @@ The local processor requires both the Hybrid and on-premises labels. The cloud A
 
 The burst application has two **OR** node-affinity terms: the approved on-premises set or the approved cloud pool. Expressions inside one term are **AND** conditions. It prefers on-premises placement, but scheduler scoring, resource requests, taints and topology preferences also apply. Karpenter can relax scheduling preferences when planning new nodes; this is not a saturation sensor or a guarantee to fill every on-premises slot first.
 
-Weights such as 100 and 50 are scheduling scores, not 2:1 capacity allocation. A node can host multiple Pods or no compatible Pod, so “eight nodes means Pods1–8 locally and Pods9+ in unlimited cloud capacity” is not a valid model.
+Weights such as 100 and 50 are scheduling scores, not a 2:1 capacity allocation. A node can host multiple Pods or no compatible Pod, so “eight nodes means Pods1–8 locally and Pods9+ in unlimited cloud capacity” is not a valid model.
 
 When on-premises capacity returns, running cloud Pods are not automatically moved back. Any rebalancing needs a separate controlled rollout/eviction policy, with data and availability considerations.
 
@@ -308,18 +308,18 @@ Data-local labels do not create or replicate data. For local persistent data, us
 
 ## Pod deletion cost is a preference
 
-`controller.kubernetes.io/pod-deletion-cost` is an integer annotation on a Pod. Its valid range is **−2147483648 to2147483647**, defaulting to0 when absent; negative values are allowed. ReplicaSet downscaling prefers lower values among its Pods on a **best-effort** basis.
+`controller.kubernetes.io/pod-deletion-cost` is an integer annotation on a Pod. Its valid range is **−2147483648 to 2147483647**, defaulting to 0 when absent; negative values are allowed. ReplicaSet downscaling prefers lower values among its Pods on a **best-effort** basis.
 
-For the reviewed Kubernetes1.36.5 controller, these comparisons precede deletion cost:
+For the reviewed Kubernetes 1.36.5 controller, these comparisons precede deletion cost:
 
 1. Unassigned Pods before assigned Pods.
 2. Pending before Unknown before Running.
 3. NotReady before Ready.
 4. Only then, lower deletion cost before higher cost.
 
-Further comparisons include replica co-location, readiness age, restart counts and creation age. Therefore an unhealthy on-premises Pod with cost1000 can be removed before a healthy cloud Pod with cost0. Cost1000 is not protection from eviction, rollout, node failure, manual deletion or another controller.
+Further comparisons include replica co-location, readiness age, restart counts and creation age. Therefore an unhealthy on-premises Pod with cost 1000 can be removed before a healthy cloud Pod with cost 0. Cost 1000 is not protection from eviction, rollout, node failure, manual deletion or another controller.
 
-The original “10 replicas →4; delete all6 cloud Pods and retain all4 on-premises Pods” is a **conditional illustration** only: all Pods would need to belong to the same ReplicaSet with compatible higher-priority criteria and stable state. It is not a guaranteed outcome, especially across Deployment revisions.
+The original “10 replicas → 4; delete all 6 cloud Pods and retain all 4 on-premises Pods” is a **conditional illustration** only: all Pods would need to belong to the same ReplicaSet with compatible higher-priority criteria and stable state. It is not a guaranteed outcome, especially across Deployment revisions.
 
 On-premises capacity also has power, maintenance and opportunity costs; retaining it is an operating objective to evaluate, not a universal economic rule. Deletion-cost values do not themselves enforce a spend budget or availability target.
 
@@ -409,7 +409,7 @@ Namespace RBAC can limit the Pod patching boundary; ordinary RBAC does not expre
 
 ## Interaction with Karpenter
 
-Karpenter1.14.1 also reads `pod-deletion-cost` in its **normalized eviction-cost heuristic**, alongside Pod priority; it is incorrect to say only ReplicaSet ever uses it. Karpenter combines Pod costs with node/disruption information. A value of1000 is not a thousandfold guarantee of retention.
+Karpenter 1.14.1 also reads `pod-deletion-cost` in its **normalized eviction-cost heuristic**, alongside Pod priority; it is incorrect to say only ReplicaSet ever uses it. Karpenter combines Pod costs with node/disruption information. A value of 1000 is not a thousandfold guarantee of retention.
 
 | Control | Scope |
 |---|---|

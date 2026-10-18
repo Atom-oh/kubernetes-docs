@@ -51,7 +51,7 @@ References: [EKS IAM actions and resources](https://docs.aws.amazon.com/service-
 
 #### AWS CLI
 
-Choose the package for your OS/CPU and follow signature verification in the [official AWS CLI v2 installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). For an existing v1/v2 installation, review its update/migration procedure first.
+Choose the package for your OS/CPU and follow the signature verification procedure in the [official AWS CLI v2 installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). For an existing v1/v2 installation, review its update/migration procedure first.
 
 | Environment | Official package/installation method |
 | --- | --- |
@@ -782,7 +782,7 @@ References: [CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIRefere
 
 ## Creating a Cluster Using Terraform
 
-The following complete example supports **one new cluster**, choosing Auto Mode or a conventional managed node group before the first apply. Do not append the alternative as a second cluster resource or toggle an existing cluster without a migration plan. Terraform state and its provider lock file belong to this specific deployment.
+The following complete example supports **one new cluster**, with Auto Mode or a conventional managed node group selected before the first apply. Do not append the alternative as a second cluster resource or toggle an existing cluster without a migration plan. Terraform state and its provider lock file belong to this specific deployment.
 
 ### EKS Auto Mode Cluster Terraform Configuration
 

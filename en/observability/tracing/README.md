@@ -188,7 +188,7 @@ processors:
         sampling_percentage: 10
 ```
 
-In the default `trace-complete` strategy, evaluation uses accumulated spans on the timer path. `decision_wait` starts from received trace data, not a guarantee of request completion. The current processor also has a distinct `span-ingest` strategy; its policy compatibility and timing differ.
+In the default `trace-complete` strategy, evaluation uses accumulated spans on the timer path. `decision_wait` starts from received trace data; it is not a guarantee of request completion. The current processor also has a distinct `span-ingest` strategy; its policy compatibility and timing differ.
 
 The status policy matches observed span status `ERROR`, not every application error string. The latency policy uses the earliest start and latest end in the received trace. The probabilistic policy can retain additional eligible traces, so ordinary traces are not universally discarded.
 

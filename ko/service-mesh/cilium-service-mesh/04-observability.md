@@ -120,7 +120,7 @@ hubble observe --server localhost:4245 --namespace production --last 100
 hubble observe --server localhost:4245 --namespace production --follow
 ```
 
-전체 상태·오류를 유지하세요. grep으로 “Hubble”을 찾았거나 노드 3개가 연결된 예시 출력이 있다고 실제 설치가 정상임을 입증하지는 않습니다.
+전체 상태·오류를 유지하세요. grep으로 “Hubble”을 찾았거나 노드 3개가 연결된 예시 출력이 있다고 해서 실제 설치가 정상임이 입증되지는 않습니다.
 
 ## Hubble CLI
 
@@ -162,7 +162,7 @@ hubble observe --input-file flows.jsonl --last 100 -o json
 hubble observe --since 5m
 ```
 
-절대 RFC3339 `--since`·`--until` 시각도 사용 가능한 데이터만 조회합니다. 메모리 버퍼에 수년의 이력이 생기는 것은 아니므로 과거 조사가 필요하면 내보낸 데이터를 보존하세요.
+절대 RFC3339 `--since`·`--until` 시각을 지정해도 사용 가능한 데이터만 조회합니다. 메모리 버퍼에 수년의 이력이 생기는 것은 아니므로 과거 조사가 필요하면 내보낸 데이터를 보존하세요.
 
 ## Hubble UI
 
@@ -172,7 +172,7 @@ hubble observe --since 5m
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-04-observability-1.html)
 
-UI의 관계는 관찰된 트래픽에서 나옵니다. 조용한 워크로드, 지원하지 않는 경로, 클러스터 밖 브라우저·CDN 트래픽과 메타데이터가 없는 엔드포인트는 보이지 않을 수 있습니다. 연결선이 없다고 의존성이 없다는 증거는 아닙니다.
+UI의 관계는 관찰된 트래픽에서 나옵니다. 조용한 워크로드, 지원하지 않는 경로, 클러스터 밖 브라우저·CDN 트래픽과 메타데이터가 없는 엔드포인트는 보이지 않을 수 있습니다. 연결선이 없다는 것이 의존성이 없다는 증거는 아닙니다.
 
 ### UI 기능과 접근
 
@@ -605,7 +605,7 @@ hubble observe --namespace production --protocol http --traffic-direction ingres
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-04-observability-3.html)
 
-서비스에 맞는 정의로 신호를 사용하세요. Availability는 네 가지 이름 중 하나가 아니지만 명시적인 SLI가 필요합니다. 관찰된 HTTP 5xx 비율만으로 가용성을 완전히 측정하지는 못합니다. Histogram quantile은 인스턴스별 백분위수를 평균하는 대신 `le`를 유지하며 호환되는 bucket을 집계해야 합니다.
+서비스에 맞는 정의로 신호를 사용하세요. Availability는 네 가지 이름 중 하나가 아니지만 명시적인 SLI가 필요합니다. 관찰된 HTTP 5xx 비율만으로 가용성을 완전히 측정하지는 못합니다. Histogram quantile을 계산할 때는 인스턴스별 백분위수를 평균하는 대신 `le`를 유지하며 호환되는 bucket을 집계해야 합니다.
 
 ## OpenTelemetry 통합
 

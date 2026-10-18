@@ -66,7 +66,7 @@ It selects installation or upgrade. Hooks, random values and external database c
 
 **Answer: C**
 
-In `helm install demo ./chart`, the name is demo. It differs from chart name, appVersion and release revision.
+In `helm install demo ./chart`, the name is demo. It differs from the chart name, appVersion and release revision.
 
 </details>
 
@@ -82,7 +82,7 @@ In `helm install demo ./chart`, the name is demo. It differs from chart name, ap
 
 **Answer: B**
 
-For alias cache, use a real Boolean path such as cache.enabled. Test absent-path behavior and distinguish it from values passed into the subchart.
+For the alias cache, use a real Boolean path such as cache.enabled. Test absent-path behavior and distinguish it from values passed into the subchart.
 
 </details>
 
@@ -209,7 +209,7 @@ False, zero, empty strings and collections count as empty. Check presence and ty
 <details>
 <summary>Show answer</summary>
 
-It templates instructions shown after successful install/upgrade and available through `helm get notes`. Keep instructions accurate and avoid secrets. Notes do not prove application readiness.
+It templates instructions shown after a successful install/upgrade and available through `helm get notes`. Keep instructions accurate and avoid secrets. Notes do not prove application readiness.
 
 </details>
 

@@ -149,7 +149,7 @@ SIG는 관련 영역을 담당합니다. Node는 runtime·lifecycle, Auth는 인
 | 1.36 | 2026-04-22 | 2026-06-02 | 2027-08-02 | 2028-08-02 | Standard |
 | 1.37 | 2026-08-26 | 2026-10-01 | 2027-12-01 | 2028-12-01 | Standard |
 
-현재 AWS 일정은 EKS 1.31~1.37을 제공합니다. 본문의 1.29·1.30은 과거 기능 이력이며 지원되는 배포 대상이 아닙니다.
+현재 AWS 일정에 따르면 EKS 1.31~1.37이 제공됩니다. 본문의 1.29·1.30은 과거 기능 이력이며 지원되는 배포 대상이 아닙니다.
 
 Extended 요금은 표의 standard 종료일 UTC 0시부터 적용됩니다. 변경 전에 실제 일정·API를 다시 확인하세요. AWS가 월 단위로만 공지한 향후 날짜는 추정입니다.
 
@@ -267,7 +267,7 @@ spec:
 | KubeletTracing | Beta | 1.29 GA가 아니며 GA는 1.34 |
 | MinDomainsInPodTopologySpread | Beta | 1.30에서 GA |
 
-Native sidecar는 아래 **Pod spec 조각**처럼 정의합니다. 예시 image를 검토한 구현으로 바꾸고 실제 log pipeline을 설정해야 합니다. 설치된 Fluent Bit 배포가 아닙니다. Sidecar 시작과, 있을 경우 startup probe 성공 후 다음 시작 단계로 진행합니다. Readiness·정상 종료에는 적절한 probe·앱 동작·충분한 termination budget이 필요합니다.
+Native sidecar는 아래 **Pod spec 조각**처럼 정의합니다. 예시 image를 검토한 구현으로 바꾸고 실제 log pipeline을 설정해야 합니다. 설치된 Fluent Bit 배포가 아닙니다. Sidecar가 시작하고 startup probe가 있는 경우 해당 probe가 성공한 후 다음 시작 단계로 진행합니다. Readiness·정상 종료에는 적절한 probe·앱 동작·충분한 termination budget이 필요합니다.
 
 ```yaml
 initContainers:
@@ -298,7 +298,7 @@ ValidatingAdmissionPolicy는 API server 안에서 CEL을 평가합니다. 여러
 
 아래는 현재 stable `v1` API 예시입니다. Binding은 **Audit-only**이고 `version-lab-policy=enabled` label이 있는 namespace만 선택합니다. 위반 시 audit annotation을 추가하고 거부하지는 않으며, 관찰하려면 audit-log 수집을 구성해야 합니다. 해당 namespace label 설정 권한을 통제합니다. 정상·오류 입력을 먼저 검증하고 강제 적용이 목적이면 의도적으로 `Deny`를 선택합니다. 예시가 production admission 동작의 검증 결과는 아닙니다.
 
-Resource policy는 일반·init container에 CPU/memory limit key가 선언되었는지 확인합니다. 적절한 양수 크기까지 검증하지 않으며 값 0의 존재가 유용한 hard limit는 아닙니다. 용량 조건에는 적합한 LimitRange·resource policy를 사용합니다. Ephemeral container에는 이 limit를 지정할 수 없어 제외합니다. `pods/resize`는 현재 클러스터를 위한 항목으로, 원래 1.30의 VAP GA 이후에 도입된 subresource입니다.
+Resource policy는 일반·init container에 CPU/memory limit key가 선언되었는지 확인합니다. 적절한 양수 크기까지 검증하지 않으며 값 0이 존재한다고 해서 유용한 hard limit가 되는 것은 아닙니다. 용량 조건에는 적합한 LimitRange·resource policy를 사용합니다. Ephemeral container에는 이 limit를 지정할 수 없어 제외합니다. `pods/resize`는 현재 클러스터를 위한 항목으로, 원래 1.30의 VAP GA 이후에 도입된 subresource입니다.
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -632,7 +632,7 @@ Nftables backend 지원은 자동 network 마이그레이션이 아닙니다. No
 
 Stable 설정은 `apiserver.config.k8s.io/v1`의 `AuthorizationConfiguration`을 사용합니다. 기존 authorization mode flag의 대안이지 `--authorization-mode`가 제거되었다는 뜻이 아닙니다. Flag 방식과 설정 파일 방식을 혼용하지 않습니다. EKS는 이 컨트롤 플레인 설정을 관리하므로 아래 파일은 관리자가 운영하는 API server용이며 kubectl로 적용하는 resource나 EKS 설정 인터페이스가 아닙니다.
 
-Authorizer는 순서대로 평가하고 명시적인 allow/deny가 나오면 chain이 끝납니다. 아래 webhook은 Node·RBAC가 이미 결정하지 않은 `version-lab` resource 요청만 처리하므로 **RBAC가 이미 허용한 요청에 추가 deny filter를 적용하지 않습니다**. CEL match condition은 webhook 호출을 선택하며 CEL 자체가 별도 authorizer 타입은 아닙니다. Request는 SubjectAccessReview spec이므로 namespace는 `request.resourceAttributes` 아래에 있고 non-resource 요청에는 존재 확인이 필요합니다.
+Authorizer를 순서대로 평가하고 명시적인 allow/deny가 나오면 chain이 끝납니다. 아래 webhook은 Node·RBAC가 이미 결정하지 않은 `version-lab` resource 요청만 처리하므로 **RBAC가 이미 허용한 요청에 추가 deny filter를 적용하지 않습니다**. CEL match condition은 webhook 호출을 선택하며 CEL 자체가 별도 authorizer 타입은 아닙니다. Request는 SubjectAccessReview spec이므로 namespace는 `request.resourceAttributes` 아래에 있고 non-resource 요청에는 존재 확인이 필요합니다.
 
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
@@ -698,7 +698,7 @@ AWS의 1.34 안내도 stable VAC API와 이전 beta sidecar 지원을 구분합�
 
 User namespace는 1.30에서 beta, 1.33에서 기본 활성화되었으며 GA는 1.36입니다. Pod는 `hostUsers: false`로 opt-in합니다. Container의 UID 0은 구현이 선택한 non-root host UID로 매핑되며 모든 환경에 공통인 `65534 + offset` 공식이 아닙니다. 호환 kernel·filesystem·CRI/runtime이 필요하고 모든 workload·host 접근 방식이 호환되는 것은 아닙니다.
 
-아래는 매핑을 설명하기 위해 container UID 0을 의도적으로 사용합니다. 예시 image를 바꾸고 지원되는 테스트 환경에서 사용합니다. 심층 방어이지 모든 kernel·container escape 취약점 방지 보장이나 다른 보안 제어의 대체재가 아닙니다.
+아래 예시는 매핑을 설명하기 위해 container UID 0을 의도적으로 사용합니다. 예시 image를 바꾸고 지원되는 테스트 환경에서 사용합니다. 심층 방어이지 모든 kernel·container escape 취약점 방지 보장이나 다른 보안 제어의 대체재가 아닙니다.
 
 ```yaml
 apiVersion: v1
@@ -747,7 +747,7 @@ spec:
 
 Alpha 1.28 → beta 1.29 → GA 1.33 순서로 진행했습니다. 재시작 가능한 init container에 `restartPolicy: Always`를 지정합니다. Sidecar의 `started`가 true가 되면 kubelet이 다음 init container로 진행합니다. Startup probe가 없으면 프로세스 실행, 있으면 해당 probe 성공을 의미하며 readiness는 별도 신호입니다. 아래 일반 init container는 **두 sidecar가 시작한 뒤** 실행되고, 완료 후 앱이 시작합니다.
 
-이는 구조 예시입니다. 모든 `example.invalid` image를 검토한 구현으로 바꾸고 proxy는 선언한 readiness endpoint를 제공하며 log agent는 실제 pipeline을 설정해야 합니다. Envoy/Istio/Fluent Bit image만 지정한다고 service mesh나 log destination이 구성되지는 않습니다. 실제 DB migration에는 조정·멱등성이 필요하며 replica마다 실행해도 안전하다고 가정하지 않습니다.
+이는 구조 예시입니다. 모든 `example.invalid` image를 검토한 구현으로 바꾸고 proxy는 선언한 readiness endpoint를 제공해야 하며 log agent에는 실제 pipeline을 설정해야 합니다. Envoy/Istio/Fluent Bit image만 지정한다고 service mesh나 log destination이 구성되지는 않습니다. 실제 DB migration에는 조정·멱등성이 필요하며 replica마다 실행해도 안전하다고 가정하지 않습니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -898,7 +898,7 @@ Resize로 Pod QoS class를 바꿀 수 없습니다. Guaranteed Pod는 CPU·memor
 
 #### 현재 VPA 연동은 별도의 버전 결정
 
-다음은 **2026년 companion component 예시**이며 Kubernetes 1.33 출시 당시 VPA 1.8이 있었다는 뜻이 아닙니다. 출시된 VPA **1.8.0** API는 1.7.0에서 alpha로 도입했고 1.8.0에서도 alpha인 `InPlace`를 지원합니다. Admission-controller·updater 양쪽의 VPA `InPlace` gate와 Kubernetes 1.33+ in-place-resize 지원이 필요하며, VPA 1.8.x 자체의 문서상 호환 범위는 Kubernetes 1.36–1.38입니다. VPA의 Pod eviction fallback을 피하지만 resize 완료나 모든 container policy의 무재시작을 보장하지 않습니다. 권고만 관찰하려면 먼저 `Off`를 사용합니다.
+다음은 **2026년 companion component 예시**이며 Kubernetes 1.33 출시 당시 VPA 1.8이 있었다는 뜻이 아닙니다. 출시된 VPA **1.8.0** API는 1.7.0에서 alpha로 도입되었고 1.8.0에서도 alpha인 `InPlace`를 지원합니다. Admission-controller·updater 양쪽의 VPA `InPlace` gate와 Kubernetes 1.33+ in-place-resize 지원이 필요하며, VPA 1.8.x 자체의 문서상 호환 범위는 Kubernetes 1.36–1.38입니다. VPA의 Pod eviction fallback을 피하지만 resize 완료나 모든 container policy의 무재시작을 보장하지 않습니다. 권고만 관찰하려면 먼저 `Off`를 사용합니다.
 
 아래 CPU-only policy는 기존 Deployment/container의 예시 범위입니다. 변경 활성화 전에 controller 배포 flag와 용량을 검토합니다. `InPlaceOrRecreate`는 재생성으로 fallback할 수 있는 별도 모드이며 VPA 1.6에서 GA, 기존 gate는 1.7에서 제거되었습니다. 제거된 gate를 설정하거나 Kubernetes GA만으로 VPA 동작을 추론하지 않습니다.
 
@@ -1221,7 +1221,7 @@ parameters:
 
 Class parameter는 불변이므로 class를 직접 수정하거나 불완전한 PVC를 생성하지 말고 기존 PVC에서 다른 class를 선택합니다. `.status.currentVolumeAttributesClassName`·`.status.modifyVolumeStatus`·event·실제 EBS 상태를 확인하며 요청 수락을 성능 변경 완료로 보지 않습니다.
 
-기존 business-hours CronJob에는 identity/RBAC와 timezone·중복 처리 조건이 빠져 있었습니다. 아래의 완전한 **suspended 구성 예시**도 실제 실행된 운영 절차는 아닙니다. `version-lab`, 소유한 `database-pvc`, 호환 class, kubectl/jq와 신뢰할 수 있는 client 설정을 갖춘 image를 준비합니다. ServiceAccount는 namespace의 해당 이름 PVC만 get/patch할 수 있지만 RBAC가 patch할 PVC 필드까지 제한하지는 않습니다.
+기존 business-hours CronJob에는 identity/RBAC와 timezone·중복 처리 조건이 빠져 있었습니다. 아래의 완전한 **suspended 구성 예시**도 실제 실행된 운영 절차는 아닙니다. `version-lab`, 소유한 `database-pvc`, 호환 class, kubectl/jq와 신뢰할 수 있는 client 설정을 갖춘 image를 준비합니다. ServiceAccount는 namespace의 해당 이름의 PVC만 get/patch할 수 있지만 RBAC가 patch할 PVC 필드까지 제한하지는 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -1533,7 +1533,7 @@ VPA는 별도 버전 체계를 따릅니다. `InPlaceOrRecreate`는 VPA 1.6에�
 
 #### PreferSameNode traffic distribution: GA
 
-`PreferSameTrafficDistribution`은 1.35에서 stable이 되었습니다. `PreferSameNode`는 가능한 경우 같은 node endpoint를 선호하고 fallback을 허용하므로 엄격한 `internalTrafficPolicy: Local`과 다릅니다. 실제 Service 구현·ready endpoint·traffic policy 우선순위를 확인합니다. 모든 ALB/NLB routing을 제어하거나 cross-zone traffic을 없애는 보장이 아닙니다.
+`PreferSameTrafficDistribution`은 1.35에서 stable이 되었습니다. `PreferSameNode`는 가능한 경우 같은 node endpoint를 선호하고 fallback을 허용하므로 엄격한 `internalTrafficPolicy: Local`과 다릅니다. 실제 Service 구현·ready endpoint·traffic policy 우선순위를 확인합니다. 모든 ALB/NLB routing을 제어하거나 cross-zone traffic을 없앤다고 보장하지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -1556,7 +1556,7 @@ spec:
 
 #### Native gang scheduling: alpha, KEP-4671
 
-Kubernetes 1.35에 native workload-aware/gang scheduling 개념이 도입되었습니다. 1.36에도 alpha이며 `GenericWorkload`·`GangScheduling`과 적절한 API·scheduler 활성화가 필요합니다. EKS version FAQ는 alpha 기능을 지원하지 않으며 self-managed node gate로 없는 EKS 컨트롤 플레인 API를 켤 수는 없습니다.
+Kubernetes 1.35에 native workload-aware/gang scheduling 개념이 도입되었습니다. 1.36에도 alpha이며 `GenericWorkload`·`GangScheduling`과 적절한 API·scheduler 활성화가 필요합니다. EKS version FAQ에 따르면 EKS는 alpha 기능을 지원하지 않으며 self-managed node gate로 없는 EKS 컨트롤 플레인 API를 켤 수는 없습니다.
 
 아래는 **upstream 실험 환경용 1.36 `v1alpha2` schema 예시**이지 이전 1.35 schema나 GA EKS 절차가 아닙니다. `spec.schedulingPolicy.gang.minCount`와 Pod의 `spec.schedulingGroup.podGroupName`을 사용합니다. 기존 `minMember`·`scheduleTimeoutSeconds`, Pod label·schedulingGate만으로 이 native API를 구성할 수 없습니다. 외부 PodGroup CRD는 별도 계약을 따릅니다.
 
@@ -1757,7 +1757,7 @@ ImageVolume·NodeLogQuery는 1.36 GA입니다. DRA partitionable device·consuma
 
 필수 입력은 하나의 `WATCH_NAMESPACE`와 검토한 양수 `MIN_STEADY_CPU`입니다. 해당 namespace에서 `resize.example.com/managed=true` label의 Pod만 watch하고 opt-in annotation도 요구합니다. Label·annotation 선택은 인가 경계가 아니므로 namespace의 workload 작성자를 신뢰해야 합니다. 명시적으로 선택한 Linux·container-level Guaranteed Pod만 허용하며 app/init의 CPU·memory request와 limit가 같아야 합니다. Memory 변경·upscale·잘못된 target·CPU 재시작 정책·진행 중 resize·확인되지 않거나 서로 다른 관측 resource는 거부합니다.
 
-StartupProbePassed는 모든 target의 실제 startupProbe와 `started=true`를 요구합니다. Ready·Delay는 명시적인 대안이며 Ready에는 의미 있는 readiness 신호가 필요하고 Delay는 타이머일 뿐 warmup 완료의 증거가 아닙니다. 30초 resync와 API·reconciliation 지연 때문에 정확한 시점 보장도 아닙니다.
+StartupProbePassed는 모든 target의 실제 startupProbe와 `started=true`를 요구합니다. Ready·Delay는 명시적인 대안이며 Ready에는 의미 있는 readiness 신호가 필요하고 Delay는 타이머일 뿐 warmup 완료의 증거가 아닙니다. 30초 resync와 API·reconciliation 지연 때문에 정확한 시점도 보장하지 않습니다.
 
 호환 dependency를 사용합니다. 감사에서는 Go 1.27.1·Kubernetes library v0.36.2를 사용했습니다.
 
@@ -2125,7 +2125,7 @@ roleRef:
   name: pod-resizer
 ```
 
-아래 workload는 controller 계약에 맞춥니다. 실제 CPU 작업이 아닌 sleep으로 warmup을 모사하며 기존 200m→50m·64Mi demo 입력을 보존합니다. 사용 전에 image를 검토·고정합니다. 시작 프로세스가 readiness 파일을 만들고 probe는 확인만 합니다. 기본 timeout 1초인데 probe가 8초 sleep하고 main이 파일을 만들지 않던 기존 문제를 고쳤습니다.
+아래 workload를 controller 계약에 맞춥니다. 실제 CPU 작업이 아닌 sleep으로 warmup을 모사하며 기존 200m→50m·64Mi demo 입력을 보존합니다. 사용 전에 image를 검토·고정합니다. 시작 프로세스가 readiness 파일을 만들고 probe는 확인만 합니다. 기본 timeout은 1초인데 probe가 8초 sleep하고 main이 파일을 만들지 않던 기존 문제를 고쳤습니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -2238,7 +2238,7 @@ RESIZED resize-demo/demo-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"
 | with-annotation | 有 | `[{cpu:NotRequired},{memory:RestartContainer}]` | ✅ 주입됨 (webhook 없이) |
 | without-annotation | 無 | `[]` (없음) | ✅ 주입 안 됨 (matchCondition 동작) |
 
-이전 `RESIZED` log는 API PATCH 성공 뒤 출력했습니다. ContainerID·restartCount 유지와 원하는 spec 변경만으로 cgroup 적용·앱 latency·요청 손실 부재를 증명할 수는 없습니다. 같은 Pod UID·시간 범위, kubelet의 실제 resource·generation, 적절한 runtime·앱 관측을 함께 확인해야 합니다. 과거 수치를 새 Kubernetes 버전으로 바꾸거나 새 실측으로 제시하지 않았습니다.
+이전 `RESIZED` log를 API PATCH 성공 뒤 출력했습니다. ContainerID·restartCount 유지와 원하는 spec 변경만으로 cgroup 적용·앱 latency·요청 손실 부재를 증명할 수는 없습니다. 같은 Pod UID·시간 범위, kubelet의 실제 resource·generation, 적절한 runtime·앱 관측을 함께 확인해야 합니다. 과거 수치를 새 Kubernetes 버전으로 바꾸거나 새 실측으로 제시하지 않았습니다.
 
 [Kubernetes 1.36 release](https://kubernetes.io/blog/2026/04/22/kubernetes-v1-36-release/) · [1.36.2 feature definitions](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go) · [Kubelet authorization](https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/) · [ServiceAccount administration](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/) · [SELinux security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) · [Released IPVS selection path](https://github.com/kubernetes/kubernetes/blob/v1.36.2/cmd/kube-proxy/app/server_linux.go) · [VPA 1.7.1 features](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md)
 
@@ -2248,7 +2248,7 @@ RESIZED resize-demo/demo-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"
 
 ## 5. 주요 기능 졸업 타임라인
 
-출시된 1.36.2 gate 정의와 공식 제거된 gate 이력을 중심으로 **Kubernetes 1.36까지**의 주요 upstream 이력을 정리합니다. Beta는 첫 beta 릴리스이며 기본 활성화를 의미하지 않습니다. 대시는 향후 일정을 약속하지 않으며 API 제공 여부·runtime/driver 조건·EKS 지원은 별도 확인합니다.
+출시된 1.36.2 gate 정의와 공식적으로 제거된 gate 이력을 중심으로 **Kubernetes 1.36까지**의 주요 upstream 이력을 정리합니다. Beta는 첫 beta 릴리스이며 기본 활성화를 의미하지 않습니다. 대시는 향후 일정을 약속하지 않으며 API 제공 여부·runtime/driver 조건·EKS 지원은 별도 확인합니다.
 
 | 기능 | 첫 alpha | 첫 beta | 1.36까지 stable |
 |---|---|---|---|
@@ -2348,7 +2348,7 @@ GA 졸업과 동시에 해당 beta API가 제거된 것이 아닙니다. 반대�
 
 GET 응답은 요청한/선호 API 표현으로 변환되어 원래 client가 사용한 version을 숨길 수 있습니다. `kubectl get flowschemas -o json`, API discovery, CRD conversion webhook 목록만으로 deprecated API 사용을 입증하지 못하며 모든 `v1beta1`이 deprecated인 것도 아닙니다. Rendered Git/Helm manifest, 있을 경우 원래 적용 설정, API 사용 metric·audit log, EKS Insights, 대상 버전 검사를 함께 사용합니다. CRD의 served/storage version과 conversion 동작은 별도 확인합니다.
 
-아래 metric은 응답한 API process가 관측한 deprecated 요청을 보여 줄 수 있지만 완전한 과거 요청 수나 모든 API server replica의 수집 범위는 아닙니다. Metric 부재·권한 오류를 정상 결과로 보지 않습니다.
+아래 metric은 응답한 API process가 관측한 deprecated 요청을 보여 줄 수 있지만 완전한 과거 요청 수나 모든 API server replica의 수집 범위를 나타내지는 않습니다. Metric 부재·권한 오류를 정상 결과로 보지 않습니다.
 
 ```bash
 # Read-only, explicitly selected cluster; metrics access may be restricted.
@@ -2595,7 +2595,7 @@ aws eks describe-addon-versions --region "$AWS_REGION" --no-cli-pager \
 
 ### Auto Mode와 혼합 클러스터
 
-Auto Mode는 내장 compute/network/storage component를 관리하지만 node 버전을 항상 `n−1`로 유지하거나 모든 외부 add-on을 자동 관리한다는 뜻은 아닙니다. Workload 제약·disruption 제어로 교체가 늦어질 수 있으므로 실제 update 상태·node 버전·custom NodePool 호환성을 확인합니다. Managed node group·self-managed/Hybrid node·Fargate Pod는 각각의 update·교체 절차를 따릅니다.
+Auto Mode가 내장 compute/network/storage component를 관리한다는 것이 node 버전을 항상 `n−1`로 유지하거나 모든 외부 add-on을 자동 관리한다는 뜻은 아닙니다. Workload 제약·disruption 제어로 교체가 늦어질 수 있으므로 실제 update 상태·node 버전·custom NodePool 호환성을 확인합니다. Managed node group·self-managed/Hybrid node·Fargate Pod는 각각의 update·교체 절차를 따릅니다.
 
 현재 Auto Mode node는 CoreDNS를 **node system service**로 실행합니다. 해당 workload를 모두 Auto Mode node로 옮긴 순수 Auto Mode 클러스터는 기존 CoreDNS Deployment를 제거할 수 있습니다. Auto/non-Auto 혼합 클러스터는 non-Auto node를 위해 Deployment를 유지해야 합니다. 일반 CoreDNS/VPC CNI/kube-proxy Pod 부재를 Auto Mode 장애로 단정하지 않으며, 존재 자체도 정상 동작의 증명은 아닙니다.
 
@@ -2614,7 +2614,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes -o json | jq '
 
 확인한 버전 지원 요금 차이는 클러스터 시간당 $0.50입니다. 365일 예시의 추가 요금은 1개 $4,380·5개 $21,900·10개 $43,800·25개 $109,500·50개 $219,000이며 compute·provisioned control-plane tier·network 등은 제외합니다. 월 730시간도 모든 달의 실제 시간이 아닌 계획 가정입니다.
 
-Fleet 수는 계획 기준 하나입니다. 중요한 클러스터 하나가 단순한 여러 클러스터보다 운영 위험이 클 수 있습니다. Standard 종료가 다가오면 계획 우선순위를 높여야지 staging 검증을 생략하거나 최소 검사로 production을 직접 업그레이드할 근거가 되지는 않습니다. 통제된 upgrade와 해당되는 경우 명시적으로 수용한 extended-support 비용을 비교합니다.
+Fleet 수는 계획 기준 중 하나입니다. 중요한 클러스터 하나가 단순한 여러 클러스터보다 운영 위험이 클 수 있습니다. Standard 종료가 다가오면 계획 우선순위를 높여야 하지만, 종료가 다가온다는 것이 staging 검증을 생략하거나 최소 검사로 production을 직접 업그레이드할 근거가 되지는 않습니다. 통제된 upgrade와 해당되는 경우 명시적으로 수용한 extended-support 비용을 비교합니다.
 
 <!-- Parent repair: imminent-support-end path must not recommend direct production upgrade with minimal validation.
 ![Standard Support 종료까지 남은 기간에 따라 계획적 업그레이드, 즉시 업그레이드, 또는 Extended Support 비용 검토 경로로 분기해 최종적으로 프로덕션 업그레이드 또는 Extended 유지로 이어지는 의사결정 흐름을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-16.png)
@@ -2638,7 +2638,7 @@ EKS는 한 번에 한 minor version씩 업그레이드합니다. 확인한 relea
 2. 대상 릴리스 변경, deprecated/removed API·저장 version 마이그레이션, runtime·OS·AMI, CRD·admission policy를 검토합니다. 도구 exit0·변환된 GET 응답·GA 표기가 전체 호환성 검사는 아닙니다.
 3. 앱 상태·Kubernetes 설정을 적절히 backup하고 복원을 검증합니다. EKS의 etcd는 AWS가 관리하므로 고객이 backup 일정을 직접 조회하거나 소유한 컨트롤 플레인처럼 etcd snapshot 명령을 실행할 수 없습니다. Git은 DB·PVC backup을 대체하지 않습니다.
 4. 대표성 있는 비프로덕션에서 실제 버전 단계와 component 순서를 연습합니다. 앱 readiness·network/DNS·storage·autoscaling·identity·observability를 확인하고 production 전에 rollback·data recovery 기준을 정합니다.
-5. 승인된 컨트롤 플레인 update의 반환된 update ID를 성공한 terminal 상태까지 추적합니다. Node·해당 component는 문서화된 순서를 따릅니다. 일부 호환성·마이그레이션 작업은 컨트롤 플레인 이전에 필요하며 모든 버전·compute mode에 공통인 “kube-proxy → CoreDNS → VPC CNI → CSI” 순서는 없습니다.
+5. 승인된 컨트롤 플레인 update에서 반환된 update ID를 성공한 terminal 상태까지 추적합니다. Node·해당 component는 문서화된 순서를 따릅니다. 일부 호환성·마이그레이션 작업은 컨트롤 플레인 이전에 필요하며 모든 버전·compute mode에 공통인 “kube-proxy → CoreDNS → VPC CNI → CSI” 순서는 없습니다.
 6. 각 단계 후 고객이 보는 동작·replica readiness·API/update 상태·component health를 검증합니다. Pod의 Running만으로 readiness를 판단하지 말고 근거를 보존하며 runbook을 갱신합니다.
 
 검토 시점 EKS update 문서는 특정 **upgrade** insight 문제에 `--force`를 요구하는 enforcement가 일시 rollback되었다고 명시합니다. Rollback-readiness 검사와는 별개이며 insight는 계속 계획에 필요합니다. 강제 조건 관련 안내가 호환성 문제를 무시할 근거는 아닙니다.

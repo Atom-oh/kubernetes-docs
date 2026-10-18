@@ -30,7 +30,7 @@
 
 ## 1. 릴리스 트레인과 도구 버전
 
-Cilium은 서로 다른 버전을 가진 세 가지 산출물로 배포되며 쉽게 혼동됩니다.
+Cilium은 서로 다른 버전을 가진 세 가지 산출물로 배포되며, 이들의 버전은 쉽게 혼동할 수 있습니다.
 
 | 산출물 | 이번 검토 시점 | 비고 |
 |---|---|---|
@@ -187,7 +187,7 @@ cosign verify \
 
 ### 6.2 ENI 모드 설치
 
-Cilium이 ENI를 관리하므로 Cilium이 관리하는 노드에서 VPC CNI가 실행되지 않게 해야 합니다. 어느 노드에도 없는 node selector로 `aws-node` DaemonSet을 patch합니다(upstream 명령 그대로).
+Cilium이 ENI를 관리하므로 Cilium이 관리하는 노드에서 VPC CNI가 실행되지 않게 해야 합니다. 어느 노드와도 일치하지 않는 node selector로 `aws-node` DaemonSet을 patch합니다(upstream 명령 그대로).
 
 ```bash
 kubectl -n kube-system patch daemonset aws-node --type='strategic' \
@@ -423,7 +423,7 @@ Cluster Mesh는 여러 Kubernetes 클러스터의 control plane을 연결해 ide
 | `cluster.id` | 기본 1~255; 0은 미설정이며 예약됨. `maxConnectedClusters: 511`이면 범위가 511까지 확장. **ENI 모드와 aws-cni chaining**: `extraConfig.allow-unsafe-policy-skb-usage=true`가 아니면 차트가 128~255(`maxConnectedClusters: 511`이면 384~511)를 거부합니다(`templates/validate.yaml:160-168`, cilium/cilium#21330). ENI 모드 EKS에서는 128 미만 ID를 쓰세요 |
 | `clustermesh.maxConnectedClusters` | `255`(기본) 또는 `511`; 모든 클러스터에서 동일; 설치 시에만 설정 |
 
-트레이드오프: 클러스터 ID가 숫자 identity의 비트를 차지합니다. 255 클러스터에서는 cluster-local identity 최대치가 65535이고 511에서는 32767로 줄어듭니다. 동작 중인 클러스터에서 `maxConnectedClusters`를 바꾸면 연결이 끊기거나 정책이 잘못 적용될 수 있습니다. `values.yaml`의 `cluster.id` 주석은 아직 1~255라고 되어 있는데 511 경우에는 맞지 않는 오래된 설명입니다. 실행 중인 클러스터의 이름이나 ID를 바꾸면 identity가 클러스터 ID를 포함하므로 모든 workload를 재시작해야 합니다.
+트레이드오프: 클러스터 ID가 숫자 identity의 비트를 차지합니다. 255 클러스터에서는 cluster-local identity 최대치가 65535이고 511에서는 32767로 줄어듭니다. 동작 중인 클러스터에서 `maxConnectedClusters`를 바꾸면 연결이 끊기거나 정책이 잘못 적용될 수 있습니다. `values.yaml`의 `cluster.id` 주석은 아직 1~255라고 되어 있는데 511인 경우에는 맞지 않는 오래된 설명입니다. 실행 중인 클러스터의 이름이나 ID를 바꾸면 identity가 클러스터 ID를 포함하므로 모든 workload를 재시작해야 합니다.
 
 ### 10.3 TLS와 authMode
 
@@ -520,7 +520,7 @@ cilium connectivity test --context $CLUSTER1 --multi-cluster $CLUSTER2
 
 ### 10.6 오래된 데이터: `cacheTTL`
 
-`clustermesh.cacheTTL` 기본값은 `"0s"`로, 연결이 끊긴 원격 클러스터의 캐시를 회수하지 않습니다. 해당 시간 안에 연결이 복구되지 않으면 오래된 원격 데이터를 버리려면 기간(예: `"15m"`)을 설정하세요.
+`clustermesh.cacheTTL` 기본값은 `"0s"`로, 연결이 끊긴 원격 클러스터의 캐시를 회수하지 않습니다. 해당 시간 안에 연결이 복구되지 않은 경우 오래된 원격 데이터를 버리려면 기간(예: `"15m"`)을 설정하세요.
 
 ## 11. Global Service, Affinity, EndpointSlice 동기화
 
@@ -549,7 +549,7 @@ spec:
     name: rebel-base
 ```
 
-affinity는 `cilium-dbg service list --clustermesh-affinity`로 확인합니다(선호 backend에 `(preferred)` 표시). 제한: Global NodePort와 host-network client는 kube-proxy replacement(또는 `socketLB.enabled=true`와 `socketLB.hostNamespaceOnly=true`)가 있을 때만 원격 backend로 로드 밸런싱됩니다. Cilium ingress controller는 EndpointSlice 동기화 없이도 mesh에서 동작하지만 다른 ingress controller는 필요할 수 있습니다. 1.19에서 추가된 metric: `cilium_agent_clustermesh_remote_cluster_endpoints`.
+affinity는 `cilium-dbg service list --clustermesh-affinity`로 확인합니다(선호 backend에 `(preferred)` 표시). 제한: Global NodePort와 host-network client는 kube-proxy replacement(또는 `socketLB.enabled=true`와 `socketLB.hostNamespaceOnly=true`)가 있을 때만 원격 backend로 로드 밸런싱됩니다. Cilium ingress controller는 EndpointSlice 동기화 없이도 mesh에서 동작하지만 다른 ingress controller에는 EndpointSlice 동기화가 필요할 수 있습니다. 1.19에서 추가된 metric: `cilium_agent_clustermesh_remote_cluster_endpoints`.
 
 ## 12. MCS-API (Multi-Cluster Services)
 
@@ -613,7 +613,7 @@ upstream의 `eks-clustermesh-prep.rst`는 `eksctl`, 겹치지 않는 CIDR의 VPC
 - VPC를 peering(또는 Transit Gateway)하고 private route table에 peer CIDR 경로를 추가합니다.
 - Security group 규칙은 두 클러스터의 node security group(또는 private CIDR)을 참조하며 `0.0.0.0/0`이나 `::/0`은 쓰지 않습니다.
 - clustermesh-apiserver는 internal NLB(`aws-load-balancer-scheme: internal`) 또는 peering 링크 위의 NodePort로 노출하고 `loadBalancerSourceRanges`를 peer VPC CIDR로 설정합니다.
-- ENI 모드는 VPC 라우팅 가능 Pod IP를 주므로 native routing에서는 `ipv4NativeRoutingCIDR`이 두 VPC의 Pod 대역을 포함하기만 하면 됩니다. overlay 모드에서는 노드 간 도달성(UDP 8472)만 필요합니다.
+- ENI 모드는 VPC에서 라우팅 가능한 Pod IP를 주므로 native routing에서는 `ipv4NativeRoutingCIDR`이 두 VPC의 Pod 대역을 포함하기만 하면 됩니다. overlay 모드에서는 노드 간 도달성(UDP 8472)만 필요합니다.
 - EKS 클러스터마다 `cluster.name`/`cluster.id`를 다르게 하고 `maxConnectedClusters`는 같게 합니다. ENI 모드에서는 `cluster.id`를 128 미만으로 두세요. `extraConfig.allow-unsafe-policy-skb-usage=true`가 없으면 차트가 128~255(`maxConnectedClusters: 511`이면 384~511)를 거부합니다(`validate.yaml:160-168`).
 
 ## 15. 실습
@@ -680,7 +680,7 @@ upstream의 `eks-clustermesh-prep.rst`는 `eksctl`, 겹치지 않는 CIDR의 VPC
 2. 그 레이블을 선택하고 `debug: "true"` 같은 무해한 `defaults` 키를 가진 `CiliumNodeConfig`를 `kube-system`에 적용합니다.
 3. 레이블이 붙은 노드와 붙지 않은 노드 하나의 agent Pod를 삭제합니다.
 
-확인: 레이블이 붙은 노드의 재생성된 agent는 실제 구성(`cilium-dbg config`)에 override가 반영되고 붙지 않은 노드는 그렇지 않습니다.
+확인: 레이블이 붙은 노드에서는 재생성된 agent의 실제 구성(`cilium-dbg config`)에 override가 반영되고 붙지 않은 노드에서는 그렇지 않습니다.
 
 정리: CiliumNodeConfig를 삭제하고 레이블을 제거한 뒤 agent Pod를 다시 한 번 재생성합니다.
 

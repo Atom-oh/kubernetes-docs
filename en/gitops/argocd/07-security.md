@@ -267,7 +267,7 @@ Base64 in a Git Secret manifest is not encryption. Prefer destination-side Secre
 
 ### Sealed Secrets
 
-This example uses controller 0.40.0/chart2.20.0. The old bitnami-labs Helm URL now returns 404; use the bitnami repository. Install the matching kubeseal binary and verify checksums from the [official release](https://github.com/bitnami/sealed-secrets/releases/tag/v0.40.0). Platform administrators pre-create the destination namespace.
+This example uses controller 0.40.0/chart 2.20.0. The old bitnami-labs Helm URL now returns 404; use the bitnami repository. Install the matching kubeseal binary and verify checksums from the [official release](https://github.com/bitnami/sealed-secrets/releases/tag/v0.40.0). Platform administrators pre-create the destination namespace.
 
 ```bash
 helm repo add sealed-secrets https://bitnami.github.io/sealed-secrets
@@ -689,7 +689,7 @@ spec:
 
 ### TLS with Gateway API
 
-This assumes Envoy Gateway 1.9.1, GatewayClass eg, Gateway API CRDs including v1 BackendTLSPolicy, and the Certificate above is Ready. Gateway and argocd-server use the same publicly trusted certificate; keep server.insecure false. Configure DNS and the intended access boundary, and use --grpc-web for the CLI.
+This assumes Envoy Gateway 1.9.1, GatewayClass eg, Gateway API CRDs including v1 BackendTLSPolicy, and that the Certificate above is Ready. Gateway and argocd-server use the same publicly trusted certificate; keep server.insecure false. Configure DNS and the intended access boundary, and use --grpc-web for the CLI.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -817,9 +817,9 @@ Pre-create the log group with retention/encryption settings and replace the grou
 
 ## Network Security
 
-These are baseline non-HA policy templates. The CNI must support/enforce NetworkPolicy. Allow rules from policies selecting the same Pod are additive, so review existing broad policies too. Replace Gateway data-plane namespace/labels, DNS, API/Git/IdP addresses with the actual deployment.
+These are baseline non-HA policy templates. The CNI must support/enforce NetworkPolicy. Allow rules from policies selecting the same Pod are additive, so review existing broad policies too. Replace Gateway data-plane namespace/labels, DNS, API/Git/IdP addresses with those of the actual deployment.
 
-192.0.2.10(API),198.51.100.10(Git) and198.51.100.20(IdP) are documentation-only addresses. Standard NetworkPolicy cannot select FQDNs; design dynamic destinations with supported CNI FQDN policies or a managed egress proxy, considering pre/post-NAT behavior.
+192.0.2.10 (API), 198.51.100.10 (Git) and 198.51.100.20 (IdP) are documentation-only addresses. Standard NetworkPolicy cannot select FQDNs; design dynamic destinations with supported CNI FQDN policies or a managed egress proxy, considering pre/post-NAT behavior.
 
 ```yaml
 apiVersion: networking.k8s.io/v1

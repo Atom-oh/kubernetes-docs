@@ -13,7 +13,7 @@
 
    **정답: D) 의미 있는 효과가 없다. ENI IPAM은 노드에 Cilium이 소유한 PodCIDR를 주지 않으므로 광고할 노드별 prefix가 없다**
 
-   `PodCIDR` 광고는 노드마다 PodCIDR를 할당하는 IPAM 모드(cluster-pool, Kubernetes host scope)에서만 동작합니다. ENI에서는 Pod IP가 VPC가 이미 라우팅하는 VPC 주소이며, BGP Control Plane은 클라우드 라우트 테이블을 프로그래밍하지 않습니다.
+   `PodCIDR` 광고는 노드마다 PodCIDR을 할당하는 IPAM 모드(cluster-pool, Kubernetes host scope)에서만 동작합니다. ENI에서는 Pod IP가 VPC가 이미 라우팅하는 VPC 주소이며, BGP Control Plane은 클라우드 라우트 테이블을 프로그래밍하지 않습니다.
 
    </details>
 

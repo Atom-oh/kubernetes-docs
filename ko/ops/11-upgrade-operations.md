@@ -441,7 +441,7 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
 
 exit 0은 update Successful, 1은 실패/취소/조회 오류, 2는 클라이언트 timeout입니다.
 timeout은 AWS 작업 취소가 아닙니다. 같은 ID로 관찰을 재개합니다.
-컨트롤 플레인 업그레이드는 시작 후 임의 pause/stop할 수 없습니다.
+컨트롤 플레인 업그레이드는 시작 후 임의로 pause/stop할 수 없습니다.
 `aws eks wait cluster-active`만으로 노드 교체 완료까지 판정하지 않습니다.
 마지막에 실제 cluster version과 노드·앱을 다시 확인합니다.
 

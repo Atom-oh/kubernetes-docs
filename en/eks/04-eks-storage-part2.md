@@ -95,7 +95,7 @@ This workflow stops for existing installations; migrate/update through their own
 
 ### Creating FSx for Lustre File System
 
-**Choose dynamic or static provisioning.** Dynamic provisioning creates a filesystem from the PVC; do not first create another filesystem expecting the dynamic class to adopt it. The following optional manual workflow is for the static path. Select an approved subnet in a supported AZ and a preconfigured Lustre SG with the required client/filesystem traffic rules. Do not choose `Subnets[0]` or assume that TCP988 alone completes every supported design. This bounded example requires the cluster VPC; connected-VPC designs need separate routing/security review. It creates billable resources when run and preserves returned IDs on failure.
+**Choose dynamic or static provisioning.** Dynamic provisioning creates a filesystem from the PVC; do not first create another filesystem expecting the dynamic class to adopt it. The following optional manual workflow is for the static path. Select an approved subnet in a supported AZ and a preconfigured Lustre SG with the required client/filesystem traffic rules. Do not choose `Subnets[0]` or assume that TCP 988 alone completes every supported design. This bounded example requires the cluster VPC; connected-VPC designs need separate routing/security review. It creates billable resources when run and preserves returned IDs on failure.
 ```bash
 set -euo pipefail
 : "${CLUSTER_NAME:?Set the existing cluster}"
@@ -168,7 +168,7 @@ parameters:
 
 ### Creating PVC and Mounting to Pod
 
-This read-only consumer verifies only that the mount is accessible. It is not a GPU workload or throughput benchmark; a CUDA image is unnecessary for this check. Prepare filesystem permissions for UID/GID1000 and the actual client network path.
+This read-only consumer verifies only that the mount is accessible. It is not a GPU workload or throughput benchmark; a CUDA image is unnecessary for this check. Prepare filesystem permissions for UID/GID 1000 and the actual client network path.
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -233,7 +233,7 @@ spec:
 
 ### Static Provisioning for FSx for Lustre Mount
 
-Use the existing filesystem’s actual ID, DNSName, MountName and capacity. This is an alternative to the dynamic PVC. Replace the placeholders below from the lookup, then bind the reserved static PV/PVC; `storageClassName: ""` prevents default dynamic provisioning. A consumer must use `fsx-static-claim`.
+Use the existing filesystem’s actual ID, DNSName, MountName and capacity. This is an alternative to the dynamic PVC. Replace the placeholders below with values from the lookup, then bind the reserved static PV/PVC; `storageClassName: ""` prevents default dynamic provisioning. A consumer must use `fsx-static-claim`.
 ```bash
 set -euo pipefail
 : "${AWS_REGION:?Set the filesystem Region}"
@@ -286,7 +286,7 @@ spec:
 
 - **SCRATCH_1/SCRATCH_2** are for temporary, reproducible data. Scratch does not provide persistent deployment replication/recovery simply because it is mounted as a PV; SCRATCH_2 adds different burst/performance and encryption characteristics.
 - **PERSISTENT_1/PERSISTENT_2** provide persistent deployment choices with different storage/throughput/latency capabilities. PERSISTENT_2 is not available in every Region/AZ configuration.
-- Match throughput fields to the selected deployment/storage type. PERSISTENT_2 SSD supports125/250/500/1000MB/s/TiB choices; other deployment/storage combinations differ. Retain is a Kubernetes lifecycle policy, not a data-durability upgrade for scratch storage.
+- Match throughput fields to the selected deployment/storage type. PERSISTENT_2 SSD supports 125/250/500/1000 MB/s/TiB choices; other deployment/storage combinations differ. Retain is a Kubernetes lifecycle policy, not a data-durability upgrade for scratch storage.
 
 ### FSx for Lustre Configuration for vLLM
 
@@ -437,7 +437,7 @@ spec:
 
 ### Hadoop S3A Access
 
-S3A is Hadoop’s `s3a://` filesystem implementation, not a Kubernetes volume mount. Hadoop3.5.0 uses AWS SDK for Java v2. Build and review an image containing matching `hadoop-common`/`hadoop-aws` versions and their compatible shaded SDK bundle; the placeholder below is not a published ready-to-run image. Its contract includes `hadoop` on PATH, `/opt/hadoop/etc/hadoop`, and UID1000 support. Merge `hadoop-aws` with any other required optional tools. The v2 default credentials provider supports the selected workload identity when the bundled SDK supports it; do not reuse a v1 `com.amazonaws` provider class.
+S3A is Hadoop’s `s3a://` filesystem implementation, not a Kubernetes volume mount. Hadoop 3.5.0 uses AWS SDK for Java v2. Build and review an image containing matching `hadoop-common`/`hadoop-aws` versions and their compatible shaded SDK bundle; the placeholder below is not a published ready-to-run image. Its contract includes `hadoop` on PATH, `/opt/hadoop/etc/hadoop`, and UID 1000 support. Merge `hadoop-aws` with any other required optional tools. The v2 default credentials provider supports the selected workload identity when the bundled SDK supports it; do not reuse a v1 `com.amazonaws` provider class.
 
 ```yaml
 apiVersion: v1
@@ -528,7 +528,7 @@ Mounting one ConfigMap key with subPath preserves the image’s other Hadoop con
 
 ### Mounting an Existing Bucket with Mountpoint CSI
 
-The reviewed upstream pair is CSI2.8.0 with bundled Mountpoint1.23.0. Standalone Mountpoint1.24.0 does not automatically change the CSI image. Check the actual EKS add-on version and compute compatibility: this upstream CSI release requires Kubernetes1.31+ and no longer supports AL2/Ubuntu22.04. Prefer the existing infrastructure owner; do not install Helm over a managed add-on or an existing driver.
+The reviewed upstream pair is CSI 2.8.0 with bundled Mountpoint 1.23.0. Standalone Mountpoint 1.24.0 does not automatically change the CSI image. Check the actual EKS add-on version and compute compatibility: this upstream CSI release requires Kubernetes 1.31+ and no longer supports AL2/Ubuntu 22.04. Prefer the existing infrastructure owner; do not install Helm over a managed add-on or an existing driver.
 
 For a separately owned Helm installation, render the **published chart** for review first; use the actual cluster version in `--kube-version`. A Git checkout’s chart is not the supported distribution and its publication guard must not be bypassed. Review privileged node components, CRD ownership and the `mount-s3` namespace before deploying through the chosen owner:
 
@@ -642,7 +642,7 @@ spec:
       readOnly: true
 ```
 
-The mount options map filesystem ownership to UID/GID1000; they do not change S3 object ownership. `allow-other` permits that application UID to reach a mount created by the driver. Application containers need no AWS CLI or FUSE privilege for this mounted read path.
+The mount options map filesystem ownership to UID/GID 1000; they do not change S3 object ownership. `allow-other` permits that application UID to reach a mount created by the driver. Application containers need no AWS CLI or FUSE privilege for this mounted read path.
 
 ### S3 Use Cases
 
@@ -658,7 +658,7 @@ CSI snapshots require support from the specific driver/backend; a PVC alone does
 
 ### Preparing the Snapshot Controller
 
-Inspect the existing snapshot CRDs, controller owner and CSI snapshotter first. Use the compatible EKS add-on or a reviewed pinned external-snapshotter release; do not apply floating master CRDs over an existing installation. External-snapshotter8.6.0 is a reviewed upstream reference, not an automatic upgrade target for every add-on. Part1’s driver and namespace prerequisites also apply.
+Inspect the existing snapshot CRDs, controller owner and CSI snapshotter first. Use the compatible EKS add-on or a reviewed pinned external-snapshotter release; do not apply floating master CRDs over an existing installation. External-snapshotter 8.6.0 is a reviewed upstream reference, not an automatic upgrade target for every add-on. Part1’s driver and namespace prerequisites also apply.
 
 ```bash
 set -euo pipefail
@@ -707,7 +707,7 @@ kubectl -n storage-demo get volumesnapshot ebs-part2-snapshot -o yaml
 
 ### Restoring into a New PVC
 
-After `readyToUse=true`, inspect restoreSize and the bound content/driver. Use a separate name in the same namespace with capacity at least restoreSize. This20Gi example assumes the snapshot is no larger. Keep the live claim untouched; WaitForFirstConsumer can leave the candidate Pending until a compatible consumer is scheduled. Validate restored data with an isolated, compatible application before a controlled cutover.
+After `readyToUse=true`, inspect restoreSize and the bound content/driver. Use a separate name in the same namespace with capacity at least restoreSize. This 20Gi example assumes the snapshot is no larger. Keep the live claim untouched; WaitForFirstConsumer can leave the candidate Pending until a compatible consumer is scheduled. Validate restored data with an isolated, compatible application before a controlled cutover.
 
 ```yaml
 apiVersion: v1
@@ -730,7 +730,7 @@ spec:
 
 ### Scheduling Backups with Velero
 
-The reviewed pair is Velero1.18.4 with AWS plugin1.14.4. Verify the CLI release checksum and plugin compatibility before installation. CSI support is integrated into Velero, but `EnableCSI` is still required for this path; do not add the old separate CSI plugin. Prepare a private backup bucket/prefix, network access, scoped IAM/KMS permissions and an IRSA role for `velero/velero`. The following renders a new-install manifest for review without creating resources:
+The reviewed pair is Velero 1.18.4 with AWS plugin 1.14.4. Verify the CLI release checksum and plugin compatibility before installation. CSI support is integrated into Velero, but `EnableCSI` is still required for this path; do not add the old separate CSI plugin. Prepare a private backup bucket/prefix, network access, scoped IAM/KMS permissions and an IRSA role for `velero/velero`. The following renders a new-install manifest for review without creating resources:
 
 ```bash
 set -euo pipefail
@@ -762,7 +762,7 @@ driver: ebs.csi.aws.com
 deletionPolicy: Retain
 ```
 
-**Velero owns the lifecycle of its CSI backup snapshots.** When the backup expires or is deleted, Velero changes the VolumeSnapshotContent deletion policy to Delete and removes the snapshot even if the original class used Retain. Set backup TTL and any independent retention/archive procedure deliberately. A Velero backup in S3 does not necessarily contain all volume bytes: CSI snapshots, filesystem backup and data movers are different paths. FSx CSI1.10.0, for example, does not implement CSI snapshots; use a supported FSx/application backup strategy.
+**Velero owns the lifecycle of its CSI backup snapshots.** When the backup expires or is deleted, Velero changes the VolumeSnapshotContent deletion policy to Delete and removes the snapshot even if the original class used Retain. Set backup TTL and any independent retention/archive procedure deliberately. A Velero backup in S3 does not necessarily contain all volume bytes: CSI snapshots, filesystem backup and data movers are different paths. FSx CSI 1.10.0, for example, does not implement CSI snapshots; use a supported FSx/application backup strategy.
 
 ```bash
 set -euo pipefail
@@ -819,7 +819,7 @@ CSI handles backend and filesystem expansion where supported. Inspect PVC condit
 
 ## Volume Cloning
 
-Current EBS CSI supports PVC cloning through `dataSource` and the CSI clone capability; EBS CSI1.67.0 uses native EBS volume copy (`CopyVolumes`), not an assumed hidden snapshot. Check the deployed driver/add-on support before using it. The target is independent, but availability and fully initialized performance are different states.
+Current EBS CSI supports PVC cloning through `dataSource` and the CSI clone capability; EBS CSI 1.67.0 uses native EBS volume copy (`CopyVolumes`), not an assumed hidden snapshot. Check the deployed driver/add-on support before using it. The target is independent, but availability and fully initialized performance are different states.
 
 
 
@@ -977,7 +977,7 @@ Do not infer speed, storage overhead or RPO from “one step” versus “two st
 
 ## Multi-Attach EBS
 
-The EC2 service supports Multi-Attach for eligible io1/io2 volumes, up to16 compatible Nitro instances in one AZ, with volume-type/Region restrictions. The **EBS CSI1.66.0 dynamic path supports io2 + ReadWriteMany + volumeMode: Block** and enables Multi-Attach from that capability. `multiAttachEnabled` is not a supported StorageClass switch in this path. RWOP is a one-Pod constraint and is not the Multi-Attach access mode.
+The EC2 service supports Multi-Attach for eligible io1/io2 volumes, up to 16 compatible Nitro instances in one AZ, with volume-type/Region restrictions. The **EBS CSI 1.66.0 dynamic path supports io2 + ReadWriteMany + volumeMode: Block** and enables Multi-Attach from that capability. `multiAttachEnabled` is not a supported StorageClass switch in this path. RWOP is a one-Pod constraint and is not the Multi-Attach access mode.
 
 
 
@@ -1112,7 +1112,7 @@ io2 Multi-Attach volumes support size/IOPS modification under the service’s co
 
 ## Mountpoint for S3 CSI Deep Dive
 
-The following behavior is checked against the Mountpoint1.23.0 bundled with CSI2.8.0. Verify the version actually installed before adopting newer standalone options.
+The following behavior is checked against the Mountpoint 1.23.0 bundled with CSI 2.8.0. Verify the version actually installed before adopting newer standalone options.
 
 
 
@@ -1140,9 +1140,9 @@ The earlier qualitative “excellent/good/moderate” ranking likewise was not a
 
 ### Cache Settings
 
-Place Mountpoint CLI options under **PV.spec.mountOptions**, not StorageClass parameters. Values are option strings such as `metadata-ttl 300`. Mountpoint1.23 uses seconds for metadata TTL, **MiB** for standalone `max-cache-size`, and **bytes** for read/write-part-size;8MiB is8,388,608bytes. The previous prefetch-bytes/read-ahead/max-read-parallelism/max-cache-size-mb/cache-block-size examples are not valid1.23 CLI flags.
+Place Mountpoint CLI options under **PV.spec.mountOptions**, not StorageClass parameters. Values are option strings such as `metadata-ttl 300`. Mountpoint 1.23 uses seconds for metadata TTL, **MiB** for standalone `max-cache-size`, and **bytes** for read/write-part-size; 8 MiB is 8,388,608 bytes. The previous prefetch-bytes/read-ahead/max-read-parallelism/max-cache-size-mb/cache-block-size examples are not valid 1.23 CLI flags.
 
-CSI v2 creates cache storage for its **Mountpoint Pod**, normally in `mount-s3`. An application Pod’s emptyDir does not become that cache. This alternative static PV uses a10Gi disk-backed emptyDir cache, with the driver enforcing its size limit; Memory would mean tmpfs RAM, not NVMe. Replace the actual bucket/prefix/Region and use its separate prebound PVC:
+CSI v2 creates cache storage for its **Mountpoint Pod**, normally in `mount-s3`. An application Pod’s emptyDir does not become that cache. This alternative static PV uses a 10Gi disk-backed emptyDir cache, with the driver enforcing its size limit; Memory would mean tmpfs RAM, not NVMe. Replace the actual bucket/prefix/Region and use its separate prebound PVC:
 
 ```yaml
 apiVersion: v1
@@ -1197,11 +1197,11 @@ spec:
       storage: 1Ti
 ```
 
-A300-second TTL can hide external changes for that period; use immutable/versioned dataset prefixes when that matters. Cached content is plaintext on local storage, so include node/storage access in the threat model. Budget cache capacity, eviction and Mountpoint Pod memory separately from training containers. An ephemeral PVC cache is another supported option with `cache: ephemeral`, its storage class and request fields; evaluate its lifecycle and cost. Do not pass a legacy host cache path and assume CSI v2 still uses it.
+A 300-second TTL can hide external changes for that period; use immutable/versioned dataset prefixes when that matters. Cached content is plaintext on local storage, so include node/storage access in the threat model. Budget cache capacity, eviction and Mountpoint Pod memory separately from training containers. An ephemeral PVC cache is another supported option with `cache: ephemeral`, its storage class and request fields; evaluate its lifecycle and cost. Do not pass a legacy host cache path and assume CSI v2 still uses it.
 
 ### Large Dataset Training Example
 
-This is an **unexecuted integration template**, not an optimized p4d benchmark. Prepare a reviewed GPU-compatible image containing `/opt/training/train.py`, four schedulable GPUs/device plugins, the account and cached data PVC above, and a writable RWX `reviewed-model-output-rwx` PVC accessible to UID/GID1000. The script must implement the shown arguments and create its distinct output directory. Resolve all placeholders before deployment.
+This is an **unexecuted integration template**, not an optimized p4d benchmark. Prepare a reviewed GPU-compatible image containing `/opt/training/train.py`, four schedulable GPUs/device plugins, the account and cached data PVC above, and a writable RWX `reviewed-model-output-rwx` PVC accessible to UID/GID 1000. The script must implement the shown arguments and create its distinct output directory. Resolve all placeholders before deployment.
 
 ```yaml
 apiVersion: batch/v1
@@ -1275,7 +1275,7 @@ spec:
         emptyDir: {}
 ```
 
-The four indexed completions are independent data shards, one GPU each. They do not establish distributed training rendezvous, gradient synchronization or exactly-once side effects. Make output handling retry-safe. The earlier4-GPU/8-GPU examples were different illustrative layouts, not comparative measurements; select actual hardware/resources from measured requirements.
+The four indexed completions are independent data shards, one GPU each. They do not establish distributed training rendezvous, gradient synchronization or exactly-once side effects. Make output handling retry-safe. The earlier 4-GPU/8-GPU examples were different illustrative layouts, not comparative measurements; select actual hardware/resources from measured requirements.
 
 ### Choosing S3, EFS or FSx
 
@@ -1299,7 +1299,7 @@ Let's explore various strategies for optimizing storage performance in EKS.
 
 ### EBS Performance Optimization
 
-Choose the volume type and provisioned IOPS/throughput from measured workload requirements and instance EBS limits. The earlier16,000IOPS/1,000MiB/s values are still valid configuration examples, but not current universal gp3 maxima: Regional gp3 supports up to80,000IOPS/2,000MiB/s subject to size/IOPS constraints, with lower Outposts limits. Do not assume maximum provisioning is necessary or sufficient.
+Choose the volume type and provisioned IOPS/throughput from measured workload requirements and instance EBS limits. The earlier 16,000 IOPS/1,000 MiB/s values are still valid configuration examples, but not current universal gp3 maxima: Regional gp3 supports up to 80,000 IOPS/2,000 MiB/s subject to size/IOPS constraints, with lower Outposts limits. Do not assume maximum provisioning is necessary or sufficient.
 
 Empty volumes need no initialization. Snapshot-restored volumes and native copies can incur initialization latency; the procedures differ. **Writing zeros destroys existing data and is not a safe initialization procedure.** Identify the exact volume first. For snapshot restores, assess supported provisioned initialization rates, fast snapshot restore or the documented read-based procedure; those acceleration features do not apply to native copies. The following only inspects metadata in an authorized node environment:
 ```bash
@@ -1310,7 +1310,7 @@ lsblk -o NAME,SERIAL,SIZE,TYPE,MOUNTPOINT
 
 AWS recommends General Purpose performance mode, including highly concurrent workloads; Max I/O is a previous-generation choice with higher operation latency. Match throughput mode to observed demand. Configure mount options in a StorageClass or PV, not under `Pod.spec.volumes`.
 
-This is an alternative class for new claims. The EFS helper’s recommended1MiB RPC sizes, hard mount, timeouts and noresvport are a starting point, not a benchmark. `retrans=2` triggers further recovery after retries; a hard mount does not abandon requests after two attempts. Prepare the filesystem ID and access-point identity as in Part1:
+This is an alternative class for new claims. The EFS helper’s recommended 1 MiB RPC sizes, hard mount, timeouts and noresvport are a starting point, not a benchmark. `retrans=2` triggers further recovery after retries; a hard mount does not abandon requests after two attempts. Prepare the filesystem ID and access-point identity as in Part1:
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass

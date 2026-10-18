@@ -36,7 +36,7 @@ cookie보다 우선하고, 유효하지 않은 Bearer token은 유효한 cookie�
 
 [Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-airflow-readme-0.html)
 
-DAG bundle는 git-sync를 무조건 제거한 기능이 아닙니다. 공식 chart는 git-sync를
+DAG bundle은 git-sync를 무조건 제거한 기능이 아닙니다. 공식 chart는 git-sync를
 계속 지원하며, 전달 방식과 bundle의 버전 고정 능력을 구분합니다.
 Parser 분리도 모든 지연·DB 병목이나 HA 문제를 없애지는 않습니다.
 

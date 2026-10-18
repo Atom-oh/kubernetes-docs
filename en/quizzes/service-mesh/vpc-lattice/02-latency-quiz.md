@@ -1,6 +1,6 @@
 # Latency Impact Analysis Quiz
 
-This quiz tests your understanding of the degrading and improving latency factors in a Lattice migration and how to design a PoC measurement.
+This quiz tests your understanding of the factors that degrade and improve latency in a Lattice migration and how to design a PoC measurement.
 
 ## Multiple Choice Questions
 

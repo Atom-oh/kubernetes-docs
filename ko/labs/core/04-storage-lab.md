@@ -46,7 +46,7 @@ storage_kubectl() {
 ### 단계
 
 **Step 1.1: emptyDir을 사용하는 Pod 생성**
-init container가 reader보다 먼저 파일을 만듭니다. writer는 샘플5줄을 쓴 뒤 유지되므로 파일이 생기기 전에 tail이 종료되는 시작 순서 경합을 피합니다. 실습에서 생성할 줄이며 감사의 실행 로그가 아닙니다.
+init container가 reader보다 먼저 파일을 만듭니다. writer는 샘플 5줄을 쓴 뒤 유지되므로 파일이 생기기 전에 tail이 종료되는 시작 순서 경합을 피합니다. 실습에서 생성할 줄이며 감사의 실행 로그가 아닙니다.
 
 ```bash
 cat > "${STORAGE_LAB_DIR:?}/emptydir-pod.yaml" << 'EOF'
@@ -192,7 +192,7 @@ storage_kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/lab-pvc --timeou
 storage_kubectl get pvc lab-pvc
 kubectl --context "${STORAGE_LAB_CONTEXT:?}" get pv "$STORAGE_LAB_PV"
 ```
-`STORAGE_LAB_PV`의 PV에 바인딩되는지 확인합니다. 요청은500Mi이고 PV는1Gi로 선언되지만 hostPath 용량은 파일 시스템 quota가 아닙니다. ReadWriteOnce는 단일 노드 접근 의미이며 Pod 하나만의 독점이나 앱 잠금이 아닙니다.
+`STORAGE_LAB_PV`의 PV에 바인딩되는지 확인합니다. 요청은 500Mi이고 PV는 1Gi로 선언되지만 hostPath 용량은 파일 시스템 quota가 아닙니다. ReadWriteOnce는 단일 노드 접근을 의미하며 Pod 하나만의 독점이나 앱 잠금이 아닙니다.
 
 **Step 2.3: PVC를 사용하는 Pod 생성**
 ```bash
@@ -228,7 +228,7 @@ storage_kubectl wait --for=condition=Ready pod/pvc-demo --timeout=120s
 ```
 
 **Step 2.4: 데이터 영속성 테스트**
-같은 PVC·PV·노드 디렉터리를 유지한 채 Pod만 재생성하는 실습입니다. Retain은 reclaim 정책이며 백업이나 노드·VM 삭제, /tmp 정리, 디스크 장애에 대한 내구성 보장이 아닙니다. claim 삭제 후 보존된 PV는 보통 Released가 되며 새 claim이 자동 재사용하지 않습니다.
+같은 PVC·PV·노드 디렉터리를 유지한 채 Pod만 재생성하는 실습입니다. Retain은 reclaim 정책이며 백업이나 노드·VM 삭제, /tmp 정리, 디스크 장애에 대한 내구성 보장이 아닙니다. claim 삭제 후 보존된 PV는 보통 Released가 되며 새 claim이 이를 자동으로 재사용하지 않습니다.
 
 ```bash
 storage_kubectl exec pvc-demo -- sh -c 'printf "Persistent Data\n" > /data/index.txt'

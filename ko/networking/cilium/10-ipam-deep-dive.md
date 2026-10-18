@@ -3,7 +3,7 @@
 > **검토 기준**: Cilium 1.20.2 (안정, 2026-09-16); Cilium CLI 0.20.1; Hubble CLI 1.20.2. **[1.21 pre-release]** 표시 항목은 v1.21.0-pre.3 기준이며 GA 전에 바뀔 수 있습니다.
 > **마지막 업데이트**: 2026년 10월 15일
 
-[Part 4](04-ipam-policy.md)에서 IPAM 모드와 Helm 조각을 소개했습니다. 이 장은 그 아래 계층을 다룹니다. 어떤 주소를 누가 소유하는지, `cilium-cni ADD`부터 endpoint 생성까지 무슨 일이 일어나는지, 설치 전에 pool 크기를 어떻게 계산하는지, ENI allocator가 언제 EC2를 호출하는지, LB IPAM과 Node IPAM이 Pod IPAM과 무엇이 다른지입니다. 주소가 어떻게 라우팅되는지는 [Overlay와 Native Routing](09-overlay-native-routing.md), LB 주소 광고는 [BGP, 로드 밸런싱, Egress, Edge](11-bgp-lb-egress-edge.md)를 참고하세요.
+[Part 4](04-ipam-policy.md)에서 IPAM 모드와 Helm 조각을 소개했습니다. 이 장은 그 아래 계층을 다룹니다. 어떤 주소를 누가 소유하는지, `cilium-cni ADD`부터 endpoint 생성까지 무슨 일이 일어나는지, 설치 전에 pool 크기를 어떻게 계산하는지, ENI allocator가 언제 EC2를 호출하는지, LB IPAM과 Node IPAM이 Pod IPAM과 어떻게 다른지 다룹니다. 주소가 어떻게 라우팅되는지는 [Overlay와 Native Routing](09-overlay-native-routing.md), LB 주소 광고는 [BGP, 로드 밸런싱, Egress, Edge](11-bgp-lb-egress-edge.md)를 참고하세요.
 
 ## IPAM이란 무엇이고 무엇이 아닌가
 
@@ -20,7 +20,7 @@ Kubernetes 클러스터에서는 서로 다른 네 종류의 주소를 서로 �
 
 ## 큰 그림: CiliumNode 핸드셰이크
 
-대부분의 모드는 노드마다 하나씩 존재하는 `CiliumNode` 커스텀 리소스를 통한 agent와 operator 사이의 대화입니다.
+대부분의 모드에서는 노드마다 하나씩 존재하는 `CiliumNode` 커스텀 리소스를 통해 agent와 operator 사이의 대화가 이루어집니다.
 
 ```
                         +-----------------------------+
@@ -94,7 +94,7 @@ kubelet -> CRI -> cilium-cni ADD
 
 - **REST 호출**: agent API(`api/v1/openapi.yaml`)의 `POST /ipam`, `POST /ipam/{ip}`, `DELETE /ipam/{ip}`. CNI 플러그인은 `IPAMAllocate("", podName, "", true)`를 호출하며 마지막 인자가 expiration 플래그입니다.
 - **Expiration 타이머**: expiration과 함께 할당된 IP는 endpoint 생성이 타이머를 멈추지 않으면 `defaults.IPAMExpiration`, 즉 10분 뒤 자동 해제됩니다. CNI 플러그인이 할당 후 endpoint 생성 전에 죽어도 agent 재시작 전까지 주소가 새는 일을 막습니다.
-- **복원**: agent가 재시작하면 실행 중 endpoint의 IP를 다시 확보합니다(`cilium-dbg status --all-addresses`에 `[restored]`). `--bypass-ip-availability-upon-restore`는 ENI/Azure 업그레이드 경우에만 쓰입니다.
+- **복원**: agent가 재시작하면 실행 중인 endpoint의 IP를 다시 확보합니다(`cilium-dbg status --all-addresses`에 `[restored]`). `--bypass-ip-availability-upon-restore`는 ENI/Azure 업그레이드 시에만 쓰입니다.
 - **ENI 계열 모드**(`eni`, `azure`, `alibabacloud`): 응답에 ENI MAC, gateway, CIDR이 포함됩니다. 플러그인은 MAC으로 parent interface index를 정하고(ENI 한정) agent는 호스트에 endpoint별 라우팅 규칙을 설치합니다. 이 모드들이 endpoint route를 강제하는 이유입니다.
 - **`delegated-plugin`**: CNI 플러그인이 직접 설정된 IPAM 바이너리(AKS의 `azure-ipam` 등)에 `DelegateAdd`를 호출하고 endpoint를 `ExternalIpam`으로 표시하므로 agent는 그 IP를 해제하지 않습니다. DEL 시 플러그인이 `DelegateDel`을 호출합니다. Pod IP 회계는 Cilium이 하지 않습니다.
 
@@ -165,7 +165,7 @@ k8s:
 
 ### Cluster scope / cluster-pool (기본)
 
-operator가 노드 prefix 할당을 소유합니다. 각 노드는 `CiliumNode.spec.ipam.podCIDRs`에 CIDR을 받고, agent는 활성 family 전부에 대해 이 필드가 채워질 때까지 시작을 막은 뒤 같은 host-scope allocator를 그 위에서 실행합니다. operator는 재시작 후 기존 할당을 다시 채택하며, 충돌하면 `node has CIDRs allocated (...) that conflict with requested CIDRs`가 발생합니다.
+operator가 노드 prefix 할당을 담당합니다. 각 노드는 `CiliumNode.spec.ipam.podCIDRs`에 CIDR을 받고, agent는 활성 family 전부에 대해 이 필드가 채워질 때까지 시작을 막은 뒤 같은 host-scope allocator를 그 위에서 실행합니다. operator는 재시작 후 기존 할당을 다시 채택하며, 충돌하면 `node has CIDRs allocated (...) that conflict with requested CIDRs`가 발생합니다.
 
 Helm 값(1.20.2 기본값):
 
@@ -202,7 +202,7 @@ pool CIDR당 노드 수       = 2^(M - P)
 | `fd00::/104` (기본) | `/120` | 65,536 | 256 | IPv6 기본값, 차이가 정확히 16 |
 | `fd00:10:244::/96` | `/112` | 65,536 | 65,536 | 허용되는 최대 차이 16 |
 
-위 수치는 공식으로 계산한 값이며 "사용 가능"은 예약 2개와 Cilium 소유 3개를 뺀 상한입니다. 실제 Pod 밀도는 kubelet `maxPods`에도 좌우되므로 롤링 업데이트 시 신구 Pod가 겹치는 여유까지 더해 mask를 정하세요.
+위 수치는 공식으로 계산한 값이며 "사용 가능"은 예약 2개와 Cilium 소유 3개를 뺀 상한입니다. 실제 Pod 밀도는 kubelet `maxPods`에도 좌우되므로 롤링 업데이트 시 신구 Pod가 겹칠 때 필요한 여유까지 더해 mask를 정하세요.
 
 변경 규칙(검증이 아니라 동작으로 강제됨):
 
@@ -532,7 +532,7 @@ metadata:
     lbipam.cilium.io/sharing-cross-namespace: "ns1,ns2"   # 또는 "*"
 ```
 
-1.20에서는 같은 sharing key의 두 Service가 port/protocol이 충돌하지 않으면 IP 하나를 공유하고, 충돌하면 같은 key 집합의 다른 IP를 받습니다. **[1.21 pre-release]** 호환성 검사가 더 엄격해져 Service들이 같은 `externalTrafficPolicy`를 가져야 하며 `Local`이면 같은 Pod를 선택해야 합니다. 새 어노테이션 `lbipam.cilium.io/sharing-permit-different-pods: "true"`는 이 안전 검사를 끄며 Cilium BGP나 L2 announcement와는 안전하지 않습니다(L4를 인식하지 못해 서로 다른 노드가 같은 IP에 응답할 수 있음).
+1.20에서는 같은 sharing key의 두 Service가 port/protocol이 충돌하지 않으면 IP 하나를 공유하고, 충돌하면 같은 key 집합의 다른 IP를 받습니다. **[1.21 pre-release]** 호환성 검사가 더 엄격해져 Service들이 같은 `externalTrafficPolicy`를 가져야 하며 `Local`이면 같은 Pod를 선택해야 합니다. 새 어노테이션 `lbipam.cilium.io/sharing-permit-different-pods: "true"`는 이 안전 검사를 끄며 Cilium BGP나 L2 announcement와 함께 쓰면 안전하지 않습니다(L4를 인식하지 못해 서로 다른 노드가 같은 IP에 응답할 수 있음).
 
 메트릭(문서상 접두사는 `cilium_`이지만 controller가 operator에서 돌고 operator registry가 namespace를 덮어쓸 수 있어 런타임 접두사는 `cilium_operator_lbipam_*`일 수 있습니다. 런타임에서 확인하지 못했으니 실제 scrape 결과로 이름을 확인하세요): `cilium_lbipam_conflicting_pools`, `cilium_lbipam_ips_available{pool}`, `cilium_lbipam_ips_used{pool}`, `cilium_lbipam_services_matching`, `cilium_lbipam_services_unsatisfied`.
 
@@ -654,10 +654,10 @@ kubectl -n kube-system logs deploy/cilium-operator | grep -i ipam
 
 사전 조건: private subnet만 있는 VPC의 일회용 EKS 클러스터, Nitro 인스턴스 타입 노드, 노드에 공인 IP 없음, 노드 보안 그룹은 VPC/클러스터 보안 그룹 참조만 허용(`0.0.0.0/0`, `::/0` 금지), 설치 및 노드 준비 절의 operator IAM, 대상 샌드박스 계정용 AWS CLI profile.
 
-1. 노드 그룹에 taint `node.cilium.io/agent-not-ready=true:NoExecute`를 두어 생성합니다. VPC CNI는 비활성화합니다(관리형 add-on을 설치하지 않거나 `aws-node`에 존재하지 않는 node selector를 패치).
+1. taint `node.cilium.io/agent-not-ready=true:NoExecute`를 설정해 노드 그룹을 생성합니다. VPC CNI는 비활성화합니다(관리형 add-on을 설치하지 않거나 `aws-node`에 존재하지 않는 node selector를 패치).
 2. `eni.enabled=true`, `eni.awsEnablePrefixDelegation=true`, `eni.awsReleaseExcessIPs=true`, `eni.iamRole`과 Helm 값 절의 나머지 값으로 Cilium을 설치합니다.
 3. 인벤토리를 확인합니다: `kubectl get ciliumnode <n> -o jsonpath='{.status.eni.enis}'`가 prefix를 가진 ENI를 나열하고 `aws ec2 describe-network-interfaces --filters Name=description,Values='Cilium-CNI*'`가 같은 ENI를 반환합니다. 기대 결과: `spec.ipam.pools.allocated`에 `/28` 블록이 있습니다.
-4. 노드당 16개를 넘도록 Deployment를 늘립니다. 기대 결과: operator가 prefix를 추가 할당하고 `cilium_operator_ipam_available_ips`가 `used + preAllocate` 위에 유지됩니다.
+4. 노드당 16개를 넘도록 Deployment를 늘립니다. 기대 결과: operator가 prefix를 추가 할당하고 `cilium_operator_ipam_available_ips`가 `used + preAllocate`보다 높은 값으로 유지됩니다.
 5. 다시 줄이고 180초 넘게 기다립니다. 기대 결과: 사용하지 않는 prefix가 해제되고 ENI는 연결된 채 남습니다.
 
 정리: replica 0으로 줄이고 Cilium 삭제, 노드 그룹과 남은 `Cilium-CNI` ENI 삭제(ENI GC가 켜져 있으면 태그된 고아 ENI를 정리). 롤백: 새 노드 그룹에서 VPC CNI add-on을 다시 켜세요. 같은 실행 중 노드에서 IPAM을 전환하지 마세요.

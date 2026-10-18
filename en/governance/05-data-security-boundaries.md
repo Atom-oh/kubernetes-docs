@@ -80,7 +80,7 @@ Choose KMS key type and recovery permissions for the selected copy/restore path 
 
 ## 4. Secrets Manager / KMS Cross-Account
 
-Both the secret's resource policy and the caller's identity policy are required. Cross-account secrets need a customer-managed KMS key, and that key requires both the owner's key policy and the caller's IAM policy. In other words, centralized secret/key management needs more than just policy and rotation; it requires **jointly operating permissions and recovery responsibility across both Accounts.**
+Both the secret's resource policy and the caller's identity policy are required. Cross-account secrets need a customer-managed KMS key, and that key requires both the owner's key policy and the caller's IAM policy. In other words, centralized secret/key management needs more than just policy and rotation; it requires **jointly managing permissions and recovery responsibility across both Accounts.**
 
 ## 5. AWS-Native Security Telemetry vs. Existing CNAPP
 

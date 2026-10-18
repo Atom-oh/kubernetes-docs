@@ -1,6 +1,6 @@
 # 트래픽 분할
 
-트래픽 분할은 Istio의 가장 강력한 기능 중 하나로, Canary 배포, A/B 테스트, Blue/Green 배포 등을 코드 변경 없이 구현할 수 있습니다.
+트래픽 분할은 Istio의 가장 강력한 기능 중 하나로, Canary 배포, A/B 테스트, Blue/Green 배포 등을 코드 변경 없이 구현할 수 있게 합니다.
 
 ## 목차
 
@@ -18,7 +18,7 @@
 
 Istio 1.31.0 및 Argo Rollouts 1.10.1 기준으로 검토했습니다. 각 예제는 독립적인 테스트 네임스페이스용 대안입니다. 같은 selector를 가진 여러 Rollout을 동시에 실행하거나 수동 스크립트/GitOps로 Rollouts가 관리하는 가중치와 subset 해시를 덮어쓰지 마세요. 참조하는 Service, DestinationRule, AnalysisTemplate, 게이트웨이, Prometheus를 먼저 준비하세요. 최초 배포는 안정 ReplicaSet을 만들며 이후 업데이트에서 Canary 단계와 분석을 실행합니다. Weight는 요청 분포이며 고정된 사용자 비율을 뜻하지 않습니다.
 
-트래픽 분할은 VirtualService의 `weight` 필드를 사용하여 여러 서비스 버전 간에 트래픽을 비율로 분배합니다.
+트래픽 분할은 VirtualService의 `weight` 필드를 사용하여 여러 서비스 버전 간에 트래픽을 비율에 따라 분배합니다.
 
 ![VirtualService가 사용자 요청을 가중치 기반으로 분할하여 Version 1에 90%, Version 2에 10%의 트래픽을 전달하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
 
@@ -1055,7 +1055,7 @@ spec:
 
 Blue/Green 배포는 두 개의 동일한 프로덕션 환경을 유지하고, 순간적으로 트래픽을 전환합니다. Argo Rollouts와 Istio를 함께 사용하면 안전한 전환과 자동 롤백을 구현할 수 있습니다.
 
-Service selector 변경은 비동기로 전파되며 기존 연결은 이전 ReplicaSet에 남을 수 있습니다. 수동 pause는 승인 실패가 아닙니다. 사전 분석 실패는 기존 프로덕션을 유지하고, 사후 분석은 이전 ReplicaSet이 유지되는 동안 트래픽을 되돌릴 수 있습니다.
+Service selector 변경은 비동기로 전파되며 기존 연결은 이전 ReplicaSet에 남을 수 있습니다. 수동 pause는 승인 실패가 아닙니다. 사전 분석이 실패하면 기존 프로덕션을 유지하고, 사후 분석은 이전 ReplicaSet이 유지되는 동안 트래픽을 되돌릴 수 있습니다.
 
 ### Argo Rollouts Blue/Green 아키텍처
 

@@ -77,7 +77,7 @@
 
    </details>
 
-6. **In which release was the v1 `CiliumBGPPeeringPolicy` and its control plane removed?**
+6. **In which release were the v1 `CiliumBGPPeeringPolicy` and its control plane removed?**
    - A) 1.18
    - B) 1.20
    - C) 1.21

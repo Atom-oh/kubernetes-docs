@@ -42,7 +42,7 @@ Karpenter는 오픈 소스 노드 오토스케일러입니다. 이 장은 호환
 | 노드 그룹 관리 | 불필요 | 필요 | 필요 |
 | 인터럽션 처리 | 설정된 이벤트 처리·노드 수명주기 | 플랫폼·통합 구성에 따라 다름 | 플랫폼별 처리 |
 
-> **참고**: EKS는 2026년4월8일 Managed Node Group warm pool 지원을 추가했습니다. 사전 초기화된 인스턴스는 반복 초기화 작업을 줄이며 Stopped·Running 상태는 전환 시간과 비용이 다르고 scale-in 재사용은 선택 사항입니다. AWS 발표에 따르면 Cluster Autoscaler 추가 설정은 필요하지 않습니다. 재개·노드 준비·애플리케이션 시작 시간은 남습니다. EKS Managed Node Group/Auto Scaling 기능이며 Karpenter가 관리하는 풀은 아닙니다.
+> **참고**: EKS는 2026년4월8일 Managed Node Group warm pool 지원을 추가했습니다. 사전 초기화된 인스턴스는 반복 초기화 작업을 줄이며 Stopped·Running 상태는 전환 시간과 비용이 다르고 scale-in 재사용은 선택 사항입니다. AWS 발표에 따르면 Cluster Autoscaler 추가 설정은 필요하지 않습니다. 재개·노드 준비·애플리케이션 시작에는 여전히 시간이 필요합니다. EKS Managed Node Group/Auto Scaling 기능이며 Karpenter가 관리하는 풀은 아닙니다.
 
 ## 아키텍처
 
@@ -94,7 +94,7 @@ apiVersion/kind가 없는 YAML은 설명 중인 NodePool·EC2NodeClass spec의 �
 
 #### 1. IAM 역할 및 정책 설정
 
-조회 명령은 기존 컨트롤러·노드 역할과 API 또는 API_AND_CONFIG_MAP EKS 인증을 가정합니다. CONFIG_MAP 전용 클러스터는 list-access-entries 대신 기존 aws-auth 노드 매핑을 확인해야 하며 설정 도중 인증 모드를 부수적으로 변경하지 마세요. 노드 역할은 EC2를 신뢰하고 AmazonEKSWorkerNodePolicy·AmazonEC2ContainerRegistryPullOnly 등의 워커·ECR 다운로드 권한이 필요합니다. 지원되는 경우 VPC CNI에 별도 인증을 부여하세요. SSM 권한은 선택 사항이며 설정된 에이전트가 필요합니다. AmazonEKSClusterPolicy는 Karpenter 컨트롤러 정책의 대체물이 아닙니다.
+조회 명령은 기존 컨트롤러·노드 역할과 API 또는 API_AND_CONFIG_MAP EKS 인증을 가정합니다. CONFIG_MAP 전용 클러스터는 list-access-entries 대신 기존 aws-auth 노드 매핑을 확인해야 하며 설정 도중 인증 모드를 부수적으로 변경하지 마세요. 노드 역할은 EC2를 신뢰해야 하고 AmazonEKSWorkerNodePolicy·AmazonEC2ContainerRegistryPullOnly 등의 워커·ECR 다운로드 권한이 있어야 합니다. 지원되는 경우 VPC CNI에 별도 인증을 부여하세요. SSM 권한은 선택 사항이며 설정된 에이전트가 필요합니다. AmazonEKSClusterPolicy는 Karpenter 컨트롤러 정책의 대체물이 아닙니다.
 
 ```bash
 # Set the existing cluster and Region; these commands only inspect AWS/Kubernetes.
@@ -112,7 +112,7 @@ aws eks list-access-entries --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME
 
 #### 2. Helm을 사용한 설치
 
-참조 큐와 부트스트랩 용량을 준비한 뒤 신규 설치 예제를 한 번만 사용하세요. 업그레이드는 버전별 마이그레이션 지침과 해당 CRD 갱신(예: 별도로 관리하는 karpenter-crd 차트)이 필요합니다. 컨트롤러 차트 업그레이드만으로 CRD가 일반적으로 갱신되지는 않습니다. 기존 CRD 관리 방식을 옮기기 전에 소유권을 확인하세요.
+참조 큐와 부트스트랩 용량을 준비한 뒤 신규 설치 예제를 한 번만 사용하세요. 업그레이드에는 버전별 마이그레이션 지침 준수와 해당 CRD 갱신(예: 별도로 관리하는 karpenter-crd 차트)이 필요합니다. 컨트롤러 차트 업그레이드만으로 CRD가 일반적으로 갱신되지는 않습니다. 기존 CRD 관리 방식을 옮기기 전에 소유권을 확인하세요.
 
 ```bash
 # Run only after the prerequisites and the current kubectl context are verified.
@@ -261,7 +261,7 @@ spec:
 
 ### 요구 사항 구성
 
-요구사항은 서로, EC2NodeClass, Pod 제약과 교집합으로 적용됩니다. amd64·arm64를 모두 허용해도 적합한 인스턴스·AMI·컨테이너 이미지가 두 아키텍처를 지원해야 의미가 있습니다. AZ·용량 유형 목록만으로 균등 분산이 보장되지는 않으므로 워크로드 토폴로지 제약을 사용하세요.
+요구사항은 다른 요구사항 및 EC2NodeClass·Pod 제약과의 교집합으로 적용됩니다. amd64·arm64를 모두 허용해도 적합한 인스턴스·AMI·컨테이너 이미지가 두 아키텍처를 지원해야 의미가 있습니다. AZ·용량 유형 목록만으로 균등 분산이 보장되지는 않으므로 워크로드 토폴로지 제약을 사용하세요.
 
 요구 사항은 Karpenter가 프로비저닝할 노드의 특성을 정의합니다:
 
@@ -301,7 +301,7 @@ template:
 
 ### 제한 구성
 
-`spec.limits`는 총 프로비저닝 리소스를 제한하지만 병렬 프로비저닝의 검사는 최종 일관성이므로 일시적으로 초과할 수 있습니다. 엄격한 과금 상한이 아닙니다. 문자열 수량으로 API·GitOps 형식 차이를 줄일 수 있습니다.
+`spec.limits`는 총 프로비저닝 리소스를 제한하지만 병렬 프로비저닝의 검사는 최종 일관성을 따르므로 일시적으로 초과할 수 있습니다. 엄격한 과금 상한이 아닙니다. 문자열 수량으로 API·GitOps 형식 차이를 줄일 수 있습니다.
 
 ```yaml
 limits:
@@ -331,7 +331,7 @@ spec:
 
 ### NodeReadinessController Taint 인식 (v1.13)
 
-코어 Karpenter v1.13은 별도 NodeReadinessController의 `readiness.k8s.io/` taint를 초기화 전 관리 노드의 스케줄링 시뮬레이션에서 임시 taint로 인식합니다. 초기화 완료는 해당 taint가 제거될 때까지 기다립니다. Karpenter가 taint를 삭제하거나 Kubernetes 스케줄러가 우회하게 하는 기능이 아닙니다. 다른 초기화 taint에는 정확한 `startupTaints` 설정과 이를 제거하는 컨트롤러가 여전히 필요합니다.
+코어 Karpenter v1.13은 별도 NodeReadinessController의 `readiness.k8s.io/` taint를 초기화 전 관리 노드의 스케줄링 시뮬레이션에서 임시 taint로 인식합니다. 초기화는 해당 taint가 제거될 때까지 완료되지 않습니다. Karpenter가 taint를 삭제하거나 Kubernetes 스케줄러가 우회하게 하는 기능이 아닙니다. 다른 초기화 taint에는 정확한 `startupTaints` 설정과 이를 제거하는 컨트롤러가 여전히 필요합니다.
 
 ### 2026년 7월 업데이트: v1.14 릴리스
 
@@ -346,7 +346,7 @@ spec:
 
 2026년7월17일 구형 브랜치에1.3.8·1.11.3 등의 패치가 배포되었습니다. 이 역사적 백포트가 모든 중간 마이너의 계속된 지원을 뜻하지는 않습니다. 현재 지원 정책은 LTS1.9를2027년2월까지, LTS1.14를2027년7월까지 지원하며 일반 마이너는 다음 마이너가 나올 때까지만 지원합니다. 구형 라인이 계속 유지된다고 가정하지 말고 지원되는 라인과 마이그레이션 지침을 선택하세요.
 
-AWS의2026년7월22일 발표는 Karpenter/EKS Auto Mode의 EFA 인터페이스·배치 그룹 구성을 추가했습니다. AWS Karpenter1.14.1의 실제 필드는 NodePool이 아닌 `EC2NodeClass.spec.networkInterfaces`와 `spec.placementGroupSelector`입니다. EFA-only 인터페이스는 VPC IP를 소비하지 않지만 device/card index0의 기본 `interface`는 여전히 필요합니다. 기존 배치 그룹을 이름 또는 ID로 선택하며 해당 cluster/spread/partition 전략과 지원 인스턴스가 배치를 제한합니다. 이 예제에서 HPC 워크로드를 구성·검증하지는 않았습니다.
+AWS는 2026년 7월 22일 발표에서 Karpenter/EKS Auto Mode의 EFA 인터페이스·배치 그룹 구성이 추가되었다고 밝혔습니다. AWS Karpenter1.14.1의 실제 필드는 NodePool이 아닌 `EC2NodeClass.spec.networkInterfaces`와 `spec.placementGroupSelector`입니다. EFA-only 인터페이스는 VPC IP를 소비하지 않지만 device/card index0의 기본 `interface`는 여전히 필요합니다. 기존 배치 그룹을 이름 또는 ID로 선택하며 해당 cluster/spread/partition 전략과 지원 인스턴스가 배치를 제한합니다. 이 예제에서 HPC 워크로드를 구성·검증하지는 않았습니다.
 
 ### 2026년 8월 업데이트: v1.14.1 패치 릴리스
 
@@ -578,7 +578,7 @@ spec:
 
 ### PDB(PodDisruptionBudget) 통합
 
-PDB는 정상 복제본 수에 따라 자발적인 eviction을 제한하지만 복제본을 생성하거나 애플리케이션 가용성을 보장하지 않습니다. 아래 `minAvailable: 2`는 축출 전에 충분한 정상 Pod가 필요합니다. 인스턴스 손실이나 강제 종료 기한은 여전히 영향을 줄 수 있습니다.
+PDB는 정상 복제본 수에 따라 자발적인 eviction을 제한하지만 복제본을 생성하거나 애플리케이션 가용성을 보장하지 않습니다. 아래 `minAvailable: 2` 설정에서는 축출 전에 충분한 정상 Pod가 필요합니다. 인스턴스 손실이나 강제 종료 기한은 여전히 영향을 줄 수 있습니다.
 
 ```yaml
 apiVersion: policy/v1
@@ -790,7 +790,7 @@ spec:
 
 #### 2. EC2 인스턴스 프로필
 
-role과 instanceProfile은 상호 배타적입니다. role을 사용하면 Karpenter가 인스턴스 프로필을 관리하므로 해당 IAM API 권한·통신 경로가 필요합니다. IAM 엔드포인트로 갈 경로가 없다면 미리 만든 instanceProfile을 사용하세요. IAM에는 PrivateLink 엔드포인트가 없습니다. 컨트롤러는 노드 역할에 대한 PassRole이 여전히 필요하며 EC2 자격 증명 보유와 EKS 노드 접근은 별개입니다.
+role과 instanceProfile은 상호 배타적입니다. role을 사용하면 Karpenter가 인스턴스 프로필을 관리하므로 해당 IAM API 권한·통신 경로가 필요합니다. IAM 엔드포인트로 갈 경로가 없다면 미리 만든 instanceProfile을 사용하세요. IAM에는 PrivateLink 엔드포인트가 없습니다. 컨트롤러에는 노드 역할에 대한 PassRole이 여전히 필요하며 EC2 자격 증명 보유와 EKS 노드 접근은 별개입니다.
 
 Karpenter는 EC2 인스턴스 프로필을 사용하여 노드에 IAM 권한을 부여합니다:
 

@@ -388,7 +388,7 @@ dependencies in the image, remote access credentials/permissions, retention,
 cleanup and recovery configuration. Strimzi's custom integration uses
 `spec.kafka.tieredStorage` with its plugin class/path/config. Turning on
 `remote.log.storage.system.enable` alone does not connect Kafka to S3.
-Read the version's feature limitations and test unavailable remote storage and restore.
+Read the version's feature limitations and test behavior when remote storage is unavailable, as well as restore operations.
 
 ### Retention is a data decision
 

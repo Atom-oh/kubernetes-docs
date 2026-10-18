@@ -72,7 +72,7 @@ An earlier nonzero exit stops this shell block for investigation; complete the r
 | 1.27 | `storage.k8s.io/v1beta1` CSIStorageCapacity → `storage.k8s.io/v1` |
 | 1.29 / 1.32 | FlowSchema / PriorityLevelConfiguration `v1beta2` / `v1beta3` removed respectively; use `flowcontrol.apiserver.k8s.io/v1` with field/default migrations |
 
-For kubelet 1.25 and newer, upstream policy permits up to three older minors than the API server, never a newer kubelet; older kubelets have a two-minor limit. Mixed API-server versions during an HA upgrade narrow that range. This is a support boundary, not proof that every add-on or application works. Conservative EKS preparation brings nodes to the **current** control-plane version before the next control-plane upgrade.
+For kubelet 1.25 and newer, upstream policy permits kubelets up to three minor versions older than the API server, never a newer kubelet; older kubelets have a two-minor limit. Mixed API-server versions during an HA upgrade narrow that range. This is a support boundary, not proof that every add-on or application works. Conservative EKS preparation brings nodes to the **current** control-plane version before the next control-plane upgrade.
 
 **Rehearsal and plan template**
 
@@ -689,7 +689,7 @@ Retrying, deleting a node group or overwriting add-on configuration is not a dia
 In-place control-plane rollback is supported under the current EKS guide. It is distinct from application data restore and from replacing a failed node.
 
 - Initiate within seven days of a completed in-place upgrade, to the immediately previous minor. A cluster created at the current version is not eligible; repeated rollbacks to successively older minors are not supported.
-- The target must remain supported. An extended-support target needs the `EXTENDED` policy and incurs its charges. An automatic upgrade at end of extended support cannot be rolled back; end-of-standard-support cases have the documented policy conditions.
+- The target must remain supported. An extended-support target needs the `EXTENDED` policy and incurs its charges. An automatic upgrade at the end of extended support cannot be rolled back; end-of-standard-support cases have the documented policy conditions.
 - Check `ACTIVE`, conflicting updates, backward-incompatible features and other prerequisites. `ROLLBACK_READINESS` `ERROR`/`UNKNOWN` insights block; `WARNING` is advisory. `--force` bypasses insight checks, not eligibility/prerequisites or Auto Mode disruption controls. This differs from the temporary rollback of normal upgrade-insight `--force` enforcement.
 
 ```bash
@@ -724,7 +724,7 @@ unset NODEGROUP_NAME ADDON_NAME
 python3 eks-wait-update.py
 ```
 
-For Auto Mode, use the source guide's alternative `--rollback-config timeoutMinutes=...` request, not a second concurrent request. The default is 720 minutes, supported range 120–10080; this is not an exact finish deadline. Zero drift budgets or node disruption exclusions can block progress. PDBs/Pod disruption exclusions interact with termination grace periods and do not imply indefinite protection. `--force` does not bypass those controls.
+For Auto Mode, use the source guide's alternative `--rollback-config timeoutMinutes=...` request, not a second concurrent request. The default is 720 minutes, with a supported range of 120–10080; this is not an exact finish deadline. Zero drift budgets or node disruption exclusions can block progress. PDBs/Pod disruption exclusions interact with termination grace periods and do not imply indefinite protection. `--force` does not bypass those controls.
 
 Only the Auto Mode node phase before control-plane rollback supports best-effort `CancelUpdate`; in-flight disruption may complete. Timeout/cancellation leaves the control plane unchanged and nodes reconcile back toward its version. A client timeout alone does not cancel the operation. Retry remains subject to the original eligibility window.
 

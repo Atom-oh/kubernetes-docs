@@ -328,7 +328,7 @@ spec:
     path: /metrics
 ```
 
-엔드포인트 탐색/RBAC, 네트워크 접근, Prometheus Targets 화면을 확인하세요. ServiceMonitor의 `endpoints.port`는 컨테이너 포트 번호가 아닌 **Service 포트 이름**을 선택합니다. 부하 분산되는 Service 주소 하나를 수집하며 모든 노드를 수집한다고 가정하지 말고 개별 탐색 target을 확인하세요.
+엔드포인트 탐색/RBAC, 네트워크 접근, Prometheus Targets 화면을 확인하세요. ServiceMonitor의 `endpoints.port`는 컨테이너 포트 번호가 아닌 **Service 포트 이름**을 선택합니다. 부하 분산되는 Service 주소 하나를 수집한다고 해서 모든 노드를 수집한다고 가정하지 말고 개별 탐색 target을 확인하세요.
 
 ## Grafana 대시보드
 
@@ -492,7 +492,7 @@ calicoctl get workloadendpoint -n "$WORKLOAD_NAMESPACE" -o yaml
 kubectl get pod "$WORKLOAD_POD" -n "$WORKLOAD_NAMESPACE" --show-labels
 ```
 
-클러스터의 첫 번째 `calico-node` Pod를 골라 문제가 있는 워크로드의 노드라고 가정하지 마세요. ICMP 성공/실패만으로 TCP나 HTTP 정책이 검증되지는 않습니다. 도구가 확인된 승인 진단 워크로드와 애플리케이션의 실제 프로토콜/포트를 사용하세요.
+클러스터의 첫 번째 `calico-node` Pod를 골라 해당 Pod가 문제가 있는 워크로드의 노드에 있다고 가정하지 마세요. ICMP 성공/실패만으로 TCP나 HTTP 정책이 검증되지는 않습니다. 도구가 확인된 승인 진단 워크로드와 애플리케이션의 실제 프로토콜/포트를 사용하세요.
 
 Calico IPAM에서는 위의 읽기 전용 명령과 [IPAM 정리 절차](07-advanced-topics.md)를 사용합니다. Pool CIDR과 blockSize는 변경할 수 없습니다. 겹치지 않는 적격 pool 추가는 계획된 용량 변경이며 기존 CIDR의 직접 확장이 아닙니다. 원인을 확인하기 전에 주소를 해제하거나 에이전트를 재시작하지 마세요.
 

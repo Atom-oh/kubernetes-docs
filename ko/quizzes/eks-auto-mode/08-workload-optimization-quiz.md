@@ -150,7 +150,7 @@ spec:
 **정답: B) Consolidation debounce/churn 절충의 예시**
 
 **설명:**
-GPU Ready나 warm capacity를 보장하지 않습니다. `WhenEmpty`는 consolidation을 좁히며 drift·expiration·interruption은 별도입니다. Model warm-up·desired capacity·비용을 실측에 맞추세요. 본문 추론 template은 검토된 image/runtime/probe 전까지 replicas 0을 유지합니다. 또한 4 CPU/16Gi Pod는 system 예약을 제외하면 g5.xlarge에 들어가지 않습니다.
+GPU Ready나 warm capacity를 보장하지 않습니다. `WhenEmpty`는 consolidation을 좁히며 drift·expiration·interruption은 별도입니다. Model warm-up·desired capacity·비용을 실측에 맞추세요. 본문 추론 template은 image/runtime/probe 검토 전까지 replicas 0을 유지합니다. 또한 4 CPU/16Gi Pod는 system 예약을 제외하면 g5.xlarge에 들어가지 않습니다.
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
@@ -224,7 +224,7 @@ spec:
 **정답: C) Spot/On-Demand 혼합과 검증한 ARM 지원 평가**
 
 **설명:**
-애플리케이션 API backend에 대한 설명이며 AWS 관리형 Kubernetes API server가 아닙니다. 혼합 용량은 고정 비율·즉각적인 fallback이 아니고 ARM에는 호환 image/dependency·애플리케이션 테스트가 필요합니다. `weight: 10`은 상대 프로비저닝 선호이지 백분율·지출 상한이 아닙니다. 이전 ~40% 절감은 미검증 추정입니다.
+애플리케이션 API backend에 대한 설명이며 AWS 관리형 Kubernetes API server에 대한 설명이 아닙니다. 혼합 용량은 고정 비율·즉각적인 fallback이 아니고 ARM에는 호환 image/dependency·애플리케이션 테스트가 필요합니다. `weight: 10`은 상대 프로비저닝 선호이지 백분율·지출 상한이 아닙니다. 이전 ~40% 절감은 미검증 추정입니다.
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
@@ -320,7 +320,7 @@ jq -e '[.manifests[]?.platform |
 **정답: B) 일치하는 toleration과 nodeSelector 또는 required node affinity**
 
 **설명:**
-Toleration은 taint 노드 배치를 허용하지만 그 노드를 강제하지는 않습니다. Selector/required affinity가 적격 노드를 좁힙니다. 다음은 Pod template의 `spec` 조각이며 본문에 완전한 Job이 있습니다. Label/taint는 테넌트 권한 경계가 아니고 일치 용량이 부족하면 Pod는 Pending일 수 있습니다.
+Toleration은 taint 노드 배치를 허용하지만 그 노드에 배치하도록 강제하지는 않습니다. Selector/required affinity가 적격 노드를 좁힙니다. 다음은 Pod template의 `spec` 조각이며 본문에 완전한 Job이 있습니다. Label/taint는 테넌트 권한 경계가 아니고 일치 용량이 부족하면 Pod는 Pending일 수 있습니다.
 ```yaml
 nodeSelector:
   karpenter.sh/nodepool: batch-tier

@@ -103,7 +103,7 @@ eksctl create cluster -f cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 위 구성은 EC2 노드와 선택적 앱 Fargate 프로필을 보여 줍니다. CoreDNS는 EC2에 두며, Fargate로 옮기려면 프로필 외에 CoreDNS의 컴퓨팅 설정도 검토해야 합니다.
 
 
-이 구성은 노드 역할의 포괄적인 애드온 권한을 제거했습니다. `iam.withOIDC`를 활성화했을 때 eksctl이 생성하는 CNI IRSA와 정책을 확인하고 다른 AWS 연동 컨트롤러에는 별도 역할을 구성합니다. 실제 애드온 구성과 일반 노드 역할의 CNI 권한 대안도 검토합니다. API 인증에도 운영자의 적절한 EKS 액세스 항목·정책이 필요합니다. 최소·최대 노드 수는 Cluster Autoscaler를 설치하지 않습니다.
+이 구성은 노드 역할의 포괄적인 애드온 권한을 제거했습니다. `iam.withOIDC`를 활성화했을 때 eksctl이 생성하는 CNI IRSA와 정책을 확인하고 다른 AWS 연동 컨트롤러에는 별도 역할을 구성합니다. 실제 애드온 구성과 일반 노드 역할의 CNI 권한 대안도 검토합니다. API 인증에도 운영자의 적절한 EKS 액세스 항목·정책이 필요합니다. 최소·최대 노드 수를 설정해도 Cluster Autoscaler가 설치되지는 않습니다.
 
 ### 관리형 노드 그룹 생성
 
@@ -163,7 +163,7 @@ eksctl create nodegroup -f nodegroup.yaml
 
 프로필은 일치하는 포드를 선택하며 포드 생성이나 애플리케이션 복제본 확장을 수행하지 않습니다. 프라이빗 서브넷, Fargate 포드 실행 역할, 지원되는 워크로드 기능을 확인합니다. 애플리케이션 프로필만으로 CoreDNS가 Fargate로 이동하지는 않습니다. 아래 CLI와 파일 예제는 대안입니다.
 
-Fargate 프로필은 네임스페이스와 레이블로 포드를 선택합니다. 프로필이 겹치면 `eks.amazonaws.com/fargate-profile` 레이블로 일치하는 프로필을 명시할 수 있으며, AWS는 여러 프로필이 일치할 때 프로필 이름의 영숫자 정렬 기준 선택을 설명합니다. 시작 지연은 이미지·용량·환경에 따라 달라집니다.
+Fargate 프로필은 네임스페이스와 레이블로 포드를 선택합니다. 프로필이 겹치면 `eks.amazonaws.com/fargate-profile` 레이블로 일치하는 프로필을 명시할 수 있으며, AWS는 여러 프로필이 일치할 때 프로필 이름의 영숫자 정렬 기준에 따른 선택을 설명합니다. 시작 지연은 이미지·용량·환경에 따라 달라집니다.
 
 <!-- Audit asset repair pending: Correct overlapping-profile selection and remove unmeasured startup comparison. Restore this embed/link after parent repairs the asset.
 ![Fargate 프로필의 네임스페이스·레이블 선택기에 일치하는 파드가 전용 microVM으로 배치되는 아키텍처 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part2-2.png)

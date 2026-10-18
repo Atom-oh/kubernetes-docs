@@ -24,7 +24,7 @@
 
 ### W3C Trace Context
 
-Istio는 호환되는 추적 제공자로 W3C trace context를 지원합니다. 애플리케이션은 자신의 요청 간 context를 전파해야 하며 그림의 애플리케이션 span은 초기화된 SDK 또는 agent가 필요합니다. 예제는 사이드카·waypoint 기준이며 ztunnel은 HTTP trace span을 생성하지 않습니다.
+Istio는 호환되는 추적 제공자를 통해 W3C trace context를 지원합니다. 애플리케이션은 자신의 요청 간 context를 전파해야 하며 그림의 애플리케이션 span에는 초기화된 SDK 또는 agent가 필요합니다. 예제는 사이드카·waypoint 기준이며 ztunnel은 HTTP trace span을 생성하지 않습니다.
 
 ![클라이언트 요청이 Service A와 Service B의 Envoy 프록시·애플리케이션을 거치며 traceparent 헤더로 trace context가 전파되고, 각 홉이 생성한 스팬을 Jaeger Collector로 비동기 내보내는 분산 추적 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-02-tracing-0.png)
 

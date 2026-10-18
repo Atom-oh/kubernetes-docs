@@ -16,7 +16,7 @@
 
 **Answer: A) Deliver to unhealthy targets rather than directly bypassing appliances**
 
-**Explanation:** GWLB does not bypass appliances. AWS describes random per-flow target selection and drops until the selected target recovers. A health-only fault still forwarding is a PoC hypothesis; check each AZ's eligible targets and cross-zone setting.
+**Explanation:** GWLB does not bypass appliances. AWS describes random per-flow target selection and drops until the selected target recovers. Continued forwarding during a health-only fault is a PoC hypothesis; check each AZ's eligible targets and cross-zone setting.
 
 </details>
 

@@ -108,7 +108,7 @@ chart 1.40.4의 scanner image는 4.0.13이고 이 문서의 로컬 CLI는 4.0.16
 
 **정답: B) 최소 compliance 미달로 exit 1**
 
-같은 fixture는 threshold 55에서 exit 0, 56에서 exit 1이었습니다. --fail-threshold는 4.0.16에서 deprecated로 받아들이지만 실제 게이트 값은 무시하므로 사용하지 않습니다.
+같은 fixture는 threshold 55에서 exit 0, 56에서 exit 1이었습니다. --fail-threshold는 4.0.16에서 deprecated로 받아들여지지만 실제 게이트 값은 무시되므로 사용하지 않습니다.
 
 </details>
 

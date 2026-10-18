@@ -18,7 +18,7 @@ compatible executor. The Airflow task environment needs the provider, but
 Changing the executor can therefore change physical pod count. Two logical
 execution roles do not imply an unchanged number of pods. Retries/reattachment
 can reuse pods or create further attempts; deferrable mode can release a worker
-slot while a triggerer continues observation. Exactly two live pods is not a guarantee.
+slot while a triggerer continues observation. Exactly two live pods are not guaranteed.
 
 ## 2. Precedence includes merge behavior
 
@@ -238,7 +238,7 @@ guarantee exactly-once external writes.
 ## 4. Dedicated nodes and AWS access
 
 When required, add selectors/required affinity and tolerations matching a prepared
-NodePool. Tolerations permit taints rather than force placement. Dedicated pools
+NodePool. Tolerations permit placement despite taints rather than forcing placement. Dedicated pools
 do not prevent Spot reclamation, node failure, disk pressure or disruption, and
 other workloads may tolerate the same taint.
 

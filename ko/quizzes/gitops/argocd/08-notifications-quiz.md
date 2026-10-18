@@ -14,7 +14,7 @@
 **정답: B) Notifications Controller (argocd-notifications)**
 
 **설명:**
-ArgoCD Notifications Controller는 ArgoCD Applications를 모니터링하고 구성된 트리거와 템플릿을 기반으로 알림을 보냅니다. 핵심 ArgoCD에 병합된 별도의 컴포넌트입니다.
+ArgoCD Notifications Controller는 ArgoCD Applications를 모니터링하고 구성된 트리거와 템플릿을 기반으로 알림을 보냅니다. ArgoCD 본체에 병합된 별도의 컴포넌트입니다.
 
 </details>
 
@@ -46,7 +46,7 @@ ArgoCD Notifications Controller는 ArgoCD Applications를 모니터링하고 구
 **정답: B) 알림을 보낼 시기를 결정하는 조건**
 
 **설명:**
-트리거는 알림을 보내야 할 시기를 결정하는 조건(동기화 상태 변경, 헬스 변경 또는 동기화 실패와 같은)을 정의합니다. 알림 내용을 포맷하는 템플릿을 참조합니다.
+트리거는 알림을 보내야 할 시기를 결정하는 조건(동기화 상태 변경, 헬스 변경 또는 동기화 실패 등)을 정의합니다. 알림 내용을 포맷하는 템플릿을 참조합니다.
 
 </details>
 

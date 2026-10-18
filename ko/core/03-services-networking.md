@@ -161,7 +161,7 @@ spec:
   type: LoadBalancer
 ```
 
-이 예시는 AWS Load Balancer Controller, IAM 권한, 적절한 서브넷, 라우팅 가능한 Pod IP가 필요하며 인터넷 공개 NLB를 생성합니다. 내부 로드 밸런서도 가능하고 AWS는 IP 대신 DNS 호스트 이름을 반환할 수 있습니다. EKS Auto Mode는 별도 컨트롤러·클래스와 설정을 사용합니다.
+이 예시는 AWS Load Balancer Controller, IAM 권한, 적절한 서브넷, 라우팅 가능한 Pod IP를 필요로 하며 인터넷 공개 NLB를 생성합니다. 내부 로드 밸런서도 가능하고 AWS는 IP 대신 DNS 호스트 이름을 반환할 수 있습니다. EKS Auto Mode는 별도 컨트롤러·클래스와 설정을 사용합니다.
 
 ### ExternalName
 
@@ -469,7 +469,7 @@ Kubernetes DNS는 서비스에 대한 DNS 레코드를 생성합니다. 포드�
 
 ## CoreDNS
 
-CoreDNS는 Kubernetes 클러스터의 DNS 서버로 사용되는 유연하고 확장 가능한 DNS 서버입니다.
+CoreDNS는 Kubernetes 클러스터에서 사용되는 유연하고 확장 가능한 DNS 서버입니다.
 
 ### CoreDNS 구성
 
@@ -682,7 +682,7 @@ spec:
 
 ### Istio
 
-Istio는 인기 있는 서비스 메시 구현 중 하나입니다. 다이어그램은 등록된 파드에 Envoy를 주입하는 Istio 사이드카 모드입니다. Istio는 다른 데이터 플레인의 ambient 모드도 제공합니다.
+Istio는 인기 있는 서비스 메시 구현 중 하나입니다. 다이어그램은 등록된 파드에 Envoy를 주입하는 Istio 사이드카 모드를 보여줍니다. Istio는 다른 데이터 플레인의 ambient 모드도 제공합니다.
 
 #### Istio 가상 서비스
 
@@ -855,7 +855,7 @@ Cilium은 기본적으로 VXLAN을 사용하여 오버레이 네트워킹을 구
 
 **작동 방식**:
 1. 소스 노드에서 패킷이 생성됩니다.
-2. Cilium은 패킷을 캡슐화하여 원래 패킷을 캡슐화 헤더로 감쌉니다.
+2. Cilium은 원래 패킷을 캡슐화 헤더로 감싸 캡슐화합니다.
 3. 캡슐화된 패킷은 물리적 네트워크를 통해 대상 노드로 전송됩니다.
 4. 대상 노드에서 Cilium은 패킷을 캡슐 해제하여 원래 패킷을 추출합니다.
 5. 추출된 패킷은 대상 컨테이너로 전달됩니다.
@@ -1059,7 +1059,7 @@ ipam:
 routingMode: native
 ```
 
-이 모드에는 EC2 API 권한과 같은 노드를 `aws-node`가 관리하지 않도록 하는 공식 설치·마이그레이션 절차가 필요합니다. 이 절차 없이 실행 중인 VPC CNI 위에 적용하지 마세요. EKS Auto Mode와 Fargate는 네트워킹을 별도로 관리합니다.
+이 모드에는 EC2 API 권한이 필요하며, 같은 노드를 `aws-node`가 관리하지 않도록 하는 공식 설치·마이그레이션 절차도 필요합니다. 이 절차 없이 실행 중인 VPC CNI 위에 적용하지 마세요. EKS Auto Mode와 Fargate는 네트워킹을 별도로 관리합니다.
 
 설치 후 `cilium status --wait`와 격리된 테스트 클러스터의 연결성 테스트로 검증하세요. 차트 버전을 고정하고 검토한 values를 업그레이드에도 유지합니다.
 

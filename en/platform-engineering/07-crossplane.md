@@ -21,7 +21,7 @@ Crossplane reconciles infrastructure and application resources through Kubernete
 
 Existing v1 XRDs can continue using LegacyCluster Claims, and legacy cluster-scoped MRs remain supported. Do not merely change the core version while retaining removed Resources-mode Compositions, ControllerConfig or XR-native connection publication. The official v2 migration guide describes preparation from 1.20.
 
-Terraform also uses declarative desired state and can automate plan/apply in CI. The primary difference is execution workflow versus continuous controller reconciliation. Crossplane behavior still depends on managementPolicies, supported fields, errors and quotas; it does not immediately repair every drift.
+Terraform also uses declarative desired state and can automate plan/apply in CI. The primary difference is execution workflow versus continuous controller reconciliation. Crossplane behavior still depends on managementPolicies, supported fields, errors and quotas; it does not immediately repair every instance of drift.
 
 ## Core, Providers and Permissions
 

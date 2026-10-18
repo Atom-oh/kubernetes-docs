@@ -147,7 +147,7 @@ add-brokers는 지정된 새 broker를 대상으로 하며 실제 broker ID 목�
 **정답: B) version을 4.3.1로 올리고 metadataVersion은 4.2-IV1로 유지한 뒤 검증 후 4.3-IV0으로 변경**
 
 **설명:**
-이 문제는 이전 metadataVersion을 명시적으로 보존해 검증 시간을 두는 운영 패턴입니다. metadataVersion을 생략하면 Strimzi가 binary 업그레이드 후 자동 갱신할 수도 있습니다. Operator는 현재/목표 Kafka를 모두 지원해야 하며 format 갱신 후 downgrade가 불가능할 수 있습니다.
+이 문제는 이전 metadataVersion을 명시적으로 보존해 검증 시간을 두는 운영 패턴을 다룹니다. metadataVersion을 생략하면 Strimzi가 binary 업그레이드 후 자동 갱신할 수도 있습니다. Operator는 현재/목표 Kafka를 모두 지원해야 하며 format 갱신 후 downgrade가 불가능할 수 있습니다.
 </details>
 
 10. Strimzi Kafka 클러스터의 자발적 eviction을 제한하는 Kubernetes 리소스는?

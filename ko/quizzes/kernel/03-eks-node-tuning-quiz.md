@@ -33,7 +33,7 @@
 **정답: B) Default/latest AMI를 다시 조회하면 새 kernel을 선택할 수 있지만 고정 AMI ID는 변하지 않는다**
 
 **설명:**
-Launch template/provisioner가 선택한 AMI와 실행 kernel을 확인합니다. EKS-optimized AMI는 별도 release 선택을 가지며 node 교체 자체가 kernel 업그레이드 증명은 아닙니다.
+Launch template/provisioner가 선택한 AMI와 실행 kernel을 확인합니다. EKS-optimized AMI의 release 선택은 별도로 이루어지며 node 교체 자체가 kernel 업그레이드 증명은 아닙니다.
 </details>
 
 3. CPU throttling의 가장 흔한 근본 원인과 첫 대응은?
@@ -81,7 +81,7 @@ Launch template/provisioner가 선택한 AMI와 실행 kernel을 확인합니다
 **정답: B) 사용량이 아니라 그 자원 때문에 지연된 시간의 비율을 알려주므로, 사용량 그래프가 평온한데도 회수·경합에 시간을 쓰는 상황이 보임**
 
 **설명:**
-`memory.pressure`의 `some avg10`은 최근 10초간 최소 하나의 태스크가 그 자원 때문에 지연된 시간의 비율입니다. 메모리 사용량이 limit 아래로 평온하게 보이는데 이 값이 올라가고 있으면 page cache 회수에 시간을 쓰고 있다는 뜻이고, 이는 사용량 그래프만으로는 보이지 않습니다. cgroup v2에서 제공되며 노드 전체는 `/proc/pressure/*`, cgroup별은 `<cgroup>/memory.pressure`로 확인합니다.
+`memory.pressure`의 `some avg10`은 최근 10초간 최소 하나의 태스크가 그 자원 때문에 지연된 시간의 비율입니다. 메모리 사용량이 limit 아래에서 안정적으로 보이는데 이 값이 올라가고 있으면 page cache 회수에 시간을 쓰고 있다는 뜻이고, 이는 사용량 그래프만으로는 보이지 않습니다. cgroup v2에서 제공되며 노드 전체는 `/proc/pressure/*`, cgroup별로는 `<cgroup>/memory.pressure`로 확인합니다.
 </details>
 
 6. 다음 중 "근거 있는 튜닝"의 대표 사례가 아닌 것은?

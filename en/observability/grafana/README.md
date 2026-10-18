@@ -30,7 +30,7 @@ Grafana queries Prometheus, Loki, Tempo, CloudWatch and other data sources, and 
 
 ### Basic Installation
 
-The default profile uses **one replica, SQLite, a RWO PVC and Recreate updates**. It requires the `gp3` StorageClass and CSI driver and can be unavailable during upgrades. HA is a separate profile. The chart comes from the community repository; its version and the image digest are pinned.
+The default profile uses **one replica, SQLite, an RWO PVC and Recreate updates**. It requires the `gp3` StorageClass and CSI driver and can be unavailable during upgrades. HA is a separate profile. The chart comes from the community repository; its version and the image digest are pinned.
 
 Check out this repository and edit all three URLs in `endpoints.yaml` to match **actual Services and ports**. The Tempo 3.x example uses HTTP API port 3200, which differs from OTLP ingestion ports. The placeholder service names do not create backends. If the lab backends require mTLS, add their CA/client certificate configuration to the data sources; plain HTTP cannot bypass it.
 
@@ -95,7 +95,7 @@ The full file connects Secret mounts, fixed data source UIDs, dashboard files an
 
 `values-ha.yaml` adds two replicas, disables the shared PVC, and configures external PostgreSQL with `verify-full`, a headless Service and Alerting gossip. Prepare database HA, backups and recovery separately. Do not share one SQLite file between Grafana replicas.
 
-The example database/user are `grafana`. Prepare a `grafana-database` Secret containing `host` (certificate-matching DNS:5432), `password` and `ca.crt`; mount the same `grafana-runtime/secret-key` on both Pods. Replace `root_url` with the real external HTTPS address and configure TLS termination. Moving existing SQLite data requires a separate migration and recovery check; changing the database type does not migrate it.
+The example database and user are both named `grafana`. Prepare a `grafana-database` Secret containing `host` (certificate-matching DNS:5432), `password` and `ca.crt`; mount the same `grafana-runtime/secret-key` on both Pods. Replace `root_url` with the real external HTTPS address and configure TLS termination. Moving existing SQLite data requires a separate migration and recovery check; changing the database type does not migrate it.
 
 ```bash
 helm upgrade --install grafana grafana-community/grafana --version 13.2.2 \
@@ -302,7 +302,7 @@ groups:
       severity: warning
 ```
 
-The rule installs **paused**. Validate real data, evaluation results, notification policy and contacts before unpausing it. `for: 5m` is pending duration; `interval: 1m` is evaluation frequency. Do not hide NoData/Error as normal. Frequent restarts do not prove a container is currently in `CrashLoopBackOff`; use the waiting-reason metric for that state.
+The rule installs **paused**. Validate real data, evaluation results, notification policy and contacts before unpausing it. `for: 5m` is the pending duration; `interval: 1m` is the evaluation frequency. Do not hide NoData/Error as normal. Frequent restarts do not prove a container is currently in `CrashLoopBackOff`; use the waiting-reason metric for that state.
 
 Provision Slack/PagerDuty contacts using the documented schema and values from Secrets. Use a built-in notification template or explicitly define a custom template before referencing it; undefined names such as `slack.title` fail. A contact point alone does not establish routing: attach the receiver to a notification policy. Send real tests only to an approved destination. This audit sent no external notifications.
 
@@ -368,7 +368,7 @@ Organize Overview, Infrastructure, Kubernetes, Applications and Alerts by purpos
 
 ## Validation Scope and References
 
-The single-instance, HA, metrics and sidecar chart profiles were rendered. An actual Grafana 13.2.1 instance checked data sources, dashboards, paused alert provisioning, expression evaluation and metrics authentication. Expressions used synthetic Prometheus responses. These checks did not deploy EKS, validate real backend TLS, fail over a HA database, complete SSO/IRSA or deliver external notifications.
+The single-instance, HA, metrics and sidecar chart profiles were rendered. An actual Grafana 13.2.1 instance checked data sources, dashboards, paused alert provisioning, expression evaluation and metrics authentication. Expressions used synthetic Prometheus responses. These checks did not deploy EKS, validate real backend TLS, fail over an HA database, complete SSO/IRSA or deliver external notifications.
 
 - [Grafana HA](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/)
 - [Grafana 13.2.1 configuration defaults](https://github.com/grafana/grafana/blob/v13.2.1/conf/defaults.ini)

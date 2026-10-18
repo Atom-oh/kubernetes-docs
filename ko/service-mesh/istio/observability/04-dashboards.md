@@ -110,7 +110,7 @@ kubectl get kiali,pods -n istio-system
 kubectl port-forward -n istio-system svc/kiali 20001:20001
 ```
 
-외부 접근은 유지보수되는 ingress/gateway, TLS 인증서, 인증, 브라우저에서 접근 가능한 URL을 별도로 구성합니다. 이 예제는 ingress controller·cert-manager issuer·공개 endpoint를 설치하지 않습니다. Proxy-status 기능은 istiod debug API에 의존할 수 있으며 의도적으로 비활성화했다면 `external_services.istio.istio_api_enabled: false`와 기능 제한을 적용합니다.
+외부 접근을 위해 유지보수되는 ingress/gateway, TLS 인증서, 인증, 브라우저에서 접근 가능한 URL을 별도로 구성합니다. 이 예제는 ingress controller·cert-manager issuer·공개 endpoint를 설치하지 않습니다. Proxy-status 기능은 istiod debug API에 의존할 수 있으며 의도적으로 비활성화했다면 `external_services.istio.istio_api_enabled: false`와 기능 제한을 적용합니다.
 
 ### Kiali 접속
 
@@ -222,7 +222,7 @@ Kubernetes Service별 상세 정보:
 
 #### 5. Istio 구성 검증 (Istio Config)
 
-Kiali는 사용 가능한 클러스터 상태로 지원되는 Istio 리소스를 검사합니다. 조회 전용 예제는 설정을 볼 수 있으며 편집에는 별도 인가 권한이 필요합니다. 녹색 표시는 구현된 검사를 통과했다는 뜻이며 실행 중 정확성을 보장하지 않습니다.
+Kiali는 사용 가능한 클러스터 상태로 지원되는 Istio 리소스를 검사합니다. 조회 전용 예제에서는 설정을 볼 수 있으며 편집에는 별도 인가 권한이 필요합니다. 녹색 표시는 구현된 검사를 통과했다는 뜻이며 실행 중 정확성을 보장하지 않습니다.
 
 **검증 대상**:
 - VirtualService
@@ -416,20 +416,20 @@ spec:
 | Istio Wasm Extension | 13277 | 287 | Wasm VM/runtime/cache/원격 로딩 상태 |
 | Istio Ztunnel | 21306 | 97 | Ambient L4 연결·바이트·DNS·xDS·프로세스 자원 |
 
-Service 대시보드의 `service` 변수는 서비스 host이며1.31 리비전은 일반 `namespace` 대신 `srcns`/`dstns` 필터를 가집니다. Workload 대시보드는 `namespace`·`workload`를 사용합니다. 링크 구성 전에 다운로드한 리비전의 변수를 확인합니다. ID7636·11829·13277은 각각 **Service·Performance·Wasm**이며 Workload·일반 Mesh·Gateway가 아닙니다.
+Service 대시보드의 `service` 변수는 서비스 host이며 1.31 리비전은 일반 `namespace` 대신 `srcns`/`dstns` 필터를 가집니다. Workload 대시보드는 `namespace`·`workload`를 사용합니다. 링크 구성 전에 다운로드한 리비전의 변수를 확인합니다. ID7636·11829·13277은 각각 **Service·Performance·Wasm**이며 Workload·일반 Mesh·Gateway가 아닙니다.
 
 Grafana dashboard UI에서 import하고 datasource를 선택합니다. 새 테스트 환경은 Istio 버전에 고정한 `samples/addons/grafana.yaml` 번들을 사용할 수 있지만 운영 보안 구성이 아닙니다. 기존 배포는 두 번째 Grafana를 설치하지 말고 해당 provisioning 방식을 사용합니다.
 
 ### 커뮤니티 Loki 대시보드14876
 
-확인한 항목은 **Grafana Loki Dashboard for Istio Service Mesh** 리비전3입니다. 특정 Envoy 텍스트 형식의 `pattern` parser, `status_code`·`req_id` 필드, datasource/label/job/instance 변수를 사용합니다. 요청/상태 수·바이트·최근 요청·지연·방문자/경로/user-agent 요약 패널이 있으며 mTLS 보안을 입증하거나 기존 문서가 주장한 모든 패널을 제공하지는 않습니다.
+확인한 항목은 **Grafana Loki Dashboard for Istio Service Mesh** 리비전 3입니다. 특정 Envoy 텍스트 형식의 `pattern` parser, `status_code`·`req_id` 필드, datasource/label/job/instance 변수를 사용합니다. 요청/상태 수·바이트·최근 요청·지연·방문자/경로/user-agent 요약 패널이 있으며 mTLS 보안을 입증하거나 기존 문서가 주장한 모든 패널을 제공하지는 않습니다.
 
 ```bash
 curl -fL -o istio-loki-dashboard.json \
   https://grafana.com/api/dashboards/14876/revisions/3/download
 ```
 
-파일을 검토한 뒤 UI에서 import하고 Loki datasource를 연결합니다. 레이블 있는 ConfigMap만으로 datasource 입력이 치환되거나 loader가 설치되지는 않습니다. 이 커뮤니티 리비전은 본 가이드의 JSON 제공자·Alloy 레이블과 직접 호환되지 않습니다. 해당 형식에는 [로깅 장의 검증된 대시보드·쿼리](03-logging.md)를 사용하거나 parser·필드·레이블을 명시적으로 맞춥니다. 로그 통계는 보관된 로그를 나타내며 필터링·샘플링으로 편향될 수 있습니다.
+파일을 검토한 뒤 UI에서 import하고 Loki datasource를 연결합니다. 레이블이 있는 ConfigMap만으로 datasource 입력이 치환되거나 loader가 설치되지는 않습니다. 이 커뮤니티 리비전은 본 가이드의 JSON 제공자·Alloy 레이블과 직접 호환되지 않습니다. 해당 형식에는 [로깅 장의 검증된 대시보드·쿼리](03-logging.md)를 사용하거나 parser·필드·레이블을 명시적으로 맞춥니다. 로그 통계는 보관된 로그를 나타내며 필터링·샘플링으로 편향될 수 있습니다.
 
 ### 메트릭 알림 규칙
 
@@ -583,7 +583,7 @@ spec:
   type: ClusterIP
 ```
 
-장기 저장은 목적지를 배포·보호한 뒤 remote-write 설정을 병합합니다. 아래 URL은 `observability`의 VictoriaMetrics Service를 가정하므로 실제 백엔드에 맞춥니다. Prometheus replica2개는 같은 대상을 수집하므로 원격 저장소의 HA·중복 제거 설계와 replica 레이블이 필요합니다. `replicas`를2로 바꾸는 것만으로 원격 집계가 정확해지지는 않습니다. 대상 환경에서 영속성·장애 동작·용량을 검증합니다.
+장기 저장은 목적지를 배포·보호한 뒤 remote-write 설정을 병합합니다. 아래 URL은 `observability`의 VictoriaMetrics Service를 가정하므로 실제 백엔드에 맞춥니다. Prometheus replica 2개는 같은 대상을 수집하므로 원격 저장소의 HA·중복 제거 설계와 replica 레이블이 필요합니다. `replicas`를 2로 바꾸는 것만으로 원격 집계가 정확해지지는 않습니다. 대상 환경에서 영속성·장애 동작·용량을 검증합니다.
 
 ```yaml
 spec:
@@ -981,7 +981,7 @@ spec:
           workload: var-workload
 ```
 
-추적 장의 Jaeger HTTP query endpoint는 현재 `external_services.tracing` 아래에 설정하고16686 포트에는 `use_grpc: false`를 사용합니다. 활성화 전에 백엔드/API 호환성·인증을 검증합니다. OAuth2 주입은 HTTP transport에서만 지원됩니다. Jaeger·Tempo는 선택적인 별도 연동입니다. Kiali custom dashboard는 고유 schema이며 Grafana JSON을 `external_services.custom_dashboards` 목록으로 넣을 수 없습니다.
+추적 장의 Jaeger HTTP query endpoint는 현재 `external_services.tracing` 아래에 설정하고 16686 포트에는 `use_grpc: false`를 사용합니다. 활성화 전에 백엔드/API 호환성·인증을 검증합니다. OAuth2 주입은 HTTP transport에서만 지원됩니다. Jaeger·Tempo는 선택적인 별도 연동입니다. Kiali custom dashboard는 고유 schema이며 Grafana JSON을 `external_services.custom_dashboards` 목록으로 넣을 수 없습니다.
 
 ```yaml
 spec:
@@ -1096,7 +1096,7 @@ timeout = 30
 ```
 
 **쿼리 최적화**:
-- Recording Rules 사용하여 자주 사용하는 쿼리 사전 계산
+- Recording Rules를 사용하여 자주 사용하는 쿼리 사전 계산
 - Prometheus rate 범위는 `$__rate_interval`, 쿼리 step·bucket은 `$__interval` 사용
 - 초당 비율은 `rate()`, 구간 합계는 `increase()`를 사용하며 둘 다 counter reset을 처리함
 
@@ -1140,7 +1140,7 @@ Prometheus snapshot은 `promtool tsdb snapshot`이 아닌 admin HTTP API를 사�
 curl -fsS -X POST http://localhost:9090/api/v1/admin/tsdb/snapshot
 ```
 
-응답은 server 데이터 디렉터리 아래 snapshot 디렉터리 이름을 반환합니다. 완료된 snapshot을 백업 목적지로 복사해야 하며 같은 디스크의 snapshot은 독립 백업이 아닙니다. 복원·보존·remote-write 복구는 별도로 검증합니다. 이 문서 감사에서는 백업·배포 작업을 실행하지 않았습니다.
+응답으로 server 데이터 디렉터리 아래 snapshot 디렉터리 이름을 반환합니다. 완료된 snapshot을 백업 목적지로 복사해야 하며 같은 디스크의 snapshot은 독립 백업이 아닙니다. 복원·보존·remote-write 복구는 별도로 검증합니다. 이 문서 감사에서는 백업·배포 작업을 실행하지 않았습니다.
 
 ## 참고 자료
 

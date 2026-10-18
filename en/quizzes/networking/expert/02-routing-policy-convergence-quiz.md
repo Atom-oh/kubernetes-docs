@@ -79,7 +79,7 @@ These are reasoning exercises, not claims that a lab was executed.
 6. Which statement about BGP policy attributes is defensible?
    - A) An attached community always enforces its intended behavior.
    - B) MED is always compared across every neighboring AS.
-   - C) Communities need interpreting policy, and MED comparison depends on receiver rules.
+   - C) Communities need policy to interpret them, and MED comparison depends on receiver rules.
 
 <details>
 <summary>Show Answer</summary>
@@ -114,7 +114,7 @@ These are reasoning exercises, not claims that a lab was executed.
 
 **Answer: A**
 
-**Explanation:** The supplied inverse assumes no explicit setting and effective preference 100. Removing a pre-existing 150 would not restore the original state. Known prestate is part of authorization and reproducibility, not an optional annotation.
+**Explanation:** The supplied inverse assumes no explicit setting and an effective preference of 100. Removing a pre-existing 150 would not restore the original state. Known prestate is part of authorization and reproducibility, not an optional annotation.
 
 </details>
 

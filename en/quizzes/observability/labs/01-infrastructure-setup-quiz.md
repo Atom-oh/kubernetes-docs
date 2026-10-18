@@ -6,14 +6,14 @@
 
 1. How should reviewed EKS version status be used?
    - A) 1.31 is necessarily already unsupported.
-   - B) Use the reviewed1.36 standard-support baseline and recheck current Region/support status.
+   - B) Use the reviewed 1.36 standard-support baseline and recheck current Region/support status.
    - C) Minor versions are supported forever.
    - D) kubectl version skew never matters.
 
 <details>
 <summary>Show answer</summary>
 
-**Answer: B) Use the reviewed1.36 standard-support baseline and recheck current Region/support status.**
+**Answer: B) Use the reviewed 1.36 standard-support baseline and recheck current Region/support status.**
 
 Distinguish extended support from end of support and verify client/server compatibility.
 
@@ -140,7 +140,7 @@ CLI failure does not prove no resources were created.
 
 ---
 
-9. What does checking gp3 StorageClass involve?
+9. What does checking the gp3 StorageClass involve?
    - A) A matching name always works.
    - B) Check EBS CSI, permissions, the actual class and volume cleanup.
    - C) Always overwrite the shared class.

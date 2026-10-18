@@ -28,7 +28,7 @@
 
    **Answer: D) It reuses the old release's values and ignores new chart defaults, which can render broken manifests**
 
-   Save the values with `helm get values`, review renamed or removed keys, and pass them with `-f`. `--reuse-values` is acceptable only when the chart version is unchanged, such as applying the Cluster Mesh values at the same version.
+   Save the values with `helm get values`, review renamed or removed keys, and pass them with `-f`. `--reuse-values` is acceptable only when the chart version is unchanged, such as when applying the Cluster Mesh values at the same version.
 
    </details>
 

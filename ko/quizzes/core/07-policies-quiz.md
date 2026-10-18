@@ -270,7 +270,7 @@ kubectl label namespace destination-namespace name=destination-namespace
 **정답:**
 OPA Gatekeeper를 사용하여 구현할 수 있는 정책 예시:
 
-공식 Gatekeeper 라이브러리의 해당 ConstraintTemplate을 먼저 설치하세요. 이 종류는 기본 API가 아니라 템플릿이 생성하며 라이브러리 K8sRequiredLabels 스키마는 본문의 단순화한 K8sRequiredLabelKeys와 다릅니다.
+공식 Gatekeeper 라이브러리의 해당 ConstraintTemplate을 먼저 설치하세요. 이 종류는 기본 API에 포함되지 않고 템플릿에 의해 생성되며 라이브러리 K8sRequiredLabels 스키마는 본문의 단순화한 K8sRequiredLabelKeys와 다릅니다.
 
 1. **이미지 레지스트리 제한**:
    - 승인된 레지스트리에서만 이미지를 가져오도록 강제하는 정책

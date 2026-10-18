@@ -18,7 +18,7 @@ Based on the managed-domain and collector examples in the [guide](../../../obser
 
 **Answer: C**
 
-The Elasticsearch 7.10 lineage is not a blanket compatibility guarantee. Check AWS version support and the actual client/plugin. The earlier 2.11 baseline remains standard-supported through November 7, 2027.
+The Elasticsearch 7.10 lineage is not a blanket compatibility guarantee. Check AWS version support and the actual client/plugin. The earlier 2.11 baseline remains under standard support through November 7, 2027.
 
 </details>
 

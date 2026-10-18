@@ -21,7 +21,7 @@ v0.31.0에서는 다음이 변경됐습니다.
 
 PyPI 패키지 조건은 Python >=3.10, <3.15이지만 태그의 GPU 설치 가이드는 3.10–3.13을 안내합니다. 이것을 모든 Python·PyTorch·CUDA 조합의 호환성 보장으로 해석하지 마세요. NVIDIA 경로의 최소 compute capability는 7.5이며 V100 (7.0)을 현재 지원 예시로 사용해서는 안 됩니다. 선택한 kernel·dtype·양자화 방식은 더 높은 장치 조건을 요구할 수 있습니다.
 
-GPU node는 [AI/ML 장치 가이드](01-ai-ml-workloads.md)의 AMI·driver·device plugin 조건을 따르세요. 일반 CUDA 이미지를 Trainium/Inferentia에 그대로 실행하는 경로는 아니며 Neuron 등 별도 plugin/runtime의 지원을 검증해야 합니다. GPU·RAM·디스크는 모델과 cache·동시성에 맞게 산정하며 `g5.2xlarge`, 50GB 디스크 같은 단일 최소값으로 보장할 수 없습니다.
+GPU node는 [AI/ML 장치 가이드](01-ai-ml-workloads.md)의 AMI·driver·device plugin 조건을 따르세요. 일반 CUDA 이미지를 Trainium/Inferentia에서 그대로 실행하는 경로는 아니며 Neuron 등 별도 plugin/runtime의 지원을 검증해야 합니다. GPU·RAM·디스크는 모델과 cache·동시성에 맞게 산정하며 `g5.2xlarge`, 50GB 디스크 같은 단일 최소값으로 보장할 수 없습니다.
 
 ## vLLM 소개
 
@@ -92,7 +92,7 @@ FSx for Lustre는 선택지이며 모든 vLLM 배포의 최적·필수 저장소
 
 [FSx 정적 PV/PVC와 동적 방식](01-ai-ml-workloads.md#storage-and-caching)을 구분하세요. Hugging Face의 snapshot_download는 Hugging Face에서 받는 동작이며 S3 다운로드가 아닙니다. 저장소 revision과 파일 무결성, 라이선스·접근 권한을 기록해야 합니다. 접근 token이 필요한 경우 파일로 마운트하고 token 파일을 읽는 download 전용 단계를 사용하세요. 실행 가능한 remote code를 신뢰하는 옵션은 기본으로 켜지 마세요.
 
-아래 예제는 token이 필요 없는 공개 Qwen3-0.6B의 확인한 revision을 사용합니다. 캐시는 Pod의 emptyDir이므로 재생성 시 다시 다운로드합니다. 다중 노드는 모든 worker에서 같은 model revision/path를 사용해야 합니다.
+아래 예제는 token이 필요 없는 공개 Qwen3-0.6B의 확인된 revision을 사용합니다. 캐시는 Pod의 emptyDir이므로 재생성 시 다시 다운로드합니다. 다중 노드는 모든 worker에서 같은 model revision/path를 사용해야 합니다.
 
 ## vLLM 배포
 
@@ -361,7 +361,7 @@ spec:
 
 ### 메트릭과 로그
 
-기본 `/metrics`는 API와 같은8000포트입니다. 별도8001포트나 `--enable-metrics=true` 옵션을 만들지 마세요. Service label·named port·namespace selector를 일치시켜 ServiceMonitor를 구성합니다.
+기본 `/metrics`는 API와 같은 8000 포트를 사용합니다. 별도8001포트나 `--enable-metrics=true` 옵션을 만들지 마세요. Service label·named port·namespace selector를 일치시켜 ServiceMonitor를 구성합니다.
 
 ```promql
 # model별 종단 지연 p95
@@ -384,7 +384,7 @@ sum by (model_name) (vllm:num_requests_waiting)
 
 독립 모델 replica의 HPA/KEDA와 하나의 모델을 나눈 worker group의 확장은 다릅니다. StatefulSet replica 수를 늘리기만 해 TP/PP topology가 자동 재구성되지는 않습니다. custom metrics adapter의 요청·queue 신호를 검증하고 CPU request가 없는데 CPU utilization HPA를 사용하지 마세요. Karpenter와 Cluster Autoscaler를 같은 노드 용량의 경쟁 owner로 설정하지 않아야 합니다.
 
-PDB는 모든 장애에서 최소 replica를 보장하지 않으며 voluntary eviction의 일부를 제한합니다. 독립 replica는 AZ에 분산할 수 있지만 통신이 많은 같은 TP/PP group을 AZ에 나누는 비용·지연은 별도 판단입니다. 모델 로드·warmup·drain·진행 중 streaming 처리와 여유 GPU를 검증해야 무중단 업데이트를 평가할 수 있습니다.
+PDB는 모든 장애에서 최소 replica를 보장하지 않으며 voluntary eviction의 일부를 제한합니다. 독립 replica는 AZ에 분산할 수 있지만 통신이 많은 같은 TP/PP group을 AZ에 나누는 비용·지연은 별도로 판단해야 합니다. 모델 로드·warmup·drain·진행 중 streaming 처리와 여유 GPU를 검증해야 무중단 업데이트를 평가할 수 있습니다.
 
 ## 보안 구성
 

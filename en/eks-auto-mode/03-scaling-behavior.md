@@ -151,7 +151,7 @@ spec:
 
 [View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-auto-mode-03-scaling-behavior-1.html)
 
-The figure's CPU 20/15/10% and memory 30/25/20% add to 45% and 75% on equal-capacity nodes. These are illustrative packing values, not measured inputs to a universal consolidation threshold. Real placement must also satisfy requests, topology, storage and availability requirements. Pods are evicted and recreated by workload controllers; they are not live-migrated.
+The figure's CPU values of 20/15/10% and memory values of 30/25/20% add to 45% and 75% on equal-capacity nodes. These are illustrative packing values, not measured inputs to a universal consolidation threshold. Real placement must also satisfy requests, topology, storage and availability requirements. Pods are evicted and recreated by workload controllers; they are not live-migrated.
 
 ## Drift Detection and Replacement
 

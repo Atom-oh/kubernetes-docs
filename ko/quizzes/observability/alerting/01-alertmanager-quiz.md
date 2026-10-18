@@ -186,7 +186,7 @@ Silence에는 유한한 종료 시각이 필요하며 통지에 영향을 줍니
 
 **정답: D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`**
 
-Go 템플릿은 이 삼항식을 지원하지 않습니다. Alertmanager 최상위 Data에는 CommonLabels/CommonAnnotations가 있고 Labels/Annotations/StartsAt은 `range .Alerts` 안의 개별 Alert에 속합니다. 아래는 설명을 최대 100 rune으로 포맷하여 바이트 slice가 한글을 자르는 문제를 피합니다. 출력 포맷이며 민감 정보 제거 기능은 아닙니다.
+Go 템플릿은 이 삼항식을 지원하지 않습니다. Alertmanager 최상위 Data에는 CommonLabels/CommonAnnotations가 있고 Labels/Annotations/StartsAt은 `range .Alerts` 안의 개별 Alert에 속합니다. 아래 예제는 설명을 최대 100 rune으로 포맷하여 바이트 slice가 한글을 자르는 문제를 피합니다. 출력 포맷이며 민감 정보 제거 기능은 아닙니다.
 
 ```text
 {{ range .Alerts }}

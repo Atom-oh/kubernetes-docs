@@ -137,7 +137,7 @@ spec:
             default_value: {numerator: 100, denominator: HUNDRED}
 ```
 
-This is a **per-proxy-process** bucket with an initial burst of 100 and refill of 10 tokens/second, not a global limit across replicas. Explicit enable/enforce fractions activate rejection.
+This is a **per-proxy-process** bucket with an initial burst of 100 and a refill of 10 tokens/second, not a global limit across replicas. Explicit enable/enforce fractions activate rejection.
 
 ### 3. WASM Plugin
 
@@ -320,7 +320,7 @@ spec:
         - "app-g.example.com:*"
 ```
 
-The Gateway must terminate HTTP and route each Host to the intended app.Use a dedicated HTTP-terminating Gateway. For mixed TCP-passthrough listeners, constrain the policy to verified workload ports; missing HTTP attributes can match a DENY rule. Review aliases, wildcard hosts and other routes that could expose F/G. Protect backends separately against bypass, for example with mTLS and an AuthorizationPolicy permitting the actual Gateway service account. IP restrictions do not replace user authentication.
+The Gateway must terminate HTTP and route each Host to the intended app. Use a dedicated HTTP-terminating Gateway. For mixed TCP-passthrough listeners, constrain the policy to verified workload ports; missing HTTP attributes can match a DENY rule. Review aliases, wildcard hosts and other routes that could expose F/G. Protect backends separately against bypass, for example with mTLS and an AuthorizationPolicy permitting the actual Gateway service account. IP restrictions do not replace user authentication.
 
 ### XFF-based IP Access Control
 
@@ -1102,7 +1102,7 @@ Both resources select the same workload. The mapper formats locally generated 42
 
 #### Scenario 3: Canary Deployment Test Response
 
-Use only on an isolated test workload. A caller can supply this header; the resulting200 proves neither authentication, backend execution nor version health. Any operational exposure needs separately validated authorization and header trust.
+Use only on an isolated test workload. A caller can supply this header; the resulting 200 proves neither authentication, backend execution nor version health. Any operational exposure needs separately validated authorization and header trust.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3

@@ -49,7 +49,7 @@ The 50 bytes are outer IPv4 20 + UDP 8 + VXLAN 8 + inner Ethernet 14. The outer 
 **Answer: C) Uses encapsulation only for cross-subnet traffic**
 
 **Explanation:**
-CrossSubnet compares the relevant node addresses and configured subnet masks. Same-subnet inter-node traffic can avoid encapsulation, while a different node subnet uses the selected IPIP/VXLAN encapsulation. It is not an AZ/Region detector or a service that creates inter-site connectivity.
+CrossSubnet compares the relevant node addresses and configured subnet masks. Same-subnet inter-node traffic can avoid encapsulation, while traffic between different node subnets uses the selected IPIP/VXLAN encapsulation. It is not an AZ/Region detector or a service that creates inter-site connectivity.
 
 </details>
 
@@ -113,7 +113,7 @@ ipipMode and vxlanMode accept Always, CrossSubnet and Never. Always concerns eli
 **Answer: B) Whether eligible traffic from this pool to destinations outside all Calico IPPools is source-NATed**
 
 **Explanation:**
-The usual predicate is destination outside all Calico IPPools, not simply outside the cluster. A disabled pool can still define a no-NAT destination range, and additional Felix exclusions can include host IPs. NAT does not authorize traffic or guarantee external return routing.
+The usual predicate is a destination outside all Calico IPPools, not simply outside the cluster. A disabled pool can still define a no-NAT destination range, and additional Felix exclusions can include host IPs. NAT does not authorize traffic or guarantee external return routing.
 
 </details>
 
@@ -193,7 +193,7 @@ tunl0 is the usual Linux IPIP tunnel interface in this configuration. It is rele
 **Answer: B) Verify a compatible non-overlapping pool, control new allocations, migrate workloads/dependencies and retire the old pool only after checks**
 
 **Explanation:**
-A CIDR/IPPool migration is different from an encapsulation-only change. Plan owner, cluster-CIDR compatibility, MTU, old explicit pool requests, remaining allocations and application rollout. Operator nodeSelector !all does not block explicit requested pools. Do not delete a pool merely because a few replacement Pods have new addresses; tunnel/other allocations and NAT/routing effects can remain.
+A CIDR/IPPool migration is different from an encapsulation-only change. Plan owner, cluster-CIDR compatibility, MTU, old explicit pool requests, remaining allocations and application rollout. Operator nodeSelector !all does not block explicitly requested pools. Do not delete a pool merely because a few replacement Pods have new addresses; tunnel/other allocations and NAT/routing effects can remain.
 
 </details>
 

@@ -5,7 +5,7 @@
 
 ## 실습 환경 설정
 
-[설치 프로필](README.md)과 [네트워킹 조건](03-networking.md)에 따라 일회용 Linux 클러스터를 준비합니다. kubectl은 API 서버와 지원되는 버전 차이로 맞춥니다. 아래 IPAM 프로필은 설치·문서화된 마이그레이션의 선택지이며 실행 중인 클러스터에 ConfigMap을 순서대로 바꾸는 절차가 아닙니다.
+[설치 프로필](README.md)과 [네트워킹 조건](03-networking.md)에 따라 일회용 Linux 클러스터를 준비합니다. kubectl은 API 서버와 지원되는 버전 차이 범위에 맞춥니다. 아래 IPAM 프로필은 설치·문서화된 마이그레이션의 선택지이며 실행 중인 클러스터의 ConfigMap을 순서대로 바꾸는 절차가 아닙니다.
 
 정책 실습은 아래 별도 namespace와 일치하는 workload를 사용합니다. 이전 Cilium 1.14 Star Wars manifest는 정책의 label과 맞지 않았습니다. 기존 Kubernetes/Cilium cluster-wide 정책과 admission 설정부터 확인하며 새 namespace가 이를 무효화하지는 않습니다.
 
@@ -541,7 +541,7 @@ HTTP method·path 필드는 정규식입니다. 예제처럼 범위를 고정하
 
 ### DNS/FQDN 정책
 
-이 예제는 `kube-system`의 CoreDNS/kube-dns Pod가 TCP/UDP 53 resolver인 환경을 가정합니다. 먼저 Pod의 실제 resolver를 확인합니다. NodeLocal DNS, OpenShift, 관리형 DNS 경로는 맞는 별도 설정이 필요합니다.
+이 예제는 `kube-system`의 CoreDNS/kube-dns Pod가 TCP/UDP 53 resolver인 환경을 가정합니다. 먼저 Pod의 실제 resolver를 확인합니다. NodeLocal DNS, OpenShift, 관리형 DNS 경로에 맞는 별도 설정이 필요합니다.
 
 **`dns-egress.yaml`**
 

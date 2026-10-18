@@ -56,7 +56,7 @@ Measured: LZ4 7.82 GiB (1.97×) vs ZSTD(3) 4.16 GiB (3.7×), 47% less storage, w
 **Answer: B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s, consistent with a volume/instance EBS throughput constraint, but not enough to identify the sole bottleneck**
 
 **Explanation:**
-The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can be a volume-throughput setting rather than a database property; gp3 throughput can be provisioned up to 2,000 MiB/s for an extra fee (reaching it requires at least 8,000 IOPS as well), but on this m5.xlarge the instance's approximately 137 MiB/s baseline and burst state must also be checked. Review node and volume capacity together for sustained demand.
+The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can depend on a volume-throughput setting rather than a database property; gp3 throughput can be provisioned up to 2,000 MiB/s for an extra fee (reaching it requires at least 8,000 IOPS as well), but on this m5.xlarge the instance's approximately 137 MiB/s baseline and burst state must also be checked. Review node and volume capacity together for sustained demand.
 
 </details>
 

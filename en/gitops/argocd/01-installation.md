@@ -15,7 +15,7 @@
 
 ## Prerequisites
 
-This is a self-managed installation guide. EKS managed Argo CD uses separate capability creation, authorization and configuration; do not overlay a self-managed installation there. Check the [overview compatibility table](README.md) and EKS support windows. A chart's minimum kubeVersion is not a tested/support guarantee.
+This is a self-managed installation guide. EKS managed Argo CD uses separate capability creation, authorization and configuration; do not overlay a self-managed installation there. Check the [overview compatibility table](README.md) and EKS support windows. A chart's minimum kubeVersion is not a guarantee of testing or support.
 
 Permission to create a namespace does not prove permissions for CRDs, ClusterRoles and bindings. Check the actual context/authorization. The HA bundle requires at least three nodes for anti-affinity. Measure CPU/memory for application, cluster and repository scale; a fixed 10/50GB Redis PVC is not universally required.
 

@@ -80,7 +80,7 @@ Managed Rules 선택·업데이트도 변경 관리 대상입니다. AWS managed
 - `MATCH`: 초과를 그 statement의 match로 취급합니다.
 - `NO_MATCH`: 초과를 그 statement의 non-match로 취급합니다.
 
-**`MATCH`는 자체로 Block 명령이 아닙니다.** rule action과 `NOT` 등 statement 조합에 따라 최종 결과가 달라집니다. 앞선 terminating `Allow`는 뒤의 초과 크기 차단 규칙에도 도달하지 않게 할 수 있습니다. [S10] [S12]
+**`MATCH`는 자체로 Block 명령이 아닙니다.** rule action과 `NOT` 등 statement 조합에 따라 최종 결과가 달라집니다. 앞선 terminating `Allow`는 요청이 뒤의 초과 크기 차단 규칙에도 도달하지 않게 할 수 있습니다. [S10] [S12]
 
 앱에서 전체 body 크기·schema·content type·압축 해제·파일 처리·인가를 검증하도록 제안합니다. 대용량 업로드에는 별도 경로와 저장소 기반 후속 검사를 검토합니다. 임계치 전후 정상 JSON·multipart와 검사 prefix 뒤의 데이터로 WAF와 앱의 처리 결과를 비교합니다. 공격 payload 없이도 한도와 경로를 확인할 수 있습니다.
 
@@ -134,7 +134,7 @@ ALB의 `waf.fail_open.enabled`는 WAF로 요청을 전달할 수 없을 때 targ
 }
 ```
 
-고유 priority와 metric name은 기존 ACL과 조정합니다. 이 예시는 악성 요청·오탐 검증을 대신하지 않습니다. 이어서 staging에서 좁게 제한한 benign canary의 Block 동작과 앱 미도달을 확인하고, 업무 replay로 실제 보호 규칙을 평가합니다. Count→Block 전환, 예외 기한, rollback 담당자를 기록합니다.
+고유 priority와 metric name은 기존 ACL에 맞춰 조정합니다. 이 예시는 악성 요청·오탐 검증을 대신하지 않습니다. 이어서 staging에서 좁게 제한한 benign canary의 Block 동작과 앱 미도달을 확인하고, 업무 replay로 실제 보호 규칙을 평가합니다. Count→Block 전환, 예외 기한, rollback 담당자를 기록합니다.
 
 | 검증 | 기대 결과·저장할 증거 |
 |---|---|

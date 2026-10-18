@@ -172,8 +172,8 @@ config와 checkpoint 저장소가 필요합니다. mode 문자열만 있는 최�
 
 Autoscaler의 주요 목표는 job vertex의 parallelism입니다. 기본적인 처리량 추정은
 source 유입/lag, 처리율·busy time과 edge의 출력 비율을 사용합니다.
-하위 vertex의 목표율은 **상위 목표율 × 해당 edge의 출력 비율**을 합산합니다.
-현재 관찰된 upstream 출력율을 단순히 합한 값과는 다릅니다.
+하위 vertex의 목표율은 **상위 목표율 × 해당 edge의 출력 비율**을 합산해 계산합니다.
+현재 관찰된 upstream 출력률을 단순히 합한 값과는 다릅니다.
 
 CPU 기반 HPA와 다르지만 “CPU·memory 정보를 전혀 보지 않는다”는 것도 틀립니다.
 검토한 구현은 GC/memory pressure와 CPU/memory quota를 확인하고, 별도 선택 기능인
@@ -214,7 +214,7 @@ Alignment 모드와 source partition 수, keyed 여부에 따라 선택 방식�
 실제 scaling은 parallelism override를 적용하고 가능한 경우 adaptive scheduler의
 resource-requirements API로 in-place 수행합니다. 지원·변경 종류·설정·성공 여부에 따라
 전체 재배포로 fallback할 수 있어 “항상 last-state upgrade”라고 설명하지 않습니다.
-In-place도 task 재시작과 state 복구 비용을 없애는 보장은 아닙니다.
+In-place도 task 재시작과 state 복구 비용을 없앤다고 보장하지는 않습니다.
 관찰 결과를 검토하고 stateful 복구와 peak load 시험 후 scaling.enabled를 켭니다.
 
 ![Flink Operator lifecycle and metrics-based scaling with recovery prerequisites.](../../.gitbook/assets/ko-data-on-eks-flink-02-flink-kubernetes-operator-0.png)

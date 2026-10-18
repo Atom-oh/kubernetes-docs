@@ -128,7 +128,7 @@ All도 교차 네임스페이스 연결을 허용하지만 레이블로 제한�
 
 **정답: B. Cluster의 `health_checks`**
 
-동작하는 CEC에는 Service→Listener→경로→Cluster 연결도 필요합니다. HTTP 상태 검사 호스트·경로가 실제 백엔드에서 동작해야 합니다. 상태 범위 상한은 제외하므로 start 200/end 300이 전체 2xx를 포함합니다.
+동작하는 CEC에는 Service→Listener→경로→Cluster 연결도 필요합니다. HTTP 상태 검사 호스트·경로가 실제 백엔드에서 동작해야 합니다. 상태 범위의 상한은 포함되지 않으므로 start 200/end 300이 전체 2xx를 포함합니다.
 
 </details>
 

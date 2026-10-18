@@ -2,7 +2,7 @@
 
 > **Last Updated**: September 11, 2026
 
-This quiz covers EKS networking, node capacity, multi-tenancy, autoscaling, and node security. Commands and manifests are learning examples; cloud deployment and end-to-end behavior have not been executed during this review. Confirm the target account, Region, kubeconfig, compatible add-on versions, and resource ownership before using them.
+This quiz covers EKS networking, node capacity, multi-tenancy, autoscaling, and node security. Commands and manifests are learning examples; cloud deployment has not been executed and end-to-end behavior has not been tested during this review. Confirm the target account, Region, kubeconfig, compatible add-on versions, and resource ownership before using them.
 
 ## Basic Concept Questions
 
@@ -1435,7 +1435,7 @@ grep -F 'Unable to locate credentials' "$IRSA_LAB_DIR/negative-log.txt" >/dev/nu
 ```
 This is a credential-provider comparison, not proof that arbitrary Pods cannot access IMDS or that containers are security boundaries. Restrict node credentials separately. IRSA uses a projected web-identity token and STS temporary credentials; compatible SDKs refresh them. Do not dump all `AWS_*` environment variables or token files.
 
-**5. Cleanup only owned resources.** Keep the recorded namespace UID and IAM RoleId. The guarded cleanup removes the lab namespace, its inline policy and its unique role; it retains the S3 bucket/object, shared OIDC provider and cluster. If setup only partly succeeded, inspect `ownership.json` and clean up just the resources actually recorded.
+**5. Clean up only owned resources.** Keep the recorded namespace UID and IAM RoleId. The guarded cleanup removes the lab namespace, its inline policy and its unique role; it retains the S3 bucket/object, shared OIDC provider and cluster. If setup only partly succeeded, inspect `ownership.json` and clean up just the resources actually recorded.
 
 ```bash
 # Recover the recorded values from ownership.json if this is a later shell.
@@ -1674,7 +1674,7 @@ if [ "${MIGRATION_VERIFIED:?Set yes only after workload and data checks}" = yes 
     --region "${EXAMPLE_REGION:?}" --name "${OLD_NODEGROUP_NAME:?}" --approve --wait
 fi
 ```
-For a managed rolling alternative, complete the `update-nodegroup-config` operation in basic question 9 before submitting `update-nodegroup-version`, then track that returned update ID. A managed group can retain its resource identity while its EC2 nodes are replaced. Once old capacity is deleted or data changed incompatibly, “instant rollback” is no longer available.
+For a managed rolling alternative, complete the `update-nodegroup-config` operation in basic question 9 before submitting `update-nodegroup-version`, then track that returned update ID. A managed group can retain its resource identity while its EC2 nodes are replaced. Once old capacity is deleted or data is changed incompatibly, “instant rollback” is no longer available.
 
 </details>
 

@@ -70,7 +70,7 @@ batch.size는 API에 보낼 Pod 요청 묶음을 제어합니다. min/initial/ma
 <details>
 <summary>정답 보기</summary>
 
-cores는 기본 CPU request와 executor task 용량에 관련되며 CPU limit은 별도 limit.cores 설정입니다. JVM 예제 heap1GiB+최소overhead384MiB는 request/limit1408MiB입니다. Template은 제출자가 읽고 Spark가 합성하는 파일이며 이미지 없는 조각을 kubectl apply하는 완전한 Pod가 아닙니다.
+cores는 기본 CPU request와 executor task 용량에 관련되며 CPU limit은 별도 limit.cores 설정입니다. JVM 예제 heap1GiB+최소overhead384MiB는 request/limit1408MiB입니다. Template은 제출자가 읽고 Spark가 합성하는 파일이며, 이미지 없는 조각은 kubectl apply로 적용할 수 있는 완전한 Pod가 아닙니다.
 
 </details>
 

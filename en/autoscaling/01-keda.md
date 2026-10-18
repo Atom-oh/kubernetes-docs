@@ -626,7 +626,7 @@ spec:
       valueLocation: "tweet_count"
 ```
 
-With default AverageValue, the count/target ratio proposes replicas within the configured bounds; it does not directly model processing throughput. The collector stays at one replica independently, returns 503 when unavailable, and has no liveness probe that would restart it merely for an upstream outage. Production use still needs tested credentials, limits, lifecycle handling and observability.
+With the default AverageValue, the count/target ratio proposes replicas within the configured bounds; it does not directly model processing throughput. The collector stays at one replica independently, returns 503 when unavailable, and has no liveness probe that would restart it merely for an upstream outage. Production use still needs tested credentials, limits, lifecycle handling and observability.
 
 ## Google Calendar Scaling
 
@@ -832,7 +832,7 @@ spec:
       valueLocation: "upcoming_events"
 ```
 
-With default AverageValue, the count/target ratio proposes replicas within the configured bounds; it does not directly model processing throughput. The collector stays at one replica independently, returns 503 when unavailable, and has no liveness probe that would restart it merely for an upstream outage. Production use still needs tested credentials, limits, lifecycle handling and observability.
+With the default AverageValue, the count/target ratio proposes replicas within the configured bounds; it does not directly model processing throughput. The collector stays at one replica independently, returns 503 when unavailable, and has no liveness probe that would restart it merely for an upstream outage. Production use still needs tested credentials, limits, lifecycle handling and observability.
 ## Istio Metric Scaling
 
 This example shows how to scale applications based on metrics collected from the Istio service mesh. We'll look at how to scale based on requests per second (RPS).
@@ -932,7 +932,7 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-With the default `AverageValue` metric type, a total rate of 100 requests/second and target 10 requests/second per replica suggests about 10 replicas before HPA tolerance, stabilization and limits. The query selects destination reports to avoid counting the same request from both source and destination proxies. Prometheus must actually scrape that traffic.
+With the default `AverageValue` metric type, a total rate of 100 requests/second and a target of 10 requests/second per replica suggest about 10 replicas before HPA tolerance, stabilization and limits. The query selects destination reports to avoid counting the same request from both source and destination proxies. Prometheus must actually scrape that traffic.
 
 ### Advanced Configuration
 
@@ -1031,7 +1031,7 @@ spec:
       desiredReplicas: "5"
 ```
 
-During minute 30–45 of each hour, the Cron trigger requests a floor of 5 replicas. Outside the interval it becomes inactive; scale-to-zero waits for polling and the configured cooldown (30 seconds here), plus controller scheduling. The transition is not guaranteed exactly at minute 45.
+During minutes 30–45 of each hour, the Cron trigger requests a floor of 5 replicas. Outside the interval it becomes inactive; scale-to-zero waits for polling and the configured cooldown (30 seconds here), plus controller scheduling. The transition is not guaranteed exactly at minute 45.
 
 ### Business Hours and Off Hours
 
@@ -1394,7 +1394,7 @@ kubectl logs -n keda -l app=keda-operator --tail=100
 
 KEDA (Kubernetes Event-driven Autoscaling) is a powerful tool that provides event-driven autoscaling in Kubernetes environments. It extends the basic Kubernetes HPA to enable workload scaling based on various event sources and metrics.
 
-This document covered KEDA's basic concepts, installation methods, various scaler usage, custom metric scaling, integration with external services like Twitter and Google Calendar, Istio metric-based scaling, Cron-based scaling, integration with Amazon EKS, best practices, and troubleshooting.
+This document covered KEDA's basic concepts, installation methods, usage of various scalers, custom metric scaling, integration with external services like Twitter and Google Calendar, Istio metric-based scaling, Cron-based scaling, integration with Amazon EKS, best practices, and troubleshooting.
 
 Using KEDA, you can scale applications more efficiently, optimize resource usage, and reduce costs. It's particularly useful for implementing event-driven architectures and serverless patterns.
 

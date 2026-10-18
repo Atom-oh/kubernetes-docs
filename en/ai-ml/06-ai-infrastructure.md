@@ -3,7 +3,7 @@
 > **Last Updated**: October 16, 2026
 > **Baselines**: GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
-AI infrastructure combines notebooks, pipelines, distributed runtimes, devices/nodes, storage/networking and authorization. A list of tools or successful Helm release does not establish platform security, availability or model execution.
+AI infrastructure combines notebooks, pipelines, distributed runtimes, devices/nodes, storage/networking and authorization. A list of tools or a successful Helm release does not establish platform security, availability or model execution.
 
 ## Layers and Responsibilities
 
@@ -23,7 +23,7 @@ JARK combines JupyterHub, Argo Workflows, Ray and Karpenter. It is an integratio
 
 ### JupyterHub Authentication and Notebook Profiles
 
-Chart4.4.2 declares appVersion5.5.2, distinct from the latest inspected PyPI Hub6.1.0 (2026-10-14). Local API checks used Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0; verify actual package combinations inside the operational chart image.
+Chart 4.4.2 declares appVersion 5.5.2, distinct from the latest inspected PyPI Hub 6.1.0 (2026-10-14). Local API checks used Hub 6.0.0/OAuthenticator 17.4.0/KubeSpawner 7.1.0; verify actual package combinations inside the operational chart image.
 
 Cognito is one OIDC provider option. Match callback URLs, token/userInfo endpoints, scopes and a stable username claim, and configure an explicit allow policy. MFA/corporate federation must be configured in the provider; GenericOAuthenticator does not enable them automatically.
 
@@ -54,7 +54,7 @@ Distinguish notebook CPU/RAM guarantees from limits and match actual GPU images,
 
 The previous workflow referenced missing templates, artifacts and scripts. This **tiny dataflow fixture** has six stages. It passes parameters through environment variables and JSON instead of injecting values into Python source. It selects between two coefficients; it is not a real image-classification training, Ray-cluster or external-registry pipeline.
 
-Argo4.1.3 offline lint and all six Python script bodies were validated locally. Prepare prepared-workflow-runner with least privilege and configure image digests, quotas and artifact storage separately before operations.
+Argo 4.1.3 offline lint and all six Python script bodies were validated locally. Prepare prepared-workflow-runner with least privilege and configure image digests, quotas and artifact storage separately before operations.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -291,11 +291,11 @@ Fixture MSE0 comes from four synthetic samples, not a real model-quality measure
 
 ### Ray and Karpenter
 
-Use the audited Ray2.58/KubeRay1.7 paths in the [Ray guide](ray/README.md). GCS means Global Control Service; scheduling interacts with raylets. The head may run work if it advertises CPU. Avoid unverified Ray/Python combinations across CPU/GPU/Neuron workers; Neuron images also need Ray and compatible frameworks.
+Use the audited Ray 2.58/KubeRay 1.7 paths in the [Ray guide](ray/README.md). GCS means Global Control Service; scheduling interacts with raylets. The head may run work if it advertises CPU. Avoid unverified Ray/Python combinations across CPU/GPU/Neuron workers; Neuron images also need Ray and compatible frameworks.
 
-Ray autoscaling expresses worker-Pod demand, the Kubernetes scheduler places Pods, and Karpenter supplies supported node capacity. Ray workers do not directly invoke Karpenter APIs. Match memory/GPU product labels to real nodes; do not select40GB p4d A100s with an80GB label.
+Ray autoscaling expresses worker-Pod demand, the Kubernetes scheduler places Pods, and Karpenter supplies supported node capacity. Ray workers do not directly invoke Karpenter APIs. Match memory/GPU product labels to real nodes; do not select 40GB p4d A100s with an 80GB label.
 
-Do not duplicate drivers on AL2023 NVIDIA AMIs or overwrite the entire containerd configuration. Karpenter limits are not absolute admission/cost caps, and consolidation does not directly use a DCGM20% utilization threshold. Inspect requests, scheduling feasibility, prices and disruption constraints.
+Do not duplicate drivers on AL2023 NVIDIA AMIs or overwrite the entire containerd configuration. Karpenter limits are not absolute admission/cost caps, and consolidation does not directly use a DCGM 20% utilization threshold. Inspect requests, scheduling feasibility, prices and disruption constraints.
 
 ## DRA APIs and Support Boundaries
 
@@ -307,7 +307,7 @@ DRA represents device attributes, requests and allocation through DeviceClass, R
 
 ### Current Claim Example
 
-The inspected Kubernetes1.36.2 resource.k8s.io/v1 schema uses requests.exactly. NVIDIA driver0.5 prerequisites distinguish GPU allocation(1.34.2+) from ComputeDomains(1.32+). Verify APIs and patch/platform versions actually served by EKS. “All DRA features on1.31+” is inaccurate.
+The inspected Kubernetes 1.36.2 resource.k8s.io/v1 schema uses requests.exactly. NVIDIA driver 0.5 prerequisites distinguish GPU allocation (1.34.2+) from ComputeDomains (1.32+). Verify APIs and patch/platform versions actually served by EKS. “All DRA features on 1.31+” is inaccurate.
 
 This **schema example** defines one GPU claim and an inventory-command Pod. Prepare the ml-workloads namespace, gpu.nvidia.com DeviceClass, driver/CDI, nodes and permissions separately. No GPU execution was performed in this audit.
 
@@ -358,17 +358,17 @@ spec:
     effect: NoSchedule
 ```
 
-CEL must use the actual published typed attributes/domain structure. The former device.topology.node==device.topology.node neither expresses same-node placement nor matches the API. matchAttribute needs an actual qualified attribute. A normal single-Pod GPU claim does not automatically allocate72GPUs across an NVL72 rack.
+CEL must use the actual published typed attributes/domain structure. The former device.topology.node==device.topology.node neither expresses same-node placement nor matches the API. matchAttribute needs an actual qualified attribute. A normal single-Pod GPU claim does not automatically allocate 72 GPUs across an NVL72 rack.
 
 ### NVIDIA0.5 and GPU Operator26.7
 
-The0.5 README still describes GPU allocation as experimental/default-disabled, conflicting with installation/chart and Operator26.7 documentation. The actual standalone chart defaults resources.gpus.enabled=true but **rejects rendering** without explicit opt-in to avoid device-plugin collisions. Do not describe default installation as silently disabling GPUs and succeeding.
+The 0.5 README still describes GPU allocation as experimental/default-disabled, conflicting with installation/chart and Operator 26.7 documentation. The actual standalone chart defaults resources.gpus.enabled=true but **rejects rendering** without explicit opt-in to avoid device-plugin collisions. Do not describe default installation as silently disabling GPUs and succeeding.
 
-The Operator26.7 managed path uses the GPUCluster singleton named gpu-cluster, mutually exclusive with ClusterPolicy. Its preinstalled-driver path sets clusterPolicy.deployCR=false, gpuCluster.deployCR=true and driver.enabled=false. GPUCluster does not replace all driver/toolkit preparation; supply driver/CDI prerequisites. Do not install a duplicate standalone DRA release. Local rendering simulated a served DeviceClass API; it did not enable a real cluster feature.
+The Operator 26.7 managed path uses the GPUCluster singleton named gpu-cluster, mutually exclusive with ClusterPolicy. Its preinstalled-driver path sets clusterPolicy.deployCR=false, gpuCluster.deployCR=true and driver.enabled=false. GPUCluster does not replace all driver/toolkit preparation; supply driver/CDI prerequisites. Do not install a duplicate standalone DRA release. Local rendering simulated a served DeviceClass API; it did not enable a real cluster feature.
 
-Distinguish full-GPU/existing-MIG and ComputeDomain support from alpha DynamicMIG, MPS and TimeSlicingSettings. The inspected0.5 feature-gate code declares those three false/Alpha. Some documentation GA labels also differ from source Beta labels; record the exact release's support matrix, code and configuration together. GPU Operator25.3 alone does not establish support for everything.
+Distinguish full-GPU/existing-MIG and ComputeDomain support from alpha DynamicMIG, MPS and TimeSlicingSettings. The inspected 0.5 feature-gate code declares those three false/Alpha. Some documentation GA labels also differ from source Beta labels; record the exact release's support matrix, code and configuration together. GPU Operator 25.3 alone does not establish support for everything.
 
-Device plugins also support existing MIG, time-slicing and experimental MPS paths; GPU sharing is not exclusive to DRA.3g.20gb names one instance profile, not three20GB instances. MIG/exclusive allocation does not automatically isolate host, driver, privileges or every side channel; MPS/time-slicing are not security boundaries.
+Device plugins also support existing MIG, time-slicing and experimental MPS paths; GPU sharing is not exclusive to DRA.3g.20gb names one instance profile, not three 20GB instances. MIG/exclusive allocation does not automatically isolate host, driver, privileges or every side channel; MPS/time-slicing are not security boundaries.
 
 ### Multi-Node NVLink and ComputeDomains
 
@@ -380,25 +380,25 @@ Use current Kagent/LangGraph/Langfuse/Milvus APIs in the [Agentic AI guide](03-a
 
 MCP defines protocol operations such as tool listing/calling; it is not a standard Kubernetes auto-discovery controller or a gateway distribution. The former ghcr.io/anthropics/mcp-gateway:latest image and mcp.anthropic.com/tool label/config were unverified implementations and were removed. Select an actual server/gateway release and validate transport, authentication, authorization, timeouts and tool input schemas. A URL environment variable does not implement those operations.
 
-Requesting GPU resources for Milvus does not enable GPU indexing. Match embedding dimensions/model revisions, index parameters, deletion/update lifecycle and tenant filters. Do not use a Langfuse2.x Deployment as current4.x platform installation; check backend dependencies, file credentials, instrumentation APIs and sensitive-data retention.
+Requesting GPU resources for Milvus does not enable GPU indexing. Match embedding dimensions/model revisions, index parameters, deletion/update lifecycle and tenant filters. Do not use a Langfuse 2.x Deployment as a current 4.x platform installation; check backend dependencies, file credentials, instrumentation APIs and sensitive-data retention.
 
 ## Storage and Networking
 
 Verify EFS access-point IAM/UID/GID, directory permissions and same-namespace PVC consumption. The IAM mount option does not configure controller/mount-identity credentials by itself.
 
-Use supported FSx CSI parameters and capacity units. Do not copy invented s3ImportPath/s3ExportPath settings for PERSISTENT_2 or an invalid10Ti capacity. Distinguish existing/static and newly provisioned filesystems, DRA and backup compatibility in the [storage guide](01-ai-ml-workloads.md).
+Use supported FSx CSI parameters and capacity units. Do not copy invented s3ImportPath/s3ExportPath settings for PERSISTENT_2 or an invalid 10Ti capacity. Distinguish existing/static and newly provisioned filesystems, DRA and backup compatibility in the [storage guide](01-ai-ml-workloads.md).
 
-Mountpoint CSI2.8.0 supports **static PVs** for existing S3 buckets. The StorageClass/PVC-only dynamic-bucket example was removed. Mountpoint is not fully POSIX; check rename, random-write, locking and checkpoint behavior. The2.8 support table removes AL2/Ubuntu22.04 and directs installations to EKS add-ons or official charts rather than repository branches.
+Mountpoint CSI 2.8.0 supports **static PVs** for existing S3 buckets. The StorageClass/PVC-only dynamic-bucket example was removed. Mountpoint is not fully POSIX; check rename, random-write, locking and checkpoint behavior. The 2.8 support table removes AL2/Ubuntu 22.04 and directs installations to EKS add-ons or official charts rather than repository branches.
 
-Do not multiply interface counts by already aggregate instance bandwidth. The former p4d“4×400Gbps” and trn1n“16×1600Gbps” figures were incorrect. Use the [training networking guide](05-model-training.md) for same-AZ placement, real interfaces, driver/libfabric/NCCL, device/Pod allocation and security groups. RAID0 and efa-enabled tags do not enable EFA.
+Do not multiply interface counts by already aggregate instance bandwidth. The former p4d “4×400Gbps” and trn1n “16×1600Gbps” figures were incorrect. Use the [training networking guide](05-model-training.md) for same-AZ placement, real interfaces, driver/libfabric/NCCL, device/Pod allocation and security groups. RAID0 and efa-enabled tags do not enable EFA.
 
 Subnets are one part of isolation. Configure workload ingress/egress and EFA self-reference requirements through actual SG/IAM resources. Terraform-looking YAML stored in a ConfigMap does not apply network rules. Avoid default access from an entire VPC CIDR.
 
 ## GPU Observability and Alerts
 
-DCGM Exporter4.6.0-4.8.3 defines XID_ERRORS as the last error **code gauge**. increase(XID_ERRORS) is not an error count and can misread a31→13 code change as a reset. Observe the current code or separately enable the XID_ERRORS_TOTAL counter. Not every XID indicates hardware failure.
+DCGM Exporter 4.6.0-4.8.3 defines XID_ERRORS as the last error **code gauge**. increase(XID_ERRORS) is not an error count and can misread a 31→13 code change as a reset. Observe the current code or separately enable the XID_ERRORS_TOTAL counter. Not every XID indicates hardware failure.
 
-FB_USED/FB_FREE are MiB gauges; the ratio below ranges0–1. High reserved VRAM is not necessarily OOM: inspect allocation failures, workload behavior, model cache and available memory together. Fixed85C/20% thresholds are not universal failure/reclamation standards. Check actual metric types/units before applying rate() to PCIe throughput or NVLink bandwidth gauges.
+FB_USED/FB_FREE are MiB gauges; the ratio below ranges from 0 to 1. High reserved VRAM is not necessarily OOM: inspect allocation failures, workload behavior, model cache and available memory together. Fixed 85C/20% thresholds are not universal failure/reclamation standards. Check actual metric types/units before applying rate() to PCIe throughput or NVLink bandwidth gauges.
 
 These rules assume one cluster per Prometheus. For combined clusters, include cluster labels in aggregation/joins. Inspect actual node/UUID/MIG labels and kube-state-metrics resource-label normalization.
 
@@ -430,7 +430,7 @@ Configure actual Prometheus rule selection and correct Service/port scraping for
 
 ## Verification Scope
 
-All original guide/quiz prose and58unique code blocks were reviewed. Checks cover DRA/Pod schemas, official Helm, OAuthenticator allow policies, Argo offline lint/script bodies and Prometheus fixtures. No actual OAuth/cluster/GPU/DRA allocation, model, S3 mount or MCP server was executed; no cloud resources or paid calls were created.
+All original guide/quiz prose and 58 unique code blocks were reviewed. Checks cover DRA/Pod schemas, official Helm, OAuthenticator allow policies, Argo offline lint/script bodies and Prometheus fixtures. No actual OAuth/cluster/GPU/DRA allocation, model, S3 mount or MCP server was executed; no cloud resources or paid calls were created.
 
 ## References
 

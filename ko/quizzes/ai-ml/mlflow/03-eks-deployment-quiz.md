@@ -44,7 +44,7 @@ SQLite 자체 기능과 여러 Pod의 저장소 배치를 구분합니다.
 Upstream CLI의 새 SQLite 파일 기본값과 chart의 override는 다릅니다.
 </details>
 
-4. Tracking DB를 외부 PostgreSQL로 바꾸면 무엇도 자동 공유되나요?
+4. Tracking DB를 외부 PostgreSQL로 바꾸면 다른 항목도 자동으로 공유되나요?
    - A) 모든 auth DB와 cache
    - B) 모든 worker의 메모리
    - C) 모든 session secret

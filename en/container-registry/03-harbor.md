@@ -169,7 +169,7 @@ Notary v1 was removed in Harbor 2.9. Cosign and Notation are external signing to
 
 ## Projects and RBAC
 
-API examples assume a reachable test Harbor over HTTPS, `curl` and `jq`. Set `HARBOR_USER` to a user with the required permissions. `curl --user "$HARBOR_USER"` prompts for the password. For automation, supply scoped robot credentials through your secret manager without logging them.
+API examples assume a reachable test Harbor instance over HTTPS, `curl` and `jq`. Set `HARBOR_USER` to a user with the required permissions. `curl --user "$HARBOR_USER"` prompts for the password. For automation, supply scoped robot credentials through your secret manager without logging them.
 
 ```bash
 export HARBOR_USER=admin
@@ -523,7 +523,7 @@ Select the Cosign or Notation policy in project Configuration. Enabling both req
 
 ### Kubernetes Policy Enforcement
 
-For deployment enforcement, configure an admission policy such as Kyverno as described in [Image Security](../security/07-image-security.md). Supply valid keys or trusted OIDC issuer/identity, exact image scope and private registry credentials; cover init/ephemeral containers. Validate in Audit before Enforce, including wrong-key, unsigned-image and tag-reassignment failures.
+For deployment enforcement, configure an admission policy such as Kyverno as described in [Image Security](../security/07-image-security.md). Supply valid keys or a trusted OIDC issuer/identity, exact image scope and private registry credentials; cover init/ephemeral containers. Validate in Audit before Enforce, including wrong-key, unsigned-image and tag-reassignment failures.
 
 ## Air-Gap Scenarios
 

@@ -32,7 +32,7 @@ A persistent volume is a piece of cluster storage that is provisioned by an admi
 
 A persistent volume claim is a user's request for storage. A PVC requests storage with a specific size and access mode, and this request is bound to an appropriate PV.
 
-A PVC is namespaced and normally binds one PV; multiple Pods in that namespace may use the claim if the access mode and backend permit. Binding does not itself grant application-level file permissions or guarantee available capacity/performance.
+A PVC is namespaced and normally binds to one PV; multiple Pods in that namespace may use the claim if the access mode and backend permit. Binding does not itself grant application-level file permissions or guarantee available capacity/performance.
 
 ### StorageClass
 
@@ -369,7 +369,7 @@ On supported Linux EC2 compute, use the earlier add-on workflow with `CSI_ADDON_
 
 ### September 2026 Update: EFS CSI Driver Mount Option Injection (CVE-2026-6437)
 
-On September 25, 2026, AWS published a security bulletin for [CVE-2026-6437](https://aws.amazon.com/security/security-bulletins/2026-016-aws/), a mount option injection in the EFS CSI driver. An actor with PersistentVolume creation privileges can inject arbitrary mount options through two unsanitized fields (the access point ID in `volumeHandle` and the `mounttargetip` volumeAttribute) because appending comma-separated values makes the mount utility parse them as separate mount options. EFS CSI driver **v3.0.0 and earlier** are affected; the issue is fixed in **v3.0.1**. Update the driver (including the EKS managed add-on) to v3.0.1 or later, and restrict PersistentVolume and StorageClass creation to cluster administrators using Kubernetes RBAC so untrusted users cannot supply arbitrary field values.
+On September 25, 2026, AWS published a security bulletin for [CVE-2026-6437](https://aws.amazon.com/security/security-bulletins/2026-016-aws/), a mount option injection in the EFS CSI driver. An actor with PersistentVolume creation privileges can inject arbitrary mount options through two unsanitized fields (the access point ID in `volumeHandle` and the `mounttargetip` volumeAttribute) because appending comma-separated values makes the mount utility parse them as separate mount options. EFS CSI driver versions **v3.0.0 and earlier** are affected; the issue is fixed in **v3.0.1**. Update the driver (including the EKS managed add-on) to v3.0.1 or later, and restrict PersistentVolume and StorageClass creation to cluster administrators using Kubernetes RBAC so untrusted users cannot supply arbitrary field values.
 
 ### Creating EFS File System
 
@@ -617,7 +617,7 @@ Using Kubernetes storage classes allows persistent volumes to be dynamically pro
 
 The `volumeBindingMode` field in a storage class determines how PVs are bound when PVCs are created:
 
-* **Immediate**: Provisions and binds PV immediately when PVC is created.
+* **Immediate**: Provisions and binds a PV immediately when a PVC is created.
 * **WaitForFirstConsumer**: Delays PV provisioning until a pod tries to use the PVC.
 
 For ordinary AZ-scoped EBS volumes, prefer `WaitForFirstConsumer` so scheduler constraints participate in provisioning/binding. EBS is network-attached block storage, not physical instance-store media; the driver’s separate pre-attached node-local cache mode is a different feature. Do not set `spec.nodeName` to bypass the scheduler for a pending delayed-binding PVC; use scheduler constraints such as nodeSelector instead.
@@ -708,7 +708,7 @@ parameters:
 The reclaim policy of a persistent volume determines how the PV and its data are handled when the PVC is deleted:
 
 * **Delete**: After claim release/protection, the provisioner attempts backend cleanup according to the driver. For EBS this deletes the volume; EFS dynamic provisioning usually deletes the access point, not the filesystem or files by default. The EFS controller’s `deleteAccessPointRootDir` setting changes that behavior.
-* **Retain**: When PVC is deleted, the PV and data are retained. Administrator must manually clean up.
+* **Retain**: When the PVC is deleted, the PV and data are retained. An administrator must manually clean up.
 * **Recycle**: Deprecated policy, use dynamic provisioning and storage classes instead.
 
 The StorageClass field is **`reclaimPolicy`**; **`persistentVolumeReclaimPolicy`** belongs to a PV’s spec. A class sets the initial policy for newly provisioned PVs; changing it does not automatically rewrite existing PV policies. Review each actual PV and backup before deleting claims:

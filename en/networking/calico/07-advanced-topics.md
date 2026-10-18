@@ -5,7 +5,7 @@
 
 ## Overview
 
-This chapter covers advanced Calico topics for production environments, including IPAM deep dive, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows container support, and large-scale cluster design patterns.
+This chapter covers advanced Calico topics for production environments, including an IPAM deep dive, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows container support, and large-scale cluster design patterns.
 
 ## IPAM Deep Dive
 
@@ -27,7 +27,7 @@ With normal automatic allocation, Calico can use an existing affine block, claim
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-1.html)
 
-> The simplified flow assumes eligible pools, automatic block allocation, permitted borrowing and no limiting cap. Windows does not support borrowing; do not use the figure as an unconditional guarantee that only total address exhaustion can fail.
+> The simplified flow assumes eligible pools, automatic block allocation, permitted borrowing and no limiting cap. Windows does not support borrowing; do not use the figure as an unconditional guarantee that only total address exhaustion can cause allocation to fail.
 
 Use `IPAMConfiguration/default` to inspect global settings. The reference web page lists a default block cap of 20, but the released **3.32.2 implementation and public CRD initialize `maxBlocksPerHost` to 0** when no configuration exists. Zero means no global block cap; per-request/platform limits still apply, and existing clusters retain their configured value. A positive global cap must be paired with `strictAffinity: true` in the reviewed IPAM configuration path.
 
@@ -422,7 +422,7 @@ spec:
       port: 8080
 ```
 
-Backing Services must be in the same namespace name across the selected clusters and expose matching port **names and protocols**. The federated Service omits `spec.selector`; its `targetPort` is not the backing-port selector. Do not manually manage its endpoint records.
+Backing Services must be in namespaces with the same name across the selected clusters and expose matching port **names and protocols**. The federated Service omits `spec.selector`; its `targetPort` is not the backing-port selector. Do not manually manage its endpoint records.
 
 Remote API credentials, controller installation, Kubernetes-version/EndpointSlice compatibility and network reachability are separate prerequisites. This example does not establish them or prove cross-cluster failover. Follow the product's current federation procedure and test the real paths; do not copy the guide's historical 2018 Endpoints output as a current deployment manifest.
 
@@ -597,7 +597,7 @@ Follow the maintained [BGP transition procedure](04-bgp-deep-dive.md): prepare s
 
 ### Datastore Choice
 
-Kubernetes datastore avoids operating a separate Calico etcd service and is required by the current eBPF dataplane. Direct etcd can be appropriate for supported non-Kubernetes or separately designed installations, but “over 5,000 nodes requires etcd” and “etcd is always faster” are not supported conclusions.
+The Kubernetes datastore avoids operating a separate Calico etcd service and is required by the current eBPF dataplane. Direct etcd can be appropriate for supported non-Kubernetes or separately designed installations, but “over 5,000 nodes requires etcd” and “etcd is always faster” are not supported conclusions.
 
 A ConfigMap named `etcd-config` does not tune an etcd process unless the deployment consumes it. It also cannot tune the managed control-plane datastore of a cloud service. Direct etcd requires its own topology, TLS/authentication, backup, recovery and capacity plan.
 

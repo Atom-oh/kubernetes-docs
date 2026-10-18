@@ -8,7 +8,7 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 
 ### 릴리스 이력
 
-아래 날짜는 GitHub 공개 시각의 UTC 날짜로 해당 릴리스 기록이며 현재 설치 버전 지정이 아닙니다. 릴리스 라인마다 백포트 내용이 다릅니다.
+아래 날짜는 GitHub 공개 시각의 UTC 날짜이며, 해당 릴리스 기록은 현재 설치 버전 지정이 아닙니다. 릴리스 라인마다 백포트 내용이 다릅니다.
 
 | 날짜 | 릴리스 | 확인한 주요 내용 |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 
 2026년 9월 14일 CNCF 블로그에 [Cilium 1.20 기능 정리 글](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/)(Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM 등)이 게시되었습니다. 내용은 아래 1.20.0 발표 요약과 같은 범위입니다.
 
-1.20.0 발표는 **2,660개 이상의 새 커밋**과 **1,100명 이상 기여자의 커뮤니티**를 소개합니다. 후자는 해당 릴리스 작성자 수가 아닌 커뮤니티 규모입니다. 주요 변경은 다음과 같습니다.
+1.20.0 발표는 **2,660개 이상의 새 커밋**과 **1,100명 이상의 기여자로 구성된 커뮤니티**를 소개합니다. 후자는 해당 릴리스 작성자 수가 아닌 커뮤니티 규모입니다. 주요 변경은 다음과 같습니다.
 
 - Gateway API **1.6.1**, TCPRoute/UDPRoute, BackendTLSPolicy, ListenerSets, ExternalAuth, CORS 지원이며 각각의 설정과 API 성숙도를 확인해야 합니다.
 - Datapath plugin과 명시적으로 선택하는 `bpf.datapathMode=auto`, 발표된 기본값은 여전히 veth입니다. Dual-stack 클러스터에는 IPv6 egress gateway 주소를 지정할 수 있습니다.
@@ -36,7 +36,7 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 - 트래픽 분배 힌트, 가중치 Maglev backend, stable MCS 통합, Kubernetes ClusterNetworkPolicy, **beta** ztunnel 워크로드 identity 지원입니다.
 - 발표된 `cilium-cni` 바이너리 크기 감소는 약 **77MB→16MB**입니다. ADS/Delta xDS 개선은 1.20 발표 내용이며 1.18.13 패치 내용으로 귀속하면 안 됩니다. 이 감사에서 다시 측정한 결과가 아닌 업스트림 릴리스의 설명입니다.
 
-Mutual Authentication(**1.20에서 deprecated**, 1.21 pre-release에서 제거), Envoy Go 확장, Kafka 인지 정책, 이전 CiliumNodeConfig API, libnetwork, 사용자 정의 CNI 설정의 제거/변경은 [1.20 업그레이드 안내](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)를 확인하세요.
+Mutual Authentication(**1.20에서 deprecated**, 1.21 pre-release에서 제거), Envoy Go 확장, Kafka 인지 정책, 이전 CiliumNodeConfig API, libnetwork, 사용자 정의 CNI 설정의 제거/변경에 대해서는 [1.20 업그레이드 안내](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)를 확인하세요.
 
 ### NetworkPolicy 보안 권고
 
@@ -65,7 +65,7 @@ Cilium은 L3/L4 정책, Envoy/DNS proxy 통합의 L7 정책, 선택적 WireGuard
 
 ## 아키텍처
 
-**Kubernetes API 서버**가 Kubernetes/Cilium 리소스를 저장합니다. Cilium Agent는 관련 상태를 감시해 노드 데이터플레인을 설정하고 Operator는 선택한 IPAM, identity/controller 작업 등 클러스터 수준 책임을 담당합니다. 기본 구조에 별도의 필수 클러스터 전체 “Cilium API Server” Deployment는 없습니다. Agent 로컬 API와 선택적 ClusterMesh API server는 서로 다른 목적입니다.
+**Kubernetes API 서버**가 Kubernetes/Cilium 리소스를 저장합니다. Cilium Agent는 관련 상태를 감시해 노드 데이터플레인을 설정하고 Operator는 선택한 IPAM, identity/controller 작업 등 클러스터 수준 책임을 담당합니다. 기본 구조에 별도의 필수 클러스터 전체 “Cilium API Server” Deployment는 없습니다. Agent 로컬 API와 선택적 ClusterMesh API server는 목적이 서로 다릅니다.
 
 | 컴포넌트 | 역할 |
 | --- | --- |
@@ -230,7 +230,7 @@ cilium status --wait
 
 ## 네트워크 정책
 
-Kubernetes `networking.k8s.io/v1` NetworkPolicy와 Cilium `cilium.io/v2` 정책은 별도 API입니다. 여러 allow 정책이 합쳐질 수 있습니다. 다음은 L4 허용이 L7 제한을 우회하지 않도록 **각기 다른 준비된 테스트 네임스페이스**를 사용합니다. 실제 endpoint를 선택하는 모든 정책을 검토하세요.
+Kubernetes `networking.k8s.io/v1` NetworkPolicy와 Cilium `cilium.io/v2` 정책은 별도 API입니다. 여러 allow 정책이 합쳐질 수 있습니다. 다음 예제는 L4 허용이 L7 제한을 우회하지 않도록 **각기 다른 준비된 테스트 네임스페이스**를 사용합니다. 실제 endpoint를 선택하는 모든 정책을 검토하세요.
 
 ### L4 예제
 

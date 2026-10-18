@@ -57,7 +57,7 @@ GenAI-Perf 0.0.16의 CLI에는 profile subcommand와 synthetic-input-tokens-mean
 genai-perf profile   --endpoint-type chat   --service-kind openai   --url http://127.0.0.1:8000   --model approved-model-alias   --concurrency 2   --synthetic-input-tokens-mean 128   --output-tokens-mean 64   --num-prompts 20   --profile-export-file profile_export.json
 ```
 
-analyze는 단순히 JSON 파일을 읽는 후처리 명령으로 간주하지 마세요. sweep 조건에 따라 추가 profiling을 수행할 수 있습니다. raw 요청·응답/실패 수·tokenizer·warm-up·동시성·model/backend revision을 함께 보관하고, GPU 활용률에는 실제 metrics 수집이 필요합니다.
+analyze를 단순히 JSON 파일을 읽는 후처리 명령으로 간주하지 마세요. sweep 조건에 따라 추가 profiling을 수행할 수 있습니다. raw 요청·응답/실패 수·tokenizer·warm-up·동시성·model/backend revision을 함께 보관하고, GPU 활용률에는 실제 metrics 수집이 필요합니다.
 
 ## NVIDIA Dynamo
 
@@ -152,7 +152,7 @@ spec:
   replicas: 1
 ```
 
-PodAutoscaler 0.7.0 사용 예시는 다음과 같습니다. metricsSources와 HPA/KPA/APA 전략을 사용하며 임의 autoscaler ConfigMap만 생성해서 작동하지 않습니다. CPU 예제는 metrics-server와 workload의 CPU requests, controller가 필요하며 GPU queue 기반 scaling을 검증한 결과가 아닙니다. 동일 target에 경쟁하는 scaler를 두지 마세요.
+PodAutoscaler 0.7.0 사용 예시는 다음과 같습니다. metricsSources와 HPA/KPA/APA 전략을 사용하며 임의 autoscaler ConfigMap만 생성해서는 작동하지 않습니다. CPU 예제는 metrics-server와 workload의 CPU requests, controller가 필요하며 GPU queue 기반 scaling을 검증한 결과가 아닙니다. 동일 target에 경쟁하는 scaler를 두지 마세요.
 
 ```yaml
 apiVersion: autoscaling.aibrix.ai/v1alpha1
@@ -286,7 +286,7 @@ Neuron compilation은 지원 모델 구현, shape/batch/sequence bucket, TP, com
 
 출처 없는 A100 비교표와 고정40–70% 절감률은 제거했습니다. 동일 모델·revision·정밀도·입출력 token 분포·동시성·성공률·SLO·warm-up·가격 시점으로 직접 비교해야 합니다. 월100만 요청/일을30일로 계산하면3천만 요청이므로, 가상의 월48,000달러는1천 요청당1.60달러입니다. 예전 표의0.80달러는 산술적으로 맞지 않으며 이 예시는 현재 AWS 가격이 아닙니다.
 
-엔진 변경은 실제 payload/template/streaming/usage와 실패 동작을 회귀 검사합니다. sharded model group과 독립 replica를 구분하고, StatefulSet의 순차 readiness가 서로 기다리는 worker를 막지 않는지도 확인합니다. StatefulSet 자체가 TP/PP·rendezvous·NCCL을 구성하지 않습니다.
+엔진 변경 시에는 실제 payload/template/streaming/usage와 실패 동작을 회귀 검사합니다. sharded model group과 독립 replica를 구분하고, StatefulSet의 순차 readiness가 서로 기다리는 worker를 막지 않는지도 확인합니다. StatefulSet 자체가 TP/PP·rendezvous·NCCL을 구성하지 않습니다.
 
 스토리지는 모델 크기·재시작 횟수·동시 다운로드·권한·비용에 따라 local cache, EBS, EFS, FSx 등을 비교합니다. EFS가 항상 FSx보다 느리다거나 gp3의 과거 제한이 현재 한계라고 고정하지 않습니다. [GPU/storage 예제](01-ai-ml-workloads.md)를 참조하세요.
 

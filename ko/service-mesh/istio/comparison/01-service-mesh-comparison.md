@@ -43,7 +43,7 @@ Kubernetes와 문서화된 VM 통합을 지원하며 network/trust 전제조건�
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.html)
 
-Linkerd는 전용 Rust proxy와 Kubernetes resource, annotation, CRD를 사용합니다. 현재 Gateway API request routing, timeout/retry, per-route authorization과 local rate limiting을 제공합니다. Annotation만 사용하거나 “기본 기능만 있는 mesh”라는 설명은 부정확합니다.
+Linkerd는 전용 Rust proxy와 Kubernetes resource, annotation, CRD를 사용합니다. 현재 Gateway API request routing, timeout/retry, per-route authorization과 local rate limiting을 제공합니다. Annotation만 사용한다거나 “기본 기능만 있는 mesh”라는 설명은 부정확합니다.
 
 Non-Kubernetes mesh expansion은 ExternalWorkload, 외부 머신의 proxy, 호환 SPIFFE/SPIRE identity, DNS·network 접근을 사용하도록 문서화되어 있습니다. “VM 미지원”이 아니며 외부 IP를 등록하기만 하면 proxy가 설치·인증되는 것도 아닙니다.
 
@@ -391,7 +391,7 @@ spec:
 
 Sidecar 예제로 실제 productpage ServiceAccount identity와 reviews workload가 필요합니다. Auto mTLS가 적절한 outbound transport를 선택할 수 있으므로 광범위한 `*.local` ISTIO_MUTUAL DestinationRule은 필요하지 않으며 무관한 plaintext destination을 깨뜨릴 수 있습니다. STRICT는 inbound 강제이고 ALLOW는 표시한 identity/method/path를 제어합니다.
 
-AuthorizationPolicy의 문자열은 exact, prefix, suffix, presence matching입니다. `*Mobile*`는 일반 substring regex가 아니며 User-Agent도 workload identity가 아닙니다. Ambient L7에서는 sidecar selector를 그대로 복사하지 말고 지원되는 waypoint 정책 연결 방식을 사용해야 합니다.
+AuthorizationPolicy의 문자열에는 exact, prefix, suffix, presence matching이 적용됩니다. `*Mobile*`는 일반 substring regex가 아니며 User-Agent도 workload identity가 아닙니다. Ambient L7에서는 sidecar selector를 그대로 복사하지 말고 지원되는 waypoint 정책 연결 방식을 사용해야 합니다.
 
 ### Linkerd: 명시적 Inbound 정책
 
@@ -441,7 +441,7 @@ spec:
     name: productpage
 ```
 
-Server는 실제 선언된 Pod port를 선택하고 여기서는 기본 deny를 사용합니다. Inbound HTTPRoute는 `/reviews/` 아래 GET을 선택하며 AuthorizationPolicy는 productpage ServiceAccount를 요구합니다. Target API group을 명시합니다. Group 생략은 core group이며 Linkerd Server를 자동 추론하지 않습니다. 누락되거나 잘못된 참조는 인가를 만들지 않습니다.
+Server는 실제 선언된 Pod port를 선택하고 여기서는 기본 deny를 사용합니다. Inbound HTTPRoute는 `/reviews/` 아래 GET을 선택하며 AuthorizationPolicy는 productpage ServiceAccount를 요구합니다. Target API group을 명시합니다. Group 생략은 core group을 의미하며 Linkerd Server를 자동 추론하지 않습니다. 누락되거나 잘못된 참조는 인가를 만들지 않습니다.
 
 검증한 edge CRD는 Server v1beta3와 v1beta1 등 구버전을 serve합니다. 구 API가 제거되었다는 뜻은 아닙니다. 선택한 artifact가 지원하는 API를 사용하세요. Namespace/Pod의 기본 all-unauthenticated 정책은 meshed peer 사이의 자동 암호화나 이 명시적 Server 정책과 별개입니다.
 
@@ -646,7 +646,7 @@ kubectl get meshhttproutes,meshtrafficpermissions -n mesh-demo
 kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 ```
 
-제품별 명령은 의도한 설치 환경에서만 사용합니다. 모든 Consul sidecar의 이름을 과거 container 이름으로 가정하지 말고 실제 component와 log를 확인하세요. Tap/debug log에는 요청 정보가 포함될 수 있으므로 범위를 정하고 일시적 진단 설정은 복구합니다. 모든 조직에 8시간 또는 5분 설치를 주장하지 말고 실제 절차에 드는 팀의 노력을 측정하세요.
+제품별 명령은 의도한 설치 환경에서만 사용합니다. 모든 Consul sidecar의 이름을 과거 container 이름으로 가정하지 말고 실제 component와 log를 확인하세요. Tap/debug log에는 요청 정보가 포함될 수 있으므로 범위를 정하고 일시적 진단 설정은 복구합니다. 모든 조직에서 설치에 8시간 또는 5분이 걸린다고 주장하지 말고 실제 절차에 드는 팀의 노력을 측정하세요.
 
 
 ## 비용과 라이선스

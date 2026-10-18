@@ -152,7 +152,7 @@ Secret에는 크기 제한이 있고 base64는 인코딩입니다. 큰 모델은
 
 **정답: C. 서비스 오류·지연·처리량, 자원 사용량, 정답 기반 모델 품질을 별도로 관측한다**
 
-ServiceMonitor는 Service label과 named port를 선택합니다. latency histogram은 성공·실패를 포함할 범위를 정하고 오류 counter를 중복 집계하지 않아야 합니다. 정확도에는 정답 데이터가 필요합니다. CRI framing과 앱 JSON, Grafana datasource·패널 스키마, 알림의 label별 집계와 무트래픽 처리를 검증하세요.
+ServiceMonitor는 Service label과 named port를 선택합니다. latency histogram에서 성공·실패를 포함할 범위를 정하고 오류 counter를 중복 집계하지 않아야 합니다. 정확도에는 정답 데이터가 필요합니다. CRI framing과 앱 JSON, Grafana datasource·패널 스키마, 알림의 label별 집계와 무트래픽 처리를 검증하세요.
 
 [메트릭과 로그](../../ai-ml/01-ai-ml-workloads.md#prometheus-and-grafana)
 </details>

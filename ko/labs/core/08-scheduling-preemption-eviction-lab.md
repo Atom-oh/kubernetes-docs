@@ -251,7 +251,7 @@ EOF
 kubectl apply -f "$SCHED_LAB_DIR/most-allocated-scheduler.yaml"
 kubectl -n kube-system rollout status deployment/most-allocated-scheduler --timeout=120s
 ```
-`image: registry.k8s.io/kube-scheduler:v1.37.0`은 실습 클러스터의 실제 마이너 버전에 맞춰야 합니다(`kubectl version`으로 확인). 스케줄러 바이너리가 API 서버와 마이너 버전이 1 이상 차이 나면 시작에 실패하거나 예측할 수 없게 동작할 수 있습니다.
+`image: registry.k8s.io/kube-scheduler:v1.37.0`은 실습 클러스터의 실제 마이너 버전에 맞춰야 합니다(`kubectl version`으로 확인). 스케줄러 바이너리와 API 서버의 마이너 버전이 1 이상 차이 나면 시작에 실패하거나 예측할 수 없게 동작할 수 있습니다.
 
 **Step 3.3: 동일한 포드 6개를 이번에는 `schedulerName`으로 배치**
 ```bash
@@ -309,7 +309,7 @@ unset SCHED_LAB_DIR SCHED_LAB_KIND SCHED_LAB_WORKERS
 - [NodeResourcesFit scoring strategies](https://kubernetes.io/docs/reference/config-api/kube-scheduler-config.v1/)
 - [Configure Multiple Schedulers](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/)
 
-이 실습은 클러스터 생성, 필러 포드 배치, 두 스케줄러 패스, 정리까지 전 과정을 격리된 폐기 가능한 `kind` 클러스터에서 실제로 실행했습니다. 공유 클러스터나 클라우드 리소스는 전혀 사용하지 않았습니다. 위 참조 결과 표는 가상의 예측이 아니라 그 실행에서 실제로 관찰된 출력을 기록한 것입니다.
+이 실습에서는 클러스터 생성, 필러 포드 배치, 두 스케줄러 패스, 정리까지 전 과정을 격리된 폐기 가능한 `kind` 클러스터에서 실제로 실행했습니다. 공유 클러스터나 클라우드 리소스는 전혀 사용하지 않았습니다. 위 참조 결과 표는 가상의 예측이 아니라 그 실행에서 실제로 관찰된 출력을 기록한 것입니다.
 
 ## 다음 단계
 - [스케줄링, 선점 및 축출 퀴즈](../../quizzes/core/08-scheduling-preemption-eviction-quiz.md)

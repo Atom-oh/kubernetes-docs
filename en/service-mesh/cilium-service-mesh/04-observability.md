@@ -78,7 +78,7 @@ This overlay selects `cronJob` certificate renewal. The selected chart's default
 
 ### Hubble CLI Installation
 
-This Unix example pins the release, selects Linux/macOS and amd64/arm64, and stops on a failed download or checksum:
+This Unix example pins the release, selects Linux/macOS and amd64/arm64, and stops on a failed download or checksum verification:
 
 ```bash
 set -eu

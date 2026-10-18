@@ -44,7 +44,7 @@ Before installing, compare the [supported distributions](https://docs.dynatrace.
 
 | Target | Scope at review time |
 |---|---|
-| EKS 1.35 on supported Linux EC2 nodes | The matrix requires OneAgent/ActiveGate **1.329+** and Operator **1.6+**, recommends Operator **1.9+**. This guide pins 1.10.2. |
+| EKS 1.35 on supported Linux EC2 nodes | The matrix requires OneAgent/ActiveGate **1.329+** and Operator **1.6+**, and recommends Operator **1.9+**. This guide pins 1.10.2. |
 | Kubernetes 1.36 | OneAgent/ActiveGate minimum is **1.335**; check the platform and version combination separately. |
 | Kubernetes 1.37 | OneAgent/ActiveGate minimum is **1.335**; outside this guide's validated scope, so check the platform and version combination separately. |
 | EKS Fargate | Application monitoring **without CSI**, using the [Fargate-specific EKS workflow](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/marketplaces/eks-dto); no host OneAgent. |

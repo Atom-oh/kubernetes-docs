@@ -176,7 +176,7 @@ istio-agent가 CSR을 만들고 istio-csr가 cert-manager 발급 경로에 연�
 
 **정답: C) ACM exportable 인증서는 명시적 내보내기로 사용 가능하며 ACM ACME는 별도 lifecycle·제약이 있음**
 
-ACK ACM export는 options.export:ENABLED, exportTo, 출력 Secret과 별도 도메인 검증이 필요합니다. ACM ACME는 사전 검증 도메인·EAB 등록과 client의 키·갱신 관리가 필요하며 45일 인증서를 직접 ALB/CloudFront/API Gateway 통합에 연결하지 못합니다. cert-manager는 Kubernetes Secret과 여러 Issuer를 조정하지만 controller와 CA 신뢰·비용을 운영해야 합니다.
+ACK ACM export는 options.export:ENABLED, exportTo, 출력 Secret과 별도 도메인 검증이 필요합니다. ACM ACME는 사전 검증 도메인·EAB 등록과 client의 키·갱신 관리가 필요하며 45일 인증서를 직접 ALB/CloudFront/API Gateway 통합에 연결하지 못합니다. cert-manager는 Kubernetes Secret과 여러 Issuer를 조정하지만 controller를 운영하고 CA 신뢰·비용을 관리해야 합니다.
 
 </details>
 

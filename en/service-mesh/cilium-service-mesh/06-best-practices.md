@@ -716,7 +716,7 @@ helm template cilium cilium/cilium -n kube-system \
 
 Review the generated resources and the official preflight procedure before the next step. `helm diff` is an optional separately installed plugin, not built-in Helm. Avoid `--reuse-values` for a version change; it can hide newly introduced chart defaults.
 
-Only after confirming a supported path and a maintenance/recovery plan, the same shell/session can perform the reviewed change:
+Only after confirming a supported path and a maintenance/recovery plan can the same shell/session perform the reviewed change:
 
 ```bash
 set -eu

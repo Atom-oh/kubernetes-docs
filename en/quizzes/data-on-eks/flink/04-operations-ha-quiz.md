@@ -117,7 +117,7 @@ Check collection paths, memory/recovery boundaries and managed-service support.
 <details>
 <summary>Show Answer</summary>
 
-**Answer:** No. Cache usage is bytes, and the reviewed reporter exports Flink Counters as Gauges.
+**Answer:** No. Cache usage is measured in bytes, and the reviewed reporter exports Flink Counters as Gauges.
 
 **Explanation:** Interpret cache capacity/hit/miss too. Histograms map to Summaries; inspect exported TYPE and labels.
 

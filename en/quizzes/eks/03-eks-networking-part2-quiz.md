@@ -327,7 +327,7 @@ The release IAM policy includes the EC2/ELB permissions needed for the whole con
 
 **Answer: `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true`**
 
-For TCP/TLS target groups the attribute is configurable: instance targets default to enabled, IP targets default to disabled. UDP/TCP_UDP/QUIC/TCP_QUIC target groups always preserve client IP and cannot disable it. This IPv4 IP-target TCP example changes the configurable case:
+For TCP/TLS target groups the attribute is configurable: instance targets default to enabled; IP targets default to disabled. UDP/TCP_UDP/QUIC/TCP_QUIC target groups always preserve client IP and cannot disable it. This IPv4 IP-target TCP example changes the configurable case:
 ```yaml
 apiVersion: v1
 kind: Service
@@ -416,7 +416,7 @@ An empty Web ACL with default Allow blocks nothing. For an isolated rule-develop
   }
 ]
 ```
-A security owner may create that training ACL with the following command; use its returned ARN when associating it. The binary-format flag makes the JSON SearchString literal bytes in AWS CLI v2.
+A security owner may create that training ACL with the following command; use its returned ARN when associating it. The binary-format flag makes AWS CLI v2 treat the JSON SearchString as literal bytes.
 ```bash
 set -euo pipefail
 : "${AWS_REGION:?Set the ALB Region}"

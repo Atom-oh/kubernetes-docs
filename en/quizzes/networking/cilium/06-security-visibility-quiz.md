@@ -231,7 +231,7 @@
 
    **Answer: C) No; header matching does not validate the token**
 
-   Use actual authentication/authorization logic. A valued headers string is literal matching, and a TLS port number does not decrypt the payload.
+   Use actual authentication/authorization logic. A valued headers string uses literal matching, and a TLS port number does not decrypt the payload.
 
    </details>
 

@@ -58,7 +58,7 @@ test "$(aws sts get-caller-identity --query Account --output text)" = "$EXPECTED
 
 ## 2. Network and two clusters {#clusters}
 
-The example reuses a reviewed VPC and two private subnets in different AZs. Prepare NAT/required VPC endpoints, DNS, address capacity and SG/NACL rules first. Kubernetes service CIDRs172.20.0.0/16 and172.21.0.0/16 must not overlap actual VPC/connected networks. Separate VPCs require additional peering/TGW, bidirectional routes, DNS and source-IP verification.
+The example reuses a reviewed VPC and two private subnets in different AZs. Prepare NAT/required VPC endpoints, DNS, address capacity and SG/NACL rules first. Kubernetes service CIDRs 172.20.0.0/16 and 172.21.0.0/16 must not overlap actual VPC/connected networks. Separate VPCs require additional peering/TGW, bidirectional routes, DNS and source-IP verification.
 
 ```bash
 cd examples/labs/observability/application
@@ -83,7 +83,7 @@ Apply the account/endpoint/ownership checks in the [EKS creation guide](../../ek
 
 ## 3. Storage, load balancer and OIDC prerequisites {#platform-prerequisites}
 
-Install EBS CSI and a reviewed `gp3` StorageClass, a CNI that actually enforces NetworkPolicy, and the AWS Load Balancer Controller (`service.k8s.aws/nlb`). Do not overwrite shared StorageClasses blindly. Obtain each cluster OIDC issuer and matching IAM provider ARN. The issuer host/path without https:// must match the provider ARN suffix.
+Install EBS CSI and a reviewed `gp3` StorageClass, a CNI that actually enforces NetworkPolicy, and the AWS Load Balancer Controller (`service.k8s.aws/nlb`). Do not overwrite shared StorageClasses blindly. Obtain each cluster’s OIDC issuer and matching IAM provider ARN. The issuer host/path without https:// must match the provider ARN suffix.
 
 ```bash
 aws eks describe-cluster --name "$LAB_PREFIX-managed" --query cluster.identity.oidc.issuer --output text

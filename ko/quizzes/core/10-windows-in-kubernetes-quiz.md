@@ -74,7 +74,7 @@ Kubernetes는 Windows 애플리케이션 컨테이너에 프로세스 격리를 
 
 프로세스 격리 모드의 특징:
 - 호스트 OS와 동일한 커널 버전을 사용해야 합니다.
-- 리소스 사용량이 적고 시작 시간이 빠릅니다.
+- 리소스 사용량이 적고 시작 시간이 짧습니다.
 - Linux 컨테이너의 일반적인 격리 모델과 유사합니다.
 
 Windows는 또한 Hyper-V 격리(Hyper-V Isolation)라는 대체 격리 모드를 제공합니다:
@@ -823,7 +823,7 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
    - 최소 권한 원칙 적용 가능
 
 2. **Active Directory 통합:**
-   - Windows 인증을 사용하는 기존 애플리케이션을 컨테이너화 가능
+   - Windows 인증을 사용하는 기존 애플리케이션의 컨테이너화 가능
    - Kerberos 및 NTLM 인증 지원
    - 도메인 리소스에 대한 원활한 접근
 
@@ -884,7 +884,7 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
 **Windows 노드 로깅 구성 방법:**
 
 1. **Fluent Bit 또는 Fluentd 설정:**
-   호스트 이벤트 로그는 본문의 Fluent Bit Windows 서비스 또는 검토된 HostProcess 수집기로 읽습니다. 일반 컨테이너의 .evtx 마운트만으로 winlog가 호스트 API를 읽지는 않습니다. 아래 설정은 Security 채널 읽기 권한과 영속 체크포인트 디렉토리가 필요합니다.
+   호스트 이벤트 로그는 본문의 Fluent Bit Windows 서비스 또는 검토된 HostProcess 수집기로 읽습니다. 일반 컨테이너의 .evtx 마운트만으로 winlog가 호스트 API를 읽지는 않습니다. 아래 설정에는 Security 채널 읽기 권한과 영속 체크포인트 디렉토리가 필요합니다.
 
 2. **Windows 이벤트 로그 수집 구성:**
    ```ini
@@ -1063,7 +1063,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 5. **보안 모니터링:**
    - Windows 보안 이벤트 로그 수집 및 분석
    - 권한 변경 및 로그인 시도 모니터링
-monitoring 네임스페이스, Prometheus Operator/ServiceMonitor 검색 설정 및 검증한 릴리스 태그가 필요합니다. HostProcess의 PSS 예외와 9182 방화벽 소스를 제한합니다. 호스트 로그 경로/채널은 배포판별로 확인하며 EKS는 kubelet/kube-proxy를 EKS Windows 채널에 기록합니다. Elasticsearch 예제에는 신뢰할 CA와 인증 설정도 필요합니다.
+monitoring 네임스페이스, Prometheus Operator/ServiceMonitor 검색 설정 및 검증한 릴리스 태그가 필요합니다. HostProcess의 PSS 예외와 9182 방화벽 소스를 제한합니다. 호스트 로그 경로/채널은 배포판별로 확인하며 EKS는 kubelet/kube-proxy를 EKS Windows 채널에 기록합니다. Elasticsearch 예제에는 신뢰할 수 있는 CA와 인증 설정도 필요합니다.
 </details>
 
 5. Kubernetes에서 Windows 컨테이너를 위한 스토리지 옵션과 볼륨 마운트 구성 방법을 설명하세요.
@@ -1318,7 +1318,7 @@ monitoring 네임스페이스, Prometheus Operator/ServiceMonitor 검색 설정 
 
 5. **백업 및 복구:**
    - Windows 볼륨 섀도 복사본 서비스(VSS) 통합 고려
-   - 애플리케이션 일관성 있는 백업 메커니즘 구현
+   - 애플리케이션 일관성이 있는 백업 메커니즘 구현
 SQL Server 이미지는 Linux용이며 Windows 애플리케이션은 네트워크로 연결합니다. Linux 호환 PVC와 SQL 프로세스의 쓰기 권한, 기존 sql-credentials Secret이 필요합니다.
 예제 StorageClass는 먼저 생성해야 하며 Windows EBS 클래스에는 NTFS와 WaitForFirstConsumer를 설정합니다. 이름만으로 드라이버/클래스가 설치되지 않습니다.
 </details>
@@ -2116,7 +2116,7 @@ Windows 노드의 리소스 관리 특징:
    - Job Objects는 프로세스 그룹에 대한 CPU 시간, 메모리 사용량, 작업 시간 등을 제한할 수 있습니다.
 
 2. **CPU 제한**:
-   - CPU 제한은 CPU 시간을 제한하며 상대적 CPU 공유 가중치와 구분해야 합니다.
+   - CPU 제한은 CPU 시간을 제한하는 설정이며 상대적 CPU 공유 가중치와 구분해야 합니다.
    - 이는 Linux의 CPU 공유와 유사하지만 구현 방식이 다릅니다.
    - Windows는 CPU 코어 수에 따라 CPU 공유를 조정합니다.
 
@@ -2204,7 +2204,7 @@ Windows 노드의 보안을 강화하기 위한 추가 모범 사례:
 - 불필요한 Windows 기능 및 역할 비활성화
 - Windows 방화벽 규칙 적절히 구성
 - 강력한 인증 메커니즘 사용
-- 컨테이너 이미지에 불필요한 도구 및 구성 요소 제거
+- 컨테이너 이미지에서 불필요한 도구 및 구성 요소 제거
 - 런타임 보안 모니터링 구현
 </details>
 

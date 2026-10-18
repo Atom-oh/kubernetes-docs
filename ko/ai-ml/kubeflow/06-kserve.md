@@ -25,7 +25,7 @@ KServe는 KFServing에서 발전한 독립 서빙 프로젝트입니다. 이 장
 
 공식 runtime-config 차트는 기본 설정에서 리소스를 생성하지 않았습니다. `kserve.servingruntime.enabled=true`로 렌더링하면 ClusterServingRuntime 12개가 생성됩니다. 목록에 있다는 사실만으로 이미지의 최신성·보안 지원이나 모델 호환성이 검증되는 것은 아닙니다.
 
-TorchServe는 [프로젝트 공지](https://github.com/pytorch/serve)에 신규 기능·버그 수정·보안 패치를 계획하지 않는다고 명시되어 있습니다. 기존 KServe runtime 목록에 남아 있어도 신규 운영의 유지보수되는 기본 선택으로 소개해서는 안 됩니다. 모델 형식과 GPU 요구에 맞는 현재 유지보수 runtime을 별도로 검증하세요.
+TorchServe는 [프로젝트 공지](https://github.com/pytorch/serve)에 신규 기능·버그 수정·보안 패치를 계획하지 않는다고 명시되어 있습니다. 기존 KServe runtime 목록에 남아 있어도 신규 운영에서 유지보수가 이루어지는 기본 선택으로 소개해서는 안 됩니다. 모델 형식과 GPU 요구에 맞는 현재 유지보수 runtime을 별도로 검증하세요.
 
 ## 배포 모드: Knative와 Standard
 

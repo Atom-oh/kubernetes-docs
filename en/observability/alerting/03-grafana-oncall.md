@@ -319,7 +319,7 @@ Verify Microsoft's currently supported webhook/workflow and card format. Do not 
 
 ### Telegram Integration
 
-The archived chart uses nested oncall.telegram token/existingSecret/tokenKey settings and separate telegramPolling. The old top-level telegram.enabled block labelled Bash was not a correct Helm configuration. Verify bot credentials, webhook/polling ownership, user linking and current availability. No bot creation or user messages were performed.
+The archived chart uses nested oncall.telegram token/existingSecret/tokenKey settings and separate telegramPolling. The old top-level telegram.enabled block labelled Bash was not a correct Helm configuration. Verify bot credentials, webhook/polling ownership, user linking and current availability. No bot was created and no user messages were sent.
 
 
 ---

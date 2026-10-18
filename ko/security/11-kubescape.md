@@ -208,7 +208,7 @@ kubectl get pods,pvc -n kubescape
 
 ## 리스크 스코어링
 
-`summaryDetails.complianceScore`와 `summaryDetails.score`는 서로 다른 집계입니다. compliance는 높을수록 더 많은 검사가 통과한 방향이며 risk score는 동일한 값이나 단순한 `100 - compliance`가 아닙니다. 임의 심각도 가중치 공식·조치 SLA를 Kubescape의 보편 공식으로 제시하지 않습니다.
+`summaryDetails.complianceScore`와 `summaryDetails.score`는 서로 다른 집계입니다. compliance는 높을수록 더 많은 검사가 통과했음을 나타내며 risk score는 동일한 값이나 단순한 `100 - compliance`가 아닙니다. 임의 심각도 가중치 공식·조치 SLA를 Kubescape의 보편 공식으로 제시하지 않습니다.
 
 ```bash
 jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
@@ -384,7 +384,7 @@ spec:
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-4.html)
 
 
-검사 범위, 성공/실패/미검사 항목, policy hash, tool image, 예외 소유자·만료일을 기록합니다. 비교하는 점수는 같은 입력·policy 범위여야 합니다. node scan·이미지 scan·runtime 탐지를 하나의 점수로 오해하지 않습니다.
+검사 범위, 성공/실패/미검사 항목, policy hash, tool image, 예외 소유자·만료일을 기록합니다. 비교하는 점수는 입력·policy 범위가 같아야 합니다. node scan·이미지 scan·runtime 탐지를 하나의 점수로 오해하지 않습니다.
 
 ### Prometheus 연동
 

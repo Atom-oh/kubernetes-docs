@@ -263,7 +263,7 @@ spec:
 
 ### TLS Modes
 
-Termination ends the downstream TLS connection at the gateway. The backend connection is configured separately and can use HTTP or TLS, for example through a supported BackendTLSPolicy. Passthrough uses a `TLS` listener with `mode: Passthrough`, and the backend terminates TLS. A `HTTPS` listener cannot be switched to passthrough merely by changing `mode`.
+Termination ends the downstream TLS connection at the gateway. The backend connection is configured separately and can use HTTP or TLS, for example through a supported BackendTLSPolicy. Passthrough uses a `TLS` listener with `mode: Passthrough`, and the backend terminates TLS. An `HTTPS` listener cannot be switched to passthrough merely by changing `mode`.
 
 | Mode | Description | Use Case |
 |------|-------------|----------|

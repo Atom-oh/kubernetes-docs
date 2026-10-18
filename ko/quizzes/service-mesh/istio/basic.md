@@ -382,7 +382,7 @@ CPU 사용량 = (Node 수 × ztunnel CPU) + waypoint CPU
 
 **해석:**
 
-가정한 값의 프록시 합계만 비교하면 메모리 98.6%, CPU 98.5% 감소입니다. 이것이 AWS 비용 96% 절감이나 10노드·1,000파드 클러스터의 인스턴스 1개 운영을 뜻하지는 않습니다. 애플리케이션 리소스, 파드/IP 제한, HA, replica, 처리량, waypoint 용량이 빠져 있습니다. 용량과 비용은 실제 토폴로지를 벤치마크해 산정하세요. Ambient 핵심 기능은 Istio 1.24부터 GA입니다.
+가정한 프록시 리소스 사용량의 합계만 비교하면 메모리 98.6%, CPU 98.5% 감소입니다. 이것이 AWS 비용 96% 절감이나 10노드·1,000파드 클러스터의 인스턴스 1개 운영을 뜻하지는 않습니다. 애플리케이션 리소스, 파드/IP 제한, HA, replica, 처리량, waypoint 용량이 빠져 있습니다. 용량과 비용은 실제 토폴로지를 벤치마크해 산정하세요. Ambient 핵심 기능은 Istio 1.24부터 GA입니다.
 
 **참고 자료:**
 
@@ -495,7 +495,7 @@ istioctl proxy-config secret <pod-name> -n <namespace> -o json
 
 ### 문제 9: Istio 디버깅
 
-새로 배포한 서비스가 Istio 메시에서 통신이 되지 않을 때, 문제를 진단하는 단계별 디버깅 방법을 작성하세요. (최소 5단계 이상)
+새로 배포한 서비스가 Istio 메시에서 통신하지 못할 때, 문제를 진단하는 단계별 디버깅 방법을 작성하세요. (최소 5단계)
 
 <details>
 
@@ -755,7 +755,7 @@ istioctl dashboard kiali
 <details>
 <summary>예시 답안</summary>
 
-모든 워크로드와 게이트웨이 이전 및 롤백 기간 종료 전까지 기존 Control Plane을 유지합니다. 아래는 istioctl 관리 Sidecar 예제이며 Helm과 Ambient 설치는 별도 업그레이드 절차를 사용합니다. Revision 이름은 실제 설치와 일치하도록 바꾸세요.
+모든 워크로드와 게이트웨이의 이전이 완료되고 롤백 기간이 종료될 때까지 기존 Control Plane을 유지합니다. 아래는 istioctl 관리 Sidecar 예제이며 Helm과 Ambient 설치는 별도 업그레이드 절차를 사용합니다. Revision 이름은 실제 설치와 일치하도록 바꾸세요.
 
 **1. 사전 준비 및 백업**
 
@@ -816,7 +816,7 @@ istioctl proxy-status
 
 **6. 완료 또는 롤백**
 
-게이트웨이와 Deployment 외 워크로드를 포함한 모든 프록시가 이전 revision을 떠난 것을 확인한 후 설치 도구로 제거합니다. 공유 검증 webhook을 직접 삭제하지 마세요:
+게이트웨이와 Deployment 외 워크로드를 포함한 모든 프록시가 이전 revision을 떠난 것을 확인한 후 설치 도구로 이전 revision을 제거합니다. 공유 검증 webhook을 직접 삭제하지 마세요:
 
 ```bash
 istioctl proxy-status

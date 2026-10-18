@@ -70,7 +70,7 @@ Kafka 4.3 Java KafkaConsumer의 기본값은 true, 간격 기본값은 5000 ms�
 멤버십·구독 파티션 변화·heartbeat/poll timeout은 그룹 할당에 영향을 줍니다. Classic은 클라이언트 session.timeout.ms, consumer 프로토콜은 broker의 group.consumer.session.timeout.ms를 사용합니다. acks는 생산자의 승인 설정입니다.
 </details>
 
-5. KRaft(Kafka Raft metadata mode)가 프로덕션 사용 가능(GA)이 된 Kafka 버전은 언제부터인가요?
+5. KRaft(Kafka Raft metadata mode)가 프로덕션 사용 가능(GA)이 된 Kafka 버전은 무엇인가요?
    - A) Kafka 2.8
    - B) Kafka 3.3
    - C) Kafka 3.9
@@ -235,7 +235,7 @@ kafka-topics.sh --create \
 ```
 
 **설명:**
-이미 접근 가능한 3개 이상 broker와 필요한 인증을 전제로 합니다. 8개 파티션은 자동 파티션 할당 그룹에서 최대 8명의 활성 담당자를 허용하며, 한 소비자가 여러 파티션을 맡을 수도 있습니다. RF와 min ISR의 장애 허용은 실제 동기화 상태·quorum 등 조건을 만족할 때만 성립합니다.
+이미 접근 가능한 3개 이상의 broker와 필요한 인증을 전제로 합니다. 8개 파티션은 자동 파티션 할당 그룹에서 최대 8명의 활성 담당자를 허용하며, 한 소비자가 여러 파티션을 맡을 수도 있습니다. RF와 min ISR의 장애 허용은 실제 동기화 상태·quorum 등 조건을 만족할 때만 성립합니다.
 </details>
 
 16. Kafka 4.3.1의 전용 controller(node.id=90)에 세 controller endpoint를 discovery seed로 설정하는 동적 quorum 구성 발췌를 작성하고, seed와 voter 멤버십의 차이를 설명하세요.

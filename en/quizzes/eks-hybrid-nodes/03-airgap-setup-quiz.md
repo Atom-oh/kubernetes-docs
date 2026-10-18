@@ -189,7 +189,7 @@ D. Promise 50–80% bandwidth savings for every environment
 
 **Answer: C. Approve a new immutable candidate after provenance, compatibility and representative-node validation**
 
-**Explanation:** Use an owned bucket, explicit expected owner, separate publisher/reader permissions and stop on unknown errors. Conditional object writes do not make a whole upload atomic. Earlier bandwidth percentages are unverified historical illustrations, not guaranteed measurements.
+**Explanation:** Use an owned bucket, an explicit expected owner and separate publisher/reader permissions, and stop on unknown errors. Conditional object writes do not make a whole upload atomic. Earlier bandwidth percentages are unverified historical illustrations, not guaranteed measurements.
 
 </details>
 

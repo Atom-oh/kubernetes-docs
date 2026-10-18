@@ -102,7 +102,7 @@ EKS integrates with the following AWS services:
 2. **VPC**: Provides networking infrastructure.
 3. **CloudWatch**: Provides monitoring and logging.
 4. **ALB/NLB**: Provides load balancing.
-5. **ECR**: Provides container image registry.
+5. **ECR**: Provides a container image registry.
 6. **EBS/EFS/FSx**: Provides persistent storage.
 7. **AWS App Mesh**: AWS ended support on September 30, 2026, and the App Mesh console and resources are no longer accessible. Existing integrations must migrate; do not select it for a new deployment.
 8. **AWS Certificate Manager**: Manages SSL/TLS certificates.

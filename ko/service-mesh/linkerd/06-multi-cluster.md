@@ -22,7 +22,7 @@ Hierarchical 모드에는 source client에서 대상 gateway에 도달하는 경
 
 ## 전제 조건과 공유 Trust
 
-명시적인 kubeconfig context `west`, `east`를 가진 준비된 cluster 두 개를 사용합니다. 이 이름은 local alias이며 AWS account/Region의 증명이 아닙니다. 호환되는 Kubernetes/Gateway API 버전, Linux worker/CNI 구성, 고정한 CLI는 [설치 가이드](01-installation.md)를 따릅니다. 최신 Kubernetes release를 Linkerd 호환성으로 간주하지 않습니다.
+명시적인 kubeconfig context `west`, `east`를 가진 준비된 cluster 두 개를 사용합니다. 이 이름은 local alias이며 AWS account/Region의 증명이 아닙니다. 호환되는 Kubernetes/Gateway API 버전, Linux worker/CNI 구성, 고정한 CLI는 [설치 가이드](01-installation.md)를 따릅니다. 최신 Kubernetes release라는 이유만으로 Linkerd와 호환된다고 간주하지 않습니다.
 
 양쪽 Linkerd는 관련 issuer chain을 신뢰해야 합니다. 공통 공개 root 하나가 가장 단순한 방식이며 적절한 root 여러 개를 포함한 공유 bundle도 지원합니다. Issuer private key나 workload 인증서를 공유할 필요는 없습니다.
 
@@ -30,7 +30,7 @@ Hierarchical 모드에는 source client에서 대상 gateway에 도달하는 경
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-06-multi-cluster-3.html)
 
-다음은 **새로 만드는 격리된 lab에 한해** 공통 root와 별도의 ECDSA P-256 issuer를 생성합니다. 10년 root 수명은 예제이며 CLI 기본값이나 일반적인 권장값이 아닙니다.
+다음 명령은 **새로 만드는 격리된 lab에 한해** 공통 root와 별도의 ECDSA P-256 issuer를 생성합니다. 10년 root 수명은 예제이며 CLI 기본값이나 일반적인 권장값이 아닙니다.
 
 ```bash
 set -euo pipefail
@@ -78,7 +78,7 @@ linkerd --context east check
 
 ## Extension과 방향성 있는 Link
 
-이 실습은 Helm이 multicluster extension과 peer controller를 소유합니다. 선택한 CLI의 이전 `multicluster link`는 deprecated입니다. Link와 credential Secret에는 `link-gen`, controller에는 chart의 `controllers` 목록을 사용합니다.
+이 실습에서는 Helm이 multicluster extension과 peer controller를 소유합니다. 선택한 CLI의 이전 `multicluster link`는 deprecated입니다. Link와 credential Secret에는 `link-gen`, controller에는 chart의 `controllers` 목록을 사용합니다.
 
 ### 기본 설치
 
@@ -322,7 +322,7 @@ spec:
       weight: 100
 ```
 
-선택한 상태를 의도적으로 적용하고 애플리케이션 결과, 원격 용량, 데이터 일관성을 확인한 뒤 복구로 판단합니다. 기존 요청/쓰기는 결과가 불확실할 수 있습니다. 라우팅 변경은 데이터베이스 복제나 완료된 작업 취소가 아닙니다.
+선택한 상태를 의도적으로 적용하고 애플리케이션 결과, 원격 용량, 데이터 일관성을 확인한 뒤 복구된 것으로 판단합니다. 기존 요청/쓰기는 결과가 불확실할 수 있습니다. 라우팅 변경은 데이터베이스 복제나 완료된 작업 취소가 아닙니다.
 
 이전 Flagger rollback webhook은 배포/검증되지 않은 `/failover` 서비스를 호출하고 별도 이름의 TrafficSplit을 patch했습니다. 신뢰할 수 있는 리전 failover를 구성한 것이 아닙니다. Flagger의 점진적 배포는 트래픽 가이드에서 별도로 다룹니다.
 
@@ -387,7 +387,7 @@ Federated Service는 관련 방향의 Link/controller가 있는 위치에 생성
 
 Endpoint readiness, failure-accrual 설정, network partition, discovery freshness, client retry 의미를 검토합니다. Member Service가 다르면 metadata/port 선택도 중요하며 충돌하는 annotation이 모두 의도대로 합쳐진다고 가정하지 않습니다.
 
-Headless service mirroring은 별도의 선택적 controller 기능이며 대응하는 controller의 `enableHeadlessServices` 설정을 사용합니다. 적절한 이름 있는 host가 필요하고 endpoint 동작도 다릅니다. Headless Service는 federated Service에 합류할 수 없습니다.
+Headless service mirroring은 별도의 선택적 controller 기능이며 대응하는 controller의 `enableHeadlessServices` 설정을 사용합니다. 적절한 이름이 있는 host가 필요하고 endpoint 동작도 다릅니다. Headless Service는 federated Service에 합류할 수 없습니다.
 
 ## Cluster 간 인가
 
@@ -546,7 +546,7 @@ openssl crl2pkcs7 -nocrl -certfile west-trust.pem | openssl pkcs7 -print_certs -
 openssl crl2pkcs7 -nocrl -certfile east-trust.pem | openssl pkcs7 -print_certs -text -noout
 ```
 
-모든 인증서의 유효 기간과 issuer chain을 확인합니다. PEM 순서/형식만으로 trust 동등성을 판단하지 않으며 이전 config field를 짧게 grep하는 것도 전체 검증이 아닙니다. 변경은 보안 가이드의 단계적 교체 절차를 사용합니다.
+모든 인증서의 유효 기간과 issuer chain을 확인합니다. PEM 순서/형식만으로 trust 동등성을 판단하지 않으며 이전 config field를 짧게 grep하는 것도 전체 검증이 아닙니다. 변경에는 보안 가이드의 단계적 교체 절차를 사용합니다.
 
 ## 참고 자료와 다음 단계
 

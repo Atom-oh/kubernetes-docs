@@ -253,7 +253,7 @@ Audit 401/403 distinguishes request-level denials from authenticator-message sea
 
 Run the account/context guard from the initial triage first. Distinguish the human/automation IAM identity used by kubectl, node bootstrap identity, and the AWS identity used inside an application Pod. Successful token generation is not proof of Kubernetes authentication or authorization.
 
-The EKS IAM token beginning k8s-aws-v1 is a base64url-encoded presigned STS request, **not a three-part JWT**. Do not decode/print it as JSON or paste it into logs. Kubernetes projected ServiceAccount tokens are a different JWT credential.
+The EKS IAM token beginning with k8s-aws-v1 is a base64url-encoded presigned STS request, **not a three-part JWT**. Do not decode/print it as JSON or paste it into logs. Kubernetes projected ServiceAccount tokens are a different JWT credential.
 
 ```bash
 set -euo pipefail
@@ -465,7 +465,7 @@ A not-yet-registered instance has no Node object: use the owned managed-node-gro
 
 ### Host and Managed-Node Diagnostics
 
-For customer-accessible Linux nodes, SSM requires the node agent, role/network prerequisites and authorized access to that exact instance. It opens a session. EKS Auto Mode managed instances do not support direct SSH access; use its documented NodeDiagnostic/console-output path or the supported kubectl debug node workflow. The current Auto Mode guide explicitly supports an **explicit sysadmin debug profile** for live logs; this is a privileged Pod creation, not an SSH session or a default debug privilege. NodeDiagnostic collection can upload sensitive logs/captures to S3 and needs its own reviewed scope/storage permissions.
+For customer-accessible Linux nodes, SSM requires the node agent, role/network prerequisites and authorized access to that exact instance. It opens a session. EKS Auto Mode managed instances do not support direct SSH access; use its documented NodeDiagnostic/console-output path or the supported kubectl debug node workflow. The current Auto Mode guide explicitly supports an **explicit sysadmin debug profile** for live logs; this is the creation of a privileged Pod, not an SSH session or a default debug privilege. NodeDiagnostic collection can upload sensitive logs/captures to S3 and needs its own reviewed scope/storage permissions.
 
 ```bash
 # Interactive host access: an operational session, not an automatic triage step.
@@ -696,7 +696,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" debug "$POD_NAME" \
   --keep-init-containers=false --keep-labels=false --keep-annotations=false \
   --share-processes=true --profile=general -- sleep 3600
 ```
-The native CLI check confirmed that this replaces the selected container’s image/command and removes init containers, while retaining the ServiceAccount and enabling shared process namespace. Other regular containers, environment/Secret references and volumes can remain and execute or access the same data. A copy stays in the same namespace, can schedule on another node and is not an isolated data clone. Review admission mutation, side effects, identity, persistent volumes and cleanup before using it. General profile capabilities may be rejected by namespace policy; do not relax policy silently.
+The native CLI check confirmed that this replaces the selected container’s image/command and removes init containers, while retaining the ServiceAccount and enabling a shared process namespace. Other regular containers, environment/Secret references and volumes can remain and execute or access the same data. A copy stays in the same namespace, can schedule on another node and is not an isolated data clone. Review admission mutation, side effects, identity, persistent volumes and cleanup before using it. General profile capabilities may be rejected by namespace policy; do not relax policy silently.
 
 #### Node diagnostics
 
@@ -905,7 +905,7 @@ Configured WARM_IP_TARGET/MINIMUM_IP_TARGET override WARM_PREFIX_TARGET. A warm 
 
 ### Custom Networking
 
-Prepare non-overlapping VPC address space, the actual per-AZ Pod subnets, routing/egress, security groups and enough migration capacity before changing CNI mode. The original two-line CIDR/subnet creation plus environment toggle was not a complete operational recipe. Existing subnet IPv4 CIDR cannot be enlarged in place. The standard ENIConfig approach below is distinct from Auto Mode networking controls.
+Prepare non-overlapping VPC address space, the actual per-AZ Pod subnets, routing/egress, security groups and enough migration capacity before changing CNI mode. The original two-line CIDR/subnet creation plus environment toggle was not a complete operational recipe. An existing subnet IPv4 CIDR cannot be enlarged in place. The standard ENIConfig approach below is distinct from Auto Mode networking controls.
 
 ```json
 {
@@ -1007,7 +1007,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get endpointslices \
     endpoints:[.endpoints[]? | {addresses,conditions,nodeName,zone,targetRef}]
   }]'
 ```
-Use EndpointSlices for current endpoint inspection; the older Endpoints API is deprecated. Check Service selector/port/targetPort, address family and endpoint ready/serving/terminating conditions. Headless, ExternalName and selectorless Services have different behavior. An endpoint address existing is not proof it can receive the intended traffic, and Service port is not always the application’s container port.
+Use EndpointSlices for current endpoint inspection; the older Endpoints API is deprecated. Check Service selector/port/targetPort, address family and endpoint ready/serving/terminating conditions. Headless, ExternalName and selectorless Services have different behavior. An endpoint address existing is not proof it can receive the intended traffic, and a Service port is not always the application’s container port.
 
 ### NetworkPolicy AND/OR Logic
 
@@ -1340,7 +1340,7 @@ unless on (namespace,pod) kube_pod_deletion_timestamp{namespace="diagnostics-exa
 
 Throttled CFS periods are not CPU utilization or a percentage of elapsed CPU time. Memory ratios include only containers with a positive configured limit; missing limits/data are not zero utilization. increase() is a reset-aware, extrapolated counter estimate and can be fractional; changes(restarts_total) counts observed value changes, not OOM events. Last termination reason plus a restart increase is a correlation, not an exact OOM-event count or proof that memory leaked. CrashLoopBackOff is checked through the waiting reason, not inferred from every restart.
 
-The readiness query includes Running-but-NotReady Pods and excludes terminal/deleting Pods. These examples do not replace separate scrape/absent-target monitoring. No returned series must not be interpreted as proof of healthy workloads.
+The readiness query includes Running-but-NotReady Pods and excludes terminal/deleting Pods. These examples do not replace separate scrape/absent-target monitoring. The absence of returned series must not be interpreted as proof of healthy workloads.
 
 ### CloudWatch Logs Insights
 
@@ -1479,7 +1479,7 @@ kubectl --context "$KUBE_CONTEXT" -n monitoring get prometheusrule reviewed-eks-
 ```
 ### ADOT Collector: Explicit Pipelines and Prerequisites
 
-The example uses the reviewed Operator 0.158.0 v1beta1 object-shaped config and ADOT 0.50.0 components. Prepare the namespace, Operator/CRDs, receiver TLS Secret, trusted client CA and an appropriately configured ServiceAccount AWS identity. The Role below grants only Kubernetes Pod discovery; it does not grant X-Ray, CloudWatch Logs or AMP access. Review exporter IAM permissions and real Region/log-group/workspace inputs before deployment. The sample is not executed or claimed production-ready.
+The example uses the reviewed Operator 0.158.0 v1beta1 object-shaped config and ADOT 0.50.0 components. Prepare the namespace, Operator/CRDs, receiver TLS Secret, trusted client CA and an appropriately configured ServiceAccount AWS identity. The Role below grants only Kubernetes Pod discovery; it does not grant X-Ray, CloudWatch Logs or AMP access. Review exporter IAM permissions and real Region/log-group/workspace inputs before deployment. The sample is not executed or claimed to be production-ready.
 
 ```yaml
 apiVersion: v1
@@ -2013,7 +2013,7 @@ def lambda_handler(event,context):
 ```
 Set EXPECTED_ALARM_ARN to the exact owned alarm. The one-hour age window/five-minute future tolerance are example policy choices. Restrict real Lambda invokers; checking event fields is not cryptographic origin verification. EventBridge’s asynchronous invocation does not forward the returned dictionary as an action: a real diagnostic queue/workflow must be explicitly connected. Logging this selection is not “auto-remediation executed.”
 
-Before enabling a mutation runbook, implement identity/UID revalidation, durable event-id deduplication, rate limits, least privilege, concurrency control, workload/data/PDB checks, rollback and post-action verification. Retries or duplicate events must not trigger repeated deletion. None of those production mutation controls is claimed implemented by this classifier.
+Before enabling a mutation runbook, implement identity/UID revalidation, durable event-id deduplication, rate limits, least privilege, concurrency control, workload/data/PDB checks, rollback and post-action verification. Retries or duplicate events must not trigger repeated deletion. None of those production mutation controls is claimed to be implemented by this classifier.
 
 | Example severity | Slack | PagerDuty | Other channels | Mutation policy |
 | --- | --- | --- | --- | --- |

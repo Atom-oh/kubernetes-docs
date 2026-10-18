@@ -131,7 +131,7 @@ func Score100(req Requirement, node *v1.Node) int64 {
 
 **`extenderserver/handler.go`**
 
-핸들러는 `nodeCacheCapable: false` 계약을 사용하고 실습 요청을 4 MiB·512개 노드로 제한하며 잘못되거나 누락된 입력을 거부합니다. 전달받은 후보의 부분집합만 반환합니다. 실제 클러스터는 제한값을 별도로 산정해야 합니다. 필수 메모리 레이블이 잘못되면 해당 노드를 제외하며, 다른 Pod를 선점해도 레이블 문제는 해결되지 않습니다.
+핸들러는 `nodeCacheCapable: false` 계약을 사용하고 실습 요청을 4 MiB·512개 노드로 제한하며 잘못되거나 누락된 입력을 거부합니다. 전달받은 후보의 부분집합만 반환합니다. 실제 클러스터에서는 제한값을 별도로 산정해야 합니다. 필수 메모리 레이블이 잘못되면 해당 노드를 제외하며, 다른 Pod를 선점해도 레이블 문제는 해결되지 않습니다.
 
 ```go
 package extenderserver
@@ -295,7 +295,7 @@ func main() {
 
 ### 스케줄러 확장 배포
 
-Part1과 같은 고정 모듈·Go 버전으로 `./cmd/extender`를 빌드하고 정적 바이너리를 non-root 이미지로 패키징한 뒤, 아래 레지스트리 자리표시자를 실제 이미지·digest로 바꿉니다. Pod는 매 요청으로 스케줄링 데이터를 받으므로 Kubernetes API 토큰이 필요하지 않습니다.
+Part1과 같은 고정 모듈·Go 버전으로 `./cmd/extender`를 빌드하고 정적 바이너리를 non-root 이미지로 패키징한 뒤, 아래 레지스트리 자리표시자를 실제 이미지·digest로 바꿉니다. Pod는 요청마다 스케줄링 데이터를 받으므로 Kubernetes API 토큰이 필요하지 않습니다.
 
 다음을 `Dockerfile.extender`로 저장하고 로컬 빌드합니다. 승인된 레지스트리를 선택하고 배포 이미지에는 게시한 결과를 지정하세요.
 
@@ -677,7 +677,7 @@ COPY --from=builder /out/gpu-scheduler /gpu-scheduler
 ENTRYPOINT ["/gpu-scheduler"]
 ```
 
-3. **레지스트리 절차로 게시**. 아래 명령은 레지스트리를 명시적으로 선택해야 합니다. 이번 감사에서는 실행하지 않았습니다:
+3. **레지스트리 절차로 게시**. 아래 명령을 실행하려면 레지스트리를 명시적으로 선택해야 합니다. 이번 감사에서는 실행하지 않았습니다:
 
 ```bash
 : "${REGISTRY:?Set the approved registry/repository prefix}"

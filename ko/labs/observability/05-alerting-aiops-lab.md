@@ -26,7 +26,7 @@
 
 알림을 수신하고 실제 지표·집계 로그를 확인한 뒤, 사람이 검토할 진단 가설을 만드는 실습입니다. [실행 예제](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops)는 입력/결과 SNS 토픽을 분리한 Lambda reporter입니다. 자동 복구나 익명 HTTP webhook은 포함하지 않습니다.
 
-[Part 2](./02-observability-stack-lab.md)의 수집, [Part 3](./03-msa-deployment-lab.md)의 서비스, [Part 4](./04-load-testing-scaling-lab.md)의 정상 smoke test가 선행 조건입니다. 예제 코드와 템플릿은 로컬 검증했으며 이번 감사에서 AWS 배포·모델 호출·알림 전송은 실행하지 않았습니다.
+[Part 2](./02-observability-stack-lab.md)의 수집, [Part 3](./03-msa-deployment-lab.md)의 서비스, [Part 4](./04-load-testing-scaling-lab.md)의 정상 smoke test가 선행 조건입니다. 예제 코드와 템플릿은 로컬에서 검증했으며 이번 감사에서 AWS 배포·모델 호출·알림 전송은 실행하지 않았습니다.
 
 ![알림 입력과 진단 결과를 다른 토픽으로 분리한 흐름](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-0.png)
 
@@ -58,7 +58,7 @@ curl --fail --silent http://127.0.0.1:9090/api/v1/rules
 curl --fail --silent http://127.0.0.1:9090/api/v1/alerts
 ```
 
-설치한 chart의 release/Service 이름을 확인해 치환합니다. 고정된 다른 release 이름이나 존재하지 않는 ConfigMap을 검색하지 않습니다. rule 리소스가 존재하는지와 Prometheus가 실제로 로드·평가하는지는 별도 확인입니다.
+설치한 chart의 release/Service 이름을 확인해 치환합니다. 고정된 다른 release 이름이나 존재하지 않는 ConfigMap을 검색하지 않습니다. rule 리소스가 존재하는지와 Prometheus가 실제로 로드·평가하는지는 별도로 확인해야 합니다.
 
 ## 2. CloudWatch alarm의 의미 {#cloudwatch-alarms}
 
@@ -154,7 +154,7 @@ arn:aws:aiops:REGION:ACCOUNT_ID:investigation-group/GROUP_ID
 
 ## 8. 장애 주입과 운영 검증 {#verification}
 
-먼저 정상 smoke 결과와 알림 경로를 기록합니다. 앱이 실제 지원하는 지연/오류 주입 기능만 전용 canary에 사용하고 제한 시간·대상·원복 방법을 정합니다. 구현하지 않은 `/admin/chaos` endpoint나 읽지 않는 환경 변수를 호출하지 않습니다. Pod 삭제는 CrashLoopBackOff를 보장하지 않습니다.
+먼저 정상 smoke 결과와 알림 경로를 기록합니다. 앱이 실제 지원하는 지연/오류 주입 기능만 전용 canary에 사용하고 제한 시간·대상·원복 방법을 정합니다. 구현하지 않은 `/admin/chaos` endpoint를 호출하거나 읽지 않는 환경 변수를 설정하지 않습니다. Pod 삭제는 CrashLoopBackOff를 보장하지 않습니다.
 
 GitOps가 소유한 workload는 Git/지원하는 Rollouts 흐름으로 변경·복구합니다. Deployment와 Rollout을 혼동하거나 JSON Patch의 음수 index로 환경 변수를 지우지 않습니다.
 

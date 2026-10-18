@@ -136,7 +136,7 @@ A CPU limit is a **bandwidth limit.** `cpu.max` of `20000 100000` means "up to 2
 
 Something counterintuitive follows. If the application does its work in a short burst across several threads, it **spends the whole quota early in the period and is forcibly stopped until the period ends.** Average utilization looks like a low 20% while latency spikes.
 
-It is worse with multiple threads. With 4 threads running concurrently, a 20ms quota is consumed in 5ms of wall time. The remaining 95ms is waiting.
+It is worse with multiple threads. With 4 threads running concurrently, a 20ms quota is consumed in 5ms of wall time. The remaining 95ms is spent waiting.
 
 **Diagnosis:** `cpu.stat` → `nr_throttled` (periods throttled) and `throttled_usec` (total throttled time). If `nr_throttled` is a meaningful fraction of `nr_periods`, the limit is the cause.
 
@@ -237,7 +237,7 @@ There are approaches that reduce the load itself.
 
 ## overlayfs: How Image Layers Are Composed
 
-Container images being layered, and those layers appearing as one filesystem, is **union mount**, specifically `overlayfs`.
+The layering of container images, with those layers appearing as one filesystem, is a **union mount**, specifically `overlayfs`.
 
 Three parts:
 
@@ -262,7 +262,7 @@ The operationally important property is **copy-up.** Modifying a file from lower
 - For kube-proxy, **nftables is GA in 1.33 and IPVS is deprecated in 1.35**; upstream plans default disablement of IPVS in 1.40 and removal in 1.43. The default is still iptables.
 - Conntrack exhaustion can drop new connections. Diagnose with count/max, drop/insert counters and logs; check the effective kube-proxy configuration before changing limits.
 
-Next: [Kernel Networking Stack](./02-network-stack.md) walks the full path a packet travels.
+Next: [Kernel Networking Stack](./02-network-stack.md) walks through the full path a packet travels.
 
 ## References
 

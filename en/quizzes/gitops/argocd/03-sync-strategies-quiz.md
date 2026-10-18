@@ -18,7 +18,7 @@ A Refresh operation fetches the latest manifests from Git and compares them to t
 
 </details>
 
-2. What does enabling `automated` sync policy do?
+2. What does enabling the `automated` sync policy do?
    - A) Automatically deletes the application
    - B) Enables automatic synchronization when the desired state differs from live state
    - C) Enables automatic rollback

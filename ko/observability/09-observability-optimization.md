@@ -4,7 +4,7 @@
 
 > **마지막 업데이트**: 2026년 9월 13일
 
-관측성 최적화는 장애 조사에 필요한 질문, 수집 품질, 실제 비용에서 시작합니다. 노드 수만으로 수집량·조회 부하·보존 비용·운영 인력을 예측할 수 없습니다. 이 장은 [완전한 설정 예제](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization)를 제공하고 클러스터 설치는 각 배포 가이드로 연결합니다. native 검증에는 합성 데이터를 사용했으며 운영 성능 벤치마크가 아닙니다.
+관측성 최적화는 장애 조사에 필요한 질문, 수집 품질, 실제 비용에서 시작합니다. 노드 수만으로 수집량·조회 부하·보존 비용·운영 인력을 예측할 수 없습니다. 이 장은 [완전한 설정 예제](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization)를 제공하고 클러스터 설치 방법은 각 배포 가이드로 안내합니다. native 검증에는 합성 데이터를 사용했으며 운영 성능 벤치마크가 아닙니다.
 
 <span id="목차"></span>
 
@@ -42,7 +42,7 @@
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-1.html)
 
-노드 에이전트는 로컬 로그를 읽고 gateway는 중앙 정책을 적용하는 등 역할이 다릅니다. Tail sampling에는 trace affinity가 필요합니다. 여러 DaemonSet 앞에 임의 분산하는 Load Balancer를 두는 것만으로 올바른 tail sampling이 구현되지 않습니다.
+노드 에이전트는 로컬 로그를 읽고 gateway는 중앙 정책을 적용하는 등 역할이 다릅니다. Tail sampling에는 trace affinity가 필요합니다. 여러 DaemonSet 앞에 트래픽을 임의로 분산하는 Load Balancer를 두는 것만으로 올바른 tail sampling이 구현되지 않습니다.
 
 <span id="_2-1-로그-저장소-비교"></span>
 
@@ -67,7 +67,7 @@
 
 Fluent Bit·Fluentd·Vector는 plugin·언어·buffering·배포 방식이 다릅니다. “15 MB”, “초당 200K 메시지”처럼 고정된 성능 수치는 재현 가능한 workload·버전·하드웨어 근거가 있어야 합니다. 실제 record 크기·parser 비용·재시도·backpressure를 측정합니다.
 
-현재 EKS의 containerd 로그는 CRI framing을 사용합니다. Docker JSON parser를 무조건 적용하거나 `/var/lib/docker/containers`가 있다고 가정하지 않습니다. 지원되는 container/CRI parser와 multiline 처리를 사용하고 host 로그는 읽기 전용, offset/buffer 상태는 별도 쓰기 가능한 위치에 둡니다. Kubernetes metadata enrichment에는 맞는 ServiceAccount/RBAC가 필요합니다. ConfigMap만으로 수집기가 배포되지는 않습니다.
+현재 EKS의 containerd 로그는 CRI framing을 사용합니다. Docker JSON parser를 무조건 적용하거나 `/var/lib/docker/containers`가 있다고 가정하지 않습니다. 지원되는 container/CRI parser와 multiline 처리를 사용하고 host 로그는 읽기 전용으로 두고 offset/buffer 상태는 별도의 쓰기 가능한 위치에 둡니다. Kubernetes metadata enrichment에는 맞는 ServiceAccount/RBAC가 필요합니다. ConfigMap만으로 수집기가 배포되지는 않습니다.
 
 Loki 라벨은 cluster·namespace·service 같은 안정적인 차원으로 제한합니다. Pod 라벨을 모두 자동 복사하면 stream 수가 폭증할 수 있습니다. [수집기 가이드](./logging/05-collectors.md)와 [Loki 가이드](./logging/01-loki.md)의 완전한 현재 프로필을 참고하고 Service·schema·storage·IAM·network 설정을 확인합니다.
 
@@ -126,7 +126,7 @@ Prometheus는 로컬 TSDB를 사용하고 sharding·remote write·query/aggregat
 
 Remote-write queue는 백업이나 무손실 전달 보장이 아닙니다. WAL/queue 용량·재시도·인증·네트워크 단절·receiver 제한을 함께 설계합니다. Thanos sidecar의 block upload 방식은 그림의 Thanos Receive 경로와 다릅니다.
 
-Prometheus Operator에서 `replicas: 2`, `shards: 3`이면 총 여섯 Pod입니다. 모든 Pod의 PVC·메모리 예산과 selector를 구성하고, shard 병합과 HA replica 중복 제거를 지원하는 query 계층을 둡니다. 중복 제거되지 않는 remote-write receiver에 두 replica를 보내면 지표가 중복 계산될 수 있습니다. 고정한 Operator CRD의 전용 query 설정을 확인하고 충돌하는 generic argument를 추가하지 않습니다.
+Prometheus Operator에서 `replicas: 2`, `shards: 3`이면 총 여섯 개의 Pod입니다. 모든 Pod의 PVC·메모리 예산과 selector를 구성하고, shard 병합과 HA replica 중복 제거를 지원하는 query 계층을 둡니다. 중복 제거되지 않는 remote-write receiver에 두 replica를 보내면 지표가 중복 계산될 수 있습니다. 고정한 Operator CRD의 전용 query 설정을 확인하고 충돌하는 generic argument를 추가하지 않습니다.
 
 <span id="_4-1-opentelemetry-개요-및-아키텍처"></span>
 
@@ -296,7 +296,7 @@ service:http_5xx:ratio_5m / 0.001
 
 ### 알림 라우팅
 
-`alertmanager.yaml`은 현재 matcher, Asia/Seoul 업무 외 시간, 비어 있지 않은 cluster/node 라벨을 조건으로 하는 inhibition을 제공합니다. 누락 라벨끼리는 같다고 비교되어 무관한 알림까지 억제할 수 있습니다. `review-only` receiver에는 외부 integration이 없으며 전송 없이 라우팅 설정을 검증합니다. 운영에 쓰기 전에 승인된 연락처, Secret 기반 webhook/routing key와 receiver policy를 연결하고 delivery·inhibition을 시험합니다. Evaluation·grouping·repeat interval·pending·mute 시간의 역할은 서로 다릅니다.
+`alertmanager.yaml`은 현재 matcher, Asia/Seoul 업무 외 시간, 비어 있지 않은 cluster/node 라벨을 조건으로 하는 inhibition을 제공합니다. 누락 라벨끼리는 같은 것으로 간주되어 무관한 알림까지 억제될 수 있습니다. `review-only` receiver에는 외부 integration이 없으며 전송 없이 라우팅 설정을 검증합니다. 운영에 쓰기 전에 승인된 연락처, Secret 기반 webhook/routing key와 receiver policy를 연결하고 delivery·inhibition을 시험합니다. Evaluation·grouping·repeat interval·pending·mute 시간의 역할은 서로 다릅니다.
 
 <span id="_8-1-로그-메트릭-저장-비용-폭증-대응"></span>
 
@@ -342,7 +342,7 @@ EKS Auto Mode에는 Kubernetes Event·Node Condition을 게시하는 node monito
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-8.html)
 
-신호별 bytes/day, active series, 새 series 증가, samples/second, spans/second, sample 보존율, query scan, retention, buffer loss, 복구 시간과 운영 시간을 먼저 측정합니다. 현재 Region별 가격과 계약 단가를 사용합니다. 월 $5,000에서 $2,500을 목표로 하는 가상 사례도 실제 비용 항목을 나눈 다음 절감을 추정해야 합니다. 도구 변경만으로 50% 절감이 보장되지 않습니다.
+신호별 bytes/day, active series, 새 series 증가, samples/second, spans/second, sample 보존율, query scan, retention, buffer loss, 복구 시간과 운영 시간을 먼저 측정합니다. 현재 Region별 가격과 계약 단가를 사용합니다. 월 $5,000에서 $2,500으로 줄이는 것을 목표로 하는 가상 사례도 실제 비용 항목을 나눈 다음 절감을 추정해야 합니다. 도구 변경만으로 50% 절감이 보장되지 않습니다.
 
 한 번에 측정 가능한 변경 하나를 적용하고 전후의 장애 조사 성공률·SLO coverage·손실 데이터·청구액을 비교합니다. 잘못된 필터를 되돌리고 진단을 복원할 만큼의 데이터를 유지합니다. 도입 기간은 권한·팀 경험·검증·이전에 따라 달라지므로 “1~2일”을 보편적인 약속으로 제시하지 않습니다.
 

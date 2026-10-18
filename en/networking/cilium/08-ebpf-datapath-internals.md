@@ -3,7 +3,7 @@
 > **Review baseline**: Cilium 1.20.2 (stable, 2026-09-16); Cilium CLI 0.20.1; Hubble CLI 1.20.2. Items marked **[1.21 pre-release]** come from v1.21.0-pre.3 and may change before GA.
 > **Last Updated**: October 15, 2026
 
-This chapter opens the Cilium datapath: which BPF programs run, where they attach, how they call each other, which maps they read, how the agent compiles and loads them, and how one packet is processed hop by hop. The generic eBPF primer (history, verifier, map types) stays in [Part 2: eBPF](02-ebpf.md). Overlay and routing behavior is in [Part 9](09-overlay-native-routing.md); IPAM in [Part 10](10-ipam-deep-dive.md).
+This chapter examines the Cilium datapath: which BPF programs run, where they attach, how they call each other, which maps they read, how the agent compiles and loads them, and how one packet is processed hop by hop. The generic eBPF primer (history, verifier, map types) stays in [Part 2: eBPF](02-ebpf.md). Overlay and routing behavior is in [Part 9](09-overlay-native-routing.md); IPAM in [Part 10](10-ipam-deep-dive.md).
 
 > **Stale-blog warning: `cilium_tunnel_map` no longer exists.** Older posts and some upstream sample listings show a `cilium_tunnel_map` that mapped a Pod CIDR to a remote node IP. Cilium 1.17 still had it in BPF (`bpf/lib/encap.h`) and `cilium-dbg bpf tunnel list` dumped it. It was dropped from the datapath in 1.18 (the 1.18.14 BPF tree has no reference; the agent only unpins a leftover map), and the Go package was removed in 1.19. In Cilium 1.20.2 no BPF program references it. The remote node (tunnel endpoint) is stored in the **value** of `cilium_ipcache_v2` (field `tunnel_endpoint`, with the flag `flag_has_tunnel_ep`). There is no `cilium-dbg bpf tunnel list` command in 1.18 or 1.20. If a guide tells you to `bpftool map dump` the tunnel map to debug overlay routing, dump the ipcache instead (`cilium-dbg bpf ipcache list`). One upstream development doc still lists the map in a sample output; that does not mean the map is live.
 
@@ -64,7 +64,7 @@ For per-device programs the loader (`pkg/datapath/loader/tc.go`) chooses the mec
 2. **Legacy tc**: if the kernel returns "not supported" or `enableTCX: false`, the loader uses a `clsact` qdisc with `cls_bpf` in direct-action mode, and detaches any stale tcx link.
 3. **Hard failure** only when neither works: the agent reports that it needs tc-bpf support or tcx (Linux 6.6 or newer).
 
-**netkit** (maturity: **beta**): `bpf.datapathMode: veth | netkit | netkit-l2 | auto`. The default is `veth`. With netkit, the Pod-specific programs attach inside the netkit **peer** device; other devices still use tcx, and selecting netkit turns tcx on automatically. Source-enforced prerequisites (`canUseNetkit`): kernel probe passes (upstream docs say 6.8 or newer; the probe error text in the source mentions 6.7), BPF host routing (no `bpf.hostLegacyRouting`), BPF masquerade, kube-proxy replacement, and **no `bpf.tproxy`** (it needs `bpf_sk_assign`, valid only at tc ingress). `auto` is new in 1.20: it probes and falls back to veth with a warning. Once Pods exist as veth, switching to netkit or `auto` for them is refused; roll new node groups instead.
+**netkit** (maturity: **beta**): `bpf.datapathMode: veth | netkit | netkit-l2 | auto`. The default is `veth`. With netkit, the Pod-specific programs attach inside the netkit **peer** device; other devices still use tcx, and selecting netkit turns tcx on automatically. Source-enforced prerequisites (`canUseNetkit`): kernel probe passes (upstream docs say 6.8 or newer; the probe error text in the source mentions 6.7), BPF host routing (no `bpf.hostLegacyRouting`), BPF masquerade, kube-proxy replacement, and **no `bpf.tproxy`** (it needs `bpf_sk_assign`, valid only at tc ingress). `auto` is new in 1.20: it probes and falls back to veth with a warning. Once Pods use veth, switching to netkit or `auto` for them is refused; roll new node groups instead.
 
 | Mechanism | Kernel | Pinned object | Reload behavior | Maturity in Cilium |
 |---|---|---|---|---|
@@ -81,7 +81,7 @@ For per-device programs the loader (`pkg/datapath/loader/tc.go`) chooses the mec
 
 ### 2.1 Why tail calls
 
-A tail call replaces the running program with another without returning. Cilium uses them for three reasons: the verifier limit on one program's complexity (1M instructions), the 512-byte stack, and the ability to keep large optional features out of the common path. Maximum chain length is 33 tail calls. Mixing bpf-to-bpf calls with tail calls requires kernel 5.10, one reason for the 5.10 baseline.
+A tail call replaces the running program with another without returning. Cilium uses them for three reasons: the verifier limit on one program's complexity (1M instructions), the 512-byte stack, and the ability to keep large optional features out of the common path. The maximum chain length is 33 tail calls. Mixing bpf-to-bpf calls with tail calls requires kernel 5.10, one reason for the 5.10 baseline.
 
 State crosses a tail call in two places: `skb->cb[]` (the `CB_*` slots, such as `CB_SRC_LABEL`) and per-CPU scratch maps `cilium_tail_call_buffer4/6`, which hold, for example, the conntrack tuple and result computed by the CT tail program.
 
@@ -348,7 +348,7 @@ Forwarding choices at step 10:
 
 ### Hop 2 (remote only): node B receives
 
-- Overlay: `cil_from_netdev` passes UDP 8472 (VXLAN) / 6081 (Geneve) to the stack; the kernel decapsulates onto `cilium_vxlan`; `cil_from_overlay` reads `bpf_skb_get_tunnel_key`, maps `tunnel_id` to the **source identity** (an identity of host is rejected with `DROP_INVALID_IDENTITY`), stores it in `CB_SRC_LABEL`, emits `TRACE_FROM_OVERLAY`, then looks up `cilium_lxc[10.0.2.77]` and calls `tail_call_policy(ep)`.
+- Overlay: `cil_from_netdev` passes UDP 8472 (VXLAN) / 6081 (Geneve) to the stack; the kernel decapsulates onto `cilium_vxlan`; `cil_from_overlay` reads `bpf_skb_get_tunnel_key`, maps `tunnel_id` to the **source identity** (a host identity is rejected with `DROP_INVALID_IDENTITY`), stores it in `CB_SRC_LABEL`, emits `TRACE_FROM_OVERLAY`, then looks up `cilium_lxc[10.0.2.77]` and calls `tail_call_policy(ep)`.
 - Native routing: `cil_from_netdev` performs the same steps with the source identity from `cilium_ipcache_v2[src ip]`.
 
 ### Hop 3: destination ingress policy and delivery
@@ -470,7 +470,7 @@ Expected: `cil_from_netdev` on each native device, `cil_from_container` per `lxc
 ### Lab 2: Policy changes do not recompile
 
 1. Note `kc cilium-dbg bpf sha list` and the endpoint's map with `kc cilium-dbg bpf policy get <ENDPOINT_ID>`.
-2. Apply a `CiliumNetworkPolicy` allowing a client label to TCP/80 on a test backend.
+2. Apply a `CiliumNetworkPolicy` allowing traffic from clients with a client label to TCP/80 on a test backend.
 3. Re-run both commands.
 
 Expected: a new ingress entry with the client's numeric identity appears in the backend endpoint's policy map; the template list is unchanged. Add an explicit deny rule and observe an entry with the deny flag. Cleanup: delete the policy objects. This should be rehearsed in a namespace with no other policies, because cluster-wide default-deny interacts.

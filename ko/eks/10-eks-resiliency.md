@@ -45,7 +45,7 @@ Amazon EKS 클러스터의 복원력(Resilience)은 장애 발생 시 서비스 
 | 3. Cell | 서비스 partition | Routing·제한한 의존성·용량 | 부분 영향의 초–분 |
 | 4. Multi-Region | 리전 장애 | 지역별 traffic·data failover·운영 | 설계에 따라 near-zero 목표부터 분·시간 |
 
-이전 양언어판의 시간 범위는 서로 다른 예시였습니다. 이 모델은 설계 선택을 정리하며 높은 단계가 항상 빠르다는 인증·보장이 아닙니다. 사용자 흐름·의존성별 실제 목표를 정하고 측정합니다.
+이전 두 언어판의 시간 범위는 서로 다른 예시였습니다. 이 모델은 설계 선택을 정리하며 높은 단계가 항상 빠르다는 인증·보장이 아닙니다. 사용자 흐름·의존성별 실제 목표를 정하고 측정합니다.
 
 Regional EKS control plane은 3개 AZ에 분산됩니다. 현재 endpoint SLA는 Standard 월 99.95%·5분 측정 간격, Provisioned 월 99.99%·1분 간격입니다. 조건이 있는 service-credit 약정이며 앱 SLO·RTO·RPO 보장이 아닙니다. [AWS EKS SLA](https://aws.amazon.com/eks/sla/)
 
@@ -135,7 +135,7 @@ spec:
 
 ---
 
-PDB는 지원되는 자발적 eviction을 제한합니다. 3개 Ready·진행 중 차감 없음이면 maxUnavailable=1로 한 번 허용하지만, AZ·hardware 장애, 직접 Pod 삭제, Deployment 자체 rollout·scale-down의 Pod 수를 보장하지 않습니다. minAvailable 2는 고정 3 replica의 대안이며 한 필드만 선택합니다.
+PDB는 지원되는 자발적 eviction을 제한합니다. Ready가 3개이고 진행 중 차감이 없으면 maxUnavailable=1로 한 번 허용하지만, AZ·hardware 장애, 직접 Pod 삭제, Deployment 자체 rollout·scale-down의 Pod 수를 보장하지 않습니다. minAvailable 2는 고정 3 replica의 대안이며 한 필드만 선택합니다.
 
 퍼센트는 올림합니다. 8×25%=2, 3×25%는 ceil(0.75)=1이며, 3 replica의 minAvailable 75%는 ceil(2.25)=3으로 정상 Pod eviction 여유가 없습니다. 실제 health·진행 중 disruption을 확인합니다.
 
@@ -514,7 +514,7 @@ spec:
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
-**가중 분산 대안 설정**은 loadBalancer의 localityLbSetting을 다음 fragment로 교체합니다. 세 source zone을 모두 포함하며 80/10/10은 설정 weight이지 실측 locality·failover 용량 보장이 아닙니다. 호환되지 않는 failover policy와 distribute를 동시에 조합하지 않습니다.
+**가중 분산 대안 설정**에서는 loadBalancer의 localityLbSetting을 다음 fragment로 교체합니다. 세 source zone을 모두 포함하며 80/10/10은 설정 weight이지 실측 locality·failover 용량 보장이 아닙니다. 호환되지 않는 failover policy와 distribute를 동시에 조합하지 않습니다.
 
 ```yaml
 localityLbSetting:
@@ -649,7 +649,7 @@ spec:
     - protocol: TCP
       port: 53
 ```
-DNS는 kube-system의 일치하는 CoreDNS Pod로 TCP·UDP를 허용합니다. Node-local·Auto Mode system DNS는 경로가 달라 mode별 검증이 필요합니다. 임의 외부 traffic은 허용하지 않으므로 필요한 endpoint·egress gateway 규칙을 별도 검토합니다. 0.0.0.0/0에서 10.0.0.0/8만 제외해도 모든 private network·cell이 격리되지는 않습니다.
+DNS 접근을 위해 kube-system의 일치하는 CoreDNS Pod로 TCP·UDP를 허용합니다. Node-local·Auto Mode system DNS는 경로가 달라 mode별 검증이 필요합니다. 임의 외부 traffic은 허용하지 않으므로 필요한 endpoint·egress gateway 규칙을 별도 검토합니다. 0.0.0.0/0에서 10.0.0.0/8만 제외해도 모든 private network·cell이 격리되지는 않습니다.
 
 [NetworkPolicy semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
@@ -736,7 +736,7 @@ data:
 
 ### Argo CD ApplicationSet
 
-세 대안은 기존 Argo CD·ApplicationSet controller, label을 갖춘 명시적으로 등록된 접근 가능한 cluster, repository credential, repo·destination·resource kind를 제한한 사전 AppProject가 필요합니다. 예제 repo·revision은 소유 값으로 바꿉니다. 생성 Application은 수동 sync이며 자동 sync·prune 전에 대상·manifest를 검토합니다. Generator가 EKS cluster를 생성하지는 않습니다.
+세 대안은 기존 Argo CD·ApplicationSet controller, label을 갖춘 명시적으로 등록된 접근 가능한 cluster, repository credential, repo·destination·resource kind를 제한한 사전 AppProject가 필요합니다. 예제 repo·revision은 소유 값으로 바꿉니다. 생성된 Application은 수동 sync이며 자동 sync·prune 전에 대상·manifest를 검토합니다. Generator가 EKS cluster를 생성하지는 않습니다.
 
 #### Cluster generator
 
@@ -1270,7 +1270,7 @@ Pod target은 clusterIdentifier·namespace·selector로 식별합니다. **aws:e
   "roleArn": "arn:aws:iam::123456789012:role/owned-fis-test"
 }
 ```
-예시 destination CIDR은 검토한 test 의존성으로 바꿉니다. Network action에는 privileged·root fault injection이 필요하며 Fargate·bridge network는 지원하지 않습니다. IPv4 대상이므로 ALL·IPv4 CIDR도 IPv6를 장애 처리하지 않습니다. 현재 readonly-root-filesystem·container 보안 제약을 확인하고 이 예제를 위해 production 보안을 낮추지 않습니다. FIS는 injector Pod를 사용하고 pod-delete 외 action은 ephemeral container를 사용합니다. Process 종료가 Pod spec의 변경 불가능한 ephemeral-container 기록을 지우지는 않습니다.
+예시 destination CIDR은 검토한 test 의존성으로 바꿉니다. Network action에는 privileged·root fault injection이 필요하며 Fargate·bridge network는 지원하지 않습니다. IPv4 대상이므로 ALL·IPv4 CIDR도 IPv6에 장애를 주입하지 않습니다. 현재 readonly-root-filesystem·container 보안 제약을 확인하고 이 예제를 위해 production 보안을 낮추지 않습니다. FIS는 injector Pod를 사용하고 pod-delete 외 action은 ephemeral container를 사용합니다. Process 종료가 Pod spec의 변경 불가능한 ephemeral-container 기록을 지우지는 않습니다.
 
 #### One subnet network disruption
 
@@ -1546,7 +1546,7 @@ kubectl --context "$KUBE_CONTEXT" -n resilience-demo \
 
 ### Game Day Framework
 
-주입 전 abort threshold·독립 observer·정확한 recovery owner를 정합니다. 실패·no-data도 포함해 감지와 복원을 분리 기록합니다. 다음 실험 전 현재 실험을 중단하고 duration 경과만으로 성공이라 하지 말고 실제 복구를 검증합니다.
+주입 전 abort threshold·독립 observer·정확한 recovery owner를 정합니다. 실패·no-data도 포함해 감지와 복원을 분리해 기록합니다. 다음 실험 전 현재 실험을 중단하고 duration 경과만으로 성공이라 하지 말고 실제 복구를 검증합니다.
 
 Game Day는 체계적인 카오스 엔지니어링 실습입니다.
 

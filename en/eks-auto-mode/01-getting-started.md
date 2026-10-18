@@ -7,7 +7,7 @@ This chapter covers new-cluster creation and enabling Auto Mode on an existing c
 
 The examples use the commercial Seoul region and reviewed, pre-created IAM roles. They were checked with eksctl 0.229.0, Terraform 1.15.7/AWS provider 6.64.0, and CDK 2.269.0/constructs 10.5.0 using local validation and synthesis. **No live cluster was created or migrated during this audit.** IAM/SCP permissions, quotas, routing, instance availability and workload compatibility still need environment-specific verification. These examples are not a tested production deployment.
 
-EKS 1.36 is in standard support on the review date. The original Auto Mode feature floor of 1.29 does not establish current EKS support eligibility. Check the AWS version calendar before running an example. `STANDARD` upgrade policy allows automatic upgrade after standard support ends; it does not stop billing.
+EKS 1.36 is in standard support on the review date. The original Auto Mode feature floor of 1.29 does not establish current EKS support eligibility. Check the AWS version calendar before running an example. The `STANDARD` upgrade policy allows automatic upgrade after standard support ends; it does not stop billing.
 
 ## Prerequisites and IAM Roles
 

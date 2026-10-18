@@ -96,7 +96,7 @@
 
 **Answer: B) The statement has no match; absence differs from malformed fallback**
 
-**Explanation:** Missing headers do not invoke malformed fallback. An enclosing NOT could invert no match into match. Geo/ASN/rate use the first address; IP sets use their configured FIRST/LAST/ANY selection.
+**Explanation:** Missing headers do not invoke malformed fallback. An enclosing NOT could invert a no-match result into a match. Geo/ASN/rate use the first address; IP sets use their configured FIRST/LAST/ANY selection.
 
 </details>
 

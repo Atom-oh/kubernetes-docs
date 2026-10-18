@@ -197,7 +197,7 @@ Normal   Killing    kubelet  Container app failed liveness probe, will be restar
 ```
 
 - If the app is slow to start, add a **`startupProbe`** instead of inflating liveness `initialDelaySeconds` (liveness does not start until the startup probe succeeds).
-- A TCP refusal such as `Readiness probe failed: dial tcp 10.0.2.45:8080: connect: connection refused` means first check whether the container port and the probe port differ.
+- A TCP refusal such as `Readiness probe failed: dial tcp 10.0.2.45:8080: connect: connection refused` means you should first check whether the container port and the probe port differ.
 
 **Configuration reference errors**: strictly speaking not a crash loop; the pod stops at `CreateContainerConfigError`.
 
@@ -230,7 +230,7 @@ kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc> -o json |
 '
 ```
 
-An unset `ready` is unknown and must be interpreted as ready by consumers. `publishNotReadyAddresses: true` changes readiness filtering; proxies can also handle serving endpoints during termination. For Services without selectors, check manually managed EndpointSlices. The v1 Endpoints API is deprecated since Kubernetes 1.33; use EndpointSlice for new diagnostics.
+An unset `ready` is unknown and must be interpreted as ready by consumers. `publishNotReadyAddresses: true` changes readiness filtering; proxies can also handle serving endpoints during termination. For Services without selectors, check manually managed EndpointSlices. The v1 Endpoints API has been deprecated since Kubernetes 1.33; use EndpointSlice for new diagnostics.
 
 **Causes and fixes**:
 
@@ -245,7 +245,7 @@ An unset `ready` is unknown and must be interpreted as ready by consumers. `publ
 
 ### 5. Service is unreachable
 
-**Symptom**: containers show `1/1 Running`, yet `curl http://<svc>.<ns>.svc.cluster.local` times out/refuses, or name resolution fails.
+**Symptom**: containers show `1/1 Running`, yet `curl http://<svc>.<ns>.svc.cluster.local` times out or reports a refused connection, or name resolution fails.
 
 **Split the diagnosis into three layers**: (a) Service → pod mapping, (b) network policy, (c) DNS.
 

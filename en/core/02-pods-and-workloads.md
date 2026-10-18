@@ -557,7 +557,7 @@ spec:
 
 ### Node Affinity
 
-Node affinity is a rule that restricts Pods to be scheduled on specific nodes:
+Node affinity is a rule that restricts Pod scheduling to specific nodes:
 
 ```yaml
 apiVersion: v1

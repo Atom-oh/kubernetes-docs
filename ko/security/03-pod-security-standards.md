@@ -44,7 +44,7 @@ PodSecurityPolicy(PSP)는 Kubernetes 1.3에서 처음 도입된 Pod 보안 메�
 
 Pod Security Standards(PSS)와 Pod Security Admission(PSA)은 Kubernetes 1.22에서 알파로 도입되어, 1.23에서 베타, 1.25에서 GA(Generally Available)가 되었습니다.
 
-![PSP 사용 중단과1.25의 PSP 제거·PSA GA, 이후 정책 버전별 발전을 구분한 로드맵.](../.gitbook/assets/ko-security-03-pod-security-standards-0.png)
+![PSP 사용 중단과 1.25의 PSP 제거·PSA GA, 이후 정책 버전별 발전을 구분한 로드맵.](../.gitbook/assets/ko-security-03-pod-security-standards-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-03-pod-security-standards-0.html)
 
@@ -78,7 +78,7 @@ Request → authentication / authorization → mutating admission
 
 ### PSA 작동 방식
 
-![인증·인가된 Pod CREATE의 단순화한 흐름. PSA는 API 서버 내부 검사이며 다른 admission과 저장도 성공한 경우에만201로 응답한다.](../.gitbook/assets/ko-security-03-pod-security-standards-1.png)
+![인증·인가된 Pod CREATE의 단순화한 흐름. PSA는 API 서버 내부 검사이며 다른 admission과 저장도 성공한 경우에만 201로 응답한다.](../.gitbook/assets/ko-security-03-pod-security-standards-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-03-pod-security-standards-1.html)
 
@@ -512,7 +512,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 PSP에서 PSS로의 마이그레이션은 신중하게 계획하고 단계적으로 수행해야 합니다.
 
-![기존 enforce를 유지하면서 정책 차이를 분석하고 warn/audit·수정·목표 enforce를 검증하는 절차. PSP API 정리는1.24이하 과거 환경에만 적용한다.](../.gitbook/assets/ko-security-03-pod-security-standards-2.png)
+![기존 enforce를 유지하면서 정책 차이를 분석하고 warn/audit·수정·목표 enforce를 검증하는 절차. PSP API 정리는 1.24 이하 과거 환경에만 적용한다.](../.gitbook/assets/ko-security-03-pod-security-standards-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-03-pod-security-standards-2.html)
 
@@ -698,7 +698,7 @@ subprocess.run(base + [
 
 ### EKS의 PSA 기본 설정
 
-AWS는 EKS 1.23부터 PSA 기본 활성화, 세 모드의 클러스터 기본값 `privileged/latest`, 정적 예외 없음으로 설명합니다. 이 기본값 자체는 워크로드 강화 정책이 아닙니다. 플랫폼 도구나 관리자가 만든 namespace 레이블이 기본값을 바꾸므로 모든 namespace에 레이블이 없다고 가정하지 말고 실제 대상을 조회합니다.
+AWS는 EKS 1.23부터 PSA가 기본 활성화되며, 세 모드의 클러스터 기본값은 `privileged/latest`이고 정적 예외는 없다고 설명합니다. 이 기본값 자체는 워크로드 강화 정책이 아닙니다. 플랫폼 도구나 관리자가 만든 namespace 레이블이 기본값을 바꾸므로 모든 namespace에 레이블이 없다고 가정하지 말고 실제 대상을 조회합니다.
 
 ```bash
 kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
@@ -753,7 +753,7 @@ EKS Auto Mode 내장 노드 구성요소는 자체 관리 애드온과 다릅니
 
 ### EKS Terraform 예시
 
-앱 namespace 하나를 관리하는 조각입니다. Kubernetes provider 인증·대상 context는 별도로 구성·검토하며 provider 초기화·plan·apply는 실행하지 않았습니다. 기존 namespace는 소유자의 import/인수 절차를 따르고 Terraform/GitOps가 경쟁 소유하지 않게 합니다. 정책을 명시적으로 고정하며 시스템 namespace 레이블은 바꾸지 않습니다.
+앱 namespace 하나를 관리하는 조각입니다. Kubernetes provider 인증·대상 context는 별도로 구성·검토하며 provider 초기화·plan·apply는 실행하지 않았습니다. 기존 namespace는 소유자의 import/인수 절차를 따르고 Terraform/GitOps가 소유권을 두고 경쟁하지 않게 합니다. 정책을 명시적으로 고정하며 시스템 namespace 레이블은 바꾸지 않습니다.
 
 ```hcl
 # Provider authentication/context and ownership must be configured separately.
@@ -867,7 +867,7 @@ spec:
 
 ### Restricted 프로파일 상세
 
-Restricted는 Baseline에 허용 볼륨 종류·non-root 실행·명시적 seccomp·권한 상승 차단·ALL capability drop을 추가합니다. 추가할 수 있는 capability는 `NET_BIND_SERVICE`뿐이지만 이 8080 리스너에는 필요하지 않습니다. `readOnlyRootFilesystem`은 권장 강화이며 PSS 필수 조건이 아닙니다. `containerPort`는 메타데이터이며 Nginx 설정을 바꾸지 않습니다.
+Restricted는 Baseline에 허용 볼륨 종류·non-root 실행·명시적 seccomp·권한 상승 차단·ALL capability drop을 추가합니다. 추가할 수 있는 capability는 `NET_BIND_SERVICE`뿐이지만 이 8080 리스너에는 필요하지 않습니다. `readOnlyRootFilesystem`은 권장 보안 강화 설정이며 PSS 필수 조건이 아닙니다. `containerPort`는 메타데이터이며 Nginx 설정을 바꾸지 않습니다.
 
 ```yaml
 apiVersion: v1

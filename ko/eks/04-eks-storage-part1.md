@@ -108,7 +108,7 @@ Amazon EBS는 EC2 인스턴스에 연결할 수 있는 블록 수준 스토리�
 
 ### EBS CSI 드라이버 설치
 
-일반 Linux EC2 노드는 인프라 소유 관리 도구로 호환 EBS CSI add-on을 설치합니다. Auto Mode는 `ebs.csi.eks.amazonaws.com`으로 블록 스토리지를 관리하며 기존 `ebs.csi.aws.com` 볼륨은 다른 provisioner를 사용합니다. 이전은 바인딩된 PVC나 driver의 in-place 수정이 아닙니다. 검증한 backup/snapshot 복원 계획 또는 현재 [AWS 이전 가이드의 workload 중지·Retain·static PV/PVC 재생성 절차](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)로 기존 EBS volume을 재사용할 수 있습니다. 쓰기 재개 전에 backup 복구, volume/AZ/KMS 소유권, IAM/tag 권한, reclaim policy, finalizer와 새 binding을 검증하세요. Fargate Pod와 Hybrid Node에는 EBS를 마운트할 수 없습니다. 컨트롤러는 Fargate에 실행할 수 있지만 node plugin은 실행할 수 없으며 별도 배포·신원 설계가 필요합니다.
+일반 Linux EC2 노드에는 인프라 소유 관리 도구로 호환 EBS CSI add-on을 설치합니다. Auto Mode는 `ebs.csi.eks.amazonaws.com`으로 블록 스토리지를 관리하며 기존 `ebs.csi.aws.com` 볼륨은 다른 provisioner를 사용합니다. 이전은 바인딩된 PVC나 driver의 in-place 수정이 아닙니다. 검증한 backup/snapshot 복원 계획 또는 현재 [AWS 이전 가이드의 workload 중지·Retain·static PV/PVC 재생성 절차](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)로 기존 EBS volume을 재사용할 수 있습니다. 쓰기 재개 전에 backup 복구, volume/AZ/KMS 소유권, IAM/tag 권한, reclaim policy, finalizer와 새 binding을 검증하세요. Fargate Pod와 Hybrid Node에는 EBS를 마운트할 수 없습니다. 컨트롤러는 Fargate에서 실행할 수 있지만 node plugin은 실행할 수 없으며 별도 배포·신원 설계가 필요합니다.
 
 아래 공통 절차는 EBS 또는 EFS용입니다. 이 절에서는 `CSI_ADDON_NAME=aws-ebs-csi-driver`로 설정하고 목록에서 정확한 호환 add-on 버전을 선택합니다. AWS API는 버전에 문자열 `latest`를 사용하지 않습니다. `eksctl --version latest`는 AWS API 값이 아닌 별도 도구 편의 기능입니다.
 ```bash
@@ -280,7 +280,7 @@ spec:
 
 ### EBS 볼륨 스냅샷
 
-이 리소스를 사용하기 전에 snapshot CRD, 호환 snapshot controller와 드라이버 snapshotter 구성 요소를 준비합니다. 관리 소유자 또는 검토한 고정 릴리스를 사용하고 floating `master` 매니페스트를 적용하지 마세요. Class의 driver는 볼륨 provisioner와 일치해야 합니다. 스냅샷은 블록 시점 복사이므로 일관성에 따라 애플리케이션 quiesce/flush 또는 지원 백업 절차가 필요합니다.
+이 리소스를 사용하기 전에 snapshot CRD, 호환 snapshot controller와 드라이버 snapshotter 구성 요소를 준비합니다. 관리 소유자 또는 검토한 고정 릴리스를 사용하고 floating `master` 매니페스트를 적용하지 마세요. Class의 driver는 볼륨 provisioner와 일치해야 합니다. 스냅샷은 특정 시점의 블록 복사본이므로 일관성에 따라 애플리케이션 quiesce/flush 또는 지원 백업 절차가 필요합니다.
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
@@ -310,7 +310,7 @@ kubectl -n storage-demo wait --for=jsonpath='{.status.readyToUse}'=true \
   volumesnapshot/ebs-snapshot --timeout=300s
 kubectl -n storage-demo get volumesnapshot ebs-snapshot -o yaml
 ```
-복원은 스냅샷 네임스페이스에서 `status.restoreSize` 이상 크기의 새 PVC를 만들고 소비 Pod로 데이터를 검증합니다. 아래20Gi는 스냅샷이 그 이하라는 전제입니다. `WaitForFirstConsumer`이면 스케줄링 전 복원 PVC가 Pending인 것은 정상일 수 있습니다. Snapshot `deletionPolicy`는 PV `reclaimPolicy`와 별개이며 Retain은 백엔드 스냅샷을 남겨 별도 정리가 필요합니다.
+복원은 스냅샷 네임스페이스에서 `status.restoreSize` 이상 크기의 새 PVC를 만들고 소비 Pod로 데이터를 검증합니다. 아래 20Gi는 스냅샷이 그 이하라는 전제입니다. `WaitForFirstConsumer`이면 스케줄링 전 복원 PVC가 Pending인 것은 정상일 수 있습니다. Snapshot `deletionPolicy`는 PV `reclaimPolicy`와 별개이며 Retain은 백엔드 스냅샷을 남겨 별도 정리가 필요합니다.
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -333,7 +333,7 @@ spec:
 
 ### EBS 볼륨 확장
 
-StorageClass가 확장을 허용하고 드라이버·파일 시스템이 지원해야 합니다. 이10Gi 예제에서는 소유 관리 도구로 PVC 요청만20Gi로 늘립니다. 축소하거나 PV capacity를 수동 변경하여 확장을 흉내 내지 마세요. PVC 조건·용량과 마운트된 파일 시스템을 확인하며 `FileSystemResizePending`이면 문서화된 재마운트·재시작 경로가 필요할 수 있습니다.
+StorageClass가 확장을 허용하고 드라이버·파일 시스템이 지원해야 합니다. 이 10Gi 예제에서는 소유 관리 도구로 PVC 요청만 20Gi로 늘립니다. 축소하거나 PV capacity를 수동 변경하여 확장을 흉내 내지 마세요. PVC 조건·용량과 마운트된 파일 시스템을 확인하며 `FileSystemResizePending`이면 문서화된 재마운트·재시작 경로가 필요할 수 있습니다.
 ```bash
 set -euo pipefail
 kubectl -n storage-demo get pvc ebs-claim -o yaml
@@ -375,7 +375,7 @@ Amazon EFS는 완전 관리형 NFS 파일 시스템으로, 여러 EC2 인스턴�
 
 `efs-ap` 동적 프로비저닝은 **기존** 파일 시스템에 access point를 만듭니다. 파일 시스템과 mount target은 네트워크·스토리지 소유자가 생성합니다. 아래 선택적 CLI 예제는 새 암호화 Regional 파일 시스템과 **서로 다른 AZ 두 개**에 mount target을 하나씩 생성합니다. 실제 클라이언트 AZ의 서브넷을 선택하고 추가 AZ는 모든 서브넷이 아닌 AZ당 target 하나로 확장합니다. 이미 IaC가 관리하는 파일 시스템은 기존 소유자의 절차를 사용하세요.
 
-운영자 권한, 정확한 리전·계정, 클라이언트 SG와 DNS/NFS 경로를 먼저 준비합니다. 모호한 Name 태그 검색 대신 반환된 ID를 저장하고 쓰기 전에 VPC/AZ를 검증하며 부분 실패 기록을 남깁니다. 고유하고 안정적인 creation token은 해당 요청 소유입니다. 기존 token 응답이 다른 파일 시스템을 인계·변경할 권한은 아닙니다. 생성을 무조건 반복하지 말고 부분 생성 리소스를 검토·조정하세요.
+운영자 권한, 정확한 리전·계정, 클라이언트 SG와 DNS/NFS 경로를 먼저 준비합니다. 모호한 Name 태그 검색 대신 반환된 ID를 저장하고 쓰기 전에 VPC/AZ를 검증하며 부분 실패 기록을 남깁니다. 고유하고 안정적인 creation token은 해당 요청 소유입니다. 기존 token에 대한 응답이 다른 파일 시스템을 인계·변경할 권한을 부여하는 것은 아닙니다. 생성을 무조건 반복하지 말고 부분 생성 리소스를 검토·조정하세요.
 ```bash
 set -euo pipefail
 umask 077

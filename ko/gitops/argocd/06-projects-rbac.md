@@ -23,7 +23,7 @@ AppProject는 ArgoCD에서 Application을 논리적으로 그룹화하고 접근
 
 AppProject는 Argo CD가 관리하는 소스·대상·리소스와 API 권한을 제한합니다. Kubernetes RBAC, Pod Security Admission, NetworkPolicy, ResourceQuota를 대신하는 격리 장치는 아닙니다. Pod 종류를 거부해도 Deployment가 만드는 privileged Pod까지 막지는 못합니다.
 
-예제의 URL·그룹·클러스터·Namespace는 실제 환경에 맞게 준비해야 합니다. 애플리케이션 팀의 Namespace는 플랫폼 팀이 미리 만들고 보안·쿼터 정책을 소유합니다. 아래 팀/환경 프로젝트는 클러스터 범위 리소스를 허용하지 않습니다. 별도의 platform 프로젝트는 신뢰하는 관리자 전용입니다. 여러 전체 AppProject 예시는 독립된 대안이며, 같은 이름의 정의를 연속 적용하지 않습니다.
+예제의 URL·그룹·클러스터·Namespace는 실제 환경에 맞게 준비해야 합니다. 애플리케이션 팀의 Namespace는 플랫폼 팀이 미리 만들고 보안·쿼터 정책을 소유합니다. 아래 팀/환경 프로젝트는 클러스터 범위 리소스를 허용하지 않습니다. 별도의 platform 프로젝트는 신뢰하는 관리자 전용입니다. AppProject 전체 예시는 각각 독립된 대안이며, 같은 이름의 정의를 연속 적용하지 않습니다.
 
 ### 기본 프로젝트 vs 커스텀 프로젝트
 
@@ -517,7 +517,7 @@ data:
 
 ### Microsoft Entra ID 그룹 매핑
 
-Entra 앱 등록에서 groups claim과 사용자/그룹 할당을 설정하고 실제 Object ID를 사용합니다. requestedIDTokenClaims만으로 그룹 설정이 생성되지는 않습니다. clientSecret 참조는 argocd-secret의 해당 키를 별도로 준비합니다. direct OIDC callback은 /auth/callback이며 Dex SAML의 /api/dex/callback과 다릅니다.
+Entra 앱 등록에서 groups claim과 사용자/그룹 할당을 설정하고 실제 Object ID를 사용합니다. requestedIDTokenClaims만으로 그룹 설정이 생성되지는 않습니다. clientSecret을 참조하려면 argocd-secret의 해당 키를 별도로 준비합니다. direct OIDC callback은 /auth/callback이며 Dex SAML의 /api/dex/callback과 다릅니다.
 
 200개 초과 그룹에서는 overage claim이 올 수 있습니다. 3.5.4의 azure.enableUserGroupOverageClaim은 기본 false이며, 필요한 경우 User.Read 위임 권한과 Graph 연결을 준비해 명시적으로 활성화합니다. Graph 실패가 로그인 실패로 이어질 수 있으므로 아래 단순 예제와 별도로 검토합니다.
 

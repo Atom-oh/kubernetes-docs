@@ -36,7 +36,7 @@ violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
 }
 ```
 
-Learn Rego sets, comprehensions and input contracts, then select a policy engine against your requirements and tests.
+Learn Rego sets, comprehensions and input contracts, then select a policy engine based on your requirements and tests.
 
 </details>
 
@@ -447,7 +447,7 @@ violation contains {"msg": "Explicit root user"} if {
 }
 ```
 
-Results from each violation rule are added to a set, and if there's one or more violations, the overall policy fails.
+Results from each violation rule are added to a set, and if there are one or more violations, the overall policy fails.
 
 These partial-set violation rules contribute to the same set. Conditions inside each body are AND; conflicting complete-document rules are not resolved by OR. This fragment is not a full PSS implementation.
 

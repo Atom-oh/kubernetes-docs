@@ -14,7 +14,7 @@
 - [ ] jq·curl 설치 (`sudo apt-get install jq curl` 또는 `sudo dnf install jq curl`)
 - [ ] [Linux 운영 기술](../../basics/02-linux-advanced.md) 학습 완료
 
-같은 Bash 터미널에서 순서대로 실행합니다. 파일은 전용 임시 디렉터리에 만듭니다. 축약한 PodList는 JSON 파싱 fixture이며 적용할 매니페스트가 아니므로 Kubernetes 클러스터가 필요하지 않습니다. Running phase만으로 Ready를 뜻하지는 않습니다.
+같은 Bash 터미널에서 순서대로 실행합니다. 파일은 전용 임시 디렉터리에 만듭니다. 축약한 PodList는 JSON 파싱 fixture이며 적용할 매니페스트가 아니므로 Kubernetes 클러스터가 필요하지 않습니다. Running phase만으로 Ready 상태라고 볼 수는 없습니다.
 
 ---
 
@@ -105,7 +105,7 @@ K8s 운영에 유용한 간단한 쉘 스크립트를 작성합니다.
 ### 단계
 
 **Step 2.1: Health Check 스크립트**
-스크립트는 의도적으로 HTTP200을 요구합니다. 타임아웃을 검증하고200헤더를 받았더라도 curl 전송이 실패하면 실패로 처리합니다. curlrc·proxy 설정 없이 직접 요청합니다. 앱이 실제 엔드포인트를 제공해야 하며 스크립트가 생성하지는 않습니다. Kubernetes에서는 가능하면 native httpGet probe를 사용하세요. 그 성공 범위200–399는 이 스크립트와 다릅니다. exec probe라면 이미지에 Bash·curl이 있어야 하고 probe 타임아웃이 스크립트 예산을 수용해야 합니다.
+스크립트는 의도적으로 HTTP200을 요구합니다. 타임아웃을 검증하고 200 헤더를 받았더라도 curl 전송이 실패하면 실패로 처리합니다. curlrc·proxy 설정 없이 직접 요청합니다. 앱이 실제 엔드포인트를 제공해야 하며 스크립트가 생성하지는 않습니다. Kubernetes에서는 가능하면 native httpGet probe를 사용하세요. 그 성공 범위 200–399는 이 스크립트의 성공 범위와 다릅니다. exec probe라면 이미지에 Bash·curl이 있어야 하고 probe 타임아웃이 스크립트 예산을 수용해야 합니다.
 
 ```bash
 cat > "${LINUX_ADVANCED_LAB_DIR:?Run Step 1.1 first}/health-check.sh" << 'SCRIPT'
@@ -141,7 +141,7 @@ chmod +x "${LINUX_ADVANCED_LAB_DIR:?Run Step 1.1 first}/health-check.sh"
 ```
 
 **Step 2.2: 로그 분석 스크립트**
-아래6줄의 합성 fixture를 명시적으로 생성합니다. 분석기는 전달한 일반 파일을 읽기만 하고 경로가 틀렸을 때 데이터를 만들지 않습니다. timestamp와 level이1·2번째 필드인 정적 스냅샷을 전제로 합니다. 메시지에 ERROR라는 단어가 들어 있는 INFO 레코드는 오류로 세면 안 됩니다.
+아래 6줄의 합성 fixture를 명시적으로 생성합니다. 분석기는 전달한 일반 파일을 읽기만 하고 경로가 틀렸을 때 데이터를 만들지 않습니다. timestamp와 level이 1·2번째 필드인 정적 스냅샷을 전제로 합니다. 메시지에 ERROR라는 단어가 들어 있는 INFO 레코드는 오류로 세면 안 됩니다.
 
 ```bash
 # Explicit synthetic fixture, not a copy of production logs.
@@ -181,7 +181,7 @@ bash "${LINUX_ADVANCED_LAB_DIR:?Run Step 1.1 first}/log-analyzer.sh" "${LINUX_AD
 
 - `awk`로 level 필드를 정확히 비교할 수 있습니다. 메시지의 단어와는 다릅니다.
 - `grep -E`는 확장 정규식을 사용하며 예제에 Perl 정규식 지원은 필요하지 않습니다.
-- fixture는6개 레코드로 INFO3·WARN1·ERROR2입니다. 실제 서비스 로그가 아닌 합성 데이터의 개수입니다.
+- fixture는 6개 레코드로 INFO 3·WARN 1·ERROR 2입니다. 실제 서비스 로그가 아닌 합성 데이터의 개수입니다.
 </details>
 
 ### 검증

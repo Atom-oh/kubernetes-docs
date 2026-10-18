@@ -170,7 +170,7 @@ Falco is a CNCF project that uses eBPF to detect runtime anomalous behavior. It 
 **Answer: C) 512 bytes**
 
 **Explanation:**
-eBPF programs have a 512 byte stack size limit. To work around this limit, you need to use maps like PERCPU_ARRAY to allocate larger buffers. This limit exists to ensure kernel safety.
+eBPF programs have a 512-byte stack size limit. To work around this limit, you need to use maps like PERCPU_ARRAY to allocate larger buffers. This limit exists to ensure kernel safety.
 
 </details>
 
@@ -212,7 +212,7 @@ Hubble is a network observability platform built into Cilium that collects data 
 
 </details>
 
-14. Which dedicated capability was introduced for privileged BPF operations in Linux5.8?
+14. Which dedicated capability was introduced for privileged BPF operations in Linux 5.8?
 
 <details>
 <summary>View Answer</summary>
@@ -224,7 +224,7 @@ CAP_BPF authorizes privileged BPF operations, while CAP_SYS_ADMIN remains a comp
 
 </details>
 
-15. Which CNCF energy exporter historically used eBPF and was rewritten in0.10.0 to use host/proc and/sys resource/power data?
+15. Which CNCF energy exporter historically used eBPF and was rewritten in 0.10.0 to use host /proc and /sys resource/power data?
 
 <details>
 <summary>View Answer</summary>
@@ -232,7 +232,7 @@ CAP_BPF authorizes privileged BPF operations, while CAP_SYS_ADMIN remains a comp
 **Answer: Kepler (Kubernetes-based Efficient Power Level Exporter)**
 
 **Explanation:**
-Kepler0.10+ no longer requires CAP_BPF. It attributes node power/energy using host resource data and hardware sensors. Current examples include kepler_container_cpu_joules_total and kepler_pod_cpu_watts; hardware and experimental GPU support vary. Legacy0.9 metrics and deployment instructions differ.
+Kepler 0.10+ no longer requires CAP_BPF. It attributes node power/energy using host resource data and hardware sensors. Current examples include kepler_container_cpu_joules_total and kepler_pod_cpu_watts; hardware and experimental GPU support vary. Legacy 0.9 metrics and deployment instructions differ.
 
 </details>
 
@@ -263,7 +263,7 @@ sudo bpftool prog dump jited id 123
 
 </details>
 
-17. Write a bpftrace one-liner command to trace TCP connections occurring from all processes on the system in real-time.
+17. Write a bpftrace one-liner command to trace TCP connections from all processes on the system in real-time.
 
 <details>
 <summary>View Answer</summary>
@@ -288,7 +288,7 @@ sudo bpftrace -e 'kprobe:tcp_connect { @[comm] = count(); }'
 ```
 
 **Explanation:**
-bpftrace is a DTrace-style high-level tracing language that allows you to trace the system with simple one-liners. `kprobe:tcp_connect` triggers when the kernel's `tcp_connect` function is called. `comm` represents the process name and `pid` represents the process ID. The sock:inet_sock_set_state example observes established connections, including passive ones; its execution context is not reliable attribution to the initiating process. The kprobe examples count connect attempts, not guaranteed successful handshakes.
+bpftrace is a DTrace-style high-level tracing language that allows you to trace the system with simple one-liners. `kprobe:tcp_connect` triggers when the kernel's `tcp_connect` function is called. `comm` represents the process name and `pid` represents the process ID. The sock:inet_sock_set_state example observes established connections, including passive ones; its execution context is not a reliable basis for attribution to the initiating process. The kprobe examples count connect attempts, not guaranteed successful handshakes.
 
 </details>
 
@@ -337,7 +337,7 @@ Main advantages of eBPF over kernel modules and their benefits in Kubernetes env
 - **Kubernetes benefit**: The same networking and security solutions can be deployed across heterogeneous node environments (nodes with different kernel versions). Compatibility issues are greatly reduced during cluster upgrades or node additions.
 
 **3. Dynamic loading (Program load/unload without reboot)**
-- **Advantage**: eBPF programs can be dynamically loaded and unloaded without system reboot. Functionality can be added or changed at runtime.
+- **Advantage**: eBPF programs can be dynamically loaded and unloaded without a system reboot. Functionality can be added or changed at runtime.
 - **Kubernetes benefit**: Network policies, security rules, and observability settings can be applied immediately without node restarts. Changes to Cilium NetworkPolicy or Tetragon TracingPolicy are reflected in real-time, enabling security enhancements without operational interruption.
 
 **Additional advantages:**

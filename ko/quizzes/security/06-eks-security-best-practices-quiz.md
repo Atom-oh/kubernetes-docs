@@ -101,7 +101,7 @@
 
 **정답: C) Pod의 리소스 사용량 초과**
 
-**설명:** EKS 감사 분석·agent 기반 Runtime Monitoring·기본 GuardDuty 데이터 소스를 구분합니다. 활성화한 플랜과 플랫폼에 따라 범위가 다르며 ECS Fargate 지원은 EKS Fargate 지원이 아닙니다. CPU/메모리 한도 감시는 운영 메트릭 도구의 역할이고 탐지 결과가 없다고 침해가 없음을 입증하지 않습니다.
+**설명:** EKS 감사 분석·agent 기반 Runtime Monitoring·기본 GuardDuty 데이터 소스를 구분합니다. 활성화한 플랜과 플랫폼에 따라 범위가 다르며 ECS Fargate 지원은 EKS Fargate 지원이 아닙니다. CPU/메모리 한도 감시는 운영 메트릭 도구의 역할이고 탐지 결과가 없다는 사실만으로 침해가 없음을 입증할 수는 없습니다.
 
 </details>
 

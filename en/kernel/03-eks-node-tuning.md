@@ -29,7 +29,7 @@ Kernel defaults are chosen to **behave reasonably across a wide range of workloa
 4. Measure before and after under identical conditions
 5. Record the change and its rationale as code (see application paths below)
 
-For measurement method, see the fixtures in the [Pod Network Benchmark](../networking/06-pod-network-benchmark.md).
+For the measurement method, see the fixtures in the [Pod Network Benchmark](../networking/06-pod-network-benchmark.md).
 
 ## Application Paths: How to Change Kernel Parameters on EKS
 
@@ -281,7 +281,7 @@ More important long-term than the tuning itself is **how you manage it.**
 |---|---|
 | **Manage as code** (Karpenter `EC2NodeClass`, launch templates, Bottlerocket settings) | Prevents values differing per node |
 | **Record the rationale in comments** | If nobody knows "why this value" six months later, nobody can revert it |
-| **Separate node groups** | Different workload characters need different tuning. Do not force one profile on everything |
+| **Separate node groups** | Different workload characteristics need different tuning. Do not force one profile on everything |
 | **Pin the kernel or plan the transition** | `kernel-default` AMIs change kernel silently |
 | **Verify actual values after applying** | Especially conntrack (another party may overwrite it) |
 | **Measure before and after under identical conditions** | Tuning without measurement becomes superstition |

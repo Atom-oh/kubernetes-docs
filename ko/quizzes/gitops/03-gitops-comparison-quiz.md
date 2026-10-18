@@ -14,7 +14,7 @@
 **정답: B) ArgoCD**
 
 **설명:**
-ArgoCD는 애플리케이션 관리를 위한 내장된 기능이 풍부한 Web UI를 포함합니다. FluxCD는 CLI 우선이며 내장 UI를 포함하지 않지만, Weave GitOps와 같은 타사 UI를 추가할 수 있습니다.
+ArgoCD는 애플리케이션 관리를 위한 기능이 풍부한 내장 Web UI를 포함합니다. FluxCD는 CLI 우선이며 내장 UI를 포함하지 않지만, Weave GitOps와 같은 타사 UI를 추가할 수 있습니다.
 
 </details>
 
@@ -30,7 +30,7 @@ ArgoCD는 애플리케이션 관리를 위한 내장된 기능이 풍부한 Web 
 **정답: C) 둘 다 지원하지만 source 설정·layer·검증 기능은 다름**
 
 **설명:**
-FluxCD는 OCIRepository 소스 유형을 통해 OCI 아티팩트에 대한 일급 지원을 제공하여 OCI 호환 레지스트리에서 저장하고 배포할 수 있습니다. 현재 Argo CD도 일반 OCI Application 소스를 지원합니다. 각 도구의 버전·media type·인증·검증 설정을 확인해야 합니다.
+FluxCD는 OCIRepository 소스 유형을 통해 OCI 아티팩트에 대한 일급 지원을 제공하여 OCI 호환 레지스트리에 아티팩트를 저장하고 배포할 수 있습니다. 현재 Argo CD도 일반 OCI Application 소스를 지원합니다. 각 도구의 버전·media type·인증·검증 설정을 확인해야 합니다.
 
 </details>
 
@@ -62,7 +62,7 @@ Flux는 선택 설치하는 Image Reflector 및 Image Automation 컨트롤러를
 **정답: B) 시각적 배포 관리와 SSO 통합이 필요한 팀**
 
 **설명:**
-ArgoCD는 팀이 Web UI를 통한 시각적 피드백, 포괄적인 RBAC, 엔터프라이즈 ID 제공자와의 SSO 통합이 필요한 환경에서 뛰어납니다.
+ArgoCD는 팀에 Web UI를 통한 시각적 피드백, 포괄적인 RBAC, 엔터프라이즈 ID 제공자와의 SSO 통합이 필요한 환경에서 뛰어납니다.
 
 </details>
 

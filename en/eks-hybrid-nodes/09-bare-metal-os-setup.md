@@ -22,7 +22,7 @@ Removing a hypervisor can avoid its licensing and execution layer, but does not 
 | AL2023 | **Not the supported deployment path** | On-premises virtualized guest | nodeadm/YAML; AWS Support Plans do not cover AL2023 outside EC2 |
 | Bottlerocket VMware variants >=1.37.0 | **Not supported for Hybrid bare metal** | VMware vSphere, **x86_64** | Bottlerocket settings/bootstrap; govc manages VMware VMs |
 
-AWS supports the Hybrid integration with the listed Ubuntu/RHEL families, not the OS vendor's support obligations. Check specific versions, architecture and CNI/kernel requirements. AL2023 outside EC2 is a VM guest option, not a generic raw-image bare-metal recommendation. Bottlerocket's VMware Kubernetes variants begin at 1.28, which is a variant history, not a recommendation to run that old EKS version. SSM installations/upgrades require nodeadm >=1.0.19 because older releases use an outdated SSM signing key.
+AWS supports the Hybrid integration with the listed Ubuntu/RHEL families, not the OS vendor's support obligations. Check specific versions, architecture and CNI/kernel requirements. AL2023 outside EC2 is a VM guest option, not a generic raw-image bare-metal recommendation. Bottlerocket's VMware Kubernetes variants begin at 1.28, which reflects the variant history, not a recommendation to run that old EKS version. SSM installations/upgrades require nodeadm >=1.0.19 because older releases use an outdated SSM signing key.
 
 ## Cost Comparison Analysis
 
@@ -178,7 +178,7 @@ sudo journalctl -k --since '30 minutes ago' --no-pager -n 200
 if test -f /run/reboot-required.pkgs; then cat /run/reboot-required.pkgs; fi
 ```
 
-For the documented affected package/profile transition, the Ubuntu issue requires a restart to load the corrected profiles; schedule draining, reboot and workload checks through the lifecycle procedure. Do not generalize that every AppArmor edit requires reboot. `aa-remove-unknown` removes all loaded profiles absent from `/etc/apparmor.d`; it is not a targeted profile editor and is not the default repair command.
+For the documented affected package/profile transition, the Ubuntu issue requires a restart to load the corrected profiles; schedule draining, reboot and workload checks through the lifecycle procedure. Do not generalize that every AppArmor edit requires a reboot. `aa-remove-unknown` removes all loaded profiles absent from `/etc/apparmor.d`; it is not a targeted profile editor and is not the default repair command.
 
 ### RHEL 9
 

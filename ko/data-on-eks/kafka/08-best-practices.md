@@ -261,7 +261,7 @@ listener 노출 방식은 `type: internal`, `loadbalancer` 등입니다. 암호�
 `tls`라는 listener 노출 type은 없습니다.
 
 다음은 기존 `spec.kafka.listeners`에 **추가할 항목 하나**이며 Part 2의
-TLS/SCRAM listener를 대체하지 않습니다. 추가 전에 전체 Kafka 원하는 상태를 검토합니다.
+TLS/SCRAM listener를 대체하지 않습니다. 추가 전에 Kafka의 원하는 상태 전체를 검토합니다.
 
 ```yaml
 name: mtls
@@ -354,7 +354,7 @@ Auto Mode는 Part 2의 별도 `ebs.csi.eks.amazonaws.com` provisioner·topology
 암호화 설명으로 동적 PVC까지 추정하지 않습니다. StorageClass 파라미터 문서는
 encrypted 기본값을 false로 명시하므로 실제 EBS 볼륨의 암호화·KMS 키를 확인합니다.
 
-고객 관리 키는 `key/xxxxxxxx`가 아닌 실제 ARN과 역할·키 권한이 필요합니다.
+고객 관리 키를 사용하려면 `key/xxxxxxxx`가 아닌 실제 ARN과 역할·키 권한이 필요합니다.
 StorageClass나 계정 기본값 변경은 기존 볼륨을 소급 암호화하지 않습니다.
 영속 볼륨 교체 전에 지원되는 데이터·스냅샷 이전과 복구 접근을 검증합니다.
 

@@ -130,7 +130,7 @@ C-0036/0039 are not wildcard-RBAC/risky-ServiceAccount controls. Severity also d
 
 ### Custom Frameworks
 
---use-from loads a local policy object. A YAML name and unresolved list of control IDs is not necessarily an executable framework. The example policies/nsa.json is the tested bundle with license, provenance, and SHA records. Author/test new Rego controls with current CLI features such as kubescape policy init and kubescape policy test, then review organizational requirements.
+--use-from loads a local policy object. A YAML name and unresolved list of control IDs are not necessarily an executable framework. The example policies/nsa.json is the tested bundle with license, provenance, and SHA records. Author/test new Rego controls with current CLI features such as kubescape policy init and kubescape policy test, then review organizational requirements.
 
 <span id="scanning-pipeline-flow"></span>
 <span id="cluster-scanning"></span>
@@ -298,7 +298,7 @@ The [validated workflow](https://github.com/Atom-oh/kubernetes-docs/blob/main/ex
 
 ### GitLab and Jenkins
 
-Both systems can preserve the same scan-manifests.sh exit code and archive reports. Generic Kubescape JSON is not GitLab SAST or Code Quality schema. For integrated SAST reporting, validate current --format gitlab-sast output against the receiving version. Jenkins readJSON/publishHTML require plugins; do not publish an HTML file the pipeline never generated.
+Both systems can preserve the same scan-manifests.sh exit code and archive reports. Generic Kubescape JSON does not use the GitLab SAST or Code Quality schema. For integrated SAST reporting, validate current --format gitlab-sast output against the receiving version. Jenkins readJSON/publishHTML require plugins; do not publish an HTML file the pipeline never generated.
 
 <span id="eks-specific-controls"></span>
 <span id="aws-auth-configmap-analysis"></span>

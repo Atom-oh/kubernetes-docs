@@ -129,7 +129,7 @@ For more than four counted nodes, this version computes max(3, floor(N / 200) + 
 **Answer: C) Felix**
 
 **Explanation:**
-Felix handles local workload route/policy reconciliation. This does not mean it is the only component touching routes: the CNI creates initial interface/routes, and BIRD's kernel protocol can install BGP-learned routes. confd generates BIRD configuration; Typha distributes cached state.
+Felix handles local workload route/policy reconciliation. This does not mean it is the only component touching routes: the CNI creates the initial interface/routes, and BIRD's kernel protocol can install BGP-learned routes. confd generates BIRD configuration; Typha distributes cached state.
 
 </details>
 

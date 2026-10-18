@@ -217,7 +217,7 @@ spec:
       selectPolicy: Min
 ```
 
-여러 metric은 우선순위나 단순 “CPU fallback” 목록이 아닙니다. 각 metric이 요구한 복제본 중 **가장 큰 값**을 선택합니다. 일부 metric을 읽지 못하면 scale-down이 생략될 수 있으며, 유효한 다른 metric이 scale-up을 요구하면 증가할 수 있습니다.
+여러 metric은 우선순위나 단순 “CPU fallback” 목록이 아닙니다. 각 metric이 요구한 복제본 수 중 **가장 큰 값**을 선택합니다. 일부 metric을 읽지 못하면 scale-down이 생략될 수 있으며, 유효한 다른 metric이 scale-up을 요구하면 증가할 수 있습니다.
 
 모든 대상 Pod와 메트릭이 준비됐다고 가정하면 기본 비율은 `ceil(currentReplicas × currentMetric / targetMetric)`입니다. Pod당 RPS가 250이고 목표가 100일 때 4개 Pod의 계산상 목표는 10개입니다. 실제 값은 min/max, 준비되지 않은 Pod, 누락 메트릭, 허용 오차와 behavior에 따라 조정됩니다.
 
@@ -694,7 +694,7 @@ helm upgrade --install goldilocks fairwinds-stable/goldilocks \
 
 기존 VPA 설치를 재사용하고 dashboard는 ClusterIP로 둡니다. 검토용 접근은 인증된 내부 경로나 localhost port-forward로 제공합니다. Goldilocks namespace label을 활성화하면 VPA를 생성할 수 있으므로 직접 만든 VPA와 같은 target을 경쟁 관리하지 않게 합니다.
 
-HPA CPU utilization과 VPA CPU request 변경은 같은 계산의 분모에 영향을 줍니다. VPA `Initial`도 새 Pod의 request를 바꾸므로 이 문제를 자동으로 없애지 않습니다. 추천 모드로 시작하거나 HPA는 RPS/큐, VPA는 resource sizing을 맡기고 실제 동작을 검증합니다. CPU HPA와 memory-only VPA도 재시작·스케줄링 영향을 고려해야 합니다.
+HPA CPU utilization과 VPA CPU request 변경은 같은 계산의 분모에 영향을 줍니다. VPA `Initial`도 새 Pod의 request를 바꾸므로 이 문제를 자동으로 없애지 않습니다. 추천 모드로 시작하거나 HPA에는 RPS/큐, VPA에는 resource sizing을 맡기고 실제 동작을 검증합니다. CPU HPA와 memory-only VPA도 재시작·스케줄링 영향을 고려해야 합니다.
 
 ## 4. Pod Deletion Cost
 
@@ -706,7 +706,7 @@ metadata:
     controller.kubernetes.io/pod-deletion-cost: "100"
 ```
 
-현재 ReplicaSet 정렬은 미할당 여부, Pod phase, Ready 여부를 먼저 비교한 뒤 deletion cost를 고려합니다. 이후 동일 노드의 복제본 밀도, Ready 기간, 재시작과 생성 시각 등이 적용됩니다. 낮은 cost가 항상 모든 Pod보다 먼저 삭제된다고 단정하지 않습니다.
+현재 ReplicaSet 정렬은 미할당 여부, Pod phase, Ready 여부를 먼저 비교한 뒤 deletion cost를 고려합니다. 이후 동일 노드의 복제본 밀도, Ready 기간, 재시작과 생성 시각 등이 적용됩니다. cost가 낮은 Pod가 항상 다른 모든 Pod보다 먼저 삭제된다고 단정하지 않습니다.
 
 범위는 signed 32-bit 정수이며 기본값은 0입니다. **같은 ReplicaSet**에 속한 Pod와 현재 상태를 확인한 뒤 다음처럼 특정 Pod의 선호를 바꿀 수 있습니다.
 
@@ -724,7 +724,7 @@ kubectl --context "$TARGET_CONTEXT" annotate pod "$POD_B" -n scaling-demo \
 
 Pod template의 모든 Pod에 같은 cost를 넣으면 서로 간의 구분은 생기지 않습니다. 생성 시 admission webhook은 대개 아직 할당될 node를 모르고, `preStop`은 삭제 대상이 선택된 뒤이므로 사전에 삭제 순서를 바꾸는 시점이 아닙니다.
 
-동적 controller가 필요하면 binding 이후 처리, 정확한 controller 소유권·UID, namespace별 patch 권한, 누락 annotations, watch 재연결과 API 오류를 구현해야 합니다. Pod readiness를 작업 완료로 간주하거나 Job 진행률에 cost를 붙이면 Job 종료 순서가 바뀐다고 가정하지 않습니다.
+동적 controller가 필요하면 binding 이후 처리, 정확한 controller 소유권·UID, namespace별 patch 권한, 누락 annotations 처리, watch 재연결과 API 오류 처리를 구현해야 합니다. Pod readiness를 작업 완료로 간주하거나 Job 진행률에 cost를 붙이면 Job 종료 순서가 바뀐다고 가정하지 않습니다.
 
 ## 5. Spot 배치와 종료
 

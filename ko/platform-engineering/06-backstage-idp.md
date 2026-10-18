@@ -4,7 +4,7 @@
 
 ## 역할과 도입 범위
 
-Backstage는 Spotify에서 시작된 오픈소스 개발자 포털 프레임워크이며 Apache 2.0 라이선스입니다. CNCF 프로젝트 페이지는 Incubating 상태로 안내합니다. 포털은 IDP의 사용자 접점이 될 수 있지만 인프라·배포·정책·운영 자동화 전체를 대신하지 않습니다.
+Backstage는 Spotify에서 시작된 오픈소스 개발자 포털 프레임워크이며 Apache 2.0 라이선스입니다. CNCF 프로젝트 페이지는 Backstage를 Incubating 상태로 안내합니다. 포털은 IDP의 사용자 접점이 될 수 있지만 인프라·배포·정책·운영 자동화 전체를 대신하지 않습니다.
 
 Software Catalog는 소유권·API·리소스 관계를, Software Templates는 준비된 action과 skeleton의 실행을, TechDocs는 문서 빌드·게시·열람을 제공합니다. Search는 구성한 collator와 backend의 인덱싱이 필요합니다. 코드와 문서를 같은 저장소에 둔다고 내용이 자동으로 최신화되지는 않습니다.
 
@@ -189,7 +189,7 @@ ingress:
   enabled: false
 ```
 
-examples/platform/backstage/app-config-configmap.yaml은 위 app-config를 data.app-config.production.yaml로 담습니다. extraAppConfig의 filename과 configMapRef에 일치하며 Secret 값 대신 파일 참조만 포함합니다.
+examples/platform/backstage/app-config-configmap.yaml은 위 app-config를 data.app-config.production.yaml로 담습니다. extraAppConfig의 filename과 configMapRef와 일치하며 Secret 값 대신 파일 참조만 포함합니다.
 
 ```bash
 helm template backstage backstage/backstage   --version 2.10.2 --namespace backstage   -f examples/platform/backstage/helm-values.yaml
@@ -411,7 +411,7 @@ Kubernetes plugin에는 frontend/backend 등록, 실제 cluster endpoint와 CA, 
 
 서버 측 cluster credential은 Backstage 사용자들이 공유할 수 있습니다. multiTenant locator나 catalog의 namespace/id label은 접근 제어 경계가 아닙니다. 사용자별 데이터 범위, backend permission coverage와 cluster RBAC를 검토합니다. Kubernetes metadata label selector와 catalog annotation을 맞추고, Pod log는 pods/log 권한과 해당 기능 구성이 필요합니다. customResources에 KEDA/Karpenter를 추가하는 것만으로 전용 scaling UI가 생기지 않으며 실제 CRD status 필드를 사용해야 합니다.
 
-ArgoCD UI/plugin과 scaffolder action은 별도 package·등록·권한입니다. 검토한 Roadie UI package는 2.12.5입니다. 예전 @kubecost/backstage-plugin 및 backend package 이름은 npm에서 404를 반환했습니다. 설치 가능한 것처럼 명령을 유지하지 않고, 유지되는 integration 또는 검증한 비용 API adapter를 선정하도록 합니다. 비용 계산의 범위·배분·가격 기준도 UI 카드와 별도로 확인합니다.
+ArgoCD UI/plugin과 scaffolder action은 별도 package·등록·권한이 필요합니다. 검토한 Roadie UI package는 2.12.5입니다. 예전 @kubecost/backstage-plugin 및 backend package 이름은 npm에서 404를 반환했습니다. 설치 가능한 것처럼 명령을 유지하지 않고, 유지되는 integration 또는 검증한 비용 API adapter를 선정하도록 합니다. 비용 계산의 범위·배분·가격 기준도 UI 카드와 별도로 확인합니다.
 
 ## Permission Framework
 
@@ -510,7 +510,7 @@ CONDITIONAL은 catalog backend가 실제 entity 관계에 적용해야 합니다
 
 ## 감사·복구·업그레이드
 
-현재 core Auditor Service는 기본 rootLogger에 기록하고 backend.auditor.severityLogLevelMappings로 수준을 설정합니다. 기존 backend.audit나 backend.events.modules의 awsCloudWatch 설정이 자동 감사 수집을 구성한다는 설명은 잘못됐습니다. plugin이 실제로 발행하는 event와 누락 범위를 확인하고, 로그 pipeline을 별도로 CloudWatch 등으로 전달합니다. Secret·개인정보가 event metadata에 포함되지 않도록 설계합니다.
+현재 core Auditor Service는 기본 rootLogger에 기록하고 backend.auditor.severityLogLevelMappings로 수준을 설정합니다. 기존 backend.audit나 backend.events.modules의 awsCloudWatch 설정이 자동 감사 수집을 구성한다는 설명은 잘못됐습니다. plugin이 실제로 발행하는 event와 누락 범위를 확인하고, 로그를 별도 pipeline을 통해 CloudWatch 등으로 전달합니다. Secret·개인정보가 event metadata에 포함되지 않도록 설계합니다.
 
 PostgreSQL snapshot/PITR, TechDocs versioning·복제·lifecycle, config·catalog source와 secret provider 복구를 실제 RPO/RTO에 맞춰 설계합니다. 동일 DB의 schema 구분, Aurora replica 또는 S3 복제만으로 완전한 격리·backup·자동 failover가 되지는 않습니다. Aurora cluster 복원은 DB instance와 subnet/security group, endpoint 전환도 검증해야 합니다.
 

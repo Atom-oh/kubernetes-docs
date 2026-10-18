@@ -62,7 +62,7 @@ D. Every cause of Pod termination
 
 **Answer: B. Supported voluntary evictions according to workload availability**
 
-PDB admission constrains the Eviction API, as used by cooperating drain/maintenance/autoscaling operations. It does not protect direct Pod deletion, Deployment rolling updates/scale-down, or involuntary failures. Choose one of minAvailable or maxUnavailable; labels must match the intended controller workload. This example is an alternative to the percentage PDB below, not an overlapping policy to apply alongside it.
+PDB admission constrains the Eviction API, as used by cooperating drain/maintenance/autoscaling operations. It does not protect against direct Pod deletion, Deployment rolling updates/scale-down, or involuntary failures. Choose one of minAvailable or maxUnavailable; labels must match the intended controller workload. This example is an alternative to the percentage PDB below, not an overlapping policy to apply alongside it.
 
 ```yaml
 apiVersion: policy/v1
@@ -810,7 +810,7 @@ spec:
         value: 100
         periodSeconds: 15
 ```
-The CPU resource metric needs working Metrics Server and CPU requests on the relevant containers. Raising replicas cannot repair a leak, exhausted database or zonal volume constraint. Keep the replica field/GitOps/HPA ownership consistent.
+The CPU resource metric needs a working Metrics Server and CPU requests on the relevant containers. Raising replicas cannot repair a leak, exhausted database or zonal volume constraint. Keep the replica field/GitOps/HPA ownership consistent.
 
 For regular game days, use an owned scheduler or approved workflow that invokes reviewed individual experiments, records its exact target/ID, watches abort signals and verifies restoration before the next fault. The old 2024 ChaosSchedule snippet was both expired and not a CRD in Litmus 3.31.0; merely changing its dates would not fix it. A 99.99% claim requires actual SLI evidence and exercises, not just a weekly schedule.
 

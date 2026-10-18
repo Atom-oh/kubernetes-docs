@@ -7,7 +7,7 @@
 
 ## 청구 구성 요소
 
-EKS 클러스터 요금, EC2 사용량, **별도 Auto Mode 요금**, EBS, 로드 밸런서, NAT/데이터 전송, 관측 및 기타 워크로드 서비스를 포함합니다. Auto Mode compute 요금은 최소 1분·초 단위이며 EC2 구매 옵션과 독립적입니다. EC2 Savings Plans/RI 할인이 별도 Auto Mode 요금에 적용되는 것은 아닙니다.
+EKS 클러스터 요금, EC2 사용량, **별도 Auto Mode 요금**, EBS, 로드 밸런서, NAT/데이터 전송, 관측 및 기타 워크로드 서비스를 포함합니다. Auto Mode compute 요금은 최소 1분·초 단위로 부과되며 EC2 구매 옵션과 독립적입니다. EC2 Savings Plans/RI 할인이 별도 Auto Mode 요금에 적용되는 것은 아닙니다.
 
 ### 2026년 7월 GPU 요금 인하
 
@@ -343,7 +343,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$WORKLOAD_NAMESPACE"
   top pods --containers > "$WORK_DIR/container-usage.txt"
 ```
 
-Metrics 조회는 성공해야 하며 데이터 부재는 사용률 0이 아닙니다. 두 snapshot은 동시 관측도 아니고, 컨테이너 사용량이 scheduler의 전체 Pod request 계산도 아닙니다. Init/restartable-init 컨테이너, Pod-level resources와 overhead도 고려해야 합니다.
+Metrics 조회는 성공해야 하며 데이터 부재는 사용률 0이 아닙니다. 두 snapshot은 동시에 관측한 값도 아니고, 컨테이너 사용량은 scheduler의 전체 Pod request 계산 결과도 아닙니다. Init/restartable-init 컨테이너, Pod-level resources와 overhead도 고려해야 합니다.
 
 | 관측 | 검토할 조치 |
 |------|-------------|
@@ -354,7 +354,7 @@ Metrics 조회는 성공해야 하며 데이터 부재는 사용률 0이 아닙�
 
 ### 선택적인 Prometheus 검토 후보
 
-다음 info rule은 **단일 클러스터**, CPU core/memory byte로 정규화된 kube-state-metrics와 namespace/Pod/container label이 있는 컨테이너 수준 cAdvisor를 가정합니다. CPU query는 합계 `cpu="total"` series가 필요하므로 collector label을 확인하세요. Collector replica 중복·인프라 cgroup을 제외하고 양수 request 분모를 요구합니다. 여러 클러스터는 모든 group/join에 실제 cluster label을 포함하세요. Series 부재를 0으로 바꾸지 않습니다. 오래된 series·컨테이너 재생성 영향과 대표 이력도 검토합니다.
+다음 info rule은 **단일 클러스터**, CPU core/memory byte로 정규화된 kube-state-metrics와 namespace/Pod/container label이 있는 컨테이너 수준 cAdvisor를 가정합니다. CPU query는 합계 `cpu="total"` series가 필요하므로 collector label을 확인하세요. Collector replica 중복·인프라 cgroup을 제외하고 양수 request 분모를 요구합니다. 여러 클러스터에서는 모든 group/join에 실제 cluster label을 포함하세요. Series 부재를 0으로 바꾸지 않습니다. 오래된 series·컨테이너 재생성 영향과 대표 이력도 검토합니다.
 
 1시간 동안 30% 미만이라는 임계값은 검토 trigger 예시이며 자동 request 축소 권장이나 실측 절감이 아닙니다. Prometheus Operator 설치 후 namespace/rule selector를 맞춰 사용하세요.
 

@@ -4,7 +4,7 @@
 
 ## 객관식 문제
 
-1. **HTTP·DNS·gRPC 애플리케이션 동작은 개념적인 OSI 어느 계층에 해당하나요?**
+1. **HTTP·DNS·gRPC 애플리케이션 동작은 개념적인 OSI의 어느 계층에 해당하나요?**
    - A) L1
    - B) L2
    - C) L3
@@ -45,7 +45,7 @@
 
    **정답: C) Envoy**
 
-   Envoy 배포는 설치 값에 따릅니다. DNS는 Cilium DNS proxy를 사용하며 지원하지 않는 Kafka 규칙을 선언한다고 parser가 설치되지 않습니다.
+   Envoy 배포는 설치 값에 따릅니다. DNS는 Cilium DNS proxy를 사용하며 지원하지 않는 Kafka 규칙을 선언해도 parser가 설치되지는 않습니다.
 
    </details>
 
@@ -105,7 +105,7 @@
 
    **정답: D) 임의 요청 본문 내용**
 
-   Method·path와 지원 header 조건은 다릅니다. 값이 있는 headers 문자열은 일반 정규식이 아닌 리터럴입니다. Payload 검사는 별도로 설계한 애플리케이션·proxy 기능이 필요합니다.
+   Method·path와 지원 header 조건은 다릅니다. 값이 있는 headers 문자열은 일반 정규식이 아닌 리터럴입니다. Payload 검사에는 별도로 설계한 애플리케이션·proxy 기능이 필요합니다.
 
    </details>
 

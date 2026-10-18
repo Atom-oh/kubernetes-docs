@@ -18,9 +18,9 @@ Istio의 DNS 관리 기능을 통해 외부 서비스 접근 성능을 최적화
 
 ## DNS Proxy 개요
 
-Sidecar 모드에서 애플리케이션 DNS 요청은 **istio-agent의 Go DNS 서버**로 전달됩니다. Envoy의 HTTP/DNS listener가 응답하는 구조가 아닙니다. agent는 Istiod가 전달한 이름/IP 테이블에 있는 항목을 로컬에서 응답하고, 모르는 이름은 `/etc/resolv.conf`의 upstream resolver로 전달합니다. UDP와 TCP DNS를 지원하며 일반 sidecar DNS 포트는15053입니다.
+Sidecar 모드에서 애플리케이션 DNS 요청은 **istio-agent의 Go DNS 서버**로 전달됩니다. Envoy의 HTTP/DNS listener가 응답하는 구조가 아닙니다. agent는 Istiod가 전달한 이름/IP 테이블에 있는 항목을 로컬에서 응답하고, 모르는 이름은 `/etc/resolv.conf`의 upstream resolver로 전달합니다. UDP와 TCP DNS를 지원하며 일반 sidecar DNS 포트는 15053입니다.
 
-Ambient는 ztunnel이 DNS를 처리하며 Istio 1.25부터 DNS capture가 기본 활성화됩니다. Sidecar 모드는 여전히 명시적으로 켜야 합니다. DNS-over-HTTPS/TLS나 애플리케이션 자체 캐시는 일반53번 포트 capture와 별개의 동작입니다. 아래 EnvoyFilter/agent 진단 예제는 **sidecar 모드**를 대상으로 합니다.
+Ambient는 ztunnel이 DNS를 처리하며 Istio 1.25부터 DNS capture가 기본 활성화됩니다. Sidecar 모드는 여전히 명시적으로 켜야 합니다. DNS-over-HTTPS/TLS나 애플리케이션 자체 캐시는 일반 53번 포트 capture와 별개의 동작입니다. 아래 EnvoyFilter/agent 진단 예제는 **sidecar 모드**를 대상으로 합니다.
 
 ## DNS Proxy vs DNS Caching
 
@@ -73,7 +73,7 @@ metadata:
 
 ### 4. 리다이렉트와 응답 확인
 
-Pod netns의 DNS 리다이렉트는 설치 모드와 CNI에 따라 달라집니다. 기본 proxy 이미지에 bash/iptables/tcpdump나 net-admin 권한이 있다고 가정하지 마세요. 운영 Pod 권한을 높여 규칙을 읽는 대신 뒤의 agent 이름 테이블·DNS 질의·upstream endpoint 검사를 먼저 수행합니다. 필요하면 승인된 진단 환경에서 UDP/TCP53과15053 경로를 모두 확인합니다.
+Pod netns의 DNS 리다이렉트는 설치 모드와 CNI에 따라 달라집니다. 기본 proxy 이미지에 bash/iptables/tcpdump나 net-admin 권한이 있다고 가정하지 마세요. 운영 Pod 권한을 높여 규칙을 읽는 대신 뒤의 agent 이름 테이블·DNS 질의·upstream endpoint 검사를 먼저 수행합니다. 필요하면 승인된 진단 환경에서 UDP/TCP 53과 15053 경로를 모두 확인합니다.
 
 ## ServiceEntry 통합
 
@@ -172,7 +172,7 @@ spec:
 
 ### DNS 기반 upstream 갱신
 
-Istio 1.31은 일반 DNS cluster에 `respect_dns_ttl: true`를 설정하고 mesh의 기본 `dnsRefreshRate`는60초입니다. 성공한 응답은 DNS TTL을 사용하고 실패/TTL0 등은 생성된 resolver/cluster 설정에 따라 처리됩니다. 공식 DNS 개념 페이지의 “고정30초, 변경 불가” 문장은 이 릴리스 소스와 맞지 않으므로 실제 생성 값을 확인하세요.
+Istio 1.31은 일반 DNS cluster에 `respect_dns_ttl: true`를 설정하고 mesh의 기본 `dnsRefreshRate`는 60초입니다. 성공한 응답은 DNS TTL을 사용하고 실패/TTL0 등은 생성된 resolver/cluster 설정에 따라 처리됩니다. 공식 DNS 개념 페이지의 “고정 30초, 변경 불가” 문장은 이 릴리스 소스와 맞지 않으므로 실제 생성 값을 확인하세요.
 
 다음은 `default`의 `app: frontend`가 사용하는 **api.example.com:443 DNS cluster 하나**만 조정하는 저수준 대안입니다. `cluster.service`는 실제 이름과 일치해야 하며 glob 선택자가 아닙니다. root namespace에서 모든 cluster에 무차별 적용하지 않습니다.
 
@@ -205,7 +205,7 @@ spec:
 
 ### TTL·실패 갱신·resolver
 
-이 예제는 `respect_dns_ttl: true`를 유지하므로 모든 성공 조회를30초마다 강제하지 않습니다. `dns_failure_refresh_rate`는 실패 후 재시도 간격의 범위이며 DNS 레코드 TTL이나 stale 응답 보존 시간을 설정하지 않습니다. `dns_query_timeout`은 Cluster 필드가 아니며 resolver별 typed config를 검증해야 합니다. IPv4-only/AUTO를 무조건 덮어쓰지 않고 Istio가 선택한 IP family를 보존합니다.
+이 예제는 `respect_dns_ttl: true`를 유지하므로 모든 성공 조회를 30초마다 강제하지 않습니다. `dns_failure_refresh_rate`는 실패 후 재시도 간격의 범위이며 DNS 레코드 TTL이나 stale 응답 보존 시간을 설정하지 않습니다. `dns_query_timeout`은 Cluster 필드가 아니며 resolver별 typed config를 검증해야 합니다. IPv4-only/AUTO를 무조건 덮어쓰지 않고 Istio가 선택한 IP family를 보존합니다.
 
 `MERGE`로 protobuf의 기본값인 `false`를 설정해 기존 `respect_dns_ttl: true`를 지운다고 가정하지 마세요. DNS cluster 필드는 Envoy에서 일부 deprecated되었으나 Istio 1.31은 실제로 이 형식을 생성합니다. 이후 업그레이드에서는 DNS cluster extension과 resolver 구성이 바뀌었는지 재검증해야 합니다.
 
@@ -288,7 +288,7 @@ curl --fail --silent http://127.0.0.1:15020/stats/prometheus |
   grep '^istio_agent_dns_'
 ```
 
-agent의 `/debug/ndsz`는 localhost 요청만 허용하고 DNS 서버/이름 테이블이 없으면404를 반환할 수 있습니다. Envoy15000의 listener dump에서 agent15053을 찾는 것은 올바른 검사 방법이 아닙니다. `nslookup`이 앱에 없으면 도구를 기본 이미지에 임의 설치하거나 권한을 높이지 말고 기존 진단 절차를 사용합니다.
+agent의 `/debug/ndsz`는 localhost 요청만 허용하고 DNS 서버/이름 테이블이 없으면 404를 반환할 수 있습니다. Envoy 15000의 listener dump에서 agent 15053을 찾는 것은 올바른 검사 방법이 아닙니다. `nslookup`이 앱에 없으면 도구를 기본 이미지에 임의 설치하거나 권한을 높이지 말고 기존 진단 절차를 사용합니다.
 
 ### 일반적인 문제
 
@@ -318,7 +318,7 @@ curl --fail --silent http://127.0.0.1:15000/clusters
 curl --fail --silent http://127.0.0.1:15000/config_dump > envoy-config.json
 ```
 
-패킷 캡처가 필요하면 운영 정책에 따라 승인된 진단 컨테이너/노드 도구로 해당 Pod netns의 UDP/TCP53과15053을 관찰합니다. 기본 istio-proxy에 tcpdump·tar·캡처 권한이 있다고 가정하지 않습니다. DNS 이름도 민감할 수 있으므로 캡처 시간·대상·보관 범위를 제한하고 분석 후 처리 절차를 따릅니다.
+패킷 캡처가 필요하면 운영 정책에 따라 승인된 진단 컨테이너/노드 도구로 해당 Pod netns의 UDP/TCP 53과 15053을 관찰합니다. 기본 istio-proxy에 tcpdump·tar·캡처 권한이 있다고 가정하지 않습니다. DNS 이름도 민감할 수 있으므로 캡처 시간·대상·보관 범위를 제한하고 분석 후 처리 절차를 따릅니다.
 
 ## 모범 사례
 
@@ -373,13 +373,13 @@ spec:
 
 ### 3. DNS Cache TTL 설정
 
-DNS 레코드 TTL, 애플리케이션 캐시, agent 이름 테이블, Envoy endpoint 갱신을 각각 관찰합니다. CDN이라는 이유만으로300초, API라는 이유만으로10초를 모든 cluster에 설정하지 마세요. 권한이 있는 DNS zone에서는 실제 failover 목표와 query 부하에 맞는 TTL을 정하고, mesh에서는 ServiceEntry `exportTo`/Sidecar 범위를 줄여 불필요한 per-proxy 조회를 줄일 수 있습니다. 두 설정은 네트워크 보안 경계가 아닙니다.
+DNS 레코드 TTL, 애플리케이션 캐시, agent 이름 테이블, Envoy endpoint 갱신을 각각 관찰합니다. CDN이라는 이유만으로 300초, API라는 이유만으로 10초를 모든 cluster에 설정하지 마세요. 권한이 있는 DNS zone에서는 실제 failover 목표와 query 부하에 맞는 TTL을 정하고, mesh에서는 ServiceEntry `exportTo`/Sidecar 범위를 줄여 불필요한 per-proxy 조회를 줄일 수 있습니다. 두 설정은 네트워크 보안 경계가 아닙니다.
 
 특정 DNS cluster의 실패 갱신 조정이 필요하면 앞의 workload/host/port 한정 예제를 사용하고 생성된 설정과 실패 시 동작을 시험합니다.
 
 ### 4. 모니터링 메트릭
 
-다음은 Istio 1.31 **sidecar agent**의 실제 metric입니다.15020의 `/stats/prometheus`를 수집하고 `namespace`/`pod` target label을 붙인 Prometheus를 가정합니다. ztunnel이나 Envoy DFP cache metric과 혼용하지 않습니다.
+다음은 Istio 1.31 **sidecar agent**의 실제 metric입니다.15020의 `/stats/prometheus`를 수집하고 `namespace`/`pod` target label을 붙이는 Prometheus를 가정합니다. ztunnel이나 Envoy DFP cache metric과 혼용하지 않습니다.
 
 ```promql
 # Application queries handled by the sidecar agent

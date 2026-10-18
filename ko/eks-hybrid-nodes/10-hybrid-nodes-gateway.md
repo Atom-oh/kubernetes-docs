@@ -21,7 +21,7 @@ EKS Hybrid Nodes Gateway는 **2026년 4월 21일 정식 출시(GA)** 된 오픈�
 
 ### 학습 목표
 
-이 문서를 완료하면 다음을 이해하고 수행할 수 있습니다:
+이 문서를 학습하면 다음을 이해하고 수행할 수 있습니다:
 
 1. Hybrid Nodes Gateway의 아키텍처와 VXLAN 터널링 메커니즘 이해
 2. Cilium VTEP(Virtual Tunnel Endpoint)와 CiliumVTEPConfig CRD 구성
@@ -45,7 +45,7 @@ EKS Hybrid Nodes Gateway는 **2026년 4월 21일 정식 출시(GA)** 된 오픈�
 | 비용 | Cluster·연결·인프라·운영 비용 | Gateway 소프트웨어 요금 없음. EC2·해당 Auto Mode·전송·storage 등은 별도 |
 | 복잡도 | BGP 구성, 방화벽 규칙, NAT 등 | Helm 차트 하나로 설치 |
 
-> **핵심 가치**: Hybrid Nodes Gateway는 추가 요금 없이 사용 가능한 오픈소스 프로젝트입니다. EC2·storage·데이터 전송·private 연결·관측성 비용은 별도이며, Gateway 노드를 Auto Mode로 운영할 때만 해당 노드의 Auto Mode 관리 요금이 더해집니다. Gateway 노드는 Auto Mode와 관리형/자체 관리 노드 그룹 모두 가능합니다.
+> **핵심 가치**: Hybrid Nodes Gateway는 추가 요금 없이 사용 가능한 오픈소스 프로젝트입니다. EC2·storage·데이터 전송·private 연결·관측성 비용은 별도이며, Gateway 노드를 Auto Mode로 운영할 때만 해당 노드의 Auto Mode 관리 요금이 더해집니다. Gateway 노드는 Auto Mode와 관리형/자체 관리 노드 그룹 모두에서 운영할 수 있습니다.
 
 ---
 
@@ -194,7 +194,7 @@ Lease 관련 주요 파라미터:
 | `--leader-election-renew-deadline` | 2s | 리더 갱신 deadline |
 | `--leader-election-retry-period` | 1s | Lease 획득 재시도 간격 |
 
-표는 binary flag입니다. chart 1.0.2는 `leaderElection` values 객체를 지원하지 않으므로 해당 YAML을 추가하는 것만으로 값이 바뀌지 않습니다.
+표의 파라미터는 binary flag입니다. chart 1.0.2는 `leaderElection` values 객체를 지원하지 않으므로 해당 YAML을 추가하는 것만으로 값이 바뀌지 않습니다.
 
 #### 6. VPC 라우트 테이블 자동 관리
 
@@ -300,7 +300,7 @@ Gateway workload role, EC2 node role, 운영자의 provisioning/cleanup 권한�
 
 Gateway runtime은 `ec2:DescribeRouteTables`·`ec2:DescribeInstances`·`ec2:CreateRoute`·`ec2:ReplaceRoute`를 사용합니다. Describe에는 `Resource: "*"`가 필요하므로 Region을 제한하고, route 쓰기는 정확한 route-table ARN과 VPC condition으로 제한합니다. 종료된 라우트 삭제는 운영자 작업이며 runtime 권한이 아닙니다.
 
-아래 정책은 account·Region·VPC·route-table ID를 검토한 inventory로 바꾼 후 `gateway-permissions.json`으로 저장합니다. 식별자는 예시이며 이번 감사에서 생성한 리소스가 아닙니다. 이 정책은 지정 table 안에서 수정할 destination CIDR까지 제한하지 않습니다. Route table을 보안 경계로 취급하고 Gateway values와 ServiceAccount를 사용할 권한도 통제합니다.
+아래 정책의 account·Region·VPC·route-table ID를 검토한 inventory에 맞게 바꾼 후 `gateway-permissions.json`으로 저장합니다. 식별자는 예시이며 이번 감사에서 생성한 리소스가 아닙니다. 이 정책은 지정 table 안에서 수정할 destination CIDR까지 제한하지 않습니다. Route table을 보안 경계로 취급하고 Gateway values와 ServiceAccount를 사용할 권한도 통제합니다.
 
 ```json
 {
@@ -461,7 +461,7 @@ autoMode:
   enabled: false  # MNG/self-managed. Set true only for prepared Auto Mode nodes.
 ```
 
-그 밖에 `image.repository`·`image.tag`·`image.pullPolicy`와 이름 helper를 지원합니다. `replicaCount`·`nodeSelector`·`resources`·`affinity`·`topologySpreadConstraints`·`serviceAccount.annotations`·`leaderElection`·`logLevel`·`metrics`·`extraEnv`·사용자 volume values는 1.0.2 템플릿에 연결되어 있지 않습니다. YAML을 받았다는 사실이 설정 적용을 의미하지 않습니다. Workload identity는 별도로 연결합니다. 다른 설정에 관리하는 post-renderer가 필요하면 최종 Deployment와 업그레이드 동작을 검토합니다.
+그 밖에 `image.repository`·`image.tag`·`image.pullPolicy`와 이름 helper를 지원합니다. `replicaCount`·`nodeSelector`·`resources`·`affinity`·`topologySpreadConstraints`·`serviceAccount.annotations`·`leaderElection`·`logLevel`·`metrics`·`extraEnv`·사용자 volume values는 1.0.2 템플릿에 연결되어 있지 않습니다. YAML을 받았다는 사실이 설정 적용을 의미하지 않습니다. Workload identity는 별도로 연결합니다. 다른 설정을 관리하는 post-renderer가 필요하면 최종 Deployment와 업그레이드 동작을 검토합니다.
 
 두 모드 모두 hostNetwork·NET_ADMIN·필수 host anti-affinity·선호 AZ anti-affinity를 사용하며 Service·ServiceMonitor·PDB는 만들지 않습니다. Auto Mode 전략은 maxSurge=1/maxUnavailable=0, 다른 노드는 0/1입니다. 어느 전략도 리더를 인식한 교체나 무중단 forwarding을 보장하지 않습니다. Auto Mode surge에는 host anti-affinity를 만족할 추가 적격 노드가 필요합니다.
 
@@ -498,7 +498,7 @@ kubectl --context "$KUBE_CONTEXT" -n eks-hybrid-nodes-gateway logs \
   -l app.kubernetes.io/name=eks-hybrid-nodes-gateway --all-containers=true --tail=50
 ```
 
-Running·readiness·leader gauge만으로 forwarding 성공을 판단하지 않습니다. 명시적으로 선택한 cloud/Hybrid workload에서 양방향 Pod IP, Hybrid endpoint를 가진 ClusterIP, 실제 webhook과 반환 트래픽을 시험합니다. 테스트 서버는 실제 해당 포트를 listen해야 합니다. 로그는 비공개로 보관하고 공유 전 workload 민감 자료를 제거합니다.
+Running·readiness·leader gauge만으로 forwarding 성공을 판단하지 않습니다. 명시적으로 선택한 cloud/Hybrid workload에서 양방향 Pod IP, Hybrid endpoint를 가진 ClusterIP, 실제 webhook과 반환 트래픽을 시험합니다. 테스트 서버는 실제로 해당 포트에서 listen해야 합니다. 로그는 비공개로 보관하고 공유 전 workload 민감 자료를 제거합니다.
 
 ### 노드 레이블링
 
@@ -963,7 +963,7 @@ kubectl --context "$KUBE_CONTEXT" -n eks-hybrid-nodes-gateway \
 
 #### 업그레이드 시 주의 사항
 
-Deployment rolling update는 리더를 인식하지 않으므로 standby부터 교체한다고 보장하지 않습니다. chart 1.0.2는 `strategy` value도 연결하지 않습니다. Host anti-affinity/capacity, Lease와 route/VTEP 반영으로 트래픽 중단이 생길 수 있습니다. 이전 5–10초·40–55초는 실측 또는 upgrade SLO가 아닙니다. Helm rollback도 CRD/config 호환성과 앱·라우트 검증이 필요하며 외부 AWS route 전체를 자동 복구하지 않습니다.
+Deployment rolling update는 리더를 인식하지 않으므로 standby Pod를 먼저 교체한다고 보장하지 않습니다. chart 1.0.2는 `strategy` value도 연결하지 않습니다. Host anti-affinity/capacity, Lease와 route/VTEP 반영으로 트래픽 중단이 생길 수 있습니다. 이전 5–10초·40–55초는 실측 또는 upgrade SLO가 아닙니다. Helm rollback도 CRD/config 호환성과 앱·라우트 검증이 필요하며 외부 AWS route 전체를 자동 복구하지 않습니다.
 
 ### 제거와 외부 라우트 정리
 
@@ -1021,7 +1021,7 @@ VPC의 aggregate Pod route가 활성 Gateway primary ENI를 가리키고, Gatewa
 
 #### Phase 2: Cilium VTEP 활성화
 
-위에서 검토한 AWS chart/minimum branch와 VTEP=true/L7=false profile을 사용합니다. 기존 selector/IPAM·release 값을 보존하고 CNI 변경 자체의 중단 가능성을 계획합니다.
+위에서 검토한 AWS chart/minimum branch와 VTEP=true/L7=false profile을 사용합니다. 기존 selector/IPAM·release 값을 보존하고 CNI 변경 자체의 중단 가능성에 대비합니다.
 
 #### Phase 3: 게이트웨이 설치
 
@@ -1061,7 +1061,7 @@ hostNetwork 트래픽에 대한 일반 Pod NetworkPolicy 동작은 구현에 따
 
 #### 1. 인스턴스 타입 선택
 
-Sustained/burst bandwidth·PPS·packet size·CPU·memory·장애 여유를 평가합니다. 이전 node-count별 instance 표는 미검증 추정입니다. AWS 현재 Gateway operations 표의 c6in.2xlarge는 up to 40 Gbps이며, 최대치가 지속 처리량을 보장하지 않습니다.
+Sustained/burst bandwidth·PPS·packet size·CPU·memory·장애 여유를 평가합니다. 이전 node-count별 instance 표는 미검증 추정입니다. AWS의 현재 Gateway operations 표의 c6in.2xlarge는 up to 40 Gbps이며, 최대치가 지속 처리량을 보장하지 않습니다.
 
 #### 2. MTU 최적화
 
@@ -1127,7 +1127,7 @@ HA 구성 (2 인스턴스):
 
 #### 1. GitOps와의 통합
 
-Argo CD에 Helm OCI repository(enableOCI=true)와 제한된 AppProject/destination 접근을 먼저 등록합니다. 이 예제는 valuesObject를 포함하므로 chart에 없는 values.yaml 파일을 요구하지 않습니다. 실제 CIDR·table ID·node 모드로 바꾸고 node/CNI/IAM 준비와 render/diff 검토 후 동기화합니다. 자동 prune/selfHeal가 외부 AWS route 정리나 안전한 cutover를 대신하지 않습니다.
+Argo CD에 Helm OCI repository(enableOCI=true)와 제한된 AppProject/destination 접근을 먼저 등록합니다. 이 예제는 valuesObject를 포함하므로 chart에 없는 values.yaml 파일을 요구하지 않습니다. 실제 CIDR·table ID·node 모드로 바꾸고 node/CNI/IAM 준비와 render/diff 검토 후 동기화합니다. 자동 prune/selfHeal이 외부 AWS route 정리나 안전한 cutover를 대신하지 않습니다.
 
 ```yaml
 # Assumes an existing restricted AppProject and Helm OCI repository registration (enableOCI=true).
@@ -1162,7 +1162,7 @@ spec:
 
 #### 2. Terraform과의 통합
 
-기존 node/network/IAM stack에 다음 fragment를 연결합니다. 변수·provider 버전·cluster 접근과 실제 node/CNI 준비를 별도로 검증합니다. Bare EC2의 tag는 Kubernetes node label이 아니며 AMI만 지정한다고 cluster에 join하지 않습니다. Instance profile, bootstrap과 primary ENI 설정을 제공하지 않는 예제를 전체 배포로 사용하지 않습니다. `aws_instance.user_data`에는 plain user data를, base64를 사용한다면 해당 `user_data_base64` 속성을 구분합니다.
+기존 node/network/IAM stack에 다음 fragment를 연결합니다. 변수·provider 버전·cluster 접근과 실제 node/CNI 준비를 별도로 검증합니다. Bare EC2의 tag는 Kubernetes node label이 아니며 AMI만 지정한다고 cluster에 join하지 않습니다. Instance profile, bootstrap과 primary ENI 설정을 제공하지 않는 예제를 전체 배포로 사용하지 않습니다. `aws_instance.user_data`에는 plain user data를 지정하고, base64를 사용한다면 해당 `user_data_base64` 속성을 사용합니다.
 
 ```hcl
 # Fragment after node/CNI/IAM preparation; provider configuration and variables are external.
@@ -1193,7 +1193,7 @@ CI는 action/tool 버전을 검토·고정하고 최소 권한 OIDC role, 제한
 
 ## 전체 배포 예제: 처음부터 끝까지
 
-다음은 앞의 검토된 구성 요소를 연결하는 절차이며 실행 완료한 production recipe가 아닙니다. 기존 중복 예제의 1.31/1.31.2 출력과 가짜 subnet/table ID는 실측·실제 inventory가 아니었습니다. 확인된 현재 inventory와 지원 버전을 사용합니다.
+다음은 앞의 검토된 구성 요소를 연결하는 절차이며 실행을 완료한 production recipe가 아닙니다. 기존 중복 예제의 1.31/1.31.2 출력과 가짜 subnet/table ID는 실측·실제 inventory가 아니었습니다. 확인된 현재 inventory와 지원 버전을 사용합니다.
 
 ### 환경 가정
 

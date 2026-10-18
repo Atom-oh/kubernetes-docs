@@ -39,7 +39,7 @@ These differences drive real operational decisions. Covering them is the purpose
 | 3 | [Amazon Managed Blockchain](./03-managed-blockchain.md) | What does managed take off your hands, and what can it not do? What does the shift in AWS's ledger services imply? |
 | 4 | [Financial Services Perspective](./04-financial-services.md) | What are the real issues in consortium governance, privacy, regulation, and integration with existing infrastructure? |
 
-Document 1 is prerequisite for 2–4. If blockchain is familiar you can start at 2, but **the "where the operational characteristics come from" section in document 1** is needed to follow document 2.
+Document 1 is a prerequisite for 2–4. If blockchain is familiar you can start at 2, but **the "where the operational characteristics come from" section in document 1** is needed to follow document 2.
 
 ## A Note on Accuracy
 

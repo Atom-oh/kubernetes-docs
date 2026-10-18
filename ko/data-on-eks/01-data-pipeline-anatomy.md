@@ -65,7 +65,7 @@ BI, 보고서, ML 학습·추론용 feature store와 데이터 API가 결과를 
 
 ## EKS 관점
 
-Kafka·Spark·Flink는 해당 Operator/배포 방식을, Airflow는 Helm chart와 executor 및 KubernetesPodOperator 같은 task 방식을 사용합니다. Airflow의 “Operator”와 Kubernetes controller 패턴은 같은 용어 사용이 아닙니다. 저장·분석 서비스와 관리형 작업 공간은 클러스터 밖의 AWS 서비스와 연결할 수 있습니다. 운영 책임과 [관리형 선택지](./README.md)를 비교하십시오.
+Kafka·Spark·Flink는 해당 Operator/배포 방식을, Airflow는 Helm chart와 executor 및 KubernetesPodOperator 같은 task 방식을 사용합니다. Airflow의 “Operator”는 Kubernetes controller 패턴과 같은 의미가 아닙니다. 저장·분석 서비스와 관리형 작업 공간은 클러스터 밖의 AWS 서비스와 연결할 수 있습니다. 운영 책임과 [관리형 선택지](./README.md)를 비교하십시오.
 
 ## 참고
 

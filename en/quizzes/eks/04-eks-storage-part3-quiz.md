@@ -77,7 +77,7 @@ Check the driver’s actual Pod Identity/IRSA role and KMS grants, not just the 
 
 **Answer: A**
 
-Measure the I/O pattern, queueing, latency and instance limits, then select storage/performance settings. This10,000IOPS io2 class is an illustrative allocation, not evidence that it meets a database SLO:
+Measure the I/O pattern, queueing, latency and instance limits, then select storage/performance settings. This 10,000 IOPS io2 class is an illustrative allocation, not evidence that it meets a database SLO:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -95,7 +95,7 @@ parameters:
   iops: '10000'
 ```
 
-Multi-Attach is not a generic read-only performance switch. The reviewed EBS CSI path uses io2, RWX and raw Block with application coordination, as described in Part2. A hostPath named /mnt/instance-store does not establish that it is physical instance store; use a prepared node-local storage design and treat its data as ephemeral. EC2 instance-store CSI is a real supported integration, with its own prerequisites.
+Multi-Attach is not a generic read-only performance switch. The reviewed EBS CSI path uses io2, RWX and raw Block with application coordination, as described in Part 2. A hostPath named /mnt/instance-store does not establish that it is physical instance store; use a prepared node-local storage design and treat its data as ephemeral. EC2 instance-store CSI is a real supported integration, with its own prerequisites.
 
 Do not write noop to a guessed nvme0n1 scheduler: that may be the root/another disk, and modern blk-mq names differ. Identify the device and supported scheduler before a separately reviewed change. Filesystem choice and mount options also need workload evidence; neither XFS nor ext4 guarantees a performance result.
 
@@ -144,7 +144,7 @@ Do not replace the chapter’s retained class with this temporary class as a bla
 
 IAM/KMS, network access, Kubernetes API authorization, admission and filesystem identities protect different operations. A region-only EC2 action list is not automatically a complete least-privilege CSI policy. Use the actual driver role policy and required key grants. A fake kmsKeyId does not create a KMS key.
 
-Namespaced Roles can grant PVC access, not cluster-scoped PV access. A Pod creator may be able to mount namespace PVCs even without reading their object through this particular Role; protect workload creation and tenant boundaries too. The chapter’s namespace reader is an object inspection example:
+Namespaced Roles can grant PVC access, not cluster-scoped PV access. A Pod creator may be able to mount namespace PVCs even without reading their objects through this particular Role; protect workload creation and tenant boundaries too. The chapter’s namespace reader is an object inspection example:
 
 ```yaml
 apiVersion: v1
@@ -184,7 +184,7 @@ roleRef:
   name: pvc-reader
 ```
 
-EFS SGs apply to real mount targets/clients, not an invented securityGroupSelector fragment. Use the actual TCP2049 path; Lustre/EFA rules differ. Pod Security Standards do not establish cloud encryption or IAM permissions.
+EFS SGs apply to real mount targets/clients, not an invented securityGroupSelector fragment. Use the actual TCP 2049 path; Lustre/EFA rules differ. Pod Security Standards do not establish cloud encryption or IAM permissions.
 
 </details>
 
@@ -279,7 +279,7 @@ HTTPS/TLS protects transport; --sse does not enable it. Use the proper endpoint 
 
 **Answer: Check units, periods, missing data and representative scenarios**
 
-For a300-second interval,30,000 completed read operations represent100 read IOPS.1,500 accumulated read seconds divided by30,000 operations is0.05seconds/op, or50milliseconds. Overlapping operations can make accumulated time exceed wall-clock time. Use aligned periods and handle zero/no samples separately.
+For a 300-second interval, 30,000 completed read operations represent 100 read IOPS.1,500 accumulated read seconds divided by 30,000 operations is 0.05 seconds/op, or 50 milliseconds. Overlapping operations can make accumulated time exceed wall-clock time. Use aligned periods and handle zero/no samples separately.
 
 ```bash
 set -euo pipefail
@@ -518,15 +518,15 @@ rules:
   - list
 ```
 
-Review scale-to-zero controller templates, Jobs/CronJobs, retained claims, indirect/ephemeral references, backup policy and actual backend IDs separately. No current Pod reference is not a deletion decision. If later scheduling this report, use a real reviewed image containing the script/client, bounded execution, scoped credentials and a defined report destination; storage-tools:latest and ellipsis commands are not an implementation.
+Review scale-to-zero controller templates, Jobs/CronJobs, retained claims, indirect/ephemeral references, backup policy and actual backend IDs separately. The absence of a current Pod reference is not a deletion decision. If later scheduling this report, use a real reviewed image containing the script/client, bounded execution, scoped credentials and a defined report destination; storage-tools:latest and ellipsis commands are not an implementation.
 
-Automate observation first, then bounded change proposals and independently validated recovery. EBS/PVC growth is not arbitrary scale-down. Keep audit evidence, lifecycle ownership and explicit approval/operational controls appropriate to the deployment rather than a script that silently destroys resources.
+Automate observation first, then bounded change proposals and independently validated recovery. EBS/PVC growth is not arbitrary scale-down. Keep audit evidence, lifecycle ownership and explicit approval/operational controls appropriate to the deployment rather than using a script that silently destroys resources.
 
 </details>
 
 ## Review Your Answers
 
-There are15 questions, including10 multiple-choice questions. Use incorrect answers to identify topics to revisit; a quiz score alone does not establish production expertise. For hands-on answers, assess assumptions, resource scope and validation evidence as well as syntax.
+There are 15 questions, including 10 multiple-choice questions. Use incorrect answers to identify topics to revisit; a quiz score alone does not establish production expertise. For hands-on answers, assess assumptions, resource scope and validation evidence as well as syntax.
 
 ## References
 

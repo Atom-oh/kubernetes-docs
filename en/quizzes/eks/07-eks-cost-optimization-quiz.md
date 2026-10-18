@@ -47,7 +47,7 @@ The most effective strategy for optimizing compute costs in Amazon EKS is to com
    - Pod-level scaling through Horizontal Pod Autoscaler
    - Resource adjustment based on demand
 
-The NodePool/EC2NodeClass require an installed compatible Karpenter controller/CRDs, scoped controller IAM, node role, discovery resources, and interruption queue. EKS 1.36 requires Karpenter >=1.13 in the current matrix. `al2023@latest` is a moving selector: review resolved AMIs and pin a tested alias/AMI for a controlled rollout. Instance lists and capacity limits are illustrative and are not a spending cap. Managed node groups handle their own interruption path; avoid a second handler over Karpenter-managed nodes.
+The NodePool/EC2NodeClass require an installed compatible Karpenter controller and CRDs, scoped controller IAM, a node role, discovery resources, and an interruption queue. EKS 1.36 requires Karpenter >=1.13 in the current matrix. `al2023@latest` is a moving selector: review resolved AMIs and pin a tested alias/AMI for a controlled rollout. Instance lists and capacity limits are illustrative and are not a spending cap. Managed node groups handle their own interruption path; avoid a second handler over Karpenter-managed nodes.
 
 The HPA requires resource metrics and requests; with CPU and memory targets it selects the largest desired replica count. The VPA below is **Off** to provide recommendations without changing those denominators. `Auto` is deprecated in favor of explicit modes such as `Recreate`; automatic CPU/memory changes must be coordinated with HPA. A preStop hook consumes the termination grace period and cannot guarantee a Spot deadline or successful cleanup.
 
@@ -1769,7 +1769,7 @@ The CUR command below creates a **legacy CUR**, not a Cost Explorer dashboard or
    ```
 
 3. **Kubecost Installation and Configuration**:
-Use the checked Kubecost 3.3.1 installation in the [source guide](../../eks/07-eks-cost-optimization.md), or OpenCost 1.121.2/chart 2.5.31 in [EKS06 question 6](06-eks-monitoring-logging-quiz.md). Kubecost 3.x uses ClickHouse/direct finops-agent collection; 2.x Prometheus values and command-line license tokens are not this setup. Reuse one owned deployment and review its migration, licensing, and storage requirements.
+Use the checked Kubecost 3.3.1 installation in the [source guide](../../eks/07-eks-cost-optimization.md), or OpenCost 1.121.2/chart 2.5.31 in [EKS06 question 6](06-eks-monitoring-logging-quiz.md). Kubecost 3.x uses ClickHouse/direct finops-agent collection; 2.x Prometheus values and command-line license tokens are not part of this setup. Reuse one owned deployment and review its migration, licensing, and storage requirements.
 
 4. **Legacy CUR Delivery Setup**:
    ```bash

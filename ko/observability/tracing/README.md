@@ -29,7 +29,7 @@
 
 Trace는 같은 TraceID를 공유하는 span을 묶습니다. Parent-child 관계는 그 trace에 인과적으로 연결된 작업을 표현합니다. 누락된 계측이나 데이터 손실 때문에 빈 구간이 있을 수 있습니다.
 
-다음은 root 시작을 0으로 한 **가상 시간표**입니다. 단위는 ms입니다.
+다음은 root 시작 시점을 0으로 한 **가상 시간표**입니다. 단위는 ms입니다.
 
 | Span | 시작 | 종료 | Duration |
 |---|---:|---:|---:|
@@ -139,7 +139,7 @@ Sampling은 보관량과 오버헤드를 줄일 수 있지만 trace로 답할 �
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-4.html)
 
-10%/90%는 설정한 확률이며 적은 요청에서 정확한 개수를 보장하지 않습니다. 그림은 계측·전파·전달 성공을 가정합니다. “수집”이 모든 child span의 조회 가능성을 무조건 보장하지는 않습니다.
+10%/90%는 설정한 확률이며 요청 수가 적을 때 정확한 개수를 보장하지 않습니다. 그림은 계측·전파·전달 성공을 가정합니다. “수집”이 모든 child span의 조회 가능성을 무조건 보장하지는 않습니다.
 
 표준 환경변수를 지원하는 SDK/autoconfiguration에서는 다음과 같이 설정할 수 있습니다.
 
@@ -242,7 +242,7 @@ public final class TraceMdc {
 }
 ```
 
-필요한 OpenTelemetry/SLF4J dependency와 logging backend를 갖춘 뒤 `TraceMdc.run(() -> logger.info("Processing order"));`처럼 사용합니다. Encoder/pattern에 `traceId`, `spanId`를 포함해야 하며 MDC에 값을 넣는 것만으로 출력되지 않습니다.
+필요한 OpenTelemetry/SLF4J dependency와 logging backend를 갖춘 뒤 `TraceMdc.run(() -> logger.info("Processing order"));`처럼 사용합니다. Encoder/pattern에 `traceId`, `spanId`를 포함해야 하며 MDC에 값을 넣는 것만으로 값이 출력되지는 않습니다.
 
 Validity 검사로 비활성 context의 all-zero ID가 기록되지 않게 합니다. MDC는 thread-local이며 비동기 작업으로 OpenTelemetry context·MDC를 전달하려면 해당 framework의 기능이 필요합니다. 이 helper는 동기 logging scope를 다루며 모든 thread hand-off를 해결하지 않습니다.
 

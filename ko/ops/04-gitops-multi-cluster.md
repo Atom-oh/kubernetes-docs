@@ -26,7 +26,7 @@ Blue/Green은 클러스터 식별자입니다. 아래 예제의 워커 NodePool�
 3. 대상 EKS의 인증 모드를 확인하고 대상 역할의 Access Entry를 준비합니다. `demo-app` namespace의 필요한 리소스만 허용하는 access policy/RBAC와, 인프라 관리용 NodePool 권한을 구분합니다. 아래 예제에서 namespace는 미리 만듭니다.
 4. Hub에서 대상 private API endpoint로의 DNS·라우팅·보안 그룹 접근을 확인합니다. IAM 권한이 있어도 네트워크가 없으면 연결되지 않습니다.
 
-구체적인 역할·Access Entry 절차는 [Argo CD 설치](../gitops/argocd/01-installation.md)와 [EKS 접근 관리](../eks/02-eks-cluster-creation-part3.md)를 사용합니다. `aws-auth`의 `mapRoles` 전체를 덮어쓰거나 기본적으로 `system:masters`를 부여하지 않습니다.
+구체적인 역할·Access Entry 절차는 [Argo CD 설치](../gitops/argocd/01-installation.md)와 [EKS 접근 관리](../eks/02-eks-cluster-creation-part3.md)를 참고합니다. `aws-auth`의 `mapRoles` 전체를 덮어쓰거나 기본적으로 `system:masters`를 부여하지 않습니다.
 
 Argo CD 3.5.5의 `awsAuthConfig.roleARN` 경로는 대상 역할을 AssumeRole하지만 별도의 ExternalId를 설정하는 필드가 없습니다. 대상 trust에 전달되지 않는 `sts:ExternalId` 조건을 넣으면 인증이 실패합니다. 그런 조건이 필요한 환경은 이를 지원하는 별도 인증 경로를 설계해야 합니다.
 

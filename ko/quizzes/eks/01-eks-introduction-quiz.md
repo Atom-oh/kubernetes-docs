@@ -50,7 +50,7 @@ EKS의 주요 이점:
 
 **정답: B) AWS가 관리하는 계정의 여러 가용 영역에 걸쳐 배포**
 
-**설명:** Amazon EKS 클러스터의 컨트롤 플레인은 AWS가 관리하는 계정의 여러 가용 영역에 걸쳐 배포됩니다. 이는 EKS의 핵심 관리형 서비스 측면 중 하나입니다.
+**설명:** Amazon EKS 클러스터의 컨트롤 플레인은 AWS가 관리하는 계정의 여러 가용 영역에 걸쳐 배포됩니다. 이는 EKS의 관리형 서비스로서의 핵심 특징 중 하나입니다.
 
 EKS 컨트롤 플레인 배포의 주요 특징:
 
@@ -87,7 +87,7 @@ Bottlerocket은 컨테이너 노드용 운영체제입니다. 독립적인 서�
 4. **EKS Auto Mode**: AWS가 노드 프로비저닝·확장·교체를 자동화하는 실제 EKS 기능입니다.
 5. **Hybrid Nodes**: 온프레미스/엣지 머신을 AWS 관리형 컨트롤 플레인에 연결합니다.
 
-일반 EC2 노드의 수요 기반 확장은 Cluster Autoscaler나 자체 관리형 Karpenter를 별도로 구성할 수 있습니다.
+일반 EC2 노드의 수요 기반 확장을 위해 Cluster Autoscaler나 자체 관리형 Karpenter를 별도로 구성할 수 있습니다.
 
 </details>
 
@@ -599,7 +599,7 @@ intro_kubectl top nodes
 
 **4. AWS Load Balancer Controller 설치**
 
-정책·컨트롤러·차트는 3.5.0에 맞췄습니다. 노드 역할에 여러 애드온의 권한을 몰아주지 않고 IRSA 역할을 사용합니다. 명시한 리전/VPC ID로 IMDS 자동 탐색에 의존하지 않습니다. 서브넷 태그·보안 그룹·서비스 할당량은 별도로 확인합니다.
+정책·컨트롤러·차트는 3.5.0에 맞췄습니다. 노드 역할에 여러 애드온의 권한을 몰아주지 않고 IRSA 역할을 사용합니다. 명시한 리전/VPC ID를 사용해 IMDS 자동 탐색에 의존하지 않습니다. 서브넷 태그·보안 그룹·서비스 할당량은 별도로 확인합니다.
 
 ```bash
 : "${EKS_INTRO_CLUSTER_ARN:?Use the new lab cluster}"
@@ -674,7 +674,7 @@ kubectl --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" -n intro-smoke \
 <details>
 <summary>해결 방법 보기</summary>
 
-실습 1의 전용 클러스터, 같은 셸 변수와 AWS LBC/IngressClass `alb`, 정상 Metrics Server가 필요합니다. 이 HTTP 예제에는 공개 더미 응답만 넣고 ALB 접근을 지정한 클라이언트 CIDR로 제한합니다. 실제 인증·TLS·프로덕션 부하 검증은 포함하지 않습니다.
+실습 1의 전용 클러스터, 같은 셸 변수와 AWS LBC/IngressClass `alb`, 정상 작동하는 Metrics Server가 필요합니다. 이 HTTP 예제에는 공개 더미 응답만 넣고 ALB 접근을 지정한 클라이언트 CIDR로 제한합니다. 실제 인증·TLS·프로덕션 부하 검증은 포함하지 않습니다.
 
 **1. 네임스페이스 생성**
 
@@ -687,7 +687,7 @@ EKS_INTRO_WEB_UID=$(intro_kubectl create namespace web-app -o jsonpath='{.metada
 
 **2. 백엔드 구성**
 
-NGINX가 실제로 80번 포트를 듣고 `/api`를 포함한 경로에 더미 JSON을 반환하도록 구성합니다.
+NGINX가 실제로 80번 포트에서 수신하고 `/api`를 포함한 경로에 더미 JSON을 반환하도록 구성합니다.
 
 ```bash
 cat > "${EKS_INTRO_DIR:?}/backend-deployment.yaml" << 'EOF'
@@ -1029,7 +1029,7 @@ Fargate 프로필의 주요 특징:
 * **선택적 실행**: 모든 포드가 아닌, 프로필에 정의된 조건과 일치하는 포드만 Fargate에서 실행됩니다.
 * **네임스페이스 및 레이블 선택기**: 특정 네임스페이스와 레이블 조합을 기반으로 포드를 선택합니다.
 * **서브넷 지정**: 포드가 실행될 프라이빗 서브넷을 지정할 수 있습니다.
-* **IAM 역할**: Pod 실행 역할은 이미지 가져오기 등 Fargate 인프라가 사용합니다. 앱 컨테이너의 AWS API 접근에는 별도의 IRSA 역할이 필요합니다.
+* **IAM 역할**: Pod 실행 역할은 이미지 가져오기 등에 Fargate 인프라가 사용합니다. 앱 컨테이너의 AWS API 접근에는 별도의 IRSA 역할이 필요합니다.
 
 Fargate 프로필 생성 예시:
 

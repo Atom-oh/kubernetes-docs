@@ -83,7 +83,7 @@ Period는 metric 집계 간격이며 평가 수행 빈도와 동의어가 아닙
 
 **정답: B) JSON tag의 소문자/camelCase key와 Go template 대문자 필드 접근의 차이**
 
-실제0.34.0 template 직렬화와 정상/오류 payload를 검증했습니다.
+실제 0.34.0 template 직렬화와 정상/오류 payload를 검증했습니다.
 
 </details>
 

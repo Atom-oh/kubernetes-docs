@@ -152,7 +152,7 @@ GitRepository의 interval은 FluxCD가 Git 저장소의 변경 사항을 확인�
 **정답: B) AWS Secrets Manager 등 외부 비밀 저장소의 값을 Kubernetes Secret으로 동기화**
 
 **설명:**
-External Secrets Operator(ESO)는 AWS Secrets Manager, HashiCorp Vault, Azure Key Vault 등의 외부 비밀 관리 서비스에서 값을 가져와 Kubernetes Secret으로 자동 생성하고 동기화합니다. 이를 통해 민감한 정보를 Git에 저장하지 않으면서도 GitOps 워크플로우를 유지할 수 있습니다.
+External Secrets Operator(ESO)는 AWS Secrets Manager, HashiCorp Vault, Azure Key Vault 등의 외부 비밀 관리 서비스에서 값을 가져와 Kubernetes Secret을 자동 생성하고 동기화합니다. 이를 통해 민감한 정보를 Git에 저장하지 않으면서도 GitOps 워크플로우를 유지할 수 있습니다.
 
 </details>
 

@@ -59,7 +59,7 @@ Pod의 정체가 여기서 정해집니다. Kubernetes는 Pod마다 net namespac
 
 User namespace는 컨테이너 UID/GID를 다른 host 범위로 매핑합니다. 여러 탈출 동작의 권한을 줄이지만 kernel 취약점이나 추가 권한 상승 경로까지 **봉쇄한다고 보장하지는 않습니다**.
 
-그런데 오래 기본이 아니었습니다. 이유는 **파일 소유권**입니다. 볼륨의 파일이 호스트 UID로 기록되어 있는데 컨테이너가 다른 UID로 보면 권한이 맞지 않습니다. 이를 해결하려면 마운트 시점에 UID를 변환해야 하고(idmapped mounts, 커널 5.12+), 스토리지 드라이버와 CSI도 이를 지원해야 합니다.
+그런데 오랫동안 기본값이 아니었습니다. 이유는 **파일 소유권**입니다. 볼륨의 파일이 호스트 UID로 기록되어 있는데 컨테이너가 다른 UID로 보면 권한이 맞지 않습니다. 이를 해결하려면 마운트 시점에 UID를 변환해야 하고(idmapped mounts, 커널 5.12+), 스토리지 드라이버와 CSI도 이를 지원해야 합니다.
 
 ### Kubernetes의 user namespace 지원 현황
 
@@ -249,7 +249,7 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 
 여기서 운영상 중요한 성질이 **copy-up**입니다. lowerdir의 파일을 수정하면 **파일 전체가 upperdir로 복사된 뒤** 수정됩니다. 그래서:
 
-- **큰 파일을 조금 수정하는 것도 전체 복사 비용**을 냅니다. 1GB 파일의 1바이트 수정에 1GB 복사가 일어납니다
+- **큰 파일을 조금 수정할 때도 전체 복사 비용**이 듭니다. 1GB 파일의 1바이트 수정에 1GB 복사가 일어납니다
 - 컨테이너 안에서 대용량 쓰기를 하면 노드 디스크를 먹습니다 (ephemeral storage)
 - **쓰기가 많은 경로는 볼륨으로 빼는 것**이 정석입니다 (emptyDir, PVC 등)
 
@@ -259,7 +259,7 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 - **net namespace가 Pod의 경계**입니다. 같은 IP·포트 공간, `localhost` 통신, Pod 범위의 netfilter 규칙이 모두 여기서 나옵니다.
 - cgroup v2에서 **`memory.current`는 page cache를 포함**합니다. OOM 진단은 `memory.stat`의 `anon`과 `memory.events`, 그리고 **PSI(`memory.pressure`)**를 함께 봐야 합니다.
 - CPU limit은 **대역폭 제한**이라 사용률이 낮아도 throttling으로 지연이 튑니다. `cpu.stat`의 `nr_throttled`가 증거입니다.
-- kube-proxy는 **nftables가 1.33에서 GA, IPVS는 1.35에서 deprecated**이며 upstream은 IPVS의 1.40 기본 비활성화와 1.43 제거를 계획합니다. 기본값은 여전히 iptables입니다.
+- kube-proxy의 모드 중 **nftables는 1.33에서 GA, IPVS는 1.35에서 deprecated**이며 upstream은 IPVS의 1.40 기본 비활성화와 1.43 제거를 계획합니다. 기본값은 여전히 iptables입니다.
 - Conntrack 포화는 신규 연결을 드롭할 수 있습니다. Count/max·drop/insert counter·log로 진단하고 상한 변경 전 유효 kube-proxy 설정을 확인합니다.
 
 다음: [커널 네트워킹 스택](./02-network-stack.md)에서 패킷이 지나는 전체 경로를 봅니다.

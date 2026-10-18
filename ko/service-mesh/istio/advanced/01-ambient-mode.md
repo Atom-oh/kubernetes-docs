@@ -112,7 +112,7 @@ Ambient Mode의 데이터 플레인은 **ztunnel**과 **Waypoint Proxy** 두 가
 ### ztunnel (Zero Trust Tunnel)
 
 
-ztunnel은 Ambient Mode의 핵심 구성 요소로, **노드 레벨에서 실행되는 경량 L4 프록시**입니다. 대상 Linux Node의 DaemonSet으로 실행되어 등록된 workload의 지원 트래픽을 처리합니다. 모든 Pod의 모든 트래픽이 아니며 host-network/제외 workload·비TCP 앱 프로토콜은 현재 지원을 확인해야 합니다.
+ztunnel은 Ambient Mode의 핵심 구성 요소로, **노드 레벨에서 실행되는 경량 L4 프록시**입니다. 대상 Linux Node의 DaemonSet으로 실행되어 등록된 workload의 지원 트래픽을 처리합니다. 처리 대상은 모든 Pod의 모든 트래픽이 아니며 host-network/제외 workload·비TCP 앱 프로토콜은 현재 지원을 확인해야 합니다.
 
 #### ztunnel의 작동 원리
 
@@ -370,7 +370,7 @@ Accepted/ResolvedRefs 상태·선택한 backend를 로그/텔레메트리로 확
 
 ### Sidecar Mode에서 Ambient Mode로
 
-마이그레이션은 레이블만의 변경이 아닌 정책/workload rollout입니다. 설치 revision·CA/trust·gateway·CNI 옵션·선언적 workload 설정을 보존합니다. 기존 sidecar가 ambient 등록보다 우선합니다. L7 정책이 필요한 workload의 sidecar를 제거하기 전에 호환 routing/권한·준비된 waypoint를 구성합니다.
+마이그레이션은 레이블 변경만이 아닌 정책/workload rollout입니다. 설치 revision·CA/trust·gateway·CNI 옵션·선언적 workload 설정을 보존합니다. 기존 sidecar가 ambient 등록보다 우선합니다. L7 정책이 필요한 workload의 sidecar를 제거하기 전에 호환 routing/권한·준비된 waypoint를 구성합니다.
 
 #### 1단계: Ambient 컴포넌트 설치
 
@@ -434,7 +434,7 @@ istioctl ztunnel-config workloads --workload-namespace migration-demo
 
 ### 롤백 전략
 
-기록한 injection 방식·원래 Pod-template/정책을 복원합니다. 다음은 앞의 namespace injection 경우만 다루며 이전 revision이 존재하고 정상이어야 합니다. Waypoint를 사용한 대상은 검토한 rollback에서 등록/routing 정책도 복원해야 합니다. 해당 대상으로 생성했고 참조가 없는 특정 waypoint만 삭제하며 namespace의 모든 Gateway를 삭제하지 않습니다.
+기록한 injection 방식·원래 Pod-template/정책을 복원합니다. 다음은 앞의 namespace injection 경우만 다루며 이전 revision이 존재하고 정상이어야 합니다. Waypoint를 사용한 대상은 검토한 rollback에서 등록/routing 정책도 복원해야 합니다. 해당 대상을 위해 생성했고 참조가 없는 특정 waypoint만 삭제하며 namespace의 모든 Gateway를 삭제하지 않습니다.
 
 ```bash
 original_revision=$(jq -r '.metadata.labels["istio.io/rev"] // ""' migration-namespace-before.json)
@@ -602,4 +602,4 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ## 요약
 
-Ambient는 공유 L4 전송과 선택한 L7 waypoint 처리를 분리합니다. Unmeshed workload 등록·proxy lifecycle 관리를 단순화할 수 있지만 리소스 절감·정책 유지·가용성은 같은 정책 조건의 측정과 검증된 전환 계획이 필요합니다. Linux/CNI/platform 제약·TCP15008 연결·API별 지원 상태를 함께 고려합니다.
+Ambient는 공유 L4 전송과 선택한 L7 waypoint 처리를 분리합니다. Unmeshed workload 등록·proxy lifecycle 관리를 단순화할 수 있지만 리소스 절감·정책 유지·가용성에는 같은 정책 조건의 측정과 검증된 전환 계획이 필요합니다. Linux/CNI/platform 제약·TCP15008 연결·API별 지원 상태를 함께 고려합니다.

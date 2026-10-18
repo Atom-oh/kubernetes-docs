@@ -142,7 +142,7 @@
 
 **정답: C**
 
-**설명:** 하나의 의도한 관찰 방향과 workload/cluster 범위를 사용합니다. 전체 실패여서 success series가 없어도 비율은 0이어야 하며 누락/무트래픽이 100% 성공이 되면 안 됩니다. Proxy HTTP 분류는 400도 성공으로 볼 수 있으므로 business SLI를 의도적으로 맞춥니다.
+**설명:** 의도한 하나의 관찰 방향과 workload/cluster 범위를 사용합니다. 전체 실패여서 success series가 없어도 비율은 0이어야 하며 누락/무트래픽이 100% 성공이 되면 안 됩니다. Proxy HTTP 분류는 400도 성공으로 볼 수 있으므로 business SLI를 의도적으로 맞춥니다.
 
 </details>
 
@@ -174,7 +174,7 @@
 
 **정답: C**
 
-**설명:** Viz는 workload/traffic, topology, Tap 조회를 제공합니다. 진단/access log는 별도 데이터입니다. 이러한 조회를 수행해도 원인, 수정, 검증이 필요하며 문제가 자동 해결되지는 않습니다.
+**설명:** Viz는 workload/traffic, topology, Tap 조회를 제공합니다. 진단/access log는 별도 데이터입니다. 이러한 조회를 수행해도 원인 파악, 수정, 검증이 필요하며 문제가 자동 해결되지는 않습니다.
 
 </details>
 

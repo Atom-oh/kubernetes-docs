@@ -404,7 +404,7 @@ for ns in "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"; do
     "$NP_LAB_DIR/$ns-created.json" >/dev/null
 done
 ```
-The HTTP servers also provide a known Python TCP diagnostic. Each Service and container use port 8080. These are test workloads, not production sizing; record image digests for repeatability.
+The HTTP servers also provide a known Python TCP diagnostic. Each Service and container uses port 8080. These are test workloads, not production sizing; record image digests for repeatability.
 
 ```bash
 for ns in "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"; do
@@ -608,7 +608,7 @@ First identify the exhausted resource: subnet addresses, contiguous prefix block
 | Alternative CNI | Different IPAM/routing model | Requires a supported, tested migration; not an in-place manifest toggle |
 | Fargate | Delegates node/IP allocation operations | Each Pod still consumes subnet/VPC addresses; does not fix an exhausted subnet |
 
-**Prefix mode:** ordinary IPv4 prefixes are /28 blocks, each consuming one address slot. The original “up to 5x” value is an unverified generic claim, not a benchmark; use actual instance/CNI/kubelet limits. Security groups for Pods can coexist, but branch Pods retain their own limits. Inspect fragmentation and reserve prefix space or use new subnets if needed; do not assume free individual IP count proves a contiguous block exists.
+**Prefix mode:** ordinary IPv4 prefixes are /28 blocks, each consuming one address slot. The original “up to 5x” value is an unverified generic claim, not a benchmark; use actual instance/CNI/kubelet limits. Security groups for Pods can coexist, but branch Pods retain their own limits. Inspect fragmentation and reserve prefix space or use new subnets if needed; do not assume the free individual IP count proves a contiguous block exists.
 
 **Warm pools:** `WARM_IP_TARGET` is free-address headroom and `MINIMUM_IP_TARGET` is minimum total allocation. They can override prefix/ENI warm-target behavior. The example values 5/10 must be tuned to the workload and API-call budget:
 
@@ -687,7 +687,7 @@ A /22 starts on a four-value boundary in the third octet. Canonicalization of 10
 
 **Answer: C) 251**
 
-AWS reserves the first four and last address per ordinary subnet. The total is 256 and assignable count 251; BYOIP has documented exceptions.
+AWS reserves the first four addresses and last address per ordinary subnet. The total is 256 and the assignable count is 251; BYOIP has documented exceptions.
 
 </details>
 

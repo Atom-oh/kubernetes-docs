@@ -18,7 +18,7 @@
 
 **정답: B**
 
-레이블로 스캔할 스트림을 좁힙니다. 고정10배 비용 우위나 파싱·청크 조회 비용 제거를 입증하지는 않습니다.
+레이블로 스캔할 스트림을 좁힙니다. 고정된 10배 비용 우위나 파싱·청크 조회 비용 제거를 입증하지는 않습니다.
 
 </details>
 
@@ -60,7 +60,7 @@ SSD는 Loki4.0에서 제거될 예정입니다. 용량·가용성은 고정GB/�
 
 ---
 
-4. 최근5분의 일치하는 에러 로그 라인을 초당 속도로 계산하는 쿼리는?
+4. 최근 5분 동안 조건에 일치하는 에러 로그 라인의 초당 발생 건수를 계산하는 쿼리는?
 
    - A) `rate({app="nginx"} |= "error" [5m])`
    - B) `count({app="nginx"} |= "error")`
@@ -108,7 +108,7 @@ SSD는 Loki4.0에서 제거될 예정입니다. 용량·가용성은 고정GB/�
 
 **정답: C**
 
-역할 신뢰는 정확한 OIDC provider, audience와 namespace/service-account subject에 일치해야 합니다. 플랫폼·SDK 조건을 충족하면 Pod Identity도 선택할 수 있습니다.
+역할 신뢰는 정확한 OIDC provider, audience와 namespace/service-account subject와 일치해야 합니다. 플랫폼·SDK 조건을 충족하면 Pod Identity도 선택할 수 있습니다.
 
 </details>
 
@@ -150,7 +150,7 @@ LogQL은 파싱 뒤 레이블 필터 stage를 사용합니다. Unwrap한 숫자 
 
 ---
 
-9. 수집429 응답 후 먼저 해야 할 일은?
+9. 수집 중 429 응답을 받은 후 먼저 해야 할 일은?
 
    - A) 용량 측정 없이 모든 제한 증가
    - B) 테넌트 byte rate/burst·스트림별 rate·활성 스트림 제한을 구분하고 용량·클라이언트 재시도 확인

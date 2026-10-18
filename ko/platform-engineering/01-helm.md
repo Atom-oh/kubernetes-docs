@@ -243,7 +243,7 @@ rollback은 DB migration·외부 API side effect·이미 발생한 데이터 삭
 
 `Chart`, `Release`, `Values`, `Capabilities`는 context 객체입니다. range/with 내부에서는 점(.) context가 바뀌므로 root가 필요할 때 `$`를 사용합니다. `.Capabilities.APIVersions.Has`는 주어진 discovery/capability 정보이며 모든 운영 호환성을 보장하지 않습니다.
 
-`include`는 named template 결과를 string으로 반환하므로 `nindent`와 조합할 수 있습니다. `nindent`는 새 줄도 추가합니다. helper 이름은 subchart와 충돌하지 않도록 chart prefix를 사용하고 selector는 release 업그레이드 시 불필요하게 바꾸지 않습니다.
+`include`는 named template 결과를 string으로 반환하므로 `nindent`와 조합할 수 있습니다. `nindent`는 새 줄도 추가합니다. helper 이름에는 subchart와 충돌하지 않도록 chart prefix를 사용하고 selector는 release 업그레이드 시 불필요하게 바꾸지 않습니다.
 
 `default`와 `coalesce`의 empty에는 false,0,빈 문자열·목록 등이 포함됩니다. 명시한 false/0을 보존해야 한다면 존재 여부와 타입을 따로 검사합니다. 부모 map이 없는 nested lookup의 오류를 모든 default가 자동 방지하지는 않습니다.
 
@@ -272,7 +272,7 @@ dependency update는 Chart.yaml의 버전 제약을 해석하고 Chart.lock을 �
 
 ## Hooks, CRDs와 테스트
 
-pre/post install·upgrade·rollback·delete와 test hook은 특정 lifecycle 단계에 실행됩니다. 같은 단계에서는 낮은 weight가 먼저 실행되고 동률의 kind/name 순서도 검토합니다. pre-install DB migration은 일반 chart의 DB가 아직 생성되지 않았을 수 있으므로 의존성을 확인해야 합니다.
+pre/post install·upgrade·rollback·delete와 test hook은 특정 lifecycle 단계에 실행됩니다. 같은 단계에서는 weight가 낮은 hook이 먼저 실행되고 동률의 kind/name 순서도 검토합니다. pre-install DB migration은 일반 chart의 DB가 아직 생성되지 않았을 수 있으므로 의존성을 확인해야 합니다.
 
 hook Job/Pod는 실제 executable·image·Service·Secret과 권한, timeout·재실행의 멱등성을 갖춰야 합니다. before-hook-creation/hook-succeeded/hook-failed와 Job TTL로 cleanup을 설계하며 uninstall이 모든 hook 자원을 정리한다고 가정하지 않습니다. post-install 의미도 --wait 설정에 따라 준비 상태와 구분합니다.
 

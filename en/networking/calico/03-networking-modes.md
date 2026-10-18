@@ -334,7 +334,7 @@ Header size alone does not determine which mode is faster. NIC offloads, kernel/
 
 ### Bounded client-side probes for a new experiment
 
-Prepare dedicated test Pods containing matching iperf3/netperf versions, running server listeners and the required policy permissions. These commands are only client probes, not a complete reproduction of either record. Capture versions, node/AZ placement, MTU, request/response sizes, raw output and repeated runs. Confirm that the selected server has an IPv4 address for this example.
+Prepare dedicated test Pods with matching iperf3/netperf versions, running server listeners and the required policy permissions. These commands are only client probes, not a complete reproduction of either record. Capture versions, node/AZ placement, MTU, request/response sizes, raw output and repeated runs. Confirm that the selected server has an IPv4 address for this example.
 
 ```bash
 set -euo pipefail

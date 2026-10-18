@@ -573,7 +573,7 @@ The Kubernetes NetworkPolicy API has no priority or explicit deny rule. Its allo
 
 ## Cilium Network Policy Extensions {#cilium-network-policy-extensions}
 
-These examples use the released Cilium 1.20.3 policy schema, not an instruction to upgrade every cluster. HTTP rules need a supported L7 proxy path. AWS VPC CNI chaining has documented advanced-feature limitations, including L7 policies; do not assume these HTTP examples work in that mode. A numeric Cilium security identity is an allocation for a label set, not a permanent application ID.
+These examples use the released Cilium 1.20.3 policy schema and are not an instruction to upgrade every cluster. HTTP rules need a supported L7 proxy path. AWS VPC CNI chaining has documented advanced-feature limitations, including L7 policies; do not assume these HTTP examples work in that mode. A numeric Cilium security identity is an allocation for a label set, not a permanent application ID.
 
 ### CiliumNetworkPolicy
 
@@ -680,7 +680,7 @@ spec:
 
 ### L7 DNS Policy
 
-This example uses Pod-based CoreDNS. `ANY` on port53 covers UDP and TCP. DNS query permission and permission to connect to a returned IP are separate: resolving the database name below does not allow database connections. Replace the example domain, account for DNS search suffixes/cache/TTL, and verify the actual resolver profile. FQDN rules learn IPs from DNS; they do not authenticate a SaaS tenant or replace TLS/application authorization.
+This example uses Pod-based CoreDNS. `ANY` on port 53 covers UDP and TCP. DNS query permission and permission to connect to a returned IP are separate: resolving the database name below does not allow database connections. Replace the example domain, account for DNS search suffixes/cache/TTL, and verify the actual resolver profile. FQDN rules learn IPs from DNS; they do not authenticate a SaaS tenant or replace TLS/application authorization.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -715,7 +715,7 @@ spec:
 
 ### CiliumClusterwideNetworkPolicy
 
-The resource is cluster-scoped, while its selector explicitly limits it to `production/app=api`. It permits gateway Pods on TCP8080. It controls ingress only; egress isolation/DNS and the gateway's own egress require their corresponding policies. The previous all-endpoint cluster/world allow example was not a default-deny policy.
+The resource is cluster-scoped, while its selector explicitly limits it to `production/app=api`. It permits gateway Pods on TCP 8080. It controls ingress only; egress isolation/DNS and the gateway's own egress require their corresponding policies. The previous all-endpoint cluster/world allow example was not a default-deny policy.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -740,7 +740,7 @@ spec:
 
 ### Cilium Entity-Based Policy
 
-`host` includes the local node and its host-network containers; `cluster` includes more than application Pods. `world` covers endpoints outside the cluster and is not a fine-grained Internet/SaaS allowlist. Use explicit CIDR/FQDN rules when narrowing external access. This example gives only a labeled Kubernetes API client TCP443 access; configure its API endpoint, TLS trust, credentials and RBAC separately. Source identity can change across managed-control-plane network paths, so inspect actual flow identity rather than broadening ingress to the entire cluster.
+`host` includes the local node and its host-network containers; `cluster` includes more than application Pods. `world` covers endpoints outside the cluster and is not a fine-grained Internet/SaaS allowlist. Use explicit CIDR/FQDN rules when narrowing external access. This example gives only a labeled Kubernetes API client TCP 443 access; configure its API endpoint, TLS trust, credentials and RBAC separately. Source identity can change across managed-control-plane network paths, so inspect actual flow identity rather than broadening ingress to the entire cluster.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -763,7 +763,7 @@ spec:
 
 ## Calico Network Policy Extensions {#calico-network-policy-extensions}
 
-The policy/Tier examples follow Calico Open Source3.32.2 resources. `projectcalico.org/v3` requires the supported Calico API server or matching `calicoctl` workflow; it is not the raw Kubernetes `crd.projectcalico.org/v1` storage API. Verify the installed datastore/API before applying. Ordered Calico actions and tier delegation differ from the additive Kubernetes NetworkPolicy API.
+The policy/Tier examples follow Calico Open Source 3.32.2 resources. `projectcalico.org/v3` requires the supported Calico API server or matching `calicoctl` workflow; it is not the raw Kubernetes `crd.projectcalico.org/v1` storage API. Verify the installed datastore/API before applying. Ordered Calico actions and tier delegation differ from the additive Kubernetes NetworkPolicy API.
 
 Current Open Source documentation also describes [Istio/Dikastes application-layer integration](https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy). The HTTPMatch API requires that separate setup and supports ingress Allow rules. The Calico examples below cover L3/L4 policy; this review did not deploy or test the L7 integration.
 
@@ -851,7 +851,7 @@ spec:
 
 ### NetworkSet
 
-NetworkSet selectors match `metadata.labels`, not the resource's name. The first set is namespaced; the blocked set is global and is consumed by the security-tier example below. All CIDRs here are documentation ranges and must be replaced with reviewed destinations. The egress example permits TCP443 to the labeled namespaced set; DNS is a separate rule.
+NetworkSet selectors match `metadata.labels`, not the resource's name. The first set is namespaced; the blocked set is global and is consumed by the security-tier example below. All CIDRs here are documentation ranges and must be replaced with reviewed destinations. The egress example permits TCP 443 to the labeled namespaced set; DNS is a separate rule.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -974,7 +974,7 @@ These are **alternative policy profiles**, not a bundle to apply together. Reusi
 
 ### Microsegmentation
 
-This profile permits frontend→API TCP8080 and API→database TCP5432 on both sides, plus DNS. It deliberately has no Internet egress or external frontend ingress. If required, add an approved destination CIDR/port or an authenticated egress gateway profile; excluding RFC1918 from 0.0.0.0/0 is not a SaaS allowlist.
+This profile permits frontend→API TCP 8080 and API→database TCP 5432 on both sides, plus DNS. It deliberately has no Internet egress or external frontend ingress. If required, add an approved destination CIDR/port or an authenticated egress gateway profile; excluding RFC1918 from 0.0.0.0/0 is not a SaaS allowlist.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1096,7 +1096,7 @@ spec:
 
 ### Namespace Isolation
 
-The team profile includes same-team ingress **and egress**, plus DNS. Shared services additionally need destination ingress allowing team-a and a real TLS443 listener. Restrict namespace label administration; a team label is not an independent trust boundary.
+The team profile includes same-team ingress **and egress**, plus DNS. Shared services additionally need destination ingress allowing team-a and a real TLS 443 listener. Restrict namespace label administration; a team label is not an independent trust boundary.
 
 ```yaml
 apiVersion: v1
@@ -1163,7 +1163,7 @@ spec:
 
 ### Database Protection
 
-The `database` namespace must exist. Production callers and monitoring Pods need their own egress allows. TCP5432 peer rules permit the assumed PostgreSQL replication transport only; configure database authentication/TLS separately. TCP9187 assumes a separately installed exporter.
+The `database` namespace must exist. Production callers and monitoring Pods need their own egress allows. TCP 5432 peer rules permit the assumed PostgreSQL replication transport only; configure database authentication/TLS separately. TCP 9187 assumes a separately installed exporter.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1230,7 +1230,7 @@ spec:
 
 ### 3-Tier Architecture Policy
 
-Assume an existing `gateway-system/app=edge-proxy` workload that terminates client TLS and may reach the web Pods on TCP80. The gateway's egress policy is outside this namespace. Data peer ingress and egress use TCP5432/6379; additional replication/cluster-bus/backup ports depend on the chosen database and are not implied. Split PostgreSQL and Redis selectors in a real deployment.
+Assume an existing `gateway-system/app=edge-proxy` workload that terminates client TLS and may reach the web Pods on TCP 80. The gateway's egress policy is outside this namespace. Data peer ingress and egress use TCP 5432/6379; additional replication/cluster-bus/backup ports depend on the chosen database and are not implied. Split PostgreSQL and Redis selectors in a real deployment.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1412,7 +1412,7 @@ kubectl --context="$CONTEXT" -n "$NAMESPACE" exec "$ALLOW_POD" \
 
 This script only executes bounded curl probes in two existing Pods; it creates or deletes no cluster resources. Set `CONTEXT`, `NAMESPACE`, `ALLOW_POD`, `DENIED_POD`, `PROBE_CONTAINER` and a non-secret `TARGET_URL` ending in `/health`. Both containers need `sh` and `curl`. The first Pod is a known allowed positive control for the same destination. HTTP error responses still establish network reachability because this test is not application-health validation.
 
-Exit1 means the blocked subject unexpectedly connected; exit2 means unknown/error; exit3 means timeout requiring corroboration. A timeout **never** becomes automatic PASS: correlate the exact source/destination/port/time with a CNI policy-drop verdict, while checking endpoint health, routes and SG/NACL controls. No live enforcement is claimed by the local mock tests.
+Exit 1 means the blocked subject unexpectedly connected; exit 2 means unknown/error; exit 3 means timeout requiring corroboration. A timeout **never** becomes automatic PASS: correlate the exact source/destination/port/time with a CNI policy-drop verdict, while checking endpoint health, routes and SG/NACL controls. No live enforcement is claimed by the local mock tests.
 
 ```bash
 #!/usr/bin/env bash
@@ -1530,7 +1530,7 @@ spec:
         matchLabels: {}
 ```
 
-The FQDN example selects `app=backend` in `production`. **Replace `10.100.0.10/32` with your cluster's actual Auto Mode CoreDNS IP**: it is Service CIDR network address plus 10 (`::a/128` for IPv6). Pure Auto Mode CoreDNS runs on the node; a conventional CoreDNS Pod selector is not interchangeable. Allow both TCP and UDP DNS. Use a unique resource name that does not collide with a NetworkPolicy in that namespace.
+The FQDN example selects `app=backend` in `production`. **Replace `10.100.0.10/32` with your cluster's actual Auto Mode CoreDNS IP**: it is the Service CIDR network address plus 10 (`::a/128` for IPv6). Pure Auto Mode CoreDNS runs on the node; a conventional CoreDNS Pod selector is not interchangeable. Allow both TCP and UDP DNS. Use a unique resource name that does not collide with a NetworkPolicy in that namespace.
 
 ```yaml
 apiVersion: networking.k8s.aws/v1alpha1
@@ -1569,7 +1569,7 @@ The DNS proxy observes permitted answers and their TTLs, then the data path perm
 
 This binding example assumes the EKS VPC Resource Controller, its **cluster-role** permissions, supported trunking-compatible EC2 Linux nodes and a reviewed VPC CNI configuration. The current AWS guide excludes Windows and EKS Auto Mode. Fargate uses a separate Pod-SG model and does not gain VPC-CNI NetworkPolicy support merely from having a security group. Apply the binding to new matching workload Pods through their owner; existing Pods are not retrofitted automatically.
 
-For Calico plus Pod SGs, AWS documents VPC CNI1.11.0+ with `POD_SECURITY_GROUP_ENFORCING_MODE=standard`; use the current CNI requirements as well, rather than treating that minimum as a recommended version. Standard-mode external SNAT can use the node SG instead of the Pod SG. Verify the exact path. The old bare PostgreSQL Pod lacked credentials/storage and was not a functioning database deployment.
+For Calico plus Pod SGs, AWS documents VPC CNI 1.11.0+ with `POD_SECURITY_GROUP_ENFORCING_MODE=standard`; use the current CNI requirements as well, rather than treating that minimum as a recommended version. Standard-mode external SNAT can use the node SG instead of the Pod SG. Verify the exact path. The old bare PostgreSQL Pod lacked credentials/storage and was not a functioning database deployment.
 
 ```yaml
 # Binding example only: use an existing reviewed security group.
@@ -1607,7 +1607,7 @@ resource "aws_security_group" "database_pods" {
 
 ### Combining VPC-Level Controls with NetworkPolicy
 
-NetworkPolicy, the actually applied SGs and NACLs must all allow the relevant path. This ingress-only NetworkPolicy does not restrict database egress; add the selected egress profile and source-Pod egress. Multiple SGs combine their allows. NACLs are **stateless**, so a subnet rule allowing inbound5432 needs a matching return path to the client's ephemeral ports, plus appropriate rules on the client's subnet. The fragments below do not replace a complete reviewed ACL rule set.
+NetworkPolicy, the actually applied SGs and NACLs must all allow the relevant path. This ingress-only NetworkPolicy does not restrict database egress; add the selected egress profile and source-Pod egress. Multiple SGs combine their allows. NACLs are **stateless**, so a subnet rule allowing inbound 5432 needs a matching return path to the client's ephemeral ports, plus appropriate rules on the client's subnet. The fragments below do not replace a complete reviewed ACL rule set.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1659,7 +1659,7 @@ resource "aws_network_acl_rule" "database_return" {
 
 Choose **AWS VPC CNI chaining** or a separately designed full CNI/IPAM migration. In chaining mode AWS VPC CNI keeps ENI/IPAM responsibility and Cilium attaches its datapath. Preserve `aws-node`; deleting it is not an installation shortcut. Review the existing add-on/Helm owner and avoid overlapping policy-enforcement engines. Existing Pods need a controlled recreation before chaining policy applies; plan disruption and rollback.
 
-The official1.20.3 chaining guide supplies these values, but also documents L7/IPsec limitations. It contains old illustrative outputs; those are not validation of your current EKS environment. Prepare the chart repository/package, verify provenance and render first:
+The official 1.20.3 chaining guide supplies these values, but also documents L7/IPsec limitations. It contains old illustrative outputs; those are not validation of your current EKS environment. Prepare the chart repository/package, verify provenance and render first:
 
 ```bash
 # Render locally after verifying the official chart/package provenance.
@@ -1686,7 +1686,7 @@ kubectl --context="$CONTEXT" -n kube-system port-forward --address=127.0.0.1 svc
 
 ### Cilium Policy Verdict Check
 
-Use an authenticated Hubble connection. `DROPPED` includes reasons other than policy; inspect drop reason, endpoint identity, time and direction. A `FORWARDED` observation at one point is not an end-to-end delivery guarantee.
+Use an authenticated Hubble connection. `DROPPED` includes reasons other than policy; inspect the drop reason, endpoint identity, time and direction. A `FORWARDED` observation at one point is not an end-to-end delivery guarantee.
 
 
 ```bash

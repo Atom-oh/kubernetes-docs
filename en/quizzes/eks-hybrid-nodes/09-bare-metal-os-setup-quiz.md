@@ -82,7 +82,7 @@ Cloud-init can deliver Ubuntu's Autoinstall configuration. RHEL uses Kickstart. 
 
 **Explanation:**
 
-This is the EKS Hybrid support boundary, not a statement about every Bottlerocket product variant. For Hybrid bare metal assess supported Ubuntu/RHEL hosts. AL2023 is also an on-premises virtualized-guest option, not the supported generic bare-metal path. Check Kubernetes variant availability and current lifecycle requirements separately.
+This is the EKS Hybrid support boundary, not a statement about every Bottlerocket product variant. For Hybrid bare metal, assess supported Ubuntu/RHEL hosts. AL2023 is also an on-premises virtualized-guest option, not the supported generic bare-metal path. Check Kubernetes variant availability and current lifecycle requirements separately.
 
 </details>
 

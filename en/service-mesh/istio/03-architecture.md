@@ -47,7 +47,7 @@ This chapter primarily describes sidecar mode. Ambient uses Rust-based ztunnel p
 
 ### Istiod Internal Structure
 
-**Important**: Since Istio 1.5, Pilot, Citadel, and Galley are **internal functions of Istiod, not separate components**.
+**Important**: Since Istio 1.5, Pilot, Citadel, and Galley have been **internal functions of Istiod, not separate components**.
 
 ![Architecture diagram showing Istiod's single process consolidating Pilot, Citadel, and Galley functions, validating configuration from the Kubernetes API and pushing xDS configuration and X.509 certificates to Envoy sidecar proxies.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-10.png)
 
@@ -383,7 +383,7 @@ spec:
 
 #### Manual Injection
 
-Use `istioctl kube-inject` command to inject sidecar directly into YAML files.
+Use the `istioctl kube-inject` command to inject a sidecar directly into YAML files.
 
 ```bash
 # Inject sidecar into YAML file and deploy

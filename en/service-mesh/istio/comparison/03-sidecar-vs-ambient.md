@@ -77,7 +77,7 @@ Current AWS documentation supports controller-owned Pods, including Deployments,
 
 ## 3. Latency: Test Results (T5)
 
-The report describes steady-state Fortio at requested 200 QPS,60 seconds,16 connections, with 12,000 successful requests per case on the same Graviton cluster:
+The report describes steady-state Fortio at a requested 200 QPS for 60 seconds with 16 connections, with 12,000 successful requests per case on the same Graviton cluster:
 
 | Case | P50 | P75 | P90 | P99 | P99.9 |
 |---|---|---|---|---|---|
@@ -136,15 +136,15 @@ The original article also provided this annotated summary, not the full machine-
 
 Interpret the values with these limits:
 
-1. The HTTP 503 fractions calculated from the counted calls are 324/60,000 =0.54% and 1,528/59,913 ≈2.55%; their ratio is about 4.72. The original rounded display 0.5%/2.6% and “about 5x” describe this sample, not an intrinsic product multiplier.
+1. The HTTP 503 fractions calculated from the counted calls are 324/60,000 =0.54% and 1,528/59,913 ≈2.55%; their ratio is about 4.72. The original rounded display of 0.5%/2.6% and “about 5x” describe this sample, not an intrinsic product multiplier.
 2. Ambient L4 had 195 non-HTTP failures, so zero HTTP 503 is not zero failure. Fortio -1 covers non-HTTP outcomes; the specific reset/EOF/timeout cause needs the underlying errors.
 3. The 87-call difference from the nominal 60,000 does not establish that 87 started requests never completed. A time-mode run can count fewer calls. Preserve the reported 59,913 and average 50.4 ms without inventing missing-request state.
-4. Fortio's SocketCount describes client sockets. It is not a direct measurement of the waypoint's upstream pool. Sixteen sockets would match the configured client concurrency under sustained reuse, but does not prove every upstream connection was healthy.
+4. Fortio's SocketCount describes client sockets. It is not a direct measurement of the waypoint's upstream pool. Sixteen sockets would match the configured client concurrency under sustained reuse, but do not prove every upstream connection was healthy.
 5. Baseline completed rollout counts were 42/64/65; ambient L7, not L4, had the largest count. Unequal rollout exposure and missing resource/timeline artifacts limit a causal comparison.
 
 ### Follow-up: after graceful-shutdown hardening
 
-The original report applied preStop sleep 10 seconds and a 40-second Pod termination grace period to all modes. Sidecar also received EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true and terminationDrainDuration 30s:
+The original report applied a preStop sleep of 10 seconds and a 40-second Pod termination grace period to all modes. Sidecar also received EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true and terminationDrainDuration 30s:
 
 | Mode | Rollout cycles | Code 200 | Code 503 | Code -1 | Sockets used | Avg latency |
 |---|---|---|---|---|---|---|
@@ -166,7 +166,7 @@ The grace period includes preStop and container termination. A ten-second sleep 
 
 ### The risk of retry as a mitigation: Test Results (T2)
 
-The original report described a six-replica order service, collector and client, with a 20-request/s setting,300-second runs and a VirtualService policy with three retries and a two-second per-try timeout. The following values are preserved as **reported, not independently reproduced**:
+The original report described a six-replica order service, collector and client, with a 20-request/s setting, 300-second runs and a VirtualService policy with three retries and a two-second per-try timeout. The following values are preserved as **reported, not independently reproduced**:
 
 | Mode | Rollout cycles | Requests sent | Reported client-visible failures | Duplicate reports (as reported) |
 |---|---|---|---|---|

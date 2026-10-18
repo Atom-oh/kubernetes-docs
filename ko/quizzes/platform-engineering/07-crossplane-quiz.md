@@ -18,7 +18,7 @@ Function pipeline으로 XR의 입력을 여러 자원의 원하는 상태로 변
 <details>
 <summary>정답 보기</summary>
 
-XRD v2는 기본 Namespaced이며 개발자가 XR을 직접 만들 수 있습니다. 기존 v1 LegacyCluster XRD는 cluster XR과 namespaced Claim의 호환 경로를 유지합니다. 모든 XR/MR이 cluster 범위라는 설명은 현재 API에 맞지 않습니다.
+XRD v2는 기본적으로 Namespaced이며 개발자가 XR을 직접 만들 수 있습니다. 기존 v1 LegacyCluster XRD는 cluster XR과 namespaced Claim의 호환 경로를 유지합니다. 모든 XR/MR이 cluster 범위라는 설명은 현재 API에 맞지 않습니다.
 
 </details>
 
@@ -45,7 +45,7 @@ XRD v2는 기본 Namespaced이며 개발자가 XR을 직접 만들 수 있습니
 <details>
 <summary>정답 보기</summary>
 
-각 도구가 관리할 외부 리소스의 소유권을 분리합니다. ACK도 namespace CR과 참조를 제공하며 kro로 조합할 수 있습니다. 같은 AWS 리소스를 여러 controller가 경쟁 수정하도록 구성하지 않습니다.
+각 도구가 관리할 외부 리소스의 소유권을 분리합니다. ACK도 namespace CR과 참조를 제공하며 kro로 조합할 수 있습니다. 같은 AWS 리소스를 여러 controller가 경쟁적으로 수정하도록 구성하지 않습니다.
 
 </details>
 

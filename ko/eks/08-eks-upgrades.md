@@ -2,9 +2,9 @@
 
 > **마지막 업데이트**: 2026년 10월 12일
 
-Amazon EKS 클러스터를 최신 상태로 유지하는 것은 보안, 안정성 및 새로운 기능을 활용하기 위해 중요합니다. 이 문서에서는 EKS 클러스터를 안전하게 업그레이드하기 위한 전략, 모범 사례 및 단계별 가이드를 제공합니다.
+Amazon EKS 클러스터를 최신 상태로 유지하는 것은 보안과 안정성을 확보하고 새로운 기능을 활용하기 위해 중요합니다. 이 문서에서는 EKS 클러스터를 안전하게 업그레이드하기 위한 전략, 모범 사례 및 단계별 가이드를 제공합니다.
 
-이 문서는 소유자가 검토하여 수행할 절차이며 이번 감사에서 실제 업그레이드를 실행한 기록이 아닙니다. 계정·리전·Kubernetes context를 명시하고 승인한 현재/대상 버전과 update ID를 기록하며 애플리케이션 동작을 검증합니다. 같은 리소스에 모든 대안 예시를 연속 실행하지 않습니다. 로컬 파서/모의 검증은 운영 준비 완료를 입증하지 않습니다.
+이 문서는 소유자가 검토하여 수행할 절차를 설명하며 이번 감사에서 실제 업그레이드를 실행한 기록이 아닙니다. 계정·리전·Kubernetes context를 명시하고 승인한 현재/대상 버전과 update ID를 기록하며 애플리케이션 동작을 검증합니다. 같은 리소스에 모든 대안 예시를 연속 실행하지 않습니다. 로컬 파서/모의 검증은 운영 준비 완료를 입증하지 않습니다.
 
 ## 목차
 
@@ -48,7 +48,7 @@ EKS 클러스터는 한 번에 한 마이너 버전씩 업그레이드해야 합
 
 - 과거 예시 1.24 → 1.25 → 1.26 → 1.27은 한 마이너씩 진행하는 형태를 설명하며 현재 배포 대상이 아닙니다.
 - 1.24 → 1.26 직접 이동은 마이너 버전 건너뛰기의 예시입니다.
-- 실제 변경은 해당 리전/지원 정책에서 EKS가 제공하는 다음 마이너를 선택합니다.
+- 실제 변경 시에는 해당 리전/지원 정책에서 EKS가 제공하는 다음 마이너를 선택합니다.
 
 ### 업그레이드 순서
 
@@ -58,7 +58,7 @@ EKS 클러스터는 한 번에 한 마이너 버전씩 업그레이드해야 합
 4. 검증한 의존성 순서로 노드·클라이언트/컨트롤러·나머지 애드온을 갱신하며 매 단계 확인합니다. Auto Mode는 기본 기능을 관리하고 컨트롤 플레인 업그레이드 후 노드 갱신을 시작합니다.
 5. 실제 노드 버전, 워크로드 readiness, 통신, 스토리지, SLO를 검증합니다.
 
-업스트림 정책에서 kubelet 1.25+는 API server보다 최대 3개 마이너 이전을 허용하지만 더 새로울 수 없으며, API server 버전이 혼재하면 허용 범위가 좁아집니다. EKS 문서에는 준비 단계의 노드 버전 정렬 안내와 지원 skew 허용 범위가 함께 있습니다. 이 절차는 준비 정책으로 정렬을 선택하며 지원되는 모든 skew를 EKS API가 일률적으로 거절한다고 주장하지 않습니다. 애드온도 모두 CP 이전/이후라는 단일 순서로 정할 수 없습니다. 롤백은 아래의 다른 노드 우선 순서를 따릅니다.
+업스트림 정책에서 kubelet 1.25+는 API server보다 최대 3개 마이너 버전까지 낮을 수 있지만 더 새로울 수 없으며, API server 버전이 혼재하면 허용 범위가 좁아집니다. EKS 문서에는 준비 단계의 노드 버전 정렬 안내와 지원 skew 허용 범위가 함께 있습니다. 이 절차는 준비 정책으로 정렬을 선택하며 지원되는 모든 skew를 EKS API가 일률적으로 거절한다고 주장하지 않습니다. 애드온도 모두 CP 이전/이후라는 단일 순서로 정할 수 없습니다. 롤백은 아래의 다른 노드 우선 순서를 따릅니다.
 
 ## 업그레이드 계획 및 준비
 
@@ -80,9 +80,9 @@ EKS 클러스터는 한 번에 한 마이너 버전씩 업그레이드해야 합
 - **기능 변경**: 새 버전의 기능 변경 사항 검토
 - **애드온 호환성**: 애드온이 대상 버전과 호환되는지 확인
 
-이미지 목록이나 `kubectl get … .apiVersion`은 클라이언트/API 사용 중단 감사가 아닙니다. API server가 협상한 현재 표현을 반환하며 beta API라는 이유만으로 deprecated는 아닙니다. 소스/Helm 매니페스트·클라이언트·CRD·웹훅과 EKS upgrade insight를 대상 릴리스 기준으로 검토합니다. 단일 API server 메트릭 수집은 관측 증거일 뿐이며 누락/오류가 미사용 증명은 아닙니다.
+이미지 목록이나 `kubectl get … .apiVersion`은 클라이언트/API 사용 중단 감사가 아닙니다. API server가 협상한 현재 표현을 반환하며 beta API라는 이유만으로 deprecated는 아닙니다. 소스/Helm 매니페스트·클라이언트·CRD·웹훅과 EKS upgrade insight를 대상 릴리스 기준으로 검토합니다. 단일 API server 메트릭 수집은 관측 증거일 뿐이며 누락/오류가 미사용을 증명하지는 않습니다.
 
-다음 읽기 전용 수집기를 `eks-upgrade-preflight.py`로 저장합니다. `CLUSTER_NAME`, `AWS_REGION`, `EXPECTED_ACCOUNT_ID`, `KUBE_CONTEXT`, `TARGET_VERSION`을 export하고 JSON을 제한된 로컬 권한으로 저장합니다. 종료 성공은 수집 성공이며 업그레이드 승인이나 모든 워크로드의 호환성 확인이 아닙니다.
+다음 읽기 전용 수집기를 `eks-upgrade-preflight.py`로 저장합니다. `CLUSTER_NAME`, `AWS_REGION`, `EXPECTED_ACCOUNT_ID`, `KUBE_CONTEXT`, `TARGET_VERSION`을 export하고 JSON을 제한된 로컬 권한으로 저장합니다. 정상 종료는 수집 성공을 뜻하며 업그레이드 승인이나 모든 워크로드의 호환성 확인이 아닙니다.
 
 ```python
 import json
@@ -534,7 +534,7 @@ aws eks update-nodegroup-config \
 
 1. 검토한 구성으로 green 용량을 만들고 노드 수·대상 kubelet/AMI·Ready·CNI/DNS·애플리케이션 배치를 확인합니다. 노드 목록 조회만으로 검증되지 않습니다.
 2. 소유자가 단계적으로 워크로드를 옮깁니다. preferred affinity는 green 배치 보장이 아니므로 실제 Pod 노드와 스토리지 토폴로지를 확인합니다.
-3. 식별한 기존 노드 하나씩 유한 timeout으로 drain하며 축출/상태 검사가 실패하면 중단합니다. 워크로드와 대체 용량을 확인한 뒤 다음 노드로 진행합니다.
+3. 식별한 기존 노드를 하나씩 유한 timeout으로 drain하며 축출/상태 검사가 실패하면 중단합니다. 워크로드와 대체 용량을 확인한 뒤 다음 노드로 진행합니다.
 4. 마이그레이션·상태·데이터 보존·복구 수용 기준을 기록한 뒤에만 기존 그룹을 폐기합니다. 확인하지 않은 반복문이나 고정 sleep 뒤에 자동 삭제하지 않습니다.
 
 ```bash
@@ -693,7 +693,7 @@ helm upgrade "$RELEASE" "$CHART_REF" --version "$CHART_VERSION" \
 
 #### CoreDNS 업그레이드
 
-표준 노드는 CoreDNS Deployment의 소유자가 EKS인지 다른 도구인지 확인하고 Corefile·PDB·사용자 설정을 보존하며 선택한 버전의 마이그레이션 안내를 따릅니다. Auto Mode 노드는 CoreDNS를 노드 system service로 실행하므로 순수 Auto Mode에는 Deployment 애드온이 필요하지 않지만 혼합 클러스터는 비-Auto 노드의 DNS를 유지해야 합니다. 순수 Auto Mode에서 Deployment가 없다고 업그레이드 실패로 판단하지 않습니다.
+표준 노드에서는 CoreDNS Deployment의 소유자가 EKS인지 다른 도구인지 확인하고 Corefile·PDB·사용자 설정을 보존하며 선택한 버전의 마이그레이션 안내를 따릅니다. Auto Mode 노드는 CoreDNS를 노드 system service로 실행하므로 순수 Auto Mode에는 Deployment 애드온이 필요하지 않지만 혼합 클러스터는 비-Auto 노드의 DNS를 유지해야 합니다. 순수 Auto Mode에서 Deployment가 없다고 업그레이드 실패로 판단하지 않습니다.
 
 #### kube-proxy 업그레이드
 
@@ -701,7 +701,7 @@ API server와 해당 노드에 호환되는 kube-proxy를 사용하며 API serve
 
 #### VPC CNI 업그레이드
 
-표준 EC2 노드는 CNI 버전 경로, IP/prefix 모드, IAM, network-policy 설정, 워크로드 연결을 검증합니다. `aws-node` ConfigMap 하나가 모든 설정을 담는다고 가정하지 말고 EKS `configurationValues`, DaemonSet/컨테이너 설정, service-account identity, 해당 Helm/GitOps 소유 구성을 포함합니다. Auto Mode 기본 네트워킹은 별도 관리 경로를 따릅니다.
+표준 EC2 노드에서는 CNI 버전 경로, IP/prefix 모드, IAM, network-policy 설정, 워크로드 연결을 검증합니다. `aws-node` ConfigMap 하나가 모든 설정을 담는다고 가정하지 말고 EKS `configurationValues`, DaemonSet/컨테이너 설정, service-account identity, 해당 Helm/GitOps 소유 구성을 포함합니다. Auto Mode 기본 네트워킹은 별도 관리 경로를 따릅니다.
 
 각 EKS 소유 애드온에 위 capture/select/update/wait 절차를 사용하며 표준 노드 agent는 실제 설치된 환경에서만 조회합니다.
 
@@ -1008,7 +1008,7 @@ kubectl --context "$KUBE_CONTEXT" api-versions
 
 #### 롤백 절차
 
-EKS 버전 롤백은 2026년 7월 도입된 실제 사용자 요청 작업입니다. 과거의 일괄적인 “다운그레이드 불가” 설명 대신 [현재 롤백 가이드](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)를 따릅니다. Kubernetes 마이너를 되돌리는 작업이며 이전 etcd/애플리케이션/PV 데이터 스냅샷을 복원하거나 애드온을 자동 되돌리지 않습니다. 플랫폼 버전은 이전 마이너의 최신 플랫폼 버전이 됩니다.
+EKS 버전 롤백은 2026년 7월 도입된 실제 사용자 요청 작업입니다. 과거의 일괄적인 “다운그레이드 불가” 설명 대신 [현재 롤백 가이드](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)를 따릅니다. Kubernetes 마이너를 되돌리는 작업이며 이전 etcd/애플리케이션/PV 데이터 스냅샷을 복원하거나 애드온을 자동으로 되돌리지 않습니다. 플랫폼 버전은 이전 마이너의 최신 플랫폼 버전이 됩니다.
 
 **자격과 준비**
 
@@ -1079,7 +1079,7 @@ aws eks update-cluster-version --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --output json --no-cli-pager > rollback-update.json
 ```
 
-Auto Mode 요청도 반환 ID와 같은 polling helper를 사용합니다. helper 기본 2시간은 서비스 기본 12시간보다 짧으므로 클라이언트 기한을 의도적으로 선택해야 합니다. CI/IaC/자격 증명 timeout은 AWS 작업을 취소하지 않습니다. CancelUpdate는 CP 롤백 전 Auto Mode 노드 단계에서만 가능하며 best effort이고 이미 중단 중인 노드는 작업을 마칩니다. Cancelling → Cancelled와 이후 노드 수렴을 확인합니다. 일반 CP 업그레이드나 시작한 CP 롤백을 이 방법으로 취소할 수는 없습니다.
+Auto Mode 요청도 반환 ID로 같은 polling helper를 사용합니다. helper 기본 2시간은 서비스 기본 12시간보다 짧으므로 클라이언트 기한을 의도적으로 선택해야 합니다. CI/IaC/자격 증명 timeout은 AWS 작업을 취소하지 않습니다. CancelUpdate는 CP 롤백 전 Auto Mode 노드 단계에서만 가능하며 best effort이고 이미 중단 중인 노드는 작업을 마칩니다. Cancelling → Cancelled와 이후 노드 수렴을 확인합니다. 일반 CP 업그레이드나 시작한 CP 롤백을 이 방법으로 취소할 수는 없습니다.
 
 ```bash
 # Only during the cancellable Auto Mode node phase, before control-plane rollback starts.
@@ -1119,7 +1119,7 @@ python3 eks-upgrade-preflight.py > preflight.json
 
 ### GitOps를 사용한 자동화
 
-Git에 원하는 버전, 호환성 증거, 검토한 runbook을 저장할 수 있습니다. Argo CD/Flux가 eksctl `ClusterConfig` 파일을 기본적으로 EKS CP 변경으로 변환하지는 않으며 적절한 권한의 AWS-aware controller/runner가 필요합니다. Git/CloudFormation rollback도 EKS 버전 업그레이드를 자동 역전하지 않습니다.
+Git에 원하는 버전, 호환성 증거, 검토한 runbook을 저장할 수 있습니다. Argo CD/Flux가 eksctl `ClusterConfig` 파일을 기본적으로 EKS CP 변경으로 변환하지는 않으며 적절한 권한의 AWS-aware controller/runner가 필요합니다. Git/CloudFormation rollback도 EKS 버전 업그레이드를 자동으로 되돌리지 않습니다.
 
 다음 workflow는 **읽기 전용 준비 자료 수집**입니다. 사용 전 위의 전체 `eks-upgrade-preflight.py`를 `runbooks/eks-upgrade-preflight.py`에 저장하여 관리합니다. 신뢰하는 private-network runner와 검토한 AWS CLI/kubectl/Python toolchain은 별도로 준비합니다. 고정한 Actions는 Node.js 24를 사용하므로 self-hosted runner가 지원해야 합니다. 저장소 변수와 보호된 `eks-upgrade-review` environment를 구성하고 OIDC trust를 해당 저장소/environment 및 `sts.amazonaws.com`에 제한합니다. 이름을 지정하는 것만으로 reviewer 보호가 생기지 않습니다. 필요한 EKS/STS 조회와 Kubernetes 노드 목록 권한만 가진 조사 역할을 사용하며 클러스터 버전 변경 권한은 필요하지 않습니다.
 
@@ -1249,7 +1249,7 @@ EKS 클러스터 업그레이드를 위한 모범 사례를 살펴보겠습니�
 1. **카나리 배포**: 일부 노드 또는 워크로드로 시작하여 점진적으로 확장
 2. **자동화**: 업그레이드 프로세스 자동화
 3. **모니터링 강화**: 업그레이드 중 클러스터 상태 지속적 모니터링
-4. **통신 계획**: 이해관계자에게 업그레이드 상태 정기적으로 통신
+4. **통신 계획**: 이해관계자에게 업그레이드 상태를 정기적으로 전달
 5. **통제된 복구**: 증거/자격 검사를 자동화하고 검토한 복구 경로를 적용하며 롤백은 조건부로 수행
 
 ### 금융 서비스를 위한 모범 사례

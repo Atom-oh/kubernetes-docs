@@ -55,7 +55,7 @@ Actual Operator merging and Prometheus TLS ready/healthy behavior were tested.
 
 ---
 
-4. Which Tempo3 configuration change matters?
+4. Which Tempo 3 configuration change matters?
    - A) Copy only old Tempo2 ingester values.
    - B) Use live-store/backend scheduler/worker and current chart values.
    - C) Copy Loki configuration.
@@ -134,7 +134,7 @@ Align prometheus/loki/tempo UIDs and escaped derived-field expressions.
 
 **Answer: B) Verify sendExemplars, receiving/storage and datasource linking.**
 
-Verify the representative trace exists, not just the transport option.
+Verify that the representative trace exists, not just that the transport option exists.
 
 </details>
 
@@ -161,7 +161,7 @@ Validate namespace admission and actual file permissions together.
    - A) All backends are already deployed.
    - B) They require separate validation; the baseline does not guarantee persistent offsets/queues.
    - C) Loss/duplicates are impossible on restart.
-   - D) 24-hour retention proves a30-day SLO.
+   - D) 24-hour retention proves a 30-day SLO.
 
 <details>
 <summary>Show answer</summary>

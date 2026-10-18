@@ -7,7 +7,7 @@ MSK 유형, IAM·네트워크, MSK Connect와 Kinesis 비교를 확인합니다.
 <details>
 <summary>정답 보기</summary>
 
-MSK는 EKS 밖의 AWS 관리 인프라, Strimzi는 팀이 운영하는 Kubernetes에서 브로커를 실행합니다. 어느 쪽이든 애플리케이션, 토픽·보존, 접근 제어와 복구 설계는 필요합니다.
+MSK는 EKS 밖의 AWS 관리 인프라에서, Strimzi는 팀이 운영하는 Kubernetes에서 브로커를 실행합니다. 어느 쪽이든 애플리케이션, 토픽·보존, 접근 제어와 복구 설계는 필요합니다.
 
 </details>
 

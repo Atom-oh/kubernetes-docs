@@ -151,7 +151,7 @@ Based on Airflow 3.3.1 and Kubernetes provider 10.21.0. Check execution structur
 
 ## Application
 
-14. Show the kpo_smoke arguments that pass the run ID and delete the pod after finish or kill.
+14. Show the kpo_smoke arguments that pass the run ID and delete the pod after completion or killing.
 
 <details>
 <summary>Show Answer</summary>

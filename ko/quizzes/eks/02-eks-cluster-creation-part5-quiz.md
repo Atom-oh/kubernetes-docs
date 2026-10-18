@@ -2,7 +2,7 @@
 
 > **마지막 업데이트**: 2026년 9월 11일
 
-EKS 운영·로그·정책 집행·테넌트 격리를 다루는 퀴즈입니다. 마지막 문항은 개념 문서의 접근 검증·폐기 절차와 연결합니다. 명령에는 검토된 클러스터·리전·kubeconfig, IAM·컨트롤러 선행조건이 필요하며 이번 감사에서 클라우드 배포·프로덕션 테스트를 실행하지 않았습니다.
+EKS 운영·로그·정책 집행·테넌트 격리를 다루는 퀴즈입니다. 마지막 문항은 개념 문서의 접근 검증·폐기 절차와 연결됩니다. 명령에는 검토된 클러스터·리전·kubeconfig, IAM·컨트롤러 선행조건이 필요하며 이번 감사에서 클라우드 배포·프로덕션 테스트를 실행하지 않았습니다.
 
 ## 객관식 문제
 
@@ -76,7 +76,7 @@ Pod 보안 그룹에는 지원 인스턴스·CNI 설정과 정책 선택이 필�
 
 **IAM Roles for Service Accounts(IRSA)**는 projected ServiceAccount 토큰, 클러스터 OIDC 발급자와 IAM 신뢰를 이용해 STS 임시 자격 증명을 얻습니다. 대상 audience(`sts.amazonaws.com`)와 정확한 네임스페이스·ServiceAccount subject로 신뢰를 제한하고 필요한 AWS 작업·리소스만 허용하세요.
 
-Pod에서 의도한 ServiceAccount와 호환 SDK 자격 증명 체인을 사용합니다. AWS 접근 성공이 다른 자격 증명에서 올 수도 있으므로 실제 assumed role을 확인하세요. IRSA만으로 노드 IMDS 자격 증명 접근을 막지는 않습니다.
+Pod에서 의도한 ServiceAccount와 호환 SDK 자격 증명 체인을 사용합니다. 다른 자격 증명으로 AWS 접근에 성공했을 수도 있으므로 실제 assumed role을 확인하세요. IRSA만으로 노드 IMDS 자격 증명 접근을 막지는 않습니다.
 
 EKS Pod Identity도 역할·ServiceAccount를 연결하지만 에이전트·association 흐름이 다릅니다. 적격 EC2·Auto Mode와 전용 설정을 갖춘 Hybrid Nodes에 지원 경로가 있으며 Fargate에는 IRSA 같은 다른 지원 방식이 필요합니다. 두 방식 모두 EKS 액세스 엔트리와는 다릅니다. 워크로드 AWS 권한과 Kubernetes API 접근은 별개입니다.
 
@@ -219,7 +219,7 @@ aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGI
 
 PodSecurityPolicy는 Kubernetes 1.21에서 폐기 예정이 되었고 1.25에서 제거되었습니다. 현재 지원되는 EKS 버전에는 이 API가 없습니다. Pod Security Admission(PSA)은 Pod Security Standards(PSS) 프로파일을 집행하지만 PSP의 모든 필드를 일대일로 대체하지는 않습니다.
 
-새 EKS 1.36 실습 네임스페이스는 정책 버전을 고정하여 이후 클러스터 업그레이드가 선택한 정책 버전을 조용히 바꾸지 않도록 합니다:
+새 EKS 1.36 실습 네임스페이스에서는 정책 버전을 고정하여 이후 클러스터 업그레이드가 선택한 정책 버전을 조용히 바꾸지 않도록 합니다:
 
 ```yaml
 apiVersion: v1

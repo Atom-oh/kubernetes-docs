@@ -244,7 +244,7 @@ print("Cleanup:", record.get("cleanup", "not reported"))
 PY
 ```
 
-**Success criterion:** The helper exits successfully, records `status: passed`, all eight named checks are true, and cleanup is reported. Route and DNS success alone cannot substitute for failed packet observations.
+**Success criterion:** The helper exits successfully and records `status: passed`; all eight named checks are true, and cleanup is reported. Route and DNS success alone cannot substitute for failed packet observations.
 
 **Cleanup:** On normal completion, observation failures and handled interruption, the helper attempts to remove the container and network IDs it created. A cleanup error is a failed run. Abrupt termination can prevent cleanup; use the recorded IDs to identify leftovers, never a broad prune of shared Docker resources. Retain the JSON while interpreting the next section.
 

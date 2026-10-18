@@ -36,7 +36,7 @@ Circuit Breaker는 장애가 발생한 서비스를 자동으로 격리하여 �
 
 ## Circuit Breaker 개요
 
-그림은 일반 라이브러리의 Closed/Open/Half-Open 패턴을 설명합니다. Istio는 연결 풀 리소스 제한과 엔드포인트별 수동 관찰 기반 Outlier Ejection을 사용하며 메시 전체의 단일 3단계 상태 머신을 제공하지 않습니다. 제한과 상태 관측은 프록시·업스트림 cluster/priority별이며 동시성에 따른 일시적 초과도 가능합니다. Ejection은 일시적으로 선택에서 제외하며 Pod를 삭제하지 않습니다. 아래 예제는 대안 구성입니다.
+그림은 일반 라이브러리의 Closed/Open/Half-Open 패턴을 설명합니다. Istio는 연결 풀 리소스 제한과 엔드포인트별 수동 관찰 기반 Outlier Ejection을 사용하며 메시 전체의 단일 3단계 상태 머신을 제공하지 않습니다. 제한과 상태 관측은 프록시·업스트림 cluster/priority별이며 동시성에 따른 일시적 초과도 가능합니다. Ejection은 엔드포인트를 일시적으로 선택에서 제외하며 Pod를 삭제하지 않습니다. 아래 예제는 대안 구성입니다.
 
 ![Circuit Breaker는 정상 상태인 Closed에서 연속 에러가 임계값을 넘으면 즉시 실패하는 Open 상태로 전환되고, 대기 시간이 지나면 제한된 요청만 허용하는 HalfOpen을 거쳐 요청이 성공하면 Closed로 복귀하고 다시 실패하면 Open으로 돌아가는 상태 전이를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
 

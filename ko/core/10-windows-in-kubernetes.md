@@ -606,7 +606,7 @@ Windows 노드 보안을 위한 권장 사항:
 
 Windows 컨테이너 보안을 위한 권장 사항:
 
-1. **최소 기본 이미지**: 가능한 작은 기본 이미지 사용(Nano Server 등)
+1. **최소 기본 이미지**: 가능한 한 작은 기본 이미지 사용(Nano Server 등)
 2. **이미지 스캐닝**: 컨테이너 이미지 취약점 스캐닝
 3. **파일 시스템 권한**: NTFS ACL 및 지원되는 읽기 전용 데이터 마운트를 사용합니다. Windows는 readOnlyRootFilesystem을 지원하지 않습니다.
 4. **비특권 사용자**: 비특권 사용자로 애플리케이션 실행
@@ -817,7 +817,7 @@ spec:
 
 ### EKS에서 Windows 컨테이너 로깅
 
-Windows 노드의 Container Insights는 CloudWatch Observability EKS 애드온 1.5.0 이상에서 지원합니다. 클러스터와 호환되는 애드온 버전, IAM 권한 및 Windows 노드용 에이전트 구성을 선택합니다. Windows Application Signals는 지원하지 않습니다.
+Windows 노드의 Container Insights는 CloudWatch Observability EKS 애드온 1.5.0 이상에서 지원됩니다. 클러스터와 호환되는 애드온 버전, IAM 권한 및 Windows 노드용 에이전트 구성을 선택합니다. Windows Application Signals는 지원하지 않습니다.
 
 Windows stdout/stderr는 kubelet의 CRI 로그 경로(일반적으로 `C:\var\log\pods` 및 `C:\var\log\containers`)에서 수집합니다. 실제 배포판 경로를 확인하며 Linux `/var/log`/Docker parser 설정을 그대로 복사하지 않습니다. EKS의 kubelet/kube-proxy 로그는 **EKS Windows** 이벤트 로그에 기록됩니다. 일반 컨테이너에 .evtx 파일만 마운트해도 winlog 입력이 호스트 이벤트 API를 읽게 되지는 않습니다. 호스트 서비스나 검토된 HostProcess 수집기를 사용합니다.
 

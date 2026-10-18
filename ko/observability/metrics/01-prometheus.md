@@ -30,9 +30,9 @@ Local 보존 기간은 설정할 수 있으며 30일을 넘길 수도 있습니�
 | kube-state-metrics | 2.20.0, subchart 8.4.2 |
 | node-exporter | 1.12.1, subchart 4.56.3 |
 
-차트의 `kubeVersion` 조건은 `>=1.25.0-0`입니다. 전체 호환성 표이거나 모든 Kubernetes 1.25 이상 버전이 계속 지원된다는 뜻은 아닙니다. 실제 cluster·컴포넌트 지원·admission 정책·storage driver를 확인합니다.
+차트의 `kubeVersion` 조건은 `>=1.25.0-0`입니다. 전체 호환성 표는 아니며, 모든 Kubernetes 1.25 이상 버전이 계속 지원된다는 뜻도 아닙니다. 실제 cluster·컴포넌트 지원·admission 정책·storage driver를 확인합니다.
 
-Profile은 **Linux EC2 worker를 사용하는 EKS** 대상입니다. Fargate는 DaemonSet을 지원하지 않으며 Auto Mode·Hybrid Nodes·Windows는 수집기와 저장소를 별도로 검토해야 합니다.
+Profile은 **Linux EC2 worker를 사용하는 EKS**를 대상으로 합니다. Fargate는 DaemonSet을 지원하지 않으며 Auto Mode·Hybrid Nodes·Windows는 수집기와 저장소를 별도로 검토해야 합니다.
 
 ### 2026년 9월 업데이트
 
@@ -61,7 +61,7 @@ Pushgateway 분기는 적합한 서비스 단위 배치의 선택적 경로이�
 | Alertmanager | Alert 그룹화·중복 제거·억제·수신자 라우팅 |
 | Grafana | Data source 조회·시각화; 인증·database/storage 별도 설정 |
 
-차트가 exporter와 지원 자원을 제공합니다. 불완전한 standalone Deployment/DaemonSet 조각은 누락된 ServiceAccount·RBAC·Service를 만들어 주지 않으며 모니터링 stack을 중복 배포하는 용도로 사용하지 않습니다.
+차트가 exporter와 지원 자원을 제공합니다. 불완전한 standalone Deployment/DaemonSet 조각은 누락된 ServiceAccount·RBAC·Service를 만들어 주지 않으며 모니터링 stack을 중복 배포하는 용도로 사용해서는 안 됩니다.
 
 ### TSDB와 설정 계층
 
@@ -155,7 +155,7 @@ histogram_quantile(0.99, sum by (le,method) (rate(http_request_duration_seconds_
 sum(rate(http_request_duration_seconds_sum{job="example-app"}[5m])) / sum(rate(http_request_duration_seconds_count{job="example-app"}[5m]))
 ```
 
-호환되는 classic 버킷을 집계할 때 `le`를 유지합니다. 분위수는 버킷 안을 보간합니다. Summary 분위수도 근사값이며 평균을 내 전체 분위수로 만들 수 없습니다. Sum/count는 전체 평균에 사용할 수 있습니다.
+호환되는 classic 버킷을 집계할 때 `le`를 유지합니다. 분위수는 버킷 안을 보간해 계산합니다. Summary 분위수도 근사값이며 평균을 내 전체 분위수로 만들 수 없습니다. Sum/count는 전체 평균에 사용할 수 있습니다.
 
 `predict_linear()`는 Gauge의 선형 추세를 외삽합니다. 음수 예측은 조사할 신호이지 미래 디스크 장애의 보장이 아닙니다.
 
@@ -163,7 +163,7 @@ sum(rate(http_request_duration_seconds_sum{job="example-app"}[5m])) / sum(rate(h
 predict_linear(node_filesystem_avail_bytes{job="node-exporter",mountpoint="/",fstype!~"tmpfs|overlay"}[6h], 86400)
 ```
 
-Prometheus 3에서는 `holt_winters`가 `double_exponential_smoothing`으로 바뀌었습니다. **Holt 선형 평활화이며 계절성 triple-exponential 예측이 아닙니다.** Gauge float 샘플에 사용합니다. 선택적 식은 `double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`이며 평가 서버에 `--enable-feature=promql-experimental-functions`가 필요합니다. 로컬 감사에서는 파서 문법을 확인했으며 실험 기능의 값 평가 통과를 주장하지 않습니다.
+Prometheus 3에서는 `holt_winters`가 `double_exponential_smoothing`으로 바뀌었습니다. **Holt 선형 평활화이며 계절성 triple-exponential 예측이 아닙니다.** Gauge float 샘플에 사용합니다. 선택적 식은 `double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`이며 평가 서버에 `--enable-feature=promql-experimental-functions`가 필요합니다. 로컬 감사에서는 파서 문법을 확인했으며 실험 기능의 값 평가가 통과했다고 주장하지 않습니다.
 
 ### 운영 쿼리 예시
 
@@ -298,7 +298,7 @@ spec:
 
 ## kube-prometheus-stack 설치
 
-아래는 클러스터를 변경하는 운영자 명령이며 **감사에서 실행한 명령이 아닙니다**. 의도한 context와 소유한 release를 사용합니다. 기존 설치는 stack을 중복 배포하기보다 실제 values·CRD·storage·upgrade 지침을 검토합니다.
+아래는 클러스터를 변경하는 운영자 명령이며 **감사에서 실행한 명령이 아닙니다**. 의도한 context와 소유한 release를 사용합니다. 기존 설치가 있다면 stack을 중복 배포하기보다 실제 values·CRD·storage·upgrade 지침을 검토합니다.
 
 이 profile의 전제 조건은 다음과 같습니다.
 
@@ -308,7 +308,7 @@ spec:
 - `metrics-demo-grafana` ServiceAccount의 IRSA role을 해당 secret으로 제한합니다. 예제 IAM role ARN을 실제 role로 바꾸고 SecretProviderClass를 적용합니다. [전체 identity·KMS·mount·rotation 전제조건](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)을 확인합니다.
 - 검증한 kubelet TLS 신뢰 경로. Profile은 인증서 검증을 켜므로 다른 issuer를 쓰면 검증을 끄는 대신 올바른 CA를 제공
 
-자원 크기는 예시입니다. Prometheus 복제본마다 PVC가 생기고 retention size는 WAL·head·compaction 사용량을 제한하지 않습니다. Grafana는 PVC의 database를 쓰는 한 복제본입니다. 복제본 수만 늘리는 것은 공유 database 기반 HA가 아닙니다.
+자원 크기는 예시입니다. Prometheus 복제본마다 PVC가 생기고 retention size는 WAL·head·compaction 사용량을 제한하지 않습니다. Grafana는 PVC의 database를 쓰며 복제본은 하나입니다. 복제본 수만 늘리는 것은 공유 database 기반 HA가 아닙니다.
 
 ```yaml
 # kube-prometheus-stack 90.0.0; replace the example IRSA role ARN before use.

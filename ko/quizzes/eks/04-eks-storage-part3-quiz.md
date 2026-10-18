@@ -2,7 +2,7 @@
 
 > **마지막 업데이트**: 2026년 9월 11일
 
-본문의 수집기·스토리지 예제로 모니터링·진단·비용·보안을 점검합니다. 아래 예제는 로컬 검사한 것이며 AWS 작업·프로덕션 복구·실제 대시보드 검증을 실행했다는 주장이 아닙니다. 배포 전에 placeholder와 리소스 소유권을 확인하세요.
+본문의 수집기·스토리지 예제로 모니터링·진단·비용·보안을 점검합니다. 아래 예제는 로컬에서 검사한 것이며 AWS 작업·프로덕션 복구·실제 대시보드 검증을 실행했다는 주장이 아닙니다. 배포 전에 placeholder와 리소스 소유권을 확인하세요.
 
 ## 객관식 문제
 
@@ -61,7 +61,7 @@ kubectl -n kube-system get pod "$CSI_CONTROLLER_POD" \
 kubectl -n kube-system logs "$CSI_CONTROLLER_POD" -c "$CSI_CONTAINER" --since=15m --tail=200
 ```
 
-EC2 node instance profile만이 아니라 드라이버의 실제 Pod Identity/IRSA 역할·KMS grant를 확인합니다. 다중 컨테이너 컨트롤러는 관련 드라이버·sidecar 로그를 선택해야 합니다. ContainerCreating은 attach·mount·client 소프트웨어·이미지 pull·앱 권한 문제일 수 있습니다. 증상을 초기화하려고 데이터를 삭제하지 마세요.
+EC2 node instance profile만이 아니라 드라이버의 실제 Pod Identity/IRSA 역할·KMS grant를 확인합니다. 다중 컨테이너 컨트롤러에서는 관련 드라이버·sidecar 로그를 선택해야 합니다. ContainerCreating은 attach·mount·client 소프트웨어·이미지 pull·앱 권한 문제일 수 있습니다. 증상을 초기화하려고 데이터를 삭제하지 마세요.
 
 </details>
 
@@ -95,7 +95,7 @@ parameters:
   iops: '10000'
 ```
 
-Multi-Attach는 일반적인 읽기 전용 성능 스위치가 아닙니다. Part2의 검토한 EBS CSI 경로는 io2·RWX·raw Block와 애플리케이션 조정을 사용합니다. /mnt/instance-store라는 hostPath 이름만으로 실제 instance store가 되지는 않습니다. 준비한 node-local 스토리지 설계를 사용하고 데이터를 임시 데이터로 다루세요. EC2 instance-store CSI는 별도 전제를 가진 실제 지원 통합입니다.
+Multi-Attach는 일반적인 읽기 전용 성능 스위치가 아닙니다. Part2에서 검토한 EBS CSI 경로는 io2·RWX·raw Block과 애플리케이션 조정을 사용합니다. /mnt/instance-store라는 hostPath 이름만으로 실제 instance store가 되지는 않습니다. 준비한 node-local 스토리지 설계를 사용하고 데이터를 임시 데이터로 다루세요. EC2 instance-store CSI는 별도 전제를 가진 실제 지원 통합입니다.
 
 추측한 nvme0n1 scheduler에 noop를 쓰지 마세요. 루트·다른 디스크일 수 있고 현대 blk-mq 이름도 다릅니다. 별도 검토한 변경 전에 장치·지원 scheduler를 확인합니다. 파일 시스템·mount option도 워크로드 근거가 필요하며 XFS·ext4 어느 것도 특정 성능을 보장하지 않습니다.
 
@@ -308,7 +308,7 @@ if not points:
 PY
 ```
 
-실측 부하 결과가 아닌 산술 예시입니다. predict_linear에는 counter가 아닌 gauge를 사용하고 중복 scrape·잘못된 용량을 처리합니다. 최근 추세가 미래 고갈의 보장은 아닙니다. 본문 규칙은 합성 데이터로 지속 높은 사용량·중복 target·용량0·누락·증가 추세를 검사했습니다.
+실측 부하 결과가 아닌 산술 예시입니다. predict_linear에는 counter가 아닌 gauge를 사용하고 중복 scrape·잘못된 용량을 처리합니다. 최근 추세가 미래 고갈을 보장하지는 않습니다. 본문 규칙은 합성 데이터로 지속적으로 높은 사용량·중복 target·용량0·누락·증가 추세를 검사했습니다.
 
 </details>
 
@@ -347,7 +347,7 @@ EKS가 제어 영역 audit policy를 관리합니다. 클러스터 소유자를 
 
 **정답: 각 의존성을 명시적으로 구성합니다**
 
-본문의 검토한 stack·수집기를 사용하며 ConfigMap만으로 agent가 설치된다고 가정하지 않습니다. 전통적인 CloudWatch agent 설치는 실제 네임스페이스·워크로드·신원을 확인하고 선택한 통합·컴퓨팅 지원에 맞게 다음 이름을 조정합니다:
+본문에서 검토한 stack·수집기를 사용하며 ConfigMap만으로 agent가 설치된다고 가정하지 않습니다. 전통적인 CloudWatch agent 설치 시에는 실제 네임스페이스·워크로드·신원을 확인하고 선택한 통합·컴퓨팅 지원에 맞게 다음 이름을 조정합니다:
 
 ```bash
 set -euo pipefail
@@ -444,7 +444,7 @@ data:
     }
 ```
 
-Native EBS IOPS·EFS 처리량 패널을 추가하려면 검토한 IAM 권한의 CloudWatch 데이터소스와 본문의 차원·기간 정규화 계산을 사용합니다. 설정한 exporter가 해당 이름·의미를 실제 게시하지 않는다면 aws_ebs_* Prometheus series를 가정하지 마세요. 여기의 JSON·표현식은 로컬 검사했으며 인증된 Grafana import·실제 AWS 질의는 수행하지 않았습니다.
+Native EBS IOPS·EFS 처리량 패널을 추가하려면 검토한 IAM 권한의 CloudWatch 데이터소스와 본문의 차원·기간 정규화 계산을 사용합니다. 설정한 exporter가 해당 이름·의미를 실제로 게시하지 않는다면 aws_ebs_* Prometheus series를 가정하지 마세요. 여기의 JSON·표현식은 로컬 검사했으며 인증된 Grafana import·실제 AWS 질의는 수행하지 않았습니다.
 
 </details>
 
@@ -520,7 +520,7 @@ rules:
 
 Scale-to-zero controller template·Job/CronJob·보존 클레임·간접/ephemeral 참조·백업 정책·실제 백엔드 ID를 별도로 검토합니다. 현재 Pod 참조가 없다는 것은 삭제 결정이 아닙니다. 나중에 이 보고서를 예약한다면 스크립트·client가 포함된 실제 검토 이미지, 실행 상한·제한된 신원·정의된 보고서 목적지를 사용합니다. storage-tools:latest·생략 부호 명령은 구현이 아닙니다.
 
-관측부터 자동화하고 상한이 있는 변경 제안·독립 검증한 복구로 확장합니다. EBS/PVC 증가는 임의 축소와 다릅니다. 리소스를 조용히 파괴하는 스크립트 대신 배포에 적절한 감사 근거·수명 소유권·승인/운영 제어를 유지합니다.
+관측부터 자동화하고 상한이 있는 변경 제안·독립적으로 검증한 복구로 확장합니다. EBS/PVC 증가는 임의 축소와 다릅니다. 리소스를 조용히 파괴하는 스크립트 대신 배포에 적절한 감사 근거·수명 소유권·승인/운영 제어를 유지합니다.
 
 </details>
 

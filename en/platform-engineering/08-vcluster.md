@@ -214,7 +214,7 @@ The Syncer needs host API access. Applying the same deny-egress to the control p
 
 ## Pause, Sleep, Deletion and Snapshots
 
-Current CLI pause scales down the virtual control plane and removes workloads, which are recreated on resume. PVCs and Services follow separate retention behavior. This is not suspend preserving Pod memory or a data backup. Distinguish manual pause from automatic sleep/wake conditions.
+Current CLI pause scales down the virtual control plane and removes workloads, which are recreated on resume. PVCs and Services follow separate retention behavior. This is not a suspend operation that preserves Pod memory or a data backup. Distinguish manual pause from automatic sleep/wake conditions.
 
 These lifecycle settings are optional. Verify product entitlement, controllers and workload behavior first. Automatic deletion is not enabled here.
 
@@ -322,7 +322,7 @@ Do not instruct EKS users to directly resize managed API-server/etcd replicas or
 
 The 1,998-line Korean and 2,171-line English guides, both 143-line quizzes and 106 unique code blocks were read. Version 0.37.0 schema, Helm profiles, lifecycle/network-policy rendering, official checksums/image index and Kubernetes resource accounting were verified. Differences between schema and runtime validation were recorded.
 
-Two 0.36.1 attempts to inspect deprecated connection flags queried the existing cluster read-only and failed Unauthorized. No resources changed; subsequent 0.37 checks were restricted to version/help/source and offline charts. No vCluster creation, image execution, sleep/deletion/snapshot/restore, network isolation, IAM authentication, load or cost savings was validated.
+Two 0.36.1 attempts to inspect deprecated connection flags queried the existing cluster read-only and failed with Unauthorized errors. No resources changed; subsequent 0.37 checks were restricted to version/help/source and offline charts. No vCluster creation, image execution, sleep/deletion/snapshot/restore, network isolation, IAM authentication, load or cost savings was validated.
 
 - [vCluster 0.37.3](https://github.com/loft-sh/vcluster/releases/tag/v0.37.3)
 - [Versioned configuration](https://github.com/loft-sh/vcluster/blob/v0.37.3/config/values.yaml)

@@ -561,7 +561,7 @@ Synced는 비교 대상 필드가 원하는 상태와 맞는다는 뜻이며 서
 
 ### 커스텀 헬스 체크
 
-기본 제공되는 Rollout·cert-manager Certificate 체크를 간단한 phase 비교로 덮어쓰지 않습니다. Certificate의 API 그룹은 cert-manager.io이며, 내장 체크는 Issuing 상태를 Ready보다 먼저 처리합니다. 아래 ACK 예제는 상태·조건이 없으면 Progressing이고 ARN 존재만으로 Healthy라고 하지 않습니다. 설치한 ACK 버전이 제공하는 Ready/ACK.ResourceSynced와 오류 조건을 확인합니다. 아래는 Ready가 있으면 우선하고, 없는 버전에서는 ACK.ResourceSynced를 사용합니다.
+기본 제공되는 Rollout·cert-manager Certificate 체크를 간단한 phase 비교로 덮어쓰지 않습니다. Certificate의 API 그룹은 cert-manager.io이며, 내장 체크는 Issuing 상태를 Ready보다 먼저 처리합니다. 아래 ACK 예제는 상태·조건이 없으면 Progressing이고 ARN 존재만으로 Healthy라고 하지 않습니다. 설치한 ACK 버전이 제공하는 Ready/ACK.ResourceSynced와 오류 조건을 확인합니다. 아래는 Ready가 있으면 이를 우선하고, 없는 버전에서는 ACK.ResourceSynced를 사용합니다.
 
 ```yaml
 apiVersion: v1

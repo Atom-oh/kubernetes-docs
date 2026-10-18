@@ -5,7 +5,7 @@
 
 ## 소개
 
-OpenTelemetry(OTel)는 클라우드 네이티브 소프트웨어를 위한 관측성 프레임워크입니다. Traces, Metrics, Logs의 세 가지 신호를 생성, 수집, 관리하기 위한 벤더 중립적 표준을 제공합니다. CNCF의 2026년 7월 24일 회고 글은 당시 기여 활동 속도를 Kubernetes 다음으로 소개합니다. 프로젝트 성숙도와 각 SDK·컴포넌트의 안정성은 구분해야 합니다.
+OpenTelemetry(OTel)는 클라우드 네이티브 소프트웨어를 위한 관측성 프레임워크입니다. Traces, Metrics, Logs의 세 가지 신호를 생성, 수집, 관리하기 위한 벤더 중립적 표준을 제공합니다. CNCF의 2026년 7월 24일 회고 글은 당시 기여 활동 속도가 Kubernetes 다음이라고 소개합니다. 프로젝트 성숙도와 각 SDK·컴포넌트의 안정성은 구분해야 합니다.
 
 ### 2026년 7월 업데이트: CNCF 졸업(Graduation)
 
@@ -324,7 +324,7 @@ spec:
 
 ### Manual Instrumentation (수동 계측)
 
-Agent나 앱이 초기화한 OpenTelemetry instance/provider를 재사용합니다. SDK provider가 없으면 API 호출은 no-op일 수 있습니다. 아래 비즈니스 작업은 INTERNAL span이며 계측된 HTTP/DB client가 CLIENT span과 컨텍스트 전파를 담당합니다. CLIENT span을 만들기만 해서는 요청을 보내거나 컨텍스트를 주입하지 않습니다.
+Agent나 앱이 초기화한 OpenTelemetry instance/provider를 재사용합니다. SDK provider가 없으면 API 호출은 no-op일 수 있습니다. 아래 비즈니스 작업은 INTERNAL span이며 계측된 HTTP/DB client가 CLIENT span과 컨텍스트 전파를 담당합니다. CLIENT span을 만들기만 해서는 요청이 전송되거나 컨텍스트가 주입되지는 않습니다.
 
 #### Java Manual Instrumentation
 
@@ -460,7 +460,7 @@ flowchart TD
 
 ### Collector 설정
 
-`otel-collector-config.yaml`로 저장합니다. 실습용 상태 유지 sampling/aggregation 인스턴스 하나이며 HA·용량 보장이 아닙니다. 별도 trace pipeline이 **tail sampling 전** 메트릭을 생성하지만 head sampling이나 filter에서 제외한 span까지 복구하지는 않습니다. 고유 사용자 요청이 아닌 관측 span 수이므로 요청 SLI에는 적절한 span kind와 제한된 dimension을 선택합니다. 0.160.0의 누적 span-metric counter는 첫 export가 0이므로 다음 flush도 관찰한 뒤 트래픽을 해석합니다.
+`otel-collector-config.yaml`로 저장합니다. 실습용 상태 유지 sampling/aggregation 인스턴스 하나이며 HA·용량을 보장하지 않습니다. 별도 trace pipeline이 **tail sampling 전** 메트릭을 생성하지만 head sampling이나 filter에서 제외한 span까지 복구하지는 않습니다. 고유 사용자 요청이 아닌 관측 span 수이므로 요청 SLI에는 적절한 span kind와 제한된 dimension을 선택합니다. 0.160.0의 누적 span-metric counter는 첫 export가 0이므로 다음 flush도 관찰한 뒤 트래픽을 해석합니다.
 
 OTLP 지원 Tempo, Prometheus 호환 remote-write receiver, Loki native OTLP 수신과 소유자가 관리하는 TLS/인증 gateway를 준비합니다. 아래 gateway 이름은 이 문서가 생성하는 Service가 아닙니다. Prometheus 자체를 받는 쪽으로 쓰면 `--web.enable-remote-write-receiver`도 필요합니다. Loki exporter base는 `/otlp`이며 HTTP exporter가 `/v1/logs`를 붙입니다. Loki structured metadata와 신뢰할 tenant 매핑을 구성하며 tenant header 자체는 인증이 아닙니다.
 
@@ -775,7 +775,7 @@ spec:
 
 ## EKS 배포 패턴
 
-서로 다른 배포 패턴이며 전체를 무조건 적용하는 스택이 아닙니다. Stateless relay가 세 신호를 위의 단일 sampling 계층으로 전달합니다. 임의 분산되는 node/sidecar/HPA 계층에 tail sampling·span aggregation을 넣지 않습니다. Sampling 인스턴스가 여러 개라면 trace ID 라우팅·endpoint 변경·진행 중 trace·재시작·저장 전략이 필요하며 Service나 HPA만으로 해결되지 않습니다.
+서로 다른 배포 패턴이며 전체를 무조건 적용하는 스택이 아닙니다. Stateless relay가 세 신호를 위의 단일 sampling 계층으로 전달합니다. 임의로 분산되는 node/sidecar/HPA 계층에 tail sampling·span aggregation을 넣지 않습니다. Sampling 인스턴스가 여러 개라면 trace ID 라우팅·endpoint 변경·진행 중 trace·재시작·저장 전략이 필요하며 Service나 HPA만으로 해결되지 않습니다.
 
 `otel-relay-config.yaml`로 저장하고 같은 client-side 절차로 `otel-relay-config` ConfigMap을 생성합니다. `OTEL_UPSTREAM_ENDPOINT`와 client 인증서는 별도로 준비한 upstream Collector를 가리킵니다. Sampling 결정 상태는 유지하지 않지만 메모리 batch/export queue의 장애·종료 한계는 남습니다.
 
@@ -979,7 +979,7 @@ spec:
 ```
 ### Sidecar 패턴
 
-다음 설정으로 별도의 `otel-sidecar-config` ConfigMap을 준비합니다. 같은 Pod만 loopback 평문 OTLP receiver를 사용하고 upstream은 mTLS로 전송합니다. 256 MiB sidecar에 hard 192 MiB / soft 144 MiB를 사용합니다. 앱 이미지에 선택한 SDK/agent가 있어야 하며 endpoint 변수만으로 계측이 추가되지는 않습니다. Kubernetes 1.35 schema 예제는 native sidecar(`initContainers`의 `restartPolicy: Always`, 1.33 GA)를 사용합니다. Startup probe 이후 앱을 시작하고 정상 종료에서는 앱 컨테이너를 먼저 종료하지만 backend 전달·갑작스러운 장애 복구는 별도입니다.
+다음 설정으로 별도의 `otel-sidecar-config` ConfigMap을 준비합니다. 같은 Pod의 컨테이너만 loopback 평문 OTLP receiver를 사용하고 upstream으로는 mTLS로 전송합니다. 256 MiB sidecar에 hard 192 MiB / soft 144 MiB를 사용합니다. 앱 이미지에 선택한 SDK/agent가 있어야 하며 endpoint 변수만으로 계측이 추가되지는 않습니다. Kubernetes 1.35 schema 예제는 native sidecar(`initContainers`의 `restartPolicy: Always`, 1.33 GA)를 사용합니다. Startup probe 이후 앱을 시작하고 정상 종료에서는 앱 컨테이너를 먼저 종료하지만 backend 전달·갑작스러운 장애 복구는 별도입니다.
 
 
 ```yaml
@@ -1474,7 +1474,7 @@ Fan-out은 backend 사이의 원자적 전달이나 동일한 보존 결과를 �
 
 ### 2026년 10월 업데이트: OTel 스트림 기반 사고 감지 재구축 사례
 
-[9월 30일 CNCF 글](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/)에서 Atlassian은 자동 사고 생성 플랫폼을 OpenTelemetry·Apache Kafka·Kubernetes 위의 Apache Flink로 재구축해 이벤트-메트릭 지연을 40초 이상에서 10초 미만으로 줄인 18개월 운영 경험을 공유합니다. 글 자체가 밝히듯 recall이 60%→86% 상승 후 64%로 떨어진 달도 있고 precision은 목표에 미달합니다. 수치는 해당 조직의 측정이지 아키텍처 채택만으로 재현되는 결과가 아니며, 공유 큐의 noisy neighbor 분리와 비용 같은 트레이드오프 판단의 참고 사례로 읽습니다.
+[9월 30일 CNCF 글](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/)에서 Atlassian은 자동 사고 생성 플랫폼을 OpenTelemetry·Apache Kafka·Kubernetes 위의 Apache Flink로 재구축해 이벤트-메트릭 지연을 40초 이상에서 10초 미만으로 줄인 18개월 운영 경험을 공유합니다. 글 자체가 밝히듯 recall이 60%→86%로 상승한 후 64%로 떨어진 달도 있고 precision은 목표에 미달합니다. 수치는 해당 조직의 측정이지 아키텍처 채택만으로 재현되는 결과가 아니며, 공유 큐의 noisy neighbor 분리와 비용 같은 트레이드오프 판단의 참고 사례로 읽습니다.
 
 ## Best Practices
 

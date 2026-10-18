@@ -79,7 +79,7 @@ INFO는 운영의 출발점이 될 수 있지만 audit/security event와 일시�
 
 ## 수집과 처리
 
-아래 계층은 역할이며 반드시 다른 process라는 뜻은 아닙니다.
+아래 계층은 역할을 나타내며 반드시 서로 다른 process라는 뜻은 아닙니다.
 Destination을 명시적으로 선택하고 모든 record를 모든 backend에 복사하지 않습니다.
 Managed EKS control-plane record는 worker-node file이 아닌 CloudWatch 경로로 들어옵니다.
 
@@ -249,7 +249,7 @@ pod execution role에 destination 권한을 부여합니다. ConfigMap 변경은
 
 CloudWatch Agent의 `logs.metrics_collected.kubernetes`는 Container Insights
 performance data를 만들며 application stdout/stderr 수집 자체가 아닙니다.
-Fluent Bit나 구성된 OTel log 경로가 application log를 별도로 처리합니다.
+Fluent Bit이나 구성된 OTel log 경로가 application log를 별도로 처리합니다.
 실제 workload/Operator가 읽지 않는 ConfigMap은 효과가 없습니다.
 검토된 [CloudWatch 장](../metrics/04-cloudwatch-metrics.md)의 모델·구성 경계를 참고하세요.
 
@@ -262,7 +262,7 @@ Fluent Bit나 구성된 OTel log 경로가 application log를 별도로 처리�
 | CloudWatch Logs | Managed log group, IAM, retention, Logs Insights QL/SQL/PPL; log class/Region별 기능 확인 |
 | ClickHouse | Column-oriented SQL analytics, schema/order/partition/TTL과 자체 운영/cloud storage 모델 선택 |
 
-OpenSearch가 모두 “S3 snapshot만” 쓰는 것은 아닙니다. UltraWarm은 S3/cache를
+모든 OpenSearch 구성이 “S3 snapshot만” 쓰는 것은 아닙니다. UltraWarm은 S3/cache를
 사용하며 Serverless도 storage와 compute를 분리합니다.
 CloudWatch는 사용자가 구성하는 S3 log backend는 아니지만 별도 export/delivery/
 integration 경로를 지원합니다. Tenant ID나 sidecar가 인증된 routing과 backend 접근

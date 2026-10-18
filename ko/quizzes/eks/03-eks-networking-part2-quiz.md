@@ -19,7 +19,7 @@ D. Gateway Load Balancer (GWLB)
 
 **설명:** AWS Load Balancer Controller는 Kubernetes Ingress 리소스를 위해 기본적으로 Application Load Balancer(ALB)를 프로비저닝합니다. ALB는 HTTP/HTTPS 트래픽을 처리하는 Layer 7 로드 밸런서로, 경로 기반 라우팅, 호스트 기반 라우팅, TLS 종료 등의 기능을 제공하여 Ingress 리소스의 요구 사항을 충족합니다.
 
-LBC가 해당 Ingress 클래스를 선택해야 하며 다른 컨트롤러는 Ingress를 다르게 구현할 수 있습니다. 아래 public scheme은 의도한 퍼블릭 서브넷·클라이언트 SG 접근과 준비된 백엔드 Service가 필요합니다.
+LBC가 해당 Ingress 클래스를 선택해야 하며 다른 컨트롤러는 Ingress를 다르게 구현할 수 있습니다. 아래 public scheme을 사용하려면 의도한 퍼블릭 서브넷·클라이언트 SG 접근과 준비된 백엔드 Service가 필요합니다.
 
 **주요 특징:**
 
@@ -350,7 +350,7 @@ spec:
   - port: 80
     targetPort: 8080
 ```
-애플리케이션이 보는 주소는 전체 경로에 따라 달라집니다. NodePort 전달 과정은 local 트래픽 정책·토폴로지가 보존하지 않으면 SNAT할 수 있고 ALB는 HTTP 전달 헤더를 사용합니다. IPv6→IPv4 변환과 PrivateLink에서는 원래 패킷 소스가 유지되지 않습니다. 보존에는 같은 VPC 또는 같은 리전 피어링의 지원되는 직접 경로가 필요하며 Transit Gateway 경유는 지원되지 않습니다. 내부 NLB 뒤의 대상이 같은 NLB를 통해 자신에게 연결하는 hairpin 연결도 실패할 수 있습니다.
+애플리케이션이 보는 주소는 전체 경로에 따라 달라집니다. NodePort 전달 과정에서는 local 트래픽 정책·토폴로지가 주소를 보존하지 않으면 SNAT이 발생할 수 있고 ALB는 HTTP 전달 헤더를 사용합니다. IPv6→IPv4 변환과 PrivateLink에서는 원래 패킷 소스가 유지되지 않습니다. 보존에는 같은 VPC 또는 같은 리전 피어링의 지원되는 직접 경로가 필요하며 Transit Gateway 경유는 지원되지 않습니다. 내부 NLB 뒤의 대상이 같은 NLB를 통해 자신에게 연결하는 hairpin 연결도 실패할 수 있습니다.
 
 Proxy Protocol v2는 원본 주소 메타데이터를 전달하지만 호환 리스너·파서가 필요하므로 무조건 켜지 마세요. 프레임워크 `remote_addr`나 TCP `RemoteAddr()`는 직접 연결된 상대 주소이며 인터넷 원본 클라이언트를 자동 식별하지 않습니다. 명시적으로 신뢰한 프록시의 전달 헤더만 사용합니다. 보존 변경은 새 TCP 연결부터 적용됩니다. `deregistration_delay.timeout_seconds`는 TCP keep-alive가 아니라 드레이닝을 제어합니다. 근거 없는 오버헤드 수치 대신 실제 경로에서 측정하세요.
 
@@ -454,7 +454,7 @@ kubectl label namespace "$LAB_NS" \
   pod-security.kubernetes.io/enforce-version=v1.36
 printf 'Namespace: %s UID: %s\n' "$LAB_NS" "$LAB_UID"
 ```
-HTTP 서버는 실제 8080을 리스닝하며 `/health`와 요청 경로에 백엔드 이름으로 응답합니다. `containerPort: 8080` 선언만으로 기본 nginx 서버 포트가 바뀌지는 않습니다. Python 태그는 예시 런타임이므로 반복 실행에는 승인한 이미지 digest를 고정하세요.
+HTTP 서버는 실제로 8080 포트에서 리스닝하며 `/health`와 요청 경로에 백엔드 이름으로 응답합니다. `containerPort: 8080` 선언만으로 기본 nginx 서버 포트가 바뀌지는 않습니다. Python 태그는 예시 런타임이므로 반복 실행에는 승인한 이미지 digest를 고정하세요.
 ```bash
 for APP in api admin frontend; do
   kubectl -n "$LAB_NS" apply -f - <<EOF
@@ -648,13 +648,13 @@ Client application → client proxy → Pod network → destination proxy → de
 ```
 이는 논리적 사이드카 경로이며 모든 패킷이 Service 가상 IP를 지나거나 가로채진다는 보장은 아닙니다. 제외 포트, UDP, host-network 트래픽, 네임스페이스 등록과 모드를 확인합니다. VPC 경로·SG·NetworkPolicy는 계속 적용됩니다. L3/L4 정책은 데이터 플레인·DNS·컨트롤 플레인·헬스체크의 실제 경로를 허용해야 하며 mTLS의 피어 인증·암호화는 애플리케이션 권한 검사를 대체하지 않습니다.
 
-Istio는 컴퓨팅 유형에 맞는 사이드카/ambient 설치 하나를 선택합니다. Fargate는 일부 모드에 필요한 노드 DaemonSet·특권 구성 요소를 실행할 수 없으므로 보편적 호환성을 주장하지 말고 지원 경로를 확인하세요. 한 네임스페이스에 메시 injector 두 개를 켜지 않습니다. 프록시 자원은 지원되는 Helm·설치·워크로드 설정으로 구성하며 관련 없는 `pilot.resources`로 injector ConfigMap을 덮어쓰지 않습니다. Prometheus·트레이싱 배포와 메시 내보내기 설정도 구분합니다. 제거된 `IstioOperator.addonComponents.prometheus`와 존재하지 않는 App Mesh `Mesh.spec.tracing`는 사용할 수 있는 설치 절차가 아닙니다.
+Istio에서는 컴퓨팅 유형에 맞는 사이드카/ambient 설치 하나를 선택합니다. Fargate는 일부 모드에 필요한 노드 DaemonSet·특권 구성 요소를 실행할 수 없으므로 보편적 호환성을 주장하지 말고 지원 경로를 확인하세요. 한 네임스페이스에 메시 injector 두 개를 켜지 않습니다. 프록시 자원은 지원되는 Helm·설치·워크로드 설정으로 구성하며 관련 없는 `pilot.resources`로 injector ConfigMap을 덮어쓰지 않습니다. Prometheus·트레이싱 배포와 메시 내보내기 설정도 구분합니다. 제거된 `IstioOperator.addonComponents.prometheus`와 존재하지 않는 App Mesh `Mesh.spec.tracing`는 사용할 수 있는 설치 절차가 아닙니다.
 
 **이전 제품 비교:** AWS는 **2026년 9월 30일** App Mesh 지원을 종료했으며 이후 콘솔·리소스에 접근할 수 없습니다. 기존 App Mesh 배포는 이전해야 하며 새 EKS 기본 선택지로 도입하지 마세요. 과거 Fargate 통합도 향후 지원 보장이 아닙니다. ECS Service Connect는 ECS용이지 EKS의 직접 대체품이 아닙니다. 지원되는 EKS 메시·데이터 플레인 설계에서 라우팅·재시도·인증서·권한·트레이싱·장애 처리의 동등성을 검증합니다.
 
-기존 “일반적으로 <10 ms” 지연 및 “10–15%” CPU·메모리 오버헤드 수치는 이 문서에서 검증된 측정 출처가 없습니다. **검증되지 않은 과거 추정값**으로 보존하며 벤치마크나 용량 보장으로 사용하지 않습니다. 등록 전후 동일한 요청 구성·TLS·텔레메트리 샘플링·부하에서 p50/p95/p99 지연, 처리량, 오류와 CPU·메모리를 측정합니다. 프록시 롤아웃, 노드·컨트롤 플레인 장애, 인증서 회전과 재시도 증폭도 테스트하세요.
+기존 “일반적으로 <10 ms” 지연 및 “10–15%” CPU·메모리 오버헤드 수치에는 이 문서에서 검증된 측정 출처가 없습니다. **검증되지 않은 과거 추정값**으로 보존하며 벤치마크나 용량 보장으로 사용하지 않습니다. 등록 전후 동일한 요청 구성·TLS·텔레메트리 샘플링·부하에서 p50/p95/p99 지연, 처리량, 오류와 CPU·메모리를 측정합니다. 프록시 롤아웃, 노드·컨트롤 플레인 장애, 인증서 회전과 재시도 증폭도 테스트하세요.
 
-전용 네임스페이스에서 injector 하나, 준비된 워크로드, mTLS와 허용·거부 정책을 검증하고 점진적으로 확장합니다. LBC를 메시 ingress gateway 앞에 둘 때는 해당 gateway Service와 대상 포트·프로브를 확인하며 Ingress API 객체는 또 다른 프록시 홉이 아닌 구성입니다. 필요한 컨트롤러 IAM을 제한하고 `cloudmap:*`를 실제 `servicediscovery` IAM 접두사 대신 사용하지 않습니다. Prefix delegation은 IP 용량 선택이지 사이드카 필수 요건이 아닙니다. 구현은 유지 관리되는 [Istio 설치](../../service-mesh/istio/01-installation.md)와 [AWS 통합](../../service-mesh/istio/04-aws-integration.md) 문서를 참고하세요.
+전용 네임스페이스에서 injector 하나, 준비된 워크로드, mTLS와 허용·거부 정책을 검증하고 점진적으로 확장합니다. LBC를 메시 ingress gateway 앞에 둘 때는 해당 gateway Service와 대상 포트·프로브를 확인하며 Ingress API 객체는 또 다른 프록시 홉이 아닌 구성입니다. 필요한 컨트롤러 IAM을 제한하고 `cloudmap:*`를 실제 `servicediscovery` IAM 접두사 대신 사용하지 않습니다. Prefix delegation은 IP 용량 선택이지 사이드카 필수 요건이 아닙니다. 구현 시에는 유지 관리되는 [Istio 설치](../../service-mesh/istio/01-installation.md)와 [AWS 통합](../../service-mesh/istio/04-aws-integration.md) 문서를 참고하세요.
 
 </details>
 
@@ -677,7 +677,7 @@ A. IngressRoute B. HTTPRoute C. VirtualService D. ServiceRoute
 3. **HTTPRoute**: L7 라우팅 규칙 (호스트, 경로, 헤더 기반 라우팅)
 4. **TCPRoute**: L4 라우팅 규칙 (TCP 트래픽)
 
-LBC는 ALB와 NLB Gateway를 별도로 사용합니다. 임의의 GatewayClass 이름이 아니라 controllerName이 구현을 선택하며 지원 필터는 릴리스 적합성 표를 확인합니다.
+LBC는 ALB와 NLB Gateway를 별도로 사용합니다. 임의의 GatewayClass 이름이 아니라 controllerName이 구현을 선택하며 지원 필터는 릴리스 적합성 표에서 확인합니다.
 
 **HTTPRoute의 주요 기능:**
 

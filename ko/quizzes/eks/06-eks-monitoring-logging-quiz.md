@@ -217,7 +217,7 @@ Endpoint·Region은 조회한 domain 값으로 바꿉니다. SigV4 권한·domai
 
 **선택한 구성 요소를 통한 ADOT Log 수집:**
 
-ADOT0.50.0에는 filelog·file_storage·awscloudwatchlogs가 포함됩니다. 대응 upstream0.158 CloudWatch Logs exporter는 alpha로 표시되며 다음은 runtime 전제를 명시한 특정 버전 예제이지 운영 준비 완료 주장이 아닙니다. 선택한 dataset의 대체 collector로 사용하고 Fluent Bit과 실수로 중복 수집하지 않습니다.
+ADOT0.50.0에는 filelog·file_storage·awscloudwatchlogs가 포함됩니다. 대응 upstream0.158 CloudWatch Logs exporter는 alpha로 표시되며 다음은 runtime 전제를 명시한 특정 버전 예제이지 운영 준비가 완료되었다는 주장이 아닙니다. 선택한 dataset의 대체 collector로 사용하고 Fluent Bit과 실수로 중복 수집하지 않습니다.
 
 Operator0.158, logging namespace와 검토한 IRSA 역할·AWS log-write 권한의 ServiceAccount adot-logs를 준비합니다. Trust를 이 클러스터 OIDC provider, sub=system:serviceaccount:logging:adot-logs·aud=sts.amazonaws.com으로 제한하고 필요한 STS·Logs 네트워크 경로를 제공합니다. 일반 Linux EC2 노드 예제이며 root node agent가 /var/log/pods를 읽고 전용 state directory에 쓰도록 admission이 허용해야 합니다. Default namespace include filter는 내보내는 데이터 범위이며 node 전체 host mount를 filesystem 보안 경계로 바꾸지는 않습니다. Node 배치·taint·file 소유권·namespace policy를 검토하고 배포 전에 실제 Region·log-group 값을 설정합니다:
 
@@ -330,7 +330,7 @@ spec:
           exporters: [awscloudwatchlogs]
 ```
 
-Container operator는 CRI envelope·부분 record를 처리하고 log.file.path에서 Pod metadata를 얻습니다. Raw CRI line에 일반 JSON parser를 적용하는 것은 잘못입니다. Stream 이름은 미지원 {pod_name}.{container_name} placeholder가 아니라 Downward API의 node 이름을 Collector 환경 치환으로 사용합니다.
+Container operator는 CRI envelope·부분 record를 처리하고 log.file.path에서 Pod metadata를 얻습니다. Raw CRI line에 일반 JSON parser를 적용하는 것은 잘못입니다. Stream 이름에는 미지원 {pod_name}.{container_name} placeholder가 아니라 Downward API의 node 이름을 Collector 환경 치환으로 사용합니다.
 
 Exporter는 group·stream을 만들 수 있고 log_retention은 신규 group에 적용됩니다. 기존 retention은 log-group 소유자가 구성합니다. 문서화된 EMF 처리는 설정한 group·stream 이름을 재정의할 수 있으므로 IAM 목적지 범위를 제한하고 실제 data format을 확인합니다. Config 문자열만으로 권한 범위가 제한되는 것은 아닙니다.
 
@@ -338,7 +338,7 @@ File_storage는 receiver offset을 보존하며 아직 export하지 않은 모�
 
 **분석·인프라 확인:**
 
-본문 Fluent Bit schema는 실제 namespace·container 필드로 구조화 오류를 확인합니다. ADOT wrapper·다른 collector의 저장 schema는 다를 수 있습니다:
+본문 Fluent Bit schema의 실제 namespace·container 필드로 구조화 오류를 확인합니다. ADOT wrapper·다른 collector의 저장 schema는 다를 수 있습니다:
 
 ```
 fields @timestamp, @log, kubernetes.pod_name, data.level, data.message
@@ -468,7 +468,7 @@ Threshold·대기 시간은 예시입니다. MemAvailable은 회수 가능한 �
 
 **실제 Alertmanager 구성 연결:**
 
-본문의 alertmanager.yaml key를 가진 alertmanager-routing Secret, alertmanager-values.yaml과 notification-credentials mount를 사용합니다. 실제 Slack webhook·PagerDuty Events API v2 routing key를 해당 Secret에 준비합니다. 기본 SNS 경로는 실제 Alertmanager ServiceAccount의 AWS 신원과 topic 범위 publish·필요한 KMS 권한을 준비합니다. 다른 구성 요소의 IRSA 역할이 자동 공유되지는 않습니다.
+본문의 alertmanager.yaml key를 가진 alertmanager-routing Secret, alertmanager-values.yaml과 notification-credentials mount를 사용합니다. 실제 Slack webhook·PagerDuty Events API v2 routing key를 해당 Secret에 준비합니다. 기본 SNS 경로에는 실제 Alertmanager ServiceAccount의 AWS 신원과 topic 범위 publish·필요한 KMS 권한을 준비합니다. 다른 구성 요소의 IRSA 역할이 자동 공유되지는 않습니다.
 
 사용 전에 예시 SNS account·Region·topic을 교체합니다. 다음 완전한 routing 예제는 critical을 PagerDuty, warning을 Slack, 일치하지 않는 경보를 SNS에 보냅니다. Watchdog는 별도 heartbeat monitor를 구성하기 전의 예제 discard 경로입니다:
 
@@ -610,7 +610,7 @@ resource "aws_cloudwatch_event_target" "sns" {
 }
 ```
 
-CPU 예제는 5분 Maximum 두 구간이 threshold를 넘는 조건이며 10분 내내80% 사용했다는 뜻이 아닙니다. Missing data를 자동 정상으로 취급하지 않습니다. 소유권·publisher 접근·metric 데이터·예상 알림을 검토한 뒤 소유자의 변경 절차로 활성화합니다. 이 예제는 topic policy를 생성·교체하거나 subscription을 구성하지 않으며 AWS에 plan·apply하지 않았습니다.
+CPU 예제는 5분 Maximum 두 구간이 threshold를 넘는 조건이며 10분 내내 80%를 사용했다는 뜻이 아닙니다. Missing data를 자동 정상으로 취급하지 않습니다. 소유권·publisher 접근·metric 데이터·예상 알림을 검토한 뒤 소유자의 변경 절차로 활성화합니다. 이 예제는 topic policy를 생성·교체하거나 subscription을 구성하지 않으며 AWS에 plan·apply하지 않았습니다.
 
 **SNS Subscription·선택적인 Lambda 처리:**
 
@@ -884,7 +884,7 @@ Grafana/AMG         -> queries the configured data sources
 
 - 정의한 대상·구간으로 지연 분포·처리량·오류율·포화도를 측정합니다. Sampling한 trace 집합이 자동으로 편향 없는 metric 분포가 되지는 않습니다.
 - 제한된 service 이름·정규화한 route·version·environment·cluster·namespace 신원을 사용합니다. Customer·tenant ID·원문 URL은 cardinality·개인정보 문제를 만들 수 있어 기본 metric label로 사용하지 않습니다.
-- Head sampling은 요청의 최종 결과 전에 결정하므로 모든 오류·느린 요청을 보장하지 못하고 tail sampling도 upstream에서 버린 span을 복구하지 못합니다. Tail sampling에는 trace별 routing·충분한 buffer·시간 구간이 필요합니다.
+- Head sampling은 요청의 최종 결과 전에 결정하므로 모든 오류·느린 요청의 보존을 보장하지 못하고 tail sampling도 upstream에서 버린 span을 복구하지 못합니다. Tail sampling에는 trace별 routing·충분한 buffer·시간 구간이 필요합니다.
 - RUM session·user data, log·span·profile에는 적절한 접근·동의·수집 policy·retention이 필요합니다. Correlation ID는 metadata이지 인증이 아닙니다.
 - 성능 시험·profiling은 runtime 신호를 보완합니다. 예제가 신규 benchmark·운영 성능 결과를 주장하지 않습니다.
 
@@ -918,7 +918,7 @@ EKS는 선택한 control-plane log type을 계정의 CloudWatch Logs로 직접 �
 | controllerManager | Controller reconciliation 진단 |
 | scheduler | Scheduling 결정·실패 관련 진단 |
 
-기존 cluster 구성을 먼저 확인합니다. 다섯 type 모두를 켜는 승인된 변경은 본문의 update ID·status 확인 절차를 사용하고 성공 후 실제 log 전달까지 확인합니다:
+기존 cluster 구성을 먼저 확인합니다. 다섯 type 모두를 켜는 승인된 변경에는 본문의 update ID·status 확인 절차를 사용하고 성공 후 실제 log 전달까지 확인합니다:
 
 ```bash
 set -euo pipefail
@@ -961,7 +961,7 @@ fields @timestamp, auditID, user.username, verb, objectRef.resource, responseSta
 | limit 100
 ```
 
-알려진 audit username은 user.username이라는 문자열을 parse하지 말고 중첩 JSON 필드를 사용합니다. 예시 username을 record에서 확인한 실제 신원으로 바꿉니다:
+알려진 audit username을 조회할 때는 user.username이라는 문자열을 parse하지 말고 중첩 JSON 필드를 사용합니다. 예시 username을 record에서 확인한 실제 신원으로 바꿉니다:
 
 ```
 fields @timestamp, auditID, user.username, verb, objectRef.resource, responseStatus.code
@@ -1097,7 +1097,7 @@ resource "aws_cloudwatch_dashboard" "control_plane" {
 
 Filter는 새로 수집한 audit ResponseComplete record 중 responseStatus.code>=500인 항목을 셉니다. Audit JSON에 없는 ClusterName 차원을 임의로 만들지 않고 cluster prefix metric 이름으로 구분합니다. Filter·경보·metric widget은 동일 namespace·이름을 사용하고 차원을 추가하지 않습니다. Dashboard query는 과거 record를 포함할 수 있지만 metric filter는 과거 데이터를 backfill하지 않습니다. 이는 기록된 event 수이며 API 오류율·중복 제거된 요청 총수가 아닙니다. 중복 전달도 발생할 수 있습니다.
 
-Default_value0은 log가 들어왔지만 일치 항목이 없을 때 게시합니다. 들어오는 log가 없으면 여전히 missing data일 수 있습니다. Metric filter의 default value와 dimensions는 함께 쓸 수 없습니다. 경보는 의도적으로 action을 끄고 시작하며 missing data·예시 threshold를 명시합니다. 활성화 전에 신규 metric datapoint·권한·subscription·통제된 전달 시험을 확인합니다.
+Default_value0은 log가 들어왔지만 일치 항목이 없을 때 게시됩니다. 들어오는 log가 없으면 여전히 missing data일 수 있습니다. Metric filter의 default value와 dimensions는 함께 쓸 수 없습니다. 경보는 의도적으로 action을 끄고 시작하며 missing data·예시 threshold를 명시합니다. 활성화 전에 신규 metric datapoint·권한·subscription·통제된 전달 시험을 확인합니다.
 
 Jsonencode는 기존 dashboard 명령의 잘못된 shell quoting을 피합니다. CLI를 사용하면 --dashboard-body file://dashboard.json으로 유효 JSON file을 전달하고 DashboardValidationMessages를 확인합니다. PutDashboard는 기존 body를 교체하므로 소유자의 widget·구성을 보존합니다. 로컬 HCL·JSON 검증은 AWS filter·query engine 실행이 아닙니다.
 
@@ -1197,7 +1197,7 @@ Encryption-context log-group ARN에는 뒤의 :*가 없습니다. Key를 연결�
 
 **리소스 효율과 비용 할당**
 
-본문의 kube-prometheus-stack, kube-state-metrics, 서버 인증서를 검증하는 kubelet ServiceMonitor를 재사용합니다. cAdvisor는 kubelet HTTPS 메트릭 포트의 `/metrics/cadvisor` 경로를 사용하며 `cadvisor`라는 별도 Service 포트가 아닙니다. 수집을 위해 중복 모니터를 추가하거나 TLS 검증을 해제하지 않습니다.
+본문의 kube-prometheus-stack, kube-state-metrics, 서버 인증서를 검증하는 kubelet ServiceMonitor를 재사용합니다. cAdvisor는 kubelet HTTPS 메트릭 포트의 `/metrics/cadvisor` 경로를 사용하며 `cadvisor`라는 별도 Service 포트를 사용하지 않습니다. 수집을 위해 중복 모니터를 추가하거나 TLS 검증을 해제하지 않습니다.
 
 다음 CPU·메모리 쿼리는 **컨테이너별 사용량/요청량 비율**이며 노드 용량 사용률이나 금액이 아닙니다. 1을 초과할 수 있고, requests가 0이거나 없으면 비율이 나오지 않습니다. 이를 사용량 0으로 해석하지 않습니다. `max`는 나열한 식별자가 같은 중복 수집본을 합치므로 실제 같은 워크로드인지 확인합니다. 이 예시는 한 클러스터의 로컬 Prometheus를 대상으로 합니다. 공유 백엔드에서는 두 메트릭 계열에 일치하는 cluster 레이블이 필요합니다. 기간 분석에서는 Pod 이름 재사용과 컨테이너 재시작도 고려합니다. 이 컨테이너 메트릭만으로 Pod 수준 리소스, init container, Pod overhead를 포함한 전체 스케줄러 예약량을 표현할 수 없습니다.
 

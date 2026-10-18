@@ -330,7 +330,7 @@ spec:
     path: /metrics
 ```
 
-Check endpoint discovery/RBAC, network access and the Prometheus Targets page. A ServiceMonitor `endpoints.port` selects the **Service port name**; it does not mean container port number. Confirm each discovered target, rather than scraping a load-balanced Service address and assuming every node is represented.
+Check endpoint discovery/RBAC, network access and the Prometheus Targets page. A ServiceMonitor `endpoints.port` selects the **Service port name**; it does not mean a container port number. Confirm each discovered target, rather than scraping a load-balanced Service address and assuming every node is represented.
 
 ## Grafana Dashboard
 
@@ -363,7 +363,7 @@ sum by (ippool) (
 / max by (ippool) (ipam_ippool_size{job="calico-kube-controllers",ippool!="no_ippool"})
 ```
 
-The `max` per pool/node avoids double-counting identical controller observations, then the sum totals allocations across nodes. This is **address utilization**, not blocks consumed or a guarantee of allocatable capacity for a particular node. Pool selectors, strict affinity, block caps, reserved/tunnel addresses and other constraints still matter. It does not describe VPC CNI allocation; empty/missing/zero-capacity metrics need separate investigation.
+The `max` per pool/node avoids double-counting identical controller observations; then the sum totals allocations across nodes. This is **address utilization**, not blocks consumed or a guarantee of allocatable capacity for a particular node. Pool selectors, strict affinity, block caps, reserved/tunnel addresses and other constraints still matter. It does not describe VPC CNI allocation; empty/missing/zero-capacity metrics need separate investigation.
 
 ## Alert Rules
 
@@ -472,7 +472,7 @@ kubectl logs -n "$CALICO_NAMESPACE" "$CALICO_POD" -c calico-node \
 
 Use explicit time and tail limits. With selectors, `kubectl logs` can default to a short tail; a requested time window is not proof that all lines in that window were returned. For a restarted container, inspect its previous log where available. Preserve retrieval errors rather than converting them into “no errors.”
 
-Felix process logs describe programming and component activity. Turning `logSeverityScreen` to Debug does not create a per-packet policy decision log. Record the original field and its configuration owner before a temporary change, then restore the exact prior value or absence rather than assuming Info was the previous setting. File/syslog output also depends on its configured path and runtime.
+Felix process logs describe programming and component activity. Setting `logSeverityScreen` to Debug does not create a per-packet policy decision log. Record the original field and its configuration owner before a temporary change, then restore the exact prior value or absence rather than assuming Info was the previous setting. File/syslog output also depends on its configured path and runtime.
 
 ### Address Allocation and Connectivity
 
@@ -514,7 +514,7 @@ calicoctl get bgppeer -o yaml
 calicoctl get bgpfilter -o yaml
 ```
 
-Use `bird6.ctl` for the corresponding IPv6 daemon when deployed. Verify local/peer ASNs, chosen source address, TCP 179 in both directions, authentication/TTL settings, route filters and the expected route advertisements. A successful TCP connection is not proof that the session established or the required prefixes were accepted. Check the packaged log configuration before assuming a log file exists; the released container's BIRD run/log scripts determine where it writes. See [BGP deep dive](04-bgp-deep-dive.md).
+Use `bird6.ctl` for the corresponding IPv6 daemon when deployed. Verify local/peer ASNs, chosen source address, TCP 179 in both directions, authentication/TTL settings, route filters and the expected route advertisements. A successful TCP connection is not proof that the session was established or the required prefixes were accepted. Check the packaged log configuration before assuming a log file exists; the released container's BIRD run/log scripts determine where it writes. See [BGP deep dive](04-bgp-deep-dive.md).
 
 ## Health Check Automation
 
@@ -685,7 +685,7 @@ Measure endpoint/policy churn, dataplane programming time, queueing, memory and 
 
 Do not enable BPF, DSR or a guessed interface pattern as a generic tuning preset. [Part 6](06-ebpf-dataplane.md) covers kernel/platform requirements, Service handling, kube-proxy conflicts and rollback. Larger conntrack maps cost memory and do not remove all bottlenecks. Re-run the relevant workload and failure tests when a dataplane or resource change is justified.
 
-The checks accompanying this guide are offline schema, query and script-fixture validation. They do not establish production capacity, successful cluster upgrade or disaster recovery.
+The checks accompanying this guide are offline schema, query and script-fixture validation. They do not establish production capacity, a successful cluster upgrade or disaster recovery.
 
 ## References
 

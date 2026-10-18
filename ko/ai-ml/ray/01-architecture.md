@@ -84,7 +84,7 @@ GCS는 actor·node·placement group 같은 cluster metadata를 관리합니다. 
 
 ### 자원 배치
 
-Ray는 cluster 상태를 보고 후보 노드를 선택하지만 **각 task/actor는 한 노드의 요구 자원을 충족해야 합니다.** CPU 1개씩 남은 두 노드의 합이 2라고 해서 CPU 2개를 요구하는 단일 task를 나눠 실행하지 않습니다. Feasible/available 상태, data locality, placement/label/affinity 조건을 함께 고려합니다.
+Ray는 cluster 상태를 보고 후보 노드를 선택하지만 **각 task/actor의 요구 자원은 한 노드에서 충족되어야 합니다.** CPU 1개씩 남은 두 노드의 합이 2라고 해서 CPU 2개를 요구하는 단일 task를 나눠 실행하지 않습니다. Feasible/available 상태, data locality, placement/label/affinity 조건을 함께 고려합니다.
 
 논리 CPU/GPU resource는 admission과 scheduling에 쓰입니다. `num_cpus=1`이 프로세스의 모든 OS thread를 한 core로 강제 제한하는 것은 아닙니다. 실제 container request/limit과 library thread 설정도 관리합니다.
 

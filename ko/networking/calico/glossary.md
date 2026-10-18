@@ -8,7 +8,7 @@
 ## 네트워킹 용어
 
 ### AS (Autonomous System)
-BGP에서 단일 라우팅 정책을 가진 네트워크 그룹입니다. BGP는 AS 사이의 eBGP와 같은 AS 내부의 iBGP에서 사용합니다. RFC 6996의 private ASN 범위는 **64512–65534**와 **4200000000–4294967294**입니다. Private ASN은 관리 영역 안에서 재사용하며 인터넷 전체에서 고유한 공인 번호로 취급하지 않습니다.
+BGP에서 단일 라우팅 정책을 가진 네트워크 그룹입니다. BGP는 AS 사이의 eBGP와 같은 AS 내부의 iBGP에서 사용됩니다. RFC 6996의 private ASN 범위는 **64512–65534**와 **4200000000–4294967294**입니다. Private ASN은 관리 영역 안에서 재사용하며 인터넷 전체에서 고유한 공인 번호로 취급하지 않습니다.
 
 ```yaml
 # 예시: BGPConfiguration에서 AS 번호 설정
@@ -129,7 +129,7 @@ calicoctl ipam show
 `calicoctl node status`는 필요한 접근 조건을 갖춘 로컬 노드의 BGP 진단입니다. Kubeconfig만 있다고 전체 노드 readiness 검사가 되지는 않습니다. 변경 명령과 IPAM 정리는 [운영 가이드](09-operations.md)를 따르세요.
 
 ### Calico API Server / Dikastes / Goldmane / Whisker
-Calico API Server는 OSS에서도 제공하는 API 통합 컴포넌트이며 Kubernetes API 서버와 다릅니다. User-facing `projectcalico.org/v3`와 backing CRD/native API 경로는 실제 설치에 따라 구분합니다. Dikastes는 Istio/Envoy가 호출하는 L7 정책 결정 컴포넌트이며 자체 전달 프록시가 아닙니다. Goldmane는 flow 집계 API, Whisker는 웹 UI로, 현재 OSS flow 관측성 가이드는 tech preview로 표시합니다.
+Calico API Server는 OSS에서도 제공하는 API 통합 컴포넌트이며 Kubernetes API 서버와 다릅니다. User-facing `projectcalico.org/v3`와 backing CRD/native API 경로는 실제 설치에 따라 구분합니다. Dikastes는 Istio/Envoy가 호출하는 L7 정책 결정 컴포넌트이며 자체 전달 프록시가 아닙니다. Goldmane는 flow 집계 API, Whisker는 웹 UI로, 현재 OSS flow 관측성 가이드에서 tech preview로 표시됩니다.
 
 
 ---
@@ -265,7 +265,7 @@ Profile은 endpoint가 레이블을 공유하는 방식입니다. 과거 ingress
 Host GlobalNetworkPolicy의 `applyOnForward`는 forwarded 트래픽 적용을 제어합니다. `preDNAT`은 ingress에서 NAT 전에, `doNotTrack`은 conntrack 전에 적용하며 둘 다 `applyOnForward`가 필요합니다. `preDNAT`과 `doNotTrack`은 함께 사용할 수 없고 stateless 반환 경로는 별도 허용이 필요합니다. [정책 가이드](05-network-policy.md)를 참고하세요.
 
 ### Dataplane / Metrics / Health
-Calico는 Linux Iptables/Nftables/BPF와 지원되는 Windows HNS 구성을 제공합니다. 데이터스토어는 Kubernetes API 또는 지원 직접 etcdv3 방식이며 기능별 제약이 다릅니다. 메트릭 포트는 Felix 기본 9091, Typha 바이너리 기본 9091(흔히 9093으로 명시), kube-controllers 기본 9094입니다. Felix health 기본 포트는 9099지만 컴포넌트 상태만으로 애플리케이션 연결과 정책 정확성이 증명되지는 않습니다.
+Calico는 Linux Iptables/Nftables/BPF와 지원되는 Windows HNS 구성을 제공합니다. 데이터스토어는 Kubernetes API 또는 지원되는 직접 etcdv3 방식이며 기능별 제약이 다릅니다. 메트릭 포트는 Felix 기본 9091, Typha 바이너리 기본 9091(흔히 9093으로 명시), kube-controllers 기본 9094입니다. Felix health 기본 포트는 9099지만 컴포넌트 상태만으로 애플리케이션 연결과 정책 정확성이 증명되지는 않습니다.
 
 
 ---

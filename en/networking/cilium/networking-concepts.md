@@ -414,7 +414,7 @@ Kubernetes uses NAT in various scenarios:
 
 #### NAT in Cilium
 
-Cilium leverages eBPF to provide efficient NAT implementation:
+Cilium leverages eBPF to provide an efficient NAT implementation:
 
 1. **eBPF-based NAT**: Performs NAT directly within the kernel
 2. **High-Performance Connection Tracking**: Connection state tracking using optimized BPF maps
@@ -789,7 +789,7 @@ spec:
 
 ## Load Balancing Concepts
 
-Load balancing is a technology that distributes network traffic across multiple servers or backend services to optimize resource utilization, support throughput, latency and availability goals when combined with suitable capacity and backend health handling. In container environments, effectively distributing traffic among dynamically changing backend instances is particularly important.
+Load balancing is a technology that distributes network traffic across multiple servers or backend services to optimize resource utilization and support throughput, latency and availability goals when combined with suitable capacity and backend health handling. In container environments, effectively distributing traffic among dynamically changing backend instances is particularly important.
 
 ### Types of Load Balancing
 
@@ -1135,7 +1135,7 @@ spec:
 
 #### 2. Service Mesh Security
 
-Service mesh is an infrastructure layer that manages and protects communication between microservices.
+A service mesh is an infrastructure layer that manages and protects communication between microservices.
 
 - **mTLS**: Encrypted communication between services
 - **Authentication and Authorization**: Service identity verification and access control
@@ -1186,7 +1186,7 @@ Cilium/Hubble provides network observations that can support investigation. A co
 
 #### 4. L3-L7 Policy Enforcement
 
-Cilium provides comprehensive policy enforcement from network layer to application layer.
+Cilium provides comprehensive policy enforcement from the network layer to the application layer.
 
 - **L3/L4 Policies**: IP and port-based filtering
 - **L7 HTTP Filtering**: URL, method, header-based control

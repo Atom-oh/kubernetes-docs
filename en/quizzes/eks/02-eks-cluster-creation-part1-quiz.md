@@ -27,7 +27,7 @@ Tools that can be used to create Amazon EKS clusters include:
 1. **AWS Management Console**:
    * Create EKS clusters through a web interface.
    * Suitable for beginners as it allows visual configuration of cluster components.
-   * Guides through the cluster creation process via a step-by-step wizard.
+   * Guides you through the cluster creation process via a step-by-step wizard.
 2.  **AWS CLI**:
 
     * Create EKS clusters from the command line.
@@ -154,7 +154,7 @@ A NAT gateway is one possible internet egress path. Required VPC endpoints, mirr
 
 The cluster role trusts `eks.amazonaws.com` and lets EKS manage cluster infrastructure. Conventional EKS needs `AmazonEKSClusterPolicy` or equivalent permissions. The EC2 node role trusts `ec2.amazonaws.com` and is supplied through an instance profile. EKS configures the instance profile for managed node groups; node bootstrap does not create IAM roles.
 
-The EC2 baseline is `AmazonEKSWorkerNodePolicy` and `AmazonEC2ContainerRegistryPullOnly`, or equivalent least privilege. CNI permissions are also required; prefer a separate IRSA/Pod Identity role. Without that, the node role needs the CNI permissions. The IPv4 `AmazonEKS_CNI_Policy` is not an IPv6 policy. Storage, load-balancer and logging controller permissions are not universally required on every node.
+The EC2 baseline is `AmazonEKSWorkerNodePolicy` and `AmazonEC2ContainerRegistryPullOnly`, or equivalent least-privilege permissions. CNI permissions are also required; prefer a separate IRSA/Pod Identity role. Without that, the node role needs the CNI permissions. The IPv4 `AmazonEKS_CNI_Policy` is not an IPv6 policy. Storage, load-balancer and logging controller permissions are not universally required on every node.
 
 This example creates new conventional cluster/node roles. Use an authorized account/role and stop on errors. A name conflict does not attach policies to the existing role.
 
@@ -216,7 +216,7 @@ Creating only a control plane with `CreateCluster` does not yet require an EC2 n
 
 **Answer: B) `eksctl create cluster --name my-cluster --region us-west-2`**
 
-**Explanation:** The correct command to create an EKS cluster using eksctl is `eksctl create cluster --name my-cluster --region us-west-2`. This command creates an EKS cluster with default settings in the specified name and region.
+**Explanation:** The correct command to create an EKS cluster using eksctl is `eksctl create cluster --name my-cluster --region us-west-2`. This command creates an EKS cluster with default settings under the specified name and in the specified region.
 
 **eksctl command structure:**
 
@@ -1026,7 +1026,7 @@ install -d -m 0755 /opt/company
 }
 ```
 
-The hop limit of 1 assumes Pods use IRSA or EKS Pod Identity rather than node credentials. Workloads that require IMDSv2 access from a container can require a hop limit of 2. Neither this setting nor IMDSv2 creates isolation for `hostNetwork` Pods. Multiple interfaces, placement and instance-store devices require compatible instance types and the EKS launch-template restrictions; they are not universally interchangeable options.
+The hop limit of 1 assumes Pods use IRSA or EKS Pod Identity rather than node credentials. Workloads that require IMDSv2 access from a container can require a hop limit of 2. Neither this setting nor IMDSv2 creates isolation for `hostNetwork` Pods. Multiple interfaces, placement and instance-store devices require compatible instance types and compliance with the EKS launch-template restrictions; they are not universally interchangeable options.
 
 **Create the node group:** choose either the eksctl configuration or the AWS CLI example after reviewing real IDs, permissions and network routes. These are alternatives, not sequential instructions:
 
@@ -1282,7 +1282,7 @@ if NODE_UPDATE_ID=$(aws eks update-nodegroup-version \
 fi
 ```
 
-Record the returned update ID and repeat `describe-update` until a terminal state. A successful API submission is not completion. Investigate reported errors before proceeding. A PDB that prevents eviction can result in `PodEvictionFailure`; do not bypass it with `--force` merely to make the command finish.
+Record the returned update ID and repeat `describe-update` until the update reaches a terminal state. A successful API submission is not completion. Investigate reported errors before proceeding. A PDB that prevents eviction can result in `PodEvictionFailure`; do not bypass it with `--force` merely to make the command finish.
 
 **Blue/green:** create a separate compatible AL2023 node group, test workload scheduling and readiness, then migrate gradually. Retain old capacity until application checks, volume/AZ constraints and rollback requirements are satisfied. Merely listing node labels is not validation, and traffic follows Service endpoints/Pods rather than node-group names. Do not automatically delete the old group immediately after creating the new one.
 
@@ -1449,7 +1449,7 @@ kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get daemonset aws-node
 kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get deployment coredns
 ```
 
-Node joining, daemon execution, network behavior and runtime logs were not executed/collected during this audit.
+Node joining, daemon execution and network behavior were not exercised, and runtime logs were not collected during this audit.
 
 [AL2023/nodeadm lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html) · [NodeConfig API](https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/)
 

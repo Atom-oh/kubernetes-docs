@@ -47,7 +47,7 @@ vminsert는 쓰기를 라우팅하고 vmstorage는 저장하며 vmselect는 조�
 
 **정답: C**
 
-Queue로 장애 구간을 buffer하지만 유한합니다. 설정한 disk 한도에서는 오래된 데이터가 삭제되고 emptyDir은 Pod 교체 시 사라집니다. 영속 저장과 감시를 따로 설계합니다.
+Queue로 장애 구간을 buffer하지만 Queue 용량은 유한합니다. 설정한 disk 한도에서는 오래된 데이터가 삭제되고 emptyDir은 Pod 교체 시 사라집니다. 영속 저장과 감시를 따로 설계합니다.
 
 </details>
 
@@ -64,7 +64,7 @@ Queue로 장애 구간을 buffer하지만 유한합니다. 설정한 disk 한도
 
 **정답: B**
 
-Gap을 채운 의미가 의도한 것인지 확인합니다. 과거 정상값 유지로 수집 누락을 숨길 수 있으므로 누락을 별도로 감시합니다.
+Gap을 채운 결과의 의미가 의도한 것인지 확인합니다. 과거 정상값 유지로 수집 누락을 숨길 수 있으므로 누락을 별도로 감시합니다.
 
 </details>
 
@@ -115,7 +115,7 @@ Gap을 채운 의미가 의도한 것인지 확인합니다. 과거 정상값 �
 
 **정답: B**
 
-Storage 하나의 장애 중에도 복사본 두 개를 유지하려면 최소 3개와 필요한 capacity·failure-domain 조건이 필요합니다. Vmselect/dedup을 일치시키며 flag가 과거 데이터를 복제하거나 복제본 부족 쓰기의 무손실·backup을 보장하지는 않습니다.
+Storage 하나의 장애 중에도 복사본 두 개를 유지하려면 최소 3개가 있어야 하며 필요한 capacity·failure-domain 조건을 충족해야 합니다. Vmselect/dedup을 일치시키며 flag가 과거 데이터를 복제하거나 복제본 부족 쓰기의 무손실·backup을 보장하지는 않습니다.
 
 </details>
 
@@ -166,7 +166,7 @@ Rule 입력/exporter·datasource URL·state 보존·notifier/routing이 준비�
 
 **정답: B**
 
-모든 vmstorage member를 별도 prefix에 또는 의도한 단일 노드 저장소를 백업합니다. S3/GCS/Azure/local 목적지를 지원합니다. 동일 위치·PVC 식별·workload credential·보존·실제 복원을 확인하며 로컬 snapshot 자체는 독립 복사본이 아닙니다.
+모든 vmstorage member를 별도 prefix에 백업하거나 의도한 단일 노드 저장소를 백업합니다. S3/GCS/Azure/local 목적지를 지원합니다. 동일 위치·PVC 식별·workload credential·보존·실제 복원을 확인하며 로컬 snapshot 자체는 독립 복사본이 아닙니다.
 
 </details>
 

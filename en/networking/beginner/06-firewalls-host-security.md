@@ -11,7 +11,7 @@ An application can be listening while a firewall rejects a connection, or it can
 
 Use the two console-accessible disposable guests from lessons 1–5: client `192.0.2.10/24`, server `192.0.2.20/24`, internal-only lab NICs without DHCP/uplink, and separate unchanged NAT/DHCP management NICs. If lesson 5 sent you here because TCP 22 is blocked, complete only the selected firewall branch and return there; full SSH hardening is not a prerequisite for that branch.
 
-You will allow the intended IPv4 client to server TCP **22 and 8000**, inspect which policy actually applies, distinguish saved/runtime rules, restore only your changes, repair a deliberately wrong SELinux label on one scratch file, and optionally configure a bounded Fail2ban jail. Use the server console for changes and the client for connection tests. All command/output examples are illustrative, **not live-tested VM results**.
+You will allow the intended IPv4 client to connect to the server on TCP ports **22 and 8000**, inspect which policy actually applies, distinguish saved/runtime rules, restore only your changes, repair a deliberately wrong SELinux label on one scratch file, and optionally configure a bounded Fail2ban jail. Use the server console for changes and the client for connection tests. All command/output examples are illustrative, **not live-tested VM results**.
 
 Take a server snapshot `before-host-security`. Record existing firewall/runtime state and any management SSH path. Choose **UFW on the Ubuntu path OR firewalld on the Rocky path**, according to the existing owner. Do not install/enable a competing manager, flush rules, or disable security services to pass a test. This is an IPv4 lab policy, not a complete policy for IPv6 listeners or a production hardening checklist.
 
@@ -347,7 +347,7 @@ Do not disable CRB/EPEL if they predated the exercise or other installed softwar
 
 Fail2ban reads authentication failure logs through a **filter**, counts events within `findtime`, and invokes an **action** when `maxretry` is reached. A **jail** combines these settings. It cannot fix weak keys, replace the firewall's baseline policy, or stop every distributed/slow attack. A wrong filter/backend can leave a running service that detects nothing.
 
-This optional setup assumes a **new Fail2ban installation with no existing custom jails**. If it is already in use, inspect its owners/configuration first; do not stop another workload's protection. Record initial service/enablement state. On a new install it may start automatically: use the console to stop only this new service while preparing `sudo systemctl stop fail2ban`. Review `/etc/fail2ban/jail.conf`, `jail.d`, and installed actions. Do not edit packaged `jail.conf`.
+This optional setup assumes a **new Fail2ban installation with no existing custom jails**. If it is already in use, inspect its owners/configuration first; do not stop another workload's protection. Record initial service/enablement state. On a new install it may start automatically: use the console to stop only this new service while preparing, using `sudo systemctl stop fail2ban`. Review `/etc/fail2ban/jail.conf`, `jail.d`, and installed actions. Do not edit packaged `jail.conf`.
 
 Create **one** new action file for the selected manager, refusing overwrites.
 

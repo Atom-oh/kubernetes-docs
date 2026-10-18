@@ -119,7 +119,7 @@ spec:
 
 ## 4. DNS Caching
 
-Istio DNS proxy는 앱 DNS 질의를 캡처해 mesh/service entry 정보를 로컬에서 응답할 수 있습니다. DestinationRule connection pool은 DNS 캐싱을 켜지 않습니다. 다음 Pod-template 조각을 병합한 뒤 새 sidecar Pod를 생성합니다:
+Istio DNS proxy는 앱 DNS 질의를 캡처해 mesh/service entry 정보를 바탕으로 로컬에서 응답할 수 있습니다. DestinationRule connection pool은 DNS 캐싱을 켜지 않습니다. 다음 Pod-template 조각을 병합한 뒤 새 sidecar Pod를 생성합니다:
 
 ```yaml
 spec:

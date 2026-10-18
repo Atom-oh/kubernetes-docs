@@ -57,14 +57,14 @@ SNS fanout and each consumer’s event-ID dedup are separate responsibilities.
 
 4. What happens to an identical repeated synthetic payment?
    - A) Always create a new payment.
-   - B) Reuse the stored result; conflicting values return409.
+   - B) Reuse the stored result; conflicting values return 409.
    - C) Charge a real card.
    - D) Always succeed even without an order.
 
 <details>
 <summary>Show answer</summary>
 
-**Answer: B) Reuse the stored result; conflicting values return409.**
+**Answer: B) Reuse the stored result; conflicting values return 409.**
 
 The lab implements no real payment gateway.
 
@@ -117,7 +117,7 @@ KEDA reads queue attributes; it does not consume messages.
 
 **Answer: B) Only the new pod-template revision.**
 
-Do not let large stable traffic hide a failing canary.
+Do not let a large volume of stable traffic hide a failing canary.
 
 </details>
 

@@ -126,7 +126,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-Access entry의 그룹 이름과 RoleBinding subject가 일치해야 합니다. 이 Role은 security-demo 안에서 표시한 작업을 허용하지만 기존 다른 grant가 접근 범위를 넓힐 수 있습니다. Deployment·Job 생성자는 namespace의 Secret·PVC·ServiceAccount를 간접 사용할 수 있으므로 Secret 직접 읽기 규칙이 없다는 사실만으로 tenant 경계가 되지는 않습니다. Tenant를 분리하고 admission·소유권 제어로 workload 신원·리소스 사용을 제한합니다.
+Access entry의 그룹 이름과 RoleBinding subject가 일치해야 합니다. 이 Role은 security-demo 안에서 표시한 작업을 허용하지만 기존 다른 grant가 접근 범위를 넓힐 수 있습니다. Deployment·Job 생성자는 namespace의 Secret·PVC·ServiceAccount를 간접적으로 사용할 수 있으므로 Secret 직접 읽기 규칙이 없다는 사실만으로 tenant 경계가 보장되지는 않습니다. Tenant를 분리하고 admission·소유권 제어로 workload 신원·리소스 사용을 제한합니다.
 
 별도 검토한 viewer는 namespace 범위 AmazonEKSViewPolicy association을 사용할 수도 있습니다. 추가 전에 기존 access policy를 확인하며 이 grant가 더 넓은 RBAC·다른 access policy 권한을 취소하지는 않습니다. `eks:namespaces`는 일반 kubectl 요청이 아닌 access policy association 요청을 필터링합니다.
 
@@ -167,7 +167,7 @@ kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
 
 **설명:**
 
-NetworkPolicy는 Kubernetes label·namespace로 Pod와 허용 트래픽을 선택하며 정책을 시행하는 네트워크 구현이 필요합니다. 지원되는 Pod용 보안 그룹을 포함한 security group도 유용한 AWS 제어이며 전체 인스턴스에만 한정되지 않습니다. VPC endpoint policy는 지원 AWS 서비스 접근을 제어하며 임의 label 기반 Pod 트래픽 정책이 아닙니다.
+NetworkPolicy는 Kubernetes label·namespace로 Pod와 허용 트래픽을 선택하며 정책을 시행하는 네트워크 구현이 필요합니다. 지원되는 Pod용 보안 그룹을 포함한 security group도 유용한 AWS 제어이며 전체 인스턴스에만 한정되지 않습니다. VPC endpoint policy는 지원하는 AWS 서비스에 대한 접근을 제어하며 임의 label 기반 Pod 트래픽 정책이 아닙니다.
 
 **완전한 정책 예제:** 아래 manifest는 격리된 데모 namespace의 정책이며 앱 설치나 CNI 교체 절차가 아닙니다. 지원되는 enforcing CNI가 있는 일반 Linux EC2 노드와 통상적인 CoreDNS Deployment·Pod label을 전제로 합니다. Auto Mode·node-local DNS는 실제 resolver 경로에 맞는 규칙이 필요합니다. CoreDNS ingress가 제한되어 있다면 그 소유자도 질의를 허용해야 합니다.
 
@@ -507,7 +507,7 @@ artifacts:
 
 검토한 project 구성에 `AWS_ACCOUNT_ID`, `AWS_REGION`, `ECR_REPOSITORY`(예: `team/app`), `SIGNING_PROFILE_ARN`을 설정합니다. Registry hostname으로 인증하고 중첩 repository 경로를 유지하며 로컬 build 이미지를 push 전에 scan합니다. 임의의 첫 RepoDigest나 mutable tag 대신 해당 repository의 push digest를 선택합니다. Trivy 예제는 HIGH·CRITICAL 취약점 finding을 gate하며 secret·구성·provenance에는 별도로 설계한 검사를 추가합니다.
 
-승격 단계는 모두 `set -euo pipefail`을 적용한 Bash build block 하나에 있습니다. Login·build·scan·push·sign·verify 실패는 새 artifact 작성 전에 중단됩니다. CodeBuild post_build는 build 실패 후에도 실행될 수 있으므로 별도 post_build의 무조건적인 push·sign은 안전하지 않습니다. 예약한 artifact 경로를 먼저 지워 이전 결과 재사용을 막습니다. 후속 배포도 build 성공과 artifact 검증을 요구해야 하며 JSON 파일 자체가 권한 부여나 서명된 attestation은 아닙니다.
+승격 단계는 모두 `set -euo pipefail`을 적용한 Bash build block 하나에 있습니다. Login·build·scan·push·sign·verify에 실패하면 새 artifact 작성 전에 중단됩니다. CodeBuild post_build는 build 실패 후에도 실행될 수 있으므로 별도 post_build의 무조건적인 push·sign은 안전하지 않습니다. 예약한 artifact 경로를 먼저 지워 이전 결과 재사용을 막습니다. 후속 배포도 build 성공과 artifact 검증을 요구해야 하며 JSON 파일 자체가 권한 부여나 서명된 attestation은 아닙니다.
 
 `verified-image.json`은 EKS 배포·GitOps consumer가 사용할 정확한 digest reference를 담습니다. ECS의 `imagedefinitions.json`이 아니며 그 자체로 배포하지 않습니다. 실제 서명·검증은 registry 접근, trust, revocation 검사와 AWS Signer 가용성에 의존합니다.
 
@@ -547,7 +547,7 @@ spec:
     message: Use a sha256 digest from the approved team/app repository in security-demo.
 ```
 
-검증: pipeline 실패·순서·artifact mocked 사례 20개와 실제 Kyverno CLI 문자열 정책 사례 9개를 확인했습니다. Buildspec·Bash·Python·JSON과 배포 policy CRD도 검사했습니다. 이미지를 build·scan·push하거나 실제 AWS 서명을 생성·검증하지 않았고 admission webhook도 배포하지 않았습니다. 환경 전제를 명시하고 검토한 교육용 흐름이며 운영 준비 완료 검증이 아닙니다.
+검증: pipeline 실패·순서·artifact mocked 사례 20개와 실제 Kyverno CLI 문자열 정책 사례 9개를 확인했습니다. Buildspec·Bash·Python·JSON과 배포 policy CRD도 검사했습니다. 이미지를 build·scan·push하거나 실제 AWS 서명을 생성·검증하지 않았고 admission webhook도 배포하지 않았습니다. 환경 전제를 명시하고 검토한 교육용 흐름이며 운영 준비 완료를 검증한 것은 아닙니다.
 
 참고: [Signer 서명](https://docs.aws.amazon.com/signer/latest/developerguide/image-signing-steps.html), [Signer 검증](https://docs.aws.amazon.com/signer/latest/developerguide/image-verification.html), [ECR managed signing](https://docs.aws.amazon.com/AmazonECR/latest/userguide/managed-signing.html), [EKS admission 검증](https://docs.aws.amazon.com/eks/latest/userguide/image-verification.html), [CodeBuild buildspec](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html), [Trivy image flag](https://trivy.dev/docs/latest/references/configuration/cli/trivy_image/).
 
@@ -624,7 +624,7 @@ spec:
 
 Namespace enforce는 Pod admission에 적용됩니다. Audit·warn이 controller template 위반을 보고할 수 있지만 Deployment·Job apply 성공이 Pod의 enforce 통과를 의미하지는 않습니다. Label 변경이 기존 Pod를 소급 eviction하지도 않습니다. 실제 클러스터에 맞는 policy version을 선택하고 기존 워크로드를 검토한 뒤 enforce합니다.
 
-runAsNonRoot·runAsUser와 seccomp는 allowPrivilegeEscalation·capability와 별개입니다. fsGroup은 Pod 수준 volume 소유권 설정이며 container capability가 아닙니다. Read-only root는 앱과 호환되어야 하는 유용한 추가 강화지만 PSS Restricted의 보편적 필수 요건이 아니고 mounted PVC까지 읽기 전용으로 만들지 않습니다. 실제 앱에는 호환 UID·GID와 쓰기 가능한 임시·cache·socket 경로가 필요하며 일반적인 root 중심 nginx에 필드만 추가하면 동작하는 것은 아닙니다.
+runAsNonRoot·runAsUser와 seccomp는 allowPrivilegeEscalation·capability와 별개입니다. fsGroup은 Pod 수준 volume 소유권 설정이며 container capability가 아닙니다. Read-only root는 앱과 호환되어야 하는 유용한 추가 강화 수단이지만 PSS Restricted의 보편적 필수 요건이 아니고 mounted PVC까지 읽기 전용으로 만들지 않습니다. 실제 앱에는 호환 UID·GID와 쓰기 가능한 임시·cache·socket 경로가 필요하며 일반적인 root 중심 nginx에 필드만 추가하면 동작하는 것은 아닙니다.
 
 **추가하는 제한된 admission 규칙:** 아래 Kyverno 1.19.1 ValidatingPolicy는 security-demo의 일반·init·ephemeral container를 모두 검사합니다. privileged 생략은 false로 허용하고 true를 거부합니다. 오래된 설치 manifest 대신 현재 v1 policy API를 사용합니다:
 
@@ -699,7 +699,7 @@ Security Hub CSPM의 FSBP는 CIS Kubernetes Benchmark가 아닙니다. 지원 CI
 
 Detector·CSPM standard·Config recorder·CloudTrail은 기존 조직·Region 소유권 아래 관리합니다. 준비된 bucket policy·암호화·event selector·보존 기간 없이 새 regional detector를 만들거나 중앙 구성을 덮어쓰고 trail을 시작하지 않습니다. CloudTrail data event는 기본 management event 범위와 별개입니다. 이번 검토에서 계정 수준 모니터링 리소스는 provisioning하지 않았습니다.
 
-**EKS별 검사:** 본문처럼 필요한 control plane log type·update 완료·log 도착을 확인합니다. `eks-cluster-logging-enabled`(모든 유형·주기 검사)와 `eks-cluster-log-enabled`(선택 유형·구성 변경 검사)는 모두 유효한 Config 규칙입니다. 자동 현재 버전 catalog라고 가정하지 말고 `oldestVersionSupported` parameter를 관리합니다. 명시적 encryptionConfig control의 finding이 EKS 1.28+ API 데이터의 기본 envelope encryption 부재를 의미하지는 않습니다.
+**EKS별 검사:** 본문처럼 필요한 control plane log type·update 완료·log 도착을 확인합니다. `eks-cluster-logging-enabled`(모든 유형·주기 검사)와 `eks-cluster-log-enabled`(선택 유형·구성 변경 검사)는 모두 유효한 Config 규칙입니다. 현재 버전을 자동으로 반영하는 catalog라고 가정하지 말고 `oldestVersionSupported` parameter를 관리합니다. 명시적 encryptionConfig control의 finding이 EKS 1.28+ API 데이터의 기본 envelope encryption 부재를 의미하지는 않습니다.
 
 GuardDuty audit 분석은 별도의 고객 CloudWatch audit export를 요구하지 않습니다. Runtime Monitoring에는 지원 security agent·data endpoint와 실제 coverage가 필요하며 현재 EKS에서는 EC2·Auto Mode를 지원하고 Fargate·Hybrid Nodes는 지원하지 않습니다. 현재 RUNTIME_MONITORING feature를 사용하고 이전 EKS_RUNTIME_MONITORING migration을 검토합니다. EKS_AUDIT_LOGS를 runtime monitoring으로 혼동하지 마세요.
 
@@ -764,7 +764,7 @@ GuardDuty audit 분석은 별도의 고객 CloudWatch audit export를 요구하�
 }
 ```
 
-승인된 AWS 시험에서 `aws events test-event-pattern --event-pattern file://security-event-pattern.json --event file://synthetic-security-event.json --region us-west-2`는 matching되어야 합니다. LOW severity, RESOLVED·SUPPRESSED workflow, ARCHIVED 상태, 필드 누락과 V2 type은 이 pattern에 matching되지 않는지도 확인합니다. 이번 검토는 JSON·출처 schema를 확인했으며 EventBridge 서비스 matcher·실제 이벤트 전달을 실행한 것은 아닙니다.
+승인된 AWS 시험에서 `aws events test-event-pattern --event-pattern file://security-event-pattern.json --event file://synthetic-security-event.json --region us-west-2`는 matching되어야 합니다. LOW severity, RESOLVED·SUPPRESSED workflow, ARCHIVED 상태, 필드 누락과 V2 type은 이 pattern에 matching되지 않는지도 확인합니다. 이번 검토에서는 JSON·출처 schema를 확인했으며 EventBridge 서비스 matcher·실제 이벤트 전달을 실행한 것은 아닙니다.
 
 현재 EventBridge 문서가 지원하는 방식으로, 소유한 SNS topic의 publish 권한이 있는 **기존 검토된 EventBridge 실행 역할**을 target에 사용할 수 있습니다. 소유 ARN으로 바꾼 뒤 `security-event-targets.json`으로 저장합니다:
 
@@ -782,7 +782,7 @@ GuardDuty audit 분석은 별도의 고객 CloudWatch audit export를 요구하�
 
 `aws events put-targets --rule eks-security-alerts --targets file://security-event-targets.json --region us-west-2` 사용 전에 기존 rule·target 소유권을 확인합니다. 명령 종료 상태뿐 아니라 FailedEntryCount·FailedEntries를 검사합니다. SNS subscription, 암호화 권한, retry·dead-letter 동작과 통제된 전체 전달 시험을 확인합니다. 이번 감사에서 알림은 전송하지 않았습니다.
 
-**감사 조사:** 실제 EKS log group에서 다음 Logs Insights 예제는 Kubernetes audit JSON field discovery를 전제로 합니다. RBAC 변경 요청을 찾아 responseStatus.code로 성공·거부 요청을 구분합니다:
+**감사 조사:** 다음 Logs Insights 예제는 실제 EKS log group에서의 Kubernetes audit JSON field discovery를 전제로 합니다. RBAC 변경 요청을 찾아 responseStatus.code로 성공·거부 요청을 구분합니다:
 
 ```text
 fields @timestamp, verb, user.username, objectRef.resource, objectRef.namespace, responseStatus.code
@@ -877,7 +877,7 @@ username·password 필드가 있는 소유 Secrets Manager JSON secret과 해당
 }
 ```
 
-아래 Namespace·ServiceAccount·SecretProviderClass·Pod는 파일 전달 예제입니다. 실제 클러스터에 맞는 PSS 버전을 선택합니다. JMESPath로 필드를 alias에 추출하고 `secretObjects.data.objectName`에는 해당 mounted alias를 지정합니다. secretObjects.data 안의 `property` 필드는 지원하지 않습니다. 0444 권한은 이 non-root 데모 process가 파일을 읽게 합니다. Mount·Pod 생성 권한을 제한하고 실제 앱에는 호환 UID·GID·파일 권한을 선택하세요.
+아래 Namespace·ServiceAccount·SecretProviderClass·Pod는 파일 전달 예제입니다. 실제 클러스터에 맞는 PSS 버전을 선택합니다. JMESPath로 필드를 alias로 추출하고 `secretObjects.data.objectName`에는 해당 mounted alias를 지정합니다. secretObjects.data 안의 `property` 필드는 지원하지 않습니다. 0444 권한은 이 non-root 데모 process가 파일을 읽게 합니다. Mount·Pod 생성 권한을 제한하고 실제 앱에는 호환 UID·GID·파일 권한을 선택하세요.
 
 ```yaml
 apiVersion: v1
@@ -972,7 +972,7 @@ Pod는 파일 내용을 출력하지 않고 존재 여부만 검사합니다. `a
 
 선택적인 csi-db-credentials Secret은 Pod가 volume을 mount한 후에만 동기화됩니다. 수명 주기는 소비 Pod를 따르며 모든 소비자가 삭제되면 제거될 수 있습니다. SecretProviderClass 생성만으로 독립적인 Secret 생성기가 되지는 않습니다. 값을 출력하지 말고 SecretProviderClassPodStatus와 controller·node 이벤트를 확인합니다.
 
-Parameter Store라면 objects 값에 다음 항목을 사용할 수 있습니다. 소유 parameter의 provider 필수 SSM 읽기 권한과 SecureString의 적절한 KMS 권한이 필요합니다. 이는 전체 SecretProviderClass가 아닌 objects 조각입니다:
+Parameter Store라면 objects 값에 다음 항목을 사용할 수 있습니다. 소유 parameter에 대해 provider가 요구하는 SSM 읽기 권한과 SecureString의 적절한 KMS 권한이 필요합니다. 이는 전체 SecretProviderClass가 아닌 objects 조각입니다:
 
 ```yaml
 - objectName: /training/app/config

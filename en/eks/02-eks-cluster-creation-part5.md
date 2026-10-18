@@ -35,7 +35,7 @@ aws eks update-kubeconfig "${KUBECONFIG_ARGS[@]}"
 ```
 This writes a private kubeconfig under the recorded review directory instead of changing the default context. Without `--kubeconfig`, the AWS CLI chooses its output path from `KUBECONFIG` or the default `~/.kube/config`; that path is not fixed in all environments.
 
-<!-- Audit 2026-09-11: parent asset repair required. Material correction:access-policy andRBACpermissionsareadditive;RBACcannotnarrowAmazonEKSClusterAdminPolicy. Arrow3narrowandfooter--asprincipal effectiveEKSpermissionsclaimarewrong;testactualIAMcredentials. Rebuilddiagramasalternative/additiveauthorizationpaths.
+<!-- Audit 2026-09-11: parent asset repair required. Material correction: access-policy and RBAC permissions are additive; RBAC cannot narrow AmazonEKSClusterAdminPolicy. The narrowing in Arrow 3 and the footer's --as principal effective EKS permissions claim are wrong; test actual IAM credentials. Rebuild the diagram as alternative/additive authorization paths.
 ![Diagram of the access configuration flow: kubeconfig, IAM principal, access entry, RBAC rules and binding, then an access test.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-0.html)
@@ -115,7 +115,7 @@ aws eks create-access-entry --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE
   --kubernetes-groups "$DEVELOPER_GROUP" \
   --query accessEntry --output json > "$EKS_REVIEW_DIR/created-access-entry.json"
 ```
-Create the matching Role and Group binding, then test with the developer role itself. This Role does not grant direct Secret reads or RBAC/namespace administration. Creating workloads can still use identities and Secrets available inside that namespace; enforce allowed service accounts/mounts through admission controls when stronger isolation is required.
+Create the matching Role and Group binding, then test with the developer role itself. This Role does not grant direct Secret reads or RBAC/namespace administration. Workloads can still use identities and Secrets available inside that namespace; enforce allowed service accounts/mounts through admission controls when stronger isolation is required.
 
 ```bash
 kubectl --kubeconfig "$ADMIN_KUBECONFIG" -n "$ACCESS_NAMESPACE" create -f - <<EOF
@@ -183,7 +183,7 @@ Merge only reviewed role/user entries into the existing `mapRoles`/`mapUsers` YA
 
 ### Check the Intended Compute and System Components
 
-<!-- Audit 2026-09-11: parent asset repair required. Footercriteriaareincomplete:RunningdoesnotmeanReady,defaultStorageClassnotuniversallyrequired,LoadBalancerdoesnotproveAWSLBCwithoutclass/ownership,loggroupexistencedoesnotprovedelivery. Mainflowusableaftercaption/footercorrection.
+<!-- Audit 2026-09-11: parent asset repair required. Footer criteria are incomplete: Running does not mean Ready, a default StorageClass is not universally required, LoadBalancer does not prove AWS LBC without class/ownership, and log group existence does not prove delivery. The main flow is usable after caption/footer correction.
 ![Cluster validation diagram checking nodes and system pods, deploying a test app and exposing it, then reviewing logs.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-2.html)
@@ -336,7 +336,7 @@ aws logs describe-log-streams --region "$EXAMPLE_REGION" \
 Worker kubelet/container logs require their own collection path. They are not enabled merely by turning on EKS control-plane logs.
 ## Cluster Upgrade
 
-<!-- Audit 2026-09-11: parent asset repair required. Materialcorrection:footerincorrectlydeniesEKScontrolplanerollback;currentAWSsupportsconditionalpreviousminorrollbackwithin7days. Stale1.31copytarget/1.29→1.30→1.31; trackupdateIDSuccessful,notACTIVEalone. Preservecompatiblecomponentsequence/preflight.
+<!-- Audit 2026-09-11: parent asset repair required. Material correction: the footer incorrectly denies EKS control plane rollback; AWS currently supports conditional rollback to the previous minor version within 7 days. The 1.31 copy target/1.29→1.30→1.31 sequence is stale; track the update ID’s Successful status, not ACTIVE alone. Preserve the compatible component sequence/preflight.
 ![Upgrade process diagram from planning and version checks through the control plane, node groups, add-ons, and function tests.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-3.html)
@@ -418,7 +418,7 @@ aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGI
 EKS currently supports conditional rollback to the previous minor within seven days of an in-place upgrade. It does not rewind etcd, workload configuration or persistent data. Prepare compatible nodes/add-ons and check all rollback eligibility conditions; Auto Mode handles its own node rollback. Do not rely on a blanket “downgrade impossible” statement or an unconditional undo guarantee.
 ## Cluster Deletion
 
-<!-- Audit 2026-09-11: parent asset repair required. Bulkall-namespacesservicedeleteexampleandunconditionalPVCdeleteflowneedownedinventory/dataretentionguards;RetainvsDelete/CSIcleanupwaits matter. Specifyallownedgroups/profileswaitersandoriginalIaCowner;retentionbackupbeforedeletion.
+<!-- Audit 2026-09-11: parent asset repair required. The bulk all-namespaces service deletion example and unconditional PVC deletion flow need owned-resource inventory/data retention guards; Retain vs Delete/CSI cleanup waits matter. Specifyallownedgroups/profileswaitersandoriginalIaCowner;retentionbackupbeforedeletion.
 ![Deletion process diagram clearing load balancers and PVCs, deleting node groups and Fargate profiles, then the cluster, then checking leftovers.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-4.html)

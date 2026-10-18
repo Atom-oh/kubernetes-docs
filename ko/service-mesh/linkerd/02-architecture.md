@@ -46,7 +46,7 @@ Get은 destination update, GetProfile은 profile update를 streaming합니다. S
 1. Proxy 시작 과정에서 로컬 개인 키·CSR 자료를 준비합니다.
 2. Identity client가 CSR, 요청 identity와 ServiceAccount token을 제출합니다.
 3. Identity는 Kubernetes TokenReview로 token을 검증하고 DNS 형식 identity를 만듭니다.
-4. 구성한 **issuer 서명 credential**, 보통 중간 issuer가 workload 인증서를 서명합니다.
+4. 구성한 **issuer 서명 credential**, 보통 중간 issuer가 workload 인증서에 서명합니다.
 5. Client가 인증서·chain을 적재하고 만료 전에 갱신합니다.
 
 Trust anchor는 chain 검증의 신뢰 기반입니다. Linkerd identity controller에는 그 root 개인 키가 필요하지 않으며 root가 모든 workload CSR의 온라인 서명자로 동작하지 않습니다.
@@ -278,7 +278,7 @@ kubectl -n linkerd get secret linkerd-identity-issuer -o json |
 2. 소유 도구로 기존 root 옆에 새 root를 추가합니다. 대상 proxy/control plane과 multicluster peer가 실제 overlap bundle을 적재했는지 확인하세요.
 3. 새 root가 서명한 issuer credential로 회전하고 identity service 적재를 확인합니다.
 4. 설정 공급 방식에 따라 consumer를 갱신·재생성하고 실제 새 credential과 해당 경로의 mTLS를 검증합니다.
-5. 필요한 peer가 기존 root에 더 의존하지 않을 때만 제거하고 최종 bundle 전파 후 재검증합니다.
+5. 필요한 peer가 기존 root에 더 이상 의존하지 않을 때만 제거하고 최종 bundle 전파 후 재검증합니다.
 
 기존의 ConfigMap 갱신과 한 namespace 재시작은 issuer 전환·옛 root 제거까지 포함하지 않아 완전한 회전 절차가 아니었습니다. Helm/cert-manager/trust-manager 소유와 충돌하는 직접 변경을 피하세요. 이미 만료된 root는 정상 rollover가 아니라 복구 절차가 필요합니다.
 

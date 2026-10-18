@@ -317,7 +317,7 @@
 
    </details>
 
-20. **Prometheus Operator가 설치된 환경에서 ServiceMonitor로 Hubble을 수집하려면 무엇이 필요한가요?**
+20. **Prometheus Operator가 설치된 환경에서 ServiceMonitor로 Hubble 메트릭을 수집하려면 무엇이 필요한가요?**
 
    - A) Grafana 대시보드 가져오기만
    - B) 공인 hubble-metrics.cilium.io:9091 정적 대상

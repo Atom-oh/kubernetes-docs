@@ -144,7 +144,7 @@ Ambient enrollment에는 의도적으로 애플리케이션 sidecar istio-proxy�
 
 [주입 가이드](../advanced/07-sidecar-injection.md)에 따라 설치에 맞는 revision/tag 또는 기존 injection label을 사용하세요. 충돌하는 istio-injection과 istio.io/rev 선택을 혼합하지 않습니다. Label은 새 Pod에 영향을 주며 기존 Pod에 sidecar를 추가하지 않습니다. 영향을 검토한 뒤 소유 rollout 도구로 의도한 워크로드만 재생성하세요.
 
-Pod별 override는 workload의 Pod template 안에 있는 **label**을 권장합니다:
+Pod별 override에는 workload의 Pod template 안에 있는 **label**을 권장합니다:
 
 ```yaml
 apiVersion: apps/v1
@@ -212,7 +212,7 @@ spec:
     mode: STRICT
 ```
 
-설정된 root namespace(보통 istio-system)의 selector 없는 정책은 그 namespace의 서비스만이 아니라 메시 전체 범위입니다. 적용 전 마이그레이션 영향을 확인하세요. Ambient의 transport mTLS는 PeerAuthentication DISABLE로 끌 수 없습니다. 인증과 AuthorizationPolicy는 별개이며 403이 항상 TLS 실패를 뜻하지 않습니다.
+설정된 root namespace(보통 istio-system)의 selector 없는 정책은 그 namespace의 서비스만이 아니라 메시 전체에 적용됩니다. 적용 전 마이그레이션 영향을 확인하세요. Ambient의 transport mTLS는 PeerAuthentication DISABLE로 끌 수 없습니다. 인증과 AuthorizationPolicy는 별개이며 403이 항상 TLS 실패를 뜻하지 않습니다.
 
 ### 디버깅 명령어
 
@@ -237,7 +237,7 @@ Mesh 트래픽은 요청한 service host를, ingress 트래픽은 gateway가 허
 
 ### 문제 2: Subset not found 또는 No healthy upstream
 
-다음 완전한 두 리소스는 mesh 트래픽을 지정된 subset으로 보냅니다:
+다음 두 개의 완전한 리소스는 mesh 트래픽을 지정된 subset으로 보냅니다:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -295,7 +295,7 @@ Analyze는 정적 설정 검사 보조입니다. 실제 요청을 운반하는 p
 
 ### 문제 1: Gateway에 트래픽이 도달하지 않음
 
-HTTP 응답 이전의 connection refused나 timeout은 DNS, listener/Service port 불일치, 로드 밸런서 target 누락 또는 네트워크 차단일 수 있습니다. 실제 gateway Deployment/Service부터 찾으세요. Namespace와 이름은 설치 방식에 따라 다릅니다.
+HTTP 응답 이전의 connection refused나 timeout은 DNS, listener/Service port 불일치, 로드 밸런서 target 누락 또는 네트워크 차단 때문에 발생할 수 있습니다. 실제 gateway Deployment/Service부터 찾으세요. Namespace와 이름은 설치 방식에 따라 다릅니다.
 
 ```bash
 kubectl -n "$GW_NS" get svc,pods --show-labels
@@ -443,7 +443,7 @@ kubectl -n "$ISTIO_NS" logs -l app=istiod --all-containers=true --tail=200
 
 사용자 지정 통합이면 표준 trust ConfigMap과 다를 수 있으므로 실제 CA provider를 확인하세요. PKCS7 검사는 PEM bundle의 첫 인증서만이 아니라 모든 인증서를 표시합니다. 현재 UTC, CA/CSR 오류, identity token, Istiod/SDS 연결과 인증서 갱신 절차를 함께 확인합니다.
 
-istioctl 1.31에는 x ca root 명령이 없습니다. Leaf가 만료되었다는 이유만으로 CA를 삭제·재생성하지 마세요. 계획하지 않은 trust root 교체는 의존하는 모든 workload를 단절시킬 수 있습니다. 실제 갱신·연결·provider 원인을 고치고 필요한 신뢰 중첩 기간을 포함한 지원 CA 회전 절차를 사용해야 합니다. 복구 절차에 필요한 경우에만 특정 영향받은 workload를 재시작하세요.
+istioctl 1.31에는 x ca root 명령이 없습니다. Leaf가 만료되었다는 이유만으로 CA를 삭제·재생성하지 마세요. 계획하지 않은 trust root 교체는 의존하는 모든 workload를 단절시킬 수 있습니다. 실제 갱신·연결·provider 원인을 고치고 필요한 신뢰 중첩 기간을 포함한 지원 CA 회전 절차를 사용해야 합니다. 복구 절차에 필요한 경우에만 영향을 받은 특정 workload를 재시작하세요.
 
 ## DNS 해석 실패
 

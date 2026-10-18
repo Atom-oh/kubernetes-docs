@@ -122,7 +122,7 @@
 
    **정답: A) 선택된 endpoint로 들어오는 트래픽**
 
-   Ingress는 선택한 대상 endpoint 기준입니다. 해당 peer·port·지원 protocol 제약을 적용합니다.
+   Ingress는 선택한 대상 endpoint를 기준으로 합니다. 해당 peer·port·지원 protocol 제약을 적용합니다.
 
    </details>
 
@@ -169,7 +169,7 @@
 
     **정답: A) 주로 외부 peer의 IP prefix 선택이며 관리 Pod·노드 매칭에는 문서화된 기본 제한이 있음**
 
-    일반 관리 Pod 정책은 endpoint selector를 사용합니다. 이 릴리스는 identity 소비 영향을 가진 선택적 beta pods/nodes CIDR 매칭을 문서화합니다. 기본 동작을 무조건적인 IP 매칭으로 설명하면 안 됩니다.
+    일반 관리 Pod 정책은 endpoint selector를 사용합니다. 이 릴리스는 identity 소비에 영향을 주는 선택적 beta pods/nodes CIDR 매칭을 문서화합니다. 기본 동작을 무조건적인 IP 매칭으로 설명하면 안 됩니다.
 
     </details>
 
@@ -184,7 +184,7 @@
 
     **정답: C) 선택한 이름에서 학습한 IP로의 트래픽을 port 등 정책 제약에 따라 허용**
 
-    별도 DNS proxy 규칙으로 이름·IP를 관찰해야 합니다. 53번 포트 허용만으로 학습이 활성화되지 않으며 IP 허용이 HTTP hostname·사용자 인가 검사는 아닙니다.
+    별도 DNS proxy 규칙으로 이름·IP를 관찰해야 합니다. 53번 포트 허용만으로 학습이 활성화되지 않으며 IP 허용이 HTTP hostname·사용자 인가 검사를 뜻하는 것은 아닙니다.
 
     </details>
 
@@ -306,7 +306,7 @@
 
     **정답: B) 지원 HTTP/gRPC는 Envoy, DNS 정책은 Cilium DNS proxy**
 
-    DNS proxy는 기본적으로 agent 내부이며 별도 alpha standalone 모드도 문서화됩니다. 모든 DNS 규칙에 Envoy가 필요하거나 암호화된 내용이 자동으로 보인다고 가정하지 않습니다.
+    DNS proxy는 기본적으로 agent 내부에 있으며 별도 alpha standalone 모드도 문서화됩니다. 모든 DNS 규칙에 Envoy가 필요하거나 암호화된 내용이 자동으로 보인다고 가정하지 않습니다.
 
     </details>
 

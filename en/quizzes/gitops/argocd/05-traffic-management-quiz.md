@@ -94,7 +94,7 @@ Argo Rollouts has native traffic management integrations with multiple ingress c
 **Answer: B) Sets the percentage of traffic to route to the canary version**
 
 **Explanation:**
-The `setWeight` step in a canary strategy configures what percentage of traffic should be routed to the canary (new) version. For example, setWeight:20 requests relative weight20/100. Observed percentages vary with samples, connections and cookies. Without a router, it approximates the ratio using Pod counts.
+The `setWeight` step in a canary strategy configures what percentage of traffic should be routed to the canary (new) version. For example, setWeight:20 requests a relative weight of 20/100. Observed percentages vary with samples, connections and cookies. Without a router, it approximates the ratio using Pod counts.
 
 </details>
 

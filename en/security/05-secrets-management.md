@@ -429,7 +429,7 @@ before installing it. Linux arm64 CLI/crypto behavior was tested locally.
 ### Creating SealedSecrets
 
 Fetch the certificate from the intended authenticated cluster context and verify
-its provenance. Encryption with a substituted attacker's certificate is unsafe.
+its provenance. Encryption with a substituted certificate belonging to an attacker is unsafe.
 
 ```bash
 kubeseal --fetch-cert --controller-name=sealed-secrets-controller   --controller-namespace=kube-system > sealed-secrets-pub.pem

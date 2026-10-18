@@ -93,7 +93,7 @@ Before writing code, check whether device plugins, required/preferred affinity, 
 
 The default scheduler may have the following limitations:
 
-1. **Specific Hardware Requirements**: Advanced scheduling logic may be needed for special hardware like GPUs, FPGAs.
+1. **Specific Hardware Requirements**: Advanced scheduling logic may be needed for special hardware like GPUs and FPGAs.
 2. **Complex Affinity Rules**: There may be complex placement constraints that are difficult to express with basic affinity rules.
 3. **Custom Metrics**: Scheduling may need to be based on custom metrics that the default scheduler doesn't consider.
 4. **Domain-Specific Knowledge**: Scheduling logic specialized for specific application domains may be required.

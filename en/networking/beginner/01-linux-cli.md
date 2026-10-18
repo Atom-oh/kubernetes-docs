@@ -118,7 +118,7 @@ sudo dnf install nano vim-minimal
 
 DNF resolves RPM package dependencies and refreshes repository metadata when needed. Rocky 9 also provides `yum` compatibility for familiar commands, but this course uses `dnf`. Do not run both command families on the same guest or add third-party repositories to make an example work.
 
-After preparation, repeat the local package query and `command -v` checks. Failure to download packages concerns the management connection/repository access; it is unrelated to the isolated lab NIC introduced next lesson.
+After preparation, repeat the local package query and `command -v` checks. Failure to download packages concerns the management connection/repository access; it is unrelated to the isolated lab NIC introduced in the next lesson.
 
 **Recovery:** `apt remove` or `dnf remove` removes packages, but is not an exact inverse of installation: dependency changes, caches, logs, and some configuration may remain. Do not remove an editor that was already installed. Keep the editors for subsequent lessons, or restore `before-cli-editors` when finished with the guest; a snapshot also discards all work performed after it. No package removal or `autoremove` is required for notebook cleanup.
 
@@ -204,7 +204,7 @@ vi notes/vi.txt
 | `:q` then Enter | Exit when no unsaved changes remain |
 | `:q!` then Enter | Discard changes since the last save and exit |
 
-Practice `:wq`, reopen the file, type an extra word after pressing `i`, and discard that extra edit with Esc, `:q!`, Enter. Back at the shell, `cat notes/vi.txt` should still contain only the saved sentence. The colon commands belong **inside vi**, not in Bash. A “No write since last change” message from `:q` is protecting your unsaved work.
+Practice `:wq`, reopen the file, type an extra word after pressing `i`, and discard that extra edit with Esc, `:q!`, Enter. Back at the shell, `cat notes/vi.txt` should still display only the saved sentence. The colon commands belong **inside vi**, not in Bash. A “No write since last change” message from `:q` is protecting your unsaved work.
 
 ## Permissions and sudo
 
@@ -233,7 +233,7 @@ stat -c '%a' notes/draft.txt
 
 The resulting number should equal your recorded mode. We restore the recorded value instead of assuming every system originally used `644`. No `sudo` is needed to change the mode of this file you own.
 
-`sudo` runs a permitted command as another user, root by default. It normally asks for **your account password**, which may show no characters while typed. It is not a general cure for “Permission denied.”
+`sudo` runs a permitted command as another user, root by default. It normally asks for **your account password**, which may not be displayed as you type it. It is not a general cure for “Permission denied.”
 
 **Practice VM, normal user; demonstrate identity with one elevated query:**
 

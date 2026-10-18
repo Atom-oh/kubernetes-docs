@@ -122,7 +122,7 @@ Gateway VTEP 최소 버전을 충족하는 AWS 유지 관리 Cilium에서 vtep.e
 **정답: C) Gateway 소프트웨어 추가 요금은 없지만 EC2 등 인프라·트래픽 비용은 별도**
 
 **설명:**
-Gateway 소프트웨어 자체에 추가 요금은 없습니다. EC2·해당하는 Auto Mode 관리 요금·스토리지·cross-AZ 데이터 전송·private 연결·관측성 비용과 클러스터/Hybrid Nodes 비용은 별도입니다. 전체 비용은 배치와 트래픽에 따라 달라지므로 보편적인 비용 절감 보장은 아닙니다.
+Gateway 소프트웨어 자체에 추가 요금은 없습니다. EC2·해당하는 Auto Mode 관리 요금·스토리지·cross-AZ 데이터 전송·private 연결·관측성 비용과 클러스터/Hybrid Nodes 비용은 별도입니다. 전체 비용은 배치와 트래픽에 따라 달라지므로 비용 절감을 보편적으로 보장할 수는 없습니다.
 
 </details>
 

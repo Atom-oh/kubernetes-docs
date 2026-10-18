@@ -341,7 +341,7 @@ spec:
 
 1. 메트릭 서버 구현:
 
-완전한 Go 서버는 숫자 `value`와 RFC3339 `observed_at`을 가진 JSON 스냅샷 `METRICS_FILE`을 읽습니다. 별도 업무 메트릭 생산자가 파일을 원자적으로 교체해야 합니다. 누락·형식 오류·음수·2분 이상 오래된 값은 HTTP503을 반환합니다. 다음 ScaledObject 사용 전에 서버를 빌드·배포하고 Service를 구성하세요. Kubernetes 집계 API 서버 구현은 아닙니다.
+완전한 Go 서버는 숫자 `value`와 RFC3339 `observed_at`을 가진 JSON 스냅샷 `METRICS_FILE`을 읽습니다. 별도 업무 메트릭 생산자가 파일을 원자적으로 교체해야 합니다. 누락·형식 오류·음수·2분 이상 오래된 값이 있으면 HTTP503을 반환합니다. 다음 ScaledObject 사용 전에 서버를 빌드·배포하고 Service를 구성하세요. Kubernetes 집계 API 서버 구현은 아닙니다.
 
 ```go
 package main
@@ -448,7 +448,7 @@ X API(이전 Twitter)의 v2 recent-counts 엔드포인트를 사용합니다. �
 
 1. Twitter 메트릭 수집기 서비스 구현:
 
-독립 예제를 `app.py`로 저장하고 Flask·requests·Gunicorn을 collector 이미지에 포함하세요. 배포는 Gunicorn worker 하나와 `app:create_app()`을 사용해 WSGI에서도 수집 스레드를 시작합니다. worker·복제본을 늘리면 API 폴링도 늘어납니다. 부분 결과·호출 제한·인증 오류는 실패 후 HTTP503으로 응답하며 잘린 검색 페이지 길이를 속도로 사용하지 않습니다. 실제 API 접근 조건에 맞춰 폴링을 조정하세요.
+독립 예제를 `app.py`로 저장하고 Flask·requests·Gunicorn을 collector 이미지에 포함하세요. 배포는 Gunicorn worker 하나와 `app:create_app()`을 사용해 WSGI에서도 수집 스레드를 시작합니다. worker·복제본을 늘리면 API 폴링도 늘어납니다. 부분 결과·호출 제한·인증 오류는 실패로 처리하고 HTTP503으로 응답하며 잘린 검색 페이지 길이를 속도로 사용하지 않습니다. 실제 API 접근 조건에 맞춰 폴링을 조정하세요.
 
 ```python
 import datetime as dt

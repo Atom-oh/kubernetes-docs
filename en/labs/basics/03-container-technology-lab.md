@@ -13,7 +13,7 @@
 - [ ] Docker CLI, a supported local Docker Engine, Bash and curl
 - [ ] Completed [Container Technology](../../basics/03-container-technology.md) learning
 
-Use one Bash terminal and a disposable **local Linux-container Docker Engine**. Verify the chosen context before continuing; the helper below pins all commands to it. Check server availability/version, not only the client version. Use a maintained Engine at least28.0.0 for the documented loopback-publishing behavior; older releases have a same-L2 reachability caveat. Docker resources and ports are created only when you run the lab, not by this audit.
+Use one Bash terminal and a disposable **local Linux-container Docker Engine**. Verify the chosen context before continuing; the helper below pins all commands to it. Check server availability/version, not only the client version. Use a maintained Engine at least 28.0.0 for the documented loopback-publishing behavior; older releases have a same-L2 reachability caveat. Docker resources and ports are created only when you run the lab, not by this audit.
 
 ---
 

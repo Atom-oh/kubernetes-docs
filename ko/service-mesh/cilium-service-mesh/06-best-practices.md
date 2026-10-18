@@ -365,7 +365,7 @@ CEC에 Listener, HCM/router, 두 EDS Cluster, 실제 백엔드 Service 참조가
 
 ### 인가는 기계적인 번역이 아님
 
-Pod 포트 8080의 Istio 관리 `app: httpbin` 워크로드에서는 수신 mTLS를 요구하고 인증한 특정 ServiceAccount principal을 허용합니다.
+Pod 포트 8080의 Istio 관리 `app: httpbin` 워크로드에서는 수신 mTLS를 요구하고 인증된 특정 ServiceAccount principal을 허용합니다.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -764,7 +764,7 @@ kubectl -n kube-system exec ds/cilium -- cilium-dbg service list
 kubectl -n kube-system exec ds/cilium -- cilium-dbg bpf ct list global
 ```
 
-호스트의 `cilium` CLI는 설치를 관리하고 Agent 내부 `cilium-dbg`는 로컬 데이터 플레인을 조사합니다. `exec ds/cilium`은 Pod 하나를 선택하므로 장애 시 실제 영향받은 노드의 Pod를 지정합니다. CT 목록은 출력이 클 수 있고 `wc -l`이 신뢰할 수 있는 점유율 측정은 아닙니다.
+호스트의 `cilium` CLI는 설치를 관리하고 Agent 내부 `cilium-dbg`는 로컬 데이터 플레인을 조사합니다. `exec ds/cilium`은 Pod 하나를 선택하므로 장애 시 실제 영향받은 노드의 Pod를 지정합니다. CT 목록은 출력이 클 수 있고 `wc -l`이 신뢰할 수 있는 점유율 측정 방법은 아닙니다.
 
 ### Envoy와 지연
 
@@ -840,7 +840,7 @@ EKS는 **2025년 11월 26일** EKS 최적화 AL2 AMI 공개를 종료했고 마�
 
 ## 추가 자료
 
-완전한 전제와 예제는 [보안](./03-security.md), [관측성](./04-observability.md), [Ingress/Gateway](./05-ingress-gateway.md) 가이드를 이어서 확인합니다.
+완전한 전제와 예제는 [보안](./03-security.md), [관측성](./04-observability.md), [Ingress/Gateway](./05-ingress-gateway.md) 가이드에서 이어서 확인합니다.
 
 - [Cilium 1.20.3 Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
 - [System requirements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)

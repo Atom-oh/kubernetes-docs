@@ -65,7 +65,7 @@ BTF provides type metadata used by tools and CO-RE relocation. It is distinct fr
 **Answer: B) A load balancing optimization where return traffic bypasses the load balancer**
 
 **Explanation:**
-DSR lets a remote backend node return traffic without the Kubernetes node that initially forwarded the Service request. Calico performs source translation. It requires a compatible fabric and return path; it does not automatically bypass or work with every external cloud load balancer.
+DSR lets a remote backend node return traffic without passing through the Kubernetes node that initially forwarded the Service request. Calico performs source translation. It requires a compatible fabric and return path; it does not automatically bypass or work with every external cloud load balancer.
 
 </details>
 

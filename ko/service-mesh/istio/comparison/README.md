@@ -80,7 +80,7 @@ Workload identity, policy, resilience 또는 관측성 중 충족되지 않은 �
 
 ### Istio와 VPC Lattice
 
-Hybrid는 cluster 내부 Istio와 명시적으로 구성한 service 경로의 Lattice를 함께 사용할 수 있습니다. 모든 TLS 종료점과 caller identity를 정의해야 합니다. Lattice IAM 인증 요청에는 문서화된 서명/인가 경로가 필요하며 mesh mTLS만으로 SigV4 identity나 end-to-end SPIFFE 전파가 생기지 않습니다. 같은 route, target 또는 DNS resource를 controller 여러 개가 경쟁해서 관리하지 않게 합니다.
+Hybrid 구성에서는 cluster 내부 Istio와 명시적으로 구성한 service 경로의 Lattice를 함께 사용할 수 있습니다. 모든 TLS 종료점과 caller identity를 정의해야 합니다. Lattice IAM 인증 요청에는 문서화된 서명/인가 경로가 필요하며 mesh mTLS만으로 SigV4 identity나 end-to-end SPIFFE 전파가 생기지 않습니다. 같은 route, target 또는 DNS resource를 controller 여러 개가 경쟁해서 관리하지 않게 합니다.
 
 ## FAQ
 
@@ -94,7 +94,7 @@ Hybrid는 cluster 내부 Istio와 명시적으로 구성한 service 경로의 La
 <details>
 <summary>Istio와 Linkerd 중 무엇을 선택해야 하나요?</summary>
 
-정확한 routing/security/observability 기능, 플랫폼 지원과 운영 절차를 비교합니다. Linkerd가 “기본 기능”이나 Kubernetes workload만으로 제한되지는 않으며 Istio의 sidecar·ambient도 resource와 기능 조건이 다릅니다. 같은 대표 workload를 시험하고 release/support 옵션을 검토한 뒤 결정하세요.
+정확한 routing/security/observability 기능, 플랫폼 지원과 운영 절차를 비교합니다. Linkerd가 “기본 기능”이나 Kubernetes workload에만 제한되지는 않으며 Istio의 sidecar·ambient도 resource와 기능 조건이 다릅니다. 같은 대표 workload를 시험하고 release/support 옵션을 검토한 뒤 결정하세요.
 
 </details>
 

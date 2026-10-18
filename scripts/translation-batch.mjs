@@ -126,17 +126,25 @@ function mergeHeadings(root, incoming) {
   write(root, headingPath, `${JSON.stringify(ours, null, 2)}\n`)
 }
 
-export function prepareBatch(root, { refs = [], before, section, langs = languages } = {}) {
+export function prepareBatch(root, { refs = [], before, section, langs = languages, fillMissing = false } = {}) {
   const main = tree(root, 'HEAD')
   const state = readState(blob(root, main.get(statePath)))
   const pending = new Set(state.pending)
+  // Reviewed results already merged into main supersede older draft queues.
+  // Keep this snapshot separate from records imported during reconciliation.
+  const mainSources = { ...state.sources }
+  const mainPending = new Set(state.pending)
+  const mainCurrent = file => main.has(file) && main.has(sourcePath(file)) && !mainPending.has(file) &&
+    mainSources[file] === main.get(sourcePath(file))?.oid
   const checkpoints = new Set([before, state.sourceCommit].filter(Boolean))
   for (const ref of refs) {
     const incoming = tree(root, ref)
     const base = tree(root, git(root, 'merge-base', 'HEAD', ref))
     const previous = readState(blob(root, incoming.get(statePath)))
     if (previous.sourceCommit) checkpoints.add(previous.sourceCommit)
-    previous.pending.forEach(file => pending.add(file))
+    previous.pending.forEach(file => {
+      if (!mainCurrent(file)) pending.add(file)
+    })
     for (const file of new Set([...base.keys(), ...incoming.keys()])) {
       if (!allowedPath(file) || file === statePath || base.get(file)?.oid === incoming.get(file)?.oid) continue
       if (file === headingPath) {
@@ -144,6 +152,7 @@ export function prepareBatch(root, { refs = [], before, section, langs = languag
         continue
       }
       if (translatedPath(file)) {
+        if (mainCurrent(file)) continue
         const src = sourcePath(file)
         const source = previous.sources[file] || incoming.get(src)?.oid
         if (!main.has(src)) {
@@ -183,12 +192,14 @@ export function prepareBatch(root, { refs = [], before, section, langs = languag
   for (const [file, sha] of Object.entries(state.sources)) {
     if (main.get(sourcePath(file))?.oid !== sha) pending.add(file)
   }
-  if (section) {
-    if (!/^[a-z0-9-]+$/.test(section) || !langs.length || langs.some(lang => !languages.includes(lang))) {
+  if (section || fillMissing) {
+    if ((section && !/^[a-z0-9-]+$/.test(section)) ||
+        !langs.length || langs.some(lang => !languages.includes(lang))) {
       throw new Error('Invalid backfill section/languages')
     }
     for (const src of main.keys()) {
-      if (!src.endsWith('.md') ||
+      if (!src.startsWith('en/') || !src.endsWith('.md')) continue
+      if (!fillMissing &&
           ![`en/${section}/`, `en/quizzes/${section}/`, `en/labs/${section}/`].some(prefix => src.startsWith(prefix)) &&
           !['en/labs/README.md', 'en/quizzes/README.md'].includes(src)) continue
       for (const lang of langs) {
@@ -427,12 +438,12 @@ async function main() {
     }
     let before = process.env.TRANSLATION_BEFORE
     if (before && /^0+$/.test(before)) before = undefined
-    if (!before && !process.env.TRANSLATION_SECTION) before = 'HEAD~1'
+    if (!before) before = 'HEAD~1'
     if (before) before = git(root, 'merge-base', before, 'HEAD')
     const pairs = prepareBatch(root, {
       refs: prior.map(pr => `origin/${pr.headRefName}`), before,
-      section: process.env.TRANSLATION_SECTION,
-      langs: (process.env.TRANSLATION_LANGUAGES || 'cn jp es').split(/\s+/).filter(Boolean)
+      fillMissing: true,
+      langs: languages
     })
     fs.writeFileSync(pairsPath, pairs.map(pair => pair.join(' ')).join('\n') + (pairs.length ? '\n' : ''))
     if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `pair_count=${pairs.length}\n`)

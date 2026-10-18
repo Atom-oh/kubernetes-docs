@@ -78,6 +78,6 @@ Refresh 작업은 Git에서 최신 매니페스트를 가져와 라이브 상태
 **정답: B) Replace=true**
 
 **설명:**
-`Replace=true` 동기화 옵션은 ArgoCD에 `kubectl apply` 대신 `kubectl replace`를 사용하도록 지시하여 패치가 아닌 리소스를 완전히 교체합니다. replace/create도 immutable 필드 제한을 자동 우회하지 않습니다. Force=true와 Replace=true의 delete/create는 별도 파괴적 동작이며 PVC 마이그레이션을 대신하지 않습니다.
+`Replace=true` 동기화 옵션은 ArgoCD에 `kubectl apply` 대신 `kubectl replace`를 사용하도록 지시하여 패치 대신 리소스를 완전히 교체합니다. replace/create도 immutable 필드 제한을 자동 우회하지 않습니다. Force=true와 Replace=true의 delete/create는 별도 파괴적 동작이며 PVC 마이그레이션을 대신하지 않습니다.
 
 </details>

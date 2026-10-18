@@ -57,7 +57,7 @@ Check management boundaries and EKS connectivity for provisioned MWAA 3.3.1/Pyth
 
 </details>
 
-6. What latest Airflow release and MWAA availability date appear in the support table reviewed on 2026-09-12?
+6. What are the latest Airflow release and MWAA availability date shown in the support table reviewed on 2026-09-12?
 
 <details>
 <summary>Show Answer</summary>

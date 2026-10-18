@@ -62,7 +62,7 @@ sequenceDiagram
 | DNS client → 승인된 resolver | UDP/TCP 53 | 이름 해석 경로를 별도 정의. CoreDNS 위치와 DNS forwarding 구성을 반영 |
 | 앱·CNI·모니터링 간 통신 | 선택한 기능별 포트 | 위 관리 통신으로 일괄 승인하지 않고 별도 flow 목록 작성 |
 
-포트 표는 모든 CNI·앱의 완성된 방화벽 규칙이 아닙니다. 세부 요구는 [네트워크 구성](02-network-configuration.md)과 [AWS의 운영 중 필수 흐름](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)을 사용합니다. Webhook의 `8443`은 예시일 뿐 `8443` 이상 전체 범위를 열라는 의미가 아닙니다.
+포트 표는 모든 CNI·앱의 완성된 방화벽 규칙이 아닙니다. 세부 요구는 [네트워크 구성](02-network-configuration.md)과 [AWS의 운영 중 필수 흐름](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)을 참고하여 확인합니다. Webhook의 `8443`은 예시일 뿐 `8443` 이상 전체 범위를 열라는 의미가 아닙니다.
 
 **Node가 시작한 TCP 443의 stateful return 허용만으로 TCP 10250의 신규 inbound 연결이 열리지는 않습니다.** 이를 outbound-only agent 터널이라고 설명하면 운영과 보안 양쪽에서 문제가 됩니다. SG는 stateful이지만 NACL은 stateless이므로 반환 트래픽 규칙도 구분합니다. 중간 NAT·보안 장비가 있으면 각 경계에서 실제로 보이는 주소와 대칭 반환 경로를 확인합니다. [Hybrid traffic flows](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html), [SG와 NACL 비교](https://aws.amazon.com/vpc/faqs/)
 
@@ -97,7 +97,7 @@ Cluster SG의 egress, VPC/TGW 경로, 온프레미스 경계·host firewall을 �
 
 Private 주소는 호출자의 권한을 증명하지 않습니다. 운영자 IAM 신원과 EKS access entry/access policy·Kubernetes RBAC, node 신원, kubelet의 인증·인가 구성을 각각 확인합니다. TLS 검증을 끄거나 kubelet에 anonymous/AlwaysAllow를 허용하는 방법으로 연결 문제를 해결하지 않습니다. kubelet에 대한 직접 접근은 별도 권한 경로이므로 API server를 통한 작업과 동일하게 취급하지 않습니다. [EKS 접근 관리](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html), [Kubelet 인증과 인가](https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/)
 
-AWS 서비스용 endpoint policy는 그 endpoint를 통과하는 해당 API 호출의 필터입니다. IAM 권한을 부여하거나 Kubernetes RBAC를 대체하지 않습니다. SSM을 사용하는 경우 Run Command·Session Manager 같은 관리 기능의 실행 권한도 심사합니다. “노드가 먼저 HTTPS를 연결했다”는 이유로 외부 관리 명령의 가능성이 사라지지는 않습니다. [Endpoint 접근 통제](https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html), [SSM 접근 통제](https://docs.aws.amazon.com/systems-manager/latest/userguide/security-iam.html)
+AWS 서비스용 endpoint policy는 그 endpoint를 통과하는 해당 API 호출의 필터입니다. IAM 권한을 부여하거나 Kubernetes RBAC를 대체하지 않습니다. SSM을 사용하는 경우 Run Command·Session Manager 같은 관리 기능의 실행 권한도 심사합니다. “노드가 먼저 HTTPS 연결을 시작했다”는 이유로 외부 관리 명령의 가능성이 사라지지는 않습니다. [Endpoint 접근 통제](https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html), [SSM 접근 통제](https://docs.aws.amazon.com/systems-manager/latest/userguide/security-iam.html)
 
 ### 데이터와 관리자 권한의 경계
 

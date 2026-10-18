@@ -199,13 +199,13 @@ readOnlyRootFilesystem은 container securityContext에 설정합니다. 쓰기�
 
 - A. 호환성을 확인한 워크로드에 RuntimeDefault 적용
 - B. 지원되는 노드에서 Falco 수집 상태 확인
-- C. 컨테이너에 root로 실행
+- C. 컨테이너를 root로 실행
 - D. 읽기 전용 루트 파일시스템 사용
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C. 컨테이너에 root로 실행**
+**정답: C. 컨테이너를 root로 실행**
 
 **설명:**
 불필요한 root 권한은 줄입니다. RuntimeDefault·readOnlyRootFilesystem도 workload 요구와 node 지원을 확인해야 하며 Falco DaemonSet을 Fargate 등 모든 node 유형에 설치할 수 있는 것은 아닙니다. GuardDuty 활성화와 healthy coverage 역시 구분합니다.

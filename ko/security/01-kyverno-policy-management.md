@@ -11,7 +11,7 @@ Kyverno는 Kubernetes 정책을 평가하고 명시적으로 구성한 mutation�
 
 ### 필수 도구
 
-대상 API server가 지원하는 version skew의 kubectl, 지원되는 OCI-capable Helm, 검증한 Kyverno 1.19.1 CLI를 사용합니다. CLI는 OS/architecture에 맞는 archive와 게시된 checksum/signature를 확인합니다. 1.10.0 archive를 재사용하거나 검증하지 않은 다운로드를 root 설치로 바로 연결하지 않습니다.
+대상 API server가 지원하는 version skew 범위에 맞는 kubectl, 지원되는 OCI-capable Helm, 검증한 Kyverno 1.19.1 CLI를 사용합니다. CLI는 OS/architecture에 맞는 archive와 게시된 checksum/signature를 확인합니다. 1.10.0 archive를 재사용하거나 검증하지 않은 다운로드를 root 설치로 바로 연결하지 않습니다.
 
 먼저 로컬 파일로 시작합니다. 아래 정책은 독립 예제이며 페이지 전체를 한꺼번에 적용하지 않습니다. Pod 예제는 `policy-lab`, generation은 추가 참여 label로 범위를 제한합니다. Policy·namespace label·Role·PolicyException 수정 권한도 통제합니다. Selector만으로 RBAC 보안 경계가 만들어지지는 않습니다.
 
@@ -86,7 +86,7 @@ helm upgrade --install kyverno kyverno/kyverno --version 3.9.1 \
   --values kyverno-values.yaml
 ```
 
-렌더링은 controller Deployment 4개와 metrics ServiceMonitor 4개를 포함합니다. Replica 증설은 topology·disruption·resource sizing·webhook 가용성을 함께 계획해야 합니다. 각 controller 하나씩 배치하는 것은 HA 설계가 아닙니다. Chart version label을 application version으로 해석하지 말고 실제 기본값과 rendered image tag를 확인합니다.
+렌더링은 controller Deployment 4개와 metrics ServiceMonitor 4개를 포함합니다. Replica 증설은 topology·disruption·resource sizing·webhook 가용성을 함께 계획해야 합니다. 각 controller를 하나씩 배치하는 것은 HA 설계가 아닙니다. Chart version label을 application version으로 해석하지 말고 실제 기본값과 rendered image tag를 확인합니다.
 
 ### YAML 매니페스트를 사용한 설치
 
@@ -672,7 +672,7 @@ results:
 
 ### 3. 정책 조직화
 
-Validation·mutation·generation·deletion을 버전과 tests·owner와 함께 관리합니다. Classic pattern/JMESPath와 CEL은 다른 문법이며 규칙별 출력 비교로 이전합니다. 현재 이미지 서명 정책은 ImageValidatingPolicy이고 [이미지 보안 문서](./07-image-security.md)의 attestor·registry·trust 전제 조건을 확인합니다. 서명 검증은 취약점 스캔이나 모든 registry를 제한하는 정책과 같지 않습니다.
+Validation·mutation·generation·deletion을 버전·tests·owner와 함께 관리합니다. Classic pattern/JMESPath와 CEL은 다른 문법이며 규칙별 출력 비교로 이전합니다. 현재 이미지 서명 정책은 ImageValidatingPolicy이고 [이미지 보안 문서](./07-image-security.md)의 attestor·registry·trust 전제 조건을 확인합니다. 서명 검증은 취약점 스캔이나 모든 registry를 제한하는 정책과 같지 않습니다.
 
 ## 결론
 

@@ -61,7 +61,7 @@ PodSecurityPolicy (PSP) was removed in Kubernetes v1.25, and PodSecurityAdmissio
 **Answer: D) Inspecting payload content of specific protocols**
 
 **Explanation:**
-NetworkPolicy provides L3/L4 level firewall policies that control communication between pods. This allows restricting traffic based on specific namespaces, labels, IP CIDR ranges, ports, etc. However, NetworkPolicy cannot perform L7 level inspection (e.g., HTTP headers, payload content). For such functionality, you need to use a service mesh (e.g., Istio) or API gateway.
+NetworkPolicy provides L3/L4 level firewall policies that control communication between pods. This allows restricting traffic based on specific namespaces, labels, IP CIDR ranges, ports, etc. However, NetworkPolicy cannot perform L7 level inspection (e.g., HTTP headers, payload content). For such functionality, you need to use a service mesh (e.g., Istio) or an API gateway.
 </details>
 
 5. What is the main purpose of RBAC (Role-Based Access Control) in Kubernetes?
@@ -170,10 +170,10 @@ PriorityClass defines the scheduling priority of pods. When resources are scarce
 ResourceQuota limits resource usage for the entire namespace, while LimitRange sets resource constraints for individual containers or pods within a namespace.
 
 Key differences:
-1. **Scope**: ResourceQuota applies to the entire namespace, LimitRange applies to individual resources (pods, containers, etc.).
+1. **Scope**: ResourceQuota applies to the entire namespace; LimitRange applies to individual resources (pods, containers, etc.).
 2. **Purpose**: ResourceQuota limits total namespace resource usage, while LimitRange controls individual resource usage through default settings, minimum/maximum limits, etc.
-3. **Enforcement**: When ResourceQuota is set, resource creation exceeding the quota is rejected. LimitRange applies defaults when resources are created or rejects if limits are exceeded.
-4. **Resource types**: ResourceQuota can limit not only CPU and memory but also object counts like pods, services, and PVCs. LimitRange primarily focuses on computing resources like CPU, memory, and storage.
+3. **Enforcement**: When ResourceQuota is set, resource creation exceeding the quota is rejected. LimitRange applies defaults when resources are created or rejects them if limits are exceeded.
+4. **Resource types**: ResourceQuota can limit not only CPU and memory but also counts of objects like pods, services, and PVCs. LimitRange primarily focuses on computing resources like CPU, memory, and storage.
 </details>
 
 2. Explain the three policy levels (Privileged, Baseline, Restricted) of Pod Security Standards and their characteristics.
@@ -204,7 +204,7 @@ Pod Security Standards define three policy levels for pod security settings:
    - Suitable for security-critical production workloads.
 </details>
 
-3. Explain how to restrict pods in a specific namespace to communicate only with specific pods in another namespace using NetworkPolicy.
+3. Explain how to restrict pods in a specific namespace to communicating only with specific pods in another namespace using NetworkPolicy.
 
 <details>
 <summary>Show Answer</summary>

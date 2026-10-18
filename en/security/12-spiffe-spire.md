@@ -131,7 +131,7 @@ spiffe-csi-driver:
 
 This is a single-server SQLite lab. Broad default, test, and unused OIDC identities are disabled; a separate ClusterSPIFFEID selects workloads. The chart defaults kubelet verification to skip, so apiServerCA is set explicitly. This assumes that the actual kubelet serving certificate validates under that CA; use the appropriate CA/host-certificate method for other PKI rather than disabling verification.
 
-Install/delete hooks are disabled in this profile; perform any required migration/cleanup separately. The render includes a Server StatefulSet with Controller Manager sidecar plus Agent and CSI DaemonSets. Confirm release-specific resource names, labels, and socket paths.
+Install/delete hooks are disabled in this profile; perform any required migration/cleanup separately. The render includes a Server StatefulSet with a Controller Manager sidecar plus Agent and CSI DaemonSets. Confirm release-specific resource names, labels, and socket paths.
 
 ### High Availability
 
@@ -285,7 +285,7 @@ Do not pass SPIRE bundle JSON where Linkerd expects PEM roots or copy SPIRE CA p
 [View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-12-spiffe-spire-3.html)
 
 
-Configure each trust direction explicitly; federation does not automatically establish mutual trust or authorization. Operate bundle endpoint connectivity, TLS verification, refresh failures, expiry, and rollover.
+Configure each trust direction explicitly; federation does not automatically establish mutual trust or authorization. Manage bundle endpoint connectivity, TLS verification, refresh failures, expiry, and rollover.
 
 ```yaml
 apiVersion: spire.spiffe.io/v1alpha1

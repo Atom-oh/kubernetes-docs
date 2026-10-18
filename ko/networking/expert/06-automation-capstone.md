@@ -139,11 +139,11 @@ python3 "${EVIDENCE_DIR:?}/check_record.py" \
   "${EVIDENCE_DIR:?}/intent.json" "${EVIDENCE_DIR:?}/observations.json"
 ```
 
-기대 출력은 `CONSISTENT_RECORD kind=synthetic; live behavior not attested`입니다. 이는 이 기록의 필수 조건 검사 통과이며 네트워크 통신 성공이나 운영 반영 승인이 아닙니다. `assert` 대신 명시적인 예외를 사용하므로 Python 최적화 옵션으로 검사가 제거되지 않습니다.
+기대 출력은 `CONSISTENT_RECORD kind=synthetic; live behavior not attested`입니다. 이는 이 기록이 필수 조건 검사를 통과했다는 뜻이며 네트워크 통신 성공이나 운영 반영 승인이 아닙니다. `assert` 대신 명시적인 예외를 사용하므로 Python 최적화 옵션으로 검사가 제거되지 않습니다.
 
 ### 반드시 실패시킬 입력
 
-원본 파일을 유지하고 `observations-bad.json` 복사본으로 다음을 **하나씩** 바꿉니다. 같은 명령의 마지막 인자만 복사본으로 바꿔 실행합니다.
+원본 파일을 유지하고 `observations-bad.json` 복사본에서 다음을 **하나씩** 바꿉니다. 같은 명령의 마지막 인자만 복사본으로 바꿔 실행합니다.
 
 | 변경 | 기대 결과 |
 |---|---|
@@ -224,7 +224,7 @@ rm -- "${EVIDENCE_DIR:?}/intent.json" "${EVIDENCE_DIR:?}/observations.json" \
   "${EVIDENCE_DIR:?}/check_record.py"
 ```
 
-복사본을 만들었다면 **확인한 그 파일만** 별도로 삭제한 뒤 `rmdir -- "${EVIDENCE_DIR:?}"`를 실행합니다. 실제 실험 원본은 이 임시 합성 예제와 구분해 승인된 보관 정책을 따릅니다.
+복사본을 만들었다면 **확인한 그 파일만** 별도로 삭제한 뒤 `rmdir -- "${EVIDENCE_DIR:?}"`를 실행합니다. 실제 실험 원본은 이 임시 합성 예제와 구분해 승인된 보관 정책에 따라 관리합니다.
 
 이후 포트폴리오에서 가장 약한 항목에 맞춰 [프로토콜](01-protocol-projects.md), [라우팅](02-routing-policy-convergence.md), [EVPN](03-datacenter-evpn.md), [Linux 성능](04-linux-performance.md), [클라우드](05-cloud-cni-design.md) 실험을 추가합니다.
 

@@ -177,7 +177,7 @@ spec:
       maxEjectionPercent: 30
 ```
 
-`minHealthPercent: 50` is a fail-open/panic choice: below the healthy-host threshold, the proxy can use unhealthy hosts as well. It is not a minimum request count, healthy-capacity guarantee or split-brain prevention. The Istio default is0; other examples use0 to disable this panic threshold. The ejection cap does not make remaining endpoints healthy.
+`minHealthPercent: 50` is a fail-open/panic choice: below the healthy-host threshold, the proxy can use unhealthy hosts as well. It is not a minimum request count, healthy-capacity guarantee or split-brain prevention. The Istio default is 0; other examples use 0 to disable this panic threshold. The ejection cap does not make remaining endpoints healthy.
 
 ### Connection Failure Based Detection
 
@@ -207,11 +207,11 @@ spec:
 
 ### Success Rate Based Detection (Advanced)
 
-Envoy has statistical success-rate detection, with minimum host/request-volume and deviation parameters; it is not simply “below95%.” The Istio1.31 DestinationRule API does not expose `enforcingConsecutiveErrors`/`enforcingSuccessRate` or those statistical thresholds. The [released implementation](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go) explicitly disables success-rate enforcement. `splitExternalLocalOriginErrors` separates error classes; it is not a minimum request count. Use the supported consecutive-error fields here. Advanced EnvoyFilter changes require version-specific configuration and runtime validation.
+Envoy has statistical success-rate detection, with minimum host/request-volume and deviation parameters; it is not simply “below 95%.” The Istio 1.31 DestinationRule API does not expose `enforcingConsecutiveErrors`/`enforcingSuccessRate` or those statistical thresholds. The [released implementation](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go) explicitly disables success-rate enforcement. `splitExternalLocalOriginErrors` separates error classes; it is not a minimum request count. Use the supported consecutive-error fields here. Advanced EnvoyFilter changes require version-specific configuration and runtime validation.
 
 ## Protecting External Services (ServiceEntry)
 
-Register external APIs or legacy systems as ServiceEntry and apply Outlier Detection to prevent failure propagation.
+Register external APIs or legacy systems as ServiceEntry resources and apply Outlier Detection to prevent failure propagation.
 
 ### External API Protection Architecture
 
@@ -219,7 +219,7 @@ Register external APIs or legacy systems as ServiceEntry and apply Outlier Detec
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-01-outlier-detection-2.html)
 
-These HTTP-aware external API examples require the application to call **HTTP port80** and the sidecar to originate TLS to target443. They set SNI/SAN and use the proxy OS trust store; mount an appropriate CA bundle for a private CA. Application-to-sidecar traffic is plaintext, so this is unsuitable when that hop must also be encrypted. For application-originated HTTPS, use passthrough without another SIMPLE TLS layer; Envoy then sees transport failures, not HTTP status/latency or HTTP retry rules. Verify enrollment, routing and certificate validation before sending credentials. Hosts/IPs below are examples, not provisioned services; substitute authorized endpoints.
+These HTTP-aware external API examples require the application to call **HTTP port 80** and the sidecar to originate TLS to target 443. They set SNI/SAN and use the proxy OS trust store; mount an appropriate CA bundle for a private CA. Application-to-sidecar traffic is plaintext, so this is unsuitable when that hop must also be encrypted. For application-originated HTTPS, use passthrough without another SIMPLE TLS layer; Envoy then sees transport failures, not HTTP status/latency or HTTP retry rules. Verify enrollment, routing and certificate validation before sending credentials. Hosts/IPs below are examples, not provisioned services; substitute authorized endpoints.
 
 ### Example 1: Single External API (DNS Based)
 
@@ -565,7 +565,7 @@ spec:
         - maps.googleapis.com
 ```
 
-The geocoding example only retries matched idempotent reads. Call the HTTP port80 path so the proxy can see the method; HTTPS passthrough cannot use this HTTP policy. Three retries plus the initial attempt do not all fit if every attempt lasts2s within the5s total timeout.
+The geocoding example only retries matched idempotent reads. Call the HTTP port 80 path so the proxy can see the method; HTTPS passthrough cannot use this HTTP policy. Three retries plus the initial attempt do not all fit if every attempt lasts 2s within the 5s total timeout.
 
 ### Example 5: External Service with Rate Limiting
 
@@ -647,7 +647,7 @@ spec:
     timeout: 5s
 ```
 
-The ConfigMap is only a rate-limit-service configuration fragment. It must be mounted in a running compatible service with its backing store, outbound Envoy rate-limit filter and matching `destination_cluster` descriptor. Alone it enforces nothing. Gateway errors are502/503/504, not429; standard5xx detection does not treat429 as a gateway error. Ejection time is not synchronized with the provider’s quota reset. Prefer quota-aware handling and Retry-After/application backoff to ejecting every healthy quota-limited host.
+The ConfigMap is only a rate-limit-service configuration fragment. It must be mounted in a running compatible service with its backing store, outbound Envoy rate-limit filter and matching `destination_cluster` descriptor. Alone it enforces nothing. Gateway errors are 502/503/504, not 429; standard 5xx detection does not treat 429 as a gateway error. Ejection time is not synchronized with the provider’s quota reset. Prefer quota-aware handling and Retry-After/application backoff to ejecting every healthy quota-limited host.
 
 ### External Service Outlier Detection Best Practices
 
@@ -795,7 +795,7 @@ histogram_quantile(0.95,
 
 #### 4. Alert Configuration
 
-This is a Prometheus rule-file fragment, not a Kubernetes resource. Mount/select it in Prometheus (or wrap groups in a selected PrometheusRule). Thresholds require traffic-volume, no-data and scrape-health handling; they are not validated SLOs. Latency below is milliseconds and rates are per second.
+This is a Prometheus rule-file fragment, not a Kubernetes resource. Mount/select it in Prometheus (or wrap groups in a selected PrometheusRule). Thresholds require traffic-volume, no-data and scrape-health handling; they are not validated SLOs. Latency below is in milliseconds and rates are per second.
 
 
 ```yaml
@@ -893,7 +893,7 @@ outlierDetection:
 
 **Expected behavior, subject to effective limits**:
 
-1. Qualifying502/503 responses count toward the gateway threshold.
+1. Qualifying 502/503 responses count toward the gateway threshold.
 2. Reaching two consecutive gateway failures can eject the host if enforcement/cap permit it.
 3. The host becomes eligible after its ejection period; no active probe is configured here.
 4. Repeated ejections increase the duration using Envoy’s multiplier/cap. Returning to the pool does not prove the provider recovered.
@@ -1059,7 +1059,7 @@ spec:
         minHealthPercent: 0
 ```
 
-Ejecting every v2 endpoint does not move its10% route weight to v1. Requests selected for an empty canary subset can fail; a rollout controller must change the route weight/rollback based on observed health. The workload labels must match both subsets.
+Ejecting every v2 endpoint does not move its 10% route weight to v1. Requests selected for an empty canary subset can fail; a rollout controller must change the route weight/rollback based on observed health. The workload labels must match both subsets.
 
 ### Example 3: Multi-Region Deployment
 
@@ -1088,7 +1088,7 @@ spec:
       minHealthPercent: 0
 ```
 
-This80/20 policy intentionally sends traffic to both healthy regions. It is not standby failover and requires actual region-locality metadata, cross-region connectivity and capacity. A region name alone does not create a multi-cluster mesh.
+This 80/20 policy intentionally sends traffic to both healthy regions. It is not standby failover and requires actual region-locality metadata, cross-region connectivity and capacity. A region name alone does not create a multi-cluster mesh.
 
 ### Example 4: Connection Pool + Outlier Detection
 
@@ -1306,7 +1306,7 @@ Review repeated-ejection history and Envoy's effective duration cap. Reducing `b
 
 ### False Positives from Temporary Errors
 
-Distinguish connection failures from application failures and check whether retries amplify them. A5xx may be an intentional response, while a slow successful response alone is not a latency-based outlier. Scope rollout and verify the changed proxy config; default logs need not contain outlier events.
+Distinguish connection failures from application failures and check whether retries amplify them. A 5xx may be an intentional response, while a slow successful response alone is not a latency-based outlier. Scope rollout and verify the changed proxy config; default logs need not contain outlier events.
 
 ## Best Practices
 
@@ -1358,7 +1358,7 @@ trafficPolicy:
 
 ### 4. Gradual Rollout
 
-Collect a baseline, verify effective mesh/namespace/workload policy, then apply a measured setting to an isolated test cohort and expand only after validation. Do not use `maxEjectionPercent: 0` as a monitor-only switch: in the [Istio1.31 implementation](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go), only values greater than0 set Envoy's field, so0 leaves Envoy's default rather than disabling ejection. Omitted settings can also inherit a mesh default. Observe actual enforced events and remaining endpoints before wider rollout.
+Collect a baseline, verify effective mesh/namespace/workload policy, then apply a measured setting to an isolated test cohort and expand only after validation. Do not use `maxEjectionPercent: 0` as a monitor-only switch: in the [Istio1.31 implementation](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go), only values greater than 0 set Envoy's field, so 0 leaves Envoy's default rather than disabling ejection. Omitted settings can also inherit a mesh default. Observe actual enforced events and remaining endpoints before wider rollout.
 
 ### 5. Monitoring and Alerting
 

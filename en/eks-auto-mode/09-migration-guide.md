@@ -15,7 +15,7 @@ The diagram's final validation step does not authorize draining, scaling to zero
 
 Use a currently supported EKS/add-on combination. The former 1.29 minimum was a historical feature floor, not current supported-version guidance. Confirm a compatible VPC CNI, kube-proxy, EBS CSI, snapshot controller and Pod Identity Agent where installed; use the official migration minimums **and** the compatibility listing for your actual Kubernetes version.
 
-Record controller ownership, workload placement, system agents, volumes/AZs, load-balancer classes, IAM, recovery procedures and cost. The guard below checks account, cluster ARN/creation time/API endpoint and node-group ARN/creation time. These are point-in-time identity checks, not an atomic lock against concurrent controllers. A deliberately proxied endpoint needs a reviewed alternative, not silently bypassing a mismatch.
+Record controller ownership, workload placement, system agents, volumes/AZs, load-balancer classes, IAM, recovery procedures and cost. The guard below checks account, cluster ARN/creation time/API endpoint and node-group ARN/creation time. These are point-in-time identity checks, not an atomic lock against concurrent controllers. A deliberately proxied endpoint needs a reviewed alternative; do not silently bypass a mismatch.
 
 ```bash
 set -euo pipefail

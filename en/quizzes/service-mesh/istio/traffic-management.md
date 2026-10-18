@@ -642,7 +642,7 @@ spec:
               podTemplateHashValue: Latest
 ```
 
-The first deployment establishes the stable version; update the image to exercise canary stages. Each weighted stage has a finite inline analysis gate. With failureLimit 0, one failed measurement aborts the active rollout; missing/NaN data cannot pass. A successful gate advances to the next stage. Timing depends on traffic, scrape/analysis intervals and reconciliation, not a guaranteed few seconds.
+The first deployment establishes the stable version; update the image to exercise canary stages. Each weighted stage has a finite inline analysis gate. With failureLimit 0, one failed measurement aborts the active rollout; missing/NaN data cannot pass. A successful gate advances to the next stage. Timing depends on traffic, scrape/analysis intervals and reconciliation; it is not guaranteed to take only a few seconds.
 
 ```bash
 kubectl argo rollouts get rollout reviews --watch
@@ -1005,7 +1005,7 @@ spec:
       baseEjectionTime: 30s
 ```
 
-The remote 20% is active traffic, not idle failover capacity. Explicit `failover` is an alternative to `distribute`, and its from/to values are **regions**, for example us-east-1 to us-west-2; they are not region/zone paths. Zone failover uses endpoint locality/health. Provide healthy capacity in other AZs and verify ejection/panic behavior. PDB limits voluntary disruption; it neither creates replicas nor prevents AZ failure.
+The remote 20% is active traffic, not idle failover capacity. Explicit `failover` is an alternative to `distribute`, and its from/to values are **regions**, for example us-east-1 to us-west-2; they are not region/zone paths. Zone failover uses endpoint locality/health. Provide healthy capacity in other AZs and verify ejection/panic behavior. A PDB limits voluntary disruption; it neither creates replicas nor prevents AZ failure.
 
 **Hypothetical arithmetic, not an AWS price quote:** assume 200,000 billable GB/month, cross-AZ share falling from 70% to 20%, and an effective rate of $0.01 per billable GB for the measured path.
 
@@ -1101,7 +1101,7 @@ curl -I --connect-to "bookinfo.example.com:80:${INGRESS_HOST}:80" \
 
 **2. ACM termination at NLB**
 
-Use an ISSUED, DNS-validated ACM certificate in the NLB’s region. Requesting a certificate alone does not finish validation. NLB is a transport-layer load balancer and does not perform HTTP redirects; the SSL negotiation policy only selects TLS versions/ciphers. Send decrypted port-443 traffic to a different gateway target port from the HTTP-redirect listener to avoid a redirect loop:
+Use an ISSUED, DNS-validated ACM certificate in the NLB’s region. Requesting a certificate alone does not finish validation. An NLB is a transport-layer load balancer and does not perform HTTP redirects; the SSL negotiation policy only selects TLS versions/ciphers. Send decrypted port-443 traffic to a gateway target port different from the HTTP-redirect listener’s port to avoid a redirect loop:
 
 ```yaml
 apiVersion: v1

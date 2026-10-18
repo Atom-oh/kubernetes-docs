@@ -119,7 +119,7 @@ After TCP idle expiry, a new SYN starts a new flow, while data packets on the ol
 
 `target_failover.on_unhealthy` and `target_failover.on_deregistration` must have the same value. The default is `no_rebalance`. Health checks support TCP, HTTP and HTTPS; match protocol, port and path to the appliance. [S25] [S26]
 
-Current documentation also provides `send_tcp_reset.on_unhealthy.enabled` and `send_tcp_reset.on_deregistration.enabled`. They default to `false`, apply only to TCP and require five-tuple (`stickiness.enabled=false`) with `no_rebalance`. They cannot be enabled with `rebalance` or reduced-tuple stickiness. Test reconnection, retries and duplicate business operations after RST; this is not uninterrupted session migration. Review deregistration drain time. [S25]
+Current documentation also provides `send_tcp_reset.on_unhealthy.enabled` and `send_tcp_reset.on_deregistration.enabled`. They default to `false`, apply only to TCP and require five-tuple stickiness (`stickiness.enabled=false`) with `no_rebalance`. They cannot be enabled with `rebalance` or reduced-tuple stickiness. Test reconnection, retries and duplicate business operations after RST; this is not uninterrupted session migration. Review deregistration drain time. [S25]
 
 **GWLB does not directly bypass appliances when all targets are unhealthy.** AWS documents random per-flow target selection and traffic drops until the chosen target becomes healthy. Decisions are independent among zones; with cross-zone disabled, review the eligible targets in each AZ. Cross-zone expands the eligible target set while existing/new-flow semantics remain relevant. [S26]
 

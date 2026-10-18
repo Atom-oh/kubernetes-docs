@@ -65,7 +65,7 @@ ipv6:
 ```
 
 
-The Operator coordinates node blocks, not a central request for each Pod address. Multiple CIDRs in `clusterPoolIPv4PodCIDRList` expand the common allocation space; this is different from selecting named pools per workload.
+The Operator coordinates node blocks, rather than handling a central request for each Pod address. Multiple CIDRs in `clusterPoolIPv4PodCIDRList` expand the common allocation space; this is different from selecting named pools per workload.
 
 Do not replace existing pool-list entries to grow a live cluster. Add a non-conflicting CIDR through the documented expansion procedure. The node mask size is not a routine mutable setting. Address counts per block are not identical to usable Pod capacity because addresses are reserved or used by node-local facilities.
 
@@ -94,7 +94,7 @@ Enabling these two Cilium address-family flags does not configure Kubernetes Ser
 
 ### Multi-Pool and CiliumPodIPPool
 
-The documented mode is `multi-pool`; the resource API is still `cilium.io/v2alpha1` in 1.20 (in the **[1.21 pre-release]** `CiliumPodIPPool` is served as `cilium.io/v2`, which becomes the storage version, `v2alpha1` is deprecated, and `spec.ipv4.pool`/`spec.ipv6.pool` add per-CIDR `reservedRanges`; those fields exist only in `v2`). Do not infer a feature's maturity solely from that API suffix. The upstream multi-pool tutorial also requires `kubeProxyReplacement=true` and `bpf.masquerade=true` (iptables masquerade would need `egressMasqueradeInterfaces`); the example below includes them. For allocation internals, pool sizing and migration, see [IPAM deep dive](10-ipam-deep-dive.md). On a fresh cluster using this mode, provide a default pool for ordinary allocations:
+The documented mode is `multi-pool`; the resource API is still `cilium.io/v2alpha1` in 1.20 (in the **[1.21 pre-release]** `CiliumPodIPPool` is served as `cilium.io/v2`, which becomes the storage version; `v2alpha1` is deprecated, and `spec.ipv4.pool`/`spec.ipv6.pool` add per-CIDR `reservedRanges`; those fields exist only in `v2`). Do not infer a feature's maturity solely from that API suffix. The upstream multi-pool tutorial also requires `kubeProxyReplacement=true` and `bpf.masquerade=true` (iptables masquerade would need `egressMasqueradeInterfaces`); the example below includes them. For allocation internals, pool sizing and migration, see [IPAM deep dive](10-ipam-deep-dive.md). On a fresh cluster using this mode, provide a default pool for ordinary allocations:
 
 **`multi-pool-values.yaml`**
 
@@ -206,7 +206,7 @@ ipv6:
 `eni.enabled=true` already makes the chart default `routingMode` to `native` and enable endpoint routes, so those keys are omitted here (Helm template `cilium-configmap.yaml` in 1.20.2).
 
 
-`eni.awsEnablePrefixDelegation` requires the instance/subnet setup to support the requested prefixes. An IPv4 `/28` contains 16 addresses, not a guarantee of 16 additional schedulable Pods in every configuration. The default is disabled. Do not add the invented `eni-prefix-delegation-enabled` key.
+`eni.awsEnablePrefixDelegation` requires the instance/subnet setup to support the requested prefixes. An IPv4 `/28` contains 16 addresses but does not guarantee 16 additional schedulable Pods in every configuration. The default is disabled. Do not add the invented `eni-prefix-delegation-enabled` key.
 
 The Operator makes the EC2 API calls; pre-allocation reduces per-Pod delays but cannot eliminate quota, API or subnet exhaustion. `eni.eniTags` tags managed interfaces. Let the SDK resolve the appropriate EC2 endpoint unless there is a deliberate, validated `eni.ec2APIEndpoint` override.
 
@@ -650,7 +650,7 @@ spec:
 ```
 
 
-`service.cilium.io/global` is the current annotation. A global service shares local backends by default; `service.cilium.io/shared: "false"` stops sharing them to peers without necessarily preventing local clients from using remote backends. Local ClusterIPs do not have to be identical.
+`service.cilium.io/global` is the current annotation. A global service shares local backends by default; `service.cilium.io/shared: "false"` stops sharing them with peers without necessarily preventing local clients from using remote backends. Local ClusterIPs do not have to be identical.
 
 Do not promise automatic failover solely from this annotation. By default, unreachable-cluster state is retained (`clustermesh.cacheTTL: 0s`); a configured positive TTL can revoke stale remote data after control-plane disconnection. That is not an application health probe or a zero-downtime guarantee.
 

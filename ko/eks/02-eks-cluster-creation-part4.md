@@ -62,7 +62,7 @@ terraform {
 }
 ```
 
-`terraform_remote_state`는 HCL에 루트 출력을 제공하지만 읽기 권한을 가진 주체는 민감한 값이 포함된 **전체 상태 스냅샷**을 가져올 수 있습니다. 별도 프로젝트 간 적용 순서를 자동으로 만들지도 않습니다. 소비 팀에 전체 상태를 공개하면 안 되는 경우 선택한 값만 별도 통제된 경로로 게시하세요.
+`terraform_remote_state`는 HCL에 루트 출력을 제공하지만 읽기 권한을 가진 주체는 민감한 값이 포함된 **전체 상태 스냅샷**을 가져올 수 있습니다. 별도 프로젝트 간 적용 순서를 자동으로 만들지도 않습니다. 소비 팀에 전체 상태를 공개하면 안 되는 경우 선택한 값만 별도로 통제되는 경로로 게시하세요.
 
 ---
 
@@ -926,14 +926,14 @@ resource "aws_iam_role_policy" "hybrid_lifecycle" {
 
 ### 핵심 사항
 
-- **`remote_network_config`**는 중복되지 않는 원격 노드·Pod CIDR을 선언하며 VPN·라우팅·방화벽·CNI를 만들지 않습니다. 모듈 v21은 `cidrs`를 담은 객체를 받으며 해당 객체의 목록이 아닙니다.
+- **`remote_network_config`**는 중복되지 않는 원격 노드·Pod CIDR을 선언하며 VPN·라우팅·방화벽·CNI를 만들지 않습니다. 모듈 v21은 `cidrs`를 담은 객체를 받으며 해당 객체의 목록을 받는 것은 아닙니다.
 - Hybrid 노드는 `HYBRID_LINUX` 유형의 액세스 엔트리가 있는 IAM 역할을 통해 인증합니다.
 - Hybrid 노드는 TCP 443으로 프라이빗 API에 연결하고 제어 플레인은 TCP 10250으로 **Hybrid kubelet에 아웃바운드 연결**합니다. 온프레미스 방화벽과 필요한 Pod·웹훅 경로도 구성해야 하며 SG 규칙 두 개가 전체 네트워크 설계는 아닙니다.
 - Hybrid 노드에서는 VPC CNI가 사용되지 않으므로 온프레미스 측에서 대체 CNI(예: Cilium)를 구성해야 합니다.
 
 ---
 
-위 SSM 역할은 범위를 제한한 nodeadm 등록 해제도 지원합니다. 별도의 SSM activation·관리형 인스턴스에 `EKSClusterARN = local.cluster_arn` 태그를 지정해 정책과 맞추세요. 서명 키 변경 때문에 신규 SSM 설치·업그레이드에는 nodeadm 1.0.19 이상이 필요합니다. activation 비밀을 Terraform 소스에 넣거나 포함된 상태를 공개하지 마세요.
+위 SSM 역할은 범위를 제한한 nodeadm 등록 해제도 지원합니다. 별도의 SSM activation·관리형 인스턴스에 `EKSClusterARN = local.cluster_arn` 태그를 지정해 정책과 맞추세요. 서명 키 변경 때문에 신규 SSM 설치·업그레이드에는 nodeadm 1.0.19 이상이 필요합니다. activation 비밀을 Terraform 소스에 넣거나 해당 비밀이 포함된 상태를 공개하지 마세요.
 
 일반 EBS CSI 플랫폼 파일은 온프레미스 디스크에 적용되지 않습니다. Hybrid 노드·CNI 설정 후 별도로 검토한 플랫폼 구성을 사용합니다. 아래는 Hybrid 전용 대안의 코어 애드온 소유권 구성이며 같은 애드온을 이미 관리하는 구성에 덧붙이면 안 됩니다:
 

@@ -92,7 +92,7 @@ metadata:
     karpenter.sh/do-not-disrupt: "true"
 ```
 
-모든 중단 원인을 막는 보장은 아닙니다. Expiration, interruption과 종료 유예 한도를 별도로 고려하고, 임시 보호는 의도한 유지보수 필요가 끝나면 제거하세요.
+모든 중단 원인을 막는 보장은 아닙니다. Expiration, interruption과 종료 유예 한도를 별도로 고려하고, 임시 보호는 의도한 유지보수가 더 이상 필요하지 않으면 제거하세요.
 
 </details>
 

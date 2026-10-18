@@ -85,7 +85,7 @@ NetworkSet은 레이블이 있는 IP/CIDR 집합입니다. namespaced NetworkSet
 
 </details>
 
-6. Tier에서 order 값이 낮을수록 어떤 의미입니까?
+6. Tier에서 order 값이 낮다는 것은 어떤 의미입니까?
    - A) 나중에 평가됨
    - B) 먼저 평가됨
    - C) 우선순위가 낮음
@@ -145,7 +145,7 @@ Pass는 같은 Tier 뒤에 있는 보안 규칙까지 건너뜁니다. deny-only
 **정답: B) 정책을 노드를 통과하는(forwarded) 트래픽에도 적용**
 
 **설명:**
-HostEndpoint 정책의 applyOnForward: true는 전달 트래픽에도 적용합니다. doNotTrack 또는 preDNAT이면 필수입니다. 호스트의 Allow가 적용되는 워크로드 정책까지 우회하지 않습니다.
+HostEndpoint 정책의 applyOnForward: true는 정책을 전달 트래픽에도 적용하도록 합니다. doNotTrack 또는 preDNAT이면 필수입니다. 호스트의 Allow가 적용되는 워크로드 정책까지 우회하지 않습니다.
 
 </details>
 
@@ -177,7 +177,7 @@ doNotTrack은 HostEndpoint용이며 applyOnForward: true가 필요합니다. 매
 **정답: B) NodePort/LoadBalancer로 들어오는 트래픽을 DNAT 전에 필터링**
 
 **설명:**
-preDNAT은 DNAT 전 원래 목적지 IP·포트를 기준으로 host ingress를 평가합니다. egress 규칙을 넣을 수 없고 applyOnForward: true가 필요하며 doNotTrack과 동시에 활성화할 수 없습니다. 이 단계에서 미일치했다고 기본 drop하는 것은 아니고 뒤의 host/workload 정책이 적용됩니다.
+preDNAT은 DNAT 전 원래 목적지 IP·포트를 기준으로 host ingress를 평가합니다. egress 규칙을 넣을 수 없고 applyOnForward: true가 필요하며 doNotTrack과 동시에 활성화할 수 없습니다. 이 단계에서 미일치했다고 기본적으로 drop하는 것은 아니고 뒤의 host/workload 정책이 적용됩니다.
 
 </details>
 
@@ -193,7 +193,7 @@ preDNAT은 DNAT 전 원래 목적지 IP·포트를 기준으로 host ingress를 
 **정답: B) 규칙 없이 types에 Ingress/Egress만 지정한 정책 생성**
 
 **설명:**
-대상 namespace·워크로드와 types: [Ingress, Egress]를 명시하고 규칙을 비웁니다. order 생략 시 명시한 정책 뒤에 평가하며 앞선 최종 Allow를 덮어쓰지는 않습니다. selector: all()만 사용한 전역 예시는 HostEndpoint·시스템 트래픽까지 선택할 수 있으므로 범위를 제한해야 합니다.
+대상 namespace·워크로드와 types: [Ingress, Egress]를 명시하고 규칙을 비웁니다. order 생략 시 order를 명시한 정책 뒤에서 평가되며 앞선 최종 Allow를 덮어쓰지는 않습니다. selector: all()만 사용한 전역 예시는 HostEndpoint·시스템 트래픽까지 선택할 수 있으므로 범위를 제한해야 합니다.
 
 </details>
 

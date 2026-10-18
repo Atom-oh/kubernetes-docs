@@ -30,7 +30,7 @@ An Experiment launches ephemeral ReplicaSets and scales them down to 0 when it f
 **Answer: C) The Rollout is aborted and the stable version stays in place**
 
 **Explanation:**
-The experiment step is a blocking step. The Rollout only proceeds when the Experiment finishes Successful; Failed/Error aborts the Rollout into Degraded. Inconclusive instead sets an InconclusiveExperiment pause for investigation and an operator decision. Abort does not undo database changes or external side effects.
+The experiment step is a blocking step. The Rollout only proceeds when the Experiment finishes in the Successful phase; Failed/Error aborts the Rollout into a Degraded state. Inconclusive instead sets an InconclusiveExperiment pause for investigation and an operator decision. Abort does not undo database changes or external side effects.
 
 </details>
 
@@ -94,7 +94,7 @@ Weight belongs to each Rollout experiment-step template. A supporting router suc
 **Answer: B) After 2 failed measurements (failed > failureLimit)**
 
 **Explanation:**
-`failureLimit` is the number of allowed failures; the AnalysisRun is assessed Failed the moment the failure count exceeds it. The 1.10.0 implementation compares `failed > failureLimit`. Likewise, exceeding `inconclusiveLimit` yields Inconclusive, and exceeding `consecutiveErrorLimit` (consecutive collection errors, default 4) yields Error.
+`failureLimit` is the number of allowed failures; the AnalysisRun is assessed as Failed the moment the failure count exceeds it. The 1.10.0 implementation compares `failed > failureLimit`. Likewise, exceeding `inconclusiveLimit` yields Inconclusive, and exceeding `consecutiveErrorLimit` (consecutive collection errors, default 4) yields Error.
 
 </details>
 

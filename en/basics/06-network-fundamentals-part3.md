@@ -21,7 +21,7 @@ Transport protocols provide streams or datagrams; application protocols turn the
 
 **How it works:** DNS uses hierarchical delegation. On a cache miss, a recursive resolver follows referrals from root to TLD to authoritative nameservers, or forwards to another resolver. Cached answers can avoid some or all of that work. A/AAAA records contain addresses, CNAME records aliases, MX records mail servers, and TXT records text used by several protocols.
 
-**In practice:** DNS is distributed, but a resolver, provider or configuration can become a shared dependency. For DNS failover, account for failure detection, record updates, the TTL of answers already cached, application caching and existing connections. Reducing TTL now does not shorten the TTL of an old cached answer. Some resolvers also serve stale answers under defined failure conditions (RFC 8767). Measure each stage; short TTL alone is not a failover-time guarantee. Load balancers and anycast can complement DNS, with their own health detection and convergence limits.
+**In practice:** DNS is distributed, but a resolver, provider or configuration can become a shared dependency. For DNS failover, account for failure detection, record updates, the TTL of answers already cached, application caching and existing connections. Reducing TTL now does not shorten the TTL of an old cached answer. Some resolvers also serve stale answers under defined failure conditions (RFC 8767). Measure each stage; a short TTL alone is not a failover-time guarantee. Load balancers and anycast can complement DNS, with their own health detection and convergence limits.
 
 **Common record types at a glance:**
 
@@ -53,7 +53,7 @@ Transport protocols provide streams or datagrams; application protocols turn the
 
 **Definition:** The protocol that automatically assigns hosts an IP address and network configuration.
 
-**How it works:** A common initial **DHCPv4** exchange is DORA: Discover → Offer → Request → Acknowledge. A local broadcast or a DHCP relay locates a server. The lease can include IPv4 address, subnet mask, gateway and DNS configuration. Renewal can use a shorter exchange. DHCPv6 uses different messages; IPv6 default-router information normally comes from Router Advertisements, and SLAAC is another address-configuration mechanism.
+**How it works:** A common initial **DHCPv4** exchange is DORA: Discover → Offer → Request → Acknowledge. A local broadcast or a DHCP relay locates a server. The lease can include an IPv4 address, subnet mask, gateway and DNS configuration. Renewal can use a shorter exchange. DHCPv6 uses different messages; IPv6 default-router information normally comes from Router Advertisements, and SLAAC is another address-configuration mechanism.
 
 **In practice:** In the cloud it is mostly abstracted away, but you meet it again in the VPC DHCP option set, which is where DNS servers and domain names are configured. When name resolution breaks in a hybrid setup that uses on-premises DNS, this is the setting to check.
 

@@ -46,7 +46,7 @@ Operator 1.15.0 / Flink 2.2.1 기준으로 설치·상태 복구·autoscaler를 
 
 </details>
 
-5. Unhealthy job의 last-state 복구는 어떤 조건이 필요한가요?
+5. Unhealthy job의 last-state 복구에는 어떤 조건이 필요한가요?
 
 <details>
 <summary>정답 보기</summary>
@@ -79,7 +79,7 @@ Operator 1.15.0 / Flink 2.2.1 기준으로 설치·상태 복구·autoscaler를 
 
 </details>
 
-8. 하위 vertex의 목표율은 단순한 현재 upstream 출력율의 합인가요?
+8. 하위 vertex의 목표율은 단순히 현재 upstream 출력률의 합인가요?
 
 <details>
 <summary>정답 보기</summary>
@@ -119,7 +119,7 @@ Operator 1.15.0 / Flink 2.2.1 기준으로 설치·상태 복구·autoscaler를 
 
 **정답:** 아니요. 가능한 경우 resource-requirements API를 사용하는 in-place scaling을 시도하고 조건에 따라 재배포합니다.
 
-**설명:** In-place도 task 재시작·state 복구 비용을 없앤다는 보장은 아닙니다.
+**설명:** In-place도 task 재시작·state 복구 비용을 없앤다는 보장은 없습니다.
 
 </details>
 
@@ -130,7 +130,7 @@ Operator 1.15.0 / Flink 2.2.1 기준으로 설치·상태 복구·autoscaler를 
 
 **정답:** Operator·커넥터 공개 지원 표와 함께 확인할 연동 조합을 고정하기 위해서입니다.
 
-**설명:** CRD enum이 새로운 version 값을 받아들이는 것만으로 해당 조합의 runtime 호환성을 증명하지 않습니다.
+**설명:** CRD enum이 새로운 version 값을 받아들이는 것만으로 해당 조합의 runtime 호환성이 증명되지는 않습니다.
 
 </details>
 

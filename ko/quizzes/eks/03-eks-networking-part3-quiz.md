@@ -85,7 +85,7 @@ Resources:
       PrivateDnsEnabled: true
       VpcEndpointType: Interface
 ```
-새 노드 그룹이 필요할 때 `eksctl create nodegroup`은 **`--subnet-ids`**를 사용하며 이전 `--vpc-private-subnets`는 이 명령의 올바른 플래그가 아닙니다. 아래는 프라이빗 API·서비스 경로가 준비된 후 과금되는 관리형 노드를 생성합니다. eksctl이 의도한 소유자이고 기존 `private-ng`가 없을 때만 사용합니다. 인스턴스 크기는 용량 권장값이 아닌 예시입니다.
+새 노드 그룹이 필요할 때 `eksctl create nodegroup`은 **`--subnet-ids`**를 사용하며 이전 `--vpc-private-subnets`는 이 명령의 올바른 플래그가 아닙니다. 아래 명령은 프라이빗 API·서비스 경로가 준비된 후 과금되는 관리형 노드를 생성합니다. eksctl이 의도한 소유자이고 기존 `private-ng`가 없을 때만 사용합니다. 인스턴스 크기는 용량 권장값이 아닌 예시입니다.
 ```bash
 set -euo pipefail
 : "${CLUSTER_NAME:?Set the existing cluster name}"
@@ -128,7 +128,7 @@ aws ec2 describe-route-tables --region "$AWS_REGION" \
 ```
 TGW 자체에 방화벽 SG를 붙이는 구조는 아닙니다. 필요에 따라 엔드포인트·노드·Pod SG, NACL, NetworkPolicy와 검사 경로를 사용합니다. VPC 간 SG 참조는 문서화된 연결·리전 조건에서 지원되는 TGW 기능이지만 TGW에 SG를 붙이거나 라우팅을 대신하는 것은 아닙니다.
 
-Cloud Map에는 네임스페이스 준비, Service 생성, 등록과 상태·등록 해제 관리가 필요합니다. TGW가 프라이빗 호스팅 존 DNS를 자동 공유하지는 않습니다. 승인된 프라이빗 존 연결 또는 Route 53 Resolver 엔드포인트·규칙을 사용합니다. 다른 VPC의 `base+2` 리졸버를 해당 클러스터 CoreDNS처럼 지정하지 마세요. 아래 **Corefile 조각**은 내보낸 `cluster2.example.internal` 레코드를 해석하는 실제 접근 가능 인바운드 리졸버 두 개를 전제로 합니다. DNS 소유 관리 도구로 병합하고 클러스터 로컬 존은 보존합니다:
+Cloud Map에는 네임스페이스 준비, Service 생성, 등록과 상태·등록 해제 관리가 필요합니다. TGW가 프라이빗 호스팅 존 DNS를 자동 공유하지는 않습니다. 승인된 프라이빗 존 연결 또는 Route 53 Resolver 엔드포인트·규칙을 사용합니다. 다른 VPC의 `base+2` 리졸버를 해당 클러스터 CoreDNS처럼 지정하지 마세요. 아래 **Corefile 조각**은 내보낸 `cluster2.example.internal` 레코드를 해석하는 실제로 접근 가능한 인바운드 리졸버 두 개를 전제로 합니다. DNS 소유 관리 도구로 병합하고 클러스터 로컬 존은 보존합니다:
 ```text
 cluster2.example.internal:53 {
     errors
@@ -193,7 +193,7 @@ Istio multi-primary와 primary-remote는 다른 컨트롤 플레인 배치입니
 | c5.xlarge | 58 | 110 |
 | r5.2xlarge | 58 | 110 |
 
-이는 벤치마크나 모든 Pod 수용 보장이 아닌 구성 제한입니다. 이전 c5.xlarge/r5.2xlarge의 250은 틀렸으며 EKS 권장 상한은 vCPU 30개 미만 110, 30개 이상 250입니다. Pod SG의 branch 인터페이스 제한은 별도입니다. Prefix 할당에는 연속된 /28이 필요하며 보편적인 최소 /24 서브넷 조건이나 SG 정책 자동 단순화는 아닙니다.
+이는 벤치마크나 모든 Pod 수용 보장이 아닌 구성 제한입니다. 이전 c5.xlarge/r5.2xlarge의 250은 틀렸으며 EKS 권장 상한은 vCPU 30개 미만 110, 30개 이상 250입니다. Pod SG의 branch 인터페이스 제한은 별도입니다. Prefix 할당에는 연속된 /28이 필요하지만 보편적인 최소 /24 서브넷 조건이 있는 것은 아니며 SG 정책이 자동으로 단순화되는 것도 아닙니다.
 ```bash
 set -euo pipefail
 : "${AWS_REGION:?Set the node Region}"
@@ -218,7 +218,7 @@ Istio 사이드카 모드는 Envoy를 사용하고 istiod가 디스커버리·�
 
 Envoy는 구성에 따라 연결 풀, HTTP/TCP 라우팅, 재시도, outlier detection, TLS와 텔레메트리를 제공합니다. 컨테이너 추가만으로 투명한 트래픽 가로채기, 워크로드 신원, xDS나 mTLS가 설정되지는 않습니다. 실제 메시는 지원 injector와 proxy 빌드를 사용합니다. 이전 Envoy1.20 이미지와 불완전한 Deployment는 현재 설치 예제로 적합하지 않았습니다.
 
-아래 **독립 reverse-proxy bootstrap**은 기존 listener/route/cluster 개념을 설명하며 upstream Envoy1.39.1로 로컬 검증했습니다. 같은 네트워크 네임스페이스의 `127.0.0.1:8080`에 별도 HTTP 애플리케이션이 있어야 합니다. 프록시와 관리 리스너는 loopback에만 바인딩하며 프로덕션이나 Kubernetes 메시 배포가 아닙니다:
+아래 **독립 reverse-proxy bootstrap**은 기존 listener/route/cluster 개념을 설명하며 upstream Envoy1.39.1로 로컬 검증했습니다. 같은 네트워크 네임스페이스의 `127.0.0.1:8080`에 별도 HTTP 애플리케이션이 있어야 합니다. 프록시와 관리 리스너는 loopback에만 바인딩하며 이 예제는 프로덕션이나 Kubernetes 메시 배포가 아닙니다:
 ```yaml
 admin:
   address:
@@ -473,7 +473,7 @@ datasources:
   access: proxy
   isDefault: true
 ```
-**4. 트래픽 동작을 명시적으로 대응합니다.** 아래 기존 router 예제는 두 버전의 VirtualNode와 정상 엔드포인트가 이미 있음을 전제로 하며 가중치가 정확한 요청 수를 보장하지 않습니다. Outlier detection은 엔드포인트 배제이며 연결 풀 circuit-breaking 제한과 다릅니다. 이전 HTTP 재시도 이벤트 네 문자열은 유효합니다. `client-error`는409, `stream-error`는 refused stream을 뜻합니다. 전체 타임아웃 예산 안에서 멱등 작업의 재시도를 선택하며 실패 부하 증폭을 주의합니다.
+**4. 트래픽 동작을 명시적으로 대응합니다.** 아래 기존 router 예제는 두 버전의 VirtualNode와 정상 엔드포인트가 이미 있음을 전제로 하며 가중치가 정확한 요청 수를 보장하지 않습니다. Outlier detection은 엔드포인트 배제이며 연결 풀 circuit-breaking 제한과 다릅니다. 이전 HTTP 재시도 이벤트 네 문자열은 유효합니다. `client-error`는409, `stream-error`는 refused stream을 뜻합니다. 전체 타임아웃 예산 안에서 멱등 작업의 재시도를 선택하며 실패에 따른 부하 증폭에 주의합니다.
 ```yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualRouter
@@ -627,7 +627,7 @@ Service 네임스페이스에서 `kubernetes.io/service-name=<service>` 레이�
 
 **정답: 증거를 수집하고 실제 프로토콜과 정상 대조 경로를 테스트합니다.**
 
-ContainerCreating을 네트워크 문제로 분류하기 전에 영향 Pod의 이벤트를 확인합니다. 알려진 클러스터 Service와 목적지 이름을 해석하고 Service/EndpointSlice의 선택자·포트·readiness를 확인한 뒤 같은 소스에서 Pod IP와 Service URL 접근을 비교합니다. 도구 부재·DNS 실패·죽은 백엔드를 정책 거부로 오인하지 않도록 알려진 정상 경로도 테스트하세요. 본문의 범위가 지정된 진단을 사용합니다:
+ContainerCreating을 네트워크 문제로 분류하기 전에 영향을 받는 Pod의 이벤트를 확인합니다. 알려진 클러스터 Service와 목적지 이름을 해석하고 Service/EndpointSlice의 선택자·포트·readiness를 확인한 뒤 같은 소스에서 Pod IP와 Service URL 접근을 비교합니다. 도구 부재·DNS 실패·죽은 백엔드를 정책 거부로 오인하지 않도록 알려진 정상 경로도 테스트하세요. 본문의 범위가 지정된 진단을 사용합니다:
 ```bash
 set -euo pipefail
 : "${APP_NAMESPACE:?Set the affected namespace}"

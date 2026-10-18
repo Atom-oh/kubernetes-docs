@@ -73,7 +73,7 @@ curl --disable --noproxy '*' --connect-timeout 2 --max-time 5 \
   -i http://192.0.2.20:8000/missing.txt
 ```
 
-**Diagnosis:** Receiving HTTP 404 means that request exchanged an HTTP response with the server. There is no reason to reset all routing and firewall settings. Compare the requested path with the server log. **Recovery:** Request `/health.txt` again.
+**Diagnosis:** Receiving HTTP 404 means that request elicited an HTTP response from the server. There is no reason to reset all routing and firewall settings. Compare the requested path with the server log. **Recovery:** Request `/health.txt` again.
 
 ### C. The wrong listening address
 

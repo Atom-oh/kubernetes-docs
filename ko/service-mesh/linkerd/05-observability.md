@@ -59,7 +59,7 @@ linkerd viz dashboard --address 127.0.0.1 --port 8084 --show url
 
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-05-observability-1.html)
 
-기본 Prometheus는 6시간을 보존하고 임시 저장소를 사용합니다. 선택한 chart는 자체 Prometheus 이미지 버전을 고정하므로 임의로 새 major 버전으로 바꾸지 않습니다. 설치 가이드의 persistence 설정을 사용할 수 있으며 장기 보존/HA 저장소는 별도 설계입니다.
+기본 Prometheus는 지표를 6시간 동안 보존하고 임시 저장소를 사용합니다. 선택한 chart는 자체 Prometheus 이미지 버전을 고정하므로 임의로 새 major 버전으로 바꾸지 않습니다. 설치 가이드의 persistence 설정을 사용할 수 있으며 장기 보존/HA 저장소는 별도 설계입니다.
 
 ```bash
 kubectl -n linkerd-viz port-forward --address 127.0.0.1 svc/prometheus 9090:9090
@@ -323,7 +323,7 @@ Inbound source 측의 활성 TCP connection:
 sum(tcp_open_connections{namespace="my-app",deployment="api",direction="inbound",peer="src"})
 ```
 
-`peer="src"`는 proxy가 local 애플리케이션에 만든 별도 connection을 합산하지 않도록 합니다. 초당 connection 생성 수는 같은 관찰 범위의 `tcp_open_total`에 rate를 적용합니다.
+`peer="src"`는 proxy가 local 애플리케이션에 만든 별도 connection을 합산하지 않도록 합니다. 초당 connection 생성 수는 같은 관찰 범위의 `tcp_open_total`에 rate를 적용해 구합니다.
 
 request_total에 범용 `retry="true"` label은 없습니다. ServiceProfile에서는 route_actual_request_total, route_request_total, route_retryable_total을 같은 범위/구간으로 확인합니다. 재시도 가능한 응답 수가 실제 전송한 재시도 수는 아니며 no-budget series는 부분집합입니다. 현재 정책 지표와 애플리케이션의 시도 근거도 각각 해석해야 합니다. [트래픽 관리](03-traffic-management.md)를 참고합니다.
 
@@ -602,7 +602,7 @@ def get_data():
         return Response("Upstream request failed\n", status=502)
 ```
 
-Connect/read timeout은 연결 대기와 read 비활성 시간을 제한하며 전체 소요 시간은 아닙니다. 계속 조금씩 응답하는 서버나 caller 취소에는 이 동기 예제 밖의 애플리케이션/server deadline 설계가 필요합니다. 응답 buffer 크기는 제한하고 redirect는 명시적으로 거부합니다.
+Connect/read timeout은 연결 대기와 read 비활성 시간을 제한하며 전체 소요 시간을 제한하지는 않습니다. 계속 조금씩 응답하는 서버나 caller 취소에는 이 동기 예제 밖의 애플리케이션/server deadline 설계가 필요합니다. 응답 buffer 크기는 제한하고 redirect는 명시적으로 거부합니다.
 
 기존 HTTP server에 연결할 Go handler:
 

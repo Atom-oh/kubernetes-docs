@@ -384,7 +384,7 @@ spec:
     appProtocol: http
 ```
 
-The consecutive policy's default threshold is 7, not an automatic five connection failures. It tracks supported HTTP/gRPC response failures; it is not a generic statement about every TCP connection error. The selected release also documents a unified policy with success-rate/rate-limit handling; review its separate parameters before using it.
+The consecutive policy's default threshold is 7, not an automatic threshold of five connection failures. It tracks supported HTTP/gRPC response failures; it is not a generic statement about every TCP connection error. The selected release also documents a unified policy with success-rate/rate-limit handling; review its separate parameters before using it.
 
 | State | Meaning |
 |---|---|

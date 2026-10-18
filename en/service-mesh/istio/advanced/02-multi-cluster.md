@@ -333,7 +333,7 @@ One primary installation can have multiple replicas. A primary outage affects di
 
 ### Shared Prerequisites
 
-Work from the Istio1.31 distribution directory, with two existing compatible clusters and reviewed kubeconfig contexts. These examples assume the default revision; preserve the installed revision in namespace labels and gateway generation when it differs. Both Kubernetes APIs and the required data/control-plane paths must be reachable. Plan shared trust before installation: multi-primary issuers must chain to a trusted common root (or an explicitly supported trust design); matching meshID strings do not establish certificate trust. Follow the [official prerequisites and CA preparation](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/) and keep private CA material protected. Independently distribute application/mesh configuration; remote secrets do not replicate it.
+Work from the Istio 1.31 distribution directory, with two existing compatible clusters and reviewed kubeconfig contexts. These examples assume the default revision; preserve the installed revision in namespace labels and gateway generation when it differs. Both Kubernetes APIs and the required data/control-plane paths must be reachable. Plan shared trust before installation: multi-primary issuers must chain to a trusted common root (or an explicitly supported trust design); matching meshID strings do not establish certificate trust. Follow the [official prerequisites and CA preparation](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/) and keep private CA material protected. Independently distribute application/mesh configuration; remote secrets do not replicate it.
 
 ```bash
 export CTX_CLUSTER1=cluster1
@@ -344,7 +344,7 @@ kubectl --context="$CTX_CLUSTER2" get nodes
 
 ## Primary-Remote Setup
 
-This is the official **IP-based, same-network sidecar** topology: Pods must be directly reachable across clusters, and the remote API must be reachable from the primary. It is not an EKS NLB-hostname recipe. The1.31 chart can represent a DNS-valued remotePilotAddress using an ExternalName Service; the IP lookup in this walkthrough is not a complete DNS-based EKS design. Use the [external-control-plane guide](https://istio.io/latest/docs/setup/install/external-controlplane/) for the injection URL, signed DNS certificates and actual control-plane reachability. Rendering a DNS value does not verify that deployment. IstioOperator below is input to istioctl, not an in-cluster operator resource.
+This is the official **IP-based, same-network sidecar** topology: Pods must be directly reachable across clusters, and the remote API must be reachable from the primary. It is not an EKS NLB-hostname recipe. The 1.31 chart can represent a DNS-valued remotePilotAddress using an ExternalName Service; the IP lookup in this walkthrough is not a complete DNS-based EKS design. Use the [external-control-plane guide](https://istio.io/latest/docs/setup/install/external-controlplane/) for the injection URL, signed DNS certificates and actual control-plane reachability. Rendering a DNS value does not verify that deployment. IstioOperator below is input to istioctl, not an in-cluster operator resource.
 
 ### 1. Primary Cluster Setup
 
@@ -483,7 +483,7 @@ istioctl create-remote-secret \
 
 ## Cross-cluster Communication
 
-Use remote discovery with matching Service/namespace names and the required DNS visibility. Istiod does not copy Service objects or Deployments between clusters. This lab defines the Service in both clusters, deploys the backend only in cluster2 and calls it from an injected client in cluster1. In different networks, Istio selects the east-west gateway and SNI/mTLS path; do not replace it with an HTTP ServiceEntry to port15443.
+Use remote discovery with matching Service/namespace names and the required DNS visibility. Istiod does not copy Service objects or Deployments between clusters. This lab defines the Service in both clusters, deploys the backend only in cluster2 and calls it from an injected client in cluster1. In different networks, Istio selects the east-west gateway and SNI/mTLS path; do not replace it with an HTTP ServiceEntry to port 15443.
 
 Save the following as `shared-httpbin-service.yaml`:
 
@@ -547,7 +547,7 @@ aws vpc-lattice create-service-network-vpc-association --region "$LATTICE_REGION
 
 The controller's `amazon-vpc-lattice` GatewayClass and Gateway reference a service network by name. A Gateway named `my-service-network` can reference the separately managed network above. A supported HTTPRoute/GRPCRoute supplies service/listener/target routing and its own assigned endpoint; the Gateway is not one universal service DNS endpoint.
 
-`ServiceExport` is a valid controller-specific API, but it creates a **target group**, not a complete Lattice service/network association. The old `lattice-service-network` annotation did not provide that workflow. The optional export below assumes an existing `lattice-entry` ingress Service on port80; creating it alone exposes no complete route:
+`ServiceExport` is a valid controller-specific API, but it creates a **target group**, not a complete Lattice service/network association. The old `lattice-service-network` annotation did not provide that workflow. The optional export below assumes an existing `lattice-entry` ingress Service on port 80; creating it alone exposes no complete route:
 
 ```yaml
 # Optional target-group export only; assumes this ingress Service already exists
@@ -726,11 +726,11 @@ aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
   --change-batch file://failover-config.json
 ```
 
-Check existing records and restore/rollback plans before changing DNS. An alias A record is not a complete IPv6 configuration; dualstack use also needs appropriate AAAA records and reachability. DNS caches, connection reuse, target-group health semantics and all-unhealthy behavior affect failover. Test these alongside application/data recovery. Neither DNS nor Istio establishes a15-minute RPO or one-hour RTO by itself.
+Check existing records and restore/rollback plans before changing DNS. An alias A record is not a complete IPv6 configuration; dualstack use also needs appropriate AAAA records and reachability. DNS caches, connection reuse, target-group health semantics and all-unhealthy behavior affect failover. Test these alongside application/data recovery. Neither DNS nor Istio establishes a 15-minute RPO or one-hour RTO by itself.
 
 ## Performance and Cost Comparison
 
-The old latency/RPS/CPU/memory table had no reproducible benchmark source, release, hardware or load conditions. The cost table also compared different traffic volumes (10TB versus5TB) and arbitrary staffing budgets. They cannot establish a cheaper/faster architecture, and are not relabeled as current measurements.
+The old latency/RPS/CPU/memory table had no reproducible benchmark source, release, hardware or load conditions. The cost table also compared different traffic volumes (10TB versus 5TB) and arbitrary staffing budgets. They cannot establish a cheaper/faster architecture, and are not relabeled as current measurements.
 
 | Component | Measure or price explicitly |
 |---|---|
@@ -740,7 +740,7 @@ The old latency/RPS/CPU/memory table had no reproducible benchmark source, relea
 |Lattice services|Provisioned service time, requests and data processing; resource configurations/endpoints have their own model|
 |Operations/DR|Observed engineering effort, incident/recovery exercises and business impact assumptions|
 
-Use [Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/) and actual billing data. VPC peering does not automatically eliminate inter-Region transfer fees. Lattice documents no additional inter-AZ data-transfer charge within its service, which is different from zero data-processing cost. Ambient does not guarantee90% resource savings; use equivalent-policy measurements. Neither a fixed staff count nor a$1,000/hour downtime threshold selects the architecture.
+Use [Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/) and actual billing data. VPC peering does not automatically eliminate inter-Region transfer fees. Lattice documents no additional inter-AZ data-transfer charge within its service, which is different from zero data-processing cost. Ambient does not guarantee 90% resource savings; use equivalent-policy measurements. Neither a fixed staff count nor a $1,000/hour downtime threshold selects the architecture.
 
 ## Troubleshooting
 

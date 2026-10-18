@@ -71,7 +71,7 @@ Tigera의 [공식 발표](https://www.tigera.io/news/tigera-launches-ebpf-powere
 
 1. Calico를 정책 엔진으로 선택하기 전에 Amazon VPC CNI의 기본 네트워크 정책 강제를 비활성화해야 합니다. 둘을 함께 실행하면 충돌합니다. 보호 중인 기존 클러스터에서는 무방비 전환 구간이 생기지 않도록 정책 인계를 계획하고 검증합니다.
 2. VPC CNI에 `ANNOTATE_POD_IP=true`를 설정하고 `aws-node` ServiceAccount에 Pod `patch` 권한을 부여합니다. 조정 루프가 되돌리지 않도록 설치된 애드온·설정 소유자를 통해 관리합니다. 아래 추가 RBAC 예제를 적용하기 전에 실제 ServiceAccount 이름을 확인하세요.
-3. `ENABLE_V4_EGRESS=true`인 IPv6 Pod의 강제를 보장하면 안 됩니다. Calico EKS 가이드는 이 조합을 명시적으로 제외합니다.
+3. `ENABLE_V4_EGRESS=true`인 IPv6 Pod의 정책 강제를 보장하면 안 됩니다. Calico EKS 가이드는 이 조합을 명시적으로 제외합니다.
 4. 아래 설치 방식 중 **하나만** 선택합니다. 새 설치용이며 기존 operator의 소유권을 가져오거나 활성 CNI를 마이그레이션하는 명령이 아닙니다.
 
 ```yaml
@@ -271,7 +271,7 @@ kubectl get globalnetworkpolicies.projectcalico.org
 kubectl get ippools.projectcalico.org -o wide
 ```
 
-Operator는 일반적으로 `calico-system`, 직접 매니페스트는 `kube-system`을 사용할 수 있습니다. Kubernetes와 Calico NetworkPolicy를 구분하도록 전체 API 리소스 이름을 사용하세요. `kubectl get nodes ...status.conditions`는 Calico 라우팅 상태 명령이 아닙니다. BIRD 상태 명령은 BGP가 켜진 경우에만 적용되고, `calicoctl node status`는 임의의 관리자 노트북이 아니라 적절한 Calico 노드 환경이 필요합니다.
+Operator는 일반적으로 `calico-system`, 직접 매니페스트는 `kube-system`을 사용할 수 있습니다. Kubernetes와 Calico NetworkPolicy를 구분하도록 전체 API 리소스 이름을 사용하세요. `kubectl get nodes ...status.conditions`는 Calico 라우팅 상태 명령이 아닙니다. BIRD 상태 명령은 BGP가 켜진 경우에만 적용되고, `calicoctl node status`에는 임의의 관리자 노트북이 아니라 적절한 Calico 노드 환경이 필요합니다.
 
 | 증상 | 설정 변경 전에 확인할 사항 |
 |---|---|

@@ -64,7 +64,7 @@ Six questions. Explain each answer in your own words.
 
 **Answer: D) 100 MB/s represents a rate equivalent to 800 Mbit/s**
 
-**Explanation:** One byte is eight bits. Comparing real application throughput also requires protocol overhead, observation points and execution conditions.
+**Explanation:** One byte is eight bits. Comparing real application throughput also requires considering protocol overhead, observation points and execution conditions.
 
 </details>
 

@@ -90,7 +90,7 @@ Collector 0.160.0의 기본 `trace-complete` 전략은 결정 타이머가 동�
 **정답: B) 텔레메트리 데이터를 생성하는 엔티티 식별**
 
 **설명:**
-Resource는 `service.name`, `service.version`, `deployment.environment.name` 등으로 텔레메트리 생산자를 식별합니다. 구성한 SDK/provider가 전송 데이터에 연결하며 Kubernetes·클라우드·사용자 지정 신원 속성은 해당 설정이나 detector가 필요합니다. 모든 속성을 자동으로 알아내는 것은 아닙니다.
+Resource는 `service.name`, `service.version`, `deployment.environment.name` 등으로 텔레메트리 생산자를 식별합니다. 구성한 SDK/provider가 Resource를 전송 데이터에 연결하며 Kubernetes·클라우드·사용자 지정 신원 속성은 해당 설정이나 detector가 필요합니다. 모든 속성을 자동으로 알아내는 것은 아닙니다.
 
 </details>
 

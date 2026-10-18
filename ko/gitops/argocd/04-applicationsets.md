@@ -448,7 +448,7 @@ spec:
   - missingkey=error
 ```
 
-Merge는 첫 생성기의 항목을 기준으로 `mergeKeys`가 일치하는 값만 덮어씁니다. 뒤쪽 생성기가 더 높은 우선순위이며, 일치하지 않는 추가 항목은 버립니다. Go 템플릿 모드에서는 중첩된 merge key를 지원하지 않습니다.
+Merge는 첫 생성기의 항목을 기준으로 `mergeKeys`가 일치하는 값만 덮어씁니다. 뒤쪽 생성기의 우선순위가 더 높으며, 일치하지 않는 추가 항목은 버립니다. Go 템플릿 모드에서는 중첩된 merge key를 지원하지 않습니다.
 
 ### 7. SCM Provider Generator
 
@@ -737,7 +737,7 @@ annotations:
   custom-value: '{{ index .values "key-with-dash" }}'
 ```
 
-Sprig 함수는 `env`, `expandenv`, `getHostByName`을 제외하고 지원합니다. `normalize` 결과는 DNS 이름에 맞추지만, Namespace나 Label처럼 더 짧은 길이 제한까지 모두 보장하지는 않습니다. Helm 차트로 ApplicationSet을 배포하면 두 템플릿 단계가 충돌하므로 ApplicationSet 표현식을 Helm 문자열 리터럴로 이스케이프해야 합니다.
+Sprig 함수는 `env`, `expandenv`, `getHostByName`을 제외하고 지원합니다. `normalize`는 결과를 DNS 이름에 맞추지만, Namespace나 Label처럼 더 짧은 길이 제한까지 모두 보장하지는 않습니다. Helm 차트로 ApplicationSet을 배포하면 두 템플릿 단계가 충돌하므로 ApplicationSet 표현식을 Helm 문자열 리터럴로 이스케이프해야 합니다.
 
 ## Progressive Syncs
 
@@ -1052,13 +1052,13 @@ spec:
 
 ### 템플릿 병합 동작
 
-![ApplicationSet의 기본 템플릿 spec.template과 생성기별 오버라이드 템플릿이 Deep Merge 단계에서 key-by-key로 병합되어 생성기 요소별 최종 Application spec이 만들어지고, 생성기별로 지정한 값을 기본 템플릿과 병합하는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-2.png)
+![ApplicationSet의 기본 템플릿 spec.template과 생성기별 오버라이드 템플릿이 Deep Merge 단계에서 key-by-key로 병합되어 생성기 요소별 최종 Application spec이 만들어지는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-04-applicationsets-2.html)
 
 ## 삭제와 보존 정책
 
-ApplicationSet 삭제는 ownerReferences를 통해 생성한 Application도 삭제합니다. `preserveResourcesOnDeletion: true`는 Application의 배포 리소스 삭제 finalizer를 추가하지 않게 하는 설정이며 **Application 자체를 보존하는 설정이 아닙니다**. 기존 Application의 finalizer 상태를 먼저 확인합니다.
+ApplicationSet을 삭제하면 ownerReferences를 통해 생성한 Application도 삭제됩니다. `preserveResourcesOnDeletion: true`는 Application의 배포 리소스 삭제 finalizer를 추가하지 않게 하는 설정이며 **Application 자체를 보존하는 설정이 아닙니다**. 기존 Application의 finalizer 상태를 먼저 확인합니다.
 
 ApplicationSet만 제거하고 자식 Application을 남길 때는 `kubectl delete applicationset NAME -n argocd --cascade=orphan`을 사용합니다. 남은 Application의 자동 동기화와 finalizer도 계속 유효하므로 이후 그 Application을 삭제하면 배포 리소스가 삭제될 수 있습니다. `applicationsSync: create-update`는 생성기 재조정에 의한 삭제를 제한할 뿐 부모 삭제에 의한 GC까지 막지 않습니다.
 

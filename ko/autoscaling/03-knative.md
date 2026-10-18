@@ -32,7 +32,7 @@ Knative는 개발자가 컨테이너 기반 애플리케이션을 서버리스 �
 
 ### Serverless on Kubernetes
 
-전통적인 서버리스 플랫폼(AWS Lambda, Google Cloud Functions)은 특정 클라우드 벤더에 종속되는 반면, Knative는 Kubernetes가 실행되는 어디에서든 서버리스 경험을 제공합니다. 이를 통해 다음을 달성할 수 있습니다:
+전통적인 서버리스 플랫폼(AWS Lambda, Google Cloud Functions)은 특정 클라우드 벤더에 종속되는 반면, Knative는 Kubernetes가 실행되는 곳이라면 어디에서든 서버리스 경험을 제공합니다. 이를 통해 다음을 달성할 수 있습니다:
 
 1. **이식 가능한 API**: 지원 Kubernetes 환경에서 공통 API를 사용하며 클라우드 인증·스토리지·네트워크 의존성은 별도 검증
 2. **컨테이너 기반 실행**: PORT·HTTP·시작·준비 상태 등 Knative Serving 런타임 계약을 충족하는 이미지 사용
@@ -888,7 +888,7 @@ Eventing 설정은 inclusion 모드를 사용합니다. 데모 네임스페이�
 kubectl label namespace knative-demo bindings.knative.dev/include=true --overwrite
 ```
 
-SinkBinding은 목적지 `K_SINK`와 `K_CE_OVERRIDES`를 주입합니다. 애플리케이션이 이를 읽어 전송해야 하며 임의의 HTTP 요청을 자동으로 바꾸지 않습니다. 아래 생산자는 올바른 구조화 CloudEvent, 타임아웃·응답 확인을 사용합니다. 동일한 논리 이벤트를 재시도할 때는 `event_id`를 유지하세요.
+SinkBinding은 목적지 `K_SINK`와 `K_CE_OVERRIDES`를 주입합니다. 애플리케이션이 이를 읽어 전송해야 하며 임의의 HTTP 요청을 자동으로 바꾸지 않습니다. 아래 생산자는 올바른 구조화 CloudEvent를 사용하고 타임아웃을 설정하며 응답을 확인합니다. 동일한 논리 이벤트를 재시도할 때는 `event_id`를 유지하세요.
 
 ```yaml
 apiVersion: sources.knative.dev/v1
@@ -1252,7 +1252,7 @@ spec:
 
 처리기 이미지는 Flask·CloudEvents·boto3·Gunicorn과 아래 `app.py`로 직접 빌드해야 합니다. 기존의 보호된 버킷, 전용 ServiceAccount의 제한된 `s3:PutObject`·필요한 KMS 권한, 통신 경로가 필요합니다. `S3_BUCKET`·`AWS_REGION`을 설정하고 정적 AWS 자격 증명을 넣지 마세요. 실행 예시는 `gunicorn --bind 0.0.0.0:8080 --workers 1 --threads 4 --timeout 90 --graceful-timeout 60 app:create_app()`이며 Knative·프록시·Pod 종료 기한과 맞춰 검증해야 합니다.
 
-DLS는 구독자 전달 실패 시 사용하는 설정된 대체 목적지입니다. DLS 자체도 실패할 수 있으며 영속 저장은 처리기와 저장소가 구현해야 합니다. 저장 성공 후 승인하고 CloudEvent의 source+id로 중복을 다루어야 합니다.
+DLS는 구독자 전달 실패 시 사용하도록 설정된 대체 목적지입니다. DLS 자체도 실패할 수 있으며 영속 저장은 처리기와 저장소가 구현해야 합니다. 저장 성공 후 승인하고 CloudEvent의 source+id로 중복을 다루어야 합니다.
 
 ```yaml
 apiVersion: v1
@@ -1368,7 +1368,7 @@ def create_app(s3_client=None):
     return app
 ```
 
-본문을 Base64로 보존하고 CloudEvents 전송 헤더만 저장하므로 바이너리 이벤트를 유지하고 Authorization/Cookie 헤더를 제외합니다. `(source, id)` 키와 조건부 저장을 사용하며 기존 키의412는 승인,409와 다른 저장 실패는 전달 정책이 재시도하도록503을 반환합니다. 보존·삭제 정책과 생산자의 ID 재사용이 중복 처리에 영향을 주므로 업무 처리의 정확히1회 보장은 아닙니다.1MiB 초과 요청은 거부합니다. 로컬 모의 테스트만 수행했고 실제 버킷·Eventing 배포를 시험하지 않았습니다.
+본문을 Base64로 보존하고 CloudEvents 전송 헤더만 저장하므로 바이너리 이벤트를 유지하고 Authorization/Cookie 헤더를 제외합니다. `(source, id)` 키와 조건부 저장을 사용하며 기존 키의412는 승인,409와 다른 저장 실패는 전달 정책이 재시도하도록503을 반환합니다. 보존·삭제 정책과 생산자의 ID 재사용이 중복 처리에 영향을 주므로 업무 처리가 정확히 1회 이루어짐을 보장하지는 않습니다.1MiB 초과 요청은 거부합니다. 로컬 모의 테스트만 수행했고 실제 버킷·Eventing 배포를 시험하지 않았습니다.
 
 ### Event 필터링
 
@@ -1683,7 +1683,7 @@ otlp:
   - kn.revision.name
 ```
 
-다음을 `serving-metrics.patch.yaml`로 저장해 Operator 관리 Serving에 병합합니다. 엔드포인트는 실제 OTLP 수신기로 교체해야 하며 이 Service 이름이 자동 존재한다고 가정하지 않습니다. 컨트롤 플레인은 스크레이프하고 요청 메트릭은 전송하므로 Queue Proxy 관리 포트를 스크레이프하지 않습니다:
+다음을 `serving-metrics.patch.yaml`로 저장해 Operator 관리 Serving에 병합합니다. 엔드포인트는 실제 OTLP 수신기로 교체해야 하며 이 이름의 Service가 자동으로 존재한다고 가정하지 않습니다. 컨트롤 플레인은 스크레이프하고 요청 메트릭은 전송하므로 Queue Proxy 관리 포트를 스크레이프하지 않습니다:
 
 ```yaml
 spec:
@@ -2162,7 +2162,7 @@ exec gunicorn --bind 0.0.0.0:8080 --workers 1 --threads 4 \
   --timeout 90 --graceful-timeout 60 'app:create_app()'
 ```
 
-신호 처리기에서 즉시 종료하지 말고 WSGI 서버의 정상 종료 기능을 사용하세요. 아래 예시 값은 프록시 드레이닝과 서버 유예 시간보다 긴 Pod 종료 예산이 필요합니다. 요청 기한과 맞추고 부하 중 종료 동작을 검증해야 합니다.
+신호 처리기에서 즉시 종료하지 말고 WSGI 서버의 정상 종료 기능을 사용하세요. 아래 예시 값을 사용하려면 프록시 드레이닝과 서버 유예 시간보다 긴 Pod 종료 예산이 필요합니다. 요청 기한과 맞추고 부하 중 종료 동작을 검증해야 합니다.
 
 ### 이벤트 드리븐 마이크로서비스 패턴
 

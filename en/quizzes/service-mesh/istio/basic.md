@@ -99,7 +99,7 @@ D. Metrics, logs, and trace collection
 
 **Answer: C**
 
-Kubernetes API Server stores resources and enforces schemas; istiod also validates Istio configuration through admission webhooks. Envoy does not store Kubernetes CRDs.
+The Kubernetes API Server stores resources and enforces schemas; istiod also validates Istio configuration through admission webhooks. Envoy does not store Kubernetes CRDs.
 
 **Explanation:**
 
@@ -241,7 +241,7 @@ spec:
 
 ### Question 6: Sidecar Injection Mechanism
 
-Explain two methods for automatically injecting Envoy Sidecar into Pods in Istio, and compare the pros and cons of each.
+Explain two methods for automatically injecting an Envoy Sidecar into Pods in Istio, and compare the pros and cons of each.
 
 <details>
 
@@ -330,7 +330,7 @@ spec:
 
 ### Question 7: Istio Resource Usage Optimization
 
-Calculate and compare the **expected resource usage** when using Istio in a large-scale Kubernetes cluster with 1000 Pods between Sidecar Mode and Ambient Mode. (Assume ztunnel is deployed on 10 nodes and there is 1 waypoint)
+Calculate and compare the **expected resource usage** between Sidecar Mode and Ambient Mode when using Istio in a large-scale Kubernetes cluster with 1000 Pods. (Assume ztunnel is deployed on 10 nodes and there is 1 waypoint)
 
 <details>
 
@@ -396,7 +396,7 @@ The assumed inputs yield 98.6% memory and 98.5% CPU reductions for the proxy tot
 
 ### Question 8: mTLS Operation Mechanism
 
-Explain step by step how mTLS works when two services (service-a and service-b) communicate in Istio. Include the roles of Istiod, Envoy, and Certificate.
+Explain step by step how mTLS works when two services (service-a and service-b) communicate in Istio. Include the roles of Istiod, Envoy, and the Certificate.
 
 <details>
 

@@ -50,10 +50,10 @@
 
 또한 kubelet은 기본적으로 "안전하지 않은" sysctl을 거부합니다. 필요하면 `--allowed-unsafe-sysctls`로 명시적으로 허용해야 하고, 이것은 노드 설정입니다.
 
-**둘째, conntrack은 kube-proxy가 덮어씁니다.** [컨테이너 커널 기능](./01-container-primitives.md)에서 언급한 내용인데, 실무에서 가장 자주 걸리는 함정이라 다시 씁니다. EKS에는 `kube-proxy-config` ConfigMap이 기본 존재하고 **커맨드라인 인자보다 우선**합니다. 부트스트랩에서 sysctl로 올려놔도 kube-proxy가 자기 값으로 되돌릴 수 있습니다.
+**둘째, conntrack은 kube-proxy가 덮어씁니다.** [컨테이너 커널 기능](./01-container-primitives.md)에서 언급한 내용인데, 실무에서 가장 자주 걸리는 함정이라 다시 씁니다. EKS에는 `kube-proxy-config` ConfigMap이 기본적으로 존재하고 **커맨드라인 인자보다 우선**합니다. 부트스트랩에서 sysctl로 올려놔도 kube-proxy가 자기 값으로 되돌릴 수 있습니다.
 
 ::: warning 확인 필요
-Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**하기 때문입니다.
+Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**한다는 점입니다.
 
 Kube-proxy 설정 파일을 사용하며 상한 관리를 node sysctl에 의도적으로 맡기려면 파일의 **`conntrack.maxPerCore`/`conntrack.min` 필드**를 변경합니다. 둘을 0으로 설정하더라도 `--config`가 무시하는 CLI flag에 의존하면 안 됩니다. Rollout 전 관리형 add-on 조정 동작과 메모리 여유를 확인합니다.
 
@@ -162,7 +162,7 @@ cat cpu.stat
 | `vm.max_map_count` | **Elasticsearch/OpenSearch 등에서 실제로 필요한 조정.** 기본값이 낮아 mmap 한도에 걸림 |
 | `kernel.pid_max` | 고밀도 노드에서 PID 고갈 시 |
 
-`vm.max_map_count`가 실제 사례로 자주 등장합니다. OpenSearch 계열은 많은 파일을 mmap하므로 기본값에서 시작 실패합니다. 이것은 "근거 있는 튜닝"의 좋은 예입니다: 증상이 명확하고, 해당 파라미터가 직접 원인이며, 벤더 문서가 값을 제시합니다.
+`vm.max_map_count`가 실제 사례로 자주 등장합니다. OpenSearch 계열은 많은 파일을 mmap하므로 기본값에서 시작에 실패합니다. 이것은 "근거 있는 튜닝"의 좋은 예입니다: 증상이 명확하고, 해당 파라미터가 직접 원인이며, 벤더 문서가 값을 제시합니다.
 
 ### kubelet의 예약: 커널 파라미터보다 먼저
 

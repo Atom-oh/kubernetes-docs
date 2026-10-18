@@ -32,7 +32,7 @@ Zone Aware Routing provides the following benefits:
 
 ### Locality Load Balancing Algorithm
 
-An80/10/10 `distribute` policy sends normal traffic to all three healthy zones; the10% portions are not standby failover. Priority-based locality failover is a separate mode. Health/capacity weighting may spill traffic before every local host fails. AZ letters do not encode physical adjacency or latency.
+An 80/10/10 `distribute` policy sends normal traffic to all three healthy zones; the 10% portions are not standby failover. Priority-based locality failover is a separate mode. Health/capacity weighting may spill traffic before every local host fails. AZ letters do not encode physical adjacency or latency.
 
 
 
@@ -244,7 +244,7 @@ spec:
       minHealthPercent: 0
 ```
 
-The basic example uses locality priority plus outlier detection. Its100% ejection cap allows all unhealthy endpoints to be excluded, which can produce “no healthy upstream” if no capacity survives. It is an illustrative failover setting, not a universal safe limit.
+The basic example uses locality priority plus outlier detection. Its 100% ejection cap allows all unhealthy endpoints to be excluded, which can produce “no healthy upstream” if no capacity survives. It is an illustrative failover setting, not a universal safe limit.
 
 ### 3. Configure Distribution Ratios
 
@@ -340,7 +340,7 @@ spec:
       minHealthPercent: 0
 ```
 
-`minHealthPercent` is a pool panic/fail-open threshold, not minimum healthy capacity per zone. Zero disables that threshold. Weighted80/20 distribution continues to use both healthy zones; it is not standby failover.
+`minHealthPercent` is a pool panic/fail-open threshold, not minimum healthy capacity per zone. Zero disables that threshold. Weighted 80/20 distribution continues to use both healthy zones; it is not standby failover.
 
 ### Multi-Region Configuration
 
@@ -373,7 +373,7 @@ spec:
       minHealthPercent: 0
 ```
 
-The90/10 example is distribution only. It requires a real multi-cluster/network setup exposing that service in both regions; `myapp.global` is not an automatically created service. For priority failover instead, use this separate policy and verify actual endpoints/connectivity:
+The 90/10 example is distribution only. It requires a real multi-cluster/network setup exposing that service in both regions; `myapp.global` is not an automatically created service. For priority failover instead, use this separate policy and verify actual endpoints/connectivity:
 
 ```yaml
 # Alternative to distribute: region-name priority failover
@@ -433,11 +433,11 @@ nodeGroups:
   amiFamily: AmazonLinux2023
 ```
 
-The eksctl file is a billable cluster/node-group design example, not a command run by this audit. It pins Kubernetes1.36 for the documented Istio/EKS compatibility range and uses AL2023. Select real subnets/AZs, instance capacity and access settings; existing clusters need an appropriate node-group change plan.
+The eksctl file is a billable cluster/node-group design example, not a command run by this audit. It pins Kubernetes 1.36 for the documented Istio/EKS compatibility range and uses AL2023. Select real subnets/AZs, instance capacity and access settings; existing clusters need an appropriate node-group change plan.
 
 ### 2. Distribute Pods Across Zones
 
-Replace the intentionally non-resolving image reference with the tested application image serving HTTP8080 and configure its readiness behavior. The Service below provides the `myapp` destination used by the policies. `maxSkew: 1` applies across eligible domains, not an unconditional three-zone guarantee; node affinity, taints, resource capacity and `minDomains` affect scheduling.
+Replace the intentionally non-resolving image reference with the tested application image serving HTTP on port 8080 and configure its readiness behavior. The Service below provides the `myapp` destination used by the policies. `maxSkew: 1` applies across eligible domains, not an unconditional three-zone guarantee; node affinity, taints, resource capacity and `minDomains` affect scheduling.
 
 
 ```yaml
@@ -623,7 +623,7 @@ spec:
       minHealthPercent: 0
 ```
 
-The95/3/2 policy covers callers in zoneA only; define other source localities if needed. Concentration can overload local endpoints. Compare measured billable bytes and service-specific pricing with the [EKS network cost guide](https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html); request counts/weights alone are not a cost calculation.
+The 95/3/2 policy covers callers in zoneA only; define other source localities if needed. Concentration can overload local endpoints. Compare measured billable bytes and service-specific pricing with the [EKS network cost guide](https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html); request counts/weights alone are not a cost calculation.
 
 ### Example 3: High Availability
 
@@ -659,7 +659,7 @@ spec:
 
 `source_zone` and `destination_zone` are **not standard Istio metric labels**. The following optional queries require a separately implemented, validated enrichment pipeline that maps both endpoints to actual zones while preserving the normal service labels. This chapter does not deploy that pipeline. Merely labeling Nodes, enabling locality routing or adding a Grafana panel does not create these metrics. Keep cluster/account context when necessary; AWS AZ names can map differently across accounts, while AZ IDs identify the same physical zone.
 
-The examples explicitly cover traffic between us-east-1a/b/c in one cluster/account. Unknown zones, other regions and other destinations are excluded from both numerator and denominator. PromQL cannot compare two label values inside a selector such as `{source_zone=destination_zone}`; use explicit matching pairs as below. Rates are per second and the same-zone result is0–100 percent.
+The examples explicitly cover traffic between us-east-1a/b/c in one cluster/account. Unknown zones, other regions and other destinations are excluded from both numerator and denominator. PromQL cannot compare two label values inside a selector such as `{source_zone=destination_zone}`; use explicit matching pairs as below. Rates are per second and the same-zone result is 0–100 percent.
 
 ```promql
 sum by (source_zone, destination_zone) (rate(istio_requests_total{reporter="source",source_workload_namespace="default",destination_service="myapp.default.svc.cluster.local",source_zone=~"us-east-1[abc]",destination_zone=~"us-east-1[abc]"}[5m]))

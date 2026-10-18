@@ -36,7 +36,7 @@ Blockchain nodes fit poorly with some Kubernetes strengths (fast rescheduling, h
 The default 30 seconds is usually insufficient. Blockchain clients cache state in memory and must flush it on shutdown. A forced kill (SIGKILL) can leave the DB mid-write and corrupted, requiring a resync that takes hours to days. For the same reason memory limits should be generous; an OOM kill is also a forced kill.
 </details>
 
-3. Why does IOPS bottleneck before capacity for blockchain node storage?
+3. Why does IOPS become a bottleneck before capacity for blockchain node storage?
    - A) Chain data is stored compressed
    - B) Traversing and updating the state trie (Merkle Patricia Trie and similar) touches scattered keys: a random access pattern
    - C) Blocks are only ever written sequentially
@@ -49,7 +49,7 @@ The default 30 seconds is usually insufficient. Blockchain clients cache state i
 **Answer: B) Traversing and updating the state trie (Merkle Patricia Trie and similar) touches scattered keys: a random access pattern**
 
 **Explanation:**
-A blockchain node's disk use is heavily random read and write. With capacity to spare but insufficient IOPS, sync falls behind, and a node that is behind cannot serve. That is why gp3's ability to **set IOPS and throughput independently of capacity** is the key advantage. gp2 fixes IOPS per unit of capacity, so raising IOPS meant buying capacity you did not need.
+A blockchain node's disk use consists largely of random reads and writes. With capacity to spare but insufficient IOPS, sync falls behind, and a node that is behind cannot serve. That is why gp3's ability to **set IOPS and throughput independently of capacity** is the key advantage. gp2 fixes IOPS per unit of capacity, so raising IOPS meant buying capacity you did not need.
 </details>
 
 4. Why must sync state not go into the liveness probe?
@@ -68,7 +68,7 @@ A blockchain node's disk use is heavily random read and write. With capacity to 
 Liveness should only check "is the process alive and responding." Putting sync there kills lagging nodes, and the restart delays sync further so they can never catch up. Conversely **readiness must include sync**; without it, a lagging node takes traffic and returns wrong data based on a stale chain. This split is the crux of blockchain node health checks.
 </details>
 
-5. You opened P2P inbound but no peers arrive. What is the classic cause?
+5. You allowed inbound P2P traffic but no peers arrive. What is the classic cause?
    - A) A missing Security Group rule
    - B) The advertised address is not configured: the Pod IP seen inside the container differs from the externally reachable address, so other peers cannot connect
    - C) Only the UDP port was opened, not TCP

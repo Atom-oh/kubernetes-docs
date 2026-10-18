@@ -22,7 +22,7 @@ Amazon EKS(Elastic Kubernetes Service)를 사용하면 컨테이너화된 애플
 
 Amazon EKS를 사용할 때 발생하는 비용은 다음과 같은 구성 요소로 이루어집니다:
 
-![EKS 총 비용이 컨트롤 플레인($0.10/시간), 컴퓨팅(EC2 인스턴스, Fargate), 스토리지(EBS, EFS, S3), 네트워킹(데이터 전송, 로드 밸런서, NAT 게이트웨이), 기타(CloudWatch, ECR, 기타 AWS 서비스)의 다섯 갈래로 나뉘는 비용 구성 요소 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-0.png)
+![EKS 총 비용이 컨트롤 플레인($0.10/시간), 컴퓨팅(EC2 인스턴스, Fargate), 스토리지(EBS, EFS, S3), 네트워킹(데이터 전송, 로드 밸런서, NAT 게이트웨이), 기타(CloudWatch, ECR, 기타 AWS 서비스)의 다섯 갈래로 나뉘는 비용 구성 요소 다이어그램을 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-0.html)
 
@@ -174,7 +174,7 @@ eksctl create nodegroup \
 
 #### Karpenter를 사용한 스팟 인스턴스 프로비저닝
 
-Karpenter/CRD 설치, 범위가 제한된 컨트롤러 IAM, 승인된 노드 역할, 검색 태그가 있는 서브넷/보안 그룹, 중단 처리 큐가 필요합니다. 현재 호환성 표에서 EKS 1.36은 Karpenter >=1.13이 필요합니다. 다음 리소스가 컨트롤러를 설치하지는 않습니다. 인스턴스 목록과 limits는 예시이며 금액 상한이 아닙니다. `al2023@latest`는 변하는 선택자로 drift/교체를 유발할 수 있으므로 실제 해석된 AMI를 확인하고 운영 변경에서는 검증한 별칭 버전 또는 AMI ID를 고정합니다.
+Karpenter/CRD 설치, 범위가 제한된 컨트롤러 IAM, 승인된 노드 역할, 검색 태그가 있는 서브넷/보안 그룹, 중단 처리 큐가 필요합니다. 현재 호환성 표에 따르면 EKS 1.36에는 Karpenter >=1.13이 필요합니다. 다음 리소스가 컨트롤러를 설치하지는 않습니다. 인스턴스 목록과 limits는 예시이며 금액 상한이 아닙니다. `al2023@latest`는 변하는 선택자로 drift/교체를 유발할 수 있으므로 실제 해석된 AMI를 확인하고 운영 변경에서는 검증한 별칭 버전 또는 AMI ID를 고정합니다.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -250,7 +250,7 @@ EC2 Instance Savings Plans는 특정 리전의 인스턴스 패밀리에 대해 
 
 #### 예약 인스턴스
 
-AWS가 현재 안내하는 RI 할인은 최대 **72%**입니다. Standard/Convertible RI의 변경·교환 규칙과 Regional/Zonal 범위는 다릅니다. Zonal RI는 해당 AZ의 용량 예약을 포함하지만 Regional RI는 포함하지 않습니다. RI는 일치하는 사용량에 적용되는 청구 혜택이며 Kubernetes 스케줄러나 최고 할인 보장이 아닙니다.
+AWS가 현재 안내하는 RI 할인은 최대 **72%**입니다. Standard/Convertible RI의 변경·교환 규칙과 Regional/Zonal 범위는 다릅니다. Zonal RI는 해당 AZ의 용량 예약을 포함하지만 Regional RI는 포함하지 않습니다. RI는 일치하는 사용량에 적용되는 청구 혜택이며 Kubernetes 스케줄러가 아니고 최고 할인을 보장하지 않습니다.
 
 Savings Plans는 1년 또는 3년 동안 시간당 적격 지출을 약정하고, RI는 적격 인스턴스 사용을 약정합니다. 적정 크기 조정 후 안정적인 기준 사용량에 맞춰 약정하고 미사용 약정 위험을 검토합니다. Spot 사용에 추가 할인을 중첩하지 않으며, 광고된 최대 할인율은 이 클러스터의 실측 절감률이 아닙니다.
 
@@ -432,7 +432,7 @@ spec:
 
 스토리지는 EKS 클러스터의 중요한 비용 구성 요소입니다. 다음과 같은 전략을 사용하여 스토리지 비용을 최적화할 수 있습니다.
 
-![스토리지 비용 최적화가 EBS 볼륨 최적화, EFS 비용 최적화, S3 비용 최적화 세 갈래로 나뉘고, EBS는 볼륨 유형 선택(gp3 마이그레이션)·볼륨 크기 최적화·볼륨 수명 주기 관리, EFS는 처리량 모드 선택·수명 주기 관리·액세스 패턴 최적화, S3는 스토리지 클래스 최적화(수명 주기 정책)·요청 최적화로 이어지는 아키텍처 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-3.png)
+![스토리지 비용 최적화가 EBS 볼륨 최적화, EFS 비용 최적화, S3 비용 최적화 세 갈래로 나뉘고, EBS는 볼륨 유형 선택(gp3 마이그레이션)·볼륨 크기 최적화·볼륨 수명 주기 관리, EFS는 처리량 모드 선택·수명 주기 관리·액세스 패턴 최적화, S3는 스토리지 클래스 최적화(수명 주기 정책)·요청 최적화로 이어지는 아키텍처 다이어그램을 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-3.html)
 
@@ -590,7 +590,7 @@ S3 요청 비용을 최적화합니다:
 네트워킹 비용은 특히 대규모 데이터 전송이 있는 경우 상당할 수 있습니다. 다음과 같은 전략을 사용하여 네트워킹 비용을 최적화할 수 있습니다.
 
 <!-- Pending parent diagram repair: see /tmp/eks-cost-optimization-audit/diagram-review.json
-![네트워킹 비용 최적화가 데이터 전송 최적화, 로드 밸런서 최적화, NAT 게이트웨이 최적화 세 갈래로 나뉘고 각 영역 아래 리전 내 통신·가용 영역 인식 라우팅·압축, LB 유형 선택·공유·유휴 LB 제거, NAT 게이트웨이 공유·VPC 엔드포인트 사용·아웃바운드 트래픽 최적화 세 가지 세부 전략이 이어지며 VPC 엔드포인트 경로가 강조된 트리 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-4.png)
+![네트워킹 비용 최적화가 데이터 전송 최적화, 로드 밸런서 최적화, NAT 게이트웨이 최적화 세 갈래로 나뉘고 각 영역 아래 리전 내 통신·가용 영역 인식 라우팅·압축, LB 유형 선택·공유·유휴 LB 제거, NAT 게이트웨이 공유·VPC 엔드포인트 사용·아웃바운드 트래픽 최적화 세 가지 세부 전략이 이어지며 VPC 엔드포인트 경로가 강조된 트리 다이어그램을 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-4.html)
 -->
@@ -695,7 +695,7 @@ spec:
 
 ### NAT 게이트웨이 최적화
 
-NAT 게이트웨이는 시간당 요금과 데이터 처리 요금이 부과됩니다:
+NAT 게이트웨이에는 시간당 요금과 데이터 처리 요금이 부과됩니다:
 
 #### NAT 게이트웨이 공유
 
@@ -742,7 +742,7 @@ NAT 게이트웨이를 통과하는 아웃바운드 트래픽을 최적화합니
 
 효과적인 리소스 관리 및 거버넌스는 EKS 클러스터의 비용을 제어하는 데 중요합니다. 다음과 같은 전략을 사용하여 리소스를 효과적으로 관리할 수 있습니다.
 
-![리소스 관리 및 거버넌스가 리소스 요청 및 제한 최적화, 네임스페이스 및 리소스 쿼터, 비용 할당 및 태깅 세 영역으로 나뉘고 각 영역 아래에 요청/제한 설정, 네임스페이스 분리·ResourceQuota·LimitRange, 리소스 태깅·Kubernetes 레이블·Kubecost 항목이 이어지는 트리 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-5.png)
+![리소스 관리 및 거버넌스가 리소스 요청 및 제한 최적화, 네임스페이스 및 리소스 쿼터, 비용 할당 및 태깅 세 영역으로 나뉘고 각 영역 아래에 요청/제한 설정, 네임스페이스 분리·ResourceQuota·LimitRange, 리소스 태깅·Kubernetes 레이블·Kubecost 항목이 이어지는 트리 다이어그램을 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-5.html)
 
@@ -912,13 +912,13 @@ Kubecost는 다음과 같은 기능을 제공합니다:
 
 비용을 효과적으로 최적화하려면 비용을 지속적으로 모니터링하고 분석해야 합니다. 다음과 같은 도구와 전략을 사용하여 EKS 클러스터의 비용을 모니터링하고 분석할 수 있습니다.
 
-![비용 모니터링 및 분석을 중심으로 AWS Cost Explorer, Kubecost, CloudWatch Container Insights, 사용자 정의 비용 대시보드 네 도구와 각 도구의 세부 기능(비용 분석·이상 탐지·예산 설정, Kubecost 대시보드·알림, 리소스 사용량 모니터링·비용 최적화 인사이트, Grafana 대시보드·비용 최적화 점수)이 연결된 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-6.png)
+![비용 모니터링 및 분석을 중심으로 AWS Cost Explorer, Kubecost, CloudWatch Container Insights, 사용자 정의 비용 대시보드 네 도구와 각 도구의 세부 기능(비용 분석·이상 탐지·예산 설정, Kubecost 대시보드·알림, 리소스 사용량 모니터링·비용 최적화 인사이트, Grafana 대시보드·비용 최적화 점수)이 연결된 다이어그램을 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-6.html)
 
 ### AWS Cost Explorer
 
-AWS Cost Explorer는 AWS 비용 및 사용량을 시각화, 이해 및 관리하는 데 도움이 되는 도구입니다:
+AWS Cost Explorer는 AWS 비용 및 사용량을 시각화하고 이해하며 관리하는 데 도움이 되는 도구입니다:
 
 #### 비용 분석
 
@@ -1082,7 +1082,7 @@ Prometheus 및 Grafana를 사용하여 사용자 정의 비용 대시보드를 �
 
 EKS 클러스터의 비용을 최적화하기 위한 모범 사례를 살펴보겠습니다.
 
-![비용 최적화 모범 사례가 일반적인 모범 사례, 워크로드별 최적화, 금융 서비스를 위한 비용 최적화 세 갈래로 나뉘고, 일반적인 모범 사례 아래에는 측정→분석→최적화→모니터링→반복으로 이어지는 지속적 비용 최적화 순환 루프가 있는 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-7.png)
+![비용 최적화 모범 사례가 일반적인 모범 사례, 워크로드별 최적화, 금융 서비스를 위한 비용 최적화 세 갈래로 나뉘고, 일반적인 모범 사례 아래에는 측정→분석→최적화→모니터링→반복으로 이어지는 지속적 비용 최적화 순환 루프가 있는 다이어그램을 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-7.html)
 
@@ -1216,7 +1216,7 @@ spec:
             emptyDir: {}
 ```
 
-CronJob은 **기본 suspend 상태**로 기존 `dev/dev-app` Deployment 하나만 대상으로 하며 현재 복제본 3개를 전제로 합니다. 서버와 지원되는 버전 차이의 kubectl을 사용하세요. 활성화 전 UTC 일정과 복구 절차를 합의하고 이름/전제 조건을 의도적으로 조정합니다. HPA나 GitOps가 복제본을 관리하면 경쟁하는 대신 해당 소유자의 일정 기능과 조율합니다. Deployment 직접 축소는 PDB eviction admission을 사용하지 않으므로 승인된 개발 환경 종료에 한정합니다. Pod를 중지해도 EKS 컨트롤 플레인 요금, 보존 스토리지, 축소할 수 없는 노드의 요금이 멈추지는 않습니다.
+CronJob은 **기본 suspend 상태**로 기존 `dev/dev-app` Deployment 하나만 대상으로 하며 현재 복제본 3개를 전제로 합니다. 서버와의 버전 차이가 지원 범위 내인 kubectl을 사용하세요. 활성화 전 UTC 일정과 복구 절차를 합의하고 이름/전제 조건을 의도적으로 조정합니다. HPA나 GitOps가 복제본을 관리하면 경쟁하는 대신 해당 소유자의 일정 기능과 조율합니다. Deployment 직접 축소는 PDB eviction admission을 사용하지 않으므로 승인된 개발 환경 종료에 한정합니다. Pod를 중지해도 EKS 컨트롤 플레인 요금, 보존 스토리지, 축소할 수 없는 노드의 요금이 멈추지는 않습니다.
 
 #### 배치 워크로드
 

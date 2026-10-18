@@ -66,7 +66,7 @@ jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-
 **정답: B) TCP443**
 
 **설명:**
-역방향 control-plane→kubelet은 secure TCP10250이며 webhook/aggregated API는 실제 설정 port를 사용합니다. 인증 없는 10255를 현대적인 요구로 열지 마세요. Cluster CA·hostname을 검증합니다. HTTP401/403은 TLS 도달과 미충족 권한일 수 있으며 app health 성공은 아닙니다.
+역방향 control-plane→kubelet은 secure TCP10250이며 webhook/aggregated API는 실제 설정 port를 사용합니다. 인증 없는 10255를 현대적인 요구로 열지 마세요. Cluster CA·hostname을 검증합니다. HTTP401/403은 TLS 도달과 권한 미충족을 나타낼 수 있으며 app health 성공은 아닙니다.
 ```bash
 set -euo pipefail
 endpoint=$(jq -er '.cluster.endpoint' "$WORK_DIR/cluster.json")
@@ -172,7 +172,7 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
 **정답: B) RTT 약 200ms 이하가 일반 안내이며 workload로 검증**
 
 **설명:**
-AWS의 100Mbps도 일반 안내이며 workload와 무관한 합격 임계값이 아닙니다. 이전 <50/50–100/100–200/>200ms 등급·Direct Connect <10ms는 미검증 예시입니다. Curl DNS/connect/TLS 시간은 누적 단계이지 순수 RTT가 아니고 ICMP 무응답은 API 실패 증거가 아닙니다. 실제 앱·API·image·telemetry 동작을 측정하세요.
+AWS의 100Mbps도 일반 안내이며 workload와 무관한 합격 임계값이 아닙니다. 이전 <50/50–100/100–200/>200ms 등급·Direct Connect <10ms는 미검증 예시입니다. Curl DNS/connect/TLS 시간은 누적 시간이지 순수 RTT가 아니고 ICMP 무응답은 API 실패 증거가 아닙니다. 실제 앱·API·image·telemetry 동작을 측정하세요.
 
 </details>
 

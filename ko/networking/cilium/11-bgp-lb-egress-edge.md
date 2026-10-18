@@ -56,7 +56,7 @@
                     ToR / 상위 라우터
 ```
 
-제어 흐름([`pkg/bgp/README.md`](https://github.com/cilium/cilium/blob/v1.20.2/pkg/bgp/README.md)): operator는 `CiliumBGPClusterConfig`와 그가 참조하는 `CiliumBGPPeerConfig`/`CiliumBGPAdvertisement`를 watch하면서, `nodeSelector`에 맞는 노드마다 `CiliumBGPNodeConfig`를 하나씩 생성/갱신/삭제합니다. 각 agent는 자기 노드의 `CiliumBGPNodeConfig`와 peer/advertisement 설정, Secret, Service, (multi-pool이면) `CiliumPodIPPool`만 보고 GoBGP 인스턴스를 reconcile합니다. 따라서 설정 변경이 전파되려면 operator가 떠 있어야 합니다.
+제어 흐름([`pkg/bgp/README.md`](https://github.com/cilium/cilium/blob/v1.20.2/pkg/bgp/README.md)): operator는 `CiliumBGPClusterConfig`와 이 설정이 참조하는 `CiliumBGPPeerConfig`/`CiliumBGPAdvertisement`를 watch하면서, `nodeSelector`에 맞는 노드마다 `CiliumBGPNodeConfig`를 하나씩 생성/갱신/삭제합니다. 각 agent는 자기 노드의 `CiliumBGPNodeConfig`와 peer/advertisement 설정, Secret, Service, (multi-pool이면) `CiliumPodIPPool`만 보고 GoBGP 인스턴스를 reconcile합니다. 따라서 설정 변경이 전파되려면 operator가 떠 있어야 합니다.
 
 스피커는 agent에 내장된 GoBGP이며 유일하게 지원되는 라우터 구현입니다. 내장 라이브러리는 `gobgp/v3`(1.19)에서 `gobgp/v4`(1.20.2, 1.21.0-pre.3; 각 태그의 `go.mod`)로 바뀌었습니다. IPv4/IPv6, 싱글/듀얼 스택을 지원하지만 agent가 실제로 운영 중인 주소 패밀리만 광고할 수 있습니다.
 
@@ -185,9 +185,9 @@ CEL 검증: `Service`는 `service` 필요, `Interface`는 `interface` 필요, `P
 
 ### 2.4 피어 설정 실무
 
-**Timers.** 기본값은 120/90/30(connect-retry/hold/keepalive)입니다. BFD가 없으므로 직접 연결되지 않은 피어의 장애 감지는 hold time뿐이고, 그래서 ToR 링크에서는 9/3 같은 공격적 값을 흔히 씁니다. 대신 keepalive 부하가 늘고 agent CPU 정체에 더 민감해집니다.
+**Timers.** 기본값은 120/90/30(connect-retry/hold/keepalive)입니다. BFD가 없으므로 직접 연결되지 않은 피어의 장애 감지는 hold time에만 의존하고, 그래서 ToR 링크에서는 9/3 같은 공격적 값을 흔히 씁니다. 대신 keepalive 부하가 늘고 agent CPU 정체에 더 민감해집니다.
 
-**Graceful Restart.** `gracefulRestart.enabled: true`이면 Cilium이 Restarting Speaker(RFC 4724 및 알림이 있는 graceful restart인 RFC 8538)로 동작합니다. agent가 재시작되면 피어는 `restartTimeSeconds`가 지날 때까지 학습한 경로를 유지하므로, eBPF에서 계속 동작하는 데이터 플레인이 agent 업그레이드 동안 블랙홀되지 않습니다. `restartTimeSeconds`는 이미지 pull을 포함한 최악의 agent 재시작 시간보다 크게 잡고, 업그레이드 전에 이미지를 미리 pull하세요. 대가는, 노드가 실제로 죽으면 GR 때문에 해당 경로가 최대 restart time 동안 유지되어 `externalTrafficPolicy: Cluster` VIP로 죽은 노드에 트래픽이 갈 수 있다는 점입니다.
+**Graceful Restart.** `gracefulRestart.enabled: true`이면 Cilium이 Restarting Speaker(RFC 4724 및 알림이 있는 graceful restart인 RFC 8538)로 동작합니다. agent가 재시작되면 피어는 `restartTimeSeconds`가 지날 때까지 학습한 경로를 유지하므로, eBPF에서 계속 동작하는 데이터 플레인이 agent 업그레이드 동안 블랙홀되지 않습니다. `restartTimeSeconds`는 이미지 pull을 포함한 최악의 agent 재시작 시간보다 크게 잡고, 업그레이드 전에 이미지를 미리 pull하세요. 단점은 노드가 실제로 죽으면 GR 때문에 해당 경로가 최대 restart time 동안 유지되어 `externalTrafficPolicy: Cluster` VIP로 죽은 노드에 트래픽이 갈 수 있다는 점입니다.
 
 **Multihop.** `ebgpMultihop: N`은 1홉보다 먼 eBGP 피어(loopback 피어링 ToR, route server)의 TTL을 정합니다. iBGP에는 영향이 없습니다.
 
@@ -355,7 +355,7 @@ kubectl -n kube-system exec ds/cilium -- cilium-dbg shell -- bgp/route-policies
 
 **메트릭**(agent, 접두사 `cilium_bgp_control_plane_`): `session_state`(1 = established), `advertised_routes`, `received_routes`(레이블 `instance_name`, `local_asn`, `neighbor`, `neighbor_asn`, `afi`, `safi`), `reconcile_errors_total{instance_name}`, `reconcile_run_duration_seconds{instance_name}`. operator: `cilium_operator_bgp_control_plane_reconcile_errors_total{resource_kind,resource_name}`, `..._reconcile_run_duration_seconds`.
 
-> **메트릭 레이블 변경.** 1.19.8 메트릭 문서는 레이블이 `vrouter`, 1.20.2는 `instance_name`입니다. 1.20 업그레이드 노트에는 이 변경이 언급되지 않으므로, `vrouter` 기준 대시보드/알림은 1.19에서 1.20으로 올릴 때 조용히 매칭이 끊깁니다. 업그레이드 작업에 쿼리 수정을 포함하세요.
+> **메트릭 레이블 변경.** 1.19.8 메트릭 문서의 레이블은 `vrouter`, 1.20.2의 레이블은 `instance_name`입니다. 1.20 업그레이드 노트에는 이 변경이 언급되지 않으므로, `vrouter` 기준 대시보드/알림은 1.19에서 1.20으로 올릴 때 조용히 매칭이 끊깁니다. 업그레이드 작업에 쿼리 수정을 포함하세요.
 
 ### 2.9 v1 제거와 CRD 버전 타임라인
 
@@ -490,7 +490,7 @@ Service의 `loadBalancerClass`는 없거나 `io.cilium/l2-announcer`여야 합�
 
 **리더 선출.** Service마다 Cilium 네임스페이스에 `cilium-l2announce-<ns>-<svc>` 이름의 `coordination.k8s.io` Lease가 하나씩 생기며, 선착순이라 부하가 고르지 않습니다. 새 리더는 gratuitous ARP를 보냅니다. 기본값: `leaseDuration` 15s, `leaseRenewDeadline` 5s, `leaseRetryPeriod` 2s. 제약: duration > renewDeadline, renewDeadline은 1.2(leader-election JitterFactor) x retryPeriod보다 엄격히 커야 하며, 아니면 agent가 경고를 남기고 timer를 덮어씁니다. 장애조치는 `leaseDuration - leaseRenewDeadline`에서 `leaseDuration + leaseRenewDeadline` 사이에 일어나며, 기본값이면 10~20초, 3s/1s/200ms이면 2~4초입니다.
 
-**API 부하.** 각 Service lease는 대략 `leaseRenewDeadline`마다 갱신되므로 `QPS ~ Service 수 x (1 / leaseRenewDeadline)`를 예산으로 잡습니다(재시도와 조회를 무시한 대략적 추정). agent 클라이언트 기본 제한은 10 QPS / burst 20이며 agent의 다른 API 트래픽과 공유합니다. 기본 5s에서는 Service당 약 0.2 QPS라 수십 개만 리더로 맡아도 예산의 상당 부분을 쓰고, 1s timer에서는 Service 약 10개가 전부 소진합니다. timer를 줄이기 전에 `k8sClientRateLimit`을 올리세요. RBAC에는 lease create/get/update/list/delete가 필요합니다.
+**API 부하.** 각 Service lease는 대략 `leaseRenewDeadline`마다 갱신되므로 `QPS ~ Service 수 x (1 / leaseRenewDeadline)`를 예산으로 잡습니다(재시도와 조회를 무시한 대략적 추정). agent 클라이언트 기본 제한은 10 QPS / burst 20이며 agent의 다른 API 트래픽과 공유합니다. 기본 5s에서는 Service당 약 0.2 QPS라 수십 개만 리더로 맡아도 예산의 상당 부분을 쓰고, 1s timer에서는 Service 약 10개만으로 예산을 전부 소진합니다. timer를 줄이기 전에 `k8sClientRateLimit`을 올리세요. RBAC에는 lease create/get/update/list/delete가 필요합니다.
 
 **제한.** `externalTrafficPolicy: Local`과 호환되지 않습니다(선출된 노드에 Pod가 없으면 트래픽 드롭). 한 IP의 모든 트래픽을 한 노드가 받으므로 클러스터 앞단 로드밸런싱이 없습니다.
 
@@ -581,7 +581,7 @@ spec:
 
 ## 9. Service traffic distribution
 
-`loadBalancer.serviceTopology`(기본 `false`, 플래그 `--enable-service-topology`)를 켜면 kube-proxy replacement가 Topology Aware Routing 힌트와 `spec.trafficDistribution`을 **모두** 존중합니다. `PreferSameZone`(및 deprecated 별칭 `PreferClose`)은 EndpointSlice zone 힌트를 노드의 `topology.kubernetes.io/zone` 레이블과 비교하고, `PreferSameNode`는 로컬 노드 백엔드를 우선하며 후보가 없으면 기본 동작으로 돌아갑니다. **[1.21 pre-release]** 활성(ready) 백엔드만 선호 후보가 됩니다. `externalTrafficPolicy`/`internalTrafficPolicy: Local`은 "선호"가 아니라 "제한"이므로 별개입니다. 멀티 AZ EKS에서는 `serviceTopology: true`와 `trafficDistribution: PreferSameZone`으로 AZ 간 트래픽을 줄일 수 있습니다. Gateway API는 `CiliumGatewayClassConfig.spec.service.trafficDistribution`이 생성된 Service로 전달됩니다.
+`loadBalancer.serviceTopology`(기본 `false`, 플래그 `--enable-service-topology`)를 켜면 kube-proxy replacement가 Topology Aware Routing 힌트와 `spec.trafficDistribution`을 **모두** 존중합니다. `PreferSameZone`(및 deprecated 별칭 `PreferClose`)은 EndpointSlice zone 힌트를 노드의 `topology.kubernetes.io/zone` 레이블과 비교하고, `PreferSameNode`는 로컬 노드 백엔드를 우선하며 후보가 없으면 기본 동작으로 돌아갑니다. **[1.21 pre-release]** 활성(ready) 백엔드만 선호 후보가 됩니다. `externalTrafficPolicy`/`internalTrafficPolicy: Local`은 "선호"가 아니라 "제한"이므로 별개입니다. 멀티 AZ EKS에서는 `serviceTopology: true`와 `trafficDistribution: PreferSameZone`으로 AZ 간 트래픽을 줄일 수 있습니다. Gateway API에서는 `CiliumGatewayClassConfig.spec.service.trafficDistribution`이 생성된 Service로 전달됩니다.
 
 ## 10. L7 진입점: Ingress와 Gateway API
 
@@ -669,10 +669,10 @@ SRv6는 지원 기능으로서 **없습니다**. 1.20.2, 1.21.0-pre.3 소스에�
 **사전 조건**: worker 2개인 kind 클러스터와 같은 Docker 네트워크의 FRR 컨테이너(AS 65000, 노드 IP를 neighbor로 설정, remote AS 65001), `bgpControlPlane.enabled=true`인 Cilium, 노드 IP에 맞게 고친 2.6절 매니페스트(`authSecretRef`는 제거하거나 Secret을 먼저 생성).
 
 1. worker에 `rack=rack0` 레이블을 붙이고 ClusterConfig, PeerConfig, Advertisement를 적용합니다.
-2. `kubectl get ciliumbgpnodeconfigs`에 레이블된 노드마다 하나씩 나타납니다.
+2. `kubectl get ciliumbgpnodeconfigs`에 레이블이 붙은 노드마다 오브젝트가 하나씩 나타납니다.
 3. `kubectl get ciliumbgpnodeconfigs <node> -o jsonpath='{.status.bgpInstances[*].peers[*].peeringState}'`와 `cilium-dbg shell -- bgp/peers`가 `established`를 보고해야 하고, FRR의 `show bgp summary`에도 neighbor가 up으로 보여야 합니다.
 4. `cilium-dbg shell -- bgp/routes out ipv4 unicast`에 노드의 PodCIDR가 보이고, FRR `show ip route bgp`에 학습된 경로가 보입니다.
-5. 한 노드의 agent Pod를 삭제합니다. GR을 켠 경우 FRR은 restart time까지 경로를 (stale로) 유지하고, GR이 없으면 즉시 사라집니다. 둘을 비교하세요.
+5. 한 노드의 agent Pod를 삭제합니다. GR을 켠 경우 FRR은 restart time까지 경로를 (stale로) 유지하고, GR이 없으면 경로가 즉시 사라집니다. 둘을 비교하세요.
 
 **롤백/정리**: BGP 리소스 3개를 삭제하고 노드 레이블을 제거합니다. ClusterConfig를 삭제하면 operator가 NodeConfig를 지우고 세션이 닫힙니다.
 
@@ -756,7 +756,7 @@ SRv6는 지원 기능으로서 **없습니다**. 1.20.2, 1.21.0-pre.3 소스에�
 
 ## 검증 한계와 출처
 
-이 실습은 이번 검토에서 실제 클러스터에 실행하지 않았으며, upstream 소스와 문서를 기준으로 점검했습니다. `bgp/peers`, `bgp/routes` 명령 문법은 `pkg/bgp/commands`에서 확인했으나 실제 표 출력은 캡처하지 않아 싣지 않았습니다. EKS 네이티브(비 hybrid) 클러스터에서의 BGP(Transit Gateway Connect, VPC Route Server 피어링 등)는 조사하지 않아 제외했습니다. 확인하지 못한 항목: 1.21 GA에서 Egress Gateway에 health 기반 failover가 생기는지, 메트릭 레이블 변경이 1.19와 1.20 사이 정확히 어느 릴리스에서 이뤄졌는지(1.20.2에는 있고 1.19.8 문서에는 없음).
+이 실습은 이번 검토에서 실제 클러스터에서 실행하지 않았으며, upstream 소스와 문서를 기준으로 점검했습니다. `bgp/peers`, `bgp/routes` 명령 문법은 `pkg/bgp/commands`에서 확인했으나 실제 표 출력은 캡처하지 않아 싣지 않았습니다. EKS 네이티브(비 hybrid) 클러스터에서의 BGP(Transit Gateway Connect, VPC Route Server 피어링 등)는 조사하지 않아 제외했습니다. 확인하지 못한 항목: 1.21 GA에서 Egress Gateway에 health 기반 failover가 생기는지, 메트릭 레이블 변경이 1.19와 1.20 사이 정확히 어느 릴리스에서 이뤄졌는지(1.20.2에는 있고 1.19.8 문서에는 없음).
 
 출처(별도 표기가 없으면 태그 v1.20.2):
 

@@ -43,7 +43,7 @@ Use multiple controls with explicit scope; no single tool establishes zero trust
 
 ### Identity and Network Controls
 
-IRSA and Pod Identity provide workload AWS credentials; NetworkPolicy provides supported network filtering; an admission engine checks configured Kubernetes requests. A compatible maintained service mesh can add mTLS and application traffic policy. AWS App Mesh reaches end of support on September30,2026, so an existing deployment needs a migration plan rather than a new default recommendation.
+IRSA and Pod Identity provide workload AWS credentials; NetworkPolicy provides supported network filtering; an admission engine checks configured Kubernetes requests. A compatible maintained service mesh can add mTLS and application traffic policy. AWS App Mesh reaches end of support on September 30, 2026, so an existing deployment needs a migration plan rather than a new default recommendation.
 
 ### Supply Chain Security
 
@@ -206,7 +206,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-The entry maps the IAM principal to a group, and RoleBinding gives that group the shown namespace permissions. Group names alone do not establish namespace boundaries. Permission to create workload controllers can produce Pods that use ServiceAccounts, Secrets and PVCs in the namespace. Separate tenants and constrain workload/service-account use through appropriate admission and ownership controls.
+The entry maps the IAM principal to a group, and a RoleBinding gives that group the shown namespace permissions. Group names alone do not establish namespace boundaries. Permission to create workload controllers can produce Pods that use ServiceAccounts, Secrets and PVCs in the namespace. Separate tenants and constrain workload/service-account use through appropriate admission and ownership controls.
 
 For a separately reviewed viewer entry, an EKS access policy is an alternative to custom RBAC. Inspect the entry’s current groups and associated policies before adding this namespace view grant:
 
@@ -464,13 +464,13 @@ Session tags label the assumed-role session; they do not automatically tag every
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-05-eks-security-4.html)
 -->
 
-For an associated newly created Pod, EKS injects a token with audience pods.eks.amazonaws.com, a token-file environment variable and a container credentials URI. The SDK calls the agent’s endpoint, commonly169.254.170.23/v1/credentials. The agent calls **AssumeRoleForPodIdentity on EKS Auth** and makes the returned credentials available to the SDK. It is not a transparent interceptor for all application requests, and the application still calls AWS services directly with its credentials.
+For an associated newly created Pod, EKS injects a token with audience pods.eks.amazonaws.com, a token-file environment variable and a container credentials URI. The SDK calls the agent’s endpoint, commonly 169.254.170.23/v1/credentials. The agent calls **AssumeRoleForPodIdentity on EKS Auth** and makes the returned credentials available to the SDK. It is not a transparent interceptor for all application requests, and the application still calls AWS services directly with its credentials.
 
 Standard supported EC2 nodes use the Pod Identity Agent add-on/DaemonSet. Auto Mode provides the capability as part of its managed nodes. Hybrid Nodes support it with the documented OS, agent and node credential configuration; do not reuse a standard EC2 agent configuration blindly. EKS Fargate does not support this Pod Identity agent path. Verify the actual compute support and the node’s EKS Auth permissions/network access.
 
 ### Prepared Role and Association
 
-For a standard managed-agent installation, inspect the actual cluster version and compatible add-on catalog through the owner. Do not hard-code the oldv1.0.0 build or install a duplicate agent over Auto Mode/another owner:
+For a standard managed-agent installation, inspect the actual cluster version and compatible add-on catalog through the owner. Do not hard-code the old v1.0.0 build or install a duplicate agent over Auto Mode/another owner:
 
 ```bash
 set -euo pipefail
@@ -613,7 +613,7 @@ spec:
 
 The association role must be in the EKS cluster account. An optional target IAM role can be in another account; Pod Identity chains from the same-account role to that target, with both trust and assume-role permissions configured. This is not permission to attach an arbitrary foreign role directly as the association role.
 
-The current target-role guide documents cached credentials lasting6hours without a target role and59minutes with a target role. Association changes do not reset that cache; recreating Pods can obtain the new configuration sooner. Check actual refresh/revocation behavior in the application. The newer association session-policy option requires disabled session tags and constrains the target role when one is configured; do not combine it unreviewed with trust conditions that require those tags.
+The current target-role guide documents cached credentials lasting 6 hours without a target role and 59 minutes with a target role. Association changes do not reset that cache; recreating Pods can obtain the new configuration sooner. Check actual refresh/revocation behavior in the application. The newer association session-policy option requires disabled session tags and constrains the target role when one is configured; do not combine it unreviewed with trust conditions that require those tags.
 
 ### IRSA to Pod Identity Migration Procedure
 
@@ -685,7 +685,7 @@ PY
 
 ### Restrict the Public Address Path
 
-A public allowlist must contain the actual approved public NAT/VPN/office egress addresses. Private ranges such as10.0.0.0/8 do not describe a public-source address. Documentation ranges such as203.0.113.0/24 are placeholders, not working office networks.
+A public allowlist must contain the actual approved public NAT/VPN/office egress addresses. Private ranges such as 10.0.0.0/8 do not describe a public-source address. Documentation ranges such as 203.0.113.0/24 are placeholders, not working office networks.
 
 Set PUBLIC_EGRESS_CIDRS to a JSON array supplied by the network owner. This bounded example accepts IPv4 CIDRs and rejects obvious private/default/documentation ranges; it does not prove ownership or that the current client is included. Review scope, quota and the cluster’s IP-family support. Dual-stack/IPv6 settings need their own verified allowlist.
 
@@ -727,7 +727,7 @@ The planned public-restricted configuration also enables private access. Without
 
 VPN, Direct Connect/TGW and an approved management host are possible paths, provided routes, DNS, security groups and authorization are configured. A single Client VPN create command does not set up subnet associations, authorization rules, routes, certificates and connection logging. A Deployment running an AWS CLI image does not create an SSM-managed bastion or install kubectl/SSM Agent.
 
-For SSM remote-host forwarding, prepare a managed host with SSM Agent3.1.1374.0 or later, Session Manager IAM/network access, the local Session Manager plugin, and DNS/routing to the private EKS endpoint. Verify private endpoint access is enabled and the host actually resolves/reaches its private path. Keep the forwarding session running in the first terminal:
+For SSM remote-host forwarding, prepare a managed host with SSM Agent 3.1.1374.0 or later, Session Manager IAM/network access, the local Session Manager plugin, and DNS/routing to the private EKS endpoint. Verify private endpoint access is enabled and the host actually resolves/reaches its private path. Keep the forwarding session running in the first terminal:
 
 ```bash
 set -euo pipefail
@@ -751,7 +751,7 @@ kubectl --kubeconfig "$CLUSTER_KUBECONFIG" \
   --request-timeout=10s -n security-demo get pods
 ```
 
-The remote-host document forwards to the supplied EKS host. The older AWS-StartPortForwardingSession document forwards a port on the managed instance itself; forwarding its port443 does not make that instance the EKS API server. A successful tunnel/health check alone is not an authorization or private-route test. Verify the intended API operation, DNS/private addresses and the actual route before removing public access.
+The remote-host document forwards to the supplied EKS host. The older AWS-StartPortForwardingSession document forwards a port on the managed instance itself; forwarding its port 443 does not make that instance the EKS API server. A successful tunnel/health check alone is not an authorization or private-route test. Verify the intended API operation, DNS/private addresses and the actual route before removing public access.
 
 ### Apply a Reviewed Endpoint Change
 
@@ -807,7 +807,7 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query cluster.resourcesVpcConfig --output json
 ```
 
-Use the returned update ID and Successful status, not only cluster ACTIVE, to confirm the update. A timeout means inspect the existing operation; do not blindly submit another change. Recheck the actual API path afterward. Keep the prior endpoint fields and AWS management recovery access available; this review did not perform a live endpoint change.
+Use the returned update ID and Successful status, not only cluster ACTIVE, to confirm the update. A timeout means you need to inspect the existing operation; do not blindly submit another change. Recheck the actual API path afterward. Keep the prior endpoint fields and AWS management recovery access available; this review did not perform a live endpoint change.
 
 ### Private AWS Service Dependencies
 
@@ -825,7 +825,7 @@ An EKS interface endpoint is not the Kubernetes API endpoint. S3 gateway endpoin
 
 ### Customer-Routed Control Plane Egress (June 2026)
 
-Announced June18,2026, CUSTOMER_ROUTED is a supported EKS control-plane egress mode. It uses the existing cross-account cluster network interfaces in your subnets rather than creating a separate egress ENI. It applies to customer-facing API-server calls such as admission webhooks, OIDC discovery and aggregated API servers.
+Announced June 18, 2026, CUSTOMER_ROUTED is a supported EKS control-plane egress mode. It uses the existing cross-account cluster network interfaces in your subnets rather than creating a separate egress ENI. It applies to customer-facing API-server calls such as admission webhooks, OIDC discovery and aggregated API servers.
 
 **The switch is one-way: after enabling CUSTOMER_ROUTED, the cluster cannot revert to AWS_MANAGED.** Do not present a saved configuration or Kubernetes version rollback as a way to undo this mode. Correct routing/connectivity if the new path fails.
 
@@ -923,7 +923,7 @@ Policies are additive. For an isolated connection, both source egress and destin
 
 ### Isolated Policy Exercise
 
-This example uses new demonstration namespaces, Linux EC2 networking with an enforcing CNI, and a traditional CoreDNS Deployment labelled k8s-app=kube-dns in kube-system. It assumes prepared frontend/API/database Pods labelled app=frontend/api/database; API listens on8080 and exposes demo metrics on9090, and the database listens on5432. These policies do not deploy those applications.
+This example uses new demonstration namespaces, Linux EC2 networking with an enforcing CNI, and a traditional CoreDNS Deployment labelled k8s-app=kube-dns in kube-system. It assumes prepared frontend/API/database Pods labelled app=frontend/api/database; the API listens on 8080 and exposes demo metrics on 9090, and the database listens on 5432. These policies do not deploy those applications.
 
 Default deny includes both directions. DNS and each intended source/destination flow are supplied explicitly. Do not apply these assumptions to an existing production namespace without inventorying all dependencies:
 
@@ -1145,13 +1145,13 @@ spec:
       port: 443
 ```
 
-Allowing0.0.0.0/0 on443 permits a broad public destination set; excluding private/link-local ranges does not identify a trusted service. Native NetworkPolicy does not resolve a domain into a durable allowlist or provide IAM authorization. Node/hostNetwork exceptions, NAT ordering and implementation-specific behavior also mean it is not the sole IMDS isolation mechanism.
+Allowing 0.0.0.0/0 on 443 permits a broad public destination set; excluding private/link-local ranges does not identify a trusted service. Native NetworkPolicy does not resolve a domain into a durable allowlist or provide IAM authorization. Node/hostNetwork exceptions, NAT ordering and implementation-specific behavior also mean it is not the sole IMDS isolation mechanism.
 
 Test positive and negative new connections on the actual CNI. Policy changes can propagate asynchronously, and handling of existing connections is implementation-defined. The source examples were checked with synthetic selector/port cases; no packet filtering, DNS resolution or live traffic was executed in this review.
 
 ## Pod Security
 
-Pod Security Standards define profiles; Pod Security Admission (PSA) enforces the selected namespace policy. PSA is stable since Kubernetes1.25. PodSecurityPolicy was deprecated in1.21 and **removed in1.25**; it is not an API to deploy on a current EKS cluster. A Gatekeeper constraint with PSP in its name is a separate custom resource, not the removed API.
+Pod Security Standards define profiles; Pod Security Admission (PSA) enforces the selected namespace policy. PSA has been stable since Kubernetes 1.25. PodSecurityPolicy was deprecated in 1.21 and **removed in 1.25**; it is not an API to deploy on a current EKS cluster. A Gatekeeper constraint with PSP in its name is a separate custom resource, not the removed API.
 
 ![Diagram showing how the Privileged, Baseline and Restricted Pod Security Standards selected by namespace labels (enforce, audit, warn), pod securityContext settings, and OPA Gatekeeper or Kyverno policies enforced through an admission webhook apply to privileged, application and system pods.](../.gitbook/assets/en-eks-05-eks-security-9.png)
 
@@ -1228,7 +1228,7 @@ For a real application, prepare the image’s UID/GID, writable tmp/cache/socket
 
 ### Admission Policy Example
 
-Use a compatible, owned policy-engine installation and its actual CRDs. Kyverno1.19.1 serves the policies.kyverno.io/v1 ValidatingPolicy API; the older ClusterPolicy format is deprecated in that release. The following narrow example applies only to security-demo and checks regular, init and ephemeral containers. Omitted privileged defaults to false and is accepted; privileged:true is rejected.
+Use a compatible, owned policy-engine installation and its actual CRDs. Kyverno 1.19.1 serves the policies.kyverno.io/v1 ValidatingPolicy API; the older ClusterPolicy format is deprecated in that release. The following narrow example applies only to security-demo and checks regular, init and ephemeral containers. Omitted privileged defaults to false and is accepted; privileged:true is rejected.
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -1832,7 +1832,7 @@ aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'update.{ID:id,Status:status,Errors:errors}'
 ```
 
-The final DescribeUpdate call is a status check, not a waiter. Repeat it until Successful or a terminal failure, then confirm the configured types and actual log arrival in `/aws/eks/CLUSTER_NAME/cluster`. Do not report a successful rollout merely because UpdateClusterConfig returned an ID.
+The final DescribeUpdate call is a status check, not a waiter. Repeat it until it reports Successful or a terminal failure, then confirm the configured types and actual log arrival in `/aws/eks/CLUSTER_NAME/cluster`. Do not report a successful rollout merely because UpdateClusterConfig returned an ID.
 
 ### AWS Config and Security Hub CSPM
 
@@ -1937,8 +1937,8 @@ Primary references: [EKS logs](https://docs.aws.amazon.com/eks/latest/userguide/
 ### Cluster Security Hardening
 
 1. **Maintain a Supported, Compatible Version**: Plan EKS upgrades within AWS support windows after checking workload, node, CNI/CSI and add-on compatibility; do not select the newest upstream Kubernetes version automatically
-2. **Use Private API Endpoint**: Restrict access to API server from public internet
-3. **Apply Principle of Least Privilege**: Apply principle of least privilege to IAM roles and RBAC
+2. **Use Private API Endpoint**: Restrict access to the API server from the public internet
+3. **Apply Principle of Least Privilege**: Apply the principle of least privilege to IAM roles and RBAC
 4. **Restrict Security Groups**: Configure security groups to allow only necessary ports
 5. **Implement Network Policies**: Apply network policies to restrict communication between pods
 
@@ -1947,8 +1947,8 @@ Primary references: [EKS logs](https://docs.aws.amazon.com/eks/latest/userguide/
 1. **Maintain Patched Node Images**: Select a supported OS/AMI for the cluster and architecture, then validate the update on a canary
 2. **Scan and Verify Images**: Use the configured ECR/Inspector or other scanner and verify image provenance/signatures at the required gates; no scan proves the absence of every backdoor or vulnerability
 3. **Coordinate Node Updates**: Use controlled instance replacement or supported Bottlerocket in-place orchestration; verify capacity, PDBs, local data and workload health before retiring old capacity
-4. **Run Containers as Non-Root User**: Run containers as non-root user to limit privileges
-5. **Use Read-Only Filesystem**: Mount container root filesystem as read-only when possible
+4. **Run Containers as Non-Root User**: Run containers as a non-root user to limit privileges
+5. **Use Read-Only Filesystem**: Mount the container root filesystem as read-only when possible
 
 ### Continuous Security Monitoring
 
@@ -1956,7 +1956,7 @@ Primary references: [EKS logs](https://docs.aws.amazon.com/eks/latest/userguide/
 2. **Verify GuardDuty Coverage**: Distinguish EKS Protection audit analysis from agent-based Runtime Monitoring and verify the actual node coverage
 3. **Security Hub Integration**: Review CSPM controls and finding ingestion/schema, then test the incident routing and response ownership
 4. **Regular Security Assessments**: Use the applicable CIS/EKS benchmark and version, recording managed-service exceptions and manual checks
-5. **Establish Incident Response Plan**: Establish and test security incident response plan for EKS cluster
+5. **Establish Incident Response Plan**: Establish and test a security incident response plan for the EKS cluster
 
 ## EKS Security Considerations for Financial Services
 
@@ -1964,7 +1964,7 @@ The following are design considerations for a scoped financial workload, not a c
 
 ### Regulatory Compliance
 
-1. **PCI DSS**: PCI DSS requirements compliance for workloads processing card payment data
+1. **PCI DSS**: Compliance with PCI DSS requirements for workloads processing card payment data
 2. **GDPR/CCPA**: Compliance with data protection regulations for personally identifiable information (PII)
 3. **Financial Regulations**: Compliance with domestic financial regulatory requirements (e.g., Financial Supervisory Service guidelines)
 
@@ -1978,7 +1978,7 @@ The following are design considerations for a scoped financial workload, not a c
 ### High Availability and Disaster Recovery
 
 1. **Multi-AZ Deployment**: Distribute workload replicas and verify storage/database/AZ failure behavior; a managed multi-AZ control plane alone does not make every application highly available
-2. **Disaster Recovery Plan**: Establish disaster recovery plan including regular backups and recovery testing
+2. **Disaster Recovery Plan**: Establish a disaster recovery plan including regular backups and recovery testing
 3. **Business Continuity**: Define RTO (Recovery Time Objective) and RPO (Recovery Point Objective) appropriate for financial services
 
 ### EKS Security Architecture Example for Financial Services

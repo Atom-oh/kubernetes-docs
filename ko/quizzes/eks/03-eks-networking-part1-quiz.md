@@ -32,7 +32,7 @@ aws eks describe-addon-configuration --region "$EXAMPLE_REGION" --addon-name vpc
 kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n kube-system get daemonset aws-node \
   -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{": "}{.image}{"\n"}{end}'
 ```
-다음은 Kubernetes ConfigMap이 아닌 **애드온 설정 조각**입니다. Warm pool 값은 예시이며 검토한 기존 설정과 병합하고 선택 버전의 스키마를 확인하세요. Windows IPAM ConfigMap 설정은 별도 인터페이스입니다.
+다음은 Kubernetes ConfigMap이 아닌 **애드온 설정 조각**입니다. Warm pool 값은 예시이므로 검토한 기존 설정과 병합하고 선택 버전의 스키마를 확인하세요. Windows IPAM ConfigMap 설정은 별도 인터페이스입니다.
 
 ```json
 {"env":{"WARM_IP_TARGET":"5","MINIMUM_IP_TARGET":"10"}}
@@ -223,7 +223,7 @@ kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
 
 Pod 보안 그룹은 **노드의 trunk ENI와 선택된 Pod의 branch ENI**를 사용합니다. EKS VPC resource controller가 `AmazonEKSVPCResourceController` 등을 포함한 **클러스터 IAM 역할** 권한으로 경로를 생성·관리하며 단순히 Pod ServiceAccount에 권한을 주는 방식이 아닙니다.
 
-일반 Linux EC2 예제는 trunking을 지원하는 인스턴스 유형(모든 Nitro 유형은 아님), 호환 VPC CNI와 소유자를 통해 설정한 `ENABLE_POD_ENI=true`를 확인합니다. `POD_SECURITY_GROUP_ENFORCING_MODE`, DNS·프로브·라우팅·SG 규칙도 검토하세요. Strict·standard 모드는 특히 VPC 외부·노드 내부 경로에서 SNAT와 적용 SG가 다릅니다.
+일반 Linux EC2 예제에서는 trunking을 지원하는 인스턴스 유형(모든 Nitro 유형은 아님), 호환 VPC CNI와 소유자를 통해 설정한 `ENABLE_POD_ENI=true`를 확인합니다. `POD_SECURITY_GROUP_ENFORCING_MODE`, DNS·프로브·라우팅·SG 규칙도 검토하세요. Strict·standard 모드는 특히 VPC 외부·노드 내부 경로에서 SNAT와 적용 SG가 다릅니다.
 
 전용 `sgp-lab` 네임스페이스를 만들고 SG 자리표시자를 올바른 VPC의 승인된 그룹으로 바꿉니다. 다음 컨트롤러 관리 대기 클라이언트는 선택 관계를 보여 주며 DB 접근 성공을 검증하지 않습니다:
 
@@ -269,7 +269,7 @@ spec:
           readOnlyRootFilesystem: true
           capabilities: {drop: [ALL]}
 ```
-필요에 따라 podSelector 또는 serviceAccountSelector를 사용합니다. 새 Pod, CNINode·branch 용량과 실제 허용·차단 연결을 확인하세요. SecurityGroupPolicy 선택 변경은 실행 중인 Pod에 소급 적용되지 않으며 SG 규칙 자체의 변경은 연결 추적 동작이 별도로 적용됩니다. HostNetwork Pod는 노드 네트워크를 사용합니다.
+필요에 따라 podSelector 또는 serviceAccountSelector를 사용합니다. 새 Pod, CNINode·branch 용량과 실제 허용·차단 연결을 확인하세요. SecurityGroupPolicy 선택 변경은 실행 중인 Pod에 소급 적용되지 않으며 SG 규칙 자체의 변경에는 연결 추적 동작이 별도로 적용됩니다. HostNetwork Pod는 노드 네트워크를 사용합니다.
 
 Prefix delegation과 호환되지만 branch ENI Pod 용량을 늘리지는 않습니다. 기존 SecurityGroupPolicy와 Auto Mode NodeClass의 Pod 서브넷·SG 선택 기능은 같은 API가 아니므로 해당 컴퓨팅의 문서를 따라야 합니다.
 
@@ -676,7 +676,7 @@ aws eks create-fargate-profile --cluster-name "${EXAMPLE_CLUSTER:?}" \
 
 </details>
 
-12. 일반 AWS IPv4 /24 서브넷은 리소스 사용 전에 몇 개를 할당할 수 있나요?
+12. 일반 AWS IPv4 /24 서브넷에서는 리소스 사용 전에 IP 주소를 몇 개 할당할 수 있나요?
    * A) 256
    * B) 254
    * C) 251

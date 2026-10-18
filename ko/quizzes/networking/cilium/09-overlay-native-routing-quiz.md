@@ -107,7 +107,7 @@
 
    **정답: C) 경고를 로그로 남기고 veth로 fallback한다. 명시적 `netkit`이었다면 hard fail이다**
 
-   1.20에서 추가된 `auto`는 probe 후 "datapath autodiscovery failed, reverting from netkit to veth" 로그와 함께 낮춥니다. netkit에는 BPF masquerade, KPR, legacy host routing 미사용도 필요합니다.
+   1.20에서 추가된 `auto`는 probe 후 "datapath autodiscovery failed, reverting from netkit to veth" 로그와 함께 veth로 전환합니다. netkit에는 BPF masquerade, KPR, legacy host routing 미사용도 필요합니다.
 
    </details>
 
@@ -122,7 +122,7 @@
 
    **정답: A) BPF host routing에 BPF masquerade가 필요하다는 로그를 남기고 조용히 legacy host routing으로 fallback한다**
 
-   Host routing은 best effort입니다. 이를 필요로 하면서 이름으로 요청한 기능(netkit, Pod용 BBR, BIG TCP)은 대신 hard fail합니다. `cilium-dbg status`의 `Routing:` 줄 `Host:` 필드(`Host: Legacy`)로 확인합니다.
+   Host routing은 best effort입니다. 이를 필요로 하면서 명시적으로 요청한 기능(netkit, Pod용 BBR, BIG TCP)은 대신 hard fail합니다. `cilium-dbg status`의 `Routing:` 줄 `Host:` 필드(`Host: Legacy`)로 확인합니다.
 
    </details>
 

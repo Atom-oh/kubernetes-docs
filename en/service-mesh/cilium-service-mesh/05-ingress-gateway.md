@@ -555,7 +555,7 @@ Use instance targets for this L7 frontend. The Cilium 1.20.3 shared Ingress Serv
 
 The TCP health check checks transport reachability at the NodePort, not application `/healthz`, TLS validity or a host-specific HTTP route. Cross-zone balancing uses the current load-balancer attributes annotation and needs cost/traffic review. Do not change an existing Service's controller ownership or LB type in place as an assumed zero-downtime migration.
 
-**Client identity and optional PROXY protocol:** Cilium preserves the source visible at its frontend for HTTP Envoy processing under both `Cluster` and `Local` external traffic policies. Whether that source is the original client first depends on the upstream NLB and target-group attributes. Instance TCP targets normally preserve client IP; PROXY protocol is not universally required. If it is required for your topology, coordinate this additional overlay with the NLB setting:
+**Client identity and optional PROXY protocol:** Cilium preserves the source visible at its frontend for HTTP Envoy processing under both `Cluster` and `Local` external traffic policies. Whether that source is the original client depends first on the upstream NLB and target-group attributes. Instance TCP targets normally preserve client IP; PROXY protocol is not universally required. If it is required for your topology, coordinate this additional overlay with the NLB setting:
 
 ```yaml
 ingressController:
@@ -875,7 +875,7 @@ spec:
         max_retries: 5
 ```
 
-Create `default/high-traffic-service` on port 80 whose backends explicitly support cleartext HTTP/2 (h2c). The typed protocol option selects upstream HTTP/2; it is not automatic protocol negotiation. `accept_http_10` would only accept HTTP/1.0 and is not an HTTP/1.1 connection-pool setting. For HTTP/1 backends choose the corresponding explicit HTTP/1 configuration instead.
+Create `default/high-traffic-service` on port 80 with backends that explicitly support cleartext HTTP/2 (h2c). The typed protocol option selects upstream HTTP/2; it is not automatic protocol negotiation. `accept_http_10` would only accept HTTP/1.0 and is not an HTTP/1.1 connection-pool setting. For HTTP/1 backends choose the corresponding explicit HTTP/1 configuration instead.
 
 Circuit-breaker thresholds are per Envoy cluster/priority, not fleet-wide quotas or capacity recommendations. `max_retries` limits concurrent retries; it is not the number of retries per request. The route here sets `num_retries: 0`. Raising connection/stream limits requires resource and backend testing; the numerical values are illustrative.
 

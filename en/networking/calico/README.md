@@ -73,7 +73,7 @@ These MTUs are examples, not universal constants. IPv6 VXLAN overhead, jumbo und
 
 This example is for Linux EC2 nodes with an existing, supported Amazon VPC CNI installation. It does not replace Pod networking. It is not an Auto Mode or Fargate installation recipe. The [official EKS guide](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks) requires:
 
-1. Disable Amazon VPC CNI's native network-policy enforcement before selecting Calico as the policy engine; running both conflicts. For an existing protected cluster, plan and validate the policy handover rather than creating an unprotected transition.
+1. Disable Amazon VPC CNI's native network-policy enforcement before selecting Calico as the policy engine; running both causes conflicts. For an existing protected cluster, plan and validate the policy handover rather than creating an unprotected transition.
 2. Set VPC CNI `ANNOTATE_POD_IP=true` and grant its `aws-node` ServiceAccount `patch` access to Pods. Manage these settings through the installed add-on/configuration owner so reconciliation does not revert them. Check the actual ServiceAccount name before applying the additive RBAC example below.
 3. Do not claim coverage for IPv6 Pods with `ENABLE_V4_EGRESS=true`: the Calico EKS guide explicitly excludes enforcement for that combination.
 4. Choose **one** installation method below. These are fresh-install examples, not commands for taking over an existing operator or migrating an active CNI.
@@ -249,7 +249,7 @@ spec:
   prometheusMetricsPort: 9091
 ```
 
-Metrics are disabled by default in Felix. Enabling this listener does not create a Prometheus scrape job or make it publicly safe; configure private discovery and access controls using the [metrics guide](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics). `flowLogsFileEnabled` is not an Open Source FelixConfiguration field. Use the supported [Goldmane/Whisker flow-log path](https://docs.tigera.io/calico/latest/observability/view-flow-logs) instead of copying Enterprise file-log settings.
+Metrics are disabled by default in Felix. Enabling this listener does not create a Prometheus scrape job or make it safe for public access; configure private discovery and access controls using the [metrics guide](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics). `flowLogsFileEnabled` is not an Open Source FelixConfiguration field. Use the supported [Goldmane/Whisker flow-log path](https://docs.tigera.io/calico/latest/observability/view-flow-logs) instead of copying Enterprise file-log settings.
 
 | Metric | Meaning |
 |---|---|

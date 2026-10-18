@@ -333,7 +333,7 @@ Multi-cluster Service Mesh를 사용하면:
 
 ### 공통 사전 조건
 
-Istio1.31 배포본 디렉터리에서 기존 호환 클러스터2개·검토한 kubeconfig context를 사용합니다. 예제는 default revision을 가정하며 다르면 namespace label·gateway 생성에도 원래 revision을 반영합니다. 두 Kubernetes API와 필요한 data/control-plane 경로가 접근 가능해야 합니다. 설치 전에 신뢰 체계를 준비합니다. Multi-primary 발급자는 공통 trusted root 또는 명시적으로 지원되는 신뢰 설계를 사용해야 하며 meshID 문자열만 같다고 인증서를 신뢰하지는 않습니다. [공식 사전 조건·CA 준비](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/)를 따르고 CA 개인키를 보호합니다. 앱/mesh 설정은 별도로 배포하며 remote secret이 이를 복제하지 않습니다.
+Istio1.31 배포본 디렉터리에서 기존 호환 클러스터2개·검토한 kubeconfig context를 사용합니다. 예제는 default revision을 가정하며 다르면 namespace label·gateway 생성에도 원래 revision을 반영합니다. 두 Kubernetes API와 필요한 data/control-plane 경로에 접근할 수 있어야 합니다. 설치 전에 신뢰 체계를 준비합니다. Multi-primary 발급자는 공통 trusted root 또는 명시적으로 지원되는 신뢰 설계를 사용해야 하며 meshID 문자열만 같다고 인증서를 신뢰하지는 않습니다. [공식 사전 조건·CA 준비](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/)를 따르고 CA 개인키를 보호합니다. 앱/mesh 설정은 별도로 배포하며 remote secret이 이를 복제하지 않습니다.
 
 ```bash
 export CTX_CLUSTER1=cluster1
@@ -562,7 +562,7 @@ spec:
     routeType: HTTP
 ```
 
-실제 공개에는 [Gateway](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)·[HTTPRoute](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/http-route/)·필요한 ServiceImport 설정을 완성합니다. 설치 controller/CRD 버전을 맞추며 exportedPorts는 v2.1.3 기준 확인했습니다.
+실제 공개에는 [Gateway](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)·[HTTPRoute](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/http-route/)·필요한 ServiceImport 설정을 완성합니다. 설치 controller/CRD 버전을 맞추며 exportedPorts는 v2.1.3을 기준으로 확인했습니다.
 
 Lattice는 STRICT backend에 Istio SPIFFE mTLS를 시작하지 않습니다. 의도한 Lattice 트래픽을 받고 우회를 제한하며 backend로 mesh mTLS를 시작하는 별도 ingress 경계 또는 명시적으로 설계한 지원 backend 보안 계약이 필요합니다. Backend 정책을 조용히 완화하지 않습니다. Backend가 원래 IAM 호출자 대신 ingress 신원을 볼 수 있어 신뢰한 신원 전달도 별도 설계가 필요합니다. 이 문서는 그 경계·IAM role·ACM 인증서·DNS를 생성하지 않습니다.
 
@@ -691,7 +691,7 @@ Hybrid 절차의 실제 HTTPS DNS·렌더링한 ServiceEntry와 정상 provider 
 
 기존 리전별 NLB2개를 위한 **수동 Route53 alias-failover 설정**입니다. Workload·LoadBalancer·TLS listener·복제·health service를 배포하지 않습니다. 먼저 각 target group의 실제 앱 readiness/health를 구성합니다. 불완전했던 ExternalDNS annotation과 DNS 소유권을 섞거나 health-check ID를 만들어내지 않습니다.
 
-예제는 별도 public HTTPS health check 없이 NLB alias의 `EvaluateTargetHealth`를 사용합니다. 더 깊은 앱/데이터 건강이 필요하면 적절한 endpoint/alarm 신호를 설계합니다. 기존 HTTP80 Service와 HTTPS443 probe는 맞지 않았으며 private-only endpoint를 public Route53 HTTP checker로 단순 점검할 수는 없습니다.
+예제는 별도 public HTTPS health check 없이 NLB alias의 `EvaluateTargetHealth`를 사용합니다. 더 상세한 앱/데이터 상태 확인이 필요하면 적절한 endpoint/alarm 신호를 설계합니다. 기존 HTTP80 Service와 HTTPS443 probe는 맞지 않았으며 private-only endpoint를 public Route53 HTTP checker로 단순 점검할 수는 없습니다.
 
 ```bash
 # Existing, healthy NLBs and a DNS zone controlled by this workflow

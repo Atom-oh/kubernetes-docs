@@ -135,7 +135,7 @@ kubectl port-forward --address 127.0.0.1 -n argo-rollouts \
 
 ## 블루/그린 배포
 
-아래의 `my-app`, `myregistry`, ECR 계정·태그와 메트릭 이름은 애플리케이션에 맞게 교체하는 예시입니다. Namespace, 이미지 접근 권한, readiness 응답, 메트릭 수집과 AnalysisTemplate을 준비한 뒤 각 시나리오를 독립적으로 실행합니다. 최초 배포에는 이전 stable ReplicaSet이 없으므로, 먼저 v1을 정상 배포한 뒤 Git의 이미지 버전을 v2로 변경해야 전환 과정을 관찰할 수 있습니다.
+아래의 `my-app`, `myregistry`, ECR 계정·태그와 메트릭 이름은 애플리케이션에 맞게 교체해야 하는 예시 값입니다. Namespace, 이미지 접근 권한, readiness 응답, 메트릭 수집과 AnalysisTemplate을 준비한 뒤 각 시나리오를 독립적으로 실행합니다. 최초 배포에는 이전 stable ReplicaSet이 없으므로, 먼저 v1을 정상 배포한 뒤 Git의 이미지 버전을 v2로 변경해야 전환 과정을 관찰할 수 있습니다.
 
 Argo CD는 Git의 Rollout 명세를 적용하고, 별도의 Rollouts 컨트롤러가 ReplicaSet과 트래픽 전환을 관리합니다. 분석 실패 시 abort/이전 stable로 트래픽 복귀는 Git 커밋이나 데이터베이스 변경을 되돌리는 작업과 다릅니다.
 
@@ -385,7 +385,7 @@ Analysis는 배포 중 메트릭을 수집하고 평가하여 자동으로 승�
 
 이 예제의 `http_requests_total`, `http_request_duration_seconds_bucket`과 `service`/버전 레이블은 애플리케이션 계측과 scrape 설정으로 제공해야 합니다. `prometheus.monitoring.svc.cluster.local:9090` 역시 실제 Prometheus Service에 맞게 변경합니다. 오류율·지연 기준과 측정 기간은 예시이며 최소 요청 수와 SLO 기준을 함께 설계합니다.
 
-`failureLimit`는 허용할 **실패 측정** 횟수이며, 3이면 네 번째 실패 측정에서 한도를 초과합니다. API 호출 오류는 별도의 consecutiveErrorLimit, 판정 불가는 inconclusiveLimit으로 처리합니다. 아래 조건은 빈 벡터·NaN·Infinity·결측값을 성공으로 바꾸지 않고 Inconclusive로 멈춥니다. `count`는 HTTP 요청 수가 아니라 측정 횟수이고, 중첩 조회 기간은 독립 표본을 의미하지 않습니다.
+`failureLimit`은 허용할 **실패 측정** 횟수이며, 3이면 네 번째 실패 측정에서 한도를 초과합니다. API 호출 오류는 별도의 consecutiveErrorLimit, 판정 불가는 inconclusiveLimit으로 처리합니다. 아래 조건은 빈 벡터·NaN·Infinity·결측값을 성공으로 바꾸지 않고 Inconclusive로 멈춥니다. `count`는 HTTP 요청 수가 아니라 측정 횟수이고, 중첩 조회 기간은 독립 표본을 의미하지 않습니다.
 
 ### AnalysisTemplate 정의
 
@@ -936,7 +936,7 @@ spec:
 
 Kong·kgateway 등의 Gateway API 경로는 argoproj-labs가 유지하는 [Gateway API 플러그인](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi)을 통해 지원됩니다. Traefik은 네이티브 TraefikService 통합도 있으며 Gateway API 경로를 선택하면 이 플러그인을 사용할 수 있습니다. 이 문서는 플러그인 0.17.0(2026-09-01) 기준입니다. HTTPRoute의 backendRefs weight를 갱신하며 다른 Route 종류와 헤더 라우팅은 CRD 및 구현체의 지원 범위를 확인해야 합니다. Route 상태와 실제 요청 분포를 함께 검증합니다.
 
-아래 바이너리는 **컨트롤러 Pod가 실행되는 Linux amd64 노드용**입니다. arm64 노드에서는 파일명을 gatewayapi-plugin-linux-arm64로 바꾸고 SHA256 `5221279f7bf2c9b2c0ff6ed7ff12718ecce1d4892f1ff5e5224bb723cfd0fd92`를 사용합니다. Helm 설치는 같은 목록을 controller.trafficRouterPlugins values로 관리합니다. 매니페스트 설치는 기존 ConfigMap data에 병합하고 컨트롤러를 재시작합니다. Role 예제는 해당 Namespace의 HTTPRoute weight 조작 범위이며 다른 Route 종류/헤더 생성 기능에는 별도 권한 검토가 필요합니다.
+아래 바이너리는 **컨트롤러 Pod가 실행되는 Linux amd64 노드용**입니다. arm64 노드에서는 파일명을 gatewayapi-plugin-linux-arm64로 바꾸고 SHA256 `5221279f7bf2c9b2c0ff6ed7ff12718ecce1d4892f1ff5e5224bb723cfd0fd92`를 사용합니다. Helm 설치는 같은 목록을 controller.trafficRouterPlugins values로 관리합니다. 매니페스트 설치는 기존 ConfigMap data에 병합하고 컨트롤러를 재시작합니다. Role 예제는 해당 Namespace의 HTTPRoute weight 조작에 한정되며 다른 Route 종류/헤더 생성 기능에는 별도 권한 검토가 필요합니다.
 
 플러그인을 설치하려면 컨트롤러가 기동 시 바이너리를 다운로드하도록 `argo-rollouts-config` ConfigMap에 등록합니다:
 
@@ -1088,7 +1088,7 @@ Argo CD가 Rollout과 라우팅 리소스를 관리한다면 Rollouts 소유 필
 
 아래는 EC2 노드용 예제입니다. Rollout 메타데이터의 Fargate 프로파일 애노테이션은 Pod를 Fargate에 배치하지 않습니다. Fargate를 사용하려면 별도의 프로파일 selector, Pod 레이블과 지원되는 리소스/스케줄링 구성을 적용합니다. topologySpreadConstraints는 분산 힌트이며 Spot 중단 대응을 대신하지 않습니다.
 
-ALB 보조 게이트는 1분당100요청 이상인 datapoint3개를 요구하는 예시입니다. 데이터 수집 지연·저트래픽에서는 Inconclusive가 정상일 수 있으므로 서비스 트래픽에 맞게 조정합니다. 같은 분석에 canary Service의 success-rate 템플릿도 결합하며, 두 템플릿의 메트릭 이름은 중복되지 않게 유지합니다.
+ALB 보조 게이트는 1분당 요청이 100개 이상인 datapoint 3개를 요구하는 예시입니다. 데이터 수집 지연·저트래픽에서는 Inconclusive가 정상일 수 있으므로 서비스 트래픽에 맞게 조정합니다. 같은 분석에 canary Service의 success-rate 템플릿도 결합하며, 두 템플릿의 메트릭 이름은 중복되지 않게 유지합니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1

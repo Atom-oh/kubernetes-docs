@@ -18,7 +18,7 @@
 **Answer: C) As an unverified example; compare compatible workloads and actual rates**
 
 **Explanation:**
-The old ~20% ARM and 70–90% Spot figures were planning examples, not a verified comparison for this workload. Check multi-architecture images, dependencies, performance per useful work, current regional rates and Auto Mode/other fees. Allowing `amd64` and `arm64` does not validate application compatibility or guarantee either architecture is selected.
+The old ~20% ARM and 70–90% Spot figures were planning examples, not a verified comparison for this workload. Check multi-architecture images, dependencies, performance per unit of useful work, current regional rates and Auto Mode/other fees. Allowing `amd64` and `arm64` does not validate application compatibility or guarantee either architecture is selected.
 
 </details>
 

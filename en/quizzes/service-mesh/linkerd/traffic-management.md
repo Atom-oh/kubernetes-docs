@@ -66,7 +66,7 @@ Based on the [maintained traffic guide](../../../service-mesh/linkerd/03-traffic
 
 </details>
 
-### 5. Which input alone cannot infer the application operations needed for a ServiceProfile?
+### 5. Which input alone cannot be used to infer the application operations needed for a ServiceProfile?
 
 - A. An OpenAPI specification
 - B. Observed live traffic via tap
@@ -142,7 +142,7 @@ Based on the [maintained traffic guide](../../../service-mesh/linkerd/03-traffic
 
 **Answer: B**
 
-**Explanation:** The request can still be forwarded normally. This setting does not stop client/SDK/other-proxy retries. In the current annotation path, limit:0 is not a reliable disable switch in edge-26.10.1; keep Service defaults free of retries and opt in only the intended read routes.
+**Explanation:** The request can still be forwarded normally. This setting does not stop client/SDK/other-proxy retries. In the current annotation path, limit:0 is not a reliable disable switch in edge-26.10.1; keep Service defaults free of retries and opt in to retries only for the intended read routes.
 
 </details>
 

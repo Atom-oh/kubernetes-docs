@@ -446,7 +446,7 @@ stage.sampling {
 }
 ```
 
-For 1% of successful, sub-second access logs while retaining errors/slow/unclassified logs, parse the integer fields emitted by the JSON provider, classify with temporary labels, sample, then remove those labels before writing. Replace the main process stages with this alternative (keep its `forward_to`):
+To retain 1% of successful, sub-second access logs while retaining errors/slow/unclassified logs, parse the integer fields emitted by the JSON provider, classify with temporary labels, sample, then remove those labels before writing. Replace the main process stages with this alternative (keep its `forward_to`):
 
 ```alloy
 stage.json {
@@ -1534,7 +1534,7 @@ curl -fsSG http://localhost:3100/loki/api/v1/query_range \
 
 ### Log Volume and Cardinality
 
-`kubectl top` measures resource consumption, not log volume. Count byte rate from retained logs and inspect actual stream sets for a bounded interval. `/labels` counts label names, not streams; avoid unbounded high-cardinality `/series` queries on a large installation.
+`kubectl top` measures resource consumption, not log volume. Measure byte rate from retained logs and inspect actual stream sets for a bounded interval. `/labels` counts label names, not streams; avoid unbounded high-cardinality `/series` queries on a large installation.
 
 ```logql
 topk(10, sum by (namespace, app) (bytes_rate({container="istio-proxy"} [5m])))

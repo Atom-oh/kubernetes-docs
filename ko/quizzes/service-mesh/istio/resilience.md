@@ -126,7 +126,7 @@ spec:
               denominator: HUNDRED
 ```
 
-예제 bucket은100 token으로 시작해 초당10개를 보충합니다. Replica3개는 분산 상태에 따라 합계 약30/s를 지속 허용하며 burst도 각각 있습니다. 공유30/s cap은 아닙니다.
+예제 bucket은 100 token으로 시작해 초당 10개를 보충합니다. Replica 3개는 분산 상태에 따라 합계 약 30/s를 지속 허용하며 burst도 각각 있습니다. 공유30/s cap은 아닙니다.
 
 **글로벌 Rate Limiting의 특징:**
 
@@ -174,7 +174,7 @@ C는 보장이 아닙니다. Locality는 호출자 기준이므로 각 호출자
 
 **Zone Aware Routing의 실제 이점:**
 
-동일 AZ routing은 지연의 네트워크 부분·과금 대상 교차 AZ byte를 줄일 수 있지만 정확한 지연·가격·절감액은 환경에 달려 있습니다. 80/10/10은 세 정상 AZ에 평상시 트래픽을 보내는 비율이며10% 부분은 대기 failover가 아닙니다. 다른 AZ에는 실제 접근 가능한 endpoint·여유 용량이 필요합니다.
+동일 AZ routing은 지연의 네트워크 부분·과금 대상 교차 AZ byte를 줄일 수 있지만 정확한 지연·가격·절감액은 환경에 달려 있습니다. 80/10/10은 세 정상 AZ에 평상시 트래픽을 보내는 비율이며 10% 부분은 대기 failover가 아닙니다. 다른 AZ에는 실제 접근 가능한 endpoint·여유 용량이 필요합니다.
 
 **DestinationRule 설정 예시:**
 
@@ -331,7 +331,7 @@ spec:
 
 **동작 예시:**
 
-성공하면 해당 연속 오류 카운트가 초기화됩니다. Host가 임계치에 도달하고 cap이 허용하면 제외되며 실제 제외 기간 뒤 후보로 돌아옵니다. 반복 제외 시 Envoy 배수·상한에 따라 기간이 늘어납니다. `minHealthPercent`는 정상 Pod 비율 보장이 아닌 panic/fail-open 임계치이며0으로 비활성화합니다.
+성공하면 해당 연속 오류 카운트가 초기화됩니다. Host가 임계치에 도달하고 cap이 허용하면 제외되며 실제 제외 기간 뒤 후보로 돌아옵니다. 반복 제외 시 Envoy 배수·상한에 따라 기간이 늘어납니다. `minHealthPercent`는 정상 Pod 비율 보장이 아닌 panic/fail-open 임계치이며 0으로 비활성화합니다.
 
 **참고 자료:**
 
@@ -483,7 +483,7 @@ spec:
 
 ### 문제 6: Outlier Detection 구현
 
-프로덕션 환경에서 실행 중인 `product-service`가 간헐적으로 느려지고 타임아웃이 발생합니다. Outlier Detection을 구현하여 문제있는 인스턴스를 자동으로 제외하고 싶습니다. 다음 요구사항을 만족하는 DestinationRule을 작성하세요:
+프로덕션 환경에서 실행 중인 `product-service`가 간헐적으로 느려지고 타임아웃이 발생합니다. Outlier Detection을 구현하여 문제가 있는 인스턴스를 자동으로 제외하고 싶습니다. 다음 요구사항을 만족하는 DestinationRule을 작성하세요:
 
 **요구사항:**
 
@@ -519,7 +519,7 @@ spec:
       consecutiveGatewayErrors: 3
 ```
 
-502/503/504는 이미5xx에 포함됩니다. 두 임계치3은 중복이지만 유효하며 gateway 임계치를 더 낮추면 그 부분집합을 더 빨리 제외할 수 있습니다. `interval: 20s`는 연속 오류 감지를 지연시키지 않습니다. `baseEjectionTime: 60s`는 초기 최소 기간이며 active health probe가 아닙니다. 30% cap이 나머지 endpoint를 정상으로 만들지는 않습니다. `minHealthPercent: 70`은70% 정상 용량 보장이 아닌 임계치 아래 panic 동작입니다. 지원되지 않는 `enforcing*` 필드는 이 DestinationRule API가 아닌 Envoy 내부 필드입니다.
+502/503/504는 이미 5xx에 포함됩니다. 두 임계치를 3으로 설정하는 것은 중복이지만 유효하며 gateway 임계치를 더 낮추면 그 부분집합을 더 빨리 제외할 수 있습니다. `interval: 20s`는 연속 오류 감지를 지연시키지 않습니다. `baseEjectionTime: 60s`는 초기 최소 기간이며 active health probe가 아닙니다. 30% cap이 나머지 endpoint를 정상으로 만들지는 않습니다. `minHealthPercent: 70`은70% 정상 용량 보장이 아닌 임계치 아래 panic 동작입니다. 지원되지 않는 `enforcing*` 필드는 이 DestinationRule API가 아닌 Envoy 내부 필드입니다.
 
 Host10개 예제에서는 세 번 제외 후 cap에 도달할 수 있지만 실제 pool 크기·반올림·건강 상태에 따라 달라집니다. Enforced/detected/overflow counter를 확인하고 복귀 host의 정상 트래픽으로 실제 복구를 확인합니다.
 
@@ -533,7 +533,7 @@ envoy_cluster_outlier_detection_ejections_active{namespace="production"}
 rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="production"}[5m])
 ```
 
-선택적 통계·수집은 [outlier 장](../../../service-mesh/istio/resilience/01-outlier-detection.md)을 따릅니다. 실측 오류·여유 용량으로 임계치를 정하며 일반적인 “운영 정답” 값은 아닙니다.
+선택적 통계·수집은 [outlier 장](../../../service-mesh/istio/resilience/01-outlier-detection.md)을 따릅니다. 실측 오류·여유 용량으로 임계치를 정하며 이 예제의 값은 일반적인 “운영 정답” 값이 아닙니다.
 
 </details>
 
@@ -609,9 +609,9 @@ spec:
               value: '1'
 ```
 
-가득 찬 bucket은 즉시 최대200개를 허용한 뒤 초당50 token을 보충합니다. 고갈 이후100 요청/s가 지속되면 요청당1 token·다른 제한 없음 가정에서 약50/s를 허용합니다. 고르게40/s이면 수용할 수 있지만 평균40/s만으로 모든 burst 허용을 보장하지는 않습니다. 허용이 backend 처리 성공을 보장하지도 않습니다.
+가득 찬 bucket은 즉시 최대200개를 허용한 뒤 초당50 token을 보충합니다. 고갈 이후 100 요청/s가 지속되면 요청당 1 token을 소비하고 다른 제한이 없다는 가정하에 약 50/s를 허용합니다. 요청이 고르게 40/s로 들어오면 수용할 수 있지만 평균 40/s만으로 모든 burst 허용을 보장하지는 않습니다. 허용이 backend 처리 성공을 보장하지도 않습니다.
 
-Filter는 기본HTTP429이며 강제 거부 응답에만 헤더를 추가합니다. 정상200에는 이 설정으로 헤더가 붙지 않습니다. `Retry-After: 1`은 권고 대기 시간이며1초 뒤 성공 예약·보장이 아닙니다. 이 예제는 `tokens_remaining` dynamic metadata를 만들지 않으므로 허구의 Remaining 헤더를 넣지 않습니다.
+Filter의 기본 거부 응답은 HTTP429이며 강제 거부 응답에만 헤더를 추가합니다. 정상200에는 이 설정으로 헤더가 붙지 않습니다. `Retry-After: 1`은 권고 대기 시간이며 1초 뒤의 성공을 예약하거나 보장하지 않습니다. 이 예제는 `tokens_remaining` dynamic metadata를 만들지 않으므로 허구의 Remaining 헤더를 넣지 않습니다.
 
 ```http
 HTTP/1.1 429 Too Many Requests
@@ -699,7 +699,7 @@ spec:
 sum by (pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="production"}[5m]))
 ```
 
-선택적 통계 수집·전역 서비스/Redis 전제·신뢰한 신원 처리는 [rate limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)을 참고합니다.
+선택적 통계 수집·전역 서비스/Redis 전제·신뢰할 수 있는 신원 처리는 [rate limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)을 참고합니다.
 
 </details>
 
@@ -798,7 +798,7 @@ Node→Pod topology·일치하는 topologySpreadConstraints·EKS node-group·EDS
 |1TB|$6.67|$3.00|$3.67|$44.00|
 |100TB|$666.67|$300.00|$366.67|$4,400.00|
 
-모델의 감소율은55%입니다. 정확한 분수로 계산한 뒤 표시 금액만 반올림하며 월$367로 미리 반올림한 값을 연간으로 곱하지 않습니다. 실제 과금 방향·byte·리전·서비스 처리 비용은 청구/flow 근거로 확인해야 합니다.
+모델의 감소율은55%입니다. 정확한 분수로 계산한 뒤 표시 금액만 반올림하며 월 $367로 미리 반올림한 값을 연간 금액으로 환산하지 않습니다. 실제 과금 방향·byte·리전·서비스 처리 비용은 청구/flow 근거로 확인해야 합니다.
 
 ```bash
 kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
@@ -902,9 +902,9 @@ spec:
       attempts: 0
 ```
 
-명시한 쓰기/fallback rule은 상속할 mesh retry를 끕니다. 반복해도 안전한 앱 의미가 확인된 매칭 읽기만 재시도합니다. `gateway-error`는502/503/504이며 결제 쓰기에 광범위한 reset/5xx/4xx 조건을 넣지 않습니다. 전송 오류만으로 결제 완료 여부를 판단할 수 없습니다.
+명시한 쓰기/fallback rule은 상속되는 mesh retry를 끕니다. 반복해도 안전한 앱 의미가 확인된 매칭 읽기만 재시도합니다. `gateway-error`는502/503/504이며 결제 쓰기에 광범위한 reset/5xx/4xx 조건을 넣지 않습니다. 전송 오류만으로 결제 완료 여부를 판단할 수 없습니다.
 
-`attempts: 3`은 최초 요청 **이후** 최대3회입니다. 2초씩 네 번+backoff는5초 안에 들어가지 않아 전체 route 예산으로 더 일찍 끝납니다. 앱 deadline은 upload/streaming·downstream 작업도 고려해야 합니다. 정확한 실패 타임라인이나 특정 최종 HTTP 상태 보장이 아닙니다.
+`attempts: 3`은 최초 요청 **이후** 최대3회입니다. 2초씩 네 번+backoff는 5초 안에 들어가지 않아 전체 route 예산에 따라 더 일찍 끝납니다. 앱 deadline은 upload/streaming·downstream 작업도 고려해야 합니다. 정확한 실패 타임라인이나 특정 최종 HTTP 상태 보장이 아닙니다.
 
 `maxRetries: 3`은 요청별 횟수가 아닌 해당 프록시/cluster의 동시 진행 retry 한도입니다. `http2MaxRequests`는 HTTP/1.1에도 적용됩니다. `maxRequestsPerConnection: 0`은 이 요청 수 cap 없이 재사용을 허용합니다. Pending/active request overflow는 HTTP 요청을 거부할 수 있지만 단순 연결 한도는 먼저 대기를 만들 수 있습니다. 어느 것도 전역50%-오류 circuit이 아닙니다.
 
@@ -952,7 +952,7 @@ sum(rate(istio_requests_total{reporter="source",destination_service_name="paymen
 
 **1. 검토한 서비스별 destination 정책 하나로 통합**
 
-대표 `api-service` 예제는 pool 제한·locality 가중치·지원되는 outlier detection을 하나의 DestinationRule에 넣습니다. 경쟁하는 wildcard rule을 여러 개 적용하거나 모든 서비스를 같은 generic backend로 보내지 않습니다. 호출자·목적지마다 용량을 산정하며 운영 기본값이 아닙니다.
+대표 `api-service` 예제는 pool 제한·locality 가중치·지원되는 outlier detection을 하나의 DestinationRule에 넣습니다. 경쟁하는 wildcard rule을 여러 개 적용하거나 모든 서비스를 같은 generic backend로 보내지 않습니다. 호출자·목적지마다 용량을 산정하며 이 예제의 값은 운영 기본값이 아닙니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1049,7 +1049,7 @@ spec:
 
 **2. 실측 용량에 맞춘 요청 허용 제한**
 
-`production`의 HTTP8080 프록시별 독립 bucket입니다. Tier 레이블·용량을 검증하며 “critical”이라는 이름만으로 특정률이 정당화되지는 않습니다. 서비스/계정의 공유 quota나 edge 보호 대체가 아닙니다.
+`production`의 HTTP8080 프록시별 독립 bucket입니다. Tier 레이블·용량을 검증하며 “critical”이라는 이름만으로 특정 요청률이 정당화되지는 않습니다. 서비스/계정의 공유 quota나 edge 보호 대체가 아닙니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3

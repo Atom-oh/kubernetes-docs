@@ -6,7 +6,7 @@
 
 이 섹션은 Kafka·Spark·Airflow·Flink를 Amazon EKS에서 운영하는 방법과 AWS 관리형 서비스와의 연결을 다룹니다. 도구별 Helm chart, Kubernetes Operator, executor를 사용하되 배포·관측·확장 방식과 운영 책임은 서로 다릅니다.
 
-직접 운영과 Amazon MSK·EMR·MWAA 같은 관리형 선택지는 운영 역량, 요구 기능, 가용성, 총비용에 따라 비교합니다. EMR on EKS는 작업 실행을 관리하면서도 사용자의 EKS 클러스터 운영 책임이 남습니다. SageMaker Unified Studio 항목은 EKS에 자체 배포하는 소프트웨어가 아니라 관리형 데이터·AI 작업 공간의 거버넌스를 연결하는 내용입니다.
+직접 운영과 Amazon MSK·EMR·MWAA 같은 관리형 선택지는 운영 역량, 요구 기능, 가용성, 총비용에 따라 비교합니다. EMR on EKS가 작업 실행을 관리하더라도 사용자의 EKS 클러스터 운영 책임은 남습니다. SageMaker Unified Studio 항목은 EKS에 자체 배포하는 소프트웨어가 아니라 관리형 데이터·AI 작업 공간의 거버넌스를 연결하는 내용입니다.
 
 ## 데이터 워크로드 카테고리
 
@@ -38,7 +38,7 @@ EKS 직접 운영을 검토할 때 다음 가능성과 제약을 함께 평가�
 ## 현재 다루는 주제
 
 - [모던 데이터 파이프라인 해부](01-data-pipeline-anatomy.md): 소스부터 소비까지 5개 계층으로 파이프라인 전체 구조를 조망하고, 각 딥다이브가 어느 계층을 다루는지 매핑하는 도입 문서입니다.
-- [Kafka on EKS](kafka/README.md): Strimzi Operator를 사용해 Apache Kafka를 EKS에 배포하고 운영하는 방법을 8개 파트로 심층 다루고, Part 9에서 gp3 위 3-브로커 RF3 클러스터의 ingest 상한을 실측합니다.
+- [Kafka on EKS](kafka/README.md): Strimzi Operator를 사용해 Apache Kafka를 EKS에 배포하고 운영하는 방법을 8개 파트로 심층적으로 다루고, Part 9에서 gp3 위 3-브로커 RF3 클러스터의 ingest 상한을 실측합니다.
 - [Spark on EKS](spark/README.md): Spark-on-Kubernetes 기초, Spark Operator 생태계, Amazon EMR on EKS, 성능/비용 튜닝을 5개 파트로 다룹니다.
 - [Airflow on EKS](airflow/README.md): Airflow 3의 아키텍처, Helm 기반 배포와 Executor 선택, KubernetesPodOperator를 활용한 DAG 패턴, Amazon MWAA 연동을 5개 파트로 다룹니다.
 - [Flink on EKS](flink/README.md): Kubernetes 위에서의 Flink 아키텍처, Flink Kubernetes Operator, 상태 관리/체크포인팅, 운영 및 고가용성을 4개 파트로 다룹니다.

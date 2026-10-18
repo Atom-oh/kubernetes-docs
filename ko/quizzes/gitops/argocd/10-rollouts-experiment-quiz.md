@@ -126,6 +126,6 @@ Experiment 컨트롤러는 먼저 템플릿별 ReplicaSet을 만들고 모든 Po
 **정답: B) 0으로 스케일 다운되고, `service` 속성으로 만든 Service도 정리된다**
 
 **설명:**
-Experiment는 일회성 리소스입니다. 종료 조건을 만족하면 기본 30초 scale-down 지연 후 ReplicaSet이 0으로 축소되고, available replica가 0인 것을 확인한 뒤 생성 Service를 정리합니다. ReplicaSet/AnalysisRun 객체는 보존 정책에 따라 남을 수 있습니다. Successful은 진행, Failed/Error는 abort, Inconclusive는 pause입니다.
+Experiment는 일회성 리소스입니다. 종료 조건을 만족하면 기본 30초 scale-down 지연 후 ReplicaSet이 0으로 축소되고, available replica가 0인 것을 확인한 뒤 생성한 Service를 정리합니다. ReplicaSet/AnalysisRun 객체는 보존 정책에 따라 남을 수 있습니다. Successful은 진행, Failed/Error는 abort, Inconclusive는 pause입니다.
 
 </details>

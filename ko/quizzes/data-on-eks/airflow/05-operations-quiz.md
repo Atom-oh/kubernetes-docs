@@ -46,7 +46,7 @@ Airflow 3.3.1의 운영·복구 경계를 확인합니다.
 
 </details>
 
-5. Fernet 설정된 metastore의 Connection/Variable은 모두 평문인가요?
+5. Fernet이 설정된 metastore의 Connection/Variable은 모두 평문인가요?
 
 <details>
 <summary>정답 보기</summary>
@@ -97,7 +97,7 @@ Airflow 3.3.1의 운영·복구 경계를 확인합니다.
 
 **정답:** 검토한 cutoff/table에 --dry-run을 먼저 사용하고 --error-on-cleanup-failure와 로그를 확인합니다.
 
-**설명:** 실제 삭제는 별도 실행합니다. 기본 archive도 DB 공간을 쓰고 cascade가 있으므로 cleanup이 항상 디스크를 줄이거나 모든 migration을 빠르게 하지는 않습니다.
+**설명:** 실제 삭제는 별도로 실행합니다. 기본 archive도 DB 공간을 쓰고 cascade가 있으므로 cleanup이 항상 디스크를 줄이거나 모든 migration을 빠르게 하지는 않습니다.
 
 </details>
 

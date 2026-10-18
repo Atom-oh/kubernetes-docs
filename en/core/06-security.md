@@ -446,7 +446,7 @@ Verify the origin and integrity of images through image signing:
 
 ### Image Policies
 
-Restrict pulling images only from trusted registries through image policies:
+Restrict image pulls to trusted registries through image policies:
 
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
@@ -524,7 +524,7 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-Create `ReadApplicationBucket` with `s3:GetObject` scoped to the required bucket/prefix and `s3:ListBucket` only if needed. Do not grant every bucket through a broad managed policy. EKS Pod Identity is another option on supported compute; Fargate applications use IRSA.
+Create `ReadApplicationBucket` with `s3:GetObject` scoped to the required bucket/prefix and `s3:ListBucket` only if needed. Do not grant access to every bucket through a broad managed policy. EKS Pod Identity is another option on supported compute; Fargate applications use IRSA.
 
 ### Secret Encryption with AWS KMS
 

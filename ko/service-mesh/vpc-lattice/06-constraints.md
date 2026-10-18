@@ -79,7 +79,7 @@ Raw-TCP 서비스 listener가 없다고 TCP 리소스까지 배제되는 것은 
 | TLS가 있는 TCP | Lattice **TLS Passthrough** (SNI 라우팅 가능하면) |
 | 평문 TCP | Lattice TCP resource connectivity·기존 사설 연결·NLB를 검토. 서비스 L7 기능이 자동 적용되지는 않음 |
 
-이 구성을 권하는 이유는 단순합니다. **모든 것을 Lattice로 옮기려는 시도가 전환을 지연시키는 가장 흔한 원인**입니다. 평문 TCP 서비스를 위해 TLS를 도입하는 작업까지 전환 범위에 넣으면 애플리케이션 변경이 필요하고 일정이 통제를 벗어납니다.
+이 구성을 권하는 이유는 단순합니다. **모든 것을 Lattice로 옮기려는 시도가 전환을 지연시키는 가장 흔한 원인**입니다. 평문 TCP 서비스를 위해 TLS를 도입하는 작업까지 전환 범위에 넣으면 애플리케이션 변경이 필요하고 일정이 통제 범위를 벗어납니다.
 
 App Mesh도 TCP route를 지원했습니다. HTTP만이 아니라 **실제로 App Mesh에 의존하던 모든 트래픽**을 조사해 대체합니다. App Mesh 지원은 2026년 9월 30일 종료되었습니다.
 
@@ -128,7 +128,7 @@ Mesh iptables가 Lattice 트래픽을 가로챌 수 있습니다. 전달·실패
 
 ### 과금 구조
 
-VPC Lattice 요금은 세 축입니다.
+VPC Lattice 요금은 세 축으로 구성됩니다.
 
 | 축 | 성격 |
 |---|---|
@@ -144,7 +144,7 @@ VPC Lattice 요금은 세 축입니다.
 
 과금이 **hop 단위**라는 점이 핵심입니다.
 
-각 edge에 Lattice 요청 하나인 단순 4-call 체인은 사용자 작업 하나당 서비스 요청 4개를 만듭니다. 실제 비용에는 fan-out·retry·polling·payload량·provisioned 시간도 포함되므로 체인 깊이만으로 전체 비용을 설명할 수 없습니다.
+각 edge에 Lattice 요청이 하나씩 있는 단순 4-call 체인은 사용자 작업 하나당 서비스 요청 4개를 만듭니다. 실제 비용에는 fan-out·retry·polling·payload량·provisioned 시간도 포함되므로 체인 깊이만으로 전체 비용을 설명할 수 없습니다.
 
 AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 요청당 요금이 없었고, 비용은 Envoy가 소비하는 컴퓨팅 리소스로 나타났습니다. **비용 모델이 "컴퓨팅 리소스"에서 "요청 수"로 바뀌는 것**이 이 전환의 재무적 성격입니다.
 
@@ -179,7 +179,7 @@ AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 �
 
 ### Failure domain이 집중된다
 
-AS-IS와 TO-BE의 장애 특성은 성격이 다릅니다.
+AS-IS와 TO-BE의 장애 특성은 다릅니다.
 
 | 항목 | Sidecar 경로 | Lattice 경로 |
 |---|---|---|

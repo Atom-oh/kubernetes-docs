@@ -156,7 +156,7 @@ service_kubectl get service web-nodeport
 ```
 
 **Step 2.2: Access from outside**
-NodePort is allocated rather than assuming30080 is free. A Service type/port listing proves configuration, not client reachability. Use the direct node-address command only where routing, nodePortAddresses and firewall policy permit it.
+NodePort is allocated rather than chosen on the assumption that 30080 is free. A Service type/port listing proves configuration, not client reachability. Use the direct node-address command only where routing, nodePortAddresses and firewall policy permit it.
 
 ```bash
 printf 'Allocated NodePort: %s\n' "${SERVICE_LAB_NODE_PORT:?}"

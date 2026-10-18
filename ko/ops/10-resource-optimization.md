@@ -145,7 +145,7 @@ P70 request/P99 limit 같은 정책은 조직의 가설로 시험할 수 있지�
 GC·model load·JIT·암호화·sidecar·배치 입력 크기 때문에 같은 언어에서도 결과가 크게 다릅니다.
 메모리 누수를 limit 증가만으로 덮거나, 유휴 상태의 재해 복구/대기 Pod를 낭비로 자동 분류하지 않습니다.
 
-VPA 설치와 Goldilocks의 버전 고정 예제는 [스케일링 장](./06-scaling-strategies.md)을 사용합니다.
+VPA 설치와 Goldilocks의 버전 고정 예제는 [스케일링 장](./06-scaling-strategies.md)에서 확인합니다.
 Goldilocks는 대상 네임스페이스/워크로드에 VPA를 생성·표시하며 설치만으로 모든 워크로드가
 자동 최적화되는 것은 아닙니다. 다음 VPA는 뒤의 `resource-java` Deployment를 관찰합니다.
 

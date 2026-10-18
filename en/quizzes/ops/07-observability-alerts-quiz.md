@@ -55,7 +55,7 @@ The Ready condition reports readiness of an observed Node. False or unknown can 
 
 </details>
 
-### 4. What does `for` duration in a Prometheus alerting rule specify?
+### 4. What does the `for` duration in a Prometheus alerting rule specify?
 
 - A) How long to keep alerts in history
 - B) How long a condition must be true before firing

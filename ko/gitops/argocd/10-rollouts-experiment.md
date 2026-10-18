@@ -141,7 +141,7 @@ metrics:
 
 1.10 구현에서는 `duration`과 분석을 무조건 AND 조건으로 기다리지 않습니다. 필수 분석(`requiredForCompletion: true`)이 모두 성공하면 duration보다 일찍 끝날 수 있습니다. 필수 분석이 남으면 기간 이후에도 기다릴 수 있으며, 필수가 아닌 분석은 duration 종료 시 중단될 수 있습니다. duration도 필수 분석도 없으면 명시적으로 종료할 때까지 계속 실행됩니다. 아래 예제는 duration을 생략하고 유한 count의 필수 분석으로 완료를 결정합니다.
 
-`scaleDownDelaySeconds` 기본값은 30초입니다. 종료 판정과 Pod 0개/Service 삭제가 같은 순간이라고 보장하지 않습니다. 컨트롤러는 지연 이후 ReplicaSet을 축소하고 available replica가 0이 된 후 생성한 Service를 정리합니다. ReplicaSet/AnalysisRun 객체는 기록 보존·GC 정책에 따라 남을 수 있습니다. abort가 DB 변경이나 외부 부작용을 되돌리지는 않습니다.
+`scaleDownDelaySeconds` 기본값은 30초입니다. 종료 판정 시점과 Pod 0개/Service 삭제 시점이 같다고 보장하지 않습니다. 컨트롤러는 지연 이후 ReplicaSet을 축소하고 available replica가 0이 된 후 생성한 Service를 정리합니다. ReplicaSet/AnalysisRun 객체는 기록 보존·GC 정책에 따라 남을 수 있습니다. abort가 DB 변경이나 외부 부작용을 되돌리지는 않습니다.
 
 ## 실사용 예시
 
@@ -271,7 +271,7 @@ kubectl patch rollout demo-app -n demo --type merge \
 kubectl argo rollouts get rollout demo-app -n demo --watch
 ```
 
-`setWeight: 20`은 trafficRouting이 없는 이 예제에서 Pod 비율 근사입니다. replicas 3개로 정확한 사용자 요청 20%를 보장하지 않습니다. 실제 비교 분석은 테스트 트래픽·계측·scrape·충분한 표본과 다음 **Experiment ReplicaSet** 해시 인자를 연결해야 합니다. `podTemplateHashValue: Baseline/Canary`를 쓰는 필드가 아닙니다.
+`setWeight: 20`은 trafficRouting이 없는 이 예제에서 Pod 비율 근사입니다. replicas 3개로 사용자 요청의 20%를 정확히 보장하지 않습니다. 실제 비교 분석에서는 테스트 트래픽·계측·scrape·충분한 표본과 다음 **Experiment ReplicaSet** 해시 인자를 연결해야 합니다. `podTemplateHashValue: Baseline/Canary`를 쓰는 필드가 아닙니다.
 
 ```yaml
 args:

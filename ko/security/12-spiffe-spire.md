@@ -147,7 +147,7 @@ spiffe-csi-driver:
 
 PostgreSQL endpoint·DNS·CA ConfigMap·`spire-database` Secret의 `password` key·StorageClass·네트워크 경로를 먼저 준비합니다. 예제는 `extraEnv.valueFrom.secretKeyRef`로 원본 비밀번호를 `PGPASSWORD`에 전달합니다. chart의 `dataStore.sql.externalSecret` 치환을 비활성화하고 `password`를 비워 생성된 connection string에서 비밀번호를 제외합니다. SPIRE의 PostgreSQL driver가 `PGPASSWORD`를 별도로 읽으므로 따옴표·역슬래시·공백·달러 기호가 JSON/DSN 파서로 들어가지 않습니다. 실제 비밀번호를 미리 escape하거나 URI encode하지 않습니다.
 
-SPIRE 1.15.3 설정 검사와 lib/pq 1.12.3 파싱으로 합성 비밀번호 6개를 검증했으며 `sslmode=verify-full`과 CA 경로도 확인했습니다. PostgreSQL 연결·failover는 실행하지 않았습니다. 환경 변수로 전달된 Secret 변경은 서버 Pod 재시작이 필요하므로 DB 비밀번호 교체와 재시작을 함께 조율하고 가용성을 확인합니다. HA는 replicas뿐 아니라 DB·키 저장·backup·bundle rollover·장애 복구 시험을 포함합니다.
+SPIRE 1.15.3 설정 검사와 lib/pq 1.12.3 파싱으로 합성 비밀번호 6개를 검증했으며 `sslmode=verify-full`과 CA 경로도 확인했습니다. PostgreSQL 연결·failover는 실행하지 않았습니다. 환경 변수로 전달된 Secret의 변경 사항을 반영하려면 서버 Pod 재시작이 필요하므로 DB 비밀번호 교체와 재시작을 함께 조율하고 가용성을 확인합니다. HA는 replicas뿐 아니라 DB·키 저장·backup·bundle rollover·장애 복구 시험을 포함합니다.
 
 <span id="어테스테이션-방식-비교"></span>
 <span id="노드-및-워크로드-어테스테이션-플로우"></span>
@@ -163,7 +163,7 @@ SPIRE 1.15.3 설정 검사와 lib/pq 1.12.3 파싱으로 합성 비밀번호 6�
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-12-spiffe-spire-2.html)
 
 
-k8s_psat은 Agent의 projected ServiceAccount token을 Server가 **Kubernetes TokenReview API**로 검증하고 namespace·SA·Pod·node 정보를 확인합니다. IRSA용 IAM OIDC provider와 같은 절차가 아닙니다. Server/Agent의 logical cluster 이름, token audience, SA allowlist와 TokenReview 권한이 맞아야 합니다.
+k8s_psat에서는 Agent의 projected ServiceAccount token을 Server가 **Kubernetes TokenReview API**로 검증하고 namespace·SA·Pod·node 정보를 확인합니다. IRSA용 IAM OIDC provider와 같은 절차가 아닙니다. Server/Agent의 logical cluster 이름, token audience, SA allowlist와 TokenReview 권한이 맞아야 합니다.
 
 기본 Agent ID는 `spiffe://TRUST_DOMAIN/spire/agent/k8s_psat/CLUSTER/NODE_UID` 형태입니다. 현재 버전은 선택적으로 Pod UID 방식도 지원합니다. 임의 parentID를 추정하지 말고 등록된 Agent/alias ID를 확인하세요. CLI의 token generate/entry create/bundle set은 실제 상태를 바꾸는 명령입니다.
 
@@ -262,7 +262,7 @@ example app image를 실제 Workload API 사용 애플리케이션으로 교체�
 
 [완전한 bootstrap 예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/envoy.yaml)는 HTTP filter chain, SDS cluster, `require_client_certificate: true`, 허용된 상대 URI의 exact matcher를 포함합니다. Envoy 프로세스도 SPIRE가 어테스트할 수 있어야 하며 지정한 server/client ID 각각의 등록이 필요합니다.
 
-SDS는 Workload API와 같은 public Agent socket을 사용합니다. TLS certificate resource는 workload SPIFFE ID 또는 default, validation context는 trust domain ID 또는 ROOTCA/ALL을 사용합니다. ALL과 기본 SPIFFE validator 지원·버전도 확인합니다. 예제는 protocol schema와 exact URI matcher의 구현을 확인했으며 실제 Envoy/SDS/mTLS handshake는 실행하지 않았습니다.
+SDS는 Workload API와 같은 public Agent socket을 사용합니다. TLS certificate resource는 workload SPIFFE ID 또는 default, validation context는 trust domain ID 또는 ROOTCA/ALL을 사용합니다. ALL과 기본 SPIFFE validator 지원·버전도 확인합니다. 예제의 protocol schema와 exact URI matcher의 구현을 확인했으며 실제 Envoy/SDS/mTLS handshake는 실행하지 않았습니다.
 
 <span id="istio-spire"></span>
 <span id="cilium-spire"></span>
@@ -286,7 +286,7 @@ Cilium 1.20.3의 mutual authentication은 **beta이며 일반 연결과 별도�
 
 ### Linkerd
 
-SPIRE bundle JSON을 Linkerd PEM trust-anchor 파일로 전달하거나 SPIRE CA 개인키를 issuer key로 복사하지 않습니다. Linkerd identity issuer에는 별도 유효한 issuer certificate/key와 신뢰 root가 필요합니다. 외부 issuer의 갱신과 root rollover를 구성하고 [검토한 cert-manager/Linkerd 경로](./10-cert-manager.md)를 참고합니다. root bundle 공유만으로 SPIFFE Workload API/SDS 연동이 되는 것은 아닙니다.
+SPIRE bundle JSON을 Linkerd PEM trust-anchor 파일로 전달하거나 SPIRE CA 개인키를 issuer key로 복사하지 않습니다. Linkerd identity issuer에는 별도의 유효한 issuer certificate/key와 신뢰 root가 필요합니다. 외부 issuer의 갱신과 root rollover를 구성하고 [검토한 cert-manager/Linkerd 경로](./10-cert-manager.md)를 참고합니다. root bundle 공유만으로 SPIFFE Workload API/SDS 연동이 되는 것은 아닙니다.
 
 <span id="페더레이션-아키텍처"></span>
 <span id="페더레이션-구성"></span>
@@ -302,7 +302,7 @@ SPIRE bundle JSON을 Linkerd PEM trust-anchor 파일로 전달하거나 SPIRE CA
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-12-spiffe-spire-3.html)
 
 
-신뢰 관계는 방향별로 명시하며 자동 상호 신뢰나 authorization을 의미하지 않습니다. bundle endpoint 접근·TLS 검증·갱신 실패·만료·rollover를 운영해야 합니다.
+신뢰 관계는 방향별로 명시하며 자동 상호 신뢰나 authorization을 의미하지 않습니다. bundle endpoint 접근·TLS 검증·갱신 실패·만료·rollover를 관리해야 합니다.
 
 ```yaml
 apiVersion: spire.spiffe.io/v1alpha1
@@ -360,7 +360,7 @@ SPIRE가 중간 CA를 소유하고 leaf를 서명합니다. IAM의 DescribeCerti
 
 ## 10. 모범 사례
 
-TTL은 만료·갱신 실패·clock skew·발급 부하·offline 시간을 함께 고려합니다. 짧은 수명이 모든 회수 문제나 JWT replay를 해결하지 않습니다. bundle set은 신뢰 bundle을 변경하는 명령이지 CA 개인키를 회전시키는 명령이 아닙니다.
+TTL을 정할 때는 만료·갱신 실패·clock skew·발급 부하·offline 시간을 함께 고려합니다. 짧은 수명이 모든 회수 문제나 JWT replay를 해결하지 않습니다. bundle set은 신뢰 bundle을 변경하는 명령이지 CA 개인키를 회전시키는 명령이 아닙니다.
 
 네트워크 정책은 Server↔Agent뿐 아니라 DNS, TokenReview/Kubernetes API, datastore, upstream CA/KMS, federation endpoint와 metrics 경로를 고려합니다. 특정 namespace의 Pod selector는 다른 namespace의 Agent를 자동 선택하지 않습니다. 실제 연결을 검증하기 전 “모든 보안 트래픽 허용”이라고 주장하지 않습니다.
 

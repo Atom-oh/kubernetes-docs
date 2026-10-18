@@ -35,7 +35,7 @@ The following tools are required for cluster administration:
 
 Use the [official kubectl installation guide](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/), keeping kubectl within one minor version of the API server. For self-managed clusters, install kubeadm/kubelet from the target minor's `pkgs.k8s.io` repository; the old `1.x.y-00` package examples are obsolete. Choose an exact package version from the configured repository before installation.
 
-Install Helm and k9s from their [official Helm instructions](https://helm.sh/docs/intro/install/) and [k9s releases](https://github.com/derailed/k9s/releases), checking platform architecture and checksums. EKS administration additionally requires an authenticated AWS CLI and a compatible eksctl.
+Install Helm and k9s from their [official Helm instructions](https://helm.sh/docs/intro/install/) and [k9s releases](https://github.com/derailed/k9s/releases), checking platform architecture and checksums. EKS administration additionally requires an authenticated AWS CLI and a compatible version of eksctl.
 
 ```bash
 kubectl version --client
@@ -266,7 +266,7 @@ kubectl cordon <node-name>
 kubectl drain <node-name> --ignore-daemonsets
 ```
 
-Drain may stop on standalone Pods, PDBs, or local data. Investigate instead of adding `--force` or `--delete-emptydir-data` by default; the latter explicitly authorizes emptyDir data loss. Wait for drain and workload health before maintenance.
+Drain may stop on standalone Pods, PDBs, or local data. Investigate instead of adding `--force` or `--delete-emptydir-data` by default; the latter explicitly authorizes emptyDir data loss. Wait for drain to complete and workloads to be healthy before maintenance.
 
 #### Node Troubleshooting
 
@@ -321,7 +321,7 @@ spec:
     pods: "10"
 ```
 
-In the above example, the `dev` namespace can have a maximum of 10 pods, 1 CPU and 1Gi memory requests, and 2 CPU and 2Gi memory limits.
+In the above example, the `dev` namespace can have a maximum of 10 pods, requests of 1 CPU and 1Gi memory, and limits of 2 CPU and 2Gi memory.
 
 ### Limit Ranges
 
@@ -350,7 +350,7 @@ spec:
     type: Container
 ```
 
-In the above example, all containers in the `dev` namespace have default limits of 500m CPU and 512Mi memory, default requests of 200m CPU and 256Mi memory, maximum of 1 CPU and 1Gi memory, and minimum of 100m CPU and 128Mi memory.
+In the above example, all containers in the `dev` namespace have default limits of 500m CPU and 512Mi memory, default requests of 200m CPU and 256Mi memory, a maximum of 1 CPU and 1Gi memory, and a minimum of 100m CPU and 128Mi memory.
 
 ### Horizontal Pod Autoscaler (HPA)
 
@@ -856,7 +856,7 @@ etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --bump-revision=1000000000 --mark-compacted
 ```
 
-Set SNAPSHOT_FILE to the verified snapshot. For HA, restore the same snapshot on every member with its unique name/peer URL and the same full membership list. Choose a revision bump exceeding changes since the snapshot. Update the etcd manifest/service to the restored path with correct ownership and certificates, verify quorum/health, then restart API servers/controllers. See the [official recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). EKS users cannot restore managed control-plane etcd directly.
+Set SNAPSHOT_FILE to the verified snapshot. For HA, restore the same snapshot on every member with its unique name/peer URL and the same full membership list. Choose a revision bump exceeding the number of changes since the snapshot. Update the etcd manifest/service to the restored path with correct ownership and certificates, verify quorum/health, then restart API servers/controllers. See the [official recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). EKS users cannot restore managed control-plane etcd directly.
 
 ### Resource Backup
 
@@ -1176,7 +1176,7 @@ The following diagram shows the Amazon EKS cluster architecture and management c
 
 ### EKS Cluster Configuration
 
-Set the real administrator CIDR before changing endpoint access and verify private access remains reachable. A version upgrade must be the next supported minor with compatible add-ons/nodes; do not use the example as a downgrade or skip-minor operation. Poll the returned update ID and stop dependent changes if it fails.
+Set the real administrator CIDR before changing endpoint access and verify private access remains reachable. A version upgrade must target the next supported minor with compatible add-ons/nodes; do not use the example as a downgrade or skip-minor operation. Poll the returned update ID and stop dependent changes if it fails.
 
 EKS cluster configuration management:
 
@@ -1591,7 +1591,7 @@ etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --bump-revision=1000000000 --mark-compacted
 ```
 
-Set SNAPSHOT_FILE to the verified snapshot. For HA, restore the same snapshot on every member with its unique name/peer URL and the same full membership list. Choose a revision bump exceeding changes since the snapshot. Update the etcd manifest/service to the restored path with correct ownership and certificates, verify quorum/health, then restart API servers/controllers. See the [official recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). EKS users cannot restore managed control-plane etcd directly.
+Set SNAPSHOT_FILE to the verified snapshot. For HA, restore the same snapshot on every member with its unique name/peer URL and the same full membership list. Choose a revision bump exceeding the number of changes since the snapshot. Update the etcd manifest/service to the restored path with correct ownership and certificates, verify quorum/health, then restart API servers/controllers. See the [official recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). EKS users cannot restore managed control-plane etcd directly.
 
 ### Kubernetes Resource Backup
 
@@ -1972,7 +1972,7 @@ Best practices for effective Kubernetes cluster management are important for ens
 1. **Gradual Upgrades**: Upgrade gradually rather than all at once
 2. **Test Environment First**: Verify upgrades in test environments before production
 3. **Create Backups**: Perform full backups before upgrades
-4. **Rollback Plan**: Develop a plan to rollback to previous versions in case of issues
+4. **Rollback Plan**: Develop a plan to roll back to previous versions in case of issues
 5. **Set Upgrade Windows**: Perform upgrades during low-usage periods
 
 ### Cost Optimization Best Practices
@@ -2006,7 +2006,7 @@ For effective cluster administration, focus on the following key areas:
 
 When using managed Kubernetes services like Amazon EKS, it is important to understand the shared responsibility model between the service provider and the user. AWS manages the control plane, while compute responsibility varies by mode; customers still manage application configuration and security.
 
-By following best practices and utilizing appropriate tools, you can operate a stable, secure, and efficient Kubernetes cluster. Continuous learning and improvement to enhance cluster management capabilities is important.
+By following best practices and utilizing appropriate tools, you can operate a stable, secure, and efficient Kubernetes cluster. Continuous learning and improvement to enhance cluster management capabilities are important.
 
 ---
 

@@ -291,7 +291,7 @@ spec:
 
 ## 퍼시스턴트 볼륨(PersistentVolume)
 
-퍼시스턴트 볼륨(PV)은 관리자가 프로비저닝하거나 스토리지 클래스를 사용하여 동적으로 프로비저닝된 클러스터의 스토리지입니다. PV는 포드와 독립적인 수명 주기를 가지며, 포드가 삭제되어도 PV는 유지됩니다.
+퍼시스턴트 볼륨(PV)은 관리자가 프로비저닝했거나 스토리지 클래스를 사용하여 동적으로 프로비저닝된 클러스터의 스토리지입니다. PV는 포드와 독립적인 수명 주기를 가지며, 포드가 삭제되어도 PV는 유지됩니다.
 
 ![클러스터 관리자가 만든 PersistentVolume에 사용자가 만든 PersistentVolumeClaim이 바인딩되고, Pod가 그 PVC를 볼륨으로 사용하며 PV는 물리적 스토리지에 연결되는 정적 프로비저닝 흐름을 보여준다.](../.gitbook/assets/ko-core-04-storage-1.png)
 
@@ -381,7 +381,7 @@ spec:
 
 ### PVC와 PV 바인딩
 
-PVC가 생성되면 Kubernetes는 PVC의 요구 사항(스토리지 크기, 액세스 모드, 스토리지 클래스, 셀렉터 등)을 충족하는 PV를 찾아 바인딩합니다. 일치하는 PV가 없으면 적절한 StorageClass가 동적 프로비저닝할 수 있습니다. 다만 위처럼 selector가 비어 있지 않은 PVC는 동적 프로비저닝할 수 없으므로 일치하는 정적 PV가 없으면 Pending입니다. WaitForFirstConsumer도 스케줄링까지 바인딩을 의도적으로 지연합니다.
+PVC가 생성되면 Kubernetes는 PVC의 요구 사항(스토리지 크기, 액세스 모드, 스토리지 클래스, 셀렉터 등)을 충족하는 PV를 찾아 바인딩합니다. 일치하는 PV가 없으면 적절한 StorageClass가 PV를 동적으로 프로비저닝할 수 있습니다. 다만 위처럼 selector가 비어 있지 않은 PVC는 동적 프로비저닝할 수 없으므로 일치하는 정적 PV가 없으면 Pending입니다. WaitForFirstConsumer도 스케줄링까지 바인딩을 의도적으로 지연합니다.
 
 ### PVC 사용
 
@@ -823,7 +823,7 @@ spec:
 3. **가상화**: VM 디스크 이미지 저장
 4. **커스텀 파일시스템**: 애플리케이션이 자체 파일시스템 사용
 
-정적 EBS 볼륨 ID와 nodeAffinity의 영역은 실제 볼륨과 해당 가용 영역으로 바꾸세요. `custom-database` 이미지는 원시 블록 장치를 지원하는 소프트웨어의 자리 표시자입니다.
+정적 EBS 볼륨 ID와 nodeAffinity의 영역은 실제 볼륨 ID와 해당 가용 영역으로 바꾸세요. `custom-database` 이미지는 원시 블록 장치를 지원하는 소프트웨어의 자리 표시자입니다.
 
 ## Volume Cloning
 
@@ -1194,11 +1194,11 @@ FSx for Lustre는 scratch와 persistent 스토리지를 구분합니다:
 - **SCRATCH_1 / SCRATCH_2**: 데이터 복제가 없는 임시 저장소입니다. 장애 파일 서버는 교체되지 않으며 해당 데이터가 손실될 수 있습니다. SCRATCH_2가 이를 자동 복구하지는 않습니다.
 - **PERSISTENT_1 / PERSISTENT_2**: 데이터 복제와 장애 구성 요소 자동 교체를 제공합니다. 배포 유형별로 스토리지 클래스, 용량 증분, 처리량 옵션, 지원 리전이 다릅니다.
 
-Scratch 기본 처리량은 200 MBps/TiB이며 최대 6배 버스트가 가능합니다. `PerUnitStorageThroughput`은 persistent SSD/HDD 설정용이며 SCRATCH_2용이 아닙니다. Persistent SSD 옵션은 PERSISTENT_1의 50/100/200 MBps/TiB와 PERSISTENT_2의 125/250/500/1000 등이 있습니다. Intelligent-Tiering은 용량·처리량 설정이 다르므로 크기 선택 전에 [배포 사양](https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html)과 API를 확인하세요.
+Scratch 기본 처리량은 200 MBps/TiB이며 최대 6배 버스트가 가능합니다. `PerUnitStorageThroughput`은 persistent SSD/HDD 설정용이며 SCRATCH_2용이 아닙니다. Persistent SSD 옵션에는 PERSISTENT_1의 50/100/200 MBps/TiB와 PERSISTENT_2의 125/250/500/1000 등이 있습니다. Intelligent-Tiering은 용량·처리량 설정이 다르므로 크기 선택 전에 [배포 사양](https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html)과 API를 확인하세요.
 
 ### vLLM 워크로드를 위한 FSx for Lustre 구성
 
-vLLM(LLM 추론·서빙 엔진)과 같은 대규모 AI 모델 워크로드는 높은 처리량과 낮은 지연 시간을 가진 스토리지가 필요합니다. FSx for Lustre는 이러한 요구 사항을 충족하는 이상적인 솔루션입니다.
+vLLM(LLM 추론·서빙 엔진)과 같은 대규모 AI 모델 워크로드에는 높은 처리량과 낮은 지연 시간을 가진 스토리지가 필요합니다. FSx for Lustre는 이러한 요구 사항을 충족하는 이상적인 솔루션입니다.
 
 #### vLLM을 위한 FSx for Lustre 스토리지 클래스
 

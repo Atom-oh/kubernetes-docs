@@ -10,7 +10,7 @@
 4. [모니터링 및 관찰성](#모니터링-및-관찰성)
 5. [프로덕션 체크리스트](#프로덕션-체크리스트)
 
-2026-09-11 기준 Istio 1.31을 검토했습니다. `IstioOperator` 발췌는 kubectl로 적용할 리소스가 아니라 `istioctl install -f`의 입력입니다. 기존 설치 설정에 병합하고 Helm에서는 동등한 차트 values를 사용하세요. 대부분 Sidecar 예제이며 Ambient는 waypoint/Gateway API 정책을 사용합니다. 리소스 값과 도입 기간은 부하 검증할 시작점입니다.
+2026-09-11 기준 Istio 1.31을 검토했습니다. `IstioOperator` 발췌는 kubectl로 적용할 리소스가 아니라 `istioctl install -f`의 입력입니다. 기존 설치 설정에 병합하고 Helm에서는 동등한 차트 values를 사용하세요. 대부분 Sidecar 예제이며 Ambient는 waypoint/Gateway API 정책을 사용합니다. 리소스 값과 도입 기간은 부하 검증의 시작점입니다.
 
 ## 성능 최적화
 
@@ -378,7 +378,7 @@ istioctl install -f istio-install-backup.yaml
 kubectl apply -f istio-config-backup.yaml
 ```
 
-Helm 설치는 차트 버전과 `helm get values <release> -n <namespace> -o yaml` 결과를 보존하세요. CA/TLS Secret은 안전하게 백업하고 사용 중인 Gateway API, EnvoyFilter, WasmPlugin 리소스도 포함하세요. 복구 전에 필요한 네임스페이스를 생성하고 스냅샷을 검토하세요.
+Helm으로 설치했다면 차트 버전과 `helm get values <release> -n <namespace> -o yaml` 결과를 보존하세요. CA/TLS Secret은 안전하게 백업하고 사용 중인 Gateway API, EnvoyFilter, WasmPlugin 리소스도 포함하세요. 복구 전에 필요한 네임스페이스를 생성하고 스냅샷을 검토하세요.
 
 ## 모니터링 및 관찰성
 

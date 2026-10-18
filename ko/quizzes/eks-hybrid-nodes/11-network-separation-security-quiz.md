@@ -130,7 +130,7 @@ ENI IP는 바뀔 수 있습니다. 넓은 공유 subnet을 허용하면 다른 �
 
 </details>
 
-10. 보안 정책이 클라우드발 신규 연결을 전면 금지합니다. Webhook을 cloud node로 옮기거나 Hybrid Nodes Gateway를 쓰면 자동 충족되나요?
+10. 보안 정책이 클라우드발 신규 연결을 전면 금지합니다. Webhook을 cloud node로 옮기거나 Hybrid Nodes Gateway를 쓰면 정책이 자동으로 충족되나요?
     - A) 둘 중 하나만 적용하면 된다.
     - B) 아니다. Kubelet의 별도 연결과 gateway의 실제 양방향 경로를 포함해 설계를 다시 검토해야 한다.
     - C) PrivateLink라는 이름으로 설명하면 된다.

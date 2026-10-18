@@ -174,7 +174,7 @@ server = "https://registry-1.docker.io"
   capabilities = ["pull"]
 ```
 
-공개 미러는 모든 이미지나 프라이빗 이미지를 보장하지 않습니다. 태그→digest 해석(`resolve`) 권한은 신뢰할 수 있는 미러에만 부여합니다. 관리형 노드에서는 지원되는 부트스트랩/노드 설정 경로를 사용합니다.
+공개 미러는 모든 이미지나 프라이빗 이미지의 제공을 보장하지 않습니다. 태그→digest 해석(`resolve`) 권한은 신뢰할 수 있는 미러에만 부여합니다. 관리형 노드에서는 지원되는 부트스트랩/노드 설정 경로를 사용합니다.
 
 ### 전략 2: Amazon ECR Pull-through Cache
 
@@ -461,7 +461,7 @@ export HUB_TOKEN HUB_NAMESPACE
 
 ### 리포지터리와 태그 조회
 
-`HUB_NAMESPACE`는 기본적으로 로그인 사용자이며 조직을 조회하려면 해당 조직명과 권한을 설정합니다. 아래 명령은 권한 범위 내 첫 페이지만 조회합니다. `page_size` 최댓값은 100이며 전체 결과에는 응답의 `next`를 따라가야 합니다.
+`HUB_NAMESPACE`는 기본적으로 로그인 사용자이며 조직을 조회하려면 해당 조직명과 권한을 설정합니다. 아래 명령은 권한 범위 내 첫 페이지만 조회합니다. `page_size` 최댓값은 100이며 전체 결과를 조회하려면 응답의 `next`를 따라가야 합니다.
 
 ```bash
 : "${DOCKER_REPO:?Set repository name}"
@@ -526,7 +526,7 @@ jq -n --arg ns "$HUB_NAMESPACE" \
 
 ### GitLab CI 예시
 
-아래는 Docker executor 러너의 privileged DinD 및 `/certs/client` 공유가 준비됐다는 전제입니다. [GitLab의 TLS DinD 설정](https://docs.gitlab.com/ci/docker/using_docker_build/)을 먼저 적용합니다. 스캔은 Docker socket 마운트 대신 빌드 산출물 tar를 읽습니다. 운영에서는 CI 이미지도 검증한 digest로 고정합니다.
+아래 예제는 Docker executor 러너의 privileged DinD 및 `/certs/client` 공유가 준비됐다는 전제로 작성되었습니다. [GitLab의 TLS DinD 설정](https://docs.gitlab.com/ci/docker/using_docker_build/)을 먼저 적용합니다. 스캔 시에는 Docker socket 마운트 대신 빌드 산출물 tar를 읽습니다. 운영에서는 CI 이미지도 검증한 digest로 고정합니다.
 
 ```yaml
 # .gitlab-ci.yml

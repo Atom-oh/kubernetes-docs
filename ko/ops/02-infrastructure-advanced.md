@@ -264,7 +264,7 @@ output "backend_port" { value = var.backend_port }
 
 DNS로 클러스터를 선택하려면 **서로 독립적인 실제 ALB/NLB endpoint 두 개**가 각각 의도한 클러스터로 이어져야 합니다. `blue.example.com`과 `green.example.com`이 같은 공유 NLB를 가리키면 이름·가중치·헬스 체크 이름이 달라도 다른 타겟 그룹을 선택하지 않습니다.
 
-별도 `dns/` root는 두 로드밸런서가 이미 존재한다는 전제입니다. `app.<domain>`의 가중치 레코드, 색상별 직접 접근 이름, 별도 `failover.<domain>` 이름을 보여 줍니다. 필요한 이름만 선택하고 같은 이름/type에 서로 다른 라우팅 정책을 섞지 않습니다.
+별도 `dns/` root는 두 로드밸런서가 이미 존재한다는 전제로 구성합니다. `app.<domain>`의 가중치 레코드, 색상별 직접 접근 이름, 별도 `failover.<domain>` 이름을 보여 줍니다. 필요한 이름만 선택하고 같은 이름/type에 서로 다른 라우팅 정책을 섞지 않습니다.
 
 ```hcl
 # dns/main.tf

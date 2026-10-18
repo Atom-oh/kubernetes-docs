@@ -920,7 +920,7 @@ histogram_quantile(0.95,
 envoy_server_uptime < 300
 ```
 
-실제 프록시 버전은 `istioctl version`, 동기화·NACK은 `istioctl proxy-status`로 확인합니다. 프로세스 나이는 설정 최신성을 나타내지 않으며 숫자형 Envoy version gauge를 버전 레이블 분포로 집계할 수 없습니다. mTLS 오류는 [mTLS 가이드](../security/01-mtls.md)의 TLS 검증 카운터·인증서를 확인합니다.
+실제 프록시 버전은 `istioctl version`, 동기화·NACK은 `istioctl proxy-status`로 확인합니다. 프로세스 실행 기간은 설정의 최신성을 나타내지 않으며 숫자형 Envoy version gauge를 버전 레이블 분포로 집계할 수 없습니다. mTLS 오류는 [mTLS 가이드](../security/01-mtls.md)의 TLS 검증 카운터·인증서를 확인합니다.
 
 ## 메트릭 최적화
 

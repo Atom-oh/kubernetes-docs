@@ -425,7 +425,7 @@ spec:
     namespace: mc-demo
 ```
 
-The API is Linkerd AuthorizationPolicy with Server `v1beta3`, not the nonexistent ServerAuthorization `v1beta2`. The standard Kubernetes identity is DNS-form, not the previously shown Istio-style SPIFFE URI.
+The API is Linkerd AuthorizationPolicy with Server `v1beta3`, not the nonexistent ServerAuthorization `v1beta2`. The standard Kubernetes identity is in DNS form, not the previously shown Istio-style SPIFFE URI.
 
 The same ServiceAccount/namespace/trust-domain combination can have the same identity in multiple clusters. Separate issuer keys do not introduce an implicit cryptographic cluster ID. This policy permits that workload identity; it does not prove “East only.” Design distinct identities and trust boundaries where required, and evaluate the identity actually visible at each enforcement point.
 

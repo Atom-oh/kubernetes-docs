@@ -16,7 +16,7 @@ Both cluster and client modes are supported; Spark 4.2 documents Kubernetes 1.34
 <details>
 <summary>Show answer</summary>
 
-The driver requests executor pods through the API. Kubernetes scheduler chooses nodes and kubelets start containers. The driver's Spark schedulers assign tasks to registered executors. Neither the API server nor driver replaces Kubernetes scheduling.
+The driver requests executor pods through the API. The Kubernetes scheduler chooses nodes and kubelets start containers. The driver's Spark schedulers assign tasks to registered executors. Neither the API server nor the driver replaces Kubernetes scheduling.
 
 </details>
 
@@ -34,7 +34,7 @@ No. Nodes, Kubernetes, images, networking, storage and observability remain. The
 <details>
 <summary>Show answer</summary>
 
-No. Enable dynamic allocation, but shuffle tracking already defaults true in 4.2 and dates from 3.0. Stock Kubernetes ESS is unsupported; decommission-based preservation or suitable reliable ShuffleDataIO are alternatives with conditions. Overlapping mechanisms can delay removal.
+No. Enable dynamic allocation, but shuffle tracking already defaults to true in 4.2 and dates from 3.0. Stock Kubernetes ESS is unsupported; decommission-based preservation or suitable reliable ShuffleDataIO are alternatives with conditions. Overlapping mechanisms can delay removal.
 
 </details>
 
@@ -70,7 +70,7 @@ batch.size controls batches of pod requests. Min/initial/max define executor bou
 <details>
 <summary>Show answer</summary>
 
-Cores relate to default CPU requests and executor task capacity; CPU limits require limit.cores. The JVM example's 1 GiB heap plus 384 MiB minimum overhead yields 1408 MiB request/limit. Templates are read by the submitter and composed by Spark, not incomplete pods to kubectl apply.
+Cores relate to default CPU requests and executor task capacity; CPU limits require limit.cores. The JVM example's 1 GiB heap plus 384 MiB minimum overhead yields a 1408 MiB request/limit. Templates are read by the submitter and composed by Spark, not incomplete pods to kubectl apply.
 
 </details>
 

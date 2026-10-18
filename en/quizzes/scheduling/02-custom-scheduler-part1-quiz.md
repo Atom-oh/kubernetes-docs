@@ -23,7 +23,7 @@ D. Container image download
 The main role of a scheduler in Kubernetes is to assign pods to appropriate nodes. The scheduler watches for newly created pods and finds the best node to run pods that have not yet been assigned to a node.
 
 **Main Functions of the Scheduler:**
-1. **Pod-Node Assignment**: Selects the optimal node considering pod requirements and node available resources.
+1. **Pod-Node Assignment**: Selects the optimal node considering pod requirements and available node resources.
 2. **Filtering**: Excludes nodes that cannot run the pod (e.g., insufficient resources, taints, etc.).
 3. **Scoring**: Scores suitable nodes to select the optimal node.
 4. **Binding**: Binds the pod to the selected node to finalize the scheduling decision.
@@ -538,7 +538,7 @@ extenders:
   ignorable: false
 ```
 
-With `ignorable: false`, an extender filter failure blocks that scheduling attempt. Setting it true could bypass a required custom constraint. Prioritization errors are handled differently: Kubernetes1.35.8 logs the failure and omits that extender’s scores, so a score must not enforce a mandatory rule. Prefer a framework plugin where possible; test timeout, retry and failure behavior.
+With `ignorable: false`, an extender filter failure blocks that scheduling attempt. Setting it true could bypass a required custom constraint. Prioritization errors are handled differently: Kubernetes 1.35.8 logs the failure and omits that extender’s scores, so a score must not enforce a mandatory rule. Prefer a framework plugin where possible; test timeout, retry and failure behavior.
 
 3. **Multiple schedulers** use distinct `profiles[].schedulerName` values and separate leader-election groups. Use the complete Part1 Deployment/RBAC rather than launching a second process with the default scheduler's identity or Lease.
 
@@ -644,7 +644,7 @@ preemptionPolicy: PreemptLowerPriority  # Preemption policy (default: PreemptLow
 1. **value**: Priority value; higher values mean higher priority. User-defined values must be at most 1000000000; the built-in critical classes use the reserved higher range.
 2. **globalDefault**: When set to true, this class becomes the cluster-wide default for newly admitted Pods without a class; existing Pods are not retroactively changed. All lab classes below use false.
 3. **description**: Description of the priority class.
-4. **preemptionPolicy**: Preemption policy, can be set to `PreemptLowerPriority` (default) or `Never`.
+4. **preemptionPolicy**: Preemption policy, which can be set to `PreemptLowerPriority` (default) or `Never`.
 
 **Applying PriorityClass to a Pod:**
 ```yaml
@@ -661,7 +661,7 @@ spec:
 
 **Priority and Preemption Behavior:**
 1. **Scheduling priority**: Higher priority pods are processed first in the scheduling queue.
-2. **Preemption**: When there is no node to schedule a high priority pod, the scheduler can remove (preempt) lower priority pods to free up space.
+2. **Preemption**: When there is no node on which to schedule a high priority pod, the scheduler can remove (preempt) lower priority pods to free up space.
 3. **Preemption policy**: Pods using `preemptionPolicy: Never` do not preempt other Pods, but may themselves be preempted. Queue backoff can allow lower-priority Pods to proceed while a higher-priority Pod cannot fit.
 
 **System PriorityClasses:**

@@ -67,7 +67,7 @@ NodePool 요구사항은 spot·on-demand와 구성된 reserved 용량을 허용�
 **정답: B) 워크로드 제약 아래 가능한 노드 삭제 또는 더 저렴한 대체를 평가**
 
 **설명:**
-Consolidation은 워크로드 제약과 해당 disruption 통제 아래에서 가능한 삭제 또는 더 저렴한 대체를 찾습니다. 노드 삭제·저가 노드로 일대일 교체·다중 노드 통합이 가능하므로 노드 수가 항상 감소하지는 않습니다. WhenEmpty는 적합한 빈 노드로 제한합니다. consolidateAfter는 관련 Pod 변경 후 후보가 되기까지의 지연이며 종료 완료 기한이나 CPU 사용률 임계값이 아닙니다.
+Consolidation은 워크로드 제약과 해당 disruption 통제 아래에서 가능한 삭제 또는 더 저렴한 대체를 찾습니다. 노드 삭제·저가 노드로 일대일 교체·다중 노드 통합이 가능하므로 노드 수가 항상 감소하지는 않습니다. WhenEmpty는 통합 대상을 적합한 빈 노드로 제한합니다. consolidateAfter는 관련 Pod 변경 후 후보가 되기까지의 지연이며 종료 완료 기한이나 CPU 사용률 임계값이 아닙니다.
 </details>
 
 5. Karpenter의 expireAfter 설정의 목적은 무엇인가요?
@@ -83,7 +83,7 @@ Consolidation은 워크로드 제약과 해당 disruption 통제 아래에서 �
 **정답: B) 만료에 따른 드레이닝을 시작하는 노드 나이**
 
 **설명:**
-expireAfter는 해당 나이에 도달하면 만료 드레이닝을 시작합니다. terminationGracePeriod가 없으면 PDB·do-not-disrupt Pod가 완료를 지연시킬 수 있습니다. terminationGracePeriod를 설정하면 기한 후 남은 Pod를 강제 삭제할 수 있고 외부 인터럽션 기한도 용량을 제거할 수 있습니다. 교체는 현재 적합한 AMI·유형을 사용하며 반드시 더 새로운 것은 아닙니다. 대체 노드가 먼저 Ready가 된다고 보장하지 않습니다.
+expireAfter는 노드가 해당 나이에 도달하면 만료 드레이닝을 시작합니다. terminationGracePeriod가 없으면 PDB·do-not-disrupt Pod가 완료를 지연시킬 수 있습니다. terminationGracePeriod를 설정하면 기한 후 남은 Pod를 강제 삭제할 수 있고 외부 인터럽션 기한도 용량을 제거할 수 있습니다. 교체는 현재 적합한 AMI·유형을 사용하며 반드시 더 새로운 것은 아닙니다. 대체 노드가 먼저 Ready가 된다고 보장하지 않습니다.
 </details>
 
 6. Karpenter에서 NodePool의 리소스 제한을 설정하는 필드는 무엇인가요?
@@ -99,7 +99,7 @@ expireAfter는 해당 나이에 도달하면 만료 드레이닝을 시작합니
 **정답: B) spec.limits**
 
 **설명:**
-spec.limits는 동적 NodePool의 총 리소스를 제한합니다. cpu: "1000" 같은 문자열 수량으로 API·GitOps 형식 차이를 피할 수 있습니다. 병렬 프로비저닝 검사는 최종 일관성이므로 급격한 확장 중 초과할 수 있으며 엄격한 비용·과금 상한은 아닙니다.
+spec.limits는 동적 NodePool의 총 리소스를 제한합니다. cpu: "1000" 같은 문자열 수량으로 API·GitOps 형식 차이를 피할 수 있습니다. 병렬 프로비저닝 검사는 최종 일관성을 따르므로 급격한 확장 중 초과할 수 있으며 엄격한 비용·과금 상한은 아닙니다.
 </details>
 
 7. Karpenter의 Drift 기능은 무엇을 감지하고 처리하나요?
@@ -169,7 +169,7 @@ spec.blockDeviceMappings로 EBS 디바이스를 설정합니다. AL2023 예제�
 **정답: PDB (PodDisruptionBudget)**
 
 **설명:**
-PDB는 일치하는 정상 복제본 수에 따라 자발적 eviction을 제한합니다. 복제본을 생성하거나 비자발적인 인스턴스 손실·강제 복구·설정된 terminationGracePeriod 만료를 막지는 않습니다. minAvailable: 2는 축출 제약이며 Pod2개가 항상 실행·서비스 중이라는 보장이 아닙니다.
+PDB는 일치하는 정상 복제본 수에 따라 자발적 eviction을 제한합니다. 복제본을 생성하거나 비자발적인 인스턴스 손실·강제 복구·설정된 terminationGracePeriod 만료를 막지는 않습니다. minAvailable: 2는 축출 제약이며 Pod 2개가 항상 실행·서비스 중이라는 보장이 아닙니다.
 </details>
 
 12. EC2NodeClass에서 Karpenter가 사용할 서브넷과 보안 그룹을 선택하는 방법은 무엇인가요?
@@ -186,7 +186,7 @@ PDB는 일치하는 정상 복제본 수에 따라 자발적 eviction을 제한�
 
 ## 실습 문제
 
-13. Spot과 On-Demand 폴백, m5/c5/r5 유형을 허용하고 빈 노드가30분 후 통합 후보가 되는 동적 NodePool을 작성하세요.
+13. Spot과 On-Demand 폴백, m5/c5/r5 유형을 허용하고 빈 노드가 30분 후 통합 후보가 되는 동적 NodePool을 작성하세요.
 
 <details>
 
@@ -286,7 +286,7 @@ spec:
 ```
 
 **설명:**
-AL2023 학습 예제입니다. @latest는 해석된 AMI와 드리프트를 바꿀 수 있으므로 운영 전 승인 릴리스·AMI를 고정·검증하세요. private 표시는 실제 경로를 확인한 서브넷에 미리 붙이는 사용자 정의 태그입니다. IMDSv2는 여러 메타데이터 공격 경로를 줄이지만 모든 SSRF를 막지 않습니다. 홉 제한1은 여러 비-host-network 컨테이너 경로를 제한하므로 CNI·워크로드 인증 설계와 함께 시험해야 합니다. 지정한 인스턴스 프로필·노드 접근·KMS/볼륨·네트워크 경로가 필요합니다.
+AL2023 학습 예제입니다. @latest는 해석된 AMI와 드리프트를 바꿀 수 있으므로 운영 전 승인 릴리스·AMI를 고정·검증하세요. private 표시는 실제 경로를 확인한 서브넷에 미리 붙이는 사용자 정의 태그입니다. IMDSv2는 여러 메타데이터 공격 경로를 줄이지만 모든 SSRF를 막지 않습니다. 홉 제한 1은 여러 비-host-network 컨테이너 경로를 제한하므로 CNI·워크로드 인증 설계와 함께 시험해야 합니다. 지정한 인스턴스 프로필·노드 접근·KMS/볼륨·네트워크 경로가 필요합니다.
 </details>
 
 15. Karpenter 설치 후 상태를 확인하고, 프로비저닝 문제를 디버깅하는 명령어들을 작성하세요.

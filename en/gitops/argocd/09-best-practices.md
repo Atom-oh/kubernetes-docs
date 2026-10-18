@@ -410,7 +410,7 @@ Also retain pinned installation manifests/Helm values, CRDs and extension contro
 
 ### Velero Configuration Backup Alternative
 
-This Schedule assumes an installed Velero and an available `aws-s3` BackupStorageLocation. Verify schedule timezone, encryption, and access control. A part-of label selector can omit user-created Applications, so the example has no such filter. CRD/installation/PV recovery remains a separate part of DR.
+This Schedule assumes a Velero installation and an available `aws-s3` BackupStorageLocation. Verify schedule timezone, encryption, and access control. A part-of label selector can omit user-created Applications, so the example has no such filter. CRD/installation/PV recovery remains a separate part of DR.
 
 ```yaml
 apiVersion: velero.io/v1

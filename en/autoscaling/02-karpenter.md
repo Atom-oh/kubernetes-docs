@@ -85,7 +85,7 @@ These are independent learning examples for an existing cluster, not a productio
 
 ### Prerequisites
 
-- Use a Kubernetes version supported by your platform and the Karpenter matrix. The published matrix lists minimum Karpenter 1.6 for Kubernetes1.34, 1.9 for1.35 and1.13 for1.36; these minimums do not mean every old Karpenter minor remains maintained. The v1.14 matrix does not include1.37, and the v1.15 matrix requires Karpenter1.15.x for Kubernetes1.37. EKS version availability/support must be checked separately.
+- Use a Kubernetes version supported by your platform and the Karpenter matrix. The published matrix lists minimum Karpenter 1.6 for Kubernetes 1.34, 1.9 for 1.35 and 1.13 for 1.36; these minimums do not mean every old Karpenter minor remains maintained. The v1.14 matrix does not include 1.37, and the v1.15 matrix requires Karpenter 1.15.x for Kubernetes 1.37. EKS version availability/support must be checked separately.
 - kubectl configured
 - Cloud provider credentials and permissions
 - Helm (optional)
@@ -312,7 +312,7 @@ limits:
 
 ### Experimental DRA Allocation Tracking (v1.13)
 
-Core Karpenter v1.13 added DRA device-allocation tracking. This is not a blanket guarantee of production DRA provisioning: the AWS1.14.1 chart defaults `settings.ignoreDRARequests: true`, and upstream labels formal DRA support as not yet GA. A Kubernetes1.29 minimum is not sufficient evidence of compatibility. Validate the exact Kubernetes resource API, DRA driver, ResourceClaims/ResourceSlices and Karpenter configuration; do not treat DRA claims as interchangeable with the device-plugin extended-resource example below.
+Core Karpenter v1.13 added DRA device-allocation tracking. This is not a blanket guarantee of production DRA provisioning: the AWS 1.14.1 chart defaults `settings.ignoreDRARequests: true`, and upstream labels formal DRA support as not yet GA. A Kubernetes 1.29 minimum is not sufficient evidence of compatibility. Validate the exact Kubernetes resource API, DRA driver, ResourceClaims/ResourceSlices and Karpenter configuration; do not treat DRA claims as interchangeable with the device-plugin extended-resource example below.
 
 ### Node Expiration Configuration
 
@@ -339,14 +339,14 @@ Karpenter v1.14, released July 11, 2026, brings:
 
 - **CapacityBuffers API support**: an alpha capacity-buffer integration; `CapacityBuffer` is disabled by default and requires the matching CRDs/controller configuration. Reserved headroom is not free capacity or a latency guarantee.
 - **Preview instance type support**: recognizes eligible preview offerings; actual provisioning still requires account/Region access and availability.
-- **Nitro Enclaves support**: the provider sets generated launch-template `EnclaveOptions.Enabled` when NodeClaim resource requests include `eks.amazonaws.com/nip-slots`. Compatible instances, AMI and device-plugin setup remain prerequisites; there is no `EC2NodeClass.spec.enclaveOptions` field in1.14.1.
+- **Nitro Enclaves support**: the provider sets generated launch-template `EnclaveOptions.Enabled` when NodeClaim resource requests include `eks.amazonaws.com/nip-slots`. Compatible instances, AMI and device-plugin setup remain prerequisites; there is no `EC2NodeClass.spec.enclaveOptions` field in 1.14.1.
 - Bug fixes: accounting for the primary IP on secondary ENIs, ensuring the Zonal Shift cache is hydrated, wiring an AWS SDK client timeout into the operator config, and more
 
 See the [v1.14.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0) for details.
 
-On July17,2026, older branches received patches including1.3.8 and1.11.3. This historical backport does not establish continued support for all intervening minors. The current support policy lists LTS1.9 through February2027 and LTS1.14 through July2027; regular minors are supported only until the next minor. Select a supported line and follow its migration guidance rather than assuming an old line remains maintained.
+On July 17, 2026, older branches received patches including 1.3.8 and 1.11.3. This historical backport does not establish continued support for all intervening minors. The current support policy lists LTS 1.9 through February 2027 and LTS 1.14 through July 2027; regular minors are supported only until the next minor. Select a supported line and follow its migration guidance rather than assuming an old line remains maintained.
 
-AWS’s July22,2026 announcement added EFA network-interface and placement-group configuration for Karpenter/EKS Auto Mode. In AWS Karpenter1.14.1, the concrete fields are `EC2NodeClass.spec.networkInterfaces` and `spec.placementGroupSelector` (not NodePool fields). EFA-only interfaces consume no VPC IP addresses, but a primary `interface` at device/card index0 is still required. Select an existing placement group by name or ID; its cluster/spread/partition strategy and supported instances constrain placement. The example here does not configure or validate an HPC workload.
+AWS’s July 22, 2026 announcement added EFA network-interface and placement-group configuration for Karpenter/EKS Auto Mode. In AWS Karpenter 1.14.1, the concrete fields are `EC2NodeClass.spec.networkInterfaces` and `spec.placementGroupSelector` (not NodePool fields). EFA-only interfaces consume no VPC IP addresses, but a primary `interface` at device/card index 0 is still required. Select an existing placement group by name or ID; its cluster/spread/partition strategy and supported instances constrain placement. The example here does not configure or validate an HPC workload.
 
 ### August 2026 Update: v1.14.1 Patch Release
 
@@ -422,7 +422,7 @@ securityGroupSelectorTerms:
 
 ### AMI Configuration
 
-Karpenter selects AMIs through `amiSelectorTerms`. An alias selects a family/version; **`@latest` is not a version pin** and may change resolved AMIs and trigger drift. The `@latest` samples are learning examples. For production, resolve and test an explicit supported AMI release (`al2023@vYYYYMMDD` with a real release date) or approved AMI IDs before rollout. AL2 EKS AMIs are not published for Kubernetes1.33+. The variants below are alternatives, and a Custom AMI requires working bootstrap, registration taint, kubelet, CNI/runtime and identity setup.
+Karpenter selects AMIs through `amiSelectorTerms`. An alias selects a family/version; **`@latest` is not a version pin** and may change resolved AMIs and trigger drift. The `@latest` samples are learning examples. For production, resolve and test an explicit supported AMI release (`al2023@vYYYYMMDD` with a real release date) or approved AMI IDs before rollout. AL2 EKS AMIs are not published for Kubernetes 1.33+. The variants below are alternatives, and a Custom AMI requires working bootstrap, registration taint, kubelet, CNI/runtime and identity setup.
 
 ```yaml
 # Amazon Linux 2023
@@ -529,7 +529,7 @@ spec:
 
 ### Draining Configuration
 
-Karpenter normally uses eviction during graceful draining. Helm settings configure the controller; NodePool disruption budgets limit voluntary consolidation/drift starts, not all simultaneous node loss. A30% budget rounds up, then subtracts deleting/not-ready nodes; it is not a strict30% ceiling. Expiration, interruptions and repair can have different forceful behavior. Configure the named SQS queue, EventBridge rules/targets, queue policy and controller permissions before enabling `interruptionQueue`; the Helm field alone does not create them.
+Karpenter normally uses eviction during graceful draining. Helm settings configure the controller; NodePool disruption budgets limit voluntary consolidation/drift starts, not all simultaneous node loss. A 30% budget rounds up, then subtracts deleting/not-ready nodes; it is not a strict 30% ceiling. Expiration, interruptions and repair can have different forceful behavior. Configure the named SQS queue, EventBridge rules/targets, queue policy and controller permissions before enabling `interruptionQueue`; the Helm field alone does not create them.
 
 ```yaml
 settings:

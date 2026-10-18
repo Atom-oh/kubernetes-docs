@@ -21,7 +21,7 @@ WorkloadEntry는 Virtual Machine (VM)이나 베어메탈 서버를 Istio 서비�
 
 ## 개요
 
-WorkloadEntry는 워크로드를 기술합니다. 생성만으로 Envoy 설치, ID 초기화, 네트워크 연결, DNS 레코드가 만들어지지는 않습니다. 이 장은 Sidecar 모드 VM 통합을 사용합니다. 각 예제는 독립적이며 ServiceEntry, 선택할 WorkloadEntry, ServiceAccount의 네임스페이스를 맞추세요. 그림은 등록/구성 관계이며 추가 네트워크 홉이 아닙니다.
+WorkloadEntry는 워크로드를 기술합니다. 생성만으로 Envoy 설치, ID 초기화, 네트워크 연결이 이루어지거나 DNS 레코드가 만들어지지는 않습니다. 이 장은 Sidecar 모드 VM 통합을 사용합니다. 각 예제는 독립적이며 ServiceEntry, 선택할 WorkloadEntry, ServiceAccount의 네임스페이스를 맞추세요. 그림은 등록/구성 관계이며 추가 네트워크 홉이 아닙니다.
 
 ### WorkloadEntry란?
 
@@ -652,7 +652,7 @@ if __name__ == '__main__':
 
 ### Prometheus 메트릭 수집
 
-ServiceMonitor는 WorkloadEntry/ServiceEntry가 아닌 Kubernetes Service/엔드포인트를 찾습니다. 이 VM에는 9187의 postgres_exporter를 설치하고 WorkloadEntry/ServiceEntry에 같은 포트를 등록한 뒤 기존 수집기 설정에 명시적 scrape job을 추가하세요. 수집기는 가상 호스트 DNS 조회, 메시 mTLS, exporter AuthorizationPolicy에서 허용한 ID가 필요합니다.
+ServiceMonitor는 WorkloadEntry/ServiceEntry가 아닌 Kubernetes Service/엔드포인트를 찾습니다. 이 VM에는 9187의 postgres_exporter를 설치하고 WorkloadEntry/ServiceEntry에 같은 포트를 등록한 뒤 기존 수집기 설정에 명시적 scrape job을 추가하세요. 수집기에는 가상 호스트 DNS 조회, 메시 mTLS, exporter AuthorizationPolicy에서 허용한 ID가 필요합니다.
 
 ```yaml
 # Fragment for the existing Prometheus scrape_configs

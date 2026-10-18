@@ -40,7 +40,7 @@
 
 ## 정확성에 대한 안내
 
-이 섹션의 사실 관계는 AWS 공식 문서, AWS Gateway API Controller 공식 문서, `aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice` 레퍼런스 구현, SPIFFE/SPIRE 공식 문서를 근거로 작성했습니다.
+이 섹션의 사실 관계는 AWS 공식 문서, AWS Gateway API Controller 공식 문서, `aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice` 레퍼런스 구현, SPIFFE/SPIRE 공식 문서를 근거로 정리했습니다.
 
 공식 문서로 확인되지 않은 항목은 단정하지 않고 `확인 필요` 블록으로 표시했습니다. Lattice는 기능이 계속 추가되는 서비스이므로, 특히 **quotas와 요금은 리전·시점에 따라 달라집니다.** 설계 확정 전에 Service Quotas 콘솔과 [VPC Lattice 요금 페이지](https://aws.amazon.com/vpc/lattice/pricing/)에서 현재값을 직접 확인하시기 바랍니다.
 

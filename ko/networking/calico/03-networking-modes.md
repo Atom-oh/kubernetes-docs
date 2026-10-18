@@ -14,7 +14,7 @@
 | Direct / 비캡슐화 | Pod 네트워크 오버레이 없이 Pod IP 패킷 라우팅 | 언더레이와 반환 경로가 Pod 주소를 라우팅해야 함 |
 | CrossSubnet | IPIP 또는 VXLAN의 설정 | 관련 노드 주소가 서로 다른 설정 서브넷일 때만 노드 간 트래픽 캡슐화 |
 
-`Always`는 해당 pool 주소로 가는 대상 노드 간 트래픽에 적용하며 같은 노드 통신에는 물리 터널이 필요하지 않습니다. `Never`는 해당 캡슐화를 끄는 값이지 모든 네트워킹을 끄는 값이 아닙니다. CrossSubnet은 AZ·리전·WAN 링크 감지기가 아니며 한 AZ의 다른 서브넷 사이도 캡슐화될 수 있습니다. Calico가 사용하는 노드 주소·서브넷 마스크를 확인해야 합니다.
+`Always`는 해당 pool 주소로 가는 대상 노드 간 트래픽에 적용되며 같은 노드 통신에는 물리 터널이 필요하지 않습니다. `Never`는 해당 캡슐화를 끄는 값이지 모든 네트워킹을 끄는 값이 아닙니다. CrossSubnet은 AZ·리전·WAN 링크 감지기가 아니며 한 AZ의 다른 서브넷 사이도 캡슐화될 수 있습니다. Calico가 사용하는 노드 주소·서브넷 마스크를 확인해야 합니다.
 
 기본값은 설치 방식·제공자·데이터플레인에 따라 다릅니다. “모든 클라우드에서 IPIP 기본”이나 “Direct 항상 최고 성능”으로 일반화할 수 없습니다. [오버레이 가이드](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)에서 지원 경로를 확인하세요.
 
@@ -247,7 +247,7 @@ kubectl patch installation.operator.tigera.io default --type merge   -p '{"spec"
 | 9000 | 8980 | 8950 | 8930 | 8940 | 8920 |
 | 실제 AWS 경로가 지원하는 9001 | 8981 | 8951 | 8931 | 8941 | 8921 |
 
-전체 경로가 점보를 지원해야 하며 인터페이스 설정만으로는 부족합니다. 워크로드 경로는 노드뿐 아니라 진단 워크로드에서 확인하세요.
+전체 경로가 점보를 지원해야 하며 인터페이스 설정만으로는 부족합니다. 워크로드 경로는 노드뿐 아니라 진단 워크로드에서도 확인하세요.
 
 다음 제한된 시험은 iputils와 필요한 권한이 있는 승인된 Linux 진단 Pod를 가정합니다. 실제 Pod 이름·주소를 사용하세요. 아래는 **IPv4 ICMP** 페이로드 크기이며 IPv4 20바이트와 ICMP 8바이트를 더합니다. IPv6 계산은 다르고 성공한 probe가 모든 ECMP 경로의 안전성을 증명하지는 않습니다.
 
@@ -265,7 +265,7 @@ kubectl -n "$CHECK_NS" exec "$CHECK_POD" -- ping -4 -c 3 -W 2 -M do -s 1452 "$DE
 kubectl -n "$CHECK_NS" exec "$CHECK_POD" -- ping -4 -c 3 -W 2 -M do -s 1422 "$DEST_IPV4"
 ```
 
-세 페이로드는 IP 패킷 크기 1500·1480·1450을 시험합니다. 실패 원인은 MTU 외에 정책·ICMP 필터링일 수도 있습니다. 패킷 캡처에는 적절한 권한으로 IPv4 fragmentation-needed와 IPv6 Packet Too Big을 확인해야 하며 기존 IPv4 전용 필터는 IPv6를 포함하지 않았습니다.
+세 페이로드는 IP 패킷 크기 1500·1480·1450을 시험합니다. 실패 원인은 MTU 외에 정책·ICMP 필터링일 수도 있습니다. 패킷 캡처 시에는 적절한 권한으로 IPv4 fragmentation-needed와 IPv6 Packet Too Big을 확인해야 하며 기존 IPv4 전용 필터는 IPv6를 포함하지 않았습니다.
 
 ## 모드 변경과 주소 이전 구분
 
@@ -287,7 +287,7 @@ Calico가 IPAM을 맡고 오케스트레이터·네트워크 설계가 지원하
 
 1. 기존 pool·Kubernetes/kube-proxy cluster CIDR·명시적 pool 요청·모든 할당을 조사합니다. Cluster CIDR 밖의 새 pool은 NAT를 바꾸거나 트래픽을 끊을 수 있습니다. 기존 예제의 10.245/16이 소개 실습의 10.244/16 클러스터와 자동 호환되지는 않습니다.
 2. 소유자를 통해 검증한 비중첩 pool을 추가하고 기존 pool을 철수하기 전에 새 할당을 시험합니다. 기존 워크로드를 위해 기존 pool은 유지합니다.
-3. 소유자에 맞는 방법으로 기존 pool의 새 할당을 막습니다. 독립 pool의 `spec.disabled: true`는 IPAM에서 제외합니다. Operator의 `nodeSelector: "!all()"`은 **자동 선택**을 막지만 명시적 기존 pool 요청은 selector를 우회하므로 그 요청도 제거해야 합니다.
+3. 소유자에 맞는 방법으로 기존 pool의 새 할당을 막습니다. 독립 pool의 `spec.disabled: true`는 해당 pool을 IPAM에서 제외합니다. Operator의 `nodeSelector: "!all()"`은 **자동 선택**을 막지만 명시적 기존 pool 요청은 selector를 우회하므로 그 요청도 제거해야 합니다.
 4. 선택한 워크로드를 제한된 단위로 옮기며 주소·MTU·라우트·정책·애플리케이션 준비 상태를 확인합니다. Pod 재생성은 중단과 IP 변경을 일으킬 수 있으며 새 pool이 원활한 롤백을 보장하지 않습니다.
 5. 터널·LoadBalancer 용도 등을 포함한 남은 할당·의존성을 모두 확인한 뒤에만 기존 pool을 폐기합니다. Pod 목록만으로는 부족합니다. 소유자에서 제거할 때 NAT·라우팅 영향도 고려해야 합니다.
 

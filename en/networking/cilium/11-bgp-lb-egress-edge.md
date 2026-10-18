@@ -58,7 +58,7 @@ The BGP Control Plane, L2 announcements and LB IPAM are therefore **independent*
 
 Control flow (from [`pkg/bgp/README.md`](https://github.com/cilium/cilium/blob/v1.20.2/pkg/bgp/README.md)): the operator watches `CiliumBGPClusterConfig` and the `CiliumBGPPeerConfig`/`CiliumBGPAdvertisement` objects it references, and creates, updates or deletes one `CiliumBGPNodeConfig` per node that matches the cluster config's `nodeSelector`. Each agent watches only its own `CiliumBGPNodeConfig` plus the peer/advertisement configs, Secrets, Services and (for multi-pool) `CiliumPodIPPool`, and reconciles its GoBGP instances. The operator therefore must be running for config changes to propagate.
 
-The speaker is GoBGP embedded in the agent. GoBGP is the only supported router implementation. The embedded library moved from `gobgp/v3` (1.19) to `gobgp/v4` (1.20.2 and 1.21.0-pre.3; `go.mod` of each tag). IPv4 and IPv6, single and dual stack are supported, but you can only advertise address families the agent itself is running.
+The speaker is GoBGP embedded in the agent. GoBGP is the only supported router implementation. The embedded library moved from `gobgp/v3` (1.19) to `gobgp/v4` (1.20.2 and 1.21.0-pre.3; `go.mod` of each tag). IPv4 and IPv6, single and dual stack are supported, but you can only advertise address families the agent itself is running with.
 
 ### 2.2 Enabling
 
@@ -102,7 +102,7 @@ All are cluster-scoped, `cilium.io/v2`. The `cilium.io/v2alpha1` copies of the s
 | `CiliumBGPNodeConfig` | `cbgpnode` | operator (read-only for users) | Resolved per-node config plus session status |
 | `CiliumBGPNodeConfigOverride` | `cbgpnodeoverride` | user | Per-node router ID, ASN, ports, source address |
 
-The linkage is two different mechanisms, which is a common source of mistakes:
+The linkage uses two different mechanisms, which is a common source of mistakes:
 
 ```
 CiliumBGPClusterConfig.spec.bgpInstances[].peers[].peerConfigRef.name  --by NAME-->  CiliumBGPPeerConfig
@@ -200,7 +200,7 @@ kubectl -n kube-system create secret generic bgp-auth \
 
 Reference it with `authSecretRef: bgp-auth`. A wrong password shows up as `dial: i/o timeout`, not an authentication error, because the kernel drops segments with bad signatures. A missing Secret does not stop the session: Cilium proceeds with an **empty** password, logs an error and sets `cilium.io/MissingAuthSecret`. MD5 cannot work if the session crosses NAT.
 
-**No BFD.** Cilium does not support BFD in any of 1.18 to 1.21-pre. Mitigations: low hold timers, a directly connected link (TCP closes immediately on link-down), Graceful Restart for the agent-restart case, and resilient hashing/Maglev (below).
+**No BFD.** Cilium does not support BFD in any version from 1.18 to 1.21-pre. Mitigations: low hold timers, a directly connected link (TCP closes immediately on link-down), Graceful Restart for the agent-restart case, and resilient hashing/Maglev (below).
 
 ### 2.5 Advertisements
 
@@ -355,7 +355,7 @@ The same three commands exist in 1.20.2 and 1.21.0-pre.3 (`pkg/bgp/commands/cell
 
 **Metrics** (agent, prefix `cilium_bgp_control_plane_`): `session_state` (1 = established), `advertised_routes`, `received_routes` (labels `instance_name`, `local_asn`, `neighbor`, `neighbor_asn`, `afi`, `safi`), `reconcile_errors_total{instance_name}`, `reconcile_run_duration_seconds{instance_name}`. Operator: `cilium_operator_bgp_control_plane_reconcile_errors_total{resource_kind,resource_name}` and `..._reconcile_run_duration_seconds`.
 
-> **Metric label change.** The 1.19.8 metrics page uses the label `vrouter`; 1.20.2 uses `instance_name`. The 1.20 upgrade notes do not mention the rename, so dashboards and alerts keyed on `vrouter` silently stop matching after 1.19 to 1.20. Update them as part of the upgrade.
+> **Metric label change.** The 1.19.8 metrics page uses the label `vrouter`; 1.20.2 uses `instance_name`. The 1.20 upgrade notes do not mention the rename, so dashboards and alerts keyed on `vrouter` silently stop matching after upgrading from 1.19 to 1.20. Update them as part of the upgrade.
 
 ### 2.9 v1 removal and the CRD version timeline
 
@@ -444,7 +444,7 @@ Behaviors worth knowing:
 - Class handling: a `LoadBalancer` Service with no class is served by LB IPAM by default. Helm `defaultLBServiceIPAM` is `lbipam` (default), `nodeipam` or `none`; with `none` only Services with a recognized class get an IP. A class Cilium does not recognize is ignored silently. The Service gets a condition `cilium.io/IPAMRequestSatisfied`.
 - IP families follow `ipFamilyPolicy`: SingleStack (IPv4 if both are available), PreferDualStack, RequireDualStack.
 - Request a specific address with `lbipam.cilium.io/ips: "a,b"` (the pool selector still applies; `.spec.loadBalancerIP` is deprecated). Do not request the first/last address of a pool.
-- **Sharing**: `lbipam.cilium.io/sharing-key` and `lbipam.cilium.io/sharing-cross-namespace: "ns1,ns2"|"*"`. 1.20.2: Services can share if no port/protocol conflicts. **[1.21 pre-release]** stricter compatibility: no same port+protocol, same `externalTrafficPolicy`, with `Local` both must select the same Pods unless every Service sets `lbipam.cilium.io/sharing-permit-different-pods: "true"` (BGP and L2 are not L4-aware, so traffic can be dropped), same namespace unless cross-namespace is permitted.
+- **Sharing**: `lbipam.cilium.io/sharing-key` and `lbipam.cilium.io/sharing-cross-namespace: "ns1,ns2"|"*"`. 1.20.2: Services can share if there are no port/protocol conflicts. **[1.21 pre-release]** stricter compatibility: no same port+protocol, same `externalTrafficPolicy`, with `Local` both must select the same Pods unless every Service sets `lbipam.cilium.io/sharing-permit-different-pods: "true"` (BGP and L2 are not L4-aware, so traffic can be dropped), same namespace unless cross-namespace is permitted.
 - **1.19 datapath change**: N/S TCP/UDP to an LB-IPAM IP on a port no Service defines is dropped.
 - Gateway API: `Gateway.spec.addresses` feeds LB IPAM; the `io.cilium/lb-ipam-ips` annotation in `spec.infrastructure.annotations` takes precedence and is slated for later deprecation.
 
@@ -547,7 +547,7 @@ Limitations:
 - **No HA in 1.20.2 or 1.21.0-pre.3.** `egressGateways[]` is static multi-gateway: each source endpoint is pinned to one gateway by a hash of its CiliumEndpoint UID. Changing the set reassigns endpoints and breaks existing connections (cilium/cilium#39245). No health check or automatic failover of a dead gateway appears in the source of either version (searched `pkg/egressgateway`). The 1.21-pre CRD differs from 1.20.2 only in CIDR types.
 - The gateway does not follow IP changes after selection; re-apply the policy.
 - A missing configured IP drops traffic with reason "No Egress IP configured".
-- A new Pod can send traffic with its own or node IP briefly before the policy is programmed.
+- A new Pod can send traffic with its own IP or the node's IP briefly before the policy is programmed.
 - SNAT port budget per (egress IP, remote IP:port) is about 65535 minus the upper bound of the node-port range (default 32767), i.e. 32768 connections. Watch with `cilium-dbg shell -- db/show nat-stats`.
 
 Inspect: `kubectl -n kube-system exec ds/cilium -- cilium-dbg bpf egress list` (source IP, destination CIDR, egress IP, gateway IP).
@@ -587,7 +587,7 @@ Rules: backend Pods must be in the policy's namespace; multi-port requires named
 
 Prerequisites: `kubeProxyReplacement=true`, `l7Proxy=true` (default), TPROXY support (iptables by default; `bpf.tproxy=true` is beta and removes the iptables dependency), and LoadBalancer Service support (or host-network mode, 1.16+).
 
-**How traffic flows.** eBPF intercepts packets to the Service port and redirects them (TPROXY) to the per-node Envoy. Traffic gets the special `ingress` identity, so policy applies twice: world to ingress, ingress to backend. Source IP is preserved with both `externalTrafficPolicy` values; with `Local` Cilium makes every node pass the health check port. Your `CiliumNetworkPolicy` must allow both hops. TLS passthrough means backends see Envoy's IP.
+**How traffic flows.** eBPF intercepts packets to the Service port and redirects them (TPROXY) to the per-node Envoy. Traffic gets the special `ingress` identity, so policy applies twice: world to ingress, ingress to backend. Source IP is preserved with both `externalTrafficPolicy` values; with `Local` Cilium makes every node pass health checks on the health check port. Your `CiliumNetworkPolicy` must allow both hops. TLS passthrough means backends see Envoy's IP.
 
 ### Ingress
 
@@ -619,7 +619,7 @@ Cilium 1.20.2 and 1.21.0-pre.3 use **Gateway API v1.6.1** (1.19.8: v1.4.1; 1.18.
 
 The generated Service is named `cilium-gateway-<gateway>` and is `LoadBalancer` by default. Customize through `CiliumGatewayClassConfig` (`cilium.io/v2alpha1`, namespaced, referenced from `GatewayClass.parametersRef`; alpha): `spec.service{type, externalTrafficPolicy, loadBalancerClass, ipFamilies, ipFamilyPolicy, allocateLoadBalancerNodePorts, loadBalancerSourceRanges, loadBalancerSourceRangesPolicy, trafficDistribution}`, `envoy.serverHeaderTransformation`, `httpOptions.grpcWebTranslation.enabled`. Per Gateway, `spec.infrastructure.annotations` and `labels` are copied onto the generated Service, which is how you pass `service.beta.kubernetes.io/aws-load-balancer-*` annotations. `spec.infrastructure.parametersRef` is not supported.
 
-Host-network mode (`gatewayAPI.hostNetwork.enabled=true`): Envoy listens on node interfaces; use ports above 1023 or grant `NET_BIND_SERVICE`; exclusive with LoadBalancer Service mode; incompatible with TCPRoute/UDPRoute; the Service becomes NodePort; at most 16 addresses appear in Gateway status.
+Host-network mode (`gatewayAPI.hostNetwork.enabled=true`): Envoy listens on node interfaces; use ports above 1023 or grant `NET_BIND_SERVICE`; mutually exclusive with LoadBalancer Service mode; incompatible with TCPRoute/UDPRoute; the Service becomes NodePort; at most 16 addresses appear in Gateway status.
 
 ### EKS pattern: CloudFront VPC origin to internal NLB to Cilium
 
@@ -674,7 +674,7 @@ SRv6 is **absent** as a supported feature. The 1.20.2 and 1.21.0-pre.3 sources h
 4. `cilium-dbg shell -- bgp/routes out ipv4 unicast` shows the node's PodCIDR; FRR `show ip route bgp` shows it learned.
 5. Delete the agent Pod on one node. With GR enabled, FRR should keep the routes (marked stale) until the restart time; without GR they disappear at once. Compare.
 
-**Rollback/cleanup**: delete the three BGP resources; remove the node labels. Deleting the ClusterConfig makes the operator remove the NodeConfigs and sessions close.
+**Rollback/cleanup**: delete the three BGP resources; remove the node labels. Deleting the ClusterConfig makes the operator remove the NodeConfigs and causes sessions to close.
 
 ### Lab 2: LB IPAM plus BGP, and traffic-policy interaction
 
@@ -701,7 +701,7 @@ SRv6 is **absent** as a supported feature. The 1.20.2 and 1.21.0-pre.3 sources h
 
 **Prerequisites**: KPR and `bpf.masquerade=true`, `egressGateway.enabled=true`, agents and operator restarted; an external web server container that logs client IPs; a node labeled `egress-node=true` with a secondary address on its device.
 
-1. Apply a policy like section 7 with that address and the server's CIDR.
+1. Apply a policy like the one in section 7 with that address and the server's CIDR.
 2. From a selected Pod, `curl` the server; its log should show the egress IP rather than the node or Pod IP.
 3. `cilium-dbg bpf egress list` on the source node lists the entry. Remove the node label: traffic to the CIDR should be dropped (no gateway).
 
@@ -716,7 +716,7 @@ SRv6 is **absent** as a supported feature. The 1.20.2 and 1.21.0-pre.3 sources h
 3. `aws ec2 describe-security-groups --profile <SANDBOX_PROFILE> --group-ids <nlb-sg> --query 'SecurityGroups[].IpPermissions'` must show only the CloudFront VPC-origin group or prefix list as sources, never `0.0.0.0/0` or `::/0`.
 4. Set the NLB as the VPC origin's target; request through the CloudFront domain.
 
-**Cleanup**: delete the Ingress or Gateway (the controller deletes the NLB), then verify the NLB is gone with a genuine not-found, not just a `deleting` state.
+**Cleanup**: delete the Ingress or Gateway (the controller deletes the NLB), then verify the NLB is gone with a genuine not-found response, not just a `deleting` state.
 
 ## Version Delta
 

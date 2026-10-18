@@ -154,7 +154,7 @@ This quiz tests your understanding of Linux operations skills used in Kubernetes
 
 </details>
 
-13. What SSH option is used for bastion jump?
+13. What SSH option is used for a bastion jump?
 
 <details>
 <summary>Show Answer</summary>
@@ -185,7 +185,7 @@ This is the default projected-token path; it may be absent if automount is disab
 
 ## Practical Questions
 
-16. Write a script with required DATABASE_URL and TIMEOUT default 30.
+16. Write a script with a required DATABASE_URL and a TIMEOUT default of 30.
 
 <details>
 <summary>Show Answer</summary>
@@ -209,7 +209,7 @@ kubectl get pods -A -o json | jq '[.items[] | select(([(.status.containerStatuse
 
 </details>
 
-18. Write an rsync command to sync yaml files through bastion.
+18. Write an rsync command to sync yaml files through a bastion host.
 
 <details>
 <summary>Show Answer</summary>
@@ -235,7 +235,7 @@ echo "=== kubelet ===" && systemctl status kubelet --no-pager
 
 </details>
 
-20. Explain ConfigMap env vars vs volume mount differences.
+20. Explain the differences between ConfigMap env vars and volume mounts.
 
 <details>
 <summary>Show Answer</summary>

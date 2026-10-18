@@ -45,7 +45,7 @@ Fluent Bit, Grafana Alloy, OpenTelemetry Collector를 비교하고 지원 종료
 | EKS Fargate | Host-file DaemonSet을 설치하지 않음; 관리형 Fargate log router나 적절한 API/앱 기반 경로 사용 |
 | EKS Auto Mode | 실제 host path·add-on 지원 확인; 관리 컴포넌트 vended log와 앱 stdout은 별도 |
 
-예제 목적지는 **이미 구성된 private mTLS log gateway**입니다. Gateway가 agent client 인증서를 신뢰하고, DNS와 일치하는 서버 인증서를 제공하며, Loki/OTLP 경로와 tenant 정책을 처리해야 합니다. 인증서·DNS·gateway·NetworkPolicy는 선행 조건이며 아래 설정이 생성하지 않습니다.
+예제 목적지는 **이미 구성된 private mTLS log gateway**입니다. Gateway가 agent client 인증서를 신뢰하고, DNS와 일치하는 서버 인증서를 제공하며, Loki/OTLP 경로와 tenant 정책을 처리해야 합니다. 인증서·DNS·gateway·NetworkPolicy는 선행 조건이며 아래 설정으로 생성되지 않습니다.
 
 ## FluentBit
 
@@ -367,7 +367,7 @@ kubectl apply -f fluent-bit-workload.yaml
 kubectl -n logging rollout status daemonset/fluent-bit
 ```
 
-예제 node log를 읽고 전용 state 디렉터리에 쓰기 위해 root로 실행하지만 추가 capability·권한 상승·writable root filesystem은 허용하지 않습니다. HostPath 사용은 적절한 cluster admission 정책이 필요합니다. 실제 OS의 파일 권한, SELinux/AppArmor, taint, storage에 맞게 조정합니다. 앱 log agent를 유지한다는 이유만으로 예약된 system-critical PriorityClass를 부여하지 않습니다.
+예제에서는 node log를 읽고 전용 state 디렉터리에 쓰기 위해 root로 실행하지만 추가 capability·권한 상승·writable root filesystem은 허용하지 않습니다. HostPath 사용에는 적절한 cluster admission 정책이 필요합니다. 실제 OS의 파일 권한, SELinux/AppArmor, taint, storage에 맞게 조정합니다. 앱 log agent를 유지한다는 이유만으로 예약된 system-critical PriorityClass를 부여하지 않습니다.
 
 Pod 종료 유예 45초는 Fluent Bit의 30초보다 길지만 장시간 장애에서 전달을 보장하지 않습니다. Resource limit은 예시입니다. Backend의 실제 record, tail offset, health, buffer/retry 지표를 확인하며 Ready Pod만으로 수집 완료를 판정하지 않습니다.
 

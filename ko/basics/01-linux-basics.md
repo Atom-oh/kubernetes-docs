@@ -18,7 +18,7 @@ Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 �
 
 ### 클라우드 환경 설정 (선택 사항)
 
-격리된 실습 VM을 사용합니다. AWS에서는 리전/아키텍처에 맞는 AL2023을 선택하며 고정 AMI ID는 다른 리전에서 재사용할 수 없습니다. AWS는 AL2 표준 지원이 2026-06-30 종료되었다고 안내합니다. 아래는 AMI 조회만 수행하므로 인스턴스 생성과 제한된 접근 경로를 별도로 준비한 후 기존 인스턴스에 접속합니다.
+격리된 실습 VM을 사용합니다. AWS에서는 리전/아키텍처에 맞는 AL2023을 선택하며 고정 AMI ID는 다른 리전에서 재사용할 수 없습니다. AWS는 AL2 표준 지원이 2026-06-30에 종료되었다고 안내합니다. 아래 예제는 AMI 조회만 수행하므로 인스턴스 생성과 제한된 접근 경로를 별도로 준비한 후 기존 인스턴스에 접속합니다.
 
 ```bash
 # Read-only AMI discovery; select a kernel-specific parameter when reproducibility is required.

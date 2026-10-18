@@ -57,7 +57,7 @@ Helm interactions to remember: `eni.enabled=true` forces `ipam: eni` regardless 
 
 ### Node-local addresses
 
-Cilium takes addresses out of each node's range for itself: the `cilium_host` router IP, the health endpoint IP and (when Ingress is enabled) the ingress IP. In `cilium-dbg status --all-addresses` they appear as `(router)`, `(health)` and `(ingress)`. The host-scope allocator also excludes the first (network) and last (broadcast) address of the node CIDR. Capacity math (see Sizing math) must subtract these.
+Cilium takes addresses out of each node's range for itself: the `cilium_host` router IP, the health endpoint IP and (when Ingress is enabled) the ingress IP. In `cilium-dbg status --all-addresses` they appear as `(router)`, `(health)` and `(ingress)`. The host-scope allocator also excludes the first (network) and last (broadcast) addresses of the node CIDR. Capacity math (see Sizing math) must subtract these.
 
 ## Pod IP Lifecycle
 
@@ -108,7 +108,7 @@ kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg status --all
 kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg status | grep -i ipam
 ```
 
-A Pod stuck in `ContainerCreating` with the CNI error `unable to allocate IP via local cilium agent` means step 2-4 failed; the Troubleshooting section maps that to a root cause per mode.
+A Pod stuck in `ContainerCreating` with the CNI error `unable to allocate IP via local cilium agent` means steps 2-4 failed; the Troubleshooting section maps that to a root cause per mode.
 
 ## Mode Catalog and Decision Matrix
 
@@ -281,7 +281,7 @@ spec:
       tenant: mars
 ```
 
-Cluster-scoped, short name `cpip`. `maskSize`, `allowFirstIP` and `allowLastIP` are immutable (CEL `self == oldSelf`). The first and last address of each *allocated per-node block* are reserved unless `allowFirstIP` / `allowLastIP` are set. A pool with no block for a family is skipped for that family.
+Cluster-scoped, short name `cpip`. `maskSize`, `allowFirstIP` and `allowLastIP` are immutable (CEL `self == oldSelf`). The first and last addresses of each *allocated per-node block* are reserved unless `allowFirstIP` / `allowLastIP` are set. A pool with no block for a family is skipped for that family.
 
 **API version note.** 1.20.2 serves `cilium.io/v2alpha1`. **[1.21 pre-release]** `cilium.io/v2` becomes the storage version and `v2alpha1` is deprecated; v2 also caps `cidrs` at 32 items and adds `spec.ipv4.pool[]` / `spec.ipv6.pool[]` (see Updating pools safely). Update manifests and tooling to v2 when you move to 1.21.
 
@@ -291,7 +291,7 @@ Evaluated once, at Pod creation (changing an annotation on a running Pod has no 
 
 1. **Pod annotation**: `ipam.cilium.io/ipv4-pool` / `ipam.cilium.io/ipv6-pool` (per family) take precedence over `ipam.cilium.io/ip-pool`.
 2. **Namespace annotation**: the same keys on the Pod's namespace.
-3. **`CiliumPodIPPool` selectors**: `podSelector` and `namespaceSelector` (both must match when both are set). Exactly one pool per family must match, otherwise allocation **fails** with an error and an event.
+3. **`CiliumPodIPPool` selectors**: `podSelector` and `namespaceSelector` (both must match when both are set). Exactly one pool per family must match; otherwise allocation **fails** with an error and an event.
 4. **Default pool**: `ipam-default-ip-pool` (default `default`), unless the Pod or namespace carries `ipam.cilium.io/require-pool-match: "true"`, in which case allocation is blocked.
 
 The correct annotation key is `ipam.cilium.io/ip-pool` (`pkg/annotation/k8s.go`). Some upstream tutorial text writes `ipam.cilium.io/ipam-pool`; that key does nothing.
@@ -407,7 +407,7 @@ ENI mode forces native routing and endpoint routes (`eni.enabled=true` already s
 
 ### Install and node preparation
 
-Remove the VPC CNI (`aws-node`) by patching its DaemonSet with an impossible `nodeSelector` (upstream uses `io.cilium/aws-node-enabled=true`) and install with `eni.enabled=true`. Create node groups with the startup taint `node.cilium.io/agent-not-ready=true:NoExecute` so workloads wait for the agent. Disable NetworkManager / systemd-networkd management of `eth*` interfaces other than `eth0`, otherwise the OS can strip secondary IPs (relevant on Amazon Linux 2023). If you replace the VPC CNI, flush `AWS-SNAT-CHAIN-*` and `AWS-CONNMARK-CHAIN-*` iptables chains.
+Remove the VPC CNI (`aws-node`) by patching its DaemonSet with an impossible `nodeSelector` (upstream uses `io.cilium/aws-node-enabled=true`) and install with `eni.enabled=true`. Create node groups with the startup taint `node.cilium.io/agent-not-ready=true:NoExecute` so workloads wait for the agent. Disable NetworkManager / systemd-networkd management of `eth*` interfaces other than `eth0`; otherwise the OS can strip secondary IPs (relevant on Amazon Linux 2023). If you replace the VPC CNI, flush `AWS-SNAT-CHAIN-*` and `AWS-CONNMARK-CHAIN-*` iptables chains.
 
 IAM privileges for the operator (all listed upstream; scope by resource tags where possible): `ec2:DeleteNetworkInterface`, `DescribeInstanceTypes`, `DescribeNetworkInterfaces`, `DescribeSubnets`, `DescribeVpcs`, `DescribeRouteTables` (required since 1.18), `DescribeSecurityGroups`, `CreateNetworkInterface`, `AttachNetworkInterface`, `ModifyNetworkInterfaceAttribute`, `AssignPrivateIpAddresses`, `CreateTags`; plus `DescribeTags` (ENI garbage collection, on by default), `UnassignPrivateIpAddresses` (release), `AssignIpv6Addresses` (IPv6), `DescribeInstances` (when `--instance-tags-filter` is used). **[1.21 pre-release]** optional `GetSecurityGroupsForVpc` (falls back with one warning), and `DescribeManagedPrefixLists` / `GetManagedPrefixListEntries`. Upstream documents only the assign/unassign private-IP actions for prefix operations; confirm the exact IAM actions against the AWS documentation before writing a least-privilege policy. Supply credentials via `eni.iamRole` (IRSA) or the `cilium-aws` secret.
 
@@ -461,7 +461,7 @@ Worked example: `preAllocate=8`, `minAllocate=16`, a node with 10 available and 
 
 Scheduling: deficit is evaluated on every `CiliumNode` update plus a full scan every minute; the work queue is processed on demand but at most once per second, largest deficit first, and allocation runs before release.
 
-Where the IPs come from: the operator iterates attached ENIs with index >= `first-interface-index` that have free capacity and subnet addresses; if none, it creates an ENI. Subnet candidates are in the same VPC and AZ, narrowed by `subnet-ids` (takes priority) or `subnet-tags` (all must match), choosing the subnet with the most free addresses. With neither set it uses the node's primary-ENI subnet, then a subnet in the same route table, then the largest subnet in the VPC/AZ. Security groups: `spec.eni.security-groups`, else `security-group-tags`, else inherit eth0's groups. ENIs are described `Cilium-CNI (<instance-id>)` and tagged with the cluster tags plus `--eni-tags`. API calls: `CreateNetworkInterface`, `AttachNetworkInterface`, `ModifyNetworkInterfaceAttribute` (delete-on-termination, default true), `AssignPrivateIpAddresses`.
+Where the IPs come from: the operator iterates attached ENIs with index >= `first-interface-index` that have free capacity and subnet addresses; if none, it creates an ENI. Subnet candidates are in the same VPC and AZ, narrowed by `subnet-ids` (takes priority) or `subnet-tags` (all must match), with the subnet with the most free addresses chosen. With neither set it uses the node's primary-ENI subnet, then a subnet in the same route table, then the largest subnet in the VPC/AZ. Security groups: `spec.eni.security-groups`, else `security-group-tags`, else inherit eth0's groups. ENIs are described as `Cilium-CNI (<instance-id>)` and tagged with the cluster tags plus `--eni-tags`. API calls: `CreateNetworkInterface`, `AttachNetworkInterface`, `ModifyNetworkInterfaceAttribute` (delete-on-termination, default true), `AssignPrivateIpAddresses`.
 
 ### Prefix delegation
 
@@ -478,7 +478,7 @@ Where the IPs come from: the operator iterates attached ENIs with index >= `firs
 
 **`usePrimaryAddress`**: lets the ENI primary private IP be given to Pods (+1 per ENI). **[1.21 pre-release]** the operator flag `--aws-use-primary-address` is **removed**; set `eni.nodeSpec.usePrimaryAddress=true` (agent flag `--eni-use-primary-address`, stored in `CiliumNode.spec.eni.use-primary-address`). Helm users are unaffected because the chart only wired the agent side.
 
-**IPv6 (beta in 1.20; the agent logs a beta warning)**: `ipam.mode=eni`, `eni.enabled=true`, `ipv6.enabled=true`. Each node gets exactly one delegated `/80` prefix, assigned at ENI creation or via `AssignIpv6Addresses` and never released; there are no watermarks; the subnet must be dual-stack, and IPv6-only subnets are unsupported because each ENI needs a primary IPv4 address. Upstream's EKS requirements page still says ENI is IPv4-only; the ENI page and the runtime beta warning are the more current source.
+**IPv6 (beta in 1.20; the agent logs a beta warning)**: `ipam.mode=eni`, `eni.enabled=true`, `ipv6.enabled=true`. Each node gets exactly one delegated `/80` prefix, assigned at ENI creation or via `AssignIpv6Addresses` and never released; there are no watermarks; the subnet must be dual-stack, and IPv6-only subnets are unsupported because each ENI needs a primary IPv4 address. Upstream's EKS requirements page still says ENI is IPv4-only; the ENI page and the runtime beta warning are the more current sources.
 
 ### ENI caveats
 
@@ -486,7 +486,7 @@ Pod density is bounded by `(ENIs - firstIndex) x (IPs per ENI - 1)` (x16 with pr
 
 ## Azure, AKS and Alibaba Cloud
 
-**AKS.** Azure CNI Powered by Cilium is managed: `ipam: delegated-plugin` with CNI configuration `"ipam": {"type": "azure-ipam"}` and `local-router-ipv4: 169.254.23.0`. Cilium assigns no Pod IPs. BYOCNI clusters can use any Cilium IPAM; Helm `azure.enabled` is incompatible with BYOCNI, use `aksbyocni.enabled`.
+**AKS.** Azure CNI Powered by Cilium is managed: `ipam: delegated-plugin` with CNI configuration `"ipam": {"type": "azure-ipam"}` and `local-router-ipv4: 169.254.23.0`. Cilium assigns no Pod IPs. BYOCNI clusters can use any Cilium IPAM; Helm `azure.enabled` is incompatible with BYOCNI; use `aksbyocni.enabled`.
 
 **Self-managed Azure (upstream `--ipam=azure`).** Operator flags `--azure-subscription-id`, `--azure-resource-group` (for VMSS, the resource group that contains the VMSS; a wrong group yields no addresses), `--azure-user-assigned-identity-id` (a client ID, not a resource ID) and `--azure-use-primary-address`; authentication is the DefaultAzureCredential chain. Per-node: `azure.nodeSpec.azureInterfaceName`. In 1.20 the operator publishes `status.azure.interfaces[]` with a new `subnet{id,cidr}` object (the flat `cidr` and `addresses[].subnet` are deprecated). **[1.21 pre-release]** Azure moves onto the shared cloud multi-pool framework (the same one as ENI): every `succeeded` address becomes a host prefix in the default pool, excess IPs are no longer released, and the agent waits up to 5 minutes for a valid IPv4 subnet CIDR, using it as the native-routing CIDR when `--ipv4-native-routing-cidr` is unset.
 
@@ -540,7 +540,7 @@ Datapath note (1.19): north-south TCP/UDP to an LB IPAM or ClusterIP address is 
 
 ### Node IPAM
 
-`nodeIPAM.enabled=true` (default false; sets `enable-node-ipam`) lets a Service with `loadBalancerClass: io.cilium/node` (or `defaultLBServiceIPAM: nodeipam`) publish node addresses as its load balancer ingress. After enabling on an existing install, restart the operator (`kubectl -n kube-system rollout restart deployment/cilium-operator`). The operator fills `status.loadBalancer.ingress` with each selected node's ExternalIP if present, else InternalIP, honouring `ipFamilies`. `externalTrafficPolicy: Cluster` uses all nodes; `Local` uses nodes hosting selected Pods (EndpointSlices required; not usable with Cilium Ingress/Gateway dummy endpoints). Nodes labelled `node.kubernetes.io/exclude-from-external-load-balancers` or tainted `ToBeDeletedByClusterAutoscaler` are excluded; the Service annotation `io.cilium.nodeipam/match-node-labels` restricts nodes by label.
+`nodeIPAM.enabled=true` (default false; sets `enable-node-ipam`) lets a Service with `loadBalancerClass: io.cilium/node` (or `defaultLBServiceIPAM: nodeipam`) publish node addresses as its load balancer ingress. After enabling it on an existing install, restart the operator (`kubectl -n kube-system rollout restart deployment/cilium-operator`). The operator fills `status.loadBalancer.ingress` with each selected node's ExternalIP if present, else InternalIP, honouring `ipFamilies`. `externalTrafficPolicy: Cluster` uses all nodes; `Local` uses nodes hosting selected Pods (EndpointSlices required; not usable with Cilium Ingress/Gateway dummy endpoints). Nodes labelled `node.kubernetes.io/exclude-from-external-load-balancers` or tainted `ToBeDeletedByClusterAutoscaler` are excluded; the Service annotation `io.cilium.nodeipam/match-node-labels` restricts nodes by label.
 
 Node IPAM publishes node addresses as service addresses. Use it only where node IPs are private; it is not a public-exposure mechanism on AWS.
 
@@ -590,7 +590,7 @@ kubectl -n kube-system logs deploy/cilium-operator | grep -i ipam
 
 Suggested alerts: `ipam_nodes{category="at-capacity"} > 0`, a rising `ipam_nodes{category="in-deficit"}`, `ipam_available_ips_per_subnet` below a threshold per AZ, sustained `ec2_api_rate_limit_duration_seconds`, and `lbipam_conflicting_pools > 0`.
 
-**Upgrade notes.** Rolling 1.19 to 1.20 is supported for ENI. **[1.21 pre-release]** the operator ClusterRole gains list/patch on `ciliumpodippools` (storage-version migration), and the `--aws-use-primary-address` operator flag is removed (see Release, use-primary-address, IPv6). If you pass it directly on the operator rather than through Helm, replace it with `eni.nodeSpec.usePrimaryAddress=true` before upgrading.
+**Upgrade notes.** Rolling upgrades from 1.19 to 1.20 are supported for ENI. **[1.21 pre-release]** the operator ClusterRole gains list/patch on `ciliumpodippools` (storage-version migration), and the `--aws-use-primary-address` operator flag is removed (see Release, use-primary-address, IPv6). If you pass it directly to the operator rather than through Helm, replace it with `eni.nodeSpec.usePrimaryAddress=true` before upgrading.
 
 ## Labs
 
@@ -646,7 +646,7 @@ Prerequisites: kind with `l2announcements.enabled=true` and `kubeProxyReplacemen
 2. Apply an L2 announcement policy (see Part 11) and a `LoadBalancer` Service whose labels match.
 3. Expected: `kubectl get ippools` shows IPs available decreasing, the Service gets an external IP from the block, and the Service condition `cilium.io/IPAMRequestSatisfied` reports `satisfied`.
 4. Create a second pool with an overlapping block. Expected: it is marked Conflicting and allocates nothing.
-5. Set `disabled: true` on the first pool, create another Service. Expected: no new allocation from it while the existing Service keeps its IP.
+5. Set `disabled: true` on the first pool and create another Service. Expected: no new allocation from it while the existing Service keeps its IP.
 
 Cleanup: delete the Services, pools and policy.
 
@@ -713,7 +713,7 @@ Symptom: Pod stays `ContainerCreating`; `kubectl describe pod` shows `unable to 
 | ENI | OS removed secondary IPs | NetworkManager / systemd-networkd logs | exclude `eth*` except `eth0` from management |
 | any | CNI crash leaked an IP | IP absent from endpoints but held | wait for the 10 minute expiration; restart agent to reconcile |
 
-For LB IPAM: Service has no external IP, check the pool's Conflicting flag, the `cilium.io/IPAMRequestSatisfied` condition, `serviceSelector` match, and that something (BGP or L2) advertises the address. Remember that IPAM modes are not toggles: a mismatch between the running mode and the Helm value after a change is the signal to stop and plan a migration, not to edit the ConfigMap.
+For LB IPAM: if a Service has no external IP, check the pool's Conflicting flag, the `cilium.io/IPAMRequestSatisfied` condition, `serviceSelector` match, and that something (BGP or L2) advertises the address. Remember that IPAM modes are not toggles: a mismatch between the running mode and the Helm value after a change is the signal to stop and plan a migration, not to edit the ConfigMap.
 
 ## Validation Limits and Sources
 

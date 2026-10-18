@@ -137,7 +137,7 @@ EBS CSI 1.66.0 also supports an io2 raw-block Multi-Attach path with RWX and com
 
 **Answer: No. RWO is the ordinary example; RWOP and specialized raw-block modes have different requirements.**
 
-RWOP supplies the one-Pod constraint that RWO does not. It is stable since Kubernetes 1.29 and requires a compatible CSI sidecar stack. CSI access-mode translation can map RWOP to SINGLE_NODE_WRITER for drivers without the newer single-node capability; reading that driver constant alone is not proof that RWOP is unsupported. This is an **alternative claim** for a one-Pod workload:
+RWOP supplies the one-Pod constraint that RWO does not. It has been stable since Kubernetes 1.29 and requires a compatible CSI sidecar stack. CSI access-mode translation can map RWOP to SINGLE_NODE_WRITER for drivers without the newer single-node capability; reading that driver constant alone is not proof that RWOP is unsupported. This is an **alternative claim** for a one-Pod workload:
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -422,7 +422,7 @@ spec:
         requests:
           storage: 100Gi
 ```
-This example uses PostgreSQL 14.24, the verified current minor release of major 14. Major14 support ends November 12, 2026. Plan a tested supported-version migration and pin an approved image digest for production. This single replica is not a replicated/HA database; replica scaling without a database replication design is not a solution. The explicit PVC retention policy preserves claims when the StatefulSet is deleted/scaled, leaving data and possible storage charges.
+This example uses PostgreSQL 14.24, the verified current minor release of major 14. Major 14 support ends November 12, 2026. Plan a tested supported-version migration and pin an approved image digest for production. This single replica is not a replicated/HA database; replica scaling without a database replication design is not a solution. The explicit PVC retention policy preserves claims when the StatefulSet is deleted/scaled, leaving data and possible storage charges.
 
 After an application-consistent backup/quiesce step, snapshot the claim the database actually uses. The class is the retained EBS snapshot class defined earlier:
 ```yaml
@@ -438,7 +438,7 @@ spec:
   source:
     persistentVolumeClaimName: data-postgres-0
 ```
-**2. Shared files.** Static configuration often belongs in ConfigMaps/Secrets. If mutable shared files are required, the EFS class from the source chapter provides separate AP directories and UID/GID1000. Replace the filesystem ID and validate client paths/permissions; this claim does not impose a 5 Gi quota.
+**2. Shared files.** Static configuration often belongs in ConfigMaps/Secrets. If mutable shared files are required, the EFS class from the source chapter provides separate AP directories and UID/GID 1000. Replace the filesystem ID and validate client paths/permissions; this claim does not impose a 5 Gi quota.
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -617,7 +617,7 @@ spec:
     requests:
       storage: 1200Gi
 ```
-The1200 Gi claim is an example allocation; confirm the driver’s rounding and service capacity choices. The Job below is a **template**: replace the placeholder with a tested non-root GPU image that contains `/opt/training/train.py` and accepts the shown arguments, and populate the dataset before execution. Training code stays in the image rather than being hidden by the data mount. Four concurrent Pods requesting four GPUs each can require **16 GPUs**, plus the requested CPU/memory and applicable quotas. Indexed completions identify four tasks; they do not automatically implement distributed training/gradient synchronization.
+The 1200 Gi claim is an example allocation; confirm the driver’s rounding and service capacity choices. The Job below is a **template**: replace the placeholder with a tested non-root GPU image that contains `/opt/training/train.py` and accepts the shown arguments, and populate the dataset before execution. Training code stays in the image rather than being hidden by the data mount. Four concurrent Pods requesting four GPUs each can require **16 GPUs**, plus the requested CPU/memory and applicable quotas. Indexed completions identify four tasks; they do not automatically implement distributed training/gradient synchronization.
 ```yaml
 apiVersion: batch/v1
 kind: Job

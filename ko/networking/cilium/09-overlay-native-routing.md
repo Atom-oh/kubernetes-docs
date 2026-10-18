@@ -35,7 +35,7 @@
 
 ## 1. 라우팅 모드 매트릭스
 
-1.20에서 `routingMode`는 `tunnel`(기본)과 `native` 두 값만 받습니다. 이 장의 나머지는 이 선택과, 스스로 tunnel 장치를 요청하는 몇몇 기능의 결과입니다.
+1.20에서 `routingMode`는 `tunnel`(기본)과 `native` 두 값만 받습니다. 이 장의 나머지 내용은 이 선택과 스스로 tunnel 장치를 요청하는 몇몇 기능이 가져오는 결과를 다룹니다.
 
 | 상황 | Helm | 서로 다른 노드 Pod 간 경로 | Pod CIDR을 라우팅하는 주체 |
 |---|---|---|---|
@@ -43,7 +43,7 @@
 | Native | `routingMode: native` | Pod IP 그대로 송출, 커널(또는 BPF host routing의 FIB redirect)이 라우팅 | 네트워크: 클라우드 라우터/ENI, `autoDirectNodeRoutes`, BGP, 정적 경로 |
 | Native + 기능이 요청한 tunnel | `routingMode: native` + Egress Gateway 또는 `dsrDispatch: geneve` DSR | 일반 Pod 트래픽은 native, 해당 기능의 패킷만 tunnel 장치 사용 | native와 동일 |
 
-세 번째 행이 중요합니다. native-routing 클러스터에서 `cilium_geneve` 장치가 보인다고 설정 오류는 아닙니다. 코드(`pkg/datapath/tunnel/tunnel.go`)에서 Egress Gateway와 Geneve DSR는 `routingMode`가 `native`여도 장치를 요청하는 "tunnel enabler"입니다.
+세 번째 행이 중요합니다. native-routing 클러스터에서 `cilium_geneve` 장치가 보인다고 해서 설정 오류인 것은 아닙니다. 코드(`pkg/datapath/tunnel/tunnel.go`)에서 Egress Gateway와 Geneve DSR는 `routingMode`가 `native`여도 장치를 요청하는 "tunnel enabler"입니다.
 
 성숙도(1.20.2 문서 기준): VXLAN/Geneve tunnel과 native routing은 stable입니다. BGP는 경로 광고 수단이지 forwarding 모드가 아닙니다. [BGP, LB, egress, edge](11-bgp-lb-egress-edge.md)를 참고하세요.
 
@@ -214,7 +214,7 @@ Native-routing CIDR 의미: 이 안의 목적지는 masquerade하지 않고 스�
 
 ### AWS ENI datapath의 라우팅 방식
 
-ENI IPAM에서 Pod IP는 ENI의 secondary IP 또는 prefix입니다. Agent는 endpoint별 route와, Pod IP마다 두 개의 ip rule을 설치합니다. ingress rule `to <podIP> lookup main`(priority 20, `RulePriorityIngress`)과 egress rule `from <podIP> lookup <ENI table>`(priority 111, `RulePriorityEgressv2`. 이전 priority 110은 Azure IPAM 모드에서만 씁니다)입니다. egress rule의 `to <VPC CIDR>` 조건(VPC CIDR마다 rule 하나)은 masquerade가 켜져 있을 때만 붙고, ENI는 masquerade가 기본 꺼져 있으므로 기본 상태의 egress rule에는 `to` 조건이 없습니다. ENI table의 default route는 ENI 서브넷 라우터를 향합니다. 라우터 IP를 ENI 주소 공간에서 가져오므로 ICMP packet-too-big을 생성할 수 있습니다. 1.18부터 operator에 `ec2:DescribeRouteTables`가 필요합니다. 주소 할당은 [IPAM 심화](10-ipam-deep-dive.md)을 보세요.
+ENI IPAM에서 Pod IP는 ENI의 secondary IP 또는 prefix입니다. Agent는 endpoint별 route와, Pod IP마다 두 개의 ip rule을 설치합니다. ingress rule `to <podIP> lookup main`(priority 20, `RulePriorityIngress`)과 egress rule `from <podIP> lookup <ENI table>`(priority 111, `RulePriorityEgressv2`. 이전 priority 110은 Azure IPAM 모드에서만 씁니다)입니다. egress rule의 `to <VPC CIDR>` 조건(VPC CIDR마다 rule 하나)은 masquerade가 켜져 있을 때만 붙고, ENI는 masquerade가 기본 꺼져 있으므로 기본 상태의 egress rule에는 `to` 조건이 없습니다. ENI table의 default route는 ENI 서브넷 라우터를 향합니다. 라우터 IP를 ENI 주소 공간에서 가져오므로 ICMP packet-too-big을 생성할 수 있습니다. 1.18부터 operator에 `ec2:DescribeRouteTables`가 필요합니다. 주소 할당은 [IPAM 심화](10-ipam-deep-dive.md)를 보세요.
 
 ## 7. 기동 시 검증: hard failure와 silent fallback
 
@@ -285,7 +285,7 @@ VXLAN과 서비스별 annotation 모드(`bpf.lbModeAnnotation=true`)를 함께 �
 
 참고:
 
-- **Geneve DSR**은 12바이트 옵션을 추가합니다. 옵션은 로드밸런싱 노드가 삽입하므로 큰 패킷이 경로 MTU를 넘을 수 있습니다. TCP에만 DSR을 쓰는 hybrid 모드(SYN에만 서비스 주소 인코딩, UDP는 SNAT)는 이를 줄이는 이유 중 하나입니다.
+- **Geneve DSR**은 12바이트 옵션을 추가합니다. 옵션은 로드밸런싱 노드가 삽입하므로 큰 패킷이 경로 MTU를 넘을 수 있습니다. TCP에만 DSR을 쓰는 hybrid 모드(SYN에만 서비스 주소 인코딩, UDP는 SNAT)를 쓰는 이유 중 하나는 이를 줄이기 위해서입니다.
 - **`pmtuDiscovery.enabled`**(기본 false)는 클라이언트에 ICMP fragmentation-needed를 보냅니다. `pmtuDiscovery.packetizationLayerPMTUDMode`(1.19 신규, 값 `always|blackhole|disabled|unset`, 기본 `blackhole`)는 Pod netns의 커널 RFC 4821 probing을 제어합니다. MTU를 알고 있으면 `disabled`로 두세요.
 - **CNI chaining**: `cni.enableRouteMTUForCNIChaining: true`는 route MTU를 chained plugin의 Pod에 전달합니다(예: aws-cni 위 WireGuard).
 - **IPv4/IPv6 fragment**는 기본으로 추적됩니다(`enable-ipv4-fragment-tracking`, `enable-ipv6-fragment-tracking`, map 크기 `bpf-fragments-map-max` 기본 8192, upstream에서 beta). [L2/L7 네트워킹](05-l2-l7-networking.md) 참고.
@@ -456,7 +456,7 @@ Annotation 모드: `bpf.lbModeAnnotation=true`이면 Service마다 `service.cili
 
 확인: `cilium-dbg status | grep BandwidthManager`(예: `EDT with BPF [BBR] [eth0]`), `cilium-dbg bpf bandwidth list`.
 
-**BIG TCP.** `enableIPv4BIGTCP`, `enableIPv6BIGTCP`(둘 다 false). 커널은 IPv6 5.19+, IPv4 6.3+이며 upstream이 열거하는 NIC 드라이버는 mlx4, mlx5, ice입니다. BPF host routing, KPR, BPF masquerade가 필요하고 IPsec, DSR IPIP과는 비호환입니다. MTU 변경 없이 gso/gro 최대 크기를 192 KB로 올리며, 토글 후 Pod를 재시작해야 합니다. Upstream 문구는 "tunneling disabled"이지만 코드는 UDP-tunnel BIG TCP 커널 probe가 통과할 때만 VXLAN/Geneve에서도 허용하고, 아니면 "BIG TCP in tunneling mode requires pending kernel support"로 실패합니다. 실무 조언은 native routing입니다.
+**BIG TCP.** `enableIPv4BIGTCP`, `enableIPv6BIGTCP`(둘 다 false). 커널은 IPv6 5.19+, IPv4 6.3+이며 upstream이 열거하는 NIC 드라이버는 mlx4, mlx5, ice입니다. BPF host routing, KPR, BPF masquerade가 필요하고 IPsec, DSR IPIP과는 비호환입니다. MTU 변경 없이 gso/gro 최대 크기를 192 KB로 올리며, 토글 후 Pod를 재시작해야 합니다. Upstream 문구는 "tunneling disabled"이지만 코드는 UDP-tunnel BIG TCP 커널 probe가 통과할 때만 VXLAN/Geneve에서도 허용하고, 아니면 "BIG TCP in tunneling mode requires pending kernel support"로 실패합니다. 실무에서는 native routing을 권장합니다.
 
 **Upstream 권장 성능 프로필**(in-place 업그레이드가 아님, 노드별 설정 사용):
 
@@ -489,7 +489,7 @@ bandwidth manager가 필요하면 `bandwidthManager.enabled=true`와 `bandwidthM
 | BIG TCP | 주의사항과 함께 동작 | 기동 오류 |
 | Chaining | 암호화 미지원 | 암호화 미지원 |
 
-그 외: IPsec `encryptedOverlay`는 1.18부터 no-op였고 1.20에서 제거되었습니다. IPsec은 direct-routing 구성에서 `ipv4NativeRoutingCIDR`이 필요하고 노드 65535 미만을 지원하며 tunnel당 단일 코어로 복호화합니다. XDP로 가속된 N/S 트래픽이나 Geneve 외 DSR은 WireGuard가 보호하지 않지만 Geneve DSR은 보호됩니다.
+그 외: IPsec `encryptedOverlay`는 1.18부터 no-op였고 1.20에서 제거되었습니다. IPsec은 direct-routing 구성에서 `ipv4NativeRoutingCIDR`이 필요하고 노드 수가 65535 미만인 구성을 지원하며 tunnel당 단일 코어로 복호화합니다. XDP로 가속된 N/S 트래픽이나 Geneve 외 DSR은 WireGuard가 보호하지 않지만 Geneve DSR은 보호됩니다.
 
 캡처할 때 순서를 기억하세요. NIC에서는 VXLAN/Geneve가 아니라 UDP 51871 또는 ESP가 보이고, Pod의 호스트 쪽 장치에서는 평문이 보입니다. 암호화나 캡슐화가 없다고 결론 내리기 전에 두 지점 모두에서 캡처하세요.
 
@@ -596,7 +596,7 @@ sudo tcpdump -nni <nic> -vv 'udp port 8472'       # -vv가 VNI를 출력
 
 ## 18. 실습
 
-일회용 클러스터(kind 또는 자기 참조 보안 그룹을 쓰는 2노드 EKS 테스트 클러스터)에서만 실행하세요. 모든 실습은 upstream 소스와 문서로 확인했으며 이번 검토에서 실제 클러스터에 실행하지는 않았습니다. 기대 결과는 캡처가 아니라 서술입니다.
+일회용 클러스터(kind 또는 자기 참조 보안 그룹을 쓰는 2노드 EKS 테스트 클러스터)에서만 실행하세요. 모든 실습은 upstream 소스와 문서로 확인했으며 이번 검토에서 실제 클러스터에서 실행하지는 않았습니다. 기대 결과는 캡처가 아니라 서술입니다.
 
 ### 실습 1: Overlay 해부와 VNI
 
@@ -702,7 +702,7 @@ sudo tcpdump -nni <nic> -vv 'udp port 8472'       # -vv가 VNI를 출력
 
 ## 21. 검증 한계 및 출처
 
-이 장의 실습은 이번 검토에서 실제 클러스터에 실행하지 않았습니다. 실습과 위의 모든 동작 서술은 아래 태그의 upstream 소스와 문서로 확인했습니다. 본문에 추론으로 표시한 항목이 있습니다: EKS overlay의 webhook 도달성, 비 ENI 인스턴스에서 native routing의 EC2 source/destination check, 보조 VPC CIDR의 native-routing 동작, Geneve 위 VTEP, 5.10~5.13 사이 커널에서의 multicast 커널 하한(검증하지 못함). 1.21 pre-release에 scaffolding된 추가 라우팅 모드는 의도적으로 다루지 않습니다.
+이 장의 실습은 이번 검토에서 실제 클러스터에서 실행하지 않았습니다. 실습과 위의 모든 동작 서술은 아래 태그의 upstream 소스와 문서로 확인했습니다. 본문에 추론으로 표시한 항목이 있습니다: EKS overlay의 webhook 도달성, 비 ENI 인스턴스에서 native routing의 EC2 source/destination check, 보조 VPC CIDR의 native-routing 동작, Geneve 위 VTEP, 5.10~5.13 사이 커널에서의 multicast 커널 하한(검증하지 못함). 1.21 pre-release에 scaffolding된 추가 라우팅 모드는 의도적으로 다루지 않습니다.
 
 계산값(MTU 표)은 소스 상수에서 산술로 구한 것이며 측정값이 아닙니다.
 

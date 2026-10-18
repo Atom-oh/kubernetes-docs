@@ -616,7 +616,7 @@ histogram_quantile(0.95,
 
 ### 실행 가능한 분석 전용 예제
 
-아래 도구는 이미 정규화한 한 metric의 JSON 시계열을 stdin으로 받아 **검토 보고서만** 출력합니다. 실제 API·HPA·NLB·Git·Slack을 변경하지 않습니다. 정상 범위도 애플리케이션이 건강하다는 판정이 아닙니다.
+아래 도구는 이미 정규화한 한 metric의 JSON 시계열을 stdin으로 받아 **검토 보고서만** 출력합니다. 실제 API·HPA·NLB·Git·Slack을 변경하지 않습니다. 정상 범위에 있다고 해서 애플리케이션이 건강하다는 뜻은 아닙니다.
 
 ```python
 # fixtures/anomaly-report.py

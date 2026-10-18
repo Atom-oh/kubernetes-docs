@@ -79,7 +79,7 @@ AMB의 구성요소별 **지원 프레임워크·체인 목록, 리전 가용성
 
 **2단계: 통제가 필요한가?** 클라이언트 선택, 튜닝, 아카이브, 검증자 참여 중 하나라도 필요하면 자체 운영입니다.
 
-**3단계: 비용은?** 선택한 제공 방식의 전용 자원·serverless request·Query API 요금을 적용합니다. 같은 기능 범위와 가용성 조건에서 EC2/EKS·storage·transfer·redundancy·운영 인력 비용을 비교하며 node 수만으로 결정되는 보편적 손익분기 실측은 없습니다.
+**3단계: 비용은?** 선택한 제공 방식의 전용 자원·serverless request·Query API 요금을 적용합니다. 같은 기능 범위와 가용성 조건에서 EC2/EKS·storage·transfer·redundancy·운영 인력 비용을 비교하며 node 수만으로 결정되는 보편적 손익분기점에 대한 실측 자료는 없습니다.
 
 **4단계: 혼합 가능한가?** 대개 가능하고, 실무에서 합리적인 경우가 많습니다. 예를 들어 일반 조회는 관리형, 특수 용도는 자체 운영.
 
@@ -147,7 +147,7 @@ AMB의 실질적 이점 중 하나가 AWS 생태계 통합입니다.
 
 **IAM 통합이 특히 유용합니다.** 자체 운영 노드의 RPC 엔드포인트는 별도 인증 체계를 만들어야 하는데(또는 네트워크 계층으로만 통제), AMB는 IAM으로 통제할 수 있습니다. 사내 권한 체계와 일관되게 관리된다는 뜻입니다.
 
-사설 연결 관련해서는 [VPC Lattice 섹션](../service-mesh/vpc-lattice/README.md)에서 다룬 개념들이 적용될 수 있습니다. 다만 **AMB와 Lattice의 직접 연계 지원 여부는 별개 확인이 필요한 항목**입니다([VPC Lattice 제약사항](../service-mesh/vpc-lattice/06-constraints.md)의 미확정 항목과 같은 성격).
+사설 연결 관련해서는 [VPC Lattice 섹션](../service-mesh/vpc-lattice/README.md)에서 다룬 개념들이 적용될 수 있습니다. 다만 **AMB와 Lattice의 직접 연계 지원 여부는 별도로 확인해야 하는 항목**입니다([VPC Lattice 제약사항](../service-mesh/vpc-lattice/06-constraints.md)의 미확정 항목과 같은 성격).
 
 ## 자체 운영과의 비교 정리
 

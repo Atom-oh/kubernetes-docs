@@ -30,7 +30,7 @@
 
 “100B 이상이면 무조건3D가 최고”라는 기준은 사용하지 않습니다. 가중치 외에 optimizer·gradient·activation·통신 buffer를 계산하고 실제 throughput과 복구 비용으로 선택합니다. DDP의 all-reduce에 parameter server가 반드시 필요한 것도 아닙니다.
 
-TP8×PP4×DP2라면 전체 rank는64개입니다. 하지만 global batch는 **microbatch × accumulation × DP replica 수**입니다. microbatch1·accumulation32·DP2이면64이며, TP/PP rank까지 다시 곱한2048이 아닙니다. 변수 길이 token packing은 sample 수와 token 수를 별도로 계산합니다.
+TP8×PP4×DP2라면 전체 rank는64개입니다. 하지만 global batch는 **microbatch × accumulation × DP replica 수**입니다. microbatch1·accumulation32·DP2이면64이며, TP/PP rank까지 다시 곱한2048이 아닙니다. 가변 길이 token packing에서는 sample 수와 token 수를 별도로 계산합니다.
 
 ## Slurm과 Slinky
 
@@ -107,7 +107,7 @@ Karpenter budgets.nodes=0은 자발적 disruption 경로의 제한이며 Spot �
 
 ## Trainium과 Neuron
 
-SDK2.32.0의 torch-neuronx, NeuronX Distributed Training와 모델 구현, Optimum Neuron 등 선택 경로를 구분합니다. transformers-neuronx의 추론 지원을 모든 모델의 훈련 지원으로 설명하지 않습니다. TensorFlow/JAX·PyTorch 버전은 선택 hardware와 SDK 지원표를 확인하며 오래된2.18 DLC에 임의 pip 설치를 추가하지 않습니다.
+SDK2.32.0의 torch-neuronx, NeuronX Distributed Training과 모델 구현, Optimum Neuron 등 선택 경로를 구분합니다. transformers-neuronx의 추론 지원을 모든 모델의 훈련 지원으로 설명하지 않습니다. TensorFlow/JAX·PyTorch 버전은 선택 hardware와 SDK 지원표를 확인하며 오래된2.18 DLC에 임의 pip 설치를 추가하지 않습니다.
 
 Optimum Neuron0.4.5에는 NeuronTrainer/NeuronTrainingArguments와 별도 Neuron training-model 구현이 있습니다. 일반 BertForPreTraining을 로드하고 정의되지 않은 dataset/tokenizer를 넘기는 예제는 완성된 TP 훈련이 아닙니다. 지원 모델의 training config, 데이터·label·collator, tokenizer·revision, optimizer·checkpoint 형식과 launcher를 준비해야 합니다. CPU 예제의 PyTorch2.14를 Neuron SDK 지원 버전으로 간주하지 마세요.
 
@@ -115,7 +115,7 @@ Optimum Neuron0.4.5에는 NeuronTrainer/NeuronTrainingArguments와 별도 Neuron
 
 일반 Job parallelism=4는4개 Pod 실행일 뿐 rank·rendezvous를 구성하지 않습니다. Indexed Job을 사용할 경우 completionMode와 index, 같은 master endpoint를 설정해야 합니다. 각 Pod의 status.podIP를 MASTER_ADDR로 넣으면 서로 다른 master를 바라보게 됩니다. coordinator/controller가 제공하는 topology와 지원 launcher를 사용하고, train_lora.py·데이터·compile cache·장치를 확인합니다.
 
-neuron_parallel_compile은 graph 추출·사전 컴파일 경로이며 전체 학습 결과를 만드는 명령으로 대체할 수 없습니다. 사전 컴파일 성공 후 실제 훈련을 별도 실행하고 cache hit·shape·compiler/SDK revision을 확인하세요. 코어와 전체 장치는 [Neuron 구분](04-inference-frameworks.md)을 참고합니다.
+neuron_parallel_compile은 graph 추출·사전 컴파일 경로이며 전체 학습 결과를 만드는 명령으로 대체할 수 없습니다. 사전 컴파일 성공 후 실제 훈련을 별도 실행하고 cache hit·shape·compiler/SDK revision을 확인하세요. 코어와 전체 장치의 구분은 [Neuron 구분](04-inference-frameworks.md)을 참고합니다.
 
 ## Ray Train, MPI와 Volcano
 
@@ -129,7 +129,7 @@ JupyterHub GPU profile은 실제 이미지·장치 label과 권한을 일치시�
 
 ## 훈련 스토리지와 체크포인트
 
-[GPU/storage 가이드](01-ai-ml-workloads.md)의 검토한 CSI 경로를 사용합니다. 기존 FSx 파일시스템을 static PV로 마운트하는 경로와 PVC로 새 파일시스템을 만드는 dynamic provisioning은 다릅니다. 임의 dataRepositoryAssociations 필드를 FileSystem에 넣거나 SCRATCH_2에 PERSISTENT 전용 throughput 설정을 섞지 않습니다. DRA와 auto import/export는 별도 API·정책·완료 상태를 확인해야 합니다.
+[GPU/storage 가이드](01-ai-ml-workloads.md)에서 검토한 CSI 경로를 사용합니다. 기존 FSx 파일시스템을 static PV로 마운트하는 경로와 PVC로 새 파일시스템을 만드는 dynamic provisioning은 다릅니다. 임의 dataRepositoryAssociations 필드를 FileSystem에 넣거나 SCRATCH_2에 PERSISTENT 전용 throughput 설정을 섞지 않습니다. DRA와 auto import/export는 별도 API·정책·완료 상태를 확인해야 합니다.
 
 EFS PVC의 요청 용량은 물리 저장소 quota가 아닙니다. access point UID/GID·directory permission, CSI identity와 network·mount target을 검증합니다. S3 복사 완료 전의 local checkpoint는 remote에 durable하다고 주장할 수 없습니다.
 

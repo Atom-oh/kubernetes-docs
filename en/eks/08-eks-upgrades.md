@@ -25,7 +25,7 @@ These are owner-reviewed procedures, not an upgrade executed in this audit. Use 
 
 ### EKS Version Management
 
-EKS uses Kubernetes version numbering, with its own release/support calendar. Each minor version receives **14 months of standard support**, followed by **12 months of extended support** at an additional charge. AWS announces end of standard support at least 60 days in advance. Consult the [current EKS catalog/calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html); an upstream Kubernetes release is not automatically available on EKS. Avoid a fixed “minimum four versions” assumption or treating 14 months as the entire support lifecycle.
+EKS uses Kubernetes version numbering, with its own release/support calendar. Each minor version receives **14 months of standard support**, followed by **12 months of extended support** at an additional charge. AWS announces the end of standard support at least 60 days in advance. Consult the [current EKS catalog/calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html); an upstream Kubernetes release is not automatically available on EKS. Avoid a fixed “minimum four versions” assumption or treating 14 months as the entire support lifecycle.
 
 ### Recent EKS Upgrade Announcements (2026)
 
@@ -58,7 +58,7 @@ EKS clusters must be upgraded one minor version at a time:
 4. Upgrade nodes, clients/controllers, and remaining add-ons in their verified dependency order, checking every step. Auto Mode owns its built-in capabilities and starts node updates after the control-plane upgrade.
 5. Validate actual node versions, workload readiness, traffic, storage, and SLOs.
 
-For kubelet 1.25+, upstream permits up to three minors behind the API server, never newer; mixed API-server versions narrow the allowed range. EKS documentation states both pre-upgrade node alignment guidance and the supported skew allowance. This runbook chooses alignment as a preparation policy; it does not claim every supported skew is universally rejected by the EKS API. Add-ons are not universally “all before” or “all after” the control plane. Rollback has a different node-first sequence, described below.
+For kubelet 1.25+, upstream permits kubelet versions up to three minors behind the API server, but never newer; mixed API-server versions narrow the allowed range. EKS documentation states both pre-upgrade node alignment guidance and the supported skew allowance. This runbook chooses alignment as a preparation policy; it does not claim every supported skew is universally rejected by the EKS API. Add-ons are not universally “all before” or “all after” the control plane. Rollback has a different node-first sequence, described below.
 
 ## Upgrade Planning and Preparation
 
@@ -1079,7 +1079,7 @@ aws eks update-cluster-version --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --output json --no-cli-pager > rollback-update.json
 ```
 
-Use the returned ID and the same waiter after an Auto Mode request; the helper’s default two-hour wait is shorter than the service’s default twelve-hour timeout, so choose the client deadline deliberately. CI/IaC/credential timeouts do not cancel the AWS operation. CancelUpdate is available only during the Auto Mode node phase before control-plane rollback; it is best effort, and already disrupting nodes finish their operation. Watch Cancelling → Cancelled and the subsequent node convergence. A normal control-plane upgrade or a started control-plane rollback cannot be canceled this way.
+Use the returned ID and the same waiter after an Auto Mode request; the helper’s default two-hour wait is shorter than the service’s default twelve-hour timeout, so choose the client deadline deliberately. CI/IaC/credential timeouts do not cancel the AWS operation. CancelUpdate is available only during the Auto Mode node phase before control-plane rollback; it is best effort, and nodes already undergoing disruption finish their operation. Watch Cancelling → Cancelled and the subsequent node convergence. A normal control-plane upgrade or a started control-plane rollback cannot be canceled this way.
 
 ```bash
 # Only during the cancellable Auto Mode node phase, before control-plane rollback starts.

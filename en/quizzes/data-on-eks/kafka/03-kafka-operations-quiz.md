@@ -19,7 +19,7 @@ This quiz tests your understanding of storage design, broker scaling, Cruise Con
 **Answer: C) io2**
 
 **Explanation:**
-io2 Block Express targets low latency, high IOPS and durability. Maximum 256,000 IOPS requires appropriate conditions such as Nitro. Distinguish 99.999% design durability from 0.001% AFR. Capacity and IOPS contribute to cost; choose using measurements, requirements and pricing.
+io2 Block Express targets low latency, high IOPS and durability. The maximum of 256,000 IOPS requires appropriate conditions such as Nitro. Distinguish 99.999% design durability from 0.001% AFR. Capacity and IOPS contribute to cost; choose using measurements, requirements and pricing.
 </details>
 
 2. What storage type on a `KafkaNodePool` configures a broker to use multiple independent volumes?
@@ -83,7 +83,7 @@ Strimzi/startup scripts manage required initialization of new storage metadata. 
 **Answer: B) The new brokers join the cluster, but existing topic partitions are not automatically reassigned**
 
 **Explanation:**
-This describes the case without a matching autoRebalance mode. Strimzi 1.3 can automatically rebalance after replicas increases on an existing pool when add-brokers automation is configured. Pool creation/deletion is a different event.
+This describes the case without a matching autoRebalance mode. Strimzi 1.3 can automatically rebalance after increases in replicas on an existing pool when add-brokers automation is configured. Pool creation/deletion is a different event.
 </details>
 
 6. What data-state requirement must be satisfied before removing a broker?
@@ -115,7 +115,7 @@ All replicas must be safely evacuated before broker removal. Manual procedures i
 **Answer: B) It collects broker load metrics and automatically generates/executes goal-based partition reassignment plans**
 
 **Explanation:**
-Cruise Control computes proposals from load/goals and executes according to approval/automation policy. Proposal generation and movement are separate; do not casually bypass insufficient metrics or hard-goal failures.
+Cruise Control computes proposals from load/goals and executes them according to approval/automation policy. Proposal generation and movement are separate; do not casually bypass insufficient metrics or hard-goal failures.
 </details>
 
 8. In the `mode` field of a `KafkaRebalance` resource, which mode is focused on moving partitions onto newly added brokers to fill their load?
@@ -201,7 +201,7 @@ Verify a Strimzi version supporting both current and target Kafka. An Operator u
 **Answer: `--generate`**
 
 **Explanation:**
---generate prints current and proposed assignments without executing movement. Extract Proposed separately and review RF, IDs, racks and capacity. Completed --verify can clear throttle configuration without preserve-throttles.
+--generate prints current and proposed assignments without executing movement. Extract Proposed separately and review RF, IDs, racks and capacity. A completed --verify operation can clear throttle configuration without preserve-throttles.
 </details>
 
 14. Distinguish the durability assumptions of acks=all from request-success guarantees during a roll.

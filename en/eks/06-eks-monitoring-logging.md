@@ -218,7 +218,7 @@ The CloudWatch Observability add-on includes a container-log collector; use its 
 
 This example uses AWS chart 0.2.0 with image 3.4.14 (Fluent Bit 5.0.9), whose published release and configuration were checked. It targets owned Linux/containerd EC2 nodes; the affinity intentionally excludes Fargate, Auto Mode and Hybrid labels from this example. Those modes need their own supported collection/identity design. The collector tolerates taints on the selected nodes, so review its placement and platform-agent admission permissions.
 
-Prepare namespace logging, a least-privilege IRSA role EKSLogWriter for service account logging/eks-log-collector, and the owned CloudWatch log group. Replace the account, role, Region and cluster-specific group consistently. Configure the IAM OIDC provider/trust audience/subject as described in the security chapter. The collector needs CloudWatch stream/write permissions and regional STS/backend connectivity. These IAM prerequisites are separate from Kubernetes metadata RBAC.
+Prepare the namespace logging, a least-privilege IRSA role EKSLogWriter for the service account logging/eks-log-collector, and the owned CloudWatch log group. Replace the account, role, Region and cluster-specific group consistently. Configure the IAM OIDC provider/trust audience/subject as described in the security chapter. The collector needs CloudWatch stream/write permissions and regional STS/backend connectivity. These IAM prerequisites are separate from Kubernetes metadata RBAC.
 
 Save as fluent-bit-values.yaml:
 
@@ -714,7 +714,7 @@ This example uses one owned kube-prometheus-stack release, which includes the Pr
 
 The reviewed baseline is chart 92.9.0 / Operator 0.94.1, rendered for EKS 1.36. It assumes standard Linux EC2 nodes and a prepared encrypted ebs-gp3 StorageClass with working EBS CSI permissions. For Auto Mode or another storage implementation, select its actual supported class and node placement. Retention and PVC sizes below are example allocations, not measured capacity guarantees.
 
-Prepare namespace monitoring and Secret grafana-admin with admin-user/admin-password keys through the approved secret-management process. The values reference that Secret rather than placing a shared password in Helm values or command arguments. Save the following as monitoring-values.yaml:
+Prepare the namespace monitoring and the Secret grafana-admin with admin-user/admin-password keys through the approved secret-management process. The values reference that Secret rather than placing a shared password in Helm values or command arguments. Save the following as monitoring-values.yaml:
 
 ```yaml
 grafana:
@@ -857,7 +857,7 @@ Root filesystem unavailable percentage, excluding zero-sized filesystems:
 (100 * (1 - max by (cluster, instance, device, mountpoint, fstype) (node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"}) / max by (cluster, instance, device, mountpoint, fstype) (node_filesystem_size_bytes{job="node-exporter",mountpoint="/"}))) and on (cluster, instance, device, mountpoint, fstype) (max by (cluster, instance, device, mountpoint, fstype) (node_filesystem_size_bytes{job="node-exporter",mountpoint="/"}) > 0)
 ```
 
-CPU percentages here describe non-idle time, memory is bytes, and restarts are counters for the current Pod/container lifetime. Use rate/increase over a chosen window when asking about counter changes. The filesystem calculation uses available space and can include space reserved from ordinary users. These are examples for investigation, not universal alert thresholds.
+CPU percentages here describe non-idle time, memory is measured in bytes, and restarts are counters for the current Pod/container lifetime. Use rate/increase over a chosen window when asking about counter changes. The filesystem calculation uses available space and can include reserved space unavailable to ordinary users. These are examples for investigation, not universal alert thresholds.
 
 ### Distributed Tracing with AWS X-Ray
 
@@ -1450,7 +1450,7 @@ kubectl events -n default --types=Warning --watch
 
 The original Opsgenie exporter is unmaintained. Its active fork moved from resmoio to mustafaakin/kubernetes-event-exporter. The latest published release inspected here is v1.7 from February 2024, even though the repository has later development. An active repository or an old latest tag does not establish a current patched production image.
 
-The following reference was checked against the v1.7 configuration/watcher source. It requires an owned image reviewed and patched through your build process that retains this configuration/CLI contract, runs as UID 65532 and can read the mounted configuration with a read-only root filesystem. Set its immutable digest during rendering; no public latest image or invented digest is provided. Image build, vulnerability review and runtime compatibility were not executed in this audit.
+The following reference was checked against the v1.7 configuration/watcher source. It requires an owned image reviewed and patched through your build process that retains this configuration/CLI contract, runs as UID 65532 and can read the mounted configuration with a read-only root filesystem. Set its immutable digest during rendering; no public latest image or invented digest is provided. Image build, vulnerability review and runtime compatibility testing were not executed in this audit.
 
 #### Namespace Scope, RBAC and Configuration
 
@@ -2037,7 +2037,7 @@ Save this illustrative 90-day current-object policy as log-lifecycle-example.jso
 }
 ```
 
-These are object-age rules, including already existing objects, and actions are asynchronous. Actual transition timing, early manual deletion or overwrite can still cause minimum-duration charges. Standard-IA has a 30-day minimum charge; Glacier Flexible Retrieval has 90 days and Deep Archive 180 days. Choose any longer archive schedule with those constraints and the actual access/retrieval costs in mind; these numbers are service rules, not measured savings.
+These are object-age rules that also apply to already existing objects, and actions are asynchronous. Actual transition timing, early manual deletion or overwrite can still cause minimum-duration charges. Standard-IA has a 30-day minimum charge; Glacier Flexible Retrieval has 90 days and Deep Archive 180 days. Choose any longer archive schedule with those constraints and the actual access/retrieval costs in mind; these numbers are service rules, not measured savings.
 
 For a reviewed addition, save and run the following as merge-log-lifecycle.py. It preserves existing Rules and refuses colliding example IDs; it does not resolve overlapping filters or approve the combined retention policy:
 

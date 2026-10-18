@@ -179,7 +179,7 @@ spec:
 <details>
 <summary>정답 보기</summary>
 
-source와 checkpoint의 replication policy·offset-syncs 위치를 일치시키고 `sync.group.offsets.enabled=true`를 설정합니다. 변환 가능한 매핑·체크포인트와 권한이 필요하며 타깃 그룹은 비활성 또는 미존재여야 합니다. 소비 중인 그룹은 덮어쓰지 않습니다. 실제 리소스는 본문의 mm2.yaml과 동일한 target/source 구조를 사용합니다.
+source와 checkpoint의 replication policy·offset-syncs 위치를 일치시키고 `sync.group.offsets.enabled=true`를 설정합니다. 변환 가능한 매핑·체크포인트와 권한이 필요하며 타깃 그룹은 비활성 상태이거나 존재하지 않아야 합니다. 소비 중인 그룹은 덮어쓰지 않습니다. 실제 리소스는 본문의 mm2.yaml과 동일한 target/source 구조를 사용합니다.
 
 </details>
 

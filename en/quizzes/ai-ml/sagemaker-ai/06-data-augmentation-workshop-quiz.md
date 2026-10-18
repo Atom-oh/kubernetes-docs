@@ -112,7 +112,7 @@ This checks reproducibility of the fixed synthetic exercise, not arbitrary annot
 
 **Answer: D**
 
-Equal steps can still expose different lengths and amounts of data. Use validation for candidate selection.
+Equal steps can still expose the model to different lengths and amounts of data. Use validation for candidate selection.
 
 </details>
 

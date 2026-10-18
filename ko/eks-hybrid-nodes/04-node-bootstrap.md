@@ -5,7 +5,7 @@
 > **지원 버전**: EKS Hybrid Nodes; nodeadm v1.0.20 소스 확인. 대상 클러스터에 지원되는 OS·Kubernetes·CNI 조합을 선택합니다.
 > **마지막 업데이트**: 2026년 9월 12일
 
-이 문서는 준비한 온프레미스 호스트를 EKS에 연결합니다. 소프트웨어 설치, AWS 신원, 초기화와 실제 워크로드 준비 확인을 구분합니다. 예제의 변경 작업에는 대상 클러스터·호스트 식별과 운영자 승인이 필요합니다. 로컬 검증은 운영 네트워크, OS 이미지, PKI 또는 워크로드를 시험했다는 증거가 아닙니다.
+이 문서는 준비한 온프레미스 호스트를 EKS에 연결하는 절차를 설명합니다. 소프트웨어 설치, AWS 신원, 초기화와 실제 워크로드 준비 확인을 구분합니다. 예제의 변경 작업에는 대상 클러스터·호스트 식별과 운영자 승인이 필요합니다. 로컬 검증은 운영 네트워크, OS 이미지, PKI 또는 워크로드를 시험했다는 증거가 아닙니다.
 
 ## 부트스트랩 흐름
 
@@ -19,7 +19,7 @@
 
 ## nodeadm과 의존성 설치
 
-Hybrid nodeadm은 EC2용 `amazon-eks-ami`가 아닌 <strong>`aws/eks-hybrid`</strong>에서 제공합니다. 오래된 SSM 서명 키 문제 때문에 SSM 신규 설치·업그레이드에는 **nodeadm 1.0.19 이상**이 필요합니다. 이 검토는 릴리스된 **v1.0.20 소스**를 사용했습니다.
+Hybrid nodeadm은 EC2용 `amazon-eks-ami`가 아닌 <strong>`aws/eks-hybrid`</strong>에서 제공합니다. 오래된 SSM 서명 키 문제 때문에 SSM 신규 설치·업그레이드에는 **nodeadm 1.0.19 이상**이 필요합니다. 이 검토에서는 릴리스된 **v1.0.20 소스**를 사용했습니다.
 
 승인한 릴리스를 HTTPS 검증과 함께 받고 독립적으로 승인한 기록의 다이제스트와 비교한 뒤 root로 실행합니다. 변경 가능한 `latest` 다운로드로 `/usr/local/bin/nodeadm`을 무조건 교체하지 않습니다. [인터넷 제한 환경 구성](./03-airgap-setup.md)은 이미지 준비와 확인한 릴리스의 private manifest 옵션을 다룹니다. 감사 환경에서 공식 아티팩트 호스트의 TLS 호스트명 검증이 실패한 뒤 nodeadm 바이너리를 받거나 실행하지 않았습니다.
 
@@ -79,7 +79,7 @@ spec:
       - --node-labels=workload.example.com/location=onprem
 ```
 
-이는 입력 템플릿이며 실제 비밀을 커밋하는 예제가 아닙니다. root 소유·`0600`으로 보호하고 로그나 셸 기록에 값을 노출하지 않고 전달합니다. 클러스터 조회는 Hybrid 역할의 EKS 권한으로 API 엔드포인트와 CA를 가져옵니다. Base64 CA 필드에 넣은 원본 PEM 블록은 API 표현과 바꿔 쓸 수 없습니다.
+이는 입력 템플릿이며 실제 비밀을 커밋하는 예제가 아닙니다. root 소유·`0600`으로 보호하고 로그나 셸 기록에 값을 노출하지 않고 전달합니다. 클러스터 조회 시 Hybrid 역할의 EKS 권한으로 API 엔드포인트와 CA를 가져옵니다. Base64 CA 필드에 넣은 원본 PEM 블록은 API 표현과 바꿔 쓸 수 없습니다.
 
 `maxPods`와 종료 시간은 계획 예시이며 용량 보장이 아닙니다. CNI 할당·예약 IP, 리소스와 워크로드 종료 요구 사항을 확인합니다. 선택적인 `NoSchedule` taint에는 워크로드·CNI의 대응 toleration이 필요합니다. 필수 에이전트나 애플리케이션을 조용히 막는 기본 taint를 추가하지 않습니다.
 
@@ -102,7 +102,7 @@ aws ssm create-activation --region "$REGION" \
 
 ### IAM Roles Anywhere
 
-[사전 요구 사항](./01-prerequisites.md)에서 준비한 trust anchor, 활성 프로필, Hybrid 역할과 노드별 인증서·키를 사용합니다. 이 문서를 실행할 때마다 trust anchor·프로필을 추가 생성하지 않습니다.
+[사전 요구 사항](./01-prerequisites.md)에서 준비한 trust anchor, 활성 프로필, Hybrid 역할과 노드별 인증서·키를 사용합니다. 이 문서의 절차를 실행할 때마다 trust anchor·프로필을 추가 생성하지 않습니다.
 
 ```yaml
 apiVersion: node.eks.aws/v1alpha1
@@ -140,9 +140,9 @@ server = "https://registry.internal.example.com"
   ca = "/etc/containerd/certs.d/registry.internal.example.com/ca.crt"
 ```
 
-대응하는 검토된 CA 파일이 각 노드에 있어야 합니다. containerd 1.x에서는 `config_path`가 `plugins."io.containerd.grpc.v1.cri".registry` 아래에, containerd 2.x/config version 3에서는 `plugins."io.containerd.cri.v1.images".registry` 아래에 위치합니다. nodeadm이 생성한 `/etc/containerd/config.toml`을 확인하고 설치한 런타임에 맞는 절을 사용합니다. 폐기 예정 inline registry `configs/auth`와 `config_path` 방식을 섞거나 NodeConfig에 레지스트리 비밀번호를 넣지 않습니다.
+검토를 마친 해당 CA 파일이 각 노드에 있어야 합니다. containerd 1.x에서는 `config_path`가 `plugins."io.containerd.grpc.v1.cri".registry` 아래에, containerd 2.x/config version 3에서는 `plugins."io.containerd.cri.v1.images".registry` 아래에 위치합니다. nodeadm이 생성한 `/etc/containerd/config.toml`을 확인하고 설치한 런타임에 맞는 절을 사용합니다. 폐기 예정 inline registry `configs/auth`와 `config_path` 방식을 섞거나 NodeConfig에 레지스트리 비밀번호를 넣지 않습니다.
 
-조직에 시스템 전체 CA 신뢰가 필요하면 Ubuntu는 `/usr/local/share/ca-certificates/`와 `update-ca-certificates`, RHEL/AL2023은 `/etc/pki/ca-trust/source/anchors/`와 `update-ca-trust extract`를 사용합니다. RHEL 예제에서 Ubuntu 경로를 참조하지 않습니다. 일반 ECR 인증서는 공인 신뢰를 사용하지만 OS에 정상 CA bundle은 필요합니다. 레지스트리 신뢰와 인증은 별개입니다.
+조직에 시스템 전체 CA 신뢰가 필요하면 Ubuntu는 `/usr/local/share/ca-certificates/`와 `update-ca-certificates`, RHEL/AL2023은 `/etc/pki/ca-trust/source/anchors/`와 `update-ca-trust extract`를 사용합니다. RHEL 예제에서 Ubuntu 경로를 참조하지 않습니다. 일반 ECR 인증서는 공인 신뢰를 사용하지만 OS에 정상적인 CA bundle이 필요합니다. 레지스트리 신뢰와 인증은 별개입니다.
 
 ## 초기화와 확인
 
@@ -282,7 +282,7 @@ StandardError=journal
 WantedBy=multi-user.target
 ```
 
-호스트 구성 소유자를 통해 설치·활성화합니다. `network-online.target`은 네트워크 관리자의 wait 서비스 기준 부팅 순서이며 DNS, VPN, EKS나 자격 증명 서비스 접근을 보장하지 않습니다. `RemainAfterExit`는 서비스 상태 기록이며 노드 상태가 아닙니다. `EnvironmentFile`은 systemd가 파싱하며 스크립트가 셸 `source`로 실행하지 않습니다.
+호스트 구성 소유자를 통해 설치·활성화합니다. `network-online.target`은 네트워크 관리자의 wait 서비스를 기준으로 한 부팅 순서이며 DNS, VPN, EKS나 자격 증명 서비스 접근을 보장하지 않습니다. `RemainAfterExit`는 서비스 상태 기록이며 노드 상태가 아닙니다. `EnvironmentFile`은 systemd가 파싱하며 스크립트가 셸 `source`로 실행하지 않습니다.
 
 기존 마커 전용 설치는 명시적으로 마이그레이션합니다. `.nodeadm-installed` / `.nodeadm-initialized` 삭제 후 재부팅만으로 초기화하지 않습니다. Credentials file 활성화와 같은 승인된 설정 변경에는 문서화된 유지보수·init 절차를 사용하고 이후 자동화 기록을 맞춥니다.
 
@@ -294,7 +294,7 @@ AWS는 현재 자체 유지 관리 **Cilium 1.17.x와 1.18.x** 빌드를 Hybrid 
 
 현재 AWS CNI 페이지는 커널 요구 사항 때문에 **Cilium v1.18.3에서 Ubuntu 20.04와 RHEL 8을 명시적으로 제외**합니다. 커널만 바꾸면 AWS 지원이 성립한다고 주장하지 말고 문서화된 행렬 안의 OS·CNI 조합을 선택합니다.
 
-Calico 예제는 `aws-samples/eks-hybrid-examples`로 이동했습니다. Calico 프로젝트 폐기나 기존 모든 배포의 계속 동작을 보장하는 의미가 아닙니다. 현재 전용 AWS CNI 지원 페이지는 AWS 유지 관리 Cilium 빌드와 지원 기능을 명시합니다.
+Calico 예제는 `aws-samples/eks-hybrid-examples`로 이동했습니다. Calico 프로젝트의 폐기를 의미하거나 기존 모든 배포의 지속적인 동작을 보장하는 것은 아닙니다. 현재 전용 AWS CNI 지원 페이지는 AWS 유지 관리 Cilium 빌드와 지원 기능을 명시합니다.
 
 ### 설치 값
 
@@ -361,7 +361,7 @@ CNI 제거는 중단이 발생하는 폐기·마이그레이션 작업입니다.
 
 ## Bottlerocket은 별도 부트스트랩 계약 사용
 
-AWS는 **1.37.0**부터 지원 x86_64 Kubernetes variant와 사전 요구 사항을 갖춘 VMware Bottlerocket을 지원합니다. nodeadm을 **사용하지 않습니다**. AWS 가이드는 Kubernetes/AWS 설정과 **`eks-hybrid-setup` bootstrap container**를 구성합니다. 이전 `[settings.hybrid.ssm]`, `[settings.hybrid.iam-roles-anywhere]` 예제는 문서화된 설정 계약이 아닙니다.
+AWS는 **1.37.0**부터 지원 x86_64 Kubernetes variant와 사전 요구 사항을 갖춘 VMware Bottlerocket을 지원합니다. nodeadm을 **사용하지 않습니다**. AWS 가이드에서는 Kubernetes/AWS 설정과 **`eks-hybrid-setup` bootstrap container**를 구성합니다. 이전 `[settings.hybrid.ssm]`, `[settings.hybrid.iam-roles-anywhere]` 예제는 문서화된 설정 계약이 아닙니다.
 
 [Bottlerocket Hybrid Node 연결](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html)의 선택 공급자용 전체 설정을 사용합니다. 공통 필드 예제:
 
@@ -395,13 +395,13 @@ user-data = "REPLACE_WITH_BASE64_PROVIDER_BOOTSTRAP_INPUT"
 
 Base64는 암호화가 아닌 인코딩입니다. 공급자 bootstrap data에는 활성화 비밀이나 개인 키가 들어갈 수 있으므로 VM 구성, guestinfo, 관리 권한과 진단 내보내기를 보호하고 공개 저장소·로그에 넣지 않습니다. Admin-container SSH는 선택 사항이며 별도 승인이 필요합니다. 이미 등록한 VM을 깨끗한 템플릿으로 복제하지 않습니다.
 
-첫 전원 켜기 전에 승인한 **새로 준비한 전원 꺼진 VM**을 구성합니다. AWS 가이드는 `settings.toml`을 base64 인코딩하고 `guestinfo.userdata.encoding=base64`를 사용합니다. 평문 base64를 `gzip+base64`로 표시하지 않습니다. 배포할 govc/VMware 버전, datastore, 네트워크, 템플릿 소유권과 비밀 전달 경로를 확인한 뒤 프로비저닝합니다. 이번 감사에서 VMware 배포는 실행하지 않았습니다.
+처음 전원을 켜기 전에 승인한 **새로 준비한 전원이 꺼진 VM**을 구성합니다. AWS 가이드는 `settings.toml`을 base64 인코딩하고 `guestinfo.userdata.encoding=base64`를 사용합니다. 평문 base64를 `gzip+base64`로 표시하지 않습니다. 배포할 govc/VMware 버전, datastore, 네트워크, 템플릿 소유권과 비밀 전달 경로를 확인한 뒤 프로비저닝합니다. 이번 감사에서 VMware 배포는 실행하지 않았습니다.
 
 ## 애드온 배치와 Pod Identity
 
 API 서버 트래픽이 실제 webhook·aggregated API listener에 도달하도록 구성합니다. Hybrid Pod CIDR에 접근할 수 없으면 **웹훅 서버·operator**를 접근 가능한 클라우드 노드에 두거나 지원되는 적절한 hostNetwork 구성을 검증합니다. 모든 CloudWatch/ADOT 에이전트나 애플리케이션 Pod를 클라우드에 둬야 한다는 뜻은 아닙니다.
 
-클라우드 노드 배치는 명시적으로 검토한 node label·affinity를 사용하고 용량·taint를 확인합니다. `NotIn [hybrid]`는 label이 없는 노드도 선택할 수 있으므로 승인한 EC2 대상이라는 증거가 아닙니다.
+클라우드 노드 배치에는 명시적으로 검토한 node label·affinity를 사용하고 용량·taint를 확인합니다. `NotIn [hybrid]`는 label이 없는 노드도 선택할 수 있으므로 승인한 EC2 대상이라는 증거가 아닙니다.
 
 AWS는 혼합 클라우드/Hybrid 클러스터에서 양쪽에 CoreDNS 최소 1개를 권고합니다. 레플리카 4개와 soft spread만으로 각 2개를 보장하지 않습니다. [네트워크 구성](./02-network-configuration.md)의 배치·Service Traffic Distribution 절차를 적용하고 확인합니다.
 
@@ -449,7 +449,7 @@ sudo journalctl -u kubelet --since '-15 min' --lines 200 --no-pager
 sudo nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml
 ```
 
-`nodeadm debug`는 AWS·클러스터 읽기와 자격 증명 검사를 수행합니다. 출력을 비공개로 보관하고 공유 전에 정제합니다. `sudo aws sts get-caller-identity`는 다른 root·관리자 자격 증명 경로를 사용할 수 있어 kubelet이 사용하는 신원을 증명하지 않습니다. TLS 검증으로 `curl -k`를 사용하지 않습니다. 서버 CA 신뢰와 kubelet 클라이언트 인증서 승인·발급도 별개입니다.
+`nodeadm debug`는 AWS·클러스터 읽기와 자격 증명 검사를 수행합니다. 출력을 비공개로 보관하고 공유 전에 정제합니다. `sudo aws sts get-caller-identity`는 다른 root·관리자 자격 증명 경로를 사용할 수 있어 kubelet이 사용하는 신원을 증명하지 않습니다. TLS 검증에 `curl -k`를 사용하지 않습니다. 서버 CA 신뢰와 kubelet 클라이언트 인증서 승인·발급도 별개입니다.
 
 ## 공식 참고 자료
 

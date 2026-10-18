@@ -152,7 +152,7 @@ NAT 게이트웨이는 가능한 인터넷 출구 중 하나입니다. 필요한
 
 **정답: C) 별도의 클러스터 역할과 EC2 노드 역할**
 
-클러스터 역할은 `eks.amazonaws.com`을 신뢰하고 EKS가 클러스터 인프라를 관리할 권한을 제공합니다. 일반 EKS에는 `AmazonEKSClusterPolicy` 또는 동등한 범위가 필요합니다. EC2 노드 역할은 `ec2.amazonaws.com`을 신뢰하고 인스턴스 프로필로 제공됩니다. 관리형 노드 그룹의 인스턴스 프로필은 EKS가 구성하며, 노드 부트스트랩이 IAM 역할을 생성하는 것은 아닙니다.
+클러스터 역할은 `eks.amazonaws.com`을 신뢰하고 EKS가 클러스터 인프라를 관리할 권한을 제공합니다. 일반 EKS에는 `AmazonEKSClusterPolicy` 또는 동등한 권한 범위가 필요합니다. EC2 노드 역할은 `ec2.amazonaws.com`을 신뢰하고 인스턴스 프로필로 제공됩니다. 관리형 노드 그룹의 인스턴스 프로필은 EKS가 구성하며, 노드 부트스트랩이 IAM 역할을 생성하는 것은 아닙니다.
 
 EC2 노드의 기본 정책은 `AmazonEKSWorkerNodePolicy`와 `AmazonEC2ContainerRegistryPullOnly` 또는 동등한 최소 권한입니다. CNI 권한도 필요하며 IRSA/Pod Identity의 별도 역할을 권장합니다. 그것을 사용하지 않으면 노드 역할에 해당 CNI 권한이 필요합니다. IPv4의 `AmazonEKS_CNI_Policy`를 IPv6에 그대로 적용하지 않습니다. 스토리지·로드 밸런서·로깅 컨트롤러 권한을 모든 노드에 일괄 부여하는 것은 필수 조건이 아닙니다.
 
@@ -198,7 +198,7 @@ if aws iam create-role --role-name "$NEW_NODE_ROLE_NAME" \
 fi
 ```
 
-`CreateCluster`만 호출하여 제어면을 만들 때는 EC2 노드 역할이 아직 필요하지 않습니다. EC2 노드 구성 시 추가합니다. Fargate는 별도의 Pod 실행 역할을 쓰며 앱의 AWS 권한과 다릅니다. Auto Mode는 클러스터의 추가 정책·`sts:TagSession`, 최소 노드 정책을 사용하는 별도 역할 구성이 필요합니다. 프로비저닝 사용자의 `iam:PassRole` 등 권한도 따로 검토합니다.
+`CreateCluster`만 호출하여 제어면을 만들 때는 EC2 노드 역할이 아직 필요하지 않습니다. EC2 노드 구성 시 추가합니다. Fargate는 별도의 Pod 실행 역할을 쓰며, 이 역할은 앱의 AWS 권한과 다릅니다. Auto Mode는 클러스터의 추가 정책·`sts:TagSession`, 최소 노드 정책을 사용하는 별도 역할 구성이 필요합니다. 프로비저닝 사용자의 `iam:PassRole` 등 권한도 따로 검토합니다.
 
 [Node role requirements](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html) · [Auto Mode roles](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)
 
@@ -316,7 +316,7 @@ eksctl은 EKS 클러스터 관리를 위한 다양한 명령어를 제공합니�
 
 EKS 출시일부터 표준 지원 **14개월**, 이어서 추가 요금의 연장 지원 **12개월**을 제공합니다. 2026년 10월 12일 공식 목록은 표준 **1.34–1.37**, 연장 **1.31–1.33**입니다. EKS 1.37은 업스트림 출시(8월 26일) 이후인 2026년 10월 1일 제공되기 시작했습니다. 새 클러스터를 만들 수 있는 버전은 대상 리전의 EKS 목록으로 확인합니다.
 
-연장 지원은 기본 활성화되며 지원 정책과 종료 시점에 따라 제어면이 자동 업그레이드될 수 있습니다. 노드·애드온 갱신은 별도로 계획합니다. 지원 종료 날짜는 AWS 공지를 따르고 업그레이드를 미루는 근거로 최대 지원 기간을 사용하지 않습니다.
+연장 지원은 기본적으로 활성화되며 지원 정책과 종료 시점에 따라 제어면이 자동 업그레이드될 수 있습니다. 노드·애드온 갱신은 별도로 계획합니다. 지원 종료 날짜는 AWS 공지를 따르고 업그레이드를 미루는 근거로 최대 지원 기간을 사용하지 않습니다.
 
 다음은 버전 조회·구성 생성·AWS 생성 API·기존 클러스터 업그레이드의 서로 다른 예시입니다. 승인된 대상과 필요한 역할·서브넷·CIDR을 준비하고 생성/업그레이드 명령을 무조건 연속 실행하지 않습니다.
 
@@ -701,13 +701,13 @@ eksctl create nodegroup \
 
 **eksctl을 사용한 기존 클러스터 구성 작성:**
 
-기존 클러스터는 새 클러스터를 만들지 않고 다음과 같이 구성을 작성합니다:
+기존 클러스터의 구성은 새 클러스터를 만들지 않고 다음과 같이 작성합니다:
 
 ```bash
 eksctl utils write-kubeconfig --cluster my-cluster --region us-west-2 --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 ```
 
-이 명령은 기존 클러스터의 kubeconfig를 작성합니다. IAM 인증과 access entry/RBAC 권한은 별도로 검증합니다. 클러스터 생성도 비활성화하지 않으면 기본적으로 kubeconfig를 작성합니다.
+이 명령은 기존 클러스터의 kubeconfig를 작성합니다. IAM 인증과 access entry/RBAC 권한은 별도로 검증합니다. 클러스터 생성 시에도 kubeconfig 작성을 비활성화하지 않으면 기본적으로 kubeconfig를 작성합니다.
 
 **여러 클러스터 관리:**
 
@@ -871,9 +871,9 @@ fi
 https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
 ```
 
-고유한 교육용 스택을 생성하기 전에 CloudFormation 템플릿을 읽습니다. 기본값은 **AZ 두 개에 퍼블릭 서브넷 두 개와 프라이빗 서브넷 두 개, 인터넷 게이트웨이, NAT 게이트웨이·EIP 두 개**를 생성합니다. 따라서 인터넷 송신이 가능한 NAT 기반 설계이지 인터넷 차단 클러스터가 아닙니다. 프로덕션에 기본값을 그대로 적용하지 말고 CIDR 중복, AZ, IP 용량, NAT 비용을 검토합니다.
+고유한 교육용 스택을 생성하기 전에 CloudFormation 템플릿을 읽습니다. 기본값으로는 **AZ 두 개에 퍼블릭 서브넷 두 개와 프라이빗 서브넷 두 개, 인터넷 게이트웨이, NAT 게이트웨이·EIP 두 개**를 생성합니다. 따라서 인터넷 송신이 가능한 NAT 기반 설계이지 인터넷 차단 클러스터가 아닙니다. 프로덕션에 기본값을 그대로 적용하지 말고 CIDR 중복, AZ, IP 용량, NAT 비용을 검토합니다.
 
-`VpcId`, `SubnetIds`, `SecurityGroups`를 기록합니다. `SubnetIds`에는 **퍼블릭·프라이빗 서브넷이 모두** 들어 있으므로 각각의 라우팅 테이블을 확인하고 실제 프라이빗 서브넷을 노드에 선택합니다. 출력의 사용자 지정 보안 그룹만으로 필요한 통신 규칙이 모두 있다는 뜻은 아닙니다. EKS 클러스터 보안 그룹, 추가 그룹, 컨트롤 플레인·노드 통신 규칙을 검토합니다.
+`VpcId`, `SubnetIds`, `SecurityGroups`를 기록합니다. `SubnetIds`에는 **퍼블릭·프라이빗 서브넷이 모두** 들어 있으므로 각각의 라우팅 테이블을 확인하고 실제 프라이빗 서브넷을 노드에 선택합니다. 출력에 사용자 지정 보안 그룹이 있다고 해서 필요한 통신 규칙이 모두 있다는 뜻은 아닙니다. EKS 클러스터 보안 그룹, 추가 그룹, 컨트롤 플레인·노드 통신 규칙을 검토합니다.
 
 **3. 일반 클러스터 생성.** EKS 콘솔의 사용자 지정 구성 경로에서 이 실습은 Auto Mode를 비활성화합니다. EKS 표준 지원 중이며 호환되는 사용 가능 버전(검토 예제는 1.36), 클러스터 서비스 역할, 검토한 VPC·서브넷을 선택합니다.
 
@@ -960,7 +960,7 @@ fi
 
 **정답: B) 노드 사용자 데이터와 볼륨 구성 지정**
 
-시작 템플릿은 스토리지, 인스턴스 메타데이터, OS별 사용자 데이터 등 **EC2 관리형 노드 그룹**을 사용자 지정합니다. EKS 컨트롤 플레인이나 EKS Auto Mode 노드를 구성하는 수단은 아닙니다.
+시작 템플릿은 **EC2 관리형 노드 그룹**의 스토리지, 인스턴스 메타데이터, OS별 사용자 데이터 등을 사용자 지정합니다. EKS 컨트롤 플레인이나 EKS Auto Mode 노드를 구성하는 수단은 아닙니다.
 
 **AL2023 사용자 데이터:** MIME multipart 형식을 사용합니다. 템플릿에 `ImageId`가 없어 EKS가 AMI를 선택하면 EKS가 노드 구성을 제공·병합합니다. 사용자 지정 AMI ID가 있으면 고급 문제 5의 완전한 `NodeConfig`를 제공해야 합니다. AL2023의 systemd 서비스가 `nodeadm`을 실행하므로 `/etc/eks/bootstrap.sh`, 중복 `nodeadm init`, 수동 kubelet 시작을 사용하지 않습니다. 추가 소프트웨어는 선택한 OS와 호환되어야 하며 신뢰할 수 있는 패키지 저장소에 연결할 수 있어야 합니다.
 
@@ -1058,7 +1058,7 @@ aws eks create-nodegroup \
 
 시작 템플릿에는 `SubnetId`와 `IamInstanceProfile`을 넣지 않습니다. 서브넷과 노드 IAM 역할은 노드 그룹 요청에 지정합니다. 시작 템플릿 사용 시 노드 그룹의 `diskSize`, `remoteAccess`를 중복 지정하지 않습니다. 인스턴스 유형은 템플릿 또는 노드 그룹 요청 중 한 곳에서 설정합니다. `ImageId`가 있으면 노드 그룹의 `amiType`, `releaseVersion`, `version`을 생략하고 사용자 지정 AMI의 kubelet과 컨트롤 플레인 버전 호환성을 확인합니다.
 
-명시적인 `ImageId`는 AMI를 고정하지만, 이를 생략한 템플릿은 EKS가 선택하는 AMI를 사용할 수 있습니다. 어느 경우에도 새 AMI가 게시될 때 기존 노드가 자동 갱신되지는 않습니다. 사용자 지정 템플릿 변경은 **같은** 템플릿의 새 버전을 만든 뒤 명시적으로 노드 그룹을 업데이트해야 하며, 이 과정에서 인스턴스가 교체됩니다.
+명시적인 `ImageId`는 AMI를 고정하지만, 이를 생략한 템플릿은 EKS가 선택하는 AMI를 사용할 수 있습니다. 어느 경우에도 새 AMI가 게시될 때 기존 노드가 자동 갱신되지는 않습니다. 사용자 지정 템플릿을 변경하려면 **같은** 템플릿의 새 버전을 만든 뒤 명시적으로 노드 그룹을 업데이트해야 하며, 이 과정에서 인스턴스가 교체됩니다.
 
 참고: [시작 템플릿 제한](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html), [CreateNodegroup 필드](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html), [AL2023 초기화](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html).
 
@@ -1399,7 +1399,7 @@ AL2023 EKS 최적화 AMI는 `nodeadm`으로 containerd와 kubelet을 구성합�
 
 **NodeConfig 입력 예제**
 
-아래는 관리 워크스테이션에서 기존 IPv4 클러스터의 실제 메타데이터로 사용자 데이터를 생성합니다. 검토한 EKS 최적화 AL2023 기반 사용자 AMI/자체 관리 노드용이며, 사용자 AMI ID가 없는 관리형 노드 그룹은 EKS의 메타데이터 생성·병합 경로를 따릅니다. `NodeConfig`는 호스트 부트스트랩 설정으로 `kubectl apply`할 일반 Kubernetes 리소스가 아닙니다.
+아래 예제는 관리 워크스테이션에서 기존 IPv4 클러스터의 실제 메타데이터로 사용자 데이터를 생성합니다. 검토한 EKS 최적화 AL2023 기반 사용자 AMI/자체 관리 노드용이며, 사용자 AMI ID가 없는 관리형 노드 그룹은 EKS의 메타데이터 생성·병합 경로를 따릅니다. `NodeConfig`는 호스트 부트스트랩 설정으로 `kubectl apply`할 일반 Kubernetes 리소스가 아닙니다.
 
 ```bash
 # Run on the administration workstation to prepare reviewed IPv4 node user data.

@@ -4,7 +4,7 @@
 > **실습 경계**: 별도로 준비한 본인 소유의 일회용 Linux fabric VM. 운영 fabric이나 클라우드 리소스는 사용하지 않습니다.
 > **검증 상태**: 공식 문서, upstream 토폴로지, FRR CLI/template 소스를 확인했으며 집필 중 실습을 **실행하지 않았습니다**.
 
-EVPN BGP 세션 established는 관찰의 출발점이며 fabric 전체의 정상 동작을 보증하지 않습니다.
+EVPN BGP 세션의 established 상태는 관찰의 출발점이며 fabric 전체의 정상 동작을 보증하지 않습니다.
 이 워크북에서는 frame 또는 packet이 VLAN, VNI, VRF, underlay를 통과하는 경로를 추적하고 격리와 복원을 증명합니다.
 먼저 [입문 8개 장](../beginner/README.md)과 [라우팅 정책](02-routing-policy-convergence.md)을 완료합니다.
 Bridge, neighbor, 커널 경로 증거를 해석할 때 [Linux 네트워크 스택](../../kernel/02-network-stack.md)을 활용합니다.

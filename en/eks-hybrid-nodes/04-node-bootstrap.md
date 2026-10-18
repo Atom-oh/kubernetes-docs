@@ -123,7 +123,7 @@ spec:
 
 The paths are examples, not an instruction to reuse one certificate across machines. Bind `nodeName` to the certificate attribute used by the role trust policy; the common CN condition requires them to match. The name must meet node naming rules and be at most 64 characters. Enable **`acceptRoleSessionName: true`** on the profile.
 
-Session duration is not increased merely by setting the role maximum to 12 hours. The effective requested/profile duration must fit within the role's `MaxSessionDuration`; equality is permitted. Choose duration according to security/availability requirements and verify credential renewal. Static IAM user access keys are not a third supported Hybrid nodeadm credential provider.
+Session duration is not increased merely by setting the role maximum to 12 hours. The effective requested/profile duration must fit within the role's `MaxSessionDuration`; equality is permitted. Choose a duration according to security/availability requirements and verify credential renewal. Static IAM user access keys are not a third supported Hybrid nodeadm credential provider.
 
 ## Private registry trust
 
@@ -286,7 +286,7 @@ Install/enable it through the host configuration owner. `network-online.target` 
 
 Existing marker-only installations require explicit migration. Merely removing `.nodeadm-installed` / `.nodeadm-initialized` and rebooting is not a reset procedure. For an approved configuration change, such as enabling the credentials file, follow the documented maintenance/init procedure and reconcile the automation record afterward.
 
-On normal reboot, configured kubelet/credential services resume. Deleting a Kubernetes Node object does not deregister SSM or stop kubelet; a running, authorized kubelet can recreate the Node. Do not use `delete node` as host decommissioning or assume every failed host will necessarily rejoin.
+On a normal reboot, configured kubelet/credential services resume. Deleting a Kubernetes Node object does not deregister SSM or stop kubelet; a running, authorized kubelet can recreate the Node. Do not use `delete node` as host decommissioning or assume every failed host will necessarily rejoin.
 
 ## Cilium CNI
 
@@ -449,7 +449,7 @@ sudo journalctl -u kubelet --since '-15 min' --lines 200 --no-pager
 sudo nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml
 ```
 
-`nodeadm debug` performs AWS/cluster reads and credential checks. Keep its output private and redact before sharing. `sudo aws sts get-caller-identity` may use a different root/admin credential chain and does not establish what kubelet uses. Do not use `curl -k` as TLS validation. CA trust of the server and approval/issuance of kubelet client certificates are separate mechanisms.
+`nodeadm debug` performs AWS/cluster reads and credential checks. Keep its output private and redact it before sharing. `sudo aws sts get-caller-identity` may use a different root/admin credential chain and does not establish what kubelet uses. Do not use `curl -k` as TLS validation. CA trust of the server and approval/issuance of kubelet client certificates are separate mechanisms.
 
 ## Primary references
 

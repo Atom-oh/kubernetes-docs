@@ -122,7 +122,7 @@ func main() {
 }
 ```
 
-The original 70:30 packing/utilization idea can be expressed as the illustrative formula `(packingScore * 7 + utilizationScore * 3) / 10`, with `utilizationScore = (1 - utilization) * 100`. It is **not wired into this binary**. A real implementation needs a consistent, fresh, per-device snapshot, finite values in0–1, bounded collection latency and an explicit missing-data policy. Missing telemetry is not zero utilization; utilization is not unallocated GPU capacity.
+The original 70:30 packing/utilization idea can be expressed as the illustrative formula `(packingScore * 7 + utilizationScore * 3) / 10`, with `utilizationScore = (1 - utilization) * 100`. It is **not wired into this binary**. A real implementation needs a consistent, fresh, per-device snapshot, finite values in 0–1, bounded collection latency and an explicit missing-data policy. Missing telemetry is not zero utilization; utilization is not unallocated GPU capacity.
 
 3. **Scheduler Configuration**:
 
@@ -146,7 +146,7 @@ profiles:
         weight: 10
 ```
 
-4. **Express hard placement requirements in the Pod.** Replace the example model/memory with verified inventory. `Gt: "40959"` means an integer label of at least40960MiB. The BusyBox image below only holds a GPU resource reservation if run in a prepared lab; it does not execute CUDA or validate the GPU.
+4. **Express hard placement requirements in the Pod.** Replace the example model/memory with verified inventory. `Gt: "40959"` means an integer label of at least 40960 MiB. The BusyBox image below only holds a GPU resource reservation if run in a prepared lab; it does not execute CUDA or validate the GPU.
 
 ```yaml
 apiVersion: v1
@@ -206,7 +206,7 @@ The diagrams describe possible integrations, not a complete network-policy, serv
 
 ## Scale-Down Optimization with Pod Deletion Cost
 
-Pod Deletion Cost is a **best-effort ReplicaSet scale-down preference**, including Pods owned by a Deployment's ReplicaSets. It appeared as alpha in1.21 and became enabled-by-default beta in1.22; it remains beta in the referenced documentation. It does not control StatefulSet ordinal deletion, bare Pod deletion, eviction or node failure.
+Pod Deletion Cost is a **best-effort ReplicaSet scale-down preference**, including Pods owned by a Deployment's ReplicaSets. It appeared as alpha in 1.21 and became enabled-by-default beta in 1.22; it remains beta in the referenced documentation. It does not control StatefulSet ordinal deletion, bare Pod deletion, eviction or node failure.
 
 ### Pod Deletion Cost Concept
 
@@ -214,7 +214,7 @@ Set the `controller.kubernetes.io/pod-deletion-cost` annotation on each Pod. Cos
 
 **Key properties:**
 
-* Missing annotation means0; valid decimal values span signed int32, including negative values. Invalid values are rejected with the feature enabled.
+* Missing annotation means 0; valid decimal values span signed int32, including negative values. Invalid values are rejected with the feature enabled.
 * In the pinned controller, assignment, Pod phase and readiness precede cost; replica placement and other tie-breakers follow it.
 * There is no guaranteed deletion order. Equal template costs do not distinguish replicas.
 * Avoid frequent metric-driven updates. Prefer coarse application-state transitions or one update before an application-controlled scale-down.
@@ -232,7 +232,7 @@ The diagram shows cost ordering **only when assignment, phase, readiness and oth
 
 #### 1. Protecting Warmed-Up Cache Pods
 
-This Deployment starts each Pod at cost0. It is a contract for **your application**: replace the image and implement `/readyz` on port8080 so readiness reflects real warm-up. The audit did not build or run that application. A high cost must not be assigned merely because a sleep elapsed.
+This Deployment starts each Pod at cost 0. It is a contract for **your application**: replace the image and implement `/readyz` on port 8080 so readiness reflects real warm-up. The audit did not build or run that application. A high cost must not be assigned merely because a sleep elapsed.
 
 ```yaml
 apiVersion: v1
@@ -406,7 +406,7 @@ func (t *ConnectionTracker) UpdateDeletionCost(parent context.Context) (bool, er
 
 #### 3. Protecting Pods with Data Locality
 
-A locality hint can prefer a replica with useful cached data. In the manifest below every replica starts at50, so there is no cost distinction until a trusted controller updates individual Pods. Cost does not mount, retain or restore data; storage constraints and application recovery remain separate.
+A locality hint can prefer a replica with useful cached data. In the manifest below every replica starts at 50, so there is no cost distinction until a trusted controller updates individual Pods. Cost does not mount, retain or restore data; storage constraints and application recovery remain separate.
 
 ```yaml
 apiVersion: apps/v1
@@ -504,9 +504,9 @@ spec:
 
 ### Dynamic Pod Deletion Cost Update Pattern
 
-This alternative policy combines fresh per-Pod request/cache/latency inputs into coarse100-point hints. The weights are illustrative and are not measured performance results. There is no fake collector or background polling loop: supply real samples with Pod UID and an offset-aware `observed_at` timestamp. Missing, invalid, stale or wrong-Pod data raises an error and leaves the annotation unchanged.
+This alternative policy combines fresh per-Pod request/cache/latency inputs into coarse 100-point hints. The weights are illustrative and are not measured performance results. There is no fake collector or background polling loop: supply real samples with Pod UID and an offset-aware `observed_at` timestamp. Missing, invalid, stale or wrong-Pod data raises an error and leaves the annotation unchanged.
 
-Pass an already configured Kubernetes Python `ApiClient`; the call signature was checked against client35.0.0. It uses JSON Patch explicitly, a UID test and bounded connection/read timeouts. Pick one owner/policy for the annotation rather than running both examples against the same Pod.
+Pass an already configured Kubernetes Python `ApiClient`; the call signature was checked against client 35.0.0. It uses JSON Patch explicitly, a UID test and bounded connection/read timeouts. Pick one owner/policy for the annotation rather than running both examples against the same Pod.
 
 ```python
 from datetime import datetime, timezone
@@ -617,11 +617,11 @@ args:
 - --metric-annotations-allowlist=pods=[controller.kubernetes.io/pod-deletion-cost]
 ```
 
-The exported metric is a gauge with value1 and an `annotation_controller_kubernetes_io_pod_deletion_cost` **label**. Relabeling an annotation does not turn it into a numeric metric value. An absent series can mean missing collection; it must not be assumed to mean cost0.
+The exported metric is a gauge with value 1 and an `annotation_controller_kubernetes_io_pod_deletion_cost` **label**. Relabeling an annotation does not turn it into a numeric metric value. An absent series can mean missing collection; it must not be assumed to mean cost 0.
 
 ### Grafana Dashboard
 
-This is a dashboard JSON object for import, not the HTTP API's `{"dashboard": ...}` request wrapper. Replace `PROMETHEUS_UID` with the actual datasource UID. The panels count Pods by explicit annotation labels, including negative values; they do not plot the gauge's value1 as a deletion cost. Verify the kube-state-metrics allowlist before interpreting results.
+This is a dashboard JSON object for import, not the HTTP API's `{"dashboard": ...}` request wrapper. Replace `PROMETHEUS_UID` with the actual datasource UID. The panels count Pods by explicit annotation labels, including negative values; they do not plot the gauge's value 1 as a deletion cost. Verify the kube-state-metrics allowlist before interpreting results.
 
 ```json
 {
@@ -716,7 +716,7 @@ This is a dashboard JSON object for import, not the HTTP API's `{"dashboard": ..
 ### Limitations
 
 * **PDB scope**: ordinary ReplicaSet/Deployment scale-down deletes Pods directly and is not blocked by a PDB. PDBs govern requests through the eviction API; neither mechanism guarantees survival during failures.
-* **Version/feature**: alpha1.21, beta/default-on since1.22; the referenced1.35.8 baseline enables PodDeletionCost. Do not treat this as a reason to deploy an unsupported old minor.
+* **Version/feature**: alpha 1.21, beta/default-on since 1.22; the referenced 1.35.8 baseline enables PodDeletionCost. Do not treat this as a reason to deploy an unsupported old minor.
 * **Workload/ownership**: the preference is within one ReplicaSet. Bare Pods, StatefulSet ordinal choices and deletion of an entire workload are different paths.
 * **Asynchrony**: concurrent updates, readiness changes and other selection criteria can override the expected preference. A new Pod needs its own annotation; the hint is not durable application state.
 
@@ -751,7 +751,7 @@ kubectl -n scheduler-lab get events --field-selector involvedObject.name=<pod-na
 
 ### Metrics Collection
 
-The example below monitors the **secondary scheduler**, which exposes HTTPS metrics on10259 itself; a metrics sidecar is not required. AMP, CloudWatch, log collectors and alert routing in the illustration require separately configured integrations.
+The example below monitors the **secondary scheduler**, which exposes HTTPS metrics on 10259 itself; a metrics sidecar is not required. AMP, CloudWatch, log collectors and alert routing in the illustration require separately configured integrations.
 
 Prerequisites: an existing Prometheus Operator stack with discovery access, a serving certificate for `custom-scheduler.scheduler-lab.svc`, and its private key in the `custom-scheduler-serving-tls` Secret in `scheduler-lab`. Put the public CA in `monitoring/custom-scheduler-ca` under `ca.crt`. The `monitoring/scheduler-scrape-token` Secret must contain a valid, **rotated short-lived** token for the Prometheus ServiceAccount; provisioning and rotation are not implemented here.
 

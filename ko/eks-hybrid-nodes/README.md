@@ -5,7 +5,7 @@
 
 Amazon EKS Hybrid Nodes는 고객이 운영하는 온프레미스·엣지 노드를 AWS 관리형 EKS control plane에 연결합니다. Host·OS·연결·workload 운영은 계속 사용자 책임입니다. 이 가이드는 지원 인터페이스와 예제 구성을 구분하며 특정 온프레미스 프로덕션 배포를 검증했다는 증거가 아닙니다.
 
-EKS 1.37은 2026년 10월 1일 제공되기 시작했습니다. 이 가이드의 예제는 EKS 1.36과 nodeadm 1.0.20 기준 검토를 유지합니다.
+EKS 1.37은 2026년 10월 1일 제공되기 시작했습니다. 이 가이드의 예제는 EKS 1.36과 nodeadm 1.0.20을 검토 기준으로 유지합니다.
 
 버전을 선택하기 전에 [현재 EKS 지원 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html), Hybrid Nodes 문서, Host/CNI 지원 정보를 확인하세요.
 
@@ -68,7 +68,7 @@ nodeSelector:
 | SSM/IAM Roles Anywhere 서비스 | AWS | 자격 증명 서비스이며 로컬 offline CA 대체물이 아님 |
 | VPN/Direct Connect·routing | 양쪽 환경 | 양방향 연결; Direct Connect만으로 암호화가 보장되지 않음 |
 
-지원 Bottlerocket VMware 변형은 자체 bootstrap 경로를 사용하며 nodeadm을 사용하지 않습니다. 다른 지원 host에서는 `nodeadm install`이 의존성을 설치하고 `nodeadm init`이 구성·join합니다. SSM signing key 변경 때문에 SSM 신규 설치/upgrade에는 **nodeadm 1.0.19 이상**이 필요하며, 확인한 현재 릴리스는 **1.0.20**입니다.
+지원되는 Bottlerocket VMware 변형은 자체 bootstrap 경로를 사용하며 nodeadm을 사용하지 않습니다. 다른 지원 host에서는 `nodeadm install`이 의존성을 설치하고 `nodeadm init`이 구성·join합니다. SSM signing key 변경 때문에 SSM 신규 설치/upgrade에는 **nodeadm 1.0.19 이상**이 필요하며, 확인한 현재 릴리스는 **1.0.20**입니다.
 
 ## 계획에 반영할 제약
 

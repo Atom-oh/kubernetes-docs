@@ -64,7 +64,7 @@ Place the service selector on the left and DB selector on the right to find desc
 
 **Answer: B) Valid TraceQL plus Grafana search sorting/limit settings.**
 
-The actual Tempo3.0.3 parser rejects those old sort/order-by/limit examples.
+The actual Tempo 3.0.3 parser rejects those old sort/order-by/limit examples.
 
 </details>
 

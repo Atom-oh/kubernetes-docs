@@ -62,7 +62,7 @@ The following diagram shows how custom resources work:
 
 ### Custom Resource Definitions (CRD)
 
-CRD is the simplest way to define new resource types:
+A CRD is the simplest way to define new resource types:
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -1093,7 +1093,7 @@ Device plugins consist of the following components:
 
 NVIDIA GPU device plugin deployment example:
 
-First configure compatible NVIDIA drivers, Container Toolkit and container runtime. Pin a tested official NVIDIA device-plugin Helm chart release and select Linux GPU nodes. Avoid a duplicate installation when GPU Operator or Auto Mode already owns the plugin.
+First configure compatible NVIDIA drivers, the Container Toolkit and a container runtime. Pin a tested official NVIDIA device-plugin Helm chart release and select Linux GPU nodes. Avoid a duplicate installation when GPU Operator or Auto Mode already owns the plugin.
 
 ### GPU Request Pod
 

@@ -58,7 +58,7 @@ Expiration is a forceful trigger and is not rate-limited by NodePool disruption 
 **Answer: B) AWS manages Bottlerocket variants; NodeClass is not an AMI-family selector**
 
 **Explanation:**
-Auto Mode does not expose those custom-AMI interfaces or SSH/SSM access. Its managed images also support accelerated workloads. The earlier quiz's AL2023 20–40s versus Bottlerocket 15–25s, and source's 40–60s versus 20–30s/20–40s, have no verified measurement provenance; they do not establish a universal boot-speed ranking. General-purpose OS comparisons are separate from Auto Mode's managed interface.
+Auto Mode does not expose those custom-AMI interfaces or SSH/SSM access. Its managed images also support accelerated workloads. The earlier quiz's AL2023 20–40s versus Bottlerocket 15–25s, and the source's 40–60s versus 20–30s/20–40s, have no verified measurement provenance; they do not establish a universal boot-speed ranking. General-purpose OS comparisons are separate from Auto Mode's managed interface.
 
 </details>
 

@@ -394,7 +394,7 @@ curl --fail-with-body --user "$HARBOR_USER" \
   "https://harbor.example.com/api/v2.0/projects/myapp/repositories/app/artifacts/${HARBOR_DIGEST}?with_scan_overview=true"
 ```
 
-스캔은 비동기 작업입니다. 완료 상태·스캐너 DB 업데이트 시각을 확인하며, 빈 결과를 취약점 0개로 처리하지 않습니다. 위 예제의 단일 경로 `app`과 달리 `team/app`처럼 중첩된 repository 이름은 Harbor API가 요구하는 이중 URL 인코딩을 적용합니다.
+스캔은 비동기 작업입니다. 완료 상태·스캐너 DB 업데이트 시각을 확인하며, 빈 결과를 취약점 0개로 처리하지 않습니다. 위 예제의 단일 경로 `app`과 달리 `team/app`처럼 중첩된 repository 이름에는 Harbor API가 요구하는 이중 URL 인코딩을 적용합니다.
 
 ### CVE Allowlist
 
@@ -566,7 +566,7 @@ trivy image --cache-dir ./trivy-cache --download-java-db-only
 tar -C trivy-cache -czf trivy-db-bundle.tgz db java-db
 ```
 
-번들을 각 Trivy replica의 영구 캐시 루트 `/home/scanner/.cache/trivy`에 풀어 `db/trivy.db`, `db/metadata.json`, `java-db/trivy-java.db` 및 Java DB 메타데이터가 올바른 소유권으로 존재하게 합니다. 실행 중인 DB 파일에 덮어쓰지 말고 스캐너를 정지하거나 새 PVC/초기화 Job으로 교체합니다. `tar`에 홈 경로를 포함하면 잘못된 하위 디렉터리에 풀리므로 위처럼 `-C`를 사용합니다.
+번들을 각 Trivy replica의 영구 캐시 루트 `/home/scanner/.cache/trivy`에 풀어 `db/trivy.db`, `db/metadata.json`, `java-db/trivy-java.db` 및 Java DB 메타데이터가 올바른 소유권으로 존재하게 합니다. 실행 중인 DB 파일을 덮어쓰지 말고 스캐너를 정지하거나 새 PVC/초기화 Job으로 교체합니다. `tar`에 홈 경로를 포함하면 잘못된 하위 디렉터리에 풀리므로 위처럼 `-C`를 사용합니다.
 
 ```yaml
 trivy:
@@ -706,7 +706,7 @@ curl --fail-with-body --user "$HARBOR_USER" -X POST \
 
 ### 2. 보안 강화
 
-외부·내부 TLS, OIDC/LDAP, 만료 있는 최소 권한 Robot, 감사 로그와 패치 관리를 적용합니다. NetworkPolicy는 실제 생성된 Pod 라벨·컨테이너 포트와 DNS, core↔registry/jobservice, PostgreSQL·Redis, DB 다운로드 및 복제 트래픽을 기준으로 작성합니다. 모든 Pod에 443만 허용하는 정책은 내부 통신과 DNS를 차단할 수 있습니다. 인증 제공자에서 비밀번호·MFA 정책을 관리하고, Harbor UI에 없는 임의의 비밀번호 정책 항목을 가정하지 않습니다.
+외부·내부 TLS, OIDC/LDAP, 만료 기한이 있는 최소 권한 Robot, 감사 로그와 패치 관리를 적용합니다. NetworkPolicy는 실제 생성된 Pod 라벨·컨테이너 포트와 DNS, core↔registry/jobservice, PostgreSQL·Redis, DB 다운로드 및 복제 트래픽을 기준으로 작성합니다. 모든 Pod에 443만 허용하는 정책은 내부 통신과 DNS를 차단할 수 있습니다. 인증 제공자에서 비밀번호·MFA 정책을 관리하고, Harbor UI에 없는 임의의 비밀번호 정책 항목을 가정하지 않습니다.
 
 ### 3. 백업 전략
 
@@ -714,7 +714,7 @@ curl --fail-with-body --user "$HARBOR_USER" -X POST \
 
 ### 4. 모니터링
 
-Chart의 `metrics.enabled`와, Operator CRD가 있는 경우 `metrics.serviceMonitor.enabled`를 사용합니다. 손으로 추측한 `http-metrics` 포트 대신 Chart가 생성한 ServiceMonitor·Service 포트를 확인합니다. Prometheus의 ServiceMonitor selector와 namespace 선택에도 맞춰야 합니다. 저장소·DB 용량, 복제/스캔/GC 실패와 큐 지연, Trivy DB 신선도, TLS·Robot 만료를 감시합니다.
+Chart의 `metrics.enabled`와, Operator CRD가 있는 경우 `metrics.serviceMonitor.enabled`를 사용합니다. 추측한 `http-metrics` 포트 대신 Chart가 생성한 ServiceMonitor·Service 포트를 확인합니다. Prometheus의 ServiceMonitor selector와 namespace 선택에도 맞춰야 합니다. 저장소·DB 용량, 복제/스캔/GC 실패와 큐 지연, Trivy DB 신선도, TLS·Robot 만료를 감시합니다.
 
 ## 요약
 
