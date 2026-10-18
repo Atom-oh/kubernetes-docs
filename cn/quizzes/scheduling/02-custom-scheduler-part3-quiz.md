@@ -1,7 +1,7 @@
 # 自定义调度器测验（第 3 部分）
 
 > **示例基线**：Kubernetes 1.35.8、Go 1.27.2；原生 1.37 功能另行说明
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 本测验考查你对在 Kubernetes 中实现和使用自定义调度器的深入理解。
 
@@ -1096,5 +1096,3 @@ D. 将不可用指标视为零活动，并立即降低成本
 * [BalancedAllocation 评分器](https://github.com/kubernetes/kubernetes/blob/v1.35.8/pkg/scheduler/framework/plugins/noderesources/balanced_allocation.go)
 * [节点分配](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)
 * [ReplicaSet 删除成本](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
-
-</source_document>

@@ -1,7 +1,7 @@
 # KEDA（Kubernetes 事件驱动自动伸缩）
 
 > **示例版本**：KEDA/Helm chart 2.21.0；请参阅下方经过测试的 Kubernetes 版本矩阵。
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 目录
 - [简介](#introduction)

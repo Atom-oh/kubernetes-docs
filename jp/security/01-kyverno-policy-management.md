@@ -1,7 +1,7 @@
 # Kyvernoによるポリシー管理
 
 > **検証ベースライン**: Kyverno/CLI 1.19.1、Helm chart 3.9.1。現在のリリースガイドでは Kubernetes 1.33～1.35 がテスト対象として掲載されています。chart のより広範なインストール制約は互換性の保証ではありません。
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 
 Kyverno は Kubernetes policy を評価し、明示的に設定された mutation、generation、deletion を実行します。これらの例は、実際の CLI とリリース済みの schema/chart を使用してローカルで確認しました。live cluster へのインストール、admission、network isolation、cleanup、AWS integration は実行していません。
 
@@ -23,7 +23,7 @@ target API server でサポートされる version skew の kubectl、OCI 対応
 
 ### Kyvernoアーキテクチャと仕組み
 
-| コンポーネント | 責任 | 
+| コンポーネント | 責任 |
 |---|---|
 | Admission controller | 一致する admission request と policy validation/mutation/image check。すべての GET/list request ではありません |
 | Background controller | Generate と明示的に有効化された mutate-existing 作業 |

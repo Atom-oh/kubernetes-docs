@@ -343,10 +343,10 @@ iperf3 3.19、TCP、每次运行 20 s、`-J`、客户端 `cli`。CPU 列是 iper
 
 | t (ms) | 发送到 172.20.0.10 的候选名称（并行查询 A + AAAA） | 响应 |
 |---|---|---|
-| 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | 0.92 / 1.14 时返回 NXDomain（权威响应，CoreDNS kubernetes 插件） |
-| 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | 2.01 / 2.26 时返回 NXDomain |
-| 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | 3.15 / 3.41 时返回 NXDomain |
-| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | 3.68 / 3.93 时返回 NXDomain（转发到 VPC 解析器，非权威响应） |
+| 0.00 | `sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.` | 0.92 / 1.14 时返回 NXDOMAIN（权威响应，CoreDNS kubernetes 插件） |
+| 1.21 | `sts.ap-northeast-2.amazonaws.com.svc.cluster.local.` | 2.01 / 2.26 时返回 NXDOMAIN |
+| 2.32 | `sts.ap-northeast-2.amazonaws.com.cluster.local.` | 3.15 / 3.41 时返回 NXDOMAIN |
+| 3.47 | `sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal.` | 3.68 / 3.93 时返回 NXDOMAIN（转发到 VPC 解析器，非权威响应） |
 | 3.99 | `sts.ap-northeast-2.amazonaws.com.` | 4.37 时返回 **A 10.0.3.84、A 10.0.2.129**（AAAA：无数据） |
 
 表中记录了 10 次查询和 8 次 NXDOMAIN。**4.37 ms** 是从第一个查询到报告的 A 响应之间的时间；未列出 AAAA 完成时间，因此这不是进程首次调用的完整 6.22 ms。各候选名称的 RTT 并非都为 0.8–1.1 ms：第四组查询耗时 0.21 / 0.46 ms，最后一个 A 查询耗时 0.38 ms。kube-proxy iptables 会为新的 conntrack 流选择一个端点，而不是为每个数据包独立选择；A/AAAA 请求可能共享同一流。若两个端点被等概率选中，那么一半新流会落到其中一个端点，这只是说明性预期，**并非实测的跨 AZ DNS 查询比例**。显示 Service VIP `172.20.0.10` 的 Pod 抓包无法确定所选后端的 AZ。原始报告将两个 STS 私有地址归因于接口端点 ENI，并记录了集群 FQDN 的转发候选名称耗时 2.2 ms / 网络传输过程耗时 5.6 ms，而名称末尾加点时为 0.4–0.5 ms；这些是不同的观测结果。

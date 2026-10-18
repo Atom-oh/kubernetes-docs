@@ -1,7 +1,7 @@
 # EKS 集群创建 - 第 4 部分：使用 Terraform 创建集群
 
 > **示例版本**：Amazon EKS 1.36；Terraform 1.16.6；AWS provider 6.69.1；EKS module 21.29.0
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 ## 三层 Terraform 示例
 

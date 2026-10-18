@@ -1,6 +1,6 @@
 # 安全测验
 
-> **最后更新**: October 12, 2026
+> **最后更新**：2026年10月12日
 >
 > **版本**: Istio 1.31，支持 Kubernetes 1.32–1.37（EKS 标准支持：1.34–1.37）。
 > 参见[安装矩阵](../../../service-mesh/istio/01-installation.md)。
@@ -1407,7 +1407,7 @@ spec:
 
 4. 在需要 namespace isolation 的地方，匹配经过身份验证的 namespace/principal。选择 `production` 且具有 `notNamespaces: [production, istio-system]` 的 DENY 会阻止**其他调用方进入 production**，而不是 production → staging。考虑 gateway 和 operator；DENY 覆盖 ALLOW。
 5. 如果访问取决于营业时间，请使用 application authorization 或已配置的 CUSTOM external authorization provider，并指定明确的 timezone、clock source 和 failure policy。插入点/timezone 未指定的 Lua `os.date()` 检查并不是完整的 authorization design。CUSTOM permission 仍必须通过 DENY/ALLOW。
-6. 通过问题 8 中的 gateway pattern 加 network control 强制执行 egress；`REGISTRY_ONLY` 和名为 `deny-all-egress` 的 sidecar policy 都不是 firewall。匹配每个 host 的入站 DENY 反而会阻止应用程序流量，且无法由 ALLOW 撤销。
+6. 通过问题 8 中的 gateway pattern 加 network control 强制执行 egress；REGISTRY_ONLY 和名为 `deny-all-egress` 的 sidecar policy 都不是 firewall。匹配每个 host 的入站 DENY 反而会阻止应用程序流量，且无法由 ALLOW 撤销。
 7. 保留 probe rewrite，为正确的 port 设计 scraping，并且仅按问题 6 中的说明添加必要例外。对于终端用户 authorization，使用问题 7 中的 JWT validation 和逐跳 token propagation。使用问题 9 中的方式记录日志和告警，并监控 mTLS 章节中的证书过期。
 8. 每次更改后检查实际 policy，并测试预期的 allow/deny matrix、TCP database access 和 egress bypass：
 

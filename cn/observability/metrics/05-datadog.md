@@ -1,6 +1,6 @@
 # Datadog
 
-> **最后更新**: October 12, 2026
+> **最后更新**：2026年10月12日
 > Helm chart 3.244.0；对应的 Agent/Cluster Agent 为 7.83.1。
 > 下文说明配置、SDK 和本地验证的限制；未修改任何 Datadog 租户。
 

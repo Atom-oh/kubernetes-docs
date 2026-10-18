@@ -1,7 +1,7 @@
 # 基础设施设置
 
 > **验证基线**：Terraform 1.16.6、AWS Provider 6.69.1、EKS module 21.29.0、VPC module 6.7.3、Pod Identity module 2.9.0
-> **最后审阅**：October 16, 2026。本地 schema/mock-plan 验证；不是实时 AWS 部署结果。
+> **最后审阅**：2026年10月16日。本地 schema/mock-plan 验证；不是实时 AWS 部署结果。
 
 < [目录](./README.md) | [下一篇：NLB 加权路由和蓝绿集群](02-infrastructure-advanced.md) >
 
@@ -1355,7 +1355,7 @@ done
 
 ### 冒烟测试脚本
 
-以下脚本会在每个显式指定的 kube-context 中创建一个名称唯一的临时 namespace 和一个 DNS Job。它验证工作负载调度和集群 DNS，但不验证外部 LB 流量或每一项应用依赖。清理操作会检查 namespace UID，发生失败时会返回非零退出代码。如果无法访问 Docker Hub，请通过 DOCS_TEST_IMAGE 使用经批准的镜像镜像站。
+以下脚本会在每个显式指定的 kube-context 中创建一个名称唯一的临时 namespace 和一个 DNS Job。它验证工作负载调度和集群 DNS，但不验证外部 LB 流量或每一项应用依赖。清理操作会检查 namespace UID，发生失败时会返回非零退出代码。如果无法访问 Docker Hub，请通过 DOCS_TEST_IMAGE 使用经批准的镜像副本。
 
 ```bash
 #!/usr/bin/env bash

@@ -1,6 +1,6 @@
 # Descripción general de métricas
 
-> **Última actualización**: September 13, 2026. Los ejemplos se comprobaron localmente con las herramientas de Prometheus 3.14.0; no se realizó ningún despliegue de clúster o nube.
+> **Última actualización**: 13 de septiembre de 2026. Los ejemplos se comprobaron localmente con las herramientas de Prometheus 3.14.0; no se realizó ningún despliegue de clúster o nube.
 
 ## Tabla de contenido
 
@@ -91,7 +91,7 @@ temperature_celsius{location="datacenter-1"} 23.5
 max_over_time(temperature_celsius{job="example-app"}[1h])
 ```
 
-La expresión de memoria es la proporción no reportada como `MemAvailable`; no es una medición de memoria residente de una aplicación. La preparación de un Pod usa una serie `condition` concreta: un valor de uno en `condition="false"` tiene un significado diferente de uno en `condition="true"`.
+La expresión de memoria es la proporción no reportada como `MemAvailable`; no es una medición de memoria residente de una aplicación. El estado de disponibilidad de un Pod usa una serie `condition` concreta: un valor de uno en `condition="false"` tiene un significado diferente de uno en `condition="true"`.
 
 ### 3. Histogram
 
@@ -124,7 +124,7 @@ sum(rate(http_request_duration_seconds_sum{job="example-app"}[5m])) / sum(rate(h
 
 Conserve `le` al agregar buckets clásicos. Los cuantiles interpolan dentro de los buckets; su exactitud depende de la distribución y la resolución de los buckets. Cambiar los límites de los buckets clásicos es un cambio de instrumentación, no una edición solo de consulta.
 
-Los histogramas nativos representan la distribución de forma diferente. La guía actual de Prometheus los prefiere cuando el cliente, el protocolo de scraping y el pipeline de almacenamiento/consulta los admiten. Verifique la compatibilidad y la configuración a lo largo de toda la ruta; los ejemplos clásicos aquí no son salida de cable de histogramas nativos.
+Los histogramas nativos representan la distribución de forma diferente. La guía actual de Prometheus los prefiere cuando el cliente, el protocolo de scraping y el pipeline de almacenamiento/consulta los admiten. Verifique la compatibilidad y la configuración a lo largo de toda la ruta; los ejemplos clásicos que se muestran aquí no representan el formato de transmisión de los histogramas nativos.
 
 ### 4. Summary
 
@@ -300,7 +300,7 @@ Las longitudes de los nombres/valores de métricas y etiquetas todavía afectan 
 
 ## Requisitos de almacenamiento a largo plazo
 
-El TSDB local de Prometheus usa compresión y puede conservar datos durante mucho más de 30 días cuando se configura y aprovisiona en consecuencia. Su retención temporal predeterminada es de **15 días cuando no se proporciona ninguna configuración de retención por tiempo/tamaño**; eso no es un máximo.
+El TSDB local de Prometheus usa compresión y puede conservar datos durante mucho más de 30 días cuando se configura y aprovisiona en consecuencia. Su período de retención predeterminado es de **15 días si no se configura un límite de tiempo ni de tamaño**; ese valor no es un máximo.
 
 El almacenamiento local no es un almacén distribuido replicado. Réplicas independientes de Prometheus pueden proporcionar redundancia de recopilación/alertas sin requerir Thanos o Mimir, pero las consultas compartidas, la deduplicación, la durabilidad remota y la recuperación necesitan su propio diseño. El coste de consultas de largo alcance depende del volumen de datos y de la expresión, no solo de la antigüedad en calendario.
 
@@ -355,13 +355,13 @@ La escritura remota es asíncrona y su búfer WAL es finito. La guía de ajuste 
 | VictoriaMetrics | Despliegue de nodo único frente a clúster; compatibilidad MetricsQL/PromQL, capacidad de almacenamiento, autorización de tenant, replicación y funcionalidades específicas de edición |
 | Grafana Mimir | Servicios distribuidos y almacenamiento de objetos; recursos locales/de ingestión, replicación, autenticación de tenant, límites y capacidad operativa |
 | Métricas CloudWatch | Almacenamiento de métricas administrado por AWS, matemática de métricas/Metrics Insights e integraciones relevantes; dimensiones, producto de consulta, cuotas y resolución |
-| Métricas Datadog | SaaS más agentes/integraciones; cardinalidad de etiquetas, derechos de producto, rollups de consulta y facturación |
+| Métricas Datadog | SaaS más agentes/integraciones; cardinalidad de etiquetas, funciones incluidas en el plan, rollups de consulta y facturación |
 
-El almacenamiento de objetos no implica escalado ilimitado ni elimina todos los requisitos de disco local. Los destinos de backup de VictoriaMetrics y las funciones de ediciones concretas no son intercambiables con la arquitectura de almacenamiento primaria. Las afirmaciones de compresión comparativa como «7×» necesitan un conjunto de datos, versión y método identificados; aquí no se afirma ninguna.
+El almacenamiento de objetos no implica escalado ilimitado ni elimina todos los requisitos de disco local. Los destinos de copias de seguridad de VictoriaMetrics y las funciones de ediciones concretas no son intercambiables con la arquitectura de almacenamiento primaria. Las afirmaciones de compresión comparativa como «7×» necesitan un conjunto de datos, versión y método identificados; aquí no se afirma ninguna.
 
 Para las **métricas tradicionales de CloudWatch**, la resolución cambia con la antigüedad: los puntos de menos de un minuto están disponibles durante tres horas, los puntos de un minuto durante 15 días, los puntos de cinco minutos durante 63 días y los puntos horarios durante 455 días. Otros productos/rutas de ingestión de métricas deben comprobarse por separado. La tabla de retención publicada por Datadog enumera etiquetas/valores de métricas durante 15 meses, pero las consultas aplican rollups; eso no promete la resolución de scraping original en cada gráfico.
 
-### Entradas de coste, no totales mensuales sin respaldo
+### Datos para estimar costos, no totales mensuales sin fundamento
 
 Si **un millón es el recuento real de series exportadas**, un intervalo uniforme de 15 segundos durante 30 días produce `1,000,000 × 30 × 86,400 / 15 = 172,800,000,000` muestras antes del filtrado/deduplicación de entrega. Si el millón se refiere solo a combinaciones de etiquetas de aplicación, expanda primero los destinos, réplicas y series de histogramas.
 
@@ -372,7 +372,7 @@ Si **un millón es el recuento real de series exportadas**, un intervalo uniform
 | CloudWatch | Combinaciones facturables de métrica/dimensión, resolución, API/consulta y funciones de observabilidad seleccionadas |
 | Datadog | Planes seleccionados, hosts/contenedores, métricas personalizadas incluidas y adicionales, etiquetas y otros productos habilitados |
 
-Compare supuestos equivalentes de ingestión, retención, HA y funcionalidades. Obtenga precios actuales de las páginas de precios oficiales de abajo y pruebe el uso de recursos específico de la carga de trabajo. «Open source» no hace que la infraestructura y las operaciones sean gratuitas.
+Compare supuestos equivalentes de ingestión, retención, HA y funcionalidades. Obtenga precios actuales de las páginas de precios oficiales de abajo y pruebe el uso de recursos específico de la carga de trabajo. El código abierto no hace que la infraestructura y las operaciones sean gratuitas.
 
 Seleccione una solución según las consultas/resolución requeridas, la cardinalidad y la rotación, los objetivos de fallo/recuperación, los límites de tenant/acceso, las integraciones y un modelo de costes medido. El tamaño del equipo por sí solo no es un algoritmo de selección de productos.
 

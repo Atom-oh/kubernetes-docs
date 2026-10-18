@@ -1,7 +1,7 @@
 # 存储
 
 > **支持的版本**：Kubernetes 1.35、1.36、1.37
-> **最后更新**：October 16, 2026
+> **最后更新**：2026年10月16日
 
 在 Kubernetes 中，存储是容器化应用存储和管理数据的重要组成部分。在本章中，我们将详细探讨 Kubernetes 存储概念，包括 Volumes、Persistent Volumes、Persistent Volume Claims 和 Storage Classes。
 

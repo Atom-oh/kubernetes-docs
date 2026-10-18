@@ -1,16 +1,58 @@
 {
-  "time": "2026-10-18T20:48:30.661725+00:00",
+  "time": "2026-10-18T21:09:50.918168+00:00",
   "status": "IN_PROGRESS",
   "sourcePages": 693,
   "modelCalls": 0,
   "reviewScope": "Complete English/native-locale document comparison",
-  "reviewLedgerDirectory": "/tmp/native-checkpoint-ledgers-2045",
+  "reviewLedgerDirectory": "/tmp/native-checkpoint-ledgers-2107",
   "locales": {
     "cn": {
       "sourcePages": 693,
-      "currentCompleteReviews": 631,
+      "currentCompleteReviews": 645,
       "minimumActualScore": 91,
       "reviews": {
+        "cn/README.md": {
+          "sourcePath": "en/README.md",
+          "sourceBlob": "ad7f93c703aaa3a03c2c5218a6112062d60e7d38",
+          "sourceSha256": "07d23dc7878bf58a43ed76f761b068200fa85ae3ba2c87946df92ea4411d6112",
+          "targetSha256": "5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005",
+          "reviewer": "native GPT-6 Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/README.md",
+            "reviewed_source_path": "en/README.md",
+            "source_blob": "ad7f93c703aaa3a03c2c5218a6112062d60e7d38",
+            "source_sha256": "07d23dc7878bf58a43ed76f761b068200fa85ae3ba2c87946df92ea4411d6112",
+            "target_sha256": "5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005",
+            "original_reviewed_target_sha256": "5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 93,
+            "fidelity_score": 96,
+            "readability_score": 91,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete comparison of repository overview, quiz guidance, every table-of-contents category and linked guide/quiz path, lab list, learning paths, contributing and license sections; final bytes equal the fully reread initial target and all source links remain intact.",
+            "findings": [
+              "Chinese version covers the current catalog and navigation throughout; no factual or structural omissions found."
+            ],
+            "resolutions": [
+              "Kept the accurate current Chinese wording and link destinations after full final reread; source and target tables of contents align."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 0 fences, 0 inline code, 621 destinations, 32 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/07d23dc7878bf58a43ed76f761b068200fa85ae3ba2c87946df92ea4411d6112.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/5e390339d566f2d4a84ad6125d9b3e37cdc37b28a85ccd5bb9af7dec0a43a005.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:47:53.883021+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/ai-ml/01-ai-ml-workloads.md": {
           "sourcePath": "en/ai-ml/01-ai-ml-workloads.md",
           "sourceBlob": "374be8a8f53b6aa50d0e472ed92b4dd1bea536d1",
@@ -2541,6 +2583,48 @@
             "reviewer_model_identity": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)"
           }
         },
+        "cn/autoscaling/01-keda.md": {
+          "sourcePath": "en/autoscaling/01-keda.md",
+          "sourceBlob": "1c35f9443e0a0c9a2e436331184e56cb5d42e7b8",
+          "sourceSha256": "14a44152f3dbb0ce056e2cf69d43a2226c3252e1b60985b0dadafcd828fffd25",
+          "targetSha256": "4ed550d6f707cfbd0d70850cee5b26c4f0c372192740bd3b59fc3d496df9a5e1",
+          "reviewer": "native GPT-6 Luna",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/autoscaling/01-keda.md",
+            "reviewed_source_path": "en/autoscaling/01-keda.md",
+            "source_blob": "1c35f9443e0a0c9a2e436331184e56cb5d42e7b8",
+            "source_sha256": "14a44152f3dbb0ce056e2cf69d43a2226c3252e1b60985b0dadafcd828fffd25",
+            "target_sha256": "4ed550d6f707cfbd0d70850cee5b26c4f0c372192740bd3b59fc3d496df9a5e1",
+            "original_reviewed_target_sha256": "e6fd73ada292b3a944e6a085ed19fe13bf255ad41a925dcfa1d8bb20a716d71f",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/e6fd73ada292b3a944e6a085ed19fe13bf255ad41a925dcfa1d8bb20a716d71f.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 95,
+            "fidelity_score": 96,
+            "readability_score": 94,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete current English source, initial Chinese target, and final Chinese target compared end to end, including all operational prose surrounding 40 exact code blocks. Reviewed current KEDA 2.21/Kubernetes compatibility, scaling behavior, integration/security qualifications, examples, troubleshooting, references, headings, anchors, and link destinations; reread all final prose.",
+            "findings": [
+              "The target followed the current source throughout; the last-updated date remained in English."
+            ],
+            "resolutions": [
+              "Localized the date as 2026 年 10 月 16 日. Final source comparison, byte-identical ordered code blocks, owned-anchor check, structural validator, emphasis check, actual VitePress render, and diff check passed."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 40 fences, 41 inline code, 30 destinations, 70 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/14a44152f3dbb0ce056e2cf69d43a2226c3252e1b60985b0dadafcd828fffd25.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/e6fd73ada292b3a944e6a085ed19fe13bf255ad41a925dcfa1d8bb20a716d71f.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/4ed550d6f707cfbd0d70850cee5b26c4f0c372192740bd3b59fc3d496df9a5e1.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/4ed550d6f707cfbd0d70850cee5b26c4f0c372192740bd3b59fc3d496df9a5e1.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T21:06:41.067074+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/basics/01-linux-basics.md": {
           "sourcePath": "en/basics/01-linux-basics.md",
           "sourceBlob": "2494edd9c9bacacff01e242d28a6854077d0b07a",
@@ -3224,6 +3308,48 @@
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
+        "cn/core/04-storage.md": {
+          "sourcePath": "en/core/04-storage.md",
+          "sourceBlob": "69bb14a550ce0ae56712afbb4030bccc7d72185f",
+          "sourceSha256": "54df253552a0f7eeda53f081e1cd8180b70c0bbc2b328a8f6276653286416b42",
+          "targetSha256": "97b603bf2417471304db2bcf433c5f3a66cef09a4ac390000b72517d61659a82",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/core/04-storage.md",
+            "reviewed_source_path": "en/core/04-storage.md",
+            "source_blob": "69bb14a550ce0ae56712afbb4030bccc7d72185f",
+            "source_sha256": "54df253552a0f7eeda53f081e1cd8180b70c0bbc2b328a8f6276653286416b42",
+            "target_sha256": "97b603bf2417471304db2bcf433c5f3a66cef09a4ac390000b72517d61659a82",
+            "original_reviewed_target_sha256": "c97cb2a632344bdd7d7e0ba74ef40b63377de334c5fe961e05172a3a8908f1cf",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/c97cb2a632344bdd7d7e0ba74ef40b63377de334c5fe961e05172a3a8908f1cf.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 94,
+            "fidelity_score": 97,
+            "readability_score": 92,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Whole-page comparison of current English and initial/final Chinese prose across setup, volume types, PV/PVC binding, StorageClasses, provisioning, snapshots, expansion, projected/ephemeral/block volumes, cloning, quotas, EKS EBS/EFS/FSx, vLLM guidance, conclusion, quiz and references; all 44 protected source code blocks preserved.",
+            "findings": [
+              "Translation covered all current sections and technical caveats; the review date remained in English."
+            ],
+            "resolutions": [
+              "Localized the review date to Chinese, then reread the complete final page; source dates, versions, limits, prerequisites, conditions, links and examples remain aligned."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 44 fences, 45 inline code, 42 destinations, 105 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/54df253552a0f7eeda53f081e1cd8180b70c0bbc2b328a8f6276653286416b42.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/c97cb2a632344bdd7d7e0ba74ef40b63377de334c5fe961e05172a3a8908f1cf.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/97b603bf2417471304db2bcf433c5f3a66cef09a4ac390000b72517d61659a82.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/97b603bf2417471304db2bcf433c5f3a66cef09a4ac390000b72517d61659a82.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:47:08.749836+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/core/05-configuration-secrets.md": {
           "sourcePath": "en/core/05-configuration-secrets.md",
           "sourceBlob": "e2997617542d90752182eccd3c53da0469f309dd",
@@ -3389,6 +3515,48 @@
             "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/cbfb864aaf5db1cf94b06a61994d42961dd9d87628ca5e38d2259db38f18e104.md",
             "complete_source_initial_final_snapshots": true,
             "reviewed_at_utc": "2026-10-18T18:58:22.668512+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
+        "cn/core/11-extending-kubernetes.md": {
+          "sourcePath": "en/core/11-extending-kubernetes.md",
+          "sourceBlob": "89a6251bf14487c99de69f2304ee5abac8c9b3fa",
+          "sourceSha256": "bff6d056d04535113e628b25c7074d8e925f5ff0c6ea47bceca1fabc891e0ef7",
+          "targetSha256": "69cc348800ca7d3747f85e0dec8bef4f07f9723ceb6d3668e3171af05f0f882c",
+          "reviewer": "native GPT-6 Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/core/11-extending-kubernetes.md",
+            "reviewed_source_path": "en/core/11-extending-kubernetes.md",
+            "source_blob": "89a6251bf14487c99de69f2304ee5abac8c9b3fa",
+            "source_sha256": "bff6d056d04535113e628b25c7074d8e925f5ff0c6ea47bceca1fabc891e0ef7",
+            "target_sha256": "69cc348800ca7d3747f85e0dec8bef4f07f9723ceb6d3668e3171af05f0f882c",
+            "original_reviewed_target_sha256": "793190841834bca939169434c61476cfe35d28fb7547e3a8bb5298bdad672586",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/793190841834bca939169434c61476cfe35d28fb7547e3a8bb5298bdad672586.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 93,
+            "fidelity_score": 95,
+            "readability_score": 91,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete current English source, saved initial Chinese target, and final Chinese prose compared across the full chapter, including every section, diagram alt/link, example caveat, list, and reference; all 31 fenced blocks checked byte-for-byte.",
+            "findings": [
+              "The initial Chinese page was substantially aligned but left its review date in English, used an imprecise rendering of level-triggering, and one Pod example image tag was stale (nginx:1.30.4 versus source nginx:1.30.6)."
+            ],
+            "resolutions": [
+              "Localized the update date, clarified level-triggered reconciliation and worker compute wording, and restored the exact source code block. Full validator, exact fenced-block check, emphasis check, actual VitePress render, and diff check pass."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 31 fences, 9 inline code, 28 destinations, 90 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/bff6d056d04535113e628b25c7074d8e925f5ff0c6ea47bceca1fabc891e0ef7.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/793190841834bca939169434c61476cfe35d28fb7547e3a8bb5298bdad672586.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/69cc348800ca7d3747f85e0dec8bef4f07f9723ceb6d3668e3171af05f0f882c.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/69cc348800ca7d3747f85e0dec8bef4f07f9723ceb6d3668e3171af05f0f882c.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:58:01.305004+00:00",
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
@@ -6188,6 +6356,48 @@
             "review_timestamp_basis": "UTC mtime of the saved final reviewed-target snapshot"
           }
         },
+        "cn/eks/02-eks-cluster-creation-part4.md": {
+          "sourcePath": "en/eks/02-eks-cluster-creation-part4.md",
+          "sourceBlob": "f10e197f136074ec41dd15d88ea0ec4fb6102c14",
+          "sourceSha256": "2330eb970c7946a0dbb5bff27ff14ff4ef4607adacf2602c2a0b01617e953a45",
+          "targetSha256": "10d57eac30fb27372135045cb1081873184d6eed2efaefb46c083962f1c9570e",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/eks/02-eks-cluster-creation-part4.md",
+            "reviewed_source_path": "en/eks/02-eks-cluster-creation-part4.md",
+            "source_blob": "f10e197f136074ec41dd15d88ea0ec4fb6102c14",
+            "source_sha256": "2330eb970c7946a0dbb5bff27ff14ff4ef4607adacf2602c2a0b01617e953a45",
+            "target_sha256": "10d57eac30fb27372135045cb1081873184d6eed2efaefb46c083962f1c9570e",
+            "original_reviewed_target_sha256": "1a8a313c0c3b9be42425a44cd7e772437c4a44575c396e462533361931f8c88a",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/1a8a313c0c3b9be42425a44cd7e772437c4a44575c396e462533361931f8c88a.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 94,
+            "fidelity_score": 96,
+            "readability_score": 92,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete current English source, saved initial Chinese target, and final Chinese prose compared; reviewed all sections, tables, quiz/reference links, caveats, numbers, and 30 protected code blocks.",
+            "findings": [
+              "The Chinese page matched the current source in substance and structure; its only needed correction was the untranslated last-updated date."
+            ],
+            "resolutions": [
+              "Localized the date to 2026年10月16日. Validator, emphasis check, actual VitePress render, and diff checks pass."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 30 fences, 79 inline code, 19 destinations, 64 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/2330eb970c7946a0dbb5bff27ff14ff4ef4607adacf2602c2a0b01617e953a45.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/1a8a313c0c3b9be42425a44cd7e772437c4a44575c396e462533361931f8c88a.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/10d57eac30fb27372135045cb1081873184d6eed2efaefb46c083962f1c9570e.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/10d57eac30fb27372135045cb1081873184d6eed2efaefb46c083962f1c9570e.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:56:25.562842+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/eks/02-eks-cluster-creation-part5.md": {
           "sourcePath": "en/eks/02-eks-cluster-creation-part5.md",
           "sourceBlob": "d5965da7dac6507be1c2f04c3a21cf73924e369b",
@@ -8732,6 +8942,48 @@
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
+        "cn/networking/03-aws-lb-controller.md": {
+          "sourcePath": "en/networking/03-aws-lb-controller.md",
+          "sourceBlob": "f6acae62c3a1e3cccf9de973f2ed7ad3065f42b7",
+          "sourceSha256": "cc0c38122ec5c4fc8030e6d636e53a532d754fafa14304205fd46e14ecc0aa6d",
+          "targetSha256": "1bdc0f2b67c4983baf738568068257cc7c4ea7ae457c1a893a582879f350a6a1",
+          "reviewer": "native GPT-6 Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/networking/03-aws-lb-controller.md",
+            "reviewed_source_path": "en/networking/03-aws-lb-controller.md",
+            "source_blob": "f6acae62c3a1e3cccf9de973f2ed7ad3065f42b7",
+            "source_sha256": "cc0c38122ec5c4fc8030e6d636e53a532d754fafa14304205fd46e14ecc0aa6d",
+            "target_sha256": "1bdc0f2b67c4983baf738568068257cc7c4ea7ae457c1a893a582879f350a6a1",
+            "original_reviewed_target_sha256": "5d79a8288973b07679a1fd712432831f8fd96ef9820cb34b5a8142cd7b62e255",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/5d79a8288973b07679a1fd712432831f8fd96ef9820cb34b5a8142cd7b62e255.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 93,
+            "fidelity_score": 96,
+            "readability_score": 90,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Compared the complete current English source with the saved initial and final Chinese guide across prerequisites, IAM/IRSA, Helm installation, ALB/NLB/TGB/WAF/Shield, v3.6 release details, annotations, EKS practices, troubleshooting and all references; all 33 fenced blocks checked byte-for-byte.",
+            "findings": [
+              "The initial translation described chart/controller 3.5.0 and the August 2026 baseline, omitted the 3.6.0 CRD-upgrade and feature notes, and linked v3.5 references while the frozen source had moved to v3.6.0."
+            ],
+            "resolutions": [
+              "Updated the baseline/date, v3.6.0 compatibility and IAM/Secret-selector notes, release history/JWT paragraph, and versioned references to current source. Reassembled exact source code blocks; validator, emphasis, renderer, and diff checks pass."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 33 fences, 72 inline code, 18 destinations, 103 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/cc0c38122ec5c4fc8030e6d636e53a532d754fafa14304205fd46e14ecc0aa6d.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/5d79a8288973b07679a1fd712432831f8fd96ef9820cb34b5a8142cd7b62e255.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/1bdc0f2b67c4983baf738568068257cc7c4ea7ae457c1a893a582879f350a6a1.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/1bdc0f2b67c4983baf738568068257cc7c4ea7ae457c1a893a582879f350a6a1.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T21:00:06.466380+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/networking/04-gateway-api.md": {
           "sourcePath": "en/networking/04-gateway-api.md",
           "sourceBlob": "fcca113295ba91beddccc9f60ccfdacd1f7302c1",
@@ -8813,6 +9065,48 @@
             "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/8ff34f2fc18839c98d07b2c1df0af10a0fadac638773e641da3b98e96abb0db2.md",
             "complete_source_initial_final_snapshots": true,
             "reviewed_at_utc": "2026-10-18T16:17:34.668232+00:00"
+          }
+        },
+        "cn/networking/06-pod-network-benchmark.md": {
+          "sourcePath": "en/networking/06-pod-network-benchmark.md",
+          "sourceBlob": "08bb74a2a7ddf345453f292260270518b1c4fb9d",
+          "sourceSha256": "30f60c7c18453107fff31147d4ea2c34db5cd21dafbf4dbeaac572982bd01948",
+          "targetSha256": "bea5541dfb8284d4809ec2b8d6b4b7c125d9e5f4ceba1f42a2aa48038a349ee3",
+          "reviewer": "native GPT-6 Luna",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/networking/06-pod-network-benchmark.md",
+            "reviewed_source_path": "en/networking/06-pod-network-benchmark.md",
+            "source_blob": "08bb74a2a7ddf345453f292260270518b1c4fb9d",
+            "source_sha256": "30f60c7c18453107fff31147d4ea2c34db5cd21dafbf4dbeaac572982bd01948",
+            "target_sha256": "bea5541dfb8284d4809ec2b8d6b4b7c125d9e5f4ceba1f42a2aa48038a349ee3",
+            "original_reviewed_target_sha256": "3ec2335c69436f12b2dd493ccbb4d4c7ccb083bd3cdd8743735d2006a2b2ed28",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/3ec2335c69436f12b2dd493ccbb4d4c7ccb083bd3cdd8743735d2006a2b2ed28.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 95,
+            "fidelity_score": 96,
+            "readability_score": 94,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete current English source, initial Chinese target, and final Chinese target prose compared end to end. Verified every measurement, unit, caveat, DNS sequence, billing assumption, reproduction step, operational safeguard, reference, and related link; reread all final prose after correction. Ten code blocks preserved byte-for-byte and in order.",
+            "findings": [
+              "The initial DNS packet timeline used inconsistent NXDomain casing for the NXDOMAIN response code; otherwise the complete translation matched the current source and retained its caveats and procedures."
+            ],
+            "resolutions": [
+              "Corrected the four DNS timeline entries to NXDOMAIN. Re-read the full final page; source/target validation, exact code-block comparison, canonical anchors, emphasis, actual VitePress render, and diff checks passed."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 10 fences, 156 inline code, 34 destinations, 25 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/30f60c7c18453107fff31147d4ea2c34db5cd21dafbf4dbeaac572982bd01948.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/3ec2335c69436f12b2dd493ccbb4d4c7ccb083bd3cdd8743735d2006a2b2ed28.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/bea5541dfb8284d4809ec2b8d6b4b7c125d9e5f4ceba1f42a2aa48038a349ee3.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/bea5541dfb8284d4809ec2b8d6b4b7c125d9e5f4ceba1f42a2aa48038a349ee3.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T21:05:41.710581+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
         "cn/networking/07-linux-network-diagnostics.md": {
@@ -9306,6 +9600,48 @@
             "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/156dfd859cb9a1a619fb099f83d095b5866ff35f9bd77e327651e4bd584a0bc6.md",
             "complete_source_initial_final_snapshots": true,
             "reviewed_at_utc": "2026-10-18T20:28:07.266593+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
+        "cn/networking/calico/05-network-policy.md": {
+          "sourcePath": "en/networking/calico/05-network-policy.md",
+          "sourceBlob": "be1aabd280a5b67492f217771a348ba9ded9858f",
+          "sourceSha256": "1bd06b19d269838d176cb1a2abfda24b78b1a3e0e20fe9160ad490065a0186a2",
+          "targetSha256": "934d499d7c7112bc51aebed83dd780c1e4ab7e1b3410ca459f277f44450e23f9",
+          "reviewer": "native GPT-6 Luna",
+          "score": 92,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/networking/calico/05-network-policy.md",
+            "reviewed_source_path": "en/networking/calico/05-network-policy.md",
+            "source_blob": "be1aabd280a5b67492f217771a348ba9ded9858f",
+            "source_sha256": "1bd06b19d269838d176cb1a2abfda24b78b1a3e0e20fe9160ad490065a0186a2",
+            "target_sha256": "934d499d7c7112bc51aebed83dd780c1e4ab7e1b3410ca459f277f44450e23f9",
+            "original_reviewed_target_sha256": "0627f1c767285b803346230d0989679ec22ec6babc5a990f53f171bcb92296f1",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/0627f1c767285b803346230d0989679ec22ec6babc5a990f53f171bcb92296f1.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 92,
+            "fidelity_score": 95,
+            "readability_score": 90,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete frozen English, initial Chinese, and final Chinese prose reread. Rebuilt all sections, tables, policy semantics, caveats, references, and dated baseline; all 28 fenced code blocks restored byte-for-byte from source.",
+            "findings": [
+              "Initial page was materially stale: obsolete version baseline and claims about FQDN/HTTP support, global policy scope, tier evaluation, host protection, DoNotTrack/PreDNAT, debugging, staged policies, patterns, and performance."
+            ],
+            "resolutions": [
+              "Replaced obsolete prose with current Calico 3.32 source-aligned explanations and explicit product/dataplane prerequisites and limitations; preserved exact source code, URLs, hierarchy, and owned anchors."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 28 fences, 81 inline code, 19 destinations, 49 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/1bd06b19d269838d176cb1a2abfda24b78b1a3e0e20fe9160ad490065a0186a2.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/0627f1c767285b803346230d0989679ec22ec6babc5a990f53f171bcb92296f1.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/934d499d7c7112bc51aebed83dd780c1e4ab7e1b3410ca459f277f44450e23f9.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/934d499d7c7112bc51aebed83dd780c1e4ab7e1b3410ca459f277f44450e23f9.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T21:03:41.512370+00:00",
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
@@ -11048,6 +11384,48 @@
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
+        "cn/observability/metrics/05-datadog.md": {
+          "sourcePath": "en/observability/metrics/05-datadog.md",
+          "sourceBlob": "ecf29c2ed3a4aaad43cfe71bab327cb8f3c6c2aa",
+          "sourceSha256": "e8ebafb0fd98bf8a104b030e3b9071d592995d580cf53a0d1084b5025c8761a8",
+          "targetSha256": "4881561b71ecdf9e0d53a631dad2421a53271d6046d98edfa419abe0d4baa492",
+          "reviewer": "native GPT-6 Luna",
+          "score": 91,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/observability/metrics/05-datadog.md",
+            "reviewed_source_path": "en/observability/metrics/05-datadog.md",
+            "source_blob": "ecf29c2ed3a4aaad43cfe71bab327cb8f3c6c2aa",
+            "source_sha256": "e8ebafb0fd98bf8a104b030e3b9071d592995d580cf53a0d1084b5025c8761a8",
+            "target_sha256": "4881561b71ecdf9e0d53a631dad2421a53271d6046d98edfa419abe0d4baa492",
+            "original_reviewed_target_sha256": "3c1317a0dff852d5dbca775ebd0a3a9f018aeb59fc8a255f2d24fa17338fe673",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/3c1317a0dff852d5dbca775ebd0a3a9f018aeb59fc8a255f2d24fa17338fe673.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 91,
+            "fidelity_score": 96,
+            "readability_score": 88,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Compared the complete current English source with the saved initial and final Chinese page, including configuration prerequisites, product limits, metric units, tracing/logging/dashboard/SLO/cost cautions, every reference, and all 20 exact fenced blocks.",
+            "findings": [
+              "The Chinese content otherwise preserved the current source and its operational boundaries; the update date remained untranslated."
+            ],
+            "resolutions": [
+              "Localized the date to 2026年10月12日. All 20 fenced blocks match the source exactly; validator, emphasis, actual renderer, and diff checks pass."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 20 fences, 115 inline code, 24 destinations, 41 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/e8ebafb0fd98bf8a104b030e3b9071d592995d580cf53a0d1084b5025c8761a8.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/3c1317a0dff852d5dbca775ebd0a3a9f018aeb59fc8a255f2d24fa17338fe673.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/4881561b71ecdf9e0d53a631dad2421a53271d6046d98edfa419abe0d4baa492.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/4881561b71ecdf9e0d53a631dad2421a53271d6046d98edfa419abe0d4baa492.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:58:46.456409+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/observability/metrics/README.md": {
           "sourcePath": "en/observability/metrics/README.md",
           "sourceBlob": "3c11671ba89ec674bfa7630410e854a6bcd974a9",
@@ -11255,6 +11633,48 @@
             "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/fa52978b57d46ef208ff4e9d091bf7232b278fa02732131762a3d94b3cbc705b.md",
             "complete_source_initial_final_snapshots": true,
             "reviewed_at_utc": "2026-10-18T16:40:44.223420+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
+        "cn/ops/01-infrastructure-setup.md": {
+          "sourcePath": "en/ops/01-infrastructure-setup.md",
+          "sourceBlob": "32b70d91f08dca771d85ddc33e1a5fbe56ceebd9",
+          "sourceSha256": "83e4d87c18e895c34b4e904c91807e2ecbd747aed033ecb7d788c278b13c878a",
+          "targetSha256": "26878234991db2aa216e31ac9f227ae4c60480ba1a0a350f80442ccfb2a78a6d",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/ops/01-infrastructure-setup.md",
+            "reviewed_source_path": "en/ops/01-infrastructure-setup.md",
+            "source_blob": "32b70d91f08dca771d85ddc33e1a5fbe56ceebd9",
+            "source_sha256": "83e4d87c18e895c34b4e904c91807e2ecbd747aed033ecb7d788c278b13c878a",
+            "target_sha256": "26878234991db2aa216e31ac9f227ae4c60480ba1a0a350f80442ccfb2a78a6d",
+            "original_reviewed_target_sha256": "cb8a4abdb219a3c3415ef76b37e6d989df6fa4d226a1cd39ca99843a85118d6b",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/cb8a4abdb219a3c3415ef76b37e6d989df6fa4d226a1cd39ca99843a85118d6b.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 94,
+            "fidelity_score": 96,
+            "readability_score": 92,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete frozen English prose and complete initial/final Chinese prose reread; checked architecture, state isolation, Auto Mode/CoreDNS, Pod Identity/ESO/KMS, ArgoCD image pulls, validation and smoke-test limits; all 25 fenced blocks exact.",
+            "findings": [
+              "Translated baseline date remained English and smoke-test sentence duplicated 镜像; remaining conditions, caveats, links, and prose aligned with source."
+            ],
+            "resolutions": [
+              "Localized review date and corrected mirrored-image wording; exact code/link and hierarchy checks passed."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 25 fences, 10 inline code, 19 destinations, 93 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/83e4d87c18e895c34b4e904c91807e2ecbd747aed033ecb7d788c278b13c878a.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/cb8a4abdb219a3c3415ef76b37e6d989df6fa4d226a1cd39ca99843a85118d6b.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/26878234991db2aa216e31ac9f227ae4c60480ba1a0a350f80442ccfb2a78a6d.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/26878234991db2aa216e31ac9f227ae4c60480ba1a0a350f80442ccfb2a78a6d.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T21:01:21.606110+00:00",
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
@@ -29634,6 +30054,48 @@
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
+        "cn/quizzes/scheduling/02-custom-scheduler-part3-quiz.md": {
+          "sourcePath": "en/quizzes/scheduling/02-custom-scheduler-part3-quiz.md",
+          "sourceBlob": "2da59180efeff167669dd95f04c425f36dd83d78",
+          "sourceSha256": "e623f5397cf3d6069f34e9c2023ba9bcdb710110ba983375735320e33b5b56c5",
+          "targetSha256": "0e4216d159bb4ed9ccf1a685dd5c03614a94a21cc86ecd9d925d7e6a6ea97190",
+          "reviewer": "native GPT-6 Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/quizzes/scheduling/02-custom-scheduler-part3-quiz.md",
+            "reviewed_source_path": "en/quizzes/scheduling/02-custom-scheduler-part3-quiz.md",
+            "source_blob": "2da59180efeff167669dd95f04c425f36dd83d78",
+            "source_sha256": "e623f5397cf3d6069f34e9c2023ba9bcdb710110ba983375735320e33b5b56c5",
+            "target_sha256": "0e4216d159bb4ed9ccf1a685dd5c03614a94a21cc86ecd9d925d7e6a6ea97190",
+            "original_reviewed_target_sha256": "30ede808d3e17620b4e1f50a7b06140d20fa4eeeca80d8c0547cc208f6fb694f",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/30ede808d3e17620b4e1f50a7b06140d20fa4eeeca80d8c0547cc208f6fb694f.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 93,
+            "fidelity_score": 97,
+            "readability_score": 91,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Read the complete current English source and complete initial and final Chinese page, covering all 12 questions, choices, answers, explanations, examples, and references; verified the full question sequence and technical conditions against the source.",
+            "findings": [
+              "The content was complete and technically aligned; the only remaining untranslated prose was the English update date."
+            ],
+            "resolutions": [
+              "Localized the date to Chinese, then reread the entire final page. Verified all 30 protected code blocks, inline technical tokens, links, heading levels, and source-owned anchors; scoped validator, emphasis check, VitePress render, and diff check pass."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 30 fences, 73 inline code, 12 destinations, 20 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/e623f5397cf3d6069f34e9c2023ba9bcdb710110ba983375735320e33b5b56c5.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/30ede808d3e17620b4e1f50a7b06140d20fa4eeeca80d8c0547cc208f6fb694f.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/0e4216d159bb4ed9ccf1a685dd5c03614a94a21cc86ecd9d925d7e6a6ea97190.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/0e4216d159bb4ed9ccf1a685dd5c03614a94a21cc86ecd9d925d7e6a6ea97190.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:51:04.814217+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/quizzes/security/01-kyverno-policy-management-quiz.md": {
           "sourcePath": "en/quizzes/security/01-kyverno-policy-management-quiz.md",
           "sourceBlob": "9e3f44ac9bcb2550a5ecf7abd8775eb11fdcd328",
@@ -31923,6 +32385,48 @@
             }
           }
         },
+        "cn/quizzes/service-mesh/istio/advanced.md": {
+          "sourcePath": "en/quizzes/service-mesh/istio/advanced.md",
+          "sourceBlob": "ae2daf26520a5b6648b2ad87f89cd8c506df2059",
+          "sourceSha256": "9618ce0e3c69a7163ce9a33d0d7a32f13689361094b7683e23eb91d135ee0f6c",
+          "targetSha256": "5bd9bfeb0340802cafd1b788cd7083361d9a374abb40c6977e7762c094d2522a",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/quizzes/service-mesh/istio/advanced.md",
+            "reviewed_source_path": "en/quizzes/service-mesh/istio/advanced.md",
+            "source_blob": "ae2daf26520a5b6648b2ad87f89cd8c506df2059",
+            "source_sha256": "9618ce0e3c69a7163ce9a33d0d7a32f13689361094b7683e23eb91d135ee0f6c",
+            "target_sha256": "5bd9bfeb0340802cafd1b788cd7083361d9a374abb40c6977e7762c094d2522a",
+            "original_reviewed_target_sha256": "737fbdc1e2449af505275c2e15dcb0ce5045e804fd82e1015457f8c620236eb2",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/737fbdc1e2449af505275c2e15dcb0ce5045e804fd82e1015457f8c620236eb2.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 94,
+            "fidelity_score": 96,
+            "readability_score": 91,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Read the complete current English source and complete initial and final Chinese quiz, including all ten questions, answer choices, sample explanations, code examples, conditions, references, score guidance, and study materials.",
+            "findings": [
+              "The technical content and quiz answers remained aligned with the pinned source; the only remaining untranslated prose was the review date. One monthly cost unit also needed to match the source’s exact inline token."
+            ],
+            "resolutions": [
+              "Localized the review date, restored the exact `$919.80/month` unit, and reread the complete final prose. Confirmed all 23 source code blocks and technical identifiers, links, question hierarchy, and headings against the English source; translation validator, emphasis check, actual VitePress render, and diff check pass."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 23 fences, 45 inline code, 20 destinations, 16 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/9618ce0e3c69a7163ce9a33d0d7a32f13689361094b7683e23eb91d135ee0f6c.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/737fbdc1e2449af505275c2e15dcb0ce5045e804fd82e1015457f8c620236eb2.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/5bd9bfeb0340802cafd1b788cd7083361d9a374abb40c6977e7762c094d2522a.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/5bd9bfeb0340802cafd1b788cd7083361d9a374abb40c6977e7762c094d2522a.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:55:06.228215+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/quizzes/service-mesh/istio/basic.md": {
           "sourcePath": "en/quizzes/service-mesh/istio/basic.md",
           "sourceBlob": "b94beeabe53c07f1af4699dcd98b5fe8263fdca6",
@@ -32068,6 +32572,48 @@
             "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/3cf519237c3db0e0a85258327b7cf223601293349adc5c683d0e116cc1fdd41c.md",
             "complete_source_initial_final_snapshots": true,
             "reviewed_at_utc": "2026-10-18T20:34:08.396697+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
+        "cn/quizzes/service-mesh/istio/security.md": {
+          "sourcePath": "en/quizzes/service-mesh/istio/security.md",
+          "sourceBlob": "027540f491ac873b77249b5c6a59dff218cec113",
+          "sourceSha256": "2eb38d23a6716c1bafd9a43c4459c2b1aaadf63e63fdfd9e0fa49b26d437e6a4",
+          "targetSha256": "c2f04ce820f6e211f579c108645eedfec09437afc35d2f7e41b00126cd26ec31",
+          "reviewer": "native GPT-6 Luna",
+          "score": 92,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/quizzes/service-mesh/istio/security.md",
+            "reviewed_source_path": "en/quizzes/service-mesh/istio/security.md",
+            "source_blob": "027540f491ac873b77249b5c6a59dff218cec113",
+            "source_sha256": "2eb38d23a6716c1bafd9a43c4459c2b1aaadf63e63fdfd9e0fa49b26d437e6a4",
+            "target_sha256": "c2f04ce820f6e211f579c108645eedfec09437afc35d2f7e41b00126cd26ec31",
+            "original_reviewed_target_sha256": "22a8089407e488353fa89cf65eb0895bfaa4729c41f72b6984eddbfa3d9cc70b",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/22a8089407e488353fa89cf65eb0895bfaa4729c41f72b6984eddbfa3d9cc70b.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 92,
+            "fidelity_score": 97,
+            "readability_score": 89,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Complete comparison of all ten Istio security quiz questions, choices, answers, explanations, references and final resources; reviewed each scenario and all 36 protected code blocks against the current version-pinned source.",
+            "findings": [
+              "The Chinese page covered the current technical conditions; its review date was untranslated, one occurrence of REGISTRY_ONLY had extra inline-code delimiters, and the file lacked its final newline."
+            ],
+            "resolutions": [
+              "Localized the date, aligned REGISTRY_ONLY delimiters with the source, added one terminal LF, then reread the complete final quiz and verified its code, links, headings, and rendering."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 36 fences, 54 inline code, 24 destinations, 47 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/2eb38d23a6716c1bafd9a43c4459c2b1aaadf63e63fdfd9e0fa49b26d437e6a4.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/22a8089407e488353fa89cf65eb0895bfaa4729c41f72b6984eddbfa3d9cc70b.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/c2f04ce820f6e211f579c108645eedfec09437afc35d2f7e41b00126cd26ec31.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/c2f04ce820f6e211f579c108645eedfec09437afc35d2f7e41b00126cd26ec31.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:49:42.401743+00:00",
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
@@ -34819,6 +35365,48 @@
             "review_timestamp_basis": "final target snapshot filesystem mtime"
           }
         },
+        "cn/service-mesh/istio/advanced/03-envoy-filter.md": {
+          "sourcePath": "en/service-mesh/istio/advanced/03-envoy-filter.md",
+          "sourceBlob": "7f09ad48746271d70ef1dd4fec725b92a5509577",
+          "sourceSha256": "100f8c0d49d72cec5d14d66bbe5b4c54845683bae322d6197d6a6f03fd2f1a05",
+          "targetSha256": "ba5a364180a738a96eeb0432471549228e6aa80cee65d58a72582ab88afdb5bf",
+          "reviewer": "native GPT-6 Luna",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "locale": "cn",
+            "path": "cn/service-mesh/istio/advanced/03-envoy-filter.md",
+            "reviewed_source_path": "en/service-mesh/istio/advanced/03-envoy-filter.md",
+            "source_blob": "7f09ad48746271d70ef1dd4fec725b92a5509577",
+            "source_sha256": "100f8c0d49d72cec5d14d66bbe5b4c54845683bae322d6197d6a6f03fd2f1a05",
+            "target_sha256": "ba5a364180a738a96eeb0432471549228e6aa80cee65d58a72582ab88afdb5bf",
+            "original_reviewed_target_sha256": "12b577180d2657f5893712cf1ef4ef87042e1d11698ddfe74626112237521689",
+            "original_reviewed_target_snapshot": "/tmp/cn-native-before-snapshots/12b577180d2657f5893712cf1ef4ef87042e1d11698ddfe74626112237521689.md",
+            "reviewer": "native GPT-6 Luna",
+            "score": 95,
+            "fidelity_score": 97,
+            "readability_score": 93,
+            "status": "reviewed",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "scope": "Read the entire current English source and the entire initial Chinese target, then reread the complete final Chinese page after reconstruction. Compared the full EnvoyFilter structure, use cases, XFF trust-chain examples, access policies, static-response patterns, ProxyConfig, verification guidance, practical examples, cautions, and all references.",
+            "findings": [
+              "The initial Chinese page was materially stale: it used an Istio 1.28 baseline, omitted most current source caveats, and had 66 code blocks versus 33 in the source, including superseded scenarios and content."
+            ],
+            "resolutions": [
+              "Rebuilt the Chinese prose and section structure against the pinned source, retaining all 33 source code blocks byte-for-byte and preserving URLs, technical identifiers, qualifications, and safety conditions. Added the source-owned heading IDs, localized the review date, and verified the complete final page with the translation validator, emphasis check, actual VitePress renderer, and diff check."
+            ],
+            "findings_resolved": true,
+            "validator": "0 Markdown file(s) need repair; owned code/link/hierarchy check PASS: 33 fences, 50 inline code, 28 destinations, 68 heading levels; single terminal LF.",
+            "source_snapshot": "/tmp/cn-native-source-snapshots/100f8c0d49d72cec5d14d66bbe5b4c54845683bae322d6197d6a6f03fd2f1a05.md",
+            "initial_target_snapshot": "/tmp/cn-native-before-snapshots/12b577180d2657f5893712cf1ef4ef87042e1d11698ddfe74626112237521689.md",
+            "reviewed_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/ba5a364180a738a96eeb0432471549228e6aa80cee65d58a72582ab88afdb5bf.md",
+            "final_target_snapshot": "/tmp/cn-native-reviewed-target-snapshots/ba5a364180a738a96eeb0432471549228e6aa80cee65d58a72582ab88afdb5bf.md",
+            "complete_source_initial_final_snapshots": true,
+            "reviewed_at_utc": "2026-10-18T20:53:20.737621+00:00",
+            "review_timestamp_basis": "final target snapshot filesystem mtime"
+          }
+        },
         "cn/service-mesh/istio/advanced/04-dns-cache.md": {
           "sourcePath": "en/service-mesh/istio/advanced/04-dns-cache.md",
           "sourceBlob": "ef0495680ce053a8953213d865435d4f86ad491a",
@@ -37503,19 +38091,7 @@
       },
       "rejected": [
         {
-          "path": "cn/README.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "cn/SUMMARY.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/autoscaling/01-keda.md",
           "issues": [
             "no native review"
           ]
@@ -37551,12 +38127,6 @@
           ]
         },
         {
-          "path": "cn/core/04-storage.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "cn/core/08-scheduling-preemption-eviction.md",
           "issues": [
             "no native review"
@@ -37569,19 +38139,7 @@
           ]
         },
         {
-          "path": "cn/core/11-extending-kubernetes.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "cn/eks-hybrid-nodes/02-network-configuration.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/eks/02-eks-cluster-creation-part4.md",
           "issues": [
             "no native review"
           ]
@@ -37659,25 +38217,7 @@
           ]
         },
         {
-          "path": "cn/networking/03-aws-lb-controller.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/networking/06-pod-network-benchmark.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "cn/networking/README.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/networking/calico/05-network-policy.md",
           "issues": [
             "no native review"
           ]
@@ -37701,19 +38241,7 @@
           ]
         },
         {
-          "path": "cn/observability/metrics/05-datadog.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "cn/observability/tracing/03-opentelemetry.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/ops/01-infrastructure-setup.md",
           "issues": [
             "no native review"
           ]
@@ -37803,25 +38331,7 @@
           ]
         },
         {
-          "path": "cn/quizzes/scheduling/02-custom-scheduler-part3-quiz.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/quizzes/service-mesh/istio/advanced.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "cn/quizzes/service-mesh/istio/observability.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/quizzes/service-mesh/istio/security.md",
           "issues": [
             "no native review"
           ]
@@ -37840,12 +38350,6 @@
         },
         {
           "path": "cn/service-mesh/cilium-service-mesh/02-traffic-management.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "cn/service-mesh/istio/advanced/03-envoy-filter.md",
           "issues": [
             "no native review"
           ]
@@ -37878,7 +38382,7 @@
     },
     "jp": {
       "sourcePages": 693,
-      "currentCompleteReviews": 528,
+      "currentCompleteReviews": 532,
       "minimumActualScore": 86,
       "reviews": {
         "jp/ai-ml/01-ai-ml-workloads.md": {
@@ -41215,6 +41719,56 @@
             ]
           }
         },
+        "jp/eks-hybrid-nodes/01-prerequisites.md": {
+          "sourcePath": "en/eks-hybrid-nodes/01-prerequisites.md",
+          "sourceBlob": "f75eda5663d014ad92b61e589522da69deeaaa52",
+          "sourceSha256": "ed85cc21cd171e237989f95cf2d3c20aee9a26faf945c0858cd497da9f840b47",
+          "targetSha256": "ccd0fe00c5b6220f95b215ec187d60c29ca16c3793c950c61c4ceaf1c588d9ea",
+          "reviewer": "nativeGPT6Luna",
+          "score": 92,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/eks-hybrid-nodes/01-prerequisites.md",
+            "sourceBlob": "f75eda5663d014ad92b61e589522da69deeaaa52",
+            "sourceSha256": "ed85cc21cd171e237989f95cf2d3c20aee9a26faf945c0858cd497da9f840b47",
+            "targetSha256": "ccd0fe00c5b6220f95b215ec187d60c29ca16c3793c950c61c4ceaf1c588d9ea",
+            "initialTargetSha256": "07db1930aee6c9e9c3da5cd5ff096814d004c94ed359c41820d06c317ea5ff6b",
+            "preEditTargetSha256": "07db1930aee6c9e9c3da5cd5ff096814d004c94ed359c41820d06c317ea5ff6b",
+            "completePageComparison": true,
+            "fidelityScore": 97,
+            "readabilityScore": 88,
+            "qualityScore": 92,
+            "qualityScale": "100-point whole-page fidelity/readability review; rendering verified separately",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "rationale": "Compared the full frozen English prerequisites guide, the exact initial Japanese page, and the final Japanese page, then reread all final Japanese prose. The original page had materially stale support/version guidance and several incorrect operational claims; I rebuilt its prose against the current source and restored protected code from that source.",
+            "findings": [
+              "The initial page cited EKS 1.31+ and nodeadm 0.1+ with a February 2026 review date, and treated prior OS, hardware, runtime, Packer, GPU, and network guidance as current. The frozen source now scopes support to EKS 1.36/nodeadm 1.0.20 and separates OS integration support from OS-vendor maintenance.",
+              "The initial Packer section described NODEADM_ARCH as amd64/arm64 and CREDENTIAL_PROVIDER=iam as a Roles Anywhere image mode without the current iam-ra mapping, and omitted the reviewed template limits and insecure/default-input caveats.",
+              "The initial credentials and networking claims included a strict Roles Anywhere duration inequality, an overly broad SG automation claim, a categorical ban on combined public/private endpoints, and incomplete route/firewall conditions. The source now specifies equality behavior, TCP 10250 direction, intended CIDRs, and endpoint-specific limitations.",
+              "The source also added current activation registration and expiry behavior, per-node credential protections, private-key/CA limits, access-entry migration warnings, version-pinned add-on floors, and explicit statements about what was not executed."
+            ],
+            "resolutions": [
+              "Rebuilt the whole Japanese page against the frozen English source, covering OS/runtime boundaries, sizing and host checks, Packer and GPU constraints, bidirectional networking, SSM and Roles Anywhere, certificate handling, CloudFormation, cluster-access/create plans, add-on compatibility, and references.",
+              "Restored all 20 code blocks byte-for-byte from the frozen English source. All 21 link destinations and all 15 heading levels match the source; the owned anchor repair added no IDs.",
+              "Reread the full final prose. Translation validation passed; the emphasis check found no repairs; actual scoped VitePress/Vue rendering reported zero compile errors and zero literal-bold regions; exactly one terminal LF and scoped git diff --check passed."
+            ],
+            "snapshot": "/tmp/native-reviewed-target-snapshots/ccd0fe00c5b6220f95b215ec187d60c29ca16c3793c950c61c4ceaf1c588d9ea.md",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/ed85cc21cd171e237989f95cf2d3c20aee9a26faf945c0858cd497da9f840b47.md",
+            "initialSnapshot": "/tmp/native-reviewed-target-snapshots/07db1930aee6c9e9c3da5cd5ff096814d004c94ed359c41820d06c317ea5ff6b.md",
+            "preEditSnapshot": "/tmp/native-reviewed-target-snapshots/07db1930aee6c9e9c3da5cd5ff096814d004c94ed359c41820d06c317ea5ff6b.md",
+            "reviewedAt": "2026-10-18T21:05:31+00:00",
+            "validation": [
+              "scripts/validate-translation.py passed",
+              "All 20 source code blocks are byte-identical; all 21 link destinations and all 15 heading levels match",
+              "scripts/repair-markdown-emphasis.py --check passed; zero repairs needed",
+              "Owned anchor repair made no changes",
+              "Actual scoped VitePress/Vue renderer: zero compile errors and zero literal-bold regions",
+              "Exactly one terminal LF; scoped git diff --check passed",
+              "Frozen source, exact initial Japanese bytes, and final Japanese bytes are SHA-256 verified and saved"
+            ]
+          }
+        },
         "jp/eks-hybrid-nodes/05-gpu-integration.md": {
           "sourcePath": "en/eks-hybrid-nodes/05-gpu-integration.md",
           "sourceBlob": "43b678733c2a87e595775ad43c0d124bb3c684e3",
@@ -42096,6 +42650,55 @@
               "Exactly one terminal LF",
               "Scoped git diff --check passed",
               "Exact frozen source, original pre-edit Japanese page, and final Japanese bytes are SHA-256 verified and saved"
+            ]
+          }
+        },
+        "jp/gitops/argocd/09-best-practices.md": {
+          "sourcePath": "en/gitops/argocd/09-best-practices.md",
+          "sourceBlob": "65529b56d80f8a2882c8ddd9257759fa20b2563a",
+          "sourceSha256": "fa97007cf7b854d13695917a17404898c2fb3d5b16636500fad71e38530f53d9",
+          "targetSha256": "ad5b51da3dba3dce82044ce12466d4ccefe6400d4f208e39a98c979784e41e75",
+          "reviewer": "nativeGPT6Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/gitops/argocd/09-best-practices.md",
+            "sourceBlob": "65529b56d80f8a2882c8ddd9257759fa20b2563a",
+            "sourceSha256": "fa97007cf7b854d13695917a17404898c2fb3d5b16636500fad71e38530f53d9",
+            "targetSha256": "ad5b51da3dba3dce82044ce12466d4ccefe6400d4f208e39a98c979784e41e75",
+            "initialTargetSha256": "0e0b09df2f26cfc7e05a2528499abf915feb0145708bd2f655202783f36aea59",
+            "preEditTargetSha256": "0e0b09df2f26cfc7e05a2528499abf915feb0145708bd2f655202783f36aea59",
+            "completePageComparison": true,
+            "fidelityScore": 97,
+            "readabilityScore": 88,
+            "qualityScore": 93,
+            "qualityScale": "100-point whole-page fidelity/readability review; rendering verified separately",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "rationale": "Compared the complete frozen English source, exact initial Japanese page, and final Japanese page; reread the full final Japanese prose after applying source-aligned corrections. The initial page retained the previous patch version and review date. The remaining sections preserve the current source caveats and recommendations.",
+            "findings": [
+              "The initial baseline cited patch 3.5.4 and October 12, while the current English baseline cites patch 3.5.5 and October 16; the Kustomize 5.8.1 bundle caveat and statement that examples were not rerun remain applicable.",
+              "The upgrade prose and version-pinned references still pointed to Argo CD 3.5.4; the current source uses 3.5.5. The Helm alternative now states chart 10.10.3 is the first chart shipping 3.5.5, while the reviewed 10.8.4 chart remains at 3.5.2.",
+              "The remaining repository, promotion, sizing, performance, backup/recovery, troubleshooting, EKS, and checklist prose aligned with the current source and retained its qualifiers."
+            ],
+            "resolutions": [
+              "Updated the Japanese review date and baseline, manifest-upgrade version, Helm chart mapping, and version-pinned source URLs to match the frozen English source. The assembler restored all 21 fenced code blocks directly from that source.",
+              "Reread the final page prose against the complete source and initial Japanese page. All 21 link destinations and all 48 heading levels match the source; no canonical anchor repair was required.",
+              "Translation validation passed; the emphasis check found no repairs; actual scoped VitePress/Vue rendering reported zero compile errors and zero literal-bold regions; exactly one terminal LF and scoped git diff --check passed."
+            ],
+            "snapshot": "/tmp/native-reviewed-target-snapshots/ad5b51da3dba3dce82044ce12466d4ccefe6400d4f208e39a98c979784e41e75.md",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/fa97007cf7b854d13695917a17404898c2fb3d5b16636500fad71e38530f53d9.md",
+            "initialSnapshot": "/tmp/native-reviewed-target-snapshots/0e0b09df2f26cfc7e05a2528499abf915feb0145708bd2f655202783f36aea59.md",
+            "preEditSnapshot": "/tmp/native-reviewed-target-snapshots/0e0b09df2f26cfc7e05a2528499abf915feb0145708bd2f655202783f36aea59.md",
+            "reviewedAt": "2026-10-18T20:46:10+00:00",
+            "validation": [
+              "scripts/validate-translation.py passed",
+              "All 21 source code blocks were restored from the frozen English source; all 21 link destinations and all 48 heading levels match",
+              "scripts/repair-markdown-emphasis.py --check passed; zero repairs needed",
+              "Owned anchor repair made no changes",
+              "Actual scoped VitePress/Vue renderer: zero compile errors and zero literal-bold regions",
+              "Exactly one terminal LF; scoped git diff --check passed",
+              "Frozen source, exact initial Japanese bytes, and final Japanese bytes are SHA-256 verified and saved"
             ]
           }
         },
@@ -47393,6 +47996,55 @@
               "git diff --check passed",
               "exact initial, source and final bytes saved and SHA-256 verified",
               "90-point Markdown content review completed; quality 86/90"
+            ]
+          }
+        },
+        "jp/quizzes/core/06-security-quiz.md": {
+          "sourcePath": "en/quizzes/core/06-security-quiz.md",
+          "sourceBlob": "37b343c61834543ae60f3f80303e8c79adc62f1a",
+          "sourceSha256": "49190cd22fd0cc8ac85f044440b83ed4d2a165d12f4b054d1bfab1475bf8c1f2",
+          "targetSha256": "999a1061150d8d46b39e1449c5e78ab95f5db22b79fd15019a3dd6707b23a081",
+          "reviewer": "nativeGPT6Luna",
+          "score": 91,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/quizzes/core/06-security-quiz.md",
+            "sourceBlob": "37b343c61834543ae60f3f80303e8c79adc62f1a",
+            "sourceSha256": "49190cd22fd0cc8ac85f044440b83ed4d2a165d12f4b054d1bfab1475bf8c1f2",
+            "targetSha256": "999a1061150d8d46b39e1449c5e78ab95f5db22b79fd15019a3dd6707b23a081",
+            "initialTargetSha256": "3e24920055c4e54e310aae11c99397ef0ae5d17ce64507f786dd82c483885615",
+            "preEditTargetSha256": "3e24920055c4e54e310aae11c99397ef0ae5d17ce64507f786dd82c483885615",
+            "completePageComparison": true,
+            "fidelityScore": 96,
+            "readabilityScore": 86,
+            "qualityScore": 91,
+            "qualityScale": "100-point whole-page fidelity/readability review; rendering verified separately",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "rationale": "Compared the complete frozen English quiz, the exact initial Japanese page, and the final Japanese page. Reread the final Japanese prose throughout the question, explanation, practice, and advanced sections while preserving quiz choices, answers, caveats, API distinctions, and source code/link structure.",
+            "findings": [
+              "The initial practice NetworkPolicy answer used an unnecessary custom namespace label and contained an extra code block; the current English source instead selects the namespace with the built-in kubernetes.io/metadata.name label and calls out additive NetworkPolicy rules plus the source Pod egress policy.",
+              "Several initial explanations mixed untranslated prose or stale security claims. Current source distinctions include PodSecurityPolicy removal and Pod Security Standards, Secret Base64 encoding versus encryption and volume update behavior, projected token audience/expiry and reread requirements, Gatekeeper ConstraintTemplate/kind and image-signature limits, mTLS identity versus NetworkPolicy reachability, privileged workload isolation, and runtime-specific prerequisites.",
+              "The current source includes operational caveats for seccomp Localhost and audit-only profiles, host-side AppArmor/SELinux support, preinstalled RuntimeClass handlers, and the Java app.jar build-context prerequisite; these are retained in Japanese."
+            ],
+            "resolutions": [
+              "Rewrote the stale practice answer using the built-in namespace label and retained the additive-policy/source-egress caveat; aligned all answer prose with the current source and translated remaining explanatory English into Japanese while retaining API and product names.",
+              "Restored all 29 fenced code blocks from the frozen English source. Source and target preserve matching heading structure and link destinations; the owned canonical-anchor helper made no change.",
+              "Reread the complete final prose. Translation validation passed, emphasis check passed with zero repairs, actual scoped VitePress/Vue rendering reported zero compile errors and zero literal-bold regions, one terminal LF is present, and scoped git diff --check passed."
+            ],
+            "snapshot": "/tmp/native-reviewed-target-snapshots/999a1061150d8d46b39e1449c5e78ab95f5db22b79fd15019a3dd6707b23a081.md",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/49190cd22fd0cc8ac85f044440b83ed4d2a165d12f4b054d1bfab1475bf8c1f2.md",
+            "initialSnapshot": "/tmp/native-reviewed-target-snapshots/3e24920055c4e54e310aae11c99397ef0ae5d17ce64507f786dd82c483885615.md",
+            "preEditSnapshot": "/tmp/native-reviewed-target-snapshots/3e24920055c4e54e310aae11c99397ef0ae5d17ce64507f786dd82c483885615.md",
+            "reviewedAt": "2026-10-18T21:01:27+00:00",
+            "validation": [
+              "scripts/validate-translation.py passed",
+              "All 29 source code blocks, heading structure, and link targets match the frozen English source",
+              "Owned anchor repair made no changes",
+              "scripts/repair-markdown-emphasis.py --check passed; zero repairs needed",
+              "Actual scoped VitePress/Vue renderer: zero compile errors and zero literal-bold regions",
+              "Exactly one terminal LF; scoped git diff --check passed",
+              "Frozen source, exact initial Japanese bytes, and final Japanese bytes are SHA-256 verified and saved"
             ]
           }
         },
@@ -53861,6 +54513,55 @@
             ]
           }
         },
+        "jp/security/01-kyverno-policy-management.md": {
+          "sourcePath": "en/security/01-kyverno-policy-management.md",
+          "sourceBlob": "c7fa24e9b9940e7df4d15ff1feac77f8fa8a2257",
+          "sourceSha256": "b88859d2e62385f7b3f56d458a52a6a1cbacd2e39d98c4a03eb8f054764c8c20",
+          "targetSha256": "f85f59d050fc2a3a2f18ef9e37a6196c3f40b089c47c4fb05fce31d68a806ca1",
+          "reviewer": "nativeGPT6Luna",
+          "score": 92,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "path": "jp/security/01-kyverno-policy-management.md",
+            "sourceBlob": "c7fa24e9b9940e7df4d15ff1feac77f8fa8a2257",
+            "sourceSha256": "b88859d2e62385f7b3f56d458a52a6a1cbacd2e39d98c4a03eb8f054764c8c20",
+            "targetSha256": "f85f59d050fc2a3a2f18ef9e37a6196c3f40b089c47c4fb05fce31d68a806ca1",
+            "initialTargetSha256": "621682f5c316064750854cc9d4b5277474a696db714c315f16d38cd2473a6294",
+            "preEditTargetSha256": "621682f5c316064750854cc9d4b5277474a696db714c315f16d38cd2473a6294",
+            "completePageComparison": true,
+            "fidelityScore": 96,
+            "readabilityScore": 87,
+            "qualityScore": 92,
+            "qualityScale": "100-point whole-page fidelity/readability review; rendering verified separately",
+            "reviewer": "nativeGPT6Luna",
+            "status": "passed",
+            "rationale": "Compared the complete frozen English policy guide, exact initial Japanese page, and final Japanese page; reread all final Japanese prose after localizing the update date and restoring the current source code examples. The translation retained the current policy semantics, security boundaries, limitations, and unexecuted-deployment caveats.",
+            "findings": [
+              "The prose matched the current English source across all sections, including Kyverno 1.19.1 and tested Kubernetes versions, the deprecation/removal schedule, Audit versus Deny and failurePolicy, asynchronous generation, policy exception boundaries, least-privilege RBAC, policy reporting, and unexecuted live-cluster checks.",
+              "The initial page displayed its current September 13, 2026 update date in English; its Japanese body already preserved the source details and caveats.",
+              "The source and target had 18 protected code blocks, 10 link destinations, and 43 heading levels; source-aligned assembly preserved their current structure and destinations."
+            ],
+            "resolutions": [
+              "Localized the date as 2026年9月13日 and restored all 18 fenced code blocks directly from the frozen English source. No substantive prose correction or anchor repair was required.",
+              "Compared the full source and initial page, then reread all final Japanese prose. All 10 link destinations and all 43 heading levels match the source.",
+              "Translation validation passed; the emphasis check found no repairs; actual scoped VitePress/Vue rendering reported zero compile errors and zero literal-bold regions; exactly one terminal LF and scoped git diff --check passed."
+            ],
+            "snapshot": "/tmp/native-reviewed-target-snapshots/f85f59d050fc2a3a2f18ef9e37a6196c3f40b089c47c4fb05fce31d68a806ca1.md",
+            "sourceSnapshot": "/tmp/jp-native-reviewed-source-snapshots/b88859d2e62385f7b3f56d458a52a6a1cbacd2e39d98c4a03eb8f054764c8c20.md",
+            "initialSnapshot": "/tmp/native-reviewed-target-snapshots/621682f5c316064750854cc9d4b5277474a696db714c315f16d38cd2473a6294.md",
+            "preEditSnapshot": "/tmp/native-reviewed-target-snapshots/621682f5c316064750854cc9d4b5277474a696db714c315f16d38cd2473a6294.md",
+            "reviewedAt": "2026-10-18T20:47:45+00:00",
+            "validation": [
+              "scripts/validate-translation.py passed",
+              "All 18 source code blocks were restored from the frozen English source; all 10 link destinations and all 43 heading levels match",
+              "scripts/repair-markdown-emphasis.py --check passed; zero repairs needed",
+              "Owned anchor repair made no changes",
+              "Actual scoped VitePress/Vue renderer: zero compile errors and zero literal-bold regions",
+              "Exactly one terminal LF; scoped git diff --check passed",
+              "Frozen source, exact initial Japanese bytes, and final Japanese bytes are SHA-256 verified and saved"
+            ]
+          }
+        },
         "jp/security/02-kubernetes-auth-authz.md": {
           "sourcePath": "en/security/02-kubernetes-auth-authz.md",
           "sourceBlob": "5e96516d6d6123420b49b113efef00eaaa528586",
@@ -56058,12 +56759,6 @@
           ]
         },
         {
-          "path": "jp/eks-hybrid-nodes/01-prerequisites.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/eks-hybrid-nodes/02-network-configuration.md",
           "issues": [
             "no native review"
@@ -56203,12 +56898,6 @@
         },
         {
           "path": "jp/gitops/argocd/08-notifications.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/gitops/argocd/09-best-practices.md",
           "issues": [
             "no native review"
           ]
@@ -56496,12 +57185,6 @@
           ]
         },
         {
-          "path": "jp/quizzes/core/06-security-quiz.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "jp/quizzes/core/07-policies-quiz.md",
           "issues": [
             "no native review"
@@ -56677,12 +57360,6 @@
         },
         {
           "path": "jp/scheduling/03-custom-scheduler-part3.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "jp/security/01-kyverno-policy-management.md",
           "issues": [
             "no native review"
           ]
@@ -56931,7 +57608,7 @@
     },
     "es": {
       "sourcePages": 693,
-      "currentCompleteReviews": 503,
+      "currentCompleteReviews": 512,
       "minimumActualScore": 91,
       "reviews": {
         "es/ai-ml/01-ai-ml-workloads.md": {
@@ -58471,6 +59148,64 @@
             "notes": "Actual complete current-source/initial/final native fidelity and readability review passed. No external model/API was used."
           }
         },
+        "es/blockchain/02-nodes-on-eks.md": {
+          "sourcePath": "en/blockchain/02-nodes-on-eks.md",
+          "sourceBlob": "d4a7415b1f66e651a229823aac156fe4e0c58ba2",
+          "sourceSha256": "87d5d510ae4685ef59d0fcb9d4aab4e04336ee85a685e2774a3b1b9645b681eb",
+          "targetSha256": "f1c6f3669905c802ea95cb1138cc402c8e9ccaa75803031aa3cd4cfb358ecc8a",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/blockchain/02-nodes-on-eks.md",
+            "target_path": "es/blockchain/02-nodes-on-eks.md",
+            "source_blob": "d4a7415b1f66e651a229823aac156fe4e0c58ba2",
+            "source_sha256": "87d5d510ae4685ef59d0fcb9d4aab4e04336ee85a685e2774a3b1b9645b681eb",
+            "initial_target_sha256": "447951184d324f211c727399864067e9e311504f6542de93f564a8619a61b4fa",
+            "original_reviewed_target_sha256": "447951184d324f211c727399864067e9e311504f6542de93f564a8619a61b4fa",
+            "target_sha256": "f1c6f3669905c802ea95cb1138cc402c8e9ccaa75803031aa3cd4cfb358ecc8a",
+            "reviewed_source_sha256": "87d5d510ae4685ef59d0fcb9d4aab4e04336ee85a685e2774a3b1b9645b681eb",
+            "reviewed_target_sha256": "f1c6f3669905c802ea95cb1138cc402c8e9ccaa75803031aa3cd4cfb358ecc8a",
+            "final_target_sha256": "f1c6f3669905c802ea95cb1138cc402c8e9ccaa75803031aa3cd4cfb358ecc8a",
+            "source_snapshot_path": "/tmp/native-reviewed-source-snapshots/87d5d510ae4685ef59d0fcb9d4aab4e04336ee85a685e2774a3b1b9645b681eb.md",
+            "initial_target_snapshot_path": "/tmp/native-initial-target-snapshots/447951184d324f211c727399864067e9e311504f6542de93f564a8619a61b4fa.md",
+            "original_reviewed_target_snapshot_path": "/tmp/native-initial-target-snapshots/447951184d324f211c727399864067e9e311504f6542de93f564a8619a61b4fa.md",
+            "snapshot_path": "/tmp/native-reviewed-target-snapshots/f1c6f3669905c802ea95cb1138cc402c8e9ccaa75803031aa3cd4cfb358ecc8a.md",
+            "final_target_snapshot_path": "/tmp/native-reviewed-target-snapshots/f1c6f3669905c802ea95cb1138cc402c8e9ccaa75803031aa3cd4cfb358ecc8a.md",
+            "fidelity_score": 96,
+            "readability_score": 92,
+            "overall_score": 94,
+            "component_scores": {
+              "fidelity": 96,
+              "readability": 92
+            },
+            "review_status": "passed",
+            "reviewer": "native GPT-6 Luna",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read the complete current frozen English document and true initial Spanish document, all prose/tables/callouts/lists/references, then the complete final Spanish document after the last correction. Rechecked both exact source code fences byte-for-byte across source, initial and final; preserved 33 headings, 29 ordered link destinations, all technical identifiers and protocol facts. Source, initial and final bytes are saved at the paths below.",
+            "concrete_findings": [
+              "The initial Spanish retained generic English peer(s)/hard fork(s) and untranslated mainnet/testnet terms in some prose.",
+              "The Fabric participation comparison used a literal translation of permissionless/permissioned terminology.",
+              "The row about moving Pods between nodes had an ambiguous pronoun for what is bound to local disk."
+            ],
+            "resolutions": [
+              "Translated generic peers as nodos pares and hard forks as bifurcaciones duras while retaining canonical English terms where useful; localized mainnet/testnet prose without changing destinations.",
+              "Clarified Ethereum participation as sin autorización previa and Fabric as con permisos (MSP), preserving the permission boundary.",
+              "Changed the ambiguous local-disk row to “El estado queda ligado al disco local.”",
+              "Compared the full current English source, true initial Spanish and final Spanish prose, including all tables, callouts, lists, summaries and references; preserved all versions, dates, protocol caveats, measurements, qualifiers and recommendations.",
+              "Verified both source code blocks are exactly unchanged in the initial and final Spanish; all 29 source link/image destinations and 34 heading levels match, with one terminal LF."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact 2 fenced code blocks, 33 headings and heading-level sequence, 29 link/image destinations, wrapper-marker guard, one terminal LF; actual VitePress/Vue 0 compile errors and 0 literal bold tokens; scoped diff-check passed.",
+            "reviewedAt": "2026-10-18T21:06:29.469700+00:00",
+            "structural_evidence_path": "/tmp/es-blockchain-nodes-structural-evidence.json",
+            "renderer_evidence_path": "/tmp/es-blockchain-nodes-render.json",
+            "review_evidence_path": "/tmp/es-blockchain-nodes-review.json",
+            "notes": "The final Spanish preserves the source distinctions between node identity and Pod state, sync/readiness and liveness, client diversity, storage capacity and IOPS, testnet/mainnet scheduling, Ethereum EL/CL and Fabric participation/consensus. Technical names remain recognizable, with awkward literal terms repaired. Dense technical prose and a few deliberate English product/protocol terms limit readability somewhat; actual whole-page fidelity is 96, readability 92, overall 94."
+          }
+        },
         "es/blockchain/03-managed-blockchain.md": {
           "sourcePath": "en/blockchain/03-managed-blockchain.md",
           "sourceBlob": "a5b1cefcdfe2ddb87d4807409422274e0a38df79",
@@ -59454,6 +60189,68 @@
             "validator_status": "passed: scripts/validate-translation.py en/data-on-eks/kafka/02-strimzi-operator.md es/data-on-eks/kafka/02-strimzi-operator.md",
             "scoped_diff_check": "passed: git diff --check -- es/data-on-eks/kafka/02-strimzi-operator.md",
             "owned_anchor_repair": "ran on this explicit page; changed=false, addedIds=0"
+          }
+        },
+        "es/data-on-eks/kafka/03-kafka-operations.md": {
+          "sourcePath": "en/data-on-eks/kafka/03-kafka-operations.md",
+          "sourceBlob": "4519b0297f0e66d2792c7fc27cd4031e869394b6",
+          "sourceSha256": "9b15a3f6adafb86d6e8854b358139c8e75a242d91d98938bebab1e309de27fa9",
+          "targetSha256": "cf1f3e46ec47094d2e7b30a4e969095529c0219e84e0b24e8015c7482ae99933",
+          "reviewer": "native GPT-6 Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/data-on-eks/kafka/03-kafka-operations.md",
+            "target_path": "es/data-on-eks/kafka/03-kafka-operations.md",
+            "source_blob": "4519b0297f0e66d2792c7fc27cd4031e869394b6",
+            "source_sha256": "9b15a3f6adafb86d6e8854b358139c8e75a242d91d98938bebab1e309de27fa9",
+            "initial_target_sha256": "956d8acf17935052b9fd4ab2a665d4fe15dfaead2ba8de87700c4d647a153aab",
+            "original_reviewed_target_sha256": "956d8acf17935052b9fd4ab2a665d4fe15dfaead2ba8de87700c4d647a153aab",
+            "target_sha256": "cf1f3e46ec47094d2e7b30a4e969095529c0219e84e0b24e8015c7482ae99933",
+            "reviewed_source_sha256": "9b15a3f6adafb86d6e8854b358139c8e75a242d91d98938bebab1e309de27fa9",
+            "reviewed_target_sha256": "cf1f3e46ec47094d2e7b30a4e969095529c0219e84e0b24e8015c7482ae99933",
+            "final_target_sha256": "cf1f3e46ec47094d2e7b30a4e969095529c0219e84e0b24e8015c7482ae99933",
+            "source_snapshot_path": "/tmp/native-reviewed-source-snapshots/9b15a3f6adafb86d6e8854b358139c8e75a242d91d98938bebab1e309de27fa9.md",
+            "initial_target_snapshot_path": "/tmp/native-initial-target-snapshots/956d8acf17935052b9fd4ab2a665d4fe15dfaead2ba8de87700c4d647a153aab.md",
+            "original_reviewed_target_snapshot_path": "/tmp/native-initial-target-snapshots/956d8acf17935052b9fd4ab2a665d4fe15dfaead2ba8de87700c4d647a153aab.md",
+            "snapshot_path": "/tmp/native-reviewed-target-snapshots/cf1f3e46ec47094d2e7b30a4e969095529c0219e84e0b24e8015c7482ae99933.md",
+            "final_target_snapshot_path": "/tmp/native-reviewed-target-snapshots/cf1f3e46ec47094d2e7b30a4e969095529c0219e84e0b24e8015c7482ae99933.md",
+            "fidelity_score": 96,
+            "readability_score": 91,
+            "overall_score": 93,
+            "component_scores": {
+              "fidelity": 96,
+              "readability": 91
+            },
+            "review_status": "passed",
+            "reviewer": "native GPT-6 Luna",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read the complete 463-line frozen English source and complete 463-line initial Spanish snapshot, then reread the complete final 463-line Spanish page after edits and the owned-anchor pass. Compared storage performance and durability qualifiers, both free-space calculations, JBOD replacement and removal caveats, broker-only scale paths and triggers, Cruise Control approval modes, manual CLI/reassignment risks, Kafka/Strimzi upgrade ordering and metadataVersion behavior, PDB coverage, acks=all assumptions, failure handling, dates, values, and all references. Verified all22 final fenced code blocks byte-identical to English; no Kafka or AWS operation was executed.",
+            "concrete_findings": [
+              "The initial wording blurred tail latency with queue latency and made the workload/page-cache condition unclear.",
+              "Retention and replication appeared as a slash pair, while the JBOD volume-array replacement was described as a matrix.",
+              "The autoRebalance trigger was phrased as replica changes without clearly identifying replica-count changes on existing pools.",
+              "Hard goals and the proposal-only KafkaRebalance JSON helper needed clearer descriptions.",
+              "The --verify warning retained untranslated throttle terminology and needed to state clearly that verification can change broker/topic throttle configuration.",
+              "The sentence about changing metadataVersion alongside Kafka binaries used an unnatural false-friend construction; PDB default scope also needed a clearer one-per-cluster statement.",
+              "Some long operational passages used compressed slashes or literal phrasing for storage cost, broker identities, repeated processing, and remaining replicas."
+            ],
+            "resolutions": [
+              "Revised19complete prose units while retaining already-correct content and the exact code examples.",
+              "Clarified high-percentile latency, page-cache load, per-topic retention/factor, and the two different free-space calculations without changing any values.",
+              "Explained that the merge patch replaces the entire volume list, distinguished broker-only procedures, and stated the existing-pool replica-count trigger and cordoning behavior.",
+              "Preserved hard-goal, manual-approval, proposal-only, source output-marker, and throttle semantics; translated throttle settings and clarified the non-read-only consequence of completed verification.",
+              "Rephrased metadataVersion upgrade safety and the default single Kafka PDB spanning all node pools; retained the synchronized-replica assumptions for acks=all.",
+              "Reread the entire final Spanish file against the full source/initial snapshots; owned anchor repair was a no-op, exact22 code blocks and ordered link destinations were verified, and validation/render/LF/diff checks passed."
+            ],
+            "unresolvedFindings": [],
+            "findings_resolved": true,
+            "validator": "PASS: 22 fenced code blocks byte-identical; 14 heading levels and 11 ordered link destinations match; exact one terminal LF; validate-translation exit0; owned anchor repair added no IDs; actual VitePress/Vue errors0 and literal bold markers0; git diff --check PASS.",
+            "renderer_evidence_path": "/tmp/es-kafka-ops-render.json",
+            "structural_evidence_path": "/tmp/es-kafka-ops-structural-evidence.json",
+            "review_evidence_path": "/tmp/es-kafka-operations-review.json",
+            "reviewedAt": "2026-10-18T20:45:37Z"
           }
         },
         "es/data-on-eks/kafka/04-schema-registry.md": {
@@ -63502,6 +64299,62 @@
             "notes": "Actual complete current-source/initial/final native fidelity and readability review passed. No external model/API was used."
           }
         },
+        "es/observability/metrics/README.md": {
+          "sourcePath": "en/observability/metrics/README.md",
+          "sourceBlob": "3c11671ba89ec674bfa7630410e854a6bcd974a9",
+          "sourceSha256": "b7051d30c2570cc8c3d73a61e73054341d74a307ff804cadd32515862187c3cf",
+          "targetSha256": "fbf090aa2382094cafaabf7f5b78f055a347552d632a1fae30b9b4bb9346adf9",
+          "reviewer": "native GPT-6 Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/observability/metrics/README.md",
+            "target_path": "es/observability/metrics/README.md",
+            "source_blob": "3c11671ba89ec674bfa7630410e854a6bcd974a9",
+            "source_sha256": "b7051d30c2570cc8c3d73a61e73054341d74a307ff804cadd32515862187c3cf",
+            "initial_target_sha256": "bc97bfbc0ad71519b6781fef34e0b3aa6715ad40ed1d4fba72eb9a95eca392f4",
+            "original_reviewed_target_sha256": "bc97bfbc0ad71519b6781fef34e0b3aa6715ad40ed1d4fba72eb9a95eca392f4",
+            "target_sha256": "fbf090aa2382094cafaabf7f5b78f055a347552d632a1fae30b9b4bb9346adf9",
+            "reviewed_source_sha256": "b7051d30c2570cc8c3d73a61e73054341d74a307ff804cadd32515862187c3cf",
+            "reviewed_target_sha256": "fbf090aa2382094cafaabf7f5b78f055a347552d632a1fae30b9b4bb9346adf9",
+            "final_target_sha256": "fbf090aa2382094cafaabf7f5b78f055a347552d632a1fae30b9b4bb9346adf9",
+            "source_snapshot_path": "/tmp/native-reviewed-source-snapshots/b7051d30c2570cc8c3d73a61e73054341d74a307ff804cadd32515862187c3cf.md",
+            "initial_target_snapshot_path": "/tmp/native-initial-target-snapshots/bc97bfbc0ad71519b6781fef34e0b3aa6715ad40ed1d4fba72eb9a95eca392f4.md",
+            "original_reviewed_target_snapshot_path": "/tmp/native-initial-target-snapshots/bc97bfbc0ad71519b6781fef34e0b3aa6715ad40ed1d4fba72eb9a95eca392f4.md",
+            "snapshot_path": "/tmp/native-reviewed-target-snapshots/fbf090aa2382094cafaabf7f5b78f055a347552d632a1fae30b9b4bb9346adf9.md",
+            "final_target_snapshot_path": "/tmp/native-reviewed-target-snapshots/fbf090aa2382094cafaabf7f5b78f055a347552d632a1fae30b9b4bb9346adf9.md",
+            "fidelity_score": 96,
+            "readability_score": 91,
+            "overall_score": 93,
+            "component_scores": {
+              "fidelity": 96,
+              "readability": 91
+            },
+            "review_status": "passed",
+            "reviewer": "native GPT-6 Luna",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read the full frozen English metrics overview, the complete initial Spanish page, and the complete final Spanish prose after correction. Compared metric definitions, counter/gauge/histogram/summary semantics, cardinality, Pushgateway lifecycle, retention and WAL caveats, product limits, cost assumptions, architecture responsibilities, references and navigation. Checked all 21 complete code blocks byte-for-byte against English. No cluster/cloud deployment was performed.",
+            "concrete_findings": [
+              "The update date remained in English.",
+              "The translation used a false-friend for Pod readiness and literal wording for histogram wire output and retention.",
+              "Some solution-comparison labels used unnatural calques for backup targets, product entitlements and cost-estimation inputs."
+            ],
+            "resolutions": [
+              "Localized the date while retaining the source version and deployment-status qualification.",
+              "Clarified Pod readiness, native histogram output and time/size retention semantics.",
+              "Rephrased backup destinations, plan entitlements, cost-estimation inputs and open-source infrastructure costs in natural Spanish.",
+              "Reread the entire final page; preserved all current facts, caveats, anchors, links and examples."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact21fences, matching heading hierarchy/link destinations, preserved source explicit ID, canonical target heading IDs; renderer errors0/literalBold0; oneLF; diffcheckPASS",
+            "structural_evidence_path": "/tmp/es-observability-metrics-readme-structural-evidence.json",
+            "renderer_evidence_path": "/tmp/es-observability-metrics-readme-render.json",
+            "review_evidence_path": "/tmp/es-observability-metrics-readme-review.json",
+            "notes": "Full native review of current source and initial/final target; all code blocks were byte-identical to frozen source."
+          }
+        },
         "es/observability/tracing/README.md": {
           "sourcePath": "en/observability/tracing/README.md",
           "sourceBlob": "9ca9298e22dd749e265bca603e4ab6a486ba2883",
@@ -67317,6 +68170,61 @@
             "notes": "Native GPT-6 Luna complete-page comparison. Final reviewed target bytes are retained at /tmp/native-reviewed-target-snapshots/b00a2c1cb0d6ac0244cdc4ed5f69317760ffd791359abf321f28ccb17136edc0.md.",
             "reviewer": "native GPT-6 Luna",
             "completePageComparison": true
+          }
+        },
+        "es/quizzes/eks/04-eks-storage-part3-quiz.md": {
+          "sourcePath": "en/quizzes/eks/04-eks-storage-part3-quiz.md",
+          "sourceBlob": "efeeebbefa702404f806f1c6c7458b38f63df9ad",
+          "sourceSha256": "2d1bf0577960aacc2c837d6d5d4484a9d5a3305f3914975c6c4903ea64d7780d",
+          "targetSha256": "9ee3632a867e6b7127df7a63e5d93244093d69a6cccbd23658724c0c6aec2be6",
+          "reviewer": "native GPT-6 Luna",
+          "score": 93,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/quizzes/eks/04-eks-storage-part3-quiz.md",
+            "target_path": "es/quizzes/eks/04-eks-storage-part3-quiz.md",
+            "source_blob": "efeeebbefa702404f806f1c6c7458b38f63df9ad",
+            "source_sha256": "2d1bf0577960aacc2c837d6d5d4484a9d5a3305f3914975c6c4903ea64d7780d",
+            "initial_target_sha256": "a53c686f11a672e4e9a4dea63003a83a02f9056f9e4682664673a2525bc55bbd",
+            "original_reviewed_target_sha256": "a53c686f11a672e4e9a4dea63003a83a02f9056f9e4682664673a2525bc55bbd",
+            "target_sha256": "9ee3632a867e6b7127df7a63e5d93244093d69a6cccbd23658724c0c6aec2be6",
+            "reviewed_source_sha256": "2d1bf0577960aacc2c837d6d5d4484a9d5a3305f3914975c6c4903ea64d7780d",
+            "reviewed_target_sha256": "9ee3632a867e6b7127df7a63e5d93244093d69a6cccbd23658724c0c6aec2be6",
+            "final_target_sha256": "9ee3632a867e6b7127df7a63e5d93244093d69a6cccbd23658724c0c6aec2be6",
+            "source_snapshot_path": "/tmp/native-reviewed-source-snapshots/2d1bf0577960aacc2c837d6d5d4484a9d5a3305f3914975c6c4903ea64d7780d.md",
+            "initial_target_snapshot_path": "/tmp/native-initial-target-snapshots/a53c686f11a672e4e9a4dea63003a83a02f9056f9e4682664673a2525bc55bbd.md",
+            "original_reviewed_target_snapshot_path": "/tmp/native-initial-target-snapshots/a53c686f11a672e4e9a4dea63003a83a02f9056f9e4682664673a2525bc55bbd.md",
+            "snapshot_path": "/tmp/native-reviewed-target-snapshots/9ee3632a867e6b7127df7a63e5d93244093d69a6cccbd23658724c0c6aec2be6.md",
+            "final_target_snapshot_path": "/tmp/native-reviewed-target-snapshots/9ee3632a867e6b7127df7a63e5d93244093d69a6cccbd23658724c0c6aec2be6.md",
+            "fidelity_score": 94,
+            "readability_score": 92,
+            "overall_score": 93,
+            "component_scores": {
+              "fidelity": 94,
+              "readability": 92
+            },
+            "review_status": "passed",
+            "reviewer": "native GPT-6 Luna",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually reread the complete frozen 538-line English source and the complete initial Spanish before rebuilding, then read the entire assembled 538-line final Spanish after edits. Compared all 15 questions, each answer and explanation, the monitoring/calculation caveats, security boundaries, operational safety limits, references, headings and every protected code block. Replaced the stale six-question structure with the complete current 10 multiple-choice, 3 short-answer and 2 practical questions. Preserved source code, link destinations, heading hierarchy, quiz answers, units and qualifications. No AWS or Kubernetes operation was executed.",
+            "concrete_findings": [
+              "The old translation had only six multiple-choice questions, outdated content and a different code-block structure; it omitted current short-answer and hands-on exercises.",
+              "A few phrases needed clarification for Spanish readability, including node-local instance-store storage, namespaced Role scope, Grafana dashboard model names and EKS audit-log ownership."
+            ],
+            "resolutions": [
+              "Rebuilt the entire quiz from the frozen current English source, translating all 15 questions, answers, explanations, practical instructions and navigation/reference text.",
+              "Preserved each answer key, calculation, metric distinction, risk qualification and operational non-authorization statement.",
+              "Restored all 12 exact source code fences; confirmed 21 heading levels and 7 ordered link destinations match.",
+              "Refined the final Spanish for the raw Block distinction, Role objects, Grafana Resource model names and audit-log ownership, then reread the full final page."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact12fences,21headingLevels,7orderedDestinations; actualVitePress/Vue errors0/literalBold0; oneLF; diffcheckPASS",
+            "structural_evidence_path": "/tmp/es-eks-storage-quiz-structural-evidence.json",
+            "renderer_evidence_path": "/tmp/es-eks-storage-quiz-render.json",
+            "review_evidence_path": "/tmp/es-eks-storage-quiz-review.json",
+            "notes": "Full native review of the current source and initial/final target; full current quiz rebuilt because legacy page was materially incomplete."
           }
         },
         "es/quizzes/eks/12-kubernetes-version-roadmap-quiz.md": {
@@ -72342,6 +73250,169 @@
             "owned_anchor_repair": "ran on this explicit page; changed=false, addedIds=0"
           }
         },
+        "es/security/02-kubernetes-auth-authz.md": {
+          "sourcePath": "en/security/02-kubernetes-auth-authz.md",
+          "sourceBlob": "5e96516d6d6123420b49b113efef00eaaa528586",
+          "sourceSha256": "244857e43e6b02f5ae8472520c94ad76556a6f26ec77c59e99cc4f47e2125a32",
+          "targetSha256": "6de2cdabc998d1b04bcb24193f8a7ede377da8d78b275536905d9fbb88f8a932",
+          "reviewer": "native GPT-6 Luna",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/security/02-kubernetes-auth-authz.md",
+            "target_path": "es/security/02-kubernetes-auth-authz.md",
+            "source_blob": "5e96516d6d6123420b49b113efef00eaaa528586",
+            "source_sha256": "244857e43e6b02f5ae8472520c94ad76556a6f26ec77c59e99cc4f47e2125a32",
+            "initial_target_sha256": "1f0c1cadbe4edd8df372cb516d198392edf2361f1ef4e5246f9471a6ef88e5b7",
+            "original_reviewed_target_sha256": "1f0c1cadbe4edd8df372cb516d198392edf2361f1ef4e5246f9471a6ef88e5b7",
+            "target_sha256": "6de2cdabc998d1b04bcb24193f8a7ede377da8d78b275536905d9fbb88f8a932",
+            "reviewed_source_sha256": "244857e43e6b02f5ae8472520c94ad76556a6f26ec77c59e99cc4f47e2125a32",
+            "reviewed_target_sha256": "6de2cdabc998d1b04bcb24193f8a7ede377da8d78b275536905d9fbb88f8a932",
+            "final_target_sha256": "6de2cdabc998d1b04bcb24193f8a7ede377da8d78b275536905d9fbb88f8a932",
+            "source_snapshot_path": "/tmp/native-reviewed-source-snapshots/244857e43e6b02f5ae8472520c94ad76556a6f26ec77c59e99cc4f47e2125a32.md",
+            "initial_target_snapshot_path": "/tmp/native-initial-target-snapshots/1f0c1cadbe4edd8df372cb516d198392edf2361f1ef4e5246f9471a6ef88e5b7.md",
+            "original_reviewed_target_snapshot_path": "/tmp/native-initial-target-snapshots/1f0c1cadbe4edd8df372cb516d198392edf2361f1ef4e5246f9471a6ef88e5b7.md",
+            "snapshot_path": "/tmp/native-reviewed-target-snapshots/6de2cdabc998d1b04bcb24193f8a7ede377da8d78b275536905d9fbb88f8a932.md",
+            "final_target_snapshot_path": "/tmp/native-reviewed-target-snapshots/6de2cdabc998d1b04bcb24193f8a7ede377da8d78b275536905d9fbb88f8a932.md",
+            "fidelity_score": 96,
+            "readability_score": 92,
+            "overall_score": 94,
+            "component_scores": {
+              "fidelity": 96,
+              "readability": 92
+            },
+            "review_status": "passed",
+            "reviewer": "native GPT-6 Luna",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read the complete frozen English source (489 lines), the complete original Spanish target snapshot (489 lines), and the complete final Spanish page (489 lines; all 260 prose-template lines) after edits and the owned-anchor pass. Compared every authentication path (client CA versus server CA, clientAuth, kubeconfig exec, TokenReview and front-proxy header trust), ServiceAccount/TokenRequest rotation and audience, OIDC ID-token requirements, RBAC Role/ClusterRole binding scopes and additive behavior, ABAC restart and EKS limitation, Node identity, webhook authorizer order/NoOpinion/system:masters, admission read bypass and failurePolicy behavior, ResourceQuota versus measured usage, EKS access-entry/RBAC separation and migration irreversibility, external OIDC versus IRSA versus Pod Identity, tenant NetworkPolicy ingress/egress scope, dates, and all references. Preserved all 16 source code blocks exactly and every link destination. No cluster, AWS, or production operation was executed.",
+            "concrete_findings": [
+              "The existing page had awkward or untranslated general Kubernetes vocabulary, especially around namespaces, clusters, service accounts, bearer/refresh tokens, bindings, admission types and IAM access entries.",
+              "Some phrasing could overstate what had been exercised or make the EKS change prerequisites hard to verify."
+            ],
+            "resolutions": [
+              "Localized general prose consistently while preserving Kubernetes resource kinds, field names, command flags, API statuses and other identifiers.",
+              "Clarified the tested-versus-performed caveat; TokenRequest rotation and audience behavior; additive RBAC and binding scope; webhook failure semantics; IAM/access-entry permission accumulation; EKS preconditions and migration limits; OIDC directionality; and tenant ingress/egress qualifications.",
+              "Read the complete final Spanish page again after the edits and owned-anchor pass; all 16 fenced blocks remain byte-identical to English, all ordered link destinations and heading levels match, and the actual VitePress/Vue renderer reports zero errors and zero literal bold markers."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: 31 matching heading levels; 32 fence delimiters/16 byte-identical fenced code blocks; exact link destinations; owned-anchor helper no-op; 489 lines; one terminal LF; translation validator exit 0; scoped VitePress/Vue renderer errors 0/literal bold 0; git diff --check PASS.",
+            "structural_evidence_path": "/tmp/es-security-auth-authz-structural-evidence.json",
+            "renderer_evidence_path": "/tmp/es-security-auth-authz-render.json",
+            "review_evidence_path": "/tmp/es-security-auth-authz-review.json",
+            "reviewedAt": "2026-10-18T20:59:27.159349+00:00"
+          }
+        },
+        "es/security/07-image-security.md": {
+          "sourcePath": "en/security/07-image-security.md",
+          "sourceBlob": "e1a8bf385288c32197ec5617c9fa602d492910a4",
+          "sourceSha256": "2ec3cd60c4cab7afa5fe24fa7c55538da853a5056c954ba57a7a783d932e3c99",
+          "targetSha256": "11172d3c62c929e0478079d828fbb1e5535bc3f60becb892a663ff05d8694cf2",
+          "reviewer": "native Codex host; model identity not asserted",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/security/07-image-security.md",
+            "target_path": "es/security/07-image-security.md",
+            "source_blob": "e1a8bf385288c32197ec5617c9fa602d492910a4",
+            "source_sha256": "2ec3cd60c4cab7afa5fe24fa7c55538da853a5056c954ba57a7a783d932e3c99",
+            "initial_target_sha256": "41eb04a986b51760d5c1f7559f372a12c152cda635fb21d6a2f8979197663fce",
+            "original_reviewed_target_sha256": "41eb04a986b51760d5c1f7559f372a12c152cda635fb21d6a2f8979197663fce",
+            "target_sha256": "11172d3c62c929e0478079d828fbb1e5535bc3f60becb892a663ff05d8694cf2",
+            "reviewed_source_sha256": "2ec3cd60c4cab7afa5fe24fa7c55538da853a5056c954ba57a7a783d932e3c99",
+            "reviewed_target_sha256": "11172d3c62c929e0478079d828fbb1e5535bc3f60becb892a663ff05d8694cf2",
+            "final_target_sha256": "11172d3c62c929e0478079d828fbb1e5535bc3f60becb892a663ff05d8694cf2",
+            "source_snapshot_path": "/tmp/root-native-es-reviews/image-security-2055/source.md",
+            "initial_target_snapshot_path": "/tmp/root-native-es-reviews/image-security-2055/initial.md",
+            "original_reviewed_target_snapshot_path": "/tmp/root-native-es-reviews/image-security-2055/initial.md",
+            "snapshot_path": "/tmp/root-native-es-reviews/image-security-2055/final.md",
+            "final_target_snapshot_path": "/tmp/root-native-es-reviews/image-security-2055/final.md",
+            "fidelity_score": 97,
+            "readability_score": 94,
+            "overall_score": 95,
+            "component_scores": {
+              "fidelity": 97,
+              "readability": 94
+            },
+            "review_status": "passed",
+            "reviewer": "native Codex host; model identity not asserted",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read all78prose units and14code blocks of the539-line current English source, all76prose units and14code blocks of the539-line true initial Spanish target, then all78final prose units and14final code blocks. Recovered the output-truncated source workflow tail, initial policy start and initial SLSA paragraph through explicit rereads. Compared artifact identity, scanning and exceptions, Basic/Enhanced ECR events, KMS notification limits, Cosign identities and bundle compatibility, admission namespace bypass, SBOM/provenance, base builds, digest lifecycle and release permissions. No source example command, AWS operation, external model API, Docker build or GitHub signing workflow was executed.",
+            "concrete_findings": [
+              "Initial date and baselines lagged current English: Trivy0.74 versus0.76, Operator0.34/chart0.36 versus0.35/chart0.37, Connaisseur3.12/chart2.12 versus3.13/chart2.13; source Dockerfile now pins Go1.27.2 and a different digest.",
+              "controles de severidad, versiones corregidas, productor de compatibilidad, digest del sujeto, el constructor and una envoltura were literal or insufficiently clear.",
+              "Slash-compressed scanning, scope, namespace selection and workflow terminology obscured operational responsibility.",
+              "Two newly explicit source spans were absent in the initial target, which instead used equivalent canonical IDs on headings."
+            ],
+            "resolutions": [
+              "Revised36of78mapped prose units and restored2exactsource span units; natural Spanish now explains severity thresholds, fixed versions, compatible signing output, attested artifact and reusable workflow callers.",
+              "Updated dates, tool/chart baselines and references to frozen English and retained all14source code fences byte-identically, including current immutable Go1.27.2 digest and release workflow scan version0.76.0.",
+              "Preserved exists:true versus positive count, Basic versus Inspector event schemas, same-account/Region KMS prerequisite and actual deployment testing requirement.",
+              "Preserved exact OIDC identities, regexp versus glob, legacy Connaisseur bundle separation, namespace label bypass, init/ephemeral coverage and transparency checks.",
+              "Preserved SBOM completeness limits, SLSA generation versus BuildLevel3, source fixture run with Go1.27.1 versus current Dockerfile1.27.2, no actual container builds or AWS resources, and digest-based build-once release permissions.",
+              "All34source span IDs and all9initial canonical IDs remain available; two heading ID declarations moved to exactsource spans to avoid duplicate explicit identifiers. ActualVitePress/Vue0errors0bold, exact24noncode heading levels/31links/9inline tokens, translation/emphasis/oneLF/diff PASS; noimages."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact14fences,24noncode heading levels,31ordered destinations,9nonfenced inline tokens;34exactSource spans and9initialcanonicalIDs retained; actualVitePress/Vue errors0/literalBold0; translation/emphasis/oneLF/diff PASS; noimages",
+            "reviewedAt": "2026-10-18T21:04:20.533986+00:00",
+            "structural_evidence_path": "/tmp/root-native-es-reviews/image-security-2055/validation-proof.json",
+            "renderer_evidence_path": "/tmp/root-native-es-reviews/image-security-2055/validation-proof.json",
+            "review_evidence_path": "/tmp/root-native-es-reviews/image-security-2055/review.json",
+            "native_review_provenance_path": "/tmp/root-native-es-reviews/image-security-2055/review.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/security/07-image-security.md",
+              "reviewed_source_path": "en/security/07-image-security.md",
+              "source_blob": "e1a8bf385288c32197ec5617c9fa602d492910a4",
+              "source_sha256": "2ec3cd60c4cab7afa5fe24fa7c55538da853a5056c954ba57a7a783d932e3c99",
+              "initial_target_sha256": "41eb04a986b51760d5c1f7559f372a12c152cda635fb21d6a2f8979197663fce",
+              "original_reviewed_target_sha256": "41eb04a986b51760d5c1f7559f372a12c152cda635fb21d6a2f8979197663fce",
+              "target_sha256": "11172d3c62c929e0478079d828fbb1e5535bc3f60becb892a663ff05d8694cf2",
+              "reviewer": "native Codex host; model identity not asserted",
+              "score": 95,
+              "fidelityScore": 97,
+              "readabilityScore": 94,
+              "qualityScale": "100-point native host assessment",
+              "status": "reviewed",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "Actually read all78prose units and14code blocks of the539-line current English source, all76prose units and14code blocks of the539-line true initial Spanish target, then all78final prose units and14final code blocks. Recovered the output-truncated source workflow tail, initial policy start and initial SLSA paragraph through explicit rereads. Compared artifact identity, scanning and exceptions, Basic/Enhanced ECR events, KMS notification limits, Cosign identities and bundle compatibility, admission namespace bypass, SBOM/provenance, base builds, digest lifecycle and release permissions. No source example command, AWS operation, external model API, Docker build or GitHub signing workflow was executed.",
+              "rationale": "Final Spanish naturally separates scanning from signature verification and policy enforcement, and accurately preserves source trust, registry, namespace, exception and testing boundaries. It aligns tools, chart manifests, Dockerfile digest and reference URLs with the current frozen English source without treating source historical local checks as host execution. Dense API field sequences and extensive identifiers remain technical. Actual whole-page fidelity97/readability94/overall95 judgment follows source, initial and final reading.",
+              "findings": [
+                "Initial date and baselines lagged current English: Trivy0.74 versus0.76, Operator0.34/chart0.36 versus0.35/chart0.37, Connaisseur3.12/chart2.12 versus3.13/chart2.13; source Dockerfile now pins Go1.27.2 and a different digest.",
+                "controles de severidad, versiones corregidas, productor de compatibilidad, digest del sujeto, el constructor and una envoltura were literal or insufficiently clear.",
+                "Slash-compressed scanning, scope, namespace selection and workflow terminology obscured operational responsibility.",
+                "Two newly explicit source spans were absent in the initial target, which instead used equivalent canonical IDs on headings."
+              ],
+              "resolutions": [
+                "Revised36of78mapped prose units and restored2exactsource span units; natural Spanish now explains severity thresholds, fixed versions, compatible signing output, attested artifact and reusable workflow callers.",
+                "Updated dates, tool/chart baselines and references to frozen English and retained all14source code fences byte-identically, including current immutable Go1.27.2 digest and release workflow scan version0.76.0.",
+                "Preserved exists:true versus positive count, Basic versus Inspector event schemas, same-account/Region KMS prerequisite and actual deployment testing requirement.",
+                "Preserved exact OIDC identities, regexp versus glob, legacy Connaisseur bundle separation, namespace label bypass, init/ephemeral coverage and transparency checks.",
+                "Preserved SBOM completeness limits, SLSA generation versus BuildLevel3, source fixture run with Go1.27.1 versus current Dockerfile1.27.2, no actual container builds or AWS resources, and digest-based build-once release permissions.",
+                "All34source span IDs and all9initial canonical IDs remain available; two heading ID declarations moved to exactsource spans to avoid duplicate explicit identifiers. ActualVitePress/Vue0errors0bold, exact24noncode heading levels/31links/9inline tokens, translation/emphasis/oneLF/diff PASS; noimages."
+              ],
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "validator": "PASS: exact14fences,24noncode heading levels,31ordered destinations,9nonfenced inline tokens;34exactSource spans and9initialcanonicalIDs retained; actualVitePress/Vue errors0/literalBold0; translation/emphasis/oneLF/diff PASS; noimages",
+              "reviewedAt": "2026-10-18T21:04:20.533986+00:00",
+              "source_snapshot": "/tmp/root-native-es-reviews/image-security-2055/source.md",
+              "initial_target_snapshot": "/tmp/root-native-es-reviews/image-security-2055/initial.md",
+              "original_reviewed_target_snapshot": "/tmp/root-native-es-reviews/image-security-2055/initial.md",
+              "reviewedTargetSnapshot": "/tmp/root-native-es-reviews/image-security-2055/final.md",
+              "final_target_snapshot": "/tmp/root-native-es-reviews/image-security-2055/final.md",
+              "provenance": "/tmp/root-native-es-reviews/image-security-2055/capture.json",
+              "assetProof": "/tmp/root-native-es-reviews/image-security-2055/assets-proof.json",
+              "validationProof": "/tmp/root-native-es-reviews/image-security-2055/validation-proof.json"
+            },
+            "asset_proof_path": "/tmp/root-native-es-reviews/image-security-2055/assets-proof.json",
+            "notes": "Exact import of Root native Codex host full-page review; model identity not asserted. Current source/target and all three saved snapshots independently SHA-256 verified."
+          }
+        },
         "es/security/08-runtime-security.md": {
           "sourcePath": "en/security/08-runtime-security.md",
           "sourceBlob": "b70a1a77af446163c41e5ddeec56a97e91129f9e",
@@ -72430,6 +73501,115 @@
               "Confirmed all ten fenced blocks byte-for-byte, all 15 link destinations, all 17 heading levels and all 45 explicit HTML IDs exactly match the source. The owned-anchor helper made no changes; translation validation and scoped diff check passed. The final page has one terminal LF and received a complete final reread."
             ],
             "notes": "Actual complete current-source/initial/final native fidelity and readability review passed. No external model/API was used."
+          }
+        },
+        "es/security/10-cert-manager.md": {
+          "sourcePath": "en/security/10-cert-manager.md",
+          "sourceBlob": "fe10e834bbd2924bfce9e2b18fe79c0ff4de431f",
+          "sourceSha256": "79907c4c19c1025a62171b7e635569ce5cac7bc25460248cc056d308a24e7c7f",
+          "targetSha256": "262d0686d4ebf49020329562e839f026ba29003e51c8d51f81ad02242a91bdff",
+          "reviewer": "native Codex host; model identity not asserted",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/security/10-cert-manager.md",
+            "target_path": "es/security/10-cert-manager.md",
+            "source_blob": "fe10e834bbd2924bfce9e2b18fe79c0ff4de431f",
+            "source_sha256": "79907c4c19c1025a62171b7e635569ce5cac7bc25460248cc056d308a24e7c7f",
+            "initial_target_sha256": "791454674daa5b25d7afed7f3c8a45e6fb1db4ab39f26108fcec32d8febdef01",
+            "original_reviewed_target_sha256": "791454674daa5b25d7afed7f3c8a45e6fb1db4ab39f26108fcec32d8febdef01",
+            "target_sha256": "262d0686d4ebf49020329562e839f026ba29003e51c8d51f81ad02242a91bdff",
+            "reviewed_source_sha256": "79907c4c19c1025a62171b7e635569ce5cac7bc25460248cc056d308a24e7c7f",
+            "reviewed_target_sha256": "262d0686d4ebf49020329562e839f026ba29003e51c8d51f81ad02242a91bdff",
+            "final_target_sha256": "262d0686d4ebf49020329562e839f026ba29003e51c8d51f81ad02242a91bdff",
+            "source_snapshot_path": "/tmp/root-native-es-reviews/cert-manager-2055/source.md",
+            "initial_target_snapshot_path": "/tmp/root-native-es-reviews/cert-manager-2055/initial.md",
+            "original_reviewed_target_snapshot_path": "/tmp/root-native-es-reviews/cert-manager-2055/initial.md",
+            "snapshot_path": "/tmp/root-native-es-reviews/cert-manager-2055/final.md",
+            "final_target_snapshot_path": "/tmp/root-native-es-reviews/cert-manager-2055/final.md",
+            "fidelity_score": 97,
+            "readability_score": 94,
+            "overall_score": 95,
+            "component_scores": {
+              "fidelity": 97,
+              "readability": 94
+            },
+            "review_status": "passed",
+            "reviewer": "native Codex host; model identity not asserted",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read all89prose units and14code blocks of the579-line current English source, all89prose units and14code blocks of the579-line true initial Spanish target, and all89final prose units and14final code blocks. Compared installation versions, issuance and trust distribution, namespace scopes, CA and leaf renewal, ACME/ARI, AWS Private CA/IAM, Vault, ACK/ACM, mesh issuers, application reload boundaries, metrics and diagnostics. Source example commands and historical source test claims were not executed by the host.",
+            "concrete_findings": [
+              "Initial English date and tool versions were stale: cmctl2.5.0 and istio-csr0.17.0 versus current source2.6.1 and0.18.0.",
+              "Qué raíces/intermedios confía cada namespace/proceso and Bootstrap raíz y una hoja were literal or ungrammatical; la ancla used the wrong article.",
+              "política de recarga confused rate-limit replenishment with application reloading; shimming de certificados and procesa Bundle obscured automatic certificate integration and rendering.",
+              "Compressed slash-separated controller, namespace, credentials and trust descriptions obscured scope and lifecycle responsibility."
+            ],
+            "resolutions": [
+              "Revised49of89prose units, localized the source date and aligned cmctl and istio-csr with the pinned English source.",
+              "Clarified which roots and intermediates each namespace or process trusts, root bootstrap versus leaf issuance, quota replenishment and the trust anchor.",
+              "Preserved disabled automatic CA renewal and Never key rotation versus leaf Always, namespace and IAM authorization limits, base64url ACME EAB handling and issuer defaults.",
+              "Explained certificate integration and Bundle rendering without implying Gateway controller installation or application reload; retained the source distinction between ACK RequestCertificate, ACM ACME and service-managed certificate ARNs.",
+              "Kept source Linkerd chart2026.9.1, Kubernetes1.33–1.36 compatibility and1.37 qualification exactly, all14source code fences,41ordered destinations,57span IDs and the pre-existing explicit Linkerd heading ID.",
+              "Whole final reread and actual VitePress/Vue checks passed with0compile errors and0literal bold markers; translation/emphasis/oneLF/diff passed; all4source images already exist with identical bytes."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact14fences,23noncode heading levels,41ordered link destinations,0nonfenced backtick identifiers;57source span IDs and1existing explicit heading ID retained;4source-identical images; actualVitePress/Vue errors0/literalBold0; translation/emphasis/oneLF/diff PASS",
+            "reviewedAt": "2026-10-18T21:01:48.597829+00:00",
+            "structural_evidence_path": "/tmp/root-native-es-reviews/cert-manager-2055/validation-proof.json",
+            "renderer_evidence_path": "/tmp/root-native-es-reviews/cert-manager-2055/validation-proof.json",
+            "review_evidence_path": "/tmp/root-native-es-reviews/cert-manager-2055/review.json",
+            "native_review_provenance_path": "/tmp/root-native-es-reviews/cert-manager-2055/review.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/security/10-cert-manager.md",
+              "reviewed_source_path": "en/security/10-cert-manager.md",
+              "source_blob": "fe10e834bbd2924bfce9e2b18fe79c0ff4de431f",
+              "source_sha256": "79907c4c19c1025a62171b7e635569ce5cac7bc25460248cc056d308a24e7c7f",
+              "initial_target_sha256": "791454674daa5b25d7afed7f3c8a45e6fb1db4ab39f26108fcec32d8febdef01",
+              "original_reviewed_target_sha256": "791454674daa5b25d7afed7f3c8a45e6fb1db4ab39f26108fcec32d8febdef01",
+              "target_sha256": "262d0686d4ebf49020329562e839f026ba29003e51c8d51f81ad02242a91bdff",
+              "reviewer": "native Codex host; model identity not asserted",
+              "score": 95,
+              "fidelityScore": 97,
+              "readabilityScore": 94,
+              "qualityScale": "100-point native host assessment",
+              "status": "reviewed",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "Actually read all89prose units and14code blocks of the579-line current English source, all89prose units and14code blocks of the579-line true initial Spanish target, and all89final prose units and14final code blocks. Compared installation versions, issuance and trust distribution, namespace scopes, CA and leaf renewal, ACME/ARI, AWS Private CA/IAM, Vault, ACK/ACM, mesh issuers, application reload boundaries, metrics and diagnostics. Source example commands and historical source test claims were not executed by the host.",
+              "rationale": "Final Spanish describes issuance and distribution in natural complete sentences, preserves issuer/namespace/IAM boundaries and source testing qualifications, and distinguishes root trust, certificate issuance, quota replenishment and actual application reload. All source version caveats and example boundaries remain explicit. Dense API names and long technical tables remain; actual whole-page judgment is fidelity97, readability94 and overall95.",
+              "findings": [
+                "Initial English date and tool versions were stale: cmctl2.5.0 and istio-csr0.17.0 versus current source2.6.1 and0.18.0.",
+                "Qué raíces/intermedios confía cada namespace/proceso and Bootstrap raíz y una hoja were literal or ungrammatical; la ancla used the wrong article.",
+                "política de recarga confused rate-limit replenishment with application reloading; shimming de certificados and procesa Bundle obscured automatic certificate integration and rendering.",
+                "Compressed slash-separated controller, namespace, credentials and trust descriptions obscured scope and lifecycle responsibility."
+              ],
+              "resolutions": [
+                "Revised49of89prose units, localized the source date and aligned cmctl and istio-csr with the pinned English source.",
+                "Clarified which roots and intermediates each namespace or process trusts, root bootstrap versus leaf issuance, quota replenishment and the trust anchor.",
+                "Preserved disabled automatic CA renewal and Never key rotation versus leaf Always, namespace and IAM authorization limits, base64url ACME EAB handling and issuer defaults.",
+                "Explained certificate integration and Bundle rendering without implying Gateway controller installation or application reload; retained the source distinction between ACK RequestCertificate, ACM ACME and service-managed certificate ARNs.",
+                "Kept source Linkerd chart2026.9.1, Kubernetes1.33–1.36 compatibility and1.37 qualification exactly, all14source code fences,41ordered destinations,57span IDs and the pre-existing explicit Linkerd heading ID.",
+                "Whole final reread and actual VitePress/Vue checks passed with0compile errors and0literal bold markers; translation/emphasis/oneLF/diff passed; all4source images already exist with identical bytes."
+              ],
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "validator": "PASS: exact14fences,23noncode heading levels,41ordered link destinations,0nonfenced backtick identifiers;57source span IDs and1existing explicit heading ID retained;4source-identical images; actualVitePress/Vue errors0/literalBold0; translation/emphasis/oneLF/diff PASS",
+              "reviewedAt": "2026-10-18T21:01:48.597829+00:00",
+              "source_snapshot": "/tmp/root-native-es-reviews/cert-manager-2055/source.md",
+              "initial_target_snapshot": "/tmp/root-native-es-reviews/cert-manager-2055/initial.md",
+              "original_reviewed_target_snapshot": "/tmp/root-native-es-reviews/cert-manager-2055/initial.md",
+              "reviewedTargetSnapshot": "/tmp/root-native-es-reviews/cert-manager-2055/final.md",
+              "final_target_snapshot": "/tmp/root-native-es-reviews/cert-manager-2055/final.md",
+              "provenance": "/tmp/root-native-es-reviews/cert-manager-2055/capture.json",
+              "assetProof": "/tmp/root-native-es-reviews/cert-manager-2055/assets-proof.json",
+              "validationProof": "/tmp/root-native-es-reviews/cert-manager-2055/validation-proof.json"
+            },
+            "asset_proof_path": "/tmp/root-native-es-reviews/cert-manager-2055/assets-proof.json",
+            "notes": "Exact import of the Root native Codex host full-page review; model identity not asserted. Current target/source and all three saved snapshots independently hash-verified."
           }
         },
         "es/security/11-kubescape.md": {
@@ -73722,6 +74902,114 @@
             "snapshot_path": "/tmp/native-reviewed-target-snapshots/0ffe354a6342b8186509087bdac64c1375368466f3cd71eaffff6d3238829dbe.md"
           }
         },
+        "es/service-mesh/istio/troubleshooting/common-errors.md": {
+          "sourcePath": "en/service-mesh/istio/troubleshooting/common-errors.md",
+          "sourceBlob": "55abd7865110d03d87189c49604ef3d00f0c72a5",
+          "sourceSha256": "c0331bce84ade220b598a5f80a97a7e5bca6337291b2e295addefde702c1e0a6",
+          "targetSha256": "d83ef68dc8daf901d540a8aa9dd9289742cc1201d0b769007036805e0b176b37",
+          "reviewer": "native Codex host; model identity not asserted",
+          "score": 94,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/service-mesh/istio/troubleshooting/common-errors.md",
+            "target_path": "es/service-mesh/istio/troubleshooting/common-errors.md",
+            "source_blob": "55abd7865110d03d87189c49604ef3d00f0c72a5",
+            "source_sha256": "c0331bce84ade220b598a5f80a97a7e5bca6337291b2e295addefde702c1e0a6",
+            "initial_target_sha256": "7392237d45af364ac7e8a83089485585a4bae92c1831d5299a412ba0659d6054",
+            "original_reviewed_target_sha256": "7392237d45af364ac7e8a83089485585a4bae92c1831d5299a412ba0659d6054",
+            "target_sha256": "d83ef68dc8daf901d540a8aa9dd9289742cc1201d0b769007036805e0b176b37",
+            "reviewed_source_sha256": "c0331bce84ade220b598a5f80a97a7e5bca6337291b2e295addefde702c1e0a6",
+            "reviewed_target_sha256": "d83ef68dc8daf901d540a8aa9dd9289742cc1201d0b769007036805e0b176b37",
+            "final_target_sha256": "d83ef68dc8daf901d540a8aa9dd9289742cc1201d0b769007036805e0b176b37",
+            "source_snapshot_path": "/tmp/root-native-es-reviews/istio-errors-2041/source.md",
+            "initial_target_snapshot_path": "/tmp/root-native-es-reviews/istio-errors-2041/initial.md",
+            "original_reviewed_target_snapshot_path": "/tmp/root-native-es-reviews/istio-errors-2041/initial.md",
+            "snapshot_path": "/tmp/root-native-es-reviews/istio-errors-2041/final.md",
+            "final_target_snapshot_path": "/tmp/root-native-es-reviews/istio-errors-2041/final.md",
+            "fidelity_score": 96,
+            "readability_score": 93,
+            "overall_score": 94,
+            "component_scores": {
+              "fidelity": 96,
+              "readability": 93
+            },
+            "review_status": "passed",
+            "reviewer": "native Codex host; model identity not asserted",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read every106prose units and25code blocks in the complete590-line English source, every106initial Spanish prose units and all25initial code blocks, then every106final prose units and25final code blocks. Compared graceful shutdown/native sidecar ordering, injection eligibility, resources, TLS direction, mesh/ingress route scope, gateway credentials, memory/import scope, retries, CA expiry, DNS, readiness and diagnostics. Initial already follows SourceIstio1.31; noobsolete-version replacement claim. No diagnostic command or Kubernetes/AWS operation was executed.",
+            "concrete_findings": [
+              "Date was in English; presupuestar apagado, contrato de disponibilidad, listeners descendentes and hosts ascendentes sanos were literal or unclear.",
+              "anulación preferida por Pod and aplicación estricta obscured selection labels and strictmTLS policy meaning.",
+              "Slash-compressed gateway, renewal, DNS and resource diagnostics made operational ownership and scope harder to follow.",
+              "Source and initial prose had version:v 1, gateway.networking.k 8s.io and x 509 spacing, while exactsource manifests identify v1 and gateway.networking.k8s.io.",
+              "ServiceEntry negative wording could be read ambiguously; explicit negatives are needed for DNS repair and public record creation."
+            ],
+            "resolutions": [
+              "Revised65of106prose units and localized the unchanged source date without changing version or operational qualification.",
+              "Replaced literal phrasing with explicit shutdown time allocation, real readiness checks, client-facing listeners, available destinations and injection selection language.",
+              "Clarified TLS directions, namespace/root scopes, gateway resource versus workload credentials, retries, leaf versus CA expiry, DNS capture and public-record limitations.",
+              "Normalized the three prose identifier spellings against exact source YAML and standard certificate naming, leaving all25source code fences byte-identical.",
+              "Preserved all10existing explicit canonical section IDs and32orderedlink destinations. Completed actual wholefinal reread, clarifying ServiceEntry negation and HTTP-path wording before grading.",
+              "ActualVitePress/Vue renderer0errors0bold; translation/emphasis/oneLF/diff pass;25codes,40noncode heading levels,32links,0nonfenced backtick identifiers."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact25fences,40noncodeHeadingLevels,32orderedDestinations,0nonfencedInlineTokens;10existing explicitsectionIDsretained; emphasis0; actualVitePress/Vue errors0/literalBold0; oneLF; diffcheckPASS; noimages",
+            "reviewed_at": "2026-10-18T20:52:22.544035+00:00",
+            "renderer_evidence_path": "/tmp/root-native-es-reviews/istio-errors-2041/validation-proof.json",
+            "native_review_provenance_path": "/tmp/root-native-es-reviews/istio-errors-2041/review.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/service-mesh/istio/troubleshooting/common-errors.md",
+              "reviewed_source_path": "en/service-mesh/istio/troubleshooting/common-errors.md",
+              "source_blob": "55abd7865110d03d87189c49604ef3d00f0c72a5",
+              "source_sha256": "c0331bce84ade220b598a5f80a97a7e5bca6337291b2e295addefde702c1e0a6",
+              "initial_target_sha256": "7392237d45af364ac7e8a83089485585a4bae92c1831d5299a412ba0659d6054",
+              "original_reviewed_target_sha256": "7392237d45af364ac7e8a83089485585a4bae92c1831d5299a412ba0659d6054",
+              "target_sha256": "d83ef68dc8daf901d540a8aa9dd9289742cc1201d0b769007036805e0b176b37",
+              "reviewer": "native Codex host; model identity not asserted",
+              "score": 94,
+              "fidelityScore": 96,
+              "readabilityScore": 93,
+              "qualityScale": "100-point native host assessment",
+              "status": "reviewed",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "Actually read every106prose units and25code blocks in the complete590-line English source, every106initial Spanish prose units and all25initial code blocks, then every106final prose units and25final code blocks. Compared graceful shutdown/native sidecar ordering, injection eligibility, resources, TLS direction, mesh/ingress route scope, gateway credentials, memory/import scope, retries, CA expiry, DNS, readiness and diagnostics. Initial already follows SourceIstio1.31; noobsolete-version replacement claim. No diagnostic command or Kubernetes/AWS operation was executed.",
+              "rationale": "Final Spanish expresses diagnostic causes and boundaries in natural sentences and retains the source absence of production testing. It preserves time-based versus connection-count drains, newPod-only settings, alpha/stable distinction, inbound versus outbound mTLS, namespace/root-scope enforcement, ingress subsets, TLS termination versus passthrough, actual gateway credential namespace, configuration scoping versus firewall, retry/write ambiguity, CA/root overlap and diagnostic retention limits. English error identifiers and unformatted API names remain dense; fidelity96/readability93/overall94 is an actual whole-page host judgment.",
+              "findings": [
+                "Date was in English; presupuestar apagado, contrato de disponibilidad, listeners descendentes and hosts ascendentes sanos were literal or unclear.",
+                "anulación preferida por Pod and aplicación estricta obscured selection labels and strictmTLS policy meaning.",
+                "Slash-compressed gateway, renewal, DNS and resource diagnostics made operational ownership and scope harder to follow.",
+                "Source and initial prose had version:v 1, gateway.networking.k 8s.io and x 509 spacing, while exactsource manifests identify v1 and gateway.networking.k8s.io.",
+                "ServiceEntry negative wording could be read ambiguously; explicit negatives are needed for DNS repair and public record creation."
+              ],
+              "resolutions": [
+                "Revised65of106prose units and localized the unchanged source date without changing version or operational qualification.",
+                "Replaced literal phrasing with explicit shutdown time allocation, real readiness checks, client-facing listeners, available destinations and injection selection language.",
+                "Clarified TLS directions, namespace/root scopes, gateway resource versus workload credentials, retries, leaf versus CA expiry, DNS capture and public-record limitations.",
+                "Normalized the three prose identifier spellings against exact source YAML and standard certificate naming, leaving all25source code fences byte-identical.",
+                "Preserved all10existing explicit canonical section IDs and32orderedlink destinations. Completed actual wholefinal reread, clarifying ServiceEntry negation and HTTP-path wording before grading.",
+                "ActualVitePress/Vue renderer0errors0bold; translation/emphasis/oneLF/diff pass;25codes,40noncode heading levels,32links,0nonfenced backtick identifiers."
+              ],
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "validator": "PASS: exact25fences,40noncodeHeadingLevels,32orderedDestinations,0nonfencedInlineTokens;10existing explicitsectionIDsretained; emphasis0; actualVitePress/Vue errors0/literalBold0; oneLF; diffcheckPASS; noimages",
+              "reviewedAt": "2026-10-18T20:52:22.544035+00:00",
+              "source_snapshot": "/tmp/root-native-es-reviews/istio-errors-2041/source.md",
+              "initial_target_snapshot": "/tmp/root-native-es-reviews/istio-errors-2041/initial.md",
+              "original_reviewed_target_snapshot": "/tmp/root-native-es-reviews/istio-errors-2041/initial.md",
+              "reviewedTargetSnapshot": "/tmp/root-native-es-reviews/istio-errors-2041/final.md",
+              "final_target_snapshot": "/tmp/root-native-es-reviews/istio-errors-2041/final.md",
+              "provenance": "/tmp/root-native-es-reviews/istio-errors-2041/capture.json",
+              "assetProof": "/tmp/root-native-es-reviews/istio-errors-2041/assets-proof.json",
+              "validationProof": "/tmp/root-native-es-reviews/istio-errors-2041/validation-proof.json"
+            },
+            "notes": "Imported exactly from Root native review; model identity is not asserted. Original report and snapshots are retained unchanged."
+          }
+        },
         "es/service-mesh/linkerd/02-architecture.md": {
           "sourcePath": "en/service-mesh/linkerd/02-architecture.md",
           "sourceBlob": "2ddc9185342f722b481911679dc5072da16e59e2",
@@ -73771,6 +75059,110 @@
             "renderer": "Actual VitePress scoped renderer passed; compile errors 0 and literal bold markers 0.",
             "owned_anchor_repair": "Passed with no changes required.",
             "notes": "Final target SHA is from the full final prose reread. The page has one terminal LF; code blocks, inline code spans and heading hierarchy match source."
+          }
+        },
+        "es/service-mesh/linkerd/04-security.md": {
+          "sourcePath": "en/service-mesh/linkerd/04-security.md",
+          "sourceBlob": "e23f0ff36fb0bb7c07446d62c3aab8104eb7b86c",
+          "sourceSha256": "2dfeb0b9e0b6fd80bb744c985bb58bbf55dea1824ddfc843524eeeb30232dee7",
+          "targetSha256": "77971a87241c01c0eb63c02e46855706d770906529b831b500b4017035dbc988",
+          "reviewer": "native Codex host; model identity not asserted",
+          "score": 95,
+          "completePageComparison": true,
+          "originalNativeReview": {
+            "source_path": "en/service-mesh/linkerd/04-security.md",
+            "target_path": "es/service-mesh/linkerd/04-security.md",
+            "source_blob": "e23f0ff36fb0bb7c07446d62c3aab8104eb7b86c",
+            "source_sha256": "2dfeb0b9e0b6fd80bb744c985bb58bbf55dea1824ddfc843524eeeb30232dee7",
+            "initial_target_sha256": "f5ddeb5fccf7d8e8bac90be8779dffbe5e6c72daf685fa56a5850aa4387b776b",
+            "original_reviewed_target_sha256": "f5ddeb5fccf7d8e8bac90be8779dffbe5e6c72daf685fa56a5850aa4387b776b",
+            "target_sha256": "77971a87241c01c0eb63c02e46855706d770906529b831b500b4017035dbc988",
+            "reviewed_source_sha256": "2dfeb0b9e0b6fd80bb744c985bb58bbf55dea1824ddfc843524eeeb30232dee7",
+            "reviewed_target_sha256": "77971a87241c01c0eb63c02e46855706d770906529b831b500b4017035dbc988",
+            "final_target_sha256": "77971a87241c01c0eb63c02e46855706d770906529b831b500b4017035dbc988",
+            "source_snapshot_path": "/tmp/root-native-es-reviews/linkerd-security-2041/source.md",
+            "initial_target_snapshot_path": "/tmp/root-native-es-reviews/linkerd-security-2041/initial.md",
+            "original_reviewed_target_snapshot_path": "/tmp/root-native-es-reviews/linkerd-security-2041/initial.md",
+            "snapshot_path": "/tmp/root-native-es-reviews/linkerd-security-2041/final.md",
+            "final_target_snapshot_path": "/tmp/root-native-es-reviews/linkerd-security-2041/final.md",
+            "fidelity_score": 97,
+            "readability_score": 94,
+            "overall_score": 95,
+            "component_scores": {
+              "fidelity": 97,
+              "readability": 94
+            },
+            "review_status": "passed",
+            "reviewer": "native Codex host; model identity not asserted",
+            "completePageComparison": true,
+            "completeFinalPageReread": true,
+            "review_scope": "Actually read the complete511-line frozen English source and exact511-line initial Spanish, including the previously truncated property table, then all80final prose units and16exact code fences. Compared automatic TLS boundaries, DNS identities, policy AND/alternative grants, probe and admin ports, CA/issuer/leaf ownership and rotation, cert-manager/Vault prerequisites, Prometheus timestamps and traffic guards. No certificate, AWS, Kubernetes or Vault operation was executed.",
+            "concrete_findings": [
+              "Header and two implementation links were still edge-26.9.1 and cert-manager1.21.1 while current source is edge-26.10.1 and1.21.2; chart code was2026.9.1.",
+              "Literal aristas observadas, aplicación que habla HTTP and certificados finales made the Spanish unnatural.",
+              "Frontend-client API grant wording could confuse application access with a Kubernetes API-resource grant.",
+              "Root/issuer ownership, rollout, readiness and metric collection prose used slash-compressed or literal phrases that obscured scope."
+            ],
+            "resolutions": [
+              "Revised45of80prose units, localized the source date, restored both current implementation URLs and every16source code fences including chart2026.10.1.",
+              "Clarified observed connections, TLS traffic, workload certificates, namespace/Server grants, probe restrictions and frontend access to the API application.",
+              "Explained issuer reload, staged root trust distribution, external ConfigMap responsibility and Vault CA-issuance permissions without inventing automation or downtime guarantees.",
+              "Completed actual full final prose and code reread; improved the served-API-version wording before grading.",
+              "Preserved16exact source fences,20noncode heading levels,21ordered link destinations,61inline identifiers and the existing source-identical image. Actual renderer0errors0bold; translation/emphasis/LF/diff pass."
+            ],
+            "unresolved_findings": [],
+            "findings_resolved": true,
+            "validator": "PASS: exact16fences,20noncodeHeadingLevels,21orderedDestinations,61nonfencedInlineTokens; emphasis0; actualVitePress/Vue errors0/literalBold0; oneLF; diffcheckPASS; oneSource-identical existing image",
+            "reviewed_at": "2026-10-18T20:48:23.181183+00:00",
+            "renderer_evidence_path": "/tmp/root-native-es-reviews/linkerd-security-2041/validation-proof.json",
+            "native_review_provenance_path": "/tmp/root-native-es-reviews/linkerd-security-2041/review.json",
+            "native_review_provenance": {
+              "locale": "es",
+              "path": "es/service-mesh/linkerd/04-security.md",
+              "reviewed_source_path": "en/service-mesh/linkerd/04-security.md",
+              "source_blob": "e23f0ff36fb0bb7c07446d62c3aab8104eb7b86c",
+              "source_sha256": "2dfeb0b9e0b6fd80bb744c985bb58bbf55dea1824ddfc843524eeeb30232dee7",
+              "initial_target_sha256": "f5ddeb5fccf7d8e8bac90be8779dffbe5e6c72daf685fa56a5850aa4387b776b",
+              "original_reviewed_target_sha256": "f5ddeb5fccf7d8e8bac90be8779dffbe5e6c72daf685fa56a5850aa4387b776b",
+              "target_sha256": "77971a87241c01c0eb63c02e46855706d770906529b831b500b4017035dbc988",
+              "reviewer": "native Codex host; model identity not asserted",
+              "score": 95,
+              "fidelityScore": 97,
+              "readabilityScore": 94,
+              "qualityScale": "100-point native host assessment",
+              "status": "reviewed",
+              "completePageComparison": true,
+              "completeFinalPageReread": true,
+              "complete_source_initial_final_snapshots": true,
+              "scope": "Actually read the complete511-line frozen English source and exact511-line initial Spanish, including the previously truncated property table, then all80final prose units and16exact code fences. Compared automatic TLS boundaries, DNS identities, policy AND/alternative grants, probe and admin ports, CA/issuer/leaf ownership and rotation, cert-manager/Vault prerequisites, Prometheus timestamps and traffic guards. No certificate, AWS, Kubernetes or Vault operation was executed.",
+              "rationale": "Spanish now states technical conditions and ownership plainly while preserving every security qualification and source version. It distinguishes workload identity from end-user authentication, TLS from mandatory authorization, alternative grants from combined authentication requirements, application9091 from admin4191, issuer renewal from root transition, public trust from private signing keys, and metric durations from absolute expiry. Dense CRD/PKI terminology remains but prose and transitions are clear. Actual whole-page host judgment is fidelity97/readability94/overall95.",
+              "findings": [
+                "Header and two implementation links were still edge-26.9.1 and cert-manager1.21.1 while current source is edge-26.10.1 and1.21.2; chart code was2026.9.1.",
+                "Literal aristas observadas, aplicación que habla HTTP and certificados finales made the Spanish unnatural.",
+                "Frontend-client API grant wording could confuse application access with a Kubernetes API-resource grant.",
+                "Root/issuer ownership, rollout, readiness and metric collection prose used slash-compressed or literal phrases that obscured scope."
+              ],
+              "resolutions": [
+                "Revised45of80prose units, localized the source date, restored both current implementation URLs and every16source code fences including chart2026.10.1.",
+                "Clarified observed connections, TLS traffic, workload certificates, namespace/Server grants, probe restrictions and frontend access to the API application.",
+                "Explained issuer reload, staged root trust distribution, external ConfigMap responsibility and Vault CA-issuance permissions without inventing automation or downtime guarantees.",
+                "Completed actual full final prose and code reread; improved the served-API-version wording before grading.",
+                "Preserved16exact source fences,20noncode heading levels,21ordered link destinations,61inline identifiers and the existing source-identical image. Actual renderer0errors0bold; translation/emphasis/LF/diff pass."
+              ],
+              "unresolvedFindings": [],
+              "findings_resolved": true,
+              "validator": "PASS: exact16fences,20noncodeHeadingLevels,21orderedDestinations,61nonfencedInlineTokens; emphasis0; actualVitePress/Vue errors0/literalBold0; oneLF; diffcheckPASS; oneSource-identical existing image",
+              "reviewedAt": "2026-10-18T20:48:23.181183+00:00",
+              "source_snapshot": "/tmp/root-native-es-reviews/linkerd-security-2041/source.md",
+              "initial_target_snapshot": "/tmp/root-native-es-reviews/linkerd-security-2041/initial.md",
+              "original_reviewed_target_snapshot": "/tmp/root-native-es-reviews/linkerd-security-2041/initial.md",
+              "reviewedTargetSnapshot": "/tmp/root-native-es-reviews/linkerd-security-2041/final.md",
+              "final_target_snapshot": "/tmp/root-native-es-reviews/linkerd-security-2041/final.md",
+              "provenance": "/tmp/root-native-es-reviews/linkerd-security-2041/capture.json",
+              "assetProof": "/tmp/root-native-es-reviews/linkerd-security-2041/assets-proof.json",
+              "validationProof": "/tmp/root-native-es-reviews/linkerd-security-2041/validation-proof.json"
+            },
+            "notes": "Imported exactly from Root native review; model identity is not asserted. Original report and snapshots are retained unchanged."
           }
         },
         "es/service-mesh/linkerd/07-best-practices.md": {
@@ -74325,12 +75717,6 @@
           ]
         },
         {
-          "path": "es/blockchain/02-nodes-on-eks.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "es/container-registry/03-harbor.md",
           "issues": [
             "no native review"
@@ -74380,12 +75766,6 @@
         },
         {
           "path": "es/core/11-extending-kubernetes.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "es/data-on-eks/kafka/03-kafka-operations.md",
           "issues": [
             "no native review"
           ]
@@ -74769,12 +76149,6 @@
           ]
         },
         {
-          "path": "es/observability/metrics/README.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "es/observability/tracing/01-tempo.md",
           "issues": [
             "no native review"
@@ -75003,12 +76377,6 @@
           ]
         },
         {
-          "path": "es/quizzes/eks/04-eks-storage-part3-quiz.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "es/quizzes/eks/05-eks-security-quiz.md",
           "issues": [
             "no native review"
@@ -75129,12 +76497,6 @@
           ]
         },
         {
-          "path": "es/security/02-kubernetes-auth-authz.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "es/security/03-pod-security-standards.md",
           "issues": [
             "no native review"
@@ -75154,18 +76516,6 @@
         },
         {
           "path": "es/security/06-eks-security-best-practices.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "es/security/07-image-security.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "es/security/10-cert-manager.md",
           "issues": [
             "no native review"
           ]
@@ -75363,12 +76713,6 @@
           ]
         },
         {
-          "path": "es/service-mesh/istio/troubleshooting/common-errors.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
           "path": "es/service-mesh/linkerd/01-installation.md",
           "issues": [
             "no native review"
@@ -75376,12 +76720,6 @@
         },
         {
           "path": "es/service-mesh/linkerd/03-traffic-management.md",
-          "issues": [
-            "no native review"
-          ]
-        },
-        {
-          "path": "es/service-mesh/linkerd/04-security.md",
           "issues": [
             "no native review"
           ]
@@ -75403,12 +76741,12 @@
   },
   "rendererContract": {
     "auditPath": "/tmp/native-document-contract-audit-20261018.json",
-    "auditTime": "2026-10-18T20:46:28.533Z",
+    "auditTime": "2026-10-18T21:07:47.878Z",
     "scope": "Actual VitePress heading hierarchy and authored local fragment links; no semantic grades."
   },
   "renderingContract": {
     "auditPath": "/tmp/native-current-render-audit-20261018.json",
-    "auditTime": "2026-10-18T20:46:20.245Z",
+    "auditTime": "2026-10-18T21:07:39.637Z",
     "scope": "Actual VitePress configuration including default syntax highlighting"
   }
 }

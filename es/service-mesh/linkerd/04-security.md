@@ -1,8 +1,8 @@
 # Seguridad de Linkerd
 
-> **Última actualización**: September 11, 2026 · Linkerd edge-26.9.1 · Ejemplos de cert-manager comprobados con 1.21.1
+> **Última actualización**: 16 de octubre de 2026 · Linkerd edge-26.10.1 · Ejemplos de cert-manager comprobados con 1.21.2
 
-Linkerd proporciona autenticación de cargas de trabajo, cifrado de transporte y autorización entrante para el tráfico gestionado por sus proxies. La incorporación, las políticas, el ciclo de vida de los certificados y la seguridad de la aplicación siguen necesitando un diseño explícito. Utilice la combinación compatible de Kubernetes/Gateway API de la [guía de instalación](01-installation.md); los ejemplos de aquí presuponen esa instalación y cargas de trabajo de aplicaciones existentes.
+Linkerd autentica las cargas de trabajo, cifra el transporte y controla el acceso entrante al tráfico que gestionan sus proxies. La incorporación a la malla, las políticas, el ciclo de vida de los certificados y la seguridad de la aplicación requieren un diseño explícito. Utilice la combinación compatible de Kubernetes y Gateway API indicada en la [guía de instalación](01-installation.md); estos ejemplos presuponen esa instalación y cargas de trabajo de aplicaciones ya existentes.
 
 ## Arquitectura de seguridad
 
@@ -12,19 +12,19 @@ Linkerd proporciona autenticación de cargas de trabajo, cifrado de transporte y
 
 ## mTLS automático
 
-Linkerd utiliza automáticamente mTLS para tráfico TCP apto entre Pods de la malla. Ambos proxies deben participar, confiar en la cadena de certificados y recibir el tráfico. Los puertos omitidos eluden el proxy; UDP queda fuera de este mecanismo TCP. El tráfico hacia o desde endpoints ajenos a la malla no adquiere mTLS de Linkerd simplemente porque un endpoint tenga un proxy.
+Linkerd utiliza mTLS automáticamente para el tráfico TCP entre Pods de la malla que cumplen sus requisitos. Ambos proxies deben participar, confiar en la cadena de certificados y recibir el tráfico. Los puertos excluidos evitan el proxy; UDP queda fuera de este mecanismo TCP. El tráfico hacia o desde endpoints ajenos a la malla no obtiene mTLS de Linkerd por el mero hecho de que uno de los extremos tenga un proxy.
 
-Para una aplicación que habla HTTP sin cifrar, el proxy saliente autentica al proxy de destino y cifra el salto de red; el proxy receptor autentica al cliente y reenvía HTTP a su aplicación local. El TLS originado en la aplicación puede permanecer cifrado a través de la malla: Linkerd no descifra automáticamente todos los flujos TLS externos u opacos.
+Si una aplicación utiliza HTTP sin cifrar, el proxy saliente autentica al proxy de destino y cifra el salto de red. El proxy receptor autentica al cliente y reenvía HTTP a su aplicación local. Cuando la propia aplicación utiliza TLS, el tráfico puede permanecer cifrado al atravesar la malla: Linkerd no descifra automáticamente todos los flujos TLS externos u opacos.
 
-| Propiedad | Significado y límite |
+| Propiedad | Alcance y límites |
 |---|---|
-| Cifrado transparente | No se requiere una implementación TLS de la aplicación para el salto apto entre proxies |
-| Autenticación mutua | Los proxies autentican identidades de cargas de trabajo, no usuarios finales |
-| TLS 1.3 | Protocolo TLS de la malla de la versión seleccionada |
-| Renovación automática de certificados finales | Los proxies normalmente renuevan sus certificados de cargas de trabajo de corta duración |
-| Ciclo de vida de raíz/emisor | Credenciales separadas que siguen necesitando rotación y monitorización |
+| Cifrado transparente | El salto entre proxies que cumple los requisitos de mTLS no requiere que la aplicación implemente TLS |
+| Autenticación mutua | Los proxies autentican las identidades de las cargas de trabajo, no las de los usuarios finales |
+| TLS 1.3 | Protocolo TLS de la malla en la versión seleccionada |
+| Renovación automática de certificados de las cargas de trabajo | Los proxies suelen renovar sus certificados de corta duración |
+| Ciclo de vida de la raíz y del emisor | Credenciales independientes que también requieren rotación y monitorización |
 
-De forma predeterminada, Linkerd acepta texto sin cifrar de orígenes ajenos a la malla. Las políticas de autorización pueden rechazarlo. Por tanto, «mTLS habilitado» es distinto de «todo acceso entrante requiere una identidad autenticada de la malla». Las políticas de red y los controles de admisión también deben cubrir las rutas que eluden u omiten el proxy.
+De forma predeterminada, Linkerd acepta tráfico sin cifrar procedente de orígenes ajenos a la malla. Las políticas de autorización pueden rechazarlo. Por tanto, habilitar mTLS no implica que todo acceso entrante requiera una identidad autenticada de la malla. Las políticas de red y los controles de admisión también deben cubrir las rutas que evitan el proxy o no lo utilizan.
 
 ### Observar el cifrado y la identidad
 
@@ -37,13 +37,13 @@ kubectl -n production get pods -l app=api \
   -o custom-columns=NAME:.metadata.name,SERVICEACCOUNT:.spec.serviceAccountName
 ```
 
-`viz edges` informa de las aristas observadas entre recursos y su estado de seguridad; no es un inventario de todas las conexiones posibles o inactivas. `tap` muestra tráfico observado compatible, no una auditoría completa de paquetes/seguridad. Su visualización no es la misma interfaz que los valores de etiquetas TLS de Prometheus. Compruebe tanto el tráfico aceptado como el denegado deliberadamente desde las identidades de cliente previstas.
+`viz edges` muestra las conexiones observadas entre recursos y su estado de seguridad; no enumera todas las conexiones posibles o inactivas. `tap` muestra el tráfico observado que admite la herramienta, pero no constituye una auditoría completa de paquetes o de seguridad. Su visualización tampoco equivale a los valores de las etiquetas TLS de Prometheus. Compruebe tanto el tráfico aceptado como el denegado deliberadamente desde las identidades de cliente previstas.
 
-`linkerd identity` recupera certificados públicos de Pods seleccionados mediante reenvío de puertos. Inspeccione sus SAN, emisor y validez. Esto evita suponer que un certificado final emitido está disponible en una ruta de archivo fija dentro de la imagen del proxy.
+`linkerd identity` obtiene certificados públicos de los Pods seleccionados mediante reenvío de puertos. Inspeccione sus SAN, el emisor y el periodo de validez. Así evita dar por hecho que el certificado emitido para la carga de trabajo está disponible en una ruta fija dentro de la imagen del proxy.
 
 ## Identidad de cargas de trabajo
 
-Para la ruta estándar de identidad de Kubernetes, Linkerd utiliza esta identidad con formato DNS:
+En el mecanismo estándar de identidad de Kubernetes, Linkerd utiliza una identidad con este formato DNS:
 
 ```text
 <service-account>.<namespace>.serviceaccount.identity.<control-plane-namespace>.<trust-domain>
@@ -52,11 +52,11 @@ web.production.serviceaccount.identity.linkerd.cluster.local
 api.production.serviceaccount.identity.linkerd.cluster.local
 ```
 
-Los ejemplos utilizan el espacio de nombres del plano de control `linkerd` y el dominio de confianza `cluster.local`. El nombre común del certificado raíz no es en sí el ajuste de dominio de confianza de la carga de trabajo. Esto no es la URI de estilo Istio `spiffe://.../ns/.../sa/...` mostrada anteriormente aquí. Varios Pods con el mismo ServiceAccount comparten una identidad de autorización, aunque sus claves privadas/certificados son independientes.
+Los ejemplos utilizan el espacio de nombres del plano de control `linkerd` y el dominio de confianza `cluster.local`. El nombre común del certificado raíz no determina por sí solo el dominio de confianza de las cargas de trabajo. La identidad DNS de Linkerd difiere de la URI de Istio `spiffe://.../ns/.../sa/...` que figuraba anteriormente en esta sección. Varios Pods con el mismo ServiceAccount comparten una identidad de autorización, aunque cada uno tiene sus propias claves privadas y certificados.
 
 El proxy genera su clave y CSR, y envía el CSR con su token proyectado de ServiceAccount a Identity. Identity valida el token mediante TokenReview de Kubernetes, comprueba la identidad solicitada y firma con la clave **del emisor**. La raíz firma el emisor; no firma cada solicitud del proxy. La clave privada no se deriva del token de ServiceAccount.
 
-Los certificados predeterminados de cargas de trabajo duran unas 24 horas y se renuevan antes de caducar. Una solicitud de certificado no genera un ServiceAccount de Kubernetes nuevo y una renovación no demuestra que todas las claves roten en cada actualización. Consulte la [guía de arquitectura](02-architecture.md) para el ciclo de vida.
+Los certificados predeterminados de las cargas de trabajo duran unas 24 horas y se renuevan antes de caducar. Solicitar un certificado no crea un nuevo ServiceAccount de Kubernetes, y la renovación no demuestra que todas las claves roten en cada actualización. Consulte el ciclo de vida en la [guía de arquitectura](02-architecture.md).
 
 ## Políticas de autorización
 
@@ -71,9 +71,9 @@ Estos recursos pertenecen a la API `policy.linkerd.io` de Linkerd. `Authorizatio
 | AuthorizationPolicy | Concede acceso a un destino cuando coinciden sus requisitos de autenticación |
 | ServerAuthorization | Concesión anterior solo para Server; compatible como `v1beta1` en los CRD seleccionados |
 
-`ServerAuthorization` y `AuthorizationPolicy` son mecanismos de concesión alternativos, no una canalización secuencial. Varias concesiones pueden ampliar el acceso; varias `requiredAuthenticationRefs` dentro de una AuthorizationPolicy deben coincidir **todas**. Una AuthorizationPolicy dirigida a un espacio de nombres cubre destinos de políticas definidos en ese espacio de nombres, no una política automática para cada puerto no declarado.
+`ServerAuthorization` y `AuthorizationPolicy` son mecanismos alternativos para conceder acceso, no etapas de una secuencia. Varias concesiones pueden ampliar el acceso; en cambio, deben cumplirse **todos** los requisitos de varias `requiredAuthenticationRefs` dentro de una misma AuthorizationPolicy. Una AuthorizationPolicy cuyo destino es un espacio de nombres abarca los destinos de políticas definidos en él, pero no aplica automáticamente una política a cada puerto no declarado.
 
-Los Servers no deben seleccionar pares de Pod/puerto superpuestos. Declare el puerto de la aplicación en la especificación del Pod. Un Server deniega de forma predeterminada el tráfico que no coincide incluso si la política predeterminada del espacio de nombres es permisiva. `accessPolicy: audit` puede ayudar a observar tráfico no coincidente durante la preparación, pero lo permite y no aplica una restricción.
+Los Servers no deben seleccionar combinaciones de Pod y puerto que se solapen. Declare el puerto de la aplicación en la especificación del Pod. Un Server deniega de forma predeterminada el tráfico que no coincide con una autorización, incluso si la política predeterminada del espacio de nombres es permisiva. `accessPolicy: audit` permite observar ese tráfico durante la preparación, pero lo deja pasar y no impone una restricción.
 
 ### Política predeterminada
 
@@ -89,9 +89,9 @@ metadata:
     config.linkerd.io/default-inbound-policy: deny
 ```
 
-Cambiar la anotación del espacio de nombres no actualiza el valor predeterminado ya inicializado en los proxies existentes. Coordine despliegues específicos por carga de trabajo y verifique la disponibilidad. Los CRD de políticas dinámicas son un mecanismo independiente y pueden actualizar políticas sin sustituir todos los Pods.
+Cambiar la anotación del espacio de nombres no modifica el valor predeterminado con el que ya se inicializaron los proxies existentes. Coordine la actualización de cada carga de trabajo y compruebe que esté preparada para recibir tráfico. Los CRD de políticas dinámicas funcionan por separado y pueden actualizar las políticas sin sustituir todos los Pods.
 
-El valor Helm para todo el clúster es `proxy.defaultInboundPolicy`, no `policyController.defaultPolicy`. Combínelo con los valores completos de instalación, conservando la configuración de CA y la responsabilidad de gestión de la versión:
+El valor de Helm para todo el clúster es `proxy.defaultInboundPolicy`, no `policyController.defaultPolicy`. Incorpórelo a los valores completos de instalación, conservando la configuración de la CA y la gestión de la release:
 
 ```yaml
 proxy:
@@ -111,7 +111,7 @@ El ámbito de clúster no es una identidad de usuario final ni un límite de aut
 
 ### Ejemplo de microservicios
 
-Para estos recursos de ejemplo separados, prepare cargas de trabajo frontend/API/PostgreSQL incorporadas a la malla en `production`, con `app: frontend/api/postgres`, los puertos declarados a continuación y sus ServiceAccounts correspondientes. Prepare la carga de trabajo de ingreso incorporada a la malla con ServiceAccount `edge-gateway` en el espacio de nombres `ingress`; ese nombre por sí solo no instala ni autentica un gateway.
+Para estos recursos de ejemplo independientes, prepare cargas de trabajo frontend, API y PostgreSQL incorporadas a la malla en `production`, con `app: frontend/api/postgres`, los puertos declarados a continuación y sus ServiceAccounts correspondientes. Prepare también la carga de trabajo de entrada de la malla con el ServiceAccount `edge-gateway` en el espacio de nombres `ingress`; utilizar ese nombre no instala ni autentica un gateway.
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta3
@@ -199,11 +199,11 @@ spec:
     namespace: production
 ```
 
-La cadena de llamadas prevista es gateway → frontend → API → base de datos. Un nombre de ServiceAccount en YAML no basta: el cliente debe presentar la identidad autenticada de esa cuenta. Verifique que ninguna concesión más amplia de espacio de nombres/Server permita también clientes no deseados.
+La cadena de llamadas prevista es gateway → frontend → API → base de datos. Escribir el nombre de un ServiceAccount en YAML no basta: el cliente debe presentar la identidad autenticada de esa cuenta. Compruebe que ninguna otra concesión más amplia, aplicada al espacio de nombres o al Server, permita el acceso de clientes no deseados.
 
-Linkerd normalmente añade autorizaciones para sondas HTTP de estado/disponibilidad declaradas cuando no hay una ruta explícita asociada al Server. Cuando se asocian recursos HTTPRoute/GRPCRoute, esas concesiones predeterminadas de sondas no se crean; modele explícitamente las rutas de sondas necesarias y su acceso limitado. No conceda acceso sin autenticar a todo un puerto de negocio solo para que una sonda tenga éxito.
+Linkerd suele añadir autorizaciones para las sondas HTTP de estado y disponibilidad declaradas cuando el Server no tiene una ruta explícita asociada. Si se asocian recursos HTTPRoute o GRPCRoute, esas autorizaciones predeterminadas no se crean. Defina expresamente las rutas necesarias para las sondas y limite su acceso. No permita acceso sin autenticar a todo un puerto de la aplicación para que una sola sonda funcione.
 
-Como referencia, esta **concesión heredada alternativa** equivale a la concesión de la API para el cliente frontend. No necesita combinarse con la AuthorizationPolicy anterior:
+Como referencia, esta **concesión heredada alternativa** permite al frontend acceder a la aplicación API, igual que la autorización anterior. No es necesario combinarla con la AuthorizationPolicy precedente:
 
 ```yaml
 apiVersion: policy.linkerd.io/v1beta1
@@ -221,7 +221,7 @@ spec:
         namespace: production
 ```
 
-La versión seleccionada no sirve `ServerAuthorization/v1beta2`; no deduzca la versión de API de un recurso a partir de la versión de Server. `client.unauthenticated:true` permite clientes sin autenticación de malla, mientras que `meshTLS.identities:["*"]` sigue exigiendo una identidad de malla y concede acceso de forma muy amplia.
+La versión seleccionada no expone `ServerAuthorization/v1beta2`; no deduzca la versión de API de un recurso a partir de la versión de Server. `client.unauthenticated:true` permite clientes sin autenticación de malla, mientras que `meshTLS.identities:["*"]` sigue exigiendo una identidad de malla y concede acceso de forma muy amplia.
 
 ### Puertos de métricas y verificación
 
@@ -257,7 +257,7 @@ spec:
     namespace: monitoring
 ```
 
-Esto es distinto del puerto de administración del propio proxy, normalmente **4191**. La configuración de proxy-init excluye los puertos de administración/control de la interceptación entrante ordinaria. Por tanto, un Server en 4191 no convierte ese endpoint en un puerto de aplicación protegido con mTLS. Utilice los controles reales de clúster/red y rutas de acceso restringidas para endpoints de gestión.
+Este puerto es distinto del puerto de administración del propio proxy, normalmente **4191**. La configuración de proxy-init excluye los puertos de administración y control de la interceptación entrante habitual. Por tanto, definir un Server en 4191 no convierte ese endpoint en un puerto de aplicación protegido con mTLS. Proteja los endpoints de gestión mediante los controles efectivos del clúster y de la red, y con rutas de acceso restringidas.
 
 ```bash
 kubectl -n production get servers,authorizationpolicies,serverauthorizations
@@ -268,22 +268,22 @@ linkerd diagnostics policy -n production "pod/$api_pod" 8080 -o json
 linkerd viz authz deploy/api -n production
 ```
 
-Un rechazo conocido de política HTTP normalmente produce HTTP 403; el tráfico opaco/TCP puede rechazarse a nivel de conexión. Una política modificada puede interrumpir conexiones existentes. Los eventos `Forbidden` de Kubernetes no son un registro automático por solicitud de las denegaciones de autorización del proxy. Utilice diagnósticos de políticas y las métricas de autorización HTTP/TCP apropiadas.
+Un rechazo HTTP identificado como una denegación de política suele devolver HTTP 403; el tráfico opaco o TCP puede rechazarse al establecer la conexión. Cambiar una política puede interrumpir las conexiones existentes. Los eventos `Forbidden` de Kubernetes no registran automáticamente cada solicitud denegada por la autorización del proxy. Utilice los diagnósticos de políticas y las métricas de autorización HTTP y TCP correspondientes.
 
 
 ## Gestión de certificados
 
-| Credencial | Propósito | Consideraciones de gestión predeterminada/manual |
+| Credencial | Finalidad | Gestión predeterminada y consideraciones para la gestión manual |
 |---|---|---|
-| Paquete de certificados del ancla de confianza | Raíces públicas aceptadas por la malla | Normalmente ConfigMap `linkerd-identity-trust-roots`, clave `ca-bundle.crt` |
-| Certificado/clave del emisor de identidad | CA intermedia utilizada por Identity para firmar certificados de cargas de trabajo | Secret `linkerd-identity-issuer`; los nombres de las claves dependen del esquema del emisor |
-| Certificado/clave de la carga de trabajo | Credencial TLS por proxy | Certificado final de corta duración, renovado automáticamente por el proxy |
+| Paquete de certificados de las anclas de confianza | Raíces públicas que acepta la malla | Normalmente, ConfigMap `linkerd-identity-trust-roots`, clave `ca-bundle.crt` |
+| Certificado y clave del emisor de identidad | CA intermedia que utiliza Identity para firmar los certificados de las cargas de trabajo | Secret `linkerd-identity-issuer`; los nombres de las claves dependen del esquema del emisor |
+| Certificado y clave de la carga de trabajo | Credencial TLS de cada proxy | Certificado de corta duración que el proxy renueva automáticamente |
 
-La raíz y el emisor generados de forma predeterminada por la CLI caducan después de un año; los certificados finales de cargas de trabajo normalmente duran 24 horas. Es posible elegir manualmente una raíz de diez años, pero no es una recomendación universal ni el valor predeterminado de instalación. Elija duraciones y antelación de renovación según la política de CA y el proceso de recuperación, y siga todos los certificados de la cadena.
+La raíz y el emisor generados con la configuración predeterminada de la CLI caducan al cabo de un año; los certificados de las cargas de trabajo suelen durar 24 horas. Se puede elegir manualmente una raíz válida durante diez años, pero no es una recomendación universal ni la configuración predeterminada de instalación. Defina los periodos de validez y la antelación de la renovación según la política de la CA y el proceso de recuperación, y supervise todos los certificados de la cadena.
 
-Las credenciales de raíz/emisor proporcionadas a Linkerd requieren **ECDSA P-256**. La [guía de instalación](01-installation.md) incluye parámetros explícitos de generación y tratamiento local de claves privadas. Mantenga la clave de firma raíz separada del paquete público de confianza; un ConfigMap público nunca debe contener esa clave.
+Las credenciales de la raíz y del emisor que se proporcionan a Linkerd requieren **ECDSA P-256**. La [guía de instalación](01-installation.md) especifica los parámetros de generación y el manejo local de las claves privadas. Mantenga la clave de firma de la raíz separada del paquete público de confianza; un ConfigMap público nunca debe contener esa clave.
 
-### Leer las credenciales públicas efectivas
+### Consultar las credenciales públicas en uso
 
 ```bash
 set -euo pipefail
@@ -306,11 +306,11 @@ openssl x509 -in current-issuer.pem -noout -checkend 86400
 
 Con el esquema predeterminado `linkerd.io/tls`, el Secret del emisor utiliza `crt.pem`/`key.pem`; `kubernetes.io/tls` utiliza `tls.crt`/`tls.key`. El comando selecciona únicamente datos de certificados públicos. Compruebe el esquema configurado y el responsable del recurso antes de cambiar nada.
 
-Inspeccione todas las raíces de un paquete. `openssl x509` por sí solo examina únicamente el primer certificado; no es una auditoría completa de caducidad de varias raíces. Verifique la cadena del emisor respecto a las anclas de confianza previstas, además de las fechas, y proporcione certificados intermedios cuando la cadena los requiera. Un fallo de análisis o lectura de API debe notificarse como fallo, no como «certificado sano».
+Inspeccione todas las raíces del paquete. `openssl x509` por sí solo examina únicamente el primer certificado y no permite auditar la caducidad de un paquete con varias raíces. Además de comprobar las fechas, valide la cadena del emisor frente a las anclas de confianza previstas e incluya los certificados intermedios que requiera la cadena. Un fallo de análisis o de lectura de la API debe registrarse como tal, no como una confirmación de que el certificado está en buen estado.
 
 ### Renovación del emisor sin cambiar el ancla de confianza
 
-Actualice el emisor mediante su responsable: valores completos de certificados Helm/CLI para un Secret gestionado por Linkerd, o el controlador de certificados para un Secret gestionado. Identity observa sus archivos de emisor montados, valida la sustitución y recarga un emisor válido; un reinicio general del Deployment Identity no es un paso obligatorio en cada renovación.
+Actualice el emisor mediante la herramienta o el controlador que lo gestiona: proporcione los valores completos de certificados de Helm o de la CLI para un Secret gestionado por Linkerd, o utilice el controlador de certificados si este gestiona el Secret. Identity vigila los archivos del emisor que tiene montados, valida el reemplazo y recarga el emisor si es válido. No es necesario reiniciar el Deployment de Identity en cada renovación.
 
 ```bash
 kubectl -n linkerd get events --field-selector reason=IssuerUpdated
@@ -320,26 +320,26 @@ linkerd check --proxy
 linkerd identity -n production -l app=api
 ```
 
-`IssuerUpdated` confirma que Identity aceptó una actualización. Investigue `IssuerUpdateSkipped` o los errores de validación. Los certificados finales existentes de los proxies pueden seguir firmados por el emisor anterior hasta su renovación normal; esto es esperable mientras ambas cadenas sigan siendo válidas. Sustituir inmediatamente todos los certificados finales es una operación coordinada de cargas de trabajo independiente.
+`IssuerUpdated` confirma que Identity aceptó una actualización. Investigue `IssuerUpdateSkipped` y los errores de validación. Los certificados de los proxies existentes pueden seguir firmados por el emisor anterior hasta su renovación habitual; es normal mientras ambas cadenas sigan siendo válidas. Sustituir de inmediato todos esos certificados requiere una operación coordinada independiente sobre las cargas de trabajo.
 
 ### Rotación del ancla de confianza
 
-Sustituir una raíz necesita una transición por etapas. El procedimiento para una raíz sana no es un método de recuperación garantizado para una raíz que ya ha caducado.
+Sustituir una raíz requiere una transición por etapas. El procedimiento previsto para una raíz válida no garantiza la recuperación cuando la raíz ya ha caducado.
 
-1. Inventaríe el paquete de raíces activo, la cadena del emisor, los recursos gestionados y todos los consumidores, incluidos proxies del plano de control, cargas de trabajo, cargas de trabajo externas y clústeres vinculados. Confirme la capacidad/disponibilidad para el despliegue previsto.
-2. Genere la nueva raíz y conserve el **paquete público antiguo+nuevo**. Actualice el paquete mediante su responsable real.
-3. Distribuya ese paquete con ambas raíces a todos los consumidores antes de cambiar el emisor. Los proxies reciben la confianza mediante la configuración de instalación/inyección; escribir un ConfigMap por sí solo no demuestra que los procesos existentes lo hayan recargado.
-4. Verifique la distribución mediante `linkerd check --proxy` y comprobaciones de cargas de trabajo/entre clústeres. Después emita y cargue un emisor firmado por la raíz nueva.
-5. Permita o coordine deliberadamente la renovación de certificados finales y verifique que todos los clientes/servidores pertinentes utilicen la cadena nueva. Una espera fija o solo un despliegue exitoso del controlador no bastan.
-6. Elimine la raíz antigua mediante el responsable del paquete, propague el paquete final a todos los consumidores y vuelva a verificar las conexiones y la confianza.
+1. Inventaríe el paquete de raíces activo, la cadena del emisor, los recursos gestionados y todos los consumidores: proxies del plano de control, cargas de trabajo internas y externas, y clústeres vinculados. Compruebe la capacidad y la disponibilidad necesarias para la actualización prevista.
+2. Genere la nueva raíz y conserve el **paquete público con la raíz anterior y la nueva**. Actualice el paquete mediante la herramienta o el controlador que lo gestiona.
+3. Distribuya ese paquete con ambas raíces a todos los consumidores antes de cambiar el emisor. Los proxies reciben la configuración de confianza durante la instalación o la inyección; escribir un ConfigMap no demuestra que los procesos existentes la hayan recargado.
+4. Verifique la distribución con `linkerd check --proxy` y con comprobaciones de las cargas de trabajo y de las conexiones entre clústeres. Después, emita y cargue un emisor firmado por la nueva raíz.
+5. Permita o coordine expresamente la renovación de los certificados de las cargas de trabajo. Compruebe que todos los clientes y servidores pertinentes utilicen la nueva cadena. Una espera fija o una actualización correcta del controlador, por sí solas, no bastan.
+6. Elimine la raíz anterior mediante el responsable del paquete, distribuya el paquete definitivo a todos los consumidores y vuelva a comprobar las conexiones y la confianza.
 
-Conserve el material de reversión y monitorice cada etapa. Reinicie únicamente controladores de cargas de trabajo de la malla revisados, con tratamiento apropiado de disponibilidad/interrupciones; un bucle de Deployments de todos los espacios de nombres omite otros tipos de cargas de trabajo y puede interrumpir cargas sin relación. Este documento no afirma que una rotación no probada carezca de interrupciones.
+Conserve los elementos necesarios para revertir el cambio y supervise cada etapa. Reinicie únicamente los controladores de cargas de trabajo de la malla que haya revisado, con las comprobaciones de disponibilidad y el manejo de interrupciones adecuados para cada carga. Un bucle que reinicia los Deployments de todos los espacios de nombres omite otros tipos de cargas de trabajo y puede interrumpir aplicaciones ajenas al cambio. La ausencia de interrupciones no está garantizada en una rotación que no se haya probado.
 
 ## Gestión externa de certificados
 
 ### Renovación del emisor con cert-manager
 
-Este ejemplo presupone un certificado de CA validado y existente y una clave de firma ECDSA P-256 en el Secret `linkerd-trust-anchor` del espacio de nombres `linkerd`. Un CA Issuer de cert-manager conserva esa clave de firma en el clúster; elija otra integración de CA si no encaja con el modelo de confianza. La versión de cert-manager elegida debe admitir la versión de Kubernetes del clúster.
+Este ejemplo presupone que el Secret `linkerd-trust-anchor`, en el espacio de nombres `linkerd`, ya contiene un certificado de CA validado y una clave de firma ECDSA P-256. Un CA Issuer de cert-manager conserva esa clave de firma en el clúster; elija otra integración de CA si esto no encaja con su modelo de confianza. La versión seleccionada de cert-manager debe admitir la versión de Kubernetes del clúster.
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -377,7 +377,7 @@ spec:
   - client auth
 ```
 
-El emisor es una CA porque firma los certificados finales de cargas de trabajo. `rotationPolicy: Always` hace explícita la rotación de claves. Aquí 8760h son 365 días y `renewBefore:720h` significa renovación **30 días antes de la caducidad**, no cada 30 días. Asegúrese de que la CA superior siga siendo válida el tiempo suficiente: el CA Issuer no impone automáticamente todas las restricciones de duración de cadena/longitud de ruta, y actualizar su Secret de CA no vuelve a emitir automáticamente todos los certificados dependientes.
+El emisor es una CA porque firma los certificados de las cargas de trabajo. `rotationPolicy: Always` establece explícitamente la rotación de claves. En este ejemplo, 8760h equivalen a 365 días y `renewBefore:720h` indica una renovación **30 días antes de la caducidad**, no cada 30 días. Compruebe que la CA superior siga siendo válida durante el tiempo necesario: el CA Issuer no impone automáticamente todas las restricciones de validez de la cadena o de longitud de ruta. Actualizar su Secret de CA tampoco vuelve a emitir automáticamente todos los certificados que dependen de ella.
 
 ```bash
 kubectl -n linkerd get issuer linkerd-trust-anchor
@@ -386,7 +386,7 @@ kubectl -n linkerd describe certificate linkerd-identity-issuer
 # Inspect public certificate contents and effective issuer loading as above.
 ```
 
-El Certificate debe estar Ready, su Secret debe tener las claves/cadena esperadas e Identity debe aceptarlo antes de que esta sea una integración funcional.
+La integración solo estará operativa cuando el Certificate esté Ready, su Secret contenga las claves y la cadena esperadas, e Identity lo haya aceptado.
 
 ### Elegir explícitamente quién gestiona el paquete de confianza
 
@@ -403,12 +403,12 @@ identity:
 # Merge into the complete reviewed values from the installation guide.
 # In this option, Helm owns the public trust bundle; cert-manager owns the issuer.
 helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd \
+  --version 2026.10.1 -n linkerd \
   -f reviewed-values.yaml -f managed-issuer-values.yaml \
   --set-file identityTrustAnchorsPEM=ca.crt > reviewed-control-plane.yaml
 ```
 
-Con `kubernetes.io/tls`, el chart espera que exista el Secret del emisor en vez de crear uno con formato Linkerd. Con `externalCA:false`, Helm sigue creando el ConfigMap público de confianza. Revise los objetos renderizados y su gestión existente antes de un despliegue mediante el flujo de instalación.
+Con `kubernetes.io/tls`, el chart espera que el Secret del emisor ya exista, en lugar de crear uno en formato Linkerd. Con `externalCA:false`, Helm sigue creando el ConfigMap público de confianza. Revise los objetos renderizados y quién los gestiona antes de desplegarlos mediante el flujo de instalación.
 
 **Opción B: un controlador externo también gestiona el ConfigMap de confianza.** En ese modelo distinto de gestión:
 
@@ -421,15 +421,15 @@ identity:
 
 `identity.externalCA:true` significa que el chart **no** crea `linkerd-identity-trust-roots`. Un controlador externo como trust-manager debe proporcionar ese ConfigMap en el espacio de nombres del plano de control con `ca-bundle.crt`. Pasar únicamente `identityTrustAnchorsPEM` y omitir el ConfigMap externo no completa esta configuración.
 
-Para la rotación gestionada de raíces, conserve el **certificado público** anterior en el paquete de superposición, coordine la renovación del emisor y los despliegues de consumidores, y después retírelo. No copie un Secret de CA completo solo para conservar su certificado público. cert-manager/trust-manager no automatizan todos los reinicios de cargas de trabajo y transiciones de confianza.
+Al rotar raíces gestionadas, conserve el **certificado público** anterior en el paquete que contiene ambas raíces. Coordine la renovación del emisor y la actualización de los consumidores antes de retirar la raíz anterior. No copie un Secret de CA completo solo para conservar su certificado público. cert-manager y trust-manager no automatizan todos los reinicios de cargas de trabajo ni todas las transiciones de confianza.
 
 ### Límite de la integración con Vault
 
-Vault puede participar en el diseño de CA, pero una receta ordinaria de firma de certificados finales PKI `sign/<role>` no es un flujo completo de emisor de Linkerd. Linkerd requiere un certificado de CA intermedia real; establecer `isCA:true` en un recurso Certificate por sí solo no demuestra que el endpoint de Vault conceda esa capacidad.
+Vault puede formar parte del diseño de la CA, pero un procedimiento habitual de firma de certificados de cargas de trabajo mediante PKI `sign/<role>` no constituye un flujo completo para el emisor de Linkerd. Linkerd requiere un certificado real de CA intermedia; establecer `isCA:true` en un recurso Certificate no demuestra por sí solo que el endpoint de Vault permita emitirlo.
 
-Verifique el endpoint de firma y la correspondencia de solicitudes/respuestas de la integración seleccionada. Vault documenta `root/sign-intermediate` con privilegios y endpoints de firma intermedia específicos del emisor; el permiso para utilizarlos concede capacidad de emisión de CA y necesita un rol/política restringido deliberadamente. Valide también ECDSA P-256, la cadena devuelta, la duración del emisor, la confianza del servidor Vault y el comportamiento de renovación.
+Verifique el endpoint de firma y cómo la integración seleccionada traduce las solicitudes y las respuestas. Vault documenta el endpoint privilegiado `root/sign-intermediate` y otros endpoints de firma intermedia específicos del emisor. Autorizar su uso permite emitir certificados de CA y requiere un rol y una política deliberadamente restringidos. Valide también ECDSA P-256, la cadena devuelta, la validez del emisor, la confianza en el servidor de Vault y el comportamiento de la renovación.
 
-Para la autenticación de cert-manager, prefiera el flujo documentado de tokens ServiceAccount de corta duración cuando corresponda, con el RBAC de TokenRequest necesario, la configuración de autenticación Kubernetes/JWT de Vault y las audiencias. Un Secret llamado `vault-token` no basta por sí solo. El antiguo YAML omitía estos requisitos y una ruta demostrada de emisión de CA intermedia, por lo que no se presenta como una receta de despliegue probada.
+Para autenticar cert-manager, utilice preferentemente el flujo documentado de tokens de ServiceAccount de corta duración cuando corresponda. Configure el RBAC de TokenRequest necesario, la autenticación Kubernetes o JWT de Vault y las audiencias. Crear un Secret llamado `vault-token` no basta. El YAML anterior omitía estos requisitos y no demostraba una vía funcional para emitir una CA intermedia; por ello, no se ofrece como un procedimiento de despliegue probado.
 
 ## Seguridad de la aplicación y monitorización
 
@@ -444,7 +444,7 @@ Una identidad frontend permitida no demuestra que su cliente sea administrador. 
 
 ### Alertas de seguridad significativas
 
-Las reglas siguientes requieren Prometheus Operator y un Prometheus que seleccione este PrometheusRule, además de recopilaciones que conserven las etiquetas mostradas de namespace/deployment e identidad TLS del proxy. Revise el ámbito de destinos y clústeres para backends compartidos.
+Las reglas siguientes requieren Prometheus Operator y una instancia de Prometheus que seleccione este PrometheusRule. La recopilación de métricas debe conservar las etiquetas mostradas de espacio de nombres, Deployment e identidad TLS del proxy. En backends compartidos, revise qué destinos y clústeres abarca cada regla.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -488,13 +488,13 @@ spec:
         summary: API inbound HTTP authorization denials observed
 ```
 
-`identity_cert_expiration_timestamp_seconds` mide la **hora absoluta de caducidad de un certificado final del proxy**. Una advertencia de siete días coincidiría siempre con un certificado final predeterminado sano de 24 horas. `issuer_cert_ttl_seconds` del controlador ya es una duración restante; no le reste `time()`. Su selector utiliza las etiquetas predeterminadas de trabajo/componente del controlador Viz; esa recopilación no añade una etiqueta de espacio de nombres. Adapte el selector si un recopilador personalizado cambia esas etiquetas. Ajuste los umbrales a las duraciones configuradas de credenciales y al intervalo de renovación esperado, y monitorice por separado las raíces públicas y la disponibilidad de recopilación.
+`identity_cert_expiration_timestamp_seconds` indica el **momento absoluto en que caduca el certificado de la carga de trabajo del proxy**. Un aviso con siete días de antelación se activaría siempre para un certificado predeterminado válido de 24 horas. La métrica del controlador `issuer_cert_ttl_seconds` ya expresa el tiempo restante; no le reste `time()`. Su selector utiliza las etiquetas predeterminadas de job y componente del controlador Viz; esa recopilación no añade una etiqueta de espacio de nombres. Adapte el selector si un recopilador personalizado cambia esas etiquetas. Ajuste los umbrales a la validez configurada de las credenciales y al intervalo de renovación previsto. Supervise por separado las raíces públicas y la disponibilidad de la recopilación.
 
-Para el proxy seleccionado, las etiquetas TLS incluyen `true`, `no_identity`, `disabled` y `opaque`; la consulta original `tls="false"` no coincidía con las series previstas. `tls="true"` por sí solo también puede carecer de identidad de cliente. El ejemplo compara las respuestas HTTP entrantes completadas de la API con aquellas que tienen tanto TLS como un `client_id` autenticado no vacío, utilizando tasas y una condición de tráfico positivo.
+En el proxy seleccionado, las etiquetas TLS incluyen `true`, `no_identity`, `disabled` y `opaque`; la consulta original `tls="false"` no seleccionaba las series previstas. `tls="true"` por sí sola tampoco garantiza la presencia de una identidad de cliente. El ejemplo compara las respuestas HTTP entrantes completadas por la aplicación API con las que incluyen tanto TLS como un `client_id` autenticado no vacío. Utiliza tasas y una condición que exige tráfico positivo.
 
-Esta proporción **no es un porcentaje de todos los bytes de red ni de todo el tráfico sin cifrar**. No cubre rutas omitidas ni TCP opaco y depende de conservar etiquetas de identidad. Las sondas previstas o las rutas deliberadamente sin autenticación necesitan su propio ámbito/base de referencia. Para tráfico completamente autenticado sin una serie sin autenticar, la proporción subyacente es cero y esta alerta no se activa. La ausencia de tráfico o de datos no demuestra seguridad.
+Esta proporción **no expresa el porcentaje de todos los bytes de red ni de todo el tráfico sin cifrar**. No incluye las rutas que evitan el proxy ni TCP opaco, y depende de que se conserven las etiquetas de identidad. Las sondas previstas y las rutas deliberadamente sin autenticación necesitan un ámbito y una referencia propios. Si todo el tráfico está autenticado y no existe una serie de tráfico sin autenticar, la proporción subyacente es cero y la alerta no se activa. La ausencia de tráfico o de datos no demuestra que el sistema sea seguro.
 
-Los contadores de denegación de autorización HTTP son distintos de los fallos de inicio de sesión de la aplicación. Utilice los contadores de autorización TCP para conexiones opacas y no deduzca «sin denegaciones» de una recopilación ausente. Los registros/métricas del modo auditoría registran tráfico no coincidente permitido, no rechazos aplicados.
+Los contadores de denegación de autorización HTTP son distintos de los fallos de inicio de sesión de la aplicación. Utilice los contadores de autorización TCP para las conexiones opacas; si falta una recopilación de métricas, no deduzca que no hubo denegaciones. Los registros y las métricas del modo de auditoría reflejan tráfico que no coincide con una autorización pero se permite, no rechazos efectivos.
 
 ## Siguientes pasos y referencias
 
@@ -505,7 +505,7 @@ Los contadores de denegación de autorización HTTP son distintos de los fallos 
 - [Rotación manual de credenciales](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)
 - [Rotación gestionada de credenciales](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)
 - [Métricas del proxy](https://linkerd.io/docs/reference/proxy-metrics/)
-- [Implementación publicada de recarga de Identity/métricas del emisor](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/pkg/identity/service.go)
-- [Gestión de credenciales del chart publicado](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/templates/identity.yaml)
+- [Implementación publicada de recarga de Identity/métricas del emisor](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/pkg/identity/service.go)
+- [Gestión de credenciales del chart publicado](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/linkerd-control-plane/templates/identity.yaml)
 - [CA Issuer de cert-manager](https://cert-manager.io/docs/configuration/ca/) y [autenticación de Vault](https://cert-manager.io/docs/configuration/vault/)
 - [Firma intermedia de Vault](https://developer.hashicorp.com/vault/api-docs/secret/pki#sign-intermediate)
