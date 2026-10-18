@@ -1,0 +1,12 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/app.ts",
+  "context": {
+    "account": "180294183052",
+    "region": "ap-northeast-2",
+    "publicZoneId": "Z01703432E9KT1G1FIRFM",
+    "appZoneId": "Z062950321UN61HPBMEOO",
+    "s3PrefixListId": "pl-78a54011",
+    "cloudfrontOriginFacingPrefixListId": "pl-22a6434b",
+    "modelId": "global.anthropic.claude-haiku-5-5"
+  }
+}

@@ -1,9 +1,10 @@
 import DefaultTheme from 'vitepress/theme'
 import mediumZoom from 'medium-zoom'
-import { defineAsyncComponent, nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { defineAsyncComponent, h, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vitepress'
 import { initQuizProgress } from './quiz-progress.mjs'
 import { createDocViewTracker } from './analytics.mjs'
+import AskDocs from './components/AskDocs.vue'
 import './custom.css'
 
 declare global {
@@ -27,6 +28,8 @@ const hardenLangSwitchLinks = () => {
 
 export default {
   extends: DefaultTheme,
+  // Q&A panel under each doc page (doc-after slot is not rendered on the home page).
+  Layout: () => h(DefaultTheme.Layout, null, { 'doc-after': () => h(AskDocs) }),
   enhanceApp({ app }) {
     app.component('NewsDashboard', defineAsyncComponent(() => import('./components/NewsDashboard.vue')))
   },
