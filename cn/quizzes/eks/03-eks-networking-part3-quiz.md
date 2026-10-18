@@ -1,8 +1,8 @@
 # EKS 网络测验 - 第 3 部分
 
-> **最后更新**: October 12, 2026
+> **最后更新**: 2026年10月16日
 
-本测验涵盖[第 3 部分故障排除概念](../../eks/03-eks-networking-part3.md)、私有连接、多集群设计和网格运维。当前示例使用 EKS Kubernetes 1.36 和 VPC CNI 1.23.0；历史 App Mesh 配置会被明确标识。资源创建示例需要经过审查的 IAM、网络和所有权前提条件。本审计执行本地检查，并不部署 EKS。
+本测验涵盖[第 3 部分故障排除概念](../../eks/03-eks-networking-part3.md)、私有连接、多集群设计和网格运维。当前示例使用 EKS Kubernetes 1.36 和 VPC CNI 1.23.2；历史 App Mesh 配置会被明确标识。资源创建示例需要经过审查的 IAM、网络和所有权前提条件。本审计执行本地检查，并不部署 EKS。
 
 ### 1. 当应用程序加入基于 sidecar 的服务网格时，会发生什么变化？
 
@@ -343,7 +343,7 @@ cache 30 {
     prefetch 10 2m 10%
 }
 ```
-在上游 CoreDNS 1.14.7 中，`denial1000` 可被接受，但会规范化为 `1024`；`success10000` 会规范化为 `9984`。显式使用 `1024` 可保留原始的有效 denial 容量。这些容量是实现行为，并非经测量的 DNS 容量规划建议。
+在上游 CoreDNS 1.14.7 中，`denial1000` 可被接受，但会规范化为 1024；`success10000` 会规范化为 9984。显式使用 1024 可保留原始的有效 denial 容量。这些容量是实现行为，并非经测量的 DNS 容量规划建议。
 
 请选择**单一扩缩容所有者**。在精确的 add-on 版本/schema 支持时使用 EKS 托管的 CoreDNS autoscaling，或使用单独拥有的 HPA/cluster-proportional autoscaler。以下 HPA 仅适用于有 metrics-server 和 CPU request 的、特意自我管理的 Deployment；请勿将其与另一个 replica manager 结合使用：
 ```yaml
@@ -510,7 +510,7 @@ spec:
 
 </details>
 
-### 8. VPC CNI 1.23.0 中哪个变量配置附加的 ENI MTU？
+### 8. VPC CNI 1.23.2 中哪个变量配置附加的 ENI MTU？
 
 - A. `ENI_MTU`
 - B. `AWS_VPC_ENI_MTU`
@@ -645,4 +645,4 @@ kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=
 
 </details>
 
-官方参考：[Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)、[VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md)、[CoreDNS cache](https://coredns.io/plugins/cache/)、[App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html)、[App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html)、[Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1)。
+官方参考：[Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)、[VPC CNI 1.23.2](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.2/README.md)、[CoreDNS cache](https://coredns.io/plugins/cache/)、[App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html)、[App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html)、[Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1)。

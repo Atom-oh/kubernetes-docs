@@ -1,7 +1,7 @@
 # Construcción de una plataforma de IA agéntica en EKS
 
 > **Base de revisión**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 La IA agéntica va más allá de responder preguntas sencillas: crea planes de forma autónoma, usa herramientas y alcanza objetivos de manera iterativa. Este capítulo explica cómo diseñar una plataforma de IA agéntica y definir sus límites operativos en EKS.
 
@@ -43,11 +43,11 @@ Desafíos clave que deben resolverse al construir una plataforma de IA agéntica
 
 ---
 
-## 2. Referencias de GPU y costos
+## 2. Bases de referencia de GPU y costos
 
 Los agentes que usan API de modelos externos no necesariamente necesitan GPU. La inferencia autohospedada requiere seleccionar dispositivos según los pesos y la precisión, la caché KV, la concurrencia, la arquitectura de CPU y la compatibilidad de los controladores. Usa la [guía de GPU revisada](01-ai-ml-workloads.md) y evita instalar controladores o toolkits duplicados en las AMI NVIDIA de AL2023.
 
-MIG particiona las GPU compatibles. La división de tiempo dentro de una instancia MIG no añade aislamiento de memoria ni de fallos entre las cargas de trabajo que la comparten; no es un límite de seguridad de software. Del mismo modo, por lo general, 80 GB no bastan para alojar pesos 70B FP16.
+MIG particiona las GPU compatibles. La compartición temporal de una misma instancia MIG no añade aislamiento de memoria ni frente a fallos entre las cargas de trabajo que la comparten; no constituye un límite de seguridad de software. Del mismo modo, por lo general, 80 GB no bastan para alojar pesos 70B FP16.
 
 Los valores de Helm de GPU Operator son distintos de los recursos ConfigMap/HelmRelease. Pasar un HelmRelease de Flux como helm --values no aplica la configuración prevista. Las referencias de ConfigMap del administrador de MIG, las etiquetas de nodo de perfil y la estrategia del plugin deben coincidir. Las etiquetas de device-plugin.config seleccionan una clave de configuración, no el nombre del ConfigMap. La reconfiguración de MIG puede interrumpir las cargas de trabajo y no se ejecutó en esta auditoría.
 
@@ -146,7 +146,7 @@ Un campo tenant_id por sí solo no impone el aislamiento. Deriva el alcance de l
 
 Las importaciones actuales de splitter usan langchain_text_splitters. De forma predeterminada, RecursiveCharacterTextSplitter define chunk_size en caracteres, no en tokens. La división en tokens debe coincidir con el tokenizer del modelo de embeddings y con el límite real de entrada. La fragmentación semántica añade llamadas y costos de embeddings, y no garantiza una mejor calidad.
 
-La búsqueda híbrida requiere fusión, por ejemplo RRF o puntuaciones calibradas, no solo dos búsquedas, y debe usar filtros de autorización idénticos. Evalúa la recuperación, la precisión y la latencia. Limita los reintentos y abstente cuando no haya evidencia, en lugar de generar siempre una respuesta tras agotar los reintentos.
+La búsqueda híbrida requiere combinar los resultados, por ejemplo mediante RRF o puntuaciones calibradas; ejecutar dos búsquedas no basta, y ambas deben aplicar filtros de autorización idénticos. Evalúa la exhaustividad (recall), la precisión y la latencia. Limita los reintentos y abstente cuando no haya evidencia, en lugar de generar siempre una respuesta tras agotar los reintentos.
 
 ## 6. Implementación de agentes de IA (Kagent)
 
@@ -200,7 +200,7 @@ spec:
           memory: 1Gi
 ```
 
-ModelConfig.apiKeySecret no implica que se entregue el secreto como archivo. El traductor de OpenAI inspeccionado crea una variable de entorno SecretKeyRef OPENAI_API_KEY. En una política que prohíba secretos en el entorno, usa una ruta verificada de credenciales en archivo mediante BYO/runtime o un gateway de autenticación. Habilitar apiKeyPassthrough sin diseñar la delegación de tokens y la audiencia no es una alternativa equivalente.
+ModelConfig.apiKeySecret no implica que se entregue el secreto como archivo. El traductor de OpenAI inspeccionado genera OPENAI_API_KEY como variable de entorno cuyo valor procede de SecretKeyRef. En una política que prohíba secretos en el entorno, usa una ruta verificada de credenciales en archivo mediante BYO/runtime o un gateway de autenticación. Habilitar apiKeyPassthrough sin diseñar la delegación de tokens y la audiencia no es una alternativa equivalente.
 
 Una calculadora basada en eval() y campos de permisos inventados no son límites de seguridad. Implementa privilegios mínimos, validación de entradas, límites de recursos, aprobación e idempotencia en el servidor de herramientas real. Las réplicas de Agent no hacen que los almacenes compartidos de memoria/sesiones sean altamente disponibles de forma automática.
 
@@ -305,7 +305,7 @@ client.shutdown()
 
 El chart 2.1.0 de Langfuse hace referencia a app 4.24.0, distinta de la versión más reciente del servidor inspeccionada, 4.60.0 (2026-10-15). Se requieren Web/worker, PostgreSQL, Redis/Valkey, almacenamiento de objetos y ClickHouse. El chart comprueba los requisitos previos de ClickHouse Operator/cert-manager. La generación sin conexión mostró información simulada sobre las capacidades de la API, no un operador implementado. Los charts predeterminados incluyen la entrega de secretos mediante variables de entorno y no están aprobados para implementaciones que solo admiten credenciales en archivos.
 
-DCGM FB_USED es una cantidad, no un porcentaje; verifica las unidades y la memoria total. GPU utilization80% o temperature85C no son umbrales de estado universales. Observa conjuntamente la latencia, las colas, los errores, la limitación y los límites reales del dispositivo.
+DCGM FB_USED es una cantidad, no un porcentaje; verifica las unidades y la memoria total. Una utilización de GPU del 80 % o una temperatura de 85 °C no constituyen umbrales universales de estado. Observa conjuntamente la latencia, las colas, los errores, la limitación y los límites reales del dispositivo.
 
 ### Cachés de respuestas y costos
 
@@ -330,7 +330,7 @@ La función compliance_check de un ejemplo financiero no certifica el cumplimien
 | Kagent |0.10.1 / v1alpha2 | Helm/CRD oficiales y esquemas de Agent/ModelConfig/RemoteMCPServer |
 | Inference Extension |1.6.1 / v1 | Esquema de InferencePool; sin EPP/gateway activo |
 | LiteLLM |1.100.1 | Configuración de fallback de Router; sin llamadas a proveedores |
-| Milvus | server/SDK3.0.1; Operator 1.3.9 | Helm del operador/esquema vectorial sintético; sin base de datos |
+| Milvus | servidor/SDK 3.0.1; Operator 1.3.9 | Helm del operador/esquema vectorial sintético; sin base de datos |
 | LangGraph |1.2.11 + sqlite saver 3.1.1 | Recuperación limitada, abstención y recuperación del estado |
 | Langfuse | SDK 4.15.2 / chart 2.1.0 | Trazas/spans locales e inspección sin conexión del chart |
 | Ragas |0.4.3 | Importaciones/esquemas aislados compatibles; sin llamadas a modelos evaluadores |

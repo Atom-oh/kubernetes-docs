@@ -1,6 +1,6 @@
 # EKS 存储测验 - 第 2 部分
 
-> **最后更新**：September 11, 2026
+> **最后更新**：2026 年 9 月 11 日
 
 本测验涵盖存储选择、StatefulSet 声明、S3/Mountpoint、克隆、备份和恢复。示例会复用本章中已准备好的驱动程序、类和专用命名空间。本次审查未执行云资源预置、数据库恢复或性能基准测试。使用示例前，请检查资源所有权并替换占位符。
 
@@ -140,13 +140,13 @@ kubectl -n storage-demo get pvc -l storage-demo=stateful-files -o wide
 
 | 类型 | 当前公布的上限，具体取决于条件 | 典型考量 |
 |---|---|---|
-| gp3 | 区域：80,000IOPS /2,000MiB/s；Outposts 更低 | 基线为 3,000IOPS /125MiB/s，可单独付费设置性能 |
-| io1 |64,000IOPS /1,000MiB/s | 预置 IOPS，受实例/大小限制 |
-| io2 Block Express |256,000IOPS /4,000MiB/s | 取决于受支持的 Nitro/大小/IOPS 及工作负载需求 |
+| gp3 | 区域：80,000 IOPS /2,000 MiB/s；Outposts 更低 | 基线为 3,000 IOPS /125 MiB/s，可单独付费设置性能 |
+| io1 |64,000 IOPS /1,000 MiB/s | 预置 IOPS，受实例/大小限制 |
+| io2 Block Express |256,000 IOPS /4,000 MiB/s | 取决于受支持的 Nitro/大小/IOPS 及工作负载需求 |
 | st1 |500MiB/s | 面向吞吐量的 HDD，具有顺序访问/突发行为 |
 | sc1 |250MiB/s | 用于不频繁顺序访问的 HDD |
 
-此前的 gp3 示例设置为 16,000IOPS/1,000MiB/s，仍然有效；但它们并非当前通用最大值。gp2 的基线/突发性能受容量影响，而 gp3 的性能可在满足其比率限制的前提下单独预置。没有哪种卷类型能自动适用于所有数据库、日志或 Web 服务器。RAID0 是另一种权衡方式，下文会讨论，并非 CSI 的默认优化方案。
+此前的 gp3 示例设置为 16,000 IOPS/1,000 MiB/s，仍然有效；但它们并非当前通用最大值。gp2 的基线/突发性能受容量影响，而 gp3 的性能可在满足其比率限制的前提下单独预置。没有哪种卷类型能自动适用于所有数据库、日志或 Web 服务器。RAID0 是另一种权衡方式，下文会讨论，并非 CSI 的默认优化方案。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -170,7 +170,7 @@ parameters:
 - A. 保证成本最低
 - B. 不需要驱动程序或网络前置条件
 - C. 为适用的工作负载提供并行文件系统
-- D. 保证每个 PVC 都达到 1,000GB/s
+- D. 保证每个 PVC 都达到 1,000 GB/s
 
 <details>
 <summary>显示答案</summary>
@@ -179,7 +179,7 @@ parameters:
 
 FSx for Lustre 为受支持的 HPC、ML、分析和媒体工作负载提供托管式并行文件系统。应一并选择部署类型、客户端/内核、容量、预置吞吐量和网络。营销材料中的聚合最大值并不代表任意小型 PVC 的性能。
 
-SCRATCH_1/SCRATCH_2 面向可重新生成的临时数据；仅仅使用 PV 并不会让 SCRATCH_2 获得持久化服务器复制能力。PERSISTENT_1/PERSISTENT_2 支持的存储和吞吐量选项各不相同。例如，PERSISTENT_2 SSD 提供 125/250/500/1000MB/s/TiB；不要把通用的 200MB/s/TiB 或 1,000GB/s 声明套用到每个文件系统。本次审查未验证此前的聚合性能声明。
+SCRATCH_1/SCRATCH_2 面向可重新生成的临时数据；仅仅使用 PV 并不会让 SCRATCH_2 获得持久化服务器复制能力。PERSISTENT_1/PERSISTENT_2 支持的存储和吞吐量选项各不相同。例如，PERSISTENT_2 SSD 提供 125/250/500/1,000 MB/s/TiB；不要把通用的 200MB/s/TiB 或 1,000 GB/s 声明套用到每个文件系统。本次审查未验证此前的聚合性能声明。
 
 按照本章所述准备托管式附加组件或由你负责管理的兼容驱动程序。以下示例保留了受支持的 `s3ImportPath` 参数；导入/导出需要兼容的部署、权限以及存储库策略/任务。仅创建 CSI 资源不会自动实现 S3 双向同步：
 
@@ -230,7 +230,7 @@ PVC 请求决定动态文件系统容量；StorageClass 没有通用的 storageC
 
 **答案：C**
 
-CSI2.8 支持 Pod 级别的 Pod Identity 和 IRSA；该卷不会使用驱动程序凭证。必须配置角色、关联/信任关系、必要时的代理，以及存储桶/KMS 权限。仅有 ServiceAccount 注解并不等同于 IAM 角色。
+CSI 2.8 支持 Pod 级别的 Pod Identity 和 IRSA；该卷不会使用驱动程序凭证。必须配置角色、关联/信任关系、必要时的代理，以及存储桶/KMS 权限。仅有 ServiceAccount 注解并不等同于 IAM 角色。
 
 </details>
 
@@ -278,11 +278,11 @@ S3 的读取/列表操作具有强一致性。可选的 Mountpoint 缓存会改�
 
 **答案：D**
 
-EBS CSI1.66 使用真正的原生卷复制路径。常规 PVC dataSource 要求源和目标位于同一命名空间；EBS 副本仍位于源卷所在的可用区。明确设置存储类，并请求至少与源卷相同的容量。卷可用之后，后台初始化可能仍未完成；为满足一致性要求，应暂停应用写入。
+EBS CSI 1.66 使用真正的原生卷复制路径。常规 PVC dataSource 要求源和目标位于同一命名空间；EBS 副本仍位于源卷所在的可用区。明确设置存储类，并请求至少与源卷相同的容量。卷可用之后，后台初始化可能仍未完成；为满足一致性要求，应暂停应用写入。
 
 </details>
 
-### 9. 哪个示例符合 EBS CSI1.66 动态 Multi-Attach？
+### 9. 哪个示例符合 EBS CSI 1.66 动态 Multi-Attach？
 
 - A. gp3 + RWO + multiAttachEnabled:true
 - B. io2 + RWOP + 独立 ext4 写入者
@@ -310,7 +310,7 @@ EBS CSI1.66 使用真正的原生卷复制路径。常规 PVC dataSource 要求�
 
 **答案：A**
 
-Velero1.18 管理其 CSI 快照生命周期。应谨慎配置备份 TTL；如有需要，请使用单独的保留/归档流程。其集成的 CSI 支持仍需要启用 EnableCSI；备份元数据、原生 CSI 快照和复制的卷数据是不同的内容。
+Velero 1.18 管理其 CSI 快照生命周期。应谨慎配置备份 TTL；如有需要，请使用单独的保留/归档流程。其集成的 CSI 支持仍需要启用 EnableCSI；备份元数据、原生 CSI 快照和复制的卷数据是不同的内容。
 
 </details>
 
@@ -367,7 +367,7 @@ parameters:
   ensureUniqueDirectory: 'true'
 ```
 
-如需进行经授权的写入测试，请使用已经验证过的临时目录和唯一文件，而不是可能覆盖数据的固定路径 `/efs/testfile`。以下 GNU dd 示例会写入 64MiB，并且只清理它创建的文件/目录。读取可能命中客户端缓存，因此仅凭这些耗时数据无法确定 EFS 的冷读取吞吐量：
+如需进行经授权的写入测试，请使用已经验证过的临时目录和唯一文件，而不是可能覆盖数据的固定路径 `/efs/testfile`。以下 GNU dd 示例会写入 64 MiB，并且只清理它创建的文件/目录。读取可能命中客户端缓存，因此仅凭这些耗时数据无法确定 EFS 的冷读取吞吐量：
 
 ```bash
 set -euo pipefail
@@ -435,7 +435,7 @@ AWS CLI 镜像不会自动包含 kubectl，也不会自动授予 Kubernetes/IAM 
 
 #### 存储和数据库
 
-保留原先的 25,000IOPS 分配，作为 io2 设置示例；其是否足够需要通过测量和实例限制来确认。加密使用配置的/默认的 EBS 密钥。如果选择客户自主管理的密钥，请准备真实的 ARN/密钥策略/驱动程序授权，而不要使用虚构的 kmsKeyId。
+保留原先的 25,000 IOPS 分配，作为 io2 设置示例；其是否足够需要通过测量和实例限制来确认。加密使用配置的/默认的 EBS 密钥。如果选择客户自主管理的密钥，请准备真实的 ARN/密钥策略/驱动程序授权，而不要使用虚构的 kmsKeyId。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -565,7 +565,7 @@ spec:
           storage: 100Gi
 ```
 
-此配置遵循第 1 部分中已验证的 PostgreSQL14.24 镜像约定：UID/GID999、挂载的密码文件、可写的 socket/tmp 卷，以及 PGDATA 子目录。14 主版本将于 November12,2026 结束支持；保留该教学版本并不意味着它适合新的生产部署。请选择合适且仍受支持的主版本，并制定迁移计划。单副本 StatefulSet 不具备高可用性；pg_isready 是连接就绪检查，不是数据完整性或恢复测试。
+此配置遵循第 1 部分中已验证的 PostgreSQL 14.24 镜像约定：UID/GID 999、挂载的密码文件、可写的 socket/tmp 卷，以及 PGDATA 子目录。14 主版本将于 2026 年 11 月 12 日结束支持；保留该教学版本并不意味着它适合新的生产部署。请选择合适且仍受支持的主版本，并制定迁移计划。单副本 StatefulSet 不具备高可用性；pg_isready 是连接就绪检查，不是数据完整性或恢复测试。
 
 #### 备份和保留
 
@@ -596,7 +596,7 @@ velero schedule create database-daily --schedule="0 1 * * *" \
 
 #### 有界扩容规划
 
-不要根据过时指标，每六小时盲目扩容 50%。以下仅供审查的规划器要求 PVC 处于 Bound 状态、对应的类支持扩容、没有待处理的调整，并且新鲜指标必须标识相同的 PVC UID，且包含有效的文件系统字节数。它支持常见的十进制/二进制 Kubernetes 数量格式，并会拒绝不支持的输入。当使用率达到 80% 时，它会建议扩容至至少为当前请求容量 1.5 倍的大小，并设置示例上限 500Gi，同时提供 UID/resourceVersion/当前容量前置条件。它不会修改 Kubernetes 资源。
+不要根据过时指标，每六小时盲目扩容 50%。以下仅供审查的规划器要求 PVC 处于 Bound 状态、对应的类支持扩容、没有待处理的调整，并且新鲜指标必须标识相同的 PVC UID，且包含有效的文件系统字节数。它支持常见的十进制/二进制 Kubernetes 数量格式，并会拒绝不支持的输入。当使用率达到 80% 时，它会建议扩容至至少为当前请求容量 1.5 倍的大小，并设置示例上限 500 Gi，同时提供 UID/resourceVersion/当前容量前置条件。它不会修改 Kubernetes 资源。
 
 从准确的对象中获取最新的 `pvc.json` 和 `storageclass.json`。`trusted-metrics.json` 必须包含 namespace、pvcName、pvcUID、带时区的 observedAt、usedBytes 和 capacityBytes；这些数据应来自实际挂载的文件系统。调用方提供的 UID 本身并不能证明指标来源可信。在任何操作员/控制器应用经审查的补丁之前，请验证采集器/挂载映射、配额、成本和驱动程序限制。
 
@@ -657,7 +657,7 @@ if __name__=='__main__':
 
 #### 恢复候选卷
 
-绝不要让会重试的 Job 把缩容并删除在线声明作为恢复的第一步。请使用独立的候选卷，其容量至少要达到 restoreSize；以下 100Gi 示例假定该恢复点不大于此容量。如果原始声明已经扩容，请相应调整候选卷：
+绝不要让会重试的 Job 把缩容并删除在线声明作为恢复的第一步。请使用独立的候选卷，其容量至少要达到 restoreSize；以下 100 Gi 示例假定该恢复点不大于此容量。如果原始声明已经扩容，请相应调整候选卷：
 
 ```yaml
 apiVersion: v1
@@ -682,7 +682,7 @@ spec:
 
 #### 监控
 
-PostgreSQL5432 使用的是数据库协议，而不是 Prometheus HTTP。应准备经过审查的 postgres-exporter 工作负载，将其标签设为 `app: postgres-exporter`，并提供命名为 `metrics` 的 9187 端口以及作用范围适当的数据库凭证。此 Service 和 ServiceMonitor 会选择该 exporter，但不会安装它。确保 Prometheus 会选择此 ServiceMonitor/命名空间，并且 NetworkPolicy/TLS/身份验证设置与部署相匹配：
+PostgreSQL 5432 使用的是数据库协议，而不是 Prometheus HTTP。应准备经过审查的 postgres-exporter 工作负载，将其标签设为 `app: postgres-exporter`，并提供命名为 `metrics` 的 9187 端口以及作用范围适当的数据库凭证。此 Service 和 ServiceMonitor 会选择该 exporter，但不会安装它。确保 Prometheus 会选择此 ServiceMonitor/命名空间，并且 NetworkPolicy/TLS/身份验证设置与部署相匹配：
 
 ```yaml
 apiVersion: v1

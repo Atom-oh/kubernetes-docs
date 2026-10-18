@@ -1,11 +1,11 @@
 # Amazon VPC CNI
 
-> **审查基线**：VPC CNI / Helm chart 1.23.0；network policy agent 1.4.1。
-> **最后更新**：October 12, 2026。
+> **审查基线**：VPC CNI / Helm chart 1.23.2；network policy agent 1.4.3。
+> **最后更新**：2026年10月16日。
 >
 > **当前 EKS add-on 列表**：AWS 为 Kubernetes 1.31–1.37 列出 `v1.23.1-eksbuild.1`。
 >
-> **示例版本固定**：以下配置示例使用 upstream/Helm 1.23.0。Upstream、Helm 和 EKS `eksbuild` 版本是不同的标识符。请检查实际集群版本和 Region 的可用性。
+> **示例版本固定**：以下配置示例使用 upstream/Helm 1.23.2。Upstream、Helm 和 EKS `eksbuild` 版本是不同的标识符。请检查实际集群版本和 Region 的可用性。
 
 ## 目录
 
@@ -18,7 +18,7 @@
 - [故障排除](#troubleshooting)
 - [最佳实践](#best-practices)
 
-## VPC CNI 概述
+## VPC CNI 概述 {#vpc-cni-overview}
 
 Amazon VPC CNI 为标准 EKS EC2 节点提供 VPC 原生 Pod 网络。本指南中的 `aws-node` DaemonSet 命令面向该安装方式。Auto Mode 以节点服务形式运行托管网络组件；Fargate 和 Windows 使用不同的管理路径。在将 EC2/Linux 指令应用于其他计算模式之前，请参阅[概述](README.md)。
 
@@ -46,14 +46,14 @@ Pod 使用可由 VPC 路由的地址，无需 overlay 封装。路由、安全�
 
 Prefix delegation 并非大型集群的通用要求，也无法在耗尽的 subnet 中制造地址空间。
 
-## 网络模型
+## 网络模型 {#networking-model}
 
 ### ENI 架构
 
 对于普通 secondary-IPv4 模式，每个 ENI 都有一个 primary address 和可供 CNI 使用的额外地址。Primary ENI 还承载节点的 primary address。额外的 ENI 可以提供更多 secondary Pod address。Custom networking 会改变哪些 interface/subnet 提供 Pod address；prefix 和 branch-ENI 模式有不同的分配规则。
 
 ```text
-Linux EC2 node — ordinary secondary-IPv4 illustration
+Linux EC2 node (ordinary secondary-IPv4 illustration)
 ├── Primary ENI: node primary IP + secondary IPs for Pods
 ├── Additional ENI: its primary IP + secondary IPs for Pods
 └── Additional ENI: its primary IP + secondary IPs for Pods
@@ -92,7 +92,7 @@ Linux EC2 node — ordinary secondary-IPv4 illustration
 
 IPv4 分配需要合适的连续 `/28` block，而不仅是正数的 `AvailableIpAddressCount`。请验证 subnet reservation/fragmentation 及受支持的 Nitro instance。启用 prefix 不会自动提高每个现有 kubelet 的 Pod limit，也不会提高 branch-ENI Pod limit。
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 ### 确立所有权和兼容性
 
@@ -169,16 +169,16 @@ aws eks create-addon --region "$EKS_REGION" \
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
-helm show values eks/aws-vpc-cni --version 1.23.0 > chart-defaults.yaml
+helm show values eks/aws-vpc-cni --version 1.23.2 > chart-defaults.yaml
 helm template aws-vpc-cni eks/aws-vpc-cni --namespace kube-system \
-  --version 1.23.0 -f helm-values.yaml > rendered-cni.yaml
+  --version 1.23.2 -f helm-values.yaml > rendered-cni.yaml
 ```
 
 为实际 IP family、CNI ServiceAccount/IAM 和选定功能准备 `helm-values.yaml`。本指南的基本 Linux 示例使用 IPv4。应用前请审查渲染后的 resource：
 
 ```bash
 helm upgrade --install aws-vpc-cni eks/aws-vpc-cni --namespace kube-system \
-  --version 1.23.0 -f helm-values.yaml --wait --timeout 10m
+  --version 1.23.2 -f helm-values.yaml --wait --timeout 10m
 ```
 
 这些命令假设是全新安装或 Helm 管理的安装。现有的 EKS-managed 或 bootstrap-owned resource 需要经规划的 ownership migration。EKS partition/registry access 和 image-pull 前提条件也必须与环境匹配。
@@ -237,7 +237,7 @@ spec:
 
 明确的 ENIConfig node annotation 优先于 label。仅有 ENIConfig object 并不会启用 custom networking。请规划 routing、DNS/security rule、地址容量以及 workload/node transition；当前 Pod 不会仅因存在新的 CIDR 或 ENIConfig 就迁移到新的 subnet。
 
-## IP 地址管理
+## IP 地址管理 {#ip-address-management}
 
 ### Warm-pool 调优
 
@@ -328,7 +328,7 @@ eksctl create cluster --config-file ipv6-cluster.yaml
 
 IPv6 需要受支持的 Linux Nitro/Fargate 路径和 prefix allocation；不支持 Windows。IPv6 Pod 可能有一个仅出站的 IPv4 helper interface。Policy agent 文档说明，primary interface 上的 IPv6 policy 不会保护该 helper 的 IPv4 traffic。如果设计要求移除此路径，请审查 `ENABLE_V4_EGRESS`、dependency 和 Pod rollout，而不要假设仅 IPv6 policy 就会阻止它。
 
-## Network Policy 支持
+## Network Policy 支持 {#network-policy-support}
 
 ### 原生执行
 
@@ -402,7 +402,7 @@ sudo /opt/cni/bin/aws-eks-na-cli ebpf maps
 
 该工具是 `aws-eks-na-cli`，而不是 `ebpf-sdk list-maps`。检查受影响节点，并区分 process log、已配置的 policy-event log 和 CloudWatch delivery。启用外部 log delivery 还需要相应的 IAM/configuration。
 
-## 高级功能
+## 高级功能 {#advanced-features}
 
 ### Pod 的 Security Group
 
@@ -503,7 +503,7 @@ eksctl create nodegroup --region "$EKS_REGION" --cluster "$CLUSTER_NAME" \
 
 Windows secondary-IP mode 通常使用一个 ENI 及其 address-slot limit，而非 Linux multi-ENI formula。Prefix delegation 和实际 kubelet limit 需要单独进行 sizing。
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 ### IP 分配和调度
 
@@ -562,7 +562,7 @@ IPAMD introspection 默认使用 loopback **61679**；Prometheus metrics 使用 
 
 重启 IPAMD、扩大 instance 或授予更多 node-role permission 并不是通用补救措施。先收集证据，并对实际拥有失败 operation 的 component 应用经审查的变更。
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 根据预期 Pod、warm pool、增长和故障/替换重叠来规划 subnet capacity。`/19` 或 RFC 6598 range 是示例 design choice，而非通用要求。关联新 CIDR，创建必要的 subnet/route，并共同规划 CNI/workload adoption。
 
@@ -650,15 +650,15 @@ Pool ratio 仅限 IPv4 和正数的观测 denominator。它是信息性调优信
 
 ## 参考资料
 
-- [VPC CNI 1.23.0 文档](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
-- [VPC CNI Helm values](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/values.yaml)
-- [Chart version 元数据](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/Chart.yaml)
-- [已发布 CNI manifest](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/config/master/aws-k8s-cni.yaml)
-- [IPAMD 实现](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/ipamd.go)
-- [IPAMD introspection server](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/introspect.go)
-- [IPAM datastore](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/datastore/data_store.go)
-- [IPAMD metric 定义](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/utils/prometheusmetrics/prometheusmetrics.go)
-- [Network policy agent 1.4.1](https://github.com/aws/aws-network-policy-agent/blob/v1.4.1/README.md)
+- [VPC CNI 1.23.2 文档](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/README.md)
+- [VPC CNI Helm values](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/charts/aws-vpc-cni/values.yaml)
+- [Chart version 元数据](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/charts/aws-vpc-cni/Chart.yaml)
+- [已发布 CNI manifest](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/config/master/aws-k8s-cni.yaml)
+- [IPAMD 实现](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/ipamd.go)
+- [IPAMD introspection server](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/introspect.go)
+- [IPAM datastore](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/pkg/ipamd/datastore/data_store.go)
+- [IPAMD metric 定义](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.2/utils/prometheusmetrics/prometheusmetrics.go)
+- [Network policy agent 1.4.3](https://github.com/aws/aws-network-policy-agent/blob/v1.4.3/README.md)
 - [AWS Helm chart index](https://aws.github.io/eks-charts/index.yaml)
 - [EKS Pod 的 security group](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 - [SGPP 操作注意事项](https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html)

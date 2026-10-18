@@ -1,15 +1,15 @@
 # Identidad de carga de trabajo con SPIFFE/SPIRE
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 16 de octubre de 2026
 > **Referencia de validación**: SPIRE 1.15.3, hardened chart 0.30.2 / CRD chart 0.6.1, Controller Manager 0.7.0, imagen CSI del chart 0.2.7 (también verificada frente a la documentación actual de CSI 0.2.13), go-spiffe 2.8.1. Inspeccione por separado las versiones de imágenes renderizadas por el chart.
 
-SPIFFE define la identidad, las credenciales, la entrega y los formatos de confianza de las cargas de trabajo; SPIRE los implementa. **Emitir una identidad no cifra automáticamente el tráfico ni autoriza el acceso al Service.** Esta guía valida la configuración local, los esquemas, las bibliotecas, los charts y los diagramas. No se realizó ningún clúster en vivo, CA de AWS, atestación de SPIRE ni instalación de mesh.
+SPIFFE define la identidad, las credenciales, la entrega y los formatos de confianza de las cargas de trabajo; SPIRE los implementa. **Emitir una identidad no cifra automáticamente el tráfico ni autoriza el acceso a los servicios.** Esta guía valida la configuración local, los esquemas, las bibliotecas, los charts y los diagramas. No se realizó ningún clúster en vivo, CA de AWS, atestación de SPIRE ni instalación de mesh.
 
 ## Descripción general
 
-SPIFFE y SPIRE son proyectos Graduated de CNCF. Sus páginas de proyectos de CNCF registran el 23 y el 22 de agosto de 2022, respectivamente. La madurez del proyecto es independiente de la validación de un Deployment individual.
+SPIFFE y SPIRE son proyectos graduados de CNCF. Sus páginas de proyectos de CNCF registran el 23 y el 22 de agosto de 2022, respectivamente. La madurez del proyecto es independiente de la validación de un despliegue individual.
 
-Las identidades estables son útiles frente a cambios de IPs/Pods, pero las aplicaciones aún necesitan un cliente, SDK, proxy o adaptador explícito de archivos para la Workload API. “Cero cambios en la aplicación para cada carga de trabajo” no es una garantía universal. Este capítulo se centra en las rutas X.509/JWT de SPIRE; no se asume que la **especificación WIT-SVID Incubating**, publicada por separado, sea compatible con todos los Deployments.
+Las identidades estables son útiles cuando cambian las direcciones IP o se recrean los Pods, pero las aplicaciones aún necesitan un cliente, SDK, proxy o adaptador explícito de archivos para la Workload API. La promesa de «cero cambios en la aplicación para cada carga de trabajo» no se cumple en todos los casos. Este capítulo se centra en las rutas X.509/JWT de SPIRE; no se da por hecho que todos los despliegues admitan la **especificación WIT-SVID, que se encuentra en fase de incubación y se publica por separado**.
 
 <span id="svid-spiffe-verifiable-identity-document"></span>
 <span id="x-509-svid-vs-jwt-svid-comparison"></span>
@@ -30,15 +30,15 @@ Un ID contiene un esquema, un dominio de confianza y una ruta opcional. Los comp
 
 | Aspecto | X.509-SVID | JWT-SVID |
 |---|---|---|
-| Identidad | URI SAN de SPIFFE en el certificado leaf | sub |
+| Identidad | URI SAN de SPIFFE en el certificado hoja | sub |
 | Validación | Cadena, vigencia, reglas de SVID, dominio de confianza | Firma, sujeto, audiencia, vencimiento |
 | Uso | Autenticación TLS de cliente/servidor | APIs que aceptan bearer tokens |
 | Clave | Ruta de clave privada de la carga de trabajo/agente | El emisor conserva la clave privada de firma |
-| Vigencia | Política y emisión real | Política y exp real del token |
+| Vigencia | Política y emisión real | Política y valor exp real del token |
 
-CN no es la identidad de SPIFFE. Las pruebas locales de go-spiffe rechazaron solo CN, múltiples URIs de SPIFFE, vencimiento y dominios de confianza incorrectos. La validación de audiencia limita los destinatarios, pero no detecta replay: el mismo bearer token válido superó la verificación nuevamente. Aplique políticas apropiadas de uso de TLS/token y defensas contra replay donde sea necesario.
+CN no es la identidad de SPIFFE. Las pruebas locales de go-spiffe rechazaron certificados que solo contenían CN, certificados con múltiples URI de SPIFFE, certificados vencidos y dominios de confianza incorrectos. La validación de audiencia limita los destinatarios, pero no detecta ataques de repetición: el mismo bearer token válido volvió a superar la verificación. Aplique políticas apropiadas de uso de TLS/token y defensas contra replay donde sea necesario.
 
-Los trust bundles incluyen autoridades X.509, claves de verificación JWT y metadatos. PEM, JSON de bundle de SPIFFE y YAML arbitrario no son intercambiables. Los bundles públicos no deben contener claves privadas de carga de trabajo ni de CA.
+Los paquetes de confianza incluyen autoridades X.509, claves de verificación JWT y metadatos. PEM, JSON de paquetes de SPIFFE y YAML arbitrario no son intercambiables. Los paquetes públicos no deben contener claves privadas de carga de trabajo ni de CA.
 
 <span id="spire-server"></span>
 <span id="spire-agent"></span>
@@ -51,9 +51,9 @@ Los trust bundles incluyen autoridades X.509, claves de verificación JWT y meta
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-12-spiffe-spire-0.html)
 
 
-El Server administra la atestación de Agent, el registro y la firma X.509/JWT. DataStore y KeyManager tienen responsabilidades de persistencia distintas. Una UpstreamAuthority como AWS Private CA firma CAs intermedias de SPIRE; no reemplaza cada operación de firma leaf de la carga de trabajo.
+El Server administra la atestación de Agent, el registro y la firma X.509/JWT. DataStore y KeyManager tienen responsabilidades de persistencia distintas. Una UpstreamAuthority como AWS Private CA firma las CA intermedias de SPIRE; no sustituye cada operación de firma de certificados hoja de la carga de trabajo.
 
-El Agent atestigua el proceso que llama a su API y utiliza entradas sincronizadas/caché de SVID. Una caché válida no requiere una nueva emisión del Server en cada solicitud de API. Los consumidores deben adoptar las credenciales actualizadas mediante streams, SDKs o proxies.
+El Agent atestigua el proceso que llama a su API y utiliza entradas sincronizadas y una caché de SVID. Una caché válida no requiere una nueva emisión del Server en cada solicitud de API. Los consumidores deben adoptar las credenciales actualizadas mediante flujos, SDK o proxies.
 
 ![Caché local de X.509-SVID y ruta de renovación condicional](../.gitbook/assets/en-security-12-spiffe-spire-1.png)
 
@@ -129,17 +129,17 @@ spiffe-csi-driver:
 ```
 
 
-Este es un laboratorio SQLite con un solo Server. Las identidades amplias predeterminadas, de prueba y OIDC no utilizadas están deshabilitadas; un ClusterSPIFFEID independiente selecciona las cargas de trabajo. El chart omite de forma predeterminada la verificación de kubelet, por lo que apiServerCA se establece explícitamente. Esto presupone que el certificado de servicio real de kubelet se valida con esa CA; utilice el método de CA/certificado de host adecuado para otras PKI en lugar de deshabilitar la verificación.
+Este es un laboratorio SQLite con un único Server. Las identidades amplias predeterminadas, de prueba y OIDC que no se utilizan están deshabilitadas; un ClusterSPIFFEID independiente selecciona las cargas de trabajo. De forma predeterminada, el chart omite la verificación de kubelet, por lo que apiServerCA se establece explícitamente. Esto presupone que el certificado de servicio real de kubelet se valida con esa CA; utilice el método de CA/certificado de host adecuado para otras PKI en lugar de deshabilitar la verificación.
 
 Los hooks de instalación/eliminación están deshabilitados en este perfil; realice por separado cualquier migración/limpieza necesaria. El render incluye un StatefulSet de Server con sidecar de Controller Manager, además de DaemonSets de Agent y CSI. Confirme los nombres de recursos, etiquetas y rutas de sockets específicos de la versión del release.
 
 ### Alta disponibilidad
 
-[ha-values.yaml](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/ha-values.yaml) utiliza tres réplicas, PostgreSQL compartido, un Secret de contraseña existente, TLS verify-full con una CA montada y anti-affinity que coincide con las etiquetas reales del Pod. Tres réplicas SQLite independientes no constituyen un datastore HA compartido.
+[ha-values.yaml](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/ha-values.yaml) utiliza tres réplicas, PostgreSQL compartido, un Secret de contraseña existente, TLS verify-full con una CA montada y anti-afinidad que coincide con las etiquetas reales del Pod. Tres réplicas SQLite independientes no constituyen un datastore HA compartido.
 
 Primero prepare PostgreSQL/DNS, el ConfigMap de CA, la clave `password` del Secret `spire-database`, StorageClass y la conectividad. El ejemplo suministra la contraseña sin procesar mediante `PGPASSWORD` usando `extraEnv.valueFrom.secretKeyRef`. Deshabilita la interpolación `dataStore.sql.externalSecret` del chart y deja `password` vacío, por lo que la cadena de conexión generada no contiene contraseña. El driver PostgreSQL de SPIRE lee `PGPASSWORD` por separado: las comillas, barras invertidas, espacios en blanco y signos de dólar no entran en el parser JSON/DSN. No aplique escape previo ni codificación URI a la contraseña real.
 
-Las comprobaciones de configuración nativa de SPIRE 1.15.3 y del parser lib/pq 1.12.3 cubrieron seis casos sintéticos de contraseña mientras mantenían `sslmode=verify-full` y la ruta de CA. Estas comprobaciones no se conectaron a PostgreSQL ni probaron failover. Los cambios de Secret entregados como variables de entorno requieren reiniciar los Pods de Server; coordine la rotación de contraseña de la base de datos con el reinicio y verifique la disponibilidad. HA también requiere persistencia de claves, copias de seguridad, rollover de bundles y pruebas de recuperación.
+Las comprobaciones de configuración nativa de SPIRE 1.15.3 y del parser lib/pq 1.12.3 cubrieron seis casos sintéticos de contraseña mientras mantenían `sslmode=verify-full` y la ruta de CA. Estas comprobaciones no se conectaron a PostgreSQL ni probaron failover. Los cambios de Secret entregados como variables de entorno requieren reiniciar los Pods de Server; coordine la rotación de contraseña de la base de datos con el reinicio y verifique la disponibilidad. HA también requiere persistencia de claves, copias de seguridad, rotación de paquetes de confianza y pruebas de recuperación.
 
 <span id="attestation-flow"></span>
 <span id="kubernetes-psat-projected-service-account-token"></span>
@@ -156,7 +156,7 @@ Las comprobaciones de configuración nativa de SPIRE 1.15.3 y del parser lib/pq 
 
 k8s_psat valida el token proyectado de ServiceAccount del Agent mediante **Kubernetes TokenReview**, y luego comprueba datos de namespace/SA/Pod/nodo. Esto no es el flujo de proveedor OIDC de IAM utilizado por IRSA. Haga coincidir los nombres lógicos de clúster, la audiencia del token, la allowlist de SA y los permisos de TokenReview.
 
-Los IDs de Agent predeterminados siguen `spiffe://TRUST_DOMAIN/spire/agent/k8s_psat/CLUSTER/NODE_UID`; la versión actual también ofrece un modo de UID de Pod. Descubra los IDs de Agent/alias registrados en lugar de inventar parentIDs. token generate, entry create y bundle set modifican el estado real.
+Los ID predeterminados de Agent siguen `spiffe://TRUST_DOMAIN/spire/agent/k8s_psat/CLUSTER/NODE_UID`; la versión actual también ofrece un modo de UID de Pod. Identifique los ID registrados de Agent y de alias; no invente parentIDs. token generate, entry create y bundle set modifican el estado real.
 
 aws_iid es una alternativa que utiliza la identidad de instancia EC2. No es universalmente más fuerte que PSAT ni está restringida a entornos no EKS. Revise las suposiciones de skip_block_device, validación local, cuentas permitidas y selectores adicionales. No coloque credenciales estáticas de AWS en ConfigMaps.
 
@@ -166,11 +166,11 @@ aws_iid es una alternativa que utiliza la identidad de instancia EC2. No es univ
 
 ## Atestación de carga de trabajo
 
-El Agent utiliza el PID/cgroups del llamador e información de kubelet. No establezca por defecto el puerto inseguro 10255 de kubelet ni skip_kubelet_verification=true. La autenticación segura, la CA de servicio correcta y el acceso de red son requisitos previos.
+El Agent utiliza el PID/cgroups del proceso que llama a la API e información de kubelet. No use por defecto el puerto inseguro 10255 de kubelet ni establezca skip_kubelet_verification=true. La autenticación segura, la CA de servicio correcta y el acceso de red son requisitos previos.
 
 Los selectores comunes incluyen k8s:ns, k8s:sa, k8s:pod-label, k8s:pod-uid y k8s:container-name/image. container-image refleja tags/digests informados por Kubernetes; nginx:* no es un selector glob. Una cadena de tag no es verificación de la cadena de suministro. Utilice por separado la atestación adecuada de digest/firma donde sea necesario.
 
-Las entidades principales que pueden cambiar las etiquetas de namespace/Pod o crear Pods con un ServiceAccount pueden afectar la elegibilidad de identidad. Controle conjuntamente la creación de namespace/SA/Pod y la propiedad de la política de identidad. Los selectores Unix UID/GID/path/hash también dependen de la configuración del plugin y del modelo de amenazas.
+Los usuarios y otras entidades con permiso para cambiar las etiquetas de namespaces o Pods, o para crear Pods con un ServiceAccount, pueden influir en qué cargas de trabajo pueden recibir identidades. Controle conjuntamente la creación de namespaces, ServiceAccounts y Pods, así como quién puede modificar la política de identidad. Los selectores Unix UID/GID/path/hash también dependen de la configuración del plugin y del modelo de amenazas.
 
 <span id="spiffe-csi-driver"></span>
 <span id="spire-controller-manager"></span>
@@ -243,11 +243,11 @@ spec:
 ```
 
 
-Reemplace la imagen de la aplicación por un consumidor real de Workload API. Distinga jwtTTL de identidad del chart de jwtTtl de CRD. El selector explícito se dirige al contenedor app; un contenedor Envoy independiente necesita una política de registro de proxy coincidente.
+Reemplace la imagen de la aplicación por un consumidor real de Workload API. Distinga el campo jwtTTL de identidad del chart del campo jwtTtl de la CRD. El selector explícito se aplica al contenedor app; un contenedor Envoy independiente necesita una política de registro de proxy correspondiente.
 
 ### Envoy SDS
 
-El [ejemplo completo de bootstrap](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/envoy.yaml) incluye filtros HTTP, el clúster SDS, require_client_certificate:true y un matcher exacto de URI de peer permitido. El proceso Envoy debe poder ser atestado y deben registrarse ambas identidades de servidor/cliente con nombre.
+El [ejemplo completo de bootstrap](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/envoy.yaml) incluye filtros HTTP, el clúster SDS, require_client_certificate:true y un matcher exacto de URI de peer permitido. El proceso Envoy debe poder ser atestado y deben registrarse ambas identidades de servidor y cliente especificadas.
 
 SDS comparte el socket público de Agent con la Workload API. Los nombres de recursos de certificado usan un ID de SPIFFE de carga de trabajo o default; los contextos de validación usan un ID de dominio de confianza o ROOTCA/ALL. Compruebe la compatibilidad con el certificate-validator de SPIFFE, especialmente para ALL. Se verificaron los esquemas de protocolo y la implementación de URI-matcher; no se ejecutó ningún handshake real de Envoy/SDS/mTLS.
 
@@ -265,13 +265,13 @@ Con sidecars nativos, istio-proxy es un initContainer y debe modificarse allí. 
 
 ### Cilium
 
-La autenticación mutua de Cilium 1.20.1 es **beta y fuera de banda de las conexiones ordinarias**. El cifrado del tráfico requiere una configuración independiente de WireGuard/IPsec. Una etiqueta arbitraria que contiene un ID de SPIFFE no es una política de identidad autenticada.
+La autenticación mutua de Cilium 1.20.3 es **beta y se realiza fuera de banda respecto de las conexiones ordinarias**. El cifrado del tráfico requiere una configuración independiente de WireGuard/IPsec. Una etiqueta arbitraria que contiene un ID de SPIFFE no es una política de identidad autenticada.
 
-La configuración oficial utiliza authentication.mutual.spire.enabled y, para su instalación incluida, authentication.mutual.spire.install.enabled. Mantenga distintas las configuraciones de SPIRE incluida y externa, y consulte la [fuente de instalación fijada](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/installation.rst). Los selectores de endpoint/modos de autenticación, la emisión de identidad y el cifrado tienen responsabilidades independientes.
+La configuración oficial utiliza authentication.mutual.spire.enabled y, para su instalación incluida, authentication.mutual.spire.install.enabled. Mantenga distintas las configuraciones de SPIRE incluida y externa, y consulte la [fuente de instalación fijada](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/installation.rst). Los selectores de endpoint/modos de autenticación, la emisión de identidad y el cifrado tienen responsabilidades independientes.
 
 ### Linkerd
 
-No pase JSON de bundle de SPIRE donde Linkerd espera raíces PEM ni copie claves privadas de CA de SPIRE como claves de emisor. Linkerd necesita un certificado/clave de emisor adecuado y raíces de confianza, con renovación y rollover de raíz. Consulte la [ruta revisada de cert-manager/Linkerd (English)](https://www.atomai.click/kubernetes-docs/en/security/10-cert-manager#linkerd-and-trust-manager). Compartir solamente la confianza de raíz no integra la Workload API ni SDS de SPIFFE.
+No pase el JSON del paquete de confianza de SPIRE donde Linkerd espera raíces PEM ni copie claves privadas de CA de SPIRE como claves de emisor. Linkerd necesita un certificado/clave de emisor adecuado y raíces de confianza, con renovación de certificados y sustitución gradual de la raíz de confianza. Consulte la [ruta revisada sobre cert-manager y Linkerd](./10-cert-manager.md#linkerd-and-trust-manager). Compartir únicamente la raíz de confianza no integra la Workload API de SPIFFE ni SDS.
 
 <span id="federation-trust-establishment"></span>
 <span id="configuring-federation"></span>
@@ -280,12 +280,12 @@ No pase JSON de bundle de SPIRE donde Linkerd espera raíces PEM ni copie claves
 
 ## Federación
 
-![Federación con confianza explícita de bundle y autorización de carga de trabajo](../.gitbook/assets/en-security-12-spiffe-spire-3.png)
+![Federación con confianza explícita en el paquete y autorización de la carga de trabajo](../.gitbook/assets/en-security-12-spiffe-spire-3.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-12-spiffe-spire-3.html)
 
 
-Configure explícitamente cada dirección de confianza; la federación no establece automáticamente confianza mutua ni autorización. Opere la conectividad del endpoint de bundle, la verificación TLS, los fallos de actualización, el vencimiento y el rollover.
+Configure explícitamente cada dirección de confianza; la federación no establece automáticamente confianza mutua ni autorización. Gestione la conectividad del endpoint del paquete de confianza, la verificación TLS, los fallos de actualización, el vencimiento y la sustitución gradual.
 
 ```yaml
 apiVersion: spire.spiffe.io/v1alpha1
@@ -300,7 +300,7 @@ spec:
 ```
 
 
-Este ejemplo https_web presupone un endpoint real con un certificado Web PKI válido. https_spiffe también necesita endpointSPIFFEID y un **bundle confiable inicial adquirido mediante una ruta de bootstrap autenticada**; establecer solo una URL no es suficiente. Utilice nombres de dominio de confianza sin prefijo, como partner.example.org, en las listas federatesWith de cargas de trabajo aplicables. Obtener un trust bundle y autorizar una carga de trabajo peer son acciones distintas.
+Este ejemplo https_web presupone un endpoint real con un certificado Web PKI válido. https_spiffe también necesita endpointSPIFFEID y un **paquete de confianza inicial adquirido mediante una ruta de arranque autenticada**; establecer solo una URL no es suficiente. Utilice nombres de dominio de confianza sin prefijo, como partner.example.org, en las listas federatesWith de cargas de trabajo aplicables. Obtener un paquete de confianza y autorizar una carga de trabajo homóloga son acciones distintas.
 
 <span id="irsa-vs-spiffe-comparison"></span>
 <span id="pod-identity-vs-spire"></span>
@@ -309,7 +309,7 @@ Este ejemplo https_web presupone un endpoint real con un certificado Web PKI vá
 
 ## Integración con EKS
 
-IRSA/Pod Identity proporcionan rutas de credenciales de API de AWS; SPIFFE/SPIRE proporcionan rutas de identidad de carga de trabajo. Ninguno reemplaza al otro, y no todos los entornos necesitan ambos. IRSA admite diseños entre cuentas y actualiza las credenciales mediante el comportamiento compatible de SDK/token proyectado; reiniciar el Pod no es inherentemente necesario. No suponga una vigencia fija de doce horas.
+IRSA/Pod Identity proporcionan rutas de credenciales de API de AWS; SPIFFE/SPIRE proporcionan rutas de identidad de carga de trabajo. Ninguno reemplaza al otro, y no todos los entornos necesitan ambos. IRSA admite diseños entre cuentas y actualiza las credenciales mediante SDK compatibles o tokens proyectados; no es necesario reiniciar el Pod por ese motivo. No suponga una vigencia fija de doce horas.
 
 Configure IRSA en el ServiceAccount y valide la confianza aud/sub y los permisos de AWS. Una anotación de Pod o una variable de entorno AWS_ROLE_ARN por sí sola no es suficiente. Para mTLS de carga de trabajo, las aplicaciones/proxies deben consumir SVIDs y autorizar por separado las identidades peer.
 
@@ -329,13 +329,13 @@ UpstreamAuthority "aws_pca" {
 ```
 
 
-SPIRE posee la CA intermedia y firma certificados leaf. Limite DescribeCertificateAuthority/IssueCertificate/GetCertificate al ARN de CA previsto utilizando el [ejemplo de política](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/aws-pca-policy.json). Seleccione algoritmos/plantillas de firma para la CA real. supplemental_bundle_path contiene autoridades PEM adicionales, no una región de respaldo. Distinga KeyManager aws_kms de los plugins UpstreamAuthority.
+SPIRE administra la CA intermedia y firma certificados hoja. Limite DescribeCertificateAuthority/IssueCertificate/GetCertificate al ARN de CA previsto utilizando el [ejemplo de política](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/aws-pca-policy.json). Seleccione algoritmos/plantillas de firma para la CA real. supplemental_bundle_path contiene autoridades PEM adicionales, no una región de respaldo. Distinga KeyManager aws_kms de los plugins UpstreamAuthority.
 
 ## Mejores prácticas y solución de problemas
 
-Ajuste las vigencias frente a fallos de renovación, clock skew, carga de emisión y períodos offline. Los TTL cortos no resuelven todos los problemas de revocación o replay de JWT. Los cambios de bundle set modifican los bundles confiables; no rotan una clave privada de CA.
+Ajuste las vigencias frente a fallos de renovación, clock skew, carga de emisión y períodos offline. Los TTL cortos no resuelven todos los problemas relacionados con la revocación o la repetición de JWT. El comando bundle set modifica los paquetes de confianza; no rota una clave privada de CA.
 
-La política de red debe contemplar DNS, Kubernetes TokenReview/API, datastore, CA/KMS ascendente, federación y telemetría, además del tráfico Server↔Agent. Un selector de Pod en un namespace no selecciona Agents en otro. Valide la conectividad real antes de afirmar que la política permite todos los flujos necesarios.
+La política de red debe contemplar DNS, Kubernetes TokenReview/API, datastore, CA/KMS ascendente, federación y telemetría, además del tráfico Server↔Agent. Un selector de Pod en un namespace no selecciona Agents de otro namespace. Valide la conectividad real antes de afirmar que la política permite todos los flujos necesarios.
 
 Ejecutar api fetch dentro del Pod de Agent atestigua el proceso que realiza la llamada, no el contexto de la aplicación. Diagnostique desde el contexto de la carga de trabajo prevista mediante un procedimiento aprobado. Limite los selectores, tokens y claves sensibles en los logs.
 
@@ -358,17 +358,17 @@ Ejecutar api fetch dentro del Pod de Agent atestigua el proceso que realiza la l
 
 ## Resumen y referencias
 
-La validación local cubrió la configuración de Server/Agent, nueve casos de ID, cinco casos X.509, seis casos JWT, Helm de laboratorio/HA, esquemas CRD/Pod, esquemas protobuf de Envoy y veinticuatro casos de navegador para ocho diagramas. No se ejecutaron atestación real, instalación de clúster, conexión a DB, emisión de AWS, intercambio de federación ni tráfico mTLS.
+La validación local cubrió la configuración de Server/Agent, nueve casos de ID, cinco casos X.509, seis casos JWT, Helm de laboratorio/HA, esquemas CRD/Pod, esquemas protobuf de Envoy y veinticuatro casos de navegador para ocho diagramas. No se realizaron atestaciones reales, no se instaló ningún clúster, no se conectó a una base de datos, no se emitieron certificados con AWS, no se intercambiaron paquetes de confianza federados ni se generó tráfico mTLS.
 
 - [Especificación de ID de SPIFFE](https://spiffe.io/docs/latest/spiffe-specs/spiffe-id/)
 - [X.509-SVID](https://spiffe.io/docs/latest/spiffe-specs/x509-svid/)
 - [JWT-SVID](https://spiffe.io/docs/latest/spiffe-specs/jwt-svid/)
-- [WIT-SVID Incubating](https://spiffe.io/docs/latest/spiffe-specs/wit-svid/)
-- [Dominio de confianza y bundle](https://spiffe.io/docs/latest/spiffe-specs/spiffe_trust_domain_and_bundle/)
+- [WIT-SVID en incubación](https://spiffe.io/docs/latest/spiffe-specs/wit-svid/)
+- [Dominio y paquete de confianza](https://spiffe.io/docs/latest/spiffe-specs/spiffe_trust_domain_and_bundle/)
 - [Especificación de federación](https://spiffe.io/docs/latest/spiffe-specs/spiffe_federation/)
 - [Historial de SPIFFE en CNCF](https://www.cncf.io/projects/spiffe/)
 - [Historial de SPIRE en CNCF](https://www.cncf.io/projects/spire/)
 - [SPIRE 1.15.3](https://github.com/spiffe/spire/releases/tag/v1.15.3)
 - [SPIFFE CSI 0.2.13](https://github.com/spiffe/spiffe-csi/blob/v0.2.13/README.md)
 - [Charts Helm hardened](https://github.com/spiffe/helm-charts-hardened)
-- [Autenticación mutua de Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Autenticación mutua de Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)

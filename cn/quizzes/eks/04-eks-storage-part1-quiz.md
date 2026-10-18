@@ -1,6 +1,6 @@
 # EKS 存储测验 - 第 1 部分
 
-> **最后更新**：September 11, 2026
+> **最后更新**：2026 年 9 月 11 日
 
 这些答案采用[存储章节](../../eks/04-eks-storage-part1.md)中的所有权和前置条件。除非另有说明，示例使用常规 Linux EC2 存储；Auto Mode、Fargate 和 Hybrid 的支持情况有所不同。本地 schema/mock 检查不能证明 AWS 卷已挂载、数据已恢复或生产性能达到预期。
 

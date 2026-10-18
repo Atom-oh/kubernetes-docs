@@ -1,6 +1,6 @@
 # Grafana Loki
 
-> **最后更新**: September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 > **示例基线**: Loki 3.7.7 / 社区 Helm chart 18.12.1。本地配置、渲染和 LogQL 检查；不包括 EKS 部署、S3 访问、负载测试或 HA/故障切换测试。
 
 Loki 将日志存储为压缩块，并为流标签建立索引。这可以减少索引开销，但并不意味着相较于 Elasticsearch/OpenSearch 在成本或查询速度上具有普遍优势。请结合具有代表性的工作负载，比较摄取、保留、查询选择性、对象请求、计算、缓存和运维要求。
@@ -236,7 +236,7 @@ test:
   enabled: false
 ```
 
-gateway 仅公开所列数据 API 和非敏感的 `/` 就绪检查。即使是有效的租户凭证，请求 `/ingester/shutdown`、`/flush`、`/config`、ring/memberlist/status、删除和 ruler 管理路径时仍会收到403。请使用单独授权的内部访问/port-forward 进行管理。在扩展 allowlist 前审查所有附加客户端 API，并继续阻止直接后端访问。
+gateway 仅公开所列数据 API 和非敏感的 `/` 就绪检查。即使是有效的租户凭证，请求 `/ingester/shutdown`、`/flush`、`/config`、ring/memberlist/status、删除和 ruler 管理路径时仍会收到 403。请使用单独授权的内部访问/port-forward 进行管理。在扩展 allowlist 前审查所有附加客户端 API，并继续阻止直接后端访问。
 
 
 
@@ -508,7 +508,7 @@ sum(count_over_time({app="api"} |= "error" [5m])) > 100
 
 每个标签基数的乘积是在所有组合都可能出现时的**上限**，并非精确流数。流数、摄取速率、块大小、查询选择性、缓存和存储延迟都会影响资源使用。旧的 `<100,000 streams/cluster`、`<10,000/tenant` 和 `<1,000 values/label` 并非通用限制。
 
-Promtail 已于 **March 2, 2026** 结束生命周期；请使用诸如 Alloy 的受维护客户端，并审查迁移指南。`lambda-promtail` 有独立的生命周期。迁移后的 scrape 配置还需要正常工作的发现、RBAC、路径/CRI framing、positions、重试和输出认证；仅有 relabel 规则并不能构成 collector。
+Promtail 已于 **2026 年 3 月 2 日** 结束生命周期；请使用诸如 Alloy 的受维护客户端，并审查迁移指南。`lambda-promtail` 有独立的生命周期。迁移后的 scrape 配置还需要正常工作的发现、RBAC、路径/CRI framing、positions、重试和输出认证；仅有 relabel 规则并不能构成 collector。
 
 对于现有 Alloy pipeline，以下**处理片段**会在将字段用作标签/结构化元数据之前提取字段。它假定 `loki.write.default` 已存在，并且上游组件将纯应用程序 JSON 转发到 `loki.process.app.receiver`。它不是完整配置，也不是 CRI parser。
 
@@ -620,7 +620,7 @@ loki:
 | 流限制拒绝 | 检查实际标签组合和变化；为部署使用正确的本地/全局流限制设置。不要将 10,000 视为通用默认值。 |
 | Ingester OOM | 活跃流、块、WAL 重放、缓存/buffer 大小和节点/container 限制。避免重复的 `ingester:` YAML 键，或将 Helm 资源混入运行时 YAML。 |
 | S3 错误 | 有效的工作负载身份、bucket/region、账户/资源限制、KMS policy、DNS/endpoints 和对象可用性。不要用公共 bucket 或静态 access key 来“修复”它们。 |
-| 写入时出现“Ingester is shutting down” | 检查实际生命周期状态**和 WAL 磁盘压力**：当 WAL 磁盘已满阈值（默认0.9）限制写入时，3.7.7 可能返回相同错误。恢复容量；不要盲目禁用该保护措施。 |
+| 写入时出现“Ingester is shutting down” | 检查实际生命周期状态**和 WAL 磁盘压力**：当 WAL 磁盘已满阈值（默认值为 0.9）限制写入时，3.7.7 可能返回相同错误。恢复容量；不要盲目禁用该保护措施。 |
 | 没有 org ID / 意外租户 | Gateway 认证、header 覆盖和直接后端绕过。`auth_enabled: true` 需要租户 ID；它不会验证密码。 |
 
 使用安全配置的 LogCLI 连接或经过认证的 HTTPS gateway。例如，将凭证保存在受保护的 netrc 文件中，并使用受信任的 CA，而不是在命令中输入密码或禁用证书验证：

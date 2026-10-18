@@ -1,17 +1,17 @@
-# eBPF の基礎クイズ
+# eBPFの基礎クイズ
 
-> **対応バージョン**: Linux Kernel 4.18+, Kubernetes 1.25+
-> **最終更新**: February 23, 2026
+> **対応バージョン**: カーネル、BTF、ヘルパー関数の要件は機能によって異なります。使用するツールとKubernetesの互換性表を確認してください。
+> **最終更新**: 2026年9月11日
 
-このクイズでは、eBPF (extended Berkeley Packet Filter) の基本概念から Kubernetes 環境での応用まで、全体的な理解を確認します。
+このクイズでは、eBPF（extended Berkeley Packet Filter）の基本概念からKubernetes環境での応用まで、全般的な理解を確認します。
 
 ## 選択問題
 
-1. eBPF verifier がチェックしないものはどれですか？
+1. eBPF verifierが検証しない項目はどれですか？
    - A) 無限ループがないこと
    - B) 範囲外のメモリアクセスがないこと
    - C) プログラムの実行速度
-   - D) 初期化されていない変数を使用していないこと
+   - D) 初期化されていない変数を使用しないこと
 
 <details>
 <summary>解答を見る</summary>
@@ -19,11 +19,11 @@
 **解答: C) プログラムの実行速度**
 
 **解説:**
-eBPF verifier は、プログラムの安全性を確保するために、無限ループがないこと（DAG 構造の検証）、範囲外のメモリアクセスがないこと、初期化されていない変数を使用していないこと、helper function の呼び出しが正しいこと、プログラムが必ず終了することをチェックします。プログラムの実行速度は verifier の検証項目ではありません。
+eBPF verifierは、安全性を確保するために、制御フローに上限がありプログラムが終了すること（サポートされる範囲付きループを含む）、範囲外のメモリアクセスがないこと、初期化されていない変数を使用しないこと、ヘルパー関数の呼び出しが正しいことを検証します。プログラムの実行速度は検証項目ではありません。
 
 </details>
 
-2. どの XDP (eXpress Data Path) program の戻り値が、packet を同じ NIC に送り返しますか？
+2. XDP（eXpress Data Path）プログラムがパケットを同じNICへ送り返す戻り値はどれですか？
    - A) XDP_DROP
    - B) XDP_PASS
    - C) XDP_TX
@@ -35,66 +35,66 @@ eBPF verifier は、プログラムの安全性を確保するために、無限
 **解答: C) XDP_TX**
 
 **解説:**
-XDP program の戻り値には、次の意味があります。
-- `XDP_DROP`: packet をドロップ
-- `XDP_PASS`: kernel stack に渡す
-- `XDP_TX`: packet を同じ NIC に戻す
-- `XDP_REDIRECT`: 別の interface に転送
-- `XDP_ABORTED`: エラー処理
+XDPプログラムの戻り値は次の意味を持ちます。
+- `XDP_DROP`: パケットを破棄する
+- `XDP_PASS`: カーネルのネットワークスタックへ渡す
+- `XDP_TX`: パケットを同じNICへ送り返す
+- `XDP_REDIRECT`: 別のインターフェイスへ転送する
+- `XDP_ABORTED`: エラー処理を行う
 
-XDP_TX は、packet を受信した network interface に送り返したい場合に使用します。
+受信したネットワークインターフェイスへパケットを送り返す場合は、XDP_TXを使用します。
 
 </details>
 
-3. eBPF Maps の主な役割ではないものはどれですか？
-   - A) kernel と user space 間のデータ共有
-   - B) state の保存
-   - C) eBPF programs のコンパイル
-   - D) event data の送信
+3. eBPF mapの主な役割ではないものはどれですか？
+   - A) カーネル空間とユーザー空間の間でデータを共有する
+   - B) 状態を保存する
+   - C) eBPFプログラムをコンパイルする
+   - D) イベントデータを送信する
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: C) eBPF programs のコンパイル**
+**解答: C) eBPFプログラムをコンパイルする**
 
 **解説:**
-eBPF maps は、kernel と user space の間でデータを共有し、state を保存するために使用されるデータ構造です。Maps は event data の送信（PERF_EVENT_ARRAY、RINGBUF）、key-value storage（HASH）、統計収集（PERCPU_ARRAY）などに使用されます。eBPF programs のコンパイルは Clang/LLVM によって処理され、maps の役割ではありません。
+eBPF mapは、カーネル空間とユーザー空間の間でデータを共有したり、状態を保存したりするデータ構造です。イベントデータの送信（`PERF_EVENT_ARRAY`、`RINGBUF`）、キーと値の保存（`HASH`）、統計収集（`PERCPU_ARRAY`）などに使われます。eBPFプログラムのコンパイルはClang/LLVMが担当し、mapの役割ではありません。
 
 </details>
 
-4. Cilium が kube-proxy を置き換えるときに eBPF が提供する主な利点は何ですか？
-   - A) service 数に比例する O(n) performance
-   - B) iptables rule evaluation が必要
-   - C) map lookup による O(1) performance
-   - D) Netfilter を使用する
+4. Ciliumがkube-proxyを置き換えるとき、eBPFがもたらす主な利点は何ですか？
+   - A) Service数に比例するO(n)の処理性能
+   - B) iptablesルールの評価が必要
+   - C) 平均して定数時間で行われるハッシュmap検索により、Serviceルールの線形走査を避けられる
+   - D) Netfilterを使用する
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: C) map lookup による O(1) performance**
+**解答: C) 平均して定数時間で行われるハッシュmap検索により、Serviceルールの線形走査を避けられる**
 
 **解説:**
-従来の kube-proxy（iptables mode）は、service 数が増えるにつれて O(n) の performance 低下が発生します。Cilium は eBPF maps を使用して、一定時間の O(1) lookup performance を提供します。これにより、connection establishment time、CPU 使用率、connections per second など、あらゆる面で大幅な performance 改善が得られます。
+新しいフローでは、iptablesのServiceルールを線形走査するため、ルール数が増えると処理量も増える場合があります。確立済みのフローにはconntrackが使われることがあります。Ciliumはmapを使ってこの走査を避けますが、計算量はmapの種類によって異なります。ハッシュmapの検索は平均的には定数時間です。エンドツーエンドのレイテンシー、CPU使用率、スループットは、ワークロード、mapの種類、競合、設定にも左右されます。
 
 </details>
 
-5. bpftrace の主な目的は何ですか？
-   - A) eBPF programs を C にコンパイルする
-   - B) kernel modules をロードする
-   - C) DTrace-style high-level tracing
-   - D) container images をビルドする
+5. bpftraceの主な用途は何ですか？
+   - A) eBPFプログラムをCにコンパイルする
+   - B) カーネルモジュールをロードする
+   - C) DTrace形式の高水準トレーシング
+   - D) コンテナイメージをビルドする
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: C) DTrace-style high-level tracing**
+**解答: C) DTrace形式の高水準トレーシング**
 
 **解説:**
-bpftrace は、シンプルな one-liner command で system を trace できる DTrace-style high-level tracing language です。たとえば、system calls のカウント、process ごとの読み取り bytes の追跡、file opens の trace、TCP connections の追跡などを簡単に実行できます。
+bpftraceは、簡潔なワンライナーでシステムをトレースできるDTrace形式の高水準トレーシング言語です。システムコールの回数を数える、プロセスごとの読み取りバイト数を追跡する、ファイルオープンをトレースする、TCP接続を追跡する、といった作業を簡単に行えます。
 
 </details>
 
-6. Tetragon の TracingPolicy で、悪意のある file access が検出されたときに process を即座に終了する action はどれですか？
+6. TetragonのTracingPolicyで、悪意のあるファイルアクセスを検出したときにプロセスを直ちに終了させるactionはどれですか？
    - A) action: Block
    - B) action: Sigkill
    - C) action: Deny
@@ -106,101 +106,101 @@ bpftrace は、シンプルな one-liner command で system を trace できる 
 **解答: B) action: Sigkill**
 
 **解説:**
-Tetragon の TracingPolicy では、policy に一致する event が発生したとき、`matchActions` の `action: Sigkill` が SIGKILL signal によって process を即座に終了します。これは sensitive file access や悪意のある network connections をリアルタイムでブロックするために使用されます。
+TetragonのTracingPolicyでは、一致するイベントが発生すると、`matchActions`内の`action: Sigkill`によってSIGKILLシグナルがプロセスに送られ、プロセスが終了します。ただし、強制制御のガイドが警告しているとおり、SIGKILLが実行中の操作を必ず阻止するとは限りません。操作自体を拒否する必要がある場合は、サポートされるOverride/LSMの仕組みを使用してください。
 
 </details>
 
-7. Hubble の主な機能ではないものはどれですか？
-   - A) Network flow の観測
-   - B) DNS query の追跡
-   - C) eBPF programs のコンパイル
-   - D) Policy decision の監視
+7. Hubbleの主な機能ではないものはどれですか？
+   - A) ネットワークフローの可視化
+   - B) DNSクエリの追跡
+   - C) eBPFプログラムのコンパイル
+   - D) ポリシー判定の監視
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: C) eBPF programs のコンパイル**
+**解答: C) eBPFプログラムのコンパイル**
 
 **解説:**
-Hubble は Cilium に組み込まれた network observability platform で、network flows、DNS queries、HTTP requests、policy decisions などを収集・監視します。Hubble は observability tool であり、eBPF program のコンパイル機能は提供しません。
+HubbleはCiliumに組み込まれたネットワーク可観測性プラットフォームで、ネットワークフロー、DNSクエリ、HTTPリクエスト、ポリシー判定などを収集・監視します。Hubbleは可観測性ツールであり、eBPFプログラムをコンパイルする機能はありません。
 
 </details>
 
-8. CO-RE (Compile Once, Run Everywhere) はどの問題を解決しますか？
-   - A) eBPF program の実行速度の向上
-   - B) 異なる kernel versions 間の portability
-   - C) memory usage の削減
-   - D) network latency の削減
+8. CO-RE（Compile Once, Run Everywhere）はどのような問題を解決しますか？
+   - A) eBPFプログラムの実行速度を高める
+   - B) 異なるカーネルバージョン間の移植性を高める
+   - C) メモリ使用量を減らす
+   - D) ネットワークレイテンシーを減らす
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: B) 異なる kernel versions 間の portability**
+**解答: B) 異なるカーネルバージョン間の移植性を高める**
 
 **解説:**
-CO-RE は libbpf と BTF (BPF Type Format) を使用し、一度コンパイルした eBPF programs をさまざまな kernel versions で実行できるようにします。これにより kernel header への依存が減り、struct relocation が自動的に処理されるため、kernel version ごとの再コンパイルが不要になります。
+CO-REはlibbpfとBTF（BPF Type Format）を使い、一度コンパイルしたeBPFプログラムを複数のカーネルバージョンで実行できるようにします。カーネルヘッダーへの依存が減り、構造体の再配置も自動的に処理されるため、互換性のあるカーネル向けの再ビルドを減らせます。ただし、CO-REが存在しないヘルパーやフックを追加したり、カーネル間の動作互換性を保証したりするわけではありません。
 
 </details>
 
-9. Falco は eBPF を使用して何を検出しますか？
-   - A) Network bandwidth usage
-   - B) Runtime anomalous behavior
-   - C) Disk capacity
-   - D) CPU temperature
+9. FalcoはeBPFを使って何を検出しますか？
+   - A) ネットワーク帯域幅の使用量
+   - B) ランタイムの異常な挙動
+   - C) ディスク容量
+   - D) CPU温度
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: B) Runtime anomalous behavior**
+**解答: B) ランタイムの異常な挙動**
 
 **解説:**
-Falco は eBPF を使用して runtime anomalous behavior を検出する CNCF project です。sensitive files の読み取り、containers 内での shell 実行、privilege escalation attempts などの security threats を rules に基づいて検出し、alert を出します。
+FalcoはeBPFを使ってランタイムの異常な挙動を検出するCNCFプロジェクトです。ルールに基づき、機密ファイルの読み取り、コンテナ内でのシェル実行、権限昇格の試みなどのセキュリティ上の脅威を検出してアラートを出します。
 
 </details>
 
-10. eBPF programs の stack size limit はいくつですか？
-    - A) 128 bytes
-    - B) 256 bytes
-    - C) 512 bytes
-    - D) 1024 bytes
+10. eBPFプログラムのスタックサイズ上限はいくつですか？
+    - A) 128バイト
+    - B) 256バイト
+    - C) 512バイト
+    - D) 1024バイト
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: C) 512 bytes**
+**解答: C) 512バイト**
 
 **解説:**
-eBPF programs には 512 byte の stack size limit があります。この制限を回避するには、PERCPU_ARRAY のような maps を使用して、より大きな buffers を割り当てる必要があります。この制限は kernel の安全性を確保するために存在します。
+eBPFプログラムのスタックサイズ上限は512バイトです。この上限を超えるデータ領域が必要な場合は、`PERCPU_ARRAY`などのmapを使って、より大きなバッファを割り当てる方法があります。この上限はカーネルの安全性を確保するために設けられています。
 
 </details>
 
 ## 短答問題
 
-11. eBPF bytecode を native machine code に変換する compiler の名前は何ですか？
+11. eBPFバイトコードをネイティブの機械語へ変換するコンパイラーの名称は何ですか？
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: JIT compiler (Just-In-Time compiler)**
+**解答: JIT compiler（Just-In-Time compiler）**
 
 **解説:**
-JIT compiler は eBPF bytecode を native machine code に変換します。これにより interpreter と比較して 4〜5 倍の performance 向上が得られ、architecture-specific optimizations が適用されます。`/proc/sys/net/core/bpf_jit_enable` を 1 に設定することで有効化できます。
+JITコンパイラーはeBPFバイトコードをネイティブの機械語に変換し、アーキテクチャ固有の最適化を適用します。このガイドにある従来の「4～5倍」という値は、実測値でも一律に保証される値でもありません。設定可能な場合は`bpf_jit_enable=1`で有効にできますが、`CONFIG_BPF_JIT_ALWAYS_ON`が設定されたカーネルでは常に有効なことがあります。
 
 </details>
 
-12. kernel function calls を動的に trace する eBPF program type の名前は何ですか？
+12. カーネル関数の呼び出しを動的にトレースするeBPFプログラム種別は何ですか？
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: Kprobes (or Kprobe)**
+**解答: Kprobes（またはKprobe）**
 
 **解説:**
-Kprobes は kernel function calls を動的に trace する eBPF program type です。user space functions を trace する Uprobes とは異なり、Kprobes は kernel 内の functions を trace します。たとえば、`tcp_connect` function を trace して TCP connection information を収集できます。
+Kprobesはカーネル関数の呼び出しを動的にトレースするeBPFプログラム種別です。ユーザー空間の関数をトレースするUprobesとは異なり、Kprobesはカーネル内の関数を対象にします。たとえば、`tcp_connect`関数をトレースしてTCP接続の情報を収集できます。
 
 </details>
 
-13. Cilium に組み込まれている network observability platform の名前は何ですか？
+13. Ciliumに組み込まれたネットワーク可観測性プラットフォームの名称は何ですか？
 
 <details>
 <summary>解答を見る</summary>
@@ -208,11 +208,11 @@ Kprobes は kernel function calls を動的に trace する eBPF program type �
 **解答: Hubble**
 
 **解説:**
-Hubble は Cilium に組み込まれている network observability platform で、network flows、DNS queries、HTTP requests、policy decisions など、eBPF dataplane からのデータを収集します。Hubble CLI、Hubble UI、Hubble Relay を通じて、cluster の network traffic をリアルタイムで観測できます。
+HubbleはCiliumに組み込まれたネットワーク可観測性プラットフォームです。eBPFデータプレーンからネットワークフロー、DNSクエリ、HTTPリクエスト、ポリシー判定などのデータを収集します。Hubble CLI、Hubble UI、Hubble Relayを使って、クラスターのネットワークトラフィックをリアルタイムに観測できます。
 
 </details>
 
-14. eBPF programs をロードするために必要な Linux capability は何ですか？（kernel 5.8 以降）
+14. Linux 5.8で、特権を要するBPF操作のために導入された専用のケイパビリティは何ですか？
 
 <details>
 <summary>解答を見る</summary>
@@ -220,25 +220,25 @@ Hubble は Cilium に組み込まれている network observability platform で
 **解答: CAP_BPF**
 
 **解説:**
-kernel 5.8 以降では、eBPF programs をロードするために `CAP_BPF` capability が必要です。それ以前の version では `CAP_SYS_ADMIN` が必要でした。さらに、performance monitoring events への attach には `CAP_PERFMON`、XDP/TC programs への attach には `CAP_NET_ADMIN` が必要です。
+`CAP_BPF`は特権を要するBPF操作を許可します。一方、互換性のため`CAP_SYS_ADMIN`が引き続き使われる場合があり、新しいカーネルでは委譲されたBPF tokenをサポートすることもあります。プログラムやフックごとのチェック、ホスト側のセキュリティポリシーも適用されます。古いバージョンでは`CAP_SYS_ADMIN`が必要でした。さらに、パフォーマンス監視イベントへのアタッチには`CAP_PERFMON`、XDP/TCプログラムのアタッチには`CAP_NET_ADMIN`が必要です。
 
 </details>
 
-15. eBPF を使用して container energy consumption を監視する CNCF project の名前は何ですか？
+15. 過去にeBPFを使い、0.10.0でホストの/procおよび/sysのリソース／電力データを使う方式に書き換えられたCNCFのエネルギーexporterは何ですか？
 
 <details>
 <summary>解答を見る</summary>
 
-**解答: Kepler (Kubernetes-based Efficient Power Level Exporter)**
+**解答: Kepler（Kubernetes-based Efficient Power Level Exporter）**
 
 **解説:**
-Kepler は eBPF を使用して container energy consumption を監視する project です。`kepler_container_joules_total`（container ごとの energy consumption）や `kepler_container_gpu_joules_total`（GPU energy consumption）など、Prometheus format の metrics を提供します。
+Kepler 0.10以降では`CAP_BPF`は不要です。ホストのリソースデータとハードウェアセンサーを使って、ノードの電力／エネルギーを帰属させます。現在の例には`kepler_container_cpu_joules_total`や`kepler_pod_cpu_watts`があります。ハードウェアの違いに加え、GPU対応は実験的な範囲を含みます。従来の0.9系とはメトリクスやデプロイ手順が異なります。
 
 </details>
 
-## ハンズオン問題
+## 実習問題
 
-16. bpftool を使用して、system に現在ロードされている eBPF programs を一覧表示し、特定の program の詳細情報を照会する commands を書いてください。
+16. bpftoolで、システムに現在ロードされているeBPFプログラムを一覧表示し、特定のプログラムの詳細を照会するコマンドを書いてください。
 
 <details>
 <summary>解答を見る</summary>
@@ -259,11 +259,11 @@ sudo bpftool prog dump jited id 123
 ```
 
 **解説:**
-`bpftool prog list` は、現在ロードされているすべての eBPF programs の一覧を表示します。各 program の ID、type、name、attachment location などを確認できます。特定の program の詳細情報を照会するには `bpftool prog show id <ID>` を使用し、bytecode と JIT-compiled native code を表示するには `dump xlated` と `dump jited` を使用します。
+`bpftool prog list`は、現在ロードされているeBPFプログラムの一覧を表示します。各プログラムのID、種類、名前、アタッチ先などを確認できます。特定のプログラムの詳細を調べるには`bpftool prog show id <ID>`を使います。`dump xlated`と`dump jited`では、変換後のバイトコードとJITコンパイル済みのネイティブコードを表示できます。
 
 </details>
 
-17. system 上のすべての processes から発生する TCP connections をリアルタイムで trace する bpftrace one-liner command を書いてください。
+17. システム上のすべてのプロセスからのTCP接続をリアルタイムにトレースするbpftraceのワンライナーを書いてください。
 
 <details>
 <summary>解答を見る</summary>
@@ -274,18 +274,25 @@ sudo bpftool prog dump jited id 123
 sudo bpftrace -e 'kprobe:tcp_connect { printf("%s (PID: %d) connecting...\n", comm, pid); }'
 
 # TCP connection tracing (Method 2: using tracepoint, more detailed info)
-sudo bpftrace -e 'tracepoint:tcp:tcp_connect { printf("%s -> %s:%d\n", ntop(args->saddr), ntop(args->daddr), args->dport); }'
+sudo bpftrace -e '
+tracepoint:sock:inet_sock_set_state /args.protocol == 6 && args.newstate == 1/ {
+    if (args.family == 2) {
+        printf("IPv4 %s:%d -> %s:%d established\n", ntop(args.saddr), args.sport, ntop(args.daddr), args.dport);
+    } else if (args.family == 10) {
+        printf("IPv6 %s:%d -> %s:%d established\n", ntop(args.saddr_v6), args.sport, ntop(args.daddr_v6), args.dport);
+    }
+}'
 
 # Count TCP connections by process
 sudo bpftrace -e 'kprobe:tcp_connect { @[comm] = count(); }'
 ```
 
 **解説:**
-bpftrace は、シンプルな one-liners で system を trace できる DTrace-style high-level tracing language です。`kprobe:tcp_connect` は kernel の `tcp_connect` function が呼び出されたときに trigger されます。`comm` は process name を表し、`pid` は process ID を表します。tracepoints を使用すると、source/destination IP addresses と port information も取得できます。
+bpftraceは、短いワンライナーでシステムをトレースできるDTrace形式の高水準トレーシング言語です。`kprobe:tcp_connect`はカーネルの`tcp_connect`関数が呼び出されたときに動作します。`comm`はプロセス名、`pid`はプロセスIDを表します。`sock:inet_sock_set_state`の例は、受動接続を含む確立済み接続を観測しますが、その実行コンテキストから接続を開始したプロセスを確実に特定することはできません。kprobeの例が数えるのは接続の試行であり、ハンドシェイクの成功を保証するものではありません。
 
 </details>
 
-18. Hubble CLI を使用して、特定の namespace からの dropped packets のみを観測する command を書いてください。
+18. 特定のnamespaceでドロップされたパケットだけを観測するHubble CLIコマンドを書いてください。
 
 <details>
 <summary>解答を見る</summary>
@@ -306,96 +313,124 @@ hubble observe --from-pod production/frontend --verdict DROPPED
 ```
 
 **解説:**
-Hubble は Cilium に組み込まれた network observability tool です。`--namespace` option は特定の namespace で filter し、`--verdict DROPPED` は dropped packets のみに filter します。`-f` option は real-time streaming を提供し、`-o json` は JSON format output を提供します。dropped packets を分析することで、network policy の問題や configuration errors の診断に役立ちます。
+HubbleはCiliumに組み込まれたネットワーク可観測性ツールです。`--namespace`で対象のnamespaceを指定し、`--verdict DROPPED`でドロップされたパケットだけに絞ります。`-f`はリアルタイムのストリーミング、`-o json`はJSON形式での出力を指定します。ドロップされたパケットを分析すると、ネットワークポリシーや設定の問題を診断するのに役立ちます。
 
 </details>
 
 ## 応用問題
 
-19. eBPF が kernel modules に対して持つ 3 つの主な利点を説明し、それぞれが Kubernetes environments で具体的にどのような benefits を提供するかを述べてください。
+19. eBPFがカーネルモジュールに対して持つ主な利点を3つ挙げ、それぞれがKubernetes環境でどのようなメリットをもたらすかを説明してください。
 
 <details>
 <summary>解答を見る</summary>
 
 **解答:**
 
-kernel modules に対する eBPF の主な利点と、Kubernetes environments における benefits:
+カーネルモジュールに対するeBPFの主な利点と、Kubernetes環境でのメリットは次のとおりです。
 
-**1. 安全性（verifier による安全性の保証）**
-- **利点**: eBPF verifier は、program をロードする前に無限ループ、memory access violations、uninitialized variables などをチェックし、kernel crashes を防ぎます。
-- **Kubernetes における benefit**: CNI plugins（Cilium）や security tools（Tetragon、Falco）を production clusters で安全に実行できます。kernel modules とは異なり、bug があっても system 全体は crash せず、高可用性を維持できます。
+**1. 検証器による安全性チェック（verifierの検証モデルの範囲内）**
+- **利点**: eBPF verifierは、カーネルクラッシュを防ぐため、プログラムをロードする前に無限ループ、メモリアクセス違反、未初期化変数などを検査します。
+- **Kubernetesでのメリット**: サポートされるバージョンと設定を検証すれば、CNIやセキュリティツールのリスクを低減できます。ただし、検証器がカーネル、ヘルパー、JITの不具合、誤ったポリシー、過剰な負荷によるホストへの影響を防ぐ保証はありません。
 
-**2. Portability（CO-RE による kernel version からの独立性）**
-- **利点**: CO-RE (Compile Once, Run Everywhere) と BTF を使用することで、一度コンパイルした eBPF programs をさまざまな kernel versions で実行できます。kernel version ごとの再コンパイルは不要です。
-- **Kubernetes における benefit**: 同じ networking/security solutions を、異種混在の node environments（kernel versions が異なる nodes）に展開できます。cluster upgrades や node 追加時の compatibility issues が大幅に減少します。
+**2. 移植性（CO-REによる型の再配置）**
+- **利点**: CO-RE（Compile Once, Run Everywhere）とBTFを使うと、一度コンパイルしたeBPFプログラムを複数のカーネルバージョンで実行できます。カーネルバージョンごとに再コンパイルする必要はありません。
+- **Kubernetesでのメリット**: 異なるカーネルバージョンのノードが混在する環境でも、同じネットワーク／セキュリティソリューションを展開できます。クラスターのアップグレードやノード追加に伴う互換性の問題を減らせます。
 
-**3. Dynamic loading（reboot なしでの program の load/unload）**
-- **利点**: eBPF programs は system reboot なしで動的に load/unload できます。runtime に機能を追加または変更できます。
-- **Kubernetes における benefit**: node restarts なしで network policies、security rules、observability settings を即座に適用できます。Cilium NetworkPolicy や Tetragon TracingPolicy への変更はリアルタイムに反映され、運用を中断せずに security enhancements を実現できます。
+**3. 動的なロード（再起動せずにプログラムをロード／アンロード）**
+- **利点**: eBPFプログラムはシステムを再起動せずに動的にロード／アンロードでき、実行時に機能を追加または変更できます。
+- **Kubernetesでのメリット**: ノードを再起動せずにネットワークポリシー、セキュリティルール、可観測性の設定を適用できます。Cilium NetworkPolicyやTetragon TracingPolicyの変更をリアルタイムに反映し、運用の中断を避けながらセキュリティを強化できます。
 
-**追加の利点:**
-- **Performance**: JIT compilation により native code-level performance が提供され、kube-proxy を置き換える際に O(1) service lookup が可能になります。
-- **開発難易度**: kernel module development よりも比較的容易で、迅速な feature development と deployment が可能になります。
+**その他の利点:**
+- **性能**: JITコンパイルによりネイティブコード水準の性能が得られます。kube-proxyを置き換える場合、Service検索をO(1)にできます。
+- **開発の難易度**: カーネルモジュールの開発に比べて比較的取り組みやすく、機能を迅速に開発・展開できます。
 
 </details>
 
-20. Kubernetes cluster で eBPF-based security solution（Tetragon または Falco）を使用して containers 内の sensitive file access を検出し、ブロックする approach を設計してください。説明には TracingPolicy または Falco rule の examples を含めてください。
+20. Kubernetesクラスターで、TetragonまたはFalcoを使ったeBPFベースのセキュリティソリューションにより、コンテナ内の機密ファイルへのアクセスを検出してブロックする方法を設計してください。説明にはTracingPolicyまたはFalcoルールの例を含めてください。
 
 <details>
 <summary>解答を見る</summary>
 
 **解答:**
 
-**eBPF-based Sensitive File Access Security Design**
+**eBPFによる機密ファイルアクセス対策の設計**
 
-**1. Security Requirements Definition**
-- Detection targets: `/etc/shadow`, `/etc/passwd`, `/etc/sudoers`, `/var/run/secrets/` (Kubernetes secrets)
-- Response approach: Alert on detection, process termination for severe cases
+**1. セキュリティ要件の定義**
+- 検出対象: `/etc/shadow`、`/etc/passwd`、`/etc/sudoers`、`/var/run/secrets/`（Kubernetes Secret）
+- 対応方針: 検出時にアラートを出し、重大なケースではプロセスを終了する
 
-**2. Tetragon TracingPolicy Implementation**
+**2. Tetragon TracingPolicyの実装**
 
 ```yaml
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
   name: sensitive-file-protection
+  namespace: ebpf-lab
 spec:
   kprobes:
-    # Monitor sensitive file opens
-    - call: security_file_open
-      syscall: false
-      args:
-        - index: 0
-          type: file
-      selectors:
-        # Detect and log Kubernetes secret access
-        - matchArgs:
-            - index: 0
-              operator: Prefix
-              values:
-                - /var/run/secrets/kubernetes.io/
-          matchActions:
-            - action: Post  # Event logging
-
-        # Block system authentication file access
-        - matchArgs:
-            - index: 0
-              operator: Prefix
-              values:
-                - /etc/shadow
-                - /etc/sudoers
-          matchNamespaces:
-            - namespace: default
-              operator: In
-          matchActions:
-            - action: Sigkill  # Immediately terminate process
+  - call: security_file_open
+    syscall: false
+    args:
+    - index: 0
+      type: file
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /var/run/secrets/kubernetes.io/
+      matchActions:
+      - action: Post
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /etc/shadow
+        - /etc/sudoers
+      matchActions:
+      - action: Post
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
 ```
 
-**3. Falco Rules Implementation**
+最初のポリシーはPostのみの観測用です。まず`ebpf-lab` namespaceと、`app=ebpf-demo`ラベルを付けたテストPodを作成してください。`TracingPolicyNamespaced`はKubernetes namespaceの範囲を指定します。一方、`matchNamespaces`はLinux namespaceのinodeでフィルタリングします。
+
+次の**任意のテスト用ポリシー**は操作を拒否します。使用するTetragonとカーネルの組み合わせがLSM Overrideをサポートすることに加え、`CONFIG_BPF_LSM`と有効なbpf LSMが必要です。適用前に許可／拒否される動作とロールバックを確認してください。これは本番環境全体で検証済みのポリシーではありません。SIGKILLだけでは、トリガーとなった操作を必ず阻止できるとは限りません。
 
 ```yaml
-# /etc/falco/rules.d/sensitive-files.yaml
-- rule: Read Kubernetes Secrets
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicyNamespaced
+metadata:
+  name: sensitive-file-deny
+  namespace: ebpf-lab
+spec:
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
+  lsmhooks:
+  - hook: file_open
+    args:
+    - index: 0
+      type: file
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Equal
+        values:
+        - /etc/shadow
+        - /etc/sudoers
+      matchActions:
+      - action: Override
+        argError: -13
+```
+
+**3. Falcoルールの実装**
+
+```yaml
+# Save locally as ebpf-lab-rules.yaml; the Helm chart mounts it under /etc/falco/rules.d.
+- rule: eBPF lab read Kubernetes secrets
   desc: Detect reading of Kubernetes secret files in containers
   condition: >
     open_read and
@@ -412,7 +447,7 @@ spec:
   priority: WARNING
   tags: [security, filesystem]
 
-- rule: Write to Sensitive System Files
+- rule: eBPF lab write sensitive files
   desc: Detect writing to sensitive system files
   condition: >
     open_write and
@@ -426,11 +461,14 @@ spec:
   tags: [security, filesystem]
 ```
 
-**4. Deployment and Monitoring**
+**4. デプロイと監視**
 
 ```bash
 # Install Tetragon and apply policy
-helm install tetragon cilium/tetragon -n kube-system
+helm repo add cilium https://helm.cilium.io
+: "${TETRAGON_CHART_VERSION:?Select a compatible reviewed chart version}"
+helm install tetragon cilium/tetragon -n kube-system --version "$TETRAGON_CHART_VERSION"
+# Apply observation first; keep optional denial in a separate reviewed file.
 kubectl apply -f sensitive-file-protection.yaml
 
 # Monitor events
@@ -438,48 +476,77 @@ kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon \
   -c export-stdout -f | tetra getevents -o compact
 
 # Install Falco (eBPF driver)
-helm install falco falcosecurity/falco \
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+# Save the following Falco rule examples as ./ebpf-lab-rules.yaml before installation.
+: "${FALCO_CHART_VERSION:?Select a compatible reviewed chart version}"
+helm install falco falcosecurity/falco --version "$FALCO_CHART_VERSION" \
   --namespace falco --create-namespace \
-  --set driver.kind=modern_ebpf
+  --set driver.kind=modern_ebpf \
+  --set-file 'customRules.ebpf-lab-rules\.yaml=./ebpf-lab-rules.yaml'
 
 # Check Falco alerts
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
 ```
 
-**5. Architecture Explanation**
+**5. アーキテクチャの説明**
 
-```
-┌─────────────────────────────────────────────────┐
-│              Kubernetes Cluster                 │
-│  ┌─────────────────┐    ┌─────────────────┐    │
-│  │   Application   │    │   Application   │    │
-│  │      Pod        │    │      Pod        │    │
-│  └────────┬────────┘    └────────┬────────┘    │
-│           │                      │             │
-│  ┌────────▼──────────────────────▼────────┐   │
-│  │              eBPF Layer                 │   │
-│  │  ┌─────────────┐  ┌─────────────┐     │   │
-│  │  │ Tetragon    │  │  Falco      │     │   │
-│  │  │ TracingPol. │  │  Rules      │     │   │
-│  │  └──────┬──────┘  └──────┬──────┘     │   │
-│  │         │                 │            │   │
-│  │         ▼                 ▼            │   │
-│  │   [File Access Event Capture]          │   │
-│  └────────────────────────────────────────┘   │
-│                      │                         │
-│  ┌───────────────────▼───────────────────┐   │
-│  │           Security Response            │   │
-│  │  • Event logging (Post)               │   │
-│  │  • Process termination (Sigkill)      │   │
-│  │  • SIEM alert forwarding              │   │
-│  └───────────────────────────────────────┘   │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  A["Application file operation"] --> T["Tetragon BPF LSM hook"]
+  T -->|supported Override| D["Return denial before operation"]
+  T -->|Post| E["Tetragon event export"]
+  A --> F["Falco kernel event sensor"]
+  F --> R["Falco userspace rule engine"]
+  R --> S["Alert / SIEM"]
+  E --> S
 ```
 
-この設計では、eBPF の kernel-level visibility を活用し、applications を変更することなく sensitive file access をリアルタイムで検出して対応します。
+この設計では、eBPFによるカーネルレベルの可視性を活用し、アプリケーションを変更せずに機密ファイルへのアクセスをリアルタイムに検出して対応します。
 
 </details>
 
 ---
 
-[学習資料に戻る](../../basics/05-ebpf-fundamentals.md) | [次のクイズ: Container Technology](./03-container-technology-quiz.md)
+[教材一覧に戻る](../../basics/05-ebpf-fundamentals.md) | [次のクイズ: コンテナ技術](./03-container-technology-quiz.md)
+
+Falcoの例は、デフォルトのルールセットに含まれる`open_read`、`open_write`、`spawned_process`、`container`マクロに依存します。追加のルールファイルは、インストール済みチャートの`customRules`／`falco.rules_files`設定から読み込んでください。Falcoは検知とアラートを行いますが、これらのルールはアクセスを拒否しません。コンテナ／Kubernetesのメタデータが遅れて届く場合があり、正当なServiceAccount tokenの読み取りも一致するため、適切な許可条件をテストしてください。
+
+## 検証用の参考資料
+
+- https://www.kernel.org/doc/html/latest/admin-guide/sysctl/kernel.html
+- https://www.kernel.org/doc/html/latest/admin-guide/sysctl/net.html
+- https://github.com/torvalds/linux/blob/master/include/linux/bpf.h
+- https://github.com/torvalds/linux/blob/master/include/linux/filter.h
+- https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h
+- https://github.com/torvalds/linux/blob/master/kernel/bpf/syscall.c
+- https://docs.kernel.org/bpf/prog_lsm.html
+- https://docs.kernel.org/userspace-api/seccomp_filter.html
+- https://github.com/torvalds/linux/blob/master/include/trace/events/sock.h
+- https://github.com/bpftrace/bpftrace/blob/v0.27.0/docs/language.md
+- https://github.com/bpftrace/bpftrace/blob/v0.27.0/docs/stdlib.md
+- https://packages.debian.org/trixie/arm64/bpfcc-tools/filelist
+- https://github.com/iovisor/bcc/blob/master/tools/tcpconnlat.py
+- https://github.com/iovisor/bcc/blob/master/tools/gethostlatency.py
+- https://github.com/libbpf/bpftool/blob/main/docs/bpftool-map.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/lb-ipam.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml
+- https://github.com/cilium/cilium/blob/v1.20.1/hubble/cmd/observe/observe.go
+- https://github.com/cilium/cilium/blob/v1.20.1/hubble/pkg/printer/printer_test.go
+- https://github.com/cilium/tetragon/blob/main/docs/content/en/docs/concepts/enforcement/_index.md
+- https://github.com/cilium/tetragon/blob/main/docs/content/en/docs/concepts/tracing-policy/selectors.md
+- https://github.com/cilium/tetragon/blob/main/pkg/k8s/apis/cilium.io/v1alpha1/tracing_policy_types.go
+- https://github.com/cilium/tetragon/blob/main/cmd/tetra/getevents/getevents.go
+- https://github.com/cilium/tetragon/blob/main/examples/tracingpolicy/lsm_file_open.yaml
+- https://github.com/cilium/tetragon/blob/main/install/kubernetes/tetragon/crds-yaml/cilium.io_tracingpoliciesnamespaced.yaml
+- https://github.com/sustainable-computing-io/kepler/blob/main/README.md
+- https://github.com/sustainable-computing-io/kepler/blob/main/docs/user/metrics.md
+- https://github.com/coroot/helm-charts/blob/main/charts/coroot/Chart.yaml
+- https://github.com/coroot/helm-charts/blob/main/charts/operator/Chart.yaml
+- https://github.com/coroot/helm-charts/blob/main/charts/coroot-ce/Chart.yaml
+- https://docs.px.dev/reference/pxl/udf/quantiles/
+- https://github.com/pixie-io/pixie/blob/main/src/pixie_cli/pkg/cmd/run.go
+- https://github.com/pixie-io/pixie/blob/main/src/pxl_scripts/px/http_data/data.pxl
+- https://falco.org/docs/reference/rules/supported-fields/
+- https://github.com/falcosecurity/charts/blob/master/charts/falco/values.yaml
+- https://github.com/falcosecurity/rules/blob/main/rules/falco_rules.yaml

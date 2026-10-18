@@ -369,7 +369,7 @@ Amazon EFS 是一种完全托管的 NFS 文件系统，可由多个 EC2 实例�
 
 ### 2026 年 9 月更新：EFS CSI 驱动程序挂载选项注入 (CVE-2026-6437)
 
-2026 年 9 月 25 日，AWS 发布了 [CVE-2026-6437](https://aws.amazon.com/security/security-bulletins/2026-016-aws/) 安全公告，指出 EFS CSI 驱动程序存在挂载选项注入问题。拥有 PersistentVolume 创建权限的行为者可以通过两个未经清理的字段（`volumeHandle` 中的接入点 ID 和 `volumeAttribute` 中的 `mounttargetip`）注入任意挂载选项，因为以逗号分隔的值会被追加，导致挂载实用程序将它们解析为单独的挂载选项。EFS CSI 驱动程序 **v3.0.0 及更早版本**受影响；此问题已在 **v3.0.1** 中修复。请将驱动程序（包括 EKS 托管插件）更新到 v3.0.1 或更高版本，并使用 Kubernetes RBAC 将 PersistentVolume 和 StorageClass 的创建权限限制为集群管理员，以防止不受信任的用户提供任意字段值。
+2026 年 9 月 25 日，AWS 发布了 [CVE-2026-6437](https://aws.amazon.com/security/security-bulletins/2026-016-aws/) 安全公告，指出 EFS CSI 驱动程序存在挂载选项注入问题。拥有 PersistentVolume 创建权限的行为者可以通过两个未经清理的字段（`volumeHandle` 中的接入点 ID 和 volumeAttribute 中的 `mounttargetip`）注入任意挂载选项，因为以逗号分隔的值会被追加，导致挂载实用程序将它们解析为单独的挂载选项。EFS CSI 驱动程序 **v3.0.0 及更早版本**受影响；此问题已在 **v3.0.1** 中修复。请将驱动程序（包括 EKS 托管插件）更新到 v3.0.1 或更高版本，并使用 Kubernetes RBAC 将 PersistentVolume 和 StorageClass 的创建权限限制为集群管理员，以防止不受信任的用户提供任意字段值。
 
 ### 创建 EFS 文件系统
 

@@ -1,6 +1,6 @@
 # 基本概念
 
-本文档介绍 Istio 的核心概念和架构。理解这些基本概念对于有效使用 Istio 至关重要。
+本文介绍 Istio 的核心概念和架构。理解这些基础概念有助于有效使用 Istio。
 
 ## 目录
 
@@ -12,12 +12,10 @@
 6. [流量管理概念](02-basic-concepts.md#traffic-management-concepts)
 7. [安全概念](02-basic-concepts.md#security-concepts)
 8. [可观测性概念](02-basic-concepts.md#observability-concepts)
-9. [Namespace 与服务网格](02-basic-concepts.md#namespaces-and-service-mesh)
+9. [命名空间与服务网格](02-basic-concepts.md#namespaces-and-service-mesh)
 10. [后续步骤](02-basic-concepts.md#next-steps)
 
-<span id="background-and-history"></span>
-
-## 背景与历史
+## 背景与历史 {#background-and-history}
 
 ### 服务网格的诞生
 
@@ -25,88 +23,34 @@
 
 2010 年代初，企业开始将单体应用拆分为微服务。
 
-```mermaid
-flowchart TB
-    subgraph Before[Monolithic Era]
-        M[Monolithic<br/>Application]
-        M -->|Single process| M
-    end
+![示意图对比单体应用与微服务架构：多个小型服务相互调用，最终汇聚到一个共享的下游服务。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-0.png)
 
-    subgraph After[Microservices Era]
-        S1[Service A]
-        S2[Service B]
-        S3[Service C]
-        S4[Service D]
-        S5[Service E]
-
-        S1 --> S2
-        S1 --> S3
-        S2 --> S4
-        S3 --> S4
-        S4 --> S5
-    end
-
-    Before -.->|Transition| After
-
-    %% Style definitions
-    classDef monolith fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef micro fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class M monolith;
-    class S1,S2,S3,S4,S5 micro;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-0.html)
 
 **新问题**：
 
-| 问题                         | 说明                                  | 影响                         |
-| ------------------------------- | -------------------------------------------- | ------------------------------ |
-| **服务间通信** | 网络调用增加                      | 延迟、故障传播   |
-| **可观测性**               | 需要分布式追踪                 | 调试困难            |
-| **安全性**                    | 服务间认证/加密 | mTLS 实现复杂度 |
-| **流量控制**             | 金丝雀部署、A/B 测试              | 应用代码修改 |
-| **故障处理**            | Circuit Breaker、重试                       | 每个服务分别实现     |
+| 问题 | 说明 | 影响 |
+| --- | --- | --- |
+| **服务间通信** | 网络调用增加 | 延迟、故障传播 |
+| **可观测性** | 需要分布式追踪 | 调试困难 |
+| **安全性** | 服务间身份验证/加密 | mTLS 实现复杂 |
+| **流量控制** | 金丝雀部署、A/B 测试 | 需要修改应用代码 |
+| **故障处理** | 熔断器、重试 | 每个服务都要分别实现 |
 
 #### 早期解决方案：库
 
 **问题**：
 
-* 每种语言都需要开发库（Java 使用 Hystrix、Go 使用单独的库……）
+* 每种语言都需要开发相应的库（例如 Java 的 Hystrix、单独的 Go 库等）
 * 与应用代码紧密耦合
 * 更新时需要重新部署所有服务
 * 版本管理复杂
 
-```mermaid
-flowchart LR
-    subgraph App1[Java Service]
-        J[Application Code]
-        H[Hystrix<br/>Netflix OSS]
-    end
+![示意图展示了三种不同语言的服务各自将网络库与应用代码紧密绑定：Java 使用 Hystrix、Go 使用一个库、Python 使用 Requests。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-1.png)
 
-    subgraph App2[Go Service]
-        G[Application Code]
-        L[Go Library]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-1.html)
 
-    subgraph App3[Python Service]
-        P[Application Code]
-        R[Requests + Retry]
-    end
-
-    J --- H
-    G --- L
-    P --- R
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lib fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class J,G,P app;
-    class H,L,R lib;
-```
-
-**服务网格理念**：将网络逻辑从应用中移至基础设施层
+**服务网格理念**：将网络逻辑从应用中移出，放到基础设施层处理。
 
 ### Envoy Proxy 的诞生
 
@@ -114,7 +58,7 @@ flowchart LR
 
 **2015 年，Lyft** 面临以下问题：
 
-* 运营 200 多个微服务
+* 运营着 200 多个微服务
 * 使用多种语言和框架（Python、Go、Java 等）
 * 现有代理（HAProxy、NGINX）无法满足需求
   * 难以动态更改配置
@@ -123,47 +67,21 @@ flowchart LR
 
 #### Matt Klein 与 Envoy
 
-**Matt Klein**（Lyft 工程师）于 2016 年将 Envoy 开源。
+Lyft 工程师 **Matt Klein** 于 2016 年将 Envoy 开源。
 
 **Envoy 解决的问题**：
 
-```mermaid
-flowchart TB
-    subgraph Problems[Existing Proxy Problems]
-        P1[Static configuration<br/>File-based]
-        P2[Limited<br/>metrics]
-        P3[Complex<br/>restart]
-        P4[Simple<br/>routing]
-    end
+![示意图将 Envoy 出现之前的四项代理局限（基于静态文件的配置、指标有限、重启复杂、路由简单）与 Envoy 提供的对应能力进行配对。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-2.png)
 
-    subgraph Solutions[Envoy's Solutions]
-        S1[Dynamic API<br/>xDS Protocol]
-        S2[Rich<br/>statistics/tracing]
-        S3[Hot Restart<br/>Zero downtime]
-        S4[Advanced L7<br/>routing]
-    end
-
-    P1 -.->|Solved| S1
-    P2 -.->|Solved| S2
-    P3 -.->|Solved| S3
-    P4 -.->|Solved| S4
-
-    %% Style definitions
-    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class P1,P2,P3,P4 problem;
-    class S1,S2,S3,S4 solution;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-2.html)
 
 **Envoy 的主要功能**：
 
-1. **进程外架构**：与应用分离的独立进程
-2. **xDS API**：动态配置更新
+1. **进程外架构**：与应用分离，作为独立进程运行
+2. **xDS API**：动态更新配置
 3. **L7 代理**：支持 HTTP/2、gRPC、WebSocket
-4. **可观测性**：详细指标、追踪、日志
-5. **性能**：使用 C++ 编写，性能优异
+4. **可观测性**：提供详细的指标、追踪和日志
+5. **性能**：使用 C++ 编写，性能高
 
 #### CNCF 采纳
 
@@ -175,65 +93,33 @@ flowchart TB
 
 ### Istio 的诞生与历史
 
-#### Google、IBM、Lyft 合作
+#### Google、IBM 与 Lyft 合作
 
-**2017 年 5 月**，Google、IBM 和 Lyft 共同宣布 Istio。
+**2017 年 5 月**，Google、IBM 和 Lyft 合作宣布推出 Istio。
 
-```mermaid
-flowchart LR
-    subgraph Companies[Participating Companies]
-        G[Google<br/>Kubernetes experience]
-        I[IBM<br/>Enterprise requirements]
-        L[Lyft<br/>Envoy Proxy]
-    end
+![示意图展示 Google 和 IBM 为 Istio 控制平面作出贡献，Lyft 提供 Envoy 作为数据平面；三家公司于 2017 年 5 月共同宣布 Istio。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-3.png)
 
-    subgraph Istio[Istio Service Mesh]
-        CP[Control Plane<br/>Google led]
-        DP[Data Plane<br/>Envoy-based]
-    end
-
-    G --> CP
-    I --> CP
-    L --> DP
-
-    %% Style definitions
-    classDef company fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class G,I,L company;
-    class CP,DP component;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-3.html)
 
 **各公司的贡献**：
 
-| 公司    | 主要贡献    | 原因                           |
-| ---------- | -------------------- | -------------------------------- |
-| **Google** | Control Plane 设计 | Borg、Kubernetes 经验      |
-| **IBM**    | 企业功能  | 企业客户需求 |
-| **Lyft**   | Envoy Proxy          | 经过生产验证的代理          |
+| 公司 | 主要贡献 | 原因 |
+| --- | --- | --- |
+| **Google** | 控制平面设计 | Borg、Kubernetes 方面的经验 |
+| **IBM** | 企业级功能 | 企业客户的需求 |
+| **Lyft** | Envoy Proxy | 经生产环境验证的代理 |
 
 #### Istio 版本历史
 
-**主要里程碑**：
+**重要里程碑**：
 
-```mermaid
-timeline
-    title Istio Major Version History
-    2017-05 : Istio 0.1 announced
-    2018-07 : Istio 1.0 : Production ready
-    2019-03 : Istio 1.1 : Performance improvements
-    2020-03 : Istio 1.5 : Istiod consolidation
-    2021-05 : Istio 1.10 : Discovery Selectors
-    2022-02 : Istio 1.13 : Gateway API support
-    2023-11 : Istio 1.20 : Ambient Mode
-    2024-05 : Istio 1.22 : Stability improvements
-    2025-01 : Istio 1.28 : Current version
-```
+![Istio 重要版本时间线：从 2017 年 5 月发布的 0.1 版，到 2025 年 11 月的 1.28 版；标出 1.0 版达到生产就绪、1.5 版整合 istiod，以及 1.18 版以 alpha 形式引入 Ambient Mode 等里程碑。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-4.png)
 
-**版本 1.5（2020 年 3 月）——重要转折点**：
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-4.html)
 
-之前的架构（Istio 1.4 及更早版本）：
+**1.5 版（2020 年 3 月）——重要转折点**：
+
+此前的架构（Istio 1.4 及更早版本）：
 
 ```
 Separated into individual components:
@@ -243,7 +129,7 @@ Separated into individual components:
 - Galley (configuration validation)
 ```
 
-新架构（Istio 1.5+，当前为 1.28）：
+新架构（Istio 1.5 及更高版本）：
 
 ```
 Istiod (consolidated into single binary)
@@ -251,69 +137,31 @@ Istiod (consolidated into single binary)
 ├── Citadel functionality (Certificate Authority, Identity)
 └── Galley functionality (Configuration Validation)
 
-Mixer completely removed (functionality moved to Envoy)
+Mixer was deprecated during this transition; telemetry moved into the proxies
 ```
 
 **变更原因**：
 
-* 降低复杂性（4 个组件 → 1 个）
-* 提升性能（移除 Mixer 后延迟降低 50%）
-* 简化运维（管理单一进程）
-* 提高资源效率（降低内存、CPU 使用量）
+* 降低复杂性（从 4 个组件减少为 1 个）
+* 减少遥测路径开销（实际改善程度取决于工作负载）
+* 简化运维（只需管理单个进程）
+* 提高资源效率（减少内存和 CPU 使用量）
 
-<span id="why-istio"></span>
+## 为什么选择 Istio？ {#why-istio}
 
-## 为什么选择 Istio？
-
-Kubernetes 提供容器编排功能，但在管理微服务之间的复杂通信方面存在局限。Istio 是用于解决这些问题的服务网格解决方案。
+Kubernetes 提供容器编排，但在管理微服务间的复杂通信方面有局限。Istio 是一种服务网格解决方案，用于应对这些问题。
 
 ### 微服务的挑战
 
-```mermaid
-flowchart TB
-    subgraph Problems["Microservices Challenges"]
-        P1[Traffic Management<br/>Complex routing]
-        P2[Security<br/>Inter-service encryption]
-        P3[Observability<br/>Difficult debugging]
-        P4[Resilience<br/>Failure handling]
-    end
+![图示列出流量管理、安全性、可观测性和弹性这四类共同挑战：不使用 Istio 时，各服务重复实现且行为不一致；使用 Istio 后，则可在基础设施层通过一致的声明式策略统一处理。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-5.png)
 
-    subgraph Without["Without Istio"]
-        W1[Direct implementation<br/>in application code]
-        W2[Duplicate code<br/>in each service]
-        W3[Inconsistent<br/>implementation]
-        W4[Difficult<br/>maintenance]
-    end
-
-    subgraph With["Using Istio"]
-        I1[Automatic handling<br/>at infrastructure level]
-        I2[Central management<br/>with declarative config]
-        I3[Consistent<br/>policy application]
-        I4[Add features<br/>without code changes]
-    end
-
-    P1 & P2 & P3 & P4 -->|Traditional approach| W1
-    W1 --> W2 --> W3 --> W4
-
-    P1 & P2 & P3 & P4 -->|Istio| I1
-    I1 --> I2 --> I3 --> I4
-
-    %% Style definitions
-    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef without fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef with fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class P1,P2,P3,P4 problem;
-    class W1,W2,W3,W4 without;
-    class I1,I2,I3,I4 with;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-5.html)
 
 ### Istio 提供的核心价值
 
 #### 1. 流量管理
 
-**问题**：部署新版本时，希望安全地切换流量。
+**问题**：部署新版本时，需要安全地切换流量。
 
 **Istio 解决方案**：
 
@@ -342,12 +190,12 @@ spec:
 
 * 无需修改应用代码
 * 可实时调整流量拆分
-* 支持自动回滚
-* 支持 A/B 测试、Blue/Green 部署
+* 回滚可由发布控制器自动执行；Istio 负责应用路由权重
+* 支持 A/B 测试和蓝绿部署
 
 #### 2. 安全性
 
-**问题**：希望加密并认证服务间通信。
+**问题**：需要加密并验证服务间通信。
 
 **Istio 解决方案**：
 
@@ -360,7 +208,7 @@ metadata:
   namespace: istio-system
 spec:
   mtls:
-    mode: STRICT  # Automatic encryption for all inter-service communication
+    mode: STRICT  # Require mTLS on enrolled inbound workloads
 ```
 
 **优势**：
@@ -368,7 +216,7 @@ spec:
 * 自动签发和续订证书
 * 自动验证服务身份
 * 细粒度权限控制
-* 实现 Zero Trust 网络
+* 实现零信任网络
 
 #### 3. 可观测性
 
@@ -376,19 +224,19 @@ spec:
 
 **Istio 解决方案**：
 
-* 自动生成指标（Latency、Traffic、Errors、Saturation）
+* 自动生成指标（延迟、流量、错误、饱和度）
 * 分布式追踪
 * 服务拓扑可视化
 
 **优势**：
 
 * 自动识别瓶颈
-* 快速识别错误根因
+* 快速定位错误根因
 * 实时监控服务状态
 
 #### 4. 弹性
 
-**问题**：一个服务的故障会传播至整个系统。
+**问题**：一个服务发生故障后，故障可能传播到整个系统。
 
 **Istio 解决方案**：
 
@@ -402,232 +250,189 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **优势**：
 
-* 故障隔离（Circuit Breaker）
+* 故障隔离（熔断器）
 * 自动重试和超时
 * 自动移除不健康实例
-* 流量限制（Rate Limiting）
+* 流量限制
 
 ### 何时使用 Istio
+
+以下服务数量仅为示例；是否适用应由安全和运维要求决定。
 
 **✅ 适合使用 Istio 的情况：**
 
 1. **微服务架构**
-   * 10 个或更多服务
-   * 服务之间存在复杂依赖关系
-   * 频繁部署
+   * 服务数量达到 10 个或更多
+   * 服务间依赖关系复杂
+   * 部署频繁
 2. **需要高级流量管理**
    * 金丝雀部署、A/B 测试
    * 细粒度路由控制
-   * Traffic Mirroring
+   * 流量镜像
 3. **安全要求高**
    * 必须加密服务间通信
-   * 细粒度访问控制
-   * 合规要求
+   * 需要细粒度访问控制
+   * 有监管合规要求
 4. **可观测性和调试**
-   * 复杂服务间问题跟踪
-   * 性能瓶颈识别
-   * SLO/SLA 监控
+   * 需要排查复杂的服务间问题
+   * 需要识别性能瓶颈
+   * 需要监控 SLO/SLA
 
-**❌ Istio 可能大材小用的情况：**
+**❌ Istio 可能用力过猛的情况：**
 
 1. **简单应用**
-   * 服务数量较少（少于 5 个）
+   * 服务较少（少于 5 个）
    * 需求简单
    * Kubernetes Ingress 已足够
 2. **资源受限**
-   * 小型集群
-   * 无法承受资源开销
-   * Sidecar 内存成本负担较重
+   * 集群规模较小
+   * 无法承担额外资源开销
+   * Sidecar 的内存成本难以接受
 3. **缺乏运维能力**
-   * 学习时间不足
+   * 没有足够时间学习
    * 没有专门的平台团队
-   * 更偏好简单的解决方案
+   * 更倾向于简单的解决方案
 
 ### 替代方案对比
 
 #### Kubernetes Ingress 与 Istio
 
-| 功能           | Kubernetes Ingress | Istio                             |
-| ----------------- | ------------------ | --------------------------------- |
-| **范围**         | 外部 → 集群 | 外部 + 内部服务间通信 |
-| **路由**       | 基础（Path、Host） | 高级（Header、Cookie 等）   |
-| **mTLS**          | 手动设置       | 自动                         |
-| **可观测性** | 有限            | 丰富                              |
-| **复杂性**    | 低                | 高                              |
-| **使用场景**      | 简单应用        | 微服务                     |
+| 功能 | Kubernetes Ingress | Istio |
+| --- | --- | --- |
+| **范围** | 外部到集群 | 外部流量及服务间流量 |
+| **路由** | 基础路由（路径、主机） | 高级路由（请求头、Cookie 等） |
+| **mTLS** | 手动配置 | 自动处理 |
+| **可观测性** | 有限 | 丰富 |
+| **复杂性** | 低 | 高 |
+| **适用场景** | 简单应用 | 微服务 |
 
 #### AWS VPC Lattice 与 Istio
 
-有关详细对比，请参阅 [AWS 集成](04-aws-integration.md#istio-vs-other-solutions-comparison)文档。
+详细比较请参阅 [AWS 集成](04-aws-integration.md#istio-vs-other-solutions-comparison)文档。
 
-**快速总结：**
+**简要总结：**
 
-* **VPC Lattice**：AWS 托管、简单、支持跨 VPC/账户通信
-* **Istio**：开源、功能强大、仅限 Kubernetes、支持细粒度控制
+* **VPC Lattice**：由 AWS 托管，使用简单，适合跨 VPC/账户通信
+* **Istio**：开源、功能强大，支持 Kubernetes 和 VM 工作负载及细粒度控制
 
 #### Linkerd 与 Istio
 
-| 属性           | Istio     | Linkerd            |
-| ------------------ | --------- | ------------------ |
-| **复杂性**     | 高      | 低                |
-| **功能**       | 非常丰富 | 仅核心功能 |
-| **资源**      | 高      | 低                |
-| **学习曲线** | 陡峭     | 平缓             |
-| **社区**      | 大     | 小              |
+| 属性 | Istio | Linkerd |
+| --- | --- | --- |
+| **复杂性** | 高 | 低 |
+| **功能** | 丰富 | 仅提供核心功能 |
+| **资源使用** | 高 | 低 |
+| **学习曲线** | 陡峭 | 平缓 |
+| **社区规模** | 大 | 小 |
 
 **选择指南：**
 
 * 需要高级功能和灵活性 → **Istio**
-* 需要简单轻量的网格 → **Linkerd**
+* 需要简单、轻量的网格 → **Linkerd**
 
-<span id="deployment-modes-sidecar-vs-ambient"></span>
-
-## 部署模式：Sidecar 与 Ambient
+## 部署模式：Sidecar 与 Ambient {#deployment-modes-sidecar-vs-ambient}
 
 Istio 支持两种部署模式：**Sidecar Mode** 和 **Ambient Mode**。
 
 ### Sidecar Mode（默认）
 
-将 Envoy proxy 作为 sidecar container 注入到每个应用 Pod 中。
+Istio 会向每个应用 Pod 注入一个 Envoy 代理 sidecar 容器。
 
-```mermaid
-flowchart LR
-    subgraph Pod["Pod"]
-        App[Application<br/>Container]
-        Envoy[Envoy Proxy<br/>Sidecar]
-    end
+![图示展示外部请求进入 Pod 内的 Envoy sidecar，再由其转发到本地应用容器；应用发出的请求也经过同一个 sidecar，然后流向目标服务。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-6.png)
 
-    External[External Request] -->|Traffic| Envoy
-    Envoy -->|Local| App
-    App -->|Outbound call| Envoy
-    Envoy -->|Network| Target[Target Service]
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Envoy proxy;
-    class External,Target default;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-6.html)
 
 **优点：**
 
 * 成熟稳定
-* 支持所有 Istio 功能
-* 可按 Pod 进行细粒度控制
+* L4/L7 功能集成熟；实际支持情况取决于数据平面模式
+* 可对每个 Pod 进行细粒度控制
 
 **缺点：**
 
-* 资源开销（每个 Pod 一个 Envoy）
-* 启动时间增加（Init Container）
-* 权限设置复杂（iptables）
+* 资源开销较高（每个 Pod 一个 Envoy）
+* 启动时间增加（需要 Init Container）
+* 权限配置复杂（iptables）
 
-### Ambient Mode（新方法）
+### Ambient Mode（自 Istio 1.24 起正式发布）
 
-在没有 sidecar 的情况下于节点级别处理流量。
+Ambient Mode 在节点级处理流量，无需 sidecar。
 
-```mermaid
-flowchart TB
-    subgraph Node["Worker Node"]
-        subgraph Pod1["Pod 1"]
-            App1[Application<br/>No sidecar]
-        end
+![图示展示工作节点上两个无需 sidecar 的 Pod，其流量被透明地转发到共享的节点级 ztunnel L4 代理；只有需要 L7 功能时，流量才会继续经过可选的 Waypoint L7 代理。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-7.png)
 
-        subgraph Pod2["Pod 2"]
-            App2[Application<br/>No sidecar]
-        end
-
-        Ztunnel[ztunnel<br/>1 per node<br/>L4 proxy]
-        Waypoint[Waypoint Proxy<br/>L7 proxy<br/>Optional]
-    end
-
-    App1 <-->|Transparent redirect| Ztunnel
-    App2 <-->|Transparent redirect| Ztunnel
-    Ztunnel <-->|When L7 needed| Waypoint
-
-    %% Style definitions
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App1,App2 userApp;
-    class Ztunnel,Waypoint proxy;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-7.html)
 
 **优点：**
 
-* 资源使用量低（每个节点 1 个）
-* Pod 启动快速
+* 资源使用量低（每个节点部署一个）
+* Pod 启动快
 * 运维简单
-* 可逐步应用 L7 功能
+* 可以逐步启用 L7 功能
 
 **缺点：**
 
-* 技术相对较新（成熟度较低）
+* 必须根据所选发行版和拓扑检查功能是否齐全
 * 部分高级功能受限
-* 难以按 Pod 进行细粒度控制
+* 难以对每个 Pod 进行细粒度控制
 
 ### 对比表
 
-| 属性                   | Sidecar Mode                | Ambient Mode                   |
-| -------------------------- | --------------------------- | ------------------------------ |
-| **资源使用量**         | 高（每个 Pod）              | 低（每个节点）                 |
-| **启动时间**           | 慢（Init Container）       | 快                           |
-| **运维复杂度** | 高                        | 低                            |
-| **L4 功能**            | 支持                   | 支持                      |
-| **L7 功能**            | 完全支持                | 可选（Waypoint）            |
-| **成熟度**               | 高                        | 中等                         |
-| **迁移**              | -                           | 可从现有 sidecar 迁移 |
-| **推荐用途**        | 需要高级 L7 功能 | 优先考虑资源效率   |
+| 属性 | Sidecar Mode | Ambient Mode |
+| --- | --- | --- |
+| **资源使用量** | 高（每个 Pod） | 低（每个节点） |
+| **启动时间** | 慢（Init Container） | 快 |
+| **运维复杂性** | 高 | 低 |
+| **L4 功能** | 支持 | 支持 |
+| **L7 功能** | 完整支持 | 可选（使用 Waypoint） |
+| **成熟度** | 稳定 | 核心功能自 1.24 起正式发布 |
+| **迁移** | — | 可从现有 Sidecar 模式迁移 |
+| **推荐用途** | 需要高级 L7 功能 | 优先考虑资源效率 |
 
 ### 选择指南
 
 **选择 Sidecar Mode：**
 
-* 需要使用所有 Istio 功能
-* 需要按 Pod 进行细粒度策略控制
-* 需要经过生产验证的稳定性
+* 需要 Sidecar 专有功能，例如 VM 集成
+* 需要针对每个 Pod 进行细粒度策略控制
+* 需要经过生产环境验证的稳定性
 
 **选择 Ambient Mode：**
 
-* 资源效率很重要
-* 仅需要简单的 L4 功能
+* 重视资源效率
+* 只需要简单的 L4 功能
 * 计划逐步添加 L7 功能
 
-**有关详细信息**，请参阅 [进阶：Ambient Mode](advanced/01-ambient-mode.md)文档。
+**详情**请参阅[进阶：Ambient Mode](advanced/01-ambient-mode.md)文档。
 
-<span id="istio-architecture"></span>
+## Istio 架构 {#istio-architecture}
 
-## Istio 架构
+Istio 由两个主要组件组成：**控制平面**和**数据平面**。
 
-Istio 由两个主要组件组成：**Control Plane** 和 **Data Plane**。
+| 组件 | 说明 |
+| --- | --- |
+| **控制平面（istiod）** | 负责服务发现、配置分发和证书管理的中央控制系统 |
+| **数据平面（Envoy Proxy）** | 包含 Envoy sidecar，或 Ambient 模式下的 ztunnel 及可选 Waypoint，用于处理网格流量 |
 
-| 组件                    | 说明                                                                                                  |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Control Plane (istiod)**   | 负责服务发现、配置分发和证书管理的中央控制系统 |
-| **Data Plane (Envoy Proxy)** | 作为 sidecar 部署在每个 Pod 中，处理实际流量（路由、mTLS、指标）                             |
+**详细了解架构组成、内部工作原理和流量拦截机制**，请参阅[架构文档](03-architecture.md)。
 
-**有关详细的架构结构、内部工作原理和流量拦截机制**，请参阅[架构文档](03-architecture.md)。
+## 核心资源 {#core-resources}
 
-<span id="core-resources"></span>
+以下示例使用 Sidecar API。不要同时应用彼此重叠的全部路由/策略示例。Gateway 需要匹配的 Gateway Pod 和位于其命名空间中的 TLS Secret。Ambient 模式使用 Gateway API 路由和面向 Waypoint 的 L7 策略；Sidecar 资源不会配置 ztunnel。
 
-## 核心资源
+Istio 使用 Kubernetes 自定义资源定义（CRD）管理配置。
 
-Istio 使用 Kubernetes Custom Resource Definitions (CRDs) 管理配置。
+<span id="1-virtualservice"></span>
 
 ### 1. VirtualService
 
-VirtualService 定义请求如何路由到服务。
+VirtualService 定义如何将请求路由到服务。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -654,14 +459,14 @@ spec:
 
 **主要功能**：
 
-* 基于路径的路由（Path、Header、Query Parameter）
-* 流量拆分（Canary、A/B 测试）
-* Retry、Timeout、Fault Injection
-* URL Rewrite、Header 操作
+* 基于路径的路由（路径、请求头、查询参数）
+* 流量拆分（金丝雀、A/B 测试）
+* 重试、超时、故障注入
+* URL 重写、请求头操作
 
 ### 2. DestinationRule
 
-DestinationRule 定义服务子集（版本）并应用流量策略。
+DestinationRule 定义服务子集（版本），并应用流量策略。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -680,7 +485,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -697,10 +502,10 @@ spec:
 
 **主要功能**：
 
-* 服务版本（subset）定义
+* 定义服务版本（子集）
 * 负载均衡算法
-* Connection Pool 设置
-* Circuit Breaker（Outlier Detection）
+* 连接池设置
+* 连接池熔断和异常实例检测
 * TLS 设置
 
 ### 3. Gateway
@@ -735,14 +540,14 @@ spec:
 
 **主要功能**：
 
-* 定义外部流量入口点
-* Host、端口、协议设置
+* 定义外部流量入口
+* 设置主机、端口和协议
 * TLS 终止
 * SNI 路由
 
 ### 4. ServiceEntry
 
-ServiceEntry 允许将网格外部服务像内部服务一样使用。
+ServiceEntry 允许像使用内部服务一样使用网格外部的服务。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -762,13 +567,13 @@ spec:
 
 **主要功能**：
 
-* 外部服务注册
-* 外部服务的流量控制
-* Egress 流量管理
+* 注册外部服务
+* 控制外部服务流量
+* 管理出站流量
 
 ### 5. PeerAuthentication
 
-PeerAuthentication 定义服务之间的认证策略。
+PeerAuthentication 定义服务之间的身份验证策略。
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -805,35 +610,17 @@ spec:
         methods: ["GET"]
 ```
 
-<span id="traffic-management-concepts"></span>
-
-## 流量管理概念
+## 流量管理概念 {#traffic-management-concepts}
 
 ### 流量路由流程
 
-```mermaid
-flowchart LR
-    Client[Client] -->|1. HTTP Request| Gateway[Gateway<br/>Ingress]
-    Gateway -->|2. VirtualService<br/>Apply routing rules| VS[VirtualService]
-    VS -->|3. Determine destination| DR[DestinationRule]
-    DR -->|4. Select subset<br/>Apply traffic policy| Service[Kubernetes<br/>Service]
-    Service -->|5. Endpoint<br/>routing| Pod1[Pod v1]
-    Service -->|5. Endpoint<br/>routing| Pod2[Pod v2]
+图中展示的是配置对象之间的关系。Gateway、VirtualService 和 DestinationRule 是 API 对象，并非依次经过的网络跳点；Envoy 通常通过 EDS 选择 Pod 端点。
 
-    %% Style definitions
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istioResource fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sResource fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+![图示展示客户端 HTTP 请求经由 Istio Gateway 进入，经过 VirtualService 路由规则和 DestinationRule 子集选择，最后通过 Kubernetes Service 到达 v1 和 v2 Pod。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-8.png)
 
-    %% Apply classes
-    class Gateway gateway;
-    class VS,DR istioResource;
-    class Service,Pod1,Pod2 k8sResource;
-    class Client default;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-8.html)
 
-### 流量拆分（Canary 部署）
+### 流量拆分（金丝雀部署）
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -855,7 +642,7 @@ spec:
       weight: 10  # 10% of traffic (canary)
 ```
 
-### Circuit Breaker
+### 熔断器
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -872,57 +659,31 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
 
-<span id="security-concepts"></span>
+## 安全概念 {#security-concepts}
 
-## 安全概念
+### mTLS（双向 TLS）
 
-### mTLS（Mutual TLS）
+Auto mTLS 会加密已加入网格的工作负载之间的流量。设置 STRICT 可拒绝入站明文流量；网格外部的流量不会自动受到保护。
 
-Istio 会自动加密服务间通信。
+![图示展示 Pod A 和 Pod B 中的应用分别以明文与各自的 Envoy sidecar 通信；两个 sidecar 之间交换经 mTLS 加密的流量，istiod Citadel 为它们签发证书。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-9.png)
 
-```mermaid
-flowchart LR
-    subgraph Pod1["Pod A"]
-        App1[App]
-        Envoy1[Envoy]
-    end
-
-    subgraph Pod2["Pod B"]
-        Envoy2[Envoy]
-        App2[App]
-    end
-
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
-
-    Citadel[istiod<br/>Citadel] -.->|Certificate issuance| Envoy1
-    Citadel -.->|Certificate issuance| Envoy2
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Citadel controlPlane;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-9.html)
 
 **mTLS 模式**：
 
-* **STRICT**：仅允许 mTLS
-* **PERMISSIVE**：允许 mTLS 和明文通信（用于迁移）
+* **STRICT**：只允许 mTLS
+* **PERMISSIVE**：允许 mTLS 和明文流量（用于迁移）
 * **DISABLE**：禁用 mTLS
 
-### 认证和授权
+Ambient 模式不支持 PeerAuthentication 的 `DISABLE`；STRICT 也会阻止绕过网格的流量。
+
+### 身份验证与授权
 
 ```yaml
 # JWT Authentication
@@ -948,77 +709,62 @@ spec:
         notRequestPrincipals: ["*"]
 ```
 
-<span id="observability-concepts"></span>
+## 可观测性概念 {#observability-concepts}
 
-## 可观测性概念
-
-Istio 自动生成指标、日志和追踪。
+Istio 会公开代理指标；访问日志、追踪提供程序和收集器需要配置。应用必须传播追踪上下文。Ambient 模式下的 L7 指标和追踪需要 Waypoint。
 
 ### 自动生成的指标
 
-```mermaid
-flowchart TB
-    subgraph Pod["Pod"]
-        App[Application]
-        Envoy[Envoy Proxy]
-    end
+![图示展示应用流量经过 Envoy sidecar，分别向 Prometheus 输出指标、向 Jaeger 输出追踪数据、向日志系统输出日志条目，最终呈现在 Grafana 面板、Jaeger 界面和 Kiali 服务网格面板中。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-10.png)
 
-    App <-->|Traffic| Envoy
-
-    Envoy -->|Metrics| Prometheus[Prometheus<br/>Metric Collection]
-    Envoy -->|Traces| Jaeger[Jaeger<br/>Distributed Tracing]
-    Envoy -->|Logs| Logging[Logging System]
-
-    Prometheus -->|Visualization| Grafana[Grafana<br/>Dashboard]
-    Jaeger -->|Analysis| JaegerUI[Jaeger UI]
-
-    Kiali[Kiali<br/>Service Mesh Dashboard] -->|Query| Prometheus
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoring fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Envoy proxy;
-    class Prometheus,Jaeger,Logging monitoring;
-    class Grafana,JaegerUI,Kiali visualization;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-10.html)
 
 ### 关键指标
 
-| 指标                                | 说明          |
-| ------------------------------------- | -------------------- |
-| `istio_requests_total`                | 请求总数  |
-| `istio_request_duration_milliseconds` | 请求延迟      |
-| `istio_request_bytes`                 | 请求大小         |
-| `istio_response_bytes`                | 响应大小        |
-| `istio_tcp_connections_opened_total`  | TCP 连接数 |
+| 指标 | 说明 |
+| --- | --- |
+| `istio_requests_total` | 请求总数 |
+| `istio_request_duration_milliseconds` | 请求延迟 |
+| `istio_request_bytes` | 请求大小 |
+| `istio_response_bytes` | 响应大小 |
+| `istio_tcp_connections_opened_total` | TCP 连接数 |
 
 ### 分布式追踪
 
 ```yaml
-# Enable tracing in Envoy
+# tracing-install.yaml: merge into the existing istioctl installation file
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
     enableTracing: true
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # 100% sampling
-        zipkin:
-          address: jaeger-collector.istio-system:9411
+    extensionProviders:
+    - name: otel-tracing
+      opentelemetry:
+        service: opentelemetry-collector.observability.svc.cluster.local
+        port: 4317
 ```
 
-<span id="namespaces-and-service-mesh"></span>
+使用 `istioctl install -f <merged-install-file>` 或相应的 Helm values 应用安装设置。请单独部署此处指定的 OTLP 收集器。然后使用 kubectl 应用以下 Telemetry 资源；1% 仅为示例，应根据实际情况调整。
 
-## Namespace 与服务网格
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-tracing
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 1
+```
 
-### Namespace 隔离
+## 命名空间与服务网格 {#namespaces-and-service-mesh}
+
+### 命名空间隔离
+
+此 DENY-all 策略有意完全阻断流量。若要建立默认拒绝并选择性放行的基线，应使用不含规则的 ALLOW 策略：DENY 的优先级高于所有 ALLOW。
 
 ```yaml
 # Per-namespace mTLS policy
@@ -1056,6 +802,8 @@ kubectl label namespace kube-system istio-injection=disabled
 
 ### 多租户
 
+`Sidecar.egress.hosts` 限制导入代理配置的范围，并不限制网络访问。应使用 AuthorizationPolicy 和具备强制执行能力的 NetworkPolicy 实现来隔离租户。
+
 ```yaml
 # Restrict mesh scope with Sidecar resource
 apiVersion: networking.istio.io/v1
@@ -1066,110 +814,38 @@ metadata:
 spec:
   egress:
   - hosts:
-    - "production/*"  # Only production namespace accessible
+    - "production/*"  # Import production configuration; not an access-control boundary
     - "istio-system/*"
 ```
 
-## VM Workload 注册
+## VM 工作负载注册 {#vm-workload-registration}
 
-Istio 不仅可以在服务网格中注册 Kubernetes Pod，还可以注册 **Virtual Machine (VM) workload**。这使传统应用或集群外服务能够使用 Istio 的流量管理、安全和可观测性功能。
+Istio 不仅可以将 Kubernetes Pod 注册到服务网格中，也可以注册**虚拟机（VM）工作负载**。这样，传统应用或集群外部的服务也能使用 Istio 的流量管理、安全和可观测性功能。
 
-### 为什么需要 VM Workload
+### 为什么需要 VM 工作负载
 
-```mermaid
-flowchart TB
-    subgraph Legacy[Legacy Environment]
-        VM1[VM<br/>Legacy App]
-        VM2[VM<br/>Database]
-        VM3[VM<br/>External Service]
-    end
+![图示展示传统 VM 最初直接访问新的 Kubernetes 应用；注册到网格后，VM 也受到 mTLS 和策略保护，而 istiod 分别向 Pod 中的 Envoy sidecar 和已注册的 VM 下发配置。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-11.png)
 
-    subgraph K8S[Kubernetes Cluster]
-        subgraph Pod1[Pod]
-            App1[New App]
-            Envoy1[Envoy]
-        end
-
-        subgraph Pod2[Pod]
-            App2[Microservice]
-            Envoy2[Envoy]
-        end
-    end
-
-    subgraph Istiod[Control Plane]
-        CP[istiod]
-    end
-
-    VM1 -->|Before migration<br/>Direct communication| App1
-    App1 -.->|After mesh registration<br/>mTLS, policy applied| VM1
-
-    CP -.->|Configuration delivery| Envoy1
-    CP -.->|Configuration delivery| Envoy2
-    CP -.->|VM can also be registered| VM1
-
-    %% Style definitions
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class VM1,VM2,VM3 vm;
-    class App1,App2 k8sApp;
-    class Envoy1,Envoy2 proxy;
-    class CP controlPlane;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-11.html)
 
 **使用场景**：
 
 * 逐步迁移传统应用
 * 将数据库服务器纳入网格
-* 集成集群外服务
+* 集成集群外部的服务
 * 配置混合云环境
 
 ### VM 注册架构
 
-```mermaid
-flowchart LR
-    subgraph VM[Virtual Machine]
-        LegacyApp[Legacy<br/>Application]
-        EnvoyVM[Envoy<br/>Sidecar]
-    end
+![图示展示虚拟机上手动安装的 Envoy sidecar 与 Kubernetes 集群中 Pod 的 Envoy sidecar 通过 mTLS 通信，istiod 向两者下发 xDS 配置和证书。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-12.png)
 
-    subgraph K8S[Kubernetes Cluster]
-        subgraph Pod[Pod]
-            App[Application]
-            EnvoyPod[Envoy<br/>Sidecar]
-        end
-
-        Istiod[istiod<br/>Control Plane]
-    end
-
-    LegacyApp <-->|Local communication| EnvoyVM
-    App <-->|Local communication| EnvoyPod
-
-    EnvoyVM <-->|mTLS| EnvoyPod
-
-    Istiod -.->|xDS configuration| EnvoyVM
-    Istiod -.->|xDS configuration| EnvoyPod
-    Istiod -.->|Certificate issuance| EnvoyVM
-
-    %% Style definitions
-    classDef vmApp fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class LegacyApp vmApp;
-    class App k8sApp;
-    class EnvoyVM,EnvoyPod proxy;
-    class Istiod controlPlane;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-12.html)
 
 ### WorkloadEntry 资源
 
-VM workload 使用 **WorkloadEntry** 资源注册。
+以下内容只是注册配置示例。单独的 WorkloadEntry 不会安装代理或启用 mTLS：首先按照 [VM 安装指南](https://istio.io/latest/docs/setup/install/virtual-machine/)配置 WorkloadGroup、服务账户、引导令牌/CA、agent 和网络可达性。还需为 ServiceEntry 主机名配置 DNS 捕获或 DNS 记录；ServiceEntry 不会创建 CoreDNS 记录。
+
+VM 工作负载通过 **WorkloadEntry** 资源注册。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1187,16 +863,16 @@ spec:
     mysql: 3306
 ```
 
-**WorkloadEntry 关键字段**：
+**WorkloadEntry 的关键字段**：
 
-* `address`：VM IP 地址
-* `labels`：与 service selector 匹配
-* `serviceAccount`：用于 mTLS 认证的服务账户
-* `ports`：暴露端口定义
+* `address`：VM 的 IP 地址
+* `labels`：与服务选择器匹配的标签
+* `serviceAccount`：用于 mTLS 身份验证的服务账户
+* `ports`：对外提供的端口定义
 
 ### 与 ServiceEntry 集成
 
-WorkloadEntry 与 ServiceEntry 结合使用，以在网格中注册 VM 服务。
+WorkloadEntry 与 ServiceEntry 配合使用，可将 VM 服务注册到网格中。
 
 ```yaml
 # Define service with ServiceEntry
@@ -1231,61 +907,31 @@ spec:
   serviceAccount: mysql-sa
 ```
 
-### VM 注册与 Multi-Cluster 对比
+### VM 注册与多集群对比
 
-| 功能                    | VM Workload 注册 | Multi-Cluster                  | Kubernetes Pod      |
-| -------------------------- | ------------------------ | ------------------------------ | ------------------- |
-| **Workload 位置**      | 集群外 VM       | 不同 Kubernetes 集群   | 集群内部      |
-| **Envoy 安装**     | 手动安装      | 自动（sidecar）            | 自动（sidecar） |
-| **注册方法**    | WorkloadEntry            | ServiceEntry + EndpointSlice   | Service + Pod       |
-| **mTLS**                   | 支持                | 支持                      | 支持           |
-| **服务发现**      | 手动（指定 IP）    | 自动                      | 自动           |
-| **使用场景**         | 传统应用、DB          | Multi-cloud、灾难恢复 | Cloud-native 应用   |
-| **运维复杂度** | 高                     | 中等                         | 低                 |
+| 功能 | VM 工作负载注册 | 多集群 | Kubernetes Pod |
+| --- | --- | --- | --- |
+| **工作负载位置** | 集群外部的 VM | 其他 Kubernetes 集群 | 集群内部 |
+| **Envoy 安装** | 手动安装 | 自动（sidecar） | 自动（sidecar） |
+| **注册方式** | WorkloadEntry | 远程 Kubernetes 服务发现 | Service + Pod |
+| **mTLS** | 支持 | 支持 | 支持 |
+| **服务发现** | 手动指定 IP | 自动 | 自动 |
+| **适用场景** | 传统应用、数据库 | 多云、灾难恢复 | 云原生应用 |
+| **运维复杂性** | 高 | 中 | 低 |
 
 ### VM 注册的优势
 
 #### 1. 渐进式迁移
 
-```mermaid
-flowchart LR
-    subgraph Phase1[Phase 1: Legacy Environment]
-        VM1[VM<br/>Monolith App]
-    end
+![四阶段渐进式迁移：独立运行的传统 VM 单体应用；为 VM 注册网格并安装 Envoy；VM 中尚未迁移的模块通过 mTLS 与新的 Kubernetes 微服务通信；最终将全部工作负载迁移到 Kubernetes。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-13.png)
 
-    subgraph Phase2[Phase 2: VM Mesh Registration]
-        VM2[VM<br/>Monolith App<br/>+ Envoy]
-    end
-
-    subgraph Phase3[Phase 3: Hybrid]
-        VM3[VM<br/>Legacy Module]
-        K8S1[K8s<br/>New Microservices]
-        VM3 <-->|mTLS| K8S1
-    end
-
-    subgraph Phase4[Phase 4: Complete Migration]
-        K8S2[K8s<br/>All Microservices]
-    end
-
-    Phase1 -->|VM registration| Phase2
-    Phase2 -->|Partial migration| Phase3
-    Phase3 -->|Complete| Phase4
-
-    %% Style definitions
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class VM1,VM2,VM3 vm;
-    class K8S1,K8S2 k8s;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-13.html)
 
 **优势**：
 
-* 无需修改即可将现有 VM 应用集成到网格中
+* 无需修改现有 VM 应用，即可将其接入网格
 * 分阶段迁移到 Kubernetes
-* 在迁移期间保持一致的安全性和可观测性
+* 迁移期间保持一致的安全和可观测性
 
 #### 2. 统一安全策略
 
@@ -1317,30 +963,28 @@ spec:
         principals: ["cluster.local/ns/default/sa/app-sa"]
     to:
     - operation:
-        methods: ["*"]
+        ports: ["3306"]
 ```
 
 #### 3. 一致的可观测性
 
-VM workload 可提供与 Kubernetes Pod 相同的指标、日志和分布式追踪。
+与 Pod 一样，VM 遥测取决于所用协议。MySQL 示例使用 TCP，因此没有 HTTP 响应代码或 HTTP 请求 span。
 
 ```promql
-# Unified metric query for VMs and pods
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+# TCP bytes received per second; verify the actual workload label in your metrics
+sum(rate(istio_tcp_received_bytes_total{destination_workload="mysql-vm-1"}[5m]))
 
-# Error rate from VM
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1",response_code="500"}[5m]))
-/
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+# TCP connections opened per second
+sum(rate(istio_tcp_connections_opened_total{destination_workload="mysql-vm-1"}[5m]))
 ```
 
 ### VM 注册的限制
 
-1. **手动安装 Envoy**：必须在 VM 上手动安装并配置 Envoy proxy
-2. **网络连接**：需要 VM 与 Kubernetes 集群之间的网络连接
-3. **证书管理**：必须将服务账户证书部署到 VM
-4. **运维负担**：需要管理和更新 VM Envoy 版本
-5. **自动扩缩容限制**：不具备 Kubernetes HPA 等自动扩缩容能力
+1. **手动安装 Envoy**：必须在 VM 上手动安装并配置 Envoy 代理
+2. **网络连接**：VM 与 Kubernetes 集群之间必须具备网络连通性
+3. **引导身份**：安全地配置根 CA 和服务账户令牌；Istio agent 会获取并轮换工作负载证书
+4. **运维负担**：需要管理和更新 VM 上的 Envoy 版本
+5. **自动扩缩限制**：不像 Kubernetes HPA 那样具备自动扩缩能力
 
 ### 实际使用示例
 
@@ -1409,91 +1053,64 @@ spec:
 **结果**：
 
 * Kubernetes Pod 通过 `postgres.production.svc.cluster.local` 访问数据库
-* VM 与 Pod 之间自动进行 mTLS 加密
+* VM 与 Pod 之间的流量自动通过 mTLS 加密
 * 应用访问控制策略
-* 自动收集指标和分布式追踪
+* 此数据库使用 TCP 指标；只有 HTTP 工作负载传播追踪上下文后，才能进行 HTTP 追踪
 
-### Workload 注册对比总结
+### 工作负载注册方式对比总结
 
-```mermaid
-flowchart TB
-    subgraph Types[Workload Types]
-        K8S[Kubernetes Pod<br/>Inside cluster]
-        MC[Multi-Cluster<br/>Different cluster]
-        VM[Virtual Machine<br/>Outside cluster]
-    end
+![图示展示三种工作负载（Kubernetes Pod、多集群工作负载和虚拟机）都注册到 Istio 服务网格，并获得共同功能：mTLS 加密、流量管理、安全策略、指标和追踪。](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-14.png)
 
-    subgraph Features[Common Features]
-        mTLS[mTLS Encryption]
-        Traffic[Traffic Management]
-        Policy[Security Policy]
-        Metrics[Metrics & Tracing]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-14.html)
 
-    K8S & MC & VM --> mTLS
-    K8S & MC & VM --> Traffic
-    K8S & MC & VM --> Policy
-    K8S & MC & VM --> Metrics
+Istio 灵活的工作负载注册能力包括：
 
-    %% Style definitions
-    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef feature fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+* **Kubernetes Pod**：云原生应用
+* **多集群**：多云、跨区域部署、灾难恢复
+* **虚拟机**：传统应用、数据库、混合环境
 
-    %% Apply classes
-    class K8S,MC,VM workload;
-    class mTLS,Traffic,Policy,Metrics feature;
-```
+所有工作负载都能获得一致的安全、流量管理和可观测性功能。
 
-通过 Istio 灵活的 Workload 注册功能：
+## 后续步骤 {#next-steps}
 
-* **Kubernetes Pod**：Cloud-native 应用
-* **Multi-Cluster**：Multi-cloud、区域分布、灾难恢复
-* **Virtual Machine**：传统应用、数据库、混合环境
-
-所有 Workload 都可获得一致的安全性、流量管理和可观测性功能。
-
-<span id="next-steps"></span>
-
-## 后续步骤
-
-现在，您已经了解 Istio 的基本概念。通过以下文档学习如何在实践中使用它们：
+现在你已了解 Istio 的基本概念。请通过以下文档学习如何在实践中使用这些功能：
 
 ### 核心功能
 
 1. [**流量管理**](traffic-management/README.md)
-   * Gateway 和 VirtualService 用法
-   * DestinationRule 和 subset 定义
+   * Gateway 和 VirtualService 的使用
+   * DestinationRule 和子集定义
    * ServiceEntry 和 WorkloadEntry（VM 注册）
-   * 高级路由模式（Canary、A/B 测试）
-   * Traffic Mirroring 和 Shadowing
+   * 高级路由模式（金丝雀、A/B 测试）
+   * 流量镜像和影子流量
 2. [**安全性**](security/README.md)
    * mTLS 配置和 PeerAuthentication
-   * 认证（RequestAuthentication、JWT）
+   * 身份验证（RequestAuthentication、JWT）
    * 授权（AuthorizationPolicy）
    * 安全策略管理
-   * 外部认证集成
+   * 外部身份验证集成
 3. [**可观测性**](observability/README.md)
    * 指标收集（Prometheus）
    * 分布式追踪（Jaeger、Zipkin）
    * 日志配置
    * Kiali 服务网格可视化
-   * Grafana dashboard
+   * Grafana 面板
 4. [**弹性**](resilience/README.md)
-   * Circuit Breaker 模式
-   * Retry 和 Timeout 设置
-   * Rate Limiting
-   * Outlier Detection
-   * Fault Injection 测试
+   * 熔断器模式
+   * 重试和超时设置
+   * 速率限制
+   * 异常实例检测
+   * 故障注入测试
 
 ### 高级主题
 
-5. [**高级主题**](advanced/README.md)
-   * Ambient Mode（无 sidecar 网格）
-   * Multi-Cluster 配置
+5. [**进阶主题**](advanced/README.md)
+   * Ambient Mode（无 sidecar 的网格）
+   * 多集群配置
    * EnvoyFilter 自定义
-   * DNS Proxy 和 Caching
-   * VM workload 详细配置
-   * WASM plugin 开发
+   * DNS 代理和缓存
+   * VM 工作负载的详细配置
+   * WASM 插件开发
 
 ## 参考资料
 
@@ -1502,3 +1119,13 @@ flowchart TB
 * [Istio 官方文档 - 安全](https://istio.io/latest/docs/concepts/security/)
 * [Istio 官方文档 - 可观测性](https://istio.io/latest/docs/concepts/observability/)
 * [Envoy Proxy 官方文档](https://www.envoyproxy.io/docs/envoy/latest/)
+
+* [DestinationRule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+* [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+* [AuthorizationPolicy](https://istio.io/latest/docs/reference/config/security/authorization-policy/)
+* [PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
+* [虚拟机安装](https://istio.io/latest/docs/setup/install/virtual-machine/)
+* [OpenTelemetry](https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/)
+* [Sidecar 还是 Ambient？](https://istio.io/latest/docs/overview/dataplane-modes/)
+* [Introducing istiod: simplifying the control plane](https://istio.io/latest/blog/2020/istiod/)
+* [云原生高性能边缘/中间层/服务代理](https://www.cncf.io/projects/envoy/)

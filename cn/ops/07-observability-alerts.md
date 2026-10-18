@@ -1,7 +1,7 @@
-# Operational Alert 配置
+# 运维告警配置
 
 > **审查基线**：Prometheus 3.15.0、Alertmanager 0.34.1、kube-prometheus-stack 92.9.0 / Prometheus Operator 0.94.1\
-> **最后审阅**：2026年10月16日。本地已验证规则评估、模板、路由、抑制范围和 chart 配置。未配置真实集群告警，也未执行 Slack/PagerDuty 通知。
+> **最后审阅**：2026 年 10 月 16 日。本地已验证规则评估、模板、路由、抑制范围和 chart 配置。未配置真实集群告警，也未执行 Slack/PagerDuty 通知。
 
 < [上一章：扩缩容](06-scaling-strategies.md) | [目录](README.md) | [下一章：可观测性分析](08-observability-analysis.md) >
 
