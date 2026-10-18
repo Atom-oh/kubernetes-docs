@@ -12,6 +12,6 @@ The Korean scan produced 2,184 proposals. Safety guards excluded 60; the semanti
 
 The final changes replace 2,001 Korean lines and 1,372 English lines. A complete comparison of all 1,031 changed documents against their original source found no changes to fenced code bytes or languages, link targets, heading/fence counts, or explicit heading anchors. The edit guards also preserve inline code, numeric values, URLs, emphasis and table/list structure.
 
-All 159 repository tests passed after the translation workflow changes. The 94 bilingual news records remain valid. Local links, PNG references and ko/en language parity checks pass. `git diff --check` passes.
+All 161 repository tests passed after the translation workflow changes and integration with current main, including the guard against metadata-only translation PRs. The 94 bilingual news records remain valid. Local links, PNG references and ko/en language parity checks pass. `git diff --check` passes for the reviewed Korean/English and workflow changes.
 
 This review covers the language changes, with the original documents as the meaning baseline. It does not certify previously published technical claims. The separate Chinese/Japanese/Spanish translation review remains in progress and is outside this verdict.

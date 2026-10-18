@@ -50,6 +50,26 @@ function fixture(t, files = { 'en/topic/page.md': source, 'cn/topic/page.md': tr
   return { root, directory, git, write, read, commit, before, state: () => JSON.parse(read(statePath)) }
 }
 
+test('a completed batch does not create a metadata-only diff after unrelated main commits', t => {
+  const f = fixture(t, {
+    'en/topic/page.md': source, 'cn/topic/page.md': translated,
+    'jp/topic/page.md': translated, 'es/topic/page.md': translated
+  })
+  const sourceBlob = f.git('rev-parse', 'HEAD:en/topic/page.md')
+  const state = {
+    version: 1,
+    sources: Object.fromEntries(['cn', 'es', 'jp'].map(lang => [`${lang}/topic/page.md`, sourceBlob])),
+    pending: [], sourceCommit: f.before
+  }
+  f.write(statePath, JSON.stringify(state, null, 2) + '\n')
+  f.commit()
+  f.write('unrelated.txt', 'main advanced\n')
+  f.commit()
+  assert.deepEqual(prepareBatch(f.root, { fillMissing: true }), [])
+  assert.equal(f.read(statePath), JSON.stringify(state, null, 2) + '\n')
+  assert.equal(f.git('diff', '--name-only'), '')
+})
+
 test('fresh pending translations survive main advancement and identical reruns avoid model calls', t => {
   const f = fixture(t)
   f.git('checkout', '-qb', 'pending')

@@ -80,9 +80,16 @@ function write(root, file, content) {
 }
 
 function writeState(root, state, pending) {
-  state.sourceCommit = git(root, 'rev-parse', 'HEAD')
   state.sources = Object.fromEntries(Object.entries(state.sources).sort(([a], [b]) => a.localeCompare(b)))
   state.pending = [...pending].sort()
+  const previous = readState(blob(root, tree(root, 'HEAD').get(statePath)))
+  const sameSources = Object.keys(previous.sources).length === Object.keys(state.sources).length &&
+    Object.entries(state.sources).every(([file, sha]) => previous.sources[file] === sha)
+  const samePending = previous.pending.length === state.pending.length &&
+    state.pending.every(file => previous.pending.includes(file))
+  // A main commit without translation changes must not create a metadata-only PR.
+  state.sourceCommit = sameSources && samePending && previous.sourceCommit
+    ? previous.sourceCommit : git(root, 'rev-parse', 'HEAD')
   write(root, statePath, `${JSON.stringify(state, null, 2)}\n`)
 }
 
