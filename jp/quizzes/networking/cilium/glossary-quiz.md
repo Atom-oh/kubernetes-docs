@@ -1,5 +1,8 @@
 # 用語集クイズ
 
+> **レビュー基準**: Cilium 1.20.3
+> **最終確認日**: 2026年10月16日
+
 このクイズでは、Cilium、eBPF、Kubernetes、ネットワーキングに関連する主要な用語と概念の理解を確認します。
 
 ## 選択式問題
@@ -16,7 +19,7 @@
 
 **回答: B) Extended Berkeley Packet Filter**
 
-**解説:** eBPF は Extended Berkeley Packet Filter の略で、もともとネットワークパケットキャプチャ用に開発された BPF (Berkeley Packet Filter) の拡張版です。eBPF は、Linux kernel 内でプログラムを安全に実行できる技術であり、ネットワークパケット処理、system call トレーシング、パフォーマンス監視など、さまざまな用途に使用されます。Cilium は eBPF を中核技術として活用し、高性能なネットワーキング、セキュリティ、オブザーバビリティ機能を提供します。
+**解説:** eBPF は従来の BPF を拡張したもので、ネットワーキング、トレーシング、その他のカーネルフックに使われます。Verifier はプログラムの性質を検査しますが、カーネルや Verifier 自体の実装バグをなくすものではありません。
 
 </details>
 
@@ -32,11 +35,11 @@
 
 **回答: C) Endpoint**
 
-**解説:** Cilium では、Endpoint は network policy が適用されるネットワークエンドポイントを指し、通常は Kubernetes Pod に対応します。各 Endpoint には一意の ID があり、Cilium はこれらの Endpoint に基づいて network policy を適用し、トラフィックを制御します。Endpoint は Cilium Agent によって管理され、Pod の作成時に自動的に作成されます。現在の Node 上のすべての Endpoint は、`cilium endpoint list` コマンドで確認できます。
+**解説:** Cilium Endpoint は通常、管理対象の Pod に対応します。Endpoint ID はそれを管理する Agent 内でのみ一意ですが、セキュリティ Identity は共有できます。対象ノードの Agent 内で `cilium-dbg endpoint list` を実行してください。
 
 </details>
 
-3. XDP (eXpress Data Path) の主な特徴は何ですか？
+3. 対応ネットワークデバイスで native XDP が実行される場所はどこですか？
    * A) L7 protocol analysis
    * B) Packet processing at network driver level
    * C) TLS encryption
@@ -48,7 +51,7 @@
 
 **回答: B) Packet processing at network driver level**
 
-**解説:** XDP (eXpress Data Path) は、network driver レベル（interrupt context）でパケットを処理する eBPF ベースの技術です。これにより kernel network stack をバイパスし、非常に高性能なパケット処理（1 秒あたり数百万パケット）が可能になります。XDP では、DROP、PASS、TX (transmit)、REDIRECT などのアクションでパケットを処理できます。Cilium は XDP を使用して、DDoS protection、高性能な load balancing、packet filtering を実装します。
+**解説:** Native XDP は、対応ドライバーの受信経路で実行されます。PASS は通常のネットワークスタックへ処理を続け、DROP、TX、REDIRECT はそれぞれ別の動作をします。Generic モードや offload モードは動作が異なります。Cilium の Service 高速化は条件付きであり、一定のパケットレートや組み込みの DDoS 保護を保証するものではありません。
 
 </details>
 
@@ -64,7 +67,7 @@
 
 **回答: C) Hubble**
 
-**解説:** Hubble は、eBPF を使用して network flow をリアルタイムに監視・分析する Cilium の network observability platform です。Hubble の主な機能には、network flow monitoring、service dependency map の生成、network policy 違反の検出、performance metrics の収集、security event の追跡があります。Hubble は CLI と web ベースの UI の両方を提供し、Prometheus や Grafana と統合して metrics を可視化できます。
+**解説:** Hubble は flow 記録、判定結果、対応するプロトコルのメトリクスを、CLI／UI や構成済みの連携先に公開します。Relay は永続ストレージではありません。外部アラートや保存期間には別途設定が必要で、イベントが失われる場合もあります。
 
 </details>
 
@@ -80,7 +83,7 @@
 
 **回答: B) Virtual Extensible LAN - L2 overlay network**
 
-**解説:** VXLAN (Virtual Extensible LAN) は、Layer 3 (L3) network 上に Layer 2 (L2) network をオーバーレイする network virtualization 技術です。VXLAN はトンネリングに UDP encapsulation を使用し、24-bit VNI (VXLAN Network Identifier) により約 1,600 万の network segment をサポートします。Cilium では、VXLAN は Node 間の Pod 通信のための overlay networking mode として使用されます。代替手段には GENEVE や native routing mode があります。
+**解説:** VXLAN は UDP を使って IP underlay 上に L2 overlay を運び、24-bit の VNI を使います。VNI には約1,600万の値がありますが、これは Cilium の容量保証ではありません。Cilium は overlay metadata に Identity 情報も載せます。
 
 </details>
 
@@ -96,7 +99,7 @@
 
 **回答: B) Data sharing and storage between eBPF programs**
 
-**解説:** BPF Maps は、eBPF programs がデータを保存・取得するために使用する key-value store です。BPF Maps は、kernel space と user space の間でのデータ共有にも使用されます。主な種類には、Hash Map (key-value store)、Array Map (index-based array)、LRU Map (least recently used cache)、Ring Buffer (circular buffer) があります。Cilium は BPF Maps を使用して、service maps、backend maps、connection tracking tables などを保存します。
+**解説:** BPF map はカーネル管理の状態やイベントを eBPF プログラムとユーザー空間で共有します。Hash map や Array map はキーを使いますが、Ring Buffer など一部の map 型は通常の lookup／update／delete 操作をサポートしません。
 
 </details>
 
@@ -112,7 +115,7 @@
 
 **回答: C) Identity**
 
-**解説:** Cilium Identity は、Pod の label set に基づいて生成される数値識別子です。同じ labels を持つすべての Pod は同じ Identity を共有します。Identity-based policies は、IP addresses ではなく Identity を使用して network policy を適用するため、Pod IP が変更されても policy の一貫性が維持されます。このアプローチは高い拡張性を備え、大規模な cluster でも効率的に動作します。Endpoint ID は特定の Pod instance を識別するもので、Identity とは異なります。
+**解説:** セキュリティ上重要な label によって Identity が決まります。すべてのメタデータ label が Identity に使われるわけではありません。Identity は割り当て範囲内で複数 Endpoint に共有されます。数値の Endpoint ID は Agent 内でローカルに使われる別の識別子です。
 
 </details>
 
@@ -128,7 +131,7 @@
 
 **回答: A) IP Address Management - IP address allocation and management**
 
-**解説:** IPAM (IP Address Management) は、IP addresses の計画、割り当て、追跡、管理を担うシステムです。Cilium は複数の IPAM modes をサポートしています。Cluster Pool (cluster 全体の IP pool 管理)、Kubernetes (Kubernetes node CIDR を使用)、AWS ENI (AWS Elastic Network Interface を使用)、Azure (Azure networking integration)、GKE (Google Kubernetes Engine integration) です。IPAM mode の選択は、cluster environment と networking requirements によって決まります。
+**解説:** IPAM は IP アドレスを割り当て、追跡します。Cilium は mode に応じて Cluster Pool、Multi-Pool、Kubernetes host-scope、ENI などの所有モデルをサポートします。GKE はプラットフォームであり、単独の `ipam.mode` 値を意味するものではありません。マネージドプラットフォームとの連携を確認してください。
 
 </details>
 
@@ -144,7 +147,7 @@
 
 **回答: B) Modern VPN protocol - Inter-node traffic encryption**
 
-**解説:** WireGuard は、modern、fast、secure な VPN (Virtual Private Network) tunnel protocol です。IPsec よりシンプルかつ高速で、codebase が小さいため security auditing が容易です。Cilium では、WireGuard は Node 間の traffic encryption に使用されます。WireGuard を有効にすると、cluster 内の Pod 間のすべての traffic が透過的に暗号化されます。Cilium は IPsec または WireGuard のいずれかを使用して encryption を実装できます。
+**解説:** Cilium WireGuard は、対応するノード間トラフィックを保護します。同一ノード上の Pod 間通信はノードトンネルを通らず、外部／ノード向けトラフィックには別の条件があります。IPsec より常に高速とは限らないため、同等のワークロードと保護設定で比較してください。
 
 </details>
 
@@ -160,7 +163,7 @@
 
 **回答: A) Container Network Interface - Standard interface for container network plugins**
 
-**解説:** CNI (Container Network Interface) は、container runtimes と network plugins の間の標準インターフェースを定義する CNCF project です。Kubernetes では、kubelet は CNI interface を通じて network plugins (Cilium、Calico、Flannel など) と通信します。CNI は、container の追加・削除時の network configuration 用の標準 API を定義し、plugin architecture を通じてさまざまな networking solutions の統合を可能にします。Cilium は CNI implementations の 1 つです。
+**解説:** CNI はコンテナランタイムとネットワークプラグインの間のインターフェースを定義します。現在の Kubernetes では kubelet は CRI を使い、コンテナランタイムが CNI 呼び出しを管理します。kubelet が直接 CNI を管理するフラグは Kubernetes 1.24 で削除されました。
 
 </details>
 
@@ -174,7 +177,7 @@
 
 **回答:** Envoy
 
-**解説:** Envoy は、L7 proxy および communication bus として使用される open-source edge and service proxy です。Cilium は L7 network policy の実装に Envoy を統合しています。CiliumNetworkPolicy で L7 rules (HTTP、gRPC、Kafka、DNS など) を定義すると、Cilium は Envoy proxy を自動的かつ透過的にデプロイします。Envoy は、高度な load balancing、traffic splitting、metrics collection 機能も提供します。
+**解説:** Envoy は構成された HTTP／gRPC proxy 機能を提供します。DNS policy は Cilium の DNS proxy を使い、Kafka L7 rule は削除されています。Proxy の配置やライフサイクルは設定に従い、任意の L7 rule ごとに自動で一つずつ Proxy が配置されるわけではありません。
 
 </details>
 
@@ -186,7 +189,7 @@
 
 **回答:** Cilium Agent
 
-**解説:** Cilium Agent は、各 Kubernetes Node で DaemonSet として実行される Cilium の中核 component です。Agent の主な責務には、kernel への eBPF programs の loading と管理、network policies の実装と適用、service load balancing、IP address management (IPAM)、network endpoint management、metrics と logs の収集、Kubernetes API server との通信があります。各 Node の local networking operations は、その Node の Cilium Agent が処理します。
+**解説:** Agent は、Cilium が管理する対象ノード上の Endpoint、BPF プログラム、ポリシー／データパス状態を管理します。IPAM の責務は mode によって Agent、Operator、プラットフォームの間で分担されます。
 
 </details>
 
@@ -210,7 +213,7 @@
 
 **回答:** Service
 
-**解説:** Kubernetes Service は、Pod のセットに安定した network endpoints (ClusterIP、DNS name) を提供する abstraction です。Pod は動的に作成・削除され、その IP は変更される場合がありますが、Service は固定 IP と DNS names を提供するため、client は一貫してアクセスできます。Cilium は eBPF を通じて service load balancing を実装し、kube-proxy を置き換えることができます。Service types には ClusterIP、NodePort、LoadBalancer、ExternalName があります。
+**解説:** Service は論理的なバックエンドアクセスの抽象化を提供します。通常の ClusterIP Service には仮想 IP があり、headless Service にはありません。ExternalName は DNS alias を使います。selector のない Service は、手動管理または外部 Endpoint を表すことができます。
 
 </details>
 
@@ -220,15 +223,15 @@
 
 <summary>回答を表示</summary>
 
-**回答:** SNAT (Source NAT) または Masquerading
+**回答:** SNAT (Source Network Address Translation)
 
-**解説:** SNAT (Source Network Address Translation) は、packet の source IP address を別の IP address に変換する NAT type です。Masquerading は SNAT の特殊な形式で、source IP を outbound interface の IP に自動変換します。Cilium では、masquerading は cluster 内の Pod からの outbound traffic の source IP を Node IP に変換するために使用されます。対照的に、DNAT (Destination NAT) は destination IP を変更します。
+**解説:** SNAT はパケットの送信元アドレスを変更します。Masquerading は送信経路／インターフェースに関連付けられたアドレスを選びます。除外設定と選択された gateway IP が影響します。すべての Pod の outbound パケットが必ず変換されるわけではありません。DNAT は宛先を変更します。
 
 </details>
 
 ## ハンズオン問題
 
-16. 次の Cilium 関連用語を、その定義と対応付けてください: Cluster Mesh、CRD、FQDN、mTLS
+16. ClusterMesh、CRD、FQDN、mTLS をそれぞれの定義と対応付けてください。
 
 <details>
 
@@ -236,49 +239,14 @@
 
 **回答:**
 
-* **Cluster Mesh**: Cilium の multi-cluster networking feature です。複数の Kubernetes clusters を接続し、cross-cluster service discovery、load balancing、network policy enforcement を可能にします。
-* **CRD (Custom Resource Definition)**: custom resources を定義して Kubernetes API を拡張する方法です。Cilium は CRDs を使用して、CiliumNetworkPolicy、CiliumEndpoint などを定義します。
-* **FQDN (Fully Qualified Domain Name)**: host の完全な domain name です（例: www.example.com）。Cilium FQDN policies は、IP ではなく domain name に基づいて external services へのアクセスを制御します。
-* **mTLS (mutual TLS)**: client と server の両方が certificate を使用して相互認証する TLS の拡張です。双方向認証により、より強固な security を提供します。
-
-**解説:** これらの用語は Cilium と Kubernetes networking で頻繁に使用されます。Cluster Mesh は hybrid/multi-cloud environments で有用であり、CRDs は Kubernetes extensibility の鍵であり、FQDN policies は dynamic IPs を持つ external services への access control に不可欠であり、mTLS は安全な service-to-service communication に重要です。
+- **ClusterMesh**: クラスター間のネットワークメタデータ／接続性。すべてのポリシーリソースを自動的に複製するものではありません。
+- **CRD**: Kubernetes API にカスタムリソースの種類を追加する定義。
+- **FQDN**: DNS ツリー上の絶対名。`toFQDNs` は学習した IP アドレスを許可します。
+- **mTLS**: 相互ピア認証を伴う TLS。認証とアプリケーション認可は別です。
 
 </details>
 
-17. Cilium CLI を使用して、current cluster 内のすべての Identities とそれらの labels を照会するコマンドを記述してください。
-
-<details>
-
-<summary>回答を表示</summary>
-
-**回答:**
-
-```bash
-# Query all Identities
-cilium identity list
-
-# Or query CiliumIdentity CRD using kubectl
-kubectl get ciliumidentity -A
-
-# Query detailed information for a specific Identity
-cilium identity get <identity_id>
-
-# Query detailed information in JSON format
-kubectl get ciliumidentity <identity_id> -o json
-
-# Filter Identities with specific labels
-kubectl get ciliumidentity -o json | jq '.items[] | select(.metadata.labels."k8s:app" == "frontend")'
-
-# Check Identity from Endpoints
-cilium endpoint list
-kubectl exec -n kube-system ds/cilium -- cilium endpoint list
-```
-
-**解説:** Cilium Identity は、Pod の label set に基づいて生成される数値識別子です。`cilium identity list` コマンドは、current cluster 内のすべての Identities とそれらの labels を表示します。CiliumIdentity は CRD として保存されるため、kubectl でも照会できます。Identity は network policies の基盤であり、同じ labels を持つすべての Pod は同じ Identity を共有します。
-
-</details>
-
-18. service load balancing maps と connection tracking tables を確認するために、BPF Map contents を照会するコマンドを記述してください。
+17. CRD で割り当てられた Identity を照会し、実際のセキュリティ label で絞り込んでください。Agent のローカルな表示範囲も区別してください。
 
 <details>
 
@@ -287,35 +255,45 @@ kubectl exec -n kube-system ds/cilium -- cilium endpoint list
 **回答:**
 
 ```bash
-# Query BPF maps from Cilium Agent pod
-
-# Service map (Service -> Backend mapping)
-kubectl exec -n kube-system ds/cilium -- cilium bpf lb list
-
-# Backend map (backend pod information)
-kubectl exec -n kube-system ds/cilium -- cilium bpf lb list --backends
-
-# Connection Tracking table
-kubectl exec -n kube-system ds/cilium -- cilium bpf ct list global
-
-# NAT map (masquerading/SNAT information)
-kubectl exec -n kube-system ds/cilium -- cilium bpf nat list
-
-# Policy map (Identity-based policies)
-kubectl exec -n kube-system ds/cilium -- cilium bpf policy get --all
-
-# Endpoint map
-kubectl exec -n kube-system ds/cilium -- cilium bpf endpoint list
-
-# List all BPF maps
-kubectl exec -n kube-system ds/cilium -- cilium bpf map list
+set -euo pipefail
+kubectl get ciliumidentities -o json > identities.json
+jq '.items[]
+| select(.["security-labels"]["k8s:app"] == "frontend")
+| {id: .metadata.name, labels: .["security-labels"]}' identities.json
+: "${CILIUM_POD:?Select the Cilium agent Pod on the node being inspected}"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg identity list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
 ```
 
-**解説:** BPF Maps は Cilium の data plane で使用される中核 data structures です。`cilium bpf lb list` は service load balancing information を表示し、service IP/port と backend Pod IP/port の対応関係を確認できます。`cilium bpf ct list` は connection tracking table を表示し、現在 active な connection status を確認できます。これらのコマンドは network troubleshooting と performance analysis に役立ちます。
+これは CRD allocation mode を前提とします。`CiliumIdentity` は cluster-scoped で、`security-labels` が正しい情報源です。これは `metadata.labels` とは異なります。予約済み／ノードローカルの Identity がすべて CRD に表現されるわけではありません。Agent の表示範囲も別です。対象ノードの Cilium Agent Pod は[ノード選択手順](../../../networking/cilium/07-advanced-topics.md)に従って指定してください。
 
 </details>
 
-19. Pod が外部の `api.example.com` および `*.googleapis.com` domains とのみ通信できるようにする、FQDN-based network policy を使用した CiliumNetworkPolicy を記述してください。
+18. 選択した Agent の Service、CT、NAT、Policy、Endpoint map を調べてください。
+
+<details>
+
+<summary>回答を表示</summary>
+
+**回答:**
+
+```bash
+set -eu
+: "${CILIUM_POD:?Select the Cilium agent Pod on the node being inspected}"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --backends
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf ct list global
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf nat list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf policy get --all
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf endpoint list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg map list
+```
+
+最初に対象ノードを所有する Agent を選んでください。`--backends` と Policy map の `--all` は有効なフラグです。CT／Policy の全件出力は大きくなるため、影響を受けたノードで必要な場合に使います。`map list` が示すのは Agent が開いている map であり、カーネル上の map の完全な一覧でも、すべてのアプリケーション接続が有効である証拠でもありません。
+
+</details>
+
+19. DNS 通信も許可しながら、TCP 443 を `api.example.com` と一階層の `*.googleapis.com` で学習した IP に許可する Policy を記述し、制約を説明してください。
 
 <details>
 
@@ -324,43 +302,43 @@ kubectl exec -n kube-system ds/cilium -- cilium bpf map list
 **回答:**
 
 ```yaml
-apiVersion: "cilium.io/v2"
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "fqdn-egress-policy"
-  namespace: default
+  name: fqdn-egress-policy
+  namespace: cilium-glossary-demo
 spec:
   endpointSelector:
     matchLabels:
       app: external-client
   egress:
-  # Allow DNS queries (required for FQDN policy to work)
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
+      - port: '53'
+        protocol: TCP
       rules:
         dns:
-        - matchPattern: "*"
-  # Allow HTTPS traffic to specific FQDNs
+        - matchPattern: '*'
   - toFQDNs:
-    - matchName: "api.example.com"
-    - matchPattern: "*.googleapis.com"
+    - matchName: api.example.com
+    - matchPattern: '*.googleapis.com'
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
 ```
 
-**解説:** FQDN (Fully Qualified Domain Name) based policies は、IP address ではなく domain name に基づいて external services へのアクセスを制御します。この policy を機能させるには、DNS queries を許可する必要があります（最初の egress rule）。`toFQDNs` では、`matchName` は完全一致の domain name を指定し、`matchPattern` は wildcards を使用した pattern matching を指定します。`*.googleapis.com` はすべての Google API subdomains を許可します。FQDN policies は、dynamic IPs を持つ external services への access control に特に有用です。
+これは Policy のみの演習です。namespace と label 付きクライアント、および実際の CoreDNS 経路は別途準備してください。DNS の UDP／TCP 通信と DNS proxy による観測を許可します。`*.googleapis.com` は一階層のサブドメインに一致し、apex や `a.b.googleapis.com` には一致しません。DNS の `*` はすべての問い合わせ名を許可します。`toFQDNs` は IP アドレスへの許可を作るもので、共有 IP 上の HTTPS Host 制約やリモートサーバー認証ではありません。重複する Allow Policy と TLS 検証も確認してください。
 
 </details>
 
-20. Cilium Operator の役割、Cilium Agent との違いを説明し、Operator の status を確認するコマンドを記述してください。
+20. Operator と Agent の責務を比較し、Operator の状態を確認してください。
 
 <details>
 
@@ -369,36 +347,23 @@ spec:
 **回答:**
 
 ```bash
-# Check Cilium Operator status
 kubectl -n kube-system get deployment cilium-operator
-
-# Check Operator pod status
 kubectl -n kube-system get pods -l name=cilium-operator
-
-# Check Operator logs
-kubectl -n kube-system logs -l name=cilium-operator
-
-# Check Operator in overall Cilium status
+kubectl -n kube-system logs -l name=cilium-operator -c cilium-operator --prefix --since=10m --tail=100
 cilium status --verbose
-
-# Check CiliumIdentity resources (managed by Operator)
-kubectl get ciliumidentity -A
-
-# Check CiliumEndpoint resources
-kubectl get ciliumendpoint -A
+kubectl get ciliumidentities
+kubectl get ciliumendpoints --all-namespaces
 ```
 
-**Cilium Operator と Cilium Agent の役割比較:**
+| コンポーネント | 範囲と責務 |
+| --- | --- |
+| Agent | Cilium が管理するノードの Endpoint、BPF プログラム、Policy／データパス状態、mode に応じたローカル IPAM 作業。 |
+| Operator | クラスター単位の CRD 登録、mode に応じた IPAM／LB IPAM、孤立リソース／Identity の収集、有効化された Ingress／Gateway の変換。 |
 
-| Component           | 実行場所                        | 主な責務                                                                                                                                              |
-| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Cilium Agent**    | 各 Node (DaemonSet)               | <p>- eBPF program loading/management<br>- Network policy enforcement<br>- Local endpoint management<br>- Service load balancing<br>- Node-level IPAM</p>           |
-| **Cilium Operator** | Cluster (Deployment、1～2 instances) | <p>- CiliumIdentity CRD management<br>- Cluster-level IPAM<br>- CiliumEndpoint synchronization<br>- Garbage collection<br>- Cluster Mesh connection management</p> |
-
-**解説:** Cilium Agent は各 Node で実行され、その Node の networking operations を処理します。これに対し、Cilium Operator は cluster 全体で single instance（または HA 用に 2 つ）として実行され、cluster-level coordination tasks を処理します。Operator は cluster 全体で Identity の一貫性を維持し、未使用 resources をクリーンアップし、cluster-level IPAM を管理します。
+`name=cilium-operator` は現行 chart で有効です。`operator.replicas` は1または2以外にも設定できます。Agent はデフォルトで Identity を作成します。Operator による Identity 管理は別の Beta mode です。有効化した機能によっては ClusterMesh の EndpointSlice／MCS 同期も加わるため、責務を常に同じものとして扱わないでください。
 
 </details>
 
 ***
 
-[学習教材に戻る](../../../networking/cilium/glossary.md) | [Cilium クイズ一覧](https://www.atomai.click/kubernetes-docs/en/quizzes/#cilium)
+[学習資料に戻る](../../../networking/cilium/glossary.md) | [Cilium クイズ一覧](../../README.md#cilium)

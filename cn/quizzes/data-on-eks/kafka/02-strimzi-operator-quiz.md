@@ -1,6 +1,6 @@
 # Strimzi Operator 测验
 
-> **最后更新**: October 16, 2026, Strimzi 1.3.0 / Kafka 4.3.1.
+> **最后更新**: 2026年10月16日，Strimzi 1.3.0 / Kafka 4.3.1.
 
 本测验将考查你对 Strimzi Operator 基础知识、安装方法、核心 CRD、KRaft 节点角色以及 EKS 部署注意事项的理解。
 

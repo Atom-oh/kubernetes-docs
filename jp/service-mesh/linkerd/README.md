@@ -1,87 +1,87 @@
 # Linkerd
 
-> **最終更新**: September 11, 2026 · 公開CLI例はedge-26.9.1で確認
+> **最終更新日**: 2026年10月16日 · 公開 CLI の例は edge-26.10.1 で確認
 
-上流はedge成果物を公開し、stableディストリビューションとサポート期間はベンダーが提供します。Linkerd 2.20は機能上の節目で、取得CLIの普遍的な版文字列ではありません。正確な配布/版を選びKubernetes/Gateway API互換性を確認します。ここの公開例はSeptember 4, 2026公開のedge-26.9.1で、multiclusterのremote credential exec-auth-provider受付と、再試行可能なdestination-IP競合処理を修正します。[リリース](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1)と[リリースモデル](https://linkerd.io/releases/)を参照します。
+上流プロジェクトは edge 成果物を公開し、stable ディストリビューションとそのサポート期間はベンダーが提供します。Linkerd 2.20 は機能上の節目であり、ダウンロードする CLI に共通するバージョン文字列ではありません。正確なディストリビューション／リリースを選び、Kubernetes および Gateway API との互換性を確認してください。ここで示す最新の公開例は、2026年10月5日公開の edge-26.10.1（proxy v2.370.0）です。multicluster でのリモート認証情報を使う exec-auth-provider の受け入れと、再試行可能な宛先 IP 競合の処理は edge-26.9.1 で修正されました。[リリース](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1)と[リリースモデル](https://linkerd.io/releases/)を参照してください。
 
-以下は過去のrelease背景を保持します。edge-26.8.2のテスト済みKubernetes最大版は、stableベンダー対応表を自動拡張しません。
+以下の項目は、過去のリリース情報を残しています。edge-26.8.2 でテストされた Kubernetes の最大バージョンが、stable なベンダーディストリビューションのサポート対象バージョンまで自動的に広がるわけではありません。
 
-### 2026年8月更新: edge-26.8.4
+### 2026年8月の更新: edge-26.8.4
 
-August 25, 2026公開のedge-26.8.4はopaque処理のnil ExternalWorkloadを防ぎ、policy controllerがclusterとTLSRoute API版をネゴシエートし、Goを1.26.7へ更新します。詳細は[リリースノート](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4)を参照してください。
+2026年8月25日公開の edge-26.8.4 は、opaque protocol の処理で nil の ExternalWorkload を扱う際の問題を防ぎ、policy controller がクラスターと TLSRoute API バージョンをネゴシエートするようにし、Go を 1.26.7 に更新します。詳しくは[リリースノート](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4)を参照してください。
 
-### 2026年8月更新: edge-26.8.2 — Gateway API 1.5.1対応
+### 2026年8月の更新: edge-26.8.2（Gateway API 1.5.1 対応）
 
-August 14, 2026公開のedge-26.8.2はlinkerd-kubert 0.27.0でGateway API 1.5.1対応を追加し、テストKubernetes最大を1.36へ上げます。destinationの重複Job informer削除とlease watch task停止時のpolicy controller終了という安定性修正も含みます。詳細は[リリースノート](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2)を参照してください。
+2026年8月14日公開の edge-26.8.2 は、linkerd-kubert 0.27.0 を通じて Gateway API 1.5.1 に対応し、テスト済みの Kubernetes 最大バージョンを 1.36 に引き上げます。また、destination controller の重複した Job informer を削除し、lease watch task が停止した場合に policy controller を終了させる安定性修正も含まれます。詳しくは[リリースノート](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2)を参照してください。
 
-### 2026年7月更新: edge-26.7.1 — 未定義Serviceポートへの要求を禁止
+### 2026年7月の更新: edge-26.7.1（未定義の Service ポートへのリクエストを拒否）
 
-edge-26.7.1のGitHub releaseはJuly 21, 2026公開です。ServiceProfileがあっても宛先Service未宣言portへの要求を拒否する動作変更を含みます。更新前に実Service port宣言を確認します。Gateway API導入チェックも追加します。[リリースノート](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1)を参照してください。
+edge-26.7.1 の GitHub リリースは2026年7月21日に公開されました。ServiceProfile が存在しても、宛先 Service に宣言されていないポートへのリクエストを拒否する、動作に影響する修正が含まれます。アップグレード前に実際の Service ポート宣言を確認してください。このリリースでは Gateway API のインストール確認も追加されました。[リリースノート](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1)を参照してください。
 
 ## 概要
 
-LinkerdはRustデータプレーンproxyを持つCNCF卒業サービスメッシュです。CNCF記録では初commitは2016、卒業は2021です。「単純」「軽量」を保証とせず、実workloadに対する運用、protocol対応、resource使用を評価します。
+Linkerd は Rust 製データプレーンプロキシを備えた、CNCF の卒業プロジェクトであるサービスメッシュです。CNCF の記録では、最初のコミットは2016年、卒業は2021年です。「シンプル」や「軽量」を保証とみなさず、実際のワークロードに照らして運用モデル、プロトコル対応、リソース使用量を評価してください。
 
-### 中核的な価値
+### 主な価値と確認事項
 
 | 機能 | 確認事項 |
 |---|---|
-| 既定workload mTLS | 両peerが参加しproxyを迂回しない。未参加平文には明示認可policyが必要 |
-| Rust proxy | 期待接続/通信下のメモリ/CPU requests、limits、使用量 |
-| HTTP/gRPC routing | 対応Gateway API型、接続、protocol検出 |
-| 運用 | 証明書ライフサイクル、HA、更新互換性、拡張所有権 |
-| 性能 | 固有の遅延/エラー/負荷測定。普遍的10MB/1ms未満の約束はない |
+| ワークロードのデフォルト mTLS | 通信する両方の peer が mesh に参加し、proxy を迂回する通信がないこと。mesh に参加していない peer からの平文通信には明示的な認可ポリシーが必要 |
+| Rust proxy | 想定する接続数と通信量におけるメモリ／CPU の requests、limits、実使用量 |
+| HTTP／gRPC ルーティング | 対応する Gateway API の型、attachment、プロトコル検出 |
+| 運用 | 証明書のライフサイクル、HA、アップグレード互換性、拡張機能の管理主体 |
+| 性能 | ワークロード固有のレイテンシ、エラー、負荷の測定。10 MB やサブミリ秒を普遍的に保証するものではない |
 
-## Linkerdアーキテクチャ概要
+## Linkerd のアーキテクチャ概要
 
 | コンポーネント | 役割 |
 |---|---|
-| Destination/policy controller | endpoint検出とrouting/認可policy配布 |
-| Identity | ID要求を検証し設定trust認証情報で短命workload証明書を発行 |
-| Proxy Injector | 新規適格Podを変更しproxy追加 |
-| linkerd-proxy | 設定TCP捕捉、適格mesh経路の認証/暗号化、対応L7動作 |
-| 任意拡張/backend | Viz metrics/dashboard、multicluster、別設定trace収集/保存 |
+| Destination／policy controller | エンドポイントを検出し、ルーティング／認可ポリシーを proxy に配布する |
+| Identity | ID 要求を検証し、設定された trust 認証情報を使って有効期間の短いワークロード証明書を発行する |
+| Proxy Injector | 対象となる新規 Pod を変更して proxy を追加する |
+| linkerd-proxy | 設定された TCP 通信を捕捉し、対象の mesh 経路を認証／暗号化して、サポートされる L7 動作を提供する |
+| 任意の拡張機能／バックエンド | Viz のメトリクス／ダッシュボード、multicluster 連携、別途設定するトレース収集／保存を提供する |
 
-固定メモリ占有や遅延負荷を意味しません。選択workload/設定で測定します。
+このアーキテクチャだけで、メモリ使用量やレイテンシの固定値が決まるわけではありません。選択したワークロードと設定で測定してください。
 
-## サービスメッシュ比較
+## サービスメッシュの比較
 
 | 観点 | Linkerd | Istio | Cilium |
 |---|---|---|---|
-| データプレーン | Rust sidecar | Envoy sidecar、またはztunnelとwaypoint | eBPFネットワークと対応L7用Envoy |
-| HTTP routing | Gateway API。旧手順にServiceProfile対応継続 | Istio APIまたは対応Gateway API接続 | Gateway APIとCilium policy/controller機能 |
-| セキュリティ | 適格mesh TCP間自動mTLS。他sourceは認可制御 | Auto mTLS、受信強制、認可は別制御 | Peer認証とpayload暗号化を別評価 |
-| 可観測性 | Proxy metricsと設定Viz/他backend | mode別telemetryと設定backend | Hubbleと設定L7/metrics backend |
-| Multicluster | Mirroring/federationと明示trust/network | 対応topology固有mesh構成 | ClusterMeshとplatform/network要件 |
-| 選択 | 必要機能/運用をテスト | 必要機能/運用をテスト | 必要機能/運用をテスト |
+| データプレーン | Rust sidecar | Envoy sidecar、または ztunnel と waypoint | eBPF ネットワークと、対応する L7 機能用の Envoy |
+| HTTP ルーティング | Gateway API route。以前からのワークフローでは ServiceProfile も引き続き利用可能 | Istio API またはサポート対象の Gateway API attachment | Gateway API と Cilium の policy／controller 機能 |
+| セキュリティ | mesh に参加する対象 TCP peer 間では自動 mTLS。その他の接続元は認可制御で扱う | Auto mTLS、受信時の強制、認可はそれぞれ別の制御 | peer 認証とペイロード暗号化を別々に評価する |
+| 可観測性 | proxy メトリクスと、設定した Viz／他のバックエンド | モード固有のテレメトリと、設定したバックエンド | Hubble と、設定した L7／メトリクスバックエンド |
+| マルチクラスター | mirroring／federation と、明示的な trust／ネットワーク設定 | トポロジーに応じてサポートされる mesh 構成 | ClusterMesh と、それに必要なプラットフォーム／ネットワーク要件 |
+| 選定 | 必要な機能と運用をテストする | 必要な機能と運用をテストする | 必要な機能と運用をテストする |
 
-SMI TrafficSplitは旧手順で、現Linkerd routingの全説明ではありません。Gateway APIでHTTP/gRPCを要求特性により送れます。固定メモリ、p99、人員/複雑さの順位は再現可能workloadと版付き測定なしに比較できません。
+SMI TrafficSplit は旧来のワークフローであり、現在の Linkerd ルーティング全体を説明するものではありません。Linkerd は Gateway API を通じて、リクエストの特性に基づく HTTP／gRPC ルーティングができます。再現可能なワークロードとバージョンを明記した測定がなければ、固定のメモリ使用量、p99、人員配置／複雑さの順位を比較することはできません。
 
-## Linkerdを選ぶ場合
+## Linkerd を選ぶ場合
 
-既定Kubernetes統合、workload ID、対応HTTP/gRPC/TCPがアプリ要件に合う場合の候補です。実負荷でresource効率/遅延を測り、CA rotation、アクセスpolicy、更新を計画します。自動転送暗号化だけでは完全ゼロトラスト/コンプライアンスではありません。
+標準の Kubernetes 統合、ワークロード ID、サポートされる HTTP／gRPC／TCP の動作がアプリケーション要件に合う場合、Linkerd は選択肢になります。現実的な負荷でリソース効率とレイテンシを測定し、CA ローテーション、アクセス制御、アップグレードを計画してください。転送時の暗号化が自動化されるだけで、完全なゼロトラストやコンプライアンスが実現するわけではありません。
 
-mesh選択前に必要routing/filter/拡張性を正確に検証します。非HTTPはTCPとしてproxyできますがHTTPレベルrouting/metricsは得られません。server-first/idle接続はopaque-portやappProtocolが必要な場合があり、アプリTLSはHTTP検査に不透明です。opaqueはproxyを通り、skip portは迂回します。
+mesh を選ぶ前に、必要なルーティング、filter、拡張性の機能を正確に検証してください。非 HTTP プロトコルは TCP として proxy できますが、HTTP レベルのルーティングやメトリクスが得られるわけではありません。server-first やアイドル状態の接続には opaque port または appProtocol の設定が必要な場合があり、アプリケーションが開始する TLS は HTTP 検査からは見えません。opaque traffic も proxy を通過しますが、skip port は proxy を迂回します。
 
-VM/物理機器統合はExternalWorkload登録と外部ID/bootstrapを含む[メッシュ拡張](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/)で可能で、一律非対応ではありません。network、DNS、proxy導入、trustは通常Pod注入を超える要件です。上流チュートリアルのbootstrap簡略手順は本番設計ではありません。
+VM と物理マシンとの統合は、ExternalWorkload の登録と外部 ID／bootstrap 経路を含む[mesh 拡張](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/)で利用できます。これは一律に非対応ということではありません。ネットワーク到達性、DNS、proxy のインストール、trust の設計が、通常の Pod 注入にはない要件として加わります。上流チュートリアルの bootstrap を簡略化した手順は、本番環境の設計ではありません。
 
-## 文書構成
+## ドキュメント構成
 
-| 文書 | 説明 |
+| ドキュメント | 説明 |
 |---|---|
-| [導入と設定](01-installation.md) | 正確な版/互換性、CLI/Helm、trust認証情報、HA、拡張 |
-| [アーキテクチャ](02-architecture.md) | Controller、proxy、証明書階層 |
-| [トラフィック管理](03-traffic-management.md) | Gateway API、旧ServiceProfile、再試行/timeout、分割 |
-| [セキュリティ](04-security.md) | mTLS境界、認可、CA rotation |
-| [可観測性](05-observability.md) | Metrics、Viz、外部backend、tracing |
-| [マルチクラスター](06-multi-cluster.md) | Mirroring/federation、経路、trust、認証情報 |
+| [インストールと設定](01-installation.md) | 正確なリリース／互換性、CLI／Helm、trust 認証情報、HA、拡張機能 |
+| [アーキテクチャ](02-architecture.md) | controller、proxy、証明書階層 |
+| [トラフィック管理](03-traffic-management.md) | Gateway API、旧 ServiceProfile、再試行／timeout、トラフィック分割 |
+| [セキュリティ](04-security.md) | mTLS の境界、認可、CA ローテーション |
+| [可観測性](05-observability.md) | メトリクス、Viz、外部バックエンド、トレース |
+| [マルチクラスター](06-multi-cluster.md) | mirroring／federation、ネットワーク経路、trust、認証情報 |
 | [ベストプラクティス](07-best-practices.md) | 運用検証、性能、トラブルシューティング |
 
 ## クイックスタート
 
-### 1. CLIと前提条件の選択
+### 1. CLI と前提条件を選ぶ
 
-選択OS/architectureと正確なreleaseの[導入ガイド](01-installation.md)に従います。CLI出力が意図配布か確認し、未固定installerが旧stableを出すと想定しません。Gateway API CRDは前提で、全利用controllerと互換である必要があります。
+選択した OS／アーキテクチャと正確なリリースに対応する[インストールガイド](01-installation.md)に従ってください。CLI の出力が意図したディストリビューションのものか確認し、バージョンを固定しないインストーラーが古い stable 版をインストールすると想定しないでください。Gateway API CRD は前提条件であり、インストールする bundle はそれを利用するすべての controller と互換でなければなりません。
 
 ```bash
 linkerd version --client
@@ -90,9 +90,9 @@ kubectl get crd httproutes.gateway.networking.k8s.io   -o 'jsonpath={.metadata.a
 linkerd check --pre
 ```
 
-### 2. レンダリング、レビュー、導入
+### 2. マニフェストを生成、確認してインストールする
 
-選択CLIと前提を持つ管理された新演習で、CLIがマニフェストを生成します。
+選択した CLI と前提条件を用意した新規の管理されたラボ環境では、CLI がマニフェストを生成します。
 
 ```bash
 set -euo pipefail
@@ -105,11 +105,11 @@ kubectl apply -f linkerd-control-plane.yaml
 linkerd check
 ```
 
-既定CLIは有限寿命のtrust認証情報を生成します。完成済み共有trust multicluster設定ではありません。反復可能な長期導入はHelm/CAライフサイクル手順に従います。このレビューはオフラインrenderと構文確認で実導入ではありません。
+デフォルトの CLI 設定では、有効期間が限られた trust 認証情報が生成されます。これは共有 trust を使う完成済みの multicluster 設定ではありません。再現可能で長期運用するインストールには、文書化された Helm／CA ライフサイクルの手順に従ってください。このレビューで確認したのはオフラインでのレンダリングと CLI 構文であり、実環境へのインストールではありません。
 
-### 3. 対象アプリ追加
+### 3. 対象のアプリケーションを追加する
 
-選択した既存namespace/Deploymentに合わせ、両my-appを実targetへ置換します。
+既存の namespace と Deployment を使う場合は、`my-app` の名前を両方とも実際の対象に置き換えてください。
 
 ```bash
 kubectl annotate namespace my-app linkerd.io/inject=enabled
@@ -118,9 +118,9 @@ kubectl -n my-app rollout status deployment/my-app
 linkerd check --proxy -n my-app
 ```
 
-競合アノテーションを自動上書きせずreviewします。注入は新Podだけで、rolling restartにはreadiness/容量の保護策が必要です。manual注入はreviewしたアプリmanifestにも使えます。汎用修正として全稼働Deploymentをinject/applyに往復させないでください。
+競合する annotation がすでにある場合は、自動的に上書きせず内容を確認してください。注入されるのは新しい Pod だけです。ローリング再起動には、ワークロードの readiness とキャパシティを守る対策が必要です。手動注入をレビュー済みのアプリケーションマニフェストに対して実施する方法もあります。すべての稼働中 Deployment に対し、一律の修正として inject／apply を往復させないでください。
 
-### 4. 必要ならVizを追加
+### 4. 必要な場合に Viz を追加する
 
 ```bash
 linkerd viz install > linkerd-viz.yaml
@@ -130,9 +130,9 @@ linkerd viz check
 linkerd viz dashboard
 ```
 
-Vizは任意で独自ライフサイクルが必要です。既定metricsは普遍的本番保持/HA設計ではありません。
+Viz は任意の機能で、独自のライフサイクル管理が必要です。デフォルトのメトリクス設定は、あらゆる本番環境に適用できる保持期間／HA 設計ではありません。
 
-## Linkerdコンポーネント状態確認
+## Linkerd コンポーネントの状態確認
 
 ```bash
 # Core installation/control-plane checks.
@@ -144,36 +144,36 @@ linkerd viz stat deploy -n my-app
 linkerd viz tap deploy/my-app -n my-app
 ```
 
-Tapは対応HTTP要求イベントを観測し、全TCP経路/packet/暗号化境界の証明ではありません。
+Tap が観測するのはサポート対象の HTTP リクエストイベントです。すべての TCP 経路、パケット、暗号化境界を証明するものではありません。
 
 ## 中核概念
 
-### データプレーンプロキシ
+### データプレーン proxy
 
-Rust linkerd-proxyは参加workloadに併設され、設定TCP経路を処理します。skip、未参加先、platform制限は別確認です。HTTP動作には可視/検出済みHTTPが必要です。Pod別固定占有を想定せずresource/遅延を測ります。
+Rust 製の linkerd-proxy は mesh に参加するワークロードと並んで動作します。設定された TCP 経路を処理しますが、skip port、mesh に参加していないエンドポイント、プラットフォーム上の制約は別途確認してください。HTTP レベルの動作には、HTTP が可視であるか検出されている必要があります。Pod ごとのリソース使用量が一定だと想定せず、使用量とレイテンシを測定してください。
 
 ### サービス検出
 
-Destination/policyがService/endpoint状態を監視しrouting情報を提供します。ServiceProfileとGateway APIは版別優先/対応を持つ別経路です。全対象Service portを宣言してください。上の過去の破壊的変更を参照します。
+Destination と policy のコンポーネントは Service／endpoint の状態を監視し、ルーティング情報を提供します。ServiceProfile と Gateway API は別々の設定経路であり、優先順位と機能対応はバージョンによって異なります。対象とするすべての Service port を宣言してください。上記の過去の破壊的変更に関する注意も参照してください。
 
-### 自動mTLS
+### 自動 mTLS
 
-文書化されたworkload証明書既定寿命は24時間、自動更新です。IDはPodのServiceAccountに結び付き、Podごと一意ではありません。trust anchor/issuerは別寿命で、CLI既定生成は1年で切れ、計画rotationが必要です。
+文書化されたデフォルトでは、ワークロード証明書の有効期間は24時間で、自動更新されます。ID は Pod の ServiceAccount に結び付き、Pod ごとに一意の ID が割り当てられるわけではありません。trust anchor と issuer 認証情報には別々のライフサイクルがあります。デフォルトの CLI が生成する認証情報は1年で期限切れとなるため、計画的なローテーションが必要です。
 
-mesh TCP peerはmTLSを使いますが、未参加peerとskip portは自動保証の外です。既定受信policyは未参加平文を許し、拒否が必要なら認可policyを使います。multiclusterには共有trustと明示接続が必要です。
+mesh に参加する TCP peer 間では mTLS が使われますが、mesh に参加していない peer との通信と skip port は、この自動保証の対象外です。受信側のデフォルトポリシーは mesh に参加していない peer からの平文通信を許可します。拒否する必要がある場合は認可ポリシーを使ってください。マルチクラスター通信には、共有 trust と明示的な接続設定が必要です。
 
 ## 次のステップ
 
-1. [導入と設定](01-installation.md)
+1. [インストールと設定](01-installation.md)
 2. [アーキテクチャ](02-architecture.md)
-3. [導入クイズ](../../quizzes/service-mesh/linkerd/installation.md)、[アーキテクチャクイズ](../../quizzes/service-mesh/linkerd/architecture.md)、[通信クイズ](../../quizzes/service-mesh/linkerd/traffic-management.md)
+3. [インストールクイズ](../../quizzes/service-mesh/linkerd/installation.md)、[アーキテクチャクイズ](../../quizzes/service-mesh/linkerd/architecture.md)、[トラフィッククイズ](../../quizzes/service-mesh/linkerd/traffic-management.md)
 4. [セキュリティクイズ](../../quizzes/service-mesh/linkerd/security.md)、[可観測性クイズ](../../quizzes/service-mesh/linkerd/observability.md)、[マルチクラスタークイズ](../../quizzes/service-mesh/linkerd/multi-cluster.md)
 
 ## 参考資料
 
-- [Linkerdドキュメント](https://linkerd.io/docs/overview/)
-- [リリース系列](https://linkerd.io/releases/)と[導入](https://linkerd.io/docs/tasks/install/)
-- [Gateway API](https://linkerd.io/docs/features/gateway-api/)と[要求routing](https://linkerd.io/docs/features/request-routing/)
-- [自動mTLSと注意点](https://linkerd.io/docs/features/automatic-mtls/)と[TCP/protocol処理](https://linkerd.io/docs/features/protocol-detection/)
-- [CNCFプロジェクト記録](https://www.cncf.io/projects/linkerd/)
-- [Linkerd GitHub](https://github.com/linkerd/linkerd2)、[コミュニティ](https://slack.linkerd.io/)、[Buoyantブログ](https://buoyant.io/blog)
+- [Linkerd ドキュメント](https://linkerd.io/docs/overview/)
+- [リリース系列](https://linkerd.io/releases/)と[インストール](https://linkerd.io/docs/tasks/install/)
+- [Gateway API](https://linkerd.io/docs/features/gateway-api/)と[リクエストルーティング](https://linkerd.io/docs/features/request-routing/)
+- [自動 mTLS と注意事項](https://linkerd.io/docs/features/automatic-mtls/)と[TCP／プロトコル処理](https://linkerd.io/docs/features/protocol-detection/)
+- [CNCF プロジェクト記録](https://www.cncf.io/projects/linkerd/)
+- [Linkerd GitHub](https://github.com/linkerd/linkerd2)、[コミュニティ](https://slack.linkerd.io/)、[Buoyant ブログ](https://buoyant.io/blog)

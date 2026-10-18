@@ -1,6 +1,6 @@
 # GitOps
 
-> **最后更新**：October 12, 2026
+> **最后更新**：2026 年 10 月 12 日
 
 ## 目录
 - [什么是 GitOps？](#what-is-gitops)
@@ -170,7 +170,7 @@ Jenkins X / JayeX 为 Kubernetes 上的云原生应用提供 CI/CD。
 - GitOps 推广
 - 基于 Tekton 的流水线
 
-**评估适用场景**：集成式 CI/CD 和预览环境工作流；JayeX/Jenkins X / JayeX 并非只是启用了 GitOps 的 Jenkins
+**评估适用场景**：集成式 CI/CD 和预览环境工作流；Jenkins X / JayeX 并非只是启用了 GitOps 的 Jenkins
 
 ### 对比矩阵
 
@@ -180,7 +180,7 @@ Jenkins X / JayeX 为 Kubernetes 上的云原生应用提供 CI/CD。
 | Helm 行为 | 使用 helm template；Argo CD 管理资源生命周期 | Helm Controller 管理 Helm release 生命周期 |
 | 镜像更新 | 独立的 Argo CD Image Updater | 可选的 Image Reflector/Automation 控制器 |
 | 多租户 | AppProjects、RBAC、目标/源限制 | Kubernetes RBAC、ServiceAccount 模拟、跨命名空间限制 |
-| OCI 源 | 通用 OCI/Helm 源；需验证层和媒体类型 | OCIRepository/Helm 源；需验证验证和层设置 |
+| OCI 源 | 通用 OCI/Helm 源；需验证层和媒体类型 | OCIRepository/Helm 源；需检查验证配置和层设置 |
 | 容量 | 测量应用/集群数量和协调负载 | 测量已安装的控制器、源和协调负载 |
 
 ## 工具选择指南 {#tool-selection-guide}

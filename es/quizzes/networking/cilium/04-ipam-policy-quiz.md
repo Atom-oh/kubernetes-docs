@@ -1,252 +1,313 @@
-# Cuestionario de IPAM y Network Policy de Cilium
+# Cuestionario de IPAM y políticas de red de Cilium
 
-> **Versión compatible**: Cilium 1.17
-> **Última actualización**: February 22, 2026
+> **Cilium 1.20.3 · 2026-10-16**
 
-## IPAM (IP Address Management)
+## IPAM
 
-1. **¿Cuál es el modo IPAM predeterminado de Cilium?**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) CRD-based
-   - D) AWS ENI
-
-   <details>
-   <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: B) Cluster Scope</p>
-   <p><strong>Explicación</strong>: El modo IPAM predeterminado de Cilium es Cluster Scope, que asigna direcciones IP de forma centralizada en todo el cluster.</p>
-   </details>
-
-2. **¿Qué modo IPAM de Cilium hace que cada nodo asigne IPs desde su propio rango CIDR?**
-   - A) Cluster Scope
-   - B) Kubernetes Host Scope
-   - C) CRD-based
-   - D) AWS ENI
+1. **Sin una configuración específica de la plataforma, ¿cuál es el modo IPAM genérico predeterminado y cómo se asignan las direcciones?**
+   - A) `kubernetes`; cada Pod solicita una IP a la API de Kubernetes
+   - B) `cluster-pool`; el Cilium Operator asigna prefijos CIDR a los nodos y los agentes asignan localmente las IP de los Pods
+   - C) `crd`; cada Pod crea un CiliumPodIPPool
+   - D) `eni` en todas las plataformas
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: B) Kubernetes Host Scope</p>
-   <p><strong>Explicación</strong>: En el modo IPAM Kubernetes Host Scope, cada nodo asigna direcciones IP desde su propio rango CIDR.</p>
+
+   **Respuesta: B) `cluster-pool`; el Cilium Operator asigna prefijos CIDR a los nodos y los agentes asignan localmente las IP de los Pods**
+
+   `cluster-pool` asigna prefijos de nodo mediante CiliumNode. No solicita centralmente una dirección por cada Pod, y los perfiles de plataforma pueden elegir otro backend.
+
    </details>
 
-3. **¿Cuál es el modo IPAM recomendado al usar Cilium en AWS EKS?**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) AWS ENI
-   - D) CRD-based
+2. **¿Qué modo obtiene los prefijos de nodo del estado Node de Kubernetes en lugar de usar la asignación `cluster-pool` del Cilium Operator?**
+   - A) `cluster-pool`
+   - B) `kubernetes` (ámbito del host)
+   - C) Solo `multi-pool`
+   - D) Solo `eni`
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: C) AWS ENI</p>
-   <p><strong>Explicación</strong>: En AWS EKS, se recomienda usar el modo IPAM AWS ENI para asignar directamente direcciones IP de VPC a los Pods.</p>
+
+   **Respuesta: B) `kubernetes` (ámbito del host)**
+
+   Kubernetes proporciona los CIDR necesarios para los nodos y el agente asigna direcciones dentro de ellos. Tanto el ámbito del host como `cluster-pool` asignan localmente direcciones individuales; ninguno elimina la coordinación de prefijos.
+
    </details>
 
-4. **¿Qué característica de Kubernetes utiliza el modo IPAM 'PodCIDR' de Cilium?**
-   - A) NodeSpec.PodCIDR
-   - B) NodeSpec.CIDR
-   - C) NodeSpec.Subnet
-   - D) NodeSpec.IPRange
+3. **¿Qué backend se aplica cuando Cilium administra las ENI de AWS y las direcciones de VPC en una instalación preparada sobre nodos EC2?**
+   - A) `kubernetes`
+   - B) `cluster-pool`
+   - C) `eni`
+   - D) `delegated-plugin` para todos los nodos de AWS
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: A) NodeSpec.PodCIDR</p>
-   <p><strong>Explicación</strong>: El modo IPAM PodCIDR de Cilium utiliza el campo NodeSpec.PodCIDR que Kubernetes asigna a cada nodo.</p>
+
+   **Respuesta: C) `eni`**
+
+   Es IPAM de ENI. Si AWS VPC CNI se encadena con Cilium, la asignación de IP sigue a cargo de AWS VPC CNI; Hybrid Nodes usan una ruta distinta, y Fargate y Auto Mode no admiten esta configuración de reemplazo.
+
    </details>
 
-5. **¿Qué comando se utiliza para comprobar la configuración IPAM de Cilium?**
-   - A) `cilium status --ipam`
-   - B) `cilium ipam`
-   - C) `cilium config get ipam`
-   - D) `kubectl -n kube-system get configmap cilium-config -o yaml | grep -E 'ipam|allocator'`
+4. **¿Qué campos de Kubernetes son pertinentes para el modo IPAM con ámbito del host?**
+   - A) `Node.spec.podCIDRs` y el campo `Node.spec.podCIDR`, heredado y limitado a una sola familia
+   - B) `Node.spec.subnet`
+   - C) `Service.spec.podCIDR`
+   - D) `CiliumPodIPPool.spec.selector`
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: D) `kubectl -n kube-system get configmap cilium-config -o yaml | grep -E 'ipam|allocator'`</p>
-   <p><strong>Explicación</strong>: La configuración IPAM de Cilium se almacena en el ConfigMap cilium-config y se puede verificar con este comando.</p>
+
+   **Respuesta: A) `Node.spec.podCIDRs` y el campo `Node.spec.podCIDR`, heredado y limitado a una sola familia**
+
+   Estos son campos del recurso Node de Kubernetes. En cambio, `cluster-pool` usa `CiliumNode.spec.ipam.podCIDRs`; cuál es el estado autoritativo depende del modo seleccionado.
+
    </details>
 
-## Conceptos básicos de Network Policy
-
-6. **¿Cuál es la versión de la API de Cilium NetworkPolicy?**
-   - A) networking.k8s.io/v1
-   - B) cilium.io/v1
-   - C) cilium.io/v2
-   - D) policy.cilium.io/v1
+5. **¿Cómo se debe investigar la configuración IPAM efectiva?**
+   - A) Considerar completa cualquier línea de `grep` que contenga `ipam`
+   - B) Usar solo la disponibilidad del Pod
+   - C) Usar siempre la primera dirección y el primer CIDR de CiliumNode
+   - D) Comparar los valores deseados y las anulaciones por nodo con el estado real del agente y del Operator, y con el recurso del asignador seleccionado
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: C) cilium.io/v2</p>
-   <p><strong>Explicación</strong>: Cilium NetworkPolicy utiliza la versión de API cilium.io/v2.</p>
+
+   **Respuesta: D) Comparar los valores deseados y las anulaciones por nodo con el estado real del agente y del Operator, y con el recurso del asignador seleccionado**
+
+   Los valores de Helm/ConfigMap, las anulaciones por nodo y el estado de asignación se complementan. CiliumNode no es la fuente autoritativa universal para todos los modos IPAM, y la posición de una dirección en una lista no determina el siguiente salto.
+
    </details>
 
-7. **¿Cuál es la función de 'endpointSelector' en Cilium NetworkPolicy?**
-   - A) Seleccionar Pods objetivo para la aplicación de la política
-   - B) Seleccionar nodos objetivo para la aplicación de la política
-   - C) Seleccionar namespaces objetivo para la aplicación de la política
-   - D) Seleccionar services objetivo para la aplicación de la política
+## Conceptos básicos de políticas
+
+6. **¿Qué versión de API del recurso CiliumNetworkPolicy se usa en esta guía?**
+   - A) `networking.k8s.io/v1`
+   - B) `cilium.io/v1`
+   - C) `cilium.io/v2`
+   - D) `policy.cilium.io/v1`
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: A) Seleccionar Pods objetivo para la aplicación de la política</p>
-   <p><strong>Explicación</strong>: endpointSelector se utiliza para seleccionar los Pods objetivo (endpoints) a los que se aplica la política.</p>
+
+   **Respuesta: C) `cilium.io/v2`**
+
+   CiliumNetworkPolicy usa `cilium.io/v2`. No la confundas con la API `v2alpha1` de CiliumPodIPPool ni con el recurso NetworkPolicy estándar de Kubernetes.
+
    </details>
 
-8. **¿Qué controla la regla 'ingress' en Cilium NetworkPolicy?**
-   - A) El tráfico que entra en los Pods seleccionados
-   - B) El tráfico que sale de los Pods seleccionados
-   - C) El tráfico dentro de los Pods seleccionados
-   - D) El tráfico hacia fuera del cluster
+7. **¿Qué selecciona `endpointSelector` en una CiliumNetworkPolicy con ámbito de namespace?**
+   - A) Los endpoints de ese namespace a los que se aplica la política
+   - B) Un Service de Kubernetes que se debe crear
+   - C) Nodos host de cualquier namespace
+   - D) Otras políticas que se deben heredar
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: A) El tráfico que entra en los Pods seleccionados</p>
-   <p><strong>Explicación</strong>: Las reglas de ingress controlan el tráfico que entra en los Pods seleccionados.</p>
+
+   **Respuesta: A) Los endpoints de ese namespace a los que se aplica la política**
+
+   Selecciona los endpoints a los que se aplica la política. El ámbito del recurso y sus selectores son distintos de los peers de tráfico descritos en las reglas ingress/egress.
+
    </details>
 
-9. **¿Qué controla la regla 'egress' en Cilium NetworkPolicy?**
-   - A) El tráfico que entra en los Pods seleccionados
-   - B) El tráfico que sale de los Pods seleccionados
-   - C) El tráfico dentro de los Pods seleccionados
-   - D) El tráfico desde fuera del cluster
+8. **¿Qué describe una regla ingress?**
+   - A) El tráfico que entra en los endpoints seleccionados
+   - B) El tráfico que sale de los endpoints seleccionados
+   - C) Un nuevo pool de IP
+   - D) Un anuncio de rutas
 
    <details>
    <summary>Mostrar respuesta</summary>
-   <p><strong>Respuesta</strong>: B) El tráfico que sale de los Pods seleccionados</p>
-   <p><strong>Explicación</strong>: Las reglas de egress controlan el tráfico que sale de los Pods seleccionados.</p>
+
+   **Respuesta: A) El tráfico que entra en los endpoints seleccionados**
+
+   Ingress se define con respecto al endpoint sujeto seleccionado. Aplica las restricciones correspondientes de peer, puerto y protocolo admitido.
+
    </details>
 
-10. **¿Cuál es la función del campo 'labels' en Cilium NetworkPolicy?**
-    - A) Seleccionar Pods para la aplicación de la política
-    - B) Identificador de la propia política
-    - C) Seleccionar namespaces para la aplicación de la política
-    - D) Seleccionar nodos para la aplicación de la política
+9. **¿Qué describe una regla egress?**
+   - A) El tráfico que entra en los endpoints seleccionados
+   - B) El tráfico que sale de los endpoints seleccionados
+   - C) Todo el tráfico en todas partes
+   - D) Solo el tráfico que viene de fuera de Kubernetes
+
+   <details>
+   <summary>Mostrar respuesta</summary>
+
+   **Respuesta: B) El tráfico que sale de los endpoints seleccionados**
+
+   Egress controla el tráfico saliente del endpoint seleccionado. Conserva deliberadamente las dependencias necesarias de DNS y de la aplicación.
+
+   </details>
+
+10. **¿Para qué se usan las etiquetas opcionales `spec.labels` de una regla de Cilium?**
+    - A) Para seleccionar los Pods sujetos en lugar de usar `endpointSelector`
+    - B) Para identificar la regla y aportar metadatos
+    - C) Para heredar cualquier política con las mismas etiquetas
+    - D) Para asignar IP a los Pods
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) Identificador de la propia política</p>
-    <p><strong>Explicación</strong>: El campo labels se utiliza como identificador de la propia política y se usa cuando otras políticas hacen referencia a esta política.</p>
+
+    **Respuesta: B) Para identificar la regla y aportar metadatos**
+
+    Las etiquetas de regla pueden servir para identificación y búsquedas, y no tienen que ser únicas. No hacen referencia a otras políticas ni las heredan; `metadata.labels` de Kubernetes etiqueta el propio recurso.
+
     </details>
 
-## Network Policy avanzada
+## Selección de peers
 
-11. **¿Qué permite la regla 'toCIDR' en Cilium NetworkPolicy?**
-    - A) Tráfico hacia rangos de direcciones IP específicos
-    - B) Tráfico hacia nombres de dominio específicos
-    - C) Tráfico hacia services específicos
-    - D) Tráfico hacia puertos específicos
+11. **¿Cuál es el propósito y cuál es el límite predeterminado de `toCIDR`/`toCIDRSet`?**
+    - A) Seleccionar prefijos IP, principalmente para peers externos; la coincidencia con Pods/nodos administrados tiene límites predeterminados documentados
+    - B) Filtrar URL HTTP
+    - C) Crear Services automáticamente
+    - D) Asignar direcciones de esos prefijos
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: A) Tráfico hacia rangos de direcciones IP específicos</p>
-    <p><strong>Explicación</strong>: La regla toCIDR se utiliza para permitir tráfico hacia rangos de direcciones IP específicos (notación CIDR).</p>
+
+    **Respuesta: A) Seleccionar prefijos IP, principalmente para peers externos; la coincidencia con Pods/nodos administrados tiene límites predeterminados documentados**
+
+    Para las políticas habituales sobre Pods administrados, usa selectores de endpoints. La versión documenta una coincidencia beta optativa de CIDR para Pods/nodos, con implicaciones para el consumo de identidades; no describas el comportamiento predeterminado como un comparador IP incondicional.
+
     </details>
 
-12. **¿Qué permite la regla 'toFQDNs' en Cilium NetworkPolicy?**
-    - A) Tráfico hacia direcciones IP específicas
-    - B) Tráfico hacia puertos específicos
-    - C) Tráfico hacia nombres de dominio específicos
-    - D) Tráfico de protocolos específicos
+12. **¿Qué autoriza `toFQDNs`?**
+    - A) Todas las consultas DNS automáticamente
+    - B) Cualquier URL HTTP del dominio
+    - C) Tráfico hacia las IP aprendidas para los nombres seleccionados, sujeto a los puertos y demás restricciones de la política
+    - D) Solo IP configuradas estáticamente
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: C) Tráfico hacia nombres de dominio específicos</p>
-    <p><strong>Explicación</strong>: La regla toFQDNs permite tráfico hacia nombres de dominio específicos (FQDNs), mientras Cilium supervisa las consultas DNS para permitir dinámicamente las direcciones IP de esos dominios.</p>
+
+    **Respuesta: C) Tráfico hacia las IP aprendidas para los nombres seleccionados, sujeto a los puertos y demás restricciones de la política**
+
+    Una regla aparte del proxy DNS permite observar la correspondencia entre nombres e IP. Autorizar el puerto 53 por sí solo no habilita ese aprendizaje, y permitir una IP no equivale a autorizar un hostname HTTP ni a un usuario de la aplicación.
+
     </details>
 
-13. **¿Qué significa la entidad 'world' en la regla 'toEntities' de Cilium NetworkPolicy?**
-    - A) Todos los endpoints internos del cluster
-    - B) Todas las redes externas
-    - C) Todos los nodos
-    - D) Todos los namespaces
+13. **¿Qué representa la entidad `world`?**
+    - A) Todos los Pods locales y remotos sin distinción
+    - B) Una categoría amplia de identidades externas al clúster
+    - C) Solo los nodos del plano de control
+    - D) Solo las direcciones de Internet públicas
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) Todas las redes externas</p>
-    <p><strong>Explicación</strong>: La entidad 'world' hace referencia a todas las redes fuera del cluster.</p>
+
+    **Respuesta: B) Una categoría amplia de identidades externas al clúster**
+
+    `world` puede incluir peers externos privados; no equivale a la entidad `all` ni a un selector de un clúster remoto con nombre. Cuando sea necesario, usa peers explícitos y reglas más acotadas.
+
     </details>
 
-14. **¿Qué permite la regla 'toServices' en Cilium NetworkPolicy?**
-    - A) Tráfico hacia services específicos de Kubernetes
-    - B) Tráfico hacia services externos específicos
-    - C) Tráfico hacia puertos específicos
-    - D) Tráfico de protocolos específicos
+14. **¿Cómo funciona `toServices`?**
+    - A) Resuelve los selectores de Service de Kubernetes o las direcciones de EndpointSlice de Services sin selector y los convierte en selectores de políticas
+    - B) Crea un Service y configura el enrutamiento automáticamente
+    - C) Hace accesibles todos los nombres DNS
+    - D) Reemplaza todas las reglas de entidad de kube-apiserver
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: A) Tráfico hacia services específicos de Kubernetes</p>
-    <p><strong>Explicación</strong>: La regla toServices se utiliza para permitir tráfico hacia services específicos de Kubernetes.</p>
+
+    **Respuesta: A) Resuelve los selectores de Service de Kubernetes o las direcciones de EndpointSlice de Services sin selector y los convierte en selectores de políticas**
+
+    Los Services sin selector usan selectores derivados de CIDR y heredan sus límites. No des por sentado que el Service especial `default/kubernetes` se comporta como un selector de una carga de trabajo ordinaria.
+
     </details>
 
-15. **¿Cuál es la función de 'nodeSelector' en Cilium NetworkPolicy?**
-    - A) Seleccionar Pods objetivo para la aplicación de la política
-    - B) Seleccionar nodos objetivo para la aplicación de la política
-    - C) Seleccionar namespaces objetivo para la aplicación de la política
-    - D) Seleccionar services objetivo para la aplicación de la política
+15. **¿Dónde se usa `nodeSelector` para seleccionar sujetos del firewall de host?**
+    - A) En cualquier CiliumNetworkPolicy con ámbito de namespace, sin requisitos previos
+    - B) En CiliumClusterwideNetworkPolicy cuando el firewall de host está configurado
+    - C) En CiliumPodIPPool para asignar la IP de cada Pod
+    - D) En anotaciones de Service
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) Seleccionar nodos objetivo para la aplicación de la política</p>
-    <p><strong>Explicación</strong>: nodeSelector se utiliza para seleccionar los nodos objetivo a los que se aplica la política.</p>
+
+    **Respuesta: B) En CiliumClusterwideNetworkPolicy cuando el firewall de host está configurado**
+
+    La API Rule restringe `nodeSelector` a CiliumClusterwideNetworkPolicy. Es distinto de `endpointSelector` y de la selección de peers mediante `fromNodes`/`toNodes`.
+
     </details>
 
 ## Política L7
 
-16. **¿Qué atributos se pueden filtrar en la política HTTP L7 de Cilium?**
-    - A) Ruta
-    - B) Método
-    - C) Encabezados
+16. **¿Qué atributos de las solicitudes HTTP pueden restringir las reglas L7 admitidas por Cilium?**
+    - A) La ruta
+    - B) El método
+    - C) Los encabezados
     - D) Todos los anteriores
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Todos los anteriores</p>
-    <p><strong>Explicación</strong>: La política HTTP L7 de Cilium puede filtrar diversos atributos de las solicitudes HTTP, incluidos la ruta, el método y los encabezados.</p>
+
+    **Respuesta: D) Todos los anteriores**
+
+    Envoy aplica las reglas al tráfico HTTP visible. Una regla L4 independiente y sin restricciones puede eludir restricciones L7 que se superpongan; además, que la política permita el tráfico no garantiza que la aplicación funcione correctamente.
+
     </details>
 
-17. **¿Qué atributos se pueden filtrar en la política Kafka L7 de Cilium?**
-    - A) Topic
-    - B) API Key
-    - C) Client ID
-    - D) Todos los anteriores
+17. **¿Qué es cierto sobre `rules.kafka` en Cilium 1.20.3?**
+    - A) Autoriza temas de Kafka de forma predeterminada
+    - B) Se habilita cambiando `apiVersion` a `v2alpha1`
+    - C) Cifra automáticamente la conexión con el broker
+    - D) Se eliminó la API L7 de Kafka integrada; usa controles de red adecuados y la autorización del broker
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Todos los anteriores</p>
-    <p><strong>Explicación</strong>: La política Kafka L7 de Cilium puede filtrar diversos atributos de las solicitudes de Kafka, incluidos topic, API key y client ID.</p>
+
+    **Respuesta: D) Se eliminó la API L7 de Kafka integrada; usa controles de red adecuados y la autorización del broker**
+
+    No apliques la política obsoleta de temas/API keys/ID de cliente. Para la conectividad L4, usa el puerto real del listener del broker y sus mecanismos nativos de autenticación y autorización.
+
     </details>
 
-18. **¿Qué permite la regla 'matchPattern' en la política DNS L7 de Cilium?**
-    - A) Coincidencia exacta de nombres de dominio
-    - B) Coincidencia de patrones de nombres de dominio con comodines
-    - C) Coincidencia de direcciones IP
-    - D) Coincidencia de números de puerto
+18. **¿Qué afirmación sobre los comodines coincide con la implementación de esta versión?**
+    - A) `*.example.com` también coincide con `example.com` y `a.b.example.com`
+    - B) `*.example.com` coincide con una etiqueta de subdominio; `**.example.com` coincide con uno o más niveles, y ambos excluyen el dominio raíz
+    - C) Todos los asteriscos siempre coinciden con puntos
+    - D) `matchName` y `matchPattern` asignan direcciones DNS
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) Coincidencia de patrones de nombres de dominio con comodines</p>
-    <p><strong>Explicación</strong>: La regla matchPattern puede coincidir con patrones de nombres de dominio, incluidos comodines (*). Ejemplo: *.example.com</p>
+
+    **Respuesta: B) `*.example.com` coincide con una etiqueta de subdominio; `**.example.com` coincide con uno o más niveles, y ambos excluyen el dominio raíz**
+
+    La implementación compara el nombre DNS normalizado anclándolo por completo. Los nombres exactos, los comodines de una etiqueta y el prefijo de varios niveles tienen significados distintos; un `matchName` separado puede incluir el dominio raíz.
+
     </details>
 
-19. **¿Qué atributos se pueden filtrar en la política gRPC L7 de Cilium?**
-    - A) Nombre del método
-    - B) Nombre del service
-    - C) Metadatos
-    - D) Todos los anteriores
+19. **¿Cómo se expresan las restricciones admitidas para servicios/métodos gRPC y metadatos?**
+    - A) Con un filtro de campos protobuf `rules.grpc`
+    - B) Solo con una coincidencia CIDR L3
+    - C) Con coincidencias de ruta y encabezados HTTP/2 mediante la ruta admitida de Envoy
+    - D) Reemplazando el CNI por kube-proxy
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: D) Todos los anteriores</p>
-    <p><strong>Explicación</strong>: La política gRPC L7 de Cilium puede filtrar diversos atributos de las solicitudes gRPC, incluidos el nombre del método, el nombre del service y los metadatos.</p>
+
+    **Respuesta: C) Con coincidencias de ruta y encabezados HTTP/2 mediante la ruta admitida de Envoy**
+
+    Los nombres de servicio/método gRPC aparecen en la ruta HTTP/2 y los metadatos, en los encabezados. Esto no inspecciona arbitrariamente el payload protobuf; también importa si TLS permite ver ese tráfico.
+
     </details>
 
-20. **¿Qué componente se necesita para aplicar la política L7 de Cilium?**
-    - A) kube-proxy
-    - B) Envoy Proxy
-    - C) NGINX Ingress Controller
-    - D) HAProxy
+20. **¿Qué distinción entre componentes es correcta?**
+    - A) kube-proxy aplica todas las reglas L7
+    - B) Envoy gestiona las reglas HTTP/gRPC admitidas; el proxy DNS de Cilium gestiona la política DNS
+    - C) NGINX Ingress es obligatorio para la política DNS
+    - D) Todos los analizadores L7 se ejecutan solo en BPF del kernel
 
     <details>
     <summary>Mostrar respuesta</summary>
-    <p><strong>Respuesta</strong>: B) Envoy Proxy</p>
-    <p><strong>Explicación</strong>: Cilium utiliza Envoy Proxy para aplicar políticas L7.</p>
+
+    **Respuesta: B) Envoy gestiona las reglas HTTP/gRPC admitidas; el proxy DNS de Cilium gestiona la política DNS**
+
+    De forma predeterminada, el proxy DNS se ejecuta dentro del agente; existe un modo independiente alfa documentado por separado. No exijas Envoy para todas las reglas DNS ni des por sentado que el cifrado deja visible el payload.
+
     </details>
+
+[Revisa la guía](../../../networking/cilium/04-ipam-policy.md).

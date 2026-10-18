@@ -1,412 +1,240 @@
 # Observability の概要
 
-> **最終更新**: February 20, 2026
+> **最終レビュー日**: 2026年9月12日
 
 ## はじめに
 
-現代の分散システム、特に Kubernetes ベースのマイクロサービスアーキテクチャでは、外部出力からシステムの内部状態を観測・理解する能力が不可欠です。これを **Observability** と呼びます。
+現代の分散システム、とりわけ Kubernetes ベースのマイクロサービスアーキテクチャでは、外部に現れる出力からシステムの内部状態を観測し、理解できることが欠かせません。これを **Observability（可観測性）** と呼びます。
 
 ## Observability と Monitoring
 
-Observability と Monitoring はしばしば同じ意味で使われますが、両者には根本的な違いがあります。
+Monitoring は、システムの動作を収集・分析し、変化に対応する活動です。Observability は、出力を通じて内部状態をどれだけ理解できるかを表します。両者は連携します。Monitoring には、ログ、トレース、診断クエリを含めることができます。
 
 | 観点 | Monitoring | Observability |
-|--------|-----------|---------------|
-| **アプローチ** | 事前定義されたメトリクスとしきい値に基づく | システム出力を通じて内部状態を推論する |
-| **質問の種類** | 「何が問題だったのか？」（What） | 「なぜ問題が起きたのか？」（Why） |
-| **データ範囲** | 既知の問題の検出 | 未知の問題の探索 |
-| **柔軟性** | 事前定義されたダッシュボード | 動的なクエリと探索 |
-| **複雑性** | 単純なシステムに適している | 複雑な分散システムに不可欠 |
+| --- | --- | --- |
+| **焦点** | 健全性とユーザーへの影響を継続的に評価する | システムの動作を説明するのに十分な可視性を得る |
+| **実践** | SLO、ダッシュボード、アラート、調査 | 計装、コンテキスト、相関付け、探索 |
+| **問い** | 何が変わり、なぜ失敗しているのか | その問いに答える証拠が十分にあるか |
+| **データ** | メトリクス、ログ、トレースなどの有用なシグナル | それらのシグナルの品質、網羅性、相互のつながり |
+| **複雑さ** | シンプルなシステムから分散システムまで有用 | システムと運用目標に合わせて設計する |
 
-```mermaid
-flowchart LR
-    subgraph Monitoring["Monitoring"]
-        M1[Predefined Metrics]
-        M2[Threshold Alerts]
-        M3[Dashboards]
-    end
+## Observability の三つの柱
 
-    subgraph Observability["Observability"]
-        O1[Logs]
-        O2[Metrics]
-        O3[Traces]
-    end
+ログ、メトリクス、トレースは広く使われている三つのシグナルですが、Observability の定義を網羅するものではありません。プロファイルもコードレベルのリソース使用状況を示せます。OpenTelemetry ではシグナルごとに成熟度が異なり、プロファイルのサポートはまだ開発中です。
 
-    M1 --> M2
-    M2 --> M3
+### 1. ログ
 
-    O1 <--> O2
-    O2 <--> O3
-    O3 <--> O1
-
-    Monitoring -->|Evolution| Observability
-
-    classDef monitoring fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef observability fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class M1,M2,M3 monitoring
-    class O1,O2,O3 observability
-```
-
-## Observability の 3 つの柱
-
-Observability は 3 つの中核となるデータタイプで構成されます。
-
-```mermaid
-flowchart TD
-    subgraph Pillars["Three Pillars of Observability"]
-        direction TB
-
-        subgraph Logs["Logs"]
-            L1[Event Records]
-            L2[Structured Data]
-            L3[Context Information]
-        end
-
-        subgraph Metrics["Metrics"]
-            M1[Numeric Measurements]
-            M2[Time Series Data]
-            M3[Aggregatable]
-        end
-
-        subgraph Traces["Traces"]
-            T1[Request Path]
-            T2[Inter-service Flow]
-            T3[Latency Analysis]
-        end
-    end
-
-    Logs <-->|TraceID Linking| Traces
-    Metrics <-->|Exemplar| Traces
-    Logs <-->|Label Matching| Metrics
-
-    classDef logs fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef traces fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class L1,L2,L3 logs
-    class M1,M2,M3 metrics
-    class T1,T2,T3 traces
-```
-
-### 1. Logs
-
-Logs は、システム内で発生する個々のイベントの記録です。
+ログは、システム内で発生した個々のイベントの記録です。
 
 **特徴:**
-- 個別かつ不変のイベント記録
+- 個別イベントの記録。改ざん耐性と保持の保証はストレージ設定によって異なる
 - タイムスタンプとコンテキスト情報を含む
-- 構造化（JSON）または非構造化形式
-- デバッグと監査に不可欠
+- 構造化形式（JSON）または非構造化形式
+- 適切にイベントを網羅し、アクセス制御と保持を設計すれば、デバッグや監査に役立つ
 
-**ユースケース:**
+**用途:**
 - エラーと例外の追跡
 - セキュリティ監査
 - コンプライアンス
 - 詳細なデバッグ
 
-**ツール:** Loki, Elasticsearch, CloudWatch Logs, Fluent Bit
+**ツールの役割:** Loki、Elasticsearch／OpenSearch、CloudWatch Logs は保存／検索バックエンドを提供し、Fluent Bit はレコードを収集して転送します。
 
-### 2. Metrics
+### 2. メトリクス
 
-Metrics は、時間の経過に伴う数値測定値です。
+メトリクスは、時間の経過に伴う数値測定値です。
 
 **特徴:**
 - 時系列データとして保存される
-- 集計および数学的演算をサポートする
-- 高いストレージ効率
+- 集計と数学的な演算ができる
+- カーディナリティと収集量を管理すれば、ストレージ効率がよい
 - 傾向分析に適している
 
-**主要な Metric タイプ:**
-- **Counter**: 累積的に増加する値（例: リクエスト数）
-- **Gauge**: 現在の状態を表す値（例: CPU 使用率）
-- **Histogram**: 分布の測定値（例: 応答時間）
-- **Summary**: 分位数の計算
+**Prometheus の主なメトリクス型:**
+- **Counter**: 累積して増える値。再起動時などにゼロへリセットされることがある（例: リクエスト数）
+- **Gauge**: 増減する現在値（例: メモリ使用量）
+- **Histogram**: 観測値の分布（例: 応答時間）。クラシック型とネイティブ型では表現とクエリ構文が異なる
+- **Summary**: 観測件数と合計を記録し、実装によっては分位数を事前計算する。インスタンスごとの分位数を平均しても、フリート全体の正しい分位数にはならない
 
-**ツール:** Prometheus, VictoriaMetrics, CloudWatch Metrics, Datadog
+**ツール:** Prometheus、VictoriaMetrics、CloudWatch Metrics、Datadog
 
-### 3. Traces
+### 3. トレース
 
-Traces は、分散システム全体にわたるリクエストの完全な経路を追跡します。
+トレースは、スパンを通じて関連する処理がたどった経路を記述します。計装の抜け、サンプリング、伝播の失敗、データ損失があると、トレースが部分的になることがあります。
 
 **特徴:**
 - サービス間のリクエストフローを可視化する
-- 各ステップのレイテンシーを測定する
+- 各段階のレイテンシーを測る
 - ボトルネックを特定する
 - 依存関係を分析する
 
-**コンポーネント:**
-- **Trace**: 単一リクエストの完全な経路
+**構成要素:**
+- **Trace**: 共通の TraceID でつながった関連スパン
 - **Span**: 単一の作業単位
-- **SpanContext**: サービス間で伝播されるコンテキスト
+- **SpanContext**: トレースコンテキストの伝播に使う TraceID、SpanID、トレースフラグ、tracestate
 
-**ツール:** Tempo, Jaeger, X-Ray, Zipkin, Datadog APM
+**ツール:** Tempo、Jaeger、X-Ray、Zipkin、Datadog APM
 
-## 3 つの柱の相関関係
+## 三つの柱の相関付け
 
-3 つの柱は独立しているのではなく相互に接続されており、強力な分析機能を提供します。
+計装、収集、バックエンド間のリンクを設定すると、シグナルを相関付けられます。シグナルが存在するだけで、すべてのイベントが自動的につながるわけではありません。
 
-```mermaid
-flowchart TD
-    subgraph Request["User Request"]
-        R[HTTP Request]
-    end
+![API Gateway からユーザー、注文、決済サービスへ HTTP リクエストが分岐し、各サービスが共通の Trace ID を付けたログ、メトリクス、トレースを出力する。共通 ID は metric exemplar と相関ログの両方にリンクし、三つの柱の間を行き来できる。](../.gitbook/assets/en-observability-readme-2.png)
 
-    subgraph Services["Microservices"]
-        S1[API Gateway]
-        S2[User Service]
-        S3[Order Service]
-        S4[Payment Service]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-2.html)
 
-    subgraph Correlation["Correlation"]
-        C1[TraceID: abc123]
-        C2[Metric Exemplar]
-        C3[Log Correlation]
-    end
+図では説明のために ID を短縮しています。実際のデータでは、以下に示す有効な全桁の ID を使ってください。メトリクスとの相関には exemplar のメタデータを使い、通常のメトリクスラベルのカーディナリティは抑えてください。
 
-    R --> S1
-    S1 --> S2
-    S1 --> S3
-    S3 --> S4
+### Trace からログへの相関付け
 
-    S1 -.->|Logs/Metrics/Traces| C1
-    S2 -.->|Logs/Metrics/Traces| C1
-    S3 -.->|Logs/Metrics/Traces| C1
-    S4 -.->|Logs/Metrics/Traces| C1
-
-    C1 <--> C2
-    C2 <--> C3
-    C3 <--> C1
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef correlation fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class R request
-    class S1,S2,S3,S4 service
-    class C1,C2,C3 correlation
-```
-
-### Trace から Log への相関付け
-
-特定のリクエストに関連するすべての Log を追跡するため、Logs に TraceID を含めます。
+アクティブなトレースコンテキストがある場合は TraceID と SpanID を記録し、出力されたログイベントをスパンにリンクします。バックグラウンド処理や未計装のログには、これらの ID がないことがあります。以下はアプリケーションの JSON 例であり、完全な OTLP リクエストペイロードではありません。
 
 ```json
 {
   "timestamp": "2025-02-15T10:30:00Z",
   "level": "ERROR",
   "message": "Payment processing failed",
-  "traceId": "abc123def456",
-  "spanId": "789xyz",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "spanId": "00f067aa0ba902b7",
   "service": "payment-service"
 }
 ```
 
-### Metric から Trace への相関付け（Exemplars）
+W3C 形式の TraceID は32桁、SpanID は16桁の16進数です。すべてゼロの ID は無効です。JSON には説明用の過去のイベント時刻が残っています。
 
-異常発生時にリクエストを追跡できるよう、TraceID を Metrics にリンクします。
+### Metric から Trace への相関付け（Exemplar）
 
-```yaml
-# Prometheus Exemplar
-http_request_duration_seconds_bucket{le="0.5"} 1000 # {traceID="abc123"}
+Exemplar は、特定の観測値をトレースに結び付ける独立したメタデータです。通常のメトリクス系列にリクエストごとの TraceID を付けるとカーディナリティが高くなるため、exemplar またはログフィールドを使ってください。以下は、説明用の測定値を含む、クラシック Histogram の完全な OpenMetrics テキスト例です。
+
+```text
+# HELP http_request_duration_seconds Observed HTTP request duration.
+# TYPE http_request_duration_seconds histogram
+# UNIT http_request_duration_seconds seconds
+http_request_duration_seconds_bucket{le="0.5"} 1000 # {trace_id="4bf92f3577b34da6a3ce929d0e0e4736"} 0.42
+http_request_duration_seconds_bucket{le="+Inf"} 1000
+http_request_duration_seconds_sum 123.4
+http_request_duration_seconds_count 1000
+# EOF
 ```
+
+Exemplar にはラベルセットと観測値（`0.42`）の両方が必要で、タイムスタンプは任意です。収集／ストレージが exemplar をサポートして保持する必要があります。また、データソースのリンクで `trace_id` ラベルをトレースバックエンドに対応付けます。参照先のトレースもサンプリングされ、保持されていなければなりません。
 
 ## OpenTelemetry と標準化
 
-OpenTelemetry（OTel）は、Observability データ収集の業界標準です。
+OpenTelemetry (OTel) は、ベンダーに依存しない API、SDK、計装、Collector ツールを提供します。サポートされるシグナルと自動計装の範囲は、言語、フレームワーク、コンポーネントのバージョンによって異なります。
 
-```mermaid
-flowchart TD
-    subgraph Apps["Applications"]
-        A1[Java App]
-        A2[Python App]
-        A3[Node.js App]
-        A4[Go App]
-    end
+![四つの言語のアプリケーションが自動または手動で計装され、OpenTelemetry Collector の受信、処理、エクスポートの各段階を経て、五つの Observability バックエンドのいずれかへデータを送る。](../.gitbook/assets/en-observability-readme-3.png)
 
-    subgraph SDK["OpenTelemetry SDK"]
-        SDK1[Auto-instrumentation]
-        SDK2[Manual instrumentation]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-3.html)
 
-    subgraph Collector["OTEL Collector"]
-        C1[Receivers]
-        C2[Processors]
-        C3[Exporters]
-    end
-
-    subgraph Backends["Backends"]
-        B1[Tempo]
-        B2[Prometheus]
-        B3[Loki]
-        B4[X-Ray]
-        B5[Datadog]
-    end
-
-    A1 & A2 & A3 & A4 --> SDK1 & SDK2
-    SDK1 & SDK2 --> C1
-    C1 --> C2
-    C2 --> C3
-    C3 --> B1 & B2 & B3 & B4 & B5
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef sdk fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef backend fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class A1,A2,A3,A4 app
-    class SDK1,SDK2 sdk
-    class C1,C2,C3 collector
-    class B1,B2,B3,B4,B5 backend
-```
+これは一つのデプロイパターンです。アプリケーションからサポート対象のバックエンドへ直接エクスポートすることもできます。選んだシグナルに合わせて Collector の receiver、processor、exporter を設定してください。各コンポーネントの成熟度は異なります。
 
 **OpenTelemetry の利点:**
-- ベンダー中立の標準
-- 複数の言語 SDK をサポート
-- Auto-instrumentation 機能
-- 複数バックエンドのサポート
+- ベンダーに依存しない標準
+- 複数言語の SDK をサポート
+- 自動計装機能
+- 複数バックエンドをサポート
 - 活発なコミュニティ
 
-## EKS 環境向け Observability 戦略
+## EKS 環境の Observability 戦略
 
-Amazon EKS で効果的な Observability を実装するための戦略です。
+Amazon EKS で Observability を効果的に実装するための戦略を示します。
 
 ### 1. レイヤーベースの Observability
 
-```mermaid
-flowchart TD
-    subgraph Infra["Infrastructure Layer"]
-        I1[EC2/Fargate Metrics]
-        I2[VPC Flow Logs]
-        I3[EBS Performance]
-    end
+![インフラストラクチャ、Kubernetes、アプリケーションの各レイヤーがシグナルを対応するツールへ送る。インフラのメトリクスは CloudWatch、クラスターとビジネスのメトリクスは Prometheus／Grafana、アプリケーションのトレースとログは Tempo／X-Ray と Loki に送られる。](../.gitbook/assets/en-observability-readme-4.png)
 
-    subgraph K8s["Kubernetes Layer"]
-        K1[kube-state-metrics]
-        K2[Node Exporter]
-        K3[API Server Metrics]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-4.html)
 
-    subgraph App["Application Layer"]
-        A1[Business Metrics]
-        A2[Application Logs]
-        A3[Distributed Tracing]
-    end
+これらはシグナル経路の例であり、ツールとレイヤーの対応を限定するものではありません。CloudWatch などのバックエンドは複数のレイヤーをカバーできます。ノードレベルの Collector では、選択した EKS コンピューティングモードでサポートされるアクセス権とデプロイ方式が必要です。
 
-    subgraph Tools["Observability Tools"]
-        T1[CloudWatch]
-        T2[Prometheus/Grafana]
-        T3[Tempo/X-Ray]
-        T4[Loki]
-    end
+### 2. ツール選択の例
 
-    I1 & I2 & I3 --> T1
-    K1 & K2 & K3 --> T2
-    A1 --> T2
-    A2 --> T4
-    A3 --> T3
-
-    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef tools fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class I1,I2,I3 infra
-    class K1,K2,K3 k8s
-    class A1,A2,A3 app
-    class T1,T2,T3,T4 tools
-```
-
-### 2. 推奨ツールスタック
-
-| 機能 | Open Source | AWS Native | 商用 |
+| 機能 | セルフホストの例 | AWS マネージドの例 | 商用プラットフォーム |
 |----------|-------------|------------|------------|
-| Metrics | Prometheus, VictoriaMetrics | CloudWatch, AMP | Datadog, New Relic |
-| Logs | Loki, Elasticsearch | CloudWatch Logs | Splunk, Datadog |
-| Traces | Tempo, Jaeger | X-Ray | Datadog APM, Dynatrace |
-| 可視化 | Grafana | CloudWatch Dashboards | Datadog, Dynatrace |
+| メトリクス | Prometheus、VictoriaMetrics | CloudWatch、AMP | Datadog、New Relic |
+| ログ | Loki、Elasticsearch／OpenSearch | CloudWatch Logs | Splunk、Datadog |
+| トレース | Tempo、Jaeger | X-Ray | Datadog APM、Dynatrace |
+| 可視化 | Grafana | CloudWatch Dashboards | Datadog、Dynatrace |
 
-### 3. コスト最適化戦略
+### 3. コスト最適化の戦略
 
-- **Sampling**: Trace データのサンプリングによりコストを削減する
-- **Retention Policies**: データ保持期間を最適化する
-- **Tiered Storage**: 古いデータをより低コストなストレージへ移動する
-- **Aggregation**: 詳細データではなく集計データを保存する
+- **Sampling**: 保持するトレース量と調査に必要な網羅性のバランスを取る。Tail sampling は判断前にデータを受信してバッファーに保持するため、上流のコストをすべてなくすわけではない
+- **保持ポリシー**: データの保持期間を最適化する
+- **階層型ストレージ**: バックエンドがサポートするストレージ階層、クエリ経路、必要な保持期間を確認する
+- **集約とカーディナリティ**: 診断情報がどれだけ失われるかを評価しながら、収集量とラベルの次元数を管理する
 
 ## Observability 成熟度モデル
 
-```mermaid
-flowchart LR
-    L1[Level 1<br/>Basic Monitoring]
-    L2[Level 2<br/>Centralization]
-    L3[Level 3<br/>Correlation]
-    L4[Level 4<br/>AIOps]
+この実務的な計画モデルを使って運用目標を見直してください。製品購入の順序や、普遍的な認定尺度を示すものではありません。シグナルの網羅性、調査速度、実行可能なアラート、コストを評価し、動作を検証したうえで自動分析を導入します。
 
-    L1 -->|Log/Metric Collection| L2
-    L2 -->|TraceID Linking| L3
-    L3 -->|ML-based Analysis| L4
-
-    classDef level1 fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-    classDef level2 fill:#B8D4E3,stroke:#333,stroke-width:1px,color:black
-    classDef level3 fill:#7FB3D3,stroke:#333,stroke-width:1px,color:white
-    classDef level4 fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class L1 level1
-    class L2 level2
-    class L3 level3
-    class L4 level4
-```
-
-| レベル | 特徴 | ツール例 |
-|-------|-----------------|---------------|
-| レベル 1 | 基本的な Log/Metric 収集 | kubectl logs, CloudWatch |
-| レベル 2 | 集中型 Observability | Loki, Prometheus, Grafana |
-| レベル 3 | 3 つの柱の相関付け | Tempo, Exemplars, TraceID |
-| レベル 4 | AIOps、自動異常検出 | Datadog Watchdog, Dynatrace Davis |
+| 評価領域 | 評価する機能 | ツール例 |
+| --- | --- | --- |
+| 基本的な収集 | 必要なサービス／プラットフォームのシグナルを確実に網羅 | kubectl logs、CloudWatch |
+| 集中管理 | 適切な保持、アクセス制御、クエリ | Loki、Prometheus、Grafana |
+| 相関付け | リクエスト、サービス、デプロイのコンテキストを通じたリンク | Tempo、exemplar、TraceID |
+| 任意の自動化 | 誤検知、見落とし、対応動作を検証した分析支援 | Datadog Watchdog、Dynatrace Intelligence |
 
 ## セクションガイド
 
-この Observability セクションは、以下のように構成されています。
+この Observability セクションは次のように構成されています。
 
 ### [Logging](./logging/README.md)
-Log の収集、保存、分析のためのツールと戦略:
-- Loki: 軽量な Log 集約システム
-- Fluent Bit: 高性能な Log コレクター
-- CloudWatch Logs: AWS ネイティブの Logging
+ログの収集、保存、分析に使うツールと戦略:
+- Loki: ログ集約とクエリのバックエンド
+- Fluent Bit: 高性能なログコレクター
+- CloudWatch Logs: AWS ネイティブのログ管理
 
 ### [Metrics](./metrics/README.md)
-時系列 Metric の収集と分析:
-- Prometheus: 業界標準の Metrics システム
-- VictoriaMetrics: 高性能な Prometheus 代替
-- CloudWatch Metrics: AWS ネイティブの Metrics
+時系列メトリクスの収集と分析:
+- Prometheus: 業界標準のメトリクスシステム
+- VictoriaMetrics: メトリクスの保存／クエリバックエンド
+- CloudWatch Metrics: AWS ネイティブのメトリクス
 
 ### [Tracing](./tracing/README.md)
-分散 Tracing とリクエストフロー分析:
-- Tempo: Grafana の分散 Tracing バックエンド
-- X-Ray: AWS ネイティブの分散 Tracing
-- OpenTelemetry: 標準化された Instrumentation
-- Dynatrace: AI 搭載 APM
+分散トレースとリクエストフローの分析:
+- Tempo: Grafana の分散トレースバックエンド
+- X-Ray: AWS ネイティブの分散トレース
+- OpenTelemetry: 標準化された計装
+- Dynatrace: AI 搭載の APM
 
 ### [Grafana (Dashboards)](./grafana/README.md)
 統合された可視化とダッシュボード:
-- データソース統合
-- ダッシュボード設計パターン
-- アラート設定
+- データソースの統合
+- ダッシュボードの設計パターン
+- アラートの設定
+
+### [Alerting](./alerting/README.md)
+実行可能なアラート、ルーティング、対応システムとの統合。
+
+### [Observability Optimization](./09-observability-optimization.md)
+収集量、カーディナリティ、保持期間、運用コスト。
+
+### [Integrated Labs](../labs/observability/README.md)
+インフラストラクチャ、スタック、アプリケーション、負荷、トレースを段階的に演習します。
 
 ## はじめに
 
-Observability の実装を開始するには、次の順序が推奨されます。
+サービスの目標、調査したい問い、既存のプラットフォーム／Collector の機能から始めます。以下の例の順序を、それらの要件に合わせてください。
 
-1. **Metric 収集を設定する**: Prometheus または VictoriaMetrics をデプロイする
-2. **Log 収集を設定する**: Loki と Fluent Bit をデプロイする
-3. **Tracing を設定する**: Tempo または X-Ray をデプロイする
-4. **可視化**: Grafana ですべてのデータソースを接続する
+1. **メトリクスを設定する**: Prometheus、VictoriaMetrics、または適切なマネージドバックエンドを選ぶ
+2. **ログ収集を設定する**: Loki と Fluent Bit をデプロイする
+3. **トレースを設定する**: Tempo または X-Ray をデプロイする
+4. **可視化**: 選択したプラットフォームで、必要なデータソースとダッシュボードを接続する
 5. **相関付け**: TraceID ベースのリンクを設定する
 
 ## 参考資料
 
-- [OpenTelemetry 公式ドキュメント](https://opentelemetry.io/docs/)
-- [Grafana LGTM Stack](https://grafana.com/oss/lgtm-stack/)
+- [OpenTelemetry のシグナル](https://opentelemetry.io/docs/concepts/signals/)
+- [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
+- [OpenTelemetry のログデータモデル](https://opentelemetry.io/docs/specs/otel/logs/data-model/)
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [Prometheus のメトリクス型](https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md)
+- [OpenMetrics 仕様](https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md)
+- [OpenTelemetry のサンプリング](https://opentelemetry.io/docs/concepts/sampling/)
+- [Grafana の OpenTelemetry ドキュメント](https://grafana.com/docs/opentelemetry/)
+- [Amazon EKS のモニタリングとログ](https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html)
 - [AWS Observability ベストプラクティス](https://aws-observability.github.io/observability-best-practices/)
-- [SRE Workbook - Monitoring](https://sre.google/workbook/monitoring/)
+- [SRE Workbook: Monitoring](https://sre.google/workbook/monitoring/)
+- [Datadog Watchdog](https://docs.datadoghq.com/watchdog/)
+- [Dynatrace Intelligence](https://docs.dynatrace.com/docs/dynatrace-intelligence)

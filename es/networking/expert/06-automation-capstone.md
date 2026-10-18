@@ -156,7 +156,7 @@ Conserve los originales y cambie la copia `observations-bad.json` **de un elemen
 
 No normalice una salida vacía ni un tiempo de espera como `deny`. Un resultado prohibido requiere evidencia de política/aplicación vinculada a la sonda. Nombrar un artefacto no demuestra que exista ni que se haya recopilado en el punto de observación correcto.
 
-Al extender este ejercicio a un recolector real, compruebe la existencia de los archivos, los hashes, el intervalo temporal y la identidad del recolector y del dispositivo/cuenta frente a la evidencia original. Valide por separado los atributos que se pierden al normalizar en conjuntos, como los atributos de ruta o la preparación de cada endpoint.
+Al extender este ejercicio a un recolector real, compruebe la existencia de los archivos, los hashes, el intervalo temporal y la identidad del recolector y del dispositivo/cuenta frente a la evidencia original. Valide por separado los atributos que se pierden al normalizar en conjuntos, como los atributos de ruta o el estado de disponibilidad de cada endpoint.
 
 ## 3. Diseñar una canalización de cambios {#pipeline}
 
@@ -164,7 +164,7 @@ Defina la entrada, la salida y el responsable del fallo de cada etapa.
 
 | Etapa | Comprobación | Resultado que se pasa a la siguiente etapa |
 |---|---|---|
-| Revisión de intención | Flujos permitidos/prohibidos, rutas, acceso de administración y límite de fallo | Revisión de intención aprobada |
+| Revisión de intención | Flujos permitidos/prohibidos, rutas, acceso de administración y límite de fallo | Versión de la intención revisada |
 | Validación estática | Sintaxis, funciones compatibles, direcciones superpuestas y alcance de políticas | Resultados para versiones exactas de herramientas/proveedores |
 | Vista previa del cambio | Destino, impacto, diferencia esperada y capacidad de recuperación | Plan de cambios revisable por personas |
 | Aplicación en laboratorio | Un cambio, tiempo/recursos acotados y acceso de administración preservado | Estado anterior/posterior y registro de ejecución |
