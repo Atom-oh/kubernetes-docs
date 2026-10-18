@@ -36,4 +36,4 @@ dist_mb="$(du -sm .vitepress/dist | cut -f1)"
   echo "| Wall clock | ${elapsed} |"
   echo "| Peak disk used during the build | $(( start_avail - min_avail )) MB |"
   echo "| Built site size | ${dist_mb} MB |"
-} >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+} | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}" # also in the job log, which the API can read
