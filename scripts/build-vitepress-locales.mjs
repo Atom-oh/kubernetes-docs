@@ -5,9 +5,12 @@ import {
   mkdir,
   readdir,
   readFile,
+  rename,
   rm,
+  statfs,
   writeFile
 } from 'node:fs/promises'
+import { freemem } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -47,6 +50,71 @@ async function copyDirectoryContents(source, destination, skipSitemap = false) {
       await copyFile(sourcePath, destinationPath)
     }
   }
+}
+
+// Moves instead of copying so the merge does not hold a second copy of the
+// site on disk. Falls back to copying across filesystems (EXDEV).
+async function moveDirectoryContents(source, destination, skipSitemap = false) {
+  await mkdir(destination, { recursive: true })
+
+  for (const entry of await readdir(source, { withFileTypes: true })) {
+    if (skipSitemap && entry.name === 'sitemap.xml') continue
+
+    const sourcePath = path.join(source, entry.name)
+    const destinationPath = path.join(destination, entry.name)
+
+    try {
+      await rename(sourcePath, destinationPath)
+      continue
+    } catch (error) {
+      if (error.code === 'EXDEV') {
+        if (entry.isDirectory()) await copyDirectoryContents(sourcePath, destinationPath)
+        else await copyFile(sourcePath, destinationPath)
+        continue
+      }
+      // A directory that already exists in the destination is merged entry by entry.
+      if (!entry.isDirectory() || !['EEXIST', 'ENOTEMPTY'].includes(error.code)) throw error
+    }
+    await moveDirectoryContents(sourcePath, destinationPath)
+  }
+}
+
+async function readAvailableMemoryBytes() {
+  try {
+    const meminfo = await readFile('/proc/meminfo', 'utf8')
+    const kib = Number(meminfo.match(/^MemAvailable:\s+(\d+)\s+kB$/m)?.[1])
+    if (Number.isFinite(kib)) return kib * 1024
+  } catch {
+    // not Linux: fall back to free memory, which under-reports page cache
+  }
+  return freemem()
+}
+
+const GIB = 1024 ** 3
+
+// Refuses to start a build that would likely exhaust the host. The full
+// two-locale build peaks at about 8 GB of heap per VitePress process and a few
+// GB of disk for the staging and merged outputs.
+export async function checkBuildResources({
+  directory = projectRoot,
+  minFreeDiskGb = Number(process.env.BUILD_MIN_FREE_DISK_GB ?? 6),
+  minAvailableMemoryGb = Number(process.env.BUILD_MIN_AVAILABLE_MEMORY_GB ?? 10)
+} = {}) {
+  const fsStats = await statfs(directory)
+  const freeDiskGb = (fsStats.bavail * fsStats.bsize) / GIB
+  const availableMemoryGb = (await readAvailableMemoryBytes()) / GIB
+  const problems = []
+  if (freeDiskGb < minFreeDiskGb) {
+    problems.push(`free disk ${freeDiskGb.toFixed(1)} GB < ${minFreeDiskGb} GB`)
+  }
+  if (availableMemoryGb < minAvailableMemoryGb) {
+    problems.push(`available memory ${availableMemoryGb.toFixed(1)} GB < ${minAvailableMemoryGb} GB`)
+  }
+  return { freeDiskGb, availableMemoryGb, problems }
+}
+
+function logResources(label, { freeDiskGb, availableMemoryGb }) {
+  console.log(`[resources] ${label}: free disk ${freeDiskGb.toFixed(1)} GB, available memory ${availableMemoryGb.toFixed(1)} GB`)
 }
 
 async function mergeSitemaps(sitemapPaths, destination) {
@@ -200,12 +268,15 @@ async function writeReadmeRedirects(destination) {
   return written
 }
 
-export async function mergeLocaleOutputs(localeOutputs, destination) {
+// `move: true` consumes the locale outputs (used for the temporary staging
+// builds); the default copies, which keeps the sources intact.
+export async function mergeLocaleOutputs(localeOutputs, destination, { move = false } = {}) {
   await rm(destination, { recursive: true, force: true })
   await mkdir(destination, { recursive: true })
 
+  const mergeContents = move ? moveDirectoryContents : copyDirectoryContents
   for (const localeOutput of localeOutputs) {
-    await copyDirectoryContents(localeOutput, destination, true)
+    await mergeContents(localeOutput, destination, true)
   }
 
   await mergeSitemaps(
@@ -238,6 +309,8 @@ export async function mergeLocaleOutputs(localeOutputs, destination) {
   }
 }
 
+let activeChild = null
+
 function runVitepressBuild(locale, outputDirectory) {
   return new Promise((resolve, reject) => {
     const child = spawn(
@@ -259,8 +332,10 @@ function runVitepressBuild(locale, outputDirectory) {
       }
     )
 
+    activeChild = child
     child.on('error', reject)
     child.on('exit', (code, signal) => {
+      activeChild = null
       if (code === 0) {
         resolve()
         return
@@ -284,6 +359,26 @@ async function buildAllLocales() {
     path.join(stagingRoot, locale)
   )
 
+  const preflight = await checkBuildResources()
+  logResources('before build', preflight)
+  // CI runners are ephemeral and sized for this job, so there it only logs.
+  const enforce = process.env.CI !== 'true' && process.env.BUILD_SKIP_RESOURCE_CHECK !== '1'
+  if (preflight.problems.length > 0 && enforce) {
+    throw new Error(
+      `Not enough resources for a full docs build (${preflight.problems.join('; ')}). ` +
+        'Free space or run the build in GitHub Actions (docs-build workflow). ' +
+        'Set BUILD_SKIP_RESOURCE_CHECK=1 to override.'
+    )
+  }
+
+  // Ctrl-C or a kill would otherwise leave the multi-GB staging tree behind.
+  const cleanupAndExit = (signal) => {
+    activeChild?.kill(signal)
+    rm(stagingRoot, { recursive: true, force: true }).finally(() => process.exit(128 + (signal === 'SIGINT' ? 2 : 15)))
+  }
+  process.once('SIGINT', cleanupAndExit)
+  process.once('SIGTERM', cleanupAndExit)
+
   await rm(stagingRoot, { recursive: true, force: true })
 
   console.log('Generating llms.txt endpoints')
@@ -295,10 +390,12 @@ async function buildAllLocales() {
         `\n[${index + 1}/${supportedLocales.length}] Building ${locale} documentation`
       )
       await runVitepressBuild(locale, localeOutputs[index])
+      logResources(`after ${locale} build`, await checkBuildResources())
     }
 
     console.log('\nMerging locale build outputs')
-    await mergeLocaleOutputs(localeOutputs, destination)
+    await mergeLocaleOutputs(localeOutputs, destination, { move: true })
+    logResources('after merge', await checkBuildResources())
   } finally {
     await rm(stagingRoot, { recursive: true, force: true })
   }
