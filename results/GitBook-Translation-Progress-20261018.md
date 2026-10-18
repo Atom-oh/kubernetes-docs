@@ -29,3 +29,7 @@ The GitHub build at checkpoint `3cfe2820` failed because a newly translated page
 The latest local Markdown link scan found broken destinations only for pages missing at scan time. No final link or coverage pass is claimed. English source drift is zero across the 693 frozen source blobs, and the bilingual news dashboard still verifies all 94 records.
 
 Changes to the unified translation workflow now trigger the normal PR validation workflow even when no document or script changes accompany them. YAML syntax and the single translation-job/model/concurrency settings were checked locally.
+
+The `f79992db` validation job exposed a test that assumed the Japanese kernel page was missing. That page is now translated. The Markdown fallback test now uses an isolated file inventory through the existing file-existence lookup; its five tests and the complete `docs:validate` command pass, including all 174 tests, 94 news records, source-language links/parity, and referenced PNG checks for all five locales. CI will check the follow-up commit independently.
+
+Two lines in the Spanish Cilium eBPF page have trailing spaces inside an ASCII code diagram. They are byte-identical to the English protected code and are retained intentionally. The whitespace findings include no changed prose.
