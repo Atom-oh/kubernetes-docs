@@ -1,2026 +1,1946 @@
 # Amazon EKS 故障排查测验
 
-本测验用于检验你诊断和解决 Amazon EKS Cluster 中可能出现的各种问题的能力。
+> **最后更新**：2026 年 9 月 12 日
+
+本测验检验你诊断并解决 Amazon EKS 集群各类问题的能力。
 
 ## 测验概览
-- Cluster 创建和配置问题
+
+- 集群创建与配置问题
 - 网络问题
-- Node 和 Pod 问题
+- 节点与 Pod 问题
 - 存储问题
-- 安全和访问问题
-- 性能和可扩展性问题
+- 安全与访问问题
+- 性能与扩展性问题
 
 ## 选择题
 
-### 1. 当 Amazon EKS Cluster 创建失败时，你应首先检查什么？
+### 1. EKS 控制平面创建失败时，最有用的第一步是什么？
 
-A. 检查 Cluster 名称是否唯一
-B. 检查 IAM 权限、VPC 配置和服务配额
-C. 在其他 Region 中重试
-D. 选择更大的实例类型
+- A. 只检查集群名称是否唯一
+- B. 检查准确的错误/请求，并核实调用方与服务角色 IAM、VPC/子网及相关配额
+- C. 立即在其他 Region 再创建一个集群
+- D. 选择更大的工作节点实例类型
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 检查 IAM 权限、VPC 配置和服务配额**
+**答案：B. 检查准确的错误/请求，并核实调用方与服务角色 IAM、VPC/子网及相关配额**
 
-**解释：**
-当 Amazon EKS Cluster 创建失败时，首先应检查 IAM 权限、VPC 配置和服务配额。这些因素是 Cluster 创建失败最常见的原因，系统化地检查它们可以帮助快速识别并解决问题。
+从失败的请求或 CloudFormation 事件入手。IAM、网络、配额和名称冲突都是可检查的假设；在读取错误之前，不能把它们当作统计结论。
 
-**要检查的关键项：**
+**核实内容**
 
-1. **检查 IAM 权限**：
-   - 是否具备创建 Cluster 所需的 IAM 权限
-   - 创建 service-linked role 的权限
-   - Cluster role 和 policy 配置
+| 区域 | 证据 |
+| --- | --- |
+| 调用方 | 账号/Region/配置文件是否正确；所需 EKS 操作、`iam:PassRole`、权限边界/会话/SCP 控制，以及必要时创建服务关联角色的权限 |
+| 集群服务角色 | 准确的角色 ARN、EKS 信任关系和必需的服务角色策略；它与调用方角色及工作节点角色不同 |
+| 集群子网 | 支持的 AZ、至少两个不同 AZ 以及可用地址；节点/Pod/负载均衡器容量是另一项预算 |
+| 端点/依赖项 | 预期的私有/公有模式、DNS、路由、安全组/NACL 和所需 AWS 服务访问 |
+| 配额 | 实际服务配额及当前已应用的 Region/账号上限；涉及节点创建时也检查 EC2 vCPU 限制 |
+| 基础设施所有者 | 原始 Terraform/CloudFormation/eksctl 配置、状态及失败操作 |
 
-2. **检查 VPC 配置**：
-   - Subnet 配置（Subnet 至少分布在 2 个可用区）
-   - Subnet CIDR 大小（最小 /28，推荐 /24）
-   - Internet 连接（NAT gateway 或 internet gateway）
-   - Security group 和 network ACL 设置
+当前 EKS 要求所选每个集群子网至少有 **6 个 IP 地址**，并建议至少 **16 个**；子网还必须覆盖至少两个 AZ。CIDR 大小本身不能证明这些地址仍然可用。过去通用的“最小 /28、建议 /24”说法混淆了控制平面与工作负载的容量。私有环境可以使用所需端点；NAT/普通互联网访问并非一概必需。
 
-3. **检查服务配额**：
-   - EKS Cluster 数量配额
-   - EC2 实例配额
-   - VPC 和 Subnet 配额
-   - 其他相关服务配额
+`AmazonEKSClusterPolicy` 用于集群服务角色。把它附加给人工用户，并不会授予所有创建/PassRole 权限或 Kubernetes RBAC。添加集群所有权子网标签也不是通用的创建故障修复办法。
 
-**故障排查方法：**
+**只读调查**
 
-1. **解决 IAM 权限问题**：
-   ```bash
-   # Check IAM permissions
-   aws sts get-caller-identity
+```bash
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${EXPECTED_ACCOUNT_ID:?}"; : "${CLUSTER_NAME:?}"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+if [ "$ACCOUNT_ID" != "$EXPECTED_ACCOUNT_ID" ]; then
+  echo "Account mismatch" >&2; exit 1
+fi
+aws cloudtrail lookup-events --region "$AWS_REGION" \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=CreateCluster \
+  --max-items 20 --output json
+aws service-quotas list-service-quotas --service-code eks --region "$AWS_REGION"
+: "${VPC_ID:?Set the VPC from the original request}"
+aws ec2 describe-subnets --region "$AWS_REGION" --filters "Name=vpc-id,Values=$VPC_ID" \
+  --query 'Subnets[].{Id:SubnetId,AZ:AvailabilityZone,AZId:AvailabilityZoneId,AvailableIPs:AvailableIpAddressCount}'
+# For an eksctl-owned creation attempt, inspect its existing stacks:
+eksctl utils describe-stacks --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
+```
 
-   # Attach required policy
-   aws iam attach-user-policy \
-     --user-name myuser \
-     --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+如果集群已经可用，用 `describe-cluster` 检查；如果集群尚未创建，应保留创建错误，不要把 ResourceNotFound 当作第二个根因。对于其他 CloudFormation 所有者，检查准确堆栈的事件。`eksctl create cluster --verbose ...` 和 CLI 调试模式仍会创建资源，并非只读诊断。
 
-   # Create service-linked role
-   aws iam create-service-linked-role --aws-service-name eks.amazonaws.com
-   ```
+**示例错误消息**
 
-2. **解决 VPC 配置问题**：
-   ```bash
-   # Check VPC and subnets
-   aws ec2 describe-vpcs --vpc-ids vpc-12345678
-   aws ec2 describe-subnets --filters "Name=vpc-id,Values=vpc-12345678"
+- `eks:CreateCluster` 调用被拒绝时，应检查调用方权限；服务角色问题属于另一条权限路径。
+- 旧示例中 `us-west-2a` 容量不足，说明的是 AZ/容量类响应，不代表该 Region 当前的可用性。
+- 旧的 “Current limit is 5” 消息仅作为历史示例保留；确定请求提高到多少之前，应查询当前已应用配额。
+- `UnsupportedAvailabilityZoneException` 表示该账号的 EKS 集群不支持相应 AZ，并不只是缺少 EC2 实例类型供给。
 
-   # Check subnet tags
-   aws ec2 describe-tags --filters "Name=resource-id,Values=subnet-12345678"
+**检查基础设施配置**
 
-   # Add subnet tags
-   aws ec2 create-tags \
-     --resources subnet-12345678 subnet-87654321 \
-     --tags Key=kubernetes.io/cluster/my-cluster,Value=shared
-   ```
+检查并修正原有所有者的配置。下面的 Terraform 片段展示了显式版本/网络意图及状态输出；它不是完整的新集群模块，也不是诊断期间应执行的命令：
 
-3. **解决服务配额问题**：
-   ```bash
-   # Check service quotas
-   aws service-quotas list-service-quotas --service-code eks
+```hcl
+# Excerpt of the original state-owned configuration, not a diagnostic apply.
+# Preserve its other settings and role/policy dependencies.
+resource "aws_eks_cluster" "main" {
+  name     = var.cluster_name
+  role_arn = var.cluster_role_arn
+  version  = var.cluster_version
+  vpc_config {
+    subnet_ids              = var.subnet_ids
+    security_group_ids      = var.cluster_security_group_ids
+    endpoint_private_access = true
+    endpoint_public_access  = false
+  }
+}
 
-   # Request quota increase
-   aws service-quotas request-service-quota-increase \
-     --service-code eks \
-     --quota-code L-1194D53C \
-     --desired-value 10
-   ```
+output "cluster_status" {
+  value = aws_eks_cluster.main.status
+}
+```
 
-**常见错误消息和解决方案：**
+提供已核实且现有的角色/子网/安全组输入，保留必需的角色策略依赖关系及其他设置，并检查私有端点的访问路径。输出值来自 Terraform 状态；创建失败时，不保证它会出现或包含最新失败详情。应使用 provider 诊断以及 AWS 请求/堆栈证据。本次检查未执行 Terraform apply 或创建集群。
 
-1. **IAM 权限不足**：
-   - 错误："User: arn:aws:iam::123456789012:user/myuser is not authorized to perform: eks:CreateCluster"
-   - 解决方案：添加所需的 IAM 权限
+确定原因后，经审查针对性地修正权限/网络/配额，再由所有者重试。A 是有用但单独不足的检查。C 会改变放置/数据/网络，并可能增加成本，却不一定解决原因。D 会改变工作节点，不能解决控制平面创建问题。
 
-2. **VPC Subnet 问题**：
-   - 错误："Cannot create cluster 'my-cluster' because us-west-2a, the targeted availability zone, does not have sufficient capacity to support the cluster. Retry after some time or try other availability zones."
-   - 解决方案：使用不同可用区中的 Subnet，或创建新的 Subnet
+来源：[EKS 网络要求](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)、[EKS 故障排查](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)、[Terraform EKS 集群](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster)。
 
-3. **超出服务配额**：
-   - 错误："Account cannot create more EKS clusters in region us-west-2. Current limit is 5"
-   - 解决方案：请求提高服务配额，或删除不需要的 Cluster
-
-**最佳实践：**
-
-1. **Cluster 创建前准备**：
-   - 验证所需的 IAM 权限
-   - 配置合适的 VPC 和 Subnet
-   - 检查服务配额
-
-2. **系统化故障排查方法**：
-   - 分析错误消息
-   - 检查 AWS CloudTrail 日志
-   - 逐步验证组件
-
-3. **自动化基础设施配置**：
-   - 使用 AWS CloudFormation 或 Terraform
-   - 利用 eksctl 等工具
-   - 对基础设施配置进行版本控制
-
-**实际实现示例：**
-
-1. **使用 eksctl 排查 Cluster 创建问题**：
-   ```bash
-   # Create cluster in debug mode
-   eksctl create cluster --name my-cluster --region us-west-2 --verbose 4
-
-   # Check cluster creation status
-   eksctl get cluster --name my-cluster --region us-west-2
-   ```
-
-2. **使用 AWS CLI 排查 Cluster 创建问题**：
-   ```bash
-   # Attempt cluster creation
-   aws eks create-cluster \
-     --name my-cluster \
-     --role-arn arn:aws:iam::123456789012:role/eks-cluster-role \
-     --resources-vpc-config subnetIds=subnet-12345678,subnet-87654321,securityGroupIds=sg-12345678
-
-   # Check cluster status
-   aws eks describe-cluster --name my-cluster
-   ```
-
-3. **使用 Terraform 排查 Cluster 创建问题**：
-   ```hcl
-   # EKS cluster definition
-   resource "aws_eks_cluster" "main" {
-     name     = "my-cluster"
-     role_arn = aws_iam_role.eks_cluster.arn
-
-     vpc_config {
-       subnet_ids         = var.subnet_ids
-       security_group_ids = [aws_security_group.eks_cluster.id]
-     }
-
-     # Explicit dependencies
-     depends_on = [
-       aws_iam_role_policy_attachment.eks_cluster_policy,
-       aws_iam_role_policy_attachment.eks_service_policy
-     ]
-   }
-
-   # Debug output on error
-   output "cluster_status" {
-     value = aws_eks_cluster.main.status
-   }
-   ```
-
-其他选项的问题：
-- **A. 检查 Cluster 名称是否唯一**：虽然 Cluster 名称不唯一可能导致错误，但这不是最常见的失败原因。
-- **C. 在其他 Region 中重试**：这是一种变通方法，无法解决根本原因，而且相同问题可能会在其他 Region 中出现。
-- **D. 选择更大的实例类型**：实例类型适用于 node group，不影响 Cluster 本身的创建。
 </details>
-### 2. 当 Amazon EKS Cluster 中的 Node 处于 NotReady 状态时，最有效的故障排查方法是什么？
 
-A. 立即终止并替换该 Node
-B. 检查 Node 日志、资源使用情况和网络连接
-C. 重启 Cluster API server
-D. 删除并重新部署所有 Pod
+### 2. EKS 节点处于 NotReady 状态时，最有效的首项调查是什么？
+
+- A. 立即终止节点
+- B. 检查节点状况/事件、日志、资源以及实际网络/身份路径
+- C. 自行重启 EKS 托管 API 服务器
+- D. 删除集群中的所有 Pod
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 检查 Node 日志、资源使用情况和网络连接**
+**答案：B. 检查节点状况/事件、日志、资源以及实际网络/身份路径**
 
-**解释：**
-当 Amazon EKS Cluster 中的 Node 处于 NotReady 状态时，最有效的故障排查方法是检查 Node 日志、资源使用情况和网络连接。这种系统化方法有助于识别问题的根本原因并应用合适的解决方案。
+根据状况原因/时间和实际节点身份开展调查。Ready=False、心跳缺失/Ready=Unknown、磁盘压力和内存压力是不同证据；任何一个都不能自动确定根因。
 
-**要检查的关键项：**
+**盘点节点与工作负载**
 
-1. **检查 Node 状态和事件**：
-   - Node 状态详情
-   - Node 相关事件
-   - Node conditions
+以下只读示例按名称/UID 选择节点，并用 `spec.nodeName` 选出其 Pod，避免不可靠的 IP/grep 匹配：
 
-2. **分析 Node 日志**：
-   - kubelet 日志
-   - 系统日志
-   - Container runtime 日志
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?}"
+NODE_JSON=$(kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o json)
+printf '%s\n' "$NODE_JSON" | jq '{name:.metadata.name,uid:.metadata.uid,labels:.metadata.labels,providerID:.spec.providerID,taints:.spec.taints,unschedulable:.spec.unschedulable,nodeInfo:.status.nodeInfo,conditions:.status.conditions,capacity:.status.capacity,allocatable:.status.allocatable}'
+NODE_UID=$(printf '%s\n' "$NODE_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" get events -A --field-selector "involvedObject.uid=$NODE_UID" \
+  --sort-by='.metadata.creationTimestamp'
+kubectl --context "$KUBE_CONTEXT" get pods -A --field-selector "spec.nodeName=$NODE_NAME" -o wide
+```
 
-3. **检查资源使用情况**：
-   - CPU、内存、磁盘使用情况
-   - 资源限制和 pressure
-   - 系统进程状态
+访问 EC2 或主机之前，先确认节点 ProviderID/账号/Region 和计算类型。对于托管组，检查其运行状况及修复/更新配置：
 
-4. **检查网络连接**：
-   - 到 control plane 的连接
-   - DNS 解析
-   - VPC 和 Subnet 配置
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" \
+  --query 'nodegroup.{status:status,health:health,version:version,release:releaseVersion,nodeRole:nodeRole,repair:nodeRepairConfig,update:updateConfig}'
+```
 
-**故障排查方法：**
+在可访问的标准 Linux 节点上，使用[源指南中的远程会话步骤](../../eks/09-eks-troubleshooting.md)检查 kubelet/containerd 日志、字节数/inode、内存和路由。实际镜像中可能没有 Docker 守护进程或 `/var/log/syslog`。节点 DNS 不会自动等同于 Pod 的集群 DNS。连接端点时使用集群 CA；`curl -k` 会掩盖证书问题。
 
-1. **检查 Node 状态和事件**：
-   ```bash
-   # Check node status
-   kubectl get nodes
-   kubectl describe node <node-name>
+在清理镜像、删除日志或重启之前保留证据。`kubectl top` 依赖可用的指标路径，在不健康节点上可能失败。检查已配置的证书路径时，不要暴露私钥。`kubeadm alpha certs renew all` 既不是当前通用命令，也不是 EKS 节点修复步骤；`eksctl replace nodegroup` 不受支持。
 
-   # Check node events
-   kubectl get events --field-selector involvedObject.name=<node-name>
-   ```
+**恢复操作与自动修复**
 
-2. **分析 Node 日志**：
-   ```bash
-   # SSH access to node (for self-managed nodes)
-   ssh ec2-user@<node-ip>
+确定原因后，结合容量、PDB、数据和节点所有者，协调替换/重启节点。受控 drain 失败时应停止；异步重启后不要继续终止节点或立即取消隔离。
 
-   # Check kubelet logs
-   sudo journalctl -u kubelet
+自动节点修复是实际存在的 EKS 机制。`update_config.max_unavailable` 控制版本更新造成的中断，并不会启用修复；`health_check { type = "EKS" }` 也不是 `aws_eks_node_group` 的配置块。当前 provider 提供 `node_repair_config`：
 
-   # Check system logs
-   sudo tail -f /var/log/syslog
+```hcl
+# Fragment of a reviewed EKS-optimized-AMI managed node group.
+resource "aws_eks_node_group" "self_healing" {
+  cluster_name    = var.cluster_name
+  node_group_name = var.node_group_name
+  node_role_arn   = var.node_role_arn
+  subnet_ids      = var.private_subnet_ids
+  version         = var.node_kubernetes_version
+  ami_type        = var.ami_type
+  release_version = var.ami_release
+  instance_types  = var.instance_types
 
-   # Check container runtime logs
-   sudo journalctl -u docker  # When using Docker
-   sudo journalctl -u containerd  # When using containerd
-   ```
+  scaling_config {
+    desired_size = 3
+    min_size     = 3
+    max_size     = 6
+  }
+  update_config {
+    max_unavailable = 1
+  }
+  node_repair_config {
+    enabled                           = true
+    max_parallel_nodes_repaired_count = 1
+  }
+}
+```
 
-3. **检查资源使用情况**：
-   ```bash
-   # Check node resource usage
-   kubectl top node <node-name>
+这是配置片段，不是经过测试的生产模块。请提供兼容且经过审查的 Kubernetes/AMI/实例输入和现有所有权配置。如果自动扩缩容器管理容量，应协调期望容量。节点组标签不能自动证明底层 ASG 带有必要的 CA 发现标签。
 
-   # Check resources via SSH
-   ssh ec2-user@<node-ip>
+不同计算所有者的修复默认值/阈值不同。Auto Mode 默认启用修复行为；托管节点组需要启用，Karpenter 也有自己的功能要求。节点监控可以报告问题，但不代表已启用修复。当前默认修复表**不会**自动修复 MemoryPressure 或 DiskPressure。机群健康阈值、并行度和 ARC 控制可能限制操作；不要承诺一定替换节点或一定受 PDB 保护。
 
-   # Check disk usage
-   df -h
+**监控示例**
 
-   # Check memory usage
-   free -m
+不能假定 `AWS/EKS` 中存在名为 `NodeNotReady` 的内置指标。已有的 kube-state-metrics/Prometheus Operator 安装可以根据实际节点状况进行评估：
 
-   # Check CPU usage
-   top
-   ```
+```yaml
+# Existing single-cluster Prometheus Operator/KSM installation required.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-readiness-example
+  namespace: monitoring
+  labels:
+    release: observability
+spec:
+  groups:
+    - name: node-readiness-example
+      rules:
+        - alert: NodeNotReady
+          expr: max by (node) (kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"}) == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.node }} is not Ready"
+            description: "Investigate node conditions, reachability and workload impact before recovery."
+```
 
-4. **检查网络连接**：
-   ```bash
-   # Check API server connection from node
-   curl -k https://<api-server-endpoint>
+将命名空间/release/job 选择器设为实际安装所用值。10 分钟等待时间仅为示例。抓取/状况数据缺失时需要单独监控遥测健康，不能把它视为节点健康。此告警既不会配置通知，也不会执行恢复；应分别验证。创建一个未定义的 `node-recovery.zip` Lambda 并不能构成安全的自动修复。
 
-   # Check DNS resolution
-   nslookup kubernetes.default.svc.cluster.local
+C 不是客户自行重启 EKS 托管 API 服务器的路径；API 连通性确实可能导致节点就绪问题。A 和 D 会扩大中断并可能破坏证据，却未必解决根因。
 
-   # Check network interfaces
-   ip addr show
+来源：[EKS 节点修复](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html)、[Terraform 托管节点资源](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group)、[节点指标](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md)。
 
-   # Check routing table
-   ip route
-   ```
-
-**常见 NotReady 原因和解决方案：**
-
-1. **kubelet 问题**：
-   - **症状**：kubelet 服务未运行或无法连接到 API server
-   - **解决方案**：
-     ```bash
-     # Check kubelet service status
-     sudo systemctl status kubelet
-
-     # Restart kubelet service
-     sudo systemctl restart kubelet
-
-     # Check kubelet configuration
-     sudo cat /etc/kubernetes/kubelet/kubelet-config.json
-     ```
-
-2. **网络问题**：
-   - **症状**：Node 无法与 control plane 通信
-   - **解决方案**：
-     ```bash
-     # Check security groups
-     aws ec2 describe-security-groups --group-ids sg-12345678
-
-     # Check routing tables
-     aws ec2 describe-route-tables --route-table-ids rtb-12345678
-
-     # Check VPC CNI pod status
-     kubectl get pods -n kube-system -l k8s-app=aws-node
-     kubectl logs -n kube-system -l k8s-app=aws-node
-     ```
-
-3. **资源不足**：
-   - **症状**：Node 上 CPU、内存或磁盘空间不足
-   - **解决方案**：
-     ```bash
-     # Free up disk space
-     sudo du -sh /var/log/*
-     sudo journalctl --vacuum-time=1d
-
-     # Clean up unnecessary containers and images
-     docker system prune -af  # When using Docker
-     ```
-
-4. **证书问题**：
-   - **症状**：证书过期或不匹配
-   - **解决方案**：
-     ```bash
-     # Check certificates
-     sudo ls -la /etc/kubernetes/pki/
-
-     # Renew certificates (for self-managed nodes)
-     sudo kubeadm alpha certs renew all
-
-     # For managed node groups, replace nodes
-     eksctl replace nodegroup --cluster=my-cluster --name=my-nodegroup
-     ```
-
-**最佳实践：**
-
-1. **系统化故障排查方法**：
-   - 识别并记录症状
-   - 收集相关日志和事件
-   - 系统化验证可能原因
-
-2. **实现 Node 状态监控**：
-   - 设置 CloudWatch alarms
-   - 配置 Node 状态 dashboard
-   - 自动化告警系统
-
-3. **实现自动恢复机制**：
-   - 配置 self-healing node group
-   - Health check 和自动替换
-   - 自动 drain 失败的 Node
-
-**实际实现示例：**
-
-1. **Node 故障排查脚本**：
-   ```bash
-   #!/bin/bash
-   # EKS node troubleshooting script
-
-   NODE_NAME=$1
-
-   if [ -z "$NODE_NAME" ]; then
-     echo "Please specify a node name."
-     exit 1
-   fi
-
-   echo "=== Troubleshooting node $NODE_NAME ==="
-
-   # Check node status
-   echo "=== Check node status ==="
-   kubectl get node $NODE_NAME -o wide
-   kubectl describe node $NODE_NAME
-
-   # Check node events
-   echo
-   echo "=== Check node events ==="
-   kubectl get events --field-selector involvedObject.name=$NODE_NAME --sort-by='.lastTimestamp'
-
-   # Check node pods
-   echo
-   echo "=== Check node pods ==="
-   kubectl get pods --all-namespaces -o wide --field-selector spec.nodeName=$NODE_NAME
-
-   # Check system pod logs
-   echo
-   echo "=== Check system pod logs ==="
-   NODE_IP=$(kubectl get node $NODE_NAME -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
-   KUBE_PROXY_POD=$(kubectl get pods -n kube-system -l k8s-app=kube-proxy -o wide | grep $NODE_IP | awk '{print $1}')
-   AWS_NODE_POD=$(kubectl get pods -n kube-system -l k8s-app=aws-node -o wide | grep $NODE_IP | awk '{print $1}')
-
-   if [ -n "$KUBE_PROXY_POD" ]; then
-     echo "kube-proxy logs:"
-     kubectl logs -n kube-system $KUBE_PROXY_POD --tail=50
-   fi
-
-   if [ -n "$AWS_NODE_POD" ]; then
-     echo
-     echo "aws-node (VPC CNI) logs:"
-     kubectl logs -n kube-system $AWS_NODE_POD --tail=50
-   fi
-
-   # Node access instructions
-   echo
-   echo "=== Node access instructions ==="
-   echo "To access the node directly, use the following command:"
-   echo "aws ssm start-session --target <instance-id>"
-   echo "or"
-   echo "ssh ec2-user@$NODE_IP  # SSH key and security group configuration required"
-
-   echo
-   echo "=== Troubleshooting complete ==="
-   ```
-
-2. **使用 Terraform 配置 self-healing node group**：
-   ```hcl
-   # Self-healing node group
-   resource "aws_eks_node_group" "self_healing" {
-     cluster_name    = aws_eks_cluster.main.name
-     node_group_name = "self-healing"
-     node_role_arn   = aws_iam_role.node_role.arn
-     subnet_ids      = var.private_subnet_ids
-
-     scaling_config {
-       desired_size = 3
-       min_size     = 3
-       max_size     = 6
-     }
-
-     # Self-healing settings
-     update_config {
-       max_unavailable = 1
-     }
-
-     # Health check settings
-     health_check {
-       type = "EKS"
-     }
-
-     # Auto scaling group tags
-     tags = {
-       "k8s.io/cluster-autoscaler/enabled" = "true"
-       "k8s.io/cluster-autoscaler/${aws_eks_cluster.main.name}" = "owned"
-     }
-   }
-   ```
-
-3. **CloudWatch alarms 和自动恢复配置**：
-   ```bash
-   # Create CloudWatch alarm
-   aws cloudwatch put-metric-alarm \
-     --alarm-name EKS-Node-NotReady \
-     --metric-name NodeNotReady \
-     --namespace AWS/EKS \
-     --statistic Maximum \
-     --period 60 \
-     --threshold 0 \
-     --comparison-operator GreaterThanThreshold \
-     --dimensions Name=ClusterName,Value=my-cluster \
-     --evaluation-periods 3 \
-     --alarm-actions arn:aws:sns:us-west-2:123456789012:eks-alerts
-
-   # Automated recovery using AWS Lambda function
-   aws lambda create-function \
-     --function-name EKS-Node-Recovery \
-     --runtime python3.9 \
-     --role arn:aws:iam::123456789012:role/EKS-Node-Recovery-Role \
-     --handler index.handler \
-     --zip-file fileb://node-recovery.zip
-   ```
-
-其他选项的问题：
-- **A. 立即终止并替换该 Node**：在未识别根本原因的情况下替换 Node，可能会导致新 Node 出现同样问题，并且诊断信息会丢失。
-- **C. 重启 Cluster API server**：API server 与 Node 状态没有直接关系，重启它可能影响整个 Cluster。
-- **D. 删除并重新部署所有 Pod**：删除 Pod 无法修复 Node 本身的问题，并且可能造成不必要的服务中断。
 </details>
-### 3. 当 Amazon EKS Cluster 中的 Pod 处于 "ImagePullBackOff" 状态时，最可能的原因和解决方案是什么？
 
-A. Pod 资源限制超出 / 增加资源限制
-B. Image 名称错误或认证问题 / 验证 Image 名称并配置 image pull secrets
-C. Node 磁盘空间不足 / 释放磁盘空间
-D. Network policy 限制 / 修改 network policy
+### 3. 在 EKS 上应如何正确调查 ImagePullBackOff？
+
+- A. 提高每个容器的内存限制
+- B. 查看拉取错误，核实镜像/平台及实际拉取身份和网络路径
+- C. 不看错误就强制重新下载镜像
+- D. 删除所有网络策略
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. Image 名称错误或认证问题 / 验证 Image 名称并配置 image pull secrets**
+**答案：B. 查看拉取错误，核实镜像/平台及实际拉取身份和网络路径**
 
-**解释：**
-当 Amazon EKS Cluster 中的 Pod 处于 "ImagePullBackOff" 状态时，最可能的原因是 Image 名称错误或认证问题。要解决此问题，需要验证 Image 名称，并在必要时配置 image pull secrets。
+ImagePullBackOff 是重试/退避状态，不代表某个原因“最可能”。检查所有受影响的普通容器/init 容器及 kubelet 给出的准确事件：
 
-**主要原因和解决方案：**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+POD_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json)
+printf '%s\n' "$POD_JSON" | jq '{
+  name:.metadata.name,uid:.metadata.uid,owners:.metadata.ownerReferences,
+  node:.spec.nodeName,serviceAccount:.spec.serviceAccountName,
+  imagePullSecrets:.spec.imagePullSecrets,
+  containers:[.spec.containers[] | {name,image,imagePullPolicy,resources}],
+  initContainers:[.spec.initContainers[]? | {name,image,resources}],
+  phase:.status.phase,reason:.status.reason,message:.status.message,
+  conditions:.status.conditions,containerStatuses:.status.containerStatuses,
+  initContainerStatuses:.status.initContainerStatuses
+}'
+POD_UID=$(printf '%s\n' "$POD_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --field-selector "involvedObject.uid=$POD_UID" --sort-by='.metadata.creationTimestamp'
+```
 
-1. **Image 名称错误**：
-   - Image 名称或 tag 不正确
-   - Image 不存在
-   - Registry URL 错误
+区分仓库/tag/digest 缺失、架构不受支持、凭证/授权、registry 限流、节点 DNS/TLS/出口网络，以及本地磁盘/运行时故障。本地 Docker 拉取使用另一种身份/路径，不能证明节点能够拉取。
 
-   **解决方案**：
-   ```bash
-   # Check pod definition
-   kubectl describe pod <pod-name>
+**ECR 身份与网络**
 
-   # Fix image name and tag
-   kubectl edit deployment <deployment-name>
-   # or
-   kubectl set image deployment/<deployment-name> container-name=image:tag
-   ```
+EC2 节点通常通过节点拉取凭证路径获取镜像；Fargate 使用 Pod 执行角色。应用的 IRSA/Pod Identity 不是应用启动前下载镜像所用的身份。按需核实仓库策略与跨账号访问。仅创建新 IAM 角色而未将它关联到相关计算资源，不会改变镜像拉取行为。
 
-2. **Private registry 认证问题**：
-   - 缺少认证凭证
-   - 凭证已过期
-   - 权限不足
+指定仓库/账号/Region，并用 tag **或** digest；不要用 `cut` 拆分任意镜像字符串：
 
-   **解决方案**：
-   ```bash
-   # Create Docker registry secret
-   kubectl create secret docker-registry regcred \
-     --docker-server=<registry-server> \
-     --docker-username=<username> \
-     --docker-password=<password> \
-     --docker-email=<email>
+```bash
+set -euo pipefail
+: "${REGISTRY_REGION:?Set the image registry Region}"
+: "${REGISTRY_ACCOUNT_ID:?Set its account ID}"
+: "${REPOSITORY_NAME:?Set the exact repository path}"
+: "${ECR_IMAGE_ID:?Set imageTag=... or imageDigest=sha256:...}"
+aws ecr describe-images --region "$REGISTRY_REGION" \
+  --registry-id "$REGISTRY_ACCOUNT_ID" --repository-name "$REPOSITORY_NAME" \
+  --image-ids "$ECR_IMAGE_ID" \
+  --query 'imageDetails[].{digest:imageDigest,tags:imageTags,pushedAt:imagePushedAt,mediaType:imageManifestMediaType}'
+```
 
-   # Link secret to pod or service account
-   kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "regcred"}]}'
-   # or
-   kubectl patch pod <pod-name> -p '{"spec":{"imagePullSecrets":[{"name":"regcred"}]}}'
-   ```
+此操作使用操作者的 AWS 凭证检查镜像元数据，不会验证 kubelet 权限。私有 ECR 访问可能需要 ECR API/DKR 与 S3 路径、端点策略/安全组及 DNS。`ecr.dkr` 不是任意私有 registry 的端点。通常 Pod NetworkPolicy 的更改无法修复节点运行时的 registry 身份验证。
 
-3. **Amazon ECR 认证问题**：
-   - ECR 权限不足
-   - Token 已过期
-   - 跨账户访问问题
+**权限示例**
 
-   **解决方案**：
-   ```bash
-   # Get ECR authentication token
-   aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-west-2.amazonaws.com
+对于明确选定的现有 EC2 节点角色，以下权限示例说明如何只拉取一个仓库。`GetAuthorizationToken` 不能按仓库资源限定，因此对应 statement 使用 `*` 并附加 Region 条件；镜像读取权限则限定到该仓库：
 
-   # Create ECR pull secret
-   TOKEN=$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')
-   echo $TOKEN | base64 -d | cut -d: -f2 > password.txt
+```hcl
+# Permission example for a reviewed existing EC2 node role.
+# This does not create/associate a new role or create an image-pull Secret.
+data "aws_iam_role" "node" {
+  name = var.existing_node_role_name
+}
 
-   kubectl create secret docker-registry ecr-secret \
-     --docker-server=123456789012.dkr.ecr.us-west-2.amazonaws.com \
-     --docker-username=AWS \
-     --docker-password="$(cat password.txt)" \
-     --docker-email=no-reply@example.com
+resource "aws_iam_policy" "ecr_pull" {
+  name = var.pull_policy_name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
+        Condition = {
+          StringEquals = { "aws:RequestedRegion" = var.registry_region }
+        }
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer"
+        ]
+        Resource = var.repository_arn
+      }
+    ]
+  })
+}
 
-   rm password.txt
-   ```
+resource "aws_iam_role_policy_attachment" "ecr_pull" {
+  role       = data.aws_iam_role.node.name
+  policy_arn = aws_iam_policy.ecr_pull.arn
+}
+```
 
-4. **网络连接问题**：
-   - 到 Registry 的网络访问受限
-   - DNS 解析问题
-   - Proxy 配置问题
+使用实际仓库 ARN/Region，并检查现有授权/边界/SCP 及跨账号仓库策略。添加窄范围策略不会移除已有的宽范围策略。Fargate 需要单独配置执行角色；此 EC2 角色示例既不会创建 Kubernetes Secret，也不会配置 Fargate profile。本次审查没有执行 IAM 更改。
 
-   **解决方案**：
-   ```bash
-   # Check registry connection from node
-   ssh ec2-user@<node-ip>
-   curl -v https://<registry-url>
+**镜像拉取 Secret**
 
-   # Check DNS resolution
-   nslookup <registry-url>
+需要 Secret 的 registry 应使用受保护、自包含的 Docker auth 文件，以及[源指南中的命名空间 Secret/Pod 模板步骤](../../eks/09-eks-troubleshooting.md)。不要打印 Secret 数据/令牌，也不要把密码放在诊断命令行中。桌面 credential-helper 的引用并不是 kubelet 可用的认证数据。
 
-   # Configure VPC endpoint for private registry
-   aws ec2 create-vpc-endpoint \
-     --vpc-id vpc-12345678 \
-     --service-name com.amazonaws.us-west-2.ecr.dkr \
-     --vpc-endpoint-type Interface \
-     --subnet-ids subnet-12345678 \
-     --security-group-ids sg-12345678
-   ```
+通常无法原地修改现有 Pod 的 imagePullSecrets。应修改所属 Deployment/StatefulSet 模板，在保留当前拉取 Secret 列表的同时进行受控 rollout。更新 ServiceAccount 会影响新准入的 Pod；不要为了一个应用去修改默认 ServiceAccount，影响无关工作负载。
 
-**故障排查步骤：**
+**凭证续期设计**
 
-1. **检查 Pod 状态和事件**：
-   ```bash
-   # Check pod status
-   kubectl get pod <pod-name>
+标准 EKS ECR 拉取不需要旧方案中的 token 续期 CronJob。ECR 授权令牌有效期为 12 小时。如果某个非原生消费者确实需要手动维护 ECR 拉取 Secret，应使用其受支持的凭证机制，或明确设计续期流程。
 
-   # Check pod details and events
-   kubectl describe pod <pod-name>
-   ```
+旧计划 `*/6 * * * *` 表示**每 6 分钟**，不是 6 小时；6 小时一次的例子是 `0 */6 * * *`，并应设置控制器时区或受支持的 `.spec.timeZone`。仅有计划任务还不构成有效续期器：它需要经过审查且包含所需工具的镜像、AWS 身份、范围受限的 Kubernetes 权限、准确目标命名空间、重叠/失败处理和经过测试的轮换流程。完成验证前应保持暂停。更新预先创建的命名 Secret，而不是先删除它造成凭证空档。AWS CLI 官方镜像并不意味着其中有 kubectl。
 
-2. **验证 Image 名称和 Registry**：
-   ```bash
-   # Check image name
-   kubectl get pod <pod-name> -o jsonpath='{.spec.containers[0].image}'
+固定预期的镜像 digest，确保 registry 可用，并先调查实际事件，再决定是否更改拉取策略。`Always` 无法修复不存在的镜像或缺失权限。A/C/D 都不能确定失败的镜像拉取路径。
 
-   # Verify image exists
-   docker pull <image-name>  # In local environment
-   # or
-   aws ecr describe-images \
-     --repository-name <repository-name> \
-     --image-ids imageTag=<tag>  # For ECR
-   ```
+来源：[Fargate 执行角色](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)、[ECR 令牌命令](https://docs.aws.amazon.com/cli/latest/reference/ecr/get-authorization-token.html)、[私有 registry Secret](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)。
 
-3. **检查认证配置**：
-   ```bash
-   # Check service account and image pull secrets
-   kubectl get serviceaccount default -o yaml
-
-   # Check secret contents
-   kubectl get secret <secret-name> -o yaml
-   ```
-
-4. **应用临时变通方案**：
-   ```bash
-   # Pull image locally and transfer to node (for emergencies)
-   docker pull <image-name>
-   docker save <image-name> -o image.tar
-   scp image.tar ec2-user@<node-ip>:~/
-   ssh ec2-user@<node-ip> "docker load -i image.tar"
-   ```
-
-**最佳实践：**
-
-1. **Image tag 管理**：
-   - 使用 digest 而不是特定 tag
-   - 避免使用 `latest` tag
-   - 实施版本管理策略
-
-2. **Image pull secret 管理**：
-   - 将 secret 关联到 service account
-   - 定期轮换 secret
-   - 自动化 secret 管理
-
-3. **确保 Image registry 可访问**：
-   - 为 private registry 配置 VPC endpoint
-   - 配置 network policy 和 security group
-   - 考虑 Image 缓存
-
-4. **使用 ECR 时的最佳实践**：
-   - 使用基于 IAM role 的认证
-   - 实施自动 token 续期
-   - 配置 Image scanning 和 lifecycle policy
-
-其他选项的问题：
-- **A. Pod 资源限制超出 / 增加资源限制**：资源限制问题通常导致 "OOMKilled" 或 "Pending" 状态，而不是 "ImagePullBackOff"。
-- **C. Node 磁盘空间不足 / 释放磁盘空间**：虽然磁盘空间不足可能导致 "ImagePullBackOff"，但磁盘空间相关错误通常会显示在 Node 事件中，而且不是最常见原因。
-- **D. Network policy 限制 / 修改 network policy**：Network policy 影响 Pod 之间的通信，但通常不是 Image pull 问题的主要原因。
 </details>
-### 4. 当 Amazon EKS Cluster 中 Service 未将流量路由到 Pod 时，最有效的故障排查步骤是什么？
 
-A. 立即创建新的 Service
-B. 检查 Service 和 Pod labels、endpoints 以及 network policies
-C. 重启所有 Pod
-D. 重启 Cluster API server
+### 4. Service 无法将流量送达其 Pod 时，最有用的首项调查是什么？
+
+- A. 立即重建 Service
+- B. 检查其 selector/type、Pod 就绪状态、EndpointSlices、端口及实际允许的路径
+- C. 重启所有 Pod
+- D. 自行重启托管 API 服务器
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 检查 Service 和 Pod labels、endpoints 以及 network policies**
+**答案：B. 检查其 selector/type、Pod 就绪状态、EndpointSlices、端口及实际允许的路径**
 
-**解释：**
-当 Amazon EKS Cluster 中 Service 未将流量路由到 Pod 时，最有效的故障排查步骤是检查 Service 和 Pod labels、endpoints 以及 network policies。这种系统化方法有助于识别服务发现和流量路由问题的根本原因。
+修改资源之前，先追踪 Service 的发现/路由过程。使用受影响的命名空间和源客户端，并将 Service 配置与实际应用监听器及就绪探针进行对照：
 
-**要检查的关键项：**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${SERVICE_NAME:?}"
+SERVICE_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get service "$SERVICE_NAME" -o json)
+printf '%s\n' "$SERVICE_JSON" | jq '{metadata: {name: .metadata.name, namespace: .metadata.namespace}, spec: .spec, status: .status}'
+SELECTOR=$(printf '%s\n' "$SERVICE_JSON" | jq -r '(.spec.selector // {}) | to_entries | map("\(.key)=\(.value)") | join(",")')
+if [ -n "$SELECTOR" ]; then
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$SELECTOR" -o wide
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$SELECTOR" -o json \
+    | jq '.items[] | {name:.metadata.name,phase:.status.phase,ready:[.status.conditions[]? | select(.type=="Ready")],containers:.status.containerStatuses}'
+else
+  printf 'No selector: inspect ExternalName or explicitly managed EndpointSlices as applicable.\n'
+fi
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$SERVICE_NAME" -o yaml
+```
 
-1. **检查 Service 和 Pod labels**：
-   - Service selector 与 Pod label 是否匹配
-   - Label 语法和拼写错误
-   - Namespace 验证
+此辅助逻辑会处理没有 selector 的 Service，不会意外选中所有 Pod。ExternalName 提供别名解析；无头 Service 有意设置 `clusterIP: None`；也可能使用手动管理的 EndpointSlices。检查 endpoint 的 Ready/serving/terminating 状况及流量策略。存在一个就绪 sidecar 或 Pod 的 phase=Running，并不等同于 Pod Ready 条件。
 
-2. **检查 endpoints**：
-   - Service endpoint 创建情况
-   - Endpoint IP 与 Pod IP 是否匹配
-   - Ready Pod 数量
+**修正已观察到的问题**
 
-3. **检查 network policies**：
-   - 限制流量的 Network policy
-   - Ingress 和 egress 规则
-   - 跨 Namespace 通信限制
+- selector 不匹配：修改所属 Service/Pod 模板，而不是只改一个可被替换的 Pod 标签。
+- 端口不匹配：Service 端口、命名 targetPort 和实际应用监听器必须一致；声明 containerPort 不会创建监听器。
+- 策略限制：检查源端 egress 和目标端 ingress、标签及实现覆盖范围。不要删除策略，也不要允许所有命名空间访问所有端口。
+- DNS/数据平面：区分名称解析与传输，并确认使用标准 kube-proxy、其他实现还是 Auto Mode。纯 Auto Mode 使用节点 DNS；混合集群仍为非 Auto 节点保留 DNS。
 
-4. **检查 Service 和 Pod 状态**：
-   - Pod running 和 ready 状态
-   - Service 类型和端口配置
-   - Health check 配置
+此**独立策略示例**仅允许经过审查的对端/端口。使用前应调整标签/命名空间，并审查完整的必要流量矩阵：
 
-**故障排查方法：**
+```yaml
+# Example ingress policy only: review both peers and the complete allowed-flow matrix.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-from-web
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend
+          podSelector:
+            matchLabels:
+              app: web
+      ports:
+        - protocol: TCP
+          port: 8080
+```
 
-1. **检查 Service 和 Pod labels**：
-   ```bash
-   # Check service selector
-   kubectl get service <service-name> -o yaml | grep -A 5 selector
+它可能隔离其他后端入口，且不会创建客户端 egress 规则。需要进行正向和负向测试。
 
-   # Check pod labels
-   kubectl get pods --show-labels
+**Terraform Service/Deployment 测试夹具**
 
-   # Check pods matching selector
-   kubectl get pods -l key=value
-   ```
+原始 Service 到 Pod 示例保留为一次性 Linux 测试夹具，其中有真实声明的监听器、匹配标签、就绪探针和受限资源。将 provider 配置到经审查的测试环境，选择新命名空间；不要导入现有应用命名空间：
 
-2. **检查 endpoints**：
-   ```bash
-   # Check service endpoints
-   kubectl get endpoints <service-name>
+```hcl
+# Disposable example; configure the Kubernetes provider/context externally.
+variable "test_namespace" {
+  type = string
+  validation {
+    condition     = can(regex("^docs-service-check-[a-z0-9]{8,16}$", var.test_namespace))
+    error_message = "Supply a new unique namespace with the test prefix."
+  }
+}
+resource "kubernetes_namespace_v1" "app" {
+  metadata {
+    name = var.test_namespace
+  }
+}
+resource "kubernetes_deployment_v1" "app" {
+  metadata {
+    name      = "app-deployment"
+    namespace = kubernetes_namespace_v1.app.metadata[0].name
+  }
+  spec {
+    replicas = 2
+    selector {
+      match_labels = { app = "service-demo" }
+    }
+    template {
+      metadata {
+        labels = { app = "service-demo" }
+      }
+      spec {
+        automount_service_account_token = false
+        node_selector                   = { "kubernetes.io/os" = "linux" }
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 65532
+          run_as_group    = 65532
+          fs_group        = "65532"
+          seccomp_profile {
+            type = "RuntimeDefault"
+          }
+        }
+        container {
+          name    = "app"
+          image   = "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662"
+          command = ["sh", "-ec"]
+          args    = ["mkdir -p /tmp/www; printf 'ok\\n' > /tmp/www/index.html; exec httpd -f -p 8080 -h /tmp/www"]
+          port {
+            name           = "http"
+            container_port = 8080
+          }
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = "http"
+            }
+            period_seconds = 5
+          }
+          resources {
+            requests = { cpu = "10m", memory = "16Mi" }
+            limits   = { cpu = "100m", memory = "64Mi" }
+          }
+          security_context {
+            allow_privilege_escalation = false
+            read_only_root_filesystem  = true
+            capabilities {
+              drop = ["ALL"]
+            }
+          }
+          volume_mount {
+            name       = "tmp"
+            mount_path = "/tmp"
+          }
+        }
+        volume {
+          name = "tmp"
+          empty_dir {}
+        }
+      }
+    }
+  }
+}
+resource "kubernetes_service_v1" "app" {
+  metadata {
+    name      = "app-service"
+    namespace = kubernetes_namespace_v1.app.metadata[0].name
+  }
+  spec {
+    selector = { app = "service-demo" }
+    type     = "ClusterIP"
+    port {
+      name        = "http"
+      port        = 80
+      target_port = "http"
+    }
+  }
+}
+```
 
-   # Check endpoint details
-   kubectl describe endpoints <service-name>
+这不是生产应用，也不是经测量得出的资源建议。它不需要应用 API/RBAC 权限。provider 字段已经本地审查，但不代表在实际环境运行过 Terraform apply 或镜像。
 
-   # Compare endpoint and pod IPs
-   kubectl get pods -o wide
-   ```
+**受限连通性 Job**
 
-3. **检查 network policies**：
-   ```bash
-   # Check network policies
-   kubectl get networkpolicy
+测试夹具 Service 和 Pod 就绪后，保存下面的 Job，并将命名空间替换为准备好的命名空间。探测不需要 kubectl 二进制或 Kubernetes API token：
 
-   # Check network policy details
-   kubectl describe networkpolicy <policy-name>
+```yaml
+# Use kubectl create; replace namespace with the prepared fixture namespace.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: service-probe-
+  namespace: docs-service-check-12345678
+spec:
+  activeDeadlineSeconds: 60
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: probe
+          image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+          command: [sh, -ec]
+          args:
+            - nslookup app-service; wget -T 5 -q -O- http://app-service:80
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+```
 
-   # Temporarily disable network policy
-   kubectl delete networkpolicy <policy-name>
-   ```
+创建具有新生成名称的 Job，不要重用通用名称：
 
-4. **测试 Service 连接**：
-   ```bash
-   # Create temporary debug pod
-   kubectl run -it --rm debug --image=nicolaka/netshoot -- bash
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${TEST_NAMESPACE:?}"; : "${SERVICE_PROBE_FILE:?}"
+JOB_NAME=$(kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" create \
+  -f "$SERVICE_PROBE_FILE" -o jsonpath='{.metadata.name}')
+: "${JOB_NAME:?Job creation did not return a name}"
+printf 'Created probe: %s/%s\n' "$TEST_NAMESPACE" "$JOB_NAME"
+kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" wait \
+  --for=condition=complete "job/$JOB_NAME" --timeout=90s
+kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" logs "job/$JOB_NAME"
+```
 
-   # Test service DNS resolution
-   nslookup <service-name>.<namespace>.svc.cluster.local
+等待失败时，应保留生成的 Job 并检查其 Pod/事件/日志；不要无条件打印成功消息，也不要删除现有命名空间。记录其 UID，查看证据后只清理自己拥有的测试资源。测试覆盖 DNS 和一次 HTTP 请求，不覆盖所有客户端身份、直接 Pod 路径、负载均衡器或 SLO。需要时使用同一授权来源分别比较直接 Pod 和 Service 访问。
 
-   # Test service connectivity
-   curl <service-ip>:<port>
+A/C 会在诊断前丢失证据或增加中断。D 不是客户操作 EKS 控制平面的方式；如果证据指向那里，应检查 API/控制器健康。
 
-   # Test direct pod connectivity
-   curl <pod-ip>:<container-port>
-   ```
+来源：[Services](https://kubernetes.io/docs/concepts/services-networking/service/)、[EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)、[NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)。
 
-**常见 Service 问题和解决方案：**
-
-1. **Label 不匹配**：
-   - **症状**：Service endpoints 为空
-   - **解决方案**：
-     ```bash
-     # Modify service selector
-     kubectl edit service <service-name>
-     # or
-     kubectl patch service <service-name> -p '{"spec":{"selector":{"app":"correct-label"}}}'
-
-     # Modify pod labels
-     kubectl label pods <pod-name> app=correct-label --overwrite
-     ```
-
-2. **端口配置错误**：
-   - **症状**：Service 可连接但应用没有响应
-   - **解决方案**：
-     ```bash
-     # Check service port configuration
-     kubectl describe service <service-name>
-
-     # Check pod container port
-     kubectl describe pod <pod-name>
-
-     # Modify service port
-     kubectl edit service <service-name>
-     ```
-
-3. **Network policy 限制**：
-   - **症状**：仅从特定来源无法访问 Service
-   - **解决方案**：
-     ```bash
-     # Modify network policy
-     kubectl edit networkpolicy <policy-name>
-
-     # Add allow rule
-     kubectl apply -f - <<EOF
-     apiVersion: networking.k8s.io/v1
-     kind: NetworkPolicy
-     metadata:
-       name: allow-service-access
-       namespace: <namespace>
-     spec:
-       podSelector:
-         matchLabels:
-           app: <app-label>
-       ingress:
-       - from:
-         - namespaceSelector: {}
-       policyTypes:
-       - Ingress
-     EOF
-     ```
-
-4. **CoreDNS 问题**：
-   - **症状**：Service 名称解析失败
-   - **解决方案**：
-     ```bash
-     # Check CoreDNS pods
-     kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-     # Check CoreDNS logs
-     kubectl logs -n kube-system -l k8s-app=kube-dns
-
-     # Check CoreDNS configuration
-     kubectl get configmap -n kube-system coredns -o yaml
-     ```
-
-**最佳实践：**
-
-1. **系统化故障排查方法**：
-   - 从 Service 配置开始，然后按顺序检查 Pod、network policies 和 DNS
-   - 在每一步收集明确证据
-   - 每次只改变一个变量
-
-2. **利用 Service 调试工具**：
-   ```bash
-   # Check kube-proxy logs
-   kubectl logs -n kube-system -l k8s-app=kube-proxy
-
-   # Check iptables rules (for self-managed nodes)
-   ssh ec2-user@<node-ip>
-   sudo iptables-save | grep <service-ip>
-
-   # DNS debugging
-   kubectl run -it --rm dnsutils --image=tutum/dnsutils -- bash
-   ```
-
-3. **实施 Service 监控**：
-   - 监控 Service endpoint 状态
-   - 验证 Service 连接状态
-   - 可视化流量路径
-
-4. **Service 配置管理**：
-   - 一致的标签策略
-   - 明确的端口命名
-   - 记录 Service 文档
-
-其他选项的问题：
-- **A. 立即创建新的 Service**：在未识别根本原因的情况下创建新的 Service，可能会出现相同问题，并且诊断信息会丢失。
-- **C. 重启所有 Pod**：重启 Pod 无法修复 Service 配置问题，并且可能造成不必要的服务中断。
-- **D. 重启 Cluster API server**：重启 API server 是极端措施，与 Service 路由问题没有直接关系，也可能影响整个 Cluster。
 </details>
-### 5. 当 Amazon EKS Cluster 中 PersistentVolumeClaim 保持在 "Pending" 状态时，最可能的原因和解决方案是什么？
 
-A. Node 资源不足 / 添加更大的 Node
-B. Storage class 问题或 Volume provisioning 权限不足 / 检查 storage class 并配置 IAM 权限
-C. Pod 优先级低 / 提高 Pod 优先级
-D. Cluster autoscaler 已禁用 / 启用 autoscaler
+### 5. PVC 保持 Pending 时应首先调查什么？
+
+- A. 始终添加更大的节点
+- B. 检查 claim/class、绑定模式、消费者调度、driver 和配置身份
+- C. 始终提高 Pod 优先级
+- D. 始终安装 Cluster Autoscaler
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. Storage class 问题或 Volume provisioning 权限不足 / 检查 storage class 并配置 IAM 权限**
+**答案：B. 检查 claim/class、绑定模式、消费者调度、driver 和配置身份**
 
-**解释：**
-当 Amazon EKS Cluster 中 PersistentVolumeClaim (PVC) 保持在 "Pending" 状态时，最可能的原因是 storage class 问题或 volume provisioning 权限不足。要解决此问题，需要检查 storage class 并配置必要的 IAM 权限。
+Pending 本身并不表示存储故障。采用 WaitForFirstConsumer 时，claim 等待合适的消费者 Pod 完成调度可能是正常行为。先识别实际 driver/计算路径，不要预设为 EBS 或 IAM 故障。
 
-**主要原因和解决方案：**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${PVC_NAME:?}"
+PVC_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pvc "$PVC_NAME" -o json)
+printf '%s\n' "$PVC_JSON" | jq '{name:.metadata.name,uid:.metadata.uid,status:.status,spec:.spec,storageClassFieldPresent:(.spec | has("storageClassName"))}'
+PVC_UID=$(printf '%s\n' "$PVC_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --field-selector "involvedObject.uid=$PVC_UID" --sort-by='.metadata.creationTimestamp'
+SC_NAME=$(printf '%s\n' "$PVC_JSON" | jq -r '.spec.storageClassName // empty')
+if [ -n "$SC_NAME" ]; then
+  kubectl --context "$KUBE_CONTEXT" get storageclass "$SC_NAME" -o yaml
+else
+  printf 'Inspect absent versus explicitly empty storageClassName and default/static binding intent.\n'
+fi
+PV_NAME=$(printf '%s\n' "$PVC_JSON" | jq -r '.spec.volumeName // empty')
+if [ -n "$PV_NAME" ]; then
+  kubectl --context "$KUBE_CONTEXT" get pv "$PV_NAME" -o yaml
+  kubectl --context "$KUBE_CONTEXT" get volumeattachments -o json \
+    | jq --arg pv "$PV_NAME" '.items[] | select(.spec.source.persistentVolumeName == $pv) | {name:.metadata.name,spec,status}'
+fi
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o json \
+  | jq --arg pvc "$PVC_NAME" '.items[] | select(any(.spec.volumes[]?; .persistentVolumeClaim.claimName == $pvc)) | {name:.metadata.name,node:.spec.nodeName,phase:.status.phase,conditions:.status.conditions}'
+```
 
-1. **Storage class 问题**：
-   - 指定了不存在的 storage class
-   - Storage class 参数错误
-   - Provisioner 配置问题
+此辅助逻辑会区分 storageClassName 缺失与空值，并通过 JSON 选择消费者。Kubernetes 不支持旧的 Pod 字段选择器 `spec.volumes.persistentVolumeClaim.claimName`。如果 claim 已 Bound，应调查挂载/可读性，而不是把绑定当作应用验证完毕。
 
-   **解决方案**：
-   ```bash
-   # Check storage classes
-   kubectl get storageclass
+**检查实际状况**
 
-   # Check storage class details
-   kubectl describe storageclass <storage-class-name>
+- Class/provisioner：确认引用的 class 存在，并匹配标准 EBS、Auto Mode、EFS 或其他 driver。显式空 class 与省略默认 class 请求的是不同绑定路径。
+- 延迟绑定：检查消费者请求、污点/亲和性、可用区及容量。节点供给、优先级和自动扩缩可能通过消费者间接影响 PVC 进度；A/C/D 不是通用修复方式。
+- 身份：检查实际控制器 IRSA/Pod Identity 和 KMS 权限，而不只是节点角色。Fargate 无法挂载 EBS 卷；Auto Mode 使用自己的 provisioner。
+- CSI：检查 controller/node 健康、事件、当前兼容的 add-on 版本及所有权。查明错误前不要强制重装。
 
-   # Set default storage class
-   kubectl patch storageclass <storage-class-name> -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-   ```
+**Class 与数据生命周期**
 
-2. **IAM 权限不足**：
-   - EBS CSI driver service account 缺少权限
-   - Node IAM role 缺少权限
-   - 跨账户访问问题
+不要为修复单个 claim 去修改现有 StorageClass 不可变的绑定模式，也不要把集群默认 class 切换掉。新的、显式指定的标准 driver class 可以这样配置：
 
-   **解决方案**：
-   ```bash
-   # Check EBS CSI driver service account
-   kubectl get serviceaccount -n kube-system ebs-csi-controller-sa
+```yaml
+# New, explicitly selected StorageClass for standard EBS CSI, not an in-place edit.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: diagnostic-ebs-gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+  csi.storage.k8s.io/fstype: ext4
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+```
 
-   # Check IAM role attachment
-   kubectl describe serviceaccount -n kube-system ebs-csi-controller-sa
+这是 YAML 配置示例，不是应用到现有 class 的命令。Retain 会保留存储以便单独决定后续生命周期，也可能继续产生费用。PVC YAML 不是数据备份；删除/重建 claim 可能销毁数据，或留下需要有意重新绑定的保留卷。
 
-   # Attach required IAM policy
-   aws iam attach-role-policy \
-     --role-name <role-name> \
-     --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
-   ```
+Auto Mode 要求使用 `ebs.csi.eks.amazonaws.com`，而非上面的标准 provisioner。其节点根卷/数据卷加密并不意味着所有动态 PVC 都已加密。应显式请求 `encrypted: "true"` 并检查实际 EBS 卷/密钥。应使用文档化的快照或适用的 Retain/静态迁移步骤，不要尝试修改已绑定 claim 的 provisioner/class。
 
-3. **Volume binding mode 问题**：
-   - 可用区不匹配
-   - WaitForFirstConsumer 设置问题
-   - Topology 约束
+**Terraform 所有权示例**
 
-   **解决方案**：
-   ```bash
-   # Check volume binding mode
-   kubectl get storageclass <storage-class-name> -o jsonpath='{.volumeBindingMode}'
+对于现有标准 EBS CSI add-on，应选择经审查的版本、完整且通过 schema 验证的配置以及准备好的 controller 身份。此 IRSA 示例不同时配置 Pod Identity：
 
-   # Modify storage class
-   kubectl patch storageclass <storage-class-name> -p '{"volumeBindingMode":"WaitForFirstConsumer"}'
+```hcl
+# Existing standard EBS CSI add-on with a reviewed IRSA identity.
+# Preserve/import its existing resource ownership; do not create a duplicate add-on.
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "aws-ebs-csi-driver"
+  addon_version               = var.reviewed_ebs_addon_version
+  service_account_role_arn    = var.controller_irsa_role_arn
+  configuration_values        = file(var.reviewed_configuration_file)
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
+```
 
-   # Create new storage class
-   kubectl apply -f - <<EOF
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: ebs-sc-waitforfirstconsumer
-   provisioner: ebs.csi.aws.com
-   volumeBindingMode: WaitForFirstConsumer
-   parameters:
-     type: gp3
-   EOF
-   ```
+保留/导入现有所有权。controller 角色需要当前、范围受限的 EBS 权限/标签条件，以及适用时的客户密钥权限。旧 IAM module/add-on 版本组合并不能保证当前兼容性；`--role-only` 不会把角色关联到 add-on。请遵循[存储源指南](../../eks/04-eks-storage-part1.md)和当前 add-on 目录。
 
-4. **CSI driver 问题**：
-   - CSI driver 未安装或出错
-   - 版本兼容性问题
-   - Controller Pod 错误
+也可以通过当前 Kubernetes resource 管理同一个新 class：
 
-   **解决方案**：
-   ```bash
-   # Check CSI driver pods
-   kubectl get pods -n kube-system -l app=ebs-csi-controller
+```hcl
+# New standard-driver class, explicitly selected by test PVCs.
+resource "kubernetes_storage_class_v1" "ebs_gp3" {
+  metadata {
+    name = "diagnostic-ebs-gp3"
+  }
+  storage_provisioner    = "ebs.csi.aws.com"
+  volume_binding_mode    = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+  reclaim_policy         = "Retain"
+  parameters = {
+    type                        = "gp3"
+    encrypted                   = "true"
+    "csi.storage.k8s.io/fstype" = "ext4"
+  }
+}
+```
 
-   # Check CSI driver logs
-   kubectl logs -n kube-system -l app=ebs-csi-controller -c ebs-plugin
+对此 class 选择 YAML **或** Terraform 作为唯一所有者。provider 字段/语法可以在本地审查，但这不能证明目标集群中的 IAM、CSI 配置或数据恢复正常。
 
-   # Reinstall CSI driver
-   eksctl create addon --name aws-ebs-csi-driver --cluster <cluster-name> --force
-   ```
+**隔离的配置测试**
 
-**最佳实践：**
+要测试经过审查的 Linux EC2 路径，应先从 [EKS 升级指南](../../eks/08-eks-upgrades.md)保存完整的 `eks-upgrade-smoke.py` 辅助程序，再使用明确选定的测试 context/class：
 
-1. **适当的 storage class 配置**：
-   ```yaml
-   # gp3 storage class example
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: ebs-gp3
-     annotations:
-       storageclass.kubernetes.io/is-default-class: "true"
-   provisioner: ebs.csi.aws.com
-   volumeBindingMode: WaitForFirstConsumer
-   parameters:
-     type: gp3
-     encrypted: "true"
-   allowVolumeExpansion: true
-   ```
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the reviewed test context}"
+: "${TEST_STORAGE_CLASS:?Set the reviewed compatible test class}"
+export KUBE_CONTEXT TEST_STORAGE_CLASS
+export RUN_SMOKE_TEST=yes
+export CLEANUP_ON_SUCCESS=no
+# Save the complete helper from the EKS upgrades source guide first.
+python3 eks-upgrade-smoke.py
+```
 
-2. **IRSA (IAM Roles for Service Accounts) 配置**：
-   ```bash
-   # Create IRSA for EBS CSI driver
-   eksctl create iamserviceaccount \
-     --name ebs-csi-controller-sa \
-     --namespace kube-system \
-     --cluster <cluster-name> \
-     --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-     --approve \
-     --override-existing-serviceaccounts
-   ```
+它会创建唯一命名空间和 PVC writer，等待延迟绑定后，再由单独的消费者读取标记。它会记录证据并保留失败现场。实际运行时需考虑存储成本和 Retain 清理。本次审查没有执行云端配置、创建卷、挂载或基准测试；不要使用过去那个创建无关计费卷的 AWS CLI Job 来诊断 PVC。
 
-3. **优化的 PVC 请求**：
-   ```yaml
-   # Optimized PVC example
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-     name: my-pvc
-   spec:
-     accessModes:
-       - ReadWriteOnce
-     storageClassName: ebs-gp3
-     resources:
-       requests:
-         storage: 10Gi
-   ```
+来源：[StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/)、[EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[Auto Mode class](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)。
 
-4. **Volume binding mode 优化**：
-   - 使用 WaitForFirstConsumer
-   - 确保 Pod 和 PV 可用区匹配
-   - 利用 topology-aware provisioning
-
-其他选项的问题：
-- **A. Node 资源不足 / 添加更大的 Node**：Node 资源不足通常会导致 Pod 处于 "Pending" 状态，但与 PVC 处于 "Pending" 状态没有直接关系。
-- **C. Pod 优先级低 / 提高 Pod 优先级**：Pod 优先级会影响调度决策，但不会影响 PVC provisioning。
-- **D. Cluster autoscaler 已禁用 / 启用 autoscaler**：Autoscaler 有助于调整 Node 数量，但与 PVC provisioning 问题没有直接关系。
 </details>
-### 6. 当 Amazon EKS Cluster 中 autoscaling 未按预期工作时，最有效的故障排查方法是什么？
 
-A. 为所有 Pod 分配更多资源
-B. 手动添加 Node
-C. 检查 HPA、CA、VPA 配置、metrics、权限和事件
-D. 重新创建 Cluster
+### 6. 自动扩缩行为与预期不符时，最有效的调查方式是什么？
+
+- A. 给所有 Pod 分配更多资源
+- B. 手动增加节点后就停止调查
+- C. 找出副本/资源/节点分别由谁管理，并检查其指标、状况、限制、身份和事件
+- D. 重建集群
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 检查 HPA、CA、VPA 配置、metrics、权限和事件**
+**答案：C. 找出副本/资源/节点分别由谁管理，并检查其指标、状况、限制、身份和事件**
 
-**解释：**
-当 Amazon EKS Cluster 中 autoscaling 未按预期工作时，最有效的故障排查方法是检查 HPA (Horizontal Pod Autoscaler)、CA (Cluster Autoscaler)、VPA (Vertical Pod Autoscaler) 配置、metrics、权限和事件。这种系统化方法有助于识别并解决 autoscaling 问题的根本原因。
+区分 HPA 的副本扩缩、VPA 的资源建议/更新，以及 CA/Karpenter/Auto Mode 的节点供给。它们管理不同资源、依赖不同信号，而且不一定全部安装。
 
-**要检查的关键项：**
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get hpa -o json \
+  | jq '.items[] | {name:.metadata.name,target:.spec.scaleTargetRef,min:.spec.minReplicas,max:.spec.maxReplicas,current:.status.currentReplicas,desired:.status.desiredReplicas,metrics:.status.currentMetrics,conditions:.status.conditions}'
+kubectl --context "$KUBE_CONTEXT" get apiservice v1beta1.metrics.k8s.io
+kubectl --context "$KUBE_CONTEXT" get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/$NAMESPACE/pods"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp'
+```
 
-1. **检查 HPA (Horizontal Pod Autoscaler)**：
-   - HPA 配置和状态
-   - Metrics 可用性和值
-   - Scaling 限制和行为
+检查 HPA 条件、当前指标、requests、min/max 和行为配置。期望/当前副本数不同可能只是正常收敛。指标数据缺失或报错可能阻止缩容。CPU/内存资源指标使用 Metrics Server；自定义/外部指标需要各自的 adapter/integration。查询失败不能证明 API/CRD 不存在。
 
-2. **检查 CA (Cluster Autoscaler)**：
-   - CA Deployment 和配置
-   - IAM 权限和 role
-   - Node group tag 和设置
+对于现有托管节点组，应检查其实际 ASG，而不是用猜测的标签搜索所有账号中的组：
 
-3. **检查 VPA (Vertical Pod Autoscaler)**：
-   - VPA 配置和模式
-   - 资源建议
-   - 更新策略
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" \
+  --query 'nodegroup.{scaling:scalingConfig,health:health,autoScalingGroups:resources.autoScalingGroups}'
+: "${ASG_NAME:?Select the actual group returned above}"
+aws autoscaling describe-auto-scaling-groups --region "$AWS_REGION" \
+  --auto-scaling-group-names "$ASG_NAME" \
+  --query 'AutoScalingGroups[].{Name:AutoScalingGroupName,Min:MinSize,Max:MaxSize,Desired:DesiredCapacity,Instances:Instances,Tags:Tags}'
+```
 
-4. **检查 metrics 和事件**：
-   - Metrics server 状态
-   - CloudWatch metrics 可用性
-   - Autoscaling 事件和日志
+CA 根据无法调度的 Pod 和约束作出响应，并非只看节点平均 CPU 是否高。检查其支持的 Kubernetes 次版本、准确 Pod 身份、最小权限的发现/扩缩权限、ASG 标签、最大规模、EC2/IP 配额和启动失败。节点组标签不能证明 ASG 具有发现标签。托管组限制应优先由 EKS/基础设施所有者管理；直接编辑 ASG 可能造成漂移，而且扩缩配置更改不遵守 PDB。
 
-**故障排查方法：**
+对于 Karpenter/Auto Mode，应检查对应 NodePool/NodeClaim/provider 限制及事件。不能只因某个固定 CA Pod label 查不到对象，就建议安装 CA。VPA 处于 Off 和 Initial 模式可能是有意的。Auto 已弃用，建议使用 Recreate；更改模式可能中断工作负载，并会影响同时使用相同 CPU/内存信号的 HPA。
 
-1. **HPA 故障排查**：
-   ```bash
-   # Check HPA status
-   kubectl get hpa
+**Helm/Terraform 配置示例**
 
-   # Check HPA details
-   kubectl describe hpa <hpa-name>
+仅当现有 CA 和 Metrics Server 由 Helm 管理时使用。提供经审查的 chart 版本，以及兼容集群次版本的 CA 镜像版本；chart 默认镜像可能落后于目标版本。每个组件只保留一个所有者。
 
-   # Check metrics
-   kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/<namespace>/pods"
+```hcl
+# Existing Helm-owned installations only; supply reviewed compatible versions.
+# The IRSA trust subject must match kube-system:cluster-autoscaler.
+resource "helm_release" "cluster_autoscaler" {
+  name       = "cluster-autoscaler"
+  repository = "https://kubernetes.github.io/autoscaler"
+  chart      = "cluster-autoscaler"
+  version    = var.ca_chart_version
+  namespace  = "kube-system"
+  wait       = true
+  timeout    = 600
+  values = [yamlencode({
+    autoDiscovery = { clusterName = var.cluster_name }
+    awsRegion     = var.aws_region
+    image         = { tag = var.ca_image_tag }
+    rbac = {
+      serviceAccount = {
+        create = true
+        name   = "cluster-autoscaler"
+        annotations = {
+          "eks.amazonaws.com/role-arn" = var.ca_irsa_role_arn
+        }
+      }
+    }
+  })]
+}
 
-   # Check metrics server status
-   kubectl get pods -n kube-system -l k8s-app=metrics-server
-   kubectl logs -n kube-system -l k8s-app=metrics-server
-   ```
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  version    = var.metrics_server_chart_version
+  namespace  = "kube-system"
+  wait       = true
+  timeout    = 600
+  # Retain/migrate the existing owner's reviewed values.
+  values = [file(var.metrics_server_values_file)]
+}
+```
 
-2. **CA 故障排查**：
-   ```bash
-   # Check CA pod status
-   kubectl get pods -n kube-system -l app=cluster-autoscaler
+这里的 values 文档兼容 Helm provider 3.x，不使用已移除的重复 `set {}` 写法。CA ServiceAccount 名称是显式值，必须匹配 IRSA trust subject；Pod Identity 是单独配置、单独管理的方案。该角色仍需具备[扩缩成本源指南](../../eks/07-eks-cost-optimization.md)所述的范围受限权限；不要把 AutoScalingFullAccess 当作通用修复而附加。
 
-   # Check CA logs
-   kubectl logs -n kube-system -l app=cluster-autoscaler
+合并 Metrics Server 安装中实际经过审查的 values。当前上游 chart 默认采用安全的 kubelet 连接路径，并不意味着要用 `--kubelet-insecure-tls`。应先诊断证书/信任/地址问题，再考虑仅用于实验室的变通办法。若 EKS add-on 已拥有组件，不要再创建重复 Helm release。目标环境必须验证 chart/身份/网络/运行时兼容性；本次没有运行 Helm 安装。
 
-   # Check node group tags
-   aws autoscaling describe-auto-scaling-groups \
-     --auto-scaling-group-names <asg-name> \
-     --query "AutoScalingGroups[].Tags"
+**HPA 指标与行为**
 
-   # Check CA events
-   kubectl get events --sort-by='.lastTimestamp' | grep -i "cluster-autoscaler"
-   ```
+此资源指标示例保留 CPU/内存和 scale-up/down 策略概念：
 
-3. **VPA 故障排查**：
-   ```bash
-   # Check VPA status
-   kubectl get vpa
+```yaml
+# Example resource metrics and behavior; requires an existing target with requests.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-hpa
+  namespace: applications
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 4
+          periodSeconds: 60
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      selectPolicy: Min
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+```
 
-   # Check VPA details
-   kubectl describe vpa <vpa-name>
+利用率目标需要配置 requests。HPA 按各指标建议的副本数中最大值作选择；指标缺失/报错也可能阻止缩容。策略中的 Max/Min 用于选择允许的变更速率；稳定窗口并非一律固定的“冷却时间”。百分比、界限和窗口都只是示例，内存扩缩行为也未必与 CPU 相同。不要让 Terraform/GitOps 和其他扩缩器争相控制同一个副本数。
 
-   # Check VPA recommendations
-   kubectl get vpa <vpa-name> -o jsonpath='{.status.recommendation}'
+**仪表板示例**
 
-   # Check VPA component status
-   kubectl get pods -n kube-system -l app=vpa-recommender
-   ```
+针对已有的单集群 kube-prometheus-stack 布局：数据源 UID 为 `prometheus`，sidecar 监视 `monitoring` 中带 `grafana_dashboard=1` 标签的资源：
 
-4. **Metrics 和权限故障排查**：
-   ```bash
-   # Check metrics server status
-   kubectl get apiservices v1beta1.metrics.k8s.io
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autoscaling-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  autoscaling-dashboard.json: |
+    {
+      "uid": "eks-autoscaling-diagnostics",
+      "title": "EKS Autoscaling Diagnostics",
+      "schemaVersion": 39,
+      "version": 1,
+      "timezone": "utc",
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "HPA replicas",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_status_current_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Current {{namespace}}/{{horizontalpodautoscaler}}"
+            },
+            {
+              "refId": "B",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_status_desired_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Desired {{namespace}}/{{horizontalpodautoscaler}}"
+            },
+            {
+              "refId": "C",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_spec_min_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Min {{namespace}}/{{horizontalpodautoscaler}}"
+            },
+            {
+              "refId": "D",
+              "expr": "max by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_spec_max_replicas{job=\"kube-state-metrics\"})",
+              "legendFormat": "Max {{namespace}}/{{horizontalpodautoscaler}}"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Observed node count",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count(max by (node) (kube_node_info{job=\"kube-state-metrics\"}))",
+              "legendFormat": "Nodes"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Pod CPU usage (cores)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace, pod) (max by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{job=\"kubelet\",metrics_path=\"/metrics/cadvisor\",container!=\"\",container!=\"POD\",image!=\"\"}[5m])))",
+              "legendFormat": "{{namespace}}/{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Pod working set (bytes)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace, pod) (max by (namespace, pod, container) (container_memory_working_set_bytes{job=\"kubelet\",metrics_path=\"/metrics/cadvisor\",container!=\"\",container!=\"POD\",image!=\"\"}))",
+              "legendFormat": "{{namespace}}/{{pod}}"
+            }
+          ]
+        }
+      ]
+    }
+```
 
-   # Check IAM roles and policies
-   aws iam get-role --role-name <role-name>
-   aws iam list-attached-role-policies --role-name <role-name>
+根据实际安装调整选择器/UID/命名空间。HPA 序列保留 namespace 身份；聚合前应去掉 exporter 重复数据。CPU 单位为核，内存是 working-set 字节数，而非百分比。多集群数据源需添加 cluster 维度/筛选器。抓取数据缺失时必须显示无数据/未知，不能显示为健康的零。仪表板不能证明扩缩成功，也不是告警/自动化流程。
 
-   # Check CloudWatch metrics
-   aws cloudwatch list-metrics \
-     --namespace AWS/EC2 \
-     --metric-name CPUUtilization \
-     --dimensions Name=AutoScalingGroupName,Value=<asg-name>
-   ```
+A/B 可能暂时改变容量，但不能定位 controller/指标故障。D 会增加迁移风险，却不能用于诊断。记录预期与实际行为，以及哪项准确更改恢复了行为。
 
-**常见 autoscaling 问题和解决方案：**
+来源：[HPA 行为](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)、[AWS Cluster Autoscaler](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md)、[CA chart](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler)、[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)、[VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)。
 
-1. **HPA metrics 问题**：
-   - **症状**：HPA 未做出 scaling 决策
-   - **原因**：Metrics server 错误或 metrics 可用性问题
-   - **解决方案**：
-     ```bash
-     # Reinstall metrics server
-     kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-
-     # Verify metrics
-     kubectl top pods
-     kubectl top nodes
-     ```
-
-2. **CA 权限问题**：
-   - **症状**：CA 未添加 Node
-   - **原因**：IAM 权限不足或缺少 ASG tag
-   - **解决方案**：
-     ```bash
-     # Attach CA IAM policy
-     aws iam attach-role-policy \
-       --role-name <role-name> \
-       --policy-arn arn:aws:iam::aws:policy/AutoScalingFullAccess
-
-     # Add ASG tags
-     aws autoscaling create-or-update-tags \
-       --tags "ResourceId=<asg-name>,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true" \
-       "ResourceId=<asg-name>,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/<cluster-name>,Value=owned,PropagateAtLaunch=true"
-     ```
-
-3. **Scaling 限制问题**：
-   - **症状**：Scaling 无法超过某个值
-   - **原因**：HPA 或 CA 限制设置
-   - **解决方案**：
-     ```bash
-     # Modify HPA max replicas
-     kubectl patch hpa <hpa-name> -p '{"spec":{"maxReplicas":20}}'
-
-     # Modify ASG max size
-     aws autoscaling update-auto-scaling-group \
-       --auto-scaling-group-name <asg-name> \
-       --max-size 10
-     ```
-
-4. **VPA update mode 问题**：
-   - **症状**：VPA 未更新资源
-   - **原因**：Update mode 设置为 "Off" 或 "Initial"
-   - **解决方案**：
-     ```bash
-     # Modify VPA update mode
-     kubectl patch vpa <vpa-name> -p '{"spec":{"updatePolicy":{"updateMode":"Auto"}}}'
-     ```
-
-**最佳实践：**
-
-1. **系统化故障排查方法**：
-   - 分别检查每个 autoscaling 组件
-   - 分析日志和事件
-   - 逐步故障排查
-
-2. **实施 autoscaling 监控**：
-   - 监控 autoscaling 活动
-   - 设置 scaling 事件通知
-   - 配置 scaling metrics dashboard
-
-3. **优化 autoscaling 配置**：
-   - 设置适合 workload 特征的 scaling 阈值
-   - 调整 scaling 行为和 cooldown period
-   - 平衡成本和性能
-
-4. **集成多个 autoscaling 组件**：
-   - 组合使用 HPA、CA、VPA
-   - 防止组件之间冲突
-   - 实施一致的 scaling 策略
-
-其他选项的问题：
-- **A. 为所有 Pod 分配更多资源**：这无法解决根本原因，并且可能浪费资源，无法识别 autoscaling 问题的实际原因。
-- **B. 手动添加 Node**：这只是临时解决方案，无法解决 autoscaling 系统的根本问题。
-- **D. 重新创建 Cluster**：这是极端措施，无法识别根本原因，并会造成不必要的停机和工作量。
 </details>
-### 7. 当 Amazon EKS Cluster 中 network policies 未按预期工作时，最有效的故障排查方法是什么？
 
-A. 删除所有 network policies 并使用默认设置
-B. 检查 Cluster CNI plugin、network policy 配置、日志和事件
-C. 为所有 Pod 设置 hostNetwork: true
-D. 重新配置 Cluster VPC
+### 7. NetworkPolicy 行为异常时，最有效的调查方法是什么？
+
+- A. 删除所有 NetworkPolicy
+- B. 检查实际 enforcement 实现、策略 selector/语义、日志和失败流量
+- C. 给所有 Pod 设置 hostNetwork
+- D. 重建 VPC
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 检查 Cluster CNI plugin、network policy 配置、日志和事件**
+**答案：B. 检查实际 enforcement 实现、策略 selector/语义、日志和失败流量**
 
-**解释：**
-当 Amazon EKS Cluster 中 network policies 未按预期工作时，最有效的故障排查方法是系统化地检查 Cluster CNI plugin、network policy 配置、日志和事件。这种方法有助于识别并解决 network policy 问题的根本原因。
+声明的策略与执行策略的实现都要检查。只创建 NetworkPolicy 对象，不会自动安装策略执行引擎。
 
-**要检查的关键项：**
+**盘点和语义**
 
-1. **检查 CNI plugin**：
-   - 正在使用的 CNI plugin 类型（AWS VPC CNI、Calico、Cilium 等）
-   - CNI plugin 版本和兼容性
-   - Network policy 支持情况
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
+  | jq '{name:.metadata.name,labels:.metadata.labels,owners:.metadata.ownerReferences,node:.spec.nodeName,hostNetwork:.spec.hostNetwork,status:.status.phase}'
+kubectl --context "$KUBE_CONTEXT" get namespace "$NAMESPACE" --show-labels
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get networkpolicies -o yaml
+kubectl --context "$KUBE_CONTEXT" get daemonsets -A -o json \
+  | jq '.items[] | {namespace:.metadata.namespace,name:.metadata.name,containers:[.spec.template.spec.containers[] | {name,image}]}'
+```
 
-2. **检查 network policy 配置**：
-   - Network policy 语法和 selector
-   - Policy 优先级和冲突
-   - Namespace 和 label selector
+Pod 列表为空时，kubectl 仍可能成功退出。不能把 `if kubectl get pods -l ...` 当作安装了 VPC CNI、Calico 或 Cilium 的证明。应检查配置的所有者、实际对象/镜像、策略 agent 状态，以及支持的计算类型/kernel/版本。Auto Mode 使用内置 NodeClass 网络控制，不支持随意安装其他 CNI。
 
-3. **检查日志和事件**：
-   - CNI plugin 日志
-   - Network policy controller 日志
-   - 相关事件和错误消息
+VPC CNI 支持原生策略。当前 AWS 指南区分标准启动模式（新 Pod 的规则配置期间先允许流量）和严格模式（初始拒绝，因此需配置所需 DNS/依赖路径）。检查实际策略 agent 容器和已启用的事件日志；不要沿用“VPC CNI 不支持策略”的过时说法。
 
-4. **测试网络连接**：
-   - Pod 到 Pod 连接测试
-   - Service 连接测试
-   - 外部连接测试
+对于标准的 networking.k8s.io/v1 NetworkPolicy，各策略允许的流量采用累加语义，没有规则优先级或后者覆盖前者的冲突解决。连接必须同时通过隔离源端的 egress 和目标端的 ingress。Admin/集群范围或厂商策略 API 语义不同，应另外考虑。HostNetwork 行为也取决于实现；给所有 Pod 设置它不是安全修复。
 
-**故障排查方法：**
+**受限策略示例**
 
-1. **检查 CNI plugin**：
-   ```bash
-   # Check CNI plugin pods
-   kubectl get pods -n kube-system -l k8s-app=aws-node  # AWS VPC CNI
-   kubectl get pods -n kube-system -l k8s-app=calico-node  # Calico
-   kubectl get pods -n kube-system -l k8s-app=cilium  # Cilium
+以下两个文档用 `---` 分隔对象。假设已有后端命名空间、前端 web Pod、数据库 Pod 和传统 CoreDNS Pod endpoint：
 
-   # Check CNI plugin logs
-   kubectl logs -n kube-system -l k8s-app=aws-node
-   kubectl logs -n kube-system -l k8s-app=calico-node
-   kubectl logs -n kube-system -l k8s-app=cilium
+```yaml
+# Independent example for a reviewed backend namespace and traditional CoreDNS Pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: backend
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend
+          podSelector:
+            matchLabels:
+              app: web
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: database
+          podSelector:
+            matchLabels:
+              app: db
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+```
 
-   # Check CNI configuration
-   kubectl describe daemonset -n kube-system aws-node
-   kubectl describe daemonset -n kube-system calico-node
-   kubectl describe daemonset -n kube-system cilium
-   ```
+命名空间与 Pod selector 位于**同一个 peer**，因此两者都必须匹配。分成多个 peer 才是 OR。命名空间名称使用标准的 kubernetes.io/metadata.name 标签；不要假设存在自定义 `name` 标签。
 
-2. **检查 network policies**：
-   ```bash
-   # List network policies
-   kubectl get networkpolicies --all-namespaces
+默认拒绝策略选中所有后端 Pod；只有选中的 API Pod 获得上面显示的例外。其他后端工作负载及 API 依赖需要单独审查放行规则。这不会配置前端 egress 或数据库 ingress。DNS 规则目标是 CoreDNS Pod，并非通用 Auto Mode/NodeLocal resolver 路径。
 
-   # Check specific network policy details
-   kubectl describe networkpolicy <policy-name> -n <namespace>
+使用适当的所有者管理的测试工作负载，测试允许的 frontend-web→API:8080 路径、错误命名空间/标签/端口的拒绝路径、API→database:5432，以及实际 DNS 路径。新建但未带标签的调试 Pod，其策略可能与受影响 Pod 不同；ping 单独不能证明 TCP/UDP 策略。经授权的抓包应限定到目标网络命名空间/流量和时长；单独的 tcpdump Pod 无法观察其他所有 Pod。
 
-   # Check network policy YAML
-   kubectl get networkpolicy <policy-name> -n <namespace> -o yaml
-   ```
+**Terraform 方案**
 
-3. **检查 Pod 网络信息**：
-   ```bash
-   # Check pod IP and node information
-   kubectl get pods -o wide
+```hcl
+# Alternative owner for the same policy intent; do not also apply duplicate YAML.
+resource "kubernetes_network_policy_v1" "default_deny" {
+  metadata {
+    name      = "default-deny"
+    namespace = var.backend_namespace
+  }
+  spec {
+    pod_selector {}
+    policy_types = ["Ingress", "Egress"]
+  }
+}
+resource "kubernetes_network_policy_v1" "api" {
+  metadata {
+    name      = "api-allow"
+    namespace = var.backend_namespace
+  }
+  spec {
+    pod_selector {
+      match_labels = { app = "api" }
+    }
+    policy_types = ["Ingress", "Egress"]
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "frontend" }
+        }
+        pod_selector {
+          match_labels = { app = "web" }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "8080"
+      }
+    }
+    egress {
+      to {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "database" }
+        }
+        pod_selector {
+          match_labels = { app = "db" }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "5432"
+      }
+    }
+    egress {
+      to {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "kube-system" }
+        }
+        pod_selector {
+          match_labels = { "k8s-app" = "kube-dns" }
+        }
+      }
+      ports {
+        protocol = "UDP"
+        port     = "53"
+      }
+      ports {
+        protocol = "TCP"
+        port     = "53"
+      }
+    }
+  }
+}
+```
 
-   # Check pod network interface
-   kubectl exec -it <pod-name> -- ip addr
+只使用一个所有者，并在隔离环境审查/应用完整流量矩阵。当前 Kubernetes provider 字段已做本地检查，但本次审计没有应用策略，也没有测试流量 enforcement。安装未固定版本的 Calico/Cilium，或只修改 aws-node 镜像，都不是通用策略修复；应遵循当前实现支持的升级/迁移流程。
 
-   # Check pod routing table
-   kubectl exec -it <pod-name> -- ip route
-   ```
+**盘点数据不等于 enforcement 证据**
 
-4. **测试网络连接**：
-   ```bash
-   # Create debug pod
-   kubectl run network-debug --rm -it --image=nicolaka/netshoot -- /bin/bash
+原先的 `kube_networkpolicy_info`/`calico_denied_packets` 示例不能证明这些指标确实存在或带有假设中的标签。当前 kube-state-metrics 文档说明了实验性的 created/ingress-rule/egress-rule gauges。在现有单集群 scrape 布局及 Grafana sidecar 中，此 ConfigMap 展示声明式清单：
 
-   # Test pod-to-pod connectivity
-   ping <target-pod-ip>
-   nc -zv <target-pod-ip> <port>
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-policy-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  network-policy-dashboard.json: |
+    {
+      "uid": "eks-network-policy-inventory",
+      "title": "Declared NetworkPolicy Inventory",
+      "schemaVersion": 39,
+      "version": 1,
+      "timezone": "utc",
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Declared policies by namespace",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count by (namespace) (max by (namespace, networkpolicy) (kube_networkpolicy_created{job=\"kube-state-metrics\"}))",
+              "legendFormat": "{{namespace}}"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Declared ingress/egress rule counts",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace) (max by (namespace, networkpolicy) (kube_networkpolicy_spec_ingress_rules{job=\"kube-state-metrics\"}))",
+              "legendFormat": "Ingress {{namespace}}"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (namespace) (max by (namespace, networkpolicy) (kube_networkpolicy_spec_egress_rules{job=\"kube-state-metrics\"}))",
+              "legendFormat": "Egress {{namespace}}"
+            }
+          ]
+        }
+      ]
+    }
+```
 
-   # Test DNS resolution
-   nslookup <service-name>.<namespace>.svc.cluster.local
+确认确实暴露这些实验性指标，并调整 job/UID/namespace selector。零条规则可能表示全拒绝；策略/规则数量既不衡量连接丢弃，也不能证明 enforcement。遥测缺失时状态是未知，不是健康的零值。要获得拒绝/允许证据，应查看实际实现启用的决策日志/流量可观测性，并验证已发布的标签/schema；不要编造计数器，也不要把每条包含 “policy” 的日志都当成拒绝。
 
-   # Packet capture
-   tcpdump -i eth0 -n
-   ```
+删除策略、对所有工作负载启用 hostNetwork 或重建 VPC，可能扩大暴露面，却找不到原因。保留失败流量证据，只更改已确认有问题的策略/配置。
 
-**常见 network policy 问题和解决方案：**
+来源：[Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)、[VPC CNI 策略](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)、[Auto Mode 网络](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[kube-state-metrics 策略指标](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/policy/networkpolicy-metrics.md)。
 
-1. **CNI plugin 兼容性问题**：
-   - **症状**：Network policies 未被应用
-   - **原因**：正在使用的 CNI plugin 不支持 network policies
-   - **解决方案**：
-     ```bash
-     # Add Calico policy engine to AWS VPC CNI
-     kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-     kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-
-     # Or switch to Cilium
-     helm repo add cilium https://helm.cilium.io/
-     helm install cilium cilium/cilium --namespace kube-system
-     ```
-
-2. **Network policy selector 问题**：
-   - **症状**：Policy 未应用到预期的 Pod
-   - **原因**：Label selector 或 namespace selector 不正确
-   - **解决方案**：
-     ```bash
-     # Check pod labels
-     kubectl get pods --show-labels
-
-     # Modify network policy
-     kubectl edit networkpolicy <policy-name> -n <namespace>
-     ```
-
-3. **Policy 冲突问题**：
-   - **症状**：连接被意外阻止或允许
-   - **原因**：多个 policy 之间存在冲突或优先级问题
-   - **解决方案**：
-     ```bash
-     # Review all network policies
-     kubectl get networkpolicies --all-namespaces -o yaml
-
-     # Simplify or reconfigure policies
-     kubectl apply -f updated-network-policy.yaml
-     ```
-
-4. **CNI plugin bug 或配置错误**：
-   - **症状**：间歇性连接问题或行为不一致
-   - **原因**：CNI plugin bug 或配置不正确
-   - **解决方案**：
-     ```bash
-     # Update CNI plugin
-     kubectl set image daemonset/aws-node -n kube-system aws-node=<new-image-version>
-
-     # Check and modify CNI configuration
-     kubectl edit configmap -n kube-system aws-node
-     ```
-
-**最佳实践：**
-
-1. **系统化 network policy 设计**：
-   - 从 default deny policy 开始
-   - 仅显式允许必要连接
-   - 使用基于 namespace 和 label 的 policy
-
-2. **测试并验证 network policies**：
-   - 应用 policy 前先测试
-   - 自动化连接测试
-   - 逐步 rollout policy
-
-3. **网络监控和日志记录**：
-   - 监控网络流量
-   - 记录连接拒绝
-   - 监控网络性能
-
-4. **CNI plugin 选择和配置**：
-   - 选择适合 workload 需求的 CNI
-   - 保持更新
-   - 分配适当资源
-
-其他选项的问题：
-- **A. 删除所有 network policies 并使用默认设置**：这会带来安全风险，移除必要的网络隔离，并且无法解决根本原因。
-- **C. 为所有 Pod 设置 hostNetwork: true**：这会绕过 network policies，带来安全风险，并移除 Pod 之间的隔离。
-- **D. 重新配置 Cluster VPC**：这是极端措施，大多数 network policy 问题与 Cluster 内部的 CNI 和 policy 配置有关，而不是 VPC 层面的问题。
 </details>
-### 8. 排查 Amazon EKS Cluster 中 Helm chart 部署问题的最有效方法是什么？
 
-A. 删除所有 Helm chart 并重新安装
-B. 重新创建 Cluster
-C. 系统化检查 Helm 版本、chart 配置、依赖、权限和日志
-D. 手动部署所有资源
+### 8. 遇到 Helm 部署问题时，最有效的做法是什么？
+
+- A. 删除所有 Helm release
+- B. 重建 EKS 集群
+- C. 检查客户端/chart/依赖配置、release 所有权、权限、事件和工作负载行为
+- D. 放弃 release 管理并改用手工对象
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 系统化检查 Helm 版本、chart 配置、依赖、权限和日志**
+**答案：C. 检查客户端/chart/依赖配置、release 所有权、权限、事件和工作负载行为**
 
-**解释：**
-排查 Amazon EKS Cluster 中 Helm chart 部署问题的最有效方法是系统化检查 Helm 版本、chart 配置、依赖、权限和日志。这种方法有助于识别并解决 Helm 部署问题的根本原因。
+分别检查客户端/chart 错误、Kubernetes admission/权限、工作负载就绪情况和应用行为。Helm 2/Tiller 属于历史迁移问题；当前 Helm 3/4 操作不需要部署 Tiller。
 
-**要检查的关键项：**
+**检查实际 release**
 
-1. **检查 Helm 版本和兼容性**：
-   - Helm client 和 Tiller (Helm 2) 版本
-   - Kubernetes API 版本兼容性
-   - EKS 版本兼容性
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${RELEASE_NAME:?}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+HELM_EVIDENCE=$(mktemp -d "$EVIDENCE_PARENT/helm-diagnosis.XXXXXXXX")
+helm version --short
+helm status "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT"
+helm history "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT"
+helm get values "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  --all > "$HELM_EVIDENCE/values.yaml"
+helm get manifest "$RELEASE_NAME" -n "$NAMESPACE" --kube-context "$KUBE_CONTEXT" \
+  > "$HELM_EVIDENCE/manifest.yaml"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp' > "$HELM_EVIDENCE/events.txt"
+printf 'Review protected evidence in %s\n' "$HELM_EVIDENCE"
+```
 
-2. **检查 chart 配置和值**：
-   - Chart 语法错误
-   - Values file 配置
-   - Template rendering 问题
+查询失败可能是权限/网络/context 问题，不代表 release 不存在。values 和渲染后的 manifest 可能包含凭证或 Secret 数据；应保护并在分享前脱敏。app.kubernetes.io/instance 等标签只是惯例，不能构成完整所有权清单。应检查 release manifest，确定准确资源，并检查其状况/事件。
 
-3. **检查依赖和 repository**：
-   - Chart dependency 可用性
-   - Repository 可访问性
-   - Chart 版本兼容性
+Helm 客户端的 Kubernetes 身份，与 chart values 所选的工作负载 ServiceAccount 不同。当前没有 `helm install --service-account` 选项。使用 chart 文档所述的 ServiceAccount values，并检查实际操作者的 RBAC。模拟身份需要相应权限，而且不能重现 EKS access policy 的所有授权。
 
-4. **检查权限和 RBAC**：
-   - Service account 权限
-   - RBAC 规则
-   - Namespace 访问
+**更改前验证配置**
 
-5. **检查日志和事件**：
-   - Helm debug 日志
-   - Kubernetes 事件
-   - 相关 Pod 日志
+```bash
+set -euo pipefail
+: "${CHART_DIR:?}"; : "${VALUES_FILE:?}"; : "${KUBE_VERSION:?Set the target capability version}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+RENDER_DIR=$(mktemp -d "$EVIDENCE_PARENT/helm-render.XXXXXXXX")
+# For charts with dependencies, first review/commit Chart.lock and build from that lock.
+helm lint "$CHART_DIR" --values "$VALUES_FILE"
+helm template review "$CHART_DIR" --namespace review \
+  --kube-version "$KUBE_VERSION" --values "$VALUES_FILE" \
+  > "$RENDER_DIR/rendered.yaml"
+```
 
-**故障排查方法：**
+渲染/lint 不能证明 server-side API/admission 兼容性、CRD 已安装、镜像可运行、工作负载就绪或应用测试通过。安装时加 `--debug` 仍会执行安装。`helm dependency update` 可能更改 lock/依赖版本选择；为确保可重复性，应使用已审查的 Chart.lock 和 `dependency build`。若没有 lock，build 可能重新解析依赖，不能称作锁定验证。
 
-1. **检查 Helm 版本和配置**：
-   ```bash
-   # Check Helm version
-   helm version
+遇到资源冲突时，先确认现有所有者及预期迁移方案。不要自动卸载 release、删除遗留资源、使用 force/take-ownership 或换 release 名称。这些操作可能影响数据并创建重复 controller。对已有 release 升级前，应保留当前 values、schema/CRD 和有状态依赖。
 
-   # Check Helm environment variables
-   env | grep HELM
+**Terraform Helm provider 语义**
 
-   # Check Helm plugins
-   helm plugin list
+此示例针对本地检查过 schema 的 Helm provider 3.3，以及已经准备好 namespace/release 所有者的环境。使用配置了经审查 exec credential 流程的 kubeconfig，不要在耗时的 apply 中只使用一次性短期 token：
 
-   # Check Helm repositories
-   helm repo list
-   helm repo update
-   ```
+```hcl
+# Choose the existing release/configuration owner and reviewed chart artifact.
+variable "verify_chart_provenance" {
+  type = bool
+}
+provider "helm" {
+  debug = false
+  kubernetes = {
+    config_path    = var.kubeconfig_path
+    config_context = var.kube_context
+  }
+}
+resource "helm_release" "example" {
+  name              = var.release_name
+  repository        = var.chart_repository
+  chart             = var.chart_name
+  version           = var.chart_version
+  namespace         = var.release_namespace
+  create_namespace  = false
+  values            = [file(var.reviewed_values_file)]
+  dependency_update = false
+  lint              = true
+  wait              = true
+  wait_for_jobs     = true
+  timeout           = 600
+  atomic            = true
+  verify            = var.verify_chart_provenance
+  keyring           = var.chart_keyring
+}
+```
 
-2. **验证和调试 chart**：
-   ```bash
-   # Validate chart syntax
-   helm lint ./my-chart
+`lint` 是**有效的** release 字段，计划阶段会运行 Helm lint。`debug` 属于 provider，不属于 helm_release。Provider 3.x 使用嵌套 values 属性，例如 `set = [...]`；上面的 values-file 形式避免重复使用旧式 set blocks。
 
-   # Check template rendering
-   helm template ./my-chart --debug
+`verify` 用受信 keyring 检查 chart 包的来源证明，**不**运行 Helm test hook。仅在具备实际来源/信任配置且验证了相应分发方式时才启用它。`wait_for_jobs` 和 `wait` 等待就绪/Job，并不等于完成所有应用测试。`atomic` 提供 Helm 安装失败清理/升级回滚，不会恢复数据库/PVC 数据，也不会自动撤销每个 hook/CRD/外部副作用。
 
-   # Update chart dependencies
-   helm dependency update ./my-chart
+`set_sensitive` 只会在展示时隐藏内容，并不会让普通 state/release 中保存的值适合公开。应优先引用单独管理的 Secret，并保护 Terraform state 和 Helm release 存储。本次审查未运行 provider apply 或安装 release。
 
-   # Install with debug mode
-   helm install my-release ./my-chart --debug
-   ```
+**Chart 测试 hook**
 
-3. **检查 release 状态和历史**：
-   ```bash
-   # List releases
-   helm list -A
+Chart 必须定义 `my-chart.fullname`、使用该 Service 名称并开放配置的 HTTP 路径。以下是两个**独立的模板文件**以及一个 values 片段：
 
-   # Include failed releases
-   helm list -A --failed
+```yaml
+# Relevant values fragment for the chart that owns the Service.
+service:
+  port: 80
+tests:
+  enabled: true
+  image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+  apiPath: /api/health
+```
 
-   # Check release status
-   helm status my-release
+保存为 `templates/tests/test-connection.yaml`：
 
-   # Check release history
-   helm history my-release
+```yaml
+{{- if .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-test-connection" (include "my-chart.fullname" .) | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  activeDeadlineSeconds: 60
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: probe
+      image: {{ .Values.tests.image | quote }}
+      command: [wget]
+      args:
+        - "-T"
+        - "5"
+        - "-q"
+        - "-O-"
+        - {{ printf "http://%s:%v/" (include "my-chart.fullname" .) .Values.service.port | quote }}
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]
+{{- end }}
+```
 
-   # Check release details
-   helm get all my-release
-   ```
+保存为 `templates/tests/test-api.yaml`：
 
-4. **检查资源和事件**：
-   ```bash
-   # Check deployed resources
-   kubectl get all -n <namespace> -l app.kubernetes.io/instance=my-release
+```yaml
+{{- if .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-test-api" (include "my-chart.fullname" .) | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  activeDeadlineSeconds: 60
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: probe
+      image: {{ .Values.tests.image | quote }}
+      command: [wget]
+      args:
+        - "-T"
+        - "5"
+        - "-q"
+        - "-O-"
+        - {{ printf "http://%s:%v%s" (include "my-chart.fullname" .) .Values.service.port .Values.tests.apiPath | quote }}
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]
+{{- end }}
+```
 
-   # Check events
-   kubectl get events -n <namespace> --sort-by='.lastTimestamp'
+测试标签有意不复制应用 selector 标签。探针把响应写入 stdout，不使用 Kubernetes API token，并限制请求/Pod 生命周期。before-hook-creation 允许重复测试；日志结果保留到下次运行/清理所属资源时。HTTP 检查不能验证所有业务行为；`/api/health` 必须确实存在。
 
-   # Check pod logs
-   kubectl logs -n <namespace> -l app.kubernetes.io/instance=my-release
+对于已经准备好的隔离测试集群，使用明确的 release/namespace 名称：
 
-   # Check pod status
-   kubectl describe pods -n <namespace> -l app.kubernetes.io/instance=my-release
-   ```
+```bash
+set -euo pipefail
+: "${TEST_CONTEXT:?Set the owned disposable cluster context}"
+: "${TEST_NAMESPACE:?Choose a new unique namespace}"
+: "${TEST_RELEASE:?}"; : "${CHART_DIR:?}"; : "${VALUES_FILE:?}"
+# Fails on an existing namespace rather than adopting it.
+TEST_NAMESPACE_UID=$(kubectl --context "$TEST_CONTEXT" create namespace "$TEST_NAMESPACE" \
+  -o jsonpath='{.metadata.uid}')
+printf 'Test namespace: %s UID: %s\n' "$TEST_NAMESPACE" "$TEST_NAMESPACE_UID"
+helm install "$TEST_RELEASE" "$CHART_DIR" --kube-context "$TEST_CONTEXT" \
+  --namespace "$TEST_NAMESPACE" --values "$VALUES_FILE" --wait --timeout 5m
+helm test "$TEST_RELEASE" --kube-context "$TEST_CONTEXT" \
+  --namespace "$TEST_NAMESPACE" --logs --timeout 90s
+```
 
-5. **检查权限和 RBAC**：
-   ```bash
-   # Check service accounts
-   kubectl get serviceaccount -n <namespace>
+失败时应保留资源，并检查 hook/工作负载日志。记录 namespace UID，清理该测试命名空间前再次核实；不要删除预先存在的命名空间。旧的、没有 change triggers 的 null_resource 并不能保证每次 release 更改后重新验证。
 
-   # Check roles and role bindings
-   kubectl get roles,rolebindings -n <namespace>
+**静态 CI 示例**
 
-   # Check cluster roles and bindings
-   kubectl get clusterroles,clusterrolebindings -l app.kubernetes.io/instance=my-release
+此 workflow 使用已提交的依赖/Chart.lock 和不含 Secret 的 `ci/values.yaml` 检查 chart。调整 chart 路径和目标 capability 版本。不含依赖项的 chart 应省略 lock/build 步骤。此 workflow 不会创建集群，也不声称运行时测试已通过：
 
-   # Check service account permissions
-   kubectl auth can-i --list --as=system:serviceaccount:<namespace>:<serviceaccount>
-   ```
+```yaml
+name: Static Helm chart validation
+on:
+  pull_request:
+    paths:
+      - charts/**
+      - ci/values.yaml
+      - .github/workflows/helm-validate.yml
+permissions:
+  contents: read
+jobs:
+  lint-render:
+    runs-on: ubuntu-24.04
+    env:
+      CHART_DIR: charts/my-chart
+      VALUES_FILE: ci/values.yaml
+      KUBE_VERSION: "1.36.0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.21.3
+      - name: Build reviewed dependencies, lint and render
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test -f "$CHART_DIR/Chart.lock"
+          helm dependency build "$CHART_DIR"
+          helm lint "$CHART_DIR" --values "$VALUES_FILE"
+          helm template chart-ci "$CHART_DIR" --namespace chart-ci \
+            --kube-version "$KUBE_VERSION" --values "$VALUES_FILE" \
+            > "$RUNNER_TEMP/chart-rendered.yaml"
+```
 
-**常见 Helm 部署问题和解决方案：**
+setup action/release 的固定版本已根据官方元数据检查。需要时，应在自有的一次性环境中单独运行集成/test-hook 阶段。使用 chart-testing 时，应采用它报告的 release/namespace 和 test 选项；chart 目录名并不保证之后 `helm test` 循环可用。
 
-1. **Chart 语法错误**：
-   - **症状**：`helm install` 或 `helm template` 命令失败
-   - **原因**：YAML 语法错误、无效的 template function 或变量
-   - **解决方案**：
-     ```bash
-     # Validate chart syntax
-     helm lint ./my-chart
+删除所有 chart、重建 EKS 或放弃 release manager，都无法诊断原始 chart/权限/运行时问题。
 
-     # Check template rendering
-     helm template ./my-chart --debug
+来源：[Helm 调试](https://helm.sh/docs/chart_template_guide/debugging/)、[Chart 测试](https://helm.sh/docs/topics/chart_tests/)、[Helm provider release](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release)、[setup-helm release](https://github.com/Azure/setup-helm/releases/tag/v5.0.1)、[Helm 3.21.3](https://github.com/helm/helm/releases/tag/v3.21.3)。
 
-     # Render template with specific values
-     helm template ./my-chart --set key=value --debug
-     ```
-
-2. **依赖问题**：
-   - **症状**：Chart 安装期间出现依赖错误
-   - **原因**：缺少依赖、版本不匹配或 repository 访问问题
-   - **解决方案**：
-     ```bash
-     # Update dependencies
-     helm dependency update ./my-chart
-
-     # Add and update repository
-     helm repo add bitnami https://charts.bitnami.com/bitnami
-     helm repo update
-
-     # Build dependencies
-     helm dependency build ./my-chart
-     ```
-
-3. **权限问题**：
-   - **症状**：Permission denied 错误
-   - **原因**：RBAC 权限不足或 service account 配置不正确
-   - **解决方案**：
-     ```bash
-     # Create required RBAC resources
-     kubectl apply -f rbac.yaml
-
-     # Specify service account
-     helm install my-release ./my-chart --service-account=my-service-account
-
-     # Check permissions
-     kubectl auth can-i create deployments --as=system:serviceaccount:<namespace>:<serviceaccount>
-     ```
-
-4. **资源冲突**：
-   - **症状**：Resource already exists 错误
-   - **原因**：上一次安装留下的资源仍存在，或名称冲突
-   - **解决方案**：
-     ```bash
-     # Remove existing release
-     helm uninstall my-release
-
-     # Check and delete remaining resources
-     kubectl get all -n <namespace> -l app.kubernetes.io/instance=my-release
-     kubectl delete <resource-type> <resource-name> -n <namespace>
-
-     # Install with different release name
-     helm install new-release ./my-chart
-     ```
-
-5. **Values 配置问题**：
-   - **症状**：已部署的应用未按预期工作
-   - **原因**：配置值不正确或缺少必需值
-   - **解决方案**：
-     ```bash
-     # Check current values
-     helm get values my-release
-
-     # Check default values
-     helm show values ./my-chart
-
-     # Upgrade with values file
-     helm upgrade my-release ./my-chart -f values.yaml
-
-     # Set specific values
-     helm upgrade my-release ./my-chart --set key=value
-     ```
-
-**最佳实践：**
-
-1. **系统化故障排查方法**：
-   - 逐步验证和校验
-   - 日志和事件分析
-   - 从症状追踪到原因
-
-2. **测试并验证 Helm chart**：
-   - 部署前验证 chart
-   - 先在测试环境测试
-   - 在 CI/CD pipeline 中包含验证步骤
-
-3. **版本管理和兼容性**：
-   - 使用兼容的 Helm 和 Kubernetes 版本
-   - 明确指定 chart 版本
-   - 固定依赖版本
-
-4. **文档和 values 管理**：
-   - 记录 chart values
-   - 管理特定环境的 values file
-   - 对敏感 values 应用安全实践
-
-其他选项的问题：
-- **A. 删除所有 Helm chart 并重新安装**：这是极端措施，可能导致数据丢失，并且无法解决根本原因。
-- **B. 重新创建 Cluster**：这是非常极端的措施，大多数 Helm 部署问题与 chart 配置或权限有关，而不是 Cluster 级别问题。
-- **D. 手动部署所有资源**：这放弃了 Helm 的优势，对于复杂应用来说容易出错且难以管理。
 </details>
-### 9. 排查 Amazon EKS Cluster 中内存泄漏问题的最有效方法是什么？
 
-A. 重启所有 Pod
-B. 增加 Cluster Node 大小
-C. Profile 内存使用情况、审查 Container 限制、分析应用代码
-D. 添加更多 Node
+### 9. 如何区分内存泄漏与其他内存压力原因？
+
+- A. 重启所有 Pod
+- B. 只增大节点
+- C. 关联内存/进程证据、限制、运行时 profile 与应用代码
+- D. 只增加节点数
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Profile 内存使用情况、审查 Container 限制、分析应用代码**
+**答案：C. 关联内存/进程证据、限制、运行时 profile 与应用代码**
 
-**解释：**
-排查 Amazon EKS Cluster 中内存泄漏问题的最有效方法是采用系统化方法，包括内存使用情况 profiling、Container 限制审查和应用代码分析。此方法有助于识别并解决内存泄漏的根本原因。
+working set 上升、容器 OOMKilled 或节点 MemoryPressure 本身都不能诊断为内存泄漏。选择修复方式前，应比较负载、进程生命周期/UID、heap/native memory、缓存和限制。
 
-**要检查的关键项：**
+**收集可比较的证据**
 
-1. **内存使用情况 profiling**：
-   - 在 Pod 和 Node 级别监控内存使用情况
-   - 分析一段时间内的内存使用模式
-   - 识别内存泄漏迹象
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${APP_SELECTOR:?Set an explicit label selector}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+MEMORY_DIR=$(mktemp -d "$EVIDENCE_PARENT/memory-observation.XXXXXXXX")
+for sample in {1..10}; do
+  date -u +"%Y-%m-%dT%H:%M:%SZ" > "$MEMORY_DIR/sample-$sample.time"
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$APP_SELECTOR" -o json \
+    | jq '[.items[] | {
+        name:.metadata.name,uid:.metadata.uid,created:.metadata.creationTimestamp,
+        node:.spec.nodeName,phase:.status.phase,
+        resources:[.spec.containers[] | {name,resources}],
+        containers:((.status.initContainerStatuses // []) + (.status.containerStatuses // []))
+      }]' > "$MEMORY_DIR/sample-$sample.pods.json"
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods \
+    -l "$APP_SELECTOR" --containers > "$MEMORY_DIR/sample-$sample.usage.txt"
+  if [ "$sample" -lt 10 ]; then sleep 30; fi
+done
+printf 'Observations saved to %s; these samples do not establish a leak.\n' "$MEMORY_DIR"
+```
 
-2. **审查 Container 限制**：
-   - 检查内存 request 和 limit 设置
-   - 分析 Container OOM (Out of Memory) 事件
-   - 优化资源分配
+该命令每隔 30 秒采集一次，共 10 次，大约符合原先的五分钟采样计划，另加命令执行时间。本次审计没有执行它。短时间窗口不能证明长期泄漏。查询失败会停止采集并留下部分证据；不要把缺失指标变成零用量。
 
-3. **应用代码分析**：
-   - 审查应用内部内存使用模式
-   - 识别可能存在内存泄漏的代码
-   - 使用应用 profiling 工具
+使用明确标签，不要把 Pod 名称前缀当作标签值；使用 kubectl 对资源数量有正确处理的输出，而不是按不存在的第四列排序。Pod 快照记录 UID 以及普通/init 容器状态；替换后名称可能复用。指标与状态请求不是原子快照。检查当前/上次终止原因和重启次数，同时记住 status 只保留有限历史。
 
-4. **审查系统组件**：
-   - kubelet 内存管理设置
-   - Node 系统资源使用情况
-   - Cluster 组件状态
+**解释内存压力**
 
-**故障排查方法：**
+- working set、RSS、托管 heap 和 native allocations 是不同测量值。缓存增长或流量增加也可能看起来像泄漏。
+- 容器可能触及 cgroup 限制，而节点仍有可用内存。request/limit 差距大本身并非 OOM 原因。
+- kubelet 是节点进程，不存在一个通用的 `kubelet-pod` 可供从 kube-system 读取日志。应通过受支持的节点/监控路径调查。
+- 内存碎片只是待验证假设；定期重启节点或强制垃圾回收不是通用修复。
 
-1. **监控并分析内存使用情况**：
-   ```bash
-   # Check node memory usage
-   kubectl top nodes
+**当前指标与单位示例**
 
-   # Check pod memory usage
-   kubectl top pods -A
+对于现有单集群 kube-prometheus-stack 抓取布局，以下规则使用当前容器级 limit 指标、去除 exporter 重复样本，并筛掉缺失/零限制：
 
-   # Check pod memory usage in specific namespace
-   kubectl top pods -n <namespace>
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: memory-observation
+  namespace: monitoring
+  labels:
+    release: observability
+spec:
+  groups:
+  - name: memory-observation
+    rules:
+    - alert: ContainerWorkingSetHigh
+      expr: max by (namespace, pod, container) (container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",image!=""})
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{job="kube-state-metrics",resource="memory",unit="byte"})
+        > 0) > 0.85
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Container working set is above 85% of its declared limit
+        description: Inspect {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container
+          }} and actual termination/pressure evidence.
+    - alert: ContainerWorkingSetCritical
+      expr: max by (namespace, pod, container) (container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",image!=""})
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{job="kube-state-metrics",resource="memory",unit="byte"})
+        > 0) > 0.95
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Container working set is above 95% of its declared limit
+        description: This is an observation threshold, not proof of a leak or guaranteed
+          OOM prediction.
+    - alert: ContainerWorkingSetGrowth
+      expr: max by (namespace, pod, container) (deriv(container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",image!=""}[30m]))
+        > 5 * 1024 * 1024 / 60
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: Estimated working-set slope exceeds 5 MiB/min
+        description: The rolling 30-minute regression has stayed above the threshold;
+          correlate with load and process lifetime.
+    - alert: NodeMemoryPressure
+      expr: max by (node) (kube_node_status_condition{job="kube-state-metrics",condition="MemoryPressure",status="true"})
+        == 1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Node {{ $labels.node }} reports MemoryPressure
+        description: Investigate node resources and workloads; this is distinct from
+          a container limit OOM.
+```
 
-   # Check memory usage per container
-   kubectl top pods -n <namespace> --containers
+按实际安装调整 namespace/release/job selector。规则使用普通容器限制；init 容器和 Pod 级预算需另行检查。没有报告正数 limit 的容器不会生成该比率；应单独监控覆盖率，不能把它们称作健康。working-set/limit 阈值只是观察值，并非 heap 泄漏探测器。
 
-   # Identify pods with high memory usage
-   kubectl top pods -A --sort-by=memory
-   ```
+此处 `deriv` 返回**字节/秒**。将 `5 * 1024 * 1024` 除以 60，阈值才是**5 MiB/分钟**。旧表达式实际比较的是 5 MiB/s，文字却说每分钟。30 分钟回归窗口加上 `for: 30m` 持续期，并不能证明每个时刻都在单调增长。抓取缺失、重启和工作负载变化都会影响解释。
 
-2. **检查 Container 限制和 OOM 事件**：
-   ```bash
-   # Check pod memory limits
-   kubectl get pods -n <namespace> -o jsonpath='{.items[*].spec.containers[*].resources}'
+**运行时 profile 的前提**
 
-   # Check pod details
-   kubectl describe pod <pod-name> -n <namespace>
+| Runtime | 正确的调查范围 |
+| --- | --- |
+| JVM | 使用匹配的 JDK 工具/权限针对目标 JVM PID；`jcmd PID GC.heap_info` 是受支持的检查命令。native-memory 报告需要启动时启用相应跟踪。Heap dump 可能暂停进程并包含 Secret |
+| Node.js | 使用目标进程支持的 inspector/profile 机制；启动 `node --inspect` 会创建新进程。限制调试器访问 |
+| Python | 在实际应用或受控复现环境配置 profiler/tracemalloc。单独启动的解释器无法查看现有进程的分配情况；Python 分配跟踪也不包含全部 native RSS |
+| Go | 采集实际且受保护的 heap profile，并使用匹配二进制/符号信息运行 pprof。不要假设存在未认证 profiling endpoint 或预先生成的 `/tmp/profile` |
 
-   # Check OOM events
-   kubectl get events -n <namespace> --sort-by='.lastTimestamp' | grep -i "OOMKilled"
+在生产环境使用前，验证工具/runtime 版本和采集开销。不要把安装随意的 profiling package 到运行中的应用当作默认步骤。本次未运行 JVM、profiler、heap dump 或实时内存实验。
 
-   # Check node OOM events
-   kubectl get events --field-selector involvedObject.kind=Node --sort-by='.lastTimestamp' | grep -i "memory"
-   ```
+**应用配置示例**
 
-3. **应用日志和 profiling**：
-   ```bash
-   # Check application logs
-   kubectl logs <pod-name> -n <namespace>
+原有的 256m/768m heap 和 1Gi 容器值仅作示例，并非测得的最优值。OpenJDK 21 会读取 JAVA_TOOL_OPTIONS；只有镜像 entrypoint 转发 JAVA_OPTS 时它才有效。命令行标志或 _JAVA_OPTIONS 可能覆盖这些设置，因此应验证 JVM 实际采用的选项。这些选项可能在 JVM 启动时打印，不要在其中放入 Secret。
 
-   # Check previous pod logs
-   kubectl logs <pod-name> -n <namespace> --previous
+```yaml
+# Pod-template fragment for an existing reviewed OpenJDK 21 application container.
+# Merge through its owner; this is not a standalone Deployment manifest.
+spec:
+  template:
+    spec:
+      containers:
+        - name: java-app
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+              ephemeral-storage: 4Gi
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -XX:+UseG1GC -XX:MaxGCPauseMillis=200
+                -Xms256m -Xmx768m
+                -XX:+HeapDumpOnOutOfMemoryError
+                -XX:HeapDumpPath=/diagnostics
+                -XX:+ExitOnOutOfMemoryError
+          volumeMounts:
+            - name: heap-diagnostics
+              mountPath: /diagnostics
+      volumes:
+        - name: heap-diagnostics
+          emptyDir:
+            sizeLimit: 2Gi
+```
 
-   # Run application profiling tool
-   kubectl exec -it <pod-name> -n <namespace> -- <profiling-command>
+保留应用实际 image、启动行为、其他环境变量/卷和安全上下文。确认其 UID 可以写入诊断挂载点。`MaxGCPauseMillis` 是软目标。Heap 只是进程内存的一部分；还应为 native allocation、线程、代码/metaspace 及其他开销留出经测量的空间。
 
-   # Generate memory dump
-   kubectl exec -it <pod-name> -n <namespace> -- <memory-dump-command>
-   ```
+磁盘型 emptyDir 有容量限制，但 Pod 删除后不持久。应谨慎采集/保护诊断文件，并考虑容器 PID 复用造成的文件名冲突。内核/cgroup 发送 SIGKILL 时，JVM 可能无法处理 heap dump。`ExitOnOutOfMemoryError` 处理 JVM 抛出的 OOM，但不能保证生成 dump，也无法解决分配根因。
 
-4. **检查 Node 和系统资源**：
-   ```bash
-   # Check node details
-   kubectl describe node <node-name>
+旧的 MEMORY_MONITOR_* 变量并非 JVM/Kubernetes 内置功能。只有应用实际启用并公开 Spring Actuator liveness/readiness 路径时它们才适用；应依据应用真实的健康契约，而非假设这些 URL 可用。
 
-   # Check node memory pressure
-   kubectl get nodes -o jsonpath='{.items[*].status.conditions[?(@.type=="MemoryPressure")]}'
+**管理现有监控**
 
-   # Check kubelet logs
-   kubectl logs -n kube-system <kubelet-pod-name>
+```hcl
+# Prometheus Operator CRD must already exist before planning this resource.
+# Save the reviewed PrometheusRule YAML above as the supplied file.
+resource "kubernetes_manifest" "memory_alerts" {
+  manifest = yamldecode(file(var.memory_rules_file))
+}
+```
 
-   # Check system memory statistics
-   kubectl debug node/<node-name> -it --image=busybox -- sh -c "cat /proc/meminfo"
-   ```
+Kubernetes manifest provider 在 plan 阶段需要 PrometheusRule CRD；用 `depends_on` 等待同一 apply 中 Helm 安装完成，并不能通用地解决 schema discovery。复用现有监控栈和问题 6 中可用的 working-set 面板；不要再安装一个监控栈，也不要引用来历不明的仪表板文件。在真实环境确认 rule 选择、告警路由和遥测健康。
 
-**常见内存泄漏问题和解决方案：**
+A/B/D 可能临时缓解容量，却不能确认或修复分配缺陷。记录已证实的原因，并在有代表性的负载下验证实际代码/配置修正。
 
-1. **应用内存泄漏**：
-   - **症状**：内存使用量随时间持续增加
-   - **原因**：应用代码中的内存泄漏，缺少缓存管理
-   - **解决方案**：
-     - 审查并修复应用代码
-     - 使用内存 profiling 工具
-     - 配置周期性 garbage collection
-     - 实施缓存大小限制和过期策略
+来源：[Prometheus deriv](https://prometheus.io/docs/prometheus/latest/querying/functions/#deriv)、[当前 Pod 指标](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)、[OpenJDK 21 选项处理](https://github.com/openjdk/jdk21u/blob/master/src/hotspot/share/runtime/arguments.cpp)、[Java 21 选项](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)、[jcmd](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jcmd.html)。
 
-2. **Container 内存限制问题**：
-   - **症状**：频繁 OOM 终止，Pod 重启
-   - **原因**：内存 limit 设置不合适，resource request 和 limit 之间差距过大
-   - **解决方案**：
-     ```yaml
-     # Set appropriate memory requests and limits
-     apiVersion: v1
-     kind: Pod
-     metadata:
-       name: memory-optimized-pod
-     spec:
-       containers:
-       - name: app
-         image: app-image
-         resources:
-           requests:
-             memory: "256Mi"
-           limits:
-             memory: "512Mi"
-     ```
-
-3. **系统组件内存问题**：
-   - **症状**：Node 不稳定，kubelet 或其他系统组件内存使用量高
-   - **原因**：kubelet 配置问题，系统组件 bug
-   - **解决方案**：
-     - 优化 kubelet 配置
-     - 更新系统组件
-     - 调整 Node 资源预留
-
-4. **内存碎片问题**：
-   - **症状**：尽管总可用内存充足仍发生 OOM
-   - **原因**：内存碎片、大页分配失败
-   - **解决方案**：
-     - 安排周期性 Node 重启
-     - 分散高内存压力的 workload
-     - 减少 Node 内存 overcommit
-
-**最佳实践：**
-
-1. **系统化内存监控**：
-   - 在 Cluster、Node 和 Pod 级别监控内存
-   - 跟踪一段时间内的内存使用模式
-   - 为异常设置告警
-
-2. **设置适当的资源限制**：
-   - 设置适合 workload 特征的内存 request 和 limit
-   - 保持内存 request 和 limit 之间的适当比例
-   - 定期审查和调整资源使用情况
-
-3. **应用优化**：
-   - 编写内存高效的代码
-   - 定期进行内存 profiling 和优化
-   - 实施合适的缓存策略
-
-4. **Cluster 配置优化**：
-   - 优化 Node 内存预留
-   - 适当的 kubelet 内存管理设置
-   - Workload 分布和隔离
-
-其他选项的问题：
-- **A. 重启所有 Pod**：这只是临时解决方案，无法解决内存泄漏的根本原因。Pod 重启后问题会再次出现。
-- **B. 增加 Cluster Node 大小**：这无法解决根本原因，只会掩盖症状。如果内存泄漏持续存在，更大的 Node 最终也会耗尽内存。
-- **D. 添加更多 Node**：与 B 类似，这只是在不解决根本原因的情况下掩盖症状。无论 Node 数量多少，内存泄漏问题都会继续存在。
 </details>
-### 10. 排查 Amazon EKS Cluster 中 DNS 解析问题的最有效方法是什么？
 
-A. 为所有 Pod 分配静态 IP
-B. 系统化检查 CoreDNS 配置、network policies、DNS policies 和连接
-C. 对所有 Service 使用 ExternalName
-D. 重新配置 Cluster VPC
+### 10. EKS DNS 解析失败时，最有效的调查方式是什么？
+
+- A. 为所有 Pod 分配静态 IP
+- B. 追踪实际 Pod resolver、DNS 实现、策略/传输和上游配置
+- C. 对所有 Service 使用 ExternalName
+- D. 重建 VPC
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 系统化检查 CoreDNS 配置、network policies、DNS policies 和连接**
+**答案：B. 追踪实际 Pod resolver、DNS 实现、策略/传输和上游配置**
 
-**解释：**
-排查 Amazon EKS Cluster 中 DNS 解析问题的最有效方法是系统化检查 CoreDNS 配置、network policies、DNS policies 和连接。这种方法有助于识别并解决 DNS 问题的根本原因。
+从受影响 Pod 的 resolver 和失败名称入手。区分工具缺失、DNS 响应、UDP/TCP 传输、上游/私有区配置以及应用缓存。
 
-**要检查的关键项：**
+**检查实际 Pod 路径**
 
-1. **检查 CoreDNS 配置和状态**：
-   - CoreDNS Pod 状态和日志
-   - CoreDNS ConfigMap 配置
-   - CoreDNS Service 和 endpoints
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
+  | jq '{name:.metadata.name,uid:.metadata.uid,node:.spec.nodeName,hostNetwork:.spec.hostNetwork,dnsPolicy:.spec.dnsPolicy,dnsConfig:.spec.dnsConfig}'
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
+  -c "$CONTAINER_NAME" -- cat /etc/resolv.conf
+# Run only where the selected container actually has this diagnostic tool.
+: "${DNS_TEST_NAME:?Set the actual Service FQDN or reviewed external name}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
+  -c "$CONTAINER_NAME" -- nslookup "$DNS_TEST_NAME"
+```
 
-2. **检查 network policies 和连接**：
-   - DNS 端口 (53/UDP, 53/TCP) 的 Network policy
-   - Pod 与 CoreDNS 之间的网络连接
-   - VPC DNS 设置
+镜像中没有 cat/nslookup 是工具限制，不代表 DNS 故障。应使用能保留相关 Pod 网络/身份上下文的预备诊断方式。新建 debug Pod 的标签、策略和 DNS 可能不同。测试 resolver 传输时，直接使用 nameserver IP，不要依赖 DNS 解析 DNS server 自己的 Service 名称。按需检查 UDP/TCP 53；只有 TCP 连接测试不能验证 DNS 响应。
 
-3. **检查 DNS policies 和配置**：
-   - Pod DNS policy 设置
-   - DNS 配置选项
-   - Host namespace 设置
+对于传统 CoreDNS，检查 Deployment 就绪状态、Service/EndpointSlices、配置和日志：
 
-4. **检查 Cluster 和 VPC 配置**：
-   - EKS Cluster DNS 设置
-   - VPC DNS 属性
-   - DHCP option sets
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"
+# Traditional CoreDNS path only; pure Auto Mode node DNS is different.
+kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get pods -l k8s-app=kube-dns -o wide
+kubectl --context "$KUBE_CONTEXT" -n kube-system get service kube-dns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get endpointslices \
+  -l kubernetes.io/service-name=kube-dns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get configmap coredns -o yaml
+kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-dns \
+  --all-containers=true --prefix=true --since=15m --tail=100
+```
 
-**故障排查方法：**
+**Auto Mode 节点以系统服务方式运行 CoreDNS。** 纯 Auto Mode 可能没有传统 Deployment；混合集群必须为非 Auto 节点保留它。不要在所有集群中都把 Deployment 缺失诊断成故障，也不要在 Auto Mode 上再安装一个 node-local DNS 服务。
 
-1. **检查 CoreDNS 状态和配置**：
-   ```bash
-   # Check CoreDNS pod status
-   kubectl get pods -n kube-system -l k8s-app=kube-dns
+**Resolver 配置与策略**
 
-   # Check CoreDNS logs
-   kubectl logs -n kube-system -l k8s-app=kube-dns
+如果 Pod 需要集群 DNS，ClusterFirst 是常见路径。有意配置 hostNetwork 的 Pod 通常需用 ClusterFirstWithHostNet。仅为了修复 DNS 而设置 hostNetwork 会改变隔离方式，不是通用补救。DNSPolicy None 要求完整而有意配置 resolver。
 
-   # Check CoreDNS ConfigMap
-   kubectl get configmap coredns -n kube-system -o yaml
+旧的 `169.254.20.10` 示例是指定的 NodeLocal DNSCache 地址，不是通用 VPC resolver。像 `8.8.8.8` 这样的公共 resolver 不提供 Kubernetes Service 区域/私有 AWS 名称解析；配置多个 nameserver 也不保证按区域回退。应检查真正的 CoreDNS/NodeLocal 上游及集群域名，不要硬编码 `172.20.0.10` 或公共备用地址。
 
-   # Check CoreDNS service
-   kubectl get service kube-dns -n kube-system
+对于标准 CoreDNS Pod，以下示例仅允许选定后端访问 DNS。应用前应审查其他所有出站流量：
 
-   # Check CoreDNS endpoints
-   kubectl get endpoints kube-dns -n kube-system
-   ```
+```yaml
+# Example for application Pods using traditional CoreDNS Pod endpoints.
+# This selects applications and isolates other egress unless another policy allows it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app-dns-egress
+  namespace: applications
+spec:
+  podSelector:
+    matchLabels:
+      app: example
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+```
 
-2. **测试 DNS 解析**：
-   ```bash
-   # Create debug pod
-   kubectl run dns-test --rm -it --image=busybox -- sh
+源端 egress 和目标端 ingress 可能都需要许可。同一个 peer 中的 namespace 和 Pod selector 通过 AND 组合。Auto Mode/NodeLocal 路径需要按各自实现处理；不要假设 Pod 标签选择器能选中主机级缓存。单独的 tcpdump Pod 无法捕获其他工作负载的查询；应在相应上下文中执行经授权、范围受限的抓包。
 
-   # Test cluster internal DNS resolution
-   nslookup kubernetes.default.svc.cluster.local
+**正确读取 VPC DNS 设置**
 
-   # Test service DNS resolution
-   nslookup <service-name>.<namespace>.svc.cluster.local
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+VPC_ID=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.resourcesVpcConfig.vpcId --output text)
+aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --region "$AWS_REGION" \
+  --attribute enableDnsSupport
+aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --region "$AWS_REGION" \
+  --attribute enableDnsHostnames
+DHCP_OPTIONS_ID=$(aws ec2 describe-vpcs --vpc-ids "$VPC_ID" --region "$AWS_REGION" \
+  --query 'Vpcs[0].DhcpOptionsId' --output text)
+aws ec2 describe-dhcp-options --dhcp-options-ids "$DHCP_OPTIONS_ID" --region "$AWS_REGION"
+```
 
-   # Test external domain resolution
-   nslookup google.com
+DNS 属性来自 DescribeVpcAttribute，而不是 DescribeVpcs 的字段。集群名称和 Region 必须明确指定；任意 kubeconfig alias 不能安全拆解为集群名称。运行这些查询前应核实账号/context。更改共享 VPC 设置前，应检查 DHCP options、DNS 路由/转发和私有 zone；创建并关联新的 DHCP option set 不是通用修复办法。
 
-   # Check DNS server
-   cat /etc/resolv.conf
-   ```
+**CoreDNS 配置与所有权**
 
-3. **检查 network policies 和连接**：
-   ```bash
-   # Check DNS-related network policies
-   kubectl get networkpolicies --all-namespaces
+对于 EKS 管理的现有 CoreDNS add-on，检查版本/配置及经审查候选的 schema：
 
-   # Test connection to CoreDNS
-   kubectl run netcat-test --rm -it --image=busybox -- sh -c "nc -zv kube-dns.kube-system.svc.cluster.local 53"
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --addon-name coredns --output json
+: "${COREDNS_ADDON_VERSION:?Select a reviewed compatible candidate}"
+aws eks describe-addon-configuration --addon-name coredns \
+  --addon-version "$COREDNS_ADDON_VERSION" --region "$AWS_REGION" --output json
+```
 
-   # Capture DNS packets
-   kubectl run tcpdump-test --rm -it --image=nicolaka/netshoot -- tcpdump -i any port 53
-   ```
+保留自定义 zone/forwarder，并使 health/ready plugin 匹配实际 probe。副本数、CPU/内存、PDB、放置与自动扩缩都需要结合工作负载审查；旧的 3 副本/70Mi/170Mi 示例不是普遍最优配置。不要用旧 EKS-Distro 1.8.7 镜像替换所属 Deployment，也不要把通用 Corefile 覆盖本地自定义项。
 
-4. **检查 Pod DNS 配置**：
-   ```bash
-   # Check pod DNS policy
-   kubectl get pod <pod-name> -o jsonpath='{.spec.dnsPolicy}'
+Terraform 所有者可以管理现有 add-on 并检查现有 VPC：
 
-   # Check pod DNS configuration
-   kubectl get pod <pod-name> -o jsonpath='{.spec.dnsConfig}'
+```hcl
+# Existing EKS-managed CoreDNS for standard/mixed clusters only.
+# Preserve/import the existing resource; do not duplicate its ownership.
+resource "aws_eks_addon" "coredns" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "coredns"
+  addon_version               = var.reviewed_coredns_version
+  configuration_values        = file(var.complete_reviewed_coredns_config)
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
 
-   # Check pod internal resolv.conf
-   kubectl exec -it <pod-name> -- cat /etc/resolv.conf
-   ```
+# Read an existing VPC; do not add a second aws_vpc resource to repair DNS.
+data "aws_vpc" "cluster" {
+  id = var.cluster_vpc_id
+}
+output "vpc_dns_attributes" {
+  value = {
+    enable_dns_support   = data.aws_vpc.cluster.enable_dns_support
+    enable_dns_hostnames = data.aws_vpc.cluster.enable_dns_hostnames
+  }
+}
+```
 
-5. **检查 VPC 和 Cluster DNS 设置**：
-   ```bash
-   # Check VPC DNS attributes
-   aws ec2 describe-vpcs --vpc-id <vpc-id> --query 'Vpcs[0].EnableDnsSupport'
-   aws ec2 describe-vpcs --vpc-id <vpc-id> --query 'Vpcs[0].EnableDnsHostnames'
+完整配置文件必须按选定 add-on schema 和当前设置进行验证。PRESERVE 并不保证显式 payload 会完整合并。遵循 [EKS 升级](../../eks/08-eks-upgrades.md)中的准确更新步骤，并在之后验证实际 DNS 行为。此示例不会配置 Auto Mode 的节点 DNS，也不授权替换共享 VPC。
 
-   # Check DHCP option set
-   aws ec2 describe-vpcs --vpc-id <vpc-id> --query 'Vpcs[0].DhcpOptionsId'
-   aws ec2 describe-dhcp-options --dhcp-options-id <dhcp-options-id>
+**受支持标准节点环境中的可选 NodeLocal DNSCache**
 
-   # Check node DNS configuration
-   kubectl debug node/<node-name> -it --image=busybox -- cat /etc/resolv.conf
-   ```
+使用[官方安装指南](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)和经审查发布的 manifest。过去手写的 DaemonSet 不完整；只改镜像并不能补齐所有接口、过滤规则、挂载、上游 Service 和 kubelet 配置。
 
-**常见 DNS 问题和解决方案：**
+| 决策 | 必需准备 |
+| --- | --- |
+| 本地地址 | 选择不冲突的 node-local IP 和实际集群域名/CoreDNS Service IP；考虑 IPv6 地址/端口写法 |
+| 现有数据平面 | 文档化的 iptables 路径中，缓存监听本地 IP 和 CoreDNS Service IP。受支持的 IPVS 设置中，它只监听本地 IP，且必须更改 kubelet 集群 DNS 配置。其他模式应遵循各自当前集成指南 |
+| Manifest/配置 | 渲染文档中的占位符，保留必需权限/接口/过滤/锁文件挂载、探针和上游配置。不要替换成不完整的旧 DaemonSet |
+| 工作负载迁移 | 确保节点/kubelet 设置与新旧 Pod resolver 行为一致；分阶段 rollout，并同时规划撤销缓存与 kubelet 更改 |
+| 内存/运维 | 根据查询/缓存/并发观察结果调整容量，监控故障并在重启/rollout 期间维持 DNS |
 
-1. **CoreDNS Pod 问题**：
-   - **症状**：DNS 查询失败，CoreDNS Pod 异常
-   - **原因**：CoreDNS Pod 崩溃、资源不足、配置错误
-   - **解决方案**：
-     ```bash
-     # Restart CoreDNS pods
-     kubectl rollout restart deployment coredns -n kube-system
+NodeLocal DNSCache 会把缓存未命中的查询转发给适当上游；它不能让每次查询都命中本地缓存。官方指南指出，OOM 终止可能导致包过滤规则仍指向不可用的本地缓存，直至其重启，从而中断 DNS。设置很小的固定内存 request 或增加缓存，都不能自动保证性能。
 
-     # Increase CoreDNS resources
-     kubectl edit deployment coredns -n kube-system
-     # Increase requests and limits in resources section
+本次审查没有执行 DNS 查询、抓包、CoreDNS 更新、NodeLocal 安装或 Terraform apply。在受控环境中验证所选拓扑与假设。
 
-     # Check CoreDNS logs
-     kubectl logs -n kube-system -l k8s-app=kube-dns
-     ```
+静态 Pod IP、对所有 Service 使用 ExternalName 或重建 VPC，都无法确定 resolver 路径在哪里失败。记录实际查询/响应、来源上下文、配置更改及恢复证据。
 
-2. **Network policy 问题**：
-   - **症状**：仅从特定 Namespace 或 Pod 发起 DNS 解析失败
-   - **原因**：限制性的 network policies 阻止 DNS 流量
-   - **解决方案**：
-     ```yaml
-     # Network policy allowing DNS traffic
-     apiVersion: networking.k8s.io/v1
-     kind: NetworkPolicy
-     metadata:
-       name: allow-dns
-       namespace: <namespace>
-     spec:
-       podSelector: {}
-       policyTypes:
-       - Egress
-       egress:
-       - to:
-         - namespaceSelector:
-             matchLabels:
-               kubernetes.io/metadata.name: kube-system
-           podSelector:
-             matchLabels:
-               k8s-app: kube-dns
-         ports:
-         - protocol: UDP
-           port: 53
-         - protocol: TCP
-           port: 53
-     ```
+来源：[EKS CoreDNS](https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html)、[Auto Mode DNS](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[Pod DNS](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)、[VPC DNS](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)、[NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)。
 
-3. **DNS policy 和配置问题**：
-   - **症状**：只有某些类型的 DNS 查询失败
-   - **原因**：DNS policy 或配置不合适
-   - **解决方案**：
-     ```yaml
-     # Create pod with custom DNS configuration
-     apiVersion: v1
-     kind: Pod
-     metadata:
-       name: dns-custom-pod
-     spec:
-       containers:
-       - name: app
-         image: busybox
-         command: ["sleep", "3600"]
-       dnsPolicy: "None"
-       dnsConfig:
-         nameservers:
-         - "169.254.20.10"  # VPC DNS server
-         - "8.8.8.8"        # Backup DNS server
-         searches:
-         - <namespace>.svc.cluster.local
-         - svc.cluster.local
-         - cluster.local
-         options:
-         - name: ndots
-           value: "5"
-     ```
-
-4. **VPC DNS 设置问题**：
-   - **症状**：外部域名解析失败
-   - **原因**：VPC DNS 属性已禁用或 DHCP option set 问题
-   - **解决方案**：
-     ```bash
-     # Enable VPC DNS attributes
-     aws ec2 modify-vpc-attribute --vpc-id <vpc-id> --enable-dns-support
-     aws ec2 modify-vpc-attribute --vpc-id <vpc-id> --enable-dns-hostnames
-
-     # Create custom DHCP option set
-     aws ec2 create-dhcp-options \
-       --dhcp-configurations \
-       "Key=domain-name-servers,Values=AmazonProvidedDNS" \
-       "Key=domain-name,Values=<region>.compute.internal"
-
-     # Associate DHCP option set with VPC
-     aws ec2 associate-dhcp-options --dhcp-options-id <dhcp-options-id> --vpc-id <vpc-id>
-     ```
-
-5. **CoreDNS 配置问题**：
-   - **症状**：特定域名解析失败或 DNS 解析缓慢
-   - **原因**：CoreDNS 配置错误或设置未优化
-   - **解决方案**：
-     ```yaml
-     # Optimized CoreDNS ConfigMap
-     apiVersion: v1
-     kind: ConfigMap
-     metadata:
-       name: coredns
-       namespace: kube-system
-     data:
-       Corefile: |
-         .:53 {
-             errors
-             health {
-                lameduck 5s
-             }
-             ready
-             kubernetes cluster.local in-addr.arpa ip6.arpa {
-                pods insecure
-                fallthrough in-addr.arpa ip6.arpa
-                ttl 30
-             }
-             prometheus :9153
-             forward . /etc/resolv.conf {
-                max_concurrent 1000
-                health_check 5s
-             }
-             cache 30
-             loop
-             reload
-             loadbalance
-         }
-     ```
-
-**最佳实践：**
-
-1. **CoreDNS 监控和 scaling**：
-   - 监控 CoreDNS 性能和状态
-   - 根据 Cluster 大小扩展 CoreDNS replicas
-   - 分配适当资源
-
-2. **DNS 缓存和优化**：
-   - 合适的 TTL 和 cache 设置
-   - 实施 Node 级 DNS 缓存
-   - 考虑应用级 DNS 缓存
-
-3. **Network policy 设计**：
-   - 显式允许 DNS 流量
-   - 应用最小权限原则
-   - 测试并验证 network policies
-
-4. **DNS 故障排查工具和流程**：
-   - 准备 DNS 故障排查工具和脚本
-   - 建立系统化故障排查流程
-   - 监控 DNS 相关事件和日志
-
-其他选项的问题：
-- **A. 为所有 Pod 分配静态 IP**：这无法解决 DNS 问题，Pod IP 分配和 DNS 解析是不同的问题。为 Pod 分配静态 IP 也违背 Kubernetes 的动态特性，并增加管理复杂度。
-- **C. 对所有 Service 使用 ExternalName**：这只适用于特定用例，无法解决大多数 DNS 问题。ExternalName 用于为外部服务提供别名，无法解决 Cluster 内部 DNS 解析问题。
-- **D. 重新配置 Cluster VPC**：这是极端措施，大多数 DNS 问题与 Cluster 内部 DNS 配置有关，而不是 VPC 层面的问题。重新配置 VPC 可能造成不必要的停机和复杂性。
 </details>

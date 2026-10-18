@@ -1,66 +1,29 @@
 # Integración con AWS
 
-Este documento explica cómo integrar Istio con servicios de AWS en un entorno de Amazon EKS.
+Este documento explica cómo integrar Istio con los servicios de AWS en un entorno de Amazon EKS.
 
 ## Índice
 
-1. [Integración con AWS Load Balancer](04-aws-integration.md#aws-load-balancer-integration)
+Revisado el 11 de septiembre de 2026 para nodos EKS sobre EC2 con Linux y AWS Load Balancer Controller. El paso directo de TLS por NLB, la terminación TLS en ALB y la terminación TLS en NLB descritos a continuación son diseños alternativos. No aplique juntos sus recursos Service y Gateway, que se solapan. Ajuste las etiquetas de los Pods del gateway y los puertos de destino a su instalación, descrita en [Instalación](01-installation.md). Incorpore los cambios de Service a la configuración de Helm o istioctl que lo administra. EKS Auto Mode utiliza su propia integración de balanceadores de carga y las anotaciones que admite; Fargate no puede alojar Istio CNI ni ztunnel.
+
+1. [Integración con balanceadores de carga de AWS](04-aws-integration.md#aws-load-balancer-integration)
 2. [Comparación entre Istio y otras soluciones](04-aws-integration.md#istio-vs-other-solutions-comparison)
 3. [Optimización específica para EKS](04-aws-integration.md#eks-specific-optimization)
 4. [Prácticas recomendadas](04-aws-integration.md#best-practices)
 
-<span id="aws-load-balancer-integration"></span>
+## Integración con balanceadores de carga de AWS {#aws-load-balancer-integration}
 
-## Integración con AWS Load Balancer
-
-Istio Ingress Gateway puede integrarse con AWS Load Balancer para manejar tráfico externo.
+Istio Ingress Gateway puede integrarse con un balanceador de carga de AWS para gestionar el tráfico externo.
 
 ### Integración con Network Load Balancer (NLB)
 
-NLB es un balanceador de carga de capa 4 (TCP/UDP), adecuado cuando se requiere alto rendimiento y baja latencia.
+NLB es un balanceador de carga de capa 4 (TCP/UDP), adecuado cuando se necesitan alto rendimiento y baja latencia.
 
 #### Arquitectura de NLB
 
-```mermaid
-flowchart TB
-    Client[Client]
+![Las solicitudes HTTPS del cliente llegan a un AWS Network Load Balancer, que reenvía TCP 443 a dos Pods Envoy de Istio Ingress Gateway en el clúster EKS. Cada gateway dirige después el tráfico HTTP/HTTPS a los Pods de Service A y Service B.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-0.png)
 
-    subgraph AWS["AWS Cloud"]
-        NLB[Network Load Balancer<br/>Layer 4]
-
-        subgraph EKS["EKS Cluster"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1<br/>Envoy Proxy]
-                IGW2[Gateway Pod 2<br/>Envoy Proxy]
-            end
-
-            subgraph Apps["Applications"]
-                App1[Service A<br/>Pod]
-                App2[Service B<br/>Pod]
-            end
-        end
-    end
-
-    Client -->|HTTPS Request| NLB
-    NLB -->|TCP 443| IGW1
-    NLB -->|TCP 443| IGW2
-    IGW1 -->|HTTP/HTTPS| App1
-    IGW1 -->|HTTP/HTTPS| App2
-    IGW2 -->|HTTP/HTTPS| App1
-    IGW2 -->|HTTP/HTTPS| App2
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client default;
-    class NLB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-04-aws-integration-0.html)
 
 #### Configuración de NLB
 
@@ -68,18 +31,21 @@ flowchart TB
 
 ```bash
 # Create IAM policy
-curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+curl -fsSL -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json
 
 aws iam create-policy \
     --policy-name AWSLoadBalancerControllerIAMPolicy \
     --policy-document file://iam_policy.json
+
+# Associate the cluster OIDC provider once before creating IRSA
+eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
 
 # IRSA setup
 eksctl create iamserviceaccount \
   --cluster=my-cluster \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
-  --attach-policy-arn=arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+  --attach-policy-arn="arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy" \
   --override-existing-serviceaccounts \
   --approve
 
@@ -89,12 +55,15 @@ helm repo update
 
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
+  --version 3.5.0 \
   --set clusterName=my-cluster \
+  --set region=us-west-2 \
+  --set vpcId="<VPC_ID>" \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller
 ```
 
-**2. Configuración de Istio Ingress Gateway con NLB**
+**2. Configurar Istio Ingress Gateway con NLB**
 
 ```yaml
 # istio-ingress-nlb.yaml
@@ -109,10 +78,7 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 
-    # TLS configuration
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account:certificate/cert-id"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    # TCP passthrough: TLS terminates at Istio; no ACM TLS listener here
 
     # Health check configuration
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "http"
@@ -120,18 +86,13 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/healthz/ready"
 
     # Additional configuration
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+    service.beta.kubernetes.io/aws-load-balancer-attributes: "load_balancing.cross_zone.enabled=true"
 spec:
   type: LoadBalancer
   selector:
     app: istio-ingressgateway
     istio: ingressgateway
   ports:
-  - name: status-port
-    port: 15021
-    protocol: TCP
-    targetPort: 15021
   - name: http2
     port: 80
     protocol: TCP
@@ -142,7 +103,7 @@ spec:
     targetPort: 8443
 ```
 
-**3. Configuración del recurso Gateway**
+**3. Configurar el recurso Gateway**
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -175,69 +136,30 @@ spec:
 
 #### Ventajas de NLB
 
-* **Alto rendimiento**: Maneja millones de solicitudes por segundo
-* **Baja latencia**: Opera en la capa 4 para obtener respuestas rápidas
-* **IP estática**: Es posible asignar Elastic IP
-* **Compatibilidad de protocolos**: TCP, UDP, TLS
-* **Rentable**: Más económico que ALB
+* **Alto rendimiento**: Gestiona millones de solicitudes por segundo.
+* **Baja latencia**: Funciona en la capa 4 para responder con rapidez.
+* **IP estática**: Permite asignar Elastic IP.
+* **Protocolos compatibles**: TCP, UDP y TLS.
+* **Planificación de capacidad**: Mida el uso de conexiones y bytes y compare los precios de la región.
 
 #### Casos de uso de NLB
 
-* WebSocket, gRPC y otras conexiones de larga duración
-* Manejo de millones de solicitudes por segundo
-* Cuando se requiere una IP estática
-* Cuando la terminación TLS debe realizarse en Istio
+* WebSocket, gRPC y otras conexiones de larga duración.
+* Gestión de millones de solicitudes por segundo.
+* Necesidad de una IP estática.
+* Terminación TLS en Istio.
 
 ### Integración con Application Load Balancer (ALB)
 
-ALB es un balanceador de carga de capa 7 (HTTP/HTTPS), adecuado cuando se necesitan características avanzadas de enrutamiento.
+ALB es un balanceador de carga de capa 7 (HTTP/HTTPS), adecuado cuando se necesitan funciones avanzadas de enrutamiento.
 
 #### Arquitectura de ALB
 
-```mermaid
-flowchart TB
-    Client[Client]
-
-    subgraph AWS["AWS Cloud"]
-        ALB[Application Load Balancer<br/>Layer 7]
-
-        subgraph EKS["EKS Cluster"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1]
-                IGW2[Gateway Pod 2]
-            end
-
-            subgraph Apps["Applications"]
-                App1[Service A]
-                App2[Service B]
-            end
-        end
-    end
-
-    Client -->|HTTPS| ALB
-    ALB -->|HTTP/2| IGW1
-    ALB -->|HTTP/2| IGW2
-    IGW1 -->|Internal routing| App1
-    IGW1 -->|Internal routing| App2
-    IGW2 -->|Internal routing| App1
-    IGW2 -->|Internal routing| App2
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client default;
-    class ALB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
+En este ejemplo, el cliente envía HTTPS al ALB. El ALB termina TLS utilizando ACM y reenvía HTTP/1.1 al gateway de Istio; Envoy dirige después el tráfico a la aplicación.
 
 #### Configuración de ALB
 
-**1. Crear ALB con el recurso Ingress**
+**1. Crear un ALB con un recurso Ingress**
 
 ```yaml
 # istio-ingress-alb.yaml
@@ -284,6 +206,26 @@ spec:
               number: 80
 ```
 
+Para este diseño con ALB, configure el Service del gateway como ClusterIP, de modo que no aprovisione también un NLB. El ALB termina TLS y, de forma predeterminada, reenvía HTTP/1.1. Utilice este gateway HTTP sin redirección a HTTPS. Añada un VirtualService vinculado a `my-alb-gateway` para definir las rutas de las aplicaciones.
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: my-alb-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "myapp.example.com"
+```
+
 **2. Enrutamiento basado en rutas**
 
 ```yaml
@@ -322,132 +264,93 @@ spec:
 
 #### Ventajas de ALB
 
-* **Enrutamiento avanzado**: Enrutamiento basado en rutas, Header y Query String
-* **Integración con WAF**: Seguridad mejorada con AWS WAF
-* **Integración de autenticación**: Integración con Cognito y OIDC
-* **Integración con ACM**: Gestión automática de certificados
-* **Optimizado para contenedores**: Optimizado para ECS y EKS
+* **Enrutamiento avanzado**: Según rutas, cabeceras y parámetros de consulta.
+* **Integración con WAF**: Mayor seguridad mediante AWS WAF.
+* **Integración de autenticación**: Compatible con Cognito y OIDC.
+* **Integración con ACM**: Administración automática de certificados.
+* **Optimización para contenedores**: Adecuado para ECS y EKS.
 
 #### Casos de uso de ALB
 
-* Tráfico solo HTTP/HTTPS
-* Cuando se necesita enrutamiento basado en rutas
-* Cuando se requiere seguridad de WAF
-* Cuando se manejan varios dominios con un único balanceador de carga
+* Tráfico exclusivamente HTTP/HTTPS.
+* Enrutamiento basado en rutas.
+* Seguridad mediante WAF.
+* Varios dominios atendidos por un solo balanceador de carga.
 
 ### Comparación entre NLB y ALB
 
-| Propiedad            | NLB                                    | ALB                                      |
-| -------------------- | -------------------------------------- | ---------------------------------------- |
-| **Capa OSI**         | Capa 4 (TCP/UDP)                       | Capa 7 (HTTP/HTTPS)                      |
-| **Rendimiento**      | Millones de solicitudes por segundo    | Decenas de miles de solicitudes por segundo |
-| **Latencia**         | Muy baja                               | Baja                                     |
-| **IP estática**      | Compatible (Elastic IP)                | No compatible                            |
-| **Terminación TLS**  | Se transmite como TCP (gestionada en Istio) | Puede gestionarse en ALB                 |
-| **Enrutamiento**     | Basado en IP/puerto                    | Basado en ruta, Host y Header            |
-| **Integración con WAF** | No disponible                       | Disponible                               |
-| **Costo**            | Menor                                  | Relativamente mayor                      |
-| **WebSocket**        | Compatibilidad nativa                  | Compatible                               |
-| **gRPC**             | Compatibilidad nativa                  | Requiere HTTP/2                          |
-| **Uso recomendado**  | Alto rendimiento, WebSocket, gRPC      | Enrutamiento HTTP, WAF, autenticación    |
+| Propiedad | NLB | ALB |
+| ------------------- | -------------------------------------- | ---------------------------------------- |
+| **Capa OSI** | Capa 4 (TCP/UDP) | Capa 7 (HTTP/HTTPS) |
+| **Capacidad** | Depende del tráfico y de la configuración de capacidad | Depende del tráfico y de la configuración de capacidad |
+| **Latencia** | Muy baja | Baja |
+| **IP estática** | Compatible (Elastic IP) | No compatible |
+| **Terminación TLS** | Paso directo de TCP o listener TLS en NLB | Puede realizarse en ALB |
+| **Enrutamiento** | Según IP y puerto | Según ruta, host y cabecera |
+| **Integración con WAF** | No disponible | Disponible |
+| **Coste** | Uso de NLCU y tarifas regionales | Uso de LCU y tarifas regionales |
+| **WebSocket** | Compatibilidad nativa | Compatible |
+| **gRPC** | Compatibilidad nativa | Requiere HTTP/2 |
+| **Uso recomendado** | Alto rendimiento, WebSocket y gRPC | Enrutamiento HTTP, WAF y autenticación |
 
-<span id="istio-vs-other-solutions-comparison"></span>
-
-## Comparación entre Istio y otras soluciones
+## Comparación entre Istio y otras soluciones {#istio-vs-other-solutions-comparison}
 
 ### Istio frente a VPC Lattice
 
-VPC Lattice es el servicio administrado de redes de aplicaciones de AWS.
+VPC Lattice es el servicio administrado de AWS para redes de aplicaciones.
 
-#### Comparación de arquitectura
+#### Comparación de arquitecturas
 
-```mermaid
-flowchart TB
-    subgraph Istio["Istio Architecture"]
-        direction TB
-        ICP[istiod<br/>Control Plane]
+![Comparación entre Istio, cuyo plano de control envía la configuración a sidecars Envoy que se comunican directamente mediante mTLS, y AWS VPC Lattice, cuya red de servicios administrada dirige HTTP sin cifrar entre Pods de aplicaciones sin sidecars.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-2.png)
 
-        subgraph IPods["Pods"]
-            IA1[App<br/>+ Envoy]
-            IA2[App<br/>+ Envoy]
-        end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-04-aws-integration-2.html)
 
-        ICP -.->|Config| IA1
-        ICP -.->|Config| IA2
-        IA1 <-->|mTLS| IA2
-    end
+#### Comparación de funciones
 
-    subgraph VPCLattice["VPC Lattice Architecture"]
-        direction TB
-        LSN[Service Network<br/>Managed Service]
+| Propiedad | Istio | VPC Lattice |
+| ---------------------- | ------------------------------------ | --------------------------- |
+| **Administración** | Autogestionado | Totalmente administrado por AWS |
+| **Sidecar** | Utiliza sidecars en ese modo; no los necesita en ambient | No se necesita |
+| **Consumo adicional de recursos** | Depende de la topología con sidecars o ambient | Bajo, sin sidecars |
+| **Complejidad** | Alta | Baja |
+| **Curva de aprendizaje** | Pronunciada | Suave |
+| **Gestión del tráfico** | Muy avanzada, con control detallado | Básica, con funciones suficientes |
+| **mTLS** | Identidades y certificados de cargas de trabajo administrados | Administrado por la aplicación mediante paso directo de TLS |
+| **Observabilidad** | Amplias métricas y trazas | Métricas básicas |
+| **Inyección de fallos** | Compatible | No compatible |
+| **Circuit breaker** | Control detallado | No tiene una API de políticas equivalente a la de Istio; las cuotas de servicio son un mecanismo distinto |
+| **Limitación de solicitudes** | Local y global | No tiene una API de políticas equivalente a la de Istio; las cuotas de servicio son un mecanismo distinto |
+| **Varios clústeres** | Amplia compatibilidad | Conectividad entre VPC |
+| **Entre cuentas** | Complejo | Sencillo, con compatibilidad nativa |
+| **Coste** | Coste de cómputo (EC2) | Coste por uso del servicio |
+| **Dependencia del proveedor** | Ninguna, al ser código abierto | Dependencia de AWS |
+| **Solo Kubernetes** | No; también admite máquinas virtuales | No; admite EC2, Lambda y otros destinos |
 
-        subgraph LPods["Pods"]
-            LA1[App<br/>No sidecar]
-            LA2[App<br/>No sidecar]
-        end
-
-        LA1 -->|HTTP| LSN
-        LA2 -->|HTTP| LSN
-        LSN -->|Routing| LA1
-        LSN -->|Routing| LA2
-    end
-
-    %% Style definitions
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class ICP controlPlane;
-    class IA1,IA2 k8sComponent;
-    class LSN controlPlane;
-    class LA1,LA2 userApp;
-```
-
-#### Comparación de características
-
-| Propiedad               | Istio                                | VPC Lattice                 |
-| ----------------------- | ------------------------------------ | --------------------------- |
-| **Administración**      | Autogestionado                       | Administrado por AWS (Fully-managed) |
-| **Sidecar**             | Obligatorio (Sidecar o Ambient)      | No obligatorio              |
-| **Sobrecarga de recursos** | Alta (Envoy por Pod)              | Baja (sin sidecar)          |
-| **Complejidad**         | Alta                                 | Baja                        |
-| **Curva de aprendizaje** | Pronunciada                        | Suave                       |
-| **Gestión de tráfico**  | Muy avanzada (control detallado)     | Básica (características suficientes) |
-| **mTLS**                | Automático, control detallado        | Compatible                  |
-| **Observabilidad**      | Métricas y trazas completas          | Métricas básicas            |
-| **Inyección de fallos** | Compatible                           | No compatible               |
-| **Circuit Breaker**     | Control detallado                    | Funcionalidad básica        |
-| **Rate Limiting**       | Local + Global                       | Funcionalidad básica        |
-| **Multi-cluster**       | Gran compatibilidad                  | Conectividad entre VPC      |
-| **Cross-account**       | Complejo                             | Simple (compatibilidad nativa) |
-| **Costo**               | Costo de cómputo (EC2)               | Costo por uso del servicio  |
-| **Vendor Lock-in**      | Ninguno (open source)                | Dependencia de AWS          |
-| **Solo Kubernetes**     | Sí                                   | No (EC2, Lambda, etc.)      |
+El paso directo de TLS en VPC Lattice conserva TLS o mTLS de la aplicación, pero ese listener no puede aplicar autenticación basada en identidades de IAM ni utilizar destinos Lambda. Los listeners HTTPS y el paso directo de TLS ofrecen funciones de seguridad diferentes.
 
 #### Cuándo elegir Istio
 
-**Istio es adecuado cuando:**
+**Istio es adecuado en los siguientes casos:**
 
-1. **Se necesita control detallado del tráfico**
-   * Despliegue canary, pruebas A/B, Traffic Mirroring
-   * Reglas de enrutamiento complejas (basadas en Header, Cookie, etc.)
-   * Inyección de fallos para Chaos Engineering
-2. **Se tienen requisitos de seguridad estrictos**
-   * Cifrado mTLS automático entre servicios
-   * Políticas de autorización detalladas
-   * Validación de JWT, RBAC
+1. **Se necesita un control detallado del tráfico**
+   * Despliegues canary, pruebas A/B y duplicación de tráfico.
+   * Reglas de enrutamiento complejas, según cabeceras, cookies u otros criterios.
+   * Inyección de fallos para ingeniería del caos.
+2. **Hay requisitos de seguridad estrictos**
+   * Cifrado mTLS automático entre servicios.
+   * Políticas de autorización detalladas.
+   * Validación de JWT y RBAC.
 3. **Se necesita observabilidad avanzada**
-   * Métricas detalladas (latencia P50/P95/P99)
-   * Trazabilidad distribuida (Jaeger, Zipkin)
-   * Visualización de la topología de servicios (Kiali)
-4. **Service Mesh Multi-cluster**
-   * Comunicación entre varios clústeres EKS
-   * Failover entre clústeres
-   * Balanceo de carga global
-5. **Independencia del proveedor**
-   * Posibilidad de migrar a otras nubes o entornos on-premises
-   * Uso de estándares de Kubernetes
+   * Métricas detalladas, como latencia P50/P95/P99.
+   * Trazado distribuido con Jaeger o Zipkin.
+   * Visualización de la topología de servicios con Kiali.
+4. **Se utiliza una malla entre varios clústeres**
+   * Comunicación entre varios clústeres EKS.
+   * Conmutación ante fallos entre clústeres.
+   * Balanceo de carga global.
+5. **Se busca independencia del proveedor**
+   * Posibilidad de migrar a otras nubes o a instalaciones propias.
+   * Uso de los estándares de Kubernetes.
 
 **Ejemplo: gestión avanzada del tráfico de Istio**
 
@@ -497,130 +400,97 @@ spec:
 
 #### Cuándo elegir VPC Lattice
 
-**VPC Lattice es adecuado cuando:**
+**VPC Lattice es adecuado en los siguientes casos:**
 
-1. **Conectividad de servicios sencilla**
-   * Solo se necesita balanceo de carga y enrutamiento básicos
-   * Es importante una implementación rápida
-2. **Baja sobrecarga operativa**
-   * Se prefieren servicios administrados por AWS
-   * No hay carga de administrar sidecars
-3. **Comunicación entre VPC/cuentas**
-   * Conexión de servicios entre varias cuentas de AWS
-   * Comunicación sin VPC peering
-4. **Entornos mixtos**
-   * Entornos mixtos de EKS + EC2 + Lambda
-   * Uso de diversos tipos de cómputo además de Kubernetes
-5. **Optimización de costos**
-   * Reducción de los costos de recursos de sidecar
-   * Servicios a pequeña escala
+1. **Se necesita una conexión sencilla entre servicios**
+   * Basta con balanceo de carga y enrutamiento básicos.
+   * Es importante implementarla con rapidez.
+2. **Se busca reducir el trabajo operativo**
+   * Se prefieren servicios administrados por AWS.
+   * Se quiere evitar la administración de sidecars.
+3. **Se necesita comunicación entre VPC o cuentas**
+   * Conexión de servicios de varias cuentas de AWS.
+   * Comunicación sin interconexión VPC peering.
+4. **Hay entornos mixtos**
+   * Combinaciones de EKS, EC2 y Lambda.
+   * Distintos tipos de cómputo, además de Kubernetes.
+5. **Se busca optimizar los costes**
+   * Reducción del coste de los recursos de los sidecars.
+   * Servicios a pequeña escala.
 
 #### Uso conjunto de Istio y VPC Lattice
 
-Las dos soluciones no son mutuamente excluyentes y pueden utilizarse juntas:
+Las dos soluciones pueden utilizarse juntas:
 
-```mermaid
-flowchart TB
-    subgraph Account1["AWS Account 1"]
-        subgraph EKS1["EKS Cluster 1 (Istio)"]
-            Istiod1[istiod]
-            App1[Service A<br/>+ Envoy]
-            App2[Service B<br/>+ Envoy]
+![Istio configura los sidecars y mTLS dentro de un clúster EKS en la cuenta AWS 1. Una red de servicios VPC Lattice dirige su tráfico entre cuentas hacia un servicio sin sidecar y una función Lambda de la cuenta AWS 2.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-3.png)
 
-            Istiod1 -.->|Config| App1
-            Istiod1 -.->|Config| App2
-        end
-    end
-
-    subgraph Account2["AWS Account 2"]
-        subgraph EKS2["EKS Cluster 2"]
-            App3[Service C<br/>No sidecar]
-        end
-
-        Lambda[Lambda<br/>Function]
-    end
-
-    VPCLattice[VPC Lattice<br/>Service Network]
-
-    App1 <-->|Internal mTLS| App2
-    App1 -->|VPC Lattice| VPCLattice
-    VPCLattice -->|Routing| App3
-    VPCLattice -->|Routing| Lambda
-
-    %% Style definitions
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Istiod1,VPCLattice controlPlane;
-    class App1,App2 k8sComponent;
-    class App3,Lambda userApp;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-04-aws-integration-3.html)
 
 **Casos de uso:**
 
-* **Dentro del clúster**: Istio para la gestión detallada del tráfico y la seguridad
-* **Entre clústeres/entre cuentas**: VPC Lattice para conectividad sencilla
-* **Entornos mixtos**: Usar VPC Lattice para conectar clústeres de Istio con Lambda/EC2
+* **Dentro del clúster**: Istio para gestionar el tráfico y la seguridad de forma detallada.
+* **Entre clústeres o cuentas**: VPC Lattice para una conexión sencilla.
+* **Entornos mixtos**: VPC Lattice para conectar clústeres con Istio a Lambda o EC2.
 
 ### Istio frente a Cilium (basado en eBPF)
 
-Cilium es una solución de redes y seguridad para Kubernetes que usa eBPF.
+Cilium es una solución de red y seguridad para Kubernetes basada en eBPF.
 
-#### Comparación de arquitectura
+#### Comparación de arquitecturas
 
-| Propiedad             | Istio                             | Cilium                         |
-| --------------------- | --------------------------------- | ------------------------------ |
-| **Stack tecnológico** | Envoy Proxy (sidecar)             | eBPF (nivel de kernel)         |
-| **Propósito principal** | Service Mesh                    | CNI + Service Mesh             |
-| **Redes**             | Opera sobre Kubernetes CNI        | Proporciona CNI                |
-| **Rendimiento**       | Bueno                             | Excelente (nivel de kernel)    |
-| **Uso de recursos**   | Alto (sidecar)                    | Bajo (nivel de kernel)         |
-| **Características L7** | Muy potentes                     | Básicas                        |
-| **Observabilidad**    | Completa                          | Hubble (básica)                |
-| **Curva de aprendizaje** | Pronunciada                    | Pronunciada                    |
-| **Madurez**           | Alta                              | Media (características de Service Mesh) |
+| Propiedad | Istio | Cilium |
+| -------------------- | --------------------------------- | ------------------------------ |
+| **Tecnología** | Proxy Envoy (sidecar) | eBPF a nivel del kernel |
+| **Objetivo principal** | Malla de servicios | CNI y malla de servicios |
+| **Red** | Funciona sobre el CNI de Kubernetes | Proporciona su propio CNI |
+| **Rendimiento** | Bueno | Excelente, a nivel del kernel |
+| **Uso de recursos** | Alto con sidecars | Bajo, a nivel del kernel |
+| **Funciones L7** | Muy completas | Básicas |
+| **Observabilidad** | Amplia | Hubble, básica |
+| **Curva de aprendizaje** | Pronunciada | Pronunciada |
+| **Madurez** | Alta | Media para las funciones de malla de servicios |
 
-#### Comparación de características
+#### Comparación de funciones
 
-| Característica          | Istio                           | Cilium                              |
-| ----------------------- | ------------------------------- | ----------------------------------- |
-| **Network Policy**      | Kubernetes + Istio              | Kubernetes + Cilium (más potente)   |
-| **Balanceo de carga L7** | Muy detallado                  | Básico                              |
-| **mTLS**                | Automático, control detallado   | Compatible                          |
-| **Gestión de tráfico**  | Muy avanzada                    | Básica                              |
-| **Observabilidad**      | Prometheus, Jaeger, Kiali       | Hubble                              |
-| **Rendimiento**         | Bueno                           | Excelente                           |
-| **Multi-cluster**       | Fuerte                          | Cluster Mesh                        |
+| Función | Istio | Cilium |
+| ---------------------- | ------------------------------- | ----------------------------------- |
+| **Políticas de red** | Kubernetes e Istio | Kubernetes y Cilium, con más funciones |
+| **Balanceo de carga L7** | Muy detallado | Básico |
+| **mTLS** | mTLS automático entre cargas de trabajo | La autenticación mutua y el cifrado con WireGuard o IPsec son mecanismos independientes |
+| **Gestión del tráfico** | Muy avanzada | Básica |
+| **Observabilidad** | Prometheus, Jaeger y Kiali | Hubble |
+| **Rendimiento** | Bueno | Excelente |
+| **Varios clústeres** | Amplia compatibilidad | Cluster Mesh |
 
 #### Cuándo elegir cada opción
 
 **Elegir Istio:**
 
-* La gestión de tráfico L7 es un requisito fundamental
-* Se necesitan potentes características de Service Mesh
-* Se necesitan herramientas completas de observabilidad y depuración
+* La gestión del tráfico L7 es un requisito fundamental.
+* Se necesitan funciones potentes de malla de servicios.
+* Se necesitan herramientas completas de observabilidad y depuración.
 
 **Elegir Cilium:**
 
-* Se considera reemplazar CNI
-* La seguridad de red es la principal preocupación
-* La optimización del rendimiento es importante
-* Se desea aprovechar la tecnología eBPF
+* Se está considerando sustituir el CNI.
+* La seguridad de red es la principal preocupación.
+* La optimización del rendimiento es importante.
+* Se quiere utilizar la tecnología eBPF.
 
 **Uso conjunto:**
 
-* Se puede usar Cilium como CNI e Istio como Service Mesh
-* Sin embargo, se debe considerar la superposición de características y la mayor complejidad
+* Es posible utilizar Cilium como CNI e Istio como malla de servicios.
+* Tenga en cuenta el solapamiento de funciones y el aumento de complejidad.
 
-<span id="eks-specific-optimization"></span>
+## Optimización específica para EKS {#eks-specific-optimization}
 
-## Optimización específica para EKS
+Para cargas ambient que utilizan trunking de interfaces ENI de Pod con VPC CNI y SecurityGroupPolicy, revise los [requisitos de ambient en EKS](https://istio.io/latest/docs/ambient/install/platform-prerequisites/#amazon-elastic-kubernetes-service-eks). La aplicación estricta de los grupos de seguridad de Pod puede impedir las comprobaciones de estado mediante direcciones locales del enlace. Entre las opciones documentadas están el modo de aplicación standard y las comprobaciones exec; evalúe sus consecuencias para las políticas antes de cambiar el modo de CNI.
 
 ### Integración de IAM Roles for Service Accounts (IRSA)
 
-Configure IRSA para permitir que las cargas de trabajo de Istio accedan de forma segura a servicios de AWS.
+EKS Pod Identity es otra opción compatible para obtener credenciales de las API de AWS en nodos sobre EC2. Requiere Pod Identity Agent y SDK de AWS compatibles; no utiliza la anotación de rol de IRSA. Ninguno de los dos mecanismos sustituye la identidad SPIFFE de las cargas de trabajo de Istio.
+
+Configure IRSA para que las cargas de trabajo de Istio accedan de forma segura a los servicios de AWS.
 
 #### Configuración de IRSA
 
@@ -659,7 +529,8 @@ eksctl create iamserviceaccount \
     --cluster my-cluster \
     --namespace default \
     --name my-app-sa \
-    --attach-policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/MyAppS3Policy \
+    --role-name my-app-role \
+    --attach-policy-arn "arn:aws:iam::<ACCOUNT_ID>:policy/MyAppS3Policy" \
     --approve
 ```
 
@@ -699,7 +570,7 @@ spec:
 
 ### Integración con AWS Certificate Manager (ACM)
 
-Cómo usar certificados ACM con Istio Gateway.
+Cómo utilizar los certificados de ACM con Istio Gateway.
 
 #### Terminación TLS en NLB
 
@@ -722,26 +593,52 @@ spec:
   ports:
   - name: https
     port: 443
-    targetPort: 8443
+    targetPort: 8080
+```
+
+Esta variante es independiente: TLS con ACM termina en el NLB y el destino recibe HTTP sin cifrar. Sustituya el Gateway TLS por este listener HTTP en el puerto 443 del Service. Para este backend, no utilice TLS SIMPLE ni redirección a HTTPS.
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: nlb-terminated-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: http-after-nlb
+      protocol: HTTP
+    hosts:
+    - "myapp.example.com"
 ```
 
 #### Terminación TLS en Istio (ACM Private CA)
 
 ```bash
-# 1. Issue certificate from ACM Private CA
-aws acm-pca issue-certificate \
-    --certificate-authority-arn arn:aws:acm-pca:region:account:certificate-authority/ca-id \
-    --csr file://csr.pem \
-    --signing-algorithm "SHA256WITHRSA" \
-    --validity Value=365,Type="DAYS"
+# Generate a private key and CSR locally; clients must trust this private CA
+openssl req -new -newkey rsa:2048 -nodes \
+  -keyout private-key.pem -out csr.pem \
+  -subj '/CN=myapp.example.com' -addext 'subjectAltName=DNS:myapp.example.com'
 
-# 2. Create Kubernetes Secret
+CA_ARN='arn:aws:acm-pca:region:account:certificate-authority/ca-id'
+CERT_ARN=$(aws acm-pca issue-certificate \
+  --certificate-authority-arn "$CA_ARN" \
+  --csr fileb://csr.pem \
+  --signing-algorithm SHA256WITHRSA \
+  --validity Value=365,Type=DAYS \
+  --query CertificateArn --output text)
+aws acm-pca wait certificate-issued \
+  --certificate-authority-arn "$CA_ARN" --certificate-arn "$CERT_ARN"
+aws acm-pca get-certificate \
+  --certificate-authority-arn "$CA_ARN" --certificate-arn "$CERT_ARN" \
+  --output json > issued-certificate.json
+jq -r '.Certificate + "\n" + .CertificateChain' issued-certificate.json > certificate-chain.pem
 kubectl create secret tls my-tls-secret \
-    --cert=certificate.pem \
-    --key=private-key.pem \
-    -n istio-system
-
-# 3. Use in Gateway
+  --cert=certificate-chain.pem --key=private-key.pem -n istio-system
 ```
 
 ```yaml
@@ -765,26 +662,28 @@ spec:
     - "myapp.example.com"
 ```
 
+Emitir un certificado no instala ni renueva el Secret. Automatice la renovación y la actualización del Secret; un ARN de ACM no puede utilizarse directamente como `credentialName` de Istio.
+
 ### Integración con CloudWatch Container Insights
 
-Implemente monitoreo unificado enviando métricas de Istio a CloudWatch.
+Implemente una supervisión unificada enviando las métricas de Istio a CloudWatch.
 
 #### Configuración de CloudWatch Agent
 
 ```bash
-# 1. Attach IAM policy
+# For EC2-backed EKS; OIDC association is required for this IRSA path
+kubectl create namespace amazon-cloudwatch --dry-run=client -o yaml | kubectl apply -f -
 eksctl create iamserviceaccount \
-    --cluster my-cluster \
-    --namespace amazon-cloudwatch \
-    --name cloudwatch-agent \
-    --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
-    --approve
-
-# 2. Install CloudWatch Agent
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cloudwatch-namespace.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
+  --cluster my-cluster --namespace amazon-cloudwatch --name cwagent-prometheus \
+  --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy --approve
+curl -fsSL -o prometheus-eks.yaml \
+  https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/service/cwagent-prometheus/prometheus-eks.yaml
+# Review/pin this manifest; merge the Istio scrape jobs and EMF declarations below before applying
+kubectl apply -f prometheus-eks.yaml
+kubectl rollout status deployment/cwagent-prometheus -n amazon-cloudwatch
 ```
+
+Crear únicamente un namespace y un ServiceAccount no despliega el agente. El manifiesto oficial proporciona el Deployment, el RBAC y los ConfigMaps montados. Conserve la anotación de IRSA si una herramienta de despliegue sustituye los ServiceAccounts. Si ya hay una instalación, actualice la configuración que la administra en lugar de desplegar un segundo recopilador.
 
 #### Recopilación de métricas de Prometheus
 
@@ -805,12 +704,12 @@ data:
     # Istio Control Plane metrics
     - job_name: 'istiod'
       kubernetes_sd_configs:
-      - role: endpoints
+      - role: pod
         namespaces:
           names:
           - istio-system
       relabel_configs:
-      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+      - source_labels: [__meta_kubernetes_pod_label_app, __meta_kubernetes_pod_container_port_name]
         action: keep
         regex: istiod;http-monitoring
 
@@ -823,24 +722,35 @@ data:
       - source_labels: [__meta_kubernetes_pod_container_port_name]
         action: keep
         regex: '.*-envoy-prom'
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        regex: ([^:]+)(?::\d+)?;(\d+)
-        replacement: $1:15090
-        target_label: __address__
 ```
 
-#### Consulta de CloudWatch Logs Insights
+Incorpore una declaración a `prometheus-cwagentconfig`, dentro de `logs.metrics_collected.prometheus.emf_processor.metric_declaration`. Un ConfigMap para la recopilación no publica por sí solo métricas personalizadas en CloudWatch. Conserve `prometheus_config_path` y los demás ajustes del manifiesto; después, vuelva a desplegar o reinicie el agente. Por ejemplo:
 
-```sql
--- Istio error log analysis
+```json
+{
+  "source_labels": ["job"],
+  "label_matcher": "^envoy-stats$",
+  "dimensions": [["ClusterName", "job"]],
+  "metric_selectors": ["^istio_requests_total$", "^istio_tcp_received_bytes_total$"]
+}
+```
+
+#### Consultas de CloudWatch Logs Insights
+
+Ejecute estas consultas por separado. Requieren que un recopilador haya enviado los registros de los proxies; recopilar métricas de Prometheus no recopila los registros de acceso. La consulta de latencia presupone JSON estructurado con un campo numérico `request_duration_ms`. Configure ese campo a partir de `%DURATION%` de Envoy o analice primero el formato que utiliza.
+
+```text
+# Istio error log analysis
 fields @timestamp, @message
 | filter @logStream like /istio-proxy/
 | filter @message like /error/
 | sort @timestamp desc
 | limit 100
 
--- Request latency analysis
+```
+
+```text
+# Request latency analysis
 fields @timestamp, request_duration_ms
 | filter @logStream like /istio-proxy/
 | stats avg(request_duration_ms), max(request_duration_ms), pct(request_duration_ms, 95) by bin(5m)
@@ -848,7 +758,7 @@ fields @timestamp, request_duration_ms
 
 ### Ajustes de optimización de EKS
 
-#### 1. Optimización de recursos de Pod
+#### 1. Optimización de recursos de los Pods
 
 ```yaml
 # Envoy sidecar resource optimization
@@ -857,10 +767,10 @@ kind: IstioOperator
 spec:
   meshConfig:
     defaultConfig:
+      concurrency: 2  # Envoy worker threads, not a connection-pool limit
       proxyMetadata:
         # EKS optimization
         ISTIO_META_DNS_CAPTURE: "true"
-        ISTIO_META_DNS_AUTO_ALLOCATE: "true"
   values:
     global:
       proxy:
@@ -871,11 +781,11 @@ spec:
           limits:
             cpu: 2000m
             memory: 1024Mi
-        # Connection pool settings
-        concurrency: 2
 ```
 
 #### 2. Consideraciones sobre Cluster Autoscaler
+
+HPA ajusta las réplicas y necesita Metrics Server y solicitudes de recursos; Cluster Autoscaler o Karpenter ajustan los nodos. Configure el HPA existente que administra el chart en lugar de crear otro que compita con él.
 
 ```yaml
 # Istio Gateway Autoscaling
@@ -921,73 +831,85 @@ spec:
       app: istio-ingressgateway
 ```
 
-<span id="best-practices"></span>
+## Prácticas recomendadas {#best-practices}
 
-## Prácticas recomendadas
-
-### 1. Guía de selección de Load Balancer
+### 1. Guía de selección del balanceador de carga
 
 **Usar NLB:**
 
-* gRPC, WebSocket y otras conexiones de larga duración
-* Manejo de millones de solicitudes por segundo
-* Se requiere IP estática
-* Terminación TLS en Istio
+* gRPC, WebSocket y otras conexiones de larga duración.
+* Gestión de millones de solicitudes por segundo.
+* Necesidad de una IP estática.
+* Terminación TLS en Istio.
 
 **Usar ALB:**
 
-* Solo HTTP/HTTPS
-* Enrutamiento basado en rutas
-* Se requiere seguridad de WAF
-* Integración de autenticación con Cognito
+* Tráfico exclusivamente HTTP/HTTPS.
+* Enrutamiento basado en rutas.
+* Necesidad de seguridad con WAF.
+* Integración de autenticación con Cognito.
 
 ### 2. Ubicación de la terminación TLS
 
-**Terminar en Load Balancer (recomendado):**
+**Terminar TLS en el balanceador de carga:**
 
-* Renovación automática de certificados ACM
-* Administración sencilla
-* Menor carga en Istio
+* Renovación automática de los certificados de ACM.
+* Administración sencilla.
+* Menor carga para Istio.
 
-**Terminar en Istio:**
+**Terminar TLS en Istio:**
 
-* Se requiere cifrado de extremo a extremo
-* Control detallado de políticas TLS
-* Uso de mTLS
+* Necesidad de cifrado de extremo a extremo.
+* Control detallado de las políticas TLS.
+* Uso de mTLS.
 
-### 3. Optimización de costos
+### 3. Optimización de costes
 
-* **Spot Instances**: Usar para cargas de trabajo de Istio Gateway
-* **Graviton Instances**: Ahorro de costos con instancias basadas en ARM
-* **Límites de recursos**: Establecer límites adecuados de recursos para sidecar
-* **Ambient Mode**: Considerar para eliminar la sobrecarga de sidecar
+* **Instancias Spot**: Utilizarlas para las cargas de trabajo de Istio Gateway.
+* **Instancias Graviton**: Ahorrar costes con instancias basadas en ARM.
+* **Límites de recursos**: Establecer límites adecuados para los sidecars.
+* **Modo ambient**: Considerarlo para eliminar el consumo adicional de los sidecars.
 
 ### 4. Seguridad
 
-* **IRSA**: Acceder a servicios de AWS con roles IAM
-* **Security Groups**: Principio de mínimo privilegio
-* **mTLS**: Habilitar el cifrado entre servicios
-* **Network Policy**: Usar con Cilium o Calico
+* **IRSA**: Acceder a los servicios de AWS mediante roles de IAM.
+* **Grupos de seguridad**: Aplicar el principio de mínimo privilegio.
+* **mTLS**: Habilitar el cifrado entre servicios.
+* **Políticas de red**: Habilitar su aplicación con Amazon VPC CNI, Cilium o Calico y comprobar que la plataforma lo admite.
 
-### 5. Monitoreo
+### 5. Supervisión
 
-* **CloudWatch**: Registros y métricas unificados
-* **X-Ray**: Trazabilidad distribuida
-* **Prometheus + Grafana**: Métricas detalladas
-* **Kiali**: Visualización de Service Mesh
+* **CloudWatch**: Unificar registros y métricas.
+* **X-Ray**: Trazado distribuido.
+* **Prometheus y Grafana**: Métricas detalladas.
+* **Kiali**: Visualización de la malla de servicios.
 
 ## Próximos pasos
 
-Si ha completado la integración con AWS, consulte los siguientes documentos:
+Una vez completada la integración con AWS, consulte los siguientes documentos:
 
-1. [**Gestión de tráfico**](traffic-management/README.md): Características avanzadas de gestión de tráfico
-2. [**Seguridad**](security/README.md): mTLS y autenticación/autorización
-3. [**Observabilidad**](observability/README.md): Recopilación de métricas, registros y trazas
+1. [**Gestión del tráfico**](traffic-management/README.md): Funciones avanzadas de gestión del tráfico.
+2. [**Seguridad**](security/README.md): mTLS, autenticación y autorización.
+3. [**Observabilidad**](observability/README.md): Recopilación de métricas, registros y trazas.
 
 ## Referencias
 
 * [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-* [Prácticas recomendadas de EKS - Redes](https://aws.github.io/aws-eks-best-practices/networking/)
+* [Prácticas recomendadas de EKS: redes](https://docs.aws.amazon.com/eks/latest/best-practices/networking.html)
 * [Documentación de VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/)
 * [Documentación de Cilium](https://docs.cilium.io/)
 * [AWS Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)
+
+* [Anotaciones de Service](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
+* [Anotaciones de Ingress](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/)
+* [v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0)
+* [Metadatos del chart de AWS Load Balancer Controller](https://raw.githubusercontent.com/aws/eks-charts/master/stable/aws-load-balancer-controller/Chart.yaml)
+* [Instalar AWS Load Balancer Controller con Helm: Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html)
+* [Listeners TLS de servicios VPC Lattice: Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)
+* [issue-certificate](https://docs.aws.amazon.com/cli/latest/reference/acm-pca/issue-certificate.html)
+* [get-certificate](https://docs.aws.amazon.com/cli/latest/reference/acm-pca/get-certificate.html)
+* [Configuración de Prometheus para Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup.html)
+* [Recopilar fuentes adicionales de Prometheus e importar sus métricas: Amazon CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html)
+* [Cómo EKS Pod Identity concede acceso a los servicios de AWS: Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+* [Limitar el tráfico de Pods con políticas de red de Kubernetes: Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+* [Proxy DNS](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)

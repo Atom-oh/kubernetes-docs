@@ -1,6 +1,6 @@
 # レート制限
 
-> **最終更新**: September 11, 2026 · Istio 1.31。独立例です。ワークロード/リスナーごとにローカルポリシーを1つ選びます。サイドカーアプリは`default`のHTTP 8080、Gateway例は`istio-system`の`istio: ingressgateway`を持つ専用Gatewayです。適用前に実ラベル/リスナーを確認してください。デプロイ/負荷テストはしていません。
+> **最終更新**: 2026年9月11日 · Istio 1.31。各例は独立しているため、ワークロード/リスナーごとにローカルポリシーを1つ選びます。サイドカーアプリは`default`のHTTP 8080、Gateway例は`istio-system`の`istio: ingressgateway`を持つ専用Gatewayです。適用前に実ラベル/リスナーを確認してください。デプロイ/負荷テストはしていません。
 
 レート制限は要求レートを制限し、サービスを過負荷から保護し、公平なリソース利用と費用制御を図る機能です。
 
@@ -25,9 +25,9 @@
 ### レート制限の目的
 
 1. **サービス保護**: 過負荷防止
-2. **公平性**: 意図的なdescriptor/IDモデルが必要。共有バケットだけではクライアント別公平性にならない。
+2. **公平性**: descriptor と identity を意図的に設計する必要があります。共有バケットだけでは、クライアントごとの公平な制限にはなりません。
 3. **費用制御**: 外部API呼び出し費用の管理
-4. **不正利用の削減**: 選択HTTP要求を制限。エッジ/DDoS保護の代わりや接続/TLS枯渇防止にはならない。
+4. **不正利用の抑制**: 対象となる HTTP リクエストを制限します。エッジ/DDoS 対策の代替にはならず、接続数や TLS 処理の枯渇も防げません。
 
 ## レート制限の種類 {#rate-limiting-types}
 
@@ -36,7 +36,7 @@
 **特性**:
 - Envoyごとに独立制限
 - 高速応答（追加ネットワーク呼び出しなし）
-- 分散環境では上限はインスタンスごとに適用
+- 分散環境では上限は Envoy プロキシごとに適用されます
 
 ```yaml
 # 100 req/s limit per pod
@@ -48,7 +48,7 @@
 
 **特性**:
 - 中央レート制限サーバーを使用
-- 定義domain/descriptorと時間窓の共有カウンター。backend/障害動作が重要
+- 定義した domain/descriptor と時間窓ごとにカウンターを共有します。backend と障害時の動作も実際の制限に影響します
 - 若干の遅延（外部サービス呼び出し）
 
 ```yaml
@@ -60,10 +60,10 @@
 
 | 特性 | ローカルレート制限 | グローバルレート制限 |
 |----------------|---------------------|----------------------|
-| **クォータ範囲** | 設定ローカルバケットごと | 共有domain/descriptor |
+| **クォータ範囲** | 設定したローカルバケット単位 | 共有domain/descriptor |
 | **性能** | 非常に速い | やや遅い |
 | **複雑さ** | 低い | 高い（外部サービスが必要） |
-| **用途** | 一般的保護 | 厳密な制限が必要な場合 |
+| **用途** | 一般的な保護 | 厳密なレート制限が必要な場合 |
 
 ## ローカルレート制限 {#local-rate-limiting}
 
@@ -296,11 +296,11 @@ tier descriptorはローカルプロキシ内のtier共有バケットで、ユ�
 
 ## グローバルレート制限 {#global-rate-limiting}
 
-共有判断サービスにdomain/descriptorを問い合わせます。Gatewayレプリカ間に範囲を広げられますが、自動的にクラスター全要求が対象にはなりません。カウンター保存、窓境界、フェイルオーバー、障害方針が実保証に影響します。
+グローバルレート制限では、定義した domain/descriptor に対する判定を共有サービスへ問い合わせます。複数の Gateway レプリカ間で適用できますが、クラスター内の全リクエストが自動的に対象になるわけではありません。カウンターの保存方法、時間窓の境界、failover、障害時の方針によって、実際の保証範囲が変わります。
 
 ### アーキテクチャ
 
-![クライアント要求がIstio Ingress Gatewayを通り、メモリキャッシュを背後に持つ中央レート制限サーバーへ確認してから許可通信をbackendへ送る構成。](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
+![クライアント要求は Istio Ingress Gateway を通り、メモリキャッシュを利用する中央レート制限サーバーで判定されます。許可された通信は backend service へ転送されます。](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
 
 [🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-2.html)
 
@@ -310,7 +310,7 @@ tier descriptorはローカルプロキシ内のtier共有バケットで、ユ�
 
 図のキャッシュにはRedisなど共有カウンターストアが必要で、独立プロセス内キャッシュでは全体クォータになりません。以下は隔離演習の`redis-ratelimit.istio-system.svc.cluster.local:6379`に**Redis TCPサービスが利用可能**な前提です。作成、認証/TLS、永続化/HA、切り替えは別要件で、以下では作りません。保護backendには適切なSecret/マウントで固定サービスのREDIS_AUTH/REDIS_TLS/証明書設定を行います。
 
-イメージは公開コミット8fe6ea42（August 24, 2026）で、manifest digest固定、linux/amd64とlinux/arm64対応です。上流はv1.4.0後にsemverリリースでなくコミットタグを使います。認定された安定/本番版という主張ではありません。更新をレビュー・テストします。Deploymentはサイドカー注入を明示要求するためinjector一致と、実メッシュ/ネットワークポリシー下でGatewayがgRPC Serviceへ届くことを確認します。
+イメージは2026年8月24日に公開された commit 8fe6ea42 で、manifest digest に固定され、linux/amd64 と linux/arm64 に対応します。上流はv1.4.0後にsemverリリースでなくコミットタグを使います。認定された安定/本番版という主張ではありません。更新をレビュー・テストします。Deploymentはサイドカー注入を明示要求するためinjector一致と、実メッシュ/ネットワークポリシー下でGatewayがgRPC Serviceへ届くことを確認します。
 
 #### 1. Rate Limitサービスのデプロイ
 
@@ -494,7 +494,7 @@ spec:
           - remote_address: {}
 ```
 
-フィルターはIstio生成gRPCクラスターを使い、通常の検出とメッシュTLSポリシーが適用されます。手作業の平文クラスターは追加しません。`failure_mode_deny: true`は通常、判断サービスエラーでHTTP 500、上限超過で429を返し、falseならfail-openし得ます。100ms予算は例です。Redis timeout、遅延、呼び出し元期限を合わせます。窓境界、Redis再起動/切り替え、サービスレプリカ変更でカウンターを検証します。ConfigMap変更後は再読み込み/再起動を確認し、PodがRunningだけでポリシー読込を推定しないでください。
+フィルターはIstio生成gRPCクラスターを使い、通常のサービスディスカバリーとメッシュ TLS ポリシーが適用されます。手作業の平文クラスターは追加しません。`failure_mode_deny: true`は通常、判断サービスエラーでHTTP 500、上限超過で429を返し、falseならfail-openし得ます。100ms予算は例です。Redis timeout、遅延、呼び出し元期限を合わせます。窓境界、Redis再起動/切り替え、サービスレプリカ変更でカウンターを検証します。ConfigMap変更後は再読み込み/再起動を確認し、PodがRunningだけでポリシー読込を推定しないでください。
 
 ### 主なパラメーター
 
@@ -914,7 +914,7 @@ istioctl proxy-config clusters <gateway-pod> -n istio-system --fqdn ratelimit.is
 kubectl get endpointslice -n istio-system -l kubernetes.io/service-name=ratelimit
 ```
 
-Redisコマンドにはredis-cliとbackend TLS/認証設定を持つ既存の許可クライアントコンテナが必要です。固定イメージはdistrolessで、シェルもredis-cliもありません。サービスログ、`/healthcheck`、読込設定、名前空間セレクター、メッシュポリシー、descriptor一致を確認します。緑のPodや空のデフォルトプロキシログは適用の証明ではありません。
+Redisコマンドにはredis-cliとbackend TLS/認証設定を持つ既存の許可クライアントコンテナが必要です。固定イメージはdistrolessで、シェルもredis-cliもありません。サービスログ、`/healthcheck`、読込設定、名前空間セレクター、メッシュポリシー、descriptor一致を確認します。Pod が正常に見えることやデフォルトの proxy log が空であることは、制限が実際に適用された証拠ではありません。
 
 ## 参考資料
 

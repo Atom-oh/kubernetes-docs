@@ -1,6 +1,6 @@
 # Grafana Loki
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 > **例のベースライン**: Loki 3.7.7 / community Helm chart 18.12.1。ローカルでの設定、レンダリング、LogQL チェックのみを実施。EKS デプロイ、S3 アクセス、負荷テスト、HA/フェイルオーバーテストは未実施。
 
 Loki はログを圧縮チャンクとして保存し、ストリームラベルをインデックス化します。これによりインデックスのオーバーヘッドを削減できる場合がありますが、Elasticsearch/OpenSearch に対して常にコストまたはクエリ速度で優位となるわけではありません。代表的なワークロードで、取り込み、保持、クエリの選択性、オブジェクトリクエスト、コンピューティング、キャッシュ、運用要件を比較してください。
@@ -508,7 +508,7 @@ cluster、namespace、service/app、environment のような有界で有用な�
 
 ラベルごとのカーディナリティの積は、すべての組み合わせが発生し得る場合の**上限**であり、正確なストリーム数ではありません。ストリーム数、取り込みレート、チャンクサイズ、クエリの選択性、cache、ストレージレイテンシはすべてリソース使用量に影響します。古い `<100,000 streams/cluster`、`<10,000/tenant`、`<1,000 values/label` は普遍的な制限ではありません。
 
-Promtail は **March 2, 2026** にサポート終了となりました。Alloy のような保守されている client を使用し、移行ガイドを確認してください。`lambda-promtail` には別のライフサイクルがあります。移行された scrape 設定にも、動作する discovery、RBAC、path/CRI framing、positions、retries、出力認証が必要です。relabel rule だけでは collector になりません。
+Promtail は**2026年3月2日**にサポート終了となりました。Alloy のような保守されている client を使用し、移行ガイドを確認してください。`lambda-promtail` には別のライフサイクルがあります。移行された scrape 設定にも、動作する discovery、RBAC、path/CRI framing、positions、retries、出力認証が必要です。relabel rule だけでは collector になりません。
 
 既存の Alloy pipeline に対し、次の**処理フラグメント**は、フィールドをラベル/structured metadata として使用する前に抽出します。`loki.write.default` がすでに存在し、上流コンポーネントがプレーンなアプリケーション JSON を `loki.process.app.receiver` に転送することを前提としています。完全な設定や CRI parser ではありません。
 

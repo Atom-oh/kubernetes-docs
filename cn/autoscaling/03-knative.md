@@ -1,7 +1,7 @@
 # Knative
 
 > **示例版本**：Serving/Eventing/Kourier 1.23.0；Operator 1.23.1。安装前请确认与 Kubernetes/EKS 的兼容性。
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 目录
 
@@ -605,7 +605,7 @@ Knative 的 KPA 根据观测到的并发数（正在处理的请求）或每秒�
 | `autoscaling.knative.dev/metric` | `"concurrency"` 或 `"rps"` | 选择用于扩缩容的指标。 |
 | `autoscaling.knative.dev/target` | `"100"` | 指标的目标值（例如，每个 Pod 有 100 个并发请求）。 |
 | `autoscaling.knative.dev/target-utilization-percentage` | `"70"` | Autoscaler 会尝试将平均利用率维持在目标值的此百分比。有效目标值 = target * utilization / 100。 |
-| `spec.template.spec.containerConcurrency` |`0`| 每个 Pod 可转发请求的并发数限制；`0` 表示禁用此硬性上限。仍会进行有界等待/拒绝和自动扩缩容。设为1 并不会让应用程序线程或所有副本全局串行运行。 |
+| `spec.template.spec.containerConcurrency` |`0`| 每个 Pod 可转发请求的并发数限制；0 表示禁用此硬性上限。仍会进行有界等待/拒绝和自动扩缩容。设为1 并不会让应用程序线程或所有副本全局串行运行。 |
 
 **扩缩容公式：**
 

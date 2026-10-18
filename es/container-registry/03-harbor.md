@@ -1,23 +1,23 @@
 # Harbor
 
-> **Última actualización**: October 16, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Descripción general
 
-Harbor es un registro de contenedores de código abierto y nativo de la nube que ofrece funciones de nivel empresarial para almacenar, firmar y analizar imágenes de contenedores. Como proyecto Graduado de CNCF, Harbor ha demostrado su madurez, seguridad y adopción en todo el sector.
+Harbor es un registro de contenedores de código abierto, diseñado para la nube, que ofrece funciones empresariales para almacenar, firmar y analizar imágenes de contenedores. Su condición de proyecto Graduated de CNCF refleja su madurez, seguridad y adopción en el sector.
 
 ### Funciones principales
 
 | Función | Descripción |
 |---------|-------------|
-| **Multitenencia** | Aislamiento basado en proyectos con RBAC |
+| **Varios inquilinos** | Aislamiento por proyectos con RBAC |
 | **Análisis de vulnerabilidades** | Analizador Trivy integrado |
-| **Firma de imágenes** | Compatibilidad con Cosign y Notation |
-| **Replicación** | Replicación de envío/recepción entre registros |
-| **Recolección de basura** | Limpieza automatizada de capas no utilizadas |
-| **Caché de proxy** | Almacenamiento en caché de registros remotos (Docker Hub, etc.) |
+| **Firma de imágenes** | Compatible con Cosign y Notation |
+| **Replicación** | Envío y descarga entre registros |
+| **Recolección de basura** | Limpieza automática de capas que ya no se utilizan |
+| **Caché de proxy** | Almacena contenido de registros remotos, como Docker Hub |
 | **Registro de auditoría** | Historial completo de operaciones |
-| **OIDC/LDAP** | Integración de identidad empresarial |
+| **OIDC/LDAP** | Integración con la identidad empresarial |
 | **Gestión de cuotas** | Límites de almacenamiento por proyecto |
 | **Cuentas de robot** | Cuentas de servicio para automatización |
 
@@ -25,7 +25,7 @@ Harbor es un registro de contenedores de código abierto y nativo de la nube que
 
 ![Estructura interna de Harbor: el Portal proporciona acceso a la API Core, que distribuye las solicitudes al Registry, Job Service, PostgreSQL y Redis, mientras que Job Service ejecuta el analizador Trivy.](../.gitbook/assets/en-container-registry-03-harbor-0.png)
 
-[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-0.html)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-0.html)
 
 ### Responsabilidades de los componentes
 
@@ -41,15 +41,15 @@ Harbor es un registro de contenedores de código abierto y nativo de la nube que
 
 ## Instalación con Helm
 
-La versión de referencia revisada el 2026-10-16 es **Harbor 2.15.4 / Helm chart 1.19.2**. Las versiones de la aplicación y del chart son diferentes: el chart más reciente, 1.19.2, sigue usando appVersion 2.15.2 de forma predeterminada, por lo que una instalación predeterminada de Helm no incluye las correcciones de seguridad de 2.15.3 (por ejemplo, GHSA-2phj-cp9f-qq6w). Este ejemplo presupone que ya existen PostgreSQL externo de alta disponibilidad, Redis y almacenamiento compartido; el archivo de valores no los aprovisiona.
+La revisión del 16 de octubre de 2026 utiliza como referencia **Harbor 2.15.4 / Helm chart 1.19.2**. Las versiones de la aplicación y del chart son distintas. En esa revisión, el chart más reciente, 1.19.2, seguía utilizando appVersion 2.15.2 de forma predeterminada; por tanto, instalarlo sin cambiar los valores no incluye las correcciones de seguridad de 2.15.3, como GHSA-2phj-cp9f-qq6w. El ejemplo presupone que ya dispone de PostgreSQL externo de alta disponibilidad, Redis y almacenamiento compartido. El archivo de valores no crea esos recursos.
 
 ### Requisitos previos
 
-- Prepare versiones compatibles de Kubernetes/Helm, DNS, un controlador Ingress con mantenimiento y su `IngressClass`. Configure límites de carga, tiempos de espera y TLS para ese controlador.
-- Cree el Secret de certificado/clave `harbor-tls` en el namespace `harbor`. El certificado debe coincidir con el nombre de host; los clientes y nodos deben confiar en su CA.
-- Dos réplicas de Registry en nodos distintos requieren un **PVC RWX compartido o almacenamiento de objetos**. Compartir un único PVC EBS `gp3` RWO entre nodos no es una configuración de alta disponibilidad.
-- Prepare la base de datos PostgreSQL `registry`, su usuario y la clave `password` en el Secret `harbor-database`. `sslmode: require` solo exige cifrado; valide la confianza en la CA y `verify-full` cuando se requiera validar el certificado y el nombre de host.
-- Redis debe admitir las múltiples bases de datos lógicas que utiliza Harbor. No use un modo Redis Cluster restringido a DB 0. Prepare `REDIS_PASSWORD` en el Secret `harbor-redis` y valide la conectividad TLS. Use `caBundleSecretName` del chart para una CA privada.
+- Prepare versiones compatibles de Kubernetes y Helm, DNS, un controlador Ingress que siga recibiendo mantenimiento y su `IngressClass`. Configure en ese controlador los límites de carga, los tiempos de espera y TLS.
+- Cree el Secret `harbor-tls`, con el certificado y la clave, en el namespace `harbor`. El certificado debe corresponder al nombre de host, y los clientes y los nodos deben confiar en su CA.
+- Dos réplicas de Registry en nodos distintos necesitan un **PVC RWX compartido o almacenamiento de objetos**. Compartir un único PVC EBS `gp3` RWO entre nodos no proporciona alta disponibilidad.
+- Prepare la base de datos PostgreSQL `registry`, su usuario y la clave `password` del Secret `harbor-database`. `sslmode: require` exige cifrado, pero no basta para validar el certificado y el nombre de host. Cuando necesite esa validación, compruebe la confianza en la CA y `verify-full`.
+- Redis debe admitir las distintas bases de datos lógicas que utiliza Harbor. No utilice un modo Redis Cluster limitado a DB 0. Prepare `REDIS_PASSWORD` en el Secret `harbor-redis` y valide la conexión TLS. Para una CA privada, utilice `caBundleSecretName` del chart.
 
 ```bash
 helm repo add harbor https://helm.goharbor.io
@@ -82,9 +82,9 @@ kubectl create secret generic harbor-encryption-key -n harbor \
 rm -rf -- "$HARBOR_SETUP_DIR"
 ```
 
-### values.yaml para producción
+### Archivo values.yaml para producción
 
-Guarde el archivo como `harbor-values.yaml` y reemplace todos los nombres de host de ejemplo y StorageClass. Añada solicitudes/límites de recursos y distribución de Pod según la carga medida y los nodos disponibles. Habilite `serviceMonitor.enabled` solo después de instalar los CRD del Prometheus Operator.
+Guarde el archivo como `harbor-values.yaml` y sustituya todos los nombres de host y StorageClass de ejemplo. Añada solicitudes y límites de recursos y distribuya los Pods según la carga medida y los nodos disponibles. Active `serviceMonitor.enabled` después de instalar los CRD de Prometheus Operator.
 
 ```yaml
 expose:
@@ -163,13 +163,13 @@ docker login harbor.example.com --username admin
 
 ### Actualización de Harbor
 
-Antes de actualizar, compruebe la ruta de actualización compatible en las notas de la versión. Haga copias de seguridad de los metadatos, los datos del registro, la configuración y las claves de cifrado en un punto de recuperación coherente, y pruebe la restauración. Compare los valores antiguos y nuevos del chart y pruebe la renderización y las migraciones en un entorno de pruebas. Fije el chart de destino en `helm upgrade`; una reversión de Helm por sí sola podría no revertir una migración de base de datos.
+Antes de actualizar, consulte en las notas de la versión qué ruta de actualización está admitida. Haga una copia de seguridad de los metadatos, los datos del registro, la configuración y las claves de cifrado en un punto de recuperación coherente, y pruebe la restauración. Compare los valores del chart anterior y del nuevo, y pruebe la generación de manifiestos y las migraciones en un entorno previo a producción. Fije la versión del chart de destino en `helm upgrade`. Una reversión de Helm por sí sola puede no revertir una migración de base de datos.
 
 Notary v1 se eliminó en Harbor 2.9. Cosign y Notation son herramientas externas de firma; sus firmas se almacenan como artefactos OCI en el registro.
 
 ## Proyectos y RBAC
 
-Los ejemplos de API presuponen que se puede acceder a una instancia de prueba de Harbor mediante HTTPS, y que están disponibles `curl` y `jq`. Asigne a `HARBOR_USER` un usuario con los permisos necesarios. `curl --user "$HARBOR_USER"` solicitará la contraseña. Para la automatización, proporcione credenciales de robot con permisos limitados mediante su administrador de secretos, sin registrarlas en los logs.
+Los ejemplos de API presuponen una instancia de prueba de Harbor accesible mediante HTTPS y la disponibilidad de `curl` y `jq`. Asigne a `HARBOR_USER` un usuario con los permisos necesarios. `curl --user "$HARBOR_USER"` solicita la contraseña. Para automatizar, obtenga las credenciales de robot con permisos limitados de su gestor de secretos y evite escribirlas en los registros.
 
 ```bash
 export HARBOR_USER=admin
@@ -205,13 +205,13 @@ curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/projects" \
 
 | Rol | Permisos |
 |------|-------------|
-| **Administrador de proyecto** | Control total: gestión de miembros, políticas e imágenes |
-| **Mantenedor** | Enviar/descargar imágenes, analizarlas y eliminar etiquetas |
-| **Desarrollador** | Enviar/descargar imágenes; no incluye la administración de miembros |
+| **Administrador de proyecto** | Control total sobre miembros, políticas e imágenes |
+| **Mantenedor** | Enviar y descargar imágenes, analizarlas y eliminar etiquetas |
+| **Desarrollador** | Enviar y descargar imágenes; no incluye administrar miembros |
 | **Invitado** | Solo descargar imágenes |
-| **Invitado limitado** | Descargar/leer artefactos; no puede enumerar miembros del proyecto ni logs |
+| **Invitado limitado** | Descargar y leer artefactos; no puede listar miembros ni registros del proyecto |
 
-### Cómo añadir miembros
+### Añadir miembros
 
 ```bash
 # Add user to project
@@ -279,20 +279,20 @@ docker push harbor.example.com/myapp/app:v1.0.0
 
 ## Replicación de imágenes
 
-![Harbor admite dos direcciones de replicación: descargar imágenes desde un registro externo para reflejarlas localmente y enviar imágenes desde un Harbor de origen a un registro remoto para distribuirlas.](../.gitbook/assets/en-container-registry-03-harbor-1.png)
+![Harbor permite replicar en dos direcciones: descargar imágenes de un registro externo para mantener una copia local, o enviarlas desde un Harbor de origen a un registro remoto para distribuirlas.](../.gitbook/assets/en-container-registry-03-harbor-1.png)
 
-[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-1.html)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-1.html)
 
 Harbor admite la replicación bidireccional entre registros.
 
-Los ID de endpoint `1` y `3` que aparecen a continuación son ejemplos: obtenga los ID reales de la respuesta `Location` de creación o de la lista de endpoints. Las expresiones cron programadas tienen seis campos, incluidos los segundos (`0 0 0 * * *`); compruebe la zona horaria de Job Service. La replicación de extracción necesita conectividad con el registro ascendente y no puede importar contenido a una red completamente desconectada. La replicación basada en eventos sigue los eventos locales de envío, cambio de etiqueta y eliminación de Harbor, no los cambios arbitrarios en un registro remoto.
+Los ID de endpoint `1` y `3` del ejemplo son ilustrativos. Obtenga los ID reales de la cabecera `Location` de la respuesta de creación o de la lista de endpoints. Las expresiones cron tienen seis campos, incluidos los segundos (`0 0 0 * * *`); compruebe la zona horaria de Job Service. La replicación de descarga necesita acceso al registro de origen y no puede importar contenido a una red completamente desconectada. La replicación por eventos sigue las operaciones locales de envío, cambio de etiqueta y eliminación en Harbor; no sigue cualquier cambio de un registro remoto.
 
 ### Modos de replicación
 
 | Modo | Descripción | Caso de uso |
 |------|-------------|----------|
-| **Envío** | Harbor envía contenido a un registro remoto | Distribución a ubicaciones periféricas |
-| **Extracción** | Harbor extrae contenido de un registro remoto | Crear una réplica de Docker Hub, sincronizar desde ECR |
+| **Envío** | Harbor envía contenido a un registro remoto | Distribuirlo a ubicaciones periféricas |
+| **Descarga** | Harbor descarga contenido de un registro remoto | Mantener una copia de Docker Hub o sincronizar desde ECR |
 
 ### Configuración de endpoints de replicación
 
@@ -406,8 +406,8 @@ curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/replication/p
 
 Harbor usa Trivy como analizador de vulnerabilidades predeterminado. Trivy analiza:
 
-- Vulnerabilidades de paquetes del sistema operativo (Alpine, Debian, Ubuntu, RHEL, etc.)
-- Dependencias de aplicaciones (npm, pip, gem, maven, módulos go)
+- Vulnerabilidades en paquetes del sistema operativo, como Alpine, Debian, Ubuntu o RHEL.
+- Dependencias de aplicaciones: npm, pip, gem, Maven y módulos de Go.
 
 
 ### Configuración del análisis al enviar imágenes
@@ -435,11 +435,11 @@ curl --fail-with-body --user "$HARBOR_USER" \
   "https://harbor.example.com/api/v2.0/projects/myapp/repositories/app/artifacts/${HARBOR_DIGEST}?with_scan_overview=true"
 ```
 
-El análisis es asíncrono. Compruebe que se haya completado y que la base de datos esté actualizada; un informe vacío o incompleto no significa que el análisis no haya encontrado problemas. A diferencia del ejemplo `app` de un solo componente, los nombres de repositorio anidados, como `team/app`, requieren una doble codificación de URL en la API de Harbor.
+El análisis es asíncrono. Compruebe que haya terminado y que su base de datos esté actualizada. Un informe vacío o incompleto no demuestra que la imagen esté libre de vulnerabilidades. A diferencia del nombre de un solo componente `app`, los nombres de repositorio anidados, como `team/app`, requieren doble codificación de URL en la API de Harbor.
 
-### Listas de permitidos de CVE
+### Listas de excepciones de CVE
 
-Limite las excepciones a CVE aprobados, con un responsable, una justificación y una fecha de vencimiento. La solicitud PUT siguiente reemplaza la lista de permitidos del proyecto, así que primero combine las entradas existentes. Desactiva la reutilización de la lista del sistema y requiere un identificador aprobado y una fecha de vencimiento futura.
+Limite las excepciones a CVE aprobados, cada uno con un responsable, una justificación y una fecha de vencimiento. La solicitud PUT siguiente sustituye la lista de excepciones del proyecto; combine primero las entradas existentes. Además, desactiva la reutilización de la lista del sistema y requiere un identificador aprobado y un vencimiento futuro.
 
 ```bash
 # Review the existing project allowlist before replacing it.
@@ -473,11 +473,11 @@ curl --fail-with-body -X PUT "https://harbor.example.com/api/v2.0/projects/myapp
 # Severity options: none, low, medium, high, critical
 ```
 
-Esta política controla las descargas del registro; no inspecciona ni detiene los contenedores que ya están en ejecución o que usan imágenes almacenadas en caché. El análisis automático por sí solo no habilita el bloqueo de descargas.
+Esta política restringe las descargas desde el registro. No inspecciona ni detiene contenedores que ya estén en funcionamiento o utilicen imágenes en caché. Activar el análisis automático no activa por sí solo el bloqueo de descargas.
 
 ## Firma de imágenes
 
-Las firmas verifican la integridad del artefacto y la identidad de un firmante de confianza. No corrigen vulnerabilidades ni inspeccionan Pods en ejecución. Instale Cosign/Notation siguiendo sus guías oficiales y valide la compatibilidad del formato de firma con Harbor y su motor de políticas.
+Las firmas verifican la integridad de los artefactos y que proceden de un firmante de confianza. No corrigen vulnerabilidades ni inspeccionan Pods en funcionamiento. Instale Cosign o Notation según sus guías oficiales y compruebe que el formato de firma sea compatible con Harbor y con su motor de políticas.
 
 ### Integración con Cosign
 
@@ -490,11 +490,11 @@ cosign sign --key cosign.key "$HARBOR_IMAGE"
 cosign verify --key cosign.pub "$HARBOR_IMAGE"
 ```
 
-La firma sin clave usa una identidad OIDC y un registro de transparencia; la verificación debe limitarse al emisor y la identidad de confianza. Proteja la clave privada y su contraseña en el ejemplo basado en claves. Un entorno completamente desconectado no puede usar directamente un flujo de trabajo que dependa de servicios públicos de Sigstore.
+La firma sin clave utiliza una identidad OIDC y un registro de transparencia. Al verificarla, limite la comprobación a emisores e identidades de confianza. En el ejemplo de firma con clave, proteja tanto la clave privada como su contraseña. Un entorno completamente desconectado no puede utilizar directamente un flujo que dependa de los servicios públicos de Sigstore.
 
 ### Integración con Notation (Notary v2)
 
-Este ejemplo usa un certificado autofirmado destinado únicamente a pruebas. Importe la política de confianza para el almacén de confianza creado por `generate-test` antes de verificar. Las políticas de producción deben usar la gestión de claves/CA de la organización y restricciones explícitas sobre la identidad del firmante.
+Este ejemplo utiliza un certificado autofirmado destinado exclusivamente a pruebas. Antes de verificar, importe la política de confianza para el almacén creado por `generate-test`. En producción, utilice la gestión de CA y claves de la organización y restricciones explícitas sobre la identidad del firmante.
 
 ```bash
 notation version
@@ -519,15 +519,15 @@ notation verify "$HARBOR_IMAGE"
 
 ### Configuración de Cosign en Harbor
 
-Seleccione la política de Cosign o Notation en la sección Configuration del proyecto. Si habilita ambas, se requieren los dos tipos de firma. El chart no tiene una opción `core.cosignKeyFile` para la verificación con clave pública. Distinga las comprobaciones de acceso a firmas del registro de la verificación basada en las claves e identidades de confianza de su organización.
+Seleccione la política de Cosign o de Notation en Configuration del proyecto. Si activa ambas, se necesitan los dos tipos de firma. El chart no dispone de una opción `core.cosignKeyFile` para verificar claves públicas. Distinga las comprobaciones del registro sobre los artefactos de firma asociados de la verificación contra las claves e identidades de confianza de su organización.
 
 ### Aplicación de políticas de Kubernetes
 
-Para aplicar políticas durante el despliegue, configure una política de admisión como Kyverno, tal como se describe en [Seguridad de imágenes](../security/07-image-security.md). Proporcione claves válidas o un emisor/identidad OIDC de confianza, un alcance de imagen exacto y credenciales del registro privado; incluya los contenedores init/efímeros. Valide en modo Audit antes de Enforce, incluidos los casos de clave incorrecta, imagen sin firma y reasignación de etiquetas.
+Para aplicar la política al desplegar, configure una política de admisión, por ejemplo con Kyverno, como se describe en [Seguridad de imágenes](../security/07-image-security.md). Proporcione claves válidas o un emisor y una identidad OIDC de confianza, un alcance de imágenes preciso y credenciales del registro privado. Incluya los contenedores init y efímeros. Valide primero en Audit y después en Enforce, incluidos los casos de clave incorrecta, imagen sin firma y reasignación de una etiqueta.
 
 ## Escenarios de redes aisladas
 
-El instalador sin conexión de Docker Compose y una implementación de Kubernetes con Helm son rutas de instalación distintas. El instalador sin conexión incluye imágenes de Harbor, pero no todos los paquetes de Docker/Compose, charts de Kubernetes, CNI, imágenes de aplicaciones ni bases de datos de Trivy.
+El instalador sin conexión para Docker Compose y el despliegue en Kubernetes mediante Helm son métodos de instalación distintos. El instalador sin conexión incluye las imágenes de Harbor, pero no todos los paquetes de Docker y Compose, charts de Kubernetes, CNI, imágenes de aplicaciones o bases de datos de Trivy.
 
 ### Instalador sin conexión
 
@@ -540,7 +540,7 @@ sha256sum "harbor-offline-installer-v${HARBOR_VERSION}.tgz" > harbor-bundle.sha2
 # Transfer both files through the approved offline transport.
 ```
 
-En el host desconectado, ejecute lo siguiente. Una suma SHA-256 generada localmente verifica la integridad de la transferencia; no reemplaza la verificación de la firma de publicación del editor.
+En el host desconectado, ejecute lo siguiente. Una suma SHA-256 generada localmente permite comprobar la integridad de la transferencia; no sustituye la verificación de la firma de la versión publicada por el proyecto.
 
 ```bash
 sha256sum -c harbor-bundle.sha256
@@ -555,7 +555,7 @@ cp harbor.yml.tmpl harbor.yml
 
 ### Precarga de imágenes para Kubernetes en redes aisladas
 
-Use un binario de kubeadm compatible para enumerar las imágenes del plano de control para la versión exacta de Kubernetes admitida. Añada por separado las imágenes de CNI, CSI, Ingress y monitorización, además de los charts/CRD. Para clústeres que no administra kubeadm, use el inventario de imágenes propio de la distribución.
+Utilice un binario kubeadm compatible para listar las imágenes del plano de control de la versión exacta de Kubernetes admitida. Añada por separado las imágenes de CNI, CSI, Ingress y supervisión, así como los charts y CRD. Para clústeres que no administra kubeadm, utilice el inventario de imágenes de la propia distribución.
 
 ```bash
 : "${K8S_VERSION:?Set the exact supported Kubernetes patch version}"
@@ -564,14 +564,14 @@ kubeadm config images list --kubernetes-version "$K8S_VERSION" > kubeadm-images.
 
 ### Script automatizado de sincronización de imágenes
 
-Asigne explícitamente referencias de origen y destino en un archivo TSV. Volver a etiquetar solo con el nombre base puede provocar colisiones entre registros/espacios de nombres. Estos ejemplos con Bash/Skopeo transfieren todas las plataformas mediante archivos OCI. Las firmas y los referenciadores SBOM requieren una transferencia y verificación aparte según la compatibilidad de las herramientas.
+Asocie explícitamente las referencias de origen y destino en un archivo TSV. Reetiquetar usando solo el nombre base puede provocar colisiones entre registros o namespaces. Estos ejemplos con Bash y Skopeo transfieren todas las plataformas mediante archivos OCI. Los artefactos de firma y SBOM que referencian la imagen requieren transporte y verificación independientes, según lo que admitan las herramientas.
 
 ```text
 # images.tsv: two columns separated by a TAB; replace the internal hostname.
 docker.io/library/nginx:1.30.6	harbor.airgap.local/k8s-system/dockerhub/library/nginx:1.30.6
 ```
 
-En el lado conectado:
+En el entorno conectado:
 
 ```bash
 #!/usr/bin/env bash
@@ -590,7 +590,7 @@ done < images.tsv
 (cd image-bundle && sha256sum image-*.tar import.tsv > SHA256SUMS)
 ```
 
-Después de transferir `image-bundle`, en el lado desconectado:
+Después de transferir `image-bundle`, en el entorno desconectado:
 
 ```bash
 #!/usr/bin/env bash
@@ -604,7 +604,7 @@ while IFS=$'\t' read -r file target; do
 done < import.tsv
 ```
 
-Aplique las URI de imagen internas asignadas a la configuración de Pod/Helm/kubeadm y verifique los resúmenes, las plataformas y las descargas. `--all` solicita todos los manifiestos de plataforma; la conversión de formato puede cambiar un resumen, así que compare los resultados de origen y destino.
+Aplique las URI internas de imagen correspondientes a la configuración de Pod, Helm o kubeadm y compruebe los digests, las plataformas y las descargas. `--all` solicita todos los manifiestos de plataforma. Convertir la representación puede cambiar un digest, por lo que debe comparar los resultados de origen y destino.
 
 ### Actualización de la base de datos de Trivy para redes aisladas
 
@@ -615,7 +615,7 @@ trivy image --cache-dir ./trivy-cache --download-java-db-only
 tar -C trivy-cache -czf trivy-db-bundle.tgz db java-db
 ```
 
-Extraiga el paquete en la raíz de la caché persistente `/home/scanner/.cache/trivy` de cada réplica de Trivy, con los permisos de propietario correctos para `db/trivy.db`, `db/metadata.json`, `java-db/trivy-java.db` y sus metadatos. Detenga el analizador o use un PVC de reemplazo/trabajo init en lugar de sobrescribir una base de datos abierta. El formato `tar -C` anterior evita anidar accidentalmente una ruta de directorio personal dentro de la caché.
+Extraiga el paquete en la raíz de la caché persistente `/home/scanner/.cache/trivy` de cada réplica de Trivy. Asigne el propietario correcto a `db/trivy.db`, `db/metadata.json`, `java-db/trivy-java.db` y sus metadatos. Detenga el analizador o utilice un PVC de sustitución o un trabajo de inicialización; evite sobrescribir una base de datos abierta. La forma `tar -C` anterior evita introducir accidentalmente una ruta de directorio personal dentro de la caché.
 
 ```yaml
 trivy:
@@ -624,11 +624,11 @@ trivy:
   offlineScan: true
 ```
 
-`offlineScan` por sí solo no deshabilita todas las actualizaciones de bases de datos ni crea una base de datos que falte. Establezca un calendario de importación y actualización de las bases de datos y vuelva a analizar tras las actualizaciones. Las claves equivalentes de `harbor.yml` para Compose son `skip_update`, `skip_java_db_update` y `offline_scan`.
+`offlineScan` por sí solo no desactiva todas las actualizaciones ni crea las bases de datos que falten. Establezca un calendario para importar las bases de datos y mantenerlas actualizadas, y vuelva a analizar las imágenes después de actualizarlas. En Compose, las claves equivalentes de `harbor.yml` son `skip_update`, `skip_java_db_update` y `offline_scan`.
 
 ### Configuración de confianza de Containerd
 
-Use referencias explícitas a imágenes de Harbor interno en los manifiestos sin conexión. Redirigir registros externos arbitrarios a `/v2/<project>` no reescribe automáticamente las rutas de los repositorios ni las credenciales. Instale la CA en cada nodo y use la configuración adecuada para la versión de su entorno de ejecución.
+Utilice referencias explícitas a las imágenes del Harbor interno en los manifiestos sin conexión. Redirigir cualquier registro externo a `/v2/<project>` no modifica automáticamente las rutas de repositorio ni las credenciales. Instale la CA en cada nodo y utilice la configuración apropiada para su versión del entorno de ejecución.
 
 ```toml
 # containerd 2.x: /etc/containerd/config.toml
@@ -645,7 +645,7 @@ server = "https://harbor.airgap.local"
   ca = "/etc/containerd/certs.d/harbor.airgap.local/ca.crt"
 ```
 
-Reinicie containerd siguiendo el procedimiento de mantenimiento de nodos al cambiar `config_path` y, después, verifique una descarga real mediante CRI. Proporcione credenciales de solo lectura limitadas al namespace mediante `imagePullSecrets`.
+Cuando cambie `config_path`, reinicie containerd según el procedimiento de mantenimiento de nodos y compruebe después una descarga real mediante CRI. Proporcione credenciales limitadas a la descarga de imágenes y al namespace mediante `imagePullSecrets`.
 
 ## Integración de Harbor con Kubernetes
 
@@ -710,9 +710,9 @@ spec:
 
 ### Configuración de la caché de proxy
 
-![Una solicitud de descarga de un cliente llega a la caché de proxy de Harbor; si hay una coincidencia en la caché, la imagen almacenada se devuelve directamente, mientras que, si no la hay, la imagen se obtiene del registro ascendente, se guarda en Harbor y después se devuelve al cliente.](../.gitbook/assets/en-container-registry-03-harbor-2.png)
+![Una solicitud de descarga llega a la caché de proxy de Harbor. Si la imagen está en caché, se devuelve directamente. Si no está, Harbor la obtiene del registro de origen, la almacena y después la devuelve al cliente.](../.gitbook/assets/en-container-registry-03-harbor-2.png)
 
-[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-2.html)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-2.html)
 
 Configure Harbor como caché de proxy para registros externos:
 
@@ -730,11 +730,11 @@ curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/projects" \
   }'
 ```
 
-Descargue desde la ruta explícita del proxy, por ejemplo, `harbor.example.com/dockerhub-proxy/library/nginx:1.30.6`. Si no hay una coincidencia en la caché, se requiere acceso ascendente. La vigencia del contenido almacenado en caché, el comportamiento ante eliminaciones en el registro ascendente y la autenticación dependen de la configuración del proyecto de proxy; esto no garantiza que todo el contenido esté disponible sin conexión.
+Descargue mediante la ruta explícita del proxy, por ejemplo `harbor.example.com/dockerhub-proxy/library/nginx:1.30.6`. Si el contenido no está en caché, se necesita acceso al registro de origen. La actualización del contenido en caché, el comportamiento ante eliminaciones en origen y la autenticación dependen de la configuración del proyecto de proxy. La caché no garantiza disponer de todo el contenido sin conexión.
 
 ### Recolección de basura
 
-GC recupera los blobs sin referencias. `delete_untagged` también elimina artefactos sin etiquetas, que aún podrían estar implementados por resumen. Proteja primero las imágenes implementadas o necesarias para una reversión. El siguiente ejemplo realiza una ejecución de prueba sin eliminar nada.
+GC recupera el espacio de los blobs que ya no tienen referencias. `delete_untagged` elimina además los artefactos sin etiquetas, aunque puedan seguir desplegados mediante su digest. Proteja primero las imágenes desplegadas y las necesarias para una reversión. El ejemplo siguiente ejecuta una simulación sin borrar contenido.
 
 ```bash
 curl --fail-with-body --user "$HARBOR_USER" -X POST \
@@ -745,13 +745,13 @@ curl --fail-with-body --user "$HARBOR_USER" -X POST \
 curl --fail-with-body --user "$HARBOR_USER"   'https://harbor.example.com/api/v2.0/system/gc'
 ```
 
-Revise los resultados antes de configurar una ejecución o programación real en la interfaz de usuario. Harbor permite operaciones de envío/descarga durante GC, pero la carga de E/S y el periodo de protección de las cargas recientes pueden retrasar la recuperación de espacio.
+Revise los resultados antes de configurar una ejecución real o una programación en la interfaz. Harbor permite envíos y descargas durante GC, pero la carga de E/S y el período de protección de cargas recientes pueden retrasar la recuperación de espacio.
 
 ### Políticas de retención de etiquetas
 
-En la vista Policy → Tag Retention del proyecto, defina qué se debe **conservar**. Si combina las 10 cargas más recientes con los últimos 30 días, se conservará la **unión/OR** de ambos conjuntos, posiblemente más de 10 artefactos. Use Dry Run para revisar las etiquetas/artefactos excluidos, las relaciones entre firmas y los resúmenes implementados o necesarios para una reversión.
+En Policy → Tag Retention del proyecto, defina qué debe **conservarse**. Combinar los 10 envíos más recientes con los de los últimos 30 días conserva la **unión de ambos conjuntos, mediante OR**, por lo que pueden quedar más de 10 artefactos. Utilice Dry Run para revisar las etiquetas y los artefactos excluidos, sus relaciones con las firmas y los digests desplegados o necesarios para una reversión.
 
-El endpoint de creación de políticas es `/api/v2.0/retentions`, no un endpoint `/tag-retention` del proyecto. En lugar de crear una política con un ID de proyecto supuesto, inspeccione y ejecute una prueba de una política existente configurada en la interfaz de usuario.
+El endpoint para crear políticas es `/api/v2.0/retentions`, no `/tag-retention` dentro del proyecto. En lugar de crear una política con un ID de proyecto supuesto, inspeccione una política existente configurada en la interfaz y ejecute su simulación.
 
 ```bash
 curl --fail-with-body --user "$HARBOR_USER" \
@@ -769,39 +769,39 @@ curl --fail-with-body --user "$HARBOR_USER" -X POST \
 
 ### Alta disponibilidad
 
-Distribuya al menos dos réplicas de portal/core/jobservice/registry y valide la conmutación por error de PostgreSQL, Redis y el propio almacenamiento compartido. Para S3, configure `persistence.imageChartStorage.type: s3`, el bucket/la región y una identidad IAM explícita para el Pod de registry o `existingSecret`. No incluya claves de larga duración en los valores. IRSA/Pod Identity requiere compatibilidad con el SDK en la imagen de registry, el ServiceAccount correcto y permisos de S3 con alcance limitado; omitir las claves estáticas no configura por sí solo un rol de IAM.
+Distribuya al menos dos réplicas de portal, core, jobservice y registry y valide la conmutación ante fallos de PostgreSQL, Redis y del propio almacenamiento compartido. Para S3, configure `persistence.imageChartStorage.type: s3`, el bucket y la región, además de una identidad IAM explícita para el Pod del registro o `existingSecret`. Evite incluir claves de larga duración en los valores. IRSA o Pod Identity requieren un SDK compatible en la imagen del registro, el ServiceAccount correcto y permisos limitados de S3. Omitir las claves estáticas no configura automáticamente un rol de IAM.
 
 ### Endurecimiento de la seguridad
 
-Use TLS externo/interno, OIDC/LDAP, robots con permisos limitados y caducidad, registros de auditoría y gestión de parches. Elabore las NetworkPolicies a partir de las etiquetas de Pod/puertos de contenedor renderizados y de los flujos necesarios de DNS, core/registry/jobservice, PostgreSQL/Redis, base de datos del analizador y replicación. Una política general limitada al puerto 443 puede interrumpir el tráfico interno y DNS. Gestione los requisitos de contraseña/MFA mediante el proveedor de identidad en lugar de suponer que Harbor dispone de controles no documentados en la interfaz de usuario.
+Utilice TLS externo e interno, OIDC o LDAP, cuentas de robot con permisos limitados y vencimiento, registros de auditoría y gestión de parches. Diseñe las NetworkPolicies a partir de las etiquetas de Pods y los puertos de contenedor de los manifiestos generados. Incluya los flujos necesarios de DNS, core, registry, jobservice, PostgreSQL, Redis, la base de datos del analizador y la replicación. Permitir únicamente el puerto 443 puede impedir el tráfico interno y DNS. Gestione las contraseñas y MFA mediante el proveedor de identidad; no presuponga controles de Harbor que no estén documentados.
 
 ### Estrategia de copias de seguridad
 
-Coordine las escrituras, la replicación y GC para capturar un punto de recuperación coherente de PostgreSQL, los blobs del registro, la configuración, TLS y las claves de cifrado. Los valores de Helm no hacen copias de seguridad de bases de datos ni imágenes; el versionado de S3 o `aws s3 sync` por sí solos no garantizan una instantánea coherente. El YAML de Secret solo está codificado en base64, así que guárdelo en una copia de seguridad cifrada y con acceso controlado. Pruebe la restauración de proyectos/autenticación de robots, descargas por resumen, firmas, políticas y resultados de análisis.
+Coordine las escrituras, la replicación y GC para obtener un punto de recuperación coherente de PostgreSQL, los blobs del registro, la configuración, TLS y las claves de cifrado. Los valores de Helm no hacen copias de seguridad de las bases de datos o las imágenes. Tampoco el versionado de S3 ni `aws s3 sync` garantizan por sí solos una instantánea coherente. El YAML de un Secret solo codifica sus datos en base64; guárdelo en una copia cifrada con acceso controlado. Pruebe la restauración de proyectos, la autenticación de robots, las descargas por digest, las firmas, las políticas y los resultados de análisis.
 
 ### Supervisión
 
-Use `metrics.enabled` del chart y, si existen los CRD del Operator, `metrics.serviceMonitor.enabled`. Inspeccione los ServiceMonitor/puertos de Service generados en lugar de suponer un puerto `http-metrics`. Haga coincidir los selectores de ServiceMonitor de Prometheus y de namespace. Supervise la capacidad de almacenamiento/base de datos, los errores de replicación/análisis/GC, los retrasos en las colas, la vigencia de la base de datos de Trivy y el vencimiento de certificados/robots.
+Utilice `metrics.enabled` del chart y, cuando estén instalados los CRD de Operator, `metrics.serviceMonitor.enabled`. Inspeccione los puertos de ServiceMonitor y Service generados en lugar de suponer un puerto `http-metrics`. Ajuste los selectores de ServiceMonitor y namespace de Prometheus. Supervise la capacidad de almacenamiento y base de datos, los fallos de replicación, análisis y GC, los retrasos en las colas, la actualización de la base de datos de Trivy y el vencimiento de certificados y cuentas de robot.
 
 ## Resumen
 
 Harbor ofrece una solución completa de registro de contenedores de nivel empresarial que destaca por:
 
-- **Seguridad**: análisis de vulnerabilidades, firma de imágenes y RBAC integrados
-- **Flexibilidad**: autohospedado, con control total sobre los datos y la infraestructura
-- **Compatibilidad con redes aisladas**: diseñado para entornos desconectados
-- **Multitenencia**: aislamiento basado en proyectos con control de acceso granular
-- **Integración**: replicación mediante adaptadores de registro y formatos de artefactos compatibles
+- **Seguridad**: análisis de vulnerabilidades, firma de imágenes y RBAC integrados.
+- **Flexibilidad**: alojamiento propio, con control total de los datos y la infraestructura.
+- **Entornos sin conexión**: diseñado para redes desconectadas.
+- **Varios inquilinos**: aislamiento por proyectos con control de acceso detallado.
+- **Integración**: replicación mediante adaptadores de registro y formatos de artefactos compatibles.
 
 ### Cuándo elegir Harbor
 
 | Escenario | Recomendación |
 |----------|----------------|
-| Entorno aislado de la red | Harbor u otro registro autohospedado compatible |
-| Soberanía estricta de los datos | Harbor |
-| Implementación multinube | Harbor |
-| Nativo de AWS con EKS | Considere primero ECR; Harbor para funciones avanzadas |
-| Equipo pequeño con operaciones limitadas | Docker Hub o ECR |
+| Entorno desconectado | Harbor u otro registro compatible con alojamiento propio |
+| Requisitos estrictos de soberanía de datos | Harbor |
+| Despliegue en varias nubes | Harbor |
+| Entorno nativo de AWS con EKS | Considere primero ECR; Harbor para funciones avanzadas |
+| Equipo pequeño con poca capacidad operativa | Docker Hub o ECR |
 | Empresa con requisitos de cumplimiento | Harbor o ECR |
 
 ### Puntos clave
