@@ -239,7 +239,7 @@ const config = defineConfig({
       : []
   },
   sitemap: {
-    hostname: 'https://www.atomai.click/kubernetes-docs/',
+    hostname: 'https://docs.atomai.click/kubernetes-docs/',
     // Stamp each entry with the document's own "last updated" header so
     // recrawls follow real edits instead of the whole tree looking equally old.
     // VitePress derives xhtml:link alternates from the locales config, but with
@@ -254,11 +254,14 @@ const config = defineConfig({
       })
   },
   head: [
+    // The same build is also published on GitHub Pages (www.atomai.click). Send those visitors to
+    // docs.atomai.click on the same path; canonical and sitemap URLs already point there.
+    ['script', {}, `if(location.hostname==='www.atomai.click'){location.replace('https://docs.atomai.click'+location.pathname+location.search+location.hash)}`],
     ['link', { rel: 'icon', type: 'image/x-icon', sizes: '16x16 32x32 48x48', href: '/kubernetes-docs/favicon.ico' }],
     ['link', { rel: 'icon', type: 'image/svg+xml', sizes: 'any', href: FAVICON }],
-    ['link', { rel: 'alternate', type: 'text/plain', title: 'LLM documentation index', href: 'https://www.atomai.click/kubernetes-docs/llms.txt' }],
-    ['link', { rel: 'alternate', type: 'application/json', title: 'Document manifest', href: 'https://www.atomai.click/kubernetes-docs/llms/manifest.json' }],
-    ['link', { rel: 'sitemap', type: 'application/xml', title: 'Sitemap', href: 'https://www.atomai.click/kubernetes-docs/sitemap.xml' }],
+    ['link', { rel: 'alternate', type: 'text/plain', title: 'LLM documentation index', href: 'https://docs.atomai.click/kubernetes-docs/llms.txt' }],
+    ['link', { rel: 'alternate', type: 'application/json', title: 'Document manifest', href: 'https://docs.atomai.click/kubernetes-docs/llms/manifest.json' }],
+    ['link', { rel: 'sitemap', type: 'application/xml', title: 'Sitemap', href: 'https://docs.atomai.click/kubernetes-docs/sitemap.xml' }],
     ['script', { async: '', src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}` }],
     ['script', {}, `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${GA_ID}');`],
     ['script', { async: '', src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`, crossorigin: 'anonymous' }]

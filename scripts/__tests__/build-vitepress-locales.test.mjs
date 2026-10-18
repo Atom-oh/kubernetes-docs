@@ -44,11 +44,11 @@ test('locale build outputs are merged with a combined sitemap', async () => {
     await writeFile(path.join(enOutput, 'assets', 'en.js'), 'en')
     await writeFile(
       path.join(koOutput, 'sitemap.xml'),
-      sitemap('https://www.atomai.click/kubernetes-docs/ko/')
+      sitemap('https://docs.atomai.click/kubernetes-docs/ko/')
     )
     await writeFile(
       path.join(enOutput, 'sitemap.xml'),
-      sitemap('https://www.atomai.click/kubernetes-docs/en/')
+      sitemap('https://docs.atomai.click/kubernetes-docs/en/')
     )
 
     await mergeLocaleOutputs([koOutput, enOutput], dist)
@@ -68,8 +68,8 @@ test('locale build outputs are merged with a combined sitemap', async () => {
     assert.deepEqual(
       items.map(({ url }) => url).sort(),
       [
-        'https://www.atomai.click/kubernetes-docs/en/',
-        'https://www.atomai.click/kubernetes-docs/ko/'
+        'https://docs.atomai.click/kubernetes-docs/en/',
+        'https://docs.atomai.click/kubernetes-docs/ko/'
       ]
     )
   } finally {
@@ -94,8 +94,8 @@ test('move mode merges shared directories and consumes the staging outputs', asy
     await writeFile(path.join(enOutput, 'assets', 'chunks', 'en.js'), 'en')
     await writeFile(path.join(koOutput, 'assets', 'shared.css'), 'from-ko')
     await writeFile(path.join(enOutput, 'assets', 'shared.css'), 'from-en')
-    await writeFile(path.join(koOutput, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/ko/'))
-    await writeFile(path.join(enOutput, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/en/'))
+    await writeFile(path.join(koOutput, 'sitemap.xml'), sitemap('https://docs.atomai.click/kubernetes-docs/ko/'))
+    await writeFile(path.join(enOutput, 'sitemap.xml'), sitemap('https://docs.atomai.click/kubernetes-docs/en/'))
 
     await mergeLocaleOutputs([koOutput, enOutput], dist, { move: true })
 
@@ -109,8 +109,8 @@ test('move mode merges shared directories and consumes the staging outputs', asy
 
     const items = await parseSitemap(createReadStream(path.join(dist, 'sitemap.xml')))
     assert.deepEqual(items.map(({ url }) => url).sort(), [
-      'https://www.atomai.click/kubernetes-docs/en/',
-      'https://www.atomai.click/kubernetes-docs/ko/'
+      'https://docs.atomai.click/kubernetes-docs/en/',
+      'https://docs.atomai.click/kubernetes-docs/ko/'
     ])
   } finally {
     await rm(root, { recursive: true, force: true })
@@ -133,11 +133,11 @@ test('indexed ko/en README URLs redirect to their live section without changing 
   const source = path.join(root, 'source')
   const dist = path.join(root, 'dist')
   const cases = [
-    ['ko/index.html', 'ko/README.html', 'https://www.atomai.click/kubernetes-docs/ko/'],
-    ['en/index.html', 'en/README.html', 'https://www.atomai.click/kubernetes-docs/en/'],
-    ['ko/networking/cilium/index.html', 'ko/networking/cilium/README.html', 'https://www.atomai.click/kubernetes-docs/ko/networking/cilium/'],
-    ['en/networking/cilium/index.html', 'en/networking/cilium/README.html', 'https://www.atomai.click/kubernetes-docs/en/networking/cilium/'],
-    ['en/service-mesh/istio/advanced/index.html', 'en/service-mesh/istio/advanced/README.html', 'https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/']
+    ['ko/index.html', 'ko/README.html', 'https://docs.atomai.click/kubernetes-docs/ko/'],
+    ['en/index.html', 'en/README.html', 'https://docs.atomai.click/kubernetes-docs/en/'],
+    ['ko/networking/cilium/index.html', 'ko/networking/cilium/README.html', 'https://docs.atomai.click/kubernetes-docs/ko/networking/cilium/'],
+    ['en/networking/cilium/index.html', 'en/networking/cilium/README.html', 'https://docs.atomai.click/kubernetes-docs/en/networking/cilium/'],
+    ['en/service-mesh/istio/advanced/index.html', 'en/service-mesh/istio/advanced/README.html', 'https://docs.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/']
   ]
 
   try {
@@ -146,7 +146,7 @@ test('indexed ko/en README URLs redirect to their live section without changing 
       await writeFile(path.join(source, page), `Content of ${page}`)
     }
     await writeFile(path.join(source, 'en/networking/cilium/01-introduction.html'), 'Article')
-    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/en/'))
+    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://docs.atomai.click/kubernetes-docs/en/'))
 
     await mergeLocaleOutputs([source], dist)
 
@@ -163,10 +163,10 @@ test('indexed ko/en README URLs redirect to their live section without changing 
     // directory, rather than chaining through a newly generated README alias.
     const retired = await readFile(path.join(dist, 'cn/networking/cilium/README.html'), 'utf8')
     assert.equal(retired.match(/http-equiv="refresh" content="0; url=([^"]+)"/)?.[1],
-      'https://www.atomai.click/kubernetes-docs/en/networking/cilium/')
+      'https://docs.atomai.click/kubernetes-docs/en/networking/cilium/')
 
     const items = await parseSitemap(createReadStream(path.join(dist, 'sitemap.xml')))
-    assert.deepEqual(items.map(({ url }) => url), ['https://www.atomai.click/kubernetes-docs/en/'])
+    assert.deepEqual(items.map(({ url }) => url), ['https://docs.atomai.click/kubernetes-docs/en/'])
   } finally {
     await rm(root, { recursive: true, force: true })
   }
@@ -182,14 +182,14 @@ test('README compatibility redirects preserve an existing page and tolerate a mi
     await writeFile(path.join(source, 'ko/index.html'), 'Korean home')
     await writeFile(path.join(source, 'ko/README.html'), 'Existing page')
     await writeFile(path.join(source, 'ko/networking/index.html'), 'Networking')
-    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/ko/'))
+    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://docs.atomai.click/kubernetes-docs/ko/'))
 
     await mergeLocaleOutputs([source], dist)
 
     assert.equal(await readFile(path.join(dist, 'ko/README.html'), 'utf8'), 'Existing page')
     const nested = await readFile(path.join(dist, 'ko/networking/README.html'), 'utf8')
     assert.equal(nested.match(/http-equiv="refresh" content="0; url=([^"]+)"/)?.[1],
-      'https://www.atomai.click/kubernetes-docs/ko/networking/')
+      'https://docs.atomai.click/kubernetes-docs/ko/networking/')
   } finally {
     await rm(root, { recursive: true, force: true })
   }
@@ -283,7 +283,7 @@ test('legacy cn/jp/es URLs get redirect stubs to the English page', async () => 
       path.join(dist, 'cn', 'networking', 'calico', '02-architecture.html'),
       'utf8'
     )
-    const target = 'https://www.atomai.click/kubernetes-docs/en/networking/calico/02-architecture'
+    const target = 'https://docs.atomai.click/kubernetes-docs/en/networking/calico/02-architecture'
     assert.match(page, new RegExp(`http-equiv="refresh" content="0; url=${target}"`))
     assert.match(page, new RegExp(`rel="canonical" href="${target}"`))
 
@@ -292,10 +292,10 @@ test('legacy cn/jp/es URLs get redirect stubs to the English page', async () => 
       path.join(dist, 'es', 'networking', 'calico', 'README.html'),
       'utf8'
     )
-    assert.match(legacyReadme, /url=https:\/\/www\.atomai\.click\/kubernetes-docs\/en\/networking\/calico\//)
+    assert.match(legacyReadme, /url=https:\/\/docs\.atomai\.click\/kubernetes-docs\/en\/networking\/calico\//)
 
     const root404 = await readFile(path.join(dist, 'jp', 'index.html'), 'utf8')
-    assert.match(root404, /url=https:\/\/www\.atomai\.click\/kubernetes-docs\/en\//)
+    assert.match(root404, /url=https:\/\/docs\.atomai\.click\/kubernetes-docs\/en\//)
   } finally {
     await rm(root, { recursive: true, force: true })
   }

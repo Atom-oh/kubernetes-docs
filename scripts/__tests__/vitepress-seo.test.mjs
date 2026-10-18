@@ -144,11 +144,11 @@ test('extractDescription returns undefined when the only paragraph is a lead-in'
 test('markdownAlternateUrl points content pages at their raw Markdown twin', () => {
   assert.equal(
     markdownAlternateUrl('ko/core/01-cluster-architecture.md'),
-    'https://www.atomai.click/kubernetes-docs/llms/ko/core/01-cluster-architecture.md'
+    'https://docs.atomai.click/kubernetes-docs/llms/ko/core/01-cluster-architecture.md'
   )
   assert.equal(
     markdownAlternateUrl('en/networking/index.md'),
-    'https://www.atomai.click/kubernetes-docs/llms/en/networking/README.md'
+    'https://docs.atomai.click/kubernetes-docs/llms/en/networking/README.md'
   )
 })
 
@@ -183,7 +183,7 @@ test('normalizeReadmeHref leaves non-README and external links untouched', () =>
   assert.equal(normalizeReadmeHref('NOT-README.md'), 'NOT-README.md')
 })
 
-const HOST = 'https://www.atomai.click/kubernetes-docs/'
+const HOST = 'https://docs.atomai.click/kubernetes-docs/'
 
 test('localeAlternates cross-references ko and en with x-default on ko', () => {
   const fileExists = (p) => p === 'en/networking/cilium/README.md'
@@ -221,13 +221,13 @@ test('localeAlternates ignores pages outside the published locales', () => {
 test('canonicalUrl strips .md and collapses index pages to a directory URL', () => {
   assert.equal(
     canonicalUrl('ko/eks/03-eks-networking-part1.md'),
-    'https://www.atomai.click/kubernetes-docs/ko/eks/03-eks-networking-part1'
+    'https://docs.atomai.click/kubernetes-docs/ko/eks/03-eks-networking-part1'
   )
   assert.equal(
     canonicalUrl('ko/networking/index.md'),
-    'https://www.atomai.click/kubernetes-docs/ko/networking/'
+    'https://docs.atomai.click/kubernetes-docs/ko/networking/'
   )
-  assert.equal(canonicalUrl('index.md'), 'https://www.atomai.click/kubernetes-docs/')
+  assert.equal(canonicalUrl('index.md'), 'https://docs.atomai.click/kubernetes-docs/')
 })
 
 test('extractLastUpdated reads the Korean header date as ISO 8601', () => {
@@ -261,7 +261,7 @@ test('socialHeadTags emit og and twitter pairs with the locale mapped', () => {
   const tags = socialHeadTags({
     title: 'EKS 네트워킹',
     description: 'VPC 구성과 서브넷 설계를 다룹니다.',
-    url: 'https://www.atomai.click/kubernetes-docs/ko/eks/03-eks-networking-part1',
+    url: 'https://docs.atomai.click/kubernetes-docs/ko/eks/03-eks-networking-part1',
     locale: 'ko'
   })
   const find = (key, attr) =>
@@ -304,7 +304,7 @@ test('structuredData emits TechArticle plus BreadcrumbList with ordered position
     structuredData({
       title: 'EKS Networking',
       description: 'Covers VPC configuration.',
-      url: 'https://www.atomai.click/kubernetes-docs/en/eks/03-eks-networking-part1',
+      url: 'https://docs.atomai.click/kubernetes-docs/en/eks/03-eks-networking-part1',
       locale: 'en',
       lastUpdated: '2026-08-01',
       crumbs

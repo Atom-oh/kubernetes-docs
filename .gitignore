@@ -12,3 +12,8 @@ __pycache__/
 public/llms.txt
 public/llms-full-*.txt
 public/llms/
+
+# ask-docs (docs Q&A) build outputs
+build/ask-index/
+infra/ask-docs/cdk.out/
+infra/ask-docs/dist/

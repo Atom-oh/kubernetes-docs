@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 import { supportedLocales } from './site-scope.mjs'
 
-export const siteHostname = 'https://www.atomai.click/kubernetes-docs/'
+export const siteHostname = 'https://docs.atomai.click/kubernetes-docs/'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const MAX_DESCRIPTION_LENGTH = 160

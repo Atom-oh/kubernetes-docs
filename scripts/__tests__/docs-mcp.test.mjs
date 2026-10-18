@@ -29,7 +29,7 @@ test('MCP from an unrelated cwd searches the real corpus and returns cited, pagi
     assert.ok(data.results.length <= 3)
     const hit = data.results.find(result => result.id.includes('01-ebs-gp2-gp3-benchmark'))
     assert.ok(hit, 'known gp2/gp3 benchmark must be discoverable')
-    assert.ok(hit.url.startsWith('https://www.atomai.click/kubernetes-docs/en/'))
+    assert.ok(hit.url.startsWith('https://docs.atomai.click/kubernetes-docs/en/'))
     assert.ok(hit.markdownUrl.endsWith('.md'))
     const first = await client.callTool({ name: 'fetch', arguments: { id: hit.id, maxLength: 500 } })
     const page = JSON.parse(first.content[0].text)

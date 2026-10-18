@@ -1,0 +1,21 @@
+{
+  "name": "ask-docs-infra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Docs Q&A API (Haiku 5.5): CloudFront -> internal ALB -> Lambda, with the chunk index in S3",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "synth": "cdk synth AskDocsNetwork AskDocsData AskDocsApp",
+    "diff": "cdk diff"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.273.0",
+    "constructs": "^10.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "aws-cdk": "^2.1145.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
