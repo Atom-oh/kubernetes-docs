@@ -20,13 +20,18 @@ import MarkdownIt from 'markdown-it'
 // Answers are Markdown from the model: raw HTML is disabled (escaped), and markdown-it rejects
 // javascript:/vbscript:/file:/data: links by default. Images are turned off.
 const md = new MarkdownIt({ html: false, linkify: false, typographer: false }).disable(['image'])
+const COPY = {
+  ko: { title: '문서에 질문하기', placeholder: '궁금한 내용을 입력하세요 (500자 이내)', followUp: '이어서 질문하세요', hint: 'Enter로 보내고 Shift+Enter로 줄을 바꿉니다.', ask: '질문', reset: '새 대화', busy: '답변을 찾는 중…', sources: '참고 문서', error: '답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.' },
+  en: { title: 'Ask the docs', placeholder: 'Type your question (500 characters max)', followUp: 'Ask a follow-up question', hint: 'Enter sends, Shift+Enter adds a line.', ask: 'Ask', reset: 'New conversation', busy: 'Searching the docs…', sources: 'Sources', error: 'Could not get an answer. Please try again shortly.' },
+  cn: { title: '向文档提问', placeholder: '请输入您的问题（500 字以内）', followUp: '继续提问', hint: '按 Enter 发送，按 Shift+Enter 换行。', ask: '提问', reset: '新对话', busy: '正在查找答案…', sources: '参考文档', error: '无法获取答案，请稍后重试。' },
+  jp: { title: 'ドキュメントに質問する', placeholder: '質問を入力してください（500 文字以内）', followUp: '続けて質問してください', hint: 'Enter で送信、Shift+Enter で改行します。', ask: '質問', reset: '新しい会話', busy: '回答を探しています…', sources: '参考ドキュメント', error: '回答を取得できませんでした。しばらくしてからもう一度お試しください。' },
+  es: { title: 'Pregunta a la documentación', placeholder: 'Escribe tu pregunta (máximo 500 caracteres)', followUp: 'Haz otra pregunta', hint: 'Enter envía, Shift+Enter añade una línea.', ask: 'Preguntar', reset: 'Nueva conversación', busy: 'Buscando en la documentación…', sources: 'Fuentes', error: 'No se pudo obtener una respuesta. Inténtalo de nuevo en unos momentos.' },
+} as const
+// Page lang (ko-KR, en-US, zh-CN, ja-JP, es-ES) -> the API's locale keys, which follow the folder names.
+const LOCALE_BY_LANG: Record<string, keyof typeof COPY> = { ko: 'ko', en: 'en', zh: 'cn', ja: 'jp', es: 'es' }
 const { lang } = useData()
-const locale = computed(() => (lang.value.startsWith('ko') ? 'ko' : 'en'))
-const copy = computed(() =>
-  locale.value === 'ko'
-    ? { title: '문서에 질문하기', placeholder: '궁금한 내용을 입력하세요 (500자 이내)', followUp: '이어서 질문하세요', hint: 'Enter로 보내고 Shift+Enter로 줄을 바꿉니다.', ask: '질문', reset: '새 대화', busy: '답변을 찾는 중…', sources: '참고 문서', error: '답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.' }
-    : { title: 'Ask the docs', placeholder: 'Type your question (500 characters max)', followUp: 'Ask a follow-up question', hint: 'Enter sends, Shift+Enter adds a line.', ask: 'Ask', reset: 'New conversation', busy: 'Searching the docs…', sources: 'Sources', error: 'Could not get an answer. Please try again shortly.' }
-)
+const locale = computed(() => LOCALE_BY_LANG[lang.value.slice(0, 2)] ?? 'en')
+const copy = computed(() => COPY[locale.value])
 
 const question = ref('')
 const pending = ref('')
@@ -104,7 +109,8 @@ function reset() {
           <strong>{{ copy.sources }}</strong>
           <!-- Numbered so they match the [n] citations in the answer. -->
           <ol>
-            <li v-for="s in t.sources" :key="s.url"><a :href="s.url">{{ s.title }}{{ s.heading && s.heading !== s.title ? ' · ' + s.heading : '' }}</a></li>
+            <!-- Keyed by position: on cn/jp/es pages two sources can link the same translated page. -->
+            <li v-for="(s, n) in t.sources" :key="n"><a :href="s.url">{{ s.title }}{{ s.heading && s.heading !== s.title ? ' · ' + s.heading : '' }}</a></li>
           </ol>
         </div>
       </article>
