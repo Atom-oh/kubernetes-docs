@@ -1,7 +1,7 @@
 # Parte 4: Katib (ajuste de hiperparámetros y AutoML)
 
 > **Versiones compatibles**: Katib 0.19.0, Kubeflow Community Distribution 26.03.1
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Configuración del entorno del laboratorio
 
@@ -23,9 +23,9 @@ Los nombres de los algoritmos deben coincidir con las entradas instaladas de Kat
 | --- | --- |
 | `random` | Muestreo del espacio o las distribuciones configurados; no necesariamente es uniforme para todos los parámetros |
 | `grid` | Combinaciones finitas; los objetivos, los fallos o los límites de Trial pueden impedir una ejecución exhaustiva |
-| `bayesianoptimization`, `tpe`, `multivariate-tpe` | Diferentes estrategias de candidatos basadas en modelos; no se garantiza que se usen menos Trial ni que se encuentre un óptimo |
+| `bayesianoptimization`, `tpe`, `multivariate-tpe` | Diferentes estrategias de candidatos basadas en modelos; no se garantiza que baste con menos Trial ni que se encuentre un óptimo |
 | `hyperband` | Presupuestos de recursos y reducción sucesiva; el código de entrenamiento debe respetar el parámetro de presupuesto |
-| `cmaes`, `sobol` | Adaptación de la covarianza y muestreo de baja discrepancia, respectivamente; no son el mismo algoritmo |
+| `cmaes`, `sobol` | Estrategia evolutiva con adaptación de la matriz de covarianza y muestreo de baja discrepancia, respectivamente; no son el mismo algoritmo |
 | `pbt` | Entrenamiento basado en poblaciones con requisitos para compartir puntos de control; distinto de CMA-ES |
 | `enas`, `darts` | Algoritmos de búsqueda de arquitecturas con sus propias plantillas y dependencias |
 
@@ -36,7 +36,7 @@ La guía de PBT requiere un volumen RWX y `resumePolicy: FromVolume`. Cambiar el
 | Campo | Significado |
 | --- | --- |
 | `objective` | Nombre de la métrica, maximización o minimización y objetivo opcional |
-| `parameters` | Espacios double/int/discrete/categorical, rangos, listas o distribuciones |
+| `parameters` | Espacios de tipo double/int/discrete/categorical, rangos, listas o distribuciones |
 | `algorithm` | Algoritmo de Suggestion instalado y su configuración |
 | `trialTemplate` | Sustitución de trialParameters y especificación del trabajo, selección del contenedor/Pod principal, condiciones de éxito y fallo |
 | `parallelTrialCount` | Cantidad de Trial procesados simultáneamente, no cantidad de Pod/GPU/EC2 |
@@ -44,7 +44,7 @@ La guía de PBT requiere un volumen RWX y `resumePolicy: FromVolume`. Cambiar el
 | `maxFailedTrialCount` | Umbral de fallos que incluye los Trial fallidos y aquellos sin métricas disponibles |
 | `metricsCollectorSpec` / `earlyStopping` | Informes de métricas y configuración independiente de detención anticipada |
 
-Al alcanzar el objetivo, llegar al límite de Trial completados o agotar las sugerencias, el Experiment puede finalizar correctamente; los umbrales de fallos o los errores de Suggestion pueden hacer que falle. El estado de finalización contabiliza los Trial exitosos, fallidos, cancelados, detenidos anticipadamente y sin métricas disponibles. La política de reanudación y los cambios en la especificación también afectan al ciclo de vida; por eso, no trates `maxTrialCount` como un límite inmutable de creación o gasto de por vida.
+Al alcanzar el objetivo, llegar al límite de Trial completados o agotar las sugerencias, el Experiment puede finalizar correctamente; los umbrales de fallos o los errores de Suggestion pueden hacer que falle. El estado de finalización contabiliza los Trial completados correctamente, fallidos, terminados (killed), detenidos anticipadamente y sin métricas disponibles. La política de reanudación y los cambios en la especificación también afectan al ciclo de vida; por eso, no trates `maxTrialCount` como un límite inmutable de creación o gasto de por vida.
 
 `Succeeded` es el resultado de un bucle de control, no una certificación de la calidad del modelo. `status.currentOptimalTrial` describe la mejor observación recopilada; si faltan métricas, puede que no haya ningún modelo óptimo utilizable.
 
@@ -74,13 +74,13 @@ El controlador de Experiment solicita candidatos mediante recursos Suggestion y 
 | `Custom` | Implementación de recopilador proporcionada por el usuario; el scraping HTTP arbitrario no es una opción predeterminada integrada |
 | `Push` | El código de entrenamiento llama al SDK `report_metrics()` para enviar datos a DB manager; no siempre se requiere un sidecar de recopilador |
 
-La inyección de extracción requiere la etiqueta de espacio de nombres `katib.kubeflow.org/metrics-collector-injection: enabled`, un webhook operativo y la selección correcta del Pod o contenedor de destino. El entrenamiento distribuido requiere una política explícita para el rango que informa las métricas. Valida los nombres de las métricas, el formato numérico, las marcas de tiempo, la conectividad y las políticas. Que un trabajo de entrenamiento finalice correctamente no garantiza que se hayan recopilado métricas.
+La inyección de extracción requiere la etiqueta de espacio de nombres `katib.kubeflow.org/metrics-collector-injection: enabled`, un webhook operativo y la selección correcta del Pod o contenedor de destino. El entrenamiento distribuido requiere una política explícita para determinar qué proceso o rank informa las métricas. Valida los nombres de las métricas, el formato numérico, las marcas de tiempo, la conectividad y las políticas. Que un trabajo de entrenamiento finalice correctamente no garantiza que se hayan recopilado métricas.
 
 ## Capacidad y costos en EKS
 
 La demanda es aproximadamente **cantidad de Trial simultáneos × Pod por Trial × recursos por Pod**, más la sobrecarga de los recopiladores, Suggestion y la base de datos. Si cada Trial tiene dos Pod que solicitan cuatro GPU cada uno, un `parallelTrialCount` de 8 puede solicitar 64 GPU, no ocho.
 
-Si hay Pod pendientes, inspecciona los eventos, las restricciones de programación, las cuotas, la capacidad de NodePool/EC2, los controladores y el estado de inicialización. Karpenter no siempre puede proporcionar capacidad, y una mayor concurrencia no garantiza que se reduzca el tiempo total de ejecución. La detención anticipada puede liberar recursos de los Pod mientras los cargos de EC2 continúan por los nodos retenidos.
+Si hay Pod pendientes, inspecciona los eventos, las restricciones de programación, las cuotas, la capacidad de NodePool/EC2, los controladores de dispositivo y el estado del proceso de arranque. Karpenter no siempre puede proporcionar capacidad, y una mayor concurrencia no garantiza que se reduzca el tiempo total de ejecución. La detención anticipada puede liberar recursos de los Pod mientras los cargos de EC2 continúan por los nodos retenidos.
 
 Configura conjuntamente los criterios del total de Trial, la concurrencia, los reintentos de trabajos, el tamaño del entrenamiento distribuido, los plazos y la retención de datos. Verifica la recopilación de métricas y la terminación con una carga de trabajo pequeña de CPU antes de aumentar la escala de GPU.
 

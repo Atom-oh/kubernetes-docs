@@ -1,110 +1,95 @@
-# EKS Auto Mode Operations Quiz
+# EKS Auto Mode の運用クイズ
 
-> **関連ドキュメント**: [Operations](../../eks-auto-mode/05-operations.md)
+> **関連ドキュメント**: [運用](../../eks-auto-mode/05-operations.md)
+> **最終更新**: 2026年9月12日
 
-## 選択式問題
+## 選択問題
 
-### 1. 営業時間中の node 中断を最小限に抑えるための NodePool Disruption Budget 設定はどれですか?
+### 1. ソウルの営業時間中に、該当する任意の NodePool 中断を防ぐスケジュール設定はどれですか？
 
 - A) `nodes: "100%"`
-- B) schedule 付きの `nodes: "0"`
+- B) UTC の範囲を正しく指定した `nodes: "0"`
 - C) `consolidateAfter: 0s`
 - D) `consolidationPolicy: Never`
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) schedule 付きの `nodes: "0"`**
+**解答: B) UTC の範囲を正しく指定した `nodes: "0"`**
 
 **解説:**
-schedule と一緒に `nodes: "0"` を設定すると、特定の時間帯に node 中断を完全に防止できます。
+予算を 0 にすると、有効な間は Consolidation や Drift など、該当するグレースフルな中断方式がブロックされます。EC2 の中断、期限切れ、修復、あらゆる手動削除まで止めるものではありません。以下の毎日の UTC 00:00 開始、9 時間の期間は、平日のソウル時間 09:00～18:00 に相当します。1 時間ごとの `9-18` スケジュールに 9 時間の期間を組み合わせると、時間帯が重複して繰り返し開始されます。
 
 ```yaml
-disruption:
-  consolidationPolicy: WhenEmptyOrUnderutilized
-  consolidateAfter: 5m
-  budgets:
-    # Default: Only 10% of total nodes can be disrupted simultaneously
-    - nodes: "10%"
-
-    # Business hours: No disruptions
-    - nodes: "0"
-      schedule: "0 9-18 * * mon-fri"  # Mon-Fri 9-18
-      duration: 9h
+# Fragment of NodePool spec.disruption
+budgets:
+  - nodes: "10%"
+  - nodes: "0"
+    schedule: "0 0 * * mon-fri"
+    duration: 9h
 ```
 
 </details>
 
-### 2. PodDisruptionBudget (PDB) における `minAvailable: 80%` は何を意味しますか?
+### 2. スケーラブルなコントローラーの 6 レプリカを選択する PDB で、`minAvailable: "80%"` は何を意味しますか？
 
-- A) 最大 80% の Pod を実行できる
-- B) 最低 80% の Pod が常に running でなければならない
-- C) Pod 保持の確率が 80%
-- D) Pod を 80 秒間保護する
+- A) 実行可能な Pod は最大 80% である
+- B) Eviction の判定では、切り上げて 5 個の正常なレプリカが必要になる
+- C) 各 Pod が 80% の確率で保持される
+- D) Pod が 80 秒間保護される
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) 最低 80% の Pod が常に running でなければならない**
+**解答: B) Eviction の判定では、切り上げて 5 個の正常なレプリカが必要になる**
 
 **解説:**
-PDB の `minAvailable` は、常に running でなければならない Pod の最小数または割合を指定します。
+コントローラーは 6 の 80% を切り上げ、正常な Ready レプリカが 5 個必要と判断します。これは Eviction API による判定を制約しますが、すべての障害、直接削除、レプリカの作成を制約するわけではありません。`minAvailable` と `maxUnavailable` は意味の異なる代替フィールドであり、両方を設定しないでください。レプリカが 5 個で `minAvailable: 3` の例では、`maxUnavailable: 1` の場合と異なり、最大 2 個まで Eviction が許可されます。
 
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: web-pdb
+  namespace: ops-lab
 spec:
-  minAvailable: 80%
+  minAvailable: "80%"
   selector:
     matchLabels:
-      app: web
+      app: web-app
 ```
 
-または、`maxUnavailable` を使用できます:
-```yaml
-spec:
-  maxUnavailable: 1  # Only 1 Pod can be disrupted simultaneously
-```
+`disruptionsAllowed` が 0 でも、意図した正常なブロックである場合があります。違反と判断する前に、`observedGeneration`、`currentHealthy`、`desiredHealthy` を確認してください。
 
 </details>
 
-### 3. Auto Mode の node 問題を診断するとき、最初に確認すべき resource はどれですか?
+### 3. Auto Mode ノードのプロビジョニング過程を診断するのに役立つリソースはどれですか？
 
-- A) Pod logs
-- B) NodeClaim status
-- C) EC2 console
-- D) CloudWatch metrics
+- A) アプリケーションログのみ
+- B) NodeClaim の conditions と、それに関連する NodePool／NodeClass の情報
+- C) EC2 コンソールのみ
+- D) CloudWatch ウィジェットのみ
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) NodeClaim status**
+**解答: B) NodeClaim の conditions と、それに関連する NodePool／NodeClass の情報**
 
 **解説:**
-NodeClaim は、node provisioning のプロセスと status を追跡する key resource です。
+まず conditions と理由を読み、証拠に応じてスケジューリング制約、NodeClass の準備状況、IAM、ネットワーク設定を調べてください。NodeClaim に一般的な `.status.phase` フィールドはありません。以下では関連ガイドで設定した `KUBE_CONTEXT` を使い、オブジェクト全体を出力する代わりに診断対象のフィールドを選んでいます。
 
 ```bash
-# Check NodeClaim status
-kubectl get nodeclaims
-
-# Check details and events
-kubectl describe nodeclaim <name>
-
-# Check provisioning failure causes
-kubectl get nodeclaims -o yaml | grep -A 10 status
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodeclaims -o json |
+  jq '[.items[] | {name: .metadata.name, uid: .metadata.uid, node: .status.nodeName,
+      pool: .metadata.labels["karpenter.sh/nodepool"], createdAt: .metadata.creationTimestamp,
+      expireAfter: .spec.expireAfter, terminationGracePeriod: .spec.terminationGracePeriod,
+      imageID: .status.imageID,
+      conditions: [.status.conditions[]? | {type,status,reason,lastTransitionTime,observedGeneration}]}]'
 ```
-
-典型的な troubleshooting の順序:
-1. NodeClaim status を確認する
-2. NodePool configuration を確認する
-3. IAM roles/policies を検証する
-4. subnets/security groups を検証する
 
 </details>
 
-### 4. do-not-disrupt annotation の正しい使い方はどれですか?
+### 4. 認識される do-not-disrupt アノテーションはどれですか？
 
 - A) `kubernetes.io/do-not-disrupt: "true"`
 - B) `karpenter.sh/do-not-disrupt: "true"`
@@ -112,156 +97,127 @@ kubectl get nodeclaims -o yaml | grep -A 10 status
 - D) `node.kubernetes.io/exclude-disruption: "true"`
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) `karpenter.sh/do-not-disrupt: "true"`**
+**解答: B) `karpenter.sh/do-not-disrupt: "true"`**
 
 **解説:**
-この annotation を Pod または Node に追加すると、Karpenter の consolidation または drift replacement から除外されます。
+Pod と Node では適用範囲が異なります。Pod のアノテーションは、その Pod の任意の Eviction と、それを含むノードの Consolidation をブロックします。NodeClaim の終了猶予期間があれば、そのような Pod を含むノードの Drift は許可され、最終的には drain が上限時間内に制御されます。Node のアノテーションは、そのノードを任意の中断の対象から除外します。どちらも、期限切れ、中断、修復、手動削除に対する無期限の保証ではありません。Auto Mode には独自の既定の終了猶予期間があるため、未設定だと想定しないでください。
 
 ```yaml
-# Apply to Pod
-apiVersion: v1
-kind: Pod
+# Metadata fragment for a deliberately selected Pod or Node.
+# Review the different Pod/Node semantics before applying.
 metadata:
-  name: critical-pod
   annotations:
     karpenter.sh/do-not-disrupt: "true"
-spec:
-  containers:
-    - name: app
-      image: myapp:latest
-
-# Apply to Node
-kubectl annotate node <node-name> karpenter.sh/do-not-disrupt=true
 ```
+
+この metadata 断片だけでは、実行可能な Pod にはなりません。実際のワークロードに適用する前に、解除や復旧の計画を決めてください。
 
 </details>
 
-### 5. Auto Mode cluster の node status を monitoring するための推奨 tool はどれですか?
+### 5. Auto Mode の運用状況を把握するのに有用な監視方法はどれですか？
 
-- A) kubectl top nodes のみ
-- B) Container Insights + kubectl の組み合わせ
-- C) EC2 console で直接確認する
-- D) AWS CLI のみ
+- A) `kubectl top` のみを使う
+- B) 設定したメトリクス収集・ログ配信と、Kubernetes の状態およびワークロードのシグナルを組み合わせる
+- C) EC2 コンソールのみを使う
+- D) 収集設定をしなくてもすべてのメトリクスが CloudWatch にあると想定する
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) Container Insights + kubectl の組み合わせ**
+**解答: B) 設定したメトリクス収集・ログ配信と、Kubernetes の状態およびワークロードのシグナルを組み合わせる**
 
 **解説:**
-効果的な monitoring には tool を組み合わせて使用します。
-
-```bash
-# Real-time monitoring
-watch -n 5 'echo "=== Pending Pods ===" && \
-kubectl get pods -A --field-selector=status.phase=Pending && \
-echo "=== Node Status ===" && kubectl get nodes -o wide'
-
-# Check resource usage
-kubectl top nodes
-kubectl top pods -A
-
-# Check NodePool status
-kubectl get nodepools
-kubectl describe nodepool <name>
-```
-
-Container Insights metrics:
-- Node CPU/memory utilization
-- Pod scheduling latency
-- Container restart count
+Container Insights、EKS コントロールプレーンメトリクス、kube-state-metrics／node-exporter、管理対象の Auto Mode コンポーネントログには、それぞれ異なる前提条件があります。各データ発行元とディメンションを確認してください。`kubectl top` には正常に動作する Metrics API が必要です。エラーが出ても、metrics-server が存在しない証明にはなりません。管理対象コンポーネントのログには、個別の Vended Logs 配信設定が必要です。スケジューリング遅延とアプリケーション可用性には、適切な計装が必要です。Container Insights を有効にしても、提案されているすべてのシグナルが自動的に得られるわけではありません。
 
 </details>
 
-### 6. Day-2 operations で node updates を自動化するには、どの NodePool field を設定すべきですか?
+### 6. NodePool のどのフィールドで、経過時間に基づく期限切れの対象を設定しますか？
 
 - A) `autoUpdate: true`
-- B) `expireAfter` setting
+- B) `expireAfter`
 - C) `updatePolicy: Rolling`
 - D) `refreshInterval: 24h`
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) `expireAfter` setting**
+**解答: B) `expireAfter`**
 
 **解説:**
-`expireAfter` を設定すると、指定した時間後に node が自動的に置き換えられ、最新の AMI と security patches が適用されます。
+この例では NodeClaim が 168 時間後に期限切れの対象となり、終了処理の期間は別の設定で制限されています。7 日間の中断なし稼働、正確な時刻での置き換え、期限までの最新セキュリティパッチ適用を保証するものではありません。それ以前に Drift、Consolidation、中断が起きる可能性があり、テンプレートを変更しても既存の NodeClaim は書き換わりません。Auto Mode の既定値と最大存続期間、およびアプリケーションの復旧要件を確認してください。
 
 ```yaml
-spec:
-  template:
-    spec:
-      expireAfter: 168h  # Auto-replace after 7 days
+# Fragment of NodePool spec.template.spec
+expireAfter: 168h
+terminationGracePeriod: 24h
 ```
-
-Day-2 operations automation settings:
-- `expireAfter`: 定期的な node replacement
-- `consolidationPolicy`: Cost optimization
-- Disruption Budget: service impact の最小化
 
 </details>
 
-### 7. production environment での rolling updates に推奨される Disruption Budget 設定はどれですか?
+### 7. 複数の該当する NodePool disruption budget はどのように組み合わされますか？
 
-- A) 高速 updates のための `nodes: "100%"`
-- B) 段階的な updates のための `nodes: "10%"` または absolute value
-- C) Disruption Budget を無効にする
-- D) 中程度の速度のための `nodes: "50%"`
+- A) 最後のスケジュール項目が以前の項目を上書きする
+- B) 最も小さい許容値が適用される
+- C) パーセンテージが加算される
+- D) 置き換えノードの数が保証される
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) 段階的な updates のための `nodes: "10%"` または absolute value**
+**解答: B) 最も小さい許容値が適用される**
 
 **解説:**
-production environment では、service impact を最小限に抑えながら段階的に update します。
+常時有効な 10% の上限を、スケジュールされた 30% の予算で緩和することはできません。関連ガイドでは、30% を基準に、ソウル時間の平日に適用する 10% の上限、営業時間の 1 ノード上限、明示的な UTC の月次停止期間を追加しています。ほかの条件を満たすノードが 20 個なら、それぞれの許容数は 6、2、1、0 です。削除中または NotReady のノードは許容値を減らします。これらの予算は、あらゆる強制的な中断を制約するものではありません。
 
 ```yaml
 disruption:
   consolidationPolicy: WhenEmptyOrUnderutilized
   consolidateAfter: 5m
   budgets:
-    # Default: Gradual replacement at 10%
-    - nodes: "10%"
-
-    # Peak hours: More conservative
-    - nodes: "1"
-      schedule: "0 9-18 * * mon-fri"
-      duration: 9h
-
-    # Maintenance window: More aggressive
-    - nodes: "30%"
-      schedule: "0 2-4 * * sun"
-      duration: 2h
+  - nodes: 30%
+  - nodes: 10%
+    schedule: 0 15 * * sun-thu
+    duration: 24h
+  - nodes: '1'
+    schedule: 0 0 * * mon-fri
+    duration: 9h
+  - nodes: '0'
+    schedule: 0 0 1 * *
+    duration: 24h
 ```
 
 </details>
 
-### 8. Auto Mode node 関連の CloudWatch alarms における key metrics はどれですか?
+### 8. 発行元が設定されている場合、ノード関連の運用アラートを定義するのに役立つシグナルはどれですか？
 
-- A) EC2 instance status のみ
-- B) Pending Pod count、node provisioning time、workload availability
-- C) Cost metrics のみ
-- D) Network traffic のみ
+- A) EC2 の状態のみ
+- B) スケジューリング待ち、測定したプロビジョニング遅延、ワークロードの可用性
+- C) コストのみ
+- D) ネットワークトラフィックのみ
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) Pending Pod count、node provisioning time、workload availability**
+**解答: B) スケジューリング待ち、測定したプロビジョニング遅延、ワークロードの可用性**
 
 **解説:**
-Auto Mode operations で monitoring すべき key metrics:
+各アラートについて、データ発行元、ディメンション、統計量、時間範囲、アプリケーションの目標を選んでください。Pending は Unschedulable と同じ意味ではありません。次の数値例は検証されていない計画上のしきい値であり、通常範囲の実測値、Auto Mode の既定値、または Container Insights で必ず得られるメトリクスではありません。
 
-| Metric | Normal Range | Alarm Condition |
-|--------|--------------|-----------------|
-| Pending Pod count | 0-5 | > 10 for 5 min |
-| Node provisioning time | < 90 sec | > 120 sec |
-| Workload availability | > 99.9% | < 99.5% |
-| API response time | < 200ms | > 500ms |
+| シグナル | 以前の計画例 | 以前のアラート例 |
+|--------|----------------|----------------|
+| Pending Pod | 0–5 | 5 分間 >10 |
+| ノードのプロビジョニング時間 | <90 秒 | >120 秒 |
+| ワークロード可用性 | >99.9% | <99.5% |
+| API 応答時間 | <200 ms | >500 ms |
 
-これらの metrics を自動的に収集するには、CloudWatch Container Insights を有効にします。
+メトリクスの欠落や古い収集データを、エラーが 0 件である状態と区別できるようにしてください。関連ガイドでは、メトリクス名を作り上げる代わりに、実際のメトリクスカタログからローカルの CloudWatch ダッシュボード定義を作成します。
 
 </details>
+
+## 参照資料
+
+- [Karpenter の disruption 制御](https://karpenter.sh/v1.14/concepts/disruption/)
+- [Kubernetes PDB の仕様](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
+- [Auto Mode NodePool](https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html)

@@ -4,14 +4,14 @@
 
 1. ¿Por qué se considera una buena práctica usar etiquetas inmutables en los registros de contenedores?
    - A) Reduce los costos de almacenamiento
-   - B) Garantiza que una etiqueta siempre haga referencia al mismo contenido de imagen, lo que permite reproducir las implementaciones
+   - B) Garantiza que una etiqueta siempre haga referencia al mismo contenido de imagen, y hace que los despliegues sean reproducibles
    - C) Acelera la descarga de imágenes
    - D) Kubernetes lo exige
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Garantiza que una etiqueta siempre haga referencia al mismo contenido de imagen, lo que permite reproducir las implementaciones**
+**Respuesta: B) Garantiza que una etiqueta siempre haga referencia al mismo contenido de imagen, y hace que los despliegues sean reproducibles**
 
 **Explicación:**
 La inmutabilidad de etiquetas garantiza que, una vez que se publica una imagen con una etiqueta concreta, esta no pueda sobrescribirse con otra imagen. Fijar además el digest verificado identifica la imagen exacta. Conserva ese artefacto para poder revertir; la inmutabilidad de etiquetas por sí sola no garantiza universalmente la protección contra eliminaciones ni la procedencia. Es una práctica fundamental de seguridad de la cadena de suministro.
@@ -52,17 +52,17 @@ Los mirrors del registro y las cachés pull-through almacenan localmente copias 
 
 4. En una implementación de Kubernetes multirregional, ¿cuál es la estrategia recomendada de recuperación ante desastres para los registros de contenedores?
    - A) Usar un único registro global
-   - B) Replicar las imágenes a registros de cada región y actualizar las implementaciones para que usen registros locales a la región
+   - B) Replicar las imágenes a registros de cada región y actualizar las implementaciones para que usen el registro regional correspondiente
    - C) Almacenar todas las imágenes en S3 y descargarlas directamente
    - D) Usar caché de imágenes en cada nodo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Replicar las imágenes a registros de cada región y actualizar las implementaciones para que usen registros locales a la región**
+**Respuesta: B) Replicar las imágenes a registros de cada región y actualizar las implementaciones para que usen el registro regional correspondiente**
 
 **Explicación:**
-Para la recuperación ante desastres y la alta disponibilidad, las imágenes deben replicarse a registros de cada región de implementación. Así, una interrupción del registro regional no impide implementar en otras regiones, se reduce la latencia de red entre regiones al descargar imágenes y se obtiene independencia de la disponibilidad de registros externos. Las implementaciones deben hacer referencia al endpoint del registro local a la región.
+Para la recuperación ante desastres y la alta disponibilidad, las imágenes deben replicarse a registros de cada región de implementación. Así, una interrupción del registro regional no impide implementar en otras regiones, se reduce la latencia de red entre regiones al descargar imágenes y se obtiene independencia de la disponibilidad de registros externos. Las implementaciones deben hacer referencia al endpoint del registro de esa región.
 
 </details>
 
@@ -116,17 +116,17 @@ Los controladores de admisión como Gatekeeper/OPA, Kyverno o las soluciones de 
 
 8. ¿Qué convención de nomenclatura se recomienda para las etiquetas de imágenes de contenedor?
    - A) UUID aleatorios
-   - B) Versión semántica (v1.2.3) o SHA de confirmación de Git con caracteres de etiqueta válidos
+   - B) Versión semántica (v1.2.3) o SHA del commit de Git con caracteres de etiqueta válidos
    - C) Solo marcas de tiempo
    - D) Iniciales del desarrollador
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Versión semántica (v1.2.3) o SHA de confirmación de Git con caracteres de etiqueta válidos**
+**Respuesta: B) Versión semántica (v1.2.3) o SHA del commit de Git con caracteres de etiqueta válidos**
 
 **Explicación:**
-Una buena convención de etiquetas permite rastrear la imagen implementada hasta el código fuente. Las versiones semánticas (v1.2.3) indican la importancia de la versión. Los SHA de Git ofrecen trazabilidad exacta hasta la confirmación. Combinarlos (v1.2.3-abc1234) o agregar números de compilación (v1.2.3-build.456) proporciona un linaje completo. Esto facilita la depuración, las auditorías y las decisiones de reversión.
+Una buena convención de etiquetas permite rastrear la imagen implementada hasta el código fuente. Las versiones semánticas (v1.2.3) indican la importancia de la versión. Los SHA de Git ofrecen trazabilidad exacta hasta el commit. Combinarlos (v1.2.3-abc1234) o agregar números de compilación (v1.2.3-build.456) proporciona una trazabilidad completa. Esto facilita la depuración, las auditorías y las decisiones de reversión.
 
 </details>
 

@@ -1,6 +1,6 @@
 # Cuestionario sobre Spark Operator
 
-Base: Kubeflow 2.5.2 y Apache operator 1.0.0 / chart 1.8.0.
+Base: Kubeflow 2.5.2 y operador Apache 1.0.0 / chart 1.8.0.
 
 ## 1. ¿Qué relación hay entre los dos operadores de Spark?
 
@@ -18,7 +18,7 @@ Kubeflow usa sparkoperator.k8s.io/v1beta2; este capítulo usa spark.apache.org/v
 
 </details>
 
-## 2. ¿Qué chart acompaña al Apache operator 1.0.0 revisado?
+## 2. ¿Qué chart acompaña al operador Apache 1.0.0 revisado?
 
 - A) Necesariamente 1.0.0
 - B) 2.5.2, como Kubeflow
@@ -30,14 +30,14 @@ Kubeflow usa sparkoperator.k8s.io/v1beta2; este capítulo usa spark.apache.org/v
 
 **Respuesta: D**
 
-Las versiones del chart y de la aplicación son independientes. Comprueba los metadatos de versiones/publicaciones y los recursos renderizados.
+Las versiones del chart y de la aplicación son independientes. Revisa los metadatos de la publicación y del chart, así como los recursos renderizados.
 
 </details>
 
 ## 3. ¿Qué se necesita para Comet o Gluten?
 
 - A) Plugins, imágenes, classpaths y configuración compatibles
-- B) Solo instalar Apache operator
+- B) Solo instalar el operador Apache
 - C) Comportamiento idéntico en todas las arquitecturas y versiones de Spark
 - D) Kubeflow nunca puede ejecutar estas cargas de trabajo
 
@@ -50,7 +50,7 @@ Los ejemplos oficiales tienen requisitos previos adicionales. Elegir un operador
 
 </details>
 
-## 4. ¿Qué afirmación sobre spark-submit simple es correcta?
+## 4. ¿Qué afirmación sobre el uso directo de spark-submit es correcta?
 
 - A) Siempre envía el trabajo y se desconecta
 - B) Puede esperar y mostrar registros; la reconciliación del CR del operador es independiente
@@ -62,7 +62,7 @@ Los ejemplos oficiales tienen requisitos previos adicionales. Elegir un operador
 
 **Respuesta: B**
 
-El envío Native ofrece acceso al estado, los registros y la interfaz de usuario. Un operador agrega gestión del ciclo de vida de CR, controladores programados y reintentos de aplicaciones.
+El envío nativo ofrece acceso al estado, los registros y la interfaz de usuario. Un operador agrega gestión del ciclo de vida de CR, controladores programados y reintentos de aplicaciones.
 
 </details>
 
@@ -103,7 +103,7 @@ El diagrama ilustra Kubeflow. La programación de Kubernetes y la asignación de
 - A) Alinear el espacio de nombres observado, el espacio de nombres del trabajo y RBAC
 - B) Enviar todos los trabajos solo al espacio de nombres de instalación
 - C) Un ClusterRole hace irrelevante el ámbito de observación
-- D) Observar default incluye automáticamente todos los espacios de nombres
+- D) Observar el espacio de nombres default incluye automáticamente todos los espacios de nombres
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -286,7 +286,7 @@ Configura permisos de AWS, confianza o asociación y proveedores de credenciales
 
 **Respuesta: D**
 
-JMX de la carga de trabajo requiere su propio JAR de exporter de la aplicación, configuración y ajustes de scraping.
+JMX de la carga de trabajo requiere su propio JAR de exportador de métricas, configuración y ajustes de recopilación.
 
 </details>
 

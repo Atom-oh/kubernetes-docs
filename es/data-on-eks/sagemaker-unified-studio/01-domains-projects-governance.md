@@ -9,13 +9,13 @@ No generalices ese registro al estado actual de todos los dominios ni a todos lo
 
 | Objeto/rol | Significado |
 | --- | --- |
-| Unified domain / domain unit | Límite de gobernanza y jerarquía organizativa |
-| Project profile / blueprint | Aprovisionamiento de herramientas/entornos y cuentas/regiones permitidas |
-| Project | Colaboración, herramientas y recursos compartidos |
-| User/group profile | Representación del servicio para identidades de SSO o roles de IAM registrados |
-| Membership designation | Roles a nivel de proyecto, como PROJECT_OWNER y PROJECT_CONTRIBUTOR |
-| Project execution role | Identidad que accede a datos/cómputo de AWS para el proyecto |
-| Catalog asset | Metadatos sujetos a gobernanza, como descripciones, esquemas y ubicaciones |
+| Dominio unificado / unidad de dominio | Límite de gobernanza y jerarquía organizativa |
+| Perfil de proyecto / blueprint | Aprovisionamiento de herramientas/entornos y cuentas/regiones permitidas |
+| Proyecto | Colaboración, herramientas y recursos compartidos |
+| Perfil de usuario/grupo | Representación del servicio para identidades de SSO o roles de IAM registrados |
+| Designación de membresía | Roles a nivel de proyecto, como PROJECT_OWNER y PROJECT_CONTRIBUTOR |
+| Rol de ejecución del proyecto | Identidad que accede a datos/cómputo de AWS para el proyecto |
+| Activo del catálogo | Metadatos sujetos a gobernanza, como descripciones, esquemas y ubicaciones |
 
 Primero identifica si la configuración y el inicio de sesión se basan en IAM o en Identity Center.
 Los roles de miembro y de ejecución tienen finalidades distintas, aunque su ARN sea el mismo. Los miembros de un proyecto basado en IAM comparten el acceso a datos/cómputo mediante el rol de ejecución del proyecto; la designación de propietario no aísla automáticamente los permisos de datos de cada usuario. Si se usa, verifica por separado la autorización basada en identidad/Trusted Identity Propagation.
@@ -26,7 +26,7 @@ El tratamiento automático del rol de ejecución de un proyecto no necesariament
 
 ## 2. El nombre de un perfil no demuestra que las herramientas estén listas
 
-All capabilities asigna nombres a una plantilla de blueprints. Los perfiles pueden aprovisionar un blueprint al crear el proyecto o ponerlo a disposición más adelante bajo demanda. Comprueba los servicios, cuentas, regiones, redes y permisos necesarios para usar el perfil.
+El perfil All capabilities identifica una plantilla de blueprints. Los perfiles pueden aprovisionar un blueprint al crear el proyecto o ponerlo a disposición más adelante bajo demanda. Comprueba los servicios, cuentas, regiones, redes y permisos necesarios para usar el perfil.
 
 Selecciona el ID/configuración del perfil previsto en lugar de elegir a ciegas la primera coincidencia de nombre. Un conjunto más pequeño de capacidades puede servir para el experimento de Qwen, sujeto a aprobación organizativa y dependencias reales. Distingue este flujo de las rutas normales de entrenamiento de SageMaker/EKS sin proyectos de Unified Studio.
 

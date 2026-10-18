@@ -1,10 +1,10 @@
 # 第 1 部分：先决条件
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 创建 Amazon EKS 集群有多种方式。本章将介绍如何使用各种工具和方法创建 EKS 集群。
 
-**当前版本：** EKS 1.37 于 October 1, 2026 正式发布。
+**当前版本：** EKS 1.37 于 2026 年 10 月 1 日正式发布。
 
 **示例基线：** 集群创建章节采用经过审查的 EKS 1.36 基线。选择其他受支持的版本前，请检查其与相关工具、节点映像和附加组件的兼容性。
 
@@ -27,7 +27,7 @@
 
 ### 2. IAM 权限
 
-所需权限取决于使用的工具及其管理的资源。授予每项资源的 `eks:*`、`ec2:*`、`iam:*` 和 `cloudformation:*` 权限并不是符合最小权限原则的必要策略。
+所需权限取决于使用的工具及其管理的资源。遵循最小权限原则并不要求对所有资源授予 `eks:*`、`ec2:*`、`iam:*` 和 `cloudformation:*` 这些宽泛权限。
 
 | 任务 | 需要审查的权限范围 |
 | --- | --- |
@@ -37,7 +37,7 @@
 | 创建网络 | 针对新 VPC、子网和安全组的 EC2 操作 |
 | 使用 eksctl/CDK | 相关 CloudFormation 堆栈、执行角色和引导资源 |
 
-预置身份、集群服务角色和节点角色彼此独立。SCP、权限边界和会话策略仍然适用。请根据合成后的模板/计划审查组织的预置权限。Auto Mode 的角色要求与传统节点组有所不同。
+执行资源创建的身份、集群服务角色和节点角色彼此独立。SCP、权限边界和会话策略仍然适用。请根据合成后的模板/计划审查组织用于资源创建的权限。Auto Mode 的角色要求与传统节点组有所不同。
 
 参考资料：[EKS IAM 操作和资源](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html)、[Auto Mode 角色](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
@@ -128,13 +128,13 @@ export AWS_PROFILE=eks-docs
 
 ### 4. VPC 和子网
 
-![EKS VPC 架构图：在两个可用区中，负载均衡器位于公有子网，NAT Gateway 和工作节点位于私有子网。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part1-0.png)
+![EKS VPC 架构图：跨两个可用区展示公有子网中的负载均衡器和私有子网中的工作节点，并单独标示 NAT Gateway。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part1-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part1-0.html)
 
 此图展示的是一种基于 NAT 的网络布局，并不意味着每个集群都必须能够访问互联网。
 
-区域性 EKS 集群需要在同一 VPC 的不同 AZ 中至少有两个子网。每个集群子网至少需要有 6 个可用 IP 地址；AWS 建议至少有 16 个。请为节点、Pods、负载均衡器和升级预留额外地址。启用 VPC DNS 主机名和 DNS 解析。
+区域性 EKS 集群需要在同一 VPC 的不同 AZ 中至少有两个子网。每个集群子网至少需要有 6 个可用 IP 地址；AWS 建议至少有 16 个。请为节点、Pod、负载均衡器和升级预留额外地址。启用 VPC DNS 主机名和 DNS 解析。
 
 并非每个 EKS 集群都必须能够访问互联网。节点和工作负载需要通过 NAT/互联网路径，或必要的 VPC 端点和镜像副本，访问 Kubernetes API、映像和所需的 AWS 服务。通过适当的 DNS 和路由，可从 VPC 或互联网络访问私有 Kubernetes 端点。
 

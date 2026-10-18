@@ -1,256 +1,338 @@
-# Cilium ネットワーキングの概念クイズ
+# Cilium ネットワーク概念クイズ
 
-> **サポート対象バージョン**: Cilium 1.17
-> **最終更新**: February 22, 2026
+> **レビュー基準**: Cilium 1.20.3。
+> **最終レビュー日**: 2026 年 10 月 16 日。
 
-## OSI モデルと基本概念
+[ガイドに戻る](../../../networking/cilium/networking-concepts.md)
 
-1. **Cilium が主に動作する OSI モデルのレイヤーはどれですか？**
-   - A) L2（データリンク層）
-   - B) L3/L4（ネットワーク層/トランスポート層）
-   - C) L7（アプリケーション層）
-   - D) L3 から L7 までのすべてのレイヤー
+## OSI と基本概念
+
+1. **Cilium のポリシー機能について正しい説明はどれですか？**
+
+   - A) 一般的な MAC アドレスファイアウォールのみ
+   - B) プロキシ統合のない L3/L4 のみ
+   - C) HTTP ポリシーのみ
+   - D) L3/L4 制御と、構成されたサポート対象の L7 ルール
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: D) L3 から L7 までのすべてのレイヤー</p>
-   <p><strong>解説</strong>: Cilium は、L3/L4（IP アドレス、ポート）だけでなく、L7（HTTP、gRPC、Kafka など）のレイヤーまでネットワーキングおよびセキュリティ機能を提供します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: D) L3/L4 制御と、構成されたサポート対象の L7 ルール**
+
+   Cilium は L3/L4 の適用に加え、サポート対象の HTTP/gRPC および DNS プロキシ機能を組み合わせます。これは、OSI のすべてのレイヤーを実装するという意味でも、廃止された Kafka L7 API をサポートするという意味でもありません。
+
    </details>
 
-2. **次のうち、L2（データリンク層）アドレスはどれですか？**
+2. **リンク層アドレスはどれですか？**
+
    - A) IP アドレス
    - B) MAC アドレス
    - C) ポート番号
    - D) URL
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) MAC アドレス</p>
-   <p><strong>解説</strong>: MAC（Media Access Control）アドレスはネットワークインターフェイスカードの一意の識別子であり、L2 レイヤーで使用されます。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) MAC アドレス**
+
+   MAC アドレスはリンク層のインターフェイスを識別します。ローカルに割り当てたり変更したりできるため、グローバルな一意性や真正性が保証されるわけではありません。
+
    </details>
 
-3. **次のうち、L3（ネットワーク層）プロトコルはどれですか？**
+3. **ネットワーク層で IP アドレスを提供するプロトコルはどれですか？**
+
    - A) TCP
    - B) UDP
    - C) IP
    - D) HTTP
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) IP</p>
-   <p><strong>解説</strong>: IP（Internet Protocol）は、ネットワーク層（L3）におけるパケットルーティングを担うプロトコルです。</p>
+   <summary>解答を表示</summary>
+
+   **解答: C) IP**
+
+   IP は論理アドレスとネットワーク層でのパケット配送を提供します。TCP と UDP は異なるトランスポート層の通信特性を持ちます。
+
    </details>
 
 ## コンテナネットワーキング
 
-4. **Cilium のデフォルトネットワークモデルは何ですか？**
-   - A) ブリッジモード
-   - B) オーバーレイネットワーク
-   - C) アンダーレイネットワーク
-   - D) Host ネットワーク
+4. **プラットフォーム固有の上書きがない場合、Cilium Helm の一般的なルーティング既定値はどれですか？**
+
+   - A) Docker ブリッジ
+   - B) トンネル／オーバーレイモード
+   - C) 必須の BGP ネイティブモード
+   - D) すべてのワークロードでホストネットワーキング
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) オーバーレイネットワーク</p>
-   <p><strong>解説</strong>: Cilium は、デフォルトで VXLAN または Geneve を使用するオーバーレイネットワークモデルを使用します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) トンネル／オーバーレイモード**
+
+   一般的な既定値はトンネルモードです。プラットフォーム固有のインストールプロファイルで別のモードを選ぶこともできます。これは EKS やクラウド全体で不変の設定ではありません。
+
    </details>
 
-5. **Cilium が使用するデフォルトのオーバーレイプロトコルは何ですか？**
+5. **一般的な Cilium トンネルプロファイルで既定のプロトコルはどれですか？**
+
    - A) VXLAN
    - B) GRE
    - C) IPsec
    - D) MPLS
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) VXLAN</p>
-   <p><strong>解説</strong>: Cilium は、オーバーレイネットワークを構成するために、デフォルトで VXLAN（Virtual Extensible LAN）プロトコルを使用します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: A) VXLAN**
+
+   既定のトンネルプロトコルは VXLAN で、Cilium の既定では UDP ポート 8472 を使います。標準 VXLAN に割り当てられた UDP ポートは 4789 です。
+
    </details>
 
-6. **Cilium の Direct Routing モードの主な利点は何ですか？**
-   - A) より高いセキュリティ
-   - B) より優れた互換性
-   - C) より低いレイテンシーとより高いスループット
-   - D) より簡単なセットアップ
+6. **ネイティブルーティングの具体的な特性はどれですか？**
+
+   - A) 自動暗号化
+   - B) 戻り経路が不要
+   - C) その経路ではオーバーレイのカプセル化がない
+   - D) スループットが必ず向上する
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) より低いレイテンシーとより高いスループット</p>
-   <p><strong>解説</strong>: Direct Routing モードはオーバーレイカプセル化を使用しないため、より低いレイテンシーとより高いスループットを提供します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: C) その経路ではオーバーレイのカプセル化がない**
+
+   ネイティブルーティングはオーバーレイヘッダーを使いませんが、Pod への到達性と戻り経路が正しく設定されている必要があります。性能はワークロードと実装に依存します。
+
    </details>
 
-## IP アドレス管理（IPAM）
+## IPAM
 
-7. **Cilium のデフォルト IPAM モードは何ですか？**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) CRD ベース
-   - D) AWS ENI
+7. **プラットフォーム固有の上書きがない場合、Helm の一般的な IPAM 既定値はどれですか？**
+
+   - A) kubernetes
+   - B) cluster-pool
+   - C) PodCIDR という名前のモード
+   - D) eni
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: B) Cluster Scope</p>
-   <p><strong>解説</strong>: Cilium のデフォルト IPAM モードは Cluster Scope であり、クラスター全体にわたって IP アドレスを一元的に割り当てます。</p>
+   <summary>解答を表示</summary>
+
+   **解答: B) cluster-pool**
+
+   cluster-pool モードでは、Operator がノード CIDR を割り当て、各 Agent がローカルで Pod IP を割り当てます。曖昧な「Cluster Scope」という表現ではなく、実際のモード名を使ってください。
+
    </details>
 
-8. **AWS EKS で Cilium を使用する場合に推奨される IPAM モードは何ですか？**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) AWS ENI
-   - D) CRD ベース
+8. **EC2 ENI と VPC アドレスを使う Cilium IPAM モードはどれですか？**
+
+   - A) Kubernetes host-scope
+   - B) cluster-pool
+   - C) ENI
+   - D) 汎用 CRD ベース
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: C) AWS ENI</p>
-   <p><strong>解説</strong>: AWS EKS では、VPC IP アドレスを Pod に直接割り当てるため、AWS ENI IPAM モードの使用が推奨されます。</p>
+   <summary>解答を表示</summary>
+
+   **解答: C) ENI**
+
+   ENI モードには AWS 固有の前提条件があります。あらゆる EKS コンピューティングモードや CNI チェイニング構成に対する普遍的な推奨ではありません。
+
    </details>
 
-9. **Cilium の IPAM「PodCIDR」モードは、どの Kubernetes 機能を利用しますか？**
-   - A) NodeSpec.PodCIDR
-   - B) NodeSpec.CIDR
-   - C) NodeSpec.Subnet
-   - D) NodeSpec.IPRange
+9. **ipam.mode: kubernetes では、Node のどのフィールドを使いますか？**
+
+   - A) spec.podCIDR / spec.podCIDRs
+   - B) spec.CIDR
+   - C) spec.Subnet
+   - D) spec.IPRange
 
    <details>
-   <summary>回答を表示</summary>
-   <p><strong>回答</strong>: A) NodeSpec.PodCIDR</p>
-   <p><strong>解説</strong>: Cilium の PodCIDR IPAM モードは、Kubernetes が各 Node に割り当てる NodeSpec.PodCIDR フィールドを利用します。</p>
+   <summary>解答を表示</summary>
+
+   **解答: A) spec.podCIDR / spec.podCIDRs**
+
+   Kubernetes がノードの Pod CIDR を割り当てます。Cilium は Kubernetes host-scope IPAM でこれらを使います。PodCIDR は IPAM モードの正式な名前ではありません。
+
    </details>
 
 ## Service とロードバランシング
 
-10. **Cilium の kube-proxy 置換モードで提供されない機能はどれですか？**
-    - A) ClusterIP Service のサポート
-    - B) NodePort Service のサポート
-    - C) LoadBalancer Service のサポート
-    - D) Service mesh 機能
+10. **kube-proxy の置き換えだけでは有効にならない機能はどれですか？**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) Service mesh 機能</p>
-    <p><strong>解説</strong>: Cilium の kube-proxy 置換モードは基本的な Kubernetes Service タイプをサポートしますが、Service mesh 機能は別の Cilium Service Mesh 機能を通じて提供されます。</p>
-    </details>
+   - A) ClusterIP の転送
+   - B) NodePort の転送
+   - C) サポート対象の LoadBalancer Service の転送
+   - D) ワークロードの mTLS
 
-11. **Cilium は Service のロードバランシングにどのアルゴリズムを使用しますか？**
-    - A) ラウンドロビン
-    - B) 最小接続数
-    - C) IP ハッシュ
-    - D) 上記すべて
+   <details>
+   <summary>解答を表示</summary>
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) 上記すべて</p>
-    <p><strong>解説</strong>: Cilium は、ラウンドロビン、最小接続数、IP ハッシュを含むさまざまなロードバランシングアルゴリズムをサポートします。</p>
-    </details>
+   **解答: D) ワークロードの mTLS**
 
-12. **Cilium の Global Service 機能で可能になることは何ですか？**
-    - A) グローバルに分散した Service へのアクセス
-    - B) 複数のクラスター間での Service ロードバランシング
-    - C) グローバル IP アドレスの割り当て
-    - D) グローバルネットワークポリシーの適用
+   Service の転送と、ワークロードの認証／暗号化は別の機能です。外部ロードバランサーのプロビジョニングにも、対応するコントローラーまたはプロバイダーが必要です。
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) 複数のクラスター間での Service ロードバランシング</p>
-    <p><strong>解説</strong>: Cilium の Global Service 機能は、Cluster Mesh を通じて複数のクラスターにまたがる同一 Service のロードバランシングを可能にします。</p>
-    </details>
+   </details>
+
+11. **Cilium の BPF Service ロードバランシングアルゴリズムはどれですか？**
+
+   - A) Random と Maglev
+   - B) Round robin のみ
+   - C) 既定で Least connections
+   - D) Maglev のタイムアウトを定期的にローテーション
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: A) Random と Maglev**
+
+   既定は Random で、サポート対象の経路では Maglev を選択肢として使えます。Envoy のアルゴリズム、ClientIP アフィニティ、アフィニティのタイムアウトは、それぞれ別の概念です。
+
+   </details>
+
+12. **構成済みの Global Service で可能になることは何ですか？**
+
+   - A) 世界中で使えるパブリック IP アドレスの自動割り当て
+   - B) 接続されたクラスター間での Service ロードバランシング
+   - C) すべてのポリシーの自動レプリケーション
+   - D) 共有永続ストレージ
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: B) 接続されたクラスター間での Service ロードバランシング**
+
+   ClusterMesh と、一致する Service 名および namespace が必要です。エンドポイントやキャッシュの動作、障害時の挙動も引き続き検証してください。
+
+   </details>
 
 ## ネットワークポリシー
 
-13. **Cilium ネットワークポリシーの「toCIDR」ルールで許可されるのは何ですか？**
-    - A) 特定の IP アドレス範囲へのトラフィック
-    - B) 特定のドメイン名へのトラフィック
-    - C) 特定の Service へのトラフィック
-    - D) 特定のポートへのトラフィック
+13. **toCIDR が選択するものは何ですか？**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: A) 特定の IP アドレス範囲へのトラフィック</p>
-    <p><strong>解説</strong>: toCIDR ルールは、特定の IP アドレス範囲（CIDR 表記）へのトラフィックを許可するために使用されます。</p>
-    </details>
+   - A) 宛先アドレス範囲
+   - B) 認証済み DNS ホスト名
+   - C) 名前付き Service のみ
+   - D) TCP ポートのみ
 
-14. **Cilium ネットワークポリシーの「toEntities」ルールにおける「world」エンティティは何を意味しますか？**
-    - A) クラスター内部のすべてのエンドポイント
-    - B) すべての外部ネットワーク
-    - C) すべての Node
-    - D) すべての namespace
+   <details>
+   <summary>解答を表示</summary>
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) すべての外部ネットワーク</p>
-    <p><strong>解説</strong>: 「world」エンティティは、クラスターの外部にあるすべてのネットワークを意味します。</p>
-    </details>
+   **解答: A) 宛先アドレス範囲**
 
-15. **Cilium の L7 ポリシーでサポートされていないプロトコルはどれですか？**
-    - A) HTTP
-    - B) gRPC
-    - C) Kafka
-    - D) SMTP
+   CIDR セレクターにはエンドポイントの分類規則があります。このバージョンでは、管理対象のクラスター内 Pod／ノードは既定で除外され、明示的な Beta オプトインで対象にできます。これは認証の仕組みではありません。
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) SMTP</p>
-    <p><strong>解説</strong>: Cilium は HTTP、gRPC、Kafka などの L7 プロトコルをサポートしますが、デフォルトでは SMTP をサポートしません。</p>
-    </details>
+   </details>
 
-## 高度なネットワーキングの概念
+14. **world エンティティが表すものは何ですか？**
 
-16. **Cilium の Transparent Encryption 機能では、どのプロトコルを使用できますか？**
-    - A) IPsec
-    - B) WireGuard
-    - C) A と B の両方
-    - D) TLS
+   - A) 既知のクラスター ID すべて
+   - B) 既知のクラスター／ClusterMesh ID ではない外部エンドポイント
+   - C) Kubernetes ノードすべて
+   - D) namespace すべて
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: C) A と B の両方</p>
-    <p><strong>解説</strong>: Cilium は IPsec と WireGuard の両方を使用して、Node 間のトラフィックを暗号化できます。</p>
-    </details>
+   <details>
+   <summary>解答を表示</summary>
 
-17. **Cilium の Multi-cluster 機能はどの技術を使用しますか？**
-    - A) Cluster Federation
-    - B) Cluster Mesh
-    - C) Multi-cluster Networking
-    - D) Global Cluster
+   **解答: B) 既知のクラスター／ClusterMesh ID ではない外部エンドポイント**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) Cluster Mesh</p>
-    <p><strong>解説</strong>: Cilium は Cluster Mesh 技術を使用して、複数の Kubernetes クラスター間の接続性を提供します。</p>
-    </details>
+   world は、すべてのクラスターにあるすべてのエンドポイントの同義語ではありません。適切なエンティティ／ID の範囲と必要なポートを選んでください。
 
-18. **Cilium の BGP サポートによって可能になることは何ですか？**
-    - A) 外部ルーターとのルート交換
-    - B) LoadBalancer Service の外部 IP アドバタイズメント
-    - C) クラスター間の直接ルーティング
-    - D) 上記すべて
+   </details>
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: D) 上記すべて</p>
-    <p><strong>解説</strong>: Cilium の BGP サポートにより、外部ルーターとのルート交換、LoadBalancer Service の外部 IP アドバタイズメント、およびクラスター間の直接ルーティングが可能になります。</p>
-    </details>
+15. **以前の Cilium L7 機能のうち、廃止されたものはどれですか？**
 
-19. **Cilium の Egress Gateway 機能の主な目的は何ですか？**
-    - A) 外部トラフィックの送信元 IP アドレスを保持すること
-    - B) 外部トラフィックの宛先 IP アドレスを変更すること
-    - C) 外部トラフィックを暗号化すること
-    - D) 外部トラフィックをブロックすること
+   - A) HTTP パス照合
+   - B) DNS クエリルール
+   - C) Kafka トピックルール
+   - D) HTTP メソッド照合
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: A) 外部トラフィックの送信元 IP アドレスを保持すること</p>
-    <p><strong>解説</strong>: Egress Gateway は、Pod からクラスター外部へ送信されるトラフィックを特定の IP に SNAT し、一貫した送信元 IP を提供します。</p>
-    </details>
+   <details>
+   <summary>解答を表示</summary>
 
-20. **Cilium の Host Routing 機能について正しい説明はどれですか？**
-    - A) Host ネットワークと Pod ネットワーク間のルーティング
-    - B) Host 間の直接ルーティング
-    - C) Host ネットワークインターフェイスの保護
-    - D) Host ベースのロードバランシング
+   **解答: C) Kafka トピックルール**
 
-    <details>
-    <summary>回答を表示</summary>
-    <p><strong>回答</strong>: B) Host 間の直接ルーティング</p>
-    <p><strong>解説</strong>: Cilium の Host Routing は、オーバーレイネットワークを使用せずに Host 間の直接ルーティングを提供します。</p>
-    </details>
+   現行のポリシーは、HTTP/gRPC 関連のプロキシ機能と DNS ルールをサポートします。古い Kafka ポリシーの例を現行 API に流用しないでください。
+
+   </details>
+
+## 高度な概念
+
+16. **Cilium のノード間トランスポート暗号化モードの組み合わせはどれですか？**
+
+   - A) HTTP と DNS
+   - B) TCP と UDP
+   - C) IPsec と WireGuard
+   - D) Relay と Prometheus
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: C) IPsec と WireGuard**
+
+   適切なノード暗号化モードを選び、対象範囲を検証してください。SPIRE の相互認証と Beta の ztunnel ワークロード mTLS は役割も前提条件も異なります。
+
+   </details>
+
+17. **Cilium のマルチクラスター用ネットワーキング機能の名称は何ですか？**
+
+   - A) Cluster Federation
+   - B) ClusterMesh
+   - C) Global Cluster
+   - D) NodePort Mesh
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: B) ClusterMesh**
+
+   ClusterMesh はネットワークメタデータを共有し、構成済みのクラスター間接続をサポートします。アドレス設定、信頼関係、アンダーレイの前提条件は別途満たす必要があります。
+
+   </details>
+
+18. **Cilium BGP Control Plane の役割は何ですか？**
+
+   - A) 学習したすべての経路をローカルデータパスに設定する
+   - B) 選択した Pod／Service のプレフィックスをピアにアドバタイズする
+   - C) DNS レコードを自動作成する
+   - D) すべてのクラスター間通信を保証する
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: B) 選択した Pod／Service のプレフィックスをピアにアドバタイズする**
+
+   経路のアドバタイズは、アドレスの割り当てや実際のパケット転送とは別です。ピア側の経路を調べ、両方向の通信をテストしてください。
+
+   </details>
+
+19. **Egress Gateway は、条件に一致する送信トラフィックに何を行いますか？**
+
+   - A) 選択したゲートウェイ IP に SNAT する
+   - B) すべての元の Pod 送信元 IP を保持する
+   - C) 外部向けトラフィックを自動的に暗号化する
+   - D) 前提条件なしでゲートウェイインターフェイスを作成する
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: A) 選択したゲートウェイ IP に SNAT する**
+
+   Egress Gateway はアドレス変換によって、構成した送信元アドレスを提供します。準備済みのインターフェイスと経路に加え、新しい Pod にポリシーが反映されるまでの収束も考慮する必要があります。
+
+   </details>
+
+20. **BPF host routing が最適化するものは何ですか？**
+
+   - A) ネイティブ／オーバーレイ間の自動フォールバック
+   - B) ホスト内部のパケット転送とホストスタックの利用
+   - C) ホストファイアウォールの認可
+   - D) ストレージ暗号化
+
+   <details>
+   <summary>解答を表示</summary>
+
+   **解答: B) ホスト内部のパケット転送とホストスタックの利用**
+
+   BPF host routing は、前提条件と統合上の制約に応じて、ホストスタック／netfilter の一部を迂回できます。ノード間でネイティブルーティングとトンネルルーティングのどちらを選ぶかとは別の機能です。
+
+   </details>

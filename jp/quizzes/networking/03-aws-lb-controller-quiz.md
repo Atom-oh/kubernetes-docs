@@ -1,381 +1,215 @@
 # AWS Load Balancer Controller クイズ
 
-このクイズでは、AWS Load Balancer Controller のアーキテクチャ、ALB/NLB の設定、および運用に関する理解を確認します。
+セルフマネージド版 LBC v3.6.0 ガイドに基づきます。
 
-## クイズ問題
+## 1. AWS Load Balancer Controller が管理するものは何ですか？
 
-### 1. AWS Load Balancer Controller は、既存のどの Kubernetes コンポーネントを置き換えますか？
-
-A. kube-proxy
-B. in-tree AWS cloud provider
-C. CoreDNS
-D. CNI plugin
+- A. ノードのライフサイクルを含む、クラウドプロバイダーのすべての責務
+- B. Kubernetes リソースから調整される、サポート対象の AWS ロードバランサーリソース
+- C. kube-proxy によるパケット転送
+- D. すべての Pod の CoreDNS レコード
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. in-tree AWS cloud provider**
-
-**解説:**
-AWS Load Balancer Controller は、既存の Kubernetes in-tree AWS cloud provider が提供するロードバランサー機能を置き換えます。
-- より多くの機能（高度な ALB、NLB 設定）
-- より迅速な更新とバグ修正
-- AWS services とのより優れた統合
-
-in-tree provider は基本的な ELB Classic のみをサポートしていましたが、AWS Load Balancer Controller は ALB と NLB のすべての機能をサポートします。
+B. LBC は、サポート対象の ALB/NLB、ターゲットグループ、リスナー、および関連リソースを管理します。kube-proxy、CNI、DNS、またはすべてのクラウドコントローラーの責務を置き換えるものではありません。従来の AWS プロバイダーの動作と EKS Auto Mode は別の実装です。LBC がすべての ELB 製品のすべての機能を実装するとは限りません。
 
 </details>
 
-### 2. ALB Ingress における `ip` と `instance` target-type annotation の正しい違いは何ですか？
+## 2. ALB の `ip` ターゲットと `instance` ターゲットの違いは何ですか？
 
-A. `ip` は Pod IP を直接ターゲットにし、`instance` は NodePort 経由でルーティングする
-B. `ip` は NodePort 経由でルーティングし、`instance` は Pod IP を直接ターゲットにする
-C. 両方のオプションは同じように動作する
-D. `ip` は IPv4 のみをサポートし、`instance` は IPv6 のみをサポートする
+- A. `ip` は Pod IP を登録し、`instance` はノードの NodePort を経由する
+- B. `ip` は常に NodePort を経由する
+- C. 両者は同じ
+- D. `instance` は IPv6 専用
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: A. `ip` は Pod IP を直接ターゲットにし、`instance` は NodePort 経由でルーティングする**
-
-**解説:**
-Target Type の比較:
-
-| Target Type | 動作 | 長所 | 短所 |
-|-------------|----------|------|------|
-| `ip` | Pod IP を直接登録 | 低レイテンシ、効率的 | VPC CNI が必要 |
-| `instance` | Node の NodePort にルーティング | 汎用的 | 追加のホップ |
-
-`ip` type を使用する場合は AWS VPC CNI が必要であり、Pod IP は Target Group に直接登録されます。
+A. IP ターゲットには、サポート対象で VPC から到達可能な Pod アドレスと、エンドポイント／ENI の検出が必要です。EKS では Amazon VPC CNI が一般的ですが、互換性のある別の CNI 構成も使用できます。Instance ターゲットには NodePort に対応する Service と適切なノードネットワークが必要です。直接ターゲットにすることで、あらゆるワークロードのレイテンシーが改善すると証明されるわけではありません。
 
 </details>
 
-### 3. AWS Load Balancer Controller に IRSA（IAM Roles for Service Accounts）が必要なのはなぜですか？
+## 3. Controller に IRSA または EKS Pod Identity 経由の IAM ロールが必要なのはなぜですか？
 
-A. Pod 間通信のため
-B. Controller がリソースを作成・管理するために AWS API を呼び出すため
-C. Kubernetes API server 認証のため
-D. TLS certificate 管理のため
+- A. Pod ネットワーキングを置き換えるため
+- B. AWS API 呼び出しを認証し、認可するため
+- C. Kubernetes RBAC を置き換えるため
+- D. すべてのバックエンドリクエストを認証するため
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. Controller がリソースを作成・管理するために AWS API を呼び出すため**
-
-**解説:**
-AWS Load Balancer Controller は、次のために AWS API を呼び出す必要があります。
-- ALB/NLB の作成と管理
-- Target Groups の作成とターゲットの登録
-- Listeners とルールの設定
-- security groups の管理
-- ACM certificates の照会
-
-IRSA で IAM Role を Service Account にリンクすると:
-- Pods が AWS API に認証できる
-- 最小権限の原則を適用できる
-- クラスター全体の nodes ではなく、特定の Pods に権限を付与できる
+B. Controller はロードバランサー、ターゲットグループ、リスナー、および関連するセキュリティグループを作成／管理するために AWS API を呼び出します。IRSA とサポート対象の Pod Identity 構成は、どちらかを選択できます。ロールで付与されるのは、そのロールにアタッチされたポリシーの権限です。ロールを使うだけで、そのポリシーが自動的に最小権限になるわけではありません。Kubernetes RBAC とアプリケーション認証は別の仕組みです。
 
 </details>
 
-### 4. 複数の Ingress リソースを単一の ALB に統合するにはどうしますか？
+## 4. 複数の Ingress で 1 つの ALB を共有するにはどうしますか？
 
-A. 同じ namespace にデプロイする
-B. `alb.ingress.kubernetes.io/group.name` annotation を使用する
-C. 同じ IngressClass を使用する
-D. ALB は常に 1 つの Ingress のみをサポートする
+- A. 同じ namespace に配置する
+- B. 同じ `alb.ingress.kubernetes.io/group.name` を使う
+- C. すべての Ingress は常に 1 つの ALB を共有する
+- D. 同じ Pod 名を設定する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. `alb.ingress.kubernetes.io/group.name` annotation を使用する**
-
-**解説:**
-Ingress Group 機能:
-
-```yaml
-# Ingress 1
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "1"
----
-# Ingress 2
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "2"
-```
-
-利点:
-- ALB のコスト削減（複数の services で 1 つの ALB を共有）
-- 集中管理
-- order 指定によるルール優先度の制御
+B. IngressGroup により、ALB とそのルール領域を共有できます。小さい `group.order` の値が先に評価され、値が同じ場合は namespace／name の順になります。グループに参加できる信頼されていないユーザーがルーティングに影響できるため、強制された信頼境界の内側でのみ使ってください。すべての構成でコストが下がると決めつけず、annotation のマージ／排他動作や制限、コストを確認してください。
 
 </details>
 
-### 5. NLB Service で TLS termination を実装するための annotation は何ですか？
+## 5. NLB の TLS 証明書を指定する annotation はどれですか？
 
-A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`
-B. `alb.ingress.kubernetes.io/certificate-arn`
-C. `service.beta.kubernetes.io/aws-load-balancer-tls-termination`
-D. `nlb.kubernetes.io/ssl-certificate`
+- A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`
+- B. `alb.ingress.kubernetes.io/certificate-arn`
+- C. `service.beta.kubernetes.io/aws-load-balancer-tls-termination`
+- D. `nlb.kubernetes.io/ssl-certificate`
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`**
-
-**解説:**
-NLB TLS termination 設定:
+A. セルフマネージド LBC での Service 全体の例です。
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
+  name: nlb-tls-service
+  namespace: default
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:..."
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: '443'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  selector:
+    app: my-app
   ports:
-    - port: 443
-      targetPort: 8080
+  - name: https
+    port: 443
+    targetPort: 8080
+    protocol: TCP
 ```
 
-`alb.ingress.kubernetes.io/certificate-arn` は ALB Ingress 用の annotation です。
+証明書 ARN を置き換え、8080 で待ち受けるバックエンド Pod を用意してください。クライアント側の TLS は NLB で終端します。ここで `tcp` を指定すると、バックエンドへの接続は TLS で暗号化されません。適切な証明書／セキュリティポリシーとネットワーク制御を使ってください。Auto Mode は独自の `loadBalancerClass` とサポート対象 annotation を使用します。
 
 </details>
 
-### 6. TargetGroupBinding CRD の主な目的は何ですか？
+## 6. 独立して作成した TargetGroupBinding の目的は何ですか？
 
-A. 新しい Target Groups を自動的に作成する
-B. 既存の AWS Target Groups を Kubernetes Services に接続する
-C. ALB Listener ルールを定義する
-D. security groups を自動作成する
+- A. すべてのロードバランサーとリスナーを自動作成する
+- B. Kubernetes Service のターゲットを既存のターゲットグループに登録する
+- C. ALB の HTTP リスナールーティングルールを定義する
+- D. IAM 認可を置き換える
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. 既存の AWS Target Groups を Kubernetes Services に接続する**
-
-**解説:**
-TargetGroupBinding のユースケース:
-1. 既存インフラの移行 - 既存の Target Groups を活用
-2. マルチクラスター共有 - 複数のクラスターで 1 つの ALB/NLB を使用
-3. Target Group の直接管理が必要な場合
+B. ロードバランサー、リスナー、ターゲットグループはすでに存在し、Service／ターゲットのプロトコル、アドレスファミリー、ポートに一致している必要があります。
 
 ```yaml
 apiVersion: elbv2.k8s.aws/v1beta1
 kind: TargetGroupBinding
 metadata:
   name: my-tgb
+  namespace: default
 spec:
-  targetGroupARN: arn:aws:elasticloadbalancing:...
+  targetGroupARN: arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-tg/1234567890abcdef
   serviceRef:
     name: my-service
     port: 80
   targetType: ip
 ```
 
+複数のクラスター／TGB で共有するターゲットグループでは、作成時からすべての参加者に `multiClusterTargetGroup: true` が必要です。既定ではターゲットグループ全体を所有するとみなされ、ほかの参加者のターゲットを登録解除する場合があります。`nodeSelector` は instance ターゲットに適用され、IP モードの Pod を絞り込むものではありません。TGB の権限は信頼されたユーザーに限定してください。
+
 </details>
 
-### 7. WAF v2 を ALB Ingress と統合するための annotation は何ですか？
+## 7. ALB にリージョンの WAF v2 Web ACL を関連付ける annotation はどれですか？
 
-A. `alb.ingress.kubernetes.io/waf-acl-id`
-B. `alb.ingress.kubernetes.io/wafv2-acl-arn`
-C. `alb.ingress.kubernetes.io/web-acl`
-D. `alb.ingress.kubernetes.io/firewall-rules`
+- A. `alb.ingress.kubernetes.io/waf-acl-id`
+- B. `alb.ingress.kubernetes.io/wafv2-acl-arn`
+- C. `alb.ingress.kubernetes.io/web-acl`
+- D. `alb.ingress.kubernetes.io/firewall-rules`
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. `alb.ingress.kubernetes.io/wafv2-acl-arn`**
-
-**解説:**
-AWS WAF v2 統合:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-1:ACCOUNT:regional/webacl/my-acl/xxx
-```
-
-WAF v2 の機能:
-- SQL injection、XSS 保護
-- Rate limiting
-- IP ベースのブロック/許可
-- Custom rules
-
-Controller のインストール時には `enableWafv2: true` 設定が必要です。
+B. ALB と同じリージョンにある既存の Web ACL ARN を指定し、そのルールを構成して、Controller に必要な権限を付与してください。WAF v2 統合を有効にする必要がありますが、既定で有効なため、`enableWafv2` を明示的に設定することが常に必要なわけではありません。統合が無効なら、この annotation は適用されません。WAF と有料の Shield Advanced 保護は別の機能です。
 
 </details>
 
-### 8. AWS Load Balancer Controller で subnet を自動検出するための tags は何ですか？
+## 8. 従来のサブネットロールタグはどれですか？
 
-A. `kubernetes.io/cluster/<cluster-name>=owned`
-B. `kubernetes.io/role/elb=1` (public), `kubernetes.io/role/internal-elb=1` (private)
-C. `aws:cloudformation:stack-name`
-D. `Name=kubernetes-subnet`
+- A. `kubernetes.io/cluster/CLUSTER_NAME` のみ
+- B. パブリック用 `kubernetes.io/role/elb` とプライベート用 `kubernetes.io/role/internal-elb`
+- C. `aws:cloudformation:stack-name`
+- D. `Name=kubernetes-subnet` のみ
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. `kubernetes.io/role/elb=1` (public), `kubernetes.io/role/internal-elb=1` (private)**
-
-**解説:**
-Subnet tagging ルール:
-
-```bash
-# Public subnets (for internet-facing ALB/NLB)
-kubernetes.io/role/elb=1
-
-# Private subnets (for internal ALB/NLB)
-kubernetes.io/role/internal-elb=1
-
-# Cluster ownership (optional)
-kubernetes.io/cluster/<cluster-name>=shared or owned
-```
-
-これらの tags がない場合、Controller は適切な subnets を見つけられず、load balancer の作成に失敗する可能性があります。
+B. セルフマネージド LBC の検出では、値に `1` または空文字列を指定できます。v2.12.1 以降は、一致するロールタグがない場合、既定の到達可能性ベースの代替判定によりルートテーブルからサブネットを分類できます。明示的なサブネット指定や IngressClassParams のタグフィルターも選択方法です。Auto Mode では、引き続き文書化されたタグが必要です。クラスタータグ、空き IP 数、AZ 要件を確認してください。タグでルーティングが変更されることはありません。
 
 </details>
 
-### 9. ALB Ingress で Sticky Sessions を有効化する annotation は何ですか？
+## 9. ALB のスティッキーセッションはどのように構成しますか？
 
-A. `alb.ingress.kubernetes.io/sticky-sessions=true`
-B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`
-C. `alb.ingress.kubernetes.io/session-affinity=cookie`
-D. `alb.ingress.kubernetes.io/cookie-based-routing=true`
+- A. `alb.ingress.kubernetes.io/sticky-sessions=true`
+- B. `stickiness.enabled=true` を含む `target-group-attributes`
+- C. Ingress の `session-affinity=cookie`
+- D. 常に既定で有効
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`**
-
-**解説:**
-Sticky Session 設定:
-
-```yaml
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/target-group-attributes: >-
-      stickiness.enabled=true,
-      stickiness.lb_cookie.duration_seconds=3600
-```
-
-Target Group attributes として設定します:
-- `stickiness.enabled=true` - 有効化
-- `stickiness.lb_cookie.duration_seconds` - Cookie の有効期間
-- `stickiness.type` - lb_cookie または app_cookie
-
-Sticky Sessions は、session state を維持する必要があるレガシーアプリケーションで役立ちます。
+B. `alb.ingress.kubernetes.io/target-type: ip` を設定し、適切な cookie 属性と `stickiness.enabled=true` を 1 つの `target-group-attributes` annotation に指定します。slow start や deregistration delay の設定で YAML キーを重複させないでください。重複キーがあると設定が破棄される場合があります。重み付き forward action では、文書化されているとおり、ターゲットグループのスティッキー設定を整合させてください。
 
 </details>
 
-### 10. NLB でクライアント source IP を保持するにはどうしますか？
+## 10. NLB のクライアント識別情報について正しい説明はどれですか？
 
-A. `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"` を使用する
-B. externalTrafficPolicy: Local を使用する
-C. どちらの方法も可能
-D. NLB は常に client IP を保持する
+- A. Proxy Protocol v2 は IP パケットの送信元をクライアントアドレスに変更する
+- B. `externalTrafficPolicy: Local` はすべてのターゲットモードで保持を保証する
+- C. Proxy Protocol はメタデータを伝える。パケット送信元の保持は、ネットワーク／プロトコル上の制約がある別の設定である
+- D. NLB は常にクライアント IP を保持する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C. どちらの方法も可能**
-
-**解説:**
-client IP を保持する方法:
-
-1. **Proxy Protocol v2**:
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: proxy_protocol_v2.enabled=true
-```
-- Application が Proxy Protocol をサポートしている必要がある
-
-2. **externalTrafficPolicy: Local**:
-```yaml
-spec:
-  externalTrafficPolicy: Local
-```
-- 追加のホップなしで、同じ node 上の Pods にのみルーティングする
-- traffic distribution が不均一になる可能性がある
-
-3. **IP Target Type** (ip mode):
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-```
+C. バックエンドはアプリケーションデータより前に Proxy Protocol v2 を解析し、該当するヘルスチェックにも対応する必要があります。`preserve_client_ip.enabled` は、サポートされる場合に IP パケットの送信元保持を制御します。Instance／NodePort モードでは、`externalTrafficPolicy: Local` により後段の kube-proxy による SNAT を避けられる場合がありますが、すべての NLB 経路や IP ファミリー変換に対応するわけではありません。重み付き NLB ターゲットでは、通常の重み変更は新しい接続に影響しますが、重みを 0 にすると、短時間のうちに既存接続も閉じられます。
 
 </details>
 
-### 11. ALB Ingress で HTTP を HTTPS にリダイレクトする annotation は何ですか？
+## 11. ALB の HTTP から HTTPS へのリダイレクトを設定する annotation はどれですか？
 
-A. `alb.ingress.kubernetes.io/actions.ssl-redirect`
-B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`
-C. `alb.ingress.kubernetes.io/force-ssl-redirect: "true"`
-D. `alb.ingress.kubernetes.io/http-to-https: "true"`
+- A. `alb.ingress.kubernetes.io/force-ssl-redirect`
+- B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`
+- C. `alb.ingress.kubernetes.io/http-to-https`
+- D. HTTPRoute が常に必要
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`**
-
-**解説:**
-SSL redirect 設定:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
-```
-
-動作:
-- HTTP(80) に到着した requests を HTTPS(443) に 301 redirect する
-- security のベストプラクティスとして推奨
-- ACM certificate が必要
+B. HTTP リスナーと転送先の HTTPS リスナーの両方、および適切な証明書を構成してください。有効にすると、HTTP リスナーは既定アクションとしてリダイレクトを使い、そのほかのルーティングルールは無視されます。IngressGroup 全体に影響するため、グループ全体の動作を確認してください。Cognito／OIDC／JWT 認証には HTTPS が必要です。リダイレクトだけではアプリケーションの認可になりません。
 
 </details>
 
-### 12. AWS Load Balancer Controller によって ALB が作成されない場合、確認すべきでない項目はどれですか？
+## 12. ALB が作成されないとき、最初に何を確認しますか？
 
-A. IAM permissions を確認する
-B. subnet tags を確認する
-C. IngressClass specification を確認する
-D. kube-proxy logs を確認する
+- A. kube-proxy のログのみ
+- B. アプリケーションの cookie の内容
+- C. Controller のログ／イベント、クラス選択、IAM、サブネットの適格性、webhook／CRD の正常性
+- D. Pod レプリカ数のみ
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: D. kube-proxy logs を確認する**
-
-**解説:**
-ALB 作成に失敗した場合の確認項目:
-
-1. **IAM permissions**: Service Account の IAM Role に必要な permissions があるか
-2. **Subnet tags**: `kubernetes.io/role/elb=1` または `kubernetes.io/role/internal-elb=1`
-3. **IngressClass**: `ingressClassName: alb` を指定するか、annotation で指定する
-4. **Controller logs**: `kubectl logs -n kube-system deployment/aws-load-balancer-controller`
-5. **Ingress events**: `kubectl describe ingress <name>`
-
-kube-proxy は Service ClusterIP/NodePort のルーティングを処理しており、ALB の作成とは無関係です。
+C. まず調整／コントロールプレーンの経路を確認します。kube-proxy または eBPF による置き換えは、その後のノード／Service トラフィックに影響することがありますが、AWS の `CreateLoadBalancer` 操作が失敗したときの最初の診断対象ではありません。`kubectl apply` が成功しても、AWS 側の調整が成功した証明にはなりません。実際のリソース ID、namespace、出力範囲を限定したログを使ってください。
 
 </details>
 
----
-
-## 追加学習リソース
-
-- [AWS Load Balancer Controller ドキュメント](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [EKS ユーザーガイド](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
-- [ALB Annotation リファレンス](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.8/guide/ingress/annotations/)
+[ガイドに戻る](../../networking/03-aws-lb-controller.md)

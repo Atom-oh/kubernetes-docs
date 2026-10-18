@@ -1,20 +1,20 @@
 # Cilium Service Mesh 安全测验
 
-根据 Cilium 1.20.3 审核。[安全指南](../../../service-mesh/cilium-service-mesh/03-security.md)区分了带外身份验证、传输加密和 ztunnel beta，并提供了主要参考资料。
+按 Cilium 1.20.3 校订。[安全指南](../../../service-mesh/cilium-service-mesh/03-security.md)区分了带外身份验证、传输加密和 ztunnel beta，并提供了主要参考资料。
 
 ### 1. SPIRE 为 Cilium 的带外双向身份验证提供什么？
 
 - **A.** 为每个 Pod 提供一个 Istio sidecar
-- **B.** 为代理身份验证机制提供 SVID 身份凭据
+- **B.** 供 Cilium Agent 身份验证机制使用的 SVID 身份凭据
 - **C.** 自动加密所有应用程序流量
 - **D.** 替代 Kubernetes API 服务器
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 为代理身份验证机制提供 SVID 身份凭据**
+**答案：B. 供 Cilium Agent 身份验证机制使用的 SVID 身份凭据**
 
-对于带外 beta 机制，SPIRE 提供 SVID 身份凭据，Cilium agent 会独立于应用程序连接对对等方进行身份验证。WireGuard/IPsec 加密是另一项独立选择。Cilium 1.20.3 还提供单独的 ztunnel mTLS beta，它有自己的 CA/引导流程、注册流程和策略限制。
+对于带外 beta 机制，SPIRE 提供 SVID 身份凭据，Cilium Agent 会独立于应用连接对通信对端进行身份验证。WireGuard/IPsec 加密是另一项独立选择。Cilium 1.20.3 还提供单独的 ztunnel mTLS beta，它有自己的 CA/引导流程、注册流程和策略限制。
 
 </details>
 
@@ -142,7 +142,7 @@ SPIRE Agent 使用已配置的证明器/选择器执行工作负载证明；Serv
 
 **答案：B. 记录策略违规，但允许流量通过**
 
-实际可变的端点选项 PolicyAuditMode 会改变隔离端点测试中已审计的数据路径策略执行行为。cilium.io/audit-mode 不是受支持的单策略注解。测试后应恢复强制执行，并单独验证 L7 行为；enableDefaultDeny:false 也不是通用审计模式。
+PolicyAuditMode 是隔离端点测试中实际可修改的端点选项，会改变数据路径对已审计策略的执行方式。cilium.io/audit-mode 不是受支持的单策略注解。测试后应恢复强制执行，并单独验证 L7 行为；enableDefaultDeny:false 也不是通用审计模式。
 
 </details>
 

@@ -322,4 +322,4 @@ Kubeflow 实验与其控制器提交运行时 4.0.4 保持一致。其他提交�
 
 </details>
 
-[正文 / Guide](../../../data-on-eks/spark/02-spark-operator.md)
+[正文 / 指南](../../../data-on-eks/spark/02-spark-operator.md)

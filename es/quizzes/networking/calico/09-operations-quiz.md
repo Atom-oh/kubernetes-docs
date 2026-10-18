@@ -1,198 +1,198 @@
 # Cuestionario de operaciones
 
 > **Documento relacionado**: [Operaciones](../../../networking/calico/09-operations.md)
-> **Última actualización**: February 22, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Cuestionario
 
-1. ¿Cuáles son los tres métodos principales de instalación de Calico?
-   - A) Docker, Podman, containerd
-   - B) Basado en manifiestos (kubectl), basado en Operator (Tigera), Helm
-   - C) CLI, GUI, API
-   - D) Binario, gestor de paquetes, compilación desde código fuente
+1. ¿Qué afirmación describe correctamente quién debe encargarse de la instalación de Calico?
+   - A) Instalar juntos el manifiesto y los operadores de Helm para tener redundancia
+   - B) Elegir un único responsable —Operator/Helm o manifiestos directos— que se ajuste a la plataforma
+   - C) Habilitar BPF es obligatorio en todas las instalaciones
+   - D) Un manifiesto nuevo del Operator incluye automáticamente todos los CRD
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Basado en manifiestos (kubectl), basado en Operator (Tigera), Helm**
+**Respuesta: B) Elegir un único responsable —Operator/Helm o manifiestos directos— que se ajuste a la plataforma**
 
 **Explicación:**
-Calico se puede instalar mediante: 1) instalación basada en manifiestos con kubectl apply en manifiestos YAML, 2) instalación basada en Operator mediante el Tigera Operator (recomendado), o 3) charts de Helm para Deployments personalizables. El método Operator generalmente se recomienda para producción, ya que administra el ciclo de vida de Calico.
+El chart de Helm instala Tigera Operator. Usa un solo responsable, fija la versión, administra los CRD correspondientes y elige el perfil de red real. El ejemplo usa Calico CNI completo en Linux autogestionado; EKS VPC CNI con solo políticas es una configuración distinta.
 
 </details>
 
-2. ¿Qué comando de calicoctl muestra el estado de los nodos de Calico, incluido el estado de los pares BGP?
-   - A) calicoctl get nodes
-   - B) calicoctl node status
-   - C) calicoctl describe node
-   - D) calicoctl show peers
+2. ¿Qué inspecciona `calicoctl node status`?
+   - A) Todos los nodos del contexto de kubeconfig
+   - B) El estado BGP del nodo local, con el acceso necesario a ese nodo
+   - C) La disponibilidad HTTP de todas las aplicaciones
+   - D) Todas las fugas de asignaciones de IPAM
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) calicoctl node status**
+**Respuesta: B) El estado BGP del nodo local, con el acceso necesario a ese nodo**
 
 **Explicación:**
-El comando `calicoctl node status` muestra el estado del nodo de Calico, incluida la información de peering BGP, mostrando qué pares están establecidos, su estado y cualquier problema de conexión. Esto es esencial para solucionar problemas de enrutamiento BGP.
+Es un diagnóstico BGP local, no una comprobación de disponibilidad de todo el clúster. Los perfiles que tienen BGP deshabilitado no necesitan obtener un resultado de BGP correcto. Selecciona el nodo afectado e inspecciona su socket BIRD real cuando corresponda.
 
 </details>
 
-3. ¿Qué comando muestra la asignación de bloques IPAM entre los nodos?
-   - A) calicoctl ipam show --show-blocks
-   - B) calicoctl get ipamblocks
-   - C) kubectl get ipamblocks -o wide
-   - D) calicoctl describe ipam
+3. ¿Qué información proporciona `calicoctl ipam show --show-blocks`?
+   - A) El uso de bloques de Calico IPAM; la afinidad de nodo se inspecciona por separado
+   - B) La liberación segura y automática de los bloques vacíos
+   - C) Todas las asignaciones de ENI de VPC CNI
+   - D) Una copia de seguridad transaccional del datastore
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) calicoctl ipam show --show-blocks**
+**Respuesta: A) El uso de bloques de Calico IPAM; la afinidad de nodo se inspecciona por separado**
 
 **Explicación:**
-El comando `calicoctl ipam show --show-blocks` muestra información detallada de IPAM, incluidos qué bloques de IP están asignados a qué nodos, la utilización de cada bloque y las estadísticas generales del pool de IP. Esto es crucial para diagnosticar problemas de asignación de IP.
+El comando informa del uso de bloques y pools de IP. Usa BlockAffinity para consultar la relación entre bloques y nodos. Se aplica a Calico IPAM; para VPC CNI o host-local, inspecciona el asignador que realmente se esté usando.
 
 </details>
 
-4. ¿Qué endpoint de métricas de Prometheus expone las estadísticas de rendimiento y políticas de Felix?
-   - A) :9090/metrics
-   - B) :9091/metrics
-   - C) :9094/metrics
-   - D) :8080/metrics
+4. ¿Qué tipo tiene `felix_int_dataplane_apply_time_seconds` en la versión revisada?
+   - A) Counter de paquetes denegados
+   - B) Histogram con series `_bucket` obligatorias
+   - C) Summary con cuantiles, `_sum` y `_count`
+   - D) Gauge de bloques de IP asignados
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) :9091/metrics**
+**Respuesta: C) Summary con cuantiles, `_sum` y `_count`**
 
 **Explicación:**
-Felix expone métricas de Prometheus en el puerto 9091 de forma predeterminada. Estas métricas incluyen recuentos de reglas de políticas, latencia de programación del dataplane, estadísticas de iptables/eBPF y recuentos de errores. Esto debe habilitarse en FelixConfiguration con `prometheusMetricsEnabled: true`.
+Es un Summary del tiempo incremental de aplicación del datapath. Un cuantíl local no equivale al p99 de todo el clúster. Usa las tasas de `_sum` y `_count` para calcular una media mientras haya observaciones; no inventes buckets de histogramas.
 
 </details>
 
-5. ¿Qué puerto utiliza Typha para su endpoint de métricas de Prometheus?
-   - A) :9091/metrics
-   - B) :9093/metrics
-   - C) :9094/metrics
-   - D) :9095/metrics
+5. ¿Qué afirmación sobre los puertos de métricas de Typha es correcta?
+   - A) El binario usa el puerto 9091 de forma predeterminada; la guía configura explícitamente las métricas de Typha del Operator en el 9093
+   - B) Todas las instalaciones de Typha usan automáticamente el puerto 9093
+   - C) Typha siempre comparte el puerto 9094 de kube-controllers
+   - D) Basta con crear un Service para habilitar las métricas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) :9093/metrics**
+**Respuesta: A) El binario usa el puerto 9091 de forma predeterminada; la guía configura explícitamente las métricas de Typha del Operator en el 9093**
 
 **Explicación:**
-Typha expone métricas de Prometheus en el puerto 9093 de forma predeterminada. Las métricas de Typha incluyen recuentos de conexiones a instancias de Felix, latencia de sincronización del datastore y estadísticas de caché. Supervisar Typha es importante para comprender el rendimiento de fan-out del datastore en clústeres grandes.
+Las métricas de Typha están deshabilitadas de forma predeterminada. `typhaMetricsPort` del Operator habilita y configura la exposición de métricas y su Service. Un ServiceMonitor debe seleccionar el puerto correspondiente del Service y, a su vez, Prometheus debe seleccionarlo.
 
 </details>
 
-6. Un Pod no puede obtener una dirección IP. ¿Qué es lo primero que se debe comprobar?
-   - A) Registros de kube-proxy
-   - B) Disponibilidad de IPPool y asignación de bloques IPAM
-   - C) Configuración de DNS
-   - D) Uso de CPU del nodo
+6. ¿Qué debes comprobar cuando un Pod no tiene una dirección IP?
+   - A) Liberar inmediatamente una dirección y reiniciar todos los agentes de Calico
+   - B) La programación y los eventos, el nodo seleccionado y el asignador CNI/IPAM real
+   - C) Solo los registros DNS
+   - D) Si todas las sesiones BGP tienen el mismo ASN
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Disponibilidad de IPPool y asignación de bloques IPAM**
+**Respuesta: B) La programación y los eventos, el nodo seleccionado y el asignador CNI/IPAM real**
 
 **Explicación:**
-Cuando un Pod no obtiene una IP, primero compruebe si IPPool tiene direcciones disponibles usando `calicoctl ipam show`. Verifique que los bloques IPAM puedan asignarse al nodo y que el selector de IPPool coincida con el nodo. Compruebe también los registros de Felix en busca de errores relacionados con IPAM.
+Es posible que un Pod en estado Pending todavía no se haya programado. Si falla la asignación, inspecciona la evidencia de kubelet/CNI y del asignador, además de los pools elegibles y las restricciones de capacidad y afinidad. Los registros del proceso Felix no son la fuente de todos los errores de asignación de Pods.
 
 </details>
 
-7. ¿Qué se debe verificar cuando no se establece el peering BGP entre nodos?
-   - A) Resolución DNS de Pod
-   - B) Conectividad de red en el puerto BGP (179), BGPConfiguration y selectores de nodos
-   - C) Enlaces de volúmenes persistentes
-   - D) Tokens de cuentas de Service
+7. ¿Qué debes incluir al solucionar problemas de BGP?
+   - A) Solo una prueba de ping correcta
+   - B) El estado de sesión del nodo afectado, direcciones de origen y par, ASN, TCP 179, autenticación/TTL y filtros
+   - C) Cambiar al azar todos los ASN hasta que se abra una sesión
+   - D) Leer el primer Pod de Calico del clúster, sin importar en qué nodo esté
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Conectividad de red en el puerto BGP (179), BGPConfiguration y selectores de nodos**
+**Respuesta: B) El estado de sesión del nodo afectado, direcciones de origen y par, ASN, TCP 179, autenticación/TTL y filtros**
 
 **Explicación:**
-Para problemas de peering BGP, verifique: 1) conectividad de red entre nodos en el puerto TCP 179, 2) que los recursos BGPConfiguration y BGPPeer estén definidos correctamente, 3) que los selectores de nodos coincidan con los nodos previstos, 4) revise `calicoctl node status` y los registros de BIRD para detectar errores específicos de peering.
+Una conexión TCP no demuestra que BGP esté en estado Established ni que se acepten los prefijos. Comprueba las rutas esperadas y el socket BIRD IPv4/IPv6 correcto. Usa estas comprobaciones solo cuando el perfil de red elegido habilite BGP.
 
 </details>
 
-8. Se aplica una política de red, pero el tráfico no se bloquea. ¿Cuál es una causa probable?
-   - A) El clúster está usando demasiada memoria
-   - B) Los selectores de la política no coinciden con los Pods objetivo, o el orden/nivel de la política es incorrecto
-   - C) Los nodos deben reiniciarse
-   - D) La versión de Kubernetes es demasiado antigua
+8. ¿Qué afirmación es correcta ante un aparente fallo de una política?
+   - A) kube-proxy y la traducción de Service nunca pueden afectar la investigación
+   - B) Las anotaciones de Pod enumeran todas las decisiones de políticas efectivas
+   - C) Los registros Debug de Felix son automáticamente registros de denegación por paquete
+   - D) Comprueba la identidad del endpoint, los selectores, la dirección, el nivel/orden, los flujos existentes y la ruta real de Service/datapath
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los selectores de la política no coinciden con los Pods objetivo, o el orden/nivel de la política es incorrecto**
+**Respuesta: D) Comprueba la identidad del endpoint, los selectores, la dirección, el nivel/orden, los flujos existentes y la ruta real de Service/datapath**
 
 **Explicación:**
-Cuando las políticas no funcionan como se espera, verifique: 1) que los selectores de Pod coincidan correctamente con los Pods objetivo (compruebe las etiquetas), 2) que los selectores de Namespace sean correctos, 3) el orden de los niveles de políticas (los niveles de mayor prioridad se evalúan primero), 4) que no haya políticas Allow en conflicto antes en el orden de evaluación. Use `calicoctl get policy` para revisar las políticas aplicadas.
+Calico aplica la política, mientras que la traducción de Service, la selección de endpoints y los cambios de dirección de origen pueden afectar qué tráfico se evalúa. Inspecciona la ruta completa y prueba tanto los casos permitidos como los denegados, en vez de suponer que algún componente es irrelevante.
 
 </details>
 
-9. ¿Cuál es el procedimiento recomendado para actualizar versiones de Calico?
-   - A) Eliminar todos los recursos y reinstalar
-   - B) Actualizar en el mismo lugar siguiendo las guías de migración específicas de cada versión
-   - C) Crear un nuevo clúster y migrar las cargas de trabajo
-   - D) Calico se actualiza automáticamente con Kubernetes
+9. ¿Qué se requiere para actualizar Calico?
+   - A) Modificar el DaemonSet administrado para quitar todos los agentes canary
+   - B) Seguir el procedimiento de migración de CRD, Operator y datos almacenados correspondiente a la instalación y las versiones
+   - C) Establecer siempre `Installation.spec.version` antes de empezar
+   - D) Suponer que una reversión de Helm deshace todos los cambios en CRD y datos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Actualizar en el mismo lugar siguiendo las guías de migración específicas de cada versión**
+**Respuesta: B) Seguir el procedimiento de migración de CRD, Operator y datos almacenados correspondiente a la instalación y las versiones**
 
 **Explicación:**
-Las actualizaciones de Calico deben seguir la documentación oficial de actualización para su método de instalación. Esto normalmente implica actualizar el Operator o los manifiestos a la nueva versión. Revise las notas de migración específicas de la versión, ya que algunas actualizaciones requieren pasos adicionales. Pruebe primero en un entorno que no sea de producción.
+Usa versiones de origen y destino compatibles, actualiza el responsable de instalación existente y administra los CRD antes de necesitar los campos nuevos. Prueba el despliegue y la recuperación. Un Operator antiguo o una exportación de YAML sin procesar no garantizan que se pueda volver a una versión anterior.
 
 </details>
 
-10. ¿Cuál es la práctica recomendada de denegación predeterminada para las políticas de red de Calico?
-    - A) No usar nunca políticas de denegación
-    - B) Aplicar políticas de denegación predeterminada a los Namespaces y luego permitir explícitamente el tráfico requerido
-    - C) Denegar únicamente el tráfico de fuentes externas
-    - D) Denegar todo el tráfico de egreso, pero permitir todo el tráfico de ingreso
+10. ¿Cómo debe introducirse una política de denegación predeterminada?
+    - A) Validarla en un namespace seleccionado y permitir explícitamente las dependencias necesarias antes de ampliar el alcance
+    - B) Aplicar de inmediato en todas partes una GlobalNetworkPolicy vacía para todos los endpoints
+    - C) Inferir los endpoints del servidor de API a partir de una etiqueta de Pod inventada
+    - D) Tomar un recuento de endpoints igual a cero como prueba de que la denegación funciona
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Aplicar políticas de denegación predeterminada a los Namespaces y luego permitir explícitamente el tráfico requerido**
+**Respuesta: A) Validarla en un namespace seleccionado y permitir explícitamente las dependencias necesarias antes de ampliar el alcance**
 
 **Explicación:**
-La práctica recomendada de seguridad es aplicar una política de denegación predeterminada que bloquee todo el tráfico de ingreso (y opcionalmente de egreso) hacia los Pods en un Namespace, y luego crear políticas específicas para permitir únicamente los flujos de tráfico requeridos. Esto implementa el principio de mínimo privilegio para el acceso a la red.
+Revisa explícitamente las rutas de DNS, API, identidad, monitorización y aplicaciones. Prueba casos positivos y negativos, conserva una vía de recuperación y contempla las políticas de endpoints de cargas de trabajo y de host.
 
 </details>
 
-11. ¿Cómo se configura Calico para exportar registros de flujos para la visibilidad de red?
-   - A) Habilitar en las flags de kube-apiserver
-   - B) Configurar FlowLogsFileReporter o FlowLogsNetworkReporter en FelixConfiguration
-   - C) Los registros de flujos siempre están habilitados de forma predeterminada
-   - D) Instalar un Operator independiente de registros de flujos
+11. ¿Qué descripción corresponde a la observabilidad de flujos actual en OSS?
+    - A) `FlowLogsFileReporter` es un campo obligatorio de la API OSS
+    - B) Cada registro de flujo corresponde exactamente a un paquete
+    - C) Operator/Helm pueden desplegar Goldmane y Whisker; la guía actual de registros de flujo marca la función como vista previa técnica
+    - D) Los registros de flujo y los registros de procesos de Felix son idénticos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configurar FlowLogsFileReporter o FlowLogsNetworkReporter en FelixConfiguration**
+**Respuesta: C) Operator/Helm pueden desplegar Goldmane y Whisker; la guía actual de registros de flujo marca la función como vista previa técnica**
 
 **Explicación:**
-Los registros de flujos se configuran mediante FelixConfiguration habilitando FlowLogsFileReporter (escribe en archivos) o FlowLogsNetworkReporter (envía a un recopilador). Configure parámetros como el intervalo de registro, el nivel de agregación y qué flujos capturar. Nota: las funciones completas de registros de flujos requieren Calico Enterprise.
+Goldmane proporciona datos de flujos agregados a Whisker. Está disponible en OSS con los requisitos previos de instalación documentados; los antiguos campos de registro a archivo/DNS no son un reemplazo válido. Protege los datos sensibles de flujos y ten en cuenta que la función sigue en vista previa.
 
 </details>
 
-12. ¿Qué variables de entorno deben establecerse para que calicoctl se conecte al datastore?
-    - A) CALICO_HOST y CALICO_PORT
-    - B) DATASTORE_TYPE y KUBECONFIG (o ETCD_ENDPOINTS para el datastore etcd)
-    - C) CALICO_API_SERVER y CALICO_TOKEN
-    - D) CNI_PATH y CNI_CONFIG
+12. ¿Cómo se puede configurar calicoctl para acceder al datastore de Kubernetes?
+    - A) Establecer solo `CNI_PATH`
+    - B) Usar `DATASTORE_TYPE=kubernetes` con acceso apropiado a kubeconfig, o un archivo de configuración explícito compatible
+    - C) Se detecta automáticamente cualquier ruta arbitraria bajo `~/.config`
+    - D) Un kubeconfig de Calico proporciona acceso al etcd administrado por EKS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) DATASTORE_TYPE y KUBECONFIG (o ETCD_ENDPOINTS para el datastore etcd)**
+**Respuesta: B) Usar `DATASTORE_TYPE=kubernetes` con acceso apropiado a kubeconfig, o un archivo de configuración explícito compatible**
 
 **Explicación:**
-Para que calicoctl se conecte al datastore, establezca `DATASTORE_TYPE=kubernetes` y asegúrese de que KUBECONFIG apunte a un archivo kubeconfig válido. Para el datastore etcd, establezca `DATASTORE_TYPE=etcdv3` junto con `ETCD_ENDPOINTS` y, opcionalmente, variables relacionadas con TLS para conexiones seguras.
+La guía muestra una configuración típica de entorno. También se admite una ruta explícita al archivo con `--config`. Selecciona el clúster previsto y configura RBAC; el acceso directo a etcdv3 corresponde a otra configuración de despliegue.
 
 </details>

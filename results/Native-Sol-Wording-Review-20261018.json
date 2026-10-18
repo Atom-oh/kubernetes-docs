@@ -11314,6 +11314,243 @@
         }
       },
       "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0034-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+      "targetPath": "cn/quizzes/networking/cilium/networking-concepts-quiz.md",
+      "sourceBlob": "2163d1a6c8a13c5adda3706210dfec68973206fa",
+      "sourceSha256": "e4f2210687130cfb12ba68c29dba7c603e2a879514c247546edec5acb5674954",
+      "beforeTargetSha256": "c7635943663aed34428d0019e0fc7574ce0eb7701950121a2763d3b45f0e072b",
+      "beforeSnapshot": "/tmp/preimages/c7635943663aed34428d0019e0fc7574ce0eb7701950121a2763d3b45f0e072b.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "2163d1a6c8a13c5adda3706210dfec68973206fa",
+      "targetSha256": "3c9eee4a8df21f3a3cc39776c15622446038d0711c31dc472954a978349404d7",
+      "currentTargetSha256": "3c9eee4a8df21f3a3cc39776c15622446038d0711c31dc472954a978349404d7",
+      "afterTargetSha256": "3c9eee4a8df21f3a3cc39776c15622446038d0711c31dc472954a978349404d7",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/3c9eee4a8df21f3a3cc39776c15622446038d0711c31dc472954a978349404d7.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0035-source-snapshots/e4f2210687130cfb12ba68c29dba7c603e2a879514c247546edec5acb5674954.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the complete frozen English and original Chinese page, then reread the complete current English and final Chinese after owned emphasis/anchor checks and single-LF normalization. All 20 stems, 80 options, 20 answer labels and explanations, 6 second-level sections, Cilium 1.20.3 baseline, October 16 2026 date and guide destination were compared. The final Chinese retains platform override scope, generic tunnel default, UDP 8472 versus assigned 4789, native-path reachability/return-route and workload-dependent performance, cluster-pool controller/agent division, ENI prerequisites and host-scope Node-field distinction. It preserves supported Service forwarding versus authentication/encryption and provider provisioning, Random/Maglev supported-path scope versus Envoy/ClientIP affinity, configured Global Service prerequisites and failure checks, CIDR endpoint classification/default exclusion/explicit Beta opt-in and world scope, removed Kafka L7 versus current HTTP/gRPC/DNS, IPsec/WireGuard versus SPIRE/ztunnel prerequisites, ClusterMesh addressing/trust/underlay constraints, BGP advertisement versus allocation/forwarding, egress SNAT/interface/new-Pod convergence, and BPF host-stack optimization versus inter-node routing choice. Ordinary Chinese is now clear; literal API/mode/product/algorithm/entity names remain for exactness. The residual terminology density is inherent in the source and accounts for a readability score below 100. No source capabilities or external facts were added. The source-absent terminal wrapper was removed. Scores are native qualitative judgments of the whole text, not results inferred from validation.",
+      "findings": [
+        {
+          "location": "Review date",
+          "finding": "English month/date remained in Chinese prose.",
+          "resolution": "Translated October 16, 2026 to 2026 年 10 月 16 日 without altering the baseline date.",
+          "resolved": true
+        },
+        {
+          "location": "Questions 1, 4–9 and IPAM explanations",
+          "finding": "Literal enforcement/override/profile/operator/agent/host-scope prose was awkward; profile incorrectly implied a configuration file.",
+          "resolution": "Used 策略执行, platform-specific configuration override, 隧道安装配置, 控制器/代理 and explanatory 主机范围; retained exact actual IPAM mode names, Node fields and allocation responsibilities. Clarified reachable Pods and valid return routes without adding guarantees.",
+          "resolved": true
+        },
+        {
+          "location": "Service section and questions 10–13",
+          "finding": "Services plural heading and ordinary algorithm/provisioning/Beta opt-in phrases were unnatural or opaque.",
+          "resolution": "Normalized heading to Service 和负载均衡; translated round-robin and least-connections distractors faithfully; made external load-balancer creation dependency explicit and Beta opt-in explicitly enabled, while keeping all selection, forwarding and authentication distinctions.",
+          "resolved": true
+        },
+        {
+          "location": "Terminal line",
+          "finding": "Closing </source_document> import wrapper was absent from the complete English source.",
+          "resolution": "Removed the source-absent terminal marker and normalized the final trailing line feed; all quiz content retained.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+          "cn/quizzes/networking/cilium/networking-concepts-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "location": "Service section heading",
+            "before": "## Services 和负载均衡",
+            "after": "## Service 和负载均衡",
+            "reason": "Natural Chinese heading using the exact Kubernetes Service kind; unchanged source heading level/order."
+          },
+          {
+            "location": "Terminal line",
+            "before": "</source_document>",
+            "after": "",
+            "reason": "Source-absent import wrapper removed after complete source comparison; not document content."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true,
+        "actualQuestionCount": 20,
+        "actualOptionCount": 80,
+        "actualAnswerCount": 20,
+        "answerLettersIncludingParenthesisMatchEnglish": true,
+        "answerSequence": [
+          "D",
+          "B",
+          "C",
+          "B",
+          "A",
+          "C",
+          "B",
+          "C",
+          "A",
+          "D",
+          "A",
+          "B",
+          "A",
+          "B",
+          "C",
+          "C",
+          "B",
+          "B",
+          "A",
+          "B"
+        ]
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0035-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/eks/02-eks-cluster-creation-part1.md",
+      "targetPath": "cn/eks/02-eks-cluster-creation-part1.md",
+      "sourceBlob": "0a8d02a2917d4fa36f37d5eb2a059fe860a4eec7",
+      "sourceSha256": "dcfc6b944d7ddcefdf45bd32b65f01f16957677e767d3711f5445cb797471ba2",
+      "beforeTargetSha256": "ca703684d56e5796213d2b2d28ea6df126959472d1c679686f4e8c4427bf0652",
+      "beforeSnapshot": "/tmp/preimages/ca703684d56e5796213d2b2d28ea6df126959472d1c679686f4e8c4427bf0652.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "0a8d02a2917d4fa36f37d5eb2a059fe860a4eec7",
+      "targetSha256": "5be17105c8bcd9d14dea8b7e8b4997dedaccf2f7cc43d9c644bcb6734bbb43dd",
+      "currentTargetSha256": "5be17105c8bcd9d14dea8b7e8b4997dedaccf2f7cc43d9c644bcb6734bbb43dd",
+      "afterTargetSha256": "5be17105c8bcd9d14dea8b7e8b4997dedaccf2f7cc43d9c644bcb6734bbb43dd",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/5be17105c8bcd9d14dea8b7e8b4997dedaccf2f7cc43d9c644bcb6734bbb43dd.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0035-source-snapshots/dcfc6b944d7ddcefdf45bd32b65f01f16957677e767d3711f5445cb797471ba2.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read complete frozen English and original Chinese prerequisites pages, inspected the actual English PNG, then reread all final English and Chinese after owned formatting/anchor operations and single-LF normalization. Compared the introductory scope, October 16 and October 1 2026 dates, current EKS 1.37 and reviewed example 1.36 distinction, all 6 navigation destinations and prerequisite ID, both permission and installation tables, all IAM role/PassRole/ARN/service-condition boundaries, SCP/permissions-boundary/session-policy qualifications, synthesized template/plan review and Auto Mode distinction. The exact 2 Bash fences were reread and remain source bytes, including approved eks-docs profile, OS/CPU selection, tool versions 1.36.5 and 0.231.0, checksums, failure stops and administrator installation; none of these commands was executed. Windows/PATH/hash procedure, supported ±1 minor skew, federation versus long-lived keys, jq and no actual login/download statement remain. Diagram alt now describes public load balancers and private worker nodes with NAT Gateways shown separately, as visible in the source PNG, without inventing a NAT placement requirement. All regional same-VPC/two-AZ/six-IP-minimum/sixteen-recommended/capacity/DNS/private-endpoint/NAT-or-endpoints-and-mirrors conditions remain; no universal internet-access or legacy VPC-tag requirement was introduced, and subnet discovery tags still do not configure routing/security/IP capacity. Image, interactive diagram, references and quiz destination remain exact. Chinese provisioning identity and wildcard least-privilege prose now express the source clearly. Fidelity/readability scores are whole-page native judgments; retained source terminology and compact prose keep readability at 97, with no unresolved defect.",
+      "findings": [
+        {
+          "location": "Update and release dates",
+          "finding": "October 16 and October 1 remained English date strings.",
+          "resolution": "Rendered both dates in Chinese with the exact 2026 calendar dates and EKS versions unchanged.",
+          "resolved": true
+        },
+        {
+          "location": "IAM permissions opening",
+          "finding": "授予每项资源的…权限并不是符合最小权限原则的必要策略 obscured the source negation/scope.",
+          "resolution": "Clarified that least privilege does not require granting the four broad wildcard action groups over all resources; retained each exact action token and tool/resource-dependent scope.",
+          "resolved": true
+        },
+        {
+          "location": "IAM provisioning paragraph",
+          "finding": "预置身份 and 组织的预置权限 were opaque literal translations.",
+          "resolution": "Named the identity executing resource creation and organizational permissions used for resource creation; kept it distinct from cluster service/node roles and retained synthesized-template/plan, SCP, boundary, session-policy and Auto Mode qualifications.",
+          "resolved": true
+        },
+        {
+          "location": "VPC image alt text",
+          "finding": "NAT Gateways and workers were both asserted to be in private subnets, unlike the actual source diagram.",
+          "resolution": "After inspecting the English PNG, described public-subnet load balancers and private-subnet workers across two AZs, with NAT Gateway shown separately. Added no placement/network requirement and retained exact image destination.",
+          "resolved": true
+        },
+        {
+          "location": "VPC capacity paragraph",
+          "finding": "Ordinary plural Pods remained in Chinese prose.",
+          "resolution": "Normalized to Pod while preserving the additional capacity planning for nodes, Pods, load balancers and upgrades.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/eks/02-eks-cluster-creation-part1.md",
+          "cn/eks/02-eks-cluster-creation-part1.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [
+          {
+            "location": "VPC diagram ALT",
+            "before": "NAT Gateway 和工作节点位于私有子网",
+            "after": "公有子网中的负载均衡器和私有子网中的工作节点，并单独标示 NAT Gateway",
+            "reason": "Corrected grouping against the English alt meaning and directly inspected English source PNG; no NAT subnet-placement rule added."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "sourceImageInspection": {
+        "path": "en/.gitbook/assets/en-eks-02-eks-cluster-creation-part1-0.png",
+        "actualNativeVisualInspection": true,
+        "observation": "Two AZ rows: public-subnet/load-balancer boxes, separate NAT Gateway boxes, private-subnet/EKS worker-node boxes."
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0035-wording-findings.json"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -11391,9 +11628,9 @@
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
   "snapshotScope": {
-    "wholePagesReviewed": 143,
+    "wholePagesReviewed": 145,
     "remainingLocaleReviews": "IN_PROGRESS; these actual individual reviews do not certify all 693 pages per locale",
-    "lastVerifiedAt": "2026-10-18T13:44:44.398713+00:00",
+    "lastVerifiedAt": "2026-10-18T14:09:35.495125+00:00",
     "allAddedReviewSourceAndTargetHashesIndependentlyVerified": true
   },
   "additionalReviewBatches": [
@@ -13772,6 +14009,67 @@
       },
       "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
       "artifact": "/tmp/native-sol-cn-batch0034-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T14:08:58.559303+00:00",
+      "scope": [
+        "cn/quizzes/networking/cilium/networking-concepts-quiz.md",
+        "cn/eks/02-eks-cluster-creation-part1.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/networking/cilium/networking-concepts-quiz.md",
+            "cn/eks/02-eks-cluster-creation-part1.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/networking/cilium/networking-concepts-quiz.md",
+            "cn/eks/02-eks-cluster-creation-part1.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/networking/cilium/networking-concepts-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/eks/02-eks-cluster-creation-part1.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/networking/cilium/networking-concepts-quiz.md",
+          "cn/eks/02-eks-cluster-creation-part1.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/networking/cilium/networking-concepts-quiz.md",
+          "cn/eks/02-eks-cluster-creation-part1.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0035-review-20261018.json"
     }
   ],
   "additionalReportedFindingCorrections": [
