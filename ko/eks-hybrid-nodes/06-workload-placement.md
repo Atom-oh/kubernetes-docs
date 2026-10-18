@@ -3,7 +3,7 @@
 < [이전: GPU 서버 통합](./05-gpu-integration.md) | [목차](./README.md) | [다음: 노드 라이프사이클 관리](./07-node-lifecycle.md) >
 
 > **지원 버전**: 호환 Karpenter를 사용하는 지원 EKS 버전. Kubernetes 1.36.5와 Karpenter/provider 1.14.1(검토 고정 버전) 인터페이스 확인.
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 10월 18일
 
 이 문서는 Hybrid·클라우드 노드에 워크로드를 배치하고 cloud bursting과 Pod deletion cost의 한계를 설명합니다. 예제는 로컬로 검증한 구성·패치 방식입니다. 감사 중 클라우드 용량 생성, 노드 변경, 애플리케이션·GPU 워크로드 실행을 수행하지 않았습니다.
 
@@ -426,6 +426,12 @@ Karpenter1.14.1도 Pod priority와 함께 **정규화된 eviction-cost 계산**�
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-06-workload-placement-0.html)
 
 > **다이어그램 정정:** cloud Pod 우선 삭제와 온프레미스 완전 보존은 best-effort 목표이며 불변 조건이 아닙니다. “빈 노드”에도 DaemonSet Pod가 남을 수 있습니다. 이전 `WhenUnderutilized` label은 v1 예제의 `WhenEmptyOrUnderutilized`로 읽어야 합니다. 위의 정렬·수명 주기 조건을 함께 읽습니다.
+
+### 데모 영상: 클라우드 버스팅과 pod-deletion-cost
+
+[![V2 데모 영상: 클라우드 버스팅과 pod-deletion-cost (무음, 3분 36초)](../.gitbook/assets/ko-eks-hybrid-nodes-demo-v2-bursting.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v2-bursting.mp4)
+
+Hybrid 노드가 가득 찬 뒤 Karpenter burst 노드로 넘치고, 축소할 때 Kyverno가 붙인 pod-deletion-cost에 따라 클라우드 Pod가 먼저 빠지는 과정을 보여 주는 무음 영상입니다. 2026년 10월 18일 시뮬레이션 환경(온프레미스를 TGW로 연결한 EC2 호스트로 대체, 프로덕션 지원 구성 아님)에서 시나리오 B(Kyverno, Karpenter 기능 끔, Pod 요청 910m)를 녹화했습니다. 녹화 회차에서는 15개로 늘린 뒤 35초에 모두 Ready(hybrid 8, burst 7), 10개로 줄이면 hybrid 8과 클라우드 2, 3개로 줄이면 3개 모두 hybrid에 남았습니다. 영상 후반의 A/B/C 비교는 2026년 10월 15일 시나리오별 1회 실행(Pod 요청 930m) 결과라 작은 차이는 오차일 수 있으며, pod-deletion-cost는 best-effort이고 노드 장애나 축출에는 적용되지 않습니다. 전체 흐름은 [1시간 세션 덱](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)에서 볼 수 있습니다.
 
 ## 공식 참고 자료
 

@@ -208,6 +208,34 @@ const config = defineConfig({
           tokens.splice(i, 3, html)
         }
       })
+      // Demo videos: the shared markdown shows a poster image linked to an mp4
+      // on the presentation site (GitBook renders it as a clickable image). On
+      // the VitePress site, play the video inline with that image as poster.
+      // The relative poster path is left for Vue's asset-URL transform
+      // (video[poster]), so it resolves exactly like the image would.
+      md.core.ruler.push('demo_video_embed', (state) => {
+        const tokens = state.tokens
+        const VIDEO = /^https:\/\/presentation\.atomai\.click\/[^\s"<>]+\.mp4$/
+        for (let i = 0; i < tokens.length; i++) {
+          if (tokens[i].type !== 'paragraph_open') continue
+          const inline = tokens[i + 1]
+          if (!inline || inline.type !== 'inline' || !inline.children) continue
+          const parts = inline.children.filter((t) => !(t.type === 'text' && !t.content.trim()))
+          if (parts.length !== 3 || parts[0].type !== 'link_open' || parts[1].type !== 'image') continue
+          const href = parts[0].attrGet('href') || ''
+          if (!VIDEO.test(href)) continue
+          const image = parts[1]
+          const alt = image.content || image.attrGet('alt') || ''
+          const poster = image.attrGet('src') || ''
+          const html = new state.Token('html_block', '', 0)
+          html.content =
+            `<figure class="demo-video">` +
+            `<video controls preload="metadata" playsinline poster="${escapeHtml(poster)}" src="${escapeHtml(href)}" aria-label="${escapeHtml(alt)}"></video>` +
+            `</figure>\n`
+          // The caption paragraph that follows stays as ordinary markdown.
+          tokens.splice(i, 3, html)
+        }
+      })
     }
   },
   transformPageData(pageData, { siteConfig }) {
