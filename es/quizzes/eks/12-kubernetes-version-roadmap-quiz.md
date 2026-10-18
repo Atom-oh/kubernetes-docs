@@ -1,43 +1,48 @@
-# Cuestionario sobre las características y la hoja de ruta de versiones de Kubernetes
+# Cuestionario sobre las funciones y la hoja de ruta de versiones de Kubernetes
 
-1. ¿Cuál es la cadencia de lanzamientos de Kubernetes?
-   - A) Una vez al año con características principales
-   - B) Aproximadamente 3 lanzamientos al año, cada ~4 meses
-   - C) Lanzamientos de parches mensuales con lanzamientos de características trimestrales
-   - D) Dos veces al año, alineados con AWS re:Invent y Summit
+> **Última actualización**: 12 de septiembre de 2026
+
+Consulta el [capítulo fuente](../../eks/12-kubernetes-version-roadmap.md) para ver los requisitos previos específicos de cada versión y los límites de la evidencia de auditoría.
+
+1. ¿Cuál es la cadencia de versiones menores de Kubernetes?
+
+   - A) Una versión de funciones al año
+   - B) Aproximadamente tres versiones menores al año, separadas por unos cuatro meses
+   - C) Versiones menores mensuales
+   - D) Un calendario fijo alineado con las conferencias de AWS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Aproximadamente 3 lanzamientos al año, cada ~4 meses**
+**Respuesta: B) Aproximadamente tres versiones menores al año, separadas por unos cuatro meses**
 
-**Explicación:**
-Kubernetes sigue un ciclo de lanzamiento de ~4 meses, produciendo aproximadamente 3 lanzamientos de versiones menores por año. Cada lanzamiento pasa por una congelación de mejoras, una congelación de código y una fase de candidato de lanzamiento. Lanzamientos recientes: 1.33 (abr. 2025), 1.34 (ago. 2025), 1.35 (dic. 2025), 1.36 (abr. 2026). Luego, cada versión se mantiene con lanzamientos de parches durante aproximadamente 14 meses.
+Las versiones menores upstream suelen publicarse unas tres veces al año; las versiones de parche siguen otra cadencia. La política upstream de soporte para ramas de parches dura aproximadamente 14 meses (12 de mantenimiento normal y 2 de mantenimiento adicional). El soporte estándar de EKS también dura 14 meses, pero empieza cuando la versión está disponible en EKS; no hay que confundir ambos calendarios.
 
 </details>
 
 ---
 
-2. ¿Cuál es la diferencia entre EKS Standard Support y Extended Support?
-   - A) Standard es gratis, Extended requiere una licencia Enterprise
-   - B) Standard dura 14 meses a $0.10/cluster/hour; Extended agrega 12 meses más a $0.60/cluster/hour
-   - C) Standard admite 3 versiones, Extended admite todas las versiones
-   - D) Standard proporciona parches mensualmente, Extended proporciona parches semanalmente
+2. ¿En qué se diferencian las tarifas de soporte estándar y extendido de versiones de EKS?
+
+   - A) El soporte estándar es gratuito
+   - B) Estándar: 14 meses a $0.10 por clúster-hora; extendido: 12 meses más a $0.60 por clúster-hora en total
+   - C) El soporte extendido cubre para siempre todas las versiones antiguas
+   - D) El soporte extendido no incluye parches de seguridad
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Standard dura 14 meses a $0.10/cluster/hour; Extended agrega 12 meses más a $0.60/cluster/hour**
+**Respuesta: B) Estándar: 14 meses a $0.10 por clúster-hora; extendido: 12 meses más a $0.60 por clúster-hora en total**
 
-**Explicación:**
-Cada versión de Kubernetes en EKS recibe 14 meses de Standard Support ($0.10/cluster/hour), seguidos de 12 meses de Extended Support ($0.60/cluster/hour — 6 veces el costo). El soporte total es de 26 meses por versión. Extended Support está habilitado de forma predeterminada. Cuando una versión sale de Extended Support, los clusters se actualizan automáticamente. Esta diferencia de precios incentiva mantenerse en versiones compatibles.
+Estas son tarifas de soporte de versión, no el costo total de cómputo, almacenamiento y redes. EXTENDED es la política de actualización predeterminada; STANDARD puede provocar una actualización automática cuando termina el soporte estándar. El soporte extendido también incluye los parches de seguridad pertinentes. Consulta el calendario de versiones actual y considera la fecha real de fin del soporte y el riesgo de las cargas de trabajo.
 
 </details>
 
 ---
 
-3. ¿En qué versión de Kubernetes los Sidecar Containers llegaron a GA?
-   - A) 1.28 (cuando se introdujeron por primera vez como alpha)
+3. ¿Cuándo se volvieron estables los sidecars nativos?
+
+   - A) 1.28
    - B) 1.31
    - C) 1.33
    - D) 1.35
@@ -47,97 +52,98 @@ Cada versión de Kubernetes en EKS recibe 14 meses de Standard Support ($0.10/cl
 
 **Respuesta: C) 1.33**
 
-**Explicación:**
-Los Sidecar Containers nativos (KEP-753) siguieron esta ruta de graduación: alpha en v1.28 (ago. 2023), beta en v1.29 (dic. 2023), GA en v1.33 (abr. 2025). Los sidecars se definen como init containers con `restartPolicy: Always`, lo que garantiza que se inicien antes que los containers de aplicación, se ejecuten durante todo el ciclo de vida del Pod y terminen después de los containers principales, resolviendo el problema histórico de los "zombie sidecar" en Jobs.
+La progresión fue alfa en 1.28, beta en 1.29 y estable en 1.33. Los contenedores init reiniciables usan `restartPolicy: Always`. El orden de inicio depende del estado `started` y de `startupProbe`; el apagado gradual usa el presupuesto de terminación compartido del Pod. Llegar a GA no garantiza que todos los contenedores auxiliares terminen de forma ordenada ni que una imagen de proxy esté configurada correctamente.
 
 </details>
 
 ---
 
-4. ¿Qué es la característica In-Place Pod Resize y cuándo alcanzó GA?
-   - A) Capacidad de cambiar las réplicas de Pod sin redespliegue; GA en 1.30
-   - B) Capacidad de modificar solicitudes y límites de CPU/memoria en Pods en ejecución sin reinicio; GA en 1.35
-   - C) Capacidad de redimensionar PersistentVolumes en línea; GA en 1.31
-   - D) Capacidad de cambiar imágenes de container en Pods en ejecución; GA en 1.34
+4. ¿Qué permite el redimensionamiento in situ de contenedores y cuándo se volvió estable?
+
+   - A) Escalar réplicas; 1.30
+   - B) Cambiar la asignación de CPU y memoria de un Pod existente; 1.35, con restricciones de reinicio y del entorno de ejecución
+   - C) Ampliar PVC; 1.31
+   - D) Actualizar una imagen sin reiniciar su proceso; 1.34
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Capacidad de modificar solicitudes y límites de CPU/memoria en Pods en ejecución sin reinicio; GA en 1.35**
+**Respuesta: B) Cambiar la asignación de CPU y memoria de un Pod existente; 1.35, con restricciones de reinicio y del entorno de ejecución**
 
-**Explicación:**
-In-Place Pod Resize (KEP-1287) hace que las solicitudes/límites de CPU y memoria sean mutables en Pods en ejecución. Graduación: alpha en v1.27, beta en v1.33, GA en v1.35 (dic. 2025). A partir de v1.33, las modificaciones usan el subresource `/resize`. El campo `resizePolicy` controla si se necesita reiniciar un container por tipo de recurso. Esta característica es transformadora para la integración con VPA, ya que permite ajustar correctamente los recursos sin interrumpir el Pod.
+La función pasó por alfa en 1.27, beta en 1.33 y llegó a estable en 1.35. `resizePolicy` del contenedor controla el comportamiento de reinicio, y los cambios de recursos pueden quedar pendientes o ser inviables. Que PATCH se haya aceptado o que `containerID` no haya cambiado no demuestra que se aplicara el cambio en cgroups ni que no hubiera disrupción. Compara los recursos deseados y los observados, la generación y las condiciones. Los modos de VPA tienen sus propias versiones y gates.
 
 </details>
 
 ---
 
-5. ¿Qué cambio importante ocurrió con Dynamic Resource Allocation (DRA) en Kubernetes 1.31?
-   - A) DRA quedó obsoleto y fue reemplazado por Device Plugins v2
-   - B) Classic DRA fue eliminado; solo permaneció Structured Parameters DRA (que más tarde alcanzó GA en 1.34)
-   - C) DRA pasó directamente de alpha a GA
-   - D) DRA agregó soporte para dispositivos de red junto con GPUs
+5. ¿Qué afirmación describe correctamente DRA en Kubernetes 1.31?
+
+   - A) DRA clásico fue reemplazado por Device Plugins v2
+   - B) DRA seguía en alfa; las API estructuradas evolucionaban y la asignación clásica seguía detrás de una gate independiente
+   - C) DRA ya estaba en GA
+   - D) La sintaxis estable de solicitudes `v1` era idéntica a la de todas las API alfa anteriores
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Classic DRA fue eliminado; solo permaneció Structured Parameters DRA (que más tarde alcanzó GA en 1.34)**
+**Respuesta: B) DRA seguía en alfa; las API estructuradas evolucionaban y la asignación clásica seguía detrás de una gate independiente**
 
-**Explicación:**
-DRA pasó por un rediseño importante. Classic DRA (KEP-3063, alpha desde v1.26) usaba parámetros opacos del proveedor sobre los que el scheduler y el cluster autoscaler no podían razonar. Structured Parameters DRA (KEP-4381) lo reemplazó con un formato nativo de Kubernetes que usa objetos `ResourceSlice`. En v1.31, classic DRA fue eliminado por completo. Structured DRA progresó: beta en v1.32, GA en v1.34. Esto es crítico para la planificación de GPUs/aceleradores en cargas de trabajo de AI/ML.
+El lanzamiento y el código de 1.31 conservan `DRAControlPlaneController` como una gate alfa deshabilitada. Se elimina en 1.32; el núcleo de DRA pasa a beta en 1.32 y a estable en 1.34. Por eso era incorrecta la respuesta del cuestionario anterior que afirmaba que se había eliminado en 1.31. Las solicitudes actuales de `v1` usan `exactly`; hay que verificar los controladores, ResourceSlices y atributos reales.
 
 </details>
 
 ---
 
-6. ¿Qué característica llegó a GA en Kubernetes 1.30 y habilita el control de admisión declarativo sin webhooks?
+6. ¿Qué función se volvió estable en 1.30 para validar la admisión nativa mediante CEL?
+
    - A) OPA Gatekeeper v4
-   - B) Kyverno Native Policies
-   - C) ValidatingAdmissionPolicy usando expresiones CEL
-   - D) Aplicación de Pod Security Standards
+   - B) Un CRD de parámetros obligatorio
+   - C) ValidatingAdmissionPolicy
+   - D) Todos los mecanismos de admisión mutante
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) ValidatingAdmissionPolicy usando expresiones CEL**
+**Respuesta: C) ValidatingAdmissionPolicy**
 
-**Explicación:**
-ValidatingAdmissionPolicy (KEP-3488) proporciona validación en proceso usando expresiones de Common Expression Language (CEL), eliminando la necesidad de servidores webhook externos. Graduación: alpha en v1.26, beta en v1.28, GA en v1.30 (abr. 2024). Usa tres tipos de recursos: ValidatingAdmissionPolicy (reglas), ValidatingAdmissionPolicyBinding (vinculación a recursos) y CRDs de parámetros opcionales. Esto reduce la latencia, la complejidad y los dominios de fallo en comparación con el control de admisión basado en webhooks.
+ValidatingAdmissionPolicy usa una política y una vinculación, con objetos de parámetros opcionales que no tienen por qué ser CRD. Para la lógica apropiada, evita depender de un webhook de validación externo, pero los errores o `failurePolicy` aún pueden afectar las solicitudes. Limita el alcance de la vinculación y distingue entre Audit y Deny. MAP es una función distinta de mutación que llegó a estable en 1.36.
 
 </details>
 
 ---
 
-7. ¿Qué es KYAML y cuál es su estado actual?
-   - A) Un linter de YAML para Kubernetes; GA en 1.35
-   - B) Un subconjunto de YAML más seguro y menos ambiguo para Kubernetes que usa formato estricto; beta en 1.35, habilitado de forma predeterminada
-   - C) Una herramienta convertidora de YAML a JSON; alpha en 1.34
-   - D) Un esquema de validación de manifiestos de Kubernetes; estable desde 1.30
+7. Según el historial de versiones verificado, ¿qué es KYAML?
+
+   - A) Un validador del servidor de API que rechaza todos los anchors YAML normales
+   - B) Un formato de salida de kubectl: alfa en 1.34, beta en 1.35–1.36 y estable en 1.37
+   - C) Una función nueva del servidor de EKS que se habilita mediante una solicitud de soporte
+   - D) Un requisito para convertir todos los manifiestos de entrada a YAML 1.2
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un subconjunto de YAML más seguro y menos ambiguo para Kubernetes que usa formato estricto; beta en 1.35, habilitado de forma predeterminada**
+**Respuesta: B) Un formato de salida de kubectl: alfa en 1.34, beta en 1.35–1.36 y estable en 1.37**
 
-**Explicación:**
-KYAML es un subconjunto de YAML más estricto, diseñado específicamente para Kubernetes, que elimina las famosas ambigüedades de YAML. Usa llaves ({}) para mapas, corchetes ([]) para listas y comillas dobles para todas las cadenas. Introducido como alpha en v1.34, llegó a beta en v1.35 (dic. 2025) y está habilitado de forma predeterminada. Se puede deshabilitar con `KUBECTL_KYAML=false`. Esto aborda problemas históricos como el "Norway problem" (NO interpretado como booleano falso) en YAML.
+KYAML corresponde a KEP-5295. Las pruebas nativas con kubectl 1.36.2 aceptaron anchors YAML normales y generaron KYAML. `KUBECTL_KYAML=false` deshabilitó ese formateador de salida, mientras que la entrada KYAML siguió analizándose al solicitar salida JSON. El formato es distinto de la validación de esquema y de admisión. Upstream 1.37 ya se había publicado a la fecha de esta revisión; eso no implica que EKS 1.37 estuviera disponible.
 
 </details>
 
 ---
 
-8. ¿Cuál es la estrategia recomendada de planificación de actualización de versiones para clusters de EKS?
-   - A) Omitir versiones para minimizar la frecuencia de actualización (por ejemplo, 1.29 → 1.33)
-   - B) Actualizar una versión menor a la vez, probar feature gates en staging, verificar la compatibilidad de API y la alineación de add-ons antes de producción
-   - C) Usar siempre la versión más reciente y confiar en Extended Support para rollback
-   - D) Esperar hasta que una versión alcance Extended Support antes de actualizar para garantizar la estabilidad
+8. ¿Qué enfoque de planificación de actualizaciones de EKS es apropiado?
+
+   - A) Omitir versiones menores para ahorrar tiempo
+   - B) Ensayar cada paso de versión menor, verificar la compatibilidad y quién administra cada componente, y preparar la recuperación
+   - C) Considerar que el código de salida 0 de un escáner es una prueba completa
+   - D) Actualizar siempre todos los complementos después del plano de control en un orden fijo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Actualizar una versión menor a la vez, probar feature gates en staging, verificar la compatibilidad de API y la alineación de add-ons antes de producción**
+**Respuesta: B) Ensayar cada paso de versión menor, verificar la compatibilidad y quién administra cada componente, y preparar la recuperación**
 
-**Explicación:**
-EKS requiere actualizaciones secuenciales de versiones menores (1.33 → 1.34 → 1.35; no se admite omitir versiones). Mejores prácticas: (1) Probar primero los nuevos feature gates y cambios de API en entornos de staging, (2) verificar la compatibilidad de add-ons con la versión objetivo, (3) ejecutar `kubectl convert` para comprobar APIs obsoletas, (4) actualizar primero el control plane, luego los add-ons y después los node groups. Mantenerse en Standard Support evita el aumento de costo de 6 veces de Extended Support y garantiza acceso a los parches de seguridad más recientes.
+Usa el calendario de soporte vigente, la evidencia de manifiestos y del uso por los clientes, la compatibilidad exacta de los complementos y la secuencia específica para el modo de cómputo. Algunos requisitos previos se deben completar antes de actualizar el plano de control. Sigue el ID real de actualización; valida la preparación de las cargas de trabajo y los datos, y distingue entre el redimensionamiento de Pods, el reemplazo de nodos y el escalado. La reversión nativa de EKS está sujeta a condiciones y debe iniciarse en un plazo de siete días después de una actualización in situ completada; no revierte bases de datos ni permite omitir todos los controles.
 
 </details>
+
+---

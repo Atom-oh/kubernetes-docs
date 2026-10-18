@@ -17,7 +17,7 @@
 **回答: B) `rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0`**
 
 **解説:**
-CPU throttling は、container が CPU limit を超えたときに発生します。`container_cpu_cfs_throttled_seconds_total` metric は throttling された時間を追跡します。正の rate は、application performance に影響する可能性のある active throttling を示します。
+利用可能なCFS quotaを使い切ると、CPU throttlingが発生することがあります。`container_cpu_cfs_throttled_seconds_total` metricは、throttlingされていた時間を記録します。正のrateは、アプリケーションの性能に影響する可能性のあるthrottlingが現在起きていることを示します。ワークロードのquotaと性能状況を踏まえて解釈してください。
 
 </details>
 
@@ -38,7 +38,7 @@ CPU throttling は、container が CPU limit を超えたときに発生しま�
 
 </details>
 
-### 3. EKS Auto Mode node termination の検出に最も重要な metric はどれですか？
+### 3. Kubernetes NodeのReady状態を確認するのに役立つmetricはどれですか？
 
 - A) `node_cpu_seconds_total`
 - B) condition="Ready" の `kube_node_status_condition`
@@ -51,7 +51,7 @@ CPU throttling は、container が CPU limit を超えたときに発生しま�
 **回答: B) condition="Ready" の `kube_node_status_condition`**
 
 **解説:**
-Ready=false の `kube_node_status_condition` を monitoring すると、node が利用不可になることを検出できます。Auto Mode では、これは node termination または replacement を示します。label と組み合わせることで、node lifecycle と replacement pattern を追跡できます。
+Ready conditionは、観測対象のNodeがReadyかどうかを示します。FalseやUnknownには複数の原因があり、終了や置き換えが起きた証拠にはなりません。インベントリ、Node/NodeClaimのcondition、実際のeventや監査ログと照合してください。
 
 </details>
 
@@ -136,24 +136,24 @@ Network では occasional packet drop は正常です。Alert は、実際の問
 **回答: B) 現在の route の後で、alert が追加の route に一致することを許可する**
 
 **解説:**
-Default では、Alertmanager は最初に一致した route で停止します。`continue: true` を設定すると、alert が複数の route に一致できるようになり、critical alert を PagerDuty と Slack の両方に同時に送信するような scenario が可能になります。
+`continue: true` を設定すると、現在のrouteに一致した後も、後続の兄弟routeとの照合が続きます。子routeがすでに一致している場合、root receiverが自動的なフォールバックになるわけではありません。担当チームのrouteに一致しないcritical alertも含め、ルーティングツリー全体をテストしてください。
 
 </details>
 
-### 9. EKS node で network bandwidth exceeded を示す metric はどれですか？
+### 9. ネットワークの送信スループットを測るのに役立つ式はどれですか？
 
 - A) `container_cpu_usage_seconds_total`
-- B) instance network limit に近づいている `node_network_transmit_bytes_total`
+- B) 実際の容量契約に合わせた単位で表した `rate(node_network_transmit_bytes_total[5m])`
 - C) `kube_pod_container_status_running`
 - D) `container_fs_writes_bytes_total`
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) instance network limit に近づいている `node_network_transmit_bytes_total`**
+**回答: B) 実際の容量契約に合わせた単位で表した `rate(node_network_transmit_bytes_total[5m])`**
 
 **解説:**
-`node_network_transmit_bytes_total` と `node_network_receive_bytes_total` は network I/O を追跡します。rate を EC2 instance network bandwidth limit と比較することで、workload が network constraint に達しているタイミングを特定しやすくなります。
+`node_network_transmit_bytes_total` と `node_network_receive_bytes_total` はネットワークI/Oを記録します。rateの単位はbytes/sです。bits/sにするには8倍し、検証済みの基準値やバースト量、経路上の上限と比較してください。累積カウンターだけでは、仮想NICの公称速度だけでも、どこでも一律に10Gbpsだと仮定しても、飽和したことは判断できません。
 
 </details>
 
@@ -170,6 +170,6 @@ Default では、Alertmanager は最初に一致した route で停止します�
 **回答: B) parent alert が firing しているときに dependent alert を suppress すること**
 
 **解説:**
-Inhibition rule は、root cause alert が firing したときに downstream alert を silence することで、alert storm を防ぎます。たとえば、「NodeDown」が firing した場合、その node 上の pod に対するすべての「PodNotReady」alert を inhibit します。これらは同じ問題の symptom であるためです。
+Inhibitionは、設定されたsource/target matcherとequal labelに従って、一致する通知を抑制します。これだけで根本原因が特定されるわけではありません。ラベルが欠けている場合に無関係なアラートまで抑制しないよう、clusterやentityを識別する値が空でないことを必須にしてください。Prometheusでのアラート評価は続きます。
 
 </details>

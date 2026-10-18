@@ -20,7 +20,7 @@ Este cuestionario evalúa tu comprensión de los factores que empeoran o mejoran
 Aquí no se proporcionan mediciones de latencia de Lattice. La dirección y la magnitud dependen de la configuración probada; no presentes estimaciones en microsegundos ni mejoras garantizadas como resultados observados.
 </details>
 
-2. ¿Qué significa que p50 y p99 estén compuestos por factores distintos?
+2. ¿Qué significa que los factores que afectan p50 y p99 no sean los mismos?
    - A) p99 siempre es peor que p50, por lo que basta con observar p50
    - B) La mediana y la cola pueden reaccionar de forma distinta a la contención, los inicios en frío y el enrutamiento; por eso hay que medir ambas
    - C) Los mismos factores afectan a p50 y p99, así que basta con medir uno
@@ -36,7 +36,7 @@ Aquí no se proporcionan mediciones de latencia de Lattice. La dirección y la m
 Las respuestas distintas de cada percentil son hipótesis que hay que investigar, no una garantía de que p50 empeore mientras p99 mejora. Incluye errores, rendimiento y condiciones de la carga de trabajo junto con las distribuciones.
 </details>
 
-3. ¿Qué ajuste del cliente se indicó como potencialmente más importante que un salto de proxy?
+3. ¿Qué ajuste del cliente se indicó que podría importar más que añadir un salto de proxy?
    - A) TTL de la caché DNS
    - B) Ajustes de keepalive y del pool de conexiones
    - C) Nivel de registro

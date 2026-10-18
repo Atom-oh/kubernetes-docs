@@ -7,7 +7,7 @@ Spark 4.2.0 / Hadoop 3.5.0 / AWS SDK v2 2.35.4。
 <details>
 <summary>显示答案</summary>
 
-Hadoop 客户端和 hadoop-aws 都使用 3.5.0，配合 AWS SDK v2 bundle 2.35.4 及解析出的运行时依赖。对于其他镜像或 EMR，应重新检查捆绑版本。
+Hadoop 客户端和 hadoop-aws 都使用 3.5.0，配合 AWS SDK v2 依赖包（bundle）2.35.4 及解析出的运行时依赖。对于其他镜像或 EMR，应重新检查捆绑版本。
 
 </details>
 
@@ -16,7 +16,7 @@ Hadoop 客户端和 hadoop-aws 都使用 3.5.0，配合 AWS SDK v2 bundle 2.35.4
 <details>
 <summary>显示答案</summary>
 
-software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider。在此组合中，旧的 com.amazonaws.auth.WebIdentityTokenCredentialsProvider 不会自动映射到新 provider。
+software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider。在此组合中，旧的 com.amazonaws.auth.WebIdentityTokenCredentialsProvider 不会自动映射到新凭证提供程序。
 
 </details>
 
@@ -34,7 +34,7 @@ software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider�
 <details>
 <summary>显示答案</summary>
 
-经审查的 Hadoop 3.5.0 凭证链包含容器/实例包装器，但不包含 web-identity provider。应指定所需 provider，并验证实际身份和前缀访问权限。
+经审查的 Hadoop 3.5.0 凭证链包含容器/实例凭证包装类，但不包含 Web 身份凭证提供程序。应指定所需凭证提供程序，并验证实际身份和前缀访问权限。
 
 </details>
 
@@ -43,7 +43,7 @@ software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider�
 <details>
 <summary>显示答案</summary>
 
-这样可以将 driver 的 Kubernetes 管理权限与各进程的 S3 数据访问权限分开。禁用清理器后，History Server 可以从只读角色开始运行。
+这样可以将驱动程序（driver）的 Kubernetes 管理权限与各进程的 S3 数据访问权限分开。禁用清理器后，History Server 可以从只读角色开始运行。
 
 </details>
 
@@ -70,7 +70,7 @@ software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider�
 <details>
 <summary>显示答案</summary>
 
-不能。它用于验证内部连接。Kubernetes 生成的应用程序 Secret 可能会通过 executor 环境变量传播，因此读取 Pod 的权限很重要。UI 身份验证、授权和 TLS 是彼此独立的配置。
+不能。它用于验证内部连接。Kubernetes 生成的应用程序 Secret 可能会通过执行器（executor）环境变量传播，因此读取 Pod 的权限很重要。UI 身份验证、授权和 TLS 是彼此独立的配置。
 
 </details>
 
@@ -79,7 +79,7 @@ software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider�
 <details>
 <summary>显示答案</summary>
 
-命名空间中其他作业的 executor 也会匹配。示例会在 driver/executor 标签和策略中共享唯一的运行 ID。标签本身不是身份验证；应考虑能够伪造标签的 Pod 创建者。
+命名空间中其他作业的执行器（executor）也会匹配。示例会在 driver/executor 标签和策略中共享唯一的运行 ID。标签本身不是身份验证；应考虑能够伪造标签的 Pod 创建者。
 
 </details>
 
@@ -88,7 +88,7 @@ software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider�
 <details>
 <summary>显示答案</summary>
 
-不会。策略是累加生效的，并且需要 CNI 强制执行。此示例仅限制 ingress。应分别检查 egress、节点/hostNetwork 行为、其他允许策略、DNS/API/AWS 端点和附加插件。
+不会。策略是累加生效的，并且需要 CNI 强制执行。此示例仅限制入站流量。应分别检查出站流量、节点/hostNetwork 行为、其他允许策略、DNS/API/AWS 端点和附加插件。
 
 </details>
 
@@ -106,7 +106,7 @@ software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider�
 <details>
 <summary>显示答案</summary>
 
-不同。/metrics/prometheus/ 提供 driver 的 Dropwizard registry；/metrics/executors/prometheus/ 提供由 driver 收集的 executor 聚合数据。每个 executor 都不会各自获得一个 Spark UI；应比较实际的序列、标签和单位。
+不同。/metrics/prometheus/ 提供 driver 的 Dropwizard 指标注册表；/metrics/executors/prometheus/ 提供由 driver 收集的 executor 聚合数据。每个 executor 都不会各自获得一个 Spark UI；应比较实际的序列、标签和单位。
 
 </details>
 
@@ -124,7 +124,7 @@ Agent 运行在 JVM 内部，而不是作为另一个进程。默认的 Operator
 <details>
 <summary>显示答案</summary>
 
-Prometheus 标签/命名空间选择器、服务发现 RBAC、Pod 端口/路径和 NetworkPolicy 必须彼此匹配。应检查 UP targets 和实际指标序列；短作业可能在抓取之前就已结束。
+Prometheus 标签/命名空间选择器、服务发现 RBAC、Pod 端口/路径和 NetworkPolicy 必须彼此匹配。应检查状态为 UP 的目标和实际指标序列；短作业可能在两次抓取之间完成。
 
 </details>
 
@@ -151,16 +151,16 @@ Prometheus 标签/命名空间选择器、服务发现 RBAC、Pod 端口/路径�
 <details>
 <summary>显示答案</summary>
 
-前提是事件日志确实得到保留并且可读取。事件缺失、损坏、未刷新、被删除或压缩都会限制重建效果。事件日志不是数据恢复检查点，也不是输出备份。
+前提是事件日志确实得到保留并且可读取。事件缺失、损坏、未刷新、被删除或经压实处理（compaction）都会限制重建效果。事件日志不是数据恢复检查点，也不是输出备份。
 
 </details>
 
-## 18. Operator、cluster mode 和 IRSA 是否是生产环境的唯三选项？
+## 18. Operator、集群模式（cluster mode）和 IRSA 是否是生产环境仅有的选择？
 
 <details>
 <summary>显示答案</summary>
 
-不是。应根据需求选择经过验证的直接提交方式、Operator 或 EMR、合适的 client/cluster mode，以及 IRSA/Pod Identity。在实际环境中测试权限、数据正确性、恢复、网络、资源和成本。
+不是。应根据需求选择经过验证的直接提交方式、Operator 或 EMR、合适的客户端/集群模式（client/cluster mode），以及 IRSA/Pod Identity。在实际环境中测试权限、数据正确性、恢复、网络、资源和成本。
 
 </details>
 

@@ -29,7 +29,7 @@
 <span id="verification-5"></span>
 
 > **難易度**: 上級
-> **最終更新**: September 13, 2026
+> **最終更新日**: 2026年9月13日
 service クラスターのアプリケーションを、management クラスターのメトリクス、ログ、トレースに接続します。[スタック例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack)にある、バージョン固定された chart/TLS/identity のファイルを使用してください。[パート1](./01-infrastructure-setup-lab.md) で context、gp3/EBS CSI、LBC、DNS/route、IRSA、`helm-inputs/collector-identity.yaml` が用意されている必要があります。
 
 ![配線されたメトリクス、ログ、トレースの経路](../../.gitbook/assets/en-labs-observability-02-observability-stack-lab-0.png)

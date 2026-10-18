@@ -1,52 +1,60 @@
-# Storage 概要
+# ストレージ概要
 
-> **最終更新**: September 2, 2026
+> **最終更新日**: 2026年9月11日
 
-Kubernetes で stateful workload を実行した瞬間、storage は単なる「後付けするもの」ではなくなり、performance、cost、availability を左右する領域になります。このセクションでは、実務で重要となる順序で cloud storage を扱います: **選び方 → 実際に測定されるもの → 運用方法**。
+Kubernetes で stateful workload を実行すると、ストレージは単に「後から接続するもの」ではなくなり、性能、コスト、可用性を左右する領域になります。このセクションでは、実務上重要な順序でクラウドストレージを扱います。**選び方 → 実際に測定されるもの → 運用方法**です。
 
 ## このセクションの内容
 
 | ドキュメント | 内容 |
 |----------|----------------|
-| [EBS gp2 vs gp3 実測ベンチマーク](./01-ebs-gp2-gp3-benchmark.md) | 同一の 100GiB volume でも performance が 10 倍異なる理由 — fio で測定した IOPS/latency/throughput と gp2 burst-credit cliff |
+| [EBS gp2 と gp3 の実測ベンチマーク](./01-ebs-gp2-gp3-benchmark.md) | 同じ 100 GiB のボリュームでも性能に10倍の差が生じる理由: fio で測定した IOPS／レイテンシー／スループットと gp2 のバーストクレジット枯渇 |
 
-Kubernetes storage の基礎と実践的な EKS 設定については、本書の別の箇所で詳しく扱っています。このセクションは以下と併せてお読みください:
+Kubernetes ストレージの基礎と実践的な EKS 設定については、本書の別の箇所で詳しく扱っています。このセクションは、次の資料と併せてお読みください。
 
-- [Kubernetes Storage](../core/04-storage.md) — PV/PVC、StorageClass、dynamic provisioning、access modes
-- [EKS Storage Part 1: EBS, EFS](../eks/04-eks-storage-part1.md) — CSI driver のインストールと基本的な使用方法
+- [Kubernetes Storage](../core/04-storage.md): PV／PVC、StorageClass、動的プロビジョニング、アクセスモード
+- [EKS Storage Part 1: EBS, EFS](../eks/04-eks-storage-part1.md): CSI driver のインストールと基本的な使用方法
 - [EKS Storage Part 2: FSx for Lustre, S3, snapshots, performance](../eks/04-eks-storage-part2.md)
 - [EKS Storage Part 3: monitoring, troubleshooting, cost](../eks/04-eks-storage-part3.md)
 
-## Storage stack の概要
+## ストレージスタックの概要
 
-application write から physical volume に至る経路を理解すると、performance が期待に届かないときに、どの layer を疑うべきかが分かります:
+アプリケーションの書き込みから物理ボリュームまでの経路を理解すると、性能が期待に届かないときに、どのレイヤーを調査すべきかが分かります。
 
 ```text
 application write()
-  → container filesystem (ext4/xfs)
-    → kernel block layer (io scheduler, page cache or O_DIRECT)
-      → EBS volume (per-volume-type IOPS/throughput limits)
-        → EC2 instance EBS bandwidth limit  ← the one everyone forgets
+  → mounted volume filesystem (ext4/xfs)
+    → guest kernel and block device
+      → EC2 EBS path (IOPS/bandwidth shared by all volumes)
+        → EBS service and volume (per-volume IOPS/throughput limits)
 ```
 
-volume 自体の limits と **instance-level EBS bandwidth/IOPS limits** は別々の予算です。m5.xlarge の baseline はおよそ 6,000 IOPS です。3,000 IOPS の gp3 volume を 3 つアタッチすると、volume の定格にかかわらず instance が bottleneck になります。
+ボリューム自体の上限と、**インスタンス単位の EBS 帯域幅／IOPS 上限**は別々の予算です。m5.xlarge のベースラインはおよそ 6,000 IOPS です。3 つの gp3 ボリュームを同時に 3,000 IOPS で動かすと、合計 9,000 IOPS を要求するため、持続可能なベースラインを超えます。インスタンスのバースト容量と、他のすべてのボリュームのトラフィックも確認してください。
 
-## AWS storage の選択
+## AWS ストレージの選択
 
-| Service | Access mode | 特性 | 最適な用途 |
+| サービス | アクセスモード | 特性 | 適した用途 |
 |---------|-------------|-----------------|----------|
-| **EBS (gp3/io2)** | RWO (single node) | Block、sub-ms latency | Databases、single-pod state |
-| **EFS** | RWX (multi node) | NFS、ms-level latency、elastic capacity | Shared config/content、共有 ML training data |
-| **FSx for Lustre** | RWX | Parallel filesystem、high throughput | HPC、大規模 ML training |
-| **S3 (Mountpoint CSI)** | RWX (read-heavy) | Object、high throughput / high latency | Data lakes、models と artifacts |
-| **Instance store** | Node-local | NVMe、最も低い latency、**ephemeral** | Caches、shuffle data、scratch space |
+| **EBS (gp3/io2)** | RWO（単一ノード） | ブロックストレージ。レイテンシーは種類、負荷、キュー深度に依存 | データベース、単一 Pod の状態データ |
+| **EFS** | RWX（複数ノード） | NFS、ミリ秒単位のレイテンシー、伸縮する容量 | 共有設定／コンテンツ、共有 ML 学習データ |
+| **FSx for Lustre** | RWX | 高スループットの並列ファイルシステム | HPC、大規模 ML 学習 |
+| **S3 (Mountpoint CSI)** | RWX（読み取り中心） | オブジェクトストレージ。POSIX／NFS とは操作の意味が異なる | データレイク、モデル、成果物 |
+| **インスタンスストア** | ノードローカル | NVMe、最も低いレイテンシー、**一時的** | キャッシュ、shuffle データ、一時領域 |
 
-## Spec sheet を読むのではなく測定する理由
+RWO は同一ノード上の複数 Pod による利用を許可します。単一 Pod だけが使えるという保証ではありません。io2 Multi-Attach などの例外には、個別のサポートとファイルシステム／アプリケーション側の並行アクセス設計が必要です。Mountpoint for S3 は汎用の POSIX 共有ファイルシステムではありません。ワークロードに必要な更新、rename、ロックの各機能がサポートされるか確認してください。インスタンスストアのデータは再起動後も残ることがありますが、停止または終了時に失われる可能性があります。
 
-Storage は、datasheet と実際の使用感の差が最も大きい領域です。代表的な落とし穴は次のとおりです:
+## 仕様書を読むだけでなく測定する理由
 
-1. **gp2 burst credits** — 新しい volume は credit bucket が枯渇するまで 3,000 IOPS で動作し、その後 baseline（3 IOPS/GiB）まで低下します。load test が 30 分以内に終わった場合、この cliff を見ないまま通り過ぎてしまいます。
-2. **Volume limits と instance limits** — 上の stack diagram を参照してください。
-3. **結論は iodepth によって変わる** — queue-depth-1 の latency test と queue-depth-32 の IOPS test は、同じ volume のまったく異なる特性を表します。
+ストレージは、データシート上の性能と実際の使用感の差が最も大きい領域です。よくある注意点は次のとおりです。
 
-[実測した EBS gp2 vs gp3 ベンチマーク](./01-ebs-gp2-gp3-benchmark.md)では、fio を使ってこれらの各落とし穴を実証します。
+1. **gp2 のバーストクレジット:** ベースラインが 3,000 IOPS 未満のボリュームは、利用可能なクレジットを使ってバーストできます。継続時間は初期クレジット量、容量、負荷によって変わります。容量 100 GiB のボリュームを 3,000 IOPS で使う場合、計算上は約33分です。短時間のテストでは、クレジット消費後の性能を見落とすことがあります。
+2. **ボリューム上限とインスタンス上限:** 上のスタック図を参照してください。
+3. **iodepth によって結論が変わる:** queue-depth-1 のレイテンシーテストと queue-depth-32 の IOPS テストは、同じボリュームのまったく異なる特性を表します。
+
+[実測 EBS gp2 と gp3 のベンチマーク](./01-ebs-gp2-gp3-benchmark.md)では、fio を使ってこれらの注意点を実証します。
+
+## 参考資料
+
+- [EBS performance](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
+- [EC2 EBS limits](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html)
+- [Mountpoint S3 semantics](https://github.com/awslabs/mountpoint-s3/blob/main/doc/SEMANTICS.md)

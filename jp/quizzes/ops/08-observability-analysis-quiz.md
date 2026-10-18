@@ -1,6 +1,6 @@
 # Observability Analysis クイズ
 
-> **関連ドキュメント**: [Observability Analysis](../../ops/08-observability-analysis.md)
+> **関連ドキュメント**: [可観測性の分析](../../ops/08-observability-analysis.md)
 
 ## 選択問題
 
@@ -17,7 +17,7 @@
 **回答: B) サービスをまたいでリクエスト内のすべての span を関連付ける一意の識別子**
 
 **解説:**
-Trace ID は、リクエストがシステムに入ったときに割り当てられ、すべての下流サービス呼び出しへ伝播される一意の識別子です。同じリクエストを処理した異なるサービスの logs、spans、metrics を結び付けることができます。
+サービスは、有効な受信trace contextを引き継ぐか、新しいtraceを作成します。非同期処理では、span linkで接続した新しいtraceを開始する場合もあります。参加するspanが同じTrace IDを共有することで、同じリクエストを処理した各サービスのlogs、spans、metricsを関連付けられます。
 
 </details>
 
@@ -85,7 +85,7 @@ USE method は、Utilization（使用率）、Saturation（キューの深さ/�
 **回答: B) metric から trace への関連付けを可能にする、metric samples に付与された Trace IDs**
 
 **解説:**
-Exemplars は、特定の時点で metric samples と一緒に保存される Trace IDs です。Grafana で histogram や counter を表示しているとき、exemplars により、特定の metric data point を生成した trace へ直接クリックして移動できます。
+Exemplars は、選択されたmetricの観測値にcontextual label（多くの場合Trace ID）を付与します。Grafanaでhistogramやcounterを表示するとき、設定済みのexemplar linkから関連する保持済みtraceを開けます。すべての観測値がtrace化されるわけではなく、厳密にP99となったリクエストを特定する保証もありません。
 
 </details>
 
@@ -102,7 +102,7 @@ Exemplars は、特定の時点で metric samples と一緒に保存される Tr
 **回答: B) `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))`**
 
 **解説:**
-`histogram_quantile()` は histogram bucket counts から quantile を計算します。最初の引数（0.95）は percentile で、`_bucket` metric の rate に対して動作します。これにより、リクエストの 95% が完了する latency の上限値が得られます。
+`histogram_quantile()` はhistogramのbucket countからquantileを計算します。最初の引数（0.95）がpercentileで、`_bucket` metricのrateを使います。結果はbucket境界からの推定値です。インスタンスをまとめる場合は、`le`と対象のservice/cluster labelを保持してrateを集約してください。トラフィックがない場合やrateが0の場合は別途扱う必要があります。
 
 </details>
 
@@ -136,7 +136,7 @@ TraceQL は、traces を検索するための Tempo のクエリ言語です。�
 **回答: B) <code v-pre>{app="myapp"} | json | line_format "{{.fieldname}}"</code>**
 
 **解説:**
-`| json` parser は、log lines から JSON fields を labels に抽出します。その後、Go template syntax を使って `| line_format` で出力を整形したり、`| status_code >= 500` のように抽出した fields でフィルタリングしたりできます。
+`| json` parserは、log lineからJSON fieldを抽出します。出力を整形したり、抽出したfieldで絞り込んだりできます。特にmetric集約の前や`unwrap`の後は、`__error__` filterを使ってparser/conversion errorを確認してください。
 
 </details>
 
@@ -160,16 +160,16 @@ Applications は logs に Trace IDs を出力する必要があります。Grafa
 ### 10. distributed tracing における span attributes の目的は何ですか？
 
 - A) trace visualization の見た目を整えるため
-- B) contextual metadata（user ID、request parameters）を spans に付与するため
+- B) routeやoperationなど、範囲を限定したcontextual metadataを付与するため
 - C) trace data を暗号化するため
 - D) trace storage を圧縮するため
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) contextual metadata（user ID、request parameters）を spans に付与するため**
+**回答: B) routeやoperationなど、範囲を限定したcontextual metadataを付与するため**
 
 **解説:**
-Span attributes は、`http.method`、`http.status_code`、`user.id`、`db.statement` など、spans に context を追加する key-value pairs です。これにより、business context で traces をフィルタリングでき、どのリクエストに問題があるかを特定しやすくなります。
+Span attributesは、routeやoperationなど、範囲を限定したcontextを追加します。クエリは実際のsemantic-convention schemaに合わせてください。カーディナリティに上限を設け、認証情報、リクエスト本文全体、機密性の高いデータベース文を無差別に記録しないでください。
 
 </details>

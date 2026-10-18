@@ -1,179 +1,114 @@
 # EKS Hybrid Nodes 前提条件测验
 
-> **相关文档**: [前提条件](../../eks-hybrid-nodes/01-prerequisites.md)
+> **相关文档**：[前提条件](../../eks-hybrid-nodes/01-prerequisites.md)
+> **最后更新**：2026年9月12日
 
-## 多项选择题
+## 选择题
 
-### 1. 以下哪项不是 EKS Hybrid Nodes 的适用用例？
+### 1. 哪种情况不属于将机器注册为 EKS Hybrid Node 的受支持理由？
 
-A. 使用本地数据中心中的 GPU 服务器
-B. 出于法规合规的数据本地性要求
-C. 运行纯云原生工作负载
-D. 延迟敏感的边缘工作负载
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C. 运行纯云原生工作负载**
-
-**解释：**
-纯云原生工作负载在常规 EKS node groups 或 Fargate 上运行效率更高。Hybrid Nodes 用于存在特殊要求（本地、边缘、法规等）的场景。
-
-**EKS Hybrid Nodes 的适用用例：**
-- 使用本地 GPU/专用硬件
-- 数据主权/法规合规要求
-- 延迟敏感的边缘计算
-- 云迁移过渡期
-- 保护现有基础设施投资
-
-</details>
-
-### 2. EKS Hybrid Nodes 支持哪种操作系统？
-
-A. 仅 Windows Server 2019
-B. Ubuntu 20.04/22.04, Amazon Linux 2023, RHEL 8/9
-C. macOS Ventura 或更高版本
-D. FreeBSD 13 或更高版本
+- A) 使用兼容的本地 GPU 服务器
+- B) 让应用处理过程靠近本地数据集
+- C) 将普通 EC2/云端机器注册为 Hybrid Node 基础设施
+- D) 连接可靠、且已测试恢复流程的边缘工作负载
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. Ubuntu 20.04/22.04, Amazon Linux 2023, RHEL 8/9**
+**答案：C) 将普通 EC2/云端机器注册为 Hybrid Node 基础设施**
 
 **解释：**
-EKS Hybrid Nodes 仅支持基于 Linux 的操作系统。支持的 OS 版本包括：
-- Ubuntu 20.04 LTS, 22.04 LTS
-- Amazon Linux 2023
-- Red Hat Enterprise Linux (RHEL) 8, 9
-- Bottlerocket（容器优化的 OS）
-
-```bash
-# Check OS version
-cat /etc/os-release
-
-# Check kernel version (5.4 or later recommended)
-uname -r
-```
+AWS 支持在客户自行运维的本地或边缘物理主机和虚拟主机上部署 Hybrid Node，而不是在云基础设施上部署。即使把 EC2 注册为 Hybrid Node，仍会产生 Hybrid Node 费用。云端节点应使用常规 AWS 计算类型。Hybrid Node 需要可靠的网络连接；仅设置 placement label 并不能证明满足法规合规要求，也不能证明节点可离线运行。
 
 </details>
 
-### 3. 以下哪项不是在 Hybrid Nodes 上运行 GPU 工作负载的最低要求？
+### 2. 以下哪项操作系统说明符合当前 AWS Hybrid 集成兼容性矩阵？
 
-A. NVIDIA Driver 525 或更高版本
-B. CUDA Toolkit 11.8 或更高版本
-C. 最低 4GB GPU 内存
-D. x86_64 或 arm64 架构是强制要求
+- A) 仅支持 Windows Server
+- B) Ubuntu 20.04/22.04/24.04、RHEL 8/9、虚拟化环境中的 AL2023，以及受支持的 Bottlerocket VMware 变体
+- C) 支持任意 macOS 版本
+- D) 任意 Linux 镜像都会自动获得 AWS 操作系统支持
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. x86_64 或 arm64 架构是强制要求**
+**答案：B) Ubuntu 20.04/22.04/24.04、RHEL 8/9、虚拟化环境中的 AL2023，以及受支持的 Bottlerocket VMware 变体**
 
 **解释：**
-x86_64 或 arm64 架构是 CPU 架构要求，并不是 GPU 工作负载的直接要求。GPU 工作负载的关键要求是：
-
-- **NVIDIA Driver**: 525 或更高版本（支持 CUDA 12）
-- **CUDA Toolkit**: 11.8 或更高版本
-- **GPU Memory**: 建议最低 4GB（因工作负载而异）
-- **containerd**: 1.6 或更高版本（支持 GPU 容器）
-
-```bash
-# Check NVIDIA driver version
-nvidia-smi --query-gpu=driver_version --format=csv,noheader
-
-# Check CUDA version
-nvcc --version
-```
+请同时核对供应商的安全维护状态、CPU 架构以及所选 CNI 和内核。Bottlerocket VMware v1.37.0 及更高版本仅支持 x86_64，并使用其专用的引导流程。AL2023 适用于本地虚拟化环境；AWS 对其在 EC2 以外环境中的使用不提供操作系统支持。ARM 上的 EKS kube-proxy 1.31 及更高版本要求 ARMv8.2+crypto；笼统的内核 5.4 规则或 CPU 型号名称都不足以完成兼容性验证。
 
 </details>
 
-### 4. EKS Hybrid Nodes 的最低硬件要求是什么？
+### 3. 评估 GPU 工作负载兼容性时，以下哪项说法不正确？
 
-A. CPU 1 核，内存 512MB
-B. CPU 2 核，内存 2GB
-C. CPU 4 核，内存 8GB
-D. CPU 8 核，内存 16GB
+- A) 驱动程序与 CUDA/框架镜像的兼容性很重要
+- B) 内存需求取决于工作负载
+- C) 必须考虑受支持的操作系统/内核和容器运行时
+- D) 安装 GPU 后就可以忽略 CPU 架构
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. CPU 2 核，内存 2GB**
+**答案：D) 安装 GPU 后就可以忽略 CPU 架构**
 
 **解释：**
-EKS Hybrid Nodes 的最低硬件要求是：
-
-| 资源 | 最低要求 | 推荐配置 |
-|----------|---------|-------------|
-| CPU | 2 核 | 4 核或更多 |
-| 内存 | 2GB | 4GB 或更多 |
-| 磁盘 | 20GB | 50GB 或更多（推荐 SSD） |
-| 网络 | 100Mbps | 1Gbps 或更多 |
-
-生产环境可能需要更高规格，具体取决于工作负载要求。
+CPU 架构、GPU 型号、驱动程序、操作系统/内核、容器工具包/运行时以及应用镜像都必须彼此兼容。Hybrid Node 没有通用的 4GB GPU 最低要求，也没有固定的 525/550 驱动程序要求。仅为运行已正确打包的容器，并不要求主机安装 nvcc 编译器；nvidia-smi 和 nvcc 报告的是不同组件的信息。
 
 </details>
 
-### 5. 以下哪项不是 EKS Hybrid Nodes 配置所需的软件组件？
+### 4. 应如何理解主机基础资源建议？
 
-A. containerd runtime
-B. kubelet
-C. Docker Engine
-D. aws-iam-authenticator
+- A) 1 个 CPU 核心和 512MB 内存可保证足够
+- B) AWS 建议至少配置 1 vCPU 和 1 GiB RAM，但不存在适用于所有情况的严格最低规格
+- C) 每种工作负载都必须恰好使用 4 个 CPU 核心和 8GB 内存
+- D) 50GB 磁盘即可保证节点满足要求
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Docker Engine**
+**答案：B) AWS 建议至少配置 1 vCPU 和 1 GiB RAM，但不存在适用于所有情况的严格最低规格**
 
 **解释：**
-EKS Hybrid Nodes 使用 containerd 作为容器运行时，不需要 Docker Engine。所需组件包括：
-
-- **containerd**: 容器运行时（1.6 或更高版本）
-- **kubelet**: Kubernetes 节点代理
-- **aws-iam-authenticator**: AWS IAM 认证
-- **CNI plugins**: 容器网络
-
-```bash
-# nodeadm automatically installs components
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-
-# Check installed components
-systemctl status containerd
-systemctl status kubelet
-```
+应分别评估操作系统、kubelet/运行时、CNI/代理、镜像与日志，以及实际工作负载的资源需求。此前提到的 2 核/2GB 答案和 20/50/100GB 磁盘规格只是彼此不一致的规划示例，并非经过验证的工作负载最低要求。同样，AWS 提供的 100Mbps/200ms 网络建议属于一般指导，并非普遍适用的验收门槛。
 
 </details>
 
-### 6. 使用 H100 GPU 与 Hybrid Nodes 时所需的最低 NVIDIA driver 版本是多少？
+### 5. 主机成为 EKS Hybrid Node 后，以下哪项组件并非因此就必须安装？
 
-A. 450.x
-B. 470.x
-C. 525.x
-D. 535.x
+- A) 兼容的 CRI 运行时，例如 containerd
+- B) kubelet
+- C) Docker Engine
+- D) 所选的 AWS 凭证/身份验证辅助工具
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. 535.x**
+**答案：C) Docker Engine**
 
 **解释：**
-NVIDIA H100 GPU 使用 Hopper 架构，需要最新的驱动程序：
-
-| GPU 型号 | 最低驱动版本 | 推荐驱动版本 |
-|-----------|----------------------|---------------------------|
-| A100 | 450.x | 525.x 或更高版本 |
-| H100 | 525.x | 535.x 或更高版本 |
-| H200 | 535.x | 545.x 或更高版本 |
-
-```bash
-# Verify H100 driver installation
-nvidia-smi
-
-# Update driver
-sudo apt-get update
-sudo apt-get install nvidia-driver-535
-```
-
-建议使用 535.x 或更高版本的驱动程序，以充分利用 H100 的关键功能（MIG 扩展、Transformer Engine 等）。
+Docker 提供的 containerd 软件包来源并不是运行 Docker Engine 的必要条件。对于非 Bottlerocket 主机，nodeadm 的 install 阶段会安装依赖项，config check 会验证输入，而 init 会配置并加入节点。签名密钥变更后，通过 SSM 安装或升级需要 nodeadm 1.0.19 或更高版本；本次核对的版本为 1.0.20。RHEL 使用 `docker`，或使用预先安装的运行时并将选项设为 `none`，而不是 `distro`。
 
 </details>
+
+### 6. 如何正确规划 H100 Hybrid Node 部署？
+
+- A) 在所有主机上安装 450.x
+- B) 将旧版 525.x 示例视为永久适用的充分条件
+- C) 不论所用框架为何，都必须恰好使用 535.x
+- D) 选择受支持的 GPU/操作系统/驱动程序/CUDA/运行时组合，并验证应用程序
+
+<details>
+<summary>显示答案</summary>
+
+**答案：D) 选择受支持的 GPU/操作系统/驱动程序/CUDA/运行时组合，并验证应用程序**
+
+**解释：**
+旧表格混淆了最低版本和建议版本，且与原答案相矛盾。450/525/535/545/550 这些版本号并不构成当前通用的部署要求。请核对具体 H100 型号、受支持的驱动程序分支、框架镜像和功能要求，并先在已隔离的测试主机上验证变更。本次审查没有执行 GPU 运算或模型基准测试。
+
+</details>
+
+## 参考资料
+
+- [Hybrid Node 前提条件](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html)
+- [Hybrid Node 操作系统兼容性](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
+- [nodeadm 参考文档](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)

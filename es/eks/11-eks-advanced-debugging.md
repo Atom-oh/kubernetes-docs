@@ -1,7 +1,7 @@
 # Depuración avanzada y respuesta a incidentes de EKS
 
 > **Línea base de revisión**: esquemas de Kubernetes 1.36 y kubectl 1.36.2; elija una versión de EKS con soporte vigente y versiones de componentes compatibles
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 Para que los clústeres de Amazon EKS funcionen de forma estable, son esenciales un marco sistemático de respuesta a incidentes y habilidades avanzadas de depuración. Este documento ofrece una guía práctica para diagnosticar y resolver rápidamente problemas complejos que se producen en entornos de producción.
 
@@ -34,7 +34,7 @@ El DaemonSet estándar de VPC CNI, `aws-node`, suele ejecutarse en `kube-system`
 
 ### Script de diagnóstico inicial
 
-Este script realiza solicitudes API acotadas y guarda evidencia privada para un espacio de nombres de carga de trabajo seleccionado, además del estado de los nodos del clúster y de los Pods del sistema. No recopila datos de Secret ni vuelca las variables de entorno/configuración de todos los Pods. Los registros, los eventos y los mensajes de error aún pueden contener datos confidenciales de la aplicación: revise/enmascare la evidencia antes de compartirla. Revise las entradas de cuenta/contexto y el directorio privado de evidencia existente antes de ejecutarlo.
+Este script realiza solicitudes limitadas a la API y guarda evidencia privada para un espacio de nombres de carga de trabajo seleccionado, además del estado de los nodos del clúster y de los Pods del sistema. No recopila datos de Secret ni vuelca las variables de entorno/configuración de todos los Pods. Los registros, los eventos y los mensajes de error aún pueden contener datos confidenciales de la aplicación: revise/enmascare la evidencia antes de compartirla. Revise las entradas de cuenta/contexto y el directorio privado de evidencia existente antes de ejecutarlo.
 
 ```bash
 set -euo pipefail
@@ -108,7 +108,7 @@ printf 'Private evidence: %s; failed collections: %s\n' "$TRIAGE_DIR" "$TRIAGE_F
 test "$TRIAGE_FAILED" -eq 0
 ```
 
-Revise `status.tsv` y los resultados de cada fallo. La falta de permisos, las métricas no disponibles y los tiempos de espera agotados de la API siguen siendo recopilaciones fallidas; el script termina con un código distinto de cero si alguna recopilación falla y no afirma que el incidente esté resuelto. Deja intencionadamente visibles los estados de Pod completados, pendientes y Running para que se interpreten. Las consultas de seguimiento selectivas a los registros deben usar un espacio de nombres, UID de Pod y contenedor exactos, con un intervalo de tiempo o número de líneas acotado.
+Revise `status.tsv` y los resultados de cada fallo. La falta de permisos, las métricas no disponibles y los tiempos de espera agotados de la API se consideran recopilaciones fallidas; el script termina con un código distinto de cero si falla alguna recopilación y no afirma que el incidente esté resuelto. Deja intencionadamente visibles los estados de Pod completados, pendientes y Running para que se interpreten. Las consultas de seguimiento selectivas a los registros deben usar un espacio de nombres, UID de Pod y contenedor exactos, con un intervalo de tiempo o número de líneas acotado.
 
 La lista de LoadBalancer filtra localmente el JSON de Service: `spec.type` no es un selector de campos integrado compatible para Service. Esta recopilación inicial no incluye `cluster-info dump` general, cargas automáticas de archivos, reinicios ni eliminaciones de recursos.
 

@@ -151,7 +151,7 @@ No. Configura la supervisión de registros y los permisos del rol de ejecución,
 <details>
 <summary>Mostrar respuesta</summary>
 
-Un endpoint de CreateManagedEndpoint usa Jupyter Enterprise Gateway para gestionar kernels. Es distinto de las llamadas por lotes normales de StartJobRun y requiere configurar una red privada, ALB y roles. Los usuarios y kernels del mismo endpoint comparten su rol.
+Un endpoint creado mediante CreateManagedEndpoint usa Jupyter Enterprise Gateway para gestionar kernels. Es distinto de las llamadas por lotes normales de StartJobRun y requiere configurar una red privada, ALB y roles. Los usuarios y kernels del mismo endpoint comparten el rol del endpoint.
 
 </details>
 

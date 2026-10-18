@@ -1,143 +1,135 @@
-# Cuestionario sobre Tekton Pipelines
+# Cuestionario de Tekton Pipelines
 
-1. ¿Qué ventaja tiene Tekton sobre Jenkins o GitHub Actions en entornos Kubernetes?
-   - A) Tekton proporciona más plugins
-   - B) Las pipelines basadas en CRD se gestionan como recursos de Kubernetes, lo que habilita GitOps, RBAC y namespace isolation
-   - C) Tekton proporciona mayor velocidad de ejecución
-   - D) Tekton es gratuito mientras que otras herramientas son de pago
+1. ¿Cuál describe correctamente Task, TaskRun y Workspace?
+   - A) La definición de una Task ya es un Pod en ejecución
+   - B) Un TaskRun ejecuta una Task; Workspace es un campo para asociar volúmenes
+   - C) Workspace siempre es un CRD independiente
+   - D) Los Steps de un mismo Pod están completamente aislados entre sí
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Las pipelines basadas en CRD se gestionan como recursos de Kubernetes, lo que habilita GitOps, RBAC y namespace isolation**
+**Respuesta: B) Un TaskRun ejecuta una Task; Workspace es un campo para asociar volúmenes**
 
-**Explicación:**
-Tekton define Tasks, Pipelines y PipelineRuns como Kubernetes CRDs. Esto permite la gestión declarativa de pipelines en Git (GitOps), el control de acceso mediante Kubernetes RBAC, el aislamiento a nivel de namespace y la gestión mediante kubectl. Cada Step se ejecuta en un contenedor separado para lograr un aislamiento sólido.
+Task y Pipeline son definiciones; los Runs son ejecuciones. Los Steps de un mismo Pod comparten la red y los volúmenes, por lo que no constituyen un límite de confianza.
 
 </details>
 
 ---
 
-2. ¿Cómo compartes datos entre Tasks en una Tekton Pipeline?
-   - A) Pasarlos mediante variables de entorno
-   - B) Compartir sistemas de archivos mediante Workspaces (PVC) y pasar datos pequeños mediante Results
-   - C) Almacenarlos en ConfigMaps
-   - D) Comunicación de red directa entre Tasks
+2. ¿Qué es correcto al compartir el código fuente entre TaskRuns?
+   - A) emptyDir comparte los mismos archivos entre Pods
+   - B) Se puede usar un PVC por ejecución; RWO y RWX por sí solos no son límites de confianza
+   - C) Usar distintos subPaths hace que un PVC sea seguro para compartir entre PR externos y versiones de release
+   - D) Results siempre admite cadenas ilimitadas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Compartir sistemas de archivos mediante Workspaces (PVC) y pasar datos pequeños mediante Results**
+**Respuesta: B) Se puede usar un PVC por ejecución; RWO y RWX por sí solos no son límites de confianza**
 
-**Explicación:**
-Workspaces permite compartir sistemas de archivos basados en PVC entre Tasks, ideal para patrones como clonar código fuente y luego compilar. Results pasa datos pequeños en forma de cadena (image tags, commit SHAs, etc.) entre Tasks, referenciados como `$(tasks.task-name.results.result-name)`.
+Usa volumeClaimTemplate para tener almacenamiento por ejecución y separa los datos modificables entre niveles de confianza. Reserva Results para valores pequeños y el almacenamiento de artefactos para informes grandes.
 
 </details>
 
 ---
 
-3. ¿Qué hace el EventListener de Tekton Triggers?
-   - A) Generar eventos y enviarlos a sistemas externos
-   - B) Recibir solicitudes webhook y crear automáticamente PipelineRuns mediante TriggerBinding/TriggerTemplate
-   - C) Monitorizar los resultados de ejecución de la pipeline
-   - D) Sondear periódicamente repositorios Git
+3. ¿Cómo se debe gestionar un PR externo después de verificar su HMAC de GitHub?
+   - A) Usar los privilegios de firma e IRSA del pipeline de release
+   - B) Usar un nivel de confianza de ejecución independiente, con permisos limitados
+   - C) Insertar directamente sus comandos de shell en los scripts porque el HMAC pasó la verificación
+   - D) Una solicitud verificada siempre corresponde a un push a la rama main
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Recibir solicitudes webhook y crear automáticamente PipelineRuns mediante TriggerBinding/TriggerTemplate**
+**Respuesta: B) Usar un nivel de confianza de ejecución independiente, con permisos limitados**
 
-**Explicación:**
-El EventListener es un endpoint HTTP que recibe solicitudes webhook (GitHub Push, eventos PR, etc.). Interceptors valida/filtra la solicitud, TriggerBinding extrae parámetros del payload y TriggerTemplate crea un PipelineRun con esos parámetros.
+HMAC valida el origen de la entrega, no autoriza al código a desplegar. La ruta de CI privilegiada de este capítulo se limita a pushes a la rama main protegida del repositorio aprobado.
 
 </details>
 
 ---
 
-4. ¿Qué característica de seguridad de la cadena de suministro proporciona Tekton Chains?
-   - A) Escanear imágenes de contenedor en busca de vulnerabilidades
-   - B) Firmar automáticamente los artefactos (imágenes) de TaskRun/PipelineRun y generar SLSA Provenance
-   - C) Cifrar el tráfico de red
-   - D) Generar automáticamente políticas RBAC
+4. ¿Qué versión de procedencia genera el formateador slsa/v1 de Chains?
+   - A) Procedencia SLSA v1.0
+   - B) Procedencia SLSA v0.2; v1.0 usa slsa/v2alpha3 o slsa/v2alpha4
+   - C) La clave de firma elige automáticamente cualquier versión
+   - D) Siempre la misma versión que la API v1 de Kubernetes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Firmar automáticamente los artefactos (imágenes) de TaskRun/PipelineRun y generar SLSA Provenance**
+**Respuesta: B) Procedencia SLSA v0.2; v1.0 usa slsa/v2alpha3 o slsa/v2alpha4**
 
-**Explicación:**
-Tekton Chains firma automáticamente imágenes OCI con Cosign/Sigstore después de que se completa TaskRun y genera SLSA Provenance (metadatos de build, información de origen, pasos de build, etc.). Esto fortalece la seguridad de la cadena de suministro de software y permite verificar el origen y la integridad de las imágenes.
+Los nombres del formateador y las versiones de la especificación SLSA son distintos. La procedencia a nivel de Pipeline se crea después de completar el Pipeline y requiere verificación y promoción por separado.
 
 </details>
 
 ---
 
-5. ¿Cuál es el propósito de las Tasks `finally` en una Tekton Pipeline?
-   - A) Ejecutarse como la primera Task de la pipeline
-   - B) Tareas de limpieza que siempre se ejecutan al final, independientemente del éxito o fallo de la pipeline
-   - C) Tasks ejecutadas condicionalmente
-   - D) Tasks que se ejecutan en paralelo
+5. ¿Cuál es la afirmación correcta sobre las Tasks finally?
+   - A) Se ejecutan ante cualquier error, cancelación o timeout
+   - B) Se ejecutan después de las Tasks normales, pero la falta de Results, una cancelación o un timeout pueden omitirlas o impedir su ejecución
+   - C) Siempre se ejecutan en secuencia, según el orden de declaración
+   - D) Proporcionan automáticamente valores predeterminados para los Results de imagen que faltan
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Tareas de limpieza que siempre se ejecutan al final, independientemente del éxito o fallo de la pipeline**
+**Respuesta: B) Se ejecutan después de las Tasks normales, pero la falta de Results, una cancelación o un timeout pueden omitirlas o impedir su ejecución**
 
-**Explicación:**
-Las Tasks `finally` se ejecutan después de que se completan todas las demás Tasks de la pipeline, independientemente de si tuvieron éxito o fallaron. Como se ejecutan incluso cuando falla el build, son ideales para limpiar recursos temporales, enviar notificaciones e informar resultados de pruebas. Es similar a un patrón try-catch-finally.
+El informe final solo hace referencia al nombre de la ejecución y a tasks.status. No supongas un orden entre las Tasks finally y ten en cuenta el comportamiento de los timeouts.
 
 </details>
 
 ---
 
-6. ¿Por qué separar CI/CD en una arquitectura de integración ArgoCD + Tekton?
-   - A) Porque Tekton no admite CD
-   - B) Separar las responsabilidades de CI (build/test) y CD (deploy) mejora la seguridad, la auditoría y el rollback
-   - C) Porque ArgoCD no admite CI
-   - D) Porque las herramientas tienen licencias diferentes
+6. ¿Qué queda por hacer después de que CI termine correctamente y aparezca chains.tekton.dev/signed=true?
+   - A) Desplegar de inmediato cualquier etiqueta en producción
+   - B) Verificar la clave de confianza, el digest, el builder y la procedencia del código fuente; después, revisar el cambio de GitOps
+   - C) Solo decodificar en base64 el JSON de la firma, sin verificarlo
+   - D) Comprobar que ArgoCD extraiga la imagen de la aplicación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Separar las responsabilidades de CI (build/test) y CD (deploy) mejora la seguridad, la auditoría y el rollback**
+**Respuesta: B) Verificar la clave de confianza, el digest, el builder y la procedencia del código fuente; después, revisar el cambio de GitOps**
 
-**Explicación:**
-Tekton gestiona CI (source clone, test, build, image push) mientras que ArgoCD gestiona CD (deployment declarativo basado en Git). CI confirma el image tag en Git, y ArgoCD detecta este cambio para desplegar. Esto permite separar permisos de deployment, tener registros de auditoría basados en Git y realizar rollback declarativo.
+La anotación de firma no constituye verificación criptográfica ni aprobación. ArgoCD sincroniza manifiestos; los kubelets o los runtimes descargan las imágenes.
 
 </details>
 
 ---
 
-7. ¿Cuál es un caso de uso del CEL Interceptor en Tekton?
-   - A) Verificar firmas de GitHub
-   - B) Filtrar y transformar payloads webhook mediante expresiones CEL (ramas específicas, rutas de archivos, etc.)
-   - C) Verificar tokens de GitLab
-   - D) Procesar eventos de Bitbucket
+7. ¿Qué puerto de ServiceMonitor y qué contador del controller corresponden a Pipelines 1.17?
+   - A) metrics / pipelinerun_count
+   - B) http-metrics / tekton_pipelines_controller_pipelinerun_total
+   - C) http / contadores automáticos para todos los espacios de nombres
+   - D) 9097 / un histograma de duración de ejecución
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Filtrar y transformar payloads webhook mediante expresiones CEL (ramas específicas, rutas de archivos, etc.)**
+**Respuesta: B) http-metrics / tekton_pipelines_controller_pipelinerun_total**
 
-**Explicación:**
-El CEL (Common Expression Language) Interceptor realiza filtrado y transformación sobre payloads webhook mediante expresiones CEL. Por ejemplo, `body.ref == 'refs/heads/main'` filtra solo los pushes a la rama main, o `body.commits.exists(c, c.modified.exists(f, f.startsWith('src/')))` activa la ejecución solo ante cambios en rutas específicas.
+Haz coincidir las etiquetas y los puertos reales del Service con los selectores de Prometheus. El contador de finalización actual solo incluye el estado; no tiene una etiqueta de espacio de nombres.
 
 </details>
 
 ---
 
-8. ¿Cuál es una estrategia de limpieza adecuada para Tekton PipelineRuns?
-   - A) Conservar todos los PipelineRuns permanentemente
-   - B) Configurar eliminación automática basada en TTL con distintos períodos de retención para éxitos/fallos a fin de gestionar recursos
-   - C) Eliminarlos solo manualmente
-   - D) Los PipelineRuns se eliminan automáticamente
+8. ¿Cuál es el comportamiento predeterminado al completar la ejecución para los PVC de volumeClaimTemplate con coschedule=workspaces?
+   - A) Siempre se eliminan de inmediato
+   - B) Se conservan; la anotación exacta de auto-limpieza con valor true permite eliminarlos al completar
+   - C) También se eliminan siempre los PVC existentes proporcionados por el usuario
+   - D) PipelineRuns tienen un TTL predeterminado de siete días
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configurar eliminación automática basada en TTL con distintos períodos de retención para éxitos/fallos a fin de gestionar recursos**
+**Respuesta: B) Se conservan; la anotación exacta de auto-limpieza con valor true permite eliminarlos al completar**
 
-**Explicación:**
-PipelineRuns y TaskRuns permanecen en etcd después de la ejecución, consumiendo almacenamiento. Usa la configuración de limpieza de Tekton (`keep`, `keep-since`) o scripts de limpieza basados en CronJob para eliminar automáticamente registros de ejecución antiguos. Las ejecuciones fallidas suelen conservarse durante más tiempo con fines de depuración.
+Otros modos de coschedule y los PVC preexistentes tienen ciclos de vida distintos. Antes de borrar los registros de ejecución, comprueba el tiempo de finalización, la retención y los archivos de registros y firmas.
 
 </details>

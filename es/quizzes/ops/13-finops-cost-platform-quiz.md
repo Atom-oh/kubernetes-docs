@@ -1,143 +1,135 @@
-# Cuestionario sobre la plataforma de visibilidad de costos FinOps
+# Cuestionario sobre la plataforma de visibilidad de costos de FinOps
 
-1. ¿Cuál es el orden correcto de las tres fases del ciclo operativo de FinOps?
-   - A) Optimize → Inform → Operate
-   - B) Inform → Optimize → Operate
-   - C) Operate → Inform → Optimize
-   - D) Inform → Operate → Optimize
+1. ¿Qué describe mejor el ciclo Inform → Optimize → Operate?
+   - A) Un recorte de costos de ingeniería que se realiza una sola vez
+   - B) Una práctica iterativa de visibilidad, mejora y responsabilidad compartida para generar valor tecnológico
+   - C) Una secuencia que toda organización completa en seis meses
+   - D) Un proceso financiero que termina automáticamente todos los Pods
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Inform → Optimize → Operate**
+**Respuesta: B) Una práctica iterativa de visibilidad, mejora y responsabilidad compartida para generar valor tecnológico**
 
-**Explicación:**
-El ciclo de FinOps itera a través de Inform (establecer visibilidad de costos) → Optimize (reducir costos) → Operate (gobernanza). Primero se entiende quién gasta qué y cuánto, luego se optimiza y después se gestiona con políticas.
+Los equipos de producto, negocio, ingeniería y finanzas colaboran; los niveles de servicio y la economía unitaria importan tanto como el gasto.
 
 </details>
 
 ---
 
-2. ¿Cuál es la razón principal para integrar AWS CUR (Cost and Usage Report) con Kubecost?
-   - A) Reducir los costos de licencia de Kubecost
-   - B) Rastrear los costos de servicios de AWS fuera de Kubernetes
-   - C) Mejorar la precisión de costos a nivel de Pod al compararlos con los datos reales de facturación de AWS
-   - D) Habilitar la federación multi-cluster
+2. ¿Qué identifica bucket en la configuración de Athena para costos en la nube de OpenCost?
+   - A) Solo el bucket de origen de CUR
+   - B) El bucket y el prefijo de los resultados de las consultas de Athena
+   - C) El almacenamiento de kubeconfig
+   - D) Un bucket público compartido por todas las cuentas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Mejorar la precisión de costos a nivel de Pod al compararlos con los datos reales de facturación de AWS**
+**Respuesta: B) El bucket y el prefijo de los resultados de las consultas de Athena**
 
-**Explicación:**
-Kubecost estima los costos según los precios públicos de lista. La integración con CUR compara estas estimaciones con los datos reales de facturación que reflejan Savings Plans, Reserved Instances y tarifas negociadas, lo que mejora significativamente la precisión de costos.
+Las lecturas de origen y las escrituras de resultados necesitan permisos separados. También hay que verificar la tabla real de Glue y la actualidad de los datos importados.
 
 </details>
 
 ---
 
-3. Al aplicar etiquetas de costos con Kyverno, ¿qué significa `validationFailureAction: Enforce`?
-   - A) Mostrar advertencias para workloads sin etiquetas
-   - B) Bloquear el despliegue de workloads sin las etiquetas requeridas
-   - C) Agregar etiquetas automáticamente
-   - D) Modificar etiquetas en workloads existentes
+3. ¿Cuál es la afirmación correcta sobre `ValidatingPolicy validationActions: [Audit]`?
+   - A) Elimina todos los Pods existentes
+   - B) No bloquea las infracciones; revisa los informes antes de cambiar las políticas seleccionadas a Deny
+   - C) Agrega automáticamente las etiquetas que faltan
+   - D) Ignora `namespaceSelector`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Bloquear el despliegue de workloads sin las etiquetas requeridas**
+**Respuesta: B) No bloquea las infracciones; revisa los informes antes de cambiar las políticas seleccionadas a Deny**
 
-**Explicación:**
-`validationFailureAction: Enforce` bloquea la creación/modificación de recursos que infringen la política. Los Deployments sin etiquetas team, service y cost-center serán rechazados. Se recomienda comenzar con el modo `Audit` para advertencias y luego cambiar a `Enforce` cuando los equipos estén listos.
+Audit y Warn para el usuario son mecanismos distintos. El fallo de una prueba en la CLI local no equivale a que la admisión del clúster haya denegado el recurso.
 
 </details>
 
 ---
 
-4. ¿Por qué configurar VPA en `updateMode: "Off"`?
-   - A) Para deshabilitar VPA por completo
-   - B) Para proporcionar solo recomendaciones sin reiniciar automáticamente los Pods
-   - C) Para ajustar solo CPU mientras se mantiene fija la memoria
-   - D) Para evitar conflictos con HPA
+4. ¿Qué hacen realmente el modo Off de VPA y el script de recomendaciones de este capítulo?
+   - A) Reducen de inmediato la cantidad de nodos y la factura
+   - B) Observan las recomendaciones y generan propuestas asociadas por nombre de contenedor
+   - C) Crean y fusionan PR automáticamente
+   - D) Aplican `upperBound` como límite para todos los contenedores
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Para proporcionar solo recomendaciones sin reiniciar automáticamente los Pods**
+**Respuesta: B) Observan las recomendaciones y generan propuestas asociadas por nombre de contenedor**
 
-**Explicación:**
-`updateMode: "Off"` hace que VPA analice el uso de recursos y proporcione recomendaciones sin reiniciar automáticamente los Pods para aplicar cambios. Esto respalda un flujo de trabajo seguro en el que las recomendaciones se revisan y se aplican manualmente mediante PRs. El dashboard de Goldilocks también aprovecha este modo.
+La edición de manifiestos, los PR, las pruebas de rendimiento y el despliegue son pasos separados. Reducir las solicitudes no garantiza ahorros, por lo que el ahorro estimado en la factura es nulo.
 
 </details>
 
 ---
 
-5. ¿Cuál es la diferencia entre Showback y Chargeback?
-   - A) Showback muestra costos, Chargeback oculta costos
-   - B) Showback proporciona visibilidad de costos, Chargeback cobra realmente a departamentos/equipos
-   - C) Showback es en tiempo real, Chargeback es mensual
-   - D) Showback es solo para cloud, Chargeback es solo on-premises
+5. ¿Qué diferencia hay entre showback y chargeback?
+   - A) Showback da visibilidad; chargeback asigna los costos y los factura según reglas acordadas
+   - B) Showback es en tiempo real y chargeback siempre es anual
+   - C) Showback solo es compatible con AWS
+   - D) Chargeback puede ignorar los redondeos y los créditos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Showback proporciona visibilidad de costos, Chargeback cobra realmente a departamentos/equipos**
+**Respuesta: A) Showback da visibilidad; chargeback asigna los costos y los factura según reglas acordadas**
 
-**Explicación:**
-Showback muestra a cada equipo/servicio cuánto gastan para aumentar la conciencia, mientras que Chargeback descuenta realmente los costos de los presupuestos departamentales. La mayoría de las organizaciones comienzan con Showback para establecer una cultura consciente de los costos antes de pasar a Chargeback.
+Acuerda los períodos, la moneda, los costos compartidos, inactivos o no asignados, los impuestos, los reembolsos y los redondeos. Los valores del modelo no se convierten automáticamente en facturas internas.
 
 </details>
 
 ---
 
-6. ¿Qué etiqueta debe tener un namespace para que Goldilocks muestre recomendaciones de recursos?
-   - A) goldilocks.fairwinds.com/vpa-enabled=true
-   - B) goldilocks.fairwinds.com/enabled=true
-   - C) vpa.kubernetes.io/enabled=true
-   - D) monitoring.goldilocks.com/watch=true
+6. ¿Qué representa un panel que multiplica por 730 la tasa de costos actual de Prometheus?
+   - A) La factura mensual final de AWS
+   - B) Una estimación que supone que la tasa actual se mantiene durante 730 horas fijas
+   - C) La suma exacta de los costos diarios observados
+   - D) El monto contable final que incluye todos los descuentos e impuestos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) goldilocks.fairwinds.com/enabled=true**
+**Respuesta: B) Una estimación que supone que la tasa actual se mantiene durante 730 horas fijas**
 
-**Explicación:**
-Goldilocks crea automáticamente VPAs para todos los Deployments en namespaces etiquetados con `goldilocks.fairwinds.com/enabled=true` y visualiza los valores de recursos recomendados en su dashboard web.
+Distingue las tasas actuales, el costo calculado para un período y el costo facturado. La estimación lineal al cierre del mes también varía según los datos faltantes y los cambios en la demanda.
 
 </details>
 
 ---
 
-7. ¿Qué significa `aggregate=label:team` en la Kubecost Allocation API?
-   - A) Filtrar solo Pods con una etiqueta team
-   - B) Agrupar y sumar costos por valores de la etiqueta team
-   - C) Crear llamadas de API separadas por equipo
-   - D) Agregar etiquetas team automáticamente
+7. ¿Una variable de espacio de nombres del equipo en Grafana garantiza el aislamiento de datos?
+   - A) Sí, las variables otorgan autorización en el origen de datos
+   - B) No; se necesitan permisos del lado del servidor en el origen de datos o aislamiento por inquilino, y pruebas de denegación
+   - C) Sí, un ALB interno también elimina la necesidad de autenticación
+   - D) Solo si el nombre de la etiqueta es suficientemente largo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Agrupar y sumar costos por valores de la etiqueta team**
+**Respuesta: B) No; se necesitan permisos del lado del servidor en el origen de datos o aislamiento por inquilino, y pruebas de denegación**
 
-**Explicación:**
-`aggregate=label:team` indica a Kubecost que agrupe todos los costos de Pods por los valores de la etiqueta `team` (por ejemplo, team-commerce, team-platform) y los sume, proporcionando costo total, costo de CPU y costo de memoria por equipo en una sola consulta.
+Los filtros de los paneles y las carpetas organizan las vistas. Comprueba si los usuarios pueden enviar consultas diferentes al mismo origen de datos.
 
 </details>
 
 ---
 
-8. ¿Por qué la alerta de anomalía de costos requiere 30 minutos de costo alto sostenido antes de activarse?
-   - A) El intervalo de scraping de Prometheus es de 30 minutos
-   - B) Para evitar falsos positivos por picos temporales (deployments, autoscaling)
-   - C) Para evitar los límites de tasa de la API de Slack
-   - D) El ciclo de actualización de datos de Kubecost es de 30 minutos
+8. ¿Cuál es la afirmación correcta sobre `for: 30m` en una alerta de tasa de costos?
+   - A) Cambia el intervalo de scraping a 30 minutos
+   - B) Exige que la condición persista; reduce el ruido de picos breves, pero no elimina los falsos positivos
+   - C) Actualiza de inmediato los datos de facturación de AWS
+   - D) Garantiza la entrega de Slack exactamente una vez
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Para evitar falsos positivos por picos temporales (deployments, autoscaling)**
+**Respuesta: B) Exige que la condición persista; reduce el ruido de picos breves, pero no elimina los falsos positivos**
 
-**Explicación:**
-Los deployments, eventos de autoscaling y trabajos batch pueden causar picos temporales de costos. La condición `for: 30m` garantiza que las alertas se activen solo cuando los costos permanezcan elevados durante más de 30 minutos, reduciendo el ruido de las actividades operativas normales.
+La duración de la condición, la actualización de los datos, la precisión del modelo y las garantías de entrega son aspectos distintos. Las métricas ausentes no significan que el gasto sea cero.
 
 </details>

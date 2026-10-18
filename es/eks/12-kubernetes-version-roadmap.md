@@ -1,21 +1,21 @@
 # Características y hoja de ruta de versiones de Kubernetes
 
-> **Versiones compatibles**: Kubernetes 1.29 - 1.36
-> **Última actualización**: July 3, 2026
+> **Cobertura histórica**: Kubernetes 1.29–1.36; el soporte vigente de EKS se indica por separado
+> **Última actualización**: 12 de octubre de 2026
 
-Kubernetes evoluciona rápidamente, con tres lanzamientos por año que introducen nuevas características, promueven características existentes y deprecian APIs antiguas. Para los equipos empresariales que ejecutan Amazon EKS, comprender el panorama de versiones es esencial para planificar actualizaciones, adoptar nuevas capacidades en el momento adecuado y evitar interrupciones por deprecaciones. Este documento proporciona una referencia integral, versión por versión, que cubre Kubernetes 1.29 a 1.36, con orientación específica de EKS para cada lanzamiento.
+Kubernetes evoluciona rápidamente: cada año publica tres versiones que incorporan funciones nuevas, promueven otras a etapas más estables y deprecian API antiguas. Para los equipos empresariales que ejecutan Amazon EKS, conocer el panorama de versiones es esencial para planificar actualizaciones, adoptar capacidades nuevas en el momento adecuado y evitar interrupciones por funciones deprecadas. Este documento ofrece una referencia detallada por versión, desde Kubernetes 1.29 hasta 1.36, con orientación específica para EKS en cada lanzamiento.
 
 ## Tabla de contenido
 
 1. [Descripción general y objetivos de aprendizaje](#1-overview-and-learning-objectives)
 2. [Ciclo de lanzamiento de Kubernetes](#2-kubernetes-release-cycle)
-3. [Matriz de compatibilidad de versiones de EKS](#3-eks-version-support-matrix)
-4. [Guía de características por versión](#4-version-by-version-feature-guide)
-5. [Cronograma de promoción de características clave](#5-key-feature-graduation-timeline)
+3. [Matriz de soporte de versiones de EKS](#3-eks-version-support-matrix)
+4. [Guía de funciones por versión](#4-version-by-version-feature-guide)
+5. [Cronología de graduación de funciones clave](#5-key-feature-graduation-timeline)
 6. [Deprecaciones y eliminaciones](#6-deprecations-and-removals)
 7. [Consideraciones específicas de EKS](#7-eks-specific-considerations)
-8. [Planificación de actualización de versiones](#8-version-upgrade-planning)
-9. [Perspectiva futura](#9-future-outlook)
+8. [Planificación de actualizaciones de versión](#8-version-upgrade-planning)
+9. [Perspectivas futuras](#9-future-outlook)
 10. [Referencias](#10-references)
 
 ---
@@ -26,35 +26,35 @@ Kubernetes evoluciona rápidamente, con tres lanzamientos por año que introduce
 
 ### Propósito de este documento
 
-Este documento sirve como referencia centralizada para:
+Este documento es una referencia centralizada sobre:
 
-- **Nuevas características específicas por versión** introducidas en Kubernetes 1.29 a 1.36
-- **Cronogramas de promoción de características** que siguen la progresión de alpha a beta y luego a GA
-- **Calendarios de deprecación** y acciones de migración requeridas
-- **Ventanas de soporte de EKS**, incluidas las fechas de soporte estándar y extendido
-- **Orientación para la planificación de actualizaciones** para equipos empresariales
+- **Funciones nuevas específicas de cada versión** incorporadas en Kubernetes 1.29 a 1.36
+- **Cronologías de graduación de funciones**, desde alfa hasta beta y GA
+- **Calendarios de deprecación** y acciones de migración necesarias
+- **Períodos de soporte de EKS**, incluidas las fechas de soporte estándar y extendido
+- **Orientación para planificar actualizaciones** dirigida a equipos empresariales
 
 ### Objetivos de aprendizaje
 
-Después de leer este documento, podrás:
+Al terminar de leer este documento, podrás:
 
-1. Explicar el ciclo de lanzamiento de Kubernetes y el modelo de madurez de características
-2. Identificar qué características están disponibles en cada versión de Kubernetes
-3. Mapear feature gates a versiones específicas y comprender su ciclo de vida
-4. Planificar actualizaciones de versión según la disponibilidad de características y los cronogramas de deprecación
-5. Comprender las políticas de soporte de versiones específicas de EKS, incluido el soporte estándar frente al extendido
-6. Evaluar las compensaciones de costo y riesgo de permanecer en versiones antiguas
-7. Anticipar próximas características y su cronograma esperado de promoción
+1. Explicar el ciclo de lanzamiento de Kubernetes y el modelo de madurez de sus funciones
+2. Identificar las funciones disponibles en cada versión de Kubernetes
+3. Relacionar las feature gates con versiones concretas y comprender su ciclo de vida
+4. Planificar actualizaciones según la disponibilidad de funciones y los calendarios de deprecación
+5. Comprender las políticas de soporte de versiones de EKS, incluido el soporte estándar y el extendido
+6. Evaluar los costos y riesgos de permanecer en versiones antiguas
+7. Distinguir los hitos publicados de las fechas propuestas al seguir funciones futuras
 
-### Quién debería leer esto
+### A quién está dirigido
 
-| Audiencia | Secciones clave |
+| Público | Secciones principales |
 |----------|-------------|
-| **Platform Engineers** | Guía de características por versión, planificación de actualizaciones, deprecaciones |
-| **Cluster Administrators** | Matriz de soporte de EKS, planificación de actualizaciones, consideraciones específicas de EKS |
-| **Application Developers** | Guía de características (Sidecar Containers, In-Place Resize, DRA), cronograma de promoción de características |
-| **Security Teams** | Deprecaciones, características relacionadas con seguridad por versión, StructuredAuthz, User Namespaces |
-| **Engineering Managers** | Descripción general, matriz de soporte, implicaciones de costo del Extended Support |
+| **Ingenieros de plataformas** | Guía de funciones por versión, planificación de actualizaciones y deprecaciones |
+| **Administradores de clústeres** | Matriz de soporte de EKS, planificación de actualizaciones y consideraciones específicas de EKS |
+| **Desarrolladores de aplicaciones** | Guía de funciones (sidecars, redimensionamiento in situ y DRA) y cronología de graduación |
+| **Equipos de seguridad** | Deprecaciones, funciones de seguridad por versión, StructuredAuthz y espacios de nombres de usuario |
+| **Gerentes de ingeniería** | Descripción general, matriz de soporte e implicaciones de costos del soporte extendido |
 
 ---
 
@@ -62,515 +62,398 @@ Después de leer este documento, podrás:
 
 ## 2. Ciclo de lanzamiento de Kubernetes
 
-### Cadencia de lanzamientos
+### Cadencia y fases de lanzamiento
 
-Kubernetes sigue una cadencia de lanzamientos predecible con aproximadamente tres lanzamientos por año, separados por unos cuatro meses.
+Kubernetes suele publicar unas tres versiones **menores** al año, separadas por aproximadamente cuatro meses. Las versiones de parche siguen otra cadencia, por lo general mensual. Las ramas de parches de upstream reciben soporte durante unos 14 meses: aproximadamente 12 meses de mantenimiento normal y, después, dos meses de mantenimiento para corregir CVE y problemas críticos. Esto es distinto del período de 14 meses de soporte estándar de EKS, que empieza en la fecha de lanzamiento de la versión de EKS.
 
-```mermaid
-gantt
-    title Kubernetes Release Timeline (2023-2026)
-    dateFormat  YYYY-MM
-    axisFormat  %Y-%m
+El equipo de lanzamiento publica fechas límite para incluir mejoras, congelar el código, estabilizarlo y publicar versiones candidatas. El diagrama original de «semana 15» es un esquema del ciclo, no un calendario garantizado ni una tabla universal de números de semana. Consulta el calendario y el proceso de excepciones de la versión que tengas como objetivo.
 
-    section 2023
-    1.27 "Chill Vibes"        :done, v127, 2023-04, 2023-08
-    1.28 "Planternetes"       :done, v128, 2023-08, 2023-12
-    1.29 "Mandala"            :done, v129, 2023-12, 2024-04
+![Flujo de trabajo que muestra el ciclo anual de lanzamiento de Kubernetes: tres versiones al año; cada una pasa por las fases de congelación de mejoras, congelación del código y pruebas y estabilización antes del lanzamiento oficial, aproximadamente cada cuatro meses.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-1.png)
 
-    section 2024
-    1.30 "Uwubernetes"        :done, v130, 2024-04, 2024-08
-    1.31 "Elli"               :done, v131, 2024-08, 2024-12
-    1.32 "Penelope"           :done, v132, 2024-12, 2025-04
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-1.html)
 
-    section 2025
-    1.33 "Octarine"           :done, v133, 2025-04, 2025-08
-    1.34 "Of Wind & Will"     :done, v134, 2025-08, 2025-12
-    1.35 "Timbernetes"        :done, v135, 2025-12, 2026-04
+### Madurez de las funciones, estabilidad de las API y feature gates
 
-    section 2026
-    1.36 "ハル (Haru)"         :active, v136, 2026-04, 2026-08
-```
+| Etapa | Interpretación |
+|---|---|
+| Alfa | Por lo general, está desactivada de forma predeterminada; el comportamiento o la API pueden cambiar o desaparecer. Comprueba la feature gate y los requisitos previos exactos. |
+| Beta | Se prueba más ampliamente, pero los valores predeterminados y la compatibilidad aún dependen de la función y la versión. Algunas feature gates beta siguen desactivadas. |
+| Estable / GA | Se aplican compromisos de estabilidad de la API; esto no certifica como segura una carga de trabajo, un controlador, un sistema operativo ni una implementación determinados. |
 
-### Cronograma típico de lanzamiento
+Desde la versión 1.24, las **API beta nuevas** están desactivadas de forma predeterminada; las API beta que ya estaban habilitadas y las versiones nuevas de API beta existentes reciben otro tratamiento. La configuración para ofrecer una API y las feature gates están relacionadas, pero son distintas. No supongas que todas las funciones beta exigen activación voluntaria ni que toda función estable funciona sin configurar la carga de trabajo.
 
-Cada lanzamiento sigue un cronograma estructurado que abarca aproximadamente 15 semanas:
+Una versión de API GA no se puede eliminar dentro de la misma versión principal de Kubernetes. Esa regla es distinta de la eliminación de feature gates: una gate que pasa de beta a GA tiene un período mínimo de deprecación de seis meses o dos versiones, lo que sea más largo. Hay que comprobar en qué versión se eliminará realmente. Una gate bloqueada o eliminada no es un mecanismo de desactivación compatible. Por ejemplo, el código de Kubernetes 1.36.2 publicado aún contiene la gate `SidecarContainers`, bloqueada; que la función alcanzara GA en 1.33 no demuestra que la gate se eliminara en 1.35.
 
-| Fase | Duración | Descripción |
-|-------|----------|-------------|
-| **Enhancements Freeze** | Semana 0 | Todas las características deben tener KEPs (Kubernetes Enhancement Proposals) aprobados |
-| **Code Freeze** | ~Semana 10 | Sin código de características nuevas; enfoque en correcciones de errores y pruebas |
-| **Beta Release** | ~Semana 11 | Versión preliminar para pruebas |
-| **RC (Release Candidate)** | ~Semana 13 | Fase final de pruebas |
-| **General Availability** | ~Semana 15 | Lanzamiento oficial |
-
-### Modelo de madurez de características
-
-Kubernetes usa un modelo de promoción de tres etapas para todas las características. Comprender estas etapas es crítico para la planificación de producción.
-
-```mermaid
-flowchart LR
-    Alpha["Alpha
-    --------
-    Disabled by default
-    May be buggy
-    No stability guarantees
-    May be removed
-    Not for production"]
-    -->
-    Beta["Beta
-    --------
-    Enabled by default (1.24+)
-    Well-tested
-    Details may change
-    Recommended for
-    non-critical workloads"]
-    -->
-    GA["GA (Stable)
-    --------
-    Always enabled
-    Feature gate locked
-    Backward compatible
-    Safe for production
-    Will not be removed"]
-
-    style Alpha fill:#ff6b6b,stroke:#333,color:black
-    style Beta fill:#ffd93d,stroke:#333,color:black
-    style GA fill:#6bcb77,stroke:#333,color:black
-```
-
-**Cambios de política clave que debes conocer:**
-
-- **Desde Kubernetes 1.24**: Las APIs beta ya no están habilitadas de forma predeterminada en clusters nuevos. Las nuevas características beta requieren opt-in explícito mediante feature gates.
-- **Desde Kubernetes 1.28**: Los feature gates para características GA se eliminan después de dos lanzamientos, lo que significa que la característica queda habilitada permanentemente.
-
-### Feature Gates
-
-Los feature gates son pares clave-valor que controlan si una característica está habilitada o deshabilitada. Son el mecanismo mediante el cual se aplica el modelo de madurez alpha/beta/GA.
+El siguiente es un **fragmento histórico de configuración**, no un KubeletConfiguration completo ni un cambio del plano de control de EKS. En un nodo actual, usa la configuración compatible con su versión exacta; no copies gates retiradas en un archivo de arranque nuevo.
 
 ```yaml
-# Example: Enabling feature gates on the kubelet
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
+# Historical fragment for a self-managed Kubernetes 1.33 test node.
+# Merge through the supported node bootstrap/configuration mechanism.
 featureGates:
-  InPlacePodVerticalScaling: true    # Enable in-place pod resize (beta in 1.33)
-  UserNamespacesSupport: true         # Enable user namespaces (beta in 1.33)
+  InPlacePodVerticalScaling: true
+  UserNamespacesSupport: true
 ```
 
-```yaml
-# Example: Enabling feature gates on the API server (EKS managed - informational only)
-# Note: In EKS, control plane feature gates are managed by AWS.
-# You cannot directly modify API server flags on EKS.
-apiVersion: kubeadm.k8s.io/v1beta3
-kind: ClusterConfiguration
-apiServer:
-  extraArgs:
-    feature-gates: "ValidatingAdmissionPolicy=true,StructuredAuthorizationConfiguration=true"
-```
+AWS administra la configuración del plano de control de EKS; los clientes no pueden editar el Pod estático kube-apiserver de EKS ni pasarle flags arbitrarios. Las preguntas frecuentes de EKS sobre versiones indican que las funciones alfa no tienen soporte. Cambiar una gate en un nodo autoadministrado no habilita una API del plano de control que no esté disponible. Consulta las instrucciones de AWS para cada función y los requisitos del entorno de ejecución y del sistema operativo del nodo.
 
-**Comprobar los feature gates habilitados en tu cluster:**
+El endpoint `configz` del nodo muestra la configuración del kubelet seleccionado; esa salida no confirma los valores predeterminados omitidos ni el comportamiento del plano de control. `/metrics` requiere la autorización adecuada para URL que no sean recursos; las métricas de funciones pueden no estar disponibles o tener etiquetas adicionales. Que no haya salida o que se deniegue el acceso no significa que la función esté «desactivada».
 
 ```bash
-# List all feature gates and their status on a node's kubelet
-kubectl get --raw /api/v1/nodes/<node-name>/proxy/configz | jq '.kubeletconfig.featureGates'
-
-# Check API server feature gates (requires API server access logs)
-kubectl get --raw /metrics | grep kubernetes_feature_enabled
-
-# Check specific feature gate status
-kubectl get --raw /metrics | grep 'kubernetes_feature_enabled{name="InPlacePodVerticalScaling"}'
+# Authorized, read-only diagnostics; these endpoints may be restricted.
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?Choose the actual node}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get --raw="/api/v1/nodes/$NODE_NAME/proxy/configz" | jq '.kubeletconfig.featureGates'
 ```
 
-### Estructura de gobernanza de SIG
+```bash
+# Run separately; absence of a metric is not proof that a feature is disabled.
+: "${KUBE_CONTEXT:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get --raw='/metrics' \
+  | awk '/^kubernetes_feature_enabled/ { print }'
+```
 
-El desarrollo de Kubernetes se organiza en Special Interest Groups (SIGs). Comprender qué SIG es responsable de una característica te ayuda a seguir su progreso y encontrar documentación relevante.
+### Grupos de interés especial y propuestas de mejora
 
-| SIG | Alcance | Características clave en este documento |
-|-----|-------|-------------------------------|
-| **SIG Node** | Kubelet, container runtime, ciclo de vida del pod | Sidecar Containers, In-Place Pod Resize, User Namespaces |
-| **SIG Auth** | Autenticación, autorización, política de seguridad | StructuredAuthorizationConfiguration, CEL Admission |
-| **SIG Network** | Networking, Service, Ingress, DNS | Gateway API, ServiceCIDR/IPAddress, Topology Aware Routing |
-| **SIG Storage** | PV/PVC, CSI, gestión de volúmenes | VolumeAttributesClass, ReadWriteOncePod |
-| **SIG Scheduling** | Scheduler, Pod Scheduling Readiness | Pod Scheduling Readiness, Gang Scheduling |
-| **SIG Apps** | Controladores de workloads (Deployment, StatefulSet, Job) | Job Success Policy, Sidecar Containers |
-| **SIG API Machinery** | API server, CRDs, admission control | CEL Admission, KYAML |
-| **SIG Autoscaling** | HPA, VPA, cluster autoscaling | HPA Container Resource Metrics |
+Los grupos de interés especial (SIG) se encargan de áreas relacionadas: Node (entorno de ejecución y ciclo de vida), Auth (autenticación y autorización), Network (enrutamiento de Service), Storage (CSI y volúmenes), Scheduling, Apps, API Machinery, Instrumentation y Autoscaling. Las mejoras importantes siguen una KEP que incluye motivación, diseño, criterios de graduación, pruebas y revisión de preparación para producción. Un hito planificado no garantiza que se publique; confirma el historial de la API publicada y de su feature gate.
+
+[Política de parches de upstream](https://kubernetes.io/releases/patch-releases/) · [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) · [Política de deprecación](https://kubernetes.io/docs/reference/deprecation-policy/) · [Implementación de gates en Kubernetes 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go)
 
 ---
 
 <span id="3-eks-version-support-matrix"></span>
 
-## 3. Matriz de compatibilidad de versiones de EKS
+## 3. Matriz de soporte de versiones de EKS
 
-### Niveles de soporte
+### Períodos de soporte y base de precios
 
-Amazon EKS proporciona dos niveles de soporte de versión:
+| Nivel | Período desde la disponibilidad en EKS | Tarifa de soporte de versión |
+|---|---|---|
+| Estándar | Primeros 14 meses | $0.10 por clúster-hora |
+| Extendido | Siguientes 12 meses | $0.60 en total por clúster-hora ($0.10 + $0.50) |
 
-| Nivel | Duración | Precio | Descripción |
-|------|----------|---------|-------------|
-| **Standard Support** | 14 meses desde el lanzamiento de EKS | $0.10/cluster/hour | Soporte completo de características, parches de seguridad, correcciones de errores |
-| **Extended Support** | 12 meses adicionales | $0.60/cluster/hour | Solo parches de seguridad y correcciones críticas de errores |
+Estas son las tarifas publicadas por soporte de versión, no el costo total de operación del clúster. Los niveles de plano de control aprovisionado, el cómputo, Auto Mode/Hybrid Nodes, otras capacidades, el almacenamiento y las redes pueden agregar cargos. A una tarifa constante durante 365 días, las tarifas correspondientes son $876 y $5,256 por clúster: una diferencia de $4,380. Como ejemplo de 730 horas mensuales, serían $73 y $438. Son cálculos aritméticos, no facturas medidas.
 
-> **Impacto de costo**: El soporte extendido cuesta 6 veces el precio del soporte estándar. Para un solo cluster ejecutándose 24/7, esto se traduce en aproximadamente $4,380/año en soporte extendido frente a $730/año en soporte estándar -- un adicional de $3,650 por cluster por año.
+### Calendario de soporte verificado: 12 de octubre de 2026 (UTC)
 
-### Diagrama de ciclo de vida de versiones
+| Versión | Lanzamiento de upstream | Lanzamiento de EKS | Fin del soporte estándar | Fin del soporte extendido | Estado en la fecha de revisión |
+|---|---|---|---|---|---|
+| 1.31 | 2024-08-13 | 2024-09-26 | 2025-11-26 | 2026-11-26 | Extendido |
+| 1.32 | 2024-12-11 | 2025-01-23 | 2026-03-23 | 2027-03-23 | Extendido |
+| 1.33 | 2025-04-23 | 2025-05-29 | 2026-07-29 | 2027-07-29 | Extendido |
+| 1.34 | 2025-08-27 | 2025-10-02 | 2026-12-02 | 2027-12-02 | Estándar |
+| 1.35 | 2025-12-17 | 2026-01-27 | 2027-03-27 | 2028-03-27 | Estándar |
+| 1.36 | 2026-04-22 | 2026-06-02 | 2027-08-02 | 2028-08-02 | Estándar |
+| 1.37 | 2026-08-26 | 2026-10-01 | 2027-12-01 | 2028-12-01 | Estándar |
 
-```mermaid
-timeline
-    title EKS Version Lifecycle
-    section Kubernetes 1.29
-        Standard Support : Jun 2024 - Aug 2025
-        Extended Support : Aug 2025 - Aug 2026
-    section Kubernetes 1.30
-        Standard Support : Sep 2024 - Nov 2025
-        Extended Support : Nov 2025 - Nov 2026
-    section Kubernetes 1.31
-        Standard Support : Dec 2024 - Feb 2026
-        Extended Support : Feb 2026 - Feb 2027
-    section Kubernetes 1.32
-        Standard Support : Mar 2025 - May 2026
-        Extended Support : May 2026 - May 2027
-    section Kubernetes 1.33
-        Standard Support : Jun 2025 - Aug 2026
-        Extended Support : Aug 2026 - Aug 2027
-    section Kubernetes 1.34
-        Standard Support : Oct 2025 - Dec 2026
-        Extended Support : Dec 2026 - Dec 2027
-    section Kubernetes 1.35
-        Standard Support : Feb 2026 - Apr 2027
-        Extended Support : Apr 2027 - Apr 2028
-    section Kubernetes 1.36
-        Standard Support : Jun 2026 - Aug 2027
-        Extended Support : Aug 2027 - Aug 2028
+El calendario actual de AWS incluye EKS 1.31–1.37. Las versiones 1.29 y 1.30 se incluyen aquí como referencia histórica de funciones, no como objetivos de implementación con soporte.
+
+La facturación del soporte extendido empieza a las 00:00 UTC de la fecha indicada como fin del soporte estándar. Antes de programar un cambio, vuelve a consultar el calendario o la API vigente; las fechas futuras que AWS publica solo por mes son estimaciones.
+
+EKS 1.35 estuvo disponible desde el **27 de enero de 2026**, EKS 1.36 desde el **2 de junio de 2026** y EKS 1.37 desde el **1 de octubre de 2026**. Los anuncios de EKS Distro corresponden a otros lanzamientos; la fecha combinada anterior, el 28 de enero, no sustituye al calendario de EKS.
+
+Las secciones de cada versión conservan sus requisitos de ejecución y admisión. Los temas de reversión de EKS, escalado del plano de control y SLA se tratan en [Actualizaciones de EKS](08-eks-upgrades.md).
+
+```bash
+# Read-only when executed with your normal authorized AWS identity.
+: "${AWS_REGION:?Choose the intended Region}"
+aws eks describe-cluster-versions --region "$AWS_REGION" --no-cli-pager \
+  --query clusterVersions --output json
 ```
 
-### Matriz detallada de soporte de versiones
+Esto imprime los registros de versiones del servicio en lugar de dar por hecho que el primer elemento de la lista es la versión más reciente o reutilizar el estado de un ejemplo antiguo. Durante esta auditoría no se ejecutó ninguna consulta de AWS.
 
-La tabla siguiente rastrea cada versión de Kubernetes compatible con EKS, incluidas las fechas de lanzamiento upstream, la disponibilidad en EKS y las fechas de fin de soporte.
+### Política de actualizaciones y actualizaciones automáticas
 
-| Versión K8s | Nombre en clave | Lanzamiento upstream | Lanzamiento EKS | Fin de Standard Support | Fin de Extended Support | Estado actual |
-|-------------|-----------|-----------------|-------------|---------------------|---------------------|----------------|
-| **1.29** | Mandala | Dec 2023 | Jun 2024 | Aug 2025 | Aug 2026 | Extended Support |
-| **1.30** | Uwubernetes | Apr 2024 | Sep 2024 | Nov 2025 | Nov 2026 | Extended Support |
-| **1.31** | Elli | Aug 2024 | Dec 2024 | Feb 2026 | Feb 2027 | Extended Support |
-| **1.32** | Penelope | Dec 2024 | Mar 2025 | May 2026 | May 2027 | Standard Support |
-| **1.33** | Octarine | Apr 2025 | Jun 2025 | Aug 2026 | Aug 2027 | Standard Support |
-| **1.34** | Of Wind & Will | Aug 2025 | Oct 2025 | Dec 2026 | Dec 2027 | Standard Support |
-| **1.35** | Timbernetes | Dec 2025 | Feb 2026 | Apr 2027 | Apr 2028 | Standard Support |
-| **1.36** | ハル (Haru) | Apr 2026 | Jun 2026 | Aug 2027 | Aug 2028 | Standard Support |
+`EXTENDED` es la política de actualización predeterminada del clúster. Un clúster que use `STANDARD` puede actualizarse automáticamente una vez que termine el soporte estándar; permanecer en una versión durante el soporte extendido es una decisión deliberada de costo y ciclo de vida. Cuando termina el soporte extendido, EKS actualiza gradualmente los planos de control que aún tengan una versión no compatible. AWS no garantiza la hora exacta de la actualización y declara que no envía una notificación inmediatamente antes de ella. El aviso de al menos 60 días describe el **fin del soporte estándar** anunciado; no es un nuevo período de gracia de 60 días después del soporte extendido ni garantiza avisos en secuencia a los 60, 30 y 7 días.
 
-> **Nota**: Las fechas de lanzamiento de EKS suelen retrasarse 2-4 meses respecto a los lanzamientos upstream de Kubernetes. AWS usa este tiempo para validar el lanzamiento, integrarlo con add-ons administrados por EKS y asegurar compatibilidad con los servicios de AWS.
+Los grupos de nodos administrados, los nodos autoadministrados, los Pods de Fargate y los Hybrid Nodes requieren sus propios procesos de actualización o reemplazo. Los nodos de Auto Mode pueden actualizarse automáticamente; los complementos instalados normalmente aún requieren revisar su compatibilidad y quién los administra. Cuando sea práctico, mantén las versiones de los nodos y del plano de control alineadas; no tomes la diferencia máxima de versiones permitida como objetivo. Comprueba el estado de preparación de las cargas de trabajo y el estado real de la actualización, no solo la cadena de versión del plano de control. La actualización automática al terminar el soporte extendido no se puede revertir con la función nativa de EKS durante siete días; consulta el capítulo de actualización para conocer los requisitos y el orden de reversión de nodos primero.
 
-### Comportamiento de actualización automática
+[Calendario de soporte y preguntas frecuentes de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) · [Precios de EKS](https://aws.amazon.com/eks/pricing/)
 
-Cuando una versión de Kubernetes llega al fin de soporte (incluido el soporte extendido), EKS actualizará automáticamente tu cluster:
+<!-- Parent diagram repair pending: stage/default guarantees and support status/notification timing are stale.
+![Lifecycle diagram of the three-stage Kubernetes feature maturity model, Alpha graduating to Beta and then to GA, with the stability and production-readiness guarantees of each stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-2.png)
 
-```mermaid
-flowchart TD
-    A["Version Approaching EOL"] --> B{"Extended Support Enabled?"}
-    B -->|Yes| C["Continue on Extended Support
-    ($0.60/cluster/hour)"]
-    B -->|No| D["60-Day Deprecation Notice"]
-    C --> E["Extended Support Ends"]
-    E --> F["60-Day Deprecation Notice"]
-    D --> G{"Cluster Upgraded
-    Before Deadline?"}
-    F --> G
-    G -->|Yes| H["Cluster on New Version
-    (User-controlled)"]
-    G -->|No| I["Auto-Upgrade Triggered
-    (Forced by AWS)"]
-    I --> J["Cluster Upgraded to
-    Oldest Supported Version"]
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-2.html)
 
-    style I fill:#ff6b6b,stroke:#333,color:black
-    style J fill:#ff6b6b,stroke:#333,color:black
-    style H fill:#6bcb77,stroke:#333,color:black
-```
+![Diagram of the Amazon EKS version lifecycle: 14 months of standard support then 12 months of extended support at six times the price, with versions 1.29 to 1.36 grouped by release year and their release and support end dates.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-3.png)
 
-**Importante**: Las actualizaciones automáticas solo actualizan el control plane. Aún debes actualizar manualmente tus node groups, add-ons y componentes autoadministrados. Una actualización forzada del control plane sin las actualizaciones correspondientes de nodos y add-ons puede causar interrupciones en workloads.
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-3.html)
 
-### Anuncios recientes de soporte de versiones de EKS (2026)
+![Flowchart showing what happens when an EKS Kubernetes version approaches end of life: clusters may continue on paid extended support, but once a 60-day deprecation notice expires without a user upgrade, AWS force-upgrades the cluster.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-5.png)
 
-AWS realizó varios anuncios en 2026 que afectan el soporte de versiones de EKS:
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-5.html)
 
-| Fecha | Anuncio | Puntos destacados |
-|:---:|------|------|
-| 2026-06-02 | EKS y EKS Distro comienzan a soportar Kubernetes 1.36 | User Namespaces GA, Mutating Admission Policies, In-Place Pod Vertical Scaling, Resource Health Status, comprobaciones previas a la actualización de EKS Cluster Insights |
-| 2026-01-28 | EKS y EKS Distro comienzan a soportar Kubernetes 1.35 | In-Place Pod Resource Updates, PreferSameNode Traffic Distribution, Node Topology Labels mediante Downward API, Image Volumes |
-
-#### Soporte de Kubernetes 1.36 (2 de junio de 2026)
-
-Amazon EKS y EKS Distro comenzaron a soportar Kubernetes 1.36. El anuncio destacó (consulta la sección 4.8 más abajo para detalles de implementación):
-
-- **User Namespaces (GA)**: Mapea el usuario root del container a un usuario no privilegiado del host, fortaleciendo el aislamiento multi-tenant
-- **Mutating Admission Policies**: Mutación basada en CEL sin requerir un servidor webhook
-- **In-Place Pod Vertical Scaling**: Ajusta CPU/memoria sin reiniciar el pod
-- **Resource Health Status**: Expone la salud de dispositivos y condiciones de fallo de hardware en el estado del Pod
-- **EKS Cluster Insights**: Comprobaciones previas a la actualización para uso de APIs deprecadas y compatibilidad de add-ons
-
-> Fuente: [Amazon EKS Distro now supports Kubernetes version 1.36](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-distro-kubernetes-version-1-36/)
-
-#### Soporte de Kubernetes 1.35 (28 de enero de 2026)
-
-Amazon EKS y EKS Distro comenzaron a soportar Kubernetes 1.35, agregando:
-
-- **In-Place Pod Resource Updates** -- la misma capacidad de ajuste de recursos sin reinicio cubierta como In-Place Pod Vertical Scaling GA en la sección 4.7
-- **PreferSameNode Traffic Distribution** -- prefiere enrutar tráfico a endpoints en el mismo nodo
-- **Node Topology Labels via Downward API** -- expone etiquetas de topología del nodo a pods
-- **Image Volumes** -- monta imágenes OCI como volúmenes para entregar datos y modelos de ML
-
-> Fuente: [Amazon EKS Distro now supports Kubernetes version 1.35](https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-eks-distro-kubernetes-version-1-35)
-
-> **Anuncios relacionados**: El soporte de rollback de versiones de EKS (1 de julio de 2026) y el nuevo SLA del control plane de 99.99% / nivel de escalado 8XL (20 de marzo de 2026) se cubren en el documento [EKS Upgrades](08-eks-upgrades.md), ya que se relacionan directamente con el proceso de actualización y no con características de versiones de Kubernetes.
+-->
 
 ---
 
 <span id="4-version-by-version-feature-guide"></span>
 
-## 4. Guía de características por versión
+## 4. Guía de funciones por versión
 
-Esta sección proporciona un desglose detallado de las características introducidas, promovidas y deprecadas en cada versión de Kubernetes desde 1.29 hasta 1.36.
+Esta sección detalla las funciones incorporadas, graduadas y deprecadas en cada versión de Kubernetes, desde 1.29 hasta 1.36.
 
-### 4.1 Kubernetes 1.29 "Mandala" (diciembre de 2023)
 
-**Tema**: Nombrado por la forma de arte geométrico que simboliza el universo, reflejando el enfoque holístico de la comunidad para este lanzamiento.
+### 4.1 Kubernetes 1.29 «Mandala» (diciembre de 2023)
 
-**Estadísticas del lanzamiento**: 49 mejoras -- 11 Stable, 19 Beta, 19 Alpha
+El anuncio del lanzamiento del 13 de diciembre de 2023 enumera **49 mejoras: 11 estables, 19 beta y 19 alfa**. Son cifras históricas de la versión; no significan que EKS aún admita 1.29. Las etiquetas de valor predeterminado y uso en producción del diagrama son generalizaciones; consulta el historial de cada feature gate y los requisitos del entorno de ejecución descritos anteriormente.
 
-```mermaid
-pie title 1.29 Enhancement Breakdown
-    "Stable (GA)" : 11
-    "Beta" : 19
-    "Alpha" : 19
-```
+![Diagrama de las 49 mejoras de Kubernetes 1.29 «Mandala», agrupadas por madurez en 11 estables (GA), 19 beta y 19 alfa, con funciones representativas de cada etapa.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-6.png)
 
-#### Características clave promovidas (GA)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-6.html)
 
-**KMS v2 Encryption**
+#### Cifrado en reposo con KMS v2: GA
 
-KMS v2 para cifrado en reposo de Kubernetes Secrets alcanzó GA, proporcionando mejoras significativas de rendimiento sobre KMS v1.
+KMS v2 mejora el rendimiento del cifrado de sobre: deriva claves de cifrado de datos de un solo uso a partir de una semilla secreta, y emplea el complemento de KMS para proteger y rotar esa semilla. Así, no es necesario hacer una nueva operación de cifrado remota por cada escritura de objeto. Ambos diseños de cifrado de sobre tienen capas de cifrado de datos y de claves; KMS v1 no era un diseño de «una sola capa». Esta mejora no garantiza una latencia constante.
 
-| Aspecto | KMS v1 | KMS v2 |
-|--------|--------|--------|
-| Llamadas de cifrado por escritura | 1 por objeto | 1 por rotación de DEK |
-| Rendimiento | Alta latencia a escala | Latencia casi constante |
-| Jerarquía de claves | Una sola capa | Dos capas (KEK + DEK) |
-| Estado | Deprecado en 1.28 | GA en 1.29 |
+KMS v1 se deprecó en 1.28 y se desactivó de forma predeterminada en 1.29. La guía upstream actual de KMS aún documenta su implementación heredada; era incorrecto afirmar que se eliminó en 1.31. Prefiere la ruta de migración compatible a v2.
+
+Esta configuración es para un servidor de API upstream administrado por el administrador, con el complemento v2 revisado e instalado en el socket indicado. **No es un manifiesto del plano de control de EKS**. KMS v2 no admite `cachesize`. El proveedor `identity` al final permite leer texto sin cifrar que ya existía durante la migración; no ofrece una alternativa de texto sin cifrar si el primer proveedor no consigue cifrar una escritura. Revisa la migración del cifrado y elimina el soporte de lectura de texto sin cifrar solo después de validar la migración.
 
 ```yaml
-# KMS v2 EncryptionConfiguration
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
-  - resources:
-      - secrets
-    providers:
-      - kms:
-          apiVersion: v2
-          name: aws-encryption-provider
-          endpoint: unix:///var/run/kmsplugin/socket.sock
-          timeout: 3s
-      - identity: {}
+- resources:
+  - secrets
+  providers:
+  - kms:
+      apiVersion: v2
+      name: reviewed-kms-provider
+      endpoint: unix:///var/run/kmsplugin/socket.sock
+      timeout: 3s
+  - identity: {}
 ```
 
-**ReadWriteOncePod PV Access Mode**
+**Diferencia para EKS:** La guía actual de AWS proporciona cifrado de sobre KMS v2 predeterminado para todos los datos de la API de Kubernetes en EKS 1.28 y versiones posteriores, con una clave propiedad de AWS a menos que se configure una clave administrada por el cliente. Esto cubre los datos de la API, como Secrets y ConfigMaps, no datos arbitrarios de nodos ni volúmenes EBS. No deduzcas que solo está disponible desde EKS 1.29 ni apliques a EKS este archivo de configuración upstream.
 
-El modo de acceso `ReadWriteOncePod` (RWOP) se promovió a GA. Esto garantiza que un PersistentVolume solo pueda montarse como lectura-escritura por un único Pod en todo el cluster, proporcionando garantías de seguridad de datos más fuertes que `ReadWriteOnce` (que permite múltiples pods en el mismo nodo).
+#### ReadWriteOncePod: GA
+
+`ReadWriteOncePod` limita una PVC a un solo Pod en todo el clúster. `ReadWriteOnce` permite, en cambio, varios Pods en un mismo nodo. RWOP requiere un volumen o controlador CSI compatible; las versiones mínimas upstream de los sidecars son csi-provisioner 3.0.0, csi-attacher 3.3.0 y csi-resizer 1.3.0. Son requisitos mínimos de esta función, no versiones actuales recomendadas. Elige versiones compatibles con el clúster y el aprovisionador reales.
+
+El ejemplo requiere que ya existan el espacio de nombres `version-lab` y una `reviewed-csi-class` adecuada. La coordinación del modo de acceso no es una barrera de seguridad del kernel frente al acceso privilegiado al host, no implementa la elección de líder de una base de datos y no sustituye al aislamiento de escrituras ni a las copias de seguridad de la aplicación.
 
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: database-pvc
+  namespace: version-lab
 spec:
   accessModes:
-    - ReadWriteOncePod    # Only one pod can mount this volume
-  storageClassName: gp3
+  - ReadWriteOncePod
+  storageClassName: reviewed-csi-class
   resources:
     requests:
       storage: 100Gi
 ```
 
-**Otras características GA en 1.29**:
-- `NodeExpandSecret` para expansión de volúmenes CSI con credenciales
-- `KubeletTracing` para trazas distribuidas a nivel de kubelet
-- Modo de acceso `ReadWriteOncePod` de PersistentVolume
-- `MinDomainsInPodTopologySpread` para restricciones de distribución de topología
+#### Algunas funciones beta y alfa
 
-#### Características beta clave
+| Función | Estado en 1.29 | Significado |
+|---|---|---|
+| SidecarContainers | Beta, habilitada de forma predeterminada | Contenedores init reiniciables; fue alfa en 1.28 y llega a GA en 1.33 |
+| NFTablesProxyMode | Alfa, deshabilitada de forma predeterminada | Backend del proxy de Service para Linux; hay que comprobar el kernel, CNI y comportamiento de NodePort |
+| LoadBalancerIPMode | Alfa | Modo de estado de ingreso LoadBalancer informado por un controlador, no un campo arbitrario del Pod |
+| PodSchedulingReadiness | Beta | Las puertas de programación retrasan la consideración del Pod por el planificador |
+| NodeLogQuery | Alfa | Consultar los registros del nodo requiere la configuración y el acceso pertinentes de kubelet |
+| KubeletTracing | Beta | No llegó a GA en 1.29; llega a GA en 1.34 |
+| MinDomainsInPodTopologySpread | Beta | Llega a GA en 1.30 |
 
-**nftables-based kube-proxy (Alpha)**
+Un sidecar nativo usa el siguiente **fragmento de Pod-spec**. Sustituye la imagen ilustrativa por una implementación revisada y configura su canal real de registros. Esto no instala Fluent Bit. El inicio continúa cuando arranca el sidecar (y cuando pasa su startupProbe, si la tiene); la preparación y el apagado gradual aún requieren sondas correctas, el comportamiento adecuado de la aplicación y tiempo suficiente para terminar.
 
-Se introdujo como alpha un nuevo backend de kube-proxy que usa nftables en lugar de iptables. Esto es importante porque nftables ofrece mejor rendimiento y escalabilidad que iptables, especialmente en clusters con miles de Services.
-
-```bash
-# Check current kube-proxy mode
-kubectl get configmap kube-proxy-config -n kube-system -o yaml | grep mode
-
-# nftables mode (alpha in 1.29 - requires feature gate)
-# mode: nftables
+```yaml
+initContainers:
+- name: log-helper
+  image: example.invalid/version-lab/log-helper:reviewed
+  restartPolicy: Always
 ```
 
-| Modo de proxy | Madurez en 1.29 | Complejidad de reglas | Rendimiento a escala |
-|-----------|-------------------|-----------------|---------------------|
-| iptables | Stable (predeterminado) | O(n) por paquete | Se degrada >5000 services |
-| IPVS | Stable | Búsqueda O(1) | Bueno a escala |
-| nftables | Alpha | Búsqueda O(1) | Excelente a escala |
+El lanzamiento también graduó `NodeExpandSecret` de CSI, que permite incluir las credenciales adecuadas en la solicitud de expansión del lado del nodo de un controlador. El endpoint deprecado `flowcontrol.apiserver.k8s.io/v1beta2` dejó de ofrecerse en 1.29; usa la API estable `v1` y revisa los cambios en sus campos. `SecurityContextDeny` ya se había deprecado y se eliminó en 1.30; no se deprecó por primera vez en 1.29. Aquí no se establece un umbral universal de rendimiento de «5.000 Services» ni un benchmark medido del proxy.
 
-**Load Balancer IP Mode**
-
-La característica `LoadBalancerIPMode` (beta) permite que los Services de tipo LoadBalancer especifiquen cómo se maneja la IP del load balancer, mejorando la compatibilidad con implementaciones de cloud providers.
-
-#### Características alpha clave
-
-- **SidecarContainers** (initContainer con `restartPolicy: Always`) -- una característica emblemática que inicia su recorrido
-- **PodLifecycleSleepAction** -- agrega la acción `sleep` a los hooks de ciclo de vida del pod
-- **Unknown Version Interoperability Proxy** -- proxy de solicitudes para versiones de API desconocidas
-
-#### Deprecaciones en 1.29
-
-- `flowcontrol.apiserver.k8s.io/v1beta2` deprecado (eliminado en 1.32)
-- Plugin de admission `SecurityContextDeny` deprecado
-- Las integraciones de cloud providers in-tree continúan su ruta de deprecación
+[Lanzamiento de Kubernetes 1.29](https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/) · [Proveedor KMS](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/) · [Cifrado de sobre de EKS](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html) · [Volúmenes persistentes y RWOP](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) · [Guía de migración de API](https://kubernetes.io/docs/reference/using-api/deprecation-guide/)
 
 ---
 
-### 4.2 Kubernetes 1.30 "Uwubernetes" (abril de 2024)
+### 4.2 Kubernetes 1.30 «Uwubernetes» (abril de 2024)
 
-**Tema**: Un nombre lúdico elegido por la comunidad que encarna la naturaleza acogedora de la comunidad de Kubernetes.
+El lanzamiento del 17 de abril incluye **45 mejoras: 17 estables, 18 beta y 10 alfa**. Las etiquetas de madurez no sustituyen las comprobaciones de configuración y entorno de ejecución de cada función.
 
-**Estadísticas del lanzamiento**: 45 mejoras -- 17 Stable, 18 Beta, 10 Alpha
+![Kubernetes 1.30 «Uwubernetes» divide sus 45 mejoras en 17 estables, 18 beta y 10 alfa; agrupa entre las estables funciones GA clave como ValidatingAdmissionPolicy.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-7.png)
 
-```mermaid
-pie title 1.30 Enhancement Breakdown
-    "Stable (GA)" : 17
-    "Beta" : 18
-    "Alpha" : 10
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-7.html)
 
-#### Características clave promovidas (GA)
+#### ValidatingAdmissionPolicy: GA
 
-**ValidatingAdmissionPolicy with CEL (GA)**
+ValidatingAdmissionPolicy evalúa CEL dentro del servidor de API. Puede sustituir muchos webhooks de validación y sus dependencias de red, certificados y servidores, pero una política incorrecta, un error de evaluación o una configuración que deniega al fallar puede rechazar solicitudes. La política, su vinculación y los objetos de parámetros opcionales cumplen funciones distintas; los parámetros pueden ser recursos integrados o personalizados, no necesariamente un tercer tipo de CRD obligatorio.
 
-Una de las características promovidas más significativas, ValidatingAdmissionPolicy permite admission control nativo usando Common Expression Language (CEL), eliminando la necesidad de controladores de admission basados en webhooks para muchos casos de uso.
+Los ejemplos siguientes usan las API `v1` estables actuales. Sus vinculaciones son **solo de auditoría** y seleccionan los espacios de nombres con la etiqueta `version-lab-policy=enabled`; las infracciones agregan anotaciones de auditoría, pero no deniegan solicitudes. Configura la recopilación del registro de auditoría para observarlas. Controla quién puede establecer esa etiqueta en los espacios de nombres. Primero evalúa casos de prueba positivos y negativos; si quieres aplicar la política, selecciona `Deny` deliberadamente. Estos ejemplos no demuestran cómo se comportará la admisión en producción.
 
-| Aspecto | Admission Webhooks | ValidatingAdmissionPolicy (CEL) |
-|--------|-------------------|-------------------------------|
-| Latencia | Viaje de ida y vuelta por red | Evaluación en proceso |
-| Riesgo de disponibilidad | Falla del servidor webhook = solicitudes bloqueadas | Sin dependencia externa |
-| Lenguaje | Cualquiera (Go, Python, etc.) | CEL |
-| Complejidad | Alta (desplegar, mantener, escalar) | Baja (un solo recurso YAML) |
-| Recorrido de la característica | N/A | Alpha 1.26 -> Beta 1.28 -> GA 1.30 |
+La política de recursos comprueba que los contenedores normales y los init declaren las claves de los límites de CPU y memoria. No valida que los valores sean positivos y adecuados: incluir una clave cuyo valor sea cero no crea un límite máximo útil. Para establecer requisitos de capacidad, usa LimitRange y políticas de recursos apropiados. Los contenedores efímeros no pueden declarar esos límites y quedan excluidos. Se incluye `pods/resize` para los clústeres actuales; ese subrecurso apareció después de la graduación original de VAP en 1.30.
 
 ```yaml
-# ValidatingAdmissionPolicy: Require resource limits on all containers
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:
-  name: require-resource-limits
+  name: version-lab-resource-limits
 spec:
   failurePolicy: Fail
   matchConstraints:
     resourceRules:
-      - apiGroups: [""]
-        apiVersions: ["v1"]
-        operations: ["CREATE", "UPDATE"]
-        resources: ["pods"]
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/resize
   validations:
-    - expression: >-
-        object.spec.containers.all(c,
-          has(c.resources) &&
-          has(c.resources.limits) &&
-          has(c.resources.limits.memory) &&
-          has(c.resources.limits.cpu)
-        )
-      message: "All containers must have CPU and memory limits set"
-      reason: Invalid
+  - expression: "object.spec.containers.all(c,\n  has(c.resources) && has(c.resources.limits)\
+      \ &&\n  has(c.resources.limits.cpu) && has(c.resources.limits.memory)\n) &&\n\
+      (!has(object.spec.initContainers) || object.spec.initContainers.all(c,\n  has(c.resources)\
+      \ && has(c.resources.limits) &&\n  has(c.resources.limits.cpu) && has(c.resources.limits.memory)\n\
+      ))"
+    message: Regular and init containers must declare CPU and memory limits.
+    reason: Invalid
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicyBinding
 metadata:
-  name: require-resource-limits-binding
+  name: version-lab-resource-limits
 spec:
-  policyName: require-resource-limits
+  policyName: version-lab-resource-limits
   validationActions:
-    - Deny
+  - Audit
   matchResources:
     namespaceSelector:
       matchLabels:
-        enforce-limits: "true"
+        version-lab-policy: enabled
 ```
 
+La política de imágenes usa prefijos completos de registro y repositorio, incluido el límite `/`. El prefijo antiguo `123456789012.dkr.ecr.` también aceptaba dominios de imitación. Sustituye la cuenta, la región y el alias público de ejemplo por las fuentes aprobadas por tu organización. La política valida las referencias de imagen; no valida firmas, vulnerabilidades ni que los digest sean inmutables. Las listas opcionales de contenedores init y efímeros se protegen con verificaciones de presencia, y se selecciona explícitamente el subrecurso de contenedores efímeros.
+
 ```yaml
-# CEL: Enforce image registry policy
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:
-  name: restrict-image-registries
+  name: version-lab-image-registries
 spec:
   failurePolicy: Fail
   matchConstraints:
     resourceRules:
-      - apiGroups: [""]
-        apiVersions: ["v1"]
-        operations: ["CREATE", "UPDATE"]
-        resources: ["pods"]
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/ephemeralcontainers
   validations:
-    - expression: >-
-        object.spec.containers.all(c,
-          c.image.startsWith('123456789012.dkr.ecr.') ||
-          c.image.startsWith('public.ecr.aws/')
-        )
-      message: "Images must come from approved ECR registries"
-    - expression: >-
-        object.spec.initContainers.all(c,
-          c.image.startsWith('123456789012.dkr.ecr.') ||
-          c.image.startsWith('public.ecr.aws/')
-        )
-      message: "Init container images must come from approved ECR registries"
+  - expression: object.spec.containers.all(c, c.image.startsWith('123456789012.dkr.ecr.us-west-2.amazonaws.com/')
+      || c.image.startsWith('public.ecr.aws/approved-alias/'))
+    message: Regular container images must use an approved registry/repository prefix.
+  - expression: '!has(object.spec.initContainers) || object.spec.initContainers.all(c,
+      c.image.startsWith(''123456789012.dkr.ecr.us-west-2.amazonaws.com/'') || c.image.startsWith(''public.ecr.aws/approved-alias/''))'
+    message: Init container images must use an approved registry/repository prefix.
+  - expression: '!has(object.spec.ephemeralContainers) || object.spec.ephemeralContainers.all(c,
+      c.image.startsWith(''123456789012.dkr.ecr.us-west-2.amazonaws.com/'') || c.image.startsWith(''public.ecr.aws/approved-alias/''))'
+    message: Ephemeral container images must use an approved registry/repository prefix.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: version-lab-image-registries
+spec:
+  policyName: version-lab-image-registries
+  validationActions:
+  - Audit
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        version-lab-policy: enabled
 ```
 
-**Pod Scheduling Readiness (GA)**
-
-Pod Scheduling Readiness permite crear pods pero no programarlos hasta que se cumplan ciertas condiciones. Esto desacopla la creación del pod de la programación, habilitando flujos de trabajo avanzados como batch scheduling y aprovisionamiento de recursos.
+Otros **fragmentos de listas de validación** muestran la herencia efectiva de `runAsNonRoot` para contenedores normales y la verificación de etiquetas de aplicación no vacías. El valor del contenedor prevalece sobre el del Pod. Estos fragmentos requieren una política y una vinculación; no validan todos los Pod Security Standards, los contenedores init o efímeros ni el usuario de la imagen. Para las claves de mapas que contienen `/` se usan pruebas de pertenencia; `has(map["key"])` no es sintaxis de macro CEL válida.
 
 ```yaml
-# Pod with scheduling gates
+- expression: "object.spec.containers.all(c,\n  has(c.securityContext) && has(c.securityContext.runAsNonRoot)\n\
+    \    ? c.securityContext.runAsNonRoot\n    : (has(object.spec.securityContext)\
+    \ &&\n       has(object.spec.securityContext.runAsNonRoot) &&\n       object.spec.securityContext.runAsNonRoot)\n\
+    )"
+  message: Regular containers must effectively set runAsNonRoot.
+- expression: 'has(object.metadata.labels) &&
+
+    ''app.kubernetes.io/name'' in object.metadata.labels &&
+
+    ''app.kubernetes.io/version'' in object.metadata.labels &&
+
+    object.metadata.labels[''app.kubernetes.io/name''] != '''' &&
+
+    object.metadata.labels[''app.kubernetes.io/version''] != '''' '
+  message: Nonempty application name and version labels are required.
+```
+
+#### Pod Scheduling Readiness: GA
+
+Las puertas de programación excluyen un Pod del proceso de programación. Se pueden establecer durante la creación o admisión del Pod y retirar después, pero no se pueden agregar puertas nuevas una vez creado. Un Pod con puertas no activa por sí mismo el aprovisionamiento normal de nodos para Pods no programables; un flujo de trabajo externo de aprobación o aprovisionamiento debe satisfacer la condición. Las puertas, por sí solas, no implementan una programación atómica por grupos.
+
+Este ejemplo requiere un espacio de nombres que controles, una versión revisada de la imagen ilustrativa y capacidad y controladores de GPU adecuados. Los nombres de las dos puertas representan una aprobación externa de cuota y un análisis de seguridad; Kubernetes no realiza esas acciones porque una puerta tenga ese nombre.
+
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: ml-training-job
+  name: gated-training
+  namespace: version-lab
 spec:
   schedulingGates:
-    - name: "example.com/gpu-provisioned"      # Gate 1: Wait for GPU node
-    - name: "example.com/dataset-downloaded"    # Gate 2: Wait for data
+  - name: example.com/gpu-quota-approved
+  - name: example.com/security-scan-passed
   containers:
-    - name: trainer
-      image: ml-training:v2
-      resources:
-        limits:
-          nvidia.com/gpu: 4
+  - name: trainer
+    image: example.invalid/version-lab/training:reviewed
+    resources:
+      limits:
+        nvidia.com/gpu: 4
 ```
+
+Después de verificar por separado la condición indicada, esta mutación retira únicamente esa puerta. Las operaciones `test` de JSON Patch protegen el UID, resourceVersion y nombre de la puerta seleccionada; una actualización o sustitución concurrente hace que falle el parche. Si no se cumple la condición previa, vuelve a leer y evaluar el Pod en vez de eliminar un índice supuesto. El Pod solo queda habilitado cuando se retiran todas las puertas; siguen aplicándose las restricciones habituales de ubicación y capacidad.
 
 ```bash
-# Remove a scheduling gate when the condition is met
-kubectl patch pod ml-training-job --type='json' -p='[
-  {"op": "remove", "path": "/spec/schedulingGates/0"}
-]'
-
-# Check remaining scheduling gates
-kubectl get pod ml-training-job -o jsonpath='{.spec.schedulingGates}'
+# MUTATION: remove only the named gate after independently verifying its condition.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${GATE_NAME:?}"
+gate_patch=$(kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
+  get pod "$POD_NAME" -o json | jq -ce --arg gate "$GATE_NAME" '
+    .metadata as $m |
+    [(.spec.schedulingGates // []) | to_entries[] | select(.value.name == $gate)] as $matches |
+    if ($matches | length) != 1 then error("Expected exactly one matching gate")
+    else ($matches[0].key | tostring) as $i | [
+      {op:"test", path:"/metadata/uid", value:$m.uid},
+      {op:"test", path:"/metadata/resourceVersion", value:$m.resourceVersion},
+      {op:"test", path:("/spec/schedulingGates/" + $i + "/name"), value:$gate},
+      {op:"remove", path:("/spec/schedulingGates/" + $i)}
+    ] end')
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
+  patch pod "$POD_NAME" --type=json --patch "$gate_patch"
 ```
 
-**HPA ContainerResource Metrics (GA)**
+#### Métricas ContainerResource de HPA: GA (KEP-2702)
 
-HPA ahora puede escalar según métricas de containers individuales en lugar de métricas totales del pod. Esto es crucial para patrones sidecar donde el uso de recursos del container principal debe impulsar el escalado, no el total combinado que incluye sidecars.
+ContainerResource mide un contenedor específico por nombre, de modo que un sidecar de registro o proxy no distorsione la señal de utilización de la aplicación. El Deployment de destino debe existir en `version-lab` y contener un contenedor `app` con solicitudes adecuadas. También se necesita un proveedor funcional de métricas de recursos. La utilización se calcula respecto de las solicitudes, no de los límites. Si hay varias métricas, HPA elige la recomendación de réplicas mayor; las métricas faltantes, la preparación y la estabilización pueden afectar el escalado. Los límites de 2 a 50 réplicas son valores ilustrativos de capacidad, no una configuración óptima medida.
 
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: web-app-hpa
+  namespace: version-lab
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -579,809 +462,734 @@ spec:
   minReplicas: 2
   maxReplicas: 50
   metrics:
-    - type: ContainerResource
-      containerResource:
-        name: cpu
-        container: app              # Scale based only on the 'app' container
-        target:
-          type: Utilization
-          averageUtilization: 70
-    - type: ContainerResource
-      containerResource:
-        name: memory
-        container: app              # Ignore sidecar memory usage
-        target:
-          type: Utilization
-          averageUtilization: 80
+  - type: ContainerResource
+    containerResource:
+      name: cpu
+      container: app
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: ContainerResource
+    containerResource:
+      name: memory
+      container: app
+      target:
+        type: Utilization
+        averageUtilization: 80
 ```
 
-**Otras características GA en 1.30**:
-- `MinDomainsInPodTopologySpread` -- conteo mínimo de dominios para distribución de topología
-- `NodeLogQuery` -- consulta logs a nivel de nodo mediante la API del kubelet
-- `PodDisruptionConditions` -- agrega condiciones relacionadas con interrupciones al estado del Pod
-- `StableLoadBalancerNodeSet` -- conjunto estable de nodos para health checks del load balancer
+#### Otros cambios seleccionados
 
-#### Características beta clave
+| Función | Estado en 1.30 |
+|---|---|
+| MinDomainsInPodTopologySpread | GA |
+| StableLoadBalancerNodeSet | GA |
+| PodDisruptionConditions | Beta; pasa a GA en 1.31 |
+| NodeLogQuery | Beta, deshabilitada de forma predeterminada; pasa a GA en 1.36 |
+| UserNamespacesSupport | Beta, deshabilitada de forma predeterminada |
+| ContextualLogging | Beta; los puntos de llamada deben proporcionar o usar registradores contextuales; no todos los mensajes obtienen campos Pod/nodo automáticamente |
+| RecursiveReadOnlyMounts | Alfa; requiere compatibilidad del kernel y del entorno de ejecución |
+| RelaxedEnvironmentVariableValidation | Alfa; cambia los **nombres** de variables de entorno permitidos, no sus valores |
+| ServiceAccountTokenJTI | Beta; el token incluye un identificador de seguimiento |
 
-**Contextual Logging (Beta, habilitado por defecto)**
+`SecurityContextDeny` se eliminó en 1.30; evalúa Pod Security Admission y las políticas necesarias para tu entorno. La madurez de una función no sustituye una prueba de migración.
 
-Contextual logging agrega contexto estructurado (como nombre del pod, namespace, componente) a todos los mensajes de log de Kubernetes, haciendo que el análisis y la correlación de logs sean significativamente más fáciles.
-
-```bash
-# Before contextual logging
-I0415 12:00:00.000000       1 controller.go:100] "Reconciling object" name="my-pod"
-
-# With contextual logging (additional context automatically added)
-I0415 12:00:00.000000       1 controller.go:100] "Reconciling object" logger="pod-controller" pod="default/my-pod" node="ip-10-0-1-100"
-```
-
-**Recursive Read-Only Mounts (Beta)**
-
-Permite hacer que todo un árbol de mounts de volumen sea de solo lectura de forma recursiva, evitando sub-mounts escribibles dentro de una ruta de mount de solo lectura.
-
-#### Características alpha clave
-
-- **UserNamespacesSupport** -- user namespaces a nivel de pod para mejorar el aislamiento de seguridad
-- **RelaxedEnvironmentVariableValidation** -- permite caracteres previamente inválidos en valores de variables de entorno
-- **SELinuxMountReadWriteOncePod** -- soporte de etiquetas SELinux para volúmenes RWOP
+[Lanzamiento de Kubernetes 1.30](https://kubernetes.io/blog/2024/04/17/kubernetes-v1-30-release/) · [ValidatingAdmissionPolicy](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/) · [Preparación para la programación](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-scheduling-readiness/) · [Métricas de contenedores de HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#container-resource-metrics)
 
 ---
 
-### 4.3 Kubernetes 1.31 "Elli" (agosto de 2024)
 
-**Tema**: Nombrado por un perro perteneciente a un contribuidor de Kubernetes, reflejando el toque personal de la comunidad.
+### 4.3 Kubernetes 1.31 «Elli» (agosto de 2024)
 
-**Estadísticas del lanzamiento**: 45 mejoras -- 11 Stable, 22 Beta, 12 Alpha
+El anuncio del lanzamiento del 13 de agosto enumera **45 mejoras: 11 estables, 22 beta y 12 alfa**.
 
-```mermaid
-pie title 1.31 Enhancement Breakdown
-    "Stable (GA)" : 11
-    "Beta" : 22
-    "Alpha" : 12
-```
+<!-- Parent repair: DRA structured parameters remained alpha in 1.31, not beta as drawn.
+![Diagrama de las 45 mejoras de Kubernetes 1.31 «Elli», agrupadas en 11 estables (GA), 22 beta y 12 alfa; las funciones tratadas en esta página aparecen bajo su etapa de madurez.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-8.png)
 
-#### Características clave promovidas (GA)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-8.html)
+-->
 
-**AppArmor Support (GA)**
+#### Campos nativos de AppArmor: GA
 
-El soporte nativo de AppArmor en Kubernetes se promovió a GA, reemplazando el enfoque anterior basado en anotaciones con campos de API adecuados.
+En 1.30 se agregaron campos nativos para configurar perfiles AppArmor; alcanzaron GA en 1.31. Sustituyen las antiguas anotaciones beta por contenedor. El host debe tener AppArmor habilitado, el entorno de ejecución debe admitirlo y, en cada nodo apto, debe estar cargado el perfil `Localhost`. Una etiqueta personalizada del nodo solo deja constancia de que un operador verificó ese requisito previo; no instala ni impone el perfil.
+
+El primer ejemplo usa un perfil preinstalado; el segundo proporciona el selector y las etiquetas del Pod que faltaban en el ejemplo anterior de Deployment. Sustituye la imagen ilustrativa y prepara el espacio de nombres. `RuntimeDefault` usa el perfil del entorno de ejecución; `Unconfined` deshabilita el confinamiento de AppArmor. No se garantiza que el perfil configurado sea compatible con todos los sistemas operativos o tipos de cómputo de EKS. AppArmor, seccomp y SELinux son controles distintos, no nombres intercambiables de una misma protección.
 
 ```yaml
-# Old approach (deprecated annotations)
-# metadata:
-#   annotations:
-#     container.apparmor.security.beta.kubernetes.io/app: localhost/my-profile
-
-# New GA approach: native API field
 apiVersion: v1
 kind: Pod
 metadata:
-  name: secure-app
+  name: apparmor-local-profile
+  namespace: version-lab
 spec:
+  nodeSelector:
+    version-lab.example.com/apparmor-profile: reviewed
   containers:
-    - name: app
-      image: myapp:latest
-      securityContext:
-        appArmorProfile:
-          type: Localhost
-          localhostProfile: my-custom-profile
+  - name: app
+    image: example.invalid/version-lab/app:reviewed
+    securityContext:
+      appArmorProfile:
+        type: Localhost
+        localhostProfile: reviewed-app-profile
 ```
 
 ```yaml
-# AppArmor with RuntimeDefault profile
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-server
+  name: apparmor-runtime-default
+  namespace: version-lab
 spec:
-  template:
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.27
-          securityContext:
-            appArmorProfile:
-              type: RuntimeDefault    # Uses container runtime's default profile
-```
-
-**Persistent Volume Last Phase Transition Time (GA)**
-
-Un nuevo campo `.status.lastPhaseTransitionTime` en PersistentVolumes rastrea cuándo el PV cambió de fase por última vez (Available, Bound, Released, Failed). Esto permite mejor monitoreo y automatización alrededor del ciclo de vida de volúmenes.
-
-```bash
-# Check PV phase transition times
-kubectl get pv -o custom-columns=\
-NAME:.metadata.name,\
-PHASE:.status.phase,\
-LAST_TRANSITION:.status.lastPhaseTransitionTime
-
-# Example output:
-# NAME         PHASE     LAST_TRANSITION
-# pv-data-01   Bound     2025-01-15T10:30:00Z
-# pv-data-02   Released  2025-01-14T22:15:00Z
-```
-
-**Otras características GA en 1.31**:
-- `PodDisruptionConditions` -- estado enriquecido del Pod con información sobre la causa de interrupción
-- `JobPodReplacementPolicy` -- controla cuándo se reemplazan pods fallidos en Jobs
-- `PodHostIPs` -- expone todas las IPs del host (IPv4 e IPv6) a pods mediante downward API
-
-#### Características beta clave
-
-**DRA Structured Parameters (Beta)**
-
-Dynamic Resource Allocation (DRA) structured parameters pasó a beta, permitiendo que device plugins anuncien capacidades de hardware mediante una API estandarizada. Esto es fundamental para la programación de GPU, FPGA y otros aceleradores.
-
-```yaml
-# ResourceClaim for GPU allocation using DRA
-apiVersion: resource.k8s.io/v1beta1
-kind: ResourceClaim
-metadata:
-  name: gpu-claim
-spec:
-  devices:
-    requests:
-      - name: gpu
-        deviceClassName: gpu.nvidia.com
-        selectors:
-          - cel:
-              expression: >-
-                device.attributes["gpu.nvidia.com"].model == "A100" &&
-                device.capacity["gpu.nvidia.com"].memory.compareTo(quantity("80Gi")) >= 0
-```
-
-**Sidecar Containers (Beta)**
-
-La característica sidecar containers avanzó a beta (habilitada por defecto en 1.31 después de haber sido alpha en 1.29). Los init containers con `restartPolicy: Always` ahora funcionan como verdaderos sidecars que:
-- Inician antes que los containers regulares
-- Se ejecutan junto con el workload principal
-- Se terminan al final durante el apagado del pod
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-with-sidecar
-spec:
-  initContainers:
-    - name: log-shipper
-      image: fluent-bit:latest
-      restartPolicy: Always       # This makes it a sidecar
-      volumeMounts:
-        - name: log-volume
-          mountPath: /var/log/app
-  containers:
-    - name: app
-      image: myapp:latest
-      volumeMounts:
-        - name: log-volume
-          mountPath: /var/log/app
-  volumes:
-    - name: log-volume
-      emptyDir: {}
-```
-
-**Traffic Distribution for Services (Beta)**
-
-Un nuevo campo `spec.trafficDistribution` en Services permite solicitar preferencias de enrutamiento de tráfico, como preferir endpoints de la misma zona.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  trafficDistribution: PreferClose    # Route traffic to closest endpoints
-  selector:
-    app: my-app
-  ports:
-    - port: 80
-      targetPort: 8080
-```
-
-**Otras características beta en 1.31**:
-- `PodLifecycleSleepAction` -- acción `sleep` en hooks PreStop/PostStart
-- `RelaxedDNSSearchValidation` -- validación relajada de rutas de búsqueda DNS
-- `VolumeAttributesClass` -- atributos de volumen mutables mediante CSI
-
-#### Características alpha clave
-
-- **PortForwardWebsockets** -- port forwarding basado en WebSocket
-- **ImageVolume** -- monta imágenes OCI como volúmenes de solo lectura
-- **DRAPartitionableDevices** -- soporte de particionado para dispositivos DRA
-
----
-
-### 4.4 Kubernetes 1.32 "Penelope" (diciembre de 2024)
-
-**Tema**: Nombrado por Penelope, el personaje fiel de la Odisea de Homero, simbolizando la confiabilidad constante del proyecto.
-
-**Estadísticas del lanzamiento**: 44 mejoras -- 13 Stable, 12 Beta, 19 Alpha
-
-```mermaid
-pie title 1.32 Enhancement Breakdown
-    "Stable (GA)" : 13
-    "Beta" : 12
-    "Alpha" : 19
-```
-
-#### Características clave promovidas (GA)
-
-**StructuredAuthorizationConfiguration (GA)**
-
-Una característica de seguridad importante que permite definir cadenas ordenadas de módulos de autorización (Node, RBAC, Webhook, CEL) con configuración estructurada. Esto reemplaza el enfoque heredado de la bandera `--authorization-mode`.
-
-```yaml
-# StructuredAuthorizationConfiguration
-# (Managed by AWS for EKS control plane; shown for reference)
-apiVersion: apiserver.config.k8s.io/v1beta1
-kind: AuthorizationConfiguration
-authorizers:
-  - type: Node
-    name: node
-  - type: RBAC
-    name: rbac
-  - type: Webhook
-    name: custom-authz
-    webhook:
-      timeout: 3s
-      subjectAccessReviewVersion: v1
-      matchConditionSubjectAccessReviewVersion: v1
-      failurePolicy: Deny
-      connectionInfo:
-        type: KubeConfigFile
-        kubeConfigFile: /etc/kubernetes/authz-webhook.kubeconfig
-      matchConditions:
-        - expression: >-
-            request.resourceAttributes.namespace == "production"
-```
-
-Esto permite:
-- **Evaluación ordenada**: Solicitudes de autorización evaluadas en orden a través de una cadena
-- **Filtrado basado en CEL**: Usa expresiones CEL para hacer coincidir solo las solicitudes relevantes con cada autorizador
-- **Enrutamiento granular de webhooks**: Envía solo solicitudes específicas a webhooks de autorización externos
-- **Recorrido de la característica**: Alpha 1.29 -> Beta 1.30 -> GA 1.32
-
-**Auto-Remove PVC Protection Finalizer (GA)**
-
-Los finalizers de protección de PersistentVolumeClaim ahora se limpian automáticamente cuando el PVC ya no está en uso. Esto elimina el problema común de PVCs huérfanos que no pueden eliminarse porque su finalizer de protección nunca se removió.
-
-```bash
-# Before 1.32: Common issue - stuck PVC deletion
-$ kubectl delete pvc my-pvc
-persistentvolumeclaim "my-pvc" deleted  # ... hangs forever
-
-$ kubectl get pvc my-pvc -o jsonpath='{.metadata.finalizers}'
-["kubernetes.io/pvc-protection"]  # Finalizer not removed
-
-# After 1.32 (GA): Automatic cleanup
-$ kubectl delete pvc my-pvc
-persistentvolumeclaim "my-pvc" deleted  # Completes immediately when no pod references it
-```
-
-**Otras características GA en 1.32**:
-- `CustomResourceFieldSelectors` -- field selectors para CRDs
-- `RetryGenerateName` -- reintento automático con nombres generados nuevos ante conflicto
-- `SizeMemoryBackedVolumes` -- aplica límites de tamaño en volúmenes emptyDir respaldados por memoria
-- `StableLoadBalancerNodeSet` -- conjunto consistente de nodos para health checking de LB
-- `ServiceAccountTokenJTI` -- JTI único en tokens de SA para seguimiento de auditoría
-- `ServiceAccountTokenNodeBindingValidation` -- vincula tokens de SA a nodos
-
-#### Características beta clave
-
-**User Namespaces (Beta)**
-
-User namespaces proporcionan una potente frontera de seguridad al remapear UIDs y GIDs dentro de containers, de modo que incluso si un proceso se ejecuta como root dentro del container, se mapea a un usuario no privilegiado en el host.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-pod
-spec:
-  hostUsers: false              # Enable user namespace remapping
-  containers:
-    - name: app
-      image: myapp:latest
-      securityContext:
-        runAsUser: 0            # Root inside container
-        # Maps to unprivileged UID on host (e.g., UID 65534+offset)
-```
-
-**VolumeAttributesClass (Beta)**
-
-VolumeAttributesClass permite cambiar atributos de volumen (como IOPS, throughput) después del aprovisionamiento, sin recrear el volumen.
-
-```yaml
-apiVersion: storage.k8s.io/v1beta1
-kind: VolumeAttributesClass
-metadata:
-  name: high-performance
-driverName: ebs.csi.aws.com
-parameters:
-  iops: "10000"
-  throughput: "500"
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: database-volume
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 500Gi
-  storageClassName: gp3
-  volumeAttributesClassName: high-performance    # Apply performance attributes
-```
-
-```yaml
-# Modify volume attributes by changing the class reference
-# (triggers a CSI ModifyVolume call)
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: database-volume
-spec:
-  volumeAttributesClassName: ultra-performance   # Switch to higher tier
-```
-
-**nftables kube-proxy (Beta)**
-
-El backend nftables para kube-proxy avanzó a beta, trayendo soporte nftables listo para producción para enrutamiento de Service.
-
-#### Características alpha clave
-
-- **DynamicResourceAllocation (DRA) Core** -- framework integral de programación de GPU/aceleradores
-- **MultiCIDRServiceAllocator** -- asigna IPs de Service desde múltiples rangos CIDR
-- **RelaxedEnvironmentVariableValidation** -- permite conjuntos ampliados de caracteres en env vars
-- **InPlacePodVerticalScalingExtendedStatus** -- informes extendidos de estado para redimensionamiento de pod
-
----
-
-### 4.5 Kubernetes 1.33 "Octarine" (abril de 2025)
-
-**Tema**: Nombrado por el octavo color, visible solo para magos, de la serie Discworld de Terry Pratchett. Un nombre apropiado para un lanzamiento lleno de características mágicas.
-
-**Estadísticas del lanzamiento**: 64 mejoras -- 18 Stable, 20 Beta, 24 Alpha (el lanzamiento más grande en este rango)
-
-```mermaid
-pie title 1.33 Enhancement Breakdown
-    "Stable (GA)" : 18
-    "Beta" : 20
-    "Alpha" : 24
-```
-
-#### Características clave promovidas (GA)
-
-**Sidecar Containers (GA)**
-
-La promoción a GA más esperada de este lanzamiento. Los sidecar containers nativos, implementados como init containers con `restartPolicy: Always`, alcanzaron estabilidad completa después de un recorrido de varias versiones.
-
-| Versión | Estado | Comportamiento |
-|---------|--------|----------|
-| 1.28 | Alpha | Feature gate `SidecarContainers` requerido |
-| 1.29 | Alpha | Correcciones de errores, mejoras de estabilidad |
-| 1.31 | Beta | Habilitado por defecto |
-| 1.33 | **GA** | Habilitado permanentemente, feature gate eliminado |
-
-```yaml
-# Production-ready sidecar pattern (GA in 1.33)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: microservice
-spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: microservice
+      app: apparmor-runtime-default
   template:
     metadata:
       labels:
-        app: microservice
+        app: apparmor-runtime-default
     spec:
-      initContainers:
-        # Sidecar 1: Service mesh proxy
-        - name: envoy-proxy
-          image: envoyproxy/envoy:v1.31
-          restartPolicy: Always
-          ports:
-            - containerPort: 15001
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
-
-        # Sidecar 2: Log collection
-        - name: fluent-bit
-          image: fluent/fluent-bit:3.2
-          restartPolicy: Always
-          volumeMounts:
-            - name: app-logs
-              mountPath: /var/log/app
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-
-        # Regular init container (runs to completion first)
-        - name: db-migration
-          image: myapp-migrations:latest
-          command: ["./migrate", "--target", "latest"]
-
       containers:
-        - name: app
-          image: myapp:v3.2
-          ports:
-            - containerPort: 8080
-          volumeMounts:
-            - name: app-logs
-              mountPath: /var/log/app
-
-      volumes:
-        - name: app-logs
-          emptyDir: {}
+      - name: app
+        image: example.invalid/version-lab/app:reviewed
+        securityContext:
+          appArmorProfile:
+            type: RuntimeDefault
 ```
 
-**Garantías del ciclo de vida de sidecar containers:**
+#### Hora de la última transición de fase de PersistentVolume: GA
 
-```mermaid
-sequenceDiagram
-    participant K as Kubelet
-    participant S1 as Sidecar 1 (envoy)
-    participant S2 as Sidecar 2 (fluent-bit)
-    participant I as Init Container (migration)
-    participant M as Main Container (app)
-
-    K->>S1: Start sidecar 1
-    Note over S1: Running (restartPolicy: Always)
-    K->>S2: Start sidecar 2
-    Note over S2: Running (restartPolicy: Always)
-    K->>I: Start init container
-    Note over I: Run to completion
-    I-->>K: Exit 0 (success)
-    K->>M: Start main container
-    Note over M: Running
-
-    Note over M: Pod shutdown triggered
-    K->>M: Send SIGTERM
-    M-->>K: Exit
-    K->>S2: Send SIGTERM (reverse order)
-    S2-->>K: Exit
-    K->>S1: Send SIGTERM (reverse order)
-    S1-->>K: Exit
-```
-
-**ServiceCIDR and IPAddress API (GA)**
-
-La API ServiceCIDR e IPAddress permite la gestión dinámica de rangos de IP de Service sin reiniciar el cluster. Esto es particularmente útil para clusters a gran escala que agotan su Service CIDR inicial.
-
-```yaml
-# Define additional Service CIDR ranges
-apiVersion: networking.k8s.io/v1
-kind: ServiceCIDR
-metadata:
-  name: secondary-service-range
-spec:
-  cidrs:
-    - "10.200.0.0/16"
-```
+El campo `.status.lastPhaseTransitionTime` de PV registra la transición más reciente de fase. Úsalo junto con los eventos y la evidencia del backend para diagnosticar el ciclo de vida; no contiene el historial completo de transiciones ni reconstruye eventos antiguos que falten. El siguiente comando no modifica ni elimina el volumen.
 
 ```bash
-# View allocated IP addresses
-kubectl get ipaddresses
-
-# Check ServiceCIDR status
-kubectl get servicecidrs
-NAME                       CIDRS            AGE
-kubernetes                 10.96.0.0/12     365d
-secondary-service-range    10.200.0.0/16    30d
+# Read-only, for one owned cluster-scoped PV.
+: "${KUBE_CONTEXT:?}"; : "${PV_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pv "$PV_NAME" -o json | jq '{
+  name:.metadata.name,phase:.status.phase,lastPhaseTransitionTime:.status.lastPhaseTransitionTime
+}'
 ```
 
-**Topology Aware Routing (GA)**
+#### Parámetros estructurados de DRA: todavía alfa en 1.31
 
-Anteriormente conocida como "Topology Aware Hints", esta característica se promovió a GA con el nombre "Topology Aware Routing". Permite el enrutamiento preferencial de tráfico de Service a endpoints en la misma zona de disponibilidad, reduciendo costos de transferencia de datos entre AZ.
+El rediseño de DRA hizo visibles para Kubernetes la información y las solicitudes de dispositivos por medio de API estructuradas y ResourceSlices, lo que permite que el planificador asigne los dispositivos. **DRA clásico aún estaba disponible en 1.31**, protegido por la feature gate independiente `DRAControlPlaneController`, desactivada de forma predeterminada. Esa gate aparece en el código publicado de 1.31; el código de 1.32 ya no la incluye. Por eso es incorrecta la afirmación del cuestionario anterior de que DRA clásico ya se había eliminado en 1.31.
+
+DRA seguía en alfa en 1.31, pasó a beta en 1.32 y su API principal se estabilizó en 1.34. El ejemplo anterior con `resource.k8s.io/v1beta1` no representaba correctamente la generación de API de 1.31. Para la sintaxis actual, usa el ejemplo estable de DRA de la sección 1.34 y comprueba las DeviceClasses, ResourceSlices, atributos y capacidades del controlador instalado. La API de Kubernetes no instala por sí sola un controlador de GPU ni implementa el reparto temporal o MIG.
+
+#### Distribución del tráfico de Service: beta
+
+El campo `trafficDistribution: PreferClose` de `Service v1` solicita que se prefieran los endpoints de la misma zona. Es una preferencia de enrutamiento, no una regla estricta de localidad, un cálculo de distancia geográfica ni una garantía de eliminar cargos entre zonas de disponibilidad. También influyen la disponibilidad de endpoints, el proxy que implementa la función y la prioridad de las políticas de tráfico. El selector debe coincidir con Pods reales de la carga de trabajo; el ejemplo no crea esos endpoints.
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-service
-  annotations:
-    # Legacy hint-based approach (deprecated)
-    # service.kubernetes.io/topology-aware-hints: Auto
+  name: zone-preference
+  namespace: version-lab
 spec:
-  trafficDistribution: PreferClose    # GA approach in 1.33
+  trafficDistribution: PreferClose
   selector:
-    app: my-app
+    app: web-app
   ports:
-    - port: 80
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080
 ```
 
-> **Consejo de costo para EKS**: Habilitar topology-aware routing en servicios internos de alto tráfico puede reducir significativamente los cargos por transferencia de datos entre AZ, que son $0.01/GB dentro de la misma región en AWS.
+#### Otros cambios seleccionados
 
-**Job Success Policy (GA)**
+| Función | Estado en 1.31 |
+|---|---|
+| NFTablesProxyMode | Beta, habilitada de forma predeterminada; elegir el modo de proxy y comprobar la compatibilidad con Linux, el kernel y CNI son pasos distintos |
+| MultiCIDRServiceAllocator | Beta, deshabilitada de forma predeterminada |
+| VolumeAttributesClass | Beta, deshabilitada de forma predeterminada; requiere soporte del controlador, el controlador de gestión y la API |
+| ImageVolume | Alfa, deshabilitada de forma predeterminada |
+| PodDisruptionConditions | GA |
+| JobPodReplacementPolicy | Beta; pasa a GA en 1.34 |
+| SidecarContainers | Ya estaba en beta desde 1.29; no pasó a beta por primera vez en 1.31 |
 
-Permite especificar condiciones bajo las cuales un Job se considera exitoso incluso si no todos los pods se han completado. Esto es esencial para frameworks de computación distribuida donde el éxito de un pod líder determina el éxito global del job.
+El backend nftables no migra automáticamente la red. El comportamiento de NodePort y del firewall puede diferir del de iptables; evalúa la implementación real antes de cambiar el modo de proxy en producción.
+
+[Lanzamiento de Kubernetes 1.31](https://kubernetes.io/blog/2024/08/13/kubernetes-v1-31-release/) · [Requisitos previos de AppArmor](https://kubernetes.io/docs/tutorials/security/apparmor/) · [Código fuente de funciones en 1.31](https://github.com/kubernetes/kubernetes/blob/v1.31.0/pkg/features/kube_features.go) · [Código fuente de funciones en 1.32](https://github.com/kubernetes/kubernetes/blob/v1.32.0/pkg/features/kube_features.go)
+
+---
+
+### 4.4 Kubernetes 1.32 «Penelope» (diciembre de 2024)
+
+El anuncio del 11 de diciembre enumera **44 mejoras: 13 estables, 12 beta y 19 alfa**. Las etiquetas del diagrama que indican funciones activadas de forma predeterminada simplifican la leyenda de madurez; algunas de las funciones beta que se describen a continuación pueden seguir desactivadas.
+
+![Diagrama de las 44 mejoras de Kubernetes 1.32 «Penelope», divididas en 13 estables (GA), 12 beta y 19 alfa, con énfasis en la ruta hacia el estado estable.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-9.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-9.html)
+
+#### Configuración estructurada de autorización: GA
+
+`AuthorizationConfiguration` usa la API estable `apiserver.config.k8s.io/v1` para configurar el sistema. Es una alternativa a los flags del modo de autorización, no una prueba de que se eliminó `--authorization-mode`. No combines el mecanismo de flags con el de archivo de configuración. EKS administra esta configuración del plano de control; el archivo siguiente es para un servidor de API administrado por el administrador, no un recurso que se aplique con kubectl ni una interfaz para personalizar EKS.
+
+Los autorizadores se ejecutan en orden; una decisión definitiva de permitir o denegar termina la cadena. En este ejemplo, el webhook solo recibe las solicitudes de recursos coincidentes de `version-lab` que Node y RBAC todavía no hayan resuelto. Por lo tanto, **no aplica un filtro de denegación a solicitudes que RBAC ya permitió**. Las condiciones de coincidencia de CEL seleccionan qué llamadas se hacen al webhook; CEL no es otro tipo independiente de autorizador. La solicitud es la especificación de un SubjectAccessReview, por lo que el espacio de nombres está en `request.resourceAttributes` y se verifica que exista para las solicitudes que no son de recursos.
 
 ```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: distributed-training
-spec:
-  completionMode: Indexed
-  completions: 8
-  parallelism: 8
-  successPolicy:
-    rules:
-      - succeededIndexes: "0"       # Job succeeds when index 0 (leader) succeeds
-        succeededCount: 1
-  template:
-    spec:
-      containers:
-        - name: trainer
-          image: pytorch-training:latest
-          env:
-            - name: JOB_COMPLETION_INDEX
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+apiVersion: apiserver.config.k8s.io/v1
+kind: AuthorizationConfiguration
+authorizers:
+- type: Node
+  name: node
+- type: RBAC
+  name: rbac
+- type: Webhook
+  name: reviewed-webhook
+  webhook:
+    authorizedTTL: 5m
+    unauthorizedTTL: 30s
+    timeout: 3s
+    subjectAccessReviewVersion: v1
+    matchConditionSubjectAccessReviewVersion: v1
+    failurePolicy: Deny
+    connectionInfo:
+      type: KubeConfigFile
+      kubeConfigFile: /etc/kubernetes/reviewed-authz-webhook.kubeconfig
+    matchConditions:
+    - expression: has(request.resourceAttributes) && request.resourceAttributes.namespace
+        == 'version-lab'
 ```
 
-**Otras características GA en 1.33**:
-- `PodLifecycleSleepAction` -- acción `sleep` en hooks de ciclo de vida del pod
-- `LoadBalancerIPMode` -- controla cómo se expone la IP de LB a los pods
-- `JobManagedBy` -- gestión externa de objetos Job por un controller
-- `RetryGenerateName` -- reintento automático de colisión de nombres para nombres generados
+Antes de usarlo, prepara el webhook real, la confianza TLS y el kubeconfig protegido. `failurePolicy: Deny` se aplica si fallan el webhook o una condición pertinente; las decisiones almacenadas en caché pueden retrasar el efecto de un cambio en la política del backend. Usa una configuración coherente en todos los servidores de API. Se admite recargar la configuración, pero no agregar ni eliminar autorizadores Node o RBAC; valida toda la política y el procedimiento de recuperación en un entorno que no sea de producción.
 
-#### Características beta clave (habilitadas por defecto)
+#### Política de retención de PVC de StatefulSet: GA
 
-**In-Place Pod Vertical Scaling (Beta)**
+La función que llegó a GA en 1.32 es la **eliminación y retención automáticas de PVC creados a partir de plantillas de claims de volumen de StatefulSet**, no una nueva garantía de que desaparezca de inmediato el finalizador de protección de todos los PVC sin uso. `whenDeleted` controla qué ocurre al eliminar el StatefulSet y `whenScaled` controla qué ocurre al reducir réplicas; ambos admiten `Retain` o `Delete`. De forma predeterminada se retienen los datos. Este es un fragmento que debes revisar en un StatefulSet existente:
 
-Una de las características más esperadas en la historia de Kubernetes. El redimensionamiento in-place del pod permite cambiar recursos de CPU y memoria en un pod en ejecución sin reiniciarlo.
+```yaml
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+```
+
+Elegir `Delete` cambia el ciclo de vida de los datos: al eliminar el PVC también se puede borrar el almacenamiento del backend, según la política de recuperación del PV. La propiedad del Pod, la recolección de basura, las operaciones CSI y los finalizadores aún afectan cuándo se completa el proceso. La protección de PVC en uso existe desde mucho antes de 1.32; si un claim queda atascado, investiga consumidores, UID, asociaciones y controladores. No elimines finalizadores en bloque ni des por sentado que una actualización resolverá el problema.
+
+#### VolumeAttributesClass: todavía beta en 1.32
+
+VAC pasó a beta en 1.31 y a GA en 1.34. Su API beta es `storage.k8s.io/v1beta1`; cuando el clúster y el controlador CSI lo admitan, los ejemplos actuales deben usar la API estable de la sección 1.34. Los parámetros de una clase son inmutables; un PVC puede cambiar la referencia de clase para solicitar otros atributos compatibles con el controlador, como IOPS o rendimiento de EBS.
+
+Esta modificación de almacenamiento es asíncrona y no garantiza que no haya interrupciones. Confirma la versión del controlador y del componente de gestión, la disponibilidad de la API, los permisos de IAM/KMS, los límites del tipo de volumen, los tiempos de espera entre modificaciones y el estado. No apliques un objeto PVC incompleto como si fuera un manifiesto completo de creación. La siguiente consulta compara la clase deseada con el progreso informado:
+
+```bash
+# Read-only: inspect one existing owned PVC and the CSI modification state.
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${PVC_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
+  get pvc "$PVC_NAME" -o json | jq '{
+    requestedClass:.spec.volumeAttributesClassName,
+    currentClass:.status.currentVolumeAttributesClassName,
+    modification:.status.modifyVolumeStatus,
+    conditions:.status.conditions
+  }'
+```
+
+Las notas de AWS para 1.34 distinguen entre la API VAC estable y el soporte anterior de sidecar beta. La versión del plano de control de EKS por sí sola no demuestra que una versión cualquiera de EBS CSI siga siendo compatible con la API VAC.
+
+#### Espacios de nombres de usuario: beta, deshabilitados de forma predeterminada en 1.32
+
+Los espacios de nombres de usuario pasaron a beta en 1.30, se habilitaron de forma predeterminada en 1.33 y llegaron a GA en 1.36. Un Pod los habilita mediante `hostUsers: false`. El UID 0 dentro del contenedor se asigna a un UID no raíz del host elegido por la implementación; no se aplica una fórmula universal como `65534 + offset`. Se requiere un kernel, sistema de archivos y CRI/entorno de ejecución compatibles, y no todas las cargas de trabajo ni los patrones de acceso al host serán compatibles.
+
+El ejemplo muestra intencionalmente el UID 0 del contenedor para explicar la asignación; sustituye la imagen ilustrativa y usa un entorno de prueba compatible. Es una defensa en profundidad, no una garantía contra todas las vulnerabilidades de escape del kernel o del contenedor, ni sustituye otros controles de seguridad.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: userns-example
+  namespace: version-lab
+spec:
+  hostUsers: false
+  containers:
+  - name: app
+    image: example.invalid/version-lab/app:reviewed
+    securityContext:
+      runAsUser: 0
+```
+
+#### Otros cambios seleccionados
+
+| Función | Estado en 1.32 |
+|---|---|
+| CustomResourceFieldSelectors | GA; quienes escriben CRD deben declarar los campos seleccionables compatibles |
+| RetryGenerateName | GA; reintenta colisiones de nombres, pero no garantiza que la creación siempre tenga éxito |
+| SizeMemoryBackedVolumes | GA; los límites de emptyDir respaldados por memoria también dependen de la memoria del Pod y del nodo |
+| ServiceAccountTokenJTI | GA; identificador del token, no un permiso de autorización nuevo |
+| JobManagedBy | Beta; pasa a GA en 1.35 |
+| DynamicResourceAllocation | Beta, deshabilitada de forma predeterminada; la API principal se estabiliza en 1.34 |
+| MultiCIDRServiceAllocator | Sigue en beta y deshabilitada de forma predeterminada |
+| NFTablesProxyMode | Sigue en beta; pasa a GA en 1.33 |
+| MutatingAdmissionPolicy | Alfa; pasa a beta en 1.34 y a GA en 1.36 |
+
+`StableLoadBalancerNodeSet` ya había llegado a GA en 1.30. Mantén separadas estas etapas históricas de las funciones habilitadas actualmente en un clúster concreto de EKS.
+
+[Lanzamiento de Kubernetes 1.32](https://kubernetes.io/blog/2024/12/11/kubernetes-v1-32-release/) · [Configuración de autorización](https://kubernetes.io/docs/reference/access-authn-authz/authorization/) · [Retención de PVC de StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention) · [Notas de versión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)
+
+---
+
+
+### 4.5 Kubernetes 1.33 «Octarine» (abril de 2025)
+
+El lanzamiento del 23 de abril enumera **64 mejoras: 18 estables, 20 beta, 24 alfa y 2 deprecadas o retiradas**. El diagrama muestra los tres grupos de madurez (62 elementos) como proporciones del total de 64; los otros dos no aparecen. Fue un lanzamiento amplio de 2025, pero eso no demuestra que aumentara el rendimiento ni que todas las cargas de trabajo estén listas.
+
+![Lanzamiento de Kubernetes 1.33 «Octarine», con sus 64 mejoras divididas por madurez en 18 estables (GA), 20 beta y 24 alfa, y la ruta a estable resaltada.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-10.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-10.html)
+
+#### Sidecars nativos: GA
+
+La función pasó de alfa en 1.28 a beta en 1.29 y a GA en 1.33. Un contenedor init reiniciable tiene `restartPolicy: Always`. Kubelet continúa con el siguiente contenedor init cuando el estado `started` del sidecar pasa a ser verdadero: su proceso está en ejecución si no tiene startupProbe, o la sonda se completó correctamente. La preparación es una señal distinta. El contenedor init normal del ejemplo se ejecuta **después de que hayan arrancado ambos sidecars**; luego se inicia la aplicación.
+
+Este es un ejemplo estructural. Hay que sustituir todas las imágenes `example.invalid` por implementaciones revisadas; el proxy debe responder en el endpoint de preparación declarado y el agente de registros necesita su configuración real de canalización. Elegir una imagen de Envoy, Istio o Fluent Bit no configura por sí mismo una malla de servicios ni un destino de registros. Una migración real de base de datos también requiere coordinación e idempotencia; no se debe suponer que sea seguro ejecutarla una vez por réplica.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidecar-lifecycle
+  namespace: version-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sidecar-lifecycle
+  template:
+    metadata:
+      labels:
+        app: sidecar-lifecycle
+    spec:
+      terminationGracePeriodSeconds: 60
+      initContainers:
+      - name: proxy-helper
+        image: example.invalid/version-lab/reviewed-proxy:reviewed
+        restartPolicy: Always
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: 15021
+          periodSeconds: 2
+          failureThreshold: 30
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+      - name: log-helper
+        image: example.invalid/version-lab/reviewed-log-agent:reviewed
+        restartPolicy: Always
+        volumeMounts:
+        - name: app-logs
+          mountPath: /var/log/app
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+      - name: initialize-app
+        image: example.invalid/version-lab/reviewed-init:reviewed
+        volumeMounts:
+        - name: app-logs
+          mountPath: /var/log/app
+      containers:
+      - name: app
+        image: example.invalid/version-lab/reviewed-app:reviewed
+        volumeMounts:
+        - name: app-logs
+          mountPath: /var/log/app
+      volumes:
+      - name: app-logs
+        emptyDir: {}
+```
+
+Durante un apagado gradual normal, los contenedores principales se detienen antes que los sidecars, y estos se detienen en orden inverso. Sigue aplicándose el presupuesto compartido de tiempo de gracia del Pod: si el apagado del contenedor principal tarda mucho, los sidecars pueden tener poco o ningún tiempo para terminar con gracia. Los sidecars nativos no impiden que se complete un Job cuando termina su contenedor principal; este comportamiento no apareció por primera vez al llegar a GA. Al dimensionar los recursos, considera la superposición de los contenedores init, sidecar y aplicación, así como la sobrecarga del Pod. Aquí no se midieron tiempos del ciclo de vida ni la disponibilidad de la aplicación.
+
+![Diagrama de secuencia: kubelet inicia dos sidecars, luego un contenedor init que debe terminar y, después, el contenedor principal; al apagarse el Pod, kubelet termina primero el contenedor principal y al final los sidecars, en orden inverso al de inicio.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-11.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-11.html)
+
+#### Redimensionamiento de recursos de contenedor in situ: beta en 1.33
+
+El redimensionamiento in situ cambia la asignación de CPU y memoria deseada sin recrear el Pod, aunque `resizePolicy` aún puede exigir reiniciar un contenedor. La función se estabilizó en 1.35. El siguiente ejemplo con el esquema actual conserva la clase QoS `Burstable` y configura CPU como `NotRequired` y memoria como `RestartContainer`. Por política, un cambio de memoria solicita reiniciar el contenedor; eso no significa que todo cambio de memoria siempre provoque un reinicio.
+
+Usa un entorno de ejecución Linux y una política de nodo compatibles, una diferencia de versiones de kubectl admitida, un espacio de nombres bajo tu control y una imagen revisada. La guía de 1.36 excluye Windows y los casos predeterminados con administradores estáticos de CPU o memoria; las capacidades que dependen de otras gates deben evaluarse según la versión. Esta API no modifica automáticamente las plantillas de Deployment o StatefulSet ni coordina con los administradores de recursos HPA, VPA o GitOps.
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: resizable-app
+  namespace: version-lab
 spec:
   containers:
-    - name: app
-      image: myapp:latest
-      resources:
-        requests:
-          cpu: 500m
-          memory: 256Mi
-        limits:
-          cpu: "1"
-          memory: 512Mi
-      resizePolicy:
-        - resourceName: cpu
-          restartPolicy: NotRequired    # CPU resize without restart
-        - resourceName: memory
-          restartPolicy: RestartContainer  # Memory resize requires restart
+  - name: app
+    image: example.invalid/version-lab/app:reviewed
+    resources:
+      requests:
+        cpu: 500m
+        memory: 256Mi
+      limits:
+        cpu: '1'
+        memory: 512Mi
+    resizePolicy:
+    - resourceName: cpu
+      restartPolicy: NotRequired
+    - resourceName: memory
+      restartPolicy: RestartContainer
+```
+
+Tras revisar la capacidad y quién administra los recursos, este ejemplo, limitado a CPU, solicita un núcleo con un límite de dos. Selecciona el contenedor por nombre, conserva la clase `Burstable` existente, rechaza una política de CPU que exige reinicio y comprueba el UID y resourceVersion del Pod antes de aplicar el parche. No cambia la memoria. Si hay un conflicto, vuelve a leer y evaluar el objetivo; no fuerces la actualización.
+
+```bash
+# MUTATION: reviewed CPU-only resize; desired request=1 core and limit=2 cores.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+resize_patch=$(kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
+  get pod "$POD_NAME" -o json | jq -ce --arg container "$CONTAINER_NAME" '
+    . as $pod |
+    [(.spec.containers | to_entries[]) | select(.value.name == $container)] as $matches |
+    if .status.phase != "Running" or .metadata.deletionTimestamp != null
+       or ($matches | length) != 1
+    then error("Expected one target container in a non-deleting Running Pod")
+    elif .status.qosClass != "Burstable"
+    then error("This example preserves an existing Burstable QoS class")
+    elif $matches[0].value.resources.requests.cpu == null
+         or $matches[0].value.resources.limits.cpu == null
+    then error("This example requires existing CPU request and limit keys")
+    elif any($matches[0].value.resizePolicy[]?; .resourceName == "cpu" and .restartPolicy == "RestartContainer")
+    then error("This example requires CPU resize policy NotRequired")
+    elif ([.status.containerStatuses[]? | select(.name == $container and .state.running != null)] | length) != 1
+    then error("Target container is not reported running")
+    else ($matches[0].key | tostring) as $i | [
+      {op:"test",path:"/metadata/uid",value:$pod.metadata.uid},
+      {op:"test",path:"/metadata/resourceVersion",value:$pod.metadata.resourceVersion},
+      {op:"test",path:("/spec/containers/" + $i + "/name"),value:$container},
+      {op:"replace",path:("/spec/containers/" + $i + "/resources/requests/cpu"),value:"1"},
+      {op:"replace",path:("/spec/containers/" + $i + "/resources/limits/cpu"),value:"2"}
+    ] end')
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
+  patch pod "$POD_NAME" --subresource=resize --type=json --patch "$resize_patch"
+```
+
+Usa los campos de estado actuales, no la antigua cadena `.status.resize`. `PodResizePending=True` puede informar `Deferred` o `Infeasible`; `PodResizeInProgress=True` indica que la aplicación del cambio sigue pendiente. Compara la especificación deseada, la generación confirmada y `status.containerStatuses[].resources` del contenedor seleccionado por nombre. `allocatedResources` es un campo avanzado de asignación, no la única prueba de que se aplicaron los límites en el entorno de ejecución. La ausencia de una condición o la aceptación del parche no demuestra que la carga de trabajo esté en buen estado.
+
+```bash
+# Read-only observation; an accepted patch is not proof of completed actuation.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
+  get pod "$POD_NAME" -o json | jq --arg container "$CONTAINER_NAME" '{
+    uid:.metadata.uid,generation:.metadata.generation,
+    observedGeneration:.status.observedGeneration,qosClass:.status.qosClass,
+    resizeConditions:[.status.conditions[]? | select(.type == "PodResizePending" or .type == "PodResizeInProgress")],
+    desired:[.spec.containers[] | select(.name == $container) | .resources],
+    reported:[.status.containerStatuses[]? | select(.name == $container) |
+      {name,resources,allocatedResources,containerID,restartCount,ready}]
+  }'
+```
+
+Un redimensionamiento no cambia la clase QoS del Pod. Los Pods `Guaranteed` deben conservar solicitudes y límites iguales de CPU y memoria; el ejemplo anterior es intencionalmente `Burstable`. Reducir memoria con `NotRequired` se hace al mejor esfuerzo y puede quedar pendiente si el uso supera el nuevo límite; una condición de carrera aún puede causar una terminación por OOM. No se pueden redimensionar contenedores init que no sean reiniciables ni contenedores efímeros. La madurez de la función no garantiza cero tiempo de inactividad, una latencia determinada ni que el redimensionamiento tenga éxito.
+
+#### La integración actual de VPA es una decisión de versión independiente
+
+Este es un **ejemplo de 2026 con un componente complementario**; no afirma que VPA 1.8 existiera cuando se lanzó Kubernetes 1.33. La API publicada de VPA **1.8.0** admite `InPlace`, incorporado como alfa en 1.7.0 y aún alfa en 1.8.0. Requiere la feature gate `InPlace` de VPA tanto en admission-controller como en updater, además del soporte para redimensionamiento in situ de Kubernetes 1.33 o posterior; VPA 1.8.x documenta compatibilidad con Kubernetes 1.36–1.38. Evita la alternativa de expulsar el Pod que usa VPA; no garantiza que el redimensionamiento finalice ni que ninguna política de contenedor exija un reinicio. Empieza con `Off` si solo quieres observar recomendaciones.
+
+La política limitada a CPU que sigue usa valores ilustrativos para un Deployment y contenedor existentes. Antes de habilitar cambios, revisa los flags de implementación del controlador y la capacidad. `InPlaceOrRecreate` es otro modo: puede volver a crear el Pod como alternativa, llegó a GA en VPA 1.6 y su antigua gate se eliminó en 1.7. No habilites una gate eliminada ni deduzcas el comportamiento de VPA solo a partir de que Kubernetes haya llegado a GA.
+
+```yaml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: current-in-place-example
+  namespace: version-lab
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-app
+  updatePolicy:
+    updateMode: InPlace
+  resourcePolicy:
+    containerPolicies:
+    - containerName: app
+      minAllowed:
+        cpu: 100m
+      maxAllowed:
+        cpu: '4'
+      controlledResources:
+      - cpu
+      controlledValues: RequestsAndLimits
+```
+
+#### ServiceCIDR e IPAddress: GA
+
+Kubernetes upstream puede ampliar las direcciones disponibles para Service mediante objetos `ServiceCIDR` adicionales de `networking.k8s.io/v1`, si están habilitados el asignador y la API. El objeto predeterminado llamado `kubernetes` representa el rango inicial del servidor de API. Antes de agregar rangos, revisa IPAM, la familia de direcciones y los solapamientos de enrutamiento; los finalizadores impiden eliminar rangos que dejarían huérfanas direcciones asignadas de Service. Un `ServiceCIDR` no es una subred VPC ni un CIDR de direcciones de Pod.
+
+Este manifiesto IPv4 es un ejemplo upstream, no una ampliación de rango ejecutada en EKS. El parámetro de creación `serviceIpv4Cidr` de EKS no se puede cambiar después de crear el clúster. Crear otro `ServiceCIDR` de Kubernetes es una operación distinta; las fuentes de AWS revisadas aquí no documentan un procedimiento probado para hacerlo en EKS. Antes de usarlo en EKS, confirma el soporte del proveedor, la política de admisión y la red prevista. Poder descubrir la API no equivale a esa validación.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: ServiceCIDR
+metadata:
+  name: reviewed-extra-service-range
+spec:
+  cidrs:
+  - 10.200.0.0/16
 ```
 
 ```bash
-# Resize a running pod's CPU (no restart!)
-kubectl patch pod resizable-app --subresource resize --patch '{
-  "spec": {
-    "containers": [{
-      "name": "app",
-      "resources": {
-        "requests": {"cpu": "1"},
-        "limits": {"cpu": "2"}
-      }
-    }]
-  }
-}'
-
-# Check resize status
-kubectl get pod resizable-app -o jsonpath='{.status.resize}'
-# "InProgress" -> "Proposed" -> "" (completed)
-
-# View allocated vs requested resources
-kubectl get pod resizable-app -o jsonpath='{.status.containerStatuses[0].allocatedResources}'
+# Read-only discovery; do not interpret availability alone as an approved EKS change.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s api-resources --api-group=networking.k8s.io
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get servicecidrs
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get ipaddresses
 ```
 
-| Recorrido de la característica | Versión | Notas |
-|----------------|---------|-------|
-| Alpha | 1.27 | Implementación inicial |
-| Beta | 1.33 | Habilitado por defecto |
-| GA | 1.35 | Estabilidad completa |
+#### Enrutamiento según la topología y distribución del tráfico: GA
 
-**OCI Images as Volumes (Beta)**
+Las indicaciones de endpoint según la topología y la preferencia `trafficDistribution` de Service son mecanismos relacionados pero distintos. El siguiente ejemplo usa `PreferClose` para favorecer la misma zona; no impone una regla estricta de zona, no calcula distancias dentro de la región ni declara que una anotación esté obsoleta universalmente. La distribución de endpoints listos, la implementación del proxy y `internalTrafficPolicy` o `externalTrafficPolicy` pueden afectar la ruta.
 
-Monta imágenes OCI (Open Container Initiative) directamente como volúmenes de solo lectura en pods. Esto permite compartir datos, modelos de ML y configuración como imágenes de container sin empaquetarlos dentro de la imagen de la aplicación.
+El tráfico entre zonas de disponibilidad puede generar cargos, pero el antiguo precio fijo de `$0.01/GB` no era un modelo de precios completo. Los cargos dependen del servicio, la ruta y los lados de entrada y salida que se contabilicen; existen excepciones para cierto tráfico dentro de una región. Compara el tráfico y los datos de facturación reales en vez de prometer un ahorro fijo.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: same-zone-preference
+  namespace: version-lab
+spec:
+  trafficDistribution: PreferClose
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+
+#### Política de éxito de Job: GA
+
+La política de éxito se aplica a Jobs indexados. En este caso debe tener éxito el índice 0; solo representa un líder si la aplicación implementa el protocolo correspondiente. Kubernetes no deduce que el resultado distribuido esté completo o sea duradero. También importan la política de fallos y la terminación de los Pods restantes. La plantilla de Job especifica `restartPolicy: Never`, que faltaba en los ejemplos originales.
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: indexed-success-example
+  namespace: version-lab
+spec:
+  completionMode: Indexed
+  completions: 8
+  parallelism: 8
+  backoffLimit: 2
+  successPolicy:
+    rules:
+    - succeededIndexes: '0'
+      succeededCount: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: trainer
+        image: example.invalid/version-lab/training:reviewed
+        env:
+        - name: JOB_COMPLETION_INDEX
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+```
+
+#### Volúmenes de imágenes OCI: beta, deshabilitados de forma predeterminada en 1.33
+
+Un volumen de imagen expone contenido de una imagen OCI a un Pod, por ejemplo datos de modelos, sin incluirlo en la imagen de la aplicación. Requiere un entorno de ejecución compatible, la configuración apropiada de la función y credenciales para descargar del registro. El montaje es de solo lectura; no es un PVC con capacidad de escritura. Revisa y fija las versiones de las imágenes de aplicación y datos. ImageVolume quedó habilitada de forma predeterminada en 1.35 y llegó a estable en 1.36; no alcanzó GA en 1.34.
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: ml-inference
+  name: image-volume-example
+  namespace: version-lab
 spec:
   containers:
-    - name: inference-server
-      image: inference-engine:latest
-      volumeMounts:
-        - name: model
-          mountPath: /models/llama
-          readOnly: true
-  volumes:
+  - name: inference
+    image: example.invalid/version-lab/inference:reviewed
+    volumeMounts:
     - name: model
-      image:
-        reference: 123456789012.dkr.ecr.us-west-2.amazonaws.com/models:llama-7b
-        pullPolicy: IfNotPresent
+      mountPath: /models
+      readOnly: true
+  volumes:
+  - name: model
+    image:
+      reference: example.invalid/version-lab/model:reviewed
+      pullPolicy: IfNotPresent
 ```
 
-**User Namespaces (Beta)**
+#### Otras etapas seleccionadas en 1.33
 
-User namespaces avanzó a beta, proporcionando un aislamiento de seguridad más fuerte donde los procesos del container se mapean a usuarios no privilegiados en el host.
+| Función | Estado |
+|---|---|
+| NFTablesProxyMode, RecursiveReadOnlyMounts | GA |
+| CRDValidationRatcheting | GA; no permite omitir la validación de campos no válidos que se modifican |
+| MatchLabelKeysInPodAffinity, NodeInclusionPolicyInPodTopologySpread | GA |
+| Protección contra eliminación de PV con política de recuperación | GA; es distinta de la protección de PVC en uso |
+| UserNamespacesSupport | Beta, ahora habilitada de forma predeterminada |
+| PodLevelResources | Sigue en alfa; pasa a beta en 1.34 |
+| StructuredAuthenticationConfiguration | Beta; pasa a GA en 1.34 |
+| MutatingAdmissionPolicy | Sigue en alfa; pasa a beta en 1.34 |
+| PodLifecycleSleepAction | Beta; pasa a GA en 1.34 |
+| JobManagedBy | Beta; pasa a GA en 1.35 |
 
-**Otras características beta en 1.33**:
-- `MatchLabelKeysInPodAffinity` -- usa claves de etiqueta para coincidencias de pod affinity
-- `PodLevelResources` -- establece límites de recursos a nivel de pod (no solo a nivel de container)
-- `ServiceTrafficDistribution` -- controles mejorados de distribución de tráfico
-- `StructuredAuthenticationConfiguration` -- configuración authn estructurada que sigue el patrón de authz
+LoadBalancerIPMode y RetryGenerateName ya habían llegado a GA en 1.32. KYAML apareció en 1.34, no en 1.33.
 
-#### Características alpha clave
-
-- **KYAML** -- un subconjunto de YAML más seguro que restringe características peligrosas de YAML
-- Mejoras de **PortForwardWebsockets**
-- Mejoras de **CRDValidationRatcheting** -- permite que campos inválidos existentes pasen la validación
-- **MutatingAdmissionPolicy** -- mutating admission basado en CEL (contraparte de ValidatingAdmissionPolicy)
+[Lanzamiento de Kubernetes 1.33](https://kubernetes.io/blog/2025/04/23/kubernetes-v1-33-release/) · [Guía de redimensionamiento para 1.36](https://github.com/kubernetes/website/blob/release-1.36/content/en/docs/tasks/configure-pod-container/resize-container-resources.md) · [Funciones de VPA 1.8.0](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md) · [Compatibilidad de VPA 1.8.0](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/installation.md#compatibility) · [Ampliación de rangos de Service](https://kubernetes.io/docs/tasks/network/extend-service-ip-ranges/) · [API de configuración de red de EKS](https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigRequest.html) · [Interpretación de cargos por transferencia de datos](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
 
 ---
 
-### 4.6 Kubernetes 1.34 "Of Wind & Will" (agosto de 2025)
 
-**Tema**: Un nombre evocador que captura el impulso y la determinación que llevan al proyecto Kubernetes hacia adelante.
+### 4.6 Kubernetes 1.34 «Of Wind & Will» (agosto de 2025)
 
-**Estadísticas del lanzamiento**: 58 mejoras -- 23 Stable, 22 Beta, 13 Alpha
+El lanzamiento del 27 de agosto enumera **58 mejoras: 23 estables, 22 beta y 13 alfa**. Los valores predeterminados varían entre las funciones beta; la flecha genérica del diagrama que las muestra activadas no es una matriz de habilitación.
 
-```mermaid
-pie title 1.34 Enhancement Breakdown
-    "Stable (GA)" : 23
-    "Beta" : 22
-    "Alpha" : 13
-```
+![Diagrama de las 58 mejoras de Kubernetes 1.34 «Of Wind & Will», divididas en 23 estables (GA), 22 beta y 13 alfa; se destaca la ruta de graduación a GA, con beta activadas de forma predeterminada y alfa que requieren una feature gate.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-12.png)
 
-#### Características clave promovidas (GA)
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-12.html)
 
-**Dynamic Resource Allocation (DRA) Core APIs (GA)**
+#### API principales de DRA: GA
 
-DRA alcanzó GA, proporcionando un framework estandarizado para solicitar y asignar recursos de hardware como GPUs, FPGAs y dispositivos de red. Esto reemplaza el modelo heredado de device plugin con un enfoque más flexible y nativo de Kubernetes.
+DeviceClass, ResourceClaim, ResourceClaimTemplate y ResourceSlice son API integradas de `resource.k8s.io/v1`; no son CRD principales de DRA que debas instalar. Los controladores publican el inventario de dispositivos mediante ResourceSlices; el planificador asigna los recursos aptos y kubelet coordina la preparación del dispositivo con el controlador. El diagrama de arquitectura muestra el flujo lógico y omite el transporte por el servidor de API y ResourceSlice.
+
+DRA no elimina el modelo de complementos de dispositivos existente ni proporciona automáticamente el reparto temporal, MPS, MIG, NUMA o las funciones de red de cada proveedor. Las funciones avanzadas de DRA tienen feature gates y etapas propias. No configures dos asignadores independientes para los mismos dispositivos sin un modelo de coordinación compatible.
+
+![Diagrama de arquitectura de Dynamic Resource Allocation, GA en Kubernetes 1.34: DeviceClass proporciona ResourceClaims y ResourceClaimTemplates al planificador que conoce los dispositivos, que también recibe información del controlador DRA antes de que kubelet prepare los dispositivos.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-13.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-13.html)
+
+El siguiente ejemplo usa un **contrato explícito de controlador sintético**: `gpu.example.com` publica un atributo de cadena `model` y un atributo `numa`. No describe los nombres de atributos ni la configuración reales del controlador NVIDIA. Sustituye el controlador y los atributos después de inspeccionar los ResourceSlices del controlador instalado. En las solicitudes estables, `deviceClassName`, `allocationMode` y `count` van dentro de `exactly`; la forma antigua los ubicaba incorrectamente en el nivel raíz. `matchAttribute` exige una igualdad exacta entre los dispositivos solicitados, no expresa preferencia por NUMA.
 
 ```yaml
-# DeviceClass: Define a class of hardware devices
 apiVersion: resource.k8s.io/v1
 kind: DeviceClass
 metadata:
-  name: gpu-a100
+  name: example-a100
 spec:
   selectors:
-    - cel:
-        expression: >-
-          device.driver == "gpu.nvidia.com" &&
-          device.attributes["model"].stringValue == "A100"
+  - cel:
+      expression: 'device.driver == "gpu.example.com" &&
+
+        "gpu.example.com" in device.attributes &&
+
+        "model" in device.attributes["gpu.example.com"] &&
+
+        device.attributes["gpu.example.com"].model == "A100"'
 ---
-# ResourceClaim: Request specific hardware
 apiVersion: resource.k8s.io/v1
 kind: ResourceClaim
 metadata:
   name: training-gpus
-  namespace: ml-team
+  namespace: version-lab
 spec:
   devices:
     requests:
-      - name: gpu
-        deviceClassName: gpu-a100
+    - name: gpu
+      exactly:
+        deviceClassName: example-a100
+        allocationMode: ExactCount
         count: 4
     constraints:
-      - requests: ["gpu"]
-        matchAttribute: "gpu.nvidia.com/numa-node"    # All GPUs on same NUMA node
+    - requests:
+      - gpu
+      matchAttribute: gpu.example.com/numa
 ---
-# ResourceClaimTemplate: Auto-create claims per pod
 apiVersion: resource.k8s.io/v1
 kind: ResourceClaimTemplate
 metadata:
-  name: gpu-claim-template
-  namespace: ml-team
+  name: four-gpu-template
+  namespace: version-lab
 spec:
   spec:
     devices:
       requests:
-        - name: gpu
-          deviceClassName: gpu-a100
-          count: 1
----
-# Pod using DRA
+      - name: gpu
+        exactly:
+          deviceClassName: example-a100
+          allocationMode: ExactCount
+          count: 4
+      constraints:
+      - requests:
+        - gpu
+        matchAttribute: gpu.example.com/numa
+```
+
+Según el ciclo de vida deseado, elige entre un claim administrado explícitamente y claims por Pod creados desde una plantilla. Los ejemplos siguientes muestran ambas alternativas. La plantilla solicita cuatro dispositivos para coincidir con `--tensor-parallel-size 4`; la anterior solo solicitaba uno. La imagen de inferencia debe implementar ese argumento y todas las imágenes son marcadores de posición. Una réplica requiere cuatro dispositivos aptos; tres réplicas requieren doce. No se ejecutó una asignación de GPU ni un benchmark de servicio de modelos.
+
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: ml-training
-  namespace: ml-team
+  name: direct-gpu-claim
+  namespace: version-lab
 spec:
   resourceClaims:
-    - name: gpu-claim
-      resourceClaimName: training-gpus
+  - name: accelerators
+    resourceClaimName: training-gpus
   containers:
-    - name: trainer
-      image: pytorch-training:latest
-      resources:
-        claims:
-          - name: gpu-claim
+  - name: trainer
+    image: example.invalid/version-lab/trainer:reviewed
+    resources:
+      claims:
+      - name: accelerators
+        request: gpu
+```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: four-gpu-serving
+  namespace: version-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: four-gpu-serving
+  template:
+    metadata:
+      labels:
+        app: four-gpu-serving
+    spec:
+      resourceClaims:
+      - name: accelerators
+        resourceClaimTemplateName: four-gpu-template
+      containers:
+      - name: inference
+        image: example.invalid/version-lab/inference:reviewed
+        args:
+        - --tensor-parallel-size
+        - '4'
+        resources:
+          claims:
+          - name: accelerators
             request: gpu
 ```
 
-```mermaid
-flowchart TD
-    subgraph "DRA Architecture (GA in 1.34)"
-        DC["DeviceClass
-        Define device types
-        (GPU, FPGA, etc.)"]
-        RC["ResourceClaim
-        Request devices"]
-        RCT["ResourceClaimTemplate
-        Per-pod claim creation"]
-        DRI["DRA Driver
-        (nvidia, intel, etc.)"]
-        SCH["Scheduler
-        Device-aware scheduling"]
-        KUB["Kubelet
-        Device preparation"]
-    end
+#### VolumeAttributesClass: GA
 
-    DC --> RC
-    DC --> RCT
-    RC --> SCH
-    RCT --> SCH
-    SCH --> KUB
-    DRI --> SCH
-    DRI --> KUB
+VAC usa `storage.k8s.io/v1` desde 1.34. Estas clases están dirigidas al controlador estándar `ebs.csi.aws.com` y a un volumen gp3 regional existente y compatible; no son automáticamente una receta de almacenamiento para Auto Mode. Antes de cambiar la clase de un PVC, verifica la compatibilidad del controlador y sus sidecars, las versiones de API, los permisos, el tamaño y tipo de volumen, el período de espera entre modificaciones y los límites EBS de la instancia.
 
-    style DC fill:#326CE5,stroke:#333,color:white
-    style RC fill:#326CE5,stroke:#333,color:white
-    style RCT fill:#326CE5,stroke:#333,color:white
-```
-
-**Namespace Structured Deletion (GA)**
-
-La eliminación de namespaces ahora sigue un orden bien definido, asegurando que los recursos dependientes se limpien antes de los recursos de los que dependen. Esto elimina una clase antigua de problemas de namespaces atascados.
-
-```bash
-# Before 1.34: Namespace deletion could get stuck
-$ kubectl delete namespace old-project
-# Hangs indefinitely due to finalizer ordering issues
-
-# After 1.34 (GA): Ordered deletion with clear status
-$ kubectl delete namespace old-project
-$ kubectl get namespace old-project -o jsonpath='{.status.conditions}'
-# Shows clear progress through deletion phases
-```
-
-**VolumeAttributesClass (GA)**
-
-VolumeAttributesClass se promovió a GA, permitiendo la modificación in-place de atributos de volumen como IOPS y throughput.
+Los límites actuales de gp3 regional alcanzan **80.000 IOPS y 2.000 MiB/s**, con 500 IOPS/GiB por encima del nivel base de 3.000 IOPS y 0,25 MiB/s por IOPS aprovisionado. Por tanto, los 64.000 IOPS del ejemplo original pueden ser válidos (con al menos 128 GiB), pero 4.000 MiB/s no era un rendimiento gp3 válido. El ejemplo corrige el valor a 2.000 y supone un volumen verificado de 500 GiB. Outposts tiene límites inferiores: 16.000 IOPS y 1.000 MiB/s. Los límites aprovisionados del volumen no garantizan que la aplicación o la instancia puedan sostener ese rendimiento.
 
 ```yaml
-# Change EBS volume performance tier without recreating
 apiVersion: storage.k8s.io/v1
 kind: VolumeAttributesClass
 metadata:
   name: high-iops
 driverName: ebs.csi.aws.com
 parameters:
-  iops: "16000"
-  throughput: "1000"
+  iops: '16000'
+  throughput: '1000'
 ---
 apiVersion: storage.k8s.io/v1
 kind: VolumeAttributesClass
@@ -1389,322 +1197,447 @@ metadata:
   name: standard
 driverName: ebs.csi.aws.com
 parameters:
-  iops: "3000"
-  throughput: "125"
-```
-
-```bash
-# Switch a PVC's performance tier
-kubectl patch pvc database-vol --type='merge' -p '{
-  "spec": {"volumeAttributesClassName": "high-iops"}
-}'
-
-# Monitor the modification
-kubectl get pvc database-vol -o jsonpath='{.status.currentVolumeAttributesClassName}'
-kubectl get pvc database-vol -o jsonpath='{.status.modifyVolumeStatus}'
-```
-
-**Otras características GA en 1.34**:
-- `nftablesProxyMode` -- backend nftables de kube-proxy
-- `TrafficDistribution` para Services
-- `PodLevelResources` -- establece límites de recursos agregados a nivel de pod
-- `MatchLabelKeysInPodAffinity` -- coincidencia de affinity basada en claves de etiqueta
-- `ImageVolume` -- imágenes OCI como volúmenes
-- `UserNamespacesSupport` -- aislamiento con user namespaces
-
-#### Características beta clave
-
-**KYAML (Beta, habilitado por defecto)**
-
-KYAML es un subconjunto más seguro de YAML diseñado para manifests de Kubernetes. Rechaza características peligrosas de YAML como anchors, aliases y ciertas coerciones de tipo que pueden provocar vulnerabilidades de seguridad o comportamiento inesperado.
-
-```yaml
-# STANDARD YAML: These dangerous patterns are REJECTED by KYAML
-
-# Pattern 1: YAML anchors and aliases (disabled in KYAML)
-# defaults: &defaults
-#   replicas: 3
-# production:
-#   <<: *defaults     # REJECTED: anchor/alias
-
-# Pattern 2: Boolean coercion (restricted in KYAML)
-# environment: yes    # YAML interprets as boolean True
-# environment: "yes"  # KYAML requires explicit quoting
-
-# Pattern 3: Octal notation ambiguity
-# fileMode: 0644      # YAML may interpret as octal or decimal
-# fileMode: "0644"    # KYAML requires clarity
-```
-
-```bash
-# Check if KYAML validation is enabled on your cluster
-kubectl get --raw /metrics | grep kyaml_validation
-
-# Test a manifest against KYAML rules
-kubectl apply --dry-run=server -f manifest.yaml
-# Warnings will indicate KYAML violations
-```
-
-**MutatingAdmissionPolicy (Beta)**
-
-La contraparte basada en CEL de ValidatingAdmissionPolicy, que permite mutación inline de recursos durante admission sin webhooks.
-
-```yaml
-apiVersion: admissionregistration.k8s.io/v1beta1
-kind: MutatingAdmissionPolicy
-metadata:
-  name: inject-default-labels
-spec:
-  matchConstraints:
-    resourceRules:
-      - apiGroups: ["apps"]
-        apiVersions: ["v1"]
-        operations: ["CREATE"]
-        resources: ["deployments"]
-  mutations:
-    - patchType: ApplyConfiguration
-      applyConfiguration:
-        expression: >-
-          Object{
-            metadata: Object.metadata{
-              labels: {
-                "app.kubernetes.io/managed-by": "platform-team",
-                "cost-center": string(request.namespace)
-              }
-            }
-          }
-```
-
-**Otras características beta en 1.34**:
-- `CRDValidationRatcheting` -- validación progresiva de campos de CRD
-- `DeviceHealthConditions` -- informa la salud de dispositivos mediante DRA
-- Mejoras de `PodLevelResources`
-
-#### Características alpha clave
-
-- **KYAML** pasó de alpha a beta en este lanzamiento
-- **GangScheduling** (alpha) -- programa grupos de pods atómicamente
-- Características extendidas de **InPlacePodVerticalScaling**
-- Mejoras de **DRAPartitionableDevices**
-
+  iops: '3000'
+  throughput: '125'
 ---
-
-### 4.7 Kubernetes 1.35 "Timbernetes" (diciembre de 2025)
-
-**Tema**: Un nombre con temática de leñador que refleja el enfoque del lanzamiento en atravesar la complejidad y construir bases sólidas.
-
-**Estadísticas del lanzamiento**: 60 mejoras -- 17 Stable, 19 Beta, 22 Alpha
-
-```mermaid
-pie title 1.35 Enhancement Breakdown
-    "Stable (GA)" : 17
-    "Beta" : 19
-    "Alpha" : 22
-```
-
-#### Características clave promovidas (GA)
-
-**In-Place Pod Vertical Scaling (GA)**
-
-La esperada promoción del redimensionamiento in-place de pods. Los Pods ahora pueden redimensionarse (CPU y memoria) sin reinicio, con garantías completas de estabilidad.
-
-| Versión | Estado | Cambios clave |
-|---------|--------|-------------|
-| 1.27 | Alpha | Implementación inicial, redimensionamiento solo de CPU |
-| 1.33 | Beta | Redimensionamiento de memoria, políticas de redimensionamiento, habilitado por defecto |
-| 1.35 | **GA** | Estabilidad completa, estado extendido, listo para producción |
-
-```yaml
-# Production-ready in-place scaling with VPA integration
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
+apiVersion: storage.k8s.io/v1
+kind: VolumeAttributesClass
 metadata:
-  name: app-vpa
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-  updatePolicy:
-    updateMode: "InPlace"           # Use in-place resize (requires 1.35+)
-  resourcePolicy:
-    containerPolicies:
-      - containerName: app
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: "4"
-          memory: 4Gi
-        controlledResources:
-          - cpu
-          - memory
+  name: io-intensive
+driverName: ebs.csi.aws.com
+parameters:
+  iops: '64000'
+  throughput: '2000'
+---
+apiVersion: storage.k8s.io/v1
+kind: VolumeAttributesClass
+metadata:
+  name: throughput-optimized
+driverName: ebs.csi.aws.com
+parameters:
+  iops: '3000'
+  throughput: '750'
 ```
 
+Los parámetros de una clase son inmutables; selecciona otra clase mediante el PVC existente en vez de editar la clase o crear un PVC incompleto. Confirma `.status.currentVolumeAttributesClassName`, `.status.modifyVolumeStatus`, los eventos y el estado real de EBS. Que se acepte una solicitud no significa que haya terminado el cambio de rendimiento.
+
+A los CronJobs antiguos para horario laboral les faltaban una identidad y RBAC, así como controles de zona horaria y superposición. El esqueleto completo **sigue suspendido** y es un ejemplo operativo que no se ha ejecutado: prepara `version-lab`, el `database-pvc` que controles, las clases compatibles y una imagen revisada que incluya kubectl, jq y configuración confiable del cliente. Su ServiceAccount puede obtener y modificar solo ese PVC por nombre y dentro del espacio de nombres; RBAC no limita qué campos del PVC puede cambiar un parche.
+
 ```yaml
-# Resize policy controlling restart behavior
 apiVersion: v1
-kind: Pod
+kind: ServiceAccount
 metadata:
-  name: production-app
-spec:
-  containers:
-    - name: app
-      image: myapp:latest
-      resources:
-        requests:
-          cpu: "1"
-          memory: 1Gi
-        limits:
-          cpu: "2"
-          memory: 2Gi
-      resizePolicy:
-        - resourceName: cpu
-          restartPolicy: NotRequired       # CPU: resize in-place
-        - resourceName: memory
-          restartPolicy: NotRequired       # Memory: also in-place (GA!)
+  name: vac-scheduler
+  namespace: version-lab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vac-scheduler
+  namespace: version-lab
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - persistentvolumeclaims
+  resourceNames:
+  - database-pvc
+  verbs:
+  - get
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: vac-scheduler
+  namespace: version-lab
+subjects:
+- kind: ServiceAccount
+  name: vac-scheduler
+  namespace: version-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: vac-scheduler
 ```
-
-```bash
-# Resize workflow
-kubectl patch pod production-app --subresource resize --patch '{
-  "spec": {
-    "containers": [{
-      "name": "app",
-      "resources": {
-        "requests": {"cpu": "2", "memory": "2Gi"},
-        "limits": {"cpu": "4", "memory": "4Gi"}
-      }
-    }]
-  }
-}'
-
-# Monitor resize progress
-kubectl get pod production-app -o json | jq '{
-  resize: .status.resize,
-  allocated: .status.containerStatuses[0].allocatedResources,
-  requested: .spec.containers[0].resources.requests
-}'
-```
-
-> **Impacto para usuarios de EKS**: El redimensionamiento in-place de pods elimina la necesidad de reiniciar pods para ajustes de recursos. Esto es transformador para:
-> - **Workloads stateful** (bases de datos, cachés) que son costosos de reiniciar
-> - **Jobs batch de larga duración** que necesitan más recursos a mitad de ejecución
-> - **Adopción de VPA**, que antes requería reinicios de pods
-> - **Optimización de costos** mediante right-sizing sin interrupciones
-
-**Otras características GA en 1.35**:
-- `CRDValidationRatcheting` -- validación progresiva de CRD
-- `DeviceHealthConditions` -- informes de salud de dispositivos DRA
-- `PodLifecycleSleepActionGracePeriod` -- período de gracia configurable para acciones sleep
-- `ContextualLogging` -- logging estructurado completamente promovido
-
-#### Características beta clave
-
-**KYAML (Beta, habilitado por defecto)**
-
-KYAML alcanzó beta y se habilitó por defecto, lo que significa que todo YAML enviado al API server se valida contra el subconjunto más seguro. Los patrones YAML inválidos generan advertencias (no rechazos en beta).
-
-```bash
-# With KYAML enabled, these warnings appear on apply:
-$ kubectl apply -f deployment.yaml
-Warning: KYAML: line 15: implicit boolean coercion; use "true" instead of "yes"
-Warning: KYAML: line 23: YAML anchor detected; anchors are not supported in KYAML
-deployment.apps/my-app created
-```
-
-**Gang Scheduling (Alpha avanzando a Beta)**
-
-Gang scheduling garantiza que un grupo de pods se programe atómicamente -- o todos los pods del grupo se programan, o ninguno. Esto es crítico para entrenamiento distribuido y workloads HPC estrechamente acoplados.
 
 ```yaml
-# PodGroup for gang scheduling
-apiVersion: scheduling.k8s.io/v1alpha1
-kind: PodGroup
+apiVersion: batch/v1
+kind: CronJob
 metadata:
-  name: distributed-training
-  namespace: ml-team
+  name: vac-business-hours
+  namespace: version-lab
 spec:
-  minMember: 4                    # All 4 pods must be schedulable
-  scheduleTimeoutSeconds: 300     # Timeout if group can't be scheduled
+  schedule: 0 8 * * 1-5
+  timeZone: Asia/Seoul
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          serviceAccountName: vac-scheduler
+          restartPolicy: Never
+          containers:
+          - name: request-class
+            image: example.invalid/version-lab/kubectl-jq:reviewed
+            command:
+            - /bin/sh
+            - -c
+            - "set -eu\n: \"${POD_NAMESPACE:?}\"; : \"${TARGET_CLASS:?}\"\ncase \"\
+              $TARGET_CLASS\" in high-iops|standard|io-intensive|throughput-optimized)\
+              \ ;; *) exit 2 ;; esac\nstate=$(kubectl --request-timeout=15s -n \"\
+              $POD_NAMESPACE\" get pvc database-pvc -o json)\npatch=$(printf '%s\\\
+              n' \"$state\" | jq -ce --arg class \"$TARGET_CLASS\" '\n  if .metadata.deletionTimestamp\
+              \ != null or .status.phase != \"Bound\"\n  then error(\"Expected an\
+              \ existing non-deleting Bound PVC\")\n  elif .status.modifyVolumeStatus\
+              \ != null\n  then error(\"Existing modification needs review before\
+              \ another request\")\n  elif .spec.volumeAttributesClassName == $class\n\
+              \  then []\n  else [\n    {op:\"test\",path:\"/metadata/uid\",value:.metadata.uid},\n\
+              \    {op:\"test\",path:\"/metadata/resourceVersion\",value:.metadata.resourceVersion},\n\
+              \    {op:\"add\",path:\"/spec/volumeAttributesClassName\",value:$class}\n\
+              \  ] end')\nif [ \"$patch\" = '[]' ]; then\n  printf '%s\\n' 'Class\
+              \ already requested; verify actual modification status separately.'\n\
+              else\n  kubectl --request-timeout=15s -n \"$POD_NAMESPACE\" patch pvc\
+              \ database-pvc --type=json --patch \"$patch\"\n  printf '%s\\n' 'Class\
+              \ change requested; this is not proof of completed EBS modification.'\n\
+              fi\n"
+            env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TARGET_CLASS
+              value: io-intensive
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 128Mi
 ---
 apiVersion: batch/v1
-kind: Job
+kind: CronJob
 metadata:
-  name: pytorch-distributed
-  namespace: ml-team
+  name: vac-off-hours
+  namespace: version-lab
 spec:
-  completions: 4
-  parallelism: 4
+  schedule: 0 22 * * 1-5
+  timeZone: Asia/Seoul
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          serviceAccountName: vac-scheduler
+          restartPolicy: Never
+          containers:
+          - name: request-class
+            image: example.invalid/version-lab/kubectl-jq:reviewed
+            command:
+            - /bin/sh
+            - -c
+            - "set -eu\n: \"${POD_NAMESPACE:?}\"; : \"${TARGET_CLASS:?}\"\ncase \"\
+              $TARGET_CLASS\" in high-iops|standard|io-intensive|throughput-optimized)\
+              \ ;; *) exit 2 ;; esac\nstate=$(kubectl --request-timeout=15s -n \"\
+              $POD_NAMESPACE\" get pvc database-pvc -o json)\npatch=$(printf '%s\\\
+              n' \"$state\" | jq -ce --arg class \"$TARGET_CLASS\" '\n  if .metadata.deletionTimestamp\
+              \ != null or .status.phase != \"Bound\"\n  then error(\"Expected an\
+              \ existing non-deleting Bound PVC\")\n  elif .status.modifyVolumeStatus\
+              \ != null\n  then error(\"Existing modification needs review before\
+              \ another request\")\n  elif .spec.volumeAttributesClassName == $class\n\
+              \  then []\n  else [\n    {op:\"test\",path:\"/metadata/uid\",value:.metadata.uid},\n\
+              \    {op:\"test\",path:\"/metadata/resourceVersion\",value:.metadata.resourceVersion},\n\
+              \    {op:\"add\",path:\"/spec/volumeAttributesClassName\",value:$class}\n\
+              \  ] end')\nif [ \"$patch\" = '[]' ]; then\n  printf '%s\\n' 'Class\
+              \ already requested; verify actual modification status separately.'\n\
+              else\n  kubectl --request-timeout=15s -n \"$POD_NAMESPACE\" patch pvc\
+              \ database-pvc --type=json --patch \"$patch\"\n  printf '%s\\n' 'Class\
+              \ change requested; this is not proof of completed EBS modification.'\n\
+              fi\n"
+            env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TARGET_CLASS
+              value: throughput-optimized
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 128Mi
+```
+
+Los horarios especifican Asia/Seoul. `Forbid` se aplica por separado a cada CronJob; no es un bloqueo compartido entre ambos horarios ni con otros operadores. Las comprobaciones de UID y resourceVersion protegen el parche de la API, no toda la operación asíncrona de EBS. El comando rechaza una modificación existente e informa únicamente que se solicitó una clase. Mantén los CronJobs suspendidos hasta establecer el impacto en las cargas de trabajo, las comprobaciones del estado del backend, la coordinación y la recuperación; no se afirma que esté listo para producción.
+
+#### Eliminación ordenada de espacios de nombres: GA
+
+El cambio elimina los Pods antes que los demás recursos del espacio de nombres, lo que ayuda a evitar situaciones en que desaparecen controles de seguridad como NetworkPolicies mientras los Pods siguen en ejecución. No calcula un grafo de dependencias arbitrario ni garantiza que se complete la eliminación de todos los espacios de nombres: las API que no están disponibles, los controladores y los finalizadores todavía pueden bloquearla. Inspecciona las condiciones reales en vez de forzar la eliminación de finalizadores o tratar una transcripción de ejemplo como una corrección medida.
+
+#### KYAML: formato de salida del cliente, alfa en 1.34
+
+KYAML corresponde a **KEP-5295**, no a KEP-4222. Es un formato de salida compatible con YAML y menos ambiguo, con delimitadores explícitos y valores de cadena entre comillas. No valida la admisión en el servidor de API, no migra globalmente a YAML 1.2 ni obliga a quitar anclas de todos los manifiestos. Pasó a beta y se habilitó de forma predeterminada en kubectl 1.35, siguió en beta en 1.36 y llegó a estable en 1.37.
+
+Guarda el siguiente YAML normal como `format-example.yaml`. El ejemplo local se comprobó con kubectl 1.36.2: se acepta el ancla y la salida conserva las dos cadenas `"no"`. No se conecta a ningún clúster.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyaml-local-example
+data:
+  first: &string_value "no"
+  norway: *string_value
+```
+
+```bash
+# Local formatting example, checked with kubectl 1.36.2; no cluster request.
+kubectl --kubeconfig=/dev/null --server=https://127.0.0.1:1 --request-timeout=1s \
+  label --local --dry-run=client -f format-example.yaml \
+  audit.example.com/checked=true -o kyaml
+```
+
+En kubectl 1.36.2, `KUBECTL_KYAML=false` deshabilita el formateador `-o kyaml`, pero la entrada en formato KYAML se sigue analizando como YAML cuando se usan otros formatos de salida. No cambia la configuración del plano de control de EKS. La validación de esquemas o de admisión y el formato siguen siendo comprobaciones distintas. Las transcripciones anteriores de advertencias o rechazos de KYAML no demostraban correctamente una función del servidor.
+
+#### MutatingAdmissionPolicy: beta en 1.34
+
+MAP pasó a alfa en 1.32, a beta en 1.34 (deshabilitada de forma predeterminada) y a GA en 1.36. Lo que sigue es la **forma estable actual para 1.36 o versiones posteriores**, no un manifiesto que se pueda aplicar sin cambios en 1.34; la API beta histórica era `v1beta1` y requería la configuración adecuada de la API ofrecida y de la feature gate. AWS administra las gates del plano de control de EKS.
+
+Esta política agrega etiquetas predeterminadas a Deployments, pero conserva los valores explícitos existentes. La etiqueta de costos derivada del espacio de nombres es ilustrativa, no una regla de asignación financiera validada. La vinculación selecciona solo los espacios de nombres que la habilitan voluntariamente. `failurePolicy: Fail` aún puede bloquear solicitudes coincidentes si ocurre un error de evaluación. La expresión se probó con el compilador y parcheador de mutaciones nativo de Kubernetes 1.36.2 en Deployments sintéticos; no se probó la cadena de admisión completa ni el entorno de producción. Un CEL determinista no hace que todas las políticas compuestas sean idempotentes ni elimina las consideraciones de reinvocación y orden.
+
+```yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: version-lab-default-labels
+spec:
+  failurePolicy: Fail
+  reinvocationPolicy: IfNeeded
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - apps
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - deployments
+  mutations:
+  - patchType: ApplyConfiguration
+    applyConfiguration:
+      expression: "Object{\n  metadata: Object.metadata{\n    labels: {\n      \"\
+        app.kubernetes.io/managed-by\":\n        has(object.metadata.labels) && \"\
+        app.kubernetes.io/managed-by\" in object.metadata.labels\n        ? object.metadata.labels[\"\
+        app.kubernetes.io/managed-by\"] : \"platform-team\",\n      \"cost-center\"\
+        :\n        has(object.metadata.labels) && \"cost-center\" in object.metadata.labels\n\
+        \        ? object.metadata.labels[\"cost-center\"] : request.namespace\n \
+        \   }\n  }\n}"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: version-lab-default-labels
+spec:
+  policyName: version-lab-default-labels
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        version-lab-policy: enabled
+```
+
+#### Otras etapas seleccionadas en 1.34
+
+| Función | Estado |
+|---|---|
+| PodLevelResources | Beta, habilitada de forma predeterminada; todavía no es GA |
+| ImageVolume | Beta, deshabilitada de forma predeterminada hasta 1.35 |
+| UserNamespacesSupport | Beta, habilitada de forma predeterminada; llega a GA en 1.36 |
+| NFTablesProxyMode, MatchLabelKeysInPodAffinity, CRDValidationRatcheting | Ya eran GA en 1.33 |
+| KubeletTracing, PodLifecycleSleepAction | GA; la segunda incluye la acción de suspensión PreStop |
+| JobPodReplacementPolicy, RecoverVolumeExpansionFailure | GA |
+| StructuredAuthenticationConfiguration, AnonymousAuthConfigurableEndpoints | GA |
+| NodeLogQuery | Sigue en beta; pasa a GA en 1.36 |
+
+En estos ejemplos no existe una política de descarga estándar llamada `IfNotPresentOrNewer`; usa la semántica compatible de `Always`, `IfNotPresent` o `Never` y revisa por separado que la imagen sea inmutable.
+
+[Lanzamiento de Kubernetes 1.34](https://kubernetes.io/blog/2025/08/27/kubernetes-v1-34-release/) · [DRA](https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/) · [Límites de EBS gp3](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html) · [KYAML KEP-5295](https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/5295-kyaml) · [Registro de cambios de Kubernetes 1.37](https://github.com/kubernetes/kubernetes/blob/v1.37.0/CHANGELOG/CHANGELOG-1.37.md) · [MutatingAdmissionPolicy](https://kubernetes.io/docs/reference/access-authn-authz/mutating-admission-policy/)
+
+---
+
+
+### 4.7 Kubernetes 1.35 «Timbernetes» (diciembre de 2025)
+
+El anuncio del 17 de diciembre informa **60 mejoras**, con un desglose principal de **17 estables, 19 beta y 22 alfa**. Estas tres cifras suman 58; el desglose no clasifica los otros dos elementos. Aquí se conservan los totales publicados originalmente, sin inventar otra categoría ni interpretarlos como mediciones de rendimiento.
+
+![Diagrama del ciclo de madurez de las 60 mejoras de Kubernetes 1.35 «Timbernetes», desde alfa hasta beta y estable: 22 alfa, 19 beta y 17 estables (GA); se resalta el estado estable y se enumeran funciones clave por etapa.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-15.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-15.html)
+
+#### Redimensionamiento de recursos de contenedor in situ: GA
+
+La función pasó de alfa en 1.27 a beta en 1.33 y a estable en 1.35. La versión alfa original no se limitaba a «CPU hasta 1.33». GA estabiliza la API, pero no garantiza que el redimensionamiento de memoria, el entorno de ejecución, la política del nodo o la aplicación eviten interrupciones. Usa las comprobaciones UID/resourceVersion y los campos de estado actuales del ejemplo de redimensionamiento anterior, y revisa las limitaciones específicas de la versión.
+
+Actualizar la plantilla normal de un Deployment aún inicia el proceso de actualización gradual. Que esta API de Pod haya llegado a GA no implementa automáticamente el «redimensionamiento in situ gradual de Deployment». Redimensionar un Pod administrado y cambiar la plantilla de su controlador son acciones distintas. Los Pods de reemplazo se crean mediante la plantilla y la cadena de admisión; coordina HPA, VPA, GitOps y cualquier redimensionador personalizado para que no compitan por administrar los recursos.
+
+Este Deployment proporciona el objetivo `web-app`/`app` que usa el ejemplo anterior de VPA. Las imágenes y los valores de recursos requieren revisión; la aplicación debe implementar realmente cualquier endpoint de Service, como el puerto 8080. No se probó una actualización gradual, un redimensionamiento ni la disponibilidad del Service en EKS.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: version-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-app
   template:
     metadata:
       labels:
-        pod-group.scheduling.k8s.io/name: distributed-training
+        app: web-app
     spec:
-      schedulerName: default-scheduler
       containers:
-        - name: trainer
-          image: pytorch-dist:latest
-          resources:
-            limits:
-              nvidia.com/gpu: 8
+      - name: app
+        image: example.invalid/version-lab/app:reviewed
+        resources:
+          requests:
+            cpu: 500m
+            memory: 256Mi
+          limits:
+            cpu: '1'
+            memory: 512Mi
+        resizePolicy:
+        - resourceName: cpu
+          restartPolicy: NotRequired
+        - resourceName: memory
+          restartPolicy: RestartContainer
 ```
 
-**Otras características beta en 1.35**:
-- `AnonymousAuthConfigurableEndpoints` -- acceso anónimo configurable por endpoint
-- `InPlacePodVerticalScalingAllocatedStatus` -- informes detallados de estado de redimensionamiento
-- Mejoras de `SELinuxMount`
-- `NodeInclusionPolicyInPodTopologySpread` -- control de inclusión de nodos para distribución de topología
+VPA tiene un ciclo de versiones independiente. `InPlaceOrRecreate` llegó a GA en VPA 1.6 y puede recrear Pods si falla una actualización in situ; `InPlace` es un modo alfa de VPA 1.7 que requiere su propia gate. No expulsar el Pod no significa que todas las políticas de redimensionamiento eviten reiniciar contenedores ni que se puedan aplicar todas las recomendaciones. El ejemplo anterior de VPA actual documenta esos requisitos. Kubernetes 1.35, por sí solo, no habilita ese modo de VPA.
 
-#### Características alpha clave
+#### Distribución de tráfico PreferSameNode: GA
 
-- **PodLevelInPlaceScaling** -- redimensiona a nivel de pod (agregado), no solo a nivel de container
-- **LeaderMigration** -- migra la elección de líder de controller-manager
-- Mejoras de **SchedulerQueueingHints**
-- **RecoverVolumeExpansionFailure** -- se recupera de fallos de expansión de volumen
+La función `PreferSameTrafficDistribution` es estable en 1.35. `PreferSameNode` prefiere los endpoints del nodo local cuando están disponibles, con una alternativa si no lo están; no equivale a la regla estricta `internalTrafficPolicy: Local`. Verifica la implementación real de Service, los endpoints listos y la prioridad de las políticas de tráfico. No controla universalmente el enrutamiento de ALB/NLB ni garantiza que no haya tráfico entre zonas.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prefer-same-node
+  namespace: version-lab
+spec:
+  trafficDistribution: PreferSameNode
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+
+#### KYAML: beta, habilitado de forma predeterminada en kubectl
+
+La habilitación predeterminada de KYAML en beta en 1.35 se refiere al formato de salida `-o kyaml`. No cambia el análisis de todas las entradas del servidor de API a un nuevo analizador estricto, no advierte sobre todas las anclas YAML ni requiere abrir un caso de soporte de EKS para cambiar una feature gate del servidor. El ejemplo local de formato y las comprobaciones nativas en 1.36.2 de la sección anterior muestran el comportamiento real. KYAML pasa a estable en 1.37, no en 1.36.
+
+#### Programación nativa por grupos: alfa, KEP-4671
+
+Kubernetes 1.35 incorporó conceptos de programación nativa por grupos y consciente de las cargas de trabajo. Siguen en alfa en 1.36; requieren `GenericWorkload`/`GangScheduling` y habilitar las API y el planificador correspondientes. Las preguntas frecuentes de EKS sobre versiones no admiten funciones alfa; una gate en un nodo autoadministrado no puede habilitar una API del plano de control de EKS que no esté disponible.
+
+El siguiente es un **ejemplo de esquema `v1alpha2` de 1.36 para un entorno experimental upstream**, no el esquema anterior de 1.35 ni una receta GA para EKS. Usa `spec.schedulingPolicy.gang.minCount` y `spec.schedulingGroup.podGroupName` en el Pod. Los campos antiguos `minMember` y `scheduleTimeoutSeconds`, o usar solo una etiqueta del Pod o una `schedulingGate`, no definen esta API nativa. Los CRD PodGroup de terceros tienen contratos propios.
+
+```yaml
+apiVersion: scheduling.k8s.io/v1alpha2
+kind: PodGroup
+metadata:
+  name: experimental-training
+  namespace: version-lab
+spec:
+  schedulingPolicy:
+    gang:
+      minCount: 8
+```
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: experimental-training
+  namespace: version-lab
+spec:
+  completionMode: Indexed
+  completions: 8
+  parallelism: 8
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      schedulingGroup:
+        podGroupName: experimental-training
+      containers:
+      - name: worker
+        image: example.invalid/version-lab/worker:reviewed
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: '1'
+            memory: 256Mi
+```
+
+El tamaño mínimo del grupo, el paralelismo del Job y la cantidad de finalizaciones son ocho. Es una ilustración independiente de un grupo: un controlador propietario debe administrar su ciclo de vida y mantener estable la asociación mientras se programan los Pods. Una decisión de programación no garantiza que los procesos se inicien al mismo tiempo, que estén listos, que el cálculo distribuido tenga éxito ni que no ocurra ningún interbloqueo. La aplicación aún requiere barreras, lógica de tiempo de espera y recuperación, y capacidad compatible. Estos objetos solo se validaron contra el esquema; no se ejecutó un experimento de colocación de grupos.
+
+#### Selección de versión y consideraciones para actualizar
+
+| Tema | Interpretación correcta |
+|---|---|
+| JobManagedBy | GA en 1.35 |
+| ImageVolume | Beta, ahora habilitada de forma predeterminada; GA en 1.36 |
+| PodLevelResources | Sigue en beta tras su graduación a beta en 1.34 |
+| UserNamespacesSupport | Sigue en beta; GA en 1.36 |
+| ContextualLogging | Sigue en beta; no llegó a GA en 1.35 |
+| CRDValidationRatcheting | Ya era GA en 1.33 |
+| NodeInclusionPolicyInPodTopologySpread | Ya era GA en 1.33 |
+| RecoverVolumeExpansionFailure / endpoints anónimos configurables | Ya eran GA en 1.34 |
+
+Al actualizar nodos, comprueba los requisitos de cgroups y del entorno de ejecución; no supongas que «GA significa seguro para producción». Las notas de EKS 1.35 describen que, de forma predeterminada, kubelet rechaza cgroup v1, además de casos específicos del proveedor como Fargate; no modifiques la configuración del host administrado de Fargate. Según esa guía, Kubernetes 1.35 es la última versión compatible con containerd 1.x y se eliminó el flag de kubelet `--pod-infra-container-image`. Usa los procedimientos actuales de nodos y AMI de EKS y el capítulo de actualizaciones; no sobrescribas flags de arranque a ciegas.
+
+[Lanzamiento de Kubernetes 1.35](https://kubernetes.io/blog/2025/12/17/kubernetes-v1-35-release/) · [Feature gates de la versión 1.36](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go) · [Esquema de API de Kubernetes 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/api/openapi-spec/swagger.json) · [Notas de versión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)
 
 ---
 
-### 4.8 Kubernetes 1.36 "ハル (Haru)" (abril de 2026)
 
-**Tema**: Nombrado con la palabra japonesa para "primavera" (ハル/Haru), simbolizando nuevos comienzos y crecimiento.
+### 4.8 Kubernetes 1.36 «Haru» (abril de 2026) {#_4-8-kubernetes-1-36-haru-april-2026}
 
-**Estadísticas del lanzamiento**: 68 mejoras -- 18 Stable, 25 Beta, 25 Alpha. Los temas principales incluyen hardening de seguridad, soporte para workloads AI/ML y extensibilidad de API. EKS soporta 1.36 en todas las regiones disponibles, incluido GovCloud (US).
+El anuncio del 22 de abril informa **70 mejoras**, con un desglose por nivel de madurez de **18 estables, 25 beta y 25 alfa**. Los tres grupos suman 68; el capítulo original usó por error ese subtotal como total de la versión. La disponibilidad en EKS se registra por separado en el calendario de soporte.
 
-```mermaid
-pie title 1.36 Enhancement Breakdown
-    "Stable (GA)" : 18
-    "Beta" : 25
-    "Alpha" : 25
-```
+<!-- Parent repair: release total is70, not68; verify stage/default/provider labels before restoring.
+![Kubernetes 1.36 "Haru" enhancement breakdown: 68 enhancements split by maturity stage into 25 Alpha, 25 Beta, and 18 Stable (GA), with Stable highlighted and EKS 1.36 availability across all regions including GovCloud (US).](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-17.png)
 
-**Descripción general de características clave**:
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-17.html)
+-->
 
-| Característica | Etapa | Valor clave |
-|---------|-------|-----------|
-| Mutating Admission Policies | **GA** | Elimina servidores webhook -- simplicidad operativa, rendimiento, disponibilidad |
-| In-Place Pod Vertical Scaling | **Mejorado** | Ajuste de recursos sin downtime -- eficiencia de costos, protección de SLA |
-| User Namespaces | **GA** | Container root ≠ node root -- aislamiento de privilegios |
-| Fine-Grained Kubelet API Authorization | **GA** | Acceso de mínimo privilegio a la API del kubelet |
-| Legacy ServiceAccount Token Cleanup | **GA** | Limpieza automática de tokens no usados -- menor superficie de ataque |
-| Resource Health Status (DRA) | Mejorado | Salud de dispositivos GPU -- identificación más rápida de causa raíz de fallos |
+#### MutatingAdmissionPolicy: GA
 
-#### Características clave promovidas (GA)
+Los recursos estables de MAP son `MutatingAdmissionPolicy` y `MutatingAdmissionPolicyBinding` en `admissionregistration.k8s.io/v1`. CEL dentro del proceso evita usar un webhook aparte para las mutaciones compatibles, pero no elimina los fallos de políticas, los límites de costos ni las consideraciones sobre el orden y la reinvocación. El determinismo no garantiza idempotencia en todos los casos.
 
-**Mutating Admission Policies (GA)**
-
-Mutating Admission Policies (MAP) llevan mutación basada en CEL a objetos nativos de Kubernetes, eliminando la necesidad de servidores webhook externos. Con MAP, la lógica de mutación se define declarativamente usando recursos `MutatingAdmissionPolicy` y `MutatingAdmissionPolicyBinding`, y el API server la evalúa en proceso.
-
-Características clave:
-
-- **Evaluación en proceso del API server**: Sin viajes de ida y vuelta de red a webhooks, sin latencia de servidores externos. La mutación se ejecuta dentro del propio proceso del API server.
-- **Simplicidad operativa**: Sin gestión de certificados, sin despliegues de alta disponibilidad, sin preocupaciones de escalado para servidores webhook. El API server maneja todo.
-- **Idempotencia garantizada**: Las expresiones CEL producen resultados deterministas, eliminando casos límite de ordenamiento y reinvocación.
-- **Limitación**: Las mutaciones que requieren búsquedas de datos externos (por ejemplo, consultar un servidor OPA o un image registry) aún necesitan webhooks tradicionales. MAP es para mutaciones autocontenidas e impulsadas por políticas.
-
-> **Impacto**: Los servidores webhook para admission control han sido históricamente puntos únicos de fallo en clusters Kubernetes. Un webhook mal configurado o no disponible puede bloquear toda la creación de pods en todo el cluster. MAP elimina esta clase de riesgo operativo para la mayoría de los casos de uso de mutación.
-
-El siguiente ejemplo demuestra una `MutatingAdmissionPolicy` que auto-inyecta `resizePolicy` en pods anotados para redimensionamiento in-place. Este es un patrón práctico que combina MAP (GA en 1.36) con In-Place Pod Vertical Scaling (GA en 1.35):
+El ejemplo de política de redimensionamiento que sigue es expresamente optativo. Agrega valores predeterminados solo a los contenedores que no tienen un `resizePolicy` definido y conserva las políticas explícitas existentes. CEL de Kubernetes admite `indexOf()`; la expresión original era válida, pero sobrescribía las políticas existentes. Una prueba con el compilador y el parcheador nativos de Kubernetes 1.36.2 verificó tanto el comportamiento original como esta corrección. `resizePolicy` es una lista atómica, por lo que el parcheador de ApplyConfiguration rechaza las modificaciones de ese campo; aquí corresponde usar JSONPatch. En esta implementación, si una operación `test` de JSONPatch falla dentro de MAP, no se aplica ningún cambio: no se deniega automáticamente la admisión.
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -1716,28 +1649,27 @@ spec:
   reinvocationPolicy: Never
   matchConstraints:
     resourceRules:
-      - apiGroups: [""]
-        apiVersions: ["v1"]
-        operations: ["CREATE"]
-        resources: ["pods"]
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
   matchConditions:
-    - name: only-resize-enabled
-      expression: >-
-        has(object.metadata.annotations) &&
-        ("resize.example.com/enabled" in object.metadata.annotations) &&
-        object.metadata.annotations["resize.example.com/enabled"] == "true"
+  - name: only-resize-enabled
+    expression: has(object.metadata.annotations) && ("resize.example.com/enabled"
+      in object.metadata.annotations) && object.metadata.annotations["resize.example.com/enabled"]
+      == "true"
   mutations:
-    - patchType: JSONPatch
-      jsonPatch:
-        expression: >-
-          object.spec.containers.map(c, JSONPatch{
-            op: "add",
-            path: "/spec/containers/" + string(object.spec.containers.indexOf(c)) + "/resizePolicy",
-            value: [
-              {"resourceName": "cpu",    "restartPolicy": "NotRequired"},
-              {"resourceName": "memory", "restartPolicy": "RestartContainer"}
-            ]
-          })
+  - patchType: JSONPatch
+    jsonPatch:
+      expression: "object.spec.containers.filter(c, !has(c.resizePolicy)).map(c, JSONPatch{\n\
+        \  op: \"add\",\n  path: \"/spec/containers/\" + string(object.spec.containers.indexOf(c))\
+        \ + \"/resizePolicy\",\n  value: [\n    {\"resourceName\": \"cpu\",    \"\
+        restartPolicy\": \"NotRequired\"},\n    {\"resourceName\": \"memory\", \"\
+        restartPolicy\": \"RestartContainer\"}\n  ]\n})"
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicyBinding
@@ -1748,431 +1680,549 @@ spec:
   matchResources:
     namespaceSelector:
       matchLabels:
-        map-demo: "true"
+        map-demo: 'true'
 ```
 
-> **Nota de seguridad**: `matchConstraints` de MAP es cluster-wide por defecto. Siempre delimita las mutaciones usando un `namespaceSelector` en el binding para evitar modificaciones no intencionadas en todo el cluster.
+Para esta vinculación, agrega etiquetas solo a los espacios de nombres de prueba que controles. `failurePolicy: Fail` aún puede rechazar la creación de Pods coincidentes si falla la evaluación. Antes de habilitarla para cargas de trabajo, verifica que la política esté lista, prueba casos negativos y revisa toda la cadena de admisión; una espera fija después de crear la política no garantiza que esté lista. Observar un campo inyectado, por sí solo, no permite saber qué componente de admisión lo produjo.
 
-> **Nota técnica**: `resizePolicy` se define como una lista atómica en el esquema de la API de Kubernetes. Esto significa que debes usar `JSONPatch` (como se muestra arriba). Intentar usar `ApplyConfiguration` fallará con `"may not mutate atomic arrays"`.
+#### Redimensionamiento in situ y presupuestos a nivel del Pod
 
-**Mejoras de In-Place Pod Vertical Scaling**
+El redimensionamiento por contenedor ya alcanzó GA en 1.35. La función independiente `InPlacePodLevelResourcesVerticalScaling` pasa a beta y está habilitada de forma predeterminada en 1.36, junto con la función `PodLevelResources`, que sigue en beta. Los presupuestos a nivel del Pod y los límites de los contenedores requieren controles de contabilidad y políticas distintos. El prototipo de reducción de CPU que aparece más adelante no administra este ejemplo: rechaza expresamente los presupuestos a nivel del Pod.
 
-Basándose en la promoción a GA del redimensionamiento in-place por container en 1.35, Kubernetes 1.36 agrega varias mejoras:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-budget-example
+  namespace: version-lab
+spec:
+  os:
+    name: linux
+  nodeSelector:
+    kubernetes.io/os: linux
+  resources:
+    requests:
+      cpu: '2'
+      memory: 4Gi
+    limits:
+      cpu: '4'
+      memory: 8Gi
+  containers:
+  - name: app
+    image: example.invalid/version-lab/app:reviewed
+    resources:
+      requests:
+        cpu: '1'
+        memory: 2Gi
+  - name: helper
+    image: example.invalid/version-lab/helper:reviewed
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+```
 
-- **Redimensionamiento de presupuesto compartido a nivel de pod**: Los recursos a nivel de pod ahora pueden redimensionarse sin reiniciar el pod, permitiendo ajustes agregados de recursos entre todos los containers de un pod.
-- **Seguimiento de checkpoints de CPUManager**: CPUManager ahora rastrea el estado de checkpoints durante operaciones de redimensionamiento en vivo, manteniendo la alineación NUMA para workloads sensibles al rendimiento.
-- **Redimensionamiento de CPU (NotRequired)**: Los cambios de CPU con `restartPolicy: NotRequired` se aplican mediante actualizaciones de cgroup con cero downtime -- sin reinicio de container, sin caídas de conexión.
-- **Comportamiento de reducción de memoria**: Las operaciones de reducción de memoria pueden activar `RestartContainer` según el uso real de memoria en el momento del redimensionamiento. La validación por workload es esencial antes de habilitar el redimensionamiento de memoria en producción.
+Las mejoras de los puntos de control de CPUManager no demuestran que todas las cargas de trabajo con administradores estáticos de CPU o memoria se puedan redimensionar o conservar una ubicación NUMA específica. Esas rutas tienen requisitos propios de función y soporte. `NotRequired` evita un reinicio exigido por una política, pero no toda posible interrupción. Con `RestartContainer`, un cambio de recursos solicita un reinicio; con `NotRequired`, la reducción de memoria se hace al mejor esfuerzo y puede detenerse o competir con un OOM. Supervisa los recursos reales del contenedor y el comportamiento de la aplicación.
 
-**User Namespaces (Feature Gate eliminado)**
+#### Espacios de nombres de usuario, autorización de kubelet y estado de los dispositivos
 
-User Namespaces ha alcanzado plena preparación para producción con el feature gate eliminado en 1.36. El UID 0 del container (root dentro del container) se mapea a un UID de host no privilegiado, proporcionando aislamiento de privilegios sin cambios en la aplicación.
+UserNamespacesSupport pasa a GA en **1.36**; la función sigue presente y bloqueada en el código fuente publicado de 1.36.2. Los Pods pueden habilitarla con `hostUsers: false`, siempre que el kernel, el sistema de archivos y el entorno de ejecución sean compatibles. La reasignación de UID añade defensa en profundidad, pero no demuestra que cualquier escape sea inocuo ni que todas las aplicaciones funcionen sin cambios.
 
-Con el gate eliminado, user namespaces está disponible en todos los clusters que ejecutan 1.36 sin configuración de feature gate. Esto elimina la necesidad de soluciones de terceros para lograr aislamiento de privilegios del container al host.
+KubeletFineGrainedAuthz también pasa a GA. Agrega verificaciones más específicas para `/pods`, `/runningPods`, `/configz` y `/healthz` antes de recurrir al acceso más amplio `nodes/proxy`. `/metrics`, `/stats` y `/logs` ya tienen sus propias distinciones de subrecursos. No lo confundas con las reglas del autorizador Node, que rigen el acceso de kubelet al servidor de API; revisa los permisos reales de quien realiza la llamada y evita el acceso amplio de proxy cuando basten permisos más acotados.
 
-**KYAML (GA)**
-
-KYAML ha alcanzado GA, haciendo del subconjunto YAML más seguro el estándar para todos los manifests de Kubernetes. La validación KYAML ahora rechaza (no solo advierte sobre) patrones YAML peligrosos por defecto.
-
-| Característica YAML | ¿Permitida en KYAML? | Razón |
-|-------------|-------------------|--------|
-| Anchors & Aliases | No | Riesgo de inyección, confusión |
-| Merge Keys (`<<`) | No | Comportamiento impredecible |
-| Booleanos implícitos (`yes`/`no`) | No | Bugs de coerción de tipo |
-| Claves de mapa que no son string | No | Ambigüedad |
-| Claves duplicadas | No | Sobrescritura silenciosa |
-| Comentarios | Sí | Esencial para documentación |
-| Strings multilínea (`|`, `>`) | Sí | Comúnmente necesario |
-| Secuencias/mapeos flow | Sí | Uso estándar de YAML |
+ResourceHealthStatus pasa a beta en 1.36 y puede informar el estado de cada dispositivo para los complementos de dispositivos y DRA. Inspecciona `status.containerStatuses[].allocatedResourcesStatus`; `status.resourceClaimStatuses` asigna referencias de claims a nombres generados. Un estado ausente, Unknown o Unhealthy requiere correlacionarlo con el controlador, el nodo y la aplicación. Por sí solo, no demuestra la causa raíz ni autoriza a restablecer el dispositivo.
 
 ```bash
-# KYAML is now enforced by default
-$ kubectl apply -f bad-manifest.yaml
-Error from server: error parsing bad-manifest.yaml: KYAML validation failed:
-  line 5: YAML anchors are not permitted
-  line 12: implicit boolean value "yes" is not permitted; use "true" or "false"
+# Read-only per-container resource health; no device reset or Pod deletion.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" get pod "$POD_NAME" -o json |
+  jq '{uid:.metadata.uid,containers:[.status.containerStatuses[]? |
+       {name,allocatedResourcesStatus}]}'
 ```
 
-**Gang Scheduling (GA)**
+LegacyServiceAccountTokenCleanUp ya había alcanzado GA en **1.30**; no es una función que pase a GA en 1.36. La limpieza identifica los Secrets de tokens heredados autogenerados mediante las referencias a ServiceAccount y otras condiciones de uso o montaje. De forma predeterminada, transcurre un año sin uso antes de invalidar el token; luego debe pasar más tiempo sin uso para que se elimine. Esto no significa que se eliminen todos los tokens antiguos o creados manualmente. Prefiere tokens TokenRequest con duración limitada; nunca imprimas los valores de los tokens como atajo de auditoría.
 
-La programación atómica de grupos de pods se promovió a GA.
+#### SELinux, redes y otros cambios de compatibilidad
 
-```yaml
-# GA-level gang scheduling
-apiVersion: scheduling.k8s.io/v1
-kind: PodGroup
-metadata:
-  name: mpi-job
-spec:
-  minMember: 8
-  scheduleTimeoutSeconds: 600
-  priorityClassName: high-priority
+Las definiciones de las funciones en Kubernetes 1.36.2 distinguen **SELinuxMountReadWriteOncePod** y **SELinuxChangePolicy** (GA) de **SELinuxMount** (que sigue en beta y desactivada de forma predeterminada). Algunos resúmenes describen el cambio de forma más amplia. Revisa la configuración real del nodo y del proveedor, la compatibilidad con CSI y los patrones de uso compartido de volúmenes; no afirmes que todos los volúmenes usan ahora el mismo comportamiento de etiquetas de montaje. Los volúmenes compartidos con distintas etiquetas de SELinux pueden requerir una revisión explícita.
+
+`StrictIPCIDRValidation` pasa a beta y se habilita de forma predeterminada en 1.36. Usa valores IP/CIDR canónicos al crear o modificar campos integrados sujetos a esta validación; los valores ya almacenados pueden seguir siendo compatibles mediante validación progresiva. Esto no normaliza automáticamente todos los CRD. El controlador de volúmenes `gitRepo` queda deshabilitado de forma permanente en 1.36 aunque el esquema de la API todavía acepte el campo: kubelet se niega a ejecutar esos volúmenes. Migra el patrón de carga de trabajo antes de actualizar.
+
+El uso de `externalIPs` en Services queda obsoleto en 1.36; la fecha de eliminación publicada es un objetivo futuro, no una eliminación de esta versión. El código de Kubernetes 1.36.2 aún incluye e instancia el proxy IPVS. La descripción de eliminación en el resumen de versiones de AWS contradice ese código upstream; no la presentes como una eliminación universal de upstream ni supongas que una imagen concreta del complemento de EKS sigue teniendo soporte. Verifica por separado el complemento elegido y la ruta de migración. Aquí no se probó ningún entorno IPVS en EKS.
+
+ImageVolume y NodeLogQuery pasan a GA en 1.36. La partición de dispositivos DRA, la capacidad consumible y las condiciones de enlace de dispositivos tienen sus propias funciones beta. KYAML sigue en beta como función de kubectl en 1.36 (pasa a estable en 1.37), mientras que GenericWorkload y GangScheduling siguen en alfa en 1.36. No vuelvas a presentar como graduaciones nuevas de 1.36 las funciones que alcanzaron GA en versiones anteriores.
+
+#### Prototipo de reducción de CPU según la fase
+
+Una aplicación con un inicio que consume muchos recursos puede beneficiarse de una asignación de CPU distinta durante el funcionamiento estable, pero el nivel mínimo adecuado debe medirse para esa aplicación. El estado `Running` de Kubernetes no indica que haya terminado el calentamiento. El controlador siguiente es **experimental y no se ha ejecutado en un clúster**; de forma predeterminada, usa una señal real de startupProbe y aplica un contrato acotado a CPU. No es un controlador listo para producción ni garantiza la disponibilidad.
+
+Sus entradas obligatorias son un `WATCH_NAMESPACE` y un `MIN_STEADY_CPU` positivo y revisado. Observa únicamente los Pods de ese espacio de nombres que tienen la etiqueta `resize.example.com/managed=true` y también exige la anotación de participación voluntaria. Seleccionar recursos por etiquetas y anotaciones no constituye un límite de autorización; se debe confiar en quienes pueden escribir cargas de trabajo en ese espacio de nombres. El ejemplo solo acepta Pods Linux de tipo Guaranteed seleccionados expresamente, con recursos a nivel de contenedor y solicitudes de CPU y memoria iguales a sus límites en contenedores de aplicación e init. Rechaza cambios de memoria, aumentos de recursos, objetivos no válidos, políticas de reinicio de CPU no compatibles, redimensionamientos pendientes y recursos observados que no hayan sido reconocidos o no coincidan con los valores esperados.
+
+StartupProbePassed requiere una startupProbe real y que `started=true` para cada objetivo. Ready y Delay son activadores alternativos explícitos; Ready necesita una señal de preparación significativa, mientras que Delay solo es un temporizador y no demuestra que haya terminado el calentamiento. El ciclo de resincronización de 30 segundos y la latencia de la API y la reconciliación impiden garantizar tiempos exactos.
+
+Usa dependencias compatibles (la auditoría usó Go 1.27.1 y las bibliotecas de Kubernetes v0.36.2):
+
+```text
+module example.com/pod-resizer
+
+go 1.26.0
+
+require (
+    k8s.io/api v0.36.2
+    k8s.io/apimachinery v0.36.2
+    k8s.io/client-go v0.36.2
+)
 ```
-
-**Otras características GA en 1.36**:
-- `AnonymousAuthConfigurableEndpoints` -- control de autenticación anónima por endpoint
-- `SELinuxMount` -- gestión de etiquetas SELinux para volúmenes
-- `NodeInclusionPolicyInPodTopologySpread` -- inclusión de nodos para distribución de topología
-- `RecoverVolumeExpansionFailure` -- recuperación automatizada de expansiones fallidas
-- `FineGrainedKubeletAPIAuthorization` -- acceso de mínimo privilegio a la API del kubelet, restringiendo qué nodos pueden acceder a qué endpoints del kubelet
-- `LegacyServiceAccountTokenCleanUp` -- limpieza automática de tokens ServiceAccount basados en Secret no usados, reduciendo la superficie de ataque de credenciales de larga duración
-
-#### Patrón de gestión de recursos consciente de fases
-
-Esta sección presenta un patrón práctico que combina In-Place Pod Vertical Scaling (GA en 1.35) con Mutating Admission Policies (GA en 1.36) para implementar gestión de recursos consciente de fases -- ajustando automáticamente los recursos del container según la fase del ciclo de vida de la aplicación.
-
-**Definición del problema**
-
-Muchos workloads containerizados tienen fases de ciclo de vida distintas que demandan perfiles de recursos diferentes:
-
-- **Fase de startup (warmup)**: Alta CPU para compilación JIT de JVM, carga de modelos LLM, precarga de índices/caché
-- **Fase steady-state (serving)**: Menor CPU suficiente para el manejo normal de solicitudes
-
-Ambas fases muestran el container como `Running` en Kubernetes. No hay un mecanismo nativo para cambiar recursos automáticamente cuando la aplicación transiciona de warmup a serving. La solución típica -- sobreaprovisionar para la fase de startup -- desperdicia recursos durante la fase steady-state, mucho más larga.
-
-Los workloads objetivo incluyen aplicaciones JVM con warmup JIT, servidores de inferencia ML que cargan modelos en memoria y servicios que construyen cachés o índices al iniciar.
-
-**Flujo**:
-
-```
-Pod Create (startup: large CPU, req==limit -> Guaranteed QoS)
-  -> Controller watches pod.status.containerStatuses[].started
-  -> started:true detected (= startup probe passed)
-  -> Resize via pods/resize subresource to steady-state CPU (zero-downtime)
-```
-
-**Idea clave -- preservación de QoS**
-
-La clase QoS se determina en el momento de creación del Pod y no cambia al redimensionar (KEP-1287). Al establecer `requests == limits` tanto en la fase de startup como en la fase steady-state, el pod mantiene QoS `Guaranteed` durante todo su ciclo de vida. La memoria permanece fija (evitando riesgo de reinicio); solo cambia la CPU.
-
-**Enfoque basado en anotaciones (sin requerir CRD)**
-
-En lugar de definir un Custom Resource, este patrón usa anotaciones en workloads existentes. Un controller liviano observa pods y actúa sobre las anotaciones:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: phase-aware-app
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: phase-aware-app
-  template:
-    metadata:
-      annotations:
-        resize.example.com/enabled:          "true"
-        resize.example.com/trigger:          "StartupProbePassed"
-        resize.example.com/steady-resources: |
-          {"app":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}
-      labels:
-        app: phase-aware-app
-    spec:
-      containers:
-        - name: app
-          image: myapp:latest
-          resizePolicy:
-            - resourceName: cpu
-              restartPolicy: NotRequired
-            - resourceName: memory
-              restartPolicy: RestartContainer
-          resources:
-            requests:
-              cpu: "200m"
-              memory: 64Mi
-            limits:
-              cpu: "200m"
-              memory: 64Mi
-          startupProbe:
-            httpGet:
-              path: /healthz
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 3
-            failureThreshold: 30
-```
-
-**Implementación del controller (Go)**
-
-El siguiente controller observa pods anotados y los parchea a recursos steady-state cuando el startup probe pasa. Funciona de forma idéntica para Deployments, StatefulSets, DaemonSets y Argo Rollouts porque solo observa Pods -- sin necesidad de ramas por tipo de workload.
 
 ```go
-// pod-resizer — annotation-based zero-downtime in-place downscale controller.
-// Watches Pods only — works identically for Deployment/StatefulSet/DaemonSet/Rollout.
-// On startup probe pass, patches to steady resources via pods/resize subresource.
-// Maintains req==limit on both phases to preserve Guaranteed QoS (KEP-1287).
+// Experimental CPU-downscale controller for Kubernetes 1.36.
+// Not a production-readiness or zero-downtime guarantee.
 package main
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
+	"os"
+	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/workqueue"
 )
 
 const (
-	annEnabled = "resize.example.com/enabled"
-	annTrigger = "resize.example.com/trigger"
-	annDelay   = "resize.example.com/delay-seconds"
-	annSteady  = "resize.example.com/steady-resources"
-	annResized = "resize.example.com/resized"
+	managedLabel = "resize.example.com/managed"
+	annEnabled   = "resize.example.com/enabled"
+	annTrigger   = "resize.example.com/trigger"
+	annDelay     = "resize.example.com/delay-seconds"
+	annSteady    = "resize.example.com/steady-resources"
 )
 
-type resVals struct {
-	Requests map[string]string `json:"requests,omitempty"`
-	Limits   map[string]string `json:"limits,omitempty"`
+type config struct {
+	namespace string
+	minCPU    resource.Quantity
 }
 
-var clientset *kubernetes.Clientset
-var processed sync.Map
+type resourceValues struct {
+	Requests map[string]string `json:"requests"`
+	Limits   map[string]string `json:"limits"`
+}
+
+type patchOperation struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value any    `json:"value"`
+}
 
 func main() {
-	cfg, err := rest.InClusterConfig()
-	if err != nil {
-		log.Fatalf("in-cluster config: %v", err)
+	namespace := os.Getenv("WATCH_NAMESPACE")
+	minCPU, err := resource.ParseQuantity(os.Getenv("MIN_STEADY_CPU"))
+	if len(validation.IsDNS1123Label(namespace)) != 0 || err != nil || minCPU.Sign() <= 0 {
+		log.Fatal("Set one valid WATCH_NAMESPACE and a reviewed positive MIN_STEADY_CPU")
 	}
-	clientset, err = kubernetes.NewForConfig(cfg)
+	cfg := config{namespace: namespace, minCPU: minCPU}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	clientConfig, err := rest.InClusterConfig()
 	if err != nil {
-		log.Fatalf("clientset: %v", err)
+		log.Fatal("In-cluster client configuration unavailable")
 	}
-
-	factory := informers.NewSharedInformerFactory(clientset, 15*time.Second)
-	podInformer := factory.Core().V1().Pods().Informer()
-	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj interface{}) { handle(obj) },
-		UpdateFunc: func(_, obj interface{}) { handle(obj) },
+	clientConfig.QPS, clientConfig.Burst = 5, 10
+	client, err := kubernetes.NewForConfig(clientConfig)
+	if err != nil {
+		log.Fatal("Client initialization failed")
+	}
+	factory := informers.NewSharedInformerFactoryWithOptions(client, 30*time.Second,
+		informers.WithNamespace(namespace),
+		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
+			options.LabelSelector = managedLabel + "=true"
+		}))
+	informer := factory.Core().V1().Pods().Informer()
+	queue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
+	enqueue := func(obj any) {
+		key, err := cache.MetaNamespaceKeyFunc(obj)
+		if err == nil {
+			queue.Add(key)
+		}
+	}
+	_, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: enqueue, UpdateFunc: func(_, current any) { enqueue(current) },
 	})
-
-	stop := make(chan struct{})
-	defer close(stop)
-	log.Printf("pod-resizer starting; watching pods annotated %s=true", annEnabled)
-	factory.Start(stop)
-	factory.WaitForCacheSync(stop)
-	log.Printf("informer cache synced; ready")
-	select {}
+	if err != nil {
+		log.Fatal("Informer handler registration failed")
+	}
+	factory.Start(ctx.Done())
+	if !cache.WaitForCacheSync(ctx.Done(), informer.HasSynced) {
+		queue.ShutDown()
+		return
+	}
+	log.Printf("Cache synchronized; watching one namespace: %s", namespace)
+	var workers sync.WaitGroup
+	workers.Add(1)
+	go func() {
+		defer workers.Done()
+		for {
+			key, shutdown := queue.Get()
+			if shutdown {
+				return
+			}
+			obj, exists, err := informer.GetIndexer().GetByKey(key)
+			if err == nil && exists {
+				pod, ok := obj.(*corev1.Pod)
+				if ok {
+					err = requestResize(ctx, client, pod, cfg, time.Now())
+				}
+			}
+			if err != nil && ctx.Err() == nil && queue.NumRequeues(key) < 5 {
+				queue.AddRateLimited(key)
+			} else {
+				queue.Forget(key)
+				if err != nil {
+					log.Printf("Request failed for %s (%s); later events/resync may retry", key, apierrors.ReasonForError(err))
+				}
+			}
+			queue.Done(key)
+		}
+	}()
+	<-ctx.Done()
+	queue.ShutDown()
+	workers.Wait()
 }
 
-func handle(obj interface{}) {
-	pod, ok := obj.(*corev1.Pod)
-	if !ok {
-		return
+func requestResize(ctx context.Context, client kubernetes.Interface, pod *corev1.Pod, cfg config, now time.Time) error {
+	patch, err := buildResizePatch(pod, cfg, now)
+	if err != nil {
+		// Do not log annotation values, credentials or entire Pod objects.
+		log.Printf("Configuration needs review for %s/%s: %v", pod.Namespace, pod.Name, err)
+		return nil // Retry only on a later event/resync, not a tight error loop.
 	}
-	a := pod.Annotations
-	if a == nil || a[annEnabled] != "true" || a[annResized] == "true" {
-		return
+	if len(patch) == 0 {
+		return nil
 	}
-	if pod.DeletionTimestamp != nil || pod.Status.Phase != corev1.PodRunning {
-		return
+	requestCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	_, err = client.CoreV1().Pods(pod.Namespace).Patch(requestCtx, pod.Name,
+		types.JSONPatchType, patch, metav1.PatchOptions{}, "resize")
+	if err == nil {
+		log.Printf("RESIZE_REQUESTED %s/%s uid=%s; verify kubelet status separately",
+			pod.Namespace, pod.Name, pod.UID)
 	}
+	return err
+}
 
-	trigger := a[annTrigger]
+func buildResizePatch(pod *corev1.Pod, cfg config, now time.Time) ([]byte, error) {
+	if pod == nil || pod.Namespace != cfg.namespace || pod.Labels[managedLabel] != "true" ||
+		pod.Annotations[annEnabled] != "true" || pod.DeletionTimestamp != nil ||
+		pod.Status.Phase != corev1.PodRunning {
+		return nil, nil
+	}
+	if pod.UID == "" || pod.ResourceVersion == "" {
+		return nil, errors.New("missing Pod identity/version")
+	}
+	// This prototype deliberately handles only container-level Guaranteed Linux Pods.
+	if pod.Spec.OS == nil || pod.Spec.OS.Name != corev1.Linux ||
+		pod.Spec.NodeSelector[corev1.LabelOSStable] != "linux" ||
+		pod.Spec.Resources != nil || pod.Status.QOSClass != corev1.PodQOSGuaranteed {
+		return nil, errors.New("prototype requires declared Linux, container-level Guaranteed resources")
+	}
+	for _, c := range append(append([]corev1.Container{}, pod.Spec.Containers...), pod.Spec.InitContainers...) {
+		for _, name := range []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory} {
+			request, hasRequest := c.Resources.Requests[name]
+			limit, hasLimit := c.Resources.Limits[name]
+			if !hasRequest || !hasLimit || request.Sign() <= 0 || request.Cmp(limit) != 0 {
+				return nil, errors.New("all app/init resources must satisfy the Guaranteed contract")
+			}
+		}
+	}
+	if pod.Status.ObservedGeneration < pod.Generation {
+		return nil, nil
+	}
+	for _, condition := range pod.Status.Conditions {
+		if condition.Status == corev1.ConditionTrue &&
+			(condition.Type == corev1.PodResizePending || condition.Type == corev1.PodResizeInProgress) {
+			return nil, nil
+		}
+	}
+	raw := pod.Annotations[annSteady]
+	if len(raw) == 0 || len(raw) > 4096 {
+		return nil, errors.New("missing or oversized steady-resources annotation")
+	}
+	var desired map[string]resourceValues
+	decoder := json.NewDecoder(strings.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&desired); err != nil {
+		return nil, errors.New("invalid steady-resources JSON shape")
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF || len(desired) == 0 {
+		return nil, errors.New("expected one nonempty steady-resources object")
+	}
+	trigger := pod.Annotations[annTrigger]
 	if trigger == "" {
 		trigger = "StartupProbePassed"
 	}
-	if !triggerMet(pod, trigger, a[annDelay]) {
-		return
-	}
-
-	steady := map[string]resVals{}
-	if err := json.Unmarshal([]byte(a[annSteady]), &steady); err != nil {
-		log.Printf("ERROR %s/%s: bad %s: %v", pod.Namespace, pod.Name, annSteady, err)
-		return
-	}
-	patch := buildResizePatch(steady)
-	if patch == nil {
-		return
-	}
-	pb, _ := json.Marshal(patch)
-
-	key := string(pod.UID)
-	if _, loaded := processed.LoadOrStore(key, true); loaded {
-		return
-	}
-
-	if _, err := clientset.CoreV1().Pods(pod.Namespace).Patch(
-		context.TODO(), pod.Name, types.StrategicMergePatchType, pb,
-		metav1.PatchOptions{}, "resize"); err != nil {
-		processed.Delete(key)
-		log.Printf("ERROR %s/%s: resize patch failed: %v", pod.Namespace, pod.Name, err)
-		return
-	}
-	log.Printf("RESIZED %s/%s [%s] trigger=%s patch=%s",
-		pod.Namespace, pod.Name, ownerKind(pod), trigger, string(pb))
-
-	mark := []byte(fmt.Sprintf(`{"metadata":{"annotations":{%q:"true"}}}`, annResized))
-	if _, err := clientset.CoreV1().Pods(pod.Namespace).Patch(
-		context.TODO(), pod.Name, types.MergePatchType, mark, metav1.PatchOptions{}); err != nil {
-		log.Printf("WARN %s/%s: marker patch failed: %v", pod.Namespace, pod.Name, err)
-	}
-}
-
-func triggerMet(pod *corev1.Pod, trigger, delayStr string) bool {
+	delay := 0
 	switch trigger {
-	case "Ready":
-		for _, c := range pod.Status.Conditions {
-			if c.Type == corev1.PodReady {
-				return c.Status == corev1.ConditionTrue
-			}
-		}
-		return false
+	case "StartupProbePassed", "Ready":
 	case "Delay":
-		delay, _ := strconv.Atoi(delayStr)
-		for _, cs := range pod.Status.ContainerStatuses {
-			if cs.State.Running != nil {
-				return time.Since(cs.State.Running.StartedAt.Time) >= time.Duration(delay)*time.Second
-			}
+		var err error
+		delay, err = strconv.Atoi(pod.Annotations[annDelay])
+		if err != nil || delay < 1 || delay > 3600 {
+			return nil, errors.New("Delay requires an integer from1 to3600 seconds")
 		}
-		return false
 	default:
-		if len(pod.Status.ContainerStatuses) == 0 {
-			return false
+		return nil, errors.New("unknown trigger")
+	}
+	podReady := false
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == corev1.PodReady && condition.Status == corev1.ConditionTrue {
+			podReady = true
 		}
-		for _, cs := range pod.Status.ContainerStatuses {
-			if cs.Started == nil || !*cs.Started {
-				return false
+	}
+	statuses := make(map[string]corev1.ContainerStatus, len(pod.Status.ContainerStatuses))
+	for _, status := range pod.Status.ContainerStatuses {
+		statuses[status.Name] = status
+	}
+	ops := []patchOperation{
+		{Op: "test", Path: "/metadata/uid", Value: string(pod.UID)},
+		{Op: "test", Path: "/metadata/resourceVersion", Value: pod.ResourceVersion},
+	}
+	matched := 0
+	for i, container := range pod.Spec.Containers {
+		values, selected := desired[container.Name]
+		if !selected {
+			continue
+		}
+		matched++
+		if len(values.Requests) != 1 || len(values.Limits) != 1 ||
+			values.Requests["cpu"] == "" || values.Limits["cpu"] == "" {
+			return nil, errors.New("only explicit CPU request and limit are supported")
+		}
+		request, errRequest := resource.ParseQuantity(values.Requests["cpu"])
+		limit, errLimit := resource.ParseQuantity(values.Limits["cpu"])
+		current := container.Resources.Requests[corev1.ResourceCPU]
+		if errRequest != nil || errLimit != nil || request.Sign() <= 0 ||
+			request.Cmp(limit) != 0 || request.Cmp(cfg.minCPU) < 0 || request.Cmp(current) > 0 {
+			return nil, errors.New("CPU target must be equal, positive, above the floor and no larger than current")
+		}
+		for _, policy := range container.ResizePolicy {
+			if policy.ResourceName == corev1.ResourceCPU && policy.RestartPolicy == corev1.RestartContainer {
+				return nil, errors.New("CPU restart policy is incompatible with this prototype")
 			}
 		}
-		return true
-	}
-}
-
-func buildResizePatch(steady map[string]resVals) map[string]interface{} {
-	var containers []map[string]interface{}
-	for name, rv := range steady {
-		res := map[string]interface{}{}
-		if len(rv.Requests) > 0 {
-			res["requests"] = rv.Requests
+		status, exists := statuses[container.Name]
+		if !exists || status.State.Running == nil || status.Resources == nil {
+			return nil, nil
 		}
-		if len(rv.Limits) > 0 {
-			res["limits"] = rv.Limits
+		observedRequest, rqOK := status.Resources.Requests[corev1.ResourceCPU]
+		observedLimit, lmOK := status.Resources.Limits[corev1.ResourceCPU]
+		if !rqOK || !lmOK || observedRequest.Cmp(current) != 0 || observedLimit.Cmp(current) != 0 {
+			return nil, nil
 		}
-		containers = append(containers, map[string]interface{}{"name": name, "resources": res})
+		switch trigger {
+		case "StartupProbePassed":
+			if container.StartupProbe == nil {
+				return nil, errors.New("StartupProbePassed requires a real startupProbe on every target")
+			}
+			if status.Started == nil || !*status.Started {
+				return nil, nil
+			}
+		case "Ready":
+			if !podReady {
+				return nil, nil
+			}
+		case "Delay":
+			if status.State.Running.StartedAt.IsZero() ||
+				now.Sub(status.State.Running.StartedAt.Time) < time.Duration(delay)*time.Second {
+				return nil, nil
+			}
+		}
+		if request.Cmp(current) == 0 {
+			continue
+		}
+		base := fmt.Sprintf("/spec/containers/%d", i)
+		ops = append(ops,
+			patchOperation{Op: "test", Path: base + "/name", Value: container.Name},
+			patchOperation{Op: "replace", Path: base + "/resources/requests/cpu", Value: request.String()},
+			patchOperation{Op: "replace", Path: base + "/resources/limits/cpu", Value: request.String()})
 	}
-	if len(containers) == 0 {
-		return nil
+	if matched != len(desired) {
+		return nil, errors.New("steady-resources contains an unknown regular container")
 	}
-	return map[string]interface{}{"spec": map[string]interface{}{"containers": containers}}
-}
-
-func ownerKind(pod *corev1.Pod) string {
-	if len(pod.OwnerReferences) > 0 {
-		return pod.OwnerReferences[0].Kind
+	if len(ops) == 2 {
+		return nil, nil
 	}
-	return "Pod"
+	return json.Marshal(ops)
 }
 ```
 
-**RBAC del controller**
+Las operaciones PATCH exitosas se registran como `RESIZE_REQUESTED`; eso no significa que hayan terminado. Las comprobaciones de UID y resourceVersion rechazan nombres desactualizados u objetos modificados. Una cola de trabajo limita los reintentos, gestiona la cancelación y evita el antiguo mapa de UID procesados que crecía sin límite. El prototipo no vuelve a asignar la CPU inicial si se reinicia un contenedor dentro de un Pod existente; tampoco coordina con otro escritor HPA/VPA/GitOps, implementa empaquetado, preparación o políticas de alta disponibilidad para el despliegue, ni demuestra los SLO de la aplicación. Distintos controladores de carga de trabajo pueden crear Pods que cumplan las condiciones, pero hay que probar cómo interactúan con sus propias actualizaciones graduales, reemplazos y almacenamiento.
 
-El controller requiere acceso al subresource `pods/resize` para aplicar parches, además de permisos estándar de watch/list para pods:
-
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: pod-resizer
-  namespace: pod-resizer-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: pod-resizer
-rules:
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch", "patch"]
-  - apiGroups: [""]
-    resources: ["pods/resize"]          # Required for resize subresource
-    verbs: ["patch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: pod-resizer
-subjects:
-  - kind: ServiceAccount
-    name: pod-resizer
-    namespace: pod-resizer-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: pod-resizer
-```
-
-**Workload de demo**
-
-Un workload mínimo para probar el patrón de redimensionamiento consciente de fases:
+La cuenta de servicio tiene permisos, limitados a su espacio de nombres, para leer Pods y solo puede escribir en el subrecurso de redimensionamiento; no tiene permiso general para modificar Pods ni para leer Secrets. Prepara el espacio de nombres y las etiquetas existentes, crea y revisa la imagen del controlador, ejecútalo con esta cuenta de servicio y define las dos variables de entorno obligatorias. El nivel de demostración `50m` es ilustrativo, no una recomendación genérica para producción.
 
 ```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: resize-demo
+  name: version-lab
   labels:
-    map-demo: "true"        # Enables MAP resizePolicy injection
+    map-demo: 'true'
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-resizer
+  namespace: version-lab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-resizer
+  namespace: version-lab
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ''
+  resources:
+  - pods/resize
+  verbs:
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-resizer
+  namespace: version-lab
+subjects:
+- kind: ServiceAccount
+  name: pod-resizer
+  namespace: version-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-resizer
+```
+
+La carga de trabajo siguiente cumple el contrato del controlador. Simula el calentamiento con sleep, no con trabajo real de CPU, y conserva los valores históricos de demostración de 200m→50m/64Mi. Revisa y fija la versión de la imagen antes de usarla. El proceso de inicio crea el archivo que indica que está listo; la sonda solo comprueba que exista. Esto corrige la sonda original, que esperaba ocho segundos pese a tener un tiempo de espera predeterminado de un segundo y dependía de un archivo que el proceso principal nunca creaba.
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: busybox-resize-demo
-  namespace: resize-demo
+  name: phase-aware-demo
+  namespace: version-lab
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: busybox-resize-demo
+      app: phase-aware-demo
   template:
     metadata:
       labels:
-        app: busybox-resize-demo
+        app: phase-aware-demo
+        resize.example.com/managed: 'true'
       annotations:
-        resize.example.com/enabled:          "true"
-        resize.example.com/trigger:          "StartupProbePassed"
-        resize.example.com/steady-resources: |
-          {"busybox":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}
+        resize.example.com/enabled: 'true'
+        resize.example.com/trigger: StartupProbePassed
+        resize.example.com/steady-resources: '{"app":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}'
     spec:
+      os:
+        name: linux
+      nodeSelector:
+        kubernetes.io/os: linux
+      automountServiceAccountToken: false
       containers:
-        - name: busybox
-          image: busybox:1.36
-          command: ["sh", "-c", "echo 'starting warmup'; sleep 10; echo 'ready'; while true; do sleep 3600; done"]
-          resources:
-            requests:
-              cpu: "200m"
-              memory: 64Mi
-            limits:
-              cpu: "200m"
-              memory: 64Mi
-          startupProbe:
-            exec:
-              command: ["sh", "-c", "test -f /tmp/ready || (sleep 8 && touch /tmp/ready)"]
-            initialDelaySeconds: 2
-            periodSeconds: 3
-            failureThreshold: 10
+      - name: app
+        image: busybox:1.36
+        command:
+        - sh
+        - -ec
+        - 'echo ''starting illustrative warmup''
+
+          sleep 10
+
+          touch "$READY_FILE"
+
+          echo ''readiness file created''
+
+          exec sleep 86400'
+        env:
+        - name: READY_FILE
+          value: /tmp/ready
+        resizePolicy:
+        - resourceName: cpu
+          restartPolicy: NotRequired
+        - resourceName: memory
+          restartPolicy: RestartContainer
+        resources:
+          requests:
+            cpu: 200m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 64Mi
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -ec
+            - test -f "$READY_FILE"
+          initialDelaySeconds: 1
+          periodSeconds: 2
+          timeoutSeconds: 1
+          failureThreshold: 30
 ```
 
-**Compatibilidad con Argo Rollouts**
-
-El controller funciona con Argo Rollouts sin modificación. La cadena de propiedad es Rollout -> ReplicaSet -> Pod, idéntica en estructura a Deployment -> ReplicaSet -> Pod. Como el controller observa solo Pods y no inspecciona owner references con lógica específica por tipo, se soporta cualquier workload controller que cree pods con las anotaciones apropiadas.
-
-**Resultados de prueba (EKS 1.36.1)**
-
-Probado en EKS v1.36.1, containerd 2.2.3, Amazon Linux 2023 (cgroup v2, arm64/Graviton).
-
-Salida de log del controller:
-
+```bash
+# Read-only observation for the owned example.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n version-lab \
+  get pods -l app=phase-aware-demo -o json | jq '.items[] | {
+    name:.metadata.name,uid:.metadata.uid,generation:.metadata.generation,
+    observedGeneration:.status.observedGeneration,qosClass:.status.qosClass,
+    desired:[.spec.containers[] | {name,resources}],
+    reported:[.status.containerStatuses[]? | {name,started,ready,resources,restartCount,containerID}],
+    conditions:.status.conditions
+  }'
 ```
+
+La auditoría local ejecutó 50 pruebas unitarias de nivel hoja con Kubernetes simulado y comportamiento RFC6902, además de pruebas de esquema y del script de la sonda en el host. No ejecutó el bucle informer contra EKS, inició BusyBox, midió el tiempo de calentamiento ni validó el rendimiento de cgroups o de la aplicación. VPA 1.7 también ofrece la función alfa CPUStartupBoost; se activa cuando el Pod está Ready, con una duración opcional, no con el contrato StartupProbePassed de este ejemplo. Tiene indicadores y compromisos operativos propios.
+
+#### Instantáneas originales informadas de EKS: procedencia no verificada
+
+El capítulo anterior afirmaba que las pruebas se hicieron con EKS 1.36.1, containerd 2.2.3, AL2023, cgroup v2 y arm64/Graviton. No se proporcionaron los artefactos originales de ejecución ni el código fuente. Las tablas y líneas de registro originales que aparecen a continuación se conservan como **resultados informados cuya procedencia no se verificó**; no son pruebas repetidas, resultados del controlador actual ni evidencia independiente de que no hubiera tiempo de inactividad. Las dos tablas de MAP repiten la afirmación original; no son dos mediciones independientes.
+
+| Caso | Anotación | resizePolicy inyectado | Resultado |
+|------|-----------|------------------------|-----------|
+| with-annotation | presente | `[{cpu:NotRequired},{memory:RestartContainer}]` | ✅ inyectado (sin webhook) |
+| without-annotation | ausente | `[]` (ninguno) | ✅ no inyectado (matchCondition funcionó) |
+
+```text
 2026/06/28 09:12:03 pod-resizer starting; watching pods annotated resize.example.com/enabled=true
 2026/06/28 09:12:03 informer cache synced; ready
 2026/06/28 09:12:41 RESIZED resize-demo/busybox-resize-demo-7f8b9c6d4-k2xnm [ReplicaSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"busybox","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
@@ -2181,221 +2231,77 @@ Salida de log del controller:
 2026/06/28 09:13:22 RESIZED resize-demo/busybox-resize-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"busybox","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
 ```
 
-Verificación de redimensionamiento in-place:
-
-| Workload | QoS | CPU (req/lim) | restartCount | containerID |
+| Carga de trabajo | QoS | CPU (solicitud/límite) | restartCount | containerID |
 |----------|-----|---------------|--------------|-------------|
 | Deployment (x2) | Guaranteed -> **Guaranteed** | 200m -> **50m** | 0 -> **0** | **Idéntico** |
 | DaemonSet | Guaranteed -> **Guaranteed** | 200m -> **50m** | 0 -> **0** | **Idéntico** |
 | StatefulSet | Guaranteed -> **Guaranteed** | 200m -> **50m** | 0 -> **0** | **Idéntico** |
 
-> **Evidencia clave**: `restartCount=0` Y `containerID` idéntico antes y después del redimensionamiento confirma una verdadera reasignación de CPU de cgroup in-place. Ningún container fue recreado. La clase QoS se preservó como `Guaranteed` durante todo el redimensionamiento.
-
-**Resultados de prueba de inyección MAP**
-
-Verificando que `MutatingAdmissionPolicy` inyecta correctamente `resizePolicy` según la presencia de anotación:
-
 | Caso | Anotación presente | resizePolicy inyectado | Veredicto |
 |------|-------------------|----------------------|---------|
 | with-annotation | Sí | `[{cpu:NotRequired},{memory:RestartContainer}]` | Inyectado (sin webhook necesario) |
-| without-annotation | No | `[]` (ninguno) | No inyectado (matchCondition funcionando) |
+| without-annotation | No | `[]` (ninguno) | No inyectado (matchCondition funcionó) |
 
-**Ventajas del enfoque basado en anotaciones**
+El antiguo registro `RESIZED` se emitía después de que la solicitud PATCH tuviera éxito. Que `containerID` y `restartCount` no cambien, junto con un cambio en la especificación deseada, no demuestra por sí solo que se haya aplicado el cambio a cgroups, cuál fue la latencia de la aplicación ni que no se descartaran solicitudes. La verificación requiere correlacionar el UID del Pod y los intervalos de tiempo con los recursos reales y la generación informados por kubelet, y observar el entorno de ejecución y la aplicación. Ningún valor numérico histórico se atribuye a una nueva versión de Kubernetes ni se presenta como si se hubiera medido de nuevo.
 
-| Aspecto | Beneficio |
-|--------|---------|
-| Sobrecarga operativa | Sin CRD/CR -- solo agrega anotaciones a workloads existentes |
-| Universalidad de workloads | El controller observa solo Pods -- comportamiento idéntico para Deployment/StatefulSet/DaemonSet/Rollout |
-| Complejidad de código | Sin ramificación por tipo, creación de hijos ni manejo de owner references |
-| Workloads existentes | Aplicar mediante parche de anotación (sin reescritura de manifest) |
-| Automatización de resizePolicy | MAP (GA) auto-inyecta al crear el pod -- totalmente automatizado sin webhooks |
-
-**Advertencias**
-
-- El redimensionamiento CPU-only con cero downtime es seguro y está verificado. Reducir memoria puede activar reinicio de container según el uso real -- valida por workload antes de habilitarlo.
-- Se requiere `kubectl` versión 1.32 o posterior para `--subresource resize` (solo debugging; el controller usa client-go, que maneja subresources de forma nativa).
-- Las interacciones con HPA y la política de alineación NUMA estática de CPUManager necesitan validación por workload. El escalado HPA concurrente y el redimensionamiento in-place pueden producir objetivos de recursos conflictivos.
-- Para despliegues de producción, agrega leader election al controller para alta disponibilidad con múltiples réplicas.
-
-#### Checklist de actualización
-
-- **Ingress-NGINX retirado (2026-03-24)**: Los parches de seguridad se detuvieron. Migra a un controller compatible con Gateway API (por ejemplo, Envoy Gateway, Istio Gateway, Cilium Gateway API).
-- **Auditoría de modo IPVS / service externalIPs**: Revisa services que usan modo IPVS o `externalIPs` para compatibilidad con cambios de networking en 1.36. Se recomienda auditoría antes de actualizar.
-- **EKS Cluster Insights**: Ejecuta EKS Cluster Insights antes de iniciar la actualización para identificar uso de APIs deprecadas, versiones incompatibles de add-ons y otros problemas de compatibilidad.
-
-#### Características beta clave
-
-**Pod-Level In-Place Scaling (Beta)**
-
-Basándose en la GA del redimensionamiento in-place por container en 1.35, pod-level in-place scaling permite establecer límites de recursos agregados a nivel de pod y redimensionarlos.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: multi-container-app
-spec:
-  resources:                          # Pod-level resource limits
-    limits:
-      cpu: "4"
-      memory: 8Gi
-    requests:
-      cpu: "2"
-      memory: 4Gi
-  containers:
-    - name: app
-      image: myapp:latest
-      resources:
-        requests:
-          cpu: "1"
-          memory: 2Gi
-    - name: sidecar
-      image: sidecar:latest
-      resources:
-        requests:
-          cpu: 500m
-          memory: 512Mi
-    # Remaining resources available for burst
-```
-
-**Improved DRA Partitioning**
-
-El particionado DRA para dispositivos como GPUs alcanzó beta, permitiendo compartir recursos con granularidad fina.
-
-```yaml
-# Request a GPU partition (MIG-like)
-apiVersion: resource.k8s.io/v1
-kind: ResourceClaim
-metadata:
-  name: gpu-partition
-spec:
-  devices:
-    requests:
-      - name: gpu-slice
-        deviceClassName: gpu-partition
-        selectors:
-          - cel:
-              expression: >-
-                device.capacity["gpu.nvidia.com"].memory.compareTo(quantity("10Gi")) >= 0
-```
-
-#### Características alpha clave
-
-- **MultipleSCTPAssociations** -- múltiples asociaciones SCTP por pod
-- **SchedulerFIFO** -- opción de cola FIFO para scheduling
-- Mejoras de **CPUManagerPolicyAlpha**
+[Kubernetes 1.36](https://kubernetes.io/blog/2026/04/22/kubernetes-v1-36-release/) · [Definiciones de funciones en 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go) · [Autorización de kubelet](https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/) · [Administración de cuentas de servicio](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/) · [Contexto de seguridad de SELinux](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) · [Ruta de selección IPVS publicada](https://github.com/kubernetes/kubernetes/blob/v1.36.2/cmd/kube-proxy/app/server_linux.go) · [Funciones de VPA 1.7.1](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md)
 
 ---
 
 <span id="5-key-feature-graduation-timeline"></span>
 
-## 5. Cronograma de promoción de características clave
+## 5. Cronología de graduación de funciones clave
 
-La siguiente tabla proporciona una vista integral entre versiones de las promociones principales de características. Úsala para comprender el ciclo de vida completo de las características que planeas adoptar.
+Esta tabla resume una selección del historial upstream **hasta Kubernetes 1.36**, a partir principalmente de las definiciones de feature gates publicadas en 1.36.2 y del historial oficial de gates eliminadas. «Beta» indica el primer lanzamiento beta, no necesariamente que se habilitara de forma predeterminada. Un guion no promete un hito futuro. Aún hay que comprobar por separado la disponibilidad de la API, los requisitos del entorno de ejecución y del controlador, y el soporte de EKS.
 
-### Características core
+| Función | Primera versión alfa | Primera versión beta | Estable en 1.36 |
+|---|---|---|---|
+| Sidecar containers | 1.28 | 1.29 | 1.33 |
+| Redimensionamiento de contenedores in situ | 1.27 | 1.33 | 1.35 |
+| Preparación de Pods para programación | 1.26 | 1.27 | 1.30 |
+| Política de éxito de Job | 1.30 | 1.31 | 1.33 |
+| Recursos a nivel del Pod | 1.32 | 1.34 | - |
+| ValidatingAdmissionPolicy | 1.26 | 1.28 | 1.30 |
+| MutatingAdmissionPolicy | 1.32 | 1.34 | 1.36 |
+| Autorización estructurada | 1.29 | 1.30 | 1.32 |
+| Campos nativos de AppArmor | - | 1.30 | 1.31 |
+| Espacios de nombres de usuario | 1.25 | 1.30 | 1.36 |
+| ServiceCIDR/IPAddress | 1.27 | 1.31 | 1.33 |
+| Indicaciones según topología | 1.21 | 1.23 | 1.33 |
+| Proxy nftables | 1.29 | 1.31 | 1.33 |
+| Distribución de tráfico de Service | 1.30 | 1.31 | 1.33 |
+| Preferencias por el mismo nodo o zona | 1.33 | 1.34 | 1.35 |
+| ReadWriteOncePod | 1.22 | 1.27 | 1.29 |
+| VolumeAttributesClass | 1.29 | 1.31 | 1.34 |
+| Última transición de fase de PV | 1.28 | 1.29 | 1.31 |
+| Recuperación de expansión de volumen | 1.23 | 1.32 | 1.34 |
+| Programación nativa por grupos | 1.35 | - | - |
+| Dominios topológicos mínimos | 1.24 | 1.25 | 1.30 |
+| DRA principal | 1.26 | 1.32 | 1.34 |
+| Métricas de contenedor de HPA | 1.20 | 1.27 | 1.30 |
+| Volúmenes de imágenes | 1.31 | 1.33 | 1.36 |
+| Consulta de registros de nodo | 1.27 | 1.30 | 1.36 |
+| KMS v2 | 1.25 | 1.27 | 1.29 |
+| Trazado de kubelet | 1.25 | 1.27 | 1.34 |
+| KYAML | 1.34 | 1.35 | - |
 
-| Característica | KEP | Alpha | Beta | GA | Descripción |
-|---------|-----|-------|------|-----|-------------|
-| Sidecar Containers | KEP-753 | 1.28 | 1.29/1.31 | **1.33** | Soporte nativo de sidecar mediante init containers con `restartPolicy: Always` |
-| In-Place Pod Vertical Scaling | KEP-1287 | 1.27 | 1.33 | **1.35** | Redimensiona CPU/memoria del pod sin reinicio |
-| Pod Scheduling Readiness | KEP-3521 | 1.26 | 1.27 | **1.30** | Scheduling gates para retrasar la programación del pod |
-| Job Success Policy | KEP-3998 | 1.28 | 1.31 | **1.33** | Criterios de éxito personalizados para Jobs |
-| Pod-Level Resources | KEP-2837 | 1.32 | 1.33 | **1.34** | Límites de recursos agregados a nivel de pod |
+Detalles importantes del historial:
 
-### Características de seguridad
+- Las anotaciones de AppArmor existían como beta desde 1.4; la fila registra los campos nativos más recientes (beta en 1.30 y GA en 1.31).
+- El trabajo con espacios de nombres de usuario empezó con un soporte limitado y sin estado; el historial de gates publicado registra alfa en 1.25, beta en 1.30, habilitación predeterminada en 1.33 y GA en 1.36. No deduzcas que la gate se eliminó en la fecha en que llegó a GA.
+- La etapa alfa de DRA en 1.26 corresponde a su diseño original. El rediseño posterior de parámetros estructurados (KEP-4381) no mantiene una trayectoria de API sin cambios; DRA clásico siguió detrás de una gate en 1.31 y se eliminó en 1.32. La sintaxis actual de solicitudes estables usa `exactly`.
+- La programación nativa por grupos corresponde a KEP-4671 y sigue en alfa en 1.36. KYAML corresponde a KEP-5295 y pasa a estable en upstream 1.37, fuera del período cubierto por la tabla; ninguna de las dos estaba en GA en 1.36.
+- Los valores beta predeterminados cambiaron de manera independiente: UserNamespacesSupport se habilitó de forma predeterminada en 1.33, ImageVolume en 1.35 y PodLevelResources pasó a beta por primera vez en 1.34.
 
-| Característica | KEP | Alpha | Beta | GA | Descripción |
-|---------|-----|-------|------|-----|-------------|
-| ValidatingAdmissionPolicy (CEL) | KEP-3488 | 1.26 | 1.28 | **1.30** | Admission control nativo con CEL |
-| MutatingAdmissionPolicy (CEL) | KEP-3962 | 1.33 | 1.34/1.35 | **1.36** | Mutación nativa con CEL |
-| StructuredAuthorizationConfiguration | KEP-3221 | 1.29 | 1.30 | **1.32** | Configuración de cadena de autorización ordenada |
-| AppArmor GA | KEP-24 | 1.4 | 1.28 | **1.31** | Campo de API nativo de perfil AppArmor |
-| User Namespaces | KEP-127 | 1.25 | 1.30/1.33 | **1.34** | Remapeo UID/GID para aislamiento de seguridad |
-| KYAML | KEP-4222 | 1.33 | 1.34/1.35 | **1.36** | Subconjunto YAML más seguro para manifests de Kubernetes |
+Gateway API es un proyecto de API y CRD con sus propios lanzamientos. No le atribuyas versiones de canal, versiones de tipos ni niveles de conformidad como «alfa en 1.18 / GA en 1.26» de Kubernetes. Del mismo modo, los modos de actualización de VPA, Karpenter y los controladores CSI tienen sus propias matrices de versión y soporte. Que una API principal llegue a GA no certifica esos componentes ni hace que todos los ejemplos estén listos para producción.
 
-### Características de networking
+<!-- Parent repair: graduation diagram has stale DRA/Gang and other milestone assertions.
+![Six major features of Kubernetes, from ValidatingAdmissionPolicy to gang scheduling, ordered by the release in which each reached alpha, beta and GA between 1.30 and 1.36.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-14.png)
 
-| Característica | KEP | Alpha | Beta | GA | Descripción |
-|---------|-----|-------|------|-----|-------------|
-| Gateway API (CRD) | KEP-1897 | 1.18 | 1.22 | **1.26+** | API Ingress de próxima generación (basada en CRD, independiente de versión) |
-| ServiceCIDR / IPAddress API | KEP-1880 | 1.27 | 1.31 | **1.33** | Gestión dinámica de rangos de IP de Service |
-| Topology Aware Routing | KEP-2433 | 1.21 | 1.23 | **1.33** | Enrutamiento de tráfico consciente de zona |
-| nftables kube-proxy | KEP-3866 | 1.29 | 1.31 | **1.34** | Enrutamiento de Service basado en nftables |
-| Traffic Distribution | KEP-4444 | 1.30 | 1.31 | **1.34** | Preferencias de distribución de tráfico de Service |
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-14.html)
+-->
 
-### Características de almacenamiento
-
-| Característica | KEP | Alpha | Beta | GA | Descripción |
-|---------|-----|-------|------|-----|-------------|
-| ReadWriteOncePod | KEP-2485 | 1.22 | 1.27 | **1.29** | Modo de acceso RW de un solo pod |
-| VolumeAttributesClass | KEP-3751 | 1.29 | 1.31 | **1.34** | Atributos de volumen mutables (IOPS, throughput) |
-| PV Last Phase Transition | KEP-3762 | 1.28 | 1.29 | **1.31** | Seguimiento de timestamp para cambios de fase de PV |
-| RecoverVolumeExpansionFailure | KEP-1790 | 1.23 | 1.35 | **1.36** | Recuperación de fallos de expansión de volumen |
-
-### Características de scheduling
-
-| Característica | KEP | Alpha | Beta | GA | Descripción |
-|---------|-----|-------|------|-----|-------------|
-| Gang Scheduling | KEP-4818 | 1.35 | 1.35 | **1.36** | Programación atómica de grupos para workloads distribuidos |
-| Pod Scheduling Readiness | KEP-3521 | 1.26 | 1.27 | **1.30** | Scheduling gates para programación diferida |
-| MinDomainsInPodTopologySpread | KEP-3022 | 1.24 | 1.25 | **1.30** | Conteo mínimo de dominios para distribución de topología |
-
-### Características de gestión de recursos
-
-| Característica | KEP | Alpha | Beta | GA | Descripción |
-|---------|-----|-------|------|-----|-------------|
-| DRA Core APIs | KEP-3063 | 1.26 | 1.31 | **1.34** | Dynamic Resource Allocation para aceleradores |
-| HPA Container Metrics | KEP-2273 | 1.20 | 1.27 | **1.30** | Métricas HPA por container |
-| OCI Images as Volumes | KEP-4639 | 1.31 | 1.33 | **1.34** | Monta imágenes OCI como volúmenes de solo lectura |
-
-### Visualización integral del cronograma
-
-```mermaid
-gantt
-    title Major Feature Graduation Timeline
-    dateFormat  YYYY-MM
-    axisFormat  %Y-%m
-
-    section Sidecar Containers
-    Alpha (1.28)              :done, s1, 2023-08, 2024-04
-    Beta (1.29-1.31)          :done, s2, 2023-12, 2025-04
-    GA (1.33)                 :done, s3, 2025-04, 2025-08
-
-    section In-Place Pod Resize
-    Alpha (1.27)              :done, r1, 2023-04, 2025-04
-    Beta (1.33)               :done, r2, 2025-04, 2025-12
-    GA (1.35)                 :done, r3, 2025-12, 2026-04
-
-    section CEL Admission
-    Alpha (1.26)              :done, c1, 2022-12, 2023-08
-    Beta (1.28)               :done, c2, 2023-08, 2024-04
-    GA (1.30)                 :done, c3, 2024-04, 2024-08
-
-    section DRA Core
-    Alpha (1.26)              :done, d1, 2022-12, 2024-08
-    Beta (1.31)               :done, d2, 2024-08, 2025-08
-    GA (1.34)                 :done, d3, 2025-08, 2025-12
-
-    section KYAML
-    Alpha (1.33)              :done, k1, 2025-04, 2025-08
-    Beta (1.34-1.35)          :done, k2, 2025-08, 2026-04
-    GA (1.36)                 :active, k3, 2026-04, 2026-08
-
-    section User Namespaces
-    Alpha (1.25)              :done, u1, 2022-05, 2024-04
-    Beta (1.30-1.33)          :done, u2, 2024-04, 2025-08
-    GA (1.34)                 :done, u3, 2025-08, 2025-12
-
-    section MutatingAdmissionPolicy
-    Alpha (1.33)              :done, m1, 2025-04, 2025-08
-    Beta (1.34-1.35)          :done, m2, 2025-08, 2026-04
-    GA (1.36)                 :active, m3, 2026-04, 2026-08
-
-    section Gang Scheduling
-    Alpha (1.35)              :done, g1, 2025-12, 2026-04
-    GA (1.36)                 :active, g2, 2026-04, 2026-08
-```
+[Historial de funciones publicadas en Kubernetes 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go) · [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) · [Gates eliminadas](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates-removed/) · [Historial de KYAML](https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/5295-kyaml)
 
 ---
 
@@ -2403,125 +2309,230 @@ gantt
 
 ## 6. Deprecaciones y eliminaciones
 
-Comprender las deprecaciones y eliminaciones es crítico para la planificación de actualizaciones. Una deprecación anuncia que una API o característica se eliminará en una versión futura, dando tiempo a los equipos para migrar. Una eliminación es la supresión real de la API o característica.
+### Distinguir versiones de API, campos, implementaciones y feature gates
 
-### Política de deprecación de APIs de Kubernetes
+Una **versión de API GA** no se puede eliminar dentro de la misma versión principal de Kubernetes. Eso no es lo mismo que un flag de CLI, una feature gate, un campo individual o una implementación de volumen. Las API beta tienen su propio período mínimo antes de retirarse: nueve meses o tres versiones menores después de la deprecación, lo que sea más largo. Las API alfa pueden cambiar o desaparecer sin esa garantía. Era incorrecta la regla original que afirmaba que «las API GA se pueden eliminar después de 12 meses o 3 versiones».
 
-- **APIs GA**: Se deprecan solo cuando hay disponible una API GA de reemplazo. Mínimo 12 meses o 3 lanzamientos antes de la eliminación.
-- **APIs beta**: Mínimo 9 meses o 3 lanzamientos antes de la eliminación después de la deprecación.
-- **APIs alpha**: Pueden eliminarse en cualquier lanzamiento sin aviso.
+Las gates siguen reglas distintas de deprecación y eliminación; hay que comprobar en qué versión se retiran realmente. No elimines ni desactives una gate solo por sumarle dos a la versión en que llegó a GA. Las secciones anteriores y el código publicado distinguen la habilitación predeterminada, el bloqueo y la eliminación real.
 
-### Deprecaciones y eliminaciones de API por versión
+### Algunos hitos de retiro de API
 
-#### Eliminado en 1.29
+| API y tipos | Dejó de ofrecerse desde | Reemplazo actual y asunto de migración |
+|---|---|---|
+| HPA `autoscaling/v2beta1` | 1.25 | `autoscaling/v2`; inspecciona el esquema de métricas |
+| HPA `autoscaling/v2beta2` | 1.26 | `autoscaling/v2` |
+| CronJob `batch/v1beta1` | 1.25 | `batch/v1` |
+| PDB `policy/v1beta1` | 1.25 | `policy/v1`; la semántica del selector vacío es distinta |
+| FlowSchema/PriorityLevelConfiguration `flowcontrol.apiserver.k8s.io/v1beta2` | 1.29 | `v1`; revisa los cambios en el campo y valor predeterminado de concurrency-shares |
+| FlowSchema/PriorityLevelConfiguration `flowcontrol.apiserver.k8s.io/v1beta3` | 1.32 | `v1` |
+| ValidatingAdmissionPolicy/Binding `admissionregistration.k8s.io/v1beta1` | 1.34 | `v1`; no lo confundas con MutatingAdmissionPolicy, que usa el mismo grupo y versión |
+| ResourceClaim/Template, DeviceClass y ResourceSlice `resource.k8s.io/v1alpha3` | 1.34 | `v1` estable para uso actual; las representaciones antiguas almacenadas requieren un plan de migración específico de la versión |
+| CSIDriver, CSINode, StorageClass y VolumeAttachment `storage.k8s.io/v1beta1` | 1.22 | `storage.k8s.io/v1` |
+| CSIStorageCapacity `storage.k8s.io/v1beta1` | 1.27 | `storage.k8s.io/v1` |
+| API beta de Ingress, CRD y configuración de webhook de admisión | 1.22 | `v1` estable; la conversión incluye cambios de esquema y campos |
 
-| API/Característica | Reemplazado por | Ruta de migración |
-|------------|-------------|----------------|
-| Plugin de admission `SecurityContextDeny` | Pod Security Standards (PSS) | Migra al admission controller `PodSecurity` |
+El grupo de recursos todavía contiene otros tipos `v1alpha3`; no declares que se retiró el grupo y versión completo por la eliminación de los cuatro tipos principales de DRA. El registro de cambios de 1.34 también advierte sobre representaciones antiguas almacenadas de DRA. Coordina las copias de seguridad, la propiedad de cargas de trabajo y claims, y la ruta de migración o recreación indicada; no elimines claims en bloque ni te limites a cambiar la cadena `apiVersion`.
 
-#### Eliminado en 1.32
+### API beta que todavía existen en la implementación de 1.36
 
-| API/Característica | Reemplazado por | Ruta de migración |
-|------------|-------------|----------------|
-| `flowcontrol.apiserver.k8s.io/v1beta2` | `flowcontrol.apiserver.k8s.io/v1beta3` -> `v1` | Actualiza la versión de API en recursos FlowSchema y PriorityLevelConfiguration |
-| API HPA `autoscaling/v2beta1` | `autoscaling/v2` | Actualiza todos los manifests HPA para usar `autoscaling/v2` |
+Los metadatos del ciclo de vida y el almacenamiento REST publicados con 1.36.2 siguen distinguiendo estas versiones. Las fechas de eliminación futuras son objetivos registrados, no una promesa de que una versión posterior no vaya a cambiarlas ni de que un servicio administrado habilite cada API de forma predeterminada.
 
-#### Eliminado en 1.34
+| API y tipos | Deprecada en los metadatos | Eliminación registrada como objetivo |
+|---|---|---|
+| API principal de DRA `resource.k8s.io/v1beta1` | 1.35 | 1.38 |
+| API principal de DRA `resource.k8s.io/v1beta2` | 1.36 | 1.39 |
+| VAC `storage.k8s.io/v1beta1` | 1.34 | 1.37 |
+| MutatingAdmissionPolicy/Binding `admissionregistration.k8s.io/v1beta1` | 1.37 | 1.40 |
 
-| API/Característica | Reemplazado por | Ruta de migración |
-|------------|-------------|----------------|
-| Patrones heredados de bandera `--authorization-mode` | StructuredAuthorizationConfiguration | Migra a archivo de configuración de autorización estructurada |
-| `flowcontrol.apiserver.k8s.io/v1beta3` | `flowcontrol.apiserver.k8s.io/v1` | Actualiza a la versión estable de la API |
+Que una API beta llegara a GA no la eliminó de inmediato. A la inversa, si un registro de cambios publicado posteriormente modifica la implementación, un pronóstico antiguo sobre la eliminación de una API alfa deja de ser una fuente confiable.
 
-#### Deprecado (aún no eliminado)
+Otras correcciones importantes: KMS v1 está deprecada y deshabilitada de forma predeterminada, no eliminada en 1.31; `--authorization-mode` sigue siendo una alternativa a la configuración estructurada de autorización; el modo de proxy iptables no se eliminó en 1.34; IPVS está deprecado, pero aún se implementa en upstream 1.36.2. La generación automática de Secrets heredados de ServiceAccount cambió en 1.24, no en 1.33. No presentes la antigua eliminación de `kubectl --export` como un cambio nuevo de 1.35. Para los complementos de almacenamiento integrados en el árbol, verifica el complemento y la versión específicos, el estado de migración CSI, los identificadores de volumen y la disponibilidad del controlador; no uses un calendario universal.
 
-| API/Característica | Deprecado en | Eliminación esperada | Ruta de migración |
-|------------|--------------|-----------------|----------------|
-| Cloud provider in-tree (AWS, GCP, Azure) | 1.26+ | En curso | Migra a external cloud controller managers |
-| Perfiles AppArmor basados en anotaciones | 1.31 | 1.35 | Usa el campo `securityContext.appArmorProfile` |
-| `batch/v1beta1` CronJob | 1.21 | 1.25 (eliminado) | Usa `batch/v1` |
-| `policy/v1beta1` PodDisruptionBudget | 1.21 | 1.25 (eliminado) | Usa `policy/v1` |
-| Modo iptables de kube-proxy | 1.33 (soft) | TBD | Planifica migración a nftables o IPVS |
+### Auditar por separado los manifiestos almacenados y el uso real de los clientes
 
-### Feature gates eliminados por versión
+La respuesta GET representa la versión de API solicitada o preferida, y puede ocultar qué versión usó originalmente un cliente. `kubectl get flowschemas -o json`, el descubrimiento de API o una lista de webhooks de conversión de CRD no demuestran que se haya usado una API deprecada. Tampoco todas las API `v1beta1` están deprecadas. Combina los manifiestos renderizados de Git o Helm, la configuración original aplicada cuando esté disponible, las métricas de uso de API o los registros de auditoría, EKS Insights y las pruebas con la versión objetivo. Revisa por separado las versiones servidas y almacenadas de los CRD y su comportamiento de conversión.
 
-Cuando una característica alcanza GA, su feature gate normalmente se elimina después de 2 lanzamientos. Esto significa que no puedes deshabilitar características GA.
-
-```bash
-# Check for feature gates that reference removed gates
-# This would cause kubelet startup failure after upgrade
-
-# Feature gates removed in 1.33:
-# - SidecarContainers (GA in 1.33, gate removed in 1.35)
-# - ServiceCIDR (GA in 1.33, gate removed in 1.35)
-
-# Feature gates removed in 1.34:
-# - UserNamespacesSupport (GA in 1.34, gate removed in 1.36)
-# - VolumeAttributesClass (GA in 1.34, gate removed in 1.36)
-
-# If you have explicit feature gate overrides, check them:
-kubectl get cm kubelet-config -n kube-system -o yaml | grep featureGates -A 20
-```
-
-### Checklist de migración para APIs deprecadas
+Esta métrica puede mostrar las solicitudes deprecadas que observó el proceso del servidor de API; no es un conteo histórico completo ni garantiza cobertura de todas las réplicas del servidor de API. La falta de métricas o los errores de acceso no significan que la revisión haya dado un resultado limpio.
 
 ```bash
-#!/bin/bash
-# deprecation-check.sh - Check for deprecated API usage
-
-echo "=== Kubernetes Deprecation Audit ==="
-
-# Check for deprecated API versions in cluster resources
-echo ""
-echo "--- Checking for deprecated APIs in running resources ---"
-
-# FlowSchema (v1beta2/v1beta3 deprecated)
-echo "FlowSchemas using deprecated API versions:"
-kubectl get flowschemas -o json | jq -r '.items[] | select(.apiVersion != "flowcontrol.apiserver.k8s.io/v1") | "\(.metadata.name): \(.apiVersion)"'
-
-# Check for AppArmor annotations (deprecated in 1.31)
-echo ""
-echo "Pods using deprecated AppArmor annotations:"
-kubectl get pods -A -o json | jq -r '.items[] | select(.metadata.annotations // {} | keys[] | test("apparmor.security.beta")) | "\(.metadata.namespace)/\(.metadata.name)"'
-
-# Check for deprecated admission webhooks
-echo ""
-echo "Admission webhooks using deprecated API versions:"
-kubectl get validatingwebhookconfigurations -o json | jq -r '.items[] | select(.apiVersion | test("v1beta1")) | .metadata.name'
-kubectl get mutatingwebhookconfigurations -o json | jq -r '.items[] | select(.apiVersion | test("v1beta1")) | .metadata.name'
-
-# Check Helm releases for deprecated APIs
-echo ""
-echo "Checking Helm releases for deprecated API versions:"
-for release in $(helm list -A -q); do
-  helm get manifest $release -n $(helm list -A -f "^${release}$" -o json | jq -r '.[0].namespace') 2>/dev/null | \
-    grep "apiVersion:" | sort -u | while read line; do
-      case "$line" in
-        *v1beta1*|*v1beta2*|*v2beta1*)
-          echo "  $release: $line (DEPRECATED)"
-          ;;
-      esac
-    done
-done
-
-echo ""
-echo "=== Audit Complete ==="
+# Read-only, explicitly selected cluster; metrics access may be restricted.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${EVIDENCE_PARENT:?Existing private directory}"
+umask 077
+evidence_dir=$(mktemp -d "$EVIDENCE_PARENT/api-usage.XXXXXXXX")
+kubectl --context "$KUBE_CONTEXT" --request-timeout=20s get --raw='/metrics' > "$evidence_dir/metrics.prom"
+awk '/^apiserver_requested_deprecated_apis/ {print}' "$evidence_dir/metrics.prom"
 ```
 
-### Matriz de compatibilidad de API
+### Comprobador local limitado del ciclo de vida
 
-Usa esta tabla para verificar que tus manifests sean compatibles con la versión objetivo de Kubernetes antes de actualizar.
+El siguiente ejemplo requiere Python, PyYAML y un directorio propio con manifiestos YAML/JSON renderizados. Usa un catálogo finito basado en la revisión de 1.36.2 y acepta como objetivo las versiones 1.29–1.36. Distingue los tipos que comparten una versión de API, rechaza errores de análisis y directorios vacíos, y nunca imprime cuerpos de recursos. **No es una auditoría completa del esquema, del uso por los clientes ni de la compatibilidad del entorno de ejecución.** No detecta todas las API deprecadas, todos los cambios semánticos ni todos los problemas de YAML/esquema; usa también un validador de esquemas asociado a la versión y a los CRD reales. Hay que revisar `notInCatalog`.
 
-| Recurso | API estable | APIs deprecadas | Seguro desde |
-|----------|-----------|-----------------|------------|
-| HorizontalPodAutoscaler | `autoscaling/v2` | `v2beta1` (eliminado 1.26), `v2beta2` (eliminado 1.26) | 1.23 |
-| CronJob | `batch/v1` | `v1beta1` (eliminado 1.25) | 1.21 |
-| PodDisruptionBudget | `policy/v1` | `v1beta1` (eliminado 1.25) | 1.21 |
-| CSIDriver | `storage.k8s.io/v1` | `v1beta1` (eliminado 1.22) | 1.18 |
-| FlowSchema | `flowcontrol.apiserver.k8s.io/v1` | `v1beta2` (eliminado 1.32), `v1beta3` (eliminado 1.34) | 1.29 |
-| ValidatingAdmissionPolicy | `admissionregistration.k8s.io/v1` | `v1beta1` (deprecado 1.30) | 1.30 |
-| ResourceClaim (DRA) | `resource.k8s.io/v1` | `v1alpha3` (eliminado 1.34), `v1beta1` (eliminado 1.34) | 1.34 |
-| VolumeAttributesClass | `storage.k8s.io/v1` | `v1beta1` (eliminado 1.36) | 1.34 |
+El código de salida 1 indica que se encontraron problemas del ciclo de vida; 2 indica un problema de entrada o análisis; 0 solo significa que no se encontraron problemas conocidos del catálogo en los archivos analizados. No suprimas esos errores ni llames «compatible» a un análisis parcial.
+
+```python
+"""Limited offline GVK lifecycle audit, snapshot: Kubernetes 1.36.2.
+Requires PyYAML. This is not a schema, runtime or complete client-usage audit.
+"""
+import argparse
+import json
+import re
+from pathlib import Path
+
+import yaml
+
+
+CATALOG = {}
+
+
+def add(api, kinds, deprecated, removed, replacement):
+    for kind in kinds.split(","):
+        CATALOG[(api, kind)] = (deprecated, removed, replacement)
+
+
+add("autoscaling/v2beta1", "HorizontalPodAutoscaler", 22, 25, "autoscaling/v2")
+add("autoscaling/v2beta2", "HorizontalPodAutoscaler", 23, 26, "autoscaling/v2")
+add("batch/v1beta1", "CronJob", 21, 25, "batch/v1")
+add("policy/v1beta1", "PodDisruptionBudget", 21, 25, "policy/v1")
+add("networking.k8s.io/v1beta1", "Ingress", 19, 22, "networking.k8s.io/v1")
+add("extensions/v1beta1", "Ingress", 14, 22, "networking.k8s.io/v1")
+add("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", 16, 22, "apiextensions.k8s.io/v1")
+add("admissionregistration.k8s.io/v1beta1", "MutatingWebhookConfiguration,ValidatingWebhookConfiguration", 16, 22, "admissionregistration.k8s.io/v1")
+add("admissionregistration.k8s.io/v1beta1", "ValidatingAdmissionPolicy,ValidatingAdmissionPolicyBinding", 31, 34, "admissionregistration.k8s.io/v1")
+add("admissionregistration.k8s.io/v1beta1", "MutatingAdmissionPolicy,MutatingAdmissionPolicyBinding", 37, 40, "admissionregistration.k8s.io/v1")
+add("flowcontrol.apiserver.k8s.io/v1beta1", "FlowSchema,PriorityLevelConfiguration", 23, 26, "flowcontrol.apiserver.k8s.io/v1")
+add("flowcontrol.apiserver.k8s.io/v1beta2", "FlowSchema,PriorityLevelConfiguration", 26, 29, "flowcontrol.apiserver.k8s.io/v1")
+add("flowcontrol.apiserver.k8s.io/v1beta3", "FlowSchema,PriorityLevelConfiguration", 29, 32, "flowcontrol.apiserver.k8s.io/v1")
+add("storage.k8s.io/v1beta1", "CSIDriver", 19, 22, "storage.k8s.io/v1")
+add("storage.k8s.io/v1beta1", "CSINode", 17, 22, "storage.k8s.io/v1")
+add("storage.k8s.io/v1beta1", "StorageClass", 19, 22, "storage.k8s.io/v1")
+add("storage.k8s.io/v1beta1", "VolumeAttachment", 19, 22, "storage.k8s.io/v1")
+add("storage.k8s.io/v1beta1", "CSIStorageCapacity", 24, 27, "storage.k8s.io/v1")
+add("storage.k8s.io/v1beta1", "VolumeAttributesClass", 34, 37, "storage.k8s.io/v1")
+# Alpha core DRA kinds were actually removed in 1.34, overriding older plans.
+add("resource.k8s.io/v1alpha3", "ResourceClaim,ResourceClaimTemplate,DeviceClass,ResourceSlice", 34, 34, "resource.k8s.io/v1")
+add("resource.k8s.io/v1beta1", "ResourceClaim,ResourceClaimTemplate,DeviceClass,ResourceSlice", 35, 38, "resource.k8s.io/v1")
+add("resource.k8s.io/v1beta2", "ResourceClaim,ResourceClaimTemplate,DeviceClass,ResourceSlice", 36, 39, "resource.k8s.io/v1")
+
+
+def resources(obj, seen=None):
+    seen = set() if seen is None else seen
+    if obj is None:
+        return
+    if not isinstance(obj, dict):
+        raise ValueError("expected a resource mapping")
+    if id(obj) in seen:
+        raise ValueError("recursive resource List")
+    if len(seen) >= 32:
+        raise ValueError("resource List nesting exceeds32")
+    seen.add(id(obj))
+    try:
+        if obj.get("kind") == "List":
+            for item in obj.get("items", []):
+                yield from resources(item, seen)
+        else:
+            yield obj
+    finally:
+        seen.remove(id(obj))
+
+
+def audit(directory, target_minor):
+    findings, errors, skipped = [], [], 0
+    files = sorted(p for p in directory.rglob("*") if p.is_file() and p.suffix.lower() in {".yaml", ".yml", ".json"})
+    if len(files) > 5000:
+        raise ValueError("limit exceeded: 5000 rendered files")
+    if not files:
+        errors.append({"path": str(directory), "errorType": "NoManifestFiles", "line": None})
+    for path in files:
+        try:
+            if path.is_symlink() or path.stat().st_size > 16 * 1024 * 1024:
+                raise ValueError("symlink or file exceeds16MiB")
+            for document in yaml.safe_load_all(path.read_text(encoding="utf-8")):
+                for obj in resources(document):
+                    key = (obj.get("apiVersion"), obj.get("kind"))
+                    entry = CATALOG.get(key)
+                    if entry is None:
+                        skipped += 1
+                        continue
+                    deprecated, removed, replacement = entry
+                    if target_minor < deprecated:
+                        continue
+                    metadata = obj.get("metadata") or {}
+                    if not isinstance(metadata, dict) or any(
+                        metadata.get(k) is not None and not isinstance(metadata[k], str)
+                        for k in ("name", "namespace")
+                    ):
+                        raise ValueError("invalid metadata identity fields")
+                    findings.append({
+                        "path": str(path), "apiVersion": key[0], "kind": key[1],
+                        "namespace": metadata.get("namespace"), "name": metadata.get("name"),
+                        "state": "removed" if target_minor >= removed else "deprecated",
+                        "replacement": replacement,
+                    })
+        except (OSError, UnicodeError, ValueError, TypeError, yaml.YAMLError) as exc:
+            # Do not print parser snippets or resource/Secret bodies.
+            mark = getattr(exc, "problem_mark", None)
+            errors.append({"path": str(path), "errorType": type(exc).__name__,
+                           "line": mark.line + 1 if mark is not None else None})
+    return {"snapshot": "Kubernetes1.36.2", "files": len(files), "findings": findings,
+            "errors": errors, "notInCatalog": skipped,
+            "limit": "Selected GVK lifecycle checks only; no matches do not certify compatibility."}
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--directory", type=Path, required=True)
+    parser.add_argument("--target-version", required=True)
+    args = parser.parse_args()
+    match = re.fullmatch(r"1\.(\d+)(?:\.\d+)?", args.target_version)
+    if not match or not 29 <= int(match[1]) <= 36 or not args.directory.is_dir():
+        parser.error("provide a rendered directory and a reviewed target from1.29 through1.36")
+    try:
+        result = audit(args.directory, int(match[1]))
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(json.dumps(result, indent=2))
+    raise SystemExit(2 if result["errors"] else 1 if result["findings"] else 0)
+```
+
+```bash
+# Save the Python example as api-version-audit.py; requires PyYAML.
+: "${MANIFEST_DIR:?Directory containing owned rendered manifests}"
+python3 api-version-audit.py --directory "$MANIFEST_DIR" --target-version 1.36.0
+```
+
+### Límites de Pluto, kubent y Helm
+
+Pluto sirve como detector adicional, pero que la herramienta o sus reglas estén actualizadas no demuestra que sus resultados sean correctos. En las pruebas nativas de esta auditoría, **Pluto 5.24.3** no detectó la API beta eliminada de VAP, devolvió código 0 ante YAML malformado y clasificó DRA beta1 como eliminada en 1.36, a pesar de la evidencia publicada del ciclo de vida y el almacenamiento de la versión 1.36.2. Trata sus resultados como pistas que hay que cotejar con fuentes primarias. Sus códigos predeterminados 2, 3 y 4 indican hallazgos de deprecación, eliminación o reemplazo no disponible; también hay que investigar otros errores. `--components k8s` evita usar sin avisar las versiones predeterminadas de otros componentes incluidos.
+
+```bash
+# Advisory only: record the reviewed Pluto version and its rule coverage.
+: "${MANIFEST_DIR:?Directory containing owned rendered manifests}"
+pluto detect-files --directory "$MANIFEST_DIR" \
+  --target-versions k8s=v1.36.0 --components k8s --output json
+```
+
+```bash
+# Read-only cluster/Helm inspection can require access to release Secrets.
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?Owned namespace}"
+pluto detect-all-in-cluster --kube-context "$KUBE_CONTEXT" --namespace "$NAMESPACE" \
+  --target-versions k8s=v1.36.0 --components k8s --output json
+```
+
+```bash
+# Inspect names with their namespaces; a Helm release name is not globally unique.
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${RELEASE_NAME:?}"
+helm list --kube-context "$KUBE_CONTEXT" --namespace "$NAMESPACE" --output json
+# If exporting manifests, use a private file: they can contain Secret values.
+: "${PRIVATE_MANIFEST_FILE:?Choose a private destination}"
+umask 077
+helm get manifest --kube-context "$KUBE_CONTEXT" --namespace "$NAMESPACE" \
+  "$RELEASE_NAME" > "$PRIVATE_MANIFEST_FILE"
+```
+
+Kubent es otro detector de manifiestos originales, no una fuente de verdad del servidor de API. La versión publicada más reciente observada aquí fue la 0.7.3, de agosto de 2024; verifica que sus reglas cubran las API objetivo más nuevas. Son relevantes los flags documentados `--context`, `--target-version` y `--exit-error`; para recopilar información de Helm se requieren permisos para leer los Secrets o ConfigMaps de los lanzamientos. `kubectl convert` convierte representaciones compatibles de objetos; no detecta el uso de API por clientes deprecados. Que haya un webhook configurado para convertir un CRD no significa por sí solo que esté deprecado.
+
+[Política de deprecación de Kubernetes](https://kubernetes.io/docs/reference/deprecation-policy/) · [Guía de migración de API](https://kubernetes.io/docs/reference/using-api/deprecation-guide/) · [Registro de cambios de 1.34](https://github.com/kubernetes/kubernetes/blob/v1.34.0/CHANGELOG/CHANGELOG-1.34.md) · [Almacenamiento REST de DRA en 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/registry/resource/rest/storage_resource.go) · [Pluto](https://github.com/FairwindsOps/pluto) · [Kubent](https://github.com/doitintl/kube-no-trouble)
 
 ---
 
@@ -2529,577 +2540,259 @@ Usa esta tabla para verificar que tus manifests sean compatibles con la versión
 
 ## 7. Consideraciones específicas de EKS
 
-### Retraso de versiones de EKS frente a upstream
+### Disponibilidad de versiones y funciones
 
-Los lanzamientos de EKS se retrasan respecto a Kubernetes upstream aproximadamente 2-4 meses. Este retraso proporciona:
+EKS sigue su propio calendario de calificación y soporte. Las fechas de la sección 3 son registros de disponibilidad verificados, no una promesa de que todas las versiones futuras lleguen con el mismo retraso. La madurez de una API upstream, su disponibilidad en la API de EKS y las capacidades del nodo o del entorno de ejecución son cuestiones distintas. AWS administra los indicadores del plano de control de EKS; editar un Pod de kube-apiserver, aplicar una configuración de kubeadm o cambiar un indicador en un nodo no permite configurar el plano de control de EKS.
 
-| Beneficio | Descripción |
-|---------|-------------|
-| **Estabilidad** | AWS valida el lanzamiento con integraciones específicas de EKS |
-| **Compatibilidad de add-ons** | Los add-ons administrados se prueban y actualizan |
-| **Disponibilidad de AMI** | Las AMIs optimizadas para EKS se construyen y prueban |
-| **Parches de seguridad** | Las CVEs conocidas se abordan antes del lanzamiento |
+La sección de preguntas frecuentes de EKS indica que se admiten las API de Kubernetes con disponibilidad general, que las API beta nuevas no se habilitan de forma predeterminada y que las funciones alfa no son compatibles. Las API beta existentes y las nuevas versiones de API beta existentes reciben un tratamiento distinto. Consulta las notas de la versión concreta de EKS y la implementación de cómputo; no des por sentado que todos los campos beta están disponibles ni que toda función GA se puede usar sin controladores, configuración o nodos compatibles.
 
-```mermaid
-gantt
-    title Upstream vs EKS Release Lag (1.33-1.36)
-    dateFormat YYYY-MM
-    axisFormat %Y-%m
+![Cronología de dos carriles que empareja los meses de lanzamiento upstream de Kubernetes 1.33 a 1.36 con su disponibilidad en Amazon EKS, muestra un retraso constante de aproximadamente dos meses y destaca 1.36 como la versión más reciente disponible en EKS.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-20.png)
 
-    section 1.33
-    Upstream Release    :done, u33, 2025-04, 2025-05
-    EKS Release         :done, e33, 2025-06, 2025-07
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-20.html)
 
-    section 1.34
-    Upstream Release    :done, u34, 2025-08, 2025-09
-    EKS Release         :done, e34, 2025-10, 2025-11
+### Consulta los registros de compatibilidad en vez de una tabla de versiones mínimas supuestas
 
-    section 1.35
-    Upstream Release    :done, u35, 2025-12, 2026-01
-    EKS Release         :done, e35, 2026-02, 2026-03
-
-    section 1.36
-    Upstream Release    :done, u36, 2026-04, 2026-05
-    EKS Release         :active, e36, 2026-06, 2026-07
-```
-
-### Disponibilidad de feature gates en EKS
-
-No todos los feature gates de Kubernetes upstream están disponibles en EKS. AWS controla la configuración del control plane, por lo que:
-
-- **Características GA**: Siempre habilitadas (igual que upstream)
-- **Características beta (habilitadas por defecto)**: Generalmente disponibles en EKS
-- **Características beta (deshabilitadas por defecto)**: Pueden requerir un ticket de soporte de EKS o no estar disponibles
-- **Características alpha**: No disponibles en EKS (las características alpha nunca se habilitan en EKS)
+La antigua matriz de complementos `v1.x+` no acreditaba la compatibilidad con compilaciones de EKS, versiones de plataforma, arquitecturas ni tipos de cómputo, y mezclaba esquemas de versiones de recopiladores, charts y complementos. Primero registra la cuenta, la región, la versión del clúster y los componentes instalados que administras. Que el campo del rol IRSA sea nulo no demuestra que el complemento carezca de acceso a AWS; puede usar Pod Identity o una identidad administrada por el proveedor. Es posible que los componentes integrados de Auto Mode no aparezcan como complementos instalados convencionales.
 
 ```bash
-# Check which feature gates are active on your EKS cluster's nodes
-kubectl get --raw "/api/v1/nodes/$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')/proxy/configz" | \
-  jq '.kubeletconfig.featureGates'
-
-# Check API server feature gates via metrics
-kubectl get --raw /metrics 2>/dev/null | grep kubernetes_feature_enabled | head -30
+# Read-only inventory in the explicitly selected account/Region/cluster.
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${CLUSTER_NAME:?}"; : "${EXPECTED_ACCOUNT_ID:?}"
+actual_account=$(aws sts get-caller-identity --region "$AWS_REGION" --query Account --output text)
+test "$actual_account" = "$EXPECTED_ACCOUNT_ID" || { printf '%s\n' 'Account mismatch' >&2; exit 1; }
+aws eks describe-cluster --region "$AWS_REGION" --name "$CLUSTER_NAME" --no-cli-pager \
+  --query 'cluster.{version:version,platform:platformVersion,compute:computeConfig,upgradePolicy:upgradePolicy}' --output json
+aws eks list-addons --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" --no-cli-pager --output json
 ```
-
-### Matriz de compatibilidad de add-ons administrados de EKS
-
-Al actualizar clusters EKS, la compatibilidad de add-ons es crítica. Cada versión de Kubernetes tiene requisitos específicos de versión de add-ons.
-
-| Add-on | K8s 1.31 | K8s 1.32 | K8s 1.33 | K8s 1.34 | K8s 1.35 | K8s 1.36 |
-|--------|----------|----------|----------|----------|----------|----------|
-| **VPC CNI** | v1.18+ | v1.19+ | v1.19+ | v1.20+ | v1.20+ | v1.21+ |
-| **CoreDNS** | v1.11.1+ | v1.11.3+ | v1.12.0+ | v1.12.0+ | v1.12.1+ | v1.12.1+ |
-| **kube-proxy** | v1.31.x | v1.32.x | v1.33.x | v1.34.x | v1.35.x | v1.36.x |
-| **EBS CSI** | v1.35+ | v1.36+ | v1.37+ | v1.38+ | v1.39+ | v1.40+ |
-| **EFS CSI** | v2.0+ | v2.1+ | v2.1+ | v2.2+ | v2.2+ | v2.3+ |
-| **ADOT** | v0.102+ | v0.104+ | v0.106+ | v0.108+ | v0.110+ | v0.112+ |
-
-> **Nota**: Siempre consulta la versión más reciente de [EKS add-on version compatibility](https://docs.aws.amazon.com/eks/latest/userguide/managing-add-ons.html) antes de actualizar, ya que pueden requerirse versiones de parche específicas.
 
 ```bash
-# Check current add-on versions
-aws eks describe-addon-versions --kubernetes-version 1.36 \
-  --addon-name vpc-cni --query 'addons[].addonVersions[].addonVersion' --output table
-
-# List all installed add-ons and their versions
-aws eks list-addons --cluster-name my-cluster --output table
-for addon in $(aws eks list-addons --cluster-name my-cluster --query 'addons[]' --output text); do
-  version=$(aws eks describe-addon --cluster-name my-cluster --addon-name $addon \
-    --query 'addon.addonVersion' --output text)
-  echo "$addon: $version"
-done
+# Inspect one addon, not a guessed first element or a bare component version.
+: "${AWS_REGION:?}"; : "${CLUSTER_NAME:?}"; : "${ADDON_NAME:?}"
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
+  --addon-name "$ADDON_NAME" --no-cli-pager \
+  --query 'addon.{name:addonName,version:addonVersion,status:status,issues:health.issues,role:serviceAccountRoleArn,podIdentityAssociations:podIdentityAssociations}' --output json
 ```
 
-### Soporte de versiones de EKS Auto Mode
-
-EKS Auto Mode simplifica la gestión del cluster administrando node groups automáticamente, pero tiene sus propias consideraciones de versión:
-
-| Característica | Comportamiento con Auto Mode |
-|---------|------------------------|
-| **Actualizaciones del control plane** | Administradas por EKS (pueden activarse mediante API/consola) |
-| **Actualizaciones de nodos** | Manejadas automáticamente por Auto Mode |
-| **Version skew** | Auto Mode mantiene skew n-1 entre control plane y nodos |
-| **Actualizaciones de add-ons** | Add-ons core administrados automáticamente |
-| **Feature gates** | Los feature gates a nivel de nodo son administrados por Auto Mode |
+La consulta candidata siguiente busca la **versión de Kubernetes solicitada** en cada registro de compatibilidad. Conserva los datos de arquitectura, tipos de cómputo, versiones de plataforma, selección predeterminada y requisitos de configuración e IAM. El primer elemento del arreglo y la versión lexicográficamente mayor no son «la versión más reciente compatible». El indicador predeterminado de AWS corresponde a un registro de compatibilidad concreto, no es una clasificación global.
 
 ```bash
-# Check Auto Mode status
-aws eks describe-cluster --name my-cluster \
-  --query 'cluster.computeConfig' --output json
-
-# Verify Auto Mode node version alignment
-kubectl get nodes -o custom-columns=\
-NAME:.metadata.name,\
-VERSION:.status.nodeInfo.kubeletVersion,\
-INSTANCE_TYPE:.metadata.labels.'node\.kubernetes\.io/instance-type'
+# Read-only candidates; no addon is installed or changed.
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${TARGET_K8S_VERSION:?For example1.36}"; : "${ADDON_NAME:?}"
+aws eks describe-addon-versions --region "$AWS_REGION" --no-cli-pager \
+  --kubernetes-version "$TARGET_K8S_VERSION" --addon-name "$ADDON_NAME" --output json |
+  jq -e --arg target "$TARGET_K8S_VERSION" --arg name "$ADDON_NAME" '
+    [.addons[]? | select(.addonName == $name) | . as $addon |
+      .addonVersions[]? as $release | $release.compatibilities[]? |
+      select(.clusterVersion == $target) |
+      {addon:$addon.addonName,version:$release.addonVersion,
+       architecture:$release.architecture,computeTypes:$release.computeTypes,
+       requiresConfiguration:$release.requiresConfiguration,requiresIamPermissions:$release.requiresIamPermissions,
+       platformVersions:.platformVersions,defaultForThisCompatibility:.defaultVersion}] |
+    if length == 0 then error("No matching compatibility record; do not infer support")
+    else . end'
 ```
 
-> **Importante**: Al usar EKS Auto Mode, asegúrate de que cualquier configuración personalizada de NodePool sea compatible con la versión objetivo de Kubernetes. Los NodePools de Auto Mode adoptan automáticamente nuevas AMIs durante las actualizaciones, pero las configuraciones personalizadas pueden requerir verificación manual.
+Estos son candidatos, no una decisión de despliegue. Comprueba la plataforma de destino, las arquitecturas y la combinación de cómputo de los nodos, las notas de la versión, la configuración requerida y los permisos de AWS. Si no hay resultados o falla la CLI, detén la selección. Consulta el esquema exacto de configuración del complemento y conserva los valores intencionales existentes antes de realizar una actualización revisada por separado. No uses OVERWRITE a ciegas, no reduzcas la versión a una anterior arbitraria ni supongas que actualizar el plano de control actualiza todos los complementos. La auditoría probó estos comandos con respuestas simuladas y modelos actuales de la CLI, no contra el catálogo activo de AWS.
 
-### Análisis de costo de Extended Support
+### Auto Mode y clústeres mixtos
 
-Comprender el impacto financiero del soporte extendido ayuda a los equipos a priorizar la planificación de actualizaciones.
+Auto Mode administra sus componentes integrados de cómputo, red y almacenamiento; eso no implica una regla permanente de versiones de nodos `n−1` ni el mantenimiento automático de cada complemento de terceros. Las restricciones de las cargas de trabajo y los controles de disrupción pueden retrasar los reemplazos. Comprueba el estado real de las actualizaciones y las versiones de los nodos, y revisa la compatibilidad de los NodePool personalizados. Los grupos de nodos administrados, los nodos autoadministrados o Hybrid y los Pods de Fargate tienen sus propios procesos de actualización y reemplazo.
 
+Los nodos actuales de Auto Mode ejecutan CoreDNS como **servicio del sistema del nodo**. Cuando todas las cargas de trabajo aplicables se hayan trasladado a nodos de Auto Mode, un clúster que solo use Auto Mode puede quitar el Deployment tradicional de CoreDNS. Un clúster mixto con Auto Mode y nodos que no usan Auto Mode debe conservar el Deployment para estos últimos. La ausencia de Pods convencionales de CoreDNS, VPC CNI o kube-proxy no significa automáticamente que Auto Mode tenga un problema, y su presencia tampoco demuestra que el modo previsto esté funcionando correctamente.
+
+```bash
+# Read-only node inventory; the label is evidence, not an availability check.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes -o json | jq '[
+  .items[] | {name:.metadata.name,kubelet:.status.nodeInfo.kubeletVersion,
+             computeType:.metadata.labels["eks.amazonaws.com/compute-type"]}]'
 ```
-Cost Comparison: Standard vs Extended Support (per cluster)
 
-Standard Support:  $0.10/hour  x  24 hours  x  365 days  =  $876/year
-Extended Support:  $0.60/hour  x  24 hours  x  365 days  =  $5,256/year
+Un ClusterConfig de eksctl con un `metadata.version` nuevo no ejecuta por sí solo una actualización. Usa el procedimiento de actualización revisado y sigue el ID de actualización que devuelve. Los PDB no garantizan la disponibilidad: entiende qué operación de reemplazo los respeta y qué rutas de escalado o eliminación funcionan de otra manera. Incluye en el plan la preparación de la disponibilidad de las aplicaciones, el almacenamiento y la reversión.
 
-Additional cost per cluster in extended support:  $4,380/year
-```
+### Costes del soporte extendido
 
-| Clusters en Extended Support | Costo anual adicional |
-|-----------------------------|----------------------|
-| 1 cluster | $4,380 |
-| 5 clusters | $21,900 |
-| 10 clusters | $43,800 |
-| 25 clusters | $109,500 |
-| 50 clusters | $219,000 |
-| 100 clusters | $438,000 |
+La diferencia verificada en la tarifa de soporte por versión es de $0.50 por clúster y hora. Para un año ilustrativo de 365 días, las tarifas adicionales ascienden a $4,380 para 1 clúster, $21,900 para 5, $43,800 para 10, $109,500 para 25 y $219,000 para 50. Estas cifras no incluyen cómputo, niveles aprovisionados del plano de control, redes ni otros cargos. Un mes de 730 horas es una hipótesis de planificación, no la duración de todos los meses calendario.
 
-```mermaid
-quadrantChart
-    title Upgrade Priority Matrix
-    x-axis Low Effort --> High Effort
-    y-axis Low Cost Risk --> High Cost Risk
-    quadrant-1 Plan and Schedule
-    quadrant-2 Upgrade Immediately
-    quadrant-3 Monitor
-    quadrant-4 Invest in Automation
-    "1 cluster, simple apps": [0.2, 0.15]
-    "5 clusters, mixed workloads": [0.4, 0.35]
-    "10 clusters, stateful apps": [0.6, 0.55]
-    "25 clusters, multi-team": [0.75, 0.7]
-    "50+ clusters, enterprise": [0.9, 0.9]
-```
+El tamaño de la flota es solo una dimensión de planificación: un clúster crítico puede entrañar más riesgo operativo que muchos clústeres sencillos. Acercarse al final del soporte estándar debería aumentar la prioridad de planificación, no justificar que se omita la validación en un entorno de prueba ni que se actualice directamente producción con comprobaciones mínimas. Cuando corresponda, compara una actualización controlada con el coste del soporte extendido que se haya aceptado explícitamente.
+
+![Matriz de prioridad de actualización que ubica cinco perfiles de flota EKS según la complejidad de la flota y la urgencia del coste de soporte extendido, desde un clúster sencillo en «Supervisar» hasta una flota empresarial de más de 50 clústeres en «Planificar y programar», con el mayor riesgo de coste.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-19.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-19.html)
+
+<!-- Parent repair: imminent-support-end path must not recommend direct production upgrade with minimal validation.
+![Decision flow that branches on the time left in Standard Support into a planned upgrade, an immediate upgrade, or an Extended Support cost review, ending in either a production upgrade or staying on Extended Support.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-16.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-16.html)
+-->
+
+[Política de soporte de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) · [DescribeAddonVersions](https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html) · [Redes y DNS de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) · [Precios de EKS](https://aws.amazon.com/eks/pricing/) · [Guía de actualización de EKS revisada](08-eks-upgrades.md)
 
 ---
 
 <span id="8-version-upgrade-planning"></span>
 
-## 8. Planificación de actualización de versiones
+## 8. Planificación de la actualización de versiones
 
-### Estrategia de pruebas de feature gates
+### Elabora un plan ejecutable para un paso de una versión menor
 
-Antes de actualizar, prueba los nuevos feature gates en un entorno de staging para asegurar compatibilidad.
+Las actualizaciones de EKS avanzan de una versión menor a la siguiente. Usa el calendario verificado de versiones y soporte, los registros de compatibilidad específicos del destino y la guía de actualización vigente de EKS; no deduzcas la elegibilidad a partir de la etiqueta upstream más reciente. Las estimaciones originales de una o dos semanas de preparación y uno o dos días de ejecución son ejemplos de planificación, no plazos ni duraciones medidas.
 
-```yaml
-# Step 1: Enable feature gates in staging
-# For EKS managed node groups, use a custom launch template
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: staging-cluster
-  region: us-west-2
-managedNodeGroups:
-  - name: test-nodes
-    instanceType: m6i.xlarge
-    desiredCapacity: 3
-    kubelet:
-      featureGates:
-        InPlacePodVerticalScaling: true
-        UserNamespacesSupport: true
+1. Registra la cuenta, la región y el clúster que administras; las versiones del plano de control y de los nodos; los modos de cómputo; las compilaciones de los complementos; el uso de las API; los operadores y responsables de las cargas de trabajo. Lleva los nodos a una versión actual segura antes de la siguiente actualización del plano de control. La diferencia de versiones permitida define un límite de compatibilidad; no recomienda mantener los nodos tres versiones menores por detrás ni describe de forma universal cómo se aplica cada API.
+2. Revisa los cambios de la versión de destino, las API obsoletas o eliminadas y los requisitos para migrar versiones almacenadas, además de la compatibilidad del entorno de ejecución, el sistema operativo y la AMI, los CRD y las políticas de admisión. Un resultado de salida 0 de una herramienta, una respuesta GET convertida o una etiqueta GA no constituyen una prueba completa de compatibilidad.
+3. Haz copias de seguridad del estado de las aplicaciones y de la configuración de Kubernetes según corresponda, y prueba su restauración. EKS administra su etcd; los clientes no pueden inspeccionar un calendario de copias de seguridad de un etcd administrado ni ejecutar comandos de instantáneas de etcd como si fueran propietarios del plano de control. Git no sustituye las copias de seguridad de bases de datos ni de PVC.
+4. Ensaya el paso de versión y la secuencia real de componentes en un entorno representativo que no sea de producción. Valida la disponibilidad de las aplicaciones, las redes y el DNS, el almacenamiento, el escalado automático, la identidad y la observabilidad. Define antes de producción los criterios para revertir o recuperar los datos.
+5. Ejecuta la actualización aprobada del plano de control y sigue el ID de actualización devuelto hasta que alcance un estado terminal satisfactorio. Actualiza los nodos y componentes aplicables en el orden documentado. Parte del trabajo de compatibilidad o migración debe hacerse antes de actualizar el plano de control; no existe una secuencia universal «kube-proxy → CoreDNS → VPC CNI → CSI» válida para todas las versiones y modos de cómputo.
+6. Tras cada fase, verifica el comportamiento observable por el cliente, la disponibilidad de las réplicas, el estado de la API y de la actualización, y el estado de los componentes. Que haya Pods en ejecución no demuestra que estén listos. Conserva las evidencias y actualiza el procedimiento operativo.
+
+A la fecha de esta revisión, la guía de actualización de EKS indica que se revirtió temporalmente la aplicación del requisito `--force` para ciertos problemas de información de actualización durante algunas **actualizaciones**. Esto difiere de las comprobaciones de preparación para una reversión. La información de actualización sigue siendo importante para planificar; la nota sobre la aplicación del requisito no permite ignorar los problemas de compatibilidad.
+
+### Pruebas de funciones y responsabilidad sobre el cómputo
+
+No copies nombres obsoletos de indicadores ni una estructura no compatible como `managedNodeGroups[].kubelet.featureGates` en eksctl. Usa el mecanismo de arranque compatible con el sistema operativo o aprovisionador del nodo y el esquema actual de la [guía de creación de clústeres](02-eks-cluster-creation.md). Los indicadores del plano de control administrado de EKS siguen bajo la responsabilidad de AWS. Usa clientes compatibles y distingue entre las comprobaciones de esquema sin conexión, la simulación del lado del servidor y las pruebas reales en tiempo de ejecución.
+
+Auto Mode administra el reemplazo de nodos, pero las restricciones de disponibilidad y disrupción de las cargas de trabajo pueden retrasarlo. Los clústeres mixtos conservan los requisitos de DNS y complementos para los nodos que no usan Auto Mode. Las actualizaciones progresivas de los grupos de nodos administrados y el escalado deseado, mínimo y máximo son operaciones distintas; un PDB no es una protección universal ante el escalado, la eliminación directa ni todas las rutas de recuperación. Fargate y Hybrid Nodes requieren sus propios procedimientos de ciclo de vida.
+
+### Reversión nativa y alternativas de recuperación de EKS
+
+La reversión de versión es una función real de EKS. Debe iniciarse dentro de los siete días posteriores a una **actualización in situ completada**, solo puede volver a la versión menor anterior y requiere un clúster y una versión compatibles que cumplan los requisitos. Un clúster creado en su versión actual, una actualización posterior, el vencimiento del periodo de elegibilidad o una función incompatible de EKS pueden impedir la reversión. Las actualizaciones automáticas al final del soporte extendido no permiten revertir. Elegir una versión con soporte extendido también tiene implicaciones para las políticas de actualización y la facturación.
+
+Cuando un operador inicia la reversión, Auto Mode revierte primero sus nodos y después el plano de control. Los grupos de nodos administrados requieren primero una reversión independiente de UpdateNodegroupVersion; los nodos autoadministrados o Hybrid necesitan su propia preparación. La versión de los nodos de trabajo de Fargate no se puede revertir in situ: el procedimiento oficial exige coordinar una retirada y un nuevo despliegue planificados antes o después de revertir el plano de control. No consideres compatible una desviación de versiones de kubelet forzada ni elimines a ciegas cargas de trabajo activas de Fargate.
+
+`--force` puede omitir las comprobaciones de información ERROR, WARNING o UNKNOWN durante una reversión, pero no la validación de elegibilidad y requisitos previos ni los controles de disrupción de Auto Mode. No es una opción segura predeterminada. Sigue el procedimiento detallado de [Actualizaciones de EKS](08-eks-upgrades.md), incluido el seguimiento exacto del estado de actualización y los límites de fase, tiempo de espera y cancelación de Auto Mode. Revertir el plano de control no revierte la aplicación ni la base de datos: EKS conserva etcd y los datos del cliente en vez de restaurar todas las aplicaciones a un estado anterior.
+
+| Capa | Planificación de la recuperación |
+|---|---|
+| Plano de control | Reversión nativa si se cumplen los requisitos, o una ruta de recuperación preparada con un clúster paralelo si no está disponible |
+| Nodos | Versiones compatibles y reemplazo o drenaje controlados; añadir una taint no traslada por sí solo los Pods ni el tráfico existentes |
+| Cargas de trabajo | Reversión revisada de la revisión de GitOps o Helm, junto con comprobaciones de compatibilidad de la aplicación y los datos |
+| Complementos | Compilaciones exactas compatibles, revisión de configuración e IAM y comportamiento de degradación compatible; no uses OVERWRITE a ciegas |
+| Datos persistentes | Copias de seguridad y restauración probadas, con recuperación coherente con la aplicación e independiente de la versión del clúster |
+
+### Cambios de Terraform durante una actualización en un proyecto existente
+
+Estos son **fragmentos de atributos para recursos existentes administrados por el estado de Terraform**, no un despliegue de Terraform independiente. Conserva el resto de la configuración del proyecto para IAM, redes, acceso, cifrado, plantillas de lanzamiento y escalado. Define las variables revisadas a partir del inventario real e inspecciona el plan; copiar un recurso mínimo para reemplazar el actual puede restablecer opciones o crear otro clúster.
+
+En el recurso del clúster existente, elige deliberadamente el paso de una versión menor y la política de soporte de destino. STANDARD puede activar la actualización automática cuando termina el soporte estándar; EXTENDED acepta el periodo posterior de soporte de pago.
+
+```hcl
+# Edit these arguments inside the existing aws_eks_cluster.main resource.
+version = var.reviewed_target_version
+
+upgrade_policy {
+  support_type = var.reviewed_support_type
+}
 ```
 
-```bash
-# Step 2: Verify feature gates are active
-kubectl get --raw "/api/v1/nodes/$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')/proxy/configz" | \
-  jq '.kubeletconfig.featureGates'
+Un recurso completo de grupo de nodos administrado requiere `node_role_arn`, `subnet_ids` y `scaling_config`; el ejemplo anterior omitía los dos primeros. Conserva los valores existentes. Los valores anteriores de deseado 3, mínimo 2, máximo 10 y el presupuesto de actualización del 33 % son ilustrativos, no valores predeterminados de actualización ni garantías de disponibilidad.
 
-# Step 3: Run feature-specific tests
-# Example: Test in-place pod resize
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: resize-test
-spec:
-  containers:
-    - name: test
-      image: nginx:latest
-      resources:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 200m
-          memory: 256Mi
-      resizePolicy:
-        - resourceName: cpu
-          restartPolicy: NotRequired
-        - resourceName: memory
-          restartPolicy: NotRequired
-EOF
+```hcl
+# Relevant arguments inside the existing aws_eks_node_group.main resource.
+# Retain the rest of the existing resource, including its scaling_config.
+node_role_arn = var.existing_node_role_arn
+subnet_ids    = var.existing_node_subnet_ids
+version       = aws_eks_cluster.main.version
 
-# Attempt resize
-kubectl patch pod resize-test --subresource resize --patch '{
-  "spec": {"containers": [{"name": "test", "resources": {"requests": {"cpu": "200m"},"limits": {"cpu": "400m"}}}]}
-}'
-
-# Verify resize succeeded
-kubectl get pod resize-test -o jsonpath='{.status.resize}'
-kubectl get pod resize-test -o jsonpath='{.status.containerStatuses[0].allocatedResources}'
+update_config {
+  max_unavailable_percentage = 33
+}
 ```
 
-### Checklist previa a la actualización por salto de versión
+Para cada complemento existente, usa la compilación de EKS revisada y una política explícita para los conflictos de actualización. PRESERVE es una opción de actualización, no una opción de conflicto de CreateAddon. No elimina las comprobaciones del esquema de configuración, la identidad ni la reversión.
 
-Usa este framework de checklist al planificar cada actualización de versión. Completa los elementos específicos según tus versiones de origen y destino.
-
-#### Checklist general previa a la actualización (todas las versiones)
-
-```markdown
-## Pre-Upgrade Checklist: v1.X -> v1.Y
-
-### Phase 1: Assessment (1-2 weeks before)
-- [ ] Review Kubernetes changelog for target version
-- [ ] Review EKS release notes for target version
-- [ ] Check deprecated API usage with `kubectl convert` or Pluto
-- [ ] Verify add-on compatibility matrix
-- [ ] Check third-party operator compatibility (cert-manager, Istio, ArgoCD, etc.)
-- [ ] Review feature gate changes (new, graduated, removed)
-- [ ] Test upgrade in staging/dev environment
-
-### Phase 2: Preparation (1 week before)
-- [ ] Back up etcd (EKS manages this, but verify backup schedule)
-- [ ] Document current cluster state (versions, add-ons, node groups)
-- [ ] Update IaC templates (Terraform, CDK, CloudFormation)
-- [ ] Prepare rollback plan
-- [ ] Schedule maintenance window
-- [ ] Notify stakeholders
-
-### Phase 3: Execution
-- [ ] Upgrade control plane
-- [ ] Verify API server health
-- [ ] Upgrade managed add-ons (CoreDNS, kube-proxy, VPC CNI)
-- [ ] Upgrade EBS CSI driver
-- [ ] Upgrade node groups (rolling update)
-- [ ] Verify node health and version
-- [ ] Run smoke tests
-
-### Phase 4: Validation
-- [ ] Verify all workloads are running
-- [ ] Check HPA/VPA functionality
-- [ ] Validate ingress/networking
-- [ ] Test service mesh (if applicable)
-- [ ] Verify monitoring and alerting
-- [ ] Check storage operations (PVC create, attach, resize)
-- [ ] Run integration tests
+```hcl
+# Edit one already-managed aws_eks_addon resource after compatibility review.
+addon_version               = var.reviewed_addon_version
+resolve_conflicts_on_update = "PRESERVE"
 ```
 
-#### Notas de actualización específicas por versión
+<!-- Parent repair: execution graphic needs operation-specific ordering and validation gates beyond API-server health.
+![Workflow diagram of the five-phase EKS cluster upgrade -- assessment, staging test, preparation, execution, and validation -- with staging and validation retried on failure, and API server health as the one hard gate during execution that routes to contacting AWS Support on failure.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-18.png)
 
-**Actualizar a 1.33 (desde 1.32)**:
-```markdown
-Additional checks:
-- [ ] Sidecar containers GA: Verify init containers with restartPolicy: Always work as expected
-- [ ] In-Place Pod Resize beta: Test resize behavior with existing VPA configurations
-- [ ] ServiceCIDR GA: If using custom Service CIDR, verify compatibility
-- [ ] Topology Aware Routing GA: Review Service traffic distribution settings
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-18.html)
+-->
 
-**Actualizar a 1.34 (desde 1.33)**:
-```markdown
-Additional checks:
-- [ ] DRA GA: If using device plugins, plan migration to DRA
-- [ ] KYAML beta: Audit YAML manifests for anchor/alias usage
-- [ ] VolumeAttributesClass GA: Test volume modification workflows
-- [ ] Namespace deletion changes: Verify namespace cleanup procedures
-- [ ] User Namespaces GA: Test workloads with hostUsers: false
-```
-
-**Actualizar a 1.35 (desde 1.34)**:
-```markdown
-Additional checks:
-- [ ] In-Place Pod Resize GA: Full production use now safe
-- [ ] KYAML enabled by default: Fix any YAML warnings before upgrade
-- [ ] Gang Scheduling alpha: Not available on EKS (alpha)
-- [ ] Remove deprecated feature gate overrides for 1.33 GA features
-- [ ] Verify sidecar container feature gate is not explicitly set (removed in 1.35)
-```
-
-**Actualizar a 1.36 (desde 1.35)**:
-```markdown
-Additional checks:
-- [ ] KYAML GA: All YAML must pass KYAML validation (strict enforcement)
-- [ ] Gang Scheduling GA: Evaluate for distributed workloads
-- [ ] Pod-level In-Place Scaling beta: Test pod-level resource limits
-- [ ] Remove deprecated feature gate overrides for 1.34 GA features
-```
-
-### Verificación de compatibilidad de API
-
-```bash
-#!/bin/bash
-# api-compat-check.sh - Verify API compatibility before upgrade
-
-TARGET_VERSION=${1:-"1.36"}
-echo "=== API Compatibility Check for Kubernetes $TARGET_VERSION ==="
-
-# Tool 1: Use kubectl convert (if available)
-echo ""
-echo "--- Checking with kubectl convert ---"
-# Install convert plugin if not present
-# kubectl krew install convert
-
-# Tool 2: Use Pluto for deprecated API detection
-echo ""
-echo "--- Checking with Pluto ---"
-if command -v pluto &> /dev/null; then
-  echo "Scanning cluster for deprecated APIs..."
-  pluto detect-all-in-cluster --target-versions k8s=v${TARGET_VERSION}
-
-  echo ""
-  echo "Scanning Helm releases..."
-  pluto detect-helm --target-versions k8s=v${TARGET_VERSION}
-else
-  echo "Pluto not installed. Install with:"
-  echo "  brew install FairwindsOps/tap/pluto"
-  echo "  or: kubectl krew install deprecations"
-fi
-
-# Tool 3: Check with kubent (kube-no-trouble)
-echo ""
-echo "--- Checking with kubent ---"
-if command -v kubent &> /dev/null; then
-  kubent --target-version ${TARGET_VERSION}
-else
-  echo "kubent not installed. Install from: https://github.com/doitintl/kube-no-trouble"
-fi
-
-# Manual checks
-echo ""
-echo "--- Manual API Version Checks ---"
-
-# Check for v1beta1 usage
-echo "Resources using v1beta1 APIs:"
-kubectl api-resources -o wide 2>/dev/null | grep v1beta1
-
-# Check CRDs for deprecated API versions
-echo ""
-echo "CRDs with deprecated conversion webhooks:"
-kubectl get crds -o json | jq -r '.items[] | select(.spec.conversion.webhook != null) | .metadata.name'
-
-echo ""
-echo "=== Compatibility Check Complete ==="
-```
-
-### Alineación de versiones de add-ons
-
-```bash
-#!/bin/bash
-# addon-alignment.sh - Verify add-on compatibility for target K8s version
-
-CLUSTER_NAME=${1:-"my-cluster"}
-TARGET_K8S_VERSION=${2:-"1.36"}
-
-echo "=== Add-on Alignment Check ==="
-echo "Cluster: $CLUSTER_NAME"
-echo "Target K8s Version: $TARGET_K8S_VERSION"
-echo ""
-
-# Get current add-on versions
-echo "--- Current Add-on Versions ---"
-for addon in $(aws eks list-addons --cluster-name $CLUSTER_NAME --query 'addons[]' --output text); do
-  current_version=$(aws eks describe-addon --cluster-name $CLUSTER_NAME --addon-name $addon \
-    --query 'addon.addonVersion' --output text 2>/dev/null)
-  echo "$addon: $current_version"
-done
-
-# Get compatible versions for target
-echo ""
-echo "--- Compatible Versions for K8s $TARGET_K8S_VERSION ---"
-for addon in vpc-cni coredns kube-proxy aws-ebs-csi-driver; do
-  echo ""
-  echo "$addon:"
-  aws eks describe-addon-versions \
-    --addon-name $addon \
-    --kubernetes-version $TARGET_K8S_VERSION \
-    --query 'addons[].addonVersions[?compatibilities[?defaultVersion==`true`]].addonVersion' \
-    --output text 2>/dev/null | head -5
-
-  default_version=$(aws eks describe-addon-versions \
-    --addon-name $addon \
-    --kubernetes-version $TARGET_K8S_VERSION \
-    --query 'addons[].addonVersions[?compatibilities[?defaultVersion==`true`]].addonVersion | [0]' \
-    --output text 2>/dev/null)
-  echo "  Default: $default_version"
-done
-
-echo ""
-echo "=== Alignment Check Complete ==="
-```
-
-### Flujo de ejecución de actualización
-
-```mermaid
-flowchart TD
-    Start["Begin Upgrade Process"] --> Assess["Phase 1: Assessment
-    - Changelog review
-    - API compatibility check
-    - Add-on compatibility
-    - Third-party tool check"]
-
-    Assess --> Staging["Phase 2: Staging Test
-    - Upgrade staging cluster
-    - Run integration tests
-    - Validate all workloads
-    - Test feature gates"]
-
-    Staging --> StagePass{"Staging
-    Passed?"}
-    StagePass -->|No| Fix["Fix Issues
-    - Update manifests
-    - Update add-ons
-    - Fix deprecated APIs"]
-    Fix --> Staging
-
-    StagePass -->|Yes| Prepare["Phase 3: Preparation
-    - Schedule window
-    - Notify teams
-    - Prepare rollback
-    - Update IaC"]
-
-    Prepare --> Execute["Phase 4: Execution"]
-
-    Execute --> CP["1. Upgrade Control Plane"]
-    CP --> CPCheck{"API Server
-    Healthy?"}
-    CPCheck -->|No| CPRollback["Rollback: Contact AWS Support"]
-    CPCheck -->|Yes| Addons["2. Upgrade Add-ons
-    CoreDNS → kube-proxy → VPC CNI → EBS CSI"]
-
-    Addons --> AddonCheck{"Add-ons
-    Healthy?"}
-    AddonCheck -->|No| AddonFix["Fix: Rollback add-on version"]
-    AddonFix --> Addons
-    AddonCheck -->|Yes| Nodes["3. Upgrade Node Groups
-    (Rolling update)"]
-
-    Nodes --> NodeCheck{"Nodes
-    Healthy?"}
-    NodeCheck -->|No| NodeFix["Fix: Check AMI, drain stuck nodes"]
-    NodeFix --> Nodes
-    NodeCheck -->|Yes| Validate["Phase 5: Validation
-    - Workload health
-    - Network connectivity
-    - Storage operations
-    - Monitoring/alerting"]
-
-    Validate --> Pass{"All
-    Validated?"}
-    Pass -->|No| Investigate["Investigate & Fix"]
-    Investigate --> Validate
-    Pass -->|Yes| Complete["Upgrade Complete"]
-
-    style Complete fill:#6bcb77,stroke:#333,color:black
-    style CPRollback fill:#ff6b6b,stroke:#333,color:black
-```
-
-### Estrategia de rollback
-
-> **Actualización (2026-07-01)**: Amazon EKS anunció soporte de rollback de versiones de Kubernetes. Dentro de los 7 días posteriores a una actualización, puedes revertir el control plane a la versión menor anterior. Primero se ejecuta una comprobación automatizada Rollback Readiness, que cubre compatibilidad de API, version skew, compatibilidad de add-ons y salud del cluster. Los clusters EKS Auto Mode hacen rollback automáticamente -- los worker nodes revierten por sí mismos y el control plane se restaura en secuencia. No hay cargo adicional y está disponible en todas las regiones. La estrategia siguiente es el fallback para casos en los que hayan pasado más de 7 días o esta característica no esté disponible. (Fuente: [Amazon EKS announces Kubernetes version rollback](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback))
-
-```yaml
-# Upgrade rollback strategy
-rollback_strategy:
-
-  control_plane:
-    note: "Within 7 days: use EKS native version rollback / Beyond 7 days: blue-green cluster strategy"
-    mitigation:
-      - "Use EKS version rollback to restore the previous minor version immediately (within 7 days, no additional cost)"
-      - "Beyond 7 days, fall back to a blue/green cluster strategy established before the upgrade"
-      - "Shift traffic via Route 53 weighted routing"
-      - "Migrate workloads to the new cluster"
-
-  node_groups:
-    strategy: "Create new node group + retain previous node group"
-    steps:
-      - "Do not immediately delete the previous version's node group"
-      - "If issues arise, remove the taint from the previous node group"
-      - "Add a taint to the new node group to shift traffic"
-
-  workloads:
-    strategy: "GitOps-based rollback"
-    steps:
-      - "Roll back to the previous commit in ArgoCD/Flux"
-      - "Run a Helm rollback"
-
-  addons:
-    strategy: "Downgrade to the previous version"
-    command: |
-      aws eks update-addon \
-        --cluster-name my-cluster \
-        --addon-name vpc-cni \
-        --addon-version <previous-version> \
-        --resolve-conflicts OVERWRITE
-```
+[Procedimiento de actualización de EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [Requisitos y secuencia de reversión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html) · [Referencia de grupos de nodos EKS de Terraform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) · [Referencia de complementos EKS de Terraform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon)
 
 ---
 
 <span id="9-future-outlook"></span>
 
-## 9. Perspectiva futura
+## 9. Perspectivas futuras
 
-### Características en desarrollo activo
+### Diferencia los cambios upstream publicados de la disponibilidad en EKS
 
-La comunidad de Kubernetes continúa expandiendo los límites de la orquestación de containers. Estas son características y tendencias clave en desarrollo activo que podrían aparecer en próximos lanzamientos.
+Al 12 de octubre de 2026, Kubernetes **1.37 está disponible en EKS**. AWS lo habilitó el 1 de octubre, después de su publicación upstream el 26 de agosto.
 
-#### Corto plazo (esperado 1.37 - 1.38)
+La cobertura detallada por versión de este capítulo termina en 1.36. Los ejemplos se comprobaron principalmente con 1.36.2 y no se han actualizado de forma implícita a 1.37.
 
-| Característica | Estado actual | Cronograma esperado | Impacto |
-|---------|--------------|-------------------|--------|
-| **Pod-Level In-Place Scaling GA** | Beta (1.36) | 1.37 | Gestión agregada de recursos del pod |
-| **Mejoras de MutatingAdmissionPolicy** | GA (1.36) | En curso | Patrones de mutación CEL más ricos |
-| **Particionado DRA mejorado** | Beta (1.36) | 1.37 | Compartición de GPU con granularidad fina |
-| **Mejoras de Scheduler** | Varias | En curso | Mejor bin-packing, gestión de colas |
+Antes de actualizar, lee las notas de la versión de EKS y verifica la compatibilidad de los complementos, la imagen de nodo, el controlador CSI y las cargas de trabajo.
 
-#### Tendencias a medio plazo
+| Cambio de EKS 1.37 | Comportamiento actual | Implicación para la actualización |
+|---|---|---|
+| Consolidación de NodePool en Auto Mode | Los NodePool personalizados nuevos que omiten `spec.disruption.consolidationPolicy` usan `Balanced` de forma predeterminada. Los grupos integrados `general-purpose` y `system` usan `Balanced` y no se pueden cambiar. | Establece una política explícita en los grupos personalizados cuando se busque otro comportamiento. |
+| Montajes de volúmenes SELinux | Estables y habilitados de forma predeterminada para las configuraciones compatibles de CSI y Pod. | Comprueba la compatibilidad del controlador y de las cargas de trabajo que comparten volúmenes con distintas etiquetas SELinux antes de actualizar los nodos. |
 
-**Optimización de workloads AI/ML**
+| Elemento upstream 1.37 verificado | Interpretación |
+|---|---|
+| KYAML | Formato de salida estable de kubectl; no es un nuevo validador YAML del servidor de API |
+| GenericWorkload | Beta, deshabilitado de forma predeterminada; la planificación nativa de grupos no es GA solo porque cambie el indicador independiente GangScheduling |
+| DRADeviceTaints / DRAResourceClaimDeviceStatus | Promovidos a estables; siguen aplicándose los requisitos del controlador y de informes |
+| PodLevelResources / cambio de tamaño in situ a nivel de Pod | Siguen en beta según el historial publicado de indicadores; no alcanzaron la disponibilidad GA que se había pronosticado |
+| DRAPartitionableDevices | Sigue en beta; no promete una implementación universal de uso compartido de GPU |
 
-Kubernetes evoluciona rápidamente para soportar mejor workloads AI/ML:
+Usa el código y los registros de cambios publicados, además del KEP específico, en vez de una fecha «prevista para la próxima versión» que no se haya comprobado. Los valores predeterminados y el bloqueo de indicadores, así como la disponibilidad de API y controladores, pueden variar incluso si una función es estable.
 
-- **Crecimiento del ecosistema DRA**: Más device drivers para hardware especializado (TPUs, ASICs personalizados)
-- **Madurez de gang scheduling**: Mejor soporte para entrenamiento distribuido con requisitos estrictos de co-programación
-- **GPU time-slicing y MIG**: Soporte nativo de Kubernetes para particionado de GPU
-- **Scheduling consciente de red**: Considera la topología de red para ubicación de entrenamiento distribuido
+### La evolución del ecosistema no constituye un compromiso de versión de Kubernetes
 
-**Hardening de seguridad**
+Los controladores DRA, el uso compartido de dispositivos, la colocación que tiene en cuenta la topología y la coordinación de trabajos por lotes siguen evolucionando. El comportamiento de la fragmentación temporal de GPU, MIG o RDMA depende del hardware y del controlador reales, no solo de la versión de una API central. La firma y verificación de la cadena de suministro, los contenedores confidenciales, GitOps, la ingeniería de plataformas, OpenTelemetry y Wasm son temas de integración del ecosistema, cada uno con sus propios proyectos y políticas de publicación. No pasan automáticamente a formar parte de Kubernetes ni están garantizados para un año futuro concreto.
 
-- **Integración con Sigstore**: Seguridad nativa de supply chain para imágenes de container
-- **Madurez de Policy as Code**: Admission basado en CEL que cubre escenarios más complejos
-- **Confidential containers**: Aislamiento de containers basado en TEE
-- **Logging de auditoría mejorado**: Eventos de auditoría estructurados y consultables
+Mantén una cadencia periódica de actualizaciones y ensayos que se ajuste a los plazos de soporte, la compatibilidad y el riesgo empresarial. «Trimestral» y la cadencia upstream de aproximadamente cuatro meses son calendarios distintos. Mantener una versión adecuada de EKS con soporte estándar puede evitar la tarifa adicional por versión, pero no existe una regla universal de `latest−1` que sustituya la validación de las aplicaciones, ni hay que adoptar de inmediato todas las funciones GA sin evaluar sus riesgos.
 
-**Experiencia de desarrollador**
+### Plantilla histórica de planificación: no es una recomendación de despliegue actual
 
-- **Ecosistema KYAML**: Mejoras de tooling para el subconjunto YAML más seguro
-- **Experiencia CRD mejorada**: Mejor validación, defaulting y conversión
-- **kubectl mejorado**: Opciones más potentes de consulta, filtrado y formato
+El capítulo coreano anterior incluía el inventario de ejemplo y los meses previstos que aparecen a continuación. Los valores de versión, cantidad y mes se conservan como datos ilustrativos históricos; no describen una flota descubierta, una actualización ejecutada ni una combinación de componentes verificada. En particular, no se deben considerar compatibles con versiones más recientes de Kubernetes las versiones antiguas de Istio, Argo CD y sus charts. Para elaborar un plan nuevo, sustitúyelas por un inventario real y evidencias de compatibilidad actuales. Las acciones de revisión siguientes corrigen las suposiciones anteriores sobre nftables automático, DRA CRD y KYAML, sin inventar que se haya repetido la revisión.
 
-### Tendencias del ecosistema CNCF
-
-| Tendencia | Proyectos clave | Impacto en Kubernetes |
-|-------|-------------|-------------------|
-| **Platform Engineering** | Backstage, Crossplane, KRO | Kubernetes como plataforma para crear plataformas |
-| **Networking eBPF** | Cilium, Calico eBPF | Reemplazar iptables/nftables por completo |
-| **Evolución de Service Mesh** | Istio Ambient, Cilium SM | Arquitecturas mesh sin sidecar |
-| **Madurez de GitOps** | ArgoCD, FluxCD | Operaciones declarativas como predeterminado |
-| **Observability** | OpenTelemetry | Estándar unificado de recolección de telemetría |
-| **WebAssembly (Wasm)** | SpinKube, wasmCloud | Ejecución de workloads más liviana |
-| **Infraestructura AI** | KubeAI, vLLM operator | Serving de AI nativo de Kubernetes |
-
-### Planificar para el futuro
-
-Para equipos que planifican su estrategia de Kubernetes:
-
-1. **Mantente dentro de n-1 de la última versión**: Apunta a ejecutar no más de una versión detrás del último lanzamiento de EKS
-2. **Actualiza trimestralmente**: Alinéate con la cadencia de lanzamientos de Kubernetes (cada 4 meses)
-3. **Prueba temprano**: Usa clusters de staging para validar nuevas versiones dentro de semanas de su disponibilidad en EKS
-4. **Automatiza actualizaciones**: Invierte en pipelines CI/CD que incluyan pruebas de actualización de clusters
-5. **Monitorea deprecaciones**: Suscríbete a anuncios de lanzamientos de Kubernetes y revisa changelogs de forma proactiva
-6. **Adopta características GA con prontitud**: Las características que alcanzan GA están listas para producción y quedarán habilitadas permanentemente
+```yaml
+historical_planning_example:
+  provenance: Illustrative prior chapter inputs; no executed upgrade or verified component
+    compatibility.
+  starting_state:
+    cluster_version: '1.33'
+    node_count: 50
+    workload_count: 200
+    component_versions:
+    - name: istio
+      version: '1.22'
+    - name: argocd
+      version: '2.11'
+    - name: prometheus-stack
+      version: '60.0'
+  target_version: '1.36'
+  upgrade_path:
+  - '1.33'
+  - '1.34'
+  - '1.35'
+  - '1.36'
+  phases:
+  - target: '1.34'
+    historical_planned_month: 2025-11
+    review:
+    - DRA API/driver and VAC compatibility
+    - Proxy backend migration only if deliberately selected; not automatic
+  - target: '1.35'
+    historical_planned_month: 2026-03
+    review:
+    - In-place resize and the actual VPA release/mode
+    - KYAML is a client output format, not a server parsing migration
+  - target: '1.36'
+    historical_planned_month: 2026-07
+    review:
+    - Pod-level resource policies and supported compute/runtime
+    - Gang scheduling is still alpha in1.36; not a GA EKS prerequisite
+```
 
 ---
 
@@ -3107,47 +2800,45 @@ Para equipos que planifican su estrategia de Kubernetes:
 
 ## 10. Referencias
 
-### Recursos oficiales de Kubernetes
+La documentación de la versión específica y de las API del proveedor prevalece sobre las tablas de resumen antiguas o las suposiciones incorporadas en una herramienta. Antes de un cambio real, vuelve a comprobar la versión de destino, el proveedor, la versión del componente y su configuración de funciones.
 
-- [Kubernetes Release Page](https://kubernetes.io/releases/)
-- [Kubernetes Changelog (GitHub)](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/)
-- [Kubernetes Feature Gates Reference](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/)
-- [Kubernetes Enhancement Proposals (KEPs)](https://github.com/kubernetes/enhancements)
-- [KEP Tracking Board](https://www.kubernetes.dev/resources/keps/)
-- [Kubernetes Deprecation Policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
-- [API Migration Guide](https://kubernetes.io/docs/reference/using-api/deprecation-guide/)
-- [Kubernetes Blog - Release Announcements](https://kubernetes.io/blog/)
-- [SIG Release](https://github.com/kubernetes/sig-release)
+- [Versiones de Kubernetes](https://kubernetes.io/releases/)
+- [Política de soporte de versiones menores](https://kubernetes.io/releases/patch-releases/)
+- [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/)
+- [Feature gates eliminados](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates-removed/)
+- [Política de obsolescencia de API](https://kubernetes.io/docs/reference/deprecation-policy/)
+- [Guía de migración de API](https://kubernetes.io/docs/reference/using-api/deprecation-guide/)
+- [Código fuente de Kubernetes 1.36.2](https://github.com/kubernetes/kubernetes/tree/v1.36.2)
+- [Registro de cambios de Kubernetes 1.37](https://github.com/kubernetes/kubernetes/blob/v1.37.0/CHANGELOG/CHANGELOG-1.37.md)
+- [Calendario de soporte de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [Notas de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)
+- [Actualizaciones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [Reversión de EKS](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+- [API de compatibilidad de complementos de EKS](https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html)
+- [Redes de EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)
+- [Prácticas recomendadas de EKS](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
+- [Precios de EKS](https://aws.amazon.com/eks/pricing/)
+- [Funciones de VPA 1.8.0](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md)
+- [Pluto](https://github.com/FairwindsOps/pluto)
+- [Kubent](https://github.com/doitintl/kube-no-trouble)
 
-### Recursos de Amazon EKS
+### Anuncios oficiales de versiones
 
-- [EKS Kubernetes Versions](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
-- [EKS Release Calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html#kubernetes-release-calendar)
-- [EKS Extended Support](https://docs.aws.amazon.com/eks/latest/userguide/extended-support-control.html)
-- [EKS Add-on Versions](https://docs.aws.amazon.com/eks/latest/userguide/managing-add-ons.html)
-- [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
-- [EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
-- [EKS Upgrade Guide](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [Kubernetes 1.29](https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/)
+- [Kubernetes 1.30](https://kubernetes.io/blog/2024/04/17/kubernetes-v1-30-release/)
+- [Kubernetes 1.31](https://kubernetes.io/blog/2024/08/13/kubernetes-v1-31-release/)
+- [Kubernetes 1.32](https://kubernetes.io/blog/2024/12/11/kubernetes-v1-32-release/)
+- [Kubernetes 1.33](https://kubernetes.io/blog/2025/04/23/kubernetes-v1-33-release/)
+- [Kubernetes 1.34](https://kubernetes.io/blog/2025/08/27/kubernetes-v1-34-release/)
+- [Kubernetes 1.35](https://kubernetes.io/blog/2025/12/17/kubernetes-v1-35-release/)
+- [Kubernetes 1.36](https://kubernetes.io/blog/2026/04/22/kubernetes-v1-36-release/)
 
-### Herramientas para planificación de actualizaciones
+## Cuestionario y próximos pasos
 
-- [Pluto - Deprecated API Detector](https://github.com/FairwindsOps/pluto)
-- [kubent (kube-no-trouble)](https://github.com/doitintl/kube-no-trouble)
-- [kubectl-convert Plugin](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-kubectl-convert-plugin)
-- [Nova - Helm Chart Version Checker](https://github.com/FairwindsOps/nova)
-- [eksctl](https://eksctl.io/)
+- [Cuestionario sobre funciones y hoja de ruta de versiones](../quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+- [Actualizaciones de EKS](08-eks-upgrades.md)
+- [Depuración avanzada de EKS](11-eks-advanced-debugging.md)
+- [Laboratorio de creación de clústeres de EKS](../labs/eks/01-eks-cluster-creation-lab.md)
+- [EKS Auto Mode](../eks-auto-mode/README.md)
 
-### Recursos de la comunidad
-
-- [Kubernetes Slack](https://kubernetes.slack.com) - canales #sig-release, #eks
-- [CNCF Calendar](https://www.cncf.io/calendar/) - KubeCon y eventos de la comunidad
-- [The Kubernetes Podcast](https://kubernetespodcast.com/)
-- [Release Team Shadows Program](https://github.com/kubernetes/sig-release/blob/master/release-team/shadows.md)
-
-## Quiz
-
-Para comprobar lo que aprendiste en este documento, intenta el [Kubernetes Version Features and Roadmap Quiz](../quizzes/eks/12-kubernetes-version-roadmap-quiz.md).
-
----
-
-< [Anterior: EKS Advanced Debugging](./11-eks-advanced-debugging.md) | [Tabla de contenido](../README.md) >
+< [Anterior: Depuración avanzada de EKS](11-eks-advanced-debugging.md) | [Tabla de contenido](../README.md) >

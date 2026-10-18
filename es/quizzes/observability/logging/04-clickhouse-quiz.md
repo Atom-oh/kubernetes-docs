@@ -1,8 +1,8 @@
-# Cuestionario de ClickHouse para análisis de logs
+# Cuestionario de ClickHouse para análisis de registros
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
-1. ¿Por qué el almacenamiento columnar puede ayudar a las consultas analíticas de logs?
+1. ¿Por qué el almacenamiento columnar puede ayudar a las consultas analíticas de registros?
 
    - A) Siempre analiza cada campo
    - B) Puede leer columnas seleccionadas y comprimir valores repetidos
@@ -23,7 +23,7 @@ Los beneficios dependen de los datos, la clave de ordenación y la consulta. La 
 2. ¿Cuál es el rol de Keeper/ZooKeeper en este diseño?
 
    - A) Ejecutar cada SELECT distribuido
-   - B) Almacenar cada fila de logs
+   - B) Almacenar cada fila de registro
    - C) Coordinar tablas replicadas y DDL distribuido
    - D) Reemplazar al colector
 
@@ -56,11 +56,11 @@ Las réplicas aún necesitan coordinación, almacenamiento persistente independi
 
 ---
 
-4. ¿Qué tipo vale la pena evaluar para valores repetidos de namespace o gravedad?
+4. ¿Qué tipo vale la pena evaluar para valores repetidos de namespace o nivel de gravedad?
 
    - A) Siempre FixedString(255)
    - B) LowCardinality(String)
-   - C) Un entero único para cada mensaje de log
+   - C) Un entero único para cada mensaje de registro
    - D) Solo String sin comprimir
 
 <details>
@@ -68,13 +68,13 @@ Las réplicas aún necesitan coordinación, almacenamiento persistente independi
 
 **Respuesta: B) LowCardinality(String)**
 
-La codificación de diccionario puede ayudar con valores repetidos; evalúe el tamaño del diccionario y el comportamiento de las consultas en lugar de asumir un límite universal de valores distintos.
+La codificación de diccionario puede ayudar con valores repetidos; evalúa el tamaño del diccionario y el comportamiento de las consultas en lugar de asumir un límite universal de valores distintos.
 
 </details>
 
 ---
 
-5. ¿Cómo se debe elegir el ORDER BY de la tabla de logs?
+5. ¿Cómo se debe elegir el ORDER BY de la tabla de registros?
 
    - A) Alfabéticamente
    - B) Por el momento de creación del campo
@@ -104,7 +104,7 @@ La clave afecta la ordenación y la poda de índices. Las columnas consultadas c
 
 **Respuesta: D) Debe definirse una expresión de muestreo MergeTree compatible e incluirse en la clave primaria**
 
-La tabla principal de logs no tiene SAMPLE BY. El sample_demo independiente muestra el diseño requerido. Un intervalo determinista de clave de muestreo no tiene por qué contener exactamente el 10 % de un conjunto finito de filas.
+La tabla principal de registros no tiene SAMPLE BY. El sample_demo independiente muestra el diseño requerido. Un intervalo determinista de clave de muestreo no tiene por qué contener exactamente el 10 % de un conjunto finito de filas.
 
 </details>
 
@@ -113,34 +113,34 @@ La tabla principal de logs no tiene SAMPLE BY. El sample_demo independiente mues
 7. ¿Qué añade Kafka, sujeto a su configuración?
 
    - A) Entrega exactamente una vez garantizada mediante un Buffer en memoria
-   - B) Búfer para ráfagas y reproducción dentro de la retención
+   - B) Búfer para ráfagas y reproducción dentro del período de retención
    - C) Eliminación automática de todos los errores del parser
    - D) Almacenamiento ilimitado durante interrupciones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Búfer para ráfagas y reproducción dentro de la retención**
+**Respuesta: B) Búfer para ráfagas y reproducción dentro del período de retención**
 
-Se deben probar la retención, los acknowledgements, la replicación, la capacidad, las confirmaciones de offset y el comportamiento de las inserciones posteriores. Un Buffer en memoria puede perder datos confirmados tras un fallo.
+Se deben probar la retención, las confirmaciones, la replicación, la capacidad, las confirmaciones de offset y el comportamiento de las inserciones posteriores. Un Buffer en memoria puede perder datos confirmados tras un fallo.
 
 </details>
 
 ---
 
-8. ¿Por qué usar una extracción JSON nullable para response_time_ms opcional?
+8. ¿Por qué usar una extracción JSON anulable para el campo response_time_ms, que es opcional?
 
-   - A) Las mediciones ausentes no deben convertirse en solicitudes de latencia cero
-   - B) Todos los logs son solicitudes HTTP
+   - A) Las mediciones ausentes no deben convertirse en solicitudes con latencia cero
+   - B) Todos los registros son solicitudes HTTP
    - C) Elimina la necesidad de validación JSON
    - D) Cambia el reloj del servidor
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Las mediciones ausentes no deben convertirse en solicitudes de latencia cero**
+**Respuesta: A) Las mediciones ausentes no deben convertirse en solicitudes con latencia cero**
 
-Primero compruebe JSONType para excluir booleanos y cadenas numéricas, y después extraiga un número nullable. La extracción nullable por sí sola puede convertir esos valores. Las consultas de recuento y percentiles deben usar eventos medidos.
+Primero comprueba JSONType para excluir booleanos y cadenas numéricas, y después extrae un número anulable. La extracción anulable por sí sola puede convertir esos valores. Las consultas de recuento y percentiles deben usar eventos medidos.
 
 </details>
 
@@ -158,7 +158,7 @@ Primero compruebe JSONType para excluir booleanos y cadenas numéricas, y despu�
 
 **Respuesta: C) Una política de almacenamiento seleccionada existente; trabajo asíncrono en segundo plano**
 
-TTL no puede crear la política ni los permisos de cloud. El almacenamiento de tablas frías y un archivo Parquet validado por separado tienen distinta propiedad y semántica de recuperación.
+TTL no puede crear la política ni los permisos de la nube. El almacenamiento de tablas frías y un archivo Parquet validado por separado tienen distinta propiedad y semántica de recuperación.
 
 </details>
 
@@ -169,14 +169,14 @@ TTL no puede crear la política ni los permisos de cloud. El almacenamiento de t
    - A) Inventar una métrica Prometheus clickhouse_custom_query
    - B) Usar grafana-clickhouse-datasource con resultados SQL numéricos y Grafana Alerting
    - C) Dar a cada dashboard una cuenta de administrador
-   - D) Considerar la ausencia de logs entrantes como prueba de estado saludable
+   - D) Considerar la ausencia de registros entrantes como prueba de estado saludable
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B) Usar grafana-clickhouse-datasource con resultados SQL numéricos y Grafana Alerting**
 
-Use una cuenta restringida de solo lectura, TLS verificado y los permisos requeridos para la configuración de timeout. Supervise la ingesta por separado; un agregado puede devolver cero incluso sin entrada.
+Usa una cuenta restringida de solo lectura, TLS verificado y los permisos requeridos para la configuración de timeout. Supervisa la ingesta por separado; un agregado puede devolver cero incluso sin entrada.
 
 </details>
 

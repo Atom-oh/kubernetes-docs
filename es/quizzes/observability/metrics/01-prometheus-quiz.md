@@ -1,11 +1,11 @@
 # Cuestionario de Prometheus
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 1. ¿Cuál es la ruta normal de recopilación de métricas de Prometheus?
 
    - A) Las aplicaciones deben enviar cada muestra directamente
-   - B) Prometheus hace scrape de los destinos configurados mediante HTTP
+   - B) Prometheus consulta por HTTP los destinos configurados (scrape)
    - C) Solo un registro de eventos en streaming
    - D) Solo importaciones periódicas de CSV
 
@@ -14,7 +14,7 @@
 
 **Respuesta: B**
 
-La ruta normal es pull/scrape. Remote write y las integraciones opcionales por lotes agregan otras rutas de entrega. up informa del éxito del scrape, no de la disponibilidad completa de la aplicación.
+La ruta normal es pull/scrape. Remote write y las integraciones opcionales por lotes agregan otras rutas de entrega. up indica si el scrape tuvo éxito, no si la aplicación está completamente disponible.
 
 </details>
 
@@ -30,7 +30,7 @@ La ruta normal es pull/scrape. Remote write y las integraciones opcionales por l
 
 **Respuesta: B**
 
-rate() utiliza un vector de rango y gestiona los reinicios/la extrapolación observados. increase() estima el incremento total, no la tasa por segundo. Aplique rate antes de la agregación y no lo interprete como la recuperación de cada incremento perdido.
+rate() utiliza un vector de rango y gestiona los reinicios y la extrapolación observados. increase() estima el incremento total, no la tasa por segundo. Aplica rate antes de la agregación y no lo interpretes como la recuperación de cada incremento perdido.
 
 </details>
 
@@ -46,7 +46,7 @@ rate() utiliza un vector de rango y gestiona los reinicios/la extrapolación obs
 
 **Respuesta: C**
 
-Prometheus primero selecciona el namespace y las labels del monitor; el monitor selecciona los Services de destino. El puerto de su endpoint es el nombre del puerto del Service. RBAC, el acceso TLS/de red y una aplicación instrumentada son requisitos adicionales.
+Prometheus primero selecciona el espacio de nombres y las etiquetas del monitor; el monitor selecciona los recursos Service de destino. El puerto del endpoint es el nombre del puerto del Service. RBAC, el acceso TLS/de red y una aplicación instrumentada son requisitos adicionales.
 
 </details>
 
@@ -62,7 +62,7 @@ Prometheus primero selecciona el namespace y las labels del monitor; el monitor 
 
 **Respuesta: B**
 
-Agregue buckets clásicos compatibles conservando le. El resultado interpola dentro de los buckets. Los cuantiles de Summary también tienen un error dependiente del algoritmo/la ventana y no pueden promediarse para obtener un percentil de toda la flota.
+Agrega los buckets clásicos compatibles y conserva la etiqueta le. El resultado interpola dentro de los buckets. Los cuantiles de Summary también tienen un error que depende del algoritmo y la ventana, y no se pueden promediar para obtener un percentil de toda la flota.
 
 </details>
 
@@ -78,7 +78,7 @@ Agregue buckets clásicos compatibles conservando le. El resultado interpola den
 
 **Respuesta: C**
 
-El chart incluye Prometheus/Alertmanager, Operator, Grafana y exporters, según los valores habilitados. VictoriaMetrics es un Deployment independiente. Fije la cohorte de chart inspeccionada en lugar de mezclar versiones arbitrarias de imágenes.
+El chart empaqueta Prometheus/Alertmanager, Operator, Grafana y exporters, según los valores habilitados. VictoriaMetrics es un despliegue independiente. Fija las versiones del chart que inspeccionaste en lugar de mezclar versiones arbitrarias de imágenes.
 
 </details>
 
@@ -98,10 +98,10 @@ Los receptores incluyen AMP, VictoriaMetrics y Mimir. Cada uno tiene su propio e
 
 </details>
 
-7. ¿Qué controla la duración for de una regla de alerta?
+7. ¿Qué controla la duración del parámetro for en una regla de alerta?
 
    - A) La retención de métricas
-   - B) Cuánto tiempo permanece pendiente el mismo conjunto de condición/labels de alerta antes de activarse
+   - B) Cuánto tiempo permanece pendiente el mismo conjunto de condiciones y etiquetas de la alerta antes de activarse
    - C) El intervalo de repetición de Alertmanager
    - D) El número de réplicas de Prometheus
 
@@ -132,8 +132,8 @@ Proyecta la tendencia lineal observada. Los cambios de carga de trabajo, la limp
 
 9. ¿Qué hace groupBy de AlertmanagerConfig?
 
-   - A) Autoriza automáticamente alertas de todos los namespaces
-   - B) Agrupa notificaciones por labels seleccionadas
+   - A) Autoriza automáticamente alertas de todos los espacios de nombres
+   - B) Agrupa notificaciones por las etiquetas seleccionadas
    - C) Define la duración for de Prometheus
    - D) Hace que se ejecute cada ruta hermana coincidente
 
@@ -142,7 +142,7 @@ Proyecta la tendencia lineal observada. Los cambios de carga de trabajo, la limp
 
 **Respuesta: B**
 
-groupBy se convierte en group_by en la configuración nativa. Las rutas normalmente se detienen en la primera coincidencia entre rutas hermanas, a menos que se configure continue. La inhibición necesita labels iguales significativas de identidad de recurso para evitar suprimir advertencias no relacionadas de Service/node.
+groupBy se convierte en group_by en la configuración nativa. Las rutas normalmente se detienen en la primera coincidencia entre rutas hermanas, a menos que se configure continue. La inhibición necesita etiquetas de identidad de recurso significativas en el parámetro equal para evitar suprimir advertencias no relacionadas de Service o Node.
 
 </details>
 
@@ -158,7 +158,7 @@ groupBy se convierte en group_by en la configuración nativa. Las rutas normalme
 
 **Respuesta: B**
 
-La reproducción de WAL es un mecanismo de durabilidad, no una promesa de pérdida cero ante corrupción, fallo del volumen o interrupciones remotas prolongadas. Los requisitos de disco de retención y de WAL/head/compactación son independientes; conserve copias de seguridad y procedimientos de recuperación verificados.
+La reproducción de WAL es un mecanismo de durabilidad, no una promesa de pérdida cero ante corrupción, fallo del volumen o interrupciones remotas prolongadas. Los requisitos de disco de retención y de WAL/head/compactación son independientes; conserva copias de seguridad y procedimientos de recuperación verificados.
 
 </details>
 

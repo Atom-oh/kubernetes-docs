@@ -46,22 +46,22 @@ El controlador, los CRDs y la aplicación web son artefactos independientes. Se 
 
 **Respuesta: C) Predictor**
 
-Transformer y explainer son opcionales; la compatibilidad de runtime/protocolo y las rutas de explicación reales siguen siendo importantes.
+Transformer y explainer son opcionales; la compatibilidad del entorno de ejecución y del protocolo, así como las rutas de explicación reales, siguen siendo importantes.
 </details>
 
-4. ¿Al seleccionar Knative todos los predictors inactivos se escalan automáticamente a cero?
+4. ¿Al seleccionar Knative todos los predictores inactivos se escalan automáticamente a cero?
 
    - A) Sí, sin configuración
-   - B) No; KServe establece minReplicas en 1 de forma predeterminada y el escalado a cero requiere configuraciones compatibles de autoscaler/policy, como minReplicas 0
+   - B) No; KServe establece minReplicas en 1 de forma predeterminada y el escalado a cero requiere parámetros compatibles del autoescalador o de la política, como minReplicas 0
    - C) Sí, y la facturación de EC2 se detiene inmediatamente
    - D) No se necesita una instalación de Knative
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) No; KServe establece minReplicas en 1 de forma predeterminada y el escalado a cero requiere configuraciones compatibles de autoscaler/policy, como minReplicas 0**
+**Respuesta: B) No; KServe establece minReplicas en 1 de forma predeterminada y el escalado a cero requiere parámetros compatibles del autoescalador o de la política, como minReplicas 0**
 
-El escalado desde cero incluye carga de capacidad, imagen y modelo. Tener cero Pods no garantiza la terminación de los nodos.
+El escalado desde cero implica aprovisionar capacidad y cargar la imagen y el modelo. Tener cero Pods no garantiza que se retiren los nodos.
 </details>
 
 5. ¿Qué afirmación sobre el modo Standard es correcta?
@@ -69,14 +69,14 @@ El escalado desde cero incluye carga de capacidad, imagen y modelo. Tener cero P
    - A) Garantiza una réplica saludable y activa en todo momento
    - B) Usa Deployment/Service; el HPA predeterminado conserva al menos 1, mientras que una ruta KEDA configurada puede admitir cero
    - C) Siempre requiere Knative
-   - D) No admite opciones de autoscaling
+   - D) No admite opciones de escalado automático
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B) Usa Deployment/Service; el HPA predeterminado conserva al menos 1, mientras que una ruta KEDA configurada puede admitir cero**
 
-KEDA necesita instalación, métricas/triggers válidos y una ruta de activación. La latencia de inicio por restart/rollout/scale-out permanece en ambos modos.
+KEDA requiere instalación, métricas y activadores válidos, además de una ruta de activación. En ambos modos persiste la latencia de inicio causada por reinicios, actualizaciones graduales o escalado horizontal.
 </details>
 
 6. ¿Cuáles son los nombres de modo modernos en 0.18.0?
@@ -91,7 +91,7 @@ KEDA necesita instalación, métricas/triggers válidos y una ruta de activació
 
 **Respuesta: B) Knative y Standard; los nombres antiguos son alias obsoletos**
 
-Inspeccione la annotation y la configuración reales. El fallback del código es Standard; el chart de recursos OCI inspeccionado usa Knative de forma predeterminada.
+Inspeccione la anotación y la configuración reales. El valor alternativo del código es Standard; el chart de recursos OCI inspeccionado usa Knative de forma predeterminada.
 </details>
 
 7. ¿Qué implementa la ruta verificada de canaryTrafficPercent?
@@ -104,7 +104,7 @@ Inspeccione la annotation y la configuración reales. El fallback del código es
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) KServe establece los destinos de tráfico de revisión de Knative; las redes de Knative enrutan las solicitudes**
+**Respuesta: B) KServe establece los destinos del tráfico entre revisiones de Knative; la capa de red de Knative enruta las solicitudes**
 
 La actualización gradual de Standard no es el mismo mecanismo de porcentaje por revisión. La promoción/reversión y los artefactos conservados requieren validación independiente.
 </details>
@@ -112,16 +112,16 @@ La actualización gradual de Standard no es el mismo mecanismo de porcentaje por
 8. ¿Solicitar nvidia.com/gpu garantiza la inferencia mediante GPU?
 
    - A) Sí, para todos los modelos
-   - B) No; los drivers, la imagen/backend y la configuración de modelo/dispositivo también deben coincidir
-   - C) Instala automáticamente todos los drivers necesarios
+   - B) No; los controladores, la imagen o el backend y la configuración del modelo y del dispositivo también deben coincidir
+   - C) Instala automáticamente todos los controladores necesarios
    - D) Elimina la necesidad de capacidad de nodos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) No; los drivers, la imagen/backend y la configuración de modelo/dispositivo también deben coincidir**
+**Respuesta: B) No; los controladores, la imagen o el backend y la configuración del modelo y del dispositivo también deben coincidir**
 
-La asignación de recursos y la ejecución real del modelo son distintas. Karpenter proporciona capacidad apta sujeta a policies, cuotas y disponibilidad.
+La asignación de recursos y la ejecución real del modelo son aspectos distintos. Karpenter proporciona capacidad apta, sujeta a políticas, cuotas y disponibilidad.
 </details>
 
 ## Preguntas de respuesta corta
@@ -131,7 +131,7 @@ La asignación de recursos y la ejecución real del modelo son distintas. Karpen
 <details>
 <summary>Mostrar respuesta</summary>
 
-Knative puede conservar réplicas activas mediante configuraciones mínimas, y Standard puede usar KEDA con una señal externa adecuada. Ningún modo garantiza disponibilidad ni latencia; pruebe la preparación, la carga, la capacidad y la recuperación.
+Knative puede conservar réplicas activas mediante configuraciones mínimas, y Standard puede usar KEDA con una señal externa adecuada. Ningún modo garantiza disponibilidad ni latencia; pruebe la preparación para recibir tráfico, la carga del modelo, la capacidad y la recuperación.
 </details>
 
 10. ¿Por qué un URI de artefacto por sí solo es insuficiente y cómo se debe tratar TorchServe?
@@ -139,15 +139,15 @@ Knative puede conservar réplicas activas mediante configuraciones mínimas, y S
 <details>
 <summary>Mostrar respuesta</summary>
 
-El runtime, el formato/disposición del modelo, la versión de la biblioteca, las credenciales, los puertos y el protocolo deben coincidir. TorchServe indica que ya no recibe mantenimiento activo ni se planean correcciones de seguridad, por lo que una entrada antigua del catálogo de runtimes no demuestra que sea un valor predeterminado mantenido.
+El entorno de ejecución, el formato y la estructura del modelo, la versión de la biblioteca, las credenciales, los puertos y el protocolo deben coincidir. TorchServe indica que ya no recibe mantenimiento activo ni se planean correcciones de seguridad, por lo que una entrada antigua del catálogo de entornos de ejecución no demuestra que la opción predeterminada siga recibiendo mantenimiento.
 </details>
 
-11. ¿Cómo interactúan el autoscaling de Pods y el escalado de EC2?
+11. ¿Cómo interactúan el escalado automático de Pods y el escalado de EC2?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Knative/HPA/KEDA u otro escalador configurado determina los Pods deseados. La planificación de Kubernetes y las policies de capacidad de Karpenter afectan el aprovisionamiento/la recuperación de nodos. Otras cargas de trabajo o reglas de interrupción pueden mantener facturados los nodos de EC2 después de que los Pods del modelo lleguen a cero.
+Knative/HPA/KEDA u otro escalador configurado determina la cantidad deseada de Pods. La planificación de Kubernetes y las políticas de capacidad de Karpenter afectan el aprovisionamiento y la retirada de nodos. Otras cargas de trabajo o reglas de interrupción pueden mantener facturados los nodos de EC2 después de que los Pods del modelo lleguen a cero.
 </details>
 
 ---

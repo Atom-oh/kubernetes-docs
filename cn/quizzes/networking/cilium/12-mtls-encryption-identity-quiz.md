@@ -71,7 +71,7 @@
 
 **答案**：C) `internal`
 
-`internal` 使用 Cilium 内置 CA。1.20 新增的 `spire` 会使用外部 SPIRE Server，并由 Operator 为加入的命名空间注册条目。
+`internal` 使用 Cilium 内置 CA。1.20 新增的 `spire` 会使用外部 SPIRE Server，并由 Operator 为已加入的命名空间注册条目。
 
 </details>
 
@@ -85,7 +85,7 @@
 
 **答案**：B) 51871
 
-Cilium 使用 51871，而不是 WireGuard 默认的 51820。节点安全组必须允许节点之间通过引用节点安全组的方式通信，绝不能使用公共 CIDR。4789 和 8472 是 VXLAN 端口。
+Cilium 使用 51871，而不是 WireGuard 默认的 51820。节点安全组必须引用节点安全组来允许节点间的 UDP 51871 流量，绝不能使用公共 CIDR。4789 和 8472 是 VXLAN 端口。
 
 </details>
 
@@ -99,7 +99,7 @@ Cilium 使用 51871，而不是 WireGuard 默认的 51820。节点安全组必�
 
 **答案**：A) `encryption.strictMode.ingress.enabled`
 
-Ingress 严格模式会丢弃未经过 WireGuard 隧道进入的集群内部入站流量，因此不支持 IPsec。旧的扁平标志（`encryption.strictMode.enabled` 等）在 1.20 中被移除，改用 `egress.*` 名称。
+入站严格模式会丢弃未经过 WireGuard 隧道进入的集群内部入站流量，因此不支持 IPsec。旧的扁平标志（`encryption.strictMode.enabled` 等）在 1.20 中被移除，改用 `egress.*` 名称。
 
 </details>
 
@@ -127,7 +127,7 @@ Ingress 严格模式会丢弃未经过 WireGuard 隧道进入的集群内部入�
 
 **答案**：A) `doublewrite-readkvstore`，然后 `doublewrite-readcrd`，最后 `crd`
 
-整个过程中都会同时写入两个存储；读取路径先从 kvstore 切换到 CRD，然后删除 kvstore。每个步骤切换前，都要观察 `cilium_operator_doublewrite_*` 指标，直到 `*_only_identities` 值归零。
+整个过程中都会同时写入两个存储；读取路径先从 kvstore 切换到 CRD，然后停止使用 kvstore 作为身份分配后端。每个步骤切换前，都要观察 `cilium_operator_doublewrite_*` 指标，直到 `*_only_identities` 值归零。
 
 </details>
 

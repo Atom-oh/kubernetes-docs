@@ -2,7 +2,7 @@
 
 Este cuestionario evalúa tu comprensión de la instalación y configuración de ArgoCD.
 
-1. ¿Qué método de instalación se ajusta a un equipo que quiere versionar HA y otros ajustes mediante valores del chart?
+1. ¿Qué método de instalación encaja con un equipo que quiere mantener bajo control de versiones la configuración de alta disponibilidad y otros ajustes mediante valores del chart?
    - A) kubectl apply desde la URL raw de GitHub
    - B) Helm chart con valores personalizados
    - C) Docker Compose
@@ -36,17 +36,17 @@ Por convención, ArgoCD se instala en el namespace `argocd`. Esto mantiene aisla
 
 3. ¿Cuál es el propósito del componente Repo Server de ArgoCD?
    - A) Almacenar el estado de la aplicación
-   - B) Clonar repositorios Git y generar manifests de Kubernetes
+   - B) Clonar repositorios Git y generar manifiestos de Kubernetes
    - C) Proporcionar la web UI
    - D) Gestionar la autenticación de usuarios
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Clonar repositorios Git y generar manifests de Kubernetes**
+**Respuesta: B) Clonar repositorios Git y generar manifiestos de Kubernetes**
 
 **Explicación:**
-El Repo Server se encarga de clonar repositorios Git y generar manifests de Kubernetes a partir de varias fuentes (Helm, Kustomize, YAML simple). Almacena en caché los datos de los repositorios para mejorar el rendimiento.
+El Repo Server se encarga de clonar repositorios Git y generar manifiestos de Kubernetes a partir de varias fuentes (Helm, Kustomize y YAML simple). Almacena en caché los datos de los repositorios para mejorar el rendimiento.
 
 </details>
 
@@ -78,6 +78,6 @@ En el flujo normal que genera una contraseña de arranque, la contraseña inicia
 **Respuesta: B) Modo Core**
 
 **Explicación:**
-El modo ArgoCD Core instala solo los componentes esenciales (Application Controller y Repo Server) sin el API Server, UI ni Dex. Este modo es adecuado para entornos en los que ArgoCD se gestiona completamente mediante Git y la CLI.
+El modo ArgoCD Core instala los componentes necesarios para operar sin interfaz de usuario, incluidos el Application Controller y el Repo Server, pero sin el API Server ni Dex. Este modo es adecuado para entornos en los que ArgoCD se gestiona completamente mediante Git y la CLI.
 
 </details>

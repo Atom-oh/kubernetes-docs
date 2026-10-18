@@ -1,13 +1,13 @@
 # ClickHouse 日志分析测验
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
 1. 为什么列式存储有助于分析型日志查询？
 
    - A) 它始终扫描每个字段
    - B) 它可以读取选定的列并压缩重复值
    - C) 它保证固定的压缩比
-   - D) 它无需进行 schema 设计
+   - D) 它无需进行数据模式设计
 
 <details>
 <summary>显示答案</summary>
@@ -38,7 +38,7 @@ ClickHouse 查询发起方和 Distributed 表执行分布式查询。Keeper 不�
 
 ---
 
-3. 哪种 engine 为 MergeTree 存储添加复制功能？
+3. 哪种引擎为 MergeTree 存储添加复制功能？
 
    - A) ReplicatedMergeTree
    - B) Memory
@@ -56,7 +56,7 @@ ClickHouse 查询发起方和 Distributed 表执行分布式查询。Keeper 不�
 
 ---
 
-4. 对于重复的 namespace 或 severity 值，哪种类型值得评估？
+4. 对于重复的命名空间或严重级别值，哪种类型值得评估？
 
    - A) 始终使用 FixedString(255)
    - B) LowCardinality(String)
@@ -79,7 +79,7 @@ ClickHouse 查询发起方和 Distributed 表执行分布式查询。Keeper 不�
    - A) 按字母顺序
    - B) 按字段创建时间
    - C) 根据选择性过滤条件、局部性和代表性查询
-   - D) 无论查询如何，始终将 timestamp 放在最后
+   - D) 无论查询如何，始终将时间戳放在最后
 
 <details>
 <summary>显示答案</summary>
@@ -122,7 +122,7 @@ ClickHouse 查询发起方和 Distributed 表执行分布式查询。Keeper 不�
 
 **答案：B) 在保留期内进行突发缓冲和重放**
 
-必须对保留期、确认、复制、容量、offset 提交和下游插入行为进行测试。内存 Buffer 可能会在崩溃时丢失已确认的数据。
+必须对保留期、确认、复制、容量、偏移量提交和下游插入行为进行测试。内存 Buffer 可能会在崩溃时丢失已确认的数据。
 
 </details>
 
@@ -148,17 +148,17 @@ ClickHouse 查询发起方和 Distributed 表执行分布式查询。Keeper 不�
 
 9. TTL TO VOLUME 子句需要什么并保证什么？
 
-   - A) 它会创建一个 S3 bucket 和 IAM role
-   - B) 它会在精确的挂钟截止时间删除每一行
-   - C) 一个现有的选定存储策略；异步后台工作
-   - D) 它使冷数据 part 成为独立的 Parquet 备份
+   - A) 它会创建一个 S3 存储桶和 IAM 角色
+   - B) 它会在预定的确切时刻删除每一行
+   - C) 需要已选用的现有存储策略；通过异步后台任务执行
+   - D) 它使冷数据分片（part）成为独立的 Parquet 备份
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 一个现有的选定存储策略；异步后台工作**
+**答案：C) 需要已选用的现有存储策略；通过异步后台任务执行**
 
-TTL 无法创建策略或云权限。冷表存储与单独验证的 Parquet archive 具有不同的所有权和恢复语义。
+TTL 无法创建策略或云权限。冷表存储与单独验证的 Parquet 归档具有不同的所有权和恢复语义。
 
 </details>
 
@@ -166,9 +166,9 @@ TTL 无法创建策略或云权限。冷表存储与单独验证的 Parquet arch
 
 10. 应如何构建由 ClickHouse 支持的 Grafana 告警？
 
-   - A) 编造一个 clickhouse_custom_query Prometheus metric
+   - A) 编造一个 clickhouse_custom_query Prometheus 指标
    - B) 使用 grafana-clickhouse-datasource、数值 SQL 结果和 Grafana Alerting
-   - C) 为每个 dashboard 提供管理员账户
+   - C) 为每个仪表板提供管理员账户
    - D) 将未收到日志视为健康的证明
 
 <details>
@@ -176,7 +176,7 @@ TTL 无法创建策略或云权限。冷表存储与单独验证的 Parquet arch
 
 **答案：B) 使用 grafana-clickhouse-datasource、数值 SQL 结果和 Grafana Alerting**
 
-使用受限的只读账户、已验证的 TLS 和所需的 timeout-setting 权限。单独监控摄取；即使没有输入，聚合结果也可能返回零。
+使用受限的只读账户、已验证的 TLS，以及设置超时所需的权限。单独监控摄取；即使没有输入，聚合结果也可能返回零。
 
 </details>
 

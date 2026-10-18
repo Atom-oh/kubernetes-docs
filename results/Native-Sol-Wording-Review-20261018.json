@@ -4328,6 +4328,1389 @@
         "sourceAuthorityRepairs": []
       },
       "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0010-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+      "targetPath": "cn/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+      "sourceBlob": "77652091de15ea3719725449b3b97d0b87fdafa3",
+      "sourceSha256": "a0522dfe07dc14c33c5d471d1e215f0dbf94bc71048f1cc1c55074e56b87ce50",
+      "beforeTargetSha256": "e09c8f7e56d62ab67676debcb1ec9b3b80902558b746b6396ca3e6bf383b3c35",
+      "beforeSnapshot": "/tmp/preimages/e09c8f7e56d62ab67676debcb1ec9b3b80902558b746b6396ca3e6bf383b3c35.md",
+      "sourceGitBlob": "77652091de15ea3719725449b3b97d0b87fdafa3",
+      "targetSha256": "6f49495a23927481c5b1265902d6e2bab202df0d50ae71e51b56fb9c3e7bdb32",
+      "currentTargetSha256": "6f49495a23927481c5b1265902d6e2bab202df0d50ae71e51b56fb9c3e7bdb32",
+      "afterTargetSha256": "6f49495a23927481c5b1265902d6e2bab202df0d50ae71e51b56fb9c3e7bdb32",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/6f49495a23927481c5b1265902d6e2bab202df0d50ae71e51b56fb9c3e7bdb32.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0011-source-snapshots/a0522dfe07dc14c33c5d471d1e215f0dbf94bc71048f1cc1c55074e56b87ce50.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read and compared the complete introduction/date and all ten stems, forty choices, ten answer labels and explanations, and return link; reread the final page after formatting. Preserved CloudWatch M-of-N versus consecutive periods, Alertmanager JSON casing/template and release boundary, OnCall archival and connection termination, SNS-loop IAM separation, missing/error evidence, Converse completion gates, the publish/commit duplication window and independent retries, investigation-group preparation, and A2A discovery/auth/task contracts. The Chinese now expresses idempotent suppression and specialist analysis naturally without strengthening exactly-once or remediation guarantees.",
+      "findings": [
+        {
+          "location": "Q7",
+          "finding": "The duplicate-success sentence was syntactically awkward and obscured the idempotency actor.",
+          "resolution": "Expressed suppression of re-executing already-successful work for the same message ID within 24 hours; retained the publish/commit duplicate window and separate retry layers.",
+          "resolved": true
+        },
+        {
+          "location": "Whole page/date/Q9–10",
+          "finding": "Generic English region/incident-path/group/decomposition prose interrupted Chinese reading.",
+          "resolution": "Localized the date and ordinary prose while retaining API, ARN, JSON, template, version and protocol tokens.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+          "cn/quizzes/observability/labs/05-alerting-aiops-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0011-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+      "targetPath": "cn/quizzes/observability/logging/04-clickhouse-quiz.md",
+      "sourceBlob": "27f7442aa4b6b502c8665a291b0e211ad07198da",
+      "sourceSha256": "e88d4011dfe56cf8b31ab1bead712532c2873e64d21386ebfe3c92db4f22f8d0",
+      "beforeTargetSha256": "f05cdcf0b924a615c2bd9b8d2bc7e95b37ce03817519736aa53ca7b321c15436",
+      "beforeSnapshot": "/tmp/preimages/f05cdcf0b924a615c2bd9b8d2bc7e95b37ce03817519736aa53ca7b321c15436.md",
+      "sourceGitBlob": "27f7442aa4b6b502c8665a291b0e211ad07198da",
+      "targetSha256": "721e010d2762969f1bde754d337f0323aa8b7a9b5e48c0e810f29ec2f91678c5",
+      "currentTargetSha256": "721e010d2762969f1bde754d337f0323aa8b7a9b5e48c0e810f29ec2f91678c5",
+      "afterTargetSha256": "721e010d2762969f1bde754d337f0323aa8b7a9b5e48c0e810f29ec2f91678c5",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/721e010d2762969f1bde754d337f0323aa8b7a9b5e48c0e810f29ec2f91678c5.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0011-source-snapshots/e88d4011dfe56cf8b31ab1bead712532c2873e64d21386ebfe3c92db4f22f8d0.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Compared and reread all ten questions, forty options, answer sequence B C A B C D B A C B, each explanation, date and link. Preserved data/query-dependent columnar gains, Keeper coordination, persistent replica fault domains, LowCardinality benchmarking, ORDER BY selectivity, the sampling-expression prerequisite and finite-sample caveat, Kafka retention/ack/offset behavior, JSONType exclusions, existing TTL policy/cloud ownership, distinct archive recovery semantics and read-only Grafana ingestion checks. SQL and plugin identifiers and deliberately false choices are unchanged in meaning.",
+      "findings": [
+        {
+          "location": "Q9",
+          "finding": "A literal wall-clock formulation and generic storage-policy/background-work wording were unnatural.",
+          "resolution": "Used precise Chinese for deletion at a scheduled exact instant as the false option, existing selected policy and asynchronous background tasks as the correct option; retained the cold part versus independent Parquet backup distinction.",
+          "resolved": true
+        },
+        {
+          "location": "Q10/whole page",
+          "finding": "Timeout-setting permission and generic schema/engine/archive/metric prose were awkward.",
+          "resolution": "Clarified permissions needed to set timeouts and localized ordinary terminology, preserving numerical examples and SQL/plugin tokens.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+          "cn/quizzes/observability/logging/04-clickhouse-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0011-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+      "targetPath": "cn/quizzes/observability/metrics/01-prometheus-quiz.md",
+      "sourceBlob": "4f79359fdfa592a5ebb119440d0bbf97c46617b1",
+      "sourceSha256": "54c8c822ad02b6441201fa2c6e266c20e4a9d52ff84e341604ba9b7c94112732",
+      "beforeTargetSha256": "e4007ead3c217a73e6cb2194643ff900238b032f2df630873364ce7770193534",
+      "beforeSnapshot": "/tmp/preimages/e4007ead3c217a73e6cb2194643ff900238b032f2df630873364ce7770193534.md",
+      "sourceGitBlob": "4f79359fdfa592a5ebb119440d0bbf97c46617b1",
+      "targetSha256": "51fb418eaceb8e0cffaa35bc6debff740db94c40ca7eace4532ec7564c3aeabd",
+      "currentTargetSha256": "51fb418eaceb8e0cffaa35bc6debff740db94c40ca7eace4532ec7564c3aeabd",
+      "afterTargetSha256": "51fb418eaceb8e0cffaa35bc6debff740db94c40ca7eace4532ec7564c3aeabd",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/51fb418eaceb8e0cffaa35bc6debff740db94c40ca7eace4532ec7564c3aeabd.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0011-source-snapshots/54c8c822ad02b6441201fa2c6e266c20e4a9d52ff84e341604ba9b7c94112732.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Completed source/target comparison and final reread of all ten stems and forty options, B B C B C B B B B B answers, explanations, the actual September 12 date and guide link. Preserved pull-scrape/up limits, reset-aware rate-before-sum ordering and unrecoverable missed increments, monitor selectors/port/RBAC/TLS, histogram interpolation and Summary aggregation limits, chart version cohort, remote-write receiver identity/HA/quota/WAL bounds, per-alert pending identity, prediction and smoothing limits, grouping/routing/inhibition and backup/storage constraints. All source inline queries remain exact.",
+      "findings": [
+        {
+          "location": "Q9",
+          "finding": "The equal configuration name was omitted from the description of resource-identity inhibition.",
+          "resolution": "Explicitly restored equal and the need for meaningful resource-identity labels to avoid inhibiting unrelated services or nodes.",
+          "resolved": true
+        },
+        {
+          "location": "Whole page/date",
+          "finding": "Generic namespace/exporter/selector/cohort/compaction prose was uneven.",
+          "resolution": "Localized ordinary prose and September 12, retaining exact configuration names, query expressions, release and experiment caveats.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+          "cn/quizzes/observability/metrics/01-prometheus-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0011-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/logging/05-collectors-quiz.md",
+      "targetPath": "cn/quizzes/observability/logging/05-collectors-quiz.md",
+      "sourceBlob": "3bbfb5cba7ab52eb0c3386ad8b99ffa1696eb74a",
+      "sourceSha256": "5ef8e8bd6af23a441b5f183d1efad678fff301f58bb09428cfc9438f2e95a0a7",
+      "beforeTargetSha256": "ccec28828956384ccd061fd5a645c0319e0b288e4f048fecf7b7c3116c6a93f1",
+      "beforeSnapshot": "/tmp/preimages/ccec28828956384ccd061fd5a645c0319e0b288e4f048fecf7b7c3116c6a93f1.md",
+      "sourceGitBlob": "3bbfb5cba7ab52eb0c3386ad8b99ffa1696eb74a",
+      "targetSha256": "83ccbda5f1daf5bd4ce2393d902588ee3b8ac169bca677d4070166112c60d622",
+      "currentTargetSha256": "83ccbda5f1daf5bd4ce2393d902588ee3b8ac169bca677d4070166112c60d622",
+      "afterTargetSha256": "83ccbda5f1daf5bd4ce2393d902588ee3b8ac169bca677d4070166112c60d622",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/83ccbda5f1daf5bd4ce2393d902588ee3b8ac169bca677d4070166112c60d622.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0011-source-snapshots/5ef8e8bd6af23a441b5f183d1efad678fff301f58bb09428cfc9438f2e95a0a7.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Compared and finally reread the complete ten-question page, all forty correct and incorrect choices, B C A B C D B A C D answers, explanations, date and link. Retained benchmark conditions, authorized Fluent Bit metadata/kubelet access, Promtail EOL date and lambda-promtail exclusion, River/HCL-like versus Terraform distinction, Collector ordering and Loki exporter removal version, limited structured Lua redaction, Promtail versus Alloy stage names, exact native AWS plugin names and actual ServiceAccount ownership, retryable memory refusal/finite filelog window, conversion limits and duplicate-file/API ownership. Heavy generic English was translated without changing config identifiers or negative options.",
+      "findings": [
+        {
+          "location": "Whole page",
+          "finding": "Many generic English phrases and literal syntax made the Chinese difficult to follow.",
+          "resolution": "Rendered resource use, pipeline stages, destinations, permissions, conversion validation and ownership as natural Chinese while preserving plugin/stage/API/config tokens and every choice meaning.",
+          "resolved": true
+        },
+        {
+          "location": "Q6/Q9/Q10",
+          "finding": "Security and delivery caveats needed readable Chinese rather than opaque literal fragments.",
+          "resolution": "Kept the non-general PII/fail-closed limits, possible failed-batch discard and conversion-induced per-pipeline rate change explicit; clarified verification of backend records and avoiding duplicate collection.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/logging/05-collectors-quiz.md",
+          "cn/quizzes/observability/logging/05-collectors-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0011-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+      "targetPath": "cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+      "sourceBlob": "ab6c41d1c55365fd695672b4b40615ad50feea85",
+      "sourceSha256": "139f5e8d0d912cfdb2c5a8dcb1f8b23e289ddb95d0bccdce2de2647007bda1f9",
+      "beforeTargetSha256": "3b23c09eddaa90cbd5bed80efc54d9f4e8e4cd0d499b84fe68d10109c6a51977",
+      "beforeSnapshot": "/tmp/preimages/3b23c09eddaa90cbd5bed80efc54d9f4e8e4cd0d499b84fe68d10109c6a51977.md",
+      "sourceGitBlob": "ab6c41d1c55365fd695672b4b40615ad50feea85",
+      "targetSha256": "70352e022dd18e1f23ed7b6f68c83c0fcf53dc6f92fac28314fb5d92ae609b78",
+      "currentTargetSha256": "70352e022dd18e1f23ed7b6f68c83c0fcf53dc6f92fac28314fb5d92ae609b78",
+      "afterTargetSha256": "70352e022dd18e1f23ed7b6f68c83c0fcf53dc6f92fac28314fb5d92ae609b78",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/70352e022dd18e1f23ed7b6f68c83c0fcf53dc6f92fac28314fb5d92ae609b78.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0011-source-snapshots/139f5e8d0d912cfdb2c5a8dcb1f8b23e289ddb95d0bccdce2de2647007bda1f9.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Compared the entire current English and final Chinese page, reread all ten questions and forty choices with C D B A C B B C B D answers and every explanation, date and link. Preserved five EKS control-plane categories and Auto Mode separation, hypothetical region-specific cost inputs, JSON envelope parsing, exact group/stream names, subscription destination/downstream export boundaries and unsupported Firehose/OpenSearch path, actual Fluent Bit identity/plugin distinction, exact four Logs Insights options, DEBUG/security-record limits, metric zero versus missing conditions, and narrow manual logging versus broader chart ownership. Source GB-month is expressed as GB·月 rather than a per-month division.",
+      "findings": [
+        {
+          "location": "Whole page",
+          "finding": "Generic English and literal date/cost/storage/permission prose obscured established distinctions.",
+          "resolution": "Translated ordinary logging, subscription, metric and IAM explanations; preserved source query/config/API/ARN bytes and the hypothetical cost conditions.",
+          "resolved": true
+        },
+        {
+          "location": "Q7/Q9/Q10",
+          "finding": "Query-grouping, absent-log and least-privilege caveats required clear prose.",
+          "resolution": "Retained exact query options, distinguished no matching events from no arriving logs, and made actual logging ServiceAccount/output ownership and the narrow action/profile scope explicit.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+          "cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0011-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/metrics/05-datadog-quiz.md",
+      "targetPath": "cn/quizzes/observability/metrics/05-datadog-quiz.md",
+      "sourceBlob": "47ed8cf2ea4d4a0191c53631f64a163690d9e1bf",
+      "sourceSha256": "a8f7d73c574547a03397a17753ca450aa3a59245cf4fb00fbfd4e1f2ca673619",
+      "beforeTargetSha256": "5a7a47c1d63c3c37f50baf9b42700dfa75ad7cae21466ee5f55fd4eda194ec47",
+      "beforeSnapshot": "/tmp/preimages/5a7a47c1d63c3c37f50baf9b42700dfa75ad7cae21466ee5f55fd4eda194ec47.md",
+      "sourceGitBlob": "47ed8cf2ea4d4a0191c53631f64a163690d9e1bf",
+      "targetSha256": "fcafb9aeed9d165dc77db1285b558e4e03df27775803bba8af183d2bc9260e39",
+      "currentTargetSha256": "fcafb9aeed9d165dc77db1285b558e4e03df27775803bba8af183d2bc9260e39",
+      "afterTargetSha256": "fcafb9aeed9d165dc77db1285b558e4e03df27775803bba8af183d2bc9260e39",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/fcafb9aeed9d165dc77db1285b558e4e03df27775803bba8af183d2bc9260e39.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0012-source-snapshots/a8f7d73c574547a03397a17753ca450aa3a59245cf4fb00fbfd4e1f2ca673619.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the complete current English/Chinese pair and reread the full final ten-question page, all forty options, C A B D C A B D C B answer labels, every explanation, date and return link. Preserved separate SaaS entitlements/billing, baseline API versus application keys/AWS roles, authorized cross-account external ID and actual rendered ServiceAccount, mutation versus SDK injection and namespace/library/runtime restrictions, UDS path/permissions/datagram acknowledgement limits, nanocore versus percent units and cumulative restart gauges/reset-aware increments, sums-of-counts with matching groups and zero/missing/error-free states, exact OpenMetrics/Grok fields and chart-managed mount ownership, caller MDC restoration/string IDs/synchronous instrumentation requirements, service-versus-host costs and local flare/no-upload/key-exposure limits. Ordinary English residue is now Chinese without modifying the actual metric/config/API identifiers or turning an alert notification into a web page.",
+      "findings": [
+        {
+          "location": "Whole page/date",
+          "finding": "Generic English residue remained throughout credentials, injection, transport, metric units, aggregation, context, billing and diagnostics.",
+          "resolution": "Localized the September 13 date and ordinary prose while retaining exact API/metric/config/product tokens, every entitlement and source caveat.",
+          "resolved": true
+        },
+        {
+          "location": "Q7",
+          "finding": "chart 所有的挂载 did not express ownership correctly.",
+          "resolution": "Expressed mounts managed by the chart and retained the distinction between standalone ConfigMaps, request-schema checks and actual scrape/Grok parsing.",
+          "resolved": true
+        },
+        {
+          "location": "Q10",
+          "finding": "The English page in the false option meant an alert/on-call notification, not a web page.",
+          "resolution": "Rendered it as an alert notification being delivered; retained routing/no-data validation, diagnostic sharing checks and --local collection behavior.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/metrics/05-datadog-quiz.md",
+          "cn/quizzes/observability/metrics/05-datadog-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0012-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+      "targetPath": "cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+      "sourceBlob": "4af25d5becede5c9dd581447d3c0d980270f73bd",
+      "sourceSha256": "d44f8f29d3a195dc413c08b132e884103711a6ed854370ad8e7dac192f4a5843",
+      "beforeTargetSha256": "8cfdb3dc8405afb0d9315fefb5e21afc6d35c423bb7c94042a81c586a0787764",
+      "beforeSnapshot": "/tmp/preimages/8cfdb3dc8405afb0d9315fefb5e21afc6d35c423bb7c94042a81c586a0787764.md",
+      "sourceGitBlob": "4af25d5becede5c9dd581447d3c0d980270f73bd",
+      "targetSha256": "8b8a841ede03e9df92ec2e2e386e4d32f6a786342f9ac81216095fa8759b29dc",
+      "currentTargetSha256": "8b8a841ede03e9df92ec2e2e386e4d32f6a786342f9ac81216095fa8759b29dc",
+      "afterTargetSha256": "8b8a841ede03e9df92ec2e2e386e4d32f6a786342f9ac81216095fa8759b29dc",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/8b8a841ede03e9df92ec2e2e386e4d32f6a786342f9ac81216095fa8759b29dc.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0012-source-snapshots/d44f8f29d3a195dc413c08b132e884103711a6ed854370ad8e7dac192f4a5843.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the whole English and Chinese quiz and finally reread all ten questions, forty choices, C D B A C B A D A B answers, explanations, baseline/date and link. Preserved Cilium 1.20.2, CLI 0.20.1, Hubble CLI 1.20.2 and the 1.21 prerelease boundary; deprecated/removed Mutual Authentication versus unused CRD field; exact reserved identity IDs; namespace-only enrollment; HBONE/redirect/legacy port numbers and inner-port L4 limits; internal versus external SPIRE CA; WireGuard-only ingress strict mode and removed flat flags; per-tunnel 3+ keys, security advisory and key-ID range; double-write phase order/concurrent stores/read migration/zero-before-each-step metrics; and CEL validation with existing policies unaffected until update. Changes are limited to clarifying the UDP rule and stopping backend usage, rather than deleting a datastore.",
+      "findings": [
+        {
+          "location": "Q6 explanation",
+          "finding": "The generic inter-node communication wording could imply broader ingress than the specified WireGuard port.",
+          "resolution": "Explicitly limited the referenced node-security-group allowance to inter-node UDP 51871 traffic and retained the never-public-CIDR condition.",
+          "resolved": true
+        },
+        {
+          "location": "Q9 explanation",
+          "finding": "删除 kvstore could instruct deletion of the underlying datastore.",
+          "resolution": "Expressed ending use of kvstore as the identity-allocation backend; preserved the exact double-write/read migration sequence and metrics gates.",
+          "resolved": true
+        },
+        {
+          "location": "Q5/Q7 prose",
+          "finding": "Small generic role/state wording was unnatural.",
+          "resolution": "Clarified already-enrolled namespaces and translated ingress strict mode without changing operator/API behavior.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+          "cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0012-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+      "targetPath": "cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+      "sourceBlob": "395b972a1e1592e374d6e030465994eb6cfa3274",
+      "sourceSha256": "fa54085460012a7dfe796d67ab1c49eaeb39c5b169c2da0223a6830ec49713c7",
+      "beforeTargetSha256": "9c4a881ce5f902abb3e0f2a145efb90c46497e5d54c74f958a9948e588cadd29",
+      "beforeSnapshot": "/tmp/preimages/9c4a881ce5f902abb3e0f2a145efb90c46497e5d54c74f958a9948e588cadd29.md",
+      "sourceGitBlob": "395b972a1e1592e374d6e030465994eb6cfa3274",
+      "targetSha256": "44eba0668eede671be71079d27e381775a081c363a8af60364b6e655d13e7105",
+      "currentTargetSha256": "44eba0668eede671be71079d27e381775a081c363a8af60364b6e655d13e7105",
+      "afterTargetSha256": "44eba0668eede671be71079d27e381775a081c363a8af60364b6e655d13e7105",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/44eba0668eede671be71079d27e381775a081c363a8af60364b6e655d13e7105.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0012-source-snapshots/fa54085460012a7dfe796d67ab1c49eaeb39c5b169c2da0223a6830ec49713c7.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Completed comparison of the full introduction, headings, six questions/twenty-four choices, all B answers, and every explanation, then reread the final whole page. Retained actual App Mesh/Lattice API comparison rather than proxy-placement impossibility, configured-control replacement scope, VirtualNode identity/backend/listener mapping and absent pool/outlier resources, application spans and request/log/client/server correlation, stopped-controller stale target behavior and IAM/Deployment reliability, current east-west versus ingress north-south ownership, and target-health-linked Pod readiness during rolling updates. General auth policy now means access control rather than authentication only; actual product/resource names, backendRefs and Ready/Healthy states remain exact.",
+      "findings": [
+        {
+          "location": "Q2 explanation",
+          "finding": "身份验证策略 narrowed the source general auth/access-control policy, and 如何接收 blurred the source location of receiving traffic.",
+          "resolution": "Used 访问控制策略 and 在何处接收流量, retaining IAM permissions/identity role and the complete resource-versus-capability mapping.",
+          "resolved": true
+        },
+        {
+          "location": "Introduction/Q3–6",
+          "finding": "Generic sidecar, circuit-breaking, spans, endpoint/controller, traffic direction and readiness prose interrupted natural Chinese.",
+          "resolution": "Rendered ordinary concepts in Chinese, retaining product names, actual resource states and source migration constraints.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0012-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+      "targetPath": "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+      "sourceBlob": "5464f25f86d92052ca4996d89f349750103b78fa",
+      "sourceSha256": "054ba6f01203f8c9900bd6ccdc335d9bd9bb67200cf1e9f728322acc555bd9e6",
+      "beforeTargetSha256": "81a5f8de08d7467b68eb3e327f7f13a6987961f1570559e4edfcf7c30c1163f4",
+      "beforeSnapshot": "/tmp/preimages/81a5f8de08d7467b68eb3e327f7f13a6987961f1570559e4edfcf7c30c1163f4.md",
+      "sourceGitBlob": "5464f25f86d92052ca4996d89f349750103b78fa",
+      "targetSha256": "7f8418f9b5aafaaaca3825cf19330362aac0f2afedb3c0e7799fa339657c5a4a",
+      "currentTargetSha256": "7f8418f9b5aafaaaca3825cf19330362aac0f2afedb3c0e7799fa339657c5a4a",
+      "afterTargetSha256": "7f8418f9b5aafaaaca3825cf19330362aac0f2afedb3c0e7799fa339657c5a4a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/7f8418f9b5aafaaaca3825cf19330362aac0f2afedb3c0e7799fa339657c5a4a.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0012-source-snapshots/054ba6f01203f8c9900bd6ccdc335d9bd9bb67200cf1e9f728322acc555bd9e6.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read all fifteen complete English/Chinese questions, answers and explanations plus the introduction and return link, and reread the final whole page. Restored the first answer polarity and preserved continued heap/GC/memory resource planning; ForSt experimental incremental snapshots and remote/cache limits; new SST/metadata compaction and shared-reference lifetime; chosen-checkpoint restore/I/O/canonical state costs; CLAIM/NO_CLAIM disposal and checkpoint externalized retention; accessible HA metadata/state/UID/serializer limits; checkpoint-coordinated Kafka commits/read_committed without global transactions; concurrent unique versus restart-stable transaction prefixes/fencing; extra latency/broker timeout and one-hour 5.0.0 default; POOLING Kafka 3+/permissions/migration conditions; exact DynamicIcebergSink API order and Iceberg 1.11.0/Flink 2.1.3 versus unvalidated 2.2.1; CDC equality/data-key/schema constraints; WATERMARK validation/JAR prerequisites; SDK v1.12.779/v2 provider and coded two-second cadence limits; and late window refiring/explicit side output. This is a native meaning comparison, not a structural grade.",
+      "findings": [
+        {
+          "location": "Q1",
+          "finding": "不必 contradicted source No and implied RocksDB removed the need for heap/GC/memory planning.",
+          "resolution": "Reworded the stem as whether RocksDB can remove those considerations and answered 不能, retaining all resource-consuming categories and measured workload/state guidance.",
+          "resolved": true
+        },
+        {
+          "location": "Q3",
+          "finding": "压缩 suggested encoding compression rather than SST compaction.",
+          "resolution": "Used 数据压实（compaction） while retaining new SST/metadata persistence, potentially rewritten files and referenced-file recovery risks.",
+          "resolved": true
+        },
+        {
+          "location": "Q12",
+          "finding": "相等字段 was unnatural and 密钥 narrowed generic record/data keys to security credentials; 架构演进 misrendered schema evolution.",
+          "resolution": "Used equality-matching fields, data keys and data-schema evolution; preserved RowKind/upsert/source/permission/format/buffering/failure checks.",
+          "resolved": true
+        },
+        {
+          "location": "Whole page",
+          "finding": "Generic slot/sink/fencing/broker/builder/connector/generator/Collector/planner/provider/side-output prose remained uneven.",
+          "resolution": "Localized ordinary prose with technical terms where useful, preserving every API/config identifier and version/operational limitation.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+          "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0012-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md",
+      "targetPath": "cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md",
+      "sourceBlob": "cbd3f5ce20d152524df37452c72cfa7c62727f8a",
+      "sourceSha256": "d20e260f4b494132663cdb34cef2cdfe3d66abb3dafa19673549477498c91b18",
+      "beforeTargetSha256": "bdcbd9db655dd29e62263d0d2da6b0afb8b4204995b0d00b05c324fcf371478d",
+      "beforeSnapshot": "/tmp/preimages/bdcbd9db655dd29e62263d0d2da6b0afb8b4204995b0d00b05c324fcf371478d.md",
+      "sourceGitBlob": "cbd3f5ce20d152524df37452c72cfa7c62727f8a",
+      "targetSha256": "19f9f41d955accd55d0e26f63794970387ba12168c9c94a8cadd5267693e29b6",
+      "currentTargetSha256": "19f9f41d955accd55d0e26f63794970387ba12168c9c94a8cadd5267693e29b6",
+      "afterTargetSha256": "19f9f41d955accd55d0e26f63794970387ba12168c9c94a8cadd5267693e29b6",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/19f9f41d955accd55d0e26f63794970387ba12168c9c94a8cadd5267693e29b6.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0012-source-snapshots/d20e260f4b494132663cdb34cef2cdfe3d66abb3dafa19673549477498c91b18.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read and compared the entire introduction/headings, seven stems, twenty-eight options, seven B answers and every explanation, and reread the final whole page. Preserved exact IPv4/IPv6 CIDRs and RFCs, link scope versus ULA global address scope/private routing and non-site-local classification, AWS-specific route/association reachability, conditional Envoy coexistence and bypass/forwarding checks, service-aware identity/correlation/SG changes through reviewed IaC, custom-domain SNI plus explicit ECH/ESNI exclusion, listener raw-TCP limits versus separate TCP resource connectivity and h2c distinction, and end-to-end TLS trade-offs including retained anonymous network-context control and lack of backend certificate validation. General access policies are no longer narrowed to identity authentication.",
+      "findings": [
+        {
+          "location": "Q4/Q7 explanations",
+          "finding": "身份验证策略 could narrow general auth policies and erase retained anonymous network-context controls.",
+          "resolution": "Used 访问控制策略, retaining authenticated HTTP identity/L7 inspection loss, anonymous controls and explicit listener/endpoint selection.",
+          "resolved": true
+        },
+        {
+          "location": "Q1/Q3/Q6–7",
+          "finding": "Repeated conjunctions and generic mesh/listener/resource-model/mathematical-impossibility prose were awkward.",
+          "resolution": "Made the ULA-versus-link-local distinction explicit and rendered generic terms naturally, retaining CIDRs/RFCs, unsupported ECH/ESNI, separate TCP model and all protocol caveats.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0012-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+      "targetPath": "cn/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+      "sourceBlob": "3867d75107187c4d32fd7ed78f7e107e3fb5df96",
+      "sourceSha256": "812a0ca10457428fbdceea976b7ab2a2102cee2e712defe0bb523c70676ae479",
+      "beforeTargetSha256": "2470ba7a90714e3f987962dce58c6cc949ef4acdb2807eaec936091727945f6e",
+      "beforeSnapshot": "/tmp/preimages/2470ba7a90714e3f987962dce58c6cc949ef4acdb2807eaec936091727945f6e.md",
+      "sourceGitBlob": "3867d75107187c4d32fd7ed78f7e107e3fb5df96",
+      "targetSha256": "08aab0f4c05324f297a95175a686b5d2dcdb8a67cf5a4d5ebf833d351fd78553",
+      "currentTargetSha256": "08aab0f4c05324f297a95175a686b5d2dcdb8a67cf5a4d5ebf833d351fd78553",
+      "afterTargetSha256": "08aab0f4c05324f297a95175a686b5d2dcdb8a67cf5a4d5ebf833d351fd78553",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/08aab0f4c05324f297a95175a686b5d2dcdb8a67cf5a4d5ebf833d351fd78553.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0013-source-snapshots/812a0ca10457428fbdceea976b7ab2a2102cee2e712defe0bb523c70676ae479.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the complete source/target pair and reread the whole final nine-question page, all thirty-six options, nine B answers, every explanation and heading. Retained the surrounding-workload EKS/EC2 criterion, terminationGracePeriodSeconds and 30-second/SIGKILL/OOM flushing risks, random trie access and independent gp3 IOPS/throughput, readiness versus liveness/restart-loop distinction, exact advertised-address command and ordinal/downward API initialization, dedicated-worker resource headroom and omitted-limit load testing, eligible EIP-7251 consolidation without proportional process/cost claims, Fabric MSP/TLS renewal and Operator/Peer validation, and independent same-height/finality hash comparison after forks. Removed unsupported frequency ranking and fixed the dedicated-worker actor without rewriting established technical terms.",
+      "findings": [
+        {
+          "location": "Q5/Q8",
+          "finding": "Most-common wording overstated a classic cause and the certificate-risk disclaimer was unnatural.",
+          "resolution": "Used a typical cause and explicitly retained the absence of measured evidence for a most-common ranking.",
+          "resolved": true
+        },
+        {
+          "location": "Q6",
+          "finding": "为区块链节点专用节点时 was ungrammatical and conflated worker nodes with blockchain clients.",
+          "resolution": "Expressed assigning dedicated worker nodes to blockchain workloads; retained CPU caution, system-daemon reservations/headroom and testing when application limits are omitted.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+          "cn/quizzes/blockchain/02-nodes-on-eks-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0013-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/blockchain/03-managed-blockchain-quiz.md",
+      "targetPath": "cn/quizzes/blockchain/03-managed-blockchain-quiz.md",
+      "sourceBlob": "052e71979a3131f00ad7babcab545d0a525d89c3",
+      "sourceSha256": "ca6bba9f9448ffa5b8b7b24dad8c2987c80241576b20130cc22411092714d1a5",
+      "beforeTargetSha256": "24c00842ec3e1d1a43357226ed675b638b3078ee6814455d9a7727f2636b876d",
+      "beforeSnapshot": "/tmp/preimages/24c00842ec3e1d1a43357226ed675b638b3078ee6814455d9a7727f2636b876d.md",
+      "sourceGitBlob": "052e71979a3131f00ad7babcab545d0a525d89c3",
+      "targetSha256": "a07c7edf1a14ed5689230c251a88a5fc395fea137ba0516abc1492ba8810f78c",
+      "currentTargetSha256": "a07c7edf1a14ed5689230c251a88a5fc395fea137ba0516abc1492ba8810f78c",
+      "afterTargetSha256": "a07c7edf1a14ed5689230c251a88a5fc395fea137ba0516abc1492ba8810f78c",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/a07c7edf1a14ed5689230c251a88a5fc395fea137ba0516abc1492ba8810f78c.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0013-source-snapshots/ca6bba9f9448ffa5b8b7b24dad8c2987c80241576b20130cc22411092714d1a5.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Compared the complete English and Chinese seven-question page and reread all final twenty-eight options, seven B answers, explanations and headings. Preserved offering-specific dedicated/serverless/Query billing, query/submission nodes versus validator signing/slashing operation, conflicting slashable messages versus identical duplicates and fenced active failover/history, decision order, QLDB 2018/2019/July2024/July31 2025 lifecycle and non-equivalent migration, standard RPC coupling and independently retained data, KMS nonexportability and distinct public/imported/CloudHSM/rotation recovery options, IAM versus network controls, and exact testnet/AMB cutoff dates plus the source migration URL. The only required edit clarifies cryptographic wrapping; no portable managed private-key backup guarantee was introduced.",
+      "findings": [
+        {
+          "location": "Q5",
+          "finding": "CloudHSM 包装规则 read as ordinary packaging rather than cryptographic key wrapping.",
+          "resolution": "Used 密钥可导出性/密钥包裹（wrapping）规则, keeping public-key downloads, imported-material backups and rotation distinct from KMS private-key export.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/blockchain/03-managed-blockchain-quiz.md",
+          "cn/quizzes/blockchain/03-managed-blockchain-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0013-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+      "targetPath": "cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+      "sourceBlob": "b996effb79bb771b06a3819cf48b13ed758676f9",
+      "sourceSha256": "a980f720a4703f9aa7a42f8f55337f6bff6a4aa5f80911fd5b2c0103396a2fbb",
+      "beforeTargetSha256": "e5a040c0d38107db41785c6219116b5a9737dacd434056cac9d030febdea1fcf",
+      "beforeSnapshot": "/tmp/preimages/e5a040c0d38107db41785c6219116b5a9737dacd434056cac9d030febdea1fcf.md",
+      "sourceGitBlob": "b996effb79bb771b06a3819cf48b13ed758676f9",
+      "targetSha256": "5f9430cc157681bb8b30deb3368f243f5ef7d652e125505d2829ac7ac5cfe741",
+      "currentTargetSha256": "5f9430cc157681bb8b30deb3368f243f5ef7d652e125505d2829ac7ac5cfe741",
+      "afterTargetSha256": "5f9430cc157681bb8b30deb3368f243f5ef7d652e125505d2829ac7ac5cfe741",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/5f9430cc157681bb8b30deb3368f243f5ef7d652e125505d2829ac7ac5cfe741.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0013-source-snapshots/a980f720a4703f9aa7a42f8f55337f6bff6a4aa5f80911fd5b2c0103396a2fbb.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read all seven complete English/Chinese questions, twenty-eight choices, seven B answers and explanations and finally reread the full page. Preserved SPIFFE URI/path and network-independent identity, trusted-kernel/attestor selectors and host-compromise caveats, finite credential lifetime without authorization/incident-response replacement, runtime private keys/temporary secret material and sockets/memory/cache protection, TLS server proof versus per-request SigV4 and IAM-controlled resource/association creation, organizational root-of-trust acceptance and retained customer policy authority, and conditional off-AWS endpoint identity/SPIRE architecture. Scoped the stated absence of customer CA-key leakage specifically to that key, avoiding an all-credential-risk guarantee.",
+      "findings": [
+        {
+          "location": "Q2–4",
+          "finding": "Generic secret material was written as Kubernetes-looking Secret and literal replay/baking/socket terms were awkward.",
+          "resolution": "Used application secret information and runtime/long-lived confidential material, described replay exploitation risk and embedded credentials naturally, and translated secret access key/session token/sockets.",
+          "resolved": true
+        },
+        {
+          "location": "Q6",
+          "finding": "The CA-key absence benefit could read as eliminating every key-leak risk.",
+          "resolution": "Made the source-context benefit explicitly refer to that CA private key while retaining organizational review and different-control-versus-equivalence limits.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0013-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+      "targetPath": "cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+      "sourceBlob": "e0ee86aa7a5960610c81db061bee234f90d03e7f",
+      "sourceSha256": "119dbe1364daf39c2a6fb32cc1c989d9913284c20d0ccd7df70867e51dd9db37",
+      "beforeTargetSha256": "7f707f31f7f3fbd2403ffab50268ad21d501acffd8fdf2377caee3f78771c499",
+      "beforeSnapshot": "/tmp/preimages/7f707f31f7f3fbd2403ffab50268ad21d501acffd8fdf2377caee3f78771c499.md",
+      "sourceGitBlob": "e0ee86aa7a5960610c81db061bee234f90d03e7f",
+      "targetSha256": "5c304ff74a3c50afc5288589575132996133007b9782d64fce22d74e073a30d9",
+      "currentTargetSha256": "5c304ff74a3c50afc5288589575132996133007b9782d64fce22d74e073a30d9",
+      "afterTargetSha256": "5c304ff74a3c50afc5288589575132996133007b9782d64fce22d74e073a30d9",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/5c304ff74a3c50afc5288589575132996133007b9782d64fce22d74e073a30d9.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0013-source-snapshots/119dbe1364daf39c2a6fb32cc1c989d9913284c20d0ccd7df70867e51dd9db37.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the whole workbook quiz and reread all ten final stems, thirty choices, A B C A B C A B C A answers, explanations, date, workbook link and not-executed completion requirement. Preserved attachment/STP/LAG instantiated scope and no-test evidence, outer VTEP/VNI versus inner addresses, RD identity versus RT membership/FIB proof, Type2/3/5 and host-learning prerequisite, SVI/VRF/L3VNI and StageB L3-only limits, explicit s1/s2 FRR overrides plus clab/kernel/template/image/digest prerequisites and blocked execution, functioning same-VLAN controls, temporary/manual RT behavior and original-before-temporary restoration on s1 red, observed outer fragmentation/no fixed loss or DF guarantee and 1600-byte restoration, and blue/gateway comparisons distinguishing faults from general outage. Provider now denotes the experimental platform, not a cloud-company assumption.",
+      "findings": [
+        {
+          "location": "Introduction/Q7/Q9–10",
+          "finding": "正向控制 and VRF 控制 suggested mechanisms instead of functioning comparison tests.",
+          "resolution": "Used normal-communication comparison tests and preserved all same-VLAN/blue/gateway prerequisites before interpreting a negative probe.",
+          "resolved": true
+        },
+        {
+          "location": "Q6",
+          "finding": "提供商 obscured the selected netlab experiment platform/provider.",
+          "resolution": "Used 实验平台（provider）, retaining supported implementation/kernel/template/image and overridden FRR requirements.",
+          "resolved": true
+        },
+        {
+          "location": "Q4",
+          "finding": "预期会学习到主机 was unnatural.",
+          "resolution": "Expressed generating host traffic before judging host learning, retaining route-model scope and N/A rather than false-pass treatment.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+          "cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0013-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/container-registry/03-harbor-quiz.md",
+      "targetPath": "cn/quizzes/container-registry/03-harbor-quiz.md",
+      "sourceBlob": "d40446f8ccab8660a4f64f045c08385003593855",
+      "sourceSha256": "a7f93a425976e3d5bbf1dbad31a8c03c3469b0058f6492d60ea96c05cced07cb",
+      "beforeTargetSha256": "b3ec4921f544127169b9bcf0f231ac77f3edbb110bd954d43481466795b969ea",
+      "beforeSnapshot": "/tmp/preimages/b3ec4921f544127169b9bcf0f231ac77f3edbb110bd954d43481466795b969ea.md",
+      "sourceGitBlob": "d40446f8ccab8660a4f64f045c08385003593855",
+      "targetSha256": "9413208958b8fcc335da32e8c4fe0a4d1fe538a3eb3d6f5bf8443d8a918fb136",
+      "currentTargetSha256": "9413208958b8fcc335da32e8c4fe0a4d1fe538a3eb3d6f5bf8443d8a918fb136",
+      "afterTargetSha256": "9413208958b8fcc335da32e8c4fe0a4d1fe538a3eb3d6f5bf8443d8a918fb136",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/9413208958b8fcc335da32e8c4fe0a4d1fe538a3eb3d6f5bf8443d8a918fb136.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0013-source-snapshots/a7f93a425976e3d5bbf1dbad31a8c03c3469b0058f6492d60ea96c05cced07cb.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the whole current source/target pair and finally reread all ten stems, forty choices, C B C B B B B B C B answers, explanations and September11 date. Preserved CNCF graduated status/year, Trivy default from2.2 and pluggable scanners, Helm installation versus Compose limitations, exact project role permissions and no-member/config rights, scoped expiring robot credentials/rotation, push versus pull and manual/scheduled versus local-artifact event scope, Cosign/Notation and Notaryv1 removal in2.9 plus trusted admission verification, pull-through misses/freshness/upstream account limits, offline scanner database updates, and scheduled/manual GC of unreferenced blobs with registry performance costs. Ordinary robot/manifest/cache/signature-presence wording is now clear without modifying roles or versions.",
+      "findings": [
+        {
+          "location": "Q1",
+          "finding": "广泛且活跃的采用 was a literal noun construction.",
+          "resolution": "Expressed broad active use, open governance and sustained community/security commitment naturally.",
+          "resolved": true
+        },
+        {
+          "location": "Q5–8/Q10",
+          "finding": "Robot/scoped-credential, signature-presence, manifest/blob and freshness language was awkward.",
+          "resolution": "Localized the generic terms; made signature-presence requirements distinct from trusted admission verification and retained cache/GC limits.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/container-registry/03-harbor-quiz.md",
+          "cn/quizzes/container-registry/03-harbor-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0013-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+      "targetPath": "cn/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+      "sourceBlob": "c1553dec6f606bb9107a13eb5821f64b9d982597",
+      "sourceSha256": "3532d525d93f05b633d7eedfc72aa0470376e11b5f47b411cd8e594bcc6b0722",
+      "beforeTargetSha256": "accb44befb7042d791d4d936ec524ebfc597adf7aa7dfd868c7a7c122e8deb5f",
+      "beforeSnapshot": "/tmp/preimages/accb44befb7042d791d4d936ec524ebfc597adf7aa7dfd868c7a7c122e8deb5f.md",
+      "sourceGitBlob": "c1553dec6f606bb9107a13eb5821f64b9d982597",
+      "targetSha256": "caf1b0783a0198b5780b8bdf762ce73f761fd2d24b68eb2110054fd14c6cd2ab",
+      "currentTargetSha256": "caf1b0783a0198b5780b8bdf762ce73f761fd2d24b68eb2110054fd14c6cd2ab",
+      "afterTargetSha256": "caf1b0783a0198b5780b8bdf762ce73f761fd2d24b68eb2110054fd14c6cd2ab",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/caf1b0783a0198b5780b8bdf762ce73f761fd2d24b68eb2110054fd14c6cd2ab.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0014-source-snapshots/3532d525d93f05b633d7eedfc72aa0470376e11b5f47b411cd8e594bcc6b0722.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the complete source and target and reread the complete final ten-question page, all forty options, ten answers, explanations, date and return link. Retained the B/B/B/C/C/B/C/D/C/C answer sequence and negative stems. Checked observed Counter resets versus unrecoverable unseen increments; the 1,000-combination upper bound versus actual series, replicas, buckets and churn; stable Pushgateway service-level grouping, no automatic TTL, honor_labels and freshness versus scrape health; producer classic buckets versus query-time quantiles and Summary algorithm/window error with aggregatable nonnegative-duration sum/count rates; published metric spellings and physical units versus _total; the 15-day default versus configurable retention and separate local TSDB redundancy, deduplication and recovery; bounded Mimir capacity/local resources, CloudWatch age-dependent resolution and Datadog rollups; hashed cardinality and protected logs/traces; precise Kubernetes component roles; and 1,728亿 samples as a workload calculation rather than provider pricing. Final reread specifically confirmed fleet statistics cover all instances without narrowing them to a Kubernetes cluster.",
+      "findings": [
+        {
+          "location": "Date/Q2",
+          "finding": "English date prose remained untranslated and generic deployment was changed into a Kubernetes Deployment resource in a wrong option.",
+          "resolution": "Localized the unchanged date to 2026年9月12日 and used 每次部署, preserving the incorrect exactly-1,000 assertion.",
+          "resolved": true
+        },
+        {
+          "location": "Q7/Q8",
+          "finding": "Version-specific language obscured edition distinctions and generic trace language remained awkward.",
+          "resolution": "Used 特定产品版本类别（edition）的功能 and 追踪数据 without promising release-version capabilities or changing storage/cardinality caveats.",
+          "resolved": true
+        },
+        {
+          "location": "Q4",
+          "finding": "The inherited translation narrowed fleet p99, quantiles and means to a whole Kubernetes cluster.",
+          "resolution": "Used 所有实例整体 for all three fleet references; retained the false p99-averaging option and the true Summary sum/count exception.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+          "cn/quizzes/observability/metrics/00-metrics-overview-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/grafana/grafana-quiz.md",
+      "targetPath": "cn/quizzes/observability/grafana/grafana-quiz.md",
+      "sourceBlob": "83131f1e0ec29f87d1f4b564c863b1b88ce9428c",
+      "sourceSha256": "6eb8eab56c55ac6ea9f76e49c5e3e7d85146a9b8abba0f0132c20e5d927f8d6b",
+      "beforeTargetSha256": "242ac0d41b68c7e16cd3769a4dfe741b082069bf9739ad457ef68bfac6a77ef2",
+      "beforeSnapshot": "/tmp/preimages/242ac0d41b68c7e16cd3769a4dfe741b082069bf9739ad457ef68bfac6a77ef2.md",
+      "sourceGitBlob": "83131f1e0ec29f87d1f4b564c863b1b88ce9428c",
+      "targetSha256": "8b529fa74ba729beade5c0ae0cbb02f274a83ed00b9369307e91edfa34c7a5c7",
+      "currentTargetSha256": "8b529fa74ba729beade5c0ae0cbb02f274a83ed00b9369307e91edfa34c7a5c7",
+      "afterTargetSha256": "8b529fa74ba729beade5c0ae0cbb02f274a83ed00b9369307e91edfa34c7a5c7",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/8b529fa74ba729beade5c0ae0cbb02f274a83ed00b9369307e91edfa34c7a5c7.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0014-source-snapshots/6eb8eab56c55ac6ea9f76e49c5e3e7d85146a9b8abba0f0132c20e5d927f8d6b.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read both complete pages and reread the final ten questions, forty choices, C/B/B/B/B/C/B/B/C/B answers, every explanation, September 13 date, heading and link. Retained Grafana 13.2.1, environment-supplied values versus actual provisioned data-source definitions, exact provisioning paths and built-in integration, tracesToLogsV2/datasourceUid/tags/trace_id and the full mapping contract, evaluation intervals versus notification delivery, the RED/USE letter meanings including wrong alternatives, four golden signals with availability as an additional item, reusable dashboard variables, selected exemplars rather than labels on every request, plan/contract-specific SLA without universal 99.9%, and self-hosted operational responsibilities. Checked every ConfigMap selection choice, exact grafana_dashboard key/value, the configured sidecar selection mode and monitoring-namespace restriction. The source has a configuration profile, not a mandatory file artifact.",
+      "findings": [
+        {
+          "location": "Date/Q2/Q4/general prose",
+          "finding": "English date and generic namespace, trace, histogram, counter, self-hosted and plan words reduced readability; untranslated RED/USE expansions obscured choice meanings.",
+          "resolution": "Localized the date and generic prose; supplied clear Chinese with original English acronym expansions so all true and false choices remain intelligible.",
+          "resolved": true
+        },
+        {
+          "location": "Q10",
+          "finding": "Profile was repeatedly rendered as 配置文件, adding an unsupported file scope.",
+          "resolution": "Used 边车配置方案/此配置方案/可选配置方案; preserved the exact label=grafana_dashboard and labelValue=true selection and monitoring namespace boundary.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/grafana/grafana-quiz.md",
+          "cn/quizzes/observability/grafana/grafana-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+      "targetPath": "cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+      "sourceBlob": "3a80c4e697925ce48eb51dd857400502789edd88",
+      "sourceSha256": "ae029d7f0fdd3968c2d962a6b54c8947b07ca3a0f0a7b17356c5d5d89973cdb3",
+      "beforeTargetSha256": "44bd53a430966f28771a81d109ff31264614e3cb3796c722fd2d7a515de003e3",
+      "beforeSnapshot": "/tmp/preimages/44bd53a430966f28771a81d109ff31264614e3cb3796c722fd2d7a515de003e3.md",
+      "sourceGitBlob": "3a80c4e697925ce48eb51dd857400502789edd88",
+      "targetSha256": "8121e44ea85e01899bc8f78ad7722485f2eee46f36f4f5a6ca2bf7a5b517b7d8",
+      "currentTargetSha256": "8121e44ea85e01899bc8f78ad7722485f2eee46f36f4f5a6ca2bf7a5b517b7d8",
+      "afterTargetSha256": "8121e44ea85e01899bc8f78ad7722485f2eee46f36f4f5a6ca2bf7a5b517b7d8",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/8121e44ea85e01899bc8f78ad7722485f2eee46f36f4f5a6ca2bf7a5b517b7d8.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0014-source-snapshots/ae029d7f0fdd3968c2d962a6b54c8947b07ca3a0f0a7b17356c5d5d89973cdb3.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the complete English/Chinese pair and reread all final eight questions, thirty-two options, eight B answers, explanations and return link. Checked Pod-network OUTPUT/REDIRECT against node POSTROUTING, 169.254.0.0/16 versus IPv6 fd00:ec2::/80 ULA and fe80 link-local scope, Envoy cluster/policy behavior without asserting one unique failure cause, dual-stack AAAA selection versus restart timing, UID 101/runAsUser and the exact owner RETURN exemption, local and upstream pooling plus per-namespace NAT costs, conditional node conntrack/eBPF costs without a guaranteed fixed increase, capture direction and limits of observed SG loss, and node-dependent security groups, 6.1/6.18 defaults, bootstrap/conntrack settings and five-minute x-amz-date skew. Q6 now clearly refers to reverse translation of return traffic rather than undoing configuration.",
+      "findings": [
+        {
+          "location": "Q6",
+          "finding": "必须记录以便撤销 could mean deleting/undoing NAT configuration; the target added a fixed proportional increase rather than the source fixed-increase claim.",
+          "resolution": "Expressed recording the NAT transformation so return traffic can be translated back and avoiding an assumed fixed node-table entry increment.",
+          "resolved": true
+        },
+        {
+          "location": "General prose/Q8 wrong option",
+          "finding": "Generic hook/init/bootstrap/sidecar prose was awkward and general auth policy was narrowed to identity verification.",
+          "resolution": "Used 钩子/初始化容器/节点引导/边车 and 访问控制策略 while preserving actual networking identifiers, false option semantics and named protocols.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+      "targetPath": "cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+      "sourceBlob": "db1940a6b3bd4132327ed27986d0b78be71afbbf",
+      "sourceSha256": "99621cfef08e541d7da083af2558623662b144de85c191ea77ab57b13d1d5e72",
+      "beforeTargetSha256": "ca5aaa713fa4439afdc33a77f55ac55d80e599167e89f62f606530b03b1563c4",
+      "beforeSnapshot": "/tmp/preimages/ca5aaa713fa4439afdc33a77f55ac55d80e599167e89f62f606530b03b1563c4.md",
+      "sourceGitBlob": "db1940a6b3bd4132327ed27986d0b78be71afbbf",
+      "targetSha256": "20939810fb9840bbdaa41daa64bcae2f7570f1deb908f6e6181b608aac7e7627",
+      "currentTargetSha256": "20939810fb9840bbdaa41daa64bcae2f7570f1deb908f6e6181b608aac7e7627",
+      "afterTargetSha256": "20939810fb9840bbdaa41daa64bcae2f7570f1deb908f6e6181b608aac7e7627",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/20939810fb9840bbdaa41daa64bcae2f7570f1deb908f6e6181b608aac7e7627.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0014-source-snapshots/99621cfef08e541d7da083af2558623662b144de85c191ea77ab57b13d1d5e72.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the complete pair and reread the final eight questions, thirty-two choices, eight B answers and all explanations and links. Retained HTTP-authenticated identity versus anonymous TLS and separate TCP-resource connectivity rather than claiming the entire product lacks TCP; endpoint mTLS/SPIRE responsibilities and why TLS passthrough does not provide SigV4 inspection/L7 semantics; caller requests, fanout, retries, bytes, hours and retained application traces rather than measured savings; direct cluster traffic bypassing IAMAuthPolicy and requiring internal authorization; local/shared failure dependencies; and the explicitly unverified direct API Gateway integration. Preserved the exact absence of a supported direct ALB/NLB-to-link-local bridge proof, the requirement to validate API/connectivity/signing/failure behavior, account/Region quotas, ingress-AZ versus backend placement, controller attachment and ECH/ESNI limits. General access-policy wording now includes authorization without altering IAMAuthPolicy identifiers.",
+      "findings": [
+        {
+          "location": "Q1/Q2/Q6",
+          "finding": "Repeated 身份验证策略 narrowed access/authorization policy to authentication alone, particularly for anonymous TLS and direct in-cluster traffic.",
+          "resolution": "Used 访问控制策略 for generic policy prose while retaining IAMAuthPolicy and the HTTP/TLS/caller-identity distinctions.",
+          "resolved": true
+        },
+        {
+          "location": "Q3/general explanations",
+          "finding": "Generic listeners, spans, service-network and attachment wording and 此处没有测量任何节省 were unnatural.",
+          "resolution": "Used natural 监听器/应用追踪跨度/服务网络/控制器挂接 wording and 本例未测量节省了多少成本; preserved all limits and unverified evidence boundaries.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/networking/beginner/05-ssh-access-quiz.md",
+      "targetPath": "cn/quizzes/networking/beginner/05-ssh-access-quiz.md",
+      "sourceBlob": "9a7aff4a9b6975cac11d1d39bbb2c43a85168db6",
+      "sourceSha256": "4973adb2cb1b61c71441d6f8c6f689cbe9104d9a71d31c3365c49038fd3b1d4a",
+      "beforeTargetSha256": "4017034a05348d6af6f9fe51c7aeb92a7c73d29bc71a8bebbce9e44679b44959",
+      "beforeSnapshot": "/tmp/preimages/4017034a05348d6af6f9fe51c7aeb92a7c73d29bc71a8bebbce9e44679b44959.md",
+      "sourceGitBlob": "9a7aff4a9b6975cac11d1d39bbb2c43a85168db6",
+      "targetSha256": "d245836a8e028e19aca20f0af863ea62931019ac1e365d92f13a4c3b651ce851",
+      "currentTargetSha256": "d245836a8e028e19aca20f0af863ea62931019ac1e365d92f13a4c3b651ce851",
+      "afterTargetSha256": "d245836a8e028e19aca20f0af863ea62931019ac1e365d92f13a4c3b651ce851",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/d245836a8e028e19aca20f0af863ea62931019ac1e365d92f13a4c3b651ce851.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0014-source-snapshots/4973adb2cb1b61c71441d6f8c6f689cbe9104d9a71d31c3365c49038fd3b1d4a.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the complete source/target pair and reread the complete final introduction, eight questions, thirty-two options, C/A/D/B/A/C/D/B answers, code, explanations and return link. Retained Ubuntu 24.04/Rocky 9 actual unit/socket inspection, no blind socket disabling, TCP 22 listener checks, trusted independent full host-fingerprint comparison rather than trust from ssh-keyscan, public-key-only installation and a nonempty local private-key passphrase, a second fresh key-only nonmultiplexed session across all management paths before removing server passwords, syntax versus effective per-case sshd -T/-C validation, Include/Match first-effective-value behavior, password versus keyboard-interactive/root restrictions without global PAM disabling, recovery only of owned configuration preserving concurrent changes, and exact server-side key revocation before client key deletion. Clarified the local passphrase may still require entry without implying server password authentication.",
+      "findings": [
+        {
+          "location": "Introduction",
+          "finding": "对一次性VM的解释练习 literally described interpreting a VM rather than interpreting commands in the disposable lab.",
+          "resolution": "Expressed the command-interpretation exercise in disposable lab VMs naturally.",
+          "resolved": true
+        },
+        {
+          "location": "Q4",
+          "finding": "私钥口令留在本地，仍然是预期步骤 confused a local credential with a procedural/server-authentication requirement.",
+          "resolution": "Clarified 私钥口令在本地使用；需要输入这一口令仍属正常情况, preserving the distinction from server password authentication.",
+          "resolved": true
+        },
+        {
+          "location": "Q5/general prose",
+          "finding": "先出现值的行为 did not clearly convey first-effective-value precedence; generic unit/socket/reload/drop-in/key prose remained awkward.",
+          "resolution": "Used 首个有效值优先 and natural Chinese systemd/configuration language while retaining every exact unit, CLI, config and owned-file boundary.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/networking/beginner/05-ssh-access-quiz.md",
+          "cn/quizzes/networking/beginner/05-ssh-access-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/container-registry/04-best-practices-quiz.md",
+      "targetPath": "cn/quizzes/container-registry/04-best-practices-quiz.md",
+      "sourceBlob": "9b2cd99c7c25a9179ca72169a6162e54d37209e2",
+      "sourceSha256": "defce23d8cc357845c932c2e4f25a72829bdfe99412c8341a69b2bfd2fbf7aa3",
+      "beforeTargetSha256": "078951c89f2fb2b0bbe8f34593755ff69c58a522c18ed1ee8fef3fa3ddb7742d",
+      "beforeSnapshot": "/tmp/preimages/078951c89f2fb2b0bbe8f34593755ff69c58a522c18ed1ee8fef3fa3ddb7742d.md",
+      "sourceGitBlob": "9b2cd99c7c25a9179ca72169a6162e54d37209e2",
+      "targetSha256": "1eb20656bffc4aaf13cb74ef40aea1b480bdee89545ffdfcd3008f3e69fc2d8a",
+      "currentTargetSha256": "1eb20656bffc4aaf13cb74ef40aea1b480bdee89545ffdfcd3008f3e69fc2d8a",
+      "afterTargetSha256": "1eb20656bffc4aaf13cb74ef40aea1b480bdee89545ffdfcd3008f3e69fc2d8a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/1eb20656bffc4aaf13cb74ef40aea1b480bdee89545ffdfcd3008f3e69fc2d8a.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0014-source-snapshots/defce23d8cc357845c932c2e4f25a72829bdfe99412c8341a69b2bfd2fbf7aa3.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the complete source and target, including the source ending, and reread the final ten questions, forty choices, B/C/B/B/B/B/B/B/B/B answers, date, all explanations and link. Retained immutable tags versus deletion/provenance, exact digest references and known-good rollback retention; latest as an ordinary mutable tag; proactively copied complete registry mirrors versus on-demand pull-through misses/refresh/upstream dependencies and tested disconnected preload/update behavior; actual regional endpoints and disaster recovery; age/count/tag lifecycle, minimal multi-stage builds and GC; post-build/pre-production scans, same-artifact deployment, new-CVE rescans and admission verification; image tag characters and source lineage; all/selected mirror storage/cold-start tradeoffs; and multi-registry operational/security complexity. Every use of registry mirror is now distinguishable from a container image, and promotion refers to moving the scanned artifact into production rather than rebuilding it.",
+      "findings": [
+        {
+          "location": "Q3/Q4/Q9",
+          "finding": "镜像仓库镜像 and 镜像仓库镜像源 conflated registry synchronization with the container images stored in it.",
+          "resolution": "Used 仓库同步副本/完整仓库同步副本 and clarified preloading; retained proactive all/selected copying versus pull-through cache behavior.",
+          "resolved": true
+        },
+        {
+          "location": "Q6",
+          "finding": "晋级到生产环境/待晋级的镜像 was unnatural personnel-style promotion prose.",
+          "resolution": "Used 将镜像移入生产环境/准备移入生产环境的镜像 while explicitly preserving the same scanned artifact.",
+          "resolved": true
+        },
+        {
+          "location": "Q9 option B",
+          "finding": "The target omitted the source all-images qualifier in the correct mirror/cache distinction.",
+          "resolution": "Restored 所有镜像 in the choice, preserving the explanation’s broader all-or-selected synchronization description.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/container-registry/04-best-practices-quiz.md",
+          "cn/quizzes/container-registry/04-best-practices-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+      "targetPath": "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+      "sourceBlob": "cefc6f45a48f7e0c82c2c61669111ce3f106c697",
+      "sourceSha256": "5614a7c3ab8a39b50c7902bf41b749eb92962d37e0a5395bf48d7e4adced2ff6",
+      "beforeTargetSha256": "d8bed1234e66b1e1d0a26039d4b32c48d577ae1257319c4480e622ed7ebb2a0e",
+      "beforeSnapshot": "/tmp/preimages/d8bed1234e66b1e1d0a26039d4b32c48d577ae1257319c4480e622ed7ebb2a0e.md",
+      "sourceGitBlob": "cefc6f45a48f7e0c82c2c61669111ce3f106c697",
+      "targetSha256": "803fb98b26688f3e487c075f347731782e1a09842c7730efe5bf30529556bc13",
+      "currentTargetSha256": "803fb98b26688f3e487c075f347731782e1a09842c7730efe5bf30529556bc13",
+      "afterTargetSha256": "803fb98b26688f3e487c075f347731782e1a09842c7730efe5bf30529556bc13",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/803fb98b26688f3e487c075f347731782e1a09842c7730efe5bf30529556bc13.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0014-source-snapshots/5614a7c3ab8a39b50c7902bf41b749eb92962d37e0a5395bf48d7e4adced2ff6.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the entire source/target pair and reread all eighteen final question headings, full answers, code, paths, links and operational caveats. Retained Spark 4.2.0/Hadoop 3.5.0/AWS SDK v2 bundle 2.35.4 and runtime dependency compatibility; the exact v2 web-identity provider versus ContainerCredentialsProvider, Pod Identity associations, Agent and pods.eks.amazonaws.com trust rather than IRSA OIDC annotations; explicit S3A provider loading rather than assumed default-chain support; driver Kubernetes rights versus per-process S3 rights and read-only History Server with cleaner disabled; namespace-bound RBAC versus job ownership and namespaced ClusterRole binding scope; internal Spark authentication versus UI authentication and Secret read risks; unique run identities, spoofable labels, additive ingress-only policies and CNI support; fixed RPC ports and maxRetries=0; driver Dropwizard versus aggregated executor metrics paths, per-JVM Java agent and operator-chart limits; scrape gaps including jobs completing BETWEEN scrapes; driver JVM UI lifetime versus event-log history; foreground spark-class with explicitly loaded properties; readable persisted events and compaction/truncation limits rather than checkpoints, stdout or data backup; and validated operator/EMR/direct submission, client/cluster mode and IRSA/Pod Identity alternatives. Corrected the one reported unnatural Q18 heading while preserving its source question and heading hierarchy; the remaining heading text is unchanged.",
+      "findings": [
+        {
+          "location": "Q17",
+          "finding": "被压缩 obscured event-log compaction by suggesting ordinary encoding compression caused missing historical events.",
+          "resolution": "Used 经压实处理（compaction） for reduced event history and retained missing/corrupt/unflushed/deleted event caveats.",
+          "resolved": true
+        },
+        {
+          "location": "Q18 heading",
+          "finding": "唯三选项 was an unnatural rendering of whether the three listed mechanisms are the only production choices.",
+          "resolution": "Used Operator、集群模式（cluster mode）和 IRSA 是否是生产环境仅有的选择？, preserving source scope, actual mode name and heading level.",
+          "resolved": true
+        },
+        {
+          "location": "Q14",
+          "finding": "The inherited explanation said short jobs may complete before scraping rather than between scrapes.",
+          "resolution": "Used 短作业可能在两次抓取之间完成, preserving why current UP targets are insufficient.",
+          "resolved": true
+        },
+        {
+          "location": "General answers",
+          "finding": "Generic provider/wrapper/driver/executor/registry/ingress/egress and UP-target prose was awkward.",
+          "resolution": "Naturalized answer prose without changing named provider classes, configuration fields, commands, query/API tokens, exact metrics endpoints or established component identity.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+          "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "location": "Q18 H2",
+            "type": "target-heading-wording-correction-required-by-source",
+            "sourceHeading": "## 18. Are an operator, cluster mode and IRSA the only production choices?",
+            "beforeTargetHeading": "## 18. Operator、cluster mode 和 IRSA 是否是生产环境的唯三选项？",
+            "afterTargetHeading": "## 18. Operator、集群模式（cluster mode）和 IRSA 是否是生产环境仅有的选择？",
+            "reason": "The parent explicitly identified the unnatural 唯三 construction. The natural question preserves whether these are the only production choices; no options, mode meaning, heading hierarchy or API tokens changed. Parent notified before final evidence."
+          }
+        ]
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -4405,9 +5788,9 @@
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
   "snapshotScope": {
-    "wholePagesReviewed": 67,
+    "wholePagesReviewed": 89,
     "remainingLocaleReviews": "IN_PROGRESS; these actual individual reviews do not certify all 693 pages per locale",
-    "lastVerifiedAt": "2026-10-18T11:09:02.289553+00:00",
+    "lastVerifiedAt": "2026-10-18T11:41:48.904921+00:00",
     "allAddedReviewSourceAndTargetHashesIndependentlyVerified": true
   },
   "additionalReviewBatches": [
@@ -5117,6 +6500,320 @@
       },
       "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
       "artifact": "/tmp/native-sol-cn-batch0010-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T11:20:22.433928+00:00",
+      "scope": [
+        "cn/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+        "cn/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "cn/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "cn/quizzes/observability/logging/05-collectors-quiz.md",
+        "cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+            "cn/quizzes/observability/logging/04-clickhouse-quiz.md",
+            "cn/quizzes/observability/metrics/01-prometheus-quiz.md",
+            "cn/quizzes/observability/logging/05-collectors-quiz.md",
+            "cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+            "cn/quizzes/observability/logging/04-clickhouse-quiz.md",
+            "cn/quizzes/observability/metrics/01-prometheus-quiz.md",
+            "cn/quizzes/observability/logging/05-collectors-quiz.md",
+            "cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/observability/labs/05-alerting-aiops-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/logging/04-clickhouse-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/metrics/01-prometheus-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/logging/05-collectors-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+          "cn/quizzes/observability/logging/04-clickhouse-quiz.md",
+          "cn/quizzes/observability/metrics/01-prometheus-quiz.md",
+          "cn/quizzes/observability/logging/05-collectors-quiz.md",
+          "cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+          "cn/quizzes/observability/logging/04-clickhouse-quiz.md",
+          "cn/quizzes/observability/metrics/01-prometheus-quiz.md",
+          "cn/quizzes/observability/logging/05-collectors-quiz.md",
+          "cn/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0011-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T11:23:02.162475+00:00",
+      "scope": [
+        "cn/quizzes/observability/metrics/05-datadog-quiz.md",
+        "cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+        "cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+        "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+        "cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/observability/metrics/05-datadog-quiz.md",
+            "cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+            "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/observability/metrics/05-datadog-quiz.md",
+            "cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+            "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/observability/metrics/05-datadog-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/observability/metrics/05-datadog-quiz.md",
+          "cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+          "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/observability/metrics/05-datadog-quiz.md",
+          "cn/quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+          "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0012-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T11:36:36.494443+00:00",
+      "scope": [
+        "cn/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+        "cn/quizzes/blockchain/03-managed-blockchain-quiz.md",
+        "cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+        "cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+        "cn/quizzes/container-registry/03-harbor-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+            "cn/quizzes/blockchain/03-managed-blockchain-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+            "cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+            "cn/quizzes/container-registry/03-harbor-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+            "cn/quizzes/blockchain/03-managed-blockchain-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+            "cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+            "cn/quizzes/container-registry/03-harbor-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/blockchain/02-nodes-on-eks-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/blockchain/03-managed-blockchain-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/container-registry/03-harbor-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+          "cn/quizzes/blockchain/03-managed-blockchain-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+          "cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+          "cn/quizzes/container-registry/03-harbor-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+          "cn/quizzes/blockchain/03-managed-blockchain-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+          "cn/quizzes/networking/expert/03-datacenter-evpn-quiz.md",
+          "cn/quizzes/container-registry/03-harbor-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0013-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T11:41:29.325838+00:00",
+      "scope": [
+        "cn/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "cn/quizzes/observability/grafana/grafana-quiz.md",
+        "cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+        "cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+        "cn/quizzes/networking/beginner/05-ssh-access-quiz.md",
+        "cn/quizzes/container-registry/04-best-practices-quiz.md",
+        "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+            "cn/quizzes/observability/grafana/grafana-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+            "cn/quizzes/networking/beginner/05-ssh-access-quiz.md",
+            "cn/quizzes/container-registry/04-best-practices-quiz.md",
+            "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+            "cn/quizzes/observability/grafana/grafana-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+            "cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+            "cn/quizzes/networking/beginner/05-ssh-access-quiz.md",
+            "cn/quizzes/container-registry/04-best-practices-quiz.md",
+            "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/observability/metrics/00-metrics-overview-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/grafana/grafana-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/networking/beginner/05-ssh-access-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/container-registry/04-best-practices-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+          "cn/quizzes/observability/grafana/grafana-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+          "cn/quizzes/networking/beginner/05-ssh-access-quiz.md",
+          "cn/quizzes/container-registry/04-best-practices-quiz.md",
+          "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+          "cn/quizzes/observability/grafana/grafana-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+          "cn/quizzes/networking/beginner/05-ssh-access-quiz.md",
+          "cn/quizzes/container-registry/04-best-practices-quiz.md",
+          "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0014-review-20261018.json"
     }
   ],
   "additionalReportedFindingCorrections": [

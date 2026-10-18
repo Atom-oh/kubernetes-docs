@@ -1,183 +1,167 @@
-# Cuestionario de métricas de CloudWatch
+# Cuestionario sobre las métricas de CloudWatch
 
-Un cuestionario para evaluar tu comprensión de las métricas de CloudWatch.
+Revisado con la guía del 13 de septiembre de 2026.
 
----
+1. ¿Qué responsabilidad del equipo elimina un backend administrado de CloudWatch?
 
-1. ¿Cuál es la función principal de Amazon CloudWatch Container Insights?
-   - A) Creación de imágenes de contenedor
-   - B) Monitoreo a nivel de contenedor/Pod para clústeres de EKS
-   - C) Orquestación de contenedores
-   - D) Administración de pipelines de CI/CD
+   - A) Toda tarea de recopilación y de IAM
+   - B) Solo la operación del backend de AWS; el equipo sigue teniendo que hacerse cargo de los recopiladores, la identidad, la retención y la respuesta
+   - C) Todos los requisitos de red
+   - D) Todos los cargos por consultas y registros
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Monitoreo a nivel de contenedor/Pod para clústeres de EKS**
+**Respuesta: B**
 
-**Explicación:**
-Container Insights es una característica de CloudWatch para monitorear cargas de trabajo en contenedores en entornos de EKS, ECS y Kubernetes. Recopila y visualiza automáticamente métricas de CPU, memoria, red y sistema de archivos a nivel de clúster, nodo, Pod y contenedor.
+La recopilación tradicional, mejorada y de OTel tiene distintos modelos de nombres y facturación. El almacenamiento administrado no elimina el trabajo operativo.
+
+</details>
+
+2. ¿Qué afirmación sobre la instalación en EKS es correcta?
+
+   - A) update-cluster-logging instala Container Insights
+   - B) Todas las plataformas ejecutan el mismo DaemonSet en los hosts
+   - C) Elige un complemento compatible o una instalación propia con Helm y verifica los requisitos previos de plataforma e identidad
+   - D) Helm 6.6.0 necesariamente es la versión del complemento de EKS
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+El registro del plano de control es independiente. Fargate no ejecuta el DaemonSet de host que se muestra; en Auto Mode y en entornos con cómputo mixto hay que verificar la compatibilidad. Pod Identity o IRSA también requieren una configuración real.
+
+</details>
+
+3. ¿Qué genera una vista de los diez primeros elementos a partir de SEARCH?
+
+   - A) SEARCH por sí sola siempre limita los resultados a diez
+   - B) SLICE(SORT(SEARCH(...), AVG, DESC), 0, 10)
+   - C) PERCENTILE(SEARCH(...), 10)
+   - D) Una alarma normal sobre el arreglo de SEARCH
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+SEARCH devuelve las series que coinciden. Ordénalas y recórtalas de forma explícita; la clasificación usa el intervalo evaluado. No se puede crear una alarma directamente sobre SEARCH.
+
+</details>
+
+4. ¿Qué afirmación sobre percentiles y proporciones es correcta?
+
+   - A) PERCENTILE(METRICS(),95) da el p95 global de solicitudes
+   - B) Todo período sin tráfico representa un resultado saludable con cero errores
+   - C) AVG(METRICS()) PERIOD(300) es un promedio móvil
+   - D) Usa un estadístico p95 compatible; controla la proporción para evitar divisiones entre cero cuando no haya tráfico e inspecciona la telemetría faltante
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+La guía usa Sum para los conteos de ALB y IF(m2>0,100*m1/m2). La aritmética de CloudWatch trata los valores faltantes como cero y descarta los resultados de divisiones entre cero; los valores p95 de los servicios no permiten reconstruir un p95 global.
+
+</details>
+
+5. ¿Qué debe incluir una declaración de métricas ADOT/EMF en la telemetría real?
+
+   - A) Las etiquetas y los valores de las dimensiones, proporcionados mediante el descubrimiento, el reetiquetado o la aplicación
+   - B) Solo los nombres de las dimensiones en la configuración del exportador
+   - C) Una clave de acceso secreta en cada etiqueta
+   - D) Una réplica en cada nodo que extraiga métricas de todos los pods
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A**
+
+awsemf envía eventos de registro de los que se extraen métricas tradicionales. El ejemplo crea las dimensiones ClusterName/Namespace/Service y usa un gauge. Las rutas modernas de OTLP directo son otra opción.
+
+</details>
+
+6. ¿Qué acción para reducir costos es incompatible o insegura según esta guía?
+
+   - A) Medir el uso de ingesta y consultas
+   - B) Establecer la retención aprobada en un grupo de registros administrado por el equipo
+   - C) Mover los registros de EMF/Container Insights a Infrequent Access y acortar la retención de todos los grupos de registros cuya retención no está limitada
+   - D) Revisar las extracciones duplicadas y las etiquetas innecesarias
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+Infrequent Access no admite la ingesta de registros de EMF ni de Container Insights. Reducir la retención puede hacer que caduque el historial existente. La alta resolución puede aumentar los costos de solicitudes y alarmas; eso no implica que el almacenamiento de métricas siempre cueste diez veces más.
+
+</details>
+
+7. ¿Qué es cierto sobre las funciones auxiliares de PutMetricData?
+
+   - A) Aprovisionan IAM automáticamente
+   - B) Usan clientes proporcionados por el llamador y marcas de tiempo UTC; los errores se propagan al llamador
+   - C) Los reintentos garantizan que los conteos de negocio se procesen exactamente una vez
+   - D) CloudWatch crea todos los conjuntos agregados de dimensiones
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+El conjunto completo de dimensiones identifica la métrica personalizada. PutMetricData no tiene un token de idempotencia; los reintentos ambiguos pueden duplicar muestras. El ejemplo informa los conteos por intervalo y usa Sum.
+
+</details>
+
+8. ¿En qué se diferencian las dimensiones de las métricas tradicionales y las etiquetas de OTel?
+
+   - A) Ambas siempre son ilimitadas
+   - B) El límite de 150 etiquetas sustituye el límite de PutMetricData
+   - C) Las métricas tradicionales permiten 30 dimensiones; el modelo de OTel documentado admite hasta 150 etiquetas
+   - D) Las etiquetas nunca afectan el tamaño de la carga útil ni la exposición de datos
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+Son modelos de ingesta distintos. Las etiquetas adicionales aumentan el tamaño de la carga útil y la exposición de metadatos; los nombres de las dimensiones por sí solos no permiten medir la cardinalidad.
+
+</details>
+
+9. ¿Qué interpretación de las métricas es correcta?
+
+   - A) node_network_total_bytes se expresa en bytes por segundo; namespace_number_of_running_pods cuenta pods
+   - B) cluster_cpu_utilization es la métrica estándar publicada
+   - C) Los contenedores en estado Running siempre equivalen a los pods en estado Running
+   - D) Todas las métricas de capacidad reservada son exclusivas de la observabilidad mejorada
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A**
+
+Verifica los catálogos de métricas y los conjuntos de dimensiones reales. La utilización de CPU y memoria de un pod puede usar los límites del nodo como denominador. La observabilidad mejorada agrega métricas y dimensiones, y tiene su propio modelo de facturación.
+
+</details>
+
+10. ¿Qué se debe comprobar para una alarma de anomalía o de reinicios?
+
+   - A) La creación de una alarma demuestra que hay telemetría activa
+   - B) Un total de reinicios siempre es un incremento por intervalo
+   - C) Quita ReturnData incondicionalmente de la serie de anomalías observada
+   - D) El historial, la identidad exacta de la métrica, si representa un total o un incremento, los datos faltantes y la entrega de notificaciones
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+ANOMALY_DETECTION_BAND devuelve límites esperados aprendidos. El formato de anomalía documentado puede devolver tanto la serie observada como la banda. Un total de reinicios con PodName/Namespace/ClusterName no equivale automáticamente a cinco reinicios nuevos en cinco minutos.
 
 </details>
 
 ---
 
-2. ¿Cuál es el método recomendado para implementar CloudWatch Agent en EKS?
-   - A) Implementar como un único Pod
-   - B) Implementar en todos los nodos como un DaemonSet
-   - C) Implementar 3 réplicas con Deployment
-   - D) Implementar como un StatefulSet
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Implementar en todos los nodos como un DaemonSet**
-
-**Explicación:**
-CloudWatch Agent se implementa como un DaemonSet para recopilar métricas y logs de cada nodo. Esto garantiza una recopilación coherente de métricas del sistema, métricas de contenedores y logs de todos los nodos.
-
-</details>
-
----
-
-3. ¿Cuál es el propósito de la función `SEARCH()` en CloudWatch Metric Math?
-   - A) Búsqueda de logs
-   - B) Buscar dinámicamente métricas que coincidan con un patrón
-   - C) Búsqueda de alertas
-   - D) Búsqueda de dashboards
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Buscar dinámicamente métricas que coincidan con un patrón**
-
-**Explicación:**
-La función `SEARCH()` busca dinámicamente métricas mediante patrones de namespace, dimensión y nombre de métrica. Por ejemplo, `SEARCH('{AWS/EC2,InstanceId} MetricName="CPUUtilization"', 'Average')` busca la utilización de CPU de todas las instancias de EC2.
-
-</details>
-
----
-
-4. ¿Cómo funciona CloudWatch Anomaly Detection?
-   - A) Detección basada en umbrales establecidos manualmente
-   - B) Detección automática de patrones anómalos basada en ML
-   - C) Análisis de patrones de logs
-   - D) Análisis de tráfico de red
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Detección automática de patrones anómalos basada en ML**
-
-**Explicación:**
-CloudWatch Anomaly Detection utiliza machine learning para aprender los patrones normales de las métricas y detectar automáticamente valores anormales. Genera rangos esperados dinámicos (bandas) teniendo en cuenta la estacionalidad, las tendencias y los patrones por día de la semana, e identifica anomalías cuando los valores quedan fuera de estos rangos.
-
-</details>
-
----
-
-5. Al usar AWS Distro for OpenTelemetry (ADOT) para enviar métricas de Prometheus a CloudWatch, ¿qué exporter se utiliza?
-   - A) prometheus-exporter
-   - B) awsemf (AWS EMF Exporter)
-   - C) cloudwatch-exporter
-   - D) metric-exporter
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) awsemf (AWS EMF Exporter)**
-
-**Explicación:**
-Para enviar métricas de Prometheus a CloudWatch en ADOT, utiliza AWS EMF (Embedded Metric Format) Exporter. Este exporter convierte las métricas al formato EMF en CloudWatch Logs y las envía; CloudWatch luego las extrae como métricas.
-
-</details>
-
----
-
-6. ¿Cuál NO es un método válido para la optimización de costos de CloudWatch?
-   - A) Establecer períodos de retención de logs
-   - B) Eliminar métricas de alta resolución innecesarias
-   - C) Recopilar todas las métricas en intervalos de 1 segundo
-   - D) Usar la clase de logs Infrequent Access
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Recopilar todas las métricas en intervalos de 1 segundo**
-
-**Explicación:**
-Las métricas de alta resolución (intervalos de 1 segundo) son costosas. Para optimizar costos, recopila solo las métricas necesarias con alta resolución y la mayoría de las métricas en intervalos de 60 segundos (predeterminado). Establecer períodos de retención de logs, filtrar métricas innecesarias y utilizar la clase de logs Infrequent Access también ayuda a reducir costos.
-
-</details>
-
----
-
-7. ¿Qué API se utiliza para crear métricas personalizadas en CloudWatch?
-   - A) CreateMetric
-   - B) PutMetricData
-   - C) PublishMetric
-   - D) SendMetric
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) PutMetricData**
-
-**Explicación:**
-La API `PutMetricData` se utiliza para enviar métricas personalizadas a CloudWatch. Puedes especificar namespace, nombre de métrica, dimensiones, valor, unidad, timestamp, etc. Se puede llamar mediante AWS SDK o CLI.
-
-</details>
-
----
-
-8. ¿Cuál es la función de Dimensions en CloudWatch?
-   - A) Especificar unidades de métrica
-   - B) Pares clave-valor que segmentan las métricas
-   - C) Especificar la gravedad de la alerta
-   - D) Especificar grupos de logs
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Pares clave-valor que segmentan las métricas**
-
-**Explicación:**
-Las dimensiones son pares clave-valor que segmentan e identifican métricas. Por ejemplo, en las métricas de instancias EC2, la dimensión `InstanceId` identifica instancias específicas. Se pueden especificar hasta 30 dimensiones para una sola métrica.
-
-</details>
-
----
-
-9. ¿En qué se diferencia Enhanced Container Insights de Container Insights básico?
-   - A) Se proporciona de forma gratuita
-   - B) Proporciona métricas adicionales y un monitoreo más detallado
-   - C) Elimina la funcionalidad de recopilación de logs
-   - D) Proporciona únicamente funcionalidad de alertas
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Proporciona métricas adicionales y un monitoreo más detallado**
-
-**Explicación:**
-Enhanced Container Insights recopila más métricas que Container Insights básico. Proporciona información adicional, como capacidad reservada de CPU/memoria, métricas de GPU (cuando corresponde) y métricas del plano de control de Kubernetes. Tiene un costo mayor, pero permite un monitoreo más detallado.
-
-</details>
-
----
-
-10. ¿Cuál es la función de `ANOMALY_DETECTION_BAND()` en las alertas de CloudWatch?
-    - A) Establecer umbrales fijos
-    - B) Devolver el rango esperado del modelo de detección de anomalías
-    - C) Filtrado de logs
-    - D) Creación de dashboards
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Devolver el rango esperado del modelo de detección de anomalías**
-
-**Explicación:**
-La función `ANOMALY_DETECTION_BAND()` devuelve el rango de valores esperados (límites superior/inferior) aprendido por el modelo de detección de anomalías. Este rango se puede utilizar en alertas para activar notificaciones cuando las métricas quedan fuera del rango esperado. El segundo argumento especifica el multiplicador de desviación estándar para ajustar el ancho de la banda.
-
-</details>
+[Volver a la guía](../../../observability/metrics/04-cloudwatch-metrics.md)
