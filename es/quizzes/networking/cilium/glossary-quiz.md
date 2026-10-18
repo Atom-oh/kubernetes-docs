@@ -1,14 +1,18 @@
 # Cuestionario de glosario
 
-Este cuestionario evalúa tu comprensión de los términos y conceptos clave relacionados con Cilium, eBPF, Kubernetes y networking.
+> **Base de revisión**: Cilium 1.20.3.
+> **Última revisión**: 16 de octubre de 2026.
+
+Este cuestionario evalúa tu comprensión de términos y conceptos clave relacionados con Cilium, eBPF, Kubernetes y redes.
 
 ## Preguntas de opción múltiple
 
 1. ¿Cuál es el nombre completo de eBPF?
-   * A) Enhanced Berkeley Packet Filter
-   * B) Extended Berkeley Packet Filter
-   * C) Embedded BPF Filter
-   * D) External Berkeley Protocol Filter
+
+   - A) Enhanced Berkeley Packet Filter
+   - B) Extended Berkeley Packet Filter
+   - C) Embedded BPF Filter
+   - D) External Berkeley Protocol Filter
 
 <details>
 
@@ -16,15 +20,16 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta: B) Extended Berkeley Packet Filter**
 
-**Explicación:** eBPF significa Extended Berkeley Packet Filter, una versión extendida de BPF (Berkeley Packet Filter) desarrollada originalmente para la captura de paquetes de red. eBPF es una tecnología que permite ejecutar programas de forma segura dentro del kernel de Linux, y se utiliza para varios fines, incluidos el procesamiento de paquetes de red, el rastreo de llamadas al sistema y la supervisión del rendimiento. Cilium aprovecha eBPF como su tecnología principal para proporcionar funciones de networking, seguridad y observabilidad de alto rendimiento.
+**Explicación:** eBPF amplía el BPF clásico y se utiliza para redes, trazado y otros puntos de enganche del kernel. El verificador comprueba propiedades de los programas; esto no hace que el kernel ni el verificador sean inmunes a errores de implementación.
 
 </details>
 
 2. ¿Cuál es la unidad básica a la que se aplican las políticas de red en Cilium?
-   * A) Pod
-   * B) Node
-   * C) Endpoint
-   * D) Service
+
+   - A) Pod
+   - B) Node
+   - C) Endpoint
+   - D) Service
 
 <details>
 
@@ -32,31 +37,33 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta: C) Endpoint**
 
-**Explicación:** En Cilium, un Endpoint se refiere a un endpoint de red al que se aplican políticas de red, que normalmente corresponde a un Pod de Kubernetes. Cada Endpoint tiene un ID único, y Cilium aplica políticas de red y controla el tráfico según estos Endpoints. Los Endpoints son administrados por Cilium Agent y se crean automáticamente cuando se crean Pods. Puedes consultar todos los Endpoints en el Node actual mediante el comando `cilium endpoint list`.
+**Explicación:** Un endpoint de Cilium suele corresponder a un Pod administrado. El ID del endpoint es local a su agente; las identidades de seguridad pueden compartirse. Ejecuta `cilium-dbg endpoint list` dentro del agente propietario.
 
 </details>
 
-3. ¿Cuál es la característica principal de XDP (eXpress Data Path)?
-   * A) Análisis de protocolo L7
-   * B) Procesamiento de paquetes a nivel de driver de red
-   * C) Cifrado TLS
-   * D) Resolución DNS
+3. ¿Dónde se ejecuta XDP nativo en un dispositivo de red compatible?
+
+   - A) Análisis de protocolos L7
+   - B) Procesamiento de paquetes en la capa del controlador de red
+   - C) Cifrado TLS
+   - D) Resolución DNS
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Procesamiento de paquetes a nivel de driver de red**
+**Respuesta: B) Procesamiento de paquetes en la capa del controlador de red**
 
-**Explicación:** XDP (eXpress Data Path) es una tecnología basada en eBPF que procesa paquetes a nivel de driver de red (contexto de interrupción). Esto omite la pila de red del kernel para habilitar un procesamiento de paquetes de muy alto rendimiento (millones de paquetes por segundo). XDP puede procesar paquetes con acciones como DROP, PASS, TX (transmitir) y REDIRECT. Cilium utiliza XDP para implementar protección contra DDoS, balanceo de carga de alto rendimiento y filtrado de paquetes.
+**Explicación:** XDP nativo se ejecuta en la ruta de recepción de un controlador compatible. `PASS` continúa por la pila; `DROP`, `TX` y `REDIRECT` realizan otras acciones. Los modos genérico y descargado al hardware son distintos. La aceleración de servicios de Cilium depende de las condiciones; no garantiza una tasa de paquetes universal ni protección DDoS integrada.
 
 </details>
 
-4. ¿Cuál es el nombre de la plataforma de observabilidad de red de Cilium?
-   * A) Prometheus
-   * B) Grafana
-   * C) Hubble
-   * D) Jaeger
+4. ¿Cómo se llama la plataforma de observabilidad de red de Cilium?
+
+   - A) Prometheus
+   - B) Grafana
+   - C) Hubble
+   - D) Jaeger
 
 <details>
 
@@ -64,15 +71,16 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta: C) Hubble**
 
-**Explicación:** Hubble es la plataforma de observabilidad de red de Cilium que utiliza eBPF para supervisar y analizar flujos de red en tiempo real. Las funciones principales de Hubble incluyen la supervisión de flujos de red, la generación de mapas de dependencias de servicios, la detección de infracciones de políticas de red, la recopilación de métricas de rendimiento y el seguimiento de eventos de seguridad. Hubble proporciona tanto CLI como una UI basada en web, y puede integrarse con Prometheus y Grafana para visualizar métricas.
+**Explicación:** Hubble expone registros de flujo, veredictos y métricas de protocolos compatibles mediante la CLI, la interfaz web y las integraciones configuradas. Relay no es almacenamiento duradero; las alertas y la retención externas requieren configuración, y se pueden perder eventos.
 
 </details>
 
 5. ¿Cuál es el nombre completo y el propósito principal de VXLAN?
-   * A) Virtual Extended LAN - Creación de red virtual
-   * B) Virtual Extensible LAN - Red superpuesta L2
-   * C) Very Extended LAN - Expansión de red a gran escala
-   * D) Variable Extensible LAN - Configuración dinámica de red
+
+   - A) Virtual Extended LAN - Creación de una red virtual
+   - B) Virtual Extensible LAN - Red superpuesta L2
+   - C) Very Extended LAN - Expansión de red a gran escala
+   - D) Variable Extensible LAN - Configuración dinámica de red
 
 <details>
 
@@ -80,15 +88,16 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta: B) Virtual Extensible LAN - Red superpuesta L2**
 
-**Explicación:** VXLAN (Virtual Extensible LAN) es una tecnología de virtualización de red que superpone redes de Layer 2 (L2) sobre redes de Layer 3 (L3). VXLAN utiliza encapsulación UDP para tunneling y admite hasta aproximadamente 16 millones de segmentos de red con un VNI (VXLAN Network Identifier) de 24 bits. En Cilium, VXLAN se utiliza como modo de networking superpuesto para la comunicación entre Pods de distintos Nodes. Las alternativas incluyen GENEVE o el modo de enrutamiento nativo.
+**Explicación:** VXLAN transporta una red superpuesta L2 sobre una red subyacente IP mediante UDP y un VNI de 24 bits. El campo admite unos 16 millones de valores posibles; esto no es una promesa de capacidad de Cilium. Cilium también transporta información de identidad en los metadatos de la superposición.
 
 </details>
 
-6. ¿Cuál es la función principal de BPF Maps?
-   * A) Administración de tablas de enrutamiento de red
-   * B) Intercambio y almacenamiento de datos entre programas eBPF
-   * C) Almacenamiento en caché de registros DNS
-   * D) Almacenamiento de certificados TLS
+6. ¿Cuál es la función principal de los mapas BPF?
+
+   - A) Administración de tablas de enrutamiento de red
+   - B) Intercambio y almacenamiento de datos entre programas eBPF
+   - C) Almacenamiento en caché de registros DNS
+   - D) Almacenamiento de certificados TLS
 
 <details>
 
@@ -96,15 +105,16 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta: B) Intercambio y almacenamiento de datos entre programas eBPF**
 
-**Explicación:** BPF Maps son almacenes de clave-valor utilizados por los programas eBPF para almacenar y recuperar datos. BPF Maps también se utilizan para intercambiar datos entre el espacio del kernel y el espacio de usuario. Los tipos principales incluyen Hash Map (almacén de clave-valor), Array Map (arreglo basado en índices), LRU Map (caché de uso menos reciente) y Ring Buffer (búfer circular). Cilium utiliza BPF Maps para almacenar mapas de servicios, mapas de backends, tablas de seguimiento de conexiones y más.
+**Explicación:** Los mapas BPF comparten estado y eventos administrados por el kernel con los programas y el espacio de usuario. Los mapas hash y de matriz usan claves; los búferes circulares y algunos otros tipos de mapa no admiten las operaciones habituales de búsqueda, actualización y eliminación.
 
 </details>
 
 7. ¿Cómo se llama el identificador numérico que representa la identidad de seguridad de un Pod en Cilium?
-   * A) Pod ID
-   * B) Security Context
-   * C) Identity
-   * D) Endpoint ID
+
+   - A) Pod ID
+   - B) Security Context
+   - C) Identity
+   - D) Endpoint ID
 
 <details>
 
@@ -112,15 +122,16 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta: C) Identity**
 
-**Explicación:** Cilium Identity es un identificador numérico generado a partir del conjunto de labels de un Pod. Todos los Pods con los mismos labels comparten la misma Identity. Las políticas basadas en Identity utilizan Identity en lugar de direcciones IP para aplicar políticas de red, de modo que las políticas se mantienen coherentes incluso cuando cambian las IP de los Pods. Este enfoque es muy escalable y funciona de manera eficiente incluso en clusters grandes. Endpoint ID identifica una instancia específica de Pod y es diferente de Identity.
+**Explicación:** Las etiquetas pertinentes para la seguridad determinan la identidad; no participan todas las etiquetas de metadatos. Los endpoints pueden compartir una identidad dentro de su ámbito de asignación. El ID numérico del endpoint es local al agente y constituye un identificador distinto.
 
 </details>
 
-8. ¿Cuál es el nombre completo de IPAM y su función en Cilium?
-   * A) IP Address Management - Asignación y administración de direcciones IP
-   * B) Internet Protocol Access Manager - Administración de acceso a Internet
-   * C) IP Assignment Module - Módulo de asignación de IP
-   * D) Internal Protocol Address Mapper - Mapeo interno de direcciones de protocolo
+8. ¿Cuál es el nombre completo de IPAM y qué función cumple en Cilium?
+
+   - A) IP Address Management - Asignación y administración de direcciones IP
+   - B) Internet Protocol Access Manager - Administración del acceso a Internet
+   - C) IP Assignment Module - Módulo de asignación de IP
+   - D) Internal Protocol Address Mapper - Asignación interna de direcciones de protocolo
 
 <details>
 
@@ -128,45 +139,47 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta: A) IP Address Management - Asignación y administración de direcciones IP**
 
-**Explicación:** IPAM (IP Address Management) es un sistema responsable de planificar, asignar, rastrear y administrar direcciones IP. Cilium admite varios modos IPAM: Cluster Pool (administración de pool de IP de todo el cluster), Kubernetes (uso del CIDR de Node de Kubernetes), AWS ENI (uso de AWS Elastic Network Interface), Azure (integración de networking de Azure) y GKE (integración de Google Kubernetes Engine). La selección del modo IPAM depende del entorno del cluster y de los requisitos de networking.
+**Explicación:** IPAM asigna y registra direcciones. Según el modo, Cilium admite distintos responsables de la asignación, como cluster-pool, multi-pool, host-scope de Kubernetes y ENI. GKE es una plataforma, no un valor universal e independiente para `ipam.mode`; comprueba la integración con la plataforma administrada.
 
 </details>
 
-9. ¿Cuál es la característica principal de WireGuard y su uso en Cilium?
-   * A) Herramienta de captura de paquetes - Análisis de red
-   * B) Protocolo VPN moderno - Cifrado de tráfico entre Nodes
-   * C) Algoritmo de balanceo de carga - Distribución de tráfico
-   * D) Proxy DNS - Resolución de nombres
+9. ¿Cuál es la característica principal de WireGuard y para qué se utiliza en Cilium?
+
+   - A) Herramienta de captura de paquetes - Análisis de red
+   - B) Protocolo VPN moderno - Cifrado del tráfico entre nodos
+   - C) Algoritmo de balanceo de carga - Distribución del tráfico
+   - D) Proxy DNS - Resolución de nombres
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Protocolo VPN moderno - Cifrado de tráfico entre Nodes**
+**Respuesta: B) Protocolo VPN moderno - Cifrado del tráfico entre nodos**
 
-**Explicación:** WireGuard es un protocolo de túnel VPN (Virtual Private Network) moderno, rápido y seguro. Es más simple y rápido que IPsec, con una base de código más pequeña que facilita la auditoría de seguridad. En Cilium, WireGuard se utiliza para el cifrado de tráfico entre Nodes. Cuando WireGuard está habilitado, todo el tráfico entre los Pods del cluster se cifra de forma transparente. Cilium puede implementar el cifrado con IPsec o WireGuard.
+**Explicación:** WireGuard de Cilium protege el tráfico compatible entre nodos. El tráfico entre Pods del mismo nodo no atraviesa su túnel; el tráfico externo o dirigido al nodo tiene condiciones distintas. No siempre es más rápido que IPsec; compara cargas de trabajo y ajustes de protección equivalentes.
 
 </details>
 
 10. ¿Cuál es el nombre completo y la función de CNI?
-    * A) Container Network Interface - Interfaz estándar para plugins de red de contenedores
-    * B) Cloud Native Infrastructure - Infraestructura cloud native
-    * C) Cluster Network Integration - Integración de red de cluster
-    * D) Container Node Interconnect - Conexión de Node de contenedor
+
+    - A) Container Network Interface - Interfaz estándar para complementos de red de contenedores
+    - B) Cloud Native Infrastructure - Infraestructura nativa de la nube
+    - C) Cluster Network Integration - Integración de red del clúster
+    - D) Container Node Interconnect - Conexión de nodos de contenedores
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Container Network Interface - Interfaz estándar para plugins de red de contenedores**
+**Respuesta: A) Container Network Interface - Interfaz estándar para complementos de red de contenedores**
 
-**Explicación:** CNI (Container Network Interface) es un proyecto de CNCF que define una interfaz estándar entre los runtimes de contenedores y los plugins de red. En Kubernetes, kubelet se comunica con los plugins de red (Cilium, Calico, Flannel, etc.) mediante la interfaz CNI. CNI define una API estándar para la configuración de red cuando se agregan o eliminan contenedores, lo que permite integrar diversas soluciones de networking mediante una arquitectura de plugins. Cilium es una de las implementaciones de CNI.
+**Explicación:** CNI especifica la interfaz entre el runtime y los complementos de red. En las versiones actuales de Kubernetes, kubelet usa CRI y el runtime de contenedores administra la invocación de CNI. Las opciones de kubelet para administrar CNI directamente se eliminaron en Kubernetes 1.24.
 
 </details>
 
-## Preguntas de respuesta corta
+## Preguntas de respuesta breve
 
-11. ¿Cuál es el nombre del componente de código abierto que proporciona funcionalidad de proxy L7 y service mesh en Cilium?
+11. ¿Cómo se llama el componente de código abierto que proporciona funciones de proxy L7 y de service mesh en Cilium?
 
 <details>
 
@@ -174,11 +187,11 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta:** Envoy
 
-**Explicación:** Envoy es un proxy de borde y de servicios de código abierto utilizado como proxy L7 y bus de comunicación. Cilium integra Envoy para implementar políticas de red L7. Cuando defines reglas L7 (HTTP, gRPC, Kafka, DNS, etc.) en una CiliumNetworkPolicy, Cilium implementa automáticamente el proxy Envoy de forma transparente. Envoy también proporciona funciones avanzadas de balanceo de carga, división de tráfico y recopilación de métricas.
+**Explicación:** Envoy proporciona funciones configuradas de proxy HTTP/gRPC. Las políticas DNS usan el proxy DNS de Cilium y se eliminaron las reglas Kafka L7. El despliegue y el ciclo de vida del proxy dependen de la configuración de instalación; no se despliega automáticamente un proxy por cada regla L7 arbitraria.
 
 </details>
 
-12. ¿Cuál es el nombre del componente de Cilium que se ejecuta en cada Node y es responsable de la carga de programas eBPF, la implementación de políticas de red y la administración de Endpoints?
+12. ¿Cómo se llama el componente de Cilium que se ejecuta en cada nodo y carga programas eBPF, implementa políticas de red y administra endpoints?
 
 <details>
 
@@ -186,11 +199,11 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta:** Cilium Agent
 
-**Explicación:** Cilium Agent es el componente principal de Cilium que se ejecuta como un DaemonSet en cada Node de Kubernetes. Las principales responsabilidades del Agent incluyen cargar y administrar programas eBPF en el kernel, implementar y aplicar políticas de red, realizar balanceo de carga de servicios, administración de direcciones IP (IPAM), administración de endpoints de red, recopilación de métricas y logs, y comunicación con el servidor de API de Kubernetes. Las operaciones de networking local en cada Node son gestionadas por el Cilium Agent de ese Node.
+**Explicación:** El agente administra endpoints locales del nodo, programas BPF y el estado de políticas y del plano de datos en los nodos aptos que administra Cilium. Según el modo, las responsabilidades de IPAM se reparten entre el agente, el operador o la plataforma.
 
 </details>
 
-13. ¿Cuál es el nombre y número de la capa del modelo OSI responsable del enrutamiento de paquetes mediante direcciones IP?
+13. ¿Cuál es el nombre y el número de la capa del modelo OSI responsable del enrutamiento de paquetes mediante direcciones IP?
 
 <details>
 
@@ -198,11 +211,11 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta:** L3 (Network Layer)
 
-**Explicación:** L3 (Network Layer) es la tercera capa del modelo OSI, responsable del direccionamiento lógico mediante direcciones IP y del enrutamiento de paquetes. IP (Internet Protocol) e ICMP (Internet Control Message Protocol) operan en esta capa. Las políticas L3 de Cilium pueden filtrar tráfico según direcciones IP y bloques CIDR. L2 (Data Link Layer) utiliza direcciones MAC, y L4 (Transport Layer) utiliza números de puerto.
+**Explicación:** L3 (capa de red) es la tercera capa del modelo OSI; se encarga del direccionamiento lógico mediante direcciones IP y del enrutamiento de paquetes. IP (Internet Protocol) e ICMP (Internet Control Message Protocol) funcionan en esta capa. Las políticas L3 de Cilium pueden filtrar el tráfico según direcciones IP y bloques CIDR. L2 (capa de enlace de datos) usa direcciones MAC, y L4 (capa de transporte) usa números de puerto.
 
 </details>
 
-14. ¿Cuál es el nombre del recurso de Kubernetes que proporciona endpoints de red estables para un conjunto de Pods?
+14. ¿Cómo se llama el recurso de Kubernetes que proporciona endpoints de red estables para un conjunto de Pods?
 
 <details>
 
@@ -210,25 +223,25 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta:** Service
 
-**Explicación:** Kubernetes Service es una abstracción que proporciona endpoints de red estables (ClusterIP, nombre DNS) para un conjunto de Pods. Los Pods se crean y eliminan dinámicamente, y sus IP pueden cambiar, pero los Services proporcionan IP fijas y nombres DNS para un acceso coherente de los clientes. Cilium implementa el balanceo de carga de Service mediante eBPF, que puede sustituir a kube-proxy. Los tipos de Service incluyen ClusterIP, NodePort, LoadBalancer y ExternalName.
+**Explicación:** Service proporciona una abstracción de acceso a backends lógicos. Los Services ClusterIP normales tienen una IP virtual; los headless no la tienen, y ExternalName usa un alias DNS. Los Services sin selector pueden representar endpoints externos o administrados manualmente.
 
 </details>
 
-15. ¿Cuál es el nombre del tipo de NAT que modifica la dirección IP de origen de un paquete?
+15. ¿Cómo se llama el tipo de NAT que modifica la dirección IP de origen de un paquete?
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** SNAT (Source NAT) o Masquerading
+**Respuesta:** SNAT (Source Network Address Translation)
 
-**Explicación:** SNAT (Source Network Address Translation) es un tipo de NAT que traduce la dirección IP de origen de un paquete a otra dirección IP. Masquerading es una forma especial de SNAT que traduce automáticamente la IP de origen a la IP de la interfaz de salida. En Cilium, masquerading se utiliza para traducir la IP de origen del tráfico saliente de los Pods dentro del cluster a la IP del Node. Por el contrario, DNAT (Destination NAT) modifica la IP de destino.
+**Explicación:** SNAT cambia la dirección de origen. Masquerading elige una dirección asociada a la ruta o interfaz de salida; importan las exclusiones y las IP de gateway seleccionadas. No necesariamente se traduce todo paquete saliente de un Pod. DNAT cambia el destino.
 
 </details>
 
 ## Preguntas prácticas
 
-16. Relaciona los siguientes términos relacionados con Cilium con sus definiciones: Cluster Mesh, CRD, FQDN, mTLS
+16. Relaciona ClusterMesh, CRD, FQDN y mTLS con sus definiciones.
 
 <details>
 
@@ -236,49 +249,15 @@ Este cuestionario evalúa tu comprensión de los términos y conceptos clave rel
 
 **Respuesta:**
 
-* **Cluster Mesh**: Función de networking multi-cluster de Cilium. Conecta varios clusters de Kubernetes para habilitar el descubrimiento de servicios entre clusters, el balanceo de carga y la aplicación de políticas de red.
-* **CRD (Custom Resource Definition)**: Un método para extender la API de Kubernetes mediante la definición de recursos personalizados. Cilium utiliza CRD para definir CiliumNetworkPolicy, CiliumEndpoint y más.
-* **FQDN (Fully Qualified Domain Name)**: El nombre de dominio completo de un host (por ejemplo, www.example.com). Las políticas FQDN de Cilium controlan el acceso a servicios externos por nombre de dominio en lugar de IP.
-* **mTLS (mutual TLS)**: Una extensión de TLS en la que tanto el cliente como el servidor se autentican mutuamente con certificados. Proporciona mayor seguridad mediante autenticación bidireccional.
-
-**Explicación:** Estos términos se utilizan con frecuencia en el networking de Cilium y Kubernetes. Cluster Mesh es útil en entornos híbridos/multi-cloud, los CRD son fundamentales para la extensibilidad de Kubernetes, las políticas FQDN son esenciales para el control de acceso a servicios externos con IP dinámicas, y mTLS es importante para una comunicación segura entre servicios.
+- **ClusterMesh**: Metadatos y conectividad de red entre clústeres; no replica automáticamente todos los recursos de políticas.
+- **CRD**: Una definición que añade un tipo de recurso personalizado a la API de Kubernetes.
+- **FQDN**: Un nombre absoluto dentro del árbol DNS. `toFQDNs` permite usar IP aprendidas.
+- **mTLS**: TLS con autenticación mutua entre pares. La autenticación es distinta de la autorización de la aplicación.
 
 </details>
 
-17. Escribe el comando para consultar todas las Identities y sus labels en el cluster actual mediante Cilium CLI.
 
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta:**
-
-```bash
-# Query all Identities
-cilium identity list
-
-# Or query CiliumIdentity CRD using kubectl
-kubectl get ciliumidentity -A
-
-# Query detailed information for a specific Identity
-cilium identity get <identity_id>
-
-# Query detailed information in JSON format
-kubectl get ciliumidentity <identity_id> -o json
-
-# Filter Identities with specific labels
-kubectl get ciliumidentity -o json | jq '.items[] | select(.metadata.labels."k8s:app" == "frontend")'
-
-# Check Identity from Endpoints
-cilium endpoint list
-kubectl exec -n kube-system ds/cilium -- cilium endpoint list
-```
-
-**Explicación:** Cilium Identity es un identificador numérico generado a partir del conjunto de labels de un Pod. El comando `cilium identity list` muestra todas las Identities y sus labels en el cluster actual. CiliumIdentity se almacena como un CRD, por lo que también se puede consultar con kubectl. Identity es la base de las políticas de red, y todos los Pods con los mismos labels comparten la misma Identity.
-
-</details>
-
-18. Escribe comandos para consultar el contenido de BPF Map a fin de comprobar los mapas de balanceo de carga de Service y las tablas de seguimiento de conexiones.
+17. Consulta las identidades asignadas mediante CRD y filtra las etiquetas de seguridad reales; distingue la vista local del agente.
 
 <details>
 
@@ -287,35 +266,47 @@ kubectl exec -n kube-system ds/cilium -- cilium endpoint list
 **Respuesta:**
 
 ```bash
-# Query BPF maps from Cilium Agent pod
-
-# Service map (Service -> Backend mapping)
-kubectl exec -n kube-system ds/cilium -- cilium bpf lb list
-
-# Backend map (backend pod information)
-kubectl exec -n kube-system ds/cilium -- cilium bpf lb list --backends
-
-# Connection Tracking table
-kubectl exec -n kube-system ds/cilium -- cilium bpf ct list global
-
-# NAT map (masquerading/SNAT information)
-kubectl exec -n kube-system ds/cilium -- cilium bpf nat list
-
-# Policy map (Identity-based policies)
-kubectl exec -n kube-system ds/cilium -- cilium bpf policy get --all
-
-# Endpoint map
-kubectl exec -n kube-system ds/cilium -- cilium bpf endpoint list
-
-# List all BPF maps
-kubectl exec -n kube-system ds/cilium -- cilium bpf map list
+set -euo pipefail
+kubectl get ciliumidentities -o json > identities.json
+jq '.items[]
+| select(.["security-labels"]["k8s:app"] == "frontend")
+| {id: .metadata.name, labels: .["security-labels"]}' identities.json
+: "${CILIUM_POD:?Select the Cilium agent Pod on the node being inspected}"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg identity list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
 ```
 
-**Explicación:** BPF Maps son estructuras de datos principales utilizadas en el plano de datos de Cilium. `cilium bpf lb list` muestra información de balanceo de carga de Service, lo que permite comprobar el mapeo entre la IP/puerto de Service y la IP/puerto del Pod backend. `cilium bpf ct list` muestra la tabla de seguimiento de conexiones, donde puedes comprobar el estado actual de las conexiones activas. Estos comandos son útiles para la solución de problemas de red y el análisis de rendimiento.
+Esto supone el modo de asignación mediante CRD. CiliumIdentity tiene ámbito de clúster, y `security-labels` es la fuente de verdad, distinta de `metadata.labels`. No todas las identidades reservadas o locales al nodo se representan como CRD. La vista del agente tiene otro ámbito. Define `CILIUM_POD` mediante el [procedimiento para seleccionar el nodo de destino](../../../networking/cilium/07-advanced-topics.md).
 
 </details>
 
-19. Escribe una CiliumNetworkPolicy que utilice una política de red basada en FQDN y permita que un Pod se comunique externamente solo con los dominios `api.example.com` y `*.googleapis.com`.
+
+18. Inspecciona los mapas de servicios, CT, NAT, políticas y endpoints del agente seleccionado.
+
+<details>
+
+<summary>Mostrar respuesta</summary>
+
+**Respuesta:**
+
+```bash
+set -eu
+: "${CILIUM_POD:?Select the Cilium agent Pod on the node being inspected}"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --backends
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf ct list global
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf nat list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf policy get --all
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf endpoint list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg map list
+```
+
+Selecciona primero el agente del nodo propietario. Las opciones `--backends` y `--all` para el mapa de políticas son válidas. Los volcados completos de CT/políticas pueden ser grandes; úsalos de forma deliberada en el nodo afectado. `map list` muestra los mapas abiertos del agente; no es un inventario exhaustivo de mapas del kernel ni demuestra todas las conexiones activas de aplicaciones.
+
+</details>
+
+
+19. Escribe una política que permita TCP 443 hacia las IP aprendidas para `api.example.com` y nombres `*.googleapis.com` de un nivel, e incluye una excepción DNS. Indica sus límites.
 
 <details>
 
@@ -324,43 +315,44 @@ kubectl exec -n kube-system ds/cilium -- cilium bpf map list
 **Respuesta:**
 
 ```yaml
-apiVersion: "cilium.io/v2"
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "fqdn-egress-policy"
-  namespace: default
+  name: fqdn-egress-policy
+  namespace: cilium-glossary-demo
 spec:
   endpointSelector:
     matchLabels:
       app: external-client
   egress:
-  # Allow DNS queries (required for FQDN policy to work)
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
+      - port: '53'
+        protocol: TCP
       rules:
         dns:
-        - matchPattern: "*"
-  # Allow HTTPS traffic to specific FQDNs
+        - matchPattern: '*'
   - toFQDNs:
-    - matchName: "api.example.com"
-    - matchPattern: "*.googleapis.com"
+    - matchName: api.example.com
+    - matchPattern: '*.googleapis.com'
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
 ```
 
-**Explicación:** Las políticas basadas en FQDN (Fully Qualified Domain Name) controlan el acceso a servicios externos por nombre de dominio en lugar de dirección IP. Para que esta política funcione, se deben permitir las consultas DNS (primera regla de egress). En `toFQDNs`, `matchName` especifica un nombre de dominio exacto y `matchPattern` especifica la coincidencia de patrones con comodines. `*.googleapis.com` permite todos los subdominios de Google API. Las políticas FQDN son especialmente útiles para el control de acceso a servicios externos con IP dinámicas.
+Este ejercicio solo trata la política. Prepara por separado el namespace, el cliente etiquetado y la ruta real a CoreDNS. Permite DNS por TCP/UDP y la observación del proxy DNS. `*.googleapis.com` coincide con un nivel de subdominio, no con el dominio raíz ni con `a.b.googleapis.com`. DNS `*` permite todos los nombres consultados. `toFQDNs` crea permisos para IP, no una restricción del encabezado HTTPS Host en IP compartidas ni autenticación del servidor remoto. Comprueba las políticas de permiso superpuestas y la validación TLS.
 
 </details>
 
-20. Explica la función de Cilium Operator y sus diferencias respecto a Cilium Agent, y escribe comandos para comprobar el estado del Operator.
+
+20. Compara las responsabilidades del operador y del agente, e inspecciona el estado del operador.
 
 <details>
 
@@ -369,36 +361,24 @@ spec:
 **Respuesta:**
 
 ```bash
-# Check Cilium Operator status
 kubectl -n kube-system get deployment cilium-operator
-
-# Check Operator pod status
 kubectl -n kube-system get pods -l name=cilium-operator
-
-# Check Operator logs
-kubectl -n kube-system logs -l name=cilium-operator
-
-# Check Operator in overall Cilium status
+kubectl -n kube-system logs -l name=cilium-operator -c cilium-operator --prefix --since=10m --tail=100
 cilium status --verbose
-
-# Check CiliumIdentity resources (managed by Operator)
-kubectl get ciliumidentity -A
-
-# Check CiliumEndpoint resources
-kubectl get ciliumendpoint -A
+kubectl get ciliumidentities
+kubectl get ciliumendpoints --all-namespaces
 ```
 
-**Comparación de funciones de Cilium Operator y Cilium Agent:**
+| Componente | Ámbito y responsabilidades |
+| --- | --- |
+| Agent | Endpoints de nodos administrados, programas BPF, estado de políticas y del plano de datos, y tareas de IPAM local según el modo. |
+| Operator | Registro de CRD a nivel de clúster, IPAM y asignación de IP para balanceadores de carga según el modo, recolección de recursos huérfanos e identidades, y traducción de Ingress/Gateway cuando está habilitada. |
 
-| Componente           | Ubicación de ejecución              | Responsabilidades principales                                                                                                                                        |
-| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Cilium Agent**    | Cada Node (DaemonSet)               | <p>- Carga/administración de programas eBPF<br>- Aplicación de políticas de red<br>- Administración de endpoints locales<br>- Balanceo de carga de Service<br>- IPAM a nivel de Node</p>           |
-| **Cilium Operator** | Cluster (Deployment, 1-2 instancias) | <p>- Administración de CRD CiliumIdentity<br>- IPAM a nivel de cluster<br>- Sincronización de CiliumEndpoint<br>- Recolección de basura<br>- Administración de conexiones de Cluster Mesh</p> |
-
-**Explicación:** Cilium Agent se ejecuta en cada Node y administra las operaciones de networking de ese Node. En cambio, Cilium Operator se ejecuta como una única instancia (o 2 para HA) en todo el cluster y administra tareas de coordinación a nivel de cluster. El Operator mantiene la coherencia de Identity en todo el cluster, limpia recursos no utilizados y administra IPAM a nivel de cluster.
+`name=cilium-operator` es válido en el chart actual. `operator.replicas` se puede configurar por encima de una o dos instancias. Por defecto, los agentes crean identidades; la administración de identidades por el operador es un modo Beta independiente. Las funciones habilitadas también pueden añadir sincronización de EndpointSlice/MCS de ClusterMesh, por lo que las responsabilidades no deben tratarse como una lista incondicional.
 
 </details>
 
+
 ***
 
-[Volver a los materiales de aprendizaje](../../../networking/cilium/glossary.md) | [Lista de cuestionarios de Cilium](https://www.atomai.click/kubernetes-docs/en/quizzes/#cilium)
+[Volver al material de aprendizaje](../../../networking/cilium/glossary.md) | [Lista de cuestionarios de Cilium](../../README.md#cilium)

@@ -30,7 +30,7 @@
 <span id="verification-checklist"></span>
 
 > **Dificultad**: Avanzado · **Tiempo estimado**: 60 minutos
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 Reciba una alerta, inspeccione métricas reales y logs agregados, y luego produzca una hipótesis de diagnóstico para revisión humana. El [ejemplo ejecutable](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) es un reportero Lambda con temas SNS de entrada/salida separados. No incluye remediación automática ni webhook HTTP anónimo.
 
@@ -52,7 +52,7 @@ Los prerrequisitos son la ingesta de la [Parte 2](./02-observability-stack-lab.m
 | Métricas | Nombres, unidades y labels reales del SDK; series ausentes, ausencia de tráfico y reinicios de contadores |
 | Label de Service | Solo se permiten los servicios del catálogo del reportero |
 
-`up == 0` detecta el fallo de un objetivo de scraping ya conocido, no todos los objetivos no detectados. El crecimiento de reinicios difiere de CrashLoopBackOff; un estado OOMKilled antiguo difiere de un evento OOM nuevo. Un nombre de métrica SQS de PromQL no puede crear datos sin su exporter.
+`up == 0` detecta el fallo de un objetivo de scraping ya conocido, no todos los objetivos que aún no se han descubierto. El crecimiento de reinicios difiere de CrashLoopBackOff; un estado OOMKilled antiguo difiere de un evento OOM nuevo. Un nombre de métrica SQS de PromQL no puede crear datos sin su exporter.
 
 ```bash
 kubectl --context managed -n monitoring get prometheus,alertmanager,prometheusrule
@@ -74,7 +74,7 @@ La alarma de backlog de la plantilla utiliza `AWS/SQS`, `ApproximateNumberOfMess
 
 Este laboratorio deja los datos ausentes como `missing`. No infiera un cero saludable a partir de una cola inactiva o una ingesta interrumpida. Al añadir CPU de RDS, utilice la dimensión de métrica de instancia real `DBInstanceIdentifier`; verifique las dimensiones admitidas antes de usar agregados de clúster u otra estadística.
 
-Los reenvíos de Alertmanager, las transiciones de estado de CloudWatch, la entrega de SNS y los reintentos asíncronos de Lambda son capas separadas. La deduplicación en una capa no puede garantizar una entrega exactamente una vez de extremo a extremo.
+Los reenvíos de Alertmanager, las transiciones de estado de CloudWatch, la entrega de SNS y los reintentos asíncronos de Lambda son capas independientes. La deduplicación en una capa no puede garantizar una entrega exactamente una vez de extremo a extremo.
 
 ## 3. Elija una ruta de guardia admitida {#oncall}
 
@@ -92,7 +92,7 @@ Este ejemplo proporciona un tema SNS de salida. Configure respondedores, escalam
 |---|---|
 | `alerts.py` | Tema/formato/listas de permitidos de SNS y normalización de CloudWatch/Alertmanager |
 | `evidence.py` | Métricas configuradas de CloudWatch y lecturas de logs agregados |
-| `analysis.py` | Converse solo con evidencia utilizable, 1024 tokens de salida, comprobaciones de finalización |
+| `analysis.py` | Invoca Converse únicamente con evidencia utilizable, 1024 tokens de salida y comprobaciones de finalización |
 | `handler.py` | Recopilación con dos workers, idempotencia de Powertools, publicación en el tema de salida |
 | `template.yaml` | Quince recursos SAM/CloudFormation e IAM con alcance limitado |
 | `tests/` | Éxito, fallo, duplicados, tiempo de espera y datos ausentes |
@@ -106,7 +106,7 @@ python3.12 -m venv .venv
 
 El código se comprobó con boto3 **1.43.93**, Powertools **3.34.0** y Python **3.12**. Para un despliegue real, proporcione una cola SQS/grupo de logs existentes, un nombre de Service aprobado, un ID de modelo/perfil de inferencia Converse actualmente disponible y sus **ARN de modelo/perfil exactos**. No codifique de forma fija un modelo Claude retirado. Los perfiles entre regiones también pueden requerir permisos para el ARN del modelo de destino.
 
-Los logs deben contener campos estructurados `service` y `level`. El reportero consulta recuentos agregados de errores, no mensajes sin procesar, y nunca ejecuta IDs de recursos o consultas generados por el modelo. Las fuentes ausentes/con errores permanecen como no_data/error y pueden provocar que se omita el análisis. No afirma recopilar valores de AMP ni trazas de X-Ray que nunca se configuraron.
+Los registros deben contener campos estructurados `service` y `level`. El reportero consulta recuentos agregados de errores, no mensajes sin procesar, y nunca ejecuta IDs de recursos o consultas generados por el modelo. Las fuentes ausentes o con errores permanecen como no_data/error y pueden provocar que se omita el análisis. No afirma recopilar valores de AMP ni trazas de X-Ray que nunca se configuraron.
 
 ## 5. Despliegue y conecte Alertmanager {#deploy}
 
@@ -130,7 +130,7 @@ receivers:
     send_resolved: true
 ```
 
-`toJson` respeta las etiquetas JSON, y produce `alerts`, `labels`, `status` y claves camelCase como `startsAt`. El acceso con plantillas Go en mayúscula (`.Alerts`) es diferente de las claves JSON serializadas. El parser conserva compatibilidad con mayúsculas solo por compatibilidad. El mensaje SNS legible de forma predeterminada no tiene este formato JSON.
+`toJson` respeta las etiquetas JSON y produce `alerts`, `labels`, `status` y claves camelCase como `startsAt`. El acceso con plantillas Go en mayúscula (`.Alerts`) es distinto de las claves JSON serializadas. El parser sigue aceptando claves en mayúscula por compatibilidad con versiones anteriores. El mensaje SNS legible de forma predeterminada no tiene este formato JSON.
 
 Adjunte el AlertmanagerPublishPolicyArn de la plantilla únicamente al **rol de workload de Alertmanager** existente. Verifique la ruta de credenciales del Pod y los permisos de KMS/SNS; no amplíe el rol compartido del nodo. Haga coincidir los labels de `service` y los nombres de alerta permitidos con el catálogo/reglas. Nunca suscriba el reportero a OutputTopicArn.
 
@@ -144,7 +144,7 @@ Los ID de mensaje SNS exitosos se deduplican en DynamoDB durante **24 horas**. S
 
 La concurrencia reservada de Lambda es dos, los reintentos asíncronos son dos y la edad máxima del evento es una hora después de que Lambda acepta el evento. Los reintentos de entrega SNS son independientes. Inspeccione los resultados, las colas de fallos y los procedimientos de repetición. No imprima eventos sin procesar ni credenciales.
 
-Las lecturas usan como máximo 15 minutos respecto de la hora actual e informan su inicio/fin reales. No reconstruyen el período exacto de la alarma original. Logs Insights consulta con límites y cancela las consultas sin terminar. La salida del modelo truncada (`max_tokens`), bloqueada o vacía no se publica como diagnóstico completado.
+Las consultas abarcan como máximo 15 minutos respecto de la hora actual e informan sus horas reales de inicio y fin. No reconstruyen el período exacto de la alarma original. Logs Insights consulta con límites y cancela las consultas sin terminar. La salida del modelo truncada (`max_tokens`), bloqueada o vacía no se publica como diagnóstico completado.
 
 ## 7. Configure CloudWatch Investigations por separado {#investigations}
 
@@ -162,7 +162,7 @@ Siga el [procedimiento oficial](https://docs.aws.amazon.com/AmazonCloudWatch/lat
 
 ## 8. Inyección de fallos y verificación operativa {#verification}
 
-Registre primero una referencia de prueba de humo saludable y la ruta de notificación. Use solo controles de fallos que la aplicación realmente implemente, en un canary dedicado con límite de tiempo, objetivo y plan de recuperación. No llame endpoints `/admin/chaos` inexistentes ni flags de entorno no utilizados. Eliminar un Pod no garantiza CrashLoopBackOff.
+Registre primero una línea base satisfactoria de la prueba de humo y la ruta de notificación. Use solo controles de fallos que la aplicación realmente implemente, en un canario dedicado con límite de tiempo, objetivo y plan de recuperación. No llame endpoints `/admin/chaos` inexistentes ni flags de entorno no utilizados. Eliminar un Pod no garantiza CrashLoopBackOff.
 
 Cambie y recupere workloads gestionados por GitOps mediante Git/el flujo de Rollouts admitido. No confunda Deployments con Rollouts ni elimine variables de entorno usando índices JSON Patch negativos.
 

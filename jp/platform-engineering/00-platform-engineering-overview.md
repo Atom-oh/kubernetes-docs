@@ -1,6 +1,6 @@
 # Platform Engineering の概要
 
-> **最終更新**: September 12, 2026
+> **最終更新**: 2026年9月12日
 
 ## 1. Platform Engineering とは？
 

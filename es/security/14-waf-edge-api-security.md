@@ -14,8 +14,8 @@ Distinga las capacidades de NGFW de VM-Series/FortiGate de las ofertas independi
 | Flujo | Control principal | Verificación pendiente |
 |---|---|---|
 | HTTP(S) público | WAF asociado a CloudFront/ALB | Origen directo, límites del cuerpo, excepciones y autorización de aplicación |
-| Sesión IP que conserva TLS | Ruta NGFW y descifrado seleccionado | Visibilidad real de la carga útil y exenciones |
-| Webhook de admisión interno | Restricciones de acceso, admisión y RBAC | Alcance de Pods y privilegios del controlador |
+| Sesión IP con TLS intacto | Ruta NGFW y descifrado seleccionado | Visibilidad real de la carga útil y exenciones |
+| Webhook de admisión interno | Restricciones de acceso, admisión y RBAC | Acceso desde los Pods y privilegios del controlador |
 | Carga, gRPC/WebSocket | Ruta compatible y tratamiento específico de la aplicación | Cobertura más allá de la solicitud inicial y procesamiento de archivos |
 
 La CVE de admisión de ingress-nginx afecta a un webhook accesible desde la red de Pods; pruébelo por separado de la cobertura de WAF de URL públicas. [S01]
@@ -35,9 +35,9 @@ Este es un diseño lógico. Documente si se utiliza solo WAF de CloudFront o si 
 
 ### Opción A: origen ALB público
 
-Combine controles basados en el ejemplo de restricción de CloudFront a orígenes ALB. [S16]
+Combine controles según el ejemplo de AWS para restringir el acceso desde CloudFront a orígenes ALB. [S16]
 
-1. Revise la lista de prefijos administrados que miran al origen de CloudFront en el grupo de seguridad de ALB.
+1. Revise la lista de prefijos administrada de CloudFront para las conexiones al origen en el grupo de seguridad de ALB.
 2. Combine un encabezado personalizado de origen de CloudFront con una condición de encabezado del listener de ALB.
 3. Diseñe la acción predeterminada del listener para que rechace solicitudes fuera de la ruta aprobada.
 4. Administre HTTPS de origen, la rotación del secreto del encabezado y los permisos de lectura de configuración.
@@ -49,15 +49,15 @@ Combine controles basados en el ejemplo de restricción de CloudFront a orígene
 
 Los orígenes VPC de CloudFront pueden entregar tráfico a orígenes compatibles en subredes privadas de VPC. El requisito de asociar un Internet Gateway no exige una IP pública en el origen. Compruebe las restricciones actuales de región, recurso y protocolo, las direcciones de la subred y la configuración del grupo de seguridad administrado por el servicio. La compatibilidad de NLB como origen es distinta de la asociación directa de WAF a NLB. [S17]
 
-Para cualquiera de las opciones, revise otros Services públicos, NodePorts y endpoints de administración que expongan la misma aplicación. Etiquetar un origen como privado no completa el inventario de rutas de entrada.
+Para cualquiera de las opciones, revise otros servicios públicos, NodePorts y endpoints de administración que expongan la misma aplicación. Etiquetar un origen como privado no completa el inventario de rutas de entrada.
 
 ## 3. Orden de reglas y acciones de terminación
 
 AWS WAF evalúa primero las prioridades numéricas más bajas. `Allow` y `Block` terminan la evaluación; `Count` continúa. `CAPTCHA` y `Challenge` no terminan la evaluación cuando hay tokens válidos, y sí la terminan si no hay un token aceptable. La acción predeterminada de la ACL se aplica cuando ninguna regla ha tomado una decisión de terminación. [S10]
 
-| Trampa | Consecuencia | Propuesta de diseño |
+| Error frecuente | Consecuencia | Propuesta de diseño |
 |---|---|---|
-| `Allow` amplio y temprano | No se evalúan las reglas administradas/de límite de velocidad posteriores | Restrinja el permiso y revise el orden |
+| `Allow` amplio y temprano | No se evalúan las reglas administradas o basadas en tasas posteriores | Restrinja el permiso y revise el orden |
 | Eximir un grupo entero | Se pueden eliminar otras protecciones | Registre la regla, ruta, método, propietario y vencimiento individuales |
 | Tratar `Count` como bloqueo | Las solicitudes solo se supervisan | Inspeccione la acción, las anulaciones y los resultados efectivos |
 | Usar Challenge en todas las API | Problemas de compatibilidad con clientes automatizados | Pruebe por separado las API de navegador y de máquina |
@@ -84,9 +84,9 @@ Cuando los cuerpos, encabezados o cookies superan los límites de inspección, i
 
 Valide en la aplicación el tamaño total del cuerpo, el esquema, el tipo de contenido, la descompresión, el manejo de archivos y la autorización. Considere rutas independientes para cargas grandes y una inspección posterior basada en almacenamiento. Compare solicitudes JSON/multipart benignas alrededor del umbral y los datos que quedan después del prefijo inspeccionado. No hacen falta cargas maliciosas para establecer los límites y las rutas.
 
-## 5. IP del cliente y reglas basadas en velocidad
+## 5. IP del cliente y reglas basadas en tasas
 
-La dirección del peer de conexión y las direcciones reenviadas del cliente pueden diferir a lo largo de CloudFront→ALB→Ingress→aplicación. Defina los proxies de confianza y las rutas de origen antes de usar la configuración de IP reenviada. Las instrucciones de coincidencia geográfica, coincidencia de ASN y basadas en velocidad usan la primera dirección. La instrucción de coincidencia de conjunto de IP utiliza la posición configurada `FIRST`, `LAST` o `ANY`; `ANY` comprueba hasta 10 direcciones y, si hay más, usa las 10 últimas. [S13]
+La dirección IP del extremo que establece la conexión y las direcciones IP del cliente incluidas en encabezados reenviados pueden diferir a lo largo de CloudFront→ALB→Ingress→aplicación. Defina los proxies de confianza y las rutas de origen antes de usar la configuración de IP reenviada. Las instrucciones de coincidencia geográfica, de ASN y las basadas en tasas utilizan la primera dirección. La instrucción de coincidencia con un conjunto de IP utiliza la posición configurada `FIRST`, `LAST` o `ANY`; `ANY` comprueba hasta 10 direcciones y, si hay más, usa las 10 últimas. [S13]
 
 Si falta un encabezado, la instrucción directa no coincide y no se activa la alternativa para valores malformados. Una instrucción `NOT` que lo envuelva puede invertir «no coincide» y convertirlo en «coincide», así que pruebe el árbol completo de instrucciones además del ajuste de IP reenviada. [S13]
 
@@ -99,7 +99,7 @@ Controles propuestos contra el abuso de API:
 | Rastreo/bots | Tokens de navegador, reglas de bots compatibles y comprobaciones de aplicación | SDK, clientes móviles y de accesibilidad |
 | Carga/pago | Autorización, tamaño, idempotencia y límites de negocio | Envío duplicado y reintento después de un fallo |
 
-Las reglas de velocidad hacen seguimiento aproximado; no imponen cuotas exactas de solicitudes por segundo. Las ventanas de evaluación compatibles son de 60, 120, 300 y 600 segundos. Cambiar los límites, las ventanas, la agregación o el alcance restablece los contadores y puede pausar la aplicación durante un máximo de un minuto. Si se usan tokens o encabezados arbitrarios como claves, pruebe variaciones de clave controladas por un atacante y valores ausentes. [S14] [S37] [S43]
+Las reglas basadas en tasas realizan un seguimiento aproximado; no imponen cuotas exactas de solicitudes por segundo. Las ventanas de evaluación compatibles son de 60, 120, 300 y 600 segundos. Cambiar los límites, las ventanas, la agregación o el alcance restablece los contadores y puede interrumpir la aplicación de la regla durante un máximo de un minuto. Si se usan tokens o encabezados arbitrarios como claves, pruebe variaciones de clave controladas por un atacante y valores ausentes. [S14] [S37] [S43]
 
 ## 6. Validar los registros y la política ante fallos
 
@@ -111,7 +111,7 @@ El atributo `waf.fail_open.enabled` de ALB controla si se reenvía a los destino
 
 ## 7. Verificación e implementación seguras
 
-Este JSON es **una Rule dentro de una Web ACL**, no una ACL, asociación o comando de implementación completos. Cuenta un encabezado único en solicitudes de prueba aprobadas para verificar la ruta y el registro.
+Este JSON representa **una regla dentro de una ACL web**, no una ACL completa, una asociación ni un comando de implementación. Cuenta un encabezado único en solicitudes de prueba aprobadas para verificar la ruta y el registro.
 
 ```json
 {
@@ -134,7 +134,7 @@ Este JSON es **una Rule dentro de una Web ACL**, no una ACL, asociación o coman
 }
 ```
 
-Coordine la prioridad y los nombres de las métricas con la ACL existente. Esto no valida la detección de solicitudes maliciosas ni los falsos positivos. En staging, siga con un canario `Block` benigno y de alcance limitado, y compruebe que no llega a la aplicación; evalúe las reglas de protección reales reproduciendo tráfico de negocio. Registre los cambios de Count a Block, el vencimiento de las excepciones y los responsables de reversión.
+Coordine la prioridad y los nombres de las métricas con la ACL existente. Esto no valida la detección de solicitudes maliciosas ni los falsos positivos. En preproducción, continúe con un canario `Block` benigno y de alcance limitado, y compruebe que no llega a la aplicación; evalúe las reglas de protección reales reproduciendo tráfico de negocio. Registre los cambios de Count a Block, el vencimiento de las excepciones y los responsables de reversión.
 
 | Verificación | Resultado esperado y evidencia que se conserva |
 |---|---|
@@ -165,14 +165,14 @@ Fuentes primarias consultadas el 15-10-2026. Antes de hacer cambios, vuelva a co
 - [S11: AWS WAF: tamaños de inspección del cuerpo][S11]
 - [S12: AWS WAF: componentes de solicitud demasiado grandes][S12]
 - [S13: AWS WAF: direcciones IP reenviadas][S13]
-- [S14: AWS WAF: reglas basadas en velocidad][S14]
+- [S14: AWS WAF: reglas basadas en tasas][S14]
 - [S15: AWS WAF: registro][S15]
 - [S16: CloudFront: restringir el acceso a orígenes ALB][S16]
 - [S17: CloudFront: orígenes VPC][S17]
 - [S18: ALB: atributos][S18]
 - [S36: AWS WAF: campos de registro][S36]
-- [S37: AWS WAF: ventana de evaluación de velocidad][S37]
-- [S43: AWS WAF: advertencias sobre las reglas de velocidad][S43]
+- [S37: AWS WAF: ventana de evaluación para reglas basadas en tasas][S37]
+- [S43: AWS WAF: precauciones sobre las reglas basadas en tasas][S43]
 
 [S01]: https://kubernetes.io/blog/2025/03/24/ingress-nginx-cve-2025-1974/
 [S09]: https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html

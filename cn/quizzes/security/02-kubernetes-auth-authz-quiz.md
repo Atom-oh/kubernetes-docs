@@ -1,8 +1,8 @@
 # Kubernetes 认证与授权测验
 
-> **相关文档**: [Kubernetes 认证与授权系统](../../security/02-kubernetes-auth-authz.md)
+> **相关文档**：[Kubernetes 认证与授权系统](../../security/02-kubernetes-auth-authz.md)
 
-> **最后更新**: September 13, 2026
+> **最后更新**：2026年9月13日
 
 ## 单选题
 
@@ -28,7 +28,7 @@
 - A) ClusterRole 是只读的，Role 是可读写的
 - B) ClusterRole 是集群范围（cluster-scoped）的定义；Role 是命名空间范围（namespaced）的定义
 - C) ClusterRole 仅限管理员使用，Role 供普通用户使用
-- D) ClusterRole 仅适用于 node，Role 仅适用于 pod
+- D) ClusterRole 仅适用于节点，Role 仅适用于 Pod
 
 <details>
 <summary>显示答案</summary>
@@ -36,11 +36,11 @@
 **答案：B) ClusterRole 是集群范围（cluster-scoped）的定义；Role 是命名空间范围（namespaced）的定义**
 
 **解释：**
-ClusterRole 也可以为命名空间级资源定义可复用的权限。引用它的 RoleBinding 会把授权限制在该绑定所在的 namespace（命名空间）内；而 ClusterRoleBinding 则在整个集群范围内授予其权限。仅有定义本身不会授予任何权限。
+ClusterRole 也可以为命名空间级资源定义可复用的权限。引用它的 RoleBinding 会把授权限制在该绑定所在的命名空间内；而 ClusterRoleBinding 则在整个集群范围内授予其权限。仅有定义本身不会授予任何权限。
 
 </details>
 
-### 3. ServiceAccount token 在 pod 中被自动挂载的默认路径是什么？
+### 3. ServiceAccount token 在 Pod 中被自动挂载的默认路径是什么？
 
 - A) /var/run/secrets/kubernetes.io/token
 - B) /etc/kubernetes/serviceaccount
@@ -89,7 +89,7 @@ Admission controller（准入控制器）的执行顺序：1) MutatingAdmissionW
 **答案：B) aws-auth**
 
 **解释：**
-`kube-system/aws-auth` 是旧版的 IAM 映射方式。当前的访问管理应使用 EKS access entry 配合适当的 RBAC，或使用 EKS access policy。在双模式迁移期间，对于同一个 principal，access entry 优先生效。替换整个 ConfigMap 可能会移除 node 的映射。
+`kube-system/aws-auth` 是旧版的 IAM 映射方式。当前的访问管理应使用 EKS access entry 配合适当的 RBAC，或使用 EKS access policy。在双模式迁移期间，对于同一个主体，access entry 优先生效。替换整个 ConfigMap 可能会移除节点映射。
 
 </details>
 
@@ -116,7 +116,7 @@ OIDC 会校验外部颁发的 ID token 的 issuer、audience、签名和有效�
 
 - A) 管理 master 节点
 - B) 提供绕过 RBAC/webhook 授权的无限制 API 访问权限
-- C) 在 master 节点上调度 pod
+- C) 在 master 节点上调度 Pod
 - D) 管理系统 namespace
 
 <details>
@@ -129,7 +129,7 @@ OIDC 会校验外部颁发的 ID token 的 issuer、audience、签名和有效�
 
 </details>
 
-### 8. 如何限制一个 ServiceAccount 只能读取特定 namespace 中的 pod？
+### 8. 如何限制一个 ServiceAccount 只能读取特定命名空间中的 Pod？
 
 - A) ClusterRole + ClusterRoleBinding
 - B) Role + ClusterRoleBinding
@@ -142,7 +142,7 @@ OIDC 会校验外部颁发的 ID token 的 issuer、audience、签名和有效�
 **答案：D) Role + RoleBinding**
 
 **解释：**
-在假定不存在其他授权的前提下，使用一个仅允许对 Pod 执行 get/list/watch 的 Role，并在该 namespace 中创建 RoleBinding。**ClusterRole + RoleBinding 同样有效**，因此它不能作为错误选项。作为 subject 的 ServiceAccount 可以显式属于另一个 namespace；权限范围仍然是绑定所在的 namespace。
+在假定不存在其他授权的前提下，使用一个仅允许对 Pod 执行 get/list/watch 的 Role，并在该命名空间中创建 RoleBinding。**ClusterRole + RoleBinding 同样有效**，因此它不能作为错误选项。作为主体（subject）的 ServiceAccount 可以显式属于另一个命名空间；权限范围仍然是绑定所在的命名空间。
 
 </details>
 
@@ -240,7 +240,7 @@ OIDC 会校验外部颁发的 ID token 的 issuer、audience、签名和有效�
 
 ### 1. 编写满足以下要求的 Role 和 RoleBinding：
 
-- Namespace: development
+- 命名空间：development
 - 权限：Pod 读取（get、list、watch），ConfigMap 读取以及针对单个对象的 create/update/patch/delete（不包含 deletecollection）
 - 用户：developer@example.com
 

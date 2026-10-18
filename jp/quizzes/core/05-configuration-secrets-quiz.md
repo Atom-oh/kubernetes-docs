@@ -1,8 +1,8 @@
-# Configuration Quiz
+# 設定クイズ
 
 このクイズでは、ConfigMap、Secret、環境変数、resource requests と limits を含む Kubernetes の設定概念についての理解を確認します。
 
-## Multiple Choice Questions
+## 選択式問題
 
 1. Kubernetes で機密情報を保存するために使用される resource は何ですか？
    - A) ConfigMap
@@ -36,20 +36,20 @@ Secret は、password、OAuth token、SSH key などの機密情報を保存す�
 ConfigMap は、key-value pair で設定データを保存する Kubernetes resource です。これにより、アプリケーションコードと設定を分離でき、環境ごとに異なる設定を使用できます。ConfigMap は、環境変数、command-line arguments、または設定ファイルとして container にマウントできます。
 </details>
 
-3. Kubernetes Pod における resource requests と limits の違いは何ですか？
-   - A) requests は Pod が使用できる最小 resource、limits は最大 resource
+3. Kubernetes Pod の resource requests と limits は、それぞれどのような役割を果たしますか？
+   - A) requests はスケジューリングと resource 割り当ての基準となり、limits は実行時の使用量を制限する
    - B) requests は Pod が使用できる最大 resource、limits は最小 resource
-   - C) requests はスケジューリングにのみ使用され、limits は runtime にのみ適用される
+   - C) requests はスケジューリングにのみ使われ、limits は実行時にのみ適用される
    - D) requests は CPU にのみ適用され、limits は memory にのみ適用される
    
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: A) requests は Pod が使用できる最小 resource、limits は最大 resource**
+**回答: A) requests はスケジューリングと resource 割り当ての基準となり、limits は実行時の使用量を制限する**
 
 **解説:**
-Resource requests は Pod に保証される resource の最小量を指定し、scheduler は Pod を Node に配置するときにこれらの値を使用します。Resource limits は Pod が使用できる resource の最大量を指定します。これらの値を超えると、Pod は (CPU の場合) throttled されたり、(memory の場合) terminated されたりする可能性があります。
+Requests はスケジューリング容量の確保に使われ、実行時のリソース割り当てにも影響します。プロセスの使用量は request を下回ることがあります。CPU limit は throttling によって適用され、memory limit は OOM kill によって事後的に適用されます。request が設定されていても、Node のリソース圧迫から Pod が保護されるわけではありません。
 </details>
 
 4. Kubernetes で Secret data を Pod に提供する方法ではないものはどれですか？
@@ -68,20 +68,20 @@ Resource requests は Pod に保証される resource の最小量を指定し�
 Kubernetes で Secret data を Pod に提供する方法には、環境変数として、マウントされた volume として、image registry credentials として提供する方法があります。network interface を通じて Secret を提供することは Kubernetes ではサポートされていません。
 </details>
 
-5. Kubernetes で ConfigMap を作成する方法ではないものはどれですか？
+5. `kubectl create configmap` がサポートしていない入力方法はどれですか？
    - A) literal value から
    - B) ファイルから
    - C) ディレクトリから
-   - D) network request から
+   - D) `--from-url`
    
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: D) network request から**
+**回答: D) `--from-url`**
 
 **解説:**
-Kubernetes で ConfigMap を作成する方法には、literal value (`--from-literal`) から、ファイル (`--from-file`) から、ディレクトリ (`--from-file=<directory>`) から作成する方法があります。network request から直接 ConfigMap を作成することは、Kubernetes ではネイティブにはサポートされていません。
+ConfigMap は literal value（`--from-literal`）、ファイル（`--from-file`）、ディレクトリ（`--from-file=<directory>`）から作成できます。このコマンドに `--from-url` flag はありません。ただし、Kubernetes REST API request で ConfigMap を作成したり、URL から取得した manifest を適用したりすることはできます。
 </details>
 
 6. Kubernetes で Pod の service account を指定するために使用される field は何ですか？
@@ -116,11 +116,11 @@ Kubernetes では、Pod の service account は `spec.serviceAccountName` field 
 Kubernetes の Secret data はデフォルトで Base64 にエンコードされて保存されます。これは単なるエンコードであり、暗号化ではないため、追加のセキュリティ対策が必要です。Kubernetes 1.13 以降、etcd に保存される Secret data の暗号化が利用可能です。
 </details>
 
-8. Kubernetes で環境変数を設定する方法として、最も推奨されないものはどれですか？
-   - A) ConfigMap から
-   - B) Secret から
+8. Pod manifest に実際の password を記述する場合、避けるべき方法はどれですか？
+   - A) Secret key を参照する
+   - B) 保護された Secret volume を使う
    - C) Pod spec に直接ハードコードする
-   - D) Downward API から
+   - D) workload identity を使って外部の Secret manager から取得する
    
 <details>
 
@@ -129,10 +129,10 @@ Kubernetes の Secret data はデフォルトで Base64 にエンコードされ
 **回答: C) Pod spec に直接ハードコードする**
 
 **解説:**
-環境変数を Pod spec に直接ハードコードすることは、設定とコードを分離する原則に反するため推奨されません。ConfigMap または Secret を使用して環境変数を管理すると、アプリケーションコードを変更せずに設定を変更できます。また Downward API を使用すると、Pod metadata や resource 情報を環境変数として提供できます。
+manifest や log に password を文字列のまま記述しないでください。機密情報でない定数なら `env.value` を直接使えますが、機密値には Secret または外部の Secret store を使用します。ConfigMap と Downward API は password の保存先ではありません。
 </details>
 
-9. Pod 内のすべての container に resource requests と limits が設定され、requests が limits と等しい場合、どの QoS (Quality of Service) class が割り当てられますか？
+9. Pod レベルの resource 設定がない場合、すべての container で CPU と memory の requests が limits と等しいとき、割り当てられる QoS (Quality of Service) class はどれですか？
    - A) Guaranteed
    - B) Burstable
    - C) BestEffort
@@ -145,12 +145,12 @@ Kubernetes の Secret data はデフォルトで Base64 にエンコードされ
 **回答: A) Guaranteed**
 
 **解説:**
-Guaranteed QoS class は、Pod 内のすべての container に resource requests と limits が設定され、requests が limits と等しい場合に割り当てられます。この class の Pod は、resource が不足しているときに最後に termination されます。Burstable は、一部の container のみに requests と limits が設定されている場合、または requests と limits が異なる場合に割り当てられます。BestEffort は、requests または limits が設定されていない場合に割り当てられます。
+Guaranteed QoS class は、すべての container に resource requests と limits が設定され、各 resource の request と limit が等しい場合に割り当てられます。ただし、Eviction の判断では Pod priority と request に対する使用量も考慮されるため、Guaranteed は無条件に保護されることを意味しません。Burstable は、一部の container にのみ requests／limits が設定されている場合や、requests と limits が異なる場合に割り当てられます。requests と limits がどの container にも設定されていない場合は BestEffort です。
 </details>
 
 10. ConfigMap または Secret への変更が Pod に自動的に反映されるのはいつですか？
     - A) 常に自動的に反映される
-    - B) volume としてマウントされた場合のみ
+    - B) subPath を除く完全な volume mount では、いずれ反映される
     - C) 環境変数として使用された場合のみ
     - D) 自動的には反映されない。Pod の restart が必要
     
@@ -158,13 +158,13 @@ Guaranteed QoS class は、Pod 内のすべての container に resource request
 
 <summary>回答を表示</summary>
 
-**回答: B) volume としてマウントされた場合のみ**
+**回答: B) subPath を除く完全な volume mount では、いずれ反映される**
 
 **解説:**
-ConfigMap または Secret が volume としてマウントされている場合、Kubernetes はマウントされたファイルを定期的に更新します (デフォルトは約 1 分です)。ただし、環境変数として使用される場合は、Pod の作成時に一度だけ設定されるため、変更を反映するには Pod を restart する必要があります。これは、環境変数が process startup 時に設定されるためです。
+変更可能な ConfigMap／Secret を通常の volume 全体として投影した場合、内容は最終的に更新されます（反映の遅延は kubelet の sync と cache／change-detection 設定によります）。`subPath` mount は更新されません。アプリケーションはファイルを再読み込みする必要があります。環境変数の場合は、アプリケーション container を置き換える／再起動するか、新しい Pod を展開する必要があります。
 </details>
 
-## Hands-on Questions
+## 実践問題
 
 1. ConfigMap と Secret を作成し、それらを環境変数および volume として Pod にマウントする方法を説明してください。
 
@@ -181,6 +181,7 @@ kind: ConfigMap
 metadata:
    name: app-config
 data:
+  app.name: MyApp
   app.properties: |
     app.name=MyApp
     app.version=1.0.0
@@ -218,8 +219,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: app.properties
-              subPath: app.name
+              key: app.name
         # Get environment variables from Secret
         - name: DB_USER
           valueFrom:
@@ -259,7 +259,7 @@ kubectl apply -f pod.yaml
 
 5. 環境変数を確認する:
 ```bash
-kubectl exec app-pod -- env | grep -E 'APP_NAME|DB_'
+kubectl exec app-pod -- sh -c 'test -n "$APP_NAME" && test -n "$DB_PASSWORD" && echo "Configuration available"'
 ```
 
 6. マウントされた volume を確認する:
@@ -271,7 +271,7 @@ kubectl exec app-pod -- ls -la /etc/secrets
 7. ファイル内容を確認する:
 ```bash
 kubectl exec app-pod -- cat /etc/config/app.properties
-kubectl exec app-pod -- cat /etc/secrets/db.user
+kubectl exec app-pod -- test -s /etc/secrets/db.user
 ```
 </details>
 
@@ -285,7 +285,7 @@ kubectl exec app-pod -- cat /etc/secrets/db.user
 
 1. 異なる QoS class の Pod を作成する:
 
-**Guaranteed QoS Pod**:
+**Guaranteed QoS の Pod**:
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -304,7 +304,7 @@ spec:
           cpu: "100m"
 ```
 
-**Burstable QoS Pod**:
+**Burstable QoS の Pod**:
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -323,7 +323,7 @@ spec:
           cpu: "200m"
 ```
 
-**BestEffort QoS Pod**:
+**BestEffort QoS の Pod**:
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -369,7 +369,7 @@ kubectl top pod burstable-pod
 kubectl top pod besteffort-pod
 ```
 
-**QoS Class Decision Rules**:
+**QoS class の判定規則**:
   - **Guaranteed**: すべての container に resource requests と limits が設定され、requests が limits と等しい
   - **Burstable**: 少なくとも 1 つの container に resource requests が設定されているが、Guaranteed の条件を満たしていない
   - **BestEffort**: どの container にも resource requests または limits が設定されていない
@@ -436,11 +436,13 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
         - name: CPU_LIMIT
           valueFrom:
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
         - name: MEM_REQUEST
           valueFrom:
             resourceFieldRef:
@@ -471,10 +473,12 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
           - path: "cpu-limit"
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
 ```
 
 2. Pod を作成する:
@@ -494,9 +498,9 @@ kubectl exec downward-api-pod -- cat /etc/podinfo/labels
 kubectl exec downward-api-pod -- cat /etc/podinfo/cpu-request
 ```
 
-**Fields Available via Downward API**:
+**Downward API で取得できるフィールド**:
 
-**Fields available as environment variables**:
+**環境変数として取得できるフィールド**:
   - `metadata.name` - Pod 名
   - `metadata.namespace` - Pod namespace
   - `metadata.uid` - Pod UID
@@ -507,7 +511,7 @@ kubectl exec downward-api-pod -- cat /etc/podinfo/cpu-request
   - `spec.serviceAccountName` - Pod の service account 名
   - `status.hostIP` - Pod が実行されている Node の IP address
 
-**Resource fields**:
+**Resource field**:
   - `requests.cpu` - CPU request
   - `limits.cpu` - CPU limit
   - `requests.memory` - Memory request

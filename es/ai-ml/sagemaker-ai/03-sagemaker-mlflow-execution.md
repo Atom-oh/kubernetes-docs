@@ -2,7 +2,7 @@
 
 Para seguir una ruta práctica de aprendizaje, comienza con el [taller de entrenamiento QLoRA](05-qlora-finetuning-workshop.md). Este capítulo documenta la implementación existente y el contrato operativo.
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Aviso de ejecución
 
@@ -81,7 +81,7 @@ La configuración histórica especifica un `ml.g6e.4xlarge`, 300 GiB, 10 pasos p
 
 ### 6. Puerta de control para prueba rápida/completa
 
-Antes de volver a habilitar la ejecución, valida la imagen compatible, las dependencias y la combinación de MLflow. Luego inspecciona el estado terminal de la prueba rápida, los hashes del conjunto de datos, las métricas y los archivos del adaptador. Revisa los registros y MLflow para detectar texto de origen, valores de entidades, correspondencias o completados sin procesar. **Una lista permitida de nombres de artefactos no demuestra que su contenido sea seguro.** Este procedimiento no implica que se haya implementado un escáner automático de PII.
+Antes de volver a habilitar la ejecución, valida la imagen compatible, las dependencias y la combinación de MLflow. Luego inspecciona el estado terminal de la prueba rápida, los hashes del conjunto de datos, las métricas y los archivos del adaptador. Revisa los registros y MLflow para detectar texto de origen, valores de entidades, correspondencias o respuestas del modelo sin procesar. **Una lista permitida de nombres de artefactos no demuestra que su contenido sea seguro.** Este procedimiento no implica que se haya implementado un escáner automático de PII.
 
 ### 7. Exportar resultados agregados
 

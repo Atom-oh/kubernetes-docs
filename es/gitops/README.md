@@ -1,6 +1,6 @@
 # GitOps
 
-> **Última actualización**: October 12, 2026
+> **Última actualización**: 12 de octubre de 2026
 
 ## Tabla de contenido
 - [¿Qué es GitOps?](#what-is-gitops)
@@ -34,8 +34,8 @@ En esencia, GitOps usa repositorios Git como única fuente de verdad para la inf
 El proyecto OpenGitOps define GitOps mediante cuatro principios:
 
 1. **Declarativo**: Un sistema gestionado mediante GitOps debe expresar declarativamente su estado deseado
-2. **Con versiones e inmutable**: El estado deseado se almacena de una manera que impone la inmutabilidad y el control de versiones, y conserva un historial completo de versiones
-3. **Recuperado automáticamente**: Los agentes de software recuperan automáticamente las declaraciones del estado deseado desde el origen
+2. **Versionado e inmutable**: El estado deseado se almacena de una manera que impone la inmutabilidad y el control de versiones, y conserva un historial completo de versiones
+3. **Extraído automáticamente**: Los agentes de software extraen automáticamente las declaraciones del estado deseado desde el origen
 4. **Reconciliado continuamente**: Los agentes de software observan continuamente el estado real del sistema e intentan aplicar el estado deseado
 
 ## Principios fundamentales {#core-principles}
@@ -122,7 +122,7 @@ En el modelo push tradicional:
 
 En el modelo pull de GitOps:
 - El agente se ejecuta en el clúster de destino o en un clúster de gestión independiente
-- El agente recupera los cambios desde Git
+- El agente extrae los cambios desde Git
 - Los agentes del clúster de gestión siguen necesitando acceso autorizado a la red/API de los destinos remotos
 
 **Ventajas:**
@@ -170,7 +170,7 @@ Jenkins X / JayeX proporciona CI/CD para aplicaciones nativas de la nube en Kube
 - Promoción mediante GitOps
 - Canalizaciones basadas en Tekton
 
-**Evaluar para:** Flujos de trabajo integrados de CI/CD y entornos de vista previa; JayeX/Jenkins X / JayeX no es simplemente Jenkins con GitOps habilitado
+**Evaluar para:** Flujos de trabajo integrados de CI/CD y entornos de vista previa; Jenkins X / JayeX no es simplemente Jenkins con GitOps habilitado
 
 ### Matriz comparativa
 
@@ -232,7 +232,7 @@ metadata:
 
 #### Arquitectura multicuenta
 
-![Diagrama de arquitectura que muestra ArgoCD en una cuenta de gestión leyendo desde Git y reconciliando clústeres EKS en cuentas independientes de desarrollo, pruebas y producción mediante conexiones entre cuentas.](../.gitbook/assets/en-gitops-readme-13.png)
+![Diagrama de arquitectura que muestra ArgoCD en una cuenta de gestión leyendo desde Git y reconciliando clústeres EKS en cuentas independientes de desarrollo, preproducción y producción mediante conexiones entre cuentas.](../.gitbook/assets/en-gitops-readme-13.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-13.html)
 

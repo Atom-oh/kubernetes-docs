@@ -79,10 +79,10 @@ El dato clave es que **las políticas heredadas no consumen el límite de adjunt
 
 ### Estrategias para ubicar adjuntos SCP
 
-| Estrategia | Configuración | Evaluación desde el punto de vista de cuotas |
+| Estrategia | Configuración | Evaluación según las cuotas |
 |---|---|---|
-| Mucho en Root | Adjuntar en Root los SCP comunes a toda la organización; las OU heredan | Las cuentas nuevas heredan los controles de inmediato, pero es difícil crear excepciones por OU |
-| Adjuntos directos completamente especificados por OU | Adjuntar directamente cada SCP que necesite cada OU, reduciendo al mínimo la dependencia de OU principales | No usa la herencia, así que una sola OU puede consumir el límite completo de 10 adjuntos; al llegar al límite, hay que combinar políticas |
+| Concentrado en Root | Adjuntar en Root los SCP comunes a toda la organización; las OU heredan | Las cuentas nuevas heredan los controles de inmediato, pero es difícil crear excepciones por OU |
+| Adjunción directa de todos los SCP necesarios por OU | Adjuntar directamente cada SCP que necesite cada OU, reduciendo al mínimo la dependencia de OU principales | No usa la herencia, así que una sola OU puede consumir el límite completo de 10 adjuntos; al llegar al límite, hay que combinar políticas |
 | **Paquete por capas** | Root lleva solo un SCP mínimo y sin excepciones; el resto se administra en paquetes de políticas versionados por OU y excepciones con vencimiento | Aprovecha activamente la herencia para conservar el límite de adjuntos directos por OU; **es la opción más escalable desde el punto de vista de cuotas** |
 
 Versione los documentos de políticas y los inventarios de adjuntos mediante revisiones de Git, manifiestos de implementación y cambios de CloudTrail. La versión en Sid es opcional. Las SCP/RCP heredadas, las políticas de recursos y los límites de permisos tienen alcances de evaluación distintos; una sola simulación no demuestra que la autorización efectiva esté completa.
@@ -106,12 +106,12 @@ Otras restricciones confirmadas:
 
 Conviene recordar un principio de evaluación SCP: el enfoque de lista de permitidos requiere un Allow explícito **en todos los niveles** desde Root hasta la cuenta de destino, y un Deny explícito en cualquier nivel no puede anularse con un Allow situado más abajo.
 
-## 4. Lista de permitidos frente a lista de denegación
+## 4. Lista de permitidos frente a lista de denegados
 
 | Enfoque | Adecuado para | Sobrecarga operativa |
 |---|---|---|
 | Centrado en lista de permitidos | Sandbox y zonas reguladas donde se puede restringir de antemano el conjunto de servicios utilizables | Hay que permitir explícitamente cada nuevo servicio/API antes de usarlo |
-| **Centrado en lista de denegación** | OU general de cargas de trabajo (predeterminado) | Requiere detectar continuamente riesgos en nuevos servicios/API y mantener un catálogo Deny |
+| **Centrado en lista de denegados** | OU general de cargas de trabajo (predeterminado) | Requiere detectar continuamente riesgos en nuevos servicios/API y mantener un catálogo Deny |
 
 Compare los resultados regionales de `describe-vpc-endpoint-services` con la documentación de los servicios. El inventario de API por sí solo no demuestra que la compatibilidad con políticas de endpoints, funciones o DNS privado sea completa.
 
