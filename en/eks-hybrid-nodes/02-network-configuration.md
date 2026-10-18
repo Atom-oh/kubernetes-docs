@@ -1,7 +1,7 @@
 # Network Configuration
 
 > **Supported Versions**: EKS 1.36 examples; AWS-maintained Cilium 1.18.3-0 reference, compatible host/kernel required
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 18, 2026
 
 Validate routing, DNS, TLS, credentials and application traffic separately. These examples were checked with local schemas and fixtures, including a mocked Terraform provider; no AWS resources, routers, firewalls or live clusters were changed. The diagrams are repository illustrations based on AWS concepts, not AWS-published validation of this configuration.
 
@@ -647,6 +647,29 @@ With three eligible equal-weight endpoints and no overriding affinity/locality p
 | `/metrics`, `/healthz` | Authorized metrics/health endpoints |
 
 Use supported API-server-mediated diagnostics and appropriate authorization. The node's real `status.addresses` matters; do not substitute a hostname or the first address from an unrelated object.
+
+## Choosing a CNI Design: Cilium Only or Mixed with VPC CNI
+
+The VPC CNI is not compatible with hybrid nodes, so **hybrid nodes always run Cilium (or Calico).** The question "Cilium only or mixed with the VPC CNI?" is therefore really about **whether the cluster has cloud nodes, and if so, which CNI they run.**
+
+| Criterion | ① Hybrid-only cluster (Cilium only) | ② Mixed mode (VPC CNI in the cloud + Cilium on hybrid) | ③ Cilium on cloud nodes too |
+|---|---|---|---|
+| AWS support | Supported (Cilium on hybrid nodes) | Supported. The AWS-recommended mixed mode design | Cloud side unsupported: Cilium running on nodes in AWS Cloud is not supported by AWS |
+| Webhook placement | Runs on hybrid nodes. The control plane connects to pod IPs, so the on-premises pod CIDR must be routable with BGP or static routes | Run on cloud nodes. The on-premises pod CIDR does not need to be routable | Depends on the IPAM and routing of Cilium in the cloud; must be validated yourself |
+| Cloud to on-premises pod traffic | Not applicable | Routable on-premises pod CIDR or the [Hybrid Nodes gateway](10-hybrid-nodes-gateway.md) | Design tunnels or routing yourself. The Hybrid Nodes gateway requires the VPC CNI (or Auto Mode built-in networking) on cloud nodes, including the gateway nodes, so it cannot be used |
+| Bursting and Auto Mode | Not possible without cloud capacity | Karpenter can add cloud nodes. Auto Mode uses built-in networking | Auto Mode cannot replace its CNI. Cilium on Karpenter nodes is also self-operated |
+| Policy and observability | One CNI (NetworkPolicy, Cilium policies, Hubble) | Each CNI enforces standard Kubernetes NetworkPolicy. Cilium-specific policies and Hubble exist only on the hybrid side | One CNI, but incident response and upgrades for the cloud side are on you or a vendor |
+
+How to choose:
+
+- **Cloud nodes present: ②.** The mixed design within AWS support. Run webhooks in the cloud and use bursting and the Hybrid Nodes gateway. In mixed mode, run at least one CoreDNS replica on each side; features where the control plane or VPC must reach hybrid pod IPs (ALB/NLB IP targets, Metrics Server, AMP collection) need a routable on-premises pod CIDR ([Mixed-Mode Webhook Operations](08-operations.md#mixed-mode-webhook-operations)).
+- **On-premises only: ①.** Simpler with one CNI, but webhooks run on hybrid nodes, so a [routable pod CIDR](#routable-pod-cidr-configuration) is required.
+- **Consider ③ carefully.** Cilium on cloud nodes is outside AWS support, and the Hybrid Nodes gateway and Auto Mode cannot be used. Consider it only with a vendor support agreement and when a single CNI outweighs these limits.
+
+References:
+- [Configure CNI for hybrid nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Configure webhooks for hybrid nodes: considerations for mixed mode clusters](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [Get started with EKS Hybrid Nodes gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 
 ## Routable Pod CIDR Configuration
 

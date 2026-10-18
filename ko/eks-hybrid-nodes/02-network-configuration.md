@@ -1,7 +1,7 @@
 # 네트워크 구성
 
 > **지원 버전**: EKS 1.36 예제; AWS-maintained Cilium 1.18.3-0 기준, 호환 host/kernel 필요
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 10월 18일
 
 Routing·DNS·TLS·credential·앱 트래픽을 별도로 검증합니다. 아래는 Terraform mock provider 등을 사용해 로컬 schema/fixture로 확인한 예제이며 AWS 리소스·router·firewall·실제 cluster를 변경하지 않았습니다. 그림은 AWS 개념을 바탕으로 이 저장소에서 제작했으며 AWS가 이 구성을 검증한 결과물이 아닙니다.
 
@@ -647,6 +647,29 @@ KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 | `/metrics`, `/healthz` | 권한이 있는 metrics/health 접근 |
 
 지원되는 API-server 경유 진단·권한을 사용합니다. 실제 Node `status.addresses`가 중요하며 다른 객체의 첫 주소나 hostname을 임의로 대신 쓰지 마세요.
+
+## CNI 구성 선택: Cilium 단독과 VPC CNI 혼합
+
+VPC CNI는 hybrid 노드와 호환되지 않으므로 **hybrid 노드에는 항상 Cilium(또는 Calico)이 들어갑니다.** 따라서 "Cilium만 쓸지, VPC CNI와 섞을지"는 실제로는 **클라우드 노드를 둘지, 둔다면 어떤 CNI를 쓸지**에 대한 질문입니다.
+
+| 기준 | ① hybrid 전용 클러스터 (Cilium만) | ② 혼합 모드 (클라우드 VPC CNI + hybrid Cilium) | ③ 클라우드 노드까지 Cilium |
+|---|---|---|---|
+| AWS 지원 | 지원 (hybrid 노드의 Cilium) | 지원. AWS 혼합 모드 권장 구성 | 클라우드 쪽은 미지원: AWS Cloud 노드에서 실행하는 Cilium은 AWS가 지원하지 않음 |
+| webhook 위치 | hybrid 노드에서 실행. 컨트롤 플레인이 Pod IP로 들어오므로 온프렘 Pod CIDR을 BGP나 static으로 라우팅해야 함 | 클라우드 노드에 배치. 온프렘 Pod CIDR을 라우팅하지 않아도 됨 | 클라우드 Cilium의 IPAM과 라우팅 방식에 따라 달라 직접 검증해야 함 |
+| 클라우드와 온프렘 Pod 통신 | 해당 없음 | 온프렘 Pod CIDR 라우팅 또는 [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md) | 터널이나 라우팅을 직접 설계. Hybrid Nodes Gateway는 gateway 노드를 포함한 클라우드 노드가 VPC CNI(Auto Mode면 내장 네트워킹)여야 해서 사용 불가 |
+| 버스팅과 Auto Mode | 클라우드 용량이 없어 불가 | Karpenter로 클라우드 노드 확장 가능. Auto Mode는 내장 네트워킹 | Auto Mode는 CNI 교체 불가. Karpenter 노드의 Cilium도 직접 운영 |
+| 정책과 관측 | Cilium 하나로 통일 (NetworkPolicy, Cilium 정책, Hubble) | 표준 Kubernetes NetworkPolicy는 양쪽 CNI가 각각 적용. Cilium 전용 정책과 Hubble은 hybrid 쪽만 | 한 CNI로 통일되지만 클라우드 쪽 장애 대응과 업그레이드 책임은 고객이나 벤더 |
+
+선택 기준:
+
+- **클라우드 노드가 있으면 ②:** AWS 지원 범위 안의 혼합 구성입니다. webhook을 클라우드에 두고, 버스팅과 Hybrid Nodes Gateway를 쓸 수 있습니다. 혼합 모드에서는 CoreDNS를 양쪽에 최소 한 replica씩 두고, ALB/NLB의 IP target이나 Metrics Server, AMP 수집처럼 컨트롤 플레인이나 VPC가 hybrid Pod IP에 닿아야 하는 기능은 온프렘 Pod CIDR 라우팅이 필요합니다([혼합 모드 웹훅 운영](08-operations.md#혼합-모드-웹훅-운영)).
+- **온프렘만 쓰면 ①:** CNI가 하나라 단순합니다. 대신 webhook이 hybrid 노드에서 돌기 때문에 [라우팅 가능한 Pod CIDR](#라우팅-가능한-pod-cidr-구성)이 필수입니다.
+- **③은 신중히:** 클라우드 노드의 Cilium은 AWS 지원 범위 밖이고 Hybrid Nodes Gateway와 Auto Mode를 쓸 수 없습니다. 벤더 지원 계약이 있고 단일 CNI의 이점이 이 제약보다 클 때만 검토합니다.
+
+참고:
+- [Configure CNI for hybrid nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Configure webhooks for hybrid nodes: considerations for mixed mode clusters](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [Get started with EKS Hybrid Nodes gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 
 ## 라우팅 가능한 Pod CIDR 구성
 

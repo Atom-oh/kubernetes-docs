@@ -13,6 +13,7 @@ import test from 'node:test'
 import { parseSitemap } from 'sitemap'
 
 import {
+  checkBuildResources,
   LEGACY_LOCALES,
   markArchmapsNoindex,
   mergeLocaleOutputs,
@@ -74,6 +75,57 @@ test('locale build outputs are merged with a combined sitemap', async () => {
   } finally {
     await rm(root, { recursive: true, force: true })
   }
+})
+
+test('move mode merges shared directories and consumes the staging outputs', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'vitepress-locales-move-'))
+  const koOutput = path.join(root, 'ko-build')
+  const enOutput = path.join(root, 'en-build')
+  const dist = path.join(root, 'dist')
+
+  try {
+    await mkdir(path.join(koOutput, 'assets', 'chunks'), { recursive: true })
+    await mkdir(path.join(enOutput, 'assets', 'chunks'), { recursive: true })
+    await mkdir(path.join(koOutput, 'ko'), { recursive: true })
+    await mkdir(path.join(enOutput, 'en'), { recursive: true })
+    await writeFile(path.join(koOutput, 'ko', 'index.html'), 'Korean')
+    await writeFile(path.join(enOutput, 'en', 'index.html'), 'English')
+    await writeFile(path.join(koOutput, 'assets', 'chunks', 'ko.js'), 'ko')
+    await writeFile(path.join(enOutput, 'assets', 'chunks', 'en.js'), 'en')
+    await writeFile(path.join(koOutput, 'assets', 'shared.css'), 'from-ko')
+    await writeFile(path.join(enOutput, 'assets', 'shared.css'), 'from-en')
+    await writeFile(path.join(koOutput, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/ko/'))
+    await writeFile(path.join(enOutput, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/en/'))
+
+    await mergeLocaleOutputs([koOutput, enOutput], dist, { move: true })
+
+    assert.equal(await readFile(path.join(dist, 'ko', 'index.html'), 'utf8'), 'Korean')
+    assert.equal(await readFile(path.join(dist, 'en', 'index.html'), 'utf8'), 'English')
+    assert.equal(await readFile(path.join(dist, 'assets', 'chunks', 'ko.js'), 'utf8'), 'ko')
+    assert.equal(await readFile(path.join(dist, 'assets', 'chunks', 'en.js'), 'utf8'), 'en')
+    // Later locales win on a name clash, matching the copy mode.
+    assert.equal(await readFile(path.join(dist, 'assets', 'shared.css'), 'utf8'), 'from-en')
+    await assert.rejects(readFile(path.join(koOutput, 'ko', 'index.html')), { code: 'ENOENT' })
+
+    const items = await parseSitemap(createReadStream(path.join(dist, 'sitemap.xml')))
+    assert.deepEqual(items.map(({ url }) => url).sort(), [
+      'https://www.atomai.click/kubernetes-docs/en/',
+      'https://www.atomai.click/kubernetes-docs/ko/'
+    ])
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('resource preflight reports shortfalls against the thresholds', async () => {
+  const ok = await checkBuildResources({ directory: tmpdir(), minFreeDiskGb: 0, minAvailableMemoryGb: 0 })
+  assert.deepEqual(ok.problems, [])
+  assert.ok(ok.freeDiskGb >= 0 && ok.availableMemoryGb > 0)
+
+  const short = await checkBuildResources({ directory: tmpdir(), minFreeDiskGb: 1e9, minAvailableMemoryGb: 1e9 })
+  assert.equal(short.problems.length, 2)
+  assert.match(short.problems[0], /free disk/)
+  assert.match(short.problems[1], /available memory/)
 })
 
 test('indexed ko/en README URLs redirect to their live section without changing canonical pages', async () => {

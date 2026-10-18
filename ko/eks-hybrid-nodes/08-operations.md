@@ -3,7 +3,7 @@
 < [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) | [다음: 베어메탈 서버 OS 설치](./09-bare-metal-os-setup.md) >
 
 > **검증 기준**: nodeadm 1.0.20; Cilium 1.18.3 CRD; Prometheus Operator 0.94.1; kube-prometheus-stack 92.9.0; Harbor 2.15.4. 검토에 사용한 기준이며 모든 제품의 지원 버전 조합을 뜻하지 않습니다.
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 10월 18일
 
 이 문서에서는 EKS Hybrid Nodes 환경의 운영 및 유지보수 절차를 다룹니다.
 
@@ -368,6 +368,72 @@ topologySpreadConstraints:
 | Metrics Server | Cloud 또는 도달 가능한 Hybrid Pod endpoint | Control-plane→Pod, Metrics-Server→kubelet 경로 |
 | CoreDNS | Cloud와 Hybrid replica 확인 | 적격 도메인·용량·실제 DNS 통신 |
 | Cilium/Calico | AWS가 지원하는 혼합 CNI 설계의 Hybrid Node | Cloud node의 VPC CNI 유지 |
+
+## 네트워크 단절 시 동작과 대비
+
+Direct Connect나 VPN이 잠시 끊기거나 네트워크가 응답하지 않을 때 무엇이 계속되고 무엇이 멈추는지 정리합니다. Hybrid Nodes는 단절이 잦은 DDIL 환경용이 아니며, 안정적인 AWS 연결을 전제로 합니다([개요](./README.md) 참조).
+
+### 단절 중 클러스터와 워크로드
+
+| 영역 | 동작 |
+|---|---|
+| 실행 중인 Pod | 노드에서 계속 실행됩니다. kubelet이 Lease를 갱신하지 못해 Node의 Ready가 `Unknown`이 되고 `node.kubernetes.io/unreachable` taint가 붙습니다(`NoSchedule`, 조건 충족 시 `NoExecute`). |
+| Pod 이전 | toleration이 없는 Pod는 기본 300초 뒤 컨트롤 플레인이 퇴거시키고 다른 노드에 대체 Pod를 만듭니다. DaemonSet Pod는 이 taint를 기본으로 허용해 노드에 남습니다. |
+| zone label | 노드에 `topology.kubernetes.io/zone`을 지정하면, 한 zone의 노드가 모두 unreachable일 때 Kubernetes가 그 zone의 퇴거를 취소합니다. hybrid 노드에는 cloud-controller-manager가 없으므로 nodeadm `--node-labels`로 데이터센터별 zone을 지정합니다. |
+| Cilium | agent health가 컨트롤 플레인 접근과 묶여 있어 단절 중 agent가 재시작을 반복하고, Cilium BGP Control Plane 세션이 내려갈 수 있습니다(CFP #31702, Cilium 1.17 opt-in 개선). AWS 예시의 MetalLB L2 모드는 단절 중에도 안정적이었습니다. |
+| AWS 서비스 의존 | ECR 이미지 pull, CloudWatch와 Amazon Managed Service for Prometheus, ALB/NLB, S3, RDS 같은 리전 서비스는 단절 중 쓸 수 없습니다. |
+| 로컬 진단 | API 서버에 닿지 않으므로 `kubectl` 대신 호스트에서 `crictl pods`, `crictl ps`, `crictl logs <container>`를 씁니다. |
+
+### 자격 증명과 재연결
+
+| 항목 | SSM hybrid activation | IAM Roles Anywhere |
+|---|---|---|
+| 임시 자격 증명 | 1시간 고정(변경 불가). 만료 전에 자동 교체되며 평소에는 노드와 앱에 영향이 없습니다. | 기본 1시간, profile의 `durationSeconds`로 최대 12시간. 노드 IAM role의 `MaxSessionDuration`이 그보다 커야 합니다. |
+| 단절 중 | SSM 리전 엔드포인트에 닿지 못해 갱신에 실패하고, 단절이 길면 만료됩니다. | AWS 없이는 새 자격 증명을 발급받을 수 없습니다. |
+| 복구 후 | 지수 백오프로 재시도하고, SSM agent **3.3.808.0 이상**은 재시도 간격이 최대 30분입니다. 그래서 **네트워크가 돌아와도 최대 30분 동안 노드가 재연결되지 않을 수 있고**, 노드마다 시점이 달라 먼저 붙은 노드로 Pod가 옮겨 갈 수 있습니다. | kubelet이 `aws_signing_helper credential-process`로 필요할 때 자격 증명을 받으므로 보통 **몇 초 안에** 재연결됩니다. |
+| 빠른 복구 | SSM agent를 재시작해 강제로 갱신합니다(아래 명령). | 인증서가 만료되지 않았다면 별도 조치가 필요 없습니다. 인증서 만료 알림을 설정합니다. |
+
+SSM agent 버전 확인, 재시작, 로그:
+
+```bash
+# Version (AL2023, RHEL / Ubuntu)
+yum info amazon-ssm-agent
+snap list amazon-ssm-agent
+
+# Force a credential refresh after the network is restored
+systemctl restart amazon-ssm-agent                          # AL2023, RHEL
+systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent    # Ubuntu
+
+# Watch the CredentialRefresher lines
+tail -f /var/log/amazon/ssm/amazon-ssm-agent.log
+```
+
+단절 중에는 `Retrieve credentials produced error: RequestError: send request failed`와 `Sleeping for ... before retrying retrieve credentials`가 반복되고, 갱신에 성공하면 `Credentials ready`가 기록됩니다.
+
+### 대비 체크리스트
+
+- **연결 이중화:** Direct Connect를 이중화하거나 Site-to-Site VPN을 백업으로 둡니다.
+- **단절 감지:** EKS 컨트롤 플레인의 Controller Manager 로그를 켜고 `Recording status change event message for node` 메시지 중 `status="NodeNotReady"`에 CloudWatch metric filter와 알람을 만듭니다. TGW `BytesIn`/`BytesOut`, VGW `TunnelDataIn`/`TunnelDataOut`이 평소보다 떨어지는 것도 알람으로 봅니다. CloudWatch Network Monitor로 손실과 지연을 볼 수 있습니다.
+- **SSM agent 버전:** 3.3.808.0 이상으로 유지해 재시도 간격 상한을 30분으로 둡니다.
+- **zone label:** 데이터센터별 `topology.kubernetes.io/zone`을 지정합니다.
+- **퇴거 시간 조정:** 다른 호스트로 옮기기 어려운 앱은 `tolerationSeconds`를 늘립니다. 길게 잡을수록 실제 장애 노드에서 Pod 이전도 늦어집니다.
+
+```yaml
+# Fragment under the Deployment's spec.template.spec
+tolerations:
+  - key: "node.kubernetes.io/unreachable"
+    operator: "Exists"
+    effect: "NoExecute"
+    tolerationSeconds: 1800
+```
+
+- **자격 증명 방식:** 단절이 잦고 복구 후 빠른 재연결이 중요하면 IAM Roles Anywhere와 긴 `durationSeconds`를 검토합니다. 클러스터 안에서는 한 방식만 쓰는 것이 권장입니다.
+- **보조 관측 경로:** 리전 서비스에 닿지 않아도 볼 수 있도록 ADOT collector를 여러 backend로 보내도록 구성합니다.
+
+참고:
+- [Host credentials through network disconnections](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)
+- [Best practices for stability through network disconnections](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html)
+- [Kubernetes pod failover through network disconnections](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html)
 
 ## 일반적인 문제 해결
 
