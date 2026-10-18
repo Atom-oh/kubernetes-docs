@@ -1,101 +1,89 @@
-# クロス Organization VPC 接続性クイズ
+# クロス組織間 VPC 接続クイズ
 
-このクイズでは、異なる AWS Organizations 間で VPC を接続するための 5 つの選択肢についての理解度を確認します。
+報告された測定値と AWS プラットフォームの要件を区別してください。
 
-## 選択式問題
+## 1. TGW を所有するアカウントの Organization 外にあるアカウントと共有するには、何が必要ですか？
 
-1. 異なる Organization のアカウントと Transit Gateway を共有するには、何が必要ですか？
-   - A) 2 つの Organizations を 1 つに統合する
-   - B) `--allow-external-principals` オプションと、受信側での招待の承諾
-   - C) 両 Organizations の管理アカウント間の VPN 接続
-   - D) AWS Support チケットによる手動承認
-
-<details>
-
-<summary>回答を表示</summary>
-
-**回答: B) `--allow-external-principals` オプションと、受信側での招待の承諾**
-
-**解説:**
-AWS RAM 経由で Organization 外部のアカウントとリソースを共有するには、リソース共有で `--allow-external-principals` が必要であり、受信アカウントが `accept-resource-share-invitation` を実行するまでリソースは表示されません。Organization 内での OU ベースの自動共有とは異なり、Organization 間の共有では明示的なアカウント ID 指定と明示的な承諾が必須です。
-</details>
-
-2. 別の Organization にあるアカウントが共有された TGW への VPC attachment を作成すると、どうなりますか？
-   - A) 即座に利用可能になる
-   - B) TGW を所有するアカウントが承諾するまで pendingAcceptance のままになる
-   - C) リクエストは拒否され、attachment は作成できない
-   - D) 24 時間後に自動的にアクティブ化される
+- A. 2 つの Organization を統合する
+- B. 共有で外部プリンシパルを許可し、受信側アカウントで AWS RAM の招待を承諾する
+- C. 両方の Organization の管理アカウントを VPN で接続する
+- D. AWS Support チケットで承認を得る
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) TGW を所有するアカウントが承諾するまで pendingAcceptance のままになる**
+B. 共有で外部アカウントを許可し、受信側が招待を承諾してから共有リソースを使用できます。`CreateResourceShare` では `allowExternalPrincipals` の既定値が `true` なので、文字列どおりの `--allow-external-principals` フラグが常に必要とは限りません。有効な設定と IAM および共有の制限を確認してください。
 
-**解説:**
-auto-accept が無効（デフォルト）の場合、外部アカウントの attachment は TGW 所有者が `accept-transit-gateway-vpc-attachment` を実行するまで `pendingAcceptance` のままです。ここで、「TGW 所有者がネットワークを一元的に制御する」というモデルが API レベルで強制されます。共有を受信するアカウントは attachment を作成できるだけで、route table を変更することはできません。
 </details>
 
-3. 同一 AZ 内での実測に基づくと、Transit Gateway の hop ごとに追加されるレイテンシ（p50）はどの程度ですか？
-   - A) 約 0.02 ms — 実質ゼロ
-   - B) 約 0.4–0.6 ms — 1 ミリ秒未満
-   - C) 約 3–5 ms
-   - D) 10 ms 以上
+## 2. `AutoAcceptSharedAttachments` が無効の場合、共有 TGW への有効なクロスアカウント VPC attachment に何が必要ですか？
+
+- A. 承諾は不要
+- B. TGW の所有者が保留中の共有 attachment を承諾する
+- C. Organization をまたぐ attachment は存在できない
+- D. 常に 24 時間後に有効になる
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) 約 0.4–0.6 ms — 1 ミリ秒未満**
+B. 共有 attachment の自動承諾はデフォルトで無効です。AWS RAM 共有の承諾と VPC attachment の承諾は別の手順です。自動承諾を有効にすると、2 つ目の手順が変わります。TGW 所有者は TGW route table を管理し、受信側アカウントは自分の VPC route とセキュリティ設定を管理します。
 
-**解説:**
-c7g.large、素の EC2 responder、持続的な TCP_RR（1 パスあたり 1,500 サンプル）で測定したところ、TGW の 1 hop のコストは +0.571 ms（TCP_RR）/ +0.410 ms（ICMP）でした。参考として、VPC Peering のコストは測定限界内ではゼロ（同一 VPC のベースラインと同等）であり、NLB の 1 hop（+0.79 ms）は実際には TGW の 1 hop よりコストが高くなります。burstable instance や多段 proxy chain を用いる測定では、このサブミリ秒のシグナルがノイズに埋もれるため、測定設計が重要です。
 </details>
 
-4. VPC Lattice の target instance における Security Group 設定で、よくある落とし穴は何ですか？
-   - A) すべての outbound rule を開放する必要がある
-   - B) Lattice data plane は link-local（169.254.171.0/24）から到達するため、managed prefix list を許可する必要がある
-   - C) SG ではなく NACL を使用する必要がある
-   - D) port 443 のみを許可する必要がある
+## 3. レポートの TCP_RR 比較 M3−M2 から何が分かりますか？
+
+- A. TGW の各 hop は常に同じ片道レイテンシを追加する
+- B. 報告された経路の中央値の差は 0.619−0.048 = 0.571 ms である
+- C. AWS が保証するレイテンシ SLA
+- D. GPU トレーニングのスループット
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) Lattice data plane は link-local（169.254.171.0/24）から到達するため、managed prefix list を許可する必要がある**
+B. これは報告された往復時間の中央値の差であり、特定コンポーネントだけの測定値でも、hop ごとの一定値でもありません。この測定では、2 つの TGW を経由する経路の TCP_RR 中央値は、1 つの TGW を経由する経路より低くなっています。より広い結論を出すには、生サンプル、不確実性、ワークロードの測定が必要です。このレビューではベンチマークを再現していません。
 
-**解説:**
-VPC Lattice のトラフィック（health check を含む）は、VPC CIDR ではなく link-local range 169.254.171.0/24 から到達します。target SG が VPC CIDR のみを許可している場合、すべての health check が UNHEALTHY と報告されます。修正するには、managed prefix list `com.amazonaws.<region>.vpc-lattice` を SG の inbound rules に追加します。
 </details>
 
-5. IP CIDR が重複する 2 つの Organizations の VPC を接続できる選択肢はどれですか？
-   - A) VPC Peering と TGW Peering
-   - B) TGW RAM Sharing
-   - C) PrivateLink と VPC Lattice
-   - D) どの選択肢でも接続できない
+## 4. テストした Lattice HTTP service／VPC association 経路では、ターゲットの Security Group で何を確認すべきですか？
+
+- A. すべての inbound と outbound port を開放する
+- B. 実際のターゲット port とヘルスチェック port で、リージョンと IP family に合った managed prefix list を許可する
+- C. Security Group を NACL に置き換える
+- D. バックエンドにかかわらず TCP 443 だけを許可する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: C) PrivateLink と VPC Lattice**
+B. Lattice のトラフィックは managed prefix list 内のアドレスから到達することがあるため、クライアント VPC の CIDR だけを許可しても不十分です。過去の例にある `169.254.171.0/24` は、すべての経路に当てはまる完全なアドレス定義ではありません。文書化された prefix list と構成済みの port を使用してください。endpoint 経路と resource gateway 経路には、それぞれ別の制御があります。
 
-**解説:**
-VPC Peering、TGW RAM sharing、TGW Peering はすべて L3 routing ベースであるため、CIDR の重複があると利用できません。PrivateLink は consumer VPC 内の ENI を介して動作し、VPC Lattice は link-local addressing を使用するため、どちらも CIDR の重複にかかわらず動作します。M&A や MSP migration のように IP の再設計が不可能な状況では、この 2 つだけが選択肢です。
 </details>
 
-6. TGW Peering 構成における routing について、正しい記述はどれですか？
-   - A) route は BGP 経由で自動的に propagate される
-   - B) BGP はサポートされないため、両方の TGW route table に static route を手動で追加する必要がある
-   - C) VPC route table のみを変更すればよい
-   - D) routing 設定は一切不要である
+## 5. CIDR が重複する VPC 間で、重複範囲どうしを直接ルーティングせずにサービスを公開できるパターンはどれですか？
+
+- A. 直接 VPC peering
+- B. 変更を加えない直接 TGW routing
+- C. PrivateLink service access または VPC Lattice service access
+- D. どのアーキテクチャでも対応できない
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) BGP はサポートされないため、両方の TGW route table に static route を手動で追加する必要がある**
+C. これらは、VPC 間の制約のない双方向 routing ではなく、サービスへのアクセスを提供します。CIDR が重複している VPC 同士を直接 VPC peering で接続することはできず、routing を使う設計では曖昧さのないアドレス計画が必要です。NAT やアドレスの再設計も選択肢なので、PrivateLink と Lattice だけが唯一の方式というわけではありません。
 
-**解説:**
-TGW peering attachment は BGP をサポートしないため、route の自動 propagation はありません。peer の CIDR に向かう static route を両方の TGW route table に追加する必要があります。実環境でのテストでは、static route を設定するまでトラフィックは流れませんでした。また、運用上の注意点として、static TGW route は propagated route より優先されること、peering attachment ID は requester 側と accepter 側で異なることにも注意してください。
 </details>
+
+## 6. 直接 TGW-to-TGW peering の routing について、正しい説明はどれですか？
+
+- A. peering によってすべての route が BGP 経由で自動伝播する
+- B. peer route と必要な VPC route を明示的に構成する
+- C. VPC route table だけを変更すればよい
+- D. 承諾すると必要な route がすべて自動作成される
+
+<details>
+<summary>回答を表示</summary>
+
+B. peering attachment では static route を使用し、自動化でそれらを管理できます。TGW は最長一致の prefix を優先し、同じ prefix では static route が伝播 route より優先されます。保留中の peering request は、accepter 側のリージョンでその attachment ID を使って承諾してください。`NotFound` だけでは、requester 側と accepter 側の ID が異なる必要があるとは判断できません。
+
+</details>
+
+[ガイドに戻る](../../networking/05-cross-org-vpc-connectivity.md)

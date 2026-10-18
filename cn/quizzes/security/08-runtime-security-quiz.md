@@ -1,6 +1,6 @@
 # 运行时安全测验
 
-> **最近更新**：October 16, 2026
+> **最近更新**：2026 年 10 月 16 日
 
 本测验用于测试你对 Falco、Seccomp、AppArmor、基于 eBPF 的安全机制以及 EKS 运行时安全的理解。
 
@@ -104,7 +104,7 @@ Complain 模式通常会记录策略违规，同时允许相关操作，但显�
 **答案：C. 代码质量问题**
 
 **说明：**
-GuardDuty Runtime Monitoring 检测的是安全威胁，而非代码质量缺陷。目前 EKS 支持 EC2 和 Auto Mode，但不包括 EKS Hybrid Nodes 和 EKS Fargate。请检查操作系统/内核/代理要求以及覆盖运行状况。
+GuardDuty Runtime Monitoring 检测的是安全威胁，而非代码质量缺陷。目前 EKS 支持 EC2 和 Auto Mode，但不包括 EKS Hybrid Nodes 和 EKS Fargate。请检查操作系统/内核/代理要求以及监控覆盖是否正常。
 
 </details>
 
@@ -113,7 +113,7 @@ GuardDuty Runtime Monitoring 检测的是安全威胁，而非代码质量缺陷
 - A. 容器镜像扫描
 - B. 基于 eBPF 的安全可观测性
 - C. 网络策略管理
-- D. 密钥管理
+- D. 机密信息管理
 
 <details>
 <summary>显示答案</summary>
@@ -155,7 +155,7 @@ Tetragon 提供进程事件、文件/网络钩子以及受支持的操作。它�
 **答案：A. readOnlyRootFilesystem: true**
 
 **说明：**
-readOnlyRootFilesystem 属于容器的 securityContext。可以单独提供可写卷或 /tmp。它无法阻止对可写卷的恶意利用、网络访问或内存攻击。
+readOnlyRootFilesystem 属于容器的 securityContext。可以单独提供可写卷或 /tmp。它无法阻止对可写卷、网络访问或内存的恶意利用。
 
 </details>
 
@@ -208,6 +208,6 @@ readOnlyRootFilesystem 属于容器的 securityContext。可以单独提供可�
 **答案：C. 以 root 身份运行容器**
 
 **说明：**
-减少不必要的 root 权限。RuntimeDefault 和 readOnlyRootFilesystem 仍需与工作负载/节点兼容。Falco DaemonSet 无法在 Fargate 等所有节点类型上运行。启用功能和确认 GuardDuty 覆盖正常是两项不同的检查。
+减少不必要的 root 权限。RuntimeDefault 和 readOnlyRootFilesystem 仍需与工作负载/节点兼容。并非每种节点类型都支持运行 Falco DaemonSet，Fargate 就不支持。启用功能和确认 GuardDuty 覆盖正常是两项不同的检查。
 
 </details>

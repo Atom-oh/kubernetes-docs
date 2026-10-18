@@ -1,6 +1,6 @@
 # Cuestionario de descripción general de métricas
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 1. ¿Qué tipo representa un recuento acumulativo que puede reiniciarse?
 
@@ -101,7 +101,7 @@ La retención predeterminada no es un máximo. La TSDB local no es un almacén d
 7. ¿Qué afirmación sobre producto/almacenamiento es incorrecta?
 
    - A) Las implementaciones de nodo único y de clúster de VictoriaMetrics tienen distintos requisitos operativos
-   - B) La resolución de métricas tradicional de CloudWatch se vuelve más gruesa con el tiempo
+   - B) La resolución de las métricas tradicionales de CloudWatch se vuelve menos granular con el tiempo
    - C) El almacenamiento de objetos de Mimir garantiza escala ilimitada y elimina todos los requisitos de almacenamiento local
    - D) Las métricas de Datadog usan rollups de consulta, por lo que la retención no garantiza la resolución original en cada gráfico
 
@@ -146,11 +146,11 @@ node-exporter informa métricas del sistema operativo host; kube-state-metrics e
 
 </details>
 
-10. ¿Qué hace que una comparación de costos sea revisable?
+10. ¿Qué hace que una comparación de costos sea verificable?
 
    - A) Una clasificación de productos basada solo en el tamaño del equipo
    - B) El número de nodos sin intervalo de muestras ni supuestos de características
-   - C) El volumen medido de series/muestras, los requisitos de retención/resolución, HA/consulta y los precios actuales para las características seleccionadas
+   - C) El volumen medido de series y muestras, los requisitos de retención/resolución, alta disponibilidad y consulta, y los precios actuales de las características seleccionadas
    - D) Suponer que las longitudes del nombre/valor de las métricas nunca importan
 
 <details>

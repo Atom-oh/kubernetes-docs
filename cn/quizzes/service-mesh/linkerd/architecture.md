@@ -36,7 +36,7 @@ D. Java
 
 **答案：C**
 
-它是用 Rust 编写的。语言选择并不能证明其占用空间始终为 10MB、p99 始终低于一毫秒，或相较于其他代理固定占优。应比较实际构建版本、工作负载和配置。
+它是用 Rust 编写的。语言选择并不能证明其占用空间始终为 10MB、p99 始终低于一毫秒，或始终优于其他代理。应比较实际构建版本、工作负载和配置。
 
 </details>
 
@@ -55,7 +55,7 @@ D. 端点更新
 
 **答案：B**
 
-Identity 使用其配置的签发者凭据签发工作负载证书。Destination 提供发现和配置文件信息；当前的 Gateway API 路由和授权也涉及 policy 控制器。旧版 TrafficSplit 扩展并不构成当前完整的策略模型。
+Identity 使用其配置的签发者凭据签发工作负载证书。Destination 提供服务发现和 ServiceProfile 相关信息；当前的 Gateway API 路由和授权也涉及策略（policy）控制器。旧版 TrafficSplit 扩展并不构成当前完整的策略模型。
 
 </details>
 
@@ -74,11 +74,11 @@ D. 唯一的 Pod 名称
 
 **答案：C**
 
-公共信任锚是证书链验证的锚点。通常由它签署中间签发者，再由中间签发者的密钥签署工作负载证书。Linkerd 不要求根私钥处理每一个工作负载 CSR。
+公开的信任锚构成证书链验证的信任依据。通常，它用于签署中间签发者的证书，再由中间签发者的密钥签署工作负载证书。Linkerd 不要求根私钥处理每一个工作负载 CSR。
 
 </details>
 
-### 5. 工作负载证书的名义默认有效期是多久？
+### 5. 工作负载证书默认设定的有效期是多久？
 
 A. 1 小时
 
@@ -112,7 +112,7 @@ D. 应用负载均衡器
 
 **答案：C**
 
-Webhook 会修改符合条件的新建 Pod。在所选版本中，代理通常会成为原生 sidecar；配置 Linkerd CNI 时会省略 linkerd-init。现有 Pod 以及被排除或覆盖的 Pod 需要另行考虑。
+Webhook 会修改符合条件的新建 Pod。在所选版本中，代理通常会成为原生 sidecar；配置 Linkerd CNI 时会省略 linkerd-init。现有 Pod、被排除在注入范围之外的 Pod，以及通过显式配置覆盖注入设置的 Pod，需要另行考虑。
 
 </details>
 
@@ -169,7 +169,7 @@ D. urn:linkerd:my-pod
 
 **答案：B**
 
-Kubernetes TokenReview 会生成 ServiceAccount 身份，并将其格式化为 DNS 名称。使用该 ServiceAccount 的多个 Pod 共享此身份。SPIFFE/SPIRE 外部工作负载身份使用不同的引导路径，并非这种默认的 Kubernetes URI 格式。
+Kubernetes TokenReview 返回 ServiceAccount 身份，其格式为 DNS 名称。使用该 ServiceAccount 的多个 Pod 共享此身份。SPIFFE/SPIRE 外部工作负载身份使用不同的引导路径，并非这种默认的 Kubernetes URI 格式。
 
 </details>
 
@@ -215,7 +215,7 @@ D. 仅 ConfigMap 名称
 
 A. 写入其 Prometheus 指标端点
 
-B. 更改根证书主题
+B. 更改根证书的主体（Subject）
 
 C. 通过控制平面 API，包括流式 gRPC
 

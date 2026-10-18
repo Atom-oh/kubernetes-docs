@@ -7,7 +7,7 @@
 <details>
 <summary>答案与说明</summary>
 
-KV-cache 块管理和内存浪费。它不会压缩模型权重，也不保证固定的 2–4 倍吞吐量。
+改善 KV-cache 块管理，减少内存浪费。它不会压缩模型权重，也不保证固定的 2–4 倍吞吐量。
 </details>
 
 ## 2. 推理网关与训练执行器有何不同？
@@ -23,7 +23,7 @@ KV-cache 块管理和内存浪费。它不会压缩模型权重，也不保证�
 <details>
 <summary>答案与说明</summary>
 
-实际 embedding 维度、模型修订版本、归一化、度量方式以及摄取/查询行为。仅有 tenant 字段并不构成隔离；应通过服务端过滤器强制执行经身份验证的检索范围。
+实际嵌入（embedding）维度、模型修订版本、归一化、度量方式以及摄取/查询行为。仅有 tenant 字段并不构成隔离；应通过服务端过滤器强制执行经身份验证的检索范围。
 </details>
 
 ## 4. LangGraph 提供什么控制模型？
@@ -39,7 +39,7 @@ KV-cache 块管理和内存浪费。它不会压缩模型权重，也不保证�
 <details>
 <summary>答案与说明</summary>
 
-Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备指标。token 成本估算不是账单，并且不同于 GPU 温度等基础设施测量值。
+Langfuse 跟踪已埋点的调用、追踪数据（trace）、用量和评估；DCGM 报告设备指标。token 成本估算不是账单，并且不同于 GPU 温度等基础设施测量值。
 </details>
 
 ## 6. Kagent 0.10.1 使用什么 API 形态？
@@ -55,7 +55,7 @@ Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备�
 <details>
 <summary>答案与说明</summary>
 
-应区分 MIG 实例之间的隔离与单个实例内部的共享。同一实例内的时间切片用户不会获得新的内存/故障隔离，也没有按比例计算资源的保证。
+应区分 MIG 实例之间的隔离与单个实例内部的共享。同一实例内的时间切片用户不会获得新的内存/故障隔离，也不保证按比例分配计算能力。
 </details>
 
 ## 8. 连续批处理是否意味着请求永远不会等待？
@@ -63,7 +63,7 @@ Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备�
 <details>
 <summary>答案与说明</summary>
 
-不是。调度可以在每一步接纳工作，但 token 预算、KV 容量、并发度和队列限制都会导致等待。应测量实际工作负载行为。
+不是。调度可以在每一步接纳工作，但 token 预算、KV 容量、并发度和队列限制都可能导致等待。应测量实际工作负载行为。
 </details>
 
 ## 9. 何时 chunk size 1000 表示 1000 个 token？
@@ -71,7 +71,7 @@ Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备�
 <details>
 <summary>答案与说明</summary>
 
-当所选 splitter 使用适当的 tokenizer 测量 token 时。RecursiveCharacterTextSplitter 默认按字符计数。应一并评估模型限制、语义单元和检索质量。
+当所选分块器（splitter）使用适当的分词器（tokenizer）按 token 计量时。RecursiveCharacterTextSplitter 默认按字符计数。应一并评估模型限制、语义单元和检索质量。
 </details>
 
 ## 10. vLLM 自动扩缩容必须检查什么？
@@ -79,7 +79,7 @@ Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备�
 <details>
 <summary>答案与说明</summary>
 
-实际的 vllm: 指标名称、模型/Pod 标签、adapter、队列/延迟信号以及一个扩缩容所有者。分配量不是 GPU 利用率；避免让 HPA/KEDA 竞争控制相同的 replica。
+应核对实际的 vllm: 指标名称、模型/Pod 标签、适配器、队列/延迟信号，并确保由一个控制系统负责扩缩容。分配量不是 GPU 利用率；避免让 HPA/KEDA 竞争控制同一组副本。
 </details>
 
 ## 11. KV cache 存储什么？
@@ -95,7 +95,7 @@ Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备�
 <details>
 <summary>答案与说明</summary>
 
-使用 start_as_current_observation 在一个 trace 下创建子 span/generation observation，并记录 usage_details。经检查的 SDK 4.15.2 没有旧的 trace()/generation() 方法。还应定义 secret/原始数据的日志记录边界。
+使用 start_as_current_observation 在一个 trace 下创建子 span/generation observation，并记录 usage_details。经检查的 SDK 4.15.2 没有旧的 trace()/generation() 方法。还应定义机密信息/原始数据的日志记录边界。
 </details>
 
 ## 13. 为什么混合搜索不仅仅是两次搜索调用？
@@ -103,7 +103,7 @@ Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备�
 <details>
 <summary>答案与说明</summary>
 
-它需要 RRF 或经过校准的分数融合、等效的授权过滤器、去重和召回率评估。来自不同 retriever 的分数并不会自动具有可比性。
+它需要 RRF 或经过校准的分数融合、等效的授权过滤器、去重和召回率评估。来自不同检索器（retriever）的分数并不会自动具有可比性。
 </details>
 
 ## 14. 原始 SqliteSaver 示例有什么问题？
@@ -119,7 +119,7 @@ Langfuse 跟踪已埋点的调用、trace、用量和评估；DCGM 报告设备�
 <details>
 <summary>答案与说明</summary>
 
-TP 划分层内的操作；PP 划分层阶段。应根据架构/backend/网络/内存限制选择，而不是采用通用的 2 的幂或按模型大小固定 GPU 数量。
+TP 划分层内的操作；PP 按层划分执行阶段。应根据架构/后端/网络/内存限制选择，而不是采用通用的 2 的幂或按模型大小固定 GPU 数量。
 </details>
 
 ## 16. 练习：当前 vLLM 部署应验证什么？
@@ -127,7 +127,7 @@ TP 划分层内的操作；PP 划分层阶段。应根据架构/backend/网络/�
 <details>
 <summary>答案与说明</summary>
 
-使用 [vLLM 指南](../../ai-ml/02-vllm-deployment.md)中的固定 image/model、GPU/cache/startupProbe 和 ClusterIP 示例。准备 namespace/driver/device。没有进行推理的 schema 检查不能证明性能或可用性。
+使用 [vLLM 指南](../../ai-ml/02-vllm-deployment.md)中的固定版本镜像/模型、GPU/缓存/startupProbe 和 ClusterIP 示例。准备命名空间/驱动/设备。未经实际推理验证的 Schema 检查不能证明性能或可用性。
 </details>
 
 ## 17. 练习：Langfuse 部署和 Python trace 应验证什么？
@@ -135,7 +135,7 @@ TP 划分层内的操作；PP 划分层阶段。应根据架构/backend/网络/�
 <details>
 <summary>答案与说明</summary>
 
-使用[章节](../../ai-ml/03-agentic-ai-platform.md)中的当前 SDK 示例、文件凭据、span 关联以及 flush/shutdown。Chart 2.1.0 包含 web/worker、Postgres、Valkey、对象存储、ClickHouse 和 operator 前置条件。默认的 secret 环境交付方式不同于仅文件策略。
+使用[章节](../../ai-ml/03-agentic-ai-platform.md)中的当前 SDK 示例、文件凭据、span 关联以及刷新缓冲区/关闭（flush/shutdown）。Chart 2.1.0 包含 web/worker、Postgres、Valkey、对象存储、ClickHouse 和 Operator 前置条件。默认通过环境变量传递机密信息的方式，与仅通过文件传递的策略不同。
 </details>
 
 ## 18. 练习：没有证据时，RAG 重试循环应如何安全终止？
@@ -159,7 +159,7 @@ TP 划分层内的操作；PP 划分层阶段。应根据架构/backend/网络/�
 <details>
 <summary>答案与说明</summary>
 
-使用 provider adapter/凭据，并在没有候选项满足允许的 provider、预算和质量限制时拒绝。实现稳定的 A/B 分配、真实的路由消费者和经过测量的 guardrail。缓存键包括 tenant/authorization/model/retrieval 修订版本；成本估算包括路由调用、重试、缓存和 GPU 固定成本。虚构的节省百分比不是结果。
+使用提供商适配器/凭据，并在没有候选项满足允许使用的提供商、预算和质量约束时拒绝执行。实现稳定的 A/B 分配，让实际执行组件使用路由结果，并设置经过测量验证的防护措施。缓存键包括 tenant/authorization/model/retrieval 修订版本；成本估算包括路由调用、重试、缓存和 GPU 固定成本。虚构的节省百分比不是结果。
 </details>
 
 [返回章节](../../ai-ml/03-agentic-ai-platform.md)

@@ -1,175 +1,173 @@
 # GitOps 自动化测验
 
-> **相关文档**: [GitOps 自动化](../../ops/05-gitops-automation.md)
+> **相关文档**：[GitOps 自动化](../../ops/05-gitops-automation.md)
 
 ## 选择题
 
-### 1. 在 Terraform 自动化的语境中，Atlantis 是什么？
+### 1. 在 Terraform 自动化中，Atlantis 是什么？
 
-- A) 云提供商
-- B) 用于 Terraform 的 pull request 自动化工具
-- C) Terraform module registry
-- D) 状态文件加密服务
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 用于 Terraform 的 pull request 自动化工具**
-
-**解释：**
-Atlantis 是一个自托管应用程序，会监听 Terraform pull request，并自动运行 `terraform plan` 和 `apply`。它会以 PR 评论的形式提供 plan 输出，并在应用变更前强制执行审批工作流。
-
-</details>
-
-### 2. 与自托管 Terraform 相比，Terraform Cloud 的一个关键优势是什么？
-
-- A) 免费无限使用
-- B) 托管状态、运行和协作功能
-- C) 更快的执行速度
-- D) 支持更多 provider
+- A) 云服务提供商
+- B) 用于 Terraform 的拉取请求自动化工具
+- C) Terraform 模块注册表
+- D) State 文件加密服务
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 托管状态、运行和协作功能**
+**答案：B) 用于 Terraform 的拉取请求自动化工具**
 
-**解释：**
-Terraform Cloud 提供托管的远程状态存储、运行执行、团队协作、策略执行（Sentinel）以及私有 module registry。与自托管设置相比，这些托管功能降低了运维开销。
+**说明：**
+Atlantis 是一个自托管应用，会监听 Terraform 拉取请求并自动运行 `terraform plan` 和 `apply`。它会将 plan 输出作为 PR 评论提供，并在应用变更前强制执行审批工作流。
 
 </details>
 
-### 3. FluxCD 在架构上与 ArgoCD 有何不同？
+### 2. 相比自托管 Terraform，HCP Terraform 的一项主要优势是什么？
+
+- A) 免费且不限制使用量
+- B) 提供托管式 State、运行执行和协作功能
+- C) 执行速度更快
+- D) 支持更多 Provider
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B) 提供托管式 State、运行执行和协作功能**
+
+**说明：**
+HCP Terraform 提供托管式远程 State 存储、运行执行、团队协作、策略执行（Sentinel）和私有模块注册表。与自托管方案相比，这些托管功能可以减少运维负担。
+
+</details>
+
+### 3. FluxCD 与 ArgoCD 的架构有何不同？
 
 - A) FluxCD 没有 UI
-- B) FluxCD 使用基于 pull 的分布式架构，没有中央服务器
+- B) 两者都使用协调机制，但 API、控制器和 UI 选择不同
 - C) FluxCD 只支持 Helm
-- D) FluxCD 需要数据库
+- D) FluxCD 必须使用数据库
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) FluxCD 使用基于 pull 的分布式架构，没有中央服务器**
+**答案：B) 两者都使用协调机制，但 API、控制器和 UI 选择不同**
 
-**解释：**
-FluxCD 直接在每个 cluster 中运行 controller，从 git 拉取内容，而 ArgoCD 使用集中式服务器模型。FluxCD 的方法更轻量，并且在多 cluster 场景中无需中央 hub 即可自然扩展。
+**说明：**
+Flux 使用 GitRepository、Kustomization 等由各控制器定义的 API。Argo CD 也包含多个组件，并支持不同的部署拓扑。资源用量和多集群行为取决于具体配置，不能对两者的架构作普遍排名。
 
 </details>
 
-### 4. Flux Image Automation Controller 的作用是什么？
+### 4. Flux Image Automation Controller 会做什么？
 
-- A) 构建 container image
-- B) 扫描 registry，并用新的 image tag 更新 git
-- C) 将 image 部署到 Kubernetes
-- D) 管理 image pull secret
+- A) 构建容器镜像
+- B) 扫描镜像注册表，并将新的镜像标签更新到 Git
+- C) 将镜像部署到 Kubernetes
+- D) 管理镜像拉取 Secret
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 扫描 registry，并用新的 image tag 更新 git**
+**答案：B) 扫描镜像注册表，并将新的镜像标签更新到 Git**
 
-**解释：**
-Image Automation Controller 会监视 container registry 中的新 image tag，然后自动将更新提交到 git repository。这样在推送新 image 时即可实现完全自动化部署，同时保持 GitOps 原则。
+**说明：**
+image-reflector-controller 会扫描镜像注册表并评估 ImagePolicy。另一个独立的 image-automation-controller 会将这些选择写入带标记的文件并提交到 Git。新镜像推送后，这些能力可以支持全自动部署，同时遵循 GitOps 原则。
 
 </details>
 
-### 5. 在 Atlantis workflow 中，当 PR 被批准并合并时会发生什么？
+### 5. Atlantis 的常规 apply 和 merge 顺序是什么？
 
-- A) Terraform plan 会自动运行
-- B) Atlantis 在合并后的代码上运行 terraform apply
-- C) PR 会被关闭且不执行任何操作
-- D) 会创建一个新 branch
+- A) 合并任何 PR 都会自动应用其中的 Terraform 变更
+- B) 审查 PR plan、满足要求、明确应用已保存的 plan，然后再合并
+- C) 先合并，再忽略已保存的 plan
+- D) plan 成功就等同于已经 apply
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Atlantis 在合并后的代码上运行 terraform apply**
+**答案：B) 审查 PR plan、满足要求、明确应用已保存的 plan，然后再合并**
 
-**解释：**
-在配置了 auto-apply 或经过明确批准后，Atlantis 会在 PR 合并后运行 `terraform apply`。这确保基础设施变更只有在 code review 和批准后才会应用，从而保持变更控制。
+**说明**：Atlantis 通过 PR 工作流执行 apply；单独合并 PR 并不会触发 apply。可选的自动合并功能会在 apply 成功后合并 PR。对于发生变更的提交，应重新审查或生成 plan；不要允许 PR 覆盖服务器强制执行的要求。
 
 </details>
 
-### 6. AIOps 在 GitOps workflow 中的一个关键好处是什么？
+### 6. AIOps 在 GitOps 工作流中的一项主要优势是什么？
 
-- A) 消除对 git 的需求
-- B) 自动化 anomaly detection 和响应建议
-- C) 更快的 container build
+- A) 不再需要 Git
+- B) 自动检测异常并提出响应建议
+- C) 更快地构建容器
 - D) 降低存储成本
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 自动化 anomaly detection 和响应建议**
+**答案：B) 自动检测异常并提出响应建议**
 
-**解释：**
-AIOps 应用机器学习来检测 metrics 和 logs 中的异常、关联事件，并推荐或自动执行响应。在 GitOps 中，这可以包括为扩缩容变更或流量权重调整自动生成 PR。
+**说明：**
+AIOps 使用机器学习检测指标和日志中的异常、关联事件，并建议或自动执行响应。在 GitOps 中，这可能包括自动创建 PR 来调整扩缩容配置或流量权重。
 
 </details>
 
-### 7. AIOps 如何在 blue/green deployments 中自动化流量权重变更？
+### 7. AIOps 如何自动调整蓝绿部署中的流量权重？
 
-- A) 通过直接修改 load balancer 设置
-- B) 通过检测异常并创建 PR，以更新 git 中的权重配置
-- C) 通过重启失败的 pods
-- D) 通过更改 DNS 记录
+- A) 直接修改负载均衡器设置
+- B) 检测异常并创建 PR，在 Git 中更新权重配置
+- C) 重启故障 Pod
+- D) 更改 DNS 记录
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 通过检测异常并创建 PR，以更新 git 中的权重配置**
+**答案：B) 检测异常并创建 PR，在 Git 中更新权重配置**
 
-**解释：**
-AIOps 可以监控 metrics，检测 green deployment 中的问题（错误率、延迟），并自动创建 PR 将流量权重切回 blue。这样既能启用自动化事件响应，又能保持 GitOps 原则。
+**说明：**
+AIOps 可以监控指标、检测绿色部署中的问题（例如错误率或延迟），并自动创建 PR，将流量权重切回蓝色部署。该提案仍需经过数据质量检查和授权审批，并由受约束的执行器重新检查当前状态、容量和目标健康状况。发现异常或新建 PR 本身都不构成调整流量的授权。
 
 </details>
 
-### 8. Flux 的 GitRepository resource 的用途是什么？
+### 8. Flux 的 GitRepository 资源有什么用途？
 
-- A) 创建 git repository
-- B) 定义 Flux 监控其变更的 git source
-- C) 将 Kubernetes resource 备份到 git
-- D) 管理 git credential
+- A) 创建 Git 仓库
+- B) 定义 Flux 监视变更的 Git 源
+- C) 将 Kubernetes 资源备份到 Git
+- D) 管理 Git 凭证
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 定义 Flux 监控其变更的 git source**
+**答案：B) 定义 Flux 监视变更的 Git 源**
 
-**解释：**
-GitRepository 是一个 Flux custom resource，用于指定 git repository URL、branch 和轮询间隔。Flux controller 会监视这些 source，并在检测到变更时触发 reconciliation。
+**说明：**
+GitRepository 是 Flux 自定义资源，用于指定 Git 仓库 URL、分支和轮询间隔。Flux 控制器会监视这些源，并在检测到变更时触发协调。
 
 </details>
 
-### 9. 比较 FluxCD 和 ArgoCD 时，哪项陈述是准确的？
+### 9. 关于多租户，哪项说法准确？
 
-- A) ArgoCD 通过其 Project model 提供更好的 multi-tenancy
-- B) FluxCD 有更丰富的内置 UI
-- C) ArgoCD 使用 GitOps，而 FluxCD 不使用
-- D) FluxCD 需要外部数据库
+- A) Argo CD 总是更安全，因为它有 AppProjects
+- B) 仅使用 Flux Namespace 就能完成租户隔离
+- C) 两者都需要有意配置源、身份、RBAC 和资源边界
+- D) Image Automation 也会扫描漏洞
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A) ArgoCD 通过其 Project model 提供更好的 multi-tenancy**
+**答案：C) 两者都需要有意配置源、身份、RBAC 和资源边界**
 
-**解释：**
-ArgoCD 的 Project resource 通过对 repository、cluster 和 namespace 的细粒度访问控制，提供强大的 multi-tenancy。FluxCD 通过 namespace 隔离实现 multi-tenancy，但控制粒度较低。
+**说明**：AppProjects 和 Flux 的租户身份会约束协调过程的不同部分。两者都不会自动提供所有网络隔离、Kubernetes 授权或不可信代码隔离边界。应避免让两个控制器同时管理同一资源字段。
 
 </details>
 
-### 10. 在 Terraform Cloud 中，Sentinel policy 是什么？
+### 10. 在 HCP Terraform 中，Sentinel 策略是什么？
 
 - A) 备份策略
-- B) 用于治理和合规的 policy-as-code framework
-- C) 状态加密方法
-- D) module 版本控制系统
+- B) 用于治理和合规的 Policy as Code 框架
+- C) State 加密方法
+- D) 模块版本管理系统
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 用于治理和合规的 policy-as-code framework**
+**答案：B) 用于治理和合规的 Policy as Code 框架**
 
-**解释：**
-Sentinel 是 HashiCorp 的 policy-as-code framework，会在 Terraform 应用变更前强制执行规则。策略可以强制要求标签、限制 instance type、要求加密，或执行任何自定义合规要求。
+**说明：**
+Sentinel 是 HashiCorp 的 Policy as Code 框架，可在 Terraform apply 前强制执行规则。策略可以检查标签、实例类型、加密设置或其他可建模的要求。策略的实际效果取决于策略集的适用范围、强制级别，以及如何处理缺失值或未知值；一个示例并不会自动覆盖所有资源。
 
 </details>

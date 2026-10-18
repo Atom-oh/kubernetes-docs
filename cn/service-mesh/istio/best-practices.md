@@ -10,7 +10,7 @@
 4. [监控与可观测性](#monitoring-and-observability)
 5. [生产检查清单](#production-checklist)
 
-已于 2026 年 9 月 11 日针对 Istio 1.31 进行审核。`IstioOperator` 摘录是 `istioctl install -f` 的输入，而不是可使用 kubectl 应用的 Kubernetes 资源。请将其合并到现有安装配置中；对于 Helm，请使用等效的 chart 值。大多数示例描述 Sidecar；对于 ambient，请使用 waypoint/Gateway API 策略。资源设置和滚动更新时间是应在负载下验证的起点。
+已于 2026 年 9 月 11 日针对 Istio 1.31 进行审核。`IstioOperator` 摘录是 `istioctl install -f` 的输入，而不是可使用 kubectl 应用的 Kubernetes 资源。请将其合并到现有安装配置中；对于 Helm，请使用等效的 chart 值。大多数示例描述 Sidecar；对于 ambient，请使用 waypoint/Gateway API 策略。资源设置和滚动发布时长是应在负载下验证的起点。
 
 ## 性能优化 {#performance-optimization}
 
@@ -45,7 +45,7 @@ spec:
 **建议**：
 - Istiod 至少应具有 2 个副本
 - CPU：根据集群规模调整
-- Memory：衡量 Service/Proxy 数量、配置大小和更新速率；没有固定的每 Service 计算公式
+- Memory：衡量 Service/Proxy 数量、配置大小和更新速率；不能按 Service 数量套用固定公式
 
 ### 2. Data Plane 资源优化
 
@@ -96,7 +96,7 @@ spec:
 
 **建议**：
 - `maxConnections`：考虑工作负载的并发连接数
-- `maxRequestsPerConnection`：0 表示无限制；较小的值会增加连接流失和 TLS 握手
+- `maxRequestsPerConnection`：0 表示无限制；较小的值会增加连接重建次数和 TLS 握手
 - `idleTimeout`：若需要长生命周期连接，请增大此值
 
 ### 4. 本地性负载均衡

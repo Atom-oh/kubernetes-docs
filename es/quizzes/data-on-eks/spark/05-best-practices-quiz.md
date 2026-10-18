@@ -34,7 +34,7 @@ Usa `ContainerCredentialsProvider`, asociaciones de cuentas de servicio, confian
 <details>
 <summary>Mostrar respuesta</summary>
 
-La cadena revisada de Hadoop 3.5.0 incluye el contenedor o el wrapper de instancia, pero no el proveedor web identity. Especifica el proveedor requerido y verifica la identidad efectiva y el acceso al prefijo.
+La cadena revisada de Hadoop 3.5.0 incluye el envoltorio de credenciales de contenedor o instancia, pero no el proveedor de identidad web. Especifica el proveedor requerido y verifica la identidad efectiva y el acceso al prefijo.
 
 </details>
 
@@ -52,7 +52,7 @@ Para separar los permisos de administración de Kubernetes del driver de los per
 <details>
 <summary>Mostrar respuesta</summary>
 
-No. Concede permisos de recursos y verbos en todo el espacio de nombres, sin condiciones que exijan que el pod pertenezca a quien lo creó. Combina admisión y límites de confianza para restringir la creación de pods, otras cuentas de servicio y el acceso al host.
+No. Concede permisos de recursos y verbos en todo el espacio de nombres, sin condiciones de propiedad basadas en las etiquetas de los pods. Combina controles de admisión y límites de confianza para restringir la creación de pods, otras cuentas de servicio y el acceso al host.
 
 </details>
 

@@ -1,6 +1,6 @@
 # Kubescape 测验
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 ## 问题
 
@@ -82,15 +82,15 @@ Chart 1.40.4 会渲染出扫描器镜像 4.0.13，而经过测试的本地 CLI �
 
 - A) 它们始终相等
 - B) 它们的总和始终为 100
-- C) 它们是结果架构中的独立汇总值
+- C) 它们是结果数据结构（Schema）中的独立汇总值
 - D) 两者都是 CVSS 平均值
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 它们是结果架构中的独立汇总值**
+**答案：C) 它们是结果数据结构（Schema）中的独立汇总值**
 
-这个合成的不安全 Pod 得出的合规性为 55，score 为 62.5。读取 summaryDetails.complianceScore 和 summaryDetails.score。这些本地值并不能衡量真实集群的安全性。
+本地测试中构造的不安全 Pod 样例得出的合规性评分为 55，score 为 62.5。读取 summaryDetails.complianceScore 和 summaryDetails.score。这些本地值并不能衡量真实集群的安全性。
 
 </details>
 
@@ -153,14 +153,14 @@ Chart 1.40.4 会渲染出扫描器镜像 4.0.13，而经过测试的本地 CLI �
 ### 9. 哪项说法正确地区分了镜像扫描和主机扫描？
 
 - A) 主机扫描只检查镜像 CVE
-- B) 显式镜像扫描需要注册表/数据库访问；主机扫描有独立的范围
+- B) 显式镜像扫描需要镜像仓库/数据库访问；主机扫描有独立的范围
 - C) Grype 只生成 SBOM
 - D) 镜像/平台/数据库版本无关紧要
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 显式镜像扫描需要注册表/数据库访问；主机扫描有独立的范围**
+**答案：B) 显式镜像扫描需要镜像仓库/数据库访问；主机扫描有独立的范围**
 
 CLI 使用 Grype 和 Syft；Operator kubevuln 的版本则单独管理。主机扫描可能需要额外的资源/权限。本次审计未执行镜像拉取或主机扫描。
 
@@ -180,7 +180,7 @@ CLI 使用 Grype 和 Syft；Operator kubevuln 的版本则单独管理。主机�
 
 **答案：B) 区分 CLI JSON 数组中的 alertOnly 和 v1beta1 SecurityException 中的 alert_only**
 
-在测试中，alertOnly 会确认一项失败，但不会改变合规性。exclude-controls 会改变评估的分母。应将所有者、范围、到期时间和重新审查与问题修复分别跟踪。
+在测试中，alertOnly 将失败记录为已确认的例外，但不会改变合规性评分。exclude-controls 会改变评估的分母。应将所有者、范围、到期时间和重新审查与问题修复分别跟踪。
 
 </details>
 

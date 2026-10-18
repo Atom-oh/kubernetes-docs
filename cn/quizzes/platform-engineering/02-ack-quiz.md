@@ -90,7 +90,7 @@ ACK.ResourceSynced=True 表示控制器已完成同步。它不能证明应用�
 <details>
 <summary>显示答案</summary>
 
-CRD。S3 示例使用 Bucket.spec.policy。经审查的版本没有单独的 BucketPolicy 或 IAM RolePolicyAttachment CRD；请核实实际的 kind 和架构。
+CRD。S3 示例使用 Bucket.spec.policy。经审查的版本没有单独的 BucketPolicy 或 IAM RolePolicyAttachment CRD；请核实实际的资源类型（kind）和字段结构（schema）。
 
 </details>
 
@@ -108,7 +108,7 @@ CRD。S3 示例使用 Bucket.spec.policy。经审查的版本没有单独的 Buc
 <details>
 <summary>显示答案</summary>
 
-CARM 会配置控制器，通过假设目标角色来管理另一个 AWS 账户，因此需要信任关系、AssumeRole 权限、映射和控制器设置。它不能确保多个集群同时修改资源是安全的。应将修改所有权与只读引用分开。
+CARM 会配置控制器，通过代入目标 IAM 角色来管理另一个 AWS 账户，因此需要信任关系、AssumeRole 权限、映射和控制器设置。它不能确保多个集群同时修改资源是安全的。应明确由谁负责修改资源，并将其与只读引用分开。
 
 </details>
 
@@ -117,7 +117,7 @@ CARM 会配置控制器，通过假设目标角色来管理另一个 AWS 账户�
 <details>
 <summary>显示答案</summary>
 
-使用全局唯一的名称、实际区域、tagging.tagSet、全部四项 Block Public Access 设置以及加密。应用 bucket policy 之前，principal/IAM Role 必须已经存在。请替换示例名称和账户 ID。
+使用全局唯一的名称、实际区域、tagging.tagSet、全部四项 Block Public Access 设置以及加密。应用存储桶策略之前，主体/IAM 角色必须已经存在。请替换示例名称和账户 ID。
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
@@ -157,7 +157,7 @@ spec:
 <details>
 <summary>显示答案</summary>
 
-该命令会在离线环境中渲染一个固定版本的 OCI chart。在实际安装/升级之前，先准备好 infra、其 ServiceAccount、IRSA/Pod Identity 和 IAM 权限。渲染结果不能验证 AWS 部署。
+该命令会在离线环境中渲染一个固定版本的 OCI Helm Chart。在实际安装/升级之前，先准备好 infra、其 ServiceAccount、IRSA/Pod Identity 和 IAM 权限。渲染结果不能验证 AWS 部署。
 
 ```bash
 helm template ack-s3 \
@@ -178,7 +178,7 @@ helm template ack-s3 \
 <details>
 <summary>显示答案</summary>
 
-指定命名空间和完全限定的 kind；检查条件/事件、控制器镜像/日志、实际账户/区域/权限以及引用。chart 标签是 app.kubernetes.io/instance=ack-s3。清除 finalizer 并非常规修复手段。
+指定命名空间和完全限定的资源类型（kind）；检查条件/事件、控制器镜像/日志、实际账户/区域/权限以及引用。Helm Chart 标签是 app.kubernetes.io/instance=ack-s3。清除 finalizer 并非常规修复手段。
 
 ```bash
 kubectl get buckets.s3.services.k8s.aws -n infra

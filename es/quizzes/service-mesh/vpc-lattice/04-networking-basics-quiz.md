@@ -17,7 +17,7 @@ Este cuestionario evalúa tu comprensión del direccionamiento de enlace local/U
 **Respuesta: B) IPv4 `169.254.171.0/24` es de enlace local, mientras que IPv6 `fd00:ec2:80::/64` no es de enlace local, sino una dirección local única (ULA)**
 
 **Explicación:**
-El rango IPv4 forma parte de `169.254.0.0/16` (RFC 3927, enlace local), pero el rango IPv6 no es `fe80::/10` (enlace local); es `fd00:ec2:80::/64`, dentro del rango ULA `fc00::/7` (RFC 4193). Las direcciones de enlace local tienen alcance de enlace. Las ULA tienen alcance de dirección global según RFC 6724, pero están pensadas para el enrutamiento privado, no para el acceso global a Internet; no son la clase de direcciones locales de sitio obsoleta. Estas clasificaciones de direcciones no describen por sí solas la implementación especial de ingreso de Lattice de AWS.
+El rango IPv4 forma parte de `169.254.0.0/16` (RFC 3927, enlace local), pero el rango IPv6 no es `fe80::/10` (enlace local); es `fd00:ec2:80::/64`, dentro del rango ULA `fc00::/7` (RFC 4193). Las direcciones de enlace local tienen alcance de enlace. Las ULA tienen alcance de dirección global según RFC 6724, pero están pensadas para el enrutamiento privado, no para el acceso global a Internet; no son la clase de direcciones locales de sitio obsoleta. Estas clasificaciones de direcciones no describen por sí solas la implementación especial de entrada de tráfico de Lattice de AWS.
 </details>
 
 2. ¿Cómo se deben interpretar los rangos de direcciones de Lattice?

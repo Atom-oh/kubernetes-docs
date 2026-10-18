@@ -17,8 +17,8 @@
 | Qwen + QLoRA | 用于实体候选项的适配器训练设计；最终替换与完整检测是不同的问题 |
 | Python 处理/评估 | 执行类型/来源检查、替换/还原和聚合；不会自动找回模型漏检的实体 |
 | MLflow | 比较配置、版本和聚合结果；验证服务器访问权限以及日志/构件内容 |
-| Unified Studio | 本实验采用的治理选择，并非 QLoRA、EKS 或 Training Jobs 的强制依赖项 |
-| 资源清单 / 拆除 | 私下记录标识符、所有权和依赖关系；导出、清理并验证结果 |
+| Unified Studio | 本实验选用的治理方案，并非 QLoRA、EKS 或 Training Jobs 的强制依赖项 |
+| 资源登记 / 清理 | 在私有清单中记录标识符、所有权和依赖关系；导出、清理并验证结果 |
 
 请控制包含源文本或令牌映射的构件。借助映射进行替换可以还原，但不等于加密。日志策略属于设计/约定，并不能证明已测试每个库、回调、异常和自动跟踪路径。
 资源 ID/ARN 可能需要记录在私有清单中，应与公开报告区分开来。
@@ -29,10 +29,10 @@
 | --- | --- | --- |
 | 执行 | 托管式 Training Job | 为本实验准备的 GPU Job/集群 |
 | 跟踪 | SageMaker MLflow App | ClusterIP MLflow |
-| 数据 | S3 输入通道 | 使用受 ServiceAccount 权限限定的 AWS 权限，通过 S3 SDK 下载 |
+| 数据 | S3 输入通道 | 使用限定于 ServiceAccount 的 AWS 权限，通过 S3 SDK 下载 |
 | 生命周期 | 区分作业终止与外部 App/存储桶的清理 | 导出结果，然后回收自有临时资源 |
 
-Training Job 或命名空间/Job 边界本身并不能完成安全隔离。请验证实际的 IAM/ServiceAccount、网络、存储、端点/MLflow 访问权限和容器配置。EKS 路径通过其 ServiceAccount 和 SDK 凭证链使用工作负载身份。它不会把预签名持有者 URL 放入 Pod 环境变量；它会验证输入清单 SHA-256 和存储桶所有权。
+Training Job 或命名空间/Job 边界本身并不能完成安全隔离。请验证实际的 IAM/ServiceAccount、网络、存储、端点/MLflow 访问权限和容器配置。EKS 路径通过其 ServiceAccount 和 SDK 凭证链使用工作负载身份。它不会把预签名 URL（持有该链接即可凭其访问资源）放入 Pod 环境变量；它会验证输入清单 SHA-256 和存储桶所有权。
 
 要进行比较，需要提供配置、数据划分哈希、训练/评估代码和步数，以及模型/分词器修订版本、镜像摘要、传递依赖、CUDA/驱动/硬件和解码设置。固定随机种子并不能保证不同环境中的 GPU 结果完全一致。`requirements.lock` 固定了直接依赖包，但不包含完整的传递依赖环境。
 
@@ -59,10 +59,10 @@ Training Job 或命名空间/Job 边界本身并不能完成安全隔离。请�
 
 ## 4. 治理与执行准备情况
 
-本实验会在提交 GPU 作业前检查预期的域/配置文件、调用方成员资格和 MLflow 访问权限。`CreateProject` 的 `membershipAssignments` 可以在同一请求中指定所有权，但无法保证所有资源配置失败时都能原子回滚。
+本实验会在提交 GPU 作业前检查预期的域/项目配置方案（profile）、调用方成员资格和 MLflow 访问权限。`CreateProject` 的 `membershipAssignments` 可以在同一请求中指定所有权，但无法保证所有资源配置失败时都能原子回滚。
 还必须分别检查项目是否为 ACTIVE，以及所需工具/环境是否已就绪。
 
-历史尝试表明，项目失败前可能已经创建了 App 等资源。请将权限预检查与创建后的资源清单和补偿操作结合起来。清理范围仅限本次运行所拥有的资源；不要根据旧记录推断当前仍有哪些遗留资源。有关身份与删除边界，请参阅 [Unified Studio 章节](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)。
+历史尝试表明，项目失败前可能已经创建了 App 等资源。请将权限预检查与创建后的资源登记和补偿操作结合起来。清理范围仅限本次运行所拥有的资源；不要根据旧记录推断当前仍有哪些遗留资源。有关身份与删除边界，请参阅 [Unified Studio 章节](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)。
 
 ## 验证范围
 

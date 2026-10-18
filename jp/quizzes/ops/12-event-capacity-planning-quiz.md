@@ -1,179 +1,163 @@
-# イベント Capacity Planning Playbook クイズ
+# イベントのキャパシティ計画クイズ
 
-1. KEDA ScaledObject に複数の trigger（Cron + Prometheus + SQS）が設定されている場合、最終的な replica 数はどのように決定されますか？
-   - A) すべての trigger 値の平均
-   - B) 最も低い値（MIN）
-   - C) 最も高い値（MAX）
-   - D) 最初の trigger の値
+> **関連ドキュメント**: [イベントのキャパシティ計画](../../ops/12-event-capacity-planning.md)
+
+## 1. 複数の KEDA metric を使う場合、目標値はどのように決まりますか？
+
+- A) すべての値を合計する
+- B) HPA が metric ごとの推奨値の最大値を使い、behavior と最小値・最大値を適用する
+- C) Cron が Pod の Ready 状態を保証する
+- D) metric が常に上限を決める
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) 最も高い値（MAX）**
+**回答: B**
 
-**解説:**
-複数の trigger が設定されている場合、KEDA はすべての trigger の中から最も高い希望 replica 数を選択します。これにより、「cron が下限を設定し、metrics が上限を決定する」パターンが可能になります。たとえば、cron が 100 を要求し、Prometheus が 150 を要求した場合、結果は 150 になります。
+Cron はスケジュールに基づく需要の下限を示し、`maxReplicaCount` などの制約が上限を定めます。実際に Pod が Ready になったかは別途確認してください。
 
 </details>
 
----
+## 2. 日付が決まっているイベントで、5 フィールド形式の Cron を使う場合に重要な点は何ですか？
 
-2. Pause Pod パターンでは、実際の workload が到着したときに Pause Pod が evict される原因となる仕組みは何ですか？
-   - A) resource request が小さいため、Pod が自動的に置き換えられる
-   - B) 低い PriorityClass 値が Preemption をトリガーする
-   - C) DaemonSet が Pod を自動的に再分散する
-   - D) TTL の期限切れにより自動削除される
+- A) 年は暗黙に指定される
+- B) 1 回実行すると自動的に削除される
+- C) 翌年も繰り返される可能性があるため、timezone と DST を確認する
+- D) 常に UTC だけを使う
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 低い PriorityClass 値が Preemption をトリガーする**
+**回答: C**
 
-**解説:**
-Pause Pod には value: -10 の PriorityClass が割り当てられます。実際の workload（default priority 0 以上）を schedule する必要があり、十分な capacity がない場合、Kubernetes Scheduler は低 priority の Pod を preempt して空き領域を確保します。これにより、実際の workload をすでに provision された Node 上に即座に schedule できます。
+この例では、年次の繰り返しと期間の境界を確認します。イベント後は構成を削除するか更新してください。
 
 </details>
 
----
+## 3. 静的な Karpenter NodePool を構成する方法はどれですか？
 
-3. なぜ KEDA cron trigger は flash sale 開始の 30 分前に発火するよう設定されているのですか？
-   - A) KEDA の polling interval が 30 分だから
-   - B) Cron trigger は正確な時刻に発火しないから
-   - C) Node provisioning と Pod scheduling にはリードタイムが必要だから
-   - D) AWS API throttling を避けるため
+- A) `weight` だけを大きくして容量を静的にする
+- B) `weight` を使わずに `replicas` を指定し、`limits.nodes` で制限する
+- C) いつでも `replicas` を削除すれば動的モードに切り替わる
+- D) すべての NodePool budget が常にスケーリング操作をブロックする
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) Node provisioning と Pod scheduling にはリードタイムが必要だから**
+**回答: B**
 
-**解説:**
-KEDA が Pod を scale up すると、Karpenter が新しい Node を provision するのに 60〜90 秒かかり、さらに Pod scheduling と container 起動の時間が必要です。30 分早く scale-up を開始することで、最初の traffic surge が到達する前にすべての Pod が Ready state になることを保証します。
+静的モードと動的モードを区別してください。静的スケーリングは NodePool の disruption budget を迂回しますが、PDB には従います。
 
 </details>
 
----
+## 4. 引き継ぎ後も placeholder Deployment の desired 数が変わらないと、何が起こる可能性がありますか？
 
-4. なぜ EC2 Capacity Reservation で `instance_match_criteria = "targeted"` を設定するのですか？
-   - A) コストを削減するため
-   - B) reservation を使用できる対象を特定の Karpenter NodePool のみに制限するため
-   - C) Spot instance での使用を有効にするため
-   - D) multi-AZ deployment のため
+- A) 追加費用が発生することはない
+- B) placeholder が再作成され、node が追加で provision されることがある
+- C) Karpenter が desired 数を自動的に 0 にする
+- D) 実アプリケーションが常にすぐ Ready になる
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) reservation を使用できる対象を特定の Karpenter NodePool のみに制限するため**
+**回答: B**
 
-**解説:**
-`targeted` 設定により、Capacity Reservation を明示的に参照する instance のみがそれを使用できます。これにより、event 専用の Karpenter NodePool（capacityReservationSelectorTerms によって matching される）向けに確保された reserved capacity を、一般的な workload が消費することを防ぎます。
+placeholder の保持期間と期限切れ、placeholder 需要の削除、実アプリケーションの readiness を合わせて確認してください。
 
 </details>
 
----
+## 5. 容量を 30% 増やせば、1 つの AZ を失っても必ずサービスを維持できますか？
 
-5. Karpenter NodePool で高い `weight` 値を設定すると、どのような効果がありますか？
-   - A) Node がより速く provision される
-   - B) その NodePool が他の NodePool より優先される
-   - C) より多くの Node を provision できる
-   - D) 低コストの instance が選択される
+- A) 常に維持できる
+- B) On-Demand なら維持できる
+- C) いいえ。配置と残存スループットを計算する必要がある
+- D) PDB があれば維持できる
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) その NodePool が他の NodePool より優先される**
+**回答: C**
 
-**解説:**
-複数の NodePool が Pending Pod の要件を満たせる場合、Karpenter は最も高い weight を持つ NodePool を選択します。event NodePool に weight: 100 を設定すると、default NodePool（例: weight: 10）より先に使用され、event 専用の設定（instance types、capacity types など）が適用されます。
+15 node と 11 node の例では、より多くの node がある AZ を失うと、残りの容量がベースラインのピーク需要を満たしません。入力した前提も実測で検証してください。
 
 </details>
 
----
+## 6. 特定の Capacity Reservation は何を意味しますか？
 
-6. HPA scaleDown behavior において、`type: Percent, value: 10, periodSeconds: 120` は何を意味しますか？
-   - A) 120 秒以内に合計の 10% まで scale down する
-   - B) 120 秒ごとに現在の Pod の 10% ずつ削減する
-   - C) 10 秒ごとに 120 Pod を削除する
-   - D) 最小 10 Pod を維持し、120 秒後にすべて削除する
+- A) 1 つの NodePool だけに制限されたセキュリティ ACL
+- B) instance が明示的に対象として指定し、一致条件を満たす必要がある予約
+- C) 既存のすべての instance に自動適用される予約
+- D) On-Demand の割引商品
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 120 秒ごとに現在の Pod の 10% ずつ削減する**
+**回答: B**
 
-**解説:**
-この policy は、現在の replica 数の最大 10% を 120 秒（2 分）ごとに削減することを許可します。200 Pod の場合、これは 2 分ごとに最大 20 Pod を削除することを意味し、急激な scale-down による service の不安定化を防ぎます。
+IAM と共有設定、AZ、instance type、platform、tenancy、実際の消費状況を確認してください。Capacity Reservation は RI とは別のものです。
 
 </details>
 
----
+## 7. D-30 に即時予約を作成し、将来の `end_date` だけを指定すると何が起こりますか？
 
-7. capacity planning worksheet が 30% の safety margin を追加するのはなぜですか？
-   - A) AWS instance の価格変動を考慮するため
-   - B) 予測誤差、Pod 起動時間、不均等な load distribution をカバーするため
-   - C) Kubernetes system Pod の resource usage を考慮するため
-   - D) network bandwidth の制限があるため
+- A) イベントまで無料で待機する
+- B) `end_date` が将来の開始時刻を指定する
+- C) 使用されていない稼働中の容量にも料金が発生することがある
+- D) 予約済み容量を使う instance に必ず二重課金される
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 予測誤差、Pod 起動時間、不均等な load distribution をカバーするため**
+**回答: C**
 
-**解説:**
-30% の safety margin は複数の不確実性を吸収します: (1) traffic prediction が不正確な可能性がある、(2) Pod がすべて同時に ready になるわけではない、(3) load が Pod 間で完全に均等に分散されるわけではない、(4) 一部の Node/Pod が fail する可能性がある。margin は過去の event の post-mortem data に基づいて調整できます。
+コストモデルには予約が有効な期間を含め、予約を消費している instance を二重計上しないようにしてください。
 
 </details>
 
----
+## 8. CloudWatch scaler の `metricStat` と `minMetricValue` について、正しい説明はどれですか？
 
-8. image pre-caching DaemonSet が initContainers を使用するのはなぜですか？
-   - A) resource を節約するために image を実行して終了するため
-   - B) Node cache に image を download（pull）して終了し、cache だけを残すため
-   - C) image version を検証するため
-   - D) Container Registry で認証するため
+- A) 正しい field は `metricStatType` である
+- B) `minMetricValue` は常に activation threshold である
+- C) `metricStat` は statistic を選び、`minMetricValue` は NoData 時の代替値を指定する。ただし `ignoreNullValues=false` の場合は上書きされる
+- D) `Sum` はあらゆる rate gauge に適している
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Node cache に image を download（pull）して終了し、cache だけを残すため**
+**回答: C**
 
-**解説:**
-DaemonSet initContainers はすべての Node 上で実行され、container image を pull します。それらは `echo cached` だけを実行して終了しますが、image は Node の local cache に残ります。後で実際の workload Pod が schedule されると、image pull phase（数十秒から数分かかる場合があります）を skip できるため、Pod startup time が大幅に短縮されます。
+差分や count と、rate や累積 counter を区別し、period、収集期間、metric の発行遅延を確認してください。
 
 </details>
 
----
+## 9. metric の反映が遅れている場合、KEDA 管理下の workload をどう扱うべきですか？
 
-9. D-30 timeline で target RPM の 120% で load testing を行うのはなぜですか？
-   - A) 高 traffic について AWS から事前承認を得るため
-   - B) target traffic を超える system stability を検証し、bottleneck を早期に発見するため
-   - C) KEDA trigger threshold を正確に計算するため
-   - D) cost estimation の精度を向上させるため
+- A) Deployment を直接スケーリングすれば常に設定が維持される
+- B) HPA 名は常に Deployment 名と同じである
+- C) 承認済みの範囲内で ScaledObject の下限を確認し、GitOps の所有関係を守る
+- D) 上限のない NodePool を作成する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) target traffic を超える system stability を検証し、bottleneck を早期に発見するため**
+**回答: C**
 
-**解説:**
-実際の event traffic は予測を上回る可能性があるため、120% で testing することで、(1) target を上回る system stability を確認し、(2) DB connections、network bandwidth、API gateways などの bottleneck を発見し、(3) 実際の scaling chain（KEDA → HPA → Karpenter）の挙動を本番 event 前に検証できます。
+直接加えた HPA や Deployment の変更は、reconciliation によって上書きされることがあります。元の設定を記録し、復元してください。
 
 </details>
 
----
+## 10. 準備と後片付けについて、正しい説明はどれですか？
 
-10. event で Spot の代わりに On-Demand instance を使用することが最も正当化される状況はどれですか？
-    - A) event duration が 4 時間を超える
-    - B) Spot savings が 60% を超える
-    - C) interruption が許容されない revenue-critical service
-    - D) workload に retry logic が実装されている
+- A) すべての image が `sh` と `echo` を備え、cache を無期限に保持する
+- B) 30 分後に NodePool を削除すれば常に安全である
+- C) アプリケーションと cache の制約、ベースラインの発動条件、実際の node と予約の後片付けを検証する
+- D) ScaledObject を削除すれば元の replica 数が常に復元される
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) interruption が許容されない revenue-critical service**
+**回答: C**
 
-**解説:**
-Spot instance は AWS によって 2 分前の通知で reclaimed される可能性があります。flash sale 中の order processing のような revenue-critical service は、availability を保証するために On-Demand を使用するべきです。email notification や log processing のような auxiliary service は、retry logic があれば Spot を使用でき、resilience を維持しながら cost を削減できます。
+起動処理、GC、architecture、権限は環境によって異なります。後片付けでは、各リソースを所有する controller と削除時のライフサイクルを考慮してください。
 
 </details>

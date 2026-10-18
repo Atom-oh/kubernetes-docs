@@ -30,7 +30,7 @@ El reemplazo determinista no recupera automáticamente las entidades que el mode
 
 **Respuesta: B**
 
-El registro del 2026-09-01 se detuvo antes del entrenamiento. Las pruebas locales no demuestran el estado actual de AWS ni los resultados de GPU.
+El registro del 1 de septiembre de 2026 se detuvo antes del entrenamiento. Las pruebas locales no demuestran el estado actual de AWS ni los resultados de GPU.
 
 </details>
 
@@ -62,7 +62,7 @@ Fijar directamente las versiones de los paquetes no equivale a bloquear todas la
 
 **Respuesta: C**
 
-Distinga los ID/ARN privados de inventario que se necesitan de la divulgación pública, y verifique el registro automático y el tracing.
+Distinga los ID/ARN privados de inventario que se necesitan de la divulgación pública, y verifique el registro automático y la captura de trazas.
 
 </details>
 

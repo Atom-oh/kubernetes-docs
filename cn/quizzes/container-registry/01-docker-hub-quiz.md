@@ -12,7 +12,7 @@
 
 **答案**：B) 源 IPv4 地址或 IPv6 /64 子网
 
-**说明**：共享 NAT 地址的节点可能会共同消耗同一份匿名拉取额度。应通过当前政策和响应头获取实际限额与重置窗口；已验证账户的归属方式和滥用控制是另外的问题。
+**说明**：共享 NAT 地址的节点可能会共同消耗同一份匿名拉取额度。应通过当前政策和响应头获取实际限额与重置窗口；已登录账户的拉取归属方式和滥用控制是另外的问题。
 
 </details>
 
@@ -27,20 +27,20 @@
 
 **答案**：B) 类型为 `kubernetes.io/dockerconfigjson` 的 Secret
 
-**说明**：Kubernetes 使用 `kubernetes.io/dockerconfigjson` 类型的 Secret 存储镜像仓库凭证。随后可在 Pod spec 中通过 `imagePullSecrets` 引用该 Secret，也可将它关联到 ServiceAccount 以便自动注入。
+**说明**：Kubernetes 使用 `kubernetes.io/dockerconfigjson` 类型的 Secret 存储镜像仓库凭证。随后可在 Pod 配置中通过 `imagePullSecrets` 引用该 Secret，也可将它关联到 ServiceAccount 以便自动注入。
 
 </details>
 
 3. 在 Kubernetes 集群中缓解 Docker Hub 拉取速率限制，建议采取什么措施？
    - A) 使用更多 IP 地址
-   - B) 配置拉取缓存或镜像仓库镜像
+   - B) 配置拉取缓存或仓库同步副本
    - C) 禁用镜像拉取
    - D) 只使用本地镜像
 
 <details>
 <summary>显示答案</summary>
 
-**答案**：B) 配置拉取缓存或镜像仓库镜像
+**答案**：B) 配置拉取缓存或仓库同步副本
 
 **说明**：拉取缓存可以减少重复下载镜像层。缓存未命中、可变标签检查和刷新仍会访问上游，因此缓存无法完全消除速率限制。
 
@@ -62,7 +62,7 @@
 </details>
 
 5. Docker Official Images 与 Docker Hub 上其他镜像有什么区别？
-   - A) 属于经过审查的上游镜像和文档精选计划
+   - A) 属于精选计划，其中的上游镜像和文档经过审查
    - B) 始终可以免费使用
    - C) 不受拉取速率限制
    - D) 每天自动更新
@@ -70,7 +70,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案**：A) 属于经过审查的上游镜像和文档精选计划
+**答案**：A) 属于精选计划，其中的上游镜像和文档经过审查
 
 **说明**：Docker Official Images 会与上游/社区维护者合作，并按照计划标准接受审查。该徽标不能保证特定标签不存在漏洞；应核实所选摘要和维护状态。
 

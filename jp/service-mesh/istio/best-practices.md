@@ -312,7 +312,7 @@ spec:
 - Authorization Policy
 - Rate Limiting
 
-### 2. アップグレード戦略
+### 2. アップグレード戦略 {#upgrade-strategy}
 
 #### Canary アップグレード
 

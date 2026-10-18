@@ -4,8 +4,8 @@
 
 1. ¿Qué afirmación describe correctamente un perfil de proyecto?
 
-   - A) Solo selecciona drivers de GPU
-   - B) Combina blueprints y configura herramientas para su creación o uso bajo demanda
+   - A) Solo selecciona controladores de GPU
+   - B) Combina blueprints y configura herramientas para su creación o para usarlas bajo demanda
    - C) Todas sus capacidades garantizan que todas las herramientas estén listas de inmediato
    - D) Reemplaza todos los permisos de IAM
 
@@ -14,15 +14,15 @@
 
 **Respuesta: B**
 
-Verifique el ID del perfil previsto, el tipo de dominio y los blueprints, Accounts y Regions requeridos.
+Verifique el ID del perfil previsto, el tipo de dominio y los blueprints, las cuentas y las regiones requeridos.
 
 </details>
 
-2. ¿Los permisos de IAM DeleteProject y la pertenencia ordinaria como contributor garantizan la eliminación?
+2. ¿Los permisos de IAM DeleteProject y la pertenencia ordinaria como colaborador garantizan la eliminación?
 
    - A) Siempre
    - B) No; verifique la autoridad del propietario o administrador para la ruta de eliminación y el resto de las políticas de IAM y del servicio
-   - C) Sí, si coincide el namespace de EKS
+   - C) Sí, si coincide el espacio de nombres de EKS
    - D) Sí, si el nombre del proyecto es único
 
 <details>
@@ -46,7 +46,7 @@ La propiedad del proyecto, la autorización de la API y los permisos reales sobr
 
 **Respuesta: B**
 
-Distinga las herramientas bajo demanda que intencionadamente no se aprovisionaron de los fallos reales.
+Distinga las herramientas bajo demanda que no se aprovisionaron intencionalmente de los fallos reales.
 
 </details>
 
@@ -66,10 +66,10 @@ Es una unión discriminada. Las asignaciones enviadas en la misma solicitud no g
 
 </details>
 
-5. ¿Cómo se debe verificar la eliminación de un proyecto restante?
+5. ¿Cómo se debe verificar la eliminación de un proyecto pendiente?
 
    - A) Interpretar AccessDenied como ausencia
-   - B) Comprobar el alcance autorizado de get/list, el dominio, los filtros y la paginación, y el inventario de recursos propios
+   - B) Comprobar el alcance autorizado de get/list, el dominio, los filtros y la paginación, y el inventario de recursos de la ejecución
    - C) Un registro de principios de septiembre demuestra el estado actual
    - D) Eliminar todos los buckets y roles compartidos con el mismo prefijo si falla una etiqueta
 

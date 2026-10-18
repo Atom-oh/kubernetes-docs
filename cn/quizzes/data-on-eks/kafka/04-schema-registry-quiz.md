@@ -1,13 +1,13 @@
 # Schema Registry 测验
 
-复习 Schema 合约、编码、兼容性、恢复和部署示例。
+复习数据模式（Schema）契约、编码、兼容性、恢复和部署示例。
 
 ## 1. 为什么 Kafka 的基本记录存储不强制执行 Schema 合约？
 
 <details>
 <summary>显示答案</summary>
 
-键和值以字节形式存储。结构和业务验证取决于序列化器、应用程序和验证路径。添加字段并不总会破坏消费者。
+键和值以字节形式存储。结构和业务验证取决于序列化器、应用程序和验证路径。添加字段不一定会使消费者不兼容或无法正常工作。
 
 </details>
 
@@ -16,7 +16,7 @@
 <details>
 <summary>显示答案</summary>
 
-可以。JSON Schema、CI 检查和版本化规范可以提供合约。Registry 集中管理治理和分发；二进制编码则是另一种独立选择。
+可以。JSON Schema、CI 检查和版本化规范可以提供契约。注册中心（Registry）负责集中治理和分发；二进制编码则是另一种独立选择。
 
 </details>
 
@@ -25,7 +25,7 @@
 <details>
 <summary>显示答案</summary>
 
-一个 magic 字节和一个四字节的 Schema ID，后面跟着值。Protobuf 还包含消息索引。这并非适用于每种 Registry 或编码的通用规则。
+一个魔数字节（magic byte）和一个四字节的 Schema ID，后面跟着值。Protobuf 还包含消息索引。这并非适用于每种注册中心或编码的通用规则。
 
 </details>
 
@@ -52,7 +52,7 @@ Apache-2.0 包含保留所需声明等条件。Confluent Server 和客户端/Avr
 <details>
 <summary>显示答案</summary>
 
-Writer/Reader Schema 解析。如果 Writer Schema 中缺少某个字段，Reader 会使用默认值。它并不允许 Writer 省略任意必需字段。
+写入端与读取端的 Schema 解析。如果写入端 Schema 中缺少某个字段，读取端会使用默认值。它并不允许写入端省略任意必需字段。
 
 </details>
 
@@ -70,7 +70,7 @@ Writer/Reader Schema 解析。如果 Writer Schema 中缺少某个字段，Reade
 <details>
 <summary>显示答案</summary>
 
-先升级消费者：新的 Reader 必须能够读取此前 Writer 写入的数据。还要测试业务行为，并记住兼容性是针对 subject 配置的，而不是 topic 固有的属性。
+先升级消费者：新的读取端必须能够读取此前写入端写入的数据。还要测试业务行为，并记住兼容性是针对注册主题（subject）配置的，而不是 Kafka 主题（topic）固有的属性。
 
 </details>
 
@@ -79,7 +79,7 @@ Writer/Reader Schema 解析。如果 Writer Schema 中缺少某个字段，Reade
 <details>
 <summary>显示答案</summary>
 
-之前的 Reader 必须能够读取新的 Writer 写入的数据，这通常意味着可以先升级生产者。但这本身并不能验证新的 Reader 是否能重放旧数据。
+之前的读取端必须能够读取新的写入端写入的数据，这通常意味着可以先升级生产者。但这本身并不能验证新的读取端是否能重放旧数据。
 
 </details>
 
@@ -88,7 +88,7 @@ Writer/Reader Schema 解析。如果 Writer Schema 中缺少某个字段，Reade
 <details>
 <summary>显示答案</summary>
 
-不会。如果旧 Reader 有默认值，就可以为新 Writer 数据中缺少的字段提供该值。如果没有默认值，则会失败。请将此情况与向后兼容方向区分开来；在向后兼容方向中，新的 Reader 不再要求该字段。
+不会。如果旧读取端有默认值，就可以为新写入端数据中缺少的字段提供该值。如果没有默认值，则会失败。请将此情况与向后兼容方向区分开来；在向后兼容方向中，新的读取端不再要求该字段。
 
 </details>
 
@@ -97,7 +97,7 @@ Writer/Reader Schema 解析。如果 Writer Schema 中缺少某个字段，Reade
 <details>
 <summary>显示答案</summary>
 
-保留记录中的标识符必须能解析为相同的 Writer Schema。请验证 ID 映射、引用、subject 策略、编码、身份验证和客户端版本。仅更改 URL 并不足以证明迁移成功。
+保留记录中的标识符必须能解析为相同的写入端 Schema。请验证 ID 映射、引用、注册主题（subject）策略、编码、身份验证和客户端版本。仅更改 URL 并不足以证明迁移成功。
 
 </details>
 
@@ -115,7 +115,7 @@ FULL。FULL_TRANSITIVE 会针对所有先前版本检查两个 Schema 方向。�
 <details>
 <summary>显示答案</summary>
 
-不会。它记录的是文件路径。文件的持久性、共享和恢复需要单独设计。该实验会禁用计划快照，并保留完整日志，以便在重启后重放。
+不会。它记录的是文件路径。文件的持久性、共享和恢复需要单独设计。该实验会禁用定时快照，并保留完整日志，以便在重启后重放。
 
 </details>
 
@@ -124,7 +124,7 @@ FULL。FULL_TRANSITIVE 会针对所有先前版本检查两个 Schema 方向。�
 <details>
 <summary>显示答案</summary>
 
-`cleanup.policy=delete`、`retention.ms=-1` 和 `retention.bytes=-1`。使用无限期保留时要监控增长。不要照搬通用的 `_schemas` 压缩配置或较短的事件保留期。
+`cleanup.policy=delete`、`retention.ms=-1` 和 `retention.bytes=-1`。使用无限期保留时要监控增长。不要照搬通用的 `_schemas` 日志压实（compaction）配置或较短的事件保留期。
 
 </details>
 
@@ -133,7 +133,7 @@ FULL。FULL_TRANSITIVE 会针对所有先前版本检查两个 Schema 方向。�
 <details>
 <summary>显示答案</summary>
 
-生产者使用 `value.serializer=io.confluent.kafka.serializers.KafkaAvroSerializer`；消费者使用 `value.deserializer=io.confluent.kafka.serializers.KafkaAvroDeserializer`。两者都需要 Registry URL、Broker TLS/SASL 配置和库依赖。
+生产者使用 `value.serializer=io.confluent.kafka.serializers.KafkaAvroSerializer`；消费者使用 `value.deserializer=io.confluent.kafka.serializers.KafkaAvroDeserializer`。两者都需要注册中心 URL、Broker 的 TLS/SASL 配置和库依赖。
 
 </details>
 
@@ -149,7 +149,7 @@ FULL。FULL_TRANSITIVE 会针对所有先前版本检查两个 Schema 方向。�
 ]
 ```
 
-这些是记录 `fields` 数组中的定义。逻辑类型应放在 type 对象内；新 Reader 读取旧数据时，新增字段的 null 默认值会生效。
+这些是记录 `fields` 数组中的定义。逻辑类型应放在 type 对象内；新读取端读取旧数据时，新增字段的 null 默认值会生效。
 
 </details>
 
@@ -167,7 +167,7 @@ FULL。FULL_TRANSITIVE 会针对所有先前版本检查两个 Schema 方向。�
 <details>
 <summary>显示答案</summary>
 
-使用镜像 3.3.3、`APICURIO_STORAGE_KIND=kafkasql`、`my-cluster-kafka-bootstrap.kafka.svc:9093`、SASL_SSL/SCRAM-SHA-512、CA truststore、由 Secret 提供的 JAAS 配置以及显式主机名验证。预先创建三个存储 topic 和用户 ACL，并禁用自动创建 topic。请区分管理端口 9000 上的运行状况检查与 HTTP API 端口 8080。HTTP API 身份验证与 Kafka 身份验证相互独立；该实验并非公共服务。
+使用镜像 3.3.3、`APICURIO_STORAGE_KIND=kafkasql`、`my-cluster-kafka-bootstrap.kafka.svc:9093`、SASL_SSL/SCRAM-SHA-512、CA 信任库（truststore）、由 Secret 提供的 JAAS 配置以及显式主机名验证。预先创建三个存储主题（topic）和用户 ACL，并禁用自动创建主题。请区分管理端口 9000 上的运行状况检查与 HTTP API 端口 8080。HTTP API 身份验证与 Kafka 身份验证相互独立；该实验并非公共服务。
 
 </details>
 

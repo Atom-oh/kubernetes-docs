@@ -1,7 +1,7 @@
 # gRPC 支持
 
 > **验证基线**：Istio 1.31.0, Kubernetes 1.32–1.37
-> **最后审核时间**：October 16, 2026
+> **最后审核时间**：2026 年 10 月 16 日
 
 Istio 可以根据 RPC 路径和元数据路由明文 gRPC HTTP/2 请求，并在符合条件的端点之间对新 RPC 进行负载均衡。长时间运行的流会继续连接到选定的后端；扩容副本不会迁移现有流。
 
@@ -9,7 +9,7 @@ Istio 可以根据 RPC 路径和元数据路由明文 gRPC HTTP/2 请求，并�
 
 - 明确将 Service 端口标识为 `grpc` 或 `http2`。除非在配置的边界处终止 TLS，否则 sidecar 无法解析由应用管理的 TLS；网格 mTLS 是独立的传输层。
 - 基于元数据的路由会将标头视为输入，而非经过身份验证的身份。
-- 健康探测、被动异常值检测、客户端截止时间和网格重试是彼此独立的机制，需要分别配置。
+- 健康探测、被动异常主机检测（outlier detection）、客户端截止时间和网格重试是彼此独立的机制，需要分别配置。
 
 ## 基本配置
 
@@ -91,7 +91,7 @@ readinessProbe:
 
 ## 重试配置
 
-以下替代方案假设 `GetItem` 是一个**幂等的一元读取操作**。大多数 gRPC 方法使用 HTTP POST，因此仅凭 HTTP 方法无法区分安全读取和写入。请匹配精确的 RPC 路径，并对其他 RPC（包括流和写入操作）禁用网格重试。
+以下替代方案假设 `GetItem` 是一个**幂等的单次读取 RPC（unary，即单请求/单响应）**。大多数 gRPC 方法使用 HTTP POST，因此仅凭 HTTP 方法无法区分安全读取和写入。请匹配精确的 RPC 路径，并对其他 RPC（包括流和写入操作）禁用网格重试。
 
 ```yaml
 # Alternative to the VirtualService above; do not create a second competing route.

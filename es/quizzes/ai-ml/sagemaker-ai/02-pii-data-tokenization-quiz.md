@@ -36,7 +36,7 @@ Si coinciden el tipo y la grafía, se reutiliza un token; las grafías distintas
 
 3. ¿Qué afirmación sobre las particiones y el alcance de la validación es correcta?
 
-   - A) Hay 1,600/200/400 registros; se pueden compartir plantillas y nombres entre particiones
+   - A) Hay 1.600/200/400 registros; se pueden compartir plantillas y nombres entre particiones
    - B) Los hashes diferentes demuestran la generalización a cargas de trabajo reales
    - C) Un fallo de checksum demuestra que no hubo una asignación oficial
    - D) Todo PHONE es un número reservado oficialmente
@@ -66,7 +66,7 @@ Comprueba que la unión de los reemplazos cubra todo el intervalo de origen. La 
 
 </details>
 
-5. ¿Qué demuestra la comprobación oracle de 2,200 registros con un TSV de respuestas?
+5. ¿Qué demuestra la comprobación oracle de 2.200 registros con un TSV de respuestas?
 
    - A) El F1 medido de un modelo ajustado
    - B) El rendimiento de GPU

@@ -1,7 +1,7 @@
 # Cuestionario de introducción a Calico
 
 > **Documento relacionado**: [Introducción a Calico](../../../networking/calico/01-introduction.md)
-> **Última actualización**: February 22, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 ## Cuestionario
 
@@ -17,123 +17,123 @@
 **Respuesta: B) 2014**
 
 **Explicación:**
-Project Calico se inició en 2014 en Metaswitch. Desde entonces, se ha convertido en uno de los plugins CNI de Kubernetes más utilizados a nivel mundial. En 2016, se fundó Tigera para comercializar Calico y, en 2019, se lanzó Calico Enterprise.
+Los orígenes de Project Calico se remontan a 2014 en Metaswitch. Tigera se fundó en 2016. No confundas el origen del proyecto con lanzamientos posteriores de productos o fechas de lanzamiento de Calico.
 
 </details>
 
-2. ¿Qué empresa fundó Tigera y comercializó Calico?
+2. ¿Qué empresa es la principal responsable del mantenimiento de Calico y ofrece Calico Enterprise y Calico Cloud?
    - A) Google
    - B) Red Hat
-   - C) Fundadores de Metaswitch
+   - C) Tigera
    - D) VMware
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Fundadores de Metaswitch**
+**Respuesta: C) Tigera**
 
 **Explicación:**
-Tigera fue fundada en 2016 por los creadores originales de Project Calico de Metaswitch. Actualmente, Tigera mantiene tanto el proyecto Calico de código abierto como productos comerciales, incluidos Calico Enterprise y Calico Cloud.
+Tigera mantiene Calico junto con colaboradores de la comunidad y ofrece productos comerciales. «Fundadores de Metaswitch» describe a personas, no el nombre de la empresa por la que se pregunta. Que el proyecto aparezca en el CNCF Landscape no significa que la CNCF lo gobierne.
 
 </details>
 
-3. ¿Cuál de las siguientes NO es una característica principal de Calico?
+3. ¿Cuál de estas afirmaciones NO es cierta sobre la instalación predeterminada de Calico?
    - A) Enrutamiento basado en BGP
-   - B) Service mesh integrado con inyección de sidecar
+   - B) Inyecta automáticamente sidecars de Istio en todos los Pods
    - C) Políticas de red estándar y extendidas de Kubernetes
-   - D) Compatibilidad con eBPF dataplane
+   - D) Compatibilidad con el plano de datos eBPF
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Service mesh integrado con inyección de sidecar**
+**Respuesta: B) Inyecta automáticamente sidecars de Istio en todos los Pods**
 
 **Explicación:**
-Calico proporciona redes de alto rendimiento con enrutamiento basado en BGP, potentes políticas de red (tanto las estándar de Kubernetes como las extendidas de Calico) y compatibilidad con eBPF dataplane. Sin embargo, a diferencia de Cilium, Calico no incluye un service mesh integrado. La funcionalidad de service mesh está disponible por separado a través de Calico Enterprise o mediante la integración con otras soluciones de service mesh como Istio.
+Calico proporciona redes, políticas y planos de datos que se pueden seleccionar. Las integraciones con mallas de servicios son funciones y configuraciones independientes; la instalación de este laboratorio no inyecta automáticamente sidecars de Istio. Las funciones de malla de Cilium también requieren su propia configuración; una comparación de CNI no debe dar a entender que todas las funciones de malla estén habilitadas de forma predeterminada.
 
 </details>
 
-4. ¿Cuál es la principal ventaja de las redes basadas en BGP de Calico en comparación con las redes overlay tradicionales?
-   - A) Configuración más sencilla
-   - B) Mejor cifrado de seguridad
-   - C) Enrutamiento directo sin sobrecarga de encapsulación
-   - D) Resolución de DNS integrada
+4. ¿Qué puede ofrecer una topología Calico sin encapsulación, si BGP y las rutas de la red subyacente están configurados correctamente?
+   - A) Una configuración más sencilla
+   - B) Un cifrado de seguridad mejor
+   - C) Enrutamiento sin encabezados de encapsulación overlay, cuando la red subyacente admite rutas de Pods
+   - D) Resolución DNS integrada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Enrutamiento directo sin sobrecarga de encapsulación**
+**Respuesta: C) Enrutamiento sin encabezados de encapsulación overlay, cuando la red subyacente admite rutas de Pods**
 
 **Explicación:**
-Las redes basadas en BGP de Calico permiten el enrutamiento directo de paquetes entre nodos sin la sobrecarga de encapsulación (como VXLAN o IPIP). Esto produce un mejor rendimiento de red, menor latencia y una integración más sencilla con la infraestructura de red existente. Las redes overlay tradicionales añaden encabezados de encapsulación que aumentan el tamaño de los paquetes y la sobrecarga de procesamiento.
+BGP distribuye rutas. Si la red subyacente puede enrutar direcciones de Pods y la encapsulación está deshabilitada, los paquetes no necesitan una envoltura IPIP/VXLAN. BGP también puede coexistir con IPIP, así que habilitar BGP por sí solo no elimina la encapsulación. Tampoco cifra el tráfico ni garantiza una latencia menor para todas las cargas de trabajo.
 
 </details>
 
-5. ¿Qué entornos admite Calico?
-   - A) Solo cloud
-   - B) Solo on-premises
-   - C) Cloud, on-premises e híbrido
-   - D) Solo Kubernetes, sin compatibilidad con VM
+5. ¿En qué entornos se pueden usar las configuraciones y ediciones de producto de Calico adecuadas?
+   - A) Solo en la nube
+   - B) Solo en instalaciones locales
+   - C) En la nube, en instalaciones locales y en entornos híbridos
+   - D) Solo con Kubernetes, sin compatibilidad con máquinas virtuales
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Cloud, on-premises e híbrido**
+**Respuesta: C) En la nube, en instalaciones locales y en entornos híbridos**
 
 **Explicación:**
-Calico es una solución de redes versátil que admite múltiples entornos, incluidos cloud público (AWS, Azure, GCP), centros de datos on-premises y despliegues híbridos. También se puede utilizar con máquinas virtuales y cargas de trabajo bare-metal, no solo con contenedores de Kubernetes.
+Calico se usa en entornos de nube, locales e híbridos, pero siguen aplicándose las limitaciones de plataforma, kernel, plano de datos y edición. GKE Dataplane V2 usa específicamente Cilium, no Calico. Las capacidades para máquinas virtuales y Windows no son idénticas a las de Kubernetes en Linux.
 
 </details>
 
-6. ¿Qué opciones de dataplane admite Calico?
+6. ¿Qué lista incluye las opciones compatibles del plano de datos de Calico para Linux?
    - A) Solo iptables
    - B) Solo eBPF
-   - C) iptables y eBPF
+   - C) iptables, nftables y eBPF
    - D) Solo IPVS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) iptables y eBPF**
+**Respuesta: C) iptables, nftables y eBPF**
 
 **Explicación:**
-Calico admite los dataplanes iptables y eBPF. El dataplane iptables es la opción tradicional y más madura, mientras que el modo eBPF se introdujo en 2020 y ofrece un rendimiento mejorado con un menor uso de CPU. Los usuarios pueden elegir el dataplane que mejor se adapte a sus requisitos y a la compatibilidad con la versión del kernel.
+Calico admite estas opciones del plano de datos para Linux. Los modos de encapsulación, como VXLAN/IPIP, son una elección distinta; e IPVS es un backend de kube-proxy, no un plano de datos completo de Calico. Elige según los requisitos del kernel, la plataforma y las funciones; el laboratorio usa explícitamente iptables.
 
 </details>
 
 7. ¿Qué es calicoctl?
    - A) Una interfaz gráfica de usuario para Calico
-   - B) Una herramienta de línea de comandos para gestionar recursos de Calico
+   - B) Una herramienta de línea de comandos para administrar recursos de Calico
    - C) Un operador de Kubernetes para Calico
    - D) Un panel de monitorización
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una herramienta de línea de comandos para gestionar recursos de Calico**
+**Respuesta: B) Una herramienta de línea de comandos para administrar recursos de Calico**
 
 **Explicación:**
-calicoctl es una herramienta de interfaz de línea de comandos para gestionar recursos de Calico, como políticas de red, grupos de IP, configuraciones de BGP y nodos. Proporciona acceso directo al almacén de datos de Calico y es esencial para la resolución de problemas, el diagnóstico y las tareas de configuración avanzada que podrían no realizarse fácilmente solo mediante kubectl.
+calicoctl administra recursos de Calico y ofrece diagnósticos, como operaciones de IPAM/BGP. Usa una versión de cliente compatible. Muchas operaciones habituales con recursos también se pueden realizar mediante kubectl y el servidor de API de Calico. calicoctl node status requiere un entorno de nodo adecuado; un kubeconfig de portátil por sí solo no basta.
 
 </details>
 
-8. ¿Cuál es la relación entre Calico OSS y Calico Enterprise?
-   - A) Son productos completamente independientes sin código compartido
-   - B) Calico Enterprise es la versión comercial construida sobre Calico OSS
-   - C) Calico OSS está obsoleto en favor de Calico Enterprise
+8. ¿Qué relación hay entre Calico OSS y Calico Enterprise?
+   - A) Son productos completamente separados, sin código compartido
+   - B) Calico Enterprise es la versión comercial basada en Calico OSS
+   - C) Calico OSS está obsoleto y ha sido sustituido por Calico Enterprise
    - D) Calico Enterprise solo funciona con Calico Cloud
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Calico Enterprise es la versión comercial construida sobre Calico OSS**
+**Respuesta: B) Calico Enterprise es la versión comercial basada en Calico OSS**
 
 **Explicación:**
-Calico Enterprise es la oferta comercial de Tigera que se basa en el proyecto Calico de código abierto. Añade características empresariales como detección avanzada de amenazas, informes de cumplimiento, gestión multiclúster y soporte comercial. La funcionalidad principal de redes y políticas se comparte entre ambas versiones.
+Enterprise amplía la tecnología de Calico con funciones y soporte comerciales. El código abierto también incluye niveles de políticas y observabilidad con Goldmane/Whisker, y se puede ejecutar en producción. Consulta la matriz de funciones vigente en lugar de suponer que todas las funciones avanzadas son de pago o que OSS solo sirve para clústeres pequeños.
 
 </details>
 
-9. ¿En qué año introdujo Calico la compatibilidad con eBPF dataplane?
+9. ¿En qué año incorporó Calico la compatibilidad con el plano de datos eBPF?
    - A) 2018
    - B) 2019
    - C) 2020
@@ -145,15 +145,15 @@ Calico Enterprise es la oferta comercial de Tigera que se basa en el proyecto Ca
 **Respuesta: C) 2020**
 
 **Explicación:**
-Calico introdujo la compatibilidad con eBPF dataplane en 2020. Fue un hito significativo que permitió a Calico ofrecer un rendimiento mejorado con características como Direct Server Return (DSR), balanceo de carga en el momento de la conexión y la capacidad de reemplazar kube-proxy, todo ello mientras utiliza menos CPU que el dataplane iptables.
+El anuncio oficial del 25 de febrero de 2020 presentó el nuevo plano de datos como vista previa tecnológica para Calico 3.13. No fue un anuncio de disponibilidad general. eBPF se ejecuta en el kernel de Linux y puede sustituir partes del procesamiento convencional de paquetes, no el kernel en sí. El rendimiento depende de la carga de trabajo medida.
 
 </details>
 
 10. ¿Qué es Calico Cloud?
-    - A) Un servicio gestionado de Kubernetes
-    - B) Una plataforma SaaS para la seguridad de red de Calico
-    - C) Una solución de almacenamiento cloud
-    - D) Un servicio CDN para Kubernetes
+   - A) Un servicio administrado de Kubernetes
+   - B) Una plataforma SaaS para la seguridad de red de Calico
+   - C) Una solución de almacenamiento en la nube
+   - D) Un servicio CDN para Kubernetes
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -161,10 +161,10 @@ Calico introdujo la compatibilidad con eBPF dataplane en 2020. Fue un hito signi
 **Respuesta: B) Una plataforma SaaS para la seguridad de red de Calico**
 
 **Explicación:**
-Calico Cloud, lanzado en 2022, es una oferta SaaS (Software como servicio) de Tigera que proporciona características de Calico Enterprise como servicio gestionado. Simplifica el despliegue y la gestión de características avanzadas de seguridad de red, observabilidad y cumplimiento sin la sobrecarga operativa de autogestionar los componentes empresariales.
+Calico Cloud es la oferta SaaS de Tigera para seguridad y observabilidad de red. No es un servicio de alojamiento de Kubernetes, un almacén de objetos ni una CDN. Sus funciones y responsabilidades difieren de las de Enterprise autoadministrado; aun así, se requiere integrar y configurar el clúster. La fecha de lanzamiento de 2022, que carecía de respaldo en la versión anterior, no es necesaria para esta definición.
 
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../../networking/calico/01-introduction.md) | [Siguiente cuestionario: Arquitectura](./02-architecture-quiz.md)
+[Volver a los materiales de aprendizaje](../../../networking/calico/01-introduction.md) | [Siguiente cuestionario: Arquitectura](02-architecture-quiz.md)

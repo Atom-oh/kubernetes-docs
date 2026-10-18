@@ -34,7 +34,7 @@
 **答案：C) 事件源扩缩器以及激活和缩容至零的管理**
 
 **说明：**
-KEDA（Kubernetes 事件驱动自动扩缩容）包含适用于 AWS SQS、Kafka、RabbitMQ、数据库等外部系统的扩缩器。它向 HPA 提供外部指标，并管理受支持工作负载的激活和缩容至零过程。HPA 本身也可以通过适配器使用外部指标；KEDA 并不会让 HPA 无法读取这些指标。
+KEDA（Kubernetes 事件驱动自动扩缩容）包含适用于 AWS SQS、Kafka、RabbitMQ、数据库等外部系统的扩缩器。它向 HPA 提供外部指标，并管理受支持工作负载的激活和缩容至零过程。HPA 本身也可以通过适配器使用外部指标。
 
 </details>
 
@@ -68,7 +68,7 @@ VPA 1.8.0 弃用了 Auto 模式，该模式目前的行为与 Recreate 相同。
 **答案：B) 一种注解，可影响缩容时先移除哪些 Pod**
 
 **说明：**
-`controller.kubernetes.io/pod-deletion-cost` 注解为 Pod 指定成本值。在 ReplicaSet 中，经过较早阶段的分配、阶段和就绪状态比较后，系统会优先选择成本较低的 Pod。这只是尽力而为的机制，不能防止驱逐、Spot 回收、Job/StatefulSet 行为，也不能影响不同 Deployment 之间的扩缩容。
+`controller.kubernetes.io/pod-deletion-cost` 注解为 Pod 指定成本值。在同一 ReplicaSet 内，先比较 Pod 的分配情况、所处阶段和就绪状态，再优先考虑删除成本较低的 Pod。这只是尽力而为的机制，不能保证免受驱逐、Spot 回收、Job/StatefulSet 行为或跨 Deployment 扩缩容的影响。
 
 </details>
 
@@ -136,7 +136,7 @@ HPA 会将当前指标值与目标值进行比较，然后按比例调整副本�
 **答案：B) Pod 原地垂直扩缩容**
 
 **说明：**
-Pod 原地调整大小功能从 1.27 版的 Alpha 阶段发展到 1.33 版的 Beta 阶段，并于 1.35 版达到稳定阶段。受支持的 VPA 模式可以使用此功能，但 resizePolicy 仍可能要求重启容器，容量/QoS 限制也可能导致更新延迟或被拒绝。
+Pod 原地调整资源配置功能从 1.27 版的 Alpha 阶段发展到 1.33 版的 Beta 阶段，并于 1.35 版达到稳定阶段。受支持的 VPA 模式可以使用此功能，但 resizePolicy 仍可能要求重启容器，容量/QoS 限制也可能导致更新延迟或被拒绝。
 
 </details>
 
@@ -170,6 +170,6 @@ metrics-server 仅提供 CPU 和内存指标。Prometheus Adapter 会通过 cust
 **答案：B) 将它们配置在不同的资源维度上（HPA 管理 CPU，VPA 管理内存）**
 
 **说明：**
-如果 HPA 和 VPA 都试图管理同一资源维度，就可能发生冲突。可选方案包括仅提供建议的 VPA，或者让 HPA 使用 RPS/积压量等工作负载指标，同时由 VPA 负责资源配置。Initial 模式仍会更改新 Pod 的请求量，因此不能消除 CPU 利用率计算分母方面的相互影响。还应验证重启和调度方面的影响。
+如果 HPA 和 VPA 都试图管理同一资源维度，就可能发生冲突。可选方案包括仅提供建议的 VPA，或者让 HPA 使用 RPS/积压量等工作负载指标，同时由 VPA 负责资源配置。Initial 模式仍会更改新 Pod 的资源请求值（requests），因此不能消除 CPU 利用率计算分母方面的相互影响。还应验证重启和调度方面的影响。
 
 </details>

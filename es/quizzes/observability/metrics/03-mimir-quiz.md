@@ -1,183 +1,165 @@
 # Cuestionario de Grafana Mimir
 
-Un cuestionario para poner a prueba tu comprensión de Grafana Mimir.
+Referencia: Mimir 3.2.1 / chart 6.2.0. Repasa la arquitectura, la identidad, el almacenamiento y los límites de validación actuales.
 
----
+## 1. ¿Qué backend está previsto para el almacenamiento de bloques de Mimir en producción?
 
-1. ¿Cuál es el backend de almacenamiento principal de Grafana Mimir?
-   - A) Solo SSD local
-   - B) Almacenamiento de objetos (S3, GCS, Azure Blob)
-   - C) Almacenamiento compartido NFS
-   - D) Solo almacenamiento en bloques
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Almacenamiento de objetos (S3, GCS, Azure Blob)**
-
-**Explicación:**
-Grafana Mimir requiere almacenamiento de objetos. Admite S3, Google Cloud Storage, Azure Blob Storage, etc., proporcionando escalabilidad ilimitada y almacenamiento a largo plazo rentable. El almacenamiento local solo se utiliza para el WAL de Ingester y los datos temporales.
-
-</details>
-
----
-
-2. ¿Cuál es el rol de Distributor en la arquitectura de Mimir?
-   - A) Almacenamiento de datos a largo plazo
-   - B) Primer punto de entrada para las solicitudes de escritura, validación de tenants y distribución de samples
-   - C) Caché de resultados de consultas
-   - D) Compactación de bloques
+- A. Solo SSD local
+- B. Almacenamiento de objetos, como S3, GCS, Azure Blob o Swift
+- C. Solo NFS
+- D. Solo una caché en memoria
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Primer punto de entrada para las solicitudes de escritura, validación de tenants y distribución de samples**
+**Respuesta: B. Almacenamiento de objetos, como S3, GCS, Azure Blob o Swift**
 
-**Explicación:**
-Distributor es el primer punto de entrada para las solicitudes de escritura y se encarga de la validación de ID de tenant, la validación de series temporales, la distribución de Ingester basada en hash ring y la replicación según el factor de replicación. Es un componente sin estado que se escala horizontalmente con facilidad.
+Los despliegues de producción usan el almacenamiento de objetos externo que corresponda. Existe un backend de sistema de archivos para desarrollo local; eso no lo convierte en un almacén de objetos compartido para producción. La TSDB/WAL local de los ingesters y el almacenamiento de Kafka tienen requisitos de persistencia y recuperación independientes.
 
 </details>
 
----
+## 2. ¿Qué hace el distributor en la arquitectura de almacenamiento de ingesta?
 
-3. ¿Cómo se implementa la multitenencia en Mimir?
-   - A) Operar clusters independientes por tenant
-   - B) Identificar tenants mediante el encabezado X-Scope-OrgID
-   - C) Separación de tenants basada en direcciones IP
-   - D) Separación de tenants basada en Namespace
+- A. Almacena por sí solo todos los bloques de largo plazo
+- B. Valida las escrituras y agrega registros a Kafka
+- C. Devuelve cada consulta desde una caché de resultados
+- D. Compacta bloques de TSDB
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Identificar tenants mediante el encabezado X-Scope-OrgID**
+**Respuesta: B. Valida las escrituras y agrega registros a Kafka**
 
-**Explicación:**
-Mimir identifica tenants mediante el encabezado HTTP `X-Scope-OrgID`. Agregar este encabezado a la configuración de remote_write de Prometheus aísla los datos de cada tenant. Se pueden configurar límites por tenant y los datos se separan mediante rutas de tenant en el almacenamiento de objetos.
+Los distributors validan y limitan las escrituras, y luego las distribuyen entre particiones de Kafka. La confirmación de escritura depende de que la escritura en Kafka tenga éxito con las condiciones de durabilidad configuradas. No espera a que un bloque se cargue en S3. Las escrituras directas a un quórum de ingesters corresponden a la arquitectura clásica.
 
 </details>
 
----
+## 3. ¿Cómo se debe proteger la selección de tenants para clientes que no son de confianza?
 
-4. ¿Por qué Ingester de Mimir carga bloques en el almacenamiento de objetos?
-   - A) Mejorar el rendimiento de las consultas en tiempo real
-   - B) Persistir los datos de la memoria en disco
-   - C) Almacenar reglas de alertas
-   - D) Respaldar la configuración de dashboards
+- A. Permitir que los clientes elijan cualquier valor para X-Scope-OrgID
+- B. Autenticar y autorizar en una pasarela de confianza que establezca el encabezado del tenant
+- C. Usar solo un prefijo de clave de objetos
+- D. Tratar el nombre de un namespace como autenticación HTTP automática
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Persistir los datos de la memoria en disco**
+**Respuesta: B. Autenticar y autorizar en una pasarela de confianza que establezca el encabezado del tenant**
 
-**Explicación:**
-Ingester primero almacena en memoria los datos de series temporales recibidos y, después, crea periódicamente (el valor predeterminado es 2 horas) bloques TSDB y los carga en el almacenamiento de objetos. Esto garantiza que los datos se almacenen de forma permanente y minimiza la pérdida de datos incluso si falla un Ingester.
+X-Scope-OrgID identifica un tenant; no es una credencial. La pasarela de confianza debe reemplazar los encabezados que no sean de confianza y aplicar la correspondencia entre el cliente y su tenant. Un nombre de usuario de autenticación básica solo se asigna a un tenant si el proxy aplica esa política. También hay que restringir el acceso directo que evite la pasarela.
 
 </details>
 
----
+## 4. ¿Por qué los ingesters cargan bloques de TSDB al almacenamiento de objetos?
 
-5. ¿Cuál es el rol correcto de Compactor de Mimir?
-   - A) Procesamiento de consultas en tiempo real
-   - B) Combinar bloques pequeños en bloques grandes y eliminar duplicados
-   - C) Recopilación de métricas
-   - D) Transmisión de alertas
+- A. Para evitar toda persistencia local
+- B. Para proporcionar almacenamiento de bloques a largo plazo y acceso a consultas sobre ellos
+- C. Para respaldar los dashboards de Grafana
+- D. Para garantizar que todas las muestras confirmadas sobrevivan a cualquier fallo posible
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Combinar bloques pequeños en bloques grandes y eliminar duplicados**
+**Respuesta: B. Para proporcionar almacenamiento de bloques a largo plazo y acceso a consultas sobre ellos**
 
-**Explicación:**
-Compactor combina (compacta) bloques pequeños del almacenamiento de objetos en bloques más grandes, elimina los datos duplicados y borra datos antiguos según las políticas de retención. Esto mejora el rendimiento de las consultas y reduce los costos de almacenamiento.
+Los ingesters mantienen una TSDB/WAL local y cargan bloques periódicamente. La retención local se solapa con la transferencia de datos a los store-gateways. La confirmación de Kafka, el consumo por los ingesters y la carga de objetos son etapas distintas; la recuperación sigue dependiendo de la persistencia, la retención y las condiciones del fallo.
 
 </details>
 
----
+## 5. ¿Qué responsabilidades corresponden al compactor?
 
-6. ¿Cuál NO es una función proporcionada por Query-frontend de Mimir?
-   - A) División de consultas grandes
-   - B) Caché de resultados
-   - C) Almacenamiento de datos
-   - D) Reintentos de consultas
+- A. Recopilar métricas de cada endpoint de las aplicaciones
+- B. Combinar bloques, deduplicar muestras replicadas y limpiar datos según la retención
+- C. Autenticar todos los tenants
+- D. Reducir automáticamente todas las series sin procesar con downsampling_enabled
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Almacenamiento de datos**
+**Respuesta: B. Combinar bloques, deduplicar muestras replicadas y limpiar datos según la retención**
 
-**Explicación:**
-Query-frontend es un componente sin estado responsable de la optimización de consultas y el almacenamiento en caché. Divide las consultas grandes en consultas más pequeñas, almacena en caché los resultados y vuelve a intentar las consultas fallidas. El almacenamiento de datos es gestionado por Ingester (a corto plazo) y el almacenamiento de objetos (a largo plazo).
+La compactación combina bloques y elimina muestras duplicadas de las réplicas. La limpieza por retención es asíncrona. La opción inventada compactor.downsampling_enabled no es válida; las reglas de registro crean series derivadas, pero no eliminan automáticamente los datos sin procesar.
 
 </details>
 
----
+## 6. ¿Cuál no es una responsabilidad del query-frontend?
 
-7. Al comparar Mimir con VictoriaMetrics, ¿cuál es una característica correcta de Mimir?
-   - A) Solo hay disco local disponible
-   - B) Menor complejidad operativa
-   - C) Almacenamiento de objetos obligatorio, multitenencia de nivel empresarial
-   - D) Usa el lenguaje de consultas MetricsQL
+- A. Dividir y fragmentar las consultas compatibles
+- B. Usar una caché de resultados de consultas
+- C. Persistir los bloques TSDB autoritativos de largo plazo
+- D. Combinar las respuestas de las consultas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Almacenamiento de objetos obligatorio, multitenencia de nivel empresarial**
+**Respuesta: C. Persistir los bloques TSDB autoritativos de largo plazo**
 
-**Explicación:**
-Mimir requiere almacenamiento de objetos y proporciona multitenencia nativa, por lo que es adecuado para entornos empresariales. VictoriaMetrics también admite disco local y es más sencillo de operar, pero Mimir tiene una excelente integración con el ecosistema de Grafana.
+El frontend planifica y almacena en caché el trabajo, y devuelve las respuestas combinadas. El scheduler pone el trabajo en cola y los queriers recuperan los datos necesarios. Que haya aciertos en la caché de metadatos o de chunks no significa que se responda automáticamente la consulta completa. La alineación de pasos puede cambiar las marcas de tiempo solicitadas y la conformidad con PromQL.
 
 </details>
 
----
+## 7. ¿Qué comparación con VictoriaMetrics es precisa?
 
-8. ¿Cuál es el rol de Store-gateway en Mimir?
-   - A) Recopilación de métricas
-   - B) Almacenar en caché bloques del almacenamiento de objetos y procesar consultas de datos históricos
-   - C) Evaluación de reglas de alertas
-   - D) Autenticación de tenants
+- A. Mimir nunca tiene un backend de sistema de archivos
+- B. El uso de Grafana hace que Mimir sea universalmente más rápido
+- C. Compara la arquitectura de almacenamiento, la semántica de consultas, la aplicación de la multitenencia, la recuperación y el costo medido
+- D. VictoriaMetrics no admite tenants
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Almacenar en caché bloques del almacenamiento de objetos y procesar consultas de datos históricos**
+**Respuesta: C. Compara la arquitectura de almacenamiento, la semántica de consultas, la aplicación de la multitenencia, la recuperación y el costo medido**
 
-**Explicación:**
-Store-gateway almacena en caché los índices y chunks de los bloques almacenados en el almacenamiento de objetos y procesa las consultas de datos históricos. Querier recupera los datos recientes de Ingester y los datos históricos de Store-gateway, y luego los combina.
+Ambos productos requieren un límite de autenticación y autorización. El almacenamiento de bloques de producción de Mimir y la arquitectura revisada de VictoriaMetrics basada en almacenamiento local tienen requisitos operativos distintos. Ni las clasificaciones de compresión sin respaldo ni la preferencia por un ecosistema determinan cuál ofrece mejor rendimiento o menor costo.
 
 </details>
 
----
+## 8. ¿Qué ofrece el store-gateway?
 
-9. ¿Cuál es el rol de la configuración `compactor_blocks_retention_period` en Mimir?
-   - A) Período de retención de caché en memoria
-   - B) Establecer el período de retención de datos de bloques
-   - C) Período de retención de logs
-   - D) Período de retención del historial de alertas
+- A. Recopilación de métricas de aplicaciones
+- B. Acceso a consultas sobre bloques mediante almacenamiento de objetos, encabezados de índice y cachés configuradas
+- C. Autenticación automática de tenants
+- D. Replicación de brokers de Kafka
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Establecer el período de retención de datos de bloques**
+**Respuesta: B. Acceso a consultas sobre bloques mediante almacenamiento de objetos, encabezados de índice y cachés configuradas**
 
-**Explicación:**
-`compactor_blocks_retention_period` establece el período durante el que Compactor conserva los bloques. Por ejemplo, configurarlo en `365d` elimina los bloques con más de 1 año de antigüedad. Esta configuración ayuda a gestionar los costos de almacenamiento y a cumplir los requisitos de conformidad.
+Los queriers solicitan datos de bloques a los store-gateways y datos recientes a los ingesters; durante la transferencia de bloques, los rangos pueden solaparse. Reutilizar la caché o los metadatos del índice evita parte del trabajo, pero no significa que todas las consultas se respondan sin leer chunks.
 
 </details>
 
----
+## 9. ¿Qué controla compactor_blocks_retention_period?
 
-10. ¿Cuál NO es una recomendación para la configuración de alta disponibilidad de Mimir?
-    - A) Mínimo de 3 réplicas de Ingester, replicación con reconocimiento de zona
-    - B) Mínimo de 2 réplicas de Store-gateway
-    - C) Implementar todos los componentes en una única zona de disponibilidad
-    - D) Habilitar el almacenamiento en caché con memcached
+- A. Solo la caducidad de la caché en memoria
+- B. La política de retención de bloques a largo plazo que aplica el compactor
+- C. La retención de topics de Kafka
+- D. Una fecha límite exacta para la eliminación física o por cumplimiento
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Implementar todos los componentes en una única zona de disponibilidad**
+**Respuesta: B. La política de retención de bloques a largo plazo que aplica el compactor**
 
-**Explicación:**
-Para lograr alta disponibilidad, los componentes deben distribuirse entre varias zonas de disponibilidad (AZ). Mimir admite replicación con reconocimiento de zona para distribuir los Ingesters entre varias AZ. Implementar en una única AZ provoca una interrupción completa del servicio si esa AZ falla.
+Los rangos de tiempo de los bloques, los escaneos, los marcadores de eliminación y deletion_delay afectan a la eliminación real. La retención de la TSDB local y la de Kafka son independientes. El versionado de S3, Object Lock y las copias de seguridad también afectan a la eliminación completa; una configuración de 365d por sí sola no garantiza el cumplimiento normativo.
 
 </details>
+
+## 10. ¿Cuál no es una suposición válida sobre la disponibilidad?
+
+- A. Validar por separado la durabilidad y la recuperación de Kafka
+- B. Hacer coincidir los selectores de zona con nodos que realmente puedan programarse
+- C. Colocarlo todo en una sola AZ y afirmar que tolera la pérdida de una zona
+- D. Revisar la cobertura de particiones de ingesters, las réplicas de store-gateway y las dependencias de los despliegues
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Colocarlo todo en una sola AZ y afirmar que tolera la pérdida de una zona**
+
+Las zonas lógicas no equivalen a la ubicación física. El ejemplo renderiza tres ingesters y store-gateways en tres zonas seleccionadas, pero aún hay que validar la topología de los brokers, los PVC, la capacidad, las colas, los despliegues y otros componentes. La redundancia de la caché y un solo compactor no demuestran alta disponibilidad integral.
+
+</details>
+
+[Volver al capítulo](../../../observability/metrics/03-mimir.md)

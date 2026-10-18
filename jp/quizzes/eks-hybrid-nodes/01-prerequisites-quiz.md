@@ -1,179 +1,114 @@
-# EKS Hybrid Nodes 前提条件クイズ
+# EKS Hybrid Nodes の前提条件クイズ
 
 > **関連ドキュメント**: [前提条件](../../eks-hybrid-nodes/01-prerequisites.md)
+> **最終更新日**: 2026 年 9 月 12 日
 
 ## 多肢選択問題
 
-### 1. EKS Hybrid Nodes のユースケースとして適していないものはどれですか？
+### 1. EKS Hybrid Node として machine を登録する理由として、サポートされないものはどれですか？
 
-A. オンプレミスのデータセンターにある GPU サーバーの活用
-B. 規制コンプライアンスのためのデータローカリティ要件
-C. 純粋なクラウドネイティブワークロードの実行
-D. レイテンシに敏感なエッジワークロード
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: C. 純粋なクラウドネイティブワークロードの実行**
-
-**解説:**
-純粋なクラウドネイティブワークロードは、通常の EKS node groups または Fargate で実行する方が効率的です。Hybrid Nodes は、特別な要件（オンプレミス、エッジ、規制など）がある場合に使用されます。
-
-**EKS Hybrid Nodes に適したユースケース:**
-- オンプレミスの GPU/特殊ハードウェアの活用
-- データ主権/規制コンプライアンス要件
-- レイテンシに敏感なエッジコンピューティング
-- クラウド移行の移行期間
-- 既存インフラ投資の保護
-
-</details>
-
-### 2. EKS Hybrid Nodes でサポートされているオペレーティングシステムはどれですか？
-
-A. Windows Server 2019 のみ
-B. Ubuntu 20.04/22.04, Amazon Linux 2023, RHEL 8/9
-C. macOS Ventura 以降
-D. FreeBSD 13 以降
+- A) 互換性のあるオンプレミス GPU server を使う
+- B) アプリケーションの処理をローカルデータの近くで行う
+- C) 通常の EC2／cloud machine を Hybrid Node のインフラとして登録する
+- D) 接続性と復旧方法をテストした edge workload を運用する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. Ubuntu 20.04/22.04, Amazon Linux 2023, RHEL 8/9**
+**回答: C) 通常の EC2／cloud machine を Hybrid Node のインフラとして登録する**
 
 **解説:**
-EKS Hybrid Nodes は Linux ベースのオペレーティングシステムのみをサポートします。サポートされる OS version には次が含まれます:
-- Ubuntu 20.04 LTS, 22.04 LTS
-- Amazon Linux 2023
-- Red Hat Enterprise Linux (RHEL) 8, 9
-- Bottlerocket (container-optimized OS)
-
-```bash
-# Check OS version
-cat /etc/os-release
-
-# Check kernel version (5.4 or later recommended)
-uname -r
-```
+AWS が Hybrid Node のインフラとしてサポートするのは、顧客が運用するオンプレミスまたは edge の物理／仮想 host であり、cloud infrastructure ではありません。EC2 を Hybrid Node として登録しても Hybrid の料金が発生します。cloud 上の node には通常の AWS compute type を使ってください。Hybrid Node には安定した接続性が必要です。配置 label だけでは、規制への適合やオフライン運用は証明できません。
 
 </details>
 
-### 3. Hybrid Nodes で GPU ワークロードを実行するための最小要件ではないものはどれですか？
+### 2. 現行の AWS Hybrid 統合互換性 matrix に一致する OS の説明はどれですか？
 
-A. NVIDIA Driver 525 以降
-B. CUDA Toolkit 11.8 以降
-C. 最小 4GB の GPU メモリ
-D. x86_64 または arm64 architecture が必須である
+- A) Windows Server のみ
+- B) Ubuntu 20.04／22.04／24.04、RHEL 8／9、仮想化環境の AL2023、サポート対象の Bottlerocket VMware variant
+- C) あらゆる macOS release
+- D) どの Linux image も自動的に AWS の OS support を受ける
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D. x86_64 または arm64 architecture が必須である**
+**回答: B) Ubuntu 20.04／22.04／24.04、RHEL 8／9、仮想化環境の AL2023、サポート対象の Bottlerocket VMware variant**
 
 **解説:**
-x86_64 または arm64 architecture は CPU architecture の要件であり、GPU ワークロードの直接的な要件ではありません。GPU ワークロードの主な要件は次のとおりです:
-
-- **NVIDIA Driver**: 525 以降 (CUDA 12 support)
-- **CUDA Toolkit**: 11.8 以降
-- **GPU Memory**: 最小 4GB 推奨（ワークロードによって異なります）
-- **containerd**: 1.6 以降 (GPU container support)
-
-```bash
-# Check NVIDIA driver version
-nvidia-smi --query-gpu=driver_version --format=csv,noheader
-
-# Check CUDA version
-nvcc --version
-```
+vendor による security maintenance、architecture、選択した CNI と kernel を確認してください。Bottlerocket VMware v1.37.0 以降は x86_64 のみで、専用の bootstrap 手順を使います。AL2023 はオンプレミスの仮想化環境向けであり、EC2 外では AWS の OS support 対象になりません。ARM 上の EKS kube-proxy 1.31 以降には ARMv8.2+crypto が必要です。kernel 5.4 以降という一般的な条件や CPU model 名だけでは、十分な検証になりません。
 
 </details>
 
-### 4. EKS Hybrid Nodes の最小ハードウェア要件は何ですか？
+### 3. GPU workload の互換性を評価する際、誤っている説明はどれですか？
 
-A. CPU 1 core, Memory 512MB
-B. CPU 2 cores, Memory 2GB
-C. CPU 4 cores, Memory 8GB
-D. CPU 8 cores, Memory 16GB
+- A) driver と CUDA／framework image の互換性が重要である
+- B) 必要な memory は workload によって異なる
+- C) サポート対象の OS／kernel と container runtime が重要である
+- D) GPU を搭載すれば CPU architecture は無視できる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. CPU 2 cores, Memory 2GB**
+**回答: D) GPU を搭載すれば CPU architecture は無視できる**
 
 **解説:**
-EKS Hybrid Nodes の最小ハードウェア要件は次のとおりです:
-
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU | 2 cores | 4 cores or more |
-| Memory | 2GB | 4GB or more |
-| Disk | 20GB | 50GB or more (SSD recommended) |
-| Network | 100Mbps | 1Gbps or more |
-
-本番環境では、ワークロード要件に応じてより高い仕様が必要になる場合があります。
+CPU architecture、GPU variant、driver、OS／kernel、container toolkit／runtime、アプリケーション image のすべてに互換性が必要です。Hybrid Node に一律適用できる 4 GB の GPU memory 下限や、固定の 525／550 driver 要件はありません。適切に package 化された container を実行するだけなら、host の `nvcc` compiler は必須ではありません。`nvidia-smi` と `nvcc` が示す情報は異なります。
 
 </details>
 
-### 5. EKS Hybrid Nodes configuration に必要な software component ではないものはどれですか？
+### 4. host resource に関する基本的な推奨を、どう解釈すべきですか？
 
-A. containerd runtime
-B. kubelet
-C. Docker Engine
-D. aws-iam-authenticator
+- A) 1 core と 512 MB で十分だと保証される
+- B) AWS は少なくとも 1 vCPU と 1 GiB RAM を推奨するが、全環境に適用される厳密な最小値はない
+- C) すべての workload に正確に 4 core と 8 GB が必要である
+- D) 50 GB の disk があれば readiness が保証される
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. Docker Engine**
+**回答: B) AWS は少なくとも 1 vCPU と 1 GiB RAM を推奨するが、全環境に適用される厳密な最小値はない**
 
 **解説:**
-EKS Hybrid Nodes は container runtime として containerd を使用するため、Docker Engine は不要です。必要な components は次のとおりです:
-
-- **containerd**: Container runtime (1.6 以降)
-- **kubelet**: Kubernetes node agent
-- **aws-iam-authenticator**: AWS IAM authentication
-- **CNI plugins**: Container networking
-
-```bash
-# nodeadm automatically installs components
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-
-# Check installed components
-systemctl status containerd
-systemctl status kubelet
-```
+OS、kubelet／runtime、CNI／agent、image／log、実際の workload に必要な容量をそれぞれ見積もってください。以前示されていた 2 core／2 GB や 20／50／100 GB の disk 推奨は、検証済みの workload 最小要件ではなく、互いに整合しない計画例でした。同様に、AWS の 100 Mbps／200 ms という network guidance も一般的な目安であり、全環境共通の受け入れ基準ではありません。
 
 </details>
 
-### 6. Hybrid Nodes で H100 GPU を使用するために必要な最小 NVIDIA driver version は何ですか？
+### 5. host を EKS Hybrid Node にすることだけを理由に、必須とはならない component はどれですか？
 
-A. 450.x
-B. 470.x
-C. 525.x
-D. 535.x
+- A) `containerd` などの互換性のある CRI runtime
+- B) kubelet
+- C) Docker Engine
+- D) 選択した AWS credential／authentication helper
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D. 535.x**
+**回答: C) Docker Engine**
 
 **解説:**
-NVIDIA H100 GPU は Hopper architecture を使用し、最新の drivers が必要です:
-
-| GPU Model | Minimum Driver Version | Recommended Driver Version |
-|-----------|----------------------|---------------------------|
-| A100 | 450.x | 525.x or later |
-| H100 | 525.x | 535.x or later |
-| H200 | 535.x | 545.x or later |
-
-```bash
-# Verify H100 driver installation
-nvidia-smi
-
-# Update driver
-sudo apt-get update
-sudo apt-get install nvidia-driver-535
-```
-
-H100 の主要機能（MIG expansion、Transformer Engine など）を最大限に活用するには、driver version 535.x 以降が推奨されます。
+Docker の `containerd` package source は、Docker Engine を実行するための要件ではありません。Bottlerocket 以外の host では、`nodeadm install` が依存関係をインストールし、`config check` が入力を検証し、`init` が node を構成して cluster に参加させます。signing key の変更後、SSM のインストール／upgrade には nodeadm 1.0.19 以降が必要です。確認対象の release は 1.0.20 です。RHEL では `docker` または事前にインストールした runtime を指定し、`none` は distro ではありません。
 
 </details>
+
+### 6. H100 を使う Hybrid Node deployment では、どのように進めるべきですか？
+
+- A) すべての host に 450.x をインストールする
+- B) 過去の 525.x の例が常に十分だとみなす
+- C) framework にかかわらず、必ず 535.x を使う
+- D) サポート対象の GPU／OS／driver／CUDA／runtime の組み合わせを選び、アプリケーションを検証する
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: D) サポート対象の GPU／OS／driver／CUDA／runtime の組み合わせを選び、アプリケーションを検証する**
+
+**解説:**
+以前の表は最低 driver version と推奨 version を混同し、回答とも矛盾していました。450／525／535／545／550 という値は、現在の deployment 全般に適用される要件ではありません。正確な H100 variant、サポート対象の driver branch、framework image、必要な feature を確認し、退避させたテスト host で変更を試してください。この監査では GPU を実行せず、model benchmark も行っていません。
+
+</details>
+
+## 参考資料
+
+- [Hybrid Node の前提条件](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html)
+- [Hybrid Node の OS 互換性](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
+- [nodeadm リファレンス](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)

@@ -1,289 +1,176 @@
 # Cuestionario sobre Schema Registry
 
-Este cuestionario evalúa tu comprensión de por qué existen los schema registries (registros de esquemas), las ventajas y desventajas de serialización de Avro/Protobuf, los cuatro modos de compatibilidad y las diferencias de licencia entre las principales implementaciones (Karapace, Apicurio, Confluent).
+Repasa los contratos de esquemas, la codificación, la compatibilidad, la recuperación y el ejemplo de despliegue.
 
-## Preguntas de opción múltiple
-
-1. ¿Cuál es el problema más fundamental causado por el hecho de que los brokers de Kafka nunca validan el contenido de los mensajes?
-   - A) El rendimiento del broker disminuye
-   - B) Los productores y consumidores pueden evolucionar sus esquemas sin conocer los cambios de los demás, lo que provoca fallos de deserialización
-   - C) No puedes crear más de un topic
-   - D) El rebalanceo de particiones se vuelve imposible
+## 1. ¿Por qué el almacenamiento básico de registros de Kafka no impone un contrato de esquema?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los productores y consumidores pueden evolucionar sus esquemas sin conocer los cambios de los demás, lo que provoca fallos de deserialización**
+Las claves y los valores se almacenan como bytes. La validación estructural y de negocio depende de los serializadores, las aplicaciones y las rutas de validación. Agregar un campo no siempre rompe un consumidor.
 
-**Explicación:**
-Kafka trata cada mensaje como un arreglo opaco de bytes y no impone ningún formato de datos. Como los productores y consumidores suelen ser aplicaciones separadas desplegadas con calendarios independientes, un cambio de esquema en un lado puede romper silenciosamente el otro, causando fallos de deserialización o valores corruptos. Un schema registry resuelve esto gestionando centralmente el contrato y aplicando la compatibilidad.
 </details>
 
-2. En comparación con JSON sin esquema, ¿cuál es la mayor ventaja de combinar un formato binario como Avro/Protobuf con un schema registry?
-   - A) Se vuelve más fácil de leer para los humanos
-   - B) Los payloads se vuelven más pequeños y los cambios de esquema se validan centralmente
-   - C) Ajusta automáticamente el número de particiones
-   - D) Los consumer groups se vuelven innecesarios
+## 2. ¿Se pueden versionar y validar documentos JSON antes del tiempo de ejecución sin un registro?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los payloads se vuelven más pequeños y los cambios de esquema se validan centralmente**
+Sí. JSON Schema, las comprobaciones de CI y las especificaciones versionadas pueden proporcionar un contrato. Un registro centraliza la gobernanza y la distribución; la codificación binaria es una elección aparte.
 
-**Explicación:**
-Avro/Protobuf usan codificación binaria compacta que no repite los nombres de los campos, lo que hace que los payloads sean más pequeños que JSON. Además, los mensajes llevan solo un ID de esquema en lugar del esquema completo: el esquema real lo gestiona el registry, que valida la compatibilidad cada vez que se registra una nueva versión. JSON, en cambio, sigue siendo más fácil de leer directamente para una persona.
 </details>
 
-3. ¿Qué contiene un mensaje real en tránsito cuando se usa un schema registry?
-   - A) La definición completa del esquema
-   - B) Un encabezado corto que contiene el ID del esquema, seguido de datos codificados en binario
-   - C) La URL del schema registry
-   - D) El ID del consumer group
+## 3. ¿Cuáles son los primeros cinco bytes del formato común de encuadre de Confluent con ID de esquema?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un encabezado corto que contiene el ID del esquema, seguido de datos codificados en binario**
+Un byte mágico y un ID de esquema de cuatro bytes, seguidos del valor. Protobuf también incluye índices de mensaje. Esta regla no es universal para todos los registros o formatos de codificación.
 
-**Explicación:**
-El productor registra (o busca) el esquema en el registry y antepone el ID de esquema devuelto, normalmente junto con un magic byte, al inicio del mensaje serializado. La definición completa del esquema nunca se incluye en el mensaje; solo el registry la almacena, que es lo que mantiene pequeño el payload. El consumidor lee este ID y obtiene del registry el esquema correspondiente para deserializar el resto.
 </details>
 
-4. ¿Cuál de las siguientes implementaciones de schema registry se distribuye bajo la Apache License 2.0?
-   - A) Confluent Schema Registry
-   - B) Tanto Karapace como Apicurio Registry
-   - C) Solo Karapace
-   - D) Solo Apicurio Registry
+## 4. ¿Qué formatos de esquema principales admite Karapace 6.2.4?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Tanto Karapace como Apicurio Registry**
+Avro, JSON Schema y Protobuf. Comprueba por separado qué borradores y palabras clave de JSON Schema valida, y si admite análisis de compatibilidad.
 
-**Explicación:**
-Karapace (Aiven) y Apicurio Registry (Red Hat) son proyectos completamente open-source distribuidos bajo la Apache License 2.0. Confluent Schema Registry se rige por la Confluent Community License desde 2018, que impone restricciones sobre ciertos usos comerciales y no es una licencia completamente open-source.
 </details>
 
-5. ¿Qué combinación se recomienda para un stack EKS + Strimzi autogestionado a fin de evitar fricciones de licencia?
-   - A) Solo Confluent Schema Registry
-   - B) Karapace o Apicurio Registry
-   - C) Ningún schema registry; simplemente usa JSON
-   - D) Solo AWS Glue Schema Registry es viable
+## 5. ¿Qué hay que tener en cuenta al revisar las licencias Apache-2.0 y de los componentes de Confluent?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Karapace o Apicurio Registry**
+Apache-2.0 incluye condiciones como conservar los avisos requeridos. El servidor de Confluent y los módulos de cliente/Avro pueden tener licencias distintas. Comprueba el componente concreto y el contrato de soporte, en lugar de inferir las condiciones a partir de la escala.
 
-**Explicación:**
-Karapace y Apicurio Registry tienen licencia Apache-2.0 y se pueden alojar de forma autogestionada sin restricciones. La Confluent Community License de Confluent Schema Registry introduce términos que justifican una revisión de licencia antes de su uso autogestionado. Ambas alternativas open-source son compatibles con la API de Confluent, por lo que los clientes pueden cambiar sin modificaciones de código.
 </details>
 
-6. ¿Qué mecanismo central permite la evolución de esquemas en la serialización Avro?
-   - A) Mapeo basado en números de campo
-   - B) Reglas de resolución entre el esquema del escritor y el esquema del lector
-   - C) Referencias `$ref` de JSON Schema
-   - D) Generación de código en tiempo de compilación
+## 6. ¿Qué permite la evolución de Avro y para qué sirve el valor predeterminado de un campo?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Reglas de resolución entre el esquema del escritor y el esquema del lector**
+La resolución entre el esquema del escritor y el del lector. El lector usa un valor predeterminado cuando el esquema del escritor no incluye ese campo. Esto no permite que el escritor omita un campo obligatorio cualquiera.
 
-**Explicación:**
-Incluso cuando el esquema del escritor (usado cuando se escribieron los datos) y el esquema del lector (usado al leerlos de vuelta) difieren, Avro puede decodificar correctamente los datos aplicando reglas de resolución definidas: emparejar campos por nombre, aplicar valores predeterminados, etc. El mapeo basado en números de campo es una característica de Protobuf, no de Avro.
 </details>
 
-7. ¿Dónde tiene Protobuf una ventaja relativa sobre Avro?
-   - A) Sus payloads siempre son más pequeños
-   - B) Los números de campo explícitos y un sistema de tipos más estricto producen código generado entre lenguajes de mayor calidad
-   - C) No requiere un schema registry
-   - D) Es más legible para humanos que JSON
+## 7. ¿Se puede reutilizar con otro significado el número de un campo eliminado de Protobuf?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Los números de campo explícitos y un sistema de tipos más estricto producen código generado entre lenguajes de mayor calidad**
+No lo reutilices. Los datos o clientes antiguos podrían interpretar ese número con su significado anterior. Reserva los números o nombres eliminados según corresponda, y comprueba los tipos wire y la semántica de la aplicación.
 
-**Explicación:**
-Protobuf asigna un número explícito a cada campo en su IDL `.proto` y aplica un sistema de tipos estricto, lo que tiende a producir código cliente generado más limpio entre lenguajes mediante `protoc`. El tamaño del payload suele ser comparable al de Avro, y Protobuf se combina comúnmente con un schema registry igual que Avro.
 </details>
 
-8. En un topic configurado con compatibilidad BACKWARD, ¿qué lado es seguro actualizar primero?
-   - A) El productor
-   - B) El consumidor
-   - C) El broker
-   - D) El controlador ZooKeeper o KRaft
+## 8. ¿Cuál suele ser el orden de despliegue de un cambio de esquema compatible hacia atrás?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El consumidor**
+Primero se actualizan los consumidores: el lector nuevo debe poder leer los datos escritos con el esquema anterior. Prueba también el comportamiento de negocio y recuerda que la compatibilidad se configura para un subject, no es inherente a un topic.
 
-**Explicación:**
-La compatibilidad BACKWARD significa "un lector que usa el esquema nuevo debe poder leer datos escritos con el esquema antiguo". Esto significa que el consumidor puede actualizarse primero al esquema nuevo, incluso mientras los productores siguen escribiendo con el esquema antiguo; el consumidor actualizado leerá correctamente los datos antiguos. FORWARD, en cambio, es el modo en el que es seguro desplegar primero el productor.
 </details>
 
-9. ¿Qué afirmación describe correctamente la compatibilidad FORWARD?
-   - A) Un lector que usa el esquema antiguo debe poder leer datos escritos con el esquema nuevo
-   - B) Un lector que usa el esquema nuevo debe poder leer datos escritos con el esquema antiguo
-   - C) No se realiza ninguna comprobación de compatibilidad
-   - D) Los consumidores siempre deben actualizarse primero
+## 9. ¿En qué dirección comprueba la compatibilidad FORWARD?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Un lector que usa el esquema antiguo debe poder leer datos escritos con el esquema nuevo**
+El lector anterior debe poder leer los datos escritos con el esquema nuevo; normalmente esto permite actualizar primero a los productores. Esto por sí solo no valida que un lector nuevo pueda reproducir datos antiguos.
 
-**Explicación:**
-FORWARD significa "el esquema antiguo (como lector) puede leer datos escritos con el esquema nuevo". Bajo este modo, los productores pueden actualizarse primero al esquema nuevo y los consumidores que aún ejecutan el esquema antiguo seguirán leyendo correctamente. B describe BACKWARD, C describe NONE y D es el orden seguro bajo BACKWARD, no FORWARD.
 </details>
 
-10. ¿Cuál de los siguientes cambios de esquema infringe la compatibilidad BACKWARD?
-    - A) Agregar un campo opcional con un valor predeterminado
-    - B) Agregar un campo requerido sin un valor predeterminado
-    - C) Agregar un comentario de documentación a un campo
-    - D) Reordenar campos sin cambiar sus nombres ni tipos
+## 10. ¿Eliminar un campo de Avro siempre rompe la compatibilidad hacia adelante?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Agregar un campo requerido sin un valor predeterminado**
+No. Si el lector antiguo tiene un valor predeterminado, puede proporcionarlo cuando faltan en los datos del escritor nuevo. Sin un valor predeterminado, la lectura falla. Distingue este caso de la dirección hacia atrás, en la que el lector nuevo deja de requerir el campo.
 
-**Explicación:**
-Agregar un campo requerido sin valor predeterminado significa que un lector que usa el esquema nuevo, al leer datos antiguos (que nunca tuvieron este campo), espera un valor pero no encuentra ninguno, lo que provoca un fallo de lectura. Eliminar un campo, en cambio, SÍ es compatible hacia atrás, ya que el lector con el esquema nuevo simplemente nunca lo busca (aunque esto rompe la compatibilidad FORWARD). Agregar un campo opcional con un valor predeterminado es el ejemplo clásico de un cambio compatible con BACKWARD, mientras que agregar comentarios de documentación o reordenar campos (Avro empareja por nombre) no tiene efecto sobre la estructura real de los datos.
 </details>
 
-## Preguntas de respuesta corta
-
-11. ¿Qué información lee un consumidor de un mensaje para encontrar el esquema correcto con el que deserializarlo?
+## 11. ¿Qué hay que comprobar para un consumidor con la caché fría y una migración de registro?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: El ID del esquema**
+El identificador de un registro conservado debe resolverse al mismo esquema de escritor. Verifica la correspondencia de ID, las referencias, la estrategia de subject, la codificación, la autenticación y las versiones de cliente. Un cambio de URL por sí solo no es prueba suficiente.
 
-**Explicación:**
-Al serializar, el productor incluye solo el ID de esquema emitido por el registry (normalmente codificado cerca del inicio del mensaje junto con un magic byte) en lugar del esquema completo. El consumidor lee este ID, consulta al registry por el esquema correspondiente y lo usa para deserializar el resto del payload binario.
 </details>
 
-12. ¿Cuál es el nombre del modo de compatibilidad que requiere que tanto BACKWARD como FORWARD se cumplan al mismo tiempo?
+## 12. ¿Qué modo requiere compatibilidad BACKWARD y FORWARD, y qué añade su variante TRANSITIVE?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: FULL**
+FULL. FULL_TRANSITIVE comprueba ambas direcciones del esquema frente a todas las versiones anteriores. FULL normal compara con la versión anterior más reciente. Ninguno garantiza la semántica de negocio ni el comportamiento de la aplicación.
 
-**Explicación:**
-La compatibilidad FULL requiere que tanto BACKWARD (un lector con el esquema nuevo puede leer datos antiguos) como FORWARD (un lector con el esquema antiguo puede leer datos nuevos) se cumplan simultáneamente. Esto hace que el orden de actualización de productor/consumidor sea irrelevante, pero también es el más estricto de los cuatro modos en cuanto a los cambios de esquema que permite.
 </details>
 
-13. ¿Cuáles son los dos tipos de backend de almacenamiento compatibles con Apicurio Registry?
+## 13. ¿Apicurio KafkaSQL almacena archivos completos de instantánea en su topic de snapshots?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Un backend basado en un topic de Kafka (kafkasql) y un backend basado en SQL (sql, por ejemplo PostgreSQL)**
+No. Registra las rutas de los archivos. La durabilidad, el uso compartido y la recuperación de los archivos requieren un diseño propio. El laboratorio deshabilita las instantáneas programadas y conserva el diario completo para reproducirlo tras reiniciar.
 
-**Explicación:**
-Apicurio Registry te permite elegir el backend mediante la variable de entorno `APICURIO_STORAGE_KIND`: `kafkasql` almacena los metadatos de esquema en un topic de Kafka, mientras que `sql` los almacena en una base de datos relacional como PostgreSQL. Karapace, en cambio, siempre usa un topic de Kafka (`_schemas`) como su única opción de almacenamiento.
 </details>
 
-14. ¿A qué licencia cambió Confluent componentes clave (incluido Schema Registry) alrededor de 2018, haciendo que ya no fueran completamente open source?
+## 14. ¿Qué valores satisfacen las comprobaciones predeterminadas de los topics de diario e instantáneas de KafkaSQL 3.3.3?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: La Confluent Community License**
+`cleanup.policy=delete`, `retention.ms=-1` y `retention.bytes=-1`. Supervisa el crecimiento cuando la retención es indefinida. No copies una configuración genérica de compactación para `_schemas` ni una retención breve de eventos.
 
-**Explicación:**
-Alrededor de 2018, Confluent migró varios componentes centrales, incluido Schema Registry, a la Confluent Community License. Esta licencia mantiene visible el código fuente, pero prohíbe ciertos usos, como ofrecerlo como un servicio gestionado competidor, que las licencias open-source aprobadas por la OSI permitirían.
 </details>
 
-15. ¿Qué propiedad configuran los clientes de Kafka para que un serializer/deserializer de Avro sepa dónde encontrar el schema registry?
+## 15. ¿Qué propiedades de Avro son distintas entre un productor y un consumidor?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: schema.registry.url**
+El productor usa `value.serializer=io.confluent.kafka.serializers.KafkaAvroSerializer`; el consumidor usa `value.deserializer=io.confluent.kafka.serializers.KafkaAvroDeserializer`. Ambos necesitan una URL del registro, la configuración TLS/SASL del broker y las dependencias de biblioteca correspondientes.
 
-**Explicación:**
-La propiedad `schema.registry.url` indica a `KafkaAvroSerializer`/`KafkaAvroDeserializer` (y sus equivalentes) qué endpoint REST usar para registrar y buscar esquemas. Cambiar solo esta propiedad te permite alternar entre Karapace, Apicurio y Confluent sin cambios en el código de la aplicación.
 </details>
 
-## Preguntas prácticas
-
-16. Escribe una definición de campo Avro que agregue un campo opcional `discountCode` a un esquema `Order` existente de forma compatible con BACKWARD.
+## 16. Escribe definiciones Avro para un campo timestamp-millis y un campo discountCode con valor predeterminado.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
 ```json
-{ "name": "discountCode", "type": ["null", "string"], "default": null }
+[
+  {"name":"createdAt","type":{"type":"long","logicalType":"timestamp-millis"}},
+  {"name":"discountCode","type":["null","string"],"default":null}
+]
 ```
 
-**Explicación:**
-Combinar el tipo union `["null", "string"]` con `default: null` significa que un lector que usa el esquema nuevo, al leer datos antiguos que no tienen este campo, recibe automáticamente `null`. Agregar un campo requerido sin valor predeterminado rompería la compatibilidad BACKWARD, por lo que preservar la compatibilidad con los datos existentes siempre requiere especificar un valor predeterminado.
+Estas son definiciones para el arreglo `fields` de un registro. El tipo lógico va dentro del objeto type; el valor null predeterminado del campo agregado se usa cuando un lector nuevo lee datos antiguos.
+
 </details>
 
-17. Escribe una llamada curl a la API REST compatible con Confluent para registrar un nuevo esquema Avro bajo el subject `orders-value`.
+## 17. ¿Cómo se registra el archivo order.avsc del capítulo bajo el subject orders-value?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-```bash
-curl -X POST http://apicurio-registry.kafka.svc:8080/apis/ccompat/v6/subjects/orders-value/versions \
-  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
-  -d '{"schema": "{\"type\":\"record\",\"name\":\"Order\",\"fields\":[{\"name\":\"orderId\",\"type\":\"string\"}]}"}'
-```
+Sigue el ejemplo `register.sh` del capítulo: analiza el JSON y crea un archivo de solicitud que contenga la cadena del esquema y `schemaType: AVRO`. Envíalo mediante POST a `/apis/ccompat/v7/subjects/orders-value/versions` y comprueba los errores HTTP. Configura primero la compatibilidad y después recupera la versión más reciente. La estrategia predeterminada TopicNameStrategy supone que el topic se llama `orders`.
 
-**Explicación:**
-Enviar una solicitud `POST` a `/subjects/<subject>/versions` registra el esquema. `<topic>-value` es la convención estándar de nomenclatura de subjects de Confluent para el payload de valor de un topic determinado. El campo `schema` en el cuerpo de la solicitud lleva el esquema Avro real como una cadena JSON escapada. Al registrarse, el registry valida el esquema nuevo contra las versiones anteriores según el modo de compatibilidad configurado.
 </details>
 
-18. Escribe la especificación central del container (imagen, variables de entorno) para un Deployment de Apicurio Registry que usa un topic de Kafka como backend de almacenamiento y se ejecuta en el mismo namespace que un cluster Kafka de Strimzi.
+## 18. Describe qué conecta el despliegue de Apicurio del capítulo con el entorno Strimzi anterior.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-```yaml
-containers:
-  - name: apicurio-registry
-    image: quay.io/apicurio/apicurio-registry:3.0.6
-    ports:
-      - containerPort: 8080
-    env:
-      - name: APICURIO_STORAGE_KIND
-        value: "kafkasql"
-      - name: APICURIO_KAFKASQL_BOOTSTRAP_SERVERS
-        value: "my-kafka-cluster-kafka-bootstrap.kafka.svc:9092"
-```
+Usa la imagen 3.3.3, `APICURIO_STORAGE_KIND=kafkasql`, `my-cluster-kafka-bootstrap.kafka.svc:9093`, SASL_SSL/SCRAM-SHA-512, el truststore de CA, la configuración JAAS respaldada por un Secret y la verificación explícita del nombre de host. Crea de antemano tres topics de almacenamiento y las ACL del usuario, y deshabilita la creación automática de topics. Distingue las comprobaciones de estado en el puerto de administración 9000 del puerto de la API HTTP 8080. La autenticación de la API HTTP es independiente de la autenticación de Kafka; el laboratorio no es un servicio público.
 
-**Explicación:**
-`APICURIO_STORAGE_KIND=kafkasql` indica a Apicurio que persista los metadatos de esquema en un topic de Kafka en lugar de requerir una base de datos separada. `APICURIO_KAFKASQL_BOOTSTRAP_SERVERS` debe apuntar al bootstrap service que crea Strimzi (`<cluster-name>-kafka-bootstrap`). Para usar el backend SQL en su lugar, establece `APICURIO_STORAGE_KIND=sql` junto con la configuración de conexión del datasource correspondiente.
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../../data-on-eks/kafka/04-schema-registry.md) | [Siguiente cuestionario: Kafka Connect y MirrorMaker](./05-kafka-connect-mirrormaker-quiz.md)
+[Volver al material de aprendizaje](../../../data-on-eks/kafka/04-schema-registry.md) | [Siguiente cuestionario](./05-kafka-connect-mirrormaker-quiz.md)

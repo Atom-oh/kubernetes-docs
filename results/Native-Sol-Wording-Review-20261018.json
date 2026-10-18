@@ -5711,6 +5711,1877 @@
         ]
       },
       "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0014-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/logging/02-opensearch-quiz.md",
+      "targetPath": "cn/quizzes/observability/logging/02-opensearch-quiz.md",
+      "sourceBlob": "f4027a5b446842243713ec1785cd096acf30eac2",
+      "sourceSha256": "dc38d65a2b5a92f519823e492f414cb6b8d802cb3abf2aa345df823a41e659bd",
+      "beforeTargetSha256": "6de840a90c3f44bdc608240b6d7882a1f0ba08669b6483a133cdf595b71cb448",
+      "beforeSnapshot": "/tmp/preimages/6de840a90c3f44bdc608240b6d7882a1f0ba08669b6483a133cdf595b71cb448.md",
+      "sourceGitBlob": "f4027a5b446842243713ec1785cd096acf30eac2",
+      "targetSha256": "ddf9fa7fd73b603e504038109eec3b3c62d024043d85301d33a8495194c2ea8d",
+      "currentTargetSha256": "ddf9fa7fd73b603e504038109eec3b3c62d024043d85301d33a8495194c2ea8d",
+      "afterTargetSha256": "ddf9fa7fd73b603e504038109eec3b3c62d024043d85301d33a8495194c2ea8d",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/ddf9fa7fd73b603e504038109eec3b3c62d024043d85301d33a8495194c2ea8d.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0015-source-snapshots/dc38d65a2b5a92f519823e492f414cb6b8d802cb3abf2aa345df823a41e659bd.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read the complete current English and Chinese pages after independently verifying the frozen source Git blob/SHA and preimage SHA, then reread both entire final pages after owned formatting/anchor repair. Reviewed all ten questions, forty options, C/A/B/D/C/A/B/D/C/D answers, every explanation, September 13 date, guide link, horizontal separators and disclosure markup. Retained Apache-2.0 versus managed selected-version support, the lack of blanket Elasticsearch 7.10 client/plugin compatibility, 2.11 standard support through November 7, 2027, dedicated_master field names and manager-versus-data-replica/AZ-versus-Standby distinctions; S3-backed UltraWarm/cold, attach-before-query, migration capacity and no fixed savings; asynchronous ISM with one action per object and exact cold_delete rather than a universal delete; Fluent Bit versus Firehose operational/schema/buffering/retry/backup/access/cost requirements and FailedDocumentsOnly versus a failed/ prefix; trusted kubernetes.namespace_name metadata, effective broader grants and FLS not redacting text/deleting backups; keyword/doc values versus analyzed text and ClickHouse LowCardinality without universally scanning _source; exact daily-index output and numbered-index/rollover/write-alias requirements; all four inline Query DSL choices byte-for-byte and nested app/@timestamp/filter context; and measured, equivalent product tradeoffs without universal cost/compliance claims. The 7/30/90-day example now describes index age distinctly from elapsed event-retention duration, preserving the absence of an exact guarantee.",
+      "findings": [
+        {
+          "location": "Date/Q1",
+          "finding": "The date was untranslated and 血统 was a literal genealogy metaphor for Elasticsearch 7.10 lineage.",
+          "resolution": "Localized the unchanged date to 2026年9月13日 and expressed 源自 Elasticsearch 7.10 without promising blanket compatibility.",
+          "resolved": true
+        },
+        {
+          "location": "Q4",
+          "finding": "索引年龄/事件年龄保留期 was unnatural and obscured the difference between index age and time since events occurred.",
+          "resolution": "Expressed index 存续时间 and retention duration measured from event occurrence; explicitly retained that 7/30/90 days are not exact event-retention guarantees.",
+          "resolved": true
+        },
+        {
+          "location": "Introduction/Q2/Q3/Q5–Q8/Q10",
+          "finding": "Generic collector, delivery, namespace/security-group, doc-values and alias/rollover prose was awkward or left unexplained.",
+          "resolution": "Used natural 采集器/数据投递/网络连通性/命名空间/安全组/文档值/索引滚动别名/写入别名/运维 wording, retaining the exact named configuration fields, type names, engine versions, actual cold attach prerequisite, query bytes and all wrong-option meanings.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/logging/02-opensearch-quiz.md",
+          "cn/quizzes/observability/logging/02-opensearch-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": []
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0015-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/linkerd/architecture.md",
+      "targetPath": "cn/quizzes/service-mesh/linkerd/architecture.md",
+      "sourceBlob": "0f845727d25b34e9934c849c2f2c94e4dc51fcb0",
+      "sourceSha256": "55eae7b97f5c075eee9c61d8852f0bac6d13bfbd661544854082ec89dd68a63c",
+      "beforeTargetSha256": "481651fe01402d5919cf4cdc342ec48207a0c3a31455f7a3a5d8a6a23a03cbe8",
+      "beforeSnapshot": "/tmp/preimages/481651fe01402d5919cf4cdc342ec48207a0c3a31455f7a3a5d8a6a23a03cbe8.md",
+      "sourceGitBlob": "0f845727d25b34e9934c849c2f2c94e4dc51fcb0",
+      "targetSha256": "52b477240bebb274e781cb8df58a6cd08e6c88a8cd00f6c86992c10fc76b6a5a",
+      "currentTargetSha256": "52b477240bebb274e781cb8df58a6cd08e6c88a8cd00f6c86992c10fc76b6a5a",
+      "afterTargetSha256": "52b477240bebb274e781cb8df58a6cd08e6c88a8cd00f6c86992c10fc76b6a5a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/52b477240bebb274e781cb8df58a6cd08e6c88a8cd00f6c86992c10fc76b6a5a.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0015-source-snapshots/55eae7b97f5c075eee9c61d8852f0bac6d13bfbd661544854082ec89dd68a63c.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read the complete frozen/current source and target and reread both full final pages after scoped emphasis/anchor repair. Covered the introduction with October 16, 2026 and edge-26.10.1, twelve question headings, forty-eight options, D/C/B/C/B/C/B/B/B/B/B/C answers, every explanation and guide link. Retained the Rust data-plane proxy versus Envoy, three pinned core Deployments with additional logical policy controllers, no universal 10MB/submillisecond superiority, Identity issuance versus Destination discovery/ServiceProfile and current Gateway API/policy versus legacy TrafficSplit; public trust-anchor/intermediate-issuer/workload-certificate chain and root private key not processing every workload CSR; configured nominal 24-hour issuance, pre-expiry renewal, actual validity/refresh variability and renewal not necessarily key/issuer/root rotation; new eligible Pod mutation, native sidecar and Linkerd CNI omission of linkerd-init versus existing/excluded/explicitly overridden injection; Pod-network-namespace TCP capture and proxy-UID/configured bypass limits; exact 4143/4140/4191 roles and configurable ports; exact DNS-form ServiceAccount identity, shared Pods, TokenReview and distinct SPIFFE/SPIRE external bootstrap; matched resource/build/traffic/policy benchmarks rather than reservations proving usage; submitted token and identity/CSR validation rather than accepting plausible caller SPIFFE URIs; and streaming gRPC control-plane policy APIs distinct from admin health/metrics and startup configuration. One Q5 heading phrase was repaired to preserve nominal configured lifetime naturally; all heading levels and the other target headings remain unchanged.",
+      "findings": [
+        {
+          "location": "Q3",
+          "finding": "Destination profile information was translated 配置文件信息, implying a filesystem file.",
+          "resolution": "Used 服务发现和 ServiceProfile 相关信息, retaining current policy-controller/Gateway API responsibilities and legacy TrafficSplit limitations.",
+          "resolved": true
+        },
+        {
+          "location": "Q4/Q5",
+          "finding": "公共信任锚 and 名义默认 were unnatural or ambiguous about public certificate trust and nominal configured lifetime.",
+          "resolution": "Used 公开的信任锚 with certificate-chain/issuer wording and 默认设定 in Q5, retaining root-private-key limits, 24 hours, variable actual validity and distinct renewal/rotation meanings.",
+          "resolved": true
+        },
+        {
+          "location": "Q6",
+          "finding": "被排除或覆盖的 Pod could suggest Pods themselves were overwritten rather than their injection settings overridden.",
+          "resolution": "Specified Pods excluded from injection and Pods with explicitly overridden injection settings, preserving separate handling of existing Pods and release/CNI conditions.",
+          "resolved": true
+        },
+        {
+          "location": "Q2/Q9/Q12 option B",
+          "finding": "固定占优 was awkward; TokenReview 会生成身份 implied identity creation, and certificate subject was mistranslated 主题.",
+          "resolution": "Used 始终优于 for the rejected universal comparison, TokenReview 返回身份 for the source yields meaning, and 证书的主体（Subject） for the wrong answer option; all twelve answer labels and literal identity alternatives remain unchanged.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/linkerd/architecture.md",
+          "cn/quizzes/service-mesh/linkerd/architecture.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "location": "Q5 H3",
+            "type": "target-heading-wording-correction-required-by-source",
+            "sourceHeading": "### 5. What is the nominal default workload certificate lifetime?",
+            "beforeTargetHeading": "### 5. 工作负载证书的名义默认有效期是多久？",
+            "afterTargetHeading": "### 5. 工作负载证书默认设定的有效期是多久？",
+            "reason": "The assigned concrete finding identified 名义默认 as unnatural. 默认设定 preserves nominal configured lifetime, while the explanation retains configuration-dependent actual validity and refresh timing. Parent notified; hierarchy, options, answer and technical meaning unchanged."
+          }
+        ]
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0015-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/container-registry/01-docker-hub-quiz.md",
+      "targetPath": "cn/quizzes/container-registry/01-docker-hub-quiz.md",
+      "sourceBlob": "170f0d2bb8db2fdc4c2a41ccf8d70faaae42b1f6",
+      "sourceSha256": "b1c4e4bf4d634f87d049487136835b151df853ae24d9789852d5a3e44c985f11",
+      "beforeTargetSha256": "066ea16a6933869a018c39644b2e0609978d030a8eb8ebf4c94c0215e0c5a7f0",
+      "beforeSnapshot": "/tmp/preimages/066ea16a6933869a018c39644b2e0609978d030a8eb8ebf4c94c0215e0c5a7f0.md",
+      "sourceGitBlob": "170f0d2bb8db2fdc4c2a41ccf8d70faaae42b1f6",
+      "targetSha256": "09c4a6845f5362a2753251aae871e41c8b39fe5a61997846fba5e1f4e0425390",
+      "currentTargetSha256": "09c4a6845f5362a2753251aae871e41c8b39fe5a61997846fba5e1f4e0425390",
+      "afterTargetSha256": "09c4a6845f5362a2753251aae871e41c8b39fe5a61997846fba5e1f4e0425390",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/09c4a6845f5362a2753251aae871e41c8b39fe5a61997846fba5e1f4e0425390.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0016-source-snapshots/b1c4e4bf4d634f87d049487136835b151df853ae24d9789852d5a3e44c985f11.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently verified the actual frozen English Git blob/SHA and current Chinese preimage SHA, read both complete pages, then reread both full final pages after scoped emphasis/owned-anchor repair. Reviewed all ten question stems, forty choices, B/B/B/B/A/B/D/A/A/C answers, full answer text and explanations, September 11 date and heading. Retained NAT-shared anonymous quotas using source IPv4 or IPv6 /64, actual policy/header limit/reset rather than a fixed allowance, separate signed-in account attribution and abuse controls; exact kubernetes.io/dockerconfigjson type, imagePullSecrets references and ServiceAccount inheritance only for eligible new Pods with no own list; cache misses/mutable-tag refresh still contacting upstream; curated Official Images and selected digest/maintenance checks without a vulnerability-free badge; Verified Publisher vendor authenticity distinct from signing in; Pro/Team/Business plan and fair-use conditions with Personal one; rare public-image compromise and pre-use scanning; exact inline kubectl alternatives, Docker Hub credential URL, USER/TOKEN replacements without committing credentials and consuming namespace; and Automated Builds retirement April 1, 2027 with legacy GitHub/Bitbucket versus independent GitLab CI. Changed no source fact, answer or target heading.",
+      "findings": [
+        {
+          "location": "Q1",
+          "finding": "已验证账户 could imply verified-account/publisher status rather than successful account authentication.",
+          "resolution": "Used 已登录账户的拉取归属方式; retained separate anonymous quota/abuse controls and the later named Docker Verified Publisher program.",
+          "resolved": true
+        },
+        {
+          "location": "Q3",
+          "finding": "镜像仓库镜像 duplicated 镜像 and confused a registry mirror with the container image.",
+          "resolution": "Used 仓库同步副本 in both option and answer, preserving the distinct pull-through-cache choice and all upstream miss/refresh caveats.",
+          "resolved": true
+        },
+        {
+          "location": "Q2/Q5",
+          "finding": "Generic Pod spec and 属于经过审查的上游镜像和文档精选计划 were awkward.",
+          "resolution": "Used Pod 配置 and a clear curated-program clause, retaining exact resource fields and the lack of a vulnerability-free guarantee.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/container-registry/01-docker-hub-quiz.md",
+          "cn/quizzes/container-registry/01-docker-hub-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "A",
+            "B",
+            "D",
+            "A",
+            "A",
+            "C"
+          ],
+          "target": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "A",
+            "B",
+            "D",
+            "A",
+            "A",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0016-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+      "targetPath": "cn/quizzes/observability/tracing/04-dynatrace-quiz.md",
+      "sourceBlob": "b32f6afc8e900ffc05a51fc5cf2e10c9b96068e0",
+      "sourceSha256": "485f95610cb3257e783c5b60b81e545607be1e39a730b22231e37db1e2dbd995",
+      "beforeTargetSha256": "a77ff0a2f97f51bf568fdb89adba56aced2205ee28e2701164adbcc2a72f734c",
+      "beforeSnapshot": "/tmp/preimages/a77ff0a2f97f51bf568fdb89adba56aced2205ee28e2701164adbcc2a72f734c.md",
+      "sourceGitBlob": "b32f6afc8e900ffc05a51fc5cf2e10c9b96068e0",
+      "targetSha256": "c9d06c98db6de0dc4d731fababb852a1a982a6e402bd878985bf67750cdd059d",
+      "currentTargetSha256": "c9d06c98db6de0dc4d731fababb852a1a982a6e402bd878985bf67750cdd059d",
+      "afterTargetSha256": "c9d06c98db6de0dc4d731fababb852a1a982a6e402bd878985bf67750cdd059d",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/c9d06c98db6de0dc4d731fababb852a1a982a6e402bd878985bf67750cdd059d.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0016-source-snapshots/485f95610cb3257e783c5b60b81e545607be1e39a730b22231e37db1e2dbd995.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read the full current English and Chinese pair after source/blob/preimage verification and reread both entire final pages after owned formatting/anchor repair. Checked ten stems, forty options, C/B/C/B/B/B/C/B/B/B answers, all repeated answer text/explanations, date, separators and guide link. Retained supported-runtime/privilege/egress/token/injection/privacy requirements and non-universal request capture; Operator/chart 1.10.2, served CRDs v1beta5/v1beta6 with v1beta6 storage rather than obsolete v1beta2; Intelligence versus older Davis terminology and approved agentic/Preview actions without automatic authority or proven diagnosis; cloudNativeFullStack hostMonitoring/applicationMonitoring/CSI and existing classicFullStack; PurePath instrumentation/sampling coverage limits; DPS monitored GiB-hours, 15-minute billing, 0.25-GiB rounding and 4-GiB minimum with container-only differences and invoice assumptions rather than old max formula; ActiveGate routing/local buffering versus backend lakehouse and conditional PVC; namespace injection selector distinct from host/API monitoring, RBAC and billing caps; native OTLP HTTP binary protobuf rather than gRPC/JSON, Collector conversion, exact /api/v2/otlp base, signal suffix, TLS/token scopes and .apps warning; and observed Smartscape gaps not proving no dependency. Kept all target headings and configuration identifiers unchanged.",
+      "findings": [
+        {
+          "location": "Date/Q7 option D",
+          "finding": "The date remained English and 经批准的到环境的连通路径 was an unnatural preposition chain.",
+          "resolution": "Localized the unchanged September 13 date and used 经批准的、通往 Dynatrace 环境的连接路径, retaining that a proxy cannot overcome a completely disconnected network.",
+          "resolved": true
+        },
+        {
+          "location": "Q2/Q4/Q6/Q8/Q9",
+          "finding": "Generic manifest, sidecar, namespace, exporter and Collector language was left mixed or unexplained.",
+          "resolution": "Used 资源清单/应用边车/命名空间/导出器/采集器 while preserving all named fields, CRD/API versions, selectors, mode and transport distinctions.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "cn/quizzes/observability/tracing/04-dynatrace-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "C",
+            "B",
+            "C",
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "B"
+          ],
+          "target": [
+            "C",
+            "B",
+            "C",
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0016-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/security/08-runtime-security-quiz.md",
+      "targetPath": "cn/quizzes/security/08-runtime-security-quiz.md",
+      "sourceBlob": "a5da734c95bf737880df146c5194949a2f137e8e",
+      "sourceSha256": "73f64a8b2390913e17887d03b5e919635747436567e01180886f039740bf00fb",
+      "beforeTargetSha256": "c9301099f4991cd63170ef877afac5973c1695102860b7a35179d7e839de4704",
+      "beforeSnapshot": "/tmp/preimages/c9301099f4991cd63170ef877afac5973c1695102860b7a35179d7e839de4704.md",
+      "sourceGitBlob": "a5da734c95bf737880df146c5194949a2f137e8e",
+      "targetSha256": "a5c35359e43429711d6267436db4aa4cd19813237d8911d66187ac4362f8f943",
+      "currentTargetSha256": "a5c35359e43429711d6267436db4aa4cd19813237d8911d66187ac4362f8f943",
+      "afterTargetSha256": "a5c35359e43429711d6267436db4aa4cd19813237d8911d66187ac4362f8f943",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/a5c35359e43429711d6267436db4aa4cd19813237d8911d66187ac4362f8f943.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0016-source-snapshots/73f64a8b2390913e17887d03b5e919635747436567e01180886f039740bf00fb.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read the entire current source/target pair and reread both final full pages after scoped formatting/anchor repair. Reviewed introduction, October 16 date, all twelve headings, forty-eight choices, B/B/B/B/B/C/B/B/A/B/B/C answers, every explanation and the exact source Hubble explicit span ID. Retained Falco Linux syscall rules and alternate plugins, 0.45.0 container plugin and modern_ebpf kernel/BTF requirements; Seccomp action-specific ERRNO/terminate/notify rather than always killing; explicitly configured RuntimeDefault or verified kubelet seccompDefault rather than automatic 1.27+ application; all eight priority levels and desc/condition/output fields; AppArmor complain with explicit deny and loaded/kernel support; GuardDuty EC2/Auto Mode coverage excluding Hybrid Nodes/Fargate and coverage-health requirements; Tetragon independent of Cilium CNI, supported hooks/selectors/actions and Post/monitor testing; exact loaded shell macros and shell not proving compromise; container securityContext readOnlyRootFilesystem with separately writable volumes/tmp and all malicious-use limitations; complementary defense layers rather than a tool-count guarantee; exact hubble --verdict DROPPED and drop reasons versus proven NetworkPolicy denial; and workload/node compatibility with feature enablement separate from healthy detection coverage. Changed no heading, option identifier, anchor or answer label.",
+      "findings": [
+        {
+          "location": "Date/Q6",
+          "finding": "The date was English and 覆盖运行状况 was an awkward rendering of coverage health.",
+          "resolution": "Localized the unchanged October 16 date and expressed checking whether monitoring coverage is healthy.",
+          "resolved": true
+        },
+        {
+          "location": "Q7 option D",
+          "finding": "密钥管理 narrowed generic Secrets management to cryptographic keys.",
+          "resolution": "Used 机密信息管理, preserving this as the incorrect alternative rather than a new Tetragon capability.",
+          "resolved": true
+        },
+        {
+          "location": "Q9",
+          "finding": "内存攻击 narrowed the source broad malicious use of writable volumes, network access and memory.",
+          "resolution": "Applied 恶意利用 to all three source scopes without inventing a specific attack class.",
+          "resolved": true
+        },
+        {
+          "location": "Q12",
+          "finding": "无法在 Fargate 等所有节点类型上运行 could imply Falco cannot run on all node types individually.",
+          "resolution": "Stated that not every node type supports Falco DaemonSet and explicitly that Fargate does not, retaining compatibility and separate GuardDuty enablement/coverage checks.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/security/08-runtime-security-quiz.md",
+          "cn/quizzes/security/08-runtime-security-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "A",
+            "B",
+            "B",
+            "C"
+          ],
+          "target": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "A",
+            "B",
+            "B",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 12
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [
+            "_11-what-command-shows-traffic-blocked-by-policies-in-hubble"
+          ],
+          "target": [
+            "_11-what-command-shows-traffic-blocked-by-policies-in-hubble"
+          ],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0016-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+      "targetPath": "cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+      "sourceBlob": "2f66e74b5fd698c48c5e005af3042f694876d14b",
+      "sourceSha256": "906480941433988b3b52c416e1194f1fe40cba7c4d3aaef10e0e783c4a34a665",
+      "beforeTargetSha256": "744a7a0e47253e382667a372fbe23b9df7c1dfeeda9f960ec124ece2106dbf51",
+      "beforeSnapshot": "/tmp/preimages/744a7a0e47253e382667a372fbe23b9df7c1dfeeda9f960ec124ece2106dbf51.md",
+      "sourceGitBlob": "2f66e74b5fd698c48c5e005af3042f694876d14b",
+      "targetSha256": "0ca56c1cf8a14f735f6b13e2e627b7c478cf09f9481cb0b82a0945d20953cdef",
+      "currentTargetSha256": "0ca56c1cf8a14f735f6b13e2e627b7c478cf09f9481cb0b82a0945d20953cdef",
+      "afterTargetSha256": "0ca56c1cf8a14f735f6b13e2e627b7c478cf09f9481cb0b82a0945d20953cdef",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/0ca56c1cf8a14f735f6b13e2e627b7c478cf09f9481cb0b82a0945d20953cdef.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0016-source-snapshots/906480941433988b3b52c416e1194f1fe40cba7c4d3aaef10e0e783c4a34a665.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently verified the frozen source Git blob/SHA and actual target preimage, read all eighteen current English/Chinese questions and answers, then reread both entire final pages after scoped formatter/anchor repair. Checked all eighteen unchanged target H2 headings, introduction, disclosure markup, exact JSON fence and two link destinations. Retained Kafka opaque byte storage and application validation, not claiming every field addition compatible; JSON Schema/CI/versioned contracts separate from binary encoding; common one-byte magic plus four-byte schema ID with Protobuf indexes and no universal framing; Karapace 6.2.4 formats and draft/analysis limitations; actual component/license/notices/support rather than scale; writer/reader resolution and reader defaults not permitting arbitrary writer omission; reserved Protobuf numbering and wire/application semantics; BACKWARD consumer-first versus FORWARD producer-first direction, removed-field/default exceptions and per-subject rather than inherent per-topic compatibility; retained ID mapping to the same writer schema with migration authentication/client/encoding/reference checks; FULL latest-previous versus FULL_TRANSITIVE all-prior and no business guarantee; KafkaSQL snapshot paths rather than files, independently durable/shared recovery and disabled scheduled snapshots/full replay journal; exact 3.3.3 cleanup.policy=delete and indefinite retention -1 with growth checks versus _schemas compaction; serializer/deserializer classes and TLS/SASL/library dependencies; exact timestamp-millis/null-default fields, AVRO request and orders-value registration endpoint, HTTP error checks and TopicNameStrategy orders; and deployment image/storage kind/bootstrap address, SASL_SSL/SCRAM/CA/Secret JAAS/hostname verification, three pre-created topics/ACLs/no autocreation, 9000 versus 8080 and independent HTTP authentication/nonpublic lab. Native readability 96 acknowledges retained established mixed Schema/Registry terminology in unchanged navigation headings; all actual assigned semantic defects are resolved.",
+      "findings": [
+        {
+          "location": "Q14",
+          "finding": "压缩配置 described compression instead of Kafka log compaction.",
+          "resolution": "Used 日志压实（compaction）配置, retaining exact _schemas and cleanup/retention tokens and the warning against copying it into KafkaSQL defaults.",
+          "resolved": true
+        },
+        {
+          "location": "Q1",
+          "finding": "添加字段并不总会破坏消费者 was a literal consumer-breaking phrase.",
+          "resolution": "Expressed that a field addition does not necessarily make the consumer incompatible or unable to work, without promising universal compatibility.",
+          "resolved": true
+        },
+        {
+          "location": "Introduction/Q2/Q3/Q6–Q13/Q15/Q16/Q18",
+          "finding": "Generic schema contract, registry, magic-byte, writer/reader, subject/topic and truststore prose was awkward.",
+          "resolution": "Used 契约/注册中心/魔数字节/写入端/读取端, distinguished 注册主题（subject） from Kafka 主题（topic）, and used CA 信任库; preserved all named schemas, class/config/API tokens and source directional caveats.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+          "cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0016-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/ops/06-scaling-strategies-quiz.md",
+      "targetPath": "cn/quizzes/ops/06-scaling-strategies-quiz.md",
+      "sourceBlob": "15b06ab33862bd12120a3c91d8759156640fdbc9",
+      "sourceSha256": "d65045cc39be225087fa0739a9bc08d203cf3bce8c89ce67736bea5310f94528",
+      "beforeTargetSha256": "2ab900c69b05e79f93d276cfc3e8c7bb42188537143c4d14ae7f9cd00b6783ab",
+      "beforeSnapshot": "/tmp/preimages/2ab900c69b05e79f93d276cfc3e8c7bb42188537143c4d14ae7f9cd00b6783ab.md",
+      "sourceGitBlob": "15b06ab33862bd12120a3c91d8759156640fdbc9",
+      "targetSha256": "3e7003e434a0fce01e72658d42c3ada09b06db9b9550ceb42099b10b759266e1",
+      "currentTargetSha256": "3e7003e434a0fce01e72658d42c3ada09b06db9b9550ceb42099b10b759266e1",
+      "afterTargetSha256": "3e7003e434a0fce01e72658d42c3ada09b06db9b9550ceb42099b10b759266e1",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/3e7003e434a0fce01e72658d42c3ada09b06db9b9550ceb42099b10b759266e1.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0016-source-snapshots/d65045cc39be225087fa0739a9bc08d203cf3bce8c89ce67736bea5310f94528.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read the complete current source/target and reread both full final pages after scoped emphasis/owned-anchor processing. Covered title, related-document link, all ten H3 stems, forty choices, B/C/B/B/B/B/B/B/B/B answers and full explanations. Retained custom.metrics.k8s.io/adapters and application metrics; KEDA event scalers plus supported activation/zero transitions with native HPA external-metric adapter capability; VPA 1.8.0 deprecated Auto/Recreate versus recommendation-only Off and distinct InPlaceOrRecreate/feature-gated InPlace fallback; ReplicaSet-specific deletion cost only after assignment/phase/readiness comparisons and no protection from eviction, Spot, Job/StatefulSet or cross-Deployment scaling; all exact replica formulas, usable metrics/ready Pods and tolerance/missing/min-max/scaling limits without a ceil extra-Pod guarantee; node-mode-appropriate Auto Mode/Karpenter/Node Termination Handler handling, no duplicate drains and no guaranteed full two-minute PDB window; polling response/load tradeoff; in-place resize 1.27 alpha/1.33 beta/1.35 stable with resizePolicy restarts and capacity/QoS defer/reject; configured available adapter series; and HPA/VPA resource conflicts, recommendation/workload metrics, Initial changing new Pod resource requests and utilization denominators, restart and scheduling validation. All target heading text, link targets and inline annotation/formula identifiers remain unchanged.",
+      "findings": [
+        {
+          "location": "Q2",
+          "finding": "KEDA并不会让HPA无法读取这些指标 was a distracting double-negative after an already accurate native-HPA capability statement.",
+          "resolution": "Kept the positive statement that native HPA can consume external metrics through an adapter and the preceding KEDA event-scaler/activation/zero-management distinction.",
+          "resolved": true
+        },
+        {
+          "location": "Q4",
+          "finding": "经过较早阶段的分配、阶段和就绪状态比较后 was repetitive; 不能影响跨Deployment扩缩容 overstated absence of influence rather than absence of protection.",
+          "resolution": "Clearly sequenced assignment, phase and readiness comparisons before preferring lower deletion cost within the same ReplicaSet; preserved best-effort behavior and lack of protection against all listed mechanisms.",
+          "resolved": true
+        },
+        {
+          "location": "Q8/Q10",
+          "finding": "调整大小 and new Pod 请求量 could be mistaken for physical size or incoming request counts rather than resource sizing.",
+          "resolution": "Used 调整资源配置 and 资源请求值（requests） without changing versions, Initial behavior or CPU-denominator/restart/scheduling caveats.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/ops/06-scaling-strategies-quiz.md",
+          "cn/quizzes/ops/06-scaling-strategies-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0016-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+      "targetPath": "cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+      "sourceBlob": "186969aece17d0e1b468f99fcd7adee037adace9",
+      "sourceSha256": "653c19ea517f064af403c972c58df657ceb9adbe374f3102e569f3a7773b6fed",
+      "beforeTargetSha256": "b49fda145d00fe56e7affccb0d9a5ca5cad34e12f9f9e7efe00866b6350597e2",
+      "beforeSnapshot": "/tmp/preimages/b49fda145d00fe56e7affccb0d9a5ca5cad34e12f9f9e7efe00866b6350597e2.md",
+      "sourceGitBlob": "186969aece17d0e1b468f99fcd7adee037adace9",
+      "targetSha256": "3b26c69cd3a48408538ce116ce50b5f3df729a0f7d357c9a367c7d06f9728a0f",
+      "currentTargetSha256": "3b26c69cd3a48408538ce116ce50b5f3df729a0f7d357c9a367c7d06f9728a0f",
+      "afterTargetSha256": "3b26c69cd3a48408538ce116ce50b5f3df729a0f7d357c9a367c7d06f9728a0f",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/3b26c69cd3a48408538ce116ce50b5f3df729a0f7d357c9a367c7d06f9728a0f.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0017-source-snapshots/653c19ea517f064af403c972c58df657ceb9adbe374f3102e569f3a7773b6fed.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently verified frozen English source blob/SHA and actual target preimage; read both entire original pages and both complete final pages after scoped formatting/anchor checks. Compared all seven stems, twenty-eight options, seven B answers and every explanation. Preserved the four-stage IAM flow, data-plane vpc-lattice-svcs versus control-plane vpc-lattice, four HMAC derivations and DNS; identity Invoke permission plus resource policy and actual 403 versus SG timeouts; signed custom Host/SNI/certificate; UTC and the general approximately five-minute caveat without asserting measured Lattice behavior; canonical signed-field changes versus equivalent query reordering, UNSIGNED-PAYLOAD requirements and TLS/application body protection; Service DNS bypass, Gateway HTTPRoute/GRPCRoute, NONE/AWS_IAM and NetworkPolicy; SVID connection authentication versus per-request SigV4, TLS server certificates, replay/freshness/credential limits without a hijack-proof claim. All target heading text, links and answer labels remain unchanged.",
+      "findings": [
+        {
+          "location": "Q2/Q6 and explanations",
+          "finding": "Auth policy was narrowed to 身份验证策略 although it governs access authorization.",
+          "resolution": "Used 访问授权策略 while retaining IAMAuthPolicy, IAMAuth, SigV4 and genuine authentication distinctions.",
+          "resolved": true
+        },
+        {
+          "location": "Q5",
+          "finding": "会导致验证失败 made a conditional can-break statement categorical.",
+          "resolution": "Used 可能导致验证失败 and retained canonical-field-change versus equivalent-reordering conditions.",
+          "resolved": true
+        },
+        {
+          "location": "Q1–Q7 prose",
+          "finding": "Literal signing-chain and generic listener/target/TLS-server wording reduced clarity.",
+          "resolution": "Naturalized signing key derivation, listener, target group, Host/path/query and TLS server-certificate prose while retaining exact HMAC/API terms and all four derivation steps.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+          "cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 7
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0017-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+      "targetPath": "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+      "sourceBlob": "f2f462871a2884270fcb31913bcc3b85297fb8ca",
+      "sourceSha256": "9f0c324aed5a4bb456dc1c560557906f12009a2014819d7c86a99d0923c77135",
+      "beforeTargetSha256": "3c7f2446995a85e7699c56d33ee13fb9834bea96103999d05b77820e06e87214",
+      "beforeSnapshot": "/tmp/preimages/3c7f2446995a85e7699c56d33ee13fb9834bea96103999d05b77820e06e87214.md",
+      "sourceGitBlob": "f2f462871a2884270fcb31913bcc3b85297fb8ca",
+      "targetSha256": "002b4e519e012c2c3f10d72ada6eb8ea07e0850758d0813c18e9732cb2be6393",
+      "currentTargetSha256": "002b4e519e012c2c3f10d72ada6eb8ea07e0850758d0813c18e9732cb2be6393",
+      "afterTargetSha256": "002b4e519e012c2c3f10d72ada6eb8ea07e0850758d0813c18e9732cb2be6393",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/002b4e519e012c2c3f10d72ada6eb8ea07e0850758d0813c18e9732cb2be6393.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0017-source-snapshots/9f0c324aed5a4bb456dc1c560557906f12009a2014819d7c86a99d0923c77135.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Compared all twenty source/target questions and complete answers, introduction, exercise links and closing link, then reread both whole final pages after final edits and owned checks. Preserved PagedAttention without model-weight compression or fixed throughput; graph control without implicit tool execution/persistence/retry limits; embedding revision/dimension/normalization and authenticated server-side retrieval scope; instrumented Langfuse versus DCGM and estimates versus invoices; exact Kagent 0.10.1 API/fields/tool references; MIG-instance isolation versus within-instance sharing and lack of proportional-compute guarantees; batching queues and token/character splitter distinctions; actual vllm: labels/adapters/signals and one scaling controller; KV representations versus response caches; Langfuse 4.15.2 observation/usage_details and missing old methods; authorized RRF fusion/dedup; SqliteSaver context manager, non-durable memory and non-authenticating thread_id; TP/PP constraints; actual GPU inference versus schema-only validation; Chart 2.1.0 prerequisites/file credentials/flush; bounded evidence-dependent local RAG verification; sticky requires_human and financial least-privilege boundaries; provider/budget/quality rejection, implemented stable routing consumers and measured guardrails, revision-scoped caches and full cost components. Required implementation/validation remains imperative, not an assertion of completed testing. Some established API/trace/tenant vocabulary is intentionally retained, so readability is 96 rather than a perfect score.",
+      "findings": [
+        {
+          "location": "Q1",
+          "finding": "改善内存浪费 was unnatural.",
+          "resolution": "Expressed improved KV-cache block management and reduced memory waste without adding a throughput claim.",
+          "resolved": true
+        },
+        {
+          "location": "Q7/Q8",
+          "finding": "Proportional-compute wording was vague and waiting was stated categorically.",
+          "resolution": "Specified no guarantee of proportional compute allocation and that capacity/budget/queue limits may cause waiting.",
+          "resolved": true
+        },
+        {
+          "location": "Q10",
+          "finding": "一个扩缩容所有者 sounded like a literal person rather than control ownership.",
+          "resolution": "Used one control system responsible for scaling and retained the HPA/KEDA competition warning.",
+          "resolved": true
+        },
+        {
+          "location": "Q15/Q17",
+          "finding": "Layer-stage partition and 默认secret环境交付方式 were awkward.",
+          "resolution": "Clarified PP partitions execution stages by layer, and default secret delivery through environment variables differs from a file-only policy; retained SDK/chart identifiers and prerequisites.",
+          "resolved": true
+        },
+        {
+          "location": "Q20",
+          "finding": "真实路由消费者 was a literal phrase obscuring required execution.",
+          "resolution": "Required actual executing components to use routing results and measured guardrails, keeping provider/budget/quality constraints and no fabricated savings results.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+          "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0017-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/ops/03-ci-pipelines-quiz.md",
+      "targetPath": "cn/quizzes/ops/03-ci-pipelines-quiz.md",
+      "sourceBlob": "cce1418793b807fb197ade93711e6e2bf4265245",
+      "sourceSha256": "1beaeb2080cf093957d0b5bcaf84c1b56fd496c68cf70d9e714055ddf4a19db6",
+      "beforeTargetSha256": "cae597e9c6c5dbcc9809e13ad24c970a57d94674c55f647b4682e568bd902321",
+      "beforeSnapshot": "/tmp/preimages/cae597e9c6c5dbcc9809e13ad24c970a57d94674c55f647b4682e568bd902321.md",
+      "sourceGitBlob": "cce1418793b807fb197ade93711e6e2bf4265245",
+      "targetSha256": "9f3c74568e606c1bb8a20b4c8ee2e3fee692f7c0d8db79d3de5d409b4c0a7bc2",
+      "currentTargetSha256": "9f3c74568e606c1bb8a20b4c8ee2e3fee692f7c0d8db79d3de5d409b4c0a7bc2",
+      "afterTargetSha256": "9f3c74568e606c1bb8a20b4c8ee2e3fee692f7c0d8db79d3de5d409b4c0a7bc2",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/9f3c74568e606c1bb8a20b4c8ee2e3fee692f7c0d8db79d3de5d409b4c0a7bc2.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0017-source-snapshots/1beaeb2080cf093957d0b5bcaf84c1b56fd496c68cf70d9e714055ddf4a19db6.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read both complete initial pages and both complete final pages after scoped helpers; compared all ten stems, forty options, B/C/A/D/B/C/A/D/B/C answers, explanations and chapter link. Preserved immutable releases versus mutable BuildKit cache and verified digests; separate Pod lifecycles without guaranteed privileged-job isolation; poll_interval versus Runner coordinator check_interval; manager S3 credential chain without RoleARN versus build ECR role, separately created ServiceAccounts and distinct Pod Identity tokens; modern ARC scale-set charts/listeners, actual runs-on name, ARC 0.15.0 scaleSetLabels and idle-runner/cost/startup caveats; credential-free hosted PR tests and exact repository/main/protected-tag role trust; scanning the same built image before publishing, architecture-specific 1:1 archives and native Trivy JSON; native CPU versus QEMU and independently checked digests; Next.js standalone build dependencies, static paths, 0.0.0.0 and monorepo bounds; archived Kaniko and separately validated rootless support, weakened no-process-sandbox isolation and incomplete cache-mount persistence. No target headings, technical tokens, answers or links changed.",
+      "findings": [
+        {
+          "location": "Q5 option/answer/explanation",
+          "finding": "扩缩集图表 confused Helm software packages with plotted charts.",
+          "resolution": "Used official runner scale-set Helm Chart terminology and listeners while preserving exact runs-on/scaleSetLabels behavior.",
+          "resolved": true
+        },
+        {
+          "location": "Q7 explanation",
+          "finding": "GitLab 报告架构 misrepresented report schema as software architecture.",
+          "resolution": "Used 报告的数据格式（Schema） with the source native-Trivy-JSON distinction.",
+          "resolved": true
+        },
+        {
+          "location": "Q10 explanation",
+          "finding": "注册表缓存 suggested a Windows registry rather than image-registry caching.",
+          "resolution": "Used 镜像仓库缓存 and retained the warning that not every cache mount is persisted.",
+          "resolved": true
+        },
+        {
+          "location": "Q2 explanation",
+          "finding": "受信任的受保护作业 was redundant literal wording.",
+          "resolution": "Used 可信且受保护的作业 without weakening the privileged DinD trust restriction.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/ops/03-ci-pipelines-quiz.md",
+          "cn/quizzes/ops/03-ci-pipelines-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "C",
+            "A",
+            "D",
+            "B",
+            "C",
+            "A",
+            "D",
+            "B",
+            "C"
+          ],
+          "target": [
+            "B",
+            "C",
+            "A",
+            "D",
+            "B",
+            "C",
+            "A",
+            "D",
+            "B",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0017-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+      "targetPath": "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+      "sourceBlob": "8d2536def3d0e86b9b98791d9fe8aff2046b5bb8",
+      "sourceSha256": "3820df914ac0d0ee233af275f5f5536b84c0d726f980bb43288461ca71b295fb",
+      "beforeTargetSha256": "bcc7fe1ec752a5d802a7052eb5e4a171ea563a7dbf7ab4d3b11e9f5ad75ce4ac",
+      "beforeSnapshot": "/tmp/preimages/bcc7fe1ec752a5d802a7052eb5e4a171ea563a7dbf7ab4d3b11e9f5ad75ce4ac.md",
+      "sourceGitBlob": "8d2536def3d0e86b9b98791d9fe8aff2046b5bb8",
+      "targetSha256": "fb581823ef3d9483e5d47dc8e8dac69d6265d385cfedae7f0c902d3f9bfeac99",
+      "currentTargetSha256": "fb581823ef3d9483e5d47dc8e8dac69d6265d385cfedae7f0c902d3f9bfeac99",
+      "afterTargetSha256": "fb581823ef3d9483e5d47dc8e8dac69d6265d385cfedae7f0c902d3f9bfeac99",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/fb581823ef3d9483e5d47dc8e8dac69d6265d385cfedae7f0c902d3f9bfeac99.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0017-source-snapshots/3820df914ac0d0ee233af275f5f5536b84c0d726f980bb43288461ca71b295fb.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently verified frozen source/preimage and read complete EN/CN before correction, then complete final EN/CN after scoped formatting/anchor handling. Compared all fifteen questions/answers/explanations and the entire unchanged Python fence. Preserved Airflow 3.3.1/provider 10.21.0, Celery KPO workload separation versus KubernetesExecutor task-plus-workload and retry/reattachment/deferral caveats; template-file precedence over dictionary for the same call, not unconditional five-source merging; replacement of the resources object dropping base requests versus other-field list/per-key/falsy rules; child AWS credentials versus parent Kubernetes RBAC; toleration versus node selection; per-call GitDagBundle version/fallback behavior and clear False versus backfill True without pinning data/images; unversioned Local/S3/GCS bundles and continued git-sync chart support; stale COMPLETED/wrong-namespace/FAILED CRs; exact V1ResourceRequirements/container_resources usage; unused deprecated delete parameter versus finish/kill actions and no exactly-once writes; namespace Role scope/admission trust; separate run_id arguments without shell interpolation; and final admitted Pod/local dry_run distinctions. Falsy override is correctly described as falling back to the base value, not inheriting the falsy override.",
+      "findings": [
+        {
+          "location": "Q4/Q15",
+          "finding": "继承falsy值 obscured the rule and the False override falling back to base True.",
+          "resolution": "Explicitly described inheritance of the base value when the override is falsy, retaining the reviewed-function scope and the concrete True/False example.",
+          "resolved": true
+        },
+        {
+          "location": "Q3",
+          "finding": "Template reconciliation prose was literal and could imply a universal merge.",
+          "resolution": "Described merging with full_pod_spec and the Pod built by KPO while preserving template-file precedence and the source per-call rule.",
+          "resolved": true
+        },
+        {
+          "location": "Pod-count/credential explanations",
+          "finding": "Reattachment and credential-provider terms were awkward generic English.",
+          "resolution": "Used 重新关联现有Pod and natural credential-provider wording while keeping retry/deferral conditions, SDK roles and source identifiers.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+          "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0017-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/security/11-kubescape-quiz.md",
+      "targetPath": "cn/quizzes/security/11-kubescape-quiz.md",
+      "sourceBlob": "ca547a9b2074c51ea60107efac8e4b89a380fca6",
+      "sourceSha256": "6addebb85b02b3c80ae2b629790cd7a85f66fe5de8b6e1d14ec6911bb7cb8348",
+      "beforeTargetSha256": "0d288f91b861c0b372d9322f8647cf0490eff0347ec55d2f725a48de87e15898",
+      "beforeSnapshot": "/tmp/preimages/0d288f91b861c0b372d9322f8647cf0490eff0347ec55d2f725a48de87e15898.md",
+      "sourceGitBlob": "ca547a9b2074c51ea60107efac8e4b89a380fca6",
+      "targetSha256": "7e0c96136c63b006f6a862c365ed830f8fc931ae07ca0d69d6187bfa7154ebde",
+      "currentTargetSha256": "7e0c96136c63b006f6a862c365ed830f8fc931ae07ca0d69d6187bfa7154ebde",
+      "afterTargetSha256": "7e0c96136c63b006f6a862c365ed830f8fc931ae07ca0d69d6187bfa7154ebde",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/7e0c96136c63b006f6a862c365ed830f8fc931ae07ca0d69d6187bfa7154ebde.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0017-source-snapshots/6addebb85b02b3c80ae2b629790cd7a85f66fe5de8b6e1d14ec6911bb7cb8348.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read both complete source/target pages, including date, ten explicit question IDs, ten stems, forty choices, B/B/B/B/C/B/B/C/B/B answers, score table, every explanation and links; reread both whole final pages after owned checks. Preserved CNCF December 13 2022 and January 13 2025 Incubating dates without installation-safety guarantees; reviewed 26-NSA-control snapshot/inventory/hash/application scope; missing local file possibly falling back to kubeconfig and explicit CI --keep-local/input checks; Chart 1.40.4 scanner 4.0.13 versus CLI 4.0.16 and distinct runtime permissions; independent score/compliance and local synthetic fixture 55/62.5, not a production assessment; compliance thresholds 55 exit 0 and 56 exit 1 and accepted-but-ignored deprecated fail-threshold; managed-control-plane visibility limitations; C0035/C0036/C0039 and namespace RoleBinding versus IAM; Grype/Syft versus Operator coverage without claiming executed registry pulls/host scans; CLI alertOnly versus SecurityException alert_only, unchanged compliance scoring and exclude-controls denominator, scoped owner/expiry review rather than remediation. Heading text and source explicit IDs retained.",
+      "findings": [
+        {
+          "location": "Date",
+          "finding": "October 16 remained English prose.",
+          "resolution": "Localized to 2026 年 10 月 16 日 without changing the date.",
+          "resolved": true
+        },
+        {
+          "location": "Q5",
+          "finding": "结果架构 confused result schema with architecture, and 合成的不安全Pod did not clearly identify a local fixture.",
+          "resolution": "Used 结果数据结构（Schema） and 本地测试中构造的不安全 Pod 样例, preserving local 55/62.5 scope.",
+          "resolved": true
+        },
+        {
+          "location": "Q9",
+          "finding": "注册表访问 was misleading image-registry wording.",
+          "resolution": "Used 镜像仓库访问 while retaining separate database and permission limits.",
+          "resolved": true
+        },
+        {
+          "location": "Q10",
+          "finding": "Acknowledging a failure could read as repairing it.",
+          "resolution": "Described recording the failure as an acknowledged exception that does not change compliance scoring; retained alertOnly versus alert_only fields and exception scope.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/security/11-kubescape-quiz.md",
+          "cn/quizzes/security/11-kubescape-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [
+            "_1-what-is-kubescape-s-project-status-in-the-cncf",
+            "_2-which-security-frameworks-does-kubescape-support-for-compliance-scanning",
+            "_3-what-is-the-correct-cli-syntax-to-scan-a-kubernetes-cluster-with-kubescape",
+            "_4-what-is-the-key-difference-between-kubescape-operator-and-cli-modes",
+            "_5-how-does-kubescape-calculate-risk-scores-for-controls",
+            "_6-which-flag-enforces-a-compliance-threshold-in-ci-cd-pipelines",
+            "_7-how-does-kubescape-differ-from-kube-bench",
+            "_8-what-feature-does-kubescape-provide-for-rbac-security-analysis",
+            "_9-which-vulnerability-scanner-does-kubescape-integrate-with-for-image-scanning",
+            "_10-how-does-kubescape-handle-control-exceptions"
+          ],
+          "target": [
+            "_1-what-is-kubescape-s-project-status-in-the-cncf",
+            "_2-which-security-frameworks-does-kubescape-support-for-compliance-scanning",
+            "_3-what-is-the-correct-cli-syntax-to-scan-a-kubernetes-cluster-with-kubescape",
+            "_4-what-is-the-key-difference-between-kubescape-operator-and-cli-modes",
+            "_5-how-does-kubescape-calculate-risk-scores-for-controls",
+            "_6-which-flag-enforces-a-compliance-threshold-in-ci-cd-pipelines",
+            "_7-how-does-kubescape-differ-from-kube-bench",
+            "_8-what-feature-does-kubescape-provide-for-rbac-security-analysis",
+            "_9-which-vulnerability-scanner-does-kubescape-integrate-with-for-image-scanning",
+            "_10-how-does-kubescape-handle-control-exceptions"
+          ],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0017-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+      "targetPath": "cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+      "sourceBlob": "7debc41b985d21723d9e699020d0ce66f00ef1f4",
+      "sourceSha256": "c79401b87494483e3f92a678574d542ffb30af9a6bd2af9ffed6856c8129f951",
+      "beforeTargetSha256": "1de2db2886d835dfe6632d142e4b5ed031736b8fc97f77793f5a4c7463420116",
+      "beforeSnapshot": "/tmp/preimages/1de2db2886d835dfe6632d142e4b5ed031736b8fc97f77793f5a4c7463420116.md",
+      "sourceGitBlob": "7debc41b985d21723d9e699020d0ce66f00ef1f4",
+      "targetSha256": "dc58aa2f6ee68ea25a2b703240d31c34ef9a1b1895d4d4b60ad66eb5afe3a4e2",
+      "currentTargetSha256": "dc58aa2f6ee68ea25a2b703240d31c34ef9a1b1895d4d4b60ad66eb5afe3a4e2",
+      "afterTargetSha256": "dc58aa2f6ee68ea25a2b703240d31c34ef9a1b1895d4d4b60ad66eb5afe3a4e2",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/dc58aa2f6ee68ea25a2b703240d31c34ef9a1b1895d4d4b60ad66eb5afe3a4e2.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0017-source-snapshots/c79401b87494483e3f92a678574d542ffb30af9a6bd2af9ffed6856c8129f951.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Verified current source Git blob/SHA and target before bytes; read all twenty complete EN/CN questions and answers initially and reread both final pages after scoped checks. Preserved Operator 1.15.0/Flink 2.2.1 baseline versus CRD acceptance of 2.3 without runtime support proof; Application/Session Deployment versus shared SessionJob failures; current EKS/client/webhook/CRD requirements versus old feature minimums; blue/green compatibility, transactional sinks/state/capacity without exactly-once guarantees; savepoint UID/serializer/connector caveats and no universal upgrade ranking; HA metadata versus checkpoint credentials/storage and effective SessionJob configuration; per-vertex parallelism versus HPA/nodes, rate/busy-time/optional memory-GC-quota inputs, alignment preference versus universal divisibility, and in-place resource API still causing redeploy/restarts; chart logging files versus runtime JAR activation/backend; all-namespace watch versus RBAC isolation; metric windows/SLOs; cert-manager Certificate/Issuer and readiness rather than internal Job objects; packaged StateMachineExample versus invented JAR/stateless durability; dry-run scaling switches and utilization bounds; Running versus Available/stale-generation/new-spec reconciliation; and 6000/600=10 versus 6000/60=100 with backlog-target zero disabling handling. No invented expiration event, explicit extra addition formula or claimed convergence remains.",
+      "findings": [
+        {
+          "location": "Q5",
+          "finding": "检查点过期 added expiration semantics absent from stale checkpoints.",
+          "resolution": "Used 检查点陈旧, retaining restore and storage/credential limitations.",
+          "resolved": true
+        },
+        {
+          "location": "Q8",
+          "finding": "再加上 created an explicit addition formula not specified by the source.",
+          "resolution": "Described combining rate/edge-output-ratio products and propagating backlog targets without inventing arithmetic details.",
+          "resolved": true
+        },
+        {
+          "location": "Q12",
+          "finding": "已与已发布...一同检查过 was repetitive and literal.",
+          "resolution": "Expressed the pinned integration baseline checked against published Operator/connector compatibility tables, not newly claimed execution tests.",
+          "resolved": true
+        },
+        {
+          "location": "Q19",
+          "finding": "New-spec reconciliation wording implied completed convergence.",
+          "resolution": "Used 针对新 spec 的实际协调情况, keeping stale conditions/generation distinct from actual progress.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+          "cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0017-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/security/07-image-security-quiz.md",
+      "targetPath": "cn/quizzes/security/07-image-security-quiz.md",
+      "sourceBlob": "c0c6e81b1f8fa43e55a6b99787fff2b048ced3d8",
+      "sourceSha256": "1cd9bf5a751b05202861f180f06ca7336d8fcf6337b16b27526a1ce138442546",
+      "beforeTargetSha256": "d98ec3e1d4633014dd1fbd95d7a69a8d65960964c62a9895355d66967301d215",
+      "beforeSnapshot": "/tmp/preimages/d98ec3e1d4633014dd1fbd95d7a69a8d65960964c62a9895355d66967301d215.md",
+      "sourceGitBlob": "c0c6e81b1f8fa43e55a6b99787fff2b048ced3d8",
+      "targetSha256": "664da6c1c32dd6388748b43df9d6ef16fea8795ce58e6d5173873c5665077725",
+      "currentTargetSha256": "664da6c1c32dd6388748b43df9d6ef16fea8795ce58e6d5173873c5665077725",
+      "afterTargetSha256": "664da6c1c32dd6388748b43df9d6ef16fea8795ce58e6d5173873c5665077725",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/664da6c1c32dd6388748b43df9d6ef16fea8795ce58e6d5173873c5665077725.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0017-source-snapshots/1cd9bf5a751b05202861f180f06ca7336d8fcf6337b16b27526a1ce138442546.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read both complete pages before editing and both complete final pages after scoped checks, including September 13 2026, thirteen explicit IDs, twelve stems, forty-eight options, B/B/B/B/A/B/C/B/C/C/B/C answers and every explanation. Exact plaintext Trivy command options and IMAGE_REF tokens remain unchanged. Preserved real digest versus syntax/registry/database/coverage limitations; approved Cosign key or OIDC identity/issuer, digest and required transparency evidence without absence-of-CVEs guarantees; earlier checks plus post-release rescanning/runtime detection; standard distroless versus debug variants and vulnerable libraries; current AWS-native Basic OS scanning versus Inspector Enhanced OS/language scanning and findings/enhancedFindings/events; incomplete detected SBOM inventory and separate signed-attestation/digest verification policy; legacy verifyImages versus ImageValidatingPolicy and Kyverno 1.19.1 CEL scope across ordinary/init/ephemeral containers; digest identity without implicit trust/CVE/availability; broad static secrets versus live syscall detection; intentionally public anonymous reads versus arbitrary anonymous writes/deletes and separate permission boundaries; same scanned artifact before publishing/signing, errors versus violations and owned expiring exceptions; Alpine musl/apk/glibc compatibility and support lifetime with size not guaranteeing CVE counts/build speed. Source heading hierarchy, target heading text, links and all labels retained.",
+      "findings": [
+        {
+          "location": "Q1/Q2/Q6 explanations",
+          "finding": "Abrupt literal clauses obscured syntax-only limits, required transparency evidence and separately evaluated digest-bound attestations.",
+          "resolution": "Used complete Chinese relations and explicitly separated syntax/registry/DB/coverage and signed-attestation/verification-policy assessment without changing claims.",
+          "resolved": true
+        },
+        {
+          "location": "Q9 option/explanation",
+          "finding": "源码密钥 and 密钥扫描 narrowed generic secrets to cryptographic keys.",
+          "resolution": "Used 源码中的机密信息检测 and 机密信息扫描, preserving static checking versus live syscall/process detection.",
+          "resolved": true
+        },
+        {
+          "location": "Q12 option D",
+          "finding": "支持寿命 was an unnatural literal support-lifetime translation.",
+          "resolution": "Used 所选发布版本的支持期限; retained the incorrect glibc-compatibility answer and all musl/apk/size caveats.",
+          "resolved": true
+        },
+        {
+          "location": "Q3/Q8/Q10/Q11 explanations",
+          "finding": "Several short literal relations were hard to read.",
+          "resolution": "Clarified post-release rescanning, content identity, public-read and publication-stop/exception clauses while preserving every restriction and answer.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/security/07-image-security-quiz.md",
+          "cn/quizzes/security/07-image-security-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "A",
+            "B",
+            "C",
+            "B",
+            "C",
+            "C",
+            "B",
+            "C"
+          ],
+          "target": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "A",
+            "B",
+            "C",
+            "B",
+            "C",
+            "C",
+            "B",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 12
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [
+            "quiz-questions",
+            "_1-what-is-the-correct-command-to-scan-a-container-image-with-trivy",
+            "_2-which-tool-is-used-for-image-signing-and-verification",
+            "_3-what-does-the-shift-left-security-approach-mean",
+            "_4-what-is-the-main-characteristic-of-distroless-images",
+            "_5-what-are-the-two-types-of-amazon-ecr-image-scanning",
+            "_6-what-is-sbom-software-bill-of-materials",
+            "_7-what-policy-type-verifies-image-signatures-in-kyverno",
+            "_8-why-should-you-use-digests-instead-of-image-tags",
+            "_9-what-does-trivy-not-scan",
+            "_10-which-is-not-a-container-image-registry-security-best-practice",
+            "_11-what-is-the-recommended-action-when-image-scanning-fails-in-ci-cd-pipeline",
+            "_12-what-is-not-an-advantage-of-alpine-base-images"
+          ],
+          "target": [
+            "quiz-questions",
+            "_1-what-is-the-correct-command-to-scan-a-container-image-with-trivy",
+            "_2-which-tool-is-used-for-image-signing-and-verification",
+            "_3-what-does-the-shift-left-security-approach-mean",
+            "_4-what-is-the-main-characteristic-of-distroless-images",
+            "_5-what-are-the-two-types-of-amazon-ecr-image-scanning",
+            "_6-what-is-sbom-software-bill-of-materials",
+            "_7-what-policy-type-verifies-image-signatures-in-kyverno",
+            "_8-why-should-you-use-digests-instead-of-image-tags",
+            "_9-what-does-trivy-not-scan",
+            "_10-which-is-not-a-container-image-registry-security-best-practice",
+            "_11-what-is-the-recommended-action-when-image-scanning-fails-in-ci-cd-pipeline",
+            "_12-what-is-not-an-advantage-of-alpine-base-images"
+          ],
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0017-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/platform-engineering/02-ack-quiz.md",
+      "targetPath": "cn/quizzes/platform-engineering/02-ack-quiz.md",
+      "sourceBlob": "6092d45ce92d9778f7dfa46cc13f681b61110678",
+      "sourceSha256": "948ab755eed1d74f6d4b9e7d1b0d508cc13df127dea74df01a17c59feff99902",
+      "beforeTargetSha256": "7b95c62916dce4c61c8cc8a7a6c2c11997971788dfa8cc7883f5dd635c2dcaa9",
+      "beforeSnapshot": "/tmp/preimages/7b95c62916dce4c61c8cc8a7a6c2c11997971788dfa8cc7883f5dd635c2dcaa9.md",
+      "sourceGitBlob": "6092d45ce92d9778f7dfa46cc13f681b61110678",
+      "targetSha256": "5a38c09a83c5f4807c2cb55a044cca2deb52610bf927a47cce6b79bb03f2c96d",
+      "currentTargetSha256": "5a38c09a83c5f4807c2cb55a044cca2deb52610bf927a47cce6b79bb03f2c96d",
+      "afterTargetSha256": "5a38c09a83c5f4807c2cb55a044cca2deb52610bf927a47cce6b79bb03f2c96d",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/5a38c09a83c5f4807c2cb55a044cca2deb52610bf927a47cce6b79bb03f2c96d.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0018-source-snapshots/948ab755eed1d74f6d4b9e7d1b0d508cc13df127dea74df01a17c59feff99902.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently verified the actual current source Git blob/SHA and target before bytes against the frozen pair. Read both entire original pages, then reread both whole final pages after scoped emphasis/owned-anchor checks. Reviewed all fifteen topics and complete answers, opening ACK link and all three exact YAML/bash fences. Retained declarative AWS-resource management without automatic savings/readiness; service-specific versioned CRDs; IRSA/supported Pod Identity, OIDC/ServiceAccount/SDK-agent/IAM and no ConfigMap access keys/root credentials; retain versus unsupported orphan with CR/namespace-specific/controller-default precedence; adoption gates/IDs/region/account and adopt-or-create mutation versus read-only references; GA maturity distinct from v1alpha1/full API support; ResourceSynced versus application/database/message readiness; cluster watch scope, namespace cache read permissions and IAM/RBAC/CARM limits; reconciliation errors/quotas; actual Bucket.spec.policy and absent BucketPolicy/RolePolicyAttachment; conditional resource ARN/status fields; target-role assumption trust/AssumeRole/mappings/controller configuration with exclusive mutation ownership; globally unique S3 name, all four public-access blocks, encryption/tagging, existing policy principal and illustrative identifiers; pinned OCI S3 chart 1.13.1 offline rendering versus prepared workload identity and real deployment; and fully qualified resource queries, chart label, events/logs and non-routine finalizer removal. Target headings and code remain unchanged.",
+      "findings": [
+        {
+          "location": "Q10",
+          "finding": "Actual CRD schemas were mistranslated as 架构.",
+          "resolution": "Used 资源类型（kind）和字段结构（schema）, preserving Bucket.spec.policy and the absence of the two named CRDs.",
+          "resolved": true
+        },
+        {
+          "location": "Q12",
+          "finding": "假设目标角色 treated AWS role assumption as a hypothesis and 修改所有权 was literal.",
+          "resolution": "Used 代入目标 IAM 角色 and clarified who owns mutations, retaining trust, AssumeRole, mappings, settings and the unsafe competing-cluster caveat.",
+          "resolved": true
+        },
+        {
+          "location": "Q13–Q15 prose",
+          "finding": "Generic principal/bucket-policy/chart/kind wording was awkward.",
+          "resolution": "Naturalized 主体/IAM角色、存储桶策略、OCI Helm Chart and resource kinds while preserving all source fields, chart labels and code bytes.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/platform-engineering/02-ack-quiz.md",
+          "cn/quizzes/platform-engineering/02-ack-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0018-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/security/12-spiffe-spire-quiz.md",
+      "targetPath": "cn/quizzes/security/12-spiffe-spire-quiz.md",
+      "sourceBlob": "78b6c5b668e140b53af385b05c1dd63eccce1128",
+      "sourceSha256": "8426f4c83e75c9f785e992f5c10ef715fa807e5213d76c35dbd93d8f5499de34",
+      "beforeTargetSha256": "34ddfc1c7bda1e95211cd2464bf83d8625d769ef2a0d95c96cb6f281849c07f7",
+      "beforeSnapshot": "/tmp/preimages/34ddfc1c7bda1e95211cd2464bf83d8625d769ef2a0d95c96cb6f281849c07f7.md",
+      "sourceGitBlob": "78b6c5b668e140b53af385b05c1dd63eccce1128",
+      "targetSha256": "f904a897bc3a80e64587d0742561796d73b97ec8d5d282d50d026a4de204dc24",
+      "currentTargetSha256": "f904a897bc3a80e64587d0742561796d73b97ec8d5d282d50d026a4de204dc24",
+      "afterTargetSha256": "f904a897bc3a80e64587d0742561796d73b97ec8d5d282d50d026a4de204dc24",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/f904a897bc3a80e64587d0742561796d73b97ec8d5d282d50d026a4de204dc24.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0018-source-snapshots/8426f4c83e75c9f785e992f5c10ef715fa807e5213d76c35dbd93d8f5499de34.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": 100,
+      "fullPageRationale": "Verified frozen source Git blob/SHA and actual target preimage, read both entire initial pages, and reread both entire final pages after scoped emphasis/owned-anchor checks. Compared all ten stems, forty choices, B/C/B/A/B/B/B/B/C/C answers, every explanation, date, scoring section, documentation link and ten explicit IDs. Retained exact URI choices/scheme exclusions and site-defined optional path; X.509 URI SAN/chain and JWT signature/sub/audience/expiry, CN not identity and bearer replay despite audience, policy-dependent lifetime and distinct Incubating WIT-SVID scope; Server attestation/registration/signing versus DataStore/KeyManager and upstream AWS PCA intermediate/local leaf signing; caller PID/cgroups/Pod metadata/cache and agent-Pod caller versus application context; k8s_psat logical-cluster/audience/SA allowlist/TokenReview permissions and conditional aws_iid trust assumptions; selector values without assumed wildcard matching, actual image/ImageID and creation permissions; CSI 0.2.13 socket directory rather than automatic certificate/private-key files, separate adapters/reload and API consumption; each federation trust direction, initial trusted bundle/endpoint ID and Web PKI alternative; IRSA SDK/projected-token refresh/cross-account/trust permissions versus SPIFFE credential use and peer authorization; stable trust-domain guidance versus parser syntax, public bundles versus separate CA-key rotation/authority overlap/consumer updates. Technical API/product tokens and target heading text are intentionally unchanged; established terms remaining in headings reduce readability slightly but there is no unresolved concrete source defect.",
+      "findings": [
+        {
+          "location": "Date and Q1–Q10 body/choices",
+          "finding": "Many ordinary concepts were left in generic English and Chinese grammar was mixed.",
+          "resolution": "Localized the date and naturalized trust domain, signatures/audience/expiry, attestation, signing/key roles, selectors, socket delivery, authorization and public trust material; retained all API identifiers and answer labels.",
+          "resolved": true
+        },
+        {
+          "location": "Q4 explanation",
+          "finding": "在agent Pod内获取会attestation该调用方 was malformed and hid the identity being attested.",
+          "resolution": "Explicitly stated that fetching within the agent Pod attests that caller, not the actual application context; retained PID/cgroups/Pod metadata and authorized entries/cache.",
+          "resolved": true
+        },
+        {
+          "location": "Q7–Q10 explanations",
+          "finding": "Literal reload/federation/credential-consumption/bundle-rotation prose obscured distinct responsibilities.",
+          "resolution": "Expressed separate adapter/reload, each trust direction, application credential use/peer authorization and public trust-material updates versus independent key rotation without automatic-integration or anti-replay guarantees.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/security/12-spiffe-spire-quiz.md",
+          "cn/quizzes/security/12-spiffe-spire-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "C",
+            "B",
+            "A",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C"
+          ],
+          "target": [
+            "B",
+            "C",
+            "B",
+            "A",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [
+            "_1-what-is-the-correct-format-for-a-spiffe-id",
+            "_2-what-is-the-key-difference-between-x-509-svid-and-jwt-svid",
+            "_3-what-is-the-primary-role-of-the-spire-server",
+            "_4-what-is-the-primary-role-of-the-spire-agent",
+            "_5-which-node-attestation-method-is-recommended-for-amazon-eks",
+            "_6-what-selector-types-does-k8s-workload-attestation-support",
+            "_7-what-is-the-purpose-of-the-spiffe-csi-driver",
+            "_8-what-does-spiffe-federation-enable",
+            "_9-how-does-spiffe-spire-compare-to-iam-roles-for-service-accounts-irsa",
+            "_10-what-are-best-practices-for-naming-trust-domains-in-spiffe"
+          ],
+          "target": [
+            "_1-what-is-the-correct-format-for-a-spiffe-id",
+            "_2-what-is-the-key-difference-between-x-509-svid-and-jwt-svid",
+            "_3-what-is-the-primary-role-of-the-spire-server",
+            "_4-what-is-the-primary-role-of-the-spire-agent",
+            "_5-which-node-attestation-method-is-recommended-for-amazon-eks",
+            "_6-what-selector-types-does-k8s-workload-attestation-support",
+            "_7-what-is-the-purpose-of-the-spiffe-csi-driver",
+            "_8-what-does-spiffe-federation-enable",
+            "_9-how-does-spiffe-spire-compare-to-iam-roles-for-service-accounts-irsa",
+            "_10-what-are-best-practices-for-naming-trust-domains-in-spiffe"
+          ],
+          "sourceIdsRetained": true,
+          "matched": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0018-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/service-mesh/istio/security/03-authorization.md",
+      "targetPath": "cn/service-mesh/istio/security/03-authorization.md",
+      "sourceBlob": "9e5e3e02fef4c857924bccbf224ed6d5985ca125",
+      "sourceSha256": "13708af892f2619524f5d440a6e72ddcca26e751d25c7baa9f9267c1a96d7069",
+      "beforeTargetSha256": "c95ada88929b0b078713e995495dcdddbeaa8d7b69a15bd1de1986b273fd0fdf",
+      "beforeSnapshot": "/tmp/preimages/c95ada88929b0b078713e995495dcdddbeaa8d7b69a15bd1de1986b273fd0fdf.md",
+      "sourceGitBlob": "9e5e3e02fef4c857924bccbf224ed6d5985ca125",
+      "targetSha256": "3c6c90cd1eba5028d715c31980fa0a41a90298c5ca4babf300a83243f25f9486",
+      "currentTargetSha256": "3c6c90cd1eba5028d715c31980fa0a41a90298c5ca4babf300a83243f25f9486",
+      "afterTargetSha256": "3c6c90cd1eba5028d715c31980fa0a41a90298c5ca4babf300a83243f25f9486",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/3c6c90cd1eba5028d715c31980fa0a41a90298c5ca4babf300a83243f25f9486.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0019-source-snapshots/13708af892f2619524f5d440a6e72ddcca26e751d25c7baa9f9267c1a96d7069.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently verified frozen current English blob/SHA and actual Chinese preimage, read the entire source and target, then reread both whole final pages after scoped emphasis/owned-anchor checks. The initial combined output truncated part of the English fences, so the entire English file was explicitly reread separately before editing. Compared introduction, full five-link TOC, diagram and interactive destinations, all supported source/operation/condition descriptions, seven exact YAML fences, all policy and practical-example paragraphs, best-practice bullets, inspection command and references. Preserved CUSTOM then DENY then ALLOW independent of creation order; AUDIT merely marking without configured logging; AND between same-rule from/to/when categories and OR between separate matching rules/ALLOW policies; no applicable ALLOW permitting requests unless CUSTOM/DENY blocks, versus requiring a match once ALLOW applies; configuration alternatives and allow-all broadening get-only; empty ALLOW allowing specific exceptions versus hard DENY rules:[{}] not overridden by ALLOW; namespace/root-namespace/targetRefs attachment; authenticated mTLS peer identities and matching RequestAuthentication issuer/audience rather than client headers; native TCP identity/IP/port matching with missing HTTP attributes in DENY possibly matching; ambient L7 waypoint targetRefs distinct from sidecar selectors and required no-policy/no-match/deny/permitted boundary testing. All target headings, preexisting canonical IDs, source image URLs and seven code fences are retained.",
+      "findings": [
+        {
+          "location": "Basic Policies paragraph",
+          "finding": "可选方案 described logical alternatives as optional installation choices and 组合生效 did not make the source AND/OR distinction clear.",
+          "resolution": "Expressed 且 between same-rule from/to/when constraints and 或 between separate rules/applicable ALLOW policies, while keeping the later examples explicitly different configuration choices.",
+          "resolved": true
+        },
+        {
+          "location": "Basic Policies paragraph",
+          "finding": "一旦某条ALLOW策略生效 could hide applicability and lowercase get was not the HTTP-method spelling used by the example.",
+          "resolution": "Specified applicability to the workload and required at least one matching ALLOW rule; used GET while retaining default behavior, CUSTOM/DENY restrictions and the broadening caveat.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/service-mesh/istio/security/03-authorization.md",
+          "cn/service-mesh/istio/security/03-authorization.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0019-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/service-mesh/istio/advanced/05-grpc.md",
+      "targetPath": "cn/service-mesh/istio/advanced/05-grpc.md",
+      "sourceBlob": "07151fe273ee6e19176078dc38e4479d684de687",
+      "sourceSha256": "f1bd48ec2242a4abbf974a897e98096bc46910deb26d8bc4e1209e546f699ceb",
+      "beforeTargetSha256": "fa302a2d267b3819958ddac617ffcca21aa403924abe702dc5a3b2c7da6bebb4",
+      "beforeSnapshot": "/tmp/preimages/fa302a2d267b3819958ddac617ffcca21aa403924abe702dc5a3b2c7da6bebb4.md",
+      "sourceGitBlob": "07151fe273ee6e19176078dc38e4479d684de687",
+      "targetSha256": "033e083addd2652f1dadedc0b413803c61a7a96b8b748608baf794498ecd63e6",
+      "currentTargetSha256": "033e083addd2652f1dadedc0b413803c61a7a96b8b748608baf794498ecd63e6",
+      "afterTargetSha256": "033e083addd2652f1dadedc0b413803c61a7a96b8b748608baf794498ecd63e6",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/033e083addd2652f1dadedc0b413803c61a7a96b8b748608baf794498ecd63e6.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0019-source-snapshots/f1bd48ec2242a4abbf974a897e98096bc46910deb26d8bc4e1209e546f699ceb.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Verified actual source blob/SHA and real target before bytes against the frozen pair, read both complete original files, then reread both complete final files after scoped emphasis/anchor handling. Reviewed Istio 1.31.0/Kubernetes 1.32–1.37 and October 16 2026, all prose/bullets, all three exact YAML fences and eight reference links. Preserved routing of plaintext HTTP/2/new RPCs to eligible endpoints with no migration of existing streams; application TLS opacity versus separate mesh mTLS and non-authenticating headers; existing labelled backend/server implementation assumptions and explicit grpc/http2 without blanket h2UpgradePolicy; LEAST_REQUEST eligibility and passive real-traffic failures with Envoy error classification, no active grpc.health.v1.Health probes; native numeric-port readiness fragment, unsupported custom auth/TLS parameters, probe rewriting/mTLS and readiness eligibility versus liveness restarts; alternative GetItem-only idempotent unary route and disabled other/stream/write retries; attempts:2 after the initial request within 3-second total timeout and client deadline, no three-completion guarantee due to backoff/processing; no automatic cancellation/deadline-expiry/resource-exhaustion retries; application cancellation contract and cross-layer retry budgets, write idempotency/deduplication and no automatic resumed response stream. Heading text, exact API/query/config tokens and URLs remain unchanged.",
+      "findings": [
+        {
+          "location": "Review date",
+          "finding": "October 16 remained generic English date prose.",
+          "resolution": "Localized the same date to 2026 年 10 月 16 日.",
+          "resolved": true
+        },
+        {
+          "location": "Overview",
+          "finding": "被动异常值检测 sounded like statistical numerical outlier analysis rather than host-failure detection.",
+          "resolution": "Used 被动异常主机检测（outlier detection）, retaining the later explicit passive observation of actual traffic, no active health probes and Envoy error classifications.",
+          "resolved": true
+        },
+        {
+          "location": "Retry Configuration opening",
+          "finding": "幂等的一元读取操作 was a literal and unclear unary RPC translation.",
+          "resolution": "Used 幂等的单次读取RPC（unary，即单请求/单响应）, preserving idempotent-read-only eligibility, exact GetItem path and all retry limits.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/service-mesh/istio/advanced/05-grpc.md",
+          "cn/service-mesh/istio/advanced/05-grpc.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0019-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/data-on-eks/01-data-pipeline-anatomy.md",
+      "targetPath": "cn/data-on-eks/01-data-pipeline-anatomy.md",
+      "sourceBlob": "2adbec209240507af1f724bec37636ba8bebfd3b",
+      "sourceSha256": "2f77d308450115eca1c8789c9c99d53baed12b28cc8395e24668580bd2d4f2cf",
+      "beforeTargetSha256": "fb0a2edba14635901e47b65e41bc2c81c47b7d1e84143ca27c684e92f44d6a9c",
+      "beforeSnapshot": "/tmp/preimages/fb0a2edba14635901e47b65e41bc2c81c47b7d1e84143ca27c684e92f44d6a9c.md",
+      "sourceGitBlob": "2adbec209240507af1f724bec37636ba8bebfd3b",
+      "targetSha256": "d6ea64ee832d42d6161fded291a437c04186721065a564193024726c3565e59a",
+      "currentTargetSha256": "d6ea64ee832d42d6161fded291a437c04186721065a564193024726c3565e59a",
+      "afterTargetSha256": "d6ea64ee832d42d6161fded291a437c04186721065a564193024726c3565e59a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/d6ea64ee832d42d6161fded291a437c04186721065a564193024726c3565e59a.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0019-source-snapshots/2f77d308450115eca1c8789c9c99d53baed12b28cc8395e24668580bd2d4f2cf.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently checked frozen English source blob/SHA and actual Chinese preimage, read both complete initial pages and both entire final pages after scoped emphasis/anchor checks. Compared last-updated date, tip block, introduction, diagram/destination, all five conceptual-role sections, ingestion and storage tables, contracts/operations bullets, EKS ownership paragraph, chapter links and all references. Preserved non-exclusive product roles and processing before storage; snapshot/incremental/log CDC with replication-log retention/permissions and connector-dependent schema support, snapshot load/lag/recovery; batch/event behavior and latency drivers; Sqoop retirement June 2021; replay only of retained Kafka records, retention/compaction/tombstone removal and no complete-history guarantee; consistent source/state recovery, sink transactions/idempotency/external side effects and distinct reexecution/final-effect duplication; raw-data access and ETL versus ELT actual transformation order rather than warehouse presence; Spark streaming and Flink bounded inputs without product exclusivity or batch-exact/stream-approximate guarantees; event-time/watermark/lateness/dedup/state/output semantics; example five-minute/one-second targets not performance claims; Airflow orchestration not per-event processing and task Operator distinct from a Kubernetes controller; registration/serialization/CI schema compatibility checks not every DDL/business change. Output-duplication contracts now describe agreed treatment of duplicate outputs rather than promised deduplication. All target heading text and source URLs remain unchanged; the schema-contract correction is a bold bullet label, not a heading change.",
+      "findings": [
+        {
+          "location": "Introduction, CDC paragraph and operations bullet",
+          "finding": "架构 mistranslated data schema as system architecture.",
+          "resolution": "Used 数据模式（schema）, 数据模式变更 and 数据模式契约, retaining connector and enforcement-path limitations.",
+          "resolved": true
+        },
+        {
+          "location": "Introduction",
+          "finding": "输出去重契约 narrowed output-duplication contracts into an apparent deduplication guarantee.",
+          "resolution": "Used 重复输出的处理契约, leaving concrete exactly-once/dedup requirements and recovery limitations in their proper later paragraphs.",
+          "resolved": true
+        },
+        {
+          "location": "Storage table/ETL paragraph and observability",
+          "finding": "精选数据 sounded like editorial selection and 数据沿袭 was awkward lineage wording.",
+          "resolution": "Used 经过整理的数据/整理好的数据结果 and 数据血缘 without adding quality or reproducibility guarantees.",
+          "resolved": true
+        },
+        {
+          "location": "Kafka retention paragraph/reference and schema compatibility",
+          "finding": "日志压缩 could suggest byte compression; 注册表 was ambiguous registry wording.",
+          "resolution": "Used 日志压实（compaction） and 数据模式注册中心, preserving historical-record removal and actual registration/serialization/CI checks.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/data-on-eks/01-data-pipeline-anatomy.md",
+          "cn/data-on-eks/01-data-pipeline-anatomy.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0019-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
+      "targetPath": "cn/ai-ml/sagemaker-ai/01-platform-architecture.md",
+      "sourceBlob": "069a77e8f44ec537b5adf21eaca82b67ec052790",
+      "sourceSha256": "350d6380d67a7d55e2968808dcb82d8cdb11de5e134be4d670cad007c4f4bbd4",
+      "beforeTargetSha256": "652f059517f41f8a84fcbaea3c84a1ea323dadaa7980115bb679eced7e1387ca",
+      "beforeSnapshot": "/tmp/preimages/652f059517f41f8a84fcbaea3c84a1ea323dadaa7980115bb679eced7e1387ca.md",
+      "sourceGitBlob": "069a77e8f44ec537b5adf21eaca82b67ec052790",
+      "targetSha256": "59f81e524058303bb98c795f9348562408319e2c55c0c6c898c646a429dbe649",
+      "currentTargetSha256": "59f81e524058303bb98c795f9348562408319e2c55c0c6c898c646a429dbe649",
+      "afterTargetSha256": "59f81e524058303bb98c795f9348562408319e2c55c0c6c898c646a429dbe649",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/59f81e524058303bb98c795f9348562408319e2c55c0c6c898c646a429dbe649.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0019-source-snapshots/350d6380d67a7d55e2968808dcb82d8cdb11de5e134be4d670cad007c4f4bbd4.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Verified the current English Git blob/SHA and actual initial target bytes independently against the retained frozen pair. Read both entire original pages and both complete final pages after owned emphasis/anchor checks, covering introduction/date/design diagram, every responsibility/environment/settings table row, all governance and validation paragraphs, model revision, references, next link and quiz link. Preserved target design and neither historical GPU path executed; pinned PyTorch 2.8 end-of-patch and supported-runtime upgrade first; 1600/200/400 splits totaling 2200 and generator/seed/hash recording; candidate training versus complete detection/replacement and no automatic recovery of missed entities; reversible token mappings not encryption and no proof of full callback/library/exception/trace testing; private identifiers versus public reports; ServiceAccount plus SDK workload identity, manifest SHA-256/bucket ownership, no automatic security boundary and no presigned bearer URLs in Pod environment; full model/tokenizer/image/transitive/CUDA/hardware/decoding reproducibility requirements versus fixed seed/direct-only lock; Qwen 30.5B total/3.3B active without all-weight/memory/latest/fit claim, observed revision not actually pinned by loader; all proposed NF4/bfloat16/16/32/.05/1024/1/8/10/80/10800 settings without successful-training/quality/peak-memory or lifetime/cost-cap evidence; intended governance profile/membership/MLflow prechecks, membershipAssignments not atomic rollback and separate ACTIVE/tool/environment readiness; possible App creation before failure, post-creation inventory/compensation, cleanup limited to owned run resources and no inferred current leftovers; actual 30 local tests plus added regression coverage and no downloaded weights/GPU training/quality evaluation/current AWS inspection. All target headings, API identifiers, model revision and URLs retained.",
+      "findings": [
+        {
+          "location": "Environment table Data row",
+          "finding": "使用受ServiceAccount权限限定的AWS权限 repeated permissions and obscured the scope relationship.",
+          "resolution": "Used 使用限定于ServiceAccount的AWS权限，通过S3 SDK下载; retained the separate explicit ServiceAccount/SDK credential-chain explanation.",
+          "resolved": true
+        },
+        {
+          "location": "Environment/security paragraph",
+          "finding": "预签名持有者URL was an opaque literal bearer-URL phrase.",
+          "resolution": "Named the presigned URL and explained that possession of the link permits access, retaining the source statement that it is not placed in Pod environment values and the manifest/bucket checks.",
+          "resolved": true
+        },
+        {
+          "location": "Responsibility table and governance inventory prose",
+          "finding": "资源清单/拆除 sounded like physical demolition rather than resource lifecycle handling.",
+          "resolution": "Used 资源登记/清理 and private-inventory wording, retaining export/verification, ownership/dependencies, public-report separation and run-owned cleanup limits.",
+          "resolved": true
+        },
+        {
+          "location": "Governance paragraph",
+          "finding": "域/配置文件 misread the governance profile as a filesystem configuration file.",
+          "resolution": "Used 域/项目配置方案（profile） while preserving caller membership, MLflow access, CreateProject membershipAssignments and readiness/rollback caveats.",
+          "resolved": true
+        },
+        {
+          "location": "Unified Studio table row",
+          "finding": "治理选择 was a literal expression.",
+          "resolution": "Used 本实验选用的治理方案 and kept Unified Studio optional for QLoRA/EKS/Training Jobs.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
+          "cn/ai-ml/sagemaker-ai/01-platform-architecture.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0019-wording-findings.json"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -5788,9 +7659,9 @@
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
   "snapshotScope": {
-    "wholePagesReviewed": 89,
+    "wholePagesReviewed": 109,
     "remainingLocaleReviews": "IN_PROGRESS; these actual individual reviews do not certify all 693 pages per locale",
-    "lastVerifiedAt": "2026-10-18T11:41:48.904921+00:00",
+    "lastVerifiedAt": "2026-10-18T12:10:21.155093+00:00",
     "allAddedReviewSourceAndTargetHashesIndependentlyVerified": true
   },
   "additionalReviewBatches": [
@@ -6814,6 +8685,384 @@
       },
       "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
       "artifact": "/tmp/native-sol-cn-batch0014-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T11:52:34.550194+00:00",
+      "scope": [
+        "cn/quizzes/observability/logging/02-opensearch-quiz.md",
+        "cn/quizzes/service-mesh/linkerd/architecture.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/observability/logging/02-opensearch-quiz.md",
+            "cn/quizzes/service-mesh/linkerd/architecture.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/observability/logging/02-opensearch-quiz.md",
+            "cn/quizzes/service-mesh/linkerd/architecture.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/observability/logging/02-opensearch-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/service-mesh/linkerd/architecture.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/observability/logging/02-opensearch-quiz.md",
+          "cn/quizzes/service-mesh/linkerd/architecture.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/observability/logging/02-opensearch-quiz.md",
+          "cn/quizzes/service-mesh/linkerd/architecture.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0015-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T11:55:36.097542+00:00",
+      "scope": [
+        "cn/quizzes/container-registry/01-docker-hub-quiz.md",
+        "cn/quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "cn/quizzes/security/08-runtime-security-quiz.md",
+        "cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+        "cn/quizzes/ops/06-scaling-strategies-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/container-registry/01-docker-hub-quiz.md",
+            "cn/quizzes/observability/tracing/04-dynatrace-quiz.md",
+            "cn/quizzes/security/08-runtime-security-quiz.md",
+            "cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+            "cn/quizzes/ops/06-scaling-strategies-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/container-registry/01-docker-hub-quiz.md",
+            "cn/quizzes/observability/tracing/04-dynatrace-quiz.md",
+            "cn/quizzes/security/08-runtime-security-quiz.md",
+            "cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+            "cn/quizzes/ops/06-scaling-strategies-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/container-registry/01-docker-hub-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/tracing/04-dynatrace-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/security/08-runtime-security-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/ops/06-scaling-strategies-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/container-registry/01-docker-hub-quiz.md",
+          "cn/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "cn/quizzes/security/08-runtime-security-quiz.md",
+          "cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+          "cn/quizzes/ops/06-scaling-strategies-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/container-registry/01-docker-hub-quiz.md",
+          "cn/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "cn/quizzes/security/08-runtime-security-quiz.md",
+          "cn/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+          "cn/quizzes/ops/06-scaling-strategies-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0016-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T12:03:50.572790+00:00",
+      "scope": [
+        "cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+        "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+        "cn/quizzes/ops/03-ci-pipelines-quiz.md",
+        "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+        "cn/quizzes/security/11-kubescape-quiz.md",
+        "cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+        "cn/quizzes/security/07-image-security-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+            "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+            "cn/quizzes/ops/03-ci-pipelines-quiz.md",
+            "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+            "cn/quizzes/security/11-kubescape-quiz.md",
+            "cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+            "cn/quizzes/security/07-image-security-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+            "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+            "cn/quizzes/ops/03-ci-pipelines-quiz.md",
+            "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+            "cn/quizzes/security/11-kubescape-quiz.md",
+            "cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+            "cn/quizzes/security/07-image-security-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/ops/03-ci-pipelines-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/security/11-kubescape-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/security/07-image-security-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+            "cn/quizzes/ops/03-ci-pipelines-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+            "cn/quizzes/ops/03-ci-pipelines-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/ops/03-ci-pipelines-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+          "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+          "cn/quizzes/ops/03-ci-pipelines-quiz.md",
+          "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+          "cn/quizzes/security/11-kubescape-quiz.md",
+          "cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+          "cn/quizzes/security/07-image-security-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+          "cn/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+          "cn/quizzes/ops/03-ci-pipelines-quiz.md",
+          "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+          "cn/quizzes/security/11-kubescape-quiz.md",
+          "cn/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+          "cn/quizzes/security/07-image-security-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0017-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T12:07:29.022847+00:00",
+      "scope": [
+        "cn/quizzes/platform-engineering/02-ack-quiz.md",
+        "cn/quizzes/security/12-spiffe-spire-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/platform-engineering/02-ack-quiz.md",
+            "cn/quizzes/security/12-spiffe-spire-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/platform-engineering/02-ack-quiz.md",
+            "cn/quizzes/security/12-spiffe-spire-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/platform-engineering/02-ack-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/security/12-spiffe-spire-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/platform-engineering/02-ack-quiz.md",
+          "cn/quizzes/security/12-spiffe-spire-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/platform-engineering/02-ack-quiz.md",
+          "cn/quizzes/security/12-spiffe-spire-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0018-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T12:09:42.803191+00:00",
+      "scope": [
+        "cn/service-mesh/istio/security/03-authorization.md",
+        "cn/service-mesh/istio/advanced/05-grpc.md",
+        "cn/data-on-eks/01-data-pipeline-anatomy.md",
+        "cn/ai-ml/sagemaker-ai/01-platform-architecture.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/service-mesh/istio/security/03-authorization.md",
+            "cn/service-mesh/istio/advanced/05-grpc.md",
+            "cn/data-on-eks/01-data-pipeline-anatomy.md",
+            "cn/ai-ml/sagemaker-ai/01-platform-architecture.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/service-mesh/istio/security/03-authorization.md",
+            "cn/service-mesh/istio/advanced/05-grpc.md",
+            "cn/data-on-eks/01-data-pipeline-anatomy.md",
+            "cn/ai-ml/sagemaker-ai/01-platform-architecture.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/service-mesh/istio/security/03-authorization.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/service-mesh/istio/advanced/05-grpc.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/data-on-eks/01-data-pipeline-anatomy.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/ai-ml/sagemaker-ai/01-platform-architecture.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/service-mesh/istio/security/03-authorization.md",
+          "cn/service-mesh/istio/advanced/05-grpc.md",
+          "cn/data-on-eks/01-data-pipeline-anatomy.md",
+          "cn/ai-ml/sagemaker-ai/01-platform-architecture.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/service-mesh/istio/security/03-authorization.md",
+          "cn/service-mesh/istio/advanced/05-grpc.md",
+          "cn/data-on-eks/01-data-pipeline-anatomy.md",
+          "cn/ai-ml/sagemaker-ai/01-platform-architecture.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0019-review-20261018.json"
     }
   ],
   "additionalReportedFindingCorrections": [

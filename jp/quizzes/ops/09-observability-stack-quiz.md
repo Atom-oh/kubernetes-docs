@@ -1,175 +1,163 @@
-# Observability Stack クイズ
+# Observability stack クイズ
 
-> **関連ドキュメント**: [Observability Stack](../../ops/09-observability-stack.md)
+> **関連ドキュメント**: [Observability stack](../../ops/09-observability-stack.md)
 
-## 選択問題
+## 1. 新しい Loki のデプロイを検討する際、判断の指針となる説明はどれですか？
 
-### 1. LGTM observability stack のコンポーネントは何ですか？
-
-- A) Linux, Git, Terminal, Make
-- B) Loki (logs), Grafana (visualization), Tempo (traces), Mimir/Prometheus (metrics)
-- C) Lambda, Gateway, Transit, Monitor
-- D) Load balancer, Gateway, TLS, Mesh
+- A) SimpleScalable は、今後もすべての新規デプロイで恒久的な既定モードである
+- B) SimpleScalable は非推奨で、4.0 で削除予定のため、代替手段を評価する
+- C) Monolithic は object storage を利用できない
+- D) replica を 3 つにすれば AZ の分離が自動的に保証される
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Loki (logs), Grafana (visualization), Tempo (traces), Mimir/Prometheus (metrics)**
+**回答: B**
 
-**解説:**
-LGTM は Grafana Labs の observability stack で、log aggregation のための Loki、visualization と dashboard のための Grafana、distributed tracing のための Tempo、metrics のための Mimir（または Prometheus）で構成されます。これらのコンポーネントはシームレスに統合されます。
+read、write、backend の分割は SSD のアーキテクチャを表します。新しい設計では、そのライフサイクルに加えて、Monolithic mode と Distributed mode の容量および運用上の制約も評価してください。
 
 </details>
 
-### 2. Loki の SimpleScalable と Distributed deployment modes の違いは何ですか？
+## 2. Tempo 3 の Distributed mode と Monolithic mode は、どのように異なりますか？
 
-- A) SimpleScalable はテスト専用である
-- B) SimpleScalable は read/write paths を分離し、Distributed はより細かな component separation を追加する
-- C) Distributed は非推奨である
-- D) これらは同一である
+- A) どちらも従来の ingester を保持する
+- B) Monolithic mode は常に Kafka を必要とする
+- C) Distributed mode は Kafka を使い、Monolithic mode は Kafka なしで実行できる
+- D) Monolithic chart の replica を増やせば、サポートされた Distributed HA が実現する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) SimpleScalable は read/write paths を分離し、Distributed はより細かな component separation を追加する**
+**回答: C**
 
-**解説:**
-SimpleScalable mode は Loki を、独立してスケールできる read paths と write paths に分割します。Distributed mode は、大規模環境で最大限の scalability と operational flexibility を実現するために、components（ingesters、distributors、queriers など）をさらに分離します。
+version 3 では、分散 ingester／compactor アーキテクチャの代わりに block-builder／live-store と backend-scheduler／worker を使います。異なるデプロイモードを混在させないでください。
 
 </details>
 
-### 3. Tempo における tail-based sampling の目的は何ですか？
+## 3. tail sampling には、どのような制約がありますか？
 
-- A) log files の末尾をサンプリングするため
-- B) 完全な trace を確認した後に sampling decisions を行うため
-- C) query latency を削減するため
-- D) trace data を圧縮するため
+- A) すべての error trace を必ず保持する
+- B) `decision_wait` の間に受信した span に基づいて判断し、head sampling で破棄済みのデータは復元できない
+- C) Service をランダムに振り分ければ、trace は常に同じ sampler に届く
+- D) `num_traces` は 1 秒あたりの trace 数を指定する
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) 完全な trace を確認した後に sampling decisions を行うため**
+**回答: B**
 
-**解説:**
-Tail-based sampling は、trace が完了するまで待ってから保存するかどうかを決定します。これにより、normal traces はサンプリングしつつ、すべての error traces や slow traces を保持できます。head-based sampling は trace の開始時に判断するため、これは実現できません。
+遅れて届く span、buffer の上限、再起動、transport の障害を考慮してください。複数の sampler を使う場合は、trace ID に基づいて routing する必要があります。
 
 </details>
 
-### 4. observability stack において OTEL Collector はどのような役割を果たしますか？
+## 4. batch processor の `send_batch_size` は何を制御しますか？
 
-- A) metrics を長期保存する
-- B) applications から telemetry data を受信、処理、export する
-- C) Grafana dashboards を作成する
-- D) user authentication を管理する
+- A) batch の最大サイズ
+- B) trace の最大継続時間
+- C) 送信を開始する item 数のしきい値
+- D) 永続ストレージの容量
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) applications から telemetry data を受信、処理、export する**
+**回答: C**
 
-**解説:**
-OpenTelemetry Collector は telemetry pipeline として機能し、applications から traces、metrics、logs を受信し、それらを処理（batching、filtering、enriching）して、Tempo、Prometheus、Loki などの backends に export します。
+batch サイズの上限は `send_batch_max_size` で指定します。memory limiter と sampling／drop 処理の後に batch processor を配置してください。
 
 </details>
 
-### 5. Amazon Managed Prometheus (AMP) は Prometheus とどのように統合されますか？
+## 5. すべての Alloy DaemonSet Pod がクラスター内のすべての log target を収集すると、何が起こりますか？
 
-- A) Prometheus を完全に置き換える
-- B) Prometheus が remote_write を使用して storage のために metrics を AMP に送信する
-- C) AMP が Prometheus sidecar として実行される
-- D) AMP は CloudWatch でのみ動作する
+- A) 完全な HA と重複排除が自動的に実現する
+- B) 重複収集が起きることがあるため、target を分割するか source clustering を構成する
+- C) Kubernetes API が collector を必ず 1 つだけ許可する
+- D) hostPath が必須なので起動できない
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Prometheus が remote_write を使用して storage のために metrics を AMP に送信する**
+**回答: B**
 
-**解説:**
-AMP は Prometheus metrics のための managed で scalable な storage backend を提供します。Prometheus は引き続き local で scrape と rule evaluation を行いますが、`remote_write` を使用して metrics を AMP に送信します。その後、Grafana が PromQL を使用して AMP に query します。
+Kubernetes logs API を使う source と file tailing は異なります。単一の Deployment と `Recreate` を使う例は重複を減らしますが、HA や中断のない収集を実現するものではありません。
 
 </details>
 
-### 6. 推奨される Loki label design strategy は何ですか？
+## 6. Loki retention を有効にするには何が必要ですか？
 
-- A) flexibility のためにできるだけ多くの labels を使用する
-- B) index explosion を避けるために、bounded で low-cardinality な labels を使用する
-- C) labels を一切使用しない
-- D) timestamp labels のみを使用する
+- A) `retention_period` だけ
+- B) 24 時間の TSDB index、compactor retention の有効化、`delete_request_store`、retention 期間
+- C) bucket 内のすべての object を同じ期間で期限切れにする
+- D) Grafana dashboard の time range
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) index explosion を避けるために、bounded で low-cardinality な labels を使用する**
+**回答: B**
 
-**解説:**
-High-cardinality labels（user IDs や request IDs など）は過剰な streams を作成し、index を肥大化させます。Labels は low-cardinality（namespace、app、environment）にし、high-cardinality data は LogQL で filtering できるように log content に含めるべきです。
+削除は遅延を伴い、非同期で行われます。compactor の state と marker は再起動後も保持される必要があります。bucket 全体に lifecycle expiration を設定すると、index など必要な object が損なわれることがあります。
 
 </details>
 
-### 7. log collection における Promtail と Grafana Alloy の違いは何ですか？
+## 7. AMP の HA group と replica を識別する label はどれですか？
 
-- A) Promtail は metrics のみを収集する
-- B) Alloy は logs、metrics、traces をサポートする unified agent であり、Promtail は Loki 専用である
-- C) Promtail は Alloy より新しい
-- D) Alloy は Kubernetes をサポートしていない
+- A) `namespace` と `pod`
+- B) `cluster` と `__replica__`
+- C) `service` と `trace_id`
+- D) `region` のみ
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Alloy は logs、metrics、traces をサポートする unified agent であり、Promtail は Loki 専用である**
+**回答: B**
 
-**解説:**
-Promtail は logs を Loki に送信するために特化して作られています。Grafana Alloy（旧 Agent）は、OpenTelemetry と native receivers を使用して logs、metrics、traces を扱う unified collector であり、必要な agents の数を減らします。
+同じ scrape data の replica は `cluster` を共有し、異なる `__replica__` の値を使います。独立した scrape coverage を 1 つの HA group にまとめると、データが失われることがあります。
 
 </details>
 
-### 8. Loki と Tempo の間で Grafana datasource linking をどのように設定しますか？
+## 8. AMP の retention について、正しい説明はどれですか？
 
-- A) 設定なしで自動的に link される
-- B) Tempo datasource を指す derived fields を Loki datasource に設定する
-- C) 別の linking plugin をインストールする
-- D) 共通の database に data を export する
+- A) 150 日が変更できない上限である
+- B) workspace ごとに設定でき、最大 1,095 日である
+- C) 常に無期限である
+- D) 期間を延長すれば、すでに削除された metric が復元される
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Tempo datasource を指す derived fields を Loki datasource に設定する**
+**回答: B**
 
-**解説:**
-Grafana の Loki datasource settings で、logs から trace IDs を抽出して Tempo datasource に link するための regex を持つ derived fields を設定します。これにより、log lines から関連する traces へのクリック可能な links が作成されます。
+要件、コスト、サービスの制限を評価してから retention を設定してください。期限切れになったデータは後から復元されません。
 
 </details>
 
-### 9. Tempo の compactor component の目的は何ですか？
+## 9. Grafana で Loki の log から Tempo の trace に移動するには何が必要ですか？
 
-- A) network traffic を圧縮するため
-- B) trace blocks を merge し、retention を管理するため
-- C) TraceQL queries をコンパイルするため
-- D) dashboard loading time を短縮するため
+- A) 両方をインストールすれば自動的にリンクされる
+- B) 正しい trace ID 抽出、明示的な datasource UID、アクセス可能な trace data
+- C) trace ID を通常の Prometheus label として追加する
+- D) HTTP/2 だけを有効にする
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) trace blocks を merge し、retention を管理するため**
+**回答: B**
 
-**解説:**
-Compactor は storage efficiency のために小さな trace blocks を大きなものに merge し、期限切れ data を削除することで retention policies を適用します。Distributed mode では別の process として、または monolithic binary 内で実行されます。
+`derivedFields` と `tracesToLogsV2` の対応関係、time range、tenant、権限を確認してください。exemplar には、instrumentation、OpenMetrics、ストレージの構成も必要です。
 
 </details>
 
-### 10. OTEL Collector processors を設定するとき、batch processor は何をしますか？
+## 10. chart の render が成功した後も、何を確認する必要がありますか？
 
-- A) traces に batch IDs を割り当てる
-- B) efficiency を向上させるため、export 前に telemetry を batches にグループ化する
-- C) database batch operations を処理する
-- D) Kubernetes で batch jobs を作成する
+- A) 不要。未知の value もすべて適用されている
+- B) 実際の PVC、Service、identity、backend の設定、write／query 経路
+- C) YAML の indentation だけ
+- D) すべての image を `latest` に置き換える
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) efficiency を向上させるため、export 前に telemetry を batches にグループ化する**
+**回答: B**
 
-**解説:**
-Batch processor は telemetry data を蓄積し、size または timeout thresholds に基づいて batches で送信します。これにより outgoing requests の数が減り、compression が向上し、receiving backends への load が低減されます。
+chart の value によっては、警告なしに無視されるものがあります。PVC の `accessModes` と Service の port を確認し、parser による構成検証と実環境への接続性を区別してください。
 
 </details>
