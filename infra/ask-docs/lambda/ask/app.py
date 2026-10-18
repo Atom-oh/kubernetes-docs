@@ -1,12 +1,12 @@
-"""docs Q&A API behind the internal ALB (path /kubernetes-docs/api/ask).
+"""docs Q&A logic for POST /kubernetes-docs/api/ask (served by server.py).
 
 Retrieval: BM25 over the chunk index that scripts/build-ask-index.mjs produces and uploads to S3.
-Generation: one Bedrock Converse call (global Haiku 5.5 inference profile). Document text is treated as
-untrusted data in the prompt. The answer must cite only the supplied sources.
+Generation: one Bedrock ConverseStream call (global Haiku 5.5 inference profile), passed on to the client
+as it arrives. Document text is treated as untrusted data in the prompt. The answer must cite only the
+supplied sources.
 Conversations: earlier turns live in DynamoDB under a server-issued id (24h TTL), so follow-up questions
 keep their context while the request body stays small and the client cannot forge earlier answers.
 """
-import base64
 import gzip
 import hashlib
 import json
@@ -355,76 +355,99 @@ def _sources(index, chunks, locale):
     return out
 
 
-def _answer(question, locale, chunks, history=()):
+def _answer_stream(question, locale, chunks, history, usage):
+    """Yield the answer text as Bedrock streams it. Token usage is stored in `usage` at the end.
+    Errors in the stream (throttling, model errors) are raised while iterating."""
     docs_xml = "\n".join(
         f'<doc index="{i + 1}" title="{c["title"]}" heading="{c["heading"]}">\n{c["text"]}\n</doc>'
         for i, c in enumerate(chunks)
     )
     user = f"<documents>\n{docs_xml}\n</documents>\n\n<question>\n{question}\n</question>"
     earlier = [{"role": m["role"], "content": [{"text": m["content"]}]} for m in history]
-    resp = bedrock.converse(
+    resp = bedrock.converse_stream(
         modelId=MODEL_ID,
         system=[{"text": SYSTEM_PROMPT[locale]}],
         messages=earlier + [{"role": "user", "content": [{"text": user}]}],
         inferenceConfig={"maxTokens": MAX_OUTPUT_TOKENS},  # temperature is deprecated for Haiku 5.5
         additionalModelRequestFields=NO_THINKING,
     )
-    text = "".join(block.get("text", "") for block in resp["output"]["message"]["content"])
-    return text.strip(), resp.get("usage", {})
+    for event in resp["stream"]:
+        if "contentBlockDelta" in event:
+            text = event["contentBlockDelta"]["delta"].get("text")
+            if text:
+                yield text
+        elif "metadata" in event:
+            usage.update(event["metadata"].get("usage", {}))
 
 
-def _response(status, body):
-    return {
-        "statusCode": status,
-        "statusDescription": f"{status} {'OK' if status == 200 else 'Error'}",
-        "headers": {"content-type": "application/json; charset=utf-8", "cache-control": "no-store"},
-        "body": json.dumps(body, ensure_ascii=False),
-        "isBase64Encoded": False,
-    }
+class RequestError(Exception):
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status = status
+        self.message = message
 
 
-def handler(event, context):
-    started = time.time()
-    method = event.get("httpMethod", "")
-    if method != "POST":
-        return _response(405, {"error": "method not allowed"})
-
-    raw = event.get("body") or ""
-    if event.get("isBase64Encoded"):
-        raw = base64.b64decode(raw).decode("utf-8")
+def parse_request(raw):
+    """Validate a request body. Returns {question, locale, conversationId} or raises RequestError."""
     try:
         body = json.loads(raw)
     except (ValueError, TypeError):
-        return _response(400, {"error": "invalid json"})
-
+        raise RequestError(400, "invalid json")
+    if not isinstance(body, dict):
+        raise RequestError(400, "invalid json")
     question = str(body.get("question", "")).strip()
     locale = str(body.get("locale", "ko"))
     if not question or len(question) > MAX_QUESTION_CHARS:
-        return _response(400, {"error": f"question must be 1..{MAX_QUESTION_CHARS} chars"})
+        raise RequestError(400, f"question must be 1..{MAX_QUESTION_CHARS} chars")
     if locale not in ALLOWED_LOCALES:
-        return _response(400, {"error": f"locale must be one of {', '.join(sorted(ALLOWED_LOCALES))}"})
+        raise RequestError(400, f"locale must be one of {', '.join(sorted(ALLOWED_LOCALES))}")
+    return {"question": question, "locale": locale, "conversationId": str(body.get("conversationId") or "")}
 
+
+def ask(request):
+    """Answer one question as a stream of (event, data) pairs: "meta" (conversation id and the numbered
+    sources) once retrieval is done, "delta" for each piece of answer text as the model writes it, then
+    "done", or "error" if retrieval or generation fails. The turn is stored only after a complete answer,
+    so a client that disconnects (the generator is closed) leaves the conversation as it was."""
+    started = time.time()
+    question, locale = request["question"], request["locale"]
     # Only ids this API issued and still stores continue a conversation; anything else starts a new one.
-    requested_id = str(body.get("conversationId") or "")
+    requested_id = request["conversationId"]
     history = _load_history(requested_id) if CONVERSATION_ID.fullmatch(requested_id) else []
     conversation_id = requested_id if history else secrets.token_hex(16)
 
-    index = _get_index()
-    search_question, keywords = _expand_query(question, history, locale)
-    search_locale = "en" if locale in TRANSLATED_LOCALES else locale
-    pool = _search(index, search_question, search_locale, CANDIDATES, expansion=keywords)
-    chunks = _rerank(search_question, pool, TOP_K)
-    if not chunks:
-        return _response(200, {"answer": NO_MATCH[locale], "sources": [], "conversationId": conversation_id})
-
     try:
-        answer, usage = _answer(question, locale, chunks, history)
+        index = _get_index()
+        search_question, keywords = _expand_query(question, history, locale)
+        search_locale = "en" if locale in TRANSLATED_LOCALES else locale
+        pool = _search(index, search_question, search_locale, CANDIDATES, expansion=keywords)
+        chunks = _rerank(search_question, pool, TOP_K)
     except Exception as exc:  # surface only the error class; no question text in logs
-        print(json.dumps({"event": "bedrock_error", "error": type(exc).__name__}))
-        return _response(502, {"error": "answer generation failed"})
+        print(json.dumps({"event": "search_error", "error": type(exc).__name__}))
+        yield "error", {"error": "search failed"}
+        return
+    if not chunks:
+        yield "meta", {"conversationId": conversation_id, "sources": []}
+        yield "delta", {"text": NO_MATCH[locale]}
+        yield "done", {}
+        return
 
+    yield "meta", {"conversationId": conversation_id, "sources": _sources(index, chunks, locale)}
+    parts, usage = [], {}
+    first_token_ms = None
+    try:
+        for text in _answer_stream(question, locale, chunks, history, usage):
+            if first_token_ms is None:
+                first_token_ms = int((time.time() - started) * 1000)
+            parts.append(text)
+            yield "delta", {"text": text}
+    except Exception as exc:
+        print(json.dumps({"event": "bedrock_error", "error": type(exc).__name__}))
+        yield "error", {"error": "answer generation failed"}
+        return
+
+    answer = "".join(parts).strip()
     _save_history(conversation_id, history + [_history_message("user", question), _history_message("assistant", answer)])
-    sources = _sources(index, chunks, locale)
     print(json.dumps({
         "event": "ask",
         "question_sha256": hashlib.sha256(question.encode()).hexdigest()[:16],
@@ -433,6 +456,23 @@ def handler(event, context):
         "chunks": len(chunks),
         "input_tokens": usage.get("inputTokens"),
         "output_tokens": usage.get("outputTokens"),
+        "first_token_ms": first_token_ms,
         "latency_ms": int((time.time() - started) * 1000),
     }))
-    return _response(200, {"answer": answer, "sources": sources, "conversationId": conversation_id})
+    yield "done", {}
+
+
+def collect(events):
+    """The buffered JSON response ({answer, sources, conversationId}) for clients that do not ask for
+    text/event-stream. Returns (status, body)."""
+    body = {"answer": "", "sources": [], "conversationId": None}
+    parts = []
+    for name, data in events:
+        if name == "meta":
+            body.update(data)
+        elif name == "delta":
+            parts.append(data["text"])
+        elif name == "error":
+            return 502, data
+    body["answer"] = "".join(parts).strip()
+    return 200, body

@@ -3,7 +3,7 @@
 < [이전: 노드 부트스트랩](./04-node-bootstrap.md) | [목차](./README.md) | [다음: 워크로드 배치 전략](./06-workload-placement.md) >
 
 > **지원 버전**: DRA GPU 예제는 지원되는 EKS 버전의 Kubernetes 1.34.2 이상 필요. 확인한 인터페이스: GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0.
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 18일
 
 이 문서는 준비한 NVIDIA GPU 호스트를 EKS Hybrid Nodes에 통합하는 절차와 할당, GPU Operator 소유권, MIG와 time-slicing을 다룹니다. **이번 감사에서 GPU 실행, 드라이버 설치, 모델 다운로드, 추론 벤치마크를 수행하지 않았습니다.** 예제에는 승인한 OS·커널·드라이버·toolkit·런타임·이미지 조합과 실제 하드웨어 시험이 필요합니다.
 
@@ -326,6 +326,12 @@ spec:
 장치 하나를 요청한 claim에 `CUDA_VISIBLE_DEVICES=0,1,2,3`을 설정하지 않습니다. 장치 관리자·런타임이 할당 장치를 제공하며 CUDA의 프로세스 내부 index와 물리 GPU index는 다를 수 있습니다. 수동 override는 할당을 숨기거나 잘못 식별할 수 있으며 추가 GPU를 허용하지 않습니다.
 
 `nvidia-smi -L`은 장치 가시성만 확인합니다. 승인한 하드웨어에서 제한된 CUDA 연산과 실제 애플리케이션을 별도로 검증합니다. 여기서는 그 실행이나 성능 결과를 주장하지 않습니다.
+
+### 실측 데모
+
+[![V4 데모 영상: Hybrid GPU 추론 (무음, 2분 14초)](../.gitbook/assets/ko-eks-hybrid-nodes-demo-v4-gpu.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v4-gpu.mp4)
+
+위 smoke Job과 별개로, device plugin(v0.17.1)을 붙인 Hybrid GPU 노드에서 vLLM(v0.19.1, `Qwen/Qwen2.5-0.5B-Instruct`) 추론 Pod를 실행하고 클라우드 노드의 client Job에서 호출하는 무음 영상입니다. 2026년 10월 18일 시뮬레이션 환경(g6.xlarge, NVIDIA L4 호스트를 TGW로 연결한 온프레미스 VPC에 두고 조인, 프로덕션 지원 구성 아님)에서 실제 터미널을 녹화했습니다. 녹화 회차에서 GPU 노드만 `nvidia.com/gpu` 1을 게시했고, inference Pod는 컨테이너 1개(`istio-proxy` 없음, `hostNetwork=false`)로 실행됐으며 응답은 1초 미만이었습니다. vLLM 이미지 첫 다운로드(9.6 GB, NAT 경로)는 녹화 밖에서 4분 35초가 걸렸습니다. 성능 결과가 아니라 동작 확인 기록입니다. 전체 흐름은 [1시간 세션 덱](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)에서 볼 수 있습니다.
 
 ## MIG와 time-slicing
 

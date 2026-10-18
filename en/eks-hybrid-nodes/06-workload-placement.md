@@ -3,7 +3,7 @@
 < [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Node Lifecycle Management](./07-node-lifecycle.md) >
 
 > **Supported Versions**: Supported EKS versions with compatible Karpenter; reviewed Kubernetes 1.36.5 and Karpenter/provider 1.14.1 (pinned review baseline) interfaces.
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 18, 2026
 
 This chapter places workloads on Hybrid and cloud nodes and explains the limits of cloud bursting and Pod deletion cost. The examples are locally validated configuration/patch patterns. No cloud capacity, node mutation, application or GPU workload was created during the audit.
 
@@ -426,6 +426,12 @@ Empty nodes are not guaranteed to disappear immediately: reconciliation, disrupt
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-06-workload-placement-0.html)
 
 > **Diagram correction:** cloud-first Pod deletion and complete on-premises retention are best-effort goals, not invariants. “Empty” can still include DaemonSet Pods. The older `WhenUnderutilized` label should read `WhenEmptyOrUnderutilized` for the v1 example. Read the ordering and lifecycle conditions above.
+
+### Demo video: cloud bursting and pod-deletion-cost
+
+[![V2 demo video: cloud bursting and pod-deletion-cost (silent, 3 min 36 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v2-bursting.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v2-bursting.mp4)
+
+A silent video in which the workload overflows from full Hybrid nodes onto Karpenter burst nodes and, on scale-down, the cloud Pods leave first because Kyverno set pod-deletion-cost on the Hybrid Pods. Recorded on October 18, 2026 in a simulated environment (EC2 hosts standing in for on-premises over TGW; not a supported production setup), running scenario B (Kyverno, Karpenter feature off, 910m Pod request). In the recorded run all 15 replicas were Ready 35 s after scaling out (8 Hybrid, 7 burst), scaling to 10 left 8 Hybrid and 2 cloud, and scaling to 3 left all 3 on Hybrid nodes. The A/B/C comparison later in the video comes from a single run per scenario on October 15, 2026 (930m Pod request), so small differences may be noise. pod-deletion-cost is best-effort and does not apply to node failures or evictions. See the [1-hour session deck](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) for the full walkthrough.
 
 ## Primary references
 
