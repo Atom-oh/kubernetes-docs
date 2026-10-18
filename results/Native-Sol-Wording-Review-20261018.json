@@ -1,0 +1,379 @@
+{
+  "reviewer": "native managed Codex subagent openai.gpt-6.1-sol",
+  "reviewedAt": "2026-10-18T08:34:17.987428+00:00",
+  "meaningBaseline": "Only the complete corresponding English repository pages; no online factual additions or external model/API calls.",
+  "ownership": [
+    "es/data-on-eks/flink/04-operations-ha.md",
+    "es/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+    "jp/SUMMARY.md"
+  ],
+  "reviews": [
+    {
+      "sourcePath": "en/data-on-eks/flink/04-operations-ha.md",
+      "targetPath": "es/data-on-eks/flink/04-operations-ha.md",
+      "sourceBlob": "9e75d3ed02f426538146a2ba2fb2df9b4fc3943f",
+      "sourceSha256": "97a5ff956515544240152bb1ba68ed1e4b05efdcba1bef9a937b1bc49974129a",
+      "beforeTargetSha256": "dffbb2b5ed8b4689f6072e07319bf64bd4215d0b584ac836a01638a902e32b7a",
+      "targetSha256": "df9bcdd4d1102706916459d00de9b360fee48b8dbe79facd84221e100087f368",
+      "afterTargetSha256": "df9bcdd4d1102706916459d00de9b360fee48b8dbe79facd84221e100087f368",
+      "fidelityScore": 95,
+      "readabilityScore": 93,
+      "qualityScore": 93,
+      "scoreScale": "0–100; qualitative native whole-page comparison, not inferred from structural checks",
+      "completePageComparison": true,
+      "rationale": "All six sections, both metric-monitor configurations, memory tables, HA constraints, autoscaler comparison, acceptance checklist and validation limitations compared with the complete English page. Five genuine translation/readability findings resolved; technical values and scope unchanged.",
+      "findings": [
+        {
+          "source": "The S3 plugin/volume configuration is retained while enabling the Prometheus plugin. Separate pod IPs normally allow JM/TM to use the same 9249 port.",
+          "before": "configuración del complemento o volumen de S3; las IP de los pods",
+          "after": "configuración del complemento y del volumen de S3; las IP independientes de los pods",
+          "finding": "The Spanish conjunction implied an alternative between plugin and volume, and omitted separate pod IPs. Restored both source qualifiers without changing the port."
+        },
+        {
+          "source": "the default chart selects Slf4j; This chart's actual Operator pod",
+          "before": "el gráfico predeterminado; de este gráfico",
+          "after": "el chart predeterminado; de este chart",
+          "finding": "Helm chart was mistranslated as a plotted graphic. Corrected both mentions to the technical term chart."
+        },
+        {
+          "source": "Explicit managed size overrides its fraction; ... account for consumer weights.",
+          "before": "Un tamaño administrado explícito sustituye su fracción; ... las ponderaciones de quienes consumen memoria.",
+          "after": "Un tamaño explícito de memoria administrada prevalece sobre la fracción configurada; ... las ponderaciones de los consumidores de memoria.",
+          "finding": "Clarified size precedence and memory consumers using the meaning already present in the source."
+        },
+        {
+          "source": "Leader information and recovery-state handles/references",
+          "before": "Información del líder y referencias/controladores del estado de recuperación",
+          "after": "Información del líder e identificadores/referencias del estado de recuperación",
+          "finding": "Handles are recovery-state identifiers, not controllers. Restored the distinction."
+        },
+        {
+          "source": "which differs from upstream per-vertex autoscaling",
+          "before": "lo cual difiere del autoescalado ascendente por vértice",
+          "after": "lo cual difiere del autoescalado por vértice de Flink",
+          "finding": "Upstream means the Flink project here, not upward scaling. The page already contrasts Flink per-vertex scaling against managed application scaling."
+        }
+      ],
+      "unresolvedFindings": []
+    },
+    {
+      "sourcePath": "en/SUMMARY.md",
+      "targetPath": "jp/SUMMARY.md",
+      "sourceBlob": "5e037cb45bb7286c021d57d1e66e4605102856fa",
+      "sourceSha256": "e28232d05b1d2112decab2ad9dd4f0f0ab4a98cbd8c82c2d1a3e62b75eea1934",
+      "beforeTargetSha256": "92e5260ee18f525f0616facf36acded04371f8d70b5594a4deb875511204e597",
+      "targetSha256": "69654d030747312480d4c553bdbc37201dfce86605b9ea5a75e73b6653227369",
+      "afterTargetSha256": "69654d030747312480d4c553bdbc37201dfce86605b9ea5a75e73b6653227369",
+      "fidelityScore": 98,
+      "readabilityScore": 96,
+      "qualityScore": 96,
+      "scoreScale": "0–100; qualitative native whole-page comparison, not inferred from structural checks",
+      "completePageComparison": true,
+      "rationale": "All 797 English and Japanese navigation lines compared; all 23 restored entries specifically checked. Seventeen inserted labels corrected for Japanese fluency or source-label fidelity. Earlier good labels, products, heading map and exact tree preserved.",
+      "findings": [
+        {
+          "path": "networking/cilium/08-ebpf-datapath-internals.md",
+          "englishLabel": "Part 8: eBPF Datapath Internals",
+          "before": "パート8: eBPF データプレーンの内部",
+          "after": "パート8: eBPF データパスの内部構造",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "networking/cilium/09-overlay-native-routing.md",
+          "englishLabel": "Part 9: Overlay and Native Routing",
+          "before": "パート9: Overlay とネイティブ routing",
+          "after": "パート9: オーバーレイとネイティブルーティング",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "networking/cilium/10-ipam-deep-dive.md",
+          "englishLabel": "Part 10: IPAM Deep Dive",
+          "before": "パート10: IPAM の詳細",
+          "after": "パート10: IPAM の詳細",
+          "changed": false,
+          "resolution": "Existing inserted label naturally preserves the English navigation meaning; retained."
+        },
+        {
+          "path": "networking/cilium/11-bgp-lb-egress-edge.md",
+          "englishLabel": "Part 11: BGP, Load Balancer IPs and Egress",
+          "before": "パート11: BGP、Load Balancer IP、Egress",
+          "after": "パート11: BGP、ロードバランサーの IP アドレス、エグレス",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "networking/cilium/12-mtls-encryption-identity.md",
+          "englishLabel": "Part 12: mTLS, Encryption and Identity",
+          "before": "パート12: mTLS、暗号化、Identity",
+          "after": "パート12: mTLS、暗号化、アイデンティティ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "networking/cilium/13-clustermesh-install-upgrade.md",
+          "englishLabel": "Part 13: Versions, Install/Upgrade and Cluster Mesh",
+          "before": "パート13: バージョン、インストール／アップグレード、Cluster Mesh",
+          "after": "パート13: バージョン、インストール／アップグレード、Cluster Mesh",
+          "changed": false,
+          "resolution": "Existing inserted label naturally preserves the English navigation meaning; retained."
+        },
+        {
+          "path": "ai-ml/09-agent-sandbox.md",
+          "englishLabel": "Agent Sandbox on EKS",
+          "before": "EKS上のAgent Sandbox：AIエージェント向けの分離されたステートフルランタイム",
+          "after": "EKS 上の Agent Sandbox",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "security/13-defense-in-depth-incident-response.md",
+          "englishLabel": "Incident-driven Defense in Depth and Response",
+          "before": "実際のインシデントから学ぶ多層防御とインシデント対応",
+          "after": "インシデントに基づく多層防御と対応",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "security/14-waf-edge-api-security.md",
+          "englishLabel": "WAF, Edge, API and Origin Protection",
+          "before": "オリジン保護を伴う WAF、エッジ、API セキュリティ",
+          "after": "WAF、エッジ、API とオリジンの保護",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "security/15-ngfw-paloalto-fortinet.md",
+          "englishLabel": "Palo Alto and Fortinet NGFW",
+          "before": "Palo Alto と Fortinet の NGFW",
+          "after": "Palo Alto と Fortinet の NGFW",
+          "changed": false,
+          "resolution": "Existing inserted label naturally preserves the English navigation meaning; retained."
+        },
+        {
+          "path": "security/16-gwlb-geneve-inspection.md",
+          "englishLabel": "GWLB and GENEVE Paths and Failure Validation",
+          "before": "GWLB と GENEVE の経路、障害検証",
+          "after": "GWLB と GENEVE の経路と障害検証",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "labs/core/08-scheduling-preemption-eviction-lab.md",
+          "englishLabel": "Scheduler Scoring Strategy Lab",
+          "before": "スケジューラーのスコアリング戦略ラボ: `LeastAllocated` と `MostAllocated`",
+          "after": "スケジューラーのスコアリング戦略ラボ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/ai-ml/09-agent-sandbox-quiz.md",
+          "englishLabel": "Agent Sandbox Quiz",
+          "before": "EKS 上の Agent Sandbox クイズ",
+          "after": "Agent Sandbox クイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md",
+          "englishLabel": "Part 8: eBPF Datapath Internals Quiz",
+          "before": "パート8: eBPFデータパス内部構造のクイズ",
+          "after": "パート8: eBPF データパス内部構造クイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/networking/cilium/09-overlay-native-routing-quiz.md",
+          "englishLabel": "Part 9: Overlay and Native Routing Quiz",
+          "before": "パート9: オーバーレイとネイティブルーティングの詳細クイズ",
+          "after": "パート9: オーバーレイとネイティブルーティングのクイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/networking/cilium/10-ipam-deep-dive-quiz.md",
+          "englishLabel": "Part 10: IPAM Deep Dive Quiz",
+          "before": "パート 10: IPAM 詳細クイズ",
+          "after": "パート10: IPAM 詳細クイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md",
+          "englishLabel": "Part 11: BGP, Load Balancer IPs and Egress Quiz",
+          "before": "パート11: BGPコントロールプレーン、ロードバランサーIP、Egressクイズ",
+          "after": "パート11: BGP、ロードバランサーの IP アドレス、エグレスのクイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md",
+          "englishLabel": "Part 12: mTLS, Encryption and Identity Quiz",
+          "before": "パート 12: mTLS、透過的な暗号化、ID のクイズ",
+          "after": "パート12: mTLS、暗号化、アイデンティティのクイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md",
+          "englishLabel": "Part 13: Versions, Install/Upgrade and Cluster Mesh Quiz",
+          "before": "パート13: バージョン、インストール/アップグレード、Cluster Meshクイズ",
+          "after": "パート13: バージョン、インストール／アップグレード、Cluster Mesh クイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        },
+        {
+          "path": "quizzes/security/13-defense-in-depth-incident-response-quiz.md",
+          "englishLabel": "Defense in Depth and Incident Response Quiz",
+          "before": "多層防御とインシデント対応のクイズ",
+          "after": "多層防御とインシデント対応のクイズ",
+          "changed": false,
+          "resolution": "Existing inserted label naturally preserves the English navigation meaning; retained."
+        },
+        {
+          "path": "quizzes/security/14-waf-edge-api-security-quiz.md",
+          "englishLabel": "WAF and Origin Protection Quiz",
+          "before": "WAF とオリジン保護のクイズ",
+          "after": "WAF とオリジン保護のクイズ",
+          "changed": false,
+          "resolution": "Existing inserted label naturally preserves the English navigation meaning; retained."
+        },
+        {
+          "path": "quizzes/security/15-ngfw-paloalto-fortinet-quiz.md",
+          "englishLabel": "Palo Alto and Fortinet NGFW Quiz",
+          "before": "Palo Alto と Fortinet NGFW のクイズ",
+          "after": "Palo Alto と Fortinet NGFW のクイズ",
+          "changed": false,
+          "resolution": "Existing inserted label naturally preserves the English navigation meaning; retained."
+        },
+        {
+          "path": "quizzes/security/16-gwlb-geneve-inspection-quiz.md",
+          "englishLabel": "GWLB and GENEVE Quiz",
+          "before": "GWLB と GENEVE の検査クイズ",
+          "after": "GWLB と GENEVE のクイズ",
+          "changed": true,
+          "resolution": "Natural Japanese terminology and/or removed H1-only qualifiers absent from English SUMMARY."
+        }
+      ],
+      "unresolvedFindings": []
+    },
+    {
+      "sourcePath": "en/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+      "targetPath": "es/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+      "sourceBlob": "7a70b389012da35669e6dbc52b7efd51018013fd",
+      "sourceSha256": "83e0bc7825cefa5422824b18fb4b5cc31657cdf8de7dee6df2042911e65a5243",
+      "beforeTargetSha256": "69dc7fe4c05695386140db1611f87d816f8f8ea9c2ab42c9a6ec3c406202170b",
+      "targetSha256": "be6d7a0648fb2b7d814d8e414c815e66075d6a716ef1ec3a78d3db972f3cceaa",
+      "afterTargetSha256": "be6d7a0648fb2b7d814d8e414c815e66075d6a716ef1ec3a78d3db972f3cceaa",
+      "fidelityScore": 97,
+      "readabilityScore": 95,
+      "qualityScore": 95,
+      "scoreScale": "0–100; qualitative native whole-page comparison, not inferred from structural checks",
+      "completePageComparison": true,
+      "rationale": "Complete 180-line source and target compared, including both unchanged Mermaid blocks, resource mapping, migration capability table, span timing caveat, controller scope and references. Four wording defects corrected without importing external technical facts.",
+      "findings": [
+        {
+          "source": "A caller-side proxy can maintain connection pools, observe upstream failures and apply configured retries.",
+          "before": "observar fallos ascendentes",
+          "after": "observar fallos de los servicios de destino",
+          "finding": "Upstream failures mean failures of destination services, not failures moving upward."
+        },
+        {
+          "source": "App Mesh, Istio and raw Envoy expose different configuration surfaces.",
+          "before": "App Mesh, Istio y Envoy sin procesar",
+          "after": "App Mesh, Istio y Envoy por sí solo",
+          "finding": "Raw Envoy refers to Envoy itself, not unprocessed material."
+        },
+        {
+          "source": "Target-group health checks actively probe targets; they are not passive per-request outlier detection.",
+          "before": "grupos de destino sondeos activos de los destinos",
+          "after": "grupos de destino sondean activamente los destinos",
+          "finding": "Missing predicate restored with sondean activamente, preserving active probing versus passive detection."
+        },
+        {
+          "source": "multiple Gateways sharing a name all point to the same Service Network",
+          "before": "varias Gateway con el mismo nombre",
+          "after": "varios recursos Gateway con el mismo nombre",
+          "finding": "Natural grammatical plural of Kubernetes Gateway resources restored."
+        }
+      ],
+      "unresolvedFindings": []
+    }
+  ],
+  "reportedFindingProvenanceCorrection": {
+    "originalArtifact": "/tmp/es-sol-wording-findings.json",
+    "originalClaimedPath": "data-on-eks/flink/04-operations-ha.md",
+    "originalClaimedTargetSha256": "dffbb2b5ed8b4689f6072e07319bf64bd4215d0b584ac836a01638a902e32b7a",
+    "originalArtifactAcceptedAsCorrect": false,
+    "correction": "The quoted English/Spanish sentence is absent from Flink 04-operations-ha.md. Root located it in service-mesh/vpc-lattice/01-appmesh-vs-lattice.md; native Sol read and compared that entire actual page before correcting the verb. Original stale/misattributed row is superseded by this evidence.",
+    "actualSourcePath": "en/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+    "actualTargetPath": "es/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+    "actualSourceBlob": "7a70b389012da35669e6dbc52b7efd51018013fd",
+    "actualBeforeTargetSha256": "69dc7fe4c05695386140db1611f87d816f8f8ea9c2ab42c9a6ec3c406202170b",
+    "actualAfterTargetSha256": "be6d7a0648fb2b7d814d8e414c815e66075d6a716ef1ec3a78d3db972f3cceaa",
+    "artifactHashMatchesActualBeforeFile": false,
+    "actualSourceSha256": "83e0bc7825cefa5422824b18fb4b5cc31657cdf8de7dee6df2042911e65a5243",
+    "originalHashContext": "The artifact hash matches the pre-correction Flink file, but its quoted finding actually belongs to Lattice. It therefore cannot validate the Lattice finding; the actual Lattice before/after hashes are recorded separately."
+  },
+  "validation": [
+    {
+      "command": [
+        "python3",
+        "scripts/validate-translation.py",
+        "en/data-on-eks/flink/04-operations-ha.md",
+        "es/data-on-eks/flink/04-operations-ha.md"
+      ],
+      "exitCode": 0,
+      "headingsUnchangedFromBefore": true,
+      "fencedCodeBytesUnchangedFromBefore": true,
+      "linkTargetsUnchangedFromBefore": true
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/validate-translation.py",
+        "en/SUMMARY.md",
+        "jp/SUMMARY.md"
+      ],
+      "exitCode": 0,
+      "headingsUnchangedFromBefore": true,
+      "fencedCodeBytesUnchangedFromBefore": true,
+      "linkTargetsUnchangedFromBefore": true
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/validate-translation.py",
+        "en/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+        "es/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md"
+      ],
+      "exitCode": 0,
+      "headingsUnchangedFromBefore": true,
+      "fencedCodeBytesUnchangedFromBefore": true,
+      "linkTargetsUnchangedFromBefore": true
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "es/data-on-eks/flink/04-operations-ha.md",
+        "es/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+        "jp/SUMMARY.md"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "SUMMARY exact hierarchy/order/paths/blank-line alignment",
+      "englishLines": 797,
+      "japaneseLines": 797,
+      "passed": true
+    }
+  ],
+  "japaneseRestoredNavigationEntriesReviewed": 23,
+  "japaneseRestoredNavigationLabelsChanged": 17,
+  "noCommitsPushesOrDeployments": true,
+  "snapshotScope": "These exact reviewed target bytes before subsequent deterministic anchor-only normalization; final multilingual review must validate final hashes separately."
+}

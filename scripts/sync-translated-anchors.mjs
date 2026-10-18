@@ -176,5 +176,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     locales: localeIndex < 0 ? undefined : [args[localeIndex + 1]]
   })
   console.log(JSON.stringify(result, null, 2))
-  if (result.failures.length || (args.includes('--check') && result.changed.length)) process.exitCode = 1
+  if (result.failures.length || result.unresolvedSource.length ||
+      (args.includes('--check') && result.changed.length)) process.exitCode = 1
 }

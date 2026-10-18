@@ -49,7 +49,7 @@ function repairImagePaths(markdown, englishFile, translatedFile, root) {
 // Translation deliberately preserves source paths. Locale-owned images
 // therefore need the same English bytes under the destination locale too.
 // Copy only referenced assets; never modify translated prose or shared assets.
-export function syncTranslatedAssets(root = process.cwd(), locales = ['cn', 'jp', 'es']) {
+export function syncTranslatedAssets(root = process.cwd(), locales = ['cn', 'jp', 'es'], { repairPaths = true } = {}) {
   const copied = []
   const unresolved = []
   const repairedLinks = []
@@ -59,7 +59,11 @@ export function syncTranslatedAssets(root = process.cwd(), locales = ['cn', 'jp'
     const localeRoot = path.join(root, locale)
     for (const file of markdownFiles(localeRoot)) {
       const markdown = fs.readFileSync(file, 'utf8')
-      const repaired = repairImagePaths(markdown, path.join(root, 'en', path.relative(localeRoot, file)), file, root)
+      // Native agents own their in-progress Markdown. A checkpoint may copy
+      // assets without rewriting any concurrently edited link destinations.
+      const repaired = repairPaths ?
+        repairImagePaths(markdown, path.join(root, 'en', path.relative(localeRoot, file)), file, root) :
+        { text: markdown, changes: [] }
       if (repaired.changes.length) {
         fs.writeFileSync(file, repaired.text)
         repairedLinks.push(...repaired.changes)

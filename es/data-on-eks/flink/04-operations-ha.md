@@ -8,7 +8,7 @@ Conecte la observabilidad y la alta disponibilidad (HA) con la implementación c
 
 Una configuración de reporter por sí sola no completa la ingesta en Prometheus. Haga coincidir el JAR, el puerto de escucha, el puerto con nombre del contenedor, los selectores y espacios de nombres, y la selección de PodMonitor que realiza Prometheus.
 
-Estos son **campos que se deben combinar con la especificación CR completa de la Parte 3**. Se conserva la configuración del complemento o volumen de S3 al habilitar el complemento de Prometheus. Por lo general, las IP de los pods permiten que JM/TM usen el mismo puerto 9249. La red del host o varios reporters en un mismo pod requieren un plan independiente para evitar colisiones y permitir el descubrimiento.
+Estos son **campos que se deben combinar con la especificación CR completa de la Parte 3**. Se conserva la configuración del complemento y del volumen de S3 al habilitar el complemento de Prometheus. Por lo general, las IP independientes de los pods permiten que JM/TM usen el mismo puerto 9249. La red del host o varios reporters en un mismo pod requieren un plan independiente para evitar colisiones y permitir el descubrimiento.
 
 ```yaml
 flinkConfiguration:
@@ -69,7 +69,7 @@ Compruebe que los pods realmente tengan la etiqueta metrics-group y el puerto co
 
 ### Las métricas del propio Operator requieren una configuración aparte
 
-Incluir un reporter de Dropwizard no habilita un endpoint HTTP de Prometheus. La imagen de Operator proporciona complementos de reporters, pero el gráfico predeterminado selecciona Slf4j y deja metrics.port sin configurar. Este ejemplo amplía los valores de la Parte 2 con la configuración de Prometheus y un puerto con nombre.
+Incluir un reporter de Dropwizard no habilita un endpoint HTTP de Prometheus. La imagen de Operator proporciona complementos de reporters, pero el chart predeterminado selecciona Slf4j y deja metrics.port sin configurar. Este ejemplo amplía los valores de la Parte 2 con la configuración de Prometheus y un puerto con nombre.
 
 ```yaml
 watchNamespaces:
@@ -111,7 +111,7 @@ spec:
     interval: 30s
 ```
 
-El pod real de Operator de este gráfico tiene app.kubernetes.io/name, pero no la etiqueta predeterminada app.kubernetes.io/instance. Las etiquetas de metadatos del Deployment no se convierten automáticamente en etiquetas de los pods. Después de cambiar los valores, vuelva a comprobar los pods renderizados y los destinos.
+El pod real de Operator de este chart tiene app.kubernetes.io/name, pero no la etiqueta predeterminada app.kubernetes.io/instance. Las etiquetas de metadatos del Deployment no se convierten automáticamente en etiquetas de los pods. Después de cambiar los valores, vuelva a comprobar los pods renderizados y los destinos.
 La revisión verificó que los selectores y puertos coincidieran en ambos monitores, pero no comprobó la ingesta activa en Prometheus.
 
 ### Unidades y coste de las métricas de RocksDB
@@ -134,7 +134,7 @@ El modelo de memoria de TaskManager es más detallado que cuatro regiones sin di
 | Metaspace de JVM | Metadatos de clases |
 | Sobrecarga de JVM | Pilas de subprocesos, caché de código y otros costes de JVM |
 
-RocksDB y los búferes de red no comparten directamente un mismo grupo de memoria administrada. Aun así, están limitados por el presupuesto total del proceso. Un tamaño administrado explícito sustituye su fracción; evite ajustes contradictorios del total y de sus componentes, y tenga en cuenta las ponderaciones de quienes consumen memoria.
+RocksDB y los búferes de red no comparten directamente un mismo grupo de memoria administrada. Aun así, están limitados por el presupuesto total del proceso. Un tamaño explícito de memoria administrada prevalece sobre la fracción configurada; evite ajustes contradictorios del total y de sus componentes, y tenga en cuenta las ponderaciones de los consumidores de memoria.
 
 Estos resultados proceden del cálculo real de Flink 2.2.1 con 4 GiB de memoria total de proceso y los demás ajustes predeterminados. Son **presupuestos configurados, no RSS medido**.
 
@@ -151,7 +151,7 @@ La HA de Kubernetes evita que usted tenga que operar por su cuenta un ensemble e
 
 | Ubicación | Función |
 | --- | --- |
-| ConfigMaps | Información del líder y referencias/controladores del estado de recuperación |
+| ConfigMaps | Información del líder e identificadores/referencias del estado de recuperación |
 | high-availability.storageDir | Archivos duraderos de metadatos y del grafo de trabajo para la recuperación de JM |
 | execution.checkpointing.dir | Almacenamiento para el estado real de los checkpoints |
 
@@ -200,7 +200,7 @@ AWS ahora documenta la **compatibilidad con Flink 2.3.0**, Java 17 como versión
 
 La HA/migración administrada no corrige automáticamente los errores de aplicación ni los estados o conectores incompatibles. Valide los checkpoints/snapshots y la restauración. La documentación de resiliencia del servicio describe internamente HA multi-AZ basada en ZooKeeper; el cliente no administra ese ensemble ni el clúster interno de EKS.
 
-El escalado automático predeterminado utiliza CPU para cambiar el paralelismo de la aplicación, lo cual difiere del autoescalado ascendente por vértice. Revise Parallelism, ParallelismPerKPU, AutoScalingEnabled y las cuotas. El escalado y los reinicios pueden pausar el procesamiento y exigir recuperar el atraso acumulado.
+El escalado automático predeterminado utiliza CPU para cambiar el paralelismo de la aplicación, lo cual difiere del autoescalado por vértice de Flink. Revise Parallelism, ParallelismPerKPU, AutoScalingEnabled y las cuotas. El escalado y los reinicios pueden pausar el procesamiento y exigir recuperar el atraso acumulado.
 
 Una KPU proporciona una vCPU, 4 GB de memoria y almacenamiento en ejecución. La documentación también indica un cargo adicional de KPU de orquestación. No compare únicamente el precio de una KPU en ejecución. Del mismo modo, evalúe el ahorro de Spot junto con los costes de interrupción y recuperación.
 Compare un rendimiento, una latencia y unos objetivos de recuperación equivalentes; cambiar los valores predeterminados no es por sí mismo un objetivo.

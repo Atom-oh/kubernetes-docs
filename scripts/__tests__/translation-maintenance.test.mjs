@@ -59,6 +59,10 @@ test('stale image case and relative depth follow the English source while transl
     fs.writeFileSync(path.join(root, 'en/topic/page.md'), '# English\n\n![Diagram](../.gitbook/assets/en-readme-0.png)\n')
     const translated = '# 日本語\n\n![図](../../.gitbook/assets/en-README-0.png)\n\n```md\n![example](../../.gitbook/assets/en-README-0.png)\n```\n'
     fs.writeFileSync(path.join(root, 'jp/topic/page.md'), translated)
+    const assetOnly = syncTranslatedAssets(root, ['jp'], { repairPaths: false })
+    assert.deepEqual(assetOnly.repairedLinks, [])
+    assert.equal(assetOnly.unresolved.length, 1)
+    assert.equal(fs.readFileSync(path.join(root, 'jp/topic/page.md'), 'utf8'), translated)
     const result = syncTranslatedAssets(root)
     assert.equal(result.repairedLinks.length, 1)
     assert.deepEqual(result.unresolved, [])

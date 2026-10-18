@@ -15,7 +15,7 @@
 
 App Mesh e Istio colocan Envoy dentro del Pod porque **algunas decisiones requieren el contexto de la aplicación.**
 
-Un proxy en el lado del cliente puede mantener grupos de conexiones, observar fallos ascendentes y aplicar los reintentos configurados. Los controles exactos dependen del producto y de su API; que Envoy tenga una capacidad no significa que App Mesh la ofrezca automáticamente. Un servicio administrado también puede mantener estado, por lo que la ubicación del proxy por sí sola no demuestra que una función sea imposible.
+Un proxy en el lado del cliente puede mantener grupos de conexiones, observar fallos de los servicios de destino y aplicar los reintentos configurados. Los controles exactos dependen del producto y de su API; que Envoy tenga una capacidad no significa que App Mesh la ofrezca automáticamente. Un servicio administrado también puede mantener estado, por lo que la ubicación del proxy por sí sola no demuestra que una función sea imposible.
 
 El cliente opera las cargas de trabajo de Envoy inyectadas y cualquier infraestructura SPIRE implementada por separado. **AWS operaba el plano de control de App Mesh (el soporte terminó el 30 de septiembre de 2026).** Las actualizaciones de los proxies y el consumo de recursos siguen siendo responsabilidad del cliente en sus cargas de trabajo; no describa App Mesh como un plano de control totalmente autoadministrado.
 
@@ -111,13 +111,13 @@ En otras palabras, aunque se complete la columna de la derecha, no todos los atr
 
 ## Brechas funcionales
 
-Estas son **comprobaciones de migración**, no pruebas de que un plano de datos administrado nunca pueda implementar esas funciones. App Mesh, Istio y Envoy sin procesar exponen superficies de configuración distintas; compruebe qué función se utiliza realmente antes de elegir su sustituto.
+Estas son **comprobaciones de migración**, no pruebas de que un plano de datos administrado nunca pueda implementar esas funciones. App Mesh, Istio y Envoy por sí solo exponen superficies de configuración distintas; compruebe qué función se utiliza realmente antes de elegir su sustituto.
 
 | Capacidad | Comprobación para la migración |
 |---|---|
 | Límites de conexiones, reintentos y gestión de valores atípicos | Haga un inventario de los controles que expone el producto de origen real. Las comprobaciones de estado de Lattice no reproducen todas las políticas del lado del cliente de Envoy; valide la resiliencia de la aplicación y los presupuestos de reintentos. |
 | Inyección de fallos y duplicación del tráfico | No atribuya todas las capacidades de Envoy/Istio a App Mesh. Cuando sea necesario, diseñe una vía de prueba o duplicación independiente y revisada. |
-| Comprobaciones de estado | Las comprobaciones de estado de los grupos de destino sondeos activos de los destinos; no equivalen a la detección pasiva de valores atípicos por solicitud. |
+| Comprobaciones de estado | Las comprobaciones de estado de los grupos de destino sondean activamente los destinos; no equivalen a la detección pasiva de valores atípicos por solicitud. |
 | Identidad mediante certificado de cliente | Un listener HTTPS de servicio y mTLS de extremo a extremo mediante TLS passthrough tienen límites de confianza distintos. Consulte [redes](./04-networking-basics.md). |
 | Métricas y trazas | Conserve los spans de OpenTelemetry de la aplicación. Los registros de acceso de Lattice y las métricas de CloudWatch añaden tiempos de solicitud y destino, así como correlación, pero no proporcionan un span de traza nativo de Lattice. |
 
@@ -136,7 +136,7 @@ Puede crear recursos de Lattice directamente con la CLI o la consola, pero en EK
 | Recurso de Kubernetes | Recurso de Lattice creado |
 |---|---|
 | `GatewayClass` (`amazon-vpc-lattice`) | Ninguno (declara Lattice como plano de datos) |
-| `Gateway` | Apunta a una **Service Network**. El nombre de Gateway (sin espacio de nombres) corresponde al nombre de Service Network; varias Gateway con el mismo nombre apuntan a la misma Service Network. |
+| `Gateway` | Apunta a una **Service Network**. El nombre de Gateway (sin espacio de nombres) corresponde al nombre de Service Network; varios recursos Gateway con el mismo nombre apuntan a la misma Service Network. |
 | `HTTPRoute` / `GRPCRoute` | **Lattice Service** + **Listener Rule**. Cada Route **obtiene su propio nombre de dominio**. |
 | `TLSRoute` | Un Lattice Service para TLS Passthrough (consulte el [documento 04](./04-networking-basics.md)). |
 | El Service al que hace referencia `backendRefs` | **Target Group** y los **Targets** que contiene. |
