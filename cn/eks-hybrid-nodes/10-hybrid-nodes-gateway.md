@@ -3,7 +3,7 @@
 < [上一页：裸机操作系统设置](./09-bare-metal-os-setup.md) | [目录](./README.md) >
 
 > **验证基线**：Gateway/chart 1.0.2；使用 EKS 支持的 Kubernetes 版本，以及满足 Gateway 前提条件的 AWS 维护版 Cilium。
-> **最后更新**：October 18, 2026
+> **最后更新**：2026 年 10 月 18 日
 
 ---
 
@@ -738,6 +738,12 @@ Webhook invocation → resolved remote Pod endpoint
 
 [AWS Ingress 指南](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html)建议，对于源自 Region 和本地环境的流量使用 Load Balancer Controller 提供的 ALB；对于源自本地环境的流量，则使用本地 Ingress。由于 Gateway 要求 Cilium 设置 `l7Proxy=false`，同一安装中不能使用 Cilium Ingress 和 Gateway API；对于本地入口流量，可以考虑使用 L4 `LoadBalancer` Service（Cilium LB IPAM/BGP）或现有硬件 LB 配合 NodePort。
 
+#### 演示视频：Hybrid Pod 的 ALB IP target 与反向路径
+
+[![V3 演示视频：Hybrid Pod 上的 ALB IP target 与从本地发起的反向路径（无声，3 分 12 秒）](../.gitbook/assets/en-eks-hybrid-nodes-demo-v3-alb-reverse.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v3-alb-reverse.mp4)
+
+这段无声视频先在负载下对 Hybrid Pod 执行 rollout restart，使 ALB 的 `ip` targets 切换到新的 Pod IP，然后演练从本地机房主机发起的三条路径。视频于 2026 年 10 月 18 日在模拟环境中录制（通过 TGW 连接，以 EC2 主机模拟本地机房；这不是受支持的生产配置）。录制中，rollout restart 后 50 秒，只有新的 Pod IP 保持健康；174 个请求中 0 个失败；从本地机房发起的 `/cloud` 返回 3/3，`/hybrid` 返回 3/3，NodePort 路径的 3 次尝试全部失败。上方表格中的 54 秒、276 个请求、4 秒和 191 个请求中 1 个失败的数据，来自同一天较早（02:11 UTC）的一次测量。完整演练请参阅[1 小时课程演示文稿](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)。
+
 ### 模式 6：对比——使用和不使用 Gateway
 
 原生/BGP/静态路由与此 Gateway 使用不同的路由数据路径和所有权机制。Gateway 增加了主动-备用 VXLAN 跳点和聚合路由自动化，同时仍需处理底层网络、CIDR、防火墙、IAM 和应用责任。下文的对比和迁移部分介绍了各自的边界；两种方案都不会自动保证 webhook/LB 可用性。
@@ -779,6 +785,12 @@ Webhook invocation → resolved remote Pod endpoint
 - **VPC 到 Hybrid 流量**：在 VPC 路由更新前丢失（数据包仍会发往故障 Gateway 的 ENI）
 - **Hybrid 到 VPC 流量**：在 CiliumVTEPConfig 更新前丢失（Cilium 仍会将流量发送到旧 Gateway IP）
 - **Hybrid 内部以及节点/控制面路径**：不经过 Gateway 的路径，只有在其自身的底层网络、CNI、DNS 和依赖项均正常时才能继续工作；共享 AZ/网络故障也可能影响这些路径。
+
+#### 演示视频：Gateway leader 故障转移
+
+[![V1 演示视频：Gateway leader 故障转移（无声，2 分 58 秒）](../.gitbook/assets/en-eks-hybrid-nodes-demo-v1-gateway-failover.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v1-gateway-failover.mp4)
+
+这段无声视频删除 leader Gateway Pod，并展示 Lease 切换、VPC 路由 ENI 切换和 1 秒探测结果。这是 2026 年 10 月 18 日在模拟环境中录制的真实终端画面（以经 TGW 连接的 EC2 主机模拟本地机房；这不是受支持的生产配置）。本次录制中，Lease 切换耗时 5 秒，60 次探测中有 2 次失败。视频结尾展示的三个较早运行结果（2026 年 10 月 15 日）分别为 3 秒、5 秒和 5 秒的切换时间，探测失败数依次为 60 次中的 1 次、60 次中的 1 次和 45 次中的 2 次。与 AWS 文档中约 3 至 5 秒的估算一样，这些都不是保证值。完整演练请参阅[1 小时课程演示文稿](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)。
 
 ### 单个 Gateway 故障和多个数据中心
 

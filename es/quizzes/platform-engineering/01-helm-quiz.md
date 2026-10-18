@@ -2,7 +2,7 @@
 
 > **Guía relacionada**: [Helm](../../platform-engineering/01-helm.md)
 
-Estos 20 temas de preguntas siguen la revisión de Helm 3.21.3 / 4.3.0.
+Estas 20 preguntas se basan en la revisión de Helm 3.21.3 / 4.3.0.
 
 ## Opción múltiple
 

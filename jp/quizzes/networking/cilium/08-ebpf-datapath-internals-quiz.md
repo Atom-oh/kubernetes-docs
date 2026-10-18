@@ -2,7 +2,7 @@
 
 > **Cilium 1.20.2 · 2026-10-15**
 
-1. **Cilium 1.20では、カーネルが対応している場合、デバイスごとのプログラムにどのattach方式を使いますか。対応していない場合はどうなりますか？**
+1. **Cilium 1.20では、カーネルが対応している場合、デバイスごとのプログラムにどのアタッチ方式を使いますか。対応していない場合はどうなりますか？**
    - A) 常に従来の`clsact`フィルターを使う。tcxはnetkitでのみ使う
    - B) tcxの`bpf_link`（カーネル6.6以降）を使う。対応していない場合は`clsact` + `cls_bpf`のdirect-actionを使う
    - C) すべてのvethでXDPを使う。対応していない場合はagentの起動を拒否する
@@ -36,12 +36,12 @@
    - A) リモートPodのIPアドレスと宛先ポートをキーとするHASH
    - B) ポート番号をインデックスとし、プロトコルごとに1スロットを持つARRAY
    - C) ポリシールール番号をインデックスとし、ルールごとのプログラムをtail callするPROG_ARRAY
-   - D) ID、方向、プロトコル、ポートプレフィックスをキーとするLPM_TRIE
+   - D) セキュリティID、方向、プロトコル、ポートプレフィックスをキーとするLPM_TRIE
 
    <details>
    <summary>回答を表示</summary>
 
-   **回答: D) ID、方向、プロトコル、ポートプレフィックスをキーとするLPM_TRIE**
+   **回答: D) セキュリティID、方向、プロトコル、ポートプレフィックスをキーとするLPM_TRIE**
 
    キーには`sec_label`、`egress`ビット、`protocol`、`dport`が含まれます。ポートプレフィックスを使うと、ポート範囲を少数のエントリで保存できます。また、`sec_label`が0の場合はL3のワイルドカードとして動作します。
 
@@ -107,8 +107,8 @@
 
    </details>
 
-8. **オーバーレイモードでパケットが`cilium_vxlan`に到着すると、`cil_from_overlay`はどのように送信元IDを取得しますか？**
-   - A) 送信元IDを設定した送信側が付与したトンネルID（VNI）を、`bpf_skb_get_tunnel_key`で読み取る
+8. **オーバーレイモードでパケットが`cilium_vxlan`に到着すると、`cil_from_overlay`はどのように送信元のセキュリティIDを取得しますか？**
+   - A) 送信元のセキュリティIDを設定した送信側が付与したトンネルID（VNI）を、`bpf_skb_get_tunnel_key`で読み取る
    - B) 外側の送信元IPを`cilium_lxc`で検索する。このマップはノードIPとIDを対応付ける
    - C) ローカルEnvoyプロキシがリクエストへ追加したHTTPヘッダーを読む
    - D) エンドポイントラベルキャッシュを使って送信元Pod名からIDを解析する
@@ -116,9 +116,9 @@
    <details>
    <summary>回答を表示</summary>
 
-   **回答: A) 送信元IDを設定した送信側が付与したトンネルID（VNI）を、`bpf_skb_get_tunnel_key`で読み取る**
+   **回答: A) 送信元のセキュリティIDを設定した送信側が付与したトンネルID（VNI）を、`bpf_skb_get_tunnel_key`で読み取る**
 
-   トンネルIDにhost IDが入っている場合は`DROP_INVALID_IDENTITY`で拒否されます。ネイティブルーティングにはVNIがないため、送信元IPから`cilium_ipcache_v2`を使って送信元IDを取得します（またはIPsec/WireGuard利用時にはmarkから取得します）。
+   トンネルIDにホストのセキュリティIDが入っている場合は`DROP_INVALID_IDENTITY`で拒否されます。ネイティブルーティングにはVNIがないため、送信元IPから`cilium_ipcache_v2`を使って送信元のセキュリティIDを取得します（またはIPsec/WireGuard利用時にはmarkから取得します）。
 
    </details>
 
@@ -139,14 +139,14 @@
 
 10. **1.20のHubbleイベントパイプラインに関する正しい説明はどれですか？**
     - A) BPFがring bufferへ書き込み、Hubble Relayが各ノードのBPF filesystemから直接読み取る
-    - B) イベントは`cilium_events`（perf array）に入り、agent monitorとHubble queueを経由して4095 flowを保持するメモリ内ringに入る
+    - B) イベントは`cilium_events`（perf array）に入り、agent monitorとHubble queueを経由して4095件のflowを保持するメモリ内ringに入る
     - C) agentがflowをディスクに保存し、再起動後にHubble Relayへ再生する
     - D) L7イベントはプロキシリダイレクトマップが一致した際に、`bpf_lxc` tailプログラムが生成する
 
     <details>
     <summary>回答を表示</summary>
 
-    **回答: B) イベントは`cilium_events`（perf array）に入り、agent monitorとHubble queueを経由して4095 flowを保持するメモリ内ringに入る**
+    **回答: B) イベントは`cilium_events`（perf array）に入り、agent monitorとHubble queueを経由して4095件のflowを保持するメモリ内ringに入る**
 
     `perf_event_ring_buffer`での損失や`observer_events_queue`での損失が発生することがあります。L7レコードはBPFではなく、EnvoyとDNSプロキシからagentイベントとして送られます。
 

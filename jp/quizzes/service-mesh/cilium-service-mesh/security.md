@@ -1,209 +1,195 @@
 # Cilium Service Mesh セキュリティクイズ
 
-このクイズでは、Cilium Service Mesh における mTLS、network policy、暗号化、Identity ベースのセキュリティ、ゼロトラストネットワーキングについての理解を確認します。
+Cilium 1.20.3 に基づいて確認しています。[セキュリティガイド](../../../service-mesh/cilium-service-mesh/03-security.md)では、アプリケーション接続の外側で行う認証、通信の暗号化、ztunnel beta の違いを、一次資料とともに説明しています。
 
-## クイズ問題
+### 1. Cilium の out-of-band 相互認証で、SPIRE は何を提供しますか？
 
-### 1. Cilium Service Mesh は、透過的な mTLS を実装するためにどの技術を使用しますか？
-
-A. Istio sidecar
-B. SPIFFE/SPIRE integration
-C. Nginx proxy
-D. HAProxy
+- **A.** すべての Pod に配置する Istio sidecar
+- **B.** agent の認証機構で使う SVID の ID 認証情報
+- **C.** それだけでアプリケーション通信をすべて自動的に暗号化する機能
+- **D.** Kubernetes API server の代替
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. SPIFFE/SPIRE integration**
+**回答: B. agent の認証機構で使う SVID の ID 認証情報**
 
-**解説:**
-Cilium Service Mesh は、透過的な mTLS を実装するために SPIFFE（Secure Production Identity Framework for Everyone）および SPIRE と統合します。これにより、application code を変更することなく workload 間の通信を暗号化できます。
+out-of-band の beta 認証機構では、SPIRE が SVID の ID 認証情報を提供し、Cilium agent 同士がアプリケーション接続とは別に相互認証します。WireGuard/IPsec による暗号化は別の選択です。Cilium 1.20.3 には、独自の CA/bootstrap、登録、ポリシー上の制約を持つ ztunnel mTLS beta もあります。
 
 </details>
 
-### 2. authentication mode が 'required' に設定されている場合、CiliumNetworkPolicy はどのように動作しますか？
+### 2. authentication mode を 'required' に設定すると、CiliumNetworkPolicy はどのように動作しますか？
 
-A. authentication なしですべての traffic を許可する
-B. mutual authentication に成功した traffic のみを許可する
-C. authentication に失敗した場合は警告のみをログに記録する
-D. mTLS を無効にする
+- **A.** 認証なしですべての通信を許可する
+- **B.** 相互認証に成功した通信だけを許可する
+- **C.** 認証失敗を警告として記録するだけである
+- **D.** mTLS を無効にする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. mutual authentication に成功した traffic のみを許可する**
+**回答: B. 相互認証に成功した通信だけを許可する**
 
-**解説:**
-authentication mode が 'required' に設定されている場合、mutual authentication を正常に完了した traffic のみが許可されます。authentication に失敗した traffic はブロックされます。これはゼロトラストセキュリティモデルを実装するうえで不可欠です。
+該当する allow ルールは、認証の成功を許可条件とします。これはクラスター全体に適用するスイッチではなく、それだけでアプリケーションのペイロードを TLS 暗号化するものでもありません。ほかの認可要件やアプリケーション側の認証要件は引き続き適用されます。API の形式は authentication: {mode: required} であり、配列ではありません。
 
 </details>
 
-### 3. Cilium における WireGuard encryption の利点ではないものはどれですか？
+### 3. Cilium WireGuard だけでは、どの通信が暗号化されませんか？
 
-A. kernel level で動作する高い performance
-B. automatic key management
-C. IETF standard protocol
-D. ChaCha20Poly1305 encryption
+- **A.** サポート対象の異なるノード間 Pod 通信
+- **B.** ノード暗号化が有効な場合の、サポート対象のリモートノード通信
+- **C.** 同一ノード内の Pod 通信と、外部クライアントからクラスターまでの区間
+- **D.** ClusterIP Service を経由する、サポート対象のリモート Pod 通信
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. IETF standard protocol**
+**回答: C. 同一ノード内の Pod 通信と、外部クライアントからクラスターまでの区間**
 
-**解説:**
-WireGuard は standard protocol ではありません。IPsec は IETF standard protocol です。ただし、WireGuard は Linux kernel 5.6+ に組み込まれており、高い performance、automatic key management、ChaCha20Poly1305 encryption を提供します。
+Cilium WireGuard は同一ノード内の Pod 通信を暗号化せず、外部クライアントからクラスターまでの区間も暗号化しません。リモートノード間の通信がどこまで保護されるかは、選択したモードと文書化された例外によって異なります。カーネルの対応が必要であり、Helm chart に userspaceFallback オプションはありません。
 
 </details>
 
-### 4. CiliumNetworkPolicy で L7 HTTP rules を使用して特定の path と method を制限する正しい設定はどれですか？
+### 4. CiliumNetworkPolicy の L7 HTTP ルールで特定のパスとメソッドを制限するには、どの設定を使いますか？
 
-A. toEndpoints で path と method を指定する
-B. toPorts.rules.http で method と path を指定する
-C. ingress.http で直接指定する
-D. spec.http で rules を定義する
+- **A.** toEndpoints にパスとメソッドを指定する
+- **B.** toPorts.rules.http にメソッドとパスを指定する
+- **C.** ingress.http に直接指定する
+- **D.** spec.http にルールを定義する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. toPorts.rules.http で method と path を指定する**
+**回答: B. toPorts.rules.http にメソッドとパスを指定する**
 
-**解説:**
-CiliumNetworkPolicy では、L7 HTTP rules は toPorts section 内の rules.http で定義されます。ここでは、きめ細かな access control のために method（GET、POST など）と path（regex support あり）を指定できます。
+HTTP ルールは ingress/egress の toPorts.rules.http の下に記述します。サポート対象の method/path/header フィールドを照合できます。ただし、ヘッダーがあることや Bearer token らしい文字列が含まれることだけでは、JWT を検証したり、エンドユーザーを認可したりできません。
 
 </details>
 
-### 5. Cilium Identity ベースのセキュリティの主な利点は何ですか？
+### 5. Cilium の identity ベースポリシーには、どのような利点がありますか？
 
-A. IP address の変更の影響を受けない
-B. MAC address ベースのためより安全である
-C. manual ID management が可能である
-D. VLAN tagging をサポートする
+- **A.** Pod の IP アドレスが変わっても、ポリシーのラベルセレクターを安定して使える
+- **B.** ラベルの代わりに MAC アドレスを使う
+- **C.** すべての数値 ID が再起動後も永続する
+- **D.** アドレスと ID の対応更新が不要になる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. IP address の変更の影響を受けない**
+**回答: A. Pod の IP アドレスが変わっても、ポリシーのラベルセレクターを安定して使える**
 
-**解説:**
-Cilium Identity は Pod label に基づいて生成されるため、Pod が再起動して IP address が変更されても、同じ Identity を維持します。これにより、IP ベースの security policy の制限を克服できます。
+ポリシーは手動管理する Pod IP の一覧ではなく、identity に関係するラベル集合を使います。複数の Pod が同じ identity を共有する場合がありますが、Cilium は引き続きアドレスと identity の対応を更新し、ID をガベージコレクションして再割り当てすることがあります。再起動しても数値 ID が永続する保証はありません。
 
 </details>
 
-### 6. Cilium で DNS L7 policy を使用して外部 domain access を制限するには、どの rules を使用しますか？
+### 6. Cilium の DNS L7 ポリシーで外部ドメインへのアクセスを制限するには、どのルールを使いますか？
 
-A. toFQDNs と dns rules の組み合わせ
-B. toEndpoints のみ
-C. toCIDR のみ
-D. toEntities のみ
+- **A.** toFQDNs と dns ルールを組み合わせる
+- **B.** toEndpoints だけを使う
+- **C.** toCIDR だけを使う
+- **D.** toEntities だけを使う
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. toFQDNs と dns rules の組み合わせ**
+**回答: A. toFQDNs と dns ルールを組み合わせる**
 
-**解説:**
-外部 domain access の制限は、2 つの手順で設定します。1) DNS L7 rules（toPorts.rules.dns）で特定の domain query のみを許可する、2) toFQDNs でそれらの domain への実際の connection を許可する。この組み合わせにより、workload の外部 access をきめ細かく制御できます。
+DNS ルールは問い合わせ先を選択した resolver に制限します。toFQDNs とポートルールは、学習したアドレスへの接続を別途制御します。実際の UDP/TCP resolver の動作と search-list による名前解決も考慮してください。Service 名には Service と namespace の両方のラベルが含まれ、DNS を許可しても、あらゆる接続が許可されるわけではありません。
 
 </details>
 
-### 7. CiliumClusterwideNetworkPolicy で default deny policy を実装する場合、通常どの traffic を許可する必要がありますか？
+### 7. default-deny ポリシーを導入するとき、何を許可すべきですか？
 
-A. すべての外部 traffic
-B. DNS query と host network traffic
-C. すべての internet traffic
-D. 特定の IP range のみ
+- **A.** すべての外部宛て通信
+- **B.** 実際の resolver や必要な probe など、ワークロードが必要とする依存先を明示する
+- **C.** 常にホストネットワーク上のすべての通信
+- **D.** DNS が過去に返したすべてのアドレス
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. DNS query と host network traffic**
+**回答: B. 実際の resolver や必要な probe など、ワークロードが必要とする依存先を明示する**
 
-**解説:**
-default deny policy を実装する場合、cluster が正常に機能するためには、少なくとも kube-dns（port 53/UDP）への DNS query と host network traffic（reserved:host）を許可する必要があります。これらがなければ、service discovery と node communication は不可能になります。
+ワークロードとネットワーク構成から確認できた依存先だけを許可します。たとえば、実際に使用する DNS resolver への UDP/TCP 53 番ポートや、必要な probe などです。ホストネットワークへの包括的なアクセス許可が常に必要なわけではありません。Cilium policy の方向別ルール配列が空の場合は、enableDefaultDeny を明示的に設定してください。
 
 </details>
 
 ### 8. SPIRE における workload attestation の役割は何ですか？
 
-A. Certificate issuance
-B. workload identity の検証
-C. network policy の適用
-D. traffic encryption
+- **A.** 証明書の発行
+- **B.** ワークロード ID の検証
+- **C.** ネットワークポリシーの適用
+- **D.** 通信の暗号化
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. workload identity の検証**
+**回答: B. ワークロード ID の検証**
 
-**解説:**
-workload attestation は、SPIRE Agent が workload の identity を検証するプロセスです。Kubernetes environment では、workload に適切な SVID（SPIFFE Verifiable Identity Document）を発行するために、その Pod の service account、namespace、label などを検証します。
+SPIRE Agent は、設定された attestor/selector を使ってワークロードを検証します。SPIRE Server は Agent を検証し、SVID に署名します。Cilium の out-of-band 統合では、委任された ID の取得と、Cilium のセキュリティ ID に対応するエントリーも使います。これはアプリケーションのペイロードを自動的に暗号化する機能ではありません。
 
 </details>
 
-### 9. audit mode で network policy をテストする場合、Cilium はどのように動作しますか？
+### 9. audit mode でネットワークポリシーをテストすると、Cilium はどのように動作しますか？
 
-A. すべての traffic をブロックする
-B. policy violation をログに記録するが、traffic は許可する
-C. policy を完全に無効にする
-D. alert のみを送信する
+- **A.** すべての通信をブロックする
+- **B.** ポリシー違反を記録するが、通信は許可する
+- **C.** ポリシーを完全に無効にする
+- **D.** アラートだけを送信する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. policy violation をログに記録するが、traffic は許可する**
+**回答: B. ポリシー違反を記録するが、通信は許可する**
 
-**解説:**
-audit mode（cilium.io/audit-mode: "true" annotation）では、policy に違反する traffic はブロックされず、ログに記録されるだけです。これにより、新しい policy を production に適用する前に影響を評価できます。
+実際に変更可能なエンドポイントオプション PolicyAuditMode は、分離したエンドポイントでのテストにおいて、監査対象 datapath のポリシー適用を切り替えます。cilium.io/audit-mode は、ポリシーごとに指定できるサポート対象の annotation ではありません。テスト後に通常の enforcement に戻し、L7 の動作は別途確認してください。enableDefaultDeny:false も、あらゆる場合に使える audit mode ではありません。
 
 </details>
 
-### 10. 3-tier architecture で microsegmentation を実装する場合、backend service に対する正しい policy はどれですか？
+### 10. 3 層バックエンドの最小権限ポリシーでは、何をモデル化すべきですか？
 
-A. すべての traffic を許可する
-B. frontend からの ingress のみを許可し、database への egress のみを許可する
-C. すべての ingress をブロックする
-D. internet access を許可する
+- **A.** 制限なしのすべての通信
+- **B.** 必要なフロントエンドからの ingress、データベースへの egress、DNS などの明示的な依存先
+- **C.** フロントエンドからの通信も含め、すべての ingress を許可しない
+- **D.** インターネットへの無制限アクセス
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. frontend からの ingress のみを許可し、database への egress のみを許可する**
+**回答: B. 必要なフロントエンドからの ingress、データベースへの egress、DNS などの明示的な依存先**
 
-**解説:**
-microsegmentation では、backend service は最小権限の原則に従います。frontend tier からの ingress のみを許可し、database tier への egress のみを許可します。これにより、各 tier 間の traffic を明確に定義して制御できます。
+バックエンドは、必要なフロントエンドの送信元、データベースの宛先、DNS などの明示的な依存先だけを許可します。ガイドのデータベース用ポリシーでは、egress の default-deny を明示的に有効化し、egress の許可ルールを設けていません。ステートフルな応答通信は可能です。ネットワーク分離だけでは、アプリケーション認可やデータ損失防止にはなりません。
 
 </details>
 
-### 11. Cilium における IPsec と WireGuard encryption の違いを正しく説明しているものはどれですか？
+### 11. IPsec の keyRotationDuration: 5m は何を意味しますか？
 
-A. kernel で動作するのは IPsec のみである
-B. WireGuard では manual key management が必要である
-C. IPsec は IETF standard、WireGuard は non-standard である
-D. node-to-node encryption をサポートするのは WireGuard のみである
+- **A.** 5 分ごとに新しい鍵を生成する
+- **B.** すべてのワークロード証明書を 5 分ごとにローテーションする
+- **C.** 鍵の変更後に、切り替えと旧鍵の削除に使う猶予期間を設ける
+- **D.** 1 つのグローバル鍵を無期限に再利用する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. IPsec は IETF standard、WireGuard は non-standard である**
+**回答: C. 鍵の変更後に、切り替えと旧鍵の削除に使う猶予期間を設ける**
 
-**解説:**
-IPsec は IETF standard protocol である一方、WireGuard は non-standard です。両方とも kernel で動作し、WireGuard は automatic key management を提供します。両方とも node-to-node encryption をサポートします。
+IPsec の keyRotationDuration は、鍵素材の変更後に切り替えと旧鍵の削除を行うための猶予期間を制御します。定期的に鍵を生成する設定ではありません。サポートされている協調的な鍵/ID ローテーション手順と、末尾に '+' を付けるトンネル単位の派生鍵形式を使用してください。一方、WireGuard はノードが生成する鍵ペアを管理します。
 
 </details>
 
-### 12. Hubble で policy violation を監視するために使用する command はどれですか？
+### 12. drop の理由を調べる前に、Hubble で drop された flow を選択するコマンドはどれですか？
 
-A. hubble observe --verdict FORWARDED
-B. hubble observe --verdict DROPPED
-C. hubble policy list
-D. hubble status --violations
+- **A.** hubble observe --verdict FORWARDED
+- **B.** hubble observe --verdict DROPPED
+- **C.** hubble policy list
+- **D.** hubble status --violations
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B. hubble observe --verdict DROPPED**
 
-**解説:**
-`hubble observe --verdict DROPPED` command は、network policy によって拒否（DROPPED）された traffic を監視します。これにより、policy violation をリアルタイムで検出して分析できます。
+DROPPED は、複数の原因で drop された flow を選択します。ポリシー拒否として報告された drop を調べる場合は --drop-reason-desc POLICY_DENIED を追加し、L7 やアプリケーション側の失敗は別途確認してください。AUDIT は別の verdict です。--last で指定する履歴には上限があり、Relay 経由でも Hubble instance ごとに結果が返される場合があります。
 
 </details>

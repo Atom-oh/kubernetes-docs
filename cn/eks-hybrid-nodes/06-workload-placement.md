@@ -3,7 +3,7 @@
 < [上一章：GPU 集成](./05-gpu-integration.md) | [目录](./README.md) | [下一章：节点生命周期管理](./07-node-lifecycle.md) >
 
 > **支持的版本**：支持的 EKS 版本及兼容的 Karpenter；已审查 Kubernetes 1.36.5 和 Karpenter/provider 1.14.1（固定的审查基线）接口。
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 18 日
 
 本章介绍如何将工作负载放置在 Hybrid 节点和云节点上，并说明云突发扩容和 Pod 删除成本的限制。示例是经过本地验证的配置/补丁模式。本次审计没有创建云容量、修改节点、运行应用或 GPU 工作负载。
 
@@ -426,6 +426,12 @@ Karpenter 1.14.1 也会在其**归一化驱逐成本启发式**中读取 `pod-de
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-06-workload-placement-0.html)
 
 > **图表修正**：优先删除云端 Pod 并完整保留本地机房 Pod，是尽力而为的目标，并非不变条件。“空”节点中仍可能包含 DaemonSet Pod。对于 v1 示例，旧的 `WhenUnderutilized` 标签应改为 `WhenEmptyOrUnderutilized`。请阅读上文的排序规则和生命周期条件。
+
+### 演示视频：云端突发扩容与 Pod 删除成本
+
+[![V2 演示视频：云端突发扩容与 Pod 删除成本（无声，3 分 36 秒）](../.gitbook/assets/en-eks-hybrid-nodes-demo-v2-bursting.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v2-bursting.mp4)
+
+这段无声视频展示了工作负载在 Hybrid 节点满载后溢出到 Karpenter 突发扩容节点；缩容时，由于 Kyverno 为 Hybrid 节点上的 Pod 设置了 `pod-deletion-cost`，云端 Pod 先离开。视频于 2026 年 10 月 18 日在模拟环境中录制（用 EC2 主机模拟经 TGW 连接的本地机房；这不是受支持的生产配置），运行的是场景 B（Kyverno 已启用、Karpenter 功能已关闭、Pod 请求为 910m）。录制中，扩容后 35 秒有 15 个副本全部 Ready（8 个位于 Hybrid 节点，7 个位于突发扩容节点）；缩容至 10 个后，8 个留在 Hybrid 节点、2 个在云端；缩容至 3 个后，3 个都留在 Hybrid 节点。视频后续的 A/B/C 对比中，每种场景都只运行了一次，时间为 2026 年 10 月 15 日（Pod 请求为 930m），因此细微差异可能只是噪声。`pod-deletion-cost` 只能尽力影响缩容选择，不适用于节点故障或驱逐。完整演练请参阅[1 小时课程演示文稿](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)。
 
 ## 主要参考资料
 

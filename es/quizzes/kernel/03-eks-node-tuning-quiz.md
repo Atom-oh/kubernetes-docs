@@ -1,6 +1,6 @@
 # Cuestionario sobre el ajuste del kernel de nodos de EKS
 
-Este cuestionario evalúa tu comprensión de las rutas para aplicar parámetros, las transiciones de versión del kernel y los ajustes justificados.
+Este cuestionario evalúa su comprensión de las rutas para aplicar parámetros, las transiciones de versión del kernel y los ajustes justificados.
 
 ## Preguntas de opción múltiple
 
@@ -17,12 +17,12 @@ Este cuestionario evalúa tu comprensión de las rutas para aplicar parámetros,
 **Respuesta: B) Configuración no reproducible, fallos al actualizar el kernel y anulación del ajuste automático del kernel**
 
 **Explicación:**
-Si los valores difieren de un nodo a otro, resulta difícil reproducir incidentes. Los nombres y las ubicaciones de los parámetros ajustables cambian entre versiones del kernel (sysctl → debugfs, entre otros), así que un ajuste válido en 6.1 puede fallar en 6.18. La configuración explícita de `SO_RCVBUF`/`SO_SNDBUF` por socket deshabilita el ajuste automático del socket correspondiente; cambiar los límites de `tcp_rmem`/`tcp_wmem` no deshabilita por sí solo el ajuste automático. Por tanto, el requisito previo para ajustar parámetros es medir: relaciona el síntoma con los contadores pertinentes y modifica únicamente los ajustes respaldados por esas pruebas.
+Si los valores difieren de un nodo a otro, resulta difícil reproducir incidentes. Los nombres y las ubicaciones de los parámetros ajustables cambian entre versiones del kernel (sysctl → debugfs, entre otros), así que un ajuste válido en 6.1 puede fallar en 6.18. La configuración explícita de `SO_RCVBUF`/`SO_SNDBUF` por socket deshabilita el ajuste automático del socket correspondiente; cambiar los límites de `tcp_rmem`/`tcp_wmem` no deshabilita por sí solo el ajuste automático. Por tanto, el requisito previo para ajustar parámetros es medir: relacione el síntoma con los contadores pertinentes y modifique únicamente los ajustes respaldados por esas pruebas.
 </details>
 
-2. ¿Qué debes saber sobre la transición de versión del kernel de AL2023 a partir de 2026?
+2. ¿Qué debe saber sobre la transición de versión del kernel de AL2023 a partir de 2026?
    - A) AL2023 solo ofrece el kernel 6.1
-   - B) Una AMI predeterminada/más reciente actualizada puede seleccionar un kernel nuevo, mientras que el ID de una AMI fijada permanece sin cambios
+   - B) Una AMI predeterminada o más reciente renovada puede seleccionar un kernel nuevo, mientras que el ID de una AMI fijada permanece sin cambios
    - C) La versión del kernel se determina automáticamente según la versión del plano de control de EKS
    - D) AL2023 no admite actualizaciones del kernel
 
@@ -30,10 +30,10 @@ Si los valores difieren de un nodo a otro, resulta difícil reproducir incidente
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una AMI predeterminada/más reciente actualizada puede seleccionar un kernel nuevo, mientras que el ID de una AMI fijada permanece sin cambios**
+**Respuesta: B) Una AMI predeterminada o más reciente renovada puede seleccionar un kernel nuevo, mientras que el ID de una AMI fijada permanece sin cambios**
 
 **Explicación:**
-Verifica la AMI seleccionada por la plantilla de lanzamiento o el aprovisionador, así como el kernel en ejecución. Las versiones de las AMI optimizadas para EKS tienen su propio método de selección; reemplazar un nodo por sí solo no demuestra que el kernel se haya actualizado.
+Verifique la AMI seleccionada por la plantilla de lanzamiento o el aprovisionador, así como el kernel en ejecución. Las versiones de las AMI optimizadas para EKS tienen su propio método de selección; reemplazar un nodo por sí solo no demuestra que el kernel se haya actualizado.
 </details>
 
 3. ¿Cuál es la causa raíz más común de la limitación de CPU y cuál debería ser la primera medida?
@@ -54,7 +54,7 @@ Si el entorno de ejecución dentro del contenedor ve todos los núcleos del nodo
 
 4. ¿Qué es más eficaz que ajustar el kernel para estabilizar el nodo, y por qué?
    - A) Limitar la cantidad de Pods: una menor densidad evita problemas
-   - B) Reservas de recursos de kubelet y umbrales de desalojo: una reserva insuficiente hace que el kernel o kubelet sufran falta de memoria (OOM), dejando todo el nodo en estado `NotReady`; es preferible desalojar un Pod antes de un OOM del kernel
+   - B) Reservas de recursos de kubelet y umbrales de desalojo: una reserva insuficiente puede hacer que el kernel o kubelet agoten la memoria (OOM), dejando todo el nodo en estado `NotReady`; es preferible desalojar un Pod antes de que ocurra un OOM del kernel
    - C) Programar reinicios del nodo: reiniciarlo periódicamente para liberar memoria
    - D) Usar imágenes más pequeñas: liberar margen en el disco
 
@@ -62,15 +62,15 @@ Si el entorno de ejecución dentro del contenedor ve todos los núcleos del nodo
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Reservas de recursos de kubelet y umbrales de desalojo: una reserva insuficiente hace que el kernel o kubelet sufran falta de memoria (OOM), dejando todo el nodo en estado `NotReady`; es preferible desalojar un Pod antes de un OOM del kernel**
+**Respuesta: B) Reservas de recursos de kubelet y umbrales de desalojo: una reserva insuficiente puede hacer que el kernel o kubelet agoten la memoria (OOM), dejando todo el nodo en estado `NotReady`; es preferible desalojar un Pod antes de que ocurra un OOM del kernel**
 
 **Explicación:**
-Si `--system-reserved` y `--kube-reserved` son insuficientes, los Pods consumen toda la memoria del nodo y el kernel o kubelet sufren OOM. El nodo pasa a `NotReady` y esto afecta a todos los Pods que ejecuta, lo cual es mucho peor que un OOM individual de un Pod. El desalojo consiste en que Kubernetes mueva un Pod de manera controlada, mientras que el asesino de OOM termina un proceso de forma abrupta; el objetivo es establecer `--eviction-hard` para que Kubernetes intervenga antes de un OOM del kernel.
+Si `--system-reserved` y `--kube-reserved` son insuficientes, los Pods consumen toda la memoria del nodo y el kernel o kubelet sufren OOM. El nodo pasa a `NotReady` y esto afecta a todos los Pods que ejecuta, lo cual es mucho peor que un OOM individual de un Pod. El desalojo permite que Kubernetes mueva un Pod de manera controlada, mientras que el mecanismo OOM killer termina un proceso de forma abrupta; el objetivo es establecer `--eviction-hard` para que Kubernetes intervenga antes de un OOM del kernel.
 </details>
 
 5. ¿Por qué PSI (Pressure Stall Information) proporciona una señal mejor que las métricas de uso?
    - A) Mide el uso con mayor precisión
-   - B) Informa la fracción de tiempo durante la que se espera por ese recurso, en lugar del uso, así que revela el tiempo dedicado a la recuperación de memoria o a la contención aunque el gráfico de uso parezca tranquilo
+   - B) Indica qué fracción del tiempo las tareas quedan bloqueadas por ese recurso, no solo cuánto se usa; así revela el tiempo dedicado a la reclamación de memoria o a la contención aunque el gráfico de uso parezca tranquilo
    - C) Se recopila en el hardware y no en el kernel
    - D) Conserva automáticamente los datos históricos
 
@@ -78,10 +78,10 @@ Si `--system-reserved` y `--kube-reserved` son insuficientes, los Pods consumen 
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Informa la fracción de tiempo durante la que se espera por ese recurso, en lugar del uso, así que revela el tiempo dedicado a la recuperación de memoria o a la contención aunque el gráfico de uso parezca tranquilo**
+**Respuesta: B) Indica qué fracción del tiempo las tareas quedan bloqueadas por ese recurso, no solo cuánto se usa; así revela el tiempo dedicado a la reclamación de memoria o a la contención aunque el gráfico de uso parezca tranquilo**
 
 **Explicación:**
-`some avg10` en `memory.pressure` es la fracción de los últimos 10 segundos durante la que al menos una tarea estuvo bloqueada esperando ese recurso. Si el uso de memoria se mantiene estable por debajo del límite y el valor va subiendo, significa que se está dedicando tiempo a recuperar la caché de páginas, algo que un gráfico de uso por sí solo no muestra. Lo proporciona cgroup v2; está disponible para todo el nodo en `/proc/pressure/*` y para cada cgroup en `<cgroup>/memory.pressure`.
+`some avg10` en `memory.pressure` es la fracción de los últimos 10 segundos durante la que al menos una tarea estuvo bloqueada esperando ese recurso. Si el uso de memoria se mantiene estable por debajo del límite y el valor va subiendo, significa que se está dedicando tiempo a reclamar memoria de la caché de páginas, algo que un gráfico de uso por sí solo no muestra. Lo proporciona cgroup v2; está disponible para todo el nodo en `/proc/pressure/*` y para cada cgroup en `<cgroup>/memory.pressure`.
 </details>
 
 6. ¿Cuál de los siguientes casos NO es un ejemplo representativo de «ajuste justificado»?
@@ -129,5 +129,5 @@ Muchos valores `net.*` se pueden establecer por espacio de nombres de red y camb
 **Respuesta: B) Gestionarlos como código, registrar la justificación en comentarios y separar los grupos de nodos según las características de las cargas de trabajo**
 
 **Explicación:**
-Declarar los ajustes en código con `EC2NodeClass` de Karpenter, plantillas de lanzamiento o la configuración de Bottlerocket evita que los valores difieran de un nodo a otro. Sin un comentario que explique «por qué este valor», nadie podrá revertirlo seis meses después. Las distintas características de las cargas de trabajo requieren ajustes diferentes, así que usa grupos de nodos separados en lugar de imponer un solo perfil. También hay que fijar o planificar la transición del kernel, verificar los valores reales después de aplicar cambios (especialmente conntrack) y medir antes y después en condiciones idénticas.
+Declarar los ajustes en código con `EC2NodeClass` de Karpenter, plantillas de lanzamiento o la configuración de Bottlerocket evita que los valores difieran de un nodo a otro. Sin un comentario que explique «por qué este valor», nadie podrá revertirlo seis meses después. Las distintas características de las cargas de trabajo requieren ajustes diferentes, así que use grupos de nodos separados en lugar de imponer un solo perfil. También hay que fijar o planificar la transición del kernel, verificar los valores reales después de aplicar cambios (especialmente conntrack) y medir antes y después en condiciones idénticas.
 </details>

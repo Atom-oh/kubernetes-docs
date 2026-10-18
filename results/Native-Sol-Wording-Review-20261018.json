@@ -10924,6 +10924,396 @@
         "terminalSingleLineFeedVerified": true
       },
       "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0032-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/security/03-pod-security-standards-quiz.md",
+      "targetPath": "cn/quizzes/security/03-pod-security-standards-quiz.md",
+      "sourceBlob": "8af0b5d7b7db98fba35a5e1087c7a8253df37fe4",
+      "sourceSha256": "a5249ce5a480aeffc03fb6d90f526676f9c69e3638f1ca95995f4e495399c27e",
+      "beforeTargetSha256": "0df1f073c4ccf8af70592cf11875b0a938f54ee046f978df46d7d3ac8a5f98e2",
+      "beforeSnapshot": "/tmp/preimages/0df1f073c4ccf8af70592cf11875b0a938f54ee046f978df46d7d3ac8a5f98e2.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "8af0b5d7b7db98fba35a5e1087c7a8253df37fe4",
+      "targetSha256": "175d4d58a21c5c58fe6b51baef2d633170391299465bb6c31f0cd5d3d0412022",
+      "currentTargetSha256": "175d4d58a21c5c58fe6b51baef2d633170391299465bb6c31f0cd5d3d0412022",
+      "afterTargetSha256": "175d4d58a21c5c58fe6b51baef2d633170391299465bb6c31f0cd5d3d0412022",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/175d4d58a21c5c58fe6b51baef2d633170391299465bb6c31f0cd5d3d0412022.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0033-source-snapshots/a5249ce5a480aeffc03fb6d90f526676f9c69e3638f1ca95995f4e495399c27e.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the complete frozen/current English and initial Chinese and reread both complete final pages, covering header/date/ordinary-Linux applicability, twelve questions, all48choices, answers C/C/B/A/C/C/A/B/D/B/C/C, every explanatory list, both exact YAML blocks and Q12 explicit source span ID. Three PSS levels exclude Hardened; three PSA modes exclude deny, with audit/warn themselves permitting requests while other checks may still reject. Audit retention explicitly concerns audit logs. Namespace labels/latest/version syntax remain exact policy selection rather than cluster upgrades, with v1.28 omitting later controls and latest changing with API-server upgrade. Baseline host namespaces/privileged containers/explicit outside-allowlist NET_RAW/all hostPath prohibitions and no built-in path allowlist remain; it does not require nonroot/no-privilege-escalation, neither profile requires read-only root, and explicit-addition checking does not drop default runtime capabilities. Restricted retains four required controls and RuntimeDefault/Localhost seccomp distinctions. PSP1.21 deprecation, PSA1.22alpha/1.23beta/1.25GA and PSP removal remain, as do EKS1.23 permissive privileged/latest defaults and no static exemptions: default enablement is not Baseline/Restricted enforcement. Exact exemption names are neither wildcard/group nor serviceAccountName, and EKS control-plane edit restrictions remain different from privileged namespace enforcement. The migration/removal sequence is specifically historical for pre1.25 PSP-serving clusters; relabeling does not evict running Pods but replacement/update admission may stall later rollout. Privileged adds no PSS restriction to these valid fields, but does not grant IAM/RBAC, bypass schema/other admission or force privileged:true; reviewed host-access scope stays. Chinese ordinary terminology/date and historical applicability are now natural, with all actual API/field/mode/profile/version tokens and code/URL/ID retained.",
+      "findings": [
+        {
+          "location": "Header/ordinary prose/Q3/Q4/Q8-Q12",
+          "finding": "English date and ordinary namespace/node/runtime/workload/cluster/rollout/security-context/group-selector/control-plane/admission/host-access nouns were awkward mixed-language prose; PSS profile was misframed as a file.",
+          "resolution": "Translate the date and ordinary concepts to natural Chinese while preserving exact field/profile/mode names. Use 安全配置 for PSS profiles, 容器运行时/节点/命名空间/工作负载/滚动发布/安全上下文/组选择器/控制平面/模式校验/准入策略/宿主机访问组件. No filesystem requirement or authorization grant is added.",
+          "resolved": true
+        },
+        {
+          "location": "Q2 audit retention",
+          "finding": "audit 保留 can imply retaining an audit mode rather than audit-log data.",
+          "resolution": "Use 审计日志保留需要适当的日志配置; audit/warn themselves still do not reject and enforce/other checks may reject the same request.",
+          "resolved": true
+        },
+        {
+          "location": "Q11 historical PSP removal scope",
+          "finding": "此PSP移除顺序具有历史意义 reads as historical importance rather than a process applicable to PSP-serving clusters beforev1.25.",
+          "resolution": "Explicitly state it applies to v1.25之前仍支持PSP的集群 and is shown as a historical migration process; audit/warn→fix→gradualenforce→remove PSP and running-Pod/replacement rollout caveats remain.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/security/03-pod-security-standards-quiz.md",
+          "cn/quizzes/security/03-pod-security-standards-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 3. 使用哪种标签格式将 PSS 应用于 namespace？",
+            "after": "### 3. 使用哪种标签格式将 PSS 应用于命名空间？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 12. PSS Privileged 配置文件本身禁止以下哪项？",
+            "after": "### 12. PSS Privileged 安全配置本身禁止以下哪项？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "C",
+            "C",
+            "B",
+            "A",
+            "C",
+            "C",
+            "A",
+            "B",
+            "D",
+            "B",
+            "C",
+            "C"
+          ],
+          "target": [
+            "C",
+            "C",
+            "B",
+            "A",
+            "C",
+            "C",
+            "A",
+            "B",
+            "D",
+            "B",
+            "C",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 12
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [
+            "_12-what-is-restricted-even-in-the-privileged-level"
+          ],
+          "target": [
+            "_12-what-is-restricted-even-in-the-privileged-level"
+          ],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true,
+        "exactCurrentSourceFenceCount": 2,
+        "actualBeforeFenceCount": 2,
+        "actualFinalFenceCount": 2,
+        "finalReadonlyTwoPageProof": [
+          {
+            "command": [
+              "python3",
+              "scripts/repair-markdown-emphasis.py",
+              "--check",
+              "cn/quizzes/security/03-pod-security-standards-quiz.md",
+              "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+            ],
+            "exitCode": 0,
+            "stdout": "0 Markdown file(s) need repair\n",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "diff",
+              "--check",
+              "--",
+              "cn/quizzes/security/03-pod-security-standards-quiz.md",
+              "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+            ],
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          }
+        ]
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0033-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
+      "targetPath": "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
+      "sourceBlob": "916f47ef9f76aa70b3a19eac26e84c5de57559be",
+      "sourceSha256": "c7d0d6ad832f0c19c5a3179ac8f3f7c27191f82faf305499f25e810203d2b2be",
+      "beforeTargetSha256": "feb8160f3e310ece340069c71e680e1af3b2ecdd286eb7174d56526eb8b5b250",
+      "beforeSnapshot": "/tmp/preimages/feb8160f3e310ece340069c71e680e1af3b2ecdd286eb7174d56526eb8b5b250.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "initialRootPreimageAbsent": true,
+      "initialRootPreimageExpectedPath": "/tmp/root-native-cn-reviews/preimages/feb8160f3e310ece340069c71e680e1af3b2ecdd286eb7174d56526eb8b5b250.md",
+      "originalBeforeBytesIndependentlyMatchedFullpairs": true,
+      "sourceGitBlob": "916f47ef9f76aa70b3a19eac26e84c5de57559be",
+      "targetSha256": "ee35e191c5567e13df038e9dfd5c902a79f977282b3bf3b138337663f31490d4",
+      "currentTargetSha256": "ee35e191c5567e13df038e9dfd5c902a79f977282b3bf3b138337663f31490d4",
+      "afterTargetSha256": "ee35e191c5567e13df038e9dfd5c902a79f977282b3bf3b138337663f31490d4",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/ee35e191c5567e13df038e9dfd5c902a79f977282b3bf3b138337663f31490d4.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0034-source-snapshots/c7d0d6ad832f0c19c5a3179ac8f3f7c27191f82faf305499f25e810203d2b2be.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the complete frozen/current English and the entire obsolete initial Chinese before rebuilding; after owned formatting/anchor and exact-source validation, actually reread the complete final English and final Chinese, including header/date,8questions,all32alternatives,answersC/B/B/B/B/C/C/B,everyparagraph,thetwoidenticalYAMLfragments,thecompleteBashpipeline/jqfields and all3references. Q1 is new-claim age expiration under spec.template.spec,336hdefault,24hgracewhenomitted and21daymanagedmaximum,notminimumuptime;templateupdatesdo notoverwriteexistingclaims and former four ranges remain explicitly unverified examples. Q2 is forceful outsidebudgetratelimits with ordinarynew-schedulingprevention/drainattempt,nopre-readyreplacementguarantee andPDB/annotationprotectionboundedbygrace/lifetime. Q3 managedBottlerocketvariants/nocustomAMIselectororSSHSSM/acceleratedsupport and alltwo-source timing ranges remain unverified,notuniversalrankings. Q4 replacement is conditional onDrifted/reasons/currentpolicy/gracefulcontrols;10%roundsupwithotherlimitsnotsequential;compatiblewidening/behavioralchanges notall desired-state drift and amiFamilynotanAutoModefield. Q5 possible replacement/imagepull/checkpoint/recovery/capacitycost andavailabilityimpact does notprovepatchavailabilityorfixeveryvulnerability,doesnotitselfraiseSpotinterruptionprobability, andexpirationstillnotbudgetlimited. Q6 only graceful drift-before-consolidation order is documented; forcefulexpiration separate,no globaltotalorder/first-conditionwins,conditional5/7/8dayexamplespreserved. Q7 requiresfixavailability,singleUID/node/PDB/durablestate/capacity/contextreview andhealth/imagechecksbetweennodes;tag/bulkdelete guarantees removed,localemptyDirdatawarningretained; codeonlygatherscontext-scoped15sevidence and was notexecutedagainstacluster. Q8 Nevercannotoverride21dayservice maximum,predictunverifiedadmissionorprovideforeverdatabaselongjobretention;checkpoints/externalstate/recoveryandearlierlifecycleactionscaveatsremain. The fullrebuild deliberately follows currentEnglishcode/options/headings/URLs rather than preserving obsoleteexamples. FinalChinese is coherent,natural and technically qualified; scores reflect this actualsemanticread, not the structuralchecks.",
+      "findings": [
+        {
+          "location": "Q1 default/lifetime/template scope",
+          "finding": "Old target treats unsupported policy ranges as recommendations and omits default,grace,21daymanagedmaximum andexisting-claim scope.",
+          "resolution": "Rebuild currentQ1/choices/explanation with exact336h/24h/21day bounds,template scope,unverifiedformer ranges andsource YAMLfragment.",
+          "resolved": true
+        },
+        {
+          "location": "Q2 expiration control path",
+          "finding": "Old target calls expiration graceful and subject toPDB/disruptionbudget controlledrollingreplacement.",
+          "resolution": "Translate currentforceful/noNodePoolbudgetratelimit trigger,noguaranteedpre-readyreplacement,drainattemptandPDB/annotationboundedgrace/lifetimemaximum;10%notcontrolledexpiration.",
+          "resolved": true
+        },
+        {
+          "location": "Q3 image interface and boot timing",
+          "finding": "Old targetassertsunsupportedbootranking/customNodeClassamiFamilyselection andadditionaladvantages.",
+          "resolution": "CurrentquestionismanagedBottlerocketinterface,nocustomAMI/SSHSSM;all20–40/15–25 and40–60/20–30/20–40 timingrangesexplicitlyunverified andnouniversalrank;removeoldtable/NodeClassfragment.",
+          "resolved": true
+        },
+        {
+          "location": "Q4 drift",
+          "finding": "Old sequentialreplacementpromise,driftcauses and10%exampleomitcurrentrounding/limits/exceptions.",
+          "resolution": "Restoreeligibleclaimconditionalgracefulreplacement,Drifted/reason/policyinspection,10%ceilcombinedlimits,nonone-at-a-time,PDB/grace,compatiblewidening/behavioralchange distinction andamiFamilynotfield.",
+          "resolved": true
+        },
+        {
+          "location": "Q5 replacement tradeoff",
+          "finding": "OldprosepromisessecuritypatchbenefitsandextraSpotinterruptionratherthanqualifiedreplacement/recoverycost.",
+          "resolution": "Translate currentreschedule,warmup,recovery/capacity/imagepull/checkpointcostandpossibleavailabilityimpact; nopatch/allvulnerabilityguarantee,nodirectSpotprobabilityincrease,expirationnotbudgetlimited andexactcurrentYAML.",
+          "resolved": true
+        },
+        {
+          "location": "Q6 overlapping mechanisms",
+          "finding": "Oldtargetinventsglobaldisruptionorderandfirst-condition-winsrule.",
+          "resolution": "Separategracefuldrift-before-consolidationfromforcefulexpiration,explicitlyno universaltotalorderorfirst-conditionguarantee;retainconditionalfive/seven/eightdayexamples.",
+          "resolved": true
+        },
+        {
+          "location": "Q7 urgent remediation",
+          "finding": "OldSecurityPatchtag/drain/localdatadeletion/bulkdeletionexamplesarenotcurrent-source healthchecked singleclaim evidence.",
+          "resolution": "Replacewithcurrentmanagedfix/UID/nodemapping/PDB/durablestate/capacity/context safeguards,health/imagecheckbeforenextnode,manualpathseparatereview,noguaranteedtagtrigger/nobulkrollingclaim/localdatalosswarning andexactread-onlyBashfence; noclustercommandsactuallyrun.",
+          "resolved": true
+        },
+        {
+          "location": "Q8 Never and review references",
+          "finding": "Oldtargetimpliesindefiniteretentionandrecommendsdatabases/longjobs;reviewdateandthreereferencesmissing.",
+          "resolution": "CurrentNeverquestion/choices explicitlypreserve21daymax,noserviceoverride/admissionguessing,checkpoint/externaldurability/recovery/earlierlifecyclecaveats;restorecurrent2026年9月12日reviewdate andexact3referenceURLs.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
+          "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": false,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "currentSourceAuthorityFullPageRebuild",
+            "location": "Entire obsolete target",
+            "before": "Earlier Chinese source version with obsolete questions/options/explanations,10unsupported code fences, no review date or references and unsupported recommendations.",
+            "after": "Complete translation of current frozen English8questions/32options/currentanswertext/explanations,2exactYAMLfragments+1Bashfence, reviewed2026-09-12 and3references; old examples deliberately removed."
+          },
+          {
+            "type": "currentSourceAuthorityQ1",
+            "location": "Q1",
+            "before": "Generic periodic-node-replacement explanation and four common policy ranges presented as recommendations.",
+            "after": "New NodeClaim template expireAfter;336hdefault/omitted24hterminationgrace/21daymaximum notminimumuptime;templatechange notexistingclaims;former336/168/72–168/24–48examples expresslyunverified."
+          },
+          {
+            "type": "currentSourceAuthorityQ2",
+            "location": "Q2",
+            "before": "Expiration described as graceful and budget-controlled;old10%budgetYAML.",
+            "after": "Forceful expiration outsideNodePoolbudgetratelimits,drainingwithoutguaranteedpre-readyreplacement,PDBannotationsboundedbygrace/lifetimemaximum andseparatereadiness/capacityproof."
+          },
+          {
+            "type": "currentSourceAuthorityQ3",
+            "location": "Q3",
+            "before": "AL2023versusBottlerocketbootranking/table and unsupportedNodeClassamiFamilyexample.",
+            "after": "CurrentmanagedBottlerocketvariantinterface;nocustomAMIselectororSSH/SSM,acceleratedworkloads,allformerlyquotedtimingsunverified andno universalbootranking."
+          },
+          {
+            "type": "currentSourceAuthorityQ4",
+            "location": "Q4",
+            "before": "Promiseofsequentialreplacement andunsupporteddriftcauses/10%concurrencyexample.",
+            "after": "EligibleDriftedclaimsmaybereplacedunderappropriategracefulcontrols,10%roundsupcombinedwithlimits,notoneatatime;requirements/behaviorversusdesiredstatedrift;amiFamilynotAutoModefield."
+          },
+          {
+            "type": "currentSourceAuthorityQ5",
+            "location": "Q5",
+            "before": "Assuredlatestpatchsecuritybenefits andextraSpotinterruptionrisk,oldbalancedsettingbudgetexample.",
+            "after": "Possiblereschedule/warmup/recoveryavailabilitycosts,noproofpatchavailable/allvulnerabilitiesfixed,nodirectincreaseSpotinterruptionprobability,expirationnotbudgetlimited andcurrentexacttemplatefragment."
+          },
+          {
+            "type": "currentSourceAuthorityQ6",
+            "location": "Q6",
+            "before": "Globaldrift>expiration>consolidationorderandfirstconditionsatisfiedwins,oldcommentonlyYAMLexamples.",
+            "after": "Drift-before-consolidationonlyingracefulcontroller;expirationseparateforcefulpath,no universalorderorfirst-conditionguarantee;five/seven/eightdayexamplesretainedasconditionalprose."
+          },
+          {
+            "type": "currentSourceAuthorityQ7",
+            "location": "Q7",
+            "before": "SecurityPatchtagguaranteetrigger,destructivedrain/deleteandbulkdeleteexamples.",
+            "after": "Verifiedmanagedfixandaffectedclaims;singleUID/node/PDB/durablestate/sparecapacityreview,health/image recheckbeforenextnode,manualpathseparatereview;tageffectnotguaranteed/local-data-losswarning andexactreadonlysingleNodeClaim/PDBBashfence."
+          },
+          {
+            "type": "currentSourceAuthorityQ8",
+            "location": "Q8",
+            "before": "Never disablesexpirationwithrecommendeddatabase/longjobindefiniteretention.",
+            "after": "21daymanagedmaximumstillapplies,upstreamsyntaxnotoverrideservicelifetime,noguaranteedadmissionresponsewithouttesting,checkpoint/externaldurablestorage/recoveryandearlierlifecycleactions."
+          },
+          {
+            "type": "currentSourceAuthorityHeadingAndReferenceRestoration",
+            "before": "OldH1/8questiontopicsandmissingReferenceheading.",
+            "after": "NaturalChineseH1/current8H3topicspluscurrentENReferenceH2; currentEnglishheadinghierarchyretained;originalguidedestinationunchanged and3currentreferencesadded."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B"
+          ],
+          "target": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 8
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true,
+        "exactCurrentSourceFenceCount": 3,
+        "actualBeforeFenceCount": 10,
+        "actualFinalFenceCount": 3,
+        "finalReadonlyTwoPageProof": [
+          {
+            "command": [
+              "python3",
+              "scripts/repair-markdown-emphasis.py",
+              "--check",
+              "cn/quizzes/security/03-pod-security-standards-quiz.md",
+              "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+            ],
+            "exitCode": 0,
+            "stdout": "0 Markdown file(s) need repair\n",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "git",
+              "diff",
+              "--check",
+              "--",
+              "cn/quizzes/security/03-pod-security-standards-quiz.md",
+              "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+            ],
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          }
+        ],
+        "originalPreimageProvenance": {
+          "initialIndependentRead": "Root preimages path was absent initially; current target bytes independently matched original fullpairs string/SHA and were saved to own beforeSnapshot before edits.",
+          "laterRootSnapshotVerification": "Root subsequently generated its preimage from preserved original fullpairs; exact byte equality against independently saved own preimage verified.",
+          "rootSnapshot": "/tmp/root-native-cn-reviews/preimages/feb8160f3e310ece340069c71e680e1af3b2ecdd286eb7174d56526eb8b5b250.md",
+          "rootSnapshotSha256": "feb8160f3e310ece340069c71e680e1af3b2ecdd286eb7174d56526eb8b5b250",
+          "ownSnapshot": "/tmp/preimages/feb8160f3e310ece340069c71e680e1af3b2ecdd286eb7174d56526eb8b5b250.md",
+          "sameBytes": true
+        }
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0034-wording-findings.json"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -11001,9 +11391,9 @@
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
   "snapshotScope": {
-    "wholePagesReviewed": 141,
+    "wholePagesReviewed": 143,
     "remainingLocaleReviews": "IN_PROGRESS; these actual individual reviews do not certify all 693 pages per locale",
-    "lastVerifiedAt": "2026-10-18T13:23:08.486710+00:00",
+    "lastVerifiedAt": "2026-10-18T13:44:44.398713+00:00",
     "allAddedReviewSourceAndTargetHashesIndependentlyVerified": true
   },
   "additionalReviewBatches": [
@@ -13270,6 +13660,118 @@
       },
       "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
       "artifact": "/tmp/native-sol-cn-batch0032-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:42:09.442434+00:00",
+      "scope": [
+        "cn/quizzes/security/03-pod-security-standards-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/security/03-pod-security-standards-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/security/03-pod-security-standards-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/security/03-pod-security-standards-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/security/03-pod-security-standards-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/security/03-pod-security-standards-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0033-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:43:02.244130+00:00",
+      "scope": [
+        "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0034-review-20261018.json"
     }
   ],
   "additionalReportedFindingCorrections": [

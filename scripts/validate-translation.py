@@ -69,6 +69,15 @@ def link_targets(text):
     return Counter(targets)
 
 
+def introduced_document_wrappers(source, translated):
+    """Reject model response wrappers while retaining documented XML examples."""
+    markers = (
+        "<source_document>", "</source_document>",
+        "<translated_document>", "</translated_document>",
+    )
+    return [marker for marker in markers if translated.count(marker) > source.count(marker)]
+
+
 def main():
     if len(sys.argv) != 3:
         print("usage: validate-translation.py <src_path> <dst_path>", file=sys.stderr)
@@ -104,6 +113,11 @@ def main():
         return 1
     if link_targets(src) != link_targets(dst):
         print(f"link/image target mismatch: {dst_path}", file=sys.stderr)
+        return 1
+
+    wrappers = introduced_document_wrappers(src, dst)
+    if wrappers:
+        print(f"unexpected translation wrapper {wrappers[0]}: {dst_path}", file=sys.stderr)
         return 1
 
     ratio = len(dst) / max(len(src), 1)

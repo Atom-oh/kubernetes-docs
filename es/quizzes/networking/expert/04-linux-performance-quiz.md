@@ -66,9 +66,9 @@ Elige la mejor respuesta. Explica tanto la interpretación como los límites de 
 </details>
 
 5. Una captura del host muestra una unidad TCP grande y errores aparentes de suma de comprobación saliente. ¿Qué debes hacer primero?
-   - A) Deshabilitar todas las descargas de trabajo de la NIC y repetir con carga ilimitada.
+   - A) Deshabilitar todas las funciones de offload de la NIC y repetir con carga ilimitada.
    - B) Declarar que la red física transmitió tramas corruptas de tamaño excesivo.
-   - C) Registrar el punto de captura, la dirección, el contexto de descarga de trabajo y los contadores de truncamiento/captura.
+   - C) Registrar el punto de captura, la dirección, el contexto de offload y los contadores de truncamiento/captura.
    - D) Eliminar la captura porque no puede contener pruebas útiles.
 
 <details>
@@ -76,7 +76,7 @@ Elige la mejor respuesta. Explica tanto la interpretación como los límites de 
 
 **Respuesta: C**
 
-**Explicación:** GSO/TSO/GRO y la descarga de comprobación pueden cambiar lo que ve un observador del host con respecto a la transmisión física. Esto tampoco demuestra que la red funcione correctamente. Identifica el punto de observación y busca pruebas correspondientes en el endpoint o en el cable cuando sea necesario. El cuaderno no cambia las descargas de trabajo de la NIC para normalizar lo observado.
+**Explicación:** Las funciones de offload GSO/TSO/GRO y la descarga del cálculo de checksum pueden hacer que lo observado en el host difiera de lo que se transmite físicamente. Esto tampoco demuestra que la red funcione correctamente. Identifica el punto de observación y busca pruebas correspondientes en el endpoint o en el cable cuando sea necesario. El cuaderno no modifica las funciones de offload de la NIC para normalizar lo observado.
 
 </details>
 
@@ -136,14 +136,14 @@ Elige la mejor respuesta. Explica tanto la interpretación como los límites de 
 
 **Respuesta: B**
 
-**Explicación:** Las conexiones breves pueden ocurrir entre intervalos de observación. Cinco muestras de transacción solo permiten un informe descriptivo pequeño, no un objetivo creíble de latencia de cola del servicio. Los datos ausentes no equivalen a cero. La carga útil dividida por el tiempo de transacción es el rendimiento útil de la operación, incluidos el trabajo de la aplicación y de conexión, no la velocidad de línea de la NIC.
+**Explicación:** Las conexiones breves pueden ocurrir entre intervalos de observación. Cinco muestras de transacción solo permiten un informe descriptivo pequeño, no permiten fijar un objetivo de latencia de percentil alto para el servicio. Los datos ausentes no equivalen a cero. La carga útil dividida por el tiempo de transacción es el rendimiento útil de la operación, incluidos el trabajo de la aplicación y de conexión, no la velocidad de línea de la NIC.
 
 </details>
 
 10. ¿Qué plan de restauración cumple los requisitos del cuaderno?
    - A) Reemplazar la qdisc raíz del host, eliminarla después y suponer que vuelve la jerarquía anterior.
    - B) Vaciar todas las rutas y terminar todos los procesos Python.
-   - C) Detener solo los procesos loopback propios y verificar la eliminación del listener; mantener el diseño netem en el plano teórico hasta definir por separado la propiedad, el estado previo y la restauración exacta.
+   - C) Detener solo los procesos loopback propios y verificar la eliminación del listener; dejar netem solo como diseño hasta definir por separado quién es su responsable, el estado previo y la restauración exacta.
    - D) Deshabilitar los controles de seguridad compartidos si falta una observación.
 
 <details>

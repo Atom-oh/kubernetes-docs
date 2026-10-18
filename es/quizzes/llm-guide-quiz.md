@@ -35,13 +35,13 @@ Los archivos completos para cada idioma son `llms-full-ko.txt` y `llms-full-en.t
 3. ¿Cómo se generan `llms.txt` y los archivos completos cuando la implementación del sitio se completa correctamente?
    - A) El autor vuelve a subir a mano los tres archivos después de cada edición
    - B) Un flujo semanal de resúmenes de noticias los actualiza
-   - C) La compilación del sitio los genera a partir de los mismos orígenes y los implementa conjuntamente
+   - C) La compilación del sitio los genera a partir del mismo origen y los implementa conjuntamente
    - D) El servidor convierte los documentos sobre la marcha para cada solicitud del LLM
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) La compilación del sitio los genera a partir de los mismos orígenes y los implementa conjuntamente**
+**Respuesta: C) La compilación del sitio los genera a partir del mismo origen y los implementa conjuntamente**
 
 **Explicación:**
 La página indica: «La compilación del sitio los genera a partir del mismo origen y los implementa juntos, así que siempre coinciden con el contenido publicado». Son artefactos del proceso de implementación, no cargas manuales ni conversiones a petición.

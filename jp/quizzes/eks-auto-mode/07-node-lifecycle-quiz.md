@@ -1,10 +1,11 @@
-# EKS Auto Mode Node ライフサイクルクイズ
+# EKS Auto Mode Node Lifecycle クイズ
 
 > **関連ドキュメント**: [Node Lifecycle](../../eks-auto-mode/07-node-lifecycle.md)
+> **最終更新**: 2026年9月12日
 
 ## 選択問題
 
-### 1. NodePool で Node を定期的に置き換えるための設定フィールド名は何ですか？
+### 1. 新しく作成される NodeClaim の経過時間ベースの有効期限を指定する NodePool field はどれですか？
 
 - A) `nodeLifetime`
 - B) `maxAge`
@@ -17,266 +18,159 @@
 **回答: C) `expireAfter`**
 
 **解説:**
-`expireAfter` フィールドを使用すると、セキュリティパッチや AMI 更新を適用するための定期的な Node 置き換えにおいて、最大 Node ライフタイムを設定できます。
+この field は `spec.template.spec` の下にあります。Auto Mode では既定値 336h が文書化されており、NodePool で省略すると NodeClaim の termination grace は 24h になります。managed instance の最大 lifetime は 21 日であり、最低 uptime の保証ではありません。template を更新しても既存の claim は上書きされません。以前の開発環境 336h、staging 168h、production 72～168h、セキュリティ重視環境 24～48h という値は、未検証の policy 例であり、準拠に必要な interval ではありません。
 
 ```yaml
-spec:
-  template:
-    spec:
-      # Set maximum node lifetime
-      expireAfter: 168h  # Auto-replace after 7 days
-```
-
-**一般的な設定:**
-- 開発環境: 336h (14 日)
-- Staging: 168h (7 日)
-- Production: 72h ~ 168h (3-7 日)
-- セキュリティが重要な環境: 24h ~ 48h (1-2 日)
-
-</details>
-
-### 2. expireAfter が設定された Node が期限切れになると何が起こりますか？
-
-- A) Node が即座に削除される
-- B) Node が cordon され、drain され、その後削除される
-- C) 管理者に通知のみが送信される
-- D) Node が自動的に再起動する
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) Node が cordon され、drain され、その後削除される**
-
-**解説:**
-Node が期限切れになると、Karpenter は graceful なプロセスを実行します。
-
-1. **Cordon**: 新しい Pod スケジューリングをブロック
-2. **Drain**: 既存の Pod を他の Node に移動
-3. **Delete**: EC2 インスタンスを終了
-
-このプロセス中は、PodDisruptionBudgets と Disruption Budgets が尊重されます。
-
-```yaml
-disruption:
-  budgets:
-    # Expiration-based replacement also follows this budget
-    - nodes: "10%"
+# Fragment of NodePool spec.template.spec
+expireAfter: 168h
+terminationGracePeriod: 24h
 ```
 
 </details>
 
-### 3. AL2023 と Bottlerocket のうち、より速い起動時間を提供する AMI はどれですか？
+### 2. Auto Mode の NodeClaim が期限切れになると、何が起こりますか？
 
-- A) AL2023
-- B) Bottlerocket
-- C) 同じ
-- D) インスタンスタイプによる
+- A) 常に即座に消失する
+- B) 事前に Ready な replacement が用意される保証なしに、termination/draining が始まる
+- C) 通知だけが送信される
+- D) 同じ instance が再起動される
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Bottlerocket**
+**回答: B) 事前に Ready な replacement が用意される保証なしに、termination/draining が始まる**
 
 **解説:**
-Bottlerocket はコンテナワークロード向けに最適化された OS であり、AL2023 より速い起動時間を提供します。
-
-**起動時間の比較:**
-| AMI | 起動時間 | 特徴 |
-|-----|-----------|-----------------|
-| AL2023 | 20-40 秒 | 汎用パッケージ、柔軟性 |
-| Bottlerocket | 15-25 秒 | コンテナ専用、最小限の OS |
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: fast-boot
-spec:
-  amiFamily: Bottlerocket  # Fast boot
-```
-
-Bottlerocket の追加の利点:
-- イミュータブルなルートファイルシステム
-- 自動セキュリティ更新
-- より小さい攻撃対象領域
+Expiration は強制的な trigger であり、NodePool disruption budget による rate limit の対象ではありません。controller は通常の新規 scheduling を止め、drain/cleanup を試みます。PDB と Pod annotation は eviction に影響することがありますが、termination grace と AWS の lifetime 上限が保護期間を制限します。そのため、`nodes: 10%` の budget を設定しても、expiration が制御された 10% ずつの rolling update になるわけではありません。replacement capacity と application readiness は、それぞれ別の証拠で確認する必要があります。
 
 </details>
 
-### 4. AMI 更新によって既存の Node で Drift が検出されると何が起こりますか？
+### 3. EKS Auto Mode の OS 選択について正しい説明はどれですか？
 
-- A) Node がその場で自動的に更新される
-- B) Node が新しい AMI で順次置き換えられる
-- C) 管理者の承認後に置き換えられる
-- D) 何も起こらない
+- A) `amiFamily` で AL2023 を選択する
+- B) Bottlerocket の variant は AWS が管理し、NodeClass は AMI family selector ではない
+- C) `amiSelectorTerms` で custom AMI を選ぶ
+- D) GPU node は customer-managed AL2023 を使う必要がある
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Node が新しい AMI で順次置き換えられる**
+**回答: B) Bottlerocket の variant は AWS が管理し、NodeClass は AMI family selector ではない**
 
 **解説:**
-新しい AMI が利用可能になると、EKS Auto Mode は Drift を検出し、Node を順次置き換えます。
-
-**Drift 検出条件:**
-- 新しい EKS optimized AMI のリリース
-- NodeClass の amiFamily 変更
-- Security group の変更
-- Subnet 設定の変更
-
-```yaml
-# Drift-based replacement also follows Disruption Budget
-disruption:
-  budgets:
-    - nodes: "10%"  # Only 10% replaced at a time
-```
+Auto Mode は、そのような custom AMI interface や SSH/SSM access を公開していません。管理対象 image は accelerated workload にも対応します。以前のクイズにある AL2023 の 20～40 秒と Bottlerocket の 15～25 秒、また元資料にある 40～60 秒と 20～30 秒/20～40 秒という比較には、検証済みの測定根拠がありません。いずれも、起動が常に一方で速いことを示すものではありません。一般的な OS 比較は、Auto Mode の管理 interface とは別の話です。
 
 </details>
 
-### 5. Node の鮮度を保つために expireAfter を短く設定する場合の潜在的なトレードオフは何ですか？
+### 4. Auto Mode の管理対象 image が更新され、既存 NodeClaim が drifted になった場合、何が起こり得ますか？
 
-- A) コスト削減
-- B) Node 置き換え頻度の増加による一時的なパフォーマンス低下の可能性
-- C) セキュリティ脆弱性の増加
-- D) Cluster の安定性向上
+- A) すべての instance が直ちにその場で patch される
+- B) 条件を満たす claim が、適用対象の graceful-disruption control の範囲で置き換えられる
+- C) Node tag を任意に変更するまで何も起きない
+- D) すべての node を同時に削除する必要がある
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Node 置き換え頻度の増加による一時的なパフォーマンス低下の可能性**
+**回答: B) 条件を満たす claim が、適用対象の graceful-disruption control の範囲で置き換えられる**
 
 **解説:**
-短い expireAfter はセキュリティを強化しますが、次のようなトレードオフがあります。
+`Drifted` condition、理由、現在の policy を確認してください。10% budget は切り上げられ、ほかに有効な limit と組み合わされます。1 台ずつの置き換えを意味しません。scheduling/PDB の制約と grace の意味も考慮してください。NodePool の変更すべてが drift を起こすわけではありません。互換性を保った requirement の拡張や、weight/limit/disruption の動作変更は、desired-state drift とは異なります。Auto Mode に `amiFamily` field はありません。
 
-**利点:**
-- 最新のセキュリティパッチが適用される
-- AMI 更新の迅速な適用
-- Node drift の防止
+</details>
 
-**欠点:**
-- Node 置き換え中の一時的な容量減少
-- Pod の再スケジューリング増加
-- Spot インスタンスでの追加中断の可能性
+### 5. Expiration policy を短くすると、どのような trade-off が生じる可能性がありますか？
 
-**推奨事項:**
+- A) コスト削減が保証される
+- B) 再スケジューリングや warm-up/recovery 作業が増え、可用性に影響する可能性がある
+- C) CVE が増えることが保証される
+- D) 安定性が保証される
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B) 再スケジューリングや warm-up/recovery 作業が増え、可用性に影響する可能性がある**
+
+**解説:**
+頻繁な置き換えにより、管理対象 image の rollout がより頻繁になる場合がありますが、必要な patch が提供されている証拠にも、すべての workload の脆弱性が修正される証拠にもなりません。capacity、image pull、checkpoint、recovery のコストが増える可能性もあります。EC2 Spot instance の interruption 発生確率自体が高くなるわけではありません。application recovery と node grace は別々に評価してください。NodePool budget では expiration を rate limit できません。
+
 ```yaml
-# Balanced setting
-spec:
-  template:
-    spec:
-      expireAfter: 168h  # 7 days
-  disruption:
-    budgets:
-      - nodes: "10%"  # Limit concurrent replacement
+# Fragment of NodePool spec.template.spec
+expireAfter: 168h
+terminationGracePeriod: 24h
 ```
 
 </details>
 
-### 6. Consolidation と Expiration が同時にトリガーされた場合、何が優先されますか？
+### 6. Consolidation と expiration の条件が重なる場合、どう理解すべきですか？
 
-- A) Consolidation が常に優先される
-- B) Expiration が常に優先される
-- C) Node 置き換え条件に先に到達したものが実行される
-- D) 管理者が選択する必要がある
+- A) 常に consolidation が優先される
+- B) expiration は必ず drift、その後 consolidation を待つ
+- C) graceful な方法と強制 expiration は別の control path であり、全体に適用される一律の順序はない
+- D) すべての処理を管理者が手動で選ぶ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Node 置き換え条件に先に到達したものが実行される**
+**回答: C) graceful な方法と強制 expiration は別の control path であり、全体に適用される一律の順序はない**
 
 **解説:**
-Karpenter は複数の disruption 理由を個別に評価し、条件が満たされたときに実行します。
-
-**Disruption の優先順位（一般的な評価順序）:**
-1. **Drift**: 設定変更または AMI 更新の検出
-2. **Expiration**: expireAfter 時間の超過
-3. **Consolidation**: 使用率の低い Node または空の Node
-
-```yaml
-# Example: 5-day-old underutilized node
-# - expireAfter: 7 days -> Not expired yet
-# - Consolidation condition met -> Replaced by Consolidation
-
-# Example: 8-day-old normal utilization node
-# - expireAfter: 7 days -> Expired
-# - Replaced by Expiration
-```
+graceful controller は consolidation より先に drift を評価します。expiration は独立した強制 path です。`drift > expiration > consolidation` のような全体順序や、最初に条件を満たしたものが常に勝つという保証は文書化されていません。作成から 5 日経過した node は 7 日の expiration より先に consolidation されることがあります。8 日経過した expired claim は、十分に利用されていても termination を開始する場合があります。
 
 </details>
 
-### 7. セキュリティパッチ適用のために Node をすぐに置き換える必要がある場合、どの方法を使用しますか？
+### 7. 緊急の node patch remediation を始める際、適切な手順はどれですか？
 
-- A) expireAfter を 0 に設定する
-- B) Node に Drift annotation を追加する
-- C) NodeClass を更新して Drift をトリガーする、または Node を drain する
-- D) Cluster を再起動する
+- A) すべての pool で `expireAfter` を 0 に設定する
+- B) drift annotation を独自に作る
+- C) 管理対象の修正を確認し、影響を受ける claim を特定して、health check を伴う単一 resource の手順を使う
+- D) pool を一括削除し、順次置き換えと呼ぶ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) NodeClass を更新して Drift をトリガーする、または Node を drain する**
+**回答: C) 管理対象の修正を確認し、影響を受ける claim を特定して、health check を伴う単一 resource の手順を使う**
 
 **解説:**
-緊急のセキュリティパッチ適用方法:
+管理対象 image/fix が利用可能であることを確認し、レビュー済みの context で、単一 NodeClaim の UID、node との対応、PDB、永続状態、余剰または調達可能な capacity を調べます。適切であれば管理対象の drift を使います。手動置き換えは別途レビューし、次の node に進む前に health と image の根拠を再確認してください。見た目だけの `SecurityPatch` tag は patch trigger の保証ではありません。label の付いた node をすべて削除しても rolling update にはなりません。`--delete-emptydir-data` によって local data が失われる場合があります。
 
-**方法 1: NodeClass の更新（推奨）**
-```yaml
-# Trigger drift by changing tags or settings
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: default
-spec:
-  tags:
-    SecurityPatch: "2025-02-19"  # Drift triggered by tag change
-```
+関連ガイドで `KUBE_CONTEXT` を設定します。以下の command は証拠の収集だけを行います。
 
-**方法 2: 手動 drain**
 ```bash
-# Drain specific node
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-
-# Delete node (Auto Mode provisions new node)
-kubectl delete node <node-name>
-```
-
-**方法 3: ローリング置き換え**
-```bash
-# Sequentially replace all nodes
-kubectl delete nodes -l karpenter.sh/nodepool=general-purpose
+: "${NODECLAIM_NAME:?Select one NodeClaim for review}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodeclaim "$NODECLAIM_NAME" -o json |
+  jq '{name:.metadata.name,uid:.metadata.uid,node:.status.nodeName,
+       pool:.metadata.labels["karpenter.sh/nodepool"],imageID:.status.imageID,
+       expireAfter:.spec.expireAfter,terminationGracePeriod:.spec.terminationGracePeriod,
+       conditions:[.status.conditions[]?|{type,status,reason}]}'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pdb -A -o json |
+  jq '[.items[]|{namespace:.metadata.namespace,name:.metadata.name,
+       observedGeneration:.status.observedGeneration,generation:.metadata.generation,
+       currentHealthy:.status.currentHealthy,desiredHealthy:.status.desiredHealthy,
+       disruptionsAllowed:.status.disruptionsAllowed}]'
 ```
 
 </details>
 
-### 8. expireAfter を Never に設定するとどのような動作になりますか？
+### 8. Upstream の `expireAfter: Never` は Auto Mode node を無期限に保持できますか？
 
-- A) Node が即座に期限切れになる
-- B) 時間ベースの自動置き換えが無効になる
-- C) 設定が無効化され、デフォルトが適用される
-- D) エラーが発生する
+- A) 保守や interruption も含めて保持できる
+- B) できない。Auto Mode の managed instance には 21 日の最大 lifetime が引き続き適用される
+- C) Pod に PDB があれば保持できる
+- D) すべての stateful workload で保持できる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 時間ベースの自動置き換えが無効になる**
+**回答: B) できない。Auto Mode の managed instance には 21 日の最大 lifetime が引き続き適用される**
 
 **解説:**
-`expireAfter: Never` を設定すると、時間ベースの Node expiration が無効になります。
-
-```yaml
-spec:
-  template:
-    spec:
-      expireAfter: Never  # Disable time-based expiration
-```
-
-**注意事項:**
-- Drift と Consolidation は引き続き機能する
-- セキュリティパッチの適用が遅れる可能性がある
-- 長時間実行されるワークロードにのみ推奨
-
-**推奨されるユースケース:**
-- Stateful ワークロード（データベース）
-- 非常に長時間実行されるジョブ
-- 手動メンテナンススケジュールがある環境
+upstream の syntax は、Auto Mode の service lifetime を上書きする許可ではありません。`Never` を使って Auto Mode の database や長時間 job を単一 instance 上で永久に実行する方法として推奨しないでください。また、実際に試さずに特定の admission response が保証されると推測しないでください。checkpoint、外部の永続 storage、recovery を計画します。drift、interruption、その他の lifecycle action がこれより前に起こる可能性もあります。
 
 </details>
+
+## 参考資料
+
+- [Auto Mode NodePool の既定値](https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html)
+- [Auto Mode の最大 lifetime](https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html)
+- [Disruption と drift](https://karpenter.sh/v1.14/concepts/disruption/)

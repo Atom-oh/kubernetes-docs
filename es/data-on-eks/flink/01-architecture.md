@@ -2,13 +2,13 @@
 
 > **Última actualización**: 12 de septiembre de 2026. Ejemplos de integración: Flink 2.2.1 / Java 17 / Operator 1.15.0.
 
-Este capítulo explica los roles del clúster y el dimensionamiento de recursos. Prepara una versión de EKS/Kubernetes con soporte vigente, una versión compatible de kubectl, una distribución de Flink y acceso de cliente. La Parte 2 abarca la instalación, las cuentas de servicio, RBAC y los recursos del Operator. Los requisitos mínimos históricos de Kubernetes no son matrices de soporte actuales.
+Este capítulo explica los roles del clúster y el dimensionamiento de recursos. Prepara una versión de EKS/Kubernetes con soporte vigente, una versión compatible de kubectl, una distribución de Flink y acceso desde un cliente. La Parte 2 abarca la instalación, las cuentas de servicio, RBAC y los recursos del Operator. Los requisitos mínimos históricos de Kubernetes no son matrices de soporte actuales.
 
 ## 1. JobManager, TaskManager y cliente
 
 | Rol | Responsabilidad |
 | --- | --- |
-| Client | Según la ruta de envío, ejecuta el método main() de la aplicación para crear un grafo o solicita la ejecución de la aplicación en el clúster |
+| Cliente | Según la ruta de envío, ejecuta el método main() de la aplicación para crear un grafo o solicita la ejecución de la aplicación en el clúster |
 | JobManager | Dispatcher, ResourceManager y JobMaster por trabajo coordinan el envío, los slots, la ejecución, los checkpoints y la recuperación |
 | TaskManager | Ejecuta los subprocesos de tareas, intercambia y almacena en búfer los datos y procesa el estado |
 | Kubernetes ResourceManager | Solicita y libera Pods de TaskManager mediante la API de Kubernetes en el modo Native |
@@ -21,8 +21,8 @@ El modo Application ejecuta main() en el JobManager; el envío normal mediante S
 Un slot de tarea es una unidad de asignación de recursos del TaskManager. La configuración clásica de slots fijos divide la memoria administrada, pero **no proporciona por sí misma aislamiento de CPU**.
 Cada TaskManager es una JVM que puede alojar varios subprocesos de tareas.
 
-Flink puede **encadenar** sub tareas de operadores en una sola tarea/subproceso. Las distintas tareas de un mismo trabajo también pueden compartir slots mediante **grupos de uso compartido de slots**.
-Por lo tanto, cuatro slots no significan un máximo de cuatro sub tareas de operadores.
+Flink puede **encadenar** subtareas de operadores en una sola tarea/subproceso. Las distintas tareas de un mismo trabajo también pueden compartir slots mediante **grupos de uso compartido de slots**.
+Por lo tanto, cuatro slots no significan un máximo de cuatro subtareas de operadores.
 
 | Supuestos del ejemplo | Cálculo sencillo de slots |
 | --- | --- |
@@ -69,7 +69,7 @@ La finalización de un trabajo o un menor paralelismo no elimina de inmediato un
 
 ### Forma actual de envío mediante CLI
 
-Este es un **envío Native Application sin Operator**, después de preparar el espacio de nombres y flink ServiceAccount/RBAC según la Parte 2.
+Este es un **envío de una aplicación en modo Native sin Operator**, después de preparar el espacio de nombres, la cuenta de servicio flink y RBAC según la Parte 2.
 No permitas que un CR de Operator y la CLI administren el mismo ID de clúster.
 El ejemplo incluido de máquina de estados es de larga duración; no es una prueba rápida de procesamiento por lotes que termina.
 

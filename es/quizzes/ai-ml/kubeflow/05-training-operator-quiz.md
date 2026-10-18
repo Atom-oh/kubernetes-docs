@@ -150,7 +150,7 @@ Katib en sí no necesita conocer la mecánica del lanzamiento distribuido: gener
 **Respuesta:** La guía "Migrating to Kubeflow Trainer v2" en kubeflow.org.
 
 **Explicación:**
-Este documento cubre el cambio conceptual y la mecánica a alto nivel, pero deliberadamente no reproduce cada paso de la migración; la [guía oficial fijada](https://github.com/kubeflow/trainer/blob/v2.3.0/docs/operator-guides/migration.md) proporciona un ejemplo de PyTorchJob, no una correspondencia exhaustiva para cada framework o campo. Compara los roles reales de lanzamiento, los reintentos, el almacenamiento y la red.
+Este documento cubre el cambio conceptual y la mecánica a alto nivel, pero deliberadamente no reproduce cada paso de la migración; la [guía oficial de la versión v2.3.0](https://github.com/kubeflow/trainer/blob/v2.3.0/docs/operator-guides/migration.md) proporciona un ejemplo de PyTorchJob, no una correspondencia exhaustiva para cada framework o campo. Compara los roles reales de lanzamiento, los reintentos, el almacenamiento y la red.
 
 </details>
 

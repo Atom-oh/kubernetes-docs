@@ -1,10 +1,11 @@
-# EKS Auto Mode Node 生命周期测验
+# EKS Auto Mode 节点生命周期测验
 
-> **相关文档**: [Node 生命周期](../../eks-auto-mode/07-node-lifecycle.md)
+> **相关文档**：[节点生命周期](../../eks-auto-mode/07-node-lifecycle.md)
+> **最后更新**：2026 年 9 月 12 日
 
 ## 选择题
 
-### 1. 在 NodePool 中用于定期替换 node 的配置字段名称是什么？
+### 1. NodePool 中哪个字段指定新创建的 NodeClaim 按存续时长过期？
 
 - A) `nodeLifetime`
 - B) `maxAge`
@@ -14,269 +15,163 @@
 <details>
 <summary>显示答案</summary>
 
-**答案: C) `expireAfter`**
+**答案：C) `expireAfter`**
 
-**解释:**
-`expireAfter` 字段允许你设置用于定期替换 node 的最大 node 生命周期，以应用安全补丁或 AMI 更新。
-
+**说明：**
+该字段位于 `spec.template.spec` 下。Auto Mode 文档规定默认值为 336h；如果池中未设置终止宽限期，则会为 NodeClaim 应用 24h 的终止宽限期。托管实例的最长存续时间为 21 天，这并不保证实例至少运行这么久。更新模板不会覆盖现有 NodeClaim。此前列出的开发环境 336h、预发布环境 168h、生产环境 72–168h 和安全场景 24–48h 都是未经验证的策略示例，并非必须遵守的合规间隔。
 ```yaml
-spec:
-  template:
-    spec:
-      # Set maximum node lifetime
-      expireAfter: 168h  # Auto-replace after 7 days
+# Fragment of NodePool spec.template.spec
+expireAfter: 168h
+terminationGracePeriod: 24h
 ```
 
-**常见设置:**
-- 开发环境: 336h（14 天）
-- 预发布环境: 168h（7 天）
-- 生产环境: 72h ~ 168h（3-7 天）
-- 安全关键环境: 24h ~ 48h（1-2 天）
 
 </details>
 
-### 2. 设置了 expireAfter 的 node 过期时会发生什么？
+### 2. Auto Mode 的 NodeClaim 过期时，哪项说法正确？
 
-- A) Node 会立即被删除
-- B) Node 会被 cordon、drain，然后删除
-- C) 仅向管理员发送通知
-- D) Node 会自动重启
+- A) 它总是立即消失
+- B) 开始终止和排空，但不保证替代节点已提前就绪
+- C) 只发送通知
+- D) 重新启动同一实例
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Node 会被 cordon、drain，然后删除**
+**答案：B) 开始终止和排空，但不保证替代节点已提前就绪**
 
-**解释:**
-当 node 过期时，Karpenter 会执行一个优雅处理流程：
-
-1. **Cordon**: 阻止新的 Pod 调度
-2. **Drain**: 将现有 Pod 移动到其他 node
-3. **Delete**: 终止 EC2 instance
-
-在此过程中会遵循 PodDisruptionBudgets 和 Disruption Budgets。
-
-```yaml
-disruption:
-  budgets:
-    # Expiration-based replacement also follows this budget
-    - nodes: "10%"
-```
+**说明：**
+过期属于强制触发路径，不受 NodePool 中断预算的速率限制。控制器会阻止普通的新调度，并尝试排空和清理。PDB 和 Pod 注解可能影响驱逐，但终止宽限期和 AWS 的最长存续时间限制了这种保护的持续范围。因此，`nodes: 10%` 预算不会将过期处理变成受控的 10% 滚动更新。替代容量和应用就绪状态需要各自的证据。
 
 </details>
 
-### 3. 在 AL2023 和 Bottlerocket 之间，哪种 AMI 提供更快的启动时间？
+### 3. 关于 EKS Auto Mode 的操作系统选择，哪项说法正确？
 
-- A) AL2023
-- B) Bottlerocket
-- C) 它们相同
-- D) 取决于 instance type
+- A) 使用 `amiFamily` 选择 AL2023
+- B) AWS 管理 Bottlerocket 的不同变体；NodeClass 不是 AMI 系列选择器
+- C) 使用 `amiSelectorTerms` 选择自定义 AMI
+- D) GPU 节点必须使用客户管理的 AL2023
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Bottlerocket**
+**答案：B) AWS 管理 Bottlerocket 的不同变体；NodeClass 不是 AMI 系列选择器**
 
-**解释:**
-Bottlerocket 是针对容器工作负载优化的 OS，启动时间比 AL2023 更快。
-
-**启动时间比较:**
-| AMI | 启动时间 | 特性 |
-|-----|-----------|-----------------|
-| AL2023 | 20-40 秒 | 通用软件包，灵活性 |
-| Bottlerocket | 15-25 秒 | 仅容器，最小化 OS |
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: fast-boot
-spec:
-  amiFamily: Bottlerocket  # Fast boot
-```
-
-Bottlerocket 的其他优势：
-- 不可变根文件系统
-- 自动安全更新
-- 更小的攻击面
+**说明：**
+Auto Mode 不开放这些自定义 AMI 接口，也不提供 SSH/SSM 访问。其托管镜像也支持加速工作负载。此前测验中的 AL2023 20–40s 与 Bottlerocket 15–25s，以及源文中的 40–60s 与 20–30s/20–40s，都缺乏经核实的测量依据，不能据此确定普遍适用的启动速度排名。通用操作系统比较与 Auto Mode 的托管接口是不同的问题。
 
 </details>
 
-### 4. 当由于 AMI 更新在现有 node 上检测到 Drift 时会发生什么？
+### 4. Auto Mode 托管镜像更新使现有 NodeClaim 发生漂移时，可能出现什么情况？
 
-- A) Node 会自动原地更新
-- B) Node 会按顺序替换为使用新 AMI 的 node
-- C) 管理员批准后替换
-- D) 什么也不会发生
+- A) 所有实例立即原地打补丁
+- B) 符合条件的 NodeClaim 可在适用的优雅中断控制下被替换
+- C) 在任意节点标签更改之前不会发生任何操作
+- D) 必须同时删除所有节点
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Node 会按顺序替换为使用新 AMI 的 node**
+**答案：B) 符合条件的 NodeClaim 可在适用的优雅中断控制下被替换**
 
-**解释:**
-当新的 AMI 可用时，EKS Auto Mode 会检测 Drift 并按顺序替换 node。
-
-**Drift 检测条件:**
-- 新的 EKS optimized AMI 发布
-- NodeClass 中的 amiFamily 变更
-- Security group 变更
-- Subnet 设置变更
-
-```yaml
-# Drift-based replacement also follows Disruption Budget
-disruption:
-  budgets:
-    - nodes: "10%"  # Only 10% replaced at a time
-```
+**说明：**
+检查 `Drifted` 状态条件、原因和当前策略。10% 预算会向上取整，并与其他生效的限制共同作用，并不意味着一次只替换一个节点。调度/PDB 约束和宽限期的具体含义也很重要。并非每项 NodePool 变更都会引发漂移：兼容的需求范围扩大，或权重、限额、中断等行为设置的变更，与期望状态漂移有所不同。`amiFamily` 不是 Auto Mode 的字段。
 
 </details>
 
-### 5. 为了保持 node 新鲜度而将 expireAfter 设置得较短时，可能的权衡是什么？
+### 5. 缩短过期时间的策略可能带来什么权衡？
 
-- A) 成本降低
-- B) 由于 node 替换频率增加，可能出现临时性能下降
-- C) 安全漏洞增加
-- D) 集群稳定性提高
+- A) 保证降低成本
+- B) 增加重新调度、预热/恢复工作，并可能影响可用性
+- C) 保证出现更多 CVE
+- D) 保证稳定性
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 由于 node 替换频率增加，可能出现临时性能下降**
+**答案：B) 增加重新调度、预热/恢复工作，并可能影响可用性**
 
-**解释:**
-较短的 expireAfter 可增强安全性，但有以下权衡：
-
-**优点:**
-- 应用最新安全补丁
-- 快速应用 AMI 更新
-- 防止 node drift
-
-**缺点:**
-- node 替换期间容量临时减少
-- 更多 Pod 重新调度
-- Spot instance 出现额外中断的可能性
-
-**建议:**
+**说明：**
+频繁替换可能让托管镜像的滚动发布更频繁，但不能证明所需补丁已经可用，也不能修复每个工作负载漏洞。这可能增加容量、镜像拉取、检查点和恢复成本。它本身不会提高 EC2 Spot 实例的中断概率。应分别评估应用恢复和节点宽限期；NodePool 预算无法限制过期处理的速率。
 ```yaml
-# Balanced setting
-spec:
-  template:
-    spec:
-      expireAfter: 168h  # 7 days
-  disruption:
-    budgets:
-      - nodes: "10%"  # Limit concurrent replacement
+# Fragment of NodePool spec.template.spec
+expireAfter: 168h
+terminationGracePeriod: 24h
 ```
+
 
 </details>
 
-### 6. 当 Consolidation 和 Expiration 同时触发时，哪个优先？
+### 6. 整合与过期的条件重叠时，应如何理解这两种机制？
 
-- A) Consolidation 总是优先
-- B) Expiration 总是优先
-- C) 哪个先达到 node 替换条件，哪个就执行
-- D) 管理员必须选择
+- A) 整合总是优先
+- B) 过期总是先等待漂移处理，再等待整合
+- C) 优雅中断方式和强制过期采用不同的控制路径，不存在通用的全局先后顺序
+- D) 管理员必须手动选择每个操作
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 哪个先达到 node 替换条件，哪个就执行**
+**答案：C) 优雅中断方式和强制过期采用不同的控制路径，不存在通用的全局先后顺序**
 
-**解释:**
-Karpenter 会独立评估多个 disruption 原因，并在条件满足时执行。
-
-**Disruption 优先级（典型评估顺序）:**
-1. **Drift**: 检测到配置变更或 AMI 更新
-2. **Expiration**: 超过 expireAfter 时间
-3. **Consolidation**: 利用率不足或空 node
-
-```yaml
-# Example: 5-day-old underutilized node
-# - expireAfter: 7 days -> Not expired yet
-# - Consolidation condition met -> Replaced by Consolidation
-
-# Example: 8-day-old normal utilization node
-# - expireAfter: 7 days -> Expired
-# - Replaced by Expiration
-```
+**说明：**
+优雅中断控制器先评估漂移，再评估整合；过期则走独立的强制处理路径。文档并未保证全局 `drift > expiration > consolidation` 顺序，也未保证哪个条件先满足就先执行。存续五天的节点可能在七天的过期时间之前被整合。已存续八天且已过期的 NodeClaim，即使利用率良好，也可能开始终止。
 
 </details>
 
-### 7. 当需要立即替换 node 以应用安全补丁时，使用什么方法？
+### 7. 紧急修复节点补丁问题时，合理的起点是什么？
 
-- A) 将 expireAfter 设置为 0
-- B) 向 node 添加 Drift annotation
-- C) 更新 NodeClass 以触发 Drift，或 drain node
-- D) 重启 cluster
+- A) 将所有池的 `expireAfter` 设为零
+- B) 虚构一个漂移注解
+- C) 确认托管修复已可用，识别受影响的 NodeClaim，并采用带健康检查的单资源处理流程
+- D) 批量删除一个池，并称其为顺序替换
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 更新 NodeClass 以触发 Drift，或 drain node**
+**答案：C) 确认托管修复已可用，识别受影响的 NodeClaim，并采用带健康检查的单资源处理流程**
 
-**解释:**
-紧急应用安全补丁的方法：
+**说明：**
+确认托管镜像/修复已可用，然后在已审查的操作上下文中检查单个 NodeClaim 的 UID、节点映射、PDB、持久化状态，以及备用或可获取的容量。适合时使用托管漂移机制；手动替换应另行审查，并在处理下一个节点前重新检查健康状态和镜像证据。仅用于标记的 `SecurityPatch` 标签并不能保证触发补丁处理，删除所有带标签的节点也不是滚动更新。`--delete-emptydir-data` 可能丢弃本地数据。
 
-**方法 1: NodeClass 更新（推荐）**
-```yaml
-# Trigger drift by changing tags or settings
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: default
-spec:
-  tags:
-    SecurityPatch: "2025-02-19"  # Drift triggered by tag change
-```
+相关指南会设置 `KUBE_CONTEXT`；以下命令仅收集证据。
 
-**方法 2: 手动 drain**
 ```bash
-# Drain specific node
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-
-# Delete node (Auto Mode provisions new node)
-kubectl delete node <node-name>
+: "${NODECLAIM_NAME:?Select one NodeClaim for review}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodeclaim "$NODECLAIM_NAME" -o json |
+  jq '{name:.metadata.name,uid:.metadata.uid,node:.status.nodeName,
+       pool:.metadata.labels["karpenter.sh/nodepool"],imageID:.status.imageID,
+       expireAfter:.spec.expireAfter,terminationGracePeriod:.spec.terminationGracePeriod,
+       conditions:[.status.conditions[]?|{type,status,reason}]}'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pdb -A -o json |
+  jq '[.items[]|{namespace:.metadata.namespace,name:.metadata.name,
+       observedGeneration:.status.observedGeneration,generation:.metadata.generation,
+       currentHealthy:.status.currentHealthy,desiredHealthy:.status.desiredHealthy,
+       disruptionsAllowed:.status.disruptionsAllowed}]'
 ```
 
-**方法 3: 滚动替换**
-```bash
-# Sequentially replace all nodes
-kubectl delete nodes -l karpenter.sh/nodepool=general-purpose
-```
 
 </details>
 
-### 8. 将 expireAfter 设置为 Never 会产生什么行为？
+### 8. 上游的 `expireAfter: Never` 能让 Auto Mode 节点无限期保留吗？
 
-- A) Node 立即过期
-- B) 禁用基于时间的自动替换
-- C) 设置无效并应用默认值
-- D) 发生错误
+- A) 能，包括所有维护和中断情形
+- B) 不能；Auto Mode 托管实例最长 21 天的限制仍然适用
+- C) 能，只要 Pod 有 PDB
+- D) 能，对所有有状态工作负载都适用
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 禁用基于时间的自动替换**
+**答案：B) 不能；Auto Mode 托管实例最长 21 天的限制仍然适用**
 
-**解释:**
-设置 `expireAfter: Never` 会禁用基于时间的 node 过期。
-
-```yaml
-spec:
-  template:
-    spec:
-      expireAfter: Never  # Disable time-based expiration
-```
-
-**注意事项:**
-- Drift 和 Consolidation 仍然有效
-- 安全补丁应用可能会延迟
-- 仅建议用于长时间运行的工作负载
-
-**推荐使用场景:**
-- Stateful 工作负载（数据库）
-- 非常长时间运行的 job
-- 具有手动维护计划的环境
+**说明：**
+上游语法并不意味着可以覆盖 Auto Mode 服务的存续时间限制。不要建议通过 `Never` 让 Auto Mode 数据库或长时间运行的作业永久运行在同一实例上，也不要在未经测试的情况下断言某种准入响应一定会出现。应规划检查点、外部持久化存储和恢复。漂移、中断以及其他生命周期操作可能更早发生。
 
 </details>
+
+## 参考资料
+
+- [Auto Mode NodePool 默认值](https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html)
+- [Auto Mode 最长存续时间](https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html)
+- [中断和漂移](https://karpenter.sh/v1.14/concepts/disruption/)

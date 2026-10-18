@@ -1,6 +1,6 @@
 # Pod Security Standards クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新**: 2026年9月13日
 > **関連ドキュメント**: [Pod Security Standards](../../security/03-pod-security-standards.md)
 
 通常の Linux Pod に対して回答してください。バージョン固有の Windows および user namespace の例外についてはガイドを参照してください。
