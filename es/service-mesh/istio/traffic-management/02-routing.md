@@ -1,64 +1,29 @@
 # Enrutamiento
 
-Las funciones avanzadas de enrutamiento de Istio permiten un control detallado del tráfico según diversos atributos de la solicitud.
+Las funciones avanzadas de enrutamiento de Istio permiten controlar con precisión el tráfico según distintos atributos de las solicitudes.
 
 ## Tabla de contenido
 
 1. [Resumen del enrutamiento](#routing-overview)
-2. [Condiciones de Match](#match-conditions)
+2. [Condiciones de coincidencia](#match-conditions)
 3. [Enrutamiento basado en URI](#uri-based-routing)
 4. [Enrutamiento basado en encabezados](#header-based-routing)
 5. [Enrutamiento basado en parámetros de consulta](#query-parameter-based-routing)
 6. [Enrutamiento basado en métodos HTTP](#http-method-based-routing)
-7. [Enrutamiento basado en origen](#source-based-routing)
-8. [Prioridad y alternativa](#priority-and-fallback)
+7. [Enrutamiento basado en el origen](#source-based-routing)
+8. [Prioridad y ruta alternativa](#priority-and-fallback)
 9. [Ejemplos prácticos](#practical-examples)
 10. [Solución de problemas](#troubleshooting)
 
-<span id="routing-overview"></span>
+## Resumen del enrutamiento {#routing-overview}
 
-## Resumen del enrutamiento
+Estos son ejemplos independientes de enrutamiento para sidecars. Cree los Services y los subsets con nombre y aplique solo un VirtualService con reglas superpuestas por host. Si no se especifica `gateways`, las rutas se aplican a los sidecars de la malla; los ejemplos de entrada para hosts externos también requieren una asociación a un Gateway existente y un nombre de host coincidente. Los encabezados, parámetros de consulta y etiquetas del workload de origen son datos de entrada para el enrutamiento, no una prueba de la identidad del usuario. Aplique la autenticación y una AuthorizationPolicy para hacer cumplir los permisos de usuarios o tenants.
 
-Las reglas de enrutamiento de VirtualService constan de **condiciones de Match** y **destinos de Route**.
+Las reglas de enrutamiento de VirtualService constan de **condiciones de coincidencia** y **destinos de ruta**.
 
-```mermaid
-flowchart LR
-    Request[Incoming Request]
+![Diagrama que muestra cómo una solicitud entrante se evalúa frente a condiciones de coincidencia ordenadas en un VirtualService de Istio y se dirige al servicio de destino correspondiente; se aplica una regla de alternativa predeterminada si ninguna condición anterior coincide.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-02-routing-0.png)
 
-    subgraph VirtualService["VirtualService Routing"]
-        Match1[Match Condition 1<br/>URI = /api/v1]
-        Match2[Match Condition 2<br/>Header = Mobile]
-        Match3[Match Condition 3<br/>Default]
-
-        Route1[Route 1<br/>→ api-v1]
-        Route2[Route 2<br/>→ mobile-app]
-        Route3[Route 3<br/>→ web-app]
-    end
-
-    Request --> Match1
-    Request --> Match2
-    Request --> Match3
-
-    Match1 -->|Match| Route1
-    Match2 -->|Match| Route2
-    Match3 -->|Match| Route3
-
-    Route1 --> Service1[API v1<br/>Service]
-    Route2 --> Service2[Mobile App<br/>Service]
-    Route3 --> Service3[Web App<br/>Service]
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef match fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef route fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Match1,Match2,Match3 match;
-    class Route1,Route2,Route3 route;
-    class Service1,Service2,Service3 service;
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-02-routing-0.html)
 
 ### Estructura básica
 
@@ -89,13 +54,11 @@ spec:
         host: web-app
 ```
 
-<span id="match-conditions"></span>
+## Condiciones de coincidencia {#match-conditions}
 
-## Condiciones de Match
+### Tipos de condiciones de coincidencia
 
-### Tipos de condiciones de Match
-
-| Condición | Descripción | Tipo de Match |
+| Condición | Descripción | Tipo de coincidencia |
 |-----------|-------------|------------|
 | **uri** | Ruta de la solicitud | `exact`, `prefix`, `regex` |
 | **scheme** | HTTP/HTTPS | `exact`, `prefix`, `regex` |
@@ -106,26 +69,30 @@ spec:
 | **sourceLabels** | Etiquetas del workload de origen | Selector de etiquetas |
 | **gateways** | Nombre del Gateway | Lista |
 
-### Tipos de Match
+### Tipos de coincidencia
 
 ```yaml
 # exact: Exact match
 match:
 - uri:
     exact: "/login"
+```
 
+```yaml
 # prefix: Prefix match
 match:
 - uri:
     prefix: "/api/"
+```
 
+```yaml
 # regex: Regular expression match
 match:
 - uri:
     regex: "^/api/v[0-9]+/.*"
 ```
 
-### Combinación de múltiples condiciones
+### Combinación de varias condiciones
 
 ```yaml
 # AND condition: All conditions must match
@@ -142,7 +109,9 @@ http:
   route:
   - destination:
       host: api-debug
+```
 
+```yaml
 # OR condition: Use multiple match blocks
 http:
 - match:
@@ -155,9 +124,7 @@ http:
       host: api-service
 ```
 
-<span id="uri-based-routing"></span>
-
-## Enrutamiento basado en URI
+## Enrutamiento basado en URI {#uri-based-routing}
 
 ### Coincidencia por prefijo
 
@@ -244,7 +211,7 @@ spec:
         host: health-service
 ```
 
-### Coincidencia por expresiones regulares
+### Coincidencia con expresiones regulares
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -280,9 +247,7 @@ spec:
         host: image-service
 ```
 
-<span id="header-based-routing"></span>
-
-## Enrutamiento basado en encabezados
+## Enrutamiento basado en encabezados {#header-based-routing}
 
 ### Enrutamiento basado en User-Agent
 
@@ -295,16 +260,6 @@ spec:
   hosts:
   - reviews
   http:
-  # Mobile devices
-  - match:
-    - headers:
-        user-agent:
-          regex: ".*Mobile.*"
-    route:
-    - destination:
-        host: reviews
-        subset: mobile
-
   # Tablet devices
   - match:
     - headers:
@@ -314,6 +269,16 @@ spec:
     - destination:
         host: reviews
         subset: tablet
+
+  # Mobile devices
+  - match:
+    - headers:
+        user-agent:
+          regex: ".*Mobile.*"
+    route:
+    - destination:
+        host: reviews
+        subset: mobile
 
   # Desktop (default)
   - route:
@@ -370,7 +335,7 @@ spec:
         subset: stable
 ```
 
-### Enrutamiento basado en la versión de API
+### Enrutamiento basado en la versión de la API
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -408,9 +373,7 @@ spec:
         subset: v1
 ```
 
-<span id="query-parameter-based-routing"></span>
-
-## Enrutamiento basado en parámetros de consulta
+## Enrutamiento basado en parámetros de consulta {#query-parameter-based-routing}
 
 ### Coincidencia básica de parámetros de consulta
 
@@ -460,7 +423,7 @@ spec:
         subset: standard
 ```
 
-### Combinación de múltiples parámetros de consulta
+### Combinación de varios parámetros de consulta
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -500,9 +463,7 @@ spec:
         subset: production
 ```
 
-<span id="http-method-based-routing"></span>
-
-## Enrutamiento basado en métodos HTTP
+## Enrutamiento basado en métodos HTTP {#http-method-based-routing}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -554,11 +515,11 @@ spec:
         host: api-read-service
 ```
 
-<span id="source-based-routing"></span>
+## Enrutamiento basado en el origen {#source-based-routing}
 
-## Enrutamiento basado en origen
+`sourceLabels` y `sourceNamespace` seleccionan a qué sidecars de origen se envía la configuración; no son condiciones de coincidencia autenticadas por solicitud en una gateway de entrada. La lista explícita de gateways del nivel superior debe incluir `mesh` para que se apliquen estos selectores. El ejemplo de la base de datos supone un servicio que acepta HTTP, no un protocolo SQL opaco.
 
-### Enrutamiento basado en Namespace
+### Enrutamiento basado en el espacio de nombres
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -586,13 +547,12 @@ spec:
         host: database
         subset: staging
 
-  # Block other namespaces
-  - route:
-    - destination:
-        host: access-denied
+  # Illustrative HTTP rejection; enforce identity policy at the destination
+  - directResponse:
+      status: 403
 ```
 
-### Enrutamiento basado en Service Account
+### Enrutamiento basado en las etiquetas del workload de origen
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -603,7 +563,7 @@ spec:
   hosts:
   - payment-service
   http:
-  # Allow access only from specific Service Account
+  # Select configuration for matching source workload labels
   - match:
     - sourceLabels:
         app: frontend
@@ -624,13 +584,11 @@ spec:
         subset: v1
 ```
 
-<span id="priority-and-fallback"></span>
+## Prioridad y ruta alternativa {#priority-and-fallback}
 
-## Prioridad y alternativa
+### Prioridad de las reglas de coincidencia
 
-### Prioridad de reglas Match
-
-Istio evalúa las reglas de enrutamiento HTTP de VirtualService **de arriba hacia abajo**.
+Istio evalúa las reglas de enrutamiento HTTP de VirtualService **de arriba abajo**.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -674,7 +632,9 @@ spec:
         host: frontend
 ```
 
-### Estrategia de alternativa
+### Estrategia de ruta alternativa
+
+En este contexto, la ruta alternativa es la ruta final para solicitudes que no coincidieron con ninguna regla. Cuando una ruta coincide, un error del servicio ascendente no reinicia la evaluación en la siguiente ruta. Configure reintentos, detección de valores atípicos o un controlador de despliegues por separado para recuperarse de errores.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -694,14 +654,9 @@ spec:
     - destination:
         host: myapp
         subset: canary
-    fault:
-      abort:
-        percentage:
-          value: 0
-        httpStatus: 503
     # No fallback on canary failure - return error
 
-  # Default requests - with fallback
+  # Default route for requests that did not match the canary condition
   - route:
     - destination:
         host: myapp
@@ -709,9 +664,7 @@ spec:
       weight: 100
 ```
 
-<span id="practical-examples"></span>
-
-## Ejemplos prácticos
+## Ejemplos prácticos {#practical-examples}
 
 ### Ejemplo 1: Enrutamiento multiinquilino
 
@@ -723,6 +676,7 @@ metadata:
 spec:
   hosts:
   - api.example.com
+  - tenant-b.api.example.com
   http:
   # Tenant A (identified by header)
   - match:
@@ -755,7 +709,7 @@ spec:
         subset: tenant-c
 ```
 
-### Ejemplo 2: Enrutamiento basado en Feature Flag
+### Ejemplo 2: Enrutamiento basado en indicadores de funciones
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -786,7 +740,7 @@ spec:
         host: myapp
         subset: beta
 
-  # Experimental features (employees only)
+  # Workloads labeled role=employee with the feature header
   - match:
     - headers:
         x-feature-experimental:
@@ -850,7 +804,7 @@ spec:
   - match:
     - headers:
         x-country-code:
-          regex: "DE|FR|UK|IT|ES"
+          regex: "DE|FR|GB|IT|ES"
     route:
     - destination:
         host: content-service
@@ -865,6 +819,8 @@ spec:
 
 ### Ejemplo 4: Patrón de API Gateway
 
+Asocie `api-gateway` a la gateway real y aplique [autenticación JWT y autorización](../security/02-authentication.md) a las rutas protegidas antes de exponerlas. Buscar el texto `Bearer ...` no valida un token. Una ruta protegida no debe continuar hacia una ruta pública o general si faltan las credenciales. Si los encabezados de ubicación geográfica o tenant influyen en las decisiones de acceso, deben proceder de una fuente confiable y autenticada.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -876,13 +832,10 @@ spec:
   gateways:
   - api-gateway
   http:
-  # APIs requiring authentication
+  # Route protected paths; JWT/authorization must be enforced separately
   - match:
     - uri:
         prefix: "/api/v1/protected/"
-      headers:
-        authorization:
-          regex: "Bearer .*"
     route:
     - destination:
         host: protected-api-service
@@ -921,15 +874,12 @@ spec:
     - destination:
         host: health-service
 
-  # 404 handling
-  - route:
-    - destination:
-        host: error-service
+  # 404 response for unmatched paths
+  - directResponse:
+      status: 404
 ```
 
-<span id="troubleshooting"></span>
-
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 ### El enrutamiento no funciona
 
@@ -948,7 +898,7 @@ istioctl proxy-config routes <pod-name> -n <namespace> --name <route-name> -o js
 istioctl analyze -n <namespace>
 ```
 
-### Depuración de condiciones de Match
+### Depuración de las condiciones de coincidencia
 
 ```bash
 # Increase Envoy log level
@@ -963,7 +913,7 @@ kubectl logs -n istio-system -l app=istiod --tail=100
 
 ### Problemas comunes
 
-#### 1. Problemas de orden de Match
+#### 1. Problemas con el orden de coincidencia
 
 ```yaml
 # ❌ Wrong order - default route first ignores other rules
@@ -977,7 +927,9 @@ http:
   route:
   - destination:
       host: api-service
+```
 
+```yaml
 # ✅ Correct order
 http:
 - match:  # Specific rules first
@@ -991,32 +943,28 @@ http:
       host: myapp
 ```
 
-#### 2. Errores de sintaxis de expresiones regulares
+#### 2. Alcance de coincidencia de las expresiones regulares
+
+RE2 compara la cadena completa. `/api/v[1-3]` es sintaxis válida y coincide con `/api/v1`, pero no con `/api/v1/users`; no es necesario escapar `/`. Para que coincidan tanto la ruta raíz de la versión como sus rutas descendientes:
 
 ```yaml
-# ❌ Incorrect regex
 match:
 - uri:
-    regex: "/api/v[1-3]"  # Missing anchor
-
-# ✅ Correct regex
-match:
-- uri:
-    regex: "^/api/v[1-3].*"
+    regex: "^/api/v[1-3](/.*)?$"
 ```
 
-#### 3. Problemas de distinción entre mayúsculas y minúsculas en encabezados
+#### 3. Nombres de encabezados
+
+Los nombres de encabezados HTTP no distinguen mayúsculas de minúsculas durante la transmisión, pero las claves del mapa de coincidencias de Istio deben estar en minúsculas. Los valores de los encabezados sí distinguen mayúsculas de minúsculas, salvo que la expresión indique lo contrario.
 
 ```yaml
-# HTTP headers are case-insensitive
-# Istio automatically converts to lowercase
 match:
 - headers:
-    X-Custom-Header:  # Automatically converted to x-custom-header
+    x-custom-header:
       exact: "value"
 ```
 
-## Buenas prácticas
+## Prácticas recomendadas
 
 ### 1. Coloque primero las reglas específicas
 
@@ -1046,21 +994,23 @@ http:
       host: frontend
 ```
 
-### 2. Minimice las expresiones regulares
+### 2. Reduzca al mínimo las expresiones regulares
 
 ```yaml
 # ❌ Avoid - complex regex degrades performance
 match:
 - uri:
     regex: "^/(api|admin|public)/v[0-9]+/(users|products|orders)/[a-zA-Z0-9_-]+$"
+```
 
+```yaml
 # ✅ Recommended - use prefix or exact
 match:
 - uri:
     prefix: "/api/v1/"
 ```
 
-### 3. Nombres claros
+### 3. Use nombres claros
 
 ```yaml
 # ✅ Use clear names
@@ -1074,6 +1024,10 @@ metadata:
 spec:
   hosts:
   - product-api.example.com
+  http:
+  - route:
+    - destination:
+        host: product-api-service
 ```
 
 ### 4. Documentación
@@ -1103,6 +1057,8 @@ spec:
 
 ### 5. Estrategia de pruebas
 
+Defina `GATEWAY_URL` con la dirección y el puerto de entrada instalados, y adapte Host y los encabezados al único ejemplo que esté desplegado en ese momento. Antes de ejecutar estas pruebas `curl` externas, asocie los ejemplos exclusivos de la malla a esa gateway. Después de la investigación, restaure cualquier nivel temporal de registro de depuración del proxy.
+
 ```bash
 # Routing rule test script
 #!/bin/bash
@@ -1114,15 +1070,15 @@ curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v1/users
 curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v2/users
 
 # Mobile user test
-curl -H "User-Agent: Mobile" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "User-Agent: Mobile" "http://$GATEWAY_URL/"
 
 # Header-based test
-curl -H "x-canary: true" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "x-canary: true" "http://$GATEWAY_URL/"
 ```
 
 ## Referencias
 
-- [Gestión de tráfico de Istio](https://istio.io/latest/docs/concepts/traffic-management/)
+- [Gestión del tráfico de Istio](https://istio.io/latest/docs/concepts/traffic-management/)
 - [Referencia de VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
 - [Coincidencia de rutas HTTP](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPMatchRequest)
-- [Enrutamiento de tráfico](https://istio.io/latest/docs/tasks/traffic-management/request-routing/)
+- [Enrutamiento del tráfico](https://istio.io/latest/docs/tasks/traffic-management/request-routing/)

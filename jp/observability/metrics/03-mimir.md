@@ -1,551 +1,202 @@
 # Grafana Mimir
 
-> **サポート対象バージョン**: Mimir 2.x
-> **最終更新**: February 20, 2026
+> **レビュー基準**: Mimir 3.2.1 / mimir-distributed Helm chart 6.2.0
+> **最終更新**: 2026年9月12日
 
-## 目次
+Grafana Mimir は、テナント単位での取り込み、クエリ、長期ブロックストレージに対応する Prometheus 互換のメトリクスバックエンドです。容量、クエリ互換性、運用コストは、選択したアーキテクチャ、設定、ワークロードによって変わります。データ保持期間もスケーリングも無制限ではありません。
 
-- [概要](#introduction)
-- [アーキテクチャ](#architecture)
-- [コアコンポーネント](#core-components)
-- [マルチテナンシー](#multi-tenancy)
-- [Helm インストール](#helm-installation)
-- [S3 バックエンド設定](#s3-backend-configuration)
-- [クエリとデータ保持](#query-and-data-retention)
-- [VictoriaMetrics との比較](#comparison-with-victoriametrics)
-- [パフォーマンスチューニング](#performance-tuning)
-- [ベストプラクティス](#best-practices)
-- [トラブルシューティング](#troubleshooting)
+## Mimir、Cortex、Thanos
 
-<span id="introduction"></span>
+Mimir と Cortex は、関連する経緯を持つ別々のプロジェクトです。Mimir の存在を、Cortex が利用できなくなったという告知だと解釈しないでください。Thanos は Sidecar と remote-write Receiver の両方をサポートしており、すべての Thanos デプロイで Sidecar が必須というわけではありません。
 
-## 概要
+| プロジェクト | 比較するデプロイ方式 |
+| --- | --- |
+| Mimir | テナント対応の remote write、オブジェクトストレージ、現在の Kafka ベース ingest-storage アーキテクチャ |
+| Cortex | Prometheus 互換の独立したマルチテナントバックエンド。バージョンとストレージ設定は個別に確認 |
+| Thanos | Sidecar 連携または Receive による取り込み、共有クエリとオブジェクトストレージのコンポーネント |
 
-Grafana Mimir は、Grafana Labs が開発したオープンソースの水平スケーリング可能な長期メトリクスストレージです。Prometheus メトリクス向けのエンタープライズグレードストレージとして、オブジェクトストレージを使用してマルチテナンシー、高可用性、無制限のスケーラビリティを提供します。
+同じワークロードを使い、障害復旧、実際のクエリ動作、ストレージ・リクエスト・転送コスト、チームの運用能力を比較してください。根拠のない「高速／中速」ランキングはベンチマークの証拠にはなりません。[Cortex](https://cortexmetrics.io/docs/) と [Thanos Receive](https://thanos.io/tip/components/receive.md/) を参照してください。
 
-### 主な機能
+## コアアーキテクチャ
 
-| 機能 | 説明 |
-|---------|-------------|
-| **水平スケーリング** | 数十億のアクティブな時系列までスケーリング可能 |
-| **マルチテナンシー** | ネイティブのテナント分離をサポート |
-| **高可用性** | コンポーネントレベルのレプリケーションと自動フェイルオーバー |
-| **オブジェクトストレージ** | S3、GCS、Azure Blob などをサポート |
-| **100% PromQL 互換** | すべての PromQL クエリをサポート |
-| **長期保持** | 無制限のデータ保持期間 |
-| **Grafana 統合** | Grafana とのネイティブ統合 |
+### Ingest storage と従来の書き込みパス
 
-### Mimir vs Cortex vs Thanos
-
-Mimir は Cortex の後継であり、より優れたパフォーマンスと運用性を提供します。
-
-```mermaid
-flowchart LR
-    subgraph HISTORY["Evolution"]
-        direction TB
-        C[Cortex<br/>2016]
-        M[Mimir<br/>2022]
-        T[Thanos<br/>2017]
-    end
-
-    subgraph APPROACH["Approach"]
-        CA[Centralized<br/>Remote Write]
-        TA[Sidecar-based<br/>Federated Query]
-    end
-
-    C --> M
-    C -.-> CA
-    T -.-> TA
-    M -.-> CA
-
-    classDef legacy fill:#95A5A6,stroke:#333,stroke-width:1px,color:white
-    classDef current fill:#3498DB,stroke:#333,stroke-width:1px,color:white
-    classDef approach fill:#27AE60,stroke:#333,stroke-width:1px,color:white
-
-    class C legacy
-    class M,T current
-    class CA,TA approach
-```
-
-| 項目 | Mimir | Cortex | Thanos |
-|------|-------|--------|--------|
-| アーキテクチャ | 集中型 | 集中型 | Sidecar ベース |
-| 複雑さ | 中 | 高 | 中 |
-| クエリパフォーマンス | 高速 | 中 | 中 |
-| 運用オーバーヘッド | 低 | 高 | 中 |
-| Prometheus の変更 | 不要 | 不要 | Sidecar が必要 |
-| マルチテナンシー | ネイティブ | ネイティブ | 限定的 |
-
-<span id="architecture"></span>
-
-## アーキテクチャ
-
-### 全体アーキテクチャ
+Mimir 3.0 以降、ingest storage は Stable であり、推奨アーキテクチャです。Distributor は受信サンプルを検証し、レコードを Kafka に追加します。書き込みが成功として応答されるのは、設定された耐久性・レプリケーション条件のもとで Kafka への書き込みが成功した後です。これは、ブロックがすでに S3 に保存されたことを意味しません。
 
 ```mermaid
 flowchart TB
-    subgraph WRITE["Write Path"]
-        P1[Prometheus 1]
-        P2[Prometheus 2]
-        P3[Prometheus 3]
-    end
-
-    subgraph MIMIR["Grafana Mimir"]
-        subgraph DIST["Distributor"]
-            D1[Distributor 1]
-            D2[Distributor 2]
-        end
-
-        subgraph ING["Ingester"]
-            I1[Ingester 1]
-            I2[Ingester 2]
-            I3[Ingester 3]
-        end
-
-        subgraph STORE["Store-gateway"]
-            SG1[Store-gateway 1]
-            SG2[Store-gateway 2]
-        end
-
-        subgraph COMPACT["Compactor"]
-            C1[Compactor]
-        end
-
-        subgraph QUERY["Querier"]
-            Q1[Querier 1]
-            Q2[Querier 2]
-        end
-
-        subgraph QF["Query-frontend"]
-            QF1[Query-frontend]
-        end
-    end
-
-    subgraph STORAGE["Object Storage"]
-        S3[(S3/GCS/Azure)]
-    end
-
-    subgraph READ["Read Path"]
-        G[Grafana]
-    end
-
-    P1 & P2 & P3 -->|remote_write| D1 & D2
-    D1 & D2 --> I1 & I2 & I3
-    I1 & I2 & I3 -->|Block upload| S3
-    C1 -->|Compaction| S3
-    SG1 & SG2 -->|Block read| S3
-    Q1 & Q2 --> I1 & I2 & I3
-    Q1 & Q2 --> SG1 & SG2
-    QF1 --> Q1 & Q2
-    G --> QF1
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef mimir fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class P1,P2,P3 prometheus
-    class D1,D2,I1,I2,I3,SG1,SG2,C1,Q1,Q2,QF1 mimir
-    class S3 storage
-    class G client
+    P["Prometheus / Alloy"] -->|HTTPS| A["Authenticated gateway"]
+    A -->|Trusted tenant ID| D["Distributor"]
+    D -->|Append records| K["Production Kafka"]
+    K -->|Asynchronous consumption| I["Ingester zones"]
+    I -->|Upload TSDB blocks| S["Object storage"]
 ```
 
-### データフロー
+各 Ingester は1つのパーティションを消費します。読み取りパスの可用性のため、異なるゾーンの Ingester が同じパーティションを消費することもあります。パーティション割り当ては、Ingester インスタンス ID の数値サフィックスに依存します。Kafka のパーティション容量と保持期間は、予定する Ingester の ordinal、バックログ、復旧期間をカバーする必要があります。Broker のレプリケーション/ISR、永続化、障害復旧も別途設定してください。
 
-1. **書き込みパス**:
-   - Prometheus は remote_write 経由でメトリクスを送信します
-   - Distributor はテナントを検証し、サンプルを分散します
-   - Ingester はメモリに保存し、定期的にブロックをアップロードします
+Ingester はメモリ内 TSDB とローカル WAL を保持し、定期的にブロック（既定では2時間分）を作成してアップロードします。ローカル TSDB の保持期間は、Querier と Store-gateway がアップロード済みブロックを検出する時間を確保するもので、長期保持期間とは異なります。永続ディスクは復旧に役立ちますが、WAL とオブジェクトストレージを組み合わせても、あらゆる障害や期限切れの Kafka バックログから必ず復旧できるわけではありません。
 
-2. **読み取りパス**:
-   - Query-frontend はクエリを分割してキャッシュします
-   - Querier は Ingester（最新データ）と Store-gateway（履歴データ）にクエリを実行します
-   - 結果はマージされて返されます
+**従来型**（classic）アーキテクチャでは、Distributor から Ingester クォーラムへ直接書き込みます。Ingester のレプリケーション係数は Kafka の書き込みレプリケーション設定とは別です。既存デプロイでは従来型を引き続き利用できますが、バイナリの既定値と Helm の既定値は異なります。Chart 6.x は ingest storage を有効にしますが、調査対象の3.2.1バイナリでは `ingest_storage.enabled` の既定値は false です。稼働中のインストールをフラグ1つで切り替えず、[アーキテクチャ](https://grafana.com/docs/mimir/latest/get-started/about-grafana-mimir-architecture/about-ingest-storage-architecture/)と[移行手順](https://grafana.com/docs/mimir/latest/set-up/migrate/migrate-ingest-storage/)を参照してください。
 
-3. **バックグラウンドプロセス**:
-   - Compactor は小さなブロックをより大きなブロックにマージします
-   - ダウンサンプリングと保持ポリシーを適用します
-
-<span id="core-components"></span>
-
-## コアコンポーネント
-
-### Distributor
-
-書き込みリクエストの最初のエントリポイントであり、テナント検証とサンプル分散を処理します。
-
-```yaml
-# Distributor configuration
-distributor:
-  ring:
-    kvstore:
-      store: memberlist
-  instance_limits:
-    max_inflight_push_requests: 30000
-    max_ingestion_rate: 100000
-```
-
-**役割**:
-- テナント ID の検証
-- 時系列の検証（ラベル、サンプル値）
-- Hash ring ベースの Ingester 分散
-- レプリケーションファクターに基づくレプリケーション
-
-### Ingester
-
-時系列データをメモリに保存し、定期的にオブジェクトストレージへアップロードします。
-
-```yaml
-# Ingester configuration
-ingester:
-  ring:
-    replication_factor: 3
-    kvstore:
-      store: memberlist
-  instance_limits:
-    max_series: 5000000
-    max_inflight_push_requests: 30000
-
-blocks_storage:
-  tsdb:
-    block_ranges_period: [2h]
-    retention_period: 24h
-    ship_interval: 1m
-```
-
-**役割**:
-- 時系列データをメモリに保存
-- WAL（Write-Ahead Log）を維持
-- TSDB ブロックを作成してアップロード
-- 最新データのクエリを処理
-
-### Store-gateway
-
-オブジェクトストレージのブロックをキャッシュしてクエリします。
-
-```yaml
-# Store-gateway configuration
-store_gateway:
-  sharding_ring:
-    replication_factor: 3
-    kvstore:
-      store: memberlist
-
-blocks_storage:
-  bucket_store:
-    sync_interval: 15m
-    bucket_index:
-      enabled: true
-    chunks_cache:
-      backend: memcached
-      memcached:
-        addresses: dns+memcached:11211
-    metadata_cache:
-      backend: memcached
-      memcached:
-        addresses: dns+memcached:11211
-```
-
-**役割**:
-- オブジェクトストレージのブロックインデックスをキャッシュ
-- 履歴データのクエリを処理
-- ブロックメタデータとチャンクをキャッシュ
-
-### Compactor
-
-ブロックのコンパクションとダウンサンプリングを実行します。
-
-```yaml
-# Compactor configuration
-compactor:
-  data_dir: /data/compactor
-  sharding_ring:
-    kvstore:
-      store: memberlist
-  compaction_interval: 1h
-  block_ranges: [2h, 12h, 24h]
-  deletion_delay: 12h
-```
-
-**役割**:
-- 小さなブロックをより大きなブロックにマージ
-- 重複データを削除
-- 保持ポリシーに基づいてデータを削除
-- ブロックインデックスを最適化
-
-### Querier
-
-Ingester と Store-gateway のデータをクエリしてマージします。
-
-```yaml
-# Querier configuration
-querier:
-  max_concurrent: 20
-  timeout: 2m
-  query_ingesters_within: 13h
-```
-
-**役割**:
-- PromQL クエリを実行
-- Ingester/Store-gateway へ並列クエリ
-- 結果をマージして重複排除
-
-### Query-frontend
-
-クエリの最適化とキャッシュを処理します。
-
-```yaml
-# Query-frontend configuration
-query_frontend:
-  align_querier_with_step: true
-  cache_results: true
-  results_cache:
-    backend: memcached
-    memcached:
-      addresses: dns+memcached:11211
-      timeout: 500ms
-  split_queries_by_interval: 24h
-  max_retries: 5
-```
-
-**役割**:
-- 大規模なクエリを分割
-- 結果をキャッシュ
-- クエリキューを管理
-- リトライを処理
-
-<span id="multi-tenancy"></span>
-
-## マルチテナンシー
-
-Mimir はネイティブのマルチテナンシーをサポートしており、複数のチームや組織のメトリクスを分離できます。
-
-### テナント設定
-
-```yaml
-# Add tenant header to Prometheus remote_write
-remote_write:
-  - url: http://mimir:8080/api/v1/push
-    headers:
-      X-Scope-OrgID: tenant-1
-
-# Or identify tenant via basic auth
-remote_write:
-  - url: http://mimir:8080/api/v1/push
-    basic_auth:
-      username: tenant-1
-      password: secret
-```
-
-### テナントごとの制限
-
-```yaml
-# Mimir configuration
-limits:
-  # Default limits (all tenants)
-  ingestion_rate: 100000
-  ingestion_burst_size: 200000
-  max_global_series_per_user: 5000000
-  max_global_series_per_metric: 50000
-  max_label_names_per_series: 30
-  max_label_value_length: 2048
-
-# Per-tenant overrides
-overrides:
-  tenant-1:
-    ingestion_rate: 200000
-    max_global_series_per_user: 10000000
-  tenant-2:
-    ingestion_rate: 50000
-    max_global_series_per_user: 1000000
-```
-
-### テナント分離
+### クエリパスとコンポーネント
 
 ```mermaid
-flowchart TD
-    subgraph TENANTS["Tenants"]
-        T1[Tenant A<br/>Team A]
-        T2[Tenant B<br/>Team B]
-        T3[Tenant C<br/>Team C]
-    end
-
-    subgraph MIMIR["Mimir"]
-        D[Distributor]
-        I[Ingester]
-    end
-
-    subgraph STORAGE["Object Storage"]
-        B1[tenant-a/blocks/]
-        B2[tenant-b/blocks/]
-        B3[tenant-c/blocks/]
-    end
-
-    T1 -->|X-Scope-OrgID: tenant-a| D
-    T2 -->|X-Scope-OrgID: tenant-b| D
-    T3 -->|X-Scope-OrgID: tenant-c| D
-
-    D --> I
-    I --> B1 & B2 & B3
-
-    classDef tenant fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef mimir fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class T1,T2,T3 tenant
-    class D,I mimir
-    class B1,B2,B3 storage
+flowchart TB
+    G["Grafana / API client"] --> A["Authenticated gateway"]
+    A --> F["Query-frontend"]
+    F -->|Enqueue work| Q["Query-scheduler"]
+    Q -->|Queued work for connected worker| R["Querier"]
+    R -->|Recent samples| I["Ingesters"]
+    R -->|Block queries| SG["Store-gateway"]
+    SG -->|Read blocks| S["Object storage"]
+    C["Compactor"] -->|Merge and retention cleanup| S
 ```
 
-<span id="helm-installation"></span>
+この図はリクエストと作業の関係を示しています。クエリ結果は Frontend 経由で返されます。Frontend は作業を分割・シャード化し、結果キャッシュを利用して応答を統合します。Scheduler は作業を Querier にキューイングします。Querier は Ingester と Store-gateway から必要なデータを取得します。ブロックの引き継ぎ時には両方から重複期間のデータを取得する場合があり、最近のデータと履歴データが完全に分離した時間帯に分かれているわけではありません。
 
-## Helm インストール
+Kafka からの消費は非同期のため、既定の読み取りパスは書き込み直後の読み取り整合性を保証しません。クライアントは `X-Read-Consistency: strong` を要求できます。この場合 Ingester は伝播したパーティションオフセットを待つため、タイムアウトやレイテンシに影響します。あらゆる Broker または Ingester の障害時に保証されるものではありません。
 
-### mimir-distributed をインストール
+| コンポーネント | 役割 |
+| --- | --- |
+| Distributor | 書き込みを検証・制限し、Kafka または従来型モードでは Ingester へ送信 |
+| Ingester | Kafka パーティションを消費し、ローカル TSDB/WAL を維持し、最近のサンプルを提供してブロックをアップロード |
+| Store-gateway | オブジェクトストレージ、ローカルのインデックスヘッダー、設定済みキャッシュを使ってブロックデータを提供 |
+| Compactor | ブロックを統合し、複製サンプルを重複排除し、条件に合う保持データのクリーンアップを実行 |
+| Query-frontend / scheduler / querier | クエリを計画・キャッシュ・キューイングし、処理を実行 |
+| Ruler / Alertmanager | 任意のルール評価とアラート処理。ストレージ、ID、HA は別途設定が必要 |
 
-```bash
-# Add Helm repository
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+Compaction に `compactor.downsampling_enabled` という架空の設定項目はありません。Recording rule は派生時系列を作成できますが、自動的にダウンサンプリングしたり、元の生データを削除したりはしません。
 
-# Install
-helm install mimir grafana/mimir-distributed \
-  --namespace monitoring \
-  --create-namespace \
-  -f values.yaml
-```
+## マルチテナンシーと認証
 
-### values.yaml
+`X-Scope-OrgID` はテナントを識別するものであり、**認証ではありません**。呼び出し元を認証し、テナントへのアクセスを認可し、信頼できないテナントヘッダーを上書きして、許可したリクエストだけを転送する Gateway を使用してください。バックエンドサービスへの直接アクセスも制限します。信頼できる Proxy が明示的にマッピングを実装している場合に限り、Basic 認証のユーザー名をテナント ID として使用できます。Chart の既定のルーティング Gateway だけでは、この認可ポリシーは確立されません。
+
+以下の Prometheus の例は、HTTPS Gateway とマウント済みの認証情報ファイルがすでに存在することを前提とします。Gateway は認証済み ID からテナントを決定するため、この例でクライアントはテナントヘッダーを選びません。
 
 ```yaml
-# Global configuration
-global:
-  # Object storage configuration
-  extraEnvFrom:
-    - secretRef:
-        name: mimir-s3-credentials
+remote_write:
+  - url: https://metrics.example.internal/api/v1/push
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/credentials/mimir-token
+```
 
-# Distributor
+クライアントがテナントヘッダーを直接指定する方法は、別途信頼されたテスト経路でのみ使用してください。テナントごとのオブジェクトキーや制限を設けても、未認証の呼び出し元が他のテナントを選択することは防げません。マルチテナンシーを無効にすると、すべてのリクエストが共有テナントに割り当てられますが、保護が追加されるわけではありません。[認証と認可](https://grafana.com/docs/mimir/latest/manage/secure/authentication-and-authorization/)を参照してください。
+
+### テナント制限とランタイム設定
+
+メイン設定の `limits` は既定値を定義します。テナントごとの `overrides` は、メイン Mimir 設定のトップレベルではなく、別のランタイム設定ファイルに記述します。この Chart では、以下の例のようにトップレベルの `runtimeConfig.overrides` を使います。ランタイムファイルは再起動せずに対応する制限を上書きできますが、起動時設定のすべてが再読み込み可能になるわけではありません。[ランタイム設定](https://grafana.com/docs/mimir/latest/configure/about-runtime-configuration/)へのアクセスと再読み込み結果を検証してください。
+
+## EKS での Helm 設定
+
+Chart **6.2.0** の appVersion は **3.2.0**、Kubernetes 要件は `^1.32.0-0` です。この例では、2026年9月10日にリリースされた **3.2.1** パッチイメージを明示的に選択します。Chart の Kubernetes 要件は EKS のサポート・ライフサイクル一覧ではありません。選択した EKS バージョン、CSI Driver、Admission Policy、Rollout Operator の依存関係を確認してください。週次開発 Chart は別のリリース系列です。
+
+### 依存関係の準備
+
+以下はレビュー用の**レンダリング可能な設定**であり、本番デプロイのテストではありません。適用する前に、次を準備してください。
+
+- 例に示すクライアント証明書認証を受け入れ、適切な Broker レプリケーション・保持設定と、認可済みの Producer/Consumer 操作が可能な外部本番 Kafka クラスターと Topic。例の Bootstrap アドレス/ポートを実際のエンドポイントに置き換えてください。別の SASL/MSK 設定には、対応する Mimir オプションと ID 設定が必要です。
+- `monitoring` Namespace の Secret `mimir-kafka-client-tls`。`ca.crt`、`tls.crt`、`tls.key` を格納します。この共有 TLS 設定を読み込むすべての Mimir プロセスがこれらのファイルを必要とします。Kafka を直接消費しないコンポーネントも含まれます。
+- 既存の S3 Bucket 3個と、以下で説明する認可済み `mimir-storage` ServiceAccount。Mimir はこれらの Bucket を作成しません。
+- 実際の AZ Label、適切な既存 StorageClass、十分なスケジュール可能ノードと PVC 容量。`gp3` は StorageClass 名の例です。EKS Auto Mode と EBS CSI Add-on では Provisioner が異なるため、クラスターのストレージ管理者に合った Class を選択してください。
+- Distributor と Query-frontend への認証済み外部ルーティング。この例は未認証の Chart Routing Gateway を無効にし、代替となる公開 Ingress を作成しません。
+
+Rollout Operator は有効です。インストール/アップグレードの前に、CRD、Webhook、権限、所有関係を確認してください。以下の `--include-crds` はローカル出力に CRD を含めます。ゾーン認識 Rollout の動作を確認せずに、既存デプロイで Operator を無効化しないでください。3ゾーン構成では実際の Zone Selector が必要です。論理名だけでは地理的な冗長性は作れません。
+
+### Values とローカルレンダリング
+
+以下を `mimir-values.yaml` として保存します。YAML Anchor は同じ証明書 Mount と AZ 定義を再利用します。Replica 数、Volume サイズ、Rate/Query 制限は、ワークロードの計測に基づいて調整する例です。3ゾーンのレンダリング設定では、各ゾーンに Ingester と Store-gateway が1つずつ、合計3つずつ配置されます。Compactor が1つであることは、あらゆる意味での HA を保証しません。
+
+```yaml
+image:
+  tag: 3.2.1
+serviceAccount:
+  create: false
+  name: mimir-storage
+minio:
+  enabled: false
+kafka:
+  enabled: false
+gateway:
+  enabled: false
 distributor:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 100m
-      memory: 512Mi
-    limits:
-      cpu: 1000m
-      memory: 2Gi
-
-# Ingester
+  replicas: 2
+  extraVolumes: &kafka-volumes
+  - name: kafka-client-tls
+    secret:
+      secretName: mimir-kafka-client-tls
+  extraVolumeMounts: &kafka-mounts
+  - name: kafka-client-tls
+    mountPath: /etc/mimir/kafka-tls
+    readOnly: true
 ingester:
   replicas: 3
   persistentVolume:
     enabled: true
     storageClass: gp3
     size: 50Gi
-  resources:
-    requests:
-      cpu: 500m
-      memory: 2Gi
-    limits:
-      cpu: 2000m
-      memory: 8Gi
   zoneAwareReplication:
     enabled: true
-    zones:
-      - name: zone-a
-        nodeSelector:
-          topology.kubernetes.io/zone: ap-northeast-2a
-      - name: zone-b
-        nodeSelector:
-          topology.kubernetes.io/zone: ap-northeast-2b
-      - name: zone-c
-        nodeSelector:
-          topology.kubernetes.io/zone: ap-northeast-2c
-
-# Store-gateway
+    topologyKey: kubernetes.io/hostname
+    zones: &az-zones
+    - name: zone-a
+      nodeSelector:
+        topology.kubernetes.io/zone: ap-northeast-2a
+    - name: zone-b
+      nodeSelector:
+        topology.kubernetes.io/zone: ap-northeast-2b
+    - name: zone-c
+      nodeSelector:
+        topology.kubernetes.io/zone: ap-northeast-2c
+  extraVolumes: *kafka-volumes
+  extraVolumeMounts: *kafka-mounts
 store_gateway:
   replicas: 3
   persistentVolume:
     enabled: true
     storageClass: gp3
     size: 20Gi
-  resources:
-    requests:
-      cpu: 200m
-      memory: 1Gi
-    limits:
-      cpu: 1000m
-      memory: 4Gi
-
-# Compactor
+  zoneAwareReplication:
+    enabled: true
+    topologyKey: kubernetes.io/hostname
+    zones: *az-zones
+  extraVolumes: *kafka-volumes
+  extraVolumeMounts: *kafka-mounts
 compactor:
   replicas: 1
   persistentVolume:
     enabled: true
     storageClass: gp3
     size: 50Gi
-  resources:
-    requests:
-      cpu: 500m
-      memory: 2Gi
-    limits:
-      cpu: 2000m
-      memory: 8Gi
-
-# Querier
+  extraVolumes: *kafka-volumes
+  extraVolumeMounts: *kafka-mounts
 querier:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-    limits:
-      cpu: 1000m
-      memory: 2Gi
-
-# Query-frontend
+  replicas: 2
+  extraVolumes: *kafka-volumes
+  extraVolumeMounts: *kafka-mounts
 query_frontend:
   replicas: 2
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 1Gi
-
-# Query-scheduler (optional)
+  extraVolumes: *kafka-volumes
+  extraVolumeMounts: *kafka-mounts
 query_scheduler:
   enabled: true
   replicas: 2
-
-# Ruler (optional)
+  extraVolumes: *kafka-volumes
+  extraVolumeMounts: *kafka-mounts
 ruler:
-  enabled: true
-  replicas: 2
-
-# Alertmanager (optional, Mimir built-in)
+  enabled: false
 alertmanager:
   enabled: false
-
-# Cache configuration
-memcached:
+rollout_operator:
   enabled: true
-
-memcached-queries:
+chunks-cache:
   enabled: true
-  replicas: 2
-
-memcached-metadata:
+index-cache:
   enabled: true
-  replicas: 2
-
-# Minio (for testing, use S3 in production)
-minio:
-  enabled: false
-
-# Structured configuration
+metadata-cache:
+  enabled: true
+results-cache:
+  enabled: true
 mimir:
   structuredConfig:
     common:
@@ -554,459 +205,200 @@ mimir:
         s3:
           endpoint: s3.ap-northeast-2.amazonaws.com
           region: ap-northeast-2
-          bucket_name: my-mimir-bucket
-
+    blocks_storage:
+      s3:
+        bucket_name: example-mimir-blocks
+    ruler_storage:
+      s3:
+        bucket_name: example-mimir-rules
+    alertmanager_storage:
+      s3:
+        bucket_name: example-mimir-alerts
+    ingest_storage:
+      enabled: true
+      kafka:
+        address: kafka.metrics.example.internal:9093
+        topic: mimir-ingest
+        auto_create_topic_enabled: false
+        tls_enabled: true
+        tls_ca_path: /etc/mimir/kafka-tls/ca.crt
+        tls_cert_path: /etc/mimir/kafka-tls/tls.crt
+        tls_key_path: /etc/mimir/kafka-tls/tls.key
+    frontend:
+      split_queries_by_interval: 24h
+    querier:
+      max_concurrent: 20
+      max_samples: 50000000
+      timeout: 2m
     limits:
       ingestion_rate: 100000
       ingestion_burst_size: 200000
       max_global_series_per_user: 5000000
       compactor_blocks_retention_period: 365d
-
-    blocks_storage:
-      tsdb:
-        dir: /data/tsdb
-      bucket_store:
-        sync_dir: /data/tsdb-sync
-
-    compactor:
-      data_dir: /data/compactor
+      max_total_query_length: 30d
+      max_query_parallelism: 32
+      query_sharding_total_shards: 16
+      align_queries_with_step: false
+runtimeConfig:
+  overrides:
+    tenant-1:
+      ingestion_rate: 50000
+      ingestion_burst_size: 100000
+      max_global_series_per_user: 1000000
+overrides_exporter:
+  extraVolumes: *kafka-volumes
+  extraVolumeMounts: *kafka-mounts
 ```
-
-<span id="s3-backend-configuration"></span>
-
-## S3 バックエンド設定
-
-### IRSA のセットアップ
 
 ```bash
-# Check OIDC provider
-aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer" --output text
-
-# Create IAM policy
-cat <<EOF > mimir-s3-policy.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:PutObject",
-                "s3:GetObject",
-                "s3:DeleteObject",
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::my-mimir-bucket",
-                "arn:aws:s3:::my-mimir-bucket/*"
-            ]
-        }
-    ]
-}
-EOF
-
-aws iam create-policy \
-  --policy-name MimirS3Policy \
-  --policy-document file://mimir-s3-policy.json
-
-# Create service account
-eksctl create iamserviceaccount \
-  --name mimir \
-  --namespace monitoring \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::123456789012:policy/MimirS3Policy \
-  --approve
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update grafana
+helm template mimir grafana/mimir-distributed \
+  --version 6.2.0 --namespace monitoring --include-crds \
+  --kube-version 1.36.2 -f mimir-values.yaml > mimir-rendered.yaml
 ```
 
-### S3 バケット設定
+`--kube-version` はオフラインレンダリング用の指定であり、クラスターのアップグレードや稼働環境との互換性テストではありません。適用前に、レンダリングされた Service、Selector、PVC、Security Context、CRD、ワークロード設定を確認してください。組み込みの単一ノード Kafka と MinIO はデモ用です。それぞれの `enabled` を false にするのは組み込みデプロイを無効化するだけであり、Mimir の ingest storage や S3 バックエンドは無効になりません。
+
+この例では Ruler と Alertmanager は無効です。どちらかを有効にする場合は、Replica、ストレージ、セキュリティ、共有設定内の証明書 Mount が別途必要です。[本番環境の設定](https://grafana.com/docs/helm-charts/mimir-distributed/latest/run-production-environment-with-helm/)を参照してください。
+
+### 既存の従来型インストール
+
+Chart 5.x から 6.x への変更では Gateway と Rollout Operator の要件も変わります。従来型アーキテクチャを維持するには、ingest storage の無効化と Ingester Push RPC の許可の両方が必要です。以下はその選択肢を示す断片であり、移行手順全体ではありません。新しい Kafka インストールへそのままマージしないでください。
 
 ```yaml
-# Mimir S3 configuration
+kafka:
+  enabled: false
 mimir:
   structuredConfig:
-    common:
-      storage:
-        backend: s3
-        s3:
-          endpoint: s3.ap-northeast-2.amazonaws.com
-          region: ap-northeast-2
-          bucket_name: my-mimir-bucket
-          # access_key and secret_key not needed with IRSA
-
-    blocks_storage:
-      s3:
-        bucket_name: my-mimir-bucket
-
-    ruler_storage:
-      s3:
-        bucket_name: my-mimir-bucket
-
-    alertmanager_storage:
-      s3:
-        bucket_name: my-mimir-bucket
+    ingest_storage:
+      enabled: false
+    ingester:
+      push_grpc_method_enabled: true
 ```
 
-### S3 バケットライフサイクルポリシー
+[5.x から 6.x への移行ガイド](https://grafana.com/docs/helm-charts/mimir-distributed/latest/migration-guides/migrate-helm-chart-5.x-to-6.0/)とレビュー済み values diff を使用してください。Chart のアップグレードによってデータが補完されたり、Kafka の耐久性が作られたり、可用性が保たれたり、古い Webhook が安全に削除されたりするとは限りません。
+
+## S3 とワークロード ID
+
+### Bucket と IRSA
+
+この例では、ブロック、ルール、Alertmanager 状態に別々の Bucket を使います。ブロックは、Ruler または Alertmanager Store と Bucket **およびストレージプレフィックス**を共有できません。この競合配置は対応するストレージターゲットで拒否されます。Distributor だけの起動時チェックでは、すべてのストレージロールが検証されるわけではありません。別の、サポートされている `storage_prefix` を使う方法もあります。設定済みの実際の配置に `blocks/` のライフサイクルフィルターが一致するとは限りません。
+
+EKS クラスターの OIDC Provider と、信頼ポリシーで `sub` を `system:serviceaccount:monitoring:mimir-storage` に、`aud` を `sts.amazonaws.com` に制限した IRSA Role を準備します。Chart の `serviceAccount.create: false` と `name: mimir-storage` は準備済みアカウントに合わせます。Role Annotation と Projected Token の受け渡しを確認してください。Kubernetes RBAC は S3 権限を付与しません。
+
+例の3つの Bucket に対する最小権限 S3 Policy の形を示します。Bucket 名を置き換え、KMS と Key Policy の要件は別途確認してください。
 
 ```json
 {
-  "Rules": [
+  "Version": "2012-10-17",
+  "Statement": [
     {
-      "ID": "CleanupIncompleteMultipartUploads",
-      "Status": "Enabled",
-      "Filter": {},
-      "AbortIncompleteMultipartUpload": {
-        "DaysAfterInitiation": 7
-      }
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::example-mimir-blocks", "arn:aws:s3:::example-mimir-rules", "arn:aws:s3:::example-mimir-alerts"]
     },
     {
-      "ID": "TransitionToIA",
-      "Status": "Enabled",
-      "Filter": {
-        "Prefix": "blocks/"
-      },
-      "Transitions": [
-        {
-          "Days": 90,
-          "StorageClass": "STANDARD_IA"
-        }
-      ]
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": ["arn:aws:s3:::example-mimir-blocks/*", "arn:aws:s3:::example-mimir-rules/*", "arn:aws:s3:::example-mimir-alerts/*"]
     }
   ]
 }
 ```
 
-<span id="query-and-data-retention"></span>
+調査した S3 Provider Chain は IRSA の Web Identity Token File と Role ARN をサポートしています。この values file に静的な Access Key/Secret は含めず、`extraEnvFrom` でも注入しません。実際の STS/S3 アクセスを検証し、ノード認証情報への意図しないフォールバックを防いでください。選択した Credential Provider のサポートと設定を確認せずに、IRSA と EKS Pod Identity を同等とみなさないでください。S3 Block Public Access を有効にし、暗号化、バージョニング、Object Lock、バックアップ要件を確認します。
 
-## クエリとデータ保持
+[Mimir のオブジェクトストレージ](https://grafana.com/docs/mimir/latest/configure/configure-object-storage-backend/)と [EKS ServiceAccount 用 IAM Role](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html)を参照してください。
 
-### 保持ポリシー設定
+### ライフサイクルと保持
 
-```yaml
-mimir:
-  structuredConfig:
-    limits:
-      # Block retention period
-      compactor_blocks_retention_period: 365d
+`limits.compactor_blocks_retention_period: 365d` は保持ポリシーを設定します。クリーンアップは非同期かつブロック単位で行われ、スキャン・マーク・削除のスケジュール、ブロックの時間範囲、`compactor.deletion_delay` が物理削除に影響します。厳密な削除期限でも、規制要件への自動準拠でもありません。削除遅延はバックアップや取り消しを保証せず、現行オブジェクトを削除しても非現行 Version やバックアップはすべて消去されません。
 
-    compactor:
-      # Deletion delay (recovery time for mistakes)
-      deletion_delay: 12h
-```
+Mimir が使用中のブロックを削除する、競合する S3 Expiration Rule を追加しないでください。不完全な Multipart Upload のクリーンアップは、別の Bucket 管理オプションです。ストレージクラスの移行では、Object サイズ、最小保存期間、リクエスト/取得コスト、Compaction による書き換えを分析してください。「90日後に STANDARD_IA」へ移す固定ルールが常に適切とは限りません。[S3 の移行に関する考慮事項](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html)を参照してください。
 
-### クエリ最適化設定
+## クエリ、キャッシュ、パフォーマンス
 
-```yaml
-mimir:
-  structuredConfig:
-    query_frontend:
-      # Query splitting
-      split_queries_by_interval: 24h
-      # Query step alignment
-      align_querier_with_step: true
-      # Result caching
-      cache_results: true
-      results_cache:
-        backend: memcached
-        memcached:
-          addresses: dns+memcached:11211
-          timeout: 500ms
+### 現在の設定キー
 
-    querier:
-      # Concurrent queries
-      max_concurrent: 20
-      # Query timeout
-      timeout: 2m
-      # Ingester query range
-      query_ingesters_within: 13h
+Mimir のメイン Query Frontend 設定は `frontend`、Helm ワークロード設定は `query_frontend` です。別の名前空間の設定項目です。現在の例では `querier.max_samples`、`limits.max_total_query_length`、`limits.query_sharding_total_shards`、`limits.align_queries_with_step` を使います。旧来の `query_frontend.query_sharding.enabled/total_shards`、`align_querier_with_step`、`max_fetched_samples_per_query` の例を有効な代替設定として使用しないでください。
 
-    limits:
-      # Maximum samples per query
-      max_fetched_samples_per_query: 50000000
-      # Query range limit
-      max_query_length: 30d
-      # Maximum query parallelism
-      max_query_parallelism: 32
-```
+要求されたタイムスタンプと PromQL の意味を厳密に保つ必要がある場合は、Step Alignment を無効のままにしてください。Step を揃えるとキャッシュ再利用率を高められることがありますが、クエリの意味が変わります。クエリ並列度、Shard 数、サンプル数、Timeout を増やすと、ボトルネックの解消ではなくメモリ使用量と下流負荷の増加につながる場合があります。
 
-### クエリキャッシュ戦略
+### キャッシュの役割
 
-```mermaid
-flowchart LR
-    Q[Query] --> QF[Query-frontend]
-    QF --> RC{Result Cache?}
-    RC -->|Hit| R1[Cached Result]
-    RC -->|Miss| QR[Querier]
-    QR --> MC{Metadata<br/>Cache?}
-    MC -->|Hit| M1[Cached Metadata]
-    MC -->|Miss| SG[Store-gateway]
-    SG --> CC{Chunk Cache?}
-    CC -->|Hit| C1[Cached Chunk]
-    CC -->|Miss| S3[S3]
+| Chart の Cache | 設定上の役割 |
+| --- | --- |
+| `results-cache` | Frontend のクエリ結果。部分的な Cache Hit でも未キャッシュの処理は残る |
+| `index-cache` | ブロックの Index、Postings、Series 情報 |
+| `chunks-cache` | ブロックの Chunk データ |
+| `metadata-cache` | オブジェクトストレージのメタデータ操作 |
 
-    classDef cache fill:#27AE60,stroke:#333,stroke-width:1px,color:white
-    classDef component fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
+Metadata または Index Cache の Hit だけでクエリ全体の応答が完成するわけではありません。「Hit して順に返せば完了」という3段階処理でもありません。ローカルの Index Header ファイルや TSDB/WAL Disk は Memcached とは異なります。変更前に Hit 率、レイテンシ、メモリ・Item サイズ、Eviction、Cold Cache 時の動作を確認してください。[Query Frontend](https://grafana.com/docs/mimir/latest/references/architecture/components/query-frontend/)と [Store-gateway](https://grafana.com/docs/mimir/latest/references/architecture/components/store-gateway/)を参照してください。
 
-    class RC,MC,CC cache
-    class Q,QF,QR,SG component
-    class R1,M1,C1,S3 storage
-```
+### 容量と可用性
 
-<span id="comparison-with-victoriametrics"></span>
+取り込みサンプル、時系列/カーディナリティ、Ingester のメモリ/WAL/Disk、Kafka バックログ、Frontend のキュー、Querier のメモリ/CPU、Store-gateway の Cache Miss、Compactor の進捗を計測してください。Chart の小規模/大規模向けサイジングプランは出発点であり、容量の保証ではありません。Replica 数や並列度を増やす前に、クエリの形とテナント制限を確認してください。
+
+耐久性と可用性については、Kafka の書き込みレプリケーション、Ingester のパーティション/ゾーン網羅性、Store-gateway の配置、スケジュール可能容量、オブジェクトストレージ、Frontend/Scheduler の Replica、Rollout 動作を個別に確認してください。Cache のレプリケーションはデータ耐久性ではありません。Rate/Cardinality 制限はデータを拒否することがありますが、拒否したサンプルを自動保存・集約するわけではありません。
+
+取り込み量を減らすには、レビュー済みの Collector 側 Relabeling やデータに適した Recording Rule を使います。Mimir はテナント単位のランタイム上書きを含め、`limits.drop_labels` もサポートしています。これは取り込む Label Set を変更するもので、任意のカーディナリティを安全に減らす機能ではありません。識別用 Label を削除すると別々だった Series が統合されることがあるため、デプロイ前に衝突とクエリ/アラートの意味をテストしてください。
 
 ## VictoriaMetrics との比較
 
-### 詳細比較
+| 項目 | Mimir | VictoriaMetrics |
+| --- | --- | --- |
+| オープンソースライセンス | AGPL-3.0 | Apache-2.0。Enterprise 機能と区別する |
+| デプロイ | Binary Target を選択。この例は Microservices 構成 | Single-node と Cluster モード |
+| ストレージ | 本番ブロックにはオブジェクトストレージ。ローカル開発用の Filesystem Backend もある | レビュー対象の Single/Cluster アーキテクチャではローカルストレージパス。Backup パスは別途 |
+| クエリ動作 | 機能/設定上の制限が文書化された PromQL 互換 API | 意味上の違いが文書化された MetricsQL |
+| テナント | Tenant ID と、強制される認証/認可レイヤー | Tenant/Account Path と、強制される認証/認可レイヤー |
+| コスト/性能 | 取り込み、クエリ、Kafka、Cache、オブジェクトリクエスト、運用を計測 | 同等のワークロード、レプリケーション、Disk、運用を計測 |
 
-| 項目 | Grafana Mimir | VictoriaMetrics |
-|------|---------------|-----------------|
-| **ライセンス** | AGPL v3 | Apache 2.0 |
-| **アーキテクチャ** | マイクロサービス | モノリシック/クラスター |
-| **ストレージ** | オブジェクトストレージが必要 | ローカルディスクも可能 |
-| **運用の複雑さ** | 高 | 低～中 |
-| **クエリ言語** | PromQL | MetricsQL（スーパーセット） |
-| **マルチテナンシー** | ネイティブ | サポート |
-| **圧縮** | 良好 | 非常に良好 |
-| **メモリ効率** | 中 | 高 |
-| **コミュニティ** | Grafana Labs | 活発なオープンソース |
-| **商用サポート** | Grafana Cloud | VictoriaMetrics Inc. |
+Grafana との連携やテナント機能の必要性だけで、普遍的な勝者が決まるわけではありません。移行後のクエリ同等性、保持、障害復旧、チームの運用能力、総コストを検証してください。[レビュー済みの VictoriaMetrics ガイド](02-victoriametrics.md)を参照してください。
 
-### 選定基準
+## モニタリングとトラブルシューティング
 
-```mermaid
-flowchart TD
-    A[Metrics Storage Selection] --> B{Grafana ecosystem<br/>centric?}
+バージョンに合った Mimir Mixin/Integration でデプロイを監視してください。現在の `cortex_ingester_active_series`、`cortex_distributor_received_samples_total`、`cortex_ingest_storage_reader_last_consumed_offset`、Compactor の進捗メトリクスを確認します。Counter や Offset 単独では Lag、Throughput、SLO を示しません。Grafana Agent ベースの非推奨 Meta-monitoring 経路を新規構成の既定にしないでください。現行ドキュメントでは Alloy/Kubernetes Monitoring Integration が案内されています。
 
-    B -->|Yes| C{Need enterprise<br/>multi-tenancy?}
-    B -->|No| D{Operational simplicity<br/>priority?}
-
-    C -->|Yes| E[Mimir]
-    C -->|No| F{Want to use<br/>object storage?}
-
-    D -->|Yes| G[VictoriaMetrics]
-    D -->|No| H{Cloud storage<br/>cost?}
-
-    F -->|Yes| E
-    F -->|No| G
-
-    H -->|Cost important| G
-    H -->|Scalability important| E
-
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#3498DB,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,D,F,H decision
-    class E,G solution
-```
-
-**Mimir を選ぶ場合**:
-- Grafana Cloud または Grafana エコシステムを使用している
-- エンタープライズグレードのマルチテナンシーが必要
-- オブジェクトストレージを活用したい
-- 複雑な運用環境を管理できる
-
-**VictoriaMetrics を選ぶ場合**:
-- シンプルな運用環境を好む
-- ローカルディスクベースのストレージを好む
-- 最大の圧縮率とパフォーマンスが重要
-- コスト効率を優先する
-
-<span id="performance-tuning"></span>
-
-## パフォーマンスチューニング
-
-### Ingester チューニング
+以下の Compactor Alert は、Pinned Mixin に存在するメトリクスを使った例です。一定期間内の失敗回数を数えるもので、必ずしも連続した試行回数ではありません。集約 Label は実際の Scrape 構成に合わせ、Target 消失の監視は別途追加してください。
 
 ```yaml
-ingester:
-  ring:
-    replication_factor: 3
-  instance_limits:
-    max_series: 5000000
-    max_inflight_push_requests: 30000
-
-blocks_storage:
-  tsdb:
-    block_ranges_period: [2h]
-    retention_period: 24h
-    head_compaction_interval: 15m
-    head_compaction_concurrency: 4
-    wal_compression_enabled: true
+groups:
+  - name: mimir-example
+    rules:
+      - alert: MimirCompactorRepeatedFailures
+        expr: sum by (cluster, namespace, pod) (increase(cortex_compactor_runs_failed_total{reason!="shutdown"}[2h])) >= 2
+        for: 5m
+        labels:
+          severity: warning
 ```
 
-### Store-gateway チューニング
-
-```yaml
-blocks_storage:
-  bucket_store:
-    sync_interval: 15m
-    max_chunk_pool_bytes: 2147483648  # 2GB
-    chunk_pool_min_bucket_size_bytes: 16384
-    chunk_pool_max_bucket_size_bytes: 524288
-
-    index_cache:
-      backend: memcached
-      memcached:
-        addresses: dns+memcached:11211
-        max_item_size: 5242880  # 5MB
-        timeout: 450ms
-
-    chunks_cache:
-      backend: memcached
-      memcached:
-        addresses: dns+memcached:11211
-        max_item_size: 1048576  # 1MB
-        timeout: 450ms
-```
-
-### クエリチューニング
-
-```yaml
-query_frontend:
-  parallelize_shardable_queries: true
-  split_queries_by_interval: 24h
-  max_retries: 5
-
-  query_sharding:
-    enabled: true
-    total_shards: 16
-
-querier:
-  max_concurrent: 20
-  timeout: 2m
-```
-
-<span id="best-practices"></span>
-
-## ベストプラクティス
-
-### 本番環境チェックリスト
-
-1. **高可用性**
-   - Ingester: 最低 3、ゾーン認識レプリケーション
-   - Store-gateway: 最低 2
-   - Distributor: 最低 2
-   - Query-frontend: 最低 2
-
-2. **キャッシュ**
-   - 結果キャッシュ: memcached
-   - メタデータキャッシュ: memcached
-   - チャンクキャッシュ: memcached
-
-3. **モニタリング**
-   ```promql
-   # Mimir self metrics
-   cortex_ingester_active_series
-   cortex_distributor_received_samples_total
-   cortex_querier_request_duration_seconds
-   cortex_compactor_runs_completed_total
-   ```
-
-4. **アラートルール**
-   ```yaml
-   groups:
-   - name: mimir
-     rules:
-     - alert: MimirIngesterUnhealthy
-       expr: cortex_ring_members{state="Unhealthy"} > 0
-       for: 5m
-       labels:
-         severity: critical
-
-     - alert: MimirCompactorFailed
-       expr: increase(cortex_compactor_runs_failed_total[1h]) > 0
-       for: 5m
-       labels:
-         severity: warning
-   ```
-
-### コスト最適化
-
-```yaml
-# Use S3 storage classes
-blocks_storage:
-  s3:
-    storage_class: INTELLIGENT_TIERING
-
-# Filter unnecessary metrics
-limits:
-  drop_labels:
-    - pod_template_hash
-    - controller_revision_hash
-
-# Downsampling (Enterprise)
-compactor:
-  downsampling_enabled: true
-```
-
-<span id="troubleshooting"></span>
-
-## トラブルシューティング
-
-### よくある問題
-
-#### 1. Ingester OOM
+レンダリングされた Release 名と Namespace に対して、権限を持つ Operator は localhost の Port Forwarding 経由で Query-frontend を調べられます。
 
 ```bash
-# Check memory usage
-kubectl top pod -l app.kubernetes.io/component=ingester -n monitoring
-
-# Solution: Adjust time series limit
-ingester:
-  instance_limits:
-    max_series: 3000000  # Reduce
+kubectl -n monitoring get pods
+kubectl -n monitoring get pvc
+kubectl -n monitoring port-forward service/mimir-query-frontend 18080:8080
 ```
 
-#### 2. クエリタイムアウト
+別の Terminal で実行します。
 
 ```bash
-# Check slow queries
-curl http://query-frontend:8080/api/v1/status/buildinfo
-
-# Solution: Query splitting and parallelization
-query_frontend:
-  split_queries_by_interval: 12h  # Smaller
-  query_sharding:
-    total_shards: 32  # Increase
+curl --fail --silent --show-error http://127.0.0.1:18080/ready
+curl --fail --silent --show-error http://127.0.0.1:18080/api/v1/status/buildinfo
 ```
 
-#### 3. Compactor の遅延
+`buildinfo` は Build Metadata を返すもので、遅いクエリを示すものではありません。Timeout の調査では、Queueing、クエリ統計/Logging、上限を設けた Query Sample を確認してください。Ingester OOM では、Instance 制限を変える前に実際の Series/Cardinality と Buffer を調べます。Compactor の遅延では、リソースを増やす前に Object 権限、Disk、失敗、バックログを確認してください。`/config`、`/runtime_config`、テナント統計、Ring、メトリクス Endpoint を保護し、公開診断 Endpoint として露出させないでください。Ring Endpoint はコンポーネントごとに異なります。Kafka 使用時は Partition Ring も重要です。
 
-```bash
-# Check Compactor status
-curl http://compactor:8080/compactor/ring
+## 検証と参考資料
 
-# Solution: Increase resources
-compactor:
-  resources:
-    limits:
-      cpu: 4000m
-      memory: 16Gi
-```
+Chart 6.2.0 をレンダリングし、Mimir 3.2.1 の8つのデプロイ対象コンポーネントに対して `-print.config` を使い Parse/Validate しました。このオプションはサービス初期化の前に終了します。準備済み Secret Volume 用の Path を、ローカルテスト証明書の Path に置き換えています。これは設定構造と検証動作を確認したものです。Kafka/mTLS/IRSA/S3 接続、PVC Provisioning、Runtime Reload、HA、負荷性能を検証したものではありません。クラウドリソースは作成していません。
 
-### デバッグコマンド
-
-```bash
-# Check component status
-curl http://distributor:8080/distributor/all_user_stats
-curl http://ingester:8080/ingester/ring
-curl http://store-gateway:8080/store-gateway/ring
-curl http://compactor:8080/compactor/ring
-
-# Check metrics
-curl http://distributor:8080/metrics | grep cortex_
-curl http://ingester:8080/metrics | grep cortex_
-
-# Check configuration
-curl http://distributor:8080/config
-```
-
-## 参考資料
-
-- [Grafana Mimir 公式ドキュメント](https://grafana.com/docs/mimir/latest/)
-- [Mimir GitHub](https://github.com/grafana/mimir)
-- [mimir-distributed Helm Chart](https://github.com/grafana/mimir/tree/main/operations/helm/charts/mimir-distributed)
-- [Mimir アーキテクチャ](https://grafana.com/docs/mimir/latest/references/architecture/)
+- [設定リファレンス](https://grafana.com/docs/mimir/latest/configure/configuration-parameters/)
+- [Mimir Helm Chart](https://grafana.com/docs/helm-charts/mimir-distributed/latest/)
+- [Mimir のデプロイモード](https://grafana.com/docs/mimir/latest/references/architecture/deployment-modes/)
+- [HTTP API リファレンス](https://grafana.com/docs/mimir/latest/references/http-api/)
 
 ## クイズ
 

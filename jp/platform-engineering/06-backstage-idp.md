@@ -1,6 +1,6 @@
 # Internal Developer Portal としての Backstage
 
-> **最終更新**: September 12, 2026 · Backstage 1.54.7 / Helm chart 2.10.0
+> **最終更新**: 2026年10月16日 · Backstage 1.54.7 / Helm chart 2.10.2
 
 ## 役割と導入範囲
 
@@ -192,10 +192,10 @@ ingress:
 examples/platform/backstage/app-config-configmap.yaml は、その設定を data.app-config.production.yaml の下に保存します。これは extraAppConfig の filename/configMapRef と一致し、secret value ではなく file reference を含みます。
 
 ```bash
-helm template backstage backstage/backstage   --version 2.10.0 --namespace backstage   -f examples/platform/backstage/helm-values.yaml
+helm template backstage backstage/backstage   --version 2.10.2 --namespace backstage   -f examples/platform/backstage/helm-values.yaml
 ```
 
-最初に公式の backstage.github.io/charts repository を登録してください。この監査ではその chart をローカルでダウンロードして render しました。serviceAccount はトップレベルの chart value であり、backstage.serviceAccount ではありません。以前の backstage.podDisruptionBudget value は chart 2.10.0 では PDB を作成しません。この resource は別途準備してください。
+最初に公式の backstage.github.io/charts repository を登録してください。この監査ではその chart をローカルでダウンロードして render しました。serviceAccount はトップレベルの chart value であり、backstage.serviceAccount ではありません。以前の backstage.podDisruptionBudget value は chart 2.10.2 では PDB を作成しません。この resource は別途準備してください。
 
 ```yaml
 apiVersion: policy/v1
@@ -523,7 +523,7 @@ upgrade では release note と plugin compatibility を確認し、次に versi
 完全な Backstage app/image、PostgreSQL/OIDC、GitHub/ArgoCD/Kubernetes/AWS API、実際の template action、deployment、load、HA test は実行していません。placeholder と operator prerequisite は明示されています。
 
 - [Backstage 1.54.7](https://github.com/backstage/backstage/tree/v1.54.7)
-- [Helm chart 2.10.0](https://github.com/backstage/charts/releases/tag/backstage-2.10.0)
+- [Helm chart 2.10.2](https://github.com/backstage/charts/releases/tag/backstage-2.10.2)
 - [Configuration](https://backstage.io/docs/conf/writing/)
 - [Kubernetes authentication](https://backstage.io/docs/features/kubernetes/authentication/)
 - [Permission policy](https://backstage.io/docs/permissions/writing-a-policy/)

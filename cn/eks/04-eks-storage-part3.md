@@ -1,6 +1,6 @@
 # Amazon EKS 存储 - 第 3 部分：监控、故障排查、成本优化与安全
 
-> **最后更新**: October 16, 2026
+> **最后更新**: 2026年10月16日
 
 本文档是 Amazon EKS 存储系列的第三部分，也是最后一部分，涵盖存储监控、故障排查、成本优化和安全。
 
@@ -50,7 +50,7 @@ LogicalDiskUsage 和 PhysicalDiskUsage 也是有效指标：它们分别描述�
 
 ### 使用 Prometheus 和 Grafana 进行监控
 
-复用监控负责人已有的技术栈。对于经过审查的新安装，已发布的 kube-prometheus-stack92.9.0 chart 是经验证的参考版本，搭配 operator0.94.1；这并不是现有集群的自动升级指令。以下命令只渲染清单。准备 `monitoring/grafana-admin`，其中包含 admin-user/admin-password 键，并使用本章中可展开的 ebs-gp3 类。根据实际集群版本、存储容量和保留期限进行调整。告警传递、Grafana 持久化、可用性以及 kubelet TLS/身份验证默认值仍需结合具体部署进行审查：
+复用监控负责人已有的技术栈。对于经过审查的新安装，已发布的 kube-prometheus-stack 92.9.0 chart 是经验证的参考版本，搭配 operator 0.94.1；这并不是现有集群的自动升级指令。以下命令只渲染清单。准备 `monitoring/grafana-admin`，其中包含 admin-user/admin-password 键，并使用本章中可展开的 ebs-gp3 类。根据实际集群版本、存储容量和保留期限进行调整。告警传递、Grafana 持久化、可用性以及 kubelet TLS/身份验证默认值仍需结合具体部署进行审查：
 
 ```yaml
 grafana:
@@ -83,7 +83,7 @@ helm template prometheus prometheus-community/kube-prometheus-stack \
   --include-crds -f monitoring-values.yaml > monitoring-review.yaml
 ```
 
-ServiceMonitor 会先选择 **Service**，再选择其端点；其 namespaceSelector 和 Prometheus 实例的 ServiceMonitor 选择器必须同时匹配。EBS CSI1.66 的 Helm chart 默认将 controller.enableMetrics 设为 false。对于由该 chart 管理的安装，请与现有负责人一起审查这些配置；它们会启用驱动的3301指标端点、sidecar 指标 Service 和生成的 ServiceMonitor。release 标签须与实际 Prometheus 选择器匹配：
+ServiceMonitor 会先选择 **Service**，再选择其端点；其 namespaceSelector 和 Prometheus 实例的 ServiceMonitor 选择器必须同时匹配。EBS CSI 1.66 的 Helm chart 默认将 controller.enableMetrics 设为 false。对于由该 chart 管理的安装，请与现有负责人一起审查这些配置；它们会启用驱动的3301 指标端点、sidecar 指标 Service 和生成的 ServiceMonitor。release 标签须与实际 Prometheus 选择器匹配：
 
 ```yaml
 controller:
@@ -218,9 +218,9 @@ WaitForFirstConsumer 会有意让新 PVC 保持 Pending，直到可调度的使�
 
 区分附加错误、节点发布/挂载错误、缺少文件系统客户端、身份/权限错误以及应用权限问题。读取日志时，应选择相关的 CSI driver/sidecar 容器；多容器 Pod 的默认日志并不包含所有组件。必要时检查 VolumeAttachment、已绑定 PV 的驱动/handle 以及分配的节点。
 
-对于节点日志，请使用节点负责方支持的访问/诊断方式。通过 SSH 使用 ec2-user 和 journalctl 并不适用于所有 Bottlerocket、Auto Mode 或其他托管计算环境。特权 amazonlinux:2 辅助容器不能替代正确的 CSI/客户端配置；AL2 已于2026年结束 OS 支持。请复用本章中受支持的 CSI 使用者测试，并在考虑单独审批的节点级手动挂载前检查其事件。
+对于节点日志，请使用节点负责方支持的访问/诊断方式。通过 SSH 使用 ec2-user 和 journalctl 并不适用于所有 Bottlerocket、Auto Mode 或其他托管计算环境。特权 amazonlinux:2 辅助容器不能替代正确的 CSI/客户端配置；AL2 的 OS 支持已于 2026 年结束。请复用本章中受支持的 CSI 使用者测试，并在考虑单独审批的节点级手动挂载前检查其事件。
 
-对于 EFS，请检查挂载目标/DNS，并从实际挂载客户端测试 TCP2049。Lustre 需要 TCP988 和1018–1023，以及服务端的客户端/服务器规则；EFA 配置还有额外的 SG 引用要求。还需检查 NACL 返回流量和路由。ICMP ping 失败并不能证明 NFS 不可用，而且 AWS CLI 容器不一定包含 ping/telnet/mount 辅助工具。Pod 网络测试所用的源地址/安全组可能与节点发起的 CSI 挂载不同。
+对于 EFS，请检查挂载目标/DNS，并从实际挂载客户端测试 TCP 2049。Lustre 需要 TCP 988 和 1018–1023，以及服务端的客户端/服务器规则；EFA 配置还有额外的 SG 引用要求。还需检查 NACL 返回流量和路由。ICMP ping 失败并不能证明 NFS 不可用，而且 AWS CLI 容器不一定包含 ping/telnet/mount 辅助工具。Pod 网络测试所用的源地址/安全组可能与节点发起的 CSI 挂载不同。
 
 ### I/O 缓慢
 
@@ -253,7 +253,7 @@ if not points:
 PY
 ```
 
-文件系统写入测试必须使用已核实挂载上的获批临时目录。请将此脚本保存在预期测试环境中；它会创建一个唯一的64MiB 文件，并且只清理它自己创建的文件/目录。读取操作可能命中缓存，因此这些计时结果无法证明冷存储性能。不要在实时数据上执行可预测路径 `/data/test` 的覆盖写入，或对原始设备写入零：
+文件系统写入测试必须使用已核实挂载上的获批临时目录。请将此脚本保存在预期测试环境中；它会创建一个唯一的64 MiB 文件，并且只清理它自己创建的文件/目录。读取操作可能命中缓存，因此这些计时结果无法证明冷存储性能。不要在实时数据上执行可预测路径 `/data/test` 的覆盖写入，或对原始设备写入零：
 
 ```bash
 set -euo pipefail
@@ -369,7 +369,7 @@ aws fsx describe-file-systems --region "$AWS_REGION" --file-system-ids "$FSX_FIL
 
 使用 Part1 中准备好的 CSI 身份：控制器受支持的 Pod Identity/IRSA 角色及精确的驱动权限，并在适用时配置 KMS 授权。不要通过无关的 eksctl 命令重新创建现有托管 add-on 的 ServiceAccount，也不要将控制器权限转移到每个节点/应用。Mountpoint 的 Pod 级身份、EFS IAM 挂载和文件系统 POSIX/access-point 身份具有不同的授权路径。
 
-对于网络访问，请允许实际客户端/节点源安全组通过 TCP2049 访问 EFS 挂载目标。Lustre 需要客户端和文件服务器之间符合文档要求的 TCP988 和1018–1023 规则，包括所需的自引用/客户端流量。启用 EFA 的 Lustre 则需要指定的、通过安全组引用的全流量规则；面向整个互联网的 CIDR 不能替代这些规则。除安全组外，还应检查路由、DNS、NACL 以及实际的 CSI 挂载源。Kubernetes Pod NetworkPolicy 不会自动控制每个由节点发起的文件系统连接。
+对于网络访问，请允许实际客户端/节点源安全组通过 TCP 2049 访问 EFS 挂载目标。Lustre 需要客户端和文件服务器之间符合文档要求的 TCP 988 和 1018–1023 规则，包括所需的自引用/客户端流量。启用 EFA 的 Lustre 则需要指定的、通过安全组引用的全流量规则；面向整个互联网的 CIDR 不能替代这些规则。除安全组外，还应检查路由、DNS、NACL 以及实际的 CSI 挂载源。Kubernetes Pod NetworkPolicy 不会自动控制每个由节点发起的文件系统连接。
 
 以下命名空间范围的 reader 可以检查 PVC 对象；它不能创建、扩容或删除 PVC。对集群范围的 PV 进行访问需要单独审查 ClusterRole。两个角色都不能直接控制文件字节。能够在命名空间中创建 Pod 的主体可能可以挂载该命名空间的 PVC，因此还必须控制 Pod 创建、工作负载身份、POSIX/access-point 权限和租户隔离：
 
@@ -413,7 +413,7 @@ roleRef:
 
 ### Pod 安全上下文
 
-此完整示例将 Pod 级别的 runAsUser/runAsGroup/fsGroup/seccomp 与容器级别的 allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem 分开配置。它使用预先准备的加密类和已声明的 PVC，而不是未定义的数据卷，也不使用未提供可写运行时路径的 nginx 镜像。命名空间策略版本与经过审查的 Kubernetes1.36 示例一致；请使用适用于集群的策略版本。
+此完整示例将 Pod 级别的 runAsUser/runAsGroup/fsGroup/seccomp 与容器级别的 allowPrivilegeEscalation/capabilities/readOnlyRootFilesystem 分开配置。它使用预先准备的加密类和已声明的 PVC，而不是未定义的数据卷，也不使用未提供可写运行时路径的 nginx 镜像。命名空间策略版本与经过审查的 Kubernetes 1.36 示例一致；请使用适用于集群的策略版本。
 
 ```yaml
 apiVersion: v1
@@ -485,7 +485,7 @@ spec:
 
 ### 安全策略执行
 
-PVC 名称模式或仅有 StorageClass 允许列表，都无法证明 EBS 已加密。以下 **Kyverno ValidatingPolicy** 使用已提供服务的 `policies.kyverno.io/v1` API，已使用 Kyverno1.19.1 及其 CRD 进行检查。它要求已安装相应控制器/CRD，并且准入控制由适当的负责人管理。该版本中较旧的 ClusterPolicy 示例已弃用；请有计划地迁移，不要假定 API 兼容。
+PVC 名称模式或仅有 StorageClass 允许列表，都无法证明 EBS 已加密。以下 **Kyverno ValidatingPolicy** 使用已提供服务的 `policies.kyverno.io/v1` API，已使用 Kyverno 1.19.1 及其 CRD 进行检查。它要求已安装相应控制器/CRD，并且准入控制由适当的负责人管理。该版本中较旧的 ClusterPolicy 示例已弃用；请有计划地迁移，不要假定 API 兼容。
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -529,7 +529,7 @@ spec:
 
 ### 备份与灾难恢复
 
-使用具备唯一备份身份和明确保留负责人的受支持计划。shell cron 行反复创建固定快照名称，会在第一个对象创建后失败；一次性的 Velero 备份 `daily-backup` 并不是计划任务。基于经过审查的 Velero/CSI 安装，以及 Part2 中的数据库一致性要求，以下命令会生成一个供审查的每日计划：
+使用具备唯一备份身份和明确保留负责人的受支持计划。shell cron 行反复创建固定快照名称，会在第一个对象创建后失败；一次性的 Velero 备份 daily-backup 并不是计划任务。基于经过审查的 Velero/CSI 安装，以及 Part2 中的数据库一致性要求，以下命令会生成一个供审查的每日计划：
 
 ```bash
 velero schedule create storage-daily --schedule="0 0 * * *" \

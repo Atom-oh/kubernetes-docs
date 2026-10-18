@@ -1,17 +1,25 @@
-# Gestión del ciclo de vida de Node
+# Gestión del ciclo de vida de los nodos
 
-> **Versiones compatibles**: EKS 1.29+, EKS Auto Mode GA
-> **Última actualización**: July 3, 2026
+> **Versiones compatibles**: disponibilidad general de EKS Auto Mode; ejemplos revisados para EKS 1.36
+> **Última actualización**: 12 de septiembre de 2026
 
-Esta guía cubre la gestión del ciclo de vida de Node en EKS Auto Mode, incluidas las políticas de expiración, la gestión de AMI, la detección de drift y el monitoreo de la actualidad de los Nodes.
+La expiración, las actualizaciones de imágenes administradas y la recuperación de aplicaciones son partes distintas del ciclo de vida de los nodos. Que un objeto Node de Kubernetes sea reciente no demuestra que se hayan aplicado todas las correcciones de CVE ni que una carga de trabajo cumpla los requisitos. Estos ejemplos se revisaron con fuentes oficiales y esquemas y fixtures locales; no se realizaron rotaciones de nodos en vivo, cambios en la nube ni pruebas de rendimiento.
 
----
+## Expiración y límite de vida útil de Auto Mode
 
-## Políticas de expiración de Node (expireAfter)
+`spec.template.spec.expireAfter` determina la expiración basada en la antigüedad de los NodeClaims creados a partir de esa plantilla. El campo heredado de la era de Provisioner `ttlSecondsUntilExpired` no se utiliza en estos NodePools `karpenter.sh/v1`.
 
-El campo `expireAfter` controla cuánto tiempo puede ejecutarse un Node antes de ser reemplazado automáticamente.
+Distinga estos tres ajustes:
 
-### Cómo funciona expireAfter
+| Concepto | Comportamiento de Auto Mode |
+|---------|-----------------------------|
+| Expiración predeterminada | AWS documenta **336h (14 días)**, no 7 ni 21 días |
+| Gracia de terminación | Si se omite en el NodePool, Auto Mode establece **24h en el NodeClaim** de forma predeterminada; inspeccione el claim aunque el pool no lo muestre |
+| Vida útil máxima de una instancia administrada | AWS impone **21 días (504h)**; esto no garantiza que un nodo vaya a permanecer disponible hasta entonces |
+
+No sustituya los valores predeterminados de Auto Mode por el valor predeterminado de 720h de Karpenter upstream. Una duración mayor o la sintaxis `Never` de upstream no proporciona retención indefinida de una instancia administrada de Auto Mode. No intente extender el máximo de AWS combinando 504h con un período de drenaje largo.
+
+Antes de ejecutar los comandos de solo lectura que siguen, utilice la comprobación de cuenta y contexto y la variable privada `WORK_DIR` de [Operaciones](./05-operations.md). Los pools de ejemplo presuponen un NodeClass `default` revisado. Son configuraciones de laboratorio acotadas y con taints; se necesitan selectores y tolerations correspondientes para las cargas de trabajo, además de pruebas de recuperación de las aplicaciones.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -22,184 +30,119 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["m", "c"]
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
-      # Set maximum node lifetime
-      expireAfter: 168h  # Auto-replace after 7 days
+      expireAfter: 168h
+      terminationGracePeriod: 24h
+      taints:
+      - key: lifecycle-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        lifecycle-lab: 'true'
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 5m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
 
-### Proceso de expiración
+### Qué hace realmente la expiración
 
-1. El Node alcanza la edad definida en `expireAfter`
-2. El controller marca el Node para reemplazo
-3. Se aprovisiona un nuevo Node con configuración actualizada
-4. Los workloads se migran respetando los PDBs
-5. El Node anterior se drena y se termina
+La expiración es un **disparador de interrupción forzosa**. Inicia la terminación y el drenaje cuando el NodeClaim alcanza la antigüedad definida por la política; no espera a que una capacidad de reemplazo aprovisionada previamente esté en estado Ready. Los presupuestos de interrupción del NodePool no limitan la velocidad de la expiración. Los controladores de cargas de trabajo y el aprovisionamiento pueden crear la capacidad de reemplazo que haga falta; aquí no se garantiza el antiguo orden de cinco pasos de «primero el nuevo nodo queda Ready y después se drena el anterior».
 
-### Vida útil máxima de Node de 21 días en Auto Mode
+El controlador de terminación impide la programación ordinaria de cargas nuevas, intenta drenar mediante la API Eviction, gestiona la separación de volúmenes y termina la instancia. Los PDB y `do-not-disrupt` de los Pods pueden influir en el drenaje, pero el plazo de gracia de terminación y la vida útil máxima de AWS impiden que sean una protección de disponibilidad indefinida. La gracia de apagado del Pod y la gracia de terminación del nodo son ajustes distintos. Los datos del almacenamiento local o efímero necesitan un plan de recuperación.
 
-EKS Auto Mode usa el valor predeterminado de `expireAfter` basado en Karpenter, y los Nodes se reemplazan automáticamente una vez que alcanzan una edad máxima de **21 días (504h)** después de su creación. Puedes establecer `expireAfter` en un valor menor que 21 días para un reemplazo más frecuente, pero establecerlo en un valor mayor que 21 días no tiene efecto: Auto Mode impone 21 días como límite máximo estricto. A diferencia de los managed node groups o Karpenter autogestionado, los Nodes no se pueden conservar indefinidamente.
+Cambiar `expireAfter` en el pool no reescribe los NodeClaims existentes; puede provocar drift y se aplica a los claims de reemplazo. Otros métodos de interrupción pueden acortar la vida del nodo. Un presupuesto de un nodo no puede hacer que varias expiraciones simultáneas se ejecuten en secuencia.
 
-Si ejecutas workloads que mantienen estado durante períodos prolongados (services con tiempos largos de calentamiento de caché, workloads con estado que dependen de almacenamiento local, etc.), planifica con anticipación los procedimientos de reprogramación de Pods y rebalanceo de datos alrededor de este límite de 21 días.
+### Cómo elegir una duración
 
-### Valores recomendados de expireAfter
+Los ejemplos anteriores de 24h, 48h, 72h, 168h y 336h específicos para distintos entornos son decisiones de política, no valores predeterminados de producción de AWS ni intervalos de rotación obligatorios para PCI/HIPAA/SOC2. El ejemplo anterior de desarrollo de 504h representaba el límite del servicio, no un `expireAfter` recomendado más tiempo de drenaje.
 
-| Caso de uso | expireAfter | Justificación |
-|----------|-------------|-----------|
-| **Crítico para seguridad** | 24h - 72h | Patching frecuente, requisitos de cumplimiento |
-| **Producción estándar** | 168h (7 days) | Equilibrio entre actualidad y estabilidad |
-| **Sensible al costo** | 336h (14 days) | Minimiza la sobrecarga de reemplazo (dentro del límite de 21 días) |
-| **Desarrollo/Prueba** | 504h (21 days, maximum) | Maximiza la reutilización de Node; este es el límite superior impuesto |
-| **Cumplimiento (PCI/HIPAA)** | 72h - 168h | Cumple los requisitos de auditoría |
+Elija una política en función de la urgencia de los parches, los puntos de control de las cargas de trabajo, el calentamiento de la caché, el comportamiento de las réplicas y el cuórum, la capacidad disponible y las pruebas de recuperación. La rotación frecuente puede aumentar las descargas de imágenes, la reprogramación y el trabajo de recuperación facturable. Por sí sola, no aumenta la probabilidad de que EC2 interrumpa una instancia Spot específica ni garantiza que un parche publicado recientemente esté disponible.
 
-### Ejemplos de configuración de expireAfter
+## AMI administradas y configuración de NodeClass
 
-```yaml
-# Security-first configuration
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: security-critical
-spec:
-  template:
-    spec:
-      expireAfter: 72h  # 3 days for security compliance
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: secure-nodeclass
----
-# Cost-optimized configuration
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: cost-optimized
-spec:
-  template:
-    spec:
-      expireAfter: 336h  # 14 days for cost efficiency
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: default
-```
+Auto Mode utiliza **variantes de Bottlerocket administradas por AWS**. No ofrece un selector `amiFamily` entre AL2023 y Bottlerocket, `amiSelectorTerms` personalizado, `userData` arbitrario, acceso por SSH ni Session Manager de SSM. No copie estas interfaces de EC2NodeClass de Karpenter autogestionado ni de recetas para grupos de nodos administrados convencionales.
 
----
-
-## Estrategia de gestión de AMI
-
-### Cómo Auto Mode selecciona AMIs
-
-EKS Auto Mode selecciona y gestiona automáticamente las AMIs según tu configuración de NodeClass.
+El NodeClass compatible que sigue configura el almacenamiento y la identidad de red; no selecciona ni fija una AMI:
 
 ```yaml
 apiVersion: eks.amazonaws.com/v1
 kind: NodeClass
 metadata:
-  name: ami-managed
+  name: lifecycle-nodeclass
 spec:
-  # AMI family selection
-  amiFamily: AL2023  # or Bottlerocket
+  instanceProfile: eks-node-instance-profile
+  subnetSelectorTerms:
+  - tags:
+      Name: private-subnet
+  securityGroupSelectorTerms:
+  - tags:
+      Name: worker-restricted
+  advancedNetworking:
+    associatePublicIPAddress: false
+  ephemeralStorage:
+    size: 100Gi
+    iops: 3000
+    throughput: 125
 ```
 
-### Comparación de familias de AMI
+Revise el rol del perfil de instancia, su entrada de acceso y la selección real de subredes y grupos de seguridad; después, haga referencia a `lifecycle-nodeclass` solo desde el pool previsto. Auto Mode administra sus ajustes de IMDSv2 y hop limit; no los sustituya mediante `metadataOptions`. Utilice `ephemeralStorage` en vez de `blockDeviceMappings`; el cifrado de EBS del disco raíz o de datos del nodo no establece el cifrado de los PVC de la aplicación. Consulte [Configuración de NodePool](./02-nodepool-configuration.md) para conocer los ajustes compatibles de claves y certificados.
 
-| Característica | AL2023 | Bottlerocket |
-|---------|--------|--------------|
-| OS base | Amazon Linux 2023 | OS de contenedores diseñado específicamente |
-| Tiempo de arranque | ~40-60 seconds | ~20-40 seconds |
-| Superficie de ataque | Estándar | Mínima (raíz de solo lectura) |
-| Personalización | Completa (userData) | Limitada (settings API) |
-| Gestor de paquetes | dnf | Ninguno (inmutable) |
-| Actualizaciones de seguridad | Patching estándar | Actualizaciones atómicas |
-| Caso de uso | Workloads generales | Workloads enfocados en seguridad |
+### Las comparaciones históricas de sistemas operativos no son un menú de selección de Auto Mode
 
-### Guías para la selección de familia de AMI
+AL2023 es una distribución Amazon Linux de propósito general con algunos componentes upstream de Fedora; no es simplemente RHEL. AL2023 de uso general y los hosts Bottlerocket operados de forma independiente ofrecen opciones de administración distintas de los nodos de Auto Mode con acceso restringido. Auto Mode también admite cargas de trabajo de GPU mediante sus imágenes administradas; aquí es incorrecto concluir que «GPU implica que se necesita AL2023».
 
-| Tipo de workload | AMI recomendada | Justificación |
-|---------------|-----------------|-----------|
-| Services web generales | AL2023 | Flexibilidad, tooling familiar |
-| Crítico para seguridad | Bottlerocket | Superficie de ataque mínima |
-| Cumplimiento (PCI/SOC2) | Bottlerocket | Infraestructura inmutable |
-| Workloads de GPU | AL2023 | Soporte de drivers NVIDIA |
-| Módulos de kernel personalizados | AL2023 | Acceso completo al OS |
-| Escalado rápido | Bottlerocket | Tiempos de arranque más rápidos |
+Los intervalos originales de arranque de 40–60s para AL2023 y 20–30s/20–40s para Bottlerocket, así como los intervalos del cuestionario de 20–40s frente a 15–25s, no tienen una procedencia de medición verificada. Se conservan como ejemplos históricos, no como una clasificación de velocidad de los sistemas operativos ni como predicción para estos manifiestos. Las descargas de imágenes, la arquitectura, el tipo de instancia y la disponibilidad de la carga deben medirse por separado.
 
-### Configuración de AMI personalizada
+## Drift y actualizaciones de imágenes administradas
 
-```yaml
-# For specific AMI requirements
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: custom-ami
-spec:
-  amiFamily: AL2023
+AWS documenta que publica AMI de Auto Mode aproximadamente cada semana y permite reemplazar por drift los nodos que cumplen los requisitos. Esa frecuencia no es un SLA de aplicación de parches para cada CVE. La publicación de una AMI optimizada para EKS de otra familia no se convierte automáticamente en una actualización de imagen de Auto Mode.
 
-  # AMI selection by tags (if using custom AMIs)
-  amiSelectorTerms:
-    - tags:
-        Name: my-custom-eks-ami
-        Environment: production
-```
+| Cambio u observación | Interpretación correcta |
+|-----------------------|-------------------------|
+| Actualización de AMI administrada de Auto Mode | Puede provocar drift en claims existentes; inspeccione las condiciones reales y el estado del despliegue |
+| Cambio en los requisitos de NodePool | No todos los cambios causan drift; ampliar los valores permitidos compatibles puede hacer que un nodo existente siga cumpliendo los requisitos |
+| Cambio de plantilla `expireAfter` | Los claims existentes conservan el valor almacenado; los claims de reemplazo usan la política actualizada |
+| Peso, límites o ajustes de interrupción | Ajustes de comportamiento, no un disparador general de drift |
+| Cambio del estado deseado de NodeClass | Utilice los campos compatibles y observe el controlador administrado; una etiqueta cosmética no garantiza un disparador de emergencia para aplicar parches |
+| Cambio de `amiFamily` o `blockDeviceMappings` | No son campos válidos de NodeClass en Auto Mode |
 
----
-
-## Actualizaciones de AMI y detección de drift
-
-### Cómo las actualizaciones de AMI activan drift
-
-Cuando AWS publica nuevas AMIs o actualizas tu NodeClass:
-
-1. **Lanzamiento de AMI**: AWS publica una nueva AMI optimizada para EKS
-2. **Detección de drift**: El controller detecta una discrepancia de versión de AMI
-3. **Marcado de Node**: Los Nodes existentes se marcan como "drifted"
-4. **Reemplazo**: Los Nodes se reemplazan según la configuración de disruption
-
-### Disparadores de detección de drift
-
-| Cambio | Activa drift | Velocidad de reemplazo |
-|--------|----------------|-------------------|
-| Nueva versión de AMI | Sí | Según el disruption budget |
-| Cambio de familia de AMI en NodeClass | Sí | Scheduling inmediato |
-| AMI con patch de seguridad | Sí | Según el disruption budget |
-| Cambio de requirements de NodePool | Sí | Según la consolidation |
-| Cambio de block device en NodeClass | Sí | Solo Nodes nuevos |
-
-### Monitoreo del estado de drift
+Utilice las condiciones `Drifted` de los NodeClaims. Una anotación de hash no es un estado booleano de drift, y no encontrar una condición no demuestra que no haya drift. Lea el motivo, la transición y la generación, y compárelos con el estado actual del recurso:
 
 ```bash
-# Check for drifted nodes
-kubectl get nodes -o custom-columns=\
-NAME:.metadata.name,\
-NODEPOOL:.metadata.labels.karpenter\\.sh/nodepool,\
-AGE:.metadata.creationTimestamp,\
-DRIFT:.metadata.annotations.karpenter\\.sh/drift-hash
-
-# Check NodeClaim drift status
-kubectl get nodeclaims -o wide
-
-# Watch for drift events
-kubectl get events --sort-by='.lastTimestamp' | grep -i drift
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodeclaims -o json |
+jq '[.items[] | {
+  name:.metadata.name,uid:.metadata.uid,node:.status.nodeName,
+  createdAt:.metadata.creationTimestamp,deletionTimestamp:.metadata.deletionTimestamp,
+  pool:.metadata.labels["karpenter.sh/nodepool"],
+  expireAfter:.spec.expireAfter,terminationGracePeriod:.spec.terminationGracePeriod,
+  imageID:.status.imageID,
+  drift:([.status.conditions[]?|select(.type=="Drifted")|
+    {status,reason,lastTransitionTime,observedGeneration}] |
+    if length == 0 then {status:"NotReported"} else .[0] end),
+  conditions:[.status.conditions[]?|{type,status,reason,lastTransitionTime,observedGeneration}]
+}]'
 ```
 
-### Control del reemplazo por drift
+El drift es un método de interrupción controlada, sujeto a los presupuestos aplicables, la viabilidad de la programación y las restricciones de drenaje. La configuración siguiente limita a un nodo las interrupciones voluntarias permitidas y pausa **solo el drift** los días laborables de 00:00 a 08:00 UTC, equivalente a las 09:00–17:00 en Seúl. Las antiguas expresiones horarias `0 9-17`/`0 9-18` volvían a iniciar períodos largos y solapados.
 
 ```yaml
-# Slow drift replacement for stability
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -207,103 +150,87 @@ metadata:
 spec:
   template:
     spec:
-      expireAfter: 168h
+      requirements:
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
+      expireAfter: 168h
+      terminationGracePeriod: 24h
+      taints:
+      - key: lifecycle-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        lifecycle-lab: 'true'
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 10m
     budgets:
-      # Slow, controlled replacement
-      - nodes: "1"
-      # No replacement during business hours
-      - nodes: "0"
-        schedule: "0 9-17 * * mon-fri"
-        duration: 8h
+    - nodes: '1'
+    - nodes: '0'
+      schedule: 0 0 * * mon-fri
+      duration: 8h
+      reasons:
+      - Drifted
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
 
----
+Esto no pausa la expiración, las interrupciones de EC2 ni la reparación. `consolidateAfter` afecta a la consolidación, no a un plazo para aplicar parches a la AMI. Las anotaciones `do-not-disrupt` de Pod y Node son distintas; la gracia predeterminada del NodeClaim de Auto Mode importa al evaluar si una anotación de Pod impide el drift.
 
-## Políticas de actualidad de Node y patching de seguridad
+## Aplicación de parches y recuperación manual excepcional
 
-### Por qué importa la actualidad de Node
+AWS administra los parches del sistema operativo del nodo y de los componentes de Auto Mode; usted sigue siendo responsable de las dependencias de las aplicaciones y los contenedores, así como de la seguridad de las cargas de trabajo. Registre la información de la imagen real, el aviso o la versión de AWS correspondiente, el avance del despliegue y las comprobaciones de la aplicación. Una marca de tiempo reciente o una etiqueta `SecurityPatch` no demuestra que se haya aplicado una corrección.
 
-| Preocupación | Impacto | Mitigación |
-|---------|--------|------------|
-| **Patches de seguridad** | Vulnerabilidades sin patch | `expireAfter` corto |
-| **Actualizaciones de AMI** | Funcionalidades/correcciones faltantes | Habilita el reemplazo por drift |
-| **Drift de configuración** | Comportamiento inconsistente | Rotación regular de Nodes |
-| **Cumplimiento** | Hallazgos de auditoría | Política de rotación documentada |
+Para una corrección urgente:
 
-### Estrategia de patching de seguridad
+1. Verifique que la imagen administrada y la corrección necesarias estén disponibles para este clúster y determine qué cargas de trabajo están afectadas.
+2. Con el contexto previsto, revise un único UID de NodeClaim, su correspondencia con el nodo, el pool, las condiciones actuales, los PDB, la durabilidad de los datos y la capacidad sobrante o que se pueda obtener.
+3. Si cumple el requisito, prefiera el despliegue de drift administrado. Si hace falta un reemplazo manual, utilice un procedimiento de mantenimiento revisado que afecte a un solo recurso y confirme que el reemplazo y la aplicación estén listos antes de continuar con otro recurso.
+4. Vuelva a comprobar el estado y la evidencia de la imagen después de cada cambio; deténgase si el estado es desconocido, falla la capacidad o se produce una regresión de la aplicación.
+
+El comando siguiente solo recopila evidencia:
+
+```bash
+: "${NODECLAIM_NAME:?Select one NodeClaim for review}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodeclaim "$NODECLAIM_NAME" -o json |
+  jq '{name:.metadata.name,uid:.metadata.uid,node:.status.nodeName,
+       pool:.metadata.labels["karpenter.sh/nodepool"],imageID:.status.imageID,
+       expireAfter:.spec.expireAfter,terminationGracePeriod:.spec.terminationGracePeriod,
+       conditions:[.status.conditions[]?|{type,status,reason}]}'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pdb -A -o json |
+  jq '[.items[]|{namespace:.metadata.namespace,name:.metadata.name,
+       observedGeneration:.status.observedGeneration,generation:.metadata.generation,
+       currentHealthy:.status.currentHealthy,desiredHealthy:.status.desiredHealthy,
+       disruptionsAllowed:.status.disruptionsAllowed}]'
+```
+
+`kubectl delete nodes -l ...` es una solicitud de eliminación en bloque, no una actualización gradual y secuencial. La eliminación manual de nodos o claims no está limitada por un presupuesto de NodePool; `drain --delete-emptydir-data` puede descartar datos locales, y ejecutar drain por sí solo no garantiza que exista un reemplazo. Por tanto, los comandos de eliminación sin restricciones del cuestionario anterior y su supuesto «disparador para aplicar parches» basado en cambiar etiquetas no constituyen un procedimiento de emergencia.
+
+## Consolidación, drift y expiración
+
+| Mecanismo | Disparador y control |
+|-----------|----------------------|
+| Consolidación | Ubicación viable de menor coste, según las solicitudes y restricciones; se aplican los controles de interrupción controlada |
+| Drift | El claim existente ya no coincide con el estado deseado administrado; se aplican los controles de interrupción controlada |
+| Expiración | La antigüedad del claim alcanza la política almacenada; es un disparador forzoso que no está sujeto a los presupuestos de NodePool |
+
+El controlador de interrupciones controladas evalúa el drift antes que la consolidación, pero la expiración sigue una ruta forzosa separada. No hay una prioridad universal de «drift > expiración > consolidación» ni un contrato de «la primera condición tiene prioridad». Un nodo con cinco días de antigüedad puede consolidarse antes de cumplir una expiración a los siete días; no es necesario que un nodo expirado con ocho días esté infrautilizado para que comience su terminación.
+
+Las siguientes son políticas de laboratorio alternativas, no resultados garantizados en coste o seguridad:
 
 ```yaml
-# Security-focused NodePool
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: security-patched
-spec:
-  template:
-    spec:
-      # Maximum node age for security compliance
-      expireAfter: 72h  # 3 days
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: secure-nodeclass
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 5m
-    budgets:
-      # Allow faster replacement for security patches
-      - nodes: "20%"
----
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: secure-nodeclass
-spec:
-  amiFamily: Bottlerocket  # Security-hardened OS
-
-  metadataOptions:
-    httpTokens: required  # IMDSv2 only
-    httpPutResponseHopLimit: 1
-
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        encrypted: true
-        volumeType: gp3
-```
-
----
-
-## Compensaciones entre consolidation y expiración
-
-### Cuándo se aplica cada una
-
-| Mecanismo | Disparador | Propósito | Prioridad |
-|-----------|---------|---------|----------|
-| **Consolidation** | Subutilización | Optimización de costos | Más baja |
-| **Expiración** | Umbral de edad | Seguridad/actualidad | Más alta |
-| **Drift** | Cambio de configuración | Consistencia | Máxima |
-
-### Interacción entre mecanismos
-
-```
-Node Lifecycle Priority:
-1. Drift (immediate) - Configuration mismatch
-2. Expiration (scheduled) - Age threshold reached
-3. Consolidation (opportunistic) - Underutilization detected
-```
-
-### Configuración para diferentes prioridades
-
-```yaml
-# Cost-priority (consolidation aggressive, expiration relaxed)
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -311,12 +238,37 @@ metadata:
 spec:
   template:
     spec:
-      expireAfter: 336h  # 14 days - relaxed
+      requirements:
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      expireAfter: 336h
+      terminationGracePeriod: 24h
+      taints:
+      - key: lifecycle-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        lifecycle-lab: 'true'
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 1m  # Aggressive consolidation
+    consolidateAfter: 1m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ---
-# Security-priority (expiration aggressive, consolidation relaxed)
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -324,107 +276,156 @@ metadata:
 spec:
   template:
     spec:
-      expireAfter: 72h  # 3 days - aggressive
+      requirements:
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      expireAfter: 72h
+      terminationGracePeriod: 24h
+      taints:
+      - key: lifecycle-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        lifecycle-lab: 'true'
   disruption:
-    consolidationPolicy: WhenEmpty  # Relaxed consolidation
+    consolidationPolicy: WhenEmpty
     consolidateAfter: 10m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
 
----
+`WhenEmpty` limita el alcance de la consolidación, pero no desactiva el drift ni la expiración. Coordine las aplicaciones con la expiración y la gracia seleccionadas; no infiera la disponibilidad a partir del nombre de una política.
 
-## Monitoreo de la distribución de edades de Node
+## Antigüedad del objeto Node y evidencia de la imagen
 
-### Monitoreo basado en kubectl
+`Node.metadata.creationTimestamp`, la hora de creación del NodeClaim y la hora de lanzamiento de EC2 son observaciones distintas. `Node.status.nodeInfo.osImage` describe el sistema operativo; no es un ID de AMI. Las columnas repetidas de fecha CREATED/AGE anteriores y el script de edad del «estado del parche de seguridad» no demostraban el estado de los parches.
+
+Capture los campos seleccionados de Node y, después, calcule la antigüedad fraccionaria portable y sus intervalos explícitos. Las marcas de tiempo no válidas, ausentes, sin zona horaria o futuras deben quedar como desconocidas:
 
 ```bash
-# List nodes with age
-kubectl get nodes --sort-by='.metadata.creationTimestamp' \
-  -o custom-columns=\
-NAME:.metadata.name,\
-NODEPOOL:.metadata.labels.karpenter\\.sh/nodepool,\
-INSTANCE:.metadata.labels.node\\.kubernetes\\.io/instance-type,\
-CREATED:.metadata.creationTimestamp,\
-AGE:.metadata.creationTimestamp
-
-# Calculate node ages in days
-kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.creationTimestamp}{"\n"}{end}' | \
-while read name created; do
-  age_seconds=$(($(date +%s) - $(date -d "$created" +%s)))
-  age_days=$((age_seconds / 86400))
-  age_hours=$(((age_seconds % 86400) / 3600))
-  echo "$name: ${age_days}d ${age_hours}h"
-done
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes \
+  -l eks.amazonaws.com/compute-type=auto -o json |
+jq '{items:[.items[] | {
+  name:.metadata.name,uid:.metadata.uid,createdAt:.metadata.creationTimestamp,
+  pool:.metadata.labels["karpenter.sh/nodepool"],
+  osImage:.status.nodeInfo.osImage,kernelVersion:.status.nodeInfo.kernelVersion
+}]}' > "$WORK_DIR/node-lifecycle.json"
 ```
 
-### Monitoreo con Prometheus/Grafana
-
-Consultas clave de Prometheus para la edad de Node:
-
-```promql
-# Node age in days
-(time() - kube_node_created) / 86400
-
-# Nodes older than 7 days
-count(((time() - kube_node_created) / 86400) > 7)
-
-# Average node age by NodePool
-avg((time() - kube_node_created) / 86400) by (label_karpenter_sh_nodepool)
-
-# Node age distribution histogram
-histogram_quantile(0.50,
-  sum(rate(kube_node_created_bucket[24h])) by (le)
-)
+```bash
+python3 - <<'PY'
+import json, os
+from datetime import datetime, timezone
+from pathlib import Path
+now = datetime.now(timezone.utc)
+rows = []
+for item in json.loads((Path(os.environ["WORK_DIR"]) / "node-lifecycle.json").read_text())["items"]:
+    result = {"node": item["name"], "pool": item.get("pool")}
+    try:
+        created = datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00"))
+        if created.tzinfo is None or created > now:
+            raise ValueError("unusable timestamp")
+        hours = (now - created).total_seconds() / 3600
+        bucket = "<1d" if hours < 24 else "1d–<3d" if hours < 72 else "3d–<7d" if hours < 168 else ">=7d"
+        result.update(nodeObjectAgeHours=round(hours, 3), bucket=bucket)
+    except (KeyError, AttributeError, TypeError, ValueError):
+        result["bucket"] = "UnknownTimestamp"
+    rows.append(result)
+summary = [{"bucket": bucket, "count": sum(row["bucket"] == bucket for row in rows)}
+           for bucket in ("<1d", "1d–<3d", "3d–<7d", ">=7d", "UnknownTimestamp")]
+print(json.dumps({"observedAt": now.isoformat(), "nodes": rows, "distribution": summary}, indent=2))
+PY
 ```
 
-### Reglas de alerting
+Los intervalos son `[0,1)`, `[1,3)`, `[3,7)` y `>=7` días; exactamente siete días pertenece al último intervalo. Una lista de Nodes vacía obtenida correctamente se distingue de un error de API. Esta instantánea es un diagnóstico, no un panel que se actualiza en vivo ni una comprobación de cumplimiento de parches.
+
+### Prometheus y Grafana
+
+Instale kube-state-metrics y permita las etiquetas `karpenter.sh/nodepool` y `eks.amazonaws.com/compute-type`. El archivo de reglas siguiente para **un solo clúster** elimina las series duplicadas de las consultas de scrape y une las etiquetas de Auto Mode con el indicador temporal de creación de Node. Las consultas multiclúster deben conservar una etiqueta real de clúster en cada agrupación y unión. La ausencia de métricas o las marcas de tiempo futuras no se convierten en nodos con antigüedad cero y estado saludable.
+
+Las alertas de antigüedad conservan los antiguos umbrales de diez días y tres desviaciones estándar como **señales ilustrativas para la revisión**. No son valores predeterminados de Auto Mode; las políticas mixtas de pools y el escalado automático normal pueden producir distribuciones amplias de antigüedad. Cargue esto como archivo de reglas de Prometheus o coloque sus grupos dentro de `spec` en un PrometheusRule seleccionado por su operador:
 
 ```yaml
-# Prometheus alerting rules for node age
 groups:
-  - name: node-lifecycle
-    rules:
-      - alert: NodeTooOld
-        expr: (time() - kube_node_created) / 86400 > 10
-        for: 1h
-        labels:
-          severity: warning
-        annotations:
-          summary: "Node {{ $labels.node }} is older than 10 days"
-
-      - alert: NodeAgeDistributionSkewed
-        expr: stddev((time() - kube_node_created) / 86400) > 3
-        for: 4h
-        labels:
-          severity: info
-        annotations:
-          summary: "Node ages are highly variable, check rotation"
+- name: node-lifecycle
+  rules:
+  - record: eks_auto:node_object_age_days
+    expr: "(\n  ((time() - max by (node) (kube_node_created)) >= 0) / 86400\n) * on\
+      \ (node) group_left (label_karpenter_sh_nodepool)\nmax by (node,label_karpenter_sh_nodepool)\
+      \ (\n  kube_node_labels{label_karpenter_sh_nodepool!=\"\",label_eks_amazonaws_com_compute_type=\"\
+      auto\"}\n)"
+  - alert: ReviewNodeObjectAge
+    expr: eks_auto:node_object_age_days > 10
+    for: 1h
+    labels:
+      severity: warning
+    annotations:
+      summary: Review this node against its actual lifecycle policy
+  - alert: ReviewNodeAgeSpread
+    expr: stddev(eks_auto:node_object_age_days) > 3
+    for: 4h
+    labels:
+      severity: info
+    annotations:
+      summary: Age spread is a review signal, not proof of failed rotation
 ```
 
-### Dashboard de edad de Node
+```promql
+# median_object_age_days
+quantile(0.5, eks_auto:node_object_age_days)
 
-Crea un dashboard de Grafana con:
+# mean_by_pool
+avg by (label_karpenter_sh_nodepool) (eks_auto:node_object_age_days)
 
-| Panel | Consulta | Visualización |
-|-------|-------|---------------|
-| Conteo de Nodes por bucket de edad | Histograma de edades de Node | Gráfico de barras |
-| Edad promedio por NodePool | `avg by (nodepool)` | Panel Stat |
-| Nodes más antiguos | Top N por edad | Tabla |
-| Nodes próximos a expirar | Edad cercana a `expireAfter` | Lista de alertas |
-| Tasa de reemplazo | NodeClaims creados/terminados | Serie temporal |
+# oldest_five
+topk(5, eks_auto:node_object_age_days)
 
----
+# less_than_1d
+sum((eks_auto:node_object_age_days >= bool 0) * (eks_auto:node_object_age_days < bool 1))
 
-## Mejores prácticas para el ciclo de vida de Node
+# 1d_to_under_3d
+sum((eks_auto:node_object_age_days >= bool 1) * (eks_auto:node_object_age_days < bool 3))
 
-| Práctica | Recomendación |
-|----------|----------------|
-| Configurar expireAfter | Configúralo siempre, predeterminado 7 días |
-| Usar Bottlerocket para seguridad | Superficie de ataque mínima |
-| Monitorear edades de Node | Alerta sobre Nodes > edad esperada |
-| Respetar PDBs | Asegura una migración gradual de workloads |
-| Escalonar reemplazos | Usa disruption budgets |
-| Rastrear versiones de AMI | Monitorea patches de seguridad |
+# 3d_to_under_7d
+sum((eks_auto:node_object_age_days >= bool 3) * (eks_auto:node_object_age_days < bool 7))
 
----
+# 7d_or_more
+sum(eks_auto:node_object_age_days >= bool 7)
+```
 
-< [Anterior: Gestión de costos](./06-cost-management.md) | [Tabla de contenidos](./README.md) | [Siguiente: Optimización de workloads](./08-workload-optimization.md) >
+`kube_node_created` es una métrica gauge de marca de tiempo, no un histograma ni un contador. No existe un `kube_node_created_bucket` predeterminado; `rate()` junto con `histogram_quantile()` no puede crear un histograma de antigüedad de nodos. Utilice `quantile()` para la mediana de antigüedad actual y cubos booleanos explícitos para un gráfico de barras. Estas sumas de cubos devuelven cero cuando hay nodos observados pero ninguno pertenece al intervalo; si no hay datos de entrada, el resultado sigue ausente.
+
+| Panel de Grafana | Evidencia |
+|------------------|-----------|
+| Distribución actual de antigüedad | Las cuatro consultas de intervalos explícitos |
+| Promedio por pool / nodos más antiguos | Unión de etiquetas y `avg` / `topk` |
+| Claims próximos a expirar | Hora real de creación del NodeClaim y `expireAfter` almacenado; la antigüedad de Node por sí sola no basta |
+| Tasa de reemplazo | Historial configurado de eventos o registros, o un publicador de contador verificado; no conteos inferidos de los objetos actuales |
+| Despliegue de parches | Información de la versión o imagen administrada, condiciones de claims y estado de la aplicación |
+
+## Referencias
+
+- [Valores predeterminados de NodePool de Auto Mode y gracia de terminación](https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html)
+- [Seguridad de Auto Mode y vida útil máxima de las instancias](https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html)
+- [Sistema operativo administrado y responsabilidades de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
+- [Configuración compatible de NodeClass](https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html)
+- [Interrupción, expiración y drift de Karpenter](https://karpenter.sh/v1.14/concepts/disruption/)
+- [Métricas de Node de Kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md)
+- [Operadores de agregación de Prometheus](https://prometheus.io/docs/prometheus/latest/querying/operators/)
+- [Relación entre AL2023 y Fedora](https://docs.aws.amazon.com/linux/al2023/ug/relationship-to-fedora.html)
+
+< [Anterior: Gestión de costos](./06-cost-management.md) | [Tabla de contenido](./README.md) | [Siguiente: Optimización de cargas de trabajo](./08-workload-optimization.md) >

@@ -1,21 +1,21 @@
 # Kubernetes ポリシー
 
-> **対応バージョン**: Kubernetes 1.32 - 1.34
-> **最終更新**: February 22, 2026
+> **サポート対象バージョン**: Kubernetes 1.35～1.37
+> **最終更新**: 2026年10月16日
 
-Kubernetes におけるポリシーは、クラスターとワークロードの動作を制御・規制するルールの集合です。ポリシーにより、セキュリティ、リソース使用量、ネットワーク通信などのさまざまな側面を管理できます。この章では、Kubernetes のさまざまな種類のポリシー、その実装方法、および Amazon EKS でのポリシー管理について学びます。
+Kubernetes では、ポリシーはクラスターやワークロードの動作を制御・規定するルールです。ポリシーを使うと、セキュリティ、リソース使用量、ネットワーク通信など、さまざまな側面を管理できます。この章では、Kubernetes のポリシーの種類と実装方法、および Amazon EKS でのポリシー管理を説明します。
 
-## Lab 環境のセットアップ
+## ラボ環境の準備
 
-このドキュメントの例に従うには、次のツールと環境が必要です。
+このドキュメントの例を試すには、以下のツールと環境が必要です。
 
 ### 必要なツール
-- kubectl v1.34 以降
+- API Server と同じ Minor Version、または1つ以内の差の kubectl
 - 動作する Kubernetes クラスター（EKS、minikube、kind など）
 - Kyverno CLI（任意）
 - OPA Gatekeeper（任意）
 
-### ポリシーの例のセットアップ
+### ポリシー例の準備
 
 ```bash
 # Create namespace
@@ -53,28 +53,28 @@ EOF
 kubectl -n policy-demo get resourcequota,networkpolicy
 ```
 
-## Kubernetes ポリシーアーキテクチャ
+## Kubernetes ポリシーのアーキテクチャ
 
-![4 種類の Kubernetes ポリシーは、ResourceQuota/LimitRange、Pod Security Standards、Admission Controllers、NetworkPolicy、および OPA Gatekeeper/Kyverno によって実装され、クラスター、namespace、または Pod レベルに適用されます。](../.gitbook/assets/en-core-07-policies-0.png)
+![Kubernetes の4種類のポリシーは、ResourceQuota/LimitRange、Pod Security Standards、Admission Controller、NetworkPolicy、OPA Gatekeeper/Kyverno によって実装され、クラスター、Namespace、Pod の各レベルで適用されます。](../.gitbook/assets/en-core-07-policies-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-0.html)
 
-## ポリシータイプの比較
+## ポリシーの種類の比較
 
-| ポリシータイプ | 実装メカニズム | 適用レベル | 主な目的 | Kubernetes バージョンサポート |
+| ポリシーの種類 | 実装方式 | 適用レベル | 主な目的 | Kubernetes バージョン |
 |------------|--------------------------|-------------------|-----------------|---------------------------|
-| **リソースポリシー** | ResourceQuota、LimitRange | Namespace | リソース使用量の制限と管理 | すべてのバージョン |
-| **セキュリティポリシー** | Pod Security Standards、PodSecurityPolicy（非推奨） | Pod、Namespace | セキュリティコンテキストの制限 | PSP: ~1.24、PSS: 1.22+ |
-| **ネットワークポリシー** | NetworkPolicy | Pod | ネットワークトラフィックの制御 | 1.8+ |
-| **カスタムポリシー** | OPA Gatekeeper、Kyverno | Cluster、Namespace、Pod | ユーザー定義ポリシーの適用 | すべてのバージョン（アドオン） |
+| **リソースポリシー** | ResourceQuota、LimitRange | Namespace | リソース使用量の制限と管理 | 全バージョン |
+| **セキュリティポリシー** | Pod Security Standards、Pod Security Admission（PSP は削除済み） | Pod、Namespace | Security Context の制限 | PSP 削除: 1.25、PSA Stable: 1.25 |
+| **ネットワークポリシー** | NetworkPolicy | Pod | ネットワーク通信の制御 | 1.8 以降 |
+| **カスタムポリシー** | OPA Gatekeeper、Kyverno | クラスター、Namespace、Pod | ユーザー定義ポリシーの適用 | インストール済みエンジンの互換性による |
 
 ## リソースポリシー
 
-リソースポリシーは、Kubernetes クラスター内のコンピューティングリソース（CPU、メモリなど）とオブジェクト数（Pod、Service など）を制限・管理するためのメカニズムです。
+リソースポリシーは、Kubernetes クラスター内で CPU やメモリなどの計算リソースと、Pod や Service などのオブジェクト数を制限・管理する仕組みです。
 
 ### ResourceQuota
 
-ResourceQuota は、namespace 内で使用できるリソースの合計量を制限します。
+ResourceQuota は、Namespace 内で使用できるリソースの合計量を制限します。
 
 ```yaml
 apiVersion: v1
@@ -97,7 +97,7 @@ spec:
 
 ### LimitRange
 
-LimitRange は、namespace 内の個々の container または Pod に対するデフォルトのリソース制限とリクエストを設定します。
+LimitRange は、コンテナの request/limit に既定値を設定し、コンテナ、Pod、PVC のリソース範囲を検証します。Pod と PVC の設定は request/limit の既定値を注入しません。
 
 ```yaml
 apiVersion: v1
@@ -134,32 +134,28 @@ spec:
 9. [ポリシーのベストプラクティス](#policy-best-practices)
 10. [まとめ](#conclusion)
 
-<span id="policy-overview"></span>
+## ポリシーの概要 {#policy-overview}
 
-## ポリシーの概要
+Kubernetes ポリシーを使うと、クラスター管理者がクラスター内のリソースやワークロードに制約を定義できます。ポリシーの主な目的は次のとおりです。
 
-Kubernetes ポリシーは、クラスター管理者がクラスター内のリソースとワークロードに対する制約を定義する方法を提供します。ポリシーは次の目的で使用されます。
+1. **セキュリティの強化**: 不正な操作を防ぎ、セキュリティのベストプラクティスを適用する
+2. **リソース管理**: リソース使用量を制限し、公平にリソースを配分する
+3. **コンプライアンス**: 組織のポリシーや規制への準拠を確保する
+4. **標準化**: 一貫した設定とデプロイ方法を適用する
 
-1. **セキュリティの強化**: 不正な操作を防止し、セキュリティのベストプラクティスを適用する
-2. **リソース管理**: リソース使用量を制限し、公平なリソース配分を確保する
-3. **コンプライアンス**: 組織のポリシーおよび規制への準拠を確保する
-4. **標準化**: 一貫した設定およびデプロイプラクティスを適用する
+Kubernetes では、組み込みリソース（NetworkPolicy、ResourceQuota、LimitRange など）またはサードパーティのポリシーエンジン（OPA Gatekeeper、Kyverno など）を使って、さまざまなポリシーを実装できます。
 
-Kubernetes では、組み込みリソース（例: NetworkPolicy、ResourceQuota、LimitRange）またはサードパーティのポリシーエンジン（例: OPA Gatekeeper、Kyverno）を通じて、さまざまな種類のポリシーを実装できます。
+## リソース割り当てポリシー {#resource-allocation-policies}
 
-<span id="resource-allocation-policies"></span>
+リソース割り当てポリシーは、Pod やコンテナが使用できる CPU、メモリなどのリソース量を制御します。
 
-## リソース割り当てポリシー
-
-リソース割り当てポリシーは、Pod と container が使用できる CPU やメモリなどのリソース量を制御します。
-
-![Pod の resources フィールドで設定した requests と limits が QoS クラスを決定し、ノードのリソースが不足した場合、そのクラスが eviction の順序を決定します。BestEffort が最初、Burstable が次、Guaranteed が最後です。](../.gitbook/assets/en-core-07-policies-1.png)
+![Resource Request と Limit は Pod の QoS に影響します。ノードプレッシャーによる Eviction では、QoS だけでなく Request を超えた使用量と Pod Priority も評価されます。](../.gitbook/assets/en-core-07-policies-1.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-1.html)
 
 ### リソースリクエストと制限
 
-Pod と container にリソースリクエストおよび制限を設定することで、リソース使用量を管理できます。
+Pod やコンテナにリソース Request と Limit を設定して、使用量を管理できます。
 
 ```yaml
 apiVersion: v1
@@ -179,49 +175,44 @@ spec:
         cpu: "500m"
 ```
 
-- **requests**: container に保証される最小リソース量
-- **limits**: container が使用できる最大リソース量
+- **requests**: スケジューリング時の予約量および実行時のリソース割り当てに使われます。実際の使用量はこの値を下回る場合があります。
+- **limits**: 実行時の上限です。CPU は Throttling され、メモリ使用量が上限を超えると OOM Kill が発生する場合があります。
 
-リソースリクエストと制限を設定すると、次の利点があります。
+リソース Request と Limit の設定には、次の利点があります。
 
-1. **リソース保証**: Pod に必要な最小リソースが保証される
-2. **リソース分離**: 1 つの Pod が他の Pod のリソースを独占することを防ぐ
-3. **効率的なスケジューリング**: scheduler は Pod を配置する際にノードのリソース容量を考慮する
+1. **リソースの確保**: Scheduler が要求容量を配置計算に使います。可用性を保証するものではありません。
+2. **リソース分離**: ある Pod が別の Pod のリソースを独占するのを防ぎます。
+3. **効率的なスケジューリング**: Pod の配置時にノードのリソース容量が考慮されます。
 
 ### QoS（Quality of Service）クラス
 
-Kubernetes は、Pod のリソースリクエストと制限の設定に基づいて QoS クラスを自動的に割り当てます。
+Kubernetes は Pod のリソース Request と Limit の設定に基づき、QoS クラスを自動的に割り当てます。
 
-1. **Guaranteed**: すべての container にリソースリクエストと制限が設定され、requests と limits が等しい
-2. **Burstable**: 少なくとも 1 つの container にリソースリクエストが設定されているが、Guaranteed の条件を満たさない
-3. **BestEffort**: リソースリクエストおよび制限が設定されている container がない
+1. **Guaranteed**: コンテナ単位の設定で、すべてのコンテナの CPU/メモリ Request と Limit がそれぞれ同じ
+2. **Burstable**: 少なくとも1つのコンテナにリソース Request があるが、Guaranteed の条件は満たさない
+3. **BestEffort**: どのコンテナにもリソース Request/Limit が設定されていない
 
-QoS クラスは、リソース不足時の Pod の eviction 順序を決定します。
-1. BestEffort Pod が最初に eviction される
-2. Burstable Pod が次に eviction される
-3. Guaranteed Pod が最後に eviction される
+ノードプレッシャーによる Eviction では、使用量が Request を超えているか、Pod の Priority、相対的な使用量などが考慮されます。一般に BestEffort は Guaranteed より Eviction されやすいものの、QoS だけで厳密な優先順位が決まるわけではありません。Pod レベルのリソースも QoS に影響します。詳しくは[公式 QoS 判定基準](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)を参照してください。
 
-<span id="pod-security-policies"></span>
+## Pod セキュリティポリシー {#pod-security-policies}
 
-## Pod セキュリティポリシー
+Pod Security Policy（PSP）は Kubernetes 1.21 から非推奨となり、1.25 で完全に削除されました。代わりに Pod Security Standards と Pod Security Admission が導入されています。
 
-Pod Security Policy（PSP）は Kubernetes 1.21 から非推奨となり、バージョン 1.25 で完全に削除されました。代わりに、Pod Security Standards と Pod Security Admission が導入されました。
-
-![namespace ラベルは Pod Security Admission モードと、各 Pod 作成リクエストを検証して許可または拒否する際の Pod Security Standards レベルを設定します。](../.gitbook/assets/en-core-07-policies-2.png)
+![Namespace Label は Pod Security Admission の Mode と Pod Security Standards の Level を設定します。Pod 作成リクエストはその Level に基づいて検証され、許可または拒否されます。](../.gitbook/assets/en-core-07-policies-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-2.html)
 
 ### Pod Security Standards
 
-Pod Security Standards は 3 つのポリシーレベルを定義します。
+Pod Security Standards は3つのポリシーレベルを定義します。
 
-1. **Privileged**: 制限なし、すべての権限を許可
+1. **Privileged**: 制限なし。すべての権限を許可
 2. **Baseline**: 既知の権限昇格経路をブロック
-3. **Restricted**: 強力に強化されたセキュリティポリシー
+3. **Restricted**: 厳格に強化されたセキュリティポリシー
 
 ### Pod Security Admission
 
-Pod Security Admission は、namespace ラベルを通じて Pod Security Standards を適用します。
+Pod Security Admission は Namespace Label を通じて Pod Security Standards を適用します。
 
 ```yaml
 apiVersion: v1
@@ -234,18 +225,16 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-各ラベルの意味:
-- **enforce**: ポリシーに違反する Pod 作成をブロックする
+各 Label の意味:
+- **enforce**: ポリシーに違反する Pod の作成を拒否する
 - **audit**: 違反を監査ログに記録する
-- **warn**: 違反に対する警告メッセージを表示する
+- **warn**: 違反に対する警告を表示する
 
-<span id="network-policies"></span>
+## ネットワークポリシー {#network-policies}
 
-## ネットワークポリシー
+NetworkPolicy を使って Pod 間の通信を制御できます。既定では Kubernetes クラスター内のすべての Pod が相互に通信できますが、ネットワークポリシーで通信を制限できます。
 
-Network Policy は、Pod 間の通信を制御する方法を提供します。デフォルトでは、Kubernetes クラスター内のすべての Pod は相互に通信できますが、ネットワークポリシーでこれを制限できます。
-
-![api-allow NetworkPolicy の podSelector、policyTypes、および ingress/egress ルールは API Pod に適用され、3 種類の selector とともに、frontend からの受信と database への送信のみを許可します。](../.gitbook/assets/en-core-07-policies-3.png)
+![api-allow NetworkPolicy の podSelector、policyTypes、Ingress/Egress ルールは API Pod に適用され、3種類の Selector とともに Frontend からの受信と Database への送信だけを許可します。](../.gitbook/assets/en-core-07-policies-3.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-3.html)
 
@@ -281,24 +270,26 @@ spec:
 ```
 
 上記の例では:
-- `api` ラベルを持つ Pod のネットワークポリシーを定義します
-- ポート 8080 では、`frontend` ラベルを持つ Pod からの受信トラフィックのみを許可します
-- ポート 5432 では、`database` ラベルを持つ Pod への送信トラフィックのみを許可します
+- `app=api` の Label が付いた Pod にネットワークポリシーを定義します。
+- ポート 8080 では、`app=frontend` の Pod からの Ingress だけを許可します。
+- ポート 5432 では、`app=database` の Pod への Egress だけを許可します。
 
-ネットワークポリシーを使用するには、クラスターのネットワークプラグインがネットワークポリシーをサポートしている必要があります。Calico、Cilium、Antrea などの CNI プラグインはネットワークポリシーをサポートしています。
+ネットワークポリシーを使うには、クラスターのネットワークプラグインが対応している必要があります。Calico、Cilium、Antrea などの CNI Plugin はネットワークポリシーをサポートしています。
+
+Namespace Selector を指定しない Pod Selector は、Policy の Namespace 内でのみ対象を選びます。標準 NetworkPolicy の許可ルールは加算方式です。別の Policy が追加の通信を許可することもあり、接続には送信元側 Egress と宛先側 Ingress の両方が許可される必要があります。この例は、別の Egress Rule でクラスター DNS Endpoint の TCP/UDP 53 を許可しない限り DNS 通信も遮断します。
 
 ### ネットワークポリシーの種類
 
-1. **Ingress Policy**: Pod に流入するトラフィックを制御する
-2. **Egress Policy**: Pod から流出するトラフィックを制御する
+1. **Ingress Policy**: Pod への受信トラフィックを制御する
+2. **Egress Policy**: Pod からの送信トラフィックを制御する
 3. **Ingress and Egress Policy**: 双方向のトラフィックを制御する
 
-### ネットワークポリシーセレクター
+### ネットワークポリシーの Selector
 
-ネットワークポリシーでは、さまざまな selector を通じてトラフィックをフィルタリングできます。
+ネットワークポリシーでは、次の Selector を使ってトラフィックを絞り込めます。
 
-1. **podSelector**: Pod ラベルに基づいて選択する
-2. **namespaceSelector**: namespace ラベルに基づいて選択する
+1. **podSelector**: Pod Label に基づいて選択する
+2. **namespaceSelector**: Namespace Label に基づいて選択する
 3. **ipBlock**: IP CIDR 範囲に基づいて選択する
 
 ```yaml
@@ -317,13 +308,11 @@ ingress:
       - 172.17.1.0/24
 ```
 
-<span id="resource-quotas"></span>
+## リソースクォータ {#resource-quotas}
 
-## リソースクォータ
+ResourceQuota は Namespace 内で使えるリソース総量を制限します。複数のチームやプロジェクトがクラスターを共有する際に、1つのチームがすべてのリソースを独占するのを防ぎます。
 
-ResourceQuota は、namespace 内で使用できるリソースの合計量を制限します。これにより、複数のチームまたはプロジェクトがクラスターリソースを共有する場合に、1 つのチームがすべてのリソースを独占することを防ぎます。
-
-![namespace に適用された 4 種類の ResourceQuota、クォータに対して合計された Pod 使用量、および使用量とリクエストの合計がクォータ内に収まるかどうかによって許可または拒否される新しい Pod リクエスト。](../.gitbook/assets/en-core-07-policies-4.png)
+![Namespace に適用された4種類の ResourceQuota、Quota に対する Pod 使用量の合計、および使用量と新しい Pod の Request の合計が Quota 内に収まるかに基づいて許可または拒否される Pod 作成リクエスト。](../.gitbook/assets/en-core-07-policies-4.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-4.html)
 
@@ -343,15 +332,15 @@ spec:
 ```
 
 上記の例では:
-- `team-a` namespace では最大 10 個の Pod を作成できます
-- すべての Pod の CPU requests の合計は 4 コアを超えることはできません
-- すべての Pod のメモリ requests の合計は 8Gi を超えることはできません
-- すべての Pod の CPU limits の合計は 8 コアを超えることはできません
-- すべての Pod のメモリ limits の合計は 16Gi を超えることはできません
+- `team-a` Namespace では、終端状態ではない Pod を最大10個作成できます。
+- Pod 全体の CPU Request 合計は4コア以下です。
+- Pod 全体のメモリ Request 合計は 8Gi 以下です。
+- Pod 全体の CPU Limit 合計は8コア以下です。
+- Pod 全体のメモリ Limit 合計は 16Gi 以下です。
 
-### オブジェクト数クォータ
+### オブジェクト数の Quota
 
-リソースクォータでは、CPU とメモリに加えて、namespace 内で作成できるオブジェクト数も制限できます。
+ResourceQuota は CPU とメモリに加えて、Namespace 内で作成できるオブジェクト数も制限できます。
 
 ```yaml
 apiVersion: v1
@@ -369,32 +358,59 @@ spec:
     services.loadbalancers: "2"
 ```
 
-### Priority Class クォータ
+### PriorityClass ごとの Quota
 
-特定の優先度クラスの Pod に対してクォータを設定することもできます。
+特定の PriorityClass を持つ Pod に対する Quota も設定できます。
+
+PriorityClass ごとに別の Quota を作成してください。`pods.high` のような Key は存在しません。Pod をスケジュールする前に対応する PriorityClass を作成します。
 
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: priority-class-quota
+  name: high-priority-quota
   namespace: team-c
 spec:
   hard:
-    pods: "10"
-    pods.high: "5"
-    pods.medium: "3"
-    pods.low: "2"
+    pods: "5"
   scopeSelector:
     matchExpressions:
     - operator: In
       scopeName: PriorityClass
-      values: ["high", "medium", "low"]
+      values: ["high"]
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: medium-priority-quota
+  namespace: team-c
+spec:
+  hard:
+    pods: "3"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values: ["medium"]
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: low-priority-quota
+  namespace: team-c
+spec:
+  hard:
+    pods: "2"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values: ["low"]
 ```
 
 ## LimitRange
 
-LimitRange は、namespace 内で作成される個々のリソース（Pod、container など）に対するデフォルトのリソース制限とリクエストを設定します。これは、開発者がリソースリクエストと制限を明示的に設定しない場合に適用されます。
+LimitRange は、コンテナに Request/Limit がない場合に既定値を設定し、Admission 時に最小値/最大値を検証します。既存 Pod のサイズを変更したり、Pod/PVC の設定に既定値を補ったりはしません。
 
 ```yaml
 apiVersion: v1
@@ -420,56 +436,56 @@ spec:
 ```
 
 上記の例では:
-- **default**: container に明示的な limit がない場合に適用されるデフォルトの limit
-- **defaultRequest**: container に明示的な request がない場合に適用されるデフォルトの request
-- **max**: container が設定できる最大 limit
-- **min**: container が設定できる最小 request
+- **default**: コンテナに明示的な Limit がない場合に適用する既定 Limit
+- **defaultRequest**: コンテナに明示的な Request がない場合に適用する既定 Request
+- **max**: コンテナに設定できる最大 Limit
+- **min**: コンテナに設定できる最小 Request
 
-LimitRange は、次のリソースタイプに適用できます。
+LimitRange は次のリソースタイプに適用できます。
 - Container
 - Pod
 - PersistentVolumeClaim
 
-<span id="policy-engines"></span>
+## ポリシーエンジン {#policy-engines}
 
-## ポリシーエンジン
+Kubernetes のエコシステムには、より複雑で柔軟なポリシーを実装できるエンジンがいくつかあります。
 
-Kubernetes エコシステムには、より複雑で柔軟なポリシーを実装できる複数のポリシーエンジンがあります。
-
-![API server は Admission Webhook を呼び出し、Webhook はリクエストを OPA Gatekeeper、Kyverno、Kubewarden に渡します。各エンジンは独自のポリシーリソースを使用し、validate と mutate をサポートしますが、generate をサポートするのは Kyverno のみです。](../.gitbook/assets/en-core-07-policies-5.png)
+![API Server は Admission Webhook を呼び出し、Webhook はリクエストを OPA Gatekeeper、Kyverno、Kubewarden に渡します。各エンジンは独自の Policy Resource を使って Validate/Mutate を行い、Generate は Kyverno だけがサポートします。](../.gitbook/assets/en-core-07-policies-5.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-5.html)
 
 ### OPA Gatekeeper
 
-OPA（Open Policy Agent）Gatekeeper は、Kubernetes クラスター上でポリシーを定義・適用するためのオープンソースプロジェクトです。Gatekeeper は、API server に送信されるリクエストをインターセプトしてポリシーを適用する Kubernetes admission controller として動作します。
+OPA（Open Policy Agent）Gatekeeper は、Kubernetes クラスターのポリシーを定義し適用するオープンソースプロジェクトです。Kubernetes Admission Controller として API Server に送られるリクエストを仲介し、ポリシーを適用します。
 
 Gatekeeper は次のコンポーネントで構成されます。
 
-1. **ConstraintTemplate**: ポリシーロジックを定義するテンプレート
-2. **Constraint**: ポリシーを特定のリソースに適用する ConstraintTemplate のインスタンス
+1. **ConstraintTemplate**: ポリシーロジックを定義する Template
+2. **Constraint**: 特定の Resource にポリシーを適用する ConstraintTemplate のインスタンス
 
 ```yaml
 # ConstraintTemplate example
-apiVersion: templates.gatekeeper.sh/v1beta1
+apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
-  name: k8srequiredlabels
+  name: k8srequiredlabelkeys
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequiredLabels
+        kind: K8sRequiredLabelKeys
       validation:
         openAPIV3Schema:
+          type: object
           properties:
             labels:
               type: array
-              items: string
+              items:
+                type: string
   targets:
     - target: admission.k8s.gatekeeper.sh
       rego: |
-        package k8srequiredlabels
+        package k8srequiredlabelkeys
         violation[{"msg": msg, "details": {"missing_labels": missing}}] {
           provided := {label | input.review.object.metadata.labels[label]}
           required := {label | label := input.parameters.labels[_]}
@@ -482,7 +498,7 @@ spec:
 ```yaml
 # Constraint example
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: K8sRequiredLabelKeys
 metadata:
   name: require-app-label
 spec:
@@ -496,7 +512,7 @@ spec:
 
 ### Kyverno
 
-Kyverno は Kubernetes ネイティブのポリシーエンジンで、YAML ベースのポリシーを使用して Kubernetes リソースを validate、mutate、generate できます。Rego 言語を学ぶ必要がなく、Kubernetes リソースに似た構文でポリシーを記述できます。
+Kyverno は Kubernetes ネイティブのポリシーエンジンです。YAML ベースのポリシーで Kubernetes Resource を検証・変更・生成できます。Rego 言語を学ぶ必要はなく、Kubernetes Resource に似た構文でポリシーを記述できます。
 
 ```yaml
 # Kyverno policy example
@@ -505,14 +521,15 @@ kind: ClusterPolicy
 metadata:
   name: require-labels
 spec:
-  validationFailureAction: enforce
   rules:
   - name: check-for-labels
     match:
-      resources:
-        kinds:
-        - Pod
+      any:
+      - resources:
+          kinds:
+          - Pod
     validate:
+      failureAction: Enforce
       message: "The labels 'app' and 'owner' are required."
       pattern:
         metadata:
@@ -521,26 +538,27 @@ spec:
             owner: "?*"
 ```
 
-Kyverno は次のポリシータイプをサポートします。
+Kyverno は次の種類のポリシーをサポートします。
 
-1. **Validate**: リソースが特定の条件を満たすことを検証する
-2. **Mutate**: リソースを自動的に変更する
-3. **Generate**: リソース作成時に他のリソースを自動的に作成する
-4. **Verify Images**: イメージ署名を検証する
-5. **Clean Up**: リソース削除時に関連リソースを自動的にクリーンアップする
+1. **Validate**: Resource が特定の条件を満たすか検証する
+2. **Mutate**: Resource を自動的に変更する
+3. **Generate**: Resource の作成時に別の Resource を自動生成する
+4. **Verify Images**: コンテナイメージの署名を検証する
+5. **Clean Up**: CleanupPolicy/ClusterCleanupPolicy が一致する Resource の削除をスケジュールする。Owner Reference による Garbage Collection とは別の機能
 
 ### Kubewarden
 
-Kubewarden は WebAssembly ベースのポリシーエンジンで、さまざまなプログラミング言語でポリシーを記述できます。ポリシーは WebAssembly モジュールにコンパイルされ、Kubewarden policy server 上で実行されます。
+Kubewarden は WebAssembly ベースのポリシーエンジンで、さまざまなプログラミング言語でポリシーを記述できます。ポリシーは WebAssembly Module にコンパイルされ、Kubewarden Policy Server 上で実行されます。
 
 ```yaml
 # Kubewarden policy example
-apiVersion: policies.kubewarden.io/v1alpha2
+apiVersion: policies.kubewarden.io/v1
 kind: ClusterAdmissionPolicy
 metadata:
   name: require-labels
 spec:
-  module: registry://ghcr.io/kubewarden/policies/require-labels:v0.1.0
+  module: "registry://ghcr.io/kubewarden/policies/safe-labels:<tested-tag>"
+  mutating: false
   rules:
   - apiGroups: [""]
     apiVersions: ["v1"]
@@ -549,24 +567,24 @@ spec:
     - CREATE
     - UPDATE
   settings:
-    required_labels:
+    mandatory_labels:
       - app
       - owner
 ```
 
-<span id="policy-management-in-amazon-eks"></span>
+これらの Resource を適用する前に、ポリシーエンジン、CRD、Policy Server をインストールしてください。Gatekeeper の例では、より機能が豊富な共有ライブラリの `K8sRequiredLabels` Template と競合しないよう、`K8sRequiredLabelKeys` を定義しています。Kubewarden では、テスト済みの公開 safe-labels Tag/Digest を選び、`mandatory_labels` を設定してください。`<tested-tag>` は置き換え用のプレースホルダーです。
 
-## Amazon EKS でのポリシー管理
+## Amazon EKS でのポリシー管理 {#policy-management-in-amazon-eks}
 
-Amazon EKS では、Kubernetes のデフォルトポリシーメカニズムに加えて、さまざまな AWS サービスを使用してポリシーを管理できます。
+Amazon EKS では、Kubernetes の既定ポリシー機構とさまざまな AWS Service を組み合わせてポリシーを管理できます。
 
-![AWS Organizations、Config、Firewall Manager は EKS クラスターを制限、監査、保護し、IAM と Security Groups は Pod に作用します。組み込みの Kubernetes ポリシーは、クラスター、namespace、Pod 全体に適用されます。](../.gitbook/assets/en-core-07-policies-6.png)
+![AWS Organizations、Config、Firewall Manager は EKS クラスターを制限・監査・保護します。IAM と Security Group は Pod に適用され、組み込み Kubernetes Policy はクラスター、Namespace、Pod に適用されます。](../.gitbook/assets/en-core-07-policies-6.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-6.html)
 
 ### AWS IAM との統合
 
-Amazon EKS は、IAM Roles for Service Accounts（IRSA）を通じて Pod に AWS サービスへの権限を付与できます。これにより、最小権限の原則を適用できます。
+Amazon EKS は IAM Roles for Service Accounts（IRSA）を通じて、Pod に AWS Service の権限を付与できます。これにより最小権限の原則を適用できます。
 
 ```bash
 # Create OIDC provider
@@ -577,13 +595,15 @@ eksctl create iamserviceaccount \
   --name my-service-account \
   --namespace default \
   --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+  --attach-policy-arn arn:aws:iam::123456789012:policy/ReadApplicationBucket \
   --approve
 ```
 
-### Pod 向け AWS Security Groups
+参照される Customer-managed Policy は、必要な Bucket/Prefix に限定した読み取りアクセスで作成してください。サポート対象の Compute では EKS Pod Identity も利用できます。IAM は AWS API へのアクセスを制御するものであり、Kubernetes Resource の認可は制御しません。
 
-Amazon EKS は、Pod レベルで AWS security groups を適用する機能を提供します。これにより、Pod 間通信をよりきめ細かく制御できます。
+### Pod 用 AWS Security Group
+
+Amazon EKS では、Pod レベルで AWS Security Group を適用できます。Pod 間の通信をより細かく制御できます。
 
 ```yaml
 apiVersion: vpcresources.k8s.aws/v1beta1
@@ -597,12 +617,14 @@ spec:
       app: web
   securityGroups:
     groupIds:
-      - sg-12345
+      - sg-0123456789abcdef0
 ```
+
+Security Group ID は、必要なアプリケーション通信と DNS 通信を許可するクラスター VPC 内の Group に置き換えてください。Pod 用 Security Group には、対応する VPC CNI 設定、IAM 権限、互換性のある Compute が必要です。Windows と EKS Auto Mode ではサポートされません。
 
 ### AWS Config と AWS Organizations
 
-AWS Config と AWS Organizations を使用して、EKS クラスターに組織レベルのポリシーを適用できます。たとえば、特定のタグがない EKS クラスターの作成を制限できます。
+AWS Config はリソースのコンプライアンスを評価しますが、それだけで `CreateCluster` を拒否することはありません。Organizations Service Control Policy（SCP）を使うと、適用対象のメンバーアカウント/OU で、次の例のように必須 Request Tag のない作成を拒否できます。
 
 ```json
 {
@@ -624,65 +646,61 @@ AWS Config と AWS Organizations を使用して、EKS クラスターに組織�
 
 ### AWS Firewall Manager
 
-AWS Firewall Manager を使用すると、複数の EKS クラスターのネットワークポリシーを一元管理できます。これにより、組織全体で一貫したセキュリティポリシーを適用できます。
+Firewall Manager は、WAF、VPC Security Group、Network Firewall、DNS Firewall など、AWS がサポートする保護機能を一元管理します。Kubernetes NetworkPolicy Resource は同期しません。これらは Kubernetes/GitOps のポリシーツールで管理してください。
 
-<span id="policy-best-practices"></span>
+## ポリシーのベストプラクティス {#policy-best-practices}
 
-## ポリシーのベストプラクティス
+Kubernetes クラスターのポリシーを効果的に管理するには、次の点を実践してください。
 
-Kubernetes クラスターでポリシーを効果的に管理するためのベストプラクティスを紹介します。
+### ポリシーの設計
 
-### ポリシー設計
-
-1. **最小権限の原則**: 必要最小限の権限のみを付与するポリシーを設計します。
-2. **段階的な適用**: すべてのポリシーを一度に適用せず、影響を最小化するために段階的に適用します。
-3. **監査モード**: 適用前に監査モードでポリシーを実行し、影響を評価します。
-4. **明確なドキュメント**: 各ポリシーの目的と影響を明確に文書化します。
+1. **最小権限の原則**: 必要最小限の権限だけを付与するポリシーを設計する
+2. **段階的な適用**: 影響を抑えるため、一度にすべてのポリシーを適用せず段階的に導入する
+3. **監査モード**: 強制する前に監査モードで実行し、影響を評価する
+4. **明確な文書化**: 各ポリシーの目的と影響を明確に記録する
 
 ### リソース管理
 
-1. **Namespace 分離**: チームまたはプロジェクトごとに namespace を分離し、それぞれに適切なリソースクォータを設定します。
-2. **デフォルト制限**: LimitRange を使用して、すべての container にデフォルトのリソース制限を設定します。
-3. **QoS クラスの考慮**: ワークロードの重要度に基づいて適切な QoS クラスを設定します。
+1. **Namespace の分離**: チーム/プロジェクトごとに Namespace を分け、適切な ResourceQuota を設定する
+2. **既定の制限**: LimitRange を使って全コンテナの既定リソース制限を設定する
+3. **QoS クラスの考慮**: ワークロードの重要度に応じて QoS クラスを設定する
 
 ### ネットワークセキュリティ
 
-1. **デフォルト拒否ポリシー**: デフォルトですべてのトラフィックを拒否し、必要な通信のみを明示的に許可するポリシーを設定します。
-2. **きめ細かなポリシー**: Pod 間の通信を細かく制御するネットワークポリシーを設定します。
-3. **定期的なレビュー**: ネットワークポリシーを定期的にレビューおよび更新します。
+1. **既定拒否ポリシー**: すべての通信を既定で拒否し、必要な通信だけを明示的に許可する
+2. **詳細なポリシー**: Pod 間通信を細かく制御するネットワークポリシーを設定する
+3. **定期的なレビュー**: ネットワークポリシーを定期的に見直し、更新する
 
 ### ポリシーの自動化
 
-1. **CI/CD 統合**: デプロイ前にポリシー違反を検出できるよう、CI/CD パイプラインにポリシー検証を統合します。
-2. **ポリシーテスト**: まずテスト環境でポリシーをテストし、問題がない場合に本番環境へ適用します。
-3. **ポリシーのバージョン管理**: ポリシーをコードとして管理し、バージョン管理システムを使用して変更を追跡します。
+1. **CI/CD との統合**: デプロイ前に違反を検知できるよう、ポリシー検証を CI/CD Pipeline に統合する
+2. **ポリシーのテスト**: まずテスト環境で検証し、問題がないことを確認してから本番環境へ適用する
+3. **バージョン管理**: ポリシーをコードとして管理し、変更履歴を追跡できるよう Version Control を使う
 
-<span id="conclusion"></span>
+## まとめ {#conclusion}
 
-## まとめ
+Kubernetes ポリシーは、クラスターやワークロードのセキュリティ、リソース使用量、ネットワーク通信を制御する強力な手段です。ResourceQuota、LimitRange、NetworkPolicy などの組み込み機構と、OPA Gatekeeper、Kyverno などのポリシーエンジンを組み合わせることで、組織の要件に合ったポリシー基盤を構築できます。
 
-Kubernetes ポリシーは、クラスターとワークロードのセキュリティ、リソース使用量、ネットワーク通信を制御するための強力なツールです。組み込みのポリシーメカニズム（ResourceQuota、LimitRange、NetworkPolicy など）とサードパーティのポリシーエンジン（OPA Gatekeeper、Kyverno など）を組み合わせることで、組織の要件に合わせたポリシーフレームワークを構築できます。
+Amazon EKS では、IAM、Security Group、AWS Config、AWS Organizations、AWS Firewall Manager などの Service を活用して、ポリシー管理をさらに強化できます。これらを組み合わせることで、クラスターやワークロードのセキュリティ、コンプライアンス、リソース管理を効果的に行えます。
 
-Amazon EKS を使用する場合、さまざまな AWS サービス（IAM、Security Groups、AWS Config、AWS Organizations、AWS Firewall Manager など）を活用することで、ポリシー管理をさらに強化できます。これらのサービスを統合することで、クラスターとワークロードのセキュリティ、コンプライアンス、リソース管理を効果的に管理できます。
-
-ポリシーは継続的に進化する領域であるため、新たな脅威や要件に対応するには、ポリシーを定期的にレビューおよび更新することが重要です。また、一貫性と効率を向上させるため、ポリシーをコードとして管理し、自動化することを推奨します。
+ポリシーは継続的に進化するため、新たな脅威や要件に対応できるよう定期的に見直し、更新することが重要です。一貫性と効率を高めるため、ポリシーをコードとして管理し、自動化することも推奨されます。
 
 ## クイズ
 
-この章で学んだ内容をテストするには、[ポリシークイズ](../quizzes/core/07-policies-quiz.md)に挑戦してください。
+この章の理解度を確認するには、[ポリシーのクイズ](../quizzes/core/07-policies-quiz.md)に挑戦してください。
 
 ## 参考資料
 
-- [Kubernetes 公式ドキュメント - Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
+- [Kubernetes 公式ドキュメント - Resource Quota](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 - [Kubernetes 公式ドキュメント - LimitRange](https://kubernetes.io/docs/concepts/policy/limit-range/)
-- [Kubernetes 公式ドキュメント - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Kubernetes 公式ドキュメント - NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [Kubernetes 公式ドキュメント - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Kubernetes 公式ドキュメント - Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
 - [OPA Gatekeeper 公式ドキュメント](https://open-policy-agent.github.io/gatekeeper/website/docs/)
 - [Kyverno 公式ドキュメント](https://kyverno.io/docs/)
 - [Kubewarden 公式ドキュメント](https://docs.kubewarden.io/)
-- [Amazon EKS 公式ドキュメント - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [Amazon EKS 公式ドキュメント - Pod 向け Security Groups](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+- [Amazon EKS 公式ドキュメント - ServiceAccount 用 IAM Role](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+- [Amazon EKS 公式ドキュメント - Pod 用 Security Group](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 - [AWS Config 公式ドキュメント](https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html)
 - [AWS Organizations 公式ドキュメント](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
 - [AWS Firewall Manager 公式ドキュメント](https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html)

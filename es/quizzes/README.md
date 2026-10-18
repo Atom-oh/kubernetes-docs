@@ -1,10 +1,15 @@
 # Cuestionarios de Operaciones Cloud Native
 
-Use estos cuestionarios después de leer las guías para comprobar conceptos y requisitos de ejecución. Los formatos varían según el tema: opción múltiple, respuestas escritas, ejercicios y preguntas avanzadas. Despliegue cada pregunta para leer su respuesta.
+Utilice estos cuestionarios después de leer las guías para comprobar conceptos y requisitos de ejecución. Los formatos varían según el tema: opción múltiple, respuestas escritas, ejercicios y preguntas avanzadas. Despliegue cada pregunta para leer su respuesta.
 
 Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de validación de la guía antes de ejecutar comandos.
 
 ## Índice completo de cuestionarios
+
+### Introducción
+
+- [Cuestionario sobre lectura con LLM y llms.txt](./llm-guide-quiz.md)
+- [Cuestionario de la hoja de ruta de la guía](./roadmap-quiz.md)
 
 ### AI/ML
 
@@ -15,6 +20,7 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 - [Cuestionario de infraestructura de IA en EKS](./ai-ml/06-ai-infrastructure-quiz.md)
 - [Cuestionario de mejores prácticas de AI/ML](./ai-ml/07-ai-ml-best-practices-quiz.md)
 - [Cuestionario de plataforma de IA agéntica en EKS](./ai-ml/08-agentic-ai-platform-quiz.md)
+- [Cuestionario de LLM Gateway](./ai-ml/08-llm-gateway-quiz.md)
 - [Cuestionario de arquitectura e instalación de Kubeflow en EKS](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Cuestionario de Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Cuestionario de Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks-quiz.md)
@@ -28,6 +34,10 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 - [Cuestionario del operador KubeRay](./ai-ml/ray/02-kuberay-operator-quiz.md)
 - [Cuestionario de Ray Train / Tune](./ai-ml/ray/03-ray-train-tune-quiz.md)
 - [Cuestionario de Ray Serve](./ai-ml/ray/04-ray-serve-quiz.md)
+- [Cuestionario de arquitectura de plataforma de SageMaker Qwen](./ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+- [Cuestionario de datos sintéticos de PII y tokenización](./ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+- [Cuestionario de ejecución de SageMaker AI y MLflow](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+- [Cuestionario de resultados de validación factual de SageMaker Qwen](./ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
 ### Autoescalado
 
@@ -42,6 +52,17 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 - [Cuestionario de tecnología de contenedores](./basics/03-container-technology-quiz.md)
 - [Cuestionario de introducción a Kubernetes](./basics/04-kubernetes-introduction-quiz.md)
 - [Cuestionario de fundamentos de eBPF](./basics/05-ebpf-fundamentals-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 1: modelo por capas, enlace y enrutamiento](./basics/06-network-fundamentals-part1-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 2: transporte y TLS](./basics/06-network-fundamentals-part2-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 3: protocolos de aplicación](./basics/06-network-fundamentals-part3-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 4: el recorrido y la nube](./basics/06-network-fundamentals-part4-quiz.md)
+
+### Registros de contenedores
+
+- [Cuestionario de Docker Hub](./container-registry/01-docker-hub-quiz.md)
+- [Cuestionario de Amazon ECR](./container-registry/02-amazon-ecr-quiz.md)
+- [Cuestionario de Harbor](./container-registry/03-harbor-quiz.md)
+- [Cuestionario de mejores prácticas para registros de contenedores](./container-registry/04-best-practices-quiz.md)
 
 ### Núcleo de Kubernetes
 
@@ -59,6 +80,16 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 
 ### Data on EKS
 
+- [Cuestionario sobre la anatomía de una canalización de datos moderna](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
+- [Cuestionario de arquitectura de Airflow](./data-on-eks/airflow/01-architecture-quiz.md)
+- [Cuestionario de despliegue con Helm y elección del ejecutor](./data-on-eks/airflow/02-helm-deployment-quiz.md)
+- [Cuestionario de patrones DAG y KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns-quiz.md)
+- [Cuestionario de integración con MWAA](./data-on-eks/airflow/04-mwaa-integration-quiz.md)
+- [Parte 5: cuestionario de operaciones y seguridad](./data-on-eks/airflow/05-operations-quiz.md)
+- [Cuestionario de arquitectura de Flink en Kubernetes](./data-on-eks/flink/01-architecture-quiz.md)
+- [Cuestionario del operador de Flink para Kubernetes](./data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+- [Cuestionario de estado, puntos de control y patrones de streaming](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+- [Cuestionario de operaciones, alta disponibilidad y Flink gestionado](./data-on-eks/flink/04-operations-ha-quiz.md)
 - [Cuestionario de fundamentos de Kafka](./data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
 - [Cuestionario del operador Strimzi](./data-on-eks/kafka/02-strimzi-operator-quiz.md)
 - [Cuestionario de operaciones de Kafka](./data-on-eks/kafka/03-kafka-operations-quiz.md)
@@ -67,6 +98,17 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 - [Cuestionario de integración con MSK](./data-on-eks/kafka/06-msk-integration-quiz.md)
 - [Parte 7: Cuestionario de monitorización](./data-on-eks/kafka/07-monitoring-quiz.md)
 - [Parte 8: Cuestionario de mejores prácticas](./data-on-eks/kafka/08-best-practices-quiz.md)
+- [Parte 9: cuestionario de revisión del benchmark de Kafka](./data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+- [Cuestionario de dominios, proyectos y gobernanza de Unified Studio](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+- [Cuestionario de fundamentos de Spark en Kubernetes](./data-on-eks/spark/01-spark-fundamentals-quiz.md)
+- [Cuestionario del operador de Spark](./data-on-eks/spark/02-spark-operator-quiz.md)
+- [Cuestionario de Amazon EMR en EKS](./data-on-eks/spark/03-emr-on-eks-quiz.md)
+- [Parte 4: cuestionario de rendimiento y optimización de costos](./data-on-eks/spark/04-performance-tuning-quiz.md)
+- [Parte 5: cuestionario de mejores prácticas y seguridad](./data-on-eks/spark/05-best-practices-quiz.md)
+
+### Bases de datos
+
+- [Cuestionario del benchmark medido de ClickHouse en EKS](./database/01-clickhouse-on-eks-quiz.md)
 
 ### Amazon EKS
 
@@ -132,6 +174,17 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 - [Cuestionario de seguridad de ArgoCD](./gitops/argocd/07-security-quiz.md)
 - [Cuestionario de notificaciones de ArgoCD](./gitops/argocd/08-notifications-quiz.md)
 - [Cuestionario de mejores prácticas de ArgoCD](./gitops/argocd/09-best-practices-quiz.md)
+- [Cuestionario de experimentos con Argo Rollouts](./gitops/argocd/10-rollouts-experiment-quiz.md)
+
+### Gobernanza de la nube
+
+- [Cuestionario de introducción a la gobernanza empresarial en la nube](./governance/00-governance-overview-quiz.md)
+- [Cuestionario de landing zones, OU y control organizativo](./governance/01-landing-zone-and-ou-quiz.md)
+- [Cuestionario de estructura de cuentas y límites de IAM](./governance/02-account-and-iam-quiz.md)
+- [Cuestionario de arquitectura de EKS con varias cuentas y clústeres](./governance/03-eks-multi-account-multi-cluster-quiz.md)
+- [Cuestionario de VPC compartidas y conectividad](./governance/04-shared-vpc-and-connectivity-quiz.md)
+- [Cuestionario de límites de datos y seguridad](./governance/05-data-security-boundaries-quiz.md)
+- [Cuestionario del marco de decisión y diseño de pruebas de concepto](./governance/06-decision-framework-and-poc-quiz.md)
 
 ### Redes
 
@@ -213,6 +266,7 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 - [Cuestionario de Tekton Pipelines](./ops/14-tekton-pipelines-quiz.md)
 - [Cuestionario de operaciones de clústeres zonales](./ops/15-zonal-operations-guide-quiz.md)
 - [Cuestionario del playbook de resolución de problemas](./ops/16-troubleshooting-playbook-quiz.md)
+- [Cuestionario de experimentos de Spot en producción en EKS](./ops/17-spot-production-experiments-quiz.md)
 
 ### Ingeniería de plataformas
 
@@ -268,6 +322,27 @@ Para los ejercicios, revise las versiones, los prerrequisitos y el alcance de va
 - [Cuestionario de seguridad de Linkerd](./service-mesh/linkerd/security.md)
 - [Cuestionario de gestión de tráfico de Linkerd](./service-mesh/linkerd/traffic-management.md)
 
+- [Cuestionario de arquitectura: App Mesh frente a VPC Lattice](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+- [Cuestionario de análisis del impacto en la latencia](./service-mesh/vpc-lattice/02-latency-quiz.md)
+- [Cuestionario del flujo de autenticación de IAM](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+- [Cuestionario de fundamentos: enlace local y SNI](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [Cuestionario de migración de identidad de cargas de trabajo](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+- [Cuestionario de restricciones y puntos de decisión](./service-mesh/vpc-lattice/06-constraints-quiz.md)
+- [Cuestionario del datapath del kernel](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
+
 ### Almacenamiento
 
 - [Cuestionario del benchmark medido de EBS gp2 frente a gp3](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### Blockchain
+
+- [Cuestionario de fundamentos de blockchain](./blockchain/01-fundamentals-quiz.md)
+- [Cuestionario de ejecución de nodos de blockchain en EKS](./blockchain/02-nodes-on-eks-quiz.md)
+- [Cuestionario de Amazon Managed Blockchain](./blockchain/03-managed-blockchain-quiz.md)
+- [Cuestionario sobre servicios financieros](./blockchain/04-financial-services-quiz.md)
+
+### Kernel de Linux
+
+- [Cuestionario sobre las funciones del kernel que sustentan los contenedores](./kernel/01-container-primitives-quiz.md)
+- [Cuestionario de la pila de redes del kernel](./kernel/02-network-stack-quiz.md)
+- [Cuestionario de ajuste del kernel de nodos de EKS](./kernel/03-eks-node-tuning-quiz.md)

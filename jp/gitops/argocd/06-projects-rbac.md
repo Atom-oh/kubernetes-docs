@@ -1,7 +1,7 @@
 # ArgoCD Projects と RBAC
 
-> **レビュー対象**: Argo CD 3.5.2。リリースノートのレビュー後にパッチ 3.5.4 へ更新（例は再実行していません）
-> **最終更新**: October 12, 2026
+> **レビュー対象**: Argo CD 3.5.2。リリースノートのレビュー後にパッチ 3.5.5 へ更新（例は再実行していません）
+> **最終更新**: 2026年10月16日
 
 ## 目次
 - [AppProject の概要](#appproject-overview)
@@ -12,7 +12,7 @@
 - [CI/CD 用 JWT Token](#jwt-tokens-for-cicd)
 - [孤立リソースのモニタリング](#orphaned-resource-monitoring)
 
-## AppProject の概要
+## AppProject の概要 {#appproject-overview}
 
 AppProject は Application を論理的にグループ化し、デプロイ可能なリソース、デプロイ先、および管理者を対象とするアクセス制御を定義します。
 
@@ -82,7 +82,7 @@ spec:
       name: kube-root-ca.crt
 ```
 
-## デフォルト Project
+## デフォルト Project {#default-project}
 
 ArgoCD は、すべてのソース、宛先、およびリソース種別を許可するデフォルト Project を作成します。制限はできますが削除はできません。
 
@@ -133,7 +133,7 @@ spec:
     kind: '*'
 ```
 
-## カスタム Project
+## カスタム Project {#custom-projects}
 
 ### チームベースの Project
 
@@ -295,7 +295,7 @@ spec:
 - `manualSync` は許可 Window 外での手動例外を許可します。自動 sync を無効化するものでも、例外をオンコール Role に限定するものでもありません。sync の章で、重複する拒否 Window と明示的な Time Zone を確認してください。
 - デフォルトを制限する前に、既存の Application を明示的な Project に移動し、アクセスを検証してください。
 
-## RBAC 設定
+## RBAC 設定 {#rbac-configuration}
 
 ArgoCD RBAC は `argocd-rbac-cm` ConfigMap で設定します。
 
@@ -421,7 +421,7 @@ policy.example-2.csv: |
   p, role:operator, applications, get, production/*, allow
 ```
 
-## マルチテナンシーのパターン
+## マルチテナンシーのパターン {#multi-tenancy-patterns}
 
 ### チームごとの Namespace
 
@@ -574,7 +574,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGOCD_VERSION=v3.5.4
+        ARGOCD_VERSION=v3.5.5
         case "$(uname -m)" in
           x86_64) cli_arch=amd64 ;;
           aarch64|arm64) cli_arch=arm64 ;;
@@ -624,7 +624,7 @@ kubectl create secret generic argocd-ci-token -n ci \
 
 先に ci Namespace と job RBAC をプロビジョニングしてください。承認済みの CI job でのみ Secret を mount/read し、Token の有効期限前に値をローテーションしてください。Token の値を Git に置かないでください。
 
-## 孤立リソースのモニタリング
+## 孤立リソースのモニタリング {#orphaned-resource-monitoring}
 
 ArgoCD で管理されていない対象 Namespace 内のリソースを検出します。
 
