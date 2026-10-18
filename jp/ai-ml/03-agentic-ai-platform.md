@@ -1,11 +1,11 @@
-# EKS 上で Agentic AI Platform を構築する
+# EKS 上で Agentic AI プラットフォームを構築する
 
 > **レビュー基準**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
-> **最終更新**: September 12, 2026
+> **最終更新**: 2026年10月16日
 
-Agentic AI は、単純な質問応答を超え、自律的に計画を作成し、ツールを使用して、反復的に目標を達成します。本章では、EKS 上での Agentic AI platform の設計方法とその運用境界を扱います。
+Agentic AI は単純な質問応答にとどまらず、自律的に計画を立て、ツールを使い、反復しながら目標を達成します。この章では、EKS 上に Agentic AI プラットフォームを設計する方法と、その運用上の境界を説明します。
 
-## 1. Agentic AI Platform の概要
+## 1. Agentic AI プラットフォームの概要
 
 ### Agentic AI とは
 
@@ -20,72 +20,72 @@ Agentic AI は、次の特性を持つ自律型 AI システムです。
 3. **反復的な改善**: 実行結果を評価し、必要に応じて計画を修正します。
 4. **状態管理**: 長時間実行されるタスクの状態とメモリを維持します。
 
-### Kubernetes を選択する場面
+### Kubernetes を選ぶ場面
 
-Kubernetes は、Agentic AI platform 向けに次の中核機能を提供します。
+Kubernetes は、Agentic AI プラットフォームに次の基本機能を提供します。
 
 | 要件 | Kubernetes ソリューション |
 |-------------|---------------------|
-| GPU オーケストレーション | Device Plugin, GPU Operator, MIG |
-| Auto Scaling | HPA, VPA, Karpenter |
-| マルチテナント分離 | RBAC, Namespace, 強制された NetworkPolicy, workload identity |
-| 高可用性 | replicas, probes, 配置および復旧テスト |
-| Service Mesh | 構成済みの gateway/mesh 実装 |
-| コスト最適化 | Spot instances, Node 統合 |
+| GPU オーケストレーション | Device Plugin、GPU Operator、MIG |
+| 自動スケーリング | HPA、VPA、Karpenter |
+| マルチテナント分離 | RBAC、Namespace、NetworkPolicy の強制適用、ワークロードアイデンティティ |
+| 高可用性 | レプリカ、プローブ、配置と復旧のテスト |
+| サービスメッシュ | 設定済みのゲートウェイ/メッシュ実装 |
+| コスト最適化 | Spot インスタンス、ノード集約 |
 
-### 4 つの主要な技術的課題
+### 4 つの主要な技術課題
 
-Agentic AI platform を構築する際に解決すべき主な課題:
+Agentic AI プラットフォームの構築では、次の技術課題に対処する必要があります。
 
-![GPU 配置、プロバイダー統合、異なる LangGraph と Kagent ADK runtime、強制された予算によるコスト計測。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
+![GPU の配置、プロバイダー統合、LangGraph と Kagent ADK で異なるランタイム、予算を強制したコスト計測。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-1.html)
 
 ---
 
-## 2. GPU とコストのベースライン
+## 2. GPU とコストの基準
 
-外部モデル API を使用する Agent が、必ずしも GPU を必要とするわけではありません。セルフホスト型 inference では、weights/precision、KV cache、concurrency、CPU architecture、driver compatibility に基づいてデバイスを選択する必要があります。[レビュー済み GPU ガイド](01-ai-ml-workloads.md)を使用し、AL2023 NVIDIA AMI 上での重複した driver/toolkit インストールを避けてください。
+外部モデル API を使うエージェントに GPU が必要とは限りません。推論をセルフホストする場合は、モデルの重みと精度、KV キャッシュ、同時実行数、CPU アーキテクチャ、ドライバーとの互換性を踏まえてデバイスを選びます。[確認済みの GPU ガイド](01-ai-ml-workloads.md)を参照し、AL2023 の NVIDIA AMI にドライバーやツールキットを重複してインストールしないでください。
 
-MIG はサポート対象の GPU を分割します。1 つの MIG instance 内での time-slicing は、その共有 workload 間に memory/fault isolation を追加しません。これは software security boundary ではありません。同様に、80 GB には一般に 70B FP16 weights は収まりません。
+MIG は対応 GPU を複数のインスタンスに分割します。1 つの MIG インスタンス内で time-slicing を行っても、同じインスタンスを共有するワークロード間にメモリ分離や障害分離は追加されません。ソフトウェア上のセキュリティ境界にもなりません。同様に、80 GB の GPU に 70B パラメーターの FP16 重みが一般に収まるわけではありません。
 
-GPU Operator Helm values は ConfigMap/HelmRelease resources とは異なります。Flux HelmRelease を helm --values として渡しても、意図した設定は適用されません。MIG manager ConfigMap references、profile node labels、plugin strategy は一致している必要があります。device-plugin.config labels は ConfigMap 名ではなく configuration key を選択します。MIG の再構成は workloads を中断させる可能性があり、この監査では実施しませんでした。
+GPU Operator の Helm 値は ConfigMap や HelmRelease リソースとは形式が異なります。Flux の HelmRelease を `helm --values` に渡しても、意図した設定は適用されません。MIG Manager の ConfigMap 参照、プロファイル用ノードラベル、プラグインの方式を一致させてください。`device-plugin.config` のラベルが選ぶのは ConfigMap 名ではなく設定キーです。MIG の再構成はワークロードを中断させる可能性があるため、この監査では実行していません。
 
-価格には region/OS/purchase mode/date と quota のコンテキストが必要です。以前の出典のない時間単価表および固定の節約率は、現行の価格根拠ではありません。セルフホスト型の合計 GPU idle time、storage/transfer、operation、recovery cost を、測定された成功 throughput と比較してください。
+価格を比較するには、リージョン、OS、購入方式、日付、クォータを揃える必要があります。以前掲載されていた出典のない時間単価表や固定の節約率は、現在の価格を裏付けるものではありません。セルフホスト時の GPU のアイドル時間、ストレージと転送、運用、復旧の総コストを、実測した正常処理スループットと比較してください。
 
-## 3. Model Serving (vLLM)
+## 3. モデルサービング（vLLM）
 
-### vLLM アーキテクチャ
+### vLLM のアーキテクチャ
 
-vLLM は、次の中核技術を通じて高性能な LLM inference を提供します。
+vLLM は、次の主要技術によって LLM の高性能な推論を実現します。
 
-![PagedAttention、continuous batching、prefix caching、chunked prefill。workload に依存する memory、throughput、latency の測定を伴います。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
+![PagedAttention、連続バッチ処理、プレフィックスキャッシュ、チャンク単位の prefill。メモリ、スループット、レイテンシはワークロードに応じて測定します。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-2.html)
 
-### レビュー済みの Serving Path
+### 確認済みの推論構成
 
-0.29.0 の image/model revisions、startup probes、private Service、実際の CLI options については、[最新の vLLM ガイド](02-vllm-deployment.md)を使用してください。single-GPU NodePool は、以前の four-GPU/200Gi Pod を配置できません。TP/PP groups と独立した replicas を区別し、memory needs を計算してください。
+イメージとモデルの 0.29.0 向けリビジョン、起動プローブ、内部 Service、実際の CLI オプションについては、[最新の vLLM ガイド](02-vllm-deployment.md)を参照してください。単一 GPU の NodePool には、以前の 4 GPU・200 Gi の Pod を配置できません。Tensor Parallelism（TP）/Pipeline Parallelism（PP）のグループと独立したレプリカを区別し、必要なメモリを計算してください。
 
-Prefix cache は、完全な responses ではなく、サポートされる KV prefixes を再利用します。GPU memory utilization は KV-cache fraction だけではなく、swap-space は現在の CLI にありません。llm-d disaggregation は、role arguments を持つ架空の 2 つの prefill/decode images ではありません。実際の release の model server、KV connector、scheduler、gateway、hardware/network の組み合わせを検証してください。
+プレフィックスキャッシュが再利用するのは、対応する KV プレフィックスであり、応答全体ではありません。GPU メモリ使用率は KV キャッシュだけで決まるわけではなく、現在の CLI に `swap-space` オプションはありません。llm-d の分離構成は、role 引数を渡す架空の prefill/decode イメージを 2 つ用意すればよいものではありません。実際のリリースで使うモデルサーバー、KV コネクター、スケジューラー、ゲートウェイ、ハードウェアとネットワークの組み合わせを検証してください。
 
-## 4. Inference Gateway
+## 4. 推論ゲートウェイ
 
-### Gateway API ベースの AI Workload Routing
+### Gateway API による AI ワークロードのルーティング
 
-Kubernetes Gateway API を拡張して、AI inference workloads を効率的に routing します。
+Kubernetes Gateway API を拡張し、AI 推論ワークロードを効率的にルーティングします。
 
 ### Kgateway + InferencePool アーキテクチャ
 
-![HTTPRoute は InferencePool を参照し、gateway は EPP selection を使用して model Pod に proxy します。configuration resources は proxy hops とは異なります。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
+![HTTPRoute が InferencePool を参照し、ゲートウェイが EPP で転送先を選んでモデル Pod にプロキシします。設定リソースとデータ経路上のプロキシホップの関係を示します。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-3.html)
 
 #### InferencePool v1
 
-Gateway API と Gateway API Inference Extension は別々の API です。Extension 1.6.1 は、targetPorts と endpointPickerRef を備えた inference.networking.k8s.io/v1 を使用します。以前の架空の EndpointPicker CRD/endpointPickerConfig はこの schema ではありません。
+Gateway API と Gateway API Inference Extension は別の API です。Extension 1.6.1 の InferencePool は、`targetPorts` と `endpointPickerRef` を持つ `inference.networking.k8s.io/v1` を使います。以前の例にあった架空の EndpointPicker CRD/`endpointPickerConfig` は、このスキーマではありません。
 
-この schema-checked example には、9002 上の EPP Service、model Pods、サポートする gateway controller が必要です。InferencePool 単体では、authentication、rate limits、prefix-aware selection algorithm は構成されません。
+このスキーマを確認した例を動かすには、ポート 9002 の EPP Service、モデル Pod、対応するゲートウェイコントローラーが必要です。InferencePool だけでは認証、レート制限、プレフィックスを考慮した選択アルゴリズムは設定されません。
 
 ```yaml
 apiVersion: inference.networking.k8s.io/v1
@@ -108,13 +108,13 @@ spec:
     failureMode: FailClose
 ```
 
-selector は同一 Namespace の Pods のみと一致します。EndpointPickerRef はデフォルトで Service reference および FailClose になります。HTTPRoute、EPP configuration/version support、TLS、gateway status をまとめて検証してください。API definitions または Kgateway installation で、すべての plugin capabilities が有効になるわけではありません。
+セレクターが一致するのは同じ Namespace 内の Pod だけです。EndpointPickerRef はデフォルトで Service 参照となり、失敗時の動作は FailClose です。HTTPRoute、EPP の設定とバージョン対応、TLS、ゲートウェイの状態をまとめて検証してください。API 定義や Kgateway のインストールだけで、すべてのプラグイン機能が有効になるわけではありません。
 
-### LiteLLM 1.100.1 Provider Gateway
+### LiteLLM 1.100.1 によるプロバイダーゲートウェイ
 
-LiteLLM provider adaptation と InferencePool endpoint selection は異なる layers です。Provider APIs は paths、authentication、payloads、responses、streaming が異なります。OpenAI JSON を変更せずに Anthropic endpoint へ forwarding しても、有効な adapter ではありません。
+LiteLLM によるプロバイダーごとの API 変換と、InferencePool によるエンドポイント選択は別の層です。プロバイダー API ではパス、認証、ペイロード、応答、ストリーミングの仕様が異なります。OpenAI の JSON をそのまま Anthropic のエンドポイントへ転送しても、正しいアダプターにはなりません。
 
-現在の Router fallback shape を以下に示します。proxy command/args を実際の config file に接続し、必要に応じて Redis/database、credentials、callbacks を別途提供してください。
+以下は現在の Router のフォールバック設定例です。プロキシの command/args を実際の設定ファイルにつなぎ、必要に応じて Redis/データベース、認証情報、コールバックを別途指定してください。
 
 ```yaml
 model_list:
@@ -132,39 +132,39 @@ router_settings:
   num_retries: 0
 ```
 
-これは構成を例示しており、準備済みの endpoints と authentication が必要です。application clients には master key ではなく scoped credentials を付与してください。外部 fallback は data-egress path です。routing 前に tenant provider/data policy を強制してください。model-selected name または client header によってそれをバイパスさせてはなりません。
+この例は設定の形を示すもので、エンドポイントと認証は事前に準備する必要があります。アプリケーションクライアントには master key ではなく、用途を限定した認証情報を渡してください。外部モデルへのフォールバックはデータの外部送信経路になります。ルーティング前にテナントごとのプロバイダー/データポリシーを強制し、モデル名やクライアントヘッダーでその制御を回避できないようにしてください。
 
 
-## 5. RAG データと Retrieval Boundaries
+## 5. RAG データと検索の境界
 
-最新の検査済み Milvus release は 3.0.3 (2026-10-14) です。別途レビュー済みの Operator 1.3.9 は、デフォルトで Milvus 2.6.11 を使用します。これらは 1 つの version ではなく、広範な compatibility table はテスト済みの 3.x upgrade の証明にはなりません。operator repository は https://zilliztech.github.io/milvus-operator/ であり、通常の Milvus chart repository とは別です。
+確認した最新の Milvus リリースは 3.0.3（2026年10月14日）です。別途確認した Operator 1.3.9 のデフォルトは Milvus 2.6.11 です。両者は同じバージョンではありません。また、幅広い互換性一覧があっても、3.x へのアップグレードをテスト済みとは言えません。operator のリポジトリは https://zilliztech.github.io/milvus-operator/ で、通常の Milvus chart リポジトリとは別です。
 
-Vector dimensions は実際の embedding output と一致する必要があります。ingestion と queries について、revision、dimensions options、tokenizer、normalization、distance metric を記録してください。Index parameters は異なります。HNSW M/efConstruction を GPU_IVF_FLAT に単純に再利用することはできません。GPU indexing には互換性のある images、version、devices、component roles が必要です。indexNode に GPU を要求しても、自動的に acceleration されるわけではありません。
+ベクトルの次元数は、実際の埋め込み出力と一致させます。データ取り込みと検索の双方について、リビジョン、次元設定、トークナイザー、正規化方式、距離尺度を記録してください。インデックスごとにパラメーターは異なるため、HNSW の M や efConstruction を GPU_IVF_FLAT にそのまま流用できません。GPU インデックスには、互換性のあるイメージ、バージョン、デバイス、コンポーネントの役割が必要です。indexNode に GPU を要求しても、自動的に GPU 処理されるわけではありません。
 
-tenant_id field だけでは isolation は強制されません。authenticated identity から scope を導出し、server-side retrieval filters を適用して、返される documents を検証してください。document deletion/change と embedding-version lifecycle も管理してください。
+`tenant_id` フィールドだけではテナント分離を強制できません。認証済みのアイデンティティから検索範囲を決め、サーバー側の検索フィルターを適用し、返却された文書を検証してください。文書の削除や変更、埋め込みバージョンのライフサイクルも管理してください。
 
-### Chunking と Hybrid Search
+### チャンク分割とハイブリッド検索
 
-現在の splitter imports では langchain_text_splitters を使用します。RecursiveCharacterTextSplitter の chunk_size はデフォルトで tokens ではなく characters です。Token splitting は embedding model の tokenizer と実際の input limit に一致させる必要があります。Semantic chunking は embedding calls/cost を追加し、より良い品質を保証するものではありません。
+現在の分割器は `langchain_text_splitters` からインポートします。`RecursiveCharacterTextSplitter` の `chunk_size` の既定値はトークン数ではなく文字数です。トークン単位で分割する場合は、埋め込みモデルのトークナイザーと実際の入力上限に合わせてください。意味ベースの分割は埋め込み呼び出しとコストを増やしますが、品質向上を保証するものではありません。
 
-Hybrid search では、同一の authorization filters を伴う、単なる 2 回の searches ではなく、RRF や calibrated scores などの fusion が必要です。recall、precision、latency を評価してください。retries を制限し、retry exhaustion 後に常に生成するのではなく、evidence がない場合は棄権してください。
+ハイブリッド検索では検索を 2 回実行するだけでなく、RRF や較正済みスコアなどで結果を融合します。どちらの検索にも同じ認可フィルターを適用し、再現率、適合率、レイテンシを評価してください。再試行回数に上限を設け、上限に達した後も常に回答を生成するのではなく、根拠がなければ棄権してください。
 
 
-## 6. AI Agent Deployment (Kagent)
+## 6. AI エージェントのデプロイ（Kagent）
 
 ### Kagent の概要
 
-Kagent は Kubernetes-native AI agent lifecycle management tool です。
+Kagent は Kubernetes ネイティブの AI エージェント・ライフサイクル管理ツールです。
 
-![Kagent controller は v1alpha2 Agent resource を reconcile し、承認済み ModelConfig、MCP tools、構成済み session storage を備えた ADK runtime を管理します。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
+![Kagent コントローラーは v1alpha2 の Agent リソースを調整し、承認済みの ModelConfig、MCP ツール、設定済みセッションストレージを備えた ADK ランタイムを管理します。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-4.html)
 
-### Kagent 0.10.1 Agent API
+### Kagent 0.10.1 の Agent API
 
-Kagent は自動的な kubectl execution だけに限定されません。Declarative agents は Go/Python ADK runtimes を使用します。BYO は user-provided A2A agent をホストします。LangGraph は別途統合された workflow framework であり、Kagent と同じ runtime ではありません。
+Kagent は kubectl を自動実行するだけのツールではありません。宣言型エージェントは Go/Python の ADK ランタイムを使い、BYO モードでは利用者が用意した A2A エージェントをホストします。LangGraph は別途統合するワークフローフレームワークであり、Kagent と同じランタイムではありません。
 
-この Agent は、別途承認/構成された同一 Namespace の ModelConfig と RemoteMCPServer resources を参照します。実際の MCP service/search_documents tool、authentication、TLS、data permissions を提供してください。これは tool を作成することも、Kubernetes write access を付与することもありません。
+この Agent は、別途承認・設定した同じ Namespace 内の ModelConfig と RemoteMCPServer リソースを参照します。実際の MCP サービスと `search_documents` ツール、認証、TLS、データへのアクセス権を用意してください。この定義だけでツールが作成されたり、Kubernetes への書き込み権限が付与されたりするわけではありません。
 
 ```yaml
 apiVersion: kagent.dev/v1alpha2
@@ -202,13 +202,13 @@ spec:
           memory: 1Gi
 ```
 
-ModelConfig.apiKeySecret は file delivery を意味しません。検査済みの OpenAI translator は、OPENAI_API_KEY SecretKeyRef environment variable を作成します。no-secret-environment policy の下では、検証済みの file-credential BYO/runtime または authentication gateway path を使用してください。token-delegation/audience design なしに apiKeyPassthrough を有効にしても、代替にはなりません。
+`ModelConfig.apiKeySecret` を指定しても、認証情報がファイルとして渡されるとは限りません。確認した OpenAI translator は、`OPENAI_API_KEY` を参照する SecretKeyRef 環境変数を作成します。Secret を環境変数に渡さないポリシーでは、検証済みのファイル認証情報に対応する BYO/ランタイムか、認証ゲートウェイを使用してください。トークン委譲と audience の設計なしに `apiKeyPassthrough` を有効化しても代替策にはなりません。
 
-An eval() calculator と架空の permissions fields は security boundaries ではありません。実際の tool server で least privilege、input validation、resource limits、approval、idempotency を実装してください。Agent replicas によって shared memory/session stores が自動的に高可用になるわけではありません。
+`eval()` を使う計算ツールや、実在しない権限フィールドはセキュリティ境界になりません。実際のツールサーバーに最小権限、入力検証、リソース上限、承認、冪等性を実装してください。Agent のレプリカを増やしても、共有メモリーやセッションストアが自動的に高可用になるわけではありません。
 
-### 実行可能な LangGraph Control Flow
+### 実行可能な LangGraph の制御フロー
 
-この local example は、明示的な retrieve/rewrite/generate callbacks を備えた実際の SDK を使用します。その demo は LLM または vector DB を呼び出しません。元の question を保持し、rewrites を 2 回に制限し、documents がない場合は棄権します。SQLite context manager は正しく使用され、永続化された state は再オープン後にチェックされています。
+このローカル例では、検索・クエリ書き換え・生成のコールバックを明示した実際の SDK を使います。デモから LLM やベクトルデータベースは呼び出しません。元の質問を保持し、書き換えは最大 2 回に制限し、文書が得られなければ回答を控えます。SQLite のコンテキストマネージャーを正しく使い、保存した状態を再オープン後に確認しています。
 
 ```python
 from typing import Callable, TypedDict
@@ -276,13 +276,13 @@ if __name__ == "__main__":
         print(app.get_state(config).values["retries"])
 ```
 
-Production thread_id は、DB authorization、encryption、concurrency、retention controls とともに、authenticated tenant/session identity に紐付ける必要があります。:memory: は process exit 後に存続しません。SqliteSaver は PostgreSQL DSN を使用できません。適切な Postgres saver を使用してください。get_state_history() を読むだけでは execution は復元されません。checkpoint configuration と実際の resume/replay semantics を使用してください。
+本番環境では `thread_id` を認証済みのテナント/セッション ID に結び付け、DB の認可、暗号化、同時実行制御、保持期間を設計してください。`:memory:` の内容はプロセス終了後に残りません。SqliteSaver は PostgreSQL の DSN を受け付けないため、対応する Postgres saver を使用してください。`get_state_history()` を読むだけでは実行状態を復元できません。checkpoint の設定と、実際の再開・再実行の仕様を使ってください。
 
-supervisor output を allowed enum に対して検証し、unknown values/budget exhaustion を処理してください。substring COMPLETE が INCOMPLETE を success として扱ってはなりません。モデルに tool の使用を求めるだけでは、それ自体で tool を実行または検証しません。
+supervisor の出力を許可された enum と照合し、未知の値や予算超過を処理してください。`COMPLETE` という部分文字列の検査で `INCOMPLETE` を成功と判定してはなりません。モデルにツールの使用を指示しても、それだけでツールが実行・検証されるわけではありません。
 
-## 7. Langfuse と Operational Observability
+## 7. Langfuse による運用可観測性
 
-Langfuse SDK 4.15.2 は、古い trace()/generation() APIs を start_as_current_observation()、create_score()、および関連 methods に置き換えます。この監査では、real server ingestion/storage/authentication ではなく、in-memory exporter を使用して 1 つの trace 内の 3 つの retrieval/generation/parent spans を検証しました。
+Langfuse SDK 4.15.2 では、旧式の `trace()`/`generation()` API に代わり、`start_as_current_observation()`、`create_score()` などを使います。この監査ではインメモリー exporter を使用し、1 つの trace 内の検索・生成・親 span の計 3 つを確認しました。実際のサーバーへの取り込み、保存、認証は検証していません。
 
 ```python
 from pathlib import Path
@@ -305,53 +305,53 @@ client.flush()
 client.shutdown()
 ```
 
-Langfuse chart 2.1.0 は app 4.24.0 を参照しており、最新の検査済み server 4.60.0 (2026-10-15) とは異なります。Web/worker、PostgreSQL、Redis/Valkey、object storage、ClickHouse が必要です。chart は ClickHouse Operator/cert-manager prerequisites をチェックします。Offline rendering は、deployed operator ではなく、simulated API capability information を提供しました。デフォルトの charts には secret environment delivery が含まれており、承認済みの file-only credential deployments ではありません。
+Langfuse chart 2.1.0 が参照するアプリは 4.24.0 で、確認済みの最新サーバー 4.60.0（2026年10月15日）とはバージョンが異なります。Web/worker、PostgreSQL、Redis/Valkey、オブジェクトストレージ、ClickHouse が必要です。chart は ClickHouse Operator と cert-manager の前提条件を確認します。オフラインレンダリングで得られたのは API 機能に関するシミュレーション情報であり、Operator をデプロイした結果ではありません。既定の chart は Secret を環境変数に渡すため、ファイルだけで認証情報を渡す構成として承認済みではありません。
 
-DCGM FB_USED は percentage ではなく quantity です。units と total memory を検証してください。GPU utilization80% または temperature85C は universal health thresholds ではありません。latency/queues/errors/throttling と実際の device limits を併せて観測してください。
+DCGM の `FB_USED` は割合ではなく使用量です。単位と総メモリー容量を確認してください。GPU 使用率 80% や温度 85°C を一律の健全性しきい値にはできません。レイテンシ、キュー、エラー、スロットリングを、実際のデバイス上限と併せて監視してください。
 
-### Response Caches とコスト
+### 応答キャッシュとコスト
 
-Cache keys は、tenant/authorization scope、model/prompt/retrieved-data revision、generation settings、関連する tool state を取得する必要があります。shared model+prompt keys は、別の user の result を再利用する可能性があります。private または変化する external state に対しては、caching を無効にするか、明示的な expiry/invalidation を定義してください。
+キャッシュキーには、テナントと認可範囲、モデル/プロンプト/取得データのリビジョン、生成設定、関連ツールの状態を含めます。モデルとプロンプトだけに基づく共有キーでは、別の利用者の結果を再利用するおそれがあります。非公開のデータや変化する外部状態を扱う場合は、キャッシュを無効にするか、有効期限と無効化の条件を明示してください。
 
-Token-price estimates は invoices ではありません。cache read/write、batch、retries、routing calls、self-hosted fixed costs を含めてください。budget、quality、provider policy に違反する cheapest-model fallback を拒否してください。KEDA cron trigger は、他の triggers に対してより低い nighttime cap を課しません。CronJob timezone、concurrency/deadline/retry、persisted results を定義してください。
-
-
-## 8. Evaluation と Quality Management
-
-Ragas 0.4.3 は、削除された vertexai module を import するため、resolved langchain-community 0.4.2 に対して import に失敗しました。langchain 0.3.27、core 0.3.79、community 0.3.31、openai integration 0.3.35 に pin した別の environment では、imports と SingleTurnSample/EvaluationDataset construction が成功しました。これが current LangGraph と 1 つの dependency stack を共有すると仮定しないでください。
-
-Faithfulness/AnswerRelevancy などの現在の collection APIs には明示的な LLM/embedding adapters が必要です。古い ragas.metrics singleton imports は deprecation warnings を出します。Evaluation には model-call cost/failure handling、dataset/judge/prompt revisions、missing/NaN treatment が必要です。ここでは metric imports/schema のみをテストしており、0.92 などの quality score は測定していません。
-
-A/B ConfigMap 単体では traffic を routing しません。実際の consumer/controller、stable assignment、equivalent authorization/data context、sufficient samples、guardrail metrics を実装してください。恣意的な model quality/pricing tables では、30–50% の savings は確立されません。
-
-finance example の compliance_check function は regulatory compliance を認証するものではありません。authenticated account scope、monotonic sensitive/approval conditions（後から true を false で上書きしない）、side-effect idempotency、audit、human handoff criteria を設計してください。
+トークン単価による概算は請求額そのものではありません。キャッシュの読み書き、バッチ処理、再試行、ルーティング呼び出し、セルフホストの固定費を含めてください。予算、品質、プロバイダーポリシーに反する場合は、最安モデルへのフォールバックを拒否します。KEDA の cron トリガーだけでは、他のトリガーに対する夜間の低い上限を設定できません。CronJob のタイムゾーン、同時実行、期限、再試行、結果の永続化を定義してください。
 
 
-## 9. Review Baselines と Validation Scope
+## 8. 評価と品質管理
 
-| コンポーネント | ベースライン | 検証済みの範囲 |
+Ragas 0.4.3 は、削除済みの `vertexai` モジュールを import するため、解決済みの langchain-community 0.4.2 との組み合わせでは import に失敗しました。別環境で langchain 0.3.27、core 0.3.79、community 0.3.31、openai integration 0.3.35 に固定したところ、import と `SingleTurnSample`/`EvaluationDataset` の構築に成功しました。この構成が現在の LangGraph と同じ依存関係一式を共有すると考えないでください。
+
+Faithfulness や AnswerRelevancy などの現行コレクション API には、LLM/埋め込みアダプターを明示的に指定する必要があります。旧式の `ragas.metrics` シングルトンを import すると非推奨の警告が出ます。評価設計では、モデル呼び出しの費用と失敗、データセット/評価者/プロンプトのリビジョン、欠損値や NaN の扱いを考慮してください。ここで確認したのはメトリクスの import とスキーマだけで、0.92 などの品質スコアは測定していません。
+
+A/B 用の ConfigMap だけではトラフィックは振り分けられません。実際に読み取るコンシューマー/コントローラー、安定した割り当て、同等の認可とデータ条件、十分なサンプル数、ガードレール指標を用意してください。根拠のないモデル品質/価格表から 30～50% の節約を主張することもできません。
+
+金融の例にある `compliance_check` 関数は、規制への準拠を証明するものではありません。認証済みアカウントの範囲、後から true を false に上書きできない単調な機微情報/承認条件、副作用の冪等性、監査、担当者へ引き継ぐ条件を設計してください。
+
+
+## 9. 検証対象のベースラインと範囲
+
+| コンポーネント | ベースライン | 検証した範囲 |
 | --- | --- | --- |
-| Kagent |0.10.1 / v1alpha2 | 公式 Helm/CRDs および Agent/ModelConfig/RemoteMCPServer schemas |
-| Inference Extension |1.6.1 / v1 | InferencePool schema。live EPP/gateway なし |
-| LiteLLM |1.100.1 | Router fallback configuration。provider call なし |
-| Milvus | server/SDK3.0.1; Operator 1.3.9 | Operator Helm/synthetic vector schema。database なし |
-| LangGraph |1.2.11 + sqlite saver 3.1.1 | Bounded retrieval、abstention、state recovery |
-| Langfuse | SDK 4.15.2 / chart 2.1.0 | Local trace/spans と offline chart inspection |
-| Ragas |0.4.3 | Compatible isolated imports/schema。evaluator model calls なし |
+| Kagent | 0.10.1 / v1alpha2 | 公式 Helm/CRD と Agent/ModelConfig/RemoteMCPServer のスキーマ |
+| Inference Extension | 1.6.1 / v1 | InferencePool のスキーマ。稼働中の EPP/gateway は未検証 |
+| LiteLLM | 1.100.1 | Router のフォールバック設定。プロバイダー呼び出しは未実施 |
+| Milvus | server/SDK 3.0.1、Operator 1.3.9 | Operator の Helm と合成ベクトルスキーマ。データベースは未検証 |
+| LangGraph | 1.2.11 + sqlite saver 3.1.1 | 上限付き検索、棄権、状態の復旧 |
+| Langfuse | SDK 4.15.2 / chart 2.1.0 | ローカルの trace/span とオフラインでの chart 検査 |
+| Ragas | 0.4.3 | 分離環境での互換 import/スキーマ。評価モデルの呼び出しは未実施 |
 
-Schemas、Helm、local SDK checks は、full-platform deployment、authentication、HA、GPU performance を証明するものではありません。cloud resources または paid model calls は使用していません。
+スキーマ、Helm、ローカル SDK の検査は、プラットフォーム全体のデプロイ、認証、高可用性、GPU 性能を証明するものではありません。クラウドリソースや有料のモデル呼び出しは使用していません。
 
 ## 10. 次のステップ
 
 ### 演習クイズ
 
-Agentic AI platform への理解を確認するため、次のクイズに取り組んでください。
-- [Agentic AI Platform クイズ](../quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+Agentic AI プラットフォームへの理解を確認するため、次のクイズに取り組んでください。
+- [Agentic AI プラットフォームのクイズ](../quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
 ### 関連ドキュメント
 
-- [vLLM Deployment 詳細ガイド](./02-vllm-deployment.md) - 詳細な vLLM installation と optimization
-- [AI/ML Workloads](./01-ai-ml-workloads.md) - Kubernetes における AI/ML workload management
+- [vLLM デプロイの詳細ガイド](./02-vllm-deployment.md) - vLLM のインストールと最適化の詳細
+- [AI/ML ワークロード](./01-ai-ml-workloads.md) - Kubernetes における AI/ML ワークロードの管理
 
 ### 参考資料
 
@@ -360,6 +360,6 @@ Agentic AI platform への理解を確認するため、次のクイズに取り
 - [Milvus Operator 1.3.9](https://github.com/zilliztech/milvus-operator/tree/milvus-operator-1.3.9)
 - [Langfuse SDK 4.15.2](https://github.com/langfuse/langfuse-python/tree/v4.15.2)
 - [Langfuse Helm2.1.0](https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0)
-- [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence)
+- [LangGraph の永続化](https://docs.langchain.com/oss/python/langgraph/persistence)
 - [LiteLLM Router](https://docs.litellm.ai/docs/routing)
 - [Ragas 0.4.3](https://pypi.org/project/ragas/0.4.3/)

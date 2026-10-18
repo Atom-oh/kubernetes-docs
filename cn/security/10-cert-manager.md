@@ -1,6 +1,6 @@
 # 使用 cert-manager 管理证书
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 > **验证基线**：cert-manager 1.21.2、cmctl 2.6.1、trust-manager 0.25.0、istio-csr 0.18.0、aws-privateca-issuer 1.9.2、ACK ACM 1.8.1。cert-manager 1.21 公布的受支持/已测试 Kubernetes 版本范围为 1.33–1.36；Kubernetes 1.37 不在该范围内，因此本指南不声明与其兼容。
 
 cert-manager 将证书签发和续期作为 Kubernetes 资源进行管理。**CA 信任分发、应用重新加载、吊销以及 CRL/OCSP 操作仍是单独的职责**。示例已使用本地 schema、配置和库进行检查；它们不能证明外部 CA 签发或 AWS/Kubernetes 部署已成功。另有一项独立的临时本地 Vault 2.1.0 测试，使用合成 CA 对十六种签发/CSR 签名接受/拒绝场景进行了验证。

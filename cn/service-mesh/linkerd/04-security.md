@@ -1,6 +1,6 @@
 # Linkerd 安全
 
-> **最后更新**：October 16, 2026 · Linkerd edge-26.10.1 · cert-manager 示例已根据 1.21.2 检查
+> **最后更新**：2026 年 10 月 16 日 · Linkerd edge-26.10.1 · cert-manager 示例已根据 1.21.2 检查
 
 Linkerd 为其代理处理的流量提供工作负载身份验证、传输加密和入站授权。注册、策略、证书生命周期和应用安全仍需要明确设计。请使用[安装指南](01-installation.md)中受支持的 Kubernetes/Gateway API 组合；此处的示例假设已完成该安装，并且已有应用工作负载。
 

@@ -40,13 +40,13 @@ Cuando un Rollout llega a un paso de experimento, los recursos se crean mediante
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-10-rollouts-experiment-0.html)
 
 1. Una actualización que llega al paso de experimento crea un Experiment. La creación inicial establece la versión estable y omite los pasos canary normales; observe el experimento tras un **cambio posterior en la plantilla de Pod**.
-2. El controlador crea un ReplicaSet por plantilla y espera a que estén disponibles las réplicas solicitadas. La preparación y minReadySeconds son relevantes; superar el plazo de progreso hace que el experimento falle.
-3. Cuando todas están disponibles, se registra `status.availableAt` y comienza el análisis. La duración configurada se mide a partir de ese momento.
+2. El controlador crea un ReplicaSet por plantilla y espera a que estén disponibles las réplicas solicitadas. La disponibilidad de las réplicas y minReadySeconds son relevantes; si se supera el plazo de progreso, el experimento falla.
+3. Cuando todas están disponibles, se registra `status.availableAt` y comienza el análisis. La duración configurada en `duration` se mide a partir de ese momento.
 4. Se propaga el resultado de finalización: Successful avanza, Failed/Error aborta e **Inconclusive pausa**. La limpieza de ReplicaSet/Service es un proceso de reconciliación aparte.
 
 ## Reglas de generación de nombres {#name-generation-rules}
 
-Los recursos de la familia Experiment reciben nombres sistemáticos que permiten deducir el Rollout propietario, la revisión y el paso.
+Los recursos asociados a Experiment siguen reglas sistemáticas de nombres que permiten identificar, solo por el nombre, el Rollout propietario, la revisión y el paso.
 
 | Recurso | Regla | Ejemplo medido |
 |----------|------|------------------|
@@ -54,7 +54,7 @@ Los recursos de la familia Experiment reciben nombres sistemáticos que permiten
 | ReplicaSet | `<experiment-name>-<template-name>` | `demo-app-74d8d8b4fb-2-0-baseline`, `demo-app-74d8d8b4fb-2-0-canary` |
 | AnalysisRun | `<experiment-name>-<analysis-name>` | `demo-app-74d8d8b4fb-2-0-success-rate` |
 
-Los ejemplos anteriores corresponden al experimento del paso con índice 0 de la actualización de revisión 2 del Rollout `demo-app`. El resultado en árbol de [Resultados de la verificación](#verification-results) muestra la jerarquía real.
+Los ejemplos anteriores corresponden al experimento del paso con índice 0 de la actualización de revisión 2 del Rollout `demo-app`. La salida en forma de árbol de [Resultados de la verificación](#verification-results) muestra la jerarquía real.
 
 Estos son nombres base. Las colisiones de nombres de Experiment/AnalysisRun pueden añadir sufijos numéricos; use ownerReferences y el estado para encontrar los recursos reales.
 
@@ -88,13 +88,13 @@ Estas son **dos alternativas** para una entrada de `spec.strategy.canary.steps` 
       weight: 5
 ```
 
-- `service: {}` crea un Service para esa plantilla. Su nombre predeterminado coincide con el ReplicaSet; `service.name` puede sobrescribirlo. Los puertos de contenedor declarados deben coincidir con los listeners reales de la aplicación.
-- `weight` se aplica a cada plantilla. Cinco significa 5 % con el peso total predeterminado de 100; compruebe las unidades si usa un `maxTrafficWeight` personalizado. Un peso también crea un Service.
+- `service: {}` crea un Service para esa plantilla. Su nombre predeterminado coincide con el ReplicaSet; `service.name` puede sobrescribirlo. Los puertos de contenedor declarados deben coincidir con los puertos de escucha reales de la aplicación.
+- `weight` se aplica a cada plantilla. Un valor de cinco representa el 5 % con el peso total predeterminado de 100; compruebe las unidades si usa un `maxTrafficWeight` personalizado. Un peso también crea un Service.
 - Los Experiment ponderados requieren un enrutador compatible. La documentación de la versión 1.10 enumera ALB/Istio/SMI. El uso de pesos en un canary normal no implica que NGINX ni todos los complementos admitan división del tráfico de Experiment.
 
 ## Medición y resultado: AnalysisRun {#measurement-and-verdict-analysisrun}
 
-AnalysisRun evalúa los resultados del proveedor mediante condiciones. Este es un **fragmento de la especificación de AnalysisTemplate**; el proveedor completo aparece en el ejemplo de abajo. Si falta la tasa de éxito o queda fuera del rango esperado, ambas condiciones son falsas y el resultado es Inconclusive. Los tipos no válidos, los fallos HTTP/de recopilación y los errores de expresiones siguen la ruta Error.
+Los recursos AnalysisRun evalúan los resultados del proveedor mediante condiciones. Este es un **fragmento de la especificación de AnalysisTemplate**; la configuración completa del proveedor aparece en el ejemplo siguiente. Si falta la tasa de éxito o queda fuera del rango esperado, ambas condiciones son falsas y el resultado es Inconclusive. Los tipos no válidos, los fallos HTTP/de recopilación y los errores de expresiones siguen la ruta Error.
 
 ```yaml
 metrics:
@@ -129,7 +129,7 @@ Si solo hay una condición de éxito, false significa Failed. Si solo hay una co
 
 ## Propagación de resultados y transiciones de estado de Rollout {#result-propagation-and-rollout-state-transitions}
 
-![Successful de Experiment avanza, Failed/Error aborta e Inconclusive pausa; la limpieza sigue la política de demora.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-1.png)
+![El resultado Successful de Experiment hace avanzar el Rollout, Failed/Error lo aborta e Inconclusive lo pausa; la limpieza sigue la política de demora.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-10-rollouts-experiment-1.html)
 
@@ -139,13 +139,13 @@ Si solo hay una condición de éxito, false significa Failed. Si solo hay una co
 | Failed / Error | Aborta/queda Degraded; restaura la versión estable según las políticas configuradas de enrutamiento/réplicas |
 | Inconclusive | Se pausa con `InconclusiveExperiment`; investigue y tome una decisión como operador |
 
-La versión 1.10 no espera incondicionalmente a que transcurran la duración Y el análisis. Si todos los análisis requeridos tienen éxito, Experiment puede finalizar antes de que transcurra la duración. Si quedan análisis requeridos, el experimento puede seguir ejecutándose después de la duración; cuando esta termina, pueden finalizarse los análisis no requeridos. Si no hay duración ni análisis requeridos, el experimento sigue ejecutándose hasta que se termina explícitamente. El ejemplo omite la duración y usa análisis requeridos de recuento finito para completar el experimento.
+La versión 1.10 no espera incondicionalmente a que transcurran la duración y el análisis. Si todos los análisis requeridos tienen éxito, Experiment puede finalizar antes de que transcurra la duración. Si quedan análisis requeridos, el experimento puede seguir ejecutándose después de la duración; cuando esta termina, pueden finalizarse los análisis no requeridos. Si no hay duración ni análisis requeridos, el experimento sigue ejecutándose hasta que se termina explícitamente. El ejemplo omite la duración y usa análisis requeridos de recuento finito para completar el experimento.
 
 `scaleDownDelaySeconds` tiene un valor predeterminado de treinta segundos. El estado terminal, la ausencia de Pods y la eliminación del Service no se garantizan simultáneamente. El controlador reduce la escala después de la demora y elimina los Services generados cuando el número de réplicas disponibles llega a cero. Los objetos ReplicaSet/AnalysisRun pueden permanecer conforme a las políticas de historial/recolección de elementos no utilizados. Abortar no revierte cambios en bases de datos ni efectos secundarios externos.
 
 ## Ejemplo práctico {#working-example}
 
-Este es un **ejemplo educativo de flujo de control**. Instale Rollouts 1.10.0/CRD y el complemento, y proporcione por separado un Service HTTP llamado `metrics-mock` en el espacio de nombres `demo` que devuelva el JSON de abajo. No se incluye la implementación de su servidor, por lo que aplicar solo estos manifiestos no garantiza el éxito. Los valores fijos de la simulación no miden la calidad de referencia/canary ni las proporciones del tráfico real.
+Este es un **ejemplo educativo de flujo de control**. Instale Rollouts 1.10.0, los CRD y el complemento, y proporcione por separado un Service HTTP llamado `metrics-mock` en el espacio de nombres `demo` que devuelva el JSON de abajo. No se incluye la implementación de su servidor, por lo que aplicar solo estos manifiestos no garantiza el éxito. Los valores fijos de la simulación no miden la calidad de referencia/canary ni las proporciones del tráfico real.
 
 ```json
 {"status":"ok","success_rate":0.99}
@@ -261,7 +261,7 @@ spec:
             memory: 128Mi
 ```
 
-Después de aplicar el archivo y establecer la primera revisión estable en un clúster de laboratorio dedicado, cambie la anotación de la plantilla de Pod para probar el paso de experimento. Esto demuestra el flujo del controlador, no la calidad de una imagen nueva. Para recursos administrados por Argo CD, realice el cambio en Git en lugar de modificar el estado activo. Una tasa simulada de 0.99 prueba el éxito, 0.50 supera failureLimit y provoca el aborto, y una tasa ausente prueba la pausa Inconclusive. Después, revise el alcance de limpieza de recursos del laboratorio.
+Después de aplicar el archivo y establecer la primera revisión estable en un clúster de laboratorio dedicado, cambie la anotación de la plantilla de Pod para probar el paso de experimento. Esto demuestra el flujo del controlador, no la calidad de una imagen nueva. Para recursos administrados por Argo CD, realice el cambio en Git en lugar de modificar directamente el estado del clúster. Una tasa simulada de 0.99 prueba el éxito, 0.50 supera failureLimit y provoca el aborto, y una tasa ausente prueba la pausa Inconclusive. Después, revise el alcance de limpieza de recursos del laboratorio.
 
 ```bash
 kubectl argo rollouts status demo-app -n demo --timeout=180s
@@ -271,7 +271,7 @@ kubectl patch rollout demo-app -n demo --type merge \
 kubectl argo rollouts get rollout demo-app -n demo --watch
 ```
 
-`setWeight: 20` es una aproximación de la proporción de Pods sin trafficRouting. Tres réplicas no pueden garantizar exactamente el 20 % de las solicitudes de usuario. Las comparaciones reales requieren tráfico de prueba, instrumentación/recopilación, muestras suficientes y los siguientes argumentos hash de **ReplicaSet de Experiment**. No son campos `podTemplateHashValue: Baseline/Canary`.
+`setWeight: 20` es una aproximación de la proporción de Pods sin trafficRouting. Tres réplicas no pueden garantizar exactamente el 20 % de las solicitudes de usuario. Las comparaciones reales requieren tráfico de prueba, instrumentación y recopilación de métricas, muestras suficientes y los argumentos de hash del **ReplicaSet de Experiment** que se muestran a continuación. No son campos `podTemplateHashValue: Baseline/Canary`.
 
 ```yaml
 args:

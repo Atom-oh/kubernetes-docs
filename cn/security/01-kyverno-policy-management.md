@@ -1,7 +1,7 @@
 # 使用 Kyverno 进行策略管理
 
 > **验证基线**：Kyverno/CLI 1.19.1，Helm chart 3.9.1。当前发布指南列出的已测试 Kubernetes 版本为 1.33–1.35；chart 更宽泛的安装约束并不保证兼容性。
-> **最后更新**：September 13, 2026
+> **最后更新**：2026 年 9 月 13 日
 
 Kyverno 会评估 Kubernetes 策略，并执行显式配置的变更、生成和删除操作。这些示例已在本地使用真实 CLI 和已发布的 schema/chart 进行检查。未执行实时集群安装、准入、网络隔离、清理或 AWS 集成。
 
@@ -213,7 +213,7 @@ spec:
 
 ### 4. 定时删除
 
-`DeletingPolicy` 使用 `spec.schedule` 和 CEL 条件；它独立于验证策略，也没有 `validationActions` 的 Audit 开关。清理控制器需要显式的删除权限。应优先选择范围狭窄的命名空间/对象标签和明确的资源保留期限或状态要求，检查所选目标，并在启用定时任务前测试恢复流程。可选的测验示例会选择带有标记且已完成的 Pod；它并不表示“超过 24 小时”，且此处没有执行任何定时删除。
+`DeletingPolicy` 使用 `spec.schedule` 和 CEL 条件；它独立于验证策略，也没有 validationActions 的 Audit 开关。清理控制器需要显式的删除权限。应优先选择范围狭窄的命名空间/对象标签和明确的资源保留期限或状态要求，检查所选目标，并在启用定时任务前测试恢复流程。可选的测验示例会选择带有标记且已完成的 Pod；它并不表示“超过 24 小时”，且此处没有执行任何定时删除。
 
 ## Kyverno 在 EKS 中的应用场景
 
@@ -375,7 +375,7 @@ spec:
 
 #### 自动生成 PodDisruptionBudget
 
-此 Deployment 示例需显式启用，要求期望副本数至少为两个，并复制**完整的 `spec.selector`**（包括 matchExpressions），而不是可能不存在的顶层 app 标签。它不能证明两个副本都处于 Ready 状态。在扩容或选择器更改后，需要另行决定是否继续使用此静态实验环境 PDB，尤其是在禁用同步时。PDB 只约束符合条件的主动驱逐，不涵盖每次滚动更新或意外故障。
+此 Deployment 示例需显式启用，要求期望副本数至少为两个，并复制**完整的 spec.selector**（包括 matchExpressions），而不是可能不存在的顶层 app 标签。它不能证明两个副本都处于 Ready 状态。在扩容或选择器更改后，需要另行决定是否继续使用此静态实验环境 PDB，尤其是在禁用同步时。PDB 只约束符合条件的主动驱逐，不涵盖每次滚动更新或意外故障。
 
 ```yaml
 apiVersion: policies.kyverno.io/v1

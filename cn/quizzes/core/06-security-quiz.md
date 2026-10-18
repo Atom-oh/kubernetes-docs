@@ -4,10 +4,10 @@
 
 ## Multiple Choice Questions
 
-1. Kubernetes 不支持以下哪种用户 authentication 方法？
+1. 以下哪种用户身份验证方法并非 Kubernetes 原生支持？
    - A) X.509 certificates
    - B) Service account tokens
-   - C) OAuth tokens
+   - C) OpenID Connect ID tokens
    - D) 内置用户数据库
    
 <details>
@@ -16,7 +16,7 @@
 **答案：D) 内置用户数据库**
 
 **解释：**
-Kubernetes 不提供内置用户数据库。相反，它支持 X.509 certificates、service account tokens、OAuth tokens、OpenID Connect tokens 和 webhook token authentication 等 authentication 方法。用户管理通常通过与外部系统（例如 LDAP、Active Directory）集成来完成。
+Kubernetes 不提供内置用户数据库。它支持 X.509 证书、ServiceAccount 令牌、OpenID Connect ID 令牌和 webhook 令牌身份验证。任意 OAuth access token 需要配置相应的身份验证器。用户管理通常通过与外部系统（例如 LDAP、Active Directory）集成来完成。
 </details>
 
 2. 以下哪项不是 Kubernetes 中 RBAC (Role-Based Access Control) 的主要组件？
@@ -31,7 +31,7 @@ Kubernetes 不提供内置用户数据库。相反，它支持 X.509 certificate
 **答案：D) SecurityPolicy**
 
 **解释：**
-Kubernetes RBAC 的主要组件是 Role、ClusterRole、RoleBinding 和 ClusterRoleBinding。Role 和 ClusterRole 定义权限集合，而 RoleBinding 和 ClusterRoleBinding 将这些权限与 users、groups 或 service accounts 关联。SecurityPolicy 不是 RBAC 组件；类似资源包括 PodSecurityPolicy（现已弃用）或 PodSecurityStandard。
+Kubernetes RBAC 的主要组件是 Role、ClusterRole、RoleBinding 和 ClusterRoleBinding。Role 和 ClusterRole 定义权限集合；RoleBinding 和 ClusterRoleBinding 则将这些权限与用户、组或 ServiceAccount 关联。SecurityPolicy 不是 RBAC 组件；PodSecurityPolicy 已在 Kubernetes 1.25 中移除。Pod Security Standards 是由 Pod Security Admission 执行的策略定义，并不存在名为 PodSecurityStandard 的 API 资源。
 </details>
 
 3. 在 Kubernetes 中，以下哪项不能通过 Pod 的 Security Context 配置？
@@ -99,7 +99,7 @@ Pod Security Standards 定义了三个 policy levels：
 Restricted policy 限制最严格，它遵循最小权限原则并应用安全最佳实践。此 policy 禁止 privileged containers、host namespace sharing、host path mounts 等。
 </details>
 
-7. 保护 Kubernetes 中 Secret 数据的最有效方法是什么？
+7. 以下哪项会在 etcd 中加密 Secret 数据？
    - A) Base64 encoding
    - B) etcd encryption configuration
    - C) Namespace isolation
@@ -146,7 +146,7 @@ Audit logging 是一种记录发送到 Kubernetes API server 的 requests 的机
 
 10. 以下哪项不是 Kubernetes 中 privileged containers 的特征？
     - A) 访问所有 host devices
-    - B) 使用 host network stack
+    - B) 授予所有 Linux capabilities
     - C) 能够加载 host kernel modules
     - D) 自动访问其他 namespaces 中的资源
     
@@ -156,7 +156,7 @@ Audit logging 是一种记录发送到 Kubernetes API server 的 requests 的机
 **答案：D) 自动访问其他 namespaces 中的资源**
 
 **解释：**
-Privileged containers 几乎可以访问所有 host capabilities，但它们不会自动拥有访问其他 Kubernetes namespaces 中资源的权限。跨 namespace 访问由 RBAC permissions 控制。Privileged containers 可以访问 host devices、network stack、kernel modules 等，因此会带来显著的安全风险，所以只应在绝对必要时使用。
+Privileged 容器可以访问几乎所有主机能力，但不会因此自动获得访问其他 Kubernetes 命名空间资源的权限；跨命名空间访问由 RBAC 权限控制。`privileged: true` 本身不会设置 `hostNetwork: true`。它会移除重要的主机隔离边界；若工作负载遭到入侵，可能暴露凭据并绕过预期隔离，因此 RBAC 无法保护已遭入侵的特权工作负载。
 </details>
 
 ## Short Answer Questions
@@ -167,7 +167,7 @@ Privileged containers 几乎可以访问所有 host capabilities，但它们不�
 <summary>显示答案</summary>
 
 **答案：**
-Role 只在特定 namespace 内定义并应用权限，而 ClusterRole 在整个集群范围内应用，并定义跨所有 namespaces 的权限。ClusterRole 还用于定义非 namespace 级资源（nodes、PVs 等）的权限。
+Role 是命名空间范围的权限定义。ClusterRole 是集群范围的定义，可涵盖命名空间级或集群级资源。RoleBinding 可在单个命名空间中授予 ClusterRole 对命名空间级资源的权限；ClusterRoleBinding 则在整个集群范围授予权限。仅定义 Role 或 ClusterRole 本身不会授予任何访问权限。
 </details>
 
 2. 解释在 Kubernetes 中应用“最小权限原则”的三种方法。
@@ -192,7 +192,7 @@ Role 只在特定 namespace 内定义并应用权限，而 ClusterRole 在整个
 <summary>显示答案</summary>
 
 **答案：**
-Secret 用于存储敏感信息（passwords、tokens、keys 等），而 ConfigMap 用于存储通用配置数据。Secrets 以 Base64 编码形式存储（默认不加密），可以配置为仅挂载在内存中，并且只在 pods 创建时被引用。不过，如果没有额外配置，两者都会以 plaintext 形式存储在 etcd 中，因此需要 etcd encryption settings 才能实现完整安全性。
+Secret 用于存储敏感信息（密码、令牌、密钥等），而 ConfigMap 用于存储一般配置数据。Secret 的 `data` 在 API 表示中使用 Base64 编码，这并不等于加密。在 Linux 上，完整的 Secret 卷使用以内存为后端的存储，并且可在 Pod 创建后接收更新；应用必须重新读取文件。静态加密取决于集群配置（EKS 1.28+ 默认加密 API 数据）。仍需使用 RBAC 并遵循 Pod 最小权限原则。
 </details>
 
 4. Kubernetes 中 'service account token volume projection' 的目的和好处是什么？
@@ -201,7 +201,7 @@ Secret 用于存储敏感信息（passwords、tokens、keys 等），而 ConfigM
 <summary>显示答案</summary>
 
 **答案：**
-Service account token volume projection 为挂载到 pods 的 service account tokens 提供额外的安全特性，例如时间限制和 audience restrictions。这可以限制 token lifetime，并确保只有特定 API servers 接受该 token，从而在 token 泄露时降低风险。此外，tokens 会自动续期，避免长期运行的 applications 出现 authentication 问题。
+ServiceAccount token 卷投影可为挂载到 Pod 的令牌提供额外安全属性，例如有效期限制和 audience 限制，从而缩短令牌寿命，并确保只有指定的 API Server 接受该令牌，降低令牌泄露后的风险。kubelet 会轮换投影令牌；应用必须重新读取令牌，接收方也必须验证其 audience 和过期时间。仅有轮换并不能更新被应用永久缓存的令牌。
 </details>
 
 5. Kubernetes 中的 'container sandboxing' 是什么，可以使用哪些技术来实现？
@@ -240,7 +240,7 @@ metadata:
   namespace: monitoring
   name: pod-reader
 rules:
-  - apiGroups: [""]
+- apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
 ---
@@ -293,7 +293,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: frontend
+          kubernetes.io/metadata.name: frontend
     ports:
     - protocol: TCP
       port: 8080
@@ -306,10 +306,8 @@ spec:
 kubectl apply -f backend-network-policy.yaml
 ```
 
-注意：要让此 NetworkPolicy 生效，'frontend' namespace 必须具有 'name: frontend' label。如果没有，请使用以下命令添加：
-```bash
-kubectl label namespace frontend name=frontend
-```
+内置标签 `kubernetes.io/metadata.name: frontend` 可在无需自定义标签的情况下选择 `frontend` 命名空间。其他叠加的 NetworkPolicy 以及源 Pod 的 egress 策略仍会影响连通性。
+
 </details>
 
 3. 创建一个具有以下 security context 要求的 Pod：
@@ -331,7 +329,8 @@ metadata:
 spec:
   containers:
   - name: secure-container
-    image: nginx
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       runAsUser: 1000
       allowPrivilegeEscalation: false
@@ -411,7 +410,7 @@ kubectl apply -f pod-with-secret.yaml
 
 **答案：**
 
-OPA Gatekeeper 是一个用于向 Kubernetes clusters 应用 policies 的强大工具。以下是可应用 policies 的示例：
+OPA Gatekeeper 是一个用于向 Kubernetes 集群实施策略的强大工具。创建以下约束前，应先安装 Gatekeeper，并安装与之匹配的官方策略库 ConstraintTemplate。约束类型并非 Kubernetes 内置 API；仅限制镜像 registry 也不等于验证镜像签名。以下是可应用的策略示例：
 
 1. **Image Registry Restriction**：强制 images 只能从已批准的 registries 拉取，防止使用来自不受信任来源的 images。
    ```yaml
@@ -477,7 +476,7 @@ mTLS (mutual TLS) 是一种 client 和 server 都使用 certificates 相互进�
 1. **使用 Service Mesh**：Istio 和 Linkerd 等 service meshes 通过 sidecar proxies 自动实现 mTLS。
    ```yaml
    # Istio example
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -487,7 +486,7 @@ mTLS (mutual TLS) 是一种 client 和 server 都使用 certificates 相互进�
        mode: STRICT
    ```
 
-2. **与 Network Policies 结合使用**：将 mTLS 与 network policies 结合，仅允许经过 authentication 的 traffic。
+2. **结合 NetworkPolicy 使用**：NetworkPolicy 限制 L3/L4 网络可达性；服务网格负责验证证书。注册工作负载、强制启用 mTLS，并使用网格授权策略限制已认证的身份。
 
 3. **Certificate Management**：使用 cert-manager 等工具管理 certificate lifecycle。
    ```yaml
@@ -530,28 +529,28 @@ mTLS 是增强 microservice architectures 中 service-to-service 通信安全性
    - 使用 Cosign、Notary 等工具对 container images 进行签名
    - 应用 policies，确保只部署已签名的 images（例如 OPA Gatekeeper、Kyverno）
    ```bash
-   cosign sign --key cosign.key docker.io/company/app:latest
+   cosign sign --key cosign.key "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
 2. **Software Bill of Materials (SBOM) Generation and Verification**：
    - 使用 Syft、Anchore 等工具生成 SBOMs
    - 跟踪 images 中包含的所有 software components
    ```bash
-   syft docker.io/company/app:latest -o spdx-json > sbom.json
+   syft "${IMAGE_REF:?Set repository@sha256:digest}" -o spdx-json > sbom.json
    ```
 
 3. **Vulnerability Scanning**：
    - 使用 Trivy、Clair 等工具扫描 images 中的 vulnerabilities
    - 将 scanning 集成到 CI/CD pipelines 中
    ```bash
-   trivy image docker.io/company/app:latest
+   trivy image "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
 4. **Use Minimal Base Images**：
    - 使用 distroless、scratch 等 minimal images 来减少 attack surface
    ```dockerfile
-   FROM gcr.io/distroless/java:11
-   COPY --from=build /app/target/app.jar /app.jar
+   FROM gcr.io/distroless/java21-debian13:nonroot
+   COPY app.jar /app.jar
    CMD ["app.jar"]
    ```
 
@@ -559,7 +558,7 @@ mTLS 是增强 microservice architectures 中 service-to-service 通信安全性
    - 根据 image age、vulnerability severity、registry source 等应用 policies
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sTrustedImages
+   kind: K8sAllowedRepos
    metadata:
      name: trusted-images
    spec:
@@ -568,7 +567,7 @@ mTLS 是增强 microservice architectures 中 service-to-service 通信安全性
          - apiGroups: [""]
            kinds: ["Pod"]
      parameters:
-       allowedRegistries:
+       repos:
          - "docker.io/company/"
          - "gcr.io/verified/"
    ```
@@ -607,7 +606,7 @@ Zero trust security model 基于“never trust, always verify”原则。以下�
    rules:
    - apiGroups: [""]
      resources: ["pods"]
-     verbs: ["get", "list"]
+     verbs: ["get"]
      resourceNames: ["app-pod"]
    ```
 
@@ -631,7 +630,7 @@ Zero trust security model 基于“never trust, always verify”原则。以下�
    - 使用 service mesh（Istio、Linkerd 等）将 mTLS 应用于所有 service-to-service 通信
    - 基于 certificate 的 service identity verification
    ```yaml
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -661,12 +660,23 @@ Zero trust security model 基于“never trust, always verify”原则。以下�
    - 使用 read-only filesystems
    - 应用 security context restrictions
    ```yaml
-   securityContext:
-     runAsUser: 1000
-     runAsGroup: 3000
-     fsGroup: 2000
-     readOnlyRootFilesystem: true
-     allowPrivilegeEscalation: false
+   spec:
+     securityContext:
+       runAsUser: 1000
+       runAsGroup: 3000
+       fsGroup: 2000
+       runAsNonRoot: true
+       seccompProfile:
+         type: RuntimeDefault
+     containers:
+     - name: app
+       image: busybox:1.36
+       command: ["sh", "-c", "sleep 3600"]
+       securityContext:
+         readOnlyRootFilesystem: true
+         allowPrivilegeEscalation: false
+         capabilities:
+           drop: ["ALL"]
    ```
 
 8. **Continuous Security Posture Assessment**：
@@ -696,7 +706,7 @@ Kubernetes 中 runtime security 的主要工具和技术包括：
      ```yaml
      - rule: Terminal shell in container
        desc: A shell was spawned by a container
-       condition: container and proc.name = bash
+       condition: spawned_process and container and proc.name = bash and proc.tty != 0
        output: Shell opened in container (user=%user.name container=%container.name)
        priority: WARNING
      ```
@@ -718,13 +728,17 @@ Kubernetes 中 runtime security 的主要工具和技术包括：
          seccompProfile:
            type: Localhost
            localhostProfile: profiles/audit.json
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 3. **AppArmor**：
    - **工作原理**：应用 per-program access control profiles
    - **特性**：
      - 对 files、network、capabilities 等进行 fine-grained access control
-     - 默认包含在 Linux distributions 中
+     - 需要启用了 AppArmor 且已预加载该配置文件的 Linux 节点
      - 可以按 container 应用 profile
    - **实现示例**：
      ```yaml
@@ -732,15 +746,22 @@ Kubernetes 中 runtime security 的主要工具和技术包括：
      kind: Pod
      metadata:
        name: apparmor-pod
-       annotations:
-         container.apparmor.security.beta.kubernetes.io/container1: localhost/restricted
+     spec:
+       containers:
+       - name: container1
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
+         securityContext:
+           appArmorProfile:
+             type: Localhost
+             localhostProfile: restricted
      ```
 
 4. **SELinux**：
    - **工作原理**：应用 Mandatory Access Control (MAC) policies
    - **特性**：
      - 基于 labels 的 fine-grained security policies
-     - 支持 military-grade security standard
+     - 执行已配置的主机 SELinux 策略
      - 需要复杂配置
    - **实现示例**：
      ```yaml
@@ -752,10 +773,14 @@ Kubernetes 中 runtime security 的主要工具和技术包括：
        securityContext:
          seLinuxOptions:
            level: "s0:c123,c456"
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 5. **OPA Gatekeeper**：
-   - **工作原理**：基于 policy 的 runtime governance
+   - **工作原理**：在准入阶段执行策略，并定期审计 API 对象；它不监控系统调用
    - **特性**：
      - 声明式 policy 定义
      - 广泛的 policy application scope
@@ -790,12 +815,14 @@ Kubernetes 中 runtime security 的主要工具和技术包括：
      - 保持 OCI compatibility
      - 比常规 containers 有更高 overhead
 
+Seccomp 的 Localhost 配置文件必须预先存在于适用节点的 kubelet seccomp 配置目录中；仅审计配置文件只记录系统调用，不会阻止它们。AppArmor/SELinux 需要主机支持并配置相应的配置文件/标签。RuntimeClass 处理程序（`runsc`、`kata`）必须已安装并配置在 CRI 运行时中，且 Pod 必须设置 `runtimeClassName`；创建 RuntimeClass 并不会安装运行时。Java Dockerfile 假设构建上下文中已有兼容的预构建 `app.jar`。
+
 **比较和选择标准**：
-  - **Security level**：Kata Containers 和 gVisor 提供最强隔离
-  - **Performance impact**：Seccomp overhead 最小，Kata Containers 最高
+  - **安全级别**：Kata Containers 和 gVisor 会增加隔离边界；应根据威胁模型选择
+  - **性能影响**：针对实际工作负载测量启动、I/O、内存和系统调用开销
   - **Implementation complexity**：Seccomp 和 AppArmor 相对容易，SELinux 复杂
   - **Monitoring vs Prevention**：Falco 主要用于 monitoring，其他工具提供 preventive protection
   - **Integration ease**：OPA Gatekeeper 与 Kubernetes 紧密集成
 
-请根据组织的 security requirements、performance goals 和对 operational complexity 的容忍度选择合适的工具组合。
+请根据组织的安全需求、性能目标和对运维复杂度的容忍度选择合适的工具组合。
 </details>

@@ -1,6 +1,6 @@
 # Linkerd 多集群
 
-> **最后更新**：October 16, 2026 · Linkerd edge-26.10.1 / charts 2026.10.1 · Gateway API 1.5.1
+> **最后更新**：2026 年 10 月 16 日 · Linkerd edge-26.10.1 / charts 2026.10.1 · Gateway API 1.5.1
 
 Linkerd 会跨集群边界镜像选定的 Service 信息。这需要可用的控制平面发现路径和适当的数据平面网络路径。它不会合并集群、复制应用程序数据，也不会为影子测试复制每个请求。
 

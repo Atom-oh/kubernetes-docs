@@ -1,6 +1,6 @@
 # 故障注入
 
-Fault Injection（故障注入）是一种通过有意注入故障来测试系统韧性的技术。
+故障注入是通过有意引入故障来检验系统韧性的技术。
 
 ## 目录
 
@@ -14,94 +14,55 @@ Fault Injection（故障注入）是一种通过有意注入故障来测试系�
 8. [测试策略](#testing-strategies)
 9. [最佳实践](#best-practices)
 
+以下示例是在 HTTP 层实施的不同实验。请从隔离的命名空间开始，保留完整的无故障路由配置，并在安排测试前定义独立的清理路径。百分比适用于匹配的请求，而不是 Pod 的百分比。测试方标头不等于身份验证，且必须传递到目标下游调用。原生 SQL/TCP、丢包、Pod 就绪状态和节点故障需要采用不同的测试方式。
+
 <span id="why-fault-injection"></span>
 
 ## 为什么要进行故障注入？
 
 ### 在生产环境中测试韧性
 
-在微服务架构中，众多服务相互依赖，**单个服务的故障可能影响整个系统**。故障注入至关重要，原因如下：
+在微服务架构中，众多服务相互依赖，**单个服务发生故障就可能影响整个系统**。故障注入之所以重要，原因如下：
 
 #### 1. **混沌工程的核心原则**
 
-起源于 Netflix Chaos Monkey 的 Chaos Engineering（混沌工程），旨在**主动在生产环境中体验故障**并发现系统弱点。
+混沌工程因 Netflix 的 Chaos Monkey 等实践而广为人知，其目标是在生产环境中**主动体验故障**并发现系统弱点。
 
-```mermaid
-flowchart TB
-    subgraph Traditional["Traditional Testing"]
-        DevTest[Development<br/>Environment Testing]
-        StagingTest[Staging<br/>Environment Testing]
-        ProdIssue[Production<br/>Failure Occurs]
-    end
+![传统测试从开发和预发布环境进入生产故障；混沌工程则持续注入故障以发现弱点、主动修复，并逐步提高系统韧性。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-0.png)
 
-    subgraph ChaosEng["Chaos Engineering"]
-        ContTest[Continuous<br/>Fault Injection]
-        Discover[Discover<br/>Weaknesses]
-        Fix[Proactive<br/>Fixes]
-        Resilient[Resilient<br/>System]
-    end
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-0.html)
 
-    DevTest --> StagingTest --> ProdIssue
-    ContTest --> Discover --> Fix --> Resilient
+#### 2. **复现真实生产场景**
 
-    %% Style definitions
-    classDef traditional fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef chaos fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class DevTest,StagingTest,ProdIssue traditional;
-    class ContTest,Discover,Fix,Resilient chaos;
-```
-
-#### 2. **复现真实的生产场景**
-
-在生产环境中，可能发生以下问题：
+生产环境中可能发生以下问题：
 
 | 场景 | 原因 | 故障注入测试 |
 |----------|-------|---------------------|
 | **网络延迟** | 跨区域网络延迟 | 延迟注入 |
 | **服务超时** | 数据库查询缓慢 | 延迟注入 |
 | **暂时性故障** | 服务重启、缩容 | 中止注入 |
-| **部分故障** | 仅部分 Pod 发生故障 | 基于百分比的注入 |
+| **部分故障** | 只有部分 Pod 发生故障 | 按百分比注入 |
 | **级联故障** | 一个服务的故障传播到其他服务 | 组合故障注入 |
 
-#### 3. **验证 Circuit Breaker 和 Timeout 设置**
+#### 3. **验证断路器和超时设置**
 
-如果没有故障注入，**很难确认 Circuit Breaker 和 Timeout 设置是否真正生效**。
+故障注入可测试调用方如何处理延迟和错误。若要测试代理重试/超时或端点剔除，必须在这些机制能够观测到的层级产生故障。
 
-```mermaid
-flowchart LR
-    Service[Service A]
-    Dep[Dependent Service B<br/>Fault Injection]
+应将调用方行为与代理剔除分别验证：本地注入的中止发生在上游请求发送前，不代表上游端点发生故障。订单服务实际返回的响应决定其调用方观察到的结果。
 
-    Service -->|1. Request| Dep
-    Dep -->|2. Delay or Failure| Service
-    Service -->|3. Verify Circuit Breaker<br/>Activation| Monitor[Monitoring]
+#### 4. **验证安全发布**
 
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef monitor fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+部署新版本时，可以检验**依赖服务发生故障时新版本是否仍能安全运行**：
 
-    %% Apply classes
-    class Service service;
-    class Dep fault;
-    class Monitor monitor;
-```
-
-#### 4. **验证安全部署**
-
-部署新版本时，可以验证**即使依赖服务发生故障，它们是否仍然安全**：
-
-- 新版本是否能正确处理超时？
-- 依赖服务发生故障时，是否会执行优雅降级？
+- 新版本能否正确处理超时？
+- 依赖服务发生故障时，能否执行优雅降级？
 - 错误处理逻辑是否正常工作？
 
 <span id="when-to-use-fault-injection"></span>
 
 ## 何时使用故障注入
 
-应在以下情况使用故障注入：
+可在以下情形使用故障注入：
 
 ### 1. **开发和测试环境**
 
@@ -135,13 +96,16 @@ spec:
     - destination:
         host: payment-service
         subset: v2
+  - route:
+    - destination:
+        host: payment-service
 ```
 
 **使用场景**：
-- 测试当支付服务变慢或发生故障时，订单服务如何响应
+- 测试订单服务在支付服务变慢或发生故障时如何响应
 - 验证是否向用户显示适当的错误消息
 
-### 2. **Staging 环境中的集成测试**
+### 2. **预发布环境中的集成测试**
 
 #### 场景：生产部署前的最终验证
 
@@ -171,7 +135,7 @@ spec:
 
 **使用场景**：
 - 在生产部署前验证整个系统的韧性
-- 确认监控告警是否正常工作
+- 确认监控告警能够正常工作
 
 ### 3. **生产环境中的混沌测试**
 
@@ -199,16 +163,21 @@ spec:
     route:
     - destination:
         host: recommendation-service
+  - route:
+    - destination:
+        host: recommendation-service
 ```
 
 **使用场景**：
-- Netflix 风格的 Chaos Engineering
-- 验证生产环境中的实际故障响应能力
-- **注意**：从极低比例（1-5%）开始，并监控影响
+- 开展 Netflix 风格的混沌工程
+- 验证生产环境实际处理故障的能力
+- **注意**：从极低的故障比例（1–5%）开始，并监控影响
 
-### 4. **调整 Timeout 和 Retry 策略**
+### 4. **调整超时和重试策略**
 
-#### 场景：寻找最佳 Timeout 值
+启用故障注入时，Istio 不会在同一条客户端路由上启用超时/重试处理。下方有意移除了路由超时；此测试中的调用方必须自行执行期限限制。
+
+#### 场景：寻找合适的超时值
 
 ```yaml
 # Test with various delay times
@@ -229,57 +198,40 @@ spec:
         percentage:
           value: 100.0
         fixedDelay: 10s  # 10 second delay
-    timeout: 5s  # 5 second timeout setting
     route:
+    - destination:
+        host: search-service
+  - route:
     - destination:
         host: search-service
 ```
 
 **使用场景**：
-- 测试当前 Timeout 设置（5 秒）是否合适
-- 验证在出现 10 秒延迟时 Timeout 是否生效
-- 找到不会损害用户体验的最佳值
+- 测试应用/客户端的 5 秒期限是否能在代理注入 10 秒延迟时发挥作用
+- 若要测试 Istio 路由超时，应使用确实缓慢的上游，或在不同的跳点注入故障
+- 找到不会损害用户体验的合适值
 
-### 5. **验证 Circuit Breaker 的运行**
+### 5. **验证异常检测**
 
-#### 场景：确认 Circuit Breaker 正常工作
+本地故障中止会在发送上游请求前返回，因此不会触发该代理针对每个端点的连续错误检测器。应使用确实返回 503 的受控 HTTP 后端，然后观察端点是否被剔除。例如，在测试命名空间部署 Istio httpbin 示例后：
 
 ```yaml
-# DestinationRule: Circuit Breaker configuration
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: reviews-circuit-breaker
+  name: httpbin-outlier-test
 spec:
-  host: reviews
+  host: httpbin
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
+      consecutive5xxErrors: 5
+      interval: 5s
       baseEjectionTime: 30s
----
-# VirtualService: Fault injection
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: reviews-fault
-spec:
-  hosts:
-  - reviews
-  http:
-  - fault:
-      abort:
-        percentage:
-          value: 60.0  # 60% failure rate
-        httpStatus: 503
-    route:
-    - destination:
-        host: reviews
+      maxEjectionPercent: 100
+      minHealthPercent: 0
 ```
 
-**使用场景**：
-- 验证在 60% 故障率下，连续发生 5 个错误后 Circuit Breaker 是否激活
-- 验证 30 秒后的自动恢复
+从网格内的应用客户端向 `http://httpbin:8000/status/503` 发送请求。这会有意导致所有测试端点均可能被剔除。恢复取决于剔除历史和后续健康状况，并不保证在固定的 30 秒内完成。不要将此配置用于无关工作负载。
 
 ### 6. **针对特定用户组进行测试**
 
@@ -313,39 +265,16 @@ spec:
 ```
 
 **使用场景**：
-- 在不影响真实用户的情况下安全地进行测试
-- 根据 Beta 测试人员的反馈进行改进
+- 在不影响真实用户的情况下安全测试
+- 根据 Beta 测试人员的反馈改进
 
 <span id="fault-injection-overview"></span>
 
 ## 故障注入概述
 
-```mermaid
-flowchart LR
-    Client[Client]
+![客户端请求可以在故障注入区域中延迟 3 秒后再缓慢到达服务，也可以被中止，并直接向客户端返回 HTTP 503 错误。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-2.png)
 
-    subgraph FaultInjection["Fault Injection"]
-        Delay[Delay<br/>3 seconds]
-        Abort[Abort<br/>HTTP 503]
-    end
-
-    Service[Service]
-
-    Client --> Delay
-    Client --> Abort
-    Delay -.->|Slow Response| Service
-    Abort -->|Error| Client
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Delay,Abort fault;
-    class Service service;
-```
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-2.html)
 
 <span id="delay-injection"></span>
 
@@ -399,7 +328,7 @@ spec:
 
 ### 1. 组合延迟和中止
 
-在真实生产环境中，延迟和故障可能同时发生：
+在真实生产环境中，延迟与故障可能同时发生：
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -425,9 +354,9 @@ spec:
 ```
 
 **结果**：
-- 20% 的请求会产生 3 秒延迟
-- 10% 的请求会立即收到 503 错误
-- 剩余 70% 将正常处理
+- 20% 的请求会延迟 3 秒
+- 中止注入可与延迟重叠，因此部分中止的请求会先经历延迟
+- 不要将两种百分比直接相加并视为互不重叠的请求群体；应实际测量重叠情况
 
 ### 2. 条件性故障注入
 
@@ -465,14 +394,14 @@ spec:
 
 ### 3. 渐进式故障注入
 
-通过逐步提高故障率进行测试：
+逐步提高故障比例进行测试：
 
 ```yaml
 # Stage 1: 5% faults
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage1
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -485,12 +414,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # Stage 2: 10% faults (apply after monitoring)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage2
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -503,12 +434,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # Stage 3: 20% faults (apply after sufficient validation)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage3
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -525,7 +458,7 @@ spec:
 
 ### 4. 按 HTTP 状态码测试
 
-使用各种 HTTP 错误码进行测试：
+使用不同的 HTTP 错误状态码进行测试：
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -585,16 +518,16 @@ spec:
 
 ## 真实场景
 
-### 场景 1：模拟缓慢的数据库查询
+### 场景 1：模拟缓慢的 HTTP 数据库代理
 
-**情况**：数据库查询偶尔变慢
+**情况**：数据库查询间歇性变慢
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: database-slow-query
-  namespace: production
+  namespace: chaos-tests
 spec:
   hosts:
   - database-service
@@ -602,7 +535,7 @@ spec:
   - fault:
       delay:
         percentage:
-          value: 15.0  # 15% of queries are slow
+          value: 15.0  # 15% of HTTP requests are delayed
         fixedDelay: 8s   # 8 second delay
     route:
     - destination:
@@ -610,41 +543,20 @@ spec:
 ```
 
 **测试目标**：
-1. 应用程序 Timeout 设置是否合适？
+1. 应用超时设置是否合适？
 2. 连接池是否会耗尽？
-3. 是否向用户显示了适当的错误消息？
+3. 是否向用户显示适当的错误消息？
 
 **预期结果**：
-- 合适的 Timeout 可实现快速失败（fail-fast）
-- 连接池管理正常
-- 整个系统的响应延迟 -> 需要 Circuit Breaker
+- 合适的超时设置可实现快速失败
+- 连接池正常管理
+- 若整个系统的响应均变慢，则可能需要断路器
 
 ### 场景 2：测试微服务级联故障
 
 **情况**：验证一个服务的故障是否会传播到其他服务
 
-```mermaid
-flowchart LR
-    Frontend[Frontend]
-    OrderService[Order Service]
-    PaymentService[Payment Service<br/>Fault Injection]
-    InventoryService[Inventory Service]
-
-    Frontend --> OrderService
-    OrderService --> PaymentService
-    OrderService --> InventoryService
-
-    PaymentService -->|30% Failure| OrderService
-    OrderService -->|Circuit Breaker| Frontend
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Frontend,OrderService,InventoryService service;
-    class PaymentService fault;
-```
+应将调用方行为与代理剔除分别验证：本地注入的中止发生在上游请求发送前，不代表上游端点发生故障。订单服务实际返回的响应决定其调用方观察到的结果。
 
 ```yaml
 # Inject faults into payment service
@@ -674,19 +586,19 @@ spec:
   host: order-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **测试目标**：
-1. 订单服务是否能优雅地处理支付失败？
-2. Circuit Breaker 是否会激活，从而使库存服务正常运行？
-3. 前端是否显示适当的用户消息？
+1. 订单服务能否优雅处理支付失败？
+2. 订单服务能否保持面向调用方的响应行为？端点是否被剔除取决于订单服务实际返回的错误。
+3. 前端是否向用户显示适当的消息？
 
-### 场景 3：测试 API Rate Limit 场景
+### 场景 3：测试 API 速率限制
 
-**情况**：模拟外部 API 达到 Rate Limit
+**情况**：模拟外部 API 达到速率限制
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -709,16 +621,19 @@ spec:
     route:
     - destination:
         host: external-api-service
+  - route:
+    - destination:
+        host: external-api-service
 ```
 
 **测试目标**：
 1. 是否适当地处理了 429 错误？
-2. Retry 逻辑是否使用 Exponential Backoff？
-3. 是否利用缓存来减少 API 调用？
+2. 重试逻辑是否使用指数退避？
+3. 是否使用缓存减少 API 调用？
 
 ### 场景 4：模拟跨区域网络延迟
 
-**情况**：调用不同区域中的服务时产生的延迟
+**情况**：调用不同区域中的服务时产生延迟
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -740,16 +655,19 @@ spec:
     route:
     - destination:
         host: us-east-service
+  - route:
+    - destination:
+        host: us-east-service
 ```
 
 **测试目标**：
-1. 确认全球服务中的跨区域延迟影响
-2. 确定是否可以通过缓存或 CDN 进行优化
-3. 是否满足 SLA 目标（例如，95% 的请求在 500ms 内完成）？
+1. 确认跨区域延迟对全球服务的影响
+2. 确定能否通过缓存或 CDN 优化
+3. 是否达到 SLA 目标（例如，95% 的请求在 500 毫秒内完成）？
 
-### 场景 5：模拟部署期间的暂时性故障
+### 场景 5：模拟发布期间的暂时性故障
 
-**情况**：Rolling Update 期间，部分 Pod 暂时不可用
+**情况**：滚动更新期间部分 Pod 暂时不可用
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -767,7 +685,7 @@ spec:
     fault:
       abort:
         percentage:
-          value: 25.0  # 25% pods fail (1 out of 4)
+          value: 25.0  # 25% of matching requests fail; Pods remain running
         httpStatus: 503
       delay:
         percentage:
@@ -777,45 +695,27 @@ spec:
     - destination:
         host: app-service
         subset: v2
+  - route:
+    - destination:
+        host: app-service
 ```
 
 **测试目标**：
-1. 在部署期间保持可用性（至少 75%）
-2. Readiness Probe 是否正常工作？
-3. Load Balancer 是否仅将流量路由至健康的 Pod？
+1. 测量调用方在注入请求错误时的行为
+2. 使用受控的工作负载状态变更，单独测试就绪状态
+3. 单独验证是否路由到健康端点；HTTP 中止不会令 Pod 变为未就绪
 
 <span id="testing-strategies"></span>
 
 ## 测试策略
 
-### 1. 渐进式 Chaos Engineering
+### 1. 渐进式混沌工程
 
-逐步提高故障率以找到系统极限：
+逐步提高故障比例以发现系统极限：
 
-```mermaid
-flowchart LR
-    Stage1[Stage 1<br/>1-5% Faults]
-    Stage2[Stage 2<br/>5-10% Faults]
-    Stage3[Stage 3<br/>10-20% Faults]
-    Stage4[Stage 4<br/>20-50% Faults]
+![故障注入比例从 1% 逐步升至 50% 的四个阶段；只有监控无异常时才进入下一阶段，发现问题时则回到统一的修复和改进步骤。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-4.png)
 
-    Stage1 -->|Monitoring OK| Stage2
-    Stage2 -->|Monitoring OK| Stage3
-    Stage3 -->|Monitoring OK| Stage4
-
-    Stage1 -.->|Issue Found| Fix[Fix and Improve]
-    Stage2 -.->|Issue Found| Fix
-    Stage3 -.->|Issue Found| Fix
-    Stage4 -.->|Issue Found| Fix
-
-    %% Style definitions
-    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fix fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Stage1,Stage2,Stage3,Stage4 stage;
-    class Fix fix;
-```
+[🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-4.html)
 
 **分步执行**：
 
@@ -832,70 +732,97 @@ kubectl apply -f fault-injection-5percent.yaml
 # Continue...
 ```
 
-### 2. 基于时间的测试
+### 2. 按时间安排测试
+
+这是一个调度模板；在准备好先决条件前，它会保持挂起状态：测试命名空间、包含 shell 和兼容 kubectl 的组织自有 runner 镜像（已构建并固定版本）、仅具备访问预先创建的同一 VirtualService 所需权限的现有 `chaos-tester` ServiceAccount，以及含有该资源完整故障/无故障清单的 `chaos-fixtures` ConfigMap。示例中的 registry 镜像只是占位符。遭遇 SIGKILL 或节点丢失后，trap 无法运行；请另行安排独立的清理检查。
 
 仅在特定时间段内注入故障：
 
 ```yaml
-# Automate with CronJob
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: fault-injection-scheduler
+  namespace: chaos-tests
 spec:
-  schedule: "0 2 * * *"  # Every day at 2 AM
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 420
+      backoffLimit: 0
       template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
         spec:
+          serviceAccountName: chaos-tester
+          restartPolicy: Never
           containers:
           - name: apply-fault
-            image: bitnami/kubectl
-            command:
-            - /bin/sh
-            - -c
+            image: registry.example.com/ops/chaos-runner:1.0.0
+            command: ["/bin/sh", "-ec"]
+            args:
             - |
-              kubectl apply -f /config/fault-injection.yaml
-              sleep 3600  # Maintain for 1 hour
-              kubectl delete -f /config/fault-injection.yaml
+              cleanup() { kubectl apply -n chaos-tests -f /config/no-fault.yaml; }
+              trap cleanup EXIT
+              trap 'exit 130' INT
+              trap 'exit 143' TERM
+              kubectl apply -n chaos-tests -f /config/fault-injection.yaml
+              sleep 300
+            volumeMounts:
+            - name: fixtures
+              mountPath: /config
+              readOnly: true
+          volumes:
+          - name: fixtures
+            configMap:
+              name: chaos-fixtures
 ```
 
-### 3. 自动化测试 Pipeline
+### 3. 自动化测试流水线
 
-集成到 CI/CD Pipeline 中：
+将测试集成到 CI/CD 流水线：
 
 ```yaml
-# GitLab CI example
-stages:
-  - deploy
-  - fault-injection-test
-  - verify
-  - cleanup
+stages: [fault-injection-test]
 
 fault_injection_test:
   stage: fault-injection-test
   script:
-    # Apply Fault Injection
-    - kubectl apply -f tests/fault-injection.yaml
-
-    # Run load test
+    - kubectl apply -n chaos-tests -f tests/fault-injection.yaml
     - k6 run --vus 100 --duration 5m tests/load-test.js
-
-    # Validate metrics
-    - |
-      ERROR_RATE=$(curl -s "http://prometheus:9090/api/v1/query?query=rate(istio_requests_total{response_code=\"500\"}[5m])" | jq '.data.result[0].value[1]')
-      if [ $(echo "$ERROR_RATE > 0.05" | bc) -eq 1 ]; then
-        echo "Error rate too high: $ERROR_RATE"
-        exit 1
-      fi
+    - ./tests/check-fault-metrics.sh
   after_script:
-    # Remove Fault Injection
-    - kubectl delete -f tests/fault-injection.yaml
+    - kubectl apply -n chaos-tests -f tests/no-fault.yaml
+```
+
+将以下内容保存为测试项目中的 `tests/check-fault-metrics.sh`。Runner 需要 kubectl、k6、curl 和 jq，以及已审核的清单/负载测试。应根据测试假设选择要测量的服务和阈值：有意注入到依赖项的错误并不自动等于用户侧 SLO 失败。响应缺失或为 NaN 时检查应失败。GitLab 的 after_script 不保证在 Runner 丢失后仍会运行，且有自己的超时；应独立验证基线是否恢复。
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+: "${PROMETHEUS_URL:?Set the Prometheus base URL}"
+: "${TEST_DESTINATION:?Set the exact destination_service label}"
+: "${ERROR_THRESHOLD:?Set the error-fraction limit for the hypothesis}"
+QUERY="sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\",response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\"}[5m]))"
+curl -fsSG "$PROMETHEUS_URL/api/v1/query" --data-urlencode "query=$QUERY" |
+  jq -e --argjson limit "$ERROR_THRESHOLD" '
+    .status == "success" and
+    (.data.result | length) == 1 and
+    (.data.result[0].value[1] as $v |
+      $v != "NaN" and $v != "+Inf" and $v != "-Inf" and
+      (($v | tonumber) <= $limit))'
 ```
 
 ### 4. 监控和告警
 
-在故障注入期间监控关键指标：
+将此规则文件挂载到 Prometheus，或使用已安装 Operator 的 PrometheusRule 资源。仅有 ConfigMap 不会启用告警。规则应限定于测试服务，并启用所引用的 Envoy 统计项。
+
+故障注入期间监控关键指标：
 
 ```yaml
 # Prometheus alert rules
@@ -910,7 +837,7 @@ data:
       rules:
       # Error rate increase
       - alert: HighErrorRate
-        expr: rate(istio_requests_total{response_code=~"5.."}[5m]) > 0.1
+        expr: sum by (destination_service) (rate(istio_requests_total{reporter="source",response_code=~"5.."}[5m])) / sum by (destination_service) (rate(istio_requests_total{reporter="source"}[5m])) > 0.1
         for: 2m
         annotations:
           summary: "High error rate during fault injection"
@@ -924,7 +851,7 @@ data:
 
       # Response time increase
       - alert: HighLatency
-        expr: histogram_quantile(0.95, rate(istio_request_duration_milliseconds_bucket[5m])) > 3000
+        expr: histogram_quantile(0.95, sum by (destination_service, le) (rate(istio_request_duration_milliseconds_bucket{reporter="source"}[5m]))) > 3000
         for: 5m
         annotations:
           summary: "95th percentile latency > 3s"
@@ -932,14 +859,13 @@ data:
 
 ### 5. 蓝绿故障注入
 
-向 Blue 环境注入故障，并与 Green 环境进行比较：
+在 Blue 环境注入故障，并与 Green 环境进行比较：
 
 ```yaml
-# Blue environment: Fault Injection
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: app-blue-fault
+  name: app-blue-green-test
 spec:
   hosts:
   - app-service
@@ -957,21 +883,7 @@ spec:
     - destination:
         host: app-service
         subset: blue
----
-# Green environment: Normal
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: app-green-normal
-spec:
-  hosts:
-  - app-service
-  http:
-  - match:
-    - headers:
-        x-version:
-          exact: "green"
-    route:
+  - route:
     - destination:
         host: app-service
         subset: green
@@ -988,13 +900,13 @@ spec:
 
 ### 1. 从小规模开始
 
-- 初始时**从 1-5%** 的低比例开始
-- 在开发/Staging 环境中进行充分测试
-- 在业务影响较低的时段于生产环境中执行
+- 初始时**从 1–5% 的低比例开始**
+- 在开发/预发布环境中充分测试
+- 在业务影响较低的时段于生产环境执行
 
 ### 2. 监控至关重要
 
-在应用故障注入前准备好监控仪表板：
+应用故障注入前准备好监控仪表板：
 
 ```yaml
 # Grafana dashboard metrics
@@ -1007,8 +919,7 @@ spec:
 ### 3. 使用清晰的标签
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: payment-fault
   labels:
@@ -1023,25 +934,16 @@ metadata:
 ### 4. 自动回滚机制
 
 ```bash
-#!/bin/bash
-# Apply Fault Injection
-kubectl apply -f fault-injection.yaml
-
-# Monitor for 5 minutes
+#!/usr/bin/env bash
+set -euo pipefail
+cleanup() { kubectl apply -n chaos-tests -f tests/no-fault.yaml; }
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+kubectl apply -n chaos-tests -f tests/fault-injection.yaml
 sleep 300
-
-# Check error rate
-ERROR_RATE=$(kubectl exec -it prometheus-pod -- \
-  promtool query instant \
-  'rate(istio_requests_total{response_code="500"}[5m])' | \
-  jq '.data.result[0].value[1]')
-
-# Rollback if threshold exceeded
-if [ $(echo "$ERROR_RATE > 0.1" | bc) -eq 1 ]; then
-  echo "Error rate too high, rolling back..."
-  kubectl delete -f fault-injection.yaml
-  exit 1
-fi
+./tests/check-fault-metrics.sh
+# EXIT restores the full baseline on success or normal failure.
 ```
 
 ### 5. 文档记录
@@ -1049,19 +951,18 @@ fi
 记录所有故障注入测试：
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: api-fault-test
   annotations:
     # Test purpose
-    test-purpose: "Verify Circuit Breaker activation"
+    test-purpose: "Verify caller error handling; test upstream ejection separately"
 
     # Expected behavior
     expected-behavior: |
-      - Circuit Breaker opens after 5 consecutive errors
+      - Caller handles the injected error according to the test hypothesis
       - Requests fail fast with 503 error
-      - System recovers after 30 seconds
+      - Restore baseline and verify recovery
 
     # Success criteria
     success-criteria: |
@@ -1070,45 +971,36 @@ metadata:
       - No cascading failures
 
     # Rollback plan
-    rollback-plan: "kubectl delete vs api-fault-test"
+    rollback-plan: "Restore the reviewed complete no-fault VirtualService"
 ```
 
 ### 6. 生产环境注意事项
 
-- **业务影响评估**：分析故障注入对真实用户的影响
-- **逐步扩大**：缓慢地从 1% -> 5% -> 10% 提升
-- **设置告警**：超过阈值时立即告警
-- **准备回滚**：随时做好立即回滚的准备
+- **评估业务影响**：分析故障注入对真实用户的影响
+- **逐步扩大范围**：缓慢地从 1% 提高到 5%、再到 10%
+- **设置告警**：超出阈值时立即告警
+- **准备回滚**：随时准备立即回滚
 - **避开业务高峰期**：选择流量较低的时段
 
 ### 7. 定期测试
 
-```yaml
-# Weekly automated Chaos Test
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: weekly-chaos-test
-spec:
-  schedule: "0 3 * * 0"  # Every Sunday at 3 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: chaos-tester
-          containers:
-          - name: chaos-test
-            image: chaos-tester:latest
-            env:
-            - name: FAULT_PERCENTAGE
-              value: "5"
-            - name: DURATION
-              value: "1h"
+```bash
+# Change the prepared scheduler to weekly; suspension/prerequisites still apply
+kubectl patch cronjob fault-injection-scheduler -n chaos-tests --type=merge \
+  -p '{"spec":{"schedule":"0 3 * * 0","timeZone":"Etc/UTC"}}'
 ```
 
 ## 参考资料
 
-- [Istio Fault Injection](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
-- [Principles of Chaos Engineering](https://principlesofchaos.org/)
-- [Netflix Chaos Engineering](https://netflix.github.io/chaosmonkey/)
-- [Google SRE - Testing for Reliability](https://sre.google/sre-book/testing-reliability/)
+- [Istio 故障注入](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
+- [混沌工程原则](https://principlesofchaos.org/)
+- [Netflix 混沌工程](https://netflix.github.io/chaosmonkey/)
+- [Google SRE：可靠性测试](https://sre.google/sre-book/testing-reliability/)
+
+- [主要参考资料 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [主要参考资料 2](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
+- [主要参考资料 3](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter)
+- [主要参考资料 4](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [主要参考资料 5](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
+- [主要参考资料 6](https://docs.gitlab.com/ci/yaml/)
+- [主要参考资料 7](https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md)
