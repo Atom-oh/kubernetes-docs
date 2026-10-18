@@ -1,6 +1,6 @@
 # 可观测性测验
 
-> **最后更新**: October 12, 2026
+> **最后更新**: 2026 年 10 月 12 日
 >
 > **版本**: Istio 1.31，支持 Kubernetes 1.32–1.37。
 > 请参阅 EKS 和 Kiali 兼容性限制的安装与仪表板章节。
@@ -973,7 +973,7 @@ app.get('/metrics', async (req, res) => {
 // Integrate app.listen/shutdown with the application's server lifecycle.
 ```
 
-**Kubernetes 采集**：此 sidecar 实验使用 Istio 的合并 endpoint，因此不假定明文应用程序 scrape 可通过 STRICT mTLS。将这些 label/annotation 合并到 `default` 中实际的 `order-service` Deployment；其 image 必须包含应用程序并在 8080 上公开 `/metrics`。mesh 必须启用 Prometheus 合并。agent endpoint15020 为明文，因此请限制网络访问。如果现有 scraper 已采集这些业务指标，请勿添加重复的 monitor。
+**Kubernetes 采集**：此 sidecar 实验使用 Istio 的合并 endpoint，因此不假定明文应用程序 scrape 可通过 STRICT mTLS。将这些 label/annotation 合并到 `default` 中实际的 `order-service` Deployment；其 image 必须包含应用程序并在 8080 上公开 `/metrics`。mesh 必须启用 Prometheus 合并。agent endpoint 15020 为明文，因此请限制网络访问。如果现有 scraper 已采集这些业务指标，请勿添加重复的 monitor。
 
 ```yaml
 spec:

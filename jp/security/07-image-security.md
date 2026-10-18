@@ -1,7 +1,7 @@
 # コンテナイメージセキュリティ
 
-> **最終更新**: September 13, 2026
-> **検証基準**: Trivy 0.74.0、Trivy Operator 0.34.0/chart 0.36.0、Cosign 3.1.3、Kyverno 1.19.1、Connaisseur 3.12.0/chart 2.12.0。CLI/設定の基準で、全Kubernetes版にまたがるデプロイテストの主張ではありません。
+> **最終更新**: 2026年10月16日
+> **検証基準**: Trivy 0.76.0、Trivy Operator 0.35.0/chart 0.37.0、Cosign 3.1.3、Kyverno 1.19.1、Connaisseur 3.13.0/chart 2.13.0。CLI/設定の基準で、全Kubernetes版にまたがるデプロイテストの主張ではありません。
 
 イメージセキュリティは**ビルド、スキャン、デプロイした成果物が同一である**ことの確認から始まります。スキャンは既知脆弱性/設定問題を見つけ、署名は署名者とdigestを結び付けます。どちらもアプリの安全性は保証しません。
 
@@ -90,11 +90,11 @@ image/filesystemスキャンの基準です。未対応vulnerability.typeやtop-
 ```bash
 helm repo add aqua https://aquasecurity.github.io/helm-charts/
 helm repo update aqua
-helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.36.0 --namespace trivy-system --create-namespace   --values trivy-operator-values.yaml
+helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.37.0 --namespace trivy-system --create-namespace   --values trivy-operator-values.yaml
 kubectl get vulnerabilityreports -A
 ```
 
-chart 0.36.0はapp 0.34.0を導入します。[values](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)はignoreUnfixed:falseを明示します。reportはoperator生成結果です。架空CVE/package版manifestをscan証拠として適用しないでください。実report schema、監視namespace、registry認証情報、scan-Job権限、resourceを確認します。監査はchart renderだけです。
+chart 0.37.0はapp 0.35.0を導入します。[values](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)はignoreUnfixed:falseを明示します。reportはoperator生成結果です。架空CVE/package版manifestをscan証拠として適用しないでください。実report schema、監視namespace、registry認証情報、scan-Job権限、resourceを確認します。監査はchart renderだけです。
 
 <span id="basic-scanning-vs-enhanced-scanning"></span>
 <span id="enabling-enhanced-scanning"></span>
@@ -257,13 +257,13 @@ matchImageReferences外は検証をskipされ得るためregistry policyも適�
 
 ### Connaisseurという代替 — 旧署名経路
 
-**Connaisseur 3.12.0は既定Cosign 3 bundleを利用しません。** 旧署名tagとSimpleSigning payloadのcosign/v2検証を使います。別の互換producerを使用します。[旧方式署名スクリプト](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)はCosign 3.1.3で`--new-bundle-format=false --registry-referrers-mode=legacy`を明示し、透明性upload/検証を維持します。付属署名設定は旧verifierのlog形式にRekor v1を明示選択します。実承認鍵とdigestを渡します。secure-build.yamlの既定bundleとは別で、その出力を直接Connaisseurへ渡しません。legacy flagは非推奨なのでproducer/verifier協調移行を計画します。CLI optionと両source契約は確認しましたがregistry/署名統合は実行していません。
+**Connaisseur 3.13.0は既定Cosign 3 bundleを利用しません。** 旧署名tagとSimpleSigning payloadのcosign/v2検証を使います。別の互換producerを使用します。[旧方式署名スクリプト](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)はCosign 3.1.3で`--new-bundle-format=false --registry-referrers-mode=legacy`を明示し、透明性upload/検証を維持します。付属署名設定は旧verifierのlog形式にRekor v1を明示選択します。実承認鍵とdigestを渡します。secure-build.yamlの既定bundleとは別で、その出力を直接Connaisseurへ渡しません。legacy flagは非推奨なのでproducer/verifier協調移行を計画します。CLI optionと両source契約は確認しましたがregistry/署名統合は実行していません。
 
-Connaisseur 3.12.0/chart 2.12.0も選択肢です。[values例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)ではvalidators/policyはapplication下、denyは明示static validatorです。同梱公開鍵は合成test keyで、実信頼鍵へ置換が必要です。
+Connaisseur 3.13.0/chart 2.13.0も選択肢です。[values例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)ではvalidators/policyはapplication下、denyは明示static validatorです。同梱公開鍵は合成test keyで、実信頼鍵へ置換が必要です。
 
 ```bash
 helm repo add connaisseur https://sse-secure-systems.github.io/connaisseur/charts
-helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.12.0 --namespace connaisseur --create-namespace   --values connaisseur-values.yaml
+helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.13.0 --namespace connaisseur --create-namespace   --values connaisseur-values.yaml
 kubectl label namespace production securesystemsengineering.connaisseur/webhook=validate
 ```
 
@@ -319,7 +319,7 @@ Syft/Trivy生成コマンドは選択肢です。SBOMは検出内容の一覧で
 **Dockerfile.distroless**
 
 ```dockerfile
-FROM golang:1.27.1@sha256:f44f6e88636cfb311f9ebace870ded69d943f227bb3cb27d32ffd84ea18c43ea AS builder
+FROM golang:1.27.2@sha256:820153096fda4de6ac1b7194d12e416b7dd8f4e9a33d17e0345b111b945162d8 AS builder
 WORKDIR /src
 COPY go.mod main.go ./
 RUN CGO_ENABLED=0 go build -trimpath -o /out/app .
@@ -409,7 +409,7 @@ jobs:
           tags: local/audit-app:${{ github.sha }}
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           scan-type: image
           image-ref: local/audit-app:${{ github.sha }}
           scanners: vuln,secret
@@ -445,7 +445,7 @@ jobs:
       - name: Scan the exact local artifact that will be pushed
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           scan-type: image
           image-ref: ${{ steps.image.outputs.tag }}
           scanners: vuln,secret
@@ -511,7 +511,7 @@ GHCR package権限、Actions OIDC、attestation plan対応、networkを設定し
 
 ## 実施した確認と限界
 
-- Trivy 0.74: 合成secret 2ケースとDockerfile非root確認2件。実CVE DB/remote image scanなし。
+- Trivy 0.76.0: 合成secret 2ケースとDockerfile非root確認2件。実CVE DB/remote image scanなし。
 - Cosign 3.1.3: 合成local key/blobの正常/改変検証。private fixtureで透明性を省略しても本番registry/OIDC検証の証拠ではない。
 - Kyverno 1.19.1: init/ephemeralを含むCEL registry/digest 6ケースと固定CRD schema 2つ。実admission/network署名検証なし。
 - Trivy Operator/Connaisseur render、合成ECR API-model/JMESPath fixture、CloudFormation lint、actionlintを実行。AWS resource、通知、registry pushは実行していない。
@@ -521,9 +521,9 @@ GHCR package権限、Actions OIDC、attestation plan対応、networkを設定し
 
 ## 参考資料
 
-- [Trivyリリース](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
+- [Trivyリリース](https://github.com/aquasecurity/trivy/releases/tag/v0.76.0)
 - [Trivyドキュメント](https://aquasecurity.github.io/trivy/)
-- [Trivy Operatorチャート](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
+- [Trivy Operatorチャート](https://github.com/aquasecurity/trivy-operator/tree/v0.35.0/deploy/helm)
 - [ECRスキャン](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
 - [Inspectorイベントschema](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
 - [EventBridge target認可](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
@@ -532,7 +532,7 @@ GHCR package権限、Actions OIDC、attestation plan対応、networkを設定し
 - [Sigstore検証](https://docs.sigstore.dev/cosign/verifying/verify/)
 - [Kyverno CEL移行](https://kyverno.io/docs/guides/migration-to-cel/)
 - [Kyverno ImageValidatingPolicy](https://kyverno.io/docs/policy-types/image-validating-policy/)
-- [Connaisseur名前空間検証](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
+- [Connaisseur名前空間検証](https://github.com/sse-secure-systems/connaisseur/blob/v3.13.0/docs/features/namespaced_validation.md)
 - [SLSA要件](https://slsa.dev/spec/v1.2/build-requirements)
 - [GitHub attest action](https://github.com/actions/attest/tree/v4.2.2)
 - [Distroless](https://github.com/GoogleContainerTools/distroless)

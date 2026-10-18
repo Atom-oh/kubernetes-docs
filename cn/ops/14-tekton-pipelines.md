@@ -1,6 +1,6 @@
 # Tekton Pipelines：Kubernetes 原生 CI
 
-> **最后更新**：October 16, 2026. Pipelines 1.17.0, Triggers 0.37.1, Chains 0.29.0, Dashboard 0.73.0, tkn 0.46.1.
+> **最后更新**：2026 年 10 月 16 日。Pipelines 1.17.0, Triggers 0.37.1, Chains 0.29.0, Dashboard 0.73.0, tkn 0.46.1.
 > **验证**：Release CRD schemas、Task 依赖项、本地脚本和模拟程序。未执行实时 EKS 安装、镜像构建/推送、KMS 签名、外部 Webhook 或通知。
 
 < [上一章：FinOps](./13-finops-cost-platform.md) | [目录](./README.md) | [下一章：可用区运维](./15-zonal-operations-guide.md) >

@@ -1,7 +1,7 @@
 # 自定义调度器测验（第 2 部分）
 
 > **示例基线**：Kubernetes 1.35.8，Go 1.27.2
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 
 本测验用于检验你对在 Kubernetes 中实现和使用自定义调度器的深入理解。
 
@@ -349,7 +349,7 @@ spec:
 * `Equal`（默认运算符）用于比较 key/value。使用 `Exists` 时必须省略 value。
 * 指定的 effect 必须匹配；空 effect 会匹配该键的所有 effect。空 key 要求使用 `Exists`，并会匹配所有键，因此请谨慎使用。
 * `tolerationSeconds` 仅适用于 `NoExecute`。省略该字段表示无限期容忍匹配的污点；指定该字段则会限制容忍时长。
-* 此示例使用默认的 `Equal`/`Exists` 行为。Kubernetes1.35 中可选的比较运算符功能处于 alpha 阶段，在此处未启用。
+* 此示例使用默认的 `Equal`/`Exists` 行为。Kubernetes 1.35 中可选的比较运算符功能处于 alpha 阶段，在此处未启用。
 
 ```yaml
 tolerations:

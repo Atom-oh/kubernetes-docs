@@ -1,6 +1,6 @@
 # Kubernetes 网络
 
-> **最后更新**：October 16, 2026
+> **最后更新**：2026 年 10 月 16 日
 >
 > **固定示例版本**：Cilium 1.20.3、Calico Open Source 3.32.2、Flannel 0.28.10，以及上游 AWS VPC CNI/Helm chart 1.23.2。
 >

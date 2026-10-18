@@ -1,6 +1,6 @@
 # Linkerdマルチクラスター
 
-> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Gateway API 1.5.1
+> **最終更新**: 2026年10月16日 · Linkerd edge-26.10.1 / charts 2026.10.1 · Gateway API 1.5.1
 
 Linkerdは選択サービス情報をクラスター間で複製します。動作するcontrol-plane検出経路と適切なdata-plane経路の両方が必要です。cluster統合、アプリデータ複製、シャドーテスト用の全要求複製はしません。
 
@@ -100,11 +100,11 @@ helm repo add linkerd-edge https://helm.linkerd.io/edge
 helm repo update linkerd-edge
 # Initially install gateway/remote-access prerequisites, without peer controllers.
 helm --kube-context west upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 helm --kube-context east upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 kubectl --context west -n linkerd-multicluster get svc linkerd-gateway -o yaml
@@ -132,7 +132,7 @@ linkerd --context west multicluster link-gen --cluster-name west > west-link.yam
 # Review public metadata and target endpoint without printing credential values.
 kubectl --context east apply -f west-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-east-links.yaml \
   --wait --timeout 10m
 kubectl --context east -n linkerd-multicluster get links.multicluster.linkerd.io
@@ -163,7 +163,7 @@ umask 077
 linkerd --context east multicluster link-gen --cluster-name east > east-link.yaml
 kubectl --context west apply -f east-link.yaml
 helm --kube-context west upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-west-links.yaml \
   --wait --timeout 10m
 linkerd --context west multicluster check
@@ -360,7 +360,7 @@ linkerd --context west multicluster link-gen --cluster-name west \
   --gateway=false > west-flat-link.yaml
 kubectl --context east apply -f west-flat-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f flat-base-values.yaml -f flat-east-links.yaml \
   --wait --timeout 10m
 kubectl --context west -n mc-demo label service/web \
@@ -554,8 +554,8 @@ openssl crl2pkcs7 -nocrl -certfile east-trust.pem | openssl pkcs7 -print_certs -
 - [Multicluster参照](https://linkerd.io/docs/reference/multicluster/)と[導入](https://linkerd.io/docs/tasks/installing-multicluster/)
 - [Pod間モード](https://linkerd.io/docs/tasks/pod-to-pod-multicluster/)と[Federated Service](https://linkerd.io/docs/tasks/federated-services/)
 - [非推奨failover拡張](https://linkerd.io/docs/tasks/automatic-failover/)
-- [リリースlink-gen実装](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/cmd/link-gen.go)
-- [リリースservice-mirror endpoint処理](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/service-mirror/cluster_watcher.go)
+- [リリースlink-gen実装](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/cmd/link-gen.go)
+- [リリースservice-mirror endpoint処理](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/service-mirror/cluster_watcher.go)
 - [AWS LB Controllerアノテーション](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
 - [EKS Auto Mode NLB](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)
 - [VPC peering](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html)と[AWS PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)

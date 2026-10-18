@@ -1,93 +1,48 @@
 # Circuit Breaker
 
-Circuit Breaker aísla automáticamente los servicios que fallan para evitar fallos en cascada.
+Un circuit breaker aísla automáticamente los servicios que fallan para evitar que el fallo se propague en cascada.
 
 ## Tabla de contenido
 
-1. [¿Por qué Circuit Breaker?](#why-circuit-breaker)
-2. [Descripción general de Circuit Breaker](#circuit-breaker-overview)
-3. [Configuración del Connection Pool](#connection-pool-settings)
-4. [Detección de valores atípicos](#outlier-detection)
-5. [Combinación con la política de Retry](#combination-with-retry-policy)
+1. [¿Por qué usar un circuit breaker?](#why-circuit-breaker)
+2. [Descripción general](#circuit-breaker-overview)
+3. [Configuración de los grupos de conexiones](#connection-pool-settings)
+4. [Detección de instancias con fallos](#outlier-detection)
+5. [Combinación con una política de reintentos](#combination-with-retry-policy)
 6. [Ejemplos prácticos](#practical-examples)
-7. [Circuit Breaker para servicios externos](#external-service-circuit-breaker)
-8. [Monitoreo y depuración](#monitoring-and-debugging)
+7. [Circuit breakers para servicios externos](#external-service-circuit-breaker)
+8. [Monitorización y depuración](#monitoring-and-debugging)
 9. [Consideraciones importantes](#important-considerations)
-10. [Mejores prácticas](#best-practices)
+10. [Buenas prácticas](#best-practices)
 
-<span id="why-circuit-breaker"></span>
-
-## ¿Por qué Circuit Breaker?
+## ¿Por qué usar un circuit breaker? {#why-circuit-breaker}
 
 ### Prevención de fallos en cascada
 
-En una arquitectura de microservicios, evita que los fallos de un servicio se propaguen a otros servicios.
+En una arquitectura de microservicios, este mecanismo evita que el fallo de un servicio se propague a otros.
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Circuit Breaker"]
-        A1[Service A] -->|Slow Response| B1[Service B<br/>Failure]
-        A1 -->|Resource Exhaustion| A1
-        A1 -->|Accumulated Timeouts| C1[Service C<br/>Failure]
-        C1 -->|Cascading Failure| D1[Service D<br/>Failure]
-    end
+![Comparación de una cadena de microservicios sin circuit breaker, donde los tiempos de espera de Service A al llamar al Service B averiado agotan sus recursos y provocan fallos en Service C y D, y otra con circuit breaker, donde las llamadas a B fallan rápidamente mientras C y D siguen funcionando.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.png)
 
-    subgraph With["With Circuit Breaker"]
-        A2[Service A] -->|Fast Fail| B2[Service B<br/>Circuit Open]
-        A2 -->|Normal Operation| C2[Service C<br/>Normal]
-        C2 -->|Normal Operation| D2[Service D<br/>Normal]
-    end
-
-    %% Style definitions
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,B1,C1,D1 failure;
-    class A2,C2,D2 normal;
-    class B2 failure;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.html)
 
 ### Beneficios principales
 
-| Problema | Sin Circuit Breaker | Con Circuit Breaker |
+| Problema | Sin circuit breaker | Con circuit breaker |
 |---------|------------------------|----------------------|
-| **Tiempo de respuesta** | Espera hasta el timeout (30 s+) | Fallo inmediato (1 ms) |
-| **Uso de recursos** | Agotamiento de hilos/conexiones | Protección de recursos |
-| **Propagación de fallos** | Se producen fallos en cascada | Aislamiento de fallos |
+| **Tiempo de respuesta** | Espera hasta agotar el tiempo de espera (30 s o más) | Rechazo rápido al alcanzar los límites configurados |
+| **Uso de recursos** | Agotamiento de hilos y conexiones | Protección de los recursos |
+| **Propagación de fallos** | Fallos en cascada | Aislamiento de los fallos |
 | **Tiempo de recuperación** | Requiere intervención manual | Intentos de recuperación automática |
 
-<span id="circuit-breaker-overview"></span>
+## Descripción general del circuit breaker {#circuit-breaker-overview}
 
-## Descripción general de Circuit Breaker
+El diagrama muestra el patrón genérico de bibliotecas con estados Closed, Open y Half-Open. Istio implementa circuit breakers que limitan los recursos del grupo de conexiones y la exclusión pasiva de endpoints con fallos. No expone un único mecanismo con esos tres estados para toda la malla. Los límites y las observaciones de salud son locales a cada proxy y a cada clúster upstream y nivel de prioridad; la concurrencia puede provocar que se sobrepasen temporalmente los límites. La exclusión de un endpoint lo retira de la selección de destinos durante un tiempo; no elimina el Pod. Los ejemplos siguientes son alternativas entre sí.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open: Consecutive error threshold exceeded
-    Open --> HalfOpen: Wait time elapsed
-    HalfOpen --> Closed: Request successful
-    HalfOpen --> Open: Request failed
+![Máquina de estados en la que el circuit breaker pasa de Closed a Open al superar el umbral de errores consecutivos, de Open a HalfOpen cuando transcurre el tiempo de espera y, según el resultado de la prueba, vuelve a Closed si tiene éxito o a Open si falla.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
 
-    note right of Closed
-        Normal state
-        All requests pass through
-    end note
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.html)
 
-    note right of Open
-        Blocked state
-        Requests fail immediately
-    end note
-
-    note right of HalfOpen
-        Test state
-        Limited requests allowed
-    end note
-```
-
-<span id="connection-pool-settings"></span>
-
-## Configuración del Connection Pool
+## Configuración de los grupos de conexiones {#connection-pool-settings}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -106,11 +61,9 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
-<span id="outlier-detection"></span>
+## Detección de instancias con fallos {#outlier-detection}
 
-## Detección de valores atípicos
-
-La detección de valores atípicos elimina automáticamente las instancias no saludables.
+La detección de instancias con fallos, denominada Outlier Detection, excluye temporalmente los endpoints no saludables del balanceo de carga, según los límites de exclusión y el comportamiento en modo de pánico.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -121,14 +74,16 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5        # 5 consecutive errors
+      consecutive5xxErrors: 5        # 5 consecutive errors
       interval: 30s               # Check every 30 seconds
-      baseEjectionTime: 30s       # Remove for 30 seconds
+      baseEjectionTime: 30s       # Minimum; repeated ejection can last longer
       maxEjectionPercent: 50      # Remove up to 50%
-      minHealthPercent: 40        # Maintain at least 40%
+      minHealthPercent: 40        # Below this, disable outlier isolation and use all hosts
 ```
 
-### Configuración avanzada de detección de valores atípicos
+### Configuración avanzada de Outlier Detection
+
+La detección de errores consecutivos puede excluir un endpoint en el momento de observarlos; `interval` controla las revisiones periódicas y no impone una espera antes de cada exclusión. `minHealthPercent` es un umbral de fail-open: permite volver a utilizar todos los destinos, en lugar de reservar una capacidad mínima saludable. `maxEjectionTime` es un campo de Envoy que esta API de DestinationRule de Istio no expone; no lo añada a estos manifiestos.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -140,27 +95,24 @@ spec:
   trafficPolicy:
     outlierDetection:
       # Consecutive error based
-      consecutiveGatewayErrors: 5    # 5xx errors 5 times
-      consecutive5xxErrors: 3        # 500~599 errors 3 times
+      consecutiveGatewayErrors: 3    # HTTP 502/503/504
+      consecutive5xxErrors: 5        # All HTTP 5xx
 
       # Time intervals
       interval: 10s                  # Check every 10 seconds
       baseEjectionTime: 30s          # First ejection time
-      maxEjectionTime: 300s          # Maximum ejection time
 
       # Rate limits
       maxEjectionPercent: 50         # Remove up to 50%
-      minHealthPercent: 30           # Maintain at least 30%
+      minHealthPercent: 30           # Fail-open/panic threshold, not a health guarantee
 
-      # Success rate based
+      # Separate local connection errors from upstream response errors
       splitExternalLocalOriginErrors: true
 ```
 
-<span id="combination-with-retry-policy"></span>
+## Combinación con una política de reintentos {#combination-with-retry-policy}
 
-## Combinación con la política de Retry
-
-Use Circuit Breaker junto con Retry para aumentar la resiliencia.
+Combine un circuit breaker con reintentos para aumentar la resiliencia.
 
 ### Combinación básica
 
@@ -193,12 +145,14 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 10s
       baseEjectionTime: 30s
 ```
 
-### Patrón de presupuesto de Retry
+### Patrón de presupuesto de reintentos
+
+Este presupuesto limita los reintentos simultáneos en relación con las solicitudes activas y pendientes de cada clúster del proxy; no limita las solicitudes por segundo. La política de reintentos se aplica a lecturas que admiten reintentos de forma segura, mientras que los demás métodos los deshabilitan explícitamente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -209,13 +163,21 @@ spec:
   hosts:
   - payment-service
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment-service
     retries:
       attempts: 2                    # Minimize retries
       perTryTimeout: 1s              # Fast fail
-      retryOn: retriable-4xx,5xx
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -224,23 +186,24 @@ metadata:
 spec:
   host: payment-service
   trafficPolicy:
+    retryBudget:
+      percent: 20
+      minRetryConcurrency: 3
     connectionPool:
       http:
         http1MaxPendingRequests: 5   # Low queue
         maxRequestsPerConnection: 1  # 1 request per connection
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 5s
       baseEjectionTime: 60s          # Long recovery time
 ```
 
-<span id="practical-examples"></span>
+## Ejemplos prácticos {#practical-examples}
 
-## Ejemplos prácticos
+### 1. Circuit breaker para servicios dentro de la malla
 
-### 1. Circuit Breaker para servicios dentro de la malla
-
-#### Escenario: Protección del servicio de base de datos
+#### Escenario: protección de un servicio de base de datos
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -254,13 +217,8 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100          # Maximum 100 connections
-      http:
-        http1MaxPendingRequests: 50  # 50 pending requests
-        http2MaxRequests: 100        # HTTP/2 100 concurrent requests
-        maxRequestsPerConnection: 2  # Maximum 2 requests per connection
-        idleTimeout: 60s             # Idle connection timeout
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -274,13 +232,15 @@ spec:
 ```
 
 **Casos de uso**:
-- Evitar el agotamiento del Connection Pool de la base de datos
-- Bloquear fallos en cascada provocados por consultas lentas
-- Eliminar automáticamente las instancias no saludables
+- Evitar el agotamiento del grupo de conexiones de la base de datos
+- Impedir que las consultas lentas provoquen fallos en cascada
+- Retirar automáticamente de la selección las instancias no saludables
 
-### 2. Patrón maxConnections: 1 (conexión única)
+Aquí, los protocolos nativos de las bases de datos solo utilizan los límites TCP y las observaciones de fallos correspondientes. El límite de conexiones de cada proxy no equivale al tamaño global del grupo de conexiones de la base de datos, ni permite inspeccionar consultas SQL lentas.
 
-#### Escenario: Sistema heredado o servicio con recursos limitados
+### 2. Patrón maxConnections: 1 (una única conexión)
+
+#### Escenario: sistema heredado o servicio con recursos limitados
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -298,19 +258,21 @@ spec:
         maxRequestsPerConnection: 1  # 1 request per connection
         h2UpgradePolicy: DO_NOT_UPGRADE  # Prevent HTTP/2 upgrade
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 1 error
+      consecutive5xxErrors: 1           # Block immediately on 1 error
       interval: 10s
       baseEjectionTime: 60s
 ```
 
 **Casos de uso**:
-- Cuando los sistemas heredados no pueden gestionar conexiones simultáneas
-- Cuando los límites de tasa de una API externa son muy estrictos
-- Cuando se requiere procesamiento secuencial con una única conexión
+- Sistemas heredados que no pueden gestionar conexiones simultáneas
+- API externas con límites de solicitudes muy estrictos
+- Operaciones que requieren procesamiento secuencial mediante una única conexión
 
-### 3. Circuit Breaker por Subset
+`maxConnections: 1` no serializa las operaciones de toda la malla ni aplica una cuota global de una API externa. Cada proxy tiene sus propios límites, HTTP/2 puede multiplexar solicitudes y `maxRequestsPerConnection: 1` deshabilita la reutilización de conexiones, pero no garantiza una única ejecución. Para coordinar las operaciones globalmente, utilice una cola o un limitador de solicitudes en la aplicación.
 
-#### Escenario: Diferentes configuraciones de Circuit Breaker por versión
+### 3. Circuit breaker por subconjunto de destinos
+
+#### Escenario: distintas configuraciones para cada versión
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -326,7 +288,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -345,7 +307,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -359,14 +321,14 @@ spec:
           http1MaxPendingRequests: 5
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 1
+        consecutive5xxErrors: 1
         interval: 5s
         baseEjectionTime: 120s
 ```
 
-### 4. Patrón avanzado de Connection Pool
+### 4. Patrón avanzado de grupos de conexiones
 
-#### Escenario: Servicio de alto rendimiento
+#### Escenario: servicio de alto rendimiento
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -391,13 +353,13 @@ spec:
         idleTimeout: 300s
         h2UpgradePolicy: UPGRADE       # Use HTTP/2
     outlierDetection:
-      consecutiveErrors: 10          # Lenient setting
+      consecutive5xxErrors: 10          # Lenient setting
       interval: 60s
       baseEjectionTime: 30s
       maxEjectionPercent: 20         # Remove up to 20% only
 ```
 
-### 5. Circuit Breaker basado en Health Check
+### 5. Circuit breaker basado en comprobaciones de salud
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -415,20 +377,19 @@ spec:
       # Performance based
       interval: 10s
       baseEjectionTime: 30s
-      maxEjectionTime: 300s          # Maximum 5 minutes
 
       # Dynamic adjustment
       splitExternalLocalOriginErrors: true
       consecutiveLocalOriginFailures: 5
 ```
 
-<span id="external-service-circuit-breaker"></span>
+## Circuit breakers para servicios externos {#external-service-circuit-breaker}
 
-## Circuit Breaker para servicios externos
+Los ejemplos HTTP siguientes suponen que la aplicación envía HTTP sin cifrar a su sidecar, que inicia una conexión TLS con verificación hacia el host externo real en el puerto 443. Si la aplicación ya utiliza TLS, evite una segunda capa de TLS y aplique únicamente las políticas que puedan actuar sobre la información visible en esa capa. La configuración de TLS y autenticación nativos de MongoDB sigue siendo un requisito independiente del cliente y del servidor.
 
-Úselo con ServiceEntry para proteger servicios externos.
+Utilice un circuit breaker junto con ServiceEntry para proteger los servicios externos.
 
-### 1. Circuit Breaker para API externa
+### 1. Circuit breaker para una API externa
 
 ```yaml
 # ServiceEntry: Register external API
@@ -440,9 +401,10 @@ spec:
   hosts:
   - api.payment-provider.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -461,15 +423,18 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1  # Minimize connection reuse
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 30s
       baseEjectionTime: 120s         # Long recovery time
       maxEjectionPercent: 100        # Can completely block
     tls:
-      mode: SIMPLE                   # TLS connection
+      mode: SIMPLE
+      sni: api.payment-provider.com
+      subjectAltNames:
+      - api.payment-provider.com
 ```
 
-### 2. Circuit Breaker para base de datos externa
+### 2. Circuit breaker para una base de datos externa
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -498,12 +463,12 @@ spec:
         maxConnections: 50
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
 
-### 3. Servicio externo con límite de tasa
+### 3. Servicio externo con límite de solicitudes
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -514,9 +479,10 @@ spec:
   hosts:
   - api.rate-limited-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -530,12 +496,17 @@ spec:
     connectionPool:
       http:
         http1MaxPendingRequests: 1   # Minimize queue
-        maxRequestsPerConnection: 1  # Prevent rate limit exceeding
+        maxRequestsPerConnection: 0  # Reuse connections; not a quota limiter
         idleTimeout: 1s              # Fast connection release
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 429 error
+      consecutive5xxErrors: 3           # Default HTTP 5xx detection; not 429
       interval: 60s
-      baseEjectionTime: 300s         # Wait 5 minutes (rate limit reset)
+      baseEjectionTime: 30s          # Independent of provider Retry-After
+    tls:
+      mode: SIMPLE
+      sni: api.rate-limited-service.com
+      subjectAltNames:
+      - api.rate-limited-service.com
 ---
 # VirtualService: Retry settings
 apiVersion: networking.istio.io/v1
@@ -554,11 +525,11 @@ spec:
     timeout: 10s
 ```
 
-<span id="monitoring-and-debugging"></span>
+Las respuestas HTTP 429 requieren limitar las solicitudes según las reglas del proveedor y respetar Retry-After. La detección predeterminada de errores 5xx y la apertura y cierre de conexiones no aplican una cuota de API ni permiten deducir cuándo se restablece.
 
-## Monitoreo y depuración
+## Monitorización y depuración {#monitoring-and-debugging}
 
-### Comprobar métricas de Envoy
+### Consulta de las métricas de Envoy
 
 ```bash
 # Check Circuit Breaker status
@@ -576,12 +547,12 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 
 ### Métricas principales
 
-```yaml
+```promql
 # Prometheus queries
-# Circuit Breaker Open count
+# Requests circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_open
 
-# Pending request count
+# Pending-request circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_pending_open
 
 # Outlier Detection Ejection
@@ -594,12 +565,12 @@ envoy_cluster_upstream_rq_pending_overflow
 envoy_cluster_upstream_rq_retry
 ```
 
-### Dashboard de Grafana
+### Panel de Grafana
 
 ```yaml
 # Circuit Breaker Dashboard
-- expr: rate(envoy_cluster_circuit_breakers_default_rq_open[5m])
-  legend: "Circuit Breaker Open Rate"
+- expr: envoy_cluster_circuit_breakers_default_rq_open
+  legend: "Circuit Breaker Open State"
 
 - expr: envoy_cluster_outlier_detection_ejections_active
   legend: "Ejected Instances"
@@ -612,85 +583,36 @@ envoy_cluster_upstream_rq_retry
 
 ```bash
 # Check Proxy configuration
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local
 
 # Check Circuit Breaker settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 
 # Check Outlier Detection settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
 
-<span id="important-considerations"></span>
+## Consideraciones importantes {#important-considerations}
 
-## Consideraciones importantes
+### Un circuit breaker no garantiza la consistencia de los datos
 
-### Circuit Breaker no garantiza la consistencia de los datos
+**Principio fundamental**: un circuit breaker es una herramienta de **aislamiento de fallos**. No evita por sí solo las **solicitudes duplicadas** ni **garantiza la consistencia de los datos**.
 
-**Principio fundamental**: Circuit Breaker es una herramienta de **aislamiento de fallos**, no de **prevención de solicitudes duplicadas** ni de **garantía de consistencia de datos**.
+#### Funciones y limitaciones del circuit breaker
 
-#### Función y limitaciones de Circuit Breaker
+![Circuit breaker conectado a las funciones que realiza —aislar servicios con fallos, evitar fallos en cascada, proteger recursos e intentar la recuperación automática— y, mediante líneas discontinuas, a las que no realiza: prevención de duplicados, consistencia de datos, transacciones e idempotencia.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
 
-```mermaid
-flowchart TB
-    subgraph WhatItDoes["What Circuit Breaker Does"]
-        CB1[Isolate Failing Services]
-        CB2[Prevent Cascading Failures]
-        CB3[Protect System Resources]
-        CB4[Attempt Auto Recovery]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.html)
 
-    subgraph WhatItDoesNot["What Circuit Breaker Does NOT Do"]
-        CB5[Prevent Duplicate Requests]
-        CB6[Guarantee Data Consistency]
-        CB7[Transaction Management]
-        CB8[Idempotency Guarantee]
-    end
+#### Escenario problemático: reintentos y circuit breaker
 
-    %% Style definitions
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
+![Secuencia de un POST de pago que el proxy de Istio reintenta tras perder cada respuesta: cada intento vuelve a insertar el pago, por lo que quedan tres registros duplicados antes de alcanzar los cinco errores consecutivos necesarios para activar el circuit breaker.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.png)
 
-    %% Apply classes
-    class CB1,CB2,CB3,CB4 good;
-    class CB5,CB6,CB7,CB8 bad;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.html)
 
-#### Escenario problemático: Retry + Circuit Breaker
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy<br/>(VirtualService Retry)
-    participant Service as Payment Service
-    participant DB as Database
-
-    Note over Proxy: Retry: attempts=3<br/>Circuit Breaker: consecutiveErrors=5
-
-    Client->>Proxy: POST /payment (Payment Request)
-
-    Proxy->>Service: Attempt 1
-    Service->>DB: INSERT payment (Success)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 1/3
-
-    Proxy->>Service: Attempt 2 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 2/3
-
-    Proxy->>Service: Attempt 3 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-
-    Note over DB: Payment duplicated 3 times!<br/>Circuit Breaker activates after 5 errors
-```
-
-**Problema**: Antes de que Circuit Breaker se active (después de 5 errores consecutivos), ya se han producido **3 pagos duplicados**.
+**Problema**: antes de que se active el circuit breaker, tras cinco errores consecutivos, ya se han producido **tres pagos duplicados**.
 
 #### Ejemplo de uso incorrecto
 
@@ -720,19 +642,19 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 
 # Result:
-# - Up to 15 duplicates possible before Circuit Breaker activates (3 retries x 5 errors)
+# - attempts: 3 allows up to 4 deliveries per original request; the ejection threshold is not a multiplier
 # - Critical operations like payment, inventory deduction get duplicated
 # - Data consistency destroyed
 ```
 
 #### Patrones de uso correctos
 
-**Patrón 1: Solo Circuit Breaker (deshabilitar Retry)**
+**Patrón 1: reintentos seguros para lecturas; sin reintentos de la malla para escrituras**
 
 ```yaml
 # Safe: Read-only + Circuit Breaker
@@ -763,7 +685,7 @@ spec:
   host: product-catalog
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -787,9 +709,6 @@ spec:
     timeout: 10s
     retries:
       attempts: 0  # Disable Retry for POST
-      # Or
-      # attempts: 1
-      # retryOn: connect-failure,refused-stream  # Network only
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -799,40 +718,16 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**Patrón 2: Idempotencia en el nivel de aplicación + Circuit Breaker**
+**Patrón 2: idempotencia en la aplicación y circuit breaker**
 
-```python
-# Server: Idempotency Key validation
-@app.route('/payment', methods=['POST'])
-def create_payment():
-    idempotency_key = request.headers.get('X-Idempotency-Key')
+La clave de idempotencia debe vincularse al llamante autenticado y al contenido de la solicitud, y registrarse de forma atómica junto con la modificación de negocio y su resultado. Comprobar la existencia de una clave en Redis, ejecutar el pago y escribir por separado en la caché permite condiciones de carrera; no es una implementación segura. Utilice el [flujo de idempotencia atómica](05-retry-timeout.md) y, cuando sea necesario, un contrato de idempotencia con el servicio de destino o un patrón outbox. Solo entonces aplique la política de reintentos siguiente: la mera presencia de la cabecera no basta.
 
-    if not idempotency_key:
-        return jsonify({"error": "Missing Idempotency-Key"}), 400
 
-    # Check if request was already processed
-    if redis.exists(f"payment:idempotency:{idempotency_key}"):
-        cached_result = redis.get(f"payment:result:{idempotency_key}")
-        return jsonify(json.loads(cached_result)), 200
-
-    # Process new payment
-    try:
-        payment = process_payment(request.json)
-
-        # Cache result (24 hours)
-        redis.setex(f"payment:idempotency:{idempotency_key}", 86400, "1")
-        redis.setex(f"payment:result:{idempotency_key}", 86400,
-                    json.dumps(payment))
-
-        return jsonify(payment), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-```
 
 ```yaml
 # Istio: Retry is safe when Idempotency is guaranteed
@@ -862,21 +757,21 @@ spec:
       attempts: 0
 ```
 
-#### Estrategia de seguridad por tipo de servicio
+#### Estrategia de seguridad según el tipo de servicio
 
-| Tipo de servicio | Retry | Circuit Breaker | Se requiere idempotencia |
+| Tipo de servicio | Reintentos | Circuit breaker | Idempotencia necesaria |
 |-------------|-------|----------------|---------------------|
-| **Catálogo de productos** | 3 veces | Requerido | No se requiere |
-| **Carrito de compras** | 3 veces | Requerido | No se requiere |
-| **Creación de pedidos** | 0 veces | Requerido | Requerida |
-| **Pago** | 0 veces | Requerido | Requerida |
-| **Deducción de inventario** | 0 veces | Requerido | Requerida |
-| **Acumulación de puntos** | 0 veces | Requerido | Requerida |
-| **Envío de notificaciones** | 3 veces (idempotente) | Requerido | Recomendada |
+| **Catálogo de productos** | 3 veces | Necesario | No es necesaria |
+| **Carrito de compras** | Solo lecturas de forma predeterminada | Ajustar según sea necesario | Necesaria para modificaciones que admitan reintentos |
+| **Creación de pedidos** | 0 veces | Necesario | Necesaria |
+| **Pago** | 0 veces | Necesario | Necesaria |
+| **Descuento de inventario** | 0 veces | Necesario | Necesaria |
+| **Acumulación de puntos** | 0 veces | Necesario | Necesaria |
+| **Envío de notificaciones** | Solo con eliminación de entregas duplicadas | Ajustar según sea necesario | Idempotencia de la entrega o del mensaje necesaria |
 
-#### Connection Pool y consistencia de datos
+#### Grupos de conexiones y consistencia de los datos
 
-La configuración del Connection Pool tampoco **garantiza la consistencia de los datos**. Solo limita el número de conexiones simultáneas.
+La configuración de los grupos de conexiones tampoco **garantiza la consistencia de los datos**. Solo limita el número de conexiones simultáneas.
 
 ```yaml
 # Misconception: Does maxConnections=1 prevent duplicates?
@@ -899,18 +794,18 @@ spec:
 # - Retries after network timeout are separate connections
 ```
 
-#### Lista de verificación práctica
+#### Lista de comprobaciones prácticas
 
-**Verificación previa al despliegue**:
+**Verificación antes del despliegue**:
 
-- [ ] Compruebe la configuración de Retry para solicitudes POST/PUT/DELETE/PATCH
-- [ ] Establezca `attempts: 0` o `retryOn: connect-failure` para solicitudes no idempotentes
-- [ ] Revise la posibilidad de duplicados al combinar Circuit Breaker y Retry
-- [ ] Implemente Idempotency Key para operaciones críticas (pago, inventario)
-- [ ] Confirme que exista lógica de validación en el nivel de aplicación
-- [ ] Realice una simulación de fallos en el entorno de pruebas
+- [ ] Revise la configuración de reintentos para solicitudes POST/PUT/DELETE/PATCH
+- [ ] Establezca `attempts: 0` para escrituras no idempotentes, salvo que un contrato verificado de la aplicación permita reintentarlas
+- [ ] Revise la posibilidad de duplicados al combinar un circuit breaker con reintentos
+- [ ] Implemente claves de idempotencia para operaciones críticas, como pagos o cambios en el inventario
+- [ ] Confirme que exista lógica de validación en la aplicación
+- [ ] Simule fallos en un entorno de pruebas
 
-**Monitoreo**:
+**Monitorización**:
 
 ```bash
 # Check Retry occurrence count
@@ -925,9 +820,7 @@ kubectl exec -n <namespace> <pod> -c istio-proxy -- \
 kubectl logs -n <namespace> <pod> | grep -i "duplicate\|idempotency"
 ```
 
-<span id="best-practices"></span>
-
-## Mejores prácticas
+## Buenas prácticas {#best-practices}
 
 ### 1. Configuración gradual
 
@@ -945,7 +838,7 @@ spec:
         http1MaxPendingRequests: 100
         maxRequestsPerConnection: 10
     outlierDetection:
-      consecutiveErrors: 10        # Lenient
+      consecutive5xxErrors: 10        # Lenient
       interval: 60s
       baseEjectionTime: 30s
 ```
@@ -964,12 +857,12 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 5
     outlierDetection:
-      consecutiveErrors: 5         # Moderate
+      consecutive5xxErrors: 5         # Moderate
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 2. Configuración específica por tipo de servicio
+### 2. Configuración según el tipo de servicio
 
 ```yaml
 # Frontend service: Lenient
@@ -978,31 +871,36 @@ connectionPool:
     http1MaxPendingRequests: 100
     maxRequestsPerConnection: 10
 outlierDetection:
-  consecutiveErrors: 10
+  consecutive5xxErrors: 10
+```
 
+```yaml
 # Backend service: Moderate
 connectionPool:
   http:
     http1MaxPendingRequests: 50
     maxRequestsPerConnection: 5
 outlierDetection:
-  consecutiveErrors: 5
+  consecutive5xxErrors: 5
+```
 
-# Database/Cache: Strict
+```yaml
+# Native database/cache TCP example
 connectionPool:
-  http:
-    http1MaxPendingRequests: 10
-    maxRequestsPerConnection: 2
+  tcp:
+    maxConnections: 10
 outlierDetection:
-  consecutiveErrors: 3
+  consecutive5xxErrors: 3
+```
 
+```yaml
 # External API: Very strict
 connectionPool:
   http:
     http1MaxPendingRequests: 5
     maxRequestsPerConnection: 1
 outlierDetection:
-  consecutiveErrors: 1
+  consecutive5xxErrors: 1
 ```
 
 ### 3. Configuración de alertas
@@ -1025,13 +923,15 @@ groups:
       summary: "Connection pool overflow rate is high"
 
   - alert: HighOutlierEjectionRate
-    expr: rate(envoy_cluster_outlier_detection_ejections_total[5m]) > 5
+    expr: rate(envoy_cluster_outlier_detection_ejections_enforced_total[5m]) > 5
     for: 3m
     annotations:
       summary: "High outlier ejection rate"
 ```
 
 ### 4. Escenarios de prueba
+
+Ejecute las pruebas de carga únicamente contra un servicio de pruebas preparado para ello. Observe por separado las métricas en tiempo real: proxy-config muestra los umbrales configurados, pero no indica si el circuit breaker está abierto en ese momento. Esperar 30 segundos no garantiza que un endpoint se recupere después de exclusiones repetidas.
 
 ```bash
 #!/bin/bash
@@ -1053,7 +953,7 @@ wait
 
 # 3. Check Circuit Breaker status
 echo "=== Circuit Breaker Status ==="
-istioctl proxy-config cluster <pod> | grep circuit_breakers
+istioctl proxy-config clusters <pod> -o json | jq '.[] | .circuitBreakers'
 
 # 4. Wait for recovery
 echo "=== Waiting for Recovery ==="
@@ -1065,6 +965,8 @@ curl -s http://service/api | jq .status
 ```
 
 ### 5. Plantilla de documentación
+
+Sustituya las cifras ilustrativas de carga y recuperación por mediciones reales; no son garantías fijas de Istio. Habilite las estadísticas necesarias de Envoy y, si la imagen del proxy no incluye curl, utilice un reenvío de puertos local hacia la interfaz de administración o `istioctl dashboard envoy`.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1078,7 +980,7 @@ metadata:
     # Threshold rationale
     threshold-rationale: |
       - maxConnections: 100 (DB connection pool size)
-      - consecutiveErrors: 5 (observed error pattern)
+      - consecutive5xxErrors: 5 (observed error pattern)
       - baseEjectionTime: 30s (average recovery time)
 
     # Test results
@@ -1091,12 +993,21 @@ metadata:
     operations: |
       - Monitor: envoy_cluster_circuit_breakers_*
       - Alert: Circuit open > 1min
-      - Rollback: kubectl delete dr my-service-circuit-breaker
+      - Rollback: restore the reviewed previous DestinationRule configuration
+spec:
+  host: my-service
 ```
 
 ## Referencias
 
-- [Istio Circuit Breaker](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
-- [Envoy Circuit Breaking](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
-- [Envoy Outlier Detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Circuit breakers en Istio](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
+- [Circuit breakers en Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
+- [Detección de instancias con fallos en Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
 - [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki/How-it-Works)
+
+- [Referencia principal 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Referencia principal 2](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
+- [Referencia principal 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Referencia principal 4](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [Referencia principal 5](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+- [Referencia principal 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
