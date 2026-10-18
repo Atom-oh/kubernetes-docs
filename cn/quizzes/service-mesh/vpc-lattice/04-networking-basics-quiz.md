@@ -1,0 +1,117 @@
+# 基础知识：链路本地地址与 SNI 测验
+
+本测验检查你对链路本地/ULA 寻址、SNI 工作方式以及 Lattice 协议支持的理解。
+
+## 单选题
+
+1. 关于 VPC Lattice 服务 DNS 名称解析到的地址范围，哪项说法正确？
+   - A) IPv4 `169.254.171.0/24` 和 IPv6 `fe80::/10` 都是链路本地地址
+   - B) IPv4 `169.254.171.0/24` 是链路本地地址，而 IPv6 `fd00:ec2:80::/64` 不是链路本地地址，而是唯一本地地址（ULA）
+   - C) 两个地址范围都是全局唯一的公有地址
+   - D) 不支持 IPv6
+
+<details>
+
+<summary>显示答案</summary>
+
+**答案：B) IPv4 `169.254.171.0/24` 是链路本地地址，而 IPv6 `fd00:ec2:80::/64` 不是链路本地地址，而是唯一本地地址（ULA）**
+
+**解释：**
+IPv4 地址范围位于 `169.254.0.0/16`（RFC 3927，链路本地地址）中；但 IPv6 范围不属于 `fe80::/10`（链路本地地址），而是 `fc00::/7` ULA 范围（RFC 4193）中的 `fd00:ec2:80::/64`。链路本地地址的作用范围仅限于链路。根据 RFC 6724，ULA 具有全局地址作用范围，但设计用途是私有路由，而非全球互联网可达；它也不是已弃用的站点本地地址类别。仅凭这些地址分类，无法说明 AWS 特有的 Lattice 入口实现方式。
+</details>
+
+2. 应如何理解 Lattice 地址范围？
+   - A) 用于节省 IP 地址
+   - B) 使用 AWS 文档描述的服务专属寻址；不要把该前缀当作链路本地拦截的一般定义
+   - C) 用于应对 IPv4 地址耗尽
+   - D) 让客户端明确知道目标地址
+
+<details>
+
+<summary>显示答案</summary>
+
+**答案：B) 使用 AWS 文档描述的服务专属寻址；不要把该前缀当作链路本地拦截的一般定义**
+
+**解释：**
+服务专属路由和关联关系决定可达性。ULA 既不是链路本地地址，也不属于已弃用的站点本地地址类别；地址作用范围与路由可达性是不同概念。
+</details>
+
+3. 共存期间，Envoy 日志中出现了发往 Lattice 的请求。接下来应检查什么？
+   - A) 是否超过 Lattice 配额
+   - B) mesh 拦截以及配置的出站路由/签名策略是否能解释故障
+   - C) Gateway API CRD 版本是否不匹配
+   - D) Target Group 协议配置是否错误
+
+<details>
+
+<summary>显示答案</summary>
+
+**答案：B) mesh 拦截以及配置的出站路由/签名策略是否能解释故障**
+
+**解释：**
+有些 Envoy 策略会拒绝未知目标，另一些则会转发。应检查规则和日志，然后测试选定的绕过或转发设计；共存并不意味着一定会失败。
+</details>
+
+4. 为什么仅凭目标 IP 不足以构成稳定的服务身份和授权依据？
+   - A) 目标 IP 会被加密；没有其他办法
+   - B) 应使用面向服务的身份、DNS/请求关联信息和经过审查的网络规则，而不能只依赖 IP
+   - C) Flow Logs 会被禁用；启用它们就能解决问题
+   - D) VPC CNI 会重复使用 IP；调整 IP 分配策略就能解决问题
+
+<details>
+
+<summary>显示答案</summary>
+
+**答案：B) 应使用面向服务的身份、DNS/请求关联信息和经过审查的网络规则，而不能只依赖 IP**
+
+**解释：**
+服务身份并不是一个稳定的、按服务划分的 CIDR 安全边界。将网络证据与身份验证策略、服务日志和请求 ID 结合起来，仍然有用。安全组变更必须通过经过审查的 IaC 实施。
+</details>
+
+5. 关于 SNI/ECH，哪项说法正确？
+   - A) 这是早期 TLS 设计留下的漏洞
+   - B) 普通 TLS 会公开 SNI 以便选择证书；ECH 是另一种设计，但 Lattice TLS Passthrough 不支持它
+   - C) 为了性能而跳过了 SNI 加密
+   - D) 故意公开 SNI，以便穿越防火墙
+
+<details>
+
+<summary>显示答案</summary>
+
+**答案：B) 普通 TLS 会公开 SNI 以便选择证书；ECH 是另一种设计，但 Lattice TLS Passthrough 不支持它**
+
+**解释：**
+TLS passthrough 要求自定义域名与 SNI 相匹配。AWS 明确排除了对 ECH/ESNI 的支持，因此不要声称明文 SNI 在所有情况下都无法避免，也不要说 Lattice 对此仅仅是“尚不确定”。
+</details>
+
+6. 关于 VPC Lattice 中的原始 TCP，哪项说法正确？
+   - A) AWS 网络不支持 TCP 协议
+   - B) Service listener 不提供原始 TCP，但 TCP resource configuration/resource gateway 是另一种受支持的模型
+   - C) NLB 已经能实现这一点，因此没有必要
+   - D) 安全法规禁止明文通信
+
+<details>
+
+<summary>显示答案</summary>
+
+**答案：B) Service listener 不提供原始 TCP，但 TCP resource configuration/resource gateway 是另一种受支持的模型**
+
+**解释：**
+不要把它说成整个产品在数学意义上都无法支持。应比较另一种资源连接访问模型、控制器支持和路由需求；不要把 h2c gRPC 归类为任意原始 TCP。
+</details>
+
+7. 关于 HTTPS listener 与 TLS Passthrough 之间的权衡，哪项说法正确？
+   - A) TLS Passthrough 在所有方面都更好
+   - B) Passthrough 会保留端点 TLS，但无法检查 HTTP SigV4 身份；基于匿名网络上下文的策略是另一种控制措施
+   - C) 两种 listener 都能在不解密的情况下验证加密的 HTTP SigV4 请求头
+   - D) HTTPS listener 看不到 SNI
+
+<details>
+
+<summary>显示答案</summary>
+
+**答案：B) Passthrough 会保留端点 TLS，但无法检查 HTTP SigV4 身份；基于匿名网络上下文的策略是另一种控制措施**
+
+**解释：**
+缺失的是经过身份验证的 HTTP 身份和 L7 检查能力，并非所有形式的身份验证策略。应明确选择 listener 和端点控制；后端 HTTPS 加密不代表 Lattice 会验证目标证书。
+</details>

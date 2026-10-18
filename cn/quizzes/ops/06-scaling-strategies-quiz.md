@@ -1,78 +1,78 @@
 # 扩缩容策略测验
 
-> **相关文档**: [扩缩容策略](../../ops/06-scaling-strategies.md)
+> **相关文档**：[扩缩容策略](../../ops/06-scaling-strategies.md)
 
 ## 选择题
 
-### 1. 使用 HPA 的自定义指标需要什么？
+### 1. 使用自定义指标与 HPA 需要什么？
 
 - A) Kubernetes 1.30 或更高版本
 - B) Prometheus Adapter 或类似的自定义指标服务器
 - C) AWS Auto Scaling 集成
-- D) 手动 Pod 扩缩容
+- D) 手动扩缩 Pod
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Prometheus Adapter 或类似的自定义指标服务器**
+**答案：B) Prometheus Adapter 或类似的自定义指标服务器**
 
-**解释:**
-使用自定义指标的 HPA 需要一个实现 custom.metrics.k8s.io API 的指标服务器。Prometheus Adapter 会查询 Prometheus，并以 HPA 期望的格式公开指标，从而能够基于每秒请求数等应用特定指标进行扩缩容。
+**说明：**
+使用自定义指标的 HPA 需要一个实现 custom.metrics.k8s.io API 的指标服务器。Prometheus Adapter 会查询 Prometheus，并以 HPA 所需的格式提供指标，从而支持根据每秒请求数等应用专属指标进行扩缩容。
 
 </details>
 
-### 2. KEDA 可以基于哪些 HPA 无法基于的事件进行扩缩容？
+### 2. KEDA 在原生 HPA 控制循环的基础上增加了什么？
 
 - A) CPU 利用率
 - B) 内存使用量
-- C) SQS 队列深度或 Kafka 滞后等外部事件
+- C) 事件源扩缩器以及激活和缩容至零的管理
 - D) Pod 重启次数
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) SQS 队列深度或 Kafka 滞后等外部事件**
+**答案：C) 事件源扩缩器以及激活和缩容至零的管理**
 
-**解释:**
-KEDA (Kubernetes Event-Driven Autoscaling) 包含适用于 AWS SQS、Kafka、RabbitMQ、数据库等外部系统的缩放器。它可以扩缩容到零，并响应 Kubernetes 指标系统之外的事件。
+**说明：**
+KEDA（Kubernetes 事件驱动自动扩缩容）包含适用于 AWS SQS、Kafka、RabbitMQ、数据库等外部系统的扩缩器。它向 HPA 提供外部指标，并管理受支持工作负载的激活和缩容至零过程。HPA 本身也可以通过适配器使用外部指标；KEDA 并不会让 HPA 无法读取这些指标。
 
 </details>
 
-### 3. VPA 模式 “Auto” 和 “Off” 之间有什么区别？
+### 3. VPA 的“Recreate”和“Off”模式有什么区别？
 
-- A) Auto 启用 HPA，Off 禁用 HPA
-- B) Auto 就地更新 Pod，Off 仅提供建议
-- C) Auto 需要重启，Off 会立即生效
-- D) Auto 使用 Spot 实例，Off 使用 On-Demand 实例
+- A) Recreate 启用 HPA，Off 禁用 HPA
+- B) Recreate 可以驱逐并重新创建 Pod；Off 仅提供建议
+- C) Recreate 保证不中断；Off 会立即生效
+- D) Recreate 使用 Spot 实例；Off 使用按需实例
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Auto 就地更新 Pod，Off 仅提供建议**
+**答案：B) Recreate 可以驱逐并重新创建 Pod；Off 仅提供建议**
 
-**解释:**
-VPA “Auto” 模式会自动驱逐并重新创建带有更新后资源请求的 Pod。“Off” 模式只生成建议而不进行更改，适用于在手动实施前审查建议。
+**说明：**
+VPA 1.8.0 弃用了 Auto 模式，该模式目前的行为与 Recreate 相同。Recreate 可以通过驱逐和重新创建来更新；Off 则保留建议供审核。显式的 InPlaceOrRecreate 模式和受功能门控控制的 InPlace 模式是独立模式，具有不同的回退行为。
 
 </details>
 
-### 4. 什么是 Pod Deletion Cost，它如何影响扩缩容？
+### 4. 什么是 Pod 删除成本，它如何影响扩缩容？
 
-- A) 删除一个 Pod 的财务成本
-- B) 一个注解，用于影响缩容期间哪些 Pod 会先被移除
-- C) 删除一个 Pod 所需的时间
+- A) 删除 Pod 的财务成本
+- B) 一种注解，可影响缩容时先移除哪些 Pod
+- C) 删除 Pod 所需的时间
 - D) 与 Pod 终止相关的存储成本
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 一个注解，用于影响缩容期间哪些 Pod 会先被移除**
+**答案：B) 一种注解，可影响缩容时先移除哪些 Pod**
 
-**解释:**
-`controller.kubernetes.io/pod-deletion-cost` 注解会为 Pod 分配一个成本值。在缩容期间，删除成本较低的 Pod 会先被终止。这有助于保留运行重要工作负载或包含缓存数据的 Pod。
+**说明：**
+`controller.kubernetes.io/pod-deletion-cost` 注解为 Pod 指定成本值。在 ReplicaSet 中，经过较早阶段的分配、阶段和就绪状态比较后，系统会优先选择成本较低的 Pod。这只是尽力而为的机制，不能防止驱逐、Spot 回收、Job/StatefulSet 行为，也不能影响不同 Deployment 之间的扩缩容。
 
 </details>
 
-### 5. 使用带自定义指标的 HPA 时，计算期望副本数的公式是什么？
+### 5. 使用自定义指标的 HPA 在计算期望副本数时采用什么公式？
 
 - A) currentReplicas + 1
 - B) desiredReplicas = ceil(currentReplicas * (currentMetricValue / desiredMetricValue))
@@ -82,27 +82,27 @@ VPA “Auto” 模式会自动驱逐并重新创建带有更新后资源请求�
 <details>
 <summary>显示答案</summary>
 
-**答案: B) desiredReplicas = ceil(currentReplicas * (currentMetricValue / desiredMetricValue))**
+**答案：B) desiredReplicas = ceil(currentReplicas * (currentMetricValue / desiredMetricValue))**
 
-**解释:**
-HPA 通过将当前指标值与目标值进行比较来计算期望副本数，然后按比例扩缩容。向上取整函数确保在扩容时至少增加一个额外副本。
+**说明：**
+HPA 会将当前指标值与目标值进行比较，然后按比例调整副本数。这个简化公式假定指标可用且 Pod 已就绪。容差、缺失数据、最小值/最大值和扩缩容行为都可能阻止或限制实际变更；向上取整并不保证会增加一个 Pod。
 
 </details>
 
-### 6. 针对 Spot 节点中断处理，推荐的策略是什么？
+### 6. 处理 Spot 节点中断的推荐策略是什么？
 
 - A) 忽略中断
-- B) 使用 Pod Disruption Budgets，并结合中断处理程序进行优雅终止
+- B) 使用 Pod 中断预算，并配合中断处理程序进行优雅终止
 - C) 只运行无状态工作负载
 - D) 完全禁用 Spot 实例
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 使用 Pod Disruption Budgets，并结合中断处理程序进行优雅终止**
+**答案：B) 使用 Pod 中断预算，并配合中断处理程序进行优雅终止**
 
-**解释:**
-Spot 中断处理结合了 AWS Node Termination Handler（或 Karpenter 的原生处理）、用于确保可用性的 Pod Disruption Budgets、足够的终止宽限期，以及能够优雅处理抢占的工作负载设计。
+**说明：**
+应根据节点模式选择合适的处理方式：托管的 Auto Mode、已配置的自管理 Karpenter，或在需要时使用完整的 Node Termination Handler 设置。避免重复配置排空控制器。PDB 和宽限期无法阻止 Spot 实例丢失，也不能保证应用获得完整的两分钟关停时间。
 
 </details>
 
@@ -110,66 +110,66 @@ Spot 中断处理结合了 AWS Node Termination Handler（或 Karpenter 的原�
 
 - A) Pod 重启的频率
 - B) KEDA 检查外部指标源的频率
-- C) 扩缩容操作之间的延迟
-- D) 健康检查频率
+- C) 扩缩操作之间的延迟
+- D) 健康检查的频率
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) KEDA 检查外部指标源的频率**
+**答案：B) KEDA 检查外部指标源的频率**
 
-**解释:**
-`pollingInterval` 定义 KEDA 向外部缩放器（例如 SQS、Prometheus）查询指标值的频率。较低的间隔可以提供更快的响应时间，但会增加指标源的负载。
+**说明：**
+`pollingInterval` 定义 KEDA 查询外部扩缩器（例如 SQS、Prometheus）以获取指标值的频率。较短的间隔可以加快响应速度，但会增加指标源的负载。
 
 </details>
 
-### 8. 哪个 Kubernetes 功能使 VPA 能够在较新版本中无需重启即可调整 Pod 大小？
+### 8. 哪项 Kubernetes 功能可以让 VPA 在较新版本中无需重启即可调整 Pod 大小？
 
-- A) Rolling updates
-- B) In-place Pod Vertical Scaling
-- C) Blue/green deployment
-- D) Canary releases
+- A) 滚动更新
+- B) Pod 原地垂直扩缩容
+- C) 蓝绿部署
+- D) 金丝雀发布
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) In-place Pod Vertical Scaling**
+**答案：B) Pod 原地垂直扩缩容**
 
-**解释:**
-Kubernetes 1.27+ 通过 `resizePolicy` 字段支持就地垂直扩缩容，允许在不重启 Pod 的情况下更改 CPU 和内存。VPA 可以利用此能力实现干扰更少的资源调整。
+**说明：**
+Pod 原地调整大小功能从 1.27 版的 Alpha 阶段发展到 1.33 版的 Beta 阶段，并于 1.35 版达到稳定阶段。受支持的 VPA 模式可以使用此功能，但 resizePolicy 仍可能要求重启容器，容量/QoS 限制也可能导致更新延迟或被拒绝。
 
 </details>
 
-### 9. 与 metrics-server 相比，使用 Prometheus Adapter 支持 HPA 有什么好处？
+### 9. 与 metrics-server 相比，Prometheus Adapter 用于 HPA 有什么优势？
 
-- A) 更低的资源使用量
-- B) 支持 CPU/内存之外的自定义和外部指标
-- C) 更快的指标收集
-- D) 内置告警
+- A) 资源使用量更低
+- B) 支持 CPU/内存之外的自定义指标和外部指标
+- C) 指标采集速度更快
+- D) 内置告警功能
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 支持 CPU/内存之外的自定义和外部指标**
+**答案：B) 支持 CPU/内存之外的自定义指标和外部指标**
 
-**解释:**
-Metrics-server 只提供 CPU 和内存指标。Prometheus Adapter 通过 custom.metrics.k8s.io API 公开任何 Prometheus 指标，使 HPA 能够基于每秒请求数、队列深度或延迟等应用指标进行扩缩容。
+**说明：**
+metrics-server 仅提供 CPU 和内存指标。Prometheus Adapter 会通过 custom.metrics.k8s.io API 暴露已配置且可用的时间序列，使 HPA 能够根据每秒请求数、队列深度或延迟等应用指标进行扩缩容。
 
 </details>
 
-### 10. 组合使用 HPA 和 VPA 时应该考虑什么？
+### 10. 将 HPA 与 VPA 结合使用时应考虑什么？
 
-- A) 它们不能一起使用
-- B) 将它们配置在不同的资源维度上（HPA 基于 CPU，VPA 基于内存）
+- A) 两者不能同时使用
+- B) 将它们配置在不同的资源维度上（HPA 管理 CPU，VPA 管理内存）
 - C) 启用 VPA 时始终禁用 HPA
-- D) 它们会自动协调，无需配置
+- D) 无需配置，两者会自动协调
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 将它们配置在不同的资源维度上（HPA 基于 CPU，VPA 基于内存）**
+**答案：B) 将它们配置在不同的资源维度上（HPA 管理 CPU，VPA 管理内存）**
 
-**解释:**
-如果 HPA 和 VPA 都尝试管理同一资源维度，就可能发生冲突。一种常见模式是使用 HPA 基于 CPU 进行水平扩缩容，并将 VPA 用于内存的建议模式；或者使用 VPA “Initial” 模式，该模式仅在 Pod 创建时设置资源。
+**说明：**
+如果 HPA 和 VPA 都试图管理同一资源维度，就可能发生冲突。可选方案包括仅提供建议的 VPA，或者让 HPA 使用 RPS/积压量等工作负载指标，同时由 VPA 负责资源配置。Initial 模式仍会更改新 Pod 的请求量，因此不能消除 CPU 利用率计算分母方面的相互影响。还应验证重启和调度方面的影响。
 
 </details>

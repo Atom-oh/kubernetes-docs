@@ -1,23 +1,23 @@
 # Aplicaciones de ArgoCD
 
-> **Base de revisión**: Argo CD 3.5.2; actualizado al parche 3.5.4 después de revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
-> **Última actualización**: October 12, 2026
+> **Referencia de revisión**: Argo CD 3.5.2; actualizado al parche 3.5.4 tras revisar las notas de la versión (no se volvieron a ejecutar los ejemplos)
+> **Última actualización**: October 16, 2026
 
 ## Tabla de contenido
 - [Descripción general del CRD Application](#application-crd-overview)
 - [Tipos de fuentes](#source-types)
-- [Múltiples fuentes](#multiple-sources)
-- [Configuración de destino](#destination-configuration)
-- [Evaluación de estado](#health-assessment)
+- [Varias fuentes](#multiple-sources)
+- [Configuración del destino](#destination-configuration)
+- [Evaluación del estado](#health-assessment)
 - [Hooks de recursos](#resource-hooks)
 - [Ignorar diferencias](#ignore-differences)
 - [Patrón App of Apps](#app-of-apps-pattern)
 
 ## Descripción general del CRD Application
 
-Los ejemplos son configuraciones independientes. Reemplace myorg/accounts/clusters/paths por fuentes autorizadas reales. Elija source/sources, el renderizador y destination.server/name según el escenario, en lugar de habilitar todas las alternativas a la vez.
+Los ejemplos son configuraciones independientes. Sustituye myorg/accounts/clusters/paths por fuentes autorizadas reales. Elige la fuente o las fuentes, el renderizador y destination.server/name según el escenario, en lugar de habilitar todas las alternativas a la vez.
 
-El CRD Application es el recurso principal de ArgoCD que define cómo y dónde desplegar sus aplicaciones. Conecta un repositorio fuente con un cluster de Kubernetes de destino.
+El CRD Application es el recurso principal de ArgoCD que define cómo y dónde implementar tus aplicaciones. Conecta un repositorio de origen con un clúster de Kubernetes de destino.
 
 ### Especificación completa
 
@@ -78,7 +78,7 @@ spec:
   revisionHistoryLimit: 10
 ```
 
-Application.status es el estado informado por el controlador. Para crear Applications fuera del namespace del plano de control, un administrador debe habilitar application.namespaces y los sourceNamespaces de AppProject, además del RBAC apropiado.
+Application.status es el estado informado por el controlador. Para crear Applications fuera del espacio de nombres del plano de control, un administrador debe habilitar application.namespaces y AppProject sourceNamespaces, además de configurar el RBAC correspondiente.
 
 ### Explicación de los campos clave
 
@@ -86,17 +86,17 @@ Application.status es el estado informado por el controlador. Para crear Applica
 |-------|-------------|
 | `project` | AppProject al que pertenece esta aplicación |
 | `source` | De dónde obtener los manifiestos |
-| `destination` | Cluster y namespace de destino |
+| `destination` | Clúster y espacio de nombres de destino |
 | `syncPolicy` | Comportamiento de sincronización automática y reintentos |
 | `ignoreDifferences` | Campos que se deben ignorar al comparar |
 | `info` | Metadatos personalizados para mostrar |
-| `revisionHistoryLimit` | Número de revisiones de despliegue que se conservan |
+| `revisionHistoryLimit` | Número de revisiones de implementación que se conservarán |
 
 ## Tipos de fuentes
 
 ArgoCD admite varios tipos de fuentes para obtener manifiestos de Kubernetes.
 
-### Directorio YAML/JSON sin procesar
+### Directorio de YAML/JSON sin formato
 
 El tipo de fuente más sencillo: un directorio que contiene manifiestos de Kubernetes:
 
@@ -123,7 +123,7 @@ spec:
 
 ### Charts de Helm
 
-#### Desde un repositorio Git
+#### Desde un repositorio de Git
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -158,9 +158,9 @@ spec:
     namespace: my-app
 ```
 
-#### Desde un repositorio Helm
+#### Desde un repositorio de Helm
 
-Un chart podinfo pequeño y fijado ilustra el formato de la fuente. El replicaCount final es 3 porque parameters reemplaza a valuesObject. valuesObject proporciona valores estructurados en línea; no lee automáticamente variables de entorno.
+Un chart podinfo pequeño y fijado ilustra el formato de la fuente. El replicaCount final es 3 porque los parámetros prevalecen sobre valuesObject. valuesObject proporciona valores en línea estructurados; no lee automáticamente variables de entorno.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -193,7 +193,7 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-La precedencia es parameters → valuesObject → values → valueFiles → valores predeterminados del chart. Prefiera una sola representación en línea; cuando existe valuesObject, proporciona los valores en línea. Habilite passCredentials solo cuando sea necesario, ya que puede reenviar credenciales a otros dominios. Esta base usa Helm 4 integrado; no seleccione v2/v3 arbitrariamente.
+El orden de precedencia es parameters → valuesObject → values → valueFiles → valores predeterminados del chart. Es preferible usar una sola representación en línea; si existe valuesObject, este proporciona los valores en línea. Habilita passCredentials solo cuando sea necesario, ya que puede reenviar credenciales a otros dominios. Esta referencia usa Helm 4 incluido; no selecciones v2/v3 arbitrariamente.
 
 #### Con valores de archivos externos
 
@@ -270,7 +270,7 @@ spec:
 
 ### Artefactos OCI
 
-Las fuentes OCI generales usan una URI oci:// y una ruta dentro del artefacto expandido. Reemplace esta cuenta/repositorio/tag por un artefacto publicado. Una imagen de contenedor normal no es automáticamente una fuente de manifiestos.
+Las fuentes OCI generales usan un URI oci:// y una ruta dentro del artefacto expandido. Sustituye esta cuenta/repositorio/etiqueta por un artefacto publicado. Una imagen de contenedor normal no se convierte automáticamente en una fuente de manifiestos.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -291,9 +291,9 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-Argo CD 3.5.4 requiere una capa con un tipo de medio compatible: de forma predeterminada, application/vnd.oci.image.layer.v1.tar+gzip o contenido tar+gzip de chart Helm. Valide otros tipos con ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES y la estructura del artefacto. Los manifiestos OCI de más de 4 MiB se rechazan a partir de 3.5.4 (GHSA-w996-f2wq-x9c6).
+Argo CD 3.5.4 requiere una capa con un tipo de medio admitido: de forma predeterminada, application/vnd.oci.image.layer.v1.tar+gzip o contenido tar+gzip de un chart de Helm. Valida otros tipos con ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES y la estructura del artefacto. A partir de la versión 3.5.4, se rechazan los manifiestos OCI de más de 4 MiB (GHSA-w996-f2wq-x9c6).
 
-La forma Helm OCI usa un campo chart y una URL de repositorio **sin oci://**. Este es un fragmento de fuente bajo Application.spec.
+El formato OCI de Helm usa un campo chart y una URL de repositorio **sin oci://**. Este es un fragmento de fuente dentro de Application.spec.
 
 ```yaml
 source:
@@ -305,7 +305,7 @@ source:
       replicaCount: 2
 ```
 
-Haga coincidir las credenciales con el tipo de fuente: OCI general usa type: oci y una URL oci://; Helm OCI usa type: helm, enableOCI: "true" y una URL sin esquema. ECR necesita permisos de registro y la renovación/aplicación de su token de 12 horas; otorgar permisos de IRSA no actualiza un Secret por sí solo.
+Haz coincidir las credenciales con el tipo de fuente: OCI general usa type: oci y una URL oci://; OCI de Helm usa type: helm, enableOCI: "true" y una URL sin esquema. ECR requiere permisos para el registro, además de renovar y aplicar su token de 12 horas; conceder permisos de IRSA no actualiza un Secret por sí solo.
 
 ### Jsonnet
 
@@ -344,9 +344,9 @@ spec:
     namespace: production
 ```
 
-## Múltiples fuentes
+## Varias fuentes
 
-Cuando sources está presente, se ignora el source en singular. Combine la configuración de una aplicación relacionada, como un chart más un repositorio de valores; use ApplicationSet/App of Apps para stacks de plataforma administrados de forma independiente.
+Cuando se especifica sources, se ignora source. Combina configuraciones de una aplicación relacionada, como un chart más un repositorio de valores; usa ApplicationSet/App of Apps para pilas de plataforma administradas de forma independiente.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -373,13 +373,13 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-ref: values asigna $values a la raíz de ese repositorio Git. Sin path proporciona solo valores; con path también genera manifiestos allí. Una fuente ref no puede especificar también chart. Los recursos duplicados de group/kind/name/namespace usan la última fuente y generan RepeatedResourceWarning; esto no es una combinación automática campo por campo.
+ref: values asigna $values a la raíz de ese repositorio de Git. Sin path, solo proporciona valores; con path, también genera manifiestos en esa ubicación. Una fuente ref no puede especificar chart a la vez. Los recursos duplicados con la misma combinación de group/kind/name/namespace usan la última fuente y generan RepeatedResourceWarning; esto no realiza una combinación automática campo por campo.
 
-## Configuración de destino
+## Configuración del destino
 
-Elija server o name para el destino registrado. destination.namespace proporciona el valor predeterminado para recursos con namespace que carecen de su propio namespace; CreateNamespace crea solo ese destino, no cada namespace incorporado explícitamente en un chart. Use managedNamespaceMetadata con la creación de namespace y revise la propiedad antes de actualizar un namespace existente.
+Elige server o name para el destino registrado. destination.namespace proporciona el valor predeterminado para los recursos con espacio de nombres que no tengan uno propio; CreateNamespace crea solo ese destino, no todos los espacios de nombres incluidos explícitamente en un chart. Usa managedNamespaceMetadata junto con la creación del espacio de nombres y revisa la propiedad antes de actualizar uno existente.
 
-### Uso de la URL del servidor
+### Uso de una URL de servidor
 
 ```yaml
 destination:
@@ -387,7 +387,7 @@ destination:
   namespace: my-app
 ```
 
-### Uso del nombre del cluster
+### Uso del nombre del clúster
 
 ```yaml
 destination:
@@ -395,7 +395,7 @@ destination:
   namespace: my-app
 ```
 
-### Creación automática de namespace
+### Creación automática del espacio de nombres
 
 ```yaml
 syncPolicy:
@@ -403,28 +403,28 @@ syncPolicy:
     - CreateNamespace=true
 ```
 
-## Evaluación de estado
+## Evaluación del estado
 
-Synced describe los campos deseados/en ejecución comparados, no prueba que el Service procese solicitudes. Healthy sigue las comprobaciones configuradas por recurso. Los recursos personalizados sin una comprobación pueden omitirse del estado de la aplicación y necesitan una definición apropiada.
+Synced describe los campos deseados/activos que se compararon; no demuestra que el servicio gestione solicitudes. Healthy depende de las comprobaciones configuradas para cada recurso. Los recursos personalizados sin una comprobación pueden omitirse del estado de la aplicación y necesitar una definición adecuada.
 
 ### Comprobaciones de estado integradas
 
-Estas resumen comprobaciones de implementación importantes de 3.5.4, no predicados completos basados en un único contador de réplicas.
+Estas resumen comprobaciones importantes de la implementación de 3.5.4; no son predicados completos basados en un único contador de réplicas.
 
 | Recurso | Comprobaciones importantes |
 |---|---|
-| Deployment | Generación observada, progreso/error del rollout, réplicas actualizadas/disponibles |
-| StatefulSet | Generación, estrategia/partición de actualización, revisiones y estado de réplicas |
-| DaemonSet | Generación y recuentos de Pod deseados/actualizados/disponibles |
-| Pod | Fase, preparación y terminación/error del contenedor |
-| Service | LoadBalancer espera una dirección; otros tipos no validan endpoints |
-| Ingress | Estado de dirección de loadBalancer informado por el controlador |
-| PVC | Estado Bound |
-| Job | Incompleto Progressing, fallido Degraded, completado Healthy, suspendido Suspended |
+| Deployment | Generación observada, progreso/fallo del despliegue, réplicas actualizadas/disponibles |
+| StatefulSet | Generación, estrategia/partición de actualización, revisiones y estado de las réplicas |
+| DaemonSet | Generación y recuento de Pods deseados/actualizados/disponibles |
+| Pod | Fase, preparación y terminación/fallo de los contenedores |
+| Service | LoadBalancer espera una dirección; los demás tipos no validan los endpoints |
+| Ingress | Estado de la dirección loadBalancer informado por el controlador |
+| PVC | Estado enlazado |
+| Job | Incompleto: Progressing; fallido: Degraded; completado: Healthy; suspendido: Suspended |
 
 ### Comprobaciones de estado personalizadas
 
-No reemplace las comprobaciones integradas de Rollout/cert-manager Certificate con una comparación simplista de fase. El grupo Certificate es cert-manager.io; su comprobación integrada gestiona Issuing antes de Ready. El ejemplo de ACK a continuación devuelve Progressing cuando falta status/conditions y no equipara la existencia de ARN con Healthy. Valide las condiciones Ready/ACK.ResourceSynced y de error que proporciona su versión de ACK. El ejemplo prefiere Ready cuando está presente y, de lo contrario, recurre a ACK.ResourceSynced.
+No sustituyas las comprobaciones integradas de Rollout/cert-manager Certificate por una comparación simplista de fases. El grupo de Certificate es cert-manager.io; su comprobación integrada gestiona Issuing antes de Ready. El ejemplo de ACK que aparece a continuación devuelve Progressing si faltan status/conditions y no considera que la existencia de un ARN equivalga a Healthy. Valida las condiciones Ready/ACK.ResourceSynced y de error que proporcione tu versión de ACK. El ejemplo da prioridad a Ready cuando está presente y, de lo contrario, recurre a ACK.ResourceSynced.
 
 ```yaml
 apiVersion: v1
@@ -471,33 +471,33 @@ data:
     return hs
 ```
 
-Esto interpreta el estado informado por el controlador; no consulta AWS directamente. Fusione la clave en el argocd-cm existente y pruebe estados de CR reales faltantes/en espera/listos/con error/con nuevas especificaciones. Argo CD administrado por EKS proporciona comprobaciones de ACK/kro, así que inspeccione primero sus comprobaciones existentes y la configuración compatible.
+Esto interpreta el estado informado por el controlador; no consulta AWS directamente. Combina la clave con el argocd-cm existente y prueba los estados faltante/en espera/listo/error/especificación nueva con CR reales. Argo CD administrado por EKS proporciona comprobaciones de ACK/kro, así que primero inspecciona las comprobaciones existentes y la configuración admitida.
 
 ## Hooks de recursos
 
-PostSync espera recursos Sync exitosos y Healthy relevantes. La sincronización explícita selectiva por recurso no ejecuta hooks. En 3.5.4, ApplyOutOfSyncOnly sigue ejecutando hooks y registra el historial. SyncFail gestiona fallos de sincronización elegibles; no dependa de él como ruta garantizada de limpieza/copia de seguridad para cada error, incluidos los fallos de generación de manifiestos.
+PostSync espera a que la sincronización finalice correctamente y a que los recursos pertinentes estén Healthy. La sincronización selectiva explícita de recursos no ejecuta hooks. En 3.5.4, ApplyOutOfSyncOnly sigue ejecutando hooks y registrando el historial. SyncFail gestiona los fallos de sincronización que correspondan; no confíes en él como una ruta garantizada de limpieza/copia de seguridad para todos los errores, incluidos los fallos de generación de manifiestos.
 
-Los hooks de recursos permiten ejecutar jobs en puntos específicos durante la sincronización.
+Los hooks de recursos permiten ejecutar Jobs en momentos específicos durante la sincronización.
 
 ### Tipos de hooks
 
 | Hook | Cuándo se ejecuta |
-|------|---------------|
+|---|---------------|
 | `PreSync` | Antes de que comience la sincronización |
 | `Sync` | Durante la sincronización (después de PreSync) |
-| `PostSync` | Después de que Sync tenga éxito y los recursos estén Healthy |
+| `PostSync` | Después de que Sync finalice correctamente y los recursos estén Healthy |
 | `SyncFail` | Después de que falle la sincronización |
 | `Skip` | Se omite la aplicación del manifiesto |
-| `PreDelete` | Antes de que se eliminen los recursos con la Application |
-| `PostDelete` | Después de que se eliminen los recursos de la Application |
+| `PreDelete` | Antes de eliminar los recursos junto con la Application |
+| `PostDelete` | Después de eliminar los recursos de la Application |
 
 ### Políticas de eliminación de hooks
 
 | Política | Comportamiento |
 |--------|----------|
-| `HookSucceeded` | Eliminar después de que el hook tenga éxito |
-| `HookFailed` | Eliminar después de que el hook falle |
-| `BeforeHookCreation` | Eliminar antes de que se ejecute el nuevo hook |
+| `HookSucceeded` | Eliminar después de que el hook finalice correctamente |
+| `HookFailed` | Eliminar después de que falle el hook |
+| `BeforeHookCreation` | Eliminar antes de ejecutar el nuevo hook |
 
 ### Hook de migración de base de datos
 
@@ -543,7 +543,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: notify
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c
@@ -576,7 +576,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: smoke-test
-          image: curlimages/curl:8.22.0
+          image: curlimages/curl:8.23.0
           command:
             - sh
             - -c
@@ -593,11 +593,11 @@ spec:
               exit 1
 ```
 
-Los Jobs con nombre fijo necesitan reglas de ciclo de vida como BeforeHookCreation para ejecuciones repetidas. Conserve los logs de fallos externamente antes de la limpieza; la limpieza HookSucceeded sigue la semántica de fase/resultado de sincronización de Argo. Prepare la imagen de migración, el Secret de base de datos y el ServiceAccount, y valide por separado la idempotencia, el bloqueo y la compatibilidad de rollback. El fallo de un hook no revierte automáticamente una base de datos ni un Deployment existente. PreDelete/PostDelete se aplican a la eliminación de Application, no al pruning de sincronización habitual.
+Los Jobs con nombres fijos necesitan reglas de ciclo de vida, como BeforeHookCreation, para ejecutarse repetidamente. Guarda los registros de los fallos fuera del clúster antes de la limpieza; la limpieza HookSucceeded sigue la semántica de fase/resultado de sincronización de Argo. Prepara la imagen de migración, el Secret de la base de datos y la ServiceAccount; valida por separado la idempotencia, el bloqueo y la compatibilidad con la reversión. El fallo de un hook no revierte automáticamente una base de datos ni un Deployment existente. PreDelete/PostDelete se aplican a la eliminación de una Application, no a la poda habitual de la sincronización.
 
 ## Ignorar diferencias
 
-Excluya solo campos específicos que pertenezcan a otro controlador conocido. Este fragmento Application.spec ignora las réplicas administradas por HPA en my-deployment en production.
+Excluye solo campos específicos que pertenezcan a otro controlador conocido. Este fragmento de Application.spec ignora las réplicas administradas por HPA en my-deployment en producción.
 
 ```yaml
 spec:
@@ -613,9 +613,9 @@ spec:
     - RespectIgnoreDifferences=true
 ```
 
-ignoreDifferences normalmente afecta a la comparación. RespectIgnoreDifferences=true lo extiende a la sincronización, pero la creación inicial sin un recurso en ejecución sigue aplicando el manifiesto deseado. Las reglas amplias de imagen, secret, recursos completos o todos los gestores pueden ocultar una desviación importante.
+ignoreDifferences normalmente afecta a la comparación. RespectIgnoreDifferences=true también lo aplica a la sincronización, pero la creación inicial sin un recurso activo sigue aplicando el manifiesto deseado. Las reglas generales para imágenes, secretos, recursos completos o todos los managers pueden ocultar divergencias importantes.
 
-Para los arrays de webhook, seleccione por nombre en lugar de índices fijos y delimite también el nombre del recurso. Use esto solo cuando se conozcan el controlador de inyección de CA y la identidad del webhook.
+Para arrays de webhooks, selecciona por nombre en lugar de usar índices fijos y limita también el ámbito al nombre del recurso. Úsalo solo cuando se conozcan el controlador de inyección de CA y la identidad del webhook.
 
 ```yaml
 spec:
@@ -627,13 +627,13 @@ spec:
     - '.webhooks[]? | select(.name == "admission.example.com") | .clientConfig.caBundle'
 ```
 
-La configuración global resource.customizations.ignoreDifferences afecta a cada Application. Prefiera reglas con ámbito de aplicación; elija managedFieldsManagers solo después de inspeccionar qué campos posee realmente ese gestor.
+La configuración global resource.customizations.ignoreDifferences afecta a todas las Applications. Es preferible usar reglas específicas de la aplicación; elige managedFieldsManagers solo después de inspeccionar qué campos administra realmente ese manager.
 
 ## Patrón App of Apps
 
-App of Apps es un patrón de arranque administrativo. Quienes escriben en la fuente padre pueden afectar Applications/AppProjects poderosos en el namespace de administración; restrinja los privilegios de escritura/revisión/destino. Los finalizers y el pruning de padre/hijo pueden encadenar eliminaciones. Crear Applications hijas en orden no garantiza por sí solo la preparación de las cargas de trabajo hijas; valide la propagación del estado de Application, la política de sincronización y el comportamiento de waves.
+App of Apps es un patrón administrativo de arranque. Quienes escriben en la fuente principal pueden afectar a Applications/AppProjects con privilegios en el espacio de nombres de administración; restringe los permisos de escritura/revisión/destino. Los finalizers de la aplicación principal/secundaria y la poda pueden desencadenar eliminaciones en cascada. Crear Applications secundarias en orden no garantiza por sí solo que las cargas de trabajo secundarias estén listas; valida la propagación del estado de Application, la política de sincronización y el comportamiento de las waves.
 
-El patrón App of Apps permite administrar varias aplicaciones desde una única aplicación padre.
+El patrón App of Apps permite administrar varias aplicaciones desde una única aplicación principal.
 
 ### Estructura de directorios
 
@@ -649,7 +649,7 @@ El patrón App of Apps permite administrar varias aplicaciones desde una única 
 │       └── cert-manager.yaml
 ```
 
-### Application padre
+### Application principal
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -678,9 +678,9 @@ spec:
       selfHeal: true
 ```
 
-### Plantilla de Application hija
+### Plantilla de Application secundaria
 
-Esta hija de monitoring fija kube-prometheus-stack 90.0.0. Revise los requisitos de actualización/CRD de ese chart y aprovisione por separado la capacidad de monitoring. Cree previamente un Secret grafana-admin protegido en el namespace monitoring con claves admin-user/admin-password; no coloque credenciales de administrador en los valores Git padre.
+Esta Application secundaria de monitorización fija kube-prometheus-stack en la versión 90.0.0. Revisa los requisitos de actualización/CRD de ese chart y aprovisiona la capacidad de monitorización por separado. Crea previamente un Secret protegido grafana-admin en el espacio de nombres monitoring, con las claves admin-user/admin-password; no incluyas credenciales de administrador en los valores de Git de la aplicación principal.
 
 ```yaml
 ---
@@ -740,9 +740,9 @@ ingress:
   class: alb
 ```
 
-### Waves de sincronización para App of Apps
+### Sync Waves para App of Apps
 
-Los siguientes son fragmentos solo de metadatos; combínelos con especificaciones hijas completas. Ordenar la creación de Applications hijas no garantiza que las cargas de trabajo hijas estén listas: configure/verifique la propagación de estado y la política de sincronización de Application.
+A continuación se muestran fragmentos que solo contienen metadatos; combínalos con las especificaciones completas de las Applications secundarias. Ordenar la creación de las Applications secundarias no garantiza que sus cargas de trabajo estén listas: configura y verifica la propagación del estado de Application secundaria y la política de sincronización.
 
 ```yaml
 # Merge into the corresponding complete child Application metadata.
@@ -762,11 +762,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
 ```
 
-## Historial de revisiones y rollback
+## Historial de revisiones y reversión
 
-El rollback del historial no se puede usar mientras la sincronización automatizada esté habilitada. Revise primero la política en su propietario real Git/ApplicationSet. El rollback no actualiza Git, por lo que una reconciliación posterior puede restaurar el estado de Git. Conserve los cambios previstos mediante un revert/cambio de revisión de Git aprobado; la recuperación de la base de datos/estado externo es independiente.
+No se puede usar la reversión del historial mientras la sincronización automática esté habilitada. Revisa primero la política en el propietario real de Git/ApplicationSet. La reversión no actualiza Git, por lo que una conciliación posterior puede restaurar el estado de Git. Conserva los cambios previstos mediante una reversión de Git o un cambio de revisión aprobados; la recuperación de la base de datos/estado externo es independiente.
 
-### Ver historial
+### Ver el historial
 
 ```bash
 # CLI
@@ -774,7 +774,7 @@ argocd app history my-app
 
 ```
 
-Salida de ejemplo (no son comandos de shell):
+Ejemplo de salida (no son comandos de shell):
 
 ```text
 ID  DATE                           REVISION
@@ -783,9 +783,9 @@ ID  DATE                           REVISION
 2   2024-01-17 09:15:00 +0000 UTC  ab89012
 ```
 
-### Rollback
+### Revertir
 
-Elija un ID del historial real. Aplicar una revisión de manifiesto anterior y hacer pruning de recursos adicionales son decisiones independientes.
+Elige un ID del historial real. Aplicar una revisión anterior de los manifiestos y podar los recursos adicionales son decisiones independientes.
 
 ```bash
 # Rollback to specific revision
@@ -795,7 +795,7 @@ argocd app rollback my-app 1
 argocd app sync my-app --revision abc1234
 ```
 
-### Rollback declarativo
+### Reversión declarativa
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -816,14 +816,14 @@ spec:
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido, pruebe el [cuestionario de aplicaciones de ArgoCD](../../quizzes/gitops/argocd/02-applications-quiz.md).
+Para comprobar lo que has aprendido, prueba el [cuestionario sobre aplicaciones de ArgoCD](../../quizzes/gitops/argocd/02-applications-quiz.md).
 
-## Fuentes de revisión versionadas
+## Fuentes de revisión por versión
 
-- [Fuentes y Helm 3.5.4](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/helm.md)
-- [Múltiples fuentes](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/multiple_sources.md)
-- [Reglas de fuente OCI](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/oci.md)
+- [Fuentes 3.5.4 y Helm](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/helm.md)
+- [Varias fuentes](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/multiple_sources.md)
+- [Reglas de fuentes OCI](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/oci.md)
 - [Opciones de sincronización](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
 - [Fases, waves y hooks](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
-- [Implementación de estado de Service](https://github.com/argoproj/argo-cd/blob/v3.5.4/gitops-engine/pkg/health/health_service.go)
+- [Implementación del estado de Service](https://github.com/argoproj/argo-cd/blob/v3.5.4/gitops-engine/pkg/health/health_service.go)
 - [Definiciones de condiciones de ACK](https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go)

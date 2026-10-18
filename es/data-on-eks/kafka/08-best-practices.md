@@ -1,130 +1,241 @@
-# Parte 8: Mejores prácticas
+# Parte 8: Buenas prácticas
 
-> **Versiones compatibles**: Apache Kafka 3.9, Strimzi 0.45+\
-> **Última actualización**: July 9, 2026
+> **Base de revisión**: Kafka 4.3.1, Strimzi 1.3.0\
+> **Última revisión**: October 16, 2026
 
-En esta profundización cubrimos los fundamentos de Kafka, operaciones de Strimzi, schema registry, Kafka Connect/MirrorMaker, integración de MSK y monitoreo. Este documento final consolida las mejores prácticas de preparación para producción por categoría y reúne los elementos clave de las siete partes anteriores en una única lista de verificación para la puesta en marcha.
+Este capítulo convierte los ejemplos anteriores en decisiones operativas que deben validarse.
+A continuación se encuentra el [capítulo de pruebas de rendimiento](./09-kafka-benchmark.md); una lista de comprobación no sustituye las pruebas de carga y de fallos con mediciones.
 
-## 1. Diseño de particiones
+## Diseño de particiones y mediciones
 
-### Dimensionamiento del número de particiones
+En un grupo de consumidores convencional, como máximo un miembro del grupo recibe una partición a la vez. Por lo tanto, veinte miembros que consumen de forma independiente necesitan al menos veinte particiones para que todos estén ocupados. Mide también el rendimiento por partición, la distribución desigual de claves, el tamaño de los registros, la sobrecarga de replicación, el tiempo de recuperación y la capacidad de los brokers/controladores. Los grupos compartidos y el procesamiento paralelo interno de la aplicación tienen semánticas diferentes; no consideres que esta regla describe universalmente todas las API de consumidores.
 
-Comience con el **máximo paralelismo esperado de consumidores** para un topic. Una única partición solo puede ser consumida por una instancia de consumidor dentro de un consumer group determinado a la vez, por lo que debe decidir hasta dónde espera escalar un consumer group y aprovisionar al menos esa cantidad de particiones. Si planea escalar a 20 instancias de consumidor en el pico, necesita al menos 20 particiones.
+Un mayor número de particiones aumenta el trabajo de metadatos, réplicas, búferes y recuperación. El coste no sigue una fórmula universal de memoria/descriptores de archivos por partición. Las reglas empíricas históricas de 4.000/200.000 no son límites universales vigentes. Elige las cantidades a partir del comportamiento medido en estado estable y ante fallos, incluidos los repartos de réplicas por broker, no solo las particiones lógicas del tema.
 
-El exceso de particiones tiene costos reales y debe evitarse:
+### Cuenta las particiones, no los encabezados de tema
 
-- **Más descriptores de archivos abiertos**: cada partición mantiene abiertos varios archivos de segmentos de log (`.log`, `.index`, `.timeindex`), por lo que el número de descriptores de archivos abiertos por broker crece linealmente con el número de particiones.
-- **Mayor presión de memoria**: los buffers de lotes de productor/consumidor y los buffers por hilo de replicación en el broker escalan con el número de particiones.
-- **Rebalances y failover más lentos**: la cantidad de trabajo de elección de líder que el controller debe realizar ante una falla de broker escala con el número de particiones, y los rebalances del consumer group también tardan más.
+`grep -c "PartitionCount"` cuenta **líneas de resumen de temas**, no particiones.
+Guarda lo siguiente como `partition_summary.py`. Lee las filas de particiones de la CLI actual, incluida `Leader: none`, e informa por separado las particiones lógicas, las ubicaciones de réplicas y el liderazgo.
 
-La regla general clásica de Confluent era un límite flexible de aproximadamente **4,000 particiones por broker y 200,000 por cluster** — orientación de la época en que el controller basado en ZooKeeper era el cuello de botella de metadatos. Los clusters basados en KRaft (quórum de controllers de Kafka 3.x+) manejan cantidades de particiones mucho mayores gracias a una ruta de metadatos de controller mucho más rápida, pero el principio sigue vigente: no cree particiones en exceso solo porque puede hacerlo, y valide el límite real para su carga de trabajo con pruebas de carga reales.
+```python
+import collections
+import json
+from pathlib import Path
+import re
+import sys
 
-```bash
-# Check total partition count and distribution per broker
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe | grep -c "PartitionCount"
+def summarize(text):
+    pattern = re.compile(
+        r"^\s*Topic:\s+(\S+)\s+Partition:\s+(\d+)\s+Leader:\s+(none|-?\d+)"
+        r"\s+Replicas:[ \t]*([\d,]*)[ \t]+Isr:[ \t]*([\d,]*)"
+    )
+    partitions = {}
+    topics = collections.Counter()
+    leaders = collections.Counter()
+    replicas = collections.Counter()
+    offline = []
+    for line in text.splitlines():
+        if not re.search(r"\bPartition:", line):
+            continue
+        match = pattern.match(line)
+        if not match:
+            raise ValueError("Unrecognized partition row; check Kafka CLI version/output.")
+        topic, partition, leader, replica_text, _ = match.groups()
+        key = (topic, int(partition))
+        if key in partitions:
+            raise ValueError("Duplicate topic/partition row.")
+        replica_ids = [int(x) for x in replica_text.split(",") if x]
+        if not replica_ids or len(set(replica_ids)) != len(replica_ids):
+            raise ValueError("Missing or duplicate replica IDs.")
+        partitions[key] = True
+        topics[topic] += 1
+        replicas.update(replica_ids)
+        if leader == "none" or int(leader) < 0:
+            offline.append({"topic": topic, "partition": int(partition)})
+        else:
+            leaders[int(leader)] += 1
+    if not partitions:
+        raise ValueError("No partition rows; empty visibility is not proof of a healthy cluster.")
+    return {
+        "visible_topics": len(topics),
+        "logical_partitions": len(partitions),
+        "replica_assignments": sum(replicas.values()),
+        "partitions_by_topic": dict(sorted(topics.items())),
+        "leaders_by_broker": dict(sorted(leaders.items())),
+        "replicas_by_broker": dict(sorted(replicas.items())),
+        "offline_partitions": offline,
+    }
 
-# Inspect partition/leader distribution for a specific topic
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic orders
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python3 partition_summary.py topics.txt")
+    print(json.dumps(summarize(Path(sys.argv[1]).read_text()), indent=2))
 ```
 
-### Elección de una clave de partición
+```bash
+set -euo pipefail
+: "${KAFKA_BOOTSTRAP_SERVERS:?Set the reachable TLS bootstrap endpoints}"
+# Run from a Kafka 4.3.1 client installation. admin.properties is local to this client.
+bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --describe > topics.txt
+python3 partition_summary.py topics.txt
+```
 
-Elija una clave con **alta cardinalidad y distribución uniforme** para evitar particiones calientes. El particionador predeterminado aplica hash murmur2 a la clave y toma su módulo con el número de particiones, por lo que una clave de baja cardinalidad (por ejemplo, `country` o `status` con solo unos pocos valores distintos) sobrecargará las pocas particiones que coincidan con sus valores de tráfico dominantes mientras las demás permanecen inactivas. Prefiera un campo con una cardinalidad suficientemente alta (por ejemplo, `user_id`), o aplique sal a una clave de baja cardinalidad (añada un sufijo aleatorio o derivado de una marca de tiempo) para forzar una distribución más uniforme.
+El resultado solo incluye los temas visibles para la identidad que realiza la llamada y los filtros del comando, incluidos los temas internos cuando se devuelven. Una consulta fallida o vacía no demuestra que un clúster tenga cero particiones ni que esté en buen estado. Usa credenciales adecuadas para esta lectura administrativa; no des por sentado que los ID de los pods broker o un listener de texto sin cifrar `localhost:9092` sean apropiados.
 
-### Manejo cuidadoso de los cambios en el número de particiones
+### Conserva el significado de la clave
 
-Aumentar el número de particiones en un topic **con clave** rompe el mapeo de clave a partición. Debido a que `hash(key) % partition_count` cambia tan pronto como cambia `partition_count`, la misma clave puede llegar a una partición diferente después del cambio de la que tenía antes. Esto causa dos problemas concretos:
+La asignación predeterminada de claves del productor Java usa los **bytes serializados de la clave** y `toPositive(murmur2(keyBytes)) % partitionCount`, a menos que una partición explícita, un particionador personalizado o una configuración que ignore la clave cambien el comportamiento. Los demás clientes deben usar un particionador/serializador compatible si es importante mantener la misma asignación.
 
-- **Orden roto**: Kafka solo garantiza el orden dentro de una partición, así que cuando los mensajes de la misma clave se dividen entre particiones, los consumidores ya no pueden depender del orden a nivel de clave.
-- **Co-particionamiento roto**: los joins en Kafka Streams (y similares) requieren que los topics unidos compartan el mismo número de particiones y esquema de particionamiento. Cambiar las particiones en solo un lado de un join lo rompe.
+Una cardinalidad alta por sí sola no garantiza un tráfico equilibrado: un cliente muy activo aún puede dominar. Añadir sal a las claves aleatorias o basadas en marcas de tiempo cambia el orden por clave, las uniones y la identidad de compactación. Hazlo solo cuando el contrato de datos permita esos cambios, con una estrategia explícita para recombinar y ordenar los datos si es necesario.
 
-Decida el número de particiones con margen durante la planificación de capacidad y, si un topic de producción ya depende del orden basado en claves o de joins, prefiera migrar a un topic nuevo en lugar de aumentar las particiones en el existente.
+Aumentar el número de particiones puede reasignar algunas claves; no redistribuye los registros antiguos. Puede romper el orden de las claves entre particiones y las suposiciones de las uniones con particiones compartidas. Los requisitos dependen de la unión/topología; no todas las uniones de Streams usan la misma partición compartida. Para cargas de trabajo sensibles al orden o con estado, planifica y prueba la redistribución/migración, a menudo mediante un tema nuevo.
 
-## 2. Ajuste del productor
+## Ajuste del productor
 
-| Configuración | Valor recomendado | Propósito |
-|---------|--------------------|---------|
-| `acks` | `all` (para topics críticos para la durabilidad) | Esperar la confirmación de todas las réplicas sincronizadas (ISR) para que una falla de broker no pierda datos |
-| `min.insync.replicas` (configuración de topic/broker) | `2` (con replication.factor=3) | Junto con `acks=all`, requiere que la escritura llegue al menos a 2 réplicas antes de tener éxito — configúrelo en el topic (`kafka-configs.sh --entity-type topics`) o como valor predeterminado del broker, no como propiedad del cliente productor |
-| `linger.ms` | `5`–`20` | Intercambiar una pequeña cantidad de latencia por lotes más grandes y mayor throughput |
-| `batch.size` | `32768`–`65536` (32–64KB) | Aumentar los bytes máximos por lote para incrementar el throughput por solicitud |
-| `enable.idempotence` | `true` | Evitar escrituras duplicadas causadas por reintentos del productor |
-| `compression.type` | `lz4` o `zstd` | Reducir los costos de red y almacenamiento |
+Considera este perfil un punto de partida sujeto a mediciones que se añade a la configuración autenticada existente del cliente, no un óptimo universal.
 
 ```properties
-# Producer settings for durability-critical topics (orders, payments, etc.)
-# (min.insync.replicas is a topic/broker setting, not a producer property — shown here for reference only)
 acks=all
 enable.idempotence=true
+max.in.flight.requests.per.connection=5
 compression.type=lz4
 linger.ms=10
 batch.size=32768
-retries=2147483647
 delivery.timeout.ms=120000
 ```
 
-`enable.idempotence=true` ha sido **el valor predeterminado desde Kafka 3.0** a menos que sobrescriba explícitamente `acks` o `retries` de una forma incompatible con ello. Asigna al productor un ID de productor único y números de secuencia por partición para que el broker pueda deduplicar de forma transparente los reintentos causados por errores transitorios de red. Esto es distinto de la semántica completa exactly-once — la idempotencia solo elimina duplicados en el salto de productor a broker; la verdadera semántica exactly-once de extremo a extremo también requiere la API transaccional (`transactional.id`).
+- `acks=all` espera al ISR actual. Con RF=3 y `min.insync.replicas=2` en el tema/broker, un ISR inferior a dos rechaza las escrituras en vez de esperar indefinidamente a una segunda réplica. Un único fallo solo es tolerable mientras las réplicas/cuórum restantes y las demás dependencias sigan cumpliendo los requisitos.
+- `enable.idempotence=true` suprime los duplicados de los reintentos del productor compatibles. Requiere configuraciones compatibles de acks, reintentos y `max.in.flight.requests.per.connection`. Establecer explícitamente una propiedad compatible no lo desactiva.
+- El valor predeterminado de linger de Kafka 4.3 es 5 ms; los 10 ms y 32 KiB de este ejemplo son opciones de ajuste. `batch.size` es una configuración de asignación/agrupación por partición, no un límite máximo estricto para el tamaño del registro o la solicitud. El encolado y los plazos de entrega también afectan la latencia.
+- Compara lz4, zstd, gzip y la ausencia de compresión con datos representativos, CPU y latencia. No des por sentado que un códec siempre tendrá el mejor coste total.
 
-`lz4` ofrece un buen equilibrio entre sobrecarga de CPU y ratio de compresión para la mayoría de las cargas de trabajo. `zstd` comprime mejor — útil para payloads con mucho JSON/texto — a costa de un uso de CPU algo mayor. `gzip` comprime bien, pero su alto consumo de CPU hace que en general no se recomiende para productores de alto throughput.
+`min.insync.replicas` pertenece al tema/broker, no a las propiedades del productor.
+`delivery.timeout.ms` limita los intentos de entrega; un número alto de reintentos no implica un tiempo de entrega infinito. Observa siempre los errores de envío.
 
-## 3. Ajuste del consumidor
+La idempotencia no elimina duplicados de reenvíos arbitrarios de la aplicación ni de un efecto secundario en una base de datos externa. El procesamiento exactamente una vez de Kafka en el flujo consumir-transformar-producir también requiere el ciclo de vida adecuado de las transacciones, la confirmación atómica de la salida/desplazamiento de entrada, fencing y consumidores con `read-committed`. Una cadena `transactional.id` por sí sola no es suficiente.
 
-### Cómo evitar tormentas de rebalance
+## Procesamiento de consumidores y pertenencia al grupo
 
-Si el procesamiento tarda más que `max.poll.interval.ms` (5 minutos de forma predeterminada), el consumidor es expulsado forzosamente de su grupo, lo que desencadena un rebalance. Cuando varios consumidores se ralentizan a la vez, esto puede encadenarse en una «tormenta de rebalance» de interrupciones repetidas del grupo.
+Este perfil usa explícitamente **`group.protocol=classic`**, de modo que se apliquen los ajustes de heartbeat/sesión del cliente. Con `group.protocol=consumer`, esos intervalos se controlan mediante la configuración del grupo de consumidores del broker.
 
 ```properties
-# Tune poll-related settings around your actual per-batch processing time
+group.id=order-processor
+group.protocol=classic
+enable.auto.commit=false
 max.poll.records=200
 max.poll.interval.ms=600000
 session.timeout.ms=45000
 heartbeat.interval.ms=15000
 ```
 
-Reducir `max.poll.records` disminuye cuántos registros regresan de una sola llamada a `poll()`, acortando la ventana de procesamiento entre polls. Aumentar `max.poll.interval.ms` da más margen al procesamiento lento antes de la expulsión. La solución más robusta es arquitectónica: mover el procesamiento pesado fuera del bucle de poll por completo y llevarlo a un pool de hilos de trabajo separado, usando poll solo para obtener y entregar trabajo.
+Limita el tiempo real de procesamiento, no solo el número de registros. Un registro lento puede superar igualmente `max.poll.interval.ms`. Los miembros dinámicos y estáticos no tienen los mismos tiempos de reasignación: un miembro estático puede dejar de enviar heartbeats al superarse el tiempo de espera de poll, y la reasignación puede aplazarse hasta que expire su sesión.
 
-### Commits manuales de offsets
+### Confirma después de un procesamiento duradero
 
-Para pipelines donde el procesamiento at-least-once es importante (procesamiento de pedidos, pagos), el auto-commit (`enable.auto.commit=true`) puede confirmar un offset antes de que el registro correspondiente haya terminado realmente de procesarse — si el consumidor falla entre ambos, ese registro se pierde efectivamente desde la perspectiva del pipeline aunque se hubiera «confirmado».
-
-```properties
-enable.auto.commit=false
-```
+La confirmación automática no sabe cuándo termina un efecto externo asíncrono.
+Un bucle síncrono con el orden correcto puede usar la confirmación automática, pero no des por sentado que esta sigue el progreso de un grupo de trabajo. El siguiente helper muestra un procesamiento síncrono explícito antes de la confirmación, con la confirmación automática desactivada.
 
 ```java
-while (true) {
-    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
-    for (ConsumerRecord<String, String> record : records) {
-        process(record);          // business logic
+import java.time.Duration;
+import java.util.Properties;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+public final class ConsumerExamples {
+    public static void setStaticIdentity(Properties props, String instanceId) {
+        if (instanceId == null || instanceId.isBlank() || instanceId.contains("${")) {
+            throw new IllegalArgumentException("Supply a resolved, stable, unique consumer instance ID.");
+        }
+        props.setProperty(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
     }
-    consumer.commitSync();        // commit only after processing succeeds
+
+    public static int processOneBatch(
+            Consumer<String, String> consumer,
+            java.util.function.Consumer<ConsumerRecord<String, String>> processDurably) {
+        var records = consumer.poll(Duration.ofMillis(500));
+        for (var record : records) {
+            processDurably.accept(record);
+        }
+        if (!records.isEmpty()) {
+            consumer.commitSync();
+        }
+        return records.count();
+    }
 }
 ```
 
-### Membresía estática del grupo
-
-Los Pods de consumidor en Kubernetes se reinician a menudo: despliegues graduales, reinicios OOMKilled, reemplazo de nodos. De forma predeterminada, que un consumidor salga y vuelva a unirse a un grupo desencadena un rebalance completo, de modo que los reinicios breves frecuentes provocan pausas de procesamiento repetidas e innecesarias en todo el grupo. Configurar `group.instance.id` habilita la membresía estática: si el consumidor se vuelve a conectar dentro de `session.timeout.ms`, reanuda su asignación de particiones anterior intacta, sin ningún rebalance.
-
-```properties
-group.instance.id=${POD_NAME}
-session.timeout.ms=45000
+```java
+// props already includes bootstrap, TLS/SCRAM, deserializers and the profile below.
+try (var consumer = new KafkaConsumer<String, String>(props)) {
+    consumer.subscribe(List.of("orders"));
+    while (!Thread.currentThread().isInterrupted()) {
+        ConsumerExamples.processOneBatch(consumer, application::processDurably);
+    }
+}
 ```
 
-`group.instance.id` debe ser único por Pod — normalmente se obtiene de un nombre de Pod de StatefulSet o se inyecta mediante la downward API.
+`application.processDurably` es código de la aplicación y solo debe devolver el control cuando se haya completado correctamente el efecto requerido. Si falla el procesamiento o la confirmación, detente y recupera el estado o reposiciónate explícitamente en las posiciones correctas; **no captures un error y sigas haciendo poll** más allá de los registros fallidos. Un reinicio puede volver a reproducir registros ya procesados, por lo que los efectos externos necesitan una estrategia adecuada de idempotencia/transacción. Configura el cierre usando el patrón compatible de wakeup/close de KafkaConsumer.
 
-## 4. Seguridad
+KafkaConsumer no es, por lo general, seguro para subprocesos. Delegar el trabajo requiere colas acotadas, orden por partición, pausa/reanudación en el hilo del consumidor, seguimiento contiguo de los desplazamientos completados y gestión de rebalanceos. Pasar el trabajo a un grupo de hilos por sí solo no es una solución de fiabilidad.
 
-### mTLS (cifrado de transporte + autenticación mutua)
+### Resuelve un ID estable para el miembro estático
 
-Strimzi aprovisiona y rota automáticamente su propia CA de cluster cuando se despliega un cluster Kafka. Establecer el tipo de un listener en `tls` cifra el tráfico entre cliente y broker, y asignar a un `KafkaUser` el tipo de autenticación `tls` hace que Strimzi emita un certificado de cliente firmado por esa CA de cluster.
+Java `Properties` **no** expande `group.instance.id=${POD_NAME}`.
+Resuelve el valor del entorno en el código de la aplicación/configuración antes de crear el consumidor:
+
+```java
+// One consumer instance per stable logical member in this example.
+ConsumerExamples.setStaticIdentity(props, System.getenv("KAFKA_GROUP_INSTANCE_ID"));
+```
+
+Para un consumidor por pod de StatefulSet, un valor de Downward API procedente de `metadata.name` puede proporcionar una identidad lógica estable. Los nombres de los pods de Deployment cambian en muchas actualizaciones; varios consumidores en un mismo pod necesitan ID distintos. Cada instancia de consumidor activa necesita un ID único, que solo debe reutilizarse deliberadamente al sustituirla. Los ID activos duplicados pueden provocar el fencing de un miembro.
+
+La pertenencia estática puede evitar rebalanceos innecesarios en reinicios breves compatibles; no garantiza que la asignación permanezca igual cada vez que un pod regresa antes de que se active un temporizador. También importan la topología, la pertenencia y las suscripciones, y un tiempo de espera de sesión más largo retrasa la recuperación de un miembro que realmente ha fallado.
+
+## Autenticación, autorización y redes
+
+### Separa las dos CA y las propiedades del listener
+
+Con las CA gestionadas por Strimzi predeterminadas:
+
+- La **CA del clúster** firma los certificados de brokers/componentes internos; los clientes confían en la cadena de certificados de servidor correspondiente.
+- La **CA de clientes** firma los certificados de cliente `KafkaUser` para mTLS.
+- `user.crt`/`user.key` son credenciales de cliente. El certificado de la CA de clientes de un Secret de usuario no sustituye a la cadena de confianza del broker.
+
+La exposición de red de un listener usa `type: internal`, `loadbalancer`, etc.
+El cifrado se indica con `tls: true` y la autenticación de cliente, con
+`authentication.type: tls`. No existe un tipo de exposición de listener llamado `tls`.
+
+Lo siguiente es **una entrada de listener adicional** para la matriz existente `spec.kafka.listeners`; no sustituye al listener TLS/SCRAM de la Parte 2. Revisa todo el recurso Kafka deseado antes de añadirla:
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+name: mtls
+port: 9094
+type: internal
+tls: true
+authentication:
+  type: tls
+networkPolicyPeers:
+- namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: kafka-clients
+  podSelector:
+    matchLabels:
+      app: order-service
+```
+
+Ambos selectores están en **un mismo peer**, por lo que el pod debe tener `app=order-service` **y** estar en el namespace `kafka-clients`. Dos entradas de peer separadas usarían una condición OR: los pods coincidentes en el namespace de la política, o cualquier pod en el namespace seleccionado. Las políticas de red se acumulan, requieren aplicación por parte del CNI y no anulan una segunda política que también permita el tráfico. Considera también el tráfico de salida y la ruta real del tráfico externo/de nodo.
+
+Este usuario mTLS separado conserva la identidad del usuario SCRAM existente:
+
+```yaml
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaUser
 metadata:
-  name: order-service
+  name: order-service-mtls
+  namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
 spec:
@@ -133,120 +244,117 @@ spec:
   authorization:
     type: simple
     acls:
-      - resource:
-          type: topic
-          name: orders
-          patternType: literal
-        operations: ["Read", "Write", "Describe"]
-      - resource:
-          type: group
-          name: order-service-group
-        operations: ["Read"]
+    - resource:
+        type: topic
+        name: orders
+        patternType: literal
+      operations:
+      - Read
+      - Write
+      - Describe
+    - resource:
+        type: group
+        name: order-processor-mtls
+        patternType: literal
+      operations:
+      - Read
+    - resource:
+        type: cluster
+      operations:
+      - IdempotentWrite
 ```
 
-### SASL/SCRAM
+El User Operator debe conciliarlo y el autorizador simple del broker debe estar habilitado. Distribuye las credenciales de usuario y la confianza del broker en el namespace de la aplicación mediante un proceso de rotación controlado; Kubernetes no puede montar directamente un Secret de otro namespace. Confirma la generación actual, el éxito de TLS/autenticación y las acciones permitidas/denegadas. Hacer commit únicamente del YAML no concede un acceso funcional.
 
-Para entornos donde distribuir y rotar certificados de cliente no es práctico (aplicaciones heredadas, herramientas de terceros), SASL/SCRAM basado en nombre de usuario/contraseña (`scram-sha-512`) es una alternativa sólida. Establezca el tipo de autenticación del listener en `scram-sha-512` y asigne al `KafkaUser` correspondiente el mismo `authentication.type`; Strimzi genera automáticamente las credenciales en un Secret.
+La ruta SCRAM existente sigue necesitando TLS para el cifrado y la rotación de contraseñas. Ni una ACL de Kafka ni una NetworkPolicy sustituyen la otra capa.
 
-### Gestión declarativa de ACL
+### Cifra explícitamente el almacenamiento persistente aprovisionado recientemente
 
-Como se muestra en el ejemplo de `KafkaUser` anterior, `authorization.type: simple` junto con una lista `acls` permite gestionar ACL como código mediante GitOps, en lugar de ejecutar manualmente `kafka-acls.sh` contra los brokers. Incorporar un servicio nuevo a un topic consiste simplemente en confirmar un recurso `KafkaUser` nuevo.
-
-### Políticas de red
-
-Los listeners de Strimzi admiten `networkPolicyPeers`, que restringe qué Pods pueden alcanzar un puerto de listener determinado (por ejemplo, 9092/9093/9094).
-
-```yaml
-listeners:
-  - name: tls
-    port: 9093
-    type: internal
-    tls: true
-    networkPolicyPeers:
-      - podSelector:
-          matchLabels:
-            app: order-service
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: kafka-clients
-```
-
-Strimzi transforma esto en una `NetworkPolicy` estándar de Kubernetes internamente, por lo que solo los Pods que coincidan con los selectores especificados podrán alcanzar el puerto de listener.
-
-### Cifrado en reposo
-
-El cifrado de volúmenes EBS **no** es algo que el controlador EBS CSI aplique automáticamente — debe habilitarlo explícitamente mediante una de estas opciones:
-
-- Habilitar la configuración de nivel de cuenta/región **"EBS encryption by default"**, de modo que cada volumen creado posteriormente se cifre automáticamente.
-- Configurar `encrypted: "true"` (y opcionalmente `kmsKeyId`) en la `StorageClass`.
+Para el driver CSI estándar de EBS, utiliza una StorageClass cifrada y/o la configuración predeterminada de cifrado de EBS de la cuenta/Región. Este ejemplo también conserva los volúmenes y espera a la programación antes de seleccionar una AZ:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: gp3-encrypted
+  name: gp3-kafka-encrypted
 provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
 parameters:
   type: gp3
-  encrypted: "true"
-  kmsKeyId: arn:aws:kms:us-east-1:123456789012:key/xxxxxxxx
+  encrypted: 'true'
 ```
 
-Dado que los clusters Kafka suelen contener datos sensibles para cumplimiento, trate una `StorageClass` explícitamente cifrada para PVC de brokers como el valor predeterminado, no como una ocurrencia tardía.
+Para Auto Mode, usa su provisioner independiente `ebs.csi.eks.amazonaws.com` y las restricciones de topología de la Parte 2, especificando también `encrypted: "true"`. No deduzcas el cifrado de PVC aprovisionados dinámicamente a partir de la afirmación de cifrado de nodos/discos efímeros de Auto Mode; la referencia de parámetros de su StorageClass indica que `encrypted` tiene el valor predeterminado false. Confirma el cifrado y la clave KMS del volumen EBS realmente creado.
 
-## 5. Optimización de costos
+Una clave gestionada por el cliente requiere su ARN real y las concesiones adecuadas para el rol/clave, no `key/xxxxxxxx`. Cambiar una StorageClass o habilitar los valores predeterminados de la cuenta no cifra retroactivamente los volúmenes existentes. Planifica una migración de datos o instantáneas compatible y verifica el acceso a la restauración antes de sustituir el almacenamiento persistente.
 
-### Dimensionamiento adecuado de tipos de instancia
+## Capacidad, niveles y retención
 
-La mayoría de las cargas de trabajo de Kafka son mucho más sensibles a la **memoria — específicamente, la caché de páginas del SO — que a la CPU**. Kafka está diseñado para atender la mayoría de las lecturas desde la caché de páginas, por lo que, en el caso habitual donde los consumidores leen datos recientes, la RAM que queda tras el heap del broker (normalmente 4–8GB son suficientes) determina directamente el throughput. Por esta razón, las instancias optimizadas para memoria (la familia Graviton `r6g`/`r7g`, por ejemplo) con frecuencia ofrecen una mejor relación precio/rendimiento que las optimizadas para cómputo.
+Kafka se beneficia de la caché de páginas, pero la CPU (incluidos TLS/compresión), la red, el rendimiento/IOPS del almacenamiento y los límites de memoria de cgroups pueden ser factores determinantes. Incluye el heap, la memoria fuera del heap, la caché de páginas y otras cargas de trabajo en las mediciones. No existe una respuesta universal de «bastan 4–8 GB de heap» ni un ganador en coste entre las instancias optimizadas para memoria.
 
-### Almacenamiento por niveles
+El almacenamiento por niveles de Kafka está listo para producción desde la versión 3.9 y es compatible con Strimzi 1.3. Aun así, necesita un **plugin RemoteStorageManager** compatible, sus dependencias en la imagen, credenciales/permisos de acceso remoto, retención, limpieza y configuración de recuperación. La integración personalizada de Strimzi usa `spec.kafka.tieredStorage` con la clase/ruta/configuración del plugin. Activar únicamente `remote.log.storage.system.enable` no conecta Kafka con S3.
+Consulta las limitaciones de la funcionalidad de la versión y prueba la indisponibilidad del almacenamiento remoto y la restauración.
 
-El almacenamiento por niveles, definido por KIP-405, descarga segmentos de log antiguos del disco local a almacenamiento remoto como S3, reduciendo la capacidad local de EBS que necesita cada broker. Se incorporó como acceso anticipado en Apache Kafka 3.6 y **pasó a estar listo para producción (GA) en Kafka 3.9**, pero no está habilitado de forma predeterminada — sigue siendo una característica opcional que debe activar explícitamente (`remote.log.storage.system.enable=true`). Antes de usarlo con Strimzi, consulte las notas de soporte y madurez de esa versión de Strimzi para el almacenamiento por niveles, y valídelo exhaustivamente primero en un cluster que no sea de producción.
+### La retención es una decisión sobre los datos
 
-### Ajuste de la retención de logs
-
-Configure `retention.ms`/`retention.bytes` por topic según los requisitos reales del negocio en lugar de dejar los valores predeterminados, ya que retener datos en exceso en EBS es un costo directo y continuo. Los topics que solo necesitan el valor más reciente por clave (snapshots de estado, datos tipo caché) deben usar `cleanup.policy=compact` para que el almacenamiento no crezca sin límite.
+El siguiente ejemplo modifica un tema existente para retener datos durante tres días o hasta **50 GiB por partición**, lo que ocurra primero. La eliminación funciona de forma asíncrona y a nivel de segmento; no constituye un límite exacto e instantáneo de bytes.
 
 ```bash
-# Example: tighten retention for a specific topic
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-configs.sh --bootstrap-server localhost:9092 \
-  --alter --entity-type topics --entity-name application-logs \
+: "${KAFKA_BOOTSTRAP_SERVERS:?Set the reachable TLS bootstrap endpoints}"
+bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --describe \
+  --entity-type topics --entity-name application-logs
+# After reviewing retention/recovery requirements: shortening retention can delete data.
+bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --alter \
+  --entity-type topics --entity-name application-logs \
   --add-config retention.ms=259200000,retention.bytes=53687091200
 ```
 
-### Uso de instancias Spot
+Reducir la retención puede eliminar irreversiblemente registros necesarios para la reproducción o la recuperación. Con `cleanup.policy=compact`, la limpieza es asíncrona y conserva el último valor por clave, sujeto al comportamiento de tombstones/cleaner; una cardinalidad alta de claves y los segmentos activos/no limpiados aún pueden hacer que el almacenamiento crezca. La compactación no impone un límite estricto de almacenamiento.
+`compact,delete` también aplica la retención de eliminación, que puede quitar el último valor de una clave antigua. Diseña explícitamente los requisitos de reconstrucción del estado y de retención de tombstones.
 
-Para entornos de desarrollo/staging o clusters Strimzi de menor criticidad, ejecutar el pool de nodos de brokers en instancias Spot puede reducir los costos considerablemente. Sin embargo, **el pool de nodos de controllers KRaft debe permanecer en On-Demand**. Perder una mayoría del quórum de controllers detiene la gestión de metadatos de todo el cluster, un riesgo que no vale la pena asumir por los ahorros de Spot. Distribuya el pool de nodos de brokers entre AZ/nodos con restricciones de distribución de topología de Pods para que un evento de recuperación de Spot no elimine varias réplicas de la misma partición a la vez.
+### Spot e interrupciones
 
-## 6. Lista de verificación para la puesta en marcha
+Mantén el cuórum de controladores en capacidad adecuada y fiable en esta base de producción. Se puede considerar capacidad Spot para los brokers en cargas de trabajo que toleren sus riesgos, pero distribuir los pods por sí solo no evita las recuperaciones correlacionadas. Combina la ubicación de réplicas de broker según racks, la distribución entre nodos/AZ, la capacidad de reemplazo en la AZ del volumen EBS y la recuperación/reserva de capacidad probadas.
 
-Reuniendo los elementos clave de las partes 1 a 8 de esta profundización en una única lista de verificación previa a producción:
+El PDB de Strimzi 1.3 cubre los pods del clúster Kafka y limita la expulsión voluntaria. No garantiza el cuórum durante una eliminación forzada, un fallo de nodo, la recuperación de Spot ni todas las operaciones de actualización gradual del Operator. RF=3/minISR=2, un PDB y controladores On-Demand son elementos de diseño, no una prueba de que no habrá pérdidas ni tiempo de inactividad.
 
-- [ ] **Arquitectura**: en ejecución en modo KRaft, con pools de nodos de controllers y brokers separados (Partes 1, 2)
-- [ ] **Replicación**: los topics de producción usan `replication.factor=3` y `min.insync.replicas=2`, tolerando una sola falla de broker (Parte 1)
-- [ ] **Diseño de particiones**: los números de particiones se dimensionan para el paralelismo máximo esperado de consumidores, sin dividir en exceso (Parte 8)
-- [ ] **Fijación de versión de Strimzi**: las versiones de Operator y Kafka se fijan explícitamente, no se dejan variar mediante actualización automática (Parte 2)
-- [ ] **Almacenamiento**: la `StorageClass` de broker usa gp3 (o io2) con cifrado (`encrypted: "true"`) (Partes 3, 8)
-- [ ] **PodDisruptionBudget**: un PDB garantiza la disponibilidad de quórum/mayoría durante reinicios graduales y reemplazo de nodos (Parte 3)
-- [ ] **Ensayo de actualización gradual**: el procedimiento de actualización gradual se ha ejercitado realmente en staging (Parte 3)
-- [ ] **Compatibilidad de schemas**: el modo de compatibilidad de schema registry (BACKWARD/FORWARD/FULL) se establece deliberadamente según las necesidades de cada topic (Parte 4)
-- [ ] **DR/replicación**: se documenta la recuperación ante desastres o replicación entre regiones basada en Kafka Connect/MirrorMaker2 y se ha probado el failover (Parte 5)
-- [ ] **Decisión MSK frente a autogestionado**: la elección entre MSK gestionado y Strimzi autogestionado está documentada junto con su justificación operativa y de costos (Parte 6)
-- [ ] **Monitoreo/alertas**: existen dashboards y reglas de alerta para métricas de brokers y consumer lag (Parte 7)
-- [ ] **Autoscaling**: las cargas de trabajo de consumidores escalan según el lag mediante KEDA o un mecanismo equivalente (Parte 7)
-- [ ] **Revisión de configuración de productor/consumidor**: `acks`, `enable.idempotence`, la estrategia de commit de offsets y la membresía estática del grupo se han revisado según las necesidades de la carga de trabajo (Parte 8)
-- [ ] **Seguridad**: mTLS o SASL/SCRAM, ACL basadas en `KafkaUser` y `NetworkPolicy` de listener están implementados (Parte 8)
-- [ ] **Revisión de costos**: los tipos de instancia, la política de retención y el uso de Spot se reevalúan periódicamente (Parte 8)
-- [ ] **Pruebas de carga**: la escala de brokers y consumidores se ha probado realmente con carga al throughput pico esperado
+## Evidencias que deben conservarse antes de usarlo en producción
 
-Cumplir esta lista de verificación es un umbral razonable para afirmar que el cluster está listo para ejecutarse en producción en EKS.
+- Compatibilidad de versiones/API y ensayos de actualización/reversión y rotación de certificados.
+- Límites medidos de particiones, réplicas, CPU/memoria/red/almacenamiento en condiciones de fallo.
+- Límites de autorización probados, identidad del cliente y rotación de secretos/confianza.
+- Compatibilidad de esquemas/historial, comportamiento de procesamiento/confirmación y gestión de duplicados.
+- Evidencias de restauración/conmutación por error con RPO/RTO medidos y los esquemas/las claves requeridos.
+- Cobertura de extracción de métricas/alertas/notificaciones, capacidad de consumidores y SLO de la aplicación.
+- Retención, cifrado del almacenamiento, supuestos de costes y un responsable de operaciones identificado.
 
----
+Aplica los controles pertinentes para la carga de trabajo y registra las limitaciones pendientes.
+Completar una lista de comprobación genérica no certifica que el sistema esté listo para producción.
+
+## Referencias y validación
+
+Los ejemplos se comprobaron con las clases de configuración de Kafka 4.3.1, su particionador real basado en claves y pruebas de procesamiento/confirmación con MockConsumer, además de esquemas de recursos publicados y fixtures de salida de temas. No sustituyen las pruebas reales de aplicación de TLS/CNI, inspección de volúmenes cifrados, recuperación ante fallos ni corrección de la aplicación.
+
+- [Configuración del productor de Kafka 4.3](https://kafka.apache.org/43/configuration/producer-configs/)
+- [Configuración del consumidor de Kafka 4.3](https://kafka.apache.org/43/configuration/consumer-configs/)
+- [Almacenamiento por niveles de Kafka 4.3](https://kafka.apache.org/43/operations/tiered-storage/)
+- [Particionador basado en claves de Kafka 4.3.1](https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java)
+- [Salida de descripción de temas de Kafka 4.3.1](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java)
+- [Guía de implementación, TLS y almacenamiento por niveles de Strimzi 1.3.0](https://strimzi.io/docs/operators/1.3.0/deploying.html)
+- [Semántica de selectores de NetworkPolicy de Kubernetes](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Cifrado de EBS de forma predeterminada](https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html)
+- [Parámetros de StorageClass de EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)
+
+## Próximos pasos
+
+[Parte 9: Pruebas de rendimiento de Kafka](./09-kafka-benchmark.md)
 
 [Volver a la página principal](./README.md)
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario de topics](../../quizzes/data-on-eks/kafka/08-best-practices-quiz.md).
+[Cuestionario del tema](../../quizzes/data-on-eks/kafka/08-best-practices-quiz.md)

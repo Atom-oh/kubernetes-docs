@@ -1,39 +1,32 @@
-# EKS Cluster 创建测验 - 第 3 部分
+# EKS 集群创建测验 - 第 3 部分
 
-本测验测试你对 Amazon EKS cluster 创建相关的高级网络、存储配置和多租户的理解。内容涵盖 cluster networking、存储选项以及多租户环境配置等主题。
+> **最后更新**：September 11, 2026
 
-## 基础概念问题
+本测验涵盖 EKS 网络、节点容量、多租户、自动扩缩和节点安全。命令和清单均为学习示例；本次审查期间未执行云端部署和端到端行为验证。使用前请确认目标账户、Region、kubeconfig、兼容的附加组件版本以及资源所有权。
 
-1. 在 Amazon EKS cluster 中，限制每个 pod 可用 IP 地址数量的主要因素是什么？
-   * A) VPC CIDR block 大小
-   * B) Node instance type
-   * C) Cluster 的 Kubernetes version
-   * D) Subnet 中可用 IP 地址数量
+## 基本概念问题
+
+1. 在常规 IPv4 辅助 IP 计算中，什么决定 ENI 和每个 ENI 的地址上限？
+   * A) Namespace 名称
+   * B) EC2 实例类型
+   * C) Service 名称
+   * D) Deployment 名称
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) Node instance type**
+**答案：B) EC2 实例类型**
 
-**解释：** 在 Amazon EKS cluster 中，限制每个 pod 可用 IP 地址数量的主要因素是 node 的 instance type。Amazon VPC CNI plugin 使用每个 node 的 Elastic Network Interfaces (ENIs) 和 secondary IP addresses 为 pods 分配 IP 地址。每种 EC2 instance type 支持的最大 ENI 数量和每个 ENI 的最大 IP 地址数量不同，这决定了一个 node 上可运行的最大 pods 数量。
+对于 Linux IPv4 **辅助 IP 模式**，在子网地址充足且未使用自定义网络或 Pod 安全组的情况下，实例类型决定 ENI 和每个 ENI 的地址上限。此公式用于估算常规节点 Pod 上限，而不是“每个 Pod 的 IP 地址数”。
 
-**按 Instance Type 计算最大 Pod 数量：**
+常规公式会预留**每个** ENI 的主地址：
 
-最大 pods 数量使用以下公式计算：
-
+```text
+ENIs × (IPv4 addresses per ENI − 1) + 2
 ```
-(Number of ENIs × IP addresses per ENI - 1) + 2
-```
+额外的两个地址是历史上为 `aws-node` 和 `kube-proxy` 保留的 host-network 配额。表格保留了这项辅助 IP 计算；它**并非**适用于每一种 AMI、CNI 模式或托管节点组的实际 `maxPods`。
 
-其中：
-
-* 减去 1 是因为 primary ENI 的 primary IP address 由 node 本身使用。
-* 加上 2 是因为 kube-proxy 和 aws-node pods 使用 host networking。
-
-**常见 Instance Types 的最大 Pod 数量：**
-
-| Instance Type | Max ENIs | IPs per ENI | Max Pods |
+| 实例类型 | 最大 ENI 数 | 每个 ENI 的 IP 数 | 最大 Pod 数 |
 | ------------- | -------- | ----------- | -------- |
 | t3.small      | 3        | 4           | 11       |
 | t3.medium     | 3        | 6           | 17       |
@@ -46,228 +39,110 @@
 | r5.large      | 3        | 10          | 29       |
 | r5.xlarge     | 4        | 15          | 58       |
 
-**如何检查最大 Pod 数量：**
+**检查实际容量和 EC2 限制：**
 
 ```bash
-# Check maximum pod count for a node
-kubectl get nodes -o jsonpath='{.items[*].status.capacity.pods}'
-
-# Or use the max-pods script
-curl -s https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/scripts/max-pods-calculator.sh | bash -s -- --instance-type m5.large
+kubectl get nodes -o custom-columns=NAME:.metadata.name,TYPE:.metadata.labels.node\\.kubernetes\\.io/instance-type,CAPACITY:.status.capacity.pods,ALLOCATABLE:.status.allocatable.pods
+aws ec2 describe-instance-types --region us-west-2 \
+  --instance-types m5.large m5.4xlarge \
+  --query 'InstanceTypes[].{Type:InstanceType,ENIs:NetworkInfo.MaximumNetworkInterfaces,IPv4PerENI:NetworkInfo.Ipv4AddressesPerInterface}'
 ```
+即使未达到节点上限，子网地址耗尽也可能导致无法创建 Pod。CPU/内存请求、其他 host-network Pod、自定义网络、Pod 安全组以及 kubelet 配置也会产生影响。托管节点组会将 `maxPods` 上限设为：少于 30 个 vCPU 的实例为 110，否则为 250；这与公式算出的更大结果无关。
 
-**限制最大 Pod 数量的因素：**
+IPv4 前缀委派会将一个 `/28` 分配给 ENI 上的一个辅助地址**槽位**；多个前缀可以占用同一个 ENI。它不会增加子网地址空间。前提条件和迁移方法请参见问题 5。
 
-1. **Instance Type**:
-   * 每种 instance type 支持的最大 ENI 数量和每个 ENI 的 IP 地址数量不同。
-   * 更大的 instance types 通常支持更多 ENIs 和 IP 地址。
-2. **CNI Configuration**:
-   * 默认 VPC CNI configuration 使用 secondary IP addresses，而不是为每个 pod 分配完整 ENI。
-   * 可以通过 custom networking 改变此行为。
-3.  **Prefix Delegation**:
-
-    * VPC CNI 1.9.0 及更高版本支持 prefix delegation，会为每个 ENI 分配一个 /28 CIDR block (16 IPs)。
-    * 这可以显著增加每个 node 的最大 pods 数量。
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-    ```
-4.  **自定义 max-pods 值**:
-
-    * 你可以使用 kubelet 的 `--max-pods` flag 限制每个 node 的最大 pods 数量。
-    * 可以将其设置为低于 instance type 支持值的数量。
-
-    ```bash
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-nodegroup \
-      --node-type m5.large \
-      --nodes 3 \
-      --kubelet-extra-args "--max-pods=110"
-    ```
-
-**其他选项的问题：**
-
-* **VPC CIDR block size**: VPC CIDR block size 限制 VPC 中可用 IP 地址总数，但不会直接限制单个 node 上的最大 pods 数量。
-* **Cluster's Kubernetes version**: Kubernetes version 会影响受支持的功能，但不会直接限制每个 node 的最大 pods 数量。
-* **Number of available IP addresses in the subnet**: Subnet 中可用 IP 地址数量会影响该 subnet 中可部署的 pods 总数，但不会直接限制单个 node 上的最大 pods 数量。
-
-Node 的 instance type 是通过其支持的 ENI 数量和每个 ENI 的 IP 地址数量来决定一个 node 上可运行最大 pods 数量的主要因素。因此，选择满足 workload 要求的合适 instance type 非常重要。
+对于自定义 AL2023 AMI，请在计算并测试合适的值后，在 NodeConfig 中配置 `spec.kubelet.config.maxPods`。如果使用托管节点组且未指定自定义 AMI ID，EKS 会计算建议值。单独提高 kubelet 上限并不能增加 IP 地址或计算容量。不要传入不存在的 eksctl `--kubelet-extra-args` 选项。
 
 </details>
 
-2\. Amazon EKS cluster 中 pod-to-pod communication 的默认 network policy 是什么？ - A) 允许所有 pod-to-pod communication - B) 仅允许同一 namespace 中的 pods 之间通信 - C) 仅允许明确许可的 pod-to-pod communication - D) 阻止所有 pod-to-pod communication
+2. 如果没有 NetworkPolicy 选择某个 Pod，它的 NetworkPolicy 隔离状态是什么？
+   * A) 未隔离，但仍受其他网络控制措施约束
+   * B) 仅允许同一 namespace 的流量
+   * C) 必须显式配置允许规则
+   * D) 拒绝所有流量
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：A) 允许所有 pod-to-pod communication**
+**答案：A) 未隔离，但仍受其他网络控制措施约束**
 
-**解释：** Amazon EKS cluster 中 pod-to-pod communication 的默认 network policy 是允许所有 pod-to-pod communication。默认情况下，EKS 不实现 network policies，所有 pods 都可以与 cluster 中的所有其他 pods 自由通信。这是 Kubernetes 的默认行为，你必须显式配置 network policies 才能限制 pod-to-pod communication。
+如果没有策略选择某个 Pod 的某个流量方向，Kubernetes NetworkPolicy 会使该方向处于未隔离状态。这**并不意味着**可以绕过安全组、路由表、NACL、其他策略 API 或应用程序的监听设置。
 
-**EKS 中的默认 Networking 行为：**
+Amazon VPC CNI 在受支持的 Linux EC2 节点上启用时，具有原生 NetworkPolicy 执行功能。目前标准/管理员策略指南要求 VPC CNI 1.21 或更高版本，以及 5.10 或更高版本的内核；请确认所选附加组件的兼容性。此执行路径不涵盖 Windows 和 Fargate。请使用受控制器管理的 Pod（例如 Deployments），并检查 AWS 对接口和 Service 端口的限制。
 
-1. **Default Allow Policy**:
-   * 默认情况下，所有 pods 都可以与 cluster 中的所有其他 pods 通信。
-   * Namespaces 之间的通信也不受限制。
-   * 这遵循 Kubernetes 的 “flat network” 模型。
-2. **Amazon VPC CNI**:
-   * EKS 的默认 CNI plugin 是 Amazon VPC CNI。
-   * 此 plugin 为 pods 分配 VPC IP 地址，使其可在 VPC 内直接路由。
-   * 默认情况下它不实现 network policies。
+使用 AWS VPC 网络的 Calico 策略和 AWS-CNI 链接模式下的 Cilium 是可选方案，但各自有安装要求。不要安装未经配置的第二个 CNI，也不要无意中叠加策略代理。AWS Network Firewall 会过滤经路由传输的 VPC 流量；它不会实现 Kubernetes NetworkPolicy 选择器。
 
-**如何实现 Network Policies：**
-
-要在 EKS 中限制 pod-to-pod communication，你需要实现以下 network policy 方案之一：
-
-1.  **Calico**:
-
-    ```bash
-    # Install Calico
-    kubectl create namespace tigera-operator
-    helm repo add projectcalico https://docs.projectcalico.org/charts
-    helm install calico projectcalico/tigera-operator --namespace tigera-operator
-    ```
-2.  **Cilium**:
-
-    ```bash
-    # Install Cilium
-    helm repo add cilium https://helm.cilium.io/
-    helm install cilium cilium/cilium --namespace kube-system
-    ```
-3. **AWS Network Firewall** (VPC level):
-   * 你可以使用 AWS Network Firewall 在 VPC level 过滤流量。
-   * 这提供的是 subnet-level 控制，而不是细粒度的 pod-level 控制。
-
-**Network Policy 示例：**
-
-1.  **Default Deny Policy**:
-
-    ```yaml
-    # Block all ingress traffic
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: default-deny-ingress
-      namespace: default
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-    ```
-2.  **允许特定 Pods 之间通信**:
-
-    ```yaml
-    # Allow communication only from frontend to backend
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-frontend-to-backend
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: backend
-      ingress:
-      - from:
-        - podSelector:
-            matchLabels:
-              app: frontend
-        ports:
-        - protocol: TCP
-          port: 8080
-    ```
-3.  **限制跨 Namespace 通信**:
-
-    ```yaml
-    # Allow access only from prod namespace
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-from-prod-namespace
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: database
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              name: prod
-        ports:
-        - protocol: TCP
-          port: 5432
-    ```
-
-**Network Policy 最佳实践：**
-
-1. **应用 Default Deny Policy**:
-   * 对所有 namespaces 应用 default deny policy，以阻止未明确允许的所有流量。
-   * 只显式允许必要的通信。
-2. **应用最小权限原则**:
-   * 只允许 pods 所需的最小 network access。
-   * 只允许特定 ports 和 protocols。
-3. **Namespace Isolation**:
-   * 使用 namespaces 对 workloads 进行逻辑隔离。
-   * 显式控制 namespaces 之间的通信。
-4. **基于 Label 的 Policies**:
-   * 使用 pod labels 定义细粒度 network policies。
-   * 维护一致的 labeling scheme。
-
-**其他选项的问题：**
-
-* **Allow communication only between pods in the same namespace**: 默认情况下，EKS 允许所有 pod-to-pod communication，包括跨 namespace 通信。
-* **Allow only explicitly permitted pod-to-pod communication**: 这是实现 network policies 之后的行为，但不是默认行为。
-* **Block all pod-to-pod communication**: 默认情况下，EKS 不会阻止 pod-to-pod communication。
-
-EKS 中的默认 network policy 是允许所有 pod-to-pod communication。虽然这在开发和测试环境中可能很方便，但在生产环境中实现适当的 network policies 来增强安全性非常重要。
-
-</details>
-
-3. Amazon EKS cluster 中的 pods 要访问 VPC 外部的 internet，需要什么？
-   * A) 将 internet gateway 附加到 pod 所在的 subnet
-   * B) 将 NAT gateway 或 NAT instance 附加到 pod 所在的 subnet
-   * C) 为 pod 分配 public IP address
-   * D) 将 Elastic IP address 关联到 pod
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：B) 将 NAT gateway 或 NAT instance 附加到 pod 所在的 subnet**
-
-**解释：** Amazon EKS cluster 中的 pods 要访问 VPC 外部的 internet，pod 所在的 subnet 必须附加 NAT gateway 或 NAT instance。这是允许 private subnets 中的 pods 访问 internet 的标准方法。
-
-**EKS Networking 架构：**
-
-1. **Private Subnets 中的 Pods**:
-   * 出于安全考虑，EKS worker nodes 通常放置在 private subnets 中。
-   * Private subnets 中的 pods 不能直接访问 internet。
-   * 它们必须通过 NAT gateway 或 NAT instance 访问 internet。
-2. **Public Subnets 中的 Pods**:
-   * 即使 worker nodes 位于 public subnets 中，pods 默认也不会获得 public IP addresses。
-   * Pods 通过 node 的 network interface 经由 NAT 访问 internet。
-
-**NAT Gateway 配置：**
-
-```bash
-# Create NAT gateway
-aws ec2 create-nat-gateway \
-  --subnet-id subnet-public1 \
-  --allocation-id eipalloc-12345
-
-# Update private subnet routing table
-aws ec2 create-route \
-  --route-table-id rtb-private \
-  --destination-cidr-block 0.0.0.0/0 \
-  --nat-gateway-id nat-12345
-```
-
-**使用 CloudFormation 的 VPC 配置示例：**
+以下示例适用于一个**新建且专用的** `network-policy-lab` namespace。第一条策略仅隔离入口流量。接下来的两条策略允许特定流量；`prod` 对等端要求同时匹配内置 namespace 标签和 backend Pod 标签。
 
 ```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: network-policy-lab
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: network-policy-lab
+spec:
+  podSelector:
+    matchLabels: {app: backend}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels: {app: frontend}
+    ports:
+    - {protocol: TCP, port: 8080}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prod-to-database
+  namespace: network-policy-lab
+spec:
+  podSelector:
+    matchLabels: {app: database}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: prod
+      podSelector:
+        matchLabels: {app: backend}
+    ports:
+    - {protocol: TCP, port: 5432}
+```
+对于出口隔离，请单独允许实际的 DNS 路径和应用程序依赖。只有在基线连接、DNS、就绪状态以及允许的正向对照均成功后，被拒绝的连接才有意义。不要为了快速测试而对 `kube-system` 或共享的 `default` namespace 应用全面拒绝策略。
+
+</details>
+
+3. 对于私有 IPv4 子网，哪种方式是常规的互联网出口路径？
+   * A) 将 IGW 附加到子网
+   * B) 路由到公有 NAT gateway，再路由到 VPC IGW
+   * C) 为每个 Pod 分配一个 Elastic IP
+   * D) 使用私有 NAT gateway 直接通过 IGW
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B) 路由到公有 NAT gateway，再路由到 VPC IGW**
+
+对于需要通过公有 IPv4 访问互联网的私有 IPv4 节点和 Pod，常见设计是将私有子网的默认路由指向**公有子网中的公有 NAT gateway**。该公有子网会路由到附加到**VPC** 的互联网网关，且 NAT gateway 具有 Elastic IP。NAT instance 是另一种方案，但需要额外配置路由、源/目标检查和运维。
+
+采用默认 IPv4 VPC CNI SNAT 行为时，Pod 发往 VPC 外部的流量首先使用节点的主 IPv4 地址。具有公有 IPv4 地址且有 IGW 路由的公有节点可以使用不同路径。原生 IPv6 出口可以使用仅出口互联网网关；通过 VPC endpoints 访问 AWS 服务可能不需要互联网 NAT。不要将 NAT 视为每个 Pod 的通用前提条件。
+
+**单可用区 CloudFormation 路由示例：**此示例展示公有/私有路由关联；它不是完整的 EKS VPC。EKS 集群子网至少需要两个 AZ。对于按可用区部署 NAT 的设计，可以考虑每个 AZ 配置一个 NAT gateway 和一条私有路由，以避免跨 AZ 依赖。NAT gateway 和公有 IPv4 地址会产生费用。有关集群部署，请查看概念指南中的完整 EKS VPC 模板。
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: One-AZ IPv4 NAT routing demonstration; not a complete EKS VPC
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -285,7 +160,7 @@ Resources:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.0.0/24
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: Public-Subnet-1
@@ -358,1093 +233,662 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway
+
+  PublicSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
 ```
+`SubnetRouteTableAssociation` 资源至关重要：在未关联的路由表中创建路由不会改变任一子网的路由。
 
-**使用 eksctl 的 VPC 配置：**
-
-```yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: my-cluster
-  region: us-west-2
-vpc:
-  cidr: 192.168.0.0/16
-  nat:
-    gateway: Single  # NAT gateway configuration
-  clusterEndpoints:
-    publicAccess: true
-    privateAccess: true
-```
-
-**其他选项的问题：**
-
-* **Attach an internet gateway to the subnet where the pod is located**: Internet gateway 附加到 public subnets，private subnets 中的资源需要 NAT gateway 才能访问 internet。此外，仅有 internet gateway 并不能让 pods 访问 internet。
-* **Assign a public IP address to the pod**: Amazon VPC CNI plugin 不支持为 pods 分配 public IP addresses。Pods 始终获得 private IP addresses。
-* **Associate an Elastic IP address with the pod**: 你不能直接将 Elastic IP address 关联到 pod。Elastic IP addresses 只能关联到 EC2 instances 或 network interfaces。
-
-NAT gateway 或 NAT instance 是允许 private subnets 中的 pods 访问 internet 的标准方法。它会将 pod 的 private IP address 转换为 NAT gateway 的 public IP address，从而启用 internet 通信。对于生产环境，建议在每个 availability zone 中部署 NAT gateway 以实现高可用性。
-
-</details>
-
-4. 在 Amazon EKS cluster 中使用 SecurityGroupPolicy 为 pods 应用 security groups 时，以下哪项不是要求？
-   * A) Amazon VPC CNI plugin version 1.7.7 或更高版本
-   * B) ENIConfig resource configuration
-   * C) 在 pod 上设置 hostNetwork: true
-   * D) 为要应用 security groups 的 pods 指定 service account
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：C) 在 pod 上设置 hostNetwork: true**
-
-**解释：** “在 pod 上设置 hostNetwork: true” 不是在 Amazon EKS cluster 中使用 SecurityGroupPolicy 为 pods 应用 security groups 的要求。事实上，security groups 不能应用于 hostNetwork: true 的 pods。要为 pods 应用 security groups，pods 必须使用自己的 network namespace。
-
-**Pod Security Group 功能要求：**
-
-1.  **Amazon VPC CNI Plugin Version 1.7.7 or Later**:
-
-    * Pod security group 功能在 Amazon VPC CNI plugin version 1.7.7 及更高版本中受支持。
-    * 建议使用最新版本。
-
-    ```bash
-    # Check CNI version
-    kubectl describe daemonset aws-node -n kube-system | grep Image
-
-    # Update CNI
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.10.0/config/master/aws-k8s-cni.yaml
-    ```
-2.  **启用 Pod Security Group 功能**:
-
-    ```bash
-    # Enable pod security group feature
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-    # Or use eksctl
-    eksctl utils update-cluster-config \
-      --name my-cluster \
-      --region us-west-2 \
-      --enable-pod-security-groups
-    ```
-3.  **为要应用 Security Groups 的 Pods 指定 Service Account**:
-
-    * 在 SecurityGroupPolicy 中，必须使用 pod selector 或 service account selector 指定要应用 security groups 的 pods。
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: my-security-group-policy
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: my-app
-      securityGroups:
-        groupIds:
-          - sg-12345
-    ```
-
-**Pod Security Group 配置示例：**
-
-1.  **创建 SecurityGroupPolicy**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: db-client-policy
-      namespace: default
-    spec:
-      serviceAccountSelector:
-        matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-db-client
-    ```
-2.  **创建 Service Account**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: db-client
-      namespace: default
-      labels:
-        role: db-client
-    ```
-3.  **部署 Pod**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client-pod
-    spec:
-      serviceAccountName: db-client
-      containers:
-      - name: db-client
-        image: mysql:5.7
-        command: ['sleep', '3600']
-    ```
-
-**hostNetwork: true 的问题：**
-
-带有 `hostNetwork: true` 的 Pods 使用 node 的 network namespace，因此无法为 pod 应用单独的 security groups。这类 pods 会继承 node 的 security groups。
-
-```yaml
-# Security groups cannot be applied to this pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: host-network-pod
-spec:
-  hostNetwork: true  # Uses the node's network namespace
-  containers:
-  - name: nginx
-    image: nginx
-```
-
-**ENIConfig Resource Configuration：**
-
-配置 custom networking 时需要 ENIConfig resources，但仅使用 pod security groups 功能时它们不是强制要求。不过，如果你将 pod security groups 与 custom networking 一起使用，则必须配置 ENIConfig resources。
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-12345
-  securityGroups:
-  - sg-12345
-```
-
-**Pod Security Group 限制：**
-
-1. **Resource Limitations**:
-   * 每个 node 需要额外的 ENIs 用于 pod security groups。
-   * 支持的最大 ENI 数量受 instance type 限制。
-2. **Compatibility Limitations**:
-   * 不能应用于 hostNetwork: true 的 pods。
-   * 不能应用于使用 hostPort 的 pods。
-   * 可能与某些 CNI plugins 不兼容。
-3. **Performance Impact**:
-   * 由于每个 pod 都需要额外 ENIs，pod 启动时间可能更长。
-   * 每个 node 的最大 pods 数量可能会受到限制。
-
-Pod security groups 功能是一项强大的能力，可在 pod level 提供细粒度 network security。然而，由于此功能不能应用于 hostNetwork: true 的 pods，pods 必须使用自己的 network namespace 才能使用 pod security groups。
-
-</details>
-
-4\. 在 Amazon EKS cluster 中使用 SecurityGroupPolicy 为 pods 应用 security groups 时，什么不是要求？ - A) Amazon VPC CNI plugin version 1.7.7 或更高版本 - B) ENIConfig resource configuration - C) 在 pod 上设置 hostNetwork: true - D) 为将应用 security groups 的 pods 指定 service account
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：C) 在 pod 上设置 hostNetwork: true**
-
-**解释：** 在 Amazon EKS cluster 中使用 SecurityGroupPolicy 为 pods 应用 security groups 时，不属于要求的选项是“在 pod 上设置 hostNetwork: true”。事实上，security groups 不能应用于 hostNetwork: true 的 pods。要为 pods 应用 security groups，pods 必须使用自己的 network namespace。
-
-**Pod Security Groups 功能要求：**
-
-1.  **Amazon VPC CNI plugin version 1.7.7 or higher**:
-
-    * Pod security groups 功能在 Amazon VPC CNI plugin version 1.7.7 及更高版本中受支持。
-    * 建议使用最新版本。
-
-    ```bash
-    # Check CNI version
-    kubectl describe daemonset aws-node -n kube-system | grep Image
-
-    # Update CNI
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.10.0/config/master/aws-k8s-cni.yaml
-    ```
-2.  **启用 pod security groups 功能**:
-
-    ```bash
-    # Enable pod security groups feature
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-    # Or use eksctl
-    eksctl utils update-cluster-config \
-      --name my-cluster \
-      --region us-west-2 \
-      --enable-pod-security-groups
-    ```
-3.  **指定将应用 security groups 的 pods 的 service account**:
-
-    * 在 SecurityGroupPolicy 中，必须使用 pod selector 或 service account selector 指定将应用 security groups 的 pods。
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: my-security-group-policy
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: my-app
-      securityGroups:
-        groupIds:
-          - sg-12345
-    ```
-
-**Pod Security Group 配置示例：**
-
-1.  **创建 SecurityGroupPolicy**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: db-client-policy
-      namespace: default
-    spec:
-      serviceAccountSelector:
-        matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-db-client
-    ```
-2.  **创建 Service Account**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: db-client
-      namespace: default
-      labels:
-        role: db-client
-    ```
-3.  **部署 Pod**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client-pod
-    spec:
-      serviceAccountName: db-client
-      containers:
-      - name: db-client
-        image: mysql:5.7
-        command: ['sleep', '3600']
-    ```
-
-**hostNetwork: true 的问题：**
-
-带有 `hostNetwork: true` 的 Pods 使用 node 的 network namespace，因此无法为 pod 应用单独的 security groups。这类 pods 会继承 node 的 security groups。
-
-```yaml
-# Security groups cannot be applied to this pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: host-network-pod
-spec:
-  hostNetwork: true  # Uses the node's network namespace
-  containers:
-  - name: nginx
-    image: nginx
-```
-
-**ENIConfig Resource Configuration：**
-
-配置 custom networking 时需要 ENIConfig resources，但仅使用 pod security groups 功能时它们不是强制要求。不过，如果你将 pod security groups 与 custom networking 一起使用，则必须配置 ENIConfig resources。
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-12345
-  securityGroups:
-  - sg-12345
-```
-
-**Pod Security Group 限制：**
-
-1. **Resource Limitations**:
-   * 每个 node 需要额外的 ENIs 用于 pod security groups。
-   * 支持的最大 ENI 数量受 instance type 限制。
-2. **Compatibility Limitations**:
-   * 不能应用于 hostNetwork: true 的 pods。
-   * 不能应用于使用 hostPort 的 pods。
-   * 可能与某些 CNI plugins 不兼容。
-3. **Performance Impact**:
-   * 由于每个 pod 都需要额外 ENIs，pod 启动时间可能更长。
-   * 每个 node 的最大 pods 数量可能会受到限制。
-
-Pod security groups 功能是一项强大的能力，可在 pod level 提供细粒度 network security。然而，由于此功能不能应用于 hostNetwork: true 的 pods，pods 必须使用自己的 network namespace 才能使用 pod security groups。
-
-</details>
-
-5. Amazon EKS cluster 中 Prefix Delegation 功能的主要优势是什么？
-   * A) 提升 pods 之间的通信速度
-   * B) 增加每个 node 的最大 pods 数量
-   * C) 能够为 pods 分配 public IP addresses
-   * D) 增强 pod network isolation
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：B) 增加每个 node 的最大 pods 数量**
-
-**解释：** Amazon EKS cluster 中 Prefix Delegation 功能的主要优势是增加每个 node 的最大 pods 数量。此功能会向每个 Elastic Network Interface (ENI) 分配 /28 CIDR blocks (16 IP addresses)，而不是单独的 IP addresses，从而显著增加一个 node 可支持的最大 pods 数量。
-
-**Prefix Delegation 的工作方式：**
-
-1. **默认 VPC CNI 行为**:
-   * 默认情况下，VPC CNI 会从 ENI 为每个 pod 分配 secondary IP addresses。
-   * 每种 EC2 instance type 对最大 ENI 数量和每个 ENI 的 IP 地址数量有限制。
-   * 这会限制每个 node 的最大 pods 数量。
-2. **Prefix Delegation 行为**:
-   * 启用 prefix delegation 后，会为每个 ENI 分配 /28 CIDR blocks (16 IPs)，而不是单独的 IP addresses。
-   * 这会显著增加每个 ENI 可支持的 IP 地址数量。
-   * 因此，每个 node 的最大 pods 数量会增加。
-
-**启用 Prefix Delegation：**
+完成经独立审查的部署后，请检查实际 ID 和路由。如果改用 CLI 创建 NAT gateway，请记录返回的 ID，并在创建路由前等待其状态变为 `nat-gateway-available`。如果 NAT 创建失败，必须停止工作流。
 
 ```bash
-# Enable prefix delegation
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# Check prefix delegation status
-kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
+set -euo pipefail
+: "${AWS_REGION:?Set the Region}"
+: "${VPC_ID:?Set the deployed VPC ID}"
+aws ec2 describe-route-tables --region "$AWS_REGION" \
+  --filters "Name=vpc-id,Values=$VPC_ID" \
+  --query 'RouteTables[].{Id:RouteTableId,Associations:Associations,Routes:Routes}'
+aws ec2 describe-nat-gateways --region "$AWS_REGION" \
+  --filter "Name=vpc-id,Values=$VPC_ID" \
+  --query 'NatGateways[].{Id:NatGatewayId,Subnet:SubnetId,State:State}'
 ```
+eksctl 的 `vpc.nat.gateway: Single` 适用于其托管 VPC 创建工作流，但会引入单 AZ 依赖。`HighlyAvailable` 会在每个 AZ 创建一个分区 NAT。这些选项无法修复任意现有子网的路由。对于实验堆栈，请先移除依赖工作负载/ENI，再仅删除由你创建的资源；确认 NAT 及其 EIP 已释放。
 
-**Prefix Delegation 的优势：**
+</details>
 
-1. **增加每个 Node 的最大 Pods 数量**:
-   * 使用 prefix delegation 会显著增加每个 node 的最大 pods 数量。
-   * 例如，对于 m5.large instance：
-     * 默认配置：最多 29 个 pods
-     * 启用 prefix delegation 后：最多超过 110 个 pods
-2. **IP 地址效率**:
-   * 优化大型 clusters 中的 IP 地址使用。
-   * 适用于 VPC CIDR ranges 有限的环境。
-3. **改进 Node 资源利用率**:
-   * 运行更多 pods 可以提高 node 资源利用率。
-   * 有助于 cluster 成本优化。
+4. 哪种 Pod 设置会共享节点网络，而不是使用 Pod 分支 ENI？
+   * A) 匹配的 Pod 标签
+   * B) 匹配的 ServiceAccount 标签
+   * C) hostNetwork: true
+   * D) 选定的 SecurityGroupPolicy
 
-**Prefix Delegation 限制：**
+<details>
+<summary>显示答案</summary>
 
-1. **EC2 Instance 支持**:
-   * 只有基于 Nitro 的 instances 支持 prefix delegation。
-   * 不能与旧一代 instances 一起使用。
-2. **VPC CNI Version 要求**:
-   * 需要 VPC CNI version 1.9.0 或更高版本。
-   * 此功能不能与早期版本一起使用。
-3. **Subnet Size 要求**:
-   * 需要具有足够 IP 地址空间的 subnets。
-   * 在小型 subnets 中，IP 地址可能很快耗尽。
-4. **迁移注意事项**:
-   * 在现有 clusters 上启用时，只有新的 pods 使用 prefix delegation。
-   * 现有 pods 必须重启才能应用到所有 pods。
+**答案：C) hostNetwork: true**
 
-**Prefix Delegation 配置示例：**
+host-network Pod 会共享节点的网络 namespace 和安全组。Pod 安全组会为具有独立网络 namespace 的选定 Pod 使用分支 ENI。
+
+此 Linux EC2 示例的前提条件包括：受支持的 trunking 实例类型、兼容的 VPC CNI、集群角色具有 `AmazonEKSVPCResourceController` 权限，以及 `ENABLE_POD_ENI=true`。EC2 `t` 系列和 EKS Auto Mode 不支持此功能。请核实 DNS、控制平面和应用规则、分支 ENI 容量以及 `POD_SECURITY_GROUP_ENFORCING_MODE`；不同模式下 SNAT 和策略行为有所不同。请使用附加组件所有者提供的配置工作流，而不是应用旧的 CNI 清单。
+
+SecurityGroupPolicy 使用 `podSelector` **或** `serviceAccountSelector` 选择 Pod；选择 Pod 并不强制要求使用专门创建的 service account。`ENIConfig` 是自定义网络资源，仅使用 Pod 安全组时并不需要它。
+
+对于下面的 service-account 选择器方案，请先创建专用的 `pod-sg-lab` namespace，将 SG 占位符替换为 VPC 中现有且经过审查的组，并满足前提条件。此休眠客户端用于演示选择功能；它并不能证明数据库连接正常。匹配的 ServiceAccount 标签和 Pod 的 `serviceAccountName` 都已设置。
 
 ```yaml
-# eksctl configuration file
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: db-client-policy
+  namespace: pod-sg-lab
+spec:
+  serviceAccountSelector:
+    matchLabels:
+      role: db-client
+  securityGroups:
+    groupIds:
+    - sg-REPLACE_WITH_REVIEWED_GROUP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: db-client
+  namespace: pod-sg-lab
+  labels:
+    role: db-client
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-client
+  namespace: pod-sg-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: db-client}
+  template:
+    metadata:
+      labels: {app: db-client}
+    spec:
+      serviceAccountName: db-client
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: client
+        image: public.ecr.aws/docker/library/busybox:1.38.0
+        command: [sleep, '3600']
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 32Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
+也可以将 `serviceAccountSelector` 替换为 `podSelector: {matchLabels: {app: db-client}}`。请确保策略和被选择的 Pod 位于同一 namespace。验证**新创建的** Pod 的分支 ENI，以及实际允许/拒绝的连接；创建策略不会追溯修改正在运行的 Pod。测试后只清理此实验 namespace 及其策略，不要删除仍被其他资源使用的 SG。
+
+</details>
+
+
+
+5. IPv4 前缀委派的主要容量优势是什么？
+   * A) 保证 Pod 到 Pod 流量更快
+   * B) 增加每个节点的 Pod IP 容量
+   * C) 为每个 Pod 分配公有 IPv4 地址
+   * D) 自动隔离网络
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B) 增加每个节点的 Pod IP 容量**
+
+在 Linux IPv4 前缀模式下，一个 `/28`（16 个地址）会占用一个 ENI 辅助地址槽位。一个 ENI 上可以附加多个前缀；ENI 数量上限本身不会增加。在 kubelet 和资源限制允许的情况下，这可以提高基于 IP 的 Pod 密度，并减少地址分配 API 调用。
+
+对于 `m5.large`，常规辅助 IP 计算结果为 29 个 Pod。采用前缀模式的兼容托管节点组可以使用建议的 `maxPods` 值 110，而不是不受限制地“超过 110”。理论地址槽位并不代表应用容量保证。
+
+**前提条件和权衡：**
+
+* 使用受支持的 Nitro 实例和兼容的 CNI（历史上的 Linux IPv4 最低版本为 1.9.0；应选择当前受支持的版本）。
+* 子网需要连续的 `/28` 地址块。即使有许多空闲的独立 IP，子网碎片化也可能导致 `InsufficientCidrBlocks`。子网 CIDR 预留可以保留前缀空间。
+* 前缀以地址块的形式占用真实子网地址。它不会扩大 CIDR，也不保证降低 IP 消耗、提高利用率或降低成本。
+* `WARM_PREFIX_TARGET` 指定备用前缀数。`WARM_IP_TARGET` 指定备用 IP 数；`MINIMUM_IP_TARGET` 设置最低总分配量。配置后，后两项会覆盖 `WARM_PREFIX_TARGET`。请根据启动延迟和未使用地址消耗进行调整。
+* 规划替换节点组，并以受控方式执行 cordon/drain 迁移。不要只切换变量并重启所有 Pod。检查 PDB、卷、备用容量和回滚方案；移除旧组前先验证新节点。
+
+以下是**新建集群的配置示例**，不是现有集群的更新命令。它使用私有 API 访问，因此管理员需要可路由的管理路径。如果未提供版本，则会选择兼容的 EKS 默认 CNI 版本；部署前请记录并审查实际解析出的版本。`withOIDC` 会参与 eksctl 的 CNI IAM 集成；请审查最终生成的角色。容量上下限本身不会安装 autoscaler。
+
+```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: my-cluster
+  name: prefix-demo
   region: us-west-2
+  version: "1.36"
 vpc:
   clusterEndpoints:
-    publicAccess: true
+    publicAccess: false
     privateAccess: true
-managedNodeGroups:
-  - name: ng-1
-    instanceType: m5.large
-    minSize: 2
-    maxSize: 5
-    disableIMDSv1: true
 iam:
   withOIDC: true
 addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      {
-        "env": {
-          "ENABLE_PREFIX_DELEGATION": "true"
-        }
-      }
+- name: vpc-cni
+  configurationValues: |
+    {"env":{"ENABLE_PREFIX_DELEGATION":"true","WARM_PREFIX_TARGET":"1"}}
+managedNodeGroups:
+- name: prefix-linux
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+  privateNetworking: true
+  disableIMDSv1: true
 ```
-
-**其他选项的问题：**
-
-* **Improved communication speed between pods**: Prefix delegation 不会直接影响 pod-to-pod communication speed。Pod 通信性能主要由 network infrastructure 和 CNI implementation 决定。
-* **Ability to assign public IP addresses to pods**: Prefix delegation 不提供为 pods 分配 public IP addresses 的能力。VPC CNI 始终为 pods 分配 private IP addresses。
-* **Enhanced pod network isolation**: Prefix delegation 与 pod network isolation 无关。Network isolation 通过 network policies 或 security groups 实现。
-
-Prefix delegation 是一项强大功能，可增加每个 node 的最大 pods 数量，提高 cluster density 和效率。它特别适用于大型 clusters 或运行高密度 workloads 的环境。
 
 </details>
 
-6. 在 Amazon EKS cluster 中自定义 CoreDNS 的正确方法是什么？
-   * A) 在 AWS Management Console 中修改 CoreDNS settings
-   * B) 修改 CoreDNS ConfigMap
-   * C) 在 EKS cluster 创建期间指定 CoreDNS configuration
-   * D) 使用 AWS CLI 更新 CoreDNS add-on parameters
+6. 哪个 Kubernetes 对象包含 CoreDNS 使用的 Corefile？
+   * A) 节点安全组
+   * B) coredns ConfigMap
+   * C) StorageClass
+   * D) PodDisruptionBudget
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 修改 CoreDNS ConfigMap**
+**答案：B) coredns ConfigMap**
 
-**解释：** 在 Amazon EKS cluster 中自定义 CoreDNS 的正确方法是修改 CoreDNS ConfigMap。CoreDNS 是 Kubernetes 的 cluster DNS server，通过 ConfigMap 进行配置。在 EKS 中，你可以通过修改 `coredns` ConfigMap 来自定义 CoreDNS 行为。
+`coredns` ConfigMap 包含 `data.Corefile`。正确的**配置所有者**取决于 CoreDNS 是 EKS 托管附加组件还是自管理组件。
 
-**如何修改 CoreDNS ConfigMap：**
+对于托管附加组件，AWS 控制台和 `aws eks update-addon --configuration-values` 都可以自定义受支持的字段。直接编辑 ConfigMap 可能会在附加组件更新时被覆盖：请将完整的自定义 Corefile 存储在附加组件的 `corefile` 配置键中。保留现有配置键，并根据准确的附加组件版本检查 schema。
 
-1.  **检查当前 ConfigMap**:
-
-    ```bash
-    kubectl get configmap coredns -n kube-system -o yaml
-    ```
-2.  **编辑 ConfigMap**:
-
-    ```bash
-    kubectl edit configmap coredns -n kube-system
-    ```
-3.  **或应用 Patch**:
-
-    ```bash
-    kubectl patch configmap coredns -n kube-system --type=merge -p '{"data":{"Corefile":".:53 {\n    errors\n    health {\n        lameduck 5s\n    }\n    ready\n    kubernetes cluster.local in-addr.arpa ip6.arpa {\n        pods insecure\n        fallthrough in-addr.arpa ip6.arpa\n        ttl 30\n    }\n    prometheus :9153\n    forward . /etc/resolv.conf\n    cache 30\n    loop\n    reload\n    loadbalance\n    # Add custom settings\n    hosts {\n        10.0.0.1 example.com\n        fallthrough\n    }\n}"}}'
-    ```
-
-**常见 CoreDNS 自定义场景：**
-
-1.  **添加自定义 DNS Records**:
-
-    ```
-    hosts {
-        10.0.0.1 example.com
-        10.0.0.2 api.example.com
-        fallthrough
-    }
-    ```
-2.  **为特定 Domains 配置 Forwarding**:
-
-    ```
-    forward example.org 10.0.0.1:53
-    ```
-3.  **调整 DNS Caching**:
-
-    ```
-    cache {
-        success 10000
-        denial 5000
-        prefetch 10 10 10%
-    }
-    ```
-4.  **配置 Logging**:
-
-    ```
-    log {
-        class error
-    }
-    ```
-5.  **禁用 Autopath**:
-
-    ```
-    kubernetes cluster.local in-addr.arpa ip6.arpa {
-        pods insecure
-        fallthrough in-addr.arpa ip6.arpa
-        ttl 30
-        autopath off
-    }
-    ```
-
-**CoreDNS 修改后应用更改：**
-
-修改 ConfigMap 后，需要重启 CoreDNS pods 以应用更改：
+编辑前，请在新的本地工作目录中保存当前配置：
 
 ```bash
-# Check CoreDNS pods
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-# Restart CoreDNS pods
-kubectl rollout restart deployment coredns -n kube-system
-
-# Verify changes are applied
-kubectl logs -n kube-system -l k8s-app=kube-dns
+set -euo pipefail
+: "${EXAMPLE_CLUSTER:?Set the cluster}"
+: "${EXAMPLE_REGION:?Set the Region}"
+: "${EXAMPLE_KUBECONFIG:?Set a private kubeconfig path}"
+aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --addon-name coredns > coredns-addon-before.json
+COREDNS_VERSION=$(jq -er '.addon.addonVersion' coredns-addon-before.json)
+aws eks describe-addon-configuration --region "$EXAMPLE_REGION" \
+  --addon-name coredns --addon-version "$COREDNS_VERSION" \
+  --query configurationSchema --output text > coredns-schema.json
+jq -e '(.addon.configurationValues // "{}") | fromjson | select(type == "object")' \
+  coredns-addon-before.json > coredns-values-before.json
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system \
+  get configmap coredns -o json | jq -er '.data.Corefile' > Corefile.reviewed
 ```
+编辑 `Corefile.reviewed` 时，请保留此安装所需的 Kubernetes zone、转发、`ready`、health 和 monitoring 插件。以下是彼此独立的自定义示例，并非替代 Corefile：
 
-**CoreDNS 性能优化：**
+* 向现有 server block 添加静态记录；使用实际内部地址：
 
-1.  **配置 Auto-scaling**:
+```text
+hosts {
+    10.0.0.1 example.com
+    10.0.0.2 api.example.com
+    fallthrough
+}
+```
+* 条件转发器应使用独立的 server block；上游必须可访问，且不能回环到此 CoreDNS Service：
 
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: coredns-autoscaler
-      namespace: kube-system
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-    ```
-2.  **调整 Resource Requests 和 Limits**:
+```text
+example.org:53 {
+    errors
+    forward . 10.0.0.53
+    cache 30
+}
+```
+* 替换现有的 cache stanza，而不是添加重复项。`prefetch` 时长需要包含单位：
 
-    ```bash
-    kubectl patch deployment coredns -n kube-system --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {"requests": {"cpu": "100m", "memory": "70Mi"}, "limits": {"cpu": "200m", "memory": "170Mi"}}}]'
-    ```
+```text
+cache {
+    success 10000
+    denial 5000
+    prefetch 10 10m 10%
+}
+```
+* 可选的错误类别查询日志记录（请评估日志量和敏感名称）：
 
-**其他选项的问题：**
+```text
+log {
+    class error
+}
+```
+`autopath` 是一个用于服务器端搜索路径补全的独立插件，并非 `kubernetes` 指令。将 `autopath off` 放在 Kubernetes block 中是无效的。要禁用现有的 `autopath @kubernetes`，请移除该指令；对于从未启用它的安装，不要添加该指令。
 
-* **Modify CoreDNS settings in the AWS Management Console**: AWS Management Console 不提供直接修改 CoreDNS settings 的界面。
-* **Specify CoreDNS configuration during EKS cluster creation**: 不能在 EKS cluster 创建期间指定详细的 CoreDNS configuration。必须在 cluster 创建后修改 ConfigMap。
-* **Update CoreDNS add-on parameters using the AWS CLI**: 虽然你可以使用 AWS CLI 更新 CoreDNS add-on version，但不能修改详细 configuration。Configuration changes 必须通过 ConfigMap 完成。
+完成 schema 和语法审查后，更新**同一**附加组件版本：
 
 ```bash
-# Update CoreDNS add-on version (not configuration change)
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name coredns \
-  --addon-version v1.8.7-eksbuild.2 \
-  --resolve-conflicts PRESERVE
+# After reviewing the complete Corefile and existing configuration:
+jq --rawfile corefile Corefile.reviewed '.corefile = $corefile' \
+  coredns-values-before.json > coredns-values-reviewed.json
+COREDNS_UPDATE_ID=$(aws eks update-addon \
+  --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name coredns --addon-version "$COREDNS_VERSION" \
+  --resolve-conflicts PRESERVE \
+  --configuration-values file://coredns-values-reviewed.json \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name coredns --update-id "$COREDNS_UPDATE_ID" \
+  --query 'update.{status:status,errors:errors}'
 ```
+响应仍可能是 `InProgress`。请持续检查此 update ID，直到状态变为 `Successful`；如果失败，请停止并检查错误后再进行其他更改。然后验证 Deployment 就绪状态、日志、内部 Service 查询和自定义 DNS 场景。如有需要，请通过同一配置所有者恢复保存的配置。
 
-修改 CoreDNS ConfigMap 是在 EKS cluster 中自定义 DNS settings 的标准方法。这支持多种自定义，例如添加自定义 DNS records、为特定 domains 配置 forwarding，以及调整 caching behavior。
+对于自管理的 CoreDNS，请通过其 GitOps/清单所有者编辑经过审查的 ConfigMap。启用 `reload` 时，ConfigMap 投影和 reload 间隔之后会检测到 Corefile 更改；不一定需要重启。请监控重新加载错误和 DNS 行为。Deployment 设置的更改可能仍需要 rollout。
 
-</details>
-
-7\. 在 Amazon EKS cluster 中实现 multi-tenancy 的最有效方法是什么？ - A) 为每个 tenant 创建单独的 EKS clusters - B) 为每个 tenant 使用单独的 namespaces，并应用 RBAC、network policies 和 resource quotas - C) 为每个 tenant 创建单独的 node groups 并使用 node selectors - D) 为每个 tenant 使用单独的 VPCs
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：B) 为每个 tenant 使用单独的 namespaces，并应用 RBAC、network policies 和 resource quotas**
-
-**解释：** 在 Amazon EKS cluster 中实现 multi-tenancy 的最有效方法是为每个 tenant 使用单独的 namespaces，并应用 RBAC (Role-Based Access Control)、network policies 和 resource quotas。这种方法可以在单个 cluster 内高效隔离多个 tenants，同时允许资源共享。
-
-**实现基于 Namespace 的 Multi-Tenancy：**
-
-1.  **为每个 Tenant 创建 Namespaces**:
-
-    ```bash
-    # Create namespaces for each tenant
-    kubectl create namespace tenant-a
-    kubectl create namespace tenant-b
-    ```
-2.  **配置 RBAC**:
-
-    ```yaml
-    # Create tenant role
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      name: tenant-full-access
-      namespace: tenant-a
-    rules:
-    - apiGroups: ["", "apps", "batch"]
-      resources: ["*"]
-      verbs: ["*"]
-    ---
-    # Bind role to tenant users
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: tenant-a-access
-      namespace: tenant-a
-    subjects:
-    - kind: Group
-      name: tenant-a-users
-      apiGroup: rbac.authorization.k8s.io
-    roleRef:
-      kind: Role
-      name: tenant-full-access
-      apiGroup: rbac.authorization.k8s.io
-    ```
-3.  **应用 Network Policies**:
-
-    ```yaml
-    # Restrict communication between tenants
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    ```
-
-metadata: name: deny-cross-tenant-traffic namespace: tenant-a spec: podSelector: {} policyTypes: - Ingress - Egress ingress: - from: - namespaceSelector: matchLabels: name: tenant-a egress: - to: - namespaceSelector: matchLabels: name: tenant-a - to: - namespaceSelector: matchLabels: name: kube-system
-
-````
-
-4. **Resource Quota 配置**:
- ```yaml
- # Tenant Resource Quota
- apiVersion: v1
- kind: ResourceQuota
- metadata:
-   name: tenant-quota
-   namespace: tenant-a
- spec:
-   hard:
-     requests.cpu: "10"
-     requests.memory: 20Gi
-     limits.cpu: "20"
-     limits.memory: 40Gi
-     pods: "50"
-     services: "20"
-     persistentvolumeclaims: "30"
-     secrets: "100"
-     configmaps: "100"
-````
-
-5.  **LimitRange 配置**:
-
-    ```yaml
-    # Default resource limit settings
-    apiVersion: v1
-    kind: LimitRange
-    metadata:
-      name: tenant-limits
-      namespace: tenant-a
-    spec:
-      limits:
-      - default:
-          cpu: 500m
-          memory: 512Mi
-        defaultRequest:
-          cpu: 100m
-          memory: 256Mi
-        type: Container
-    ```
-
-**基于 Namespace 的 Multi-Tenancy 的优势：**
-
-1. **Resource Efficiency**:
-   * 多个 tenants 共享单个 cluster 时，资源利用率会提高。
-   * Control plane 成本会降低。
-2. **Ease of Management**:
-   * 管理单个 cluster 可减少运营开销。
-   * 可以进行集中式 monitoring 和 logging。
-3. **Flexibility**:
-   * 添加和移除 tenants 很直接。
-   * 可以轻松应用 tenant-specific policies。
-4. **Cost Efficiency**:
-   * Cluster 开销在多个 tenants 之间共享。
-   * 提高资源利用率会带来成本节省。
-
-**基于 Namespace 的 Multi-Tenancy 的缺点：**
-
-1. **有限的隔离级别**:
-   * Namespaces 只提供逻辑隔离，而不是完整的物理隔离。
-   * 可能暴露于 kernel-level vulnerabilities。
-2. **Resource Contention**:
-   * Tenants 之间可能出现 resource contention。
-   * 可能出现 Noisy Neighbor 问题。
-3. **Security Risks**:
-   * 存在 cluster-level privilege escalation 风险。
-   * 可能暴露于 container escape vulnerabilities。
-
-**其他 Multi-Tenancy 方法：**
-
-1. **Cluster-Based Multi-Tenancy (每个 Tenant 一个单独 EKS Cluster)**:
-   * 提供最强隔离
-   * 增加管理开销
-   * 增加成本
-   * 适合大型企业环境或高度监管行业
-2. **Node-Based Multi-Tenancy (每个 Tenant 一个单独 Node Group)**:
-   * 提供中等级别隔离
-   * 可按 tenant 进行 node-level customization
-   * 降低资源利用率
-   * 适合安全要求较高但也需要考虑成本的场景
-3. **Hybrid Approach**:
-   * 为关键 tenants 提供 dedicated clusters
-   * 在共享 cluster 中按 namespace 分隔不太关键的 tenants
-   * 平衡灵活性和成本效率
-
-**其他选项的问题：**
-
-* **Creating a Separate EKS Cluster per Tenant**: 提供最强隔离，但会显著增加管理开销和成本。当 tenants 很多时，可能出现可扩展性问题。
-* **Creating Separate Node Groups per Tenant and Using Node Selectors**: 提供 node-level isolation，但资源利用率会下降，管理也可能变得复杂。此外，仅靠 node groups 并不能提供完整隔离。
-* **Using Separate VPCs per Tenant**: 由于 EKS clusters 在单个 VPC 内创建，为每个 tenant 使用单独 VPCs 需要为每个 tenant 创建单独 clusters。这会显著增加管理开销和成本。
-
-对于大多数用例，基于 namespace 的 multi-tenancy 在隔离、易管理性和成本效率之间提供最佳平衡。然而，当安全要求非常高时，应考虑基于 cluster 的 multi-tenancy。
-
-</details>
-
-8. 在 Amazon EKS cluster 中为 node group 选择 instance type 时，以下哪项不是需要考虑的因素？
-   * A) Workload 的 CPU 和 memory 要求
-   * B) Cost optimization
-   * C) Cluster 的 Kubernetes version
-   * D) Required pod density
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：C) Cluster 的 Kubernetes version**
-
-**解释：** 在 Amazon EKS cluster 中为 node group 选择 instance type 时，不需要考虑的因素是“cluster 的 Kubernetes version”。虽然 Kubernetes version 会影响受支持功能，但它不会直接影响 node group 的 instance type 选择。Instance type 主要由 workload 要求、成本、pod density 和其他因素决定。
-
-**选择 Node Group Instance Types 时需要考虑的实际因素：**
-
-1. **Workload 的 CPU 和 Memory 要求**:
-   * 选择符合 workload 资源要求的 instance types
-   * CPU-intensive workloads：compute-optimized instances，例如 c5、c6g
-   * Memory-intensive workloads：memory-optimized instances，例如 r5、r6g
-   * Balanced workloads：general-purpose instances，例如 m5、m6g
-   * GPU workloads：accelerated computing instances，例如 p3、g4dn
-2. **Cost Optimization**:
-   * On-Demand vs Spot instances
-   * Reserved Instances 或 Savings Plans
-   * 通过基于 ARM 的 Graviton instances 节省成本（例如 m6g、c6g）
-   * 选择大小合适的 instances（避免过度配置）
-3. **Required Pod Density**:
-   * 最大支持 pods 数量因 instance type 而异
-   * 考虑每种 instance type 的 ENI 数量和每个 ENI 的 IP 地址数量
-   * 对于高密度 workloads，选择支持更多 ENIs 和 IP 地址的 instance types
-4. **Networking Requirements**:
-   * Network bandwidth 要求
-   * Enhanced networking 支持（ENA、EFA 等）
-   * Network performance 因 instance type 而异
-5. **Storage Requirements**:
-   * 是否需要 local instance storage（例如 i3、d3 instances）
-   * EBS optimization 支持
-   * Storage throughput 和 IOPS 要求
-6. **Availability Requirements**:
-   * Instance types 的 regional availability
-   * 使用 Spot instances 时的中断可能性
-   * Availability Zone 中的 instance type availability
-
-**Instance Type 选择示例：**
-
-1.  **Web Application Servers**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: web-servers
-        instanceType: m5.large
-        minSize: 2
-        maxSize: 10
-        labels:
-          role: web
-    ```
-2.  **Database Workloads**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: database-nodes
-        instanceType: r5.xlarge
-        minSize: 3
-        maxSize: 5
-        labels:
-          role: database
-    ```
-3.  **Batch Processing Workloads**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: batch-processors
-        instanceType: c5.2xlarge
-        minSize: 0
-        maxSize: 20
-        labels:
-          role: batch
-    ```
-4.  **Cost-Optimized Workloads**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: spot-workers
-        instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
-        minSize: 2
-        maxSize: 10
-        spot: true
-        labels:
-          lifecycle: spot
-    ```
-
-**Kubernetes Version 与 Instance Types 的关系：**
-
-Kubernetes version 会以下列方式影响 cluster，但不会直接影响 instance type 选择：
-
-1. **Supported Features**:
-   * 新 Kubernetes versions 提供新功能。
-   * 某些功能只在特定 versions 中可用。
-2. **API Compatibility**:
-   * 某些 APIs 可能会在新 versions 中更改或移除。
-   * 如果你的应用依赖特定 APIs，version 选择很重要。
-3. **Security Patches**:
-   * 最新 versions 包含最新 security patches。
-   * 旧 versions 可能暴露于 security vulnerabilities。
-4. **Support Period**:
-   * 每个 Kubernetes version 只在有限期间内受支持。
-   * EKS 对每个 version 的支持约为 14 个月。
-
-Instance type 选择主要由 workload resource requirements、cost optimization、pod density 和其他因素决定，与 Kubernetes version 没有直接关系。因此，“cluster 的 Kubernetes version”不是选择 node group instance type 时需要考虑的主要因素。
-
-</details>
-
-9\. 在 Amazon EKS cluster 中进行 node group updates 时，最大限度减少 pod disruption 的最有效方法是什么？ - A) 使用 rolling update strategy - B) 配置 PodDisruptionBudget - C) 在 node group update 前手动迁移所有 pods - D) 使用 blue/green deployment strategy
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：B) 配置 PodDisruptionBudget**
-
-**解释：** 在 Amazon EKS cluster 中进行 node group updates 时，最大限度减少 pod disruption 的最有效方法是配置 PodDisruptionBudget (PDB)。PDB 限制在 voluntary disruptions 期间可同时中断的 pods 数量，以确保 application availability。由于 node group updates 被视为 voluntary disruptions，你可以通过 PDB 在 updates 期间维持 application availability。
-
-**PodDisruptionBudget 的工作方式：**
-
-1. **PDB Definition**:
-   * `minAvailable`: 指定必须始终可用的 pods 最小数量或百分比
-   * `maxUnavailable`: 指定可同时不可用的 pods 最大数量或百分比
-   * 这两个选项只能指定一个
-2. **PDB Application**:
-   * Kubernetes 在 node draining 期间遵守 PDB
-   * 如果违反 PDB，draining 过程会暂停
-   * 当新的 pods 在其他 nodes 上开始运行时，draining 继续
-
-**PodDisruptionBudget 示例：**
+**扩缩和资源：**如果所选版本满足 AWS 前提条件，EKS 托管 CoreDNS 支持 `autoScaling` 配置对象。只能保留一个负责管理副本数的控制器。以下 CPU HPA 是**自管理 CoreDNS 的替代方案**，需要 Metrics Server 和 CPU requests；不要与 EKS CoreDNS autoscaling 同时运行：
 
 ```yaml
-# Ensure at least 2 pods are always available
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: coredns-autoscaler
+  namespace: kube-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coredns
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+```
+2–10 个副本和 60% 目标只是示例，并非测量得出的容量规划值。请检查内存、CPU 限流、缓存增长、拓扑和 DNS 延迟；应通过附加组件 schema 或自管理工作负载所有者更改资源，而不是按容器数组索引替换整个 resources 对象。
+
+</details>
+
+7. 对于共享一个 EKS 集群的可信团队，哪种组合有助于实现逻辑隔离？
+   * A) 仅使用 Namespaces
+   * B) Namespaces、RBAC、强制执行的策略和配额
+   * C) 仅使用节点选择器
+   * D) 共享 cluster-admin 角色
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B) Namespaces、RBAC、强制执行的策略和配额**
+
+对于共享集群的互信团队，Namespaces 加上 RBAC、强制执行的网络策略和配额可以提供有效的逻辑隔离。但它们并非适用于恶意租户的通用解决方案。
+
+平台管理员创建新的 `tenant-a`/`tenant-b` namespaces，并强制执行适当的 Pod Security Admission 策略（对于此 Linux EKS 1.36 示例，使用版本为 `v1.36` 的 Restricted 策略）。以下是 `tenant-a` 的策略集；请为 `tenant-b` 应用经过审查的等效策略。还需要为 `tenant-a-users` 配置经过身份验证的组映射。
+
+应用程序权限是显式设置的。租户不能通过此 Role 直接更改 ResourceQuota、LimitRange、NetworkPolicy、Roles 或 RoleBindings。集群范围资源由平台负责管理。
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-workloads
+  namespace: tenant-a
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "deployments/scale", "statefulsets/scale"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["services", "configmaps", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "events"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-a-access
+  namespace: tenant-a
+subjects:
+- kind: Group
+  name: tenant-a-users
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: tenant-workloads
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-boundary
+  namespace: tenant-a
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  namespace: tenant-a
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "50"
+    services: "20"
+    persistentvolumeclaims: "30"
+    secrets: "100"
+    configmaps: "100"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant-limits
+  namespace: tenant-a
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 256Mi
+    type: Container
+```
+**限制和验证：**
+
+* 创建工作负载仍可能使用可访问的 service accounts，并挂载该 namespace 中的 Secrets。此 Role 并不是租户内部的 Secret 机密性边界。请通过准入策略强制限制允许的身份、挂载和安全设置；平台凭证应保留在租户 namespace 之外。
+* DNS 规则假设 `kube-system` 中的常规 CoreDNS Pod 使用 `k8s-app=kube-dns` 标签。若使用 NodeLocal DNSCache 或其他 DNS 路径，请相应调整并测试。此规则允许 DNS 查询，而不是允许访问所有系统 Pod；它不会隐藏跨 namespace 的 DNS 名称。
+* 配额会限制获准资源的请求量/数量；它们不会预留物理节点、保证带宽或消除 noisy neighbor。LimitRange 值是示例默认值。
+* 在启用租户之前，请使用租户身份验证有效权限和策略执行情况，包括允许的连接、被拒绝的跨租户连接以及触发配额拒绝的场景。
+* 专用节点组可以减少某些共享，但节点选择器/污点本身不是安全边界。若要实现更强隔离，请评估沙箱运行时、虚拟控制平面或独立集群/账户/网络，同时考虑其共享依赖和运维成本。
+
+共享 namespace 可以降低控制平面开销，并简化集中运维。设计取决于所需的隔离级别，而不存在普遍“最优”的方案。
+
+</details>
+
+8. 哪一项本身不会改变 EC2 实例类型的技术容量？
+   * A) vCPU 和内存大小
+   * B) 网络和存储限制
+   * C) 仅用于显示的名称标签
+   * D) ENI 和地址限制
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C) 仅用于显示的名称标签**
+
+选择实例时，必须考虑 CPU、内存、加速器需求、架构兼容的镜像/AMI 和驱动程序、Pod 密度、网络带宽、EBS/实例存储性能、AZ 可用性、中断容忍度和成本。Kubernetes 版本可能会通过受支持的 AMI、驱动程序和功能产生影响；不能忽略它。
+
+以下原始系列示例用于说明工作负载类型，而非当前价格/性能排名。`m5` 是通用型，`r5` 是内存优化型，`c5` 是计算优化型。Graviton 替代方案要求镜像和依赖项兼容 Arm 架构。GPU 工作负载还需要适当的加速 AMI 和 device plugin。实例存储中的数据是临时数据；仅靠标签无法保证数据库持久性或放置位置。
+
+以下是针对现有且经过审查的集群的**可选节点组配置文件**（`eksctl create nodegroup -f ...`），使用未占用的组名称和具有所需出口/端点的私有子网。请检查实际 Region/AZ 是否提供相应实例。容量上下限不会安装 Cluster Autoscaler；批处理组的容量设为零时，需要正确配置 autoscaler 或手动扩缩。
+
+**Web 服务器**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: web-servers
+  instanceType: m5.large
+  minSize: 2
+  maxSize: 10
+  labels:
+    role: web
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**数据库工作负载**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: database-nodes
+  instanceType: r5.xlarge
+  minSize: 3
+  maxSize: 5
+  labels:
+    role: database
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**批处理**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: batch-processors
+  instanceType: c5.2xlarge
+  minSize: 0
+  maxSize: 20
+  labels:
+    role: batch
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**可中断的 Spot worker**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: spot-workers
+  instanceTypes:
+  - m5.large
+  - m5a.large
+  - m5d.large
+  - m5ad.large
+  minSize: 2
+  maxSize: 10
+  spot: true
+  labels:
+    lifecycle: spot
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+EKS 提供 14 个月的标准版本支持，随后提供 12 个月的扩展支持。请与上游 Kubernetes 发行版本分开检查 EKS 支持日历、升级要求和附加组件兼容性。这些示例不代表经过测量的成本节省或容量。
+
+</details>
+
+9. 哪个 Kubernetes 对象会在 drain 期间限制自愿驱逐 Pod？
+   * A) StorageClass
+   * B) PodDisruptionBudget
+   * C) ConfigMap
+   * D) IngressClass
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B) PodDisruptionBudget**
+
+PDB 会通过 Eviction API 限制自愿驱逐。它只是更新策略的一部分，并不保证可用性。PDB 无法阻止节点故障、直接删除 Pod 或 Deployment 自身的滚动更新。
+
+对于一个经过审查、包含三个副本且标签为 `app=my-app` 的 `update-lab` Deployment，此示例仅允许在至少保留两个符合条件的健康 Pod 时执行驱逐：
+
+```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: app-pdb
-  namespace: default
+  namespace: update-lab
 spec:
   minAvailable: 2
   selector:
     matchLabels:
       app: my-app
 ```
+另一种写法是 `maxUnavailable: "50%"`；两个预算字段只能指定一个。百分比会**向上取整**，因此这允许 3 个 Pod 中有 2 个不可用，或 1 个 Pod 中有 1 个不可用。这并不保证至少一半的 Pod 保持运行。应根据仲裁要求、就绪状态、工作负载行为和可调度的备用容量来选择预算。
 
-```yaml
-# Limit only up to 50% of pods to be unavailable simultaneously
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: app-pdb
-  namespace: default
-spec:
-  maxUnavailable: 50%
-  selector:
-    matchLabels:
-      app: my-app
-```
+托管节点组采用 `DEFAULT` 更新时，会在对选定旧节点进行 drain 前先启动替代容量。`MINIMAL` 则先终止选定旧节点，以减少临时容量需求。`maxUnavailable` 控制同时不可用的节点数；PDB 会单独限制 Pod 驱逐。不要将 `--force` 作为 drain 被阻止时的常规应对方式，因为它可能绕过 Pod 驱逐保护。
 
-**EKS Node Group Update 流程：**
-
-1. **Update Start**:
-   * 创建新 nodes
-   * 新 nodes 加入 cluster
-2. **Node Draining**:
-   * 对现有 nodes 应用 cordoning（防止新的 pod scheduling）
-   * 从现有 nodes drain pods（迁移 pods）
-   * 在遵守 PDB 的同时迁移 pods
-3. **Node Termination**:
-   * 所有 pods 迁移后终止 nodes
-   * 对下一个 node 重复该过程
-
-**PDB 配置最佳实践：**
-
-1. **设置适当的 Replica Count**:
-   * 需要足够 replicas 才能让 PDB 有效工作
-   * 建议至少 3 个 replicas
-2. **选择适当的 PDB 值**:
-   * 选择适合 application characteristics 的值
-   * 过于严格的值可能延迟 updates
-   * 过于宽松的值可能影响 availability
-3. **将 PDB 应用于所有关键 Workloads**:
-   * Stateful applications
-   * User-facing services
-   * System components
-4. **测试 PDB**:
-   * 在 updates 前测试 PDB 行为
-   * 通过 draining simulation 验证 availability
-
-**Node Group Update 配置：**
+配置节点更新策略，并在启动版本更新**之前**等待此特定更新成功：
 
 ```bash
-# Modify managed node group update configuration
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --update-config '{"maxUnavailable": 1}'
-
-# Or using eksctl
-eksctl update nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --max-unavailable 1
+set -euo pipefail
+NODEGROUP_UPDATE_ID=$(aws eks update-nodegroup-config \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --update-config '{"maxUnavailable":1,"updateStrategy":"DEFAULT"}' \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$NODEGROUP_UPDATE_ID" \
+  --query 'update.{status:status,errors:errors}'
 ```
-
-**其他选项的问题：**
-
-* **Using a Rolling Update Strategy**: EKS managed node groups 默认已经使用 rolling update strategy。然而，仅靠 rolling updates 不能控制 pod disruption，必须与 PDB 一起使用才有效。
-* **Manually Migrating All Pods Before Node Group Update**: 这是耗时且容易出错的手动过程。对于大型 clusters 也不实际。
-* **Using a Blue/Green Deployment Strategy**: Blue/green deployment 涉及创建新 node group、迁移 workloads，然后删除现有 node group。这是有效策略，但存在因资源重复导致成本增加和实现复杂的缺点。它也最好与 PDB 一起使用。
-
-PodDisruptionBudget 是 Kubernetes-native 的方式，用于在 node group updates 期间控制 pod disruption，使你可以在确保 application availability 的同时安全更新 node groups。因此，最大限度减少 node group updates 期间 pod disruption 的最有效方法是配置 PodDisruptionBudget。
+持续轮询此 ID 的 `describe-update`，直到状态为 `Successful`，并明确处理 `Failed`/`Cancelled`。原先的 eksctl `update nodegroup --max-unavailable` 命令不能作为受支持的替代方案。检查实际 PDB `disruptionsAllowed`、就绪状态、应用健康状况和卷迁移；三个副本只是示例，并非通用最低要求。
 
 </details>
 
-10. 以下哪项不用于控制 Amazon EKS cluster 中 node groups 的 Auto Scaling 行为？
-    * A) Cluster Autoscaler
-    * B) Karpenter
-    * C) Horizontal Pod Autoscaler
-    * D) Vertical Pod Autoscaler
+10. 哪个控制器会建议或更改 Pod 的 CPU 和内存 requests？
+   * A) Cluster Autoscaler
+   * B) Karpenter
+   * C) Horizontal Pod Autoscaler
+   * D) Vertical Pod Autoscaler
 
 <details>
-
 <summary>显示答案</summary>
 
 **答案：D) Vertical Pod Autoscaler**
 
-**解释：** 不用于控制 Amazon EKS cluster 中 node groups 的 Auto Scaling 行为的是 Vertical Pod Autoscaler (VPA)。VPA 用于自动调整 pods 的 CPU 和 memory requests，但不用于调整 node groups 的大小。Node group Auto Scaling 主要由 Cluster Autoscaler、Karpenter 以及间接由 Horizontal Pod Autoscaler (HPA) 控制。
+VPA 会建议或更新 Pod 资源 requests。HPA 会更改副本数。**两者**都可能间接改变节点需求；两者都不会直接管理托管节点组的 ASG。
 
-**Node Group Auto Scaling 工具：**
+| 组件 | 管理对象 |
+| --- | --- |
+| Cluster Autoscaler | 根据可调度性和安全移除条件，调整已发现现有节点组/ASG 的期望容量 |
+| Karpenter | 通过 NodePools 和 EC2NodeClasses 选择并管理自己的 NodeClaims/EC2 容量；不管理托管节点组 ASG |
+| HPA / KEDA | 根据资源/自定义/外部指标或事件调整工作负载副本数 |
+| VPA | 根据更新模式提供 Pod 资源建议/requests |
 
-1.  **Cluster Autoscaler**:
+**Cluster Autoscaler：**使用与集群相同的 Kubernetes 次要版本。对于 EKS 1.36 示例，chart 9.59.0 必须显式使用镜像 `v1.36.1`（其默认镜像为 1.35.0）。首先为 `cluster-autoscaler` ServiceAccount 配置专用身份，并配置经过审查、限定标签范围的 IAM 权限和 ASG 发现标签。安装前请渲染并检查 RBAC、镜像和参数：
 
-    * 一个 Kubernetes component，会自动调整 node groups 的大小
-    * 当 pods 无法调度时添加 nodes
-    * 当 nodes 利用率不足时移除 nodes
-    * 与 AWS Auto Scaling Groups 集成
+```bash
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update autoscaler
+helm template cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.59.0 --namespace kube-system \
+  --set-string autoDiscovery.clusterName="${EXAMPLE_CLUSTER:?}" \
+  --set-string awsRegion="${EXAMPLE_REGION:?}" \
+  --set-string image.tag=v1.36.1 \
+  --set rbac.serviceAccount.create=false \
+  --set-string rbac.serviceAccount.name=cluster-autoscaler \
+  > cluster-autoscaler-reviewed.yaml
+```
+不要轻率地禁用本地存储保护措施，也不要让 ASG 的 target-tracking/predictive 策略与 Cluster Autoscaler 同时控制同一预期容量。
 
-    ```yaml
-    # Cluster Autoscaler Deployment
+**Karpenter 替代方案：**单独安装并授权兼容的控制器。将 AMI ID、节点角色和发现标签值替换为该集群中经过审查的资源；AMI 必须兼容 AL2023、Kubernetes 版本和架构。请固定 AMI ID 或经过测试的版本化别名，而不要静默选择 `al2023@latest`。以下限制和整合时间仅为示例，并非实测容量规划或预置速度保证。
+
+```yaml
+# Karpenter NodePool (karpenter.sh/v1)
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default-class
+  limits:
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+# Karpenter EC2NodeClass (karpenter.k8s.aws/v1)
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default-class
+spec:
+  amiFamily: AL2023
+  amiSelectorTerms:
+    - id: ami-REPLACE_WITH_VERIFIED_AL2023_AMI
+  role: KarpenterNodeRole-my-cluster
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+```
+**HPA：**此示例需要在 `autoscaling-lab` 中已有 `my-app` Deployment、Metrics Server 和 CPU requests：
+
+```yaml
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+  namespace: autoscaling-lab
+spec:
+  scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    metadata:
-      name: cluster-autoscaler
-      namespace: kube-system
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: cluster-autoscaler
-      template:
-        metadata:
-          labels:
-            app: cluster-autoscaler
-        spec:
-          serviceAccountName: cluster-autoscaler
-          containers:
-          - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-            name: cluster-autoscaler
-            command:
-            - ./cluster-autoscaler
-            - --v=4
-            - --stderrthreshold=info
-            - --cloud-provider=aws
-            - --skip-nodes-with-local-storage=false
-            - --expander=least-waste
-            - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-    ```
-2.  **Karpenter**:
-
-    * AWS 的 open-source node provisioning project
-    * 为 workload requirements 选择最佳 instance types
-    * 快速 node provisioning（以秒计）
-    * Cost optimization 和统一 lifecycle management
-
-    ```yaml
-    # Karpenter Provisioner
-    apiVersion: karpenter.sh/v1alpha5
-    kind: NodePool
-    metadata:
-      name: default
-    spec:
-      template:
-        spec:
-          requirements:
-            - key: karpenter.sh/capacity-type
-              operator: In
-              values: ["spot", "on-demand"]
-          nodeClassRef:
-            name: default-class
-      limits:
-        cpu: 1000
-          memory: 1000Gi
-      provider:
-        subnetSelector:
-          karpenter.sh/discovery: "true"
-        securityGroupSelector:
-          karpenter.sh/discovery: "true"
-      ttlSecondsAfterEmpty: 30
-    ```
-3.  **Horizontal Pod Autoscaler (HPA)**:
-
-    * 自动调整 pod replicas 的数量
-    * 基于 CPU、memory 或 custom metrics
-    * 可以间接触发 node group Auto Scaling
-    * 与 Cluster Autoscaler 或 Karpenter 协同工作
-
-    ```yaml
-    # Horizontal Pod Autoscaler
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: my-app-hpa
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: my-app
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 70
-    ```
-
-**Vertical Pod Autoscaler (VPA)：**
-
-VPA 用于自动调整 pods 的 CPU 和 memory requests，但不会直接调整 node groups 的大小：
+    name: my-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+```
+**VPA：**首先安装 VPA CRD/控制器。先使用仅提供建议的模式，并在选择明确受支持的更新模式前检查建议：
 
 ```yaml
 # Vertical Pod Autoscaler
@@ -1452,13 +896,14 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: my-app-vpa
+  namespace: autoscaling-lab
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
     name: my-app
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Off"
   resourcePolicy:
     containerPolicies:
     - containerName: '*'
@@ -1470,1403 +915,979 @@ spec:
         memory: 500Mi
       controlledResources: ["cpu", "memory"]
 ```
-
-VPA 提供以下功能：
-
-* 自动调整 pod resource requests
-* 基于 resource usage 的建议
-* 通过 pod restarts 更新 resource requests
-
-然而，VPA 不会直接调整 node groups 的大小，只影响 pod level 的资源分配。
-
-**Node Group Auto Scaling 策略：**
-
-1. **Reactive Scaling**:
-   * 使用 Cluster Autoscaler
-   * 当 pods 无法调度时添加 nodes
-   * 当 resource utilization 低时移除 nodes
-   * 适合可预测 workloads
-2. **Predictive Scaling**:
-   * 使用 AWS Auto Scaling predictive scaling
-   * 根据历史模式预测未来需求
-   * 在需求增加前确保容量
-   * 适合具有周期性模式的 workloads
-3. **Event-driven Scaling**:
-   * 使用 KEDA (Kubernetes Event-driven Autoscaling)
-   * 基于 external events 或 metrics 进行 scaling
-   * 基于 queue length、event count 等进行 scaling
-   * 适合 batch processing、event processing workloads
-
-**其他选项说明：**
-
-* **Cluster Autoscaler**: 一个 Kubernetes component，直接控制 node group Auto Scaling，根据 pod scheduling requirements 添加或移除 nodes。
-* **Karpenter**: AWS open-source node provisioning project，可快速 provision 满足 workload requirements 的最佳 instances。它可以作为 Cluster Autoscaler 的替代方案使用。
-* **Horizontal Pod Autoscaler**: 自动调整 pod replicas 的数量，当创建更多 pods 时，可间接触发 Cluster Autoscaler 或 Karpenter 调整 node group size。
-
-Vertical Pod Autoscaler 用于调整 pod resource requests，但不直接调整 node group size。因此，Vertical Pod Autoscaler 是不用于控制 node group Auto Scaling 行为的选项。
+`Off` 不会更改 Pod 资源。应用建议可能需要重新创建 Pod，或需要受支持的原地调整，具体取决于 VPA/Kubernetes 版本和配置；不要承诺每种模式都会重启。CPU 利用率 HPA 管理同一工作负载时更新 CPU requests，会通过利用率分母产生反馈。仅提供建议的示例在审查并协调设计之前避免了此冲突。
 
 </details>
 
 ## 实践练习
 
-### 练习 1：在 EKS Cluster 中实现 Network Policies
+### 练习 1：在 EKS 集群中实施网络策略
 
-**场景：** 你是公司的一名 security engineer，需要在 EKS cluster 中限制 microservices 之间的 network traffic。具体来说，只有 frontend service 应该能够访问 backend API，而 database 应该只能由 backend API 访问。
+**场景：**允许 frontend → backend 和 backend → database，同时拒绝 frontend → database。使用 AWS VPC CNI 分配 IP，以保留原本的 Calico 学习目标。
 
-**要求：**
+**范围：**现有的、可丢弃的 Linux IPv4 EKS 集群；没有冲突的全局/层级策略；使用标准 CoreDNS；并且由管理员审查 Calico 安装。这是连通性练习，不是生产微服务/数据库方案。本次审计未执行云端安装和流量测试。
 
-1. 安装 Calico network policy engine
-2. 实现 default deny policy
-3. 允许从 frontend 到 backend 的流量
-4. 允许从 backend 到 database 的流量
-5. 测试 policies
-
-**解决方案：**
 
 <details>
-
 <summary>显示解决方案</summary>
 
-**1. 安装 Calico Network Policy Engine**
+**1. 准备策略引擎。**按照官方 Calico EKS **Amazon VPC networking** 路径操作。通过其配置所有者禁用原生 AWS VPC CNI NetworkPolicy；它与 Calico 执行功能冲突。保留 `aws-node` 网络配置。启用其 `ANNOTATE_POD_IP=true` 设置，并授予其 ServiceAccount patch Pod 的权限。以下专用 RBAC 示例添加了该权限，不会将格式错误的 YAML 追加到附加组件的 ClusterRole 中：
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: calico-vpc-cni-pod-annotation
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: calico-vpc-cni-pod-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-vpc-cni-pod-annotation
+subjects:
+- kind: ServiceAccount
+  name: aws-node
+  namespace: kube-system
+```
+保存并检查 RBAC，然后仅将它应用于预期的 `aws-node` ServiceAccount；通过托管附加组件或自管理清单所有者配置环境变量。在 rollout 和注释行为正常之前不要继续。如果已安装 Calico，请检查并复用现有安装，而不要运行以下新安装命令。
 
 ```bash
-# Install Tigera Operator
-kubectl create namespace tigera-operator
-helm repo add projectcalico https://docs.projectcalico.org/charts
-helm install calico projectcalico/tigera-operator --namespace tigera-operator
+# Download pinned manifests for inspection; do not overwrite an existing installation.
+curl --fail --location --output calico-crds.yaml \
+  https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml
+curl --fail --location --output tigera-operator.yaml \
+  https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+# After review, on the intended new lab installation:
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" create -f calico-crds.yaml
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create -f tigera-operator.yaml
+```
+operator CRD 建立后，创建以下经过审查的 `Installation` 和 `APIServer` 资源。仅安装 operator 不会配置 AWS VPC 网络。`projectcalico.org/v3` 策略示例需要 API server：
 
-# Verify installation
-kubectl get pods -n calico-system
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  kubernetesProvider: EKS
+  cni:
+    type: AmazonVPC
+  calicoNetwork:
+    bgp: Disabled
+---
+apiVersion: operator.tigera.io/v1
+kind: APIServer
+metadata:
+  name: default
+spec: {}
 ```
 
-**2. 创建 Namespace 和示例 Applications**
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get tigerastatus
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get apiservice v3.projectcalico.org
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n calico-system get pods
+```
+要求 Calico 组件和聚合 API 均可用，然后在下方验证实际执行情况。节点 `Ready` 状态本身并不足够。此练习不需要可选的 Goldmane/Whisker UI。
+
+**2. 创建自有 namespace 和临时数据库凭证。**后续代码片段请在同一个 Bash 会话中运行。namespace 名称和 UID 都会被记录，以确保清理时不会有意针对其他 namespace：
 
 ```bash
-# Create namespace
-kubectl create namespace microservices
+set -euo pipefail
+umask 077
+: "${EXAMPLE_KUBECONFIG:?Use the reviewed lab cluster kubeconfig}"
+NETWORK_LAB_DIR=$(mktemp -d /tmp/eks-calico-lab.XXXXXX)
+NETWORK_NAMESPACE="calico-quiz-$(date +%s)-$$"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create namespace "$NETWORK_NAMESPACE"
+NETWORK_NAMESPACE_UID=$(kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" \
+  get namespace "$NETWORK_NAMESPACE" -o jsonpath='{.metadata.uid}')
+: "${NETWORK_NAMESPACE_UID:?}"
+jq -n --arg name "$NETWORK_NAMESPACE" --arg uid "$NETWORK_NAMESPACE_UID" \
+  '{namespace:$name,namespaceUID:$uid}' > "$NETWORK_LAB_DIR/ownership.json"
+openssl rand -hex 32 > "$NETWORK_LAB_DIR/db-password"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+  create secret generic database-auth \
+  --from-file=password="$NETWORK_LAB_DIR/db-password"
+```
+**3. 部署三个层级。**Python HTTP server 充当 frontend/backend，使两个容器都能使用诊断 TCP 客户端。PostgreSQL 17 镜像使用 `POSTGRES_PASSWORD_FILE` 和 namespace 本地 Secret；它不会执行外部数据库操作。数据库的 `emptyDir` 会在 Pod 替换时**丢失**。不要在这里放置有价值的数据。保留数据库镜像的初始化行为；这不是符合 Restricted 配置文件的生产数据库清单。主要版本镜像标签可变：如需可重复运行，请记录解析后的摘要。
 
-# Deploy frontend
-cat > frontend.yaml << EOF
+```bash
+# The HTTP layers are diagnostic stand-ins, not business applications.
+for tier in frontend backend; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
-  namespace: microservices
-  labels:
-    app: frontend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: frontend
-  template:
-    metadata:
-      labels:
-        app: frontend
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-  namespace: microservices
-spec:
-  selector:
-    app: frontend
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
-
-kubectl apply -f frontend.yaml
-
-# Deploy backend
-cat > backend.yaml << EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-  namespace: microservices
-  labels:
-    app: backend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-      - name: httpd
-        image: httpd:alpine
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend
-  namespace: microservices
-spec:
-  selector:
-    app: backend
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
-
-kubectl apply -f backend.yaml
-
-# Deploy database
-cat > database.yaml << EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: database
-  namespace: microservices
-  labels:
-    app: database
+  name: $tier
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: database
+    matchLabels: {app: $tier}
   template:
     metadata:
-      labels:
-        app: database
+      labels: {app: $tier}
     spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
       containers:
-      - name: postgres
-        image: postgres:13-alpine
+      - name: diagnostic
+        image: python:3.13-alpine
+        command: [python, -m, http.server, "8080", --directory, /tmp]
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          tcpSocket: {port: 8080}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 200m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: $tier
+spec:
+  selector: {app: $tier}
+  ports:
+  - {port: 8080, targetPort: 8080, protocol: TCP}
+EOF
+done
+
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: database}
+  template:
+    metadata:
+      labels: {app: database}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      containers:
+      - name: database
+        image: postgres:17-alpine
         env:
-        - name: POSTGRES_PASSWORD
-          value: "password"
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/secrets/postgres/password
         ports:
         - containerPort: 5432
+        readinessProbe:
+          exec:
+            command: [pg_isready, -U, postgres]
+          initialDelaySeconds: 5
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 256Mi}
+        volumeMounts:
+        - {name: data, mountPath: /var/lib/postgresql/data}
+        - {name: auth, mountPath: /run/secrets/postgres, readOnly: true}
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: auth
+        secret: {secretName: database-auth}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: database
-  namespace: microservices
 spec:
-  selector:
-    app: database
+  selector: {app: database}
   ports:
-  - port: 5432
-    targetPort: 5432
+  - {port: 5432, targetPort: 5432, protocol: TCP}
 EOF
 
-kubectl apply -f database.yaml
-
-# Verify deployment
-kubectl get pods -n microservices
-kubectl get services -n microservices
+for tier in frontend backend database; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+    rollout status "deployment/$tier" --timeout=180s
+done
 ```
-
-**3. 实现 Default Deny Policy**
+**4. 建立基线。**应用策略前，三个 TCP 路径和 DNS 都必须正常。5432 端口连接成功只证明 TCP 连接可用，并不能证明 SQL 身份验证或应用行为正常。
 
 ```bash
-# Create default deny policy
-cat > default-deny.yaml << EOF
+# Distinguish DNS failure from TCP denial. Status 42 means a TCP failure.
+check_tcp() {
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+    exec "deployment/$1" -c diagnostic -- python -c '
+import socket, sys
+host, port = sys.argv[1], int(sys.argv[2])
+try:
+    address = socket.gethostbyname(host)
+except OSError as error:
+    print("DNS failure:", error, file=sys.stderr)
+    sys.exit(43)
+try:
+    connection = socket.create_connection((address, port), timeout=3)
+    connection.close()
+except OSError as error:
+    print("TCP connection failed:", error, file=sys.stderr)
+    sys.exit(42)
+print("TCP connection succeeded")
+' "$2" "$3"
+}
+
+# Baseline: all three must succeed BEFORE the policy is applied.
+check_tcp frontend backend 8080
+check_tcp backend database 5432
+check_tcp frontend database 5432
+```
+**5. 应用并测试策略。**所选 Pod 会在两个方向上被隔离；未匹配的流量会被拒绝。显式规则允许两个应用流量路径以及 UDP/TCP DNS。要访问实验 namespace 之外的 CoreDNS，需要 namespace 选择器。测试前，请根据 NodeLocal DNSCache 或不同标签调整 DNS 规则。
+
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<'EOF'
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
-  name: default-deny
-  namespace: microservices
+  name: tier-boundaries
 spec:
   selector: all()
-  types:
-  - Ingress
-  - Egress
-EOF
-
-kubectl apply -f default-deny.yaml
-```
-
-**4. 允许从 Frontend 到 Backend 的流量**
-
-```bash
-# Policy to allow traffic from frontend to backend
-cat > frontend-to-backend.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: frontend-to-backend
-  namespace: microservices
-spec:
-  selector: app == 'backend'
-  types:
-  - Ingress
+  types: [Ingress, Egress]
   ingress:
   - action: Allow
+    protocol: TCP
     source:
       selector: app == 'frontend'
     destination:
-      ports:
-      - 80
-EOF
-
-kubectl apply -f frontend-to-backend.yaml
-
-# Allow frontend egress to external DNS and API
-cat > frontend-egress.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: frontend-egress
-  namespace: microservices
-spec:
-  selector: app == 'frontend'
-  types:
-  - Egress
-  egress:
-  - action: Allow
-    destination:
       selector: app == 'backend'
-      ports:
-      - 80
-  # Allow DNS access
+      ports: [8080]
   - action: Allow
-    destination:
-      selector: k8s-app == 'kube-dns'
-      ports:
-      - 53
-EOF
-
-kubectl apply -f frontend-egress.yaml
-```
-
-**5. 允许从 Backend 到 Database 的流量**
-
-```bash
-# Policy to allow traffic from backend to database
-cat > backend-to-database.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: backend-to-database
-  namespace: microservices
-spec:
-  selector: app == 'database'
-  types:
-  - Ingress
-  ingress:
-  - action: Allow
+    protocol: TCP
     source:
       selector: app == 'backend'
     destination:
-      ports:
-      - 5432
-EOF
-
-kubectl apply -f backend-to-database.yaml
-
-# Allow backend egress to external DNS and database
-cat > backend-egress.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: backend-egress
-  namespace: microservices
-spec:
-  selector: app == 'backend'
-  types:
-  - Egress
+      selector: app == 'database'
+      ports: [5432]
   egress:
   - action: Allow
+    protocol: UDP
+    destination:
+      namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+      selector: k8s-app == 'kube-dns'
+      ports: [53]
+  - action: Allow
+    protocol: TCP
+    destination:
+      namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+      selector: k8s-app == 'kube-dns'
+      ports: [53]
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'frontend'
+    destination:
+      selector: app == 'backend'
+      ports: [8080]
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'backend'
     destination:
       selector: app == 'database'
-      ports:
-      - 5432
-  # Allow DNS access
-  - action: Allow
-    destination:
-      selector: k8s-app == 'kube-dns'
-      ports:
-      - 53
+      ports: [5432]
 EOF
 
-kubectl apply -f backend-egress.yaml
+# Allow policy propagation, then verify positive controls and the denied path.
+POLICY_VERIFIED=false
+for attempt in $(seq 1 30); do
+  check_tcp frontend backend 8080
+  check_tcp backend database 5432
+  if check_tcp frontend database 5432; then
+    sleep 2
+  else
+    result=$?
+    if [ "$result" -ne 42 ]; then
+      printf '%s\n' 'DNS/exec failure is not proof of policy denial.' >&2
+      exit 1
+    fi
+    # Database availability must still hold after the negative observation.
+    check_tcp backend database 5432
+    POLICY_VERIFIED=true
+    break
+  fi
+done
+[ "$POLICY_VERIFIED" = true ] || {
+  printf '%s\n' 'Expected denial was not observed; inspect policy enforcement.' >&2
+  exit 1
+}
 ```
+策略传播是异步的。超时、DNS 失败、缺少诊断二进制文件或数据库不可用，本身都不能证明隔离已成功。此流程先使用正常基线和正向对照；如果观察结果不同，请调查其他策略/路由。
 
-**6. 测试 Policies**
+**6. 清理。**确认 UID 后，仅删除自有 namespace。这样会移除测试工作负载、策略、Secret 和临时数据，但不会移除集群范围的 Calico 安装。练习结束后，请删除本地密码文件。除非另有经管理员审查的回滚流程负责，否则保留共享 CNI/RBAC 配置。
 
 ```bash
-# Get frontend pod name
-FRONTEND_POD=$(kubectl get pods -n microservices -l app=frontend -o jsonpath='{.items[0].metadata.name}')
-
-# Get backend pod name
-BACKEND_POD=$(kubectl get pods -n microservices -l app=backend -o jsonpath='{.items[0].metadata.name}')
-
-# Get database pod name
-DATABASE_POD=$(kubectl get pods -n microservices -l app=database -o jsonpath='{.items[0].metadata.name}')
-
-# Test connection from frontend to backend (should succeed)
-kubectl exec -it $FRONTEND_POD -n microservices -- wget -O- --timeout=2 http://backend
-
-# Test connection from frontend to database (should fail)
-kubectl exec -it $FRONTEND_POD -n microservices -- nc -zv database 5432
-
-# Test connection from backend to database (should succeed)
-kubectl exec -it $BACKEND_POD -n microservices -- nc -zv database 5432
-
-# Test connection from backend to external site (should fail)
-kubectl exec -it $BACKEND_POD -n microservices -- wget -O- --timeout=2 https://www.example.com
-```
-
-**7. Network Policy 可视化（可选）**
-
-```bash
-# Install Calico network policy visualization tool
-kubectl apply -f https://raw.githubusercontent.com/tigera/ccol/master/manifests/tigera-policies-viewer/tigera-policies-viewer.yaml
-
-# Set up port forwarding
-kubectl port-forward -n tigera-policies-viewer svc/tigera-policies-viewer 8080:8080
-
-# Access http://localhost:8080 in browser to visualize policies
-```
-
-通过本练习，你学习了如何使用 Calico 限制 EKS cluster 中 microservices 之间的 network traffic。通过实现 default deny policies 并仅显式允许必要流量，你应用了最小权限原则。这些 network policies 通过限制 cluster 内 services 之间的通信并减少潜在攻击面，帮助增强安全性。
-
-</details>
-
-\### 练习 2：在 EKS Cluster 中配置 IRSA 和 S3 Access
-
-**场景：** 你是公司的一名 DevOps engineer，在 EKS cluster 中运行的 applications 需要安全访问 S3 bucket。按照安全最佳实践，你不想共享 node IAM role，而是希望使用 IRSA (IAM Roles for Service Accounts) 仅向特定 pods 授予必要权限。
-
-**要求：**
-
-1. 将 OIDC provider 与 EKS cluster 关联
-2. 创建具有 S3 access permissions 的 IAM role
-3. 创建 Kubernetes service account 并关联 IAM role
-4. 部署使用该 service account 的 pod
-5. 测试 S3 access
-
-**解决方案：**
-
-<details>
-
-<summary>显示解决方案</summary>
-
-**1. 将 OIDC Provider 与 EKS Cluster 关联**
-
-```bash
-# Set cluster name
-CLUSTER_NAME=my-cluster
-REGION=us-west-2
-
-# Get OIDC provider URL
-OIDC_PROVIDER=$(aws eks describe-cluster --name $CLUSTER_NAME --region $REGION --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
-
-# Check if OIDC provider already exists
-aws iam list-open-id-connect-providers | grep $OIDC_PROVIDER
-
-# Create OIDC provider if it doesn't exist
-if [ $? -ne 0 ]; then
-  echo "Creating OIDC provider..."
-  eksctl utils associate-iam-oidc-provider --cluster $CLUSTER_NAME --region $REGION --approve
+CURRENT_NETWORK_UID=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get namespace "${NETWORK_NAMESPACE:?}" --ignore-not-found \
+  -o jsonpath='{.metadata.uid}') || exit 1
+if [ -z "$CURRENT_NETWORK_UID" ]; then
+  printf '%s\n' 'Lab namespace is already absent.'
+elif [ "$CURRENT_NETWORK_UID" = "${NETWORK_NAMESPACE_UID:?Recorded UID required}" ]; then
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" \
+    delete namespace "$NETWORK_NAMESPACE" --wait=true || exit 1
 else
-  echo "OIDC provider already exists."
+  printf '%s\n' 'Namespace UID changed; no deletion attempted.' >&2
+  exit 1
 fi
 ```
 
-**2. 创建具有 S3 Access Permissions 的 IAM Role**
+</details>
+
+### 练习 2：在 EKS 集群中配置 IRSA 和 S3 访问
+
+**场景：**使用 IRSA 而不是节点角色，为一个工作负载授予对现有 S3 bucket 中已批准 `training/` 前缀的只读访问权限。验证实际使用的角色身份，并与一个特意不配置凭证的 Pod 进行比较。
+
+**前提条件：**Bash、jq、AWS CLI、eksctl 和 kubectl；现有且已获授权的 EKS 集群；对新 namespace 和 IAM 角色的管理员访问权限；已批准的非敏感现有 S3 对象。此商业分区示例假设对象不需要额外的客户 KMS 要求。Bucket/KMS 策略、SCP、DNS、STS 和 S3 网络路径可能还会带来其他要求。不会创建、更改或删除任何 S3 对象。
+
+
+<details>
+<summary>显示解决方案</summary>
+
+**1. 限定实验范围并验证 OIDC。**设置 `EXAMPLE_CLUSTER`、`EXAMPLE_REGION`、`S3_BUCKET` 和 `S3_TEST_KEY`（位于 `training/` 下）。OIDC provider 是集群共享基础设施；清理时不要删除它。如果创建 namespace 或验证 provider 失败，请停止。
 
 ```bash
-# Get account ID
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+set -euo pipefail
+umask 077
+# Commercial AWS partition example; use an existing approved S3 training prefix.
+: "${EXAMPLE_CLUSTER:?}"
+: "${EXAMPLE_REGION:?}"
+: "${S3_BUCKET:?Existing bucket containing the approved training object}"
+: "${S3_TEST_KEY:?Existing non-sensitive object key under training/}"
+case "$S3_TEST_KEY" in training/*) ;; *) printf '%s\n' 'Use a training/ key.' >&2; exit 1 ;; esac
+IRSA_LAB_DIR=$(mktemp -d /tmp/eks-irsa-lab.XXXXXX)
+: "${IRSA_LAB_DIR:?}"
+IRSA_LAB_ID="irsa-quiz-$(date +%s)-$$"
+IRSA_NAMESPACE="$IRSA_LAB_ID"
+IRSA_ROLE_NAME="$IRSA_LAB_ID"
+IRSA_SERVICE_ACCOUNT=s3-reader
+IRSA_KUBECONFIG="$IRSA_LAB_DIR/kubeconfig"
 
-# Set namespace and service account name
-NAMESPACE=default
-SERVICE_ACCOUNT_NAME=s3-access-sa
+aws sts get-caller-identity --output json > "$IRSA_LAB_DIR/caller.json" || exit 1
+IRSA_ACCOUNT_ID=$(jq -er '.Account' "$IRSA_LAB_DIR/caller.json") || exit 1
+jq -e '.Arn | startswith("arn:aws:")' "$IRSA_LAB_DIR/caller.json" >/dev/null || exit 1
+aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query cluster --output json > "$IRSA_LAB_DIR/cluster.json" || exit 1
+IRSA_ISSUER=$(jq -er '.identity.oidc.issuer' "$IRSA_LAB_DIR/cluster.json") || exit 1
+case "$IRSA_ISSUER" in https://*) ;; *) printf '%s\n' 'Invalid OIDC issuer.' >&2; exit 1 ;; esac
+IRSA_ISSUER_HOST="${IRSA_ISSUER#https://}"
+IRSA_PROVIDER_ARN="arn:aws:iam::$IRSA_ACCOUNT_ID:oidc-provider/$IRSA_ISSUER_HOST"
 
-# Create trust policy
-cat > trust-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+aws eks update-kubeconfig --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubeconfig "$IRSA_KUBECONFIG" --alias "$EXAMPLE_CLUSTER" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" create namespace "$IRSA_NAMESPACE" || exit 1
+IRSA_NAMESPACE_UID=$(kubectl --kubeconfig "$IRSA_KUBECONFIG" \
+  get namespace "$IRSA_NAMESPACE" -o jsonpath='{.metadata.uid}') || exit 1
+: "${IRSA_NAMESPACE_UID:?}"
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "$IRSA_NAMESPACE_UID" \
+  '{namespace:$namespace,namespaceUID:$uid}' > "$IRSA_LAB_DIR/ownership.json" || exit 1
+
+# The cluster's provider is shared infrastructure; eksctl checks/associates it.
+eksctl utils associate-iam-oidc-provider --cluster "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --approve || exit 1
+aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$IRSA_PROVIDER_ARN" \
+  --output json > "$IRSA_LAB_DIR/provider.json" || exit 1
+jq -e '.ClientIDList | index("sts.amazonaws.com") != null' \
+  "$IRSA_LAB_DIR/provider.json" >/dev/null || exit 1
+```
+**2. 创建唯一且范围受限的角色。**信任关系要求同时满足 `aud=sts.amazonaws.com` 和准确的 namespace/ServiceAccount `sub`。角色创建失败时停止附加策略；记录不可变的 RoleId，以便清理。
+
+```bash
+jq -n --arg provider "${IRSA_PROVIDER_ARN:?}" --arg issuer "${IRSA_ISSUER_HOST:?}" \
+  --arg subject "system:serviceaccount:${IRSA_NAMESPACE:?}:${IRSA_SERVICE_ACCOUNT:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[{
+      Effect:"Allow",
+      Principal:{Federated:$provider},
+      Action:"sts:AssumeRoleWithWebIdentity",
+      Condition:{StringEquals:{
+        ($issuer+":aud"):"sts.amazonaws.com",
+        ($issuer+":sub"):$subject
+      }}
+    }]
+  }' > "${IRSA_LAB_DIR:?}/trust.json" || exit 1
+
+jq -n --arg bucket "${S3_BUCKET:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[
+      {
+        Effect:"Allow",Action:"s3:ListBucket",Resource:("arn:aws:s3:::"+$bucket),
+        Condition:{StringLike:{"s3:prefix":["training/","training/*"]}}
       },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${NAMESPACE}:${SERVICE_ACCOUNT_NAME}"
+      {
+        Effect:"Allow",Action:"s3:GetObject",
+        Resource:("arn:aws:s3:::"+$bucket+"/training/*")
+      }
+    ]
+  }' > "$IRSA_LAB_DIR/s3-policy.json" || exit 1
+
+# Stop on creation failure; never attach this policy to a pre-existing role.
+aws iam create-role --role-name "${IRSA_ROLE_NAME:?}" \
+  --assume-role-policy-document "file://$IRSA_LAB_DIR/trust.json" \
+  --tags "Key=TrainingLab,Value=${IRSA_LAB_ID:?}" \
+  --query Role --output json > "$IRSA_LAB_DIR/created-role.json" || exit 1
+IRSA_ROLE_ARN=$(jq -er '.Arn' "$IRSA_LAB_DIR/created-role.json") || exit 1
+IRSA_ROLE_ID=$(jq -er '.RoleId' "$IRSA_LAB_DIR/created-role.json") || exit 1
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "${IRSA_NAMESPACE_UID:?}" \
+  --arg roleName "$IRSA_ROLE_NAME" --arg roleArn "$IRSA_ROLE_ARN" --arg roleId "$IRSA_ROLE_ID" \
+  '{namespace:$namespace,namespaceUID:$uid,roleName:$roleName,roleARN:$roleArn,roleID:$roleId}' \
+  > "$IRSA_LAB_DIR/ownership.json" || exit 1
+aws iam put-role-policy --role-name "$IRSA_ROLE_NAME" \
+  --policy-name ScopedTrainingS3Read \
+  --policy-document "file://$IRSA_LAB_DIR/s3-policy.json" || exit 1
+```
+**3. 部署并验证。**如果测试失败，请留出时间等待 IAM 传播后再重试。三个容器分别检查身份、前缀列举计数和对象长度；不会记录对象内容或凭证。身份必须与新建角色匹配；否则，S3 操作成功也可能是因为使用了权限更广泛的节点角色。
+
+```bash
+# JSON construction preserves literal object keys and prevents YAML interpolation errors.
+jq -n --arg ns "${IRSA_NAMESPACE:?}" --arg sa "${IRSA_SERVICE_ACCOUNT:?}" \
+  --arg role "${IRSA_ROLE_ARN:?}" --arg region "${EXAMPLE_REGION:?}" \
+  --arg bucket "${S3_BUCKET:?}" --arg key "${S3_TEST_KEY:?}" '
+  {
+    apiVersion:"v1",kind:"List",items:[
+      {
+        apiVersion:"v1",kind:"ServiceAccount",
+        metadata:{name:$sa,namespace:$ns,annotations:{
+          "eks.amazonaws.com/role-arn":$role,
+          "eks.amazonaws.com/sts-regional-endpoints":"true"
+        }}
+      },
+      {
+        apiVersion:"v1",kind:"Pod",metadata:{name:"irsa-check",namespace:$ns},
+        spec:{
+          serviceAccountName:$sa,nodeSelector:{"kubernetes.io/os":"linux"},restartPolicy:"Never",
+          containers:[
+            {name:"identity",args:["--region",$region,"sts","get-caller-identity"]},
+            {name:"list-prefix",args:["--region",$region,"s3api","list-objects-v2","--bucket",$bucket,
+              "--prefix","training/","--max-keys","1","--query","KeyCount","--output","json"]},
+            {name:"object-metadata",args:["--region",$region,"s3api","head-object","--bucket",$bucket,
+              "--key",$key,"--query","ContentLength","--output","json"]}
+          ] | map(.+{
+            image:"public.ecr.aws/aws-cli/aws-cli:2.36.43",command:["aws"],
+            resources:{requests:{cpu:"100m",memory:"128Mi"},limits:{memory:"256Mi"}}
+          })
         }
       }
-    }
-  ]
+    ]
+  }' > "${IRSA_LAB_DIR:?}/workload.json" || exit 1
+kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" create -f "$IRSA_LAB_DIR/workload.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  wait --for=jsonpath='{.status.phase}'=Succeeded pod/irsa-check --timeout=180s || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  logs irsa-check -c identity > "$IRSA_LAB_DIR/pod-identity.json" || exit 1
+jq -e --arg account "${IRSA_ACCOUNT_ID:?}" --arg role "${IRSA_ROLE_NAME:?}" \
+  '.Account == $account and (.Arn | startswith("arn:aws:sts::"+$account+":assumed-role/"+$role+"/"))' \
+  "$IRSA_LAB_DIR/pod-identity.json" >/dev/null || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c list-prefix
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c object-metadata
+```
+**4. 受控的负向比较。**新 namespace 的默认 ServiceAccount 不得带有 IRSA 注释或 EKS Pod Identity 关联，也不得注入其他凭证。在此测试客户端中禁用 IMDS 回退，并要求出现特定的缺少凭证错误。随机网络错误或授权错误不能作为有效的负向结果。
+
+```bash
+# Controlled comparison: no IRSA, no Pod Identity association, no IMDS fallback.
+jq -n --arg ns "${IRSA_NAMESPACE:?}" --arg region "${EXAMPLE_REGION:?}" '
+{
+  apiVersion:"v1",kind:"Pod",
+  metadata:{name:"no-role-check",namespace:$ns},
+  spec:{
+    automountServiceAccountToken:false,
+    serviceAccountName:"default",
+    nodeSelector:{"kubernetes.io/os":"linux"},
+    restartPolicy:"Never",
+    containers:[{
+      name:"identity",image:"public.ecr.aws/aws-cli/aws-cli:2.36.43",
+      command:["aws"],args:["--region",$region,"sts","get-caller-identity"],
+      env:[{name:"AWS_EC2_METADATA_DISABLED",value:"true"}],
+      resources:{requests:{cpu:"100m",memory:"128Mi"},limits:{memory:"256Mi"}}
+    }]
+  }
+}' > "${IRSA_LAB_DIR:?}/negative-pod.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" create -f "$IRSA_LAB_DIR/negative-pod.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  wait --for=jsonpath='{.status.phase}'=Failed pod/no-role-check --timeout=180s || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  get pod no-role-check -o json > "$IRSA_LAB_DIR/negative-status.json" || exit 1
+jq -e '.status.containerStatuses[] | select(.name=="identity") |
+  .state.terminated.exitCode == 255' "$IRSA_LAB_DIR/negative-status.json" >/dev/null || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  logs no-role-check -c identity > "$IRSA_LAB_DIR/negative-log.txt" || exit 1
+grep -F 'Unable to locate credentials' "$IRSA_LAB_DIR/negative-log.txt" >/dev/null || {
+  printf '%s\n' 'Unexpected failure: inspect the saved log; do not claim isolation.' >&2
+  exit 1
 }
-EOF
-
-# Create IAM role
-ROLE_NAME=eks-s3-access-role
-aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://trust-policy.json
-
-# Attach S3 read-only policy
-aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-
-# Get role ARN
-ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query Role.Arn --output text)
-echo "Role ARN: $ROLE_ARN"
 ```
+这是凭证提供程序对比测试，并不能证明任意 Pod 都无法访问 IMDS，也不能证明容器构成安全边界。请单独限制节点凭证。IRSA 使用投射的 web-identity token 和 STS 临时凭证；兼容的 SDK 会刷新这些凭证。不要转储所有 `AWS_*` 环境变量或 token 文件。
 
-**3. 创建 Kubernetes Service Account 并关联 IAM Role**
+**5. 仅清理自有资源。**保留记录的 namespace UID 和 IAM RoleId。受保护的清理操作会移除实验 namespace、其内联策略及唯一角色；会保留 S3 bucket/object、共享 OIDC provider 和集群。如果设置只部分成功，请检查 `ownership.json`，仅清理其中实际记录的资源。
 
 ```bash
-# Create service account
-cat > service-account.yaml << EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: ${SERVICE_ACCOUNT_NAME}
-  namespace: ${NAMESPACE}
-  annotations:
-    eks.amazonaws.com/role-arn: ${ROLE_ARN}
-EOF
+# Recover the recorded values from ownership.json if this is a later shell.
+IRSA_CLEANUP_NAMESPACE_OK=false
+if CURRENT_IRSA_UID=$(kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" \
+  get namespace "${IRSA_NAMESPACE:?}" --ignore-not-found -o jsonpath='{.metadata.uid}'); then
+  if [ -z "$CURRENT_IRSA_UID" ]; then
+    IRSA_CLEANUP_NAMESPACE_OK=true
+  elif [ "$CURRENT_IRSA_UID" = "${IRSA_NAMESPACE_UID:?Recorded UID required}" ]; then
+    if kubectl --kubeconfig "$IRSA_KUBECONFIG" delete namespace "$IRSA_NAMESPACE" --wait=true; then
+      IRSA_CLEANUP_NAMESPACE_OK=true
+    else
+      exit 1
+    fi
+  else
+    printf '%s\n' 'Namespace UID mismatch; stop and inspect.' >&2
+    exit 1
+  fi
+else
+  printf '%s\n' 'Namespace lookup failed; stop and inspect.' >&2
+  exit 1
+fi
 
-kubectl apply -f service-account.yaml
-
-# Verify service account
-kubectl get serviceaccount $SERVICE_ACCOUNT_NAME -o yaml
+if [ "$IRSA_CLEANUP_NAMESPACE_OK" = true ]; then
+  CURRENT_IRSA_ROLE_JSON=$(aws iam get-role --role-name "${IRSA_ROLE_NAME:?}" \
+    --query Role --output json) || exit 1
+  CURRENT_IRSA_ROLE_ID=$(printf '%s' "$CURRENT_IRSA_ROLE_JSON" | jq -er '.RoleId') || exit 1
+  if [ "$CURRENT_IRSA_ROLE_ID" = "${IRSA_ROLE_ID:?Recorded IAM RoleId required}" ]; then
+    IRSA_INLINE_POLICIES=$(aws iam list-role-policies --role-name "$IRSA_ROLE_NAME" \
+      --query PolicyNames --output json) || exit 1
+    printf '%s' "$IRSA_INLINE_POLICIES" |
+      jq -e 'all(.[]; . == "ScopedTrainingS3Read")' >/dev/null || exit 1
+    if printf '%s' "$IRSA_INLINE_POLICIES" | jq -e 'index("ScopedTrainingS3Read") != null' >/dev/null; then
+      aws iam delete-role-policy --role-name "$IRSA_ROLE_NAME" \
+        --policy-name ScopedTrainingS3Read || exit 1
+    fi
+    aws iam delete-role --role-name "$IRSA_ROLE_NAME"
+  else
+    printf '%s\n' 'IAM RoleId mismatch; no IAM deletion attempted.' >&2
+    exit 1
+  fi
+fi
 ```
-
-**4. 部署使用该 Service Account 的 Pod**
-
-```bash
-# Deploy test pod
-cat > s3-test-pod.yaml << EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: s3-test-pod
-  namespace: ${NAMESPACE}
-spec:
-  serviceAccountName: ${SERVICE_ACCOUNT_NAME}
-  containers:
-  - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
-  restartPolicy: Never
-EOF
-
-kubectl apply -f s3-test-pod.yaml
-
-# Check pod status
-kubectl get pod s3-test-pod
-kubectl describe pod s3-test-pod
-```
-
-**5. 测试 S3 Access**
-
-```bash
-# Test listing S3 buckets
-kubectl exec -it s3-test-pod -- aws s3 ls
-
-# Test listing objects in a specific S3 bucket (change bucket name as needed)
-kubectl exec -it s3-test-pod -- aws s3 ls s3://my-bucket/
-
-# Verify AWS credentials
-kubectl exec -it s3-test-pod -- aws sts get-caller-identity
-
-# Check environment variables
-kubectl exec -it s3-test-pod -- env | grep AWS
-```
-
-**6. 部署普通 Pod 进行对比**
-
-```bash
-# Deploy a pod using a regular service account
-cat > regular-pod.yaml << EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: regular-pod
-  namespace: ${NAMESPACE}
-spec:
-  containers:
-  - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
-  restartPolicy: Never
-EOF
-
-kubectl apply -f regular-pod.yaml
-
-# Test S3 access from regular pod (should fail if node IAM role doesn't have S3 access permissions)
-kubectl exec -it regular-pod -- aws s3 ls
-```
-
-**7. Cleanup**
-
-```bash
-# Delete pods
-kubectl delete pod s3-test-pod regular-pod
-
-# Delete service account
-kubectl delete serviceaccount $SERVICE_ACCOUNT_NAME
-
-# Clean up IAM role (optional)
-aws iam detach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-aws iam delete-role --role-name $ROLE_NAME
-```
-
-**IRSA 的工作方式：**
-
-1. **OIDC Provider Connection**:
-   * EKS cluster 被配置为 OIDC provider。
-   * 这允许 Kubernetes service account tokens 成为 AWS IAM 中受信任的身份验证机制。
-2. **IAM Role Trust Policy**:
-   * IAM role 的 trust policy 限制哪些 Kubernetes service accounts 可以 assume role。
-   * 使用 conditions 将其限制到特定 namespaces 中的特定 service accounts。
-3. **Service Account Annotation**:
-   * `eks.amazonaws.com/role-arn` annotation 指定 service account 应该 assume 哪个 IAM role。
-   * 此 annotation 由 EKS Pod Identity Webhook 处理。
-4. **Environment Variable Injection**:
-   * EKS Pod Identity Webhook 会自动将以下 environment variables 注入 pods：
-     * `AWS_ROLE_ARN`
-     * `AWS_WEB_IDENTITY_TOKEN_FILE`
-     * `AWS_REGION`
-   * AWS SDKs 使用这些 environment variables 获取 credentials。
-5. **最小权限原则**:
-   * 只授予 application 所需的最低权限。
-   * 在本示例中，我们只授予了 S3 read-only access permissions。
-
-通过本 lab，你学习了如何配置 IRSA，以便仅向 EKS cluster 中运行的特定 pods 授予对 AWS services 的细粒度权限。与共享 node IAM roles 相比，此方法更安全，并遵循最小权限原则。
 
 </details>
 
 ## 高级主题
 
-以下问题与 Amazon EKS cluster 创建相关的高级主题有关。本节测试你对 EKS cluster 创建的高级概念和最佳实践的理解。
+以下问题涉及 Amazon EKS 集群创建的高级主题。本部分考查你对 EKS 集群创建高级概念和最佳实践的理解。
 
-1. 在 Amazon EKS cluster 中启用 Prefix Delegation 时，以下哪项不是会发生的变化？
-   * A) 每个 ENI 被分配一个 /28 CIDR block (16 IPs)
-   * B) 增加每个 node 的最大 pods 数量
-   * C) 缩短 pod 启动时间
-   * D) 提高 IP 地址使用效率
+1. 以下哪项**并非** IPv4 前缀委派所能保证？
+   * A) 一个前缀占用一个 ENI 地址槽位
+   * B) 一个节点上可以容纳更多 IP 容量
+   * C) 每个应用程序都会更快就绪
+   * D) 需要连续的子网地址块
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：C) 缩短 pod 启动时间**
+**答案：C) 每个应用程序都会更快就绪**
 
-**解释：** 在 Amazon EKS cluster 中启用 Prefix Delegation 时不会发生的变化是“缩短 pod 启动时间”。实际上，启用 prefix delegation 不会缩短 pod 启动时间；它甚至可能略微增加启动时间。Prefix delegation 的主要优势是增加每个 node 的最大 pods 数量并提高 IP 地址使用效率。
+前缀委派可以降低地址分配延迟：将另一个前缀附加到现有 ENI，可以避免部分 ENI 创建/附加工作。AWS 记录了此项优势，因此原先关于前缀委派无法缩短启动时间且必然增加路由开销的解释不正确。
 
-**启用 Prefix Delegation 时的实际变化：**
+端到端 Pod 就绪仍取决于调度、节点启动、镜像拉取、卷附加、初始化、探针和应用程序启动。此处未提供前后基准测试，本次审计也未执行相关测试。不要推断固定的延迟改善幅度，也不要臆造减速原因。
 
-1. **每个 ENI 被分配一个 /28 CIDR block (16 IPs)**:
-   * 默认情况下，VPC CNI 会从 ENI 为每个 pod 分配 secondary IP addresses。
-   * 启用 prefix delegation 后，每个 ENI 会被分配 /28 CIDR blocks (16 IPs)，而不是单独的 IP addresses。
-   * 这会显著增加每个 ENI 可支持的 IP 地址数量。
-2. **增加每个 node 的最大 pods 数量**:
-   * 使用 prefix delegation 会显著增加每个 node 的最大 pods 数量。
-   * 例如，对于 m5.large instance：
-     * 默认配置：最多 29 个 pods
-     * 启用 prefix delegation 后：最多 110+ 个 pods
-3. **提高 IP 地址使用效率**:
-   * 优化大型 clusters 中的 IP 地址使用。
-   * 适用于 VPC CIDR ranges 有限的环境。
-   * 允许在相同 IP address space 内运行更多 pods。
+每个 IPv4 `/28` 会占用一个辅助地址槽位，并从连续子网地址块中消耗 16 个地址。在 `maxPods`、计算资源和子网空间允许的情况下，它会提高每个节点的 IP 容量。它不会扩大 CIDR，也不保证减少已分配的地址。Warm-pool 设置会在备用地址消耗和地址分配就绪程度之间产生权衡。
 
-**Prefix Delegation 对 Pod 启动时间的影响：**
-
-Prefix delegation 不会缩短 pod 启动时间；它可能由于以下原因略微增加启动时间：
-
-1. **额外的 setup overhead**:
-   * CIDR block allocation 和 management 可能产生额外开销。
-   * 可能需要时间进行 routing table updates。
-2. **IP address allocation complexity**:
-   * CIDR block allocation 和 management 可能比单独 IP address allocation 更复杂。
-   * 这可能导致 pod 启动期间出现轻微延迟。
-3. **Initial setup time**:
-   * 为新 ENIs 分配 CIDR blocks 的初始设置时间可能更长。
-   * 但是，一旦设置完成，该 ENI 上可以快速启动多个 pods。
-
-**如何启用 Prefix Delegation：**
-
-```bash
-# Enable prefix delegation
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# Check prefix delegation status
-kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
-```
-
-**Prefix Delegation 限制：**
-
-1. **EC2 Instance 支持**:
-   * 只有基于 Nitro 的 instances 支持 prefix delegation。
-   * 不能用于上一代 instances。
-2. **VPC CNI Version 要求**:
-   * 需要 VPC CNI version 1.9.0 或更高版本。
-   * 此功能在早期版本中不可用。
-3. **Subnet Size 要求**:
-   * 需要具有足够 IP 地址空间的 subnets。
-   * 在小型 subnets 中，IP 地址可能很快耗尽。
-4. **过渡注意事项**:
-   * 在现有 clusters 上启用时，只有新的 pods 使用 prefix delegation。
-   * 现有 pods 必须重启才能应用到所有 pods。
-
-Prefix delegation 是一项强大功能，可增加每个 node 的最大 pods 数量并提高 IP 地址使用效率，但它不会缩短 pod 启动时间。因此，“缩短 pod 启动时间”不是启用 prefix delegation 时会发生的变化。
+请参考基本问题 5 中的前提条件和新节点组迁移方法：检查碎片化情况，配置兼容的 CNI，验证计算出的节点容量，并通过预留备用容量和考虑 PDB 的 drain 进行迁移。对现有 Pod 进行全面重启并不是完整的迁移方案。
 
 </details>
 
-2\. 在 Amazon EKS cluster node group 中混合 instance types 的主要优势中，以下哪项不是？ - A) Cost optimization - B) 提高 availability - C) 选择适合 workload characteristics 的 instance types - D) 简化 cluster management
+2. 对使用 Cluster Autoscaler 的混合实例托管节点组，哪项做法不正确？
+   * A) 使用 CPU/内存/GPU 规格相近的实例
+   * B) 验证镜像和 AZ 兼容性
+   * C) 分开使用 Spot 和 On-Demand 节点组
+   * D) 混用任意规格，因为 autoscaler 会模拟每种类型
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：D) 简化 cluster management**
+**答案：D) 混用任意规格，因为 autoscaler 会模拟每种类型**
 
-**解释：** 在 Amazon EKS cluster node group 中混合 instance types 的主要优势中，不属于主要优势的选项是“简化 cluster management”。实际上，混合多种 instance types 会使 cluster management 更复杂。混合 instance types 的主要优势是 cost optimization、提高 availability，以及选择适合 workload characteristics 的 instance types。
+多样性可以增加容量选择，尤其适用于 Spot，但必须遵循 autoscaler 的调度模型。Cluster Autoscaler 使用混合组中的第一种实例类型进行模拟；候选实例应具有相同的 CPU、内存和 GPU 规格。较小的替代实例可能导致 Pod 保持 Pending，而较大的实例可能浪费容量。名称相似并不能保证规格相同：例如，`c5n.large` 的内存不同于 `c5.large`。
 
-**混合 Instance Types 的实际优势：**
+托管节点组只具有一种容量类型。请使用**独立节点组**提供 On-Demand 基础容量和 Spot 扩展容量；在一个托管组中列出多个 `instanceTypes` 并不会混合购买选项。EKS 会选择托管 Spot 的分配策略；`spotAllocationStrategy` 不是 eksctl `managedNodeGroups` 支持的字段。
 
-1. **Cost optimization**:
-   * 混合 spot instances 和 on-demand instances
-   * 利用不同 instance families 的价格差异
-   * 为 workload requirements 选择最佳 price-to-performance ratio
-   *   示例：
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-spot-instances
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m5n.large"]
-           spot: true
-           minSize: 2
-           maxSize: 10
-       ```
-2. **提高 availability**:
-   * 当特定 instance types 容量不足时使用替代 instance types
-   * Spot instances 中断时可以替换为其他 types
-   * 通过跨多个 instance families 多样化来分散风险
-   *   示例：
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-instance-types
-           instanceTypes: ["c5.large", "c5a.large", "c5d.large", "c5n.large"]
-           minSize: 3
-           maxSize: 10
-           spotAllocationStrategy: capacity-optimized
-       ```
-3. **选择适合 workload characteristics 的 instance types**:
-   * 为不同 workload requirements 提供 instance types
-   * C series 用于 compute-intensive workloads
-   * R series 用于 memory-intensive workloads
-   * M series 用于 balanced workloads
-   * G 或 P series 用于 GPU workloads
-   *   示例：
-
-       ```yaml
-       # Compute optimized node group
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: compute-optimized
-           instanceTypes: ["c5.2xlarge"]
-           minSize: 2
-           maxSize: 10
-           labels:
-             workload-type: compute
-           taints:
-             - key: workload-type
-               value: compute
-               effect: NoSchedule
-
-         # Memory optimized node group
-         - name: memory-optimized
-           instanceTypes: ["r5.2xlarge"]
-           minSize: 2
-           maxSize: 10
-           labels:
-             workload-type: memory
-           taints:
-             - key: workload-type
-               value: memory
-               effect: NoSchedule
-       ```
-
-**混合 Instance Types 的缺点：**
-
-1. **增加 cluster management complexity**:
-   * 需要监控和管理多种 instance types
-   * 由于 performance characteristics 不同，troubleshooting 更复杂
-   * 需要为不同 instance types 调整 resource requests 和 limits
-2. **降低 workload predictability**:
-   * Performance characteristics 可能因 instance type 而异
-   * 可能出现 workload performance variations，尤其在使用 spot instances 时
-3. **Resource allocation complexity**:
-   * 很难为不同 instance types 设置 pod resource requests 和 limits
-   * 需要使用 node selectors 和 taints 的复杂 scheduling rules
-4. **Testing and validation burden**:
-   * 需要在多种 instance types 上测试 applications
-   * 发现 performance 和 compatibility issues 的可能性增加
-
-**混合 Instance Types 的策略：**
-
-1.  **按 workload 分离 node groups**:
-
-    ```yaml
-    # Node group for web servers
-    - name: web-servers
-      instanceTypes: ["c5.large", "c5a.large"]
-      labels:
-        role: web
-
-    # Node group for databases
-    - name: databases
-      instanceTypes: ["r5.xlarge", "r5a.xlarge"]
-      labels:
-        role: database
-    ```
-2.  **Cost optimization strategy**:
-
-    ```yaml
-    # Base on-demand node group
-    - name: on-demand-base
-      instanceTypes: ["m5.large"]
-      minSize: 2
-      maxSize: 5
-      spot: false
-
-    # Spot node group for scaling
-    - name: spot-scaling
-      instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-      minSize: 0
-      maxSize: 20
-      spot: true
-    ```
-3.  **Availability optimization strategy**:
-
-    ```yaml
-    # Diversification across multiple instance families
-    - name: high-availability
-      instanceTypes: ["m5.large", "m5a.large", "c5.large", "c5a.large", "r5.large", "r5a.large"]
-      minSize: 3
-      maxSize: 10
-      spotAllocationStrategy: capacity-optimized
-    ```
-
-混合 instance types 提供 cost optimization、提高 availability 和选择适合 workload characteristics 的 instance types 等优势，但并不会简化 cluster management，反而可能让管理更复杂。因此，“简化 cluster management”不是混合 instance types 的主要优势。
-
-</details>
-
-3. Amazon EKS cluster 中最安全的 node group update strategy 是什么？
-   * A) In-place update
-   * B) Blue/Green deployment
-   * C) Canary deployment
-   * D) Rolling update
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：B) Blue/Green deployment**
-
-**解释：** Amazon EKS cluster 中最安全的 node group update strategy 是 Blue/Green deployment。Blue/Green deployment 会创建新的 node group (green)，迁移 workloads，然后移除现有 node group (blue)。这种方法最安全，因为如果 update 期间出现问题，你可以立即回滚到之前的环境。
-
-**Node Group Update Strategies 对比：**
-
-1. **Blue/Green Deployment**:
-   * **工作方式**: 创建新 node group → 迁移 workloads → 移除现有 node group
-   * **优势**:
-     * 可以立即 rollback
-     * Updates 期间 workload disruption 最小
-     * 可以比较 update 前后的环境
-     * 可以在测试后切换
-   * **缺点**:
-     * 临时需要双倍资源
-     * 实现复杂
-     * 成本增加
-   *   **实现示例**:
-
-       ```bash
-       # 1. Create new node group
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name my-nodegroup-v2 \
-         --node-type m5.large \
-         --nodes 3 \
-         --node-ami-family AmazonLinux2 \
-         --node-labels "version=v2,color=green"
-
-       # 2. Migrate workloads (update node selector)
-       kubectl patch deployment my-app -p '{"spec":{"template":{"spec":{"nodeSelector":{"color":"green"}}}}}'
-
-       # 3. Verify all workloads have moved to new nodes
-       kubectl get pods -o wide
-
-       # 4. Remove existing node group
-       eksctl delete nodegroup --cluster my-cluster --name my-nodegroup-v1
-       ```
-2. **Rolling Update**:
-   * **工作方式**: 一次替换一个 node（cordon → drain → terminate → add new node）
-   * **优势**:
-     * 不需要额外资源
-     * EKS managed node groups 的默认策略
-     * 实现简单
-   * **缺点**:
-     * rollback 困难
-     * Update 期间的问题可能影响整个 cluster
-     * Update 时间可能较长
-   *   **实现示例**:
-
-       ```bash
-       # Update managed node group
-       aws eks update-nodegroup-version \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup
-
-       # Modify update configuration
-       aws eks update-nodegroup-config \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup \
-         --update-config '{"maxUnavailable": 1}'
-       ```
-3. **Canary Deployment**:
-   * **工作方式**: 创建小规模新 node group → 迁移部分 workloads → 验证 → 完成迁移
-   * **优势**:
-     * 最小化风险
-     * 允许逐步验证
-     * 出现问题时限制影响范围
-   * **缺点**:
-     * 实现复杂
-     * 需要额外资源
-     * 到完成完整迁移为止耗时较长
-   *   **实现示例**:
-
-       ```bash
-       # 1. Create small canary node group
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name canary-nodegroup \
-         --node-type m5.large \
-         --nodes 1 \
-         --node-labels "deployment=canary"
-
-       # 2. Migrate some workloads
-       kubectl patch deployment my-app -p '{"spec":{"template":{"spec":{"nodeSelector":{"deployment":"canary"}}}}}'
-
-       # 3. Proceed with complete migration after validation
-       ```
-4. **In-place Update**:
-   * **工作方式**: 直接在现有 nodes 上执行 updates
-   * **优势**:
-     * 不需要额外资源
-     * 适合简单更改
-   * **缺点**:
-     * 风险高
-     * rollback 困难
-     * update 失败时可能损坏 node
-     * EKS 中不推荐
-   *   **实现示例**:
-
-       ```bash
-       # SSH into node for direct update (not recommended)
-       ssh ec2-user@node-ip
-       sudo yum update -y
-       ```
-
-**为什么 Blue/Green Deployment 最安全：**
-
-1. **Complete isolation**:
-   * 新环境与现有环境完全分离，最大限度减少影响
-   * 即使 update 期间出现问题，现有环境也不受影响
-2. **Immediate rollback**:
-   * 出现问题时可以立即将 traffic 重定向到现有环境
-   * 可以无 downtime rollback
-3. **Validation opportunity**:
-   * 可以在切换到 production traffic 前彻底测试新环境
-   * 可以在与实际环境相同的条件下进行验证
-4. **Gradual transition**:
-   * 可以逐步将 traffic 迁移到新环境
-   * 出现问题时限制影响范围
-
-**Blue/Green Deployment 最佳实践：**
-
-1. **Automation**:
-   * 通过自动化 deployment process 最大限度减少人为错误
-   * 与 CI/CD pipeline 集成
-2. **Enhanced monitoring**:
-   * 监控新环境的 performance 和 error metrics
-   * 与现有环境进行比较和分析
-3. **Gradual transition**:
-   * 逐步将 traffic 迁移到新环境
-   * 出现问题时立即 rollback
-4. **Resource optimization**:
-   * 迁移完成后及时清理不必要资源
-   * Cost optimization
-
-Blue/Green deployment 存在需要额外资源和实现复杂的缺点，但从安全性角度看是最优秀的方法。尤其推荐用于重要生产环境，或 update 失败会造成重大业务影响的场景。
-
-</details>
-
-4\. 以下哪项不是优化 Amazon EKS cluster 中 node groups Auto Scaling 的方法？ - A) 调整 Cluster Autoscaler scan interval - B) 配置 pod priority 和 preemption - C) 按 node group 标记 Auto Scaling groups - D) 所有 nodes 使用相同 instance type
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：D) 所有 nodes 使用相同 instance type**
-
-**解释：** 不属于优化 Amazon EKS cluster 中 node groups Auto Scaling 方法的选项是“所有 nodes 使用相同 instance type”。实践中，混合多种 instance types 在 cost optimization 和 availability 方面是更有效的 Auto Scaling 策略。尤其在使用 Spot Instances 时，建议指定多个 instance types 以提高 capacity availability 并降低 interruption risk。
-
-**优化 Node Group Auto Scaling 的实际方法：**
-
-1. **调整 Cluster Autoscaler Scan Interval**:
-   * Cluster Autoscaler 定期扫描 cluster，以判断是否需要 scale up 或 scale down。
-   * 你可以通过调整 scan interval 在响应时间和 resource usage 之间取得平衡。
-   *   示例：
-
-       ```yaml
-       # Cluster Autoscaler deployment configuration
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: cluster-autoscaler
-         namespace: kube-system
-       spec:
-         template:
-           spec:
-             containers:
-             - name: cluster-autoscaler
-               image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-               command:
-               - ./cluster-autoscaler
-               - --v=4
-               - --stderrthreshold=info
-               - --cloud-provider=aws
-               - --scan-interval=30s  # Adjust scan interval (default: 10 seconds)
-               - --max-node-provision-time=15m
-               - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-       ```
-2. **配置 Pod Priority 和 Preemption**:
-   * 使用 pod priority 和 preemption (PriorityClass) 确保重要 workloads 优先调度。
-   * 当资源不足时，较低优先级 pods 会被 preempted，为较高优先级 pods 腾出空间。
-   *   示例：
-
-       ```yaml
-       # Priority class definition
-       apiVersion: scheduling.k8s.io/v1
-       kind: PriorityClass
-       metadata:
-         name: high-priority
-       value: 1000000
-       globalDefault: false
-       description: "High priority pods"
-       ---
-       # High priority pod
-       apiVersion: v1
-       kind: Pod
-       metadata:
-         name: high-priority-pod
-       spec:
-         priorityClassName: high-priority
-         containers:
-         - name: nginx
-           image: nginx
-       ```
-3. **按 Node Group 标记 Auto Scaling Groups**:
-   * 为 Auto Scaling groups 添加 tags，使 Cluster Autoscaler 能识别并管理特定 node groups。
-   * 可以为每个 node group 配置不同的 Auto Scaling 行为。
-   *   示例：
-
-       ```bash
-       # Tag Auto Scaling group
-       aws autoscaling create-or-update-tags \
-         --tags ResourceId=my-asg,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true \
-                ResourceId=my-asg,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/my-cluster,Value=owned,PropagateAtLaunch=true
-
-       # Configure Auto Scaling settings per node group
-       aws autoscaling update-auto-scaling-group \
-         --auto-scaling-group-name my-asg \
-         --min-size 2 \
-         --max-size 10 \
-         --desired-capacity 2
-       ```
-
-**混合多种 Instance Types 的优势：**
-
-1. **Cost Optimization**:
-   * 利用各种 instance types 之间的价格差异
-   * 使用 Spot Instances 时提高 availability
-   *   示例：
-
-       ```yaml
-       # Node group using various instance types
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-instances
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-           minSize: 2
-           maxSize: 10
-           spot: true
-       ```
-2. **Improved Availability**:
-   * 当特定 instance types 容量不足时使用替代 instance types
-   * Spot Instances 中断时可以切换到其他 types
-   *   示例：
-
-       ```yaml
-       # Capacity-optimized Spot allocation strategy
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: spot-nodes
-           instanceTypes: ["c5.large", "c5a.large", "c5d.large", "c5n.large"]
-           minSize: 2
-           maxSize: 10
-           spot: true
-           spotAllocationStrategy: capacity-optimized
-       ```
-3. **基于 Workload Characteristics 选择 Instance Types**:
-   * 提供适合各种 workload requirements 的 instance types
-   * 使用 node selectors 和 taints 控制 workload placement
-   *   示例：
-
-       ```yaml
-       # Node groups by workload characteristics
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: general-purpose
-           instanceTypes: ["m5.large"]
-           minSize: 2
-           maxSize: 10
-
-         - name: compute-intensive
-           instanceTypes: ["c5.large"]
-           minSize: 0
-           maxSize: 10
-           labels:
-             workload-type: compute
-       ```
-
-**Auto Scaling 优化的其他策略：**
-
-1. **Overprovisioning**:
-   * 保留一定数量的 spare resources，以应对突然的 scaling requests
-   *   示例：
-
-       ```yaml
-       # Overprovisioning pod
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: overprovisioning
-         namespace: kube-system
-       spec:
-         replicas: 1
-         selector:
-           matchLabels:
-             app: overprovisioning
-         template:
-           metadata:
-             labels:
-               app: overprovisioning
-           spec:
-             priorityClassName: overprovisioning
-             containers:
-             - name: reserve-resources
-               image: k8s.gcr.io/pause:3.2
-               resources:
-                 requests:
-                   cpu: 1000m
-                   memory: 1000Mi
-       ```
-2. **优化 Scaling Policies**:
-   * 使用 target tracking scaling policies
-   * 使用 step scaling policies
-   * 启用 predictive scaling
-   *   示例：
-
-       ```bash
-       # Configure target tracking scaling policy
-       aws autoscaling put-scaling-policy \
-         --auto-scaling-group-name my-asg \
-         --policy-name cpu70-target-tracking-scaling-policy \
-         --policy-type TargetTrackingScaling \
-         --target-tracking-configuration '{"PredefinedMetricSpecification":{"PredefinedMetricType":"ASGAverageCPUUtilization"},"TargetValue":70.0,"DisableScaleIn":false}'
-       ```
-3. **使用 Karpenter**:
-   * 考虑使用 Karpenter 代替 Cluster Autoscaler
-   * 更快的 node provisioning 和更灵活的 instance type selection
-   *   示例：
-
-       ```yaml
-       # Karpenter Provisioner
-       apiVersion: karpenter.sh/v1alpha5
-       kind: NodePool
-       metadata:
-         name: default
-       spec:
-         template:
-           spec:
-             requirements:
-               - key: karpenter.sh/capacity-type
-                 operator: In
-                 values: ["spot", "on-demand"]
-               - key: node.kubernetes.io/instance-type
-                 operator: In
-                 values: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-         limits:
-           resources:
-             cpu: 1000
-             memory: 1000Gi
-       ```
-
-所有 nodes 使用相同 instance type 不是 Auto Scaling optimization strategy；相反，混合多种 instance types 在 cost optimization 和 availability 方面更有效。因此，“所有 nodes 使用相同 instance type”不是优化 node groups Auto Scaling 的方法。
-
-</details>
-
-5. 创建 Amazon EKS cluster 的 node groups 时，以下哪项不是应考虑的 security best practice？
-   * A) 要求 IMDSv2
-   * B) 应用 least privilege IAM policies
-   * C) 为所有 nodes 分配 public IP addresses
-   * D) 限制 security group rules
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：C) 为所有 nodes 分配 public IP addresses**
-
-**解释：** 创建 Amazon EKS cluster 的 node groups 时，不属于应考虑的 security best practice 的选项是“为所有 nodes 分配 public IP addresses”。实际的 security best practice 正好相反：将 nodes 放在 private subnets 中，并且不分配 public IP addresses。这会通过防止 nodes 从 internet 直接访问来减少攻击面。
-
-**EKS Node Group 创建的实际 Security Best Practices：**
-
-1. **要求 IMDSv2**:
-   * 要求 Instance Metadata Service version 2 (IMDSv2) 以防御 SSRF (Server-Side Request Forgery) attacks
-   * IMDSv2 使用 session-based requests 来增强安全性
-   *   示例：
-
-       ```yaml
-       # eksctl configuration file
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: secure-nodes
-           instanceType: m5.large
-           minSize: 2
-           maxSize: 5
-           disableIMDSv1: true  # Disable IMDSv1
-           metadataOptions:
-             httpTokens: required  # Require IMDSv2
-             httpPutResponseHopLimit: 1
-       ```
-2. **应用 Least Privilege IAM Policies**:
-   * 仅向 node IAM roles 授予最低必要权限
-   * 当需要超出默认 managed policies 的额外权限时，创建细粒度 policies
-   *   示例：
-
-       ```yaml
-       # Least privilege policy for node IAM role
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: secure-nodes
-           instanceType: m5.large
-           minSize: 2
-           maxSize: 5
-           iam:
-             attachPolicyARNs:
-               - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-               - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-               - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-             withAddonPolicies:
-               imageBuilder: false
-               autoScaler: false
-               externalDNS: false
-               certManager: false
-               appMesh: false
-               ebs: true
-               fsx: false
-               efs: false
-               albIngress: false
-               xRay: false
-               cloudWatch: true
-       ```
-3. **限制 Security Group Rules**:
-   * 限制 node security groups 的 inbound 和 outbound rules
-   * 只打开最低必要 ports
-   *   示例：
-
-       ```bash
-       # Create security group
-       aws ec2 create-security-group \
-         --group-name eks-node-sg \
-         --description "Security group for EKS nodes" \
-         --vpc-id vpc-12345
-
-       # Add only rules necessary for cluster communication
-       aws ec2 authorize-security-group-ingress \
-         --group-id sg-12345 \
-         --protocol tcp \
-         --port 443 \
-         --source-group sg-cluster
-
-       aws ec2 authorize-security-group-ingress \
-         --group-id sg-12345 \
-         --protocol tcp \
-         --port 10250 \
-         --source-group sg-cluster
-       ```
-
-**不为 Nodes 分配 Public IP Addresses 的原因：**
-
-1. **减少 Attack Surface**:
-   * 没有 public IPs，nodes 无法从 internet 直接访问
-   * SSH access 等管理任务通过 bastion hosts 或 AWS Systems Manager 执行
-2. **改进 Security Architecture**:
-   * 将 nodes 放置在 private subnets
-   * 仅允许通过 NAT Gateway 进行 outbound communication
-   * 仅允许通过 load balancers 进入 inbound traffic
-3. **Regulatory Compliance**:
-   * 许多 security standards 和 regulations 要求最大限度减少直接 internet exposure
-   * 有助于满足 PCI DSS、HIPAA 和其他 regulations 的 compliance
-
-**将 Nodes 放置在 Private Subnets 的示例：**
+此示例保留了规格相近的 `m5` 系列实例。它是为现有且经过审查的集群配置节点组的示例，要求使用未占用的组名称；它并不证明价格/性能或容量有保障。请确认各 AZ 是否提供实例，以及镜像/驱动程序/存储兼容性：
 
 ```yaml
-# eksctl configuration file
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
   name: my-cluster
   region: us-west-2
-vpc:
-  subnets:
-    private:
-      us-west-2a: { id: subnet-private-a }
-      us-west-2b: { id: subnet-private-b }
-    public:
-      us-west-2a: { id: subnet-public-a }
-      us-west-2b: { id: subnet-public-b }
 managedNodeGroups:
-  - name: secure-nodes
-    instanceType: m5.large
-    minSize: 2
-    maxSize: 5
-    privateNetworking: true  # Place nodes in private subnets
+- name: on-demand-base
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  spot: false
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+- name: spot-scaling
+  amiFamily: AmazonLinux2023
+  instanceTypes: [m5.large, m5a.large, m5d.large, m5ad.large, m5n.large]
+  privateNetworking: true
+  spot: true
+  desiredCapacity: 0
+  minSize: 0
+  maxSize: 20
 ```
+请将不同工作负载规格分开，不要把内存型、计算型和通用型实例合并到一个自动扩缩组中：
 
-**其他 EKS Security Best Practices：**
-
-1. **启用 Encryption**:
-   * EBS volume encryption
-   * Secrets encryption
-   *   示例：
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       secretsEncryption:
-         keyARN: arn:aws:kms:us-west-2:123456789012:key/key-id
-       nodeGroups:
-         - name: secure-nodes
-           volumeEncrypted: true
-           volumeKmsKeyID: arn:aws:kms:us-west-2:123456789012:key/key-id
-       ```
-2. **Container Security**:
-   * 禁用 privileged containers
-   * 使用 read-only root filesystem
-   *   示例：
-
-       ```yaml
-       apiVersion: v1
-       kind: Pod
-       metadata:
-         name: secure-pod
-       spec:
-         containers:
-         - name: secure-container
-           image: nginx
-           securityContext:
-             privileged: false
-             readOnlyRootFilesystem: true
-             allowPrivilegeEscalation: false
-       ```
-3. **实现 Network Policies**:
-   * 限制 pod-to-pod communication
-   * 应用 default deny policies
-   *   示例：
-
-       ```yaml
-       apiVersion: networking.k8s.io/v1
-       kind: NetworkPolicy
-       metadata:
-         name: default-deny
-         namespace: default
-       spec:
-         podSelector: {}
-         policyTypes:
-         - Ingress
-         - Egress
-       ```
-4. **Logging 和 Monitoring**:
-   * 启用 CloudWatch Logs
-   * 启用 GuardDuty EKS Protection
-   *   示例：
-
-       ```bash
-       # Enable CloudWatch Logs
-       aws eks update-cluster-config \
-         --name my-cluster \
-         --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-       ```
-
-为所有 nodes 分配 public IP addresses 不是 security best practice；相反，它会增加安全风险。因此，“为所有 nodes 分配 public IP addresses”不是创建 Amazon EKS cluster node groups 时应考虑的 security best practice。
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: compute-optimized
+  amiFamily: AmazonLinux2023
+  instanceTypes: [c5.2xlarge, c5a.2xlarge]
+  privateNetworking: true
+  minSize: 2
+  maxSize: 10
+  labels: {workload-type: compute}
+  taints:
+  - {key: workload-type, value: compute, effect: NoSchedule}
+- name: memory-optimized
+  amiFamily: AmazonLinux2023
+  instanceTypes: [r5.2xlarge, r5a.2xlarge]
+  privateNetworking: true
+  minSize: 2
+  maxSize: 10
+  labels: {workload-type: memory}
+  taints:
+  - {key: workload-type, value: memory, effect: NoSchedule}
+```
+如果工作负载必须使用专用资源池，则它必须同时具有匹配的 toleration 和选择器/亲和性。标签本身不会安排它，而污点不是租户安全边界。请考虑从零扩缩时的发现、daemon 开销、中断处理、存储持久性，以及对所有候选实例类型的测试。多样性可能增加监控和故障排查工作；管理更简单或成本更低都不是必然结果。
 
 </details>
+
+3. 哪种策略会先创建独立的替代节点组，再退役旧节点组？
+   * A) 未跟踪的主机软件包更新
+   * B) 蓝绿迁移
+   * C) 一次性删除所有节点
+   * D) 仅更改集群显示名称
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B) 蓝绿迁移**
+
+蓝绿迁移会创建独立的替代节点组，并在验证后迁移工作负载。在旧节点组和兼容的应用程序/数据状态仍保留期间，这种方法可以保留回滚选项。一个集群中的两个节点组仍共享控制平面和其他依赖；这并非完全隔离，也不保证零停机。
+
+| 策略 | 优点 | 重要限制 |
+| --- | --- | --- |
+| 蓝绿 | 在最终退役前验证替代容量 | 需要额外成本/容量；回滚取决于保留的节点和兼容状态 |
+| 托管滚动更新 | EKS 协调逐步替换节点 | `DEFAULT` 会使用临时额外节点；PDB/容量问题可能阻止更新进展 |
+| Canary | 先尝试独立的小型工作负载/节点组 | 必须实际限制工作负载/流量范围；会增加验证和路由工作 |
+| 手动修改主机软件包 | 更改单个主机 | 会导致与 AMI 不一致；应使用经过审查的替代镜像生命周期，而不是不加限定的 SSH/yum 操作说明 |
+
+**替代组示例：**对于现有集群和未占用的组名称，请审查此文件并运行 `eksctl create nodegroup -f green-nodegroup.yaml`。首先确认 AL2023/架构兼容性、附加组件、出口、IP 空间、配额和存储拓扑。
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: green-nodegroup
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  desiredCapacity: 3
+  minSize: 3
+  maxSize: 5
+  labels:
+    audit.example.com/pool: green
+```
+**真正的 canary 会使用单独的 Deployment：**以下是在专用 `update-lab` namespace 中运行的最小 HTTP 探测工作负载，使用独特标签以避免意外加入现有 Service。若要声称应用程序兼容，请先将其替换为实际应用程序中经过审查的 canary。修改主 Deployment 的节点选择器会滚动更新其**所有**副本，并不是范围受限的 canary。
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-canary
+  namespace: update-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: my-app-canary}
+  template:
+    metadata:
+      labels: {app: my-app-canary}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        audit.example.com/pool: green
+      containers:
+      - name: web
+        image: nginx:1.30.6
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet: {path: /, port: 80}
+        resources:
+          requests: {cpu: 100m, memory: 64Mi}
+          limits: {cpu: 500m, memory: 128Mi}
+```
+在经过审查的观察期内，验证就绪状态、API/CNI/DNS、应用程序错误、资源压力、持久卷和有代表性的流量。明确配置流量路由；节点标签不会切换流量。验证替代容量以及工作负载/数据行为后，每次 drain 一个确认无误的旧节点：
+
+```bash
+# One reviewed node at a time, after validating replacement capacity.
+OLD_NODE_JSON=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get node "${OLD_NODE_NAME:?}" -o json) || exit 1
+OLD_NODE_GROUP=$(printf '%s' "$OLD_NODE_JSON" |
+  jq -er '.metadata.labels["eks.amazonaws.com/nodegroup"]') || exit 1
+if [ "$OLD_NODE_GROUP" != "${OLD_NODEGROUP_NAME:?}" ]; then
+  printf '%s\n' 'Node is not in the intended old managed node group.' >&2
+  exit 1
+fi
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" cordon "$OLD_NODE_NAME" &&
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" drain "$OLD_NODE_NAME" \
+  --ignore-daemonsets --timeout=15m
+```
+drain 被阻止时应进行诊断，而不是使用 `--force` 或自动删除 emptyDir。在单独执行最终删除步骤前，确认所有工作负载和状态数据均已迁移：
+
+```bash
+# Separate final step, after application/data validation and ownership review.
+if [ "${MIGRATION_VERIFIED:?Set yes only after workload and data checks}" = yes ]; then
+  eksctl delete nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
+    --region "${EXAMPLE_REGION:?}" --name "${OLD_NODEGROUP_NAME:?}" --approve --wait
+fi
+```
+若选择托管滚动更新方案，请先按照基本问题 9 完成 `update-nodegroup-config` 操作，再提交 `update-nodegroup-version`，然后跟踪返回的 update ID。托管节点组可以保留其资源身份，同时替换 EC2 节点。旧容量被删除或数据发生不兼容更改后，“立即回滚”便不再可行。
+
+</details>
+
+4. 哪项操作可能与 Cluster Autoscaler 对托管 ASG 的控制权冲突？
+   * A) 检查发现标签
+   * B) 根据观察调整扫描频率
+   * C) 使用准确的 Pod 资源 requests
+   * D) 添加另一个独立更改相同预期容量的策略
+
+<details>
+<summary>显示答案</summary>
+
+**答案：D) 添加另一个独立更改相同预期容量的策略**
+
+Cluster Autoscaler 根据调度请求而非仅根据 EC2 平均 CPU 使用率来控制节点组容量。更改同一预期容量的 target-tracking 或 predictive ASG 策略可能与该控制循环冲突，并绕过预期的 Kubernetes drain 流程。不要为了“优化”而直接将预期容量重设为两个。
+
+**实用控制措施：**
+
+* 根据响应时间和 API 负载调整扫描频率。文档记录的默认值为 10 秒；30 秒只是可供测试的示例，并非测量得出的最佳值。同样，预置超时也必须符合实际节点启动行为。
+* 使用经过审查的 ASG 发现标签和限定标签范围的 IAM。标签用于识别符合条件的组；它们不会授予权限，也不定义扩缩算法。
+* 使 requests、标签和污点与实际容量匹配。使用一种实例类型可能合适；如果可用性/Spot 需求有理由支撑，采用规格相近的多样化实例也有用（高级问题 2）。
+* 有意地使用优先级。抢占不保证可用性，也可能影响低优先级工作负载。只有在评估准入和工作负载策略后，才通过 `priorityClassName` 绑定以下类别：
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: audit-high-priority
+value: 1000000
+globalDefault: false
+description: Reviewed priority for critical application Pods
+```
+**超额预留容量：**使用可抢占的低优先级 Pod 预留 requests。对于此示例，Cluster Autoscaler 配置的 expendable-Pod cutoff 必须低于 `-5`（例如 `-10`），而应用程序 Pod 的优先级必须更高。否则，备用 Pod 可能无法按预期触发容量补充。请使用专用 namespace 和未占用的 PriorityClass 名称：
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: audit-overprovisioning
+value: -5
+globalDefault: false
+description: Temporary spare capacity for an autoscaling lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overprovisioning
+  namespace: autoscaling-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: overprovisioning}
+  template:
+    metadata:
+      labels: {app: overprovisioning}
+    spec:
+      priorityClassName: audit-overprovisioning
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: reserve
+        image: public.ecr.aws/docker/library/busybox:1.38.0
+        command: [sleep, '86400']
+        resources:
+          requests: {cpu: 1000m, memory: 1000Mi}
+          limits: {cpu: 1000m, memory: 1000Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
+此配置会占用 1 个 CPU 和 1000Mi 的请求容量，不会预热应用程序状态，并且会产生节点成本。它不会避免镜像拉取、卷附加或应用程序初始化。请根据观察到的需求确定规模，并在测试后删除自有的预留 Deployment 和 PriorityClass。
+
+请使用基本问题 10 中完整渲染的 Cluster Autoscaler 配置，而不是旧的不完整 v1.23 Deployment。Karpenter 是单独管理容量的替代方案；其 NodePool 必须引用有效且已授权的 EC2NodeClass。KEDA/HPA 会扩缩工作负载副本，进而可能为任一节点 autoscaler 产生需求。启用所有扩缩机制并让它们同时管理相同资源前，请验证这些控制循环之间的相互作用。
+
+</details>
+
+5. 以下哪项**不是** EKS 节点组的通用安全最佳实践？
+   * A) 要求使用 IMDSv2 并检查元数据访问
+   * B) 遵循最小权限原则
+   * C) 为每个节点分配公有 IP
+   * D) 检查安全组规则
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C) 为每个节点分配公有 IP**
+
+为每个节点分配公有 IP 并不是通用安全最佳实践。私有子网可以减少直接暴露于互联网的风险，但仍需考虑路由、安全组、IAM、软件维护和工作负载控制。
+
+**节点身份和元数据：**使用 eksctl 支持的 `disableIMDSv1` 字段，要求使用 IMDSv2。嵌套的 `metadataOptions` 对象并非 eksctl 托管节点组字段；自定义 EC2 MetadataOptions 应放在经过审查的启动模板中。IMDSv2 可以缓解某些 SSRF 路径，但无法阻止所有 Pod 访问节点凭证，尤其是 host-network Pod。请分别检查元数据访问、工作负载身份和主机依赖项。
+
+**最小权限和加密根卷：**此现有集群节点组示例假设 CNI 已有自己的 IRSA/Pod Identity 权限。EBS CSI、日志收集器和应用程序也需要各自经过审查的角色；将这些资源的广泛权限附加到每个节点上有违最小权限原则。
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: secure-nodes
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+  disableIMDSv1: true
+  volumeEncrypted: true
+  iam:
+    attachPolicyARNs:
+    - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+    - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly
+```
+EBS 加密保护的是与 Kubernetes API 数据不同的层。EKS 1.28 及更高版本默认使用 envelope encryption 对所有 Kubernetes API 静态数据进行加密；客户托管 KMS key 是可选项，但会增加授权/权限和密钥生命周期义务。不要将禁用或删除集群密钥作为例行清理操作。
+
+**网络设计：**私有 API endpoint 要求具备可路由的管理员/节点访问路径。公有 API 限制应使用 `publicAccessCidrs`，而不是在集群 SG 上设置入站规则。请检查 AWS 对完整集群/节点 SG 的要求：TCP 443、TCP 10250、TCP/UDP 53，以及工作负载特定路径，并确保方向和对等安全组正确。仅配置两条入站端口规则并不是完整的节点网络设计。
+
+私有 IPv4 互联网出口可以使用 NAT；VPC endpoints 和原生 IPv6 则具有不同路径。入站流量可以来自负载均衡器或已授权的互联网络。仅使用私有子网既不能证明已完全隔离，也不能证明符合监管要求。
+
+**容器控制：**使用兼容非 root 和只读运行模式的工作负载。此由控制器管理的诊断 Pod 在**新建的专用** `security-lab` namespace 中运行，无需网络或可写根文件系统：
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-pod
+  namespace: security-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &id001
+      app: secure-pod
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: secure-container
+        image: public.ecr.aws/docker/library/busybox:1.38.0
+        command:
+        - sh
+        - -c
+        - echo read-only-lab; sleep 3600
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+```
+可以在该专用 namespace 中演示强制执行的拒绝策略；用于实际工作负载前，请添加显式的 DNS/应用允许规则：
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: security-lab
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+```
+**日志记录和检测：**控制平面 CloudWatch 日志有五种可配置类型：
+
+```bash
+# Enable the reviewed set of log types; this example enables all five.
+if LOG_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --update-id "$LOG_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+fi
+```
+等待返回的更新成功，并验证实际日志传输和保留情况。这不会收集所有容器的应用程序日志。GuardDuty EKS audit-log protection 和 Runtime Monitoring 是不同的功能，各自有独立配置/覆盖范围；仅启用控制平面日志并不能实现运行时威胁检测。
+
+</details>
+
+
+## 参考资料
+
+* [EKS 前缀模式](https://docs.aws.amazon.com/eks/latest/best-practices/prefix-mode-linux.html)
+* [EKS maxPods 和前缀配置流程](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)
+* [EKS 网络策略](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+* [NAT gateways](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html)
+* [子网路由表关联](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-subnetroutetableassociation.html)
+* [Pod 安全组](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+* [CoreDNS 托管附加组件](https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html)
+* [CoreDNS cache](https://coredns.io/plugins/cache/)
+* [CoreDNS reload](https://coredns.io/plugins/reload/)
+* [Kubernetes 多租户](https://kubernetes.io/docs/concepts/security/multi-tenancy/)
+* [Kubernetes PDB](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
+* [EKS Cluster Autoscaler](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)
+* [EKS 托管节点更新](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html)
+* [在 EKS 上运行 Calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
+* [Calico NetworkPolicy](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+* [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+* [EKS 节点 IAM 角色](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)

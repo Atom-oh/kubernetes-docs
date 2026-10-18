@@ -1,33 +1,33 @@
 # Infraestructura de IA en EKS
 
-> **Última actualización**: September 12, 2026
-> **Líneas base**: GPU Operator26.7.0 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
+> **Última actualización**: October 16, 2026
+> **Versiones de referencia**: GPU Operator26.7.2 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
-La infraestructura de IA combina notebooks, pipelines, runtimes distribuidos, dispositivos/nodos, almacenamiento/redes y autorización. Una lista de herramientas o un release de Helm exitoso no establece la seguridad, la disponibilidad ni la ejecución de modelos de la plataforma.
+La infraestructura de IA combina notebooks, pipelines, runtimes distribuidos, dispositivos/nodos, almacenamiento/redes y autorización. Una lista de herramientas o una release de Helm exitosa no garantiza la seguridad ni la disponibilidad de la plataforma, ni la ejecución de modelos.
 
 ## Capas y responsabilidades
 
-![Capas que separan las responsabilidades del workload, la plataforma, el cómputo y la base de EKS.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-0.png)
+![Capas que separan las responsabilidades de las cargas de trabajo, la plataforma, el cómputo y los cimientos de EKS.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-0.html)
 
-Las cargas de trabajo son dueñas del código de modelo/datos/ejecución; las plataformas son dueñas de los workflows, runtimes y registries; el cómputo es dueño de los dispositivos reales, los Pods y la capacidad de nodo. Las identidades de IAM, redes y almacenamiento atraviesan estas capas. Un NodePool habilitado para Spot no garantiza ni capacidad ni recuperación/ahorro.
+Las cargas de trabajo se encargan del código de modelos/datos/ejecución; las plataformas, de los workflows, runtimes y registros; el cómputo, de los dispositivos reales, los Pods y la capacidad de los nodos. Las identidades de IAM, redes y almacenamiento abarcan estas capas. Un NodePool habilitado para Spot no garantiza capacidad, recuperación ni ahorro.
 
 ## Stack JARK
 
-JARK combina JupyterHub, Argo Workflows, Ray y Karpenter. Es un patrón de integración, no un producto único conectado automáticamente. Conecte de forma explícita la autorización de notebooks, el envío de workflows, los jobs de Ray, la planificación (scheduling) de Kubernetes y el provisioning de nodos.
+JARK combina JupyterHub, Argo Workflows, Ray y Karpenter. Es un patrón de integración, no un producto que se conecte automáticamente. Conecta explícitamente la autorización de notebooks, el envío de workflows, los trabajos de Ray, la programación de Kubernetes y el aprovisionamiento de nodos.
 
-![JupyterHub/Argo/Ray crean workloads de Kubernetes; el scheduler coloca los Pods y Karpenter aprovisiona los nodos.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-1.png)
+![JupyterHub/Argo/Ray crean cargas de trabajo de Kubernetes; el scheduler coloca los Pods y Karpenter aprovisiona nodos.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-1.html)
 
-### Autenticación de JupyterHub y perfiles de notebook
+### Autenticación y perfiles de notebooks de JupyterHub
 
-El chart4.4.2 declara appVersion5.5.2, distinta del Hub6.0.0 más reciente inspeccionado en PyPI. Las comprobaciones locales de la API usaron Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0; verifique las combinaciones reales de paquetes dentro de la imagen del chart en operación.
+Chart4.4.2 declara appVersion5.5.2, distinta de la versión más reciente de Hub inspeccionada en PyPI: 6.1.0 (2026-10-14). Las comprobaciones locales de la API usaron Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0; verifica las combinaciones reales de paquetes dentro de la imagen del chart operativo.
 
-Cognito es una de las opciones de proveedor OIDC. Haga coincidir las URLs de callback, los endpoints de token/userInfo, los scopes y un claim de nombre de usuario estable, y configure una política de permitidos explícita. El MFA y la federación corporativa deben configurarse en el proveedor; GenericOAuthenticator no los habilita automáticamente.
+Cognito es una opción de proveedor OIDC. Haz coincidir las URL de callback, los endpoints de token/userInfo, los scopes y un claim de nombre de usuario estable, y configura una política de autorización explícita. MFA/la federación corporativa deben configurarse en el proveedor; GenericOAuthenticator no las habilita automáticamente.
 
-Esta configuración del Hub asume un Secret existente montado en /run/secrets/oidc. Mantenga los secretos reales fuera de los ConfigMaps, el código fuente y las variables de entorno. Enlace este archivo Python con la ruta de configuración real del Hub y reemplace las URIs y los valores de sub aprobados según su entorno.
+Esta configuración de Hub presupone que existe un volumen Secret montado en /run/secrets/oidc. Mantén los secretos reales fuera de ConfigMaps, el código fuente y las variables de entorno. Conecta este archivo Python con la ruta de configuración real de Hub y sustituye los URI/valores de sub aprobados según tu entorno.
 
 ```python
 from pathlib import Path
@@ -46,15 +46,15 @@ c.GenericOAuthenticator.allow_existing_users = False
 c.GenericOAuthenticator.allowed_users = {"replace-with-approved-cognito-sub"}
 ```
 
-El ejemplo establece allow_all=False, un allowed_users explícito y allow_existing_users=False. Las comprobaciones locales permitieron una identidad aprobada y rechazaron usuarios no aprobados o previos. No se ejecutó ningún inicio de sesión OAuth ni intercambio de tokens real.
+El ejemplo establece allow_all=False, allowed_users explícitos y allow_existing_users=False. Las comprobaciones locales permitieron una identidad aprobada y rechazaron usuarios no aprobados o anteriores. No se ejecutó ningún inicio de sesión OAuth ni intercambio de tokens real.
 
-Distinga entre las garantías (requests) de CPU/RAM del notebook y los límites, y haga coincidir las imágenes, etiquetas, tolerations y drivers de GPU reales. No asuma que las etiquetas antiguas jupyter/*:gpu proporcionan CUDA. Los PVCs deben compartir el namespace del Pod que los consume; un Pod de jupyterhub no puede referenciar un PVC de ml-platform solo por su nombre. Revise los access points por usuario, el UID/GID, las cuotas y los permisos de escritura de modelos compartidos. El storage_capacity de EFS no es un límite de capacidad física.
+Distingue las garantías de CPU/RAM de los notebooks de sus límites, y hazlas coincidir con las imágenes GPU, etiquetas, tolerations y drivers reales. No des por hecho que las etiquetas antiguas jupyter/*:gpu incluyen CUDA. Los PVC deben estar en el mismo namespace que el Pod que los consume; un Pod de jupyterhub no puede hacer referencia a un PVC de ml-platform solo por su nombre. Revisa los puntos de acceso por usuario, UID/GID, cuotas y permisos de escritura de modelos compartidos. storage_capacity de EFS no es un límite de capacidad física.
 
 ### Flujo de datos de Argo Workflows
 
-El workflow anterior referenciaba templates, artifacts y scripts inexistentes. Este **fixture mínimo de flujo de datos** tiene seis etapas. Pasa parámetros mediante variables de entorno y JSON en lugar de inyectar valores en el código fuente de Python. Selecciona entre dos coeficientes; no es un pipeline real de entrenamiento de clasificación de imágenes, de cluster Ray ni de registry externo.
+El workflow anterior hacía referencia a templates, artifacts y scripts que no existían. Este **fixture mínimo de flujo de datos** tiene seis etapas. Pasa parámetros mediante variables de entorno y JSON en lugar de insertar valores en el código fuente de Python. Elige entre dos coeficientes; no es un pipeline real de entrenamiento de clasificación de imágenes, clúster Ray ni registro externo.
 
-El lint offline de Argo4.1.3 y los seis cuerpos de script de Python se validaron localmente. Prepare prepared-workflow-runner con privilegios mínimos y configure los digests de imagen, las cuotas y el almacenamiento de artifacts por separado antes de operar.
+Se validaron localmente el lint sin conexión de Argo4.1.3 y los cuerpos de los seis scripts de Python. Prepara prepared-workflow-runner con privilegios mínimos y configura por separado los digests de imagen, las cuotas y el almacenamiento de artifacts antes de usarlo en operaciones.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -287,29 +287,29 @@ spec:
         '
 ```
 
-El MSE0 del fixture proviene de cuatro muestras sintéticas, no de una medición real de la calidad del modelo. Los workflows de producción necesitan separación de train/test, revisiones de datos/modelos, reglas de fallo/reintento/idempotencia y entregas reales de artifacts. artifactRepositoryRef no instala boto3 ni concede permisos de descarga a la aplicación.
+El MSE0 del fixture procede de cuatro muestras sintéticas, no de una medición real de la calidad del modelo. Los workflows de producción necesitan separación entre entrenamiento y prueba, revisiones de datos/modelos, reglas de fallos/reintentos/idempotencia y transferencias reales de artifacts. artifactRepositoryRef no instala boto3 ni concede permisos de descarga a la aplicación.
 
 ### Ray y Karpenter
 
-Use las rutas auditadas de Ray2.58/KubeRay1.7 en la [guía de Ray](ray/README.md). GCS significa Global Control Service; la planificación interactúa con los raylets. El head puede ejecutar trabajo si anuncia CPU. Evite combinaciones no verificadas de Ray/Python entre workers de CPU/GPU/Neuron; las imágenes de Neuron también necesitan Ray y frameworks compatibles.
+Usa las rutas auditadas de Ray2.58/KubeRay1.7 en la [guía de Ray](ray/README.md). GCS significa Global Control Service; la programación interactúa con raylets. El head puede ejecutar trabajo si anuncia CPU. Evita combinaciones de Ray/Python no verificadas en workers de CPU/GPU/Neuron; las imágenes de Neuron también necesitan Ray y frameworks compatibles.
 
-El autoscaling de Ray expresa la demanda de Pods worker, el scheduler de Kubernetes coloca los Pods y Karpenter suministra capacidad de nodo compatible. Los workers de Ray no invocan directamente las APIs de Karpenter. Haga coincidir las etiquetas de producto de memoria/GPU con los nodos reales; no seleccione p4d A100 de40GB con una etiqueta de80GB.
+El autoscaling de Ray expresa la demanda de worker-Pod, el scheduler de Kubernetes coloca los Pods y Karpenter proporciona capacidad de nodo compatible. Los workers de Ray no invocan directamente las API de Karpenter. Haz coincidir las etiquetas de producto de memoria/GPU con los nodos reales; no selecciones A100 de 40GB p4d con una etiqueta de 80GB.
 
-No duplique drivers en las AMIs NVIDIA de AL2023 ni sobrescriba la configuración completa de containerd. Los limits de Karpenter no son topes absolutos de admisión/costo, y la consolidación no usa directamente un umbral de utilización del20% de DCGM. Inspeccione los requests, la viabilidad de planificación, los precios y las restricciones de disruption.
+No dupliques drivers en AMI NVIDIA de AL2023 ni sobrescribas toda la configuración de containerd. Los límites de Karpenter no son topes absolutos de admisión/costo, y la consolidación no usa directamente un umbral de utilización de DCGM del 20%. Inspecciona las solicitudes, la viabilidad de la programación, los precios y las restricciones de interrupción.
 
-## APIs de DRA y límites de soporte
+## API de DRA y límites de compatibilidad
 
-DRA representa atributos, solicitudes y asignación de dispositivos mediante DeviceClass, ResourceSlice y ResourceClaim/Template. Los drivers publican slices; los componentes de scheduler/driver asignan y preparan las claims. Los ResourceSlices escritos a mano no crean GPUs reales. La madurez de la API de Kubernetes y la madurez de las funcionalidades del driver de NVIDIA son cosas distintas.
+DRA representa los atributos, las solicitudes y la asignación de dispositivos mediante DeviceClass, ResourceSlice y ResourceClaim/Template. Los drivers publican slices; los componentes del scheduler/driver asignan y preparan los claims. Los ResourceSlices escritos manualmente no crean GPU reales. La madurez de la API de Kubernetes y la madurez de las funcionalidades del driver NVIDIA son independientes.
 
-![Recursos extendidos de device plugins frente a las rutas de DRA DeviceClass/ResourceSlice/ResourceClaim; la compartición y la topología dependen del driver, del hardware y de los feature gates.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-2.png)
+![Rutas de recursos extendidos de device-plugin frente a DeviceClass/ResourceSlice/ResourceClaim de DRA; el uso compartido y la topología dependen del driver, el hardware y los feature gates.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-2.html)
 
-### Ejemplo de claim actual
+### Ejemplo actual de claim
 
-El esquema resource.k8s.io/v1 de Kubernetes1.36.2 inspeccionado usa requests.exactly. Los prerrequisitos del driver NVIDIA0.5 distinguen la asignación de GPU(1.34.2+) de los ComputeDomains(1.32+). Verifique las APIs y las versiones de patch/plataforma que EKS realmente sirve. “Todas las funcionalidades de DRA en1.31+” es inexacto.
+El esquema resource.k8s.io/v1 inspeccionado en Kubernetes1.36.2 usa requests.exactly. Los requisitos previos del driver NVIDIA0.5 distinguen la asignación de GPU (1.34.2+) de ComputeDomains (1.32+). Verifica las API y las versiones de parches/plataforma que realmente ofrece EKS. «Todas las funcionalidades de DRA en 1.31+» es inexacto.
 
-Este **ejemplo de esquema** define una claim de GPU y un Pod con un comando de inventario. Prepare el namespace ml-workloads, la DeviceClass gpu.nvidia.com, el driver/CDI, los nodos y los permisos por separado. En esta auditoría no se realizó ninguna ejecución en GPU.
+Este **ejemplo de esquema** define un claim de GPU y un Pod de comando de inventario. Prepara por separado el namespace ml-workloads, DeviceClass gpu.nvidia.com, driver/CDI, nodos y permisos. En esta auditoría no se ejecutó ninguna GPU.
 
 ```yaml
 apiVersion: resource.k8s.io/v1
@@ -358,49 +358,49 @@ spec:
     effect: NoSchedule
 ```
 
-CEL debe usar la estructura real de atributos tipados/dominios publicada. El antiguo device.topology.node==device.topology.node no expresa colocación en el mismo nodo ni coincide con la API. matchAttribute necesita un atributo cualificado real. Una claim de GPU normal de un solo Pod no asigna automáticamente72GPUs a lo largo de un rack NVL72.
+CEL debe usar los atributos tipados/la estructura de dominio que se hayan publicado realmente. device.topology.node==device.topology.node, usado anteriormente, no expresa la colocación en el mismo nodo ni coincide con la API. matchAttribute necesita un atributo cualificado real. Un claim de GPU normal para un solo Pod no asigna automáticamente 72 GPU en un rack NVL72.
 
 ### NVIDIA0.5 y GPU Operator26.7
 
-El README de0.5 sigue describiendo la asignación de GPU como experimental y deshabilitada por defecto, lo que contradice la documentación de instalación/chart y del Operator26.7. El chart standalone real usa por defecto resources.gpus.enabled=true, pero **rechaza el renderizado** sin una habilitación explícita, para evitar colisiones con el device plugin. No describa la instalación por defecto como algo que deshabilita las GPUs silenciosamente y aun así tiene éxito.
+El README de 0.5 todavía describe la asignación de GPU como experimental y deshabilitada de forma predeterminada, en conflicto con la documentación de instalación/chart y Operator26.7. Los valores predeterminados del chart independiente real son resources.gpus.enabled=true, pero **se rechaza el renderizado** si no se habilita explícitamente para evitar conflictos con device-plugin. No describas la instalación predeterminada como una que deshabilita GPU silenciosamente y termina correctamente.
 
-La ruta gestionada del Operator26.7 usa el singleton GPUCluster llamado gpu-cluster, mutuamente excluyente con ClusterPolicy. Su ruta con driver preinstalado establece clusterPolicy.deployCR=false, gpuCluster.deployCR=true y driver.enabled=false. GPUCluster no reemplaza toda la preparación de driver/toolkit; provea los prerrequisitos de driver/CDI. No instale un release standalone de DRA duplicado. El renderizado local simuló una API DeviceClass servida; no habilitó una funcionalidad real del cluster.
+La ruta gestionada de Operator26.7 usa el singleton GPUCluster llamado gpu-cluster, que es mutuamente excluyente con ClusterPolicy. Su ruta con driver preinstalado establece clusterPolicy.deployCR=false, gpuCluster.deployCR=true y driver.enabled=false. GPUCluster no sustituye toda la preparación de driver/toolkit; proporciona los requisitos previos de driver/CDI. No instales un release DRA independiente duplicado. El renderizado local simuló una API DeviceClass disponible; no habilitó una funcionalidad de clúster real.
 
-Distinga el soporte de GPU completa/MIG existente y ComputeDomain del de DynamicMIG, MPS y TimeSlicingSettings en alpha. El código de feature gates de0.5 inspeccionado declara esos tres como false/Alpha. Algunas etiquetas GA de la documentación también difieren de las etiquetas Beta del código fuente; registre juntos la matriz de soporte, el código y la configuración exactos del release. GPU Operator25.3 por sí solo no establece soporte para todo.
+Distingue la compatibilidad con GPU completa/MIG existente y ComputeDomain de las funcionalidades alpha DynamicMIG, MPS y TimeSlicingSettings. El código de feature gates inspeccionado de 0.5 declara esas tres como false/Alpha. Algunas etiquetas GA de la documentación también difieren de las etiquetas Beta del código fuente; registra conjuntamente la matriz de compatibilidad, el código y la configuración de la versión exacta. GPU Operator25.3 por sí solo no demuestra que todo esté admitido.
 
-Los device plugins también soportan las rutas de MIG existente, time-slicing y la experimental de MPS; el uso compartido de GPU no es exclusivo de DRA.3g.20gb nombra un perfil de instancia, no tres instancias de20GB. La asignación MIG/exclusiva no aísla automáticamente el host, el driver, los privilegios ni todos los canales laterales; MPS y time-slicing no son fronteras de seguridad.
+Los device plugins también admiten rutas de MIG existente, time-slicing y MPS experimental; el uso compartido de GPU no es exclusivo de DRA. 3g.20gb identifica un perfil de instancia, no tres instancias de 20GB. La asignación MIG/exclusiva no aísla automáticamente el host, el driver, los privilegios ni todos los canales laterales; MPS/time-slicing no son límites de seguridad.
 
 ### NVLink multinodo y ComputeDomains
 
-GB200 es Grace Blackwell, no Grace Hopper. Los ComputeDomains coordinan recursos MNNVL/IMEX entre Pods y nodos. Distinga entre racks, instancias EC2, nodos de Kubernetes y Pods, y verifique el soporte real de clique/fabric/dispositivo/driver. Campos inventados como nvswitchEnabled/graceHopperMode o scheduling gates no configuran la topología. Un scheduling gate sin un controlador que lo elimine deja el Pod esperando.
+GB200 es Grace Blackwell, no Grace Hopper. ComputeDomains coordinan recursos MNNVL/IMEX entre Pods/nodos. Distingue racks, instancias EC2, nodos de Kubernetes y Pods, y verifica la compatibilidad real de clique/fabric/dispositivo/driver. Los campos inventados nvswitchEnabled/graceHopperMode o las puertas de programación no configuran la topología. Una puerta de programación sin un controlador que la retire deja el Pod en espera.
 
 ## Plataformas de agentes y MCP
 
-Use las APIs actuales de Kagent/LangGraph/Langfuse/Milvus en la [guía de IA agéntica](03-agentic-ai-platform.md). GitLab es una plataforma opcional de código fuente/CI; los runners privilegiados y el ingress público no son requisitos de base. Separe la identidad de los jobs, las redes, los secretos y los permisos de construcción de imágenes, y verifique la entrega de credenciales del proveedor.
+Usa las API actuales de Kagent/LangGraph/Langfuse/Milvus en la [guía de IA agentic](03-agentic-ai-platform.md). GitLab es una plataforma opcional de origen/CI; los runners con privilegios y el ingreso público no son requisitos básicos. Separa la identidad de los trabajos, las redes, los secretos y los permisos para crear imágenes, y verifica la entrega de credenciales del proveedor.
 
-MCP define operaciones de protocolo como el listado y la invocación de herramientas; no es un controlador estándar de autodescubrimiento de Kubernetes ni una distribución de gateway. La antigua imagen ghcr.io/anthropics/mcp-gateway:latest y la etiqueta/configuración mcp.anthropic.com/tool eran implementaciones no verificadas y se eliminaron. Seleccione un release real de servidor/gateway y valide el transporte, la autenticación, la autorización, los timeouts y los esquemas de entrada de las herramientas. Una variable de entorno con una URL no implementa esas operaciones.
+MCP define operaciones de protocolo como listar/llamar herramientas; no es un controlador estándar de autodetección de Kubernetes ni una distribución de gateway. La imagen anterior ghcr.io/anthropics/mcp-gateway:latest y la etiqueta/configuración mcp.anthropic.com/tool eran implementaciones no verificadas y se eliminaron. Selecciona una versión real de servidor/gateway y valida el transporte, la autenticación, la autorización, los tiempos de espera y los esquemas de entrada de las herramientas. Una variable de entorno URL no implementa esas operaciones.
 
-Solicitar recursos de GPU para Milvus no habilita la indexación en GPU. Haga coincidir las dimensiones de los embeddings y las revisiones de modelo, los parámetros de índice, el ciclo de vida de borrado/actualización y los filtros por tenant. No use un Deployment de Langfuse2.x como instalación actual de la plataforma4.x; revise las dependencias del backend, las credenciales en archivos, las APIs de instrumentación y la retención de datos sensibles.
+Solicitar recursos GPU para Milvus no habilita la indexación GPU. Haz coincidir las dimensiones de embedding/revisiones del modelo, los parámetros del índice, el ciclo de vida de eliminación/actualización y los filtros por tenant. No uses un Deployment de Langfuse2.x como instalación actual de la plataforma4.x; comprueba las dependencias del backend, las credenciales de archivos, las API de instrumentación y la retención de datos sensibles.
 
 ## Almacenamiento y redes
 
-Verifique el IAM/UID/GID de los access points de EFS, los permisos de directorio y el consumo del PVC en el mismo namespace. La opción de montaje IAM no configura por sí sola las credenciales de identidad del controller ni del montaje.
+Verifica IAM/UID/GID del punto de acceso de EFS, los permisos de directorio y el consumo del PVC en el mismo namespace. La opción de montaje IAM no configura por sí sola las credenciales del controlador/la identidad de montaje.
 
-Use parámetros y unidades de capacidad de FSx CSI soportados. No copie configuraciones inventadas de s3ImportPath/s3ExportPath para PERSISTENT_2 ni una capacidad inválida de10Ti. Distinga los filesystems existentes/estáticos de los recién provisionados, y la compatibilidad con DRA y backup, en la [guía de almacenamiento](01-ai-ml-workloads.md).
+Usa parámetros CSI de FSx y unidades de capacidad compatibles. No copies configuraciones inventadas s3ImportPath/s3ExportPath para PERSISTENT_2 ni una capacidad inválida de 10Ti. Distingue los sistemas de archivos existentes/estáticos de los aprovisionados recientemente, DRA y la compatibilidad con copias de seguridad en la [guía de almacenamiento](01-ai-ml-workloads.md).
 
-Mountpoint CSI2.8.0 soporta **PVs estáticos** para buckets S3 existentes. Se eliminó el ejemplo de bucket dinámico basado solo en StorageClass/PVC. Mountpoint no es totalmente POSIX; revise el comportamiento de rename, escritura aleatoria, locking y checkpoints. La tabla de soporte de2.8 elimina AL2/Ubuntu22.04 y dirige las instalaciones a add-ons de EKS o charts oficiales en lugar de ramas del repositorio.
+Mountpoint CSI2.8.0 admite **PV estáticos** para buckets de S3 existentes. Se eliminó el ejemplo de bucket dinámico que solo usaba StorageClass/PVC. Mountpoint no es completamente POSIX; comprueba el comportamiento de rename, escritura aleatoria, bloqueo y checkpoint. La tabla de compatibilidad de 2.8 elimina AL2/Ubuntu22.04 y dirige las instalaciones a complementos de EKS o charts oficiales, en lugar de ramas del repositorio.
 
-No multiplique el número de interfaces por el ancho de banda de la instancia, que ya es agregado. Las cifras anteriores de p4d “4×400Gbps” y trn1n “16×1600Gbps” eran incorrectas. Use la [guía de redes para entrenamiento](05-model-training.md) para la colocación en la misma AZ, las interfaces reales, driver/libfabric/NCCL, la asignación de dispositivos/Pods y los security groups. Las etiquetas RAID0 y efa-enabled no habilitan EFA.
+No multipliques el número de interfaces por un ancho de banda de instancia que ya sea agregado. Las cifras anteriores «4×400Gbps» de p4d y «16×1600Gbps» de trn1n eran incorrectas. Consulta la [guía de redes para entrenamiento](05-model-training.md) para la colocación en la misma AZ, las interfaces reales, driver/libfabric/NCCL, la asignación de dispositivo/Pod y los grupos de seguridad. Las etiquetas RAID0 y efa-enabled no habilitan EFA.
 
-Las subredes son solo una parte del aislamiento. Configure los requisitos de ingress/egress de la carga de trabajo y la autorreferencia de EFA mediante recursos reales de SG/IAM. Un YAML con apariencia de Terraform almacenado en un ConfigMap no aplica reglas de red. Evite el acceso por defecto desde un CIDR de VPC completo.
+Las subredes son solo una parte del aislamiento. Configura el ingreso/egreso de las cargas de trabajo y los requisitos de autorreferencia de EFA mediante recursos SG/IAM reales. Un YAML con apariencia de Terraform almacenado en un ConfigMap no aplica reglas de red. Evita el acceso predeterminado desde un CIDR de toda la VPC.
 
 ## Observabilidad y alertas de GPU
 
-DCGM Exporter4.6.0-4.8.3 define XID_ERRORS como un **gauge del código** del último error. increase(XID_ERRORS) no es un conteo de errores y puede interpretar erróneamente un cambio de código de31→13 como un reset. Observe el código actual o habilite por separado el counter XID_ERRORS_TOTAL. No todo XID indica un fallo de hardware.
+DCGM Exporter4.6.0-4.8.3 define XID_ERRORS como la última **métrica gauge de código** de error. increase(XID_ERRORS) no es un recuento de errores y puede interpretar incorrectamente un cambio de código 31→13 como un reinicio. Observa el código actual o habilita por separado el contador XID_ERRORS_TOTAL. No todos los XID indican un fallo de hardware.
 
-FB_USED/FB_FREE son gauges en MiB; el ratio de abajo va de0–1. Una VRAM reservada alta no implica necesariamente OOM: inspeccione en conjunto los fallos de asignación, el comportamiento de la carga de trabajo, la caché de modelos y la memoria disponible. Los umbrales fijos de85C/20% no son estándares universales de fallo o reclamación. Verifique los tipos y unidades reales de las métricas antes de aplicar rate() a gauges de throughput de PCIe o de ancho de banda NVLink.
+FB_USED/FB_FREE son métricas gauge en MiB; la proporción de abajo va de 0 a 1. Un valor alto de VRAM reservada no significa necesariamente OOM: inspecciona conjuntamente los fallos de asignación, el comportamiento de la carga de trabajo, la caché del modelo y la memoria disponible. Los umbrales fijos de 85C/20% no son estándares universales de fallo/recuperación de recursos. Comprueba los tipos/unidades reales de las métricas antes de aplicar rate() al caudal de PCIe o al ancho de banda de NVLink medidos por gauges.
 
-Estas reglas asumen un cluster por Prometheus. Para clusters combinados, incluya etiquetas de cluster en las agregaciones y los joins. Inspeccione las etiquetas reales de nodo/UUID/MIG y la normalización de etiquetas de recursos de kube-state-metrics.
+Estas reglas presuponen un clúster por Prometheus. Para clústeres combinados, incluye etiquetas de clúster en las agregaciones/uniones. Inspecciona las etiquetas reales de nodo/UUID/MIG y la normalización de etiquetas de recursos de kube-state-metrics.
 
 ```yaml
 groups:
@@ -424,27 +424,27 @@ groups:
       )
 ```
 
-La regla de pending cuenta los Pods en espera que solicitan GPUs; no prueba que la escasez de GPU haya causado la espera. Varios contenedores que solicitan GPU cuentan una sola vez por Pod. Inspeccione los events, los PVCs, la affinity, los taints, las cuotas, las claims y los pulls de imagen. No asuma que existe una etiqueta de nodo en cada alerta.
+La regla de pendientes cuenta los Pods en espera que solicitan GPU; no demuestra que la espera se deba a una escasez de GPU. Varios contenedores que soliciten GPU se cuentan una sola vez por Pod. Inspecciona los eventos, PVC, afinidad, taints, cuotas, claims y descargas de imágenes. No des por hecho que una etiqueta de nodo existe en todas las alertas.
 
-Configure la selección real de reglas de Prometheus y el scraping correcto de Service/puerto para DCGM, Ray y Karpenter. El provisioning por archivos de Grafana es distinto de un wrapper de dashboard por HTTP; una etiqueta por sí sola no conecta datasources. La salida del monitor de Neuron y los endpoints del exporter requieren preparación aparte.
+Configura la selección real de reglas de Prometheus y el scraping correcto del Service/puerto para DCGM, Ray y Karpenter. El aprovisionamiento de archivos de Grafana difiere de un wrapper HTTP de dashboards; una etiqueta por sí sola no conecta datasources. La salida del monitor de Neuron y los endpoints del exporter requieren una preparación aparte.
 
 ## Alcance de la verificación
 
-Se revisaron toda la prosa original de la guía y el quiz y58bloques de código únicos. Las comprobaciones cubren los esquemas de DRA/Pod, el Helm oficial, las políticas de permitidos de OAuthenticator, el lint offline de Argo y los cuerpos de sus scripts, y los fixtures de Prometheus. No se ejecutó ninguna asignación real de OAuth/cluster/GPU/DRA, ni modelo, ni montaje de S3, ni servidor MCP; no se crearon recursos en la nube ni llamadas de pago.
+Se revisaron todos los textos originales de la guía/el cuestionario y 58 bloques de código únicos. Las comprobaciones abarcan los esquemas de DRA/Pod, Helm oficial, las políticas de autorización de OAuthenticator, el lint sin conexión/cuerpos de scripts de Argo y los fixtures de Prometheus. No se ejecutaron OAuth/clúster/asignaciones de GPU/DRA, modelos, montajes de S3 ni servidores MCP reales; tampoco se crearon recursos en la nube ni se hicieron llamadas de pago.
 
 ## Referencias
 
-- [GPU Operator26.7 DRA installation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/26.7/dra-intro-install.html)
-- [NVIDIA DRA0.5 source](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/tree/v0.5.0)
-- [DRA0.5 prerequisites](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/site/content/docs/prerequisites.md)
-- [DRA0.5 feature gates](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/pkg/featuregates/featuregates.go)
+- [Instalación de DRA de GPU Operator26.7](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/26.7/dra-intro-install.html)
+- [Código fuente de NVIDIA DRA0.5](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/tree/v0.5.0)
+- [Requisitos previos de DRA0.5](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/site/content/docs/prerequisites.md)
+- [Feature gates de DRA0.5](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/pkg/featuregates/featuregates.go)
 - [OAuthenticator17.4](https://github.com/jupyterhub/oauthenticator/tree/17.4.0)
 - [JupyterHub chart4.4.2](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/releases/tag/4.4.2)
 - [Argo Workflows4.1.3](https://github.com/argoproj/argo-workflows/tree/v4.1.3)
 - [Mountpoint CSI2.8.0](https://github.com/awslabs/mountpoint-s3-csi-driver/tree/v2.8.0)
-- [DCGM Exporter counter definitions](https://github.com/NVIDIA/dcgm-exporter/blob/4.6.0-4.8.3/etc/default-counters.csv)
-- [MCP tools specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
+- [Definiciones de contadores de DCGM Exporter](https://github.com/NVIDIA/dcgm-exporter/blob/4.6.0-4.8.3/etc/default-counters.csv)
+- [Especificación de herramientas MCP](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
 
 ## Cuestionario
 
-[Cuestionario de infraestructura de IA](../quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+[Cuestionario sobre infraestructura de IA](../quizzes/ai-ml/06-ai-infrastructure-quiz.md)

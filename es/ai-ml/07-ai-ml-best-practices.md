@@ -1,37 +1,37 @@
-# Mejores prácticas de AI/ML en EKS
+# Mejores prácticas de IA/ML en EKS
 
 > **Última actualización**: September 12, 2026
 > **Líneas base**: inference-perf0.6.1 / SOCI0.15.0 / Karpenter1.14.1 / External Secrets2.10.0
 
-Evalúe las mejoras usando latencia, tasa de éxito, throughput, costo y recuperación para la misma carga de trabajo. Una GPU, snapshotter o función de compartición no garantiza una aceleración fija ni un porcentaje de ahorro.
+Evalúe las mejoras según la latencia, la tasa de éxito, el rendimiento, el costo y la recuperación para la misma carga de trabajo. Una GPU, un snapshotter o una función de uso compartido no garantiza una mejora de velocidad ni un porcentaje de ahorro determinados.
 
-![Benchmarking, optimización de inicio, dispositivos, redes/almacenamiento, observabilidad, costo y seguridad evaluados con mediciones y comprobaciones de recuperación.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png)
+![Evaluación del benchmarking, la optimización del inicio, los dispositivos, las redes y el almacenamiento, la observabilidad, los costos y la seguridad mediante mediciones y comprobaciones de recuperación.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-0.html)
 
 ## Benchmarking de inferencia de LLM
 
-![Ventanas de medición distintas para la primera salida, intervalos de tokens, latencia de extremo a extremo y throughput/goodput agregado.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-1.png)
+![Ventanas de medición diferenciadas para la primera salida, los intervalos entre tokens, la latencia de extremo a extremo y el rendimiento/goodput agregado.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-1.html)
 
-| Métrica | Definición y advertencias |
+| Métrica | Definición y salvedades |
 | --- | --- |
-| TTFT | Salida **no vacía** recibida desde el envío hasta la primera; el primer frame HTTP/SSE no tiene por qué contener un token |
-| ITL | Intervalos entre tokens/chunks; un chunk de red puede contener varios tokens |
-| TPOT | Promedio definido por la herramienta después del primer token; no definido para uno o menos tokens de salida |
-| E2E | Tiempo desde la solicitud hasta la finalización; registre los límites de cola, red y postprocesamiento |
-| Throughput de solicitudes | Solicitudes completadas correctamente / ventana de medición especificada |
-| Throughput de tokens | Suma de tokens de salida en la ventana / tiempo, no una media sin ponderar de TPS de solicitudes |
-| Goodput | Tasa de solicitudes que cumplen los criterios de éxito y latencia del SLO |
+| TTFT | Tiempo desde el envío hasta la recepción de la primera **salida no vacía**; el primer frame HTTP/SSE no necesariamente contiene un token |
+| ITL | Intervalos entre tokens/trozos; un fragmento de red puede contener varios tokens |
+| TPOT | Promedio definido por la herramienta después del primer token; no está definido para una o menos tokens de salida |
+| E2E | Tiempo desde la solicitud hasta su finalización; registre los límites de cola, red y posprocesamiento |
+| Rendimiento de solicitudes | Solicitudes completadas correctamente / ventana de medición especificada |
+| Rendimiento de tokens | Suma de los tokens de salida en la ventana / tiempo, no un promedio no ponderado del TPS de las solicitudes |
+| Goodput | Tasa de solicitudes que cumplen los criterios de éxito y latencia de los SLO |
 
-Con marcas de tiempo reales de tokens, el ITL medio es (tiempo del último token - tiempo del primero)/(tokens-1). Las respuestas sin streaming no pueden medir el TTFT/ITL real. Especifique tokenizer, salida vacía/de un solo token, fallos y exclusiones de warmup. 500ms/50ms no son SLO universales.
+Con marcas de tiempo reales de los tokens, el ITL medio es (hora del último token - hora del primero)/(tokens-1). Las respuestas que no se transmiten en streaming no permiten medir el TTFT/ITL real. Especifique el tokenizador, las salidas vacías/de un solo token, los errores y las exclusiones del calentamiento. 500 ms/50 ms no son SLO universales.
 
 ### inference-perf y GenAI-Perf
 
-inference-perf es una herramienta de benchmarking de Kubernetes SIGs/wg-serving. El paquete PyPI inspeccionado es0.6.1, mientras que el pyproject de su tag de Git todavía indica0.5.0; esta discrepancia de metadatos está registrada. El CLI real usa --config_file u opciones estructuradas como --server.type, no la antigua interfaz de benchmark --endpoint --prompt-length.
+inference-perf es una herramienta de benchmarking de Kubernetes SIGs/wg-serving. El paquete de PyPI inspeccionado es la versión 0.6.1, mientras que el pyproject de su etiqueta Git todavía indica 0.5.0; se documenta esta discrepancia de metadatos. La CLI real usa --config_file u opciones estructuradas como --server.type, no la interfaz anterior de benchmark --endpoint --prompt-length.
 
-Esta configuración de **mock interno** no llama a un servidor de modelos. El CLI real0.6.1 completó tres solicitudes con un worker. Los conteos de tokens del mock son cero y TTFT/TPOT son null, por lo que no son resultados de rendimiento del modelo.
+Esta configuración de **simulación interna** no llama a ningún servidor de modelos. La CLI real 0.6.1 completó tres solicitudes con un trabajador. La cantidad de tokens simulada es cero y TTFT/TPOT son nulos, por lo que estos no son resultados de rendimiento de modelos.
 
 ```yaml
 api:
@@ -64,59 +64,59 @@ storage:
 inference-perf --config_file benchmark-fixture.yaml
 ```
 
-Antes de cambiar a un endpoint real, verifique los tipos de servidor/API, alias de modelos, streaming, tokenizer y autenticación. La configuración puede contener headers secretos y se registra la configuración combinada, así que valide la entrega/enmascaramiento de credenciales. Conserve los archivos de salida, solicitudes/respuestas sin procesar y fallos, respetando la privacidad del dataset y los permisos de uso.
+Antes de cambiar a un endpoint real, verifique los tipos de servidor/API, los alias del modelo, el streaming, el tokenizador y la autenticación. La configuración puede contener encabezados secretos y la configuración combinada se registra en los logs, así que valide la entrega y el enmascaramiento de credenciales. Conserve los archivos de salida, las solicitudes/respuestas sin procesar y los errores, respetando la privacidad de los conjuntos de datos y los permisos de uso.
 
-La tasa constante/Poisson mide llegadas por segundo; la carga concurrente controla la concurrencia. Configuraciones numéricas iguales no son equivalentes. Pruebe una línea base de una sola solicitud, rampas de carga acotadas, ráfagas y distribuciones realistas. Una curva de saturación por sí sola no demuestra un cuello de botella de CPU/GPU/memoria; inspeccione profiling, colas, redes y capacidad del cliente.
+La tasa constante/Poisson mide las llegadas por segundo; la carga concurrente controla la concurrencia. Los mismos valores numéricos no son equivalentes. Pruebe una línea base de una sola solicitud, aumentos graduales de carga acotados, ráfagas y distribuciones realistas. Una curva de saturación por sí sola no demuestra un cuello de botella de CPU/GPU/memoria; inspeccione el perfil, las colas, las redes y la capacidad del cliente.
 
-Use las [opciones auditadas de profile/endpoint/service/token](04-inference-frameworks.md) de GenAI-Perf0.0.16, no combinaciones inventadas de --backend vllm. Las métricas de GPU necesitan una recopilación independiente; compruebe los límites de CPU/red del generador de carga. Los Jobs de benchmark necesitan imágenes verificadas, claves de configuración, PVCs, deadlines y semántica de reintentos que tenga en cuenta la carga duplicada.
+Use las opciones auditadas de [perfil/endpoint/servicio/token de GenAI-Perf 0.0.16](04-inference-frameworks.md), no combinaciones inventadas de --backend vllm. Las métricas de GPU requieren recopilación por separado; compruebe los límites de CPU/red del generador de carga. Los Jobs de benchmarking necesitan imágenes y claves de configuración verificadas, PVC, plazos y semántica de reintentos que tenga en cuenta la carga duplicada.
 
 ## Optimización del inicio de contenedores
 
-![Mida por separado la ubicación del Pod, la obtención/desempaquetado de imágenes, el inicio del contenedor, la carga del modelo y la preparación.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-2.png)
+![Mida por separado la colocación del Pod, la descarga/descompresión de imágenes, el inicio del contenedor, la carga del modelo y la preparación.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-2.html)
 
-Mida por separado la transferencia de imágenes, el desempaquetado, la descarga/carga del modelo y la preparación. Se eliminaron las tablas sin fuentes de “always5–15minutes” y “80–95%savings”. 45GB/1Gbps≈360seconds es solo aritmética idealizada de transferencia, sin incluir tamaño comprimido, protocolo, disco ni sobrecarga de concurrencia; no es un tiempo de pull medido.
+Mida por separado la transferencia de imágenes, la descompresión, la descarga/carga del modelo y la preparación. Se eliminaron las tablas sin fuentes que afirmaban “siempre 5–15 minutos” y “ahorros del 80–95 %”. 45 GB/1 Gbps ≈ 360 segundos es solo un cálculo idealizado de transferencia, que no incluye el tamaño comprimido ni la sobrecarga de protocolo, disco y concurrencia; no es un tiempo de descarga medido.
 
-Los artefactos externos del modelo pueden reducir cambios/pulls de imagen, pero añaden costos de descarga y gestión de caché. Las imágenes preparadas pueden ser apropiadas en algunos entornos. La inicialización debe propagar fallos y verificar la revisión, checksums y finalización. Se eliminó el anterior sync de S3 seguido de un echo exitoso porque podía ocultar un fallo de descarga.
+Los artefactos de modelos externos pueden reducir los cambios/descargas de imágenes, pero añaden costos de descarga y gestión de caché. Las imágenes preparadas pueden ser adecuadas en algunos entornos. La inicialización debe propagar los errores y verificar la revisión, las sumas de comprobación y la finalización. Se eliminó el anterior comando de sincronización de S3 seguido de un echo exitoso, que podía ocultar errores de descarga.
 
-Los builds multietapa deben alinear el intérprete/ABI de Python y las bibliotecas CUDA/runtime, incluidos ejecutables/bibliotecas compartidas. No suponga que Ubuntu22.04 python3.11 y pip3 usan el mismo intérprete ni copie solo site-packages. Use paquetes/wheels de distribución compatibles y pruebe importaciones/entrypoints dentro de la imagen. Prefiera sistemas de archivos raíz de solo lectura con mounts explícitos y escribibles de caché/tmp/modelo.
+Las compilaciones de varias etapas deben tener versiones compatibles del intérprete/ABI de Python y de las bibliotecas de CUDA/runtime, incluidos los ejecutables y las bibliotecas compartidas. No dé por sentado que python3.11 de Ubuntu 22.04 y pip3 usan el mismo intérprete ni copie solo site-packages. Use paquetes/wheels compatibles con la distribución y pruebe las importaciones y los puntos de entrada dentro de la imagen. Prefiera sistemas de archivos raíz de solo lectura con montajes explícitos y escribibles para caché/tmp/modelos.
 
-### SOCI0.15
+### SOCI 0.15
 
-SOCI admite carga diferida de imágenes, pero los beneficios pueden reducirse cuando el inicio lee inmediatamente todos los pesos/bibliotecas. Tener un índice no configura CRI para usar el snapshotter SOCI. Verifique la integración de containerd/CRI, los digests de imagen/índice y la compatibilidad del registry. Se eliminó el DaemonSet privilegiado no verificado que exponía sockets de containerd del host.
+SOCI permite la carga diferida de imágenes, pero sus ventajas pueden reducirse si el inicio lee de inmediato todos los pesos/bibliotecas. Tener un índice no configura CRI para que use el snapshotter de SOCI. Verifique la integración de containerd/CRI, los digests de la imagen/índice y la compatibilidad del registro. Se eliminó el DaemonSet privilegiado no verificado que exponía sockets de containerd del host.
 
-La versión0.15 create/push acepta referencias de imagen posicionales, no --ref. La guía de inicio actual usa convert para crear imágenes habilitadas para SOCI. El modo independiente procesa layouts OCI locales sin containerd ni sudo.
+En la versión 0.15, create/push reciben referencias de imagen posicionales, no --ref. La guía de inicio actual usa convert para crear imágenes con SOCI habilitado. El modo independiente procesa diseños OCI locales sin containerd ni sudo.
 
 ```bash
 soci convert --standalone --format oci-dir input-oci-layout output-soci-layout
 ```
 
-Las entradas deben ser layouts OCI, no tarballs docker-save ordinarios. La conversión puede fallar si todas las capas son menores que min-layer-size. Esta auditoría convirtió una capa sintética con min-layer-size=0 explícito y verificó ocho digests de blobs. No se ejecutó ningún benchmark de inicio de contenedores. Conserve la imagen/índice convertido juntos al publicar.
+Las entradas deben ser diseños OCI, no archivos tar ordinarios de docker-save. La conversión puede fallar si todas las capas son menores que min-layer-size. En esta auditoría se convirtió una capa sintética con min-layer-size=0 explícito y se verificaron ocho digests de blobs. No se ejecutó ningún benchmark de inicio de contenedores. Al publicar, conserve juntos la imagen y el índice convertidos.
 
-### Bootstrap de Bottlerocket
+### Inicio de Bottlerocket
 
-En1.64, `bootstrap-containers.<name>.user-data` son datos **base64**, consumidos como archivo por el contenedor bootstrap. El texto de shell sin formato en settings no se ejecuta automáticamente. La imagen de origen debe ser real y usar correctamente los almacenes/namespaces de imágenes del host. Una etiqueta estática images-prefetched=true no es evidencia de éxito.
+En 1.64, `bootstrap-containers.<name>.user-data` contiene **datos codificados en base64**, que el contenedor de arranque consume como archivo. El texto de shell sin formato en la configuración no se ejecuta automáticamente. La imagen de origen debe ser real y usar correctamente los almacenes/espacios de nombres de imágenes del host. Una etiqueta estática images-prefetched=true no demuestra que la operación haya tenido éxito.
 
-mode=once pasa a off después de ejecutarse. El fallo de essential=true detiene el arranque; false permite el fallo, por lo que debe alinear la configuración con las necesidades de preparación. allowed-unsafe-sysctls no es un interruptor para contenedor privilegiado. Incluya el efecto del prefetch en el tiempo de preparación del nodo en las mediciones.
+mode=once pasa a ser off después de la ejecución. Si falla essential=true, se detiene el arranque; false permite que falle, así que ajuste la configuración a las necesidades de preparación. allowed-unsafe-sysctls no es un conmutador de contenedores privilegiados. Incluya el efecto de la precarga en el tiempo de preparación del nodo en las mediciones.
 
 ## Selección de GPU, Neuron y almacenamiento
 
-Parámetros×bytes es solo el límite inferior de los pesos. Incluya caché KV consciente de la arquitectura, activaciones, workspace, buffers de comunicación, fragmentación y restricciones de sharding. Los pesos de13B FP16≈26GB no caben en24GB;70B FP16≈140GB supera cuatro GPUs de24GB combinadas. Más CPUs host no amplían la VRAM de GPU sin cambios.
+Parámetros × bytes es solo el límite inferior de los pesos. Incluya la caché KV considerando la arquitectura, las activaciones, el espacio de trabajo, los búferes de comunicación, la fragmentación y las restricciones de particionamiento. Los pesos FP16 de 13B ≈ 26 GB no caben en 24 GB; 70B en FP16 ≈ 140 GB, más que los 24 GB combinados de cuatro GPU. Más CPU de host no amplía la VRAM de GPU sin cambios.
 
-Distinga p4d.24xlarge8×40GB de los A100 p4de8×80GB. G5g usa Arm/T4G; verifique la arquitectura de imagen/kernel. Consulte la [tabla auditada de Inf2](04-inference-frameworks.md) para inf2.48xlarge192vCPUs/768GiB de RAM host,12chips/24NeuronCores/384GiB HBM. Un nombre de familia como P5 no fija los conteos de GPU en todos los tamaños. Vuelva a comprobar las generaciones, regiones, cuotas y precios disponibles al elegir.
+Distinga p4d.24xlarge con 8×40 GB de p4de con A100 de 8×80 GB. G5g usa Arm/T4G; verifique la arquitectura de la imagen/kernel. Consulte la [tabla auditada de Inf2](04-inference-frameworks.md) para inf2.48xlarge: 192 vCPU/768 GiB de RAM de host, 12 chips/24 NeuronCores/384 GiB de HBM. Un nombre de familia como P5 no determina la cantidad de GPU en todos los tamaños. Vuelva a comprobar las generaciones, regiones, cuotas y precios disponibles al elegir.
 
-LoRA reduce el estado entrenable del adaptador, pero conserva los pesos/activaciones base y difiere de QLoRA. No use una función que suponga que la mayoría de los modelos LoRA caben en24GB. Mida la memoria máxima, latencia, throughput y reinicios.
+LoRA reduce el estado de los adaptadores entrenables, pero mantiene los pesos/activaciones base y es distinto de QLoRA. No use una función que dé por sentado que la mayoría de los modelos LoRA caben en 24 GB. Mida la memoria máxima, la latencia, el rendimiento y los reinicios.
 
-No seleccione almacenamiento únicamente por un corte de dataset de10TB. Compare patrones de acceso, concurrencia, metadatos, latencia, semántica, durabilidad y costo. La documentación general actual de gp3 enumera una línea base de3000IOPS/125MiB/s y un máximo de80000IOPS/2000MiB/s, sujetos a restricciones de tamaño/IOPS/instancia; Outposts es diferente. Los límites históricos de16000IOPS/1GB/s no son universalmente actuales.
+No seleccione el almacenamiento únicamente por un umbral de conjunto de datos de 10 TB. Compare los patrones de acceso, la concurrencia, los metadatos, la latencia, la semántica, la durabilidad y el costo. La documentación general actual de gp3 indica una línea base de 3000 IOPS/125 MiB/s y un máximo de 80000 IOPS/2000 MiB/s, sujetos a restricciones de tamaño/IOPS/instancia; Outposts es distinto. Los límites históricos de 16000 IOPS/1 GB/s no están vigentes universalmente.
 
-Use la [guía de infraestructura](06-ai-infrastructure.md) para throughput Elastic de EFS, asociaciones FSx/CSI/S3 y límites POSIX de Mountpoint. S3 no tiene ni throughput infinito ni latencia fija; EFS no es universalmente más lento que FSx. Instance store/tmpfs son efímeros. La caché KV de GPU normalmente reside en la memoria de GPU, no automáticamente en SSD/tmpfs.
+Use la [guía de infraestructura](06-ai-infrastructure.md) para el rendimiento Elastic de EFS, las asociaciones de FSx/CSI/S3 y los límites POSIX de Mountpoint. S3 no tiene rendimiento infinito ni latencia fija; EFS no es siempre más lento que FSx. El almacenamiento de instancia/tmpfs es efímero. La caché KV de GPU normalmente reside en la memoria de la GPU, no automáticamente en SSD/tmpfs.
 
 ### Verificación de la caché del modelo
 
-Un archivo config.json no demuestra que los pesos terminaron de descargarse. Verifique **todos los archivos** contra un manifiesto/revisión de lanzamiento confiable antes de exponer almacenamiento inmutable de solo lectura. Evite las carreras de descargadores concurrentes y los archivos escritos parcialmente.
+Un archivo config.json no demuestra que se haya terminado de descargar los pesos. Verifique **todos los archivos** con un manifiesto de publicación/revisión confiable antes de exponer almacenamiento inmutable de solo lectura. Evite las condiciones de carrera entre descargadores simultáneos y los archivos escritos parcialmente.
 
-Este validador local no realiza descargas/eliminaciones. Las pruebas cubren archivos completos, revisiones incorrectas, pesos parciales/faltantes, traversal y symlinks externos. La confianza en el manifiesto y la inmutabilidad posterior a la verificación siguen siendo requisitos independientes.
+Este validador local no descarga ni elimina archivos. Las pruebas abarcan archivos completos, revisiones incorrectas, pesos parciales/ausentes, traversal y enlaces simbólicos externos. La confianza en el manifiesto y la inmutabilidad posterior a la verificación siguen siendo requisitos independientes.
 
 ```python
 from pathlib import Path
@@ -150,13 +150,13 @@ def verify_model_cache(root, manifest, expected_revision):
     return root
 ```
 
-Los checkpoints necesitan estado de optimizer/RNG/cursor de datos y shard como en el [ejemplo de entrenamiento/recuperación](05-model-training.md). No elimine copias válidas anteriores antes de que se completen la transferencia, checksums y los manifiestos de finalización. Se eliminó el antiguo bucle ls/xargs rm -rf porque confundía el contenido de directorios con rutas de checkpoints e intentaba eliminar mediante un mount de solo lectura. Retrasar el primer sync30minutes u omitir el flushing al terminar aumenta la exposición a pérdida de trabajo.
+Los puntos de control necesitan el estado del optimizador/RNG/cursor de datos y de los shards, como en el [ejemplo de entrenamiento/recuperación](05-model-training.md). No elimine copias válidas anteriores hasta que la transferencia, las sumas de comprobación y los manifiestos de finalización se hayan completado correctamente. Se eliminó el antiguo bucle ls/xargs rm -rf, que confundía el contenido de directorios con las rutas de los puntos de control e intentaba eliminar archivos a través de un montaje de solo lectura. Retrasar 30 minutos la primera sincronización u omitir el vaciado durante la terminación aumenta el riesgo de perder trabajo.
 
-## Redes y scheduling
+## Redes y programación
 
-EFA mejora la comunicación para cargas de trabajo adecuadas; no es necesario para toda ejecución DDP. Verifique interfaces, ubicación en la misma AZ, driver/libfabric/aws-ofi-nccl, recursos de Pod, security groups y transporte real. Las etiquetas RAID0/subnet no lo habilitan. Evite NCCL_TIMEOUT no verificado y configuraciones Ring/Simple/IB_DISABLE copiadas a ciegas. torchrun --nnodes cuenta nodos, no el WORLD_SIZE total de procesos.
+EFA mejora la comunicación para las cargas de trabajo adecuadas; no es obligatorio para todas las ejecuciones de DDP. Verifique las interfaces, la colocación en la misma AZ, driver/libfabric/aws-ofi-nccl, los recursos del Pod, los grupos de seguridad y el transporte real. RAID0/las etiquetas de subred no lo habilitan. Evite NCCL_TIMEOUT no verificado y los ajustes Ring/Simple/IB_DISABLE copiados sin criterio. torchrun --nnodes cuenta nodos, no el WORLD_SIZE total de procesos.
 
-Use el placementGroupSelector real de Karpenter1.14.1. Una etiqueta aws:ec2:placement-group no es la API de placement, y aws: no es un namespace de etiquetas de usuario. Este **ejemplo de esquema** requiere identificadores aprobados de AMI/subnet/SG/rol y un placement group existente. El ejemplo especifica amiFamily AL2023, por lo que el reemplazo debe ser una AMI EKS AL2023 validada, no una AMI para otro OS. No completa la configuración de networkInterfaces de EFA.
+Use el placementGroupSelector real de Karpenter 1.14.1. Una etiqueta aws:ec2:placement-group no es la API de colocación, y aws: no es un espacio de nombres para etiquetas de usuario. Este **ejemplo de esquema** requiere identificadores aprobados de AMI/subred/SG/rol y un placement group existente. El ejemplo especifica amiFamily AL2023, por lo que la sustitución debe ser una AMI de EKS AL2023 validada, no una AMI de otro sistema operativo. No completa la configuración de EFA networkInterfaces.
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -176,9 +176,9 @@ spec:
   amiFamily: AL2023
 ```
 
-### Presupuestos de disrupción y Spot
+### Presupuestos de interrupción y Spot
 
-Este presupuesto se aplica de lunes a viernes **09:00–17:00UTC**. El antiguo0 9-17 * * 1-5 iniciaba una ventana de ocho horas cada hora hasta las17:00, extendiendo la protección hasta las01:00 del día siguiente. Los presupuestos concurrentes usan la restricción más estricta y no siguen automáticamente las zonas horarias locales.
+Este presupuesto se aplica de lunes a viernes, de **09:00 a 17:00 UTC**. El antiguo 0 9-17 * * 1-5 iniciaba una ventana de ocho horas cada hora hasta las 17:00, prolongando la protección hasta la 01:00 del día siguiente. Los presupuestos simultáneos aplican la restricción más estricta y no se ajustan automáticamente a las zonas horarias locales.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -208,25 +208,25 @@ spec:
     - nodes: 30%
 ```
 
-budgets.nodes=0 limita la disrupción voluntaria, no las interrupciones Spot, fallos de nodo ni expiración forzada. Los requisitos solo de Spot son obligatorios, no una preferencia con fallback on-demand. La distribución de topología ScheduleAnyway es flexible; verifique las réplicas reales, la capacidad y la distribución de AZ.
+budgets.nodes=0 limita las interrupciones voluntarias, no las interrupciones de Spot, los fallos de nodos ni la expiración forzosa. Los requisitos exclusivos de Spot son obligatorios, no una preferencia con capacidad bajo demanda como alternativa. ScheduleAnyway para la distribución de topología es una configuración flexible; verifique las réplicas, la capacidad y la distribución entre AZ reales.
 
-terminationGracePeriodSeconds=120 no garantiza que EC2 conceda120seconds. Pruebe la preparación/drenaje del gateway, propagación de endpoints, SIGTERM, streams activos, reintentos y duplicados mediante una terminación real. No invente una API /drain de vLLM. Las cachés de inferencia, sesiones y grupos TP conllevan costos de estado/reinicio.
+terminationGracePeriodSeconds=120 no garantiza que EC2 conceda 120 segundos. Pruebe la preparación/drenaje del gateway, la propagación de endpoints, SIGTERM, los streams activos, los reintentos y los duplicados durante una terminación real. No invente una API /drain de vLLM. Las cachés de inferencia, las sesiones y los grupos TP conllevan costos de estado/reinicio.
 
-## Observabilidad y costo
+## Observabilidad y costos
 
-Use las [métricas actuales de vLLM](02-vllm-deployment.md) y las [reglas de DCGM](06-ai-infrastructure.md). La ocupación de KV es vllm:kv_cache_usage_perc, no la antigua gpu_cache_usage_perc. Observe colas/preemption y el comportamiento del backend en lugar de suponer que una caché llena rechaza solicitudes de inmediato. Derive ratios de aciertos de prefijo a partir de los contadores actuales de hit/query con manejo de denominador cero.
+Use las [métricas actuales de vLLM](02-vllm-deployment.md) y las [reglas de DCGM](06-ai-infrastructure.md). La ocupación de KV es vllm:kv_cache_usage_perc, no el antiguo gpu_cache_usage_perc. Observe las colas/la expulsión y el comportamiento del backend en vez de suponer que la caché completa rechaza las solicitudes de inmediato. Calcule las tasas de aciertos de prefijos a partir de los contadores actuales de aciertos/consultas y contemple el caso de denominador cero.
 
-DCGM FB_USED/FREE son gauges MiB; XID_ERRORS es el último código. Evite FB_TOTAL inexistente o increase() en gauges. La temperatura por sí sola no demuestra thermal throttling; compare clocks, potencia, razones de throttle y carga de trabajo. Haga coincidir las etiquetas/agregación de histogramas de Prometheus y use sintaxis de subconsulta válida para avg_over_time sobre expresiones.
+DCGM FB_USED/FREE son gauges en MiB; XID_ERRORS es el último código. Evite FB_TOTAL, que no existe, o increase() aplicado a gauges. La temperatura por sí sola no demuestra limitación térmica; compare los clocks, la potencia, los motivos de limitación y la carga de trabajo. Haga coincidir las etiquetas de Prometheus y la agregación de histogramas, y use sintaxis válida de subconsulta para avg_over_time aplicado a expresiones.
 
-VPA Off proporciona recomendaciones de CPU/memoria, no selección automática de instancias GPU. Se eliminó el anterior script de rightsizing porque inspeccionaba solo la primera serie y comparaba ratios0–1 con50/90. Inspeccione picos, colas, SLOs y recuperación después de eliminar en todas las cargas de trabajo.
+VPA Off proporciona recomendaciones de CPU/memoria, no selección automática de instancias GPU. Se eliminó el anterior script de ajuste de tamaño, que inspeccionaba solo la primera serie y comparaba proporciones de 0–1 con 50/90. Inspeccione los picos, las colas, los SLO y la recuperación tras la eliminación en todas las cargas de trabajo.
 
-Registre los ahorros usando términos reales de región/OS/compra, utilización, tiempo inactivo/de fallo, almacenamiento, transferencia y operaciones. Spot/Savings Plans/RI difieren en descuentos y garantías de capacidad. Evite tablas fijas de60–90% o sumar porcentajes de ahorro de optimización. Tome las decisiones de compra de compromisos por separado usando líneas base y variabilidad medidas.
+Registre los ahorros según la región/términos de SO/compra reales, la utilización, el tiempo de inactividad/fallo, el almacenamiento, la transferencia y las operaciones. Spot/Savings Plans/RI difieren en descuentos y garantías de capacidad. Evite tablas con porcentajes fijos del 60–90 % o sumar porcentajes de ahorro de optimizaciones. Tome las decisiones de compra de compromisos por separado, basándose en líneas base medidas y variabilidad.
 
 ## Acceso a modelos y gestión de secretos
 
-S3 ListBucket y GetObject usan ARN de bucket/objeto y claves de condición compatibles, respectivamente. Los buckets de propósito general pueden usar condiciones de etiqueta de bucket como aws:ResourceTag/Environment después de habilitar explícitamente ABAC. ABAC está deshabilitado por defecto: verifique el estado del bucket, permisos confiables de administración de etiquetas, políticas de identidad/bucket y el emparejamiento acción/recurso en lugar de copiar solo la condición de etiqueta. La habilitación no crea el Allow requerido ni anula otras políticas Deny. Verifique namespace/nombre de ServiceAccount confiable, cadenas de credenciales de SDK e identidad de solicitud real. vLLM no descarga automáticamente cada URI de modelo S3.
+S3 ListBucket y GetObject usan ARN de bucket/objeto y claves de condición compatibles, respectivamente. Los buckets de uso general pueden usar condiciones basadas en etiquetas de bucket, como aws:ResourceTag/Environment, una vez que se habilite explícitamente ABAC. ABAC está deshabilitado de forma predeterminada: verifique el estado del bucket, los permisos confiables para administrar etiquetas, las políticas de identidad/bucket y la correspondencia entre acciones y recursos, en vez de copiar solo la condición de etiqueta. Habilitarlo no crea el Allow necesario ni anula otras políticas Deny. Verifique el namespace/nombre del ServiceAccount vinculado a la relación de confianza, las cadenas de credenciales del SDK y la identidad real de la solicitud. vLLM no descarga automáticamente todos los URI de modelos de S3.
 
-El CRD ESO2.10.0 inspeccionado **sirve v1**, con v1beta1 served=false. Este ejemplo hace referencia a un SecretStore del mismo namespace ya aprobado. Prepare por separado las claves remotas, permisos, rotación y ciclo de vida del destino.
+El CRD de ESO 2.10.0 inspeccionado **sirve v1**; v1beta1 tiene served=false. Este ejemplo hace referencia a un SecretStore aprobado que ya existe en el mismo namespace. Prepare por separado las claves remotas, los permisos, la rotación y el ciclo de vida del recurso de destino.
 
 ```yaml
 apiVersion: external-secrets.io/v1
@@ -250,30 +250,30 @@ spec:
       property: token
 ```
 
-Monte los Secrets de Kubernetes como volúmenes y haga que las aplicaciones relean archivos cuando sea necesario. Los mounts subPath no reciben actualizaciones automáticas; las variables de entorno o los valores leídos solo al inicio no se recargan automáticamente. La actualización de ESO no es la emisión/rotación de credenciales upstream en sí misma. Verifique por separado la rotación del proveedor, el acceso a Secret y la recarga de la aplicación.
+Monte los Secrets de Kubernetes como volúmenes y haga que las aplicaciones vuelvan a leer los archivos cuando sea necesario. Los montajes subPath no reciben actualizaciones automáticas; las variables de entorno o los valores que solo se leen durante el inicio no se recargan automáticamente. La actualización de ESO no es, por sí sola, la emisión/rotación de credenciales del proveedor. Verifique por separado la rotación del proveedor, el acceso al Secret y la recarga de la aplicación.
 
-Los registros de API de CloudTrail Secrets Manager no capturan cada lectura de aplicación de un archivo Secret local. No afirme que kubectl describe imprime en general valores SecretKeyRef, pero la entrega mediante entorno sigue exponiendo superficies de proceso/debugging y difiere de una política de credenciales en archivo. Nunca imprima secretos reales en ejemplos/logs.
+Los registros de la API de Secrets Manager de CloudTrail no capturan todas las lecturas que hace una aplicación de un archivo Secret local. No afirme que kubectl describe suele mostrar valores de SecretKeyRef, pero tenga en cuenta que la entrega mediante variables de entorno sigue exponiendo superficies de procesos/depuración y difiere de una política de credenciales en archivo. Nunca imprima secretos reales en ejemplos/logs.
 
-NetworkPolicy requiere aplicación por CNI. Verifique la semántica AND/OR del selector, las etiquetas de nombre de namespace predeterminadas y DNS tanto TCP como UDP. Se eliminaron la apertura de comprobación de estado10.0.0.0/8 y la regla “internet443means S3-only”. Con modelos preparados, restrinja el egress en runtime a las rutas necesarias y distinga las APIs de inferencia/gestión en el gateway.
+NetworkPolicy requiere que CNI aplique las políticas. Verifique la semántica AND/OR de los selectores, las etiquetas predeterminadas de nombre de namespace y DNS por TCP/UDP. Se eliminaron la apertura de comprobaciones de estado a 10.0.0.0/8 y la regla de que “internet 443 significa solo S3”. Con modelos preparados, restrinja el egreso en tiempo de ejecución a las rutas necesarias y distinga las API de inferencia/gestión en el gateway.
 
-Los registros de auditoría deben capturar identidad de usuario/carga de trabajo, revisión del modelo, acción, resultado e ID de solicitud, enmascarando u omitiendo los prompts y secretos según corresponda. Analizar los logs CRI de containerd como Docker o conservar solo líneas que contienen request puede perder eventos de auditoría. Verifique los collectors, parsers, IAM, buffers, retención y fallos de entrega reales, no solo un ConfigMap.
+Los registros de auditoría deben capturar la identidad del usuario/carga de trabajo, la revisión del modelo, la acción, el resultado y el ID de solicitud, enmascarando los prompts/secretos según corresponda. Analizar los registros CRI de containerd como si fueran Docker o conservar solo las líneas que contienen request puede hacer que se pierdan eventos de auditoría. Verifique los recopiladores, analizadores, IAM, búferes, retención y errores de entrega reales, no solo un ConfigMap.
 
 ## Alcance de la verificación
 
-Se revisaron toda la prosa original de la guía/quiz y87 bloques de código únicos. La validación incluye tres solicitudes mock nativas de inference-perf, conversión SOCI OCI local, seis casos de caché, tres esquemas Karpenter/ESO y aritmética cron. No se ejecutaron benchmarks de GPU/modelo real, mediciones de inicio de contenedor, instalación SOCI en host, recursos cloud ni proveedor de secretos.
+Se revisó toda la prosa original de la guía y el cuestionario, así como los 87 bloques de código únicos. La validación incluye tres solicitudes de simulación nativas de inference-perf, conversión OCI local de SOCI, seis casos de caché, tres esquemas de Karpenter/ESO y cálculos de cron. No se ejecutaron benchmarks de GPU/modelos reales, mediciones del inicio de contenedores, instalaciones de SOCI en el host, recursos en la nube ni proveedores de secretos.
 
 ## Referencias
 
-- [inference-perf0.6.1](https://github.com/kubernetes-sigs/inference-perf/tree/v0.6.1)
-- [CLI SOCI0.15](https://github.com/awslabs/soci-snapshotter/blob/v0.15.0/docs/cli-usage.md)
-- [Configuración bootstrap de Bottlerocket1.64](https://bottlerocket.dev/en/os/1.64.x/api/settings/bootstrap-containers/)
-- [CRDs de Karpenter1.14.1](https://github.com/aws/karpenter-provider-aws/tree/v1.14.1/pkg/apis/crds)
-- [Disrupción de Karpenter](https://karpenter.sh/docs/concepts/disruption/)
-- [CRD ExternalSecret de ESO2.10](https://github.com/external-secrets/external-secrets/blob/helm-chart-2.10.0/config/crds/bases/external-secrets.io_externalsecrets.yaml)
+- [inference-perf 0.6.1](https://github.com/kubernetes-sigs/inference-perf/tree/v0.6.1)
+- [CLI de SOCI 0.15](https://github.com/awslabs/soci-snapshotter/blob/v0.15.0/docs/cli-usage.md)
+- [Configuración de contenedores de arranque de Bottlerocket 1.64](https://bottlerocket.dev/en/os/1.64.x/api/settings/bootstrap-containers/)
+- [CRD de Karpenter 1.14.1](https://github.com/aws/karpenter-provider-aws/tree/v1.14.1/pkg/apis/crds)
+- [Interrupciones de Karpenter](https://karpenter.sh/docs/concepts/disruption/)
+- [CRD ExternalSecret de ESO 2.10](https://github.com/external-secrets/external-secrets/blob/helm-chart-2.10.0/config/crds/bases/external-secrets.io_externalsecrets.yaml)
 - [Actualizaciones de Secret de Kubernetes](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Habilitación ABAC de bucket de propósito general de S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html)
+- [Habilitación de ABAC para buckets de uso general de S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html)
 - [Rendimiento de EBS gp3](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
 
 ## Cuestionario
 
-[Cuestionario de mejores prácticas de AI/ML](../quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+[Cuestionario sobre mejores prácticas de IA/ML](../quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)

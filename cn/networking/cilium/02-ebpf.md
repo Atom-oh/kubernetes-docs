@@ -1,1387 +1,595 @@
-# eBPF 技术深度解析
+# eBPF 技术深入探究
 
-> **支持的版本**: Linux kernel 4.19+
-> **最后更新**: February 22, 2026
+> **审查基线**：Cilium 1.20.3、Linux 5.10+ 或有文档记录的等效回移版本（例如 RHEL 8.10 的 4.18 内核），已在 Kubernetes 1.33–1.36 上测试。各项 BPF 功能的要求各不相同。
+> **最近审阅日期**：October 16, 2026
 
 ## 实验环境设置
 
-要跟随本文档中的示例操作，您需要以下工具和环境：
+使用一次性 Linux 开发 VM，运行受维护的发行版，支持下文使用的 tracepoint，并具有加载跟踪程序的权限。此环境与安装 Cilium 分开；不要在集群节点上加载实验性程序。Linux 6.12 是 verifier 讨论的参考版本，并不意味着所有 6.12 发行版都启用了每项功能。
 
-### 所需工具
-- Linux kernel 4.19 或更高版本（推荐 5.10+）
-- bpftool、libbpf-dev、clang、llvm
-- bcc（BPF Compiler Collection）
-
-### 环境设置
+必需工具包括带有 BPF 后端的 Clang、目标架构的 UAPI 头文件、libbpf 1.x 开发头文件/库、libelf、zlib、C 编译器和 bpftool。BCC 和 bpftrace 是可选的替代工具。Debian/Ubuntu 软件包名称通常包括 `clang`、`libbpf-dev`、`libelf-dev`、`zlib1g-dev`、`build-essential` 和 `pkg-config`；bpftool 的打包方式取决于发行版/内核。不要假设每个 Debian 系统都提供或适合使用 `linux-tools-generic`。Cilium 说明支持 AMD64/AArch64 主机；在其容器镜像之外原生运行 Cilium，还需要 Clang/LLVM 18.1+，这是与此小型跟踪实验不同的一项要求。
 
 ```bash
-# Install required packages on Ubuntu/Debian systems
-sudo apt-get update
-sudo apt-get install -y build-essential clang llvm libelf-dev libbpf-dev bpftool linux-tools-common linux-tools-generic
-
-# Install BCC
-sudo apt-get install -y bpfcc-tools python3-bpfcc
-
-# Check kernel version
 uname -r
-
-# Check eBPF feature support
-bpftool feature
+clang --version
+clang --print-targets
+pkg-config --modversion libbpf
+bpftool version
+test -r /sys/kernel/tracing/events/syscalls/sys_enter_execve/format
+test -r /sys/kernel/tracing/events/sched/sched_process_exec/format
+# Active feature probing: run only on the prepared lab VM.
+sudo bpftool feature probe kernel
 ```
+
+必须挂载并能够访问 Tracefs；某些系统会在 `/sys/kernel/debug/tracing` 下提供它。即使以容器 root 身份运行，内核配置、能力、lockdown/LSM 策略和容器限制也可能阻止程序加载或附加。`CAP_BPF` 并不是通用的跟踪权限；具体要求取决于内核、程序类型和 BPF token 委派方式。
+
+**验证范围：**这些示例已通过针对 libbpf 1.7 的主机 C 语法检查、用户空间链接检查和确定性 helper 模拟。Clang BPF 目标编译、运行中内核的 verifier 检查和实时 tracepoint 附加仍需在准备好的 VM 中验证。这些示例并未经过生产环境测试，也不是无损跟踪方案。
 
 ## eBPF 技术简介与历史背景
 
-eBPF（extended Berkeley Packet Filter）是一项革命性技术，允许程序在 Linux kernel 内安全运行。该技术提供了一种强大机制，无需修改 kernel 代码即可扩展和观测 kernel 行为。在现代云原生环境中，eBPF 已为网络、安全、监控和性能分析带来了革命性变化。
+eBPF 允许获准的程序在受支持的 Linux hook 上执行，以观察或影响内核行为。验证机制会限制内存访问和程序执行，但内核、verifier、JIT 和 helper 中仍可能存在缺陷。程序被接受并不能证明主机不会崩溃，也不能证明程序实现了预期策略。
 
 ### 从 BPF 到 eBPF：演进历史
 
-#### 早期 BPF 的诞生与局限（1992-2013）
-1992 年，UC Berkeley 的 Steven McCanne 和 Van Jacobson 发表了题为 “The BSD Packet Filter: A New Architecture for User-level Packet Capture” 的论文，介绍了 Berkeley Packet Filter（BPF）。该技术提出了一种创新的网络数据包过滤方法。
+McCanne 和 Jacobson 的论文 *The BSD Packet Filter: A New Architecture for User-level Packet Capture* 的预印本日期为 1992 年 12 月 19 日，并注明其于 1993 年 1 月 25–29 日在 Winter USENIX 上发表。引用年份时应保留这一区别。经典 BPF 使用 32 位 A/X 寄存器和暂存内存进行过滤，避免不必要地将数据包复制到用户空间。其受限指令集并不意味着它无法在现代 CPU 上运行。
 
-BPF 引入了以下核心概念：
-- **内核内虚拟机**：在 kernel 内安全执行用户定义的代码
-- **基于寄存器的设计**：比基于栈的模型更高效的执行模型
-- **安全保障**：防止无限循环并限制内存访问
-- **数据包过滤优化**：避免不必要的数据包复制
+扩展 BPF 增加了 64 位指令集，其中有十一个寄存器 R0–R10（R10 是只读帧指针）、通常限制为 512 字节的栈、maps 和更多程序类型。这并不是一次从十个通用寄存器变为十一个通用寄存器的历史变化。函数调用和尾调用的组合可能会施加额外的栈限制。
 
-早期 BPF 主要用于 tcpdump 等网络监控工具，并具有以下局限：
-- 指令集有限（仅有 2 个 32 位寄存器）
-- 程序大小受限（最多 4096 条指令）
-- 功能有限（主要用于数据包过滤）
-- 与用户空间的交互有限
-- 无法利用现代 CPU 架构
+### eBPF 技术演进：按内核版本划分的主要功能
 
-尽管存在这些局限，BPF 在 20 多年间始终是 Linux kernel 的重要组成部分。
+以下选取的上游里程碑已对照带版本号的源码核实。它们不是发行版支持矩阵；回移补丁、构建选项、架构和 helper 各不相同。
 
-#### eBPF 的诞生与早期发展（2013-2016）
-2013 年，PLUMgrid 的 Alexei Starovoitov 提出了扩展 BPF（eBPF），以克服现有 BPF 的限制。该提案旨在彻底重新设计 BPF，使其适配现代处理器架构。
+| 内核 | 选取的里程碑 |
+|---|---|
+| [3.15](https://github.com/torvalds/linux/blob/v3.15/include/linux/filter.h) | 扩展指令集；内部经典 BPF 转换 |
+| [3.16](https://github.com/torvalds/linux/blob/v3.16/arch/x86/net/bpf_jit_comp.c) | x86 扩展 BPF JIT |
+| [3.18](https://github.com/torvalds/linux/blob/v3.18/include/uapi/linux/bpf.h) | BPF syscall/验证基础设施；尚无可用的 HASH/ARRAY map 类型 |
+| [3.19](https://github.com/torvalds/linux/blob/v3.19/include/uapi/linux/bpf.h) | HASH/ARRAY maps 和 socket-filter 程序类型 |
+| [4.1](https://github.com/torvalds/linux/blob/v4.1/include/uapi/linux/bpf.h) | KPROBE 和 TC SCHED_CLS/SCHED_ACT |
+| [4.2](https://github.com/torvalds/linux/blob/v4.2/include/uapi/linux/bpf.h) | PROG_ARRAY 和尾调用 |
+| [4.8](https://github.com/torvalds/linux/blob/v4.8/include/uapi/linux/bpf.h) | XDP 程序类型 |
+| [4.10](https://github.com/torvalds/linux/blob/v4.10/include/uapi/linux/bpf.h) | LRU hash maps |
+| [4.16](https://github.com/torvalds/linux/blob/v4.16/include/uapi/linux/bpf.h) | BPF 到 BPF 函数调用 |
+| [4.17](https://github.com/torvalds/linux/blob/v4.17/include/uapi/linux/bpf.h) | 原始 tracepoint |
+| [4.18](https://github.com/torvalds/linux/blob/v4.18/include/uapi/linux/bpf.h) | BTF 加载 API |
+| [5.2](https://github.com/torvalds/linux/blob/v5.2/include/uapi/linux/bpf.h) | 用于全局数据的直接 map-value 访问 |
+| [5.7](https://github.com/torvalds/linux/blob/v5.7/include/uapi/linux/bpf.h) | BPF link API 和 BPF LSM |
+| [5.8](https://github.com/torvalds/linux/blob/v5.8/include/uapi/linux/bpf.h) | BPF ring buffer |
+| [5.10](https://github.com/torvalds/linux/blob/v5.10/include/uapi/linux/bpf.h) | 支持的附加类型可使用可睡眠程序 |
+| [5.15](https://github.com/torvalds/linux/blob/v5.15/include/uapi/linux/bpf.h) | BPF timer helper |
+| [5.19](https://github.com/torvalds/linux/blob/v5.19/include/uapi/linux/bpf.h) | 动态指针 helper |
+| [6.2](https://github.com/torvalds/linux/blob/v6.2/kernel/bpf/helpers.c) | 类型化对象分配 kfunc，而非无限制的 malloc |
 
-eBPF 的初始设计目标包括：
-- 支持 64 位架构
-- 更多寄存器（10 → 当前为 11）
-- 更大的栈空间（512 字节）
-- 通过 maps 存储状态并与用户空间通信
-- 能够附加到各种事件的通用能力
+有界循环于 Linux 5.3 引入；[上游 verifier 变更](https://github.com/torvalds/linux/commit/2589726d12a1b12eaaa93c7f1ea64287e383c7a5)解释了循环分析和状态剪枝。设计 FAQ 中仍保留的“尚未实现循环”旧段落并不是当前功能指南。有界循环仍可能超出 verifier 的复杂度限制。
 
-关键发展阶段：
-- **2014 年 5 月（Linux kernel 3.15）**：初始 eBPF 基础设施集成到 Linux kernel
-  - 引入新的 eBPF 指令集
-  - 添加从经典 BPF（cBPF）到 eBPF 的转换层
-  - 引入初始 eBPF map 类型（hash、array）
+### 发展与应用领域
 
-- **2014 年 12 月（Linux kernel 3.18）**：引入 eBPF JIT（Just-In-Time）编译器
-  - 为 x86_64 架构提供 JIT 编译支持
-  - 显著提升执行性能
-  - 添加用于程序链式调用的 tail call 功能
+Cilium 的公开代码仓库于 2015 年 12 月创建；“项目于 2017 年启动”这一说法并不准确。仓库创建日期并不等同于确切的产品发布日期，也不能证明其属于“首批大型项目”。
 
-- **2015 年 6 月（Linux kernel 4.1）**：扩展 eBPF maps 功能
-  - 增强用户空间与 kernel 空间之间的数据共享机制
-  - 添加新的 map 类型（LRU hash、stack trace）
-  - 添加将 eBPF 程序附加到 kprobes 的能力
+| 领域 | 示例与界限 |
+|---|---|
+| 网络 | Cilium/Calico 数据路径、Katran 负载均衡和 XDP 过滤 |
+| 运行时安全 | Falco、Tracee 和 Tetragon 使用内核事件；是否实施强制控制取决于产品和 hook |
+| 跟踪 | BCC（包括 Python/Lua 前端）、bpftrace、存储和块 I/O 跟踪 |
+| 网络可观测性 | Hubble flow/proxy 事件；flow 图并非分布式应用 span 跟踪 |
+| Service mesh | Cilium 将内核转发与用户空间代理结合，用于支持的 L7 功能 |
+| 社区 | eBPF Foundation 为生态系统提供支持；资金和项目成熟度并非兼容性标准 |
 
-- **2016 年 1 月（Linux kernel 4.4）**：引入 XDP（eXpress Data Path）
-  - 可在网络驱动层进行高性能数据包处理
-  - 在数据包进入 kernel 网络栈前进行处理
-  - 能够每秒处理数百万个数据包
+`seccomp-bpf` 使用经典 BPF 过滤器接口来决定系统调用。Linux 可能会在内部转换经典过滤器，但这并不是通用的 eBPF 程序/map/helper API。
 
-- **2016 年 7 月（Linux kernel 4.7）**：引入额外的 eBPF 程序类型
-  - 支持流量控制（TC）程序
-  - 增强 socket 过滤功能
-  - 扩展 helper function
+### eBPF 与传统内核模块：范式转变
 
-在此期间，eBPF 开始从简单的数据包过滤工具演变为通用 kernel 编程基础设施，并扩展到网络以外的多种用途。
+| 特征 | eBPF | 内核模块 |
+|---|---|---|
+| 安全性 | 受 verifier 约束；实现缺陷和运维风险仍然存在 | 可访问范围更广的原生内核功能；缺陷可能导致主机不稳定 |
+| 部署 | 在支持的情况下，可加载/附加程序而无需重启 | 满足依赖条件且使用情况允许时，许多模块也可以在不重启的情况下加载/卸载 |
+| 兼容性 | 指令/helper ABI 和功能要求；CO-RE 可重定位受支持的类型访问 | 内核/模块 ABI、配置和发行版支持 |
+| 性能 | 通常由 JIT 编译；开销取决于 hook、程序和工作负载 | 原生执行同样会产生依赖工作负载的开销 |
+| 开发 | 受限的执行上下文、helper/kfunc 和 verifier 限制 | 内核 API 和常规内核开发约束 |
+| 权限 | 加载/附加需要适当权限或委派 | 需要特权才能加载；签名/lockdown 可能会限制加载 |
 
-#### 现代 eBPF 生态系统的增长与创新（2017 年至今）
-自 2017 年以来，eBPF 已确立为云原生计算的核心技术，各种项目和公司纷纷采用该技术。
+两者都需要进行运维测试。模块并非仅限于供应商实现，eBPF 也不会天然保证生产环境部署安全。
 
-##### 主要项目和技术发展：
-
-- **2017 年**：
-  - **Cilium Project 启动**：首个将 eBPF 用于容器网络和安全的重大项目
-  - **BCC（BPF Compiler Collection）**：用于 eBPF 程序开发的高级工具集合出现
-  - **Linux kernel 4.10-4.14**：添加 cgroup、socket、tracepoint 程序类型
-
-- **2018 年**：
-  - **Linux kernel 4.18**：引入 BTF（BPF Type Format），为 CO-RE（Compile Once – Run Everywhere）支持奠定基础
-  - **bpftrace**：出现 DTrace 风格的高级追踪语言
-  - **Facebook Katran**：开源基于 eBPF 的 L4 负载均衡器
-
-- **2019 年**：
-  - **Linux kernel 5.0-5.3**：支持 BPF-to-BPF 函数调用，添加 raw tracepoint 程序
-  - **Falco**：基于 eBPF 的运行时安全监控工具日益流行
-  - **Hubble**：出现基于 Cilium 的网络可观测性工具
-
-- **2020 年**：
-  - **Linux kernel 5.5-5.10**：BPF link 抽象、全局变量、sleep 能力、循环支持
-  - **libbpf**：用户空间库趋于成熟
-  - **eBPF Foundation 成立**：成立推动技术发展的官方组织
-  - **Isovalent（Cilium 开发者）A 轮融资**：商业 eBPF 解决方案出现
-
-- **2021 年**：
-  - **Linux kernel 5.11-5.15**：内存分配功能、timer 支持、dynamic pointer 增加
-  - **增强 Kubernetes 集成**：在 service mesh、网络、安全领域扩大采用
-  - **商业产品发布**：多家公司推出基于 eBPF 的产品
-
-- **2022 年至今**：
-  - **Linux kernel 6.0+**：持续扩展功能和优化
-  - **作为云原生技术的标准化**：扩大与 CNCF 项目的集成
-  - **eBPF Summit**：专门会议和社区不断发展
-  - **主要云提供商采用**：AWS、GCP、Azure 使用 eBPF 技术
-
-##### 当前 eBPF 应用领域：
-
-1. **网络**：
-   - 容器网络（Cilium、Calico）
-   - 负载均衡（Katran、Cilium）
-   - 数据包过滤和防火墙（bpfilter）
-   - 网络加速（基于 XDP 的解决方案）
-
-2. **安全**：
-   - 运行时安全监控（Falco、Tracee）
-   - 入侵检测系统（Tetragon）
-   - 系统调用过滤（seccomp-bpf）
-   - 权限管理（LSM BPF）
-
-3. **可观测性**：
-   - 系统监控和追踪（bpftrace、BCC）
-   - 性能分析（BPF Performance Tools）
-   - 分布式追踪（Hubble）
-   - 指标收集（eBPF Exporter）
-
-4. **Service Mesh**：
-   - 无 Sidecar 的 service mesh（Cilium Service Mesh）
-   - L7 proxy 和负载均衡
-   - 流量管理和路由
-
-5. **存储**：
-   - 块 I/O 追踪和优化
-   - 文件系统监控
-   - 缓存性能分析
-
-### eBPF 的技术演进：按 Kernel 版本划分的关键特性
-
-eBPF 的技术进步经历了多个 Linux kernel 版本的逐步发展，每个版本都增加了重要功能。下表展示了按 kernel 版本划分的主要 eBPF 功能新增项：
-
-| Kernel 版本 | 年份 | 新增的主要 eBPF 功能 | 技术意义 |
-|---------------|------|-------------------------|----------------------|
-| 3.15 | 2014 | 引入初始 eBPF 基础设施 | 新指令集、寄存器扩展 |
-| 3.18 | 2014 | 添加 JIT 编译器 | 显著提升执行性能 |
-| 4.1 | 2015 | eBPF maps 功能、用户空间 API | 可存储状态和共享数据 |
-| 4.4 | 2016 | 引入 XDP（eXpress Data Path） | 可进行超高速数据包处理 |
-| 4.7 | 2016 | 额外的程序类型、tail call 支持 | 改进程序链式调用和可扩展性 |
-| 4.10 | 2017 | Socket 和 cgroup 程序 | 网络 socket 控制、容器支持 |
-| 4.14 | 2017 | XDP offload、更多 helper function | 硬件加速支持 |
-| 4.18 | 2018 | 引入 BTF（BPF Type Format） | CO-RE 支持的基础 |
-| 5.0 | 2019 | 支持 BPF-to-BPF 函数调用 | 可实现模块化和代码复用 |
-| 5.5 | 2020 | BPF link 抽象、全局变量 | 改进程序管理 |
-| 5.8 | 2020 | 循环支持（有界循环） | 增强编程灵活性 |
-| 5.10 | 2020 | Sleep 能力 | 可进行异步编程 |
-| 5.13 | 2021 | 内存分配功能 | 可进行动态内存管理 |
-| 5.15 | 2021 | Timer 支持 | 基于时间的事件处理 |
-| 6.0+ | 2022+ | 持续扩展功能和优化 | 演变为完整的编程环境 |
-
-通过这些发展，eBPF 已从简单的数据包过滤器演变为完整的编程环境，如今是 Linux kernel 中最重要的技术之一。尤其是 CO-RE（Compile Once – Run Everywhere）功能的引入，极大提升了 eBPF 程序的可移植性，使同一个程序可在各种 kernel 版本上无需重新编译即可运行。
-
-### eBPF 与传统 Kernel Module：范式转变
-
-eBPF 与传统 kernel module 相比，为扩展 Linux kernel 提供了根本不同的方法。理解这些差异对于掌握 eBPF 的创新至关重要。
-
-| 特性 | eBPF | Kernel Module |
-|---------------|------|---------------|
-| **安全性** | 通过 verifier 保证安全，不可能导致 kernel 崩溃 | 可能发生 kernel panic，影响整体系统稳定性 |
-| **部署** | 运行时动态加载，保持二进制兼容性 | 每个 kernel 版本均需重新编译，可能出现兼容性问题 |
-| **升级** | 无需重启 kernel 即可实时更新 | 通常需要重启，造成服务中断 |
-| **性能** | 通过 JIT 编译优化，接近原生性能 | 原生性能，可直接访问 kernel |
-| **开发复杂度** | 受限环境，需要特殊工具，调试困难 | 可完整访问 kernel API，具备标准调试工具 |
-| **权限模型** | 权限受限，沙箱环境 | 完整 kernel 权限，无限制访问 |
-| **可移植性** | 支持 CO-RE（Compile Once – Run Everywhere） | 每个 kernel 版本均需重新编译 |
-| **部署范围** | 可安全部署在生产环境 | 通常仅限于供应商提供的 kernel module |
-
-eBPF 最大的创新是其安全性和动态加载能力。传统 kernel module 在 kernel 内不受限制地运行，错误可能导致整个系统不稳定。相比之下，eBPF 程序只有通过 kernel verifier 后才能加载；verifier 会彻底检查内存访问、无限循环和 kernel 崩溃的可能性。
-
-## 深入分析 Kernel 内的 eBPF 架构
-
-> **核心概念**：eBPF 作为 Linux kernel 内的沙箱虚拟机运行，可以在不修改 kernel 代码的情况下扩展 kernel 行为。
-
-eBPF 并非简单技术，而是一个完整技术栈，涵盖从 kernel 内虚拟机到用户空间库的各种组件。理解此架构对于掌握 eBPF 的强大功能和灵活性至关重要。
-
-### 详细 eBPF 架构图
-
-```mermaid
-flowchart TD
-    subgraph "User Space"
-        App[Application]
-        LibBPF[libbpf Library]
-        BCC[BCC Framework]
-        BPFtrace[bpftrace Tool]
-        App --> LibBPF & BCC & BPFtrace
-
-        subgraph "Development Tools"
-            Clang[Clang Compiler]
-            LLVM[LLVM Backend]
-            BTF_Info[BTF Information]
-            Clang --> LLVM
-            LLVM --> BTF_Info
-        end
-    end
-
-    subgraph "Kernel Space"
-        subgraph "eBPF Runtime"
-            Verifier["eBPF Verifier
-            (Safety Guarantee)"]
-            JIT["JIT Compiler\n(Performance Optimization)"]
-            VM["eBPF Virtual Machine\n(Program Execution)"]
-
-            Verifier -->|Verification Passed| JIT
-            JIT -->|Optimized Code| VM
-        end
-
-        subgraph "eBPF Map System"
-            Maps["eBPF Maps\n(Data Store)"]
-            MapTypes["Map Types\n- HashMap\n- Array\n- LRU\n- Ring Buffer\n- Stack Trace\n- Socket Map\n- Others"]
-            Maps --- MapTypes
-        end
-
-        subgraph "Hook Points"
-            XDP["XDP\n(Network Driver Level)"]
-            TC["Traffic Control\n(Network Stack)"]
-            Kprobes["Kprobes/Uprobes\n(Dynamic Tracing)"]
-            Tracepoints["Tracepoints\n(Static Trace Points)"]
-            Perf["Perf Events\n(Performance Events)"]
-            LSM["LSM\n(Security Module)"]
-            Sockets["Socket Filter\n(Socket Level)"]
-            Cgroups["Cgroups\n(Resource Control)"]
-        end
-
-        VM --> XDP & TC & Kprobes & Tracepoints & Perf & LSM & Sockets & Cgroups
-        VM <-->|Data Exchange| Maps
-    end
-
-    LibBPF & BCC & BPFtrace -->|Program Load| Verifier
-    App <-->|Data Exchange| Maps
-
-    classDef userspace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef kernelspace fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef ebpfcomp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef hookpoint fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef mapcomp fill:#28A745,stroke:#333,stroke-width:1px,color:white;
-
-    class App,LibBPF,BCC,BPFtrace,Clang,LLVM,BTF_Info userspace;
-    class Verifier,JIT,VM ebpfcomp;
-    class Maps,MapTypes mapcomp;
-    class XDP,TC,Kprobes,Tracepoints,Perf,LSM,Sockets,Cgroups hookpoint;
-```
+## 深入分析内核内部的 eBPF 架构
 
 ### eBPF 架构组件详解
 
-#### 1. 用户空间组件
+在用户空间中，Clang 将 C 编译为 BPF ELF；Rust 使用自己的编译器/工具链生态系统。libbpf 负责 ELF section、maps、重定位、加载和受支持的附加 API。BCC 提供更高级的 API；bpftrace 提供跟踪语言。
 
-**开发工具和库**：
-- **Clang/LLVM**：将 eBPF 程序从 C 或 Rust 编译为 eBPF bytecode
-- **libbpf**：低级 eBPF 操作库，直接与 kernel 交互
-- **BCC（BPF Compiler Collection）**：提供 Python 和 Lua binding 的高级库
-- **bpftrace**：基于 eBPF 的追踪语言，语法类似 DTrace
+CO-RE 使用 BTF 和重定位来适配受支持的类型/字段访问。它不会提供缺失的 helper、程序类型或内核配置，也不保证任意跨架构/跨内核兼容性。即使程序使用了 BTF，内核内部结构、tracepoint 格式和 kfunc 也不是稳定 ABI。
 
-**CO-RE（Compile Once – Run Everywhere）**：
-- 使用 BTF（BPF Type Format）实现跨 kernel 版本的可移植性
-- 同一个 eBPF 程序可在各种 kernel 版本上运行，无需重新编译
-- 通过 struct relocation 功能应对 kernel 结构变更
-
-#### 2. Kernel 空间组件
-
-**eBPF Runtime**：
-- **eBPF Verifier**：保证程序安全的核心组件
-  - 防止无限循环
-  - 仅允许有效的内存访问
-  - 保证 kernel 稳定性
-  - 权限检查
-
-- **JIT（Just-In-Time）Compiler**：
-  - 将 eBPF bytecode 转换为原生机器代码
-  - 架构特定优化（x86_64、ARM64、RISC-V 等）
-  - 显著提升执行性能
-
-- **eBPF Virtual Machine**：
-  - 11 个寄存器
-  - 512 字节栈
-  - 通过 helper function 访问 kernel 函数
-  - 支持用于程序链式调用的 tail call
-
-**eBPF Map System**：
-- 实现为 key-value store 的数据结构
-- 在 kernel 空间和用户空间之间共享数据
-- 支持多种 map 类型：
-  - **BPF_MAP_TYPE_HASH**：通用 hash table
-  - **BPF_MAP_TYPE_ARRAY**：固定大小 array
-  - **BPF_MAP_TYPE_LRU_HASH**：跟踪最近使用的项目
-  - **BPF_MAP_TYPE_RINGBUF**：高性能 ring buffer
-  - **BPF_MAP_TYPE_STACK_TRACE**：stack trace 存储
-  - **BPF_MAP_TYPE_SOCKHASH**：socket 引用存储
-  - **BPF_MAP_TYPE_DEVMAP**：网络设备引用
-  - **BPF_MAP_TYPE_PROG_ARRAY**：eBPF 程序引用
-
-**Hook Points**：
-
-eBPF 程序可以附加到 kernel 内的各种位置，称为 hook point。每个 hook point 都允许 eBPF 程序在发生特定事件或操作时执行。主要 hook point 如下：
-
-- **XDP（eXpress Data Path）**：
-  - 在网络驱动层处理数据包
-  - 在数据包从 NIC 进入 kernel 前处理
-  - 性能最高的数据包处理点（每秒可处理数千万个数据包）
-  - 可能的操作：数据包 drop、pass、redirect、modify
-  - 使用场景：DDoS 防御、数据包过滤、负载均衡
-  - 支持硬件 offload（在特定 NIC 上）
-
-- **Traffic Control（TC）**：
-  - 网络栈的流量控制层
-  - Ingress/egress 队列点
-  - 提供比 XDP 更多的上下文
-  - 可以修改数据包 header 和 payload
-  - 使用场景：Network Policy、NAT、数据包转换
-  - 同时支持 ingress 和 egress
-
-- **Socket Filter**：
-  - 在 socket 层进行数据包过滤
-  - 程序附加到特定 socket
-  - 控制用户空间应用程序的 socket 操作
-  - 使用场景：按应用程序的数据包过滤、socket 级别统计
-  - 可在 socket 创建、绑定、连接时应用
-
-- **Kprobes/Uprobes**：
-  - 动态追踪 kernel/用户空间函数
-  - 在函数入口/返回时执行
-  - 可以 hook 任意 kernel 函数
-  - 使用场景：性能分析、调试、安全监控
-  - 可动态添加/移除
-  - 存在开销（生产环境中需谨慎）
-
-- **Tracepoints**：
-  - kernel 内静态定义的 trace point
-  - 提供稳定 ABI（跨 kernel 版本兼容）
-  - 支持追踪主要 kernel 事件
-  - 使用场景：系统调用追踪、块 I/O 监控、网络事件追踪
-  - 开销低于 Kprobes
-
-- **Perf Events**：
-  - 性能监控事件
-  - CPU performance counter 访问
-  - 硬件/软件事件监控
-  - 使用场景：CPU 使用率分析、cache miss 跟踪、分支预测失败监控
-  - 可进行精确性能测量
-
-- **LSM（Linux Security Module）**：
-  - 应用安全策略
-  - 系统调用安全检查
-  - 权限验证和访问控制
-  - 使用场景：容器安全、权限提升检测、文件访问控制
-  - 支持 kernel 5.7+
-
-- **Cgroups**：
-  - 容器资源控制
-  - 按容器应用策略
-  - 限制和监控资源使用情况
-  - 使用场景：容器 Network Policy、资源限制、隔离
-  - 在容器编排环境中很重要
+在内核中，verifier 会根据程序类型、上下文、helper 和权限检查程序。JIT 可以将已接受的 BPF 转换为原生指令；在受支持的情况下，解释器也是一种执行机制。JIT 输出之后不会再经过一个强制的第二阶段 VM。附加操作会将已加载的程序连接到 hook；仅加载程序并不会订阅 tracepoint。
 
 ### eBPF 程序生命周期详解
 
-eBPF 程序从开发到执行会经历多个阶段。了解此过程有助于阐明 eBPF 的工作方式和约束。
+1. **开发：**选择 hook/上下文并定义 maps/license 元数据。并非所有程序都需要 GPL 兼容性，但 GPL-only helper 和某些类型/kfunc 会施加限制。这些跟踪示例使用 GPL 元数据以适配所用 helper。
+2. **编译：**使用目标工具链和头文件生成 BPF ELF 以及所需的调试/BTF 信息。
+3. **打开/加载：**解析 ELF、创建或显式复用 maps、进行重定位并调用 BPF 加载 API。验证和可选的 JIT 会在加载期间进行。
+4. **附加：**使用相应的 API。libbpf 可以根据 `SEC("tracepoint/...")` 推断这些 tracepoint。保持 link/附加状态处于活动状态。
+5. **运行/观察：**事件会调用程序；用户空间读取 maps/buffers。采样和容量限制可能导致观测数据丢失。
+6. **更新/卸载：**只有在明确需要时才保留兼容的 maps/links/pins。销毁此实验的 link 并关闭其对象以释放资源。
 
-1. **开发阶段**：
-   - 使用 C、Rust 等高级语言编写程序
-   - 使用 kernel header 和 eBPF helper function
-   - 利用 BTF 信息（用于 CO-RE 支持）
-   - 定义 section（使用 `SEC()` macro）
-   - 指定 license（需要与 GPL 兼容）
+在 Linux 6.12 中，具备 BPF 能力的加载路径最多允许 1,000,000 条指令，非特权路径则最多允许 4,096 条指令。verifier 另有 1,000,000 条指令的**分析复杂度**限制。较小的程序也可能无法通过验证。非特权 BPF 通常处于禁用状态；token/能力和程序类型检查仍然适用。
 
-2. **编译阶段**：
-   - 使用 Clang/LLVM 编译为 eBPF bytecode
-   - 使用 `-target bpf` 选项指定 eBPF target
-   - 生成 BTF 和调试信息
-   - 以 ELF 文件格式输出
+### eBPF 程序类型及其特征
 
-3. **加载阶段**：
-   - 通过 `bpf()` system call 将程序加载到 kernel
-   - libbpf 或 BCC 库处理此过程
-   - 指定要附加的程序类型和 hook
-   - 创建所需 maps
+| Hook / 程序类型 | 用途与返回值界限 |
+|---|---|
+| XDP / `BPF_PROG_TYPE_XDP` | 原生驱动 XDP 在分配 skb 前运行；通用/卸载模式各不相同。`XDP_DROP`、`PASS`、`TX`、`REDIRECT` 是动作，并不保证吞吐量 |
+| TC / `SCHED_CLS`、`SCHED_ACT` | 入站/出站数据包分类/动作。分类器的 `TC_ACT_*` 语义需要适当的 direct-action 设置 |
+| Socket filter / `SOCKET_FILTER` | socket 数据包交付：返回零表示丢弃，正数表示捕获长度，可能会截断。创建/连接策略使用其他 hook |
+| kprobe/uprobe / `KPROBE` | 内核/用户空间探针；不存在单独的 `BPF_PROG_TYPE_UPROBE`。内联、黑名单和符号可用性会限制附加 |
+| Tracepoint / `TRACEPOINT` | 静态声明的事件上下文；检查目标格式。它不是保证稳定的内核 ABI |
+| Perf event / `PERF_EVENT` | 性能采样；返回行为取决于其 perf-event 集成方式 |
+| cgroup / `CGROUP_SKB`、`CGROUP_SOCK`、`CGROUP_SOCK_ADDR` 等 | 网络/socket 控制；上下文和允许/拒绝约定各不相同 |
+| LSM / `LSM` | MAC 风格程序通常会保留之前的错误，并返回零/错误；cgroup-LSM 的授权语义有所不同 |
+| Socket operations / `SOCK_OPS` | TCP 回调；具体操作、reply 字段和 helper 支持都很重要 |
+| fentry/fexit / `TRACING` | 在支持的情况下进行基于 BTF 的函数跟踪；目标和附加限制仍然适用 |
 
-4. **验证阶段**：
-   - kernel 内 verifier 检查程序安全性
-   - 控制流图（CFG）分析
-   - 内存访问验证
-   - 防止无限循环
-   - 权限检查
-   - 失败时提供详细错误信息
+应根据可见性/控制需求选择 hook。XDP 缺少一些较后续协议栈阶段的上下文；TC 处理基于 skb 的流量；tracepoint/probe 观测不会自动实施网络策略。不要在不同程序类型之间照搬上下文结构体或返回码。
 
-5. **JIT 编译阶段**：
-   - 将 bytecode 转换为主机架构的原生代码
-   - 应用架构特定优化
-   - 提高执行性能
-   - 在大多数架构上受支持（x86_64、ARM64、RISC-V 等）
+### eBPF Maps：数据共享与状态存储的核心
 
-6. **附加阶段**：
-   - 将程序附加到特定 kernel 事件（hooks）
-   - 创建并初始化所需 maps
-   - 设置程序 metadata
-   - 管理 file descriptor
+只要仍有引用（例如 FD、已加载的程序或显式 bpffs pin），maps 就会继续存在。Pin 并不等于磁盘持久化，也不会在重启后保留 map 内容。重新加载不会自动复用旧 map。
 
-7. **执行阶段**：
-   - 事件发生时执行程序
-   - 访问 context 数据
-   - 根据决策处理数据包/事件
-   - 调用 helper function
+| 类型 | 用途与限制 |
+|---|---|
+| `HASH` | 有界键/值表；表满时插入可能失败。预期的常数时间查找并不保证延迟 |
+| `ARRAY` | 在有效索引处预分配并初始化为零的值；零值不等于 hash 条目缺失 |
+| `LRU_HASH` | 带 LRU 风格淘汰的有界缓存，并非无损的累计计数器 |
+| `RINGBUF` | 多生产者/单消费者，可跨 CPU 使用；键/值大小为零，容量必须是 2 的幂字节数；预留失败不会阻塞 |
+| `PERF_EVENT_ARRAY` | 每 CPU 的 perf 通道；用户空间必须配置/消费事件并跟踪丢失记录 |
+| `PROG_ARRAY` | 尾调用程序引用；目标兼容性和调用次数限制均适用 |
+| `PERCPU_HASH` / `PERCPU_ARRAY` | 减少跨 CPU 竞争，但并非在所有情况下都没有竞争。用户空间读取所有可能 CPU 的槽位时必须使用所需填充 |
+| `SOCKMAP` / `SOCKHASH` | 用于支持的重定向/程序的 socket 引用，并非任意 socket 操作 hook |
 
-8. **数据交换阶段**：
-   - 通过 eBPF maps 存储和检索数据
-   - 与用户空间应用程序通信
-   - 共享性能指标、状态信息等
-   - 事件通知（perf event buffer、ring buffer 等）
+libbpf 1.x 已移除 `struct bpf_map_def SEC("maps")`。以下基于 BTF 的定义使用实际类型展示八类 maps。请将所需 maps 与合适的程序组合使用；仅有这些声明并不会形成事件处理管道。
 
-9. **更新/卸载阶段**：
-   - 必要时动态更新程序
-   - 使用完成后卸载程序
-   - 清理相关资源
-   - 保留或删除 map 数据
-
-### eBPF 程序类型和特性
-
-eBPF 程序根据所附加的 hook point 分为多种类型。每种程序类型都有特定的 context 和功能：
-
-1. **XDP（eXpress Data Path）Programs**：
-   - 程序类型：`BPF_PROG_TYPE_XDP`
-   - Context：网络数据包数据、接口信息
-   - 返回值：`XDP_DROP`、`XDP_PASS`、`XDP_TX`、`XDP_REDIRECT` 等
-   - 特性：最高性能的数据包处理、驱动/硬件级执行
-
-2. **Traffic Control（TC）Programs**：
-   - 程序类型：`BPF_PROG_TYPE_SCHED_CLS`、`BPF_PROG_TYPE_SCHED_ACT`
-   - Context：网络数据包数据、调度信息
-   - 返回值：`TC_ACT_OK`、`TC_ACT_SHOT`、`TC_ACT_REDIRECT` 等
-   - 特性：数据包分类和操作，支持 ingress/egress
-
-3. **Socket Filter Programs**：
-   - 程序类型：`BPF_PROG_TYPE_SOCKET_FILTER`
-   - Context：socket buffer 数据
-   - 返回值：0（丢弃数据包）或数据包长度（允许数据包）
-   - 特性：socket 级别数据包过滤，功能类似 tcpdump
-
-4. **kprobe/uprobe Programs**：
-   - 程序类型：`BPF_PROG_TYPE_KPROBE`、`BPF_PROG_TYPE_UPROBE`
-   - Context：函数参数、寄存器值
-   - 返回值：整数（无语义）
-   - 特性：动态函数追踪、调试和 profiling
-
-5. **tracepoint Programs**：
-   - 程序类型：`BPF_PROG_TYPE_TRACEPOINT`
-   - Context：tracepoint 定义 struct
-   - 返回值：整数（无语义）
-   - 特性：稳定的 kernel trace point、版本兼容性
-
-6. **perf Event Programs**：
-   - 程序类型：`BPF_PROG_TYPE_PERF_EVENT`
-   - Context：性能事件数据
-   - 返回值：整数（无语义）
-   - 特性：硬件/软件性能事件监控
-
-7. **cgroup Programs**：
-   - 程序类型：`BPF_PROG_TYPE_CGROUP_SKB`、`BPF_PROG_TYPE_CGROUP_SOCK` 等
-   - Context：cgroup 信息、socket/数据包数据
-   - 返回值：0（拒绝）或 1（允许）
-   - 特性：按容器应用的 Network Policy、资源控制
-
-8. **LSM（Linux Security Module）Programs**：
-   - 程序类型：`BPF_PROG_TYPE_LSM`
-   - Context：安全相关操作信息
-   - 返回值：0（允许）或错误码（拒绝）
-   - 特性：安全策略应用、权限检查
-
-9. **Socket Operations Programs**：
-   - 程序类型：`BPF_PROG_TYPE_SOCK_OPS`
-   - Context：socket 操作信息
-   - 返回值：整数（无语义）
-   - 特性：TCP 连接控制、socket 选项设置
-
-10. **fentry/fexit Programs**：
-    - 程序类型：`BPF_PROG_TYPE_TRACING`
-    - Context：函数参数、返回值
-    - 返回值：整数（无语义）
-    - 特性：低开销函数追踪，比 kprobe 更高效
-
-### 简单 eBPF 程序示例和说明
-
-以下是一个追踪系统调用执行的简单 eBPF 程序示例：
-
-```c
-// hello_world.c
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-
-// Program section definition - this program executes on execve system call entry
-SEC("tracepoint/syscalls/sys_enter_execve")
-int hello_execve(void *ctx) {
-    // Print simple message
-    char msg[] = "Hello, eBPF!";
-    bpf_trace_printk(msg, sizeof(msg));
-    return 0;
-}
-
-// License definition (GPL compatible required)
-char LICENSE[] SEC("license") = "GPL";
-```
-
-**代码说明**：
-1. **Header 文件**：包含所需的 eBPF 相关 header
-2. **Section 定义**：使用 `SEC()` macro 指定程序类型和附加点
-3. **程序函数**：执行 `execve` system call 时调用的函数
-4. **Context 参数**：包含事件相关数据
-5. **Helper function 使用**：使用 `bpf_trace_printk()` 输出调试消息
-6. **License 指定**：需要 GPL 兼容 license（用于访问 kernel symbol）
-
-**编译和运行**：
-```bash
-# Compile
-clang -O2 -target bpf -c hello_world.c -o hello_world.o
-
-# Load and run
-bpftool prog load hello_world.o /sys/fs/bpf/hello_world
-
-# Check output
-cat /sys/kernel/debug/tracing/trace_pipe
-```
-
-**执行结果**：
-```
-<...>-1234  [001] d... 123456.789012: bpf_trace_printk: Hello, eBPF!
-<...>-5678  [002] d... 123456.789102: bpf_trace_printk: Hello, eBPF!
-```
-
-这个简单示例演示了 eBPF 的基本概念。在实际应用中，可以使用更复杂的逻辑和 maps 来收集和分析数据。
-
-### eBPF Maps：数据共享和状态存储的核心
-
-eBPF maps 是用于在 eBPF 程序和用户空间应用程序之间共享数据的 key-value store。这些 maps 是 eBPF 程序维护状态并与用户空间通信的核心机制。
-
-#### eBPF Maps 的基本概念
-
-eBPF maps 具有以下特性：
-
-- **持久化存储**：即使重新加载程序，数据仍会保留
-- **多种数据结构**：支持 hash table、array、queue、stack 等多种形式
-- **并发支持**：可以从多个 CPU 并发访问
-- **大小限制**：创建时必须指定最大大小
-- **灵活的 Key/Value 格式**：可以存储多种数据类型
-- **双向访问**：kernel 空间和用户空间均可访问
-
-#### 主要 Map 类型和使用场景
-
-1. **Hash Map（BPF_MAP_TYPE_HASH）**：
-   - 通用 key-value store
-   - O(1) 时间复杂度的查找性能
-   - 动态大小管理（受 max entries 限制）
-   - 使用场景：连接跟踪、会话信息存储、计数器
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") connection_map = {
-         .type = BPF_MAP_TYPE_HASH,
-         .key_size = sizeof(struct connection_key),
-         .value_size = sizeof(struct connection_info),
-         .max_entries = 1024,
-     };
-     ```
-
-2. **Array Map（BPF_MAP_TYPE_ARRAY）**：
-   - 基于索引的固定大小 array
-   - 查找性能非常快
-   - 预分配所有条目
-   - 使用场景：全局设置、统计信息、需要快速查找的数据
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") config_array = {
-         .type = BPF_MAP_TYPE_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(struct config),
-         .max_entries = 1,
-     };
-     ```
-
-3. **LRU Hash Map（BPF_MAP_TYPE_LRU_HASH）**：
-   - 具有最近最少使用项目跟踪功能的 hash map
-   - 超过 max entries 时自动删除最旧条目
-   - 适合实现缓存
-   - 使用场景：连接缓存、路由缓存
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") connection_cache = {
-         .type = BPF_MAP_TYPE_LRU_HASH,
-         .key_size = sizeof(struct connection_key),
-         .value_size = sizeof(struct connection_info),
-         .max_entries = 10000,
-     };
-     ```
-
-4. **Ring Buffer（BPF_MAP_TYPE_RINGBUF）**：
-   - 使用 producer-consumer 模型的高性能 buffer
-   - 支持单 producer、单 consumer
-   - 支持基于事件的通知
-   - 使用场景：日志收集、事件交付、高性能数据流
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") events = {
-         .type = BPF_MAP_TYPE_RINGBUF,
-         .max_entries = 256 * 1024, // 256 KB
-     };
-     ```
-
-5. **Perf Event Array（BPF_MAP_TYPE_PERF_EVENT_ARRAY）**：
-   - 传输性能事件数据
-   - 从 kernel 向用户空间交付事件
-   - 使用场景：追踪事件、性能数据收集
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") perf_events = {
-         .type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-         .key_size = sizeof(int),
-         .value_size = sizeof(u32),
-         .max_entries = 128,
-     };
-     ```
-
-6. **Program Array（BPF_MAP_TYPE_PROG_ARRAY）**：
-   - 存储对其他 eBPF 程序的引用
-   - 用于实现 tail call
-   - 可以进行程序链式调用
-   - 使用场景：复杂处理逻辑模块化、条件执行
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") jump_table = {
-         .type = BPF_MAP_TYPE_PROG_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(u32),
-         .max_entries = 10,
-     };
-     ```
-
-7. **Per-CPU Maps（BPF_MAP_TYPE_PERCPU_HASH/ARRAY）**：
-   - 每个 CPU 独立存储数据
-   - 无并发问题的高性能访问
-   - 使用场景：高性能计数器、按 CPU 统计信息
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") cpu_stats = {
-         .type = BPF_MAP_TYPE_PERCPU_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(struct stats),
-         .max_entries = 1,
-     };
-     ```
-
-8. **Socket Map（BPF_MAP_TYPE_SOCKMAP）**：
-   - Socket 引用存储
-   - 支持 socket 到 socket 的 redirect
-   - 使用场景：socket 加速、proxy 实现
-   - 示例代码：
-     ```c
-     struct bpf_map_def SEC("maps") socket_map = {
-         .type = BPF_MAP_TYPE_SOCKMAP,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(u32),
-         .max_entries = 1024,
-     };
-     ```
-
-#### eBPF Map 操作示例
-
-以下是在 eBPF 程序中使用 maps 的简单示例：
+**`map_types.bpf.c`**
 
 ```c
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 
-// Map definition
-struct bpf_map_def SEC("maps") counter_map = {
-    .type = BPF_MAP_TYPE_ARRAY,
-    .key_size = sizeof(u32),
-    .value_size = sizeof(u64),
-    .max_entries = 1,
-};
-
-SEC("tracepoint/syscalls/sys_enter_execve")
-int count_execve(void *ctx) {
-    u32 key = 0;
-    u64 *value, init_val = 1;
-
-    // Lookup value from map
-    value = bpf_map_lookup_elem(&counter_map, &key);
-    if (value) {
-        // Increment if value exists
-        __sync_fetch_and_add(value, 1);
-    } else {
-        // Initialize if value doesn't exist
-        bpf_map_update_elem(&counter_map, &key, &init_val, BPF_ANY);
-    }
-
-    return 0;
-}
-
-char LICENSE[] SEC("license") = "GPL";
-```
-
-从用户空间访问 map：
-
-```c
-#include <bpf/bpf.h>
-#include <stdio.h>
-
-int main() {
-    // Open map file descriptor
-    int map_fd = bpf_obj_get("/sys/fs/bpf/counter_map");
-    if (map_fd < 0) {
-        perror("Failed to open map");
-        return 1;
-    }
-
-    // Lookup value from map
-    u32 key = 0;
-    u64 value;
-    if (bpf_map_lookup_elem(map_fd, &key, &value) == 0) {
-        printf("execve count: %llu\n", value);
-    } else {
-        perror("Failed to lookup value");
-    }
-
-    return 0;
-}
-```
-
-## 在 Cilium 中利用 eBPF：容器网络创新
-
-Cilium 是一个开源项目，利用 eBPF 实现容器网络、负载均衡、Network Policy 和可见性。它为 Kubernetes 等容器编排平台提供网络和安全能力。
-
-### Cilium 架构和 eBPF 的作用
-
-Cilium 由以下组件构成，eBPF 在每个组件中都发挥重要作用：
-
-```mermaid
-flowchart TD
-    subgraph "Kubernetes Cluster"
-        API[Kubernetes API Server]
-
-        subgraph "Cilium Components"
-            Agent[Cilium Agent]
-            Operator[Cilium Operator]
-            CLI[Cilium CLI]
-            Hubble[Hubble\nObservability Platform]
-        end
-
-        subgraph "Node 1"
-            Agent1[Cilium Agent]
-            eBPF1[eBPF Programs]
-            Maps1[eBPF Maps]
-            Pod1A[Pod A]
-            Pod1B[Pod B]
-
-            Agent1 -->|Load| eBPF1
-            Agent1 -->|Manage| Maps1
-            eBPF1 <-->|Data Access| Maps1
-            Pod1A <-->|Packet Processing| eBPF1
-            Pod1B <-->|Packet Processing| eBPF1
-        end
-
-        subgraph "Node 2"
-            Agent2[Cilium Agent]
-            eBPF2[eBPF Programs]
-            Maps2[eBPF Maps]
-            Pod2A[Pod C]
-            Pod2B[Pod D]
-
-            Agent2 -->|Load| eBPF2
-            Agent2 -->|Manage| Maps2
-            eBPF2 <-->|Data Access| Maps2
-            Pod2A <-->|Packet Processing| eBPF2
-            Pod2B <-->|Packet Processing| eBPF2
-        end
-
-        API <-->|State Sync| Agent
-        API <-->|CRD Management| Operator
-        Agent <-->|Cluster State| Operator
-        CLI -->|Management| Agent
-        Agent <-->|Metrics Collection| Hubble
-
-        Agent <-->|State Sync| Agent1
-        Agent <-->|State Sync| Agent2
-    end
-
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef cilium fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class API k8s;
-    class Agent,Operator,CLI,Hubble,Agent1,Agent2 cilium;
-    class eBPF1,eBPF2,Maps1,Maps2 ebpf;
-    class Pod1A,Pod1B,Pod2A,Pod2B pod;
-```
-
-#### 关键组件：
-
-1. **Cilium Agent**：
-   - 在每个 node 上运行的 daemon
-   - eBPF 程序编译和加载
-   - Endpoint 管理和策略应用
-   - 网络拓扑发现
-   - 状态监控和指标收集
-
-2. **Cilium Operator**：
-   - 集群范围的资源管理
-   - CRD（Custom Resource Definition）处理
-   - Node 间协调
-   - 集群范围功能管理
-
-3. **eBPF Programs**：
-   - 附加到 XDP 和 TC hooks 的 datapath 程序
-   - Socket 级负载均衡程序
-   - 连接跟踪程序
-   - Network Policy 执行程序
-
-4. **eBPF Maps**：
-   - Endpoint 信息存储
-   - 策略规则存储
-   - 连接跟踪状态管理
-   - 负载均衡 Service 信息
-
-5. **Hubble**：
-   - 基于 eBPF 的网络可观测性平台
-   - 网络流量监控
-   - 安全可见性
-   - 性能分析和故障排除
-
-### Cilium eBPF Datapath 详解
-
-Cilium 的 datapath 通过 eBPF 程序实现，在数据包通过网络栈时于多个位置进行处理：
-
-1. **数据包接收（XDP/TC Ingress）**：
-   - 在网络接口接收数据包
-   - 在 XDP 或 TC hook 截获数据包
-   - 初始过滤和 DDOS 防御
-   - 数据包类型分类（本地/转发/主机）
-
-2. **身份验证**：
-   - 分析数据包源/目标 IP 和 port
-   - Kubernetes endpoint 识别
-   - Service backend 验证
-   - 收集 context 信息
-
-3. **策略应用**：
-   - 检查 Network Policy 规则
-   - 应用 L3/L4 策略（基于 IP/port）
-   - 应用 L7 策略（HTTP/gRPC/DNS 等）
-   - 基于策略决策允许/拒绝
-
-4. **连接跟踪**：
-   - 跟踪和管理连接状态
-   - Stateful firewall 功能
-   - 维护 NAT 状态
-   - 连接超时管理
-
-5. **NAT 和负载均衡**：
-   - 必要时进行地址转换
-   - Service 负载均衡（一致性 hash、session affinity）
-   - 支持 DSR（Direct Server Return）
-   - 基于 health check 的 endpoint 选择
-
-6. **数据包转发**：
-   - 将数据包转发至目标 endpoint
-   - Overlay 或 native routing
-   - 数据包封装/解封装（如有需要）
-   - 数据包转换和优化
-
-7. **监控和可见性**：
-   - 收集 flow 信息
-   - 更新指标
-   - 生成事件
-   - 记录调试信息
-
-### Cilium 主要 eBPF 程序详解
-
-Cilium 使用多种 eBPF 程序实现容器网络功能：
-
-1. **bpf_lxc.c**：Endpoint 到 Endpoint 通信处理
-   - 处理容器 network namespace 与主机之间的通信
-   - 策略应用和连接跟踪
-   - Endpoint 识别和路由
-   - 关键函数：`handle_xgress`、`__tail_handle_ipv{4,6}`
-
-2. **bpf_overlay.c**：Overlay 网络处理
-   - VXLAN/Geneve 封装和解封装
-   - Node 间数据包路由
-   - Tunnel key 管理
-   - 关键函数：`from_overlay`、`to_overlay`
-
-3. **bpf_host.c**：主机网络处理
-   - 主机网络栈与容器之间的通信
-   - Host firewall 功能
-   - 基于主机的 Service 处理
-   - 关键函数：`handle_netdev`、`handle_from_host`
-
-4. **bpf_xdp.c**：基于 XDP 的数据包处理
-   - 早期数据包过滤
-   - DDoS 防御
-   - 高性能数据包 drop 和 redirect
-   - 关键函数：`cilium_xdp_entry`
-
-5. **bpf_sock.c**：Socket 级负载均衡
-   - 在 socket 创建时进行负载均衡
-   - 绕过连接跟踪
-   - 高性能 Service 访问
-   - 关键函数：`sock4_load_balancer`、`sock6_load_balancer`
-
-6. **bpf_lb.c**：Service 负载均衡
-   - Kubernetes Service 实现
-   - Backend 选择和 NAT
-   - Session affinity 支持
-   - 关键函数：`lb{4,6}_service`
-
-7. **bpf_network.c**：Network Policy 应用
-   - L3/L4 策略应用
-   - 策略决策缓存
-   - 策略统计信息收集
-   - 关键函数：`policy_can_access`、`policy_apply_verdict`
-
-### Cilium 的 eBPF Map 使用
-
-Cilium 使用多种 eBPF maps 来存储状态并共享数据：
-
-1. **endpoints_map**：Endpoint 信息存储
-   - Key：Endpoint ID
-   - Value：Endpoint metadata（IP、安全 ID、接口等）
-   - 用途：数据包路由、策略应用
-
-2. **connection_map**：连接跟踪信息
-   - Key：连接 tuple（src IP/port、dst IP/port、protocol）
-   - Value：连接状态、timestamp、统计信息
-   - 用途：Stateful firewall、NAT 跟踪
-
-3. **policy_map**：Network Policy 规则
-   - Key：策略标识符
-   - Value：策略规则（允许/拒绝、port、protocol 等）
-   - 用途：Network Policy 应用
-
-4. **lb_map**：负载均衡 Service 信息
-   - Key：Service 地址（virtual IP:port）
-   - Value：backend 列表、选择算法、状态
-   - 用途：Service 负载均衡
-
-5. **tunnel_map**：Overlay 网络信息
-   - Key：远程 node IP
-   - Value：tunnel endpoint 信息
-   - 用途：Node 间数据包路由
-
-6. **metrics_map**：性能指标收集
-   - Key：指标类型
-   - Value：counters、gauges 等
-   - 用途：监控和调试
-
-### Cilium 基于 eBPF 的功能
-
-Cilium 使用 eBPF 提供以下高级网络和安全功能：
-
-1. **Kubernetes Network Policies**：
-   - Namespace、Pod、Service 级策略
-   - 支持 L3/L4/L7 策略
-   - 基于 CIDR 的过滤
-   - 集群内/外通信控制
-
-2. **透明加密**：
-   - 基于 WireGuard 或 IPsec 的 Node 间加密
-   - 零配置设置
-   - 性能优化的实现
-   - 自动化 key 管理
-
-3. **Service Mesh 功能**：
-   - L7 proxy 集成
-   - HTTP、gRPC、Kafka protocol 感知
-   - 基于 header 的路由
-   - 无 Sidecar 的 service mesh
-
-4. **负载均衡**：
-   - 一致性 hash 算法
-   - Session affinity
-   - Microservice 负载均衡
-   - 支持 DSR（Direct Server Return）
-
-5. **可观测性和监控**：
-   - 网络 flow 可见性
-   - Service dependency map
-   - 性能 bottleneck 识别
-   - 安全事件检测
-
-6. **带宽管理**：
-   - 按 Endpoint 限制带宽
-   - 流量优先级
-   - 拥塞控制
-   - Quality of Service（QoS）保证
-
-7. **多集群网络**：
-   - 集群间连接
-   - 全局 Service 路由
-   - 一致的策略应用
-   - Federation 支持
-
-## 实验：eBPF 程序开发和调试
-
-本节介绍开发和调试 eBPF 程序的实践体验。我们将从基本 eBPF 程序开始，并探索 Cilium 的 eBPF 功能。
-
-### 1. 基本 eBPF 程序开发
-
-#### 1.1 系统调用追踪程序
-
-以下是一个追踪 `execve` system call 的简单 eBPF 程序：
-
-```c
-// hello_ebpf.c
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-
-// Specify tracepoint for program execution
-SEC("tracepoint/syscalls/sys_enter_execve")
-int hello_execve(void *ctx) {
-    // Output debug message
-    char msg[] = "Hello, eBPF! Process executed.";
-    bpf_trace_printk(msg, sizeof(msg));
-    return 0;
-}
-
-// Specify GPL compatible license (required)
-char LICENSE[] SEC("license") = "GPL";
-```
-
-#### 1.2 编译和加载
-
-```bash
-# Verify required packages are installed
-sudo apt-get update
-sudo apt-get install -y clang llvm libelf-dev libbpf-dev bpftool
-
-# Compile
-clang -O2 -target bpf -c hello_ebpf.c -o hello_ebpf.o
-
-# Load program
-sudo bpftool prog load hello_ebpf.o /sys/fs/bpf/hello_execve
-
-# Check output
-sudo cat /sys/kernel/debug/tracing/trace_pipe
-```
-
-执行结果：
-```
-<...>-1234  [001] d... 123456.789012: bpf_trace_printk: Hello, eBPF! Process executed.
-<...>-5678  [002] d... 123456.789102: bpf_trace_printk: Hello, eBPF! Process executed.
-```
-
-#### 1.3 检查程序信息
-
-```bash
-# List loaded eBPF programs
-sudo bpftool prog list
-
-# Check specific program details
-sudo bpftool prog show id 123
-
-# Dump program bytecode
-sudo bpftool prog dump xlated id 123
-```
-
-### 2. 使用 Maps 的高级 eBPF 程序
-
-#### 2.1 进程执行计数器程序
-
-以下是使用 maps 跟踪进程执行次数的程序：
-
-```c
-// process_counter.c
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <linux/sched.h>
-
-// Struct to store process name
-struct process_key {
-    char comm[16];
-};
-
-// Map definition
+/* Definitions only; combine the needed maps with a suitable program. */
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
     __uint(max_entries, 1024);
-    __type(key, struct process_key);
-    __type(value, u64);
-} process_map SEC(".maps");
+    __type(key, __u32);
+    __type(value, __u64);
+} hash_counts SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} total SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u64);
+} cache SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_RINGBUF);
+    __uint(max_entries, 256 * 1024);
+} events SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+    __type(key, __u32);
+    __type(value, __u32);
+    /* libbpf determines max_entries from the number of possible CPUs. */
+} perf_events SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+    __uint(max_entries, 10);
+    __type(key, __u32);
+    __type(value, __u32);
+} jump_table SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} cpu_counts SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_SOCKMAP);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u32);
+} sockets SEC(".maps");
+```
+
+共享计数器需要原子递增。新的 hash 键需要通过 `BPF_NOEXIST` 插入，然后查找/递增成功插入的条目；使用 `BPF_ANY` 初始化可能会覆盖另一个 CPU 的计数。有效索引处的 array 条目已经存在。
+
+## 在 Cilium 中使用 eBPF：容器网络的创新
+
+### Cilium 架构与 eBPF 的作用
+
+![Cilium 逻辑职责：Kubernetes 状态和 Operator、每节点 agent、内核程序/maps 以及 Hubble flow 观测。](../../.gitbook/assets/en-networking-cilium-02-ebpf-1.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-02-ebpf-1.html)
+
+该图展示的是逻辑职责，而非强制的位置安排或单一编译管线。CLI 可以在集群外运行；agent 在符合条件的受管理节点上运行。程序构建/加载的具体细节因版本/功能而异。Hubble Relay 会汇总 flows；Prometheus metrics 使用独立的端点。
+
+agent 会协调 endpoints、身份、策略和数据路径状态。Operator 负责身份/IPAM 生命周期等已配置的集群范围任务；它不属于数据包转发路径。Hubble 会结合 BPF flow 信息和用户空间代理事件。
+
+### 深入分析 Cilium 的 eBPF 数据路径
+
+以下是相互配合的功能，并非每个数据包都遵循的固定顺序：
+
+1. **入口：**socket hook 可以在数据包产生前解析 Service 后端；TC 处理数据包路径；可选的 XDP 加速可处理受支持的外部流量。
+2. **身份/策略：**IP/身份和 endpoint 策略控制 L3/L4 访问。受支持的 HTTP/gRPC 策略使用 Envoy，DNS 策略使用 DNS 代理；L7 解析/强制执行并非完全由 BPF 完成。
+3. **状态/转换：**conntrack、service/backend、reverse-NAT 和 affinity maps 各有不同用途。并非每个数据包都会重新选择后端。
+4. **转发：**原生路由或配置的 overlay 会承载流量。DSR 分发/返回路径需要满足所选模式的网络前提条件。
+5. **观测：**数据路径计数器/事件和代理事件存在配置要求和采集丢失限制。
+
+后端就绪状态来自控制平面状态和适用的健康检查机制，而不是通用的 BPF 应用探测。Maglev、affinity、DSR 和加速都是可选功能，并非通用默认设置。
+
+### Cilium 主要 eBPF 程序详解
+
+| Cilium 1.20.3 源码 | 作用 |
+|---|---|
+| `bpf/bpf_lxc.c` | Endpoint 数据包路径、策略、conntrack 和转发 |
+| `bpf/bpf_overlay.c` | Overlay 数据包路径 |
+| `bpf/bpf_host.c` | 主机/设备路径和受支持的 host-firewall 处理 |
+| `bpf/bpf_xdp.c` | XDP 路径，包括已配置的负载均衡加速 |
+| `bpf/bpf_sock.c` | cgroup socket-address hook（IPv4 和 IPv6）：connect、sendmsg、recvmsg、getpeername、bind/post_bind 和 sock_release，用于 socket 层级的 service 转换 |
+| `bpf/bpf_wireguard.c` | `cilium_wg0` 设备程序（`cil_from_wireguard`/`cil_to_wireguard`），用于标记经过 WireGuard 解密的流量 |
+| `bpf/bpf_sock_term.c` | BPF 迭代器（TCP/UDP），用于销毁连接到已删除 Service 后端的 sockets |
+| `bpf/bpf_probes.c`、`bpf/bpf_alignchecker.c` | 非数据路径程序：在 agent 启动时运行内核功能探测，并检查 C/Go 结构体布局 |
+| `bpf/lib/lb.h` | 共享负载均衡 helper |
+| `bpf/lib/policy.h` | 共享策略 helper |
+
+有关加载器、附加点、尾调用和逐程序说明，请参阅 [eBPF 数据路径内部机制](08-ebpf-datapath-internals.md)。
+
+此版本中不存在顶层的 `bpf_lb.c` 或 `bpf_network.c` 文件。函数名称和功能门控会变化；请检查确切版本，不要把概念名称当成源文件。
+
+### Cilium 对 eBPF Map 的使用
+
+以下示例并非稳定的 map 布局 API：
+
+| 名称 / 系列 | 键与用途 |
+|---|---|
+| `cilium_lxc` | 地址/地址族 → endpoint 转发元数据；并非简单的 endpoint ID |
+| `cilium_ipcache_v2` | 前缀、地址族、集群上下文 → 身份/隧道元数据 |
+| `cilium_policy_v3_<endpoint>` | 身份、方向、协议、目标端口和前缀 → 策略条目 |
+| `cilium_ct4_global`、`cilium_ct6_global`、`cilium_ct_any4_global` 等 | 连接元组状态；实际 maps 取决于协议/地址族/配置 |
+| `cilium_lb4_services_v2` / `cilium_lb6_services_v2` | 地址/端口、协议、范围和后端槽位 → service 元数据/后端引用；后端记录存放在独立 maps 中 |
+| `cilium_metrics` | 原因、方向和源位置键 → 数据包/字节计数器 |
+
+`cilium-dbg map get` 显示的是用户空间缓存的内容，不一定是最新的内核转储。请使用匹配的 `cilium-dbg bpf ...` 解码器或 bpftool 查看其支持的内核视图。不要将原始字节写入 Cilium maps 作为故障排查捷径。
+
+### 基于 eBPF 的功能及其边界
+
+- **策略：**Kubernetes NetworkPolicy 具有 L3/L4 语义；Cilium 资源会增加受支持的功能。无限制的 L4 allow 可能绕过重叠的 L7 限制型 allow；请检查组合策略。
+- **加密：**在 WireGuard/IPsec 模式下，BPF 会将流量导向这些内核功能；加密并非完全由 BPF 指令完成。请为所选模式配置密钥、端口、MTU 和流量覆盖范围。IPsec 和 WireGuard 的密钥操作各不相同。
+- **Service mesh：**用户空间代理提供受支持的 L7 处理。Kafka L7 策略已移除。Beta 工作负载 mTLS/ztunnel 有独立的前提条件，不能由节点加密功能推定已启用。
+- **带宽：**EDT/bandwidth-manager 和拥塞控制无法保证端到端 QoS 或吞吐量。
+- **多集群：**Cluster Mesh 需要连通性、身份、地址和兼容配置；它不会自动同步所有策略对象，也不能解决路由问题。
+
+## 实验：eBPF 程序开发与调试
+
+### 1. 基本 eBPF 程序开发
+
+将具名文件保存到新的实验目录中。此程序会记录 `execve` **尝试**，包括之后失败的尝试。`execveat` 使用不同的 syscall-entry tracepoint。调试打印是共享的、噪声较大的输出，不是生产环境事件传输方式。`SEC()` 用于指定预期的类型/hook；这里使用的 GPL 元数据适用于所用 helper。
+
+**`hello.bpf.c`**
+
+```c
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
 SEC("tracepoint/syscalls/sys_enter_execve")
-int count_execve(void *ctx) {
-    struct process_key key = {};
-    u64 *count, zero = 1;
-
-    // Get current process name
-    bpf_get_current_comm(&key.comm, sizeof(key.comm));
-
-    // Lookup counter from map
-    count = bpf_map_lookup_elem(&process_map, &key);
-    if (count) {
-        // Increment counter
-        __sync_fetch_and_add(count, 1);
-    } else {
-        // Add new entry
-        bpf_map_update_elem(&process_map, &key, &zero, BPF_ANY);
-    }
-
+int hello_execve(void *ctx)
+{
+    (void)ctx;
+    char message[] = "execve attempt\n";
+    bpf_trace_printk(message, sizeof(message));
     return 0;
 }
 
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-#### 2.2 用户空间应用程序
+### 2. 使用 Maps 的进阶 eBPF 程序
 
-用于读取 map 数据的用户空间程序：
+在所引用的内核中，`sched_process_exec` 会在成功的执行转换后发出。程序按 `comm` 计数；这是最多 16 字节（包括终止符）的短任务名称，不是唯一的可执行文件路径/进程身份。名称可能冲突/变化。此程序观测的是主机，并不会自动限定到某个 Pod。
+
+该 map 最多容纳 1,024 个名称。`lost_events[0]` 统计名称读取失败，`[1]` 统计没有可用计数器条目的事件，包括容量耗尽。这些计数并未涵盖所有可能的采集故障；64 位计数器可能溢出。实验在计数期间不会删除条目。
+
+**`exec_shared.h`**
 
 ```c
-// process_reader.c
-#include <stdio.h>
-#include <stdlib.h>
-#include <bpf/libbpf.h>
-#include <bpf/bpf.h>
-#include <unistd.h>
-
-struct process_key {
-    char comm[16];
+#ifndef EXEC_SHARED_H
+#define EXEC_SHARED_H
+#define COMM_BYTES 16
+#define MAX_COMMANDS 1024
+struct comm_key {
+    char comm[COMM_BYTES];
 };
+#endif
+```
 
-int main() {
-    // Open map file descriptor
-    int map_fd = bpf_obj_get("/sys/fs/bpf/process_map");
-    if (map_fd < 0) {
-        perror("Failed to open map");
+**`exec_count.bpf.c`**
+
+```c
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#include "exec_shared.h"
+
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, MAX_COMMANDS);
+    __type(key, struct comm_key);
+    __type(value, __u64);
+} exec_counts SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 2);
+    __type(key, __u32);
+    __type(value, __u64);
+} lost_events SEC(".maps");
+
+static __always_inline void record_loss(__u32 reason)
+{
+    __u64 *lost = bpf_map_lookup_elem(&lost_events, &reason);
+    if (lost)
+        __sync_fetch_and_add(lost, 1);
+}
+
+SEC("tracepoint/sched/sched_process_exec")
+int count_exec(void *ctx)
+{
+    (void)ctx;
+    struct comm_key key = {};
+    __u64 zero = 0;
+    if (bpf_get_current_comm(key.comm, sizeof(key.comm)) != 0) {
+        record_loss(0);
+        return 0;
+    }
+
+    __u64 *count = bpf_map_lookup_elem(&exec_counts, &key);
+    if (!count) {
+        /* A competing CPU may insert first; never overwrite its count. */
+        bpf_map_update_elem(&exec_counts, &key, &zero, BPF_NOEXIST);
+        count = bpf_map_lookup_elem(&exec_counts, &key);
+    }
+    if (count)
+        __sync_fetch_and_add(count, 1);
+    else
+        record_loss(1);
+    return 0;
+}
+
+char LICENSE[] SEC("license") = "GPL";
+```
+
+#### 用户空间应用与附加生命周期
+
+此加载器接受任一示例对象，只加载一个程序，将其附加，并保留 link 直到 Ctrl-C/SIGTERM。它从同一个对象中读取计数器 map FD，而不假设 pin 已存在。迭代从 NULL 开始，生成有界的非原子实时样本。
+
+**`run_bpf.c`**
+
+```c
+#define _POSIX_C_SOURCE 200809L
+#include <errno.h>
+#include <inttypes.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include "exec_shared.h"
+
+static volatile sig_atomic_t stopping;
+
+static void stop(int signal_number)
+{
+    (void)signal_number;
+    stopping = 1;
+}
+
+static int dump_counts(int map_fd, int lost_fd)
+{
+    struct comm_key current, next;
+    const struct comm_key *previous = NULL;
+    unsigned int seen = 0;
+
+    while (seen < MAX_COMMANDS) {
+        if (bpf_map_get_next_key(map_fd, previous, &next) != 0) {
+            if (errno == ENOENT)
+                break;
+            perror("get next key");
+            return -1;
+        }
+        __u64 value;
+        if (bpf_map_lookup_elem(map_fd, &next, &value) == 0)
+            printf("%.*s: %" PRIu64 "\n", COMM_BYTES, next.comm,
+                   (uint64_t)value);
+        else if (errno != ENOENT) {
+            perror("lookup count");
+            return -1;
+        }
+        current = next;
+        previous = &current;
+        seen++;
+    }
+    for (__u32 reason = 0; reason < 2; reason++) {
+        __u64 value;
+        if (bpf_map_lookup_elem(lost_fd, &reason, &value) != 0) {
+            perror("lookup loss");
+            return -1;
+        }
+        printf("lost[%u]: %" PRIu64 "\n", reason, (uint64_t)value);
+    }
+    if (fflush(stdout) != 0) {
+        perror("flush output");
+        return -1;
+    }
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    struct bpf_object *object = NULL;
+    struct bpf_link *link = NULL;
+    int result = 1;
+    if (argc != 2) {
+        fprintf(stderr, "usage: %s OBJECT.bpf.o\n", argv[0]);
+        return 2;
+    }
+    struct sigaction action = {.sa_handler = stop};
+    sigemptyset(&action.sa_mask);
+    if (sigaction(SIGINT, &action, NULL) || sigaction(SIGTERM, &action, NULL)) {
+        perror("sigaction");
         return 1;
     }
-
-    // Iterate through map entries
-    struct process_key key, next_key;
-    u64 value;
-
-    while (bpf_map_get_next_key(map_fd, &key, &next_key) == 0) {
-        if (bpf_map_lookup_elem(map_fd, &next_key, &value) == 0) {
-            printf("Process: %-16s Count: %llu\n", next_key.comm, value);
-        }
-        key = next_key;
+    object = bpf_object__open_file(argv[1], NULL);
+    if (!object) {
+        perror("open BPF object");
+        return 1;
     }
-
-    return 0;
+    struct bpf_program *program = bpf_object__next_program(object, NULL);
+    if (!program || bpf_object__next_program(object, program)) {
+        fprintf(stderr, "expected exactly one program\n");
+        goto cleanup;
+    }
+    if (bpf_object__load(object) != 0) {
+        fprintf(stderr, "load failed; inspect libbpf/verifier diagnostics\n");
+        goto cleanup;
+    }
+    int counts = bpf_object__find_map_fd_by_name(object, "exec_counts");
+    int losses = bpf_object__find_map_fd_by_name(object, "lost_events");
+    if (counts >= 0 && losses < 0) {
+        fprintf(stderr, "counter object is missing lost_events\n");
+        goto cleanup;
+    }
+    link = bpf_program__attach(program);
+    if (!link) {
+        perror("attach tracepoint");
+        goto cleanup;
+    }
+    fprintf(stderr, "Attached; Ctrl-C detaches. Counts are live samples.\n");
+    result = 0;
+    while (!stopping) {
+        if (counts >= 0 && dump_counts(counts, losses) != 0) {
+            result = 1;
+            break;
+        }
+        sleep(2);
+    }
+cleanup:
+    bpf_link__destroy(link);
+    bpf_object__close(object);
+    return result;
 }
 ```
 
-#### 2.3 编译和运行
+#### 编译与运行
+
+在 Debian/Ubuntu 多架构安装中，GCC 的多架构目录会提供 UAPI `asm/` 头文件；其他发行版请相应调整路径。`-g` 会为 `.maps` 提供 BTF。在准备好的 VM 上的终端 A 中编译并启动加载器：
 
 ```bash
-# Compile eBPF program
-clang -O2 -target bpf -c process_counter.c -o process_counter.o
-
-# Compile user-space program
-gcc -o process_reader process_reader.c -lbpf
-
-# Load eBPF program
-sudo bpftool prog load process_counter.o /sys/fs/bpf/process_counter map name process_map /sys/fs/bpf/process_map
-
-# Check map pin
-ls -la /sys/fs/bpf/
-
-# Run some commands to increment counters
-ls -la
-echo "Hello"
-find . -name "*.c"
-
-# Check results
-sudo ./process_reader
+MULTIARCH=$(gcc -print-multiarch)
+test -n "$MULTIARCH"
+clang -O2 -g -target bpf -I"/usr/include/$MULTIARCH" \
+  -c hello.bpf.c -o hello.bpf.o
+clang -O2 -g -target bpf -I"/usr/include/$MULTIARCH" \
+  -c exec_count.bpf.c -o exec_count.bpf.o
+cc -O2 -Wall -Wextra run_bpf.c -o run_bpf \
+  $(pkg-config --cflags --libs libbpf)
+sudo ./run_bpf hello.bpf.o
 ```
+
+在终端 B 中读取 `sudo cat /sys/kernel/tracing/trace_pipe`；在终端 C 中运行 `/usr/bin/true` 等外部可执行文件。按 Ctrl-C 停止 hello 加载器，然后运行 `sudo ./run_bpf exec_count.bpf.o`。在另一个终端中执行命令时，观察名称/计数对不断变化。观察程序和主机上的其他活动也会生成事件，因此不会保证固定的总数/PID。失败的 `execve` 尝试可能出现在 hello 输出中，但不应触发 `sched_process_exec`。
+
+仅运行 `bpftool prog load OBJECT PIN` 并不会附加此 tracepoint。此示例有意持有一个 link。显式 pin/复用属于单独的生命周期决策：`pinmaps` 和 `map ... pinned ...` 不是可以互换的语法。关闭此加载器会释放其未 pin 的资源。
 
 ### 3. 探索和调试 Cilium eBPF 程序
 
-Cilium 使用多种 eBPF 程序和 maps。让我们了解如何探索和调试它们。
-
-#### 3.1 检查 Cilium eBPF Maps
+使用已准备好的集群和正确的 kubeconfig context。选择受影响 Pod 所在节点上的 agent；endpoint ID 在节点本地有效。替换明确标出的占位符：
 
 ```bash
-# List Cilium eBPF maps
-cilium bpf maps list
-
-# Check specific map contents
-cilium bpf maps get cilium_policy_00001
-
-# Check endpoint information
-cilium endpoint list
-
-# Check eBPF programs for specific endpoint
-cilium bpf endpoint list -e 1234
+kubectl config current-context
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+export CILIUM_POD=cilium-REPLACE-WITH-ACTUAL-POD
+export ENDPOINT_ID=REPLACE-WITH-NODE-LOCAL-ID
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint get "$ENDPOINT_ID"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg map list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg service list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --frontends
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --backends
 ```
 
-#### 3.2 调试 Cilium Network Policies
+使用 `kubectl get networkpolicy,ciliumnetworkpolicy -n YOUR_NAMESPACE` 检查期望策略，并单独检查适用的集群范围策略。将 endpoint 的已生效状态与实际 flows 进行比较。已移除的 `policy trace` 和已弃用的 `policy get` 不能替代这些检查。
+
+每次运行一个 monitor，并按 Ctrl-C 停止：
 
 ```bash
-# Check network policy status
-cilium policy get
-
-# Check policy for specific endpoint
-cilium endpoint get 1234 -o json | jq '.policy'
-
-# Enable policy tracing
-cilium policy trace --src-k8s-pod default:app-frontend --dst-k8s-pod default:app-backend -p TCP --dport 80
-
-# Enable policy debug mode
-cilium config Debug=true
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent --   cilium-dbg monitor --related-to "$ENDPOINT_ID" --type drop
 ```
 
-#### 3.3 检查 Cilium Service 负载均衡
+使用 `--type policy-verdict` 查看发出的策略判定，或使用 `--type l7` 查看可用的代理事件。可见性取决于配置。HTTP 拒绝可能返回 HTTP 403，而非网络 DROPPED 判定。
+
+对于已启用的 Hubble Relay，请保持 `cilium hubble port-forward` 运行，然后使用：
 
 ```bash
-# List services
-cilium service list
-
-# Check service backends
-cilium service get 1
-
-# Check load balancer map
-cilium bpf lb list
-
-# Check backend status for specific service
-cilium bpf lb maglev list
+hubble status
+hubble observe --namespace default --last 20
+hubble observe --protocol http --last 20
+hubble observe --namespace default --last 20 --output json
 ```
 
-#### 3.4 监控 Cilium 网络流量
+将 JSON 管道传递给 `jq` 并不会生成服务依赖图。已启用的 Hubble UI 会提供服务映射（`cilium hubble ui`）。HTTP 可见性需要受支持的代理/L7 路径；应用内容加密后不会自动解码。
+
+### 4. 性能分析与优化
+
+在具有分析权限/支持的受控节点上，检查实际程序 ID。这些命令针对本地内核状态，本次审计未执行：
 
 ```bash
-# Enable network flow monitoring
-cilium monitor
-
-# Monitor flows for specific endpoint only
-cilium monitor --related-to 1234
-
-# Monitor dropped packets only
-cilium monitor --type drop
-
-# Monitor L7 protocol flows
-cilium monitor --type l7
+sudo bpftool prog show
+export PROG_ID=REPLACE-WITH-ACTUAL-ID
+sudo bpftool prog show id "$PROG_ID"
+sudo bpftool prog dump xlated id "$PROG_ID"
+sudo bpftool prog profile id "$PROG_ID" duration 10 cycles instructions
 ```
 
-#### 3.5 使用 Hubble 进行高级可观测性
+性能分析需要指定指标名称，并需要适当的内核/PMU 支持。`bpftool -p map dump ...` 会美化打印内容，并不会测量查找延迟。`perf`/bpftrace 可以分析工作负载，但请确认目标符号、探针可用性和参数。若没有显式关联，kretprobe 无法可靠地获取入口处的 `arg0`。
 
-```bash
-# Check Hubble status
-cilium status | grep Hubble
+测量完整工作负载时，请记录协议、数据包大小、并发度、策略、加密、代理和路由情况。在更改 XDP/原生路由之前，请检查已安装的 Helm 值和 `cilium-dbg status --verbose`。hook 更快或合成测试结果更好，并不能证明应用延迟更低。
 
-# Access Hubble UI
-kubectl port-forward -n kube-system svc/hubble-ui 12000:80
+### 5. 故障排查提示
 
-# Observe flows for specific namespace
-hubble observe --namespace default
+| 症状 | 检查项 |
+|---|---|
+| C 构建失败 | 检查 UAPI/libbpf 头文件、BPF 编译器目标、`__u32`/`__u64` 和用于 BTF 的 `-g` |
+| Verifier 拒绝 | 检查加载器 stderr/verifier 日志、边界、栈初始化、helpers、license 和复杂度 |
+| 已加载但没有事件 | 检查附加/link 生命周期、确切的 tracepoint、触发条件和权限 |
+| Map 数据缺失 | 检查是否为同一个 map 实例、插入错误/容量、键的含义、引用/pin 生命周期 |
+| Cilium flow 异常 | 检查节点/endpoint 是否正确、期望/已生效的组合策略、路由/后端状态和 L7 代理行为 |
+| Hubble 记录缺失 | 检查 Relay、过滤器、已配置的可见性和丢失事件报告 |
 
-# Observe HTTP requests
-hubble observe --protocol http
+`trace_pipe` 包含跟踪输出，而非 verifier 诊断信息。在隔离 VM 中进行有意的加载测试时，bpftool `-d` 可以提供加载器/verifier 诊断；但加载成功仍不能证明程序已附加或行为正确。不要为了让测试通过而禁用策略、扩大生产权限或改写 maps。
 
-# Generate service dependency map
-hubble observe --output json | jq
-```
+## 来源
 
-### 4. 性能分析和优化
-
-#### 4.1 eBPF 程序性能分析
-
-```bash
-# Measure eBPF program execution time
-bpftool prog profile name hello_execve
-
-# Measure specific map lookup performance
-bpftool map dump name process_map -p
-
-# Trace kernel function calls
-bpftrace -e 'kprobe:bpf_prog_run { @start[arg0] = nsecs; } kretprobe:bpf_prog_run /@start[arg0]/ { @runtime_ns[arg0] = nsecs - @start[arg0]; delete(@start[arg0]); }'
-```
-
-#### 4.2 Cilium 性能优化
-
-```bash
-# Check Cilium datapath optimization settings
-cilium config | grep -E 'EnableAutoDirectRouting|EnableBPFMasquerade|EnableIPv4Masquerade'
-
-# Check XDP acceleration status
-cilium status | grep XDP
-
-# Check native routing mode
-cilium status | grep Routing
-
-# Check performance metrics
-cilium metrics list
-```
-
-### 5. 故障排除提示
-
-#### 5.1 调试 eBPF 程序验证错误
-
-```bash
-# Check verifier logs
-sudo cat /sys/kernel/debug/tracing/trace_pipe | grep "bpf_verifier"
-
-# Enable detailed logs during program load
-sudo bpftool prog load hello_ebpf.o /sys/fs/bpf/hello_execve -d
-
-# Check kernel logs
-dmesg | grep bpf
-```
-
-#### 5.2 Cilium 故障排除
-
-```bash
-# Check Cilium status
-cilium status --verbose
-
-# Check Cilium agent logs
-kubectl logs -n kube-system -l k8s-app=cilium
-
-# Check endpoint status
-cilium endpoint list | grep "not-ready"
-
-# Check health status
-cilium status --all-health
-
-# Connectivity test
-cilium connectivity test
-```
-
-#### 5.3 常见故障排除方法
-
-1. **eBPF 程序无法加载**：
-   - 检查 kernel 版本（需要 4.19+）
-   - 检查所需权限（CAP_BPF、CAP_SYS_ADMIN）
-   - 检查 verifier 错误信息
-
-2. **Map 访问错误**：
-   - 检查 map 路径和权限
-   - 检查 map 类型及 key/value 大小
-   - 检查 file descriptor 限制
-
-3. **Cilium 网络连接问题**：
-   - 检查 endpoint 状态
-   - 检查策略规则
-   - 检查路由表
-   - 检查 CNI 配置
-
-4. **性能问题**：
-   - 检查 eBPF 程序复杂度
-   - 优化 map 大小和查找模式
-   - 验证 JIT compiler 是否已启用
-   - 考虑硬件 offload 的可能性
-
-[返回主页](README.md)
+- [BPF 原始论文](https://www.tcpdump.org/papers/bpf-usenix93.pdf)、[Linux BPF 设计问答](https://docs.kernel.org/bpf/bpf_design_QA.html)、[verifier](https://docs.kernel.org/bpf/verifier.html)、[ring buffer](https://docs.kernel.org/bpf/ringbuf.html)、[许可](https://docs.kernel.org/bpf/bpf_licensing.html)、[seccomp](https://docs.kernel.org/userspace-api/seccomp_filter.html)
+- [Linux 6.12 BPF 加载](https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c)、[exec 事件位置](https://github.com/torvalds/linux/blob/v6.12/fs/exec.c)、[libbpf 1.7](https://github.com/libbpf/libbpf/tree/v1.7.0)、[bpftool 7.7](https://github.com/libbpf/bpftool/releases/tag/v7.7.0)
+- [Cilium 1.20.3 BPF 源码](https://github.com/cilium/cilium/tree/v1.20.3/bpf)、[maps](https://github.com/cilium/cilium/tree/v1.20.3/pkg/maps)、[负载均衡 maps](https://github.com/cilium/cilium/tree/v1.20.3/pkg/loadbalancer/maps)、[命令参考](https://github.com/cilium/cilium/tree/v1.20.3/Documentation/cmdref)
+- [Cilium 系统要求](https://docs.cilium.io/en/v1.20/operations/system_requirements/)、[Kubernetes 兼容性](https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/)、[kube-proxy 替代](https://docs.cilium.io/en/v1.20/network/kubernetes/kubeproxy-free/)、[加密](https://docs.cilium.io/en/v1.20/security/network/encryption/)
 
 ## 测验
 
-为测试您在本章中所学的内容，请尝试 [主题测验](../../quizzes/networking/cilium/02-ebpf-quiz.md)。
+[检查你的理解情况](../../quizzes/networking/cilium/02-ebpf-quiz.md).

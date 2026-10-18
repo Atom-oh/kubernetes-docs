@@ -2,32 +2,32 @@
 
 [kro](../../platform-engineering/03-kro.md)
 
-这些问题保留了使用 kro 0.9.4 的原始 20 个主题。
+这些问题保留了原有的 20 个主题，使用 kro 0.9.4。
 
 ## 1. kro 的核心概念是什么？
 
 <details>
 <summary>显示答案</summary>
 
-在 RGD 中定义 API schema 和资源图，通过 CEL 引用推断依赖关系并协调实例。kro 不是命令式脚本运行器。
+在 RGD 中定义 API 架构和资源图，根据 CEL 引用推断依赖关系，并协调实例。kro 不是命令式脚本运行器。
 
 </details>
 
-## 2. 受管资源定义在哪里声明？
+## 2. 在哪里声明受管理资源定义？
 
 <details>
 <summary>显示答案</summary>
 
-在 spec.resources 下，使用每个条目的 id 以及 template 或 externalRef。以前的 childResources 已不是当前的 RGD 字段。
+在 spec.resources 下，使用每个条目的 id 和 template 或 externalRef。旧版的 childResources 不是当前 RGD 字段。
 
 </details>
 
-## 3. kro 与 Helm 一起提供什么？
+## 3. kro 与 Helm 一起提供什么功能？
 
 <details>
 <summary>显示答案</summary>
 
-资源引用图和持续的实例协调。Helm 提供 chart 渲染和 release 管理；它们可以协同工作。对于每一种工作负载，没有任何一个能普遍优于另一个。
+资源引用图和持续的实例协调。Helm 提供 chart 渲染和 release 管理；二者可以协同工作。对于每种工作负载，任何一方都不一定普遍优于另一方。
 
 </details>
 
@@ -36,20 +36,20 @@
 <details>
 <summary>显示答案</summary>
 
-使用 schema.spec 或 schema.metadata，例如 `${schema.spec.replicas}`。不要使用 .parent 或 Go-template 语法。
+使用 schema.spec 或 schema.metadata，例如 `${schema.spec.replicas}`。不要使用 .parent 或 Go 模板语法。
 
 </details>
 
-## 5. 如何配置条件性资源包含？
+## 5. 如何配置条件式资源纳入？
 
 <details>
 <summary>显示答案</summary>
 
-在 includeWhen 中使用 Boolean CEL 表达式。更改条件可能会添加或清理资源，因此请审查对有状态资源的生命周期影响。
+在 includeWhen 中使用布尔 CEL 表达式。更改条件可能会添加或修剪资源，因此请审查对有状态资源生命周期的影响。
 
 </details>
 
-## 6. 受管资源 status 值投射到哪里？
+## 6. 在哪里映射受管理资源的状态值？
 
 <details>
 <summary>显示答案</summary>
@@ -58,12 +58,12 @@
 
 </details>
 
-## 7. 如何排序依赖关系和就绪状态？
+## 7. 如何确定依赖关系和就绪顺序？
 
 <details>
 <summary>显示答案</summary>
 
-对其他资源 ID 的 CEL 引用会推断出一个 DAG。存在 readyWhen 条件时，依赖资源也会等待这些条件。循环会被拒绝；YAML 列出顺序不能替代依赖关系。
+对其他资源 ID 的 CEL 引用会推断出一个 DAG。如果存在 readyWhen 条件，依赖项也会等待这些条件满足。循环依赖会被拒绝；YAML 中的排列顺序不能替代依赖关系。
 
 </details>
 
@@ -72,7 +72,7 @@
 <details>
 <summary>显示答案</summary>
 
-当前 kro 使用 ApplySet inventory 和删除波次，先移除依赖其他资源的对象（依赖方），并保留 finalizer。子资源的 finalizer 可能会阻塞进度。外部引用目标不会被删除。
+当前版本的 kro 使用 ApplySet 清单和删除波次，先删除依赖资源，并保留一个 finalizer。子资源上的 finalizer 可能会阻止删除进度。external-reference 目标不会被删除。
 
 </details>
 
@@ -81,16 +81,16 @@
 <details>
 <summary>显示答案</summary>
 
-kro 的动态实例 controllers 会观察变更并协调图。RGD/GraphRevision 验证和编译会影响实例进度。
+kro 的动态实例控制器会观察变更并协调资源图。RGD/GraphRevision 的验证和编译会影响实例进度。
 
 </details>
 
-## 10. kubectl apply 做什么？
+## 10. kubectl apply 会做什么？
 
 <details>
 <summary>显示答案</summary>
 
-它会创建或更新 CR 的期望状态，随后 controllers 进行协调。apply 成功并不表示图编译完成或应用已就绪，也不保证外部影响具有事务性。
+它会创建或更新 CR 的期望状态，之后由控制器进行协调。apply 成功不代表资源图已编译或应用已就绪，也不能保证外部操作具有事务性。
 
 </details>
 
@@ -99,7 +99,7 @@ kro 的动态实例 controllers 会观察变更并协调图。RGD/GraphRevision 
 <details>
 <summary>显示答案</summary>
 
-ResourceGraphDefinition 定义生成的 API schema、受管资源和 status 关系。它不同于应用实例 CR。
+ResourceGraphDefinition 定义生成的 API 架构、受管理资源和状态关系。它不同于应用实例 CR。
 
 </details>
 
@@ -108,7 +108,7 @@ ResourceGraphDefinition 定义生成的 API schema、受管资源和 status 关�
 <details>
 <summary>显示答案</summary>
 
-生成的 API 实例的 spec。它的 SimpleSchema 类型、默认值和边界必须与 template 实际使用的字段相匹配。
+生成的 API 实例的 spec。其 SimpleSchema 类型、默认值和边界必须与模板实际使用的字段相匹配。
 
 </details>
 
@@ -121,21 +121,21 @@ ResourceGraphDefinition 定义生成的 API schema、受管资源和 status 关�
 
 </details>
 
-## 14. 什么会跟踪受管资源并支持删除诊断？
+## 14. 什么用于跟踪受管理资源并帮助诊断删除问题？
 
 <details>
 <summary>显示答案</summary>
 
-检查当前 ApplySet inventory、owner metadata 和 internal.kro.run/apply-order 删除波次。不要把虚构的 kro.run/owner annotation 视为完整的跟踪契约。
+检查当前的 ApplySet 清单、所有者元数据和用于删除波次的 internal.kro.run/apply-order。不要把臆造的 kro.run/owner 注解视为完整的跟踪约定。
 
 </details>
 
-## 15. 如何验证输入 schema？
+## 15. 如何验证输入架构？
 
 <details>
 <summary>显示答案</summary>
 
-SimpleSchema 会成为生成的 CRD 的 OpenAPI schema，Kubernetes 使用它来验证实例。RGD 结构、图编译器的 CEL 类型检查和运行时就绪状态是独立的检查。
+SimpleSchema 会成为生成的 CRD 的 OpenAPI 架构，Kubernetes 会用它来验证实例。RGD 结构、资源图编译器的 CEL 类型检查和运行时就绪状态是彼此独立的检查。
 
 </details>
 
@@ -144,7 +144,7 @@ SimpleSchema 会成为生成的 CRD 的 OpenAPI schema，Kubernetes 使用它来
 <details>
 <summary>显示答案</summary>
 
-首先确保 RGD 为 Active 且其生成的 CRD 为 Established。此实例禁用了 ingress。
+首先确保 RGD 处于 Active 状态，且其生成的 CRD 已达到 Established 状态。此实例会禁用 ingress。
 
 ```yaml
 apiVersion: platform.example.com/v1alpha1
@@ -154,7 +154,7 @@ metadata:
   namespace: example
 spec:
   replicas: 2
-  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  image: nginxinc/nginx-unprivileged:1.30.6-alpine
   ingress:
     enabled: false
     className: internal
@@ -164,12 +164,12 @@ spec:
 
 </details>
 
-## 17. 编写创建 Deployment 的资源条目。
+## 17. 编写用于创建 Deployment 的资源条目。
 
 <details>
 <summary>显示答案</summary>
 
-这与指南中的 template 相同。readyWhen 仅引用 Deployment 本身；请在实际环境中验证 image、namespace 和 policies。
+这与指南中的模板相同。readyWhen 只引用 Deployment 本身；请在实际环境中核实镜像、命名空间和策略。
 
 ```yaml
 resources:
@@ -237,12 +237,12 @@ resources:
 
 </details>
 
-## 18. 在 status 中公开 availableReplicas。
+## 18. 在状态中公开 availableReplicas。
 
 <details>
 <summary>显示答案</summary>
 
-这是 RGD spec.schema 下的 status 部分。解析可能会等待缺失的值；它并不代表全面的应用健康状况。
+这是 RGD spec.schema 下的状态部分。缺少值时解析可能会等待；这并不代表全面的应用健康状况。
 
 ```yaml
 status:
@@ -252,20 +252,20 @@ status:
 
 </details>
 
-## 19. 设计一个 dev/staging/prod 策略。
+## 19. 设计 dev/staging/prod 策略。
 
 <details>
 <summary>显示答案</summary>
 
-共享经过验证的 API 契约和 image digests，同时按实例分离 namespace、replicas、ingress 和 policies。在每个 cluster 中准备 kro/RGD/permissions，并使用 fleet tooling 进行同步。未使用的 autoscaling 字段不会创建 HPA。
+共享经过验证的 API 契约和镜像摘要，同时为每个实例分别设置命名空间、副本数、ingress 和策略。在每个集群中准备 kro/RGD/权限，并使用集群管理工具进行同步。未使用的自动扩缩字段不会创建 HPA。
 
 </details>
 
-## 20. Helm 和 kro 对有状态应用的限制是什么？
+## 20. Helm 和 kro 在有状态应用方面有哪些限制？
 
 <details>
 <summary>显示答案</summary>
 
-两者都不会自动实现数据库备份、恢复、failover 或 schema migration。请验证专用 operator/managed-service 的行为和数据保留。恢复 Git spec 不等于数据库回滚；失败的最新 GraphRevision 不会自动回退。
+二者都不会自动实现数据库备份、恢复、故障转移或架构迁移。请验证专用 operator/托管服务的行为和数据保留策略。恢复 Git spec 并不等于数据库回滚；最新的 GraphRevision 失败时也不会自动回退。
 
 </details>

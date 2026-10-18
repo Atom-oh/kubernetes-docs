@@ -1,175 +1,163 @@
-# 升级操作测验
+# EKS 升级运维测验
 
-> **相关文档**: [升级操作](../../ops/11-upgrade-operations.md)
+> **相关文档**：[EKS 升级](../../ops/11-upgrade-operations.md)
 
-## 选择题
+## 1. EKS 控制平面升级最多可以跳过多少个中间次要版本？
 
-### 1. AWS 在标准支持下为每个 EKS Kubernetes 版本提供多长时间的支持？
-
-- A) 6 个月
-- B) 12 个月
-- C) 14 个月
-- D) 24 个月
+- A) 零个：每次都升级到下一个次要版本
+- B) 一个
+- C) 两个
+- D) 不限
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 14 个月**
+**答案：A**
 
-**解释:**
-AWS 为 EKS 上的每个 Kubernetes 版本提供 14 个月的标准支持。之后，cluster 可以迁移到扩展支持（需要额外费用），或者必须升级。建议在标准支持窗口内规划升级。
+例如，1.34→1.36 必须经过 1.35。Kubelet 版本偏差允许范围与控制平面升级步骤是不同的概念。
 
 </details>
 
-### 2. 哪个工具可以检测 cluster 中已弃用的 Kubernetes API？
+## 2. 在纯 Auto Mode 中，如何理解 CoreDNS Deployment 缺失的情况？
 
-- A) kubectl
-- B) Pluto
-- C) Helm
-- D) Terraform
+- A) 这始终意味着 DNS 已损坏
+- B) 检查节点系统服务 DNS 和实际行为
+- C) 始终安装自管理的 Karpenter
+- D) 从每个集群中删除 CoreDNS Deployment
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Pluto**
+**答案：B**
 
-**解释:**
-Pluto 会扫描 Kubernetes manifests、Helm releases 和实时 cluster，以查找已弃用或已移除的 API 版本。它有助于识别在升级到这些 API 不再存在的版本之前需要更新的资源。
+混合集群必须保留非 Auto 节点所需的 DNS Deployment 和附加组件。
 
 </details>
 
-### 3. 在 EKS 升级操作中，Velero 的用途是什么？
+## 3. 关于 Velero 1.18.4 的 restore create -o json，哪项说法正确？
 
-- A) 升级 Kubernetes 版本
-- B) 在升级前备份和恢复 cluster 资源
-- C) 监控 cluster 性能
-- D) 管理 node groups
+- A) 它会完成实际还原
+- B) 它完全离线运行
+- C) 它不会创建对象，但可能会执行发现操作/读取 Backup
+- D) 只有与 --dry-run 一起使用才有效
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 在升级前备份和恢复 cluster 资源**
+**答案：C**
 
-**解释:**
-Velero 为 Kubernetes 资源和 persistent volumes 提供备份与恢复能力。在升级前进行 Velero 备份，可以在升级导致问题时进行恢复，为操作提供安全保障。
+restore create 没有这样的 --dry-run 标志。仅输出以供审查，与实际执行隔离还原测试是两回事。
 
 </details>
 
-### 4. 在 Terraform 3-Layer 架构中，正确的升级顺序是什么？
+## 4. 遇到 API 错误或 kubecontext 错误时，预检工具应该怎么做？
 
-- A) Workload -> Platform -> Foundation
-- B) Platform -> Foundation -> Workload
-- C) Foundation -> Platform -> Workload
-- D) 所有层同时进行
+- A) 将空结果视为健康
+- B) 将其判定为未知/上下文不匹配并进行调查
+- C) 自动切换上下文并升级
+- D) 删除 PDB
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) Foundation -> Platform -> Workload**
+**答案：B**
 
-**解释:**
-升级顺序遵循依赖关系：首先是 Foundation（VPC、IAM），因为 Platform 依赖它；然后是 Platform（EKS cluster），因为 Workload 依赖它；最后是 Workload（应用程序）。这样可以确保每一层的依赖项都已完成升级。
+单独检查 Pod 是否运行，并不能确认其已就绪；Deployment 的 generation 和 rollout 状态也很重要。
 
 </details>
 
-### 5. 在 EKS Auto Mode 中，Kubernetes 版本升级期间 node 会发生什么？
+## 5. EKS 原生回滚的基本资格条件是什么？
 
-- A) Node 原地升级且无需重启
-- B) Node 会自动替换为新版本 node
-- C) 必须手动删除 node
-- D) Node 不受版本升级影响
+- A) 任何刚创建且版本为当前版本的集群
+- B) 满足资格条件，包括在升级到上一个次要版本完成后的七天内启动回滚
+- C) 随时回滚到任何先前版本
+- D) etcd 备份可以绕过所有限制
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Node 会自动替换为新版本 node**
+**答案：B**
 
-**解释:**
-升级 EKS control plane 后，Auto Mode 会自动轮换 node 以匹配新版本。此过程会 cordon 旧 node、drain workloads，并使用更新后的 kubelet 版本预置新 node。
+还要检查目标版本是否受支持、EXTENDED 策略、ACTIVE 状态以及不兼容的 EKS 功能。
 
 </details>
 
-### 6. 升级前应验证 Pod Disruption Budgets (PDBs) 的什么内容？
+## 6. Auto Mode 节点回滚期间，如果集群状态为 ACTIVE，这意味着什么？
 
-- A) 确认不存在 PDBs
-- B) 确认 PDBs 允许足够的 disruption，以进行滚动 node 替换
-- C) 确认 PDBs 设置为零
-- D) 确认 PDBs 引用了正确的 API 版本
+- A) 回滚已全部完成
+- B) CP 仍可能提供当前版本的服务；请检查 update ID
+- C) 无法回滚节点
+- D) 立即删除之前的集群
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 确认 PDBs 允许足够的 disruption，以进行滚动 node 替换**
+**答案：B**
 
-**解释:**
-过于严格的 PDBs（例如 maxUnavailable: 0 且 minAvailable: 100%）可能会在升级期间阻止 node draining。升级前，确保 PDBs 允许足够的 disruption，使滚动替换过程能够继续进行。
+Auto Mode 会先调整节点。节点超时默认为 720 分钟；客户端等待超时不会取消 AWS 端的操作。
 
 </details>
 
-### 7. EKS cluster 的 blue/green 升级策略是什么？
+## 7. rollback --force 会绕过什么？
 
-- A) 同时升级两个 cluster
-- B) 使用新版本创建一个新 cluster，并逐步转移流量
-- C) 原地升级并具备回滚能力
-- D) 在相同 node 上运行两个版本
+- A) 七天期限和所有 PDB
+- B) 所有中断风险和数据兼容性检查
+- C) Insight 检查，但不会绕过资格条件或 Auto Mode 中断控制
+- D) etcd 数据保留
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 使用新版本创建一个新 cluster，并逐步转移流量**
+**答案：C**
 
-**解释:**
-Blue/green 升级会在现有的 “blue” cluster 旁边创建一个运行目标 Kubernetes 版本的新 “green” cluster。流量通过加权路由逐步转移；如果出现问题，可以通过将流量切回 blue 来轻松回滚。
+ERROR/UNKNOWN 会阻止回滚，而 WARNING 仅作提示。Force 并非标准恢复路径。
 
 </details>
 
-### 8. 升级后应执行哪些验证？
+## 8. 通过原生版本回滚不会自动还原到历史状态的是什么？
 
-- A) 仅检查 pods 是否正在运行
-- B) 验证 node 状态、pod 健康状况、addon 功能和应用程序行为
-- C) 不需要验证
-- D) 只需再次运行 Pluto
+- A) API Server 次要版本
+- B) Auto Mode 节点版本调整
+- C) 附加组件、应用、etcd 对象和 PV 数据
+- D) 控制平面组件版本
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 验证 node 状态、pod 健康状况、addon 功能和应用程序行为**
+**答案：C**
 
-**解释:**
-升级后验证应包括：所有 node 均为 Ready、pods 处于 Running 状态、cluster addons（CoreDNS、kube-proxy、CNI）功能正常、ingress/egress 工作正常、storage 操作成功，以及应用程序特定的健康检查通过。
+普通托管节点组需要单独处理 UpdateNodegroupVersion。版本回滚不同于快照还原。
 
 </details>
 
-### 9. EKS 扩展支持与标准支持有何不同？
+## 9. 关于将 NLB 目标组权重设为零，哪项说法正确？
 
-- A) 扩展支持是免费的
-- B) 扩展支持以额外费用提供超出标准支持的更多月份
-- C) 扩展支持仅涵盖安全补丁
-- D) 扩展支持仅适用于 Fargate
+- A) 现有连接始终会保持到完成
+- B) 现有连接可能会在短时间后关闭；请测试重试/会话行为
+- C) 权重总和必须为 100
+- D) NLB 不支持加权 TG
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 扩展支持以额外费用提供超出标准支持的更多月份**
+**答案：B**
 
-**解释:**
-EKS 扩展支持允许 cluster 在 14 个月标准窗口之后继续运行较旧的 Kubernetes 版本，但会产生额外的每 cluster 小时费用。这为需要更多时间进行升级的组织提供了灵活性。
+权重是 0–999 之间的相对值。要区分普通变更与切换到零权重的情形；TLS 侦听器不支持 TG 粘性会话。
 
 </details>
 
-### 10. 升级时，为什么检查 addon 兼容性很重要？
+## 10. 停用 Blue 前应该验证什么？
 
-- A) Addons 会自动升级
-- B) 某些 addon 版本仅与特定 Kubernetes 版本兼容
-- C) Addons 不影响升级
-- D) 升级前必须移除 addons
+- A) 权重为零时立即销毁
+- B) 检查共享资源/TG 引用、数据兼容性、恢复期和所有权
+- C) 一个 HTTP 200 就能证明所有数据一致
+- D) 共享 EFS 意味着无需检查并发写入者
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 某些 addon 版本仅与特定 Kubernetes 版本兼容**
+**答案：B**
 
-**解释:**
-EKS managed addons（VPC CNI、CoreDNS、kube-proxy）和 third-party addons 都有与 Kubernetes 版本对应的版本兼容性矩阵。升级到不兼容的 addon 版本可能会破坏 cluster 功能。请在 cluster 升级的同时检查并规划 addon 升级。
+请考虑删除 Auto Mode TGB/集群时的 TG 生命周期以及共享侦听器。更改 Namespace 并不能保证消费者/数据库/DNS 隔离。
 
 </details>

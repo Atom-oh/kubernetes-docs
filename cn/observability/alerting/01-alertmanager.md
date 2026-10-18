@@ -1,13 +1,13 @@
 # Prometheus Alertmanager
 
-> **审阅基线**：Alertmanager 0.34.0；kube-prometheus-stack 90.0.0 / Operator 0.93.1；独立 chart 1.43.1
-> **Last Updated**: September 13, 2026
+> **评审基线**：Alertmanager 0.34.0；kube-prometheus-stack 90.0.0 / Operator 0.93.1；独立 chart 1.43.1
+> **最后更新**：September 13, 2026
 
 ## 目录
 
 - [Alertmanager 概述](#alertmanager-overview)
 - [架构](#architecture)
-- [安装与配置](#installation-and-configuration)
+- [安装和配置](#installation-and-configuration)
 - [定义告警规则](#defining-alert-rules)
 - [路由配置](#routing-configuration)
 - [接收器配置](#receiver-configuration)
@@ -21,22 +21,20 @@
 
 ---
 
-<span id="alertmanager-overview"></span>
-
 ## Alertmanager 概述
 
-Prometheus Alertmanager 是处理 Prometheus 服务器发送的告警的组件，提供告警去重、分组、路由、抑制和静默等功能。
+Prometheus Alertmanager 是一个处理 Prometheus 服务器发送的告警的组件。它提供告警去重、分组、路由、抑制和静默等功能。
 
 ### 主要功能
 
-1. **分组**将同一路由/分组中的告警组合成通知。
-2. **抑制和静默**会阻止通知，但不会改变底层 Prometheus 规则的条件。
-3. **路由**选择接收器；一个接收器可以包含多个集成。
-4. **HA**以最终一致性共享静默和通知日志状态。发生网络分区时，它宁可重复投递，也不愿丢掉通知；这不是恰好一次投递。
+1. **分组**会将某个路由/组的告警合并为通知。
+2. **抑制和静默**会抑制通知，但不会更改底层 Prometheus 规则条件。
+3. **路由**用于选择接收器；一个接收器可以包含多个集成。
+4. **HA** 会以最终一致性共享静默和通知日志状态。在发生分区时，它倾向于重复发送，而不是抑制通知；它不保证恰好一次送达。
 
 ### Prometheus 告警流程
 
-Prometheus 评估规则，Alertmanager 处理通知。该时序图概括了职责划分，并不保证投递延迟。
+Prometheus 负责评估规则；Alertmanager 负责处理通知。此序列概述各自的职责，并不保证通知延迟。
 
 ```mermaid
 sequenceDiagram
@@ -52,13 +50,11 @@ sequenceDiagram
   Note over A,R: Failures and partitions can cause<br/>retries or duplicates
 ```
 
-<span id="architecture"></span>
-
 ## 架构
 
 ### Alertmanager 内部结构
 
-dispatcher 在**选择路由之后**创建分组。抑制、静默/时间检查和通知日志去重在通知流水线中执行，并不是分组前的一条固定处理链。Gossip 不能替代 Prometheus 向每个副本发送告警。告警本身不会像静默和 nflog 一样被持久化。
+dispatcher 会在**选择路由之后**创建组。抑制、静默/时间检查和通知日志去重都在通知管道中执行；它们并不是固定的预分组处理链。Gossip 不会取代 Prometheus 向每个副本发送告警。告警本身不会像静默/nflog 那样持久化。
 
 ```mermaid
 flowchart TB
@@ -77,26 +73,24 @@ flowchart TB
 
 | 组件 | 作用 |
 |-----------|------|
-| **Dispatcher** | 根据路由树将告警路由到适当的接收器 |
+| **Dispatcher** | 根据路由树将告警路由到相应的接收器 |
 | **Inhibitor** | 根据抑制规则抑制相关告警 |
-| **Silencer** | 过滤匹配静默规则的告警 |
-| **Aggregation Group** | 将同组告警组合起来处理 |
+| **Silencer** | 过滤与静默规则匹配的告警 |
+| **Aggregation Group** | 将同一组中的告警分组处理 |
 | **Notification Pipeline** | 处理实际的告警发送 |
-| **nflog** | 记录已发送的告警，用于去重 |
+| **nflog** | 记录已发送的告警（用于去重） |
 
 ---
 
-<span id="installation-and-configuration"></span>
+## 安装和配置
 
-## 安装与配置
+以下是适用于 Kubernetes 1.35 Linux 工作节点基线的备选示例。两个 Helm chart 和手动 StatefulSet 分别由**不同的安装所有者**管理；请选择其中一种。已对 chart 进行渲染，在本地执行了配置/模板和合成规则，但未执行 Kubernetes 安装、实时 CNI 强制实施、SaaS 交付或生产容量测试。现有安装需要由所有者审核 values 合并和升级计划，不应盲目用本教程替换。
 
-以下是以 Kubernetes 1.35 Linux 工作节点为基线的备选示例。两个 Helm chart 和手动 StatefulSet 属于**不同的安装管理主体**，只能选择一种。已在本地渲染 chart，并执行配置、模板和合成规则检查；未执行 Kubernetes 安装、真实 CNI 策略强制执行、SaaS 投递或生产容量测试。对于已有安装，需要由负责人审阅 values 合并和升级计划，而不是盲目用本教程替换现有配置。
-
-请准备 `monitoring` 命名空间、用于硬性反亲和性的三个可调度节点、合适的默认 RWO StorageClass、通知凭证以及获准的网络路径。EKS Fargate/Auto Mode 和托管控制平面指标具有不同的采集/存储约束。尤其是，EKS 托管的 etcd 不是客户可抓取的端点。本 profile 禁用了 Grafana 和 etcd ServiceMonitor，以聚焦示例；这不是要求在已有 stack 中禁用这些组件。
+请准备 `monitoring` namespace、三个可调度节点以满足硬反亲和性要求、合适的默认 RWO StorageClass、通知凭据以及已批准的网络路径。EKS Fargate/Auto Mode 和托管控制平面指标有不同的采集/存储限制。特别是，EKS 托管的 etcd 不是客户可抓取的端点。此配置档会禁用 Grafana 和 etcd ServiceMonitor，以便聚焦示例；这并不是要求在现有 stack 中禁用组件。
 
 ### 通过 Helm 安装（kube-prometheus-stack）
 
-对于**新 release**，请使用下方固定版本的 stack profile。90.0.0 版本包含 Operator 0.93.1 和 Alertmanager 0.34.0。这是已检查的基线，并不意味着没有更新的 chart。安装前请检查集群 RBAC、CRD、PVC、命名空间和安装管理主体的设置。
+对于**新 release**，使用下面锁定版本的 stack 配置档。90.0.0 版本包含 Operator 0.93.1 和 Alertmanager 0.34.0。这是经过核验的基线，并不意味着不存在更新的 chart。安装前请检查集群 RBAC、CRD、PVC、namespace 和所有者设置。
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -108,7 +102,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack   --version 9
 
 ### Alertmanager 专用 Helm Chart
 
-这是**独立安装的备选方案**，不是 stack 的附加安装步骤。它使用顶层的 `replicaCount`、`resources`、`persistence` 和 `config`；stack 则通过 `alertmanager.alertmanagerSpec` 配置副本、资源和存储。此前混用的 values 无法按文中描述正确配置任一 chart。
+这是**独立部署的替代方案**，不是 stack 的附加安装步骤。它使用顶层的 `replicaCount`、`resources`、`persistence` 和 `config`；stack 使用 `alertmanager.alertmanagerSpec` 配置副本、资源和存储。先前混用的 values 并未按描述配置任一 chart。
 
 ```bash
 helm template alertmanager prometheus-community/alertmanager   --version 1.43.1 --namespace monitoring --kube-version 1.35.0   -f alertmanager-values.yaml > alertmanager-rendered.yaml
@@ -117,11 +111,11 @@ helm install alertmanager prometheus-community/alertmanager   --version 1.43.1 -
 
 ### values.yaml 示例
 
-下方的主配置为 `alertmanager.yaml`。接收器凭证使用文件引用，而不是实际令牌值。请在选定的工作负载启动前创建 `notification-credentials` 和 `alertmanager-templates`。Helm 渲染成功并不能解决文件缺失、频道错误或 provider 凭证无效的问题。
+主配置如下方的 `alertmanager.yaml` 所示。接收器凭据是文件引用，而不是令牌值。所选工作负载启动前，请创建 `notification-credentials` 和 `alertmanager-templates`。文件缺失、频道错误或提供商凭据无效，都不能靠 Helm 渲染成功来解决。
 
-创建**两个不同的 Slack incoming-webhook URL**，并在 Slack 中预先分别绑定目标频道：`slack-normal-webhook-url` 对应 `#alerts`，`slack-critical-webhook-url` 对应 `#critical-alerts`。Incoming webhook 不能通过 `channel` 字段覆盖已配置的频道。这两个文件对应 `notification-credentials` 中的键，由 stack、独立和手动 profile 挂载。URL 与频道的绑定是 provider 侧的先决条件；本地解析不验证 Slack 投递。
+创建**两个不同的 Slack incoming-webhook URL**，并在 Slack 中分别预先配置为对应的频道：`slack-normal-webhook-url` 对应 `#alerts`，`slack-critical-webhook-url` 对应 `#critical-alerts`。incoming webhook 无法通过 `channel` 字段覆盖其配置的频道。这两个文件都是 `notification-credentials` 中的键，并由 stack、独立部署和手动配置档挂载。URL 与频道的配置是提供商的前置条件；本地解析无法验证 Slack 是否成功送达。
 
-**Stack profile — `kube-prometheus-stack-values.yaml`：**
+**Stack 配置档（`kube-prometheus-stack-values.yaml`）：**
 
 ```yaml
 grafana:
@@ -231,7 +225,7 @@ kubeEtcd:
   enabled: false
 ```
 
-**独立 profile — `alertmanager-values.yaml`：**
+**独立配置档（`alertmanager-values.yaml`）：**
 
 ```yaml
 replicaCount: 3
@@ -325,11 +319,11 @@ extraVolumeMounts:
 hostUsers: true
 ```
 
-`hostUsers: true` 使独立安装基线使用传统的用户命名空间；启用 Pod 用户命名空间需要另行检查运行时和平台。资源 requests/limits 和 10Gi PVC 仅为容量设置示例，并非经过容量测试的结论。硬性反亲和性需要三个符合条件的节点。PDB 约束的是自愿中断，而不是所有故障。
+`hostUsers: true` 会使独立基线使用传统用户 namespace；启用 Pod 用户 namespace 需要单独进行运行时/平台检查。资源 requests/limits 和 10Gi PVC 仅用于示例性容量规划，并非经过测试的容量保证。硬反亲和性需要三个符合条件的节点。PDB 限制的是自愿中断，不涵盖所有故障。
 
 ### 通过 ConfigMap 直接配置
 
-下方完整的核心配置也嵌入在 chart profile 中。手动部署时，将其保存为 `alertmanager.yaml`，再将内容写入 ConfigMap 的 `alertmanager.yml` 键。ConfigMap 包含路径和路由元数据，**不包含凭证**。不要将这种手动管理方式与 Operator 生成的 Secret 混用。
+以下完整核心配置也嵌入在 chart 配置档中。对于手动部署，将其保存为 `alertmanager.yaml`，并将内容放入 ConfigMap 的 `alertmanager.yml` 键中。ConfigMap 包含路径和路由元数据，**不包含凭据**。不要将这种手动管理方式与 Operator 生成的 Secret 混用。
 
 ```yaml
 global:
@@ -408,15 +402,13 @@ kubectl -n monitoring create secret generic notification-credentials \
 kubectl -n monitoring create configmap alertmanager-config   --from-file=alertmanager.yml=alertmanager.yaml
 ```
 
-请保护 Secret 读取/exec 权限以及通知内容本身。仅添加已启用集成所需的凭证文件。ConfigMap 投射不会自动使 Alertmanager 重载：请使用所选安装管理主体审阅过的重载/滚动更新机制；无效的重载应使上一份有效配置继续运行。
-
-<span id="defining-alert-rules"></span>
+请保护 Secret 读取/执行权限以及通知内容本身。只添加启用的集成所需的凭据文件。ConfigMap 投影不会自动触发 Alertmanager 重新加载：请使用所选所有者审核过的重新加载/滚动更新机制；重新加载无效配置时，应继续运行上一个有效配置。
 
 ## 定义告警规则
 
 ### PrometheusRule CRD
 
-PrometheusRule 必须匹配 Prometheus 实例的**规则标签选择器和命名空间选择器**。这些示例在 `monitoring` 中使用 `release: prometheus`，与显式配置的 stack values 匹配。仅安装 CR 并不能证明它已被选中或成功加载。部署后应对照检查实际生效的规则和抓取标签，并避免与 stack 的现有规则集产生重复告警。
+PrometheusRule 必须与 Prometheus 实例的**规则标签和 namespace 选择器**匹配。这些示例使用 `monitoring` 中的 `release: prometheus`，与显式配置的 stack values 相匹配。仅安装 CR 并不能证明它已被选中或成功加载。部署后请核对生效的规则和抓取标签。避免与 stack 现有规则集产生重复告警。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -446,23 +438,21 @@ spec:
 
 ### 告警规则组成部分
 
-`alert` 和 `expr` 分别标识规则及其表达式。非空结果向量代表活跃的告警实例，即使样本值为零也是如此。`for` 会跨多次规则评估进行检查；它不是抓取间隔，也不是通知截止时间。`labels` 影响告警身份和路由；不断变化的值应放在 `annotations` 中，而不是标签中。可选的 `keep_firing_for` 会在条件解除后继续保持一段时间的 Firing 状态。请确认所部署的 Prometheus/Operator 版本是否支持它。
+`alert` 和 `expr` 用于标识规则及其表达式。非空结果向量表示存在活动告警实例，即使其样本值为零。`for` 会在规则评估期间进行检查；它不是抓取间隔或通知截止时间。`labels` 会影响告警身份/路由；请将会变化的值放在 `annotations` 中，而不是标签中。可选的 `keep_firing_for` 会在条件清除后的一段时间内保留 Firing 状态。请检查已部署的 Prometheus/Operator 版本是否支持该功能。
 
 ### 告警状态
 
-该 Prometheus 状态示意图假定 for 时长为正且未设置 keep_firing_for；for 为零的规则可在匹配条件的当次评估中立即触发。
+以下 Prometheus 状态示意图假设 `for` 时长为正值且未设置 keep_firing_for；对于 `for` 为零的规则，匹配评估时即可立即触发。
 
-![该 Prometheus 状态示意图假定 for 时长为正且未设置 keep_firing_for；for 为零的规则可在匹配条件的当次评估中立即触发。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
+![Prometheus 状态示意图：for 时长为正值且未设置 keep_firing_for；对于 for 为零的规则，匹配评估时即可立即触发。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
 
-[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
-
-<span id="routing-configuration"></span>
+[交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
 
 ## 路由配置
 
 ### 路由树结构
 
-以下**路由测试配置**声明了全部接收器名称，但将其集成留空。在添加获准的集成前，它不会投递通知。同级路由中，第一个匹配项通常会停止后续同级遍历；子路由可以选择更具体的接收器。
+以下**路由测试配置**声明了所有接收器名称，但没有配置任何集成。在添加已批准的集成之前，它不会发送通知。通常，第一个匹配的同级路由会停止对其他同级路由的遍历；子路由可以选择更具体的接收器。
 
 ```yaml
 route:
@@ -495,15 +485,15 @@ receivers:
 
 ### 路由流程
 
-仅按标签路由且 continue=false。图中使用旧的 match/match_re 写法；经过检查的等价配置使用 matchers。时间窗口是否允许通知需要另行判断。
+仅根据标签进行路由，且 continue=false。图示使用旧版 match/match_re 表示法；经过核验的等价配置使用 matchers。时间窗口是否符合条件是独立检查项。
 
-![仅按标签路由且 continue=false。图中使用旧的 match/match_re 写法；经过检查的等价配置使用 matchers。时间窗口是否允许通知需要另行判断。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-3.png)
+![仅根据标签进行路由，且 continue=false。图示使用旧版 match/match_re 表示法；经过核验的等价配置使用 matchers。时间窗口是否符合条件是独立检查项。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-3.png)
 
-[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-3.html)
+[交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-3.html)
 
 ### 匹配器
 
-使用带引号的 matcher 字符串，运算符为 `=`、`!=`、`=~` 或 `!~`。同一路由中的 matcher 之间是 AND 关系；正则表达式采用完整锚定匹配。空标签和缺失标签会影响结果。此版本仍接受旧的 `match`/`match_re` 字段，但它们已被弃用。分组计时参数从父路由继承，active/mute 时间区间则不会继承。
+使用带有 `=`、`!=`、`=~` 或 `!~` 的带引号匹配器字符串。同一路由中的匹配器采用 AND 逻辑；正则表达式语义会完整锚定。空标签/缺失标签也会产生影响。在此版本中，旧版 `match`/`match_re` 字段仍可使用，但已弃用。组计时器会从父路由继承；活动/静默时间区间则不会。
 
 ```yaml
 # Alternative child-route fragments; attach to a complete configuration.
@@ -516,7 +506,7 @@ routes:
 
 ### 高级路由示例
 
-请在午夜处分割跨夜区间，并在**每个**区间条目中指定时区。旧的 `18:00→09:00` 区间无法通过原生验证。本扁平路由示例将时间限制直接设置在实际接收器路由上。非工作时间的 critical 路由使用 `continue: true`：不在活动时间内的路由仍会匹配标签，否则会阻止后续同级路由，因此不能让它吞掉工作时间路由。这里留空的接收器集成是有意设置的测试替身。
+将跨午夜的夜间时段拆分，并在**每个**时间区间条目中指定时区。旧的 `18:00→09:00` 范围无法通过原生校验。此扁平示例将时间约束放在实际接收器路由上。非工作时间的 critical 路由使用 `continue: true`：非活动路由仍会匹配标签，否则会阻止后续同级路由，因此不能让它吞掉工作时间路由。此处空的接收器集成是有意设置的测试占位项。
 
 ```yaml
 route:
@@ -579,15 +569,13 @@ time_intervals:
     location: Asia/Seoul
 ```
 
-原生标签路由测试不评估日历。日历已使用发布版本的时间区间实现另行检查，覆盖开始/结束边界、周末和 UTC/KST 偏移。被静音或不在活动时间内的通知不会自动重定向到父路由的兜底接收器。
-
-<span id="receiver-configuration"></span>
+原生标签路由测试不会评估日历。已使用发布版时间区间实现，另行检查日历在开始/结束边界、周末以及 UTC/KST 时差下的行为。静默或非活动通知不会自动重定向到父路由的备用接收器。
 
 ## 接收器配置
 
 ### Slack 接收器
 
-使用 `api_url_file` 引用受保护的 incoming-webhook URL 文件，该 URL 应已绑定目标 Slack 频道。下方的一般告警示例使用 `slack-normal-webhook-url`；critical 路由使用另一个独立的 critical 文件。[Slack 文档明确说明 incoming webhook 不支持覆盖频道](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)。经过检查的自定义模板仅输出获准的字段子集；不要转储全部标签或 annotation，因为其中可能包含用户数据或秘密信息，截断并不等于遮蔽敏感信息。这些是供完整配置使用的接收器片段。
+对已经绑定到目标 Slack 频道且受保护的 incoming-webhook URL，使用 `api_url_file`。以下普通示例使用 `slack-normal-webhook-url`；critical 路由使用独立的 critical 文件。[Slack 文档说明 incoming webhook 不支持覆盖频道](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)。经过核验的自定义模板只输出已批准的字段；不要转储所有标签/注释。这些内容可能包含用户数据或机密，截断并不等于隐藏敏感数据。以下是完整配置中的接收器片段。
 
 ```yaml
 receivers:
@@ -602,7 +590,7 @@ receivers:
 
 ### PagerDuty 接收器
 
-使用 Events API v2 的 `routing_key_file`；旧的 Prometheus 集成使用不同的 service-key 模式，并非相同凭证，绝不能同时设置两者。将严重性映射到 PagerDuty 支持的值；任意 Alertmanager severity 字符串不一定有效。这些是供完整配置使用的接收器片段。
+使用 Events API v2 的 `routing_key_file`；旧版 Prometheus 集成使用不同的服务密钥模式，并非同一种凭据。切勿同时设置两者。将严重性映射到 PagerDuty 支持的值；任意 Alertmanager 严重性字符串不会自动成为有效值。以下是完整配置中的接收器片段。
 
 ```yaml
 receivers:
@@ -620,9 +608,9 @@ receivers:
       namespace: '{{ .CommonLabels.namespace }}'
 ```
 
-### Email 接收器
+### 电子邮件接收器
 
-使用 `auth_password_file`，并通过有效的 SMTP 信任配置要求 TLS。地址均为占位符；请审阅中继策略、发件人身份以及投递/退信监控。这些是供完整配置使用的接收器片段。
+使用 `auth_password_file`，并要求通过有效的 SMTP 信任配置启用 TLS。地址均为占位符；请审核中继策略、发件人身份以及投递/退信监控。以下是完整配置中的接收器片段。
 
 ```yaml
 receivers:
@@ -642,7 +630,7 @@ receivers:
 
 ### OpsGenie 接收器
 
-这是供**现有客户迁移**使用的参考配置。根据 [Atlassian](https://www.atlassian.com/licensing/opsgenie)，Opsgenie 已于 June 4, 2025 停止销售，并将于 April 5, 2027 结束支持和访问。不要围绕它设计新的长期依赖。使用当前的 `responders` 形式和受保护的密钥文件。这些是供完整配置使用的接收器片段。
+这是供**现有客户迁移时参考**的内容。根据 [Atlassian](https://www.atlassian.com/licensing/opsgenie) 的信息，Opsgenie 于 2025 年 6 月 4 日停止销售；支持/访问将于 2027 年 4 月 5 日结束。不要围绕它设计新的长期依赖。请使用当前的 `responders` 格式和受保护的密钥文件。以下是完整配置中的接收器片段。
 
 ```yaml
 receivers:
@@ -661,7 +649,7 @@ receivers:
 
 ### Webhook 接收器
 
-Basic authentication 需要 HTTPS；`insecure_skip_verify: false` 不会加密 `http://` URL。请提供自有接收器、匹配的 TLS 证书/信任配置以及挂载的凭证文件。使用 `max_alerts: 10` 时，载荷可能省略部分告警，并通过 `truncatedAlerts` 报告；消费者必须处理这种情况。接收器必须实现 Alertmanager webhook 协议，而不能只是返回通用健康响应。这些是供完整配置使用的接收器片段。
+基本身份验证需要 HTTPS；`insecure_skip_verify: false` 并不会加密 `http://` URL。请提供自有接收器、匹配的 TLS 证书/信任配置以及已挂载的凭据文件。设置 `max_alerts: 10` 时，载荷可能会省略部分告警并报告 `truncatedAlerts`；消费者必须处理这种情况。接收器必须实现 Alertmanager webhook 协议，而不能只是返回通用健康检查响应。以下是完整配置中的接收器片段。
 
 ```yaml
 receivers:
@@ -681,7 +669,7 @@ receivers:
 
 ### 多接收器配置
 
-一个接收器无需 `continue` 就可通知多个集成。各 provider 的失败和重试相互独立；某个 provider 成功并不能证明全部 provider 成功。本示例需要所有列出 provider 的文件，以及 SMTP/TLS 配置。这些是供完整配置使用的接收器片段。
+一个接收器可以通知多个集成，无需使用 `continue`。各提供商的失败和重试相互独立；某个提供商成功并不能证明所有提供商都成功。此示例需要所有列出提供商的文件以及 SMTP/TLS 配置。以下是完整配置中的接收器片段。
 
 ```yaml
 receivers:
@@ -716,13 +704,11 @@ receivers:
       namespace: '{{ .CommonLabels.namespace }}'
 ```
 
-<span id="inhibition-rules"></span>
-
 ## 抑制规则
 
 ### 抑制概念
 
-抑制会阻止匹配的**通知**，而不是停止规则评估或删除已存储的告警。使用非空标签限定关联范围。节点状态不能成为抑制整个集群全部服务告警的理由。
+抑制针对匹配的**通知**，而不是规则评估或已存储的告警。请使用非空标签限定这种关联范围。节点条件不能成为抑制集群中所有服务告警的依据。
 
 ```mermaid
 flowchart LR
@@ -735,9 +721,9 @@ flowchart LR
 
 ### 抑制规则配置
 
-第一条规则使用 `NodeNotReady` 及 kube-state-metrics 提供的 `node` 标签。下方的 Pod 规则通过 `kube_pod_info` 添加节点信息；若该指标缺失，仍保留未被补充节点信息的告警。缺失标签比较时等同于空值，因此相等匹配前必须要求 `cluster`/`node` 非空。本地测试复现了旧配置对无关告警的抑制，并验证了这些防护条件。
+第一条规则使用带有 kube-state-metrics `node` 标签的 `NodeNotReady`。下方的 Pod 规则使用 `kube_pod_info` 添加节点信息；如果该指标缺失，则仍会保留告警。缺失标签在比较时等同于空值：请在进行相等匹配前要求 `cluster`/`node` 非空。本地测试复现了旧版对无关告警的抑制问题，并验证了这些保护条件。
 
-当被监控集群无法发送告警时，`ClusterDown` 需要由独立路径投递源告警。数据库规则需要稳定且共享的 `database_id`，而不是彼此无关的抓取 `instance` 标签。启用规则前应先定义这些输入。
+当受监控集群无法发送告警时，`ClusterDown` 需要一个通过独立渠道送达的源告警。数据库规则需要稳定且共享的 `database_id`，而不是互不相关的抓取 `instance` 标签。启用这些规则前，请先定义这些输入。
 
 ```yaml
 route:
@@ -793,15 +779,13 @@ inhibit_rules:
 
 ### 抑制优先级
 
-列表顺序**不是优先级系统**。任意适用的抑制规则都可能抑制目标。用不重叠的源/目标 matcher 和非空关联标签建立基础设施→节点→服务的依赖模型，再测试无关节点/集群以及缺失标签。宽泛的 `alertname=~".*"` 加上缺失的 `datacenter` 可能使无关事故的通知被静音。不要仅根据严重性推断因果关系。
-
-<span id="silencing"></span>
+列表顺序**不是优先级系统**。任何适用的抑制规则都可以抑制目标告警。使用互不重叠的源/目标匹配器和非空关联标签，为基础设施→节点→服务依赖关系建模，然后测试无关节点/集群以及缺失标签。宽泛的 `alertname=~".*"` 加上缺失的 `datacenter` 可能会静默无关事件。不要仅凭严重性推断因果关系。
 
 ## 静默
 
 ### 创建静默
 
-创建静默或使其过期都会改变通知行为。请审阅端点、精确 matcher、作者、原因以及有限的时间窗口。`--end` 需要明确选择一个未来的 RFC3339 时间；旧的固定 2025 年窗口无法静默当前告警。使用受支持的 TLS/认证配置保护 HTTP 访问；`amtool --http.config.file` 可读取受保护的客户端配置文件。
+创建/到期静默会改变通知行为。请核对端点、精确匹配器、作者、原因和有限时间窗口。`--end` 要求明确选择一个未来的 RFC3339 时间；之前固定的 2025 年窗口无法静默当前告警。请使用受支持的 TLS/身份验证配置保护 HTTP 访问；`amtool --http.config.file` 接受受保护的客户端配置文件。
 
 #### 使用 amtool CLI
 
@@ -817,7 +801,7 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence expire "$SILENCE_ID"
 
 #### 通过 API 创建静默
 
-将此辅助程序的输出保存为 `silence.json`，审阅后使用已配置的认证将其 POST 到获准的 `/api/v2/silences` 端点。不要将凭证值放入命令参数，也不要分享包含运维数据的原始 API 载荷。
+将此辅助程序的输出保存为 `silence.json`，进行审核，然后使用已配置的身份验证将其 POST 到已批准的 `/api/v2/silences` 端点。不要将凭据值放入命令参数，也不要共享包含运行数据的原始 API 载荷。
 
 ```python
 # Generates a payload only; it makes no API call.
@@ -838,7 +822,7 @@ print(json.dumps({
 
 ### 静默管理最佳实践
 
-采用获准的最短维护/部署窗口，并为调查设置有限时长。“直到修复”为止仍需要明确的结束时间和负责人审阅；四小时是团队策略示例，不是 Alertmanager 的限制。过期会停止抑制，但过期记录会保留到 retention/GC 清理。本地 API 测试验证了这一区别。到期提醒需要另行配置工作流。
+使用经过批准的最短维护/部署窗口，并设置有期限的调查时段。“修复前”仍然需要一个有限的结束时间和所有者审核；四小时只是团队策略示例，并非 Alertmanager 限制。到期后会停止抑制，但记录仍会保留，直到达到保留期限/执行垃圾回收。本地 API 测试验证了这一差异。到期提醒需要单独配置的工作流。
 
 ```mermaid
 stateDiagram-v2
@@ -850,17 +834,15 @@ stateDiagram-v2
   Expired --> Removed: retention and garbage collection
 ```
 
-<span id="template-customization"></span>
-
 ## 模板自定义
 
-### Go 模板基础
+### Go 模板基础知识
 
-通知模板接收 `Data`：在根上下文使用 `.CommonLabels`、`.CommonAnnotations`、`.GroupLabels` 和 `.Alerts`。进入 `range .Alerts` 后，点号表示单个 Alert，可使用其 `.Labels`、`.Annotations` 和 `.StartsAt`。这与 Prometheus 规则 annotation 模板中的 `$labels`、`$value` 不同。不要对不可信数据使用 `safeHtml`/`safeUrl` 来绕过转义。模板必须被挂载，并列入配置。
+通知模板接收 `Data`：在根级别使用 `.CommonLabels`、`.CommonAnnotations`、`.GroupLabels` 和 `.Alerts`。在 `range .Alerts` 内部，点号表示单个 Alert，其中有 `.Labels`、`.Annotations` 和 `.StartsAt`。这与 Prometheus 规则注释模板（`$labels`、`$value`）不同。不要对不可信数据使用 `safeHtml`/`safeUrl` 来绕过转义。模板必须挂载并在配置中列出。
 
 ### Slack 模板示例
 
-保存为 `slack.tmpl`。空白裁剪使颜色结果保持为一个有效的颜色字符串。仅输出获准字段；此模板不会清除任意敏感 annotation 值中的敏感信息。
+保存为 `slack.tmpl`。空白裁剪会确保颜色结果是一个有效的颜色字符串。这里只输出已批准的字段；此模板不会清理任意敏感注释值。
 
 ```text
 {{ define "slack.custom.title" -}}
@@ -891,11 +873,11 @@ stateDiagram-v2
 
 ### 模板函数
 
-使用 `if`、`range`、管道以及 `toUpper`、`title`、`printf`、`date` 等函数。Go 模板没有 JavaScript 风格的三元表达式。`printf "%.100s"` 按 rune 限制字符串长度；按字节进行 `slice` 可能切断韩文 UTF-8 字符。上方模板展示了根上下文与单告警上下文的区别，以及数值格式化。
+使用 `if`、`range`、管道以及 `toUpper`、`title`、`printf` 和 `date` 等函数。Go 模板没有 JavaScript 风格的三元表达式。`printf "%.100s"` 会按 rune 限制字符串长度；字节级的 `slice` 可能会拆分韩文 UTF-8 字符。上面的模板演示了根级与单条告警上下文以及数字格式化。
 
-使用合成的通知 Data 进行测试，而不是生产载荷：
+请使用合成通知 Data 进行测试，而不要使用生产载荷：
 
-将这份仅用于模板的合成输入保存为 `synthetic-notification.json`；其中的时间戳不会创建或发送告警。
+将此合成的仅模板输入保存为 `synthetic-notification.json`；其中的时间戳不会创建或发送告警。
 
 ```json
 {
@@ -938,7 +920,7 @@ amtool template render --template.glob=slack.tmpl   --template.data=synthetic-no
 
 ### 通过 ConfigMap 管理模板
 
-stack profile 通过 `alertmanagerSpec.configMaps` 挂载该 ConfigMap，独立 profile 则使用显式 volume。两者均配置 `/etc/alertmanager/configmaps/alertmanager-templates/*.tmpl`。如果没有匹配的挂载和路径，仅创建 ConfigMap 不会生效。应通过选定的安装管理主体执行重载。
+Stack 配置档通过 `alertmanagerSpec.configMaps` 挂载此 ConfigMap；独立配置档使用显式卷。两者都配置 `/etc/alertmanager/configmaps/alertmanager-templates/*.tmpl`。如果创建的 ConfigMap 没有对应的挂载/路径，就不会产生任何作用。请通过所选安装所有者重新加载。
 
 ```yaml
 apiVersion: v1
@@ -1001,23 +983,21 @@ data:
     '
 ```
 
-<span id="high-availability-configuration"></span>
-
 ## 高可用配置
 
 ### 集群架构
 
-健康且状态已收敛的 HA 示例：每个副本都接收告警。图示的单次投递不是普遍保证；网络分区或重试可能产生重复投递。
+健康且已收敛的 HA 示例：每个副本都会接收告警。图示中的单次送达并非普遍保证；分区或重试都可能导致重复。
 
-![健康且状态已收敛的 HA 示例：每个副本都接收告警。图示的单次投递不是普遍保证；网络分区或重试可能产生重复投递。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-6.png)
+![健康且已收敛的 HA 示例：每个副本都会接收告警。图示中的单次送达并非普遍保证；分区或重试都可能导致重复。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-6.png)
 
-[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-6.html)
+[交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-6.html)
 
 ### StatefulSet 配置
 
-这是使用前述 ConfigMap、模板和凭证 Secret 的**手动安装备选方案**。API/UI 和 gossip 端口是内部服务，但采用 ClusterIP 并不意味着已进行认证。生产使用前，应实施适当的网络访问控制，并审阅[受支持的 TLS/认证配置](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/https.md)。Gossip 默认不加密；其实验性的双向 TLS 传输具有不同的仅 TCP 行为。下方基线展示普通的 TCP/UDP gossip，并非经过验证的安全生产拓扑。
+这是**手动部署的替代方案**，使用前述 ConfigMap、模板和凭据 Secret。API/UI 和 gossip 端口是内部服务；它们不会仅仅因为使用 ClusterIP 就具备身份验证。请执行适当的网络访问控制，并在生产环境中先审核[受支持的 TLS/身份验证配置](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/https.md)。Gossip 默认未加密；其试验性的双向 TLS 传输具有不同的 TCP-only 行为。以下基线展示的是普通 TCP/UDP gossip，并非经过验证的安全生产拓扑。
 
-配置显式包含并行启动 Pod、尚未就绪 peer 的无头 DNS、两种 gossip 协议和持久化状态。`publishNotReadyAddresses` 有助于发现 peer，但不会使尚未就绪的成员变得健康。告警本身不持久化，Prometheus 必须重新发送。请审阅 StorageClass/AZ 绑定、中断行为和资源规模。
+并行 Pod 启动、用于发现尚未就绪 peer 的 headless DNS、两种 gossip 协议以及持久化状态均已明确配置。`publishNotReadyAddresses` 有助于 peer 发现，但不会使未就绪成员变为健康。告警本身不会持久化；Prometheus 必须重新发送告警。请审核 StorageClass/AZ 绑定、中断策略和资源容量规划。
 
 ```yaml
 apiVersion: apps/v1
@@ -1165,9 +1145,9 @@ spec:
 
 ### Prometheus 集成配置
 
-将此片段合并到**手动管理的 Prometheus 实例**的完整配置中。选择 DNS 发现或明确列出全部副本，不要同时使用两份重复列表。不要在副本之间对通知做负载均衡。Operator stack 会管理自己的告警发现。
+将此片段合并到**手动管理的 Prometheus 所有者**的完整配置中。请选择 DNS 发现或列出每个副本的显式列表，不要同时配置两份重复列表。不要通过负载均衡在多个副本间分发通知。Operator stack 会管理自己的告警发现。
 
-只有当 `prometheus_replica` 是其他方面等价的 HA Prometheus 服务器所配置的区分标签时，才移除它。保留 cluster/tenant 标签；无差别删除标签可能合并无关告警。本示例使用 IPv4 DNS A 记录；IPv6 应使用实际部署所需的地址族配置。
+只有当 `prometheus_replica` 是等价 HA Prometheus 服务器的区分标签时，才应移除它。请保留 cluster/tenant 标签；不加区分地删除标签可能会合并无关告警。此示例使用 IPv4 DNS A 记录；IPv6 请使用已部署的地址族配置。
 
 ```yaml
 global:
@@ -1187,9 +1167,9 @@ alerting:
 
 ## AlertmanagerConfig CRD
 
-### 按 Namespace 划分的配置
+### Namespace 范围的配置
 
-打包的 Operator 0.93.1 CRD 仍以 **v1alpha1** 提供服务并存储对象。对象标签应与下方的选择 overlay 对齐，并显式选择获准的命名空间。默认的按命名空间匹配会将导入的路由/抑制规则限制到对象所在命名空间，但这不是对客户端提供的告警标签进行认证。请保护 CRD/Secret 写权限和可信告警接入。全局 `alertmanagerConfiguration` 是另一种模式，此处不展示。
+打包的 Operator 0.93.1 CRD 仍以 **v1alpha1** 提供/存储。请将对象标签与下方的选择器配置相匹配，并显式选择已批准的 namespace。默认/namespace 范围匹配会将导入的路由/抑制规则限制在对象所在的 namespace；它不会对客户端提供的告警标签进行身份验证。请保护 CRD/Secret 写入权限和可信告警入口。全局 `alertmanagerConfiguration` 是另一种模式，此处不作说明。
 
 ```yaml
 apiVersion: v1
@@ -1269,9 +1249,9 @@ spec:
 
 ### Secret 引用
 
-team-a 示例应为 `#team-a-alerts` 和 `#team-a-critical` 创建不同 URL，分别存入 `slack-webhook-secret` 的 `normal-webhook-url` 和 `critical-webhook-url` 键。AlertmanagerConfig 选择这些不同的键，而不是通过更改 channel 字段让同一 webhook 改投其他频道。
+对于 team-a 示例，请为 `#team-a-alerts` 和 `#team-a-critical` 创建不同的 URL。分别将其存储在 `slack-webhook-secret` 的 `normal-webhook-url` 和 `critical-webhook-url` 键下。AlertmanagerConfig 会选择这些不同的键；它不会通过更改频道字段来重定向同一个 webhook。
 
-先创建命名空间，再创建这些 Secret，并在选定配置进行 reconcile 之前准备好 Secret。名称/键必须与 AlertmanagerConfig 匹配，并位于同一命名空间。保护本地凭证文件，已有 Secret 的轮换应单独处理。
+请先创建 namespace，再创建这些 Secret，并在所选配置被协调之前创建 Secret。Secret 名称/键必须与 AlertmanagerConfig 匹配，并且位于其所在的 namespace 中。请妥善保管本地凭据文件，并单独轮换已有 Secret。
 
 ```bash
 # team-a namespace is declared in team-a-alertmanagerconfig.yaml.
@@ -1284,7 +1264,7 @@ kubectl -n team-a create secret generic pagerduty-secret   --from-file=routing-k
 
 ### Alertmanager AlertmanagerConfig 选择
 
-这是 **kube-prometheus-stack 的 values overlay**，不是 Alertmanager API 对象。将其与选定的 stack profile 合并。此前 `team-a` 与 `enabled` 的标签不匹配，导致未选中任何配置。显式的命名空间标签可避免意外选择全部命名空间。
+这是一个 **kube-prometheus-stack values 覆盖配置**，不是 Alertmanager API 对象。请将其与选定的 stack 配置档合并。先前 `team-a` 与 `enabled` 之间的标签不匹配，导致没有选中任何配置。显式指定 namespace 标签可避免意外选中所有 namespace。
 
 ```yaml
 alertmanager:
@@ -1299,13 +1279,11 @@ alertmanager:
       type: OnNamespace
 ```
 
-<span id="production-alert-rule-examples"></span>
-
 ## 生产环境告警规则示例
 
-### Node 告警
+### 节点告警
 
-node-exporter 抓取失败并不能证明节点已物理宕机，`NodeExporterUnavailable` 体现了这一区别。文件系统空间并不等同于 Kubernetes 的 DiskPressure 条件，因此该规则命名为 `NodeFilesystemSpaceLow`。请检查实际 job/instance/device 标签和只读文件系统。阈值是策略示例，不是通用的生产限制。
+node-exporter 抓取失败并不能证明节点实际宕机；`NodeExporterUnavailable` 体现了这一区别。文件系统空间不足不是 Kubernetes 的 DiskPressure 条件，因此规则命名为 `NodeFilesystemSpaceLow`。请检查实际的 job/instance/device 标签以及只读文件系统。阈值仅为策略示例，并非适用于所有环境的生产限制。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1377,11 +1355,11 @@ spec:
     interval: 30s
 ```
 
-### Pod 和 Container 告警
+### Pod 和容器告警
 
-对于 `PodCrashLooping`，先对每条指标序列应用 `max_over_time(waiting_reason[5m])`，**然后再补充 UID/node 信息**，并要求所得观测条件持续 `10m`。重试间隙可能使瞬时 waiting reason 消失；有限窗口会跨越短于五分钟的间隙。一次性的 waiting 样本会在满足十分钟保持条件前过期。这检测的是反复观测到的状态，而不是连续十分钟一直 waiting。告警解除可能比最后一次观测晚最多五分钟，再加上抓取/评估延迟。
+对于 `PodCrashLooping`，应在 UID/node 信息增强**之前**对每个指标序列应用 `max_over_time(waiting_reason[5m])`，然后要求该观测条件持续 `10m`。重试间隙可能会清除瞬时 waiting reason；这个有界时间窗口可以跨越短于五分钟的间隙。一次性的 waiting 样本会在满足十分钟保持时间之前过期。此规则检测的是重复出现的观测，而不是连续等待十分钟。清除告警可能会在最后一次观测后延迟最多五分钟，再加上抓取/评估延迟。
 
-Readiness 不仅是 Pod phase。规则排除已完成/正在删除的 Pod，区分 CrashLoopBackOff 与普通重启，并将近期重启与最后一次 OOM 原因结合。最后终止/删除指标在 kube-state-metrics 2.20.0 中属于实验性指标，需要确认可用性。节点信息按 Pod UID 关联；信息缺失时仍保留告警。内存 limit 必须为正；CFS 周期限流百分比不是 CPU 时间百分比。
+就绪状态并不只取决于 Pod 阶段。这些规则排除已完成/正在删除的 Pod，区分 CrashLoopBackOff 与普通重启，并结合近期重启和最后一次 OOM 原因。kube-state-metrics 2.20.0 中最后终止/删除指标仍为实验性指标；请验证其是否可用。节点信息通过 Pod UID 关联；即使 info 缺失，也会保留告警。内存限制必须为正值；CFS 周期节流百分比并不是 CPU 时间百分比。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1484,7 +1462,7 @@ spec:
 
 ### API Server 告警
 
-经过检查的 stack ServiceMonitor 使用 `job="apiserver"`，请核实实际目标标签。无法成功抓取可能源于发现、RBAC、TLS 或网络问题，并不一定是 API Server 故障。错误率仅在总请求存在时将缺失的 5xx 分子填为零，并排除零流量。百分比值乘以100。客户端证书直方图在 Kubernetes1.35 源码中为 ALPHA，观测的是请求证书；近期分位数不等于完整证书清单，也不是 AWS IAM 凭证到期监控器。
+经过核验的 stack ServiceMonitor 使用 `job="apiserver"`；请验证实际目标标签。没有成功抓取可能意味着发现/RBAC/TLS/网络故障，并不一定表示 API server 故障。只有在总请求数存在时，错误率才会将缺失的 5xx 分子补为零，并且会排除零流量情况。百分比值乘以 100。客户端证书直方图在 Kubernetes 1.35 源码中为 ALPHA，用于观测请求证书；近期分位数并不是完整的证书清单，也不是 AWS IAM 凭据到期监控。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1553,7 +1531,7 @@ spec:
 
 ### etcd 告警
 
-这些可选规则用于明确配置抓取的**自管理 etcd** 部署，假定有三个预期成员且 `job="etcd"`。不要将其作为 EKS 托管 etcd 的检查来部署。在所检查的3.6.5源码中，`etcd_server_id` 确实存在；应统计不同的已观测 ID 并处理无数据情况，而不能声称抓取目标数量证明了 Raft quorum。数据库压力使用正数的已配置配额，而不是固定6GB阈值。物理分配空间与逻辑在用空间不同。
+这些可选规则用于明确抓取的**自管理 etcd** 部署，该部署预期有三个成员且 `job="etcd"`。不要将其部署为 EKS 托管 etcd 检查。检查过的 3.6.5 源码中存在 `etcd_server_id`；应统计不同的已观测 ID 并处理无数据的情况，而不是声称抓取计数可以证明 Raft 仲裁。数据库压力使用正的已配置配额，而不是固定的 6GB 阈值。物理分配大小与逻辑使用量不同。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1623,15 +1601,13 @@ spec:
     interval: 30s
 ```
 
-<span id="troubleshooting"></span>
-
 ## 故障排查
 
 ### 常见问题及解决方案
 
-#### 告警未发送
+#### 未发送告警
 
-检查规则是否被选中和加载、是否处于 firing 状态、Alertmanager 发现、接收器/文件配置、抑制以及投递失败。不要将生成的 Alertmanager 配置或 Secret 转储到日志中，其中可能包含 provider 凭证。分享前应审阅有限范围的组件日志，并遮蔽敏感信息。使用已配置认证的 API 检查状态。
+请检查已选择/加载的规则、Firing 状态、Alertmanager 发现、接收器/文件配置、抑制情况和投递失败。不要将生成的 Alertmanager 配置或 Secret 转储到日志中：其中可能包含提供商凭据。分享前请检查日志并隐藏敏感信息，同时限制日志范围。使用已配置身份验证的 API 检查状态。
 
 ```bash
 # Read-only checks against explicitly selected existing workloads.
@@ -1646,15 +1622,15 @@ amtool config routes test --config.file=routing-tree.yaml   --verify.receivers=c
 
 #### 重复告警
 
-检查等价的 Prometheus 副本是否仅在预期的 replica 标签上不同，且只在通知路径上删除该标签。检查集群成员/nflog、网络分区、重试、分组变化以及 repeat/retention 时序。将 `pod` 加入 `group_by` 会创建更多分组，并不是修复重复通知的通用方法。
+检查等价的 Prometheus 副本是否只在预期的副本标签上不同，并且只在通知路径中删除该标签。检查集群成员关系/nflog、分区、重试、分组变更以及重复发送/保留计时。将 `pod` 添加到 `group_by` 会创建更多分组，并不是通用的重复告警修复方案。
 
-#### 告警发送到错误的接收器
+#### 告警发送到了错误的接收器
 
-在本地测试精确的标签集和预期接收器，再分别测试时间窗口与实际投递。检查 first-match/continue 行为、继承的分组参数以及不继承的 active/mute 区间。
+先在本地测试确切的标签集和预期接收器，再分别测试时间窗口和实际投递。检查 first-match/continue 行为、继承的分组参数以及不会继承的活动/静默区间。
 
 ### amtool 命令参考
 
-本地配置/路由/模板检查不同于经过认证的 API 读取和静默变更。未经审阅精确 ID，绝不能将宽泛查询结果直接通过管道送入静默过期操作。
+本地配置/路由/模板检查不同于经过身份验证的 API 读取和静默修改。切勿未经核对精确 ID 就将宽泛查询结果直接传入静默过期命令。
 
 ```bash
 amtool check-config alertmanager.yaml
@@ -1666,34 +1642,34 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 
 ### 指标验证
 
-前六项说明已使用合成本地流量与实际0.34.0 `/metrics` HELP 输出核对。计数器是累计值；事故分析应使用适当的 rate/increase 窗口，并考虑重置。不要将尝试发送的通知标为成功投递。
+前六个说明已根据真实的 0.34.0 `/metrics` HELP 输出并使用本地合成流量进行了核对。计数器是累积值；请在事件分析中使用适当的 rate/increase 窗口，并考虑计数器重置。不要将尝试发送的通知标记为成功投递。
 
 | 指标 | 含义 |
 |---|---|
 | `alertmanager_alerts_received_total` | 已接收的告警 |
-| `alertmanager_alerts_invalid_total` | 已接收但无效的告警 |
-| `alertmanager_notifications_total` | **尝试发送**的通知，不是成功计数器 |
-| `alertmanager_notifications_failed_total` | 失败的通知；检查集成标签和重试行为 |
-| `alertmanager_alerts` | 按状态分类的告警 |
-| `alertmanager_silences` | 按状态分类的静默，适用时包括过期记录 |
-| `alertmanager_cluster_members` | 启用 gossip 时的集群成员数；禁用 gossip 的单实例测试配置中不存在 |
+| `alertmanager_alerts_invalid_total` | 无效的已接收告警 |
+| `alertmanager_notifications_total` | **尝试发送的**通知，不是成功计数器 |
+| `alertmanager_notifications_failed_total` | 发送失败的通知；请检查集成标签和重试行为 |
+| `alertmanager_alerts` | 按状态统计的告警 |
+| `alertmanager_silences` | 按状态统计的静默记录，可能包括已过期记录 |
+| `alertmanager_cluster_members` | 启用 gossip 时的集群成员信息；在禁用 gossip 的单实例测试配置中不存在 |
 
 ### 调试提示
 
-启用 provider 路由前，使用合成告警和自有本地/测试接收器。不要将生产告警载荷转发到公共 request-bin 服务。`localhost` 接收器指的是 Alertmanager 进程所在的网络命名空间，而不是你的笔记本电脑。调试日志可能泄露运维数据，必须限制范围，并通过安装管理主体的配置恢复原有日志级别。
+在启用提供商路由之前，请使用合成告警和自有的本地/测试接收器。不要将生产告警载荷转发到公开的 request-bin 服务。`localhost` 接收器指的是 Alertmanager 进程的网络 namespace，而不是你的笔记本电脑。调试日志可能泄露运行数据，因此必须限制范围，并通过所有者的配置恢复原状。
 
-将 shell API 请求放在 YAML 围栏之外。POST 测试告警或重载配置都是明确的变更操作，只应针对获准的测试端点执行。Webhook 响应只证明该请求到达了测试接收器，并不证明生产事故处理流程端到端正常。
+请将 shell API 请求放在 YAML 代码围栏之外。发送测试告警或重新加载配置属于有意执行的变更；只能对已批准的测试端点执行。webhook 响应只能证明请求到达了测试夹具，不能证明生产环境端到端的事件处理成功。
 
 ## 参考资料
 
-- [Alertmanager0.34 配置](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
-- [高可用性](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/high_availability.md)
+- [Alertmanager 0.34 配置](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
+- [高可用](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/high_availability.md)
 - [通知模板数据](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
 - [Prometheus Operator 告警](https://prometheus-operator.dev/docs/developer/alerting/)
-- [kube-prometheus-stack90 values](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml)
-- [独立 Alertmanager1.43.1 values](https://github.com/prometheus-community/helm-charts/blob/alertmanager-1.43.1/charts/alertmanager/values.yaml)
-- [kube-state-metrics2.20 Pod 指标](https://github.com/kubernetes/kube-state-metrics/blob/v2.20.0/docs/metrics/workload/pod-metrics.md)
+- [kube-prometheus-stack 90 values](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml)
+- [独立 Alertmanager 1.43.1 values](https://github.com/prometheus-community/helm-charts/blob/alertmanager-1.43.1/charts/alertmanager/values.yaml)
+- [kube-state-metrics 2.20 Pod 指标](https://github.com/kubernetes/kube-state-metrics/blob/v2.20.0/docs/metrics/workload/pod-metrics.md)
 
 ## 测验
 
-请通过 [Alertmanager 测验](../../quizzes/observability/alerting/01-alertmanager-quiz.md)检验你的理解。
+通过 [Alertmanager 测验](../../quizzes/observability/alerting/01-alertmanager-quiz.md)检验你的知识。

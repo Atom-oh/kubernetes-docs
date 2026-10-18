@@ -1,70 +1,74 @@
-# Container Technology
+# Tecnología de contenedores
 
-> **Versiones compatibles**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+ **Última actualización**: February 11, 2026
+> **Versiones compatibles**: Versiones mantenidas de Linux Docker/CRI; Kubernetes CRI v1; ejemplos de compilación con Node.js 24 **Última actualización**: 16 de octubre de 2026
 
-Los contenedores son una tecnología que empaqueta las aplicaciones junto con sus dependencias, lo que permite una ejecución consistente en diversos entornos. Este documento explica los conceptos fundamentales de los contenedores, cómo funcionan y su relación con Kubernetes.
+Los contenedores son una tecnología que empaqueta aplicaciones y sus dependencias, lo que permite ejecutarlas de forma coherente en diversos entornos. Este documento explica los conceptos fundamentales de los contenedores, cómo funcionan y su relación con Kubernetes.
 
-## Table of Contents
+## Tabla de contenido
 
-* [What is a Container?](03-container-technology.md#what-is-a-container)
-* [Container vs Virtual Machine](03-container-technology.md#container-vs-virtual-machine)
-* [Technical Foundation of Containers](03-container-technology.md#technical-foundation-of-containers)
-* [Container Runtime](03-container-technology.md#container-runtime)
-* [Container Images](03-container-technology.md#container-images)
+* [¿Qué es un contenedor?](03-container-technology.md#what-is-a-container)
+* [Contenedor frente a máquina virtual](03-container-technology.md#container-vs-virtual-machine)
+* [Fundamentos técnicos de los contenedores](03-container-technology.md#technical-foundation-of-containers)
+* [Runtime de contenedores](03-container-technology.md#container-runtime)
+* [Imágenes de contenedor](03-container-technology.md#container-images)
 * [Dockerfile](03-container-technology.md#dockerfile)
-* [Container Networking](03-container-technology.md#container-networking)
-* [Container Storage](03-container-technology.md#container-storage)
-* [Container Security](03-container-technology.md#container-security)
-* [Container Lifecycle Management](03-container-technology.md#container-lifecycle-management)
-* [Container Orchestration](03-container-technology.md#container-orchestration)
-* [Containers on AWS](03-container-technology.md#containers-on-aws)
+* [Redes de contenedores](03-container-technology.md#container-networking)
+* [Almacenamiento de contenedores](03-container-technology.md#container-storage)
+* [Seguridad de contenedores](03-container-technology.md#container-security)
+* [Administración del ciclo de vida de los contenedores](03-container-technology.md#container-lifecycle-management)
+* [Orquestación de contenedores](03-container-technology.md#container-orchestration)
+* [Contenedores en AWS](03-container-technology.md#containers-on-aws)
 
-## What is a Container?
+> Los comandos de Linux que aparecen a continuación presuponen un host Linux con Docker. Docker Desktop ejecuta su daemon en una VM, por lo que no se pueden inspeccionar directamente desde el sistema operativo de escritorio las rutas de PID o del sistema de archivos del host. Las imágenes requieren una arquitectura de CPU, un sistema operativo y características del kernel compatibles. Los entornos basados en VM, como Kata/Fargate, difieren del modelo básico de aislamiento de procesos descrito aquí.
 
-Un contenedor es una unidad estandarizada de software que incluye todo lo necesario para ejecutar una aplicación (código, runtime, herramientas del sistema, bibliotecas del sistema y configuración). Los contenedores se ejecutan en entornos aislados mientras comparten el kernel del sistema operativo del host.
+## ¿Qué es un contenedor?
 
-### Key Characteristics of Containers
+Un contenedor es una unidad de software estandarizada que incluye todo lo necesario para ejecutar una aplicación (código, runtime, herramientas del sistema, bibliotecas del sistema y configuración). Los contenedores se ejecutan en entornos aislados mientras comparten el kernel del sistema operativo host.
 
-1. **Portabilidad**: Proporciona un entorno de ejecución consistente entre desarrollo, pruebas y producción
-2. **Ligero**: Usa menos recursos que las máquinas virtuales
+### Características principales de los contenedores
+
+1. **Portabilidad**: Ofrecen un entorno de ejecución coherente durante el desarrollo, las pruebas y la producción
+2. **Ligereza**: Utilizan menos recursos que las máquinas virtuales
 3. **Aislamiento**: Entorno de ejecución aislado de otros contenedores y del sistema host
-4. **Inicio y detención rápidos**: Tiempo de arranque rápido en milisegundos
-5. **Escalabilidad**: Fácil de replicar para escalado horizontal
-6. **Control de versiones**: Gestión del ciclo de vida de la aplicación mediante versionado de imágenes
+4. **Inicio y detención rápidos**: A menudo se inician rápidamente; la descarga de la imagen y la inicialización de la aplicación determinan cuándo están listos
+5. **Escalabilidad**: Es fácil replicarlos para escalar horizontalmente
+6. **Control de versiones**: Administración del ciclo de vida de las aplicaciones mediante el control de versiones de imágenes
 
-### History of Container Technology
+### Historia de la tecnología de contenedores
 
-* **Principios de la década de 2000**: Surgen tecnologías tempranas de contenedores como Linux VServer y OpenVZ
-* **2007**: cgroups (Control Groups) se integra en el kernel de Linux
+* **Principios de la década de 2000**: Surgen las primeras tecnologías de contenedores, como Linux VServer y OpenVZ
+* **2008**: Linux 2.6.24 publica la implementación inicial de cgroups
 * **2008**: Comienza el proyecto LXC (Linux Containers)
 * **2013**: El lanzamiento de Docker populariza la tecnología de contenedores
-* **2015**: Se establece Open Container Initiative (OCI), estandarizando los contenedores
-* **2017**: containerd se dona al proyecto CNCF
+* **2015**: Se crea la Open Container Initiative (OCI) para estandarizar los contenedores
+* **2017**: containerd se dona como proyecto de CNCF
 
-## Container vs Virtual Machine
+## Contenedor frente a máquina virtual
 
-### Virtual Machine Architecture vs Container Architecture
+### Arquitectura de máquinas virtuales frente a arquitectura de contenedores
 
-### Key Differences
+### Diferencias principales
 
-| Characteristic      | Container                        | Virtual Machine                                           |
+Esta es una comparación de arquitecturas, no una prueba de rendimiento/inicio basada en mediciones. El tamaño de la imagen, la inicialización y los mecanismos de restauración de VM afectan los resultados.
+
+| Característica       | Contenedor                       | Máquina virtual                                           |
 | ------------------- | -------------------------------- | --------------------------------------------------------- |
-| Size                | Typically tens of MB             | Typically several GB                                      |
-| Startup Time        | Seconds or less                  | Minutes                                                   |
-| Isolation Level     | Process-level isolation          | Hardware-level isolation                                  |
-| OS                  | Shares host OS kernel            | Each VM requires full OS                                  |
-| Performance         | Nearly native                    | Some overhead                                             |
-| Security            | Relatively lower (shared kernel) | Relatively higher (complete isolation)                    |
-| Resource Efficiency | High                             | Medium                                                    |
-| Use Cases           | Microservices, CI/CD, dev/test   | Legacy apps, diverse OS requirements, high security needs |
+| Tamaño              | Capas de aplicación/espacio de usuario; varía | Sistema operativo invitado más aplicación; varía          |
+| Tiempo de inicio    | A menudo rápido cuando la imagen ya es local | Depende de la estrategia de arranque/restauración          |
+| Nivel de aislamiento | Aislamiento a nivel de proceso   | Aislamiento a nivel de hardware                            |
+| Sistema operativo   | Comparte el kernel del sistema operativo host | Cada VM requiere un sistema operativo completo             |
+| Rendimiento         | Casi nativo                      | Cierta sobrecarga                                         |
+| Seguridad           | Kernel compartido; requiere medidas de refuerzo | Límite del hipervisor; también requiere medidas de refuerzo |
+| Eficiencia de recursos | Alta                          | Media                                                     |
+| Casos de uso        | Microservicios, CI/CD, desarrollo/pruebas | Aplicaciones heredadas, requisitos de sistemas operativos diversos, necesidades de alta seguridad |
 
-## Technical Foundation of Containers
+## Fundamentos técnicos de los contenedores
 
-Los contenedores se implementan usando varias características del kernel de Linux. Estas tecnologías se cubrieron en detalle en 01-linux-basics.md; aquí nos enfocamos en su relación con los contenedores.
+Los contenedores se implementan mediante varias características del kernel de Linux. Estas tecnologías se explicaron en detalle en 01-linux-basics.md; aquí nos centramos en su relación con los contenedores.
 
-### Isolation Through Namespaces
+### Aislamiento mediante namespaces
 
-Los contenedores usan namespaces de Linux para aislar procesos. Cada contenedor tiene su propio conjunto de namespaces, lo que proporciona un entorno de ejecución independiente.
+Los contenedores utilizan namespaces de Linux para aislar procesos. El uso compartido de namespaces se puede configurar; por ejemplo, los contenedores de un mismo Kubernetes Pod comparten un namespace de red.
 
 ```bash
 # Check container namespaces
@@ -78,18 +82,18 @@ docker exec <container-id> ps aux
 ps aux | grep <process-name>
 ```
 
-**Namespaces usados por los contenedores**:
+**Namespaces que utilizan los contenedores**:
 
-* **PID**: El contenedor tiene su propio árbol de procesos (comenzando desde PID 1)
-* **Network**: Stack de red independiente (dirección IP, tabla de enrutamiento, puertos)
+* **PID**: El contenedor tiene su propio árbol de procesos (a partir del PID 1)
+* **Network**: Pila de red independiente (dirección IP, tabla de enrutamiento y puertos)
 * **Mount**: Vista independiente del sistema de archivos
-* **UTS**: Hostname independiente
-* **IPC**: Espacio independiente de comunicación entre procesos
+* **UTS**: Nombre de host independiente
+* **IPC**: Espacio independiente para la comunicación entre procesos
 * **User**: Asignación independiente de ID de usuario (opcional)
 
-### Resource Limiting Through cgroups
+### Limitación de recursos mediante cgroups
 
-Los contenedores usan cgroups para limitar y monitorear el uso de recursos.
+Los contenedores utilizan cgroups para limitar y supervisar el uso de recursos.
 
 ```bash
 # Run container with CPU limit
@@ -101,29 +105,36 @@ docker stats <container-id>
 # Check container cgroup settings
 docker inspect <container-id> | grep -A 20 "Cgroup"
 
-# Check container cgroup from host
-cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/cpu.max
-cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/memory.max
+# On a Linux cgroup v2 host, inspect a running container's actual path.
+CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' <container-id>)
+if [ "$CONTAINER_PID" -gt 0 ]; then
+  CGROUP_PATH=$(awk -F: '$1 == "0" {print $3}' "/proc/$CONTAINER_PID/cgroup")
+  cat "/sys/fs/cgroup$CGROUP_PATH/cpu.max"
+  cat "/sys/fs/cgroup$CGROUP_PATH/memory.max"
+fi
 ```
 
-**Controles de recursos de cgroup usados por los contenedores**:
+**Controles de recursos cgroup que utilizan los contenedores**:
 
 * **CPU**: Limitación del tiempo de CPU y asignación de núcleos de CPU
-* **Memory**: Limitación del uso de memoria y control del comportamiento OOM
-* **Block I/O**: Limitación del ancho de banda de I/O de disco
-* **Network**: Limitación del ancho de banda de red (combinada con tc)
-* **PIDs**: Límite de cantidad de procesos dentro del contenedor
+* **Memoria**: Limitación del uso de memoria y control del comportamiento OOM
+* **E/S de bloques**: Limitación del ancho de banda de E/S del disco
+* **Red**: Clasificación del tráfico integrada con tc/eBPF
+* **PIDs**: Límite del número de procesos dentro del contenedor
 
-### Layer Management Through OverlayFS
+### Administración de capas mediante OverlayFS
 
-Las imágenes de contenedor usan OverlayFS para gestionar eficientemente múltiples capas.
+Las instalaciones nuevas de Docker Engine 29.0+ utilizan de forma predeterminada el almacén de imágenes y los snapshotters de containerd. Las actualizaciones pueden conservar el overlay2 clásico; consulta docker info. Las rutas de GraphDriver.Data no están disponibles en todas las instalaciones.
+
+Las imágenes OCI describen las capas del sistema de archivos de forma independiente de la implementación de almacenamiento. OverlayFS es un backend común de Linux; los runtimes pueden utilizar otros controladores de almacenamiento o snapshotters.
 
 ```bash
 # Check image layers
 docker history <image-name>
 
 # Check container file system layers
-docker inspect <container-id> | grep -A 10 "GraphDriver"
+docker info --format '{{.Driver}} {{json .DriverStatus}}'
+docker image inspect <image-name> --format '{{json .RootFS.Layers}}'
 
 # Check OverlayFS mount information
 mount | grep overlay
@@ -132,11 +143,11 @@ mount | grep overlay
 **Estructura de OverlayFS**:
 
 * **LowerDir**: Capas de imagen de solo lectura (capa inferior → capa superior)
-* **UpperDir**: Capa de lectura/escritura del contenedor
+* **UpperDir**: Capa de contenedor de lectura/escritura
 * **WorkDir**: Directorio de trabajo de OverlayFS
-* **MergedDir**: Vista unificada (sistema de archivos visto por el contenedor)
+* **MergedDir**: Vista unificada (sistema de archivos que ve el contenedor)
 
-### Lab: Understanding Container Technical Foundation
+### Laboratorio: comprender los fundamentos técnicos de los contenedores
 
 ```bash
 # 1. Run a simple container
@@ -160,168 +171,158 @@ docker stop test-container
 docker rm test-container
 ```
 
-## Container Runtime
+## Runtime de contenedores
 
-Un container runtime es software que gestiona el ciclo de vida de los contenedores. Ejecuta imágenes de contenedor, limita el uso de recursos del contenedor y configura redes y almacenamiento.
+Un runtime de contenedores es un software que administra el ciclo de vida de los contenedores. Ejecuta imágenes de contenedor, limita el uso de recursos de los contenedores y configura las redes y el almacenamiento.
 
-### Container Runtime Hierarchy
+### Jerarquía de runtime de contenedores
 
 1. **Runtime de bajo nivel (compatible con OCI)**
-   * **runc**: Runtime predeterminado de Docker, implementación del estándar OCI
+   * **runc**: Runtime predeterminado de Docker e implementación del estándar OCI
    * **crun**: Runtime OCI ligero escrito en C
-   * **kata-containers**: Runtime con seguridad reforzada que usa virtualización de hardware
+   * **kata-containers**: Runtime con seguridad reforzada que utiliza virtualización de hardware
    * **gVisor**: Runtime de seguridad que emula funciones del kernel en el espacio de usuario
 2. **Runtime de alto nivel**
-   * **containerd**: Runtime de contenedores estándar de la industria separado de Docker
+   * **containerd**: Runtime de contenedores estándar del sector, separado de Docker
    * **CRI-O**: Runtime ligero diseñado específicamente para Kubernetes
-   * **Docker Engine**: Plataforma de contenedores más utilizada
+   * **Docker Engine**: Plataforma de contenedores de uso más extendido
 
-### Kubernetes Container Runtime Interface (CRI)
+### Interfaz de runtime de contenedores de Kubernetes (CRI)
 
-Kubernetes se integra con varios container runtimes mediante CRI (Container Runtime Interface). CRI proporciona una interfaz estandarizada entre Kubernetes y los container runtimes.
+Kubernetes se integra con distintos runtimes de contenedores mediante CRI (Container Runtime Interface). CRI proporciona una interfaz estandarizada entre Kubernetes y los runtimes de contenedores.
 
-## Container Images
+Kubernetes 1.26+ requiere CRI v1. Utiliza una versión compatible de containerd/CRI-O y haz coincidir su controlador cgroup con el de kubelet. Docker Engine no implementa CRI por sí mismo; dockershim, integrado en Kubernetes, se eliminó en la versión 1.24. Docker Engine necesita un adaptador CRI independiente, como cri-dockerd. Las imágenes OCI creadas con Docker siguen funcionando. CRI es el contrato de API entre kubelet y el runtime; no necesariamente un servicio intermedio que se implemente por separado.
 
-Las imágenes de contenedor son plantillas inmutables que contienen aplicaciones y sus dependencias. Las imágenes constan de múltiples capas, cada una de las cuales representa cambios en el sistema de archivos.
+## Imágenes de contenedor
 
-### Image Layers
+Las imágenes de contenedor son plantillas inmutables que contienen aplicaciones y sus dependencias. Las imágenes constan de varias capas, cada una de las cuales representa cambios en el sistema de archivos.
 
-Las imágenes de contenedor se componen de una pila de múltiples capas. Cada capa representa cambios respecto de la capa anterior. Este enfoque por capas hace que compartir imágenes y almacenarlas en caché sea eficiente.
+### Capas de imagen
 
-```mermaid
-flowchart TB
-    app["Application Layer<br/>Application code"]
-    dep["Dependencies Layer<br/>npm packages, pip packages, etc."]
-    runtime["Runtime Layer<br/>Node.js, Python, etc."]
-    os["OS Layer<br/>Ubuntu, Alpine, etc."]
+Las imágenes de contenedor se componen de una pila de varias capas. Cada capa representa los cambios realizados sobre la capa anterior. Este enfoque por capas hace que el uso compartido y el almacenamiento en caché de imágenes sean eficientes.
 
-    app --> dep --> runtime --> os
+![Una pila de capas que muestra cómo se crea una imagen de contenedor desde una capa del sistema operativo, pasando por una capa de runtime y una capa de dependencias, hasta la capa de aplicación; cada capa registra los cambios sobre la capa inferior, lo que permite compartir imágenes y almacenarlas en caché de forma eficiente.](../.gitbook/assets/en-basics-03-container-technology-0.png)
 
-    style app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    style dep fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style runtime fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style os fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-03-container-technology-0.html)
 
-```
+### Registros de imágenes
 
-### Image Registries
+Las imágenes de contenedor se almacenan y comparten en registros. Entre los principales registros se incluyen:
 
-Las imágenes de contenedor se almacenan y comparten en registries. Los principales registries incluyen:
-
-* **Docker Hub**: El registro público más grande
+* **Docker Hub**: El mayor registro público
 * **Amazon ECR**: Servicio de registro de contenedores de AWS
-* **Google Container Registry**: Registro de Google Cloud
+* **Google Artifact Registry**: Registro actual de Google Cloud; Container Registry cerró en 2025, mientras que los repositorios gcr.io respaldados por Artifact Registry siguen siendo compatibles.
 * **Azure Container Registry**: Registro de Microsoft Azure
 * **GitHub Container Registry**: Registro de contenedores de GitHub
-* **Harbor**: Registro open-source de nivel empresarial
+* **Harbor**: Registro de código abierto de nivel empresarial
 
-### Image Tags and Digests
+### Etiquetas y resúmenes criptográficos de imágenes
 
-* **Tag**: Nombre legible por humanos que identifica una versión específica de una imagen (por ejemplo, `nginx:1.21.0`)
-* **Digest**: Hash SHA256 del contenido de la imagen, identificador único de una imagen (por ejemplo, `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
+* **Etiqueta**: Referencia mutable y legible para las personas; se puede reasignar, a menos que el registro aplique la inmutabilidad (por ejemplo, `nginx:1.30.6`)
+* **Resumen criptográfico**: Resumen del contenido de un manifiesto de imagen o de un índice multiplataforma (comúnmente SHA256); hace referencia a los resúmenes de la configuración y de las capas (por ejemplo, `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
 
 ## Dockerfile
 
-Un Dockerfile es un archivo de texto que contiene instrucciones para construir una imagen de contenedor. Cada instrucción agrega una nueva capa a la imagen.
+Un Dockerfile es un archivo de texto que contiene instrucciones para crear una imagen de contenedor. Las instrucciones que modifican el sistema de archivos pueden crear capas; ENV, CMD y otras instrucciones que solo contienen metadatos no añaden diferencias al sistema de archivos.
 
-### Key Dockerfile Instructions
+### Instrucciones principales de Dockerfile
 
 ```dockerfile
-# Specify base image
-FROM node:14-alpine
-
-# Set working directory
+FROM node:24-alpine
 WORKDIR /app
-
-# Set environment variables
 ENV NODE_ENV=production
-
-# Copy files
-COPY package*.json ./
-COPY . .
-
-# Run commands
-RUN npm install --production
-
-# Expose port
+# Requires a committed package-lock.json matching package.json.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --chown=node:node . .
+RUN mkdir -p /app/data && chown node:node /app/data
+USER node
 EXPOSE 3000
-
-# Define volume
 VOLUME /app/data
-
-# Command to run when container starts
 CMD ["node", "server.js"]
 ```
 
-### Multi-stage Builds
+Node.js 14 llegó al final de su vida útil; estos ejemplos utilizan la línea compatible de Node.js 24. Comprueba la compatibilidad de musl de Alpine con los módulos nativos. Prepara .dockerignore para evitar que node_modules del host o las credenciales se copien en la imagen. EXPOSE es metadato y no publica un puerto; para publicar un puerto se necesita docker run -p o la configuración del orquestador.
 
-Los builds de múltiples etapas usan varias etapas de compilación para reducir el tamaño final de la imagen.
+```text
+# .dockerignore
+node_modules
+.git
+.env
+.env.*
+npm-debug.log
+```
+
+### Compilaciones en varias etapas
+
+Las compilaciones en varias etapas utilizan varias etapas de compilación para reducir el tamaño de la imagen final.
 
 ```dockerfile
-# Build stage
-FROM node:14 AS build
+FROM node:24 AS build
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
-RUN npm install
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
+# This example assumes a static build written to dist/.
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-### Image Optimization Techniques
+### Técnicas de optimización de imágenes
 
-1. **Elegir una imagen base adecuada**: Usa imágenes ligeras como Alpine
-2. **Usar builds de múltiples etapas**: Excluye herramientas de build y archivos intermedios
-3. **Minimizar capas**: Combina RUN, COPY y otros comandos
-4. **Excluir archivos innecesarios**: Usa el archivo .dockerignore
-5. **Aprovechar la caché**: Coloca las capas que cambian con frecuencia más tarde
+1. **Elegir una imagen base adecuada**: Utiliza imágenes ligeras, como Alpine
+2. **Utilizar compilaciones en varias etapas**: Excluye las herramientas de compilación y los archivos intermedios
+3. **Optimizar el contenido de las capas y la caché**: Combina la instalación/limpieza de paquetes en un RUN; reducir el número de capas no garantiza por sí solo que la imagen sea más pequeña.
+4. **Excluir archivos innecesarios**: Utiliza el archivo .dockerignore
+5. **Aprovechar la caché**: Coloca las capas que cambian con frecuencia al final
 
-## Container Networking
+## Redes de contenedores
 
-La red de contenedores permite la comunicación entre contenedores y entre contenedores y el mundo exterior.
+Las redes de contenedores permiten la comunicación entre contenedores y entre los contenedores y el exterior.
 
-### Network Drivers
+### Controladores de red
 
-Docker proporciona varios network drivers:
+Docker proporciona varios controladores de red:
 
-1. **bridge**: Network driver predeterminado, comunicación entre contenedores en el mismo host
-2. **host**: Usa directamente la red del host, sin aislamiento
-3. **overlay**: Comunicación de contenedores a través de múltiples hosts
-4. **macvlan**: Asigna una dirección MAC al contenedor, aparece como dispositivo de red físico
-5. **none**: Deshabilita toda la red
+1. **bridge**: Controlador de red predeterminado; permite la comunicación entre contenedores del mismo host
+2. **host**: Comparte el namespace de red del host; se mantiene el resto del aislamiento del contenedor
+3. **overlay**: Comunicación entre contenedores de varios hosts
+4. **macvlan**: Asigna una dirección MAC al contenedor, que aparece como un dispositivo de red físico
+5. **none**: Deja solo la red de loopback
 
-### Port Mapping
+### Asignación de puertos
 
-Asigna puertos internos del contenedor a puertos del host para acceso externo.
+Asigna los puertos internos del contenedor a los puertos del host para permitir el acceso externo.
 
 ```bash
 # Map host port 8080 to container port 80
 docker run -p 8080:80 nginx
 ```
 
-### Container-to-Container Communication
+La publicación de puertos se enlaza de forma predeterminada a todas las direcciones del host. Utiliza `-p 127.0.0.1:8080:80` para un laboratorio accesible solo desde el equipo local.
 
-1. **Misma red**: Los contenedores en la misma red pueden comunicarse por nombre de contenedor
-2. **Links**: Método heredado, configuración de enlace directo entre contenedores
-3. **Red externa**: Comunicación a través de puertos del host
+### Comunicación entre contenedores
 
-## Container Storage
+1. **Misma red**: Los contenedores de una misma red bridge definida por el usuario pueden resolverse entre sí por nombre; el bridge predeterminado no proporciona resolución DNS automática de nombres
+2. **Links**: Método heredado para configurar enlaces directos entre contenedores
+3. **Red externa**: Comunicación a través de los puertos del host
 
-Los contenedores son stateless de forma predeterminada, pero existen varias opciones para el almacenamiento persistente de datos.
+## Almacenamiento de contenedores
 
-### Storage Types
+La capa de escritura de un contenedor Docker se conserva al detenerlo y volverlo a iniciar, pero se elimina junto con el contenedor. Guarda los datos persistentes en volúmenes u otros almacenamientos externos.
 
-1. **Almacenamiento efímero**: Sistema de archivos interno del contenedor; los datos se pierden cuando se elimina el contenedor
-2. **Volumes**: Áreas del sistema de archivos del host gestionadas por Docker
-3. **Bind mounts**: Montan rutas específicas del host en el contenedor
-4. **tmpfs mounts**: Almacenan datos solo en memoria, se usan cuando se necesita alto rendimiento de I/O
+### Tipos de almacenamiento
 
-### Volume Usage Examples
+1. **Almacenamiento efímero**: Sistema de archivos interno del contenedor; los datos se pierden al eliminarlo
+2. **Volúmenes**: Áreas del sistema de archivos del host administradas por Docker
+3. **Montajes bind**: Montan rutas específicas del host en el contenedor
+4. **Montajes tmpfs**: Almacenamiento temporal respaldado por memoria; las páginas pueden intercambiarse al disco
+
+### Ejemplos de uso de volúmenes
 
 ```bash
 # Create volume
@@ -337,53 +338,54 @@ docker run -v /host/path:/container/path nginx
 docker run -v /host/path:/container/path:ro nginx
 ```
 
-### Data Sharing Patterns
+### Patrones para compartir datos
 
-1. **Uso compartido de volumes**: Múltiples contenedores usan el mismo volume
-2. **Contenedor de data volume**: Crea un contenedor que contiene solo datos y luego compártelo
-3. **Integración con almacenamiento externo**: Usa sistemas de almacenamiento externo como AWS EBS, NFS
+1. **Uso compartido de volúmenes**: Varios contenedores utilizan el mismo volumen
+2. **Contenedor de volumen de datos**: Crea un contenedor que solo contenga datos y luego compártelo
+3. **Integración con almacenamiento externo**: Utiliza sistemas de almacenamiento externos, como AWS EBS o NFS
 
-## Container Security
+## Seguridad de contenedores
 
-La seguridad de contenedores debe considerarse en múltiples capas, incluidas las imágenes, el container runtime y los sistemas host.
+La seguridad de los contenedores debe tenerse en cuenta en varias capas, incluidas las imágenes, el runtime de contenedores y los sistemas host.
 
-### Image Security
+### Seguridad de las imágenes
 
-1. **Escaneo de vulnerabilidades**: Escanea imágenes en busca de vulnerabilidades con herramientas como Trivy, Clair
-2. **Imágenes base confiables**: Usa imágenes oficiales o verificadas
+1. **Análisis de vulnerabilidades**: Analiza las imágenes en busca de vulnerabilidades con herramientas como Trivy y Clair
+2. **Imágenes base de confianza**: Utiliza imágenes oficiales o verificadas
 3. **Principio de privilegio mínimo**: Incluye solo los paquetes y permisos necesarios
-4. **Firma de imágenes**: Firma y verifica imágenes con Docker Content Trust o Cosign
+4. **Firma de imágenes**: Utiliza un flujo de trabajo de firma de imágenes mantenido, como Cosign. Docker Content Trust está en proceso de retirada; está previsto que el servicio Notary v1 de Docker cierre el 8 de diciembre de 2026.
 
-### Runtime Security
+### Seguridad en tiempo de ejecución
 
-1. **Restricción de privilegios**: Ejecuta contenedores como usuario no root
-2. **Restricción de capabilities**: Otorga solo las capabilities de Linux necesarias
-3. **Perfiles seccomp**: Restringe llamadas al sistema
+1. **Restricción de privilegios**: Ejecuta los contenedores con un usuario no root
+2. **Restricción de capacidades**: Concede solo las capacidades de Linux necesarias
+3. **Perfiles seccomp**: Restringen las llamadas al sistema
 4. **AppArmor/SELinux**: Aplica controles de acceso obligatorios
 5. **Sistema de archivos de solo lectura**: Monta el sistema de archivos como solo lectura cuando sea posible
 
-### Security Best Practices
+### Prácticas recomendadas de seguridad
 
-1. **Actualizaciones regulares**: Actualiza regularmente las imágenes de contenedor y los sistemas host
-2. **Aislamiento de red**: Restringe la comunicación de contenedores con políticas de red apropiadas
-3. **Gestión de secretos**: Usa Docker Secrets o herramientas externas de gestión de secretos en lugar de variables de entorno
-4. **Límites de recursos**: Limita CPU, memoria y otros usos de recursos
-5. **Monitoreo y logging**: Monitorea la actividad de los contenedores y centraliza los logs
+1. **Actualizaciones periódicas**: Actualiza periódicamente las imágenes de contenedor y los sistemas host
+2. **Aislamiento de red**: Restringe la comunicación entre contenedores mediante políticas de red adecuadas
+3. **Administración de secretos**: Utiliza el mecanismo de secretos de la plataforma o un administrador de secretos externo. Los secretos de Docker Swarm se aplican a los servicios, no a los contenedores independientes ejecutados con docker run; los secretos de los archivos Compose ofrecen garantías distintas.
+4. **Límites de recursos**: Limita el uso de CPU, memoria y otros recursos
+5. **Supervisión y registro**: Supervisa la actividad de los contenedores y centraliza los registros
 
-## Container Lifecycle Management
+## Administración del ciclo de vida de los contenedores
 
-Comprender el ciclo de vida completo del contenedor es esencial para operaciones de contenedores eficaces.
+Comprender todo el ciclo de vida de los contenedores es esencial para administrarlos eficazmente.
 
-### Container States
+### Estados de los contenedores
 
-Los contenedores pueden tener varios estados:
+Los contenedores pueden encontrarse en varios estados:
 
-* **Created**: Contenedor creado pero aún no iniciado
+* **Created**: Contenedor creado, pero aún no iniciado
 * **Running**: El contenedor está en ejecución
-* **Paused**: Todos los procesos del contenedor están pausados
+* **Paused**: Los procesos de Linux están congelados mediante el cgroup freezer
 * **Restarting**: El contenedor se está reiniciando
 * **Exited**: El contenedor ha terminado
-* **Dead**: El daemon del contenedor intentó eliminarlo, pero falló
+* **Removing**: Se está eliminando el contenedor
+* **Dead**: Contenedor parcialmente eliminado o inservible; no se puede reiniciar y es necesario limpiarlo
 
 ```bash
 # Check container status
@@ -401,7 +403,7 @@ docker stop <container-id>  # Transition to Exited state
 docker rm <container-id>  # Remove container
 ```
 
-### Creating and Running Containers
+### Crear y ejecutar contenedores
 
 ```bash
 # Create container only (don't start)
@@ -432,7 +434,7 @@ docker run -p 8080:80 nginx
 docker run -v /host/path:/container/path nginx
 ```
 
-### Controlling Containers
+### Controlar contenedores
 
 ```bash
 # List running containers
@@ -441,7 +443,7 @@ docker ps
 # List all containers (including stopped)
 docker ps -a
 
-# Stop container (SIGTERM then SIGKILL)
+# Stop with configured signal (default SIGTERM), then SIGKILL after timeout
 docker stop <container-id>
 
 # Force kill container (SIGKILL)
@@ -465,7 +467,7 @@ docker cp <container-id>:/path/to/file /local/path
 docker cp /local/path <container-id>:/path/to/file
 ```
 
-### Container Logging and Monitoring
+### Registro y supervisión de contenedores
 
 ```bash
 # View container logs
@@ -496,16 +498,16 @@ docker top <container-id>
 docker inspect <container-id>
 ```
 
-### Cleaning Up Containers
+### Limpieza de contenedores
 
 ```bash
 # Remove all stopped containers
 docker container prune
 
-# Remove all unused resources (containers, images, networks, volumes)
+# Remove stopped containers, unused networks, dangling images and build cache; no volumes
 docker system prune
 
-# Remove all resources including volumes
+# Additionally prune unused anonymous volumes; running resources are not removed
 docker system prune --volumes
 
 # Check disk usage
@@ -514,13 +516,13 @@ docker system df
 # Remove image
 docker rmi <image-id>
 
-# Remove unused images
+# Remove dangling images; -a includes all unused images
 docker image prune
 
 # Remove volume
 docker volume rm <volume-name>
 
-# Remove unused volumes
+# Remove unused anonymous volumes; --all includes unused named volumes
 docker volume prune
 
 # Remove network
@@ -530,40 +532,40 @@ docker network rm <network-name>
 docker network prune
 ```
 
-### Health Checks
+### Comprobaciones de estado
 
-Monitorea el estado de salud del contenedor para recuperación automática.
+HEALTHCHECK registra el estado de salud de Docker. Las políticas de reinicio de Docker independiente responden a la salida del proceso, no solo al estado de salud. Kubernetes ignora HEALTHCHECK de Dockerfile y utiliza sondas de liveness/readiness/startup.
 
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine
 
 # Define health check in Dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/ || exit 1
 ```
 
 ```bash
 # Define health check at runtime
 docker run -d \
-  --health-cmd="curl -f http://localhost/ || exit 1" \
+  --health-cmd="wget -q -O /dev/null http://127.0.0.1/ || exit 1" \
   --health-interval=30s \
   --health-timeout=3s \
   --health-retries=3 \
-  nginx
+  nginx:1.30.6-alpine
 
 # Check health check status
 docker inspect <container-id> | jq '.[0].State.Health'
 ```
 
-### Restart Policies
+### Políticas de reinicio
 
-Configura los contenedores para que se reinicien automáticamente cuando salgan.
+Configura los contenedores para que se reinicien automáticamente al terminar.
 
 ```bash
 # Restart policy options
 # - no: Don't restart (default)
 # - on-failure: Restart only on failure
-# - always: Always restart
+# - always: Restart after exit; manual stop suppresses it until daemon restart or explicit start
 # - unless-stopped: Always restart unless explicitly stopped
 
 # Restart on failure (max 3 times)
@@ -579,7 +581,9 @@ docker run -d --restart=unless-stopped nginx
 docker update --restart=always <container-id>
 ```
 
-### Debugging Containers
+### Depuración de contenedores
+
+bash/ip/netstat/ps deben estar instalados en la imagen. Para imágenes mínimas, utiliza docker inspect/top desde el host o una imagen de depuración aprobada. El resultado de env/inspect puede contener secretos; no lo pegues en registros compartidos.
 
 ```bash
 # Explore container internal file system
@@ -605,107 +609,134 @@ docker events --filter container=<container-id>
 docker diff <container-id>
 ```
 
-## Container Orchestration
+## Orquestación de contenedores
 
-La orquestación de contenedores es el proceso de gestionar y coordinar múltiples contenedores. Las características clave incluyen gestión de despliegues, escalado, redes y descubrimiento de servicios.
+La orquestación de contenedores es el proceso de administrar y coordinar varios contenedores. Entre sus características principales se incluyen la administración de implementaciones, el escalado, las redes y la detección de servicios.
 
-### Major Orchestration Tools
+### Principales herramientas de orquestación
 
-1. **Kubernetes**: Plataforma de orquestación de contenedores más utilizada
-2. **Docker Swarm**: Herramienta de orquestación integrada de Docker, configuración sencilla
+1. **Kubernetes**: La plataforma de orquestación de contenedores de uso más extendido
+2. **Docker Swarm**: Herramienta de orquestación integrada en Docker, con una configuración sencilla
 3. **Amazon ECS**: Servicio de orquestación de contenedores de AWS
-4. **HashiCorp Nomad**: Soporta workloads tanto de contenedor como no basados en contenedores
+4. **HashiCorp Nomad**: Admite cargas de trabajo tanto con contenedores como sin ellos
 
-### Key Features of Orchestration
+### Características principales de la orquestación
 
-1. **Despliegue y rollback automatizados**: Gestión del despliegue de aplicaciones mediante configuración declarativa
-2. **Service discovery y balanceo de carga**: Comunicación de contenedores y distribución de carga
-3. **Auto-scaling**: Ajusta la cantidad de contenedores según la carga
-4. **Self-healing**: Reinicia automáticamente los contenedores fallidos
-5. **Gestión de configuración**: Configuración de aplicaciones y gestión de secretos
-6. **Orquestación de almacenamiento**: Gestión de almacenamiento persistente
-7. **Ejecución batch**: Ejecución de jobs únicos y cron jobs
+1. **Implementación y reversión automatizadas**: Administración de la implementación de aplicaciones mediante configuración declarativa
+2. **Detección de servicios y balanceo de carga**: Comunicación entre contenedores y distribución de carga
+3. **Escalado automático**: Ajuste del número de contenedores según la carga
+4. **Recuperación automática**: Reinicio automático de los contenedores que hayan fallado
+5. **Administración de la configuración**: Administración de la configuración de aplicaciones y de secretos
+6. **Orquestación del almacenamiento**: Administración del almacenamiento persistente
+7. **Ejecución por lotes**: Ejecución de tareas puntuales y programadas
 
-## Containers on AWS
+## Contenedores en AWS
 
-AWS proporciona varios servicios para workloads de contenedores.
+AWS ofrece varios servicios para cargas de trabajo en contenedores.
 
 ### Amazon ECS (Elastic Container Service)
 
-Servicio propio de orquestación de contenedores de AWS que puede ejecutar contenedores en instancias EC2 o AWS Fargate.
+Servicio de orquestación de contenedores propio de AWS que puede ejecutar contenedores en instancias EC2 o en AWS Fargate.
 
-**Características clave**:
+**Características principales**:
 
-* Integración estrecha con servicios de AWS
-* Ejecución serverless de contenedores (Fargate)
-* Configuración y gestión sencillas
-* Auto-scaling y balanceo de carga
+* Integración estrecha con los servicios de AWS
+* Ejecución de contenedores sin servidor (Fargate)
+* Configuración y administración sencillas
+* Escalado automático y balanceo de carga
 
 ### Amazon EKS (Elastic Kubernetes Service)
 
-Servicio Kubernetes gestionado por AWS que permite ejecutar Kubernetes en infraestructura de AWS usando las APIs estándar de Kubernetes.
+Servicio Kubernetes administrado por AWS que permite ejecutar Kubernetes en la infraestructura de AWS mediante las API estándar de Kubernetes.
 
-**Características clave**:
+**Características principales**:
 
-* Plano de control de Kubernetes gestionado
-* Alta disponibilidad en múltiples zonas de disponibilidad
-* Integración con servicios de AWS
-* Soporte para EC2 y Fargate
+* Plano de control de Kubernetes administrado
+* Alta disponibilidad en varias zonas de disponibilidad
+* Integración con los servicios de AWS
+* Compatibilidad con EC2 y Fargate
 
 ### AWS Fargate
 
-Entorno serverless de ejecución de contenedores que permite ejecutar contenedores sin gestionar servidores.
+Entorno de ejecución de contenedores sin servidor que permite ejecutar contenedores sin administrar servidores.
 
-**Características clave**:
+**Características principales**:
 
-* No se necesita gestión de servidores
-* Facturación por contenedor
+* No es necesario administrar servidores
+* La facturación se basa en los recursos solicitados para las tareas (ECS) o los recursos del Pod (EKS), no en una tarifa independiente por cada contenedor de aplicación
 * Integración con ECS y EKS
 * Aislamiento de seguridad
 
 ### Amazon ECR (Elastic Container Registry)
 
-Servicio gestionado de registro de imágenes de contenedor de AWS.
+Servicio de registro de imágenes de contenedor administrado por AWS.
 
-**Características clave**:
+**Características principales**:
 
-* Escaneo de vulnerabilidades de imágenes
+* Análisis de vulnerabilidades de imágenes
 * Integración con IAM
-* Gestión del ciclo de vida de imágenes
+* Administración del ciclo de vida de las imágenes
 * Alta disponibilidad y escalabilidad
 
-## Glossary
+## Glosario
 
-| Term                  | Description                                                                                                                   |
+| Término               | Descripción                                                                                                                   |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Container**         | A standardized software unit that packages an application with its dependencies, enabling consistent execution anywhere.      |
-| **Image**             | A read-only template used to create containers, containing application code, libraries, dependencies, tools, and other files. |
-| **Dockerfile**        | A text file containing instructions for building a container image.                                                           |
-| **Registry**          | A repository that stores and distributes container images. (e.g., Docker Hub, Amazon ECR)                                     |
-| **Container Runtime** | Software that runs containers. (e.g., Docker, containerd, CRI-O)                                                              |
-| **Namespace**         | A Linux kernel feature that isolates processes so they cannot see other parts of the system.                                  |
-| **cgroups**           | A Linux kernel feature that limits and monitors resource usage (CPU, memory, etc.) of process groups.                         |
-| **Layer**             | Container images consist of multiple layers, each corresponding to a Dockerfile instruction.                                  |
-| **Volume**            | A mechanism for persistently storing container data.                                                                          |
-| **Orchestration**     | The process of automating the deployment, management, scaling, and networking of multiple containers.                         |
-| **ECS**               | Amazon Elastic Container Service, AWS's container orchestration service.                                                      |
-| **ECR**               | Amazon Elastic Container Registry, AWS's container image registry service.                                                    |
-| **Fargate**           | AWS's serverless container execution environment that runs containers without infrastructure management.                      |
+| **Contenedor**        | Unidad de software estandarizada que empaqueta una aplicación con sus dependencias y permite ejecutarla de forma coherente en cualquier lugar. |
+| **Imagen**            | Plantilla de solo lectura utilizada para crear contenedores, que contiene código de aplicación, bibliotecas, dependencias, herramientas y otros archivos. |
+| **Dockerfile**        | Archivo de texto que contiene instrucciones para crear una imagen de contenedor.                                              |
+| **Registro**          | Repositorio que almacena y distribuye imágenes de contenedor. (por ejemplo, Docker Hub, Amazon ECR)                            |
+| **Runtime de contenedores** | Software que ejecuta contenedores. (por ejemplo, Docker, containerd, CRI-O)                                                |
+| **Namespace**         | Característica del kernel de Linux que aísla procesos para que no puedan ver otras partes del sistema.                        |
+| **cgroups**           | Característica del kernel de Linux que limita y supervisa el uso de recursos (CPU, memoria, etc.) de grupos de procesos.     |
+| **Capa**               | Las imágenes de contenedor constan de varias capas que representan diferencias en el sistema de archivos; las instrucciones que solo contienen metadatos no necesitan una capa del sistema de archivos. |
+| **Volumen**            | Mecanismo para almacenar datos de contenedor de forma persistente.                                                            |
+| **Orquestación**      | Proceso de automatizar la implementación, administración, el escalado y las redes de varios contenedores.                     |
+| **ECS**               | Amazon Elastic Container Service, servicio de orquestación de contenedores de AWS.                                            |
+| **ECR**               | Amazon Elastic Container Registry, servicio de registro de imágenes de contenedor de AWS.                                     |
+| **Fargate**           | Entorno de ejecución de contenedores sin servidor de AWS que ejecuta contenedores sin administrar la infraestructura.        |
 
-## Conclusion
+## Conclusión
 
-La tecnología de contenedores ha revolucionado la forma en que se desarrollan y despliegan las aplicaciones. Proporciona portabilidad, consistencia y eficiencia, lo que mejora la productividad de los desarrolladores y reduce la complejidad operativa. Combinada con herramientas de orquestación como Kubernetes, permite gestionar eficazmente aplicaciones distribuidas a gran escala.
+La tecnología de contenedores ha revolucionado la forma de desarrollar e implementar aplicaciones. Proporciona portabilidad, coherencia y eficiencia, mejora la productividad de los desarrolladores y reduce la complejidad operativa. Combinada con herramientas de orquestación como Kubernetes, permite administrar eficazmente aplicaciones distribuidas a gran escala.
 
-Comprender los conceptos básicos y el funcionamiento de los contenedores es esencial para desarrollar y operar aplicaciones cloud-native modernas. Este conocimiento forma la base para utilizar Kubernetes de manera efectiva.
+Comprender los conceptos básicos y el funcionamiento de los contenedores es esencial para desarrollar y operar aplicaciones nativas de la nube modernas. Este conocimiento constituye la base para utilizar Kubernetes de forma eficaz.
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que has aprendido en este capítulo, realiza el [cuestionario de Container Technology](../quizzes/basics/03-container-technology-quiz.md).
+Para poner a prueba lo que has aprendido en este capítulo, responde al [Cuestionario sobre tecnología de contenedores](../quizzes/basics/03-container-technology-quiz.md).
 
-## References
+## Referencias
 
-* [Docker Official Documentation](https://docs.docker.com/)
+* [Documentación oficial de Docker](https://docs.docker.com/)
 * [OCI (Open Container Initiative)](https://opencontainers.org/)
-* [containerd Project](https://containerd.io/)
-* [CNCF Container Runtime Overview](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
-* [AWS Container Services](https://aws.amazon.com/containers/)
+* [Proyecto containerd](https://containerd.io/)
+* [Descripción general del runtime de contenedores de Kubernetes](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)
+* [Servicios de contenedores de AWS](https://aws.amazon.com/containers/)
+
+## Referencias de verificación
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

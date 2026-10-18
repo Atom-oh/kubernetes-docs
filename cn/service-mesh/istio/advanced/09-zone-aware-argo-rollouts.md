@@ -1,355 +1,139 @@
 # 区域感知的 Argo Rollouts
 
-> **支持的版本**: Istio 1.18+, Argo Rollouts 1.6+ **最后更新**: February 19, 2026 **难度**: 专家
+> **验证基线**：Istio 1.31.0、Argo Rollouts 1.10.1、Kubernetes 1.32–1.37
+> **最后审核**：October 16, 2026
+> **难度**：高级
 
-本文档说明如何为每个 AWS 可用区（Availability Zone）设置独立的 Argo Rollouts Canary 部署，同时利用 Istio 的位置感知路由实现自动故障转移。
+本指南将独立的分区 canary 与跨 AZ 故障转移区分开来。主要示例是一个**分区路由/隔离蓝图**：客户端群组选择某个区域的 stable/canary Services。当这些端点消失时，它不会自动故障转移到其他区域。
 
 ## 目录
 
-1. [问题定义](09-zone-aware-argo-rollouts.md#problem-definition)
-2. [架构概览](09-zone-aware-argo-rollouts.md#architecture-overview)
-3. [关键设计决策](09-zone-aware-argo-rollouts.md#key-design-decisions)
-4. [实施指南](09-zone-aware-argo-rollouts.md#implementation-guide)
-5. [流量流向](09-zone-aware-argo-rollouts.md#traffic-flow)
-6. [故障排除](09-zone-aware-argo-rollouts.md#troubleshooting)
-7. [最佳实践](09-zone-aware-argo-rollouts.md#best-practices)
-
-<span id="problem-definition"></span>
+1. [问题定义](#problem-definition)
+2. [架构概述](#architecture-overview)
+3. [关键设计决策](#key-design-decisions)
+4. [实施指南](#implementation-guide)
+5. [流量路径](#traffic-flow)
+6. [故障排查](#troubleshooting)
+7. [最佳实践](#best-practices)
 
 ## 问题定义
 
-### 真实场景用例：Spot Instance 环境中的 PDB 管理
+### Spot 中断与 PDB
 
-**背景**：在使用 AWS Spot Instances 的环境中，某个特定 Availability Zone（Zone）中的所有节点都可能突然被终止。
+Spot 容量可能会被回收，因此必须为相关的容量损失做好规划。中断通知尽力而为；停止/终止通知通常会提前两分钟发出，而休眠会立即开始。EKS 托管节点组会尝试进行替换/重新均衡，但无法保证在驱逐发生中断的节点之前，替换节点已达到 Ready 状态。
 
-**问题场景**：
+PodDisruptionBudget 会限制自愿的 Eviction API 操作。它不会阻止 EC2 中断、节点故障、直接删除 Pod 或所有由控制器驱动的更新。Rollouts 不会创建/管理下方的 PDB；应用团队负责定义它们，Kubernetes 负责计算其状态。
 
-```mermaid
-flowchart TD
-    subgraph Before["Before Full Zone Outage"]
-        direction LR
-        ZoneA1[Zone A<br/>3 Pods]
-        ZoneB1[Zone B<br/>3 Pods]
-        ZoneC1[Zone C<br/>3 Pods]
+对于九个健康且匹配的 Pod，若设置**整数值 `minAvailable: 6`**，示例中的自愿中断允许数量为三个。如果只剩六个健康 Pod，该允许数量就是零。这并不是“至少需要六个 Pod 的 33%”：如果预期有九个 Pod，`minAvailable: "33%"` 会向上取整为三个。百分比形式的 `maxUnavailable` 语义不同，并且对控制器规模有要求。
 
-        PDB1[PodDisruptionBudget: 33%<br/>Minimum 6 Pods required]
-    end
+将全局预算拆分为每个区域 `minAvailable: 1` 会改变保护方式。一个区域失效后，剩余两个预算可能允许自愿驱逐，直到每个区域只剩一个健康 Pod，而不是在全局范围内保留六个。这对于独立操作可能有用，但代表不同的可用性/容量策略。选择 stable 和 canary Pod 的预算也不能保证每个按权重分配的目标各自都有容量。
 
-    subgraph After["After Zone C Full Outage"]
-        direction LR
-        ZoneA2[Zone A<br/>3 Pods<br/>Normal]
-        ZoneB2[Zone B<br/>3 Pods<br/>Normal]
-        ZoneC2[Zone C<br/>0 Pods<br/>Full outage]
+### 目标与限制
 
-        PDB2[PodDisruptionBudget: 33%<br/>Actual: 6/9 -> 6/6 = 100%<br/>Balance broken]
-    end
+| 设计 | 独立的分区版本 | 跨 AZ 故障转移 | 主要限制 |
+|---|---|---|---|
+| 跨 AZ 共享一个 revision/subset，且端点分布在多个 AZ | 无法独立控制每个区域的 revision | 在选定的端点池内可能实现 | 其他 AZ 中必须有健康容量，且发布/数据状态兼容 |
+| 此处展示的按区域划分 Rollouts 和区域过滤 Services | 是 | locality 设置不提供此能力 | 选定区域的端点池为空时，仍为空 |
+| 在区域网关/流水线之前设置独立的、基于健康状态的入口路由 | 可以设计实现 | 需要自己的策略/控制器和测试 | 需要额外协调路由、容量、身份验证和恢复 |
 
-    Before -->|Spot Instance<br/>Interruption| After
+不要仅靠添加 DestinationRule 就声称同时具备三项特性（严格的区域过滤、每个区域独立的哈希值和透明故障转移）。独立的入口路由设计不属于此部署蓝图，也未在此处经过生产环境测试。
 
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failed fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef warning fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
+## 架构概述
 
-    class ZoneA1,ZoneB1,ZoneC1,ZoneA2,ZoneB2 normal;
-    class ZoneC2 failed;
-    class PDB2 warning;
-```
+一个通用的 `test` Service 提供 DNS 名称。对于注入了 sidecar 的客户端，VirtualService 会根据**明确设置的客户端 Pod 标签**选择区域路由。每条路由都指向该区域的 stable/canary Services。独立的 Rollout 控制这对 Services 的哈希值以及其专属命名路由的权重。
 
-**为什么需要特定 Zone 的 Rollout？**
+Istiod 会将配置编译为 Envoy 配置。VirtualService/DestinationRule 对象不是网络跳点。未加入网格的客户端可以使用通用 Service 的普通 Kubernetes 端点选择机制，从而绕过这些路由规则；路由标签不是安全边界。
 
-1. **每个 Rollout 的独立 PDB 管理**
-   * 每个 Zone 的 Rollout 管理自己的 PDB
-   * 即使 Zone C 完全消失，Zone A 和 B 的 PDB 也不会受到影响
-2. **Zone 级恢复**
-   * Zone C 恢复时，只有受影响的 Rollout 会重启
-   * 不影响其他 Zone 的部署状态
-3. **Spot Instance 中断响应**
-   * 即使特定 Zone 中的所有 Spot Instances 被终止，Service 仍会在其他 Zone 中继续运行
-   * 通过 Istio 位置故障转移自动切换流量
-
-**PDB 配置示例**（每个 Zone）：
-
-```yaml
-# Zone A - PDB (Independent per Rollout)
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: test-a-pdb
-  namespace: default
-spec:
-  minAvailable: 1  # Minimum 1 in Zone A
-  selector:
-    matchLabels:
-      app: test
-      zone: a
----
-# Zone B - PDB
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: test-b-pdb
-  namespace: default
-spec:
-  minAvailable: 1  # Minimum 1 in Zone B
-  selector:
-    matchLabels:
-      app: test
-      zone: b
----
-# Zone C - PDB
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: test-c-pdb
-  namespace: default
-spec:
-  minAvailable: 1  # Minimum 1 in Zone C
-  selector:
-    matchLabels:
-      app: test
-      zone: c
-```
-
-**优势**：
-
-* 即使 Zone C 完全中断，Zone A 和 B 的 PDB 仍能正常工作
-* 每个 Zone 都可以独立恢复
-* Canary 部署也可以按 Zone 独立进行
-
-### 要求
-
-1. **独立 Zone 部署**：为 3 个 Availability Zone（a、b、c）分别进行独立的 Canary 部署
-2. **Zone 隔离**：默认情况下，每个 zone 的流量仅在该 zone 内处理
-3. **仅故障转移**：仅在发生故障时将流量切换到其他 zone（a->b、b->c、c->a）
-4. **统一调用**：客户端使用单个 Service 名称进行调用
-5. **Spot Instance 响应**：即使发生 Zone 级中断，也保证 Service 连续性
-
-### 常见问题
-
-**问题**：多个 Argo Rollouts 引用同一个 VirtualService 时会发生冲突
-
-```yaml
-# Wrong approach: All Rollouts try to modify the same route
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: test-a
-spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: test  # All zone Rollouts reference same VirtualService
-            routes:
-            - primary  # Trying to modify same route simultaneously -> Conflict!
-```
-
-**解决方案**：使用特定 Zone 的路由进行隔离
-
-**重要**：Argo Rollouts 会**管理指定路由名称的整个 destinations 数组**。因此，如果多个 Rollouts 引用相同的路由名称，每个 Rollout 都会覆盖其他 Rollout 的设置。即使 subset 配置不同，也会发生冲突。
-
-<span id="architecture-overview"></span>
-
-## 架构概览
-
-### 整体结构
-
-```mermaid
-flowchart TB
-    subgraph Clients["Clients"]
-        ClientA[Client A<br/>Zone: us-east-1a]
-        ClientB[Client B<br/>Zone: us-east-1b]
-        ClientC[Client C<br/>Zone: us-east-1c]
-    end
-
-    subgraph Istio["Istio Control Plane"]
-        VS[VirtualService: test<br/>Single VirtualService]
-        DR[DestinationRule: test<br/>locality-aware routing]
-    end
-
-    subgraph ZoneA["Zone A (us-east-1a)"]
-        RolloutA[Rollout: test-a<br/>subset: stable-a/canary-a]
-        StableA[Stable Pods<br/>label: zone=a]
-        CanaryA[Canary Pods<br/>label: zone=a]
-    end
-
-    subgraph ZoneB["Zone B (us-east-1b)"]
-        RolloutB[Rollout: test-b<br/>subset: stable-b/canary-b]
-        StableB[Stable Pods<br/>label: zone=b]
-        CanaryB[Canary Pods<br/>label: zone=b]
-    end
-
-    subgraph ZoneC["Zone C (us-east-1c)"]
-        RolloutC[Rollout: test-c<br/>subset: stable-c/canary-c]
-        StableC[Stable Pods<br/>label: zone=c]
-        CanaryC[Canary Pods<br/>label: zone=c]
-    end
-
-    ClientA -->|test.default| VS
-    ClientB -->|test.default| VS
-    ClientC -->|test.default| VS
-
-    VS -->|90% stable-a| StableA
-    VS -->|10% canary-a| CanaryA
-    VS -->|90% stable-b| StableB
-    VS -->|10% canary-b| CanaryB
-    VS -->|90% stable-c| StableC
-    VS -->|10% canary-c| CanaryC
-
-    DR -.->|localityLbSetting| VS
-
-    RolloutA -.->|manages weights| VS
-    RolloutB -.->|manages weights| VS
-    RolloutC -.->|manages weights| VS
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef rollout fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class VS,DR istio;
-    class RolloutA,RolloutB,RolloutC rollout;
-    class StableA,CanaryA,StableB,CanaryB,StableC,CanaryC pod;
-    class ClientA,ClientB,ClientC client;
-```
-
-### 关键组件
-
-1. **单个 VirtualService**：定义所有 zone 的流量路由规则
-2. **特定 Zone 的 Rollout**：管理每个 zone 中独立的 Canary 部署
-3. **基于 Subset 的隔离**：每个 Rollout 管理唯一的 subset 对（stable-a/canary-a 等）
-4. **位置感知 DestinationRule**：自动进行 zone 本地路由和故障转移
-
-<span id="key-design-decisions"></span>
+每个区域的 Pod 只会调度到其配置的 AZ。因此，区域 A 的 Services 不包含区域 B/C 的备用端点。独立的部署状态也无法消除共享控制平面、API server、网络或数据库依赖。
 
 ## 关键设计决策
 
-### 1. 单个 VirtualService + 特定 Zone 路由隔离
+### 1. 路由所有权
 
-**为什么需要这种方法？**
+Rollouts 1.10 会协调已配置的路由权重和受支持的托管目标；它不会盲目替换所有目标数组。使用不同的路由名称可以避免期望权重相互冲突。不过，三个控制器更新同一个 VirtualService 时，仍可能遇到 Kubernetes `resourceVersion` 冲突和协调延迟。如果需要更强的控制平面隔离，可以选择独立对象/入口路由。
 
-Argo Rollouts 通过覆盖指定路由名称的整个 destinations 数组来工作。因此，**每个 Zone 的 Rollout 都必须管理独立的路由名称**，以避免冲突：
+此蓝图使用不同的路由（`zone-a-route`、`zone-b-route`、`zone-c-route`）和**主机级拆分**。它不会混用 Service-hash 和 DestinationRule-subset 所有权。[集成指南](08-argo-rollouts.md)会介绍这两种替代方案。
 
-```yaml
-# VirtualService: Zone-specific routes defined in single VirtualService
-http:
-- name: zone-a-route  # Rollout A manages stable-a/canary-a for this route
-  match:
-  - sourceLabels:
-      topology.istio.io/zone: us-east-1a
-  route:
-  - destination: {host: test, subset: stable-a}
-    weight: 90
-  - destination: {host: test, subset: canary-a}
-    weight: 10
+### 2. 客户端标签与实际 AZ
 
-- name: zone-b-route  # Rollout B manages stable-b/canary-b for this route
-  match:
-  - sourceLabels:
-      topology.istio.io/zone: us-east-1b
-  route:
-  - destination: {host: test, subset: stable-b}
-    weight: 90
-  - destination: {host: test, subset: canary-b}
-    weight: 10
-```
+Istiod 构建网格配置时，`sourceLabels` 用于选择源工作负载；它不是运行时的请求头匹配条件。节点标签（例如 `topology.kubernetes.io/zone`）不会自动复制到 Pod。自定义的 `routing.example.com/zone: a` Pod 标签必须与经过验证、确实位于目标 AZ 的 Pod 部署位置相配套。
 
-**核心原则**：
+这些选择器适用于网格客户端，不适用于到达 ingress gateway 的普通外部请求。保留 `mesh` 网关作用范围。在此示例中，未知客户端群组会收到明确的 503 响应，而不会被静默地路由到其他区域。
 
-* 每个 Rollout 引用**不同的路由名称**（`zone-a-route`、`zone-b-route`、`zone-c-route`）
-* 每个路由仅通过 **sourceLabels match** 处理来自该 Zone 的流量
-* 位置感知路由会自动优先选择 zone 本地端点
+### 3. Locality 无法跳出选定的端点池
 
-### 2. 位置感知路由
+通过 `zone: a` 和 Rollout A 哈希值选中的 subset 无法故障转移到相邻区域 B 的 subset。按区域过滤的 Service 也一样。Outlier detection 只会改变所选上游端点池内端点的可用性；它不会跳转到其他 VirtualService 路由。
 
-**默认行为**：
-
-* Zone A 客户端 -> Zone A Pod（100%）
-* Zone B 客户端 -> Zone B Pod（100%）
-* Zone C 客户端 -> Zone C Pod（100%）
-
-**故障转移时**：
-
-* Zone A 故障 -> 自动切换到 Zone B
-* Zone B 故障 -> 自动切换到 Zone C
-* Zone C 故障 -> 自动切换到 Zone A
-
-### 3. 统一 Service 调用
-
-客户端使用单个 DNS 名称：
-
-```bash
-# Call like this
-curl http://test.default.svc.cluster.local:8080
-
-# Istio automatically routes to zone-local endpoint
-```
-
-<span id="implementation-guide"></span>
+此外，`localityLbSetting.distribute`、`failover` 和 `failoverPriority` 是互斥的选项，不应随意组合字段。`failover.from/to` 的值是**区域（region）**，不是 `region/zone` 字符串。仅靠这些条目无法建立 A→B→C→A 的 AZ 循环。
 
 ## 实施指南
 
-### 1. 创建通用 Service
+### 先决条件
 
-**重要**：不要在 `selector` 中包含 zone label（它会选择所有 zone 的 Pods）
+请采用 [Argo Rollouts 集成](08-argo-rollouts.md)中介绍的控制器、CLI、注入、Prometheus 和工作负载先决条件。这是一个使用默认/旧版注入方式的隔离 sidecar HTTP 演示；如果使用带 revision 的网格，请改用已安装的 revision/tag。此实验需要兼容的 EC2 Linux 工作节点、配额、网络、镜像访问和可观测性配置。Fargate 不在此蓝图范围内；请选择目前受支持且处于 Istio 兼容范围内的 EKS 版本。
+
+示例中的 AZ 名称 `us-east-1a/b/c` 必须替换为实际的节点标签。不同账户中的 AZ 名称映射可能不同；在跨账户协调物理区域时，请核实 AZ ID。固定的演示镜像仅适用于 Linux amd64，因此每个选定 AZ 都需要兼容节点，或经过单独验证的替代镜像。
+
+```bash
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone,kubernetes.io/arch
+```
+
+### 1. Namespace 与通用/区域 Services
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zone-rollouts-demo
+  labels:
+    istio-injection: enabled
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: test
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
-    app: test  # No zone label - selects Pods from all zones
+    app: test
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
-```
-
-### 2. 特定 Zone 的 Rollout Services
-
-由每个 Rollout 管理的 Stable/canary Services：
-
-```yaml
-# Zone A - Stable Service
+    targetPort: http
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: test-stable-a
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
-    zone: a  # Selects only Zone A stable Pods
+    zone: a
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone A - Canary Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-canary-a
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
-    zone: a  # Selects only Zone A canary Pods
+    zone: a
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone B - Stable Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-stable-b
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -357,14 +141,13 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone B - Canary Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-canary-b
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -372,14 +155,13 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone C - Stable Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-stable-c
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -387,14 +169,13 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ---
-# Zone C - Canary Service
 apiVersion: v1
 kind: Service
 metadata:
   name: test-canary-c
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   selector:
     app: test
@@ -402,162 +183,126 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 8080
+    targetPort: http
 ```
 
-### 3. 包含特定 Zone 路由的单个 VirtualService
+通用 Service 为网格内调用方提供 DNS 入口，不是授权机制。六个区域 Services 都使用实际的 Pod `zone` 选择器；Rollouts 会为每个 stable/canary Service 添加哈希值。
 
-单个 VirtualService 处理所有 zone 的流量（特定 Zone 路由隔离）：
+### 2. 客户端模板约定
+
+将以下片段合并到**现有的、名为 `zone-client-a` 的 Deployment** 中，并保留其选择器、容器、已验证的镜像、资源配置和其他放置约束。必须将 `a` 路由标签添加到实际的 Pod 模板中，而不仅是 Deployment 元数据：
+
+```yaml
+metadata:
+  name: zone-client-a
+  namespace: zone-rollouts-demo
+spec:
+  template:
+    metadata:
+      labels:
+        routing.example.com/zone: a
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - us-east-1a
+```
+
+测试 B/C 客户端时，准备带有相应标签并受实际 AZ 约束的等效客户端。将亲和性与现有规则组合时，要保留预期的 AND/OR 限制；不要意外扩大节点的可选范围。请根据所选 Node 的区域核实 `.spec.nodeName`。此片段不会部署客户端，也不会自动复制节点元数据。
+
+### 3. 使用独立路由的共享 VirtualService
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: test
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   hosts:
   - test
-  - test.default.svc.cluster.local
+  - test.zone-rollouts-demo.svc.cluster.local
+  gateways:
+  - mesh
   http:
-  # Zone A route (Managed by Rollout A)
   - name: zone-a-route
     match:
     - sourceLabels:
-        topology.kubernetes.io/zone: us-east-1a
+        routing.example.com/zone: a
     route:
     - destination:
-        host: test
-        subset: stable-a
-      weight: 90
+        host: test-stable-a
+        port:
+          number: 8080
+      weight: 100
     - destination:
-        host: test
-        subset: canary-a
-      weight: 10
-  # Zone B route (Managed by Rollout B)
+        host: test-canary-a
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
   - name: zone-b-route
     match:
     - sourceLabels:
-        topology.kubernetes.io/zone: us-east-1b
+        routing.example.com/zone: b
     route:
     - destination:
-        host: test
-        subset: stable-b
-      weight: 90
+        host: test-stable-b
+        port:
+          number: 8080
+      weight: 100
     - destination:
-        host: test
-        subset: canary-b
-      weight: 10
-  # Zone C route (Managed by Rollout C)
+        host: test-canary-b
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
   - name: zone-c-route
     match:
     - sourceLabels:
-        topology.kubernetes.io/zone: us-east-1c
+        routing.example.com/zone: c
     route:
     - destination:
-        host: test
-        subset: stable-c
-      weight: 90
+        host: test-stable-c
+        port:
+          number: 8080
+      weight: 100
     - destination:
-        host: test
-        subset: canary-c
-      weight: 10
+        host: test-canary-c
+        port:
+          number: 8080
+      weight: 0
+    retries:
+      attempts: 0
+  - name: unclassified-client
+    directResponse:
+      status: 503
+      body:
+        string: No reviewed client-zone route
 ```
 
-**重要变更**：
+发送测试流量之前，请确认每个控制器都已选中预期的哈希值和健康端点。初始权重为 100/0，而不是没有说明的、正在生效的 90/10 拆分。每条命名路由都明确禁用了网格重试；应用程序重试行为是另一回事。
 
-* 之前：所有 Zone 共用相同的 `primary` 路由 -> **发生冲突**
-* 修复后：每个 Zone 使用独立的路由名称（`zone-a-route`、`zone-b-route`、`zone-c-route`）
-* 新增：通过 `sourceLabels.topology.kubernetes.io/zone` match 实现特定 Zone 的流量隔离
+### 4. 按区域划分的 Rollouts
 
-**工作原理**：
-
-1. 来自 Zone A Pods 的请求 -> 匹配 `zone-a-route`
-2. Rollout A 仅修改 `zone-a-route` 的权重（不影响其他 Zone）
-3. 位置感知路由会自动优先选择 zone 本地端点
-
-### 4. 包含位置设置的 DestinationRule
-
-```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: test
-  namespace: default
-spec:
-  host: test
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        # Each zone processes only local traffic by default
-        distribute:
-        - from: us-east-1/us-east-1a/*
-          to:
-            "us-east-1/us-east-1a/*": 100  # Zone A -> Zone A (100%)
-        - from: us-east-1/us-east-1b/*
-          to:
-            "us-east-1/us-east-1b/*": 100  # Zone B -> Zone B (100%)
-        - from: us-east-1/us-east-1c/*
-          to:
-            "us-east-1/us-east-1c/*": 100  # Zone C -> Zone C (100%)
-        # Failover settings: a->b, b->c, c->a
-        failover:
-        - from: us-east-1/us-east-1a
-          to: us-east-1/us-east-1b  # Zone A failure -> Zone B
-        - from: us-east-1/us-east-1b
-          to: us-east-1/us-east-1c  # Zone B failure -> Zone C
-        - from: us-east-1/us-east-1c
-          to: us-east-1/us-east-1a  # Zone C failure -> Zone A
-    # Outlier Detection for fast failure detection
-    outlierDetection:
-      consecutiveErrors: 3        # 3 consecutive failures
-      interval: 10s               # Check every 10 seconds
-      baseEjectionTime: 30s       # Exclude for 30 seconds
-      maxEjectionPercent: 100     # Up to 100% can be excluded
-  # Define stable/canary subsets per zone
-  subsets:
-  # Zone A subsets
-  - name: stable-a
-    labels:
-      app: test
-      zone: a
-  - name: canary-a
-    labels:
-      app: test
-      zone: a
-  # Zone B subsets
-  - name: stable-b
-    labels:
-      app: test
-      zone: b
-  - name: canary-b
-    labels:
-      app: test
-      zone: b
-  # Zone C subsets
-  - name: stable-c
-    labels:
-      app: test
-      zone: c
-  - name: canary-c
-    labels:
-      app: test
-      zone: c
-```
-
-### 5. 特定 Zone 的 Rollout 配置
-
-#### Zone A Rollout
+工作负载、副本数、requests/limits 和暂停时间都是演示输入。三个副本不会自动分布到三个节点。对于真实部署，请检查节点级拓扑分布/反亲和性、容量、PDB 和 stable/canary 余量。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: test-a
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   replicas: 3
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: test
@@ -568,7 +313,30 @@ spec:
         app: test
         zone: a
     spec:
-      # Deploy Pods only to Zone A
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -578,50 +346,73 @@ spec:
                 operator: In
                 values:
                 - us-east-1a
-      containers:
-      - name: app
-        image: myapp:v1
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ZONE
-          value: "a"
   strategy:
     canary:
-      # Zone A specific Services
-      canaryService: test-canary-a
       stableService: test-stable-a
+      canaryService: test-canary-a
+      maxSurge: 1
+      maxUnavailable: 0
       trafficRouting:
         istio:
           virtualService:
-            name: test              # Common VirtualService
+            name: test
             routes:
-            - zone-a-route          # Zone A specific route
-          destinationRule:
-            name: test              # Common DestinationRule
-            canarySubsetName: canary-a  # Zone A specific subset
-            stableSubsetName: stable-a  # Zone A specific subset
+            - zone-a-route
       steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 20
-      - pause: {duration: 5m}
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
+      - pause: {}
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
       - setWeight: 50
-      - pause: {duration: 5m}
-      - setWeight: 80
-      - pause: {duration: 5m}
-```
-
-#### Zone B Rollout
-
-```yaml
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
+      - setWeight: 75
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-a
+          - name: namespace
+            value: zone-rollouts-demo
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: test-b
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   replicas: 3
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: test
@@ -632,7 +423,30 @@ spec:
         app: test
         zone: b
     spec:
-      # Deploy Pods only to Zone B
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -642,50 +456,73 @@ spec:
                 operator: In
                 values:
                 - us-east-1b
-      containers:
-      - name: app
-        image: myapp:v1
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ZONE
-          value: "b"
   strategy:
     canary:
-      # Zone B specific Services
-      canaryService: test-canary-b
       stableService: test-stable-b
+      canaryService: test-canary-b
+      maxSurge: 1
+      maxUnavailable: 0
       trafficRouting:
         istio:
           virtualService:
-            name: test              # Common VirtualService
+            name: test
             routes:
-            - zone-b-route          # Zone B specific route
-          destinationRule:
-            name: test              # Common DestinationRule
-            canarySubsetName: canary-b  # Zone B specific subset
-            stableSubsetName: stable-b  # Zone B specific subset
+            - zone-b-route
       steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 20
-      - pause: {duration: 5m}
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
+      - pause: {}
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
       - setWeight: 50
-      - pause: {duration: 5m}
-      - setWeight: 80
-      - pause: {duration: 5m}
-```
-
-#### Zone C Rollout
-
-```yaml
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
+      - setWeight: 75
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-b
+          - name: namespace
+            value: zone-rollouts-demo
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: test-c
-  namespace: default
+  namespace: zone-rollouts-demo
 spec:
   replicas: 3
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app: test
@@ -696,7 +533,30 @@ spec:
         app: test
         zone: c
     spec:
-      # Deploy Pods only to Zone C
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -706,423 +566,350 @@ spec:
                 operator: In
                 values:
                 - us-east-1c
-      containers:
-      - name: app
-        image: myapp:v1
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ZONE
-          value: "c"
   strategy:
     canary:
-      # Zone C specific Services
-      canaryService: test-canary-c
       stableService: test-stable-c
+      canaryService: test-canary-c
+      maxSurge: 1
+      maxUnavailable: 0
       trafficRouting:
         istio:
           virtualService:
-            name: test              # Common VirtualService
+            name: test
             routes:
-            - zone-c-route          # Zone C specific route
-          destinationRule:
-            name: test              # Common DestinationRule
-            canarySubsetName: canary-c  # Zone C specific subset
-            stableSubsetName: stable-c  # Zone C specific subset
+            - zone-c-route
       steps:
-      - setWeight: 10
-      - pause: {duration: 5m}
-      - setWeight: 20
-      - pause: {duration: 5m}
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
+      - pause: {}
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
       - setWeight: 50
-      - pause: {duration: 5m}
-      - setWeight: 80
-      - pause: {duration: 5m}
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
+      - setWeight: 75
+      - pause:
+          duration: 10m
+      - analysis:
+          templates:
+          - templateName: zone-canary-check
+          args:
+          - name: service-name
+            value: test-canary-c
+          - name: namespace
+            value: zone-rollouts-demo
 ```
 
-<span id="traffic-flow"></span>
+每个 Rollout 都有自己的选择器、镜像/revision 状态、Services 和分析参数。经过第一个 5% 阶段后，无期限暂停需要有意执行 promote。严格的区域亲和性会在该 AZ 没有容量时使受影响的 Pod 保持 Pending；它不会将 Pod 迁移到健康的 AZ。
 
-## 流量流向
-
-### 正常状态（Zone 本地流量）
-
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: Normal state: Zone-local traffic only
-
-    ClientA->>EnvoyA: GET /api
-    Note over EnvoyA: Locality-aware routing<br/>distribute: 100% local
-
-    EnvoyA->>PodA: Request (zone-local)
-    Note over EnvoyA,PodA: Processed within same zone
-
-    PodA->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodB: Zone B Pod is<br/>not used
-```
-
-### 故障转移场景
-
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)<br/>Unhealthy
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: Failover: Zone A -> Zone B
-
-    ClientA->>EnvoyA: GET /api
-    EnvoyA->>PodA: Attempt 1
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 2
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 3
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    Note over EnvoyA: Outlier Detection<br/>consecutiveErrors: 3<br/>-> Exclude Zone A
-
-    Note over EnvoyA: Apply failover rule<br/>from: us-east-1a<br/>to: us-east-1b
-
-    EnvoyA->>PodB: Request (failover to Zone B)
-    Note over EnvoyA,PodB: Cross-zone traffic
-
-    PodB->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodA: Zone A is<br/>excluded for<br/>baseEjectionTime(30s)
-```
-
-### Canary 部署期间的流量流向
-
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A
-    participant Client as Client
-    participant VS as VirtualService
-    participant Stable as Stable Pod<br/>90%
-    participant Canary as Canary Pod<br/>10%
-    end
-
-    Note over Client,Canary: Canary deployment in progress<br/>setWeight: 10
-
-    Client->>VS: GET /api
-
-    alt 90% of traffic
-        VS->>Stable: subset: stable-a<br/>weight: 90
-        Stable->>VS: Response (v1)
-    else 10% of traffic
-        VS->>Canary: subset: canary-a<br/>weight: 10
-        Canary->>VS: Response (v2)
-    end
-
-    VS->>Client: Response
-
-    Note over VS: Argo Rollouts<br/>gradually changes weight<br/>10 -> 20 -> 50 -> 80 -> 100
-```
-
-<span id="troubleshooting"></span>
-
-## 故障排除
-
-### 1. VirtualService 冲突错误
-
-**症状**：
-
-```bash
-Error: VirtualService update conflict
-```
-
-**原因**：多个 Rollouts 尝试同时修改同一路由
-
-**解决方法**：
+### 5. 明确配置 PDB
 
 ```yaml
-# Configure each Rollout to manage unique subsets
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: test-a-pdb
+  namespace: zone-rollouts-demo
 spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          destinationRule:
-            canarySubsetName: canary-a  # Different subset per Zone
-            stableSubsetName: stable-a
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: test
+      zone: a
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: test-b-pdb
+  namespace: zone-rollouts-demo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: test
+      zone: b
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: test-c-pdb
+  namespace: zone-rollouts-demo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: test
+      zone: c
 ```
 
-### 2. 发生跨 Zone 流量
+这些配置会保留原示例中每个区域至少一个 Pod 的要求。它们不等同于前文的全局最少六个 Pod，也无法独立保护每个按流量权重分配的 revision。自愿维护之前，请检查 `currentHealthy`、`desiredHealthy` 和 `disruptionsAllowed`。
 
-**症状**：未发生故障转移时，流量被发送到其他 zone
+### 6. 按区域进行分析
 
-**原因**：`distribute` 设置不正确
-
-**解决方法**：
-
-```yaml
-# Correct distribute settings
-distribute:
-- from: us-east-1/us-east-1a/*
-  to:
-    "us-east-1/us-east-1a/*": 100  # 100% local only
-```
-
-### 3. 故障转移未生效
-
-**症状**：即使发生 Zone 故障，也没有向其他 zone 进行故障转移
-
-**原因**：Outlier Detection 被禁用或设置过慢
-
-**解决方法**：
-
-```yaml
-# Fast failure detection
-outlierDetection:
-  consecutiveErrors: 3      # Detect even after just 3 failures
-  interval: 10s             # Check every 10 seconds
-  baseEjectionTime: 30s     # Exclude for 30 seconds
-```
-
-### 4. Rollout 卡住
-
-**症状**：Canary 部署未继续推进
-
-**验证**：
-
-```bash
-# Check Rollout status
-kubectl argo rollouts get rollout test-a -n default
-
-# Check VirtualService weights
-kubectl get virtualservice test -n default -o yaml | grep weight
-
-# Check DestinationRule subsets
-kubectl get destinationrule test -n default -o yaml
-```
-
-### 5. 调试命令
-
-```bash
-# 1. Verify Pods deployed to correct zones
-kubectl get pods -l app=test -o wide
-kubectl get nodes --show-labels | grep topology.kubernetes.io/zone
-
-# 2. Verify locality routing configuration
-istioctl proxy-config endpoint <pod-name> --cluster "outbound|8080||test.default.svc.cluster.local"
-
-# 3. Verify VirtualService synchronization
-istioctl proxy-config route <pod-name> --name 8080
-
-# 4. Check outlier detection status
-kubectl exec <pod-name> -c istio-proxy -- curl localhost:15000/clusters | grep outlier
-
-# 5. Check Argo Rollouts logs
-kubectl logs -n argo-rollouts deployment/argo-rollouts
-```
-
-<span id="best-practices"></span>
-
-## 最佳实践
-
-### 1. Rollout 同步
-
-**问题**：同时部署多个 zone Rollouts 时复杂性增加
-
-**建议**：
-
-```bash
-# Sequential deployment per Zone
-kubectl argo rollouts promote test-a -n default
-# Wait 5 minutes and monitor
-kubectl argo rollouts promote test-b -n default
-# Wait 5 minutes and monitor
-kubectl argo rollouts promote test-c -n default
-```
-
-### 2. Canary 分析
-
-按 zone 进行独立分析：
+请在 Rollouts 之前创建此模板。它使用实际的区域 canary Service 名称和标准 source-reporter 指标，而不是臆造的 Pod 区域标签：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: success-rate-zone-a
+  name: zone-canary-check
+  namespace: zone-rollouts-demo
 spec:
+  args:
+  - name: service-name
+  - name: namespace
   metrics:
-  - name: success-rate
+  - name: request-volume
     interval: 1m
-    successCondition: result[0] >= 0.95
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
     provider:
       prometheus:
-        address: http://prometheus:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service="test.default.svc.cluster.local",
-              destination_workload_namespace="default",
-              response_code=~"2..",
-              destination_pod_label_zone="a"
-            }[5m]
-          )) /
-          sum(rate(
-            istio_requests_total{
-              destination_service="test.default.svc.cluster.local",
-              destination_workload_namespace="default",
-              destination_pod_label_zone="a"
-            }[5m]
-          ))
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+  - name: http-2xx-rate
+    interval: 1m
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
 ```
 
-### 3. 渐进式 Rollout 步骤
+分子明确表示 **HTTP 2xx**，与本指南的成功定义一致。全部为 5xx 的时间窗口会产生 0，而不是空分子；没有流量或缺少数据都无法通过有限值/流量门槛。源代理必须能够访问配置的 Prometheus，且其实际标签必须与这些选择器匹配。
+
+通过 `http://test.zone-rollouts-demo.svc.cluster.local:8080/color` 持续发送有代表性的网格流量。调用方标签决定其所属区域，控制器则决定该区域 stable/canary 的权重。五分钟预热时间长于两分钟的指标回看窗口；二十个请求的估算值和测量次数只是示例，并不代表统计置信度。
+
+## 流量路径
+
+### 正常的区域流量路径
+
+标签正确且位于经过审核的 AZ 中的 A 客户端会使用 `zone-a-route`，该路由指向 A 的 stable/canary Services。观测到的比例取决于样本量、会话和就绪状态，并不保证每十个请求中有精确数量的请求。
+
+### 区域失效
+
+如果所有符合条件的 A 端点都消失，A 路由就没有健康的上游。降低 outlier 阈值或更改 PDB，都无法在 A 的 Service 中凭空生成 B 端点。在容量恢复或明确设计的更高层路由策略生效之前，此示例会持续返回失败。
+
+若要实现跨 AZ 连续性，请选择在同一个已选发布池中拥有健康远程端点的架构，或实施并测试独立的入口层故障转移策略。还需考虑远程容量、数据一致性、身份验证、正在处理的请求和故障恢复。上面的区域代码不声称支持透明/循环故障转移。
+
+### 独立的共享端点 Locality 替代方案
+
+以下配置属于**另一种设置**：现有的 `shared-app` Service 或已选 subset，其符合条件的端点横跨多个 AZ，且发布状态兼容。它不会为上面的区域 Services 启用故障转移。如果已有 DestinationRule 管理该共享主机/subsets，请将此 trafficPolicy 合并到现有规则中，而不要创建相互冲突的规则：
 
 ```yaml
-steps:
-- setWeight: 5      # Start with very small traffic
-- pause: {duration: 5m}
-- analysis:
-    templates:
-    - templateName: success-rate-zone-a
-- setWeight: 10
-- pause: {duration: 5m}
-- setWeight: 25
-- pause: {duration: 10m}
-- setWeight: 50
-- pause: {duration: 10m}
-- setWeight: 75
-- pause: {duration: 10m}
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: shared-endpoint-locality
+  namespace: zone-rollouts-demo
+spec:
+  host: shared-app.zone-rollouts-demo.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST
+      localityLbSetting:
+        enabled: true
+        failoverPriority:
+        - topology.kubernetes.io/region
+        - topology.kubernetes.io/zone
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
 ```
 
-### 4. 自动回滚
+Locality 优先级会优先选择区域/可用区匹配的端点，并可将后续流量转移到符合条件的健康端点。它们不会指定固定的循环 AZ 顺序。`consecutive5xxErrors` 是当前字段；连续错误检测由流量驱动，而 `interval` 用于定期检测任务。驱逐所有端点可能导致错误，并且已失败的请求不会自动重放。请参阅[区域感知路由](../resilience/03-zone-aware-routing.md)。
+
+## 故障排查
+
+```bash
+kubectl argo rollouts get rollout test-a -n zone-rollouts-demo
+kubectl get virtualservice test -n zone-rollouts-demo -o yaml
+kubectl get services test-stable-a test-canary-a -n zone-rollouts-demo -o yaml
+kubectl get pods -n zone-rollouts-demo -l app=test -o wide --show-labels
+kubectl get endpointslices -n zone-rollouts-demo -l kubernetes.io/service-name=test-canary-a
+kubectl get pdb -n zone-rollouts-demo -o wide
+
+istioctl proxy-config routes <client-a-pod> -n zone-rollouts-demo
+istioctl proxy-config endpoints <client-a-pod> -n zone-rollouts-demo --cluster 'outbound|8080||test-canary-a.zone-rollouts-demo.svc.cluster.local'
+kubectl get analysisruns -n zone-rollouts-demo
+kubectl logs -n argo-rollouts deployment/argo-rollouts
+```
+
+- **更新冲突**：区分同一路由的所有权冲突和共享 VirtualService 上暂时的对象版本冲突。仅使用不同的 subset 名称无法解决其中任何一种问题。
+- **选错区域**：比较实际调用方 Pod 标签、Node 位置和编译后的路由。不要假设节点区域标签已复制到 Pod。
+- **没有备用路由**：首先检查所选 Service/subset 中符合条件的端点。如果 A 以外没有端点，更快的 outlier detection 也无法提供跨 AZ 故障转移。
+- **没有 canary 流量**：确认请求经过网格、有就绪的 EndpointSlices、哈希选择器和实际权重，并且样本数量足够。
+- **分析卡住/失败**：检查原始结果和 provider 错误，而不只是 Rollout 的汇总阶段。缺少自定义区域标签不会自动生成遥测数据。
+
+## 最佳实践
+
+### 1. 明确协调版本变更
+
+Promote 会恢复现有的暂停；它不会部署新镜像，也不能证明其他 AZ 健康。通过 Git（或在隔离实验环境中直接操作）更新某个区域期望使用的镜像，观察其分析和工作负载状态，然后再决定是否推进其他区域。仅等待固定的五分钟并不足以作为证据。
+
+```bash
+# Isolated lab alternative to changing Git; affects zone A only.
+kubectl argo rollouts set image test-a app=argoproj/rollouts-demo@sha256:e32df3d15f759d36c323b3dccb7003d38df1a4274d37217715151f085c24c58f -n zone-rollouts-demo
+kubectl argo rollouts get rollout test-a -n zone-rollouts-demo --watch
+# After the intended manual pause and review:
+kubectl argo rollouts promote test-a -n zone-rollouts-demo
+```
+
+Abort 不会还原 Git 中的期望镜像。请协调 GitOps，避免它覆盖各区域托管的权重或 Service 哈希选择器；请参阅前面的集成指南。
+
+### 2. 持续分析替代方案
+
+如果需要持续监控，请有意识地替换内联步骤计划。后台模板中省略了 `count`，`startingStep: 2` 表示第三个步骤：
 
 ```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: zone-canary-continuous
+  namespace: zone-rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 1m
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+  - name: http-2xx-rate
+    interval: 1m
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+---
 spec:
   strategy:
     canary:
       analysis:
         templates:
-        - templateName: success-rate-zone-a
-        startingStep: 2  # Start analysis from second step
-      trafficRouting:
-        istio:
-          virtualService:
-            name: test
-          destinationRule:
-            name: test
-            canarySubsetName: canary-a
-            stableSubsetName: stable-a
+        - templateName: zone-canary-continuous
+        startingStep: 2
+        args:
+        - name: service-name
+          value: test-canary-a
+        - name: namespace
+          value: zone-rollouts-demo
+      steps:
+      - setWeight: 5
+      - pause:
+          duration: 5m
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - setWeight: 50
+      - pause: {}
 ```
 
-### 5. 监控和告警
+将此 A 片段改用于 B/C 时，请保留正确区域的路由、Services 和参数。独立分析仍可能依赖共享的 Prometheus/网络/控制平面可用性。
 
-**Prometheus 告警**：
+### 3. 监控规则
+
+此 PrometheusRule 需要 Prometheus Operator，并且规则 namespace/标签选择器必须匹配。独立的 Istio 附加组件 Prometheus 不会自动加载此 CRD。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: zone-aware-rollout-alerts
+  name: zone-rollout-alerts
+  namespace: zone-rollouts-demo
 spec:
   groups:
-  - name: rollout
+  - name: zone-rollout
     rules:
-    # Zone A Canary high failure rate
-    - alert: HighErrorRateZoneA
-      expr: |
-        sum(rate(istio_requests_total{
-          destination_service="test.default.svc.cluster.local",
-          response_code=~"5..",
-          destination_pod_label_zone="a"
-        }[5m])) /
-        sum(rate(istio_requests_total{
-          destination_service="test.default.svc.cluster.local",
-          destination_pod_label_zone="a"
-        }[5m])) > 0.05
+    - alert: HighErrorRateZoneACanary
+      expr: |-
+        ((sum(rate(istio_requests_total{reporter="source",destination_service_namespace="zone-rollouts-demo",destination_service_name="test-canary-a",response_code=~"5..|0"}[2m])) or vector(0)) / sum(rate(istio_requests_total{reporter="source",destination_service_namespace="zone-rollouts-demo",destination_service_name="test-canary-a"}[2m]))) > 0.05
+        and
+        (sum(increase(istio_requests_total{reporter="source",destination_service_namespace="zone-rollouts-demo",destination_service_name="test-canary-a"}[2m]))) >= 20
       for: 2m
       annotations:
-        summary: "Zone A Canary has high error rate"
-
-    # Cross-zone traffic occurring (unexpected)
-    - alert: UnexpectedCrossZoneTraffic
-      expr: |
+        summary: Zone A canary has elevated 5xx/zero-status rate with observed traffic
+    - alert: UnexpectedDemoZoneRoute
+      expr: |-
         sum(rate(istio_requests_total{
-          destination_service="test.default.svc.cluster.local",
-          source_workload_zone="a",
-          destination_pod_label_zone!="a"
+          reporter="source",source_workload="zone-client-a",source_workload_namespace="zone-rollouts-demo",
+          destination_service_namespace="zone-rollouts-demo",destination_service_name=~"test-(stable|canary)-(b|c)"
         }[5m])) > 0
       for: 5m
       annotations:
-        summary: "Unexpected cross-zone traffic from Zone A"
+        summary: Demo client A is using a B/C destination Service; inspect route/placement assumptions
 ```
 
-### 6. 部署检查清单
+第一条规则检查 5xx/零状态码错误；4xx 也会降低 Analysis 的 2xx 比率，但不会触发这条特定错误规则。低流量/缺失流量需要单独设计预期流量/遥测健康信号；缺少流量并不能证明 canary 健康。
 
-* [ ] 所有 zone Nodes 均已就绪
-* [ ] VirtualService 包含所有 subsets
-* [ ] 已验证 DestinationRule 位置设置
-* [ ] 已启用 Outlier Detection
-* [ ] 每个 Rollout 管理唯一的 subsets
-* [ ] 已定义特定 Zone 的 Services
-* [ ] 已验证 Prometheus 指标采集
-* [ ] 已配置告警规则
+第二条规则是**演示路由不变量告警**，不是通用的物理跨 AZ 检测器。它假设实际源 Deployment 是 `zone-client-a`、其部署位置在 A，且 B/C Services 保留各自的区域选择器。若要测量物理区域，请使用经过验证的节点/端点 locality，或按照路由/可观测性指南所述明确增强遥测数据。
 
-## 性能注意事项
+### 4. 恢复与容量
 
-### 资源要求
+请根据实际的 EKS/节点预置模型，分散使用 Spot 容量并保留足够的容错容量。区域亲和性、中断处理和 PDB 策略都无法保证有替换容量。请检查节点组生命周期行为以及应用的终止/恢复流程。
 
-**Control Plane**：
+此蓝图没有经过测量的资源或延迟结果。请根据实际工作负载的实测协调压力、端点数量、资源使用情况以及正常/故障路径延迟，为 Istiod、代理和 Rollouts 控制器确定容量。
 
-* Istiod：CPU 500m，内存 2GB（额外 VirtualService/DestinationRule 带来的负载）
+## 参考资料与后续步骤
 
-**Data Plane**：
+- [Argo Rollouts 集成](08-argo-rollouts.md)
+- [区域感知路由](../resilience/03-zone-aware-routing.md)
+- [Outlier Detection](../resilience/01-outlier-detection.md)
+- [DestinationRule](../traffic-management/03-destination-rule.md)
+- [Istio VirtualService 源选择器](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Istio locality 故障转移](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [Istio DestinationRule API](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Argo Rollouts Istio 集成](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
+- [Kubernetes 中断](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
+- [PDB 配置与取整规则](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
+- [节点亲和性](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)
+- [EC2 中断通知](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html)
+- [EKS 托管节点组的 Spot 行为](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html)
+- [AWS AZ ID 与账户映射](https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html)
+- [AWS 区域与可用区](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
 
-* Envoy Sidecar：CPU 100-500m，内存 50-150MB（zone 信息和位置路由开销）
-
-**Argo Rollouts Controller**：
-
-* CPU 100m，内存 128MB（管理 3 个 Rollouts）
-
-### 网络开销
-
-* **Zone 本地流量**：额外延迟 1-2ms（Envoy 开销）
-* **跨 Zone 流量**（故障转移时）：额外延迟 5-10ms（zone 间网络）
-
-## 参考资料
-
-### 相关文档
-
-* [Argo Rollouts 集成](08-argo-rollouts.md)
-* [Zone 感知路由](../resilience/03-zone-aware-routing.md)
-* [Outlier Detection](../resilience/01-outlier-detection.md)
-* [DestinationRule](../traffic-management/03-destination-rule.md)
-
-### 外部链接
-
-* [Istio 位置负载均衡](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
-* [Argo Rollouts Istio 集成](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
-* [AWS Availability Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
-
-## 后续步骤
-
-1. [实验：Zone 感知 Rollout 实践](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide)
-2. 扩展至[多集群](02-multi-cluster.md)，实现跨区域故障转移
-3. 使用[渐进式交付](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts)实现自动化分析和回滚
+请将上述维护中的集成/路由指南作为实验验证的起点。[多集群](02-multi-cluster.md)会引入额外的信任、连接性和故障域设计；它不是对此蓝图通过单一设置进行扩展。

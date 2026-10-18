@@ -1,147 +1,131 @@
 # Amazon VPC CNI 测验
 
-以下问题用于测试您对 Amazon VPC CNI 的理解。
+根据 [VPC CNI 指南](../../networking/01-vpc-cni.md)及其主要参考资料于 2026 年 9 月 11 日审阅。
 
----
+## 1. 在标准 EKS Linux EC2 节点上，IPAMD 的作用是什么？
 
-1. IPAMD（L-IPAM Daemon）在 VPC CNI 中的主要作用是什么？
-   - A) 管理 Pod DNS 设置
-   - B) 预分配和管理 ENI 及 IP 地址
-   - C) 应用 Network Policy
-   - D) 加密节点间流量
+- A. 管理每个 Pod 的 DNS 应用设置
+- B. 维护用于 Pod 网络的常规 ENI/IP 分配池
+- C. 替代网络策略控制器
+- D. 加密所有节点间流量
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 预分配和管理 ENI 及 IP 地址**
+**答案：B. 维护用于 Pod 网络的常规 ENI/IP 分配池**
 
-**说明：**
-IPAMD（L-IPAM Daemon）是在每个节点上运行的守护进程，负责管理 ENI（Elastic Network Interfaces）并预分配 IP 地址，以便在创建 Pod 时能够快速分配 IP。CNI Binary 由 kubelet 调用，从 IPAMD 接收 IP，并设置 Pod 网络命名空间。
+容器运行时会调用 CNI 二进制文件，该文件会请求地址并配置 Pod 沙箱。IPAMD 负责维护相关地址池。Windows、Fargate 和 Auto Mode 的管理路径有所不同。
 
 </details>
 
----
+## 2. 次要 IP 模式与前缀模式的 IPv4 分配方式有何不同？
 
-2. Secondary IP 模式与 Prefix Delegation 模式的关键区别是什么？
-   - A) Secondary IP 仅支持 IPv6，Prefix Delegation 仅支持 IPv4
-   - B) Secondary IP 分配单个 IP，Prefix Delegation 分配 /28 前缀（16 个 IP）
-   - C) Secondary IP 仅适用于 EKS，Prefix Delegation 仅适用于自管理集群
-   - D) Secondary IP 使用覆盖网络，Prefix Delegation 使用直接路由
+- A. 只有次要 IP 模式支持 IPv6
+- B. 次要 IP 模式分配单个地址；IPv4 前缀模式分配包含 16 个地址的 /28 块
+- C. 前缀模式会取消 kubelet 的 Pod 限制
+- D. 前缀模式会在已耗尽的子网中创建空闲空间
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Secondary IP 分配单个 IP，Prefix Delegation 分配 /28 前缀（16 个 IP）**
+**答案：B. 次要 IP 模式分配单个地址；IPv4 前缀模式分配包含 16 个地址的 /28 块**
 
-**说明：**
-Secondary IP 模式会逐个向每个 ENI 分配单独的 IP 地址，而 Prefix Delegation 模式会一次分配 /28 IPv4 前缀（16 个 IP）。这使得每个节点可以运行更多 Pod，同时也提高了 IP 分配速度。
+前缀模式需要受支持的硬件和连续地址块。分配仍会占用子网空间，而预留目标可能会保留未使用的地址。IPv6 使用 /80 前缀；EKS 不提供双栈 Pod/Service。
 
 </details>
 
----
+## 3. 旧版 m5.large 次要 IPv4 引导计算如何得出 29？
 
-3. 为什么使用 VPC CNI 时，m5.large 实例的最大 Pod 数为 29？
-   - A) 因为 Kubernetes 的默认限制是 29
-   - B) 最多 3 个 ENI × 每个 ENI 10 个 IP = 30，减去用于 Primary IP 的 ENI 数量（3）
-   - C) 受 AWS 软限制约束
-   - D) 受 VPC 子网大小约束
+- A. Kubernetes 始终将所有节点限制为 29
+- B. 3 × (10 − 1) + 2 = 29
+- C. 3 × 10 − 3 = 29
+- D. 29 是每个子网的大小
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 最多 3 个 ENI × 每个 ENI 10 个 IP = 30，减去用于 Primary IP 的 ENI 数量（3）**
+**答案：B. 3 × (10 − 1) + 2 = 29**
 
-**说明：**
-VPC CNI 中的最大 Pod 数计算方式为（ENI 数量 × 每个 ENI 的 IP 数）- ENI 数量。m5.large 最多支持 3 个 ENI，每个 ENI 有 10 个 IPv4 地址。由于每个 ENI 的 Primary IP 被节点使用，因此 (3 × 10) - 3 = 27。实际数量可能因 host networking Pod 和其他因素而略有不同。
+共有 3 个 ENI，每个有 10 个 IPv4 地址槽位。扣除每个 ENI 的主地址槽位后，剩下 27 个常规次要地址；历史公式再加上 2 个使用主机网络的系统 Pod。这不是适用于所有情况的当前容量上限；前缀、SGPP、kubelet 上限和资源都会改变其含义。
 
 </details>
 
----
+## 4. WARM_IP_TARGET 指定什么？
 
-4. WARM_IP_TARGET 环境变量的用途是什么？
-   - A) 设置可分配给 Pod 的最大 IP 数量
-   - B) 设置每个节点上要预分配的备用 IP 数量
-   - C) 限制整个集群的 IP 总数
-   - D) 设置 IP 地址的 TTL（Time To Live）
+- A. Pod 数量的硬性上限
+- B. 可用于常规分配的空闲地址目标数量
+- C. 集群范围的地址配额
+- D. 地址 TTL
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 设置每个节点上要预分配的备用 IP 数量**
+**答案：B. 可用于常规分配的空闲地址目标数量**
 
-**说明：**
-WARM_IP_TARGET 控制 IPAMD 在每个节点上预分配的备用 IP 数量。这确保了创建新 Pod 时可以立即获得 IP。较大的值会加快 Pod 启动速度，但会使用更多 IP；较小的值可提高 IP 使用效率，但可能会减慢 Pod 启动速度。
+MINIMUM_IP_TARGET 是已分配地址总数的下限。这些 IP 目标会覆盖预留 ENI/前缀策略；分配仍按前缀大小进行。应根据测得的需求、变更频率、地址空间和 API 行为选择取值。
 
 </details>
 
----
+## 5. 关于 EKS 原生网络策略，哪项说法正确？
 
-5. 关于 VPC CNI 原生 Network Policy 支持的哪项说法是正确的？
-   - A) 它在内部使用 Calico 来实施 Network Policy
-   - B) 从 v1.14 开始，它支持原生的基于 eBPF 的 Network Policy
-   - C) EKS 不支持 Network Policy
-   - D) 它使用 iptables 来实施 Network Policy
+- A. VPC CNI 内部运行 Calico
+- B. 标准 eBPF 策略在 1.14 中引入，但仍须满足当前平台/版本和选择启用的条件
+- C. 它会自动覆盖 Windows 和 Fargate
+- D. 启用后即可保证对每个独立 Pod 可靠地实施策略
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 从 v1.14 开始，它支持原生的基于 eBPF 的 Network Policy**
+**答案：B. 标准 eBPF 策略在 1.14 中引入，但仍须满足当前平台/版本和选择启用的条件**
 
-**说明：**
-从 VPC CNI v1.14 开始，支持基于 eBPF 的原生 Kubernetes Network Policy。此前需要使用如 Calico 这样的独立 Network Policy 引擎，但现在 VPC CNI 本身可以处理标准 Kubernetes NetworkPolicy 资源。
+经审阅的 1.23 设置使用已配置的策略控制器和 aws-eks-nodeagent。当前 EKS 指南涵盖 EC2 Linux、由控制器管理的 Pod，以及 Service/容器端口条件。标准启动模式会在解析规则期间允许流量；严格启动行为是另一项有意选择的设置。
 
 </details>
 
----
+## 6. 使用 ENIConfig 的自定义网络能提供什么？
 
-6. 使用 Custom Networking（ENIConfig）的主要目的是什么？
-   - A) 自定义 Pod DNS 服务器设置
-   - B) 从与节点不同的子网为 Pod 分配 IP
-   - C) 安装自定义 CNI 插件
-   - D) 重命名节点的网络接口
+- A. 一个替代 DNS 服务器
+- B. 从选定子网/安全组分配 Pod 地址，使其与节点的默认配置不同
+- C. 添加 CIDR 后自动迁移现有 Pod
+- D. 自动移除重叠路由
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 从与节点不同的子网为 Pod 分配 IP**
+**答案：B. 从选定子网/安全组分配 Pod 地址，使其与节点的默认配置不同**
 
-**说明：**
-Custom Networking 使用 ENIConfig CRD 从与节点不同的子网为 Pod 分配 IP。当节点子网的 IP 不足、需要对 Pod 应用不同的 Security Group，或需要隔离节点与 Pod 网络时，这会很有用。它通常与 Secondary CIDR 一起使用（例如 100.64.0.0/16）。
+配置实际位于同一可用区的资源，启用自定义网络，并通过预期的节点标签/注释选择 ENIConfig。显式注释的优先级高于标签。仅创建新的 CIDR/子网不会迁移现有 Pod，也不会自动提供所有路由和权限。
 
 </details>
 
----
+## 7. 在符合条件的 EC2 节点上，SGPP 的 trunk 和 branch 接口如何工作？
 
-7. 在 per-Pod Security Group 功能中，Trunk ENI 和 Branch ENI 的作用是什么？
-   - A) Trunk ENI 处理外部流量，Branch ENI 处理内部流量
-   - B) Trunk ENI 是承载 Branch ENI 的节点主 ENI，Branch ENI 是分配给每个 Pod 的虚拟 ENI
-   - C) Trunk ENI 用于 IPv4，Branch ENI 用于 IPv6
-   - D) Trunk ENI 和 Branch ENI 执行相同的作用
+- A. trunk 始终是主 eth0 接口
+- B. 控制器会附加额外的 trunk ENI，并关联供选定 Pod 使用的 branch 接口
+- C. 这两个名称分别表示 IPv4 和 IPv6
+- D. 前缀委派会将 branch Pod 上限提高 16 倍
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Trunk ENI 是承载 Branch ENI 的节点主 ENI，Branch ENI 是分配给每个 Pod 的虚拟 ENI**
+**答案：B. 控制器会附加额外的 trunk ENI，并关联供选定 Pod 使用的 branch 接口**
 
-**说明：**
-per-Pod Security Group 使用 Trunk/Branch ENI 架构。Trunk ENI 是附加到节点上的主 ENI，可承载多个 Branch ENI。Branch ENI 是分配给每个 Pod 的虚拟网络接口，从而能够独立实施 AWS Security Group。这可在 Pod 级别实现精细的网络安全控制。
+trunk 是额外接口，不是主 ENI。前提条件包括受支持的实例类型、控制器/IAM 和实际的安全组规则。Fargate 使用单独的托管路径。SGPP 不支持 Windows/Auto Mode；EKS 服务指南则说明在其规定条件下支持 IPv6。
 
 </details>
 
----
+## 8. 以下哪项是不恰当的 IP 耗尽默认应对措施？
 
-8. 以下哪项不是解决 IP 耗尽问题的有效方案？
-   - A) 启用 Prefix Delegation
-   - B) 添加 Secondary CIDR
-   - C) 将所有 Pod 切换为 host network 模式
-   - D) 使用带有专用 Pod 子网的 Custom Networking
+- A. 考虑前缀委派前，先检查连续前缀空间和硬件
+- B. 容量不足时，规划添加 CIDR/子网并让工作负载采用这些资源
+- C. 将所有工作负载切换为 hostNetwork，以绕过常规 Pod 地址分配
+- D. 考虑自定义网络和基于测量结果调整预留目标
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 将所有 Pod 切换为 host network 模式**
+**答案：C. 将所有工作负载切换为 hostNetwork，以绕过常规 Pod 地址分配**
 
-**说明：**
-以 host network 模式运行所有 Pod（`hostNetwork: true`）在技术上可以解决 IP 分配问题，但会消除 Pod 之间的网络隔离，并可能导致端口冲突，因此并非实用的解决方案。IP 耗尽的适当解决方案包括启用 Prefix Delegation、添加 Secondary CIDR、使用 Custom Networking 以及调整 WARM_IP_TARGET。
+将所有工作负载切换为 hostNetwork 会改变隔离和端口行为，并不是通用的容量解决方案。应分别诊断地址耗尽、前缀碎片、ENI 限制、kubelet 容量和 API 错误。前缀委派无法创建缺失的子网地址。
 
 </details>

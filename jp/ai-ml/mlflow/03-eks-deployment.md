@@ -1,6 +1,6 @@
 # パート 3: EKS への MLflow のデプロイ
 
-> **レビュー基準**: MLflow 3.16.0 · community chart 1.11.7; latest patch 3.16.1 checked · 2026-10-12
+> **レビュー基準**: MLflow 3.16.0 · community chart 1.11.7; latest release 3.17.1 checked · 2026-10-16
 
 ## Lab 環境のセットアップ
 
@@ -80,7 +80,7 @@ ClusterIP、private ALB、TLS は networking または transport control を提�
 
 実際の caller 向けに、MLflow 3.16.0 の `allowed_hosts` と CORS origin を設定してください。この community chart では、対応する CLI argument を `extraArgs.allowedHosts` および `extraArgs.corsAllowedOrigins` で設定します。Host/CORS restriction は login や authorization を置き換えるものではありません。
 
-basic-auth は 3.16.0 で default により fail-closed authorization へ変更されました。version 3.16.1 では同梱の default administrator password が削除されたため、default credential に依存しないでください。startup 前に、承認済みの administrator password と auth setting を明示的に設定してください。この章の chart と MLflow 3.16.0 の組み合わせは、3.16.1 では再検証されていません。
+basic-auth は 3.16.0 で default により fail-closed authorization へ変更されました。version 3.16.1 では同梱の default administrator password が削除されたため、default credential に依存しないでください。startup 前に、承認済みの administrator password と auth setting を明示的に設定してください。この章の chart と MLflow 3.16.0 の組み合わせは 3.16.1 または 3.17.x では再検証されておらず、3.17.0 以降へ移行するには SQL backend schema upgrade が必要です。
 
 検証済みの health endpoint は **`/health`** で、`"OK", 200` を返すよう実装されています。これは HTTP process の応答性をチェックするものであり、継続的な RDS/S3 connectivity や user authorization を確認するものではありません。この release では health endpoint は host validation から除外されます。`static-prefix`、ingress rewrite、plugin を使用する場合は、実際の service path を確認してください。
 

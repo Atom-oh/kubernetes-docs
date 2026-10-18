@@ -1,6 +1,6 @@
 # mTLS
 
-双向 TLS（mTLS）是 Istio 的核心安全功能，可自动加密并验证服务间通信。
+双向 TLS（mTLS）是 Istio 的核心安全功能，可自动加密并验证服务到服务的通信。
 
 ## 目录
 
@@ -9,24 +9,22 @@
 3. [证书管理](#certificate-management)
 4. [PeerAuthentication 配置](#peerauthentication-configuration)
 5. [mTLS 与 AWS 服务集成](#mtls-integration-with-aws-services)
-6. [使用 mTLS 连接外部服务](#mtls-with-external-services)
+6. [mTLS 与外部服务](#mtls-with-external-services)
 7. [迁移策略](#migration-strategy)
-8. [常见问题和解决方案](#common-issues-and-solutions)
+8. [常见问题与解决方案](#common-issues-and-solutions)
 9. [性能与监控](#performance-and-monitoring)
-
-<span id="mtls-overview"></span>
 
 ## mTLS 概述
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/id-prov.svg" alt="Istio 身份供应" width="700">
+  <img src="https://istio.io/latest/docs/concepts/security/id-prov.svg" alt="Istio Identity Provisioning" width="700">
 </p>
 
-Istio 会自动将 mTLS 应用于服务间通信，从而实现零信任网络。
+自动 mTLS 会为兼容的网格对等端选择 TLS。在 sidecar 模式下，使用 `STRICT` 拒绝接收代理上的明文流量，并使用 AuthorizationPolicy 限制身份。仅使用自动 mTLS 并不能构成完整的零信任策略。下面的身份流说明的是 sidecar；ambient 使用 ztunnel 和可选的 waypoint。
 
-### 基于身份的安全性
+### 基于身份的安全
 
-Istio 使用 **SPIFFE（Secure Production Identity Framework for Everyone）** 标准为每个工作负载分配强身份：
+Istio 使用 **SPIFFE（面向所有人的安全生产身份框架）** 标准，为每个工作负载分配强身份：
 
 ```
 spiffe://cluster.local/ns/default/sa/productpage
@@ -39,49 +37,21 @@ spiffe://cluster.local/ns/default/sa/productpage
   +---------------------------------------- Protocol
 ```
 
-**身份供应流程**：
+**身份配置流程**：
 1. Kubernetes 创建 Pod 并分配 ServiceAccount
 2. Istio Agent 在 Pod 内启动
-3. Agent 向 Istiod 发送 CSR（Certificate Signing Request）
-4. Istiod 基于 SPIFFE ID 签发 X.509 证书
+3. Agent 向 Istiod 发送 CSR（证书签名请求）
+4. Istiod 根据 SPIFFE ID 签发 X.509 证书
 5. Agent 将证书交付给 Envoy（SDS 协议）
-6. 自动续期证书（默认 TTL：24 小时）
+6. 自动续订证书（默认 TTL：24 小时）
 
-```mermaid
-flowchart LR
-    subgraph Pod1["Pod A"]
-        App1[Application]
-        Envoy1[Envoy<br/>Proxy]
-    end
+![每个 Pod 的 Envoy sidecar 从 istiod 接收 X.509 证书，然后使用 mTLS 加密 Pod 到 Pod 的流量；每个 sidecar 与应用程序之间的流量则保持本地明文传输。](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-0.png)
 
-    subgraph Pod2["Pod B"]
-        Envoy2[Envoy<br/>Proxy]
-        App2[Application]
-    end
-
-    Istiod[istiod<br/>Certificate Issuance]
-
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
-
-    Istiod -.->|Certificate| Envoy1
-    Istiod -.->|Certificate| Envoy2
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Istiod control;
-```
-
-<span id="mtls-modes"></span>
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-01-mtls-0.html)
 
 ## mTLS 模式
+
+以下示例互为替代方案。在网格根命名空间（通常为 `istio-system`）中不带 selector 的策略会作用于整个网格。Ambient 使用 HBONE 加密捕获到的网格流量；不支持 `DISABLE`，而 `STRICT` 会拒绝绕过流量。
 
 ### STRICT 模式（推荐）
 
@@ -122,86 +92,48 @@ spec:
     mode: DISABLE  # mTLS disabled
 ```
 
-<span id="certificate-management"></span>
-
 ## 证书管理
-
-<p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/cert-hierarchy.svg" alt="证书层级" width="600">
-</p>
 
 ### Istio 默认 CA 证书
 
-Istio 在安装期间自动生成自签名根 CA。上图展示了 Istio 的证书层级：
+默认情况下，istiod 会创建自签名根 CA，并直接用它为工作负载证书签名。在生产部署中，可以选择使用离线根 CA 和单独的中间签名 CA；默认情况下不会自动创建这样的层级结构。
 
-- **根 CA**：顶级信任锚点
-- **中间 CA**：用于签发工作负载证书的中间 CA
-- **工作负载证书**：每个服务的 mTLS 证书（自动续期）
-
-```mermaid
-flowchart TD
-    subgraph IstioCA["Istio CA (istiod)"]
-        RootCA[Root CA<br/>Self-signed]
-        IntermediateCA[Intermediate CA<br/>Workload Certificate Issuance]
-    end
-
-    subgraph Workloads["Workloads"]
-        Cert1[Service A<br/>Certificate]
-        Cert2[Service B<br/>Certificate]
-        Cert3[Service C<br/>Certificate]
-    end
-
-    RootCA -->|Sign| IntermediateCA
-    IntermediateCA -->|Issue| Cert1
-    IntermediateCA -->|Issue| Cert2
-    IntermediateCA -->|Issue| Cert3
-
-    %% Style definitions
-    classDef ca fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef cert fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class RootCA,IntermediateCA ca;
-    class Cert1,Cert2,Cert3 cert;
-```
-
-**默认证书属性**：
-- 有效期：**90 天**（自动续期：到期前 24 小时）
-- 密钥长度：2048 位 RSA
-- 签名算法：SHA-256
+默认情况下，Agent 会请求有效期为 **24 小时** 的工作负载证书，并在证书有效期约过半时安排续订，同时加入随机抖动。CA 可能会限制所请求的有效期。根证书和中间证书有各自独立的生命周期。请检查已签发的证书，确认其实际使用的算法和有效期。
 
 ### 证书验证
 
 ```bash
 # 1. Check CA certificate
-kubectl get secret istio-ca-secret -n istio-system -o yaml
+kubectl get secret istio-ca-secret -n istio-system -o jsonpath='{.data.ca-cert\.pem}' | \
+  base64 -d | openssl x509 -noout -issuer -subject -dates
 
 # 2. Check workload certificate
 istioctl proxy-config secret <pod-name> -n <namespace>
 
 # 3. Certificate details
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -text -noout
 
 # 4. Check certificate expiration date
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -noout -dates
 ```
 
 ### 使用自定义 CA 证书
 
-在生产环境中，建议使用企业内部 CA 或公共 CA。
+使用能够签发 SPIFFE URI SAN 的私有 PKI。公有 ACME 证书不适用于工作负载身份。此 OpenSSL 示例用于引导一个新的测试网格；安装 istiod 之前，请先创建 `istio-system` 和 `cacerts`。在生产环境中，应将根密钥离线妥善保管。
 
-#### 第 1 步：生成 CA 证书和密钥
+#### 步骤 1：生成 CA 证书和密钥
 
 ```bash
 # 1. Generate Root CA
+umask 077
 openssl genrsa -out root-key.pem 4096
 
 openssl req -new -x509 -days 3650 -key root-key.pem \
-  -out root-cert.pem \
+  -out root-cert.pem -addext "basicConstraints=critical,CA:TRUE" \
   -subj "/C=US/ST=California/L=San Francisco/O=MyOrg/OU=IT/CN=Root CA"
 
 # 2. Generate Intermediate CA
@@ -212,8 +144,8 @@ openssl req -new -key ca-key.pem -out ca-cert.csr \
 
 # 3. Sign Intermediate CA with Root CA
 cat > ca-extensions.txt <<EOF
-basicConstraints=CA:TRUE
-keyUsage=keyCertSign,cRLSign
+basicConstraints=critical,CA:TRUE,pathlen:0
+keyUsage=critical,keyCertSign,cRLSign
 EOF
 
 openssl x509 -req -days 1825 -in ca-cert.csr \
@@ -224,7 +156,7 @@ openssl x509 -req -days 1825 -in ca-cert.csr \
 cat ca-cert.pem root-cert.pem > cert-chain.pem
 ```
 
-#### 第 2 步：创建 Kubernetes Secret
+#### 步骤 2：创建 Kubernetes Secret
 
 ```bash
 kubectl create secret generic cacerts -n istio-system \
@@ -234,17 +166,11 @@ kubectl create secret generic cacerts -n istio-system \
   --from-file=cert-chain.pem=cert-chain.pem
 ```
 
-#### 第 3 步：重启 Istio
+#### 步骤 3：安装新网格
 
-```bash
-# Restart istiod to load new CA certificate
-kubectl rollout restart deployment/istiod -n istio-system
+创建 `cacerts` 后，使用[安装指南](../01-installation.md)安装兼容且固定版本的 Istio。不要使用此初始安装流程替换正在运行的网格根 CA。
 
-# Restart all workloads to issue new certificates
-kubectl rollout restart deployment -n <namespace>
-```
-
-#### 第 4 步：验证
+#### 步骤 4：验证
 
 ```bash
 # Verify CA certificate is loaded correctly
@@ -252,67 +178,15 @@ kubectl logs -l app=istiod -n istio-system | grep "Use plugged-in cert"
 
 # Verify workload certificates are issued by new CA
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -noout -issuer
 ```
 
-### AWS Certificate Manager（ACM）集成
+### AWS Private CA 集成
 
-您可以使用 ACM Private CA 管理 Istio 证书。
+使用 **cert-manager → AWS Private CA issuer → istio-csr** 为工作负载签名。准备一个未安装 Istio 的新集群、一个处于活动状态的 Private CA，以及为 issuer 的 ServiceAccount 授予限定在该 CA 范围内的 IAM 权限（`DescribeCertificateAuthority`、`GetCertificate`、`IssueCertificate`）。使用 EKS Pod Identity 或 IRSA。CA 必须允许 SPIFFE SAN 和所请求的有效期。
 
-#### 第 1 步：创建 ACM Private CA
-
-```bash
-# Create ACM Private CA
-aws acm-pca create-certificate-authority \
-  --certificate-authority-configuration \
-    "KeyAlgorithm=RSA_4096,SigningAlgorithm=SHA256WITHRSA,Subject={CommonName=Istio CA}" \
-  --certificate-authority-type ROOT \
-  --tags Key=Name,Value=istio-root-ca
-
-# Save CA ARN
-CA_ARN=$(aws acm-pca list-certificate-authorities \
-  --query 'CertificateAuthorities[0].Arn' --output text)
-
-# Generate Root CA certificate
-aws acm-pca get-certificate-authority-csr \
-  --certificate-authority-arn $CA_ARN \
-  --output text > ca.csr
-
-aws acm-pca issue-certificate \
-  --certificate-authority-arn $CA_ARN \
-  --csr fileb://ca.csr \
-  --signing-algorithm SHA256WITHRSA \
-  --template-arn arn:aws:acm-pca:::template/RootCACertificate/V1 \
-  --validity Value=10,Type=YEARS
-
-# Install certificate
-CERT_ARN=$(aws acm-pca list-certificates \
-  --certificate-authority-arn $CA_ARN \
-  --query 'Certificates[0].Arn' --output text)
-
-aws acm-pca get-certificate \
-  --certificate-authority-arn $CA_ARN \
-  --certificate-arn $CERT_ARN \
-  --output text > root-cert.pem
-
-aws acm-pca import-certificate-authority-certificate \
-  --certificate-authority-arn $CA_ARN \
-  --certificate fileb://root-cert.pem
-```
-
-#### 第 2 步：安装 Cert-Manager + AWS PCA Issuer
-
-```bash
-# Install Cert-Manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
-
-# Install AWS PCA Issuer
-helm repo add awspca https://cert-manager.github.io/aws-privateca-issuer
-helm install aws-pca-issuer awspca/aws-privateca-issuer -n cert-manager
-```
-
-#### 第 3 步：创建 AWSPCAIssuer
+安装与 Kubernetes 兼容的 cert-manager 版本（1.21 支持 Kubernetes 1.33–1.36），然后安装 AWS Private CA issuer。将下面的 ARN 替换为选定的 CA；纯 YAML 不会展开 shell 变量。
 
 ```yaml
 apiVersion: awspca.cert-manager.io/v1beta1
@@ -320,83 +194,64 @@ kind: AWSPCAClusterIssuer
 metadata:
   name: istio-ca
 spec:
-  arn: ${CA_ARN}
+  arn: arn:aws:acm-pca:us-west-2:123456789012:certificate-authority/REPLACE_WITH_CA_ID
   region: us-west-2
 ```
 
-#### 第 4 步：在 Istio 中使用
+使用经过验证的公有根证书包（`ca.pem`）在 `cert-manager` 命名空间中创建 `istio-root-ca`，然后使用以下 Helm values 配置 istio-csr：
 
 ```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: istio-ca-cert
-  namespace: istio-system
-spec:
-  secretName: cacerts
-  commonName: "Istio CA"
-  isCA: true
-  duration: 87600h  # 10 years
-  renewBefore: 720h  # 30 days
-  issuerRef:
-    kind: AWSPCAClusterIssuer
-    name: istio-ca
+# istio-csr Helm values fragment
+app:
+  certmanager:
+    issuer:
+      group: awspca.cert-manager.io
+      kind: AWSPCAClusterIssuer
+      name: istio-ca
+  tls:
+    rootCAFile: /var/run/secrets/istio-csr/ca.pem
+volumeMounts:
+- name: root-ca
+  mountPath: /var/run/secrets/istio-csr
+  readOnly: true
+volumes:
+- name: root-ca
+  secret:
+    secretName: istio-root-ca
 ```
 
-### 证书续期策略
+请参阅[当前的 istio-csr 安装指南](https://cert-manager.io/docs/usage/istio-csr/installation/)，获取完整且版本兼容的 chart 和 Istio 安装清单。后者会禁用 istiod 的 CA（`ENABLE_CA_SERVER=false`）、将 CA 端点设置为 `cert-manager-istio-csr.cert-manager.svc:443`，并挂载已签发的 istiod 服务证书和固定的根证书。对该清单使用 `istioctl install -f`。Ambient 还需要在 istio-csr 中配置受信任的 ztunnel ServiceAccount。按照该指南，不支持在现有 Istio 安装之后再安装 istio-csr。
+
+cert-manager `Certificate` 通常会创建 `tls.crt`、`tls.key`，并可能创建 `ca.crt`；将其 Secret 命名为 `cacerts` **并不会**生成 Istio 所需的 `ca-cert.pem`、`ca-key.pem`、`root-cert.pem` 和 `cert-chain.pem`。istio-csr 路径可以避免对这种不兼容的 Secret 结构作出假设。
+
+### 证书续订策略
+
+sidecar Agent 控制其请求的有效期和轮换时间窗口。以下内容是 `istioctl` 输入；请通过安装工作流应用它，并在更改引导配置时滚动重启选定的代理：
 
 ```yaml
-# Configure certificate policy with Istio Operator
+# Input to istioctl install -f; not kubectl apply
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
-metadata:
-  name: istio-control-plane
-  namespace: istio-system
 spec:
   meshConfig:
-    certificates:
-      - secretName: dns.istio-system-service-account
-        dnsNames:
-          - istiod.istio-system.svc
-          - istiod.istio-system
-    caCertificates:
-      - secretName: cacerts
-        certProvider: cert-manager
-  values:
-    pilot:
-      env:
-        # Workload certificate TTL (default: 24 hours)
-        CITADEL_CERT_TTL: "24h"
-        # Certificate renewal grace period (default: 15 minutes)
-        CITADEL_GRACE_PERIOD: "15m"
+    defaultConfig:
+      proxyMetadata:
+        SECRET_TTL: "24h"
+        SECRET_GRACE_PERIOD_RATIO: "0.5"
 ```
+
+`SECRET_TTL` 默认值为 24h，`SECRET_GRACE_PERIOD_RATIO` 默认值为 0.5；续订还会加入随机抖动。这些是 Agent 设置，并非已移除的 `CITADEL_CERT_TTL`/`CITADEL_GRACE_PERIOD` 示例。实际证书签发方可能会缩短有效期。
 
 ### 证书轮换
 
-```bash
-# 1. Generate new CA certificate (repeat steps above)
+叶证书续订、同一根证书下的中间证书续订，以及根证书替换是不同的操作。更换根证书时：
 
-# 2. Update existing Secret
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=ca-cert.pem=new-ca-cert.pem \
-  --from-file=ca-key.pem=new-ca-key.pem \
-  --from-file=root-cert.pem=new-root-cert.pem \
-  --from-file=cert-chain.pem=new-cert-chain.pem \
-  --dry-run=client -o yaml | kubectl apply -f -
+1. 向每个受影响的工作负载、网关和集群分发同时包含**旧根证书和新根证书**的证书包；在更换签名方之前，验证当前信任状态。
+2. 引入新的签名方，并在两个根证书仍受信任时签发新的叶证书。
+3. 验证 SDS 状态、证书链、跨集群流量和剩余的旧叶证书；同时考虑断开连接的工作负载和长连接。
+4. 只有在迁移完成且回滚窗口结束后，才移除旧根证书。
 
-# 3. Restart istiod (zero-downtime rolling update)
-kubectl rollout restart deployment/istiod -n istio-system
-
-# 4. Gradual workload certificate renewal
-# Method 1: Wait for automatic renewal (within 24 hours)
-# Method 2: Manual rolling restart
-for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
-  echo "Restarting deployments in namespace: $ns"
-  kubectl rollout restart deployment -n $ns
-done
-```
-
-<span id="peerauthentication-configuration"></span>
+请使用所选 CA 提供商支持的轮换流程。一步覆盖 `cacerts` 并重启并不能保证服务不中断。不要为了强制续订而重启所有命名空间。
 
 ## PeerAuthentication 配置
 
@@ -413,7 +268,7 @@ spec:
     mode: STRICT
 ```
 
-### Namespace 级配置
+### 命名空间级配置
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -462,52 +317,19 @@ spec:
       mode: DISABLE  # mTLS disabled for port 8080
 ```
 
-<span id="mtls-integration-with-aws-services"></span>
-
 ## mTLS 与 AWS 服务集成
 
-### AWS Application Load Balancer（ALB）与 mTLS
+### AWS Application Load Balancer（ALB）和 mTLS
 
 ALB 支持基于客户端证书的 mTLS。
 
-```mermaid
-flowchart LR
-    Client[Client<br/>Client Cert]
-    ALB[ALB<br/>mTLS Termination]
-    Gateway[Istio Gateway<br/>TLS]
-    Service[Backend Service<br/>Envoy mTLS]
+![客户端提供证书，AWS ALB 终止并验证该证书，然后 ALB 通过 TLS 将流量转发到 Istio Gateway；Istio Gateway 再使用 Envoy mTLS 重新加密流量并发送到后端服务。](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-2.png)
 
-    Client <-->|mTLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-01-mtls-2.html)
 
-    %% Style definitions
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+#### 配置 ALB Listener 和 Gateway
 
-    %% Class applications
-    class Client client;
-    class ALB aws;
-    class Gateway,Service istio;
-```
-
-#### 第 1 步：在 ALB 上配置 mTLS
-
-```bash
-# 1. Create Trust Store (upload CA certificate)
-aws elbv2 create-trust-store \
-  --name istio-client-trust-store \
-  --ca-certificates-bundle-s3-bucket my-bucket \
-  --ca-certificates-bundle-s3-key ca-bundle.pem
-
-# 2. Configure mTLS on ALB listener
-aws elbv2 modify-listener \
-  --listener-arn arn:aws:elasticloadbalancing:region:account:listener/app/my-alb/xxx \
-  --mutual-authentication Mode=verify,TrustStoreArn=arn:aws:elasticloadbalancing:region:account:truststore/istio-client-trust-store/xxx
-```
-
-#### 第 2 步：AWS Load Balancer Controller 配置
+使用客户端 CA 证书包创建 ALB trust store，并在下方填写其名称。AWS Load Balancer Controller 管理此 Ingress 及其 listener 设置。Gateway Deployment 必须已存在，并带有标签 `istio: ingressgateway`；还必须有一个 `gateway-cert` TLS Secret，以及一个绑定到 `istio-system/public-gateway` 并将 `api.example.com` 路由到应用程序的 VirtualService。
 
 ```yaml
 apiVersion: v1
@@ -515,27 +337,47 @@ kind: Service
 metadata:
   name: istio-gateway
   namespace: istio-system
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-    # mTLS configuration
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account:certificate/xxx"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
-    service.beta.kubernetes.io/aws-load-balancer-mutual-authentication: '[{"port": 443, "mode": "verify", "trustStore": "arn:aws:elasticloadbalancing:region:account:truststore/istio-client-trust-store/xxx"}]'
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     istio: ingressgateway
   ports:
   - name: https
     port: 443
     targetPort: 8443
-```
-
-#### 第 3 步：在 Istio Gateway 验证客户端证书
-
-```yaml
+  - name: status-port
+    port: 15021
+    targetPort: 15021
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: istio-edge
+  namespace: istio-system
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:123456789012:certificate/REPLACE_WITH_CERT_ID
+    alb.ingress.kubernetes.io/mutual-authentication: '[{"port":443,"mode":"verify","trustStore":"istio-client-trust-store","ignoreClientCertificateExpiry":false}]'
+    alb.ingress.kubernetes.io/backend-protocol: HTTPS
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-port: '15021'
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz/ready
+spec:
+  ingressClassName: alb
+  rules:
+  - host: api.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: istio-gateway
+            port:
+              number: 443
+---
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
@@ -546,288 +388,113 @@ spec:
     istio: ingressgateway
   servers:
   - port:
-      number: 8443
+      number: 443
       name: https
       protocol: HTTPS
     tls:
-      mode: SIMPLE  # ALB already completed mTLS verification
+      mode: SIMPLE
       credentialName: gateway-cert
     hosts:
-    - "*.example.com"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio-envoy-custom
-  namespace: istio-system
-data:
-  custom-bootstrap.yaml: |
-    static_resources:
-      listeners:
-      - name: http_listener
-        address:
-          socket_address:
-            address: 0.0.0.0
-            port_value: 8443
-        filter_chains:
-        - filters:
-          - name: envoy.filters.network.http_connection_manager
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-              # Verify client certificate headers forwarded from ALB
-              forward_client_cert_details: APPEND_FORWARD
-              set_current_client_cert_details:
-                subject: true
-                cert: true
-                chain: true
-                dns: true
-                uri: true
+    - api.example.com
 ```
 
-#### 第 4 步：转发客户端证书信息
+ALB 的 `verify` 模式会在握手期间验证客户端证书。其 `passthrough` 模式会转发证书链，以便应用程序验证；但 TLS 仍会在 ALB 处终止。HTTPS target group 会加密 ALB 到 Gateway 的流量，但 **ALB 不会验证 target 证书**。将 target 流量限制为来自 ALB security group 的流量，并限制健康检查端口；仅使用 ClusterIP Service 并不能阻止其他集群 Pod 访问 Gateway。
 
-ALB 会将客户端证书信息作为 HTTP 标头转发：
+ALB 会生成 `X-Amzn-Mtls-Clientcert-Serial-Number`、`-Subject`、`-Issuer`、`-Validity` 和 `-Leaf`。这些 HTTP header 是来自受信任边缘的身份声明，并非 Envoy 上的客户端 TLS 会话。应阻止对源站的直接访问，并清理与之冲突的客户端自带身份 header。在后端，要求 Gateway 具有经过身份验证的网格主体，然后针对已验证的声明执行应用程序授权。仅凭 header 存在或 Subject 字符串不足以进行验证。包含 Envoy bootstrap YAML 的任意 ConfigMap 并不能配置 Gateway。
 
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: verify-client-cert
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  - when:
-    - key: request.headers[x-amzn-mtls-clientcert-serial-number]
-      values: ["*"]
-    - key: request.headers[x-amzn-mtls-clientcert-subject]
-      values: ["CN=trusted-client,O=MyOrg*"]
-```
+### Amazon CloudFront 和 mTLS
 
-**由 ALB 转发的标头**：
-- `X-Amzn-Mtls-Clientcert-Serial-Number`：证书序列号
-- `X-Amzn-Mtls-Clientcert-Subject`：证书 Subject DN
-- `X-Amzn-Mtls-Clientcert-Issuer`：证书 Issuer DN
-- `X-Amzn-Mtls-Clientcert-Validity`：有效期
-- `X-Amzn-Mtls-Clientcert-Leaf`：客户端证书（PEM）
+CloudFront 原生支持 viewer mTLS。使用包含已批准客户端 CA 证书包的 CloudFront trust store，并设置 `ViewerMtlsConfig.Mode=required`，以要求提供有效证书。创建或更新 trust store 时会读取 S3 中的证书包；仅更改 S3 不会刷新 trust store。目前，viewer mTLS 要求使用 HTTP/2，而非 HTTP/3；每个 cache behavior 都必须拒绝或重定向 HTTP。
 
-### Amazon CloudFront 与 mTLS
+#### 更新选定的 Distribution
 
-CloudFront 支持客户端证书验证。
-
-```mermaid
-flowchart LR
-    Client[Client<br/>Client Cert]
-    CloudFront[CloudFront<br/>mTLS + Edge]
-    ALB[ALB<br/>TLS]
-    Gateway[Istio Gateway]
-    Service[Backend Service<br/>Envoy mTLS]
-
-    Client <-->|mTLS| CloudFront
-    CloudFront <-->|TLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
-
-    %% Style definitions
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class CloudFront,ALB aws;
-    class Gateway,Service istio;
-```
-
-#### 第 1 步：创建 CloudFront Distribution
+以下示例保留完整的现有配置并使用其 ETag。应用更改之前，请检查所选 distribution、origin HTTPS 设置、所有 cache behavior 和 trust store。请使用支持 viewer mTLS API 的最新版 AWS CLI。
 
 ```bash
-# 1. Upload Trust Store (CA certificate) to S3
-aws s3 cp ca-bundle.pem s3://my-bucket/ca-bundle.pem
-
-# 2. Create CloudFront distribution
-cat > cloudfront-config.json <<EOF
-{
-  "CallerReference": "istio-mtls-$(date +%s)",
-  "Origins": {
-    "Quantity": 1,
-    "Items": [
-      {
-        "Id": "istio-gateway",
-        "DomainName": "k8s-istiosystem-istiogateway-xxx.elb.us-west-2.amazonaws.com",
-        "CustomOriginConfig": {
-          "HTTPPort": 80,
-          "HTTPSPort": 443,
-          "OriginProtocolPolicy": "https-only",
-          "OriginSslProtocols": {
-            "Quantity": 1,
-            "Items": ["TLSv1.2"]
-          }
-        }
-      }
-    ]
-  },
-  "DefaultCacheBehavior": {
-    "TargetOriginId": "istio-gateway",
-    "ViewerProtocolPolicy": "https-only",
-    "TrustedSigners": {
-      "Enabled": false,
-      "Quantity": 0
-    },
-    "ForwardedValues": {
-      "QueryString": true,
-      "Headers": {
-        "Quantity": 1,
-        "Items": ["*"]
-      }
-    },
-    "MinTTL": 0
-  },
-  "ViewerCertificate": {
-    "CloudFrontDefaultCertificate": false,
-    "ACMCertificateArn": "arn:aws:acm:us-east-1:account:certificate/xxx",
-    "SSLSupportMethod": "sni-only",
-    "MinimumProtocolVersion": "TLSv1.2_2021"
-  }
-}
-EOF
-
-aws cloudfront create-distribution --distribution-config file://cloudfront-config.json
-
-# 3. Configure mTLS on CloudFront
-DIST_ID=$(aws cloudfront list-distributions --query 'DistributionList.Items[0].Id' --output text)
-
-aws cloudfront update-distribution \
-  --id $DIST_ID \
-  --distribution-config '{
-    "ViewerCertificate": {
-      "ACMCertificateArn": "arn:aws:acm:us-east-1:account:certificate/xxx",
-      "SSLSupportMethod": "sni-only",
-      "MinimumProtocolVersion": "TLSv1.2_2021",
-      "CertificateSource": "acm"
-    },
-    "CustomOriginConfig": {
-      "OriginSslProtocols": {
-        "Quantity": 1,
-        "Items": ["TLSv1.2"]
+# Existing distribution and trust store selected explicitly by the operator.
+DIST_ID=REPLACE_WITH_DISTRIBUTION_ID
+TRUST_STORE_ID=REPLACE_WITH_TRUST_STORE_ID
+aws cloudfront get-distribution-config --id "$DIST_ID" --output json > dist-before.json
+ETAG=$(jq -r '.ETag' dist-before.json)
+jq --arg trust "$TRUST_STORE_ID" '
+  .DistributionConfig
+  | .HttpVersion = "http2"
+  | .DefaultCacheBehavior.ViewerProtocolPolicy = "https-only"
+  | (if .CacheBehaviors.Quantity > 0 then
+       .CacheBehaviors.Items |= map(.ViewerProtocolPolicy = "https-only")
+     else . end)
+  | .ViewerMtlsConfig = {
+      Mode: "required",
+      TrustStoreConfig: {
+        TrustStoreId: $trust,
+        AdvertiseTrustStoreCaNames: true,
+        IgnoreCertificateExpiry: false
       }
     }
-  }'
+' dist-before.json > dist-mtls.json
+# Review the complete diff before applying to the selected distribution.
+diff -u <(jq '.DistributionConfig' dist-before.json) dist-mtls.json || true
+aws cloudfront update-distribution --id "$DIST_ID" --if-match "$ETAG" \
+  --distribution-config file://dist-mtls.json
 ```
 
-#### 第 2 步：使用 CloudFront Function 验证证书
+#### 转发并授权证书身份
+
+使用 origin request policy，仅转发必需的 `CloudFront-Viewer-Cert-*` header：`Present`、`Sha256`、`Serial-Number`、`Issuer`、`Subject`，以及可选的 `Validity`/`Pem`。PEM header 仅对 origin 可用，对边缘函数不可用。对于特定用户的响应，应禁用缓存或使用适当的、区分身份的 cache key；origin request policy 不会更改 cache key。
+
+在原生 mTLS 验证之后，可选用 viewer-request CloudFront Function 应用允许列表。指纹用于识别证书；序列号仅在同一签发方内唯一。客户端证书轮换时，请同步更新允许列表：
 
 ```javascript
+// Additional authorization after native CloudFront viewer mTLS verification.
 function handler(event) {
-    var request = event.request;
-    var headers = request.headers;
-
-    // Headers forwarded by CloudFront after client certificate verification
-    var clientCertSerial = headers['cloudfront-viewer-tls-client-cert-serial-number'];
-    var clientCertSubject = headers['cloudfront-viewer-tls-client-cert-subject'];
-
-    if (!clientCertSerial || !clientCertSubject) {
-        return {
-            statusCode: 403,
-            statusDescription: 'Forbidden',
-            body: 'Client certificate required'
-        };
+    var fingerprint = event.request.headers['cloudfront-viewer-cert-sha256'];
+    var allowed = ['REPLACE_WITH_VERIFIED_CERT_SHA256'];
+    if (!fingerprint || allowed.indexOf(fingerprint.value) === -1) {
+        return {statusCode: 403, statusDescription: 'Forbidden'};
     }
-
-    // Check allowed certificate serial numbers
-    var allowedSerials = ['1234567890ABCDEF', 'FEDCBA0987654321'];
-    if (!allowedSerials.includes(clientCertSerial.value)) {
-        return {
-            statusCode: 403,
-            statusDescription: 'Forbidden',
-            body: 'Invalid client certificate'
-        };
-    }
-
-    // Forward certificate information to Istio
-    headers['x-client-cert-serial'] = clientCertSerial;
-    headers['x-client-cert-subject'] = clientCertSubject;
-
-    return request;
+    return event.request;
 }
 ```
 
-#### 第 3 步：在 Istio 中验证 CloudFront 标头
+要求 origin 仅接受来自目标 distribution 的流量，并使用受支持的 origin access control/网络设计和 origin 身份验证。后端不得信任任意调用方提供的这些 header。Viewer 证书验证在 CloudFront 处结束；到 origin 的 HTTPS 是独立的 TLS 会话。请参阅 [CloudFront mTLS 配置](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/enable-mtls-distributions.html)和[证书 header](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewer-mtls-headers.html)。
+
+### 多个 TLS 跳之间的安全性
+
+下图使用多个独立的 TLS 会话。图中沿用的历史标题“端到端 mTLS”并不意味着 viewer 证书就是网格工作负载身份。CloudFront 到 ALB 以及 ALB 到 Gateway 是通过转发身份声明实现的服务器身份验证/加密跳，并非在每一跳中传递 viewer mTLS。
+
+![客户端到 CloudFront 的 mTLS 连接切换为跨 ALB 和 Istio Gateway 的普通 TLS；随后 Istio 网格通过 Envoy mTLS 在三个后端服务之间逐跳重新建立连接。](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-4.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-01-mtls-4.html)
+
+**各区段的安全性**：
+1. **客户端 -> CloudFront**：mTLS（客户端证书验证）
+2. **CloudFront -> ALB**：TLS + 证书信息 header
+3. **ALB -> Istio Gateway**：TLS + 证书信息 header
+4. **Istio 网格内部**：自动 mTLS（Envoy 到 Envoy）
+
+## mTLS 与外部服务
+
+### 与旧系统集成
+
+对于支持普通 HTTPS 的旧服务器，可以让 sidecar 发起 TLS。应用程序发送 `http://legacy.external.com:80`；代理则连接到 443 端口。如果应用程序已发送 HTTPS，请保持其为 opaque 流量，不要再通过此规则叠加第二层 TLS。对于使用私有 CA 的服务器，需要显式提供受信任的 CA 证书包。
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
 metadata:
-  name: verify-cloudfront-client-cert
+  name: legacy-system
   namespace: default
 spec:
-  action: ALLOW
-  rules:
-  - when:
-    - key: request.headers[x-client-cert-serial]
-      values:
-      - "1234567890ABCDEF"
-      - "FEDCBA0987654321"
-    - key: request.headers[x-client-cert-subject]
-      values: ["CN=trusted-client,O=MyOrg*"]
-```
-
-### 端到端 mTLS 架构
-
-从客户端到后端的整个路径均使用 mTLS：
-
-```mermaid
-flowchart TB
-    Client[Client<br/>Client Cert]
-
-    subgraph AWS ["AWS Edge"]
-        CF[CloudFront<br/>mTLS Verification]
-        ALB[ALB<br/>Header Forwarding]
-    end
-
-    subgraph EKS ["EKS Cluster"]
-        Gateway[Istio Gateway<br/>Header Validation]
-
-        subgraph Mesh ["Service Mesh"]
-            ServiceA[Service A<br/>Envoy mTLS]
-            ServiceB[Service B<br/>Envoy mTLS]
-            ServiceC[Service C<br/>Envoy mTLS]
-        end
-    end
-
-    Client <-->|1\. mTLS| CF
-    CF -->|2\. TLS + Headers| ALB
-    ALB -->|3\. TLS + Headers| Gateway
-    Gateway <-->|4\. mTLS| ServiceA
-    ServiceA <-->|5\. mTLS| ServiceB
-    ServiceB <-->|6\. mTLS| ServiceC
-
-    %% Style definitions
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% Class applications
-    class Client client;
-    class CF,ALB aws;
-    class Gateway,ServiceA,ServiceB,ServiceC istio;
-```
-
-**各段的安全性**：
-1. **客户端 -> CloudFront**：mTLS（客户端证书验证）
-2. **CloudFront -> ALB**：TLS + 证书信息标头
-3. **ALB -> Istio Gateway**：TLS + 证书信息标头
-4. **Istio Mesh 内部**：自动 mTLS（Envoy 到 Envoy）
-
-<span id="mtls-with-external-services"></span>
-
-## 使用 mTLS 连接外部服务
-
-### 旧版系统集成
-
-```yaml
-# When legacy system doesn't support mTLS
-apiVersion: networking.istio.io/v1beta1
+  hosts: [legacy.external.com]
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+  - number: 80
+    targetPort: 443
+    name: http
+    protocol: HTTP
+---
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: legacy-system
@@ -836,89 +503,63 @@ spec:
   host: legacy.external.com
   trafficPolicy:
     tls:
-      mode: SIMPLE  # Use one-way TLS only
----
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: legacy-system
-  namespace: default
-spec:
-  hosts:
-  - legacy.external.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
+      mode: SIMPLE
+      sni: legacy.external.com
+      subjectAltNames: [legacy.external.com]
 ```
 
-### 外部 API mTLS 客户端认证
+### 外部 API 的 mTLS 客户端身份验证
 
-当 Istio 需要向外部 API 出示客户端证书时：
+对于 HTTP 到 mTLS 的发起模式，请将客户端证书链/密钥和服务器信任证书包放在**客户端代理的命名空间**中。此处 sidecar 的 `credentialName` 示例要求使用下面带有 workload selector 的 DestinationRule。证书 SAN 必须与 `api.external.com` 匹配。
+
+```bash
+kubectl create secret generic client-mtls-credential -n default \
+  --from-file=tls.crt=client-chain.pem \
+  --from-file=tls.key=client-key.pem \
+  --from-file=ca.crt=server-ca.pem
+```
 
 ```yaml
-# 1. Create client certificate Secret
-apiVersion: v1
-kind: Secret
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
 metadata:
-  name: client-mtls-credential
-  namespace: istio-system
-type: kubernetes.io/tls
-data:
-  tls.crt: <base64-encoded-cert>
-  tls.key: <base64-encoded-key>
-  ca.crt: <base64-encoded-ca>
+  name: external-api
+  namespace: default
+spec:
+  hosts: [api.external.com]
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+  - number: 80
+    targetPort: 443
+    name: http
+    protocol: HTTP
 ---
-# 2. Configure client certificate in DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-api-mtls
   namespace: default
 spec:
   host: api.external.com
+  workloadSelector:
+    matchLabels:
+      app: external-api-client
   trafficPolicy:
     tls:
-      mode: MUTUAL  # Use mTLS
-      clientCertificate: /etc/certs/tls.crt
-      privateKey: /etc/certs/tls.key
-      caCertificates: /etc/certs/ca.crt
----
-# 3. Register external API with ServiceEntry
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: external-api
-  namespace: default
-spec:
-  hosts:
-  - api.external.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
+      mode: MUTUAL
+      credentialName: client-mtls-credential
+      sni: api.external.com
+      subjectAltNames: [api.external.com]
 ```
+
+被选中的工作负载发送 `http://api.external.com:80`；只有其代理会发起 mTLS。此方法和下面的 egress-gateway 方法互为替代方案。
 
 ### 通过 Egress Gateway 使用外部 mTLS
 
+请使用 [egress 指南](../traffic-management/11-egress-control.md)安装 egress gateway。此示例假设存在 Service `istio-egressgateway.istio-system.svc.cluster.local`、服务端口 443，以及 Gateway Pod 标签 `istio: egressgateway`。保留前文中对两个命名空间都可见的 ServiceEntry，省略直接客户端 DestinationRule，并在 `istio-system` 中为 Gateway 创建客户端凭据 Secret。
+
 ```yaml
-# 1. Deploy Egress Gateway
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  components:
-    egressGateways:
-    - name: istio-egressgateway
-      enabled: true
-      k8s:
-        serviceAnnotations:
-          networking.istio.io/exportTo: "*"
----
-# 2. Gateway resource
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
@@ -930,76 +571,85 @@ spec:
   servers:
   - port:
       number: 443
-      name: tls
-      protocol: TLS
-    hosts:
-    - api.external.com
+      name: https
+      protocol: HTTPS
+    hosts: [api.external.com]
     tls:
-      mode: ISTIO_MUTUAL  # mTLS inside mesh
+      mode: ISTIO_MUTUAL
 ---
-# 3. Route traffic with VirtualService
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: to-egress-gateway
+  namespace: default
+spec:
+  host: istio-egressgateway.istio-system.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+      sni: api.external.com
+---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: external-api-through-egress
   namespace: default
 spec:
-  hosts:
-  - api.external.com
-  gateways:
-  - mesh  # From inside mesh
-  - istio-system/egress-gateway  # To Egress Gateway
+  hosts: [api.external.com]
+  gateways: [mesh, istio-system/egress-gateway]
   http:
   - match:
-    - gateways:
-      - mesh
-      port: 443
+    - gateways: [mesh]
+      port: 80
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
         port:
           number: 443
   - match:
-    - gateways:
-      - istio-system/egress-gateway
+    - gateways: [istio-system/egress-gateway]
       port: 443
     route:
     - destination:
         host: api.external.com
         port:
-          number: 443
+          number: 80
 ---
-# 4. DestinationRule (from Egress Gateway to external)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: external-api-mtls
+  name: external-api-from-egress
   namespace: istio-system
 spec:
   host: api.external.com
+  workloadSelector:
+    matchLabels:
+      istio: egressgateway
   trafficPolicy:
     tls:
       mode: MUTUAL
-      clientCertificate: /etc/istio/egress-certs/tls.crt
-      privateKey: /etc/istio/egress-certs/tls.key
-      caCertificates: /etc/istio/egress-certs/ca.crt
+      credentialName: client-mtls-credential
+      sni: api.external.com
+      subjectAltNames: [api.external.com]
 ```
 
-<span id="migration-strategy"></span>
+流量路径为应用程序 HTTP:80 → Gateway ISTIO_MUTUAL:443 → 外部 MUTUAL:443（ServiceEntry 端口 80 映射到 targetPort 443）。验证 Gateway SDS Secret、生成的 cluster、服务器 SAN 验证和测试流量。通过 Gateway 路由并不能阻止绕过；请另行使用适当的网络控制来强制执行 egress 限制。
 
 ## 迁移策略
 
-### 第 1 步：检查当前状态
+### 步骤 1：检查当前状态
 
 ```bash
 # Check current mTLS configuration
 kubectl get peerauthentication -A
 
 # Check mTLS status by service
-istioctl authn tls-check <pod-name> -n <namespace>
+istioctl proxy-config clusters <pod-name> -n <namespace> -o json
 ```
 
-### 第 2 步：切换到 PERMISSIVE 模式
+仅在计划好的迁移中使用此流程。将明文例外限制在确实需要它的最小命名空间/工作负载范围内；不要仅仅为了诊断故障而将已处于 STRICT 模式的网格降级。
+
+### 步骤 2：切换到 PERMISSIVE 模式
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -1012,19 +662,11 @@ spec:
     mode: PERMISSIVE  # Allow both mTLS and plaintext
 ```
 
-### 第 3 步：监控
+### 步骤 3：监控
 
-```bash
-# Verify mTLS connections
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/stats/prometheus | grep ssl
+使用按 `connection_security_policy` 分组的目的端报告指标 `istio_requests_total`/`istio_tcp_connections_opened_total`，查找观察到的明文流量。生成有代表性的流量，并检查生效的代理 cluster 和证书。指标缺失并不能证明没有明文调用方。
 
-# Verify plaintext connections
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/stats/prometheus | grep plaintext
-```
-
-### 第 4 步：切换到 STRICT 模式
+### 步骤 4：切换到 STRICT 模式
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -1037,9 +679,7 @@ spec:
     mode: STRICT  # Only mTLS allowed
 ```
 
-<span id="common-issues-and-solutions"></span>
-
-## 常见问题和解决方案
+## 常见问题与解决方案
 
 ### 1. mTLS 连接失败
 
@@ -1061,7 +701,7 @@ kubectl get destinationrule -A -o yaml | grep -A 5 "trafficPolicy"
 istioctl proxy-config secret <pod-name> -n <namespace>
 
 # 4. Verify TLS connection
-istioctl authn tls-check <source-pod> <dest-service> -n <namespace>
+istioctl proxy-config clusters <source-pod> -n <namespace> --fqdn <dest-service> -o json
 
 # 5. Check Envoy logs in detail
 kubectl logs <pod-name> -c istio-proxy -n <namespace> | grep -E "(TLS|SSL|certificate)"
@@ -1073,7 +713,7 @@ kubectl logs <pod-name> -c istio-proxy -n <namespace> | grep -E "(TLS|SSL|certif
 ```yaml
 # Problem: PeerAuthentication is STRICT, DestinationRule is DISABLE
 # Solution: Change DestinationRule to ISTIO_MUTUAL
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: fix-mtls
@@ -1084,7 +724,7 @@ spec:
       mode: ISTIO_MUTUAL  # Match STRICT mode
 ```
 
-2. **未注入 sidecar 的 Pod**：
+2. **Pod 未注入 sidecar**：
 ```bash
 # Add istio-injection label to namespace
 kubectl label namespace default istio-injection=enabled
@@ -1101,12 +741,12 @@ TLS error: Secret is not supplied by SDS
 x509: certificate has expired
 ```
 
-**检查证书到期时间**：
+**检查证书过期时间**：
 
 ```bash
 # Check workload certificate expiration date
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -noout -dates
 
 # Check CA certificate expiration
@@ -1117,149 +757,46 @@ kubectl get secret istio-ca-secret -n istio-system -o json | \
 for pod in $(kubectl get pods -n default -o jsonpath='{.items[*].metadata.name}'); do
   echo "Pod: $pod"
   istioctl proxy-config secret $pod -n default -o json 2>/dev/null | \
-    jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+    jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
     base64 -d 2>/dev/null | openssl x509 -noout -dates 2>/dev/null || echo "No cert found"
 done
 ```
 
 **解决方案**：
 
-```bash
-# 1. Restart istiod (trigger new certificate issuance)
-kubectl rollout restart deployment/istiod -n istio-system
-
-# 2. Restart specific workload (renew certificate)
-kubectl delete pod <pod-name> -n <namespace>
-
-# 3. Renew CA certificate (see "Certificate Rotation" section above)
-```
+先恢复 CA 连通性、有效信任和节点时间；检查 Agent/istiod 日志以查找续订失败的原因。重启 istiod 本身无法修复已过期的 CA。如果修复原因后某个选定的工作负载仍无法恢复，请在遵守其 disruption budget 的前提下执行受控滚动重启。
 
 ### 3. 时钟偏差（时间同步问题）
 
-**症状**：
-```
-certificate is not valid yet
-certificate verify failed
-```
-
-**原因**：Pod/节点之间的时间差导致证书验证失败
-
-**验证**：
+`certificate is not valid yet` 或证书过期错误可能表明节点时钟存在问题。将 UTC 时间与证书的 `NotBefore`/`NotAfter` 进行比较；TLS 没有通用的 ±5 分钟容差。在受影响的 EC2 节点上检查 chrony，不要将 NTP 地址当作 HTTP 进行查询：
 
 ```bash
-# Check node time
-kubectl get nodes -o wide
-for node in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
-  echo "Node: $node"
-  kubectl debug node/$node -it --image=busybox -- date
-done
-
-# Check pod time
-kubectl exec -it <pod-name> -c istio-proxy -n <namespace> -- date
-
-# Check time difference (acceptable range: +/- 5 minutes)
+date -u
+chronyc tracking
+chronyc sources -v
+# Amazon Time Sync NTP: 169.254.169.123 (not an HTTP metadata URL)
 ```
 
-**解决方案**：
-
-```bash
-# 1. NTP configuration (node level)
-sudo systemctl restart chrony
-sudo chronyc tracking
-
-# 2. NTP sync is default on EKS
-# Verify Amazon Time Sync Service usage
-curl http://169.254.169.123/latest/meta-data/system
-
-# 3. Add grace period to certificate start time
-# Istio Operator configuration
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    pilot:
-      env:
-        CERT_NOTBEFORE_GRACE_DURATION: "10m"  # Start time grace period
-```
+根据操作系统（`chronyd` 或 `chrony`）修复节点上配置的时间同步服务。不要虚构证书宽限期环境变量来绕过有效性检查。
 
 ### 4. 循环依赖
 
-**症状**：
-```
-upstream connect error or disconnect/reset before headers
-```
-
-**原因**：Service A -> Service B -> Service A 调用期间的 mTLS 握手超时
-
-**验证**：
-
-```bash
-# Check service call chain
-istioctl analyze -n <namespace>
-
-# Check Envoy clusters
-istioctl proxy-config cluster <pod-name> -n <namespace>
-```
-
-**解决方案**：
-
-```yaml
-# Set appropriate timeout in DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: service-with-timeout
-spec:
-  host: myservice.default.svc.cluster.local
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        connectTimeout: 30s  # Increase connection timeout
-    tls:
-      mode: ISTIO_MUTUAL
-```
+Service A → B → A 的调用循环本身不会导致 mTLS 失败。请检查分布式跟踪、应用程序截止时间、重试、连接错误和代理日志，以区分递归或资源耗尽与 TLS 协商问题。`istioctl analyze` 会检查配置；它不会还原运行时调用图。增加 TCP 连接超时时间并不能解决依赖循环。
 
 ### 5. 混合协议（mTLS + 明文）
 
-**症状**：
-```
-SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
-```
+`WRONG_VERSION_NUMBER` 通常表示 TLS/明文端口不匹配。请检查 Service 端口协议、应用程序使用的 scheme、PeerAuthentication、DestinationRule 和实际代理 cluster。移除不正确的显式 TLS 覆盖，或修正目标协议；普通网格对等端应使用自动 mTLS。范围受限的 PERMISSIVE 例外适用于有意进行的迁移，不是通用修复方法。
 
-**原因**：部分服务使用 mTLS，其他服务使用明文
+### 6. Headless Service 的 mTLS
 
-**验证**：
+Headless Service 同样支持自动 mTLS。首先检查 endpoint 发现和命名的 Service 端口。以下显式规则是可选的，无法修复缺失的 endpoint 元数据或应用程序协议不匹配问题。
 
-```bash
-# Check mTLS status for all services
-for svc in $(kubectl get svc -n default -o jsonpath='{.items[*].metadata.name}'); do
-  echo "Service: $svc"
-  istioctl authn tls-check $(kubectl get pod -n default -l app=test -o jsonpath='{.items[0].metadata.name}') $svc.default.svc.cluster.local -n default
-done
-```
+**症状**：headless service 上的 mTLS 连接失败
 
 **解决方案**：
 
 ```yaml
-# Gradual migration with PERMISSIVE mode
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: migration-policy
-  namespace: default
-spec:
-  mtls:
-    mode: PERMISSIVE  # Allow both mTLS and plaintext
-```
-
-### 6. Headless Service mTLS
-
-**症状**：headless Service 上的 mTLS 连接失败
-
-**解决方案**：
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: headless-service-mtls
@@ -1277,87 +814,101 @@ spec:
 
 ### 7. mTLS 与 NetworkPolicy 冲突
 
-**症状**：应用 NetworkPolicy 后 mTLS 连接失败
-
-**解决方案**：
+sidecar mTLS 使用应用程序的目标端口；**15008 是 ambient HBONE 端口**，并非通用的 sidecar mTLS 端口。此 sidecar 示例允许 gateway → productpage:9080、productpage → reviews/details:9080、istiod:15012 和集群 DNS。应用此策略之前，请根据实际情况调整标签、所有真实依赖项、抓取/探针和 NodeLocal DNS。Ambient 需要单独处理 CNI/NetworkPolicy。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-istio-mtls
+  name: productpage-sidecar
   namespace: default
 spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
+  podSelector:
+    matchLabels:
+      app: productpage
+  policyTypes: [Ingress, Egress]
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: istio-system  # Allow istiod
-    - podSelector: {}  # Allow pods in same namespace
+          kubernetes.io/metadata.name: istio-system
+      podSelector:
+        matchLabels:
+          istio: ingressgateway
     ports:
     - protocol: TCP
-      port: 15008  # Envoy mTLS port
-    - protocol: TCP
-      port: 15012  # Pilot discovery
+      port: 9080
   egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: reviews
+    - podSelector:
+        matchLabels:
+          app: details
+    ports:
+    - protocol: TCP
+      port: 9080
   - to:
     - namespaceSelector:
         matchLabels:
-          name: istio-system
+          kubernetes.io/metadata.name: istio-system
+      podSelector:
+        matchLabels:
+          app: istiod
     ports:
     - protocol: TCP
       port: 15012
   - to:
-    - podSelector: {}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     ports:
+    - protocol: UDP
+      port: 53
     - protocol: TCP
-      port: 15008
+      port: 53
 ```
-
-<span id="performance-and-monitoring"></span>
 
 ## 性能与监控
 
-### mTLS 性能影响
+### mTLS 性能影响：在 EKS 上测量
 
-| 指标 | 明文 | mTLS | 增幅 |
-|--------|-----------|------|----------|
-| **延迟（p50）** | 5ms | 6ms | +20% |
-| **延迟（p99）** | 15ms | 18ms | +20% |
-| **CPU 使用率** | 10% | 15% | +50% |
-| **内存使用量** | 100MB | 120MB | +20% |
-| **吞吐量（RPS）** | 10000 | 8500 | -15% |
+以下历史基准比较了完整的数据平面路径，包括加密和代理处理。以下数据由本指南在专用 EKS 集群上测得（Graviton m7g.xlarge，fortio 以 200 qps 运行 60s、使用 16 个连接；所有情况下 Code 200 均为 100%）：
+
+| 场景（mTLS STRICT） | P50 | P90 | P99 | 相对于无网格的 P50 开销 |
+|--------------------|-----|-----|-----|-------------------------|
+| 无网格（明文基线） | 0.82ms | 1.73ms | 1.97ms | - |
+| sidecar | 2.11ms | 2.89ms | 3.91ms | **+1.29ms** |
+| ambient L4（仅 ztunnel） | 0.86ms | 1.74ms | 1.98ms | **+0.04ms（可忽略）** |
+| ambient L7（waypoint） | 2.68ms | 3.63ms | 3.98ms | **+1.86ms** |
+
+结论是：不存在适用于所有情况的“mTLS 开销 +20%”系数。本次测试中，ambient L4 的 P50 增加了 0.04ms。由于各场景在 L7 处理和代理路径方面有所不同，这些数据无法单独衡量 TLS 加密的开销，也不能证明该开销为零。有关方法、滚动更新期间的 503 比率和复现步骤，请参阅[sidecar 与 ambient 的实测对比](../comparison/03-sidecar-vs-ambient.md)。不同工作负载需要自行重新测量。
 
 **优化方法**：
 
-1. **硬件加速（AES-NI）**：
+1. **采用适合架构的加密加速**：AES-NI 是 x86 扩展；Graviton 使用 Arm 加密扩展。请确认 CPU 功能，并针对实际使用的密码套件/工作负载进行基准测试。
 ```bash
-# Check AES-NI support on CPU
-grep -m1 -o aes /proc/cpuinfo
-
-# Recommended EC2 instance types:
-# - c5.*, c6i.*, c7g.*: AES-NI supported
-# - m5.*, m6i.*, r5.*: General purpose
+lscpu
+rg -m 1 "^(flags|Features)" /proc/cpuinfo
 ```
 
-2. **使用 TLS 1.3**（更快的握手）：
+2. **使用 TLS 1.3**（握手更快）：
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
-    defaultConfig:
-      proxyMetadata:
-        TLS_MIN_PROTOCOL_VERSION: TLSv1_3
+    meshMTLS:
+      minProtocolVersion: TLSV1_3
 ```
 
 3. **连接池**：
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: connection-pool
@@ -1367,76 +918,42 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100
-        connectTimeout: 30ms
+        connectTimeout: 1s
       http:
         http1MaxPendingRequests: 1024
         http2MaxRequests: 1024
-        maxRequestsPerConnection: 10
+        maxRequestsPerConnection: 0  # No request-count cap; reuse connections
         idleTimeout: 900s
 ```
 
 ### Prometheus 指标
 
-**mTLS 连接指标**：
+分别测量启用情况、应用程序错误、证书续订和 TLS 握手。以下 HTTP 指标需要 L7 遥测（sidecar 或 waypoint）；ztunnel L4 遥测无法报告 HTTP 状态。Agent 证书指标需要抓取 sidecar Agent 端点，通常为端口 15020 上的 `/stats/prometheus`；对于文件挂载或其他数据平面，这些指标可能不存在。请确认部署中实际使用的指标名称和标签。
 
 ```promql
-# mTLS connection success rate
-sum(rate(istio_tcp_connections_opened_total{connection_security_policy="mutual_tls"}[5m])) by (destination_service_name)
+# Observed HTTP request share protected by mTLS (destination reporter).
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",connection_security_policy="mutual_tls"}[5m]))
 /
-sum(rate(istio_tcp_connections_opened_total[5m])) by (destination_service_name)
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination"}[5m]))
 
-# mTLS handshake time (p99)
-histogram_quantile(0.99,
-  sum(rate(envoy_listener_ssl_connection_handshake_duration_bucket[5m])) by (le)
-)
+# Remaining sidecar workload certificate lifetime in seconds.
+istio_agent_cert_expiry_seconds{resource_name="default"}
 
-# Days until first certificate expires
-envoy_server_days_until_first_cert_expiring
-
-# mTLS error rate
-sum(rate(istio_requests_total{response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
+# HTTP 5xx fraction on mTLS-protected requests; not TLS handshake failures.
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
 /
-sum(rate(istio_requests_total{connection_security_policy="mutual_tls"}[5m]))
+sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",connection_security_policy="mutual_tls"}[5m]))
 ```
 
-### Grafana 仪表板
+加密流量/总流量比率描述的是**观测到的流量采用情况**，而非握手成功率。HTTP 5xx 可能是发生在完全有效的 TLS 连接上的应用程序故障。Envoy 会在 listener/cluster SSL 统计信息中公开 TLS `handshake`、`connection_error` 和 `fail_verify_*` 计数器；旧的 `ssl_connection_handshake_duration_bucket` 示例不是标准 Envoy 直方图。请先启用所需的代理统计信息，并检查实际导出的名称，然后再构建查询。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio-mtls-dashboard
-  namespace: istio-system
-data:
-  dashboard.json: |
-    {
-      "dashboard": {
-        "title": "Istio mTLS Monitoring",
-        "panels": [
-          {
-            "title": "mTLS Connection Success Rate",
-            "targets": [{
-              "expr": "sum(rate(istio_tcp_connections_opened_total{connection_security_policy=\"mutual_tls\"}[5m])) / sum(rate(istio_tcp_connections_opened_total[5m]))"
-            }]
-          },
-          {
-            "title": "Certificate Expiration",
-            "targets": [{
-              "expr": "envoy_server_days_until_first_cert_expiring"
-            }]
-          },
-          {
-            "title": "mTLS Handshake Duration (p99)",
-            "targets": [{
-              "expr": "histogram_quantile(0.99, sum(rate(envoy_listener_ssl_connection_handshake_duration_bucket[5m])) by (le))"
-            }]
-          }
-        ]
-      }
-    }
-```
+### Grafana Dashboard
+
+创建面板以展示 mTLS 采用情况、工作负载证书剩余有效时间（秒）、mTLS 上的 HTTP 5xx，以及实际 TLS 验证计数器。使用上面的表达式和已配置的 Prometheus datasource。要进行配置加载，必须通过 Grafana dashboard provider 挂载 dashboard JSON（或配置 dashboard sidecar）；仅创建 ConfigMap 并不会加载 dashboard。已配置的文件必须包含 dashboard 对象本身，而不是 HTTP API 的 `{ "dashboard": ... }` 包装对象。
 
 ### 证书过期告警
+
+以下示例假设 sidecar 叶证书有效期为 24 小时且会自动续订，并且 Prometheus Operator 会选取此 PrometheusRule。请根据签发的 TTL 和续订计划调整阈值。对于抓取失败/预期时间序列缺失，应单独设置告警：缺少证书指标并不意味着证书状态正常。Agent 的秒级 gauge 可能为负值；Envoy 以整天为单位的过期 gauge 不适用于针对 24 小时叶证书的七天告警，也无法可靠地表示已过期状态。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1447,44 +964,38 @@ metadata:
 spec:
   groups:
   - name: istio-certificates
-    interval: 30s
     rules:
-    - alert: IstioCertificateExpiringSoon
-      expr: envoy_server_days_until_first_cert_expiring < 7
-      for: 1h
+    - alert: IstioWorkloadCertificateExpiringSoon
+      expr: istio_agent_cert_expiry_seconds{resource_name="default"} < 3600
+      for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "Istio certificate expiring in {{ $value }} days"
-        description: "Certificate for {{ $labels.pod }} will expire in {{ $value }} days"
-
-    - alert: IstioCertificateExpired
-      expr: envoy_server_days_until_first_cert_expiring < 0
-      for: 5m
+        summary: "Workload certificate has less than one hour remaining"
+    - alert: IstioWorkloadCertificateExpired
+      expr: istio_agent_cert_expiry_seconds{resource_name="default"} < 0
+      for: 1m
       labels:
         severity: critical
       annotations:
-        summary: "Istio certificate has expired"
-        description: "Certificate for {{ $labels.pod }} has expired"
-
-    - alert: IstioMTLSConnectionFailure
+        summary: "Workload certificate has expired"
+    - alert: IstioHTTP5xxOverMTLS
       expr: |
-        sum(rate(istio_requests_total{response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
+        sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",response_code=~"5.*",connection_security_policy="mutual_tls"}[5m]))
         /
-        sum(rate(istio_requests_total{connection_security_policy="mutual_tls"}[5m])) > 0.05
+        sum by (destination_service_name) (rate(istio_requests_total{reporter="destination",connection_security_policy="mutual_tls"}[5m])) > 0.05
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High mTLS connection failure rate"
-        description: "mTLS error rate is {{ $value | humanizePercentage }} for {{ $labels.destination_service_name }}"
+        summary: "HTTP 5xx fraction exceeds 5% on mTLS traffic"
 ```
 
 ### 日志记录与调试
 
 ```bash
 # 1. Change Envoy log level dynamically
-istioctl proxy-config log <pod-name> -n <namespace> --level connection:debug,tls:debug
+istioctl proxy-config log <pod-name> -n <namespace> --level connection:debug
 
 # 2. Filter mTLS-related logs
 kubectl logs <pod-name> -c istio-proxy -n <namespace> | grep -E "(TLS|SSL|certificate|handshake)"
@@ -1502,28 +1013,30 @@ istioctl dashboard envoy <pod-name>.<namespace>
 # Check ssl metrics at http://localhost:15000/stats/prometheus
 ```
 
+收集诊断信息后，请恢复之前的日志级别。精简版代理镜像中可能没有 curl；可以改用本地端口转发检查管理端点。
+
 ### 最佳实践
 
 1. **生产环境**：
    - 使用 STRICT 模式
    - 使用自定义 CA 证书
-   - 配置自动证书续期
-   - 设置到期告警
+   - 配置自动续订证书
+   - 设置过期告警
 
 2. **性能优化**：
    - 使用 TLS 1.3
    - 启用连接池
-   - 使用支持 AES-NI 的实例
+   - 使用适合 CPU 的加密加速
 
 3. **监控**：
-   - 跟踪证书到期时间
-   - 监控 mTLS 连接成功率
-   - 跟踪握手延迟
+   - 跟踪证书过期情况
+   - 分别监控 mTLS 采用情况和 TLS 验证错误
+   - 跟踪实际握手计数器和证书续订
 
 4. **安全性**：
    - 定期轮换 CA
-   - 最小权限原则
-   - 与 NetworkPolicy 配合使用
+   - 遵循最小权限原则
+   - 配合 NetworkPolicy 使用
 
 ## 参考资料
 
@@ -1533,3 +1046,8 @@ istioctl dashboard envoy <pod-name>.<namespace>
 - [Cert-Manager](https://cert-manager.io/docs/)
 - [AWS Certificate Manager](https://docs.aws.amazon.com/acm/)
 - [AWS ALB mTLS](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/mutual-authentication.html)
+
+- [插件 CA 前提条件](https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/)
+- [Agent 证书设置](https://istio.io/latest/docs/reference/commands/pilot-agent/)
+- [AWS Load Balancer Controller 注解](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/)
+- [Envoy TLS 统计信息](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)

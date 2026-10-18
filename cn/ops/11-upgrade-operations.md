@@ -1,24 +1,22 @@
-# EKS 升级：Auto Mode、回滚和蓝绿部署
+# EKS 升级：Auto Mode、回滚与蓝绿部署
 
-> **最后更新**：2026 年 10 月 12 日。命令于 2026 年 9 月 12 日使用 AWS CLI 2.36.44、Pluto 5.24.3 和 Velero 1.18.2 验证。
-> 示例迁移为 1.35 → 1.36；请发现实际的区域可用性。
+> **最后更新**：October 16, 2026。命令于 September 12, 2026 检查（Pluto 和 Velero 于 October 16, 2026 检查），使用 AWS CLI 2.36.44、Pluto 5.24.4 和 Velero 1.18.4。
+> 示例升级路径为 1.35 → 1.36；请确认实际区域可用性。
 
-统筹规划控制平面、节点、附加组件、应用程序和数据。
-仅有 Auto Mode 和 PDB 并不能保证服务不中断。请根据可用性目标验证备用容量、
-就绪状态、重连行为、会话、状态和恢复。
+请一并规划控制平面、节点、附加组件、应用和数据。
+仅靠 Auto Mode 和 PDB 无法保证服务不中断。请根据可用性目标，验证备用容量、就绪状态、重新连接行为、会话、状态和恢复能力。
 
-## 1. 版本和管理职责
+## 1. 版本与管理职责
 
-上游 Kubernetes 为最近三个次要版本维护发布分支
-（截至 2026 年 10 月 12 日为 1.35–1.37），而不是当前版本加前三个旧版本。
-每个次要版本大约获得 14 个月的补丁，最后两个月处于维护模式；1.34 将在
-2026 年 10 月 27 日生命周期结束前处于维护模式。
-EKS 有独立的生命周期：通常为 14 个月标准支持和
-12 个月扩展支持。请检查准确日期、策略和区域可用性。
+截至 October 12, 2026，上游 Kubernetes 为最近三个次要版本（1.35–1.37）维护发布分支，
+而不是当前版本加上之前的三个版本。每个次要版本大约有 14 个月的补丁支持，其中最后两个月处于维护模式；1.34 将处于
+维护模式，直至其生命周期于 October 27, 2026 结束。
+EKS 有单独的生命周期：通常提供 14 个月标准
+支持和 12 个月延长支持。请确认确切日期、策略和区域可用性。
 
-普通 EKS 基础控制平面费用在标准支持期内为 $0.10/小时，在扩展支持期内总计为
-$0.60/小时（$0.10 + $0.50）。附加费用不是 $0.60。
-Auto Mode、计算、存储、网络和单独预置的控制平面容量需额外付费。
+标准支持期间，EKS 普通基础控制平面费用为 $0.10/小时；延长支持期间的总费用为
+$0.60/小时（$0.10 + $0.50）。额外费用不是 $0.60。
+Auto Mode、计算、存储、网络以及单独预置的控制平面容量需额外付费。
 
 ```bash
 DOCS_CLUSTER="my-cluster"
@@ -32,41 +30,41 @@ aws eks describe-cluster-versions --region "$DOCS_REGION" \
 kubectl --context "$DOCS_CONTEXT" get nodes -o wide
 ```
 
-`describe-addon-versions` 检查附加组件兼容性，而非集群支持日期。
-每次将 EKS 控制平面升级一个次要版本，不要跳过中间版本。对于当前支持的版本，
-kubelet 不能比 API server 更新，上游策略在其条件下允许最多相差三个较旧的次要版本。
-这并不是建议让节点落后。请在下一次升级前规划使节点与当前控制平面对齐，
-并分别检查 EKS 托管节点、Fargate、自管和 Hybrid 的要求。
-在控制平面的一个次要版本范围内使用 kubectl。
+`describe-addon-versions` 检查附加组件兼容性，不检查集群支持日期。
+EKS 控制平面每次只能升级一个次要版本，不能跳过中间版本。
+对于当前受支持的版本，kubelet 不能比 API server 新；根据上游策略及其条件，最多可比 API server 旧三个次要版本。这并不意味着建议让
+节点落后。请规划在下次升级前使节点版本与当前控制平面对齐，
+并分别检查 EKS 托管节点、Fargate、自管理节点和 Hybrid 的要求。
+使用与控制平面相差不超过一个次要版本的 kubectl。
 
-| 部署 | 更新职责 |
+| Deployment | 更新职责 |
 |---|---|
 | 纯 Auto Mode | 由服务管理节点、网络、块存储和 LB 功能 |
-| 普通/自管/Hybrid 节点 | 规划节点、CNI、DNS、代理、驱动程序和控制器更新 |
+| 普通/自管理/Hybrid 节点 | 规划节点、CNI、DNS、代理、驱动和控制器更新 |
 | 混合集群 | 保留非 Auto 节点所需的附加组件 |
-| 应用程序、自管控制器和 EKS 附加组件 | 验证已安装的版本、配置和 CRD |
+| 应用、自管理控制器和 EKS 附加组件 | 验证已安装的版本、配置和 CRD |
 
-纯 Auto Mode 将 CoreDNS 用作节点系统服务。仅仅缺少 CoreDNS Deployment
-并不表示失败；混合集群必须保留其他节点所需的 DNS Deployment。
+纯 Auto Mode 将 CoreDNS 用作节点系统服务。没有 CoreDNS Deployment 本身
+并不代表故障；混合集群必须保留其他节点所需的 DNS Deployment。
 不要在 Auto Mode 中无条件安装或查找普通节点的 aws-node/kube-proxy/Pod Identity agent
-Pod。兼容性可能要求在控制平面升级前完成工作，因此
-“控制平面 → 每个附加组件 → 节点”并不通用。
+Pod。兼容性可能要求在控制平面升级前先进行处理，因此
+“控制平面 → 每个附加组件 → 节点”并不适用于所有情况。
 
 | API 稳定性 | 弃用策略 |
 |---|---|
-| GA | 可以弃用，但不会在同一个 Kubernetes 主版本中移除 |
-| Beta | 弃用后至少九个月或三个次要版本（以较长者为准）才会停止提供 |
+| GA | 可以弃用，但不能在同一个 Kubernetes 主版本中移除 |
+| Beta | 弃用后至少九个月或三个次要版本（以较长者为准）才会停止提供服务 |
 | Alpha | 可以在不事先发出弃用通知的情况下移除 |
 
-CLI 标志和指标策略有所不同。请比较迁移指南和实际安装的版本、
-架构、平台版本和计算类型，而不要复制旧的兼容性表。
+CLI 标志和指标采用不同的策略。请对照迁移指南以及实际安装的版本、
+架构、平台版本和计算类型，而不要照搬旧的兼容性表。
 
 ## 2. 升级前审查
 
-升级洞察存在时效性和覆盖范围限制。官方升级指南仍指出，
-针对某些升级洞察问题暂时暂停要求使用 `--force`。
-请将此与下面阻止回滚就绪性的 ERROR/UNKNOWN 区分开来。
-API 接受并不代表就绪审查已经完成。
+升级洞察有时间和覆盖范围方面的限制。官方升级指南仍指出，
+某些升级洞察问题暂时不再要求使用 `--force`。
+请将此情况与下文阻止操作的回滚就绪状态 ERROR/UNKNOWN 区分开来。
+API 接受请求并不代表已完成就绪状态审查。
 
 ```bash
 aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
@@ -76,18 +74,18 @@ pluto detect-helm --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 pluto detect-api-resources --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 ```
 
-Pluto 5.24.3 区分退出码 0（干净）、2（已弃用）和 3（已移除）。
-不要将每个非零结果都视为“未安装”，也不要用 `|| true` 隐藏它。
-其 JSON 是一个对象：计数 `.items // []`；干净的响应可能省略 items。
-`detect-all-in-cluster` 同样有效。请检查官方发布架构和校验和。
+Pluto 5.24.4 区分退出码 0（无问题）、2（已弃用）、3（已移除）和 4（目标版本中没有可用的替代 API）。
+不要将所有非零结果都解释为“未安装”，也不要用 `|| true` 隐藏结果。
+其 JSON 是一个对象：统计 `.items // []`；干净的响应可能不包含 items。
+`detect-all-in-cluster` 也有效。请检查官方发布版本的架构和校验和。
 
-实时发现可能遗漏原始 API 版本，因为 API server 会转换对象。
-请审查 Git、渲染后的 Helm/Kustomize、发布元数据、API 警告/审计和实际客户端。
-也请使 Pluto 的其他组件目标与已部署的 Istio/cert-manager 版本对齐。
+实时发现可能无法识别原始 API 版本，因为 API server 会转换对象。
+请检查 Git、渲染后的 Helm/Kustomize、发布元数据、API 警告/审计记录和实际客户端。
+也要让 Pluto 的其他组件目标版本与已部署的 Istio/cert-manager 版本匹配。
 
 此只读工具会比较 EKS 和 kubecontext 端点，然后检查 Node/Pod 就绪状态、
-Deployment generation/rollout、PDB 以及实际安装的附加组件。
-代理 kubeconfig 可能与直接 EKS 端点不同，需要单独审查。
+Deployment generation/rollout、PDB 和实际安装的附加组件。
+代理 kubeconfig 可能与 EKS 直接端点不同，需要单独审查。
 
 ```python
 # preflight.py
@@ -265,12 +263,12 @@ python3 preflight.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --context "$DOCS_CONTEXT" --target "$DOCS_TARGET" > preflight-report.json
 ```
 
-退出码 0 表示已收集列出的检查项，2 表示有发现，1 表示因错误而得出未知结果。
-零并不自动批准升级，也不证明完整的应用程序运行状况。
-公布的附加组件版本仍需进行架构/平台/计算类型和配置审查。
+退出码 0 表示已收集所列检查项，2 表示发现问题，1 表示因错误而结果未知。
+零不代表自动获准升级，也不能证明应用完全健康。
+已公布的附加组件版本仍需进行架构/平台/计算类型和配置审查。
 
-maxUnavailable 为 1 的 PDB 仍可能由于不健康 Pod 或重叠 PDB 而允许零次中断。
-AlwaysAllow 会改变不健康 Pod 的驱逐行为；它不保证可用性。
+即使 maxUnavailable 为 1，PDB 仍可能因为 Pod 不健康或 PDB 重叠而允许零次驱逐。
+AlwaysAllow 会改变对不健康 Pod 的驱逐行为；但不能保证可用性。
 
 ```yaml
 # pdb.yaml
@@ -287,17 +285,17 @@ spec:
       app: api
 ```
 
-不要仅从 Node phase 或 Pod Running 推断健康状态。请区分零副本 Deployment、
-已完成的 Job 和空的 PDB selector。检查 EndpointSlice ready/serving/terminating 条件
-以及 Service selector；无 selector/ExternalName Service 不需要普通 Pod endpoint。
+不要仅凭 Node phase 或 Pod Running 状态判断健康。请区分零副本 Deployment、
+已完成的 Job 和空 PDB selector。检查 EndpointSlice 的 ready/serving/terminating 条件
+和 Service selector；无 selector/ExternalName Service 不需要普通 Pod 端点。
 
 ## 3. 备份和恢复验证
 
-托管 EKS 备份并不意味着客户可从任意 etcd 快照控制恢复。
-请区分 Git/IaC、Kubernetes 对象、PV 数据、外部数据库、权限、加密密钥
-和恢复过程。首先准备 Velero BackupStorageLocation、plugin/CSI 快照配置
-和 IAM。此 Schedule 明确选择 production。
-默认 Backup CLI 包括 `*` namespace；它不会自动排除所有 velero 内容。
+EKS 托管备份并不意味着客户可以从任意 etcd 快照自行恢复。
+请分别处理 Git/IaC、Kubernetes 对象、PV 数据、外部数据库、权限、加密密钥
+和恢复流程。先准备 Velero BackupStorageLocation、插件/CSI 快照配置
+和 IAM。此 Schedule 明确选择了 production。
+默认 Backup CLI 包含 `*` namespace；它不会自动排除所有 velero。
 
 ```yaml
 # backup-schedule.yaml
@@ -325,14 +323,14 @@ velero --kubecontext "$DOCS_CONTEXT" backup describe "$DOCS_BACKUP" --details
 velero --kubecontext "$DOCS_CONTEXT" backup logs "$DOCS_BACKUP"
 ```
 
-Completed 并不证明应用程序一致性或每个卷都可以恢复。
-审查错误/警告、snapshot/data-mover 结果、排除的卷和 DB 静默/复制。
-仅有 PVC/PV 对象不是完整的应用程序/Secret/Service/数据备份。
-文件系统备份需要单独的 node-agent 和卷配置。
+显示 Completed 并不能证明应用一致性或每个卷都能恢复。
+请检查错误/警告、快照/数据移动器结果、排除的卷以及数据库静默/复制情况。
+PVC/PV 对象本身并不是完整的应用/Secret/Service/数据备份。
+文件系统备份需要单独配置 node-agent 和卷。
 
-Velero 1.18.2 restore create 没有 `--dry-run`。
-`-o yaml/json` 会打印 Restore 而不创建它，但会执行发现/Backup 读取。
-它既非完全离线，也不是恢复测试。
+Velero 1.18.4 的 restore create 没有 `--dry-run`。
+`-o yaml/json` 会打印 Restore 而不创建它，但仍会执行发现和 Backup 读取操作。
+因此它既不是完全离线操作，也不是恢复测试。
 
 ```bash
 velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
@@ -340,20 +338,20 @@ velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
   --namespace-mappings production:restore-test -o yaml > restore-plan.yaml
 ```
 
-在隔离的测试环境中执行实际恢复。仅 namespace 映射并不能
-隔离 CronJob、消费者、外部 DB 或 DNS/LB 更改。
-审查测试集群的备份存储写入所有权、快照区域/AZ 和 KMS/IAM。
-在适当时使用只读 BackupStorageLocation 进行同步。
-分别测试恢复创建、Pod 启动、卷挂载、完整性和应用程序行为。
-测试清理期间不要删除原始备份。
+请在隔离的测试环境中实际执行恢复。仅靠 namespace 映射无法隔离 CronJobs、消费者、
+外部数据库或 DNS/LB 变更。
+请检查测试集群的备份存储写入所有权、快照区域/AZ 以及 KMS/IAM。
+在适当情况下，使用只读 BackupStorageLocation 进行同步。
+分别测试恢复创建、Pod 启动、卷挂载、完整性和应用行为。
+测试清理时不要删除原始备份。
 
 ## 4. 控制平面和节点更新
 
-这里使用[基础设施章节](./01-infrastructure-setup.md)中的现有集群层。
-不要在新 state 中创建重复集群或重建 VPC/IAM。
-将模块/provider 主版本变更与 Kubernetes 次要版本变更分开审查。
-不要将旧的 EKS module v20 输入混入当前模块。
-将 tfvars 替换为真实的绝对文件路径。
+本节使用[基础设施章节](./01-infrastructure-setup.md)中已有的集群层。
+不要在新的 state 中创建重复集群，也不要重建 VPC/IAM。
+请单独审查模块/提供程序主版本变更和 Kubernetes 次要版本变更。
+不要将旧 EKS module v20 输入混入当前模块。
+请将 tfvars 替换为真实的绝对文件路径。
 
 ```bash
 DOCS_TFVARS="/absolute/path/to/production.cluster.tfvars.json"
@@ -364,8 +362,8 @@ terraform -chdir=terraform/02-cluster show upgrade.tfplan
 terraform -chdir=terraform/02-cluster apply upgrade.tfplan
 ```
 
-如果选择 CLI 更改，请避免同时对相同设置进行 IaC 更改。
-下一条命令会在就绪审查后执行真实更改。请记录其更新 ID。
+如果选择 CLI 变更，请避免对同一设置同时进行 IaC 变更。
+下一个命令会在就绪状态审查后实际执行变更。请记录其 update ID。
 
 ```bash
 DOCS_UPDATE_ID=$(aws eks update-cluster-version \
@@ -441,56 +439,55 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
 ```
 
 退出码 0 表示 Successful，1 表示失败/取消/查询错误，2 表示客户端超时。
-超时不会取消 AWS；请继续观察相同的 ID。
-控制平面升级一旦开始就不能随意暂停/停止。
-仅 cluster-active 并不能确定节点替换已经完成。
-随后重新检查实际版本、节点和应用程序。
+超时不会取消 AWS 操作；请使用同一个 ID 恢复观察。
+控制平面升级开始后，不能随意暂停/停止。
+仅 cluster-active 并不能证明节点替换已完成。
+之后请重新检查实际版本、节点和应用。
 
-Auto Mode 会在控制平面更新后增量替换节点。
-客户不会通过 EC2NodeClass al2023@latest 选择 Auto Mode AMI。
-普通托管/自管/Hybrid 节点和现有 Fargate Pod 需要单独处理。
-并非所有 EKS 附加组件都会自动更新。请从 describe-addon-configuration 审查版本和配置 schema；
+控制平面更新后，Auto Mode 会逐步替换节点。
+客户不能通过 EC2NodeClass al2023@latest 选择 Auto Mode AMI。
+普通托管/自管理/Hybrid 节点和现有 Fargate Pod 需要单独处理。
+EKS 附加组件不会全部自动更新。请从 describe-addon-configuration 审查版本和配置 schema；
 不要不加区分地应用 OVERWRITE。
 
 ### 中断约束
 
-适用的 NodePool budget 会通过最严格的约束组合。
-10% 和 1 并不表示“至少一个”。请考虑取整、正在删除/NotReady 的节点和 UTC schedule。
-单独的计划 budget 不会禁止其活动窗口以外的中断。
+适用的 NodePool budget 会按照限制最严格的约束合并。
+10% 和 1 并不意味着“至少一个”。请考虑取整、删除中/NotReady 节点以及 UTC 时间表。
+仅设置计划 budget 并不能禁止其生效时间窗口以外的中断。
 
 要暂停自愿 drift，请保留/审查现有 budget，添加类似
-`nodes: "0", reasons: [Drifted]` 的策略，然后恢复原始策略。
-NodePool metadata 上的 do-not-disrupt annotation 不是该暂停机制。
-Node/Pod annotation 和 budget 不能防止每一种中断、到期或 termination-grace 路径。
+`nodes: "0", reasons: [Drifted]` 的策略，然后恢复原策略。
+NodePool metadata 上的 do-not-disrupt annotation 不是这种暂停机制。
+Node/Pod annotation 和 budget 并不能阻止所有中断、到期或 termination-grace 路径。
 
 | 手动 drain 选项 | 含义 |
 |---|---|
-| `--ignore-daemonsets` | 排除 DaemonSet Pod 而不删除它们 |
-| `--delete-emptydir-data` | 允许 emptyDir 数据丢失 |
-| `--disable-eviction` | 删除而非使用 Eviction，从而绕过 PDB 保护 |
+| `--ignore-daemonsets` | 排除 DaemonSet Pod，但不删除它们 |
+| `--delete-emptydir-data` | 允许丢失 emptyDir 数据 |
+| `--disable-eviction` | 不使用 Eviction 而直接删除，从而绕过 PDB 保护 |
 
-DaemonSet 在符合条件的节点上运行。不要将强制删除/绕过 PDB 自动化为通用补救措施。
+DaemonSet 会在符合条件的节点上运行。不要将强制删除/绕过 PDB 自动化用作通用补救措施。
 
 ## 5. 原生 Kubernetes 版本回滚
 
-EKS 支持在升级完成后七天内启动回滚到前一个次要版本。
-“控制平面永远不能回滚”已不再正确。
-限制包括在当前版本创建的集群、过期窗口、扩展支持结束时的自动升级
-以及与目标不兼容的 EKS 功能。
-连续升级后，只有紧邻的前一个次要版本符合条件。
-扩展支持目标需要相应的策略和费用条件。
+EKS 支持在升级完成后的七天内发起回滚至上一个次要版本。
+“控制平面永远不能回滚”这一说法已不再正确。
+限制包括：集群是在其当前版本创建的、窗口已过期、延长支持结束时发生自动升级，以及 EKS 功能与目标版本不兼容。
+连续升级后，只有紧邻的上一个次要版本符合条件。
+回滚到延长支持版本需要满足相应的策略和费用条件。
 
 | 组件 | 处理方式 |
 |---|---|
-| API server/control plane | 前一个 Kubernetes 次要版本及其最新平台版本 |
+| API server/控制平面 | 上一个 Kubernetes 次要版本及其最新 platform version |
 | Auto Mode 节点 | 服务先调整节点，然后回滚控制平面 |
-| 普通托管节点组 | 用户先使用 UpdateNodegroupVersion 调整它们 |
-| 自管/Hybrid 节点 | 用户先以兼容节点替换它们 |
-| Fargate | 现有 Pod kubelet 无法直接降级；请规划单独的替换/兼容性 |
-| 附加组件、应用程序、etcd 对象和 PV 数据 | 不从历史快照恢复 |
+| 普通托管节点组 | 用户先使用 UpdateNodegroupVersion 调整节点组 |
+| 自管理/Hybrid 节点 | 用户先替换为兼容节点 |
+| Fargate | 不能直接降级现有 Pod 的 kubelet；请单独规划替换/兼容性 |
+| 附加组件、应用、etcd 对象和 PV 数据 | 不会从历史快照恢复 |
 
-这不是数据恢复或即时流量故障回退。
-请验证新 API/字段、控制器和 DB schema 与前一版本的兼容性。
+这不是数据恢复，也不是即时流量切回。
+请验证新 API/字段、控制器和数据库 schema 与旧版本的兼容性。
 
 ```bash
 aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
@@ -504,49 +501,48 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_ROLLBACK_ID" --timeout-seconds 5400
 ```
 
-已测试的 CLI 2.36.44 支持 rollback-config；环境中较旧的 2.35.11 不支持。
-不要将旧 CLI 的未知选项误认为 EKS 功能不存在。
-请使用官方更新的 CLI 或受支持的 API/SDK。不存在单独的 aws eks rollback-cluster 命令。
+经测试的 CLI 2.36.44 支持 rollback-config；环境中的旧版 2.35.11 不支持。
+不要将旧 CLI 的未知选项误认为 EKS 不具备该功能。
+请使用官方更新后的 CLI 或受支持的 API/SDK。没有单独的 aws eks rollback-cluster 命令。
 
-回滚就绪性 ERROR/UNKNOWN 会阻止该操作；WARNING 仅作提示。
-Force 可以绕过洞察检查，但不能绕过资格或 Auto Mode 中断控制。
-基线不使用 force。
+回滚就绪状态为 ERROR/UNKNOWN 时会阻止操作；WARNING 仅作提示。
+Force 可以绕过洞察检查，但不能绕过资格条件或 Auto Mode 中断控制。
+基准流程不使用 force。
 
-### Auto Mode 观察和取消
+### Auto Mode 观察与取消
 
-在节点回滚期间，控制平面继续提供较新版本，集群状态保持
-ACTIVE。EKS 在节点满足目标版本偏差要求后重新检查洞察，然后回滚 CP。
-观察更新 ID。节点超时默认值为 720 分钟，范围为 120–10,080 分钟。
-这是最小界限，不是精确计时器。请区分七天启动窗口与
-已开始节点阶段的超时。超时时，CP 保持当前版本，节点向它 drift
-回去，更新变为 Failed。
+节点回滚期间，控制平面会继续提供较新版本的服务，集群状态保持
+ACTIVE。节点满足目标版本偏差要求后，EKS 会重新检查洞察，然后回滚 CP。
+请观察 update ID。节点超时默认值为 720 分钟，范围为 120–10,080 分钟。
+它是最短界限，不是精确计时器。请区分七天的发起窗口和
+已开始的节点阶段超时。超时后，CP 保持当前版本，节点会逐渐回到该版本，更新状态变为 Failed。
 
-零 Drift budget 或节点 do-not-disrupt 可以阻止进度。PDB/Pod annotation 可以将
-中断延迟至 TerminationGracePeriod，但无法永久阻止它。
-节点阶段中可进行尽力取消，尽管已经开始的个别中断
-可能会完成。CP 回滚开始后无法取消。
+零 Drift budget 或节点 do-not-disrupt 可能阻止进度。PDB/Pod annotation 可能延迟中断，
+最长可达 TerminationGracePeriod，但无法永久阻止中断。
+节点阶段可以尽力取消，不过已开始的单次中断可能仍会完成。
+CP 回滚开始后则不能取消。
 
 ```bash
 aws eks cancel-update --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_ROLLBACK_ID"
 ```
 
-取消后，节点会向当前 CP 版本 drift。
-IaC 超时不会停止 AWS 操作，CloudFormation stack rollback 也不是自动
-Kubernetes 版本回滚。CLI/API 更改后请协调实际和预期的 IaC 版本。
+取消后，节点会逐渐回到当前 CP 版本。
+IaC 超时不会停止 AWS 操作，CloudFormation stack rollback 也不会自动执行
+Kubernetes 版本回滚。CLI/API 变更后，请协调实际版本和 IaC 目标版本。
 
 ## 6. 蓝绿部署
 
-为 Green 使用不同的 state/identity，并将共享 DNS/NLB/database 所有权置于 Blue 的
-删除范围之外。请通过[多集群 GitOps](./04-gitops-multi-cluster.md)流程注册
-真实 endpoint/CA、workload identity、assume-role、EKS access entry 和 Kubernetes RBAC。
+为 Green 使用独立的 state/identity，并确保共享 DNS/NLB/数据库的所有权不在 Blue 的
+删除范围内。按照[多集群 GitOps](./04-gitops-multi-cluster.md) 流程，为真实端点/CA、
+workload identity、assume-role、EKS access entries 和 Kubernetes RBAC 注册。
 将集群 Secret 应用到 Hub context，而不是 Green。
 
-此 ApplicationSet 仅选择 Green，且不使用自动 sync。
-准备 production AppProject/namespace、repository 和已批准的 revision。
-替换 URL/SHA 占位符，并控制 worker、consumer 和 CronJob 的并发激活。
-preserveResourcesOnDeletion 会在 selector 更改移除生成的 Application 时保护工作负载。
-保留不等于管理移交；请在更改颜色/selector 前规划稳定状态 GitOps 所有权。
+此 ApplicationSet 仅选择 Green，且不启用自动同步。
+准备 production AppProject/namespace、仓库和已批准的 revision。
+替换 URL/SHA 占位符，并控制 workers、消费者和 CronJobs 的并发激活。
+如果 selector 变更导致生成的 Application 被移除，preserveResourcesOnDeletion 可保护工作负载。
+保留资源并不代表管理权已交接；更改颜色/selector 前，请规划好稳态下的 GitOps 所有权。
 
 ```yaml
 # applicationset.yaml
@@ -598,22 +594,22 @@ argocd app sync api-my-cluster-green
 argocd app wait api-my-cluster-green --sync --health --timeout 300
 ```
 
-要回滚 Git revision，请恢复已批准的 Git state 并同步。
-argocd app rollback 接受 deployment history ID，而不是 SHA。
-否则自动 sync/ApplicationSet desired state 可能再次更改它。
+要回滚 Git revision，请恢复已批准的 Git 状态并进行同步。
+argocd app rollback 使用 deployment history ID，而不是 SHA。
+否则，自动同步/ApplicationSet 的期望状态可能会再次更改它。
 
 ### 直接测试 Green
 
-运行中的 Pod 和 TCP 连通性并不能证明 DB/message/readiness 行为。
-使用直接 Green 路径，并保留服务 hostname 的 SNI/Host 和证书验证。
-NLB 的 AWS hostname 不是应用程序 TLS hostname。
-对于实际在 443 上提供 HTTPS 的 Service，请使用单独的终端：
+Pod 正在运行且 TCP 可连通，并不能证明 DB/消息/readiness 行为正常。
+请使用直接通往 Green 的路径，并保留服务主机名的 SNI/Host 和证书验证。
+NLB 的 AWS 主机名不是应用的 TLS 主机名。
+对于确实在 443 上提供 HTTPS 服务的 Service，请在单独的终端中运行：
 
 ```bash
 kubectl --context green -n production port-forward --address 127.0.0.1 svc/api 18443:443
 ```
 
-在另一终端中使用实际 hostname、path 和响应契约。
+在另一个终端中使用实际的主机名、路径和响应约定。
 
 ```bash
 DOCS_SERVICE_HOST="api.example.com"
@@ -626,19 +622,19 @@ test "$DOCS_HTTP_CODE" = "200" || exit 1
 
 ### NLB 权重
 
-NLB 支持加权 target group。相对权重范围为 0–999，无需总和为 100。
-它们表示新连接的预期份额，而非精确的请求、字节或现有会话。
-为每个集群在单独的 TG 中注册健康 target。
-有关 TGB、target type 和 network/security group，请参阅[高级基础设施](./02-infrastructure-advanced.md)。
+NLB 支持加权目标组。相对权重范围为 0–999，无需总和为 100。
+它们表示新连接的预期占比，而不是精确的请求数、字节数或现有会话数。
+请在每个集群使用单独的 TG 注册健康目标。
+有关 TGB、目标类型和网络/安全组，请参阅[高级基础设施](./02-infrastructure-advanced.md)。
 
-普通权重变更会影响新连接，但将权重设为零可能在短时间后关闭现有
-连接。这并不是不中断的排空；请测试生命周期、重试和会话。
-TCP/UDP/TCP_UDP 支持 target-group stickiness；TLS listener 不支持。
-TCP forward stickiness 并非 ALB 独有功能。
-API 为 ALB 记录了 DurationSeconds；不要将该时长保证复制到 NLB。
+普通权重变更会影响新连接，但将权重设为零可能会在短时间后关闭现有连接。
+这不等同于不中断排空；请测试连接生命周期、重试和会话。
+TCP/UDP/TCP_UDP 支持目标组粘性；TLS listener 不支持。
+TCP forward 粘性并非 ALB 独有功能。
+API 为 ALB 记录了 DurationSeconds；不要将该时长保证照搬到 NLB。
 
-此工具只生成 JSON。首先验证实际 listener protocol 和 target-group VPC、
-protocol/IP family、健康状态和现有 stickiness。
+此工具仅生成 JSON。请先确认实际 listener protocol 和目标组 VPC、
+协议/IP family、健康状态及现有粘性设置。
 
 ```python
 # traffic_action.py
@@ -706,35 +702,35 @@ aws elbv2 describe-listeners --region "$DOCS_REGION" \
   --listener-arns "$DOCS_LISTENER_ARN" --output json
 ```
 
-首先设置三个 ARN 变量。不要仅按计时器推进百分比。
-在每个阶段观察 SLO、新/现有连接、错误和会话。
-测试零权重、不健康 target 和 cross-zone 行为，而不要假定故障转移至另一个 TG。
-在共享 NLB 后验证 Green 时使用单独的直接 Service 路径。
+请先设置三个 ARN 变量。不要仅凭计时器推进百分比。
+每个阶段都要观察 SLO、新/现有连接、错误和会话。
+请测试权重为零、目标不健康和跨区行为，不要想当然地认为流量会故障转移到另一个 TG。
+通过共享 NLB 验证 Green 时，请使用单独的直接 Service 路径。
 
-### 数据和清理
+### 数据与清理
 
-外部 RDS/ElastiCache 或共享 EFS 并不能消除 schema、权限、cache-format 或
-并发 writer/consumer 迁移工作。共享文件系统或一个 SQL count 都不能证明
-一致性。检查快照区域/AZ、storage class、KMS 以及自最近写入以来的 RPO。
+外部 RDS/ElastiCache 或共享 EFS 并不能免除 schema、权限、缓存格式或
+并发 writer/consumer 迁移工作。共享文件系统或单次 SQL 计数不能证明一致性。
+请检查快照区域/AZ、存储类、KMS，以及距上次写入以来的 RPO。
 
-在约定的观察/恢复期和数据兼容性验证期内保留 Blue。
-零权重 TG 仍可能被 listener 引用。
-Auto Mode TGB/cluster 删除会影响关联 TG 生命周期。先从共享 listener 中移除
-Blue TG 引用，然后在清理前审查所有权、IaC 和删除顺序。
-请将其与自管 LB Controller 的 external-TG 所有权区分开来。
-流量切换后不要立即自动 terraform destroy。
+在约定的观察/恢复期和数据兼容性验证完成之前，保留 Blue。
+权重为零的 TG 仍可能被 listener 引用。
+Auto Mode TGB/集群删除会影响相关 TG 的生命周期。请从共享 listener 中移除 Blue TG 引用，
+然后在清理前检查所有权、IaC 和删除顺序。
+请将此情况与自管理 LB Controller 对外部 TG 的所有权区分开来。
+流量切换后不要立即自动运行 terraform destroy。
 
-如果 worker 已在按 AZ 分隔的集群中运行，可以选择一次升级一个集群。
-这并不使每个 EKS 控制平面成为单 AZ。
-验证其他集群的备用容量/状态兼容性以及原生回滚资格/持续时间。
-七天窗口不保证即时 Blue 故障回退。
+如果 workers 已在按 AZ 分离的集群中运行，可以选择一次升级一个集群。
+但这并不意味着每个 EKS 控制平面都是单 AZ。
+请验证其他集群的备用容量/状态兼容性，以及原生回滚的资格条件/时长。
+七天窗口并不保证能立即切回 Blue。
 
 ## 7. 升级后验证
 
-更新 Successful 后，验证实际版本、Node/Pod Ready、controller generation、
-DNS/network 路径、存储、权限、应用程序行为和计划任务。
-count 也会计数零值的 condition/phase 样本。如下聚合值，且不要将
-缺失的观测转换为健康的零。多个集群需要在收集中具有实际 cluster label。
+更新状态为 Successful 后，请验证实际版本、Node/Pod Ready、控制器 generation、
+DNS/网络路径、存储、权限、应用行为和计划任务。
+count 也会统计值为零的 condition/phase 样本。请按以下方式聚合数值，不要
+将缺失的观测数据当作健康的零值。多个集群需要在采集数据时使用实际的集群标签。
 
 ```promql
 count by (cluster, kubelet_version) (
@@ -756,11 +752,10 @@ sum by (cluster) (
 )
 ```
 
-Pod restart count 并不是重新调度计数。不要假定 Auto Mode controller metric
-由自管 Karpenter Pod 抓取。
-以下内容需要真实的 service=api label/metric 契约。
-零流量不是健康的零错误率；仅在 total-traffic series 存在且其 rate 为正时，
-才以零填充缺失的 error series。
+Pod 重启计数不等于重新调度计数。不要假设 Auto Mode 控制器指标
+是从自管理的 Karpenter Pod 抓取的。
+以下查询要求有真实的 service=api 标签/指标约定。
+零流量并不代表错误率健康为零；只有在总流量 series 存在且其 rate 大于零时，才将缺失的错误 series 补为零。
 
 ```promql
 (
@@ -782,18 +777,18 @@ histogram_quantile(0.99,
 )
 ```
 
-比较历史记录时，对分子、分母和 bucket 使用相同 offset。
-[30m] offset 1h 覆盖的是现在前 90–60 分钟，而非 60–30 分钟。
-比较等价 cohort：蓝绿环境可能在流量、路由、样本计数和负载方面不同。
-七十二小时无法覆盖完整的每周模式。请依据工作负载周期和回滚资格窗口选择观察持续时间。
+比较历史数据时，分子、分母和 buckets 应使用相同的 offset。
+`[30m] offset 1h` 覆盖的是现在之前 90–60 分钟，而不是 60–30 分钟。
+请比较相同的样本群体：blue/green 的流量、路由、样本数量和负载可能不同。
+七十二小时无法覆盖完整的每周模式。请根据工作负载周期和回滚资格窗口选择观察时长。
 
-使用[stack 章节](./09-observability-stack.md)中的明确 UID 和完整 dashboard provisioning。
-不要将部分 panel YAML/JSON 作为完整的可导入 dashboard。
-记录前/后版本、更新 ID、计划/实际时间、失败和恢复结果。
+使用[技术栈章节](./09-observability-stack.md)中明确的 UID 和完整的仪表板配置。
+不要将不完整的面板 YAML/JSON 作为可完整导入的仪表板呈现。
+记录升级前/后的版本、update ID、计划/实际时间、故障和恢复结果。
 
-本审查检查了合成 preflight/wait/routing 用例、官方 CLI parser、Velero 仅 GET 的
-输出行为以及 manifest/query。它未执行真实 EKS 升级/回滚、NLB 更改、
-快照/恢复或应用程序负载测试。
+本次审查检查了合成 preflight/wait/routing 用例、官方 CLI 解析器、Velero 仅 GET 输出行为
+以及 manifests/queries。未执行真实的 EKS 升级/回滚、NLB 变更、
+快照/恢复或应用负载测试。
 
 ## 官方参考资料
 
@@ -804,12 +799,12 @@ histogram_quantile(0.99,
 - [EKS 定价](https://aws.amazon.com/eks/pricing/)
 - [Kubernetes 版本偏差](https://kubernetes.io/releases/version-skew-policy/)
 - [Kubernetes 发布历史](https://kubernetes.io/releases/)
-- [Kubernetes 补丁版本和支持期](https://kubernetes.io/releases/patch-releases/)
+- [Kubernetes 补丁版本和支持周期](https://kubernetes.io/releases/patch-releases/)
 - [Kubernetes 弃用策略](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
-- [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
-- [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
-- [NLB listener](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [Pluto 5.24.4](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.4)
+- [Velero 1.18.4](https://github.com/velero-io/velero/releases/tag/v1.18.4)
+- [NLB listeners](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 
 ---
 
-< [上一节：资源优化](./10-resource-optimization.md) | [目录](./README.md) | [下一节：事件容量规划](./12-event-capacity-planning.md) >
+< [上一章：资源优化](./10-resource-optimization.md) | [目录](./README.md) | [下一章：活动容量规划](./12-event-capacity-planning.md) >

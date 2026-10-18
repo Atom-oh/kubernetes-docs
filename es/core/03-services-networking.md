@@ -1,19 +1,19 @@
 # Servicios y redes
 
-> **Versiones compatibles**: Kubernetes 1.32, 1.33, 1.34
-> **Última actualización**: February 23, 2026
+> **Versiones compatibles**: Kubernetes 1.35, 1.36, 1.37
+> **Última actualización**: October 16, 2026
 
-En Kubernetes, un Service es una capa de abstracción que proporciona un único punto de acceso para un conjunto de Pods. En este capítulo, exploraremos en detalle los conceptos de redes de Kubernetes, incluidos varios tipos de Service, Ingress, políticas de red y más.
+En Kubernetes, un Service es una capa de abstracción que proporciona un único punto de acceso a un conjunto de Pods. En este capítulo, exploraremos en detalle los conceptos de redes de Kubernetes, incluidos varios tipos de Service, Ingress, políticas de red y mucho más.
 
 ## Configuración del entorno de laboratorio
 
 Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y el siguiente entorno:
 
 ### Herramientas necesarias
-- kubectl v1.34 o posterior
+- kubectl con una diferencia máxima de una versión menor respecto al servidor de API
 - Un clúster de Kubernetes en funcionamiento (EKS, minikube, kind, etc.)
 
-### Implementar la aplicación de ejemplo
+### Implementar una aplicación de ejemplo
 
 ```bash
 # Create namespace
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
 ---
@@ -60,35 +60,33 @@ EOF
 kubectl -n networking-demo get svc,pods
 ```
 
-## Tabla de contenidos
+## Tabla de contenido
 
 1. [Tipos de Service](#service-types)
 2. [Ingress](#ingress)
 3. [Endpoints](#endpoints)
-4. [Descubrimiento de servicios](#service-discovery)
+4. [Detección de servicios](#service-discovery)
 5. [CoreDNS](#coredns)
 6. [Políticas de red](#network-policies)
-7. [Service Mesh](#service-mesh)
-8. [CNI (Container Network Interface) (English)](https://www.atomai.click/kubernetes-docs/en/core/03-services-networking#cnicontainer-network-interface)
+7. [Malla de servicios](#service-mesh)
+8. [CNI (Interfaz de red de contenedores)](#cnicontainer-network-interface)
 9. [Cilium](#cilium)
    - [Introducción a Cilium](#introduction-to-cilium)
    - [Tecnología eBPF](#ebpf-technology)
-   - [Modelo de red de Cilium](#cilium-networking-model)
+   - [Modelo de redes de Cilium](#cilium-networking-model)
    - [Políticas de red de Cilium](#cilium-network-policies)
    - [Visibilidad de red con Hubble](#network-visibility-with-hubble)
    - [Configuración de Cilium en Amazon EKS](#configuring-cilium-on-amazon-eks)
 
-<span id="service-types"></span>
-
 ## Tipos de Service
 
-> **Concepto clave**: Los Services de Kubernetes proporcionan endpoints de red estables para un conjunto de Pods y controlan el acceso interno y externo mediante varios tipos.
+> **Concepto clave**: Los Service de Kubernetes proporcionan endpoints de red estables para un conjunto de Pods y controlan el acceso interno y externo mediante varios tipos.
 
-Kubernetes proporciona varios tipos de Services para admitir múltiples formas de exponer aplicaciones.
+Kubernetes proporciona distintos tipos de Service para admitir varias formas de exponer aplicaciones.
 
 ### Arquitectura de Service
 
-![Los clientes externos llegan a ClusterIP a través de LoadBalancer o NodePort; los clientes internos del clúster resuelven nombres mediante CoreDNS y acceden a ClusterIP, que se enruta a través de Endpoints a los Pods de backend, mientras que ExternalName crea un alias de un servicio externo mediante DNS CNAME.](../.gitbook/assets/en-core-03-services-networking-0.png)
+![Red de Service: los proxies o balanceadores de carga enrutan el tráfico a los Pods de backend mediante la información de EndpointSlice; CoreDNS resuelve los nombres de Service y ExternalName proporciona un alias DNS CNAME.](../.gitbook/assets/en-core-03-services-networking-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-0.html)
 
@@ -96,15 +94,15 @@ Kubernetes proporciona varios tipos de Services para admitir múltiples formas d
 
 | Tipo de Service | Ámbito de acceso | IP externa | Caso de uso | Características |
 |-------------|-------------|-------------|----------|----------|
-| **ClusterIP** | Interno del clúster | No | Comunicación interna entre microservicios | Tipo de Service predeterminado, accesible solo dentro del clúster |
-| **NodePort** | Externo al clúster | No | Entornos de desarrollo y prueba | Acceso mediante un puerto específico (30000-32767) en todos los nodos |
+| **ClusterIP** | Interno al clúster | No | Comunicación interna entre microservicios | Tipo de Service predeterminado, accesible solo dentro del clúster |
+| **NodePort** | Externo al clúster | No | Entornos de desarrollo y pruebas | Acceso mediante un puerto específico (30000-32767) en todos los nodos |
 | **LoadBalancer** | Externo al clúster | Sí | Servicios externos de producción | Aprovisiona un balanceador de carga del proveedor de nube |
-| **ExternalName** | Interno del clúster | No | Alias interno para servicios externos | Redirección mediante registro DNS CNAME |
-| **Headless** | Interno del clúster | No | Cuando se necesita acceso directo a la IP del Pod | Service especial sin ClusterIP |
+| **ExternalName** | Interno al clúster | No | Alias interno para servicios externos | Redirección mediante un registro DNS CNAME |
+| **Headless** | Interno al clúster | No | Cuando se necesita acceso directo a la IP del Pod | Service especial sin ClusterIP |
 
 ### ClusterIP
 
-ClusterIP es el tipo de Service más básico y proporciona una dirección IP fija accesible solo dentro del clúster.
+ClusterIP es el tipo de Service más básico: proporciona una dirección IP fija a la que solo se puede acceder dentro del clúster.
 
 ```yaml
 apiVersion: v1
@@ -123,7 +121,7 @@ spec:
 
 ### NodePort
 
-Los Services NodePort permiten acceder al Service a través de un puerto específico en todos los nodos.
+Los Service de tipo NodePort permiten acceder al Service mediante un puerto específico en todos los nodos.
 
 ```yaml
 apiVersion: v1
@@ -141,48 +139,9 @@ spec:
   type: NodePort
 ```
 
-ClusterIP es el tipo de Service predeterminado y proporciona una dirección IP accesible solo dentro del clúster.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-  - port: 80
-    targetPort: 9376
-  type: ClusterIP
-```
-
-Se puede acceder a este Service como `my-service:80` dentro del clúster.
-
-### NodePort
-
-Los Services NodePort permiten acceder al Service a través de un puerto específico en todos los nodos.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-  - port: 80
-    targetPort: 9376
-    nodePort: 30007  # Optional, auto-assigned from 30000-32767 if not specified
-  type: NodePort
-```
-
-Se puede acceder a este Service como `<Node IP>:30007` en todos los nodos del clúster.
-
 ### LoadBalancer
 
-Los Services LoadBalancer aprovisionan un balanceador de carga del proveedor de nube para exponer el Service externamente.
+Los Service de tipo LoadBalancer aprovisionan un balanceador de carga del proveedor de nube para exponer el Service externamente.
 
 ```yaml
 apiVersion: v1
@@ -190,7 +149,9 @@ kind: Service
 metadata:
   name: my-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb  # Use NLB on AWS
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
 spec:
   selector:
     app: MyApp
@@ -200,11 +161,11 @@ spec:
   type: LoadBalancer
 ```
 
-Se puede acceder a este Service externamente a través del balanceador de carga del proveedor de nube.
+Este ejemplo requiere AWS Load Balancer Controller, sus permisos de IAM, subredes adecuadas e IP de Pod enrutables. Aprovisiona un NLB accesible desde Internet. También es posible usar balanceadores de carga internos; AWS puede devolver un nombre de host DNS en lugar de una IP. EKS Auto Mode utiliza una clase y un controlador independientes, además de una configuración propia.
 
 ### ExternalName
 
-Los Services ExternalName proporcionan un alias para servicios externos.
+Los Service de tipo ExternalName proporcionan un alias para servicios externos.
 
 ```yaml
 apiVersion: v1
@@ -220,7 +181,7 @@ Este Service asigna el nombre DNS `my-service` a `my.database.example.com`.
 
 ### Service Headless
 
-Un Service Headless es un Service sin una IP de clúster que crea registros DNS para cada Pod.
+Un Service headless es un Service sin una IP de clúster que crea registros DNS para cada Pod.
 
 ```yaml
 apiVersion: v1
@@ -240,7 +201,7 @@ Este Service no asigna una IP de clúster y crea registros DNS para cada Pod.
 
 ### IP externa
 
-Los Services pueden especificar IP externas para exponer recursos externos como Services de Kubernetes.
+`externalIPs` expone este Service en direcciones IP administradas por un administrador y ya enrutadas a los nodos; no asigna direcciones ni selecciona un backend externo. Está obsoleto desde la versión v1.36. Para configuraciones nuevas, es preferible usar un balanceador de carga compatible o una implementación de Gateway. La dirección de documentación que aparece a continuación debe sustituirse por una dirección que controles.
 
 ```yaml
 apiVersion: v1
@@ -254,27 +215,28 @@ spec:
   - port: 80
     targetPort: 9376
   externalIPs:
-  - 80.11.12.10
+  - 198.51.100.32
 ```
 
 ## Ingress
 
-Ingress es un objeto de API que expone rutas HTTP y HTTPS desde fuera del clúster hacia Services dentro del clúster. Ingress proporciona balanceo de carga, terminación SSL y alojamiento virtual basado en nombres.
+Ingress es un objeto de API que expone rutas HTTP y HTTPS desde fuera del clúster hacia los Service dentro del clúster. Ingress proporciona balanceo de carga, terminación SSL y alojamiento virtual basado en nombres.
 
-![La solicitud de un cliente externo pasa por un balanceador de carga y un controlador Ingress hasta un único recurso Ingress, cuyas reglas de host/ruta se distribuyen a Service A y Service B, cada uno con balanceo de carga entre sus propios Pods de backend (A-1, A-2 / B-1, B-2).](../.gitbook/assets/en-core-03-services-networking-1.png)
+![Las reglas de host y ruta de Ingress configuran un proxy o balanceador de carga para enrutar las solicitudes a los Pods de backend del Service A o del Service B; el objeto de API Ingress en sí es configuración, no un salto del tráfico.](../.gitbook/assets/en-core-03-services-networking-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-1.html)
 
-### Controlador Ingress
+### Controlador de Ingress
 
-Para usar recursos Ingress, debe ejecutarse un controlador Ingress en el clúster. Existen varios controladores Ingress:
+Para usar recursos de Ingress, debe haber un controlador de Ingress en ejecución en el clúster. Hay varios controladores de Ingress:
 
-- NGINX Ingress Controller
-- AWS ALB Ingress Controller
+- AWS Load Balancer Controller
 - GCE Ingress Controller
 - Traefik
 - HAProxy
 - Istio Ingress
+
+ingress-nginx de la comunidad dejó de mantenerse en marzo de 2026 ([aviso](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)). Los ejemplos genéricos que aparecen a continuación suponen que hay instalado un controlador Traefik y la clase `traefik` IngressClass. Ingress es una API de configuración, no un salto de procesamiento de paquetes; el controlador configura el proxy o balanceador de carga real.
 
 ### Ingress básico
 
@@ -284,7 +246,7 @@ kind: Ingress
 metadata:
   name: minimal-ingress
 spec:
-  ingressClassName: nginx  # Ingress controller class to use
+  ingressClassName: traefik  # Ingress controller class to use
   rules:
   - host: example.com
     http:
@@ -308,7 +270,7 @@ kind: Ingress
 metadata:
   name: path-based-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: example.com
     http:
@@ -329,7 +291,7 @@ spec:
               number: 80
 ```
 
-Este Ingress enruta las solicitudes que comienzan con `example.com/api` a `api-service` y las solicitudes que comienzan con `example.com/web` a `web-service`.
+Este Ingress enruta las solicitudes que empiezan por `example.com/api` a `api-service` y las que empiezan por `example.com/web` a `web-service`.
 
 ### Alojamiento virtual basado en nombres
 
@@ -339,7 +301,7 @@ kind: Ingress
 metadata:
   name: name-based-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: foo.example.com
     http:
@@ -363,9 +325,9 @@ spec:
               number: 80
 ```
 
-Este Ingress enruta las solicitudes a `foo.example.com` a `foo-service` y las solicitudes a `bar.example.com` a `bar-service`.
+Este Ingress enruta las solicitudes a `foo.example.com` hacia `foo-service` y las solicitudes a `bar.example.com` hacia `bar-service`.
 
-### Configuración TLS
+### Configuración de TLS
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -373,7 +335,7 @@ kind: Ingress
 metadata:
   name: tls-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
   - hosts:
     - example.com
@@ -391,17 +353,17 @@ spec:
               number: 80
 ```
 
-Este Ingress termina las conexiones HTTPS a `example.com` mediante el certificado TLS almacenado en el Secret `example-tls`.
+Este Ingress termina las conexiones HTTPS a `example.com` mediante el certificado TLS almacenado en el secreto `example-tls`.
 
-Creación de Secret TLS:
+Creación de un secreto TLS:
 
 ```bash
 kubectl create secret tls example-tls --cert=path/to/cert.crt --key=path/to/key.key
 ```
 
-### AWS ALB Ingress Controller
+### AWS Load Balancer Controller
 
-En AWS EKS, puedes usar AWS ALB Ingress Controller para aprovisionar Application Load Balancers.
+En AWS EKS, puedes usar AWS Load Balancer Controller para aprovisionar Application Load Balancers.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -409,12 +371,13 @@ kind: Ingress
 metadata:
   name: alb-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id
 spec:
+  ingressClassName: alb
   rules:
   - host: example.com
     http:
@@ -432,7 +395,9 @@ Este Ingress usa AWS ALB para gestionar las solicitudes a `example.com`.
 
 ## Endpoints
 
-Los Endpoints son recursos que almacenan las direcciones IP y los puertos de los Pods a los que apunta un Service. Cuando hay Pods que coinciden con el selector del Service, Kubernetes crea y administra automáticamente el objeto Endpoints.
+La API heredada `v1/Endpoints` está obsoleta desde la versión v1.33. Para nuevas integraciones, usa EndpointSlices de `discovery.k8s.io/v1`. Estos objetos describen los backends; el tráfico no pasa por los objetos de API.
+
+Endpoints son recursos que almacenan las direcciones IP y los puertos de los Pods a los que apunta un Service. Cuando hay Pods que coinciden con el selector del Service, Kubernetes crea y administra automáticamente el objeto Endpoints.
 
 ```yaml
 apiVersion: v1
@@ -446,11 +411,11 @@ subsets:
   - port: 9376
 ```
 
-Este Endpoints hace que `my-service` apunte a `192.168.1.1:9376`.
+Para usar backends manuales, crea un Service llamado `my-service` **sin selector** y con puertos coincidentes; de lo contrario, el controlador podría sobrescribir los datos del backend. Se recomienda usar un EndpointSlice administrado manualmente, como el que se muestra a continuación.
 
 ### EndpointSlice
 
-EndpointSlice es una alternativa escalable a Endpoints que proporciona mejor rendimiento en clústeres grandes.
+EndpointSlice es una alternativa escalable a Endpoints que ofrece un mejor rendimiento en clústeres grandes.
 
 ```yaml
 apiVersion: discovery.k8s.io/v1
@@ -459,34 +424,32 @@ metadata:
   name: my-service-abc
   labels:
     kubernetes.io/service-name: my-service
+    endpointslice.kubernetes.io/managed-by: docs.example.com
 addressType: IPv4
 ports:
-- name: http
+- name: ""
   protocol: TCP
-  port: 80
+  port: 9376
 endpoints:
 - addresses:
   - "10.1.2.3"
   conditions:
     ready: true
   hostname: pod-1
-  topology:
-    kubernetes.io/hostname: node-1
-    topology.kubernetes.io/zone: us-west-2a
+  nodeName: node-1
+  zone: us-west-2a
 ```
 
-<span id="service-discovery"></span>
+## Detección de servicios
 
-## Descubrimiento de servicios
+Kubernetes proporciona dos métodos principales para detectar servicios:
 
-Kubernetes proporciona dos métodos principales de descubrimiento de servicios:
-
-1. **Variables de entorno**: Kubernetes inyecta variables de entorno de los Services activos en los Pods cuando se crean.
-2. **DNS**: Kubernetes proporciona registros DNS para los Services a través del servidor DNS del clúster.
+1. **Variables de entorno**: Kubernetes inyecta variables de entorno para los servicios activos en los Pods cuando se crean.
+2. **DNS**: Kubernetes proporciona registros DNS para los servicios mediante el servidor DNS del clúster.
 
 ### Variables de entorno
 
-Cuando se crea un Pod, Kubernetes inyecta en el Pod variables de entorno para todos los Services que existen en ese momento. Por ejemplo, si hay un Service llamado `my-service`, se crean las siguientes variables de entorno:
+Con `enableServiceLinks: true`, kubelet agrega variables para los Service con ClusterIP que ya están presentes en el espacio de nombres del Pod cuando se inician sus contenedores. Estas variables no se actualizan dinámicamente; es preferible usar DNS para los Service que se crean posteriormente. Por ejemplo, si hay un Service llamado `my-service`, se crean las siguientes variables de entorno:
 
 ```
 MY_SERVICE_SERVICE_HOST=10.0.0.11
@@ -495,14 +458,14 @@ MY_SERVICE_SERVICE_PORT=80
 
 ### DNS
 
-El DNS de Kubernetes crea registros DNS para los Services. Los Pods pueden acceder a los Services mediante el nombre del Service.
+El DNS de Kubernetes crea registros DNS para los servicios. Los Pods pueden acceder a los servicios mediante el nombre del Service.
 
 - Service normal: `my-service.my-namespace.svc.cluster.local`
-- Pod de un Service Headless: `pod-name.my-service.my-namespace.svc.cluster.local`
+- Pod de un Service headless: `pod-name.my-service.my-namespace.svc.cluster.local`
 
 ## CoreDNS
 
-CoreDNS es un servidor DNS flexible y extensible que se utiliza como servidor DNS para los clústeres de Kubernetes.
+CoreDNS es un servidor DNS flexible y extensible que se utiliza como servidor DNS en los clústeres de Kubernetes.
 
 ### Configuración de CoreDNS
 
@@ -536,27 +499,27 @@ data:
     }
 ```
 
-Esta configuración proporciona las siguientes características:
+Esta configuración ofrece las siguientes funciones:
 
 - `errors`: Registro de errores
 - `health`: Endpoint de comprobación de estado
 - `ready`: Endpoint de comprobación de disponibilidad
-- `kubernetes`: Registros DNS para Services y Pods de Kubernetes
+- `kubernetes`: Registros DNS para servicios y Pods de Kubernetes
 - `prometheus`: Exposición de métricas de Prometheus
 - `forward`: Reenvío de consultas DNS externas
 - `cache`: Almacenamiento en caché de respuestas DNS
 - `loop`: Detección de bucles
-- `reload`: Recarga automática ante cambios en el archivo de configuración
+- `reload`: Recarga automática cuando cambian los archivos de configuración
 - `loadbalance`: Balanceo de carga
 
-### Política DNS
+### Política de DNS
 
 La política DNS de un Pod se puede configurar mediante el campo `dnsPolicy`:
 
-- `ClusterFirst`: Predeterminada; utiliza primero el servidor DNS de Kubernetes y reenvía a servidores de nombres ascendentes si no encuentra coincidencias.
-- `Default`: Hereda la configuración DNS del nodo donde se ejecuta el Pod.
-- `ClusterFirstWithHostNet`: Política recomendada para Pods con `hostNetwork: true`.
-- `None`: Todas las configuraciones DNS deben proporcionarse mediante el campo `dnsConfig`.
+- `ClusterFirst`: Predeterminada; usa primero el servidor DNS de Kubernetes y reenvía las consultas a los servidores de nombres ascendentes si no encuentra coincidencias.
+- `Default`: Hereda la configuración DNS del nodo en el que se ejecuta el Pod.
+- `ClusterFirstWithHostNet`: Política recomendada para los Pods con `hostNetwork: true`.
+- `None`: Toda la configuración DNS debe proporcionarse mediante el campo `dnsConfig`.
 
 ```yaml
 apiVersion: v1
@@ -581,13 +544,11 @@ spec:
     - name: edns0
 ```
 
-<span id="network-policies"></span>
-
 ## Políticas de red
 
-Las políticas de red proporcionan una forma de controlar la comunicación entre Pods. Para usar políticas de red, el complemento de red debe admitirlas (por ejemplo, Calico, Cilium, Weave Net).
+Las políticas de red permiten controlar la comunicación entre Pods. Para usarlas, el complemento de red debe ser compatible con ellas (por ejemplo, Calico o Cilium).
 
-![Las políticas de red permiten que el Pod Frontend llegue al Pod API y que el Pod API llegue al Pod Database, y permiten que un Pod Monitoring de otro namespace llegue al Pod API, mientras bloquean directamente que el Pod Frontend y el Pod Monitoring lleguen al Pod Database.](../.gitbook/assets/en-core-03-services-networking-2.png)
+![Las políticas de red permiten que el Pod Frontend llegue al Pod API y que el Pod API llegue al Pod Database, además de permitir que un Pod Monitoring de otro espacio de nombres llegue al Pod API; a la vez, bloquean directamente el acceso del Pod Frontend y del Pod Monitoring al Pod Database.](../.gitbook/assets/en-core-03-services-networking-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-2.html)
 
@@ -604,9 +565,9 @@ spec:
   - Ingress
 ```
 
-Esta política de red bloquea el tráfico de entrada a todos los Pods.
+Esta política aísla el tráfico de entrada a los Pods de su propio espacio de nombres. Las NetworkPolicies estándar son aditivas: el tráfico permitido por otra política sigue estando permitido. El complemento debe aplicar las políticas; tanto la salida de origen como la entrada de destino deben permitir una conexión. El tráfico de nodos tiene excepciones documentadas.
 
-### Permitir entrada a Pods específicos
+### Permitir el tráfico de entrada a Pods específicos
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -629,9 +590,9 @@ spec:
       port: 80
 ```
 
-Esta política de red permite tráfico de entrada en el puerto TCP 80 desde Pods con la etiqueta `access: allowed` hacia Pods con la etiqueta `app: nginx`.
+Esta política de red permite el tráfico de entrada por el puerto TCP 80 desde Pods con la etiqueta `access: allowed` hacia Pods con la etiqueta `app: nginx`.
 
-### Política basada en namespace
+### Política basada en espacios de nombres
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -651,7 +612,7 @@ spec:
           purpose: production
 ```
 
-Esta política de red permite tráfico de entrada desde todos los Pods en namespaces con la etiqueta `purpose: production` hacia Pods con la etiqueta `app: db`.
+Esta política de red permite el tráfico de entrada desde todos los Pods de los espacios de nombres con la etiqueta `purpose: production` hacia los Pods con la etiqueta `app: db`.
 
 ### Política de salida
 
@@ -680,7 +641,9 @@ spec:
           purpose: monitoring
 ```
 
-Esta política de red permite tráfico de salida desde Pods con la etiqueta `app: frontend` hacia el puerto TCP 8080 en Pods con la etiqueta `app: api` y hacia todos los Pods en namespaces con la etiqueta `purpose: monitoring`.
+Esta política de red permite el tráfico de salida desde los Pods con la etiqueta `app: frontend` hacia el puerto TCP 8080 de los Pods con la etiqueta `app: api`, así como hacia todos los Pods de los espacios de nombres con la etiqueta `purpose: monitoring`.
+
+El ejemplo de salida también bloquea el DNS, a menos que otra política lo permita. Si las aplicaciones usan nombres de Service, agrega acceso TCP/UDP por el puerto 53 a los endpoints DNS del clúster; ten en cuenta NodeLocal DNS si está instalado.
 
 ### Política basada en CIDR
 
@@ -703,24 +666,24 @@ spec:
         - 192.168.1.1/32
 ```
 
-Esta política de red permite tráfico de entrada desde el bloque CIDR `192.168.1.0/24` (excepto 192.168.1.1) hacia Pods con la etiqueta `app: web`.
+Esta política de red permite el tráfico de entrada desde el bloque CIDR `192.168.1.0/24` (excepto 192.168.1.1) hacia los Pods con la etiqueta `app: web`.
 
-## Service Mesh
+## Malla de servicios
 
-Un service mesh es una capa de infraestructura que administra la comunicación entre microservicios. Los service meshes proporcionan características como descubrimiento de servicios, balanceo de carga, cifrado, autenticación, autorización y observabilidad.
+Una malla de servicios es una capa de infraestructura que administra la comunicación entre microservicios. Las mallas de servicios ofrecen funciones como la detección de servicios, el balanceo de carga, el cifrado, la autenticación, la autorización y la observabilidad.
 
-![El plano de control de Istio envía configuración a través de canales de control discontinuos a los proxies sidecar inyectados en tres Pods; cada Service se comunica solo con su propio sidecar, y los sidecars intercambian tráfico de Service a Service entre sí en lugar de que los Services se conecten directamente.](../.gitbook/assets/en-core-03-services-networking-3.png)
+![El plano de control de Istio envía configuración a través de canales de control discontinuos a los proxies sidecar inyectados en tres Pods; cada servicio se comunica únicamente con su propio sidecar, y los sidecars intercambian tráfico entre servicios en lugar de que los servicios se conecten directamente entre sí.](../.gitbook/assets/en-core-03-services-networking-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-3.html)
 
 ### Istio
 
-Istio es una de las implementaciones populares de service mesh. Istio usa el patrón sidecar para inyectar proxies Envoy en cada Pod.
+Istio es una de las implementaciones populares de malla de servicios. El diagrama muestra el modo sidecar de Istio, que inyecta Envoy en los Pods inscritos. Istio también ofrece el modo ambient, con un plano de datos diferente.
 
-#### Istio Virtual Service
+#### VirtualService de Istio
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -742,12 +705,12 @@ spec:
         subset: v1
 ```
 
-Este VirtualService enruta las solicitudes con el encabezado `end-user: jason` al subconjunto `v2` del Service `reviews` y todas las demás solicitudes al subconjunto `v1`.
+Este VirtualService enruta las solicitudes que incluyen el encabezado `end-user: jason` al subconjunto `v2` del Service `reviews` y todas las demás solicitudes al subconjunto `v1`.
 
-#### Istio Destination Rule
+#### DestinationRule de Istio
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -772,9 +735,11 @@ Este DestinationRule define dos subconjuntos (`v1` y `v2`) para el Service `revi
 
 ### Linkerd
 
-Linkerd es un service mesh ligero caracterizado por una instalación y un uso sencillos.
+Linkerd es una malla de servicios ligera que se caracteriza por su sencillez de instalación y uso.
 
-#### Linkerd Service Profile
+#### Perfil de Service de Linkerd
+
+Este es un ejemplo heredado. Desde Linkerd 2.16, los tipos de Gateway API sustituyen a ServiceProfiles, que se mantienen por compatibilidad. Consulta la [referencia actual](https://linkerd.io/2-edge/reference/service-profiles/).
 
 ```yaml
 apiVersion: linkerd.io/v1alpha2
@@ -802,70 +767,72 @@ spec:
 
 Este ServiceProfile define rutas y políticas de reintento para el Service `nginx`.
 
+<span id="cnicontainer-network-interface"></span>
+
+## CNI (Interfaz de red de contenedores)
+
+Los complementos CNI configuran las interfaces de red de los Pods y el direccionamiento IP. La aplicación de NetworkPolicy es opcional y depende del complemento.
+
 ## Cilium
 
-![Kubernetes delega las redes a través de Container Network Interface en Cilium, que carga programas eBPF en el kernel de Linux para implementar la ruta de datos y también alimenta a Hubble para la observabilidad de los flujos de red.](../.gitbook/assets/en-core-03-services-networking-4.png)
+![Kubernetes delega las funciones de red mediante la Interfaz de red de contenedores a Cilium, que carga programas eBPF en el kernel de Linux para implementar el plano de datos y también proporciona datos a Hubble para la observabilidad de los flujos de red.](../.gitbook/assets/en-core-03-services-networking-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-4.html)
 
 [Detalles de Cilium](../networking/cilium/README.md)
 
-<span id="introduction-to-cilium"></span>
-
 ### Introducción a Cilium
 
-Cilium es software de código abierto que aprovecha la potente tecnología eBPF del kernel de Linux para proporcionar conectividad de red, seguridad y observabilidad para aplicaciones en contenedores. Está diseñado para proporcionar redes, seguridad y observabilidad para plataformas de orquestación de contenedores como Kubernetes, Docker y Mesos.
+Cilium es software de código abierto que aprovecha la potente tecnología eBPF del kernel de Linux para proporcionar conectividad de red, seguridad y observabilidad a las aplicaciones en contenedores. Su integración actual con Kubernetes proporciona redes, seguridad y observabilidad mediante un complemento CNI y controladores.
 
 #### Características principales
 
-- **Basado en eBPF**: Proporciona características de red y seguridad de alto rendimiento a través de una ruta de datos programable dentro del kernel
+- **Basado en eBPF**: Proporciona funciones de redes y seguridad de alto rendimiento mediante un plano de datos programable dentro del kernel
 - **Redes con reconocimiento de API**: Admite políticas de seguridad de red con reconocimiento de API en las capas L3-L7
-- **Integración con Kubernetes**: Proporciona una implementación CNI (Container Network Interface) de Kubernetes
-- **Balanceo de carga distribuido**: Balanceo de carga distribuido para una comunicación eficiente de Service a Service
-- **Visibilidad de red**: Monitoreo y solución de problemas de flujos de red mediante Hubble
-- **Compatibilidad con múltiples clústeres**: Compatibilidad con redes y políticas de seguridad entre clústeres
+- **Integración con Kubernetes**: Proporciona una implementación CNI (Interfaz de red de contenedores) para Kubernetes
+- **Balanceo de carga distribuido**: Balanceo de carga distribuido para una comunicación eficiente entre servicios
+- **Visibilidad de red**: Supervisión y solución de problemas de los flujos de red mediante Hubble
+- **Compatibilidad con varios clústeres**: Compatibilidad con redes y políticas de seguridad entre clústeres
 
 #### Aspectos diferenciadores de Cilium
 
-Cilium proporciona varias ventajas únicas en comparación con otras soluciones CNI.
+Cilium ofrece varias ventajas únicas en comparación con otras soluciones CNI.
 
-**Diferenciación técnica**:
-- **Uso de eBPF**: Alto rendimiento y flexibilidad a través de una ruta de datos programable dentro del kernel
+**Diferencias técnicas**:
+- **Uso de eBPF**: Alto rendimiento y flexibilidad mediante un plano de datos programable dentro del kernel
 - **Redes con reconocimiento de API**: Compatibilidad con políticas de red hasta la capa L7
-- **XDP (eXpress Data Path)**: Optimización del rendimiento de procesamiento de paquetes
-- **Reemplazo de Kube-proxy**: Balanceo de carga de Service más eficiente
+- **XDP (eXpress Data Path)**: Optimización del rendimiento del procesamiento de paquetes
+- **Sustitución de kube-proxy**: Balanceo de carga de Service más eficiente
 - **Integración con Hubble**: Potente herramienta de observabilidad de red
 
-**Beneficios por caso de uso**:
-- **Arquitectura de microservicios**: Políticas de red y observabilidad detalladas
-- **Implementación en múltiples clústeres**: Redes sin interrupciones entre clústeres
-- **Entorno centrado en la seguridad**: Políticas de seguridad de red sólidas
-- **Requisitos de alto rendimiento**: Ruta de datos optimizada
-- **Integración con Service Mesh**: Integración con service meshes como Istio
-
-<span id="ebpf-technology"></span>
+**Ventajas según el caso de uso**:
+- **Arquitectura de microservicios**: Políticas de red detalladas y observabilidad
+- **Implementación en varios clústeres**: Redes fluidas entre clústeres
+- **Entornos centrados en la seguridad**: Políticas de seguridad de red sólidas
+- **Requisitos de alto rendimiento**: Plano de datos optimizado
+- **Integración con mallas de servicios**: Integración con mallas de servicios como Istio
 
 ### Tecnología eBPF
 
-eBPF (extended Berkeley Packet Filter) es una tecnología que permite que los programas se ejecuten de forma segura dentro del kernel de Linux. Cilium usa eBPF para implementar características de red, seguridad y observabilidad.
+eBPF (extended Berkeley Packet Filter) es una tecnología que permite ejecutar programas de forma segura dentro del kernel de Linux. Cilium usa eBPF para implementar funciones de redes, seguridad y observabilidad.
 
 #### Características principales de eBPF
 
-1. **Ejecución en el kernel**: Los programas eBPF se ejecutan directamente dentro del kernel y proporcionan alto rendimiento.
-2. **Seguridad**: El verificador de eBPF garantiza que los programas no dañen el kernel.
+1. **Ejecución dentro del kernel**: Los programas eBPF se ejecutan directamente dentro del kernel y ofrecen un alto rendimiento.
+2. **Seguridad**: El verificador comprueba las restricciones de seguridad del programa antes de cargarlo; esto no garantiza protección frente a errores del kernel ni a una lógica de políticas incorrecta.
 3. **Carga dinámica**: Los programas eBPF se pueden cargar y descargar sin reiniciar el kernel.
-4. **Mapas**: Los mapas eBPF se utilizan para almacenar y compartir datos entre el espacio de usuario y el espacio del kernel.
+4. **Maps**: Los maps de eBPF se usan para almacenar datos y compartirlos entre el espacio de usuario y el espacio del kernel.
 
 #### Uso de eBPF en Cilium
 
 Cilium usa eBPF de las siguientes maneras:
 
-1. **Ruta de datos de red**: Los programas eBPF procesan y enrutan paquetes de red.
+1. **Plano de datos de red**: Los programas eBPF procesan y enrutan paquetes de red.
 2. **Aplicación de políticas**: Los programas eBPF aplican políticas de red.
-3. **Balanceo de carga**: Los programas eBPF realizan el balanceo de carga para Services.
-4. **Observabilidad**: Los programas eBPF recopilan métricas sobre los flujos de red.
+3. **Balanceo de carga**: Los programas eBPF realizan el balanceo de carga de los servicios.
+4. **Observabilidad**: Los programas eBPF recopilan métricas de los flujos de red.
 
-#### eBPF frente a enfoques de red tradicionales
+#### eBPF frente a los enfoques de redes tradicionales
 
 | Característica | eBPF | Enfoque tradicional (iptables) |
 |---------|------|--------------------------------|
@@ -875,15 +842,13 @@ Cilium usa eBPF de las siguientes maneras:
 | Observabilidad | Alta | Limitada |
 | Complejidad de implementación | Alta | Media |
 
-<span id="cilium-networking-model"></span>
+### Modelo de redes de Cilium
 
-### Modelo de red de Cilium
+Cilium admite varios modelos de redes que se pueden configurar para adaptarse a distintos entornos y requisitos.
 
-Cilium admite varios modelos de red que se pueden configurar para adaptarse a diferentes entornos y requisitos.
+#### Redes superpuestas
 
-#### Redes overlay
-
-Cilium implementa redes overlay de forma predeterminada mediante VXLAN, pero también admite otros protocolos de encapsulación como Geneve.
+Cilium implementa redes superpuestas de forma predeterminada mediante VXLAN, pero también admite otros protocolos de encapsulación, como Geneve.
 
 **Cómo funciona**:
 1. Los paquetes se crean en el nodo de origen.
@@ -895,56 +860,45 @@ Cilium implementa redes overlay de forma predeterminada mediante VXLAN, pero tam
 **Ventajas**:
 - Compatibilidad con la infraestructura de red existente
 - Independencia de la topología de red
-- Prevención de conflictos de IP en entornos de múltiples clústeres
+- El direccionamiento de los Pods es independiente de la red subyacente; aun así, los clústeres conectados necesitan un plan de direccionamiento compatible y sin superposiciones
 
 **Desventajas**:
-- Impacto en el rendimiento debido a la sobrecarga de encapsulación
-- Tamaño de MTU reducido
-- Uso adicional de CPU
+- Impacto en el rendimiento debido a la sobrecarga de la encapsulación
+- Reducción del tamaño de MTU
+- Mayor uso de CPU
 
 #### Enrutamiento nativo
 
-El enrutamiento nativo utiliza enrutamiento directo sin encapsulación. En este modo, la infraestructura de red subyacente debe poder enrutar las direcciones IP de los Pods.
+El enrutamiento nativo usa enrutamiento directo sin encapsulación. En este modo, la infraestructura de red subyacente debe poder enrutar las direcciones IP de los Pods.
 
 **Cómo funciona**:
-1. Cada nodo anuncia el bloque CIDR de los Pods que se ejecutan en ese nodo.
-2. Las tablas de enrutamiento se configuran para enrutar cada bloque CIDR de Pods al nodo correspondiente.
+1. Cada nodo anuncia el bloque CIDR de los Pods que se ejecutan en él.
+2. Las tablas de enrutamiento se configuran para dirigir cada bloque CIDR de Pod al nodo correspondiente.
 3. Los paquetes se enrutan directamente al nodo de destino sin encapsulación.
 
 **Ventajas**:
 - Sin sobrecarga de encapsulación
-- Rendimiento de red mejorado
+- Mejor rendimiento de red
 - Menor uso de CPU
 
 **Desventajas**:
 - Dependencia de la infraestructura de red subyacente
 - Restricciones de topología de red
-- Complejidad de la administración de direcciones IP
+- Complejidad en la administración de direcciones IP
 
-#### Modo híbrido
+#### Selección del modo de enrutamiento
 
-Cilium también admite un modo híbrido que combina redes overlay y enrutamiento nativo.
-
-**Cómo funciona**:
-1. Usa enrutamiento nativo cuando es posible.
-2. Recurre a redes overlay cuando el enrutamiento nativo no es posible.
-
-**Ventajas**:
-- Equilibrio entre flexibilidad y rendimiento
-- Compatibilidad con varias topologías de red
-- Posibilidad de migración gradual
+Selecciona explícitamente la encapsulación o el enrutamiento nativo para la implementación. No des por hecho que las rutas nativas fallidas pasan automáticamente a un túnel; configura el enrutamiento y cualquier migración según la versión de Cilium elegida.
 
 #### Modo AWS ENI
 
-En AWS EKS, Cilium puede aprovechar las AWS Elastic Network Interfaces (ENI) para asignar direcciones IP de VPC nativas a los Pods.
+En AWS EKS, Cilium puede aprovechar las interfaces de red elásticas (ENI) de AWS para asignar direcciones IP nativas de la VPC a los Pods.
 
 **Características principales**:
-- Asigna direcciones IP nativas de VPC a los Pods
-- Redes nativas de VPC sin red overlay
-- Integración con AWS security groups y políticas de red
-- Rendimiento de red mejorado
-
-<span id="cilium-network-policies"></span>
+- Asigna direcciones IP nativas de la VPC a los Pods
+- Redes nativas de la VPC sin red superpuesta
+- Integración con grupos de seguridad y políticas de red de AWS
+- Mejor rendimiento de red
 
 ### Políticas de red de Cilium
 
@@ -973,11 +927,11 @@ spec:
         protocol: TCP
 ```
 
-Esta política permite tráfico de entrada en el puerto TCP 80 desde Pods con la etiqueta `app: frontend` hacia Pods con la etiqueta `app: myapp`.
+Esta política permite el tráfico de entrada por el puerto TCP 80 desde Pods con la etiqueta `app: frontend` hacia Pods con la etiqueta `app: myapp`.
 
 #### Políticas L7
 
-Cilium admite políticas L7 (capa de aplicación) para definir políticas detalladas para protocolos como HTTP, gRPC y Kafka.
+Cilium admite políticas L7, como reglas HTTP, mediante un proxy Envoy en espacio de usuario junto con eBPF. La inspección L7 no se realiza íntegramente dentro del kernel; consulta las limitaciones de protocolos y cifrado para la versión instalada.
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1006,7 +960,7 @@ Esta política permite únicamente solicitudes HTTP GET a la ruta `/api/v1/produ
 
 #### Políticas para todo el clúster
 
-Cilium admite políticas de red para todo el clúster para definir políticas que se aplican a todos los Pods.
+Cilium admite políticas de red para todo el clúster que definen reglas aplicables a todos los Pods.
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1022,30 +976,28 @@ spec:
         io.kubernetes.pod.namespace: kube-system
 ```
 
-Esta política permite tráfico de entrada desde Pods en el namespace `kube-system` hacia todos los Pods.
-
-<span id="network-visibility-with-hubble"></span>
+Esta política permite el tráfico de entrada desde los Pods del espacio de nombres `kube-system` hacia todos los Pods.
 
 ### Visibilidad de red con Hubble
 
-Hubble es la capa de observabilidad de Cilium que usa eBPF para monitorear flujos de red y solucionar problemas.
+Hubble es la capa de observabilidad de Cilium, que usa eBPF para supervisar los flujos de red y solucionar problemas.
 
 #### Características principales de Hubble
 
-1. **Monitoreo de flujos de red**: Monitorea la comunicación de Pod a Pod en tiempo real.
-2. **Mapeo de dependencias de Services**: Visualiza las dependencias de Service a Service.
-3. **Observación de seguridad**: Detecta infracciones de políticas de red.
-4. **Análisis de rendimiento**: Analiza la latencia y el rendimiento de la red.
+1. **Supervisión de flujos de red**: Supervisa en tiempo real la comunicación entre Pods.
+2. **Mapa de dependencias de servicios**: Visualiza las dependencias entre servicios.
+3. **Observación de seguridad**: Detecta infracciones de las políticas de red.
+4. **Análisis del rendimiento**: Analiza la latencia y el caudal de la red.
 5. **Solución de problemas**: Diagnostica problemas de conectividad de red.
 
 #### Arquitectura de Hubble
 
 Hubble consta de los siguientes componentes:
 
-1. **Hubble Server**: Servidor integrado en el agente de Cilium que recopila datos de flujos de red.
-2. **Hubble Relay**: Agrega datos de varios Hubble Servers.
-3. **Hubble UI**: Interfaz web para visualizar flujos de red.
-4. **Hubble CLI**: Herramienta de línea de comandos para consultar flujos de red.
+1. **Servidor Hubble**: Servidor integrado en el agente de Cilium que recopila datos de flujos de red.
+2. **Hubble Relay**: Agrega datos de varios servidores Hubble.
+3. **Interfaz de usuario de Hubble**: Interfaz web para visualizar los flujos de red.
+4. **CLI de Hubble**: Herramienta de línea de comandos para consultar los flujos de red.
 
 #### Ejemplos de uso de Hubble
 
@@ -1058,6 +1010,9 @@ rm hubble-linux-amd64.tar.gz
 # Enable Hubble
 cilium hubble enable
 
+# Run in a separate terminal and keep it open
+cilium hubble port-forward
+
 # Observe network flows
 hubble observe
 
@@ -1065,52 +1020,47 @@ hubble observe
 hubble observe --protocol http
 
 # Observe network flows for specific Pod
-hubble observe --pod app=myapp
+hubble observe --pod default/myapp-pod
 
 # Observe network policy violations
 hubble observe --verdict DROPPED
 ```
 
-<span id="configuring-cilium-on-amazon-eks"></span>
-
 ### Configuración de Cilium en Amazon EKS
 
-Existen varias formas de configurar Cilium en Amazon EKS. Aquí veremos algunos métodos de configuración comunes.
+Hay varias formas de configurar Cilium en Amazon EKS. Aquí veremos algunos métodos de configuración comunes.
 
-#### Instalación básica
+#### Elegir el modo CNI antes de la instalación
 
-```bash
-# Install Cilium CLI
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
-sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-rm cilium-linux-amd64.tar.gz
+Usa un clúster de prueba EKS desechable y selecciona una versión de Cilium compatible con su versión de Kubernetes. Sigue la [guía oficial de instalación en EKS](https://docs.cilium.io/en/stable/installation/k8s-install-helm/); lo siguiente son **fragmentos de valores** de Helm, no comandos completos de instalación o migración.
 
-# Install Cilium
-cilium install
+Para **AWS VPC CNI chaining**, conserva `aws-node` como IPAM y usa:
 
-# Check installation status
-cilium status
-
-# Test connectivity
-cilium connectivity test
+```yaml
+cni:
+  chainingMode: aws-cni
+  exclusive: false
+enableIPv4Masquerade: false
+routingMode: native
 ```
 
-#### Configuración del modo AWS ENI
+Los Pods existentes deben volver a crearse mediante un despliegue gradual controlado para que se aplique la nueva cadena CNI. Revisa las limitaciones de las funciones de chaining antes de activar la política L7 o la sustitución de kube-proxy.
 
-```bash
-# Install Cilium with AWS ENI mode
-cilium install --config aws-eni-mode=true
+Para **Cilium ENI IPAM**, Cilium administra las ENI en lugar de VPC CNI:
 
-# Or install using Helm
-helm install cilium cilium/cilium \
-  --namespace kube-system \
-  --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set tunnel=disabled
+```yaml
+eni:
+  enabled: true
+ipam:
+  mode: eni
+routingMode: native
 ```
 
-#### Habilitar Hubble
+Este modo requiere permisos para la API de EC2 y evitar que `aws-node` administre los mismos nodos, siguiendo el procedimiento oficial de instalación o migración. No lo apliques sobre una instalación de VPC CNI en ejecución sin seguir esos pasos. EKS Auto Mode y Fargate administran sus redes por separado.
+
+Después de la instalación, valida con `cilium status --wait` y la prueba de conectividad en el clúster de prueba aislado. Fija la versión del chart y conserva los valores revisados para las actualizaciones.
+
+#### Activar Hubble
 
 ```bash
 # Enable Hubble
@@ -1153,43 +1103,43 @@ spec:
         protocol: TCP
 ```
 
-Esta política permite únicamente solicitudes HTTP GET a la ruta `/api/v1/` desde Pods con la etiqueta `app: frontend` hacia Pods con la etiqueta `app: api`, y permite tráfico de salida en el puerto TCP 3306 desde Pods con la etiqueta `app: api` hacia Pods con la etiqueta `app: database`.
+Esta política permite únicamente solicitudes HTTP GET a la ruta `/api/v1/` desde Pods con la etiqueta `app: frontend` hacia Pods con la etiqueta `app: api`, y permite el tráfico de salida por el puerto TCP 3306 desde Pods con la etiqueta `app: api` hacia Pods con la etiqueta `app: database`.
 
 #### Optimización de Cilium en EKS
 
-1. **Configuración de grupos de nodos**:
-   - Selecciona tipos de instancias que proporcionen suficientes ENI y direcciones IP
-   - Configura un recuento máximo de Pods adecuado
+1. **Configuración del grupo de nodos**:
+   - Selecciona tipos de instancia que proporcionen suficientes ENI y direcciones IP
+   - Configura un número máximo de Pods adecuado
 
-2. **Optimización de rendimiento**:
+2. **Optimización del rendimiento**:
    - Usa el modo de enrutamiento directo
-   - Habilita la aceleración XDP
-   - Habilita el algoritmo de control de congestión BBR
+   - Activa la aceleración XDP
+   - Activa el algoritmo de control de congestión BBR
 
-3. **Monitoreo y registro**:
-   - Habilita Hubble
-   - Recopilación de métricas de Prometheus
-   - Integración con CloudWatch
+3. **Supervisión y registro**:
+   - Activa Hubble
+   - Recopila métricas de Prometheus
+   - Integra con CloudWatch
 
 ## Conclusión
 
-En este capítulo, aprendimos sobre Services y redes de Kubernetes. Los Services proporcionan endpoints estables para un conjunto de Pods, e Ingress enruta el tráfico externo a Services dentro del clúster. Las políticas de red controlan la comunicación entre Pods, y los service meshes administran la comunicación de Service a Service en arquitecturas de microservicios. También exploramos cómo implementar características avanzadas de red a través de CNI y Cilium.
+En este capítulo, aprendimos sobre los Service y las redes de Kubernetes. Los Service proporcionan endpoints estables para un conjunto de Pods, e Ingress enruta el tráfico externo hacia los Service del clúster. Las políticas de red controlan la comunicación entre Pods y las mallas de servicios administran la comunicación entre servicios en arquitecturas de microservicios. También exploramos cómo implementar funciones de red avanzadas mediante CNI y Cilium.
 
-Comprender y utilizar las características de red de Kubernetes te permite crear aplicaciones seguras y escalables.
+Comprender y aprovechar las funciones de red de Kubernetes te permite crear aplicaciones seguras y escalables.
 
 En el próximo capítulo, aprenderemos sobre las opciones de almacenamiento de Kubernetes.
 
 ## Referencias
 
-- [Documentación oficial de Kubernetes - Services](https://kubernetes.io/docs/concepts/services-networking/service/)
-- [Documentación oficial de Kubernetes - Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
-- [Documentación oficial de Kubernetes - Políticas de red](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Documentación oficial de Kubernetes - DNS para Services y Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+- [Documentación oficial de Kubernetes: Services](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Documentación oficial de Kubernetes: Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+- [Documentación oficial de Kubernetes: políticas de red](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Documentación oficial de Kubernetes: DNS para Services y Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
 - [Documentación oficial de Istio](https://istio.io/latest/docs/)
-- [Documentación oficial de Linkerd](https://linkerd.io/2.11/overview/)
+- [Documentación oficial de Linkerd](https://linkerd.io/2-edge/overview/)
 - [Documentación oficial de Cilium](https://docs.cilium.io/)
 - [Documentación oficial de CNI](https://github.com/containernetworking/cni)
 
 ## Cuestionario
 
-Para poner a prueba lo que aprendiste en este capítulo, intenta el [Cuestionario de Services y redes](../quizzes/core/03-services-networking-quiz.md).
+Para comprobar lo que aprendiste en este capítulo, prueba el [cuestionario sobre servicios y redes](../quizzes/core/03-services-networking-quiz.md).

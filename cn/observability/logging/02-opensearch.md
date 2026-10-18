@@ -1,9 +1,9 @@
 # Amazon OpenSearch Service
 
-> **最后更新**: September 13, 2026
-> **示例基线**: 预置型 OpenSearch Service 3.5；Terraform 1.15.7/AWS provider 6.64.0；AWS for Fluent Bit 3.4.15（Fluent Bit 5.0.9）。仅进行了本地配置检查；未部署任何域、采集器、SAML 会话或数据投递测试。
+> **最后更新**：September 13, 2026
+> **示例基线**：预置型 OpenSearch Service 3.5；Terraform 1.15.7/AWS provider 6.69.1；AWS for Fluent Bit 3.4.15（Fluent Bit 5.0.9）。仅进行本地配置检查；未部署 domain、collector、SAML 会话或数据交付测试。
 
-Amazon OpenSearch Service 负责管理搜索集群，并支持特定的 OpenSearch 版本以及旧版 Elasticsearch OSS 版本。本章介绍 VPC 域以及传统的热存储/UltraWarm/冷存储分层。Serverless 集合（collection）以及较新的优化型实例存储选项具有各自不同的配置、API 与可用性要求。
+Amazon OpenSearch Service 管理搜索集群，并支持部分 OpenSearch 和旧版 Elasticsearch OSS 版本。本章介绍 VPC domain 以及传统的 hot/UltraWarm/cold 存储层。Serverless collections 和较新的优化型实例存储选项有各自独立的配置、API 和可用性要求。
 
 <span id="table-of-contents"></span>
 <span id="opensearch-vs-elasticsearch"></span>
@@ -12,11 +12,11 @@ Amazon OpenSearch Service 负责管理搜索集群，并支持特定的 OpenSear
 
 ## 概述
 
-OpenSearch 是采用 Apache-2.0 许可的搜索项目。它源自 Elasticsearch 7.10 这一事实并不意味着它兼容当前所有的 Elasticsearch 客户端、插件或 API。Elastic 当前的源码许可选择包括对符合条件的源码部分采用 AGPLv3，同时并存 SSPL/Elastic License 2.0；请核对具体组件与分发形式，而不要把 Elasticsearch 当作单一、未变更的许可模型。
+OpenSearch 是一个采用 Apache-2.0 许可证的搜索项目。它源自 Elasticsearch 7.10，并不意味着与所有当前的 Elasticsearch 客户端、插件或 API 兼容。Elastic 当前的源代码许可选择包括符合条件的源代码部分采用 AGPLv3，以及 SSPL/Elastic License 2.0；应检查具体组件和发行版，而不要把 Elasticsearch 视为许可模式始终不变的单一产品。
 
-AWS 支持列表当前将 OpenSearch 3.5 列为受支持版本之一。此前的 2.11 示例**在 2027 年 11 月 7 日之前仍处于标准支持范围内**；并非因为出现了更新的版本就不再受支持。对于已有的域，在申请版本升级之前，请先检查受支持的升级路径、破坏性变更、快照以及客户端兼容性。
+AWS 支持表目前将 OpenSearch 3.5 列为受支持版本。较早的 2.11 示例**仍在标准支持期内，支持期截至 2027 年 11 月 7 日**；不能仅仅因为存在较新版本就认定它已不受支持。对于现有 domain，在请求升级版本之前，请检查受支持的升级路径、重大变更、快照和客户端兼容性。
 
-OpenSearch Service 可支持日志分析、全文检索、聚合以及安全分析类工作流。启用某项服务或保留审计日志本身并不等于满足了合规要求。
+OpenSearch Service 可用于日志分析、全文搜索、聚合和安全分析工作流。启用某项服务或保留审计日志，本身并不能满足合规要求。
 
 <span id="node-types"></span>
 
@@ -24,51 +24,51 @@ OpenSearch Service 可支持日志分析、全文检索、聚合以及安全分�
 
 ### OpenSearch 集群架构
 
-![Conceptual provisioned-domain ingestion and traditional hot/UltraWarm/cold storage flow.](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
+![预置型 domain 的概念性数据摄取流程，以及传统 hot/UltraWarm/cold 存储流程。](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
 
-[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html)
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html)
 
-该图为示意性质，并非精确的副本/可用区（AZ）布局，也不是容量规划建议。图中的 “Master” 标签指专用集群管理角色；AWS 配置字段仍使用 `dedicated_master_*`。“Kinesis Data Firehose” 是 **Amazon Data Firehose** 的旧称。UltraWarm 与冷存储均使用基于 S3 的存储；冷数据必须先挂载到 UltraWarm 才能查询。
+该图为示意图，并非精确的副本/AZ 布局，也不是容量建议。图中的“Master”表示专用集群管理角色；AWS 配置字段仍使用 `dedicated_master_*`。“Kinesis Data Firehose”是**Amazon Data Firehose**的旧名称。UltraWarm 和 cold storage 均使用 S3 支持的存储；cold 数据必须先关联到 UltraWarm，才能进行查询。
 
-| 角色或层级 | 功能 |
+| 角色或存储层 | 功能 |
 |---|---|
-| 专用集群管理器节点（cluster-manager） | 管理集群状态、元数据与分片分配。三个节点是惯用的专用管理器配置；它们不是数据副本。 |
-| 数据节点 / 热存储 | 负责索引与查询。EBS 的可用性与限制取决于所选的实例系列。 |
-| UltraWarm | 由 S3 支撑的只读索引，配合 warm 节点的缓存/计算能力。请核对引擎、实例与专用管理器方面的前置条件。 |
-| 冷存储 | 生命周期独立的分离式索引存储。需将选定索引重新挂载到 UltraWarm 才能查询。 |
+| 专用集群管理节点 | 管理集群状态、元数据和分片分配。三个节点是常见的专用集群管理节点配置；这些节点不是数据副本。 |
+| 数据节点 / hot storage | 索引和查询。EBS 的可用性和限制取决于所选实例系列。 |
+| UltraWarm | 由 S3 支持的只读索引，并由 warm 节点提供缓存/计算能力。请检查引擎、实例和专用集群管理节点的前置条件。 |
+| Cold storage | 具有独立生命周期的分离索引存储。要查询选定索引，请将其重新关联到 UltraWarm。 |
 
-带备用（Standby）的多可用区部署有额外的拓扑与副本要求。仅启用可用区感知（zone awareness）并不会启用 Standby，也不会建立其可用性保证。请查看当前的实例限制，包括 VPC Encryption Controls 与存储兼容性。原示例中的 r6g/m6g 规格只是示例输入，不是基准测试结果。
+Multi-AZ with Standby 有额外的拓扑和副本要求。仅启用 zone awareness 并不会启用 Standby，也不能确立其可用性保证。请检查当前实例限制，包括 VPC Encryption Controls 和存储兼容性。原文中的 r6g/m6g 规格只是示例输入，不是基准测试结果。
 
-补充资源：[AWS Instance Benchmark](https://benchmark.aws.atomai.click/)。服务容量仍需通过具有代表性的 OpenSearch 工作负载测试来确认。
+补充资源：[AWS Instance Benchmark](https://benchmark.aws.atomai.click/)。服务容量仍需通过有代表性的 OpenSearch 工作负载测试来确定。
 
 ### 数据流
 
-![Illustrative daily-index lifecycle: ingestion to hot storage, then an ISM transition to UltraWarm and cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
+![每日索引生命周期示意：数据摄取到 hot storage，然后通过 ISM 转换到 UltraWarm 和 cold storage。](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
 
-[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html)
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html)
 
-图中的 7 天/30 天标签是示例性的**索引年龄条件**，不是自动生效的默认值，也不代表按事件时间精确保留。ISM 周期性运行，迁移是异步的。在基于日期的索引策略下，迟到或重放的事件可能落到较旧的只读索引上；在启用迁移之前，请先确定如何路由或归档这类数据。
+7/30 天标签是示例**索引年龄条件**，并非自动默认值，也不代表精确的事件年龄保留期限。ISM 会定期运行，迁移是异步的。使用基于日期的索引时，迟到或重放的事件可能会写入较早的只读索引；启用迁移之前，请决定如何路由或归档这些事件。
 
 <span id="creation-via-aws-console"></span>
 
-## 域的创建
+## 创建 Domain
 
 ### 前置条件
 
-准备同一 VPC 中位于不同可用区的三个私有子网、可访问的客户端安全组、已存在的服务关联角色，以及经过审批的管理员/写入者/读取者 IAM 角色。示例会校验子网 ID 互不相同，但不会远程验证它们的可用区、路由、容量或归属。
+准备同一 VPC 中位于不同 AZ 的三个私有子网、可访问的客户端安全组、现有的服务关联角色，以及获批的管理员/写入者/读取者 IAM 角色。该示例会验证子网 ID 是否不同，但不会远程验证其 AZ、路由、容量或所有权。
 
-该 Terraform 配置使用 **IAM 签名的 API 请求**和 IAM 主用户角色，避免在 Terraform state 中保存内部主用户密码。在发送日志之前，请先配置 FGAC 角色映射。浏览器 SSO 是下文讨论的另一种访问方案；基于 IAM 主体的域策略要求 SigV4，不会自动接受未签名的 SAML 浏览器请求。
+Terraform 配置采用 **IAM 签名 API 请求**和 IAM 主角色，不会在 Terraform state 中保存内部主密码。发送日志前，请配置 FGAC 角色映射。下文将浏览器 SSO 作为单独的访问配置进行讨论；要求使用 IAM 主体的 domain policy 需要 SigV4，并不会自动接受未签名的 SAML 浏览器请求。
 
 ### 通过 Terraform 创建
 
-示例使用 AWS 商用分区和首尔区域。请一致地替换各项输入，并核对区域可用性。该配置在实际 apply 时会创建资源；本次审核仅执行了本地校验。
+该示例使用 AWS 商业分区和首尔 Region。请一致地替换输入值，并检查区域可用性。应用该配置会创建资源；本次审查仅运行了本地验证。
 
 ```hcl
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -253,23 +253,23 @@ output "dashboards_endpoint" {
 }
 ```
 
-初始规格、500GiB 的 EBS 卷以及 30 天的 CloudWatch 保留期都只是示意。该配置明确采用**不带 Standby** 的多可用区部署。在这份参考配置中，安全组的出站访问仍较宽松；在投入生产之前，请针对实际需要支持的连接设计出站限制。
+初始规格、500GiB EBS 卷和 30 天 CloudWatch 保留期均为示例值。该配置明确使用**不带 Standby 的** Multi-AZ。此参考配置中的安全组出站访问范围仍然较广；生产环境中应针对实际支持的连接设计出站限制。
 
-域访问策略允许指定的 IAM 角色执行 HTTP 操作；**FGAC** 必须进一步限制它们的索引/集群权限。仅靠基于 URI 的 IAM 权限无法约束批量请求体中内嵌的索引名称。请只为采集器角色授予预期的写入者映射。
+Domain access policy 允许指定的 IAM 角色执行 HTTP 操作；必须通过 **FGAC** 限制其索引/集群权限。仅基于 URI 的 IAM 权限无法限制批量请求正文中包含的索引名称。仅向 collector 角色授予预期的写入者映射。
 
-平台的服务关联角色属于账户级依赖。请通过其归属的基础设施 state 复用或导入该角色，而不要在每次部署时都尝试创建同一个角色。
+平台的服务关联角色是账户级依赖。应在其所属的基础设施 state 中复用或导入该角色，而不要尝试在每次部署时创建同一个角色。
 
-OpenSearch 域每小时接收一次自动快照，保留 14 天（最多 336 个）。旧的 `automated_snapshot_start_hour` 示例适用于更早的 Elasticsearch 版本，不适用于此 OpenSearch 配置。快照是恢复手段，不能替代经过测试的保留/恢复方案。集群状态为红色（red）时可能无法生成快照。
+OpenSearch domains 每小时创建一次自动快照，保留 14 天（最多 336 个）。旧版 `automated_snapshot_start_hour` 示例适用于更早的 Elasticsearch 版本，不适用于此 OpenSearch 配置。快照是恢复手段，不能替代经过测试的保留/还原计划。集群状态为 red 时，可能无法创建快照。
 
-CloudWatch 日志发布需要先配置范围受限的资源策略，然后再配置域。发布慢日志目标并不等于启用了所有慢日志阈值，发布审计日志也不等于配置了每一类审计事件。请有意识地配置相应的引擎/审计设置；日志中的查询语句与文档内容同样需要访问控制与保留策略。
+CloudWatch 发布需要在配置 domain 之前设置范围受限的资源策略。配置慢日志目标并不会启用所有慢日志阈值，发布审计日志也不会配置所有审计事件。请有针对性地配置相应的引擎/审计设置；日志中的查询和文档内容也需要访问控制与保留控制。
 
 <span id="index-aliases"></span>
 
 ## 索引管理
 
-下文的主采集器写入名为 `logs-production-YYYY.MM.DD` 的**每日索引**。模板、ISM 模式与查询示例都使用该命名模式。随后还有一个独立的 rollover 练习；请勿不加区分地混用这两种写入策略。
+下方的主 collector 会写入**每日索引**，命名格式为 `logs-production-YYYY.MM.DD`。模板、ISM 模式和查询示例都使用这一模式。后面会介绍单独的 rollover 练习；不要在不说明的情况下混用这两种写入策略。
 
-以下请求块使用 OpenSearch Dashboards Dev Tools 语法。它们不是独立的 JSON 文件，也不是本次审核实际执行的命令。请使用获得授权的数据平面客户端并指向目标域。
+以下请求块使用 OpenSearch Dashboards Dev Tools 语法。它们不是独立的 JSON 文件，也不是本次审查实际执行的命令。请使用经过授权的数据平面客户端和预期的 domain。
 
 ### 索引模板
 
@@ -373,17 +373,17 @@ PUT _index_template/logs-template
 }
 ```
 
-Kubernetes filter 生成的字段是 `kubernetes.namespace_name`，而不是 `kubernetes.namespace`。应用的 JSON 被嵌套在 `app` 之下，以便与采集器元数据区分开。应用必须按文档约定输出相应字段与单位；示例使用小写的 `app.level`，并在 `app.http.response_time_ms` 中使用毫秒。
+Kubernetes filter 生成的是 `kubernetes.namespace_name`，而不是 `kubernetes.namespace`。应用 JSON 会嵌套在 `app` 下，以便与 collector 元数据分开。应用必须输出文档规定的字段和单位；示例使用小写的 `app.level`，并以毫秒表示 `app.http.response_time_ms`。
 
-采集器增强处理之前，一条示意性的单行应用记录如下：
+collector 添加元数据之前的示例应用记录如下，为单行格式：
 
 ```json
 {"level":"error","message":"request failed","error_type":"upstream_timeout","http":{"method":"GET","path":"/orders","status_code":503,"response_time_ms":1250}}
 ```
 
-`message.keyword` 子字段被显式定义为 `app.message.keyword`；仅有 `text` 映射并不会自动创建它。超过其 `ignore_above` 限制的值不会在该子字段中被索引。用于聚合时，建议使用范围有限的 `error_type` 分类体系，而不是任意的消息文本。
+`message.keyword` 子字段明确定义为 `app.message.keyword`；仅有 `text` 映射并不会自动创建该字段。超过其 `ignore_above` 限制的值不会被索引到该子字段中。聚合时可考虑使用有界的 `error_type` 分类体系，而不是使用任意消息。
 
-`dynamic: false` 限制新增映射字段，但**不会把未知字段从 `_source` 中移除**。原始的 `log` 字段被存储但不建立搜索索引。请评估数据重复、脱敏以及原始数据的访问控制。`translog.durability: request` 相比缺乏解释的 async/30s 持久性取舍是更安全的基线；但这两种设置都不能保证从任何存储或副本故障中恢复。
+`dynamic: false` 会限制新映射字段，但**不会从 `_source` 中移除未知字段**。原始 `log` 字段会被存储，但不会建立搜索索引。请审查数据重复、敏感数据隐藏和原始数据访问控制。`translog.durability: request` 是比未作说明的 async/30s 持久性折衷更安全的基线；但这两种设置都不能保证从所有存储或副本故障中恢复。
 
 ### ISM（索引状态管理）策略
 
@@ -463,15 +463,15 @@ PUT _plugins/_ism/policies/logs-lifecycle
 }
 ```
 
-该策略会附加到新创建的匹配索引上。已有索引需要显式执行策略附加操作；在变更之前，请检查 `_plugins/_ism/explain/INDEX` 与策略版本。
+此策略会附加到新创建的匹配索引。对于现有索引，需要有计划地执行策略附加操作；更改之前，请检查 `_plugins/_ism/explain/INDEX` 和策略版本。
 
-每个 action 对象只包含一个动作（以及它支持的重试/超时元数据）。托管的 `warm_migration`、`cold_migration` 和 **`cold_delete`** 与自管 ISM 操作不同。冷索引需要使用 `cold_delete`，而 ISM 冷迁移需要显式指定时间戳字段。请勿把 warm 迁移、副本数变更和 force merge 合并到同一个 action 对象中。
+每个 action 对象只包含一个 action（以及它支持的重试/超时元数据）。托管式 `warm_migration`、`cold_migration` 和 **`cold_delete`** 与自行管理的 ISM 操作有所不同。Cold 索引需要使用 `cold_delete`，而 ISM cold migration 需要指定 timestamp 字段。不要将 warm migration、副本更改和 force merge 放在同一个 action 对象中。
 
-ISM 通常每 5–8 分钟评估一次作业，且在集群状态为红色时不会执行。索引年龄从索引创建时间开始计算。示例中的 90 天删除是组织自身的选择，不是普适的法律要求，也不代表按单条记录精确到期。在启用删除之前，请验证迟到数据的行为、快照与恢复能力。
+ISM 通常每 5–8 分钟评估一次作业，并且在集群状态为 red 时不会运行。索引年龄从索引创建时开始计算。示例中的 90 天删除期限是组织的选择，不是普遍适用的法律要求，也不是精确的逐条记录过期时间。启用删除之前，请验证迟到数据处理方式、快照和恢复流程。
 
-### 索引别名与 Rollover
+### 索引别名和 Rollover
 
-这个独立练习使用 `rollover-logs-*` 前缀和一个写入别名，不会改变前述每日采集器的配置。
+此独立练习使用前缀 `rollover-logs-*` 和写入别名，不会更改每日 collector 配置。
 
 ```http
 PUT _index_template/rollover-logs
@@ -556,20 +556,20 @@ POST rollover-logs-write/_rollover
 }
 ```
 
-自动 ISM rollover 需要 rollover 别名设置、符合命名规则的带序号索引以及写入别名。仅仅因为存在别名，按日期命名的写入方并不会去使用该别名。
+自动 ISM rollover 需要设置 rollover alias、使用合适的编号索引，并配置写入别名。仅仅因为存在别名，按日期写入的 writer 并不会使用该别名。
 
-ISM 的 `min_primary_shard_size: 30gb` 针对单个主分片。OpenSearch 3.5 的 rollover REST 解析器接受 `max_age`、`max_docs` 和 `max_size`；其中 `max_size` 衡量的是**主分片存储总量**，不包含副本。因此 90GB 的 REST 示例与每个主分片 30GB 的阈值并不是同一个条件。Rollover 条件之间是“满足其一即可”的关系，并不要求同时满足所有阈值。
+ISM 的 `min_primary_shard_size: 30gb` 指单个主分片。OpenSearch 3.5 的 rollover REST 解析器接受 `max_age`、`max_docs` 和 `max_size`；`max_size` 衡量的是**主分片存储总量**，不包括副本。因此，REST 示例中的 90GB 条件与每个主分片 30GB 的阈值不是一回事。Rollover 条件彼此独立，并不要求同时满足所有阈值。
 
 <span id="direct-ingestion-from-fluentbit-to-opensearch"></span>
 <span id="fluentbit-daemonset-using-irsa"></span>
 
 ## 数据摄取
 
-### 从 Fluent Bit 直接摄取
+### 直接通过 Fluent Bit 摄取
 
-以下六个资源构成适用于符合条件的 **Linux EC2 节点**的参考采集器配置。Fargate 使用其平台自带的日志路由器；Windows 及其他节点平台需要各自的路径与部署模型。在部署节点日志读取器之前，请确认主机路径、准入策略例外以及资源需求。
+以下六个资源构成适用于符合条件的 **Linux EC2 节点**的参考 collector 配置。Fargate 使用其平台日志路由器；Windows 和其他节点平台需要各自的路径和部署模型。部署节点日志读取器之前，请确认主机路径、准入策略例外和资源需求。
 
-请设置真实的域主机名、区域与 IRSA 角色。该角色的 OIDC 信任关系必须匹配 `system:serviceaccount:logging:fluent-bit`；同时还要授权其 IAM/数据平面访问权限和 FGAC 写入者角色。只有在节点/代理/SDK 支持的情况下，Pod Identity 才是可选替代方案。
+设置真实的 domain 主机名、Region 和 IRSA 角色。该角色的 OIDC 信任必须与 `system:serviceaccount:logging:fluent-bit` 匹配；还需要授权其 IAM/数据平面访问权限和 FGAC 写入者角色。只有在节点/agent/SDK 支持的情况下，Pod Identity 才是可选方案。
 
 ```yaml
 apiVersion: v1
@@ -746,27 +746,27 @@ spec:
         emptyDir: {}
 ```
 
-镜像索引已固定（pin），并已检查其 Linux amd64/arm64 元数据。该镜像的默认 CMD 是一个入口脚本；示例显式调用 `/fluent-bit/bin/fluent-bit` 并使用**原生 OpenSearch output**。它不会加载旧版 Go 输出插件，也未在运行时测试该镜像。
+镜像索引已固定，并检查了其 Linux amd64/arm64 元数据。此镜像的默认 CMD 是一个入口脚本；该示例显式调用 `/fluent-bit/bin/fluent-bit` 并使用**原生 OpenSearch output**。它不会加载旧版 Go output 插件，也未进行镜像运行时测试。
 
-重要的配置关联点：
+重要的配置关系：
 
-- `multiline.parser docker, cri` 处理受支持的容器日志分帧格式；随后 Kubernetes filter 会把应用 JSON 合并到 `app` 之下。
-- 只读挂载的 `/var/log` 用于日志输入。Tail DB 与文件系统缓冲使用独立的可写节点路径。它们只在该节点/路径存续期间能够跨 Pod 重启保留；它们不是跨节点的持久化存储。
-- 元数据相关的 RBAC 仅限于对 Pod/namespace 的读取操作。代理本身会读取节点日志，因此要保护它的 namespace、角色与配置。
-- 在本示例中，应用注解无法暗中覆盖解析行为或排除日志。采集器生成的 cluster/environment 值是显式设置的。请把采集器自身的日志从该管道中排除，以减少反馈回路。
-- 对于无类型（typeless）的 OpenSearch 2.x/3.x API，必须设置 `Suppress_Type_Name On`。`Type _doc` 不是兼容的替代方案。
-- `Logstash_Format On` 会生成基于日期的索引名以及 `@timestamp` 字段。它不会写入可选的 rollover 别名。
-- 重试机制、`Generate_ID`、内存缓冲以及 output 的存储上限都不构成精确一次（exactly-once）或无损投递的保证。请测试部分批量写入失败、超长行、重启后的偏移量、重试上限、磁盘压力与迟到记录。output 的上限也无法限制节点的全部磁盘用量。
+- `multiline.parser docker, cri` 会处理受支持的容器日志帧格式；随后 Kubernetes filter 会将应用 JSON 合并到 `app` 下。
+- 只读的 `/var/log` 挂载用于读取日志。Tail DB 和文件系统缓冲区使用单独的可写节点路径。只有在节点/路径仍然存在时，这些数据才会在 Pod 重启后保留；它们不是跨节点的持久存储。
+- 元数据 RBAC 仅允许读取 Pods/namespaces。agent 本身会读取节点日志，因此应保护其 namespace、角色和配置。
+- 在此示例中，应用注解不能悄然覆盖解析行为或排除日志。collector 生成的集群/环境值会被有意设置。请将 collector 自身的日志排除在此管道之外，以减少反馈循环。
+- 对于无类型的 OpenSearch 2.x/3.x API，必须使用 `Suppress_Type_Name On`。`Type _doc` 不能替代它。
+- `Logstash_Format On` 会创建按日期命名的索引，并生成 `@timestamp` 字段。它不会写入可选的 rollover alias。
+- 重试、`Generate_ID`、内存缓冲区和 output 的存储上限，并不保证恰好一次或无损交付。请测试部分 bulk 错误、超大行、重启偏移量、重试上限、磁盘压力和迟到记录。Output 上限不会限制节点的全部磁盘使用量。
 
-被保留的原始日志可能包含同样存在于 `app` 之下的数据。请在存储前对禁止内容做脱敏，并监控被拒绝的记录。不要把请求体追踪（request-body tracing）作为长期开启的诊断设置。
+保留的原始日志可能包含 `app` 下已有的数据。存储前应隐藏禁止保留的内容，并监控被拒绝的记录。不要将请求正文跟踪作为永久诊断设置启用。
 
 <span id="ingestion-via-kinesis-data-firehose"></span>
 
 ### 通过 Amazon Data Firehose 摄取
 
-Data Firehose 是另一种托管投递路径，具备缓冲、重试与备份控制；但它并不自动就是所有工作负载中最便宜或最简单的选择。其 Terraform 资源名称仍为 `aws_kinesis_firehose_delivery_stream`。
+Data Firehose 是一条可选的托管交付路径，提供缓冲、重试和备份控制；它并非对所有工作负载来说都是最便宜或最简单的选择。其 Terraform 资源仍名为 `aws_kinesis_firehose_delivery_stream`。
 
-这个可选的资源文件使用上文的域，以及已有且经过审批的投递角色、子网、安全组和私有备份存储桶作为输入：
+以下可选资源文件使用上方的 domain，以及现有且获批的交付角色、子网、安全组和私有备份 bucket 输入：
 
 ```hcl
 variable "firehose_role_arn" {
@@ -833,9 +833,9 @@ resource "aws_kinesis_firehose_delivery_stream" "logs" {
 }
 ```
 
-投递角色需要相应的 OpenSearch/FGAC、S3、CloudWatch 与 VPC/ENI 权限，以及所需的 KMS 权限；它的信任策略与部署者的 `iam:PassRole` 权限是两回事。请把该投递角色加入域的调用方输入列表和写入者映射中，并允许其 VPC 连接访问 443 端口。
+交付角色需要相应的 OpenSearch/FGAC、S3、CloudWatch 和 VPC/ENI 权限，以及任何所需的 KMS 权限；其信任关系与部署者的 `iam:PassRole` 权限是分开的。请将交付角色加入 domain 的调用者输入和写入者映射，并允许其 VPC 连接访问端口 443。
 
-`FailedDocumentsOnly` 才是选择备份模式的方式；仅把 S3 前缀命名为 `failed/` 并不能达到该效果。请测试失败场景以及从私有备份桶重放数据。Firehose 记录需要与索引映射兼容的 schema（包括时间戳）；该服务不会自动生成这里展示的 Kubernetes 元数据/应用信息外层结构。
+`FailedDocumentsOnly` 才能指定备份模式；仅将 S3 前缀命名为 `failed/` 并不能做到这一点。请测试失败处理以及从私有备份 bucket 重放数据。Firehose 记录需要符合索引映射的 schema，包括时间戳；该服务不会自动创建此处所示的 Kubernetes 元数据/应用封装结构。
 
 <span id="dashboard-access-setup"></span>
 <span id="create-index-pattern"></span>
@@ -843,11 +843,11 @@ resource "aws_kinesis_firehose_delivery_stream" "logs" {
 
 ## OpenSearch Dashboards
 
-### 访问与索引模式
+### 访问和索引模式
 
-请使用经过批准的 VPC 连接方式，以及与域访问策略兼容的身份验证方法。单纯的 SSH 隧道本身无法保留原始的 TLS 主机名、SSO 重定向或 SigV4 签名。不要为了让 `https://localhost:9200` 看起来能用而关闭证书校验。ALB 并不是一套完整的原生域/Dashboards 集成方案。
+请使用获批的 VPC 连接方式和与 domain access policy 兼容的身份验证方法。普通 SSH tunnel 本身无法保留原始 TLS 主机名、SSO 重定向或 SigV4 签名。不要为了让 `https://localhost:9200` 看起来可用而禁用证书验证。ALB 并不是完整的原生 domain/Dashboards 集成方案。
 
-在配置好经过认证的访问之后，为 `logs-production-*` 创建数据视图/索引模式，并选择 `@timestamp`。菜单名称会随 Dashboards 版本和启用的体验而不同。
+配置好经过身份验证的访问后，为 `logs-production-*` 创建 data view/index pattern，并选择 `@timestamp`。菜单名称会因 Dashboards 版本和启用的体验而异。
 
 ### 搜索查询示例
 
@@ -964,9 +964,9 @@ GET logs-production-*/_search
 }
 ```
 
-这些示例对精确的 keyword/时间条件使用 filter 上下文。第二个查询确实会先过滤出错误再聚合 namespace。Terms 聚合返回的是选定的 top-N 结果集，可能存在分布式近似或被省略的桶；它不是对每个 namespace 的完整计数。百分位数是近似值，并使用已映射的毫秒字段。
+这些示例使用 filter context 对精确的 keyword/时间条件进行筛选。第二个查询会先实际筛选出错误，再聚合 namespace。Terms aggregation 会返回选定的前 N 项，并可能存在分布式近似结果/省略的 bucket；它并不包含每个 namespace 的完整计数。百分位数为近似值，使用映射为毫秒的字段。
 
-做可视化时，可选择 `app.level`、基于 `@timestamp` 的时间直方图，或显式映射的 `app.message.keyword`/`app.error_type` 字段。在仪表板中提到某个字段名并不会自动创建它的映射。
+创建可视化时，可选择 `app.level`、基于 `@timestamp` 的时间直方图，或明确映射的 `app.message.keyword`/`app.error_type` 字段。在仪表板中提到字段名并不会创建其映射。
 
 <span id="fine-grained-access-control-fgac"></span>
 <span id="document-level-security-dls"></span>
@@ -974,11 +974,11 @@ GET logs-production-*/_search
 
 ## 安全配置
 
-### 精细访问控制（Fine-Grained Access Control）
+### 精细访问控制
 
-网络访问、域资源策略与 FGAC 是相互独立的层次。Terraform 中基于 IAM 主体的策略要求 SigV4。安全组规则或一次成功的 IAM 请求都不会自动授予索引访问权限。
+网络访问、domain 资源策略和 FGAC 是不同的层。Terraform IAM 主体策略要求使用 SigV4。安全组规则或成功的 IAM 请求都不会自动授予索引访问权限。
 
-管理员可以为采集器定义写入者角色，并定义受 namespace 限制的读取者：
+管理员可以为 collector 定义写入者角色，并为读取者限制 namespace：
 
 ```http
 PUT _plugins/_security/api/roles/logs-writer
@@ -1032,13 +1032,13 @@ PUT _plugins/_security/api/rolesmapping/team-a-logs
 }
 ```
 
-请把角色 ARN 替换为经过批准的身份。如果使用了 Firehose 路径，写入者映射还必须包含 Firehose 投递角色。不要向普通读取者授予 `cluster_all` 或主用户角色。IAM 后端角色映射与内部/SAML 用户名是不同的身份机制。
+请将角色 ARN 替换为获批的身份。如果使用 Firehose 路径，写入者映射还必须包含 Firehose 交付角色。不要向日常读取者授予 `cluster_all` 或主角色权限。IAM backend-role 映射与内部/SAML 用户名属于不同的身份机制。
 
-### 文档级安全与字段级安全
+### 文档级安全和字段级安全
 
-DLS 依据已存储的字段过滤文档。在本示例中，namespace 元数据必须来自可信的采集器；由应用自行提供的字符串不能作为租户身份的凭证。
+DLS 根据已存储字段筛选文档。在此示例中，namespace 元数据必须来自受信任的 collector；应用提供的字符串不能证明租户身份。
 
-对于权限更受限的读取者，下面这个**组合式**角色既保留了 namespace 限制，又只返回选定的字段：
+若要限制读取者权限，可使用以下**组合**角色，保留 namespace 限制，并且只包含选定的响应字段：
 
 ```http
 PUT _plugins/_security/api/roles/team-a-limited
@@ -1066,15 +1066,15 @@ PUT _plugins/_security/api/roles/team-a-limited
 }
 ```
 
-请使用预期的角色映射，而不要把受限角色附加到已经具备更大权限的身份上。请评估生效角色的完整集合。原始的 `log` 字段被有意排除在这份白名单之外，因为它可能重复包含那些本应被隐藏的 JSON 字段。
+请使用预期的角色映射，而不要将受限角色添加到已经拥有更广泛权限的身份上。评估所有生效角色的完整集合。原始 `log` 字段被有意排除在此允许列表之外，因为它可能重复包含其他被隐藏的 JSON 字段。
 
-FLS 控制的是返回的字段，而不是允许返回的消息字符串的内容。它不会从 `_source`、快照或日志归档中删除信息。请测试 search、get、multi-search 与聚合的访问行为，并从源头上防止禁止的数据被写入日志。
+FLS 控制返回的字段，而不控制允许返回的消息字符串中的内容。它不会从 `_source`、快照或日志存档中删除信息。请测试 search、get、multi-search 和 aggregation 访问，并从源头上避免记录禁止的数据。
 
-### SAML 身份验证配置
+### 配置 SAML 身份验证
 
-托管 OpenSearch Service 的 SAML 通过 **AWS 域配置 API** 进行配置，而不是上传自管的 `opensearch-security/config.yml`。
+托管式 OpenSearch Service SAML 应通过 **AWS domain configuration API** 配置，而不是通过上传自行管理的 `opensearch-security/config.yml` 配置。
 
-下面这个本地辅助脚本会把经过批准的 IdP XML 序列化，无需手工转义。请把示例中的管理组和角色属性键替换为你已审核过的 IdP 配置：
+以下本地辅助脚本会序列化获批的 IdP XML，无需手动转义。请根据审核过的 IdP 配置，替换示例管理组和角色属性键：
 
 ```python
 from pathlib import Path
@@ -1103,7 +1103,7 @@ aws opensearch update-domain-config \
   --advanced-security-options file://advanced-security-saml.json
 ```
 
-这只是一个请求负载示例，不是端到端的 SSO 部署方案。请验证元数据信任关系、实体 ID、证书、ACS/Dashboards URL 以及各类映射。SAML 浏览器流量需要相匹配的域访问策略设计；启用 `SAMLOptions` 不会把这类流量变成上文仅支持 IAM 的策略所要求的 SigV4 请求。请遵循一套一致的身份验证方案，并在变更现有域之前测试管理员账号的恢复流程。
+这只是 payload 示例，并非端到端 SSO 部署方案。请验证元数据可信度、entity ID、证书、ACS/Dashboards URL 和映射。SAML 浏览器流量需要匹配的 domain access policy 设计；启用 `SAMLOptions` 并不会让此类流量自动转换为上述仅适用于 IAM 的策略所需的 SigV4。请遵循一种一致的身份验证配置，并在更改现有 domain 之前测试管理员恢复流程。
 
 <span id="storage-tiering"></span>
 <span id="cost-comparison-based-on-100gb-day"></span>
@@ -1112,26 +1112,26 @@ aws opensearch update-domain-config \
 
 ## 成本优化
 
-### 存储与索引设置
+### 存储和索引设置
 
-请针对所选区域、节点系列/数量、副本、EBS、warm 节点的计算/存储、冷存储以及数据传输/摄取路径分别计价。此前按 100GB/天给出的总金额与固定节省百分比缺乏足够假设，无法复现；它们既不是当前预算，也不是实测对比结果。
+请估算所选 Region、节点系列/数量、副本、EBS、warm 节点计算/存储、cold storage 以及数据传输/摄取路径的价格。此前按每日 100GB 计算的美元总额和固定节省百分比缺少足够的假设，无法复现；它们不是当前预算，也不是经过测量的比较结果。
 
-索引压缩、刷新间隔、分片数量与字段映射是在存储/CPU、搜索新鲜度、查询能力与恢复成本之间的权衡。请在创建模板中设置诸如 `index.codec` 这类静态选项；不要盲目地对每个处于打开状态的生产索引下发静态设置变更。丢弃文本位置信息或禁用字段可能会破坏查询。
+索引压缩、refresh interval、分片数和字段映射会在存储/CPU、搜索新鲜度、查询能力和恢复成本之间产生权衡。请在创建模板时设置 `index.codec` 等静态选项；不要不加判断地向所有打开的生产索引发送静态设置变更。移除文本位置或禁用字段可能会破坏查询。
 
-预留实例（Reserved Instance）的节省取决于符合条件的用量、区域、期限与付款方式。仅有一年的规划期并不足以证明购买的合理性，而节点折扣也不会让所有存储/投递费用消失。请使用当前价格与实测需求，而不是旧的 21/24/36% 固定数字。
+Reserved Instance 的节省取决于符合条件的使用量、Region、期限和付款方式。仅有一年的预期使用时间不足以证明购买合理；节点折扣也不会免除所有存储/交付费用。请依据当前价格和实际测得的需求，而不是旧的固定 21/24/36% 数字进行决策。
 
 <span id="inverted-index-inefficiency"></span>
 <span id="aggregation-query-performance-degradation"></span>
 <span id="scaling-cost-issues"></span>
 <span id="clickhouse-migration-decision-criteria"></span>
 
-## 大规模日志环境中的局限
+## 大规模日志环境中的限制
 
-OpenSearch 把倒排索引与**面向列的 doc values** 结合起来支撑许多聚合与排序操作，并不会在聚合时普遍重新读取每个完整的 `_source` 文档。映射、选择性、分片、缓存、段布局与并发负载都会影响性能。
+OpenSearch 将倒排索引与用于许多聚合和排序的**列式 doc values**结合使用。它并非总会在聚合时重新读取每个完整的 `_source` 文档。映射、选择性、分片、缓存、段布局和并发工作都会影响性能。
 
-原文中的 OpenSearch/ClickHouse 延迟与压缩数据没有可复现的硬件、版本、数据或查询信息。请不要把它们变成普适的 100GB 迁移门槛，或断言所有组织中 90% 的查询都属于同一种模式。
+原始 OpenSearch/ClickHouse 延迟和压缩数据没有可复现的硬件、版本、数据或查询说明。不要将其转化为通用的 100GB 迁移阈值，也不要据此断言 90% 的组织都具有某种查询模式。
 
-请在相同的数据、保留期、持久性与并发要求下，对具有代表性的全文检索、过滤、聚合与排查类查询进行比较。同时评估摄取/回填成本、schema 演进、权限、仪表板、运维技能与回滚方案。双写实验需要对账机制与成本控制；固定的两周或两个月排期并不构成保证。
+请使用相同的数据、保留期限、持久性和并发要求，对有代表性的全文、筛选、聚合和调查查询进行比较。评估摄取/回填成本、schema 演进、权限、仪表板、运维技能和回滚。双写实验需要数据对账和成本控制；固定两周或两个月的时间表并非保证。
 
 <span id="feature-comparison"></span>
 <span id="recommendations-by-use-case"></span>
@@ -1141,29 +1141,29 @@ OpenSearch 把倒排索引与**面向列的 doc values** 结合起来支撑许�
 
 | 方面 | OpenSearch | Loki |
 |---|---|---|
-| 索引/查询模型 | 映射字段、倒排索引与 doc values；Query DSL 以及受支持的 SQL/PPL 功能 | 流标签索引、chunk 扫描以及 LogQL 管道/指标 |
-| 文本检索 | 分析器、相关性排序与全文查询能力 | 在选定的流与时间范围内进行文本过滤/检索 |
-| 访问控制 | 网络/IAM/FGAC 以及已配置的文档/字段级控制 | 认证网关、租户授权以及策略/运维层面的控制 |
-| 成本与运维 | 取决于预置/托管模型与工作负载 | 取决于部署模式、流数量、对象存储、缓存与查询 |
-| 迁移 | 重建映射/查询并验证权限与数据正确性 | 重新设计标签/元数据/查询并验证权限与数据正确性 |
+| 索引/查询模型 | 映射字段、倒排索引和 doc values；Query DSL 以及受支持的 SQL/PPL 功能 | Stream label 索引、chunk 扫描以及 LogQL 管道/指标 |
+| 文本搜索 | 分析器、相关性和全文查询能力 | 在选定的 stream 和时间范围内筛选/搜索文本 |
+| 访问控制 | 网络/IAM/FGAC，以及已配置的文档/字段控制 | 身份验证网关、租户授权和策略/运维控制 |
+| 成本和运维 | 取决于预置/托管模式和工作负载 | 取决于部署模式、stream、对象存储、缓存和查询 |
+| 迁移 | 重建映射/查询，并验证权限/数据正确性 | 重新设计 label/元数据/查询，并验证权限/数据正确性 |
 
-两款产品都不会自动成为合规之选、最省钱之选或运维上的简单之选。Loki 依然支持文本检索与派生指标；迁移改变的是语义与能力，而不是符合某个固定的 3–5 倍成本或 60–80% 节省的规律。
+任何一种产品都不会自动成为合规首选、最便宜的选择或易于运维的方案。Loki 仍支持文本搜索和衍生指标；迁移会改变语义和能力，而不是符合固定的 3–5 倍成本或节省 60–80% 的规则。
 
-## 验证与参考资料
+## 验证和参考资料
 
-本地检查涵盖 Terraform 资源配置以及已发布的数据/配置约定。它们无法证明真实的 AWS 授权、某区域内受支持 SKU 的容量、采集器投递、ISM 状态转换/删除、SAML 身份验证或查询性能。镜像索引/配置元数据是在不拉取可执行层、不运行容器的情况下检查的。
+本地检查覆盖 Terraform 资源配置以及已发布的数据/配置契约，但无法证明 AWS 实时授权、某个 Region 中受支持 SKU 的容量、collector 交付、ISM 转换/删除、SAML 身份验证或查询性能。检查了镜像索引/配置元数据，但未拉取可执行层，也未运行容器。
 
-- [Service/version support](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html)
-- [Supported instance types](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html) and [Multi-AZ](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html)
-- [VPC access](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html), [access policies](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html) and [FGAC](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html)
-- [UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html), [cold storage](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html), [managed ISM](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html) and [ISM policy reference](https://docs.opensearch.org/latest/im-plugin/ism/policies/)
-- [Rollover API](https://docs.opensearch.org/latest/api-reference/index-apis/rollover/) and [doc values](https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/)
-- [Snapshots](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html), [CloudWatch logs](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html) and [SAML](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html)
-- [AWS for Fluent Bit release history](https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md) and [OpenSearch output configuration](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md)
-- [Data Firehose destination configuration](https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html)
-- [Current service pricing](https://aws.amazon.com/opensearch-service/pricing/)
-- [Elastic licensing FAQ](https://www.elastic.co/pricing/faq/licensing)
+- [服务/版本支持](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html)
+- [支持的实例类型](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html) 和 [Multi-AZ](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html)
+- [VPC 访问](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html)、[访问策略](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html)和 [FGAC](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html)
+- [UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html)、[cold storage](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html)、[托管式 ISM](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html) 和 [ISM 策略参考](https://docs.opensearch.org/latest/im-plugin/ism/policies/)
+- [Rollover API](https://docs.opensearch.org/latest/api-reference/index-apis/rollover/) 和 [doc values](https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/)
+- [快照](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html)、[CloudWatch 日志](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html)和 [SAML](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html)
+- [AWS for Fluent Bit 发布历史](https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md) 和 [OpenSearch output 配置](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md)
+- [Data Firehose 目标配置](https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html)
+- [当前服务定价](https://aws.amazon.com/opensearch-service/pricing/)
+- [Elastic 许可常见问题](https://www.elastic.co/pricing/faq/licensing)
 
 ## 测验
 
-通过 [OpenSearch 测验](../../quizzes/observability/logging/02-opensearch-quiz.md) 检验这些区别。
+请参加 [OpenSearch 测验](../../quizzes/observability/logging/02-opensearch-quiz.md)，检验你对这些区别的理解。

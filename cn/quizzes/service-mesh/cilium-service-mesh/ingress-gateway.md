@@ -1,209 +1,197 @@
 # Cilium Service Mesh Ingress 与 Gateway 测验
 
-本测验用于测试你对 Cilium Ingress Controller、Gateway API、TLS 终止和 EKS 集成模式的理解。
+基线版本：Cilium 1.20.3、Gateway API 1.6.3 和 AWS LBC 3.6.0。阅读[指南](../../../service-mesh/cilium-service-mesh/05-ingress-gateway.md)及其主要来源。
 
 ## 测验题目
 
-### 1. Cilium Ingress Controller 的 loadbalancerMode 选项中的“shared”模式表示什么？
+### 1. Cilium Ingress `loadbalancerMode: shared` 共享的是什么？
 
-A. 为每个 Ingress 创建单独的负载均衡器
-B. 所有 Ingress 共用一个负载均衡器
-C. 仅使用 NodePort，不使用负载均衡器
-D. 仅处理内部流量
+- A. 集群中所有控制器共用的一个前端
+- B. 使用此模式的资源共用的 Cilium Ingress Service
+- C. 仅限内部 NodePort
+- D. 所有 Gateway API Gateway 自动共用
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 所有 Ingress 共用一个负载均衡器**
+**答案：B. 使用此模式的资源共用的 Cilium Ingress Service**
 
-**说明：**
-loadbalancerMode: shared 设置使所有 Ingress 资源使用同一个共享负载均衡器。这种方式具有成本效益，而 dedicated 模式会为每个 Ingress 创建单独的负载均衡器。
+此设置适用于使用 shared 模式、由 Cilium 管理的 Ingress 资源。Dedicated 模式的覆盖设置和其他控制器彼此独立。共享的 GatewayClass 也不意味着共用一个云负载均衡器。
 
 </details>
 
-### 2. Gateway API 的 HTTPRoute 中 parentRefs 字段的作用是什么？
+### 2. 如何将 HTTPRoute 显式关联到 Gateway 的 HTTPS listener？
 
-A. 定义父 Pod
-B. 指定此路由连接到哪个 Gateway
-C. 引用父 namespace
-D. 定义要继承的策略
+- A. 指定一个父 Pod
+- B. 使用 `parentRefs` 指定 Gateway 名称和 `sectionName: https`
+- C. 仅设置 Route 的命名空间
+- D. 使用任意 listener 注解
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 指定此路由连接到哪个 Gateway**
+**答案：B. 使用 `parentRefs` 指定 Gateway 名称和 `sectionName: https`**
 
-**说明：**
-parentRefs 指定 HTTPRoute 连接到哪个 Gateway。通过引用 Gateway 的名称和 namespace，它确定该路由应用于哪个 listener。
+section 名称必须与 listener 匹配，其 `allowedRoutes` 必须允许关联，并且主机名/协议必须兼容。请检查正确的 parent status 条目中的 Accepted/ResolvedRefs 状态；仅有 parent reference 并不能证明可达。
 
 </details>
 
-### 3. 哪个 annotation 可在 Cilium Ingress 中启用 TLS passthrough？
+### 3. 哪个 Cilium Ingress 注解可启用 TLS passthrough？
 
-A. ingress.cilium.io/tls-mode: passthrough
-B. ingress.cilium.io/tls-passthrough: "true"
-C. cilium.io/tls: passthrough
-D. nginx.ingress.kubernetes.io/ssl-passthrough
+- A. `ingress.cilium.io/tls-mode: passthrough`
+- B. `ingress.cilium.io/tls-passthrough: "true"`
+- C. `cilium.io/tls: passthrough`
+- D. nginx 专用注解
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. ingress.cilium.io/tls-passthrough: "true"**
+**答案：B. `ingress.cilium.io/tls-passthrough: "true"`**
 
-**说明：**
-`ingress.cilium.io/tls-passthrough: "true"` annotation 会将 TLS 流量直接转发到后端 Service，而不终止 TLS。当后端需要处理 TLS 时，这非常有用。
+TLS 由后端终止。Ingress 需要设置主机名和路径 `/`；Cilium 使用 SNI，而不是检查 HTTP 路径。后端看到的是 Envoy/节点连接，而不是原始客户端的套接字地址。
 
 </details>
 
-### 4. Gateway API 的 Gateway 资源中使用哪个字段来支持多种协议？
+### 4. 在哪里配置 Gateway 的协议和端口？
 
-A. protocols
-B. listeners
-C. endpoints
-D. handlers
+- A. `protocols`
+- B. `listeners`
+- C. `endpoints`
+- D. `handlers`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. listeners**
+**答案：B. `listeners`**
 
-**说明：**
-可在 Gateway 的 listeners 字段中定义多个 listener，以支持 HTTP、HTTPS、TCP、TLS 等各种协议。每个 listener 都可以单独配置 protocol、port、hostname 等。
+每个 listener 定义其协议/端口以及适用的主机名/TLS/关联设置。实际支持的协议组合取决于控制器。例如，LBC 3.6 不支持在同一个 Gateway 中混用其 L4/NLB 和 L7/ALB listener。
 
 </details>
 
-### 5. 在 EKS 上将 NLB 与 Cilium Ingress 一起使用需要哪个 annotation？
+### 5. 要为指南中的 Cilium shared Ingress NLB 前端选择 AWS LBC，应使用哪项配置？
 
-A. service.kubernetes.io/load-balancer-type: nlb
-B. service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-C. eks.amazonaws.com/load-balancer: nlb
-D. aws.load-balancer/type: network
+- A. 仅使用旧版 `aws-load-balancer-type: nlb` 注解
+- B. Service `spec.loadBalancerClass: service.k8s.aws/nlb`、instance target 和已分配的 NodePort
+- C. 使用 IP target，但不检查 EndpointSlices
+- D. 任意 EKS 命名空间标签
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. service.beta.kubernetes.io/aws-load-balancer-type: "nlb"**
+**答案：B. Service `spec.loadBalancerClass: service.k8s.aws/nlb`、instance target 和已分配的 NodePort**
 
-**说明：**
-要在 AWS EKS 上使用 Network Load Balancer，请向 Service 添加 `service.beta.kubernetes.io/aws-load-balancer-type: "nlb"` annotation。scheme、target-type 等额外 annotation 可以进一步配置 NLB 行为。
+对应的 Helm 设置是 `ingressController.service.loadBalancerClass`。Cilium 的 L7 shared Ingress EndpointSlice 是合成的，并且没有 Pod target 引用；LBC 的 IP 解析器会跳过它。仍需验证 EC2 instance/NodePort 前提条件。
 
 </details>
 
-### 6. Gateway API 的 HTTPRoute 中使用哪种 filter 类型来配置 URL 重写？
+### 6. 哪个 HTTPRoute filter 会改写上游主机名/路径，而不重定向客户端？
 
-A. PathRewrite
-B. URLRewrite
-C. RequestTransform
-D. PathModifier
+- A. `PathRewrite`
+- B. `URLRewrite`
+- C. `RequestTransform`
+- D. `RequestRedirect`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. URLRewrite**
+**答案：B. `URLRewrite`**
 
-**说明：**
-在 HTTPRoute 的 filters 部分中，使用 type: URLRewrite 重写请求 URL。path 和 hostname 都可以修改。
+URLRewrite 会更改转发给后端的请求。RequestRedirect 会向客户端返回重定向。指南中的 header 值是字面字符串，不会自动生成 UUID 或延迟值。
 
 </details>
 
-### 7. 要在 Cilium Gateway API 中允许跨 namespace 路由，需要哪个 Gateway 设置？
+### 7. 哪项 listener 设置可将跨命名空间的 Route 关联限制为带有获准标签的命名空间？
 
-A. allowedRoutes.namespaces.from: All
-B. allowedRoutes.namespaces.from: Selector
-C. crossNamespace: true
-D. routes.scope: cluster
+- A. `allowedRoutes.namespaces.from: All`
+- B. `allowedRoutes.namespaces.from: Selector` 并配置匹配的 selector
+- C. `crossNamespace: true`
+- D. `routes.scope: cluster`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. allowedRoutes.namespaces.from: Selector**
+**答案：B. `allowedRoutes.namespaces.from: Selector` 并配置匹配的 selector**
 
-**说明：**
-在 Gateway 的 listeners 中，将 allowedRoutes.namespaces.from: Selector 设置为 Selector 后，使用 selector 时仅允许来自具有特定标签的 namespace 的路由。'All' 允许所有 namespace，'Same' 仅允许相同的 namespace。
+All 也允许跨命名空间关联，但不会按标签进行限制。Same 会将关联范围限制在 Gateway 所在的命名空间。跨命名空间引用后端 Service 还需要在后端命名空间中配置 ReferenceGrant；这是另一项独立检查。
 
 </details>
 
-### 8. 在 CiliumEnvoyConfig 中使用哪种 Envoy 资源类型来配置 Service 健康检查？
+### 8. 在哪里配置 Envoy 主动健康检查？
 
-A. envoy.config.listener.v3.Listener
-B. envoy.config.cluster.v3.Cluster
-C. envoy.config.route.v3.Route
-D. envoy.config.endpoint.v3.Endpoint
+- A. Listener 的名称
+- B. Cluster 的 `health_checks`
+- C. Route 的名称
+- D. Endpoint 的命名空间
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. envoy.config.cluster.v3.Cluster**
+**答案：B. Cluster 的 `health_checks`**
 
-**说明：**
-健康检查设置定义在 Cluster 资源的 health_checks 字段中。可以配置 HTTP 健康检查、TCP 健康检查、间隔、阈值等。
+可用的 CEC 仍需具备 Service→Listener→route→Cluster 链路。HTTP 健康检查的主机名/路径必须能在实际后端上正常工作。预期状态码区间不包含上界，因此起始值为 200、结束值为 300 时会覆盖所有 2xx 状态码。
 
 </details>
 
-### 9. 在 Gateway API 中从 HTTP 重定向到 HTTPS 时，建议使用哪个 statusCode？
+### 9. 哪种永久重定向会保留请求方法/正文？HTTP→HTTPS Route 应如何关联？
 
-A. 302 (Found)
-B. 307 (Temporary Redirect)
-C. 301 (Moved Permanently)
-D. 303 (See Other)
+- A. HTTP 和 HTTPS 上都使用 302
+- B. HTTP 和 HTTPS 上都使用 307
+- C. 仅在 HTTP listener 上使用 308
+- D. 仅在 HTTPS listener 上使用 303
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 301 (Moved Permanently)**
+**答案：C. 仅在 HTTP listener 上使用 308**
 
-**说明：**
-对于从 HTTP 到 HTTPS 的永久重定向，建议使用状态码 301。这会告知浏览器和搜索引擎 URL 已永久更改，有利于缓存和 SEO。
+308 是永久重定向，并会保留方法/正文；307 是对应的临时重定向。仅将 scheme 重定向绑定到 HTTP，可避免 HTTPS 自我重定向循环。重定向无法保护已在初始明文请求中发送的数据。
 
 </details>
 
-### 10. Cilium 与 AWS Load Balancer Controller 的主要区别是什么？
+### 10. 哪项成本和能力比较是准确的？
 
-A. Cilium 仅支持 L4
-B. AWS LBC 提供更低延迟
-C. Cilium 仅使用 node 资源，无需额外的 LB 成本
-D. AWS LBC 完全支持 Gateway API
+- A. Cilium 从不需要云负载均衡器
+- B. AWS LBC 总是更快
+- C. Cilium 节点/代理成本可能与云 LB 费用同时产生；应比较特定版本支持的功能
+- D. 每个控制器都支持所有 Gateway API 功能
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Cilium 仅使用 node 资源，无需额外的 LB 成本**
+**答案：C. Cilium 节点/代理成本可能与云 LB 费用同时产生；应比较特定版本支持的功能**
 
-**说明：**
-Cilium Ingress/Gateway 使用 node 的 eBPF 和 Envoy 处理外部流量，因此不会产生单独的 AWS load balancer 成本。相比之下，AWS LBC 会预配 ALB/NLB，从而产生额外成本。
+Cilium 可以运行在 ALB/NLB 后方，而 ALB/NLB 仍会产生费用。LBC 3.6 会将 HTTP/GRPC Route 映射到 ALB，并将 TCP/UDP/TLS Route 映射到 NLB。工作负载 mTLS 和 ACM 服务器证书是不同的机制；性能比较需要采用可比的测量方式。
 
 </details>
 
-### 11. Gateway API 中的 TCPRoute 用于什么？
+### 11. 在指南所用的 Gateway API 1.6.3 基线中，TCPRoute 有什么作用？
 
-A. HTTP 流量路由
-B. 需要 TLS 终止的流量
-C. 原始 TCP 流量路由（非 HTTP）
-D. 仅用于 UDP 流量
+- A. 检查 HTTP 路径
+- B. 默认终止 TLS
+- C. 使用已提供的 v1 API 转发不透明的 TCP 流
+- D. 仅处理 UDP
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 原始 TCP 流量路由（非 HTTP）**
+**答案：C. 使用已提供的 v1 API 转发不透明的 TCP 流**
 
-**说明：**
-TCPRoute 用于路由非 HTTP 的原始 TCP 流量，例如数据库连接和消息队列。它与 Gateway 的 TCP listener 配合使用，为非 HTTP Service 提供外部访问。
+TCP 可以承载 HTTP 或 TLS，但 TCPRoute 不具备它们的 L7 语义。此基线不提供旧版 TCPRoute v1alpha2 API。TLSRoute v1 则需要兼容的 TLS passthrough listener 才能进行 SNI 路由。
 
 </details>
 
-### 12. 在 Cilium Ingress 中，使用哪种 NLB 设置来保留客户端 IP？
+### 12. 如果在此 Cilium Ingress 拓扑中启用 NLB PPv2，需要协调哪些事项？
 
-A. X-Forwarded-For header
-B. Proxy Protocol
-C. Disable Source NAT
-D. Direct Server Return
+- A. 仅需客户端 X-Forwarded-For header
+- B. 同时配置 NLB 发送端和 Cilium `enableProxyProtocol` 接收端、健康检查及可信访问路径
+- C. 无需更改接收端
+- D. 每个 NLB 都必须启用 PPv2
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. Proxy Protocol**
+**答案：B. 同时配置 NLB 发送端和 Cilium `enableProxyProtocol` 接收端、健康检查及可信访问路径**
 
-**说明：**
-要通过 NLB 保留客户端 IP，必须启用 Proxy Protocol。使用 `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"` annotation。Envoy 从 Proxy Protocol header 中提取原始客户端 IP。
+解析器要求存在 PROXY header，因此只启用一端会导致流量中断。PPv2 是可选项；客户端 IP 是否保留也取决于 target 类型/属性。AWS LBC 警告不要在使用 instance target 和 externalTrafficPolicy Local 时启用 PPv2。PROXY 元数据不是经过身份验证的身份信息。
 
 </details>

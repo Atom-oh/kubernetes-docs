@@ -1,253 +1,106 @@
 # Istio 高级主题测验
 
-> **支持的版本**: Istio 1.28.0
-> **EKS 版本**: 1.34 (Kubernetes 1.28+)
-> **最后更新**: February 19, 2026
+> **验证基线**：Istio 1.31.0、Kubernetes 1.32–1.37、Argo Rollouts 1.10.1
+> **上次审阅**：October 16, 2026
 
-本测验用于检验您对 Istio 高级功能的理解。
+这些问题旨在区分配置、运行时行为和证据。各示例彼此独立；请选择相关拓扑，并保留链接指南中的先决条件。下文中的历史计算输入不是当前价格，也不是新的基准测试结果。
 
-## 选择题（1-5）
+## 选择题（1–5）
 
-### 问题 1：Ambient Mode 与 Sidecar Mode
+### 问题 1：Ambient 和 Sidecar 模式
 
-Istio Ambient Mode 的**最大优势**是什么？
+在 ambient 模式中，哪项架构变更可以降低每个工作负载的代理开销？
 
-A. 提供更多功能
-B. 显著降低资源使用量
-C. 更快的安装速度
-D. 更好的安全性
+- A. Ambient 始终比 sidecar 提供更多功能。
+- B. 每个节点上的 ztunnel 处理 L4 流量，并为需要 L7 处理的场景单独部署 waypoint。
+- C. 可以保证安装速度提高十倍。
+- D. 无需更改配置即可增强所有策略。
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B**
 
-Ambient Mode 的最大优势是**资源使用量减少超过 98%**。
+Ambient 无需在每个加入的工作负载 Pod 中都部署一个 sidecar 代理。ztunnel 提供 L4 安全覆盖网络；目标 waypoint 的加入情况和所支持的 L7 策略决定了额外的处理路径。waypoint 并非一个通用的共享跳点，不能由任意一个 ztunnel 随意选择。
 
-**说明：**
+| 方面 | 正确的比较方式 |
+|---|---|
+| CPU/内存 | 在流量、策略、遥测、节点数和 waypoint 副本数相当的条件下进行测量。不存在普遍适用的 98% 节省。 |
+| 加入方式 | Ambient 可以在不重启应用的情况下，让现有且无 sidecar 的 Pod 加入；移除已有 sidecar 则需要替换工作负载。 |
+| 功能 | 支持情况各不相同。Waypoint 不支持 EnvoyFilter；ambient 多集群也有其自身的 Beta 拓扑限制。 |
+| 成熟度 | Ambient 核心功能在 Istio 1.24 中达到 GA；这并不意味着之后推出的每项功能都已达到 GA。 |
+| 安全 | mTLS 和策略取决于实际流量路径以及支持的策略附加方式；若 L7 强制执行是必需的，则必须确保流量经过 waypoint。 |
 
-**Sidecar Mode 与 Ambient Mode 对比：**
+例如，**假设**有 1,000 个 sidecar，每个占用 50 MB/0.1 vCPU，总计为 50,000 MB/100 vCPU。假设有 10 个 ztunnel，每个占用 50 MB/0.1 vCPU，再加上一个占用 200 MB/0.5 vCPU 的 waypoint，则总计为 700 MB/1.5 vCPU。按算术计算，降幅为 98.6%/98.5%；这些任意设定的输入既不是基准测试结果，也不是容量保证。
 
-| 项目 | Sidecar Mode | Ambient Mode | 改进 |
-|------|-------------|-------------|------|
-| **内存** | 50MB × Pod 数量 | 仅 ztunnel + waypoint | 减少 98%+ |
-| **CPU** | 0.1 vCPU × Pod 数量 | 仅 ztunnel + waypoint | 减少 98%+ |
-| **Pod 重启** | 必需 | 不需要 | 简化运维 |
-| **部署速度** | 慢（Sidecar 注入） | 快 | 提升 5-10 倍 |
-
-**在 1000 个 Pod 规模下的资源对比：**
-
-```
-Sidecar Mode:
-- Memory: 1000 × 50MB = 50GB
-- CPU: 1000 × 0.1 vCPU = 100 vCPU
-
-Ambient Mode (10 nodes):
-- Memory: (10 × 50MB) + 200MB = 700MB
-- CPU: (10 × 0.1 vCPU) + 0.5 vCPU = 1.5 vCPU
-
-Savings rate: 98.6% (memory), 98.5% (CPU)
-```
-
-**Ambient Mode 架构：**
-
-```mermaid
-flowchart TB
-    subgraph Node1[Node 1]
-        Pod1[Pod A]
-        Pod2[Pod B]
-        ztunnel1[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Node2[Node 2]
-        Pod3[Pod C]
-        Pod4[Pod D]
-        ztunnel2[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Waypoint[Waypoint Proxy]
-        waypoint[waypoint<br/>L7 Proxy<br/>Optional]
-    end
-
-    Pod1 --> ztunnel1
-    Pod2 --> ztunnel1
-    Pod3 --> ztunnel2
-    Pod4 --> ztunnel2
-
-    ztunnel1 <-->|mTLS| ztunnel2
-    ztunnel1 -->|When L7 needed| waypoint
-    ztunnel2 -->|When L7 needed| waypoint
-
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class ztunnel1,ztunnel2 ztunnel;
-    class waypoint waypoint;
-```
-
-**启用 Ambient Mode：**
+安装受支持的 ambient 组件并检查现有 revision/injection 标签后，可按以下方式加入：
 
 ```bash
-# Install Istio with Ambient Mode
-istioctl install --set profile=ambient -y
-
-# Add Namespace to Ambient Mode
-kubectl label namespace default istio.io/dataplane-mode=ambient
-
-# Verify
-kubectl get pods -n istio-system | grep ztunnel
+kubectl label namespace ambient-demo istio.io/dataplane-mode=ambient --overwrite
+kubectl get daemonset ztunnel -n istio-system
+istioctl ztunnel-config workloads --workload-namespace ambient-demo
 ```
 
-**选项分析：**
-- A (X)：功能与 Sidecar 相同（某些高级功能需要 waypoint）
-- B (O)：资源使用量减少超过 98%
-- C (X)：安装速度是次要收益
-- D (X)：安全级别相同（均支持 mTLS、AuthorizationPolicy）
+命名空间必须已存在、确实应使用 ambient，并且其中的工作负载必须兼容。这些命令本身不会安装 CNI/ztunnel、配置 waypoint，也无法安全迁移已注入的 Pod。
 
-**参考资料：**
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+[Ambient 指南](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+
 </details>
 
----
+### 问题 2：多集群发现
 
-### 问题 2：多集群 Mesh
+在 Istio sidecar 多集群网格中，哪个组件会读取经过授权的 Kubernetes 服务注册表，并生成代理发现配置？
 
-在 Istio 多集群 Mesh 中，什么负责**跨集群的服务发现**？
-
-A. Istiod
-B. CoreDNS
-C. East-West Gateway
-D. Service Entry
+- A. Istiod
+- B. 只有 CoreDNS
+- C. 只有东西向网关
+- D. 只有 ServiceEntry 对象
 
 <details>
 <summary>显示答案</summary>
 
 **答案：A**
 
-在多集群环境中，**Istiod** 会收集并分发所有集群的服务信息。
+每个主集群中的 Istiod 都会读取其有权访问的 Kubernetes API。在主集群-远程集群拓扑中，远程工作负载使用主集群的控制平面；远程安装并不是由“超级主集群”管理的第二个完整 Istiod。在多主集群拓扑中，各主集群有自己的控制平面，并执行经过授权的远程发现。
 
-**说明：**
+Istiod 会生成/分发代理配置；它不会将 VirtualService/DestinationRule Kubernetes 对象或应用数据复制到每个集群。请单独分发配置。必须有意配置共享信任；相同的 meshID 值不会创建共同 CA。
 
-**多集群 Mesh 架构：**
+CoreDNS 可以使用转发和其他配置，但它不是 Istio 的跨集群注册表。网关负责传输跨网络流量。ServiceEntry 会添加注册表条目，包括外部服务或其他显式注册的服务。
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[Cluster 1]
-        Istiod1[Istiod<br/>Primary]
-        Service1[Service A]
-        Pod1[Pod A]
-    end
+不要臆造 `data.kubeconfig` 字段，应生成实际的远程 secret：
 
-    subgraph Cluster2[Cluster 2]
-        Istiod2[Istiod<br/>Remote]
-        Service2[Service B]
-        Pod2[Pod B]
-    end
-
-    subgraph SharedCP[Shared Control Plane]
-        PrimaryIstiod[Primary Istiod<br/>Service Discovery Manager]
-    end
-
-    PrimaryIstiod -->|Config Distribution| Istiod1
-    PrimaryIstiod -->|Config Distribution| Istiod2
-
-    Istiod1 -->|Service Info Collection| Service1
-    Istiod2 -->|Service Info Collection| Service2
-
-    Pod1 <-->|Cross-cluster| Pod2
-
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Istiod1,Istiod2 istiod;
-    class Service1,Service2 service;
-    class PrimaryIstiod primary;
+```bash
+# After the remote installation; contexts must identify the intended clusters.
+istioctl create-remote-secret --context="$CTX_CLUSTER2" --name=cluster2   | kubectl --context="$CTX_CLUSTER1" apply -f -
 ```
 
-**Istiod 的职责：**
+该 secret 授予主集群访问**远程 API**的权限。请保护其中的凭证并检查生成的 RBAC。它不会将网络互联，也不会复制策略对象。
 
-1. **服务发现**：
-   - 收集所有集群中的 Kubernetes Service
-   - 维护统一的服务注册表
-   - 向 Envoy 分发端点信息
+[多集群指南](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 
-2. **配置分发**：
-   - 将 VirtualService、DestinationRule 部署到所有集群
-   - 管理跨集群路由规则
-
-3. **证书管理**：
-   - 为所有集群签发 mTLS 证书
-   - 通过共享 Root CA 建立信任链
-
-**多集群配置示例：**
-
-```yaml
-# Primary cluster configuration
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    global:
-      meshID: mesh1
-      multiCluster:
-        clusterName: cluster1
-      network: network1
-
----
-# Remote cluster access from Primary
-apiVersion: v1
-kind: Secret
-metadata:
-  name: istio-remote-secret-cluster2
-  namespace: istio-system
-  annotations:
-    networking.istio.io/cluster: cluster2
-type: Opaque
-data:
-  kubeconfig: <base64-encoded-kubeconfig>
-```
-
-**选项分析：**
-- A (O)：Istiod 收集并分发所有集群的服务信息
-- B (X)：CoreDNS 仅处理集群内部 DNS
-- C (X)：East-West Gateway 仅处理流量路由（不负责服务发现）
-- D (X)：ServiceEntry 是用于手动注册外部服务的资源
-
-**参考资料：**
-- [多集群](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 </details>
-
----
 
 ### 问题 3：EnvoyFilter 的用途
 
-使用 EnvoyFilter 的**主要目的**是什么？
+EnvoyFilter 的主要用途是什么？
 
-A. 创建 Kubernetes Service
-B. 自动生成 VirtualService
-C. 自定义 Envoy proxy 行为
-D. 更改 Istiod 配置
+- A. 创建 Kubernetes Service。
+- B. 自动生成每个 VirtualService。
+- C. 自定义选定的、已生成的 Envoy 代理配置。
+- D. 替换所有 Istiod 安装设置。
 
 <details>
 <summary>显示答案</summary>
 
 **答案：C**
 
-**EnvoyFilter** 是一种用于精细自定义 Envoy proxy 行为的高级资源。
+应优先使用受支持的路由、遥测、安全或扩展 API 来完成任务。当这些 API 无法提供所需的受支持行为，且已理解生成的配置时，才适合使用 EnvoyFilter。例如，下面这个仅适用于 sidecar 的 Lua filter 会更改一个示例性的出站请求标头：
 
-**说明：**
-
-**EnvoyFilter 使用场景：**
-
-1. **添加自定义 Header**：
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: add-custom-header
+  name: quiz-header
   namespace: default
 spec:
   workloadSelector:
@@ -260,1083 +113,310 @@ spec:
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
-        name: envoy.lua
+        name: envoy.filters.http.lua
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              request_handle:headers():add("x-custom-header", "my-value")
-            end
+          '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(handle)
+                handle:headers():replace("x-quiz-example", "yes")
+              end
 ```
 
-2. **Wasm Extension 集成**：
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: wasm-filter
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.wasm
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          config:
-            vm_config:
-              runtime: "envoy.wasm.runtime.v8"
-              code:
-                local:
-                  filename: "/etc/istio/extensions/auth_filter.wasm"
-```
+命名空间和选择器必须与目标代理相匹配。通常，不设选择器会覆盖该资源所在命名空间中的代理；位于根命名空间的资源则可能作用于整个网格。不要在同一个 YAML 对象中写两个 `workloadSelector` 键。Lua 插入的标头并不是经过身份验证的身份信息。
 
-3. **Rate Limiting 集成**：
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: rate-limit-filter
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.ratelimit
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-          domain: productpage-ratelimit
-          rate_limit_service:
-            grpc_service:
-              envoy_grpc:
-                cluster_name: rate_limit_cluster
-```
+其他用途需要具备完整依赖：Wasm 模块需要经过验证的制品/运行时以及挂载方式，或使用受支持的 WasmPlugin 分发路径；全局限流需要可访问的服务、匹配的 descriptor 和故障策略。仅仅插入 filter 名称并不能提供这些系统。Ambient waypoint 不支持 EnvoyFilter。
 
-**EnvoyFilter 作用范围：**
+升级期间，请验证准确的 Istio/Envoy 版本、实际生效范围、filter 顺序、类型化载荷和生成的代理配置。Istiod 的安装值仍使用 Helm/istioctl 配置；IstioOperator YAML 仍然是 istioctl 的输入，尽管集群内 operator 已被移除。
 
-```yaml
-spec:
-  # Apply to entire mesh
-  workloadSelector: {}
+[EnvoyFilter 指南](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 
-  # Apply to specific workload only
-  workloadSelector:
-    labels:
-      app: reviews
-      version: v2
-
-  # Apply to specific namespace only
-  # (controlled by metadata.namespace)
-```
-
-**注意事项：**
-
-警告：**EnvoyFilter 功能强大但存在风险：**
-- 需要深入理解 Envoy 内部机制
-- Istio 版本升级时可能出现兼容性问题
-- 错误配置可能导致整个 Mesh 故障
-
-**最佳实践：**
-1. 尽可能使用 VirtualService、DestinationRule
-2. 仅在万不得已时使用 EnvoyFilter
-3. 在测试环境中进行充分测试
-4. 使用 workloadSelector 限制作用范围
-
-**选项分析：**
-- A (X)：使用 kubectl 创建 Kubernetes Service
-- B (X)：VirtualService 需手动创建
-- C (O)：精细自定义 Envoy proxy 行为
-- D (X)：使用 IstioOperator 更改 Istiod 配置
-
-**参考资料：**
-- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 </details>
-
----
 
 ### 问题 4：Sidecar 注入
 
-如何在 Istio 中**禁用自动 Sidecar 注入**？
+哪些设置可以为新创建的 Pod 禁用自动 sidecar 注入？
 
-A. 从 Namespace 移除 `istio-injection=enabled` 标签
-B. 为 Pod 添加 `sidecar.istio.io/inject="false"` 注解
-C. 重启 Istiod
-D. A 和 B 都可以
+- A. 显式将命名空间标签设为 `istio-injection=disabled`。
+- B. 将工作负载 Pod 模板标签设为 `sidecar.istio.io/inject: "false"`。
+- C. 在不更改配置的情况下重启 Istiod。
+- D. A 和 B。
 
 <details>
 <summary>显示答案</summary>
 
 **答案：D**
 
-可以在 Namespace 级别和 Pod 级别控制 Sidecar 注入。
-
-**说明：**
-
-**Sidecar 注入控制方法：**
-
-**1. Namespace 级别（A - O）：**
-
 ```bash
-# Enable Sidecar injection
-kubectl label namespace default istio-injection=enabled
-
-# Disable Sidecar injection
-kubectl label namespace default istio-injection-
-
-# Or change label
-kubectl label namespace default istio-injection=disabled --overwrite
+kubectl label namespace example istio-injection=disabled --overwrite
+kubectl get namespace example -L istio-injection,istio.io/rev
 ```
 
-**2. Pod 级别（B - O）：**
+下面这段配置属于现有 Deployment 的 spec；保留其 image、选择器及其他字段：
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
 spec:
   template:
     metadata:
-      annotations:
-        sidecar.istio.io/inject: "false"  # Disable Sidecar injection
-    spec:
-      containers:
-      - name: myapp
-        image: myapp:latest
+      labels:
+        sidecar.istio.io/inject: 'false'
 ```
 
-**Sidecar 注入优先级：**
+禁用注入的命名空间标签或 Pod 标签具有优先效力。特别是，Pod 选择加入注入**不会**覆盖 `istio-injection=disabled`。只移除 `istio-injection=enabled` 并不能在所有情况下禁用注入：还必须检查 revision 标签、Pod 注入选择和注入器默认设置。旧版 inject annotation 已弃用，应改用标签；避免新旧设置互相冲突。
 
-```
-Pod annotation > Namespace label > Default
-
-Examples:
-1. Namespace: istio-injection=enabled
-   Pod: sidecar.istio.io/inject="false"
-   Result: Sidecar not injected (Pod annotation takes priority)
-
-2. Namespace: istio-injection=disabled
-   Pod: sidecar.istio.io/inject="true"
-   Result: Sidecar injected (Pod annotation takes priority)
-
-3. Namespace: no label
-   Pod: no annotation
-   Result: Sidecar not injected (default)
-```
-
-**验证 Sidecar 注入：**
+更改只影响新建的 Pod，不影响已注入代理的 Pod。要更改现有 Pod，请使用工作负载经过审查的 rollout。混合配置的命名空间可以启用注入，同时让选定工作负载模板选择退出；这也会改变该工作负载参与网格/安全策略的方式。
 
 ```bash
-# Check if Sidecar was injected into Pod
-kubectl get pods <pod-name> -o jsonpath='{.spec.containers[*].name}'
-# Example output: myapp istio-proxy (2 = Sidecar present)
-
-# Check Sidecar injection logs
-kubectl logs -n istio-system -l app=istiod --tail=100 | grep injection
-
-# Check Namespace settings
-kubectl get namespace -L istio-injection
+kubectl get pod "$POD" -n "$NAMESPACE" -o json   | jq '{containers: [.spec.containers[].name],
+         initContainers: [.spec.initContainers[]? | {name, restartPolicy}]}'
 ```
 
-**混合环境示例：**
+原生 sidecar 可能会以 `restartPolicy: Always` 的形式出现在 initContainers 中；只检查普通容器或期待恰好 `2/2` Ready 都不够。Ambient 加入是另一种独立机制。
 
-```yaml
-# Inject Sidecar for entire Namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
-  labels:
-    istio-injection: enabled
+[注入指南](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 
----
-# Exclude specific Pod only (e.g., legacy system)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: legacy-app
-  namespace: production
-spec:
-  template:
-    metadata:
-      annotations:
-        sidecar.istio.io/inject: "false"
-    spec:
-      containers:
-      - name: legacy
-        image: legacy:v1
-
----
-# Most Pods automatically get Sidecar injected
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: modern-app
-  namespace: production
-spec:
-  template:
-    spec:
-      containers:
-      - name: modern
-        image: modern:v2
-```
-
-**选项分析：**
-- A (O)：可以在 Namespace 级别控制 Sidecar 注入
-- B (O)：可以在 Pod 级别控制 Sidecar 注入
-- C (X)：不需要重启 Istiod
-- D (O)：A 和 B 都是有效方法
-
-**参考资料：**
-- [Sidecar 注入](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 </details>
 
----
+### 问题 5：Argo Rollouts 流量拆分
 
-### 问题 5：Argo Rollouts 集成
+Argo Rollouts 会更新哪个 Istio **声明式资源**中的 HTTP 路由权重？
 
-将 Argo Rollouts 与 Istio 配合使用时，什么负责**流量拆分**？
-
-A. Argo Rollouts Controller
-B. Istio VirtualService
-C. Kubernetes Service
-D. Istio Gateway
+- A. Rollouts 控制器进程
+- B. VirtualService
+- C. 只有 Kubernetes Service
+- D. 只有 Gateway
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B**
 
-**Istio VirtualService** 执行实际的流量拆分，Argo Rollouts 会自动更新 VirtualService 中的权重值。
+Rollouts 会更新指定路由的权重，Istiod 会转换配置，而 **Envoy 执行**路由。VirtualService 不是处理数据包的进程。10% 是概率路由权重，并不保证每 100 个请求中恰好有 10 个到达 canary。重试和长连接会影响观察结果。
 
-**说明：**
-
-**Argo Rollouts + Istio 集成架构：**
-
-```mermaid
-flowchart TB
-    User[User] --> Gateway[Istio Gateway]
-    Gateway --> VS[VirtualService<br/>Traffic Splitting]
-
-    VS -->|90% weight| Stable[Stable Pod<br/>v1]
-    VS -->|10% weight| Canary[Canary Pod<br/>v2]
-
-    Rollout[Argo Rollouts<br/>Controller] -->|weight update| VS
-    Rollout -->|Pod management| Stable
-    Rollout -->|Pod management| Canary
-
-    Prometheus[Prometheus] -->|metrics| Analysis[AnalysisTemplate]
-    Analysis -->|success/failure| Rollout
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Gateway,VS istio;
-    class Rollout,Analysis argo;
-    class Stable,Canary pod;
-    class Prometheus argo;
-```
-
-**VirtualService 的作用：**
+基于 subset 的替代方案需要一个选择该应用的 Service、两个 subset，以及由 Rollouts 管理它们的 revision 标签：
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: test-subsets
+  namespace: rollouts-demo
+spec:
+  host: test
+  subsets:
+  - name: stable
+    labels:
+      app: test
+  - name: canary
+    labels:
+      app: test
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: reviews
+  name: test-subsets
+  namespace: rollouts-demo
 spec:
   hosts:
-  - reviews
+  - test
+  - test.rollouts-demo.svc.cluster.local
   http:
-  - name: primary  # route name referenced by Argo Rollouts
+  - name: primary
     route:
     - destination:
-        host: reviews
+        host: test
+        port:
+          number: 8080
         subset: stable
-      weight: 100  # Automatically changed by Argo Rollouts
+      weight: 100
     - destination:
-        host: reviews
+        host: test
+        port:
+          number: 8080
         subset: canary
-      weight: 0    # Automatically changed by Argo Rollouts
+      weight: 0
+    retries:
+      attempts: 0
 ```
 
-**Argo Rollouts 配置：**
+将此策略片段合并到指南中完整且匹配的 Rollout 中；不要将其作为不完整资源应用，也不要与其他主机级流量拆分策略组合使用：
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: reviews
 spec:
   strategy:
     canary:
-      # Istio integration settings
       trafficRouting:
         istio:
           virtualService:
-            name: reviews        # VirtualService name
+            name: test-subsets
             routes:
-            - primary            # route name
+            - primary
           destinationRule:
-            name: reviews        # DestinationRule name
+            name: test-subsets
             canarySubsetName: canary
             stableSubsetName: stable
-
-      # Canary steps
       steps:
-      - setWeight: 10   # Change VirtualService weight to 10
-      - pause: {duration: 2m}
-      - setWeight: 25   # Change VirtualService weight to 25
-      - pause: {duration: 2m}
-      - setWeight: 50
-      - pause: {duration: 2m}
+      - setWeight: 10
+      - pause: {}
 ```
 
-**部署流程：**
+必须存在名为 `test` 的 Service、完整的 Rollout 选择器/模板、控制器/RBAC，以及 `rollouts-demo` 命名空间。Rollouts 会更新 subset revision 标签。`retries.attempts: 0` 会禁用此路由上的网格重试；应用自身的重试行为则是另一回事。
 
-```
-1. Argo Rollouts creates new version (v2) Pods
-   |
-2. Argo Rollouts sets VirtualService canary weight to 10
-   |
-3. Istio Envoy routes actual 10% traffic to v2
-   |
-4. AnalysisTemplate checks metrics (error rate, latency)
-   |
-5. On success, Argo Rollouts increases weight to 25
-   |
-6. Repeat...
-   |
-7. Finally weight 100 (complete transition)
-```
+只有经过配置才会执行流量分析。自动分析失败可以中止 rollout，但不会撤销应用/数据库副作用。请使用指南中的完整主机级或 subset 示例，每次只采用一种策略。
 
-**职责划分：**
+[Argo Rollouts 指南](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
-| 组件 | 职责 |
-|---------|------|
-| **Argo Rollouts** | - 创建/删除 Pod<br/>- 更新 VirtualService 权重<br/>- 执行部署策略<br/>- 自动回滚 |
-| **Istio VirtualService** | - 实际流量拆分<br/>- 应用路由规则<br/>- 生成 Envoy 配置 |
-| **Envoy Proxy** | - 执行流量路由<br/>- 收集指标 |
-| **Prometheus** | - 存储指标<br/>- 向 AnalysisTemplate 提供数据 |
-
-**实际流量流程：**
-
-```bash
-# 100 user requests
-100 requests -> Istio Gateway
-              |
-         VirtualService
-         (weight: stable=90, canary=10)
-              |
-         +----+----+
-         |         |
-        90        10
-    Stable v1   Canary v2
-```
-
-**选项分析：**
-- A (X)：Argo Rollouts 仅更新 VirtualService（不直接拆分流量）
-- B (O)：VirtualService 执行实际流量拆分
-- C (X)：Kubernetes Service 仅处理负载均衡（不负责流量拆分）
-- D (X)：Gateway 是外部流量入口（不负责流量拆分）
-
-**参考资料：**
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
----
+## 简答题（6–10）
 
-## 简答题（6-10）
+### 问题 6：Ambient 资源与成本分析
 
-### 问题 6：Ambient Mode 成本节省分析
-
-计算在 AWS EKS 集群中从 Sidecar Mode 切换到 Ambient Mode 时的**成本节省**。（假设：500 个 Pod、5 个节点、r5.xlarge 实例、每月运行 730 小时）
+使用原先假设的输入（500 个 Pod、五个 r5.xlarge 节点、每月 730 小时、每节点每小时 $0.252），计算代理资源，并说明账单节省是否会随之而来。每个 sidecar 使用 50 MB/0.1 vCPU；每个 ztunnel 使用 50 MB/0.1 vCPU；假设 waypoint 使用 200 MB/0.5 vCPU。
 
 <details>
 <summary>参考答案</summary>
 
-**答案：**
+价格和资源数值是**练习输入**，不是当前 AWS 报价或实测的 Istio 用量。以下 MB/GB 算术采用十进制单位。
 
-**成本节省分析：**
+| 资源 | Sidecar | 假设五个节点上的 Ambient | 算术降幅 |
+|---|---|---|---|
+| 内存 | 500 × 50 = 25,000 MB | 5 × 50 + 200 = 450 MB | 24,550 MB，98.2% |
+| CPU | 500 × 0.1 = 50 vCPU | 5 × 0.1 + 0.5 = 1 vCPU | 49 vCPU，98% |
 
----
+一个 r5.xlarge 有四个 vCPU 和 32 GiB 内存。五个节点在满足系统/应用需求之前只有 20 个 vCPU，因此在这个固定的五节点场景中，假设的 50 vCPU sidecar 需求本身就不可行。仅考虑代理 CPU 的最低节点数为 ceil(50/4) = 13；此数值未计入应用 CPU、系统预留、内存、IP 限制、调度和弹性要求。
 
-**1. 假设条件**
+不要将这个 13 节点最低值与“一个 ambient 节点”比较，同时仍按五个节点计算 ztunnel 资源。请按**实际保留的节点数**重新计算 ztunnel 资源需求，并计入 waypoint 的高可用/流量容量和所有其他工作负载。
 
-```
-Cluster scale:
-- Pod count: 500
-- Node count: 5
-- Instance type: r5.xlarge (4 vCPU, 32GB RAM)
-- Instance cost: $0.252/hour
-- Operating hours: 730 hours/month
+按假设费率计算：
 
-Resource usage:
-- Sidecar memory: 50MB/Pod
-- Sidecar CPU: 0.1 vCPU/Pod
-- ztunnel memory: 50MB/Node
-- ztunnel CPU: 0.1 vCPU/Node
-- waypoint memory: 200MB
-- waypoint CPU: 0.5 vCPU
-```
+- 一个节点月的费用为 `0.252 × 730 = $183.96`。
+- 五个节点不变时，两种模式每月都需支付 `$919.80`：单靠测得的代理余量不会降低此账单。
+- 13 个节点月的费用应为 `$2,391.48`，这是对先前算术的修正；这并不证明生产环境确实需要这样的集群。
+- 如果经过验证的集群分别包含 Nₛ 和 Nₐ 个节点，则计算资源费用差为 `(Nₛ − Nₐ) × $183.96/month`，还未计入其他成本或承诺用量。
 
----
+完整比较还应包括 EKS/控制平面费用、负载均衡器、跨 AZ/Region 传输、存储、遥测以及实际采购承诺。Sidecar 确实使用本地通信；Ambient 不会自动消除网络费用或 OOM。
 
-**2. Sidecar Mode 资源计算**
+如果练习中的迁移成本为 $6,000，则只有在实测净月节省 S 为正数时，回本时间才是 `6000 / S` 个月。若计费容量不变，S 可能为零，这样的回本计算就没有有限结果。不要仅凭代理算术就断言此前的账单节省 92% 或 2.7 个月 ROI。
 
-```
-Memory usage:
-= 500 Pods × 50MB
-= 25,000MB
-= 25GB
+[Ambient 指南](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
-CPU usage:
-= 500 Pods × 0.1 vCPU
-= 50 vCPU
-```
-
-**所需实例数量（r5.xlarge：4 vCPU，32GB RAM）：**
-
-```
-CPU basis:
-= 50 vCPU ÷ 4 vCPU/instance
-= 12.5 instances
-≈ 13 instances needed
-
-Memory basis:
-= 25GB ÷ 32GB/instance
-= 0.78 instances
-≈ 1 instance needed
-
-Actual needed: max(13, 1) = 13 instances
-```
-
-**Sidecar Mode 每月成本：**
-
-```
-= 13 instances × $0.252/hour × 730 hours
-= $2,395.56/month
-```
-
----
-
-**3. Ambient Mode 资源计算**
-
-```
-Memory usage:
-= (5 nodes × 50MB) + 200MB
-= 250MB + 200MB
-= 450MB
-
-CPU usage:
-= (5 nodes × 0.1 vCPU) + 0.5 vCPU
-= 0.5 vCPU + 0.5 vCPU
-= 1.0 vCPU
-```
-
-**所需实例数量：**
-
-```
-CPU basis:
-= 1.0 vCPU ÷ 4 vCPU/instance
-= 0.25 instances
-≈ 1 instance needed
-
-Memory basis:
-= 0.45GB ÷ 32GB/instance
-= 0.01 instances
-≈ 1 instance needed
-
-Actual needed: max(1, 1) = 1 instance
-```
-
-**Ambient Mode 每月成本：**
-
-```
-= 1 instance × $0.252/hour × 730 hours
-= $183.96/month
-```
-
----
-
-**4. 成本节省**
-
-```
-Monthly savings:
-= $2,395.56 - $183.96
-= $2,211.60/month
-
-Savings rate:
-= ($2,211.60 ÷ $2,395.56) × 100
-= 92.3%
-
-Annual savings:
-= $2,211.60 × 12
-= $26,539.20/year
-```
-
----
-
-**5. 资源节省汇总**
-
-| 项目 | Sidecar Mode | Ambient Mode | 节省 |
-|------|-------------|-------------|------|
-| **内存** | 25GB | 0.45GB | 24.55GB (98.2%) |
-| **CPU** | 50 vCPU | 1.0 vCPU | 49 vCPU (98.0%) |
-| **实例** | 13 | 1 | 12 (92.3%) |
-| **每月成本** | $2,395.56 | $183.96 | $2,211.60 (92.3%) |
-| **年度成本** | $28,746.72 | $2,207.52 | $26,539.20 (92.3%) |
-
----
-
-**6. 其他成本节省因素**
-
-**网络成本：**
-- Sidecar Mode：没有 localhost 通信（所有流量均经过网络）
-- Ambient Mode：通过 ztunnel 之间的直接通信提高效率
-
-**运维成本：**
-- 无需重启 Pod（缩短部署时间）
-- 无 Sidecar 注入错误
-- 降低管理复杂性
-
-**性能改进：**
-- 减少内存压力，从而提升 Pod 性能
-- 降低 OOMKilled 频率
-- 增加节点资源余量
-
----
-
-**7. ROI（投资回报率）**
-
-```
-Ambient Mode transition cost (one-time):
-- Learning time: 40 hours × $100/hour = $4,000
-- Testing and validation: 20 hours × $100/hour = $2,000
-- Total transition cost: $6,000
-
-Payback period:
-= $6,000 ÷ $2,211.60/month
-= 2.7 months
-
-3-year total savings:
-= ($26,539.20 × 3) - $6,000
-= $73,617.60
-```
-
----
-
-**8. 实际注意事项**
-
-**优势：**
-- 节省 92%+ 成本
-- 简化运维
-- 提升部署速度
-- 最大化资源效率
-
-**注意事项：**
-- Istio 1.28+ beta 功能
-- L7 功能需要额外部署 waypoint
-- 某些高级功能需要 Sidecar mode
-- 需要充分测试
-
-**参考资料：**
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 </details>
 
----
 
-### 问题 7：多集群 Service Mesh 配置
+### 问题 7：主集群-远程 EKS 网格
 
-说明如何将 2 个 EKS 集群（us-east-1、us-west-2）集成到**单个 Istio Mesh**中。使用 **Primary-Remote 模型**，并包含跨集群服务调用示例。
+描述两个现有 EKS 集群（分别位于 us-east-1 和 us-west-2）的主集群-远程集群设计，包括发现、信任、网络先决条件和跨集群验证示例。
 
 <details>
 <summary>参考答案</summary>
 
-**答案：**
+这是一个 **sidecar** 设计。Ambient 当前的多集群 Beta 支持多主集群/多网络，不支持这种主集群-远程集群模型。主 Istiod 为远程代理提供服务；不存在一个必须从上级主集群接收配置的完整远程 Istiod。
 
-**多集群 Istio Mesh 配置：**
+安装之前，应建立经过审查的共同信任、API 访问、DNS、安全组/防火墙以及所需的 L4 控制/数据路径。不同的网络 ID 用于标识不同网络，但不会建立网络连通性。对于多网络，双方都需要适当的东西向网关，以便访问远程端点。跨 Region 网络成本和故障恢复仍需单独负责。
 
----
+主集群的必要配置是 istioctl 输入：
 
-**1. 架构概述**
-
-```mermaid
-flowchart TB
-    subgraph USEast1[Cluster 1: us-east-1<br/>Primary]
-        Istiod1[Istiod<br/>Primary Control Plane]
-        ServiceA[Service A]
-        PodA[Pod A]
-        EWG1[East-West Gateway]
-    end
-
-    subgraph USWest2[Cluster 2: us-west-2<br/>Remote]
-        Istiod2[Istiod<br/>Remote Control Plane]
-        ServiceB[Service B]
-        PodB[Pod B]
-        EWG2[East-West Gateway]
-    end
-
-    Istiod1 -->|Config Distribution| Istiod2
-    Istiod1 -->|Service Discovery| ServiceA
-    Istiod1 -->|Service Discovery| ServiceB
-
-    PodA <-->|mTLS| EWG1
-    EWG1 <-->|Cross-cluster| EWG2
-    EWG2 <-->|mTLS| PodB
-
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod1,ServiceA,PodA,EWG1 primary;
-    class Istiod2,ServiceB,PodB,EWG2 remote;
-```
-
----
-
-**2. 前提条件**
-
-```bash
-# Set up kubeconfig with access to both clusters
-export CTX_CLUSTER1=eks-us-east-1
-export CTX_CLUSTER2=eks-us-west-2
-
-# Verify contexts
-kubectl config get-contexts
-
-# Generate CA certificates (shared Root CA)
-mkdir -p certs
-cd certs
-
-# Generate Root CA
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk root-ca
-
-# Generate intermediate certificates for each cluster
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster1-cacerts
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster2-cacerts
-```
-
----
-
-**3. 集群 1（Primary）设置**
-
-```bash
-# Create CA certificate Secret
-kubectl create namespace istio-system --context="${CTX_CLUSTER1}"
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=cluster1/ca-cert.pem \
-  --from-file=cluster1/ca-key.pem \
-  --from-file=cluster1/root-cert.pem \
-  --from-file=cluster1/cert-chain.pem \
-  --context="${CTX_CLUSTER1}"
-
-# Install Primary Istio
-istioctl install --context="${CTX_CLUSTER1}" -f - <<EOF
+```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   values:
     global:
       meshID: mesh1
+      externalIstiod: true
       multiCluster:
         clusterName: cluster1
       network: network1
-
-  components:
-    ingressGateways:
-    - name: istio-eastwestgateway
-      label:
-        istio: eastwestgateway
-        app: istio-eastwestgateway
-        topology.istio.io/network: network1
-      enabled: true
-      k8s:
-        env:
-        - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-          value: network1
-        service:
-          type: LoadBalancer
-          ports:
-          - name: status-port
-            port: 15021
-            targetPort: 15021
-          - name: tls
-            port: 15443
-            targetPort: 15443
-          - name: tls-istiod
-            port: 15012
-            targetPort: 15012
-          - name: tls-webhook
-            port: 15017
-            targetPort: 15017
-EOF
-
-# Expose East-West Gateway
-kubectl apply --context="${CTX_CLUSTER1}" -n istio-system -f \
-  samples/multicluster/expose-services.yaml
 ```
 
----
+对于远程集群，**198.51.100.10 是文档占位符**，不是 EKS 端点：
 
-**4. 集群 2（Remote）设置**
-
-```bash
-# Create CA certificate Secret
-kubectl create namespace istio-system --context="${CTX_CLUSTER2}"
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=cluster2/ca-cert.pem \
-  --from-file=cluster2/ca-key.pem \
-  --from-file=cluster2/root-cert.pem \
-  --from-file=cluster2/cert-chain.pem \
-  --context="${CTX_CLUSTER2}"
-
-# Create Remote Secret (access cluster2 from cluster1)
-istioctl create-remote-secret \
-  --context="${CTX_CLUSTER2}" \
-  --name=cluster2 | \
-  kubectl apply -f - --context="${CTX_CLUSTER1}"
-
-# Install Remote Istio
-istioctl install --context="${CTX_CLUSTER2}" -f - <<EOF
+```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
+  profile: remote
   values:
+    istiodRemote:
+      injectionPath: /inject/cluster/cluster2/net/network2
     global:
       meshID: mesh1
       multiCluster:
         clusterName: cluster2
       network: network2
-      remotePilotAddress: <CLUSTER1_EAST_WEST_GATEWAY_IP>
-
-  components:
-    ingressGateways:
-    - name: istio-eastwestgateway
-      label:
-        istio: eastwestgateway
-        app: istio-eastwestgateway
-        topology.istio.io/network: network2
-      enabled: true
-      k8s:
-        env:
-        - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-          value: network2
-        service:
-          type: LoadBalancer
-          ports:
-          - name: status-port
-            port: 15021
-          - name: tls
-            port: 15443
-          - name: tls-istiod
-            port: 15012
-          - name: tls-webhook
-            port: 15017
-EOF
+      remotePilotAddress: 198.51.100.10
 ```
 
----
+远程命名空间还需要标识管理它的主集群：
 
-**5. Service 部署和验证**
+```bash
+kubectl --context="$CTX_CLUSTER2" annotate namespace istio-system   topology.istio.io/controlPlaneClusters=cluster1 --overwrite
+```
 
-**将 Service A 部署到集群 1：**
+请按照维护中的指南准备信任、使用相同的 Istio 版本生成网关、公开主集群发现/注入服务，并在创建问题 2 中所示的远程访问 secret 之前安装远程 profile。在这个双网络示例中，远程注入路径以 `net/network2` 结尾。
+
+EKS NLB 通常会提供 DNS 名称。该版本可以将 DNS 值表示为 remotePilotAddress，但仅渲染 chart 并不能证明发现/注入连通性或证书名称正确。请完成官方的外部控制平面 DNS/证书/注入 URL 设计；不要用任意地址替代缺失的负载均衡器 IP。
+
+验证时，请使用同一 Istio 发行版中的 `helloworld` 和 `curl` 示例。按照文档，在两个集群中创建相同的命名空间/Service 身份，并部署带版本号的工作负载。即使 Service 没有本地端点，它仍可提供本地 Kubernetes DNS，同时由 Istio 发现远程端点：
 
 ```yaml
-# cluster1: service-a.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-a
-  labels:
-    app: service-a
+  name: helloworld
+  namespace: sample
 spec:
+  selector:
+    app: helloworld
   ports:
-  - port: 8080
-    name: http
-  selector:
-    app: service-a
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-a
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: service-a
-  template:
-    metadata:
-      labels:
-        app: service-a
-    spec:
-      containers:
-      - name: service-a
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
+  - name: http
+    port: 5000
+    targetPort: 5000
 ```
+
+单独创建此 Service 不会部署任何应用。示例中的实际后端监听端口 5000；仅仅声明 containerPort 8080 并不会让标准 nginx 进程在该端口监听。完成整个示例部署后，选择已知的 curl Pod/容器，并检查数据平面配置和响应：
 
 ```bash
-kubectl apply --context="${CTX_CLUSTER1}" -f service-a.yaml
+kubectl --context="$CTX_CLUSTER1" get service,endpointslice -n sample
+kubectl --context="$CTX_CLUSTER2" get service,endpointslice -n sample
+istioctl --context="$CTX_CLUSTER1" proxy-status
+istioctl --context="$CTX_CLUSTER1" proxy-config endpoints "$CURL_POD" -n sample   --cluster 'outbound|5000||helloworld.sample.svc.cluster.local'
+kubectl --context="$CTX_CLUSTER1" exec -n sample "$CURL_POD" -c curl --   curl --fail --max-time 5 http://helloworld.sample.svc.cluster.local:5000/hello
 ```
 
-**将 Service B 部署到集群 2：**
+在多网络场景中，客户端看到的可能是东西向网关端点，而不是可直接访问的远程 Pod IP。一次响应只能证明那一次调用；还要测试两个方向、端点版本、信任、策略和故障场景。
 
-```yaml
-# cluster2: service-b.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-b
-  labels:
-    app: service-b
-spec:
-  ports:
-  - port: 8080
-    name: http
-  selector:
-    app: service-b
+两个目标具有**相同 host/subset/port** 的加权目标，并不意味着本地 80%/远程 20%。应使用明确且受支持的 locality，或使用具有合格端点的显式目标模型。观察跨集群流量时，选择一个 telemetry reporter，并使用真实的 source_cluster/destination_cluster 标签。
 
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-b
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: service-b
-  template:
-    metadata:
-      labels:
-        app: service-b
-    spec:
-      containers:
-      - name: service-b
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
-```
+[多集群指南](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 
-```bash
-kubectl apply --context="${CTX_CLUSTER2}" -f service-b.yaml
-```
-
----
-
-**6. 跨集群 Service 调用测试**
-
-```bash
-# Call cluster 2 service from cluster 1
-kubectl exec --context="${CTX_CLUSTER1}" -it \
-  $(kubectl get pod --context="${CTX_CLUSTER1}" -l app=service-a -o jsonpath='{.items[0].metadata.name}') \
-  -- curl http://service-b.default.svc.cluster.local:8080
-
-# Call cluster 1 service from cluster 2
-kubectl exec --context="${CTX_CLUSTER2}" -it \
-  $(kubectl get pod --context="${CTX_CLUSTER2}" -l app=service-b -o jsonpath='{.items[0].metadata.name}') \
-  -- curl http://service-a.default.svc.cluster.local:8080
-```
-
----
-
-**7. 验证服务发现**
-
-```bash
-# Check Envoy configuration from cluster 1
-istioctl --context="${CTX_CLUSTER1}" proxy-config endpoints \
-  $(kubectl get pod --context="${CTX_CLUSTER1}" -l app=service-a -o jsonpath='{.items[0].metadata.name}') | \
-  grep service-b
-
-# Example output:
-# service-b.default.svc.cluster.local:8080  HEALTHY  <cluster2-pod-ip>:8080
-```
-
----
-
-**8. 应用流量策略**
-
-```yaml
-# Cross-cluster traffic routing
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: service-b
-spec:
-  hosts:
-  - service-b.default.svc.cluster.local
-  http:
-  - match:
-    - sourceLabels:
-        app: service-a
-    route:
-    - destination:
-        host: service-b.default.svc.cluster.local
-        port:
-          number: 8080
-      weight: 80  # 80% to local cluster
-    - destination:
-        host: service-b.default.svc.cluster.local
-        port:
-          number: 8080
-      weight: 20  # 20% to remote cluster
-
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: service-b
-spec:
-  host: service-b.default.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true  # Locality-aware routing
-```
-
----
-
-**9. 监控和验证**
-
-```bash
-# Check cross-cluster traffic in Prometheus
-kubectl port-forward --context="${CTX_CLUSTER1}" -n istio-system \
-  svc/prometheus 9090:9090
-
-# Prometheus query:
-# sum(rate(istio_requests_total{source_cluster="cluster1", destination_cluster="cluster2"}[5m]))
-
-# Visualize with Kiali
-istioctl dashboard kiali --context="${CTX_CLUSTER1}"
-```
-
----
-
-**10. 注意事项和最佳实践**
-
-**注意事项：**
-- 必须共享 Root CA
-- 考虑网络延迟
-- 加强 East-West Gateway 安全性
-- 正确配置 DNS 解析
-
-**最佳实践：**
-- 启用本地感知路由
-- 配置 Circuit Breaker
-- 在每个集群中维护副本
-- 监控跨集群流量
-
-**参考资料：**
-- [多集群](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 </details>
 
----
+### 问题 8：共享的按用户限流
 
-### 问题 8：使用 EnvoyFilter 实现自定义 Rate Limiting
-
-仅针对特定路径（`/api/premium/*`），使用 EnvoyFilter 实现**每用户 Rate Limiting**（每分钟 100 个请求）。
+为 `/api/premium/*` 实现共享的每分钟 100 个请求配额。说明身份、descriptor 和故障约定。
 
 <details>
 <summary>参考答案</summary>
 
-**答案：**
+请求路径为：**经过身份验证的入口 → 专用 Envoy 网关 → 共享限流服务/Redis 决策 → 后端或拒绝**。本地代理令牌桶并不是跨网关副本共享的配额。
 
-**基于 EnvoyFilter 的 Rate Limiting 实现：**
+以下条件示例假定：
 
----
+- `istio-system` 中有一个专用网关，实际标签为 `app: premium-gateway`，并且匹配 TLS/路由配置以及已有的后端 Service。
+- 可信的身份验证层会移除调用方提供的 x-user-id，并提供一个非空的规范用户身份。只有经过身份验证的路径才能访问该网关/后端。原始的、由调用方控制的标头不代表用户身份。
+- 下方显示的现有隔离实验环境 Redis 端点可访问。生产环境的 Redis 身份验证/TLS、持久化、高可用、故障转移和适当连接设置必须另行设计；仅设置副本数并不能实现这些功能。
 
-**1. 架构概述**
-
-```mermaid
-flowchart LR
-    Client[Client] --> Envoy[Envoy Proxy]
-    Envoy -->|Rate Limit Check| Redis[(Redis<br/>Rate Limit Store)]
-    Envoy -->|Allowed Request| Backend[Backend Service]
-    Envoy -->|Rejected Request| Reject[429 Too Many Requests]
-
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef backend fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef reject fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    class Client client;
-    class Envoy envoy;
-    class Backend backend;
-    class Reject,Redis reject;
-```
-
----
-
-**2. 部署 Redis Rate Limit Server**
+匹配的 descriptor 是一个**包含两个条目的序列**：`(header_match=premium, user_id=<trusted user>)`。服务端配置必须将动态 user 条目嵌套在 premium 条目之下。顶层只有 user_id 的 descriptor 不会与之匹配。
 
 ```yaml
-# redis-ratelimit.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  ports:
-  - port: 6379
-    name: redis
-  selector:
-    app: redis-ratelimit
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis-ratelimit
-  template:
-    metadata:
-      labels:
-        app: redis-ratelimit
-    spec:
-      containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
-        - containerPort: 6379
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-
----
-# Envoy Rate Limit Service
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1346,12 +426,88 @@ data:
   config.yaml: |
     domain: premium-ratelimit
     descriptors:
-      # Per-user Rate Limit: 100 requests per minute
+    - key: header_match
+      value: premium
+      descriptors:
       - key: user_id
         rate_limit:
           unit: minute
           requests_per_unit: 100
-
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratelimit
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratelimit
+  template:
+    metadata:
+      labels:
+        app: ratelimit
+        sidecar.istio.io/inject: 'true'
+    spec:
+      containers:
+      - name: ratelimit
+        image: docker.io/envoyproxy/ratelimit:8fe6ea42@sha256:a61547259607d40aff153050c2a87873ca1676d1d9f5f06937d412000dcc2df1
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 8081
+          name: grpc
+        env:
+        - name: LOG_LEVEL
+          value: info
+        - name: CONFIG_TYPE
+          value: FILE
+        - name: RUNTIME_ROOT
+          value: /data
+        - name: RUNTIME_SUBDIRECTORY
+          value: ratelimit
+        - name: RUNTIME_APPDIRECTORY
+          value: config
+        - name: RUNTIME_WATCH_ROOT
+          value: 'false'
+        - name: RUNTIME_IGNOREDOTFILES
+          value: 'true'
+        - name: USE_STATSD
+          value: 'false'
+        - name: REDIS_SOCKET_TYPE
+          value: tcp
+        - name: REDIS_URL
+          value: redis-ratelimit.istio-system.svc.cluster.local:6379
+        - name: HOST
+          value: '::'
+        - name: GRPC_HOST
+          value: '::'
+        - name: HEALTHY_WITH_AT_LEAST_ONE_CONFIG_LOADED
+          value: 'true'
+        volumeMounts:
+        - name: config-volume
+          mountPath: /data/ratelimit/config
+          readOnly: true
+        command:
+        - /bin/ratelimit
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ratelimit-config
 ---
 apiVersion: v1
 kind: Service
@@ -1360,72 +516,21 @@ metadata:
   namespace: istio-system
 spec:
   ports:
-  - port: 8081
+  - port: 8080
     name: http
-  - port: 9091
+    targetPort: 8080
+  - port: 8081
     name: grpc
+    targetPort: 8081
   selector:
     app: ratelimit
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ratelimit
-  namespace: istio-system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: ratelimit
-  template:
-    metadata:
-      labels:
-        app: ratelimit
-    spec:
-      containers:
-      - name: ratelimit
-        image: envoyproxy/ratelimit:master
-        ports:
-        - containerPort: 8081
-        - containerPort: 9091
-        env:
-        - name: REDIS_URL
-          value: redis-ratelimit.istio-system.svc.cluster.local:6379
-        - name: USE_STATSD
-          value: "false"
-        - name: LOG_LEVEL
-          value: debug
-        - name: RUNTIME_ROOT
-          value: /data
-        - name: RUNTIME_SUBDIRECTORY
-          value: ratelimit
-        volumeMounts:
-        - name: config-volume
-          mountPath: /data/ratelimit/config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-      volumes:
-      - name: config-volume
-        configMap:
-          name: ratelimit-config
 ```
 
-```bash
-kubectl apply -f redis-ratelimit.yaml
-```
+该镜像使用带摘要的已验证上游提交 8fe6ea42，而不是会变动的 master 标签。gRPC 端口为 **8081**，HTTP 健康检查端口为 **8080**。此工作负载需要匹配的注入器以及实际的网格/网络访问。请通过适当的 Secret/挂载机制配置受保护的 Redis 凭证。确保已加载新配置；此处显示的文件模式设置并不能证明支持热加载。
 
----
-
-**3. EnvoyFilter 配置**
+使用生成的 Istio gRPC 集群，以便沿用已建立的服务发现/TLS 策略：
 
 ```yaml
-# envoyfilter-ratelimit.yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -1434,616 +539,424 @@ metadata:
 spec:
   workloadSelector:
     labels:
-      app: api-gateway
-
+      app: premium-gateway
   configPatches:
-  # Add Rate Limit filter to HTTP filter chain
   - applyTo: HTTP_FILTER
     match:
-      context: SIDECAR_INBOUND
+      context: GATEWAY
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
           domain: premium-ratelimit
-          failure_mode_deny: true  # Deny on Rate Limit server failure
-          enable_x_ratelimit_headers: DRAFT_VERSION_03
+          failure_mode_deny: true
+          timeout: 0.1s
           rate_limit_service:
             grpc_service:
               envoy_grpc:
-                cluster_name: rate_limit_cluster
+                cluster_name: outbound|8081||ratelimit.istio-system.svc.cluster.local
+                authority: ratelimit.istio-system.svc.cluster.local
             transport_api_version: V3
-
-  # Define Rate Limit cluster
-  - applyTo: CLUSTER
-    patch:
-      operation: ADD
-      value:
-        name: rate_limit_cluster
-        type: STRICT_DNS
-        connect_timeout: 1s
-        lb_policy: ROUND_ROBIN
-        http2_protocol_options: {}
-        load_assignment:
-          cluster_name: rate_limit_cluster
-          endpoints:
-          - lb_endpoints:
-            - endpoint:
-                address:
-                  socket_address:
-                    address: ratelimit.istio-system.svc.cluster.local
-                    port_value: 9091
-
-  # Add Rate Limit action to HTTP route
-  - applyTo: HTTP_ROUTE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: premium-ratelimit-actions
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      app: premium-gateway
+  configPatches:
+  - applyTo: VIRTUAL_HOST
     match:
-      context: SIDECAR_INBOUND
-      routeConfiguration:
-        vhost:
-          route:
-            action: ANY
+      context: GATEWAY
     patch:
       operation: MERGE
       value:
-        route:
-          rate_limits:
-          # Apply Rate Limit only to /api/premium/* path
-          - actions:
-            - header_value_match:
-                descriptor_value: "premium"
-                headers:
-                - name: ":path"
-                  prefix_match: "/api/premium/"
-            - request_headers:
-                header_name: "x-user-id"
-                descriptor_key: "user_id"
+        rate_limits:
+        - actions:
+          - header_value_match:
+              descriptor_value: premium
+              headers:
+              - name: :path
+                string_match:
+                  prefix: /api/premium/
+          - request_headers:
+              header_name: x-user-id
+              descriptor_key: user_id
+              skip_if_absent: false
 ```
 
-```bash
-kubectl apply -f envoyfilter-ratelimit.yaml
+这组 action 刻意限定在专用网关上；若使用共享网关，则应进一步缩小到实际生成的 vhost 范围。前缀之外的请求不会生成 premium descriptor。应确保路由/路径规范化和身份验证策略一致，包括编码路径及其他后端访问路径。
+
+在请求有机会绕过 descriptor 生成之前，拒绝 premium 路径上缺失/为空的身份：
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: premium-requires-identity
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: premium-gateway
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        paths:
+        - /api/premium/*
+    when:
+    - key: request.headers[x-user-id]
+      notValues:
+      - '*'
 ```
 
----
+此 DENY 策略仅用于防止缺少标头。它不会验证已提供的值，也不能替代强制要求的可信入口/绕过控制、现有 ALLOW 策略、TLS 或应用授权。
 
-**4. 测试**
+当 `failure_mode_deny: true` 时，限流服务错误通常会导致 HTTP 500，超过限额的决策则会导致 429。100 ms RPC 超时预算只是一个示例，必须根据 Redis 和网络延迟进行测试。仅凭一个标头/统计计数器无法证明配额已生效。
 
-```bash
-# Normal requests (under 100 requests/minute per user)
-for i in {1..50}; do
-  curl -H "x-user-id: user123" \
-       -H "Host: api.example.com" \
-       http://<INGRESS_GATEWAY>/api/premium/data
-  sleep 0.1
-done
+| 验证场景 | 要测试的预期约定 |
+|---|---|
+| 一个身份经过两个网关副本 | 使用一个共享的 descriptor/窗口配额 |
+| 第二个身份 | 使用独立的用户 descriptor |
+| 身份缺失或伪造 | 由防护策略/身份验证边界拒绝；不能免费绕过配额 |
+| 不在 premium 前缀内的路径 | 不生成 premium descriptor；其他安全/限流策略仍然适用 |
+| Redis/RLS 不可用 | 按预期故障关闭，并观察状态码/延迟 |
+| 窗口边界或 Redis 重启 | 测量计数器/窗口行为；不要承诺在不同测试运行中第 101 个请求一定会被拒绝 |
 
-# Output: 200 OK (all successful)
+请针对获准的只读端点发送数量受限的请求，并使用新的测试身份/窗口。先发送 50 个请求，再发送 150 个请求，并不会启动两个独立的干净配额。响应限流标头需要受支持的服务响应和 filter 配置；不要伪造剩余数量/重置值。
 
-# Rate Limit exceeded (over 100 requests/minute)
-for i in {1..150}; do
-  curl -H "x-user-id: user123" \
-       -H "Host: api.example.com" \
-       http://<INGRESS_GATEWAY>/api/premium/data
-done
+检查 RLS 健康状态、已加载配置和实际 Envoy 统计信息（HTTP 统计前缀下的 `ratelimit.ok`、`ratelimit.over_limit`、`ratelimit.error`）。验证实际导出的 Prometheus 名称/标签，不要臆造 `rejected_total`。不要在大型生产 keyspace 中运行 Redis `KEYS *`，也不要把实现相关的计数器解释为剩余配额。固定版本的 distroless RLS 镜像不是 redis-cli shell。
 
-# Output:
-# 1-100: 200 OK
-# 101-150: 429 Too Many Requests
+[限流指南](../../../service-mesh/istio/resilience/02-rate-limiting.md) · [EnvoyFilter 指南](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 
-# Other users unaffected
-curl -H "x-user-id: user456" \
-     -H "Host: api.example.com" \
-     http://<INGRESS_GATEWAY>/api/premium/data
-
-# Output: 200 OK
-```
-
----
-
-**5. 检查 Rate Limit Header**
-
-```bash
-curl -I -H "x-user-id: user123" \
-     -H "Host: api.example.com" \
-     http://<INGRESS_GATEWAY>/api/premium/data
-
-# Output:
-# X-RateLimit-Limit: 100
-# X-RateLimit-Remaining: 73
-# X-RateLimit-Reset: 1735689600
-```
-
----
-
-**6. 注意事项和最佳实践**
-
-**注意事项：**
-- 需要配置 Redis 高可用性（生产环境）
-- 定义 Rate Limit Server 故障时的行为（`failure_mode_deny`）
-- 确保用户识别 Header（`x-user-id`）的可靠性
-- Istio 版本升级时，EnvoyFilter 需要进行兼容性检查
-
-**最佳实践：**
-- 使用 Redis Sentinel 或 Cluster
-- Rate Limit Server 副本数 >= 2
-- 适当的监控和告警
-- 每用户例外处理（VIP 用户等）
-
-**参考资料：**
-- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
----
 
-### 问题 9：Argo Rollouts 蓝绿部署
+### 问题 9：带分析的 Blue/Green
 
-使用 Argo Rollouts 和 Istio 实现**蓝绿部署**。包含**自动化分析**（AnalysisTemplate），并配置失败时自动回滚。
+配置带有 preview 和 promotion 后分析的 Blue/Green Rollout。说明流量切换和失败行为，不要把缺失的指标当作成功。
 
 <details>
 <summary>参考答案</summary>
 
-**答案：**
+这是问题 5 中 canary 策略的一个**替代方案**。它假定已安装 Argo Rollouts 1.10 控制器/CRD、启用了 Istio 注入的演示工作负载和调用方、Prometheus 正在采集匹配的 source-reporter 指标，并且具备运行已验证演示镜像所需的 Linux amd64 容量。这是实验室示例，不是经过测试的生产部署。
 
-**Argo Rollouts 蓝绿部署实现：**
-
----
-
-**1. 蓝绿部署概念**
-
-```mermaid
-flowchart TB
-    User[User] --> Gateway[Istio Gateway]
-    Gateway --> ActiveService[Active Service<br/>Production Traffic]
-    Gateway -.->|Preview| PreviewService[Preview Service<br/>Test Traffic]
-
-    ActiveService --> Blue[Blue<br/>Current Version v1]
-    PreviewService --> Green[Green<br/>New Version v2]
-
-    Analysis[AnalysisTemplate] -->|Metric Analysis| Green
-    Analysis -->|Success| Promote[Traffic Switch]
-    Analysis -->|Failure| Rollback[Rollback]
-
-    Promote --> Swap[Active <-> Preview Swap]
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class User user;
-    class Gateway,ActiveService,PreviewService istio;
-    class Blue,Green version;
-    class Analysis,Promote,Rollback,Swap argo;
-```
-
----
-
-**2. 创建 Kubernetes Service**
+在现有的 `rollouts-demo` 命名空间中创建 Service 和完整的 Rollout。Rollouts 会管理 Service 的 revision-hash 选择器；GitOps 不应覆盖这些动态字段。
 
 ```yaml
-# services.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp-active
+  name: test-active
+  namespace: rollouts-demo
 spec:
-  ports:
-  - port: 8080
-    name: http
   selector:
-    app: myapp
-    # Argo Rollouts automatically manages selector
-
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp-preview
+  name: test-preview
+  namespace: rollouts-demo
 spec:
+  selector:
+    app: test
   ports:
-  - port: 8080
-    name: http
-  selector:
-    app: myapp
-    # Argo Rollouts automatically manages selector
-```
-
-```bash
-kubectl apply -f services.yaml
-```
-
+  - name: http
+    port: 8080
+    targetPort: http
 ---
-
-**3. Istio Gateway 和 VirtualService**
-
-```yaml
-# gateway.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: myapp-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - myapp.example.com
-
----
-# virtualservice.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  hosts:
-  - myapp.example.com
-  gateways:
-  - myapp-gateway
-  http:
-  # Production traffic (Active)
-  - match:
-    - uri:
-        prefix: /
-    route:
-    - destination:
-        host: myapp-active
-        port:
-          number: 8080
-
----
-# preview-virtualservice.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: myapp-preview
-spec:
-  hosts:
-  - myapp-preview.example.com
-  gateways:
-  - myapp-gateway
-  http:
-  # Preview traffic (Preview)
-  - match:
-    - uri:
-        prefix: /
-    route:
-    - destination:
-        host: myapp-preview
-        port:
-          number: 8080
-```
-
-```bash
-kubectl apply -f gateway.yaml
-```
-
----
-
-**4. AnalysisTemplate 定义**
-
-```yaml
-# analysis-template.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # Metric 1: Success rate (95% or higher)
-  - name: success-rate
-    interval: 30s
-    count: 5
-    successCondition: result >= 0.95
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: latency
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # Metric 2: P95 latency (500ms or less)
-  - name: latency-p95
-    interval: 30s
-    count: 5
-    successCondition: result <= 500
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          histogram_quantile(0.95,
-            sum(rate(
-              istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}"
-              }[2m]
-            )) by (le)
-          )
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: error-rate
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # Metric 3: Error rate (1% or less)
-  - name: error-rate
-    interval: 30s
-    count: 5
-    successCondition: result <= 0.01
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code=~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-```
-
-```bash
-kubectl apply -f analysis-template.yaml
-```
-
----
-
-**5. Rollout 资源定义**
-
-```yaml
-# rollout.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: myapp
+  name: test
+  namespace: rollouts-demo
 spec:
-  replicas: 5
+  replicas: 3
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: myapp
-
+      app: test
   template:
     metadata:
       labels:
-        app: myapp
+        app: test
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
       containers:
-      - name: myapp
-        image: myapp:v1
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
         resources:
           requests:
             cpu: 100m
             memory: 128Mi
           limits:
-            cpu: 500m
-            memory: 512Mi
-
-  # Blue/Green deployment strategy
+            cpu: 200m
+            memory: 256Mi
   strategy:
     blueGreen:
-      # Active Service (production)
-      activeService: myapp-active
-
-      # Preview Service (test)
-      previewService: myapp-preview
-
-      # Disable auto promotion (manual promotion or Analysis-based)
-      autoPromotionEnabled: false
-
-      # Wait time after Green deployment
-      scaleDownDelaySeconds: 30
-
-      # Pre-promotion analysis (Green environment verification)
+      activeService: test-active
+      previewService: test-preview
+      autoPromotionEnabled: true
       prePromotionAnalysis:
         templates:
-        - templateName: success-rate
-        - templateName: latency
-        - templateName: error-rate
+        - templateName: preview-analysis
         args:
         - name: service-name
-          value: myapp-preview
-
-      # Post-promotion analysis (verification after Active switch)
+          value: test-preview
+        - name: namespace
+          value: rollouts-demo
       postPromotionAnalysis:
         templates:
-        - templateName: success-rate
-        - templateName: latency
-        - templateName: error-rate
+        - templateName: active-analysis
         args:
         - name: service-name
-          value: myapp-active
+          value: test-active
+        - name: namespace
+          value: rollouts-demo
+      scaleDownDelaySeconds: 600
 ```
 
-```bash
-kubectl apply -f rollout.yaml
-```
+初始镜像是已验证的蓝色演示摘要；更新时，指南会提供相应的绿色摘要。创建新 revision 后，preview 会指向候选版本。预分析成功后，`autoPromotionEnabled: true` 允许自动 promotion。如果需要有意手动 promotion，则设为 false；这是另一项策略选择。
 
+此处流量来自经网格接入的客户端，并发送至内部 Service。生产环境的边缘公开需要真实的 Gateway、TLS、匹配的主机绑定和授权。仅创建第二个 VirtualService 主机名并不会将其添加到 Gateway，也无法保护 preview 访问。
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test-bluegreen
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-active
+  - test-active.rollouts-demo.svc.cluster.local
+  http:
+  - name: active
+    route:
+    - destination:
+        host: test-active
+        port:
+          number: 8080
+      weight: 100
+    retries:
+      attempts: 0
 ---
-
-**6. 部署新版本**
-
-```bash
-# Update to new version image
-kubectl argo rollouts set image myapp \
-  myapp=myapp:v2
-
-# Monitor deployment status
-kubectl argo rollouts get rollout myapp --watch
-
-# Output:
-# Name:            myapp
-# Namespace:       default
-# Status:          Paused
-# Strategy:        BlueGreen
-# Images:          myapp:v1 (stable, active)
-#                  myapp:v2 (preview)
-# Replicas:
-#   Desired:       5
-#   Current:       10
-#   Updated:       5
-#   Ready:         5
-#   Available:     5
-# Analysis:        Running
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test-preview-route
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-preview
+  - test-preview.rollouts-demo.svc.cluster.local
+  http:
+  - name: preview
+    route:
+    - destination:
+        host: test-preview
+        port:
+          number: 8080
+      weight: 100
+    retries:
+      attempts: 0
 ```
 
+这两条路由都显式禁用了网格重试。promotion 时，preview Service 不会自动切换到旧的 stable 版本。active Service 选择器会切换到新 revision；旧 ReplicaSet 最终会被**缩容**，但不一定会删除。已有连接和应用/数据库副作用不会因选择器变更而撤销。
+
+在 preview 分析之前/期间，应通过 preview Service 生成有代表性的、经过授权的流量。Prometheus 查询不会生成流量。此示例要求每两分钟预计至少有 20 个请求、有限的 2xx 成功率 ≥95%、p95 ≤0.5 秒，并且 5xx/零状态错误 ≤1%：
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: preview-analysis
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: http-2xx-success
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+    initialDelay: 5m
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
 ---
-
-**7. 自动回滚场景**
-
-**场景 1：prePromotionAnalysis 失败**
-
-```bash
-# Error rate exceeds 1% in Green environment
-# Analysis log:
-# error-rate: FAILED (0.03 > 0.01)
-# failureLimit: 2/2
-
-# Automatic rollback executed
-# Green Pods deleted
-# Blue continues as Active
-
-kubectl argo rollouts get rollout myapp
-# Status: Degraded
-# Message: PrePromotionAnalysis Failed
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: active-analysis
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: http-2xx-success
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+    initialDelay: 5m
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
 ```
 
-**场景 2：postPromotionAnalysis 失败**
+这两个模板有意使用相同的门限定义，但 Service 参数不同。`initialDelay: 5m` 为两分钟窗口提供时间，使其越过切换阶段；但仍需验证数据新鲜度和实际流量。不要将旧 active 版本的样本当作候选版本的证据。
+
+Prometheus 返回的是 vector，因此条件会先检查长度和有限值，再读取 `result[0]`。分子的 `or vector(0)` 可处理没有 2xx/全部为 5xx，以及没有 5xx/健康的情况；分母和请求量检查则可避免缺失或空闲遥测导致误通过。成功指标只统计 2xx；4xx 会降低成功率，即使它不计入 5xx/零状态错误分子。
+
+`failureLimit: 0` 表示首次测量失败即中止。如果设为 2，则第三次失败会超出限制；允许出现失败的五个样本并不意味着必须有五次成功。每 30 秒采样一次、共五个样本，并不能保证整个阶段恰好持续 2.5 分钟，尤其是存在初始延迟和 provider 错误时。
+
+promotion 前失败会保留旧的 active 目标。promotion 后失败会中止，并根据控制器规则恢复之前的 active 选择，只要旧 ReplicaSet 仍然可用。这并不保证在所有情况下都能即时回滚。应保留足够的旧版本容量，并验证传播、会话、连接排空和数据库兼容性。
 
 ```bash
-# Success rate below 95% after Active switch
-# Analysis log:
-# success-rate: FAILED (0.92 < 0.95)
-# failureLimit: 2/2
-
-# Automatic rollback executed
-# Immediately restore Active Service to Blue
-# Green moves to Preview
-
-kubectl argo rollouts get rollout myapp
-# Status: Degraded
-# Message: PostPromotionAnalysis Failed
+kubectl argo rollouts get rollout test -n rollouts-demo --watch
+kubectl get analysisrun -n rollouts-demo
+kubectl get service test-active test-preview -n rollouts-demo -o yaml
 ```
 
----
+应检查实际 AnalysisRun 条件和 revision 树，而不是复制状态输出或使用不存在的指标名称。Rollout 缩容、端点传播和应用恢复都必须在目标环境中测试。
 
-**8. 最佳实践**
+[Argo Rollouts 指南](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
-**优势：**
-- 可以立即回滚（切换流量）
-- 对生产环境影响最小
-- 确保充足的测试时间
-- 自动化分析和回滚
-
-**注意事项：**
-- 需要 2 倍资源（Blue + Green）
-- 验证数据库 schema 兼容性
-- Session 管理（如需要 Sticky Session）
-
-**参考资料：**
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
----
+### 问题 10：DNS 行为与测量
 
-### 问题 10：DNS 缓存性能优化
-
-说明如何在 Istio 中启用 **DNS Caching** 以提升外部 Service 调用性能。包含**基准测试结果**。
+说明 Istio DNS capture 与 Envoy 上游 DNS 解析的区别，展示有效配置，并设计可复现的性能比较。评估原先未经验证的基准测试数据，但不要将其说成新的测量结果。
 
 <details>
 <summary>参考答案</summary>
 
-**答案：**
+应用 DNS、Istio DNS capture、CoreDNS/缓存行为以及 Envoy 上游解析彼此不同。新的 HTTP 请求不一定会执行新的 DNS 查询或建立新连接。DNS capture 并不是适用于任意上游响应的通用缓存。
 
-**Istio DNS Caching 实现和性能测量：**
+在 sidecar 模式下，istio-agent 会处理捕获到的 DNS 请求；ambient 使用其文档所述的 DNS 路径，并从 Istio 1.25 起默认启用 capture。名称表中已知的网格名称可以直接响应；未知名称则会被转发。Envoy 会独立解析基于 DNS 的上游端点。
 
----
-
-**1. DNS Caching 的必要性**
-
-**问题：DNS 查询开销**
-
-```
-DNS lookup occurs for each external API call:
-1. Application -> Envoy: HTTP request
-2. Envoy -> CoreDNS: DNS lookup (50-100ms)
-3. CoreDNS -> Response: IP address
-4. Envoy -> External API: HTTP request (100-200ms)
-
-Total latency: 150-300ms
-```
-
-**解决方案：启用 DNS Caching**
-
-```
-After DNS Caching:
-1. Application -> Envoy: HTTP request
-2. Envoy: Use cached IP (0ms)
-3. Envoy -> External API: HTTP request (100-200ms)
-
-Total latency: 100-200ms (33-50% improvement)
-```
-
----
-
-**2. 使用 ServiceEntry 注册外部 Service**
+使用有效的 ServiceEntry 注册由应用发起的外部 HTTPS 服务：
 
 ```yaml
-# external-api-serviceentry.yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
+  namespace: default
 spec:
   hosts:
   - api.github.com
@@ -2052,161 +965,75 @@ spec:
     name: https
     protocol: HTTPS
   location: MESH_EXTERNAL
-  resolution: DNS  # Use DNS resolution
+  resolution: DNS
 ```
 
-```bash
-kubectl apply -f external-api-serviceentry.yaml
-```
+这不会再发起一层 TLS、创建出口防火墙，也不会让 sidecar 看到加密 HTTP 请求路径。仍然需要适当的网络策略和应用 TLS 验证。
 
----
-
-**3. 使用 DestinationRule 启用 DNS Caching**
+要进行 sidecar capture，请将此 istioctl 输入合并到现有安装值中，并按照常规变更流程滚动受影响的工作负载：
 
 ```yaml
-# destinationrule-dns-cache.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: external-api
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 spec:
-  host: api.github.com
-  trafficPolicy:
-    # DNS refresh interval: 5 minutes
-    # (DNS re-lookup every 5 minutes even if TTL is 0)
-    dnsRefreshRate: 5m
-
-    # Connection Pool settings
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
-        http2MaxRequests: 100
-        maxRequestsPerConnection: 10
-
-    # Outlier Detection
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 30s
+  meshConfig:
+    defaultConfig:
+      proxyMetadata:
+        ISTIO_META_DNS_CAPTURE: 'true'
 ```
+
+不存在 DestinationRule `trafficPolicy.dnsRefreshRate`，而且 `consecutiveErrors` 不是当前的 outlier 字段。Istio 1.31 中生成的 DNS 集群会遵循 DNS TTL；对于相关的 fallback 行为，mesh `dnsRefreshRate` 默认为 60 秒。五分钟设置并不会普遍固定刷新间隔，也不会覆盖正数 TTL。
+
+不要插入臆造的 `envoy.filters.network.dns_cache` filter/type。Dynamic forward proxy 和当前的 DYNAMIC_DNS ServiceEntry 模式是两种独立的受支持设计，各有自身要求，并非通用缓存开关。若确有需要，请使用 DNS 指南中范围明确且经过版本验证的集群定制方案。
+
+要进行有界测试，请使用已知包含 curl 的调用方容器，并使用自有/获准的、DNS/TTL 可控的 HTTPS 测试端点。显式设置 BENCH_URL。该测试采样的是进程级耗时，不是 Envoy 专属 DNS 延迟：
 
 ```bash
-kubectl apply -f destinationrule-dns-cache.yaml
+: "${BENCH_URL:?Set an authorized HTTPS benchmark endpoint}"
+for i in $(seq 1 20); do
+  curl --silent --show-error --fail --max-time 5 --output /dev/null     --write-out '%{http_code},%{time_namelookup},%{time_connect},%{time_appconnect},%{time_starttransfer},%{time_total}
+'     "$BENCH_URL" || break
+  sleep 0.2
+done
 ```
 
----
+记录客户端/image、Istio/Kubernetes 版本、代理模式、TTL/答案变化、DNS 路径、连接复用、并发度、负载、TLS 和预热/冷启动流程。每个新的 curl 进程都会重置其进程本地状态；应单独控制连接复用。不要对公共 GitHub API 进行负载测试，也不要假设 curl 镜像同时包含 ApacheBench。在计算统计数据前，必须明确处理失败样本。
 
-**4. 性能基准测试**
+原始韩文文本声称使用 EKS 1.34、Istio 1.28.0、r5.xlarge/us-east-1 和 api.github.com，但没有提供原始样本或可复现的基准测试制品。应保留这一**历史背景**，不要将其重新标注为 Istio 1.31 的结果：
 
-**DNS Caching 已禁用（之前）：**
+| 原始未验证数据 | 之前 | 之后 | 仅作算术计算 |
+|---|---:|---:|---:|
+| 平均响应时间 |287 ms|152 ms|降低 47.04%|
+| p95 |350 ms|180 ms|降低 48.57%|
+| p99 |420 ms|210 ms|降低 50%|
+| 吞吐量 |12.34 RPS|23.15 RPS|提高 87.60%|
+| 声称的缓存命中率 |0%|99%|未提供有效命中/未命中证据|
+| 声称的连接复用率 |0%|95%|未提供有效复用测量|
 
-```bash
-# 100 consecutive call test
-kubectl exec -it test-app -- sh -c '
-for i in $(seq 1 100); do
-  time curl -s -o /dev/null -w "%{time_total}\n" https://api.github.com/users/octocat
-done' | awk '{sum+=$1; count++} END {print "Average response time:", sum/count, "seconds"}'
+总响应时间的差异不能全部归因于 DNS。并发数为 10 时，ApacheBench 的 mean time per request 约为 `1000 × 10 / RPS` ms，而其 “across all concurrent requests” 数值为 `1000 / RPS` ms；原来的标签标反了。这些修正并不能证明该基准测试真实有效。
 
-# Output:
-# Average response time: 0.287 seconds
-```
+可用于 capture 的指标包括 `istio_agent_dns_requests_total`、`istio_agent_dns_upstream_requests_total`、`istio_agent_dns_upstream_failures_total`，以及实际导出时的上游耗时直方图。上游成功数/(成功数+失败数) 衡量的是查询成功率，而不是缓存命中率。`envoy_cluster_upstream_cx_active` 是 gauge；对它应用 rate() 并不能衡量连接复用。
 
-**DNS Caching 已启用（之后）：**
+检查生成的集群 DNS 配置、已验证导出的计数器以及实际 resolver/连接跟踪。除了平均延迟，也要测试 DNS 变更和故障恢复；没有工作负载证据时，不要建议 5–15 分钟刷新间隔或声称固定的性能提升。
 
-```bash
-# Same test after applying DestinationRule
-kubectl exec -it test-app -- sh -c '
-for i in $(seq 1 100); do
-  time curl -s -o /dev/null -w "%{time_total}\n" https://api.github.com/users/octocat
-done' | awk '{sum+=$1; count++} END {print "Average response time:", sum/count, "seconds"}'
+[DNS 指南](../../../service-mesh/istio/advanced/04-dns-cache.md)
 
-# Output:
-# Average response time: 0.152 seconds
-```
-
-**性能提升：**
-
-```
-Before: 287ms
-After: 152ms
-Improvement: (287 - 152) / 287 = 47%
-
-DNS lookup time saved: ~135ms
-```
-
----
-
-**5. 验证 Envoy 统计信息**
-
-```bash
-# Envoy DNS cache statistics
-kubectl exec -it test-app -c istio-proxy -- \
-  curl localhost:15000/stats | grep dns_cache
-
-# Output:
-# cluster.outbound|443||api.github.com.dns_cache_hits: 99
-# cluster.outbound|443||api.github.com.dns_cache_misses: 1
-# cluster.outbound|443||api.github.com.dns_refresh: 0
-
-# Cache hit rate: 99 / (99 + 1) = 99%
-```
-
----
-
-**6. 对比表**
-
-| 项目 | DNS Caching 已禁用 | DNS Caching 已启用 | 改进 |
-|------|---------------------|-------------------|------|
-| **平均响应时间** | 287ms | 152ms | 减少 47% |
-| **P95 响应时间** | 350ms | 180ms | 减少 49% |
-| **P99 响应时间** | 420ms | 210ms | 减少 50% |
-| **吞吐量（RPS）** | 12.34 | 23.15 | 增加 88% |
-| **DNS 缓存命中率** | 0% | 99% | - |
-| **连接复用率** | 0% | 95% | - |
-
----
-
-**7. 最佳实践**
-
-**推荐设置：**
-- DNS 刷新间隔：5-15 分钟（考虑外部 Service TTL）
-- 启用 Connection Pool（连接复用）
-- 使用 HTTP/2（多路复用）
-- 启用 Keep-Alive
-
-**注意事项：**
-- 对于 TTL 较短的服务，缩短刷新间隔
-- DNS 变更时考虑缓存失效时间
-- 测试故障转移场景
-
-**参考资料：**
-- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
 </details>
-
----
 
 ## 评分
 
-- 选择题 1-5：每题 10 分（共 50 分）
-- 简答题 6-10：每题 10 分（共 50 分）
-- **总分：100 分**
-
-**评估标准：**
-- 90-100 分：优秀（Istio 高级功能专家）
-- 80-89 分：良好（可以使用高级功能）
-- 70-79 分：一般（建议进一步学习）
-- 60-69 分：低于平均水平（需要复习基本概念）
-- 0-59 分：需要重新学习
+- 问题 1–5：每题 10 分，共 50 分。答案：**B、A、C、D、B**。
+- 问题 6–10：每题 10 分，共 50 分。正确说明工作机制、完整先决条件、有效配置、有意义的验证和诚实的测量限制，均可得分。
+- 总分：100 分。测验分数表示对这些问题的理解，不代表具备运维专业能力认证。
 
 ## 学习资料
 
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+- [Ambient](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 - [多集群](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 - [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+- [DNS](../../../service-mesh/istio/advanced/04-dns-cache.md)
 - [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
 - [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
-- [Sidecar 注入](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+- [注入](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 - [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+- [KEDA](../../../service-mesh/istio/advanced/10-keda-autoscaling.md)

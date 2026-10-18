@@ -1,91 +1,46 @@
-# 熔断器
+# 断路器
 
-熔断器会自动隔离发生故障的 Service，以防止级联故障。
+断路器会自动隔离故障服务，以防止故障级联。
 
 ## 目录
 
-1. [为什么需要熔断器？](#why-circuit-breaker)
-2. [熔断器概述](#circuit-breaker-overview)
+1. [为什么需要断路器？](#why-circuit-breaker)
+2. [断路器概述](#circuit-breaker-overview)
 3. [连接池设置](#connection-pool-settings)
 4. [异常值检测](#outlier-detection)
 5. [与重试策略结合](#combination-with-retry-policy)
 6. [实践示例](#practical-examples)
-7. [外部 Service 熔断器](#external-service-circuit-breaker)
-8. [监控和调试](#monitoring-and-debugging)
+7. [外部服务断路器](#external-service-circuit-breaker)
+8. [监控与调试](#monitoring-and-debugging)
 9. [重要注意事项](#important-considerations)
 10. [最佳实践](#best-practices)
 
-<span id="why-circuit-breaker"></span>
+## 为什么需要断路器？
 
-## 为什么需要熔断器？
+### 防止故障级联
 
-### 防止级联故障
+在微服务架构中，断路器可以防止一个服务的故障传播到其他服务。
 
-在微服务架构中，它可以防止一个 Service 的故障传播到其他 Service。
+![对比有无断路器的微服务链：没有断路器时，Service A 对故障 Service B 的请求超时会耗尽自身资源，并导致 Service C 和 D 发生级联故障；有断路器时，对 B 的调用会快速失败，而 C 和 D 仍保持健康。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.png)
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Circuit Breaker"]
-        A1[Service A] -->|Slow Response| B1[Service B<br/>Failure]
-        A1 -->|Resource Exhaustion| A1
-        A1 -->|Accumulated Timeouts| C1[Service C<br/>Failure]
-        C1 -->|Cascading Failure| D1[Service D<br/>Failure]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.html)
 
-    subgraph With["With Circuit Breaker"]
-        A2[Service A] -->|Fast Fail| B2[Service B<br/>Circuit Open]
-        A2 -->|Normal Operation| C2[Service C<br/>Normal]
-        C2 -->|Normal Operation| D2[Service D<br/>Normal]
-    end
+### 主要优点
 
-    %% Style definitions
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,B1,C1,D1 failure;
-    class A2,C2,D2 normal;
-    class B2 failure;
-```
-
-### 主要优势
-
-| 问题 | 不使用熔断器 | 使用熔断器 |
+| 问题 | 没有断路器 | 有断路器 |
 |---------|------------------------|----------------------|
-| **响应时间** | 等待直到超时（30 秒以上） | 立即失败（1 毫秒） |
-| **资源使用** | 线程/连接耗尽 | 资源保护 |
-| **故障传播** | 发生级联故障 | 故障隔离 |
-| **恢复时间** | 需要手动干预 | 自动尝试恢复 |
+| **响应时间** | 等待超时（30 秒以上） | 达到配置的限制后快速拒绝 |
+| **资源使用** | 线程/连接耗尽 | 保护资源 |
+| **故障传播** | 发生级联故障 | 隔离故障 |
+| **恢复时间** | 需要人工干预 | 自动尝试恢复 |
 
-<span id="circuit-breaker-overview"></span>
+## 断路器概述
 
-## 熔断器概述
+该图展示了通用的 Closed/Open/Half-Open 库模式。Istio 实现的是基于资源的连接池断路器和被动的逐端点异常值剔除；它并未提供一个适用于整个网格的单一三状态断路器。限制/健康状况观察结果仅对各个代理和上游集群/优先级本地有效，并且可能出现并发超量。异常值剔除会暂时将端点从选择范围中移除；它不会删除 Pod。以下示例是可选方案。
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open: Consecutive error threshold exceeded
-    Open --> HalfOpen: Wait time elapsed
-    HalfOpen --> Closed: Request successful
-    HalfOpen --> Open: Request failed
+![状态机图显示：连续错误数超过阈值后，断路器从 Closed 转为 Open；等待时间结束后转为 HalfOpen；成功后回到 Closed，失败后则转回 Open。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
 
-    note right of Closed
-        Normal state
-        All requests pass through
-    end note
-
-    note right of Open
-        Blocked state
-        Requests fail immediately
-    end note
-
-    note right of HalfOpen
-        Test state
-        Limited requests allowed
-    end note
-```
-
-<span id="connection-pool-settings"></span>
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.html)
 
 ## 连接池设置
 
@@ -106,11 +61,9 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
-<span id="outlier-detection"></span>
-
 ## 异常值检测
 
-异常值检测会自动移除不健康的实例。
+异常值检测会在负载均衡时暂时排除不健康的端点，但会受到剔除限制和恐慌行为的影响。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -121,14 +74,16 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5        # 5 consecutive errors
+      consecutive5xxErrors: 5        # 5 consecutive errors
       interval: 30s               # Check every 30 seconds
-      baseEjectionTime: 30s       # Remove for 30 seconds
+      baseEjectionTime: 30s       # Minimum; repeated ejection can last longer
       maxEjectionPercent: 50      # Remove up to 50%
-      minHealthPercent: 40        # Maintain at least 40%
+      minHealthPercent: 40        # Below this, disable outlier isolation and use all hosts
 ```
 
 ### 高级异常值检测设置
+
+基于连续错误的检测可以立即剔除端点；`interval` 控制定期扫描，不表示每次剔除前都必须等待该时长。`minHealthPercent` 是故障开放阈值，而不是预留健康容量的下限。`maxEjectionTime` 是 Envoy 字段，并未通过此 Istio DestinationRule API 暴露；不要将其写入这些清单。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -140,29 +95,26 @@ spec:
   trafficPolicy:
     outlierDetection:
       # Consecutive error based
-      consecutiveGatewayErrors: 5    # 5xx errors 5 times
-      consecutive5xxErrors: 3        # 500~599 errors 3 times
+      consecutiveGatewayErrors: 3    # HTTP 502/503/504
+      consecutive5xxErrors: 5        # All HTTP 5xx
 
       # Time intervals
       interval: 10s                  # Check every 10 seconds
       baseEjectionTime: 30s          # First ejection time
-      maxEjectionTime: 300s          # Maximum ejection time
 
       # Rate limits
       maxEjectionPercent: 50         # Remove up to 50%
-      minHealthPercent: 30           # Maintain at least 30%
+      minHealthPercent: 30           # Fail-open/panic threshold, not a health guarantee
 
-      # Success rate based
+      # Separate local connection errors from upstream response errors
       splitExternalLocalOriginErrors: true
 ```
 
-<span id="combination-with-retry-policy"></span>
-
 ## 与重试策略结合
 
-将熔断器与重试一起使用，以提高弹性。
+将断路器与重试结合使用，可以提高弹性。
 
-### 基础组合
+### 基本组合
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -193,12 +145,14 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 10s
       baseEjectionTime: 30s
 ```
 
 ### 重试预算模式
+
+此预算会根据每个代理集群中的活动/待处理请求数量，限制并发重试；它不是每秒请求数限制。对重试安全的读取操作使用重试策略，而其他方法则明确禁用重试。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -209,13 +163,21 @@ spec:
   hosts:
   - payment-service
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment-service
     retries:
       attempts: 2                    # Minimize retries
       perTryTimeout: 1s              # Fast fail
-      retryOn: retriable-4xx,5xx
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -224,23 +186,24 @@ metadata:
 spec:
   host: payment-service
   trafficPolicy:
+    retryBudget:
+      percent: 20
+      minRetryConcurrency: 3
     connectionPool:
       http:
         http1MaxPendingRequests: 5   # Low queue
         maxRequestsPerConnection: 1  # 1 request per connection
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 5s
       baseEjectionTime: 60s          # Long recovery time
 ```
 
-<span id="practical-examples"></span>
-
 ## 实践示例
 
-### 1. Mesh 内 Service 的熔断器
+### 1. 网格内部服务的断路器
 
-#### 场景：数据库 Service 保护
+#### 场景：保护数据库服务
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -254,13 +217,8 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100          # Maximum 100 connections
-      http:
-        http1MaxPendingRequests: 50  # 50 pending requests
-        http2MaxRequests: 100        # HTTP/2 100 concurrent requests
-        maxRequestsPerConnection: 2  # Maximum 2 requests per connection
-        idleTimeout: 60s             # Idle connection timeout
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -273,14 +231,16 @@ spec:
       version: v2
 ```
 
-**使用场景**：
+**适用场景**：
 - 防止数据库连接池耗尽
-- 阻止由慢查询引发的级联故障
+- 阻止慢查询导致的级联故障
 - 自动移除不健康的实例
+
+对于原生数据库协议，此处仅使用 TCP 限制/故障观察。每个代理的连接限制并非数据库的全局连接池大小，也不会检查慢 SQL 查询。
 
 ### 2. maxConnections: 1 模式（单连接）
 
-#### 场景：旧版系统或资源受限的 Service
+#### 场景：传统系统或资源受限的服务
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -298,19 +258,21 @@ spec:
         maxRequestsPerConnection: 1  # 1 request per connection
         h2UpgradePolicy: DO_NOT_UPGRADE  # Prevent HTTP/2 upgrade
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 1 error
+      consecutive5xxErrors: 1           # Block immediately on 1 error
       interval: 10s
       baseEjectionTime: 60s
 ```
 
-**使用场景**：
-- 当旧版系统无法处理并发连接时
-- 当外部 API 速率限制非常严格时
-- 当需要使用单个连接进行顺序处理时
+**适用场景**：
+- 传统系统无法处理并发连接时
+- 外部 API 的速率限制非常严格时
+- 必须通过单个连接进行顺序处理时
 
-### 3. 按 Subset 配置熔断器
+`maxConnections: 1` 不会串行化整个网格，也不会强制执行外部 API 配额。每个代理都有自己的限制，HTTP/2 可以多路复用请求，而 `maxRequestsPerConnection: 1` 会禁用连接复用，并不能保证只执行一个请求。需要全局协调时，请使用应用队列/速率限制器。
 
-#### 场景：每个版本使用不同的熔断器设置
+### 3. 按子集配置断路器
+
+#### 场景：为不同版本设置不同的断路器配置
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -326,7 +288,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -345,7 +307,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -359,14 +321,14 @@ spec:
           http1MaxPendingRequests: 5
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 1
+        consecutive5xxErrors: 1
         interval: 5s
         baseEjectionTime: 120s
 ```
 
 ### 4. 高级连接池模式
 
-#### 场景：高性能 Service
+#### 场景：高性能服务
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -391,13 +353,13 @@ spec:
         idleTimeout: 300s
         h2UpgradePolicy: UPGRADE       # Use HTTP/2
     outlierDetection:
-      consecutiveErrors: 10          # Lenient setting
+      consecutive5xxErrors: 10          # Lenient setting
       interval: 60s
       baseEjectionTime: 30s
       maxEjectionPercent: 20         # Remove up to 20% only
 ```
 
-### 5. 基于健康检查的熔断器
+### 5. 基于健康检查的断路器
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -415,20 +377,19 @@ spec:
       # Performance based
       interval: 10s
       baseEjectionTime: 30s
-      maxEjectionTime: 300s          # Maximum 5 minutes
 
       # Dynamic adjustment
       splitExternalLocalOriginErrors: true
       consecutiveLocalOriginFailures: 5
 ```
 
-<span id="external-service-circuit-breaker"></span>
+## 外部服务断路器
 
-## 外部 Service 熔断器
+以下 HTTP 示例假设应用通过明文 HTTP 向 sidecar 发送请求，而 sidecar 会通过经过验证的 TLS，使用 443 端口连接实际的外部主机。如果应用已使用 TLS，请避免重复 TLS，只使用该层可见的策略。原生 MongoDB 应用 TLS/身份验证仍是客户端/服务器的独立要求。
 
-与 ServiceEntry 一起使用以保护外部 Service。
+与 ServiceEntry 配合使用，以保护外部服务。
 
-### 1. 外部 API 熔断器
+### 1. 外部 API 断路器
 
 ```yaml
 # ServiceEntry: Register external API
@@ -440,9 +401,10 @@ spec:
   hosts:
   - api.payment-provider.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -461,15 +423,18 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1  # Minimize connection reuse
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 30s
       baseEjectionTime: 120s         # Long recovery time
       maxEjectionPercent: 100        # Can completely block
     tls:
-      mode: SIMPLE                   # TLS connection
+      mode: SIMPLE
+      sni: api.payment-provider.com
+      subjectAltNames:
+      - api.payment-provider.com
 ```
 
-### 2. 外部数据库熔断器
+### 2. 外部数据库断路器
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -498,12 +463,12 @@ spec:
         maxConnections: 50
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
 
-### 3. 受速率限制的外部 Service
+### 3. 受速率限制的外部服务
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -514,9 +479,10 @@ spec:
   hosts:
   - api.rate-limited-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -530,12 +496,17 @@ spec:
     connectionPool:
       http:
         http1MaxPendingRequests: 1   # Minimize queue
-        maxRequestsPerConnection: 1  # Prevent rate limit exceeding
+        maxRequestsPerConnection: 0  # Reuse connections; not a quota limiter
         idleTimeout: 1s              # Fast connection release
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 429 error
+      consecutive5xxErrors: 3           # Default HTTP 5xx detection; not 429
       interval: 60s
-      baseEjectionTime: 300s         # Wait 5 minutes (rate limit reset)
+      baseEjectionTime: 30s          # Independent of provider Retry-After
+    tls:
+      mode: SIMPLE
+      sni: api.rate-limited-service.com
+      subjectAltNames:
+      - api.rate-limited-service.com
 ---
 # VirtualService: Retry settings
 apiVersion: networking.istio.io/v1
@@ -554,9 +525,9 @@ spec:
     timeout: 10s
 ```
 
-<span id="monitoring-and-debugging"></span>
+HTTP 429 需要结合服务提供商进行限流，并处理 Retry-After。默认的 5xx 异常值检测和连接频繁重建既不能强制执行 API 配额，也无法推断配额重置时间。
 
-## 监控和调试
+## 监控与调试
 
 ### 检查 Envoy 指标
 
@@ -576,12 +547,12 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 
 ### 关键指标
 
-```yaml
+```promql
 # Prometheus queries
-# Circuit Breaker Open count
+# Requests circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_open
 
-# Pending request count
+# Pending-request circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_pending_open
 
 # Outlier Detection Ejection
@@ -594,12 +565,12 @@ envoy_cluster_upstream_rq_pending_overflow
 envoy_cluster_upstream_rq_retry
 ```
 
-### Grafana Dashboard
+### Grafana 仪表板
 
 ```yaml
 # Circuit Breaker Dashboard
-- expr: rate(envoy_cluster_circuit_breakers_default_rq_open[5m])
-  legend: "Circuit Breaker Open Rate"
+- expr: envoy_cluster_circuit_breakers_default_rq_open
+  legend: "Circuit Breaker Open State"
 
 - expr: envoy_cluster_outlier_detection_ejections_active
   legend: "Ejected Instances"
@@ -612,85 +583,36 @@ envoy_cluster_upstream_rq_retry
 
 ```bash
 # Check Proxy configuration
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local
 
 # Check Circuit Breaker settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 
 # Check Outlier Detection settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
 
-<span id="important-considerations"></span>
-
 ## 重要注意事项
 
-### 熔断器不保证数据一致性
+### 断路器不保证数据一致性
 
-**核心原则**：熔断器是一种用于**故障隔离**的工具，而非用于**防止重复请求**或**保证数据一致性**的工具。
+**核心原则**：断路器用于**故障隔离**，而不是用于**防止重复请求**或**保证数据一致性**。
 
-#### 熔断器的作用与限制
+#### 断路器的作用和局限性
 
-```mermaid
-flowchart TB
-    subgraph WhatItDoes["What Circuit Breaker Does"]
-        CB1[Isolate Failing Services]
-        CB2[Prevent Cascading Failures]
-        CB3[Protect System Resources]
-        CB4[Attempt Auto Recovery]
-    end
+![断路器节点通过实线连接到其作用（隔离故障服务、防止级联故障、保护资源、尝试自动恢复），并通过虚线连接到其不具备的作用：防止重复、保证数据一致性、处理事务、保证幂等性。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
 
-    subgraph WhatItDoesNot["What Circuit Breaker Does NOT Do"]
-        CB5[Prevent Duplicate Requests]
-        CB6[Guarantee Data Consistency]
-        CB7[Transaction Management]
-        CB8[Idempotency Guarantee]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.html)
 
-    %% Style definitions
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
+#### 问题场景：重试 + 断路器
 
-    %% Apply classes
-    class CB1,CB2,CB3,CB4 good;
-    class CB5,CB6,CB7,CB8 bad;
-```
+![时序图显示 payment POST 请求在每次响应丢失后都由 Istio 代理重试，每次尝试都会再次插入付款记录，因此最终留下三条重复记录；此时断路器需要连续五次错误才会触发。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.png)
 
-#### 问题场景：重试 + 熔断器
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.html)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy<br/>(VirtualService Retry)
-    participant Service as Payment Service
-    participant DB as Database
-
-    Note over Proxy: Retry: attempts=3<br/>Circuit Breaker: consecutiveErrors=5
-
-    Client->>Proxy: POST /payment (Payment Request)
-
-    Proxy->>Service: Attempt 1
-    Service->>DB: INSERT payment (Success)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 1/3
-
-    Proxy->>Service: Attempt 2 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 2/3
-
-    Proxy->>Service: Attempt 3 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-
-    Note over DB: Payment duplicated 3 times!<br/>Circuit Breaker activates after 5 errors
-```
-
-**问题**：在熔断器激活之前（连续发生 5 次错误后），已经发生了 **3 笔重复付款**。
+**问题**：在断路器激活之前（连续发生 5 次错误后），**已经出现了 3 笔重复付款**。
 
 #### 错误用法示例
 
@@ -720,19 +642,19 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 
 # Result:
-# - Up to 15 duplicates possible before Circuit Breaker activates (3 retries x 5 errors)
+# - attempts: 3 allows up to 4 deliveries per original request; the ejection threshold is not a multiplier
 # - Critical operations like payment, inventory deduction get duplicated
 # - Data consistency destroyed
 ```
 
-#### 正确用法模式
+#### 正确的使用模式
 
-**模式 1：仅使用熔断器（禁用重试）**
+**模式 1：对可安全重试的读取操作启用重试；写入操作不使用网格重试**
 
 ```yaml
 # Safe: Read-only + Circuit Breaker
@@ -763,7 +685,7 @@ spec:
   host: product-catalog
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -787,9 +709,6 @@ spec:
     timeout: 10s
     retries:
       attempts: 0  # Disable Retry for POST
-      # Or
-      # attempts: 1
-      # retryOn: connect-failure,refused-stream  # Network only
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -799,40 +718,16 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**模式 2：应用程序级幂等性 + 熔断器**
+**模式 2：应用级幂等性 + 断路器**
 
-```python
-# Server: Idempotency Key validation
-@app.route('/payment', methods=['POST'])
-def create_payment():
-    idempotency_key = request.headers.get('X-Idempotency-Key')
+幂等键必须绑定到经过身份验证的调用方和请求负载，并且必须与业务变更/结果原子地记录。先检查 Redis 中是否存在，再执行付款并单独写入缓存，这种做法存在竞态，并非安全的实现。必要时，请使用[原子幂等工作流](05-retry-timeout.md)以及下游幂等性约定/outbox。只有满足这些条件后，才使用以下重试策略；仅检查请求头是否存在并不足够。
 
-    if not idempotency_key:
-        return jsonify({"error": "Missing Idempotency-Key"}), 400
 
-    # Check if request was already processed
-    if redis.exists(f"payment:idempotency:{idempotency_key}"):
-        cached_result = redis.get(f"payment:result:{idempotency_key}")
-        return jsonify(json.loads(cached_result)), 200
-
-    # Process new payment
-    try:
-        payment = process_payment(request.json)
-
-        # Cache result (24 hours)
-        redis.setex(f"payment:idempotency:{idempotency_key}", 86400, "1")
-        redis.setex(f"payment:result:{idempotency_key}", 86400,
-                    json.dumps(payment))
-
-        return jsonify(payment), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-```
 
 ```yaml
 # Istio: Retry is safe when Idempotency is guaranteed
@@ -862,21 +757,21 @@ spec:
       attempts: 0
 ```
 
-#### 按 Service 类型制定安全策略
+#### 按服务类型制定安全策略
 
-| Service 类型 | 重试 | 熔断器 | 需要幂等性 |
+| 服务类型 | 重试 | 断路器 | 是否需要幂等性 |
 |-------------|-------|----------------|---------------------|
-| **产品目录** | 3 次 | 必需 | 不需要 |
-| **购物车** | 3 次 | 必需 | 不需要 |
-| **订单创建** | 0 次 | 必需 | 必需 |
-| **付款** | 0 次 | 必需 | 必需 |
-| **库存扣减** | 0 次 | 必需 | 必需 |
-| **积分累积** | 0 次 | 必需 | 必需 |
-| **通知发送** | 3 次（幂等） | 必需 | 建议 |
+| **商品目录** | 3 次 | 必须 | 不需要 |
+| **购物车** | 默认仅读取操作 | 按需调整 | 可重试的变更操作需要 |
+| **创建订单** | 0 次 | 必须 | 需要 |
+| **付款** | 0 次 | 必须 | 需要 |
+| **扣减库存** | 0 次 | 必须 | 需要 |
+| **积分累积** | 0 次 | 必须 | 需要 |
+| **发送通知** | 仅在进行投递去重时 | 按需调整 | 需要投递/消息幂等性 |
 
 #### 连接池与数据一致性
 
-连接池设置同样**不保证数据一致性**。它们仅限制并发连接数量。
+连接池设置也**不能保证数据一致性**。它们只能限制并发连接数。
 
 ```yaml
 # Misconception: Does maxConnections=1 prevent duplicates?
@@ -904,10 +799,10 @@ spec:
 **部署前验证**：
 
 - [ ] 检查 POST/PUT/DELETE/PATCH 请求的重试设置
-- [ ] 对非幂等请求设置 `attempts: 0` 或 `retryOn: connect-failure`
-- [ ] 审查同时使用熔断器和重试时出现重复请求的可能性
-- [ ] 为关键操作（付款、库存）实现 Idempotency Key
-- [ ] 确认应用程序级验证逻辑已存在
+- [ ] 对非幂等写入设置 `attempts: 0`，除非经验证的应用约定允许重试
+- [ ] 检查组合使用断路器和重试时是否可能产生重复请求
+- [ ] 为关键操作（付款、库存）实现幂等键
+- [ ] 确认存在应用级验证逻辑
 - [ ] 在测试环境中执行故障模拟
 
 **监控**：
@@ -925,11 +820,9 @@ kubectl exec -n <namespace> <pod> -c istio-proxy -- \
 kubectl logs -n <namespace> <pod> | grep -i "duplicate\|idempotency"
 ```
 
-<span id="best-practices"></span>
-
 ## 最佳实践
 
-### 1. 逐步配置
+### 1. 渐进式配置
 
 ```yaml
 # Stage 1: Start with lenient settings
@@ -945,7 +838,7 @@ spec:
         http1MaxPendingRequests: 100
         maxRequestsPerConnection: 10
     outlierDetection:
-      consecutiveErrors: 10        # Lenient
+      consecutive5xxErrors: 10        # Lenient
       interval: 60s
       baseEjectionTime: 30s
 ```
@@ -964,12 +857,12 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 5
     outlierDetection:
-      consecutiveErrors: 5         # Moderate
+      consecutive5xxErrors: 5         # Moderate
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-### 2. 按 Service 类型配置
+### 2. 按服务类型配置
 
 ```yaml
 # Frontend service: Lenient
@@ -978,34 +871,39 @@ connectionPool:
     http1MaxPendingRequests: 100
     maxRequestsPerConnection: 10
 outlierDetection:
-  consecutiveErrors: 10
+  consecutive5xxErrors: 10
+```
 
+```yaml
 # Backend service: Moderate
 connectionPool:
   http:
     http1MaxPendingRequests: 50
     maxRequestsPerConnection: 5
 outlierDetection:
-  consecutiveErrors: 5
+  consecutive5xxErrors: 5
+```
 
-# Database/Cache: Strict
+```yaml
+# Native database/cache TCP example
 connectionPool:
-  http:
-    http1MaxPendingRequests: 10
-    maxRequestsPerConnection: 2
+  tcp:
+    maxConnections: 10
 outlierDetection:
-  consecutiveErrors: 3
+  consecutive5xxErrors: 3
+```
 
+```yaml
 # External API: Very strict
 connectionPool:
   http:
     http1MaxPendingRequests: 5
     maxRequestsPerConnection: 1
 outlierDetection:
-  consecutiveErrors: 1
+  consecutive5xxErrors: 1
 ```
 
-### 3. 告警配置
+### 3. 配置告警
 
 ```yaml
 # Prometheus Alert Rules
@@ -1025,13 +923,15 @@ groups:
       summary: "Connection pool overflow rate is high"
 
   - alert: HighOutlierEjectionRate
-    expr: rate(envoy_cluster_outlier_detection_ejections_total[5m]) > 5
+    expr: rate(envoy_cluster_outlier_detection_ejections_enforced_total[5m]) > 5
     for: 3m
     annotations:
       summary: "High outlier ejection rate"
 ```
 
 ### 4. 测试场景
+
+仅针对已准备好的测试服务运行负载测试，并单独观察实时指标：proxy-config 显示的是已配置的阈值，并不表示断路器当前是否处于打开状态。等待 30 秒并不能保证多次剔除后端点会恢复。
 
 ```bash
 #!/bin/bash
@@ -1053,7 +953,7 @@ wait
 
 # 3. Check Circuit Breaker status
 echo "=== Circuit Breaker Status ==="
-istioctl proxy-config cluster <pod> | grep circuit_breakers
+istioctl proxy-config clusters <pod> -o json | jq '.[] | .circuitBreakers'
 
 # 4. Wait for recovery
 echo "=== Waiting for Recovery ==="
@@ -1065,6 +965,8 @@ curl -s http://service/api | jq .status
 ```
 
 ### 5. 文档模板
+
+请将这些用于说明的负载/恢复数据替换为实际测量值；它们并非 Istio 的固定保证。启用所需的 Envoy 统计信息；如果代理映像中没有 curl，请使用本地管理端口转发或 `istioctl dashboard envoy`。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1078,7 +980,7 @@ metadata:
     # Threshold rationale
     threshold-rationale: |
       - maxConnections: 100 (DB connection pool size)
-      - consecutiveErrors: 5 (observed error pattern)
+      - consecutive5xxErrors: 5 (observed error pattern)
       - baseEjectionTime: 30s (average recovery time)
 
     # Test results
@@ -1091,12 +993,21 @@ metadata:
     operations: |
       - Monitor: envoy_cluster_circuit_breakers_*
       - Alert: Circuit open > 1min
-      - Rollback: kubectl delete dr my-service-circuit-breaker
+      - Rollback: restore the reviewed previous DestinationRule configuration
+spec:
+  host: my-service
 ```
 
 ## 参考资料
 
-- [Istio Circuit Breaker](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
-- [Envoy Circuit Breaking](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
-- [Envoy Outlier Detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Istio 断路器](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
+- [Envoy 断路器](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
+- [Envoy 异常值检测](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
 - [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki/How-it-Works)
+
+- [主要参考资料 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [主要参考资料 2](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
+- [主要参考资料 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [主要参考资料 4](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [主要参考资料 5](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+- [主要参考资料 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

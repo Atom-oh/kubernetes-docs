@@ -1,74 +1,42 @@
 # 授权
 
-AuthorizationPolicy 让您能够精细地控制服务访问权限。
+AuthorizationPolicy 可让你精细控制服务访问权限。
 
 ## 目录
 
 1. [授权概述](#authorization-overview)
-2. [基础策略](#basic-policies)
+2. [基本策略](#basic-policies)
 3. [高级策略](#advanced-policies)
-4. [实践示例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#practical-examples)
-5. [最佳实践 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#best-practices)
-
-<span id="authorization-overview"></span>
+4. [实用示例](#practical-examples)
+5. [最佳实践](#best-practices)
 
 ## 授权概述
 
 <p align="center">
-  <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Istio 授权" width="700">
+  <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Istio Authorization" width="700">
 </p>
 
-Istio AuthorizationPolicy 为服务提供细粒度的访问控制。上图展示了 Authorization Policy 的工作方式：
+Istio AuthorizationPolicy 为服务提供精细化访问控制。上图展示了 Authorization Policy 的工作方式：
 
-1. **请求接收**：Envoy 接收入站请求
-2. **策略评估**：按顺序评估 AuthorizationPolicy 规则
+1. **接收请求**：Envoy 接收入站请求
+2. **策略评估**：先匹配 CUSTOM 策略，然后是 DENY，最后是 ALLOW；与 YAML 中的创建顺序无关
 3. **访问决策**：应用 ALLOW、DENY 或 CUSTOM 操作
-4. **审计日志记录**：记录所有决策
+4. **审计日志记录**：需要配置访问日志/审计日志；AUDIT 本身只会标记请求
 
 **支持的条件**：
 - **来源**：请求来源（ServiceAccount、Namespace、IP）
 - **操作**：HTTP 方法、路径、端口
-- **条件**：自定义条件（headers、JWT claims 等）
+- **条件**：自定义条件（标头、JWT 声明等）
 
-```mermaid
-flowchart TB
-    Request[Request]
+![流程图展示 Istio AuthorizationPolicy 如何依次通过三项检查（Service Account、Namespace 和 HTTP Method）来评估请求；全部匹配时允许请求，任何一项不匹配都会立即拒绝请求。](../../../.gitbook/assets/en-service-mesh-istio-security-03-authorization-0.png)
 
-    subgraph AuthZ["Authorization Policy"]
-        Check1{Service Account<br/>Check}
-        Check2{Namespace<br/>Check}
-        Check3{HTTP Method<br/>Check}
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-03-authorization-0.html)
 
-    Allow[Allow]
-    Deny[Deny]
+## 基本策略
 
-    Request --> Check1
-    Check1 -->|Match| Check2
-    Check1 -.->|No Match| Deny
-    Check2 -->|Match| Check3
-    Check2 -.->|No Match| Deny
-    Check3 -->|Match| Allow
-    Check3 -.->|No Match| Deny
+该图展示了一条合取规则。在一条规则中，from/to/when 约束会组合生效；不同规则以及匹配的 ALLOW 策略则是可选方案。如果某个工作负载没有 ALLOW 策略，请求将被允许，除非被 CUSTOM/DENY 拒绝。一旦某条 ALLOW 策略生效，就必须至少匹配一条 ALLOW 规则。以下示例是可选方案；允许所有请求会放宽仅允许 get 请求的策略。
 
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef deny fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Check1,Check2,Check3 check;
-    class Allow result;
-    class Deny deny;
-```
-
-<span id="basic-policies"></span>
-
-## 基础策略
-
-### 默认拒绝（拒绝所有请求）
+### 默认拒绝（拒绝所有）
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -77,12 +45,11 @@ metadata:
   name: deny-all
   namespace: default
 spec:
-  action: DENY
-  rules:
-  - {}  # Deny all requests
+  action: ALLOW
+  rules: []  # Default deny with room for specific ALLOW exceptions
 ```
 
-### 默认允许（允许所有请求）
+### 默认允许（允许所有）
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -114,8 +81,6 @@ spec:
     - operation:
         methods: ["GET"]  # Allow only GET
 ```
-
-<span id="advanced-policies"></span>
 
 ## 高级策略
 
@@ -182,7 +147,7 @@ spec:
         paths: ["/api/admin/*"]  # admin SA can access admin API
 ```
 
-### 基于 JWT Claims
+### 基于 JWT 声明
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -201,7 +166,20 @@ spec:
       values: ["admin", "superuser"]  # role claim is admin or superuser
 ```
 
+## 实用示例
+
+若要设置默认拒绝并配置例外，请应用空的 ALLOW 策略，并仅添加预期的特定 ALLOW 规则。包含 rules: [{}] 的显式 DENY 会形成无法被任何 ALLOW 覆盖的硬性阻止。不带 selector 的策略会应用于其所在的 Namespace；根 Namespace 和 targetRefs 附加规则需要分别谨慎处理。
+
+基于 Service Account/Namespace 的匹配要求经过身份验证的 mTLS 对端身份。JWT 角色示例要求配置匹配的 RequestAuthentication，并验证预期的签发者/受众。客户端标头不能替代这两种身份。对于原生 TCP，应匹配身份/IP/端口，而不是 HTTP 方法或 JWT 声明；DENY 规则中缺少 HTTP 属性时，可能会意外匹配 TCP 流量。
+
+## 最佳实践
+
+- 将策略范围限定为预期的工作负载/资源，并一并检查所有适用的 ALLOW 规则。
+- 对 ambient L7 策略使用 waypoint targetRefs；sidecar selector 不是 waypoint 附加方式。
+- 验证无策略、无匹配、显式拒绝和允许请求等情况，包括 Namespace 边界。
+- 明确配置日志记录，并使用 `istioctl x authz check <pod> -n <namespace>` 检查生效的策略。
+
 ## 参考资料
 
-- [Istio 授权策略](https://istio.io/latest/docs/reference/config/security/authorization-policy/)
-- [授权示例](https://istio.io/latest/docs/tasks/security/authorization/)
+- [Istio Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/)
+- [Authorization Examples](https://istio.io/latest/docs/tasks/security/authorization/)

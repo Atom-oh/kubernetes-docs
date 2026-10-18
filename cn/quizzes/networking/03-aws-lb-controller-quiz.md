@@ -1,381 +1,215 @@
 # AWS Load Balancer Controller 测验
 
-本测验用于检验您对 AWS Load Balancer Controller 架构、ALB/NLB 配置和运维的理解。
+基于 self-managed LBC v3.6.0 指南。
 
-## 测验问题
+## 1. AWS Load Balancer Controller 管理什么？
 
-### 1. AWS Load Balancer Controller 替代了哪个现有 Kubernetes 组件？
-
-A. kube-proxy
-B. 内置 AWS cloud provider
-C. CoreDNS
-D. CNI plugin
+- A. 所有云提供商职责，包括节点生命周期
+- B. 根据 Kubernetes 资源协调的受支持 AWS 负载均衡器资源
+- C. kube-proxy 数据包转发
+- D. 每个 pod 的 CoreDNS 记录
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 内置 AWS cloud provider**
-
-**说明：**
-AWS Load Balancer Controller 替代了现有 Kubernetes 内置 AWS cloud provider 的 load balancer 功能：
-- 更多功能（高级 ALB、NLB 配置）
-- 更快的更新和 bug 修复
-- 与 AWS 服务更好地集成
-
-内置 provider 仅支持基础 ELB Classic，而 AWS Load Balancer Controller 支持 ALB 和 NLB 的全部功能。
+B. LBC 管理受支持的 ALB/NLB、目标组、监听器及相关资源。它不会取代 kube-proxy、CNI、DNS 或所有云控制器职责。旧版 AWS 提供商行为和 EKS Auto Mode 是单独的实现；不要声称 LBC 实现了每种 ELB 产品的所有功能。
 
 </details>
 
-### 2. ALB Ingress 中 `ip` 和 `instance` target-type annotation 的正确区别是什么？
+## 2. ALB 的 ip 和 instance 目标类型有何不同？
 
-A. `ip` 直接指向 Pod IP，`instance` 通过 NodePort 路由
-B. `ip` 通过 NodePort 路由，`instance` 直接指向 Pod IP
-C. 两个选项的行为相同
-D. `ip` 仅支持 IPv4，`instance` 仅支持 IPv6
+- A. ip 注册 pod IP；instance 通过节点 NodePort 转发
+- B. ip 始终通过 NodePort 转发
+- C. 两者相同
+- D. instance 仅适用于 IPv6
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A. `ip` 直接指向 Pod IP，`instance` 通过 NodePort 路由**
-
-**说明：**
-Target Type 对比：
-
-| Target Type | 行为 | 优点 | 缺点 |
-|-------------|----------|------|------|
-| `ip` | 直接注册 Pod IP | 低延迟，高效 | 需要 VPC CNI |
-| `instance` | 路由到 Node 的 NodePort | 通用 | 额外一跳 |
-
-使用 `ip` 类型时，需要 AWS VPC CNI，并且会将 Pod IP 直接注册到 Target Group 中。
+A. IP 目标需要受支持、可通过 VPC 路由的 pod 地址，以及端点/ENI 发现功能。Amazon VPC CNI 是 EKS 中的常见选择，但也可以使用兼容的替代 CNI 配置。Instance 目标需要支持 NodePort 的 Service 和适当的节点网络。直接寻址并不能证明所有工作负载都能获得特定的延迟优势。
 
 </details>
 
-### 3. 为什么 AWS Load Balancer Controller 需要 IRSA (IAM Roles for Service Accounts)？
+## 3. 为什么控制器需要通过 IRSA 或 EKS Pod Identity 获取 IAM 角色？
 
-A. 用于 Pod 到 Pod 通信
-B. 用于让 controller 调用 AWS API 以创建/管理资源
-C. 用于 Kubernetes API server 身份验证
-D. 用于 TLS certificate 管理
+- A. 取代 pod 网络
+- B. 对其 AWS API 调用进行身份验证和授权
+- C. 取代 Kubernetes RBAC
+- D. 使每个后端请求都经过身份验证
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 用于让 controller 调用 AWS API 以创建/管理资源**
-
-**说明：**
-AWS Load Balancer Controller 需要调用 AWS API 来：
-- 创建和管理 ALB/NLB
-- 创建 Target Group 并注册 target
-- 配置 Listener 和规则
-- 管理 security group
-- 查询 ACM certificate
-
-通过 IRSA 将 IAM Role 关联到 Service Account：
-- Pod 可以向 AWS API 进行身份验证
-- 应用最小权限原则
-- 向特定 Pod 而非整个 Node 授予权限
+B. 控制器会调用 AWS API 来创建/管理负载均衡器、目标组、监听器和相关安全组。IRSA 和受支持的 Pod Identity 配置是可选方案。角色只会授予附加到该角色的策略所允许的权限；使用角色并不会自动使策略符合最小权限原则。Kubernetes RBAC 和应用身份验证是彼此独立的。
 
 </details>
 
-### 4. 如何将多个 Ingress 资源整合到单个 ALB 中？
+## 4. 多个 Ingress 如何共享一个 ALB？
 
-A. 部署在同一个 namespace 中
-B. 使用 `alb.ingress.kubernetes.io/group.name` annotation
-C. 使用相同的 IngressClass
-D. ALB 始终只支持一个 Ingress
+- A. 位于同一命名空间就足够了
+- B. 使用相同的 alb.ingress.kubernetes.io/group.name
+- C. 所有 Ingress 始终共享一个 ALB
+- D. 设置相同的 pod 名称
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 使用 `alb.ingress.kubernetes.io/group.name` annotation**
-
-**说明：**
-Ingress Group 功能：
-
-```yaml
-# Ingress 1
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "1"
----
-# Ingress 2
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "2"
-```
-
-优点：
-- 节省 ALB 成本（多个 Service 共享一个 ALB）
-- 集中管理
-- 通过指定 order 控制规则优先级
+B. IngressGroup 会共享 ALB 和规则空间。较小的 group.order 值会先进行评估；值相同时按 namespace/name 排序。仅在有强制执行的信任边界内使用此功能，因为能够加入该组的不可信用户可以影响路由。请检查注解的合并/互斥行为、限制和成本，不要假设每种部署都能节省成本。
 
 </details>
 
-### 5. 在 NLB Service 上实现 TLS termination 的 annotation 是什么？
+## 5. 哪个注解用于指定 NLB TLS 证书？
 
-A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`
-B. `alb.ingress.kubernetes.io/certificate-arn`
-C. `service.beta.kubernetes.io/aws-load-balancer-tls-termination`
-D. `nlb.kubernetes.io/ssl-certificate`
+- A. service.beta.kubernetes.io/aws-load-balancer-ssl-cert
+- B. alb.ingress.kubernetes.io/certificate-arn
+- C. service.beta.kubernetes.io/aws-load-balancer-tls-termination
+- D. nlb.kubernetes.io/ssl-certificate
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`**
-
-**说明：**
-NLB TLS termination 配置：
+A. 对于 self-managed LBC，完整的 Service 示例为：
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
+  name: nlb-tls-service
+  namespace: default
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:..."
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: '443'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  selector:
+    app: my-app
   ports:
-    - port: 443
-      targetPort: 8080
+  - name: https
+    port: 443
+    targetPort: 8080
+    protocol: TCP
 ```
 
-`alb.ingress.kubernetes.io/certificate-arn` 是用于 ALB Ingress 的 annotation。
+请替换证书 ARN，并提供与之匹配、在 8080 端口监听的后端 pod。面向客户端的 TLS 在 NLB 处终止；这里的 tcp 表示后端连接不使用 TLS。请使用适当的证书/安全策略和网络控制。Auto Mode 使用自己的 loadBalancerClass 和受支持的注解集。
 
 </details>
 
-### 6. TargetGroupBinding CRD 的主要用途是什么？
+## 6. 独立创建的 TargetGroupBinding 有什么用途？
 
-A. 自动创建新的 Target Group
-B. 将现有 AWS Target Group 连接到 Kubernetes Service
-C. 定义 ALB Listener 规则
-D. 自动创建 security group
+- A. 自动创建所有负载均衡器/监听器
+- B. 将 Kubernetes Service 的目标注册到现有目标组
+- C. 定义 ALB HTTP 监听器路由规则
+- D. 取代 IAM 授权
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 将现有 AWS Target Group 连接到 Kubernetes Service**
-
-**说明：**
-TargetGroupBinding 使用场景：
-1. 迁移现有基础设施 - 利用现有 Target Group
-2. 多集群共享 - 在多个集群间使用一个 ALB/NLB
-3. 需要直接管理 Target Group 时
+B. 负载均衡器、监听器和目标组都已存在，并且必须与 Service/目标协议、地址族和端口相匹配。
 
 ```yaml
 apiVersion: elbv2.k8s.aws/v1beta1
 kind: TargetGroupBinding
 metadata:
   name: my-tgb
+  namespace: default
 spec:
-  targetGroupARN: arn:aws:elasticloadbalancing:...
+  targetGroupARN: arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-tg/1234567890abcdef
   serviceRef:
     name: my-service
     port: 80
   targetType: ip
 ```
 
+对于由多个集群/TGB 共享的目标组，每个参与方都必须在创建时设置 multiClusterTargetGroup: true。默认情况下，系统会假定拥有完整所有权，并可能注销外部目标。nodeSelector 适用于 instance 目标，不适用于 IP 模式的 pod 筛选。请将 TGB 权限限制为受信任用户。
+
 </details>
 
-### 7. 将 WAF v2 与 ALB Ingress 集成的 annotation 是什么？
+## 7. 哪个注解可将区域级 WAF v2 Web ACL 关联到 ALB？
 
-A. `alb.ingress.kubernetes.io/waf-acl-id`
-B. `alb.ingress.kubernetes.io/wafv2-acl-arn`
-C. `alb.ingress.kubernetes.io/web-acl`
-D. `alb.ingress.kubernetes.io/firewall-rules`
+- A. alb.ingress.kubernetes.io/waf-acl-id
+- B. alb.ingress.kubernetes.io/wafv2-acl-arn
+- C. alb.ingress.kubernetes.io/web-acl
+- D. alb.ingress.kubernetes.io/firewall-rules
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. `alb.ingress.kubernetes.io/wafv2-acl-arn`**
-
-**说明：**
-AWS WAF v2 集成：
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-1:ACCOUNT:regional/webacl/my-acl/xxx
-```
-
-WAF v2 功能：
-- SQL injection、XSS 防护
-- Rate limiting
-- 基于 IP 的阻止/允许
-- 自定义规则
-
-安装 controller 时需要设置 `enableWafv2: true`。
+B. 请提供 ALB 所在区域中现有 Web ACL 的 ARN，配置其规则，并授予控制器所需的权限。必须启用 WAF v2 集成；其默认值为 true，因此并非所有情况下都需要显式设置 enableWafv2。禁用该集成时，注解不会生效。WAF 和付费的 Shield Advanced 保护是不同的功能。
 
 </details>
 
-### 8. AWS Load Balancer Controller 自动发现 subnet 所需的 tag 是什么？
+## 8. 常见的子网角色标签有哪些？
 
-A. `kubernetes.io/cluster/<cluster-name>=owned`
-B. `kubernetes.io/role/elb=1`（public），`kubernetes.io/role/internal-elb=1`（private）
-C. `aws:cloudformation:stack-name`
-D. `Name=kubernetes-subnet`
+- A. 仅 kubernetes.io/cluster/CLUSTER_NAME
+- B. 公有子网使用 kubernetes.io/role/elb，私有子网使用 kubernetes.io/role/internal-elb
+- C. aws:cloudformation:stack-name
+- D. 仅 Name=kubernetes-subnet
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. `kubernetes.io/role/elb=1`（public），`kubernetes.io/role/internal-elb=1`（private）**
-
-**说明：**
-Subnet tagging 规则：
-
-```bash
-# Public subnets (for internet-facing ALB/NLB)
-kubernetes.io/role/elb=1
-
-# Private subnets (for internal ALB/NLB)
-kubernetes.io/role/internal-elb=1
-
-# Cluster ownership (optional)
-kubernetes.io/cluster/<cluster-name>=shared or owned
-```
-
-如果没有这些 tag，controller 可能无法找到合适的 subnet，导致 load balancer 创建失败。
+B. 对于 self-managed LBC，标签值可以是 1 或空。在 v2.12.1 及更高版本中，如果缺少匹配的角色标签，默认的基于可达性的回退机制可以根据路由表对子网进行分类。显式指定子网和 IngressClassParams 标签筛选器是其他选择路径。Auto Mode 仍要求使用其文档中规定的标签。请检查集群标签、可用 IP 数量和 AZ 要求；标签不会修改路由。
 
 </details>
 
-### 9. 在 ALB Ingress 中启用 Sticky Sessions 的 annotation 是什么？
+## 9. 如何配置 ALB 粘性会话？
 
-A. `alb.ingress.kubernetes.io/sticky-sessions=true`
-B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`
-C. `alb.ingress.kubernetes.io/session-affinity=cookie`
-D. `alb.ingress.kubernetes.io/cookie-based-routing=true`
+- A. alb.ingress.kubernetes.io/sticky-sessions=true
+- B. 在 target-group-attributes 中设置 stickiness.enabled=true
+- C. 在 Ingress 上设置 session-affinity=cookie
+- D. 始终默认启用
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`**
-
-**说明：**
-Sticky Session 配置：
-
-```yaml
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/target-group-attributes: >-
-      stickiness.enabled=true,
-      stickiness.lb_cookie.duration_seconds=3600
-```
-
-配置为 Target Group attribute：
-- `stickiness.enabled=true` - 启用
-- `stickiness.lb_cookie.duration_seconds` - Cookie 有效期
-- `stickiness.type` - lb_cookie 或 app_cookie
-
-Sticky Sessions 对于需要保持 session state 的 legacy application 很有用。
+B. 设置 alb.ingress.kubernetes.io/target-type: ip，并在同一个 target-group-attributes 注解中将 stickiness.enabled=true 与适当的 cookie 属性组合使用。不要为慢启动或注销延迟重复使用 YAML 键，因为重复键可能导致设置被丢弃。使用加权转发操作时，请按照文档说明一致地配置其目标组粘性。
 
 </details>
 
-### 10. 如何在 NLB 中保留 client source IP？
+## 10. 关于 NLB 客户端身份，哪项说法正确？
 
-A. 使用 `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"`
-B. 使用 externalTrafficPolicy: Local
-C. 两种方法都可以
-D. NLB 始终保留 client IP
+- A. Proxy Protocol v2 会将 IP 数据包的源地址更改为客户端地址
+- B. externalTrafficPolicy: Local 保证所有目标模式都能保留客户端 IP
+- C. Proxy Protocol 会传递元数据；数据包源地址保留是另一项设置，且受网络/协议限制
+- D. NLB 始终保留客户端 IP
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 两种方法都可以**
-
-**说明：**
-保留 client IP 的方法：
-
-1. **Proxy Protocol v2**:
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: proxy_protocol_v2.enabled=true
-```
-- Application 必须支持 Proxy Protocol
-
-2. **externalTrafficPolicy: Local**:
-```yaml
-spec:
-  externalTrafficPolicy: Local
-```
-- 仅路由到同一 Node 上的 Pod，无额外跳转
-- 可能导致流量分布不均
-
-3. **IP Target Type**（ip mode）：
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-```
+C. 后端必须在应用数据之前解析 Proxy Protocol v2，并支持适用的运行状况检查。preserve_client_ip.enabled 用于在受支持的情况下控制数据包源地址保留。在 instance/NodePort 模式下，externalTrafficPolicy: Local 可以避免后续 kube-proxy SNAT 跳转；但它无法解决所有 NLB 路径或 IP 地址族转换情况。对于加权 NLB 目标，常规权重调整会影响新连接，但将权重设为零会在短时间后关闭现有连接。
 
 </details>
 
-### 11. 在 ALB Ingress 中将 HTTP 重定向到 HTTPS 的 annotation 是什么？
+## 11. 哪个注解可配置 ALB 的 HTTP 到 HTTPS 重定向？
 
-A. `alb.ingress.kubernetes.io/actions.ssl-redirect`
-B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`
-C. `alb.ingress.kubernetes.io/force-ssl-redirect: "true"`
-D. `alb.ingress.kubernetes.io/http-to-https: "true"`
+- A. alb.ingress.kubernetes.io/force-ssl-redirect
+- B. alb.ingress.kubernetes.io/ssl-redirect: "443"
+- C. alb.ingress.kubernetes.io/http-to-https
+- D. 始终需要 HTTPRoute
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`**
-
-**说明：**
-SSL redirect 配置：
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
-```
-
-行为：
-- 将访问 HTTP(80) 的请求以 301 重定向到 HTTPS(443)
-- 推荐作为安全最佳实践
-- 需要 ACM certificate
+B. 配置 HTTP 监听器和目标 HTTPS 监听器，并设置适当的证书。启用后，HTTP 监听器会使用重定向默认操作，其其他路由规则将被忽略。此设置会影响整个 IngressGroup，因此请检查组级行为。Cognito/OIDC/JWT 身份验证需要 HTTPS；单靠重定向并不等于应用授权。
 
 </details>
 
-### 12. 当 AWS Load Balancer Controller 未创建 ALB 时，以下哪项不是需要检查的内容？
+## 12. ALB 未创建时，应该先检查什么？
 
-A. 检查 IAM 权限
-B. 检查 subnet tag
-C. 检查 IngressClass specification
-D. 检查 kube-proxy log
+- A. 仅检查 kube-proxy 日志
+- B. 应用的 cookie 内容
+- C. 控制器日志/事件、类选择、IAM、子网资格以及 webhook/CRD 健康状况
+- D. 仅检查 pod 副本数
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D. 检查 kube-proxy log**
-
-**说明：**
-ALB 创建失败时需要检查的内容：
-
-1. **IAM 权限**：Service Account 的 IAM Role 是否具有所需权限
-2. **Subnet tag**：`kubernetes.io/role/elb=1` 或 `kubernetes.io/role/internal-elb=1`
-3. **IngressClass**：指定 `ingressClassName: alb` 或通过 annotation 指定
-4. **Controller log**：`kubectl logs -n kube-system deployment/aws-load-balancer-controller`
-5. **Ingress event**：`kubectl describe ingress <name>`
-
-kube-proxy 负责 Service ClusterIP/NodePort 路由，与 ALB 创建无关。
+C. 首先检查协调/控制平面路径。对于节点/Service 流量，kube-proxy 或 eBPF 替代方案之后可能会有影响，但它不是 AWS CreateLoadBalancer 操作失败时首先要检查的内容。kubectl apply 成功并不能证明 AWS 协调成功。请使用真实的资源 ID、命名空间，并限制日志输出范围。
 
 </details>
 
----
-
-## 其他学习资源
-
-- [AWS Load Balancer Controller 文档](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [EKS 用户指南](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
-- [ALB Annotation 参考](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.8/guide/ingress/annotations/)
+[返回指南](../../networking/03-aws-lb-controller.md)

@@ -1,10 +1,10 @@
 # 调度、抢占和驱逐测验
 
-本测验涵盖 Kubernetes 调度、节点选择、亲和性、污点、优先级、驱逐、中断预算和重新调度。
+本测验涵盖 Kubernetes 调度、节点选择、亲和性、污点、优先级、驱逐、中断预算和取消调度。
 
-## 多项选择题
+## 选择题
 
-1. 在评估候选节点时，过滤、评分和绑定中哪一项最先发生？
+1. 评估候选节点时，过滤、评分和绑定中哪一步最先发生？
    - A) 节点评分
    - B) 节点过滤
    - C) 确定 Pod 优先级
@@ -15,101 +15,101 @@
 
 **答案：B) 节点过滤**
 
-**说明：**
-调度器会过滤不合适的节点，为可行节点评分，选择一个节点，然后绑定 Pod。队列处理和其他框架扩展点围绕这些步骤运行。
+**解释：**
+调度器会过滤不合适的节点，为可行节点评分，选择一个节点，然后绑定 Pod。排队和其他框架扩展点会围绕这些步骤进行。
 </details>
 
 2. 节点亲和性和 Pod 亲和性的主要区别是什么？
    - A) 节点亲和性仅支持硬约束；Pod 亲和性仅支持软约束
-   - B) 节点亲和性匹配节点标签；Pod 亲和性将放置与匹配的 Pod 关联起来
-   - C) 节点亲和性是集群范围的，而 Pod 亲和性是命名空间范围的
-   - D) 只有 Pod 亲和性会在运行时自动更改放置位置
+   - B) 节点亲和性匹配节点标签；Pod 亲和性根据匹配的 Pod 确定放置位置
+   - C) 节点亲和性适用于整个集群，而 Pod 亲和性适用于整个命名空间
+   - D) 只有 Pod 亲和性会在运行时自动改变放置位置
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 节点亲和性匹配节点标签；Pod 亲和性将放置与匹配的 Pod 关联起来**
+**答案：B) 节点亲和性匹配节点标签；Pod 亲和性根据匹配的 Pod 确定放置位置**
 
-**说明：**
-两者都支持必需和首选规则。Pod 亲和性使用匹配的 Pod 和拓扑键来表达共置。标签变更时，IgnoredDuringExecution 不会自动驱逐 Pod。
+**解释：**
+两者都支持必需规则和首选规则。Pod 亲和性使用匹配的 Pod 和拓扑键来表达共置要求。IgnoredDuringExecution 不会在标签更改时自动驱逐 Pod。
 </details>
 
-3. 污点和容忍的用途是什么？
-   - A) 保证一个 Pod 只在某个特定节点上运行
-   - B) 使节点排斥 Pod，除非它们具有匹配的容忍
+3. 污点和容忍度的作用是什么？
+   - A) 保证 Pod 只在某个特定节点上运行
+   - B) 让节点排斥 Pod，除非 Pod 具有匹配的容忍度
    - C) 设置 Pod 间亲和性
    - D) 自动优化集群利用率
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使节点排斥 Pod，除非它们具有匹配的容忍**
+**答案：B) 让节点排斥 Pod，除非 Pod 具有匹配的容忍度**
 
-**说明：**
-容忍允许考虑带有污点的节点；它不会吸引 Pod 或保证放置。对于专用工作负载，应将其与节点亲和性结合使用，并控制谁可以使用该容忍。
+**解释：**
+容忍度允许将带污点的节点纳入考虑范围；它不会吸引 Pod，也不保证 Pod 会被放置在该节点上。对于专用工作负载，应将其与节点亲和性结合使用，并控制谁可以使用该容忍度。
 </details>
 
-4. Pod 优先级和抢占有何关系？
-   - A) 在调度期间，较高优先级的 Pod 可以抢占较低优先级的 Pod
+4. Pod 优先级与抢占有什么关系？
+   - A) 调度期间，较高优先级的 Pod 可能抢占较低优先级的 Pod
    - B) 优先级直接设置 CPU/内存分配
-   - C) 抢占仅在维护期间发生
+   - C) 只有在维护期间才会发生抢占
    - D) 两者无关
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A) 在调度期间，较高优先级的 Pod 可以抢占较低优先级的 Pod**
+**答案：A) 调度期间，较高优先级的 Pod 可能抢占较低优先级的 Pod**
 
-**说明：**
-如果移除较低优先级的受害 Pod 能使待处理 Pod 可调度，调度器就可以移除它们。这并不保证容量或放置。具有 preemptionPolicy: Never 的 PriorityClass 不会抢占其他 Pod。
+**解释：**
+如果移除较低优先级的受害 Pod 能让待处理的 Pod 可调度，调度器就可以将其移除。这并不保证容量或放置位置。设置了 preemptionPolicy: Never 的 PriorityClass 不会抢占其他 Pod。
 </details>
 
-5. nodeSelector 和节点亲和性有何区别？
-   - A) nodeSelector 是硬约束；节点亲和性支持硬约束和软约束
-   - B) nodeSelector 仅支持一个标签
+5. nodeSelector 和节点亲和性有什么区别？
+   - A) nodeSelector 是硬约束；节点亲和性同时支持硬约束和软约束
+   - B) nodeSelector 只支持一个标签
    - C) 节点亲和性无法匹配标签值
-   - D) nodeSelector 仅在调度后适用
+   - D) nodeSelector 只在调度后生效
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A) nodeSelector 是硬约束；节点亲和性支持硬约束和软约束**
+**答案：A) nodeSelector 是硬约束；节点亲和性同时支持硬约束和软约束**
 
-**说明：**
-节点亲和性还支持 In、NotIn、Exists、DoesNotExist、Gt 和 Lt。所有 nodeSelector 条目都必须匹配。必需的节点亲和性必须匹配；首选规则会影响评分。
+**解释：**
+节点亲和性还支持 In、NotIn、Exists、DoesNotExist、Gt 和 Lt。nodeSelector 中的所有条目都必须匹配。必需的节点亲和性必须匹配；首选规则会影响评分。
 </details>
 
 6. 哪种情况通常会触发节点压力驱逐？
-   - A) 一个 Pod 本身具有较低的优先级值
-   - B) 节点缺少内存、磁盘空间或其他受监控资源
-   - C) 一个 Pod 本身已存在很长时间
-   - D) 一个 ReplicaSet 有过多副本
+   - A) 单纯因为某个 Pod 的优先级值较低
+   - B) 节点的内存、磁盘空间或其他受监控资源不足
+   - C) 单纯因为某个 Pod 已经存在很长时间
+   - D) ReplicaSet 的副本过多
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 节点缺少内存、磁盘空间或其他受监控资源**
+**答案：B) 节点的内存、磁盘空间或其他受监控资源不足**
 
-**说明：**
-Kubelet 会监控压力信号，并可能回收资源和终止 Pod。候选项排序会考虑超出请求量的使用量、Pod 优先级和相对使用量，而不是固定的仅 QoS 顺序。其他驱逐机制包括 drain 和 NoExecute 污点。
+**解释：**
+Kubelet 会监控压力信号，并可能回收资源和终止 Pod。候选 Pod 的排序会考虑超出请求量的资源使用情况、Pod 优先级和相对使用量，而不是固定的、仅基于 QoS 的顺序。其他驱逐机制包括 drain 和 NoExecute 污点。
 </details>
 
 7. DaemonSet Pod 如何放置？
    - A) 在每个符合条件的目标节点上放置一个 Pod
-   - B) 仅在控制平面节点上放置
-   - C) 它们始终绕过 kube-scheduler
-   - D) 副本数与符合条件节点的数量无关
+   - B) 只放置在控制平面节点上
+   - C) 它们总是绕过 kube-scheduler
+   - D) 副本数与符合条件的节点数无关
 
 <details>
 <summary>显示答案</summary>
 
 **答案：A) 在每个符合条件的目标节点上放置一个 Pod**
 
-**说明：**
-DaemonSet 控制器会创建目标指向符合条件节点的 Pod；调度器负责绑定它们。选择器、亲和性、容忍和容量仍然重要。不应使用历史上的直接绑定行为来描述当前的 DaemonSet。
+**解释：**
+DaemonSet 控制器会创建目标节点为符合条件节点的 Pod；调度器负责绑定它们。选择器、亲和性、容忍度和容量仍然会产生影响。描述当前 DaemonSet 时，不应使用历史上的直接绑定行为。
 </details>
 
-8. 没有 Pod 级资源设置时，当每个容器的 CPU 请求/限制相等且内存请求/限制相等，会应用哪个 QoS 类？
+8. 未设置 Pod 级资源时，如果每个容器的 CPU 请求和限制相等，且内存请求和限制相等，则适用哪种 QoS 类？
    - A) BestEffort
    - B) Burstable
    - C) Guaranteed
@@ -120,23 +120,23 @@ DaemonSet 控制器会创建目标指向符合条件节点的 Pod；调度器负
 
 **答案：C) Guaranteed**
 
-**说明：**
-Guaranteed 在每个容器上具有相等的 CPU 和内存请求/限制。BestEffort 两者均不设置，而中间配置属于 Burstable。QoS 不是 PriorityClass，也不保证在所有故障或压力情况下都能存活。
+**解释：**
+Guaranteed 要求每个容器的 CPU 和内存请求与限制分别相等。BestEffort 表示两者都未设置，其他中间配置属于 Burstable。QoS 不等同于 PriorityClass，也不保证 Pod 在任何故障或压力情况下都能存活。
 </details>
 
-9. 什么允许在带有 node-role.kubernetes.io/control-plane:NoSchedule 污点的节点上进行调度考虑？
+9. 什么允许调度器考虑将 Pod 调度到带有 node-role.kubernetes.io/control-plane:NoSchedule 污点的节点上？
    - A) 仅节点亲和性
    - B) 仅 Pod 亲和性
-   - C) 匹配的容忍
+   - C) 匹配的容忍度
    - D) 仅较高的 PriorityClass
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 匹配的容忍**
+**答案：C) 匹配的容忍度**
 
-**说明：**
-容忍允许该污点，但仍必须满足资源和其他放置约束。仅将控制平面放置用于预期的工作负载。
+**解释：**
+容忍度允许 Pod 容忍该污点，但仍必须满足资源和其他放置约束。仅将控制平面节点用于预期的工作负载。
 
 ```yaml
 tolerations:
@@ -148,17 +148,17 @@ tolerations:
 
 10. PodDisruptionBudget 主要控制什么？
    - A) 容器资源消耗
-   - B) 通过 Eviction API 进行的自愿驱逐
+   - B) 通过 Eviction API 执行的自愿驱逐
    - C) 调度优先级
    - D) 容器重启策略
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 通过 Eviction API 进行的自愿驱逐**
+**答案：B) 通过 Eviction API 执行的自愿驱逐**
 
-**说明：**
-PDB 限制允许的 Eviction API 请求，包括常规 drain/descheduler 操作。直接删除 Pod、工作负载控制器滚动发布和节点压力驱逐会绕过此限制。它不会创建健康副本或防止节点故障。
+**解释：**
+PDB 会限制允许的 Eviction API 请求，包括常规 drain/descheduler 操作。直接删除 Pod、工作负载控制器滚动更新以及节点压力驱逐都绕过此限制。它不会创建健康副本，也无法防止节点故障。
 </details>
 
 ## 简答题
@@ -170,40 +170,40 @@ PDB 限制允许的 Eviction API 请求，包括常规 drain/descheduler 操作�
 
 **答案：**
 
-- **NodeResourcesFit** 根据节点可分配容量和现有请求检查所请求的资源。
-- **NodeAffinity** 检查必需的节点选择规则；除非适用相关容忍，否则 **NodeUnschedulable** 会拒绝已 cordon 的节点。
-- **InterPodAffinity** 同时检查 Pod 亲和性和反亲和性；**PodTopologySpread** 检查硬分布约束。
-- **TaintToleration** 检查污点。**NodePorts** 检测主机端口冲突。
-- **VolumeBinding** 检查 PVC 绑定/拓扑；**NodeVolumeLimits** 检查 CSI 挂载限制。
-- 直接分配的 `spec.nodeName` 通常会绕过调度器。NodeName 不应被描述为最高优先级的过滤器。
+- **NodeResourcesFit** 会根据节点可分配容量和已有请求检查资源请求。
+- **NodeAffinity** 会检查必需的节点选择规则；除非适用相关容忍度，否则 **NodeUnschedulable** 会拒绝已封锁的节点。
+- **InterPodAffinity** 会同时检查 Pod 亲和性和反亲和性；**PodTopologySpread** 会检查硬性分布约束。
+- **TaintToleration** 会检查污点。**NodePorts** 会检测主机端口冲突。
+- **VolumeBinding** 会检查 PVC 绑定/拓扑；**NodeVolumeLimits** 会检查 CSI 附加限制。
+- 直接指定 `spec.nodeName` 通常会绕过调度器。不应将 NodeName 描述为优先级最高的过滤器。
 
-诸如 EBSLimits 等旧的每提供商名称不是当前的 CSI 插件名称。
+像 EBSLimits 这样的旧版按云提供商划分的名称并不是当前 CSI 插件的名称。
 </details>
 
-2. 说明节点亲和性和污点/容忍如何协同用于专用 GPU 节点。
+2. 说明节点亲和性与污点/容忍度如何配合用于专用 GPU 节点。
 
 <details>
 <summary>显示答案</summary>
 
 **答案：**
 
-节点亲和性将工作负载限制在预期节点上，而污点会排斥缺少匹配容忍的 Pod。例如，为实际 GPU 节点添加标签，要求匹配的 GPU 标签，对它们施加污点，并且只在获批准的 GPU 工作负载中容忍该污点。
+节点亲和性会将工作负载限制在目标节点上，而污点会排斥缺少匹配容忍度的 Pod。例如，为实际的 GPU 节点添加标签，要求匹配的 GPU 标签，为这些节点添加污点，并且只在获批的 GPU 工作负载中容忍该污点。
 
-单独使用容忍并不能保证放置到 GPU 节点。还需要诸如 `nvidia.com/gpu: 1` 的 GPU 请求和正常工作的设备插件来预留 GPU。当这种隔离是安全边界时，必须限制谁可以添加容忍/标签。
+仅有容忍度不能保证 Pod 被放置在 GPU 节点上。还需要像 `nvidia.com/gpu: 1` 这样的 GPU 请求，以及正常工作的设备插件，才能预留 GPU。如果这种隔离属于安全边界，则还需要限制谁可以添加容忍度/标签。
 </details>
 
-3. 说明 Pod 优先级和抢占，包括它们的限制。
+3. 说明 Pod 优先级和抢占及其限制。
 
 <details>
 <summary>显示答案</summary>
 
 **答案：**
 
-创建一个 PriorityClass，并通过 `spec.priorityClassName` 引用它。调度器队列使用优先级，如果移除较低优先级的受害 Pod 可以使待处理 Pod 可行，抢占可以选择这些受害 Pod。
+创建 PriorityClass，并通过 `spec.priorityClassName` 引用它。调度器队列会使用优先级；如果移除较低优先级的受害 Pod 能让待处理的 Pod 可调度，调度器就可以选择这些受害 Pod。
 
-调度器通过 API 请求删除受害 Pod；kubelet/runtime 执行终止。受害 Pod 的终止可能会延迟传入的 Pod，并且被提名的节点不是无条件的预留。抢占不会移除同等或更高优先级的 Pod，也可能无法解决亲和性或容量约束。
+调度器会通过 API 请求删除受害 Pod；kubelet/runtime 会执行终止操作。受害 Pod 的终止可能会延迟传入 Pod 的启动，而且被提名的节点并非无条件预留。抢占不会移除优先级相同或更高的 Pod，也可能无法解决亲和性或容量约束问题。
 
-PDB 仅以尽力而为的方式被考虑，并非保证。用户定义的优先级值不得大于 1,000,000,000；系统类具有保留的更高值。仅仅运行在 kube-system 中不会使 Pod 获得豁免。请检查事件并测试影响。
+PDB 会以尽力而为的方式纳入考虑，不提供保证。用户定义的优先级值不得大于 1,000,000,000；系统类使用保留的更高值。Pod 仅仅运行在 kube-system 中并不会因此获得豁免。请查看事件并测试影响。
 
 ```yaml
 apiVersion: scheduling.k8s.io/v1
@@ -235,15 +235,15 @@ spec:
 
 **答案：**
 
-**节点压力：**Kubelet 观察内存、文件系统和 PID 可用性，并可能在终止 Pod 前回收资源。典型的 Linux 硬默认值包括 memory.available 低于 100Mi、nodefs.available 低于 10%、imagefs.available 低于 15%，以及空闲 inode 低于 5%。PID 没有默认的 10% 阈值。Windows 内存默认值不同。
+**节点压力：** Kubelet 会监控内存、文件系统和 PID 可用情况，并可能在终止 Pod 前回收资源。Linux 常见硬阈值默认值包括：memory.available 低于 100Mi、nodefs.available 低于 10%、imagefs.available 低于 15%，以及可用 inode 低于 5%。PID 没有默认的 10% 阈值。Windows 的内存默认值有所不同。
 
-**软阈值与硬阈值：**必须显式配置软阈值及其宽限期。硬阈值可以在没有优雅终止期的情况下终止 Pod。软终止也受 evictionMaxPodGracePeriod 限制。覆盖默认值时，请保留所有预期阈值。
+**软阈值与硬阈值：** 必须显式配置软阈值及其宽限期。硬阈值可能会在没有优雅终止期的情况下终止 Pod。软阈值下的终止也受 evictionMaxPodGracePeriod 限制。覆盖默认值时，请保留所有预期阈值。
 
-**Eviction API：**常规 drain 和兼容的自动化会提交 policy/v1 Eviction 请求。PDB 会限制这些请求。直接 Pod DELETE 与此不同，并会绕过 PDB 检查。
+**Eviction API：** 常规 drain 和兼容的自动化工具会提交 policy/v1 Eviction 请求。PDB 会限制这些请求。直接执行 Pod DELETE 则不同，它会绕过 PDB 检查。
 
-**基于污点的删除：**NoExecute 污点可以删除不容忍它们的 Pod。普通 Pod 通常具有 300 秒的 not-ready/unreachable 容忍。这与 Kubelet 压力驱逐以及 Eviction API 限制是不同的机制。
+**基于污点的删除：** NoExecute 污点可以删除不容忍这些污点的 Pod。普通 Pod 通常具有 300 秒的 not-ready/unreachable 容忍时间。这与 kubelet 的压力驱逐以及 Eviction API 限制机制相互独立。
 
-驱逐会结束一个 Pod；工作负载控制器可能会创建一个具有新 UID 的替代 Pod。没有机制能够安全地将同一个 Pod 移动到不同节点。可用性需要副本、存储/容量规划以及经过测试的故障处理。
+驱逐会结束一个 Pod；工作负载控制器可能会使用新的 UID 创建替代 Pod。没有任何机制能安全地将同一个 Pod 移动到另一个节点。可用性需要副本、存储/容量规划以及经过测试的故障处理机制。
 </details>
 
 5. 当前 DaemonSet 调度与 Deployment Pod 调度有何不同？
@@ -253,14 +253,14 @@ spec:
 
 **答案：**
 
-DaemonSet 控制器会为每个符合条件的节点创建一个 Pod，并设置目标节点亲和性。调度器执行绑定。相比之下，Deployment 通过 ReplicaSet 维持所需副本数，放置基于资源和约束；Pod 数量不是每节点一个。
+DaemonSet 控制器会为每个符合条件的节点创建一个 Pod，并设置目标节点亲和性。调度器负责绑定。Deployment 则通过 ReplicaSet 维护期望的副本数，并根据资源和约束确定放置位置；Pod 数量并非每个节点一个。
 
-DaemonSet 会获得针对节点状况的若干自动容忍，包括无限期的 not-ready/unreachable NoExecute 容忍。它们不会绕过所有资源约束，也不会自动在每个带污点的控制平面节点上运行。
+DaemonSet 会自动获得若干针对节点状况的容忍度，其中包括对 not-ready/unreachable NoExecute 的无限期容忍度。它们不会绕过所有资源约束，也不会自动在每个带污点的控制平面节点上运行。
 </details>
 
-## 实践题
+## 实操题
 
-1. 创建一个名为 web-server、使用 nginx:1.30.4 的 Pod，该 Pod 必须位于 us-east-1a 或 us-east-1b，并且首选 m5.large 节点。
+1. 创建一个名为 web-server 的 Pod，使用 nginx:1.30.6，要求放置在 us-east-1a 或 us-east-1b，并优先放置在 m5.large 节点上。
 
 <details>
 <summary>显示答案</summary>
@@ -275,7 +275,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -296,10 +296,10 @@ spec:
             - m5.large
 ```
 
-必需节点亲和性限制符合条件的可用区。首选节点亲和性为 m5.large 添加评分偏好。标准标签由云/节点集成填充；请验证所选集群节点实际具有这些标签。
+必需的节点亲和性会限制符合条件的可用区。首选节点亲和性会为 m5.large 添加评分偏好。标准标签由云/节点集成组件填充；请确认所选集群节点确实具有这些标签。
 </details>
 
-2. 为 worker-1 添加 dedicated=database:NoSchedule 污点，并为 postgres-db Pod 提供匹配的容忍。
+2. 为 worker-1 添加 dedicated=database:NoSchedule 污点，并为 postgres-db Pod 添加匹配的容忍度。
 
 <details>
 <summary>显示答案</summary>
@@ -332,10 +332,10 @@ spec:
     effect: "NoSchedule"
 ```
 
-请先在同一命名空间中创建具有 password 键的 postgres-credentials。此示例演示调度，且没有持久数据库存储；如需持久使用，请添加 PVC。容忍允许使用 worker-1，但不会强制放置到那里。
+请先在同一命名空间中创建带有 password 键的 postgres-credentials。此示例演示调度，但没有持久化数据库存储；若要持久使用，请添加 PVC。容忍度允许 Pod 放置在 worker-1 上，但不会强制将其放置在那里。
 </details>
 
-3. 创建一个三副本的 web-frontend Deployment，使用 nginx:1.30.4，与 app=cache Pod 共置，但与自身副本分离。
+3. 创建一个包含三个副本的 web-frontend Deployment，使用 nginx:1.30.6，与 app=cache 的 Pod 共置，同时将自身副本彼此分开。
 
 <details>
 <summary>显示答案</summary>
@@ -378,13 +378,13 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
-必需的 Pod 亲和性和反亲和性在该命名空间中适用。要调度所有三个副本，至少三个符合条件的节点上必须存在匹配的 cache Pod。否则，副本可能保持 Pending。这些规则不会在标签改变后自动移动现有 Pod。
+必需的 Pod 亲和性和反亲和性适用于该命名空间。要调度全部三个副本，至少三个符合条件的节点上都必须存在匹配的 cache Pod。否则，副本可能会一直处于 Pending 状态。这些规则不会在标签更改后自动移动现有 Pod。
 </details>
 
-4. 创建值为 100000 的 high-priority，以及一个具有 Guaranteed QoS 的 critical-service Pod：CPU 500m 和内存 512Mi 的请求和限制均相同。
+4. 创建 value 为 100000 的 high-priority，以及 QoS 为 Guaranteed 的 critical-service Pod：CPU 500m 和内存 512Mi 的请求与限制分别相等。
 
 <details>
 <summary>显示答案</summary>
@@ -410,7 +410,7 @@ spec:
   priorityClassName: high-priority
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 500m
@@ -420,10 +420,10 @@ spec:
         memory: 512Mi
 ```
 
-优先级影响排队/抢占；容器上相等的 CPU 和内存请求/限制满足容器级 Guaranteed 标准。优先级和 QoS 均不保证免受节点故障或驱逐的影响。
+优先级会影响排队/抢占；容器的 CPU 和内存请求与限制相等，满足容器级别的 Guaranteed 条件。优先级和 QoS 都无法保证 Pod 免受节点故障或驱逐的影响。
 </details>
 
-5. 为具有 app=web-server 的 Pod 创建 minAvailable: 2 的 web-pdb。
+5. 为 app=web-server 的 Pod 创建 web-pdb，并设置 minAvailable: 2。
 
 <details>
 <summary>显示答案</summary>
@@ -454,24 +454,24 @@ spec:
       app: web-server
 ```
 
-PDB 会限制常规 Eviction API 请求，因此自愿驱逐不会将当前健康状态降低到其预算以下。替代方案 maxUnavailable: 1 仅在所需副本数为三个时具有相同效果。它不防护直接删除、滚动更新或非自愿故障。
+PDB 会限制常规 Eviction API 请求，使自愿驱逐不会让当前健康状态低于预算。替代方案 maxUnavailable: 1 仅在期望副本数为三个时效果相同。它无法保护直接删除、滚动更新或非自愿故障。
 </details>
 
 ## 高级主题
 
-1. 为选定的 Pod 运行单独调度器的常用方法是什么？
-   - A) 为每次策略更改重新构建 kube-scheduler
-   - B) 部署一个调度器并使用 schedulerName 选择它
+1. 为选定 Pod 运行单独调度器的常见方式是什么？
+   - A) 每次策略变更都重新构建 kube-scheduler
+   - B) 部署一个调度器，并通过 schedulerName 选择它
    - C) 为所有 Pod 添加任意注解
    - D) 在 kubelet 中启用本地调度
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 部署一个调度器并使用 schedulerName 选择它**
+**答案：B) 部署一个调度器，并通过 schedulerName 选择它**
 
-**说明：**
-匹配的调度器必须实际在运行，并具有合适的 RBAC 和兼容的配置。仅 schedulerName 不会安装它。调度器监视 Pod/节点并绑定符合条件的待处理 Pod；kubelet 不选择放置位置。
+**解释：**
+必须确保实际运行着匹配的调度器，并为其配置合适的 RBAC 和兼容的配置。仅设置 schedulerName 并不会安装调度器。调度器会监视 Pod/节点，并绑定符合条件的待处理 Pod；kubelet 不会选择放置位置。
 
 ```yaml
 apiVersion: v1
@@ -486,7 +486,7 @@ spec:
 ```
 </details>
 
-2. 哪一项不是 Descheduler 策略？
+2. 哪个不是 Descheduler 策略？
    - A) LowNodeUtilization
    - B) RemoveDuplicates
    - C) PodLifeTimeExtension
@@ -497,11 +497,11 @@ spec:
 
 **答案：C) PodLifeTimeExtension**
 
-**说明：**
-PodLifeTime 会驱逐匹配的旧 Pod；它不会延长它们的生命周期。其他策略包括 NodeAffinity、拓扑分布和重启计数检查。LowNodeUtilization 通常将所请求的资源与节点容量进行比较。Descheduler 负责驱逐；控制器创建替代 Pod，kube-scheduler 选择放置位置，该位置不一定是不同的节点。
+**解释：**
+PodLifeTime 会驱逐匹配的旧 Pod；它不会延长这些 Pod 的生命周期。其他策略包括 NodeAffinity、拓扑分布和重启次数检查。LowNodeUtilization 通常会比较请求的资源与节点容量。Descheduler 负责驱逐；控制器会创建替代 Pod，而 kube-scheduler 会选择放置位置，但不一定会选择不同的节点。
 </details>
 
-3. 哪一项不是标准自动应用的节点状况污点？
+3. 哪个不是自动应用的标准节点状况污点？
    - A) node.kubernetes.io/not-ready
    - B) node.kubernetes.io/unreachable
    - C) node.kubernetes.io/disk-pressure
@@ -512,23 +512,23 @@ PodLifeTime 会驱逐匹配的旧 Pod；它不会延长它们的生命周期。�
 
 **答案：D) node.kubernetes.io/high-load**
 
-**说明：**
-当前标准污点包括 not-ready、unreachable、memory-pressure、disk-pressure、pid-pressure、network-unavailable 和 unschedulable。旧的 out-of-disk 污点不是当前的自动污点。压力污点通常使用 NoSchedule；not-ready/unreachable 的 NoExecute 行为和 kubelet 压力驱逐是不同的机制。
+**解释：**
+当前的标准污点包括 not-ready、unreachable、memory-pressure、disk-pressure、pid-pressure、network-unavailable 和 unschedulable。旧版 out-of-disk 污点不是当前自动应用的污点。压力污点通常使用 NoSchedule；not-ready/unreachable 的 NoExecute 行为与 kubelet 压力驱逐是不同的机制。
 </details>
 
-4. 关于拓扑分布约束的哪项陈述是错误的？
-   - A) 它们可以将 Pod 分布到带标签的可用区、节点或机架中
-   - B) DoNotSchedule 根据全局最小值评估偏差
+4. 关于拓扑分布约束，哪项说法是错误的？
+   - A) 它们可以将 Pod 分布到带标签的可用区、节点或机架
+   - B) DoNotSchedule 会根据全局最小值评估偏差
    - C) ScheduleAnyway 使用分布偏好
-   - D) 它们会自动重新放置现有 Pod
+   - D) 它们会自动迁移现有 Pod
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D) 它们会自动重新放置现有 Pod**
+**答案：D) 它们会自动迁移现有 Pod**
 
-**说明：**
-分布约束会影响传入 Pod 的调度。它们不会移动正在运行的 Pod。使用 DoNotSchedule 时，maxSkew 会将目标域中匹配 Pod 的数量与全局最小值进行比较；如果符合条件的域少于 minDomains，该最小值为零。请使传入 Pod 标签与 labelSelector 匹配，以便它参与计数。Descheduler 可能会驱逐符合条件且违反约束的 Pod，但不保证特定替代 Pod 的放置位置。
+**解释：**
+分布约束会影响传入 Pod 的调度，不会移动正在运行的 Pod。使用 DoNotSchedule 时，maxSkew 会将目标域中的匹配 Pod 数量与全局最小值进行比较；如果符合条件的域少于 minDomains，该最小值就是零。请让传入 Pod 的标签与 labelSelector 匹配，使其计入数量。Descheduler 可能会驱逐符合条件且违反约束的 Pod，但不会保证替代 Pod 被放置在特定位置。
 
 ```yaml
 apiVersion: v1
@@ -551,34 +551,34 @@ spec:
 ```
 </details>
 
-5. 关于 QoS 和驱逐的哪项陈述是错误的？
-   - A) Guaranteed 需要适当的相等 CPU/内存请求-限制配置
-   - B) Burstable 覆盖 Guaranteed 和 BestEffort 之间的配置
-   - C) BestEffort 没有 CPU/内存请求或限制
-   - D) Guaranteed Pod 总是在压力下最先被驱逐
+5. 关于 QoS 和驱逐，哪项说法是错误的？
+   - A) Guaranteed 要求 CPU/内存请求与限制采用适当的相等配置
+   - B) Burstable 涵盖介于 Guaranteed 和 BestEffort 之间的配置
+   - C) BestEffort 不设置 CPU/内存请求或限制
+   - D) 在压力下，Guaranteed Pod 总是最先被驱逐
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D) Guaranteed Pod 总是在压力下最先被驱逐**
+**答案：D) 在压力下，Guaranteed Pod 总是最先被驱逐**
 
-**说明：**
-Kubelet 不会将 QoS 用作严格的驱逐顺序。它根据超出请求量的使用量、优先级和相对于请求量的使用量进行排序；磁盘压力具有不同的核算方式。Guaranteed Pod 仍可能在故障期间被驱逐或丢失。QoS 源自资源，而不是直接作为 Pod 字段分配。
+**解释：**
+Kubelet 不会将 QoS 作为严格的驱逐顺序。它会根据超出请求量的资源使用情况、优先级以及相对于请求量的使用情况进行排序；磁盘压力采用不同的核算方式。Guaranteed Pod 仍可能被驱逐或在故障中丢失。QoS 根据资源配置推导得出，并非直接设置的 Pod 字段。
 </details>
 
-6. batch-job 工作负载与 Karpenter/Cluster Autoscaler 一起运行，并且应最大化可完全空闲以进行整合的节点数量。哪种 `NodeResourcesFit` 评分策略最合适，为什么？
-   - A) `LeastAllocated`，因为它在每个节点上均衡 CPU/内存使用量
-   - B) `MostAllocated`，因为它将新 Pod 打包到已最繁忙的节点上，并使其他节点保持空闲
-   - C) 使用与 `LeastAllocated` 相同线性曲线的 `RequestedToCapacityRatio`
+6. 一个批处理作业工作负载与 Karpenter/Cluster Autoscaler 同时运行，并且应尽可能增加可完全空闲以便整合的节点数量。哪种 `NodeResourcesFit` 评分策略最合适，为什么？
+   - A) `LeastAllocated`，因为它会让所有节点上的 CPU/内存使用量趋于均衡
+   - B) `MostAllocated`，因为它会将新 Pod 集中放到已经最繁忙的节点上，让其他节点空闲
+   - C) `RequestedToCapacityRatio`，采用与 `LeastAllocated` 相同的线性曲线
    - D) 两种策略都无关紧要，因为 EKS 允许你直接编辑默认调度器的配置
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) `MostAllocated`，因为它将新 Pod 打包到已最繁忙的节点上，并使其他节点保持空闲**
+**答案：B) `MostAllocated`，因为它会将新 Pod 集中放到已经最繁忙的节点上，让其他节点空闲**
 
-**说明：**
-使用负载不均衡的基线（CPU 为 75%/37%/0%）进行的一次性 3-worker `kind` 测试证实了这一点：默认的 `LeastAllocated` 调度器将 6 个新 Pod 路由到最空闲的节点，使三个节点分别达到 75%/37%/37%（没有节点可缩容）。使用 `scoringStrategy.type: MostAllocated` 配置的第二个调度器将相同的 6 个 Pod 路由到两个最繁忙的节点（93%/56%/0%），使空闲节点保持不受影响并符合整合条件。Amazon EKS 的控制平面由托管，因此应用 `MostAllocated` 需要运行额外的调度器 `Deployment`，并使用 `schedulerName` 将 Pod 定向到它，而不是直接编辑默认调度器。
+**解释：**
+在有不均衡基线负载（CPU 为 75%/37%/0%）的三节点临时 `kind` 测试中，这一点得到了验证：默认的 `LeastAllocated` 调度器将 6 个新 Pod 都调度到最空闲的节点，使三个节点的负载变为 75%/37%/37%（没有节点可以缩容）。另一个配置了 `scoringStrategy.type: MostAllocated` 的调度器，则将同样的 6 个 Pod 调度到两个最繁忙的节点上（93%/56%/0%），使空闲节点不受影响，因而可以进行整合。Amazon EKS 的控制平面由 AWS 管理，因此要应用 `MostAllocated`，需要运行额外的调度器 `Deployment`，并通过 `schedulerName` 将 Pod 指定给它，而不是直接编辑默认调度器。
 </details>
 
 [返回学习材料](../../core/08-scheduling-preemption-eviction.md)

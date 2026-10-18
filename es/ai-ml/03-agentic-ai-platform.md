@@ -1,91 +1,91 @@
 # Construcción de una plataforma de IA agéntica en EKS
 
-> **Base de la revisión**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
-> **Última actualización**: September 12, 2026
+> **Base de revisión**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
+> **Última actualización**: October 16, 2026
 
-La IA agéntica va más allá de la simple respuesta a preguntas: crea planes de forma autónoma, usa herramientas y alcanza objetivos de manera iterativa. Este capítulo cubre cómo diseñar una plataforma de IA agéntica y sus límites operativos en EKS.
+La IA agéntica va más allá de responder preguntas sencillas: crea planes de forma autónoma, usa herramientas y alcanza objetivos de manera iterativa. Este capítulo explica cómo diseñar una plataforma de IA agéntica y definir sus límites operativos en EKS.
 
-## 1. Visión general de la plataforma de IA agéntica
+## 1. Descripción general de la plataforma de IA agéntica
 
 ### ¿Qué es la IA agéntica?
 
 La IA agéntica es un sistema de IA autónomo con las siguientes características:
 
-![Objetivo, planificación, ejecución y evaluación con autorización, evidencia y presupuestos de reintento, que terminan en un resultado o en una abstención.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png)
+![Objetivo, planificación, ejecución y evaluación con autorización, evidencia y presupuestos de reintentos, que culminan en un resultado o una abstención.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-0.html)
 
 1. **Planificación autónoma**: descompone tareas complejas en subtareas y determina el orden de ejecución.
-2. **Ejecución basada en herramientas**: utiliza diversas herramientas, incluidas APIs externas, bases de datos y ejecutores de código.
+2. **Ejecución basada en herramientas**: utiliza diversas herramientas, incluidas API externas, bases de datos y ejecutores de código.
 3. **Mejora iterativa**: evalúa los resultados de la ejecución y modifica los planes según sea necesario.
-4. **Gestión de estado**: mantiene el estado y la memoria de tareas de larga duración.
+4. **Gestión del estado**: mantiene el estado y la memoria de las tareas de larga duración.
 
 ### Cuándo elegir Kubernetes
 
-Kubernetes ofrece las siguientes capacidades esenciales para plataformas de IA agéntica:
+Kubernetes ofrece las siguientes capacidades fundamentales para las plataformas de IA agéntica:
 
 | Requisito | Solución de Kubernetes |
 |-------------|---------------------|
 | Orquestación de GPU | Device Plugin, GPU Operator, MIG |
 | Escalado automático | HPA, VPA, Karpenter |
-| Aislamiento multi-tenant | RBAC, Namespace, NetworkPolicy aplicada, identidad de carga de trabajo |
-| Alta disponibilidad | replicas, probes, pruebas de ubicación y recuperación |
-| Service Mesh | implementación de gateway/mesh configurada |
-| Optimización de costes | Instancias Spot, consolidación de Nodes |
+| Aislamiento multiinquilino | RBAC, Namespace, NetworkPolicy aplicada, identidad de cargas de trabajo |
+| Alta disponibilidad | réplicas, probes, pruebas de ubicación y recuperación |
+| Service Mesh | implementación configurada de gateway/mesh |
+| Optimización de costos | Instancias Spot, consolidación de nodos |
 
 ### Cuatro desafíos técnicos clave
 
-Desafíos clave que resolver al construir una plataforma de IA agéntica:
+Desafíos clave que deben resolverse al construir una plataforma de IA agéntica:
 
-![Ubicación de GPU, integración de proveedores, runtimes distintos de LangGraph y ADK de Kagent, y medición de costes con presupuestos aplicados.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
+![Ubicación de GPU, integración de proveedores, runtimes diferenciados para LangGraph y Kagent ADK, y medición de costos con presupuestos aplicados.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-1.html)
 
 ---
 
-## 2. Bases de referencia de GPU y coste
+## 2. Referencias de GPU y costos
 
-Los agentes que usan APIs de modelos externas no necesitan GPUs necesariamente. La inferencia autoalojada requiere seleccionar el dispositivo según los pesos/la precisión, la caché KV, la concurrencia, la arquitectura de CPU y la compatibilidad de drivers. Use la [guía de GPU revisada](01-ai-ml-workloads.md) y evite instalaciones duplicadas de driver/toolkit en las AMIs NVIDIA de AL2023.
+Los agentes que usan API de modelos externos no necesariamente necesitan GPU. La inferencia autohospedada requiere seleccionar dispositivos según los pesos y la precisión, la caché KV, la concurrencia, la arquitectura de CPU y la compatibilidad de los controladores. Usa la [guía de GPU revisada](01-ai-ml-workloads.md) y evita instalar controladores o toolkits duplicados en las AMI NVIDIA de AL2023.
 
-MIG particiona las GPUs compatibles. El time-slicing dentro de una instancia MIG no añade aislamiento de memoria/fallos entre las cargas de trabajo que la comparten; no es un límite de seguridad de software. De igual modo, 80 GB no suelen bastar para pesos FP16 de 70B.
+MIG particiona las GPU compatibles. La división de tiempo dentro de una instancia MIG no añade aislamiento de memoria ni de fallos entre las cargas de trabajo que la comparten; no es un límite de seguridad de software. Del mismo modo, por lo general, 80 GB no bastan para alojar pesos 70B FP16.
 
-Los values de Helm de GPU Operator son distintos de los recursos ConfigMap/HelmRelease. Pasar un HelmRelease de Flux como helm --values no aplica los ajustes previstos. Las referencias al ConfigMap del MIG manager, las etiquetas de perfil de los nodos y la estrategia del plugin deben coincidir. Las etiquetas de device-plugin.config seleccionan una clave de configuración, no el nombre del ConfigMap. La reconfiguración de MIG puede interrumpir cargas de trabajo y no se ejecutó en esta auditoría.
+Los valores de Helm de GPU Operator son distintos de los recursos ConfigMap/HelmRelease. Pasar un HelmRelease de Flux como helm --values no aplica la configuración prevista. Las referencias de ConfigMap del administrador de MIG, las etiquetas de nodo de perfil y la estrategia del plugin deben coincidir. Las etiquetas de device-plugin.config seleccionan una clave de configuración, no el nombre del ConfigMap. La reconfiguración de MIG puede interrumpir las cargas de trabajo y no se ejecutó en esta auditoría.
 
-Los precios requieren contexto de región/SO/modo de compra/fecha y cuotas. La tabla horaria previa sin fuentes y los porcentajes de ahorro fijos no son evidencia de precios actuales. Compare el tiempo total de inactividad de GPU autoalojada, el almacenamiento/la transferencia y el coste de operación y recuperación frente al rendimiento exitoso medido.
+Los precios requieren contexto de región, sistema operativo, modalidad de compra, fecha y cuota. La tabla de precios por hora anterior, sin fuentes, y los porcentajes fijos de ahorro no son pruebas actuales de precios. Compara el tiempo de inactividad total de la GPU autohospedada, el almacenamiento y la transferencia, y los costos de operación y recuperación con el rendimiento medido de solicitudes completadas correctamente.
 
 ## 3. Servicio de modelos (vLLM)
 
 ### Arquitectura de vLLM
 
-vLLM ofrece inferencia LLM de alto rendimiento mediante las siguientes tecnologías clave:
+vLLM ofrece inferencia de LLM de alto rendimiento mediante las siguientes tecnologías fundamentales:
 
-![PagedAttention, continuous batching, prefix caching y chunked prefill, con mediciones de memoria, throughput y latencia dependientes de la carga de trabajo.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
+![PagedAttention, batching continuo, caché de prefijos y prefill por bloques, con mediciones de memoria, rendimiento y latencia que dependen de la carga de trabajo.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-2.html)
 
 ### Ruta de servicio revisada
 
-Use la [guía actual de vLLM](02-vllm-deployment.md) para las revisiones de imagen/modelo 0.29.0, las startup probes, el Service privado y las opciones reales de la CLI. Un NodePool de una sola GPU no puede ubicar el antiguo Pod de cuatro GPUs/200Gi. Distinga los grupos TP/PP de las réplicas independientes y calcule las necesidades de memoria.
+Usa la [guía actual de vLLM](02-vllm-deployment.md) para las revisiones de imagen/modelo de 0.29.0, las startup probes, el Service privado y las opciones reales de CLI. Un NodePool con una sola GPU no puede ubicar el Pod anterior de cuatro GPU/200Gi. Distingue los grupos TP/PP de las réplicas independientes y calcula los requisitos de memoria.
 
-La caché de prefijos reutiliza prefijos KV compatibles, no respuestas completas. La utilización de memoria de GPU no es únicamente una fracción de la caché KV, y swap-space no está presente en la CLI actual. La desagregación de llm-d no consiste en dos imágenes inventadas de prefill/decode con argumentos de rol; valide el servidor de modelos, el conector KV, el scheduler, el gateway y la combinación de hardware/red de su release real.
+La caché de prefijos reutiliza prefijos KV compatibles, no respuestas completas. La utilización de memoria de GPU no es únicamente una fracción de la caché KV, y swap-space no aparece en la CLI actual. La desagregación de llm-d no consiste en dos imágenes inventadas de prefill/decode con argumentos de rol; valida el servidor de modelos, el conector KV, el scheduler, el gateway y la combinación de hardware/red de su versión real.
 
 ## 4. Inference Gateway
 
-### Enrutamiento de cargas de trabajo de IA basado en Gateway API
+### Enrutamiento de cargas de trabajo de inferencia de IA basado en Gateway API
 
-Extensión de la Gateway API de Kubernetes para enrutar de forma eficiente cargas de trabajo de inferencia de IA.
+Extensión de Kubernetes Gateway API para enrutar de manera eficiente las cargas de trabajo de inferencia de IA.
 
-### Arquitectura Kgateway + InferencePool
+### Arquitectura de Kgateway + InferencePool
 
-![Un HTTPRoute referencia un InferencePool; el gateway usa la selección de EPP para hacer proxy a un Pod de modelo. Los recursos de configuración son distintos de los saltos del proxy.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
+![Un HTTPRoute hace referencia a un InferencePool; el gateway usa la selección de EPP para enviar solicitudes a un Pod de modelo. Los recursos de configuración son distintos de los saltos del proxy.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-3.html)
 
 #### InferencePool v1
 
-Gateway API y Gateway API Inference Extension son APIs separadas. La extensión 1.6.1 usa inference.networking.k8s.io/v1 con targetPorts y endpointPickerRef. El antiguo CRD EndpointPicker/endpointPickerConfig inventado no corresponde a este esquema.
+Gateway API y Gateway API Inference Extension son API independientes. La versión 1.6.1 de la extensión usa inference.networking.k8s.io/v1 con targetPorts y endpointPickerRef. El EndpointPicker CRD/endpointPickerConfig inventado anteriormente no corresponde a este esquema.
 
-Este ejemplo verificado contra el esquema requiere el Service de EPP en 9002, Pods de modelo y un controlador de gateway compatible. InferencePool por sí solo no configura autenticación, límites de tasa ni un algoritmo de selección con conocimiento de prefijos.
+Este ejemplo, validado contra el esquema, requiere el Service de EPP en 9002, los Pods de modelos y un controlador de gateway compatible. InferencePool por sí solo no configura la autenticación, los límites de frecuencia ni un algoritmo de selección que tenga en cuenta los prefijos.
 
 ```yaml
 apiVersion: inference.networking.k8s.io/v1
@@ -108,13 +108,13 @@ spec:
     failureMode: FailClose
 ```
 
-El selector solo coincide con Pods del mismo namespace. EndpointPickerRef toma por defecto una referencia a Service y FailClose. Valide en conjunto el HTTPRoute, la configuración/el soporte de versión de EPP, TLS y el estado del gateway. Las definiciones de la API o la instalación de Kgateway no habilitan todas las capacidades de plugins.
+El selector solo coincide con Pods del mismo namespace. EndpointPickerRef hace referencia a un Service de forma predeterminada y usa FailClose. Valida conjuntamente HTTPRoute, la configuración de EPP y la compatibilidad de versiones, TLS y el estado del gateway. Las definiciones de API o la instalación de Kgateway no habilitan todas las capacidades de los plugins.
 
-### LiteLLM 1.100.1 como gateway de proveedores
+### Gateway de proveedores LiteLLM 1.100.1
 
-La adaptación de proveedores de LiteLLM y la selección de endpoints de InferencePool son capas distintas. Las APIs de los proveedores difieren en rutas, autenticación, payloads, respuestas y streaming; reenviar JSON de OpenAI sin cambios a un endpoint de Anthropic no es un adaptador válido.
+La adaptación de proveedores de LiteLLM y la selección de endpoints de InferencePool son capas diferentes. Las API de proveedores difieren en rutas, autenticación, cargas, respuestas y streaming; reenviar JSON de OpenAI sin cambios a un endpoint de Anthropic no es una adaptación válida.
 
-A continuación se muestra la forma actual de fallback del Router. Conecte el command/args del proxy al archivo de configuración real y proporcione por separado Redis/base de datos, credenciales y callbacks donde sea necesario.
+A continuación se muestra la estructura actual de fallback de Router. Conecta el comando/los argumentos del proxy con el archivo de configuración real y proporciona por separado Redis/base de datos, credenciales y callbacks cuando sea necesario.
 
 ```yaml
 model_list:
@@ -132,39 +132,37 @@ router_settings:
   num_retries: 0
 ```
 
-Esto ilustra la configuración y requiere endpoints y autenticación preparados. Entregue a los clientes de aplicación credenciales con alcance limitado en lugar de la master key. El fallback externo es una ruta de salida de datos: aplique la política de proveedor/datos del tenant antes de enrutar. Un nombre de modelo seleccionado o una cabecera del cliente no deben eludirla.
-
+Esto ilustra una configuración que requiere endpoints preparados y autenticación. Proporciona a los clientes de la aplicación credenciales con alcance limitado, no la clave maestra. El fallback externo es una ruta de salida de datos: aplica la política de proveedores/datos del inquilino antes del enrutamiento. Un nombre elegido por el modelo o un encabezado del cliente no debe permitir eludirla.
 
 ## 5. Datos de RAG y límites de recuperación
 
-La release de Milvus más reciente inspeccionada es la 3.0.1; el Operator 1.3.9 revisado por separado usa por defecto Milvus 2.6.11. No son una misma versión, y una tabla de compatibilidad amplia no prueba una actualización 3.x probada. El repositorio del operator es https://zilliztech.github.io/milvus-operator/, distinto del repositorio del chart ordinario de Milvus.
+La versión más reciente de Milvus inspeccionada es 3.0.3 (2026-10-14); el Operator 1.3.9 revisado por separado usa Milvus 2.6.11 de forma predeterminada. No son la misma versión, y una tabla de compatibilidad general no demuestra que se haya probado una actualización a 3.x. El repositorio del operador es https://zilliztech.github.io/milvus-operator/, distinto del repositorio habitual del chart de Milvus.
 
-Las dimensiones de los vectores deben coincidir con la salida real del embedding. Registre la revisión, las opciones de dimensiones, el tokenizador, la normalización y la métrica de distancia tanto para la ingesta como para las consultas. Los parámetros de índice difieren; M/efConstruction de HNSW no pueden reutilizarse sin más para GPU_IVF_FLAT. La indexación por GPU necesita imágenes, versión, dispositivos y roles de componentes compatibles; solicitar una GPU en indexNode no supone aceleración automática.
+Las dimensiones vectoriales deben coincidir con la salida real de embeddings. Registra la revisión, las opciones de dimensiones, el tokenizer, la normalización y la métrica de distancia para la ingesta y las consultas. Los parámetros de índice varían; los valores M/efConstruction de HNSW no se pueden reutilizar sin más en GPU_IVF_FLAT. La indexación en GPU requiere imágenes, versiones, dispositivos y roles de componentes compatibles; solicitar una GPU en indexNode no acelera automáticamente el proceso.
 
-Un campo tenant_id por sí solo no impone aislamiento. Derive el alcance de la identidad autenticada, aplique filtros de recuperación en el servidor y valide los documentos devueltos. Gestione también el borrado/cambio de documentos y el ciclo de vida de las versiones de embeddings.
+Un campo tenant_id por sí solo no impone el aislamiento. Deriva el alcance de la identidad autenticada, aplica filtros de recuperación del lado del servidor y valida los documentos devueltos. Gestiona también la eliminación y los cambios de documentos, así como el ciclo de vida de las versiones de embeddings.
 
-### Chunking y búsqueda híbrida
+### Fragmentación y búsqueda híbrida
 
-Las importaciones actuales del splitter usan langchain_text_splitters. El chunk_size de RecursiveCharacterTextSplitter se expresa por defecto en caracteres, no en tokens. La división por tokens debe coincidir con el tokenizador del modelo de embedding y con su límite real de entrada. El chunking semántico añade llamadas/coste de embeddings y no garantiza mejor calidad.
+Las importaciones actuales de splitter usan langchain_text_splitters. De forma predeterminada, RecursiveCharacterTextSplitter define chunk_size en caracteres, no en tokens. La división en tokens debe coincidir con el tokenizer del modelo de embeddings y con el límite real de entrada. La fragmentación semántica añade llamadas y costos de embeddings, y no garantiza una mejor calidad.
 
-La búsqueda híbrida requiere fusión, como RRF o puntuaciones calibradas, no simplemente dos búsquedas, con filtros de autorización idénticos. Evalúe recall, precisión y latencia. Acote los reintentos y abstenga la respuesta cuando falte evidencia, en lugar de generar siempre tras agotar los reintentos.
+La búsqueda híbrida requiere fusión, por ejemplo RRF o puntuaciones calibradas, no solo dos búsquedas, y debe usar filtros de autorización idénticos. Evalúa la recuperación, la precisión y la latencia. Limita los reintentos y abstente cuando no haya evidencia, en lugar de generar siempre una respuesta tras agotar los reintentos.
 
+## 6. Implementación de agentes de IA (Kagent)
 
-## 6. Despliegue de agentes de IA (Kagent)
+### Descripción general de Kagent
 
-### Visión general de Kagent
+Kagent es una herramienta nativa de Kubernetes para gestionar el ciclo de vida de agentes de IA.
 
-Kagent es una herramienta nativa de Kubernetes para la gestión del ciclo de vida de agentes de IA.
-
-![El controlador de Kagent reconcilia un recurso Agent v1alpha2 y gestiona un runtime ADK con un ModelConfig aprobado, herramientas MCP y almacenamiento de sesiones configurado.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
+![El controlador de Kagent reconcilia un recurso Agent v1alpha2 y gestiona un runtime ADK con ModelConfig aprobado, herramientas MCP y almacenamiento de sesiones configurado.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-4.html)
 
-### API de Agent de Kagent 0.10.1
+### API Agent de Kagent 0.10.1
 
-Kagent no se limita a la ejecución automática de kubectl. Los agentes declarativos usan runtimes ADK de Go/Python; BYO aloja un agente A2A proporcionado por el usuario. LangGraph es un framework de workflows integrado por separado, no el mismo runtime que Kagent.
+Kagent no se limita a ejecutar kubectl automáticamente. Los agentes declarativos usan runtimes ADK de Go/Python; BYO aloja un agente A2A proporcionado por el usuario. LangGraph es un framework de flujos de trabajo integrado por separado, no el mismo runtime que Kagent.
 
-Este Agent referencia recursos ModelConfig y RemoteMCPServer aprobados/configurados por separado en el mismo namespace. Proporcione el servicio MCP real, la herramienta search_documents, la autenticación, TLS y los permisos de datos. No crea la herramienta ni concede acceso de escritura a Kubernetes.
+Este Agent hace referencia a recursos ModelConfig y RemoteMCPServer aprobados/configurados por separado en el mismo namespace. Proporciona el servicio MCP/herramienta search_documents real, autenticación, TLS y permisos de datos. No crea la herramienta ni concede acceso de escritura a Kubernetes.
 
 ```yaml
 apiVersion: kagent.dev/v1alpha2
@@ -202,13 +200,13 @@ spec:
           memory: 1Gi
 ```
 
-ModelConfig.apiKeySecret no implica entrega por archivo. El traductor de OpenAI inspeccionado crea una variable de entorno SecretKeyRef OPENAI_API_KEY. Bajo una política de no usar secretos en el entorno, utilice en su lugar una ruta verificada de BYO/runtime con credenciales en archivo o un gateway de autenticación. Habilitar apiKeyPassthrough sin un diseño de delegación de tokens/audiencia no es un sustituto.
+ModelConfig.apiKeySecret no implica que se entregue el secreto como archivo. El traductor de OpenAI inspeccionado crea una variable de entorno SecretKeyRef OPENAI_API_KEY. En una política que prohíba secretos en el entorno, usa una ruta verificada de credenciales en archivo mediante BYO/runtime o un gateway de autenticación. Habilitar apiKeyPassthrough sin diseñar la delegación de tokens y la audiencia no es una alternativa equivalente.
 
-Una calculadora con eval() y campos de permisos inventados no son límites de seguridad. Implemente el mínimo privilegio, la validación de entradas, los límites de recursos, la aprobación y la idempotencia en el servidor de herramientas real. Las réplicas del agente no hacen automáticamente que los almacenes compartidos de memoria/sesión sean de alta disponibilidad.
+Una calculadora basada en eval() y campos de permisos inventados no son límites de seguridad. Implementa privilegios mínimos, validación de entradas, límites de recursos, aprobación e idempotencia en el servidor de herramientas real. Las réplicas de Agent no hacen que los almacenes compartidos de memoria/sesiones sean altamente disponibles de forma automática.
 
 ### Flujo de control ejecutable de LangGraph
 
-Este ejemplo local usa el SDK real con callbacks explícitos de retrieve/rewrite/generate. Su demo no llama a un LLM ni a una base de datos vectorial. Conserva la pregunta original, limita las reescrituras a dos y se abstiene si no hay documentos. El context manager de SQLite se usa correctamente y el estado persistido se comprobó tras reabrirlo.
+Este ejemplo local usa el SDK real con callbacks explícitos de recuperación, reformulación y generación. La demostración no llama a un LLM ni a una base de datos vectorial. Conserva la pregunta original, limita las reformulaciones a dos y se abstiene cuando no hay documentos. El administrador de contexto de SQLite se usa correctamente y se comprobó el estado persistido tras volver a abrirlo.
 
 ```python
 from typing import Callable, TypedDict
@@ -276,13 +274,13 @@ if __name__ == "__main__":
         print(app.get_state(config).values["retries"])
 ```
 
-En producción, thread_id debe estar vinculado a la identidad autenticada de tenant/sesión, con controles de autorización, cifrado, concurrencia y retención en la base de datos. :memory: no sobrevive a la salida del proceso. SqliteSaver no puede usar un DSN de PostgreSQL; use el saver de Postgres adecuado. Leer get_state_history() por sí solo no restaura la ejecución: use la configuración de checkpoints y la semántica real de reanudación/repetición.
+En producción, thread_id debe estar vinculado a la identidad autenticada del inquilino/de la sesión, con controles de autorización de base de datos, cifrado, concurrencia y retención. :memory: no sobrevive a la salida del proceso. SqliteSaver no puede usar un DSN de PostgreSQL; usa el saver de Postgres correspondiente. Leer solo get_state_history() no restaura la ejecución; usa la configuración del checkpoint y la semántica real de reanudación/reproducción.
 
-Valide la salida del supervisor contra un enum permitido y gestione los valores desconocidos y el agotamiento del presupuesto. La subcadena COMPLETE no debe hacer que INCOMPLETE se trate como éxito. Pedir a un modelo que use una herramienta no ejecuta ni verifica por sí mismo esa herramienta.
+Valida la salida del supervisor con una enumeración permitida y gestiona los valores desconocidos y el agotamiento del presupuesto. La subcadena COMPLETE no debe tratar INCOMPLETE como un éxito. Pedirle a un modelo que use una herramienta no hace que la ejecute ni que verifique su uso.
 
 ## 7. Langfuse y observabilidad operativa
 
-El SDK 4.15.2 de Langfuse sustituye las antiguas APIs trace()/generation() por start_as_current_observation(), create_score() y métodos relacionados. Esta auditoría verificó tres spans de recuperación/generación/padre en una misma traza usando un exportador en memoria, no la ingesta/el almacenamiento/la autenticación de un servidor real.
+Langfuse SDK 4.15.2 sustituye las API antiguas trace()/generation() por start_as_current_observation(), create_score() y métodos relacionados. Esta auditoría verificó tres spans de recuperación/generación/padre en una traza mediante un exporter en memoria, no la ingesta/almacenamiento/autenticación de un servidor real.
 
 ```python
 from pathlib import Path
@@ -305,61 +303,59 @@ client.flush()
 client.shutdown()
 ```
 
-El chart 2.1.0 de Langfuse referencia la app 4.24.0, distinta del servidor 4.35.0 más reciente inspeccionado. Se requieren web/worker, PostgreSQL, Redis/Valkey, almacenamiento de objetos y ClickHouse. El chart comprueba los prerrequisitos de ClickHouse Operator/cert-manager. El renderizado offline aportó información simulada de capacidades de la API, no un operator desplegado. Los charts por defecto incluyen la entrega de secretos por entorno y no son despliegues aprobados con credenciales solo en archivo.
+El chart 2.1.0 de Langfuse hace referencia a app 4.24.0, distinta de la versión más reciente del servidor inspeccionada, 4.60.0 (2026-10-15). Se requieren Web/worker, PostgreSQL, Redis/Valkey, almacenamiento de objetos y ClickHouse. El chart comprueba los requisitos previos de ClickHouse Operator/cert-manager. La generación sin conexión mostró información simulada sobre las capacidades de la API, no un operador implementado. Los charts predeterminados incluyen la entrega de secretos mediante variables de entorno y no están aprobados para implementaciones que solo admiten credenciales en archivos.
 
-FB_USED de DCGM es una cantidad, no un porcentaje; verifique las unidades y la memoria total. Una utilización de GPU del 80% o una temperatura de 85C no son umbrales universales de salud. Observe en conjunto la latencia/las colas/los errores/el throttling y los límites reales del dispositivo.
+DCGM FB_USED es una cantidad, no un porcentaje; verifica las unidades y la memoria total. GPU utilization80% o temperature85C no son umbrales de estado universales. Observa conjuntamente la latencia, las colas, los errores, la limitación y los límites reales del dispositivo.
 
-### Cachés de respuestas y coste
+### Cachés de respuestas y costos
 
-Las claves de caché deben capturar el alcance de tenant/autorización, la revisión del modelo/prompt/datos recuperados, los ajustes de generación y el estado relevante de las herramientas. Claves compartidas de modelo+prompt pueden reutilizar el resultado de otro usuario. Deshabilite el caché o defina expiración/invalidación explícitas para estado externo privado o cambiante.
+Las claves de caché deben incluir el alcance del inquilino/autorización, la revisión del modelo/prompt/datos recuperados, la configuración de generación y el estado pertinente de las herramientas. Las claves compartidas de modelo+prompt pueden reutilizar el resultado de otro usuario. Deshabilita la caché o define una caducidad/invalidación explícita para estados privados o externos que cambien.
 
-Las estimaciones de precio por token no son facturas. Incluya lecturas/escrituras de caché, lotes, reintentos, llamadas de enrutamiento y los costes fijos del autoalojamiento. Rechace un fallback al modelo más barato que viole el presupuesto, la calidad o la política del proveedor. Un trigger cron de KEDA no impone un límite nocturno inferior sobre otros triggers. Defina la zona horaria del CronJob, la concurrencia/el deadline/los reintentos y los resultados persistidos.
-
+Las estimaciones de precios por token no son facturas. Incluye lecturas/escrituras de caché, procesamiento por lotes, reintentos, llamadas de enrutamiento y costos fijos de autohospedaje. Rechaza un fallback al modelo más barato si infringe el presupuesto, la calidad o la política de proveedores. Un disparador cron de KEDA no impone un límite nocturno inferior al de otros disparadores. Define la zona horaria, la concurrencia, el plazo, los reintentos y los resultados persistidos del CronJob.
 
 ## 8. Evaluación y gestión de la calidad
 
-Ragas 0.4.3 falló al importarse con langchain-community 0.4.2 resuelto, porque importa un módulo vertexai eliminado. En un entorno separado fijado a langchain 0.3.27, core 0.3.79, community 0.3.31 y la integración de openai 0.3.35, las importaciones y la construcción de SingleTurnSample/EvaluationDataset pasaron. No asuma que esto comparte una única pila de dependencias con el LangGraph actual.
+Ragas 0.4.3 no se pudo importar con langchain-community 0.4.2 resuelto, porque importa un módulo vertexai que se eliminó. En un entorno aparte fijado en langchain 0.3.27, core 0.3.79, community 0.3.31 y la integración openai 0.3.35, se importaron correctamente los módulos y se construyeron correctamente SingleTurnSample/EvaluationDataset. No supongas que comparte una misma pila de dependencias con LangGraph actual.
 
-Las APIs actuales de la colección, como Faithfulness/AnswerRelevancy, requieren adaptadores explícitos de LLM/embeddings; las antiguas importaciones singleton de ragas.metrics emiten avisos de obsolescencia. La evaluación necesita gestión de coste/fallos de las llamadas al modelo, revisiones de dataset/juez/prompt y tratamiento de valores ausentes/NaN. Aquí solo se probaron las importaciones/el esquema de métricas; no se midió ninguna puntuación de calidad como 0.92.
+Las API actuales de recopilación, como Faithfulness/AnswerRelevancy, requieren adaptadores explícitos de LLM/embeddings; las importaciones antiguas de singleton ragas.metrics generan advertencias de obsolescencia. La evaluación requiere gestionar costos/fallos de llamadas al modelo, revisiones de conjuntos de datos/jueces/prompts y valores ausentes/NaN. Aquí solo se probaron las importaciones de métricas y los esquemas; no se midió ninguna puntuación de calidad como 0.92.
 
-Un ConfigMap de A/B por sí solo no enruta tráfico. Implemente su consumidor/controlador real, una asignación estable, un contexto equivalente de autorización/datos, muestras suficientes y métricas de guardrail. Tablas arbitrarias de calidad/precios de modelos no acreditan ahorros del 30–50%.
+Un ConfigMap de A/B por sí solo no enruta el tráfico. Implementa su consumidor/controlador real, asignación estable, contexto equivalente de autorización/datos, muestras suficientes y métricas de protección. Las tablas arbitrarias de calidad/precio de modelos no demuestran ahorros del 30–50 %.
 
-La función compliance_check de un ejemplo financiero no certifica el cumplimiento normativo. Diseñe el alcance de cuentas autenticado, condiciones sensibles/de aprobación monótonas (no sobrescriba después true con false), idempotencia de efectos secundarios, auditoría y criterios de traspaso a una persona.
+La función compliance_check de un ejemplo financiero no certifica el cumplimiento normativo. Diseña el alcance autenticado de las cuentas, condiciones sensibles/de aprobación monotónicas (no sobrescribas un valor true con false más adelante), idempotencia de efectos secundarios, auditoría y criterios de derivación a una persona.
 
+## 9. Bases de revisión y alcance de validación
 
-## 9. Bases de la revisión y alcance de la validación
-
-| Componente | Base de referencia | Alcance verificado |
+| Componente | Base | Alcance verificado |
 | --- | --- | --- |
-| Kagent |0.10.1 / v1alpha2 | Helm/CRDs oficiales y esquemas de Agent/ModelConfig/RemoteMCPServer |
-| Inference Extension |1.6.1 / v1 | Esquema de InferencePool; sin EPP/gateway en vivo |
-| LiteLLM |1.100.1 | Configuración de fallback del Router; sin llamada a proveedor |
-| Milvus | servidor/SDK3.0.1; Operator 1.3.9 | Helm del Operator/esquema vectorial sintético; sin base de datos |
-| LangGraph |1.2.11 + sqlite saver 3.1.1 | Recuperación acotada, abstención y recuperación de estado |
-| Langfuse | SDK 4.15.2 / chart 2.1.0 | Trazas/spans locales e inspección offline del chart |
-| Ragas |0.4.3 | Importaciones/esquema aislados compatibles; sin llamadas al modelo evaluador |
+| Kagent |0.10.1 / v1alpha2 | Helm/CRD oficiales y esquemas de Agent/ModelConfig/RemoteMCPServer |
+| Inference Extension |1.6.1 / v1 | Esquema de InferencePool; sin EPP/gateway activo |
+| LiteLLM |1.100.1 | Configuración de fallback de Router; sin llamadas a proveedores |
+| Milvus | server/SDK3.0.1; Operator 1.3.9 | Helm del operador/esquema vectorial sintético; sin base de datos |
+| LangGraph |1.2.11 + sqlite saver 3.1.1 | Recuperación limitada, abstención y recuperación del estado |
+| Langfuse | SDK 4.15.2 / chart 2.1.0 | Trazas/spans locales e inspección sin conexión del chart |
+| Ragas |0.4.3 | Importaciones/esquemas aislados compatibles; sin llamadas a modelos evaluadores |
 
-Los esquemas, Helm y las comprobaciones locales del SDK no prueban el despliegue completo de la plataforma, la autenticación, la HA ni el rendimiento de GPU. No se usaron recursos en la nube ni llamadas de pago a modelos.
+Las comprobaciones de esquemas, Helm y SDK locales no demuestran la implementación de la plataforma completa, la autenticación, la alta disponibilidad ni el rendimiento de GPU. No se utilizaron recursos en la nube ni llamadas pagadas a modelos.
 
-## 10. Próximos pasos
+## 10. Pasos siguientes
 
 ### Cuestionario de práctica
 
-Para verificar su comprensión de la plataforma de IA agéntica, realice el siguiente cuestionario:
+Para comprobar que comprendes la plataforma de IA agéntica, responde al siguiente cuestionario:
 - [Cuestionario sobre la plataforma de IA agéntica](../quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
 ### Documentos relacionados
 
-- [Guía detallada de despliegue de vLLM](./02-vllm-deployment.md) - Instalación y optimización detalladas de vLLM
-- [Cargas de trabajo AI/ML](./01-ai-ml-workloads.md) - Gestión de cargas de trabajo AI/ML en Kubernetes
+- [Guía detallada de implementación de vLLM](./02-vllm-deployment.md) - Instalación y optimización detalladas de vLLM
+- [Cargas de trabajo de IA/ML](./01-ai-ml-workloads.md) - Gestión de cargas de trabajo de IA/ML en Kubernetes
 
 ### Referencias
 
 - [Kagent 0.10.1](https://github.com/kagent-dev/kagent/tree/v0.10.1)
-- [InferencePool v1 API](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.6.1/api/v1/inferencepool_types.go)
+- [API de InferencePool v1](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.6.1/api/v1/inferencepool_types.go)
 - [Milvus Operator 1.3.9](https://github.com/zilliztech/milvus-operator/tree/milvus-operator-1.3.9)
 - [Langfuse SDK 4.15.2](https://github.com/langfuse/langfuse-python/tree/v4.15.2)
-- [Langfuse Helm2.1.0](https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0)
-- [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence)
-- [LiteLLM Router](https://docs.litellm.ai/docs/routing)
+- [Langfuse Helm 2.1.0](https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0)
+- [Persistencia de LangGraph](https://docs.langchain.com/oss/python/langgraph/persistence)
+- [Router de LiteLLM](https://docs.litellm.ai/docs/routing)
 - [Ragas 0.4.3](https://pypi.org/project/ragas/0.4.3/)

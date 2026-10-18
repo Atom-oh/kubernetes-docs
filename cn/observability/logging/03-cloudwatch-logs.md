@@ -1,21 +1,19 @@
 # CloudWatch Logs
 
 > **最后更新**: September 13, 2026
-> **已检查示例**: AWS provider 6.64.0；可选的 CloudWatch Observability Helm chart 6.6.0；手动部署的 AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9。仅进行了本地配置、SDK 和合成负载检查。未执行 AWS 资源创建、日志传输、Insights 查询或告警。
+> **已检查示例**: AWS provider 6.69.1；可选的 CloudWatch Observability Helm chart 6.6.0；手动配置 AWS for Fluent Bit 3.4.15/Fluent Bit 5.0.9。仅检查了本地配置、SDK 和合成负载。未执行任何 AWS 资源操作、日志传送、Insights 查询或告警。
 
-Amazon CloudWatch Logs 用于管理日志摄取、存储和分析。你仍需配置生产者、身份、网络、保留期、配额和下游消费者。EKS control-plane 日志、工作负载日志和 EKS Auto Mode 托管组件日志是不同的收集路径。
+Amazon CloudWatch Logs 管理日志摄取、存储和分析。你仍需配置日志生产者、身份、网络、保留期、配额和下游使用方。EKS 控制平面日志、工作负载日志和 EKS Auto Mode 托管组件日志属于独立的收集路径。
 
 ## 目录
 
 1. [概述](#overview)
-2. [EKS Control Plane 日志记录](#eks-control-plane-logging)
+2. [EKS 控制平面日志记录](#eks-control-plane-logging)
 3. [Container Insights](#container-insights)
 4. [FluentBit 集成](#fluentbit-integration)
 5. [CloudWatch Logs Insights](#cloudwatch-logs-insights)
-6. [订阅筛选器](#subscription-filters)
+6. [订阅筛选条件](#subscription-filters)
 7. [成本优化](#cost-optimization)
-
-<span id="overview"></span>
 
 ## 概述
 
@@ -23,17 +21,17 @@ Amazon CloudWatch Logs 用于管理日志摄取、存储和分析。你仍需配
 
 ### 功能和日志类别
 
-| 范围 | 检查内容 |
+| 区域 | 检查内容 |
 |---|---|
-| 托管服务 | 无需运营搜索集群，但收集器和传输集成仍需要负责人 |
-| 容量 | 事件大小、API、订阅和目标配额均适用；摄取并非无限制 |
-| 安全性 | IAM、加密、数据保护和私有连接均有独立配置 |
-| 时效性 | 传输和告警均为异步；必须考虑重试以及重复或缺失的传输 |
-| Standard 类别 | 支持本章使用的指标筛选器和订阅 |
-| Infrequent Access | 摄取价格更低且功能集不同；不支持订阅筛选器、指标筛选器或 EMF |
-| Delivery 类别 | 用于传输至 S3/Firehose 的 Lambda 日志的独立选项；固定两天的 CloudWatch 保留期，且不支持 Logs Insights 查询 |
+| 托管服务 | 无需运维搜索集群，但仍需指定收集器和传送集成的负责人 |
+| 容量 | 事件大小、API、订阅和目标配额均适用；摄取量并非不受限制 |
+| 安全性 | IAM、加密、数据保护和私有连接需要分别配置 |
+| 时效性 | 传送和告警是异步的；必须考虑重试以及重复或丢失的传送 |
+| Standard 类 | 支持本章使用的指标筛选条件和订阅 |
+| Infrequent Access | 摄取价格较低，但功能集不同；不支持订阅筛选条件、指标筛选条件或 EMF |
+| Delivery 类 | Lambda 日志传送到 S3/Firehose 的独立选项；CloudWatch 保留期固定为两天，且不支持 Logs Insights 查询 |
 
-日志组的类别在创建后无法更改。Infrequent Access 当前支持的功能包括 S3 导出、Logs Insights 和数据保护，因此“它不支持其中任何功能”之类的旧有笼统说法并不正确。更改收集设计前，请检查当前的功能表。
+创建日志组后，无法更改其类别。目前 Infrequent Access 支持的功能包括 S3 导出、Logs Insights 和数据保护，因此，过去笼统声称它不支持这些功能的说法是不正确的。更改收集设计前，请查看当前功能表。
 
 <span id="terminology"></span>
 
@@ -56,24 +54,22 @@ flowchart LR
   GROUPS -.->|Separate asynchronous export task| S3
 ```
 
-订阅筛选器**不会**将 S3 bucket ARN 作为其目标。通过 Firehose 持续传输至 S3 与异步 S3 导出任务是不同的路径。CloudWatch Logs 批次也无法通过 Firehose 的 OpenSearch 目标进行传输；请改用有文档说明的 CloudWatch-to-OpenSearch 集成。直接发送至 Firehose 的应用程序记录是不同的输入契约。
+订阅筛选条件**不能**将 S3 bucket ARN 作为目标。通过 Firehose 持续传送到 S3，与异步 S3 导出任务是不同的路径。CloudWatch Logs 批次也不能通过 Firehose 的 OpenSearch 目标传送；请改用文档说明的 CloudWatch-to-OpenSearch 集成。直接发送到 Firehose 的应用程序记录属于不同的输入约定。
 
 | 术语 | 含义 |
 |---|---|
-| 日志组 | 通用的保留期、访问和配置边界；例如 `/aws/eks/example-eks/cluster` |
-| 日志流 | 组内的一系列日志事件 |
+| 日志组 | 共享保留期、访问权限和配置的边界；例如 `/aws/eks/example-eks/cluster` |
+| 日志流 | 日志组内的一系列日志事件 |
 | 日志事件 | 时间戳和消息，受服务限制约束 |
-| 保留期 | 受支持的离散保留期，或者在未设置保留期时永不过期 |
+| 保留期 | 受支持的离散保留期限；如果未设置保留期，则不会过期 |
 
-<span id="eks-control-plane-logging"></span>
-
-## EKS Control Plane 日志记录
+## EKS 控制平面日志记录
 
 ### 日志类型
 
-五种类型分别是 `api`、`audit`、`authenticator`、`controllerManager` 和 `scheduler`。它们分别涵盖 API server 诊断、审计事件、IAM 身份验证、controller manager 诊断和调度。Worker node 和应用程序日志是独立的。
+五种类型分别是 `api`、`audit`、`authenticator`、`controllerManager` 和 `scheduler`。它们分别涵盖 API 服务器诊断信息、审计事件、IAM 身份验证、controller-manager 诊断信息和调度信息。工作节点和应用程序日志是独立的。
 
-默认禁用 Control Plane 日志记录。请根据诊断、安全和保留期要求选择类型；API 不要求采用早先表格中的“必需”选择。传输通常需要数分钟，并且尽力而为。启用日志记录不会恢复已轮换的历史日志。
+默认情况下会禁用控制平面日志记录。请根据诊断、安全和保留要求选择类型；API 并未强制要求采用早前表格中的“必需”选项。通常需要几分钟才能传送日志，且传送尽力而为。启用日志记录无法找回已轮换的历史日志。
 
 <span id="enable-via-aws-cli"></span>
 
@@ -113,22 +109,22 @@ aws eks describe-update --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
 
-更新必须达到 `Successful`；仅接受请求并不足够。日志记录更新可能要求每个集群 subnet 最多有五个可用 IP 地址。若要禁用某种类型，请明确审查该更改，而不是复制第二个会悄然关闭现有日志的示例。
+更新必须达到 `Successful` 状态；仅仅接受请求并不足够。更新日志配置时，每个集群子网最多可能需要五个空闲 IP 地址。若要禁用某种类型，请明确审查这一更改，不要复制第二个会悄悄关闭现有日志的示例。
 
 <span id="configure-with-terraform"></span>
 
-### Terraform 所有权和保留期
+### Terraform 资源归属和保留期
 
-对于由 Terraform 管理的集群，请在**现有集群资源的所属配置**中更改 `enabled_cluster_log_types`。不要仅为启用日志而再创建一个 `aws_eks_cluster` 资源，也不要复制已废弃的 Kubernetes 1.29 创建示例。
+对于由 Terraform 管理的集群，请在**现有集群资源所属的配置**中更改 `enabled_cluster_log_types`。不要仅为了启用日志而创建另一个 `aws_eks_cluster` 资源，也不要复制过时的 Kubernetes 1.29 创建示例。
 
-以下独立文件管理日志组和手动收集器的策略：
+以下独立文件用于管理日志组和手动收集器策略：
 
 ```hcl
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -192,9 +188,9 @@ output "collector_policy_arn" {
 }
 ```
 
-如果组已存在，请在应用前重用其所有者，或将其导入预期状态。例如，Control Plane 组使用导入 ID `/aws/eks/example-eks/cluster`。不要将相同的组再次声明为“audit”组：所有五种 Control Plane 类型共享此组及其保留期。
+如果日志组已存在，请复用其所属配置，或在应用更改前将其导入预期状态。例如，控制平面日志组使用导入 ID `/aws/eks/example-eks/cluster`。不要将同一日志组再次声明为“审计”日志组：所有五种控制平面类型共享此日志组及其保留期。
 
-30 天的值只是示例，并非法律要求。`prevent_destroy` 会阻止 Terraform 销毁，但不会阻止缩短保留期或在 Terraform 外部删除。CloudWatch 会加密存储的日志数据；客户托管 KMS key 需要其自身的 key policy 和运维规划。
+30 天只是示例，并非法律要求。`prevent_destroy` 可以阻止 Terraform 销毁资源，但无法阻止降低保留期或在 Terraform 之外删除资源。CloudWatch 会加密存储的日志数据；如需使用客户管理的 KMS key，则必须单独规划其 key policy 和运维工作。
 
 ### 日志组结构
 
@@ -207,7 +203,7 @@ output "collector_policy_arn" {
   kube-scheduler-...         Scheduler
 ```
 
-日志流后缀会轮换。旧图中的示例 `/aws/eks/cluster/logs` 并非实际的 Control Plane 组命名约定。
+日志流后缀会轮换。旧图中的示例 `/aws/eks/cluster/logs` 并非控制平面的实际日志组命名约定。
 
 ## Container Insights
 
@@ -219,9 +215,9 @@ output "collector_policy_arn" {
 
 ### 安装选项
 
-使用当前的 **Amazon CloudWatch Observability EKS add-on** 或其 **amazon-cloudwatch-observability** Helm chart。此前的 ADOT exporter chart 和未经替换的 quickstart URL 并非等效安装方式。
+请使用当前的 **Amazon CloudWatch Observability EKS add-on** 或其 **amazon-cloudwatch-observability** Helm chart。之前的 ADOT exporter chart 和未替换变量的 quickstart URL 并非等效的安装方式。
 
-对于 add-on，请发现与实际集群兼容的版本，检查所选配置 schema，并配置有文档说明的 IAM association。chart 版本不是 EKS add-on 版本字符串。
+对于 add-on，请查找与实际集群兼容的版本，检查所选配置架构，并配置文档说明的 IAM 关联。Chart 版本并不是 EKS add-on 版本字符串。
 
 ```bash
 K8S_VERSION=$(aws eks describe-cluster --name "$DOCS_CLUSTER" \
@@ -231,7 +227,7 @@ aws eks describe-addon-versions \
   --kubernetes-version "$K8S_VERSION" --region "$DOCS_REGION"
 ```
 
-可选 Helm 示例使用以下 `cloudwatch-values.yaml`。它选择传统的 Container Insights 路径和容器日志；此处禁用了 Application Signals 和独立的 OTel Container Insights pipeline。
+可选的 Helm 示例使用以下 `cloudwatch-values.yaml`。它选择传统的 Container Insights 路径和容器日志；此处禁用了 Application Signals 和独立的 OTel Container Insights 管道。
 
 ```yaml
 clusterName: example-eks
@@ -257,24 +253,22 @@ helm upgrade --install cloudwatch-observability \
   --values cloudwatch-values.yaml
 ```
 
-请在**安装前**设置 IAM 权限。在此 chart 中，Fluent Bit DaemonSet 使用 `cloudwatch-agent` ServiceAccount；其名称和 namespace 必须与所选 Pod Identity association 相匹配。请遵循官方的 association/role-trust 要求。为名称不同的 ServiceAccount 创建的 IRSA role 不会授权手动创建的 `fluent-bit` Pod。不要在 EKS 托管的 add-on 之上安装此 chart，也不要对相同日志运行重复的收集器。
+请在**安装之前**设置 IAM 权限。在此 chart 中，Fluent Bit DaemonSet 使用 `cloudwatch-agent` ServiceAccount；其名称和命名空间必须与所选 Pod Identity 关联相匹配。请遵循官方关联和角色信任要求。为名称不同的 ServiceAccount 配置的 IRSA 角色无法授权手动创建的 `fluent-bit` Pod。不要在 EKS 托管 add-on 上安装此 chart，也不要在同一批日志上运行重复的收集器。
 
 <span id="collected-logs"></span>
 
-### 已收集的日志和平台
+### 收集的日志和平台
 
-| 典型组后缀 | 内容和限制 |
+| 常见组后缀 | 内容和限制 |
 |---|---|
 | `application` | `/aws/containerinsights/CLUSTER/application` 下的容器 stdout/stderr |
-| `dataplane` | 配置的 kubelet/runtime/VPC CNI/kube-proxy 源；实际组件因平台而异 |
-| `host` | 配置的 Linux 文件/journal 或 Windows 事件日志；并非每个 OS 都有 `/var/log/messages`、`/var/log/secure` 或 `/var/log/dmesg` |
-| `performance` | 性能事件，通常为 EMF；不能与应用程序日志消息互换 |
+| `dataplane` | 配置的 kubelet/runtime/VPC CNI/kube-proxy 来源；实际组件因平台而异 |
+| `host` | 配置的 Linux 文件/日志或 Windows 事件日志；并非每种 OS 都有 `/var/log/messages`、`/var/log/secure` 或 `/var/log/dmesg` |
+| `performance` | 性能事件，通常采用 EMF；不能与应用程序日志消息互换 |
 
-受支持的 add-on/chart 具有 Linux 和 Windows 路径，但 EKS Windows 不支持 Application Signals。Fargate 使用其平台日志路由器，而非此手动 DaemonSet。请分别验证 Hybrid Nodes 和 Auto Mode；不要假定传统 EC2 host 路径在所有环境中都存在。
+受支持的 add-on/chart 同时提供 Linux 和 Windows 路径，但 EKS Windows 不支持 Application Signals。Fargate 使用其平台日志路由器，而不是此手动 DaemonSet。请分别验证 Hybrid Nodes 和 Auto Mode；不要假设所有环境都存在传统 EC2 主机路径。
 
-EKS Auto Mode 的 AWS 托管 Karpenter、EBS CSI、load-balancer-controller 和 IPAM 日志使用独立的 **vended log delivery** 设置。其日志类型为 `AUTO_MODE_COMPUTE_LOGS`、`AUTO_MODE_BLOCK_STORAGE_LOGS`、`AUTO_MODE_LOAD_BALANCING_LOGS` 和 `AUTO_MODE_IPAM_LOGS`。有文档说明的 `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` 流程可将目标设为日志组、S3 或 Firehose。这与 `PutSubscriptionFilter` 以及启用五种 Control Plane 日志类型不同。
-
-<span id="fluentbit-integration"></span>
+EKS Auto Mode 中 AWS 管理的 Karpenter、EBS CSI、load-balancer-controller 和 IPAM 日志使用独立的**托管日志传送**设置。其日志类型为 `AUTO_MODE_COMPUTE_LOGS`、`AUTO_MODE_BLOCK_STORAGE_LOGS`、`AUTO_MODE_LOAD_BALANCING_LOGS` 和 `AUTO_MODE_IPAM_LOGS`。文档说明的 `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` 流程可以将日志传送到日志组、S3 或 Firehose。这与 `PutSubscriptionFilter` 以及启用五种控制平面日志类型不同。
 
 ## FluentBit 集成
 
@@ -283,11 +277,11 @@ EKS Auto Mode 的 AWS 托管 Karpenter、EBS CSI、load-balancer-controller 和 
 
 ### 手动应用程序日志收集器
 
-这是适用于符合条件的 Linux EC2 node 的**替代性仅应用程序日志配置**。它不会安装完整的 Container Insights 指标 pipeline，也不保证通用的 host/dataplane 收集。
+这是适用于符合条件的 Linux EC2 节点的**仅收集应用程序日志的替代配置**。它不会安装完整的 Container Insights 指标管道，也不保证收集所有主机或数据平面日志。
 
-请先创建或重用 application 组。上面的收集器策略允许向该组创建日志流和写入事件；它刻意不创建组或更改保留期。因此，手动配置不需要 `cloudwatch:PutMetricData`、`s3:PutObject` 或宽泛的 `logs:*` 权限。
+请先创建或复用应用程序日志组。上方的收集器策略允许在该日志组中创建日志流和写入事件；它有意不创建日志组或更改保留期。因此，手动配置不需要 `cloudwatch:PutMetricData`、`s3:PutObject` 或宽泛的 `logs:*` 权限。
 
-准备一个已批准的 IRSA role，其 OIDC trust 与 `system:serviceaccount:logging:fluent-bit-cloudwatch` 及受众 `sts.amazonaws.com` 匹配，并附加生成的策略。`eksctl --role-only` 工作流可以创建该 role，而 manifest 拥有 ServiceAccount。请一致地替换 role ARN、集群名称和 Region。
+请准备经批准的 IRSA 角色，其 OIDC 信任条件与 `system:serviceaccount:logging:fluent-bit-cloudwatch` 及 audience `sts.amazonaws.com` 相匹配，并附加生成的策略。`eksctl --role-only` 工作流可以创建角色，同时由清单管理 ServiceAccount。请一致地替换角色 ARN、集群名称和 Region。
 
 ```yaml
 apiVersion: v1
@@ -456,27 +450,27 @@ spec:
       terminationGracePeriodSeconds: 45
 ```
 
-原生 plugin 是 `cloudwatch_logs`；较旧的 Go plugin 名为 `cloudwatch`。该 image 的默认 command 是 entrypoint script，因此手动 manifest 使用其配置显式启动原生 Fluent Bit binary。
+原生插件是 `cloudwatch_logs`；旧版 Go 插件名为 `cloudwatch`。镜像的默认命令是一个入口脚本，因此，手动清单会显式启动原生 Fluent Bit 二进制文件并指定其配置。
 
-Tail DB 和 filesystem buffer 可写，且与只读日志挂载分离。Grace 为 30 秒，Pod termination grace 为 45 秒，但这并不保证交付所有缓冲数据。node 丢失、磁盘已满、长行、有限重试和重启偏移量仍可能导致日志丢失。`Read_from_Head Off` 会影响此前未见过的文件；持久偏移量仍然很重要。
+Tail DB 和文件系统缓冲区可写，并且与只读日志挂载分开。Grace 为 30 秒，Pod 终止宽限期为 45 秒，但这并不能保证所有缓冲数据都已传送。节点丢失、磁盘已满、日志行过长、重试次数有限以及重启偏移量等情况仍可能导致日志丢失。`Read_from_Head Off` 会影响此前未见过的文件；持久化偏移量仍然重要。
 
-该配置使用 API server 元数据查找，而非 host-network kubelet 访问。应用程序 annotation 无法更改解析或排除日志。不要在自定义收集器中设置保留的 `extra_user_agent: container-insights` 值来暗示其为托管安装。
+此配置通过 API 服务器查询元数据，而不是通过主机网络访问 kubelet。应用程序注解无法更改解析方式或排除日志。不要在自定义收集器中将保留值 `extra_user_agent: container-insights` 用作其为托管安装的标识。
 
-### 记录契约和 Host 源
+### 记录约定和主机日志来源
 
-发送到 CloudWatch 的一个示例扩充事件如下：
+发送到 CloudWatch 的一个示例增强事件如下：
 
 ```json
 {"log":"{\"level\":\"error\",\"message\":\"upstream request failed\",\"error_type\":\"upstream_timeout\",\"http\":{\"response_time_ms\":1250,\"status_code\":503}}","stream":"stderr","kubernetes":{"namespace_name":"production","pod_name":"api-example","container_name":"api"},"log_processed":{"level":"error","message":"upstream request failed","error_type":"upstream_timeout","http":{"response_time_ms":1250,"status_code":503}}}
 ```
 
-应用程序字段位于 `log_processed` 下，而受信任的 Kubernetes 元数据位于 `kubernetes` 下。原始 `log` 字符串重复了应用程序数据；请在收集前脱敏禁止字段。下方的查询、订阅和指标筛选器示例使用此精确 JSON envelope 以及小写的 `level: error`。
+应用程序字段位于 `log_processed` 下，可信的 Kubernetes 元数据位于 `kubernetes` 下。原始 `log` 字符串会重复包含应用程序数据；请在收集前遮蔽禁止收集的字段。下方的查询、订阅和指标筛选示例都使用这一确切的 JSON 封装以及小写的 `level: error`。
 
-如果需要收集 Linux journal，请验证持久 journal 是否位于 `/var/log/journal`，或易失 journal 是否位于 `/run/log/journal`。请配置 `systemd` input、适当的 unit filter、只读挂载、独立的可写 DB、输出组和 IAM 权限。不要盲目挂载 Docker 旧的 `/var/lib/docker/containers` 路径，也不要在 containerd/Bottlerocket/AL2023 node 上要求不存在的文本文件。这些特定于平台的 host 配置不会由手动配置部署。
+如需收集 Linux journal，请检查持久化 journal 是否位于 `/var/log/journal`，或临时 journal 是否位于 `/run/log/journal`。配置 `systemd` 输入、适当的 unit 筛选条件、只读挂载、独立的可写 DB、输出组和 IAM 权限。不要盲目挂载 Docker 旧版路径 `/var/lib/docker/containers`，也不要要求 containerd/Bottlerocket/AL2023 节点上存在并不存在的文本文件。这些特定于平台的主机配置不会由手动配置部署。
 
 ## CloudWatch Logs Insights
 
-这些示例使用 **Logs Insights QL**，而非 SQL。请选择预期日志组和有边界的时间范围。本地审查检查了已发布的语法/契约；未调用托管查询服务。
+以下示例使用 **Logs Insights QL**，而不是 SQL。请选择预期的日志组和有界时间范围。本地审查检查了已发布的语法和约定；未调用托管查询服务。
 
 ### 基本查询语法
 
@@ -487,9 +481,9 @@ fields @timestamp, @message
 | limit 100
 ```
 
-不区分大小写的 regex 使用 `/(?i)error/`，而非 JavaScript 的 `/error/i` 后缀。文本匹配可能匹配并非应用程序结构化错误级别的词语。
+不区分大小写的正则表达式使用 `/(?i)error/`，而不是 JavaScript 的 `/error/i` 后缀。文本匹配可能会匹配到并非应用程序结构化错误级别的词语。
 
-对于收集器的 JSON envelope：
+对于收集器使用的 JSON 封装：
 
 ```text
 fields jsonParse(@message) as record
@@ -508,11 +502,11 @@ fields @timestamp, @message
 | limit 100
 ```
 
-不要依赖假定任意 JSON key 顺序和空白的 glob。`jsonParse` 和显式嵌套字段可使预期记录结构清晰明确。
+不要依赖假设 JSON 键顺序和空白字符任意变化的 glob。`jsonParse` 和显式的嵌套字段可以清楚地说明预期记录结构。
 
 ### EKS 日志查询示例
 
-API server 诊断排除重叠的 audit 日志流前缀：
+API 服务器诊断查询会排除前缀重叠的审计流：
 
 ```text
 fields @timestamp, @logStream, @message
@@ -523,7 +517,7 @@ fields @timestamp, @logStream, @message
 | limit 50
 ```
 
-特定 Kubernetes username 的 audit 活动：
+查询特定 Kubernetes 用户名的审计活动：
 
 ```text
 fields jsonParse(@message) as audit
@@ -534,7 +528,7 @@ fields jsonParse(@message) as audit
 | limit 100
 ```
 
-Authenticator 诊断：
+Authenticator 诊断信息：
 
 ```text
 fields @timestamp, @message
@@ -544,7 +538,7 @@ fields @timestamp, @message
 | limit 100
 ```
 
-Pod 创建/删除 audit 事件：
+Pod 创建/删除审计事件：
 
 ```text
 fields jsonParse(@message) as audit
@@ -556,11 +550,11 @@ fields jsonParse(@message) as audit
 | limit 100
 ```
 
-这些是诊断性搜索，并非 audit 捕获每一个操作或文本匹配确定根本原因的证明。
+这些是诊断搜索，并不能证明审计记录捕获了每个操作，也不能证明文本匹配就能确定根本原因。
 
 ### 应用程序日志查询
 
-按 namespace 统计的错误：
+按命名空间统计错误：
 
 ```text
 fields jsonParse(@message) as record
@@ -569,7 +563,7 @@ fields jsonParse(@message) as record
 | sort error_count desc
 ```
 
-使用声明的数值毫秒字段统计的慢响应：
+使用声明的数值型毫秒字段查询慢响应：
 
 ```text
 fields jsonParse(@message) as record
@@ -580,16 +574,16 @@ fields jsonParse(@message) as record
 | limit 100
 ```
 
-每小时事件计数：
+按小时统计事件数：
 
 ```text
 stats count(*) as log_count by bin(1h) as bucket
 | sort bucket asc
 ```
 
-在 `stats` 之后，请对定义的 bucket alias 排序；原始的每事件 `@timestamp` 不再是分组输出。
+在 `stats` 之后，对已定义的 bucket 别名排序；原始的逐事件 `@timestamp` 不再是分组输出。
 
-最多的错误类别：
+最常见的错误类别：
 
 ```text
 fields jsonParse(@message) as record
@@ -599,7 +593,7 @@ fields jsonParse(@message) as record
 | limit 10
 ```
 
-有界类别通常比按每个唯一完整消息分组更易于理解。不要将请求 ID 或任意消息变成无界指标维度。
+与按每条唯一的完整消息分组相比，类别范围有限的查询通常更易于解释。不要将请求 ID 或任意消息设为无界指标维度。
 
 ### 高级查询
 
@@ -613,7 +607,7 @@ fields jsonParse(@message) as record
 | sort bucket asc
 ```
 
-QL 聚合函数是 `pct`，不是 `percentile`。生产者必须输出数值毫秒；旧 nginx 示例的 wildcard 计数不匹配且虚构了字段位置。
+QL 聚合函数是 `pct`，而不是 `percentile`。生产者必须输出数值型毫秒值；旧的 nginx 示例中通配符数量不匹配，且虚构了字段位置。
 
 ```text
 fields @timestamp, @message, @logStream
@@ -622,9 +616,9 @@ fields @timestamp, @message, @logStream
 | sort backoff_log_events desc
 ```
 
-这会统计匹配的**日志事件**，而非容器重启次数。kubelet 事件/消息可能缺失、重复或聚合。当你需要实际重启计数时，请使用适当的 Kubernetes 重启指标。
+此查询统计匹配的**日志事件**，而不是容器重启次数。kubelet 事件/消息可能不存在、重复出现或经过聚合。如果需要实际的重启计数，请使用适当的 Kubernetes 重启指标。
 
-`SOURCE` 在 CLI/API 查询中受支持，而不在 console query editor 中：
+CLI/API 查询支持 `SOURCE`，控制台查询编辑器不支持：
 
 ```text
 SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/containerinsights/prod-', '/aws/containerinsights/stage-'])
@@ -634,21 +628,19 @@ SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/container
 | limit 100
 ```
 
-`accountIdentifier` 为单数。跨账户查询需要已批准的 monitoring/source-account 设置和权限；提及第二个账户或组并不会创建该访问权限。省略账户/prefix 选择可能会大幅扩大查询范围。
+`accountIdentifier` 为单数。跨账户查询需要已批准的监控账户/源账户设置和权限；提及第二个账户或日志组并不会自动创建访问权限。省略账户/前缀选择可能会大幅扩大查询范围。
 
-<span id="subscription-filters"></span>
+## 订阅筛选条件
 
-## 订阅筛选器
+订阅筛选条件会异步转发新匹配的事件。传送至少一次，因此可能出现重复。可重试的目标故障最多可重试 24 小时；不可重试的错误和持续故障可能导致传送丢失。请监控配额、`DeliveryErrors` 和 `DeliveryThrottling`。订阅不会回填所有历史日志。
 
-订阅筛选器会异步转发新的匹配事件。传输至少一次；可能发生重复。可重试的目标失败最多可重试 24 小时；不可重试错误和持续失败可能丢失传输。请监控配额、`DeliveryErrors` 和 `DeliveryThrottling`。订阅不会回填所有历史日志。
-
-这些示例中的直接 Lambda、Kinesis 和 Firehose 目标属于与日志组相同的账户。跨账户传输使用受支持的 logical destination 及其 destination policy；任意跨账户 Lambda ARN 并不是替代方案。
+这些示例中的 Lambda、Kinesis 和 Firehose 直接目标与日志组位于同一账户。跨账户传送需使用受支持的逻辑目标及其目标策略；任意跨账户 Lambda ARN 不能替代此方式。
 
 <span id="export-to-s3"></span>
 
-### 通过 Firehose 归档至 S3
+### 通过 Firehose 存档到 S3
 
-此可选文件使用上面的组、现有的私有 S3 bucket 和已批准的 Firehose delivery role：
+此可选文件使用上方的日志组、现有的私有 S3 bucket 和经批准的 Firehose 传送角色：
 
 ```hcl
 variable "firehose_delivery_role_arn" {
@@ -729,15 +721,15 @@ resource "aws_cloudwatch_log_subscription_filter" "archive" {
 }
 ```
 
-该 delivery role 需要其经过审查的 Firehose trust、bucket/prefix 访问权限、可选 KMS 权限和目标日志权限。CloudWatch-to-Firehose role 是独立的，部署者需要范围限定的 `iam:PassRole`。避免将 delivery-error 日志订阅回其自身 pipeline。
+传送角色需要经过审查的 Firehose 信任策略、bucket/prefix 访问权限、可选的 KMS 权限和目标日志权限。CloudWatch-to-Firehose 角色是独立的，部署者需要范围受限的 `iam:PassRole` 权限。避免将传送错误日志再次订阅到其自身管道。
 
-CloudWatch 订阅记录已经过 gzip 压缩。这里的 `UNCOMPRESSED` 禁用的是**额外的 Firehose 压缩**；它不会将传入负载转换为纯文本，也不会移除 CloudWatch envelope。消费者必须处理实际归档记录格式。
+CloudWatch 订阅记录已采用 gzip 压缩。此处的 `UNCOMPRESSED` 会禁用**额外的 Firehose 压缩**；它不会将传入负载转换为纯文本，也不会移除 CloudWatch 封装。使用方必须处理实际的存档记录格式。
 
-对于解压后的输出，请有意配置 Firehose 有文档说明的解压功能。可选消息提取会移除 `owner`、`logGroup`、`logStream` 和其他 envelope 元数据。不要将 vended-log input 与为 CloudWatch-subscription 解压配置的 stream 混用，也不要假设这些设置会使不受支持的 CloudWatch→Firehose→OpenSearch 路径有效。
+如需解压后的输出，请有意配置 Firehose 文档说明的解压功能。可选的消息提取会移除 `owner`、`logGroup`、`logStream` 和其他封装元数据。不要将托管日志输入与配置为解压 CloudWatch 订阅的流混用，也不要认为这些设置能够使不受支持的 CloudWatch→Firehose→OpenSearch 路径变得有效。
 
 ### 使用 Lambda 处理
 
-此示例处理上面的结构化 envelope，忽略控制消息，并发送错误**摘要**而非原始日志文本。请将其保存为 `log_processor.py`：
+此示例会处理上文的结构化封装，忽略控制消息，并发送错误**摘要**而不是原始日志文本。将其保存为 `log_processor.py`：
 
 ```python
 import base64
@@ -812,17 +804,17 @@ def lambda_handler(event, context):
     return {"notified": True, "errorCount": summary["errorCount"]}
 ```
 
-`ALERT_TOPIC_ARN` 是已批准的同一 Region topic 的非秘密目标标识符。Lambda execution role 需要范围限定的 `sns:Publish` 及其自身日志权限，以及适用的 KMS 权限。其日志组不得以递归方式馈送相同订阅。
+`ALERT_TOPIC_ARN` 是经批准的同 Region topic 的非机密目标标识符。Lambda 执行角色需要范围受限的 `sns:Publish` 权限、自身的日志权限以及适用的 KMS 权限。其日志组不得递归地馈入同一订阅。
 
-8MiB 处理限制是选定的示例边界，而非 AWS 配额。无效 envelope 会引发错误；预期应用程序 schema 之外的记录不会被视为结构化错误。请监控解析失败、配置失败处理，并在部署前测试重放。SNS 非 SMS 消息受**UTF-8 字节数**限制，而非 1,000 个字符的规则；固定 subject 也低于 subject 限制。
+8 MiB 处理上限是选定的示例限制，并非 AWS 配额。无效封装会引发错误；不符合预期应用程序架构的记录不会被视为结构化错误。请监控解析失败、配置故障处理，并在部署前测试重放。SNS 非 SMS 消息的大小限制按 **UTF-8 字节数**计算，而不是 1,000 个字符；固定主题也低于主题长度限制。
 
-事件 key 有助于调查；它们**不是持久化去重机制**。重复调用可能发送重复通知。生产消费者需要明确的幂等性和失败目标决策。
+事件 key 有助于调查，但**不是持久化去重机制**。重复调用可能发送重复通知。生产使用方需要明确制定幂等性和故障目标决策。
 
 <span id="create-alerts-with-metric-filters"></span>
 
-### 指标筛选器和告警
+### 指标筛选条件和告警
 
-以下可选文件连接已部署的、无别名 Lambda function ARN，并创建计数指标/告警。它使用与收集器和查询相同的 JSON 字段：
+以下可选文件将已部署的、未限定限定符的 Lambda 函数 ARN 与日志连接起来，并创建计数指标/告警。它使用与收集器相同的 JSON 字段，并查询：
 
 ```hcl
 variable "processor_function_arn" {
@@ -881,36 +873,34 @@ resource "aws_cloudwatch_metric_alarm" "high_error_count" {
 }
 ```
 
-该权限先于 Lambda 订阅，并按日志组 ARN 和源账户进行限制。SNS 告警目标也需要合适的 topic policy。function 部署、execution-role policy、topic 订阅和端到端通知是独立的前提条件。
+Lambda 订阅之前需要先配置权限，并将权限限制为日志组 ARN 和源账户。SNS 告警目标也需要相应的 topic policy。函数部署、执行角色策略、topic 订阅和端到端通知都是独立的前提条件。
 
-告警是**错误计数**，而非错误率：两个五分钟周期中的每一个均有超过 100 个匹配事件。`default_value = 0` 在日志到达但没有任何匹配时适用；没有传入日志仍可能意味着缺失数据。`treat_missing_data = "missing"` 不会将沉默视为健康状态。指标筛选器不会回填历史事件，重复事件会影响计数。
+此告警监控的是**错误计数**，而不是错误率：两个连续的五分钟周期内，每个周期都有超过 100 个匹配事件。`default_value = 0` 适用于日志已到达但没有任何匹配项的情况；没有传入日志时，数据仍可能缺失。`treat_missing_data = "missing"` 不会将无活动视为健康。指标筛选条件不会回填历史事件，重复事件也可能影响计数。
 
 <span id="_3-archive-to-s3"></span>
 
 ### 导出任务和 S3 生命周期
 
-对于有界历史导出，请使用 CloudWatch 独立的 S3 export task API 及其 bucket/KMS 权限。导出可用性最多可能延迟 12 小时，顺序无法保证，并且该服务不建议将定期导出任务用于持续归档。
+对于有界的历史数据导出，请使用 CloudWatch 独立的 S3 导出任务 API，以及相应的 bucket/KMS 权限。导出数据最长可能延迟 12 小时，且不保证顺序；服务不建议使用定期导出任务进行持续归档。
 
-归档 lifecycle rule 属于 bucket 的单一配置所有者。请将经过审查的 prefix-scoped rule 合并到该配置中，而不是用第二个 Terraform resource 替换现有规则。选择 Standard-IA 或 Glacier tier 前，请考虑小对象转换行为、最短存储期限、检索成本和 Object Lock。
-
-<span id="cost-optimization"></span>
+归档生命周期规则应由 bucket 的单一配置负责人管理。请将经过审查且限定前缀范围的规则合并到该配置中，不要通过第二个 Terraform 资源替换现有规则。选择 Standard-IA 或 Glacier 层级前，请考虑小对象转换行为、最低存储期限、检索成本和 Object Lock。
 
 ## 成本优化
 
 ### 成本结构
 
-请检查当前区域/类别/层级的摄取、保留存储、查询扫描、vended delivery、转换和下游服务定价。Firehose、S3、KMS、Lambda、自定义指标和告警并非普遍免费。旧表并未证实其首尔费率或零成本“Logs to S3”路径。
+请查看当前按区域/类别/层级划分的摄取、保留存储、查询扫描、托管日志传送、转换和下游服务定价。Firehose、S3、KMS、Lambda、自定义指标和告警并非一概免费。旧表格未能证实其首尔费率，也未能证实存在零成本的“Logs to S3”路径。
 
-以下是**假设性算术，而非当前区域定价**：
+以下为**假设性计算，并非当前区域定价**：
 
 | 假设 | 月度计算 |
 |---|---|
-| 以假定 $0.50/GB 的价格每天摄取 100GB，持续 30 天 | 3,000 × $0.50 = $1,500 |
-| 30 天稳定状态保留期，假定存储比例为 0.5，$0.03/GB-month | 平均 1,500GB × $0.03 = $45 |
-| 以假定 $0.005/GB 的价格每天扫描 200GB，持续 30 天 | 6,000 × $0.005 = $30 |
-| 仅在这些假设下的小计 | **$1,575** |
+| 每天摄取 100GB，持续 30 天，假设价格为 $0.50/GB | 3,000 × $0.50 = $1,500 |
+| 稳定状态下保留 30 天，假设已存储比例为 0.5，价格为 $0.03/GB-month | 平均 1,500GB × $0.03 = $45 |
+| 每天扫描 200GB，持续 30 天，假设价格为 $0.005/GB | 6,000 × $0.005 = $30 |
+| 仅在上述假设下计算的小计 | **$1,575** |
 
-这不是第一个月的存储爬坡、压缩基准或完整账单。原始的 $1,576 总计混合了每日/月度查询值。请使用测得的平均保留字节数、扫描量、当前费率和所有其他收费类别。
+这不是首月的存储增长曲线、压缩基准或完整账单。原有的 $1,576 总额混用了每日和每月查询值。请使用测得的平均保留字节数、扫描量、当前费率和所有其他费用类别。
 
 <span id="cost-reduction-strategies"></span>
 <span id="_1-log-filtering"></span>
@@ -919,15 +909,15 @@ resource "aws_cloudwatch_metric_alarm" "high_error_count" {
 
 ### 筛选、保留期和日志级别
 
-仅筛除诊断和安全要求允许你丢弃的记录。Fluent Bit classic 配置不是 YAML。对于此记录结构，namespace 筛选器使用诸如 `$kubernetes['namespace_name']` 的 record accessor，而非不存在的扁平字段 `kubernetes_namespace_name`。
+仅筛选并丢弃那些符合诊断和安全要求、可以丢弃的记录。Fluent Bit 经典配置并非 YAML。对于此记录结构，命名空间筛选应使用 `$kubernetes['namespace_name']` 这样的记录访问器，而不是不存在的扁平字段 `kubernetes_namespace_name`。
 
-避免宽泛的 substring filter，它们会仅因提及 health-check path 而丢弃有用错误。优先选择明确字段，例如已审查的事件类型，并验证必须保留以及必须丢弃的示例。
+避免使用宽泛的子字符串筛选条件，仅因记录提及健康检查路径就丢弃有用的错误。优先使用经过审查的事件类型等显式字段，并验证既应保留也应丢弃的示例。
 
-不同的保留期可适用于开发、生产和审计需求，但更改保留期可能删除数据。同一组中的所有 Control Plane 日志流共享该组策略。应用程序日志级别是一项应用程序契约：除非应用程序使用并实现它，否则将 `LOG_LEVEL: INFO` 放入 ConfigMap 不会起任何作用。临时提高详细程度需要访问控制、到期时间和容量预算。
+开发、生产和审计需求可以采用不同的保留期，但更改保留期可能会删除数据。一个组内所有控制平面流共享该组的策略。应用程序日志级别属于应用程序约定：除非应用程序读取并实现该设置，否则在 ConfigMap 中设置 `LOG_LEVEL: INFO` 不会产生任何效果。临时提高日志详细程度时，需要配置访问控制、到期时间和容量预算。
 
 ### 成本监控
 
-使用带有 `LogGroupName` dimension 和 `Sum` statistic 的 `AWS/Logs` 指标，例如 `IncomingBytes` 和 `IncomingLogEvents`。它们描述摄取，而非整个账单。`@billedDuration` 是 Lambda 字段，并非 CloudWatch Logs 的存储或摄取计费指标。
+使用 `AWS/Logs` 指标，例如带有 `LogGroupName` 维度和 `Sum` 统计值的 `IncomingBytes` 和 `IncomingLogEvents`。这些指标反映摄取量，而非整张账单。`@billedDuration` 是 Lambda 字段，并非 CloudWatch Logs 的存储或摄取计费指标。
 
 ```bash
 aws logs describe-log-groups --region "$DOCS_REGION" \
@@ -940,23 +930,23 @@ aws ce get-dimension-values --region us-east-1 \
   --dimension SERVICE --search-string CloudWatch
 ```
 
-请在 Cost Explorer filter 中使用返回的 billing-service 值，并在估算完整 pipeline 时包含相关服务。`storedBytes` 是日志组属性，而不是名为该名称且得到保证的 `AWS/Logs` 指标。查询所有日志以估算其成本本身可能产生查询费用。
+请在 Cost Explorer 筛选条件中使用返回的计费服务值；估算完整管道时，也要包括相关服务。`storedBytes` 是日志组属性，并非可保证存在的同名 `AWS/Logs` 指标。查询所有日志来估算费用的操作本身也可能产生查询费用。
 
 ## 验证和参考资料
 
-审计检查了本地 Terraform/Helm 配置、Kubernetes schema、SDK payload type、合成 Lambda event、双语示例、测验答案和 Markdown 渲染。这些检查并不能证明实时 IAM、收集器传输、托管 QL 执行、Firehose 归档、告警传输或实际成本。
+此次审查检查了本地 Terraform/Helm 配置、Kubernetes 架构、SDK 负载类型、合成 Lambda 事件、双语示例、测验答案和 Markdown 渲染。这些检查并不能证明实时 IAM 配置正确、收集器已成功传送、托管 QL 已执行、Firehose 已完成归档、告警已送达或实际成本符合预期。
 
-- [EKS control-plane 日志](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [EKS 控制平面日志](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
 - [CloudWatch Observability add-on 和 Helm 安装](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
-- [Auto Mode 托管组件日志传输](https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html)
-- [日志类别](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html) 和 [配额](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
+- [Auto Mode 托管组件日志传送](https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html)
+- [日志类别](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)和[配额](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html)
 - [Fluent Bit 原生 CloudWatch 输出](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md)
-- [QL filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html)、[stats](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html)、[functions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html) 和 [SOURCE](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html)
-- [订阅示例](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html) 和 [destination API](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html)
-- [CloudWatch Logs 到 Firehose 的限制](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html)、[解压](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html) 和 [消息提取](https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html)
-- [指标筛选器](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html)、[S3 导出任务](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html) 和 [CloudWatch Logs 服务指标](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html)
-- [SNS Publish API](https://docs.aws.amazon.com/sns/latest/api/API_Publish.html) 和 [当前 CloudWatch 定价](https://aws.amazon.com/cloudwatch/pricing/)
+- [QL filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html)、[stats](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html)、[函数](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html)和 [SOURCE](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html)
+- [订阅示例](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html)和[目标 API](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html)
+- [CloudWatch Logs 到 Firehose 的限制](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html)、[解压](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html)和[消息提取](https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html)
+- [指标筛选条件](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html)、[S3 导出任务](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html)和 [CloudWatch Logs 服务指标](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html)
+- [SNS Publish API](https://docs.aws.amazon.com/sns/latest/api/API_Publish.html)和[当前 CloudWatch 定价](https://aws.amazon.com/cloudwatch/pricing/)
 
 ## 测验
 
-请通过 [CloudWatch Logs 测验](../../quizzes/observability/logging/03-cloudwatch-logs-quiz.md)检查这些差异。
+请通过 [CloudWatch Logs 测验](../../quizzes/observability/logging/03-cloudwatch-logs-quiz.md)检查你是否理解这些区别。
