@@ -1,166 +1,23 @@
 name: Translate Sync (cn/jp/es)
 
-# Keeps cn/jp/es in sync when en/ changes (e.g. a merged weekly-news-digest
-# PR). Only re-translates files whose cn/jp/es counterpart already exists --
-# sections not yet backfilled (see translate-backfill.yml) are untouched, so
-# this never races ahead of the section-by-section rollout.
 on:
   push:
     branches: [main]
-    paths: ['en/**/*.md']
+    paths:
+      - 'en/**/*.md'
+      - '.github/workflows/translate*.yml'
+      - '.github/workflows/translation-batch.yml'
+      - 'scripts/translation-batch.mjs'
+      - 'scripts/translate.sh'
+      - 'scripts/sync-nav.py'
   workflow_dispatch: {}
 
 permissions:
   contents: write
   pull-requests: write
 
-concurrency:
-  group: translate-sync
-  cancel-in-progress: false
-
 jobs:
   sync:
-    runs-on: kubernetes-docs-claude-arm
-    env:
-      ANTHROPIC_MODEL: us.anthropic.claude-fable-5
-      CLAUDE_CODE_USE_BEDROCK: 1
-      ANTHROPIC_BEDROCK_BASE_URL: https://bedrock-runtime.us-east-1.amazonaws.com
-      AWS_REGION: us-east-1
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Verify CLIs present (pre-installed on runner)
-        run: |
-          if ! command -v claude >/dev/null 2>&1; then
-            npm install -g @anthropic-ai/claude-code
-          fi
-          if ! command -v kiro-cli >/dev/null 2>&1; then
-            echo "::error::kiro-cli not found on runner (image needs rebuild)"
-            exit 1
-          fi
-
-      - name: Find changed en/ files with an existing cn/jp/es counterpart
-        id: diff
-        run: |
-          set -euo pipefail
-          BEFORE="${{ github.event.before }}"
-          AFTER="${{ github.event.after || github.sha }}"
-          if [ -z "${BEFORE:-}" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
-            # workflow_dispatch, or first push with no prior SHA -- diff the last commit only.
-            BEFORE="HEAD~1"
-          fi
-          CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" -- en | grep '\.md$' || true)
-          : > /tmp/pairs.txt
-          for SRC in $CHANGED; do
-            for LANG in cn jp es; do
-              DST="${LANG}${SRC#en}"
-              [ -f "$DST" ] && printf '%s %s %s\n' "$SRC" "$DST" "$LANG" >> /tmp/pairs.txt
-            done
-          done
-          echo "pair_count=$(wc -l < /tmp/pairs.txt)" >> "$GITHUB_OUTPUT"
-          cat /tmp/pairs.txt
-
-      - name: Re-translate changed files
-        if: steps.diff.outputs.pair_count != '0'
-        run: |
-          set -euo pipefail
-          : > /tmp/translate-failures.txt
-          while read -r _ DST _; do rm -f "$DST"; done < /tmp/pairs.txt
-          xargs -a /tmp/pairs.txt -P 2 -L 1 bash -c \
-            'bash scripts/translate.sh "$0" "$1" "$2" || echo "$1" >> /tmp/translate-failures.txt'
-          cat /tmp/translate-failures.txt
-          node scripts/restore-failed-translations.mjs /tmp/translate-failures.txt
-          node scripts/sync-translated-assets.mjs
-
-      - name: Quality gate on the diff
-        if: steps.diff.outputs.pair_count != '0'
-        id: gate
-        run: |
-          if ! git status --porcelain -- cn jp es | grep -q .; then
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          # Nav files first, uncapped -- see translate-backfill.yml's gate
-          # for why (issue #99: a flat cap let large diffs exhaust the
-          # budget before nav files were visible, causing false "dropped
-          # content" claims).
-          git diff -- cn/SUMMARY.md cn/README.md jp/SUMMARY.md jp/README.md \
-            es/SUMMARY.md es/README.md .github/i18n-heading-map.json \
-            > /tmp/review-diff.txt
-          git diff -- cn jp es | head -c 200000 >> /tmp/review-diff.txt
-
-          # See translate-backfill.yml's gate for why: files that genuinely
-          # failed re-translation (both attempts) are intentionally left
-          # unchanged (old content, not a fresh translation) rather than
-          # invented -- flag that to the reviewer instead of letting it
-          # guess "why wasn't this updated" as a completeness bug.
-          FAILED_FILES=$(cat /tmp/translate-failures.txt 2>/dev/null || true)
-
-          {
-            echo 'Review this diff (piped to your stdin) re-translating existing'
-            echo 'Simplified Chinese/Japanese/Spanish pages after their English'
-            echo 'source changed, for a Kubernetes/EKS training site. Score 0-100 on:'
-            echo 'markdown structure preserved exactly, translation faithfulness,'
-            echo 'Kubernetes/AWS technical terms kept in English, language'
-            echo 'correctness, and no PII/sensitive data.'
-            if [ -n "$FAILED_FILES" ]; then
-              echo ''
-              echo 'The following destination files genuinely failed re-translation after'
-              echo 'a retry and were intentionally left with their prior content (this is'
-              echo 'correct, expected behavior, not a bug) -- do NOT penalize them for'
-              echo 'still showing old/unchanged content:'
-              echo "$FAILED_FILES"
-            fi
-            echo ''
-            echo 'For large diffs the content-file portion may be truncated near the'
-            echo 'end -- SUMMARY.md/README.md/i18n-heading-map.json are always shown'
-            echo 'in full above it. Do not call content "dropped" or "untranslated"'
-            echo 'just because it is absent near the end of a large diff.'
-            echo ''
-            echo 'Output EXACTLY two lines, nothing else:'
-            echo 'SCORE: <0-100>'
-            echo 'FEEDBACK: <one sentence>'
-          } > /tmp/review-prompt.txt
-
-          claude -p "$(cat /tmp/review-prompt.txt)" --output-format text \
-            --allowedTools "Read" < /tmp/review-diff.txt > /tmp/review-result.txt || true
-          cat /tmp/review-result.txt
-          score=$(grep -oE 'SCORE:[[:space:]]*[0-9]+' /tmp/review-result.txt | head -1 | grep -oE '[0-9]+')
-          if [[ "$score" =~ ^[0-9]+$ ]] && [ "$score" -ge 85 ]; then
-            echo "passed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Commit and open PR
-        if: steps.diff.outputs.pair_count != '0' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          SHA_SHORT=$(git rev-parse --short "${{ github.event.after || github.sha }}")
-          BRANCH="docs/translate-sync-$SHA_SHORT"
-          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
-            exit 0
-          fi
-          git checkout -b "$BRANCH"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cn jp es
-          git commit -m "docs: re-sync cn/jp/es translations for en/ changes ($SHA_SHORT)"
-          git push origin "$BRANCH"
-          gh label create automated-translation --color 1D76DB --description "Automated cn/jp/es translation backfill" --force
-          gh pr create \
-            --title "docs: re-sync cn/jp/es translations ($SHA_SHORT)" \
-            --body "English source changed in commit $SHA_SHORT; re-translated the already-backfilled cn/jp/es counterparts. Please spot-check before merging." \
-            --label automated-translation \
-            --base main \
-            --head "$BRANCH"
-
-      - name: Discard changes if gate failed (manual follow-up not auto-filed for sync)
-        if: steps.diff.outputs.pair_count != '0' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'false'
-        run: |
-          echo "::warning::translate-sync quality gate failed (score < 85), discarding. Re-run manually or fix via translate-backfill for the affected section."
-          git checkout -- cn jp es
+    uses: ./.github/workflows/translation-batch.yml
+    with:
+      before: ${{ github.event.before || '' }}
