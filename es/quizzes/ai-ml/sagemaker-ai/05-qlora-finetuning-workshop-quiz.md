@@ -6,7 +6,7 @@
 
 1. ¿Qué afirmación describe correctamente QLoRA con `load_in_4bit=True`, `bnb_4bit_quant_type="nf4"` y `bnb_4bit_compute_dtype=torch.bfloat16`?
    - A) Las activaciones y el estado del optimizador también pasan a cuatro bits, junto con los pesos base.
-   - B) Los pesos base compatibles se almacenan en formato de cuatro bits y se congelan, la ruta lineal cuantizada realiza cálculos en BF16 y se entrenan los adaptadores.
+   - B) Los pesos base compatibles se almacenan en formato de cuatro bits y quedan congelados; la ruta lineal cuantizada calcula en BF16 y se entrenan los adaptadores.
    - C) El cálculo en BF16 anula NF4, por lo que todos los pesos base se almacenan en formato de 16 bits.
    - D) La doble cuantización consiste en entrenar dos veces los pesos base.
 
@@ -71,21 +71,21 @@ El lote efectivo es `1 × 8 × 1 = 8`, y las presentaciones de ejemplos son `80 
 
 **Respuesta: B**
 
-Un ejemplo negativo debe enseñar al modelo a finalizar su respuesta sin extraer entidades. Este modelo usa `<|im_end|>` como EOS. Después de aplicar la plantilla real de chat y el truncamiento, comprueba que queden algunas etiquetas supervisadas. Una finalización real puede incluir tokens adicionales, como un salto de línea; no se debe tratar como entrenamiento normal de ejemplos negativos una secuencia cuyas etiquetas estén todas ignoradas.
+Un ejemplo negativo debe enseñar al modelo a finalizar su respuesta sin extraer entidades. Este modelo usa `<|im_end|>` como EOS. Después de aplicar la plantilla real de chat y el truncamiento, compruebe que queden algunas etiquetas supervisadas. Una respuesta real puede incluir tokens adicionales, como un salto de línea; una secuencia cuyas etiquetas estén todas ignoradas no debe tratarse como un ejemplo negativo de entrenamiento normal.
 </details>
 
 6. ¿Cómo deben usarse los conjuntos de evaluación al comparar opciones de rango y aumento de datos?
    - A) Seleccionar candidatos bajo condiciones de validación coherentes, congelar la configuración y después realizar la comparación final entre referencia y candidato con el conjunto de prueba bloqueado.
    - B) Consultar la puntuación del conjunto de prueba para cada candidato y elegir la más alta.
    - C) Generar primero todos los descendientes del aumento de datos y luego dividirlos aleatoriamente entre entrenamiento, validación y prueba.
-   - D) Desplegar cuando baje la pérdida en el pequeño subconjunto de sobreajuste, sin comprobar la generalización.
+   - D) Desplegar cuando baje la pérdida en un pequeño subconjunto de datos para comprobar si hay sobreajuste, sin verificar la generalización.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: A**
 
-Ajusta el modelo con validación y reserva el conjunto de prueba para la comparación final. El entrenador actual evalúa el conjunto de prueba antes y después de cada ejecución, incluso en pruebas rápidas, así que todavía no constituye un bucle seguro de búsqueda de hiperparámetros. El flujo de ajuste didáctico requiere una modificación aparte. Divide las familias originales antes del aumento de datos y aumenta solo los descendientes de entrenamiento; una pequeña comprobación de sobreajuste diagnostica la ruta de aprendizaje, pero no demuestra generalización.
+Ajuste el modelo usando el conjunto de validación y reserve el conjunto de prueba para la comparación final. El entrenador actual evalúa el conjunto de prueba antes y después de cada ejecución, incluso en las pruebas rápidas, por lo que todavía no ofrece un ciclo seguro de búsqueda de hiperparámetros. El flujo didáctico de ajuste requiere una modificación aparte. Divida las familias originales antes del aumento de datos y aumente solo los datos derivados del conjunto de entrenamiento; una pequeña prueba de sobreajuste sirve para diagnosticar la ruta de aprendizaje, pero no demuestra la generalización.
 </details>
 
 7. ¿Cuál es la forma correcta de comprobar los siete sufijos de destino LoRA actuales para la implementación Qwen3 MoE en Transformers 4.57.6?
@@ -99,21 +99,21 @@ Ajusta el modelo con validación y reserva el conjunto de prueba para la compara
 
 **Respuesta: C**
 
-Esta versión implementa a los expertos como proyecciones `nn.Linear` dentro de un `ModuleList`. Un sufijo se repite en capas y expertos, por lo que la cantidad de sufijos no equivale a la cantidad de módulos. Para la configuración publicada, compara el valor esperado de `48 × (4 + 3 × 128) = 18,624` destinos lineales con el inventario real. `"all-linear"` puede agregar módulos como el router, mientras que `target_parameters` se usa para una implementación diferente con parámetros sin procesar.
+Esta versión implementa a los expertos como proyecciones `nn.Linear` dentro de un `ModuleList`. Un sufijo se repite en capas y expertos, por lo que la cantidad de sufijos no equivale a la cantidad de módulos. Para la configuración publicada, compare el valor esperado de `48 × (4 + 3 × 128) = 18,624` destinos lineales con el inventario real. `"all-linear"` puede agregar módulos como el router, mientras que `target_parameters` se usa para una implementación diferente con parámetros sin procesar.
 </details>
 
-8. Encuentras en el catálogo un DLC de PyTorch para AL2023 que tiene soporte vigente. ¿Cuál es el siguiente paso apropiado antes de volver a habilitar la ejecución en GPU para el ejemplo histórico?
+8. Si encuentra en el catálogo un DLC de PyTorch para AL2023 que tiene soporte vigente, ¿cuál es el siguiente paso apropiado antes de volver a habilitar la ejecución en GPU para el ejemplo histórico?
    - A) Cambiar solo la etiqueta de imagen e instalar el archivo de bloqueo anterior, incluido `torch==2.8.0`.
    - B) Eliminar la protección de fecha y enviar una ejecución completa porque la imagen existe en ECR.
    - C) Registrar que la carga cuantizada en GPU y la retropropagación funcionaron porque se aprobaron las pruebas de CPU.
-   - D) Validar el repositorio, la etiqueta o el digest de la imagen, Python/CUDA/controlador, las dependencias, el toolkit y el grupo de MLflow; realizar una prueba rápida autorizada en GPU y mantener la protección existente mientras la versión sustituta no esté validada.
+   - D) Validar el repositorio, la etiqueta o el digest de la imagen, Python/CUDA/controlador, las dependencias, el kit de herramientas y la combinación de versiones de MLflow; realizar una prueba rápida autorizada en GPU y mantener la protección existente mientras la versión sustituta no esté validada.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: D**
 
-PyTorch 2.8 llegó al fin del soporte de parches el 6 de agosto de 2026. Una entrada más reciente en el catálogo no constituye una combinación de reemplazo validada para este paquete. La nueva familia también puede usar un repositorio distinto de `pytorch-training`, y la instalación de la versión fijada anteriormente de torch puede revertir la migración. La prueba previa de GPU es un procedimiento de prueba futuro; las comprobaciones de CPU o la consulta de una imagen no demuestran que la ejecución en GPU haya funcionado correctamente.
+PyTorch 2.8 llegó al fin del soporte de parches el 6 de agosto de 2026. Una entrada más reciente en el catálogo no constituye una combinación de reemplazo validada para este paquete. La nueva familia también puede usar un repositorio distinto de `pytorch-training`, y la instalación de la versión de `torch` fijada anteriormente puede revertir la migración. La prueba previa de GPU es un procedimiento de prueba futuro; las comprobaciones de CPU o la consulta de una imagen no demuestran que la ejecución en GPU haya funcionado correctamente.
 </details>
 
 ---

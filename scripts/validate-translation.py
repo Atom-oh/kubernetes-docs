@@ -57,6 +57,8 @@ def code_blocks(text):
 def link_targets(text):
     patterns = [
         r"!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))",
+        # A linked image has two destinations: its image and its enclosing link.
+        r"\[\s*!\[[^\]]*]\([^)]*\)\s*]\(\s*(?:<([^>]+)>|([^\s)]+))",
         r"<(?:a|img)\b[^>]*?\b(?:href|src)=[\"']([^\"']+)[\"']",
         r"^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))",
     ]

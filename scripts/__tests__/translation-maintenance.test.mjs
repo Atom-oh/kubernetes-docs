@@ -89,6 +89,29 @@ test('translation validation rejects changed code and link targets even when cou
   } finally { fs.rmSync(root, { recursive: true, force: true }) }
 })
 
+test('translation validation preserves both poster and video destinations of linked images', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-video-links-'))
+  const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))
+  try {
+    const source = '# Demo\n\nThe recorded video is a functional check in a simulated environment.\n\n[![Recorded demo](poster.jpg)](https://presentation.atomai.click/demo.mp4)\n\n[![Second demo](<second.jpg>)](<https://presentation.atomai.click/second.mp4>)\n'
+    const translated = source.replace('# Demo', '# 演示').replace('Recorded demo', '实录演示').replace('Second demo', '第二个演示')
+    const src = path.join(root, 'source.md'), dst = path.join(root, 'translated.md')
+    fs.writeFileSync(src, source)
+    fs.writeFileSync(dst, translated)
+    execFileSync('python3', [validator, src, dst], { stdio: 'pipe' })
+    for (const changed of [
+      translated.replace('/demo.mp4', '/wrong.mp4'),
+      translated.replace('/second.mp4', '/different.mp4'),
+      translated.replace('[![实录演示](poster.jpg)](https://presentation.atomai.click/demo.mp4)', '![实录演示](poster.jpg)'),
+      translated.replace('poster.jpg', 'wrong.jpg')
+    ]) {
+      fs.writeFileSync(dst, changed)
+      assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }),
+        error => /link\/image target mismatch/.test(error.stderr.toString()))
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})
+
 test('complete Chinese prose can be shorter than English without accepting an empty summary', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-chinese-size-'))
   const validator = fileURLToPath(new URL('../validate-translation.py', import.meta.url))

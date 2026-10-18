@@ -1,78 +1,80 @@
-# Cuestionario sobre EKS Hybrid Nodes Gateway
+# Cuestionario de EKS Hybrid Nodes Gateway
+
+> **Última actualización**: 13 de septiembre de 2026
 
 1. ¿Qué problema resuelve EKS Hybrid Nodes Gateway?
-   - A) Reemplaza VPN/Direct Connect para la conectividad del control plane
-   - B) Automatiza el networking a nivel de pod entre VPC y hybrid nodes mediante VXLAN tunnels, eliminando el pod routing manual
-   - C) Proporciona un NAT gateway administrado para hybrid nodes
-   - D) Cifra todo el tráfico entre cloud y on-premises
+   - A) Reemplaza VPN/Direct Connect para conectar el plano de control
+   - B) Automatiza las rutas de pods que administra el gateway y el reenvío VXLAN entre la VPC y los Hybrid Nodes
+   - C) Proporciona un NAT gateway administrado para los Hybrid Nodes
+   - D) Cifra todo el tráfico entre la nube y las instalaciones locales
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Automatiza el networking a nivel de pod entre VPC y hybrid nodes mediante VXLAN tunnels, eliminando el pod routing manual**
+**Respuesta: B) Automatiza las rutas de pods que administra el gateway y el reenvío VXLAN entre la VPC y los Hybrid Nodes**
 
 **Explicación:**
-EKS Hybrid Nodes Gateway automatiza el networking entre la VPC del cluster de EKS y Kubernetes Pods en Hybrid Nodes. Crea VXLAN tunnels entre gateway nodes basados en EC2 y hybrid nodes administrados por Cilium, y mantiene automáticamente las entradas de las VPC route tables. Esto elimina la necesidad de configuración manual de BGP, rutas estáticas o hacer que las redes de pod on-premises sean ruteables desde la VPC. Ten en cuenta que VPN/Direct Connect sigue siendo necesario para la conectividad base de los node.
+El gateway programa rutas agregadas para los CIDR de pods de la VPC y el estado local de reenvío VXLAN. La red subyacente todavía debe enrutar el tráfico entre las direcciones IP del gateway y de los Hybrid Nodes a través de la conexión privada aprobada. Revisa quién administra las tablas de rutas, las rutas de retorno y las reglas de seguridad. La instalación no elimina todas las tareas de red manuales y la desinstalación no borra las rutas de AWS.
 
 </details>
 
 ---
 
 2. ¿Cómo mantiene el gateway la alta disponibilidad?
-   - A) Active-active con load balancing en varios gateways
-   - B) Dos gateway pods como un Deployment con elección de líder basada en Kubernetes Lease
-   - C) Redundancia administrada por AWS con failover automático
-   - D) Ejecutándose en múltiples Availability Zones con comprobaciones de estado de Route 53
+   - A) Activo-activo, con balanceo de carga entre varios gateways
+   - B) Dos pods del gateway en un Deployment con elección de líder basada en Kubernetes Lease
+   - C) Redundancia administrada por AWS con conmutación por error automática
+   - D) Ejecución en varias zonas de disponibilidad con comprobaciones de estado de Route 53
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Dos gateway pods como un Deployment con elección de líder basada en Kubernetes Lease**
+**Respuesta: B) Dos pods del gateway en un Deployment con elección de líder basada en Kubernetes Lease**
 
 **Explicación:**
-El gateway se ejecuta como un Deployment de 2 pods en EC2 nodes etiquetados. Una elección de líder basada en Kubernetes Lease determina qué pod está activo. Solo el líder realiza acciones específicas del líder: administrar entradas de VPC route table y el CRD CiliumVTEPConfig. Cuando el líder falla, el liderazgo se transfiere al pod en espera, que luego actualiza las VPC routes para apuntar a su propia ENI.
+El chart configura de forma predeterminada dos réplicas, con anti-afinidad obligatoria entre hosts y anti-afinidad preferida entre zonas de disponibilidad. Ambas mantienen entradas locales de túnel; solo el líder actualiza las rutas de la VPC y `CiliumVTEPConfig`. La expiración del Lease, el reemplazo de rutas, la convergencia de Cilium y la recuperación de las aplicaciones pueden interrumpir el tráfico. Más réplicas en espera no distribuyen el caudal, y un PDB no garantiza que se reemplace primero al líder o al pod en espera.
 
 </details>
 
 ---
 
-3. ¿Cuál es el rol de CiliumVTEPConfig en la arquitectura del gateway?
-   - A) Configura Cilium network policies para hybrid nodes
-   - B) Registra la IP del gateway como un VTEP remoto para que los Cilium agents en hybrid nodes reenvíen el tráfico destinado a la VPC a través del VXLAN tunnel del gateway
-   - C) Administra las actualizaciones de versión de Cilium en todo el cluster
-   - D) Proporciona claves de cifrado para VXLAN tunnels
+3. ¿Qué función cumple `CiliumVTEPConfig` en la arquitectura del gateway?
+   - A) Configura las políticas de red de Cilium para los Hybrid Nodes
+   - B) Registra la IP del gateway como VTEP remoto para que los agentes de Cilium en los Hybrid Nodes envíen el tráfico destinado a la VPC por el túnel VXLAN del gateway
+   - C) Administra las actualizaciones de versión de Cilium en todo el clúster
+   - D) Proporciona claves de cifrado para los túneles VXLAN
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Registra la IP del gateway como un VTEP remoto para que los Cilium agents en hybrid nodes reenvíen el tráfico destinado a la VPC a través del VXLAN tunnel del gateway**
+**Respuesta: B) Registra la IP del gateway como VTEP remoto para que los agentes de Cilium en los Hybrid Nodes envíen el tráfico destinado a la VPC por el túnel VXLAN del gateway**
 
 **Explicación:**
-El líder del gateway crea el recurso CiliumVTEPConfig. El Cilium agent de cada hybrid node on-premises lee esta configuración y registra la IP del gateway como un VTEP (VXLAN Tunnel Endpoint) remoto. Esto permite que Cilium sepa dónde enviar el tráfico destinado a la VPC: a través del VXLAN tunnel del gateway en lugar de intentar rutearlo directamente, lo cual fallaría sin pod CIDRs ruteables.
+La versión 1.0.2 del gateway administra el objeto `cilium.io/v2` llamado `hybrid-gateway`. Las entradas de `spec.endpoints` contienen `name`, `tunnelEndpoint`, `cidr` y `mac`. El endpoint usa la IP del nodo que es líder en ese momento y la dirección MAC real de la interfaz VXLAN. Este recurso no contiene claves de cifrado, y VNI no es uno de sus campos CRD.
 
 </details>
 
 ---
 
-4. ¿Cuáles son los requisitos previos de CNI para usar Hybrid Nodes Gateway?
-   - A) Cualquier CNI tanto en cloud nodes como en hybrid nodes
-   - B) Cilium en cloud nodes y VPC CNI en hybrid nodes
-   - C) Cilium (con VTEP habilitado) en hybrid nodes y VPC CNI en cloud nodes
-   - D) VPC CNI tanto en cloud nodes como en hybrid nodes
+4. ¿Qué requisitos de CNI hay para usar EKS Hybrid Nodes Gateway?
+   - A) Cualquier CNI tanto en los nodos de la nube como en los Hybrid Nodes
+   - B) Cilium en los nodos de la nube y VPC CNI en los Hybrid Nodes
+   - C) Cilium mantenido por AWS, con VTEP habilitado y L7 deshabilitado, además de la configuración de red correcta en los nodos de la nube
+   - D) VPC CNI tanto en los nodos de la nube como en los Hybrid Nodes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Cilium (con VTEP habilitado) en hybrid nodes y VPC CNI en cloud nodes**
+**Respuesta: C) Cilium mantenido por AWS, con VTEP habilitado y L7 deshabilitado, además de la configuración de red correcta en los nodos de la nube**
 
 **Explicación:**
-El gateway requiere: (1) La versión de EKS de Cilium como CNI en hybrid nodes con soporte de VTEP habilitado, para que los hybrid nodes puedan participar en VXLAN tunneling. (2) AWS VPC CNI en cloud nodes, ya que el gateway depende del routing nativo de VPC para reenviar tráfico entre la VPC y el VXLAN tunnel. Ambos CNI trabajan juntos a través del gateway para habilitar una comunicación pod-to-pod fluida.
+Usa una rama y versión de Cilium mantenido por AWS que cumpla el requisito mínimo de VTEP del gateway, con `vtep.enabled=true` y `l7Proxy=false`. Las funciones L7 de Cilium Ingress y Gateway API no pueden compartir esa configuración. En los nodos de la nube administrados o autoadministrados que usen `aws-node`, excluye los CIDR de pods híbridos del SNAT para el tráfico de ClusterIP hacia endpoints Hybrid. Auto Mode proporciona la red integrada; no instales ni configures un DaemonSet `aws-node` para Auto Mode. Una prueba directa a la IP del pod, por sí sola, no verifica el comportamiento de ClusterIP.
 
 </details>
 
 ---
 
-5. ¿Qué configuración de VXLAN usa el gateway?
+5. ¿Qué configuración VXLAN usa el gateway?
    - A) VNI 1 en el puerto UDP 4789 (VXLAN estándar)
    - B) VNI 2 en el puerto UDP 8472 (valor predeterminado de Cilium)
    - C) VNI 100 en el puerto UDP 6081 (Geneve)
@@ -84,60 +86,60 @@ El gateway requiere: (1) La versión de EKS de Cilium como CNI en hybrid nodes c
 **Respuesta: B) VNI 2 en el puerto UDP 8472 (valor predeterminado de Cilium)**
 
 **Explicación:**
-El gateway crea una VXLAN interface llamada `hybrid_vxlan0` con VNI (VXLAN Network Identifier) 2 en el puerto UDP 8472, que es el puerto VXLAN predeterminado de Cilium. Establece un tunnel hacia cada hybrid node programando entradas FDB (Forwarding Database), entradas ARP y rutas en la VXLAN interface. Los security groups y los firewalls on-premises deben permitir UDP 8472 de forma bidireccional.
+La interfaz predeterminada es `hybrid_vxlan0`, con VNI 2 y UDP 8472. La versión 1.0.2 no asigna una IP a esa interfaz. Deriva direcciones MAC deterministas e instala entradas FDB y de vecinos, además de rutas `onlink`, usando la IP interna y el CIDR de pods de cada Hybrid Node. Permite el tráfico UDP subyacente requerido en ambas direcciones. La encapsulación VXLAN no cifra el tráfico.
 
 </details>
 
 ---
 
-6. ¿Cómo administra el gateway el routing de VPC?
-   - A) Usa BGP para anunciar pod routes al VPC router
-   - B) Crea y mantiene automáticamente entradas de VPC route table que apuntan los hybrid pod CIDRs a la ENI primaria del gateway activo
-   - C) Modifica la main route table de la VPC para agregar reglas NAT
-   - D) Configura Transit Gateway route tables
+6. ¿Cómo administra el gateway las rutas de la VPC?
+   - A) Usa BGP para anunciar las rutas de pods al router de la VPC
+   - B) Crea y mantiene automáticamente entradas en las tablas de rutas de la VPC que apuntan los CIDR de pods híbridos a la ENI principal del gateway activo
+   - C) Modifica la tabla de rutas principal de la VPC para agregar reglas NAT
+   - D) Configura las tablas de rutas de Transit Gateway
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Crea y mantiene automáticamente entradas de VPC route table que apuntan los hybrid pod CIDRs a la ENI primaria del gateway activo**
+**Respuesta: B) Crea y mantiene automáticamente entradas en las tablas de rutas de la VPC que apuntan los CIDR de pods híbridos a la ENI principal del gateway activo**
 
 **Explicación:**
-El node controller del gateway observa objetos CiliumNode y agrega o elimina automáticamente VXLAN tunnels a medida que los hybrid nodes se unen o salen. El leader pod mantiene las entradas de VPC route table, ruteando cada hybrid pod CIDR a la ENI primaria de la instancia de gateway activa. Por eso el IAM role del gateway necesita permisos ec2:DescribeRouteTables, ec2:CreateRoute y ec2:ReplaceRoute.
+La configuración del líder crea o reemplaza rutas para los `podCIDRs` agregados que estén configurados y luego actualiza `CiliumVTEPConfig`. Por separado, los eventos de `CiliumNode` actualizan las entradas locales de túnel por nodo en cada réplica del gateway. Los permisos de ejecución son `DescribeRouteTables`, `DescribeInstances`, `CreateRoute` y `ReplaceRoute`. El gateway no llama a `DeleteRoute`; al retirar el gateway, los operadores deben revisar y eliminar o restaurar solo las rutas que les pertenecen.
 
 </details>
 
 ---
 
 7. ¿Cuál es el modelo de precios de EKS Hybrid Nodes Gateway?
-   - A) Cargo por hora basado en los datos procesados
-   - B) Incluido en los precios de EKS Hybrid Nodes a $0.10 por hybrid node por hora
-   - C) Sin cargo adicional por el gateway en sí, pero aplican los costos de instancias EC2 para gateway nodes
-   - D) Gratis durante los primeros 3 meses, luego cargos estándar de networking de AWS
+   - A) Un cargo por hora basado en los datos procesados
+   - B) Está incluido en el precio de EKS Hybrid Nodes, a 0,10 USD por nodo híbrido y hora
+   - C) El software del gateway no tiene cargo; se siguen aplicando los cargos de EC2 y de otra infraestructura o tráfico pertinente
+   - D) Es gratis durante los primeros tres meses y luego se aplican los cargos estándar de redes de AWS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Sin cargo adicional por el gateway en sí, pero aplican los costos de instancias EC2 para gateway nodes**
+**Respuesta: C) El software del gateway no tiene cargo; se siguen aplicando los cargos de EC2 y de otra infraestructura o tráfico pertinente**
 
 **Explicación:**
-EKS Hybrid Nodes Gateway se ofrece sin cargo adicional y es open source (disponible en GitHub). Sin embargo, dado que el gateway se ejecuta en instancias EC2 en tu VPC, pagas los costos estándar de instancias EC2 para los gateway nodes. Esto lo convierte en una solución rentable en comparación con administrar manualmente infraestructura compleja de BGP o routing estático.
+El software del gateway no tiene un cargo adicional. Aun así, pueden cobrarse EC2, las tarifas de administración aplicables de Auto Mode, el almacenamiento, la transferencia de datos entre zonas, la conectividad privada y la observabilidad, además de los cargos del clúster y de Hybrid Nodes. El costo total depende del despliegue y del tráfico; no hay una garantía de ahorro universal.
 
 </details>
 
 ---
 
-8. ¿Cuándo deberías elegir el enfoque del gateway en lugar del pod routing manual (BGP/rutas estáticas)?
-   - A) Cuando necesitas la latencia más baja posible entre pods en cloud y on-premises
-   - B) Cuando quieres simplificar las operaciones y evitar hacer ruteables las redes de pod on-premises, mientras habilitas comunicación con webhooks e integración con servicios de AWS
-   - C) Cuando tienes más de 1000 hybrid nodes
-   - D) Cuando usas un CNI distinto de Cilium en hybrid nodes
+8. ¿Cuándo conviene elegir el gateway en lugar del enrutamiento manual de pods con BGP o rutas estáticas?
+   - A) Cuando se necesita la latencia más baja posible entre los pods de la nube y los de las instalaciones locales
+   - B) Cuando el perfil de Cilium/VTEP de AWS y el salto adicional del gateway se ajustan al diseño y simplifican la administración de rutas de pods
+   - C) Cuando hay más de 1000 Hybrid Nodes
+   - D) Cuando se usa un CNI distinto de Cilium en los Hybrid Nodes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cuando quieres simplificar las operaciones y evitar hacer ruteables las redes de pod on-premises, mientras habilitas comunicación con webhooks e integración con servicios de AWS**
+**Respuesta: B) Cuando el perfil de Cilium/VTEP de AWS y el salto adicional del gateway se ajustan al diseño y simplifican la administración de rutas de pods**
 
 **Explicación:**
-El gateway es ideal cuando quieres evitar cambios complejos en la infraestructura de red (configuración de BGP, administración de rutas estáticas). Habilita automáticamente: (1) comunicación de control plane a webhook en hybrid nodes, (2) tráfico pod-to-pod entre cloud y on-premises, (3) conectividad de servicios de AWS (ALB, NLB, Prometheus) a hybrid pods. El enfoque manual con BGP puede seguir siendo preferible cuando ya tienes infraestructura BGP o necesitas minimizar el salto adicional a través del gateway.
+El gateway puede simplificar la administración de rutas de pods si el diseño admite el perfil requerido de Cilium/VTEP de AWS y un salto adicional activo-en espera. Los webhooks y los destinos de ALB/NLB siguen necesitando sus propias rutas, rutas de retorno, configuración de pods remotos, comprobaciones de estado y reglas de seguridad. Las redes de pods enrutables manualmente también pueden admitir estas rutas. Una infraestructura BGP/rutas estáticas existente u otras necesidades de CNI/L7 pueden favorecer otro diseño.
 
 </details>

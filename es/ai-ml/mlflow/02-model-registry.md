@@ -39,7 +39,7 @@ Las etapas heredadas son `None`, `Staging`, `Production` y `Archived`. `transiti
 
 ## Registro de un modelo
 
-Después de registrar un modelo real de un flavor, llama a `mlflow.register_model(model_uri, name)` o pasa `registered_model_name` a la llamada `log_model` del flavor. La API de nivel inferior `MlflowClient.create_model_version` permite especificar directamente un origen. El registro y la reasignación de alias son operaciones independientes.
+Después de guardar con `log_model` un modelo real de un flavor, llama a `mlflow.register_model(model_uri, name)` o pasa `registered_model_name` a la llamada `log_model` del flavor. La API de nivel inferior `MlflowClient.create_model_version` permite especificar directamente un origen. El registro y la reasignación de alias son operaciones independientes.
 
 Este **ejercicio de metadatos del registro** no crea un modelo capaz de realizar inferencias. Se comprobó con Python 3.12, MLflow 3.16.0 y SQLite.
 

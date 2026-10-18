@@ -1,6 +1,6 @@
 # OpenTelemetry クイズ
 
-> **最終更新**: September 13, 2026
+> **最終更新日**: 2026年9月13日
 
 OpenTelemetry についての理解を確認しましょう。
 

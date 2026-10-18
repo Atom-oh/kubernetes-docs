@@ -1,427 +1,204 @@
-# EKS Hybrid Nodes Air-Gap 环境设置测验
+# EKS Hybrid Nodes 受限互联网环境配置测验
 
-> **相关文档**: [Air-Gap 环境设置](../../eks-hybrid-nodes/03-airgap-setup.md)
+> **相关文档**：[受限互联网环境配置](../../eks-hybrid-nodes/03-airgap-setup.md)
+> **最后更新**：2026 年 9 月 12 日
 
-## 选择题
+### 1. 关于 EKS Hybrid Nodes 的连接需求，哪项说法正确？
 
-### 1. 下列哪一项不是 Harbor 中有效的 replication policy 类型？
+A. 通过物理方式传输镜像后，就不再需要连接 AWS
 
-A. Push-based
-B. Pull-based
-C. Event-based
-D. Sync-based
+B. 节点仍需连接 EKS 控制平面和凭证服务
+
+C. 私有 S3 存储桶负责托管 EKS 控制平面
+
+D. VPN 连接等同于物理隔离
 
 <details>
 <summary>显示答案</summary>
 
-**答案: D. Sync-based**
+**答案：B. 节点仍需连接 EKS 控制平面和凭证服务**
 
-**说明:**
-Harbor 支持 Push-based、Pull-based 和 Event-based replication policies。“Sync-based” 不是 Harbor 的官方术语。
-
-**Harbor Replication Policy 类型:**
-1. **Push-based**: 从源 Harbor 推送到目标 registry
-2. **Pull-based**: 目标 Harbor 从源拉取 images
-3. **Event-based**: 在 image push 事件发生时自动复制
-
-```yaml
-# Harbor Replication Policy API Example
-POST /api/v2.0/replication/policies
-{
-  "name": "ecr-replication",
-  "trigger": {
-    "type": "event_based"
-  },
-  "filters": [
-    {"type": "name", "value": "myapp/**"},
-    {"type": "tag", "value": "v*"}
-  ]
-}
-```
+**说明：**
+限制对公网的访问与通过私有网络连接 AWS 可以同时实现。物理断网的网络无法提供 Hybrid Nodes 所需的实时控制平面和凭证服务连接路径。
 
 </details>
 
-### 2. 将 Harbor private registry 与 Kubernetes 集成时使用哪种 Secret 类型？
+### 2. 为什么将 PHZ 中的 hybrid-assets.eks.amazonaws.com 别名指向 S3 仍然不够？
 
-A. Opaque
-B. kubernetes.io/dockerconfigjson
-C. kubernetes.io/tls
-D. kubernetes.io/service-account-token
+A. S3 从不支持私有 DNS
+
+B. 必须先安装 ECR
+
+C. DNS 不会保留原始 TLS 主机名，也不会处理对象路由或授权
+
+D. 所有 HTTPS 请求都会自动使用 IAM 角色
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B. kubernetes.io/dockerconfigjson**
+**答案：C. DNS 不会保留原始 TLS 主机名，也不会处理对象路由或授权**
 
-**说明:**
-Docker/Container registry 认证信息会作为 `kubernetes.io/dockerconfigjson` 类型的 Secret 存储。
-
-```bash
-# Create Harbor Registry Secret
-kubectl create secret docker-registry harbor-secret \
-  --docker-server=harbor.example.com \
-  --docker-username=admin \
-  --docker-password=Harbor12345 \
-  --docker-email=admin@example.com
-```
-
-```yaml
-# Use imagePullSecrets in Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-app
-spec:
-  containers:
-  - name: app
-    image: harbor.example.com/project/my-app:v1
-  imagePullSecrets:
-  - name: harbor-secret
-```
+**说明：**
+S3 接口端点支持私有 DNS。但 DNS 别名不会改写 TLS SNI、HTTP Host 标头、对象路径或身份验证。应使用经批准的镜像准备流程，或实际可访问的自定义 manifest URL；不要关闭证书验证。
 
 </details>
 
-### 3. Harbor 为 image scanning 提供的默认 vulnerability scanner 是什么？
+### 3. nodeadm v1.0.20 的 private 安装模式会做什么？
 
-A. Clair
-B. Trivy
-C. Anchore
-D. Snyk
+A. 根据本地 manifest 安装所有操作系统依赖
+
+B. 跳过操作系统软件包安装，但仍安装凭证和 EKS 制品
+
+C. 使所有 AWS API 调用都变为可选
+
+D. 自动为每个 S3 制品下载签名
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B. Trivy**
+**答案：B. 跳过操作系统软件包安装，但仍安装凭证和 EKS 制品**
 
-**说明:**
-自 Harbor 2.0 起，Trivy 被包含为默认 vulnerability scanner。Clair 也可以选择性使用。
-
-```bash
-# Harbor Vulnerability Scan API
-POST /api/v2.0/projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/scan
-
-# Get Scan Results
-GET /api/v2.0/projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/additions/vulnerabilities
-```
-
-**Harbor Scan Policy 设置:**
-- Projects > Configuration > Vulnerability scanning
-- Automatically scan images on push: enabled
-- Prevent vulnerable images from running: enabled (CVE severity threshold)
+**说明：**
+已发布的配置要求同时使用 `--manifest-override` 和 `--private-mode`。运行时和操作系统依赖须另行准备。SSM 的安装器/签名来源是单独构造的；manifest 使用 `file://` 并不意味着制品也支持 `file://`。
 
 </details>
 
-### 4. air-gap（气隙）环境最准确的定义是什么？
+### 4. 制品准备脚本遇到缺少校验和或校验和不匹配时应如何处理？
 
-A. 互联网连接速度很慢的环境
-B. 与外部网络物理隔离的环境
-C. 仅通过 VPN 连接的环境
-D. 安装了 firewalls 的环境
+A. 发出警告后继续发布其余文件
+
+B. 只要有一个文件通过校验就接受本次运行
+
+C. 根据下载的文件生成新的预期校验和
+
+D. 停止处理并保留失败的候选制品以供调查
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B. 与外部网络物理隔离的环境**
+**答案：D. 停止处理并保留失败的候选制品以供调查**
 
-**说明:**
-出于安全原因，air-gap 环境会与互联网或外部网络物理隔离。它通常用于：
-
-- 军事/国防设施
-- 金融机构核心系统
-- 核电站控制系统
-- 医疗机构敏感数据处理系统
-
-```
-Air-gap environment characteristics:
-+------------------+     Physical isolation     +------------------+
-|   External       | <---- No connection ---->  |   Air-gap        |
-|   Network        |                            |   Environment    |
-| (Internet, Cloud)|                            | (On-premises DC) |
-+------------------+                            +------------------+
-```
-
-在 air-gap 环境中，所有 software 和 images 都必须离线传输。
+**说明：**
+每个必需文件都必须匹配可信且经过审核的校验和记录。重新生成预期值会使校验失去意义。哈希值一致本身也不能独立证明发布者身份。
 
 </details>
 
-### 5. 在 air-gap 环境中将 container images 镜像到 Harbor 的正确顺序是什么？
+### 5. IAM Roles Anywhere 更新服务适用于哪种情况？
 
-A. 安装 Harbor -> 标记 image -> 推送 image -> 拉取 image
-B. 拉取 image -> 保存 image -> 离线传输 -> 加载并推送到 Harbor
-C. 安装 Harbor -> 直接 ECR 连接 -> 自动同步
-D. 构建 image -> 直接部署 -> 跳过 Harbor
+A. 所有安装方式都使用该服务，包括 SSM
+
+B. 启用 enableCredentialsFile 时使用该服务；普通 credential-process 用法是另一条路径
+
+C. 该服务并不存在，应始终将其删除
+
+D. 该服务可以免除证书续期
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B. 拉取 image -> 保存 image -> 离线传输 -> 加载并推送到 Harbor**
+**答案：B. 启用 enableCredentialsFile 时使用该服务；普通 credential-process 用法是另一条路径**
 
-**说明:**
-在 air-gap 环境中没有互联网连接，因此 images 必须手动传输：
-
-```bash
-# 1. Pull image on internet-connected system
-docker pull nginx:1.25
-
-# 2. Save image to tar file
-docker save nginx:1.25 -o nginx-1.25.tar
-
-# 3. Offline transfer (USB, external hard drive, etc.)
-# Physically move media to air-gap environment
-
-# 4. Load image in air-gap environment
-docker load -i nginx-1.25.tar
-
-# 5. Tag and push to Harbor
-docker tag nginx:1.25 harbor.airgap.local/library/nginx:1.25
-docker push harbor.airgap.local/library/nginx:1.25
-```
-
-对于管理大量 images，`skopeo` 或 `crane` 等工具更高效。
+**说明：**
+`aws_signing_helper_update.service` 确实存在于凭证文件模式中。应为相应服务和调用进程配置合适的环境变量，包括 nodeadm 的代理检测及 `--with-proxy` 行为。证书生命周期管理和 AWS 网络连接仍不可缺少。
 
 </details>
 
-### 6. 在 air-gap 环境中离线安装 nodeadm 的正确方法是什么？
+### 6. Hybrid Nodes 制品清单应包含哪些镜像？
 
-A. 使用 curl 直接从 GitHub 下载
-B. apt-get install nodeadm
-C. 预先下载 binaries 和 dependencies 以便离线安装
-D. pip install nodeadm
+A. 所有节点都固定使用同一组 VPC CNI 镜像
+
+B. 只包含 kubelet，因为它就是 CNI 镜像
+
+C. 实际受支持的 CNI、DNS、数据平面、sandbox 和工作负载镜像，包括 init container 及相应平台
+
+D. 将任意 Kubernetes 补丁版本号加上 -eksbuild.1 就能构造出有效标签
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C. 预先下载 binaries 和 dependencies 以便离线安装**
+**答案：C. 实际受支持的 CNI、DNS、数据平面、sandbox 和工作负载镜像，包括 init container 及相应平台**
 
-**说明:**
-在 air-gap 环境中无法访问互联网，因此必须提前准备所有必要文件：
-
-```bash
-# Prepare on internet-connected system
-# 1. Download nodeadm binary
-curl -L -o nodeadm https://github.com/awslabs/amazon-eks-ami/releases/download/nodeadm-v0.1.0/nodeadm-linux-amd64
-
-# 2. Download required dependency packages (e.g., Ubuntu)
-apt-get download containerd.io kubelet kubectl
-
-# 3. Transfer all files to air-gap environment
-
-# Install in air-gap environment
-# 4. Install nodeadm
-chmod +x nodeadm
-sudo mv nodeadm /usr/local/bin/
-
-# 5. Install dependency packages
-sudo dpkg -i containerd.io_*.deb kubelet_*.deb kubectl_*.deb
-
-# 6. Run nodeadm
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-```
+**说明：**
+VPC CNI 不是 Hybrid Nodes 使用的 CNI。应根据实际部署的 manifest 和获准的 digest 准备制品。私有 ECR 拉取还需要 S3 层下载路径和工作负载的镜像拉取凭证；仅列出仓库并不足够。
 
 </details>
 
-### 7. 在 air-gap 环境中配置 proxy server 时，不需要设置的环境变量是哪一个？
+### 7. nodeadm 启动前，哪种配置检查方式有效？
 
-A. HTTP_PROXY
-B. HTTPS_PROXY
-C. NO_PROXY
-D. FTP_PROXY
+A. nodeadm init --dry-run
+
+B. nodeadm config check --config-source file:///etc/eks/nodeconfig.yaml
+
+C. 执行 curl -k 后报告节点就绪
+
+D. 配置文件缺失时跳过并返回成功
 
 <details>
 <summary>显示答案</summary>
 
-**答案: D. FTP_PROXY**
+**答案：B. nodeadm config check --config-source file:///etc/eks/nodeconfig.yaml**
 
-**说明:**
-在 container 和 Kubernetes 环境中常用的 proxy 环境变量是 HTTP_PROXY、HTTPS_PROXY 和 NO_PROXY。FTP_PROXY 很少使用。
-
-```bash
-# Set proxy environment variables
-export HTTP_PROXY=http://proxy.company.local:8080
-export HTTPS_PROXY=http://proxy.company.local:8080
-export NO_PROXY=localhost,127.0.0.1,.cluster.local,10.0.0.0/8
-
-# containerd proxy configuration
-sudo mkdir -p /etc/systemd/system/containerd.service.d
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service.d/proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://proxy.company.local:8080"
-Environment="HTTPS_PROXY=http://proxy.company.local:8080"
-Environment="NO_PROXY=localhost,127.0.0.1,.cluster.local"
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart containerd
-```
-
-**需要包含在 NO_PROXY 中的地址:**
-- Cluster internal services (*.cluster.local)
-- Pod/Service CIDR
-- Node IP range
-- Harbor registry address
+**说明：**
+应使用内容完整且受到保护的配置文件。`config check` 只验证配置，不证明私有网络可用，也不会注册节点。检查过的 `init` 命令没有 `--dry-run` 标志。
 
 </details>
 
-### 8. 下列哪一项不是验证 air-gap 环境就绪状态的有效 checklist 项？
+### 8. 哪种代理配置修改最能保留现有 kube-proxy DaemonSet？
 
-A. Harbor registry accessibility
-B. Required container images presence
-C. Internet connection speed test
-D. DNS resolution capability
+A. 使用新的 JSON Patch 数组替换 /containers/0/env
+
+B. 删除 NODE_NAME，因为代理不需要它
+
+C. 按容器名和 env 名称审核后使用 strategic merge，并保留现有参数和 NODE_NAME
+
+D. 始终将 .eks.amazonaws.com 排除在代理之外
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C. Internet connection speed test**
+**答案：C. 按容器名和 env 名称审核后使用 strategic merge，并保留现有参数和 NODE_NAME**
 
-**说明:**
-根据定义，air-gap 环境没有互联网连接，因此互联网速度测试没有意义。Air-gap 就绪状态验证 checklist：
-
-```bash
-# 1. Verify Harbor registry access
-curl -k https://harbor.airgap.local/api/v2.0/health
-
-# 2. Verify required images exist
-docker pull harbor.airgap.local/library/pause:3.9
-
-# 3. Verify DNS resolution
-nslookup harbor.airgap.local
-
-# 4. Verify nodeadm binary
-nodeadm version
-
-# 5. Verify dependency packages
-dpkg -l | grep -E "containerd|kubelet"
-
-# 6. Verify TLS certificates
-openssl s_client -connect harbor.airgap.local:443 -showcerts
-```
-
-**验证脚本示例:**
-```bash
-#!/bin/bash
-echo "=== Air-gap Environment Verification ==="
-
-# Harbor connection
-if curl -sk https://harbor.airgap.local/api/v2.0/health | grep -q "healthy"; then
-  echo "[OK] Harbor is healthy"
-else
-  echo "[FAIL] Harbor connection failed"
-fi
-
-# Required images check
-REQUIRED_IMAGES="pause:3.9 coredns:v1.10.1"
-for img in $REQUIRED_IMAGES; do
-  if docker manifest inspect harbor.airgap.local/library/$img > /dev/null 2>&1; then
-    echo "[OK] $img exists"
-  else
-    echo "[FAIL] $img missing"
-  fi
-done
-```
+**说明：**
+JSON Patch 若向已存在的 env 成员执行 add，可能替换整个数组。应将补丁限定在 kube-proxy，并保留其他值。范围过宽的 `.eks.amazonaws.com` 代理绕过规则也会匹配公网 hybrid-assets 下载主机名。
 
 </details>
 
-### 9. 在 air-gap 环境中运行 EKS Hybrid Nodes 时，更新 container images 的推荐方法是什么？
+### 9. 使用传输过来的 OCI 镜像归档前，必须完成哪些检查？
 
-A. 直接在 nodes 上运行 docker pull
-B. 建立定期 image mirroring 和离线传输流程
-C. 仅使用固定版本，不进行 image 更新
-D. 临时允许互联网连接
+A. 只需确认 tar 导入成功
+
+B. 验证获批哈希、digest 和平台内容、目标引用，以及实际运行时拉取行为
+
+C. 关闭源 registry 的 TLS 验证以避免证书错误
+
+D. 假定只需支持构建主机使用的架构
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B. 建立定期 image mirroring 和离线传输流程**
+**答案：B. 验证获批哈希、digest 和平台内容、目标引用，以及实际运行时拉取行为**
 
-**说明:**
-Air-gap 环境需要系统化的 image 管理流程：
-
-```
-Image Update Workflow:
-
-[Internet-connected Environment]    [Air-gap Environment]
-+-----------------------+           +-----------------------+
-| 1. Check/download     |           | 4. Load images        |
-|    image list         |           |                       |
-| 2. Vulnerability scan | --------> | 5. Push to Harbor     |
-| 3. Package as tar     | Offline   | 6. Update deployments |
-+-----------------------+ Transfer  +-----------------------+
-```
-
-```bash
-# Image list management (images.txt)
-public.ecr.aws/eks-distro/kubernetes/pause:3.9
-public.ecr.aws/eks-distro/coredns/coredns:v1.10.1
-docker.io/library/nginx:1.25
-
-# Batch download script
-#!/bin/bash
-while read -r image; do
-  echo "Pulling $image..."
-  docker pull "$image"
-  name=$(echo "$image" | tr '/:' '_')
-  docker save "$image" -o "${name}.tar"
-done < images.txt
-
-# Batch upload script (air-gap environment)
-#!/bin/bash
-for tarfile in *.tar; do
-  docker load -i "$tarfile"
-  # Retag and push to Harbor
-done
-```
-
-**建议:**
-- 设置每月或每季度 image 更新周期
-- 为安全漏洞补丁建立紧急更新流程
-- Image signing 和完整性验证
+**说明：**
+Skopeo 的 `--all` 会保留平台列表；如果无法保留 digest，`--preserve-digests` 会报错。导入后的名称、containerd 的 `k8s.io` 命名空间、`imagePullPolicy` 和垃圾回收都会影响实际 Pod 是否能启动。
 
 </details>
 
-### 10. 在 Harbor 中镜像 images 时优化带宽的正确方法是什么？
+### 10. 私有制品仓库采用哪种更新做法较为合适？
 
-A. 每次都重新传输整个 images
-B. 使用基于 layer 的增量传输和压缩
-C. 无论 image 大小如何都以相同方式处理
-D. 每次都重新构建而不是 mirroring
+A. 每周自动覆盖生产环境的 latest 键
+
+B. 将 head-object 返回的 AccessDenied 当作对象不存在
+
+C. 在来源、兼容性和代表性节点验证通过后，批准新的不可变候选版本
+
+D. 保证所有环境的带宽节省为 50–80%
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B. 使用基于 layer 的增量传输和压缩**
+**答案：C. 在来源、兼容性和代表性节点验证通过后，批准新的不可变候选版本**
 
-**说明:**
-Container images 由 layers 组成，仅传输已更改的 layers 可以显著节省带宽：
-
-```bash
-# Efficient image copy using skopeo
-skopeo copy \
-  --src-tls-verify=false \
-  docker://source-registry.com/myapp:v1 \
-  docker://harbor.airgap.local/myapp:v1
-
-# Layer-based copy using crane
-crane copy source-registry.com/myapp:v1 harbor.airgap.local/myapp:v1
-```
-
-**优化策略:**
-
-| Method | Description | Savings |
-|--------|-------------|---------|
-| Layer caching | Transfer only changed layers | 50-80% |
-| Compression | Apply gzip/zstd compression | 30-50% |
-| Multi-architecture | Mirror only required architectures | 50% |
-| Tag filtering | Mirror only required tags | Variable |
-
-```yaml
-# Filtering in Harbor replication policy
-{
-  "filters": [
-    {"type": "tag", "value": "v*"},
-    {"type": "label", "value": "production=true"}
-  ]
-}
-```
+**说明：**
+应使用自有存储桶、明确的预期所有者，并分离发布者和读取者权限；遇到未知错误应停止处理。条件式对象写入不能让整次上传具备原子性。此前提及的带宽百分比未经验证，只是历史示例，不能视为保证的测量结果。
 
 </details>

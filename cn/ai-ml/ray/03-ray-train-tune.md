@@ -6,43 +6,43 @@
 
 验证使用了 Python 3.12 和 `ray[train,tune]==2.58.0`。这些额外组件会安装 Ray 的 Train/Tune 依赖项；**PyTorch 等框架需单独安装**。请根据实际工作负载检查 PyTorch、CUDA 和驱动程序的配对。
 
-此处的检查涵盖配置、回调/检查点 API 以及一个小型 CPU 标量 Tune 示例。它们不是 PyTorch 训练、GPU、分布式梯度或 EKS 自动扩缩测试。
+此处的检查涵盖配置、回调/检查点 API 以及一个小型 CPU 标量 Tune 示例。这些检查不包括 PyTorch 训练、GPU、分布式梯度或 EKS 自动扩缩测试。
 
 ## Ray Train V2 和训练代码职责
 
 在 2.58.0 中，当未设置 `RAY_TRAIN_V2_ENABLED` 时，V2 为默认版本。`ray.train.torch.TorchTrainer` 导入会相应地选择其 V2 实现。当环境变量选择较旧实现时，不要假定其契约完全相同。
 
-Trainer 协调 worker 和底层分布式进程组。它不会自动编写模型、优化器、损失/数据循环、数据分区或状态保存/恢复逻辑。对于 PyTorch，请使用 `prepare_model` 和 `prepare_data_loader` 等适当的辅助函数来完成设备/DDP/sampler 设置，然后验证数据重复、梯度同步和评估。框架集合通信不能全部描述为 Ray 对象存储传输。
+Trainer 协调工作进程和底层分布式进程组。它不会自动编写模型、优化器、损失/数据循环、数据分区或状态保存/恢复逻辑。对于 PyTorch，请使用 `prepare_model` 和 `prepare_data_loader` 等适当的辅助函数来完成设备/DDP/采样器设置，然后验证数据重复、梯度同步和评估。框架集合通信不能全部描述为 Ray 对象存储传输。
 
 ## ScalingConfig 和资源需求
 
-`ScalingConfig` 指定 worker 数量以及每个 worker 的逻辑 CPU/GPU 资源。也支持弹性配置，因此请检查实际模式及其数据/恢复要求。在 2.58.0 V2 中，设置旧版 `trainer_resources` 会引发弃用错误。请区分 V2 controller、训练 worker 和 Tune trial-driver 资源。
+`ScalingConfig` 指定工作进程数量以及每个工作进程的逻辑 CPU/GPU 资源。也支持弹性配置，因此请检查实际模式及其数据/恢复要求。在 2.58.0 V2 中，设置旧版 `trainer_resources` 会引发弃用错误。请区分 V2 控制器、训练工作进程和 Tune 试验驱动进程的资源。
 
-在框架进程初始化之前，放置组和 worker bundle 需要具备足够的容量。这既不能替代 Kubernetes 调度，也不能保证每个 Pod 都能原子调度。GPU 不足可能导致等待、超时或失败；Ray/KubeRay 边界、配额、镜像就绪情况以及 EC2 可用性也很重要。
+在框架进程初始化之前，放置组和工作进程资源束需要足够的容量。这既不能替代 Kubernetes 调度，也不能保证每个 Pod 都能原子调度。GPU 不足可能导致等待、超时或失败；Ray/KubeRay 配置的限制、配额、镜像就绪情况以及 EC2 可用性也很重要。
 
 ## 检查点和报告
 
-`Checkpoint.from_directory()` 会根据你准备的文件构建一个检查点引用。它不会自动捕获模型、优化器、RNG、调度器或数据集位置。请显式保存所需状态，然后在 worker 内加载 `train.get_checkpoint()` 返回的检查点。
+`Checkpoint.from_directory()` 会根据你准备的文件构建一个检查点引用。它不会自动捕获模型、优化器、RNG、调度器或数据集位置。请显式保存所需状态，然后在工作进程内加载 `train.get_checkpoint()` 返回的检查点。
 
-**2.58.0 V2 的 `train.report` 调用是一个屏障，每个 worker 必须达到相同的调用次数。** 即使只有 rank 0 保存文件，其他 rank 也要以 `checkpoint=None` 参与。某些 worker 跳过报告可能导致训练停滞。指标不会在 worker 间自动求平均；请在训练代码中计算所需聚合值。
+**2.58.0 V2 的 `train.report` 调用是一个屏障，每个工作进程都必须以相同次数调用它。** 即使只有 rank 0 保存文件，其他 rank 也要以 `checkpoint=None` 参与。某些工作进程跳过报告可能导致训练停滞。指标不会在工作进程间自动求平均；请在训练代码中计算所需聚合值。
 
-检查点上传默认采用同步模式。若使用异步上传或验证，请检查完成状态、临时文件生命周期以及特定功能限制。当多个 worker 保存分片时，避免文件名冲突。
+检查点上传默认采用同步模式。若使用异步上传或验证，请检查完成状态、临时文件生命周期以及特定功能限制。当多个工作进程保存分片时，避免文件名冲突。
 
-对于多个节点，请将 `train.RunConfig(storage_path=...)` 设置为所有 worker 都可访问的持久存储。本地 Pod 目录无法保证在节点/Pod 删除后仍能恢复。S3 路径仍需要 IAM、网络和保留配置。
+对于多个节点，请将 `train.RunConfig(storage_path=...)` 设置为所有工作进程都可访问的持久存储。本地 Pod 目录无法保证在节点/Pod 删除后仍能恢复。S3 路径仍需要 IAM、网络和保留配置。
 
 ### 故障类别和重试
 
-2.58.0 V2 的 `FailureConfig` 默认值为：训练 worker 错误的 `max_failures=0`、controller 错误的 `controller_failure_limit=-1`，以及抢占的 `max_preemption_failures=-1`。**仅设置 `max_failures=0` 并不会禁用所有重试类别。** 请将每个限制与 RayJob/运维截止时间一并配置。重试无法从缺失或不完整的检查点恢复进度。
+2.58.0 V2 的 `FailureConfig` 默认值为：训练工作进程错误的 `max_failures=0`、控制器错误的 `controller_failure_limit=-1`，以及抢占的 `max_preemption_failures=-1`。**仅设置 `max_failures=0` 并不会禁用所有重试类别。** 请将每个限制与 RayJob/运维截止时间一并配置。重试无法从缺失或不完整的检查点恢复进度。
 
 ## Ray Tune：搜索器和调度器
 
-Tune 管理 trial 配置和执行。搜索器选择参数候选项；trial 调度器使用中间指标来停止、暂停或继续 trial。网格/随机搜索不一定会根据先前指标调整其下一个候选项。
+Tune 管理试验配置和执行。搜索器选择参数候选项；试验调度器使用中间指标来停止、暂停或继续试验。网格/随机搜索不一定会根据先前指标调整其下一个候选项。
 
-请一并审查 `max_concurrent_trials`、trial 资源、放置组和集群容量。避免 trial driver 占用嵌套 Train worker 所需的全部资源。仅 CPU/GPU 总数相加并不能保证每个 worker bundle 都能够被放置。
+请一并审查 `max_concurrent_trials`、试验资源、放置组和集群容量。避免试验驱动进程占用其嵌套 Train 工作进程所需的全部资源。仅凭 CPU/GPU 总数不能保证每个工作进程资源束都能完成调度。
 
 ## 小型 Tune 示例
 
-这会运行**两个标量目标 trial**，而非模型训练。实际检查收集了两个结果，并选择 `x=3`，得分为 0。
+这会运行**两个标量目标试验**，而非模型训练。实际检查收集了两个结果，并选择 `x=3`，得分为 0。
 
 ```python
 from pathlib import Path
@@ -73,27 +73,27 @@ finally:
     ray.shutdown()
 ```
 
-Ray 逻辑资源和对象存储大小并非整个进程的 OS 限制。在复用结果目录前，请确定你是要开始新运行还是进行恢复。
+Ray 逻辑资源和对象存储大小并非整个进程的操作系统限制。在复用结果目录前，请确定你是要开始新运行还是进行恢复。
 
 ## 当前的 Train/Tune 集成
 
-**不要将直接向 `Tuner` 传递 V2 Trainer 实例描述为当前推荐路径。** 原生检查对 V2 DataParallelTrainer 实例引发了 `TuneError`。请区分较旧 BaseTrainer 的兼容性/弃用处理与 V2。
+**不要将直接向 `Tuner` 传递 V2 Trainer 实例描述为当前推荐路径。** 原生检查中，将 V2 DataParallelTrainer 实例传入时抛出了 `TuneError`。请区分较旧 BaseTrainer 的兼容性/弃用处理与 V2。
 
-当前文档化的模式使用**函数 trainable**，它会构建框架 Trainer 并调用 `.fit()`。通过 `train_loop_config` 传递 trial 参数，并为每个 trial 使用唯一的 Train 运行名称和存储路径。
+当前文档中的模式以**函数作为试验执行入口（trainable）**，在函数内构建相应训练框架的 Trainer 并调用 `.fit()`。通过 `train_loop_config` 传递试验参数，并为每个试验使用唯一的 Train 运行名称和存储路径。
 
-要转发中间指标和检查点路径，请通过 Train `RunConfig(callbacks=[...])` 附加 `ray.tune.integration.ray_train.TuneReportCallback`。请在 Tune 会话内构建它。2.58.0 实现会转发第一个 worker 的指标字典，而不会求平均。它将现有检查点路径添加到指标中，而不是再次上传检查点。
+要转发中间指标和检查点路径，请通过 Train `RunConfig(callbacks=[...])` 附加 `ray.tune.integration.ray_train.TuneReportCallback`。请在 Tune 会话内构建它。2.58.0 实现会转发第一个工作进程的指标字典，而不会求平均。它将现有检查点路径添加到指标中，而不是再次上传检查点。
 
 对 Tuner 使用 `tune.RunConfig`，对 Trainer 使用 `train.RunConfig`。请将它们的故障、存储和回调设置分开。此集成需要显式连接和资源规划。
 
-![Tune trial 函数会创建独立的 Train 运行，其 worker 使用框架通信。检查点会进入共享持久存储；回调会将指标和检查点路径转发给 Tune。](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
+![Tune 试验函数会创建独立的 Train 运行，其工作进程使用框架通信。检查点会进入共享持久存储；回调会将指标和检查点路径转发给 Tune。](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
 
 [交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-03-ray-train-tune-0.html)
 
 ## EKS 运维检查
 
-请分别检查 Ray 资源/放置需求、KubeRay worker-group 边界、Kubernetes Pod 放置以及物理节点供应。即使有可用容量，镜像拉取、数据集访问、框架初始化/通信和检查点权限也可能延迟启动。
+请分别检查 Ray 资源/放置需求、KubeRay 工作进程组的配置限制、Kubernetes Pod 调度以及物理节点容量。即使有可用容量，镜像拉取、数据集访问、框架初始化/通信和检查点权限也可能延迟启动。
 
-自动扩缩不会即时提供 GPU，也不会自动给出成本/完成时间的界限。请协调 trial 并发数、worker、最大副本数、重试类别和运维截止时间。在删除 RayJob 或集群前，验证结果/检查点是否保留。
+自动扩缩不会即时提供 GPU，也不会自动给出成本/完成时间的界限。请协调试验并发数、工作进程、最大副本数、重试类别和运维截止时间。在删除 RayJob 或集群前，验证结果/检查点是否保留。
 
 ## 主要来源
 

@@ -1,242 +1,149 @@
 # Cuestionario de Kafka Connect y MirrorMaker
 
-Este cuestionario evalúa tu comprensión del modelo de conectores source/sink de Kafka Connect, el modo distribuido, los CRD `KafkaConnect`/`KafkaConnector` de Strimzi, y la arquitectura de MirrorMaker 2 y sus patrones de recuperación ante desastres.
+Revisa la configuración v1 de Strimzi del capítulo, los complementos reales, la replicación y las condiciones de recuperación.
 
-## Preguntas de opción múltiple
-
-1. Un conector como Debezium, que lee el WAL/binlog de una base de datos y transmite eventos de cambio hacia Kafka, ¿qué tipo de conector es?
-   - A) Sink connector
-   - B) Source connector
-   - C) Filter connector
-   - D) Transform connector
+## 1. ¿En qué dirección mueven los datos Debezium PostgreSQL y un sink de S3?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Source connector**
+Debezium es un conector de origen que envía a Kafka los cambios de la instantánea y del WAL; un sink de S3 envía los registros de Kafka a S3. Comprueba los formatos y el comportamiento de entrega de cada complemento.
 
-**Explicación:**
-Los source connectors extraen datos HACIA Kafka desde un sistema externo. Debezium es el ejemplo canónico de un source connector de CDC (Change Data Capture): lee el write-ahead log (o binlog) de una base de datos y transmite eventos de cambio a nivel de fila hacia Kafka. Los sink connectors hacen lo contrario: envían datos FUERA de Kafka hacia sistemas externos como S3 o Elasticsearch.
 </details>
 
-2. ¿Qué tienen en común el S3 Sink Connector y el Elasticsearch Sink Connector?
-   - A) Extraen datos desde un sistema externo hacia Kafka
-   - B) Envían datos desde un topic de Kafka hacia un sistema externo
-   - C) Replican datos entre topics
-   - D) Administran offsets de consumer groups
+## 2. ¿Archivar los registros de Debezium con el sink de S3 de Aiven reconstruye automáticamente la tabla actual de la base de datos?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Envían datos desde un topic de Kafka hacia un sistema externo**
+No. El ejemplo archiva eventos CDC con la operación y los datos anteriores y posteriores al cambio. Para materializar el estado actual hay que manejar las claves, las eliminaciones y tombstones, el orden y la reproducción de eventos.
 
-**Explicación:**
-Tanto el S3 Sink Connector como el Elasticsearch Sink Connector son sink connectors, lo que significa que envían datos acumulados en un topic de Kafka hacia un sistema externo. S3 Sink Connector escribe datos de topics en un bucket de S3 en formatos como JSON o Parquet, mientras que Elasticsearch Sink Connector indexa datos de topics para búsqueda y análisis.
 </details>
 
-3. En el modo distribuido de Kafka Connect, ¿qué ocurre cuando un worker muere?
-   - A) Todo el clúster de Connect se detiene
-   - B) Las tareas del worker muerto se rebalancean automáticamente hacia otros workers supervivientes
-   - C) El conector cambia automáticamente al modo standalone
-   - D) Toda la información de offsets se restablece
+## 3. ¿En qué se diferencian el coordinador del grupo distribuido de Connect y el líder de los workers?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Las tareas del worker muerto se rebalancean automáticamente hacia otros workers supervivientes**
+Un broker de Kafka coordina el grupo; el líder elegido entre los workers calcula las asignaciones. Un fallo de worker puede retrasar la reasignación y provocar la reproducción de registros, y es distinto de un fallo de tarea.
 
-**Explicación:**
-En modo distribuido, varios procesos worker forman un grupo que actúa como un único clúster de Connect, con un coordinador de grupo que distribuye conectores y tareas entre los workers. Si un worker muere, el coordinador lo detecta y rebalancea automáticamente las tareas de ese worker hacia los workers restantes para mantener la disponibilidad. Esta es la diferencia clave frente al modo standalone, que se ejecuta como un único proceso sin alta disponibilidad.
 </details>
 
-4. ¿Por qué el modo standalone de Kafka Connect nunca se usa en entornos Kubernetes/Strimzi?
-   - A) No admite una REST API
-   - B) No tiene alta disponibilidad ni escalabilidad horizontal
-   - C) Solo admite source connectors
-   - D) No admite TLS
+## 4. ¿Es imposible ejecutar Connect en modo standalone en Kubernetes?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) No tiene alta disponibilidad ni escalabilidad horizontal**
+No; se puede ejecutar allí, pero no dispone de conmutación por error entre workers distribuidos. Strimzi KafkaConnect administra el modo distribuido. Agregar workers no paraleliza automáticamente un conector que tiene una sola tarea.
 
-**Explicación:**
-El modo standalone se ejecuta como un único proceso con un almacén de offsets basado en archivos, diseñado para desarrollo y pruebas locales. Como solo hay un worker, no hay otro worker que tome el control si falla, y la carga de trabajo no puede distribuirse entre varios nodos. Debido a estas limitaciones, los entornos Kubernetes/Strimzi siempre ejecutan el modo distribuido, respaldado por varios Pods.
 </details>
 
-5. ¿Cuál es la principal ventaja de usar el CRD `KafkaConnector` en Strimzi?
-   - A) Te permite administrar conectores declarativamente mediante GitOps en lugar de llamar directamente a la REST API
-   - B) Escribe automáticamente código de plugins de conectores por ti
-   - C) Convierte el modo distribuido en modo standalone
-   - D) Elimina la necesidad de un topic de almacenamiento de offsets
+## 5. ¿Qué puede ocurrir si se edita un conector directamente mediante REST mientras los recursos KafkaConnector lo administran?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Te permite administrar conectores declarativamente mediante GitOps en lugar de llamar directamente a la REST API**
+El operador puede reconciliarlo y devolverlo al estado deseado del recurso personalizado (CR). Usa el CR como vía para modificarlo y restringe tanto las actualizaciones de Kubernetes como el acceso a Connect REST.
 
-**Explicación:**
-Con el CRD `KafkaConnector`, no necesitas llamar directamente a la REST API de Connect para crear, eliminar o reconfigurar conectores: declaras el estado deseado en un manifiesto YAML, y el Strimzi Operator lo reconcilia con el estado real del conector. Esto habilita un flujo de trabajo GitOps donde la configuración del conector se controla por versión en un repositorio Git y se despliega mediante revisión de código/pipelines de CI.
 </details>
 
-6. ¿Qué anotación se requiere en un recurso `KafkaConnect` para habilitar el CRD `KafkaConnector` para él?
-   - A) `strimzi.io/kraft: enabled`
-   - B) `strimzi.io/node-pools: enabled`
-   - C) `strimzi.io/use-connector-resources: "true"`
-   - D) `strimzi.io/connect-mode: distributed`
+## 6. ¿Qué anotación habilita la reconciliación de KafkaConnector y qué versión de API se usa aquí?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) `strimzi.io/use-connector-resources: "true"`**
+`strimzi.io/use-connector-resources: "true"` y `kafka.strimzi.io/v1`. La migración a v1 incluye campos como `groupId` y los nombres de los topics internos; cambiar solo `apiVersion` no basta.
 
-**Explicación:**
-Agregar la anotación `strimzi.io/use-connector-resources: "true"` a los metadatos de un recurso `KafkaConnect` le indica al Strimzi Operator que observe los recursos `KafkaConnector` dirigidos a ese clúster de Connect y los reconcilie en conectores reales. Sin esta anotación, crear recursos `KafkaConnector` no tiene efecto.
 </details>
 
-7. ¿Qué caracteriza el enfoque recomendado de Strimzi para construir una imagen personalizada con plugins de conectores mediante `KafkaConnect.spec.build`?
-   - A) Debes escribir un Dockerfile a mano
-   - B) Declaras URLs de artefactos de plugins, y el Operator construye y envía la imagen al registry que especifiques
-   - C) Las imágenes solo pueden enviarse a Docker Hub
-   - D) Solo funciona en modo standalone
+## 7. ¿Qué se debe fijar y comprobar en `spec.build`, y cómo se autentica con ECR?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Declaras URLs de artefactos de plugins, y el Operator construye y envía la imagen al registry que especifiques**
+Especifica las versiones de los complementos, las URL, las sumas de comprobación y una etiqueta para la imagen de salida. Mantén un Secret válido para publicar la imagen y los permisos para extraerla; los tokens de ECR caducan a las 12 horas. La identidad de S3 en tiempo de ejecución y la autenticación para compilar y publicar la imagen son independientes.
 
-**Explicación:**
-El patrón recomendado de Strimzi es completar declarativamente `KafkaConnect.spec.build` con un `output` (la imagen de registry destino y un push secret) y una lista de `plugins` (cada uno especificando URLs de artefactos tgz/zip/jar o coordenadas Maven). No se requiere Dockerfile: el Strimzi Operator realiza la compilación por sí mismo y envía la imagen resultante a un registry como Amazon ECR.
 </details>
 
-8. En MirrorMaker 2, ¿qué conector es responsable de traducir los offsets de consumer groups de un clúster source a los offsets equivalentes en el clúster target?
-   - A) MirrorSourceConnector
-   - B) MirrorHeartbeatConnector
-   - C) MirrorCheckpointConnector
-   - D) MirrorTopicConnector
+## 8. ¿Para qué sirven las asignaciones de offsets y los checkpoints de MM2?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) MirrorCheckpointConnector**
+`MirrorSourceConnector` emite asignaciones de offsets de origen a destino; `MirrorCheckpointConnector` las usa para traducir los commits de grupos del origen. No se debe suponer que los offsets de origen y destino sean iguales.
 
-**Explicación:**
-MirrorCheckpointConnector traduce periódicamente los offsets de consumer groups de un clúster source a los offsets equivalentes en el clúster target y los registra en un topic de checkpoint. Esta traducción de offsets es lo que permite a un consumer group saber "cuánto había procesado ya" cuando hace failover al clúster de DR y necesita reanudar el consumo. MirrorSourceConnector maneja la replicación real de mensajes, topics y ACLs, mientras que MirrorHeartbeatConnector envía heartbeats que indican que el pipeline de replicación está vivo.
 </details>
 
-9. ¿Qué convención de nombres usa el `DefaultReplicationPolicy` predeterminado de MirrorMaker 2 para topics remotos?
-   - A) `<topic>.<source-cluster-alias>`
-   - B) `<source-cluster-alias>.<topic>`
-   - C) `mirror-<topic>`
-   - D) El nombre original del topic sin cambios
+## 9. ¿Cómo nombra los topics remotos `DefaultReplicationPolicy` y cómo detecta ciclos?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `<source-cluster-alias>.<topic>`**
+Usa `<source-alias>.<topic>` y detecta un ciclo de vuelta a un alias de destino que ya esté en la cadena de origen. No excluye todos los topics con prefijo: la replicación de varios saltos a un tercer clúster puede ser legítima.
 
-**Explicación:**
-`DefaultReplicationPolicy` nombra los topics remotos como `<source-cluster-alias>.<topic>`. Por ejemplo, replicar el topic `orders` desde un clúster con alias `us-east-1` produce un topic remoto llamado `us-east-1.orders` en el clúster target. Mantener el nombre original sin cambios requiere `IdentityReplicationPolicy` en su lugar, lo que hace más difícil prevenir loops en una configuración active-active.
 </details>
 
-10. ¿Cuál es la diferencia central entre los patrones de DR active-passive y active-active?
-    - A) Active-passive comprime datos y active-active no
-    - B) Active-passive replica solo en una dirección, mientras que active-active replica bidireccionalmente y requiere prevención de loops
-    - C) Active-active no usa MirrorMaker 2
-    - D) Solo active-passive usa el CRD KafkaConnector
+## 10. ¿Qué hay que preparar, además de MM2, para una conmutación por error activo-pasivo?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Active-passive replica solo en una dirección, mientras que active-active replica bidireccionalmente y requiere prevención de loops**
+Aísla a los escritores anteriores, mide la actualidad de la replicación y los checkpoints, verifica los permisos y esquemas del destino, cambia los endpoints y las suscripciones, y valida las posiciones al reanudar. Si el origen no se puede recuperar, se pueden perder datos que no alcanzaron a replicarse; mide también la reproducción duplicada.
 
-**Explicación:**
-El patrón active-passive replica en una sola dirección, desde el clúster primario hacia el clúster de DR, y el clúster de DR normalmente permanece inactivo. El patrón active-active replica bidireccionalmente entre ambos clústeres para que ambas regiones puedan atender tráfico, pero esto significa que un topic replicado podría reflejarse de vuelta a su clúster de origen, causando un loop infinito, a menos que se prevenga explícitamente mediante `replication.policy.class` y filtros de topics.
 </details>
 
-## Preguntas de respuesta corta
-
-11. ¿Cuál es el nombre del conector de MirrorMaker 2 que envía periódicamente mensajes de heartbeat para señalar que el clúster source está vivo y que el pipeline de replicación está funcionando?
+## 11. ¿Un heartbeat de Apache MirrorHeartbeatTask demuestra que la replicación de los datos de origen está sana?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: MirrorHeartbeatConnector**
+No. La tarea puede emitir un heartbeat sin leer datos del origen. Comprueba también el avance de las particiones, los errores y la actualidad de los checkpoints. Distingue esta clase de Apache de los campos que admite el CRD v1 de Strimzi 1.3.
 
-**Explicación:**
-MirrorHeartbeatConnector envía periódicamente mensajes de heartbeat que indican que el clúster source está operando normalmente y que el pipeline de replicación no se ha interrumpido. Si estos heartbeats dejan de llegar durante un período de tiempo, esa ausencia puede usarse como señal para detectar lag de replicación o una conexión rota con el clúster source.
 </details>
 
-12. ¿Cuáles son los nombres de las tres claves de configuración de topics internos que los workers distribuidos de Strimzi Kafka Connect usan para almacenar offsets, configuración de conectores/tareas y estado de tareas? (por ejemplo, offset.storage.topic)
+## 12. ¿Cuáles son los campos de topics internos de Connect v1 y qué requisitos de particiones y retención tienen?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: `offset.storage.topic`, `config.storage.topic`, `status.storage.topic`**
+`spec.configStorageTopic`, `spec.offsetStorageTopic` y `spec.statusStorageTopic`. Usa compactación y una partición para el topic de configuración. Establece el grupo de workers con `spec.groupId`; los offsets de los grupos de los sinks son independientes.
 
-**Explicación:**
-Los workers de Connect en modo distribuido usan tres topics internos: `offset.storage.topic` para offsets, `config.storage.topic` para configuración de conectores/tareas y `status.storage.topic` para estado de tareas. Si estos topics se pierden, cada conector del clúster pierde su estado, por lo que los despliegues de producción deben establecer su factor de replicación en al menos 3.
 </details>
 
-13. ¿Qué clave de configuración controla si MirrorMaker 2 también sincroniza los ACLs de topics del clúster source con el clúster target?
+## 13. ¿`sync.topic.acls.enabled=true` copia sin cambios toda la política de seguridad del clúster de origen?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: `sync.topic.acls.enabled`**
+No. Kafka 4.3.1 procesa ACL de topics literales seleccionados, excluye `ALLOW WRITE` y reduce `ALLOW ALL` a `READ`. No migra todos los usuarios, las políticas del clúster ni las políticas externas de IAM. El ejemplo administra por separado las políticas del destino.
 
-**Explicación:**
-Establecer `sync.topic.acls.enabled` en `true` hace que los ACLs de topics del clúster source también se sincronicen con el clúster target, de modo que la política de control de acceso no tenga que mantenerse dos veces. Sin embargo, si los dos clústeres tienen posturas de seguridad distintas —por ejemplo, si el clúster de DR requiere un control de acceso más estricto— puede ser más seguro deshabilitar esto y administrar los ACLs de forma independiente en cada lado.
 </details>
 
-14. ¿Cuál es el nombre de la métrica que expone MirrorMaker 2 y que informa el tiempo desde que un mensaje se produjo en el clúster source hasta que se replicó completamente al target?
+## 14. ¿Qué hay que tener en cuenta al interpretar `replication-latency-ms` y la compresión entre regiones?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: `replication-latency-ms`**
+Mide el tiempo de confirmación del destino menos la marca de tiempo del registro; le afectan la diferencia entre relojes, el modo de marcas de tiempo y la reproducción. La compresión del productor de destino en un worker de la región de destino no reduce el tráfico de lectura del origen que ya cruzó regiones.
 
-**Explicación:**
-`replication-latency-ms` es una de las métricas principales expuestas por MirrorMaker 2, e informa el tiempo transcurrido desde que un mensaje se produjo en el clúster source hasta que se replicó completamente al clúster target. Hacer scraping de esta métrica en Prometheus y alertar sobre ella te permite verificar continuamente un SLA de lag de replicación.
 </details>
 
-15. En Strimzi, ¿qué campo de `spec` en un recurso `KafkaMirrorMaker2` especifica cuál de los clústeres configurados deben usar los Pods worker de MM2 para almacenar sus propios topics internos (offsets, configuración, etc.)?
+## 15. ¿Dónde se definen el destino y el origen en KafkaMirrorMaker2 v1?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: `connectCluster`**
+En `spec.target` y `spec.mirrors[].source`. El destino requiere un alias, `bootstrapServers`, `groupId` y los nombres de los tres topics internos. No uses la estructura anterior `connectCluster`/`clusters`/`heartbeatConnector`.
 
-**Explicación:**
-`KafkaMirrorMaker2.spec.connectCluster` apunta a uno de los alias de clúster definidos en `spec.clusters`, determinando qué clúster usan los Pods worker de MM2 para almacenar sus propios topics internos de Kafka Connect (topics de almacenamiento de offsets, configuración y estado). Normalmente se establece en el clúster de DR o target.
 </details>
 
-## Preguntas prácticas
-
-16. Escribe un recurso `KafkaConnector` para un source connector Debezium PostgreSQL que se ejecute en un clúster `KafkaConnect` llamado `connect-cluster` (que tiene establecida la anotación `strimzi.io/use-connector-resources: "true"`). Limítalo a una sola tarea.
+## 16. Escribe el KafkaConnector de Debezium PostgreSQL del capítulo y describe sus requisitos previos.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnector
 metadata:
   name: orders-db-source
@@ -247,85 +154,44 @@ spec:
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1
   config:
-    database.hostname: orders-db.xxxxxxx.us-east-1.rds.amazonaws.com
+    database.hostname: orders-db.REPLACE.ap-northeast-2.rds.amazonaws.com
     database.port: 5432
     database.user: debezium
-    database.password: "${secrets:kafka/debezium-db-credentials:password}"
+    database.password: "${dir:/mnt/debezium:password}"
     database.dbname: orders
+    database.sslmode: verify-full
+    database.sslrootcert: /mnt/rds-ca/ca.crt
     topic.prefix: orders-db
     plugin.name: pgoutput
     slot.name: debezium_orders
-    table.include.list: public.orders,public.order_items
+    publication.name: debezium_orders_pub
+    publication.autocreate.mode: disabled
+    table.include.list: 'public[.]orders,public[.]order_items'
+    snapshot.mode: initial
 ```
 
-**Explicación:**
-La etiqueta `metadata.labels.strimzi.io/cluster: connect-cluster` le indica al Strimzi Operator en qué clúster `KafkaConnect` debe ejecutarse este `KafkaConnector`. `spec.class` especifica la clase real de implementación del conector (el conector Debezium PostgreSQL), y `plugin.name: pgoutput` especifica el plugin de salida de replicación lógica de PostgreSQL. `tasksMax: 1` refleja el hecho de que un source connector PostgreSQL solo puede usar un único replication slot, por lo que su trabajo no puede paralelizarse entre varias tareas.
+Prepara la replicación lógica, los privilegios, la publicación y una identidad de réplica adecuada. Lee la contraseña mediante el proveedor permitido del directorio de Secrets y verifica el nombre de host TLS de la base de datos. Usa una sola tarea y supervisa el WAL retenido por una ranura que se haya quedado atascada.
+
 </details>
 
-17. Escribe un recurso `KafkaMirrorMaker2` que replique en una sola dirección topics que coincidan con `orders.*` y `payments.*` desde un clúster con alias `us-east-1` hacia un clúster con alias `dr-region`, sincronizando también offsets de consumer groups.
+## 17. ¿Qué condiciones clave permiten sincronizar los offsets de grupo en el ejemplo MM2 v1 del capítulo?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-```yaml
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaMirrorMaker2
-metadata:
-  name: primary-to-dr
-  namespace: kafka
-spec:
-  version: 3.9.0
-  replicas: 3
-  connectCluster: dr-region
-  clusters:
-    - alias: us-east-1
-      bootstrapServers: primary-kafka-bootstrap.us-east-1.example.com:9093
-    - alias: dr-region
-      bootstrapServers: dr-kafka-bootstrap.us-west-2.example.com:9093
-      config:
-        config.storage.replication.factor: 3
-        offset.storage.replication.factor: 3
-        status.storage.replication.factor: 3
-  mirrors:
-    - sourceCluster: us-east-1
-      targetCluster: dr-region
-      sourceConnector:
-        tasksMax: 5
-        config:
-          replication.factor: 3
-          offset-syncs.topic.replication.factor: 3
-          sync.topic.acls.enabled: "true"
-      heartbeatConnector:
-        config:
-          heartbeats.topic.replication.factor: 3
-      checkpointConnector:
-        config:
-          checkpoints.topic.replication.factor: 3
-          sync.group.offsets.enabled: "true"
-      topicsPattern: "orders.*|payments.*"
-      groupsPattern: "orders-consumer-.*"
-```
+Haz coincidir la política de replicación del origen y de los checkpoints, así como la ubicación de `offset-syncs`, y habilita `sync.group.offsets.enabled=true`. Se necesitan asignaciones/checkpoints válidos y permisos; el grupo de destino debe estar inactivo o no existir. Los consumidores activos no se sobrescriben. Usa la estructura de origen/destino de `mm2.yaml` del capítulo.
 
-**Explicación:**
-Cada entrada en la lista `mirrors` define una dirección de replicación (`sourceCluster` a `targetCluster`). `topicsPattern` restringe la replicación a `orders.*` y `payments.*`, y establecer `checkpointConnector.config.sync.group.offsets.enabled: "true"` hace que los offsets traducidos de consumer groups se escriban en `__consumer_offsets` del clúster target. `connectCluster: dr-region` designa la región de DR como el clúster donde los workers de MM2 almacenan sus topics internos.
 </details>
 
-18. Explica dos configuraciones que revisarías para evitar que un topic se replique infinitamente en un loop (A a B a A a B...) en una configuración active-active.
+## 18. ¿`IdentityReplicationPolicy` y `topicsPattern` hacen seguras las escrituras bidireccionales arbitrarias?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-1. `replication.policy.class` — con el `DefaultReplicationPolicy` predeterminado, los topics que ya tienen un prefijo de clúster remoto (`<alias>.<topic>`) se excluyen automáticamente de futuras replicaciones.
-2. `topicsPattern` — restringir el patrón en cada dirección de mirroring para incluir explícitamente solo los topics que realmente necesitan replicación evita que topics no previstos queden atrapados en un ciclo de replicación.
+No. Identity pierde la información del prefijo de origen y no tiene una detección de ciclos equivalente a la política predeterminada. Diseña la propiedad direccional de los topics, los filtros, las políticas de escritura y el cambio de tráfico. Los filtros de topics no resuelven automáticamente los conflictos de datos ni los duplicados.
 
-**Explicación:**
-La convención de nombres de `DefaultReplicationPolicy` (`<source-cluster-alias>.<topic>`) es en sí misma la primera línea de defensa contra loops: si el clúster B intenta replicar un topic como `A.orders` de vuelta al clúster A, MM2 lo reconoce como un topic remoto ya prefijado y no lo vuelve a replicar. Además, restringir explícitamente `topicsPattern` para cada dirección de mirroring reduce el riesgo de que un error de configuración o un patrón inusual de nombres de topics active accidentalmente un loop de replicación.
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../../data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [Siguiente cuestionario: Integración con MSK](./06-msk-integration-quiz.md)
+[Volver al material de aprendizaje](../../../data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [Siguiente cuestionario](./06-msk-integration-quiz.md)

@@ -9,7 +9,7 @@ Estas preguntas conservan los 20 temas originales usando kro 0.9.4.
 <details>
 <summary>Mostrar respuesta</summary>
 
-Defina esquemas de API y grafos de recursos en RGD, infiera dependencias a partir de referencias CEL y reconcilie instancias. kro no es un ejecutor de scripts imperativos.
+Define esquemas de API y grafos de recursos en RGD, infiere dependencias a partir de referencias CEL y reconcilia instancias. kro no es un ejecutor de scripts imperativos.
 
 </details>
 
@@ -36,7 +36,7 @@ Un grafo de referencias de recursos y reconciliación continua de instancias. He
 <details>
 <summary>Mostrar respuesta</summary>
 
-Use schema.spec o schema.metadata, como `${schema.spec.replicas}`. No use .parent ni sintaxis de plantillas Go.
+Usa `schema.spec` o `schema.metadata`, como `${schema.spec.replicas}`. No uses `.parent` ni sintaxis de plantillas Go.
 
 </details>
 
@@ -45,7 +45,7 @@ Use schema.spec o schema.metadata, como `${schema.spec.replicas}`. No use .paren
 <details>
 <summary>Mostrar respuesta</summary>
 
-Use expresiones CEL Boolean en includeWhen. Cambiar las condiciones puede añadir o eliminar recursos, por lo que se deben revisar las implicaciones del ciclo de vida para recursos con estado.
+Usa expresiones CEL booleanas en `includeWhen`. Cambiar las condiciones puede añadir o eliminar recursos, por lo que hay que revisar las implicaciones del ciclo de vida para los recursos con estado.
 
 </details>
 
@@ -54,7 +54,7 @@ Use expresiones CEL Boolean en includeWhen. Cambiar las condiciones puede añadi
 <details>
 <summary>Mostrar respuesta</summary>
 
-Defina expresiones CEL en spec.schema.status, por ejemplo `${deployment.status.availableReplicas}`. statusMappings no es un campo actual.
+Define expresiones CEL en `spec.schema.status`, por ejemplo `${deployment.status.availableReplicas}`. `statusMappings` no es un campo actual.
 
 </details>
 
@@ -63,7 +63,7 @@ Defina expresiones CEL en spec.schema.status, por ejemplo `${deployment.status.a
 <details>
 <summary>Mostrar respuesta</summary>
 
-Las referencias CEL a otros ID de recursos infieren un DAG. Los dependientes también esperan las condiciones readyWhen cuando están presentes. Los ciclos se rechazan; el orden de listado de YAML no sustituye a las dependencias.
+Las referencias CEL a otros ID de recursos infieren un DAG. Los dependientes también esperan las condiciones `readyWhen` cuando están presentes. Los ciclos se rechazan; el orden de listado de YAML no sustituye a las dependencias.
 
 </details>
 
@@ -108,7 +108,7 @@ ResourceGraphDefinition define el esquema de API generado, los recursos administ
 <details>
 <summary>Mostrar respuesta</summary>
 
-El spec de la instancia de API generada. Sus tipos, valores predeterminados y límites de SimpleSchema deben coincidir con los campos que realmente consumen las plantillas.
+El campo `spec` de la instancia de API generada. Sus tipos, valores predeterminados y límites de SimpleSchema deben coincidir con los campos que realmente consumen las plantillas.
 
 </details>
 
@@ -117,7 +117,7 @@ El spec de la instancia de API generada. Sus tipos, valores predeterminados y l�
 <details>
 <summary>Mostrar respuesta</summary>
 
-Haga referencia directamente a su ID de recurso, como `${deployment.spec.selector.matchLabels}` o `${service.metadata.name}`. No use .children.
+Haz referencia directamente a su ID de recurso, como `${deployment.spec.selector.matchLabels}` o `${service.metadata.name}`. No uses .children.
 
 </details>
 
@@ -126,7 +126,7 @@ Haga referencia directamente a su ID de recurso, como `${deployment.spec.selecto
 <details>
 <summary>Mostrar respuesta</summary>
 
-Inspeccione el inventario actual de ApplySet, los metadatos de propietario y las oleadas de eliminación internal.kro.run/apply-order. No trate una anotación kro.run/owner inventada como todo el contrato de seguimiento.
+Inspecciona el inventario actual de ApplySet, los metadatos del propietario y las oleadas de eliminación `internal.kro.run/apply-order`. No trates una anotación inventada `kro.run/owner` como si fuera todo el contrato de seguimiento.
 
 </details>
 
@@ -139,12 +139,12 @@ SimpleSchema se convierte en el esquema OpenAPI del CRD generado, que Kubernetes
 
 </details>
 
-## 16. Escriba la instancia de ejemplo NginxApp.
+## 16. Escribe la instancia de ejemplo NginxApp.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Primero asegúrese de que el RGD esté Active y que su CRD generado esté Established. Esta instancia deshabilita ingress.
+Primero asegúrate de que el RGD esté Active y que su CRD generado esté Established. Esta instancia deshabilita ingress.
 
 ```yaml
 apiVersion: platform.example.com/v1alpha1
@@ -154,7 +154,7 @@ metadata:
   namespace: example
 spec:
   replicas: 2
-  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  image: nginxinc/nginx-unprivileged:1.30.6-alpine
   ingress:
     enabled: false
     className: internal
@@ -164,12 +164,12 @@ spec:
 
 </details>
 
-## 17. Escriba la entrada de recurso que crea un Deployment.
+## 17. Escribe la entrada de recurso que crea un Deployment.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Esta es la misma plantilla que la guía. readyWhen solo se refiere al propio Deployment; verifique la imagen, el namespace y las políticas en el entorno real.
+Esta es la misma plantilla que la guía. `readyWhen` solo se refiere al propio Deployment; verifica la imagen, el namespace y las políticas en el entorno real.
 
 ```yaml
 resources:
@@ -237,12 +237,12 @@ resources:
 
 </details>
 
-## 18. Exponga availableReplicas en status.
+## 18. Expón `availableReplicas` en `status`.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Esta es la sección status en spec.schema de RGD. La resolución puede esperar valores faltantes; no representa de forma exhaustiva la salud de la aplicación.
+Esta es la sección `status` dentro de `spec.schema` del RGD. La resolución puede esperar valores faltantes; no representa de forma exhaustiva la salud de la aplicación.
 
 ```yaml
 status:
@@ -252,12 +252,12 @@ status:
 
 </details>
 
-## 19. Diseñe una estrategia de desarrollo/staging/producción.
+## 19. Diseña una estrategia para desarrollo, staging y producción.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-Comparta un contrato de API validado y digests de imágenes, a la vez que separa namespaces, réplicas, ingress y políticas por instancia. Prepare kro/RGD/permisos en cada clúster y use herramientas de flota para la sincronización. Los campos de autoscaling no utilizados no crean un HPA.
+Comparte un contrato de API validado y los digests de las imágenes, y separa los namespaces, las réplicas, el ingress y las políticas por instancia. Prepara kro/RGD/permisos en cada clúster y usa herramientas de flota para sincronizarlos. Los campos de autoscaling que no se usan no crean un HPA.
 
 </details>
 
@@ -266,6 +266,6 @@ Comparta un contrato de API validado y digests de imágenes, a la vez que separa
 <details>
 <summary>Mostrar respuesta</summary>
 
-Ninguno implementa automáticamente backup, restauración, failover o migración de esquemas de bases de datos. Valide el comportamiento de un operator dedicado o de un servicio administrado, así como la retención de datos. Restaurar una especificación de Git no es una reversión de base de datos; los últimos GraphRevisions fallidos no vuelven automáticamente a una versión anterior.
+Ninguno implementa automáticamente copias de seguridad, restauración, conmutación por error o migración de esquemas de bases de datos. Valida el comportamiento de un operator dedicado o de un servicio administrado, así como la retención de datos. Restaurar una especificación de Git no revierte la base de datos; las GraphRevisions fallidas más recientes no vuelven automáticamente a una versión anterior.
 
 </details>

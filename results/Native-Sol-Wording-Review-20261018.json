@@ -9609,6 +9609,1321 @@
         "frozenEnglishCatalog": "/tmp/english-final-sources.json"
       },
       "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0027-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/platform-engineering/01-helm-quiz.md",
+      "targetPath": "cn/quizzes/platform-engineering/01-helm-quiz.md",
+      "sourceBlob": "8ec90395a863a63c423e716e697683d459a41f6c",
+      "sourceSha256": "bb42e2c11298e8ecf35055196e422e602f1ca35beab87517c849a0efaf2cf302",
+      "beforeTargetSha256": "1a0ddbd27cf3c8b0c51170cbf436b86b4f3882d03a368132fb142945f4193d18",
+      "beforeSnapshot": "/tmp/preimages/1a0ddbd27cf3c8b0c51170cbf436b86b4f3882d03a368132fb142945f4193d18.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "8ec90395a863a63c423e716e697683d459a41f6c",
+      "targetSha256": "f4c2db36a226852bdbe870efcec6599c8779b69218ee4f410f10b2f5274c8875",
+      "currentTargetSha256": "f4c2db36a226852bdbe870efcec6599c8779b69218ee4f410f10b2f5274c8875",
+      "afterTargetSha256": "f4c2db36a226852bdbe870efcec6599c8779b69218ee4f410f10b2f5274c8875",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/f4c2db36a226852bdbe870efcec6599c8779b69218ee4f410f10b2f5274c8875.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0028-source-snapshots/bb42e2c11298e8ecf35055196e422e602f1ca35beab87517c849a0efaf2cf302.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually compared complete original source/target and reread the whole final page, all 20 topics: 10 MCQs with 40 alternatives/answers, five short answers, three practical answers with exact bash/YAML/text fences and two advanced answers. Preserved Helm3.21.3/4.3.0 baseline, Tiller removal not making manifests safe, values consumed by templates only, upgrade/install not external idempotency, release versus Chart/appVersion/revision, alias condition real Boolean path and missing-path behavior, pre-upgrade after rendering/before resources and database rollback limits, local rendering not server admission/RBAC/execution/connectivity, reusable context and namespaces, computed values/sensitive output, YAML/newline indentation; release Secret name/namespace/other backends/Base64 not encryption; Chart.lock/build versus integrity/image/reproducibility; false/zero/empty presence/type and nested lookup; negative hook weights plus phase/kind/name ties/Job/timeout; NOTES not readiness. Practical section keeps approved repository/cluster context and no installation performed, exact string env values and sorted map traversal only for basic ordered key types rather than list ordering, helper root context and appVersion not selecting an image. Advanced section preserves actual blue-green Service selection, non-evaluated embedded strings, real canary routes/controller/weights/observations/abort without automatic analysis/rollback, DB and in-flight requests; values schema/pinned artifacts, ServiceAccount/RoleBinding minimal API permissions, Secret mount not all-Secret API access, approved rotation/rereading, controllers/plugins/provider/key permissions, possible decrypted release records and actual non-root/read-only-root/writable-volume image compatibility. Generic Chinese is now complete without changing commands or introducing implementation guarantees.",
+      "findings": [
+        {
+          "location": "Hands-on Q2 explanation",
+          "finding": "Go template 会按键顺序使用基本有序键遍历 map inverted the relation between key type and iteration order.",
+          "resolution": "Specified maps whose keys have a basic ordered type are traversed in sorted key order, distinct from list ordering; both exact env values remain quoted strings.",
+          "resolved": true
+        },
+        {
+          "location": "All prose/options/selected headings",
+          "finding": "Scattered generic English template/release/image/namespace/context/phase/weight/timeout/secrets/controller prose was unnatural and incompletely localized.",
+          "resolution": "Translated ordinary concepts naturally; retained real Chart/API/command names and all lifecycle, database, security and rendering limits.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/platform-engineering/01-helm-quiz.md",
+          "cn/quizzes/platform-engineering/01-helm-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 5. dependency condition 指定什么？",
+            "after": "### 5. 依赖项的 condition 指定什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 6. pre-upgrade hook 何时运行？",
+            "after": "### 6. pre-upgrade 钩子何时运行？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 1. 默认的 release 存储资源是什么？",
+            "after": "### 1. 默认的发布存储资源是什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 2. dependency update 创建哪个 lock 文件，其限制是什么？",
+            "after": "### 2. dependency update 创建哪个锁定文件，其限制是什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 3. 使用 default 时，哪些空 values 很重要？",
+            "after": "### 3. 使用 default 时，需要注意哪些空值？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 4. 哪个 annotation 控制 hook 排序？",
+            "after": "### 4. 哪个注解控制钩子的执行顺序？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 1. 在 frontend 中以三个 replica 将示例安装为 web-server。",
+            "after": "### 1. 在 frontend 命名空间中以三个副本将示例安装为 web-server。",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 2. LOG_LEVEL=debug 和 MAX_CONNECTIONS=\"100\" 应如何渲染为 env？",
+            "after": "### 2. LOG_LEVEL=debug 和 MAX_CONNECTIONS=\"100\" 应如何渲染为环境变量？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 3. 为 chart、release 和 appVersion label 编写一个 helper。",
+            "after": "### 3. 为 Chart、发布和 appVersion 标签编写辅助模板。",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 1. 使用 Helm 实现 Blue/Green 和 canary 交付需要什么？",
+            "after": "### 1. 使用 Helm 实现蓝绿和金丝雀发布需要什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "### 2. 设计 chart 安全性和 secret 管理。",
+            "after": "### 2. 设计 Chart 安全性和机密信息管理方案。",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs preserved."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0028-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "targetPath": "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "sourceBlob": "697dfc3c344e2994322e6c53b1f5f7a7d7947081",
+      "sourceSha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487",
+      "beforeTargetSha256": "f95ce178773c2c4cb658e05037d6bb702051c2a2577bfd28c673e2aa41bc2c4a",
+      "beforeSnapshot": "/tmp/preimages/f95ce178773c2c4cb658e05037d6bb702051c2a2577bfd28c673e2aa41bc2c4a.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "697dfc3c344e2994322e6c53b1f5f7a7d7947081",
+      "targetSha256": "ad66b5d110142a87d0980a33b22f75b7551a66dbc564393b11528270466dbb26",
+      "currentTargetSha256": "ad66b5d110142a87d0980a33b22f75b7551a66dbc564393b11528270466dbb26",
+      "afterTargetSha256": "ad66b5d110142a87d0980a33b22f75b7551a66dbc564393b11528270466dbb26",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/ad66b5d110142a87d0980a33b22f75b7551a66dbc564393b11528270466dbb26.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0028-source-snapshots/cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Complete initial and final semantic reads covered date, archive/Cloud Connection notice, all 10 stems and 40 alternatives, C/B/B/B/B/B/C/C/B/B answers, explanations and five resource URLs. Preserved 2026-03-24 archive/mobile-push and dependent SMS/voice end with separately configured Twilio exception, maintained Cloud IRM versus archived OSS, wait 1minute–24hours in seconds not acknowledgement/resolution and chain-state-dependent stop/re-page, override type/timezone/schedule association/IDs/priorities/gaps, protected url_file and all receivers/current matchers, raw-token API versus webhook authentication and send_resolved not altering source rules. Grouping remains incident-domain scoped, too few labels/unbounded IDs are distinct failure cases and delivery is not guaranteed exactly once. important selects personal rules while ordered waits/channels still apply, not all channels/Slack-only. Installed configurable root/slash commands and action permissions remain authoritative; acknowledgment/resolution/silence are independent, not deployment execution. Tool selection retains costs/contracts/migration/recovery and future announced Opsgenie2027-04-05 end, not a present termination. HA retains broker/cache/database/scheduler/keys/TLS/delivery/recovery and no HA exercise. Routes now use actual alert data, matching/order/fallback with nested slack.channel_id/enabled and missing/conflicting-field/nonuniversal regex caveats. No software-upgrade implication or extra maintained-provider facts were introduced.",
+      "findings": [
+        {
+          "location": "Q10 explanation",
+          "finding": "实际负载 sounded like computational load rather than alert payload used to match routes.",
+          "resolution": "Used 实际告警内容 and 告警升级/通知方式 while preserving matching mode/order/fallback and exact nested fields.",
+          "resolved": true
+        },
+        {
+          "location": "Q1/2/3/6/8/10 and resource prose",
+          "finding": "升级链/ordinary serializer/on-call/broker prose and English date obscured alert escalation and scheduling.",
+          "resolution": "Used 告警升级链, 值班排班, 序列化器, 消息代理, 告警解除模板 and Chinese date; retained important/API identifiers, standalone phone exception and future announced lifecycle date.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "target": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [
+            "附加学习资源"
+          ],
+          "sourceIdsRetained": true,
+          "matched": false
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0028-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/networking/expert/01-protocol-projects-quiz.md",
+      "targetPath": "cn/quizzes/networking/expert/01-protocol-projects-quiz.md",
+      "sourceBlob": "aef123abb270cdbc44a66a371a335c1cbf318066",
+      "sourceSha256": "1c7f05b340641cfec10f4aa4e6dcd8202682168312bdad1164d96f44b557d567",
+      "beforeTargetSha256": "6bb7a5c77b6b4e34e7eebd2f5363ed59b9a969d24f59693ab50b5067f75f2e50",
+      "beforeSnapshot": "/tmp/preimages/6bb7a5c77b6b4e34e7eebd2f5363ed59b9a969d24f59693ab50b5067f75f2e50.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "aef123abb270cdbc44a66a371a335c1cbf318066",
+      "targetSha256": "c8134beac657d7898599630fb3f94632431a5e045e9dfa76ad2db4cccc0419dc",
+      "currentTargetSha256": "c8134beac657d7898599630fb3f94632431a5e045e9dfa76ad2db4cccc0419dc",
+      "afterTargetSha256": "c8134beac657d7898599630fb3f94632431a5e045e9dfa76ad2db4cccc0419dc",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/c8134beac657d7898599630fb3f94632431a5e045e9dfa76ad2db4cccc0419dc.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0028-source-snapshots/1c7f05b340641cfec10f4aa4e6dcd8202682168312bdad1164d96f44b557d567.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read complete original and final EN/CN, including separately reread truncated final source tail and complete corrected target. Covered September15,2026 date, all10 question/options/explanations, B/C/B/B/B/B/C/C/B/C answer labels, every inline tuple/flag/number and two fragment links. Preserved Summer2026 archive versus unfinished Fall and optional CS144 historical404/institution grading access, assignment Python notes versus workbook guest Python3.9+. UDP correlation retains original quoted destination mismatch despite same ports and outer error-source distinction. TTL2 unobserved/TTL3 destination evidence remains observational, not zero RTT/fixed app path/duplicate replacement. Framing preserves partial header/body parser, consistent partition-independent records, EOF truncation and allocation cap. Receive window is now explicitly advertised by the receiver, independently from sender congestion/in-flight/pacing/application limits; archived Project3 excludes congestion. SYN1000/payload1001–1006/ACK1007/pureACK0/FINextra arithmetic is unchanged. curl404 tool success is distinct from missing application resource; fail changes handling not server result. HTTP3 requires QUIC/protocol/capability evidence and preserves fallback/only flag/shared congestion/cross-stream TCP limits. IPv6 retains family/scope/extensions/types, no router fragmentation, PacketTooBig versus TimeExceeded, AAAA not guest routing, neighbor discovery not ARP. Capture20second timer and partial coverage are not server failure; stop only owned foreground helper, verify listener and label limited offline analysis. No measurements or lab outcomes were added.",
+      "findings": [
+        {
+          "location": "Q5 stem",
+          "finding": "发送方公布的接收窗口 reversed who advertises the receive window.",
+          "resolution": "Specified 接收方通告的接收窗口 versus 发送方的拥塞窗口, preserving independent flow and congestion control.",
+          "resolved": true
+        },
+        {
+          "location": "Q1 option D/explanation and Q9 option D",
+          "finding": "guest was mistranslated as 学习者, a person rather than the lab virtual machine.",
+          "resolution": "Used 实验虚拟机 and retained historical assignment environment versus current Python3.9+ guest scope.",
+          "resolved": true
+        },
+        {
+          "location": "Q1C, Q6 and Q7",
+          "finding": "grader was untranslated, payload bytes were 负载 and negative HTTP route was 否定路由.",
+          "resolution": "Used 自动评分工具, 有效载荷字节 and intentional nonexistent HTTP path, preserving exact sequence arithmetic and application failure over working HTTP.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/networking/expert/01-protocol-projects-quiz.md",
+          "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "C"
+          ],
+          "target": [
+            "B",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0028-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/ai-ml/ray/03-ray-train-tune.md",
+      "targetPath": "cn/ai-ml/ray/03-ray-train-tune.md",
+      "sourceBlob": "86bc34b8d800367faf1395c791798d59c64869cd",
+      "sourceSha256": "9ed2fe3ddb1f3ec97daca59ff2d18ed4e1f37ef8d927823b5311b00cd32f9277",
+      "beforeTargetSha256": "34c929cfddaf49a9c8ea23bfc653709ea48541fa8c0d80f84cb2fdf7212ffd7f",
+      "beforeSnapshot": "/tmp/preimages/34c929cfddaf49a9c8ea23bfc653709ea48541fa8c0d80f84cb2fdf7212ffd7f.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "86bc34b8d800367faf1395c791798d59c64869cd",
+      "targetSha256": "a93565f5899d348aa91b710f7aebb38286661646570681b7d7ef86688efef39e",
+      "currentTargetSha256": "a93565f5899d348aa91b710f7aebb38286661646570681b7d7ef86688efef39e",
+      "afterTargetSha256": "a93565f5899d348aa91b710f7aebb38286661646570681b7d7ef86688efef39e",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/a93565f5899d348aa91b710f7aebb38286661646570681b7d7ef86688efef39e.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0029-source-snapshots/9ed2fe3ddb1f3ec97daca59ff2d18ed4e1f37ef8d927823b5311b00cd32f9277.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read all original and final EN/CN, exact Python fence, diagram and every reference. Retained Ray2.58/Python3.12 extras versus separate PyTorch/CUDA/driver prerequisites and CPU scalar/config/checkpoint API-only validation, not GPU/PyTorch/distributed-gradient/EKS tests. V2 defaults only with unset environment, import selects implementation and legacy contracts differ. Trainer still requires explicit model/optimizer/loss/data partition/save restore and appropriate device/DDP/sampler verification; collectives are not all object transfers. Worker/controller/Tune-driver resources and bundles are distinct, trainer_resources raises deprecation, supported elasticity has data/recovery requirements, placement capacity not atomic Pod scheduling or guaranteed EC2/GPU capacity. Checkpoints remain references to manually saved state; all workers reach report barrier equally, rank0 saves while others use checkpoint=None, no automatic metric average. Synchronous default/async completion/file lifetime/shard collision/shared persistence/S3 IAM retention remain explicit. Failure defaults max_failures0/controller-1/preemption-1 and per-class operational deadlines stay exact; missing checkpoints not recovered by retries. Search versus schedulers and grid/random nonadaptive possibilities, nested starvation and per-bundle constraints remain. CPU example still runs two scalar trials selecting x3/score0; logical resources not OS limits, existing directory new versus recovery distinction retained. Integration exception is naturally expressed without new tests; function entry constructs framework Trainer, unique runs/storage, callback inside Tune session forwards first-worker dict/no average/existing checkpoint path without reupload and separate Tune/Train RunConfigs. EKS capacity/startup/cost/deadline/preservation caveats stay intact; API names, code bytes and all URLs unchanged.",
+      "findings": [
+        {
+          "location": "Resources/reporting/search/diagram/operations prose",
+          "finding": "worker/controller/trial-driver/bundle/sampler and limits prose was incompletely translated and awkward.",
+          "resolution": "Used 工作进程/控制器/试验驱动进程/资源束/采样器 and configured limits, preserving distinct ownership and placement/checkpoint/barrier/retry constraints.",
+          "resolved": true
+        },
+        {
+          "location": "Current integration and validation scope",
+          "finding": "对实例引发了TuneError and 函数trainable构建框架Trainer were literal constructions; test scope was clumsy.",
+          "resolution": "Expressed that passing the V2 instance in the native check threw TuneError; described a function-based trial entry constructing the appropriate framework Trainer and retained actual limited tests/no GPU claims.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/ai-ml/ray/03-ray-train-tune.md",
+          "cn/ai-ml/ray/03-ray-train-tune.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0029-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+      "targetPath": "cn/quizzes/ops/17-spot-production-experiments-quiz.md",
+      "sourceBlob": "4e7ee3849fedb47620c50cdbfeebb59ddda372f8",
+      "sourceSha256": "1ebd50ae27b01bfb4ae25d7c58995f8d15fe1003334fa87860ed263e5fd74ce0",
+      "beforeTargetSha256": "f63a9d894378ce3620e5cb7fca1d2486101cefd685cae4a6fad739831bd4396f",
+      "beforeSnapshot": "/tmp/preimages/f63a9d894378ce3620e5cb7fca1d2486101cefd685cae4a6fad739831bd4396f.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "4e7ee3849fedb47620c50cdbfeebb59ddda372f8",
+      "targetSha256": "b910060867937880d56dd68e069b2c2a5d6a91726669965aae3b993c5981f5de",
+      "currentTargetSha256": "b910060867937880d56dd68e069b2c2a5d6a91726669965aae3b993c5981f5de",
+      "afterTargetSha256": "b910060867937880d56dd68e069b2c2a5d6a91726669965aae3b993c5981f5de",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/b910060867937880d56dd68e069b2c2a5d6a91726669965aae3b993c5981f5de.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0029-source-snapshots/1ebd50ae27b01bfb4ae25d7c58995f8d15fe1003334fa87860ed263e5fd74ce0.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read complete initial and final paired pages: guide link, all10 stems,40 alternatives and B/C/B/C/B/C/C/B/C/B answers/explanations. Voluntary node drain/PDB remains distinct from actual EC2 reclamation/no-notice loss, without guaranteed2minute notice. Spot-only selector still excludes On-Demand despite NodePool weights; fallback requires capacity and compatible Pod constraints. Configuration drill is not injected Spot capacity failure. FIS completed/Ready are not service pass; errors/latency/throughput/correctness require actual request and Pod/LB proof. Savings retain unique correct successful operations, overhead/commitment discounts/retries/replacements without double count and short monthly estimates. Missing data stays NOT RUN/hold expansion, official docs not experiments. E2 numbers0.0556/0.8333/60second0.1 remain and worst-window failure is not general prohibition. Guaranteed QoS is creation-fixed; CPU200m→50m both request/limit with64Mi equality across all applicable containers/positive limits preserves class but not SLO/Spot protection. StartupProbe must prove actual initialization; Running/started/PATCH acceptance are insufficient; desired/reported resources, generations/Pending/InProgress, readiness/LB/errors/p99/throughput/throttling checked separately. Q10 now asks idiomatically what published initial template/September12 measurements establish about phase-aware CPU resizing, without adding causal evidence. Three Deployments50m64Mi versus500m256Mi lack Guaranteed/opt-in/resizePolicy/startupProbe, actual before/after resources/QoS/warmup and E10 remains NOT RUN, separate from historical report/local prototypes. All literal fields and numeric values preserved; no new execution is claimed.",
+      "findings": [
+        {
+          "location": "Q10 heading",
+          "finding": "能证明什么关于分阶段CPUresize的结论 followed unnatural English question order.",
+          "resolution": "Used 对于分阶段CPU资源调整...能够证明什么, preserving the exact insufficient-evidence/NOT RUN result.",
+          "resolved": true
+        },
+        {
+          "location": "Q1/2/8/9/10 descriptive resource prose",
+          "finding": "drain/selector/request/limit/resize/opt-in/throttling and generations wording was awkward mixed English.",
+          "resolution": "Localized node drain/selector/resource requests and limits/CPU downscale/explicit opt-in/CPU throttling and clarified creation-time QoS while preserving all API identifiers, conditions and metrics.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+          "cn/quizzes/ops/17-spot-production-experiments-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## 1. 在带有 PDB 的 Spot 节点上进行 drain 测试并通过。这能证明什么？",
+            "after": "## 1. 在带有 PDB 的 Spot 节点上进行节点排空测试并通过。这能证明什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## 2. 一个 Pending Pod 带有仅允许 Spot 的 selector。添加 On-Demand 节点后会发生什么？",
+            "after": "## 2. 一个 Pending Pod 带有仅允许 Spot 的选择器。添加 On-Demand 节点后会发生什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## 8. 某 Pod 从创建时起就是 Guaranteed。其目标普通容器的 CPU request 和 limit 都从 200m 降至 50m。Memory request=limit 仍为 64Mi，所有其他容器也保持 Guaranteed 资源设置。会发生什么？",
+            "after": "## 8. 某 Pod 创建时的 QoS 类别为 Guaranteed。其目标普通容器的 CPU 请求值（request）和限制值（limit）都从 200m 降至 50m。内存请求值与限制值相等，仍为 64Mi，所有其他容器也保持 Guaranteed 资源设置。会发生什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## 9. 在 E10 中，哪些证据能够证明初始化已完成、CPU 缩容已应用，以及缩容后服务质量符合要求？",
+            "after": "## 9. 在 E10 中，哪些证据能够证明初始化已完成、CPU 下调已应用，以及下调后服务质量符合要求？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          },
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## 10. 2026-09-12 的 Spot 测量结果和已发布的初始模板能证明什么关于分阶段 CPU resize 的结论？",
+            "after": "## 10. 对于分阶段 CPU 资源调整，2026-09-12 的 Spot 测量结果和已发布的初始模板能够证明什么？",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "C",
+            "B",
+            "C",
+            "B",
+            "C",
+            "C",
+            "B",
+            "C",
+            "B"
+          ],
+          "target": [
+            "B",
+            "C",
+            "B",
+            "C",
+            "B",
+            "C",
+            "C",
+            "B",
+            "C",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0029-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/ai-ml/mlflow/01-tracking.md",
+      "targetPath": "cn/ai-ml/mlflow/01-tracking.md",
+      "sourceBlob": "3d7c362d15b29858e3a05b2137bb07e9956f831a",
+      "sourceSha256": "552c3aff761baf73b58d2505e421938e300b457bd6d22e9fbd553bce12bef113",
+      "beforeTargetSha256": "99e5c98bd430117cd024cf6796b0b93bc50fc9a81fc7b49b5db13b11fed1f726",
+      "beforeSnapshot": "/tmp/preimages/99e5c98bd430117cd024cf6796b0b93bc50fc9a81fc7b49b5db13b11fed1f726.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "3d7c362d15b29858e3a05b2137bb07e9956f831a",
+      "targetSha256": "df3f58fbb482aeaaf5ea194f1377c75d2cc396b44a368ae999dbbfa293c016a7",
+      "currentTargetSha256": "df3f58fbb482aeaaf5ea194f1377c75d2cc396b44a368ae999dbbfa293c016a7",
+      "afterTargetSha256": "df3f58fbb482aeaaf5ea194f1377c75d2cc396b44a368ae999dbbfa293c016a7",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/df3f58fbb482aeaaf5ea194f1377c75d2cc396b44a368ae999dbbfa293c016a7.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0030-source-snapshots/552c3aff761baf73b58d2505e421938e300b457bd6d22e9fbd553bce12bef113.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the complete original English and Chinese and reread both complete final pages, including both Python examples, every table cell, figure, reference and next-step link. The 3.16.0/Python 3.12 checked example, 3.17.1 latest check and lack of later reruns are preserved. Runs, immutable parameter values and metric history remain distinct from independent LoggedModel identity and registered models/versions. Metadata-only PENDING is not model weights/flavor or approved READY deployment; no-explicit-start_run behavior already existed in 2.22.0. Tracing 2.14.0/2024-06-17 versus 3.16.0 span links and parent-child relations, provider-dependent token/cost fields, cost estimate versus reconciled bill, and explicitly scoped collection/access/redaction/retention all retain their source qualifications. SQLite is not promised HA, metadata backups do not include artifacts, proxy versus direct S3 ownership and permissions remain separate, and existing URIs/aliases are not automatically rewritten/redeployed. SQL migration wording now describes new operational deployments; all code and destinations remain exact. The final Chinese is natural technical prose with necessary official identifiers retained.",
+      "findings": [
+        {
+          "location": "Environment/legacy backend",
+          "finding": "EKS operation/new operation read as an API action (操作/新操作).",
+          "resolution": "Use EKS 运维 and 新部署应显式选择 SQL 后端, preserving explicit backend selection and migration plan.",
+          "resolved": true
+        },
+        {
+          "location": "Logged models and tracing",
+          "finding": "Ordinary registered-model, span-link/token and flavor terminology and 敏感信息隐藏 were literal or mixed English.",
+          "resolution": "Use 已记录模型, registered models/versions with official parenthetical names, 模型封装形式（flavor）, 追踪片段/片段链接, LLM 词元 and 敏感数据脱敏; independent model identity, links versus parent-child structure and privacy responsibilities remain unchanged.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/ai-ml/mlflow/01-tracking.md",
+          "cn/ai-ml/mlflow/01-tracking.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0030-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+      "targetPath": "cn/quizzes/observability/alerting/01-alertmanager-quiz.md",
+      "sourceBlob": "eabb591ec928f7ce21e8df7e5c3ac5261c7e7c55",
+      "sourceSha256": "74875d8b93457adbd069c8d5cd4798cce88ed756225d624f00a6297329de5b62",
+      "beforeTargetSha256": "6c48d7e8028b78d3906e95551cf189f0f1885efb50689e41af8c404666174702",
+      "beforeSnapshot": "/tmp/preimages/6c48d7e8028b78d3906e95551cf189f0f1885efb50689e41af8c404666174702.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "eabb591ec928f7ce21e8df7e5c3ac5261c7e7c55",
+      "targetSha256": "92131308eccf211a23153b316ccd8e388f2ac9ed64e079790160bf9f515bac7d",
+      "currentTargetSha256": "92131308eccf211a23153b316ccd8e388f2ac9ed64e079790160bf9f515bac7d",
+      "afterTargetSha256": "92131308eccf211a23153b316ccd8e388f2ac9ed64e079790160bf9f515bac7d",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/92131308eccf211a23153b316ccd8e388f2ac9ed64e079790160bf9f515bac7d.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0030-source-snapshots/74875d8b93457adbd069c8d5cd4798cce88ed756225d624f00a6297329de5b62.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read all ten original and final questions, forty choices, answer explanations, three exact YAML/text fences and all references. Answers B/A/B/B/A/C/B/B/C/D are unchanged. Prometheus Pending/for/keep_firing_for are separate from notification grouping; group/repeat/log-retention timing, active-source inhibition with nonempty equal correlation labels and no rule-order priority remain qualified. CPU observation/evaluation and CrashLoop lookback are not delivery deadlines. Resolved notification state is not independent proof of recovered service. Gossip eventual consistency requires replica fanout and neither exactly-once nor universal loss prevention. First-matching sibling/continue and muted route behavior, channel-bound Slack URL/Secret ownership, namespace selection/enforcement and chart 0.93.1 v1alpha1, separate global config, finite silence expiry/history and explicit reminders all retain source boundaries. Operational deployment windows no longer suggest a Kubernetes Deployment object. Template root-versus-per-alert fields, invalid ternary and 100-rune formatting versus redaction remain exact. Final Chinese naturally conveys these distinctions while code, raw fields and existing span ID are retained.",
+      "findings": [
+        {
+          "location": "Header/Q5/Q6/Q8/Q10",
+          "finding": "English date and cluster/namespace/provider/template nouns made the Chinese unnecessarily mixed.",
+          "resolution": "Translate the date, 集群/命名空间/提供商/频道/Go 模板 and chart ownership prose while preserving actual API/type identifiers and template expressions.",
+          "resolved": true
+        },
+        {
+          "location": "Q3/Q5",
+          "finding": "通知资格/解决通知/Service恢复 obscure inhibition and resolved lifecycle meaning.",
+          "resolution": "Use 是否发送通知, value-equal correlation labels and 告警解除通知; retain missing-as-empty caution and explicitly no independent proof of service recovery.",
+          "resolved": true
+        },
+        {
+          "location": "Q9",
+          "finding": "Capitalized Deployment 窗口 changes an operational release window into a Kubernetes kind.",
+          "resolution": "Use 经审核的部署窗口, keeping finite-end silence, review and expiry-reminder conditions.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "cn/quizzes/observability/alerting/01-alertmanager-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "A",
+            "B",
+            "B",
+            "A",
+            "C",
+            "B",
+            "B",
+            "C",
+            "D"
+          ],
+          "target": [
+            "B",
+            "A",
+            "B",
+            "B",
+            "A",
+            "C",
+            "B",
+            "B",
+            "C",
+            "D"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [
+            "附加学习资源"
+          ],
+          "sourceIdsRetained": true,
+          "matched": false
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0030-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/roadmap-quiz.md",
+      "targetPath": "cn/quizzes/roadmap-quiz.md",
+      "sourceBlob": "cb2fd57bbf9c079100e04ac151c21dd001b8ad64",
+      "sourceSha256": "95c762a01c8b4794f27e71e33c771ec46b047fac19d5d612fa5d854786c16064",
+      "beforeTargetSha256": "980dede2a8f31f89087c28ffd6d91866a9bd829d10ee9522a159e0d1b5c5f1d2",
+      "beforeSnapshot": "/tmp/preimages/980dede2a8f31f89087c28ffd6d91866a9bd829d10ee9522a159e0d1b5c5f1d2.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "cb2fd57bbf9c079100e04ac151c21dd001b8ad64",
+      "targetSha256": "da30ddeac109d40db76495f8a7d8fcd0e479a688e9959397f6334999c5140b7c",
+      "currentTargetSha256": "da30ddeac109d40db76495f8a7d8fcd0e479a688e9959397f6334999c5140b7c",
+      "afterTargetSha256": "da30ddeac109d40db76495f8a7d8fcd0e479a688e9959397f6334999c5140b7c",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/da30ddeac109d40db76495f8a7d8fcd0e479a688e9959397f6334999c5140b7c.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0030-source-snapshots/95c762a01c8b4794f27e71e33c771ec46b047fac19d5d612fa5d854786c16064.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently compared and finally reread all eight questions, thirty-two choices, answers C/B/D/B/A/B/B/A and complete explanations. Database remains in State with an Operator landscape and 100M-row benchmark; all fifteen-domain layers, five historical measured benchmark entries, prescribed infrastructure and Data/AI learning sequences and conditional custom-scheduler branch are retained. Labs remain parallel to quizzes, with measured benchmarks as evidence for Platform/SRE. LinkedIn procedure preserves viewer/UI names, shortcuts, exact URL-path placeholder, 30-second recipe, 6-second WebM, 1200×630 static previews and browser/current-selection/MediaRecorder constraints. Route cards require authored directed resolved paths and reject stale/unreachable routes; download-only PNG and separate Reach card authored reachability never become runtime blast-radius/causal validation. Final Chinese fixes Operator ecology/onboarding/feed/open-address and blast-radius wording without changing the false answer alternatives or export truth boundaries.",
+      "findings": [
+        {
+          "location": "Q1/Q5",
+          "finding": "运维工具全景 and 基础设施接入 drift from database Operators and a learning onboarding path.",
+          "resolution": "Use 数据库 Operator 生态概览 and 基础设施入门; restore benchmark-as-evidence wording to 支撑材料 rather than introductory content.",
+          "resolved": true
+        },
+        {
+          "location": "Q6/Q7/Q8",
+          "finding": "动态消息中实际移动/打开在 and 爆炸半径 are literal; Q7 false option omits explicit blast-radius sense.",
+          "resolution": "Use flow animation in 信息流, diagram 打开地址为, and 故障影响范围（blast radius）; the false option remains explicitly a blast-radius analysis and final explanations still reject impact/runtime-causality claims.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/roadmap-quiz.md",
+          "cn/quizzes/roadmap-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "C",
+            "B",
+            "D",
+            "B",
+            "A",
+            "B",
+            "B",
+            "A"
+          ],
+          "target": [
+            "C",
+            "B",
+            "D",
+            "B",
+            "A",
+            "B",
+            "B",
+            "A"
+          ],
+          "matched": true,
+          "expectedCount": 8
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0030-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md",
+      "targetPath": "cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md",
+      "sourceBlob": "031871c1da7cab1013915a9fe8549ecf1212698c",
+      "sourceSha256": "f4f669836fa9e4488459e91a51e79385d3545d7801f3aa3266e6f677c4c96548",
+      "beforeTargetSha256": "a3135e6f83867330943465ba6531dd8e8372a63f87bff6333a2013e40d9dbd02",
+      "beforeSnapshot": "/tmp/preimages/a3135e6f83867330943465ba6531dd8e8372a63f87bff6333a2013e40d9dbd02.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "031871c1da7cab1013915a9fe8549ecf1212698c",
+      "targetSha256": "7940896fd8ff84e4943c12e331fb7cc6636ac6ecfc09bd929f063954a514a844",
+      "currentTargetSha256": "7940896fd8ff84e4943c12e331fb7cc6636ac6ecfc09bd929f063954a514a844",
+      "afterTargetSha256": "7940896fd8ff84e4943c12e331fb7cc6636ac6ecfc09bd929f063954a514a844",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/7940896fd8ff84e4943c12e331fb7cc6636ac6ecfc09bd929f063954a514a844.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0030-source-snapshots/f4f669836fa9e4488459e91a51e79385d3545d7801f3aa3266e6f677c4c96548.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Read both complete initial pages and both final pages, all eight questions and thirty-two alternatives, answers B/A/B/B/B/A/B/B, arithmetic and operational caveats. The measured 1998/1999/2000-second log, 3001→2659→300 cliff, 5.4M credits at net 2700/s for 2000 seconds and >=1000GiB baseline remain exact. Little law includes queueing/service and assumes 32 outstanding operations, qd1 still includes kernel/virtualization; rest credits 36000/18000 lead to theoretical 600 versus measured 601/603, not write exemptions. Tail latency is not proof of identical devices. Four 256KiB operations per MiB, prior-rest credits, throughput-first ceiling and m5.xlarge baseline/burst sustained caveat remain. Prices are expressly the article’s September 2026 Seoul rates, not newly researched/live prices. VAC GA1.34 versus gated beta1.31–1.33, no existing PV StorageClass auto-migration, completed-state/up-to-six-hours/four-rolling-24h modification restrictions, unchanged storageClassName and combined actual-PVC/EBS checks remain. The accounting pool is now natural Chinese and does not imply an S3 bucket; all original API tokens/amounts/conditions are preserved.",
+      "findings": [
+        {
+          "location": "Q2/Q4/Q6",
+          "finding": "积分存储桶/空桶 suggests an object-storage bucket rather than an accounting credit balance.",
+          "resolution": "Use 突发积分池/容量为5.4M积分/积分池为空, retaining the bank-account analogy and all refill/drain arithmetic.",
+          "resolved": true
+        },
+        {
+          "location": "Q4/Q7",
+          "finding": "累积积分 was repeated around the equation and the capacity/price sentence was awkward.",
+          "resolution": "Naturally state the accrued-credit equation and price-for-capacity relationship; 120s/36000/601, 60s/18000/603 and every historical dollar amount remain unchanged.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md",
+          "cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "A",
+            "B",
+            "B",
+            "B",
+            "A",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "A",
+            "B",
+            "B",
+            "B",
+            "A",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 8
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0030-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/kernel/01-container-primitives-quiz.md",
+      "targetPath": "cn/quizzes/kernel/01-container-primitives-quiz.md",
+      "sourceBlob": "34c56118455e6319c220ee6e501cb2941feb6aaf",
+      "sourceSha256": "a4f1a562ae2d8734f12e83fc24c7c5f2e7bf5d98ff89543c5eb232499c9f5340",
+      "beforeTargetSha256": "080f50ef84149ec8494ccf05e50a07efa7029bbb293aafd14379a65287fb5796",
+      "beforeSnapshot": "/tmp/preimages/080f50ef84149ec8494ccf05e50a07efa7029bbb293aafd14379a65287fb5796.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "34c56118455e6319c220ee6e501cb2941feb6aaf",
+      "targetSha256": "3d6c2fcebd5b7ce6fae4a14f69bda5568969978e8a3cf1dadb581a23186fc3cd",
+      "currentTargetSha256": "3d6c2fcebd5b7ce6fae4a14f69bda5568969978e8a3cf1dadb581a23186fc3cd",
+      "afterTargetSha256": "3d6c2fcebd5b7ce6fae4a14f69bda5568969978e8a3cf1dadb581a23186fc3cd",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/3d6c2fcebd5b7ce6fae4a14f69bda5568969978e8a3cf1dadb581a23186fc3cd.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0031-source-snapshots/a4f1a562ae2d8734f12e83fc24c7c5f2e7bf5d98ff89543c5eb232499c9f5340.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 99,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read both entire original pages and both entire final pages: introduction, hierarchy, all eight questions, thirty-two choices, eight B answers, explanations and maintained KEP link. The selective composition of namespaces/cgroups/capabilities/seccomp/LSM/overlayfs/netfilter and omitted isolation remain distinct from a nonexistent struct/single syscall. Shared Pod IP/localhost/8080 and per-netns iptables, page-cache reclaim versus allocation/OOM/PSI, quota 20000/100000 with early multi-thread bursts and throttled-period ratio/application CPU alignment remain exact. Q5 retains completed GA1.33 and December2025 deprecation1.35 versus only the future planned1.40 disablement/1.43 removal, worker kernel5.13+, AL2023 and still-default iptables/explicit switching. Conntrack insertion failures are not unique exhaustion proof and headless DNS does not inherently bypass tracking; ConfigMap precedence, per-core scaling, DaemonSet restart and node-global limits remain. One-byte modification still copies the entire1GB file and write-heavy volumes remain required by the source. The rest of the Chinese was already clear, so only the concrete future-scope sentence changed; no outside facts or schedule claims added.",
+      "findings": [
+        {
+          "location": "Q5 explanation",
+          "finding": "以上均为未来计划 could include already-completed nftables1.33 GA and IPVS1.35 deprecation.",
+          "resolution": "Explicitly limit 未来目标 to1.40默认禁用 and1.43移除; keep1.33 GA,1.35/2025年12月 deprecation, current iptables default, explicit switching and maintained KEP URL unchanged.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/kernel/01-container-primitives-quiz.md",
+          "cn/quizzes/kernel/01-container-primitives-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "target": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B"
+          ],
+          "matched": true,
+          "expectedCount": 8
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0031-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/quizzes/networking/expert/04-linux-performance-quiz.md",
+      "targetPath": "cn/quizzes/networking/expert/04-linux-performance-quiz.md",
+      "sourceBlob": "9fb6318fc874b910d1b08c7818e6d2a100373267",
+      "sourceSha256": "1f3d952aefc3a653364e0562d2f735747febde414e76dcdddb1041590988ca68",
+      "beforeTargetSha256": "45a9a5f5837427b9f26d61c10c0b539e6fe3abf89fb40f92b397928bafcfdf2d",
+      "beforeSnapshot": "/tmp/preimages/45a9a5f5837427b9f26d61c10c0b539e6fe3abf89fb40f92b397928bafcfdf2d.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "9fb6318fc874b910d1b08c7818e6d2a100373267",
+      "targetSha256": "4ac30aa987b6707e5416fe9bc99fea23f2c2888fe9febda61f35d0ebc853cf3a",
+      "currentTargetSha256": "4ac30aa987b6707e5416fe9bc99fea23f2c2888fe9febda61f35d0ebc853cf3a",
+      "afterTargetSha256": "4ac30aa987b6707e5416fe9bc99fea23f2c2888fe9febda61f35d0ebc853cf3a",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/4ac30aa987b6707e5416fe9bc99fea23f2c2888fe9febda61f35d0ebc853cf3a.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0031-source-snapshots/1f3d952aefc3a653364e0562d2f735747febde414e76dcdddb1041590988ca68.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 99,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read all original and final English/Chinese ten questions, forty alternatives, answers C/B/C/B/C/C/C/B/B/C, explanations, date and workbook/course-map destinations. Public study materials do not provide hardware/instruction/certificate evidence, and loopback does not prove physical NIC behavior. The configured0.15s wait contributes to read_ms/total_ms, headers_ms is not pure RTT and no measured duration is invented. Socket-state meanings, unsent/unacknowledged Send-Q, memory overhead, LISTEN backlog and cwnd segment/MSS units remain distinct.100Mbit/s×40ms gives hypothetical500000bytes without bottleneck proof or global tuning; offload/capture context does not prove either corruption or health. RSS/RPS/NAPI scopes, observer capture drops versus TCP loss/reordering/timeouts, interval/tuple/endpoints, BPF attachment versus execution/comparison/overhead and permission-unobserved states remain exact. Five samples remain descriptive, not credible p99; missing is not zero; payload-byte goodput includes application/connection work and is not line rate. Recovery owns only its processes/files, TIME_WAIT may remain, and future netem requires an isolated boundary, pre-state and exact restoration. Only two payload/load confusions changed; Q3A remains deliberately incorrect for LISTEN and all answer logic is preserved.",
+      "findings": [
+        {
+          "location": "Q3 optionA/Q9 explanation",
+          "finding": "应用负载字节 and 负载除以事务时长 confuse data payload with workload/load.",
+          "resolution": "Use 应用有效载荷字节数 and 有效载荷字节数除以事务时长, with natural 操作级有效吞吐量（goodput）. Preserve incorrect LISTEN alternative, correct C answer and operation/connection-inclusive goodput versus NIC line-rate caveat.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/quizzes/networking/expert/04-linux-performance-quiz.md",
+          "cn/quizzes/networking/expert/04-linux-performance-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [
+            "C",
+            "B",
+            "C",
+            "B",
+            "C",
+            "C",
+            "C",
+            "B",
+            "B",
+            "C"
+          ],
+          "target": [
+            "C",
+            "B",
+            "C",
+            "B",
+            "C",
+            "C",
+            "C",
+            "B",
+            "B",
+            "C"
+          ],
+          "matched": true,
+          "expectedCount": 10
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0031-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+      "targetPath": "cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+      "sourceBlob": "b063d08b190bd22e9bcaf522bce0379ae32de0b5",
+      "sourceSha256": "8fd74cfcd4b3dcea3f87d91096c466c542a04716f521e6b07480709f8cc96cc0",
+      "beforeTargetSha256": "9973bbb8ab84fe3ebd4fd25d2e4538788517dac7300b978cf932732f10cb119b",
+      "beforeSnapshot": "/tmp/preimages/9973bbb8ab84fe3ebd4fd25d2e4538788517dac7300b978cf932732f10cb119b.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "b063d08b190bd22e9bcaf522bce0379ae32de0b5",
+      "targetSha256": "39e3d2cf29b784e2d4260f83a234bbe229aef506cff9d5ca8ff7afed34780f49",
+      "currentTargetSha256": "39e3d2cf29b784e2d4260f83a234bbe229aef506cff9d5ca8ff7afed34780f49",
+      "afterTargetSha256": "39e3d2cf29b784e2d4260f83a234bbe229aef506cff9d5ca8ff7afed34780f49",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/39e3d2cf29b784e2d4260f83a234bbe229aef506cff9d5ca8ff7afed34780f49.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0032-source-snapshots/8fd74cfcd4b3dcea3f87d91096c466c542a04716f521e6b07480709f8cc96cc0.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Independently read the full initial English/Chinese and reread both entire final pages, including all seven numbered sections, object table, readiness/deletion lists, exact JSON request, historical records, all references and navigation. The third historical project-created/read-delete-membership-denied result still did not start training and is not generalized to current domain state or every authorization failure. IAM versus Identity Center, same-ARN but distinct member/execution role purposes, shared execution access without per-user owner isolation, identity-based authorization/TIP, group versus session-user profiles and CreateGroupProfile registration rather than IAM-role creation remain separate. All capabilities names a blueprint template; project profile selection, on-create/on-demand provisioning, real dependencies/approval and ordinary non-Unified Studio training paths remain conditional. IAM/SCP/resource/data restrictions do not vanish with ownership; JSON membership tagged union selects only one identity and same-request membership is no transaction-wide rollback guarantee. Timeout inventory reconciliation, ACTIVE versus deployment statuses and intentionally unprovisioned tools remain. Domain-specific tag rejection does not establish absent tag support and cleanup remains scoped to owned authorized resources, not prefixes. Catalog schema is a data structure, not architecture; public redaction and internal discovery metadata, subscription approval and actual authorization remain separate. AccessDenied/empty filtered-paginated list is not absence; external-resource lifecycle/retention need inventory. All three September1 trainingStarted=false records, one remaining project, historical September2 ACTIVE and local skeleton-only validation with no live authorization/provisioning or resource mutation remain exact. Final Chinese clarifies ordinary identity/profile terms and template direction with official/API identifiers retained.",
+      "findings": [
+        {
+          "location": "Object table/catalog disclosure",
+          "finding": "Catalog schemas and synthetic-data schema were rendered 架构, confusing field/data structure with system architecture.",
+          "resolution": "Use 数据模式 in both catalog metadata and synthetic-data disclosure; all metadata, record counts, generator version/seed/hash, ownership/retention and privacy limitations remain.",
+          "resolved": true
+        },
+        {
+          "location": "Section2 project profile",
+          "finding": "All capabilities 会为蓝图指定模板 reverses a named template of blueprints into assigning templates to blueprints.",
+          "resolution": "All capabilities 是一套蓝图模板的名称; project profiles still provision at creation or later on demand, with required dependencies and permission checks. Heading Profile 名称 becomes 项目配置名称 for the same source topic; hierarchy unchanged.",
+          "resolved": true
+        },
+        {
+          "location": "Object/identity table, group/session profiles, readiness/cleanup/reference prose",
+          "finding": "Generic profile/group/session/owner/admin/skeleton nouns and service representation were unnecessarily mixed or literal.",
+          "resolution": "Translate object labels alongside official first-use English terms, distinguish 项目配置 versus 用户/组档案/会话用户档案, use 所有者/管理员 and output 骨架模式; keep exact API/field/status names and the IAM role/profile/execution-caller distinctions. Training 未启动 expresses the historical source outcome.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+          "cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": false,
+        "sourceAuthorityRepairs": [
+          {
+            "type": "sourceMeaningHeadingWordingCorrection",
+            "before": "## 2. Profile 名称不能证明工具已就绪",
+            "after": "## 2. 项目配置名称不能证明工具已就绪",
+            "reason": "Natural Chinese wording of the same source topic; heading hierarchy/order and explicit IDs retained."
+          }
+        ],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0032-wording-findings.json"
+    },
+    {
+      "sourcePath": "en/ai-ml/kubeflow/04-katib.md",
+      "targetPath": "cn/ai-ml/kubeflow/04-katib.md",
+      "sourceBlob": "a8f1184a6cb6ca33ae77f696076b7849c152d559",
+      "sourceSha256": "d4289aaae4d2eac4c257866100c953d79639bcfdb63119b19a2cee1cc3010d72",
+      "beforeTargetSha256": "99023d7ce5595fca049c8ad4670c69a5be196002105fa1e6c9fef366f21c9dce",
+      "beforeSnapshot": "/tmp/preimages/99023d7ce5595fca049c8ad4670c69a5be196002105fa1e6c9fef366f21c9dce.md",
+      "frozenSourceCatalog": "/tmp/english-final-sources.json",
+      "sourceGitBlob": "a8f1184a6cb6ca33ae77f696076b7849c152d559",
+      "targetSha256": "8390d2d980a1cde75f507cfbb1f6a790d48785e000870da7ab021452eb607cb3",
+      "currentTargetSha256": "8390d2d980a1cde75f507cfbb1f6a790d48785e000870da7ab021452eb607cb3",
+      "afterTargetSha256": "8390d2d980a1cde75f507cfbb1f6a790d48785e000870da7ab021452eb607cb3",
+      "reviewedTargetSnapshot": "/tmp/native-reviewed-target-snapshots/8390d2d980a1cde75f507cfbb1f6a790d48785e000870da7ab021452eb607cb3.md",
+      "reviewedSourceSnapshot": "/tmp/native-sol-cn-batch0032-source-snapshots/d4289aaae4d2eac4c257866100c953d79639bcfdb63119b19a2cee1cc3010d72.md",
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "completePageComparison": true,
+      "completeFinalPageReread": true,
+      "fidelityScore": 98,
+      "readabilityScore": 97,
+      "qualityScore": 97,
+      "scoreScale": 100,
+      "fullPageRationale": "Actually read full original and full final source/target pages: version/date/setup, all algorithm/field/collector rows, lifecycle and early-stopping details, diagram caption, capacity/validation caveats, references and next chapter/quiz. Katib0.19.0/distribution26.03.1, optional GPU/one provisioner, full-platform Profile versus standalone, Experiment/Suggestion/Trial custom objects versus per-run CRD installation, job-controller Pod placement and default TrainJob.v1alpha1 compatibility requirements remain exact. Algorithm strategies/limits, PBT RWX/FromVolume, training budgets and templates are retained; maxTrialCount is completed-count not successful-only or immutable lifetime budget, failed/metrics-unavailable counts and lifecycle resumption/spec effects remain. Succeeded and optimal observation are not certified quality/model artifacts. StdOut/File timestamp requirements/default3/4 and documented median versus actual arithmetic mean of first start_step successful-Trial averages [1,2,100]≈34.333 rather than2 remain clearly distinguished, with Hyperband a separate execution path. Candidate direction and DB-manager reporting are preserved. All five collection modes retain their constraints; Push may omit sidecar, Custom has no default arbitrary HTTP scraping, injection still requires namespace label/webhook/target selection, and explicit reporting-rank policy does not impose an invented particular rank. Eight Trials×two Pods×four GPUs remains64 plus overhead, pending/capacity/no guaranteed faster runtime and retained-node EC2 cost/deadlines/retries/retention constraints remain. Source validation remains source/config inspection and a local unchanged medianstop function with blocked network, not a newly claimed Experiment/GPU run. Final Chinese date, DB manager/storage, writer, collector and rank prose are natural while formal resource/API/algorithm names and exact URLs remain.",
+      "findings": [
+        {
+          "location": "Header/setup/flow/metrics table",
+          "finding": "English date and generic DB manager/storage, Experiments, spec, TensorBoard writer and collector sidecar fragments made prose awkward.",
+          "resolution": "Use2026年9月12日, 数据库管理器（DB manager）及存储, Experiment对象, 作业配置/配置变更, TensorBoard写入器输出 and 收集器边车容器; preserve formal API/CR/component identifiers and all collection-mode constraints.",
+          "resolved": true
+        },
+        {
+          "location": "Metrics collection reporting policy",
+          "finding": "明确的报告 rank 策略 is unnatural and does not clearly express who reports metrics.",
+          "resolution": "分布式训练需要明确规定由哪个训练进程（rank）报告指标; no fixed rank, duplicate-aggregation rule or new operational guarantee is added. Pull-mode collector injection and training-success-versus-metric-evidence boundaries stay intact.",
+          "resolved": true
+        }
+      ],
+      "unresolvedFindings": [],
+      "validatorProof": {
+        "command": [
+          "python3",
+          "scripts/validate-translation.py",
+          "en/ai-ml/kubeflow/04-katib.md",
+          "cn/ai-ml/kubeflow/04-katib.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "preservationProof": {
+        "fencedCodeMatchesEnglish": true,
+        "linkDestinationsMatchEnglish": true,
+        "headingHierarchyMatchesEnglish": true,
+        "disclosureHtmlMatchesEnglish": true,
+        "answerLettersMatchEnglish": true,
+        "sourceInlineCodeTokensRetained": true,
+        "linkDestinationsMatchPreimage": true,
+        "headingTextMatchesPreimage": true,
+        "sourceAuthorityRepairs": [],
+        "answerLabelsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "matched": true,
+          "expectedCount": 0
+        },
+        "explicitSourceIdsIndependentlyVerified": {
+          "source": [],
+          "target": [],
+          "sourceIdsRetained": true,
+          "matched": true
+        },
+        "rawHtmlUrlAttributesMatchEnglish": true,
+        "existingCanonicalHeadingIdsRetained": true,
+        "frozenEnglishCatalogBlobMatch": true,
+        "frozenEnglishCatalog": "/tmp/english-final-sources.json",
+        "terminalSingleLineFeedVerified": true
+      },
+      "reportedFindingProvenance": "/tmp/root-native-cn-reviews/batch0032-wording-findings.json"
     }
   ],
   "reportedFindingProvenanceCorrection": {
@@ -9686,9 +11001,9 @@
   "japaneseRestoredNavigationLabelsChanged": 17,
   "noCommitsPushesOrDeployments": true,
   "snapshotScope": {
-    "wholePagesReviewed": 128,
+    "wholePagesReviewed": 141,
     "remainingLocaleReviews": "IN_PROGRESS; these actual individual reviews do not certify all 693 pages per locale",
-    "lastVerifiedAt": "2026-10-18T13:00:31.177202+00:00",
+    "lastVerifiedAt": "2026-10-18T13:23:08.486710+00:00",
     "allAddedReviewSourceAndTargetHashesIndependentlyVerified": true
   },
   "additionalReviewBatches": [
@@ -11593,6 +12908,368 @@
       },
       "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
       "artifact": "/tmp/native-sol-cn-batch0027-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:13:53.520653+00:00",
+      "scope": [
+        "cn/quizzes/platform-engineering/01-helm-quiz.md",
+        "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/platform-engineering/01-helm-quiz.md",
+            "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+            "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/platform-engineering/01-helm-quiz.md",
+            "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+            "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/platform-engineering/01-helm-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/networking/expert/01-protocol-projects-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/networking/expert/01-protocol-projects-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/platform-engineering/01-helm-quiz.md",
+          "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/platform-engineering/01-helm-quiz.md",
+          "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "cn/quizzes/networking/expert/01-protocol-projects-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0028-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:15:59.243741+00:00",
+      "scope": [
+        "cn/ai-ml/ray/03-ray-train-tune.md",
+        "cn/quizzes/ops/17-spot-production-experiments-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/ai-ml/ray/03-ray-train-tune.md",
+            "cn/quizzes/ops/17-spot-production-experiments-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/ai-ml/ray/03-ray-train-tune.md",
+            "cn/quizzes/ops/17-spot-production-experiments-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/ai-ml/ray/03-ray-train-tune.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/ops/17-spot-production-experiments-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/ai-ml/ray/03-ray-train-tune.md",
+          "cn/quizzes/ops/17-spot-production-experiments-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/ai-ml/ray/03-ray-train-tune.md",
+          "cn/quizzes/ops/17-spot-production-experiments-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0029-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:19:55.072288+00:00",
+      "scope": [
+        "cn/ai-ml/mlflow/01-tracking.md",
+        "cn/quizzes/observability/alerting/01-alertmanager-quiz.md",
+        "cn/quizzes/roadmap-quiz.md",
+        "cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/ai-ml/mlflow/01-tracking.md",
+            "cn/quizzes/observability/alerting/01-alertmanager-quiz.md",
+            "cn/quizzes/roadmap-quiz.md",
+            "cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/ai-ml/mlflow/01-tracking.md",
+            "cn/quizzes/observability/alerting/01-alertmanager-quiz.md",
+            "cn/quizzes/roadmap-quiz.md",
+            "cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/ai-ml/mlflow/01-tracking.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/observability/alerting/01-alertmanager-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/roadmap-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/ai-ml/mlflow/01-tracking.md",
+          "cn/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "cn/quizzes/roadmap-quiz.md",
+          "cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/ai-ml/mlflow/01-tracking.md",
+          "cn/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "cn/quizzes/roadmap-quiz.md",
+          "cn/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0030-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:20:56.455588+00:00",
+      "scope": [
+        "cn/quizzes/kernel/01-container-primitives-quiz.md",
+        "cn/quizzes/networking/expert/04-linux-performance-quiz.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/quizzes/kernel/01-container-primitives-quiz.md",
+            "cn/quizzes/networking/expert/04-linux-performance-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/quizzes/kernel/01-container-primitives-quiz.md",
+            "cn/quizzes/networking/expert/04-linux-performance-quiz.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/quizzes/kernel/01-container-primitives-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/quizzes/networking/expert/04-linux-performance-quiz.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/quizzes/kernel/01-container-primitives-quiz.md",
+          "cn/quizzes/networking/expert/04-linux-performance-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/quizzes/kernel/01-container-primitives-quiz.md",
+          "cn/quizzes/networking/expert/04-linux-performance-quiz.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0031-review-20261018.json"
+    },
+    {
+      "reviewer": "native managed Codex GPT-6.1-Sol (openai.gpt-6.1-sol)",
+      "reviewedAt": "2026-10-18T13:22:38.346162+00:00",
+      "scope": [
+        "cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+        "cn/ai-ml/kubeflow/04-katib.md"
+      ],
+      "inputSourceAndTargetHashesIndependentlyVerified": true,
+      "formattingAndAnchorProof": [
+        {
+          "command": [
+            "python3",
+            "scripts/repair-markdown-emphasis.py",
+            "cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+            "cn/ai-ml/kubeflow/04-katib.md"
+          ],
+          "exitCode": 0,
+          "stdout": "0 Markdown file(s) repaired\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            ".vitepress/cache/native-owned-anchor-repair.mjs",
+            "cn",
+            "cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+            "cn/ai-ml/kubeflow/04-katib.md"
+          ],
+          "exitCode": 0,
+          "stdout": "[\n  {\n    \"target\": \"cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  },\n  {\n    \"target\": \"cn/ai-ml/kubeflow/04-katib.md\",\n    \"changed\": false,\n    \"addedIds\": 0,\n    \"reviewRequired\": \"Record the actual reviewed final bytes; no quality grade is assigned here.\"\n  }\n]\n",
+          "stderr": ""
+        }
+      ],
+      "diffCheck": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "--",
+          "cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+          "cn/ai-ml/kubeflow/04-katib.md"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "emphasisCheck": {
+        "command": [
+          "python3",
+          "scripts/repair-markdown-emphasis.py",
+          "--check",
+          "cn/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+          "cn/ai-ml/kubeflow/04-katib.md"
+        ],
+        "exitCode": 0,
+        "stdout": "0 Markdown file(s) need repair\n",
+        "stderr": ""
+      },
+      "inputSourceAndTargetHashesIndependentlyVerifiedByHost": true,
+      "artifact": "/tmp/native-sol-cn-batch0032-review-20261018.json"
     }
   ],
   "additionalReportedFindingCorrections": [

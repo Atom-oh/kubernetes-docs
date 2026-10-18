@@ -3,7 +3,7 @@
 < [前へ: Node Bootstrap](./04-node-bootstrap.md) | [目次](./README.md) | [次へ: Workload Placement](./06-workload-placement.md) >
 
 > **サポート対象バージョン**: DRA GPU の例では、サポート対象の EKS バージョンで Kubernetes 1.34.2+ が必要です。確認済みのインターフェイス: GPU Operator 26.7.0、DRA driver 0.5.0、device plugin 0.20.0。
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月18日
 
 この章では、準備済みの NVIDIA GPU ホストを EKS Hybrid Nodes と統合します。割り当て、GPU Operator の所有権、MIG、および time-slicing を扱います。**この監査では、GPU、driver のインストール、モデルのダウンロード、または inference benchmark は実行していません。** 例には、承認済みの OS/kernel/driver/toolkit/runtime/image の組み合わせと、実際のハードウェアでのテストが必要です。
 
@@ -326,6 +326,12 @@ spec:
 1 device claim に対して `CUDA_VISIBLE_DEVICES=0,1,2,3` を設定しないでください。device manager/runtime が割り当て済み device を提供します。CUDA の process-visible index は物理 GPU index と異なる可能性があります。手動 override により割り当てが非表示になったり誤認されたりする可能性があり、追加 GPU を付与するものではありません。
 
 `nvidia-smi -L` が確認するのは device visibility のみです。承認済みハードウェア上で、制限された CUDA operation と実際の application を別途検証してください。このドキュメントでは、そのような実行またはパフォーマンス結果は主張していません。
+
+### 測定デモ
+
+[![V4 デモ動画: Hybrid GPU 推論（無音、2分14秒）](../.gitbook/assets/en-eks-hybrid-nodes-demo-v4-gpu.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v4-gpu.mp4)
+
+上記のスモーク Job とは別に、この無音動画では、デバイスプラグイン（v0.17.1）を使い、Hybrid GPU ノード上で vLLM（v0.19.1、`Qwen/Qwen2.5-0.5B-Instruct`）の推論 Pod を起動して、クラウドノード上のクライアント Job から呼び出します。これは2026年10月18日にシミュレーション環境で収録した実際のターミナル画面の録画です（TGW 経由でオンプレミス VPC に接続した g6.xlarge の NVIDIA L4 ホストを使用。サポート対象の本番構成ではありません）。記録上、`nvidia.com/gpu: 1` を公開していたのは GPU ノードのみで、推論 Pod は `istio-proxy` を含まない単一コンテナ（`hostNetwork=false`）で動作し、応答時間は1秒未満でした。vLLM イメージの初回取得（NAT 経由、9.6 GB）は録画の範囲外で、4分35秒かかりました。これは機能確認であり、性能測定ではありません。全手順は[1時間セッションの資料](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html)を参照してください。
 
 ## MIG と time-slicing
 

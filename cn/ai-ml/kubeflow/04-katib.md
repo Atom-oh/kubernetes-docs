@@ -1,11 +1,11 @@
 # 第 4 部分：Katib（超参数调优和 AutoML）
 
 > **支持的版本**：Katib 0.19.0，Kubeflow Community Distribution 26.03.1
-> **最后更新**：September 12, 2026
+> **最后更新**：2026 年 9 月 12 日
 
 ## 实验环境设置
 
-使用 Katib 0.19.0 控制器、DB manager/storage、所需的 Suggestion 镜像和命名空间权限来创建 Experiments。区分完整平台的 Profile 访问权限与独立安装。GPU 容量为可选项；Karpenter 是一种节点供应器。
+使用 Katib 0.19.0 控制器、数据库管理器（DB manager）及存储、所需的 Suggestion 镜像和命名空间权限来创建 Experiment 对象。区分完整平台的 Profile 访问权限与独立安装。GPU 容量为可选项；Karpenter 是一种节点供应器。
 
 ## Katib 是什么
 
@@ -38,13 +38,13 @@ PBT 指南要求使用 RWX 卷和 `resumePolicy: FromVolume`。更改算法名�
 | `objective` | 指标名称、最大化/最小化以及可选目标值 |
 | `parameters` | double/int/discrete/categorical 搜索空间、范围/列表/分布 |
 | `algorithm` | 已安装的 Suggestion 算法及其设置 |
-| `trialTemplate` | trialParameters 替换和作业 spec、主要容器/Pod 选择、成功/失败条件 |
+| `trialTemplate` | trialParameters 替换和作业配置、主要容器/Pod 选择、成功/失败条件 |
 | `parallelTrialCount` | 并发处理的 Trial 数量，而非 Pod/GPU/EC2 数量 |
 | `maxTrialCount` | 基于完成数量的停止条件，而非成功训练次数或不可变的生命周期成本上限 |
 | `maxFailedTrialCount` | 失败阈值，包括失败和无法获取指标的 Trial |
 | `metricsCollectorSpec` / `earlyStopping` | 指标报告和单独配置的提前停止 |
 
-达到目标、完成数量达到上限或建议耗尽，都可能使 Experiment 成功结束；达到失败阈值或发生 Suggestion 错误，则可能导致 Experiment 失败。完成状态会统计成功、失败、已终止、提前停止和无法获取指标的 Trial。恢复策略和 spec 变更也会影响生命周期，因此不要将 maxTrialCount 视为不可变的生命周期创建数量或支出上限。
+达到目标、完成数量达到上限或建议耗尽，都可能使 Experiment 成功结束；达到失败阈值或发生 Suggestion 错误，则可能导致 Experiment 失败。完成状态会统计成功、失败、已终止、提前停止和无法获取指标的 Trial。恢复策略和配置变更也会影响生命周期，因此不要将 maxTrialCount 视为不可变的生命周期创建数量或支出上限。
 
 `Succeeded` 表示控制循环的结果，而非对模型质量的认证。`status.currentOptimalTrial` 描述收集到的最佳观测结果；如果缺少指标，可能无法得到可用的最佳模型。
 
@@ -58,11 +58,11 @@ Hyperband 的预算分配与提前停止服务属于不同的配置/执行路径
 
 ## Experiment 的端到端运行流程
 
-![Experiment 和 Suggestion 生成候选项；Trial 作业通过 DB manager 报告指标。目标、完成数量和失败条件决定何时终止。](../../.gitbook/assets/en-ai-ml-kubeflow-04-katib-0.png)
+![Experiment 和 Suggestion 生成候选项；Trial 作业通过数据库管理器报告指标。目标、完成数量和失败条件决定何时终止。](../../.gitbook/assets/en-ai-ml-kubeflow-04-katib-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-04-katib-0.html)
 
-Experiment 控制器通过 Suggestion 资源请求候选项并创建 Trial 对象。Trial 和训练作业控制器负责执行流程，指标则通过 DB manager 报告。算法会根据各自的实现来使用结果。请检查终止条件和剩余的子作业；最优超参数本身并不是可部署的模型制品。
+Experiment 控制器通过 Suggestion 资源请求候选项并创建 Trial 对象。Trial 和训练作业控制器负责执行流程，指标则通过数据库管理器报告。算法会根据各自的实现来使用结果。请检查终止条件和剩余的子作业；最优超参数本身并不是可部署的模型制品。
 
 ## 指标收集
 
@@ -70,11 +70,11 @@ Experiment 控制器通过 Suggestion 资源请求候选项并创建 Trial 对�
 | --- | --- |
 | `StdOut` | 默认拉取模式；从主要容器的日志格式中提取指标 |
 | `File` | TEXT 或按行分隔的 JSON；配置路径和筛选器 |
-| `TensorFlowEvent` | 事件文件目录，包括兼容的 TensorBoard writer |
+| `TensorFlowEvent` | 事件文件目录，包括兼容 TensorBoard 写入器的输出 |
 | `Custom` | 用户提供的收集器实现；任意 HTTP 抓取并非内置默认功能 |
-| `Push` | 训练代码调用 SDK `report_metrics()` 将指标报告给 DB manager；并非总是需要收集器 sidecar |
+| `Push` | 训练代码调用 SDK `report_metrics()` 将指标报告给数据库管理器；并非总是需要收集器边车容器 |
 
-拉取注入需要命名空间标签 `katib.kubeflow.org/metrics-collector-injection: enabled`、正常工作的 webhook，以及正确选择目标 Pod/容器。分布式训练需要明确的报告 rank 策略。请验证指标名称、数值格式、时间戳、连接和策略。训练作业成功并不保证已收集到指标。
+拉取模式的收集器注入需要命名空间标签 `katib.kubeflow.org/metrics-collector-injection: enabled`、正常工作的 webhook，以及正确选择目标 Pod/容器。分布式训练需要明确规定由哪个训练进程（rank）报告指标。请验证指标名称、数值格式、时间戳、连接和策略。训练作业成功并不保证已收集到指标。
 
 ## EKS 上的容量和成本
 
