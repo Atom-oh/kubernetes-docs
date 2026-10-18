@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import * as acm from 'aws-cdk-lib/aws-certificatemanager'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2'
 import * as elbv2Targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets'
@@ -17,6 +18,7 @@ export interface AppStackProps extends cdk.StackProps {
   albSecurityGroup: ec2.ISecurityGroup
   lambdaSecurityGroup: ec2.ISecurityGroup
   bucket: s3.IBucket
+  conversationTable: dynamodb.ITableV2
 }
 
 // Internal ALB -> Lambda target group -> ask-docs Lambda. No public IP, no public listener.
@@ -50,9 +52,11 @@ export class AppStack extends cdk.Stack {
         MAX_QUESTION_CHARS: '500',
         MAX_OUTPUT_TOKENS: '800',
         TOP_K: '6',
+        CONVERSATION_TABLE: props.conversationTable.tableName,
       },
     })
     props.bucket.grantRead(fn, 'index/*')
+    props.conversationTable.grant(fn, 'dynamodb:GetItem', 'dynamodb:PutItem')
     fn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
