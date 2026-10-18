@@ -19,7 +19,7 @@ import {
   streamToPromise
 } from 'sitemap'
 
-import { supportedLocales } from '../.vitepress/site-scope.mjs'
+import { publishedLocales, translatedLocales } from '../.vitepress/site-scope.mjs'
 import { generateLlmsFiles } from './generate-llms-txt.mjs'
 import { normalizeArchmapFontsInDirectory } from './lib/archmap-fonts.mjs'
 import { normalizeArchmapResponsiveLayoutsInDirectory } from './lib/archmap-responsive.mjs'
@@ -92,9 +92,10 @@ async function readAvailableMemoryBytes() {
 
 const GIB = 1024 ** 3
 
-// Refuses to start a build that would likely exhaust the host. The full
-// two-locale build peaks at about 8 GB of heap per VitePress process and a few
-// GB of disk for the staging and merged outputs.
+// Refuses to start a build that would likely exhaust the host. Locales build
+// one at a time, so memory peaks at one VitePress process (about 8 GB of heap
+// for the largest locale) however many locales there are. Disk holds the
+// staging outputs and the merged site, a few GB.
 export async function checkBuildResources({
   directory = projectRoot,
   minFreeDiskGb = Number(process.env.BUILD_MIN_FREE_DISK_GB ?? 6),
@@ -169,13 +170,12 @@ export async function markArchmapsNoindex(destination) {
 
 const SITE_ROOT = 'https://docs.atomai.click/kubernetes-docs/'
 
-// Locales that were once published here (five-locale build, .html URLs) and
-// still sit in search indexes; those URLs now 404. Only ko/en are built, so
-// each legacy URL gets a stub that redirects to the English twin — a 0-second
-// meta refresh is treated as a permanent redirect by Google, which lets the
-// stale entries hand their ranking to the live page instead of decaying as
-// 404s. GitHub Pages has no server-side redirects, hence stubs.
-export const LEGACY_LOCALES = ['cn', 'jp', 'es']
+// The translated locales cover only part of en. Every en page they do not have
+// yet gets a stub at its cn/jp/es URL that redirects to the English page, so
+// the language menu, old search results and shared links never 404. A
+// 0-second meta refresh is treated as a permanent redirect by Google. The
+// static hosts have no server-side redirects, hence stubs.
+export const FALLBACK_LOCALES = translatedLocales
 
 function redirectStub(target) {
   return [
@@ -202,13 +202,19 @@ async function listHtmlFiles(directory, prefix = '') {
   return files
 }
 
-export async function writeLegacyLocaleRedirects(destination, sourceLocale = 'en') {
+// Writes only where the locale has no page of its own ('wx'), so translated
+// pages, and the README.html aliases written before this, are never replaced.
+export async function writeTranslationFallbackRedirects(destination, sourceLocale = 'en') {
   let pages
   try {
     pages = await listHtmlFiles(path.join(destination, sourceLocale))
   } catch {
     return 0
   }
+  // README.html files are the aliases writeReadmeRedirects just wrote, not
+  // pages (VitePress emits every README.md as index.html). Redirecting to them
+  // would chain two redirects.
+  pages = pages.filter((page) => !/(^|\/)README\.html$/.test(page))
 
   let written = 0
   for (const page of pages) {
@@ -225,12 +231,16 @@ export async function writeLegacyLocaleRedirects(destination, sourceLocale = 'en
       ? [page, `${cleanPath}README.html`]
       : [page]
 
-    for (const locale of LEGACY_LOCALES) {
+    for (const locale of FALLBACK_LOCALES) {
       for (const variant of variants) {
         const filePath = path.join(destination, locale, variant)
         await mkdir(path.dirname(filePath), { recursive: true })
-        await writeFile(filePath, stub)
-        written += 1
+        try {
+          await writeFile(filePath, stub, { flag: 'wx' })
+          written += 1
+        } catch (error) {
+          if (error.code !== 'EEXIST') throw error
+        }
       }
     }
   }
@@ -238,10 +248,10 @@ export async function writeLegacyLocaleRedirects(destination, sourceLocale = 'en
 }
 
 // Search results still link to README.html from before the README→index
-// rewrite, including in the ko/en locales that are still published.
+// rewrite.
 async function writeReadmeRedirects(destination) {
   let written = 0
-  for (const locale of supportedLocales) {
+  for (const locale of publishedLocales) {
     let pages
     try {
       pages = await listHtmlFiles(path.join(destination, locale))
@@ -296,16 +306,16 @@ export async function mergeLocaleOutputs(localeOutputs, destination, { move = fa
   const marked = await markArchmapsNoindex(destination)
   if (marked > 0) console.log(`Marked ${marked} archmap pages noindex`)
 
-  const redirected = await writeLegacyLocaleRedirects(destination)
-  if (redirected > 0) {
-    console.log(`Wrote ${redirected} legacy ${LEGACY_LOCALES.join('/')} redirect stubs`)
-  }
-
-  // Generate these after retired-locale redirects so compatibility aliases
-  // are not mistaken for canonical English pages when those targets are built.
+  // README aliases first, while every locale directory still holds only real
+  // pages: a translated section's README.html must point at its own index.
   const readmesRedirected = await writeReadmeRedirects(destination)
   if (readmesRedirected > 0) {
-    console.log(`Wrote ${readmesRedirected} ko/en README redirect stubs`)
+    console.log(`Wrote ${readmesRedirected} README redirect stubs`)
+  }
+
+  const redirected = await writeTranslationFallbackRedirects(destination)
+  if (redirected > 0) {
+    console.log(`Wrote ${redirected} ${FALLBACK_LOCALES.join('/')} → en redirect stubs for untranslated pages`)
   }
 }
 
@@ -352,10 +362,14 @@ function runVitepressBuild(locale, outputDirectory) {
   })
 }
 
+// en builds last so the root index.html and 404.html it emits win the merge,
+// as they did when only ko/en were built.
+export const BUILD_ORDER = [...publishedLocales.filter((locale) => locale !== 'en'), 'en']
+
 async function buildAllLocales() {
   const stagingRoot = path.join(projectRoot, '.vitepress', '.locale-builds')
   const destination = path.join(projectRoot, '.vitepress', 'dist')
-  const localeOutputs = supportedLocales.map((locale) =>
+  const localeOutputs = BUILD_ORDER.map((locale) =>
     path.join(stagingRoot, locale)
   )
 
@@ -385,11 +399,14 @@ async function buildAllLocales() {
   generateLlmsFiles()
 
   try {
-    for (const [index, locale] of supportedLocales.entries()) {
+    for (const [index, locale] of BUILD_ORDER.entries()) {
       console.log(
-        `\n[${index + 1}/${supportedLocales.length}] Building ${locale} documentation`
+        `\n[${index + 1}/${BUILD_ORDER.length}] Building ${locale} documentation`
       )
       await runVitepressBuild(locale, localeOutputs[index])
+      // Every build copies public/ in full, and public/archmaps alone is about
+      // 1.4 GB. The copies are identical, so keep only the first one.
+      if (index > 0) await rm(path.join(localeOutputs[index], 'archmaps'), { recursive: true, force: true })
       logResources(`after ${locale} build`, await checkBuildResources())
     }
 

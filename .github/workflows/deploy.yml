@@ -20,13 +20,12 @@ jobs:
     # self-hosted runner shutdowns interrupting the build before upload.
     runs-on: ubuntu-24.04-arm
     env:
-      # Only ko/en are published now (see docs/superpowers/plans/2026-08-19-
-      # vitepress-ko-en-docs.md), built sequentially so VitePress never holds
-      # both locale graphs in one process. Each locale still needs more than
-      # Node's default 4GiB heap while rendering Mermaid and the local search
-      # index; a prior 5-locale build OOM'd repeatedly even at 43008MB (RSS
-      # scaled with page count regardless of heap cap), which per-locale
-      # sequencing avoids by bounding peak RSS to one locale at a time.
+      # All five locales are published, built one after another so VitePress
+      # never holds more than one locale graph in a process. Each locale still
+      # needs more than Node's default 4GiB heap while rendering Mermaid and
+      # the local search index. A single-process 5-locale build OOM'd
+      # repeatedly even at 43008MB (RSS scaled with page count regardless of
+      # heap cap); per-locale sequencing bounds peak RSS to one locale.
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +40,20 @@ jobs:
         run: python3 -B -m unittest discover -s examples/networking/foundations -p 'test_*.py' -v
       - run: npm run docs:build
       - run: mkdir -p .vitepress/dist/assets && cp assets/*.html .vitepress/dist/assets/
+      # docs.atomai.click gets the whole site (publish-docs-domain below).
+      - if: github.ref == 'refs/heads/main'
+        run: tar -cf docs-site.tar -C .vitepress/dist .
+      - if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: docs-site.tar
+          retention-days: 1
+      # GitHub Pages (www.atomai.click) only forwards visitors to docs.atomai.click
+      # (head script in .vitepress/config.ts), so it keeps the ko/en pages and
+      # stays near its old size. Its 404 page carries the same script, so
+      # cn/jp/es URLs on www still end up on the right docs.atomai.click page.
+      - run: rm -rf .vitepress/dist/cn .vitepress/dist/jp .vitepress/dist/es
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist
@@ -55,7 +68,7 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-  # Publishes the same artifact to docs.atomai.click (CloudFront + private S3, see infra/ask-docs).
+  # Publishes the full site to docs.atomai.click (CloudFront + private S3, see infra/ask-docs).
   # A separate job, so a failure here never blocks the GitHub Pages deploy above. GitHub Pages
   # stays up and sends its visitors to docs.atomai.click (head script in .vitepress/config.ts).
   publish-docs-domain:
@@ -70,9 +83,9 @@ jobs:
           node-version: 22
       - uses: actions/download-artifact@v4
         with:
-          name: github-pages
-          path: pages-artifact
-      - run: mkdir -p site && tar -xf pages-artifact/artifact.tar -C site
+          name: docs-site
+          path: docs-site
+      - run: mkdir -p site && tar -xf docs-site/docs-site.tar -C site
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::180294183052:role/kubernetes-docs-github-deploy
