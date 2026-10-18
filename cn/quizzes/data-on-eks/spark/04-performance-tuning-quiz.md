@@ -83,12 +83,12 @@ Karpenter 使用 NodeConfig 为 kubelet/containerd 临时存储配置实例存�
 
 </details>
 
-## 10. Spot 警告和停用标志能保证迁移完成吗？
+## 10. Spot 警告和 executor 退役标志能保证迁移完成吗？
 
 <details>
 <summary>显示答案</summary>
 
-不能。警告是尽力而为的通知；休眠不提供两分钟的窗口。EventBridge/SQS/中断处理、驱逐、钩子/信号、可用时间、对等容量和网络都很重要。Pod 的 120 秒宽限期不会延长云实例的生命周期。
+不能。警告是尽力而为的通知；休眠不提供两分钟的窗口。EventBridge/SQS/中断处理、驱逐、钩子/信号、可用时间、其他 executor/节点的可用容量和网络都很重要。Pod 的 120 秒宽限期不会延长云实例的生命周期。
 
 </details>
 
@@ -106,7 +106,7 @@ Karpenter 使用 NodeConfig 为 kubelet/containerd 临时存储配置实例存�
 <details>
 <summary>显示答案</summary>
 
-DRA 根据 Spark 任务积压以及空闲/缓存/Shuffle 状态调整 executor 数量。Karpenter 根据 Pod 请求和调度约束来配置节点。不需要 metrics-server；allocation.batch.size 控制 Kubernetes 分配器创建对象的速率。
+DRA 根据 Spark 任务积压以及空闲/缓存/Shuffle 状态调整 executor 数量。Karpenter 根据 Pod 请求和调度约束供应节点容量。不需要 metrics-server；allocation.batch.size 控制 Kubernetes 分配器创建对象的速率。
 
 </details>
 

@@ -1,3 +1,7 @@
+# 集群管理测验
+
+本测验涵盖自管集群和 EKS 的运维、备份、维护、监控与恢复，并保留原有的 15 个练习。主机级 etcd 操作流程不适用于由服务管理的 EKS 控制平面。
+
 ## 简答题
 
 1. 说明 Kubernetes 集群中 etcd 数据库的备份和恢复流程。
@@ -9,7 +13,7 @@
 
 **etcd 备份流程：**
 
-1. **验证 etcdctl 工具安装：**
+1. **验证 etcdctl 工具已安装：**
    ```bash
    etcdctl version
    ```
@@ -25,79 +29,41 @@
 
 3. **验证备份文件：**
    ```bash
-   ETCDCTL_API=3 etcdctl snapshot status snapshot.db --write-out=table
+   etcdutl snapshot status snapshot.db --write-out=table
    ```
 
 4. **将备份文件存储在安全位置：**
-   - 集群外部的存储
-   - 云存储（S3、GCS 等）
-   - 不同的物理位置
+   - 集群外部存储
+   - 云存储（如 S3、GCS）
+   - 其他物理位置
 
 **etcd 恢复流程：**
 
-1. **停止所有 API server 以进行恢复：**
-   ```bash
-   sudo systemctl stop kube-apiserver
-   ```
+1. 验证 snapshot，并保留原始数据、PKI 和 encryption-provider 密钥/配置。etcd snapshot 不包含 PV 文件或所有主机配置。
+2. 按所用发行版的运行手册停止所有 API server 和受影响的 etcd 进程。kubeadm 通常通过 static Pod 运行这些组件，而不是独立的 systemd unit；仅停止 kubelet 并不会停止这些容器。
+3. 使用兼容版本的 etcdutl 离线恢复到新目录。以下单成员示例不是 HA 恢复命令：
 
-2. **停止 etcd 服务：**
-   ```bash
-   sudo systemctl stop etcd
-   ```
+```bash
+etcdutl snapshot restore snapshot.db \
+  --data-dir=/var/lib/etcd-restore \
+  --name=etcd-1 \
+  --initial-cluster=etcd-1=https://127.0.0.1:2380 \
+  --initial-cluster-token=restored-cluster \
+  --initial-advertise-peer-urls=https://127.0.0.1:2380 \
+  --bump-revision=1000000000 --mark-compacted
+```
 
-3. **备份数据目录（可选）：**
-   ```bash
-   sudo mv /var/lib/etcd /var/lib/etcd.bak
-   ```
-
-4. **从 snapshot 创建新的数据目录：**
-   ```bash
-   ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
-     --data-dir=/var/lib/etcd-restore \
-     --name=master \
-     --initial-cluster=master=https://127.0.0.1:2380 \
-     --initial-cluster-token=etcd-cluster-1 \
-     --initial-advertise-peer-urls=https://127.0.0.1:2380
-   ```
-
-5. **配置 etcd 使用已恢复的数据目录：**
-   ```bash
-   sudo mv /var/lib/etcd-restore /var/lib/etcd
-   sudo chown -R etcd:etcd /var/lib/etcd
-   ```
-
-6. **重启 etcd 服务：**
-   ```bash
-   sudo systemctl start etcd
-   ```
-
-7. **验证 etcd 状态：**
-   ```bash
-   ETCDCTL_API=3 etcdctl endpoint health \
-     --endpoints=https://127.0.0.1:2379 \
-     --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-     --cert=/etc/kubernetes/pki/etcd/server.crt \
-     --key=/etc/kubernetes/pki/etcd/server.key
-   ```
-
-8. **重启 API server：**
-   ```bash
-   sudo systemctl start kube-apiserver
-   ```
-
-9. **验证集群状态：**
-   ```bash
-   kubectl get nodes
-   kubectl get pods --all-namespaces
-   ```
+4. 对于 HA，将同一 snapshot 恢复到每个成员，为每个成员指定其名称/peer URL，并使用完全一致的成员列表。revision bump 应足够高，超过 snapshot 之后发生的写入，并使 watch cache 失效。
+5. 将 etcd manifest/service 指向恢复后的数据目录，确保 owner 和证书正确。重新启动 API server/controller 之前，先验证 etcd quorum/health；随后验证 node 和 workload。
+6. 遵循[官方恢复流程](https://etcd.io/docs/v3.6/op-guide/recovery/)。EKS 用户应通过受支持的备份工具恢复应用程序资源/数据，而不是访问托管 etcd。
 
 **最佳实践：**
-- 设置定期备份计划（例如每天）
-- 在备份前验证 etcd 集群状态
+- 制定定期备份计划（例如每日备份）
+- 备份前检查 etcd 集群状态
 - 验证备份文件完整性
 - 定期测试恢复流程
-- 在备份文件名中包含时间戳
-- 保留多个备份版本
+- 在备份文件名中加入时间戳
+- 保留多个版本的备份
 - 记录备份和恢复流程
 </details>
 
@@ -123,7 +89,7 @@
 
 3. **Drain 该 Node：**
    ```bash
-   kubectl drain <node_name> --ignore-daemonsets --delete-emptydir-data
+   kubectl drain <node_name> --ignore-daemonsets
    ```
 
 4. **执行维护任务：**
@@ -153,8 +119,8 @@
 2. **`kubectl drain <node_name>`：**
    - 将该 Node 标记为不可调度（包含 cordon）。
    - 从该 Node 安全驱逐正在运行的 Pod。
-   - Pod 会被重新调度到其他 Node 上。
-   - 默认会忽略 DaemonSet Pod（需要 `--ignore-daemonsets` 标志）。
+   - Workload controller 可能会创建替代 Pod；是否能调度取决于可用容量和约束条件。
+   - 不提供 `--ignore-daemonsets` 时，drain 会拒绝处理 DaemonSet Pod；提供该标志会让它们继续运行。
    - 使用 emptyDir 卷的 Pod 可能会丢失数据，需要特殊处理（`--delete-emptydir-data` 标志）。
    - 遵守 PodDisruptionBudget。
 
@@ -186,9 +152,9 @@
 - **Metrics Server：**
   - 提供基础 CPU 和内存使用指标
   - 支持 `kubectl top` 命令
-  - 安装方法：
+  - Kubernetes 1.34+ 的安装示例（请先核对要求并检查是否已安装）：
     ```bash
-    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.0/components.yaml
     ```
   - 使用示例：
     ```bash
@@ -196,7 +162,7 @@
     kubectl top pods --all-namespaces
     ```
 
-- **Kubernetes Dashboard：**
+- **Headlamp（Kubernetes Dashboard 已归档）：**
   - 以可视化方式呈现集群状态和资源使用情况
   - 为 Pod、Node、Namespace 等提供资源管理界面
 
@@ -345,24 +311,29 @@
   - 运行自动化测试套件
 
 - **验证 API 兼容性：**
-  - 检查正在使用的 API 版本：
+  - 列出当前提供的 API 版本（这并不能盘点客户端实际使用情况）：
     ```bash
     kubectl api-resources -o wide
     ```
-  - 检查是否使用已弃用的 API：
+  - 在允许访问 `/metrics` 时检查已观测到的弃用 API 请求；同时审计 manifests 和请求日志：
     ```bash
-    kubectl get -A | grep "deprecated"
+    kubectl get --raw /metrics | grep '^apiserver_requested_deprecated_apis'
     ```
   - 根据需要更新 manifest
 
 - **备份和恢复计划：**
   - 备份 etcd 数据库：
     ```bash
-    ETCDCTL_API=3 etcdctl snapshot save snapshot.db
+    ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
+      --endpoints=https://127.0.0.1:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+      --key=/etc/kubernetes/pki/etcd/healthcheck-client.key
     ```
-  - 备份所有关键 manifest：
+  - 导出部分 workload 对象（不是完整备份；应妥善保护导出内容）：
     ```bash
-    kubectl get all --all-namespaces -o yaml > all-resources.yaml
+    umask 077
+    kubectl get all --all-namespaces -o yaml > workload-subset.yaml
     ```
   - 记录并测试恢复流程
 
@@ -388,7 +359,7 @@
     ```
   - **Drain Node 时要小心：**
     ```bash
-    kubectl drain <node_name> --ignore-daemonsets --delete-emptydir-data
+    kubectl drain <node_name> --ignore-daemonsets
     ```
 
 - **增强监控：**
@@ -424,52 +395,52 @@
 
 **答案：**
 
-**Kubernetes 网络问题诊断和解决：**
+**Kubernetes 网络问题诊断与排查：**
 
-**1. Pod 到 Pod 通信问题：**
+**1. Pod 间通信问题：**
 
 - **症状：**
   - Pod 无法与其他 Pod 通信
   - 无法通过 Service 名称连接
-  - 网络超时错误
+  - 网络超时
 
 - **诊断方法：**
-  - 检查 network policy：
+  - 查看 NetworkPolicy：
     ```bash
     kubectl get networkpolicy --all-namespaces
     ```
-  - 创建测试 Pod 进行连通性测试：
+  - 创建测试 Pod 检查连通性：
     ```bash
     kubectl run -it --rm debug --image=busybox -- sh
     # Inside the pod
     ping <target_pod_IP>
     wget -O- <service_name>:<port>
     ```
-  - 检查 CNI plugin Pod 状态：
+  - 检查 CNI 插件 Pod 状态：
     ```bash
     kubectl get pods -n kube-system | grep -E 'calico|flannel|weave|cilium'
     ```
 
 - **解决方法：**
-  - 重新安装或更新 CNI plugin
-  - 修改或移除 network policy
-  - 检查 Node 网络接口
-  - 检查 firewall 规则
+  - 重新安装或升级 CNI 插件
+  - 调整或删除造成阻断的 NetworkPolicy
+  - 检查节点网络接口
+  - 检查防火墙规则
 
-**2. Service Discovery 和 DNS 问题：**
+**2. Service 发现与 DNS 问题：**
 
 - **症状：**
   - 无法通过 Service 名称连接
   - DNS 查询失败
-  - 间歇性连接问题
+  - 连接间歇性中断
 
 - **诊断方法：**
-  - 检查 CoreDNS Pod 状态：
+  - 检查 CoreDNS Pod 状态和日志：
     ```bash
     kubectl get pods -n kube-system -l k8s-app=kube-dns
     kubectl logs -n kube-system -l k8s-app=kube-dns
     ```
-  - 测试 DNS 查询：
+  - 测试 DNS 查询并查看 Pod 的 resolver 配置：
     ```bash
     kubectl run -it --rm debug --image=busybox -- sh
     # Inside the pod
@@ -477,7 +448,7 @@
     nslookup <service_name>.<namespace>.svc.cluster.local
     cat /etc/resolv.conf
     ```
-  - 检查 Service endpoint：
+  - 检查 Service endpoints：
     ```bash
     kubectl get endpoints <service_name>
     ```
@@ -491,96 +462,96 @@
     ```bash
     kubectl edit configmap coredns -n kube-system
     ```
-  - 检查 kubelet DNS 设置
+  - 检查 kubelet 的 DNS 设置
 
-**3. Service 和 Ingress 问题：**
+**3. Service 与 Ingress 问题：**
 
 - **症状：**
-  - 无法从外部来源访问 Service
-  - Ingress 规则不工作
-  - Load balancer 未创建
+  - 外部来源无法访问 Service
+  - Ingress 规则未生效
+  - 未能创建 LoadBalancer
 
 - **诊断方法：**
-  - 检查 Service 状态：
+  - 查看 Service 状态：
     ```bash
     kubectl describe service <service_name>
     ```
-  - 检查 Ingress 状态：
+  - 查看 Ingress 状态：
     ```bash
     kubectl describe ingress <ingress_name>
     ```
-  - 检查 ingress controller Pod 日志：
+  - 查看 ingress controller Pod 日志：
     ```bash
     kubectl logs -n <ingress_namespace> <ingress_controller_pod>
     ```
-  - 检查 endpoint：
+  - 检查 endpoints：
     ```bash
     kubectl get endpoints <service_name>
     ```
 
 - **解决方法：**
-  - 验证 Service selector 是否匹配 Pod label
-  - 重新安装或更新 ingress controller
+  - 验证 Service selector 与 Pod labels 匹配
+  - 重新安装或升级 ingress controller
   - 检查 Service 类型和端口配置
-  - 检查 cloud provider load balancer 设置
+  - 检查 cloud provider 的 load balancer 设置
 
-**4. Node 网络问题：**
+**4. 节点网络问题：**
 
 - **症状：**
-  - Node 与集群断开连接
-  - Node 到 Node 通信失败
+  - 节点与集群断开连接
+  - 节点间通信失败
   - kubelet 连接错误
 
 - **诊断方法：**
-  - 检查 Node 状态：
+  - 查看节点状态：
     ```bash
     kubectl describe node <node_name>
     ```
-  - 检查 Node 网络接口：
+  - 检查节点网络接口和路由：
     ```bash
     # Directly on the node
     ip addr
     ip route
     ```
-  - 检查 firewall 规则：
+  - 检查防火墙规则：
     ```bash
     # Directly on the node
     iptables -L
     ```
-  - 检查 kubelet 日志：
+  - 查看 kubelet 日志：
     ```bash
     journalctl -u kubelet
     ```
 
 - **解决方法：**
-  - 重新配置 Node 网络接口
-  - 修改 firewall 规则
+  - 重新配置节点网络接口
+  - 调整防火墙规则
   - 重启 kubelet
-  - 必要时重启 Node
+  - 必要时重启节点
 
-**5. Network Policy 问题：**
+**5. NetworkPolicy 问题：**
 
 - **症状：**
-  - 意外的连接阻塞
-  - 无法在特定 Namespace 之间通信
-  - 只有部分 Pod 可访问
+  - 意外的连接阻断
+  - 特定 Namespace 之间无法通信
+  - 只有部分 Pod 可以访问
 
 - **诊断方法：**
-  - 检查 network policy：
+  - 查看 NetworkPolicy：
     ```bash
     kubectl get networkpolicy -A
     kubectl describe networkpolicy <policy_name> -n <namespace>
     ```
-  - 检查 Pod label：
+  - 检查 Pod labels：
     ```bash
     kubectl get pods --show-labels
     ```
-  - 验证 network plugin 是否支持 network policy
+  - 确认网络插件支持 NetworkPolicy
 
 - **解决方法：**
-  - 修改或删除 network policy
-  - 修改 Pod label
-  - 使用 network policy 调试工具
+  - 调整或删除 NetworkPolicy
+  - 修改 Pod labels
+  - 使用 NetworkPolicy 调试工具
 
 **6. 常用网络调试工具：**
 
@@ -597,7 +568,7 @@
       command: ["sleep", "3600"]
   ```
 
-- **有用命令：**
+- **常用命令：**
   ```bash
   # Inside the pod
   ping <IP>
@@ -608,28 +579,28 @@
   netstat -tuln
   ```
 
-- **CNI plugin 特定的调试工具：**
-  - Calico: `calicoctl`
-  - Cilium: `cilium`
-  - Weave: `weave`
+- **CNI 插件专用调试工具：**
+  - Calico：`calicoctl`
+  - Cilium：`cilium`
+  - Weave：`weave`
 
 **7. 最佳实践：**
 
 - 记录网络拓扑
 - 定期执行连通性测试
-- 在变更 network policy 前分析影响
+- 修改 NetworkPolicy 前评估影响
 - 规划集群网络 CIDR 范围
-- 实施网络监控工具
+- 部署网络监控工具
 </details>
 ## 实践题
 
 1. 编写一个满足以下要求的 ResourceQuota manifest：
-   - Namespace: development
-   - Maximum pods: 20
-   - Maximum CPU requests: 4 cores
-   - Maximum memory requests: 8Gi
-   - Maximum PVCs: 10
-   - Maximum storage requests: 100Gi
+   - 命名空间：development
+   - Pod 数量上限：20
+   - CPU requests 总量上限：4 cores
+   - 内存 requests 总量上限：8Gi
+   - PVC 数量上限：10
+   - 存储 requests 总量上限：100Gi
 
 <details>
 <summary>显示答案</summary>
@@ -682,65 +653,53 @@ kubectl create namespace development
 **答案：**
 
 ```bash
-#!/bin/bash
-# Filename: check_kubelet.sh
-# Description: Check kubelet service status on all nodes and troubleshoot
-
-# Get node list
-NODES=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
-
-# Iterate over each node
-for NODE in $NODES; do
-  echo "===== Checking node: $NODE ====="
-
-  # Check node status
-  NODE_STATUS=$(kubectl get node $NODE -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-  echo "Node status: $NODE_STATUS"
-
-  # Check kubelet status via SSH
-  echo "Checking kubelet service status..."
-  ssh $NODE "sudo systemctl status kubelet | grep Active"
-
-  # Start kubelet if not running
-  if ssh $NODE "sudo systemctl is-active kubelet" != "active"; then
-    echo "kubelet is not running. Starting service..."
-    ssh $NODE "sudo systemctl start kubelet"
-
-    # Check status again after starting
-    sleep 5
-    if ssh $NODE "sudo systemctl is-active kubelet" == "active"; then
-      echo "kubelet service started successfully."
-    else
-      echo "kubelet service failed to start. Checking logs..."
-      ssh $NODE "sudo journalctl -u kubelet --no-pager -n 50"
-    fi
+#!/usr/bin/env bash
+# check_kubelet.sh: self-managed Linux nodes with configured SSH aliases only.
+set -euo pipefail
+repair=${REPAIR_KUBELET:-0}
+status=0
+nodes=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+for node in $nodes; do
+  printf '%s: ' "$node"
+  if state=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n systemctl is-active kubelet'); then
+    printf 'kubelet %s\n' "$state"
+    continue
   else
-    echo "kubelet service is running normally."
+    rc=$?
   fi
-
-  # Check kubelet configuration
-  echo "Checking kubelet configuration..."
-  ssh $NODE "sudo cat /var/lib/kubelet/config.yaml | grep -E 'address|authentication|authorization'"
-
-  echo "===== $NODE check complete ====="
-  echo ""
+  if [ "$rc" -ne 3 ]; then
+    printf 'SSH/sudo/service query failed (exit %s); no repair attempted\n' "$rc" >&2
+    status=1
+    continue
+  fi
+  printf 'kubelet %s\n' "$state"
+  if [ "$repair" != 1 ]; then
+    printf 'Inspect logs and approve a repair before rerunning with REPAIR_KUBELET=1\n'
+    status=1
+    continue
+  fi
+  if ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n systemctl start kubelet && sudo -n systemctl is-active --quiet kubelet' \
+      && kubectl wait --for=condition=Ready "node/$node" --timeout=120s; then
+    printf '%s: kubelet active and node Ready\n' "$node"
+  else
+    status=1
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n journalctl -u kubelet --no-pager -n 50' || true
+  fi
 done
+exit "$status"
 ```
 
-此脚本执行以下任务：
-1. 使用 `kubectl get nodes` 获取集群中所有 Node 的列表。
-2. 对每个 Node：
-   - 检查该 Node 的 Ready 状态。
-   - 通过 SSH 连接到该 Node 以检查 kubelet 服务状态。
-   - 如果 kubelet 未运行，则启动该服务。
-   - 启动服务后再次检查状态。
-   - 如果启动失败，则检查日志。
-   - 检查 kubelet 配置文件中的关键设置。
+此脚本使用 `kubectl get nodes` 获取节点列表，并逐一检查 kubelet。只有在显式设置 `REPAIR_KUBELET=1` 且服务查询成功确认 kubelet 未运行时，才会尝试启动；之后会重新检查服务并确认 Node 恢复 Ready。若启动失败则检查日志。SSH、sudo 或服务查询错误会与“服务未运行”区分处理，避免误触发修复。
 
 **用法：**
 ```bash
 chmod +x check_kubelet.sh
 ./check_kubelet.sh
+# After diagnosing the inactive service and approving repair:
+REPAIR_KUBELET=1 ./check_kubelet.sh
 ```
 
 **注意事项：**
@@ -759,56 +718,55 @@ chmod +x check_kubelet.sh
 **1. 创建备份脚本：**
 
 ```bash
-#!/bin/bash
-# Filename: backup_etcd.sh
-# Description: etcd database backup and remote storage
+#!/usr/bin/env bash
+# backup_etcd.sh: self-managed etcd; external storage must already be mounted.
+set -euo pipefail
+umask 077
+BACKUP_DIR=${BACKUP_DIR:-/opt/etcd-backup}
+REMOTE_ROOT=${REMOTE_ROOT:-/mnt/remote-storage}
+REMOTE_DIR="$REMOTE_ROOT/etcd-backups"
+METRICS_DIR=${METRICS_DIR:-/var/lib/node_exporter/textfile_collector}
+RETENTION_DAYS=${RETENTION_DAYS:-7}
+ETCD_ENDPOINT=${ETCD_ENDPOINT:-https://127.0.0.1:2379}
+ETCD_CACERT=${ETCD_CACERT:-/etc/kubernetes/pki/etcd/ca.crt}
+ETCD_CERT=${ETCD_CERT:-/etc/kubernetes/pki/etcd/healthcheck-client.crt}
+ETCD_KEY=${ETCD_KEY:-/etc/kubernetes/pki/etcd/healthcheck-client.key}
 
-# Variable settings
-BACKUP_DIR="/opt/etcd-backup"
-REMOTE_BACKUP_DIR="/mnt/remote-storage/etcd-backups"
-DATE=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE="etcd-snapshot-$DATE.db"
-ETCD_ENDPOINTS="https://127.0.0.1:2379"
-ETCD_CACERT="/etc/kubernetes/pki/etcd/ca.crt"
-ETCD_CERT="/etc/kubernetes/pki/etcd/server.crt"
-ETCD_KEY="/etc/kubernetes/pki/etcd/server.key"
-RETENTION_DAYS=7
-
-# Create backup directory
-mkdir -p $BACKUP_DIR
-
-# Create etcd snapshot
-ETCDCTL_API=3 etcdctl snapshot save $BACKUP_DIR/$BACKUP_FILE \
-  --endpoints=$ETCD_ENDPOINTS \
-  --cacert=$ETCD_CACERT \
-  --cert=$ETCD_CERT \
-  --key=$ETCD_KEY
-
-# Verify backup success
-if [ $? -eq 0 ]; then
-  echo "etcd backup successful: $BACKUP_FILE"
-
-  # Check backup file status
-  ETCDCTL_API=3 etcdctl snapshot status $BACKUP_DIR/$BACKUP_FILE --write-out=table
-
-  # Compress backup file
-  gzip $BACKUP_DIR/$BACKUP_FILE
-
-  # Copy to remote storage
-  mkdir -p $REMOTE_BACKUP_DIR
-  cp $BACKUP_DIR/$BACKUP_FILE.gz $REMOTE_BACKUP_DIR/
-
-  # Clean up old backup files (local)
-  find $BACKUP_DIR -name "etcd-snapshot-*.db.gz" -type f -mtime +$RETENTION_DAYS -delete
-
-  # Clean up old backup files (remote)
-  find $REMOTE_BACKUP_DIR -name "etcd-snapshot-*.db.gz" -type f -mtime +$RETENTION_DAYS -delete
-
-  echo "Backup complete and copied to remote storage: $REMOTE_BACKUP_DIR/$BACKUP_FILE.gz"
-else
-  echo "etcd backup failed"
-  exit 1
-fi
+publish_status() {
+  rc=$?
+  trap - EXIT
+  if [ -d "$METRICS_DIR" ]; then
+    tmp=$(mktemp "$METRICS_DIR/.etcd-backup.XXXXXX")
+    success=0
+    [ "$rc" -eq 0 ] && success=1
+    printf 'etcd_backup_success %s\netcd_backup_last_attempt_timestamp_seconds %s\n' \
+      "$success" "$(date +%s)" > "$tmp"
+    chmod 0644 "$tmp"
+    mv "$tmp" "$METRICS_DIR/etcd_backup_status.prom"
+  fi
+  exit "$rc"
+}
+trap publish_status EXIT
+case "$RETENTION_DAYS" in ''|*[!0-9]*) echo 'Invalid retention' >&2; exit 1;; esac
+mountpoint -q "$REMOTE_ROOT" || { echo 'Remote storage is not mounted' >&2; exit 1; }
+mkdir -p "$BACKUP_DIR" "$REMOTE_DIR"
+exec 9>"$BACKUP_DIR/.backup.lock"
+flock -n 9 || { echo 'Another backup is running' >&2; exit 1; }
+name="etcd-snapshot-$(date -u +%Y%m%d-%H%M%S).db"
+ETCDCTL_API=3 etcdctl snapshot save "$BACKUP_DIR/$name" \
+  --endpoints="$ETCD_ENDPOINT" --cacert="$ETCD_CACERT" \
+  --cert="$ETCD_CERT" --key="$ETCD_KEY"
+etcdutl snapshot status "$BACKUP_DIR/$name" --write-out=table
+gzip "$BACKUP_DIR/$name"
+cp "$BACKUP_DIR/$name.gz" "$REMOTE_DIR/.$name.gz.partial"
+cmp "$BACKUP_DIR/$name.gz" "$REMOTE_DIR/.$name.gz.partial"
+mv "$REMOTE_DIR/.$name.gz.partial" "$REMOTE_DIR/$name.gz"
+# Retention runs only after snapshot validation and verified external copy.
+find "$BACKUP_DIR" -maxdepth 1 -type f -name 'etcd-snapshot-*.db.gz' \
+  -mtime "+$RETENTION_DAYS" -delete
+find "$REMOTE_DIR" -maxdepth 1 -type f -name 'etcd-snapshot-*.db.gz' \
+  -mtime "+$RETENTION_DAYS" -delete
+printf 'Verified backup copied to %s\n' "$REMOTE_DIR/$name.gz"
 ```
 
 **2. 授予脚本执行权限：**
@@ -843,7 +801,7 @@ sudo crontab -e
     delaycompress
     missingok
     notifempty
-    create 0644 root root
+    create 0600 root root
 }
 ```
 
@@ -855,24 +813,15 @@ sudo /opt/etcd-backup/backup_etcd.sh
 
 **6. 设置备份监控（可选）：**
 
-要在备份失败时接收告警，可以与 Prometheus 等监控工具集成。将以下代码添加到备份脚本中：
-
-```bash
-# Create file indicating backup success/failure
-if [ $? -eq 0 ]; then
-  echo "success" > /var/lib/node_exporter/etcd_backup_status.prom
-else
-  echo "failure" > /var/lib/node_exporter/etcd_backup_status.prom
-fi
-```
+若 `METRICS_DIR` 存在，脚本的 EXIT trap 会发布数值型 `etcd_backup_success` 和 `etcd_backup_last_attempt_timestamp_seconds` 指标。配置 node-exporter 的 textfile collector 读取该目录，并授予写入者所需权限；针对失败或尝试时间过旧发出告警。不要在 echo/copy 命令之后再追加 `$?` 检查。外部挂载必须已存在；验证或复制失败会停止保留策略。
 
 **注意事项：**
 - 备份文件应存储在集群外部的安全位置。
 - 在云环境中，建议使用 S3 或 GCS 等 object storage。
 - 定期执行备份恢复测试，以验证备份有效性。
-- 对于 HA etcd 集群，只需要在一个 etcd 实例上执行备份。
+- 对于 HA etcd 集群，只需在一个 etcd 实例上执行备份。
 </details>
-4. 编写一个流程，用于对集群中的所有 Node 执行 rolling update。更新期间必须保持工作负载可用性。
+4. 编写一个有边界的维护流程，仅针对明确选定的自管 Linux 工作节点，同时保留中断预算；若健康检查失败则停止。
 
 <details>
 <summary>显示答案</summary>
@@ -882,99 +831,65 @@ fi
 **Node Rolling Update 流程：**
 
 ```bash
-#!/bin/bash
-# Filename: node_rolling_update.sh
-# Description: Perform cluster node rolling update
-
-# Variable settings
-UPGRADE_COMMAND="sudo apt update && sudo apt upgrade -y"
-REBOOT_REQUIRED_CHECK="[ -f /var/run/reboot-required ]"
-MAX_UNAVAILABLE=1  # Number of nodes to update at once
-
-# Check cluster status
-echo "Checking cluster status..."
-kubectl get nodes
-kubectl get pods --all-namespaces -o wide
-
-# Check PodDisruptionBudgets
-echo "Checking PodDisruptionBudgets..."
-kubectl get poddisruptionbudget --all-namespaces
-
-# Get node list
-NODES=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
-NODE_COUNT=$(echo $NODES | wc -w)
-
-echo "Updating $NODE_COUNT nodes total."
-echo "Node list: $NODES"
-echo "Maximum $MAX_UNAVAILABLE node(s) will be updated at once."
-echo "Press Enter to continue. Press Ctrl+C to cancel."
-read
-
-# Iterate over each node
-for NODE in $NODES; do
-  echo "===== Updating node: $NODE ====="
-
-  # Cordon node
-  echo "Cordoning node..."
-  kubectl cordon $NODE
-
-  # Drain node
-  echo "Draining node..."
-  kubectl drain $NODE --ignore-daemonsets --delete-emptydir-data --force
-
-  # Update node
-  echo "Updating node..."
-  ssh $NODE "$UPGRADE_COMMAND"
-
-  # Check if reboot is required
-  REBOOT_REQUIRED=$(ssh $NODE "$REBOOT_REQUIRED_CHECK && echo 'true' || echo 'false'")
-
-  if [ "$REBOOT_REQUIRED" == "true" ]; then
-    echo "Reboot required. Rebooting..."
-    ssh $NODE "sudo reboot"
-
-    # Wait until node is Ready again
-    echo "Node rebooting. Waiting until Ready..."
-    while true; do
-      STATUS=$(kubectl get node $NODE -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-      if [ "$STATUS" == "True" ]; then
-        echo "Node is now Ready."
-        break
-      fi
-      echo "Node is not Ready yet. Checking again in 10 seconds."
-      sleep 10
-    done
-  else
-    echo "Node reboot not required."
-  fi
-
-  # Uncordon node
-  echo "Uncordoning node..."
-  kubectl uncordon $NODE
-
-  # Check node status
-  echo "Checking node status..."
-  kubectl get node $NODE
-
-  # Wait for pods to be rescheduled on the node
-  echo "Waiting for pods to be rescheduled on the node..."
-  sleep 30
-
-  # Check cluster status
-  echo "Checking cluster status..."
-  kubectl get pods --all-namespaces -o wide | grep $NODE
-
-  echo "===== $NODE update complete ====="
-  echo ""
-
-  # User confirmation before proceeding to next node (optional)
-  echo "Press Enter to proceed to next node. Press Ctrl+C to cancel."
-  read
+#!/usr/bin/env bash
+# node_rolling_update.sh: explicitly selected self-managed Linux workers only.
+set -euo pipefail
+: "${MAINTENANCE_COMMAND:?Set a reviewed node-maintenance command that does not reboot itself}"
+: "${WORKLOAD_HEALTHCHECK:?Set a command that verifies critical workload health}"
+[ "$#" -gt 0 ] || { echo 'Pass the worker node names as arguments' >&2; exit 1; }
+trap 'echo "Stopped on error; inspect the node before manually uncordoning it" >&2' ERR
+for node in "$@"; do
+  kubectl get node "$node" -o json | jq -e '
+    (.metadata.labels["kubernetes.io/os"] == "linux") and
+    (.metadata.labels | has("node-role.kubernetes.io/control-plane") | not) and
+    (.metadata.labels | has("node-role.kubernetes.io/master") | not)' >/dev/null
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" 'sudo -n true'
 done
-
-echo "All node updates complete!"
-kubectl get nodes
+kubectl get poddisruptionbudgets -A
+bash -c "$WORKLOAD_HEALTHCHECK"
+for node in "$@"; do
+  kubectl wait --for=condition=Ready "node/$node" --timeout=120s
+  boot_before=$(kubectl get node "$node" -o jsonpath='{.status.nodeInfo.bootID}')
+  kubectl cordon "$node"
+  kubectl drain "$node" --ignore-daemonsets --timeout=10m
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" "$MAINTENANCE_COMMAND"
+  reboot_required=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+    'if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi')
+  if [ "$reboot_required" = yes ]; then
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" 'sudo -n reboot' || true
+    deadline=$((SECONDS + 600))
+    while :; do
+      boot_after=$(kubectl get node "$node" -o jsonpath='{.status.nodeInfo.bootID}')
+      [ -n "$boot_after" ] && [ "$boot_after" != "$boot_before" ] && break
+      [ "$SECONDS" -lt "$deadline" ] || { echo 'New boot ID not reported' >&2; exit 1; }
+      sleep 5
+    done
+  fi
+  # Require a fresh kubelet lease renewal, not a stale pre-maintenance Ready flag.
+  lease_before=$(kubectl -n kube-node-lease get lease "$node" -o jsonpath='{.spec.renewTime}')
+  deadline=$((SECONDS + 120))
+  while :; do
+    lease_after=$(kubectl -n kube-node-lease get lease "$node" -o jsonpath='{.spec.renewTime}')
+    [ -n "$lease_after" ] && [ "$lease_after" != "$lease_before" ] && break
+    [ "$SECONDS" -lt "$deadline" ] || { echo 'No fresh kubelet lease' >&2; exit 1; }
+    sleep 5
+  done
+  kubectl wait --for=condition=Ready "node/$node" --timeout=5m
+  bash -c "$WORKLOAD_HEALTHCHECK"
+  kubectl uncordon "$node"
+  bash -c "$WORKLOAD_HEALTHCHECK"
+done
 ```
+
+此示例需要 kubectl、jq、已为所选 Node 配置 SSH alias、无需密码且经过授权的 sudo，以及经过审核的维护命令。它会检查 Debian/Ubuntu 的“需要重启”标记；其他操作系统需据此调整。请将 WORKLOAD_HEALTHCHECK 设为实际验证关键应用的命令，并且只传入经过审核的 worker 列表。例如：
+
+```bash
+MAINTENANCE_COMMAND='sudo -n /usr/local/sbin/approved-node-maintenance' \
+WORKLOAD_HEALTHCHECK='kubectl -n app rollout status deployment/frontend --timeout=5m' \
+./node_rolling_update.sh worker-1 worker-2
+```
+
+命令/脚本和应用名称必须真实存在并符合维护计划。流程不会使用 force，也不会授权丢弃 emptyDir 数据。若 drain/维护失败，流程会停止；重启后它会等待 boot ID 变化和新的 kubelet lease，并让失败的 Node 保持 cordon。PDB 和这些检查可减少计划内中断，但无法保证避免无关故障导致的不可用。EKS managed/Auto Mode Node 应使用 provider-managed 更新；control-plane Node 则应遵循独立的 kubeadm 控制平面流程。
 
 **Rolling Update 前准备：**
 
@@ -1035,159 +950,111 @@ kubectl get nodes
 
 **答案：**
 
-```bash
-#!/bin/bash
-# Filename: resource_usage_report.sh
-# Description: Identify pods with high resource usage in the cluster and generate report
+```python
+#!/usr/bin/env python3
+# resource_usage_report.py: read-only Kubernetes API/metrics reporting.
+import datetime
+from decimal import Decimal
+import html
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
 
-# Variable settings
-REPORT_DIR="/tmp/k8s-reports"
-DATE=$(date +%Y%m%d-%H%M%S)
-REPORT_FILE="$REPORT_DIR/resource-usage-report-$DATE.txt"
-TOP_N=10  # Show top N pods
+SCALE = {"": Decimal(1), "n": Decimal("1e-9"), "u": Decimal("1e-6"),
+         "m": Decimal("1e-3"), "k": Decimal(1000), "K": Decimal(1000)}
+SCALE.update({s: Decimal(1000) ** n for n, s in enumerate("MGTPE", 2)})
+SCALE.update({s + "i": Decimal(1024) ** n for n, s in enumerate("KMGTPE", 1)})
 
-# Create report directory
-mkdir -p $REPORT_DIR
+def quantity(value):
+    text = str(value)
+    match = re.fullmatch(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)([a-zA-Z]*)", text)
+    if not match or match[2] not in SCALE:
+        raise ValueError("Unsupported Kubernetes quantity: " + text)
+    return Decimal(match[1]) * SCALE[match[2]]
 
-# Write report header
-echo "===== Kubernetes Cluster Resource Usage Report =====" > $REPORT_FILE
-echo "Generated: $(date)" >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def kubectl_json(*args):
+    return json.loads(subprocess.check_output(["kubectl", *args], text=True))
 
-# Add cluster information
-echo "===== Cluster Information =====" >> $REPORT_FILE
-kubectl cluster-info >> $REPORT_FILE 2>&1
-echo "" >> $REPORT_FILE
+def make_rows(pods, metrics):
+    index = {(p["metadata"]["namespace"], p["metadata"]["name"]): p for p in pods}
+    rows = []
+    for metric in metrics:
+        key = metric["metadata"]["namespace"], metric["metadata"]["name"]
+        if key not in index:
+            continue  # API snapshots are not atomic; the Pod may have disappeared.
+        spec = index[key]["spec"]
+        active = spec.get("containers", []) + [c for c in spec.get("initContainers", [])
+                                               if c.get("restartPolicy") == "Always"]
+        usage = {r: sum((quantity(c["usage"][r]) for c in metric["containers"]), Decimal(0))
+                 for r in ("cpu", "memory")}
+        requests = {}
+        for resource in ("cpu", "memory"):
+            pod_request = spec.get("resources", {}).get("requests", {}).get(resource)
+            values = [c.get("resources", {}).get("requests", {}).get(resource) for c in active]
+            requests[resource] = (quantity(pod_request) if pod_request is not None else
+                                  sum((quantity(v) for v in values), Decimal(0))
+                                  if all(v is not None for v in values) else None)
+        rows.append((key, usage, requests))
+    return rows
 
-# Node resource usage
-echo "===== Node Resource Usage =====" >> $REPORT_FILE
-kubectl top nodes | sort -k 3 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def render_report(rows):
+    lines = ["Kubernetes resource usage report", "Generated: " + datetime.datetime.now(datetime.timezone.utc).isoformat(),
+             "Requests: active application/native-sidecar containers or Pod-level requests.",
+             "This is not scheduler effective-request accounting for completed init stages/overhead."]
+    totals = {}
+    for key, usage, _ in rows:
+        total = totals.setdefault(key[0], {"cpu": Decimal(0), "memory": Decimal(0)})
+        for resource in total:
+            total[resource] += usage[resource]
+    for resource in ("cpu", "memory"):
+        lines.append("\nTop 10 Pods by " + resource)
+        for key, usage, requests in sorted(rows, key=lambda row: row[1][resource], reverse=True)[:10]:
+            request = requests[resource]
+            ratio = f"{usage[resource] / request * 100:.1f}%" if request else "request missing/zero"
+            lines.append(f"{key[0]}/{key[1]}: usage={usage[resource]}, request={request}, ratio={ratio}")
+    lines.append("\nNamespace totals (CPU cores, memory GiB)")
+    for namespace, total in sorted(totals.items()):
+        lines.append(f"{namespace}: {total['cpu']:.3f}, {total['memory'] / (1024 ** 3):.3f}")
+    lines.append("\nPods above 80% of known requests or with missing requests")
+    for key, usage, requests in rows:
+        if any(not requests[r] or usage[r] / requests[r] >= Decimal('0.8') for r in requests):
+            lines.append(f"{key[0]}/{key[1]}: usage={usage}; requests={requests}")
+    return "\n".join(lines)
 
-# Top pods by CPU usage
-echo "===== Top $TOP_N Pods by CPU Usage =====" >> $REPORT_FILE
-kubectl top pods --all-namespaces | sort -k 3 -hr | head -n $((TOP_N + 1)) >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def main():
+    os.umask(0o077)
+    group = kubectl_json("get", "--raw", "/apis/metrics.k8s.io")
+    version = group["preferredVersion"]["version"]
+    pod_metrics = kubectl_json("get", "--raw", f"/apis/metrics.k8s.io/{version}/pods")["items"]
+    pods = kubectl_json("get", "pods", "-A", "-o", "json")["items"]
+    rows = make_rows(pods, pod_metrics)
+    report = render_report(rows)
+    nodes = subprocess.check_output(["kubectl", "top", "nodes"], text=True)
+    report += "\n\nNode resource usage\n" + nodes
+    node_count = len(kubectl_json("get", "nodes", "-o", "json")["items"])
+    namespace_count = len(kubectl_json("get", "namespaces", "-o", "json")["items"])
+    context = subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
+    report += f"\nContext: {context}; nodes: {node_count}; namespaces: {namespace_count}\n"
+    report += f"Inventory Pods: {len(pods)}; Pods with matched metrics: {len(rows)}\n"
+    directory = Path(os.environ.get("REPORT_DIR", "/tmp/k8s-reports"))
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    stem = "resource-usage-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    text_path = directory / (stem + ".txt")
+    text_path.write_text(report, encoding="utf-8")
+    (directory / (stem + ".html")).write_text(
+        '<!doctype html><meta charset="utf-8"><title>Kubernetes resource report</title><pre>'
+        + html.escape(report) + '</pre>', encoding="utf-8")
+    print(text_path)
 
-# Top pods by memory usage
-echo "===== Top $TOP_N Pods by Memory Usage =====" >> $REPORT_FILE
-kubectl top pods --all-namespaces | sort -k 4 -hr | head -n $((TOP_N + 1)) >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# Resource usage by namespace
-echo "===== Resource Usage by Namespace =====" >> $REPORT_FILE
-echo "CPU Usage (cores):" >> $REPORT_FILE
-kubectl top pods --all-namespaces | tail -n +2 | awk '{print $2, $3}' | sed 's/m//' | awk '{ns[$1] += $2} END {for (namespace in ns) print namespace, ns[namespace]/1000}' | sort -k 2 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "Memory Usage (GiB):" >> $REPORT_FILE
-kubectl top pods --all-namespaces | tail -n +2 | awk '{print $2, $4}' | sed 's/Mi//' | awk '{ns[$1] += $2} END {for (namespace in ns) print namespace, ns[namespace]/1024}' | sort -k 2 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# Identify pods with high usage relative to requests
-echo "===== Pods with High Usage Relative to Requests =====" >> $REPORT_FILE
-echo "Collecting pod information..." >> $REPORT_FILE
-
-# Create temporary files
-PODS_USAGE_FILE="$REPORT_DIR/pods-usage-$DATE.tmp"
-PODS_REQUESTS_FILE="$REPORT_DIR/pods-requests-$DATE.tmp"
-
-# Collect current usage
-kubectl top pods --all-namespaces | tail -n +2 > $PODS_USAGE_FILE
-
-# Collect resource requests for all pods in all namespaces
-echo "Namespace,Pod,CPU Request(m),Memory Request(Mi)" > $PODS_REQUESTS_FILE
-for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
-  kubectl get pods -n $ns -o jsonpath='{range .items[*]}{.metadata.namespace},{.metadata.name},{range .spec.containers[*]}{.resources.requests.cpu}{","}{.resources.requests.memory}{"\n"}{end}{end}' | sed 's/$/,/' | sed 's/,$//' >> $PODS_REQUESTS_FILE
-done
-
-# Calculate usage relative to requests and add to report
-echo "Pods with high CPU usage (usage/request > 80%):" >> $REPORT_FILE
-while read line; do
-  ns=$(echo $line | awk '{print $1}')
-  pod=$(echo $line | awk '{print $2}')
-  cpu_usage=$(echo $line | awk '{print $3}' | sed 's/m//')
-
-  # Find CPU request for the pod
-  cpu_request=$(grep "$ns,$pod," $PODS_REQUESTS_FILE | awk -F, '{print $3}' | sed 's/[^0-9m.]//g' | sed 's/m//')
-
-  # Show as "not set" if no CPU request
-  if [ -z "$cpu_request" ] || [ "$cpu_request" == "" ]; then
-    echo "$ns/$pod: CPU usage ${cpu_usage}m, request not set" >> $REPORT_FILE
-  else
-    # Calculate CPU usage percentage
-    cpu_percentage=$(echo "scale=2; $cpu_usage / $cpu_request * 100" | bc)
-
-    # Only show if usage is 80% or higher
-    if (( $(echo "$cpu_percentage >= 80" | bc -l) )); then
-      echo "$ns/$pod: CPU usage ${cpu_usage}m, request ${cpu_request}m, utilization ${cpu_percentage}%" >> $REPORT_FILE
-    fi
-  fi
-done < $PODS_USAGE_FILE
-
-echo "" >> $REPORT_FILE
-echo "Pods with high memory usage (usage/request > 80%):" >> $REPORT_FILE
-while read line; do
-  ns=$(echo $line | awk '{print $1}')
-  pod=$(echo $line | awk '{print $2}')
-  mem_usage=$(echo $line | awk '{print $4}' | sed 's/Mi//')
-
-  # Find memory request for the pod
-  mem_request=$(grep "$ns,$pod," $PODS_REQUESTS_FILE | awk -F, '{print $4}' | sed 's/[^0-9Mi.]//g' | sed 's/Mi//')
-
-  # Show as "not set" if no memory request
-  if [ -z "$mem_request" ] || [ "$mem_request" == "" ]; then
-    echo "$ns/$pod: Memory usage ${mem_usage}Mi, request not set" >> $REPORT_FILE
-  else
-    # Calculate memory usage percentage
-    mem_percentage=$(echo "scale=2; $mem_usage / $mem_request * 100" | bc)
-
-    # Only show if usage is 80% or higher
-    if (( $(echo "$mem_percentage >= 80" | bc -l) )); then
-      echo "$ns/$pod: Memory usage ${mem_usage}Mi, request ${mem_request}Mi, utilization ${mem_percentage}%" >> $REPORT_FILE
-    fi
-  fi
-done < $PODS_USAGE_FILE
-
-echo "" >> $REPORT_FILE
-
-# Identify pods without resource requests
-echo "===== Pods Without Resource Requests =====" >> $REPORT_FILE
-kubectl get pods --all-namespaces -o json | jq -r '.items[] | select((.spec.containers[].resources.requests.cpu == null) or (.spec.containers[].resources.requests.memory == null)) | .metadata.namespace + "/" + .metadata.name' >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# Clean up temporary files
-rm -f $PODS_USAGE_FILE $PODS_REQUESTS_FILE
-
-# Report summary
-echo "===== Report Summary =====" >> $REPORT_FILE
-echo "Total nodes: $(kubectl get nodes | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "Total pods: $(kubectl get pods --all-namespaces | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "Total namespaces: $(kubectl get ns | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "Report generation complete: $REPORT_FILE" >> $REPORT_FILE
-
-# Output report location
-echo "Report generated: $REPORT_FILE"
-
-# HTML report generation (optional)
-HTML_REPORT="${REPORT_FILE%.txt}.html"
-echo "<html><head><title>Kubernetes Resource Usage Report</title>" > $HTML_REPORT
-echo "<style>body{font-family:Arial;margin:20px}h1{color:#326ce5}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background-color:#f2f2f2}</style>" >> $HTML_REPORT
-echo "</head><body>" >> $HTML_REPORT
-echo "<h1>Kubernetes Cluster Resource Usage Report</h1>" >> $HTML_REPORT
-echo "<p>Generated: $(date)</p>" >> $HTML_REPORT
-
-# Convert report content to HTML
-awk '/===== Cluster Information =====/{flag=1;print "<h2>Cluster Information</h2><pre>"}/===== Node Resource Usage =====/{flag=0;print "</pre><h2>Node Resource Usage</h2><table><tr><th>Node</th><th>CPU(%)</th><th>Memory(%)</th></tr>"}/===== Top.*CPU Usage/{flag=0;print "</table><h2>Top Pods by CPU Usage</h2><table><tr><th>Namespace</th><th>Pod</th><th>CPU(m)</th><th>Memory(Mi)</th></tr>"}/===== Top.*Memory Usage/{flag=0;print "</table><h2>Top Pods by Memory Usage</h2><table><tr><th>Namespace</th><th>Pod</th><th>CPU(m)</th><th>Memory(Mi)</th></tr>"}/===== Resource Usage by Namespace =====/{flag=0;print "</table><h2>Resource Usage by Namespace</h2>"}/CPU Usage \(cores\):/{flag=0;print "<h3>CPU Usage (cores)</h3><table><tr><th>Namespace</th><th>CPU(cores)</th></tr>"}/Memory Usage \(GiB\):/{flag=0;print "</table><h3>Memory Usage (GiB)</h3><table><tr><th>Namespace</th><th>Memory(GiB)</th></tr>"}/===== Pods with High Usage Relative to Requests =====/{flag=0;print "</table><h2>Pods with High Usage Relative to Requests</h2>"}/Pods with high CPU usage/{flag=0;print "<h3>Pods with High CPU Usage (usage/request > 80%)</h3><ul>"}/Pods with high memory usage/{flag=0;print "</ul><h3>Pods with High Memory Usage (usage/request > 80%)</h3><ul>"}/===== Pods Without Resource Requests =====/{flag=0;print "</ul><h2>Pods Without Resource Requests</h2><ul>"}/===== Report Summary =====/{flag=0;print "</ul><h2>Report Summary</h2><ul>"}{if(flag==1)print;else if($0 ~ /^NAME/){print "<tr>";for(i=1;i<=NF;i++)print "<th>"$i"</th>";print "</tr>"}else if($0 ~ /^[a-z].*[0-9]%/){print "<tr>";for(i=1;i<=NF;i++)print "<td>"$i"</td>";print "</tr>"}else if($0 ~ /^[a-z].*[0-9]m/){print "<tr>";for(i=1;i<=NF;i++)print "<td>"$i"</td>";print "</tr>"}else if($0 ~ /^[a-z].* [0-9]/){print "<tr><td>"$1"</td><td>"$2"</td></tr>"}else if($0 ~ /^[a-z].*\//){print "<li>"$0"</li>"}else if($0 ~ /^Total/){print "<li>"$0"</li>"}}' $REPORT_FILE >> $HTML_REPORT
-
-echo "</ul></body></html>" >> $HTML_REPORT
-echo "HTML report generated: $HTML_REPORT"
+if __name__ == "__main__":
+    main()
 ```
 
 **脚本用法：**
 ```bash
-chmod +x resource_usage_report.sh
-./resource_usage_report.sh
+python3 resource_usage_report.py
 ```
 
 **脚本功能：**
@@ -1200,7 +1067,7 @@ chmod +x resource_usage_report.sh
 7. 生成文本和 HTML 格式的报告
 
 **注意事项：**
-- 此脚本需要 `kubectl`、`jq` 和 `bc` 工具。
+- 此脚本需要 Python 3，以及对 Pods 和 metrics API 的只读 `kubectl` 访问。它会发现已提供的 metrics API 版本，按 Namespace 汇总多容器用量，处理资源单位并对 HTML 输出进行转义。
 - 集群中必须安装 Metrics Server。
 - 在大型集群中，脚本执行时间可能较长。
 - 可以设置为 cron job 以定期生成报告。
@@ -1208,47 +1075,47 @@ chmod +x resource_usage_report.sh
 </details>
 ## 高级主题
 
-1. 在 Kubernetes 集群中优化 etcd 性能的关键配置参数和最佳实践是什么？
-   - A) `--max-request-bytes`, `--quota-backend-bytes`, regular compaction
-   - B) `--max-concurrent-requests`, `--max-connections`, disk RAID configuration
-   - C) `--auto-compaction-retention`, `--snapshot-count`, SSD storage
-   - D) `--max-txn-ops`, `--max-result-buffer`, memory expansion
+1. 哪两组选项包含真实的 etcd 设置或运维实践？（选择两项。）
+   - A) `--max-request-bytes`、`--quota-backend-bytes`，以及定期 compaction
+   - B) `--max-concurrent-requests`、`--max-connections`，以及磁盘 RAID 配置
+   - C) `--auto-compaction-retention`、`--snapshot-count`，以及 SSD 存储
+   - D) `--max-txn-ops`、`--max-result-buffer`，以及扩展内存
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) `--auto-compaction-retention`, `--snapshot-count`, SSD storage**
+**答案：A 和 C**
 
 **解释：**
-etcd 是 Kubernetes 集群的核心数据存储，其性能直接影响整体集群性能。优化 etcd 性能的关键配置参数和最佳实践如下：
+etcd 的配置选项必须和运维实践一起评估。A 和 C 包含真实设置或有效做法；请在实际版本上核对参数默认值，并通过测量验证调整效果。
 
-1. **`--auto-compaction-retention`**：etcd 是一种 append-only 存储，会保留所有变更的历史记录。此参数设置自动压缩 key 先前版本的间隔。默认值为 0（禁用），但在生产环境中通常设置为 1 小时（1h）或 24 小时（24h）。这有助于节省磁盘空间并提升性能。
+1. **`--auto-compaction-retention`**：etcd 是仅追加存储，会保留变更历史；此参数设置自动压缩旧 key 版本的保留期。默认值为 0（禁用），生产环境通常设为 1 小时（1h）或 24 小时（24h），以节省磁盘空间并改善性能。
 
-2. **`--snapshot-count`**：指定 etcd 创建 snapshot 前要提交的事务数量。默认值为 100,000，但在大型集群中可调整此值以优化 snapshot 创建频率。较小的值会更频繁地创建 snapshot，从而缩短恢复时间，但会增加磁盘 I/O。
+2. **`--snapshot-count`**：指定 etcd 在创建内部 Raft snapshot 前提交的事务数；这不是可移植的备份 snapshot。默认值随版本变化（v3.6 参考文档列出 10,000），调优前应检查安装版本并测量影响。
 
-3. **SSD storage**：etcd 对磁盘 I/O 很敏感，因此使用 SSD（Solid State Drives）可显著提升性能。在大型集群中，使用 SSD 是必要的。
+3. **SSD 存储**：etcd 对磁盘 I/O 敏感，使用 SSD 通常可显著改善性能；大型集群应使用 SSD，并结合实际负载测量。
 
 其他重要优化设置和最佳实践：
 
 - **使用专用磁盘**：为 etcd 数据使用专用磁盘，以防止与其他应用程序发生 I/O 争用。
 - **适当的内存分配**：etcd 会在内存中缓存数据以提升性能，因此必须分配足够的内存。
 - **优化集群规模**：通常 3-5 个 etcd member 可提供最佳性能和可用性。
-- **最小化网络延迟**：将 etcd member 放置在同一数据中心或 availability zone 中，以最小化 member 之间的网络延迟。
+- **平衡网络延迟和故障隔离**：降低成员间延迟的同时，避免所有成员集中在同一故障域；若整个 AZ 故障，同区部署可能失去 quorum。
 - **定期备份和压缩**：执行定期备份和 compaction，以确保数据安全并高效使用磁盘空间。
 
-`--max-request-bytes` 和 `--quota-backend-bytes` 是实际的 etcd 参数，但主要与资源限制相关，而不是性能。`--max-concurrent-requests`、`--max-connections`、`--max-txn-ops` 和 `--max-result-buffer` 要么不是实际的 etcd 参数，要么不是性能优化的主要因素。
+`--max-request-bytes`、`--quota-backend-bytes` 和 `--max-txn-ops` 都是真实设置。选项 D 中的 `--max-result-buffer` 不受支持；也不要把资源限制、保留期和内部 snapshot 当作备份策略。
 </details>
 
-2. 在 Kubernetes 集群中实现 control plane 高可用性（HA）的最有效方式是什么？
-   - A) Running multiple API server instances on a single master node
-   - B) Configuring an etcd cluster with multiple master nodes and a load balancer
-   - C) Deploying the API server as a StatefulSet with PersistentVolume
-   - D) Implementing a watchdog process with auto-recovery on the master node
+2. 在 Kubernetes 集群中实现 control plane 高可用性（HA）的有效方式是什么？
+   - A) 在单个 master Node 上运行多个 API server 实例
+   - B) 配置包含多个 master Node 和负载均衡器的 etcd 集群
+   - C) 将 API server 部署为带 PersistentVolume 的 StatefulSet
+   - D) 在 master Node 上实现可自动恢复的 watchdog 进程
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Configuring an etcd cluster with multiple master nodes and a load balancer**
+**答案：B：配置包含多个 master Node 和负载均衡器的 etcd 集群**
 
 **解释：**
 实现 Kubernetes control plane 高可用性（HA）的最有效方式，是配置包含多个 master Node 的 etcd 集群和一个 load balancer。此方法由以下组件组成：
@@ -1274,27 +1141,27 @@ etcd 是 Kubernetes 集群的核心数据存储，其性能直接影响整体集
 - watchdog 进程可能有帮助，但其本身并不是真正的高可用性解决方案。
 </details>
 
-3. 在 Kubernetes 集群中配置 audit logging 时最重要的考虑事项是什么？
-   - A) Logging all API requests to ensure complete audit trail
-   - B) Using audit policies to selectively log only important events
-   - C) Real-time streaming of audit logs to an external SIEM system
-   - D) Restricting access to audit logs to administrators only
+3. 哪种机制决定 Kubernetes audit logging 要记录哪些事件及其详细级别？
+   - A) 不加筛选地记录所有请求和响应正文
+   - B) 使用 audit policy 选择要记录的事件和详细级别
+   - C) 将 audit log 实时流式传输到外部 SIEM 系统
+   - D) 仅允许管理员访问 audit log
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Using audit policies to selectively log only important events**
+**答案：B：使用 audit policy 选择要记录的事件和详细级别**
 
 **解释：**
-配置 Kubernetes audit logging 时最重要的考虑事项，是使用 audit policy 有选择地仅记录重要事件。原因如下：
+Audit policy 用于选择事件和详细级别。可用 Metadata catch-all 保留较广泛的审计轨迹，同时排除敏感正文；保留期限、访问控制和日志传送也同样重要。
 
-1. **最小化性能影响**：记录所有 API 请求会给 API server 带来显著负载并降低性能。大型集群每秒可能有数千个 API 请求。
+1. **降低性能影响**：按审计需求和实测开销选择记录级别；对所有请求记录 Metadata 是受支持的基线。
 
 2. **存储效率**：记录所有事件会导致日志数据快速增长，增加存储成本，并使日志分析变得困难。
 
 3. **关注相关信息**：通过仅记录重要事件，安全分析人员可以关注关键信息。
 
-4. **合规性**：许多合规要求需要记录特定类型的事件，而不是所有事件。
+4. **合规性**：根据适用要求确定事件覆盖范围、保留期限和访问控制。
 
 Kubernetes audit policy 支持以下 audit level：
 
@@ -1308,26 +1175,12 @@ Kubernetes audit policy 支持以下 audit level：
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
-# Set logging level for authentication and authorization requests
 - level: Metadata
-  users: ["system:anonymous"]
-  verbs: ["get", "list", "watch"]
-
-# Log changes to sensitive resources like Secret, ConfigMap in detail
-- level: Request
   resources:
   - group: ""
-    resources: ["secrets", "configmaps"]
-  verbs: ["create", "update", "patch", "delete"]
-
-# Log important resource changes in detail
-- level: RequestResponse
-  resources:
-  - group: ""
-    resources: ["pods"]
-  verbs: ["create", "update", "patch", "delete"]
-
-# Log only metadata by default
+    resources: ["secrets", "configmaps", "serviceaccounts/token"]
+  - group: authentication.k8s.io
+    resources: ["tokenreviews"]
 - level: Metadata
 ```
 
@@ -1337,19 +1190,19 @@ rules:
 - 限制 audit log 访问权限很重要，但这是安全措施，而不是 logging policy 本身。
 </details>
 
-4. 在 Kubernetes 集群中实现 Node auto-repair 的最有效方式是什么？
-   - A) Deploy a DaemonSet that monitors node status and automatically reboots problematic nodes
-   - B) Utilize cloud provider's managed node groups and auto-repair features
-   - C) Use Node Problem Detector and custom controllers for node status monitoring and recovery
-   - D) Implement a cron job that periodically checks node status and recreates problematic nodes
+4. 在自管环境中，哪种模式将专用节点问题检测器与自定义修复逻辑结合起来？
+   - A) 部署 DaemonSet 监控节点状态，并自动重启有问题的节点
+   - B) 使用云提供商的托管节点组和自动修复功能
+   - C) 使用 Node Problem Detector 和自定义 controller 监控节点状态并执行恢复
+   - D) 使用 cron job 定期检查节点状态并重建有问题的节点
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Use Node Problem Detector and custom controllers for node status monitoring and recovery**
+**答案：C：使用 Node Problem Detector 和自定义 controller 监控节点状态并执行恢复**
 
 **解释：**
-在 Kubernetes 集群中实现 Node auto-repair 的最有效方式，是将 Node Problem Detector 与 custom controller 结合使用。此方法提供以下优势：
+Node Problem Detector 与 custom controller 是一种可扩展的设计，但并非在所有环境中都最优。受支持的 provider-managed 修复（包括 EKS node repair）也可能减少运维工作。该设计的组成部分如下：
 
 1. **准确的问题检测**：Node Problem Detector (NPD) 是专用工具，可检测多种 Node 问题，包括：
    - Kernel 错误和崩溃
@@ -1365,7 +1218,7 @@ rules:
 
 3. **Kubernetes 原生集成**：NPD 将 Node 状态报告为 NodeConditions，与现有 Kubernetes 机制良好集成。
 
-4. **与云无关**：此方法适用于所有环境（本地环境、各种 cloud provider）。
+4. **匹配环境**：检测和修复逻辑必须适配操作系统、运行时和 provider；如果节点上的 agent 无法上报节点丢失，还需要外部信号或 controller。
 
 实施步骤：
 
@@ -1391,34 +1244,34 @@ rules:
 
 - **Cron job 方法**：响应时间慢，问题检测能力有限，并且必须在集群外部运行。
 
-将 Node Problem Detector 与 custom controller 结合使用，可以实现适用于各种环境的强大且灵活的 Node auto-repair 解决方案。
+
 </details>
 
 5. 在 Kubernetes 集群中有效管理 RBAC（Role-Based Access Control）的最佳实践是什么？
-   - A) Grant cluster-admin role to all users for ease of management
-   - B) Define granular roles by namespace and apply the principle of least privilege
-   - C) Consolidate all permissions into a single ClusterRole for consistency
-   - D) Always use user certificates instead of service accounts for authentication
+   - A) 为便于管理而向所有用户授予 cluster-admin role
+   - B) 按 Namespace 定义细粒度 role 并遵循最小权限原则
+   - C) 为保持一致而将所有权限合并到单个 ClusterRole
+   - D) 始终使用用户证书而不是 service account 进行身份验证
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Define granular roles by namespace and apply the principle of least privilege**
+**答案：B：按 Namespace 定义细粒度 role 并遵循最小权限原则**
 
 **解释：**
 在 Kubernetes 集群中有效管理 RBAC（Role-Based Access Control）的最佳实践，是按 Namespace 定义细粒度 role，并应用最小权限原则。此方法提供以下优势：
 
 1. **最小权限原则**：仅向用户和 service account 授予最低限度的必要权限，以最小化安全风险。这有助于保护集群免受意外变更或恶意操作影响。
 
-2. **Namespace 隔离**：按 Namespace 定义 role 可加强团队或应用程序之间的逻辑隔离。这可以防止一个团队的错误影响另一个团队的资源。
+2. **Namespace 隔离**：按 Namespace 定义 role 可加强团队或应用程序之间的逻辑隔离，但 Namespace 边界可以限制普通 API 操作；还需搭配 workload admission 和网络控制。
+
+Pod/Deployment 创建操作可能会间接暴露该 Namespace 中的 Secret 和 ServiceAccount 权限。移除直接读取 Secret 的权限虽有帮助，但并不能单独限制工作负载可挂载哪些凭证；还应使用适当的 admission control。
 
 3. **细粒度访问控制**：可以针对特定资源类型或操作精细控制权限。例如，可以授予开发人员管理 Pod 和 Service 的权限，同时限制修改 Secret 或 Namespace 本身的权限。
 
 4. **便于审计**：使用细粒度 role 可以清晰记录谁可以执行哪些操作，使审计和合规更容易。
 
 RBAC 最佳实践实施示例：
-
-1. **按 Namespace 定义 role**：
    ```yaml
    apiVersion: rbac.authorization.k8s.io/v1
    kind: Role
@@ -1432,10 +1285,9 @@ RBAC 最佳实践实施示例：
    - apiGroups: ["apps"]
      resources: ["deployments", "replicasets"]
      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-   - apiGroups: [""]
-     resources: ["secrets"]
-     verbs: ["get", "list", "watch"]  # Only allow reading secrets
    ```
+
+1. **按 Namespace 定义 role**：
 
 2. **创建 role binding**：
    ```yaml
@@ -1484,7 +1336,7 @@ RBAC 最佳实践实施示例：
 
 - **向所有用户授予 cluster-admin role**：这会带来严重安全风险。所有用户都将对集群中的所有资源拥有完全访问权限，使集群容易受到意外变更或恶意操作影响。
 
-- **将所有权限合并到单个 ClusterRole 中**：这会使细粒度访问控制无法实现，并违反最小权限原则。
+- **将所有权限合并到单个 ClusterRole 中**：一个权限过宽的共享 role 有过度授权风险；不过，范围狭窄、可复用的 ClusterRole 配合 namespaced RoleBinding 也可以是合适做法。
 
 - **始终使用用户证书**：Service account 适合应用程序身份验证，而在所有情况下都使用用户证书会增加管理负担。根据具体情况选择适当的身份验证机制很重要。
 </details>

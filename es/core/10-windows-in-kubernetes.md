@@ -19,7 +19,7 @@ Kubernetes se diseñó originalmente para contenedores Linux, pero la compatibil
 11. [Prácticas recomendadas](#best-practices)
 12. [Conclusión](#conclusion)
 
-## Descripción general de los contenedores Windows
+## Descripción general de los contenedores Windows {#windows-container-overview}
 
 Los contenedores Windows se ejecutan en el sistema operativo Windows y permiten empaquetar e implementar aplicaciones Windows.
 
@@ -54,7 +54,7 @@ EXPOSE 80
 # Inherit the IIS image entrypoint (ServiceMonitor.exe).
 ```
 
-## Arquitectura de compatibilidad con Windows en Kubernetes
+## Arquitectura de compatibilidad con Windows en Kubernetes {#kubernetes-windows-support-architecture}
 
 La compatibilidad con Windows en Kubernetes se basa en un entorno mixto. Los componentes del plano de control siempre se ejecutan en Linux, mientras que los nodos de trabajo pueden ser Linux o Windows.
 
@@ -79,7 +79,7 @@ Los componentes de Kubernetes que se ejecutan en nodos Windows son:
 3. **Plugin CNI**: Configuración de red
 4. **Plugin CSI**: Administración del almacenamiento
 
-## Limitaciones de los nodos Windows
+## Limitaciones de los nodos Windows {#windows-node-limitations}
 
 Al usar nodos Windows en Kubernetes, hay varias limitaciones que debe tener en cuenta.
 
@@ -100,7 +100,7 @@ Compruebe la matriz de compatibilidad de HNS/CNI de Windows para modos como L2br
 
 Kubernetes v1.37 admite nodos de trabajo Windows Server 2022 y 2025. Los ejemplos de este capítulo usan **Windows Server 2022 + ltsc2022**. Consulte tanto la matriz de compatibilidad de Microsoft como la política de soporte de la distribución y aplique las actualizaciones de seguridad mensuales. El aislamiento de Hyper-V no evita los requisitos de compatibilidad de Kubernetes.
 
-## Configuración de nodos Windows
+## Configuración de nodos Windows {#windows-node-setup}
 
 Veamos el proceso para añadir nodos Windows a un clúster de Kubernetes.
 
@@ -145,7 +145,7 @@ Inspeccione las etiquetas de sistema operativo, arquitectura y compilación que 
 kubectl get nodes -L kubernetes.io/os,kubernetes.io/arch,node.kubernetes.io/windows-build
 ```
 
-## Despliegue de contenedores Windows
+## Despliegue de contenedores Windows {#deploying-windows-containers}
 
 Veamos cómo desplegar contenedores Windows en Kubernetes.
 
@@ -253,7 +253,7 @@ spec:
     emptyDir: {}
 ```
 
-## Redes
+## Redes {#networking}
 
 Las redes de los nodos Windows tienen características distintas de las de los nodos Linux.
 
@@ -320,7 +320,7 @@ spec:
       port: 80
 ```
 
-## Almacenamiento
+## Almacenamiento {#storage}
 
 Veamos las opciones de almacenamiento disponibles en los nodos Windows.
 
@@ -509,7 +509,7 @@ spec:
       claimName: windows-pvc
 ```
 
-## Supervisión y registro
+## Supervisión y registro {#monitoring-and-logging}
 
 Veamos métodos para supervisar y recopilar registros de nodos y contenedores Windows.
 
@@ -589,7 +589,7 @@ Start-Service fluent-bit
 
 Integre Microsoft LogMonitor en la imagen de la aplicación y defina los orígenes reales de archivos/ETW/Event Log en `LogMonitorConfig.json` para enviar los registros de IIS a stdout. Pruebe el punto de entrada para que los ciclos de vida de ServiceMonitor e IIS sigan siendo correctos. El sidecar con archivo compartido anterior muestra cómo compartir un volumen; no gestiona la rotación de archivos ni los registros duplicados/perdidos durante un reinicio. Los recopiladores de producción necesitan checkpoints y control de rotación. `kubectl logs` lee stdout/stderr y no recopila automáticamente los archivos de IIS.
 
-## Seguridad
+## Seguridad {#security}
 
 Veamos las consideraciones de seguridad para nodos y contenedores Windows.
 
@@ -718,7 +718,7 @@ spec:
     command: [powershell.exe, -Command, 'whoami; Start-Sleep -Seconds 3600']
 ```
 
-## Compatibilidad con Windows en Amazon EKS
+## Compatibilidad con Windows en Amazon EKS {#windows-support-in-amazon-eks}
 
 Veamos cómo ejecutar cargas de trabajo Windows en Amazon EKS.
 
@@ -822,7 +822,7 @@ Windows Container Insights es compatible con la versión 1.5.0 o posterior del a
 
 Recopile stdout/stderr de Windows desde las rutas de registros CRI de kubelet (normalmente `C:\var\log\pods` y `C:\var\log\containers`); verifique las rutas de la distribución en lugar de copiar las rutas Linux `/var/log` y la configuración del analizador de Docker. EKS escribe los registros de kubelet/kube-proxy en el registro de eventos **EKS Windows**. Montar archivos .evtx en un contenedor normal no permite a winlog acceder a la API de eventos del host. Use un servicio del host o un recopilador HostProcess revisado.
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
 Veamos las prácticas recomendadas para ejecutar cargas de trabajo Windows en Kubernetes.
 

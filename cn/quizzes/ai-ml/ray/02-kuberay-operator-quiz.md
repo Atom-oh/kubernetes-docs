@@ -46,7 +46,7 @@
 
 4. RayService 增量升级需要什么？
    - A) 仅启用功能门就能保证零停机
-   - B) 策略、Gateway API/实现、容量、就绪状态和连接排空
+   - B) 策略、Gateway API/实现、容量、就绪状态和排空处理
    - C) 只需编辑一个现有 Pod 的镜像
    - D) 必须使用 RayJob
 
@@ -60,7 +60,7 @@
 
 5. 哪种扩缩容顺序是合适的？
    - A) Ray autoscaler 直接配置所有 EC2 容量
-   - B) Ray 需求 → KubeRay Pod 调和 → Kubernetes 放置/容量配置
+   - B) Ray 资源需求 → KubeRay 协调 Pod 状态 → Kubernetes 调度 Pod/提供所需容量
    - C) Karpenter 调用 Ray actor 方法
    - D) 两个控制器共同管理完全相同的资源
 

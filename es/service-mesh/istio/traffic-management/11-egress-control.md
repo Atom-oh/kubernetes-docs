@@ -10,7 +10,7 @@ El control de salida es una función que administra el tráfico saliente de la m
 4. [Inicio de TLS](#tls-origination)
 5. [Verificación](#verification)
 
-## Descripción general del tráfico de salida
+## Descripción general del tráfico de salida {#egress-overview}
 
 Este ejemplo enruta el HTTPS originado por una aplicación a través de un sidecar y un gateway de salida. Sustituya `api.external.com` por un endpoint resoluble que controle y use un plano de control de Istio compatible que ya esté instalado. ServiceEntry registra un destino; no obliga a que el tráfico pase por un gateway ni funciona como firewall. Aplique también restricciones de salida mediante controles de red.
 
@@ -18,7 +18,7 @@ Este ejemplo enruta el HTTPS originado por una aplicación a través de un sidec
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-11-egress-control-0.html)
 
-## Configuración de ServiceEntry
+## Configuración de ServiceEntry {#serviceentry-configuration}
 
 ### Registro de servicios externos
 
@@ -56,7 +56,7 @@ spec:
   resolution: DNS
 ```
 
-## Gateway de salida
+## Gateway de salida {#egress-gateway}
 
 ### Instalación del gateway de salida
 
@@ -138,11 +138,11 @@ spec:
           number: 443
 ```
 
-## Inicio de TLS
+## Inicio de TLS {#tls-origination}
 
 El ejemplo conserva la conexión TLS de la aplicación con el servicio externo; el gateway de salida enruta mediante SNI. El inicio de TLS, en cambio, comienza TLS en un proxy después de que la aplicación envía HTTP. Para eso se necesita un puerto/`targetPort` HTTP de ServiceEntry coincidente y una política TLS de DestinationRule; siga la [guía de inicio de TLS](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/) y evite iniciar una segunda capa TLS sobre una conexión de aplicación ya cifrada.
 
-## Verificación
+## Verificación {#verification}
 
 Configure el repositorio y la versión del chart como se indica en la [guía de instalación](../01-installation.md). Mantenga estos recursos en los namespaces especificados y asegúrese de que el ServiceEntry externo original esté en `default` o se exporte al namespace del cliente. Use un cliente de malla con SNI, inspeccione las rutas de ambos proxies y verifique que el gateway de salida recibe la conexión. Llegar al endpoint externo no demuestra por sí solo que se haya atravesado el gateway.
 

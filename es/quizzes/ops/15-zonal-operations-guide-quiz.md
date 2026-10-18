@@ -4,104 +4,98 @@
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Cuál es la ventana de elegibilidad para el rollback nativo de la versión de Kubernetes de Amazon EKS (GA en julio de 2026)?
+### 1. ¿Qué significa la ventana de siete días para revertir de forma nativa una actualización de EKS?
 
-- A) 24 horas
-- B) 7 días
-- C) 30 días
-- D) Ilimitado
+- A) El tiempo que debe tardar la reversión
+- B) El plazo para poder iniciar la reversión una vez completada la actualización
+- C) La vida útil máxima de un nodo
+- D) El periodo para restaurar automáticamente los complementos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) 7 días**
+**Respuesta: B) El plazo para poder iniciar la reversión una vez completada la actualización**
 
-**Explicación:**
-El rollback nativo de EKS puede revertir una versión menor a la vez, dentro de los 7 días posteriores a la actualización. Los clústeres creados con la versión de destino, aquellos para los que han transcurrido más de 7 días o los clústeres que ya se actualizaron nuevamente no son elegibles.
+Es el plazo para iniciar la reversión a la versión menor inmediatamente anterior. También importan la versión con la que se creó el clúster, su estado de soporte, las actualizaciones posteriores y la compatibilidad. En Auto Mode, primero se revierten los nodos; los complementos, las aplicaciones y los cambios en los datos no se restauran automáticamente.
 
 </details>
 
-### 2. ¿Qué mecanismo se utiliza para desviar el tráfico de una zona durante una actualización Zonal In-Place?
+### 2. ¿Qué se debe comprobar después de establecer en cero el peso de un grupo de destino de NLB?
 
-- A) `kubectl drain`
-- B) Ajustar el peso del Target Group
-- C) Esperar a que expire el DNS TTL
-- D) Recrear el clúster
+- A) Que todas las conexiones existentes terminen de inmediato
+- B) Que TargetGroupBinding se mueva a otro clúster
+- C) Por separado, la reducción de flujos nuevos y el drenaje de los existentes
+- D) Que ARC reescriba automáticamente los pesos de todos los demás clústeres
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Ajustar el peso del Target Group**
+**Respuesta: C) Por separado, la reducción de flujos nuevos y el drenaje de los existentes**
 
-**Explicación:**
-En lugar de modificar algo dentro del clúster, ajustas el peso del Target Group vinculado mediante TargetGroupBinding para reducir o detener el tráfico hacia una zona determinada. En situaciones no planificadas, como una interrupción de AZ, ARC Zonal Shift realiza esta función automáticamente.
+Los cambios normales de peso afectan a los flujos nuevos, pero la guía actual de NLB indica que el peso cero también cierra las conexiones existentes después de un breve intervalo. No des por hecho que basta con el drenaje natural: prueba el comportamiento de reconexión y reintento. Antes de cambiar los nodos, comprueba NewFlowCount, ActiveFlowCount y los errores. TGB no tiene un campo de peso, y el cambio zonal de EKS no modifica automáticamente los pesos entre clústeres.
 
 </details>
 
-### 3. ¿Qué se debe configurar en los brokers de Kafka para habilitar KIP-392 (Follower Fetching)?
+### 3. ¿Qué combinación configura correctamente Kafka KIP-392?
 
-- A) `auto.leader.rebalance.enable=true`
-- B) `replica.selector.class=RackAwareReplicaSelector`
-- C) `unclean.leader.election.enable=true`
-- D) `min.insync.replicas=2`
+- A) broker.rack, que configura automáticamente a todos los consumidores
+- B) RackAwareReplicaSelector, broker.rack y un client.rack coincidente en el consumidor
+- C) Solo unclean.leader.election.enable=true
+- D) Las cadenas del nombre de AZ y del ID de AZ son intercambiables
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `replica.selector.class=RackAwareReplicaSelector`**
+**Respuesta: B) RackAwareReplicaSelector, broker.rack y un client.rack coincidente en el consumidor**
 
-**Explicación:**
-Los brokers necesitan tener `replica.selector.class` configurado como `RackAwareReplicaSelector` y tener asignado un `broker.rack` (ID de AZ). Del lado del consumidor, la propiedad `client.rack` debe configurarse con el propio ID de AZ del consumidor para que las recuperaciones se redirijan a un follower del mismo rack.
+El valor completo de replica.selector.class es org.apache.kafka.common.replica.RackAwareReplicaSelector. El recurso Kafka de Strimzi configura los brokers; los consumidores de aplicaciones normales necesitan una configuración aparte. Si no hay una réplica local adecuada, la selección vuelve al líder.
 
 </details>
 
-### 4. ¿Qué estrategia `ReadFrom` de Valkey GLIDE se recomienda para cargas de trabajo con más del 99 % de lecturas?
+### 4. ¿Cuál es el orden de preferencia de GLIDE para AZ_AFFINITY_REPLICAS_AND_PRIMARY?
 
-- A) `PRIMARY`
-- B) `PREFER_REPLICA`
-- C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`
-- D) Distribución aleatoria
+- A) Solo el nodo principal
+- B) Réplicas locales → nodo principal local → réplicas o nodo principal de otras AZ
+- C) Solo réplicas remotas
+- D) Siempre se produce un error si no hay un nodo local
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`**
+**Respuesta: B) Réplicas locales → nodo principal local → réplicas o nodo principal de otras AZ**
 
-**Explicación:**
-Primero prefiere una réplica en la misma AZ, recurre al primary en la misma AZ y solo accede a otras AZ como último recurso. Para cargas de trabajo dominadas por lecturas, este es el equilibrio recomendado entre ahorro de costos y disponibilidad: HotelTrader redujo los costos de transferencia entre AZ en un 95 % después de adoptarla.
+Los metadatos de AZ del servidor deben coincidir con client_az. Evalúa si puedes tolerar lecturas obsoletas de las réplicas; el porcentaje de lecturas, por sí solo, no basta. Entre las mejoras comunicadas por HotelTrader se incluyen tanto el procesamiento por lotes de solicitudes como el enrutamiento con reconocimiento de AZ.
 
 </details>
 
-### 5. ¿Qué afirmación sobre el endpoint de reader predeterminado de Amazon Aurora es correcta?
+### 5. ¿Qué afirmación sobre el endpoint de lectura predeterminado de Aurora es correcta?
 
-- A) Prioriza automáticamente las réplicas en la misma AZ
-- B) Es DNS round-robin sin reconocimiento de AZ
-- C) Siempre enruta al primary
-- D) No se puede usar sin AWS Advanced JDBC Wrapper
+- A) Envía cada consulta SQL a una réplica diferente
+- B) Garantiza una réplica de lectura en la misma AZ
+- C) Distribuye las conexiones y puede usar el nodo de escritura si no hay réplicas
+- D) Requiere JDBC Wrapper para conectarse
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Es DNS round-robin sin reconocimiento de AZ**
+**Respuesta: C) Distribuye las conexiones y puede usar el nodo de escritura si no hay réplicas**
 
-**Explicación:**
-El endpoint de reader predeterminado de Aurora no tiene afinidad de AZ. Puedes evitar esta limitación con endpoints personalizados por AZ o con la estrategia `fastestResponse` de AWS Advanced JDBC Wrapper, pero la afinidad de AZ real sigue siendo una solicitud de funcionalidad abierta en el repositorio `aws-advanced-jdbc-wrapper`.
+No garantiza preferencia por AZ. Los endpoints READER personalizados por AZ requieren gestionar la pertenencia y la alternativa de respaldo. fastestResponse de JDBC usa el tiempo de respuesta, no impone una restricción estricta de AZ. La solicitud de función n.º 1139 se cerró en 2025.
 
 </details>
 
-### 6. ¿Qué afirmación sobre cómo un pod puede determinar su propia AZ es INCORRECTA?
+### 6. ¿Qué afirmación sobre cómo averiguar la AZ de un pod es incorrecta?
 
-- A) Puede consultarla directamente a través de EC2 IMDS
-- B) Una política de mutación de Kyverno puede copiar una etiqueta de nodo en una anotación de pod
-- C) La Kubernetes Downward API inyecta de forma predeterminada la etiqueta de zona del nodo en el pod
-- D) Un operator como Strimzi puede proporcionar reconocimiento de rack como una funcionalidad integrada
+- A) La admisión normal al crear un Pod siempre conoce el nodo que eligió el planificador
+- B) El ejemplo de Kyverno para AWS MSK gestiona solicitudes de Pod y de enlace
+- C) spec.nodeName se puede pasar a un componente de inicialización mediante Downward API
+- D) El acceso a IMDS depende del entorno y de la configuración de seguridad
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) La Kubernetes Downward API inyecta de forma predeterminada la etiqueta de zona del nodo en el pod**
+**Respuesta: A) La admisión normal al crear un Pod siempre conoce el nodo que eligió el planificador**
 
-**Explicación:**
-La Downward API no inyecta automáticamente la etiqueta `topology.kubernetes.io/zone` de un nodo en un pod. Por eso se necesita uno de los otros enfoques: consulta directa de IMDS, copia de etiquetas durante la admisión basada en Kyverno o soporte integrado de un operator como Strimzi.
+Normalmente, aún no se ha elegido un nodo al crear el Pod. Usa la inyección durante el enlace o consulta la información después de la programación. Downward API no consulta directamente las etiquetas del nodo, y Strimzi no configura automáticamente los consumidores de aplicaciones ajenos a él.
 
 </details>

@@ -8,7 +8,7 @@
 
 Ray 使用 tasks、actors、ObjectRefs 和每个节点的对象存储来分发 Python 工作。Train、Tune 和 Serve 基于这一基础构建，同时增加了训练、搜索和服务策略。单一对象存储路径不会自动处理所有通信或恢复问题。
 
-KubeRay 是用于协调 RayCluster、RayJob 和 RayService 的 Kubernetes operator。它不会将应用的 ML 库选作调度器。Ray 工作调度、Kubernetes Pod 放置和 EC2 节点预置属于不同层级。
+KubeRay 是用于协调 RayCluster、RayJob 和 RayService 的 Kubernetes operator。它不是为应用选择 ML 库的调度器。Ray 工作调度、Kubernetes Pod 放置和 EC2 节点预置属于不同层级。
 
 ## 组件概览
 
@@ -27,7 +27,7 @@ KubeRay 是用于协调 RayCluster、RayJob 和 RayService 的 Kubernetes operat
 
 权衡与本文档站点的数据/ML 部分其他内容所述相同：已经运行 EKS 的团队可以将同一套节点池自动扩缩（通过 Karpenter）、IAM 和可观测性模式复用于 Ray 工作负载，就像集群上的其他工作负载一样；代价是直接运维 KubeRay operator 及其 RayCluster/RayJob/RayService 资源，而不是使用托管替代方案。
 
-基础验证是运行一个小型单节点 Ray 实例。这不能证明 GPU 训练、多节点恢复、实时 EKS 安装或自动扩缩可行。
+基础验证是运行一个小型单节点 Ray 实例。它不能作为 GPU 训练、多节点恢复、实际运行的 EKS 部署或自动扩缩的证据。
 
 Ray 2.59.0 默认对本地集群启用令牌身份验证。如果 `~/.ray/auth_token` 不存在，调用 `ray.init()` 且不指定地址时会生成一个令牌；`RAY_AUTH_MODE=disabled` 可将其关闭。发行说明称，计划从 2.61 版开始将此默认设置扩展到远程和多节点集群。本系列示例已在 2.58.0 上检查，未在 2.59.0 上重新运行。
 

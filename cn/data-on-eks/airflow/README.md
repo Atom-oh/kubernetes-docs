@@ -13,9 +13,9 @@ Airflow 2 已于 2026 年 4 月 22 日结束生命周期（EOL）。新部署应
 
 ## 核心架构
 
-- Scheduler 和 executor 决定并提交任务工作，同时更新元数据状态。
+- Scheduler 和 executor 决定任务的执行安排并提交执行请求，同时更新元数据状态。
 - 必需的 DAG processor 会解析并序列化 DAG bundle。Worker 也必须通过相应的 bundle 或代码分发路径获取任务代码。
-- API server 提供 UI、REST API 和 Task Execution API 路径。受监督的 Python Task SDK 运行时通过该 API 访问状态以及 Connection/Variable/XCom。
+- API server 提供 UI、REST API 和 Task Execution API 路径。由 supervisor 进程管理的 Python Task SDK 运行时通过该 API 访问状态以及 Connection/Variable/XCom。
 - 可延迟任务等待期间，triggerer 会运行 **triggers**。不使用延迟执行的精简部署可以不启用它。
 - 元数据后端包括 PostgreSQL 和 MySQL。本系列以 PostgreSQL 为例，并非表示只有这一种选择。Redis 也不是 Celery 唯一可用的 broker。
 

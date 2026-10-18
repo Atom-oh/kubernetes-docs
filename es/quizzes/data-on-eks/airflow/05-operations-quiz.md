@@ -18,7 +18,7 @@ Comprueba los límites operativos y de recuperación de Airflow 3.3.1.
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** No. Coordina también el ingreso, el drenaje y las escrituras de workers/tareas, servidores API y automatización externa.
+**Respuesta:** No. Coordina también el tráfico de entrada, el drenaje y las escrituras de los workers, las tareas, los servidores de API y la automatización externa.
 
 **Explicación:** Prueba la restauración de la base de datos y la recuperación de Fernet/datos externos; usa una sola ruta de migración y un plan de reversión verificado.
 
@@ -40,7 +40,7 @@ Comprueba los límites operativos y de recuperación de Airflow 3.3.1.
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** No. Configura los registros de tareas; el supervisor revisado los carga después de que termina la ejecución de la tarea.
+**Respuesta:** No. Configura los registros de tareas; según el comportamiento verificado, el supervisor los carga cuando termina la ejecución de la tarea.
 
 **Explicación:** La salida estándar/error del servicio puede requerir una recopilación aparte. Una terminación forzada antes de la carga puede hacer que se pierdan los registros recientes.
 
@@ -62,13 +62,13 @@ Comprueba los límites operativos y de recuperación de Airflow 3.3.1.
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** Ten en cuenta las colas, los executors, los alias, la concurrencia de los workers y los límites de réplicas.
+**Respuesta:** No. Ten en cuenta las colas, los ejecutores, los alias, la concurrencia de los workers y los límites de réplicas.
 
 **Explicación:** Los workers pueden usar Deployments o StatefulSets, y que escalen a cero depende de la configuración real.
 
 </details>
 
-7. ¿Por qué no se aplica sin cambios el escalado del grupo de procesos worker de Celery a KubernetesExecutor?
+7. ¿Por qué no se puede aplicar sin cambios el escalado del grupo de workers de Celery a KubernetesExecutor?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -86,7 +86,7 @@ Comprueba los límites operativos y de recuperación de Airflow 3.3.1.
 
 **Respuesta:** No. Varias tareas que se ejecutan en ese worker pueden compartir sus permisos de ejecución.
 
-**Explicación:** Cuando sea necesario, usa límites reales, como pools, executors o pods secundarios de KPO separados, e inspecciona las fuentes de credenciales.
+**Explicación:** Cuando necesites límites reales, usa pools o ejecutores separados, o pods creados por KPO, e inspecciona las fuentes de credenciales.
 
 </details>
 
@@ -95,13 +95,13 @@ Comprueba los límites operativos y de recuperación de Airflow 3.3.1.
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** Primero usa `--dry-run` con tablas y un límite temporal revisados; usa `--error-on-cleanup-failure` e inspecciona los registros.
+**Respuesta:** Primero usa `--dry-run` con una fecha de corte y tablas revisadas; usa `--error-on-cleanup-failure` e inspecciona los registros.
 
 **Explicación:** Ejecuta la eliminación por separado. Los archivos de respaldo predeterminados ocupan espacio en la base de datos y las eliminaciones en cascada importan; la limpieza no siempre libera espacio en disco ni acelera todas las migraciones.
 
 </details>
 
-10. ¿Una NetworkPolicy y un endpoint OTLP bastan por sí solos para completar la seguridad y la observabilidad?
+10. ¿Basta con una NetworkPolicy y un endpoint OTLP para garantizar la seguridad y la observabilidad?
 
 <details>
 <summary>Mostrar respuesta</summary>

@@ -5,8 +5,8 @@
 1. DNS responde, pero falla la conexión TCP. ¿Cuál es el siguiente paso adecuado?
 
    - A) Declarar que el backend está en buen estado basándose solo en DNS
-   - B) Inspeccionar el target real, el puerto, las rutas, los controles y el listener
-   - C) Abrir todos los security groups
+   - B) Inspeccionar el destino real, el puerto, las rutas, los controles y el listener
+   - C) Abrir todos los grupos de seguridad
    - D) Concluir que no existe ningún recurso
 
 <details>
@@ -22,7 +22,7 @@
 
    - A) El plano de datos por el que pasa cada solicitud HTTP
    - B) La puerta de enlace predeterminada de todos los Pods
-   - C) Un reconciler del plano de control que usa las API de AWS para administrar recursos de balanceadores de carga
+   - C) Un reconciliador del plano de control que usa las API de AWS para administrar recursos de balanceadores de carga
    - D) La propia caché DNS
 
 <details>
@@ -30,11 +30,11 @@
 
 **Respuesta: C**
 
-**Explicación:** Las solicitudes pasan por los balanceadores de carga y sus targets reales. Investigue por separado el estado del controller y la comunicación del plano de datos.
+**Explicación:** Las solicitudes pasan por los balanceadores de carga y sus destinos reales. Investigue por separado el estado del controlador y la comunicación del plano de datos.
 
 </details>
 
-3. EndpointSlice está listo, pero el target del balanceador de carga está en mal estado. ¿Cómo se debe interpretar?
+3. EndpointSlice figura como listo, pero el destino del balanceador de carga está en mal estado. ¿Cómo se debe interpretar?
 
    - A) Correlacionar el registro, el puerto, las condiciones de comprobación de estado y la ruta, porque los estados pueden diferir
    - B) La observación es imposible porque significan lo mismo
@@ -46,7 +46,7 @@
 
 **Respuesta: A**
 
-**Explicación:** La preparación y las comprobaciones de estado del balanceador tienen observadores y condiciones distintos. Correlacione cada dirección de endpoint con sus condiciones y el target real.
+**Explicación:** El estado de disponibilidad y las comprobaciones de estado del balanceador tienen observadores y condiciones distintos. Correlacione cada dirección de endpoint con sus condiciones y el destino real.
 
 </details>
 
@@ -100,9 +100,9 @@
 
 7. ¿Cómo se debe representar un Service ClusterIP en la ruta de paquetes?
 
-   - A) Distinguir la selección lógica del reenvío real del proxy y los targets
+   - A) Distinguir la selección lógica del reenvío real del proxy y sus destinos
    - B) Siempre como otro salto físico detrás del nodo
-   - C) Como requisito para toda solicitud dirigida a un target IP
+   - C) Como requisito para toda solicitud dirigida a un destino IP
    - D) Omitir la ruta de retorno
 
 <details>
@@ -110,7 +110,7 @@
 
 **Respuesta: A**
 
-**Explicación:** El reenvío depende del tipo de target, la implementación del proxy y la política. Convertir relaciones entre objetos en saltos obligatorios sobre el cable distorsiona el diagnóstico.
+**Explicación:** El reenvío depende del tipo de destino, la implementación del proxy y la política. Convertir relaciones entre objetos en saltos obligatorios por la red distorsiona el diagnóstico.
 
 </details>
 

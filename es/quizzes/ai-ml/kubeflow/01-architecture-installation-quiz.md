@@ -6,7 +6,7 @@ Referencia: distribución de la comunidad 26.03.1 / Dashboard 2.0.0 / KFP 2.16.1
 
 1. ¿Qué establece la graduación de Kubeflow en CNCF del 17 de agosto de 2026?
 
-   - A) Cumplimiento automático de cada Deployment de EKS
+   - A) Cumplimiento automático de cada implementación de EKS
    - B) Madurez y gobernanza del proyecto, incluida una auditoría de seguridad independiente
    - C) Ya no se necesitan más actualizaciones de seguridad
    - D) Aislamiento garantizado de tenants sin configuración
@@ -16,7 +16,7 @@ Referencia: distribución de la comunidad 26.03.1 / Dashboard 2.0.0 / KFP 2.16.1
 
 **Respuesta: B) Madurez y gobernanza del proyecto, incluida una auditoría de seguridad independiente**
 
-La graduación se refiere al proyecto. La seguridad de Deployment, el aislamiento y el cumplimiento normativo aún requieren su propia evaluación.
+La graduación se refiere al proyecto. La seguridad de la implementación, el aislamiento y el cumplimiento normativo aún requieren una evaluación propia.
 </details>
 
 2. ¿Qué referencia de versión utiliza este capítulo?
@@ -46,7 +46,7 @@ Las versiones de la distribución y de los componentes difieren. El plan de lanz
 
 **Respuesta: C) El controller de Profile no crea su ResourceQuota**
 
-La cuota es opcional. Vaciar hard elimina la cuota administrada por el controller. RBAC, la política de red, el almacenamiento y el acceso a AWS son límites independientes.
+La cuota es opcional. Dejar `hard` vacío elimina la cuota administrada por el controlador. RBAC, la política de red, el almacenamiento y el acceso a AWS son límites independientes.
 </details>
 
 4. ¿Qué debe comprobarse antes de seguir la antigua guía de instalación de la distribución de AWS?
@@ -61,7 +61,7 @@ La cuota es opcional. Vaciar hard elimina la cuota administrada por el controlle
 
 **Respuesta: C) Si el lanzamiento es compatible y sus imágenes requeridas siguen disponibles**
 
-El lanzamiento v1.7.0-aws-b1.0.3 inspeccionado advierte explícitamente que la disponibilidad eliminada de la imagen de OIDC impide nuevas instalaciones. No es una receta verificada para 26.03.1.
+El lanzamiento v1.7.0-aws-b1.0.3 inspeccionado advierte explícitamente que las imágenes de OIDC ya no están disponibles, lo que impide nuevas instalaciones. No es una receta verificada para 26.03.1.
 </details>
 
 5. ¿Qué afirmación sobre la identidad S3 actual de KFP está respaldada?
@@ -76,7 +76,7 @@ El lanzamiento v1.7.0-aws-b1.0.3 inspeccionado advierte explícitamente que la d
 
 **Respuesta: C) La guía actual documenta IRSA; el SDK real, ServiceAccount y la confianza del rol aún necesitan validación**
 
-KFP 2.16.1 delega fromEnv a Go Cloud, cuya opción predeterminada fijada utiliza la cadena de credenciales de AWS SDK v2. Esta inspección del código fuente no demuestra un Deployment de EKS Pod Identity.
+KFP 2.16.1 delega `fromEnv` a Go Cloud, cuya opción predeterminada fijada utiliza la cadena de credenciales de AWS SDK v2. Esta inspección del código fuente no demuestra una implementación de EKS Pod Identity.
 </details>
 
 6. ¿Qué función desempeña el dashboard?
@@ -91,7 +91,7 @@ KFP 2.16.1 delega fromEnv a Go Cloud, cuya opción predeterminada fijada utiliza
 
 **Respuesta: B) Proporciona navegación hacia las interfaces de los componentes**
 
-Los controllers de carga de trabajo y las API de aplicaciones realizan sus propias operaciones. Las API de KFP también utilizan persistencia; sus conceptos de Run y Experiment no son CRD de manera universal.
+Los controladores de cargas de trabajo y las API de aplicaciones realizan sus propias operaciones. Las API de KFP también utilizan persistencia; sus conceptos de Run y Experiment no siempre son CRD.
 </details>
 
 ## Preguntas de respuesta corta
@@ -101,7 +101,7 @@ Los controllers de carga de trabajo y las API de aplicaciones realizan sus propi
 <details>
 <summary>Mostrar respuesta</summary>
 
-El controller de Profile establece la propiedad del namespace. Eliminar un Profile puede propagarse en cascada a su namespace y recursos. Siga la limpieza específica de la versión de los recursos del controller anterior sin eliminar los Profiles ni los namespaces de los tenants.
+El controlador de Profile establece la propiedad del namespace. Eliminar un Profile puede provocar la eliminación en cascada de su namespace y sus recursos. Sigue el procedimiento de limpieza de la versión correspondiente para los recursos del controlador anterior, sin eliminar los Profiles ni los namespaces de los inquilinos.
 </details>
 
 8. ¿Qué demuestra una renderización correcta del overlay de Profile y qué permanece sin verificar?
@@ -109,7 +109,7 @@ El controller de Profile establece la propiedad del namespace. Eliminar un Profi
 <details>
 <summary>Mostrar respuesta</summary>
 
-Demuestra que las entradas seleccionadas de Kustomize generan manifiestos; el overlay revisado produjo 14 recursos con imágenes de Dashboard 2.0.0. No demuestra la admisión de la API, la preparación del controller, el aislamiento de tenants ni el acceso S3 en EKS. Las sustituciones de servicios administrados también necesitan comprobaciones de identidad, compatibilidad, red, costos y migración.
+Demuestra que las entradas seleccionadas de Kustomize generan manifiestos; el overlay revisado produjo 14 recursos con imágenes de Dashboard 2.0.0. No demuestra la admisión de la API, que el controlador esté listo, el aislamiento de los inquilinos ni el acceso a S3 en EKS. Las sustituciones de servicios administrados también requieren comprobar la identidad, la compatibilidad, la red, los costos y la migración.
 </details>
 
 ---

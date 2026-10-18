@@ -75,7 +75,7 @@
 
 **答案**：不是。Operator 等外部控制器可以协调 Kubernetes 资源。
 
-**解释**：在 Native 资源管理模式下，Flink 运行时不会直接请求 TM Pod。对于 HA 等功能，还应单独评估 API 权限。
+**解释**：在此 Standalone 模式下，Flink 运行时不会通过 Native 资源管理直接请求 TM Pod。对于 HA 等功能，还应单独评估 API 权限。
 
 </details>
 

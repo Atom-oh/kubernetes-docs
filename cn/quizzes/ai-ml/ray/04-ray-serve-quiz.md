@@ -69,67 +69,67 @@ HeadOnly 和 Disabled 是显式选项。请区分过时的架构说明与当前 
 
 **答案：B**
 
-请分别检查 actor placement、Pod 大小和节点配置。
+请分别检查 actor 的调度位置、Pod 大小和节点容量供应。
 </details>
 
-6. 关于 2.58.0 LLM backends，验证了什么？
+6. 关于 2.58.0 的 LLM 后端，验证了什么？
    - A) 仅存在 vLLM
-   - B) 存在 vLLM 和 SGLang backends；请分别检查它们的 dependencies/configuration
-   - C) 每个 engine kwarg 在所有 engine 中都完全相同
-   - D) ray[serve]includes 所有 LLM weights
+   - B) 存在 vLLM 和 SGLang 后端；请分别检查它们的依赖项和配置
+   - C) 每个引擎关键字参数在所有引擎中都完全相同
+   - D) ray[serve] 包含所有 LLM 权重
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B**
 
-Inference dependencies 以及 model access/downloads 是独立的。CPU 检查并未验证 LLM execution。
+推理依赖项与模型访问/下载是不同的事项。CPU 检查并未验证 LLM 的运行。
 </details>
 
 7. 哪项关于 RayService 更新的说法是准确的？
-   - A) 对于每个 EKS deployment 都是强制性的，并保证零停机时间
-   - B) 它是可选的 lifecycle 路径；请验证 strategy、Gateway、capacity、readiness 和 draining
-   - C) 始终只会编辑现有 Pod image
-   - D) 所有长 streams 始终都会被保留
+   - A) 对每个 EKS 部署都是强制要求，并保证零停机时间
+   - B) 它是可选的生命周期管理方式；请验证策略、Gateway、容量、就绪状态和排空处理
+   - C) 始终只会编辑现有 Pod 镜像
+   - D) 所有长时间流式连接始终都会被保留
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B**
 
-请区分 application changes、cluster transitions 和 actor reconfiguration。
+请区分应用变更、集群切换和 actor 重新配置。
 </details>
 
 8. 本地 Echo 测试验证了什么？
    - A) GPU 性能
    - B) LLM 质量
    - C) HTTP 200 和 DeploymentHandle 调用
-   - D) 多节点 autoscaling
+   - D) 多节点自动扩缩容
 
 <details>
 <summary>显示答案</summary>
 
 **答案：C**
 
-这是一个微型的单节点 CPU 测试，不包含 model、LLM、GPU 或 cloud deployment。
+这是一个微型的单节点 CPU 测试，不包含模型、LLM、GPU 或云部署。
 </details>
 
 ## 简答题
 
-9. 为什么要区分最大 ongoing、autoscaling target 和 caller queue limit？
+9. 为什么要区分最大进行中请求数、自动扩缩容目标和调用方队列上限？
 
 <details>
 <summary>显示答案</summary>
 
-它们控制不同的事物：分配给 replicas 的请求、用于 scaling 的目标负载，以及每个 caller 的等待请求。一个设置并不能确定所有其他边界或 latency guarantees。
+它们控制的对象不同：分配给副本的请求、扩缩容的目标负载，以及每个调用方的等待请求。单个设置不能确立所有其他上限，也不能保证延迟。
 </details>
 
-10. 为什么 cluster tokens 或 ClusterIP 不能完成 application security？
+10. 为什么集群令牌或 ClusterIP 不能提供完整的应用安全保障？
 
 <details>
 <summary>显示答案</summary>
 
-请分别验证 TLS、每个 entry point 的 authentication/authorization、model-artifact permissions、sensitive request/log handling，以及 resource/queue/timeout policies。
+请分别验证 TLS、每个入口的身份验证/授权、模型制品权限、敏感请求/日志处理，以及资源/队列/超时策略。
 </details>
 
 ---

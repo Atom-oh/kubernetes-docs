@@ -2,10 +2,10 @@
 
 ## Descripción general
 
-Esta guía utiliza Strimzi Operator como opción de Kafka autogestionada en EKS. El Operator reconcilia Pods, almacenamiento, listeners, certificados y actualizaciones; no elimina la responsabilidad sobre los datos, la disponibilidad y las políticas de seguridad. La parte 6 compara alternativas administradas, como Amazon MSK.
+Esta guía utiliza el operador Strimzi como opción de Kafka autogestionada en EKS. El operador reconcilia pods, almacenamiento, listeners, certificados y actualizaciones; no elimina la responsabilidad sobre los datos, la disponibilidad ni las políticas de seguridad. La parte 6 compara alternativas administradas, como Amazon MSK.
 
 > **Última actualización**: 16 de octubre de 2026. Strimzi 1.3.0 / Kafka 4.3.1.
-> **Requisito de actualización**: Strimzi 1.0 y versiones posteriores solo admiten la API de CRD `v1`. Convierte los recursos existentes `v1beta2` / `v1beta1` / `v1alpha1` y prepara los CRD siguiendo el procedimiento oficial de migración antes de actualizar el Operator. Cambiar solo los números de versión no constituye un plan de actualización.
+> **Requisito de actualización**: Strimzi 1.0 y versiones posteriores solo admiten la API de CRD `v1`. Convierte los recursos existentes `v1beta2` / `v1beta1` / `v1alpha1` y prepara los CRD siguiendo el procedimiento oficial de migración antes de actualizar el operador. Cambiar solo los números de versión no constituye un plan de actualización.
 
 Strimzi 1.3.0 admite Kafka 4.2.0, 4.2.1, 4.2.2, 4.3.0 y 4.3.1, y usa 4.3.1 de forma predeterminada. Esta guía fija una combinación compatible; antes de la instalación, comprueba también la distribución, la versión de Kubernetes y la ruta de actualización.
 
@@ -66,7 +66,7 @@ Los usuarios declaran recursos personalizados, como Kafka y KafkaNodePool; Strim
 - Seguridad con mTLS/SASL
 - Optimización de los costos de almacenamiento e instancias
 
-**[9. Prueba de rendimiento medida de Kafka](09-kafka-benchmark.md)**
+**[9. Resultados medidos de rendimiento de Kafka](09-kafka-benchmark.md)**
 - Límite de ingesta medido de RF3 frente a RF1 en un clúster KRaft de 3 brokers con volúmenes gp3
 - Compensaciones entre rendimiento y latencia p99 con acks=0/1/all
 - Rendimiento y costo de CPU por códec de compresión y tamaño de registro

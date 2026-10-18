@@ -6,7 +6,7 @@ Referencia: Notebooks 1.11.0 / Community Distribution 26.03.1.
 
 1. ¿Qué reconcilia el controlador de Notebook?
 
-   - A) Un proceso de navegador en la laptop del usuario
+   - A) Un proceso del navegador en el portátil del usuario
    - B) StatefulSet, Service y recursos de enrutamiento configurados desde un Notebook CR
    - C) Una instancia EC2 para cada usuario
    - D) Solo un panel de HTML
@@ -38,7 +38,7 @@ Las descripciones de las versiones y las etiquetas de imagen difieren. Verifica 
 
    - A) Sí, incluidos AWS y el almacenamiento
    - B) No; los Profiles se pueden compartir y la red, el almacenamiento, IAM y la autorización de aplicaciones siguen siendo independientes
-   - C) Sí, porque los namespaces bloquean los paquetes de red
+   - C) Sí, porque los espacios de nombres bloquean el tráfico de red
    - D) Sí, porque RBAC cancela todos los permisos no relacionados
 
 <details>
@@ -76,7 +76,7 @@ Revisa las ubicaciones de montaje, el ciclo de vida de PVC/volúmenes y las copi
 
 **Respuesta: B) Deshabilitada; umbral de inactividad de 1440 minutos, período de comprobación de 1 minuto**
 
-El culler usa la actividad del kernel de Jupyter. Los resultados fallidos/vacíos de la API dejan sin cambios la actividad anterior y aun así pueden llevar a la detención. Prueba la imagen y la ruta de acceso reales.
+El proceso de eliminación por inactividad usa la actividad del kernel de Jupyter. Si la API falla o devuelve resultados vacíos, la actividad anterior no cambia y aun así el notebook puede detenerse. Prueba la imagen y la ruta de acceso reales.
 </details>
 
 6. ¿Cómo representa v1.11.0 un Notebook detenido?
@@ -106,7 +106,7 @@ NotebookSpec no tiene un campo replicas. Reanúdalo eliminando la anotación. In
 
 **Respuesta: B) El contenido de imagen referenciado; los datos montados y los cambios en tiempo de ejecución aún pueden diferir**
 
-Usa comportamiento probado de prefijo de servidor/puerto/UID, dependencias y arquitectura. Una etiqueta mutable por sí sola no fija los bytes de la imagen.
+Usa valores probados para el prefijo del servidor, el puerto y el UID, así como para las dependencias y la arquitectura. Una etiqueta mutable por sí sola no fija los bytes de la imagen.
 </details>
 
 ## Preguntas de respuesta corta
@@ -116,7 +116,7 @@ Usa comportamiento probado de prefijo de servidor/puerto/UID, dependencias y arq
 <details>
 <summary>Mostrar respuesta</summary>
 
-Las solicitudes de Pod pueden liberarse, pero otras cargas de trabajo, PDB, los límites/políticas de interrupción de NodePool y la gestión de capacidad afectan la terminación del nodo. Los cargos de EC2 pueden continuar mientras el nodo permanezca en ejecución.
+Las solicitudes de recursos del Pod pueden liberarse, pero otras cargas de trabajo, los PDB, los límites y las políticas de interrupción de NodePool, y la gestión de capacidad afectan la terminación del nodo. Los cargos de EC2 pueden continuar mientras el nodo siga en ejecución.
 </details>
 
 9. ¿En qué se diferencian RBAC, la autorización de Istio y NetworkPolicy para los notebooks?
@@ -124,7 +124,7 @@ Las solicitudes de Pod pueden liberarse, pero otras cargas de trabajo, PDB, los 
 <details>
 <summary>Mostrar respuesta</summary>
 
-RBAC gobierna las acciones de la API de Kubernetes. La autorización de Istio controla las solicitudes gestionadas por proxies y políticas configurados. NetworkPolicy gobierna el tráfico de red de Pod permitido cuando el CNI la aplica. Ninguna por sí sola garantiza el aislamiento de almacenamiento/IAM/aplicación.
+RBAC controla las acciones de la API de Kubernetes. La autorización de Istio controla las solicitudes gestionadas por los proxies y las políticas configurados. NetworkPolicy controla el tráfico de red permitido para los Pods cuando el CNI la aplica. Ninguno de estos mecanismos garantiza por sí solo el aislamiento del almacenamiento, de IAM y de las aplicaciones.
 </details>
 
 ---

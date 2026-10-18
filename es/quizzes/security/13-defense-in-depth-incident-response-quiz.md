@@ -1,12 +1,12 @@
 # Cuestionario sobre defensa en profundidad y respuesta a incidentes
 
-> **Última actualización**: October 15, 2026
+> **Última actualización**: 15 de octubre de 2026
 
-[Lea el capítulo y las fuentes principales](../../security/13-defense-in-depth-incident-response.md)
+[Lee el capítulo y las fuentes principales](../../security/13-defense-in-depth-incident-response.md)
 
 ### 1. ¿Qué ruta había que revisar para CVE-2025-1974 además de la cobertura pública de WAF?
 
-- A) El admission webhook accesible desde la red de los Pods
+- A) El webhook de admisión accesible desde la red de los pods
 - B) Solo la ruta del viewer de CloudFront
 - C) Solo el cifrado del almacenamiento de bases de datos
 - D) Solo el tamaño de la caché DNS
@@ -16,7 +16,7 @@
 
 **Respuesta: A) El admission webhook accesible desde la red de los Pods**
 
-**Explicación:** Revise la accesibilidad del webhook y los privilegios de Secret del controller. Las versiones corregidas históricamente no resuelven la retirada posterior de ingress-nginx.
+**Explicación:** Revisa la accesibilidad del webhook y los privilegios del recurso Secret del controlador. Las versiones que corrigieron la vulnerabilidad en su momento no resuelven la retirada posterior de ingress-nginx.
 
 </details>
 
@@ -32,7 +32,7 @@
 
 **Respuesta: B) Planificar la migración a una implementación mantenida**
 
-**Explicación:** Tras la retirada, ingress-nginx no recibirá más versiones de seguridad. Revise el mantenimiento y la migración, no solo un parche anterior.
+**Explicación:** Tras la retirada, ingress-nginx no recibirá más actualizaciones de seguridad. Revisa su mantenimiento y planifica la migración; no te limites a comprobar si se aplicó un parche anterior.
 
 </details>
 
@@ -64,7 +64,7 @@
 
 **Respuesta: D) Los IdP SAML de terceros/FortiAuthenticator están excluidos del problema especificado**
 
-**Explicación:** Use el alcance revisado en lugar de la afirmación SAML inicial, más amplia. Aún hay que comprobar si FortiCloud SSO está afectado.
+**Explicación:** Usa el alcance actualizado en lugar de la afirmación SAML inicial, más amplia. Aún hay que comprobar si FortiCloud SSO está afectado.
 
 </details>
 
@@ -80,15 +80,15 @@
 
 **Respuesta: D) Solo los flujos que realmente pasan por esa ruta de inspección**
 
-**Explicación:** Inventaríe por separado las rutas locales, de endpoint, peering e IPv6; siguen siendo necesarios los controles complementarios de CNI, IAM, SG y aplicación.
+**Explicación:** Haz un inventario aparte de las rutas locales, de endpoint, peering e IPv6; siguen siendo necesarios los controles complementarios de CNI, IAM, SG y aplicación.
 
 </details>
 
-### 6. ¿Qué diferencia la finalización de parches de la eliminación de un compromiso?
+### 6. ¿Qué distingue la aplicación de un parche de la erradicación de una intrusión?
 
 - A) Solo la hora del reinicio
 - B) La evidencia sobre cuentas/configuraciones no autorizadas, acceso persistente y secretos expuestos
-- C) Que un target esté en buen estado
+- C) Que un destino esté en buen estado
 - D) Que haya una cadena de versión más reciente
 
 <details>
@@ -112,7 +112,7 @@
 
 **Respuesta: C) No demuestra seguridad completa ni cobertura efectiva de rutas**
 
-**Explicación:** Correlacione las asociaciones, las acciones, las canary benignas, las restricciones del origen y los registros de la aplicación. Cero bloqueos también puede significar que falta cobertura.
+**Explicación:** Correlaciona las asociaciones, las acciones, los canarios benignos, las restricciones del origen y los registros de la aplicación. Cero bloqueos también puede indicar que falta cobertura.
 
 </details>
 
@@ -121,13 +121,13 @@
 - A) Solo la versión
 - B) Una captura de pantalla del appliance
 - C) Un solo inicio de sesión correcto
-- D) Configuración/credenciales limpias más nuevas pruebas de negocio, rutas denegadas y registros
+- D) Configuración y credenciales saneadas, más pruebas repetidas de negocio, rutas denegadas y registros
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Configuración/credenciales limpias más nuevas pruebas de negocio, rutas denegadas y registros**
+**Respuesta: D) Configuración y credenciales saneadas, más pruebas repetidas de negocio, rutas denegadas y registros**
 
-**Explicación:** Combine evidencia de erradicación con la funcionalidad legítima, la administración restringida, la inspección y la observabilidad restaurada.
+**Explicación:** Combina la evidencia de erradicación con la funcionalidad legítima, la administración restringida, la inspección y la observabilidad restaurada.
 
 </details>

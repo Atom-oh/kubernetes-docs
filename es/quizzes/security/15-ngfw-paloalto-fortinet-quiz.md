@@ -7,14 +7,14 @@
 ### 1. ¿La compatibilidad genérica con GENEVE demuestra la compatibilidad con AWS GWLB?
 
 - A) Sí, basta con UDP 6081
-- B) No; verifica la integración del proveedor admitida y los metadatos de AWS requeridos
+- B) No; verifica que la integración del proveedor esté admitida y los metadatos de AWS requeridos
 - C) Sí, cualquier IP de administración sirve como par
 - D) Solo importa el logotipo del producto
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) No; verifica la integración del proveedor admitida y los metadatos de AWS requeridos**
+**Respuesta: B) No; verifica que la integración del proveedor esté admitida y los metadatos de AWS requeridos**
 
 **Explicación:** Adapta la versión, las interfaces, la política y el procesamiento de metadatos al modo de implementación oficial.
 
@@ -48,7 +48,7 @@
 
 **Respuesta: D) Adáptalos a la plantilla real, el grupo de destino y la respuesta del dispositivo**
 
-**Explicación:** La guía manual contiene indicaciones contradictorias sobre la prohibición y el perfil de HTTP. En lugar de automatizar esa ambigüedad, verifica la compatibilidad con TCP/HTTPS y las respuestas reales en la versión y plantilla seleccionadas.
+**Explicación:** El manual contiene indicaciones contradictorias sobre la prohibición de HTTP y el perfil. No automatices esa ambigüedad: verifica la compatibilidad con TCP/HTTPS y las respuestas reales en la versión y plantilla seleccionadas.
 
 </details>
 
@@ -64,7 +64,7 @@
 
 **Respuesta: A) Descifrado o terminación admitidos, y una política de confianza y compatibilidad probada**
 
-**Explicación:** GENEVE no cifra ni termina TLS. Valida mTLS, el pinning, la confianza de la CA, la compatibilidad de protocolos y las excepciones.
+**Explicación:** GENEVE no cifra ni termina TLS. Valida mTLS, la fijación de certificados, la confianza de la CA, la compatibilidad de protocolos y las excepciones.
 
 </details>
 
@@ -128,6 +128,6 @@
 
 **Respuesta: A) Tráfico empresarial medido con los perfiles reales de seguridad y descifrado, capacidad N-1, latencia y errores**
 
-**Explicación:** Controla la mezcla de tráfico, las licencias, las funciones, las rutas entre AZ y las condiciones de sesión. En esta actualización de la documentación no se midió ningún resultado de rendimiento.
+**Explicación:** Controla la mezcla de tráfico, las licencias, las funciones, las rutas entre zonas de disponibilidad y las condiciones de sesión. Esta actualización de la documentación no incluye mediciones de rendimiento.
 
 </details>

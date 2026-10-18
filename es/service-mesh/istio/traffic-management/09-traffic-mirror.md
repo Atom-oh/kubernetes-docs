@@ -9,13 +9,13 @@ Traffic Mirroring (o Shadow Traffic) es una técnica que replica en tiempo real 
 3. [Duplicación parcial](#partial-mirroring)
 4. [Buenas prácticas](#best-practices)
 
-## Descripción general de Traffic Mirroring
+## Descripción general de Traffic Mirroring {#traffic-mirroring-overview}
 
 ![Un cliente envía una solicitud que responde la Versión 1 en la ruta activa; la misma solicitud se replica a la Versión 2 como copia sombra, cuya respuesta se descarta y nunca llega al cliente.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.html)
 
-## Configuración básica
+## Configuración básica {#basic-configuration}
 
 Estos ejemplos de sidecar requieren un Service `reviews` y subconjuntos `v1`/`v2` de DestinationRule que coincidan con las etiquetas de los Pods. Aplique una sola configuración alternativa de VirtualService para este host a la vez. El espejo no recibe una parte del peso de la ruta principal: recibe una copia adicional.
 
@@ -40,7 +40,7 @@ spec:
       value: 100  # 100% mirroring
 ```
 
-## Duplicación parcial
+## Duplicación parcial {#partial-mirroring}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -62,7 +62,7 @@ spec:
       value: 10  # Mirror only 10%
 ```
 
-## Buenas prácticas
+## Buenas prácticas {#best-practices}
 
 - Las respuestas duplicadas se descartan; esto no es una conmutación por error ni una comparación automática de respuestas.
 - Las escrituras también se ejecutan en el destino sombra. Aísle sus bases de datos, colas y efectos secundarios externos antes de duplicar solicitudes de producción.

@@ -19,7 +19,7 @@ La mayoría de las cargas de trabajo de Kubernetes son de uno de estos dos tipos
 | «Los Pods se pueden reemplazar en cualquier momento» | Reconstruir cientos de GB o varios TB de estado local puede llevar **días** |
 | «Escalar horizontalmente aumenta el rendimiento» | Las réplicas pueden escalar las lecturas de RPC y la disponibilidad, pero no aumentan automáticamente la capacidad de escritura o consenso de la cadena base |
 | «Si supera la comprobación de estado, puede atender solicitudes» | Un nodo que va atrasado en la sincronización supera la comprobación de estado y, aun así, **devuelve datos incorrectos** |
-| «Las actualizaciones graduales permiten despliegues sin tiempo de inactividad» | Las versiones compatibles con la bifurcación pueden desplegarse primero en un canario y luego gradualmente antes de la activación; la fecha límite del protocolo y la compatibilidad de la reversión posterior a la bifurcación son restricciones independientes |
+| «Las actualizaciones graduales permiten despliegues sin tiempo de inactividad» | Las versiones compatibles con la bifurcación pueden probarse mediante despliegues canary o graduales antes de la activación; la fecha límite del protocolo y la compatibilidad de la reversión posterior a la bifurcación son restricciones independientes |
 | «Restaura los datos desde las copias de seguridad» | El estado se puede reproducir a partir de la cadena, pero **si pierdes las claves, todo se acaba** |
 
 Estas diferencias determinan decisiones operativas reales. Esta sección tiene como propósito explicarlas.
@@ -36,7 +36,7 @@ Estas diferencias determinan decisiones operativas reales. Esta sección tiene c
 |---|----------|---------------------|
 | 1 | [Fundamentos de blockchain](./01-fundamentals.md) | ¿Qué son el consenso, los árboles de Merkle, P2P y la finalidad, y por qué se derivan de ese diseño estas características operativas? |
 | 2 | [Ejecución de nodos de blockchain en EKS](./02-nodes-on-eks.md) | ¿Cómo se gestionan realmente los StatefulSets, el almacenamiento, P2P, la sincronización y las actualizaciones? |
-| 3 | [Amazon Managed Blockchain](./03-managed-blockchain.md) | ¿De qué tareas te libera el servicio administrado y qué no puede hacer? ¿Qué implicaciones tiene el cambio en los servicios de registro contable de AWS? |
+| 3 | [Amazon Managed Blockchain](./03-managed-blockchain.md) | ¿De qué tareas te libera el servicio administrado y qué no puede hacer? ¿Qué implicaciones tiene el cambio en los servicios de libro mayor de AWS? |
 | 4 | [Perspectiva de los servicios financieros](./04-financial-services.md) | ¿Cuáles son los problemas reales de la gobernanza de consorcios, la privacidad, la regulación y la integración con la infraestructura existente? |
 
 El documento 1 es un requisito previo para los documentos 2–4. Si ya conoces blockchain, puedes empezar por el 2, pero **la sección «de dónde proceden las características operativas» del documento 1** es necesaria para seguir el documento 2.

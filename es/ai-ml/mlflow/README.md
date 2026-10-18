@@ -6,9 +6,9 @@
 
 ## Descripción general
 
-MLflow ofrece seguimiento de experimentos, registro y registro en el catálogo de modelos, administración de versiones, evaluación de GenAI y trazas. Las trazas se incorporaron en la versión 2.14.0; la versión 3.x amplió LoggedModel, la evaluación y la integración con la interfaz de usuario. La versión 3.16.0 se publicó el 04-09-2026.
+MLflow ofrece seguimiento de experimentos, registro de artefactos de modelos, inscripción de modelos en el registro, administración de versiones, evaluación de GenAI y trazas. Las trazas se incorporaron en la versión 2.14.0; la versión 3.x amplió LoggedModel, la evaluación y la integración con la interfaz de usuario. La versión 3.16.0 se publicó el 4 de septiembre de 2026.
 
-El parche 3.16.1 llegó el 17-09-2026 y eliminó la contraseña predeterminada de administrador de autenticación básica que se incluía en el paquete. Los ejemplos siguientes se comprobaron con la versión 3.16.0 y no se volvieron a ejecutar con la 3.16.1. MLflow 3.17.0 (07-10-2026) es una versión menor posterior que requiere una actualización coordinada del esquema SQL para los servidores respaldados por SQL; la versión 3.17.1 (13-10-2026) es su lanzamiento de parche. Esta serie no abarca las versiones 3.17.x.
+El parche 3.16.1 llegó el 17 de septiembre de 2026 y eliminó la contraseña predeterminada de administrador de autenticación básica que se incluía en el paquete. Los ejemplos siguientes se comprobaron con la versión 3.16.0 y no se volvieron a ejecutar con la 3.16.1. MLflow 3.17.0 (7 de octubre de 2026) es una versión menor posterior que requiere una actualización coordinada del esquema SQL para los servidores respaldados por SQL; la versión 3.17.1 (13 de octubre de 2026) es su lanzamiento de parche. Esta serie no abarca las versiones 3.17.x.
 
 Úsalo localmente con el SDK y SQLite, u opera un servicio de seguimiento HTTP con almacenes de metadatos SQL y de artefactos independientes. Un servicio lógico no tiene por qué consistir en un solo Pod o sistema de almacenamiento. Esta serie abarca el seguimiento, el registro de modelos y la implementación en EKS; no valida todas las funciones de MLflow ni el entrenamiento correcto con GPU.
 
@@ -26,11 +26,11 @@ El parche 3.16.1 llegó el 17-09-2026 y eliminó la contraseña predeterminada d
 
 ## Por qué ejecutarlo en EKS
 
-La compensación es la misma que se aborda en otras secciones de datos y ML de este sitio de documentación: un equipo que ya ejecuta EKS puede reutilizar los mismos patrones de implementación, IAM (IRSA/Pod Identity) y observabilidad para el servidor de seguimiento de MLflow que para el resto del clúster, a cambio de operar directamente el servidor de seguimiento, su base de datos de backend y su almacén de artefactos, en lugar de usar una alternativa administrada.
+La disyuntiva es la misma que se aborda en otras secciones de datos y ML de este sitio de documentación: un equipo que ya ejecuta EKS puede reutilizar los mismos patrones de implementación, IAM (IRSA/Pod Identity) y observabilidad para el servidor de seguimiento de MLflow que para el resto del clúster, a cambio de operar directamente el servidor de seguimiento, su base de datos de backend y su almacén de artefactos, en lugar de usar una alternativa administrada.
 
-La [guía de SageMaker AI](../sagemaker-ai/README.md) describe un diseño de comparación de Qwen. Ese ejemplo tiene versiones fijadas históricas e independientes y actualmente bloquea la ejecución con GPU porque su DLC llegó al final de su ciclo de parches. Las comprobaciones locales de MLflow 3.16.0 de esta serie no constituyen una validación integral de ese ejemplo.
+La [guía de SageMaker AI](../sagemaker-ai/README.md) describe un diseño de comparación de Qwen. Ese ejemplo tiene sus propias versiones históricas fijadas y actualmente bloquea la ejecución con GPU porque su DLC llegó al final de su ciclo de parches. Las comprobaciones locales de MLflow 3.16.0 de esta serie no constituyen una validación integral de ese ejemplo.
 
-El registro en el Registro de modelos es un paso opcional del ciclo de vida. Los sistemas de servicio consumen URI de modelos o alias mediante una configuración independiente; registrar un modelo o cambiar un alias no implementa un modelo automáticamente.
+El registro en el Registro de modelos es un paso opcional del ciclo de vida. Los sistemas de inferencia consumen las URI de modelos o sus alias mediante una configuración independiente; registrar un modelo o cambiar un alias no implementa un modelo automáticamente.
 
 ## Cobertura actual
 

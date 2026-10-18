@@ -2,12 +2,12 @@
 
 Base: Spark 4.2.0 / Karpenter 1.14 · septiembre de 2026.
 
-## 1. ¿Las instancias de la serie R y NVMe son siempre la opción más rápida para el shuffle?
+## 1. ¿Las instancias de la serie R y el almacenamiento NVMe son siempre lo más rápido para el shuffle?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-No. Mide el tiempo de las tareas y etapas, el spill, la espera al recuperar datos del shuffle, la distribución desigual y los cuellos de botella de CPU, memoria, disco y red. Compara la capacidad disponible y el costo por trabajo completado; otras familias de instancias y EBS no son inadecuados por definición.
+No. Mide el tiempo de las tareas y etapas, el derrame de datos a disco (spill), la espera al recuperar datos del shuffle, la distribución desigual de datos y los cuellos de botella de CPU, memoria, disco y red. Compara la capacidad disponible y el costo por trabajo completado; otras familias de instancias y EBS no son inadecuados por definición.
 
 </details>
 
@@ -25,7 +25,7 @@ Valida la compatibilidad con arm64 de la imagen de Spark, JNI, los códecs, BLAS
 <details>
 <summary>Mostrar respuesta</summary>
 
-No. En Nitro, EBS también aparece como NVMe, y un disco sin montar puede contener datos o particiones. El nombre del dispositivo y su estado de montaje no demuestran que sea almacenamiento efímero de la instancia prescindible.
+No. En Nitro, EBS también aparece como NVMe, y un disco sin montar puede contener datos o particiones. El nombre del dispositivo y que no esté montado no demuestran que sea almacenamiento local efímero de la instancia descartable (instance store).
 
 </details>
 
@@ -56,7 +56,7 @@ Un nombre como `spark-local-dir-scratch`, con el prefijo `spark-local-dir-` y un
 
 </details>
 
-## 7. ¿`emptyDir` `sizeLimit` reserva espacio en disco?
+## 7. ¿El campo `sizeLimit` de `emptyDir` reserva espacio en disco?
 
 <details>
 <summary>Mostrar respuesta</summary>

@@ -10,7 +10,7 @@ AuthorizationPolicy permite controlar con precisión los permisos de acceso a lo
 4. [Ejemplos prácticos](#practical-examples)
 5. [Prácticas recomendadas](#best-practices)
 
-## Descripción general de la autorización
+## Descripción general de la autorización {#authorization-overview}
 
 <p align="center">
   <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Autorización de Istio" width="700">
@@ -32,7 +32,7 @@ AuthorizationPolicy de Istio proporciona control de acceso detallado para los se
 
 [🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-03-authorization-0.html)
 
-## Políticas básicas
+## Políticas básicas {#basic-policies}
 
 El diagrama ilustra una regla conjuntiva. Dentro de una regla se combinan las restricciones `from`, `to` y `when`; las reglas separadas y las políticas ALLOW coincidentes son alternativas. Si una carga de trabajo no tiene ninguna política ALLOW, las solicitudes se permiten salvo que CUSTOM/DENY las rechace. Cuando se aplica una política ALLOW, se requiere al menos una coincidencia ALLOW. Los ejemplos siguientes son alternativas; permitir todo ampliaría una política limitada a `get`.
 
@@ -82,7 +82,7 @@ spec:
         methods: ["GET"]  # Allow only GET
 ```
 
-## Políticas avanzadas
+## Políticas avanzadas {#advanced-policies}
 
 ### Basada en ServiceAccount
 
@@ -166,13 +166,13 @@ spec:
       values: ["admin", "superuser"]  # role claim is admin or superuser
 ```
 
-## Ejemplos prácticos
+## Ejemplos prácticos {#practical-examples}
 
 Para establecer una denegación predeterminada con excepciones, aplique la política ALLOW vacía y solo las reglas ALLOW específicas previstas. Un DENY explícito con `rules: [{}]` es un bloqueo estricto que ninguna regla ALLOW puede anular. Una política sin selector se aplica a su namespace; la asociación con el namespace raíz y las reglas de conexión mediante `targetRefs` requieren atención aparte.
 
 Las coincidencias de ServiceAccount/namespace requieren una identidad de par autenticada mediante mTLS. El ejemplo del rol JWT requiere un RequestAuthentication coincidente y la validación prevista del emisor/audiencia. Las cabeceras del cliente no sustituyen ninguna de esas identidades. Para TCP nativo, haga coincidencias por identidad/IP/puertos en lugar de métodos HTTP o claims de JWT; si faltan atributos HTTP en reglas DENY, estas pueden coincidir inesperadamente con TCP.
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
 - Limite las políticas a la carga de trabajo/recurso previsto y revise en conjunto todas las reglas ALLOW aplicables.
 - Use `targetRefs` de waypoint para las políticas L7 de ambient; un selector de sidecar no asocia una política a un waypoint.

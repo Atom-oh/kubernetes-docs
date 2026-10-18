@@ -11,15 +11,15 @@ La afinidad de sesión (o sesión persistente) es una técnica que proporciona a
 5. [Basada en IP de origen](#source-ip-based)
 6. [Consideraciones operativas](#operational-considerations)
 
-## Descripción general de la afinidad de sesión
+## Descripción general de la afinidad de sesión {#session-affinity-overview}
 
 ![Diagrama de afinidad de sesión por hash consistente: el balanceador aplica un hash a una solicitud del cliente que contiene un ID de usuario y siempre la enruta al mismo Pod; las demás réplicas de Pod no reciben solicitudes de esa sesión.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-10-session-affinity-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-10-session-affinity-0.html)
 
-## Basada en hash consistente
+## Basada en hash consistente {#consistent-hash-based}
 
-### Basada en encabezado HTTP
+### Basada en encabezado HTTP {#http-header-based}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -34,7 +34,7 @@ spec:
         httpHeaderName: "x-user-id"
 ```
 
-### Basada en cookies
+### Basada en cookies {#cookie-based}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -51,7 +51,7 @@ spec:
           ttl: 0s  # Cookie expiration time (0s = session cookie)
 ```
 
-### Basada en IP de origen
+### Basada en IP de origen {#source-ip-based}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -66,7 +66,7 @@ spec:
         useSourceIp: true
 ```
 
-## Consideraciones operativas
+## Consideraciones operativas {#operational-considerations}
 
 El diagrama supone que el conjunto de endpoints no cambia y que cada proxy ve los mismos endpoints. Agregar o quitar Pods, o las diferencias de endpoints debidas a la localidad, puede reasignar solicitudes. Almacene el estado de sesión de forma que una reasignación o un fallo de Pod no cause problemas.
 

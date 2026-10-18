@@ -50,7 +50,7 @@ Scheduler 可以启动一个 manager，由它为每个文件创建子进程；�
 
 </details>
 
-## 4. 正常受监督的 Python Task SDK 运行中，由谁调用 API？
+## 4. 在由 supervisor 进程管理的正常 Python Task SDK 运行中，由谁调用 API？
 
 - A) 用户任务代码直接执行元数据 SQL
 - B) Worker 一侧的 supervisor 使用 task JWT 调用 Execution API
@@ -98,7 +98,7 @@ Task runner 和 supervisor 通过 socket 通信。Worker 到 API 的寻址、身
 
 </details>
 
-## 7. Airflow 3.0 弃用了哪些固定的混合 executor 类？
+## 7. Airflow 3.0 不再支持哪些固定的混合 executor 类？
 
 - A) LocalKubernetesExecutor 和 CeleryKubernetesExecutor
 - B) LocalExecutor 和 CeleryExecutor

@@ -2,10 +2,10 @@
 
 ## Preguntas de opción múltiple
 
-1. ¿Cómo se relacionan Experiments y Runs?
-   - A) Un Experiment agrupa Runs; un Run puede representar entrenamiento o evaluación
-   - B) Un Experiment es una GPU
-   - C) Un Run siempre es un modelo desplegado
+1. ¿Cómo se relacionan los experimentos y las ejecuciones?
+   - A) Un experimento agrupa ejecuciones; una ejecución puede representar entrenamiento o evaluación
+   - B) Un experimento es una GPU
+   - C) Una ejecución siempre es un modelo desplegado
    - D) Son la misma entidad
 
 <details>
@@ -13,7 +13,7 @@
 
 **Respuesta: A**
 
-Los Runs también pueden registrar el preprocesamiento y las tareas de comparación.
+Las ejecuciones también pueden registrar el preprocesamiento y las tareas de comparación.
 </details>
 
 2. ¿Cuál es el backend de metadatos predeterminado en un entorno nuevo de MLflow 3.16.0?
@@ -27,12 +27,12 @@ Los Runs también pueden registrar el preprocesamiento y las tareas de comparaci
 
 **Respuesta: B**
 
-SQLite es el valor predeterminado; inspecciona el comportamiento de compatibilidad si ./mlruns ya existe. Los URI explícitos eliminan la ambigüedad.
+SQLite es el valor predeterminado; inspecciona el comportamiento de compatibilidad si ./mlruns ya existe. Las URI explícitas eliminan la ambigüedad.
 </details>
 
 3. ¿Cuál es el cambio importante de LoggedModel en MLflow 3?
-   - A) model_id, estado y seguimiento de relaciones independientes
-   - B) La primera capacidad de llamar a log_model sin un bloque start_run
+   - A) Seguimiento independiente de model_id, el estado y las relaciones
+   - B) La posibilidad inédita de llamar a log_model sin un bloque start_run
    - C) Los artefactos ya no son necesarios
    - D) Despliegue inmediato en GPU al registrarse
 
@@ -41,13 +41,13 @@ SQLite es el valor predeterminado; inspecciona el comportamiento de compatibilid
 
 **Respuesta: A**
 
-Model.log en 2.22.0 ya iniciaba un Run implícitamente cuando era necesario. La identidad independiente del modelo es distinta de omitir un contexto explícito de Run.
+Model.log en 2.22.0 ya iniciaba una ejecución de forma implícita cuando era necesario. La identidad independiente del modelo es distinta de omitir un contexto explícito de ejecución.
 </details>
 
-4. ¿Qué afirmación sobre autologging es correcta?
+4. ¿Qué afirmación sobre el registro automático es correcta?
    - A) Captura todo en código arbitrario
    - B) Siempre elimina PII
-   - C) Revisa las versiones compatibles y las entradas/salidas recopiladas de cada integración
+   - C) Revisa las versiones compatibles y los datos de entrada y salida que recopila cada integración
    - D) Completa el despliegue automáticamente
 
 <details>
@@ -58,22 +58,22 @@ Model.log en 2.22.0 ya iniciaba un Run implícitamente cuando era necesario. La 
 El comportamiento depende del framework y de las opciones. Comprueba los ejemplos de entrada, los datos sin procesar y la recopilación de artefactos del modelo.
 </details>
 
-5. ¿Qué afirmación sobre tracing y costo es precisa?
-   - A) Tracing apareció por primera vez en 3.x
-   - B) Cada tool span tiene costo de LLM
-   - C) El costo derivado de tokens siempre equivale a la factura
-   - D) Tracing llegó en 2.14.0; la recopilación de uso depende de la integración
+5. ¿Qué afirmación sobre las trazas y el costo es precisa?
+   - A) Las trazas aparecieron por primera vez en 3.x
+   - B) Cada tramo de herramienta tiene un costo de LLM
+   - C) El costo calculado a partir de los tokens siempre equivale al de la factura
+   - D) Las trazas llegaron en 2.14.0; la recopilación del uso depende de la integración
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: D**
 
-Distingue la expansión posterior de la introducción inicial. No se puede garantizar el costo sin información del modelo, el uso y los precios.
+Distingue la ampliación posterior de la función de su introducción inicial. No se puede garantizar el costo sin información sobre el modelo, su uso y los precios.
 </details>
 
-6. ¿Cuándo puede un cliente necesitar permisos de S3 a pesar de usar un servidor de tracking remoto?
-   - A) Modo sin proxy con un URI directo de artefactos de S3
+6. ¿Cuándo puede un cliente necesitar permisos de S3 aunque use un servidor remoto de seguimiento?
+   - A) Modo sin proxy con un URI directo a los artefactos de S3
    - B) Solo al leer parámetros de SQLite
    - C) Nunca necesita permisos independientemente del modo
    - D) Cada búsqueda de nombre de alias requiere acceso a S3
@@ -83,13 +83,13 @@ Distingue la expansión posterior de la introducción inicial. No se puede garan
 
 **Respuesta: A**
 
-Las rutas de metadatos y artefactos son diferentes. El modo directo requiere permisos de almacenamiento del cliente y acceso de red.
+Las rutas de acceso a metadatos y artefactos son distintas. El modo directo requiere que el cliente tenga permisos de almacenamiento y acceso de red.
 </details>
 
-7. ¿Cómo inspeccionas una métrica registrada en los pasos 0 y 1?
+7. ¿Cómo puedes consultar una métrica registrada en los pasos 0 y 1?
    - A) El parámetro cambia automáticamente
    - B) Solo el segundo valor se conserva para siempre
-   - C) Usa get_metric_history para inspeccionar ambas observaciones
+   - C) Usa get_metric_history para consultar ambas observaciones
    - D) Se registran automáticamente dos modelos
 
 <details>
@@ -97,10 +97,10 @@ Las rutas de metadatos y artefactos son diferentes. El modo directo requiere per
 
 **Respuesta: C**
 
-Distingue el resumen actual del historial de métricas con marcas de tiempo y pasos.
+Distingue el resumen actual de la métrica de su historial, que incluye marcas de tiempo y pasos.
 </details>
 
-8. ¿Cuál es una ruta de consulta apropiada para la interfaz web de Tracking?
+8. ¿Cuál es una ruta adecuada para que la interfaz web de seguimiento obtenga datos?
    - A) El navegador se conecta directamente a PostgreSQL
    - B) El navegador llama a las API HTTP del servidor
    - C) La UI siempre lee archivos directamente de los Pods de entrenamiento
@@ -111,25 +111,25 @@ Distingue el resumen actual del historial de métricas con marcas de tiempo y pa
 
 **Respuesta: B**
 
-El servidor accede a su backend. La configuración del proxy de artefactos es un asunto independiente.
+El servidor accede a su backend. La configuración del proxy de artefactos es independiente.
 </details>
 
 ## Preguntas de respuesta corta
 
-9. ¿Puede un resultado PENDING de initialize_logged_model realizar inferencia de inmediato?
+9. ¿Puede un resultado PENDING de initialize_logged_model servir para hacer inferencias de inmediato?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-No. Puede contener solo metadatos; todavía se requieren el flavor real, los pesos, el registro de artefactos y la finalización. READY no implica calidad ni aprobación del despliegue.
+No. Puede contener solo metadatos; todavía se requieren el flavor real, los pesos, el registro de artefactos y la finalización. READY no implica que el modelo tenga calidad suficiente ni que esté aprobado para su implementación.
 </details>
 
-10. ¿Por qué un experimento existente podría seguir accediendo directamente a S3 después de que cambien los indicadores de artefactos del servidor?
+10. ¿Por qué un experimento existente podría seguir accediendo directamente a S3 después de cambiar las opciones de artefactos del servidor?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-El URI de artefactos registrado del experimento/Run no se reescribe retroactivamente. Inspecciona ese URI, así como los permisos y la ruta de transferencia reales.
+El URI de artefactos registrado para el experimento o la ejecución no se reescribe retroactivamente. Inspecciona ese URI, así como los permisos y la ruta de transferencia reales.
 </details>
 
 ---

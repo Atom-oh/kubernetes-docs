@@ -1,15 +1,15 @@
 # Grafana Loki 测验
 
-> **最后更新**: September 13, 2026
+> **最后更新**: 2026 年 9 月 13 日
 
-基于[指南](../../../observability/logging/01-loki.md)中的 Loki3.7.7/chart18.12.1 示例。
+基于[指南](../../../observability/logging/01-loki.md)中的 Loki 3.7.7/chart 18.12.1 示例。
 
 ---
 
-1. 在 TSDB/chunk 模型中，Loki 主要索引什么？
+1. 在 TSDB/数据块模型中，Loki 主要索引什么？
 
    - A) 每条日志行中的每个词
-   - B) 流 labels
+   - B) 流标签
    - C) 仅请求 ID
    - D) 仅时间戳
 
@@ -18,13 +18,13 @@
 
 **答案：B**
 
-Labels 可缩小需要扫描的流范围。这并不能证明固定的 10× 成本优势，也不能消除解析/chunk 读取成本。
+标签可缩小需要扫描的流范围。这并不能证明固定的 10× 成本优势，也不能消除解析/数据块读取成本。
 
 </details>
 
 ---
 
-2. 哪个组件会缓冲日志流、在启用时写入 WAL，并刷新 chunks？
+2. 哪个组件会缓冲日志流、在启用时写入 WAL，并刷写数据块？
 
    - A) Distributor
    - B) Query frontend
@@ -45,8 +45,8 @@ Ingester 也提供近期数据。WAL 需要持久化存储，其本身并不能�
 3. 哪项说法符合本章节采用的当前部署指导？
 
    - A) SSD 永远是所有生产 EKS 集群的默认选项
-   - B) 任意三个 Pod 都能保证跨三个 AZ 的弹性
-   - C) SingleBinary 是唯一的 chart18.12.1 模式名称
+   - B) 任意三个 Pod 都能保证跨三个可用区的容错能力
+   - C) SingleBinary 是唯一的 chart 18.12.1 模式名称
    - D) SSD 已弃用；生产扩展/HA 指导建议使用 Distributed，并进行明确的运维规划
 
 <details>
@@ -54,7 +54,7 @@ Ingester 也提供近期数据。WAL 需要持久化存储，其本身并不能�
 
 **答案：D**
 
-SSD 计划在 Loki4.0 中移除。容量和可用性取决于工作负载、存储、拓扑以及经过测试的故障处理，而非固定的 GB/天表格。
+SSD 计划在 Loki 4.0 中移除。容量和可用性取决于工作负载、存储、拓扑以及经过测试的故障处理，而非固定的 GB/天表格。
 
 </details>
 
@@ -72,7 +72,7 @@ SSD 计划在 Loki4.0 中移除。容量和可用性取决于工作负载、存�
 
 **答案：A**
 
-这是每个流的日志行速率，并不会自动成为 HTTP 请求错误比率。LogQL 支持 count 向量聚合，但 B 未提供所需的 metric-vector 输入。
+这是每个流的日志行速率，并不会自动成为 HTTP 请求错误比率。LogQL 支持 count 向量聚合，但 B 未提供所需的指标向量输入。
 
 </details>
 
@@ -82,8 +82,8 @@ SSD 计划在 Loki4.0 中移除。容量和可用性取决于工作负载、存�
 
    - A) 索引每个请求 ID 以加快查询
    - B) 在访问/隐私控制下，将必要的 ID 保留在日志内容或结构化元数据中
-   - C) 删除所有 cluster/namespace labels
-   - D) 假设总流数始终等于 label 基数的乘积
+   - C) 删除所有集群/命名空间标签
+   - D) 假设总流数始终等于标签基数的乘积
 
 <details>
 <summary>查看答案</summary>
@@ -101,14 +101,14 @@ SSD 计划在 Loki4.0 中移除。容量和可用性取决于工作负载、存�
    - A) eksctl 和 Helm 都创建相同的 ServiceAccount
    - B) 将 S3 访问密钥放入 Helm values
    - C) 使用 eksctl --role-only；Helm 创建匹配的带注释 ServiceAccount
-   - D) 授予所有节点 bucket policy 并禁用身份验证
+   - D) 授予所有节点存储桶策略并禁用身份验证
 
 <details>
 <summary>查看答案</summary>
 
 **答案：C**
 
-role trust 必须与确切的 cluster OIDC provider、audience 和 namespace/service-account subject 相匹配。当其平台/SDK 前提条件满足时，Pod Identity 也是一种选择。
+角色信任策略必须与确切的集群 OIDC 提供商、受众（audience）和命名空间/服务账户主体（subject）相匹配。当其平台/SDK 前提条件满足时，Pod Identity 也是一种选择。
 
 </details>
 
@@ -126,7 +126,7 @@ role trust 必须与确切的 cluster OIDC provider、audience 和 namespace/ser
 
 **答案：A**
 
-LogQL 在解析后使用 label-filter 阶段。对于 unwrapped numeric metric，请将错误过滤器置于 unwrap 之后，以同时排除转换错误。
+LogQL 在解析后使用标签筛选阶段。对于通过 unwrap 提取的数值指标，请将错误过滤器置于 unwrap 之后，以同时排除转换错误。
 
 </details>
 
@@ -134,35 +134,35 @@ LogQL 在解析后使用 label-filter 阶段。对于 unwrapped numeric metric�
 
 8. Compactor 在此 TSDB 部署中的作用是什么？
 
-   - A) 对 gateway 用户进行身份验证
-   - B) 接收所有客户端 push 请求
+   - A) 对网关用户进行身份验证
+   - B) 接收所有客户端推送请求
    - C) 保证所有日志会在摄取后恰好 31 天过期
-   - D) 在启用 retention 时压缩索引文件，并异步删除已标记的 chunks
+   - D) 启用保留策略时合并整理索引文件，并异步删除已标记的数据块
 
 <details>
 <summary>查看答案</summary>
 
 **答案：D**
 
-它并非通用的小日志 chunk 合并器。Retention 需要兼容的 schema/index period、已启用的处理、deletion store 以及持久化 marker state；31 天只是一个示例策略。
+它并非通用的小日志数据块合并器。保留策略需要兼容的数据模式/索引周期、已启用的处理、用于删除操作的存储以及持久化的标记状态；31 天只是一个示例策略。
 
 </details>
 
 ---
 
-9. 收到 ingestion429 响应后，首先应做什么？
+9. 收到摄取 429 响应后，首先应做什么？
 
-   - A) 在未测量容量的情况下提高所有 limit
-   - B) 区分 tenant byte rate/burst、per-stream rate 和 active-stream limit，然后检查容量/客户端重试
-   - C) 仅增加 query timeout
-   - D) 永久禁用所有 limit
+   - A) 在未测量容量的情况下提高所有限制
+   - B) 区分租户字节速率/突发额度、每个流的速率和活动流数量限制，然后检查容量/客户端重试
+   - C) 仅增加查询超时
+   - D) 永久禁用所有限制
 
 <details>
 <summary>查看答案</summary>
 
 **答案：B**
 
-摄取速率和突发 limit 位于 limits_config 下。提高 limit 可能会使后端过载，重试需要 backoff 和有界的丢失/缓冲策略。
+摄取速率和突发限制位于 limits_config 下。提高限制可能会使后端过载，重试需要退避机制以及有界的丢失/缓冲策略。
 
 </details>
 
@@ -171,8 +171,8 @@ LogQL 在解析后使用 label-filter 阶段。对于 unwrapped numeric metric�
 10. 哪项说法正确描述了 chunk_idle_period 和 /flush？
 
    - A) 两者都是只读状态端点
-   - B) chunk_idle_period 是日志 retention period
-   - C) chunk_idle_period 控制空闲刷新；POST /flush 会主动触发刷新
+   - B) chunk_idle_period 是日志保留期
+   - C) chunk_idle_period 控制空闲刷写；POST /flush 会主动触发刷写
    - D) 降低 chunk_idle_period 总是会降低总成本
 
 <details>
@@ -180,6 +180,6 @@ LogQL 在解析后使用 label-filter 阶段。对于 unwrapped numeric metric�
 
 **答案：C**
 
-更短的空闲时间可能产生更多小 chunks 和对象请求。flush 操作不是健康检查，readiness 也不能证明端到端持久性。
+更短的空闲时间可能产生更多小数据块和对象请求。刷写操作不是健康检查，就绪状态也不能证明端到端持久性。
 
 </details>

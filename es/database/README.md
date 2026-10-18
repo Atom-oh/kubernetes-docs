@@ -20,7 +20,7 @@ esa decisión y lo respalda con datos medidos, no solo con hojas de especificaci
 | Personal de operaciones | No hace falta un equipo dedicado de DBA/plataforma | El equipo de plataforma es responsable del ciclo de vida |
 | Disponibilidad del motor | PostgreSQL/MySQL/Redis con ofertas administradas consolidadas | Regiones, extensiones o versiones requeridas que los servicios administrados disponibles no ofrecen; compara también con ClickHouse Cloud |
 | Estructura de costos | Precio del servicio más ahorro en operaciones | Infraestructura, alta disponibilidad, copias de seguridad, actualizaciones y personal en conjunto |
-| Densidad de implementación | Pocos inquilinos | Decenas de bases de datos por inquilino desplegadas mediante GitOps |
+| Densidad de implementación | Pocos inquilinos | Decenas de bases de datos de distintos inquilinos desplegadas mediante GitOps |
 | Requisitos de control | Comprueba las regiones, el cifrado y las capacidades de auditoría que se ofrecen | Asumes tanto el control adicional como la responsabilidad operativa |
 
 La pregunta clave es **quién es responsable del ciclo de vida de la base de datos y
@@ -46,7 +46,7 @@ responsabilidades operativas.
 
 1. **Almacenamiento**: el tipo de volumen determina tu presupuesto de rendimiento. Como muestra la [prueba comparativa de EBS gp2 frente a gp3](../storage/01-ebs-gp2-gp3-benchmark.md), capacidades idénticas pueden diferir 10 veces en IOPS. Para bases de datos, empieza con gp3 y considera las IOPS aprovisionadas.
 2. **Topología**: distribuye las réplicas entre AZ con `topologySpreadConstraints` y ten en cuenta el costo de transferencia entre AZ y la latencia de replicación.
-3. **Aislamiento de recursos**: si se desea QoS Guaranteed, todos los contenedores deben tener solicitudes y límites de CPU/memoria iguales. Esto no elimina los OOM, la limitación de CPU ni los fallos de nodos. Dimensiona los límites de CPU, las cachés, el trabajo en segundo plano y el margen de memoria para las consultas según la carga medida.
+3. **Aislamiento de recursos**: si se desea QoS Guaranteed, cada contenedor debe tener iguales sus solicitudes y límites de CPU y memoria. Esto no elimina los OOM, la limitación de CPU ni los fallos de nodos. Dimensiona los límites de CPU, las cachés, el trabajo en segundo plano y el margen de memoria para las consultas según la carga medida.
 4. **Copias de seguridad que realmente hayas restaurado**: habilitar la copia de seguridad del operador (por ejemplo, el complemento Barman Cloud admitido de CloudNativePG para S3) es lo mínimo; los ensayos de restauración programados son lo que demuestra que funciona.
 
 ## Lecturas relacionadas

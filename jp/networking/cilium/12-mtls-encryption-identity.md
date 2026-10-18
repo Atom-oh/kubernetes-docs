@@ -452,7 +452,7 @@ kubectl -n kube-system exec ds/cilium -- cilium-dbg statedb dump | jq '.["mtls-e
 tcpdump -i eth0 port 15008      # use cilium_vxlan when tunnelling
 ```
 
-## 透過暗号化
+## 透過暗号化 {#transparent-encryption}
 
 default では Cilium 管理の Pod traffic のうち node 間を通過するものだけを暗号化します。同じ node 内の traffic は暗号化しません。node がまだ学習していない endpoint への egress は平文で送られる場合があります。判定には同じ ipcache／policy mechanism を使うためです。strict mode、または `world` を deny する egress policy で対処します。
 

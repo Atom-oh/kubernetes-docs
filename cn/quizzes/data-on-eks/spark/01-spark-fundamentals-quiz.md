@@ -79,7 +79,7 @@ Cores 与默认 CPU request 和 executor 任务处理能力有关；要设置 CP
 <details>
 <summary>显示答案</summary>
 
-应检查 tracking/空闲超时、强制终止、节点容量和重新计算情况。Client 模式还需要可访问的 driver 端点，并在适用时配置实际管理 driver Pod 的控制器。保留中间数据块不能替代检查点、driver 恢复或端到端 exactly-once 保证。
+应检查 tracking/空闲超时、强制终止、节点容量和重新计算情况。Client 模式还需要可访问的 driver 端点；如果 driver 运行在 Pod 中，还需配置其实际 Pod 名称，以便将该 Pod 设为 executor Pod 的所有者。保留中间数据块不能替代检查点、driver 恢复或端到端 exactly-once 保证。
 
 </details>
 

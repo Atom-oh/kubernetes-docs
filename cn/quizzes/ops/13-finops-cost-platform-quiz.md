@@ -1,143 +1,135 @@
 # FinOps 成本可视化平台测验
 
-1. FinOps 运营周期三个阶段的正确顺序是什么？
-   - A) Optimize → Inform → Operate
-   - B) Inform → Optimize → Operate
-   - C) Operate → Inform → Optimize
-   - D) Inform → Operate → Optimize
+1. 哪项最准确地描述 Inform → Optimize → Operate？
+   - A) 一次仅由工程团队参与的成本削减
+   - B) 通过提高可见性、持续改进和共同承担责任，迭代实现技术价值的实践
+   - C) 每个组织都能在六个月内完成的流程
+   - D) 自动终止所有 Pod 的财务流程
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Inform → Optimize → Operate**
+**答案：B) 通过提高可见性、持续改进和共同承担责任，迭代实现技术价值的实践**
 
-**解释:**
-FinOps 周期会迭代经过 Inform（建立成本可视性）→ Optimize（降低成本）→ Operate（治理）。首先了解谁花费了什么以及花费多少，然后进行优化，最后通过策略进行管理。
+产品、业务、工程和财务团队共同协作；除了支出，还应关注服务水平和单位经济效益。
 
 </details>
 
 ---
 
-2. 将 AWS CUR (Cost and Usage Report) 与 Kubecost 集成的主要原因是什么？
-   - A) 降低 Kubecost 许可证成本
-   - B) 跟踪 Kubernetes 之外的 AWS service 成本
-   - C) 通过匹配实际 AWS 账单数据来提高 Pod-level 成本准确性
-   - D) 启用多集群 federation
+2. 在 OpenCost Cloud Cost 的 Athena 配置中，bucket 标识什么？
+   - A) 仅标识 CUR 源存储桶
+   - B) Athena 查询结果的存储桶和前缀
+   - C) kubeconfig 的存储位置
+   - D) 所有账户共享的公共存储桶
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 通过匹配实际 AWS 账单数据来提高 Pod-level 成本准确性**
+**答案：B) Athena 查询结果的存储桶和前缀**
 
-**解释:**
-Kubecost 基于公开标价估算成本。CUR 集成会将这些估算值与反映 Savings Plans、Reserved Instances 和协商费率的实际账单数据相匹配，从而显著提高成本准确性。
+读取源数据和写入查询结果需要分别授权。还必须验证实际的 Glue 表以及导入器的数据更新情况。
 
 </details>
 
 ---
 
-3. 使用 Kyverno 强制执行成本标签时，`validationFailureAction: Enforce` 表示什么？
-   - A) 对没有标签的 workloads 显示警告
-   - B) 阻止部署缺少必需标签的 workloads
-   - C) 自动添加标签
-   - D) 修改现有 workloads 上的标签
+3. 关于 ValidatingPolicy 的 validationActions: [Audit]，哪项说法正确？
+   - A) 它会删除所有现有 Pod
+   - B) 它不会阻止违规操作；将选定策略改为 Deny 之前，应先审查报告
+   - C) 它会自动添加缺失的标签
+   - D) 它会忽略 namespaceSelector
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 阻止部署缺少必需标签的 workloads**
+**答案：B) 它不会阻止违规操作；将选定策略改为 Deny 之前，应先审查报告**
 
-**解释:**
-`validationFailureAction: Enforce` 会阻止创建/修改违反策略的 resources。缺少 team、service 和 cost-center 标签的 Deployments 将被拒绝。建议先从 `Audit` 模式开始用于警告，然后在团队准备就绪后切换到 `Enforce`。
+Audit 与面向用户的 Warn 是不同的操作。本地 CLI 测试失败并不等于准入请求被拒绝。
 
 </details>
 
 ---
 
-4. 为什么将 VPA 设置为 `updateMode: "Off"`？
-   - A) 完全禁用 VPA
-   - B) 仅提供建议，而不自动重启 Pods
-   - C) 仅调整 CPU，同时保持 memory 固定
-   - D) 防止与 HPA 冲突
+4. VPA 的 Off 模式和本章的建议脚本实际会做什么？
+   - A) 立即减少节点数量和账单金额
+   - B) 查看建议，并按容器名称匹配后输出调整方案
+   - C) 自动创建并合并 PR
+   - D) 将 upperBound 应用为每个容器的 limit
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 仅提供建议，而不自动重启 Pods**
+**答案：B) 查看建议，并按容器名称匹配后输出调整方案**
 
-**解释:**
-`updateMode: "Off"` 让 VPA 分析 resource 使用情况并提供建议，而不会自动重启 Pods 来应用更改。这支持一种安全的工作流：先审查建议，再通过 PRs 手动应用。Goldilocks dashboard 也利用了此模式。
+修改清单、提交 PR、进行性能测试和部署是独立步骤。降低资源请求不保证节省费用，因此预估账单节省值为 null。
 
 </details>
 
 ---
 
-5. Showback 和 Chargeback 之间有什么区别？
-   - A) Showback 显示成本，Chargeback 隐藏成本
-   - B) Showback 提供成本可视性，Chargeback 实际向部门/团队收费
-   - C) Showback 是实时的，Chargeback 是按月的
-   - D) Showback 仅适用于 cloud，Chargeback 仅适用于 on-premises
+5. showback 与 chargeback 有什么区别？
+   - A) showback 提供成本可见性；chargeback 按约定规则分摊并计费
+   - B) showback 是实时的，而 chargeback 始终按年进行
+   - C) showback 仅支持 AWS
+   - D) chargeback 可以忽略舍入和抵扣项
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Showback 提供成本可视性，Chargeback 实际向部门/团队收费**
+**答案：A) showback 提供成本可见性；chargeback 按约定规则分摊并计费**
 
-**解释:**
-Showback 向每个团队/service 显示其花费，以提高意识，而 Chargeback 则实际从部门预算中扣除成本。大多数组织先从 Showback 开始建立成本意识文化，然后再过渡到 Chargeback。
+应约定周期、币种、共享/闲置/未分配成本、税费、退款和舍入规则。模型计算值不会自动成为内部账单。
 
 </details>
 
 ---
 
-6. namespace 必须具有哪个标签，Goldilocks 才会显示 resource 建议？
-   - A) goldilocks.fairwinds.com/vpa-enabled=true
-   - B) goldilocks.fairwinds.com/enabled=true
-   - C) vpa.kubernetes.io/enabled=true
-   - D) monitoring.goldilocks.com/watch=true
+6. 将当前 Prometheus 成本速率乘以 730 的面板表示什么？
+   - A) 本月最终确定的 AWS 账单
+   - B) 假设当前速率持续固定 730 小时的估算值
+   - C) 已观测到的每日成本的精确总和
+   - D) 包含所有折扣和税费的最终核算金额
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) goldilocks.fairwinds.com/enabled=true**
+**答案：B) 假设当前速率持续固定 730 小时的估算值**
 
-**解释:**
-Goldilocks 会自动为带有 `goldilocks.fairwinds.com/enabled=true` 标签的 namespaces 中的所有 Deployments 创建 VPAs，并在其 web dashboard 中可视化推荐的 resource 值。
+应区分当前速率、时间窗口内的模型成本和账单成本。线性推算的月末估值也会受到数据缺口和需求变化的影响。
 
 </details>
 
 ---
 
-7. Kubecost Allocation API 中的 `aggregate=label:team` 表示什么？
-   - A) 仅筛选带有 team 标签的 Pods
-   - B) 按 team 标签值对成本进行分组并求和
-   - C) 为每个 team 创建单独的 API 调用
-   - D) 自动添加 team 标签
+7. Grafana 中按团队设置的命名空间变量能保证数据隔离吗？
+   - A) 能，变量就是数据源授权机制
+   - B) 不能；还需要服务端数据源权限或租户隔离，并测试未授权访问是否被拒绝
+   - C) 能，内部 ALB 还会免除身份验证的需要
+   - D) 仅当标签名称足够长时才能保证
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 按 team 标签值对成本进行分组并求和**
+**答案：B) 不能；还需要服务端数据源权限或租户隔离，并测试未授权访问是否被拒绝**
 
-**解释:**
-`aggregate=label:team` 指示 Kubecost 按 `team` 标签值（例如 team-commerce、team-platform）对所有 Pod 成本进行分组并求和，在单个查询中提供每个 team 的总成本、CPU 成本和 memory 成本。
+仪表板筛选器和文件夹用于组织视图。应验证用户能否对同一数据源发起不同的查询。
 
 </details>
 
 ---
 
-8. 为什么成本 anomaly alert 需要持续 30 分钟的高成本才会触发？
-   - A) Prometheus scrape interval 是 30 分钟
-   - B) 防止临时峰值（deployments、autoscaling）造成误报
-   - C) 避免 Slack API rate limits
-   - D) Kubecost 数据刷新周期是 30 分钟
+8. 关于成本速率告警中的 for: 30m，哪项说法正确？
+   - A) 它将采集间隔改为 30 分钟
+   - B) 它要求条件持续成立，可以减少短时尖峰噪声，但不会消除误报
+   - C) 它会立即刷新 AWS 账单数据
+   - D) 它保证 Slack 消息恰好投递一次
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 防止临时峰值（deployments、autoscaling）造成误报**
+**答案：B) 它要求条件持续成立，可以减少短时尖峰噪声，但不会消除误报**
 
-**解释:**
-Deployments、autoscaling events 和 batch jobs 可能导致临时成本峰值。`for: 30m` 条件确保只有当成本持续升高 30 分钟以上时才触发 alerts，从而减少正常运营活动带来的噪音。
+条件持续时间、数据更新、模型精度和投递保证是不同的问题。指标缺失不代表支出为零。
 
 </details>

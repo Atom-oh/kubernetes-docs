@@ -2,23 +2,23 @@
 
 检查采集路径、内存/恢复边界和托管服务支持范围。
 
-1. 经审查的 Kubernetes 高可用 leader election 使用哪种资源？
+1. 经审查的 Kubernetes 高可用领导者选举使用哪种资源？
 
 <details>
 <summary>显示答案</summary>
 
 **答案**：Fabric8 ConfigMapLock，依赖 Kubernetes 控制平面的可用性。
 
-**解释**：它不会额外添加独立的 leader election 服务器，也不一定使用 Lease 资源。ZooKeeper HA 也是受支持的替代方案。
+**解释**：它不会额外添加独立的领导者选举服务器，也不一定使用 Lease 资源。ZooKeeper HA 也是受支持的替代方案。
 
 </details>
 
-2. HA ConfigMap、HA `storageDir` 和 checkpoint 目录是否存储相同数据？
+2. HA ConfigMap、HA `storageDir` 和检查点目录是否存储相同数据？
 
 <details>
 <summary>显示答案</summary>
 
-**答案**：ConfigMap 保存 leader 信息/引用，HA `storageDir` 保存 JM 恢复元数据/作业图，checkpoint 目录则保留检查点状态。
+**答案**：ConfigMap 保存领导者信息/引用，HA `storageDir` 保存 JM 恢复元数据/作业图，检查点目录则保留检查点状态。
 
 **解释**：设置一条 HA 路径，并不能预先准备好所有状态文件或恢复权限。
 
@@ -35,7 +35,7 @@
 
 </details>
 
-4. Flink 自动扩缩容器和节点自动扩缩容器主要分别调整什么？
+4. Flink 自动扩缩容控制器和节点自动扩缩容控制器主要分别调整什么？
 
 <details>
 <summary>显示答案</summary>
@@ -51,13 +51,13 @@
 <details>
 <summary>显示答案</summary>
 
-**答案**：不必。应区分无法调度的 Pod 与镜像拉取、PVC、admission 或其他问题。
+**答案**：不必。应区分无法调度的 Pod 与镜像拉取、PVC、准入或其他问题。
 
 **解释**：约束条件、资源请求、实例供应情况和配额都可能阻止节点预置。
 
 </details>
 
-6. 将 consolidation 延迟设得长于 Flink 稳定时间，是否能避免中断？
+6. 将节点整合延迟设得长于 Flink 稳定时间，是否能避免中断？
 
 <details>
 <summary>显示答案</summary>
@@ -97,16 +97,16 @@
 
 **答案**：不是。它们属于各自独立的预算区域。
 
-**解释**：在检查过的 4 GiB 配置中，将托管内存比例从 0.4 调到 0.5 后，网络预算没有变化，而 task heap 减少。预算数值与实测 RSS 不同。
+**解释**：在检查过的 4 GiB 配置中，将托管内存比例从 0.4 调到 0.5 后，网络预算没有变化，而任务堆内存减少。预算数值与实测 RSS 不同。
 
 </details>
 
-10. PodMonitor 对象存在，但没有发现任何 target 时，应检查哪些内容？
+10. PodMonitor 对象存在，但没有发现任何采集目标时，应检查哪些内容？
 
 <details>
 <summary>显示答案</summary>
 
-**答案**：Prometheus monitor/namespace selector、实际 Pod 标签、命名端口、目标命名空间和服务发现权限。
+**答案**：Prometheus 监视器/命名空间选择器、实际 Pod 标签、命名端口、目标命名空间和服务发现权限。
 
 **解释**：此 chart 的 Operator Pod 缺少默认的 instance 标签。Deployment 元数据不会自动成为 Pod 标签。
 
@@ -117,7 +117,7 @@
 <details>
 <summary>显示答案</summary>
 
-**答案**：都不是。Cache 使用量以字节计，而经审查的 reporter 会将 Flink Counter 导出为 Gauge。
+**答案**：都不是。缓存使用量以字节计，而经审查的指标导出器会将 Flink Counter 导出为 Gauge。
 
 **解释**：还应结合缓存容量/命中/未命中来解读。Histogram 会映射为 Summary；应检查导出的 TYPE 和标签。
 

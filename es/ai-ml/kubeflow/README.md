@@ -18,7 +18,7 @@ CNCF [anunció la graduación de Kubeflow el 17 de agosto de 2026](https://www.c
 
 | Componente | Propósito | API o concepto | Guía |
 | --- | --- | --- | --- |
-| Dashboard, Profiles, gestión de acceso | Navegación de la interfaz de usuario, propiedad del namespace y membresía | `Profile` con ámbito de clúster; cuota opcional | [Parte 1](01-architecture-installation.md) |
+| Dashboard, Profiles, gestión de acceso | Navegación de la interfaz de usuario, propiedad y pertenencia al espacio de nombres | `Profile` con ámbito de clúster; cuota opcional | [Parte 1](01-architecture-installation.md) |
 | Pipelines | Compilar y ejecutar flujos de trabajo; hacer seguimiento de ejecuciones y artefactos | API de Pipeline/Run/Experiment; el modo opcional Kubernetes Native API añade CRD `Pipeline`/`PipelineVersion` | [Parte 2](02-pipelines.md) |
 | Notebooks | Cargas de trabajo de notebooks de usuario | `Notebook`; configuración de imagen y PVC | [Parte 3](03-notebooks.md) |
 | Katib | Búsqueda de hiperparámetros y pruebas | CRD `Experiment`, `Trial`, `Suggestion` | [Parte 4](04-katib.md) |

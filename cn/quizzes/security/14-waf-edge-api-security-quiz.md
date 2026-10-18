@@ -73,7 +73,7 @@
 - A) 其他 CloudFront 路径也可能使用相同基础设施
 - B) CloudFront 不能使用 HTTPS
 - C) ALB 没有 listener 规则
-- D) 所有源站请求头都是加密签名
+- D) 所有源站请求头都是密码学签名
 
 <details>
 <summary>显示答案</summary>

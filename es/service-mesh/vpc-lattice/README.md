@@ -7,7 +7,7 @@
 
 - Qué cambia realmente al pasar de una malla de servicios con proxy sidecar (App Mesh, Istio) a un **plano de datos administrado** (VPC Lattice)
 - Cómo afectan al recorrido de la solicitud el direccionamiento documentado de Lattice, la firma SigV4 y las políticas de autorización aplicables
-- Las diferencias estructurales que surgen al migrar la identidad de cargas de trabajo de SPIFFE/SPIRE a IAM, y por qué se convierten en temas para el comité de revisión
+- Las diferencias estructurales que surgen al migrar la identidad de cargas de trabajo de SPIFFE/SPIRE a IAM, y por qué son cuestiones que deberá evaluar el comité de revisión
 
 ## Por qué esta sección es independiente
 
@@ -18,8 +18,8 @@ Hay urgencia. **El soporte de AWS App Mesh terminó el 30 de septiembre de 2026*
 
 Pero App Mesh y Lattice **no son dos implementaciones de lo mismo**. El plano de
 datos está en un lugar distinto (dentro del pod o en la infraestructura de AWS), la
-identidad se demuestra con diferente granularidad (conexión o solicitud) y otra
-parte administra la raíz de confianza (la CA del cliente o AWS IAM/STS). Si intentas
+identidad se demuestra con diferente granularidad (conexión frente a solicitud) y
+la raíz de confianza pertenece a otra entidad (la CA del cliente o AWS IAM/STS). Si intentas
 migrar sustituyendo nombres de recursos uno por uno, descubrirás brechas funcionales
 y fallos en las revisiones de seguridad cuando la migración ya esté avanzada. El
 objetivo de esta sección es exponer esas brechas **desde el principio**.

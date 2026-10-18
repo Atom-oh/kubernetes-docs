@@ -4,7 +4,7 @@ Airflow 3.3.1 / chart de Helm 1.22.0 · septiembre de 2026.
 
 ## 1. ¿Qué descripción del análisis de DAG en Airflow 2 es correcta?
 
-- A) Todos los archivos se analizaban únicamente en el mismo ciclo del scheduler
+- A) Todos los archivos se analizaban únicamente en el mismo ciclo del planificador
 - B) Los DAG solo se leían desde Redis
 - C) Ya existían subprocesos para procesar archivos y la opción de ejecutar el análisis de DAG de forma independiente
 - D) Las tareas se ejecutaban sin analizarse
@@ -14,7 +14,7 @@ Airflow 3.3.1 / chart de Helm 1.22.0 · septiembre de 2026.
 
 **C**
 
-El scheduler podía iniciar un administrador con subprocesos por archivo o usar el procesamiento independiente. La planificación de DAG serializados y la alta disponibilidad con varios schedulers también existían antes de Airflow 3.
+El planificador podía iniciar un administrador con subprocesos por archivo o usar el procesamiento independiente. La planificación de DAG serializados y la alta disponibilidad con varios planificadores también existían antes de Airflow 3.
 
 </details>
 
@@ -142,7 +142,7 @@ El primer executor configurado es el predeterminado. Las tareas seleccionan un n
 
 **C**
 
-GitDagBundle admite versionado; los bundles Local/S3/GCS revisados no. Verifica la distribución y la versión del código que se usa en los reintentos.
+GitDagBundle admite versionado; los bundles Local/S3/GCS revisados no. Verifica cómo se distribuye el código y qué versión se usa en los reintentos.
 
 </details>
 

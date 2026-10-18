@@ -68,7 +68,7 @@
 
 </details>
 
-### 5. ¿Se puede combinar la afinidad reducida de dos o tres tuplas con el modo de dispositivo de TGW?
+### 5. ¿Se puede combinar la afinidad de flujo basada en tuplas reducidas de dos o tres campos con el modo de dispositivo de TGW?
 
 - A) No, según la restricción documentada
 - B) Siempre
@@ -80,7 +80,7 @@
 
 **Respuesta: A) No, según la restricción documentada**
 
-**Explicación:** La documentación actual de AWS exige cinco tuplas con el modo de dispositivo de TGW. Revisa la concentración de carga con un número reducido de tuplas y las combinaciones admitidas.
+**Explicación:** La documentación actual de AWS exige usar una tupla de cinco elementos con el modo de dispositivo de TGW. Revisa la concentración de carga que producen las tuplas reducidas y las combinaciones admitidas.
 
 </details>
 

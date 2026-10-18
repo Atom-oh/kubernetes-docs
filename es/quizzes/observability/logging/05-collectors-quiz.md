@@ -1,6 +1,6 @@
-# Cuestionario de comparación de recopiladores de logs
+# Cuestionario comparativo de recopiladores de registros
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 1. ¿Cómo se deben comparar los requisitos de recursos de los recopiladores?
 
@@ -48,7 +48,7 @@ El filtro kubernetes necesita etiquetas correctas y acceso autorizado a los meta
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Migrar: llegó al EOL el 2 de marzo de 2026**
+**Respuesta: A) Migrar: llegó al fin de vida útil (EOL) el 2 de marzo de 2026**
 
 El aviso oficial del ciclo de vida indica migrar a Alloy u otro cliente compatible y excluye explícitamente de ese aviso al cliente independiente lambda-promtail.
 
@@ -86,7 +86,7 @@ La sintaxis se parece a HCL, pero un grafo de componentes de Alloy no es un arch
 
 **Respuesta: C) Receivers → Processors → Exporters**
 
-Los Connectors pueden enlazar pipelines. La ruta actual de Loki utiliza OTLP HTTP; el loki exporter eliminado no está presente en Contrib0.160.0.
+Los Connectors pueden enlazar pipelines. La ruta actual de Loki utiliza OTLP HTTP; el loki exporter eliminado no está presente en Contrib 0.160.0.
 
 </details>
 
@@ -97,14 +97,14 @@ Los Connectors pueden enlazar pipelines. La ruta actual de Loki utiliza OTLP HTT
    - A) La eliminación de todos los secretos posibles de texto arbitrario
    - B) La eliminación de los archivos de logs originales del nodo
    - C) Entrega exactamente una vez
-   - D) El enmascaramiento de claves estructuradas seleccionadas y la eliminación del duplicado sin procesar
+   - D) El enmascaramiento de claves estructuradas seleccionadas y la eliminación del campo duplicado raw
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) El enmascaramiento de claves estructuradas seleccionadas y la eliminación del duplicado sin procesar**
+**Respuesta: D) El enmascaramiento de claves estructuradas seleccionadas y la eliminación del campo duplicado raw**
 
-No es un detector general de PII ni un límite de cierre ante fallos. Los valores de mensajes de texto sin formato y texto libre pueden seguir conteniendo datos sensibles.
+No es un detector general de PII ni garantiza una denegación segura ante errores. Los mensajes en texto sin formato y los valores de texto libre pueden seguir conteniendo datos sensibles.
 
 </details>
 
@@ -140,7 +140,7 @@ Las etapas de parser, template, labels y output también tienen efectos en el or
 
 **Respuesta: A) cloudwatch_logs y opensearch**
 
-La disponibilidad de plugins no otorga permisos IAM. Haz coincidir la identidad real de ServiceAccount, Region, endpoint, TLS y la propiedad de los recursos creados previamente.
+La disponibilidad de plugins no otorga permisos IAM. Haz coincidir la identidad real de ServiceAccount, la región de AWS, el endpoint, TLS y la propiedad de los recursos creados previamente.
 
 </details>
 
@@ -158,7 +158,7 @@ La disponibilidad de plugins no otorga permisos IAM. Haz coincidir la identidad 
 
 **Respuesta: C) Puede rechazar datos con errores reintentables y solicitar la recolección de basura**
 
-El comportamiento de reintentos de Receiver, los límites y las colas importan. La ventana de reintento limitada de filelog puede expirar y descartar un lote fallido.
+El comportamiento de reintentos del receptor (Receiver), los límites y las colas importan. La ventana de reintento limitada de filelog puede expirar y descartar un lote fallido.
 
 </details>
 
@@ -176,7 +176,7 @@ El comportamiento de reintentos de Receiver, los límites y las colas importan. 
 
 **Respuesta: D) Verificar el análisis, estado, propiedad, autenticación, métricas propias y registros reales del backend**
 
-El convertidor puede cambiar un límite de tasa global por límites por pipeline y no valida los montajes de host ni los permisos de Kubernetes. Elige la propiedad de archivo o de API para evitar la recopilación duplicada.
+El convertidor puede cambiar un límite de tasa global por límites por pipeline y no valida los montajes de host ni los permisos de Kubernetes. Decide si se recopilan los registros desde archivos o desde la API para evitar duplicarlos.
 
 </details>
 

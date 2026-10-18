@@ -53,7 +53,7 @@ Comprueba los límites de administración y la conectividad con EKS de MWAA 3.3.
 
 **Respuesta:** No. Deben terminar la sincronización de archivos y el análisis de DAG.
 
-**Explicación:** La configuración base documentada con S3 no demuestra por sí sola que falte compatibilidad con todas las funciones de bundles de Airflow. Comprueba que la versión elegida admita una configuración independiente.
+**Explicación:** La configuración base documentada con S3 no permite concluir que todas las funciones de bundles de Airflow sean incompatibles. Comprueba si la versión elegida admite una configuración independiente.
 
 </details>
 
@@ -79,7 +79,7 @@ Comprueba los límites de administración y la conectividad con EKS de MWAA 3.3.
 
 </details>
 
-8. ¿Se debería usar un ahorro fijo de entre el 30 % y el 60 % por alojamiento propio al comparar costos?
+8. ¿Se debería suponer un ahorro fijo del 30 % al 60 % por operar una plataforma autogestionada al comparar costos?
 
 <details>
 <summary>Mostrar respuesta</summary>

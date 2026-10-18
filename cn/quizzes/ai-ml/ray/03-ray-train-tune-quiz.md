@@ -4,7 +4,7 @@
 
 1. Ray Train 不会自动编写什么？
    - A) 底层 worker 协调
-   - B) Framework process-group 设置
+   - B) 框架的进程组设置
    - C) 所有模型/数据分区/状态保存与恢复逻辑
    - D) Ray 资源请求
 
@@ -27,11 +27,11 @@
 
 **答案：A**
 
-明确区分显式选择旧版实现的运行。Framework 是独立依赖项。
+明确区分显式选择旧版实现的运行。框架是独立依赖项。
 </details>
 
 3. 在 V2 中设置旧版 trainer_resources 时会发生什么？
-   - A) 它始终保留更多 controller CPU
+   - A) 它始终为控制器预留更多 CPU
    - B) 会引发弃用错误
    - C) GPU 数量增加
    - D) Tune trial 数量改变
@@ -41,7 +41,7 @@
 
 **答案：B**
 
-Controller、training-worker 和 Tune-driver 的资源范围不同。
+控制器、训练 worker 和 Tune driver 各自的资源范围不同。
 </details>
 
 4. Checkpoint.from_directory 的作用是什么？
@@ -55,7 +55,7 @@ Controller、training-worker 和 Tune-driver 的资源范围不同。
 
 **答案：B**
 
-编写恢复负载，并加载由 get_checkpoint 返回的 checkpoint。
+准备恢复所需的状态数据，并加载由 get_checkpoint 返回的 checkpoint。
 </details>
 
 5. 2.58.0 V2 的 report 参与规则是什么？
@@ -74,7 +74,7 @@ Controller、training-worker 和 Tune-driver 的资源范围不同。
 
 6. max_failures=0 会禁用所有重试吗？
    - A) 会
-   - B) 不会；controller 和抢占重试有各自独立的设置
+   - B) 不会；控制器重试和抢占重试有各自独立的设置
    - C) 它始终表示无限重试
    - D) 它只禁用 Karpenter 重试
 
@@ -116,12 +116,12 @@ Controller、training-worker 和 Tune-driver 的资源范围不同。
 
 ## 简答题
 
-9. 为什么要同时为 trial drivers 和 Train workers 预留预算？
+9. 为什么要统筹规划 trial driver 和 Train worker 的资源？
 
 <details>
 <summary>显示答案</summary>
 
-Drivers 可能占用其嵌套 workers 或 placement groups 所需的资源。请一并检查并发度、worker bundles、集群边界和每个节点的可行性。
+Driver 可能占用其嵌套 worker 或 placement group 所需的资源。请一并检查并发度、worker 资源包、集群资源上下限，以及单个节点的资源是否满足要求。
 </details>
 
 10. 成功的标量 Tune 示例不能证明什么？

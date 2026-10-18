@@ -31,7 +31,7 @@ CNCF [于 2026 年 8 月 17 日宣布 Kubeflow 毕业](https://www.cncf.io/annou
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-readme-0.html)
 
-仪表板提供指向各组件 UI 的链接。只有在其实现明确提交受支持的训练资源时，Pipelines 和 Katib 才会使用 Trainer。将训练后的制品连接到 KServe 需要单独的部署步骤；图表并未表示模型会自动晋级。
+仪表板提供指向各组件 UI 的链接。只有在其实现明确提交受支持的训练资源时，Pipelines 和 Katib 才会使用 Trainer。将训练后的制品连接到 KServe 需要单独的部署步骤；图表并未表示模型会自动进入后续发布阶段。
 
 ## 为什么在 EKS 上运行
 
@@ -46,6 +46,6 @@ CNCF [于 2026 年 8 月 17 日宣布 Kubeflow 毕业](https://www.cncf.io/annou
 3. [第 3 部分：Notebooks](03-notebooks.md)：工作负载、Profiles、存储和 GPU 放置。
 4. [第 4 部分：Katib](04-katib.md)：实验、试验、搜索和提前停止。
 5. [第 5 部分：Trainer](05-training-operator.md)：旧版 Training Operator 和 Trainer v2 API。
-6. [第 6 部分：KServe](06-kserve.md)：推理资源、部署模式和滚动发布。
+6. [第 6 部分：KServe](06-kserve.md)：推理资源、部署模式和发布过程。
 
 请使用各章节对应的组件基线。选择安装方案前，请检查 [26.03.1 发行版](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1)、[锁定的组件清单](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md)、[KFP 2.17.2](https://github.com/kubeflow/pipelines/releases/tag/2.17.2) 和 [KServe 0.21.0](https://github.com/kserve/kserve/releases/tag/v0.21.0)。

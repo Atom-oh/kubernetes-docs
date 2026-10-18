@@ -106,7 +106,7 @@ nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
 if command -v nvcc >/dev/null 2>&1; then nvcc --version; fi
 ```
 
-Use las instrucciones actuales de compatibilidad/plataforma de NVIDIA para la cohorte elegida. Pruebe los cambios de controlador/kernel en un host de prueba sin cargas de trabajo. Instalar una rama antigua del controlador o reiniciar containerd en un worker activo no es una comprobación de requisitos previos inocua.
+Siga las instrucciones vigentes de NVIDIA sobre compatibilidad y plataformas para la cohorte elegida. Pruebe los cambios de controlador/kernel en un host de prueba sin cargas de trabajo. Instalar una rama antigua del controlador o reiniciar containerd en un nodo de trabajo activo no es una comprobación de requisitos previos inocua.
 
 ## Red, CIDR y MTU
 
@@ -114,7 +114,7 @@ Los Nodos híbridos requieren **conectividad privada bidireccional** fiable, inc
 
 AWS recomienda **un ancho de banda de 100 Mbps y un RTT de 200 ms o menos** como orientación general de conectividad. Establezca objetivos de ancho de banda, latencia y pérdida de paquetes según las necesidades de las cargas de trabajo y mídalos a lo largo de la ruta de conexión real. Configure la MTU después de tener en cuenta la sobrecarga de encapsulación de túneles y los tamaños compatibles con los dispositivos de la ruta.
 
-Los CIDR remotos de nodo/Pod usan IPv4 RFC1918 o CGNAT, sin solaparse entre sí, con las redes de VPC o con las redes de servicio. Hasta 15 CIDR de cada tipo remoto caben dentro de **un** contenedor de red de nodos remotos y **uno** de red de Pods remotos. El enrutamiento de Pods entre clústeres también requiere una separación deliberada.
+Los CIDR remotos de nodo/Pod usan IPv4 RFC1918 o CGNAT, sin solaparse entre sí, con las redes de VPC o con las redes de servicio. Hasta 15 CIDR de cada tipo remoto caben en **un** bloque de configuración de red de nodos remotos y **uno** de red de Pods remotos. El enrutamiento de Pods entre clústeres también requiere una separación deliberada.
 
 Guarde un `network-plan.json` revisado:
 
@@ -161,7 +161,7 @@ print("CIDR syntax/range/non-overlap checks passed; routing and reachability rem
 PY
 ```
 
-Esto comprueba la sintaxis, los rangos y los solapamientos, pero no la conectividad. Configure las rutas de retorno de VPC a través del TGW/VGW real y las rutas de retorno/locales por Pod en las instalaciones.
+Esto comprueba la sintaxis, los rangos y los solapamientos, pero no la conectividad. Configure las rutas de retorno de VPC a través del TGW/VGW real, además de las rutas de retorno locales y las rutas de Pods por nodo en las instalaciones.
 
 | Flujo | Revisión |
 |------|--------|
@@ -170,7 +170,7 @@ Esto comprueba la sintaxis, los rangos y los solapamientos, pero no la conectivi
 | Plano de control → webhook | IP real del Pod, puerto, rutas y firewall |
 | Host/Pod → credenciales/imágenes/DNS/hora | Endpoints del proveedor, registro, DNS y sincronización del reloj |
 
-TCP10250 no es ingreso de kubelet al SG del servidor de API. EKS por sí solo no crea todas las reglas personalizadas; eksctl puede automatizar los recursos del lado de VPC que administra. Compruebe las cuotas reales de reglas en lugar de considerar 60 un máximo inmutable.
+TCP10250 no es tráfico entrante de kubelet al grupo de seguridad del servidor de API. EKS por sí solo no crea todas las reglas personalizadas; eksctl puede automatizar los recursos del lado de VPC que administra. Compruebe las cuotas reales de reglas en lugar de considerar 60 un máximo inmutable.
 
 AWS recomienda usar solo endpoints públicos o solo privados. Si se habilitan ambos, los nodos fuera de la VPC resuelven direcciones públicas y **pueden** no unirse si las rutas/reglas de acceso son distintas. No se trata de un rechazo categórico de la API. El acceso solo privado también necesita DNS privado y acceso administrativo.
 
@@ -413,7 +413,7 @@ Estos no son los archivos de CA de la API de Kubernetes de EKS. No clone identid
 
 Las plantillas v1.0.20 fijadas son puntos de partida para el aprovisionamiento. La plantilla de SSM crea el rol, **no la activación**. Revise el amplio alcance de DescribeCluster y los nombres de exportación fijos antes de usarlos con varios clústeres.
 
-El valor `CertAttributeTrustPolicy` de IRA es la cadena literal **`${aws:PrincipalTag/x509Subject/CN}`**, no `"CN"`. Este ayudante de Python `cryptography` serializa correctamente PEM y comprueba la forma básica y la validez actual de la CA, pero no la autoridad del emisor ni la revocación:
+El valor `CertAttributeTrustPolicy` de IRA es la cadena literal **`${aws:PrincipalTag/x509Subject/CN}`**, no `"CN"`. Este script auxiliar de Python, que usa `cryptography`, serializa correctamente PEM y comprueba la forma básica y la validez actual de la CA, pero no la autoridad del emisor ni la revocación:
 
 ```bash
 : "${CA_PEM_FILE:?Set the approved CA certificate file, not a private key}"

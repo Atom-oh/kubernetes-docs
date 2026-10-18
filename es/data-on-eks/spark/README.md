@@ -21,7 +21,7 @@ En el **modo de implementación en clúster**, el cliente que envía el trabajo 
 a la API de Kubernetes que cree el pod del driver. La admisión y la planificación de
 Kubernetes, junto con los kubelets de los nodos, gestionan la ubicación y el inicio
 del pod. El driver de Spark solicita pods de executor y coordina las etapas y tareas
-de Spark; no sustituye al scheduler de Kubernetes.
+de Spark; no sustituye al planificador de Kubernetes.
 
 Los executors se registran y se comunican directamente con el driver para el trabajo
 de Spark. Kubernetes sigue gestionando el ciclo de vida de sus pods. En el **modo
@@ -35,7 +35,7 @@ aplicaciones Spark.
 
 ## Capítulos
 
-1. [Fundamentos de Spark en Kubernetes](01-spark-fundamentals.md): envío en modo clúster o cliente, asignación de recursos, asignación dinámica y condiciones de desmantelamiento.
+1. [Fundamentos de Spark en Kubernetes](01-spark-fundamentals.md): envío en modo clúster o cliente, asignación de recursos, asignación dinámica y condiciones para la retirada ordenada de ejecutores.
 2. [Spark Operator](02-spark-operator.md): distingue los operadores de Apache y Kubeflow, sus API, el ciclo de vida de los trabajos, el envío y la supervisión.
 3. [EMR en EKS](03-emr-on-eks.md): clústeres virtuales, envío de trabajos e identidades de ejecución; distingue las funciones del entorno de ejecución administrado de las operaciones de capacidad de EKS.
 4. [Rendimiento y costos](04-performance-tuning.md): cuellos de botella de shuffle, almacenamiento, CPU y memoria; capacidades de nodo adecuadas, recuperación de Spot y escalado de executors frente al escalado de nodos.
@@ -43,9 +43,9 @@ aplicaciones Spark.
 
 La **asignación dinámica de recursos** de Spark ajusta los executors dentro de una
 aplicación. Es distinta de la asignación dinámica de recursos de Kubernetes para
-dispositivos y del escalado automático de nodos. El desmantelamiento puede reducir
-el recálculo, pero no garantiza que todos los bloques sobrevivan a una terminación
-forzada.
+dispositivos y del escalado automático de nodos. La retirada ordenada de ejecutores
+puede reducir el recálculo, pero no garantiza que todos los bloques sobrevivan a una
+terminación forzada.
 
 ## Referencias
 
@@ -53,8 +53,8 @@ forzada.
 - [Configuración de Spark 4.2.0](https://spark.apache.org/docs/4.2.0/configuration.html)
 - [Alternativas de asignación dinámica de Spark 4.2.0](https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation)
 - [Asignación de recursos del driver](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala)
-- [Recursos de los executors y hook de desmantelamiento](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala)
-- [Script oficial de desmantelamiento](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh)
+- [Recursos de los executors y hook de retirada ordenada](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala)
+- [Script oficial de retirada ordenada](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh)
 - [Etiquetas oficiales de imágenes de Spark](https://github.com/docker-library/official-images/blob/master/library/spark)
 
 - [Apache Spark Kubernetes Operator](https://github.com/apache/spark-kubernetes-operator)
