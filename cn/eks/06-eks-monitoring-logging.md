@@ -15,7 +15,7 @@
 7. [监控与日志记录最佳实践](#monitoring-and-logging-best-practices)
 8. [故障排除与调试](#troubleshooting-and-debugging)
 
-## 监控与日志记录概述
+## 监控与日志记录概述 {#monitoring-and-logging-overview}
 
 ### 监控与日志记录的重要性
 
@@ -52,7 +52,7 @@ AWS 会将托管控制平面日志交付到 CloudWatch Logs。容器运行时会
 6. **自动化**：尽可能自动化监控与日志记录流程
 7. **定期审查**：定期审查并改进监控与日志记录策略
 
-## EKS 控制平面日志记录
+## EKS 控制平面日志记录 {#eks-control-plane-logging}
 
 EKS 会将选定类型的托管控制平面日志导出到 CloudWatch Logs。节点端采集器不会抓取托管控制平面的文件系统。日志传输尽力而为；请配置访问权限和保留期，并检测日志缺失，然后验证日志是否实际到达。
 
@@ -200,7 +200,7 @@ CloudWatch Logs 目标支持 Logs Insights 查询。S3 目标是供所选 S3/Ath
 
 参考资料：[EKS 控制平面日志记录](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)、[审计策略和查询示例](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html)、[capability 控制器日志](https://docs.aws.amazon.com/eks/latest/userguide/capabilities-controller-logs.html)。
 
-## 容器日志记录
+## 容器日志记录 {#container-logging}
 
 容器运行时会将 stdout/stderr 写入节点的 CRI 日志文件。kubelet 负责管理日志轮转并提供 Pod 日志访问；采集器会跟踪这些文件，并将记录转发到所选后端。JSON 格式的应用消息仍然位于 CRI 封装中，不能把整条容器日志行当作 Docker JSON 来解析。
 
@@ -442,7 +442,7 @@ fields @timestamp, kubernetes.namespace_name, kubernetes.pod_name, data.level, l
 
 参考资料：[AWS image 版本 3.4.14](https://github.com/aws/aws-for-fluent-bit/releases/tag/v3.4.14)、[CloudWatch 输出](https://docs.fluentbit.io/manual/data-pipeline/outputs/cloudwatch)、[Fluent Bit 缓冲](https://docs.fluentbit.io/manual/data-pipeline/buffering)、[Promtail 生命周期](https://grafana.com/docs/loki/latest/send-data/promtail/)。
 
-## 集群监控
+## 集群监控 {#cluster-monitoring}
 
 有效的集群监控对于跟踪 EKS 集群的状态、性能和资源使用情况至关重要。本节介绍监控 EKS 集群的各种工具和技术。
 
@@ -1147,7 +1147,7 @@ spec:
 5. 编写 PromQL 查询（例如 `rate(app_requests_total[5m])`）
 6. 配置面板标题、描述和可视化类型
 7. 点击“Save”
-## 告警与事件管理
+## 告警与事件管理 {#alerting-and-event-management}
 
 有效的告警与事件管理对于快速检测并响应 EKS 集群中的问题至关重要。本节介绍管理 EKS 集群告警和事件的各种工具和技术。
 
@@ -1698,7 +1698,7 @@ Flux notification Providers 会将 Flux reconciliation 事件与 Flux Alert 资�
 2. **告警筛选**：仅传递重要告警
 3. **告警限流**：限制重复告警的频率
 4. **告警时间窗口**：仅在工作时间传递非业务关键告警
-## 日志分析与可视化
+## 日志分析与可视化 {#log-analysis-and-visualization}
 
 日志分析与可视化对于诊断和解决 EKS 集群中出现的问题十分重要。本节介绍在 EKS 集群中分析和可视化日志的各种工具和技术。
 
@@ -2087,7 +2087,7 @@ aws s3api put-bucket-lifecycle-configuration --bucket "$LOG_BUCKET" \
 
 此次审计未应用任何保留策略或对象生命周期操作。参考资料：[生命周期替换 API](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html)、[转换限制](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html)、[过期/版本控制/最低期限](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html)。
 
-## 监控与日志记录最佳实践
+## 监控与日志记录最佳实践 {#monitoring-and-logging-best-practices}
 
 下面介绍在 EKS 集群中有效实施监控与日志记录的最佳实践。
 
@@ -2261,7 +2261,7 @@ route:
 2. **温存储**：不常访问的日志
 3. **冷存储**：归档日志
 
-## 故障排除与调试
+## 故障排除与调试 {#troubleshooting-and-debugging}
 
 下面介绍在 EKS 集群中排查和调试问题的各种技术。
 

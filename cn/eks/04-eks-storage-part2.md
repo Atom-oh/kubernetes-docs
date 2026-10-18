@@ -319,7 +319,7 @@ spec:
       storage: 4800Gi
 ```
 
-## Amazon S3 存储集成
+## Amazon S3 存储集成 {#amazon-s3-storage-integration}
 
 S3 是对象存储。应用程序可以直接使用其 API，Hadoop 可以使用 S3A，而 Mountpoint CSI 可以通过文件系统接口公开现有存储桶，但有文档所述的限制。这些路径不能互换为 POSIX 文件系统。第 1 部分介绍的 S3 Files 是另一种集成方式，有其自身的 EFS CSI 要求。
 
@@ -648,7 +648,7 @@ spec:
 
 数据湖、模型存储库、归档、静态资产和审计对象都可以使用 S3。如果应用程序需要对象版本、条件请求或 Mountpoint 文件系统契约之外的功能，请选择 API 访问。需要随机更新和 POSIX 锁的可写数据库目录应采用其他存储设计。
 
-## 快照和备份
+## 快照和备份 {#snapshots-and-backups}
 
 CSI 快照需要特定驱动程序/后端提供支持；仅有 PVC 并不意味着支持快照。以下 EBS 示例用于捕获块卷的时间点状态。必要时请暂停/刷新应用程序，或使用适合数据库的备份/WAL 归档。快照成功并不能证明应用程序一致性或数据库时间点恢复能力。
 
@@ -786,7 +786,7 @@ velero restore create storage-demo-recovery-review --from-backup "$VERIFIED_BACK
 
 只有在候选数据通过应用程序检查后，才启动恢复的工作负载，并保留回滚路径。跨集群 CSI 恢复需要匹配的驱动程序名称以及可访问的快照/密钥；仅进行命名空间映射无法让云资源变得可移植。
 
-## 卷扩展和调整大小
+## 卷扩展和调整大小 {#volume-expansion-and-resizing}
 
 ![卷扩展流程图：StorageClass 允许扩展后，通过编辑 PVC、调用 CSI、扩展 EBS 并调整文件系统大小来完成扩展。](../.gitbook/assets/en-eks-04-eks-storage-part2-3.png)
 
@@ -817,7 +817,7 @@ kubectl -n storage-demo describe pvc ebs-claim
 ```
 在支持的情况下，CSI 会处理后端和文件系统扩展。请检查 PVC 条件、控制器/节点日志以及已挂载容量。如有需要，请按照驱动程序文档执行重新挂载/重启流程；不要在应用程序容器中对猜测的 `/dev/xvdf` 运行 `resize2fs`。切勿通过编辑 PV 容量来绕过扩展。请规划配额/成本上限，并避免在之前的调整大小操作仍处于待处理状态时反复自动扩容。
 
-## 卷克隆
+## 卷克隆 {#volume-cloning}
 
 当前 EBS CSI 支持通过 `dataSource` 和 CSI 克隆功能克隆 PVC；EBS CSI1.67.0 使用原生 EBS 卷复制（`CopyVolumes`），并非假设中隐藏的快照。使用前请检查已部署驱动程序/附加组件是否支持此功能。目标卷独立存在，但“可用”和“完全初始化后的性能”是不同状态。
 
@@ -1110,7 +1110,7 @@ spec:
 ```
 在服务规定的条件下，io2 Multi-Attach 卷支持修改大小/IOPS；笼统声称“无法在线扩容”并不正确。io1 的修改支持情况有所不同。启用/禁用 Multi-Attach 要求卷未挂载；安全的调整大小流程仍取决于 CSI/文件系统/应用程序的支持情况。共享卷发生故障可能会影响所有已挂载实例。Retain 和附加设置都不能替代备份策略。
 
-## 深入了解 Mountpoint for S3 CSI
+## 深入了解 Mountpoint for S3 CSI {#mountpoint-for-s3-csi-deep-dive}
 
 以下行为基于随 CSI2.8.0 捆绑的 Mountpoint1.23.0 进行了核验。采用更新的独立版本选项之前，请先确认实际安装的版本。
 
@@ -1289,7 +1289,7 @@ spec:
 
 不能仅根据服务名称得出通用的低/中/高成本或客户端数量无限制的排名。
 
-## 存储性能优化
+## 存储性能优化 {#storage-performance-optimization}
 
 下面介绍多种优化 EKS 存储性能的策略。
 

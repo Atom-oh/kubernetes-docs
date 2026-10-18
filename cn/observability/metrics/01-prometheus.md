@@ -13,7 +13,7 @@
 - [远程写入与 AMP](#remote-write-and-amp)
 - [性能、高可用与故障排除](#performance-ha-and-troubleshooting)
 
-## 简介与版本
+## 简介与版本 {#introduction-and-versions}
 
 Prometheus 是 CNCF 监控工具包，最初由 SoundCloud 开发。它收集数值时间序列，将其存储在本地 TSDB 中，评估 PromQL 和 recording/alert 规则，并向 Alertmanager 发送告警。常规采集通过 HTTP 抓取进行；远程写入和可选的批处理集成则提供了其他传输途径。它不是事件日志、链路追踪存储，也不是精确的逐请求计费台账。
 
@@ -43,7 +43,7 @@ Chart 的 `kubeVersion` 限制为 `>=1.25.0-0`。这并不是完整的兼容性�
 - [7 月 14 日的 Kubernetes exporter 文章](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/)介绍了应用埋点和自定义 exporter。使用 HPA 还需要适当的 metrics API/adapter；仅进行抓取并不会将任意指标接入 HPA。
 - [7 月 21 日的 AMP 公告](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/)介绍了每个工作区最高支持 15 亿个活跃时间序列和 20 万条 recording/alerting 规则。这些是公布的扩展限制，并不代表会自动授予默认配额或保证审批通过。请检查目标工作区/账户的当前配额。
 
-## 架构与组件
+## 架构与组件 {#architecture-and-components}
 
 ![Prometheus 发现、抓取、存储/查询以及规则到 Alertmanager 的流程。](../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png)
 
@@ -183,7 +183,7 @@ Prometheus 3 将 `holt_winters` 重命名为 `double_exponential_smoothing`。�
 
 观测到的健康流量会得到 0，全部为 5xx 的流量会得到 100，分母为零时结果仍未定义。缺失的遥测数据仍然缺失；请单独监控采集故障。
 
-## 发现与 Operator 选择器
+## 发现与 Operator 选择器 {#discovery-and-operator-selectors}
 
 ![Operator 工作负载协调以及 monitor/rule 选择。](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
 
@@ -296,7 +296,7 @@ spec:
 - 节点发现会访问 kubelet 端点，而不会自动访问 node-exporter。请确认服务证书、正确的 CA 和节点指标 RBAC。Kubernetes API CA 并不能证明任意节点证书都可信。
 - 请使用经过审查的命名空间/Service/团队标签，而非不受限制的节点 `labelmap`。删除身份标签并不等同于聚合操作。
 
-## kube-prometheus-stack 安装
+## kube-prometheus-stack 安装 {#kube-prometheus-stack-installation}
 
 以下是会更改集群的 Operator 命令，**本次审计中并未执行**。请使用预期的 context 和自有 release。对于现有安装，请检查实际 values、CRD、存储和升级说明，不要安装重复的监控堆栈。
 
@@ -445,7 +445,7 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 
 Chart 的 CRD 升级处理因版本而异。请阅读升级说明，不要假定普通 Helm upgrade 会涵盖所有 CRD 迁移。Chart 90 还将 Grafana 依赖项更改为社区仓库；升级时请验证现有身份验证/provisioning values，并保留数据库/PVC 备份。
 
-## 规则与 Alertmanager
+## 规则与 Alertmanager {#rules-and-alertmanager}
 
 下方所选的 PrometheusRule 包含告警和 recording 示例。CPU recording 使用 `rate`，并保持比率单位一致。错误表达式的单位是百分比，因此阈值为 1，注释会显示百分比。
 
@@ -627,7 +627,7 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 
 原生路由检查使用的是不会发送通知的接收端名称。仍需通过受控验证来确认 Secret 获取、提供方身份验证和实际通知投递。
 
-## 远程写入与 AMP
+## 远程写入与 AMP {#remote-write-and-amp}
 
 远程写入会异步地将样本转发到已配置的后端。它不会传递告警、保证无限缓冲，也不能替代备份。请监控积压、重试和接收端限制。除非经过审查的聚合/丢弃策略已明确其影响，否则应保留完整的直方图分布。
 
@@ -692,7 +692,7 @@ VictoriaMetrics 单节点通常会在其配置的 HTTP 端口接受 `/api/v1/wri
 
 不要照搬旧规则，在未评估分位数/SLO 损失的情况下丢弃所有亚秒级直方图分桶或整个控制平面延迟指标系列。队列默认值只是起点，并非经过测量的生产环境最优值。
 
-## 性能、高可用与故障排除
+## 性能、高可用与故障排除 {#performance-ha-and-troubleshooting}
 
 ### 根据测量结果调优
 

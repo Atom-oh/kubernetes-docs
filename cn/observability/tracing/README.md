@@ -206,7 +206,7 @@ processors:
 
 ## Trace-日志-指标关联
 
-### 通过 TraceID 链接日志
+### 通过 TraceID 链接日志 {#linking-logs-via-traceid}
 
 优先为你的框架使用受支持的日志插桩。如果手动使用 SLF4J MDC，即使操作抛出异常也应恢复之前的上下文：
 

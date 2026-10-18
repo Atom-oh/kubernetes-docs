@@ -11,7 +11,7 @@
 - [Patrones multiclúster](#multi-cluster-patterns)
 - [Parches de plantillas](#template-patches)
 
-## Descripción general de ApplicationSet
+## Descripción general de ApplicationSet {#applicationset-overview}
 
 ApplicationSet es un controlador de Kubernetes que añade compatibilidad para generar Applications de ArgoCD a partir de plantillas. Permite administrar múltiples aplicaciones con configuraciones similares en clústeres, entornos o repositorios.
 
@@ -65,7 +65,7 @@ spec:
   - missingkey=error
 ```
 
-## Generadores
+## Generadores {#generators}
 
 Los generadores producen parámetros que se sustituyen en la plantilla para crear Applications.
 
@@ -690,7 +690,7 @@ data:
 
 El ConfigMap no ejecuta código. Un servicio HTTP desplegado por separado debe gestionar POST `/api/v1/getparams.execute` y devolver un array `output.parameters`. Sustituya el dominio de ejemplo por un endpoint validado mediante TLS. Aprovisione el Secret `appset-plugin-token` en `argocd`, con la clave `token` y la etiqueta `app.kubernetes.io/part-of: argocd`; mantenga su valor fuera de Git. Implemente autenticación, validación de entradas y el esquema de respuesta documentado antes de conectarlo.
 
-## Plantillas Go
+## Plantillas Go {#go-templating}
 
 Establezca `spec.goTemplate: true` para usar plantillas Go; el motor predeterminado en 3.5.4 sigue siendo fasttemplate. Los ejemplos de esta página habilitan explícitamente las plantillas Go con `missingkey=error`. Cada campo de cadena se procesa de forma independiente: las instrucciones de control no pueden abarcar campos YAML, y los booleanos/objetos/listas requieren `templatePatch`. Use `dig` para las claves opcionales porque el acceso directo a una clave faltante falla antes de que pueda ejecutarse `default`.
 
@@ -762,7 +762,7 @@ spec:
         - CreateNamespace=true
 ```
 
-## Sincronización progresiva
+## Sincronización progresiva {#progressive-sync}
 
 Progressive Syncs es Beta desde la versión 3.3 y aún debe habilitarse explícitamente en la 3.5.4. Combine `applicationsetcontroller.enable.progressive.syncs: "true"` con los `argocd-cmd-params-cm.data` existentes y, después, reinicie el controlador ApplicationSet. Para Helm, administre la clave correspondiente en `configs.params`.
 
@@ -845,7 +845,7 @@ spec:
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-1.html)
 
-## Patrones multiclúster
+## Patrones multiclúster {#multi-cluster-patterns}
 
 ### Patrón hub-and-spoke
 
@@ -978,7 +978,7 @@ imageTag: v1.2.3
 
 ```
 
-## Parches de plantillas
+## Parches de plantillas {#template-patches}
 
 Anule campos de plantilla según la salida del generador.
 

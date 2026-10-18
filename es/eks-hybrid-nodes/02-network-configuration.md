@@ -673,7 +673,7 @@ Referencias:
 - [Configurar webhooks para nodos híbridos: consideraciones para clústeres en modo mixto](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [Introducción al gateway de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 
-## Configuración de CIDR de Pod enrutable
+## Configuración de CIDR de Pod enrutable {#routable-pod-cidr-configuration}
 
 ![CIDR de Pod remotos ilustrativos y el router de instalaciones locales.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 

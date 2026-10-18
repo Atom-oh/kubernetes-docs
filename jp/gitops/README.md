@@ -11,7 +11,7 @@
 - [Amazon EKS での GitOps](#gitops-on-amazon-eks)
 - [はじめに](#getting-started)
 
-## GitOps とは？
+## GitOps とは？ {#what-is-gitops}
 
 GitOps は、バージョン管理、コラボレーション、コンプライアンス、CI/CD などのインフラストラクチャ自動化に関する DevOps のベストプラクティスを、インフラストラクチャ管理に適用する運用フレームワークです。この用語は 2017 年に Weaveworks によって提唱され、その後クラウドネイティブアプリケーションデプロイのための CNCF に認められた方法論となりました。
 
@@ -38,7 +38,7 @@ OpenGitOps プロジェクトは、4 つの原則を通じて GitOps を定義�
 3. **自動的に Pull される**: ソフトウェアエージェントが、ソースから望ましい状態の宣言を自動的に Pull する
 4. **継続的に調整される**: ソフトウェアエージェントが実際のシステム状態を継続的に監視し、望ましい状態の適用を試みる
 
-## 基本原則
+## 基本原則 {#core-principles}
 
 Git 履歴は望ましい設定を記録します。Git revert では、データベースマイグレーション、削除されたデータ、または外部状態は復元されません。Argo CD の automated sync、prune、selfHeal は別個の設定です。GitOps は、調整を試みる制御ループを表します。
 
@@ -98,7 +98,7 @@ GitOps エージェントは継続的に次を行います。
 
 調整の試行は、sync/self-heal ポリシー、権限、およびヘルスに依存します。たとえば、Argo CD の automated sync と selfHeal には設定が必要です。インストールだけで、すべての手動変更を revert したり、失われたデータを復旧したりすることはありません。
 
-## Push モデルと Pull モデル
+## Push モデルと Pull モデル {#push-vs-pull-model}
 
 従来の Push デプロイと Pull ベースの GitOps を比較します。CI のみの `kubectl apply` パイプラインは、それ自体では OpenGitOps の自動 Pull および継続的調整の原則を満たしません。
 
@@ -131,7 +131,7 @@ GitOps Pull モデルでは、次のとおりです。
 - 自動ドリフト検出および修正
 - ファイアウォールの背後でも動作する
 
-## GitOps ツールの概要
+## GitOps ツールの概要 {#gitops-tools-overview}
 
 ### ArgoCD
 
@@ -183,7 +183,7 @@ Jenkins X / JayeX は、Kubernetes 上のクラウドネイティブアプリケ
 | OCI ソース | 汎用 OCI/Helm ソース、layer/media type を検証 | OCIRepository/Helm ソース、検証/layer 設定を検証 |
 | キャパシティ | アプリケーション/クラスター数と調整負荷を測定 | インストール済み controller、ソース、調整負荷を測定 |
 
-## ツール選定ガイド
+## ツール選定ガイド {#tool-selection-guide}
 
 ### 次の場合は ArgoCD を選択:
 
@@ -209,7 +209,7 @@ Jenkins X / JayeX は、Kubernetes 上のクラウドネイティブアプリケ
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-12.html)
 
-## Amazon EKS での GitOps
+## Amazon EKS での GitOps {#gitops-on-amazon-eks}
 
 ### EKS 固有の考慮事項
 
@@ -268,7 +268,7 @@ GitOps は次を通じて AWS リソースを管理できます。
     └── security/                # Security policies
 ```
 
-## はじめに
+## はじめに {#getting-started}
 
 ### ArgoCD クイックスタート
 

@@ -16,13 +16,13 @@
 7. [故障排查](#troubleshooting)
 8. [最佳实践](#best-practices)
 
-## DNS 代理概述
+## DNS 代理概述 {#dns-proxy-overview}
 
 在 sidecar 模式下，应用程序的 DNS 请求会被重定向到 **istio-agent 的 Go DNS 服务器**，而不是 Envoy HTTP/DNS 监听器。Agent 从 Istiod 提供的名称/IP 表中应答，并将未知名称转发到 `/etc/resolv.conf` 中的上游解析器。它支持 UDP 和 TCP DNS；sidecar 通常使用 DNS 端口 15053。
 
 在 ambient 模式下，ztunnel 负责处理 DNS，且从 Istio 1.25 起默认启用流量捕获。sidecar 模式仍需显式启用。DNS-over-HTTPS/TLS 和应用程序管理的缓存与普通的 53 端口流量捕获是分开的。下文的 EnvoyFilter 和 Agent 诊断适用于 **sidecar 模式**。
 
-## DNS 代理与 DNS 缓存的区别
+## DNS 代理与 DNS 缓存的区别 {#dns-proxy-vs-dns-caching}
 
 | 层 | 职责 | 配置 |
 |---|---|---|
@@ -33,7 +33,7 @@
 
 `dns_refresh_rate` 不会启用对所有应用程序 DNS 响应的缓存。sidecar Agent 也不会将未知名称的上游响应保留为通用响应缓存。已知名称可以避免一次 CoreDNS 往返，但上游端点刷新仍会独立进行；同时启用这两种机制并不能保证性能达到最佳。
 
-## DNS 代理配置
+## DNS 代理配置 {#dns-proxy-configuration}
 
 ### 1. 全局启用
 
@@ -75,7 +75,7 @@ metadata:
 
 Pod 网络命名空间中的 DNS 重定向方式会因安装模式和 CNI 而异。不要假设代理镜像包含 bash/iptables/tcpdump 或拥有 net-admin 权限。请先检查下文所述的 Agent 名称表、DNS 查询和上游端点，而不是提升生产 Pod 的权限。如有需要，请在获批的诊断环境中检查 UDP/TCP 53 和 15053 的路径。
 
-## ServiceEntry 集成
+## ServiceEntry 集成 {#serviceentry-integration}
 
 DNS 代理与 ServiceEntry 紧密协作。
 
@@ -168,7 +168,7 @@ spec:
   - address: 203.0.113.12
 ```
 
-## DNS 缓存配置
+## DNS 缓存配置 {#dns-caching-configuration}
 
 ### 基于 DNS 的上游刷新
 
@@ -216,7 +216,7 @@ istioctl proxy-config clusters <client-pod> -n default --fqdn api.example.com -o
   jq '.[] | {name,type,dnsRefreshRate,respectDnsTtl,dnsFailureRefreshRate,dnsLookupFamily,typedDnsResolverConfig,loadAssignment}'
 ```
 
-## 自动分配地址
+## 自动分配地址 {#automatic-address-allocation}
 
 ### 分配方和状态
 
@@ -255,7 +255,7 @@ istioctl proxy-config endpoints <client-pod> -n default --cluster 'outbound|443|
 
 已分配的 VIP 用于应用程序 DNS 响应和目标匹配。DNS 集群的 `loadAssignment` 包含需要解析的真实后端主机名；运行时端点则包含已解析的地址。不要将 VIP 描述为真实的外部上游 IP。
 
-## 故障排查
+## 故障排查 {#troubleshooting}
 
 ### 验证 DNS 代理运行情况
 
@@ -320,7 +320,7 @@ curl --fail --silent http://127.0.0.1:15000/config_dump > envoy-config.json
 
 如果需要抓包，请遵循获批的诊断容器/节点流程，在 Pod 网络命名空间中检查 UDP/TCP 53 和 15053。不要假设 istio-proxy 包含 tcpdump、tar 或抓包权限。DNS 名称可能包含敏感信息；请限制抓包时长/范围/保留时间，并在分析后遵循处置流程。
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 1. DNS 代理启用策略
 

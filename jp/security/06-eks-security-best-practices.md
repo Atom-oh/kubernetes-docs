@@ -265,7 +265,7 @@ spec:
 
 ---
 
-## Pod の Security Groups
+## Pod の Security Groups {#security-groups-for-pods}
 
 ### 概要
 
@@ -316,7 +316,7 @@ Security group の戻りトラフィックはステートフルですが、ア�
 
 ---
 
-## VPC エンドポイント
+## VPC エンドポイント {#vpc-endpoints}
 
 ### プライベート EKS 向け VPC エンドポイント
 
@@ -342,7 +342,7 @@ Kubernetes のプライベート API エンドポイントと AWS サービス�
 
 ---
 
-## コントロールプレーンのログ記録
+## コントロールプレーンのログ記録 {#control-plane-logging}
 
 ### EKS コントロールプレーンログの種類
 
@@ -403,7 +403,7 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## GuardDuty EKS 保護
+## GuardDuty EKS 保護 {#guardduty-eks-protection}
 
 ### GuardDuty EKS 保護の概要
 
@@ -506,7 +506,7 @@ GitHub Actions 統合には、承認済みの OIDC 信頼ロール ARN、`permis
 
 ---
 
-## クラスター暗号化
+## クラスター暗号化 {#cluster-encryption}
 
 ### EKS Secrets 暗号化 (KMS)
 
@@ -518,7 +518,7 @@ customer-managed key では、クラスターのロール/KMS grants、キーポ
 
 ---
 
-## ノードセキュリティ
+## ノードセキュリティ {#node-security}
 
 ### Bottlerocket OS
 
@@ -534,7 +534,7 @@ Bottlerocket はコンテナホスト OS の選択肢であり、すべてのワ
 
 ---
 
-## プライベートクラスター
+## プライベートクラスター {#private-clusters}
 
 ### 完全にプライベートな EKS 設定
 
@@ -550,7 +550,7 @@ bastion には、独自のアクセス、パッチ、監査の責任が追加さ
 
 ---
 
-## マルチテナンシーのパターン
+## マルチテナンシーのパターン {#multi-tenancy-patterns}
 
 ### Namespace ベースのマルチテナンシー
 
@@ -674,7 +674,7 @@ EKS のユーザーアクセスでは、namespace スコープの access policie
 
 ---
 
-## 境界セキュリティと検査パス
+## 境界セキュリティと検査パス {#perimeter-security-and-inspection-paths}
 
 IAM と Pod ポリシーに加えて、パブリックアプリケーション、admission webhooks、管理者アクセス、アウトバウンドトラフィック、VPC 間パスを個別に検証してください。外部 WAF は内部 webhook を自動的に保護するわけではありません。中央 TGW 検査は、実際にそれを経由してルーティングされるトラフィックを対象とします。既存の IAM、CNI、ランタイムコントロールを以下のガイドに接続してください。
 

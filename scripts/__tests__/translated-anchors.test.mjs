@@ -2,9 +2,32 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
 import test from 'node:test'
 import { createMarkdownRenderer } from 'vitepress'
 import { syncTranslatedAnchors } from '../sync-translated-anchors.mjs'
+
+test('anchor CLI help and invalid options leave every locale file untouched', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translated-anchors-cli-'))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  for (const locale of ['en', 'cn', 'jp', 'es']) fs.mkdirSync(path.join(root, locale))
+  fs.writeFileSync(path.join(root, 'en/page.md'), '# Page\n\n[Go](#page)\n')
+  const translated = '# 翻訳\n\n[Go](#page)\n'
+  for (const locale of ['cn', 'jp', 'es']) fs.writeFileSync(path.join(root, locale, 'page.md'), translated)
+  const script = new URL('../sync-translated-anchors.mjs', import.meta.url).pathname
+  for (const args of [
+    ['--help'], ['-h'], ['--locale', 'cn', '--typo'],
+    ['--locale'], ['--locale', 'unknown'], ['--check', '--check'], ['--help', '--locale', 'cn']
+  ]) {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8' })
+    assert.ifError(result.error)
+    assert.equal(result.status, args.length === 1 && ['--help', '-h'].includes(args[0]) ? 0 : 1)
+    if (result.status === 0) assert.match(result.stdout, /^Usage:/)
+    for (const locale of ['cn', 'jp', 'es']) {
+      assert.equal(fs.readFileSync(path.join(root, locale, 'page.md'), 'utf8'), translated, `${locale}: ${args}`)
+    }
+  }
+})
 
 test('translated headings resolve source self/cross-page fragments including duplicate and explicit IDs', async t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translated-anchors-'))

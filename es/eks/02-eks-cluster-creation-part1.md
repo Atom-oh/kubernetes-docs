@@ -17,7 +17,7 @@ Hay varias formas de crear un clúster de Amazon EKS. En este capítulo, aprende
 5. [Acceso, validación, actualizaciones y eliminación](02-eks-cluster-creation-part5.md)
 6. [Guía completa y CDK](02-eks-cluster-creation.md)
 
-## Requisitos previos
+## Requisitos previos {#prerequisites}
 
 Antes de crear un clúster de EKS, se requieren los siguientes requisitos previos:
 

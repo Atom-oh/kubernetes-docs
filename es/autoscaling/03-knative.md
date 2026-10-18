@@ -17,7 +17,7 @@
 
 ---
 
-## Descripción general y objetivos de aprendizaje
+## Descripción general y objetivos de aprendizaje {#overview-and-learning-objectives}
 
 ### ¿Qué es Knative?
 
@@ -83,7 +83,7 @@ Al finalizar este documento, podrá:
 
 ---
 
-## Arquitectura de Knative
+## Arquitectura de Knative {#knative-architecture}
 
 ### Arquitectura de Serving
 
@@ -125,7 +125,7 @@ Knative Eventing proporciona una forma declarativa de vincular fuentes de evento
 
 ---
 
-## Instalación y configuración en EKS
+## Instalación y configuración en EKS {#eks-installation-and-configuration}
 
 Los fragmentos de instalación están destinados a un entorno de prueba aislado y contienen marcadores de posición. Aplicar Serving con un LoadBalancer puede aprovisionar recursos de AWS mediante el controlador instalado; en esta auditoría no se ejecutó ninguna acción de ese tipo. Los ConfigMaps, Services y cargas de trabajo propiedad de Operator se configuran a través de los recursos KnativeServing/KnativeEventing. Al preparar parches de combinación, conserve la configuración existente, especialmente los campos de tipo lista. Cree los namespaces de las aplicaciones, ServiceAccounts, Secrets, imágenes, recursos Kafka/SQS y roles de IAM referenciados antes de usar los ejemplos posteriores. Las comprobaciones de esquema no establecen que algo esté listo para producción.
 
@@ -389,7 +389,7 @@ kubectl get crd inmemorychannels.messaging.knative.dev integrationsources.source
 
 ---
 
-## Análisis detallado de Knative Serving
+## Análisis detallado de Knative Serving {#knative-serving-deep-dive}
 
 ### Modelo de recursos
 
@@ -692,7 +692,7 @@ metadata:
 
 ---
 
-## Análisis detallado de Knative Eventing
+## Análisis detallado de Knative Eventing {#knative-eventing-deep-dive}
 
 ### Fuentes de eventos
 
@@ -1362,7 +1362,7 @@ spec:
 
 ---
 
-## Comparación entre KEDA y Knative
+## Comparación entre KEDA y Knative {#keda-vs-knative-comparison}
 
 Tanto KEDA como Knative permiten el escalado basado en eventos en Kubernetes, pero operan en distintos niveles de abstracción y cumplen funciones complementarias.
 
@@ -1458,7 +1458,7 @@ spec:
 
 ---
 
-## Operaciones en producción
+## Operaciones en producción {#production-operations}
 
 ### Límites de recursos y QoS
 
@@ -1957,7 +1957,7 @@ kubectl get ksvc order-api -n knative-demo -o jsonpath='{.status.url}'
 
 ---
 
-## Buenas prácticas
+## Buenas prácticas {#best-practices}
 
 ### Patrones de diseño de Service
 
@@ -2098,7 +2098,7 @@ spec:
 
 ---
 
-## Referencias
+## Referencias {#references}
 
 ### Documentación oficial
 

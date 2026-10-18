@@ -21,7 +21,7 @@ Los contenedores son una tecnología que empaqueta aplicaciones y sus dependenci
 
 > Los comandos de Linux que aparecen a continuación presuponen un host Linux con Docker. Docker Desktop ejecuta su daemon en una VM, por lo que no se pueden inspeccionar directamente desde el sistema operativo de escritorio las rutas de PID o del sistema de archivos del host. Las imágenes requieren una arquitectura de CPU, un sistema operativo y características del kernel compatibles. Los entornos basados en VM, como Kata/Fargate, difieren del modelo básico de aislamiento de procesos descrito aquí.
 
-## ¿Qué es un contenedor?
+## ¿Qué es un contenedor? {#what-is-a-container}
 
 Un contenedor es una unidad de software estandarizada que incluye todo lo necesario para ejecutar una aplicación (código, runtime, herramientas del sistema, bibliotecas del sistema y configuración). Los contenedores se ejecutan en entornos aislados mientras comparten el kernel del sistema operativo host.
 
@@ -43,7 +43,7 @@ Un contenedor es una unidad de software estandarizada que incluye todo lo necesa
 * **2015**: Se crea la Open Container Initiative (OCI) para estandarizar los contenedores
 * **2017**: containerd se dona como proyecto de CNCF
 
-## Contenedor frente a máquina virtual
+## Contenedor frente a máquina virtual {#container-vs-virtual-machine}
 
 ### Arquitectura de máquinas virtuales frente a arquitectura de contenedores
 
@@ -62,7 +62,7 @@ Esta es una comparación de arquitecturas, no una prueba de rendimiento/inicio b
 | Eficiencia de recursos | Alta                          | Media                                                     |
 | Casos de uso        | Microservicios, CI/CD, desarrollo/pruebas | Aplicaciones heredadas, requisitos de sistemas operativos diversos, necesidades de alta seguridad |
 
-## Fundamentos técnicos de los contenedores
+## Fundamentos técnicos de los contenedores {#technical-foundation-of-containers}
 
 Los contenedores se implementan mediante varias características del kernel de Linux. Estas tecnologías se explicaron en detalle en 01-linux-basics.md; aquí nos centramos en su relación con los contenedores.
 
@@ -171,7 +171,7 @@ docker stop test-container
 docker rm test-container
 ```
 
-## Runtime de contenedores
+## Runtime de contenedores {#container-runtime}
 
 Un runtime de contenedores es un software que administra el ciclo de vida de los contenedores. Ejecuta imágenes de contenedor, limita el uso de recursos de los contenedores y configura las redes y el almacenamiento.
 
@@ -193,7 +193,7 @@ Kubernetes se integra con distintos runtimes de contenedores mediante CRI (Conta
 
 Kubernetes 1.26+ requiere CRI v1. Utiliza una versión compatible de containerd/CRI-O y haz coincidir su controlador cgroup con el de kubelet. Docker Engine no implementa CRI por sí mismo; dockershim, integrado en Kubernetes, se eliminó en la versión 1.24. Docker Engine necesita un adaptador CRI independiente, como cri-dockerd. Las imágenes OCI creadas con Docker siguen funcionando. CRI es el contrato de API entre kubelet y el runtime; no necesariamente un servicio intermedio que se implemente por separado.
 
-## Imágenes de contenedor
+## Imágenes de contenedor {#container-images}
 
 Las imágenes de contenedor son plantillas inmutables que contienen aplicaciones y sus dependencias. Las imágenes constan de varias capas, cada una de las cuales representa cambios en el sistema de archivos.
 
@@ -280,7 +280,7 @@ CMD ["nginx", "-g", "daemon off;"]
 4. **Excluir archivos innecesarios**: Utiliza el archivo .dockerignore
 5. **Aprovechar la caché**: Coloca las capas que cambian con frecuencia al final
 
-## Redes de contenedores
+## Redes de contenedores {#container-networking}
 
 Las redes de contenedores permiten la comunicación entre contenedores y entre los contenedores y el exterior.
 
@@ -311,7 +311,7 @@ La publicación de puertos se enlaza de forma predeterminada a todas las direcci
 2. **Links**: Método heredado para configurar enlaces directos entre contenedores
 3. **Red externa**: Comunicación a través de los puertos del host
 
-## Almacenamiento de contenedores
+## Almacenamiento de contenedores {#container-storage}
 
 La capa de escritura de un contenedor Docker se conserva al detenerlo y volverlo a iniciar, pero se elimina junto con el contenedor. Guarda los datos persistentes en volúmenes u otros almacenamientos externos.
 
@@ -344,7 +344,7 @@ docker run -v /host/path:/container/path:ro nginx
 2. **Contenedor de volumen de datos**: Crea un contenedor que solo contenga datos y luego compártelo
 3. **Integración con almacenamiento externo**: Utiliza sistemas de almacenamiento externos, como AWS EBS o NFS
 
-## Seguridad de contenedores
+## Seguridad de contenedores {#container-security}
 
 La seguridad de los contenedores debe tenerse en cuenta en varias capas, incluidas las imágenes, el runtime de contenedores y los sistemas host.
 
@@ -371,7 +371,7 @@ La seguridad de los contenedores debe tenerse en cuenta en varias capas, incluid
 4. **Límites de recursos**: Limita el uso de CPU, memoria y otros recursos
 5. **Supervisión y registro**: Supervisa la actividad de los contenedores y centraliza los registros
 
-## Administración del ciclo de vida de los contenedores
+## Administración del ciclo de vida de los contenedores {#container-lifecycle-management}
 
 Comprender todo el ciclo de vida de los contenedores es esencial para administrarlos eficazmente.
 
@@ -609,7 +609,7 @@ docker events --filter container=<container-id>
 docker diff <container-id>
 ```
 
-## Orquestación de contenedores
+## Orquestación de contenedores {#container-orchestration}
 
 La orquestación de contenedores es el proceso de administrar y coordinar varios contenedores. Entre sus características principales se incluyen la administración de implementaciones, el escalado, las redes y la detección de servicios.
 
@@ -630,7 +630,7 @@ La orquestación de contenedores es el proceso de administrar y coordinar varios
 6. **Orquestación del almacenamiento**: Administración del almacenamiento persistente
 7. **Ejecución por lotes**: Ejecución de tareas puntuales y programadas
 
-## Contenedores en AWS
+## Contenedores en AWS {#containers-on-aws}
 
 AWS ofrece varios servicios para cargas de trabajo en contenedores.
 

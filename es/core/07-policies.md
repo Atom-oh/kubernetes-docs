@@ -134,7 +134,7 @@ spec:
 9. [Prácticas recomendadas para las políticas](#policy-best-practices)
 10. [Conclusión](#conclusion)
 
-## Descripción general de las políticas
+## Descripción general de las políticas {#policy-overview}
 
 Las políticas de Kubernetes permiten a los administradores de clúster definir restricciones para los recursos y las cargas de trabajo dentro del clúster. Las políticas se utilizan con los siguientes propósitos:
 
@@ -145,7 +145,7 @@ Las políticas de Kubernetes permiten a los administradores de clúster definir 
 
 Kubernetes puede implementar distintos tipos de políticas mediante recursos integrados (por ejemplo, NetworkPolicy, ResourceQuota, LimitRange) o motores de políticas de terceros (por ejemplo, OPA Gatekeeper, Kyverno).
 
-## Políticas de asignación de recursos
+## Políticas de asignación de recursos {#resource-allocation-policies}
 
 Las políticas de asignación de recursos controlan la cantidad de recursos, como CPU y memoria, que pueden utilizar los pods y los contenedores.
 
@@ -194,7 +194,7 @@ Kubernetes asigna automáticamente clases de QoS en función de la configuració
 
 La expulsión por presión en el nodo tiene en cuenta si el uso supera las solicitudes, la prioridad del Pod y el uso relativo. Por lo general, BestEffort está más expuesto que Guaranteed, pero la QoS por sí sola no establece un orden estricto. Los recursos a nivel de Pod también pueden afectar la QoS; consulta los [criterios oficiales de QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/).
 
-## Políticas de seguridad de Pod
+## Políticas de seguridad de Pod {#pod-security-policies}
 
 Pod Security Policy (PSP) quedó obsoleto a partir de Kubernetes 1.21 y se eliminó por completo en la versión 1.25. En su lugar, se introdujeron Pod Security Standards y Pod Security Admission.
 
@@ -230,7 +230,7 @@ Significado de cada etiqueta:
 - **audit**: Registra las infracciones en los registros de auditoría
 - **warn**: Muestra mensajes de advertencia sobre las infracciones
 
-## Políticas de red
+## Políticas de red {#network-policies}
 
 Network Policy permite controlar la comunicación entre pods. De forma predeterminada, todos los pods de un clúster de Kubernetes pueden comunicarse entre sí, pero las políticas de red pueden restringirla.
 
@@ -308,7 +308,7 @@ ingress:
       - 172.17.1.0/24
 ```
 
-## Cuotas de recursos
+## Cuotas de recursos {#resource-quotas}
 
 ResourceQuota limita la cantidad total de recursos que se pueden utilizar en un espacio de nombres. Esto evita que un equipo monopolice todos los recursos cuando varios equipos o proyectos comparten los recursos del clúster.
 
@@ -446,7 +446,7 @@ LimitRange puede aplicarse a los siguientes tipos de recursos:
 - Pod
 - PersistentVolumeClaim
 
-## Motores de políticas
+## Motores de políticas {#policy-engines}
 
 El ecosistema de Kubernetes cuenta con varios motores de políticas que pueden implementar políticas más complejas y flexibles.
 
@@ -574,7 +574,7 @@ spec:
 
 Instala los motores de políticas, sus CRD y los servidores de políticas antes de crear estos recursos. El ejemplo de Gatekeeper define deliberadamente `K8sRequiredLabelKeys` para evitar conflictos con la plantilla de biblioteca más completa `K8sRequiredLabels`. Para Kubewarden, selecciona una etiqueta o un digest publicado y probado de safe-labels, y usa la configuración `mandatory_labels`; `<tested-tag>` es un marcador de posición.
 
-## Administración de políticas en Amazon EKS
+## Administración de políticas en Amazon EKS {#policy-management-in-amazon-eks}
 
 En Amazon EKS, puedes administrar políticas mediante los mecanismos de políticas predeterminados de Kubernetes junto con diversos servicios de AWS.
 
@@ -648,7 +648,7 @@ AWS Config evalúa el cumplimiento de los recursos; por sí solo, no deniega Cre
 
 Firewall Manager administra de forma centralizada las protecciones compatibles de AWS, como WAF, los grupos de seguridad de VPC, Network Firewall y DNS Firewall. No concilia objetos NetworkPolicy de Kubernetes; adminístralos mediante herramientas de políticas de Kubernetes/GitOps.
 
-## Prácticas recomendadas para las políticas
+## Prácticas recomendadas para las políticas {#policy-best-practices}
 
 Estas son algunas prácticas recomendadas para administrar eficazmente las políticas en clústeres de Kubernetes.
 

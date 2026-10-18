@@ -23,7 +23,7 @@
 14. [EKS 安全最佳实践](#eks-security-best-practices)
 15. [金融服务的 EKS 安全注意事项](#eks-security-considerations-for-financial-services)
 
-## EKS 安全概述
+## EKS 安全概述 {#eks-security-overview}
 
 将基础设施、集群访问和工作负载控制分开管理。AWS 管理控制平面；节点/操作系统的责任取决于采用 EC2 自管理或托管节点、Fargate、Auto Mode 还是 Hybrid Nodes。客户仍负责应用镜像、身份、数据处理和工作负载策略。标准 EC2 节点示意图并不意味着客户需要为 Auto Mode/Fargate 主机操作系统打补丁。
 
@@ -31,7 +31,7 @@
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-05-eks-security-0.html)
 
-## 安全实践
+## 安全实践 {#security-practices}
 
 使用范围明确的多种控制；没有任何单一工具可以建立零信任或证明工作负载安全。验证调用方/工作负载身份，授权预期操作，限制网络路径，并收集符合威胁模型要求的证据。
 
@@ -59,7 +59,7 @@ GuardDuty EKS Protection 会分析独立的 EKS 审计日志流。Runtime Monito
 
 策略即代码工具也处于不同阶段：Gatekeeper/Kyverno 可以评估 Kubernetes 准入，CloudFormation Guard 或 Sentinel 可以评估基础设施变更，AWS Config 可以评估受支持的已部署资源配置。Detective 等调查工具依赖其已配置的数据源。应区分这些职责与运行时预防。
 
-## IAM 与身份验证
+## IAM 与身份验证 {#iam-and-authentication}
 
 | 身份/控制 | 用途 |
 |---|---|
@@ -227,7 +227,7 @@ aws eks associate-access-policy --cluster-name "$CLUSTER_NAME" --region "$AWS_RE
 
 IAM eks:DescribeCluster/ListClusters 支持 AWS 管理/发现操作。eks:AccessKubernetesApi 是控制台查看权限。eks:namespaces 条件用于筛选访问策略关联请求；它不是对 kubectl API 调用的一般命名空间筛选条件。
 
-## 深入了解 OIDC 提供程序
+## 深入了解 OIDC 提供程序 {#oidc-provider-deep-dive}
 
 EKS 会发布集群 OIDC issuer 和公钥签名密钥。该端点本身不会创建 IAM OIDC 提供程序，也不会授权角色承担。对于 IRSA，角色所在账户必须具有预期的 IAM OIDC 提供程序；角色必须使用正确的 issuer/subject/audience 条件信任该提供程序；工作负载必须使用兼容的 SDK。
 
@@ -639,7 +639,7 @@ kubectl -n "$WORKLOAD_NAMESPACE" get serviceaccount "$SERVICE_ACCOUNT" \
 
 这是一个需要在目标环境中验证的迁移流程，并不表示本次文档审查期间已实际执行迁移。
 
-## 集群端点访问控制
+## 集群端点访问控制 {#cluster-endpoint-access-control}
 
 端点配置决定网络可达性；API 操作仍受身份验证和授权控制。应根据运维需求选择访问路径，并检查实际设置，而不是假定工具默认值符合要求。
 
@@ -901,7 +901,7 @@ eks:controlPlaneEgressMode 键会评估 CreateCluster/UpdateClusterConfig 请求
 
 这是一项有意设置的请求限制，并不会自动迁移现有集群。根据此示例，现有 AWS_MANAGED 集群仍可以执行无关更新。若组织要求不同的推出策略，则必须单独建模。SCP 不会授予 IAM 权限，也不会配置路由/DNS。部署前，应与组织负责人一起审查策略继承，并测试具有代表性的允许/拒绝请求。
 
-## 网络安全
+## 网络安全 {#network-security}
 
 安全组、路由、NetworkPolicy 和应用身份验证分别用于各自的安全层。此图展示的是传统网络布局；公有堡垒主机和私有 AWS 端点都是可选组件，必须经过实际配置，并非每个 EKS 集群固有的属性。
 
@@ -1147,7 +1147,7 @@ spec:
 
 请在实际 CNI 上测试正向和负向新连接。策略变更可能会异步传播，现有连接的处理方式由具体实现决定。本次审查使用合成的选择器/端口案例检查了示例；未执行数据包过滤、DNS 解析或实际流量测试。
 
-## Pod 安全
+## Pod 安全 {#pod-security}
 
 Pod Security Standards 定义配置文件；Pod Security Admission (PSA) 会强制执行所选命名空间策略。PSA 自 Kubernetes 1.25 起为稳定功能。PodSecurityPolicy 在 1.21 中已弃用，并且**已在 1.25 中移除**；当前 EKS 集群上不能部署此 API。名称中带有 PSP 的 Gatekeeper constraint 是单独的自定义资源，并非已移除的 API。
 
@@ -1268,7 +1268,7 @@ spec:
 
 此 CEL 策略已通过已发布的 CRD 和实际 Kyverno CLI 检查，包括省略/false、常规/初始化/临时容器为 true，以及其他命名空间等案例。未执行实际准入 webhook、Pod 部署或策略强制执行。生产环境强制执行前，请审查现有资源和控制器 rollout。
 
-## Bottlerocket 与只读操作系统
+## Bottlerocket 与只读操作系统 {#bottlerocket-and-read-only-os}
 
 Bottlerocket 是一种 Linux 容器主机，主机软件面较小，通过 API 管理设置，并采用基于镜像的更新。其只读根文件系统并不意味着所有存储都不可变，也不会消除内核/运行时漏洞。
 
@@ -1370,7 +1370,7 @@ AMI 发行版本并非后续 API 设置变更或原地操作系统更新的完�
 
 主要参考资料：[Bottlerocket API 客户端](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/v15.0.0/sources/api/apiclient)、[原地更新](https://bottlerocket.dev/en/os/1.64.x/update/methods/in-place/)、[节点替换](https://bottlerocket.dev/en/os/1.64.x/update/methods/node-replacement/)、[版本锁定](https://bottlerocket.dev/en/os/1.64.x/update/locking-to-a-specific-release/)、[dm-verity](https://docs.kernel.org/admin-guide/device-mapper/verity.html)。
 
-## IAM 权限边界
+## IAM 权限边界 {#iam-permission-boundaries}
 
 权限边界会限制基于身份的策略可以授予 IAM 用户或角色的权限；它本身不会授予权限。对于身份策略路径，允许的操作是身份策略与边界的交集，同时还受适用的会话/Organizations 策略和显式拒绝影响。
 
@@ -1601,7 +1601,7 @@ SCP 会限制成员账户中适用主体的权限，但不会授予权限，也�
 
 主要参考资料：[IAM 边界](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)、[SCP 效果](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)、[EKS 授权参考](https://docs.aws.amazon.com/service-authorization/latest/reference/list_eks.html)、[EKS 条件键公告](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/)、[S3 ABAC 启用](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html)、[存储桶标签条件](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging.html)。
 
-## 加密与密钥管理
+## 加密与密钥管理 {#encryption-and-secrets-management}
 
 ### 默认加密与客户密钥所有权
 
@@ -1789,7 +1789,7 @@ test -s "$review_dir/secret.yaml"
 
 主要参考资料：[EKS 信封加密](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)、[ESO 2.10 AWS 身份验证](https://github.com/external-secrets/external-secrets/blob/v2.10.0/docs/provider/aws-access.md)、[ESO 发行版本](https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0)、[Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)、[Secrets Manager 轮换 CLI](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html)、[SOPS](https://getsops.io/docs/)。
 
-## 合规与审计
+## 合规与审计 {#compliance-and-auditing}
 
 ### EKS 控制平面审计日志
 
@@ -1850,7 +1850,7 @@ Security Hub CSPM 会评估 AWS Foundational Security Best Practices (FSBP) 和�
 
 当前 Security Hub OCSF 调查结果工作流与 CSPM ASFF 事件采用不同架构。对于 EventBridge，CSPM 使用 `Security Hub Findings - Imported`；V2 事件为 `Findings Imported V2`。请匹配实际架构并测试具有代表性的事件。这两种集成方式都不意味着所有 CloudWatch 原始日志都会自动作为调查结果摄取。
 
-## 安全监控与检测
+## 安全监控与检测 {#security-monitoring-and-detection}
 
 应分别使用基于审计的威胁检测、基于代理的运行时遥测、态势评估和事件响应控制。服务已启用并不代表集群/节点覆盖完整，也不代表通知已成功送达。
 
@@ -1930,7 +1930,7 @@ customRules:
 
 主要参考资料：[EKS 日志](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)、[全类型 Config 规则](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html)、[选定类型 Config 规则](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html)、[CSPM 标准](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html)、[ASFF 事件](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html)、[V2 事件](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html)、[GuardDuty EKS Protection](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html)、[GuardDuty 运行时](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html)、[Falco chart 9.2.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.0)。
 
-## EKS 安全最佳实践
+## EKS 安全最佳实践 {#eks-security-best-practices}
 
 ### 集群安全强化
 
@@ -1956,7 +1956,7 @@ customRules:
 4. **定期进行安全评估**：使用适用的 CIS/EKS 基准和版本，并记录托管服务例外和手动检查
 5. **制定事件响应计划**：制定并测试 EKS 集群安全事件响应计划
 
-## 金融服务的 EKS 安全注意事项
+## 金融服务的 EKS 安全注意事项 {#eks-security-considerations-for-financial-services}
 
 以下是范围受限的金融工作负载设计注意事项，不是认证清单，也不表示此示例已通过生产环境测试。请与负责安全/合规的人员一起确定适用司法管辖区、数据类型、合同要求和控制证据。
 

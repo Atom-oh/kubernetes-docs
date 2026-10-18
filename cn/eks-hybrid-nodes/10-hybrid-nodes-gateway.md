@@ -354,7 +354,7 @@ mtu: 1400  # Illustrative only; replace using validated path MTU and chosen Cili
 
 ---
 
-## IAM 配置
+## IAM 配置 {#iam-configuration}
 
 ### 所需 IAM 权限
 
@@ -483,7 +483,7 @@ Auto Mode 转发使用 `NodeClass.spec.advancedNetworking.sourceDestCheck: Disab
 
 ---
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 ### 步骤 1：为 Gateway 节点添加标签
 
@@ -580,7 +580,7 @@ Pod 处于 Running 状态、就绪响应和 leader gauge 均不能证明转发�
 
 ---
 
-## CNI 配置
+## CNI 配置 {#cni-configuration}
 
 ### 在 Hybrid Nodes 上配置 Cilium VTEP
 

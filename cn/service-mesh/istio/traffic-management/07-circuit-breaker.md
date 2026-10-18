@@ -15,7 +15,7 @@
 9. [重要注意事项](#important-considerations)
 10. [最佳实践](#best-practices)
 
-## 为什么需要断路器？
+## 为什么需要断路器？ {#why-circuit-breaker}
 
 ### 防止故障级联
 
@@ -34,7 +34,7 @@
 | **故障传播** | 发生级联故障 | 隔离故障 |
 | **恢复时间** | 需要人工干预 | 自动尝试恢复 |
 
-## 断路器概述
+## 断路器概述 {#circuit-breaker-overview}
 
 该图展示了通用的 Closed/Open/Half-Open 库模式。Istio 实现的是基于资源的连接池断路器和被动的逐端点异常值剔除；它并未提供一个适用于整个网格的单一三状态断路器。限制/健康状况观察结果仅对各个代理和上游集群/优先级本地有效，并且可能出现并发超量。异常值剔除会暂时将端点从选择范围中移除；它不会删除 Pod。以下示例是可选方案。
 
@@ -42,7 +42,7 @@
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.html)
 
-## 连接池设置
+## 连接池设置 {#connection-pool-settings}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -61,7 +61,7 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
-## 异常值检测
+## 异常值检测 {#outlier-detection}
 
 异常值检测会在负载均衡时暂时排除不健康的端点，但会受到剔除限制和恐慌行为的影响。
 
@@ -110,7 +110,7 @@ spec:
       splitExternalLocalOriginErrors: true
 ```
 
-## 与重试策略结合
+## 与重试策略结合 {#combination-with-retry-policy}
 
 将断路器与重试结合使用，可以提高弹性。
 
@@ -199,7 +199,7 @@ spec:
       baseEjectionTime: 60s          # Long recovery time
 ```
 
-## 实践示例
+## 实践示例 {#practical-examples}
 
 ### 1. 网格内部服务的断路器
 
@@ -383,7 +383,7 @@ spec:
       consecutiveLocalOriginFailures: 5
 ```
 
-## 外部服务断路器
+## 外部服务断路器 {#external-service-circuit-breaker}
 
 以下 HTTP 示例假设应用通过明文 HTTP 向 sidecar 发送请求，而 sidecar 会通过经过验证的 TLS，使用 443 端口连接实际的外部主机。如果应用已使用 TLS，请避免重复 TLS，只使用该层可见的策略。原生 MongoDB 应用 TLS/身份验证仍是客户端/服务器的独立要求。
 
@@ -527,7 +527,7 @@ spec:
 
 HTTP 429 需要结合服务提供商进行限流，并处理 Retry-After。默认的 5xx 异常值检测和连接频繁重建既不能强制执行 API 配额，也无法推断配额重置时间。
 
-## 监控与调试
+## 监控与调试 {#monitoring-and-debugging}
 
 ### 检查 Envoy 指标
 
@@ -594,7 +594,7 @@ istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
 
-## 重要注意事项
+## 重要注意事项 {#important-considerations}
 
 ### 断路器不保证数据一致性
 
@@ -820,7 +820,7 @@ kubectl exec -n <namespace> <pod> -c istio-proxy -- \
 kubectl logs -n <namespace> <pod> | grep -i "duplicate\|idempotency"
 ```
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 1. 渐进式配置
 

@@ -25,7 +25,7 @@
 7. [xDS API 通信](03-architecture.md#xds-api-communication)
 8. [使用 Sidecar 资源进行优化](03-architecture.md#optimization-with-sidecar-resource)
 
-## Istio 架构概览
+## Istio 架构概览 {#istio-architecture-overview}
 
 ### 整体结构
 
@@ -43,7 +43,7 @@
 | **负载**       | 低                                   | 高（处理所有流量）|
 | **可扩展性**   | 水平扩展（高可用）                   | 自动扩展（每个 Pod 一个） |
 
-## 控制平面：Istiod
+## 控制平面：Istiod {#control-plane-istiod}
 
 ### Istiod 内部结构
 
@@ -211,7 +211,7 @@ spec:
 * 内存：2 - 4 GB
 * 可处理数千个服务和 Pod
 
-## 数据平面：Envoy 代理
+## 数据平面：Envoy 代理 {#data-plane-envoy-proxy}
 
 ### Envoy 架构
 
@@ -291,7 +291,7 @@ spec:
 
 请根据实际流量模式、配置大小和遥测设置进行测量。[官方基准测试](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)明确针对 Istio 1.24；不存在适用于所有情况的每核 RPS、亚毫秒 P99 或内存保证。还应根据服务/代理数量和配置变化频率来规划 istiod 的资源。
 
-## Sidecar 注入机制
+## Sidecar 注入机制 {#sidecar-injection-mechanism}
 
 ### 注入流程
 
@@ -400,7 +400,7 @@ kubectl apply -f deployment-injected.yaml
 * 需要在 CI/CD 流水线中进行显式控制时
 * 希望检查注入后的 YAML 以便调试时
 
-## iptables 与流量拦截
+## iptables 与流量拦截 {#iptables-and-traffic-interception}
 
 ### istio-init 容器
 
@@ -475,7 +475,7 @@ REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 
 两种方式都会配置流量重定向。Istio CNI 是一个特权节点 DaemonSet，与主要 CNI（例如 AWS VPC CNI）串联；它并非该 CNI 的 eBPF 替代方案。它可用于 sidecar 模式，在 ambient 模式下则是必需的。
 
-## DNS 处理机制
+## DNS 处理机制 {#dns-processing-mechanism}
 
 ### Kubernetes DNS 基本运行方式
 
@@ -532,7 +532,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
   -j REDIRECT --to-port 15053
 ```
 
-## xDS API 通信
+## xDS API 通信 {#xds-api-communication}
 
 ### xDS 协议概览
 
@@ -582,7 +582,7 @@ istioctl proxy-config endpoints <pod-name> -n default
 istioctl proxy-config routes <pod-name> -n default
 ```
 
-## 使用 Sidecar 资源进行优化
+## 使用 Sidecar 资源进行优化 {#optimization-with-sidecar-resource}
 
 ### 问题：接收所有服务信息
 

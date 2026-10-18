@@ -1,16 +1,16 @@
 # GitBook translation progress
 
-Checkpoint: 2026-10-18T09:27:23.223931+00:00
+Checkpoint: 2026-10-18T09:36:36.336026+00:00
 
 Local translation uses three managed Codex subagents running `openai.gpt-6-luna`. The former local API helpers and duplicate Translate Sync run were stopped. Existing validated translations are retained with their original provenance.
 
 | Locale | English source pages | Present | Missing | Changed files in this checkpoint | Existing pages still failing structure checks |
 |---|---:|---:|---:|---:|---:|---:|
-| cn | 693 | 686 | 7 | 3 | 105 |
-| jp | 693 | 690 | 3 | 4 | 320 |
-| es | 693 | 693 | 0 | 5 | 257 |
+| cn | 693 | 688 | 5 | 78 | 105 |
+| jp | 693 | 692 | 1 | 18 | 320 |
+| es | 693 | 693 | 0 | 48 | 255 |
 
-12 additional changed Markdown files pass exact fenced-code, link-target, heading/fence-count and size validation. Six edited legacy Japanese pages were excluded because they still need complete source reconciliation; their in-progress edits remain local. The previous checkpoints retained 452, 132, 96, 53, 29, 25 and 31 validated changes.
+144 additional changed Markdown files pass exact fenced-code, link-target, heading/fence-count and size validation. This includes verified canonical-ID changes as well as new translations and source reconciliations. Forty-two edited legacy pages were excluded because their protected code, links or structure still differs from English; their in-progress edits remain local. The previous checkpoints retained 452, 132, 96, 53, 29, 25, 31 and 12 validated changes.
 
 **Quality review: IN PROGRESS.** Structural validation does not certify source fidelity or wording. Native agents still need to review all retained translations, repair stale technical prose, and complete missing pages. This checkpoint has not been deployed.
 
@@ -20,7 +20,7 @@ An asset checkpoint copied 208 referenced locale images from the English source,
 
 The source-fragment inventory found zero unresolved English fragments. The canonical-anchor helper adds explicit IDs only where source links or explicit IDs require them, preserves authored code/link bytes, and rejects translations whose heading structure still differs from English. Locale agents apply it before recording final content-review hashes.
 
-The unified Actions workflow scans all English pages for cn/jp/es together, preserves retry checkpoints, and accumulates one translation PR. Reviewed translations on main supersede obsolete draft retry queues during import and refresh. All 174 repository tests pass. This report records a snapshot, not live coverage.
+The unified Actions workflow scans all English pages for cn/jp/es together, preserves retry checkpoints, and accumulates one translation PR. Reviewed translations on main supersede obsolete draft retry queues during import and refresh. All 175 repository tests pass. This report records a snapshot, not live coverage.
 
 A real VitePress renderer audit with default syntax highlighting compiled all pages present in its snapshot without Vue errors: en/ko 693 each, cn 640, jp 649, es 671. English, Korean and Spanish had zero literal bold-marker text regions; Chinese and Japanese rendering findings remain assigned to their native locale agents. This does not certify final coverage or prose quality.
 
@@ -37,3 +37,7 @@ The `f79992db` validation job exposed a test that assumed the Japanese kernel pa
 The two latest asset-only checkpoints copied 13 and three further referenced images with identical English bytes, zero unresolved image destinations and no Markdown rewrites.
 
 Two lines in each translated Cilium eBPF page have trailing spaces inside an ASCII code diagram. The complete fenced blocks are byte-identical to the English protected code and are retained intentionally. The staged CN/JP diff adds four such findings; it includes no unexpected prose whitespace.
+
+An agent's help lookup accidentally invoked the anchor CLI because it previously ignored `--help`. The CLI now supports help and rejects unknown, duplicate or incomplete options before synchronization. A regression test runs these options against real temporary locale files and verifies that none change. The four anchor tests and complete `docs:validate` pass, including all 175 tests, the 94 news records and five-locale PNG checks.
+
+A read-only audit established that 171 tracked changes were exactly deterministic canonical-ID transformations of their prior committed bytes. The other ten paths contain known native translation or previously retained formatter work. Three stale reviewed hashes have saved-byte proofs that only canonical IDs changed; one Spanish operations page requires a fresh complete comparison because its reviewed preimage was not retained. `Native-Anchor-Repair-Review-20261018.json` preserves this evidence without assigning semantic quality scores. Locale agents retain their original review scores only where the byte-level transformation was verified.

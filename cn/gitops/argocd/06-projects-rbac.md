@@ -12,7 +12,7 @@
 - [CI/CD 的 JWT Token](#jwt-tokens-for-cicd)
 - [孤立资源监控](#orphaned-resource-monitoring)
 
-## AppProject 概述
+## AppProject 概述 {#appproject-overview}
 
 AppProject 为 Applications 提供逻辑分组，并定义访问控制，规定可以部署哪些资源、部署到哪里，以及谁可以管理它们。
 
@@ -82,7 +82,7 @@ spec:
       name: kube-root-ca.crt
 ```
 
-## 默认 Project
+## 默认 Project {#default-project}
 
 ArgoCD 会创建一个允许所有来源、目标和资源类型的默认 Project。可以对其进行限制，但不能删除。
 
@@ -133,7 +133,7 @@ spec:
     kind: '*'
 ```
 
-## 自定义 Project
+## 自定义 Project {#custom-projects}
 
 ### 基于团队的 Project
 
@@ -295,7 +295,7 @@ spec:
 - manualSync 允许在允许窗口之外手动例外同步；它不会禁用自动同步，也不会将例外限制为值班角色。请在同步章节中审查重叠的拒绝窗口和显式时区。
 - 限制 default 之前，应将现有 Applications 移至显式指定的 Project，并验证访问权限。
 
-## RBAC 配置
+## RBAC 配置 {#rbac-configuration}
 
 ArgoCD RBAC 在 `argocd-rbac-cm` ConfigMap 中配置。
 
@@ -421,7 +421,7 @@ policy.example-2.csv: |
   p, role:operator, applications, get, production/*, allow
 ```
 
-## 多租户模式
+## 多租户模式 {#multi-tenancy-patterns}
 
 ### 每个团队使用一个命名空间
 
@@ -624,7 +624,7 @@ kubectl create secret generic argocd-ci-token -n ci \
 
 请先创建 ci 命名空间并配置作业 RBAC。仅在获授权的 CI 作业中挂载/读取 Secret，并在 Token 过期前轮换其值。不要将 Token 值放入 Git。
 
-## 孤立资源监控
+## 孤立资源监控 {#orphaned-resource-monitoring}
 
 检测目标命名空间中未由 ArgoCD 管理的资源。
 

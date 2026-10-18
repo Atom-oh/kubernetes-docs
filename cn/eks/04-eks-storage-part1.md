@@ -12,7 +12,7 @@
 4. [使用 Amazon EFS 存储](04-eks-storage-part1.md#storage-with-amazon-efs)
 5. [存储类和动态配置](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
 
-## Kubernetes 存储基本概念
+## Kubernetes 存储基本概念 {#kubernetes-storage-basic-concepts}
 
 首先了解 Kubernetes 中管理存储的关键概念。
 
@@ -49,7 +49,7 @@ Kubernetes 支持以下访问模式：
 
 **RWO 表示一个节点，而不是一个 Pod**：该节点上的多个 Pod 可以共享 PVC。RWOP 是一项单独的限制，需要兼容的 CSI sidecar。其他访问模式主要用于匹配和挂载能力；如有需要，请使用只读挂载标志、文件系统权限和服务授权。RWX 并不能确保应用程序的并发写入安全。
 
-## Amazon EKS 存储选项概览
+## Amazon EKS 存储选项概览 {#amazon-eks-storage-options-overview}
 
 在 Amazon EKS 中，你可以使用各种 AWS 存储服务为容器化应用程序提供存储。
 
@@ -96,7 +96,7 @@ Kubernetes 支持以下访问模式：
 
 请参阅 [Mountpoint CSI](https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html) 和 [S3 Files](https://docs.aws.amazon.com/eks/latest/userguide/s3files-csi.html)，了解它们不同的语义以及控制器/节点 IAM 要求。两者都不能自动替代事务型数据库文件系统。
 
-## 使用 Amazon EBS 存储
+## 使用 Amazon EBS 存储 {#storage-with-amazon-ebs}
 
 Amazon EBS 提供可附加到 EC2 实例的块级存储卷。在 EKS 中，你可以通过 EBS CSI (Container Storage Interface) 驱动程序将 EBS 卷挂载到 Kubernetes Pod。
 
@@ -355,7 +355,7 @@ Amazon EBS 提供多种卷类型：
 
 gp3 是常见的起点，但应根据工作负载和实例 EBS 限制选择大小、IOPS 和吞吐量。普通 gp3 文件系统卷不是供多节点共享的文件系统。EBS CSI 1.66.0 有一条适用于 `ReadWriteMany` 的 io2 **raw-block** Multi-Attach 路径；它需要兼容的节点和应用层协调/隔离机制，并不能让 ext4/XFS 能够安全地由多个独立挂载同时使用。RWOP 与 RWO 不同，CSI sidecar 的兼容性也很重要。
 
-## 使用 Amazon EFS 存储
+## 使用 Amazon EFS 存储 {#storage-with-amazon-efs}
 
 Amazon EFS 是一种完全托管的 NFS 文件系统，可由多个 EC2 实例同时访问。在 EKS 中，你可以通过 EFS CSI 驱动程序将 EFS 文件系统同时挂载到多个 Pod。
 
@@ -605,7 +605,7 @@ spec:
 - Regional 和 One Zone 具有不同的故障/可用性特征。目前 One Zone 也支持 Elastic 吞吐量，但这不会消除其单可用区持久性方面的考量。
 - 请测量实际访问模式和客户端限制。这些说明并未为示例提供延迟/吞吐量基准。
 
-## 存储类和动态配置
+## 存储类和动态配置 {#storage-classes-and-dynamic-provisioning}
 
 使用 Kubernetes 存储类可以动态配置持久卷。在 EKS 中，你可以为各种 AWS 存储服务配置存储类。
 

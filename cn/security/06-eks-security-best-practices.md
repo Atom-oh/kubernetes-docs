@@ -265,7 +265,7 @@ spec:
 
 ---
 
-## Pod 的 Security Groups
+## Pod 的 Security Groups {#security-groups-for-pods}
 
 ### 概述
 
@@ -342,7 +342,7 @@ Kubernetes 私有 API endpoint 和 AWS 服务 PrivateLink endpoints 不同。`ek
 
 ---
 
-## 控制平面日志记录
+## 控制平面日志记录 {#control-plane-logging}
 
 ### EKS 控制平面日志类型
 
@@ -403,7 +403,7 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## GuardDuty EKS 保护
+## GuardDuty EKS 保护 {#guardduty-eks-protection}
 
 ### GuardDuty EKS 保护概述
 
@@ -486,7 +486,7 @@ Enhanced finding events 使用 `aws.inspector2` / `Inspector2 Finding`，不同�
 
 ---
 
-## CIS Kubernetes 基准
+## CIS Kubernetes 基准 {#cis-kubernetes-benchmark}
 
 ### 运行 kube-bench
 
@@ -506,7 +506,7 @@ Enhanced finding events 使用 `aws.inspector2` / `Inspector2 Finding`，不同�
 
 ---
 
-## 集群加密
+## 集群加密 {#cluster-encryption}
 
 ### EKS Secrets 加密 (KMS)
 
@@ -518,7 +518,7 @@ EKS **1.28+ 默认使用 AWS 自有 KMS key 对所有 Kubernetes API 数据进�
 
 ---
 
-## 节点安全
+## 节点安全 {#node-security}
 
 ### Bottlerocket OS
 
@@ -534,7 +534,7 @@ Bottlerocket 是一种 container-host OS 选项，并不保证每个工作负载
 
 ---
 
-## 私有集群
+## 私有集群 {#private-clusters}
 
 ### 完全私有 EKS 配置
 
@@ -550,7 +550,7 @@ Bastion 会增加自身的访问、patching 和 audit 责任。不要默认采�
 
 ---
 
-## 多租户模式
+## 多租户模式 {#multi-tenancy-patterns}
 
 ### 基于 Namespace 的多租户
 
@@ -674,7 +674,7 @@ roleRef:
 
 ---
 
-## 边界安全和检查路径
+## 边界安全和检查路径 {#perimeter-security-and-inspection-paths}
 
 除 IAM 和 Pod policies 外，还应分别验证 public applications、admission webhooks、administrator access、outbound traffic 和 inter-VPC paths。外部 WAF 不会自动保护内部 webhooks；中心化 TGW inspection 覆盖实际经由它路由的流量。将现有 IAM、CNI 和 runtime controls 与以下指南连接起来。
 

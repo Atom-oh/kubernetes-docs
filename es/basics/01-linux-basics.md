@@ -57,7 +57,7 @@ Para practicar localmente, puedes usar una de las siguientes opciones:
 * [Comandos esenciales de Linux](01-linux-basics.md#essential-linux-commands)
 * [Características de Linux relacionadas con contenedores](01-linux-basics.md#container-related-linux-features)
 
-## Kernel de Linux y espacio de usuario
+## Kernel de Linux y espacio de usuario {#linux-kernel-and-user-space}
 
 ### Rol del kernel
 
@@ -96,7 +96,7 @@ El espacio de usuario es la región de memoria donde se ejecutan las aplicacione
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
-## Gestión de procesos
+## Gestión de procesos {#process-management}
 
 ### Procesos e hilos
 
@@ -220,7 +220,7 @@ podman stats  # Monitor container resource usage
 docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 ```
 
-## Sistema de archivos
+## Sistema de archivos {#file-system}
 
 ### Jerarquía del sistema de archivos
 
@@ -260,7 +260,7 @@ df -h
 umount <mount-point>
 ```
 
-## Conceptos básicos de redes
+## Conceptos básicos de redes {#networking-basics}
 
 ### Interfaces de red
 
@@ -300,7 +300,7 @@ ip link add <veth1> type veth peer name <veth2>
 ip link set <veth2> netns <namespace-name>
 ```
 
-## Contexto de seguridad
+## Contexto de seguridad {#security-context}
 
 ### Usuarios y grupos
 
@@ -353,7 +353,7 @@ aa-enforce /etc/apparmor.d/<profile>
 aa-complain /etc/apparmor.d/<profile>
 ```
 
-## systemd y gestión de servicios
+## systemd y gestión de servicios {#systemd-and-service-management}
 
 systemd es el sistema init y gestor de servicios para sistemas Linux modernos. Se utiliza para gestionar servicios principales como kubelet y containerd en nodos de Kubernetes.
 
@@ -446,7 +446,7 @@ sudo systemctl set-property --runtime linux-basics-demo.service IOWeight=500
 systemctl show linux-basics-demo.service | grep -E 'CPUQuota|MemoryMax|IOWeight'
 ```
 
-## Parámetros y módulos del kernel
+## Parámetros y módulos del kernel {#kernel-parameters-and-modules}
 
 ### Configuración de parámetros del kernel mediante sysctl
 
@@ -538,7 +538,7 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
-## Límites de recursos del sistema
+## Límites de recursos del sistema {#system-resource-limits}
 
 ### ulimit - Límites de recursos por usuario
 
@@ -594,7 +594,7 @@ cat /proc/<PID>/limits
 find /proc/<PID>/fd -mindepth 1 -maxdepth 1 -printf '%f\n' | wc -l
 ```
 
-## Gestión de logs
+## Gestión de logs {#log-management}
 
 ### journald - logging integrado de systemd
 
@@ -702,7 +702,7 @@ sudo vi /etc/logrotate.d/linux-basics-demo
 sudo logrotate -f /etc/logrotate.d/linux-basics-demo
 ```
 
-## Configuración de DNS y red
+## Configuración de DNS y red {#dns-and-network-configuration}
 
 ### Configuración de DNS
 
@@ -769,7 +769,7 @@ sudo netplan generate
 sudo netplan try
 ```
 
-## Sincronización de hora
+## Sincronización de hora {#time-synchronization}
 
 La sincronización de hora es muy importante en sistemas distribuidos. Todos los nodos de un cluster de Kubernetes deben mantener una hora precisa.
 
@@ -862,7 +862,7 @@ sudo timedatectl set-timezone Asia/Seoul
 sudo timedatectl set-ntp true
 ```
 
-## Gestión de paquetes
+## Gestión de paquetes {#package-management}
 
 Uso del gestor de paquetes para instalar y gestionar Kubernetes y herramientas relacionadas.
 
@@ -969,7 +969,7 @@ sudo dnf versionlock add kubelet kubeadm kubectl
 sudo dnf versionlock delete kubelet kubeadm kubectl
 ```
 
-## Comandos esenciales de Linux
+## Comandos esenciales de Linux {#essential-linux-commands}
 
 ### Gestión de archivos y directorios
 
@@ -1012,7 +1012,7 @@ systemctl restart <service> # Or use start/stop as separate subcommands
 journalctl -u <service> # View service logs
 ```
 
-## Características de Linux relacionadas con contenedores
+## Características de Linux relacionadas con contenedores {#container-related-linux-features}
 
 ### OverlayFS
 

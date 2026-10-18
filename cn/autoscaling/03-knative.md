@@ -17,7 +17,7 @@
 
 ---
 
-## 概述与学习目标
+## 概述与学习目标 {#overview-and-learning-objectives}
 
 ### 什么是 Knative？
 
@@ -83,7 +83,7 @@ Knative 由两个可独立安装的组件组成：
 
 ---
 
-## Knative 架构
+## Knative 架构 {#knative-architecture}
 
 ### Serving 架构
 
@@ -125,7 +125,7 @@ Knative Eventing 提供一种声明式方式，将事件源绑定到消费者。
 
 ---
 
-## EKS 安装与配置
+## EKS 安装与配置 {#eks-installation-and-configuration}
 
 安装片段针对隔离的测试环境，并包含占位符。应用带有 LoadBalancer 的 Serving 配置时，可能会通过已安装的控制器创建 AWS 资源；本次审计没有执行此类操作。由 Operator 管理的 ConfigMap、Service 和工作负载应通过 KnativeServing/KnativeEventing 资源配置。准备合并补丁时应保留现有配置，尤其是列表字段。在使用后续示例前，请创建其中引用的应用程序命名空间、ServiceAccount、Secret、镜像、Kafka/SQS 资源和 IAM 角色。通过架构检查并不意味着已达到生产就绪状态。
 
@@ -389,7 +389,7 @@ kubectl get crd inmemorychannels.messaging.knative.dev integrationsources.source
 
 ---
 
-## 深入了解 Knative Serving
+## 深入了解 Knative Serving {#knative-serving-deep-dive}
 
 ### 资源模型
 
@@ -692,7 +692,7 @@ metadata:
 
 ---
 
-## 深入了解 Knative Eventing
+## 深入了解 Knative Eventing {#knative-eventing-deep-dive}
 
 ### Event Source
 
@@ -1362,7 +1362,7 @@ spec:
 
 ---
 
-## KEDA 与 Knative 对比
+## KEDA 与 Knative 对比 {#keda-vs-knative-comparison}
 
 KEDA 和 Knative 都支持 Kubernetes 上的事件驱动扩缩容，但它们处于不同的抽象层，作用互为补充。
 
@@ -1458,7 +1458,7 @@ spec:
 
 ---
 
-## 生产环境运维
+## 生产环境运维 {#production-operations}
 
 ### 资源限制和 QoS
 
@@ -1957,7 +1957,7 @@ kubectl get ksvc order-api -n knative-demo -o jsonpath='{.status.url}'
 
 ---
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### Service 设计模式
 
@@ -2098,7 +2098,7 @@ spec:
 
 ---
 
-## 参考资料
+## 参考资料 {#references}
 
 ### 官方文档
 

@@ -21,7 +21,7 @@ Python 3.12 と JSONL を使用できる場合は、データと評価から始�
 
 新しい拡張演習では、トレーニングデータのみを拡張する前に、40 の合成ファミリーを分割します。その別個のデータセットは、2,200 レコードからなる履歴上の generator 1.0.0 コーパスを上書きしません。小規模な演習または oracle スコアは、実運用におけるモデル性能の主張ではありません。
 
-## SageMaker 実行の準備状況
+## SageMaker 実行の準備状況 {#sagemaker-execution-readiness}
 
 [実際の GPU スモーク実行の記録](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json)には、2026年9月16日の PyTorch 2.11/AL2023/CUDA 13 による別のパスが記録されています。これは同じ Qwen モデルを NF4 でロードし、4 つの attention projection に rank-16 LoRA を適用します。4 回の optimizer step により、保存・再ロードした状態が一致する変更済み adapter weight が生成されました。請求対象の 1,140 秒は、ストレージ、ログ、税金、調整を除き、GPU コンピューティングがおよそ USD 1.46 であることを示します。
 

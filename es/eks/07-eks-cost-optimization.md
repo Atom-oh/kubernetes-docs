@@ -18,7 +18,7 @@ Los comandos son ejemplos de configuración, no implementaciones registradas ni 
 7. [Supervisión y análisis de costos](#cost-monitoring-and-analysis)
 8. [Prácticas recomendadas para optimizar costos](#cost-optimization-best-practices)
 
-## Componentes de costos de EKS
+## Componentes de costos de EKS {#eks-cost-components}
 
 Los costos en los que se incurre al usar Amazon EKS constan de los siguientes componentes:
 
@@ -26,7 +26,7 @@ Los costos en los que se incurre al usar Amazon EKS constan de los siguientes co
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-0.html)
 
-## Principios de FinOps y EKS
+## Principios de FinOps y EKS {#finops-principles-and-eks}
 
 FinOps es un marco operativo y una práctica cultural para maximizar el valor empresarial de la tecnología. Los equipos de ingeniería, finanzas y negocio colaboran tomando decisiones oportunas basadas en datos y asumiendo responsabilidad financiera; este capítulo aplica ese enfoque a EKS.
 
@@ -108,7 +108,7 @@ Costos relacionados con las redes del clúster de EKS:
 - **ECR**: costo de ECR para el almacenamiento de imágenes de contenedores
 - **Otros servicios de AWS**: costo de otros servicios de AWS que se usan con el clúster de EKS
 
-## Optimización de costos de cómputo
+## Optimización de costos de cómputo {#compute-cost-optimization}
 
 El costo de cómputo suele ser el componente más importante del costo de un clúster de EKS. Puede optimizarlo mediante las siguientes estrategias.
 
@@ -428,7 +428,7 @@ Este ejemplo usa **Off** para recopilar recomendaciones sin competir con el HPA 
 - **Auto**: alias obsoleto de Recreate; para nuevas configuraciones, elija el modo explícito.
 - Los modos in-place requieren una versión compatible de VPA/Kubernetes y sus feature gates documentados. Lea el contrato del modo seleccionado: `InPlaceOrRecreate` puede recurrir al desalojo, mientras que `InPlace` no usa esa alternativa de recreación. Revise los límites, las interrupciones y la demanda máxima antes de habilitar las actualizaciones automáticas.
 
-## Optimización de costos de almacenamiento
+## Optimización de costos de almacenamiento {#storage-cost-optimization}
 
 El almacenamiento es un componente importante del costo de los clústeres de EKS. Puede optimizar los costos de almacenamiento mediante las siguientes estrategias.
 
@@ -585,7 +585,7 @@ Optimice los costos de solicitudes de S3:
 - Reduzca las operaciones LIST innecesarias
 - La carga multiparte puede mejorar la transferencia y los reintentos, pero agrega cargos por solicitudes y por almacenamiento de partes incompletas; configure la cancelación/limpieza de las cargas abandonadas. Transfer Acceleration puede generar cargos y es una opción de latencia/rendimiento, no un ahorro automático en el costo de las solicitudes
 
-## Optimización de costos de redes
+## Optimización de costos de redes {#networking-cost-optimization}
 
 Los costos de redes pueden ser significativos, especialmente con grandes transferencias de datos. Puede optimizarlos mediante las siguientes estrategias.
 
@@ -738,7 +738,7 @@ Optimice el tráfico saliente que pasa por NAT gateway:
 - La programación puede reducir la contención, pero los precios normales de NAT/transferencia de datos no tienen un descuento general fuera de las horas pico; reduzca los bytes facturados o la duración aprovisionada
 - Use compresión de datos
 
-## Administración y gobernanza de recursos
+## Administración y gobernanza de recursos {#resource-management-and-governance}
 
 La administración y gobernanza eficaces de recursos son importantes para controlar los costos del clúster de EKS. Puede administrar los recursos eficazmente con las siguientes estrategias.
 
@@ -909,7 +909,7 @@ Kubecost ofrece las siguientes funciones:
 - Recomendaciones para optimizar costos
 - Informes de asignación de costos y devolución de cargos
 
-## Supervisión y análisis de costos
+## Supervisión y análisis de costos {#cost-monitoring-and-analysis}
 
 Para optimizar los costos de forma eficaz, debe supervisarlos y analizarlos continuamente. Puede supervisar y analizar los costos del clúster de EKS con las siguientes herramientas y estrategias.
 
@@ -1079,7 +1079,7 @@ Realice seguimiento de estos indicadores por separado, con fórmulas, cobertura 
 - Relación de uso de instancias Spot
 - Relación de recursos inactivos
 
-## Prácticas recomendadas para optimizar costos
+## Prácticas recomendadas para optimizar costos {#cost-optimization-best-practices}
 
 Veamos las prácticas recomendadas para optimizar los costos del clúster de EKS.
 

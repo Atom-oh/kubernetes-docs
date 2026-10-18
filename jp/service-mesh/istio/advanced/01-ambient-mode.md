@@ -15,7 +15,7 @@ Ambient は 2022 年に実験的プレビューとして導入され、Istio 1.1
 7. [ユースケース](#use-cases)
 8. [トラブルシューティング](#troubleshooting)
 
-## 概要
+## 概要 {#overview}
 
 
 Ambient Mode は、アプリケーション Pod に Sidecar proxy を注入せずに Service Mesh 機能を提供する新しいアプローチです。Ambient Mode は、**階層型アーキテクチャ**で構成されます。
@@ -53,7 +53,7 @@ Ambient Mode の解決策:
 3. **透過的な L4 トランスポート**: アプリケーションのトレーシング、deadline、idempotency の要件は残る
 4. **柔軟な L7 機能**: 必要な場合にのみ waypoint を使用
 
-## Sidecar Mode と Ambient Mode
+## Sidecar Mode と Ambient Mode {#sidecar-mode-vs-ambient-mode}
 
 ### アーキテクチャの比較
 
@@ -100,11 +100,11 @@ Ambient Mode の解決策:
 | **運用範囲** | ワークロードごとの proxy ライフサイクル | Node/CNI と共有 waypoint のライフサイクル |
 | **本番環境への対応状況** | 成熟 | GA（Istio 1.24 以降） |
 
-### リソース使用量の比較
+### リソース使用量の比較 {#resource-usage-comparison}
 
 以下の 100-Pod の計算は、公式ベンチマークではなく仮説的な計画例です。リソースまたは請求額の削減を見積もる前に、すべての node/waypoint replica を数え、同等のセキュリティ、テレメトリ、ルーティング要件を比較してください。
 
-## アーキテクチャ
+## アーキテクチャ {#architecture}
 
 
 Ambient Mode のデータプレーンは、**ztunnel** と **Waypoint Proxy** という 2 つのコアコンポーネントで構成されます。
@@ -242,7 +242,7 @@ spec:
 
 このガイドの HBONE は TCP stream を転送します。アプリケーション UDP はこの tunnel では転送されません。DNS capture/proxying は別の機能です。ローカルのアプリケーション stream はプレーンテキストのままにできる一方、proxy 間の mesh トランスポートは暗号化されます。
 
-## インストールと設定
+## インストールと設定 {#installation-and-configuration}
 
 このラボには、互換性のある Linux node と必要な Istio CNI/ztunnel DaemonSet が必要です。EKS Fargate ではこれらの node DaemonSet を実行できません。サポート対象の EC2 ベース配置を使用し、実際の node/CNI platform を確認してください。[プラットフォームの前提条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)には、CNI パス、権限、health probe が記載されています。SecurityGroupPolicy を使用する VPC CNI Pod ENI trunking では、standard enforcing mode または適切な exec probe が必要になる場合があります。ポリシーへの影響を評価してください。GKE、OpenShift、k3s、その他の platform では異なる設定が必要になる場合があります。
 
@@ -366,7 +366,7 @@ kubectl exec -n ambient-demo deploy/curl -c curl -- \
 
 Accepted/ResolvedRefs condition と、ログ/テレメトリを通じて選択された backend を確認してください。HTTP の成功だけでは、mTLS も必須 waypoint 経由も証明されません。L7 authorization には適切な `targetRefs` が必要です。必須の経由には文書化された ztunnel authorization guard も必要です。[waypoint ポリシーのアタッチ](https://istio.io/latest/docs/ambient/usage/l7-features/)を参照してください。
 
-## 移行
+## 移行 {#migration}
 
 ### Sidecar Mode から Ambient Mode へ
 
@@ -456,7 +456,7 @@ for deployment in curl httpbin; do
 done
 ```
 
-## パフォーマンス比較
+## パフォーマンス比較 {#performance-comparison}
 
 ### ベンチマーク結果
 
@@ -484,7 +484,7 @@ memory_saved = sidecar_memory - ambient_memory  # 4300 MB, 86% of assumed baseli
 cpu_saved = sidecar_cpu - ambient_cpu           # 8.5 vCPU, 85% of assumed baseline
 ```
 
-## ユースケース
+## ユースケース {#use-cases}
 
 ### Ambient Mode を選ぶべき場合
 
@@ -533,7 +533,7 @@ L7 の要件によって sidecar が自動的に必要になるわけではあ�
 kubectl get namespaces -L istio-injection,istio.io/rev,istio.io/dataplane-mode,istio.io/use-waypoint
 ```
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
 ### ztunnel が動作しない
 

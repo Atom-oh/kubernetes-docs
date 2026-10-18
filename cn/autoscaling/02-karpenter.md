@@ -16,7 +16,7 @@
 - [故障排查](#troubleshooting)
 - [结论](#conclusion)
 
-## 简介
+## 简介 {#introduction}
 
 Karpenter 是一款开源节点自动扩缩器。本章使用其 AWS provider，为兼容的 Kubernetes 工作负载预置 EC2 容量。可用性和效率取决于约束、云容量、节点初始化和应用设计。
 
@@ -44,7 +44,7 @@ Karpenter 是一款开源节点自动扩缩器。本章使用其 AWS provider，
 
 > **注意**：EKS 于 2026 年 4 月 8 日增加了 Managed Node Group warm-pool 支持。预初始化的实例可以减少重复初始化工作；Stopped 和 Running 模式的转换时间和成本不同，缩容时是否复用实例则为可选项。根据 AWS 的说法，Cluster Autoscaler 集成无需额外配置。恢复、节点就绪和应用启动仍需要时间。这是 EKS Managed Node Group/Auto Scaling 功能，并非由 Karpenter 管理的节点池。
 
-## 架构
+## 架构 {#architecture}
 
 Karpenter 以 Kubernetes 控制器的形式运行，检测无法调度的 Pod 并预置适当的节点。
 
@@ -77,7 +77,7 @@ Karpenter 以 Kubernetes 控制器的形式运行，检测无法调度的 Pod �
 5. 节点注册并就绪；之后 Kubernetes 调度器可以绑定符合条件的 Pod。Karpenter 不会取代 kube-scheduler。
 6. Consolidation、漂移、过期、手动删除和云中断各有不同的触发条件和防护措施；它们并非全部属于 SQS 中断事件。
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 不含 apiVersion/kind 的 YAML 代码块是针对所讨论的 NodePool 或 EC2NodeClass spec 的配置片段；它们并非可独立通过 kubectl apply 应用的文档。
 
@@ -488,7 +488,7 @@ userData: |
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-2.html)
 
-## 中断处理
+## 中断处理 {#interruption-handling}
 
 已配置的中断处理会尝试在容量丢失之前作出响应。结果取决于通知、替换容量、关机期限和应用恢复情况；无法保证服务不中断。
 
@@ -591,7 +591,7 @@ spec:
       app: my-app
 ```
 
-## 集成
+## 集成 {#integration}
 
 Karpenter 可与多种 Kubernetes 和云服务集成。
 
@@ -846,7 +846,7 @@ spec:
     httpPutResponseHopLimit: 1
     httpTokens: required
 ```
-## 与 Amazon EKS 集成
+## 与 Amazon EKS 集成 {#integration-with-amazon-eks}
 
 在配置好身份、网络、节点访问和引导后，Karpenter 的 AWS provider 可以与 EKS 管理的计算资源共同预置 EC2 容量。
 
@@ -1149,7 +1149,7 @@ spec:
     consolidateAfter: 1m
 ```
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ![四列并排列表，按类别列出 Karpenter 最佳实践：性能优化、成本优化、提高可用性和加强安全性。](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
 
@@ -1260,7 +1260,7 @@ spec:
     consolidateAfter: 60s
 ```
 
-## 故障排查
+## 故障排查 {#troubleshooting}
 
 ### 常见问题
 
@@ -1348,7 +1348,7 @@ helm get values karpenter --namespace karpenter
 kubectl get nodeclaims -o wide
 ```
 
-## 结论
+## 结论 {#conclusion}
 
 Karpenter 会根据工作负载和基础设施约束自动处理节点预置和生命周期管理。它可以改善容量管理，但可用性、性能和成本方面的效果仍需针对具体工作负载进行验证。
 

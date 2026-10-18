@@ -14,7 +14,7 @@
 - [实验](#experiments)
 - [通知](#notifications)
 
-## Argo Rollouts 概述
+## Argo Rollouts 概述 {#argo-rollouts-overview}
 
 Argo Rollouts 是一个 Kubernetes 控制器，提供高级部署功能，包括蓝绿部署、金丝雀部署和渐进式交付。
 
@@ -39,7 +39,7 @@ Kubernetes Deployments 支持 RollingUpdate 和 Recreate，也支持暂停/恢�
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-0.html)
 
-## 安装
+## 安装 {#installation}
 
 ### 安装 Argo Rollouts 控制器
 
@@ -138,7 +138,7 @@ kubectl port-forward --address 127.0.0.1 -n argo-rollouts \
 
 打开 `http://127.0.0.1:3100/rollouts`。共享访问需要单独经过身份验证和授权的代理。
 
-## 蓝绿部署
+## 蓝绿部署 {#blue-green-deployments}
 
 请根据应用配置替换示例中的 `myapp`/registry 镜像、ECR 账户/标签和指标名称。准备命名空间、镜像访问权限、就绪探针响应、指标采集和 AnalysisTemplates；每个场景应独立运行。初始部署没有之前的稳定 ReplicaSet。先成功部署 v1，然后在 Git 中将镜像改为 v2，以观察发布过程。
 
@@ -247,7 +247,7 @@ strategy:
     previewReplicaCount: 3
 ```
 
-## 金丝雀部署
+## 金丝雀部署 {#canary-deployments}
 
 配置了 trafficRouting 时，`setWeight` 会更改路由器的相对权重。没有路由器时，它会通过 ReplicaSet 数量近似实现流量比例；但不能保证请求百分比精确。使用路由器时，稳定版本的副本容量与流量权重相互独立。
 
@@ -387,7 +387,7 @@ kubectl argo rollouts promote myapp-canary -n myapp
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-2.html)
 
-## 分析与验证
+## 分析与验证 {#analysis-and-verification}
 
 AnalysisTemplates 定义如何验证部署健康状况。
 
@@ -608,7 +608,7 @@ spec:
     inconclusiveLimit: 0
 ```
 
-## Ingress 集成
+## Ingress 集成 {#ingress-integration}
 
 Argo Rollouts 支持原生流量提供程序和插件扩展。Kong 等没有原生集成的提供程序，可通过 **Gateway API 插件**支持。
 
@@ -871,7 +871,7 @@ spec:
       weight: 0
 ```
 
-### Gateway API 插件（HTTPRoute）
+### Gateway API 插件（HTTPRoute） {#gateway-api-plugin-httproute}
 
 Kong、kgateway 和其他兼容实现的 Gateway API 路径使用由 argoproj-labs 维护的 [Gateway API 插件](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi)。Traefik 也有原生的 TraefikService 集成；其 Gateway API 路径可以使用此插件。本章使用于 2026-09-01 发布的插件 0.17.0。它会更新 HTTPRoute 后端权重。其他 Route 类型和标头路由取决于已安装的 CRD 和实现能力；请验证 Route 状态和实际请求分布。
 
@@ -1008,7 +1008,7 @@ spec:
 
 接下来，应用与上述相同的 [Gateway API 插件](#gateway-api-plugin-httproute)配置；Rollout 和 HTTPRoute YAML 完全相同。
 
-### EKS 上的验证结果
+### EKS 上的验证结果 {#verification-results-on-eks}
 
 之前的文档报告了在 EKS 1.36、Rollouts 1.9.0、AWS Load Balancer Controller 3.2.1、Istio 1.30、KIC 3.5 和 plugin0.16.0 下的以下结果。未附原始日志、请求数、测量时长和已执行的清单，因此本次静态审阅无法复现这些报告。以下是历史观察结果，并非 1.10.0/0.17.0 的新测试结果，也不保证能够即时、零停机地完成切换。
 
@@ -1021,7 +1021,7 @@ spec:
 
 当 Argo CD 管理路由资源时，请审查针对 Rollouts 所拥有字段的精确 diff 排除项：相关 ALB action 注解、Istio 路由权重、HTTPRoute 后端权重以及 Service 的 rollouts-pod-template-hash 选择器。避免忽略整个 spec 或整个管理器。同步期间保留这些值还需要 RespectIgnoreDifferences=true，且此功能对现有资源存在限制。
 
-## 回滚策略
+## 回滚策略 {#rollback-strategies}
 
 ### 分析失败时自动回滚
 
@@ -1074,7 +1074,7 @@ spec:
             value: myapp-canary
 ```
 
-## 实验
+## 实验 {#experiments}
 
 在 1.10.0 中，所有 `requiredForCompletion: true` 的分析都成功后，Experiment 可能会在 `duration` 到期前结束。不要将 duration 视为验证时间的下限。请明确验证用于隔离实验流量的 Service/路由器选择器。有关状态转换和清理延迟，请参阅[深入介绍](10-rollouts-experiment.md)。
 
@@ -1193,7 +1193,7 @@ spec:
     requiredForCompletion: true
 ```
 
-## 通知
+## 通知 {#notifications}
 
 将 Rollout 事件集成到通知系统中。
 

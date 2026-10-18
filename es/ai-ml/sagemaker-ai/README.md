@@ -21,7 +21,7 @@ Comience con datos y evaluación si puede usar Python 3.12 y JSONL. Ninguno de l
 
 El nuevo ejercicio de aumento divide 40 familias sintéticas antes de aumentar solo el entrenamiento. Su conjunto de datos independiente no sobrescribe el corpus histórico del generador 1.0.0 de 2,200 registros. Las puntuaciones de ejercicios pequeños u oráculo no son afirmaciones sobre el rendimiento del modelo en el mundo real.
 
-## Preparación para la ejecución de SageMaker
+## Preparación para la ejecución de SageMaker {#sagemaker-execution-readiness}
 
 El [recibo real de la prueba de humo con GPU](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json) registra una ruta independiente de PyTorch 2.11/AL2023/CUDA 13 el September 16, 2026. Carga el mismo modelo Qwen en NF4 y aplica LoRA de rango 16 a cuatro proyecciones de atención. Cuatro pasos del optimizador produjeron pesos de adaptador modificados con estados guardados/recargados coincidentes. Los 1,140 segundos facturables implican aproximadamente USD 1.46 de cómputo de GPU, sin incluir almacenamiento, registros, impuestos ni ajustes.
 

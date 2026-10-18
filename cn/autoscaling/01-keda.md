@@ -18,7 +18,7 @@
 - [故障排查](#troubleshooting)
 - [结论](#conclusion)
 
-## 简介
+## 简介 {#introduction}
 
 KEDA（Kubernetes 事件驱动自动伸缩）是一个开源项目，可为 Kubernetes 应用启用事件驱动自动伸缩。KEDA 扩展了 Kubernetes 原生的 Horizontal Pod Autoscaler（HPA），使工作负载能够根据 CPU 和内存使用量以外的各种事件源和指标进行伸缩。
 
@@ -42,7 +42,7 @@ KEDA（Kubernetes 事件驱动自动伸缩）是一个开源项目，可为 Kube
 | 部署复杂度 | Operator、指标 server、webhook 和凭据 | 内置控制器；可能需要适配器 | 取决于产品 |
 | 自定义指标 | Scaler 集成或 HTTP/gRPC 生产器 | 需要适当的指标适配器 | 取决于产品 |
 
-## 架构
+## 架构 {#architecture}
 
 KEDA 基于 Kubernetes operator 模式，可监控外部指标来源并自动管理 Kubernetes HPA。
 
@@ -67,7 +67,7 @@ KEDA 基于 Kubernetes operator 模式，可监控外部指标来源并自动管
 4. HPA 调整非零副本数；KEDA 处理激活和已配置的缩容至零冷却时间。`cooldownPeriod` 不会取代 HPA 将副本数从 N 缩减到 1 时的稳定窗口。
 5. ScaledJob 采用单独的处理路径：KEDA 根据事件及其伸缩策略创建批处理 Job；它不会为这些 Job 创建 HPA。
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 这些示例是可选方案，并非一组可一次性应用的 manifest。请准备好引用的工作负载、Service、Secret 和镜像；替换账户、队列、URL 和镜像占位符。不要让多个 ScaledObject/HPA 作用于同一个目标。自动伸缩接管副本数后，请协调 GitOps/应用对 `spec.replicas` 的管理权。这些配置示例尚未在生产环境中部署或测量。
 
@@ -158,7 +158,7 @@ logging:
 helm upgrade --install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace -f values.yaml
 ```
 
-## Scaler
+## Scaler {#scalers}
 
 KEDA 为各种事件源提供 Scaler。每个 Scaler 都会从特定事件源收集指标，并根据这些指标对工作负载进行伸缩。
 
@@ -276,7 +276,7 @@ spec:
     authenticationRef:
       name: rabbitmq-auth
 ```
-## 自定义指标伸缩
+## 自定义指标伸缩 {#custom-metric-scaling}
 
 除各种内置 Scaler 外，KEDA 还支持根据自定义指标灵活地进行伸缩。这样你就可以实现适合自身业务需求的独特伸缩逻辑。
 
@@ -435,7 +435,7 @@ spec:
       valueLocation: value
 ```
 
-## Twitter 指标伸缩
+## Twitter 指标伸缩 {#twitter-metric-scaling}
 
 此示例使用 X API（前身为 Twitter）v2 recent-counts 端点。它统计以数据采集时间前 30 秒为结束时间的五分钟窗口内的匹配项；这既不是累计计数，也不是即时发帖速率。必须针对预期用途验证账户访问权限、查询语义、计费和速率限制。
 
@@ -628,7 +628,7 @@ spec:
 
 使用默认的 AverageValue 时，计数/目标值比率会在配置的上下限内建议副本数；它并不直接表示处理吞吐量。采集器独立保持一个副本，在不可用时返回 503，并且没有会仅因上游故障而重启它的 liveness probe。生产环境使用仍需经过验证的凭据、限制、生命周期处理和可观测性。
 
-## Google Calendar 伸缩
+## Google Calendar 伸缩 {#google-calendar-scaling}
 
 此示例统计**未来一小时内与时间窗口重叠的 Google Calendar 事件实例**，包括已经开始且仍在进行的事件。`timeMin` 会筛选事件结束时间，`timeMax` 会筛选开始时间。所有分页都会计入；采集不完整、失败或数据过期时，服务会返回指标不可用，而不是错误地返回零。
 
@@ -833,7 +833,7 @@ spec:
 ```
 
 使用默认的 AverageValue 时，计数/目标值比率会在配置的上下限内建议副本数；它并不直接表示处理吞吐量。采集器独立保持一个副本，在不可用时返回 503，并且没有会仅因上游故障而重启它的 liveness probe。生产环境使用仍需经过验证的凭据、限制、生命周期处理和可观测性。
-## Istio 指标伸缩
+## Istio 指标伸缩 {#istio-metric-scaling}
 
 此示例展示如何根据从 Istio 服务网格收集的指标对应用进行伸缩。我们将介绍如何根据每秒请求数（RPS）进行伸缩。
 
@@ -1001,7 +1001,7 @@ spec:
           stabilizationWindowSeconds: 300
 ```
 
-## 基于 Cron 的伸缩
+## 基于 Cron 的伸缩 {#cron-based-scaling}
 
 KEDA 支持使用 Cron 表达式进行基于时间的伸缩。这样，你可以根据可预测的流量模式或时间安排预先调整应用副本数。
 
@@ -1095,7 +1095,7 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-## 与 Amazon EKS 集成
+## 与 Amazon EKS 集成 {#integration-with-amazon-eks}
 
 配置好 Kubernetes 兼容性、operator 身份、权限和连接后，KEDA 可以使用 AWS 指标对 EKS 工作负载进行伸缩。KEDA 本身不会增加计算容量；请将工作负载伸缩与适当的节点/Fargate 容量设计结合使用。
 
@@ -1209,7 +1209,7 @@ serviceAccount:
       eks.amazonaws.com/sts-regional-endpoints: 'true'
 ```
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 性能优化
 
@@ -1313,7 +1313,7 @@ spec:
       port: 8080
 ```
 
-## 故障排查
+## 故障排查 {#troubleshooting}
 
 ### 常见问题
 
@@ -1390,7 +1390,7 @@ kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/
 kubectl logs -n keda -l app=keda-operator --tail=100
 ```
 
-## 结论
+## 结论 {#conclusion}
 
 KEDA（Kubernetes 事件驱动自动伸缩）是一款功能强大的工具，可在 Kubernetes 环境中提供事件驱动自动伸缩。它扩展了基础 Kubernetes HPA，使工作负载能够根据各种事件源和指标进行伸缩。
 

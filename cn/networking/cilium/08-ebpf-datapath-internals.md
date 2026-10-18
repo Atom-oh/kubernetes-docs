@@ -212,7 +212,7 @@ Conntrack 地址相对于数据包中的地址将源和目标互换存储；`ct_
 | `cilium_lb4_services_v2`（及 `6`） | HASH | `{address, dport, backend_slot, proto, scope}` → `{backend_id or affinity/algorithm, count, rev_nat_index, flags, qcount}` | 槽位 0 是 frontend；槽位 1..count 存放 backend ID；`scope` 区分外部和内部流量（externalTrafficPolicy） |
 | `cilium_lb4_backends_v3`（及 `6`） | HASH | `backend_id` → `{address, port, proto, flags, cluster_id, zone}` | |
 | `cilium_lb4_reverse_nat`（及 `6`） | HASH | `rev_nat_index` → `{address, port}` | 逐包 LB 的回复地址恢复 |
-| `cilium_lb4_reverse_sk` | LRU_HASH | `{socket cookie, backend addr, port}` → `{original service addr, port, rev_nat_index}` | socket-LB 反向转换 |
+| `cilium_lb4_reverse_sk`（及 `6`） | LRU_HASH | `{socket cookie, backend addr, port}` → `{original service addr, port, rev_nat_index}` | socket-LB 反向转换 |
 | `cilium_lb4_affinity`、`cilium_lb_affinity_match` | LRU_HASH / HASH | 客户端（IP 或 netns cookie）+ rev_nat → backend | `sessionAffinity` |
 | `cilium_lb4_source_range` | LPM_TRIE | `{rev_nat_id, cidr}` → flag | `loadBalancerSourceRanges` |
 | `cilium_lb4_maglev` | HASH_OF_MAPS | `rev_nat_id` → 查找表数组 | `--bpf-lb-algorithm maglev`；表大小由 `--bpf-lb-maglev-table-size` 控制 |
@@ -316,12 +316,12 @@ Cilium 会针对内核 5.10、6.1 和 net-next 对启用最多功能的构建执
 
 ## 7. 工作示例：Pod → Service → Pod
 
-说明性设置（数字仅为示例；结构来自源码）：客户端 Pod `C` 为 `10.0.1.10`，身份 `4711`，端点 ID `312`，位于节点 A。Service `web` 的 ClusterIP 为 `10.100.0.20:80/TCP`，`rev_nat_index` 为 `42`，有两个后端：B1 `10.0.1.55`（节点 A，端点 87）和 B2 `10.0.2.77`（节点 B），两者身份均为 `9001`。设置为：IPv4、veth、tcx、BPF host routing、`kubeProxyReplacement: true`（这会强制启用 socket-LB）、`socketLB.hostNamespaceOnly=false`。
+说明性设置（数字仅为示例；结构来自源码）：客户端 Pod `C` 为 10.0.1.10，身份 4711，端点 ID 312，位于节点 A。Service `web` 的 ClusterIP 为 10.100.0.20:80/TCP，`rev_nat_index` 为 42，有两个后端：B1 10.0.1.55（节点 A，端点 87）和 B2 10.0.2.77（节点 B），两者身份均为 9001。设置为：IPv4、veth、tcx、BPF host routing、`kubeProxyReplacement: true`（这会强制启用 socket-LB）、`socketLB.hostNamespaceOnly=false`。
 
 ### 第 0 跳：Pod 中的 `connect()`，`cgroup/connect4`（`cil_sock4_connect`）
 
 1. 使用 `{10.100.0.20, 80, TCP, slot 0, scope 0}` 查询 `cilium_lb4_services_v2`。未命中则保持 sockaddr 不变；命中项的 `count=2`。
-2. 选择一个槽位：TCP 随机选择（UDP 使用 socket cookie）。使用该槽位查询 service key，取得 `backend_id`，再查询 `cilium_lb4_backends_v3[backend_id]`，得到 `10.0.2.77:80`。如果配置了 `sessionAffinity`，先查询 `cilium_lb4_affinity`。
+2. 选择一个槽位：TCP 随机选择（UDP 使用 socket cookie）。使用该槽位查询 service key，取得 `backend_id`，再查询 `cilium_lb4_backends_v3[backend_id]`，得到 10.0.2.77:80。如果配置了 `sessionAffinity`，先查询 `cilium_lb4_affinity`。
 3. 写入 `cilium_lb4_reverse_sk[{cookie, 10.0.2.77, 80}] = {10.100.0.20, 80, 42}`。
 4. 在系统调用中改写 `user_ip4/user_port`。**线上不会发生 DNAT**。Pod 内部执行 `tcpdump` 会看到后端 IP，这往往令人意外。启用 socket-LB tracing 时会产生 `trace_sock_notify` 事件。
 
@@ -334,7 +334,7 @@ Cilium 会针对内核 5.10、6.1 和 net-next 对启用最多功能的构建执
 | 3 | 跳过逐包 LB（socket-LB 已完成转换） | 无 |
 | 4 | tail call 到槽位 30（CT egress）：查询 `CT_NEW`，并将 tuple 存入 per-CPU buffer | `cilium_ct4_global`、`cilium_tail_call_buffer4` |
 | 5 | tail call 到槽位 26（`handle_ipv4_from_lxc`） | `cilium_calls_00312` |
-| 6 | 解析目标身份：LPM 查询 `10.0.2.77` 得到身份 9001；使用 overlay 时同时得到节点 B 的隧道端点。未命中表示 `world` | `cilium_ipcache_v2` |
+| 6 | 解析目标身份：LPM 查询 10.0.2.77 得到身份 9001；使用 overlay 时同时得到节点 B 的隧道端点。未命中表示 `world` | `cilium_ipcache_v2` |
 | 7 | 出口策略：查询 `{egress=1, sec_label=9001, TCP, 80}`，执行两阶段查询；允许或丢弃。新允许的流会产生 policy-verdict 事件 | `cilium_policy_v3_00312`、`cilium_events`；丢弃时写入 `cilium_metrics` |
 | 8 | 若 `proxy_port != 0`：标记为代理流量，给 CT 设置 `proxy_redirect` 标志，并交给协议栈（见 3.5 节） | |
 | 9 | `ct_create4(CT_EGRESS)`：插入条目；SYN 的生命周期为 1 分钟，收到 ACK 后为 2 小时 13 分 20 秒 | `cilium_ct4_global`（相关 ICMP 还会用 CT-any） |
@@ -356,12 +356,12 @@ Cilium 会针对内核 5.10、6.1 和 net-next 对启用最多功能的构建执
 1. `cil_lxc_policy` 执行 CT-ingress tail call：查询 `cilium_ct4_global`，结果为 `CT_NEW`。
 2. 入口策略：使用 `{egress=0, sec_label=4711, TCP, 80}` 查询 `cilium_policy_v3_00087`。发出 verdict 事件。
 3. `ct_create4(CT_INGRESS)` 记录 `src_sec_id=4711`、`from_tunnel` 和 `proxy_redirect`。
-4. 通过 `bpf_redirect_peer` 将流量送入 Pod netns（veth），或使用 `redirect`（netkit），并产生 `TRACE_TO_LXC` 事件。后端协议栈以 `10.0.2.77` 为源地址回复；它不会看到 ClusterIP。
+4. 通过 `bpf_redirect_peer` 将流量送入 Pod netns（veth），或使用 `redirect`（netkit），并产生 `TRACE_TO_LXC` 事件。后端协议栈以 10.0.2.77 为源地址回复；它不会看到 ClusterIP。
 
 ### 第 4 跳：回复和关闭
 
 - B 的 `cil_from_container` 将 ingress CT 条目识别为 `CT_REPLY`，因此**跳过策略**；数据包以 VNI 9001 封装返回（或使用原生路由）。在节点 A 上执行 `tail_call_policy(312)`，客户端 C 的策略程序发现 `CT_REPLY` 后跳过策略，再通过 `redirect_peer` 将数据包交给 C。
-- Socket-LB 反向转换：应用认为自己连接的是 `10.100.0.20`。`getpeername` 和 `recvmsg` hook 查询 `cilium_lb4_reverse_sk[{cookie, 10.0.2.77, 80}]`，并返回 Service 地址。
+- Socket-LB 反向转换：应用认为自己连接的是 10.100.0.20。`getpeername` 和 `recvmsg` hook 查询 `cilium_lb4_reverse_sk[{cookie, 10.0.2.77, 80}]`，并返回 Service 地址。
 - 不使用 socket-LB 时（host-namespace-only 模式、L7 LB、SCTP），第 1 跳会在 `bpf_lxc` 中执行 DNAT，并将 `rev_nat_index` 存入 CT 条目；回复会通过 `cilium_lb4_reverse_nat[rev_nat_index]` 恢复源地址。
 - FIN/RST 会设置 `tx/rx_closing`，并将生命周期缩短到 FIN timeout（10 秒）；agent 的 CT GC 会删除过期条目。`cilium_lb4_reverse_sk` 条目会保留到 LRU 淘汰或 `cil_sock_release`。
 
@@ -401,7 +401,7 @@ gRPC: hubble observe / Relay / UI
 
 - 在 1.20 和 1.21-pre.3 中，事件 map 是 **perf event array**，不是 BPF ring buffer。
 - 数据路径中的事件量控制项是 `bpf.monitorAggregation`（Helm 默认 `medium`；agent flag 默认 `None`）。设置为 `medium` 或更高时，会抑制节点内 receive trace；已建立连接只有在 `bpf.monitorInterval`（5 秒）到期或检测到 `bpf.monitorFlags` 指定的标志时才上报。各类开关包括 `bpf.events.drop.enabled`、`bpf.events.policyVerdict.enabled`、`bpf.events.trace.enabled`（默认全为 true），以及实验性限速项 `bpf.events.default.rateLimit` / `burstLimit`（两者必须同时设置，或同时为零）。
-- `hubble observe` 中的流量事件保存在内存 ring（`hubble.eventBufferCapacity` 必须是 `2^n - 1`；默认 4095，最大 65535）。这是尽力而为：perf-buffer 溢出和 observer 队列溢出都会丢事件，但分别计入不同的 `source` 标签（`perf_event_ring_buffer`、`observer_events_queue`）。
+- `hubble observe` 中的流量事件保存在内存 ring（`hubble.eventBufferCapacity` 必须是 2^n - 1；默认 4095，最大 65535）。这是尽力而为：perf-buffer 溢出和 observer 队列溢出都会丢事件，但分别计入不同的 `source` 标签（`perf_event_ring_buffer`、`observer_events_queue`）。
 - L7 事件并非来自 BPF；它们以 proxy 事件的形式送达 agent。
 
 ## 9. 检查工具

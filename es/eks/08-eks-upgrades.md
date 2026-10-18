@@ -17,7 +17,7 @@ Estos son procedimientos revisados por los responsables; en esta auditoría no s
 7. [Automatización de actualizaciones](#upgrade-automation)
 8. [Prácticas recomendadas para las actualizaciones](#upgrade-best-practices)
 
-## Descripción general de las actualizaciones de EKS
+## Descripción general de las actualizaciones de EKS {#eks-upgrade-overview}
 
 ![Diagrama de árbol de los cuatro pilares de una actualización de EKS: política de administración de versiones, los componentes que se actualizan (plano de control, grupos de nodos, complementos y componentes autoadministrados), la ruta de actualización de una versión secundaria a la vez frente al salto de versión no admitido y el orden de actualización en cinco pasos.](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
 
@@ -60,7 +60,7 @@ Los clústeres de EKS deben actualizarse de una versión secundaria a la siguien
 
 Para kubelet 1.25 y posteriores, upstream permite estar hasta tres versiones secundarias por detrás del servidor de API, pero nunca por delante; si hay varias versiones del servidor de API, el intervalo permitido se reduce. La documentación de EKS indica tanto las pautas de alineación de nodos previas a la actualización como la diferencia de versiones admitida. Este runbook elige la alineación como política de preparación; no afirma que la API de EKS rechace universalmente todas las diferencias de versiones admitidas. No hay una regla universal que indique que los complementos deban actualizarse todos “antes” o todos “después” del plano de control. La reversión tiene otra secuencia, que se describe más abajo.
 
-## Planificación y preparación de la actualización
+## Planificación y preparación de la actualización {#upgrade-planning-and-preparation}
 
 <!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
 ![Tree diagram showing upgrade planning and preparation split into an upgrade assessment branch (version compatibility check, resource requirements, upgrade schedule planning) and a pre-upgrade preparation branch (check cluster state, create backup, test upgrade, upgrade documentation).](../.gitbook/assets/en-eks-08-eks-upgrades-1.png)
@@ -230,7 +230,7 @@ Documente el proceso de actualización:
 - Procedimientos de reversión
 - Guía para solucionar problemas
 
-## Actualización del plano de control de EKS
+## Actualización del plano de control de EKS {#eks-control-plane-upgrade}
 
 <!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
 ![Diagram of an EKS control plane upgrade split into four stages, preparation, execution, monitoring, and troubleshooting, each grouping its steps: version checks and planning, Console/CLI/eksctl, status, cluster state and CloudWatch monitoring, and common issues with troubleshooting steps.](../.gitbook/assets/en-eks-08-eks-upgrades-2.png)
@@ -406,7 +406,7 @@ Problemas comunes que pueden presentarse durante la actualización del plano de 
 3. Revise los registros del plano de control de EKS
 4. Póngase en contacto con AWS Support
 
-## Actualización del grupo de nodos
+## Actualización del grupo de nodos {#node-group-upgrade}
 
 Después de actualizar el plano de control, debe actualizar los grupos de nodos. Hay varias estrategias para actualizar grupos de nodos, cada una con ventajas y desventajas.
 
@@ -589,7 +589,7 @@ kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o wide
 kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,PHASE:.status.phase,READY:'.status.conditions[?(@.type=="Ready")].status'
 ```
 
-## Actualización de complementos
+## Actualización de complementos {#add-on-upgrade}
 
 Inventaríe los propietarios reales de los componentes y sus rutas de actualización. Las versiones de complementos administrados por EKS no se actualizan automáticamente al actualizar el plano de control; el responsable selecciona e inicia una actualización compatible. Las versiones puente necesarias pueden instalarse antes del cambio del plano de control. AWS administra por separado las capacidades integradas de Auto Mode; no instale ni actualice componentes duplicados de redes/almacenamiento/DNS de nodos como si todos los clústeres usaran los mismos DaemonSets/Deployments.
 
@@ -745,7 +745,7 @@ kubectl --context "$KUBE_CONTEXT" logs -n kube-system -l k8s-app=aws-node
 kubectl --context "$KUBE_CONTEXT" get events -n kube-system --sort-by='.lastTimestamp'
 ```
 
-## Validación y solución de problemas de la actualización
+## Validación y solución de problemas de la actualización {#upgrade-validation-and-troubleshooting}
 
 Cuando termine la actualización, debe validar que el clúster funcione con normalidad y resolver cualquier problema que pueda surgir.
 
@@ -1008,7 +1008,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$WORKLOAD_NAMESPACE" get deployments,state
 kubectl --context "$KUBE_CONTEXT" api-versions
 ```
 
-#### Procedimiento de reversión
+#### Procedimiento de reversión {#rollback-procedure}
 
 La reversión de versión de EKS es una operación real iniciada por el usuario que se introdujo en julio de 2026. Use la [guía actual de reversión](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), no una afirmación general y antigua de que “no es posible bajar de versión”. Esto cambia la versión secundaria de Kubernetes; **no** restaura una instantánea anterior de etcd/datos de aplicaciones/PV ni revierte automáticamente los complementos. La versión de la plataforma pasa a ser la última versión de la plataforma para la versión secundaria anterior.
 
@@ -1091,7 +1091,7 @@ aws eks cancel-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
 
 Una reversión de una pila de CloudFormation o una reversión de Git no inicia automáticamente una reversión de versión de EKS. Tras una recuperación explícita, reconcilie el estado/los planes de IaC con la versión observada. Si la reversión no es posible, evalúe una corrección progresiva o un clúster nuevo en una versión admitida, con migración/restauración probadas. Ninguno de estos mecanismos deshace automáticamente las migraciones de bases de datos ni los cambios en los datos de las aplicaciones.
 
-## Automatización de actualizaciones
+## Automatización de actualizaciones {#upgrade-automation}
 
 En entornos a gran escala, es importante automatizar el proceso de actualización. Puede automatizar las actualizaciones de EKS con las siguientes herramientas y métodos.
 
@@ -1204,7 +1204,7 @@ Prácticas recomendadas para automatizar actualizaciones de EKS:
 4. **Notificaciones**: configure notificaciones de éxito o falla de la actualización
 5. **Documentación**: documente el proceso y los pasos de automatización
 
-## Prácticas recomendadas para las actualizaciones
+## Prácticas recomendadas para las actualizaciones {#upgrade-best-practices}
 
 Veamos las prácticas recomendadas para actualizar clústeres de EKS.
 

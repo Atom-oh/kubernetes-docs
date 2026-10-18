@@ -18,7 +18,7 @@
 10. [性能与成本比较](02-multi-cluster.md#performance-and-cost-comparison)
 11. [故障排查](02-multi-cluster.md#troubleshooting)
 
-## 你真的需要多集群吗？
+## 你真的需要多集群吗？ {#do-you-really-need-multi-cluster}
 
 多集群 Service Mesh 功能强大，但会增加复杂性和成本。采用之前需要仔细考虑。
 
@@ -138,7 +138,7 @@
 
 请将答案作为设计输入，而不是数值化的推荐评分。无论勾选了多少项，区域、信任、API、恢复和运维约束都可能排除某个选项。
 
-## 架构选择指南
+## 架构选择指南 {#architecture-selection-guide}
 
 | 决策 | 所需证据 |
 |---|---|
@@ -217,7 +217,7 @@
 * 只需要简单的服务连接
 * 优先简化运维
 
-## Istio 与 AWS VPC Lattice
+## Istio 与 AWS VPC Lattice {#istio-vs-aws-vpc-lattice}
 
 ### 功能对比
 
@@ -301,7 +301,7 @@ Lattice 服务、资源配置和服务网络均为区域级。跨区域/本地�
 * 环境隔离（dev/staging/prod）
 * 跨集群服务发现和通信
 
-## 拓扑
+## 拓扑 {#topology}
 
 以下均为 sidecar 拓扑。目前 Ambient 多集群支持 Beta 版多主集群/多网络，但有单独的限制；不要将主集群/远程集群的操作说明用于 Ambient。每个主集群都会读取已授权的 Kubernetes API。Istiod 不会将其他 Istio CRD、应用配置或数据库复制到另一个主集群；这些内容需要单独分发。共享信任域会使不同集群中相同命名空间/ServiceAccount 具有相同身份，因此仅靠集群隔离并不能实现授权隔离。
 
@@ -342,7 +342,7 @@ kubectl --context="$CTX_CLUSTER1" get nodes
 kubectl --context="$CTX_CLUSTER2" get nodes
 ```
 
-## 主集群-远程集群设置
+## 主集群-远程集群设置 {#primary-remote-setup}
 
 这是官方的 **基于 IP、同网络的 sidecar** 拓扑：Pod 必须能够跨集群直接访问，且远程 API 必须可从主集群访问。这不是 EKS NLB 主机名配置方案。1.31 chart 可以使用 ExternalName Service 表示 DNS 值的 remotePilotAddress；本指南中的 IP 查找并非完整的基于 DNS 的 EKS 设计。请使用[外部控制平面指南](https://istio.io/latest/docs/setup/install/external-controlplane/)配置注入 URL、签名 DNS 证书和实际控制平面可达性。渲染 DNS 值并不能验证该部署。下面的 IstioOperator 是 istioctl 的输入，而不是集群内的 operator 资源。
 
@@ -418,7 +418,7 @@ istioctl create-remote-secret \
   kubectl apply -f - --context="${CTX_CLUSTER1}"
 ```
 
-## 多主集群设置
+## 多主集群设置 {#multi-primary-setup}
 
 对于这种独立网络拓扑，每个主集群都必须能够访问对等集群的 API 和 East-West Gateway。安装 Istiod 前，请配置符合该拓扑要求的 CA Secret。请为实际平台配置 L4 负载均衡器、网关可达性和范围受限的访问；ALB 或其他会终止 TLS 的 L7 跳点与 AUTO_PASSTHROUGH 不兼容。有关 EKS 负载均衡器前提条件，请参阅 [AWS 集成](../04-aws-integration.md)。
 
@@ -481,7 +481,7 @@ istioctl create-remote-secret \
   kubectl apply -f - --context="${CTX_CLUSTER1}"
 ```
 
-## 跨集群通信
+## 跨集群通信 {#cross-cluster-communication}
 
 使用远程发现，并确保 Service/命名空间名称匹配且 DNS 可见性符合要求。Istiod 不会在集群之间复制 Service 对象或 Deployment。本实验在两个集群中都定义 Service，只在 cluster2 中部署后端，并从 cluster1 中注入的客户端调用它。在不同网络中，Istio 会选择 East-West Gateway 和 SNI/mTLS 路径；不要将其替换为指向 port15443 的 HTTP ServiceEntry。
 
@@ -519,7 +519,7 @@ kubectl --context="$CTX_CLUSTER1" exec -n multicluster-demo deploy/curl -c curl 
 
 HTTP 响应测试的是应用路径，本身不能证明证书信任。请按照安全章节中的说明检查调用方/接收方 TLS 配置和身份凭据。[官方多集群验证指南](https://istio.io/latest/docs/setup/install/multicluster/verify/)提供了其他场景。这些命令假设信任、网络、策略和服务发现前提条件均已满足。
 
-## 与 VPC Lattice 配合使用
+## 与 VPC Lattice 配合使用 {#using-with-vpc-lattice}
 
 ### 混合架构约定和配置片段
 
@@ -614,7 +614,7 @@ aws vpc-lattice put-auth-policy --region "$LATTICE_REGION"   --resource-identifi
 
 确保各应用的链路追踪上下文和 Collector/后端配置兼容。跨越集群或 Lattice 边界本身并不会拆分链路追踪。请验证实际身份、TLS 和遥测路径，不要假设原来的双集群示意图就代表完整部署。
 
-## 实用示例
+## 实用示例 {#practical-examples}
 
 ### 示例 1：全球电子商务（多主集群 + VPC Lattice）
 
@@ -728,7 +728,7 @@ aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
 
 更改 DNS 前，请检查现有记录以及恢复/回滚计划。别名 A 记录并不构成完整的 IPv6 配置；使用 dualstack 还需要适当的 AAAA 记录和可达性。DNS 缓存、连接复用、目标组健康语义以及所有目标均不健康时的行为都会影响故障转移。请与应用/数据恢复一并测试。DNS 或 Istio 本身都无法单独保证15分钟 RPO 或1小时 RTO。
 
-## 性能与成本比较
+## 性能与成本比较 {#performance-and-cost-comparison}
 
 旧版延迟/RPS/CPU/内存表没有可复现的基准测试来源、发行版本、硬件或负载条件。成本表还比较了不同的流量规模（10TB 对比5TB）和随意设定的人员预算。因此这些表无法证明哪种架构更便宜/更快，也不能通过修改标签冒充最新测量结果。
 
@@ -742,7 +742,7 @@ aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
 
 请使用 [Lattice 定价](https://aws.amazon.com/vpc/lattice/pricing/)和实际账单数据。VPC 对等连接不会自动免除跨区域传输费用。Lattice 文档说明其服务内不会额外收取跨 AZ 数据传输费，但这不等于没有数据处理成本。Ambient 并不保证节省90%资源；请使用相同策略进行测量。固定的人员数量或每小时$1,000的停机损失门槛都不能决定架构选择。
 
-## 故障排查
+## 故障排查 {#troubleshooting}
 
 ```bash
 # Verify cross-cluster connectivity

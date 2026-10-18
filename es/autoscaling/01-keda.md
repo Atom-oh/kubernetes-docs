@@ -18,7 +18,7 @@
 - [Solución de problemas](#troubleshooting)
 - [Conclusión](#conclusion)
 
-## Introducción
+## Introducción {#introduction}
 
 KEDA (escalado automático basado en eventos de Kubernetes) es un proyecto de código abierto que permite escalar automáticamente aplicaciones de Kubernetes en función de eventos. KEDA amplía el Horizontal Pod Autoscaler (HPA) nativo de Kubernetes para permitir el escalado de cargas de trabajo según diversas fuentes de eventos y métricas, además del uso de CPU y memoria.
 
@@ -42,7 +42,7 @@ KEDA (escalado automático basado en eventos de Kubernetes) es un proyecto de c�
 | Complejidad de implementación | Operador, servidor de métricas, webhooks y credenciales | Controlador integrado; puede necesitar adaptadores | Depende del producto |
 | Métricas personalizadas | Integración con escaladores o productor HTTP/gRPC | Requiere un adaptador de métricas adecuado | Depende del producto |
 
-## Arquitectura
+## Arquitectura {#architecture}
 
 KEDA se basa en el patrón de operador de Kubernetes: supervisa fuentes de métricas externas y administra automáticamente el HPA de Kubernetes.
 
@@ -67,7 +67,7 @@ KEDA se basa en el patrón de operador de Kubernetes: supervisa fuentes de métr
 4. El HPA ajusta las réplicas distintas de cero; KEDA gestiona la activación y el periodo de enfriamiento configurado para escalar a cero. `cooldownPeriod` no sustituye la estabilización de reducción de escala del HPA desde N réplicas hasta 1.
 5. Un ScaledJob sigue una ruta distinta: KEDA crea Jobs por lotes según los eventos y su estrategia de escalado; no crea un HPA para esos Jobs.
 
-## Instalación y configuración
+## Instalación y configuración {#installation-and-configuration}
 
 Los ejemplos son alternativas, no un único conjunto de manifiestos. Prepara las cargas de trabajo, los Services, los Secrets y las imágenes a los que se hace referencia; sustituye los marcadores de cuenta, cola, URL e imagen. No asocies varios ScaledObjects/HPA al mismo destino. Una vez que el escalado automático administra las réplicas, coordina la propiedad de `spec.replicas` con GitOps/apply. Estas recetas no se han implementado ni medido en producción.
 
@@ -158,7 +158,7 @@ logging:
 helm upgrade --install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace -f values.yaml
 ```
 
-## Escaladores
+## Escaladores {#scalers}
 
 KEDA proporciona escaladores para diversas fuentes de eventos. Cada escalador recopila métricas de una fuente de eventos específica y escala las cargas de trabajo en función de ellas.
 
@@ -276,7 +276,7 @@ spec:
     authenticationRef:
       name: rabbitmq-auth
 ```
-## Escalado con métricas personalizadas
+## Escalado con métricas personalizadas {#custom-metric-scaling}
 
 KEDA permite escalar según métricas personalizadas, además de ofrecer diversos escaladores integrados. Esto permite implementar una lógica de escalado única, adaptada a los requisitos de tu negocio.
 
@@ -435,7 +435,7 @@ spec:
       valueLocation: value
 ```
 
-## Escalado con métricas de Twitter
+## Escalado con métricas de Twitter {#twitter-metric-scaling}
 
 Este ejemplo utiliza el endpoint de recuentos recientes de la API v2 de X (antes Twitter). Cuenta coincidencias en una ventana de cinco minutos que termina 30 segundos antes de la recopilación; no es un recuento acumulado ni una tasa instantánea de publicaciones. Deben verificarse el acceso a la cuenta, la semántica de la consulta, la facturación y los límites de frecuencia para el uso previsto.
 
@@ -628,7 +628,7 @@ spec:
 
 Con el valor predeterminado AverageValue, la proporción entre recuento y objetivo propone réplicas dentro de los límites configurados; no modela directamente el rendimiento del procesamiento. El recopilador permanece en una réplica independientemente, devuelve 503 cuando no está disponible y no tiene una sonda de actividad que lo reinicie únicamente por una interrupción del servicio ascendente. El uso en producción todavía requiere credenciales y límites probados, gestión del ciclo de vida y observabilidad.
 
-## Escalado con Google Calendar
+## Escalado con Google Calendar {#google-calendar-scaling}
 
 Este ejemplo cuenta las instancias de eventos de Google Calendar que **se solapan con la próxima hora**, incluidos los eventos que ya están en curso. `timeMin` filtra las horas de finalización de los eventos y `timeMax` filtra las horas de inicio. Se cuentan todas las páginas; si la recopilación es parcial, falla o queda obsoleta, la métrica se declara no disponible en lugar de devolver un cero falso.
 
@@ -833,7 +833,7 @@ spec:
 ```
 
 Con el valor predeterminado AverageValue, la proporción entre recuento y objetivo propone réplicas dentro de los límites configurados; no modela directamente el rendimiento del procesamiento. El recopilador permanece en una réplica independientemente, devuelve 503 cuando no está disponible y no tiene una sonda de actividad que lo reinicie únicamente por una interrupción del servicio ascendente. El uso en producción todavía requiere credenciales y límites probados, gestión del ciclo de vida y observabilidad.
-## Escalado con métricas de Istio
+## Escalado con métricas de Istio {#istio-metric-scaling}
 
 Este ejemplo muestra cómo escalar aplicaciones en función de métricas recopiladas de la malla de servicios de Istio. Veremos cómo escalar según las solicitudes por segundo (RPS).
 
@@ -1001,7 +1001,7 @@ spec:
           stabilizationWindowSeconds: 300
 ```
 
-## Escalado basado en Cron
+## Escalado basado en Cron {#cron-based-scaling}
 
 KEDA admite el escalado basado en el tiempo mediante expresiones Cron. Esto permite preescalar aplicaciones según patrones de tráfico o calendarios previsibles.
 
@@ -1095,7 +1095,7 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-## Integración con Amazon EKS
+## Integración con Amazon EKS {#integration-with-amazon-eks}
 
 KEDA puede escalar cargas de trabajo de EKS mediante métricas de AWS si se configuran la compatibilidad con Kubernetes, la identidad del operador, los permisos y la conectividad. KEDA no añade capacidad de cómputo por sí mismo; combina el escalado de cargas de trabajo con un diseño adecuado de capacidad de nodos/Fargate.
 
@@ -1209,7 +1209,7 @@ serviceAccount:
       eks.amazonaws.com/sts-regional-endpoints: 'true'
 ```
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
 ### Optimización del rendimiento
 
@@ -1313,7 +1313,7 @@ spec:
       port: 8080
 ```
 
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 ### Problemas comunes
 

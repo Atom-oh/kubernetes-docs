@@ -813,7 +813,7 @@ spec:
 
 每个后端都必须实际接受 `Host: health-check.local` 和 `/health`。Envoy 状态码范围不包括上限，因此 `[200, 300)` 覆盖所有 2xx 响应。主动健康检查和被动异常检测是不同的机制；弹出限制和 panic 行为无法保证排除所有故障端点。请根据后端数量和故障模型进行验证。
 
-### 连接池配置
+### 连接池配置 {#connection-pool-configuration}
 
 ```yaml
 apiVersion: cilium.io/v2

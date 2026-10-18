@@ -10,7 +10,7 @@ AuthorizationPolicy 可让你精细控制服务访问权限。
 4. [实用示例](#practical-examples)
 5. [最佳实践](#best-practices)
 
-## 授权概述
+## 授权概述 {#authorization-overview}
 
 <p align="center">
   <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Istio Authorization" width="700">
@@ -32,7 +32,7 @@ Istio AuthorizationPolicy 为服务提供精细化访问控制。上图展示了
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-03-authorization-0.html)
 
-## 基本策略
+## 基本策略 {#basic-policies}
 
 该图展示了一条合取规则。在一条规则中，from/to/when 约束会组合生效；不同规则以及匹配的 ALLOW 策略则是可选方案。如果某个工作负载没有 ALLOW 策略，请求将被允许，除非被 CUSTOM/DENY 拒绝。一旦某条 ALLOW 策略生效，就必须至少匹配一条 ALLOW 规则。以下示例是可选方案；允许所有请求会放宽仅允许 get 请求的策略。
 
@@ -82,7 +82,7 @@ spec:
         methods: ["GET"]  # Allow only GET
 ```
 
-## 高级策略
+## 高级策略 {#advanced-policies}
 
 ### 基于 Service Account
 
@@ -166,13 +166,13 @@ spec:
       values: ["admin", "superuser"]  # role claim is admin or superuser
 ```
 
-## 实用示例
+## 实用示例 {#practical-examples}
 
 若要设置默认拒绝并配置例外，请应用空的 ALLOW 策略，并仅添加预期的特定 ALLOW 规则。包含 rules: [{}] 的显式 DENY 会形成无法被任何 ALLOW 覆盖的硬性阻止。不带 selector 的策略会应用于其所在的 Namespace；根 Namespace 和 targetRefs 附加规则需要分别谨慎处理。
 
 基于 Service Account/Namespace 的匹配要求经过身份验证的 mTLS 对端身份。JWT 角色示例要求配置匹配的 RequestAuthentication，并验证预期的签发者/受众。客户端标头不能替代这两种身份。对于原生 TCP，应匹配身份/IP/端口，而不是 HTTP 方法或 JWT 声明；DENY 规则中缺少 HTTP 属性时，可能会意外匹配 TCP 流量。
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 - 将策略范围限定为预期的工作负载/资源，并一并检查所有适用的 ALLOW 规则。
 - 对 ambient L7 策略使用 waypoint targetRefs；sidecar selector 不是 waypoint 附加方式。

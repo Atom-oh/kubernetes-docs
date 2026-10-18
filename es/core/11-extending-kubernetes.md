@@ -20,7 +20,7 @@ Kubernetes es una plataforma diseñada teniendo en cuenta la extensibilidad, lo 
 12. [Prácticas recomendadas](#best-practices)
 13. [Conclusión](#conclusion)
 
-## Descripción general de las extensiones de Kubernetes
+## Descripción general de las extensiones de Kubernetes {#kubernetes-extension-overview}
 
 Kubernetes proporciona varios puntos de extensión para ampliar y personalizar su funcionalidad básica. Los principales puntos de extensión son:
 
@@ -50,7 +50,7 @@ Aspectos que debes tener en cuenta al elegir un método de extensión adecuado:
 4. **Compatibilidad con las actualizaciones**: Compatibilidad con las actualizaciones de versión de Kubernetes
 5. **Compatibilidad con la comunidad**: Nivel de apoyo de la comunidad para el método de extensión
 
-## Recursos personalizados
+## Recursos personalizados {#custom-resources}
 
 Los recursos personalizados permiten ampliar la API de Kubernetes para definir nuevos tipos de objetos.
 
@@ -199,7 +199,7 @@ spec:
       - v1
 ```
 
-## Patrón de operador
+## Patrón de operador {#operator-pattern}
 
 El patrón de operador permite automatizar el conocimiento operativo de aplicaciones complejas mediante la combinación de recursos personalizados y controladores.
 
@@ -329,7 +329,7 @@ Operadores populares de código abierto:
 5. **OpenTelemetry Operator**: Implementa Jaeger v2; el antiguo Jaeger Operator solo admite Jaeger v1, que ya está retirado.
 6. **Strimzi Kafka Operator**: Administra clústeres de Apache Kafka
 7. **Istio in-cluster Operator (eliminado en 1.24)**: Ejemplo histórico; usa los flujos de instalación compatibles con Helm/istioctl.
-## Controladores de admisión
+## Controladores de admisión {#admission-controllers}
 
 Los controladores de admisión son complementos que interceptan las solicitudes al servidor de API de Kubernetes y las modifican o validan.
 
@@ -531,7 +531,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 3. **Istio**: Inyección de sidecar de Service mesh
 4. **cert-manager**: Administración de certificados TLS
 
-## Extensiones del servidor de API
+## Extensiones del servidor de API {#api-server-extensions}
 
 Las extensiones del servidor de API permiten agregar nuevos endpoints al servidor de API de Kubernetes.
 
@@ -631,7 +631,7 @@ La capa de agregación hace que varios servidores de API parezcan un solo servid
           +-----------------------+               +-------------------------+
 ```
 
-## Extensiones del Scheduler
+## Extensiones del Scheduler {#scheduler-extensions}
 
 Las extensiones del Scheduler permiten personalizar el comportamiento del Scheduler de Kubernetes.
 
@@ -1053,7 +1053,7 @@ kubectl get nodes -o wide
 kubectl -n kube-system get daemonsets
 ```
 
-## Complementos de dispositivos
+## Complementos de dispositivos {#device-plugins}
 
 Los complementos de dispositivos proporcionan una interfaz entre Kubernetes y el hardware especializado.
 
@@ -1125,7 +1125,7 @@ spec:
 4. **Complemento de dispositivos InfiniBand**: Administración de dispositivos InfiniBand
 5. **Complemento de dispositivos de red SR-IOV**: Administración de dispositivos de red SR-IOV
 
-## Funciones de extensión en Amazon EKS
+## Funciones de extensión en Amazon EKS {#extension-features-in-amazon-eks}
 
 La compatibilidad de versiones de EKS difiere de la de upstream. A fecha de 2026-10-12, la compatibilidad estándar de EKS abarca de 1.34 a 1.37; comprueba también la matriz de compatibilidad de cada complemento y controlador.
 
@@ -1254,7 +1254,7 @@ spec:
 EOF
 ```
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
 Veamos las prácticas recomendadas que debes tener en cuenta al implementar funciones de extensión de Kubernetes.
 

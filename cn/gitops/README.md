@@ -11,7 +11,7 @@
 - [Amazon EKS 上的 GitOps](#gitops-on-amazon-eks)
 - [入门](#getting-started)
 
-## 什么是 GitOps？
+## 什么是 GitOps？ {#what-is-gitops}
 
 GitOps 是一种运维框架，它将 DevOps 的基础设施自动化最佳实践（例如版本控制、协作、合规性和 CI/CD）应用于基础设施管理。Weaveworks 于 2017 年创造了这个术语，此后它成为 CNCF 认可的云原生应用部署方法。
 
@@ -38,7 +38,7 @@ OpenGitOps 项目通过四项原则定义 GitOps：
 3. **自动拉取**：软件 agent 自动从源拉取期望状态声明
 4. **持续协调**：软件 agent 持续观察系统实际状态，并尝试应用期望状态
 
-## 核心原则
+## 核心原则 {#core-principles}
 
 Git 历史记录期望配置。Git revert 不会还原数据库迁移、已删除的数据或外部状态。Argo CD 的 automated sync、prune 和 selfHeal 是相互独立的设置；GitOps 描述的是一个尝试进行协调的控制循环。
 
@@ -98,7 +98,7 @@ GitOps agent 会持续执行以下操作：
 
 协调尝试取决于 sync/self-heal 策略、权限和运行状况。例如，Argo CD automated sync 和 selfHeal 需要配置；仅安装 Argo CD 并不会回退每一项手动更改或恢复丢失的数据。
 
-## 推送与拉取模型
+## 推送与拉取模型 {#push-vs-pull-model}
 
 对比传统的推送式部署与基于拉取的 GitOps。仅使用 `kubectl apply` 的 CI 流水线本身并不符合 OpenGitOps 的自动拉取和持续协调原则：
 
@@ -131,7 +131,7 @@ GitOps agent 会持续执行以下操作：
 - 自动检测并纠正偏差
 - 可在防火墙后运行
 
-## GitOps 工具概览
+## GitOps 工具概览 {#gitops-tools-overview}
 
 ### ArgoCD
 
@@ -183,7 +183,7 @@ Jenkins X / JayeX 为 Kubernetes 上的云原生应用提供 CI/CD。
 | OCI 源 | 通用 OCI/Helm 源；需验证层和媒体类型 | OCIRepository/Helm 源；需验证验证和层设置 |
 | 容量 | 测量应用/集群数量和协调负载 | 测量已安装的控制器、源和协调负载 |
 
-## 工具选择指南
+## 工具选择指南 {#tool-selection-guide}
 
 ### 适合选择 ArgoCD 的情况：
 
@@ -209,7 +209,7 @@ Jenkins X / JayeX 为 Kubernetes 上的云原生应用提供 CI/CD。
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-12.html)
 
-## Amazon EKS 上的 GitOps
+## Amazon EKS 上的 GitOps {#gitops-on-amazon-eks}
 
 ### EKS 特定注意事项
 
@@ -268,7 +268,7 @@ GitOps 可通过以下方式管理 AWS 资源：
     └── security/                # Security policies
 ```
 
-## 入门
+## 入门 {#getting-started}
 
 ### ArgoCD 快速入门
 

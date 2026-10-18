@@ -12,7 +12,7 @@
 
 2026 年 9 月 11 日時点で Istio 1.31 向けにレビュー済みです。`IstioOperator` の抜粋は `istioctl install -f` への入力であり、kubectl で適用する Kubernetes リソースではありません。既存のインストール設定にマージし、Helm では同等の chart values を使用してください。ほとんどの例は Sidecar を対象としています。ambient では waypoint/Gateway API ポリシーを使用してください。リソース設定とロールアウト期間は、負荷をかけて検証するための出発点です。
 
-## パフォーマンス最適化
+## パフォーマンス最適化 {#performance-optimization}
 
 ### 1. Control Plane リソースの最適化
 
@@ -148,7 +148,7 @@ spec:
 - メモリ使用量の削減
 - 設定プッシュの高速化
 
-## セキュリティ強化
+## セキュリティ強化 {#security-hardening}
 
 ### 1. 厳格な mTLS の適用
 
@@ -263,7 +263,7 @@ spec:
       values: ["https://auth.example.com"]
 ```
 
-## 運用ガイド
+## 運用ガイド {#operations-guide}
 
 ### 1. Deployment 戦略
 
@@ -380,7 +380,7 @@ kubectl apply -f istio-config-backup.yaml
 
 Helm インストールでは、代わりに chart version と `helm get values <release> -n <namespace> -o yaml` を保持してください。CA/TLS Secrets は安全にバックアップし、使用中の Gateway API、EnvoyFilter、WasmPlugin リソースも含めてください。必要な Namespace を再作成し、復元前に生成された snapshot をレビューしてください。
 
-## モニタリングと可観測性
+## モニタリングと可観測性 {#monitoring-and-observability}
 
 ### 1. Golden Signals
 
@@ -470,7 +470,7 @@ groups:
       summary: "Istiod scrape target is unavailable"
 ```
 
-## 本番環境チェックリスト
+## 本番環境チェックリスト {#production-checklist}
 
 ### インストール前
 
@@ -570,7 +570,7 @@ groups:
    Do require Golden Signals monitoring
    ```
 
-## コスト最適化
+## コスト最適化 {#cost-optimization}
 
 - 測定済みの Sidecar リソース requests を、ztunnel および必要な waypoint 容量と比較してください。Pod 数だけでは固定の削減率を定められません。
 - AZ 間のバイト数を測定し、実際のパスに対する最新の AWS リージョン料金を使用してください。locality weight は、普遍的な課金削減に直接変換されるものではありません。

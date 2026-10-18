@@ -56,7 +56,7 @@ Cilium 在 BPF 映射中存储连接状态。这支持有状态处理、回复�
 
 读取原始映射时请使用已发布的 BPF 定义。IPv4/IPv6 的键、值、字节序和布局各不相同；虚构一个同时包含元组和状态的 `ct_entry` 不能作为可靠的解码规范。
 
-### 替代 kube-proxy
+### 替代 kube-proxy {#kube-proxy-replacement}
 
 以下是一个**安装模式片段**，不是迁移步骤。请将 API 主机和端口替换为 Service 转换尚不可用时即可访问的端点。端口 6443 仅作示例；EKS API 端点通常使用 HTTPS 端口 443。保留所选平台的 IPAM、路由和 CNI 设置。
 

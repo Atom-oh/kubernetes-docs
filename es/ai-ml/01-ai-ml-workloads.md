@@ -145,7 +145,7 @@ Configuración de redes para el entrenamiento distribuido:
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-2.html)
 
-### NVIDIA GPU Operator y asignación de dispositivos
+### NVIDIA GPU Operator y asignación de dispositivos {#nvidia-gpu-operator-and-device-allocation}
 
 Las AMI NVIDIA de EKS AL2023 ya incluyen controladores y Container Toolkit, así que desactiva su instalación por parte de GPU Operator. No incluyen el device plugin ni el controlador DRA, que requieren configuración. Las AMI NVIDIA de Bottlerocket incluyen el device plugin. Evita instalar componentes duplicados que administren la misma función.
 
@@ -183,7 +183,7 @@ spec:
           nvidia.com/gpu: 1
 ```
 
-### Kubeflow y entrenamiento distribuido
+### Kubeflow y entrenamiento distribuido {#kubeflow-and-distributed-training}
 
 Usa la [guía de instalación 26.03.1](kubeflow/01-architecture-installation.md) fijada para consultar dependencias, identidad y almacenamiento, en lugar de una instalación de una sola línea desde la rama master. El proyecto de servicio de modelos es KServe; KFServing es su nombre histórico.
 
@@ -244,7 +244,7 @@ helm template nvdp nvdp/nvidia-device-plugin \
 
 Esto expone nvidia.com/gpu.shared; los Pod solicitan un valor entero de ese recurso. replicas=2 no garantiza la mitad de la memoria de la GPU. Verifica los nodos seleccionados, la asignación y la contención en hardware GPU real.
 
-### Ubicación y topología
+### Ubicación y topología {#placement-and-topology}
 
 Las anotaciones de zona/región no controlan la ubicación de los Pod. Usa nodeSelector/afinidad con etiquetas reales de los nodos; los selectores de antiafinidad y distribución también deben coincidir con las etiquetas de los Pod. Sustituye la AZ indicada más abajo por la real. La ubicación en la misma AZ, la distribución entre nodos y la admisión en grupo son restricciones distintas.
 
@@ -281,7 +281,7 @@ spec:
           memory: 128Mi
 ```
 
-### Almacenamiento y almacenamiento en caché
+### Almacenamiento y almacenamiento en caché {#storage-and-caching}
 
 El aprovisionamiento estático de FSx CSI conecta un **sistema de archivos existente** con un PV/PVC. Sustituye el ID del sistema de archivos, el DNS, el nombre del montaje, la capacidad y el namespace por valores reales. Retain evita la eliminación automática del sistema de archivos; los cargos continúan hasta que se elimine por separado.
 
@@ -329,7 +329,7 @@ Un DaemonSet de workers de Alluxio, por sí solo, no constituye una implementaci
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-6.html)
 
-### Prometheus y Grafana
+### Prometheus y Grafana {#prometheus-and-grafana}
 
 DCGM Exporter proporciona métricas de GPU, que son distintas de la capacidad asignable del device plugin. Evita duplicar un exporter administrado por Operator con otro DaemonSet. No se necesita un montaje del socket de Docker en una configuración con containerd.
 
@@ -360,11 +360,11 @@ El encuadre de registros CRI de containerd y el JSON de la aplicación son capas
 
 ## Optimización de costos
 
-### Spot y aprovisionamiento de nodos
+### Spot y aprovisionamiento de nodos {#spot-and-node-provisioning}
 
 Las interrupciones de Spot y la falta de capacidad requieren checkpoints externos, reintentos, idempotencia y validación del tiempo de recuperación. Usa la configuración actual de NodePool/EC2NodeClass de la [guía de Karpenter](../autoscaling/02-karpenter.md), incluidas la revisión de la imagen/AMI, las taints/tolerations, los límites y la gestión de interrupciones. Combinar grupos de nodos de CPU/GPU no es lo mismo que el producto EKS Hybrid Nodes.
 
-### HPA y métricas
+### HPA y métricas {#hpa-and-metrics}
 
 Usa las métricas Resource de HPA para CPU/memoria proporcionadas por metrics-server. La asignación de nvidia.com/gpu no es una métrica Resource de utilización de GPU. Las señales de GPU/solicitudes requieren exporters y un adaptador de métricas personalizadas/externas.
 
@@ -395,7 +395,7 @@ spec:
 
 Una agregación o agrupación de etiquetas incorrecta puede impedir que un adaptador devuelva valores por Pod. Los percentiles de histogramas o la precisión del modelo no son señales proporcionales adecuadas para HPA de forma automática. Mide conjuntamente la carga, la cola, la latencia, la utilización y el rendimiento alcanzado. Reducir la cantidad de Pod puede mantener los cargos de EC2 hasta que se terminen los nodos; la hora del día, por sí sola, no reduce las tarifas On-Demand.
 
-### Acceso a datos y modelos
+### Acceso a datos y modelos {#data-and-model-access}
 
 RBAC de Kubernetes controla el acceso a la API; los permisos de S3/KMS usan IAM para cargas de trabajo. Usa almacenamiento de objetos, cifrado y credenciales basadas en archivos en lugar de Secrets grandes para los modelos o claves de descifrado en variables de entorno. La codificación base64 de un Secret no es cifrado. En NetworkPolicy, namespaceSelector y podSelector dentro del mismo peer se combinan mediante AND; las entradas separadas se combinan mediante OR. Permite también las direcciones reales de DNS, almacenamiento y métricas.
 

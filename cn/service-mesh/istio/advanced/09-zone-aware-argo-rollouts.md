@@ -16,7 +16,7 @@
 6. [故障排查](#troubleshooting)
 7. [最佳实践](#best-practices)
 
-## 问题定义
+## 问题定义 {#problem-definition}
 
 ### Spot 中断与 PDB
 
@@ -38,7 +38,7 @@ PodDisruptionBudget 会限制自愿的 Eviction API 操作。它不会阻止 EC2
 
 不要仅靠添加 DestinationRule 就声称同时具备三项特性（严格的区域过滤、每个区域独立的哈希值和透明故障转移）。独立的入口路由设计不属于此部署蓝图，也未在此处经过生产环境测试。
 
-## 架构概述
+## 架构概述 {#architecture-overview}
 
 一个通用的 `test` Service 提供 DNS 名称。对于注入了 sidecar 的客户端，VirtualService 会根据**明确设置的客户端 Pod 标签**选择区域路由。每条路由都指向该区域的 stable/canary Services。独立的 Rollout 控制这对 Services 的哈希值以及其专属命名路由的权重。
 
@@ -46,7 +46,7 @@ Istiod 会将配置编译为 Envoy 配置。VirtualService/DestinationRule 对�
 
 每个区域的 Pod 只会调度到其配置的 AZ。因此，区域 A 的 Services 不包含区域 B/C 的备用端点。独立的部署状态也无法消除共享控制平面、API server、网络或数据库依赖。
 
-## 关键设计决策
+## 关键设计决策 {#key-design-decisions}
 
 ### 1. 路由所有权
 
@@ -66,7 +66,7 @@ Istiod 构建网格配置时，`sourceLabels` 用于选择源工作负载；它�
 
 此外，`localityLbSetting.distribute`、`failover` 和 `failoverPriority` 是互斥的选项，不应随意组合字段。`failover.from/to` 的值是**区域（region）**，不是 `region/zone` 字符串。仅靠这些条目无法建立 A→B→C→A 的 AZ 循环。
 
-## 实施指南
+## 实施指南 {#implementation-guide}
 
 ### 先决条件
 
@@ -712,7 +712,7 @@ spec:
 
 通过 `http://test.zone-rollouts-demo.svc.cluster.local:8080/color` 持续发送有代表性的网格流量。调用方标签决定其所属区域，控制器则决定该区域 stable/canary 的权重。五分钟预热时间长于两分钟的指标回看窗口；二十个请求的估算值和测量次数只是示例，并不代表统计置信度。
 
-## 流量路径
+## 流量路径 {#traffic-flow}
 
 ### 正常的区域流量路径
 
@@ -753,7 +753,7 @@ spec:
 
 Locality 优先级会优先选择区域/可用区匹配的端点，并可将后续流量转移到符合条件的健康端点。它们不会指定固定的循环 AZ 顺序。`consecutive5xxErrors` 是当前字段；连续错误检测由流量驱动，而 `interval` 用于定期检测任务。驱逐所有端点可能导致错误，并且已失败的请求不会自动重放。请参阅[区域感知路由](../resilience/03-zone-aware-routing.md)。
 
-## 故障排查
+## 故障排查 {#troubleshooting}
 
 ```bash
 kubectl argo rollouts get rollout test-a -n zone-rollouts-demo
@@ -775,7 +775,7 @@ kubectl logs -n argo-rollouts deployment/argo-rollouts
 - **没有 canary 流量**：确认请求经过网格、有就绪的 EndpointSlices、哈希选择器和实际权重，并且样本数量足够。
 - **分析卡住/失败**：检查原始结果和 provider 错误，而不只是 Rollout 的汇总阶段。缺少自定义区域标签不会自动生成遥测数据。
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 1. 明确协调版本变更
 

@@ -14,7 +14,7 @@ Este contenido formativo incluye cuestionarios para cada tema junto con los mate
 - [Hoja de ruta de la guía](./roadmap.md) - Mapa de aprendizaje completo y rutas de aprendizaje recomendadas | [Cuestionario](./quizzes/roadmap-quiz.md)
 - [Lectura con LLM](./llm-guide.md) - Busca y lee material de origen mediante llms.txt, el manifiesto y MCP | [Cuestionario](./quizzes/llm-guide-quiz.md)
 
-## Tabla de contenido
+## Tabla de contenido {#table-of-contents}
 
 ### Noticias
 - [Noticias semanales](./news/README.md) - Resúmenes de las últimas noticias del ecosistema de Kubernetes/EKS

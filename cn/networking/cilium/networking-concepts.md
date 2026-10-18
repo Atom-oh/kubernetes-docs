@@ -24,7 +24,7 @@
 7. [负载均衡概念](#load-balancing-concepts)
 8. [网络安全基础](#network-security-basics)
 
-## OSI 模型和 TCP/IP 协议栈
+## OSI 模型和 TCP/IP 协议栈 {#osi-model-and-tcp-ip-stack}
 
 > **关键概念**：OSI 模型是一个概念框架，将网络通信划分为 7 个抽象层，从而更容易理解复杂的网络处理过程。
 
@@ -128,7 +128,7 @@ Cilium 在多个网络层提供功能：
 - **L4（传输层）**：基于端口的过滤、负载均衡、连接跟踪
 - **L7（应用层）**：已配置的 HTTP/gRPC 代理功能和 DNS 策略；早期的 Kafka L7 策略 API 已移除
 
-## 容器网络基础
+## 容器网络基础 {#container-networking-basics}
 
 容器网络是一种机制，允许容器化应用彼此通信并与外部世界通信。Kubernetes 等容器编排平台使用各种网络模型和解决方案。
 
@@ -234,7 +234,7 @@ Cilium 利用 eBPF 提供高性能、可扩展的容器网络解决方案：
 
 不带平台覆盖项的通用 Helm 安装默认使用 cluster-pool IPAM：operator 分配节点 CIDR，agent 从各自节点的地址池中分配 Pod IP。`ipam.mode: kubernetes` 使用 Node 的 `spec.podCIDR`/`spec.podCIDRs`。ENI 模式使用 EC2 接口和 VPC 地址；这并非适用于所有 EKS 计算模式的通用建议。请参阅 [IPAM 和策略](04-ipam-policy.md)。
 
-## Overlay 网络
+## Overlay 网络 {#overlay-networks}
 
 Overlay 网络是一种在现有网络基础设施之上构建虚拟网络层的技术。这项技术允许在不受物理网络拓扑影响的情况下创建虚拟网络拓扑。在容器环境中，它被广泛用于实现跨多个主机的容器通信。
 
@@ -331,7 +331,7 @@ ipam:
     clusterPoolIPv4MaskSize: 24
 ```
 
-## 网络地址转换（NAT）
+## 网络地址转换（NAT） {#network-address-translation-nat}
 
 网络地址转换（NAT）是修改 IP 数据包源地址或目标地址的过程。NAT 主要用于使私有网络中的设备能够与公共互联网通信，或使两个网络地址空间重叠的网络能够互相通信。
 
@@ -444,7 +444,7 @@ ipMasqAgent:
     masqLinkLocal: false
 ```
 
-## 路由协议
+## 路由协议 {#routing-protocols}
 
 路由协议定义了相关规则和过程，用于确定数据包从源到目的地的最佳网络路径。这些协议在适应网络拓扑变化、高效转发流量和绕过网络故障方面发挥着重要作用。
 
@@ -580,7 +580,7 @@ bgpControlPlane:
 
 请使用上面的完整 VXLAN values 示例。在 agent 状态中核实运行模式和端口；不要使用小型 ConfigMap 覆盖安装设置。
 
-## DNS 和服务发现
+## DNS 和服务发现 {#dns-and-service-discovery}
 
 DNS（域名系统）和服务发现对现代网络应用至关重要，尤其是在动态容器环境中。这些机制可以抽象服务位置，并允许应用适应网络拓扑变化。
 
@@ -787,7 +787,7 @@ spec:
       timeoutSeconds: 10800
 ```
 
-## 负载均衡概念
+## 负载均衡概念 {#load-balancing-concepts}
 
 负载均衡是一种将网络流量分配到多个服务器或后端服务的技术，可优化资源利用率，并在配合适当的容量和后端健康状态处理时，支持吞吐量、延迟和可用性目标。在容器环境中，对动态变化的后端实例有效分配流量尤为重要。
 
@@ -969,7 +969,7 @@ maglev:
   hashSeed: AAECAwQFBgcICQoL
 ```
 
-## 网络安全基础
+## 网络安全基础 {#network-security-basics}
 
 网络安全是保护网络基础设施、应用和数据免遭未经授权的访问、滥用、故障或修改的实践。在容器环境中，由于其动态分布式特性，网络安全更加重要。
 

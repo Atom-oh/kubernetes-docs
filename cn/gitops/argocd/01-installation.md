@@ -13,7 +13,7 @@
 - [声明式设置](#declarative-setup)
 - [升级 ArgoCD](#upgrading-argocd)
 
-## 先决条件
+## 先决条件 {#prerequisites}
 
 这是自我管理安装指南。EKS 托管 Argo CD 使用单独的功能创建、授权和配置流程；不要在其中叠加自我管理安装。请查看[概览兼容性表](README.md)和 EKS 支持窗口。Chart 声明的最低 kubeVersion 并不代表经过测试或受支持。
 
@@ -27,7 +27,7 @@ kubectl auth can-i create customresourcedefinitions.apiextensions.k8s.io
 kubectl auth can-i create clusterrolebindings.rbac.authorization.k8s.io
 ```
 
-## 安装方式
+## 安装方式 {#installation-methods}
 
 请选择一种安装管理方式：manifests、Helm 或 Kustomize。以下非 HA/HA 命令是可选方案，并非需要按顺序执行的步骤。使用自定义命名空间时，还必须更新 ClusterRoleBindings 中的 ServiceAccount subjects。
 
@@ -190,7 +190,7 @@ configMapGenerator:
 kubectl apply --server-side -k .
 ```
 
-## CLI 安装
+## CLI 安装 {#cli-installation}
 
 ### Linux / macOS
 
@@ -243,7 +243,7 @@ source <(argocd completion bash)
 # source <(argocd completion zsh)
 ```
 
-## 初始访问
+## 初始访问 {#initial-access}
 
 ### 选项 1：端口转发（开发环境）
 
@@ -289,7 +289,7 @@ argocd account update-password
 kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
 
-## 高可用设置
+## 高可用设置 {#high-availability-setup}
 
 ### HA 架构
 
@@ -306,7 +306,7 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 - PDB 会限制自愿驱逐，但无法防止节点故障，也不能覆盖每一种滚动更新。请测试实例分布、就绪状态、依赖项和协调恢复。
 - 请根据实际的 manifest 生成和内存负载调整 Repo Server 并发数、HPA 和 CPU 限制。不存在通用的“100 个应用就需要两个分片”阈值。
 
-## Amazon EKS 上的 ArgoCD
+## Amazon EKS 上的 ArgoCD {#argocd-on-amazon-eks}
 
 ### ALB 和 TLS
 
@@ -393,7 +393,7 @@ argocd cluster list
 
 命令式命令 `argocd cluster add` 接受 kubeconfig context 名称。EKS 默认 context 可能是 ARN，但这并不意味着这是一个接受任意 ARN 的 AWS API。该命令可能会创建目标 ServiceAccount/RBAC 对象；请将其权限范围限制为所需的命名空间和权限。
 
-## 声明式设置
+## 声明式设置 {#declarative-setup}
 
 对于 Helm，请在 values 中管理 `configs.cm`/`configs.params`。对于 manifests，请将以下必需键与现有设置合并。避免 Helm 和单独的 kubectl 管理方同时更改相同字段。
 
@@ -472,7 +472,7 @@ kubectl -n argocd label secret github-app-creds \
   argocd.argoproj.io/secret-type=repo-creds
 ```
 
-## 升级 ArgoCD
+## 升级 ArgoCD {#upgrading-argocd}
 
 ### 升级前检查清单
 

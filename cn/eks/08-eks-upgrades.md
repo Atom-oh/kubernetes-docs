@@ -17,7 +17,7 @@
 7. [升级自动化](#upgrade-automation)
 8. [升级最佳实践](#upgrade-best-practices)
 
-## EKS 升级概述
+## EKS 升级概述 {#eks-upgrade-overview}
 
 ![Tree diagram of the four pillars of an EKS upgrade: version management policy, the components that get upgraded (control plane, node groups, add-ons, self-managed components), the one-minor-version-at-a-time upgrade path versus an unsupported version skip, and the five-step upgrade order.](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
 
@@ -60,7 +60,7 @@ EKS 集群必须一次升级一个次要版本：
 
 对于 kubelet 1.25 及更高版本，上游允许其最多落后 API server 三个次要版本，但不能更新；API server 版本混合时，允许的范围会缩小。EKS 文档既说明了升级前节点版本对齐建议，也说明了支持的版本偏差范围。本操作手册选择对齐作为准备策略；它并不声称 EKS API 一律拒绝所有受支持的版本偏差。附加组件并非一律都要“在控制平面升级之前”或“之后”升级。回滚采用不同的先升级节点顺序，详见下文。
 
-## 升级规划与准备
+## 升级规划与准备 {#upgrade-planning-and-preparation}
 
 <!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
 ![Tree diagram showing upgrade planning and preparation split into an upgrade assessment branch (version compatibility check, resource requirements, upgrade schedule planning) and a pre-upgrade preparation branch (check cluster state, create backup, test upgrade, upgrade documentation).](../.gitbook/assets/en-eks-08-eks-upgrades-1.png)
@@ -230,7 +230,7 @@ kubectl --context "$KUBE_CONTEXT" get events --all-namespaces
 - 回滚流程
 - 故障排除指南
 
-## EKS 控制平面升级
+## EKS 控制平面升级 {#eks-control-plane-upgrade}
 
 <!-- Pending parent diagram repair: see core-audit/eks-upgrades/diagram-review.json
 ![Diagram of an EKS control plane upgrade split into four stages, preparation, execution, monitoring, and troubleshooting, each grouping its steps: version checks and planning, Console/CLI/eksctl, status, cluster state and CloudWatch monitoring, and common issues with troubleshooting steps.](../.gitbook/assets/en-eks-08-eks-upgrades-2.png)
@@ -406,7 +406,7 @@ kubectl --context "$KUBE_CONTEXT" get events --all-namespaces --sort-by='.lastTi
 3. 查看 EKS 控制平面日志
 4. 联系 AWS Support
 
-## 节点组升级
+## 节点组升级 {#node-group-upgrade}
 
 升级控制平面后，需要升级节点组。节点组升级有多种策略，各有优缺点。
 
@@ -589,7 +589,7 @@ kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o wide
 kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,PHASE:.status.phase,READY:'.status.conditions[?(@.type=="Ready")].status'
 ```
 
-## 附加组件升级
+## 附加组件升级 {#add-on-upgrade}
 
 清点实际组件负责人和升级路径。控制平面升级不会自动升级 EKS 托管的附加组件；负责人需选择并发起兼容的更新。必需的过渡版本可以先于控制平面变更安装。Auto Mode 内置功能由 AWS 单独管理；不要像所有集群都使用相同的 DaemonSet/Deployment 一样，安装或更新重复的节点网络/存储/DNS 组件。
 
@@ -745,7 +745,7 @@ kubectl --context "$KUBE_CONTEXT" logs -n kube-system -l k8s-app=aws-node
 kubectl --context "$KUBE_CONTEXT" get events -n kube-system --sort-by='.lastTimestamp'
 ```
 
-## 升级验证与故障排除
+## 升级验证与故障排除 {#upgrade-validation-and-troubleshooting}
 
 升级完成后，需要验证集群是否正常运行，并解决可能出现的任何问题。
 
@@ -1008,7 +1008,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$WORKLOAD_NAMESPACE" get deployments,state
 kubectl --context "$KUBE_CONTEXT" api-versions
 ```
 
-#### 回滚流程
+#### 回滚流程 {#rollback-procedure}
 
 EKS 版本回滚是一项真实存在、由用户发起的操作，于 2026 年 7 月推出。请使用[当前回滚指南](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)，不要笼统沿用较早的“不能降级”说法。此操作会更改 Kubernetes 次要版本；它**不会**还原先前的 etcd/应用程序/PV 数据快照，也不会自动回退附加组件。平台版本会变为先前次要版本的最新平台版本。
 
@@ -1091,7 +1091,7 @@ aws eks cancel-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
 
 CloudFormation 堆栈回滚或 Git 撤销不会自动发起 EKS 版本回滚。显式恢复后，请根据观测到的版本协调 IaC 状态/计划。如果不符合回滚条件，请评估向前修复，或在受支持的版本上新建集群并采用经过测试的迁移/恢复方案。这些机制都不会自动撤销数据库迁移或应用程序数据变更。
 
-## 升级自动化
+## 升级自动化 {#upgrade-automation}
 
 在大规模环境中，自动化升级流程很重要。可以使用以下工具和方法自动升级 EKS。
 
@@ -1204,7 +1204,7 @@ EKS 升级自动化的最佳实践：
 4. **通知**：配置升级成功或失败时的通知
 5. **文档**：记录自动化流程和步骤
 
-## 升级最佳实践
+## 升级最佳实践 {#upgrade-best-practices}
 
 下面来看看 EKS 集群升级的最佳实践。
 

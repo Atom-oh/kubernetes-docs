@@ -463,7 +463,7 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-## Aprovisionamiento dinámico
+## Aprovisionamiento dinámico {#dynamic-provisioning}
 
 El aprovisionamiento dinámico es una función que crea automáticamente PV cuando se crean PVC. Esto permite que los usuarios soliciten almacenamiento cuando lo necesitan, sin que los administradores tengan que crear PV de antemano.
 
@@ -521,7 +521,7 @@ spec:
         claimName: myclaim
 ```
 
-## Instantáneas de volúmenes
+## Instantáneas de volúmenes {#volume-snapshots}
 
 Kubernetes admite instantáneas de volúmenes para crear copias puntuales de PV. Esto resulta útil en escenarios de copia de seguridad y restauración.
 
@@ -575,7 +575,7 @@ spec:
       storage: 100Gi
 ```
 
-## Ampliación de volúmenes
+## Ampliación de volúmenes {#volume-expansion}
 
 Kubernetes permite ampliar el tamaño de los PVC. Para ello, se debe establecer `allowVolumeExpansion: true` en el Storage Class.
 
@@ -593,7 +593,7 @@ kubectl patch pvc myclaim --type merge -p '{"spec":{"resources":{"requests":{"st
 
 Usa el namespace del PVC y el StorageClass existente. El controlador y el sistema de archivos deben admitir la ampliación; no se admite la reducción. No cambies la clase del PVC enlazado ni edites directamente la capacidad del PV para simular un cambio de tamaño.
 
-## Volúmenes proyectados
+## Volúmenes proyectados {#projected-volumes}
 
 Los volúmenes proyectados permiten combinar varias fuentes de volumen en un único montaje de volumen. Esto resulta útil cuando necesitas exponer secrets, configMaps, downwardAPI y serviceAccountToken juntos en un solo directorio.
 
@@ -686,7 +686,7 @@ spec:
 
 Los tokens proyectados se renuevan; las aplicaciones deben volver a leer el archivo. El valor explícito de `audience` debe coincidir con el verificador previsto y no es automáticamente válido para acceder a la API de Kubernetes.
 
-## Volúmenes efímeros genéricos
+## Volúmenes efímeros genéricos {#generic-ephemeral-volumes}
 
 Los volúmenes efímeros genéricos proporcionan almacenamiento similar a un PVC, vinculado al ciclo de vida del Pod. A diferencia de `emptyDir`, aprovechan toda la funcionalidad de los PVC y los Storage Classes, incluido el aprovisionamiento dinámico.
 
@@ -777,7 +777,7 @@ spec:
 
 Los PVC efímeros genéricos son propiedad de su Pod y se eliminan junto con él mediante la recolección de basura. La eliminación de los datos subyacentes sigue la política de recuperación del PV: `Retain` deja el almacenamiento para una limpieza manual. Exporta los puntos de control que deban sobrevivir a la pérdida del Pod a un almacenamiento duradero.
 
-## Modo de volumen de bloques
+## Modo de volumen de bloques {#block-volume-mode}
 
 Kubernetes admite volúmenes de bloques sin formato, además de volúmenes de sistema de archivos. Los volúmenes de bloques presentan el almacenamiento como un dispositivo de bloques sin formato y sin sistema de archivos, lo que resulta útil para aplicaciones que administran su propia organización de datos.
 
@@ -864,7 +864,7 @@ Nota: Los volúmenes de bloques usan `volumeDevices` y `devicePath` en lugar de 
 
 Reemplaza el ID del volumen EBS estático y la zona de nodeAffinity por el volumen real y su zona de disponibilidad. La imagen `custom-database` es un marcador de posición para software compatible con dispositivos de bloques sin formato.
 
-## Clonación de volúmenes
+## Clonación de volúmenes {#volume-cloning}
 
 La clonación de volúmenes crea un nuevo PVC con el contenido de un PVC existente. Esto resulta útil para crear entornos de prueba, duplicar datos o migrar cargas de trabajo.
 
@@ -961,7 +961,7 @@ spec:
       claimName: test-db-clone
 ```
 
-## ResourceQuota de almacenamiento
+## ResourceQuota de almacenamiento {#storage-resourcequota}
 
 ResourceQuota puede limitar el consumo de almacenamiento dentro de un namespace, incluido el número de PVC y la capacidad total de almacenamiento.
 
@@ -1036,7 +1036,7 @@ Esto garantiza que:
 - El tamaño máximo del PVC sea 100Gi
 - Cada PVC solicite almacenamiento explícitamente; LimitRange no establece valores predeterminados para PVC
 
-## Opciones de almacenamiento en EKS
+## Opciones de almacenamiento en EKS {#storage-options-in-eks}
 
 Amazon EKS ofrece varias opciones de almacenamiento. Cada opción tiene diferentes casos de uso y características de rendimiento, por lo que es importante elegir el almacenamiento adecuado según los requisitos de tu aplicación.
 

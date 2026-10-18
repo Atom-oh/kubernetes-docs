@@ -12,7 +12,7 @@ Al ejecutar aplicaciones en Amazon EKS, hay diversas opciones de almacenamiento 
 4. [Almacenamiento con Amazon EFS](04-eks-storage-part1.md#storage-with-amazon-efs)
 5. [Clases de almacenamiento y aprovisionamiento dinámico](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
 
-## Conceptos básicos del almacenamiento de Kubernetes
+## Conceptos básicos del almacenamiento de Kubernetes {#kubernetes-storage-basic-concepts}
 
 Primero, comprendamos los conceptos clave para administrar el almacenamiento en Kubernetes.
 
@@ -49,7 +49,7 @@ Kubernetes admite los siguientes modos de acceso:
 
 **RWO significa un nodo, no un Pod**: varios Pods de ese nodo pueden compartir el PVC. RWOP es una restricción aparte y requiere sidecars CSI compatibles. Los demás modos de acceso participan principalmente en la correspondencia y las capacidades de montaje; cuando sea necesario, usa indicadores de montaje de solo lectura, permisos del sistema de archivos y autorización del servicio. RWX no garantiza que la aplicación pueda realizar escrituras simultáneas de forma segura.
 
-## Descripción general de las opciones de almacenamiento de Amazon EKS
+## Descripción general de las opciones de almacenamiento de Amazon EKS {#amazon-eks-storage-options-overview}
 
 En Amazon EKS, puedes aprovechar diversos servicios de almacenamiento de AWS para proporcionar almacenamiento a aplicaciones en contenedores.
 
@@ -96,7 +96,7 @@ El rendimiento depende del tamaño, el modo de rendimiento/IOPS, los límites de
 
 Consulta [Mountpoint CSI](https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html) y [S3 Files](https://docs.aws.amazon.com/eks/latest/userguide/s3files-csi.html) para conocer sus semánticas diferentes y los requisitos de IAM del controlador/nodo. Ninguno de los dos sustituye automáticamente un sistema de archivos transaccional de base de datos.
 
-## Almacenamiento con Amazon EBS
+## Almacenamiento con Amazon EBS {#storage-with-amazon-ebs}
 
 Amazon EBS proporciona volúmenes de almacenamiento en bloques que se pueden conectar a instancias EC2. En EKS, puedes montar volúmenes EBS en Pods de Kubernetes mediante el controlador EBS CSI (Container Storage Interface).
 
@@ -355,7 +355,7 @@ Amazon EBS ofrece varios tipos de volumen:
 
 gp3 es un punto de partida habitual, pero elige el tamaño, las IOPS y el rendimiento según la carga de trabajo y los límites de EBS de la instancia. Los volúmenes de sistema de archivos gp3 normales no son sistemas de archivos compartidos entre varios nodos. EBS CSI 1.66.0 dispone de una ruta Multi-Attach de **bloques sin formato** para io2 con `ReadWriteMany`; requiere nodos compatibles y coordinación/fencing a nivel de aplicación, y no hace que ext4/XFS sea seguro para montajes simultáneos independientes. RWOP es distinto de RWO y la compatibilidad de los sidecars CSI es importante.
 
-## Almacenamiento con Amazon EFS
+## Almacenamiento con Amazon EFS {#storage-with-amazon-efs}
 
 Amazon EFS es un sistema de archivos NFS completamente administrado al que pueden acceder simultáneamente varias instancias EC2. En EKS, puedes montar sistemas de archivos EFS en varios Pods a la vez mediante el controlador EFS CSI.
 
@@ -605,7 +605,7 @@ spec:
 - Regional y One Zone tienen distintas propiedades de disponibilidad y ante fallos. Actualmente, el rendimiento Elastic también es compatible con One Zone; esto no elimina las consideraciones de durabilidad de una sola AZ.
 - Mide el patrón de acceso real y los límites del cliente. Estas descripciones no establecen un benchmark de latencia/rendimiento para el ejemplo.
 
-## Clases de almacenamiento y aprovisionamiento dinámico
+## Clases de almacenamiento y aprovisionamiento dinámico {#storage-classes-and-dynamic-provisioning}
 
 El uso de clases de almacenamiento de Kubernetes permite aprovisionar volúmenes persistentes de forma dinámica. En EKS, puedes configurar clases de almacenamiento para diversos servicios de almacenamiento de AWS.
 

@@ -16,7 +16,7 @@
 7. [故障排除](#troubleshooting)
 8. [参考：安装 KEDA](#reference-keda-installation)
 
-## 概述
+## 概述 {#overview}
 
 Kubernetes HPA 可通过相应的 API 支持资源、自定义和外部指标，包括多个指标。CloudWatch 可以通过适配器集成；并非 HPA 本身无法使用 CloudWatch。KEDA 提供 scaler、外部指标 API 和激活管理，同时仍使用 HPA 进行常规副本扩缩容。
 
@@ -30,7 +30,7 @@ Kubernetes HPA 可通过相应的 API 支持资源、自定义和外部指标，
 
 经过校准的需求/积压指标是一个起点。延迟、错误和断路器事件可能由下游故障造成，而增加副本无法解决这些问题。有状态成员关系、存储和应用语义也会限制扩缩容；仅凭“有状态”或“对延迟敏感”并不能确定安全的自动扩缩容策略。
 
-## 架构
+## 架构 {#architecture}
 
 KEDA 会为扩缩容目标创建/配置 HPA，并公开外部指标。HPA 控制器通过该 API 请求指标，并更新目标的 `/scale` 子资源；随后目标控制器和调度器会创建/放置 Pod。
 
@@ -56,7 +56,7 @@ KEDA 会为扩缩容目标创建/配置 HPA，并公开外部指标。HPA 控制
 
 如果有 4 个副本，全局延迟为 300ms，Value 目标为 200ms，则会建议扩至 6 个副本。如果增加副本并未降低该延迟，反复决策可能会让工作负载一直扩到上限。应将延迟/错误率控制器视为需要负反馈证据的实验，而非生产环境默认设置。
 
-## 基于 Prometheus 指标的扩缩容
+## 基于 Prometheus 指标的扩缩容 {#prometheus-metrics-based-scaling}
 
 这些示例假设 `default` 中有一个实际名为 `reviews` 的 Deployment。Service 名称不是扩缩容目标。已发布的 Bookinfo 通常使用 `reviews-v1` 等 Deployment 名称；应根据实际工作负载调整 `scaleTargetRef` 和指标选择器，而不要假设它们与 Service 名称一致。
 
@@ -375,7 +375,7 @@ spec:
 
 RPS 输入是使用 AverageValue 的总需求量；延迟输入是 Value。HPA 采用最大建议值。扩容 `selectPolicy: Max` 会选择允许的较大变化量：如果百分比策略允许增加更多副本，五个 Pod 的策略就不是绝对上限。这些备选方案仍需进行容量和工作负载测试。
 
-## 基于 CloudWatch 指标的扩缩容
+## 基于 CloudWatch 指标的扩缩容 {#cloudwatch-metrics-based-scaling}
 
 CloudWatch 数据源的采集节奏、发布延迟、聚合周期、回看时间和偏移量共同决定数据的新鲜度。高分辨率自定义指标确实存在；“CloudWatch 总是延迟 1–3 分钟”这种说法并不准确。Prometheus 也有采集和控制循环延迟。
 
@@ -605,7 +605,7 @@ spec:
 
 两个指标都会参与 HPA 的最大建议值计算。“Prometheus 主用，CloudWatch 备用”不是优先级/故障转移策略，过期值仍可能维持较高的副本建议。应优先选择明确的单一数据源，或经过测试的多源/fallback 设计。
 
-## 实用扩缩容策略
+## 实用扩缩容策略 {#practical-scaling-strategies}
 
 ### 1. 定时设置副本下限
 
@@ -796,7 +796,7 @@ spec:
 
 此示例保持正数的最小副本数。如果考虑缩容到 0，应先证明在没有后端端点时，独立的网关/拦截器仍会输出所需指标，并能提供期望的请求缓冲/错误处理行为。
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 1. 一个目标，一个自动扩缩容所有者
 
@@ -1142,7 +1142,7 @@ PrometheusRule 需要匹配的 Operator 规则选择器/命名空间。HPA 筛�
 
 副本数变化可能来自需求或滚动更新，不一定意味着有害振荡。这些告警用于提示调查，不能证明扩缩容失败或就绪容量充足。
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 ```bash
 kubectl get scaledobject reviews-rps-scaler -n default -o yaml
@@ -1165,7 +1165,7 @@ promtool query instant http://127.0.0.1:9090 'sum(rate(istio_requests_total{repo
 
 对于 CloudWatch，应检查返回的时间戳、所有维度、统计数据/单位、采集窗口、偏移量和 IAM。第二个指标设置更高的阈值，并不会使其成为被动备用指标。
 
-## 参考：安装 KEDA
+## 参考：安装 KEDA {#reference-keda-installation}
 
 ### 固定 Chart 版本与实际兼容性
 

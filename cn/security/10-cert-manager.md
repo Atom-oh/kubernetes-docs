@@ -441,7 +441,7 @@ helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
   --version v0.18.0 --namespace cert-manager --values istio-csr-values.yaml
 ```
 
-### Linkerd 和 trust-manager
+### Linkerd 和 trust-manager {#linkerd-and-trust-manager}
 
 [Linkerd identity 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/linkerd-identity.yaml)会准备签发者 Secret 和根证书 bundle ConfigMap。固定版本的控制平面 chart 2026.9.1 引用了 linkerd-identity-issuer 和 linkerd-identity-trust-roots。
 

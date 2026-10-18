@@ -21,7 +21,7 @@
 
 ---
 
-## Alertmanager 概述
+## Alertmanager 概述 {#alertmanager-overview}
 
 Prometheus Alertmanager 是一个处理 Prometheus 服务器发送的告警的组件。它提供告警去重、分组、路由、抑制和静默等功能。
 
@@ -50,7 +50,7 @@ sequenceDiagram
   Note over A,R: Failures and partitions can cause<br/>retries or duplicates
 ```
 
-## 架构
+## 架构 {#architecture}
 
 ### Alertmanager 内部结构
 
@@ -82,7 +82,7 @@ flowchart TB
 
 ---
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 以下是适用于 Kubernetes 1.35 Linux 工作节点基线的备选示例。两个 Helm chart 和手动 StatefulSet 分别由**不同的安装所有者**管理；请选择其中一种。已对 chart 进行渲染，在本地执行了配置/模板和合成规则，但未执行 Kubernetes 安装、实时 CNI 强制实施、SaaS 交付或生产容量测试。现有安装需要由所有者审核 values 合并和升级计划，不应盲目用本教程替换。
 
@@ -404,7 +404,7 @@ kubectl -n monitoring create configmap alertmanager-config   --from-file=alertma
 
 请保护 Secret 读取/执行权限以及通知内容本身。只添加启用的集成所需的凭据文件。ConfigMap 投影不会自动触发 Alertmanager 重新加载：请使用所选所有者审核过的重新加载/滚动更新机制；重新加载无效配置时，应继续运行上一个有效配置。
 
-## 定义告警规则
+## 定义告警规则 {#defining-alert-rules}
 
 ### PrometheusRule CRD
 
@@ -448,7 +448,7 @@ spec:
 
 [交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
 
-## 路由配置
+## 路由配置 {#routing-configuration}
 
 ### 路由树结构
 
@@ -571,7 +571,7 @@ time_intervals:
 
 原生标签路由测试不会评估日历。已使用发布版时间区间实现，另行检查日历在开始/结束边界、周末以及 UTC/KST 时差下的行为。静默或非活动通知不会自动重定向到父路由的备用接收器。
 
-## 接收器配置
+## 接收器配置 {#receiver-configuration}
 
 ### Slack 接收器
 
@@ -704,7 +704,7 @@ receivers:
       namespace: '{{ .CommonLabels.namespace }}'
 ```
 
-## 抑制规则
+## 抑制规则 {#inhibition-rules}
 
 ### 抑制概念
 
@@ -781,7 +781,7 @@ inhibit_rules:
 
 列表顺序**不是优先级系统**。任何适用的抑制规则都可以抑制目标告警。使用互不重叠的源/目标匹配器和非空关联标签，为基础设施→节点→服务依赖关系建模，然后测试无关节点/集群以及缺失标签。宽泛的 `alertname=~".*"` 加上缺失的 `datacenter` 可能会静默无关事件。不要仅凭严重性推断因果关系。
 
-## 静默
+## 静默 {#silencing}
 
 ### 创建静默
 
@@ -834,7 +834,7 @@ stateDiagram-v2
   Expired --> Removed: retention and garbage collection
 ```
 
-## 模板自定义
+## 模板自定义 {#template-customization}
 
 ### Go 模板基础知识
 
@@ -983,7 +983,7 @@ data:
     '
 ```
 
-## 高可用配置
+## 高可用配置 {#high-availability-configuration}
 
 ### 集群架构
 
@@ -1279,7 +1279,7 @@ alertmanager:
       type: OnNamespace
 ```
 
-## 生产环境告警规则示例
+## 生产环境告警规则示例 {#production-alert-rule-examples}
 
 ### 节点告警
 
@@ -1601,7 +1601,7 @@ spec:
     interval: 30s
 ```
 
-## 故障排查
+## 故障排查 {#troubleshooting}
 
 ### 常见问题及解决方案
 

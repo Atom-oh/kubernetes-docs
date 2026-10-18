@@ -15,7 +15,7 @@ Amazon CloudWatch Logs 管理日志摄取、存储和分析。你仍需配置日
 6. [订阅筛选条件](#subscription-filters)
 7. [成本优化](#cost-optimization)
 
-## 概述
+## 概述 {#overview}
 
 <span id="cloudwatch-logs-features"></span>
 
@@ -63,7 +63,7 @@ flowchart LR
 | 日志事件 | 时间戳和消息，受服务限制约束 |
 | 保留期 | 受支持的离散保留期限；如果未设置保留期，则不会过期 |
 
-## EKS 控制平面日志记录
+## EKS 控制平面日志记录 {#eks-control-plane-logging}
 
 ### 日志类型
 
@@ -270,7 +270,7 @@ helm upgrade --install cloudwatch-observability \
 
 EKS Auto Mode 中 AWS 管理的 Karpenter、EBS CSI、load-balancer-controller 和 IPAM 日志使用独立的**托管日志传送**设置。其日志类型为 `AUTO_MODE_COMPUTE_LOGS`、`AUTO_MODE_BLOCK_STORAGE_LOGS`、`AUTO_MODE_LOAD_BALANCING_LOGS` 和 `AUTO_MODE_IPAM_LOGS`。文档说明的 `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` 流程可以将日志传送到日志组、S3 或 Firehose。这与 `PutSubscriptionFilter` 以及启用五种控制平面日志类型不同。
 
-## FluentBit 集成
+## FluentBit 集成 {#fluentbit-integration}
 
 <span id="fluentbit-configmap"></span>
 <span id="fluentbit-daemonset"></span>
@@ -630,7 +630,7 @@ SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/container
 
 `accountIdentifier` 为单数。跨账户查询需要已批准的监控账户/源账户设置和权限；提及第二个账户或日志组并不会自动创建访问权限。省略账户/前缀选择可能会大幅扩大查询范围。
 
-## 订阅筛选条件
+## 订阅筛选条件 {#subscription-filters}
 
 订阅筛选条件会异步转发新匹配的事件。传送至少一次，因此可能出现重复。可重试的目标故障最多可重试 24 小时；不可重试的错误和持续故障可能导致传送丢失。请监控配额、`DeliveryErrors` 和 `DeliveryThrottling`。订阅不会回填所有历史日志。
 
@@ -885,7 +885,7 @@ Lambda 订阅之前需要先配置权限，并将权限限制为日志组 ARN �
 
 归档生命周期规则应由 bucket 的单一配置负责人管理。请将经过审查且限定前缀范围的规则合并到该配置中，不要通过第二个 Terraform 资源替换现有规则。选择 Standard-IA 或 Glacier 层级前，请考虑小对象转换行为、最低存储期限、检索成本和 Object Lock。
 
-## 成本优化
+## 成本优化 {#cost-optimization}
 
 ### 成本结构
 

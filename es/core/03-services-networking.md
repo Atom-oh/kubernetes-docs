@@ -78,7 +78,7 @@ kubectl -n networking-demo get svc,pods
    - [Visibilidad de red con Hubble](#network-visibility-with-hubble)
    - [Configuración de Cilium en Amazon EKS](#configuring-cilium-on-amazon-eks)
 
-## Tipos de Service
+## Tipos de Service {#service-types}
 
 > **Concepto clave**: Los Service de Kubernetes proporcionan endpoints de red estables para un conjunto de Pods y controlan el acceso interno y externo mediante varios tipos.
 
@@ -440,7 +440,7 @@ endpoints:
   zone: us-west-2a
 ```
 
-## Detección de servicios
+## Detección de servicios {#service-discovery}
 
 Kubernetes proporciona dos métodos principales para detectar servicios:
 
@@ -544,7 +544,7 @@ spec:
     - name: edns0
 ```
 
-## Políticas de red
+## Políticas de red {#network-policies}
 
 Las políticas de red permiten controlar la comunicación entre Pods. Para usarlas, el complemento de red debe ser compatible con ellas (por ejemplo, Calico o Cilium).
 
@@ -668,7 +668,7 @@ spec:
 
 Esta política de red permite el tráfico de entrada desde el bloque CIDR `192.168.1.0/24` (excepto 192.168.1.1) hacia los Pods con la etiqueta `app: web`.
 
-## Malla de servicios
+## Malla de servicios {#service-mesh}
 
 Una malla de servicios es una capa de infraestructura que administra la comunicación entre microservicios. Las mallas de servicios ofrecen funciones como la detección de servicios, el balanceo de carga, el cifrado, la autenticación, la autorización y la observabilidad.
 
@@ -781,7 +781,7 @@ Los complementos CNI configuran las interfaces de red de los Pods y el direccion
 
 [Detalles de Cilium](../networking/cilium/README.md)
 
-### Introducción a Cilium
+### Introducción a Cilium {#introduction-to-cilium}
 
 Cilium es software de código abierto que aprovecha la potente tecnología eBPF del kernel de Linux para proporcionar conectividad de red, seguridad y observabilidad a las aplicaciones en contenedores. Su integración actual con Kubernetes proporciona redes, seguridad y observabilidad mediante un complemento CNI y controladores.
 
@@ -812,7 +812,7 @@ Cilium ofrece varias ventajas únicas en comparación con otras soluciones CNI.
 - **Requisitos de alto rendimiento**: Plano de datos optimizado
 - **Integración con mallas de servicios**: Integración con mallas de servicios como Istio
 
-### Tecnología eBPF
+### Tecnología eBPF {#ebpf-technology}
 
 eBPF (extended Berkeley Packet Filter) es una tecnología que permite ejecutar programas de forma segura dentro del kernel de Linux. Cilium usa eBPF para implementar funciones de redes, seguridad y observabilidad.
 
@@ -842,7 +842,7 @@ Cilium usa eBPF de las siguientes maneras:
 | Observabilidad | Alta | Limitada |
 | Complejidad de implementación | Alta | Media |
 
-### Modelo de redes de Cilium
+### Modelo de redes de Cilium {#cilium-networking-model}
 
 Cilium admite varios modelos de redes que se pueden configurar para adaptarse a distintos entornos y requisitos.
 
@@ -900,7 +900,7 @@ En AWS EKS, Cilium puede aprovechar las interfaces de red elásticas (ENI) de AW
 - Integración con grupos de seguridad y políticas de red de AWS
 - Mejor rendimiento de red
 
-### Políticas de red de Cilium
+### Políticas de red de Cilium {#cilium-network-policies}
 
 Cilium amplía las políticas de red de Kubernetes para proporcionar políticas de seguridad de red detalladas en las capas L3-L7.
 
@@ -978,7 +978,7 @@ spec:
 
 Esta política permite el tráfico de entrada desde los Pods del espacio de nombres `kube-system` hacia todos los Pods.
 
-### Visibilidad de red con Hubble
+### Visibilidad de red con Hubble {#network-visibility-with-hubble}
 
 Hubble es la capa de observabilidad de Cilium, que usa eBPF para supervisar los flujos de red y solucionar problemas.
 
@@ -1026,7 +1026,7 @@ hubble observe --pod default/myapp-pod
 hubble observe --verdict DROPPED
 ```
 
-### Configuración de Cilium en Amazon EKS
+### Configuración de Cilium en Amazon EKS {#configuring-cilium-on-amazon-eks}
 
 Hay varias formas de configurar Cilium en Amazon EKS. Aquí veremos algunos métodos de configuración comunes.
 

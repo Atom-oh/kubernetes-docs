@@ -20,9 +20,9 @@ Eliminar un hipervisor puede evitar sus costos de licencia y su capa de ejecuci�
 | Ubuntu 20.04/22.04/24.04 | Familias de Hybrid OS enumeradas | Infraestructura host compatible, sujeta a los requisitos de SO/kernel/CNI | nodeadm/YAML; verifique por separado el ciclo de vida y el soporte de Ubuntu |
 | RHEL 8/9 | Familias de Hybrid OS enumeradas | Infraestructura host compatible, sujeta a los requisitos de SO/kernel/CNI | nodeadm/YAML; la suscripción y el soporte de SO de Red Hat siguen siendo independientes |
 | AL2023 | **No es la ruta de implementación compatible** | Huésped virtualizado local | nodeadm/YAML; AWS Support Plans no cubren AL2023 fuera de EC2 |
-| Variantes de Bottlerocket VMware >=1.37.0 | **No compatible con Hybrid bare metal** | VMware vSphere, **x86_64** | Configuración/bootstrap de Bottlerocket; govc administra las VM de VMware |
+| Variantes de Bottlerocket VMware a partir de 1.37.0 | **No compatible con Hybrid bare metal** | VMware vSphere, **x86_64** | Configuración/bootstrap de Bottlerocket; govc administra las VM de VMware |
 
-AWS admite la integración de Hybrid con las familias Ubuntu/RHEL enumeradas, no las obligaciones de soporte del proveedor del SO. Compruebe las versiones específicas, la arquitectura y los requisitos de CNI/kernel. AL2023 fuera de EC2 es una opción de VM huésped, no una recomendación genérica de imagen sin procesar para bare metal. Las variantes de Kubernetes de Bottlerocket para VMware comienzan en 1.28; esto indica el historial de variantes, no recomienda ejecutar esa versión antigua de EKS. Las instalaciones y actualizaciones con SSM requieren nodeadm >=1.0.19, ya que las versiones anteriores usan una clave de firma de SSM obsoleta.
+AWS admite la integración de Hybrid con las familias Ubuntu/RHEL enumeradas, no las obligaciones de soporte del proveedor del SO. Compruebe las versiones específicas, la arquitectura y los requisitos de CNI/kernel. AL2023 fuera de EC2 es una opción de VM huésped, no una recomendación genérica de imagen sin procesar para bare metal. Las variantes de Kubernetes de Bottlerocket para VMware comienzan en 1.28; esto indica el historial de variantes, no recomienda ejecutar esa versión antigua de EKS. Las instalaciones y actualizaciones con SSM requieren nodeadm 1.0.19 o posterior, ya que las versiones anteriores usan una clave de firma de SSM obsoleta.
 
 ## Análisis comparativo de costos
 
@@ -30,38 +30,38 @@ AWS admite la integración de Hybrid con las familias Ubuntu/RHEL enumeradas, no
 
 #### VMware vSphere
 
-Solicite una cotización actual para el paquete de productos real, los núcleos con licencia, los mínimos, el plazo y el soporte. La cifra anterior de $4,500–8,500/soquete-año no tiene aquí una fuente verificada y no puede considerarse una cotización actual de vSphere.
+Solicite una cotización actual para el paquete de productos real, los núcleos con licencia, los mínimos, el plazo y el soporte. La cifra anterior de $4.500–8.500 por socket/año no tiene aquí una fuente verificada y no puede considerarse una cotización actual de vSphere.
 
 #### OpenShift
 
-Normalice los derechos reales de Red Hat, las métricas de núcleos físicos/virtuales o de soquetes y los niveles de soporte. La estimación anterior de $2,500–5,000/nodo-año y la afirmación de que «incluye soporte prémium» no están verificadas; no las use como precio actual ni como garantía de derechos.
+Normalice los derechos reales de Red Hat, las métricas de núcleos físicos/virtuales o de sockets y los niveles de soporte. La estimación anterior de $2.500–5.000 por nodo/año y la afirmación de que «incluye soporte prémium» no están verificadas; no las use como precio actual ni como garantía de derechos.
 
 #### EKS Hybrid Nodes
 
-La [página oficial de precios](https://aws.amazon.com/eks/pricing/) aplica niveles marginales mensuales sobre las **horas-vCPU de los nodos declaradas**: las primeras 576,000 a $0.020; las siguientes 576,000 a $0.014; las siguientes 4,608,000 a $0.010; las siguientes 5,760,000 a $0.008; por encima de 11,520,000, a $0.006. No se trata de una tarifa plana universal de $0.01.
+La [página oficial de precios](https://aws.amazon.com/eks/pricing/) aplica niveles marginales mensuales sobre las **horas-vCPU de los nodos declaradas**: las primeras 576.000 a $0,020; las siguientes 576.000 a $0,014; las siguientes 4.608.000 a $0,010; las siguientes 5.760.000 a $0,008; por encima de 11.520.000, a $0,006. No se trata de una tarifa plana universal de $0,01.
 
 Los niveles se agregan dentro de una cuenta/Región o entre cuentas de la misma Región con la facturación consolidada de AWS Organizations. Los núcleos bare metal con hyperthreading pueden declarar dos vCPU cada uno. Los cargos comienzan cuando se incorpora un nodo y terminan cuando se elimina; las cargas de trabajo inactivas no eliminan el cargo del nodo. AWS pide a los clientes que se pongan en contacto con su equipo de cuenta para máquinas de más de 32 vCPU. Los cargos por clúster, plano de control/capacidad aprovisionados, red, registros, almacenamiento, SO y otros servicios de soporte son independientes.
 
 ### Comparación de costos anuales por escala (servidores de 32 vCPU)
 
-Lo siguiente es un **modelo** determinista, no una factura ni una medición: 32 vCPU declaradas por nodo, 730 horas cada mes, una Región/ámbito de agregación, ningún otro uso de Hybrid y doce meses modelados idénticos. La última columna suma un clúster de nivel básico con soporte estándar a $0.10/hora. Excluye otros servicios, descuentos/impuestos, hardware, energía, derechos del SO, mano de obra y migración; la duración real de los meses y los reinicios de nivel afectan las facturas.
+Lo siguiente es un **modelo** determinista, no una factura ni una medición: 32 vCPU declaradas por nodo, 730 horas cada mes, una Región/ámbito de agregación, ningún otro uso de Hybrid y doce meses modelados idénticos. La última columna suma un clúster de nivel básico con soporte estándar a $0,10/hora. Excluye otros servicios, descuentos/impuestos, hardware, energía, derechos del SO, mano de obra y migración; la duración real de los meses y los reinicios de nivel afectan las facturas.
 
 | Nodos | Horas-vCPU mensuales | Tarifa mensual de nodos | Tarifa anualizada de nodos | Nodos anualizados + un clúster con soporte estándar básico |
 | --- | --- | --- | --- | --- |
-| 10 | 233,600 | $4,672.00 | $56,064.00 | $56,940.00 |
-| 50 | 1,168,000 | $19,744.00 | $236,928.00 | $237,804.00 |
-| 100 | 2,336,000 | $31,424.00 | $377,088.00 | $377,964.00 |
+| 10 | 233.600 | $4.672,00 | $56.064,00 | $56.940,00 |
+| 50 | 1.168.000 | $19.744,00 | $236.928,00 | $237.804,00 |
+| 100 | 2.336.000 | $31.424,00 | $377.088,00 | $377.964,00 |
 
 <details>
 <summary>Estimaciones históricas conservadas (no verificadas y no son precios actuales)</summary>
 
-La tabla original se conserva para facilitar la trazabilidad. No se pudieron verificar las fuentes de las cotizaciones de proveedores. La columna de EKS usaba el supuesto obsoleto `32 × $0.01 × 8,760 = $2,803.20/nodo-año`, sin tarifa de clúster ni niveles marginales. Estas cifras no son evidencia válida y actual para una comparación del costo total de propiedad.
+La tabla original se conserva para facilitar la trazabilidad. No se pudieron verificar las fuentes de las cotizaciones de proveedores. La columna de EKS usaba el supuesto obsoleto `32 × $0,01 × 8.760 = $2.803,20 por nodo/año`, sin tarifa de clúster ni niveles marginales. Estas cifras no son evidencia válida y actual para una comparación del costo total de propiedad.
 
 | Escala | VMware vSphere (estimación anual anterior) | OpenShift (estimación anual anterior) | EKS Hybrid (estimación obsoleta de tarifa plana) |
 | --- | --- | --- | --- |
-| 10 nodos | ~$45,000–85,000 | ~$25,000–50,000 | ~$28,032 |
-| 50 nodos | ~$225,000–425,000 | ~$125,000–250,000 | ~$140,160 |
-| 100 nodos | ~$450,000–850,000 | ~$250,000–500,000 | ~$280,320 |
+| 10 nodos | ~$45.000–85.000 | ~$25.000–50.000 | ~$28.032 |
+| 50 nodos | ~$225.000–425.000 | ~$125.000–250.000 | ~$140.160 |
+| 100 nodos | ~$450.000–850.000 | ~$250.000–500.000 | ~$280.320 |
 
 </details>
 
@@ -75,7 +75,7 @@ Incluya capacidad de reserva, instalaciones/energía, aplicación de parches del
 
 #### Configuración de BIOS/UEFI
 
-Verifique el instalador seleccionado, el firmware, el modo de arranque, los controladores de NIC/almacenamiento y la cadena de arranque firmado. Mantenga Secure Boot cuando la cadena validada de cargador de arranque/kernel/módulos lo admita; no lo desactive como requisito general para contenedores. Los contenedores Linux habituales con containerd/runc no requieren virtualización de hardware VT-x/AMD-V. Los entornos aislados basados en VM, los generadores de imágenes QEMU/KVM y otras cargas de trabajo de virtualización tienen requisitos propios.
+Verifique el instalador seleccionado, el firmware, el modo de arranque, los controladores de NIC/almacenamiento y la cadena de arranque firmada. Mantenga Secure Boot cuando la cadena validada de cargador de arranque/kernel/módulos lo admita; no lo desactive como requisito general para contenedores. Los contenedores Linux habituales con containerd/runc no requieren virtualización de hardware VT-x/AMD-V. Los entornos aislados basados en VM, los generadores de imágenes QEMU/KVM y otras cargas de trabajo de virtualización tienen requisitos propios.
 
 #### Infraestructura de red
 
@@ -229,7 +229,7 @@ Satellite/Foreman puede administrar plantillas Kickstart revisadas, repositorios
 
 ### Amazon Linux 2023
 
-Esta es una **referencia para huéspedes virtualizados**, no una opción de instalación bare metal. AWS proporciona imágenes de VM KVM, VMware y Hyper-V para AL2023 fuera de EC2. Los AWS Support Plans no cubren ese uso del SO AL2023 fuera de EC2; distíngalo del soporte de integración de EKS Hybrid. Use la imagen adecuada y el transporte de cloud-init. Este es un fragmento mínimo de identidad de VM:
+Esta es una **referencia para huéspedes virtualizados**, no una opción de instalación bare metal. AWS proporciona imágenes de VM KVM, VMware y Hyper-V para AL2023 fuera de EC2. AWS Support Plans no cubre ese uso del SO AL2023 fuera de EC2; distíngalo del soporte de integración de EKS Hybrid. Use la imagen adecuada y el transporte de cloud-init. Este es un fragmento mínimo de identidad de VM:
 
 ```yaml
 #cloud-config
@@ -243,13 +243,13 @@ Deliberadamente no crea un administrador, no incorpora claves ni inicializa un n
 
 ### Bottlerocket en VMware (referencia)
 
-Para EKS Hybrid Nodes, use variantes de VMware compatibles >=1.37.0 en x86_64. La configuración y los contenedores de bootstrap de Bottlerocket configuran el SO/autenticación; govc es una CLI de administración de VM de VMware, no un analizador de configuración TOML. Use la [guía completa de bootstrap](./04-node-bootstrap.md) para consultar los ajustes versionados, los datos de usuario privados y la configuración de credenciales.
+Para EKS Hybrid Nodes, use variantes de VMware compatibles a partir de 1.37.0 en x86_64. La configuración y los contenedores de bootstrap de Bottlerocket configuran el SO/autenticación; govc es una CLI de administración de VM de VMware, no un analizador de configuración TOML. Use la [guía completa de bootstrap](./04-node-bootstrap.md) para consultar los ajustes versionados, los datos de usuario privados y la configuración de credenciales.
 
 ## Comparación de configuración de proveedores de credenciales
 
 ### Configuración basada en nodeadm (Ubuntu/RHEL/AL2023)
 
-Estas son alternativas independientes de SSM y IAM Roles Anywhere. Sustituya todos los marcadores de posición por el clúster/Región/identidad aprobados, proteja NodeConfig con propiedad de root y modo 0600, y mantenga privadas las claves privadas de cada host. No coloque estados de SSM registrados ni una clave de host compartida en imágenes maestras clonadas.
+Estas son alternativas independientes de SSM y IAM Roles Anywhere. Sustituya todos los marcadores de posición por el clúster/Región/identidad aprobados, proteja NodeConfig con propiedad de root y modo 0600, y mantenga privadas las claves privadas de cada host. No incluya el estado de registro de SSM ni una misma clave de host compartida en imágenes maestras clonadas.
 
 ```yaml
 apiVersion: node.eks.aws/v1alpha1

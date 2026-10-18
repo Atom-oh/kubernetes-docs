@@ -12,7 +12,7 @@
 4. [存储安全](#storage-security)
 5. [存储管理最佳实践](#storage-management-best-practices)
 
-## 存储监控
+## 存储监控 {#storage-monitoring}
 
 结合后端、Kubernetes 和应用层的观测数据。后端 I/O 计数器无法测量文件系统可用空间，Kubernetes 就绪状态也不能证明数据库一致性。创建告警前，记录单位、维度、聚合周期以及缺失数据的处理方式。
 
@@ -177,7 +177,7 @@ spec:
 
 namespace/release 标签必须与 Prometheus 规则选择器匹配。请验证规则语法和模拟场景，然后在目标部署中确认实际指标覆盖情况和告警路由。本次审查未执行实时指标采集或告警传递。
 
-## 存储故障排查
+## 存储故障排查 {#storage-troubleshooting}
 
 从对象身份和事件着手。Pending、ContainerCreating 和 I/O 缓慢可能有不同原因；拉取镜像、调度和应用就绪状态不一定是存储故障。该图是分诊指南，并未详尽列出各种症状及其原因。
 
@@ -270,7 +270,7 @@ time dd if="$STORAGE_TEST_PATH/payload" of=/dev/null bs=1M
 
 对于 EFS，需考虑 General Purpose、实际吞吐量模式、客户端限制、元数据需求和并发。使用 Part2 中受支持的挂载助手选项，包括 hard/TLS 和适当的超时/重试行为。对经过测量的工作负载，文件打包或增加顺序访问可能有帮助，但改变应用数据布局并非总是有益。
 
-## 存储成本优化
+## 存储成本优化 {#storage-cost-optimization}
 
 在满足延迟、持久性、恢复和所有权要求的前提下，优化工作负载总成本。计算折扣、分配的存储、预置性能、请求/传输费用和保留的备份是不同的成本项。
 
@@ -316,7 +316,7 @@ put-lifecycle-configuration 请求会更新文件系统配置；请在经过审�
 
 Cost Explorer 和 Kubernetes 成本分摊工具需要配置计费数据，在适用时激活成本分配标签，并测试从 PVC/PV 到云资源 ID 的映射。仅有命名空间标签并不会自动标记每一项 AWS 费用。跟踪保留的卷/快照、请求/传输费用和遥测数据保留。EC2 Reserved Instances/Compute Savings Plans 可以改变符合条件的计算成本；它们不会自动降低单独的 EBS/EFS/FSx 存储费用。
 
-## 存储安全
+## 存储安全 {#storage-security}
 
 分别保护后端、节点/挂载路径以及 Kubernetes 控制平面。类名称、命名空间策略或只读容器根文件系统本身都无法保护可写 PVC 的内容。
 
@@ -517,7 +517,7 @@ spec:
 
 此策略会检查 EBS StorageClass 创建/更新时**声明的加密参数**，包括 Auto Mode provisioner。它不会检查现有 AWS 卷、静态 PV、快照内容或不属于其匹配范围的绕过路径。除准入控制外，还应限制 StorageClass/PV 管理权限，并使用后端合规性检查。全面强制执行前，应针对代表性资源进行试运行，并监控策略报告/webhook 健康状况。现有数据的加密仍需单独迁移。
 
-## 存储管理最佳实践
+## 存储管理最佳实践 {#storage-management-best-practices}
 
 ![图示将四个存储生命周期阶段（规划、实施、运维、优化）与对应的最佳实践领域（规划与设计、自动化与 IaC、备份与灾难恢复、性能与成本优化）配对，并按顺序列出每个领域的三项实践。](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
 

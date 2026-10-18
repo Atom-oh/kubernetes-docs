@@ -12,7 +12,7 @@
 - [仓库凭证](#repository-credentials)
 - [GPG 签名验证](#gpg-signature-verification)
 
-## SSO 集成
+## SSO 集成 {#sso-integration}
 
 SSO 示例互为替代方案：将必需字段合并到现有 ConfigMap/Secret 中，不要替换 argocd-secret 中的服务器签名密钥或其他凭证。将占位符替换为实际的 IdP 设置，并通过外部 Secret 管理系统或受保护的文件提供 Secret。下面的 Secret YAML 仅用于说明结构；不要将其中的明文值提交到仓库。
 
@@ -261,7 +261,7 @@ data:
   scopes: '[groups]'
 ```
 
-## Secret 管理
+## Secret 管理 {#secret-management}
 
 Git Secret 清单中的 Base64 并不等于加密。新环境优先使用 ESO 或 Sealed Secrets 在目标端创建 Secret。AVP/KSOPS 在生成时注入内容可能会使明文暴露在 repo-server 和 Redis 清单缓存中；它们采用不同的信任模型。
 
@@ -649,7 +649,7 @@ kustomize build --enable-alpha-plugins --enable-exec . > "$render_dir/rendered.y
 
 不要提交解密后的输出或私有 identity。这些插件安装方式互为替代方案；如要组合使用，必须明确合并 values 数组、权限和密钥范围。
 
-## TLS 配置
+## TLS 配置 {#tls-configuration}
 
 ### 服务器证书
 
@@ -763,7 +763,7 @@ data:
 
 默认情况下，内部 repo-server RPC 可以加密传输，但不会验证服务器证书。配置持久化的 argocd-repo-server-tls，并设置服务 DNS SAN，然后重启 repo-server。挂载信任 CA，并在 server/application-controller/applicationset-controller 上使用 --repo-server-ca-cert-path，在 notifications-controller 上使用 --argocd-repo-server-ca-cert-path。应优先使用 CA 路径方法，而不是已弃用的 strict-tls 标志。这本身不构成双向 TLS；客户端证书配置请参阅 [mTLS 指南](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/mtls.md)。
 
-## 审计日志
+## 审计日志 {#audit-logging}
 
 server.audit.enabled/path 不是 3.5.2 支持的设置。配置组件的 stdout 日志，将其合并到现有的 argocd-cmd-params-cm，然后重启相关工作负载。
 
@@ -815,7 +815,7 @@ kubectl logs -n argocd deployment/argocd-server --tail=100
 
 预先创建日志组并设置保留/加密策略，然后替换日志组和区域。将收集器的 stream/event 权限限制在该日志组内。Containerd CRI 封装和应用 JSON 属于不同层。
 
-## 网络安全
+## 网络安全 {#network-security}
 
 这些是适用于非 HA 环境的基线策略模板。CNI 必须支持并执行 NetworkPolicy。选择同一 Pod 的策略允许规则会累加，因此也要检查现有的宽泛策略。将 Gateway 数据平面 namespace/labels、DNS、API/Git/IdP 地址替换为实际部署中的值。
 
@@ -950,7 +950,7 @@ spec:
 
 Redis HA/代理、NodeLocal DNS、metrics collector、Dex LDAP/SAML/OIDC、AVP Vault/KMS 和其他组件都需要相应的流量规则。这两项策略并未涵盖完整的部署清单。在现有工作负载上启用 Pod Security 强制模式之前，应先以 audit/warn 模式进行评估。
 
-## 仓库凭证
+## 仓库凭证 {#repository-credentials}
 
 以下 Secret 清单仅用于说明结构。PAT 应仅具备所需仓库的读取权限；GitHub Apps 应限制为适当的安装范围和 Contents-read 权限。通过外部 Secret 管理系统或受保护的文件提供凭证。在 argocd-ssh-known-hosts-cm 中配置经过验证的 SSH 主机密钥。repo-creds.url 是 URL 前缀，而不是 glob；最长匹配项优先，且模板不会覆盖 repository Secret 自身的凭证。
 
@@ -1034,7 +1034,7 @@ stringData:
   password: REPLACE_FROM_SECRET_MANAGER
 ```
 
-## GPG 签名验证
+## GPG 签名验证 {#gpg-signature-verification}
 
 使用 Argo CD 3.5 引入的 sourceIntegrity 格式。它会验证 Git commit/annotated tag，而不是 Helm/OCI/image 签名。任意 Secret 或名为 developer1.asc 的 ConfigMap 键都不会注册为受信任密钥。
 

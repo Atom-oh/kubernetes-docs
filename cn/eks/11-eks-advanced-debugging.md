@@ -510,7 +510,7 @@ if [ -r /proc/pressure/cpu ]; then cat /proc/pressure/cpu; fi
 ```
 进程目录计数不等于所有线程/task 的数量。ps NLWP 和内核限制只是线索；kubelet PID 压力计算和 cgroup PID 限制需要单独解读。不要把一般性的高内存百分比称作 Kubernetes MemoryPressure 条件。缺失指标应视为不可用证据。
 
-### Karpenter 预置问题
+### Karpenter 预置问题 {#karpenter-provisioning-issues}
 
 ```bash
 # Self-managed Karpenter; use the actual release namespace and selected objects.

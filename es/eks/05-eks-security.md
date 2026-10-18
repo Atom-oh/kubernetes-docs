@@ -23,7 +23,7 @@ Para ejecutar cargas de trabajo de forma segura en Amazon EKS (Elastic Kubernete
 14. [Prácticas recomendadas de seguridad de EKS](#eks-security-best-practices)
 15. [Consideraciones de seguridad de EKS para servicios financieros](#eks-security-considerations-for-financial-services)
 
-## Descripción general de la seguridad de EKS
+## Descripción general de la seguridad de EKS {#eks-security-overview}
 
 Separa los controles de infraestructura, acceso al clúster y cargas de trabajo. AWS administra el plano de control; la responsabilidad sobre los nodos y el SO depende de si se usan nodos autoadministrados o administrados de EC2, Fargate, Auto Mode o Hybrid Nodes. Los clientes siguen siendo responsables de las imágenes de aplicaciones, las identidades, el tratamiento de los datos y las políticas de las cargas de trabajo. Un diagrama estándar de nodos de EC2 no implica que los clientes deban aplicar parches a los sistemas operativos de host de Auto Mode/Fargate.
 
@@ -31,7 +31,7 @@ Separa los controles de infraestructura, acceso al clúster y cargas de trabajo.
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-05-eks-security-0.html)
 
-## Prácticas de seguridad
+## Prácticas de seguridad {#security-practices}
 
 Usa varios controles con un ámbito explícito; ninguna herramienta individual establece confianza cero ni certifica una carga de trabajo. Verifica la identidad de quien realiza la llamada o de la carga de trabajo, autoriza la operación prevista, restringe las rutas de red y recopila evidencias adecuadas al modelo de amenazas.
 
@@ -59,7 +59,7 @@ Usa herramientas de tiempo de ejecución y motores de políticas compatibles, co
 
 Las herramientas de políticas como código también operan en distintas etapas: Gatekeeper/Kyverno pueden evaluar la admisión de Kubernetes, CloudFormation Guard o Sentinel pueden evaluar cambios en la infraestructura y AWS Config evalúa la configuración de los recursos implementados que admite. Las herramientas de investigación, como Detective, dependen de sus fuentes de datos configuradas. Mantén diferenciadas estas funciones de la prevención en tiempo de ejecución.
 
-## IAM y autenticación
+## IAM y autenticación {#iam-and-authentication}
 
 | Identidad/control | Propósito |
 |---|---|
@@ -227,7 +227,7 @@ Añadir View no revoca permisos más amplios concedidos por RBAC o políticas de
 
 IAM eks:DescribeCluster/ListClusters admite operaciones de administración y descubrimiento de AWS. eks:AccessKubernetesApi es un permiso de visualización de la consola. La condición eks:namespaces filtra las solicitudes de asociación de políticas de acceso; no es un filtro general de espacios de nombres para llamadas a la API de kubectl.
 
-## Análisis detallado del proveedor OIDC
+## Análisis detallado del proveedor OIDC {#oidc-provider-deep-dive}
 
 EKS publica un emisor OIDC del clúster y claves públicas de firma. Ese endpoint por sí solo no crea un proveedor OIDC de IAM ni autoriza la asunción de roles. Para IRSA, la cuenta del rol debe tener el proveedor OIDC de IAM previsto, el rol debe confiar en él con las condiciones correctas de emisor, asunto y audiencia, y la carga de trabajo debe usar un SDK compatible.
 
@@ -639,7 +639,7 @@ kubectl -n "$WORKLOAD_NAMESPACE" get serviceaccount "$SERVICE_ACCOUNT" \
 
 Este es un procedimiento de migración que debe validarse en el entorno de destino, no una afirmación de que la migración se haya ejecutado durante esta revisión de la documentación.
 
-## Control de acceso al endpoint del clúster
+## Control de acceso al endpoint del clúster {#cluster-endpoint-access-control}
 
 La configuración del endpoint determina la accesibilidad de la red, mientras que la autenticación y la autorización siguen rigiendo las operaciones de la API. Elige la ruta de acceso según los requisitos operativos e inspecciona la configuración real en vez de suponer los valores predeterminados de una herramienta.
 
@@ -901,7 +901,7 @@ La clave eks:controlPlaneEgressMode evalúa el modo especificado en solicitudes 
 
 Este es un control deliberado para las solicitudes, no una migración automática de los clústeres existentes. Los clústeres AWS_MANAGED existentes aún pueden recibir actualizaciones no relacionadas con este ejemplo. Las organizaciones que exijan otra política de implementación deben modelarla por separado. Las SCP no conceden permisos de IAM ni configuran enrutamiento/DNS. Revisa la herencia de políticas y prueba solicitudes representativas permitidas/denegadas con el responsable de la organización antes de implementarlas.
 
-## Seguridad de red
+## Seguridad de red {#network-security}
 
 Usa grupos de seguridad, enrutamiento, NetworkPolicy y autenticación de aplicaciones para las capas que les correspondan. El diagrama ilustra un diseño de red tradicional; un bastión público y endpoints privados de AWS son componentes opcionales que deben configurarse realmente y no son propiedades inherentes a todos los clústeres de EKS.
 
@@ -1149,7 +1149,7 @@ Permitir0.0.0.0/0 en443 permite un amplio conjunto de destinos públicos; exclui
 
 Prueba conexiones nuevas positivas y negativas en el CNI real. Los cambios de políticas pueden propagarse de forma asíncrona, y el tratamiento de las conexiones existentes depende de la implementación. Los ejemplos de origen se comprobaron con casos sintéticos de selectores/puertos; durante esta revisión no se ejecutó filtrado de paquetes, resolución DNS ni tráfico activo.
 
-## Seguridad de Pod
+## Seguridad de Pod {#pod-security}
 
 Pod Security Standards define perfiles; Pod Security Admission (PSA) aplica la política de espacio de nombres seleccionada. PSA es estable desde Kubernetes1.25. PodSecurityPolicy quedó obsoleto en1.21 y **se eliminó en1.25**; no es una API que se deba implementar en un clúster actual de EKS. Una restricción de Gatekeeper que incluya PSP en su nombre es un recurso personalizado distinto, no la API eliminada.
 
@@ -1270,7 +1270,7 @@ Esta regla no sustituye por completo un perfil PSS ni la verificación de firmas
 
 La política CEL se comprobó con la CRD publicada y la CLI real de Kyverno para casos omitidos/false, true en contenedores normales/init/efímeros y otros espacios de nombres. No se ejecutó un webhook de admisión activo, un despliegue de Pod ni la aplicación de la política. Revisa los recursos existentes y el rollout del controlador antes de aplicar la política en producción.
 
-## Bottlerocket y SO de solo lectura
+## Bottlerocket y SO de solo lectura {#bottlerocket-and-read-only-os}
 
 Bottlerocket es un host de contenedores Linux con una pequeña superficie de software de host, ajustes administrados por API y actualizaciones basadas en imágenes. Su sistema de archivos raíz de solo lectura no hace inmutable todo el almacenamiento ni elimina las vulnerabilidades del kernel/tiempo de ejecución.
 
@@ -1372,7 +1372,7 @@ La validación aquí incluyó la sintaxis de TOML, el esquema publicado de confi
 
 Referencias principales: [cliente de API de Bottlerocket](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/v15.0.0/sources/api/apiclient), [actualizaciones in situ](https://bottlerocket.dev/en/os/1.64.x/update/methods/in-place/), [sustitución de nodos](https://bottlerocket.dev/en/os/1.64.x/update/methods/node-replacement/), [bloqueos de versión](https://bottlerocket.dev/en/os/1.64.x/update/locking-to-a-specific-release/), [dm-verity](https://docs.kernel.org/admin-guide/device-mapper/verity.html).
 
-## Límites de permisos de IAM
+## Límites de permisos de IAM {#iam-permission-boundaries}
 
 Un límite de permisos restringe lo que las políticas basadas en identidad pueden conceder a un usuario o rol de IAM; no concede permisos por sí solo. Para la ruta de política de identidad, las acciones permitidas son la intersección de la política de identidad y el límite, sujetas a las políticas de sesión/Organizations aplicables y a las denegaciones explícitas.
 
@@ -1603,7 +1603,7 @@ Se comprobaron localmente el JSON y tablas de verdad de condiciones específicas
 
 Referencias principales: [límites de IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html), [efectos de las SCP](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html), [referencia de autorización de EKS](https://docs.aws.amazon.com/service-authorization/latest/reference/list_eks.html), [anuncio de claves de condición de EKS](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/), [habilitación de ABAC en S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html), [condiciones de etiquetas de bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging.html).
 
-## Cifrado y administración de secretos
+## Cifrado y administración de secretos {#encryption-and-secrets-management}
 
 ### Cifrado predeterminado y propiedad de las claves del cliente
 
@@ -1791,7 +1791,7 @@ La validación usa las CRD/gráficos publicados de ESO, el esquema nativo de Kub
 
 Referencias principales: [cifrado de sobre de EKS](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [autenticación de AWS de ESO 2.10](https://github.com/external-secrets/external-secrets/blob/v2.10.0/docs/provider/aws-access.md), [versión de ESO](https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0), [Secrets de Kubernetes](https://kubernetes.io/docs/concepts/configuration/secret/), [CLI de rotación de Secrets Manager](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html), [SOPS](https://getsops.io/docs/).
 
-## Cumplimiento y auditoría
+## Cumplimiento y auditoría {#compliance-and-auditing}
 
 ### Registros de auditoría del plano de control de EKS
 
@@ -1852,7 +1852,7 @@ Para una cuenta/región de CSPM propia ya habilitada, inspecciona `aws securityh
 
 El flujo actual de hallazgos OCSF de Security Hub y los eventos ASFF de CSPM tienen esquemas diferentes. En EventBridge, CSPM usa `Security Hub Findings - Imported`; el evento V2 es `Findings Imported V2`. Adáptate al esquema real y prueba un evento representativo. Ninguna de las dos integraciones significa que todos los registros sin procesar de CloudWatch se ingieran automáticamente como hallazgos.
 
-## Supervisión y detección de seguridad
+## Supervisión y detección de seguridad {#security-monitoring-and-detection}
 
 Usa controles independientes para la detección de amenazas basada en auditoría, la telemetría de tiempo de ejecución basada en agentes, la evaluación de postura y la respuesta ante incidentes. Que un servicio esté habilitado no demuestra la cobertura completa del clúster/nodo ni la entrega correcta de notificaciones.
 
@@ -1932,7 +1932,7 @@ La regla personalizada y un control negativo de macro indefinida se comprobaron 
 
 Referencias principales: [registros de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [regla Config para todos los tipos](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-logging-enabled.html), [regla Config para tipos seleccionados](https://docs.aws.amazon.com/config/latest/developerguide/eks-cluster-log-enabled.html), [estándares CSPM](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [eventos ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [eventos V2](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [EKS Protection de GuardDuty](https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html), [tiempo de ejecución de GuardDuty](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html), [gráfico Falco 9.2.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.2.0).
 
-## Prácticas recomendadas de seguridad de EKS
+## Prácticas recomendadas de seguridad de EKS {#eks-security-best-practices}
 
 ### Refuerzo de la seguridad del clúster
 
@@ -1958,7 +1958,7 @@ Referencias principales: [registros de EKS](https://docs.aws.amazon.com/eks/late
 4. **Evaluaciones de seguridad periódicas**: usa el benchmark CIS/EKS y la versión aplicables, documentando las excepciones del servicio administrado y las comprobaciones manuales
 5. **Establece un plan de respuesta a incidentes**: establece y prueba un plan de respuesta a incidentes de seguridad para el clúster de EKS
 
-## Consideraciones de seguridad de EKS para servicios financieros
+## Consideraciones de seguridad de EKS para servicios financieros {#eks-security-considerations-for-financial-services}
 
 Lo siguiente son consideraciones de diseño para una carga de trabajo financiera acotada, no una lista de comprobación de certificación ni una afirmación de que este ejemplo se haya probado para producción. Determina la jurisdicción, los tipos de datos, los requisitos contractuales y las pruebas de controles aplicables con los responsables de seguridad/cumplimiento correspondientes.
 

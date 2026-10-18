@@ -94,7 +94,7 @@ EOF
 9. [审计](#audit)
 10. [Amazon EKS 安全增强](#amazon-eks-security-enhancement)
 
-## 安全概述
+## 安全概述 {#security-overview}
 
 > **关键概念**：Kubernetes 安全遵循纵深防御方法，在基础设施、集群和工作负载层面提供多种安全机制。
 
@@ -116,7 +116,7 @@ Kubernetes 安全主要包括以下几个方面：
 4. **安全加固**：采用比默认设置更严格的安全配置
 5. **持续监控**：检测并响应安全事件
 
-## 身份验证
+## 身份验证 {#authentication}
 
 要访问 Kubernetes API 服务器，必须经过身份验证流程。Kubernetes 支持多种身份验证方式：
 
@@ -183,7 +183,7 @@ users:
 
 在 API 服务器前部署身份验证代理来处理用户身份验证的一种方法。代理会在 HTTP 标头中加入已验证的用户信息，并将其转发给 API 服务器。
 
-## 授权
+## 授权 {#authorization}
 
 如果身份验证是确认“你是谁”的过程，那么授权就是确定“你可以做什么”的过程。Kubernetes 支持多种授权模式：
 
@@ -273,7 +273,7 @@ Node 授权是 kubelet 访问 API 服务器时使用的一种特殊授权模式�
 
 通过外部服务作出授权决策的一种方法。API 服务器会将授权请求转发给外部服务，由该服务决定允许还是拒绝请求。
 
-## 安全上下文
+## 安全上下文 {#security-context}
 
 安全上下文定义 Pod 或容器级别的安全设置。它支持对权限、访问控制、功能等进行精细控制。
 
@@ -316,7 +316,7 @@ spec:
 - `capabilities`：添加或移除 Linux 内核功能
 - `readOnlyRootFilesystem`：将根文件系统挂载为只读
 
-### Pod 安全标准
+### Pod 安全标准 {#pod-security-standards}
 
 PodSecurityPolicy 已在 v1.25 中移除。Pod Security Admission（在 v1.25 中达到稳定状态）可以通过命名空间标签强制实施 Pod 安全标准。这些标准是策略定义，而不是 `PodSecurityStandard` API 资源。它们定义了三个级别：
 
@@ -338,7 +338,7 @@ metadata:
 
 Restricted Linux 工作负载需要设置 `runAsNonRoot: true`、`allowPrivilegeEscalation: false`，使用允许的 seccomp 配置文件并丢弃 capabilities，同时还要限制主机访问。`readOnlyRootFilesystem` 是有用的加固措施，但它本身并非 Restricted 级别的要求。如需固定策略版本，请设置 `*-version` 命名空间标签。
 
-## 网络策略
+## 网络策略 {#network-policy}
 
 网络策略提供了控制 Pod 之间通信的方式。默认情况下，Kubernetes 集群中的所有 Pod 都可以互相通信，但可以使用网络策略限制通信。
 
@@ -386,7 +386,7 @@ spec:
 
 这些 podSelector 匹配 `default` 命名空间中的 Pod。策略是累加生效的，因此其他策略可能会允许更多流量；源端的出站规则和目标端的入站规则都必须允许连接。本示例未包含 DNS：如果应用程序需要解析 Service 名称，请为实际的集群 DNS 端点添加 TCP/UDP 53 端口访问权限。
 
-## Secret 管理
+## Secret 管理 {#secret-management}
 
 Kubernetes Secret 用于存储和管理密码、API 密钥和证书等敏感信息。Secret API 对 `data` 使用 base64 编码；这种编码并不等于加密。静态数据保护取决于集群：自管理集群需要配置加密，而当前的 EKS 集群默认启用信封加密。无论哪种情况，都需要 RBAC 和安全的应用程序处理方式。
 
@@ -420,7 +420,7 @@ resources:
 - Google Secret Manager
 - External Secrets Operator
 
-## 镜像安全
+## 镜像安全 {#image-security}
 
 容器镜像安全是 Kubernetes 安全的重要组成部分。
 
@@ -464,7 +464,7 @@ plugins:
 
 ImagePolicyWebhook 需要运行中的策略后端以及自管理 API 服务器准入配置；仅凭此文件并不能强制执行注册表规则。EKS 不提供任意 API 服务器标志；在 EKS 上请改用受支持的准入 Webhook/策略控制器。
 
-## 审计
+## 审计 {#audit}
 
 Kubernetes 审计提供了一种记录和分析集群中发生事件的机制。
 
@@ -499,7 +499,7 @@ rules:
 
 内置后端为文件/日志和 Webhook。可以通过采集器将其输出转发到 Elasticsearch/Loki；它们不是原生的动态审计后端。本示例仅记录元数据，因此不会将 Secret/令牌正文复制到日志中。自管理集群必须在 API 服务器上配置审计策略和后端；EKS 审计日志通过控制平面日志记录启用。
 
-## Amazon EKS 安全增强
+## Amazon EKS 安全增强 {#amazon-eks-security-enhancement}
 
 除了 Kubernetes 的基本安全功能外，Amazon EKS 还可以通过与 AWS 安全服务集成来增强安全性。
 

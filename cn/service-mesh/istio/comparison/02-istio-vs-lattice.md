@@ -18,7 +18,7 @@
 7. [混合与多云设计](#hybrid-and-multicloud-design)
 8. [选择标准](#selection-criteria)
 
-## 架构与平台
+## 架构与平台 {#architecture-and-platforms}
 
 ### Istio
 
@@ -50,7 +50,7 @@ VPC association 和 endpoint association 具有不同的寻址/连接行为。se
 
 “不要求 sidecar”是部署属性，而非零延迟、CPU、签名/controller 工作或总基础设施成本的证明。
 
-## 流量管理
+## 流量管理 {#traffic-management}
 
 ### 加权与条件路由
 
@@ -315,7 +315,7 @@ Lattice 自动使用健康的 target。如果 group 中所有 target 都不健�
 
 Service idleTimeoutSeconds 可在 60 至 600 秒间配置。它不是与每 route request timeout 或 retry budget 相同的控制措施。应测试所选 HTTP、gRPC 或 TLS 路径的连接/request 限制和故障行为，而不是指定笼统的胜者。
 
-## 安全与身份
+## 安全与身份 {#security-and-identity}
 
 ### Istio：共同要求预期条件
 
@@ -482,7 +482,7 @@ Lattice authorization 不限于 L4/service name。有文档说明的 condition �
 当前 WAF AssociateWebACL resource list 不包含 Lattice service/network。受支持的 WAF component 可以是单独设计路径的一部分，但旧图中直接的“Lattice WAF integration”说法没有依据。IAM、WAF、network isolation 和 application authorization 仍然是不同的控制措施。
 
 
-## 可观测性
+## 可观测性 {#observability}
 
 ### Istio 指标与 Trace
 
@@ -618,7 +618,7 @@ aws logs get-query-results --region "$AWS_REGION" --query-id "$QUERY_ID"
 
 query 可能仍处于 Scheduled 或 Running；立即得到空结果并不能证明没有发生错误。请将访问权限和时间范围缩小到调查范围。Kiali/Grafana 或 CloudWatch dashboard 需要其真实的数据源和访问配置；dashboard 名称不能证明等价的可见性。
 
-## 安装与运维
+## 安装与运维 {#installation-and-operations}
 
 ### 选择并验证平台
 
@@ -674,7 +674,7 @@ aws vpc-lattice list-targets --region "$AWS_REGION" --target-group-identifier "$
 list-services 不接受 service-network filter。network analysis tool 检查其受支持的 network resource；将 Lattice service ID 作为 EC2 network-insights destination 传入，并不是完整的 application/IAM 诊断。没有任何固定的三层流程、五分钟修复时间或托管“auto healing”保证源自这些 command。
 
 
-## 成本与历史证据
+## 成本与历史证据 {#cost-and-historical-evidence}
 
 ### 比较相同的成本边界
 
@@ -724,7 +724,7 @@ list-services 不接受 service-network filter。network analysis tool 检查其
 
 原始匿名 customer story 和所谓 re:Invent satisfaction survey 没有可追溯的 publication 或 methodology。它们可以提示关于 migration、staffing 和 hybrid ownership 的问题，但不能证明测量的 success rate。已确定的 **CNCF 2024 Annual Survey** 询问 container challenge、project usage 和 service-mesh usage；它无法证实声称的“40% Istio adoption failure”或列出的 failure-cause percentage。引用 survey 时请使用实际 question、sample 和含义。
 
-## 混合与多云设计
+## 混合与多云设计 {#hybrid-and-multicloud-design}
 
 ![一种可能的混合布局是在集群内使用 Istio，并在集群外使用单独配置的 Lattice service path。必须完成 signer、network、TLS 和可选 egress-gateway 契约。](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
 
@@ -751,7 +751,7 @@ service-network endpoint 可以从 on-premises 或其他已连接 network 提供
 
 对于 migration，请映射 API、identity、certificate trust、route、telemetry 和 recovery ownership。移动 namespace label 并不是从 Lattice IAM 到 mesh identity 的完整变更。有关其特定契约，请参阅 [VPC Lattice 指南](../../../networking/02-vpc-lattice.md)、[AWS 集成](../04-aws-integration.md)和[多集群指南](../advanced/02-multi-cluster.md)。
 
-## 选择标准
+## 选择标准 {#selection-criteria}
 
 | 要求 | 决策证据 |
 |---|---|

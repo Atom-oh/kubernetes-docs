@@ -80,7 +80,7 @@ Bottlerocket 支持的 VMware 变体使用其自身的引导路径，并且不�
 - **主机支持：**请一并审查 OS、架构、CNI 和 kernel。AL2023 适用于本地虚拟化环境，而非通用的裸金属建议。
 - **费用：**Node连接期间，hybrid 费用按报告的 vCPU-hours 计算。启用超线程的裸金属 cores 可能报告为两个 vCPU。空闲工作负载不会自动停止Node费用；集群和其他服务费用另行计算。
 
-## 凭证提供商
+## 凭证提供商 {#credential-providers}
 
 两种提供商都需要访问 AWS service endpoints 才能刷新凭证。本地 CA 不能让 IAM Roles Anywhere 离线签发 AWS 凭证。除非已有经过审核的混用理由，否则应在整个Node群中始终使用一种提供商。
 

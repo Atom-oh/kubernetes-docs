@@ -66,7 +66,7 @@ kubectl -n workloads-demo get deployments,pods
 - [DaemonSet](#daemonset)
 - [Job 和 CronJob](#jobs-and-cronjobs)
 
-## Pod 概念
+## Pod 概念 {#pod-concepts}
 
 > **核心概念**：Pod 是 Kubernetes 中最小的可部署计算单元，由一个或多个共享存储和网络的容器组构成。
 
@@ -352,7 +352,7 @@ spec:
       name: app-config
 ```
 
-## Pod 生命周期
+## Pod 生命周期 {#pod-lifecycle}
 
 Pod 从创建到终止会经历多个生命周期阶段。了解这一生命周期对于确保应用的稳定性和可用性十分重要。
 
@@ -477,7 +477,7 @@ Pod 中断可分为自愿中断和非自愿中断：
 
 PodDisruptionBudget 通过 Eviction API 限制自愿驱逐（例如 drain）。直接删除 Pod 和 Deployment 滚动更新会绕过它；需要单独配置滚动更新的可用性。它无法阻止非自愿故障。
 
-## Pod 设计模式
+## Pod 设计模式 {#pod-design-patterns}
 
 设计 Pod 时，有几种模式和最佳实践值得考虑。了解并应用这些模式可以提高应用的稳定性、可扩展性和可维护性。
 
@@ -677,7 +677,7 @@ spec:
     image: myapp:1.0
 ```
 
-## 工作负载资源概览
+## 工作负载资源概览 {#workload-resources-overview}
 
 Kubernetes 提供了多种用于管理 Pod 的工作负载资源。每种工作负载资源都针对特定的用例和需求而设计。
 
@@ -1249,7 +1249,7 @@ spec:
           path: /
 ```
 
-## Job 和 CronJob
+## Job 和 CronJob {#jobs-and-cronjobs}
 
 Job 和 CronJob 是用于运行一次性任务或定期任务的工作负载资源。
 

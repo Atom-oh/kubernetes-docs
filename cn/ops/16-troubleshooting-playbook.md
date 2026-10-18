@@ -46,7 +46,7 @@
 
 ***
 
-## 诊断决策树
+## 诊断决策树 {#diagnostic-decision-tree}
 
 ![用于区分节点分配、镜像与设置等待、重复退出、Pod Ready 条件以及 EndpointSlice/网络诊断的决策树。](../.gitbook/assets/en-ops-16-troubleshooting-playbook-0.png)
 
@@ -72,7 +72,7 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 
 ***
 
-## 按症状分类的故障排查手册
+## 按症状分类的故障排查手册 {#playbook-by-symptom}
 
 <span id="1-pod-stuck-in-pending"></span>
 
@@ -594,7 +594,7 @@ kube_deployment_status_replicas_available{
 
 ***
 
-## kubectl 诊断速查表
+## kubectl 诊断速查表 {#kubectl-diagnostic-cheat-sheet}
 
 将检查操作与调试操作区分开来：get/describe/logs/top 用于检查资源；kubectl debug 和 kubectl run 会创建容器或 Pod。请确保复制的 debug Pod 标签不会意外匹配 Service selector，并在使用后删除 debug Pod。Ephemeral container 会继续记录在原始 Pod 上。
 
@@ -664,7 +664,7 @@ kubectl rollout history deploy/<name> -n <ns>
 
 ***
 
-## 深入了解：相关文档
+## 深入了解：相关文档 {#going-deeper-related-documents}
 
 本故障排查手册是决定“下一步去哪里”的入口。缩小原因范围后，请转到以下文档。
 
@@ -683,7 +683,7 @@ kubectl rollout history deploy/<name> -n <ns>
 
 ***
 
-## 参考资料
+## 参考资料 {#references}
 
 本页引用字符串和经验规则背后的官方文档。
 

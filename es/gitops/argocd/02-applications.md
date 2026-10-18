@@ -13,7 +13,7 @@
 - [Ignorar diferencias](#ignore-differences)
 - [Patrón App of Apps](#app-of-apps-pattern)
 
-## Descripción general del CRD Application
+## Descripción general del CRD Application {#application-crd-overview}
 
 Los ejemplos son configuraciones independientes. Sustituye myorg/accounts/clusters/paths por fuentes autorizadas reales. Elige la fuente o las fuentes, el renderizador y destination.server/name según el escenario, en lugar de habilitar todas las alternativas a la vez.
 
@@ -92,7 +92,7 @@ Application.status es el estado informado por el controlador. Para crear Applica
 | `info` | Metadatos personalizados para mostrar |
 | `revisionHistoryLimit` | Número de revisiones de implementación que se conservarán |
 
-## Tipos de fuentes
+## Tipos de fuentes {#source-types}
 
 ArgoCD admite varios tipos de fuentes para obtener manifiestos de Kubernetes.
 
@@ -344,7 +344,7 @@ spec:
     namespace: production
 ```
 
-## Varias fuentes
+## Varias fuentes {#multiple-sources}
 
 Cuando se especifica sources, se ignora source. Combina configuraciones de una aplicación relacionada, como un chart más un repositorio de valores; usa ApplicationSet/App of Apps para pilas de plataforma administradas de forma independiente.
 
@@ -375,7 +375,7 @@ spec:
 
 ref: values asigna $values a la raíz de ese repositorio de Git. Sin path, solo proporciona valores; con path, también genera manifiestos en esa ubicación. Una fuente ref no puede especificar chart a la vez. Los recursos duplicados con la misma combinación de group/kind/name/namespace usan la última fuente y generan RepeatedResourceWarning; esto no realiza una combinación automática campo por campo.
 
-## Configuración del destino
+## Configuración del destino {#destination-configuration}
 
 Elige server o name para el destino registrado. destination.namespace proporciona el valor predeterminado para los recursos con espacio de nombres que no tengan uno propio; CreateNamespace crea solo ese destino, no todos los espacios de nombres incluidos explícitamente en un chart. Usa managedNamespaceMetadata junto con la creación del espacio de nombres y revisa la propiedad antes de actualizar uno existente.
 
@@ -403,7 +403,7 @@ syncPolicy:
     - CreateNamespace=true
 ```
 
-## Evaluación del estado
+## Evaluación del estado {#health-assessment}
 
 Synced describe los campos deseados/activos que se compararon; no demuestra que el servicio gestione solicitudes. Healthy depende de las comprobaciones configuradas para cada recurso. Los recursos personalizados sin una comprobación pueden omitirse del estado de la aplicación y necesitar una definición adecuada.
 
@@ -473,7 +473,7 @@ data:
 
 Esto interpreta el estado informado por el controlador; no consulta AWS directamente. Combina la clave con el argocd-cm existente y prueba los estados faltante/en espera/listo/error/especificación nueva con CR reales. Argo CD administrado por EKS proporciona comprobaciones de ACK/kro, así que primero inspecciona las comprobaciones existentes y la configuración admitida.
 
-## Hooks de recursos
+## Hooks de recursos {#resource-hooks}
 
 PostSync espera a que la sincronización finalice correctamente y a que los recursos pertinentes estén Healthy. La sincronización selectiva explícita de recursos no ejecuta hooks. En 3.5.4, ApplyOutOfSyncOnly sigue ejecutando hooks y registrando el historial. SyncFail gestiona los fallos de sincronización que correspondan; no confíes en él como una ruta garantizada de limpieza/copia de seguridad para todos los errores, incluidos los fallos de generación de manifiestos.
 
@@ -595,7 +595,7 @@ spec:
 
 Los Jobs con nombres fijos necesitan reglas de ciclo de vida, como BeforeHookCreation, para ejecutarse repetidamente. Guarda los registros de los fallos fuera del clúster antes de la limpieza; la limpieza HookSucceeded sigue la semántica de fase/resultado de sincronización de Argo. Prepara la imagen de migración, el Secret de la base de datos y la ServiceAccount; valida por separado la idempotencia, el bloqueo y la compatibilidad con la reversión. El fallo de un hook no revierte automáticamente una base de datos ni un Deployment existente. PreDelete/PostDelete se aplican a la eliminación de una Application, no a la poda habitual de la sincronización.
 
-## Ignorar diferencias
+## Ignorar diferencias {#ignore-differences}
 
 Excluye solo campos específicos que pertenezcan a otro controlador conocido. Este fragmento de Application.spec ignora las réplicas administradas por HPA en my-deployment en producción.
 
@@ -629,7 +629,7 @@ spec:
 
 La configuración global resource.customizations.ignoreDifferences afecta a todas las Applications. Es preferible usar reglas específicas de la aplicación; elige managedFieldsManagers solo después de inspeccionar qué campos administra realmente ese manager.
 
-## Patrón App of Apps
+## Patrón App of Apps {#app-of-apps-pattern}
 
 App of Apps es un patrón administrativo de arranque. Quienes escriben en la fuente principal pueden afectar a Applications/AppProjects con privilegios en el espacio de nombres de administración; restringe los permisos de escritura/revisión/destino. Los finalizers de la aplicación principal/secundaria y la poda pueden desencadenar eliminaciones en cascada. Crear Applications secundarias en orden no garantiza por sí solo que las cargas de trabajo secundarias estén listas; valida la propagación del estado de Application, la política de sincronización y el comportamiento de las waves.
 

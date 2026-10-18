@@ -19,7 +19,7 @@
 9. [卸载 Istio](#istio-removal)
 10. [故障排除](#troubleshooting)
 
-## 先决条件
+## 先决条件 {#prerequisites}
 
 安装 Istio 前，必须满足以下要求：
 
@@ -53,7 +53,7 @@ kubectl get nodes
 - **控制平面**：1 vCPU，1.5GB RAM
 - **Sidecar（每个 Pod）**：0.1 vCPU，128MB RAM
 
-## 选择安装方法
+## 选择安装方法 {#choosing-an-installation-method}
 
 选择一种受支持的安装路径；不要在同一个控制平面上同时运行 istioctl 和 Helm 安装：
 
@@ -62,7 +62,7 @@ kubectl get nodes
 | **istioctl** | 简单快速，提供验证功能 | 在自动化中需要显式协调 | 开发和生产 |
 | **Helm** | 适合 GitOps，版本管理方便 | 配置可能较复杂 | 生产环境、CI/CD 管道 |
 
-## 使用 istioctl 安装
+## 使用 istioctl 安装 {#installation-using-istioctl}
 
 istioctl 是 Istio 官方 CLI 工具，也是最简单的安装方法。
 
@@ -107,7 +107,7 @@ kubectl get all -n istio-system
 kubectl logs -n istio-system -l app=istiod
 ```
 
-## 使用 Helm 安装
+## 使用 Helm 安装 {#installation-using-helm}
 
 istiod 1.31.0 和 1.31.2 的 chart 存档中不包含 `eks` 平台配置文件（`files/profile-platform-eks.yaml`；于 October 16, 2026 检查）。以下 chart 示例现已固定为 1.31.2，但本次审阅未渲染该 chart；安装前请检查所选 chart。这些示例不设置 `global.platform=eks`，以免假设该配置文件存在，并明确设置 EKS 先决条件和负载均衡器参数。
 
@@ -192,7 +192,7 @@ helm upgrade --install istiod istio/istiod \
   --wait
 ```
 
-## 使用 istioctl 声明式安装
+## 使用 istioctl 声明式安装 {#declarative-installation-with-istioctl}
 
 上游集群内 operator 已在 1.23 中弃用，并在 1.24 中移除。`istioctl operator init/remove` 和向集群应用 IstioOperator 对象都不是当前的安装方法。[IstioOperator 文件格式仍受支持，可作为 istioctl 的输入](https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/)。
 
@@ -227,7 +227,7 @@ istioctl install -f istio-operator.yaml
 kubectl rollout status deployment/istiod -n istio-system
 ```
 
-## 安装配置文件
+## 安装配置文件 {#installation-profiles}
 
 Istio 提供多种适用于不同用例的配置文件。
 
@@ -274,7 +274,7 @@ istioctl install --set profile=default \
   -y
 ```
 
-## 验证安装
+## 验证安装 {#installation-verification}
 
 ### 1. 检查控制平面
 
@@ -320,7 +320,7 @@ kubectl get mutatingwebhookconfiguration
 kubectl get validatingwebhookconfiguration
 ```
 
-## 部署示例应用程序
+## 部署示例应用程序 {#sample-application-deployment}
 
 Istio 包含一个名为 Bookinfo 的示例应用程序。
 
@@ -425,7 +425,7 @@ echo "http://$GATEWAY_URL/productpage"
 curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 ```
 
-## 卸载 Istio
+## 卸载 Istio {#istio-removal}
 
 这些清理命令适用于一次性实验环境。清除操作会移除共享网格资源；从运行中的网格卸载前，请先移除已注入的工作负载，或在不启用注入的情况下重启它们。Helm 卸载会保留 CRD。
 
@@ -462,7 +462,7 @@ helm delete istio-base -n istio-system
 kubectl delete namespace istio-system
 ```
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 ### 常见问题
 

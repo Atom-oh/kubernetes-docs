@@ -57,7 +57,7 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 * [基本 Linux 命令](01-linux-basics.md#essential-linux-commands)
 * [容器相关的 Linux 功能](01-linux-basics.md#container-related-linux-features)
 
-## Linux 内核和用户空间
+## Linux 内核和用户空间 {#linux-kernel-and-user-space}
 
 ### 内核的作用
 
@@ -96,7 +96,7 @@ Linux 内核是操作系统的核心，充当硬件与软件之间的中介。�
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
-## 进程管理
+## 进程管理 {#process-management}
 
 ### 进程和线程
 
@@ -136,7 +136,7 @@ fg %<job-number>
 bg %<job-number>
 ```
 
-## 命名空间
+## 命名空间 {#namespaces}
 
 命名空间是 Linux 内核的一项功能，可隔离进程组，使每个组都能独立看到系统资源。这是容器技术的核心要素。
 
@@ -174,7 +174,7 @@ unshare --user --map-root-user --mount --net bash
 sudo unshare --time --fork bash
 ```
 
-## cgroups（控制组）
+## cgroups（控制组） {#cgroups-control-groups}
 
 cgroups 是 Linux 内核的一项功能，用于限制和隔离进程组的资源使用。它用于实现容器资源限制。它是云原生环境和 Kubernetes 中资源管理的核心技术。
 
@@ -220,7 +220,7 @@ podman stats  # Monitor container resource usage
 docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 ```
 
-## 文件系统
+## 文件系统 {#file-system}
 
 ### 文件系统层级结构
 
@@ -260,7 +260,7 @@ df -h
 umount <mount-point>
 ```
 
-## 网络基础
+## 网络基础 {#networking-basics}
 
 ### 网络接口
 
@@ -300,7 +300,7 @@ ip link add <veth1> type veth peer name <veth2>
 ip link set <veth2> netns <namespace-name>
 ```
 
-## 安全上下文
+## 安全上下文 {#security-context}
 
 ### 用户和组
 
@@ -353,7 +353,7 @@ aa-enforce /etc/apparmor.d/<profile>
 aa-complain /etc/apparmor.d/<profile>
 ```
 
-## systemd 和服务管理
+## systemd 和服务管理 {#systemd-and-service-management}
 
 systemd 是现代 Linux 系统的 init 系统和服务管理器。它用于管理 Kubernetes 节点上的 kubelet 和 containerd 等核心服务。
 
@@ -446,7 +446,7 @@ sudo systemctl set-property --runtime linux-basics-demo.service IOWeight=500
 systemctl show linux-basics-demo.service | grep -E 'CPUQuota|MemoryMax|IOWeight'
 ```
 
-## 内核参数和模块
+## 内核参数和模块 {#kernel-parameters-and-modules}
 
 ### 通过 sysctl 设置内核参数
 
@@ -538,7 +538,7 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
-## 系统资源限制
+## 系统资源限制 {#system-resource-limits}
 
 ### ulimit - 每用户资源限制
 
@@ -594,7 +594,7 @@ cat /proc/<PID>/limits
 find /proc/<PID>/fd -mindepth 1 -maxdepth 1 -printf '%f\n' | wc -l
 ```
 
-## 日志管理
+## 日志管理 {#log-management}
 
 ### journald - systemd 集成日志
 
@@ -702,7 +702,7 @@ sudo vi /etc/logrotate.d/linux-basics-demo
 sudo logrotate -f /etc/logrotate.d/linux-basics-demo
 ```
 
-## DNS 和网络配置
+## DNS 和网络配置 {#dns-and-network-configuration}
 
 ### DNS 配置
 
@@ -769,7 +769,7 @@ sudo netplan generate
 sudo netplan try
 ```
 
-## 时间同步
+## 时间同步 {#time-synchronization}
 
 时间同步在分布式系统中非常重要。Kubernetes 集群中的所有节点都必须保持准确的时间。
 
@@ -862,7 +862,7 @@ sudo timedatectl set-timezone Asia/Seoul
 sudo timedatectl set-ntp true
 ```
 
-## 软件包管理
+## 软件包管理 {#package-management}
 
 用于安装和管理 Kubernetes 及相关工具的软件包管理器用法。
 
@@ -969,7 +969,7 @@ sudo dnf versionlock add kubelet kubeadm kubectl
 sudo dnf versionlock delete kubelet kubeadm kubectl
 ```
 
-## 基本 Linux 命令
+## 基本 Linux 命令 {#essential-linux-commands}
 
 ### 文件和目录管理
 
@@ -1012,7 +1012,7 @@ systemctl restart <service> # Or use start/stop as separate subcommands
 journalctl -u <service> # View service logs
 ```
 
-## 容器相关的 Linux 功能
+## 容器相关的 Linux 功能 {#container-related-linux-features}
 
 ### OverlayFS
 

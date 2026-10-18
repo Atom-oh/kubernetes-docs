@@ -46,7 +46,7 @@ apt-cache madison kubeadm
 ```
 
 
-## Descripción general de la administración de clústeres
+## Descripción general de la administración de clústeres {#cluster-administration-overview}
 
 La administración de clústeres de Kubernetes es el proceso de gestionar todo el ciclo de vida de un clúster. Esto incluye las siguientes áreas principales:
 
@@ -58,7 +58,7 @@ La administración de clústeres de Kubernetes es el proceso de gestionar todo e
 
 El diagrama siguiente muestra las principales áreas de la administración de clústeres de Kubernetes y las herramientas relacionadas:
 
-## Gestión de los componentes del clúster
+## Gestión de los componentes del clúster {#cluster-component-management}
 
 Un clúster de Kubernetes consta de componentes del plano de control y componentes de los nodos. La gestión de cada componente es fundamental para la estabilidad y el rendimiento del clúster.
 
@@ -287,7 +287,7 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
-## Gestión de recursos
+## Gestión de recursos {#resource-management}
 
 Gestionar eficazmente los recursos de un clúster de Kubernetes es importante para mantener su estabilidad y rendimiento.
 
@@ -399,7 +399,7 @@ spec:
 
 En el ejemplo anterior, las solicitudes de CPU y memoria de los pods del Deployment `frontend` se ajustan automáticamente según el uso real de recursos.
 
-## Redes del clúster
+## Redes del clúster {#cluster-networking}
 
 Las redes de clúster de Kubernetes gestionan la comunicación entre pods, Services y nodos.
 
@@ -537,7 +537,7 @@ spec:
 
 En el ejemplo anterior, los pods con la etiqueta `role=db` solo permiten el tráfico entrante TCP por el puerto 3306 desde pods con la etiqueta `role=frontend`, y el tráfico saliente TCP por el puerto 9090 hacia pods con la etiqueta `role=monitoring`.
 
-## Gestión de la autenticación y la autorización
+## Gestión de la autenticación y la autorización {#authentication-and-authorization-management}
 
 La gestión de la autenticación y la autorización de Kubernetes son elementos fundamentales de la seguridad del clúster.
 
@@ -749,7 +749,7 @@ spec:
 
 En el ejemplo anterior, el pod se ejecuta con UID 1000 y GID 3000, y el contenedor no puede escalar privilegios, tiene eliminadas todas las capacidades de Linux y tiene el sistema de archivos raíz montado en modo de solo lectura.
 
-## Actualizaciones del clúster
+## Actualizaciones del clúster {#cluster-upgrades}
 
 Las actualizaciones de clústeres de Kubernetes son necesarias para aplicar nuevas funciones, mejoras de rendimiento y parches de seguridad.
 
@@ -814,7 +814,7 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
-## Copia de seguridad y recuperación
+## Copia de seguridad y recuperación {#backup-and-recovery}
 
 La copia de seguridad y recuperación de un clúster de Kubernetes es una parte importante de la planificación de recuperación ante desastres.
 
@@ -955,7 +955,7 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
-## Supervisión y registro
+## Supervisión y registro {#monitoring-and-logging}
 
 La supervisión y el registro eficaces son elementos fundamentales de la administración de clústeres.
 
@@ -1069,7 +1069,7 @@ data:
     </match>
 ```
 
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 La solución de problemas de clústeres de Kubernetes es una parte importante de la administración de clústeres.
 
@@ -1165,7 +1165,7 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 kubectl logs -n kube-system etcd-<node-name>
 ```
 
-## Administración de clústeres de Amazon EKS
+## Administración de clústeres de Amazon EKS {#amazon-eks-cluster-administration}
 
 Amazon EKS es un servicio de Kubernetes administrado que automatiza muchos aspectos de la administración de clústeres.
 
@@ -1294,7 +1294,7 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
-## Prácticas recomendadas para la administración de clústeres
+## Prácticas recomendadas para la administración de clústeres {#cluster-administration-best-practices}
 
 Prácticas recomendadas para administrar clústeres de Kubernetes y EKS:
 

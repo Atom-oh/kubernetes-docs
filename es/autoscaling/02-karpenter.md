@@ -16,7 +16,7 @@
 - [Solución de problemas](#troubleshooting)
 - [Conclusión](#conclusion)
 
-## Introducción
+## Introducción {#introduction}
 
 Karpenter es un autoescalador de nodos de código abierto. Este capítulo utiliza su proveedor de AWS, que aprovisiona capacidad de EC2 para cargas de trabajo compatibles con Kubernetes. La disponibilidad y la eficiencia dependen de las restricciones, la capacidad de la nube, la inicialización de los nodos y el diseño de las aplicaciones.
 
@@ -44,7 +44,7 @@ Karpenter es un autoescalador de nodos de código abierto. Este capítulo utiliz
 
 > **Nota**: EKS añadió compatibilidad con grupos de nodos administrados con warm pools el 8 de abril de 2026. Las instancias preinicializadas pueden reducir el trabajo repetido de inicialización; los modos Stopped y Running tienen diferentes tiempos de transición y costos, y la reutilización al reducir el escalado es opcional. Según AWS, la integración con Cluster Autoscaler no requiere configuración adicional. La reanudación, la disponibilidad del nodo y el inicio de la aplicación siguen llevando tiempo. Esta es una característica de los grupos de nodos administrados de EKS/Auto Scaling, no un pool administrado por Karpenter.
 
-## Arquitectura
+## Arquitectura {#architecture}
 
 Karpenter funciona como un controlador de Kubernetes que detecta pods no programables y aprovisiona los nodos adecuados.
 
@@ -77,7 +77,7 @@ El siguiente diagrama muestra cómo funciona Karpenter en un clúster de EKS:
 5. El nodo se registra y pasa a estar listo; entonces, el scheduler de Kubernetes puede vincular los Pods aptos. Karpenter no reemplaza a kube-scheduler.
 6. La consolidación, la deriva, la expiración, la eliminación manual y las interrupciones de la nube tienen desencadenantes y medidas de protección diferentes; no son todos eventos de interrupción de SQS.
 
-## Instalación y configuración
+## Instalación y configuración {#installation-and-configuration}
 
 Los bloques YAML que no incluyen apiVersion/kind son fragmentos de configuración para la especificación de NodePool o EC2NodeClass en cuestión; no son documentos independientes para aplicar con kubectl.
 
@@ -363,7 +363,7 @@ El anuncio de AWS del 22 de julio de2026 añadió configuración de interfaces d
 
 Según la política de soporte, las versiones menores regulares solo reciben soporte hasta la siguiente versión menor. Por tanto, tras la publicación de v1.15.0, v1.14 continúa únicamente como línea LTS (hasta julio de 2027); por eso, los ejemplos de este capítulo siguen en 1.14 LTS (1.14.1). Kubernetes 1.37 requiere Karpenter 1.15.x; así que, si necesitas Kubernetes 1.37 o quieres pasar a 1.15, consulta primero la [matriz de compatibilidad de v1.15](https://karpenter.sh/v1.15/upgrading/compatibility/) y la guía de actualización. Consulta las [notas de la versión v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) para obtener más información.
 
-## Clases de nodo
+## Clases de nodo {#node-classes}
 
 Las clases de nodo definen la configuración de los nodos que aprovisiona Karpenter. En AWS, utiliza el CRD EC2NodeClass.
 
@@ -488,7 +488,7 @@ El siguiente diagrama muestra el proceso de consolidación de nodos de Karpenter
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-2.html)
 
-## Gestión de interrupciones
+## Gestión de interrupciones {#interruption-handling}
 
 La gestión de interrupciones configurada intenta reaccionar antes de que se pierda capacidad. Las notificaciones, la capacidad de reemplazo, los plazos de apagado y la recuperación de las aplicaciones determinan el resultado; no se garantiza la disponibilidad ininterrumpida.
 
@@ -591,7 +591,7 @@ spec:
       app: my-app
 ```
 
-## Integración
+## Integración {#integration}
 
 Karpenter se integra con varios servicios de Kubernetes y de la nube.
 
@@ -846,7 +846,7 @@ spec:
     httpPutResponseHopLimit: 1
     httpTokens: required
 ```
-## Integración con Amazon EKS
+## Integración con Amazon EKS {#integration-with-amazon-eks}
 
 El proveedor de AWS de Karpenter puede aprovisionar capacidad de EC2 junto con los recursos de cómputo administrados por EKS cuando se configuran la identidad, la red, el acceso de los nodos y el bootstrap.
 
@@ -1149,7 +1149,7 @@ spec:
     consolidateAfter: 1m
 ```
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
 ![Cuatro listas paralelas de prácticas recomendadas de Karpenter, agrupadas por categoría: optimización del rendimiento, optimización de costos, mejora de la disponibilidad y refuerzo de la seguridad.](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
 
@@ -1260,7 +1260,7 @@ spec:
     consolidateAfter: 60s
 ```
 
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 ### Problemas comunes
 

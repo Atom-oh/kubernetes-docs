@@ -943,7 +943,7 @@ fi
 
 </details>
 
-## 高级主题
+## 高级主题 {#advanced-topics}
 
 以下问题涉及 Amazon EKS 集群创建的高级主题。本节用于测试你对 EKS 集群创建高级概念和最佳实践的理解。
 

@@ -16,7 +16,7 @@
 6. [按需求选择架构](#architecture-selection-by-requirement)
 7. [局限性与后续检查](#limitations-and-next-checks)
 
-## 为何需要跨组织连接
+## 为何需要跨组织连接 {#why-cross-org-connectivity}
 
 合同所有权、收购、独立治理或隔离要求，可能会使 GPU 工作负载和现有服务分别位于不同的 Organizations 中。组织结构应根据这些要求确定，而不应假设另设一个 Organization 就能自动改善 GPU 折扣、配额或合规性。
 
@@ -24,7 +24,7 @@ EC2 资源配额通常按**账户和区域**设定；单独的账户即可实现
 
 对于 EKS，需要区分对数据管道/推理 API 的普通 IP 访问与 GPU 集合通信。基于 CPU 实例的请求/响应基准测试，不能证明 NCCL、吞吐量或 RDMA 性能。**EFA OS bypass 流量无法跨越 VPC 或可用区**；其 ENA 接口发出的普通 IP 流量仍可路由。
 
-## 五种方案比较
+## 五种方案比较 {#comparing-the-five-options}
 
 PrivateLink 和 Lattice 两列描述的是**已测试的、由 NLB 支持的端点服务和 HTTP 服务模式**。PrivateLink 还提供资源和服务网络端点类型；Lattice 也提供 TCP 资源配置。它们并非一概都是“必须使用 NLB”或“仅支持 L7”的产品。
 
@@ -39,7 +39,7 @@ PrivateLink 和 Lattice 两列描述的是**已测试的、由 NLB 支持的端�
 
 配置时间是原始报告中的观测结果，并非 SLA 或端到端交付时间估算。路由一行描述的是本章中的双 TGW 拓扑；并未声称可以通过任意对等连接链实现不受限制的中转。NAT 或重新规划地址是处理地址重叠的其他方法，需要单独设计。
 
-## 报告的验证结果
+## 报告的验证结果 {#reported-verification-results}
 
 原始报告称，五种模式均已建立，并且流量已在两个 Organizations 之间传输。AWS 文档支持这些模式的跨账户部署；不一定需要属于同一个 Organization。不过，IAM/SCP/共享限制可能阻止配置，而路由、安全组、NACL、DNS 和服务授权决定流量能否正常工作。仅有账户 ID 和接受共享邀请并不足够。
 
@@ -106,7 +106,7 @@ Lattice 的 HTTP 中位数比共享 TGW/NLB 和 TGW 对等连接/NLB 的 HTTP �
 
 原始报告还描述了一项被舍弃的突发型实例/NLB→ALB/新建 curl 试测，p95 约为 **7 毫秒**，以及首次流量增加 **0.6–1.6 毫秒**。这些仍是有所归属的观测结果，但没有附上原始样本链接，也不代表 AWS 保证。应针对实际应用分别测量连接建立阶段和稳定运行阶段的表现。
 
-## 运维发现
+## 运维发现 {#operational-findings}
 
 1. **RAM 外部共享：**必须允许外部主体，并且 Organization 之外的账户必须接受共享邀请。`CreateResourceShare` API 的 `allowExternalPrincipals` 默认值为 **true**；显式设置 `--allow-external-principals` 可记录设计意图，但并非所有情况下，未提供这个字面 CLI 标志都会导致失败。请核实有效的共享配置和权限。
 2. **共享 TGW VPC 连接接受：**当 `AutoAcceptSharedAttachments` 被禁用（默认值）时，TGW 所有者必须接受共享连接。启用该选项会改变此流程。RAM 共享接受与 TGW 连接接受是不同的步骤。使用者无法修改所有者的 TGW 路由表，但仍可控制自己的 VPC 路由和安全设置。
@@ -116,7 +116,7 @@ Lattice 的 HTTP 中位数比共享 TGW/NLB 和 TGW 对等连接/NLB 的 HTTP �
 6. **Lattice 目标安全组：**对于文档所述的 VPC 关联服务路径，应在实际目标端口和运行状况检查端口上使用按区域/IP 地址族管理的前缀列表（`com.amazonaws.REGION.vpc-lattice` 和 `com.amazonaws.REGION.ipv6.vpc-lattice`）。原始示例中的 `169.254.171.0/24` 并非通用列表定义；管理列表可能包含链路本地或不可路由的公网地址。端点/资源网关路径有各自的控制措施。还必须配置 IAM 服务身份验证；仅关联 VPC 并不会启用该功能。
 7. **清理资源的所有权：**原始报告提到，GuardDuty 管理的网络依赖项、IAM 策略附加项以及残留的 Lattice 资源会影响资源拆除。操作前请检查实际依赖项 ID 和所属服务。不要为了强行删除 VPC/角色而禁用托管安全控制或删除无关资源。
 
-## 按需求选择架构
+## 按需求选择架构 {#architecture-selection-by-requirement}
 
 | 需求 | 候选模式 | 重要检查项 |
 |---|---|---|
@@ -129,7 +129,7 @@ Lattice 的 HTTP 中位数比共享 TGW/NLB 和 TGW 对等连接/NLB 的 HTTP �
 
 TGW 对等连接与 PrivateLink 的混合方案，或许适合既需要独立网络治理、又只需暴露少量 API 的场景。已发布的延迟表格并不能证明它最适合大多数 GPU 环境。应根据所需的连接能力和控制措施做出选择，然后测量实际工作负载。
 
-## 局限性与后续检查
+## 局限性与后续检查 {#limitations-and-next-checks}
 
 原始报告未涵盖经测量的 Network Firewall 检查路径、跨区域延迟以及吞吐量/并发量。报告提到了重叠地址的功能检查，但未公布重叠地址情况下的延迟结果。GPU 集合通信、EFA/RDMA、有代表性的负载大小、不确定性估算以及完整复现材料，也无法通过本页面证实。
 

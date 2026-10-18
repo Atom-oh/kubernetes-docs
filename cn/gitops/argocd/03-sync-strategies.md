@@ -13,7 +13,7 @@
 - [重试策略](#retry-policies)
 - [选择性同步](#selective-sync)
 
-## 手动同步与自动同步
+## 手动同步与自动同步 {#manual-vs-automated-sync}
 
 以下示例是相互独立的策略片段。请保留实际 Application 的 source、destination 和 project，并且只选择需要的选项。Sync 会应用更改；Refresh 会根据来源/缓存更新比较结果。Synced 与健康状态及实际服务可用性相互独立。
 
@@ -81,7 +81,7 @@ spec:
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-0.html)
 
-## 自动同步策略
+## 自动同步策略 {#auto-sync-policies}
 
 automated: {} 或省略/null 的 enabled 标志会启用自动同步；enabled: false 会禁用自动同步。只有设置 selfHeal 才会纠正仅存在于实际状态中的偏差，prune 则是独立选项。默认情况下，相同提交/参数组合的失败不会无限重试；请配置重试策略。对于由 ApplicationSet 管理的 Application，应修改其所属模板。
 
@@ -151,7 +151,7 @@ spec:
       allowEmpty: false  # Prevent auto-prune from deleting everything on an empty render
 ```
 
-## 同步选项
+## 同步选项 {#sync-options}
 
 同步选项可以精细控制同步行为。
 
@@ -247,7 +247,7 @@ metadata:
 
 更改不可变字段需要针对具体资源制定迁移/重新创建计划。不要将此用作 PVC 存储类迁移的捷径。删除前请审查保留策略、数据和可用性。Replace 的优先级高于 ServerSideApply。
 
-## 同步波次与阶段
+## 同步波次与阶段 {#sync-waves-and-phases}
 
 同步波次控制资源的应用顺序。
 
@@ -411,7 +411,7 @@ spec:
 
 对于数据库，应先准备身份验证、持久化、Service 和实际就绪检查。HPA 需要 CPU requests 和可用的指标。不要将就绪检查所需的 Service/ConfigMap 放在后续波次中。
 
-## 同步窗口
+## 同步窗口 {#sync-windows}
 
 此示例允许 production 项目中名称匹配 prod-* 的应用在韩国标准时间星期日 02:00–06:00 进行同步，并在 03:00–04:00 冻结同步。请将仓库/目标位置替换为实际授权的范围。
 
@@ -473,7 +473,7 @@ argocd app get my-app
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-4.html)
 
-## 差异比较自定义
+## 差异比较自定义 {#diffing-customization}
 
 仅忽略由其他控制器实际管理的字段，并按名称/命名空间限定范围。例如，排除由 HPA 管理的某个 Deployment 的 replicas。不要默认广泛排除镜像、所有注解/资源或所有管理器。
 
@@ -494,7 +494,7 @@ ignoreDifferences 控制比较；RespectIgnoreDifferences 会将其扩展到同�
 
 有关限定范围的规则，请参见 [Application ignore-difference 示例](02-applications.md#ignore-differences)。
 
-## 重试策略
+## 重试策略 {#retry-policies}
 
 limit: 5 表示初始尝试之后最多重试五次，总计最多六次。延迟从 5s、10s、20s、40s、80s 递增；maxDuration 限制的是单次退避时长，而不是整个同步或 Hook 的时长。Application 重试与 Job 的 backoffLimit/activeDeadlineSeconds 属于不同层级。
 
@@ -565,7 +565,7 @@ spec:
           exit 1
 ```
 
-## 选择性同步
+## 选择性同步 {#selective-sync}
 
 显式使用 --resource/--label 选择会跳过 Hook 和历史记录。ApplyOutOfSyncOnly/--apply-out-of-sync-only 在 3.5.4 中会保留 Hook 和历史记录。--label 用于选择资源；--selector(-l) 用于选择 Application。
 

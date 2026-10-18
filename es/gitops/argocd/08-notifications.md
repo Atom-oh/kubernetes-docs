@@ -14,7 +14,7 @@
 - [Configuración avanzada](#advanced-configuration)
 - [Integración con AWS](#aws-integration)
 
-## Descripción general
+## Descripción general {#overview}
 
 ArgoCD Notifications es un componente que supervisa las aplicaciones de ArgoCD y envía notificaciones cuando se cumplen ciertas condiciones. Admite varios servicios de notificación y proporciona plantillas flexibles.
 
@@ -28,7 +28,7 @@ ArgoCD Notifications es un componente que supervisa las aplicaciones de ArgoCD y
 | Modelo de suscripción | Suscripciones de notificación por aplicación |
 | Catálogo de ejemplos | Definiciones opcionales de disparadores/plantillas para combinar con su configuración |
 
-## Arquitectura
+## Arquitectura {#architecture}
 
 ![Diagrama de flujo de las notificaciones de ArgoCD: los eventos de Application llegan al Notifications Controller, que evalúa los disparadores y renderiza las plantillas; después, envía mensajes a las suscripciones configuradas coincidentes.](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
 
@@ -42,7 +42,7 @@ La instalación completa de Argo CD 3.5.4 incluye el controlador de Notification
 kubectl get deployment argocd-notifications-controller -n argocd
 ```
 
-## Servicios de notificación
+## Servicios de notificación {#notification-services}
 
 Combine estos fragmentos de datos en una configuración de argocd-notifications-cm; no reemplace el mismo ConfigMap/Secret con cada fragmento independiente. Almacene los tokens, las URL de webhook firmadas y las claves privadas en valores protegidos de argocd-notifications-secret fuera de Git. Los nombres de servicio, plantilla, disparador y suscripción deben coincidir.
 
@@ -218,7 +218,7 @@ data:
       staging: $pagerduty-key-staging
 ```
 
-## Disparadores
+## Disparadores {#triggers}
 
 Estos son ejemplos definidos explícitamente, no supuestos sobre un catálogo instalado automáticamente. Sus entradas `send` hacen referencia a `template.app-status` a continuación. **Combine los fragmentos en un ConfigMap** junto con la configuración del servicio que haya seleccionado.
 
@@ -346,7 +346,7 @@ spec:
         summary: Application {{ $labels.name }} has remained OutOfSync for 30 minutes
 ```
 
-## Plantillas
+## Plantillas {#templates}
 
 Esta plantilla común define formatos para Slack, Teams Workflows, correo electrónico HTML, webhook e incidentes. **Las suscripciones seleccionan los destinos**; incluir un formato de servicio no difunde a todos los proveedores. Suscriba PagerDuty/Opsgenie solo a los disparadores de fallo o Degraded. Este ejemplo no resuelve automáticamente los incidentes.
 
@@ -505,7 +505,7 @@ data:
         targetURL: '{{.context.argocdUrl}}/applications/{{.app.metadata.namespace}}/{{.app.metadata.name}}'
 ```
 
-## Suscripciones
+## Suscripciones {#subscriptions}
 
 ### Anotaciones de Application
 
@@ -566,7 +566,7 @@ metadata:
     notifications.argoproj.io/subscribe.on-health-degraded.pagerdutyv2: production
 ```
 
-## Configuración avanzada
+## Configuración avanzada {#advanced-configuration}
 
 ### oncePer y gestión de duplicados
 
@@ -584,7 +584,7 @@ argocd admin notifications template notify app-status ./sample-application.yaml 
   --config-map ./notifications.yaml --secret :empty --recipient console:stdout
 ```
 
-## Integración con AWS
+## Integración con AWS {#aws-integration}
 
 ### Servicio SQS nativo
 

@@ -20,7 +20,7 @@
 <span id="shift-left-security"></span>
 <span id="scan-targets"></span>
 
-## 镜像扫描概览
+## 镜像扫描概览 {#image-scanning-overview}
 
 左移安全检查会在 IDE、PR 和构建阶段引入检查。发布后仍会出现新的 CVE，因此仍需单独执行仓库重新扫描和运行时检测。
 
@@ -101,7 +101,7 @@ Chart 0.37.0 部署的应用版本为 0.35.0。[values 文件](https://github.co
 <span id="retrieving-scan-results"></span>
 <span id="notifications-via-eventbridge"></span>
 
-## Amazon ECR 镜像扫描
+## Amazon ECR 镜像扫描 {#amazon-ecr-image-scanning}
 
 | 属性 | Basic | Enhanced |
 |---|---|---|
@@ -162,7 +162,7 @@ cosign verify   --certificate-identity 'https://github.com/example-org/example-a
 
 <span id="kyverno-imageverify"></span>
 
-## 准入控制中的镜像验证
+## 准入控制中的镜像验证 {#image-verification-in-admission-control}
 
 Kyverno 1.19.1 会警告 ClusterPolicy 已弃用。新示例使用 policies.kyverno.io/v1 的 ValidatingPolicy 和 ImageValidatingPolicy。旧版 verifyImages 规则不是新策略类型的名称。
 
@@ -273,7 +273,7 @@ kubectl label namespace production securesystemsengineering.connaisseur/webhook=
 <span id="sbom-based-vulnerability-scanning"></span>
 <span id="slsa-supply-chain-levels-for-software-artifacts"></span>
 
-## 供应链安全
+## 供应链安全 {#supply-chain-security}
 
 ### SBOM 与证明
 
@@ -300,7 +300,7 @@ Syft/Trivy 生成命令是可选方案。SBOM 会列出工具检测到的内容�
 <span id="using-chainguard-images"></span>
 <span id="alpine-security-hardening"></span>
 
-## 基础镜像选择
+## 基础镜像选择 {#base-image-selection}
 
 | 镜像 | 特征 | 检查项 |
 |---|---|---|
@@ -361,7 +361,7 @@ ENTRYPOINT ["python3", "/app/app.py"]
 <span id="image-pull-policies"></span>
 <span id="immutable-tag-policy-kyverno"></span>
 
-## 镜像仓库最佳实践
+## 镜像仓库最佳实践 {#image-registry-best-practices}
 
 - 私有镜像需要获批准的拉取身份。ECR kubelet/node/Fargate 执行角色与应用程序 Pod Identity 不同。
 - 外部仓库可以使用有效的 kubernetes.io/dockerconfigjson Secret 和 ServiceAccount imagePullSecrets。Base64 并非加密。

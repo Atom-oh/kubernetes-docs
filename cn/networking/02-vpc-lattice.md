@@ -18,7 +18,7 @@ Amazon VPC Lattice 可连接跨 VPC 和 AWS 账户的应用程序。本章介绍
 - [故障排除](#troubleshooting)
 - [参考资料](#references)
 
-## 概述
+## 概述 {#overview}
 
 ### 什么是 VPC Lattice？
 
@@ -40,7 +40,7 @@ VPC Lattice 提供应用程序网络连接，无需在每个应用程序旁边�
 
 VPC Lattice 无需你运维其托管数据平面，但不保证总成本更低，也不保证提供相同的网格功能。请根据实际工作负载比较请求/数据/资源费用、Controller 运维、身份要求、重试、路由功能和可观测性。请参阅 [Istio–Lattice 比较](../service-mesh/istio/comparison/02-istio-vs-lattice.md)。
 
-## 架构
+## 架构 {#architecture}
 
 ### 组件和流量流向
 
@@ -66,7 +66,7 @@ VPC Lattice 无需你运维其托管数据平面，但不保证总成本更低�
 
 网络访问、IAM 授权和加密是不同的控制措施。`AWS_IAM` 要求使用受支持的签名请求和相应策略。`NONE` 会在特定层禁用 IAM 身份验证；它不会绕过其他层的 IAM policy、安全组或应用程序授权。HTTPS 保护客户端到 Lattice 的流量。除非明确配置后端 TLS，否则后端 HTTP 流量仍为明文。
 
-## EKS 和 VPC Lattice 集成
+## EKS 和 VPC Lattice 集成 {#eks-and-vpc-lattice-integration}
 
 AWS Gateway API Controller 会将 Kubernetes 资源协调为 VPC Lattice 资源：
 
@@ -84,7 +84,7 @@ AWS Gateway API Controller 会将 Kubernetes 资源协调为 VPC Lattice 资源�
 
 以下示例使用外部管理的网络和 VPC association。示例未设置 `defaultServiceNetwork`，也未将 VpcAssociationPolicy 附加到该 association。如果采用基于 CRD 的模型，请将网络、VPC association 和授权作为单独资源管理；不要同时使用 CloudFormation 管理相同资源。
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 ### 先决条件
 
@@ -447,7 +447,7 @@ spec:
 
 CRD 使用 `intervalSeconds`、`timeoutSeconds` 和 `statusMatch`。AWS CLI 使用不同的字段名称，稍后会展示。更改协议/版本可能会替换目标组；删除 policy 会恢复其设置，包括默认的 HTTP/HTTP1 行为。
 
-## Service 管理
+## Service 管理 {#service-management}
 
 ### 通过 HTTPRoute 创建 Service
 
@@ -620,7 +620,7 @@ aws vpc-lattice get-service --service-identifier "$SERVICE_ID" --query dnsEntry
 
 **删除 IAMAuthPolicy 会在解除 policy 附加前禁用其目标上的 IAM 身份验证 (`NONE`)。**这不是拒绝访问或安全回滚授权的方式。删除 Service 时请保留限制性 policy，并验证剩余的网络/Service 控制措施。
 
-## 路由和流量管理
+## 路由和流量管理 {#routing-and-traffic-management}
 
 ### 路径和标头匹配
 
@@ -690,7 +690,7 @@ aws vpc-lattice update-target-group --target-group-identifier "$TARGET_GROUP_ID"
 
 运行状况检查会根据阈值评估就绪状态；它不能保证可用性或零停机。HTTP1 目标组默认启用运行状况检查，而 HTTP2 需要显式考虑。gRPC 目标使用 HTTP1/HTTP2 运行状况检查，Lambda/ALB 目标类型则具有不同的运行状况检查行为。请查看当前的目标类型文档，不要将 Pod 示例套用到所有目标。
 
-## 安全和身份验证
+## 安全和身份验证 {#security-and-authentication}
 
 ### Auth policy 和调用方权限
 
@@ -743,7 +743,7 @@ aws vpc-lattice update-service --service-identifier "$SERVICE_ID" \
 
 面向客户端的 HTTPS 和后端 TLS 是两项独立配置。使用 `protocol: HTTPS` 的后端 `TargetGroupPolicy` 还要求后端实际使用 TLS，并且配置兼容的 HTTPS 运行状况检查。VPC Lattice **不会验证后端证书**；此配置可以加密连接，但不会验证后端证书的身份。若这是预期设计，请使用独立的 TLSRoute/TLS passthrough 模型，并审查其功能限制。
 
-## 监控和日志记录
+## 监控和日志记录 {#monitoring-and-logging}
 
 ### CloudWatch 指标、控制面板和警报
 
@@ -866,7 +866,7 @@ aws logs get-query-results --query-id "$QUERY_ID"
 
 VPC Lattice 没有 `update-service --tracing-config` 选项，也没有能自动为应用程序配置 X-Ray 的 Controller 注解。请使用 OpenTelemetry/ADOT 或适用的跟踪 SDK 为应用程序配置插桩，传播跟踪上下文，并配置导出/采样。将应用程序跟踪与访问日志及请求 ID 关联起来；客户端提供的请求 ID 不是经过身份验证的身份。
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 - **设计和所有权：** 使用清晰的网络/Service 命名和环境边界。考虑不同 namespace 中同名的 Gateway、共享网络使用方、配额，以及每个 policy 和 association 的所有权。
 - **部署：** 确保可以分别选择稳定版和 canary 后端。调整权重前检查端点、目标运行状况和授权。记录回滚标准并保留最近一次已知配置。
@@ -875,7 +875,7 @@ VPC Lattice 没有 `update-service --tracing-config` 选项，也没有能自动
 - **可观测性：** 分别监控请求数、错误数/错误率、延迟、目标运行状况和遥测缺失情况。按要求的期限保留访问日志，并明确为应用程序配置跟踪插桩。
 - **成本：** 针对所选模型查看当前区域内的 Service/资源、请求、数据处理、端点和日志费用。使用标签，仅移除确认未使用的资源，并将后端自动扩缩容与托管 Lattice 数据平面分开规划。
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 请使用 Controller 注解/状态以及 AWS 资源清单中的标识符。不要假设直接 API 示例中的 `$SERVICE_ID` 就是 Kubernetes Route 的 Service。
 
@@ -916,7 +916,7 @@ aws cloudwatch get-metric-statistics --namespace AWS/VpcLattice \
 
 如果 AWS Service 发生事件，请查看 AWS Health 和相关账户事件。账户专属的 API 访问和支持操作取决于适用的支持计划和端点。支持工单应包含经过审查的资源 ID、时间范围、故障症状和已清理敏感信息的日志。请为账户选择当前适用的 Service/类别/严重性选项；不要粘贴写死 `urgent` 的工单创建命令。
 
-## 参考资料
+## 参考资料 {#references}
 
 - [VPC Lattice 概述](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
 - [Service network associations](https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html)

@@ -733,7 +733,7 @@ spec:
 
 ## 重试和超时
 
-### 重试配置
+### 重试配置 {#retry-configuration}
 
 ```yaml
 apiVersion: cilium.io/v2

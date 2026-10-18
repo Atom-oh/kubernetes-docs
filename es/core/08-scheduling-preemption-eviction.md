@@ -129,7 +129,7 @@ EOF
 15. [Prácticas recomendadas de programación](#scheduling-best-practices)
 16. [Conclusión](#conclusion)
 
-## Descripción general de la programación
+## Descripción general de la programación {#scheduling-overview}
 
 El programador de Kubernetes es un componente del plano de control que coloca Pods en nodos adecuados. El programador tiene en cuenta diversos factores para determinar el nodo óptimo donde colocar los Pods:
 
@@ -154,7 +154,7 @@ El proceso de programación se divide, en términos generales, en dos fases:
    - Localidad de los datos
    - Taints/tolerations
 
-## Cómo funciona el programador
+## Cómo funciona el programador {#how-the-scheduler-works}
 
 El programador de Kubernetes opera mediante el siguiente proceso:
 
@@ -184,7 +184,7 @@ El programador de Kubernetes está diseñado para ser extensible mediante una ar
    - InterPodAffinity: tiene en cuenta la afinidad entre Pods
    - NodeAffinity: tiene en cuenta la afinidad de nodo
 
-### Estrategia de puntuación de NodeResourcesFit: LeastAllocated frente a MostAllocated
+### Estrategia de puntuación de NodeResourcesFit: LeastAllocated frente a MostAllocated {#noderesourcesfit-scoring-strategy-leastallocated-vs-mostallocated}
 
 `NodeResourcesFit` es tanto un complemento de filtrado (¿el nodo tiene suficiente CPU/memoria asignable para el Pod?) como un complemento de puntuación. El comportamiento de su complemento de puntuación se controla mediante `scoringStrategy.type`, configurado a través de `KubeSchedulerConfiguration`:
 
@@ -224,7 +224,7 @@ Por eso se suele recomendar `MostAllocated` para las **cargas de trabajo por lot
 
 Reproduce esta comparación exacta, paso a paso, en el [Laboratorio de estrategias de puntuación del programador](../labs/core/08-scheduling-preemption-eviction-lab.md).
 
-### Varios programadores
+### Varios programadores {#multiple-schedulers}
 
 Kubernetes puede ejecutar varios programadores al mismo tiempo. Esto permite implementar lógica de programación personalizada para cargas de trabajo específicas.
 
@@ -242,7 +242,7 @@ spec:
 
 En el ejemplo anterior, el campo `schedulerName` especifica el programador que programará el Pod.
 
-## Selección de nodos
+## Selección de nodos {#node-selection}
 
 Kubernetes proporciona varios mecanismos para colocar Pods en nodos específicos.
 
@@ -293,7 +293,7 @@ spec:
 
 En el ejemplo anterior, el Pod se coloca directamente en el nodo llamado `worker-node-1`.
 
-## Afinidad y antiafinidad de Pods
+## Afinidad y antiafinidad de Pods {#pod-affinity-and-anti-affinity}
 
 La afinidad y la antiafinidad de Pods permiten colocarlos según las relaciones entre Pods.
 
@@ -382,7 +382,7 @@ affinity:
 
 En el ejemplo anterior, el campo `weight` indica el peso de esta preferencia. Si hay varias preferencias, las de mayor peso se consideran más importantes.
 
-## Taints y tolerations
+## Taints y tolerations {#taints-and-tolerations}
 
 Los taints y las tolerations son mecanismos que permiten a los nodos rechazar determinados Pods.
 
@@ -448,7 +448,7 @@ Kubernetes aplica taints predeterminados a algunos nodos:
 - **node.kubernetes.io/network-unavailable**: la red del nodo no está disponible
 - **node.kubernetes.io/unschedulable**: no se puede programar en el nodo
 
-## Afinidad de nodo
+## Afinidad de nodo {#node-affinity}
 
 La afinidad de nodo ofrece una manera más expresiva de colocar Pods en conjuntos específicos de nodos. Permite especificar condiciones más complejas que un selector de nodo.
 
@@ -501,7 +501,7 @@ La afinidad de nodo admite varios operadores:
 - **Gt**: el valor de la etiqueta es mayor que el valor especificado
 - **Lt**: el valor de la etiqueta es menor que el valor especificado
 
-## Prioridad de Pods y desalojo por prioridad
+## Prioridad de Pods y desalojo por prioridad {#pod-priority-and-preemption}
 
 Kubernetes ofrece funciones de prioridad y desalojo por prioridad de Pods para garantizar que las cargas de trabajo importantes puedan obtener recursos del clúster.
 
@@ -561,7 +561,7 @@ Aspectos que se deben tener en cuenta al usar el desalojo por prioridad:
    - `system-cluster-critical`: Pods críticos para el funcionamiento del clúster
    - `system-node-critical`: Pods críticos para el funcionamiento del nodo
 
-## Expulsión de Pods
+## Expulsión de Pods {#pod-eviction}
 
 La expulsión termina un Pod; su controlador de carga de trabajo puede crear un reemplazo que el programador coloca por separado. La expulsión puede ocurrir por varios motivos.
 
@@ -621,7 +621,7 @@ evictionPressureTransitionPeriod: "30s"
 
 kubelet ordena los candidatos según si el uso supera las solicitudes, luego según la prioridad del Pod y, por último, según el uso relativo a las solicitudes. No expulsa simplemente primero todos los Pods BestEffort, luego todos los Burstable y después todos los Guaranteed. La presión de disco/PID tiene restricciones contables distintas; QoS no es un orden de expulsión universal.
 
-## Presupuesto de interrupción de Pods (PDB)
+## Presupuesto de interrupción de Pods (PDB) {#pod-disruption-budget-pdb}
 
 El presupuesto de interrupción de Pods (PDB) es una forma de mantener la disponibilidad de las aplicaciones durante interrupciones voluntarias. El PDB limita la cantidad de Pods que pueden interrumpirse simultáneamente.
 
@@ -677,7 +677,7 @@ Los PDB controlan las solicitudes a la API de expulsión, como las operaciones n
 3. **Ten en cuenta el número de réplicas**: `minAvailable` puede ser igual al número de réplicas para bloquear expulsiones voluntarias, pero el mantenimiento podría detenerse; configura deliberadamente el margen de interrupción permitido
 4. **Realiza pruebas periódicas**: prueba el funcionamiento del PDB mediante el vaciado de nodos y tareas similares
 
-## Expulsión por presión en el nodo
+## Expulsión por presión en el nodo {#node-pressure-eviction}
 
 La expulsión por presión en el nodo es un mecanismo que expulsa Pods cuando escasean los recursos del nodo.
 
@@ -833,7 +833,7 @@ spec:
 | **Rendimiento** | Mejor rendimiento del programador a escala | Puede ralentizar la programación con muchos Pods |
 | **Caso de uso** | Distribución uniforme con tolerancia | Separación estricta |
 
-## Costo de eliminación de Pods
+## Costo de eliminación de Pods {#pod-deletion-cost}
 
 El costo de eliminación de Pods es una preferencia de mejor esfuerzo que usa el controlador ReplicaSet al reducir la escala. HPA cambia el número deseado de réplicas; no selecciona Pods individuales como víctimas. La anotación no protege Jobs/StatefulSets, no impide la expulsión ni garantiza el orden de eliminación.
 
@@ -1083,7 +1083,7 @@ El CronJob independiente es una alternativa a Helm, no una instalación adiciona
 > - [Programador personalizado, parte 2: implementación](../scheduling/02-custom-scheduler-part2.md)
 > - [Programador personalizado, parte 3: funciones avanzadas](../scheduling/03-custom-scheduler-part3.md)
 
-## Optimización de la programación en Amazon EKS
+## Optimización de la programación en Amazon EKS {#scheduling-optimization-in-amazon-eks}
 
 En Amazon EKS, puedes optimizar las cargas de trabajo mediante las funciones de programación de Kubernetes.
 
@@ -1231,7 +1231,7 @@ spec:
     updateMode: "Recreate"
 ```
 
-## Prácticas recomendadas de programación
+## Prácticas recomendadas de programación {#scheduling-best-practices}
 
 Prácticas recomendadas para optimizar la programación en Kubernetes y EKS:
 

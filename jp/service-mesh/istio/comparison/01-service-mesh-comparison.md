@@ -17,7 +17,7 @@ artifact バージョンは、例を確認するために使用したソース�
 8. [コストとライセンス](#cost-and-licensing)
 9. [選定と検証](#selection-and-validation)
 
-## アーキテクチャ
+## アーキテクチャ {#architecture}
 
 Service Mesh は、選択された通信機能をインフラストラクチャコンポーネントへ移します。トラフィックのインターセプトはアプリケーションコードに対して透過的に行えますが、プロトコル選択、トラフィックの所有権、workload identity、ポリシーには引き続き設定が必要です。分散トレーシングにもコンテキスト伝播および instrumentation が必要です。Mesh によって任意のアプリケーション再試行が安全になるわけではありません。
 
@@ -75,7 +75,7 @@ Cilium は eBPF network datapath と、L7 parsing/policy 向けの Envoy など�
 
 Cilium 1.20.1 は、`encryption.type: ztunnel` で選択される別個の [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst) も提供します。これは namespace enrollment による TCP workload mTLS を提供し、両方の endpoint が enrollment されている必要があります。ClusterMesh および host-networked Pod は対象外で、リリース済みガイドでは、HBONE port 15008 を対象とする場合を除き、通常の L4 ポリシーはこのパスで機能しないと警告されています。これは独自の CA/bootstrap 要件を持つ別個のデプロイメント選択です。
 
-## パフォーマンスの根拠
+## パフォーマンスの根拠 {#performance-evidence}
 
 ### 元の数値: 歴史的かつ未検証
 
@@ -99,7 +99,7 @@ Cilium 1.20.1 は、`encryption.type: ztunnel` で選択される別個の [ztun
 
 rollout、draining、connection reuse、欠落した telemetry、control-plane 喪失を含め、同等の HA と障害動作を比較します。raw error は、retry 後の client-visible outcome と分けて測定してください。実験を再実行して保持せずに、歴史的なバージョンラベルを更新してはいけません。
 
-## トラフィック管理
+## トラフィック管理 {#traffic-management}
 
 | 機能 | 具体的な比較項目 |
 |---|---|
@@ -347,7 +347,7 @@ spec:
 これらは Consul config entry の Kubernetes CRD 形式であり、設定済みの Consul controller/RBAC が必要です。Consul catalog 内の Service metadata には実際に `version=v1/v2` が含まれている必要があります。Kubernetes Pod label のみでは catalog metadata の証拠になりません。HTTP protocol と resolver subset が split 定義を完成させます。同じ config entry に複数の owner を適用するのではなく、Kubernetes-to-Consul namespace/Service mapping と健全な endpoint を確認してください。
 
 
-## セキュリティ
+## セキュリティ {#security}
 
 暗号化、peer identity、caller authorization、アプリケーション authentication は別個の control です。enrolled proxy 間の自動 mTLS は、すべての unmeshed traffic が拒否されることや、すべての caller が認可されることを意味しません。
 
@@ -513,7 +513,7 @@ Consul Service identity と HTTP protocol 設定は、catalog および実際の
 
 Mesh config entry の TLS 最小バージョンは TLS 設定を変更します。アプリケーションを enrollment したり、proxy をインストールしたり、完全な CA/ACL 設定を作成したりするものではありません。Envoy extension と escape-hatch API にも、実際の Consul リリースの permission が必要です。2.0.4 リリースでは、code-executing extension に対する mesh:write 要件が厳格化されています。
 
-## 可観測性
+## 可観測性 {#observability}
 
 metric 数は有意な固定ランキングではありません。有効な stats、dimension、policy、scraping、アプリケーション instrumentation は、signal と overhead の両方に影響します。EnvoyFilter は無制限の telemetry extension API ではなく、すべての tracing backend が互換性のある protocol/exporter なしで交換可能なわけではありません。
 
@@ -537,7 +537,7 @@ linkerd viz dashboard
 
 これらは dashboard や backend をインストールしません。Kiali の現在の設定と互換性は別途確認する必要があります。古い accessible_namespaces 例と legacy Istio bundled-addon 値は、現在のインストール手順ではありません。維持されている設定と検証上の制限については、[observability guide](../observability/README.md) を参照してください。Kong GUI は、空の Mesh metrics backend によって有効になるわけではなく、Consul UI metrics URL は実際の server 環境から解決できる必要があります。
 
-## マルチクラスター
+## マルチクラスター {#multicluster}
 
 | システム | Discovery/data path | 重要な境界 |
 |---|---|---|
@@ -554,7 +554,7 @@ linkerd viz dashboard
 
 両方向で remote API/gateway 到達可能性、certificate trust、DNS、namespace/Service identity、export された Service、障害動作を確認してください。meshID label と 1 つの secret を使った以前の 2 つの install command よりも、[maintained Istio multicluster guide](../advanced/02-multi-cluster.md) を推奨します。これらの command は完全な Mesh setup ではありませんでした。
 
-## インストールと運用
+## インストールと運用 {#installation-and-operations}
 
 ### バージョンは独立した入力
 
@@ -649,7 +649,7 @@ kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 製品固有の command は、意図したインストール済み環境でのみ実行してください。すべての Consul sidecar に固定された歴史的 container 名があると想定せず、実際の component 名と log を調べてください。tap/debug log は request 情報を公開する可能性があります。一時的な diagnostic 設定の範囲を絞り、復元してください。すべての組織で 8 時間または 5 分の installation と主張するのではなく、実際の workflow におけるチームの作業を測定してください。
 
 
-## コストとライセンス
+## コストとライセンス {#cost-and-licensing}
 
 ### 元のコスト入力は見積もりではない
 
@@ -679,7 +679,7 @@ kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 
 Consul の Helm chart はその artifact に対して MPL ライセンスを示しますが、application binary のライセンスを上書きするものではありません。正確な artifact/version の条件を確認してください。Linkerd HA control-plane 設定は本質的に enterprise 専用機能ではありません。paid support/SLA と製品機能は upstream capability と区別する必要があります。1 つの vendor 名やドル記号のランキングから support を推論しないでください。
 
-## 選定と検証
+## 選定と検証 {#selection-and-validation}
 
 | 状況 | 選択を決定する質問 |
 |---|---|

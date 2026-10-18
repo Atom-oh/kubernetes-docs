@@ -14,7 +14,7 @@
 8. [监控和回滚](#monitoring-and-rollback)
 9. [故障排查](#troubleshooting)
 
-## 流量拆分概述
+## 流量拆分概述 {#traffic-splitting-overview}
 
 已针对 Istio 1.31.0 和 Argo Rollouts 1.10.1 进行检查。以下示例适用于可随时销毁的测试命名空间；不要运行多个使用相同 selector 的 Rollout，也不要让手动脚本/GitOps 覆盖由 Rollouts 管理的权重和子集哈希。开始发布前，请先安装引用的 Services、DestinationRules、AnalysisTemplates、gateway 和 Prometheus。首次部署会建立一个稳定的 ReplicaSet；Canary 步骤/分析则用于检查后续更新。权重控制的是请求分配比例，而不是用户的稳定百分比。
 
@@ -46,7 +46,7 @@ spec:
       weight: 10  # 10% of traffic
 ```
 
-## Canary 部署
+## Canary 部署 {#canary-deployment}
 
 Canary 部署是一种安全验证新版本的策略：首先仅将新版本部署给一小部分用户。将 Argo Rollouts 与 Istio 配合使用，可以实现自动化渐进式部署，并根据指标自动回滚。
 
@@ -955,7 +955,7 @@ spec:
       - pause: {duration: 2m}
 ```
 
-### 故障排查
+### 故障排查 {#troubleshooting}
 
 #### Rollout 卡在 Progressing 状态
 
@@ -1542,7 +1542,7 @@ spec:
         subset: version-a
 ```
 
-## 渐进式发布
+## 渐进式发布 {#progressive-rollout}
 
 渐进式发布会随时间自动提高流量比例。使用 Argo Rollouts 的 Canary 策略，可以实现自动化渐进式部署。
 
@@ -1558,7 +1558,7 @@ kubectl argo rollouts promote reviews
 kubectl argo rollouts abort reviews
 ```
 
-## 与流量镜像配合使用
+## 与流量镜像配合使用 {#using-with-traffic-mirroring}
 
 将流量拆分与镜像结合，可以让部署更加安全。
 
@@ -1589,7 +1589,7 @@ spec:
       value: 100
 ```
 
-## 实用示例
+## 实用示例 {#practical-examples}
 
 ### 示例 1：按用户群体部署
 
@@ -1742,7 +1742,7 @@ spec:
         subset: v1
 ```
 
-## 监控和回滚
+## 监控和回滚 {#monitoring-and-rollback}
 
 ### Prometheus 查询
 

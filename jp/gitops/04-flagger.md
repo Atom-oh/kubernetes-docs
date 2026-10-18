@@ -20,7 +20,7 @@ Flagger は Canary CRD を通じて Kubernetes ワークロードのプログレ
 - [可観測性とアラート](#observability-and-alerting)
 - [本番環境のベストプラクティス](#production-best-practices)
 
-## 概要と学習目標
+## 概要と学習目標 {#overview-and-learning-objectives}
 
 Kubernetes Deployment の RollingUpdate はすでに Pod を段階的に置き換えます。Flagger は、明示的なリビジョンのトラフィック制御と、メトリクス/テストに基づく昇格を追加します。この章では、リソースの所有権、3 つの戦略、メトリクス/ゲート、GitOps、および可観測性を扱います。
 
@@ -43,7 +43,7 @@ Blue-Green は、リソースが正確に 2 倍になること、即時ロール
 
 エコシステム統合は排他的な結合を意味しません。2 つのプログレッシブデリバリーコントローラーに同じワークロードを管理させないでください。
 
-## Flagger アーキテクチャ
+## Flagger アーキテクチャ {#flagger-architecture}
 
 ![Flagger は Canary/ワークロードリソースを監視し、ルーティング、メトリクス、通知を接続します。](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
@@ -81,7 +81,7 @@ AWS App Mesh のサポートは **2026-09-30** に終了しました。AWS に�
 
 アダプターが利用可能であることは、新規の本番利用に対する保守保証ではありません。実装ごとに A/B、ミラーリング、セッションアフィニティのサポートを検証してください。
 
-## EKS のインストールと設定
+## EKS のインストールと設定 {#eks-installation-and-configuration}
 
 この基準には、サポート対象の EKS/Kubernetes、インストール済みの Istio sidecar 環境、および必要なメトリクスをスクレイプする Prometheus が必要です。その URL は実際の Service に置き換えてください。Flagger は Istio も計装もインストールしません。Chart に同梱された Prometheus イメージは古い 2.41.0 なので、無効化しています。
 
@@ -321,7 +321,7 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
   --namespace flagger-system -f flagger-values.yaml --set meshProvider=gatewayapi:v1
 ```
 
-## Canary デプロイ戦略
+## Canary デプロイ戦略 {#canary-deployment-strategy}
 
 以下は基準となる Istio ワークロードと HPA です。Metrics Server が必要です。HPA/Flagger がスケーリングを所有できるよう Git から Deployment replicas を省略し、競合する Service を作成しないでください。これらのマニフェスト、または後述する HelmRelease の代替案を選択してください。
 
@@ -477,7 +477,7 @@ kubectl logs -n flagger-system -l app.kubernetes.io/name=flagger -c flagger --pr
 
 初期の安定セットアップ後、分析を開始するには、レビュー済みのイメージ/タグ/ダイジェストまたは Pod テンプレート変更を Git 経由で適用してください。同じタグの背後にあるリモートコンテンツを置き換えても、Git の変更の代わりにはなりません。生成された primary、Service、またはルーティングリソースを直接編集しないでください。
 
-## Blue-Green デプロイ戦略
+## Blue-Green デプロイ戦略 {#blue-green-deployment-strategy}
 
 ![Blue-Green は canary を検証し、primary を更新してから canary をスケールダウンします。](../.gitbook/assets/en-gitops-04-flagger-4.png)
 
@@ -648,7 +648,7 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   curl -fsS -b 'canary=always' http://podinfo.flagger-demo.svc.cluster.local:9898/
 ```
 
-## カスタムメトリクスと Webhook
+## カスタムメトリクスと Webhook {#custom-metrics-and-webhooks}
 
 ### Prometheus MetricTemplate
 
@@ -1276,7 +1276,7 @@ image:
 
 タグのみの marker はダイジェストを固定しません。Chart のダイジェストサポートまたはレジストリのタグ不変性と検証を確認してください。Kustomize images と Deployment marker の両方を通じて 1 つのイメージを不整合に上書きしないでください。ECR には、個別の image-reflector AWS 認証と、実際の Pod イメージプル認可が必要です。
 
-## 可観測性とアラート
+## 可観測性とアラート {#observability-and-alerting}
 
 Flagger メトリクスと Istio/application メトリクスは異なるスクレイプターゲットです。アノテーションだけで、すべての Prometheus インストールが自動的にスクレイプするわけではありません。Prometheus Operator では、Chart の serviceMonitor.enabled を実際の selector、namespace、および mTLS アクセスに合わせてください。
 
@@ -1431,7 +1431,7 @@ NAME:.metadata.name,NAMESPACE:.metadata.namespace,PHASE:.status.phase,WEIGHT:.st
 
 Kubernetes event には保持期間の制限があります。永続的な履歴は外部に保持してください。changes(status[7d]) はデプロイではなく遷移を数えます。スキップ済み/完了済みと実際のリビジョンを考慮して結果 counter を解釈してください。
 
-## 本番環境のベストプラクティス
+## 本番環境のベストプラクティス {#production-best-practices}
 
 まず非クリティカル/ラボのワークロードから始め、成功、失敗、欠損データ、承認待機、および primary 昇格失敗をテストしてください。より高い失敗しきい値は、安全性を向上させるのではなくロールバックを遅らせる可能性があります。より大きい stepWeight はより多くのユーザーを露出させ、より長い分析 interval は検知を遅らせる可能性があります。
 

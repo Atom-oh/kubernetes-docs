@@ -15,7 +15,7 @@ Ambient se presentó como una vista previa experimental en 2022, se distribuyó 
 7. [Casos de uso](#use-cases)
 8. [Solución de problemas](#troubleshooting)
 
-## Descripción general
+## Descripción general {#overview}
 
 
 Ambient Mode es un nuevo enfoque que proporciona funcionalidad de Service Mesh sin inyectar proxies Sidecar en los Pods de aplicación. Ambient Mode consta de una **arquitectura en capas**:
@@ -53,7 +53,7 @@ El waypoint opcional de estas figuras se selecciona mediante configuración/insc
 3. **Transporte L4 transparente**: Los requisitos de tracing/deadline/idempotencia de la aplicación se mantienen
 4. **Funcionalidades L7 flexibles**: Use waypoint solo cuando sea necesario
 
-## Modo Sidecar frente a Ambient Mode
+## Modo Sidecar frente a Ambient Mode {#sidecar-mode-vs-ambient-mode}
 
 ### Comparación de arquitectura
 
@@ -100,11 +100,11 @@ El waypoint opcional de estas figuras se selecciona mediante configuración/insc
 | **Ámbito operativo** | Ciclo de vida del proxy por carga de trabajo | Ciclo de vida de nodo/CNI y waypoint compartido |
 | **Preparación para producción** | Maduro | GA (Istio 1.24+) |
 
-### Comparación de uso de recursos
+### Comparación de uso de recursos {#resource-usage-comparison}
 
 El cálculo de 100 Pods a continuación es un ejemplo hipotético de planificación, no un benchmark oficial. Cuente todas las réplicas de nodo/waypoint y compare requisitos equivalentes de seguridad, telemetría y enrutamiento antes de estimar ahorros de recursos o facturación.
 
-## Arquitectura
+## Arquitectura {#architecture}
 
 
 El plano de datos de Ambient Mode consta de dos componentes principales: **ztunnel** y **Waypoint Proxy**.
@@ -242,7 +242,7 @@ La siguiente es un diagrama completo que muestra cómo fluye el tráfico en Ambi
 
 HBONE en esta guía transporta streams TCP. UDP de aplicación no se transporta por ese túnel; la captura/proxy de DNS es una función independiente. El stream de aplicación local puede permanecer en texto sin cifrar mientras el transporte de mesh entre proxies está cifrado.
 
-## Instalación y configuración
+## Instalación y configuración {#installation-and-configuration}
 
 El laboratorio necesita nodos Linux compatibles y los DaemonSets de Istio CNI/ztunnel necesarios. EKS Fargate no puede ejecutar estos DaemonSets de nodo; use una ubicación compatible basada en EC2 y revise la plataforma real de nodo/CNI. Los [requisitos previos de la plataforma](https://istio.io/latest/docs/ambient/install/platform-prerequisites/) cubren rutas de CNI, permisos y sondas de estado. El trunking de Pod ENI de VPC CNI con SecurityGroupPolicy puede requerir el modo de aplicación estándar o sondas exec adecuadas; evalúe las implicaciones de las políticas. GKE, OpenShift, k3s y otras plataformas pueden necesitar configuraciones diferentes.
 
@@ -366,7 +366,7 @@ kubectl exec -n ambient-demo deploy/curl -c curl -- \
 
 Compruebe las condiciones Accepted/ResolvedRefs y el backend seleccionado mediante logs/telemetría. El éxito de HTTP por sí solo no prueba ni mTLS ni el recorrido obligatorio por waypoint. La autorización L7 necesita los `targetRefs` adecuados; el recorrido obligatorio también necesita la protección de autorización de ztunnel documentada. Consulte [vinculación de políticas de waypoint](https://istio.io/latest/docs/ambient/usage/l7-features/).
 
-## Migración
+## Migración {#migration}
 
 ### De Sidecar Mode a Ambient Mode
 
@@ -456,7 +456,7 @@ for deployment in curl httpbin; do
 done
 ```
 
-## Comparación de rendimiento
+## Comparación de rendimiento {#performance-comparison}
 
 ### Resultados de benchmark
 
@@ -484,7 +484,7 @@ memory_saved = sidecar_memory - ambient_memory  # 4300 MB, 86% of assumed baseli
 cpu_saved = sidecar_cpu - ambient_cpu           # 8.5 vCPU, 85% of assumed baseline
 ```
 
-## Casos de uso
+## Casos de uso {#use-cases}
 
 ### ¿Cuándo debería elegir Ambient Mode?
 
@@ -533,7 +533,7 @@ Primero haga un inventario de inyección e inscripción, y luego migre un grupo 
 kubectl get namespaces -L istio-injection,istio.io/rev,istio.io/dataplane-mode,istio.io/use-waypoint
 ```
 
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
 ### ztunnel no funciona
 

@@ -474,7 +474,7 @@ resources:
 
 En clústeres autogestionados, carga este archivo con `--encryption-provider-config`, protege la clave de cifrado y vuelve a escribir los Secrets existentes para cifrarlos. No es un recurso para `kubectl apply`. EKS administra su propio cifrado (ver más abajo).
 
-## Variables de entorno
+## Variables de entorno {#environment-variables}
 
 Las variables de entorno son una forma sencilla de pasar información de configuración a los contenedores. Kubernetes ofrece varias maneras de establecer variables de entorno.
 
@@ -585,7 +585,7 @@ spec:
   restartPolicy: Never
 ```
 
-## Montaje de la configuración mediante volúmenes
+## Montaje de la configuración mediante volúmenes {#mounting-configuration-through-volumes}
 
 Montar archivos de configuración en los contenedores mediante volúmenes ofrece un método de gestión de la configuración más flexible que las variables de entorno.
 
@@ -708,7 +708,7 @@ spec:
   restartPolicy: Never
 ```
 
-## Prácticas recomendadas para la configuración
+## Prácticas recomendadas para la configuración {#configuration-best-practices}
 
 Ten en cuenta las siguientes prácticas recomendadas al administrar la configuración en Kubernetes:
 
@@ -788,7 +788,7 @@ Documenta las opciones de configuración y sus efectos. Esto ayuda a los miembro
 
 Las solicitudes orientan la planificación y la asignación de recursos en tiempo de ejecución; no obligan a una aplicación a consumir esa cantidad. Los límites de CPU restringen el uso de CPU, mientras que los límites de memoria pueden provocar la terminación por OOM. En los ejemplos del cuestionario a nivel de contenedor, Guaranteed requiere solicitudes y límites de CPU y memoria iguales en cada contenedor; BestEffort no tiene ninguno, y las demás configuraciones son Burstable. Los recursos a nivel de Pod también pueden afectar a QoS. La expulsión por presión en el nodo también tiene en cuenta la prioridad y el uso en relación con las solicitudes. Consulta [gestión de recursos](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) y [QoS de Pod](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/).
 
-## Gestión de la configuración en Amazon EKS
+## Gestión de la configuración en Amazon EKS {#configuration-management-in-amazon-eks}
 
 En Amazon EKS, además de las funciones básicas de gestión de la configuración de Kubernetes, puedes usar distintos servicios de AWS para administrar la configuración y los Secrets. En esta sección se describen varias maneras de gestionar la configuración en EKS y de integrarla con los servicios de AWS.
 
@@ -1012,7 +1012,7 @@ fargateProfiles:
   - subnet-0abcdef1234567890
 ```
 
-### Cifrado de Secrets con AWS KMS
+### Cifrado de Secrets con AWS KMS {#secret-encryption-with-aws-kms}
 
 Los clústeres de EKS con Kubernetes 1.28 o posterior tienen [cifrado de sobre predeterminado para todos los datos de la API de Kubernetes](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), incluidos Secrets y ConfigMaps, con una clave propiedad de AWS. Una clave de KMS administrada por el cliente es opcional; no es necesaria para activar el cifrado.
 

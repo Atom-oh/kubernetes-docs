@@ -510,7 +510,7 @@ if [ -r /proc/pressure/cpu ]; then cat /proc/pressure/cpu; fi
 ```
 El recuento de directorios de procesos no equivale al recuento de todos los hilos/tareas. ps NLWP y los límites del kernel son indicios; los cálculos de presión de PID de kubelet y los límites de PID de cgroup requieren su propia interpretación. No etiquete un porcentaje genérico de memoria alta como la condición MemoryPressure de Kubernetes. Considere las métricas ausentes como evidencia no disponible.
 
-### Problemas de aprovisionamiento de Karpenter
+### Problemas de aprovisionamiento de Karpenter {#karpenter-provisioning-issues}
 
 ```bash
 # Self-managed Karpenter; use the actual release namespace and selected objects.

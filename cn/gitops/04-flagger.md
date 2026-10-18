@@ -20,7 +20,7 @@ Flagger 通过 Canary CRD 管理 Kubernetes 工作负载的渐进式交付。它
 - [可观测性和告警](#observability-and-alerting)
 - [生产最佳实践](#production-best-practices)
 
-## 概述和学习目标
+## 概述和学习目标 {#overview-and-learning-objectives}
 
 Kubernetes Deployment 的 RollingUpdate 已会逐步替换 Pod。Flagger 增加了显式的修订版本流量控制和基于指标/测试的晋升。本章涵盖资源所有权、三种策略、指标/门禁、GitOps 和可观测性。
 
@@ -43,7 +43,7 @@ Kubernetes Deployment 的 RollingUpdate 已会逐步替换 Pod。Flagger 增加�
 
 生态系统集成不代表排他性耦合。不要让两个渐进式交付控制器管理同一工作负载。
 
-## Flagger 架构
+## Flagger 架构 {#flagger-architecture}
 
 ![Flagger 观察 Canary/工作负载资源，并连接路由、指标和通知。](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
@@ -81,7 +81,7 @@ AWS App Mesh 支持已于 **2026-09-30** 结束；AWS 表示该日期后其控�
 
 Adapter 可用不代表适合新的生产使用且仍在维护。请按实现验证 A/B、镜像和会话亲和性支持。
 
-## EKS 安装和配置
+## EKS 安装和配置 {#eks-installation-and-configuration}
 
 基线要求受支持的 EKS/Kubernetes、已安装的 Istio sidecar 环境，以及 Prometheus 抓取所需指标。将其 URL 替换为实际的 Service。Flagger 不安装 Istio 或监控埋点。Chart 捆绑的 Prometheus 镜像是旧版 2.41.0，因此将其禁用。
 
@@ -321,7 +321,7 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
   --namespace flagger-system -f flagger-values.yaml --set meshProvider=gatewayapi:v1
 ```
 
-## Canary 部署策略
+## Canary 部署策略 {#canary-deployment-strategy}
 
 以下是基线 Istio 工作负载和 HPA；需要 Metrics Server。请从 Git 中省略 Deployment replicas，以便 HPA/Flagger 拥有扩缩容控制权，并且不要创建竞争的 Service。选择这些清单或后面的 HelmRelease 替代方案。
 
@@ -477,7 +477,7 @@ kubectl logs -n flagger-system -l app.kubernetes.io/name=flagger -c flagger --pr
 
 初始稳定设置后，通过 Git 应用经过审查的 image/tag/digest 或 Pod 模板变更以启动分析。在同一 tag 后替换远程内容不能替代 Git 变更。不要直接编辑生成的 primary、Service 或路由资源。
 
-## 蓝绿部署策略
+## 蓝绿部署策略 {#blue-green-deployment-strategy}
 
 ![蓝绿验证 canary、更新 primary，然后缩减 canary。](../.gitbook/assets/en-gitops-04-flagger-4.png)
 
@@ -648,7 +648,7 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   curl -fsS -b 'canary=always' http://podinfo.flagger-demo.svc.cluster.local:9898/
 ```
 
-## 自定义指标和 Webhook
+## 自定义指标和 Webhook {#custom-metrics-and-webhooks}
 
 ### Prometheus MetricTemplate
 
@@ -1276,7 +1276,7 @@ image:
 
 仅 tag 的 marker 不会固定 digest。请验证 Chart 的 digest 支持或 registry tag 不可变性和验证。不要同时通过 Kustomize images 和 Deployment marker 不一致地覆盖同一 image。ECR 需要独立的 image-reflector AWS 认证以及实际 Pod image-pull 授权。
 
-## 可观测性和告警
+## 可观测性和告警 {#observability-and-alerting}
 
 Flagger 指标和 Istio/应用指标是不同的抓取目标。annotation 不会使每个 Prometheus 安装都自动抓取。对于 Prometheus Operator，请使 Chart 的 serviceMonitor.enabled 与实际 selector、namespace 和 mTLS 访问保持一致。
 
@@ -1431,7 +1431,7 @@ NAME:.metadata.name,NAMESPACE:.metadata.namespace,PHASE:.status.phase,WEIGHT:.st
 
 Kubernetes events 有保留限制；请在外部保留持久化历史。changes(status[7d]) 计算的是转换，而不是部署。请结合 skipped/completed 和实际修订版本解读结果 counter。
 
-## 生产最佳实践
+## 生产最佳实践 {#production-best-practices}
 
 从非关键/实验工作负载开始，并测试成功、失败、缺失数据、等待批准和 primary 晋升失败。更高的失败阈值可能延迟回滚，而不是提高安全性。更大的 stepWeight 会暴露更多用户；更长的分析 interval 可能延迟检测。
 

@@ -56,7 +56,7 @@ Istio 是一个开源服务网格平台，用于连接、保护、控制和观�
 
 这些 Bookinfo 图示展示的是 sidecar 模式。自动注入只会为选择启用注入的命名空间或工作负载中新创建的 Pod 添加 Envoy；ambient 模式不会注入 sidecar。
 
-## 真的需要 Service Mesh 吗？
+## 真的需要 Service Mesh 吗？ {#do-you-really-need-a-service-mesh}
 
 以下服务数量阈值和检查清单评分仅供讨论，并非 Istio 的要求。出于安全需求，即使是小型网格也可能有充分的理由。决策图使用相同的示例阈值。
 

@@ -13,7 +13,7 @@
 - [Configuración declarativa](#declarative-setup)
 - [Actualización de ArgoCD](#upgrading-argocd)
 
-## Requisitos previos
+## Requisitos previos {#prerequisites}
 
 Esta guía explica una instalación autogestionada. Argo CD administrado por EKS utiliza procesos separados para crear, autorizar y configurar capacidades; no superponga allí una instalación autogestionada. Consulte la [tabla de compatibilidad general](README.md) y los períodos de soporte de EKS. La versión mínima de kubeVersion de un chart no garantiza que se haya probado ni que tenga soporte.
 
@@ -27,7 +27,7 @@ kubectl auth can-i create customresourcedefinitions.apiextensions.k8s.io
 kubectl auth can-i create clusterrolebindings.rbac.authorization.k8s.io
 ```
 
-## Métodos de instalación
+## Métodos de instalación {#installation-methods}
 
 Elija un único responsable de la instalación: manifiestos, Helm o Kustomize. Los comandos de alta disponibilidad y sin alta disponibilidad que aparecen a continuación son alternativas, no pasos secuenciales. Si utiliza un namespace personalizado, también debe actualizar los sujetos de ServiceAccount en los ClusterRoleBindings.
 
@@ -190,7 +190,7 @@ Aplique con:
 kubectl apply --server-side -k .
 ```
 
-## Instalación de la CLI
+## Instalación de la CLI {#cli-installation}
 
 ### Linux / macOS
 
@@ -243,7 +243,7 @@ source <(argocd completion bash)
 # source <(argocd completion zsh)
 ```
 
-## Acceso inicial
+## Acceso inicial {#initial-access}
 
 ### Opción 1: Reenvío de puertos (desarrollo)
 
@@ -289,7 +289,7 @@ argocd account update-password
 kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
 
-## Configuración de alta disponibilidad
+## Configuración de alta disponibilidad {#high-availability-setup}
 
 ### Arquitectura de alta disponibilidad
 
@@ -306,7 +306,7 @@ Compruebe lo siguiente en el ejemplo de Helm renderizado.
 - Los PDB limitan las expulsiones voluntarias, no los fallos de nodos ni todos los despliegues. Pruebe la distribución, la disponibilidad, las dependencias y la recuperación de la reconciliación.
 - Ajuste la concurrencia de Repo Server, el HPA y los límites de CPU según la carga real de generación de manifiestos y memoria. No existe un umbral universal de «100 aplicaciones significa dos shards».
 
-## ArgoCD en Amazon EKS
+## ArgoCD en Amazon EKS {#argocd-on-amazon-eks}
 
 ### ALB y TLS
 
@@ -393,7 +393,7 @@ argocd cluster list
 
 El comando imperativo `argocd cluster add` acepta un nombre de contexto de kubeconfig. Un contexto predeterminado de EKS puede ser un ARN, pero este comando no es una llamada a la API de AWS que acepte ARN arbitrarios. Puede crear objetos de ServiceAccount/RBAC en el clúster de destino; restrínjalos a los namespaces y permisos necesarios.
 
-## Configuración declarativa
+## Configuración declarativa {#declarative-setup}
 
 En Helm, administre `configs.cm`/`configs.params` en los valores. En los manifiestos, combine las claves necesarias que aparecen a continuación con la configuración existente. Evite que Helm y un proceso independiente de kubectl compitan por los mismos campos.
 
@@ -472,7 +472,7 @@ kubectl -n argocd label secret github-app-creds \
   argocd.argoproj.io/secret-type=repo-creds
 ```
 
-## Actualización de ArgoCD
+## Actualización de ArgoCD {#upgrading-argocd}
 
 ### Lista de comprobación previa a la actualización
 

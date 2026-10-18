@@ -15,7 +15,7 @@
 - [EKS 最佳实践](#eks-best-practices)
 - [生产环境检查清单](#production-checklist)
 
-## 仓库结构
+## 仓库结构 {#repository-structure}
 
 ### Monorepo 模式
 
@@ -128,7 +128,7 @@ gitops-root/
 | Namespace | `{app}` 或 `{app}-{env}` | `frontend`、`frontend-prod` |
 | 仓库 | `gitops-{scope}` | `gitops-platform` |
 
-## 环境晋级
+## 环境晋级 {#environment-promotion}
 
 ### Git 分支策略
 
@@ -232,7 +232,7 @@ jobs:
             Require the repository's validation and approval checks before merging.
 ```
 
-## 资源管理
+## 资源管理 {#resource-management}
 
 ### 组件资源
 
@@ -295,7 +295,7 @@ repoServer:
         stabilizationWindowSeconds: 300
 ```
 
-## 性能调优
+## 性能调优 {#performance-tuning}
 
 ### 配置位置及含义
 
@@ -378,7 +378,7 @@ spec:
     - /spec/replicas
 ```
 
-## 灾难恢复
+## 灾难恢复 {#disaster-recovery}
 
 ### 备份范围
 
@@ -465,7 +465,7 @@ argocd admin import -n argocd "$ARGO_RESTORE_DIR/data.yaml"
 
 恢复所需的补充 ConfigMap/Secret 和外部依赖，然后根据经过审查的安装配置恢复 controller 副本数。在逐个恢复部署之前，先检查有代表性的 Application diff/健康状态。对所有应用执行同步、使用 `--prune` 导入或删除 namespace，都不是默认的恢复步骤。
 
-## 升级策略
+## 升级策略 {#upgrade-strategies}
 
 ### 版本与安装管理方
 
@@ -508,7 +508,7 @@ helm upgrade argocd argo/argo-cd --version 10.8.4 \
 
 同一集群中的两个 namespace 仍会共享 CRD 和其他集群级资源。仅更改安装 namespace 不会改写 ClusterRoleBinding subject。Kubernetes 没有 `kubectl rename namespace` 命令。优先在独立集群中进行验证，并明确规划凭据、跟踪/实例 ID、活动 controller 和流量切换。删除旧 namespace 可能会通过 Application finalizer 连带删除受其管理的工作负载。
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 ### 检查同步和差异
 
@@ -566,7 +566,7 @@ kubectl logs -n argocd deployment/argocd-repo-server --tail=100
 
 渲染后的清单可能包含生成的 Secret；不要将其写入共享日志。默认 controller 是 StatefulSet；如果启用了动态分布，请检查实际的 Deployment。将临时调试日志范围限定在受影响的组件，并妥善管理其 rollout 和移除。
 
-## EKS 最佳实践
+## EKS 最佳实践 {#eks-best-practices}
 
 ### AWS 凭据
 
@@ -614,7 +614,7 @@ spec:
 
 如果要暂停自动同步，请记录原始设置，并通过 Git/ApplicationSet 管理方进行更改。仅通过 CLI 更改子 Application，可能会被其父级还原。完成连接、diff 和示例同步验证后，应恢复**原有的** prune/selfHeal/自动化策略，而不是无条件启用自动化。
 
-## 生产环境检查清单
+## 生产环境检查清单 {#production-checklist}
 
 - [ ] 停用默认 admin 前，验证 SSO/RBAC/TLS 和恢复访问
 - [ ] 加密/外置 Secret，并限制仓库/集群凭据的作用范围

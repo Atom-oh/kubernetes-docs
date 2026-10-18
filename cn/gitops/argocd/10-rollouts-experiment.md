@@ -18,7 +18,7 @@
 - [参考资料](#references)
 - [测验](#quiz)
 
-## 什么是 Experiment？
+## 什么是 Experiment？ {#what-is-an-experiment}
 
 Experiment 是一种 Argo Rollouts CRD，它会创建临时 ReplicaSet 并运行分析。它支持基线/金丝雀比较、部署前检查以及带真实流量的实验。**创建单独的 ReplicaSet 本身并不能隔离生产流量。** 应明确设计 Service 选择器、路由器和测试流量。
 
@@ -31,7 +31,7 @@ Experiment 是一种 Argo Rollouts CRD，它会创建临时 ReplicaSet 并运行
 
 既支持独立的 Experiment，也支持 Rollout 中的 experiment 步骤。`specRef` 和 `weight` 属于 **Rollout 步骤模板**。独立 Experiment 会直接定义选择器和 Pod 模板。
 
-## 资源层级和创建链
+## 资源层级和创建链 {#resource-hierarchy-and-creation-chain}
 
 Rollout 到达 experiment 步骤时，会沿着以下链条创建资源：
 
@@ -44,7 +44,7 @@ Rollout 到达 experiment 步骤时，会沿着以下链条创建资源：
 3. 所有副本都可用后，控制器记录 `status.availableAt` 并启动分析。配置的 `duration` 从此时开始计时。
 4. 完成结果会向上传播：Successful 会继续前进；Failed/Error 会中止；**Inconclusive 会暂停**。ReplicaSet/Service 清理则由单独的协调流程处理。
 
-## 名称生成规则
+## 名称生成规则 {#name-generation-rules}
 
 Experiment 系列资源的命名遵循固定规则，因此仅凭名称就可以追踪所属 Rollout、修订版本和步骤。
 
@@ -58,7 +58,7 @@ Experiment 系列资源的命名遵循固定规则，因此仅凭名称就可以
 
 以上是基础名称。Experiment/AnalysisRun 名称冲突时可能会附加数字后缀；应通过 ownerReferences 和 status 查找实际资源。
 
-## 流量路由行为
+## 流量路由行为 {#traffic-routing-behavior}
 
 如果生产 Service 只选择 `app: demo-app`，它也可能选中 Experiment Pod。还应检查实际的哈希专属选择器；不要认为单独使用一个哈希值就能保证足够隔离。此示例要求生产 Service 使用 `traffic-class: production`，并在 Experiment 模板中将其覆盖为 `experiment`。还应检查其他 Service 和 mesh 路由。
 
@@ -92,7 +92,7 @@ Experiment 系列资源的命名遵循固定规则，因此仅凭名称就可以
 - `weight` 按模板分别计算。默认总权重为 100 时，5 表示 5%；使用自定义 `maxTrafficWeight` 时应确认单位。设置权重也会创建 Service。
 - 加权 Experiment 需要受支持的路由器。1.10 版本的文档列出了 ALB/Istio/SMI。普通金丝雀加权并不代表 NGINX 或所有插件都支持 Experiment 流量拆分。
 
-## 度量和判定：AnalysisRun
+## 度量和判定：AnalysisRun {#measurement-and-verdict-analysisrun}
 
 AnalysisRun 根据条件评估提供方结果。以下是 **AnalysisTemplate 的 spec 片段**；完整提供方配置见下方示例。成功率缺失或超出范围时，两个条件都为 false，结果是 Inconclusive。类型无效、HTTP/收集失败以及表达式错误会走 Error 路径。
 
@@ -127,7 +127,7 @@ metrics:
 
 `failureLimit: 1` 会在第二次失败的度量时超限。`count` 统计度量次数，而不是 HTTP 请求数。只设置 interval、不设置 count 时会无限重复；两者都省略时只执行一次。三个重叠的指标时间窗口并不等于三个独立样本。
 
-## 结果传播与 Rollout 状态转换
+## 结果传播与 Rollout 状态转换 {#result-propagation-and-rollout-state-transitions}
 
 ![Experiment 为 Successful 时继续前进；为 Failed/Error 时中止；为 Inconclusive 时暂停；清理按延迟策略执行。](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-1.png)
 
@@ -143,7 +143,7 @@ metrics:
 
 `scaleDownDelaySeconds` 默认为 30 秒。终止状态、Pod 数为零以及 Service 删除并不保证同时发生。控制器会在该延迟后缩容；所有可用副本都归零后，再删除生成的 Service。ReplicaSet/AnalysisRun 对象仍可能根据历史记录/垃圾回收策略保留。中止操作不会撤销数据库变更或外部副作用。
 
-## 示例
+## 示例 {#working-example}
 
 这是一个**用于教学的控制流示例**。请安装 Rollouts 1.10.0/CRD 和插件，并另行在 `demo` 命名空间提供名为 `metrics-mock` 的 HTTP Service，使其返回下方 JSON。此处没有包含该服务端实现，因此单独应用这些清单不能保证成功。固定的 mock 值无法衡量基线/金丝雀质量或真实流量比例。
 
@@ -283,7 +283,7 @@ args:
 
 另请参阅[指标比较示例](05-traffic-management.md#experiments)。
 
-## 使用 kubectl 插件观察
+## 使用 kubectl 插件观察 {#observing-with-the-kubectl-plugin}
 
 `kubectl argo rollouts get rollout <name> --watch` 会实时显示完整的 Experiment 层级（Experiment → ReplicaSet → Pod，以及 AnalysisRun）。下方输出是原文记录的 1.8.3 历史结果，并非当前示例的一次新运行。不要将其名称、时间或清理时机当作新的 1.10.0 结果。
 
@@ -333,7 +333,7 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 }
 ```
 
-## 验证结果
+## 验证结果 {#verification-results}
 
 原文报告了在 1.8.3 源码构建版和 Kubernetes 1.33/kwok（真实控制平面二进制文件，模拟节点/Pod 生命周期）上得到的以下结果。报告未附上完整执行清单、原始 API 转储和日志，因此本次审查无法复现。以下是历史观测，并非新的 1.10.0 结果，也不能证明真实流量、Pod 就绪情况或应用质量。
 
@@ -346,13 +346,13 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 | 成功路径：60 秒 duration 到期 → Experiment Successful → Experiment RS 缩容至 0 → 下一步骤（setWeight 20）→ Rollout Healthy | 报告：正常运行 |
 | 失败路径：指标恶化 → AnalysisRun Failed，`failed (2) > failureLimit (1)` → Experiment Failed → Rollout 中止（Degraded），保留稳定版本 | 报告：正常运行（中止消息会原样列出出问题的指标） |
 
-## 后续步骤
+## 后续步骤 {#next-steps}
 
 1. **[流量管理](05-traffic-management.md)**：将 Experiment 步骤与金丝雀/蓝绿策略和 Ingress 集成结合起来。
 
 2. **[最佳实践](09-best-practices.md)**：了解渐进式交付运维的最佳实践。
 
-## 参考资料
+## 参考资料 {#references}
 
 - [Experiment 官方文档](https://argoproj.github.io/argo-rollouts/features/experiment/)
 - [Analysis 官方文档](https://argoproj.github.io/argo-rollouts/features/analysis/)
@@ -362,6 +362,6 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 - [1.10.0 Rollout 暂停/中止处理](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/rollout/experiment.go)
 - [1.10.0 ReplicaSet 清理](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/replicaset.go)
 
-## 测验
+## 测验 {#quiz}
 
 请通过[Rollouts Experiments 测验](../../quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)测试你对本章内容的掌握情况。

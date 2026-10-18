@@ -3,7 +3,7 @@
 < [Anterior: Administración del ciclo de vida de los nodos](./07-node-lifecycle.md) | [Tabla de contenido](./README.md) | [Siguiente: Configuración del sistema operativo en bare metal](./09-bare-metal-os-setup.md) >
 
 > **Base de validación**: nodeadm 1.0.20; CRD de Cilium 1.18.3; Prometheus Operator 0.94.1; kube-prometheus-stack 92.9.0; Harbor 2.15.4. Son referencias revisadas, no una matriz universal de versiones compatibles.
-> **Última actualización**: October 18, 2026
+> **Última actualización**: 18 de octubre de 2026
 
 Este documento abarca las tareas diarias de operaciones y mantenimiento de entornos de EKS Hybrid Nodes, incluidas la supervisión, las copias de seguridad y la resolución de problemas.
 
@@ -13,7 +13,7 @@ Use el programador integrado de Harbor para analizar todo, en lugar de un CronJo
 
 Harbor 2.15.4 expone GET/POST/PUT `/api/v2.0/system/scanAll/schedule`. Use la interfaz de usuario o una integración de API aprobada con validación de una CA de confianza, credenciales protegidas y los permisos requeridos a nivel del sistema. Los permisos de robot de un proyecto no otorgan autoridad para configurar análisis globales. No coloque una contraseña de administrador en los argumentos del comando o el entorno de un Pod, ni desactive la verificación de TLS.
 
-Registre la disponibilidad del escáner, la actualidad de la base de datos de vulnerabilidades, la finalización real de los análisis y los errores. El envío de una solicitud o una respuesta vacía de la API no constituyen una evaluación de vulnerabilidades satisfactoria. Los artefactos no compatibles requieren un tratamiento aparte, y los análisis globales consumen recursos. La automatización de artefactos seleccionados debe enumerar todas las páginas y los resúmenes criptográficos requeridos, codificar correctamente las rutas de los repositorios y comprobar cada respuesta; un bucle que solo abarque la etiqueta más reciente no cubre el registro.
+Registre la disponibilidad del escáner, la actualización de la base de datos de vulnerabilidades, la finalización real de los análisis y los errores. El envío de una solicitud o una respuesta vacía de la API no constituyen una evaluación de vulnerabilidades satisfactoria. Los artefactos no compatibles requieren un tratamiento aparte, y los análisis globales consumen recursos. La automatización de artefactos seleccionados debe enumerar todas las páginas y los digests requeridos, codificar correctamente las rutas de los repositorios y comprobar cada respuesta; un bucle que solo abarque la etiqueta más reciente no cubre el registro.
 
 Consulte la [guía de Harbor](../container-registry/03-harbor.md) y el [procedimiento oficial de programación](https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md).
 
@@ -21,7 +21,7 @@ Consulte la [guía de Harbor](../container-registry/03-harbor.md) y el [procedim
 
 Defina el objetivo de recuperación y haga un inventario antes de copiar los datos. La recuperación de Harbor requiere metadatos de base de datos compatibles, blobs del registro/almacenamiento de objetos, configuración y secretos/claves de cifrado protegidos. Un volcado de PostgreSQL por sí solo no es una copia de seguridad completa. Las versiones modernas de Harbor ya no incluyen Notary v1; no dé por sentado que existen las bases de datos notarysigner/notaryserver.
 
-El [procedimiento oficial de Velero para Harbor](https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md) utiliza el modo de solo lectura del repositorio y recursos/PV de Kubernetes seleccionados. Su copia de seguridad es **coherente ante fallos, no coherente con la aplicación**, excluye Redis, puede perder metadatos/sesiones no sincronizados y dejar tareas que requieran reparación. Cubre la base de datos interna, no una base de datos externa administrada. Seleccione complementos compatibles de instantáneas/copia de archivos/movimiento de datos y verifique que el sitio de recuperación pueda acceder a todos los datos necesarios de volúmenes/objetos; una referencia a una instantánea no es necesariamente una copia portátil.
+El [procedimiento oficial de Velero para Harbor](https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md) utiliza el modo de solo lectura del repositorio y recursos/PV de Kubernetes seleccionados. Su copia de seguridad es **consistente tras un fallo, no coherente con la aplicación**, excluye Redis, puede perder metadatos/sesiones no sincronizados y dejar tareas que requieran reparación. Cubre la base de datos interna, no una base de datos externa administrada. Seleccione complementos compatibles de instantáneas/copia de archivos/movimiento de datos y verifique que el sitio de recuperación pueda acceder a todos los datos necesarios de volúmenes/objetos; una referencia a una instantánea no es necesariamente una copia portátil.
 
 Lo siguiente es solo un **ejemplo de volcado del componente de base de datos** para el Pod de PostgreSQL interno verificado, con pg_dump/pg_restore y autenticación local ya configurados. Las bases de datos externas usan su propio proceso autenticado de copia de seguridad/restauración. Las credenciales no se pasan en los argumentos del comando. Deténgase ante errores y mantenga privada cualquier salida parcial; no la publique como un volcado completo.
 
@@ -55,7 +55,7 @@ Mantenga separadas las métricas del host, de kubelet/contenedores y de GPU. `no
 
 El siguiente ejemplo de descubrimiento utiliza las etiquetas/el puerto del Service de Node Exporter de kube-prometheus-stack 92.9.0 con la versión `kube-prom` en `monitoring`. La parte de DCGM presupone Pods verificados con la etiqueta `app: nvidia-dcgm-exporter` en `gpu-operator` y un puerto de contenedor llamado `metrics`; ajústela al exportador instalado. Ninguno de estos recursos instala un exportador. Haga coincidir los selectores de monitores/espacios de nombres del recurso de Prometheus y evite recopilar dos veces las métricas del mismo exportador mediante un monitor existente.
 
-`attachMetadata.node` pone a disposición los metadatos de descubrimiento de Node; no copia automáticamente las etiquetas en las métricas. Requiere Prometheus >=2.37 para ServiceMonitor o >=2.35 para PodMonitor y permisos `list`/`watch` de Node para Prometheus. La configuración de relabeling conserva los nodos que realmente tienen `eks.amazonaws.com/compute-type=hybrid` y crea etiquetas estables `node`/`compute_type` para el destino. No deduzca la ubicación Hybrid a partir del prefijo del nombre de Node de SSM.
+`attachMetadata.node` pone a disposición los metadatos de descubrimiento de Node; no copia automáticamente las etiquetas en las métricas. Requiere Prometheus >= 2.37 para ServiceMonitor o >= 2.35 para PodMonitor y permisos `list`/`watch` de Node para Prometheus. La configuración de relabeling conserva los nodos que realmente tienen `eks.amazonaws.com/compute-type=hybrid` y crea etiquetas estables `node`/`compute_type` para el destino. No deduzca la ubicación Hybrid a partir del prefijo del nombre de Node de SSM.
 
 Estos ejemplos usan los endpoints HTTP protegidos de métricas de los exportadores, no el endpoint HTTPS de kubelet. Restrinja la conectividad del recopilador. Si el tráfico cruza un límite no confiable, configure TLS/autenticación del exportador o un proxy revisado, junto con la configuración correspondiente de CA/autorización; no use `insecureSkipVerify`. Mantenga la recopilación de métricas de kubelet en su configuración aparte, con autenticación y verificación de CA.
 
@@ -139,9 +139,9 @@ and
 
 ## Validación del rendimiento de Direct Connect
 
-Separe un plan de pruebas de una garantía de servicio de AWS. Los ejemplos anteriores de RTT <5ms, variación <2ms, pérdida <0.01% y rendimiento >1Gbps son objetivos ilustrativos de planificación, no resultados medidos ni promesas universales de Direct Connect. Elija objetivos para la ubicación, el circuito, el endpoint, la carga de trabajo y la capacidad contratada reales; confirme que la ruta medida usa Direct Connect y no una VPN u otra ruta.
+Separe un plan de pruebas de una garantía de servicio de AWS. Los ejemplos anteriores de RTT < 5 ms, variación < 2 ms, pérdida < 0,01 % y rendimiento > 1 Gbps son objetivos ilustrativos de planificación, no resultados medidos ni promesas universales de Direct Connect. Elija objetivos para la ubicación, el circuito, el endpoint, la carga de trabajo y la capacidad contratada reales; confirme que la ruta medida usa Direct Connect y no una VPN u otra ruta.
 
-`ping` informa el RTT de ICMP y, en Linux iputils, el RTT mdev. Esa dispersión no es la misma estadística que la variación del retardo unidireccional ni que el jitter UDP de iperf3. El filtrado/priorización de ICMP puede diferir del tráfico de aplicaciones. Una prueba de 1,000 paquetes tiene incrementos de pérdida del 0.1%; observar cero pérdidas no demuestra una tasa de pérdida a largo plazo inferior al 0.01%.
+`ping` informa el RTT de ICMP y, en Linux iputils, el RTT mdev. Esa dispersión no es la misma estadística que la variación del retardo unidireccional ni que el jitter UDP de iperf3. El filtrado/priorización de ICMP puede diferir del tráfico de aplicaciones. Una prueba de 1.000 paquetes tiene incrementos de pérdida del 0,1 %; observar cero pérdidas no demuestra una tasa de pérdida a largo plazo inferior al 0,01 %.
 
 Use un servidor de pruebas privado aprobado con iperf3 ya en ejecución, una ventana coordinada, un límite deliberado de tráfico y almacenamiento protegido de resultados. No ejecute iperf3 contra un endpoint de la API de EKS. El ejemplo acotado siguiente requiere Bash, Python3, ping de iputils, GNU timeout e iperf3 con las opciones indicadas. Un fallo detiene la secuencia; la falta de herramientas, el JSON no válido o un error de iperf3 no constituyen una prueba de rendimiento aprobada.
 
@@ -329,7 +329,7 @@ Para el DaemonSet Hybrid que no es de Bottlerocket, la configuración del comple
 
 Para Bottlerocket, use la configuración documentada `hybrid-bottlerocket` de la versión seleccionada. Inspeccione y combine los ajustes existentes. Cree un complemento solo si no existe; actualice uno existente con un tratamiento de conflictos revisado, en lugar de usar a ciegas create o OVERWRITE. El agente y el archivo de credenciales no crean la asociación de Pod Identity de cada aplicación: verifique el espacio de nombres, la ServiceAccount, la confianza/permisos del rol de IAM, la resolución de credenciales del SDK y la autorización satisfactoria.
 
-## Operaciones de webhooks en modo mixto
+## Operaciones de webhooks en modo mixto {#mixed-mode-webhook-operations}
 
 En el patrón compatible de modo mixto de AWS, VPC CNI se ejecuta en nodos de la nube y Cilium/Calico en Hybrid Nodes. AWS recomienda ubicar los webhooks en la nube en ese patrón. Un webhook alojado en Hybrid necesita además un CIDR de Pod remoto enrutable y accesibilidad desde el plano de control; inspeccione el endpoint real en lugar de suponer que todos los webhooks deben o pueden ejecutarse en cualquier lugar.
 

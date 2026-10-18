@@ -671,7 +671,7 @@ VPC CNI 与混合节点不兼容，因此**混合节点始终运行 Cilium（或
 - [为混合节点配置 webhook：混合模式集群注意事项](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [开始使用 EKS Hybrid Nodes gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 
-## 可路由的 Pod CIDR 配置
+## 可路由的 Pod CIDR 配置 {#routable-pod-cidr-configuration}
 
 ![远程 Pod CIDR 和本地路由器示意图。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 

@@ -17,7 +17,7 @@
 8. [成本与许可](#cost-and-licensing)
 9. [选择与验证](#selection-and-validation)
 
-## 架构
+## 架构 {#architecture}
 
 服务网格将选定的通信功能转移到基础设施组件中。流量拦截可以对应用代码透明，但协议选择、流量所有权、工作负载身份和策略仍需配置。分布式追踪也需要上下文传播/插桩。服务网格不会让任意应用重试变得安全。
 
@@ -75,7 +75,7 @@ Cilium 将 eBPF 网络数据平面与 Envoy 等代理结合，用于 L7 解析/�
 
 Cilium 1.20.1 还提供了独立的 [ztunnel 透明加密 Beta 功能](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)，通过 `encryption.type: ztunnel` 选择。它为启用了命名空间的工作负载提供 TCP mTLS；通信两端都必须启用。它不支持 ClusterMesh 和使用 host-network 的 Pod，且发布版指南警告：在此路径上，普通 L4 策略不起作用，除非目标是 HBONE 端口 15008。这是另一种部署选择，有其独立的 CA/引导要求。
 
-## 性能证据
+## 性能证据 {#performance-evidence}
 
 ### 原始数据：历史数据，未经验证
 
@@ -99,7 +99,7 @@ Cilium 1.20.1 还提供了独立的 [ztunnel 透明加密 Beta 功能](https://g
 
 比较同等的高可用和故障行为，包括滚动更新、连接排空、连接复用、遥测缺失和控制平面丢失。应将原始错误与重试后客户端可见的结果分开测量。未经重新运行并保留实验记录，不要将历史版本标签更新为当前版本。
 
-## 流量管理
+## 流量管理 {#traffic-management}
 
 | 能力 | 具体比较内容 |
 |---|---|
@@ -346,7 +346,7 @@ spec:
 
 这些是 Consul 配置条目的 Kubernetes CRD 形式，需要配置好 Consul 控制器/RBAC。Consul catalog 中的服务元数据必须实际包含 `version=v1/v2`；仅凭 Kubernetes Pod 标签不能证明 catalog 中存在相应元数据。HTTP 协议和 resolver 子集共同构成完整的流量拆分定义。应用多个配置所有者到同一个配置条目前，应检查 Kubernetes 到 Consul 的命名空间/服务映射和健康端点。
 
-## 安全性
+## 安全性 {#security}
 
 加密、对等身份、调用方授权和应用身份验证是彼此独立的控制措施。已加入服务网格的代理之间自动进行 mTLS，并不意味着所有未加入服务网格的流量都会被拒绝，也不意味着每个调用方都获得授权。
 
@@ -512,7 +512,7 @@ Consul 服务身份和 HTTP 协议配置必须与 catalog 和实际代理相匹�
 
 网格配置条目的 TLS 最低版本设置只会更改 TLS 设置；它不会纳管应用、安装代理或创建完整的 CA/ACL 配置。Envoy 扩展和逃生通道 API 也需要符合实际 Consul 版本的权限要求；2.0.4 版本加强了代码执行型扩展的 mesh:write 权限要求。
 
-## 可观测性
+## 可观测性 {#observability}
 
 指标数量不是有意义的固定排名：启用的统计信息、维度、策略、抓取配置和应用插桩都会影响信号和开销。EnvoyFilter 并不是不受限制的遥测扩展 API，而且并非所有追踪后端都能在没有兼容协议/导出器的情况下互换。
 
@@ -536,7 +536,7 @@ linkerd viz dashboard
 
 这些命令不会安装仪表板或后端。应另行检查 Kiali 的当前配置和兼容性；旧版 accessible_namespaces 示例和 Istio 旧版捆绑式插件的 values 并不是当前安装指南。有关受维护的配置和验证限制，请参阅[可观测性指南](../observability/README.md)。即使 Mesh 指标后端为空，也不会启用 Kong GUI；Consul UI 的指标 URL 必须能从实际服务器环境访问。
 
-## 多集群
+## 多集群 {#multicluster}
 
 | 系统 | 发现/数据路径 | 重要边界 |
 |---|---|---|
@@ -553,7 +553,7 @@ linkerd viz dashboard
 
 应检查远程 API/网关可达性、证书信任、DNS、命名空间/服务身份、导出服务以及双向故障行为。应优先参考[维护中的 Istio 多集群指南](../advanced/02-multi-cluster.md)，而不是原来仅使用 meshID 标签和一个 secret 的两条安装命令：那些命令并不是完整的服务网格配置。
 
-## 安装与运维
+## 安装与运维 {#installation-and-operations}
 
 ### 版本是相互独立的输入
 
@@ -647,7 +647,7 @@ kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 
 仅在预期的已安装环境中运行特定产品的命令。应检查实际组件名称和日志，而不要假定每个 Consul sidecar 都使用某个固定的历史容器名称。Tap/调试日志可能会暴露请求信息；应限定诊断设置的范围，并在完成后恢复。应根据团队在实际工作流中的表现进行测量，而不是声称所有组织都能在八小时或五分钟内完成安装。
 
-## 成本与许可
+## 成本与许可 {#cost-and-licensing}
 
 ### 原始成本输入不是报价
 
@@ -677,7 +677,7 @@ kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 
 Consul Helm chart 将该制品标注为采用 MPL 许可；这不会覆盖应用二进制文件的许可。应审查确切制品/版本的条款。Linkerd 的高可用控制平面配置并非天然仅限企业版；必须区分付费支持/SLA、产品功能和上游能力。不要根据某个供应商名称或美元符号排名推断支持情况。
 
-## 选择与验证
+## 选择与验证 {#selection-and-validation}
 
 | 场景 | 决定选择的问题 |
 |---|---|

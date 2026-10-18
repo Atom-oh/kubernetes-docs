@@ -452,7 +452,7 @@ kubectl -n kube-system exec ds/cilium -- cilium-dbg statedb dump | jq '.["mtls-e
 tcpdump -i eth0 port 15008      # use cilium_vxlan when tunnelling
 ```
 
-## Cifrado transparente
+## Cifrado transparente {#transparent-encryption}
 
 Reglas comunes: de forma predeterminada solo se cifra el tráfico de Pods administrados por Cilium que cruza nodos; el tráfico entre Pods del mismo nodo nunca se cifra. El tráfico de salida hacia un endpoint que el nodo aún no ha aprendido puede salir sin cifrar, porque la decisión usa el mismo mecanismo de ipcache/políticas. Mitígalo con el modo estricto o una política de salida que deniegue `world`.
 

@@ -84,7 +84,7 @@ minikube start
 * [Kubernetes 与 Amazon EKS 的比较](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
 * [Kubernetes 入门](04-kubernetes-introduction.md#getting-started-with-kubernetes)
 
-## 什么是 Kubernetes？
+## 什么是 Kubernetes？ {#what-is-kubernetes}
 
 Kubernetes 在希腊语中意为“舵手”或“领航员”，是一个开源系统，可自动执行容器化应用的部署、扩展和运行。它受到 Google 内部 Borg 系统的启发，并于 2014 年以开源形式发布。
 
@@ -109,7 +109,7 @@ Kubernetes 在希腊语中意为“舵手”或“领航员”，是一个开源
 * **声明式配置**：将基础设施作为代码进行管理
 * **多云和混合云**：在各种环境中保持一致的部署和管理
 
-## Kubernetes 的历史
+## Kubernetes 的历史 {#history-of-kubernetes}
 
 ### 背景
 
@@ -127,7 +127,7 @@ Kubernetes（κυβερνήτης）在希腊语中意为“舵手”或“领�
 
 Kubernetes Logo 描绘了一个带有 7 根辐条的舵轮，象征着 Kubernetes 在引导容器化应用前进方向方面的作用。
 
-## Kubernetes 架构
+## Kubernetes 架构 {#kubernetes-architecture}
 
 Kubernetes 采用主节点架构。主节点（控制平面）管理集群，工作节点运行实际的应用工作负载。
 
@@ -166,7 +166,7 @@ Kubernetes 采用主节点架构。主节点（控制平面）管理集群，工
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
 
-## Kubernetes 主要组件
+## Kubernetes 主要组件 {#kubernetes-main-components}
 
 ### API 服务器（kube-apiserver）
 
@@ -264,7 +264,7 @@ kube-proxy 是在每个节点上运行的网络代理，用于实现 Kubernetes 
 * **iptables 模式**：使用 Linux iptables 的 NAT 实现（默认）
 * **IPVS 模式**：自 1.35 起弃用；请规划迁移。历史上的 userspace 模式已移除。
 
-## Kubernetes 基本对象
+## Kubernetes 基本对象 {#kubernetes-basic-objects}
 
 Kubernetes 对象是表示集群状态的持久化实体。这些对象描述集群中运行的应用、可用资源、策略等。
 
@@ -411,7 +411,7 @@ status:
   # ...
 ```
 
-## Kubernetes 工作负载资源
+## Kubernetes 工作负载资源 {#kubernetes-workload-resources}
 
 工作负载资源是用于管理和运行 Pod 的对象。这些资源负责管理 Pod 的创建、扩展、更新和终止。
 
@@ -760,7 +760,7 @@ spec:
           restartPolicy: OnFailure
 ```
 
-## Kubernetes Services 和网络
+## Kubernetes Services 和网络 {#kubernetes-services-and-networking}
 
 Kubernetes 网络模型基于以下前提：Pod 网络由兼容的 CNI 提供；可路由性取决于 NetworkPolicy、防火墙和网络拓扑。Service 为一组 Pod 提供稳定端点。
 
@@ -1030,7 +1030,7 @@ spec:
       version: v2
 ```
 
-## Kubernetes 存储
+## Kubernetes 存储 {#kubernetes-storage}
 
 Kubernetes 为容器化应用提供各种存储选项。即使 Pod 重启或重新调度，也可以通过这些选项持久化数据。
 
@@ -1218,7 +1218,7 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-## Kubernetes 配置和安全
+## Kubernetes 配置和安全 {#kubernetes-configuration-and-security}
 
 Kubernetes 提供各种对象和机制，用于管理应用配置和安全。
 
@@ -1496,7 +1496,7 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-## Kubernetes 与 Amazon EKS 的比较
+## Kubernetes 与 Amazon EKS 的比较 {#kubernetes-vs-amazon-eks}
 
 Amazon EKS（Elastic Kubernetes Service）是 AWS 提供的托管 Kubernetes 服务。EKS 提供标准 Kubernetes API，并集成 AWS 服务。以下比较假设使用传统 EC2 节点组；Auto Mode、Fargate 和 Hybrid Nodes 的职责及支持功能各不相同。
 
@@ -1557,7 +1557,7 @@ EKS 与以下 AWS 服务集成：
 13. **AWS SageMaker**：机器学习工作负载
 14. **AWS Bedrock**：生成式 AI 工作负载
 
-## Kubernetes 入门
+## Kubernetes 入门 {#getting-started-with-kubernetes}
 
 有多种方法可以开始使用 Kubernetes。这里简要介绍如何在本地开发环境和 AWS EKS 上启动 Kubernetes。
 

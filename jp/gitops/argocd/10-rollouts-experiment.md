@@ -18,7 +18,7 @@
 - [参考資料](#references)
 - [クイズ](#quiz)
 
-## Experiment とは
+## Experiment とは {#what-is-an-experiment}
 
 Experiment は Argo Rollouts の CRD で、一時的な ReplicaSet を作成して analysis を実行します。Baseline／canary の比較、deploy 前の確認、実 traffic を使った実験に対応します。**ReplicaSet を分けても、本番 traffic が自動的に隔離されるわけではありません。** Service selector、router、test traffic を明示的に設計してください。
 
@@ -31,7 +31,7 @@ Experiment は Argo Rollouts の CRD で、一時的な ReplicaSet を作成し�
 
 単独の Experiment と Rollout の Experiment step の両方に対応しています。`specRef` と `weight` は **Rollout step template** の field です。単独 Experiment では selector と Pod template を直接定義します。
 
-## Resource の階層と生成の連鎖
+## Resource の階層と生成の連鎖 {#resource-hierarchy-and-creation-chain}
 
 Rollout が Experiment step に到達すると、次の順に resource が作成されます。
 
@@ -44,7 +44,7 @@ Rollout が Experiment step に到達すると、次の順に resource が作成
 3. すべてが利用可能になると `status.availableAt` が記録され、analysis が開始します。設定した `duration` はその時点から測定します。
 4. 完了結果が伝播します。Successful は次へ進み、Failed／Error は abort、**Inconclusive は pause** します。ReplicaSet／Service の cleanup は別の reconciliation 処理です。
 
-## Name 生成規則
+## Name 生成規則 {#name-generation-rules}
 
 Experiment 系 resource には規則的な名前が付き、名前だけで owner Rollout、revision、step を追跡できます。
 
@@ -58,7 +58,7 @@ Experiment 系 resource には規則的な名前が付き、名前だけで owne
 
 これらは基本名です。Experiment／AnalysisRun の名前が衝突すると数字の suffix が付くことがあります。実際の resource は ownerReferences と status で特定してください。
 
-## Traffic routing の挙動
+## Traffic routing の挙動 {#traffic-routing-behavior}
 
 `app: demo-app` のみを選択する production Service は Experiment Pod も選択する可能性があります。Hash 固有の selector も確認してください。Hash が別であるだけで十分に隔離されると仮定しないでください。この例では production Service に `traffic-class: production`、Experiment template に `traffic-class: experiment` を設定します。ほかの Service と mesh route も確認してください。
 
@@ -92,7 +92,7 @@ Experiment 系 resource には規則的な名前が付き、名前だけで owne
 - `weight` は template ごとに設定します。既定の合計 weight が100なら5は5%です。独自 `maxTrafficWeight` を使う場合は単位を確認してください。Weight を設定すると Service も作成されます。
 - Weighted Experiment には対応 router が必要です。Version 1.10 のドキュメントでは ALB／Istio／SMI が挙げられています。通常の canary weight に対応していても、NGINX やすべての plugin が Experiment の traffic split に対応するとは限りません。
 
-## Measurement と判定: AnalysisRun
+## Measurement と判定: AnalysisRun {#measurement-and-verdict-analysisrun}
 
 AnalysisRun は条件に従って provider の結果を評価します。これは **AnalysisTemplate spec の fragment** です。Provider 全体は以下の例にあります。Success rate が欠損または範囲外なら両条件が false となり、Inconclusive になります。型が不正、HTTP／collection failure、expression error の場合は Error 経路をたどります。
 
@@ -127,7 +127,7 @@ Success condition だけなら false は Failed です。Failure condition だ�
 
 `failureLimit: 1` は2回目の Failed measurement で超過します。`count` が数えるのは HTTP request ではなく measurement です。`count` なしで `interval` を設定すると無期限に繰り返します。どちらも省略すると1回だけ測定します。重複する3つの metric window は、独立した3 sample ではありません。
 
-## 結果の伝播と Rollout の状態遷移
+## 結果の伝播と Rollout の状態遷移 {#result-propagation-and-rollout-state-transitions}
 
 ![Experiment の Successful は次へ進み、Failed／Error は abort、Inconclusive は pause となる。Cleanup は delay policy の後に行われる。](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-1.png)
 
@@ -143,7 +143,7 @@ Version 1.10 は duration **かつ** analysis が終わるまで常に待つわ�
 
 `scaleDownDelaySeconds` の既定値は30秒です。Terminal status、Pod 数ゼロ、Service 削除は同時に保証されません。Controller は delay 後に scale down し、利用可能な replica 数がゼロになると生成 Service を削除します。ReplicaSet／AnalysisRun object は history／GC policy に応じて残ることがあります。Abort しても database 変更や外部副作用は取り消されません。
 
-## 動作例
+## 動作例 {#working-example}
 
 これは**制御フローを学ぶための例**です。Rollouts 1.10.0／CRD と plugin を install し、namespace `demo` に以下の JSON を返す `metrics-mock` という HTTP Service を別途用意してください。Server 実装は含まれないため、これらの manifest だけを apply しても成功は保証されません。固定 mock value は baseline／canary の品質や実 traffic 比率を測定しません。
 
@@ -283,7 +283,7 @@ args:
 
 [Metric 比較の例](05-traffic-management.md#experiments)を参照してください。
 
-## kubectl Plugin で観測する
+## kubectl Plugin で観測する {#observing-with-the-kubectl-plugin}
 
 `kubectl argo rollouts get rollout <name> --watch` は Experiment の階層全体（Experiment → ReplicaSet → Pod と AnalysisRun）をリアルタイムに表示します。以下の出力は元文書にある過去の1.8.3記録であり、現行例を新たに実行した結果ではありません。名前、時刻、cleanup timing を1.10.0の新しい結果として解釈しないでください。
 
@@ -333,7 +333,7 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 }
 ```
 
-## 検証結果
+## 検証結果 {#verification-results}
 
 元文書では、1.8.3 の source build と Kubernetes 1.33／kwok（実際の control-plane binary、Pod／node lifecycle は simulation）での結果が報告されています。実行した manifest 一式、生 API dump、log は添付されていないため、このレビューでは報告を再現できません。以下は過去の観測結果であり、現行1.10.0での新しい結果でも、実 traffic、Pod readiness、application 品質の証拠でもありません。
 
@@ -346,12 +346,12 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 | 成功経路: 60秒の duration 経過 → Experiment Successful → Experiment RS を0に scale → 次の step（`setWeight 20`）→ Rollout Healthy | 報告値: 動作 |
 | 失敗経路: Metric 劣化 → `failed (2) > failureLimit (1)` で AnalysisRun Failed → Experiment Failed → Rollout abort（Degraded）、stable は維持 | 報告値: 動作（abort message に該当 metric 名がそのまま表示） |
 
-## 次のステップ
+## 次のステップ {#next-steps}
 
 1. **[Traffic Management](05-traffic-management.md)**: Experiment step を canary／blue-green strategy、Ingress integration と組み合わせます。
 2. **[Best Practices](09-best-practices.md)**: Progressive delivery の運用上の best practice を学びます。
 
-## 参考資料
+## 参考資料 {#references}
 
 - [Experiment の公式ドキュメント](https://argoproj.github.io/argo-rollouts/features/experiment/)
 - [Analysis の公式ドキュメント](https://argoproj.github.io/argo-rollouts/features/analysis/)
@@ -361,6 +361,6 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 - [1.10.0 Rollout pause／abort 処理](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/rollout/experiment.go)
 - [1.10.0 ReplicaSet cleanup](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/replicaset.go)
 
-## クイズ
+## クイズ {#quiz}
 
 この章の理解を確認するには、[Rollouts Experiments のクイズ](../../quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)を解いてください。

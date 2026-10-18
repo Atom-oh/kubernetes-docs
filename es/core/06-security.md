@@ -94,7 +94,7 @@ EOF
 9. [Auditoría](#audit)
 10. [Mejora de la seguridad de Amazon EKS](#amazon-eks-security-enhancement)
 
-## Descripción general de la seguridad
+## Descripción general de la seguridad {#security-overview}
 
 > **Concepto clave**: La seguridad de Kubernetes sigue un enfoque de defensa en profundidad que proporciona varios mecanismos de seguridad en los niveles de infraestructura, clúster y carga de trabajo.
 
@@ -116,7 +116,7 @@ La seguridad de Kubernetes consta de las siguientes áreas principales:
 4. **Refuerzo de la seguridad**: Aplicar configuraciones de seguridad más estrictas que las predeterminadas
 5. **Supervisión continua**: Detectar y responder a eventos de seguridad
 
-## Autenticación
+## Autenticación {#authentication}
 
 Para acceder al servidor de API de Kubernetes, debes pasar por un proceso de autenticación. Kubernetes admite varios métodos de autenticación:
 
@@ -183,7 +183,7 @@ Método que valida tokens mediante un servicio de autenticación externo. El ser
 
 Método en el que se coloca un proxy de autenticación delante del servidor de API para gestionar la autenticación de usuarios. El proxy incluye información del usuario autenticado en los encabezados HTTP y los reenvía al servidor de API.
 
-## Autorización
+## Autorización {#authorization}
 
 Si la autenticación es el proceso de verificar «quién eres», la autorización es el proceso de determinar «qué puedes hacer». Kubernetes admite varios modos de autorización:
 
@@ -273,7 +273,7 @@ La autorización de Node es un modo de autorización especial que se utiliza cua
 
 Método en el que las decisiones de autorización se toman a través de un servicio externo. El servidor de API reenvía las solicitudes de autorización a un servicio externo, que decide si permite o deniega la solicitud.
 
-## Contexto de seguridad
+## Contexto de seguridad {#security-context}
 
 El contexto de seguridad define la configuración de seguridad en el nivel del Pod o del contenedor. Esto permite un control detallado de los privilegios, el control de acceso, las capacidades y otros aspectos.
 
@@ -338,7 +338,7 @@ metadata:
 
 Las cargas de trabajo Linux Restricted necesitan `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, un perfil seccomp permitido y capacidades descartadas, además de restricciones al acceso al host. `readOnlyRootFilesystem` es una medida de refuerzo útil, pero Restricted no lo exige. Fija las etiquetas de namespace `*-version` cuando necesites una versión de política fija.
 
-## Política de red
+## Política de red {#network-policy}
 
 Las políticas de red permiten controlar la comunicación entre Pods. De forma predeterminada, todos los Pods de un clúster de Kubernetes pueden comunicarse entre sí, pero esto se puede restringir mediante políticas de red.
 
@@ -386,7 +386,7 @@ Para usar políticas de red, el complemento de red del clúster debe admitirlas.
 
 Estos podSelectors hacen referencia a Pods en `default`. Las políticas son aditivas, por lo que otra política puede permitir más tráfico; tanto el egreso del origen como el ingreso del destino deben permitir una conexión. Este ejemplo omite DNS: añade acceso TCP/UDP al puerto 53 para los endpoints DNS reales del clúster si la aplicación resuelve nombres de Service.
 
-## Administración de Secrets
+## Administración de Secrets {#secret-management}
 
 Los Secrets de Kubernetes se utilizan para almacenar y administrar información sensible, como contraseñas, claves de API y certificados. La API de Secret usa base64 para `data`; esa codificación no es cifrado. La protección en reposo depende del clúster: los clústeres autogestionados requieren una configuración de cifrado, mientras que los clústeres actuales de EKS tienen cifrado de sobre habilitado de forma predeterminada. En ambos casos se requieren RBAC y un manejo seguro de las aplicaciones.
 
@@ -420,7 +420,7 @@ Para administrar Secrets de forma más segura, puedes usar sistemas externos de 
 - Google Secret Manager
 - External Secrets Operator
 
-## Seguridad de imágenes
+## Seguridad de imágenes {#image-security}
 
 La seguridad de las imágenes de contenedores es una parte importante de la seguridad de Kubernetes.
 
@@ -464,7 +464,7 @@ plugins:
 
 ImagePolicyWebhook requiere un backend de políticas en ejecución y una configuración de admisión del servidor de API autogestionado; este archivo por sí solo no aplica reglas para los registros. EKS no expone indicadores arbitrarios del servidor de API: utiliza allí webhooks de admisión o controladores de políticas compatibles.
 
-## Auditoría
+## Auditoría {#audit}
 
 La auditoría de Kubernetes proporciona un mecanismo para registrar y analizar los eventos que ocurren en el clúster.
 
@@ -499,7 +499,7 @@ Los registros de auditoría se pueden almacenar en varios backends:
 
 Los backends integrados son file/log y webhook. Reenvía su salida a Elasticsearch/Loki mediante un recolector; estos no son backends de auditoría dinámica nativos. Este ejemplo registra solo metadatos para que los cuerpos de Secret y token no se copien en los registros. Los clústeres autogestionados deben configurar una política de auditoría y un backend en el servidor de API; los registros de auditoría de EKS se habilitan mediante el registro del plano de control.
 
-## Mejora de la seguridad de Amazon EKS
+## Mejora de la seguridad de Amazon EKS {#amazon-eks-security-enhancement}
 
 Amazon EKS puede mejorar la seguridad mediante la integración con servicios de seguridad de AWS, además de las funciones de seguridad básicas de Kubernetes.
 

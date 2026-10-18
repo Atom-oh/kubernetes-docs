@@ -170,12 +170,30 @@ export async function syncTranslatedAnchors(root, { locales = ['cn', 'jp', 'es']
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2), localeIndex = args.indexOf('--locale')
-  const result = await syncTranslatedAnchors(process.cwd(), {
-    apply: !args.includes('--check'),
-    locales: localeIndex < 0 ? undefined : [args[localeIndex + 1]]
-  })
-  console.log(JSON.stringify(result, null, 2))
-  if (result.failures.length || result.unresolvedSource.length ||
-      (args.includes('--check') && result.changed.length)) process.exitCode = 1
+  const args = process.argv.slice(2)
+  try {
+    if (args.includes('--help') || args.includes('-h')) {
+      if (args.length !== 1) throw new Error('Use --help on its own')
+      console.log('Usage: node scripts/sync-translated-anchors.mjs [--check] [--locale cn|jp|es]')
+    } else {
+      let check = false, locale
+      for (let index = 0; index < args.length; index++) {
+        if (args[index] === '--check' && !check) check = true
+        else if (args[index] === '--locale' && locale === undefined) {
+          locale = args[++index]
+          if (!['cn', 'jp', 'es'].includes(locale)) throw new Error('Expected --locale cn|jp|es')
+        } else throw new Error(`Unknown or duplicate argument: ${args[index]}`)
+      }
+      const result = await syncTranslatedAnchors(process.cwd(), {
+        apply: !check,
+        locales: locale === undefined ? undefined : [locale]
+      })
+      console.log(JSON.stringify(result, null, 2))
+      if (result.failures.length || result.unresolvedSource.length ||
+          (check && result.changed.length)) process.exitCode = 1
+    }
+  } catch (error) {
+    console.error(error.message)
+    process.exitCode = 1
+  }
 }

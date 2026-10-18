@@ -11,7 +11,7 @@
 - [多集群模式](#multi-cluster-patterns)
 - [模板补丁](#template-patches)
 
-## ApplicationSet 概述
+## ApplicationSet 概述 {#applicationset-overview}
 
 ApplicationSet 是一个 Kubernetes controller，用于增加从模板生成 ArgoCD Application 的支持。它可以跨集群、环境或仓库管理具有相似配置的多个应用程序。
 
@@ -65,7 +65,7 @@ spec:
   - missingkey=error
 ```
 
-## 生成器
+## 生成器 {#generators}
 
 生成器会产生参数，这些参数将替换到模板中以创建 Application。
 
@@ -690,7 +690,7 @@ data:
 
 ConfigMap 不会执行代码。必须由一个单独部署的 HTTP 服务处理 POST `/api/v1/getparams.execute` 并返回 `output.parameters` 数组。请将示例域名替换为经过 TLS 验证的 endpoint。在 `argocd` 中预置 Secret `appset-plugin-token`，其 key 为 `token`，标签为 `app.kubernetes.io/part-of: argocd`；请勿将其值存入 Git。在连接之前，实现身份验证、输入验证以及文档规定的响应 schema。
 
-## Go 模板
+## Go 模板 {#go-templating}
 
 设置 `spec.goTemplate: true` 以使用 Go 模板；3.5.4 中的默认引擎仍为 fasttemplate。本页示例均通过 `missingkey=error` 显式启用 Go 模板。每个字符串字段都会独立渲染：控制语句不能跨越 YAML 字段，布尔值/对象/列表需要 `templatePatch`。对于可选 key，请使用 `dig`，因为直接访问缺失 key 会在 `default` 运行之前失败。
 
@@ -762,7 +762,7 @@ spec:
         - CreateNamespace=true
 ```
 
-## 渐进式同步
+## 渐进式同步 {#progressive-sync}
 
 Progressive Sync 自 3.3 起为 Beta 功能，在 3.5.4 中仍必须显式启用。将 `applicationsetcontroller.enable.progressive.syncs: "true"` 合并到现有 `argocd-cmd-params-cm.data`，然后重启 ApplicationSet controller。对于 Helm，请管理 `configs.params` 下的对应 key。
 
@@ -845,7 +845,7 @@ spec:
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-1.html)
 
-## 多集群模式
+## 多集群模式 {#multi-cluster-patterns}
 
 ### Hub-and-Spoke 模式
 
@@ -978,7 +978,7 @@ imageTag: v1.2.3
 
 ```
 
-## 模板补丁
+## 模板补丁 {#template-patches}
 
 根据生成器输出覆盖模板字段。
 

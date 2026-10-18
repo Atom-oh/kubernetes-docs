@@ -206,7 +206,7 @@ No existe una clasificación universal de «precisión: media/alta». Evalúe si
 
 ## Correlación entre trazas, logs y métricas
 
-### Vincular logs mediante el TraceID
+### Vincular logs mediante el TraceID {#linking-logs-via-traceid}
 
 Prefiera la instrumentación de logging soportada para su framework. Si usa MDC de SLF4J manualmente, restaure el contexto anterior incluso cuando la operación lance una excepción:
 

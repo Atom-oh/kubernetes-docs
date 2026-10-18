@@ -15,7 +15,7 @@ Ambient 最初于 2022 年作为实验性预览版推出，在 Istio 1.18 中首
 7. [使用场景](#use-cases)
 8. [故障排查](#troubleshooting)
 
-## 概述
+## 概述 {#overview}
 
 
 Ambient Mode 是一种新方法，无需向应用 Pod 注入 Sidecar 代理即可提供 Service Mesh 功能。Ambient Mode 由**分层架构**组成：
@@ -53,7 +53,7 @@ Ambient Mode 的解决方案：
 3. **透明的 L4 传输**：应用的跟踪/截止时间/幂等性要求仍然存在
 4. **灵活的 L7 功能**：只在需要时使用 waypoint
 
-## Sidecar Mode 与 Ambient Mode
+## Sidecar Mode 与 Ambient Mode {#sidecar-mode-vs-ambient-mode}
 
 ### 架构对比
 
@@ -100,11 +100,11 @@ Ambient Mode 的解决方案：
 | **运维范围** | 每个工作负载的代理生命周期 | 节点/CNI 和共享 waypoint 生命周期 |
 | **生产就绪状态** | 成熟 | GA（Istio 1.24+） |
 
-### 资源使用量比较
+### 资源使用量比较 {#resource-usage-comparison}
 
 下面的 100-Pod 计算只是一个假设的规划示例，并非官方基准测试。在估算资源或账单节省之前，应统计所有节点/waypoint 副本，并比较等效的安全、遥测和路由需求。
 
-## 架构
+## 架构 {#architecture}
 
 
 Ambient Mode 数据平面由两个核心组件构成：**ztunnel** 和 **Waypoint Proxy**。
@@ -242,7 +242,7 @@ spec:
 
 本指南中的 HBONE 用于传输 TCP 流。应用 UDP 不会通过该隧道传输；DNS 捕获/代理是单独的功能。本地应用流可以保持明文，而代理之间的网格传输则经过加密。
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 本实验需要兼容的 Linux 节点以及所需的 Istio CNI/ztunnel DaemonSet。EKS Fargate 无法运行这些节点 DaemonSet；应使用受支持的 EC2 后端节点，并检查实际节点/CNI 平台。[平台先决条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)涵盖 CNI 路径、权限和健康探针。使用 SecurityGroupPolicy 的 VPC CNI Pod ENI trunking 可能需要标准强制模式或适当的 exec 探针；应评估其策略影响。GKE、OpenShift、k3s 和其他平台可能需要不同设置。
 
@@ -366,7 +366,7 @@ kubectl exec -n ambient-demo deploy/curl -c curl -- \
 
 检查 Accepted/ResolvedRefs 条件，并通过日志/遥测确认所选后端。HTTP 请求成功本身既不能证明 mTLS 已启用，也不能证明流量必须经过 waypoint。L7 授权需要适当的 `targetRefs`；强制流量经过 waypoint 还需要文档所述的 ztunnel 授权保护措施。请参阅 [waypoint 策略附加](https://istio.io/latest/docs/ambient/usage/l7-features/)。
 
-## 迁移
+## 迁移 {#migration}
 
 ### 从 Sidecar Mode 迁移到 Ambient Mode
 
@@ -456,7 +456,7 @@ for deployment in curl httpbin; do
 done
 ```
 
-## 性能比较
+## 性能比较 {#performance-comparison}
 
 ### 基准测试结果
 
@@ -484,7 +484,7 @@ memory_saved = sidecar_memory - ambient_memory  # 4300 MB, 86% of assumed baseli
 cpu_saved = sidecar_cpu - ambient_cpu           # 8.5 vCPU, 85% of assumed baseline
 ```
 
-## 使用场景
+## 使用场景 {#use-cases}
 
 ### 何时应选择 Ambient Mode？
 
@@ -533,7 +533,7 @@ L7 需求并不意味着必须自动使用 Sidecar：应将受支持的 waypoint
 kubectl get namespaces -L istio-injection,istio.io/rev,istio.io/dataplane-mode,istio.io/use-waypoint
 ```
 
-## 故障排查
+## 故障排查 {#troubleshooting}
 
 ### ztunnel 无法正常工作
 

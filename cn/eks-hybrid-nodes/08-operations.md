@@ -329,7 +329,7 @@ AWS 要求在每台受影响主机上按计划运行 `nodeadm init -c file:///pa
 
 对于 Bottlerocket，请使用所选版本文档规定的 `hybrid-bottlerocket` 配置。检查并合并现有设置。仅当附加组件不存在时才创建；更新现有附加组件时，应经过审查并妥善处理冲突，不要盲目使用 create 或 OVERWRITE。agent 和凭证文件不会自动创建每个应用的 Pod Identity 关联：请验证命名空间、ServiceAccount、IAM 角色信任/权限、SDK 凭证解析和授权是否成功。
 
-## 混合模式 Webhook 运维
+## 混合模式 Webhook 运维 {#mixed-mode-webhook-operations}
 
 在 AWS 支持的混合模式方案中，VPC CNI 在云节点上运行，Cilium/Calico 在 Hybrid Nodes 上运行。AWS 建议在此方案中将 webhook 放置于云端。部署在 Hybrid 节点上的 webhook 还需要可路由的远程 Pod CIDR 和控制平面可达性；请检查实际端点，而不要假设每个 webhook 必须或可以在任何位置运行。
 

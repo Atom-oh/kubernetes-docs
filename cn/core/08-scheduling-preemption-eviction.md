@@ -129,7 +129,7 @@ EOF
 15. [调度最佳实践](#scheduling-best-practices)
 16. [结论](#conclusion)
 
-## 调度概述
+## 调度概述 {#scheduling-overview}
 
 Kubernetes 调度器是一个控制平面组件，负责将 Pod 放置到合适的节点上。调度器会考虑各种因素，以确定放置 Pod 的最优节点：
 
@@ -154,7 +154,7 @@ Kubernetes 调度器是一个控制平面组件，负责将 Pod 放置到合适�
    - 数据局部性
    - 污点/容忍度
 
-## 调度器的工作原理
+## 调度器的工作原理 {#how-the-scheduler-works}
 
 Kubernetes 调度器按以下流程运行：
 
@@ -184,7 +184,7 @@ Kubernetes 调度器采用可扩展的插件架构设计。各种插件在调度
    - InterPodAffinity：考虑 Pod 间亲和性
    - NodeAffinity：考虑 Node Affinity
 
-### NodeResourcesFit 评分策略：LeastAllocated 与 MostAllocated
+### NodeResourcesFit 评分策略：LeastAllocated 与 MostAllocated {#noderesourcesfit-scoring-strategy-leastallocated-vs-mostallocated}
 
 `NodeResourcesFit` 同时是一个过滤插件（节点是否有足够的可分配 CPU/内存供 Pod 使用？）和一个评分插件。其评分插件行为由 `scoringStrategy.type` 控制，可通过 `KubeSchedulerConfiguration` 配置：
 
@@ -224,7 +224,7 @@ Amazon EKS 的控制平面完全由 AWS 管理，因此你无法直接编辑默�
 
 请在[调度器评分策略实验](../labs/core/08-scheduling-preemption-eviction-lab.md)中按照步骤亲自复现这一完全相同的对比。
 
-### 多个调度器
+### 多个调度器 {#multiple-schedulers}
 
 Kubernetes 可以同时运行多个调度器。这样就能为特定工作负载实现自定义调度逻辑。
 
@@ -242,7 +242,7 @@ spec:
 
 在上面的示例中，`schedulerName` 字段指定用于调度 Pod 的调度器。
 
-## 节点选择
+## 节点选择 {#node-selection}
 
 Kubernetes 提供了多种机制，可将 Pod 放置到指定节点上。
 
@@ -293,7 +293,7 @@ spec:
 
 在上面的示例中，Pod 会被直接放置到名为 `worker-node-1` 的节点上。
 
-## Pod 亲和性与反亲和性
+## Pod 亲和性与反亲和性 {#pod-affinity-and-anti-affinity}
 
 Pod 亲和性和反亲和性提供了根据 Pod 之间的关系来放置 Pod 的方法。
 
@@ -382,7 +382,7 @@ affinity:
 
 在上面的示例中，`weight` 字段表示此偏好的权重。存在多个偏好时，权重越高的偏好越重要。
 
-## 污点与容忍度
+## 污点与容忍度 {#taints-and-tolerations}
 
 污点和容忍度是用于让节点拒绝特定 Pod 的机制。
 
@@ -501,7 +501,7 @@ Node Affinity 支持多种运算符：
 - **Gt**：标签值大于指定值
 - **Lt**：标签值小于指定值
 
-## Pod 优先级与抢占
+## Pod 优先级与抢占 {#pod-priority-and-preemption}
 
 Kubernetes 提供了 Pod 优先级和抢占功能，确保重要工作负载能够获得集群资源。
 
@@ -561,7 +561,7 @@ spec:
    - `system-cluster-critical`：对集群运行至关重要的 Pod
    - `system-node-critical`：对节点运行至关重要的 Pod
 
-## Pod 驱逐
+## Pod 驱逐 {#pod-eviction}
 
 Pod 驱逐会终止一个 Pod；其工作负载控制器可能会创建一个替代 Pod，再由调度器将其放置到其他位置。驱逐可能由多种原因触发。
 
@@ -677,7 +677,7 @@ PDB 会控制常规 drain/Descheduler 操作等 Eviction API 请求。直接删�
 3. **考虑副本数量**：`minAvailable` 可以等于副本数，以阻止自愿驱逐，但这可能导致维护停滞；应明确配置允许的中断数量
 4. **定期测试**：通过节点排空等任务测试 PDB 的运行情况
 
-## 节点压力驱逐
+## 节点压力驱逐 {#node-pressure-eviction}
 
 节点压力驱逐是指因节点资源不足而驱逐 Pod 的机制。
 
@@ -833,7 +833,7 @@ spec:
 | **性能** | 大规模场景下调度器性能更好 | Pod 数量较多时可能拖慢调度 |
 | **使用场景** | 在允许一定偏差的前提下均匀分布 | 严格隔离 |
 
-## Pod 删除成本
+## Pod 删除成本 {#pod-deletion-cost}
 
 Pod 删除成本是 ReplicaSet 控制器在缩容时采用的一种尽力而为的偏好。HPA 会更改期望副本数，但不会选择具体要删除的 Pod。此注解不会保护 Jobs/StatefulSets、防止驱逐，也不保证删除顺序。
 
@@ -1083,7 +1083,7 @@ spec:
 > - [自定义调度器第 2 部分：实现](../scheduling/02-custom-scheduler-part2.md)
 > - [自定义调度器第 3 部分：高级功能](../scheduling/03-custom-scheduler-part3.md)
 
-## Amazon EKS 中的调度优化
+## Amazon EKS 中的调度优化 {#scheduling-optimization-in-amazon-eks}
 
 在 Amazon EKS 中，你可以使用 Kubernetes 调度功能优化工作负载。
 
@@ -1231,7 +1231,7 @@ spec:
     updateMode: "Recreate"
 ```
 
-## 调度最佳实践
+## 调度最佳实践 {#scheduling-best-practices}
 
 优化 Kubernetes 和 EKS 中调度的最佳实践：
 
@@ -1265,7 +1265,7 @@ spec:
    - 为正在维护的节点应用污点
    - 设置合适的容忍度
 
-## 结论
+## 结论 {#conclusion}
 
 Kubernetes 调度、抢占和驱逐机制在高效管理集群资源及维持工作负载可用性方面发挥着重要作用。了解并使用这些功能，可以帮助你优化 Amazon EKS 集群中的工作负载，并确保其可靠运行。
 

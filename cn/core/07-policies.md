@@ -134,7 +134,7 @@ spec:
 9. [策略最佳实践](#policy-best-practices)
 10. [结论](#conclusion)
 
-## 策略概述
+## 策略概述 {#policy-overview}
 
 Kubernetes 策略为集群管理员提供了一种方法，用于定义集群内资源和工作负载的约束。策略用于以下目的：
 
@@ -145,7 +145,7 @@ Kubernetes 策略为集群管理员提供了一种方法，用于定义集群内
 
 Kubernetes 可以通过内置资源（例如 NetworkPolicy、ResourceQuota、LimitRange）或第三方策略引擎（例如 OPA Gatekeeper、Kyverno）实现各种类型的策略。
 
-## 资源分配策略
+## 资源分配策略 {#resource-allocation-policies}
 
 资源分配策略用于控制 Pod 和容器可以使用的 CPU、内存等资源量。
 
@@ -194,7 +194,7 @@ Kubernetes 会根据 Pod 的资源 request 和 limit 设置自动分配 QoS 类�
 
 节点压力驱逐会考虑用量是否超出 requests、Pod 优先级和相对用量。与 Guaranteed 相比，BestEffort 通常更容易受到影响，但 QoS 本身并不是严格的排序规则。Pod 级资源也可能影响 QoS；请参阅[官方 QoS 标准](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)。
 
-## Pod 安全策略
+## Pod 安全策略 {#pod-security-policies}
 
 Pod Security Policy (PSP) 自 Kubernetes 1.21 起已弃用，并在 1.25 版本中彻底移除。取而代之的是 Pod Security Standards 和 Pod Security Admission。
 
@@ -230,7 +230,7 @@ metadata:
 - **audit**：在审计日志中记录违规情况
 - **warn**：针对违规情况显示警告消息
 
-## 网络策略
+## 网络策略 {#network-policies}
 
 Network Policy 提供了一种控制 Pod 之间通信的方式。默认情况下，Kubernetes 集群中的所有 Pod 都可以相互通信，但网络策略可以限制这种通信。
 
@@ -308,7 +308,7 @@ ingress:
       - 172.17.1.0/24
 ```
 
-## 资源配额
+## 资源配额 {#resource-quotas}
 
 ResourceQuota 限制命名空间内可使用的资源总量。当多个团队或项目共享集群资源时，这可以防止某个团队独占所有资源。
 
@@ -446,7 +446,7 @@ LimitRange 可以应用于以下资源类型：
 - Pod
 - PersistentVolumeClaim
 
-## 策略引擎
+## 策略引擎 {#policy-engines}
 
 Kubernetes 生态系统中有多种策略引擎，可以实现更加复杂和灵活的策略。
 
@@ -574,7 +574,7 @@ spec:
 
 在创建这些资源之前，请先安装策略引擎、其 CRD 和策略服务器。Gatekeeper 示例特意定义了 `K8sRequiredLabelKeys`，以避免与功能更丰富的库模板 `K8sRequiredLabels` 冲突。对于 Kubewarden，请选择经过测试并已发布的 safe-labels 标签或摘要，并使用其 `mandatory_labels` 设置；`<tested-tag>` 是占位符。
 
-## Amazon EKS 中的策略管理
+## Amazon EKS 中的策略管理 {#policy-management-in-amazon-eks}
 
 在 Amazon EKS 中，你可以结合 Kubernetes 默认策略机制和各种 AWS 服务来管理策略。
 
@@ -648,7 +648,7 @@ AWS Config 会评估资源的合规性；它本身不会拒绝 CreateCluster。�
 
 Firewall Manager 集中管理受支持的 AWS 防护措施，例如 WAF、VPC security groups、Network Firewall 和 DNS Firewall。它不会协调 Kubernetes NetworkPolicy 对象；应通过 Kubernetes/GitOps 策略工具管理这些对象。
 
-## 策略最佳实践
+## 策略最佳实践 {#policy-best-practices}
 
 以下是在 Kubernetes 集群中有效管理策略的最佳实践。
 
@@ -677,7 +677,7 @@ Firewall Manager 集中管理受支持的 AWS 防护措施，例如 WAF、VPC se
 2. **策略测试**：先在测试环境中测试策略，确认没有问题后再应用到生产环境。
 3. **策略版本控制**：将策略作为代码进行管理，并使用版本控制系统跟踪变更。
 
-## 结论
+## 结论 {#conclusion}
 
 Kubernetes 策略是控制集群和工作负载安全性、资源使用及网络通信的强大工具。你可以结合内置策略机制（ResourceQuota、LimitRange、NetworkPolicy 等）和第三方策略引擎（OPA Gatekeeper、Kyverno 等），构建适合组织需求的策略框架。
 

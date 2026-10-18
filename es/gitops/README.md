@@ -11,7 +11,7 @@
 - [GitOps en Amazon EKS](#gitops-on-amazon-eks)
 - [Primeros pasos](#getting-started)
 
-## ¿Qué es GitOps?
+## ¿Qué es GitOps? {#what-is-gitops}
 
 GitOps es un marco operativo que aplica las prácticas recomendadas de DevOps para la automatización de la infraestructura (como el control de versiones, la colaboración, el cumplimiento y CI/CD) a la gestión de infraestructura. Weaveworks acuñó el término en 2017 y, desde entonces, se ha convertido en una metodología reconocida por CNCF para la implementación de aplicaciones nativas de la nube.
 
@@ -38,7 +38,7 @@ El proyecto OpenGitOps define GitOps mediante cuatro principios:
 3. **Recuperado automáticamente**: Los agentes de software recuperan automáticamente las declaraciones del estado deseado desde el origen
 4. **Reconciliado continuamente**: Los agentes de software observan continuamente el estado real del sistema e intentan aplicar el estado deseado
 
-## Principios fundamentales
+## Principios fundamentales {#core-principles}
 
 El historial de Git registra la configuración deseada. Una reversión de Git no restaura las migraciones de bases de datos, los datos eliminados ni el estado externo. La sincronización automatizada, prune y selfHeal de Argo CD son ajustes independientes; GitOps describe un bucle de control que intenta realizar la reconciliación.
 
@@ -98,7 +98,7 @@ Los agentes GitOps continuamente:
 
 Los intentos de reconciliación dependen de la política de sync/self-heal, los permisos y el estado de salud. Por ejemplo, la sincronización automatizada y selfHeal de Argo CD requieren configuración; la instalación por sí sola no revierte todos los cambios manuales ni recupera los datos perdidos.
 
-## Modelo push frente a pull
+## Modelo push frente a pull {#push-vs-pull-model}
 
 Compara la implementación tradicional push con GitOps basado en pull. Una canalización de `kubectl apply` que solo use CI no cumple por sí misma los principios de recuperación automática y reconciliación continua de OpenGitOps:
 
@@ -131,7 +131,7 @@ En el modelo pull de GitOps:
 - Detección y corrección automáticas de desviaciones
 - Funciona detrás de firewalls
 
-## Descripción general de las herramientas GitOps
+## Descripción general de las herramientas GitOps {#gitops-tools-overview}
 
 ### ArgoCD
 
@@ -183,7 +183,7 @@ Jenkins X / JayeX proporciona CI/CD para aplicaciones nativas de la nube en Kube
 | Orígenes OCI | Orígenes OCI/Helm generales; validar capas y tipos de medios | Orígenes OCIRepository/Helm; validar la configuración de verificación/capas |
 | Capacidad | Medir la cantidad de aplicaciones/clústeres y la carga de reconciliación | Medir los controladores, orígenes y la carga de reconciliación instalados |
 
-## Guía para elegir una herramienta
+## Guía para elegir una herramienta {#tool-selection-guide}
 
 ### Elige ArgoCD cuando:
 
@@ -209,7 +209,7 @@ El diagrama ilustra preguntas para elegir, no capacidades exclusivas. Compara la
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-12.html)
 
-## GitOps en Amazon EKS
+## GitOps en Amazon EKS {#gitops-on-amazon-eks}
 
 ### Consideraciones específicas de EKS
 
@@ -268,7 +268,7 @@ GitOps puede administrar recursos de AWS mediante:
     └── security/                # Security policies
 ```
 
-## Primeros pasos
+## Primeros pasos {#getting-started}
 
 ### Inicio rápido con ArgoCD
 

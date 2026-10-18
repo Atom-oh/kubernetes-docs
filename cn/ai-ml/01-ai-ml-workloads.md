@@ -145,7 +145,7 @@ AI/ML 工作负载需要高性能存储：
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-2.html)
 
-### NVIDIA GPU Operator 和设备分配
+### NVIDIA GPU Operator 和设备分配 {#nvidia-gpu-operator-and-device-allocation}
 
 EKS AL2023 NVIDIA AMI 已包含驱动程序和 Container Toolkit，因此请在 GPU Operator 中禁用它们的安装。AMI 不包含 device plugin/DRA 驱动程序，这些需要进行配置。Bottlerocket NVIDIA AMI 包含 device plugin。避免安装重复的管理组件。
 
@@ -183,7 +183,7 @@ spec:
           nvidia.com/gpu: 1
 ```
 
-### Kubeflow 和分布式训练
+### Kubeflow 和分布式训练 {#kubeflow-and-distributed-training}
 
 依赖项、身份和存储配置请参阅固定版本的[26.03.1 安装指南](kubeflow/01-architecture-installation.md)，不要使用 master 分支上的单行安装命令。服务项目现名为 KServe；KFServing 是其历史名称。
 
@@ -244,7 +244,7 @@ helm template nvdp nvdp/nvidia-device-plugin \
 
 这会公开 nvidia.com/gpu.shared；Pods 可请求该资源的整数值。replicas=2 并不能保证获得一半 GPU 内存。请在实际 GPU 硬件上验证所选节点、资源分配和争用情况。
 
-### 放置和拓扑
+### 放置和拓扑 {#placement-and-topology}
 
 Zone/region 注解不会控制 Pod 放置。请使用 nodeSelector/affinity 匹配实际节点标签；反亲和性/分散选择器也必须匹配 Pod 标签。请将下方的 AZ 替换为实际值。同一 AZ 放置、跨节点分散和 gang 准入是不同的约束。
 
@@ -281,7 +281,7 @@ spec:
           memory: 128Mi
 ```
 
-### 存储和缓存
+### 存储和缓存 {#storage-and-caching}
 
 静态 FSx CSI 预配会通过 PV/PVC 连接**现有文件系统**。请将文件系统 ID、DNS、挂载名称、容量和命名空间替换为实际值。Retain 可避免自动删除文件系统；费用会持续产生，直到另行清理。
 
@@ -329,7 +329,7 @@ spec:
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-6.html)
 
-### Prometheus 和 Grafana
+### Prometheus 和 Grafana {#prometheus-and-grafana}
 
 DCGM Exporter 提供 GPU 指标，这与 device-plugin 的可分配容量不同。避免用另一个 DaemonSet 重复部署由 Operator 管理的 exporter。containerd 配置不需要挂载 Docker socket。
 
@@ -360,11 +360,11 @@ containerd CRI 日志分帧和应用程序 JSON 属于不同层。请配置 Flue
 
 ## 成本优化
 
-### Spot 和节点预配
+### Spot 和节点预配 {#spot-and-node-provisioning}
 
 Spot 中断/容量短缺需要外部检查点、重试/幂等机制和恢复时间验证。请使用 [Karpenter 指南](../autoscaling/02-karpenter.md)中的当前 NodePool/EC2NodeClass 配置，包括镜像/AMI 版本、污点/容忍度、限制和中断处理。混合使用 CPU/GPU 节点组与 EKS Hybrid Nodes 产品并不是一回事。
 
-### HPA 和指标
+### HPA 和指标 {#hpa-and-metrics}
 
 请对 metrics-server 提供的 CPU/内存使用 HPA Resource 指标。nvidia.com/gpu 分配并不是 GPU 利用率 Resource 指标。GPU/请求信号需要 exporter 和自定义/外部指标适配器。
 
@@ -395,7 +395,7 @@ spec:
 
 聚合/标签分组不正确可能导致适配器无法返回每个 Pod 的值。直方图百分位数或模型准确性不一定适合作为成比例的 HPA 信号。请同时测量负载/队列/延迟/利用率和实际吞吐量。Pod 数量减少后，EC2 费用可能仍会持续，直到节点终止；仅仅改变一天中的时间并不会降低 On-Demand 费率。
 
-### 数据和模型访问
+### 数据和模型访问 {#data-and-model-access}
 
 Kubernetes RBAC 管理 API 访问；S3/KMS 权限使用工作负载 IAM。请使用对象存储、加密和基于文件的凭证，而不要将大型模型或解密密钥放入环境变量中的 Secret。Secret 的 base64 编码并不等于加密。在同一个 peer 中，NetworkPolicy 的 namespaceSelector 和 podSelector 条件之间是 AND 关系；不同条目之间是 OR 关系。还需允许实际的 DNS/存储/指标通信方向。
 

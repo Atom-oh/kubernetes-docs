@@ -18,7 +18,7 @@ Amazon EKS（Elastic Kubernetes Service）让部署、管理和扩展容器化�
 7. [成本监控与分析](#cost-monitoring-and-analysis)
 8. [成本优化最佳实践](#cost-optimization-best-practices)
 
-## EKS 成本组成
+## EKS 成本组成 {#eks-cost-components}
 
 使用 Amazon EKS 所产生的成本由以下部分组成：
 
@@ -26,7 +26,7 @@ Amazon EKS（Elastic Kubernetes Service）让部署、管理和扩展容器化�
 
 [🔍 查看交互式示意图](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-0.html)
 
-## FinOps 原则与 EKS
+## FinOps 原则与 EKS {#finops-principles-and-eks}
 
 FinOps 是一种旨在最大化技术业务价值的运营框架和文化实践。工程、财务和业务团队通过及时、数据驱动的决策和财务责任机制开展协作；本章将这种方法应用于 EKS。
 
@@ -108,7 +108,7 @@ EKS 集群相关的网络成本：
 - **ECR**：容器映像存储所用 ECR 的成本
 - **其他 AWS 服务**：EKS 集群使用的其他 AWS 服务的成本
 
-## 计算成本优化
+## 计算成本优化 {#compute-cost-optimization}
 
 计算成本通常是 EKS 集群成本中占比最大的一项。你可以使用以下策略优化计算成本。
 
@@ -428,7 +428,7 @@ spec:
 - **Auto**：Recreate 的弃用别名；新配置应选择明确的模式。
 - 就地模式需要兼容的 VPA/Kubernetes 版本和相应的文档化功能门控。请阅读所选模式的具体行为：`InPlaceOrRecreate` 可在必要时回退到驱逐，而 `InPlace` 不会使用这种重新创建回退。启用自动更新前，请检查边界、干扰和峰值需求。
 
-## 存储成本优化
+## 存储成本优化 {#storage-cost-optimization}
 
 存储是 EKS 集群成本的重要组成部分。你可以使用以下策略优化存储成本。
 
@@ -585,7 +585,7 @@ S3 是一种具有成本效益的存储选项，可用于存储日志、备份�
 - 尽量减少不必要的 LIST 操作
 - 分段上传可以改善传输/重试行为，但会增加请求费用和未完成分段的存储费用；应配置中止/清理机制来处理已放弃的上传。Transfer Acceleration 可能增加费用，它是延迟/吞吐量选项，并不会自动降低请求成本
 
-## 网络成本优化
+## 网络成本优化 {#networking-cost-optimization}
 
 网络成本可能相当可观，尤其是在数据传输量较大时。你可以使用以下策略优化网络成本。
 
@@ -738,7 +738,7 @@ aws ec2 create-vpc-endpoint \
 - 调度可以减少争用，但常规 NAT/数据传输价格并无通用的非高峰时段折扣；应减少计费字节数或预置时长
 - 使用数据压缩
 
-## 资源管理与治理
+## 资源管理与治理 {#resource-management-and-governance}
 
 有效的资源管理和治理对于控制 EKS 集群成本很重要。你可以使用以下策略有效地管理资源。
 
@@ -909,7 +909,7 @@ Kubecost 提供以下功能：
 - 提供成本优化建议
 - 提供成本分配和分摊报告
 
-## 成本监控与分析
+## 成本监控与分析 {#cost-monitoring-and-analysis}
 
 要有效优化成本，需要持续监控和分析成本。你可以使用以下工具和策略监控并分析 EKS 集群成本。
 
@@ -1079,7 +1079,7 @@ CloudWatch 仪表板可监控以下指标：
 - Spot 实例使用率
 - 闲置资源比例
 
-## 成本优化最佳实践
+## 成本优化最佳实践 {#cost-optimization-best-practices}
 
 下面来看优化 EKS 集群成本的最佳实践。
 

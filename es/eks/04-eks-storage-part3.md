@@ -12,7 +12,7 @@ Este documento es la tercera y última parte de la serie sobre almacenamiento de
 4. [Seguridad del almacenamiento](#storage-security)
 5. [Prácticas recomendadas de administración del almacenamiento](#storage-management-best-practices)
 
-## Supervisión del almacenamiento
+## Supervisión del almacenamiento {#storage-monitoring}
 
 Combine observaciones del backend, Kubernetes y las aplicaciones. Los contadores de E/S del backend no miden el espacio libre del sistema de archivos, y la disponibilidad de Kubernetes no confirma la coherencia de la base de datos. Registre las unidades, dimensiones, períodos de agregación y el comportamiento ante datos faltantes antes de crear una alarma.
 
@@ -177,7 +177,7 @@ spec:
 
 Las etiquetas de espacio de nombres/versión deben coincidir con el selector de reglas de Prometheus. Valide la sintaxis de las reglas y los escenarios sintéticos; luego, verifique la cobertura de métricas en vivo y el enrutamiento de alertas en el despliegue previsto. En esta revisión no se ejecutó ninguna recopilación de métricas en vivo ni entrega de alertas.
 
-## Solución de problemas de almacenamiento
+## Solución de problemas de almacenamiento {#storage-troubleshooting}
 
 Empiece por la identidad del objeto y los eventos. Pending, ContainerCreating y las E/S lentas pueden tener causas distintas; la descarga de imágenes, la planificación y la disponibilidad de la aplicación no necesariamente indican fallos de almacenamiento. El diagrama es una guía de triaje, no una correspondencia exhaustiva entre síntomas y causas.
 
@@ -270,7 +270,7 @@ En esta revisión no se ejecutó ningún benchmark de almacenamiento. Considere 
 
 En EFS son importantes General Purpose, el modo de rendimiento real, los límites de clientes, la demanda de metadatos y la concurrencia. Use las opciones compatibles del asistente de montaje de la Parte 2, incluidas las opciones hard/TLS y un comportamiento adecuado de timeout/reintento. Agrupar archivos o usar accesos más secuenciales puede ayudar con una carga de trabajo medida, pero cambiar la organización de los datos de la aplicación no siempre es beneficioso.
 
-## Optimización de costos de almacenamiento
+## Optimización de costos de almacenamiento {#storage-cost-optimization}
 
 Optimice el costo total de la carga de trabajo sin dejar de cumplir los requisitos de latencia, durabilidad, recuperación y propiedad. Los descuentos de cómputo, el almacenamiento asignado, el rendimiento aprovisionado, los cargos por solicitudes/transferencia y las copias de seguridad retenidas son costos independientes.
 
@@ -316,7 +316,7 @@ Elija scratch solo para datos que puedan recrearse y use opciones de despliegue/
 
 Cost Explorer y las herramientas de asignación de costos de Kubernetes requieren datos de facturación configurados, etiquetas de asignación de costos activadas cuando corresponda y una correspondencia probada entre el PVC/PV y los ID de recursos en la nube. Las etiquetas del espacio de nombres no etiquetan automáticamente todos los cargos de AWS. Haga seguimiento de los volúmenes/instantáneas retenidos, los costos de solicitudes/transferencia y la retención de telemetría. Las instancias reservadas de EC2/Compute Savings Plans pueden cambiar los costos de cómputo elegibles; no reducen automáticamente la factura independiente de almacenamiento de EBS/EFS/FSx.
 
-## Seguridad del almacenamiento
+## Seguridad del almacenamiento {#storage-security}
 
 Proteja por separado el backend, la ruta del nodo/montaje y el plano de control de Kubernetes. Un nombre de clase, una política de espacio de nombres o una raíz de contenedor de solo lectura no protegen por sí solos el contenido de un PVC con permisos de escritura.
 
@@ -517,7 +517,7 @@ spec:
 
 La política comprueba el **parámetro de cifrado declarado en las operaciones de creación/actualización de StorageClass de EBS**, incluido el provisioner de Auto Mode. No inspecciona los volúmenes existentes de AWS, los PV estáticos, el contenido de las instantáneas ni las rutas de omisión fuera de su ámbito. Restrinja la administración de StorageClass/PV y use comprobaciones de cumplimiento del backend además de la admisión. Despliéguela tras probarla con recursos representativos y supervise los informes de políticas/el estado del webhook antes de aplicar la política ampliamente. El cifrado de datos existentes aún requiere su propia migración.
 
-## Prácticas recomendadas de administración del almacenamiento
+## Prácticas recomendadas de administración del almacenamiento {#storage-management-best-practices}
 
 ![Diagrama que relaciona las cuatro fases del ciclo de vida del almacenamiento (planificación, implementación, operación y optimización) con sus áreas correspondientes de prácticas recomendadas (planificación y diseño, automatización e IaC, copias de seguridad y recuperación ante desastres, rendimiento y optimización de costos); cada área enumera sus tres prácticas en orden.](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
 

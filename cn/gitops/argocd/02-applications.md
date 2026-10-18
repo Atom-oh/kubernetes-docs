@@ -13,7 +13,7 @@
 - [忽略差异](#ignore-differences)
 - [应用集合模式](#app-of-apps-pattern)
 
-## Application CRD 概览
+## Application CRD 概览 {#application-crd-overview}
 
 这些示例是相互独立的配置。请将 myorg/accounts/clusters/paths 替换为实际获准使用的源。根据具体场景选择 source/sources、渲染器和 destination.server/name，而不要一次启用所有备选项。
 
@@ -92,7 +92,7 @@ Application.status 是由控制器报告的状态。要在控制平面命名空�
 | `info` | 用于显示的自定义元数据 |
 | `revisionHistoryLimit` | 保留的部署修订版本数量 |
 
-## 源类型
+## 源类型 {#source-types}
 
 ArgoCD 支持多种源类型来获取 Kubernetes 清单。
 
@@ -344,7 +344,7 @@ spec:
     namespace: production
 ```
 
-## 多个源
+## 多个源 {#multiple-sources}
 
 如果存在 sources，单数形式的 source 将被忽略。可将一个相关应用的配置组合在一起，例如 Chart 加值仓库；对于独立管理的平台栈，请使用 ApplicationSet/App of Apps。
 
@@ -375,7 +375,7 @@ spec:
 
 ref: values 会将 $values 映射到该 Git 仓库根目录。不设置 path 时，它只提供值；设置 path 时，它也会在该路径下生成清单。ref 源不能同时指定 chart。重复的 group/kind/name/namespace 资源将采用最后一个源，并触发 RepeatedResourceWarning；这不是自动的逐字段合并。
 
-## 目标配置
+## 目标配置 {#destination-configuration}
 
 对于已注册的目标，请选择 server 或 name。destination.namespace 为未指定自身命名空间的命名空间级资源提供默认命名空间；CreateNamespace 只会创建该目标命名空间，不会创建 Chart 中明确嵌入的所有命名空间。使用 managedNamespaceMetadata 时，应同时配置命名空间创建，并在更新现有命名空间前审查其所有权。
 
@@ -403,7 +403,7 @@ syncPolicy:
     - CreateNamespace=true
 ```
 
-## 健康状态评估
+## 健康状态评估 {#health-assessment}
 
 Synced 表示期望字段与实际字段的比较结果，并不证明服务能够处理请求。Healthy 状态取决于配置的各资源检查。没有检查的自定义资源可能不会纳入应用健康状态，需要为其定义适当的检查。
 
@@ -473,7 +473,7 @@ data:
 
 此检查解释的是控制器报告的状态；它不会直接查询 AWS。请将此键合并到现有的 argocd-cm 中，并使用真实 CR 测试缺失/等待/就绪/错误/新规格等状态。EKS 托管的 Argo CD 提供 ACK/kro 检查，因此请先检查现有检查项和支持的配置。
 
-## 资源钩子
+## 资源钩子 {#resource-hooks}
 
 PostSync 会等待 Sync 成功，并等待相关 Healthy 资源就绪。显式选择资源进行同步时不会运行钩子。在 3.5.4 中，ApplyOutOfSyncOnly 仍会运行钩子并记录历史。SyncFail 用于处理符合条件的同步失败；不要依赖它作为所有错误（包括清单生成失败）的可靠清理/备份路径。
 
@@ -595,7 +595,7 @@ spec:
 
 固定名称的 Job 需要 BeforeHookCreation 等生命周期规则才能重复运行。清理前，请将失败日志保存到外部；HookSucceeded 清理遵循 Argo 的同步阶段/结果语义。请准备好迁移镜像、数据库 Secret 和 ServiceAccount，并单独验证幂等性、锁定行为和回滚兼容性。钩子失败不会自动回退数据库或现有 Deployment。PreDelete/PostDelete 适用于删除 Application，不适用于普通同步修剪。
 
-## 忽略差异
+## 忽略差异 {#ignore-differences}
 
 仅排除由其他已知控制器管理的特定字段。此 Application.spec 片段会忽略生产环境中 my-deployment 上由 HPA 管理的副本数。
 
@@ -629,7 +629,7 @@ spec:
 
 全局 resource.customizations.ignoreDifferences 设置会影响每个 Application。优先使用应用级规则；只有在检查过 managedFieldsManagers 实际管理的字段之后，才选择它。
 
-## 应用集合模式
+## 应用集合模式 {#app-of-apps-pattern}
 
 App of Apps 是一种管理性引导模式。父级源的写入者可能会影响管理命名空间中权限强大的 Application/AppProject；请限制写入、审查和目标权限。父级/子级 finalizer 和修剪可能导致级联删除。按顺序创建子 Application 本身并不能确保子工作负载就绪；请验证 Application 健康状态传播、同步策略和 wave 行为。
 

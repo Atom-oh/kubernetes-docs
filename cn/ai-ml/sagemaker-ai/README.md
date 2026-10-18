@@ -21,7 +21,7 @@
 
 新的扩增练习会先拆分 40 个合成家族，再仅对训练数据进行扩增。其独立数据集不会覆盖包含 2,200 条记录的历史生成器 1.0.0 语料库。微型练习或预言机分数并非真实世界模型性能的声明。
 
-## SageMaker 执行就绪性
+## SageMaker 执行就绪性 {#sagemaker-execution-readiness}
 
 [实际 GPU 冒烟收据](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json)记录了一条独立的 PyTorch 2.11/AL2023/CUDA 13 路径，执行日期为 September 16, 2026。它以 NF4 加载相同的 Qwen 模型，并将 rank-16 LoRA 应用于四个注意力投影。四个优化器步骤生成了发生变化的适配器权重，且保存/重新加载后的状态一致。1,140 个可计费秒数意味着 GPU 计算费用约为 USD 1.46，不包括存储、日志、税费和调整项。
 

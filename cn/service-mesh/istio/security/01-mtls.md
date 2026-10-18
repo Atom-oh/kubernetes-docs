@@ -14,7 +14,7 @@
 8. [常见问题与解决方案](#common-issues-and-solutions)
 9. [性能与监控](#performance-and-monitoring)
 
-## mTLS 概述
+## mTLS 概述 {#mtls-overview}
 
 <p align="center">
   <img src="https://istio.io/latest/docs/concepts/security/id-prov.svg" alt="Istio Identity Provisioning" width="700">
@@ -49,7 +49,7 @@ spiffe://cluster.local/ns/default/sa/productpage
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-01-mtls-0.html)
 
-## mTLS 模式
+## mTLS 模式 {#mtls-modes}
 
 以下示例互为替代方案。在网格根命名空间（通常为 `istio-system`）中不带 selector 的策略会作用于整个网格。Ambient 使用 HBONE 加密捕获到的网格流量；不支持 `DISABLE`，而 `STRICT` 会拒绝绕过流量。
 
@@ -92,7 +92,7 @@ spec:
     mode: DISABLE  # mTLS disabled
 ```
 
-## 证书管理
+## 证书管理 {#certificate-management}
 
 ### Istio 默认 CA 证书
 
@@ -253,7 +253,7 @@ spec:
 
 请使用所选 CA 提供商支持的轮换流程。一步覆盖 `cacerts` 并重启并不能保证服务不中断。不要为了强制续订而重启所有命名空间。
 
-## PeerAuthentication 配置
+## PeerAuthentication 配置 {#peerauthentication-configuration}
 
 ### 全局配置
 
@@ -317,7 +317,7 @@ spec:
       mode: DISABLE  # mTLS disabled for port 8080
 ```
 
-## mTLS 与 AWS 服务集成
+## mTLS 与 AWS 服务集成 {#mtls-integration-with-aws-services}
 
 ### AWS Application Load Balancer（ALB）和 mTLS
 
@@ -472,7 +472,7 @@ function handler(event) {
 3. **ALB -> Istio Gateway**：TLS + 证书信息 header
 4. **Istio 网格内部**：自动 mTLS（Envoy 到 Envoy）
 
-## mTLS 与外部服务
+## mTLS 与外部服务 {#mtls-with-external-services}
 
 ### 与旧系统集成
 
@@ -635,7 +635,7 @@ spec:
 
 流量路径为应用程序 HTTP:80 → Gateway ISTIO_MUTUAL:443 → 外部 MUTUAL:443（ServiceEntry 端口 80 映射到 targetPort 443）。验证 Gateway SDS Secret、生成的 cluster、服务器 SAN 验证和测试流量。通过 Gateway 路由并不能阻止绕过；请另行使用适当的网络控制来强制执行 egress 限制。
 
-## 迁移策略
+## 迁移策略 {#migration-strategy}
 
 ### 步骤 1：检查当前状态
 
@@ -679,7 +679,7 @@ spec:
     mode: STRICT  # Only mTLS allowed
 ```
 
-## 常见问题与解决方案
+## 常见问题与解决方案 {#common-issues-and-solutions}
 
 ### 1. mTLS 连接失败
 
@@ -873,7 +873,7 @@ spec:
       port: 53
 ```
 
-## 性能与监控
+## 性能与监控 {#performance-and-monitoring}
 
 ### mTLS 性能影响：在 EKS 上测量
 

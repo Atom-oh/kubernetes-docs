@@ -14,7 +14,7 @@
 - [高度な設定](#advanced-configuration)
 - [AWS 統合](#aws-integration)
 
-## 概要
+## 概要 {#overview}
 
 ArgoCD Notifications は、ArgoCD アプリケーションを監視し、特定の条件が満たされたときに通知を送信するコンポーネントです。複数の通知サービスをサポートし、柔軟なテンプレート機能を提供します。
 
@@ -28,7 +28,7 @@ ArgoCD Notifications は、ArgoCD アプリケーションを監視し、特定�
 | サブスクリプションモデル | アプリケーションごとの通知サブスクリプション |
 | サンプルカタログ | 設定にマージできるオプションのトリガー／テンプレート定義 |
 
-## アーキテクチャ
+## アーキテクチャ {#architecture}
 
 ![ArgoCD Notifications のフロー図: Application イベントが Notifications Controller に到達し、トリガーの評価とテンプレートのレンダリング後、一致する設定済みサブスクリプションにメッセージを送信します。](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
 
@@ -42,7 +42,7 @@ ArgoCD Notifications は、ArgoCD アプリケーションを監視し、特定�
 kubectl get deployment argocd-notifications-controller -n argocd
 ```
 
-## 通知サービス
+## 通知サービス {#notification-services}
 
 これらのデータフラグメントを 1 つの argocd-notifications-cm 設定にまとめてください。個々のスニペットごとに同じ ConfigMap/Secret を置き換えないでください。トークン、署名付き Webhook URL、秘密鍵は、Git 外の保護された argocd-notifications-secret 値に保存してください。サービス、テンプレート、トリガー、サブスクリプションの名前はすべて一致している必要があります。
 
@@ -218,7 +218,7 @@ data:
       staging: $pagerduty-key-staging
 ```
 
-## トリガー
+## トリガー {#triggers}
 
 これらは明示的に定義した例であり、自動的にインストールされるカタログに関する前提ではありません。`send` エントリは以下の `template.app-status` を参照します。選択したサービス設定とともに、**フラグメントを 1 つの ConfigMap にマージしてください**。
 
@@ -346,7 +346,7 @@ spec:
         summary: Application {{ $labels.name }} has remained OutOfSync for 30 minutes
 ```
 
-## テンプレート
+## テンプレート {#templates}
 
 この共通テンプレートは、Slack、Teams Workflows、HTML email、webhook、incident 形式を定義します。**サブスクリプションが宛先を選択します**。サービス形式を含めても、すべてのプロバイダーにブロードキャストされるわけではありません。PagerDuty/Opsgenie は failure または Degraded トリガーにのみサブスクライブしてください。この例では incidents は自動解決されません。
 
@@ -505,7 +505,7 @@ data:
         targetURL: '{{.context.argocdUrl}}/applications/{{.app.metadata.namespace}}/{{.app.metadata.name}}'
 ```
 
-## サブスクリプション
+## サブスクリプション {#subscriptions}
 
 ### Application Annotations
 
@@ -566,7 +566,7 @@ metadata:
     notifications.argoproj.io/subscribe.on-health-degraded.pagerdutyv2: production
 ```
 
-## 高度な設定
+## 高度な設定 {#advanced-configuration}
 
 ### oncePer と重複処理
 
@@ -584,7 +584,7 @@ argocd admin notifications template notify app-status ./sample-application.yaml 
   --config-map ./notifications.yaml --secret :empty --recipient console:stdout
 ```
 
-## AWS 統合
+## AWS 統合 {#aws-integration}
 
 ### ネイティブ SQS サービス
 
