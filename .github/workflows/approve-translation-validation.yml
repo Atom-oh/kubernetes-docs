@@ -1,6 +1,10 @@
 name: Approve translation validation
 
 on:
+  workflow_dispatch:
+  # Poll because approval-required runs can omit workflow_run events.
+  schedule:
+    - cron: '*/5 * * * *'
   workflow_run:
     workflows: ['PR validation']
     types: [requested, completed]
@@ -13,10 +17,11 @@ permissions:
 jobs:
   approve:
     if: >-
-      github.event.workflow_run.head_branch == 'docs/translate-sync' &&
-      github.event.workflow_run.actor.login == 'github-actions[bot]' &&
-      (github.event.action == 'requested' ||
-       github.event.workflow_run.conclusion == 'action_required')
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.head_branch == 'docs/translate-sync' &&
+       github.event.workflow_run.actor.login == 'github-actions[bot]' &&
+       (github.event.action == 'requested' ||
+        github.event.workflow_run.conclusion == 'action_required'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -31,5 +36,30 @@ jobs:
             const { approveTranslationValidation } = await import(
               process.env.GITHUB_WORKSPACE + '/scripts/approve-translation-validation.mjs'
             )
-            const result = await approveTranslationValidation({ github, context })
+            let run = context.payload.workflow_run
+            if (!run) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo,
+                workflow_id: 'pr-validate.yml',
+                branch: 'docs/translate-sync',
+                event: 'pull_request',
+                status: 'action_required',
+                per_page: 20
+              })
+              run = data.workflow_runs.find(candidate =>
+                candidate.actor?.login === 'github-actions[bot]' &&
+                candidate.head_repository?.id === context.payload.repository.id
+              )
+            }
+            if (!run) {
+              core.info('No translation validation runs await approval')
+              return
+            }
+            const result = await approveTranslationValidation({
+              github,
+              context: {
+                ...context,
+                payload: { ...context.payload, workflow_run: run }
+              }
+            })
             core.info(JSON.stringify(result))
