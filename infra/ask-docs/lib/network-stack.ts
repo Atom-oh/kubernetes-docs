@@ -108,6 +108,16 @@ export class NetworkStack extends cdk.Stack {
       securityGroups: [apiEndpointSg],
       open: false, // no VPC-CIDR ingress; only the ALB rule above
     })
+    // The endpoint picks the API by Host or x-apigw-api-id header, so it must not be usable for any
+    // other private API: only this account's ask route. (The API id lives in AskDocsApp, which depends
+    // on this stack, hence the stage/route match instead of the exact id.)
+    this.executeApiEndpoint.addToPolicy(
+      new iam.PolicyStatement({
+        principals: [new iam.AnyPrincipal()],
+        actions: ['execute-api:Invoke'],
+        resources: [`arn:aws:execute-api:${this.region}:${this.account}:*/kubernetes-docs/POST/api/ask`],
+      })
+    )
 
     // The ALB target group takes IP addresses, so look up the endpoint ENIs' private IPs (one per AZ).
     const endpointEnis = new cr.AwsCustomResource(this, 'ExecuteApiEndpointIps', {

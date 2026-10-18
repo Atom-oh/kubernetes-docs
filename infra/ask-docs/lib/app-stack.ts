@@ -67,6 +67,7 @@ export class AppStack extends cdk.Stack {
         AWS_LWA_INVOKE_MODE: 'response_stream',
         AWS_LWA_PORT: '8080',
         AWS_LWA_READINESS_CHECK_PATH: '/healthz',
+        PYTHONUNBUFFERED: '1', // server.py's stdout is a pipe, not a TTY: flush each log line
         INDEX_BUCKET: props.bucket.bucketName,
         INDEX_PREFIX: 'index/',
         MODEL_ID: modelId,
