@@ -86,7 +86,7 @@ Los valores firmados de Host, ruta y consulta deben coincidir con la solicitud. 
 
 6. ¿Por qué una política de autenticación podría no aplicarse al tráfico dentro del clúster?
    - A) Las políticas de autenticación no admiten tráfico IPv6
-   - B) Si el cliente llama directamente al DNS de Service de Kubernetes, omite Lattice y nunca se evalúa la política de autenticación
+   - B) Si el cliente llama directamente al nombre DNS del Service de Kubernetes, omite Lattice y nunca se evalúa la política de autenticación
    - C) Las políticas de autenticación solo se aplican a llamadas entre cuentas
    - D) Gateway API Controller aún no reconcilió la política
 
@@ -94,7 +94,7 @@ Los valores firmados de Host, ruta y consulta deben coincidir con la solicitud. 
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Si el cliente llama directamente al DNS de Service de Kubernetes, omite Lattice y nunca se evalúa la política de autenticación**
+**Respuesta: B) Si el cliente llama directamente al nombre DNS del Service de Kubernetes, omite Lattice y nunca se evalúa la política de autenticación**
 
 **Explicación:**
 La documentación de AWS Gateway API Controller lo indica explícitamente: `IAMAuthPolicy` autoriza solo el tráfico que pasa por Gateways, HTTPRoutes y GRPCRoutes. Enviar una solicitud a `http://svc.ns.svc.cluster.local` omite Lattice, así que no se evalúa ninguna política. Durante la migración, cuando coexisten ambas rutas, habrá rutas en las que se aplica la autorización y otras en las que no; se necesitan controles compensatorios, como NetworkPolicy. Otra causa frecuente es que `authType` sea `NONE` y no `AWS_IAM`.
@@ -113,5 +113,5 @@ La documentación de AWS Gateway API Controller lo indica explícitamente: `IAMA
 **Respuesta: B) Autenticación mutua bidireccional y por conexión → unidireccional y por solicitud (prueba del cliente), más un certificado de servidor TLS**
 
 **Explicación:**
-mTLS autentica a ambos pares con sus SVID cuando se establece la conexión. IAM Auth de Lattice verifica la firma SigV4 de quien llama para cada solicitud y puede aplicar condiciones de política a ruta/método/encabezado. SigV4 protege los campos canónicos firmados; Lattice requiere `UNSIGNED-PAYLOAD` y no admite la firma de la carga útil. Protege el cuerpo mediante TLS y evalúa por separado el robo de credenciales, la vigencia de las solicitudes y la repetición, en vez de afirmar que la firma de solicitudes siempre evita el secuestro de conexiones. En el diseño de listener HTTPS, la autenticación del servidor usa el certificado de servidor TLS, no la identidad SPIFFE del par.
+mTLS autentica ambos extremos mediante sus SVID al establecer la conexión. IAM Auth de Lattice verifica la firma SigV4 de quien llama para cada solicitud y puede aplicar condiciones de política a ruta/método/encabezado. SigV4 protege los campos canónicos firmados; Lattice requiere `UNSIGNED-PAYLOAD` y no admite la firma de la carga útil. Protege el cuerpo mediante TLS y evalúa por separado el robo de credenciales, la vigencia de las solicitudes y los ataques de repetición, en vez de afirmar que la firma de solicitudes siempre evita el secuestro de conexiones. En el diseño de listener HTTPS, la autenticación del servidor usa el certificado de servidor TLS, no la identidad SPIFFE del otro extremo.
 </details>

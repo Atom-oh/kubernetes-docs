@@ -1,183 +1,167 @@
-# CloudWatch Metrics クイズ
+# CloudWatch メトリクスのクイズ
 
-CloudWatch Metrics の理解度を確認するクイズです。
+2026年9月13日版のガイドに基づいてレビューしました。
 
----
+1. マネージド CloudWatch バックエンドを使うと、チームのどの責任がなくなりますか？
 
-1. Amazon CloudWatch Container Insights の主な機能は何ですか？
-   - A) Container image のビルド
-   - B) EKS cluster の Container/Pod レベルのモニタリング
-   - C) Container orchestration
-   - D) CI/CD pipeline の管理
+   - A) すべての収集作業と IAM 設定
+   - B) AWS バックエンドの運用だけ。収集、ID、保持、対応の責任は引き続き必要
+   - C) すべてのネットワーク前提条件
+   - D) クエリ料金とログ料金のすべて
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) EKS cluster の Container/Pod レベルのモニタリング**
+**解答: B**
 
-**解説:**
-Container Insights は、EKS、ECS、Kubernetes 環境の containerized workload をモニタリングする CloudWatch の機能です。cluster、node、Pod、Container レベルの CPU、memory、network、filesystem metrics を自動的に収集し、可視化します。
+従来型、拡張型、OTel による収集では、メトリクスの命名や課金モデルがそれぞれ異なります。ストレージがマネージドでも、運用作業がゼロになるわけではありません。
+
+</details>
+
+2. EKS へのインストールについて、正しい説明はどれですか？
+
+   - A) `update-cluster-logging` を実行すると Container Insights がインストールされる
+   - B) どのプラットフォームでも同じホスト DaemonSet を実行する
+   - C) 互換性のあるアドオンまたは管理対象の Helm インストールを選び、プラットフォームと ID の前提条件を検証する
+   - D) Helm 6.6.0 は必ず EKS アドオンのバージョンである
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: C**
+
+コントロールプレーンのログ記録は別の機能です。Fargate では例にあるホスト DaemonSet は実行されません。Auto Mode や複数のコンピュート方式が混在する環境では互換性を確認してください。Pod Identity／IRSA も実際の設定が必要です。
+
+</details>
+
+3. `SEARCH` の結果から上位 10 件をダッシュボードに表示するには、何を使いますか？
+
+   - A) `SEARCH` だけで常に結果が 10 件に制限される
+   - B) `SLICE(SORT(SEARCH(...), AVG, DESC), 0, 10)`
+   - C) `PERCENTILE(SEARCH(...), 10)`
+   - D) `SEARCH` 配列に対する通常のアラーム
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B**
+
+`SEARCH` は一致する時系列を返します。並べ替えと切り取りを明示してください。順位は評価対象の期間に基づきます。`SEARCH` をアラームで直接監視することはできません。
+
+</details>
+
+4. パーセンタイルと比率について、正しい説明はどれですか？
+
+   - A) `PERCENTILE(METRICS(),95)` はリクエスト全体の p95 を返す
+   - B) トラフィックがない期間はすべて、エラー 0 の正常な結果である
+   - C) `AVG(METRICS()) PERIOD(300)` は移動平均である
+   - D) サポートされる p95 統計値を使い、カウント比率ではトラフィック 0 を処理し、テレメトリ欠落を確認する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: D**
+
+ガイドでは ALB カウントに Sum を使い、`IF(m2>0,100*m1/m2)` で比率を計算します。CloudWatch の算術式では欠損値が 0 として扱われ、ゼロ除算の結果は除外されます。サービスごとの p95 値から全体の p95 を再構成することはできません。
+
+</details>
+
+5. 実際のテレメトリで ADOT／EMF のメトリクス宣言に必要なものはどれですか？
+
+   - A) dimension のラベルと値。検出／relabeling またはアプリケーションから提供する
+   - B) exporter 設定内の dimension 名だけ
+   - C) すべてのラベルに secret access key を含める
+   - D) すべての Pod をスクレイプするレプリカを各ノードで実行する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: A**
+
+`awsemf` は、従来型メトリクスとして抽出するためのログイベントを送信します。この例では ClusterName／Namespace／Service を作成し、gauge を使います。新しい直接 OTLP 経路は別の選択肢です。
+
+</details>
+
+6. このガイドと互換性がない、または安全でないコスト削減策はどれですか？
+
+   - A) 取り込み量とクエリ使用量を計測する
+   - B) 所有する 1 つのロググループに承認済みの保持期間を設定する
+   - C) EMF／Container Insights のログを Infrequent Access に移し、保持期間に上限のないすべてのロググループを短縮する
+   - D) 重複スクレイプや不要なラベルを確認する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: C**
+
+Infrequent Access は EMF や Container Insights のログ取り込みをサポートしません。保持期間を短くすると、既存の履歴が期限切れになる場合があります。高解像度の設定はリクエスト料金やアラーム料金を増やすことがありますが、メトリクスストレージ料金が一律 10 倍になることを意味するわけではありません。
+
+</details>
+
+7. `PutMetricData` ヘルパーについて、正しい説明はどれですか？
+
+   - A) IAM を自動的にプロビジョニングする
+   - B) 呼び出し元から渡されたクライアントと UTC timestamp を使い、エラーを呼び出し元に返す
+   - C) リトライにより業務上のカウントが厳密に 1 回だけ記録される
+   - D) CloudWatch がすべての集約用 dimension セットを自動作成する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B**
+
+カスタムメトリクスは、dimension の組み合わせ全体によって識別されます。`PutMetricData` に冪等性トークンはありません。結果が不明な状態でリトライすると、サンプルが重複することがあります。この例では期間ごとのカウントを報告し、Sum を使います。
+
+</details>
+
+8. 従来型メトリクスの dimension と OTel の label はどう異なりますか？
+
+   - A) どちらも常に上限がない
+   - B) 150 label の上限が `PutMetricData` の上限に置き換わる
+   - C) 従来型メトリクスは 30 dimension、文書化された OTel モデルは最大 150 label をサポートする
+   - D) label は payload の料金や情報開示に影響しない
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: C**
+
+これらは別々の取り込みモデルです。label を増やすと payload とメタデータの露出が増えます。dimension 名だけでは cardinality を測れません。
+
+</details>
+
+9. メトリクスの解釈として正しいのはどれですか？
+
+   - A) `node_network_total_bytes` は bytes/second、`namespace_number_of_running_pods` は Pod 数を表す
+   - B) `cluster_cpu_utilization` は標準公開メトリクスである
+   - C) 実行中のコンテナ数は常に実行中の Pod 数と等しい
+   - D) 予約済みキャパシティのメトリクスはすべて拡張型でのみ利用できる
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: A**
+
+実際のメトリクス一覧と dimension の組み合わせを確認してください。Pod の CPU／メモリ使用率では、ノードの limits を分母に使うことがあります。拡張オブザーバビリティはメトリクスや dimension を追加し、独自の課金モデルがあります。
+
+</details>
+
+10. 異常検知アラームや再起動アラームで確認すべきことは何ですか？
+
+   - A) アラームを作成すれば実際のテレメトリがあることを証明できる
+   - B) 再起動の合計値は常に期間ごとの増分を表す
+   - C) 観測対象の異常検知系列から `ReturnData` を必ず削除する
+   - D) 履歴、正確なメトリクス ID、合計値か差分かの意味、欠損データ、通知の配信を確認する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: D**
+
+`ANOMALY_DETECTION_BAND` は、学習された期待範囲の上限と下限を返します。文書化された異常検知の式は、観測系列とバンドの両方を返す場合があります。PodName／Namespace／ClusterName ごとの再起動合計値が、5 分間に新たに 5 回再起動したことを自動的に意味するわけではありません。
 
 </details>
 
 ---
 
-2. CloudWatch Agent を EKS にデプロイする推奨方法は何ですか？
-   - A) 単一の Pod としてデプロイする
-   - B) DaemonSet としてすべての node にデプロイする
-   - C) Deployment で 3 replicas としてデプロイする
-   - D) StatefulSet としてデプロイする
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) DaemonSet としてすべての node にデプロイする**
-
-**解説:**
-CloudWatch Agent は、各 node から metrics と logs を収集するために DaemonSet としてデプロイされます。これにより、すべての node から system metrics、Container metrics、logs を一貫して収集できます。
-
-</details>
-
----
-
-3. CloudWatch Metric Math における `SEARCH()` 関数の目的は何ですか？
-   - A) Log の検索
-   - B) pattern に一致する metrics を動的に検索する
-   - C) Alert の検索
-   - D) Dashboard の検索
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) pattern に一致する metrics を動的に検索する**
-
-**解説:**
-`SEARCH()` 関数は、namespace、dimension、metric name の pattern を使用して metrics を動的に検索します。たとえば、`SEARCH('{AWS/EC2,InstanceId} MetricName="CPUUtilization"', 'Average')` は、すべての EC2 instance の CPU utilization を検索します。
-
-</details>
-
----
-
-4. CloudWatch Anomaly Detection はどのように機能しますか？
-   - A) 手動で設定した threshold に基づく検出
-   - B) ML に基づく異常 pattern の自動検出
-   - C) Log pattern の分析
-   - D) Network traffic の分析
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) ML に基づく異常 pattern の自動検出**
-
-**解説:**
-CloudWatch Anomaly Detection は machine learning を使用して metrics の通常の pattern を学習し、異常値を自動的に検出します。seasonality、trend、曜日の pattern を考慮した動的な expected range（band）を生成し、値がこの range の外に出た場合に anomaly を特定します。
-
-</details>
-
----
-
-5. AWS Distro for OpenTelemetry (ADOT) を使用して Prometheus metrics を CloudWatch に送信する場合、どの exporter を使用しますか？
-   - A) prometheus-exporter
-   - B) awsemf (AWS EMF Exporter)
-   - C) cloudwatch-exporter
-   - D) metric-exporter
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) awsemf (AWS EMF Exporter)**
-
-**解説:**
-ADOT で Prometheus metrics を CloudWatch に送信するには、AWS EMF (Embedded Metric Format) Exporter を使用します。この exporter は metrics を CloudWatch Logs 内の EMF format に変換して送信し、CloudWatch がそれを metrics として抽出します。
-
-</details>
-
----
-
-6. CloudWatch の cost optimization に有効ではない方法はどれですか？
-   - A) Log retention period を設定する
-   - B) 不要な high-resolution metrics を削除する
-   - C) すべての metrics を 1-second interval で収集する
-   - D) Infrequent Access log class を使用する
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: C) すべての metrics を 1-second interval で収集する**
-
-**解説:**
-High-resolution metrics（1-second interval）は高価です。cost optimization のため、必要な metrics のみを high resolution で収集し、大半の metrics は 60-second interval（default）で収集します。log retention period の設定、不要な metrics の filtering、Infrequent Access log class の使用も cost の削減に役立ちます。
-
-</details>
-
----
-
-7. CloudWatch で custom metrics を作成するために使用する API はどれですか？
-   - A) CreateMetric
-   - B) PutMetricData
-   - C) PublishMetric
-   - D) SendMetric
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) PutMetricData**
-
-**解説:**
-`PutMetricData` API は、custom metrics を CloudWatch に送信するために使用します。namespace、metric name、dimensions、value、unit、timestamp などを指定できます。AWS SDK または CLI から呼び出せます。
-
-</details>
-
----
-
-8. CloudWatch における Dimensions の役割は何ですか？
-   - A) Metric unit を指定する
-   - B) Metrics を区分する key-value pair
-   - C) Alert severity を指定する
-   - D) Log group を指定する
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) Metrics を区分する key-value pair**
-
-**解説:**
-Dimensions は、metrics を区分し識別する key-value pair です。たとえば、EC2 instance metrics では、`InstanceId` dimension が特定の instance を識別します。単一の metric には最大 30 dimensions を指定できます。
-
-</details>
-
----
-
-9. Enhanced Container Insights は basic Container Insights とどのように異なりますか？
-   - A) 無料で提供される
-   - B) 追加の metrics と、より詳細なモニタリングを提供する
-   - C) Log collection 機能を削除する
-   - D) Alerting 機能のみを提供する
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) 追加の metrics と、より詳細なモニタリングを提供する**
-
-**解説:**
-Enhanced Container Insights は basic Container Insights より多くの metrics を収集します。reserved CPU/memory capacity、GPU metrics（該当する場合）、Kubernetes control plane metrics などの追加情報を提供します。cost は高くなりますが、より詳細なモニタリングが可能になります。
-
-</details>
-
----
-
-10. CloudWatch alerts における `ANOMALY_DETECTION_BAND()` 関数の役割は何ですか？
-    - A) 固定 threshold を設定する
-    - B) anomaly detection model から expected range を返す
-    - C) Log filtering
-    - D) Dashboard の作成
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) anomaly detection model から expected range を返す**
-
-**解説:**
-`ANOMALY_DETECTION_BAND()` 関数は、anomaly detection model が学習した expected value range（upper/lower bounds）を返します。この range は alerts で使用でき、metrics が expected range の外に出たときに notification をトリガーします。2 番目の argument は standard deviation multiplier を指定し、band width を調整します。
-
-</details>
+[ガイドに戻る](../../../observability/metrics/04-cloudwatch-metrics.md)

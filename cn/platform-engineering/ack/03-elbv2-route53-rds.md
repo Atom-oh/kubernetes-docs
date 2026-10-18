@@ -2,9 +2,9 @@
 
 [ACK](../02-ack.md)
 
-以下是 ELBv2 1.8.2 / Route 53 1.7.1 / RDS 1.13.3 的独立架构示例。它们不会将 NLB 放在 Aurora 前面。内部 NLB/DNS 为应用程序提供服务，而 Aurora 是一个独立的应用程序依赖项。尚未测试端到端的连通部署。
+以下是分别对应 ELBv2 1.8.2 / Route 53 1.7.1 / RDS 1.13.3 资源字段模式（schema）的示例。它们不会将 NLB 放在 Aurora 前面。内部 NLB/DNS 为应用程序提供服务，而 Aurora 是一个独立的应用程序依赖项。尚未测试端到端的连通部署。
 
-为这三个控制器准备基础设施和身份验证/权限。将 VPC、私有子网、安全组和托管区域 ID 替换为已批准的值。NLB 和数据库安全组应仅允许必需的来源/端口。内部 NLB 不能替代授权或网络控制。
+为这三个控制器准备 infra 命名空间及身份验证/权限。将 VPC、私有子网、安全组和托管区域 ID 替换为已批准的值。NLB 和数据库安全组应仅允许必需的来源/端口。内部 NLB 不能替代授权或网络控制。
 
 创建 TargetGroup 不会注册目标。ACK 目标可以管理固定 IP；Kubernetes Pod IP 发生变化时，需要适当的 AWS Load Balancer Controller 绑定和所有权方案。避免两个控制器争用同一个 AWS 对象。
 
@@ -12,9 +12,9 @@ NLB 和 TargetGroup ARN 位于 status.ackResourceMetadata.arn。Listener 使用�
 
 Aurora PostgreSQL 17.10 于 2026 年 8 月发布。请使用 describe-db-engine-versions 和 describe-orderable-db-instance-options，针对实际账户/区域验证引擎/实例类组合和升级路径。之前的 15.4 不是新的默认版本。准备分布在至少两个受支持 AZ 中的数据库子网，并验证放置/可用性。
 
-manageMasterUserPassword=true 会请求 RDS Secrets Manager 集成，不需要提供明文密码示例。请准备所需的 KMS/Secrets Manager 权限、成本，以及向应用程序交付文件的批准流程。deletionProtection 和 retain 保护的是不同的生命周期层。
+manageMasterUserPassword=true 会请求 RDS Secrets Manager 集成，不需要提供明文密码示例。请准备所需的 KMS/Secrets Manager 权限，考虑相关成本，并采用获准的文件方式向应用程序交付凭证。deletionProtection 和 retain 保护的是不同的生命周期层。
 
-DBInstance 名称或 Role 标签无法确定写入器/读取器角色。请检查实际的集群成员；故障转移可能会更改写入器。promotionTier 是提升优先级，而不是永久角色分配。自定义 READER 端点只会使用所选的、当前为读取器的实例。请检查可用成员以及故障转移后的重新连接行为。看起来像 AZ 的端点名称并不会实现 AZ 筛选。
+DBInstance 名称或 Role 标签无法固定写入实例/只读实例的角色。请检查实际的集群成员；故障转移可能会改变写入实例。promotionTier 是提升为写入实例的优先级，而不是永久角色分配。自定义 READER 端点只会使用所选实例中当前承担只读角色的实例。请检查可用成员以及故障转移后的重新连接行为。看起来像 AZ 的端点名称并不会实现 AZ 筛选。
 
 ## LoadBalancer: loadbalancer-app-nlb
 
@@ -232,7 +232,7 @@ spec:
 
 ## 验证和运维前提
 
-已根据官方的版本化 CRD 检查字段。架构验证成功并不代表 IAM 权限、AWS 服务约束、资源创建、连通性或恢复能力均已得到确认。应用配置前，请明确保留资源的所有权、成本、清理和备份责任。
+已根据官方的版本化 CRD 检查字段。通过字段模式校验并不代表 IAM 权限、AWS 服务约束、资源创建、连通性或恢复能力均已得到确认。应用配置前，请明确保留资源的所有权、成本、清理和备份责任。
 
 - [elbv2 v1.8.2 CRD](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.8.2/config/crd/bases)
 - [route53 v1.7.1 CRD](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.7.1/config/crd/bases)

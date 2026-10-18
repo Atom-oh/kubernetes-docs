@@ -22,7 +22,7 @@ Basado en Airflow 3.3.1 y Kubernetes provider 10.21.0. Comprueba la estructura d
 
 **Respuesta:** Puede crear un pod ejecutor de tarea y un pod de carga de trabajo en vez de usar un worker de Celery existente.
 
-**Explicación:** Dos roles lógicos de ejecución no siempre significan dos pods creados de nuevo. Los reintentos, la reconexión y la postergación también afectan el número de pods activos.
+**Explicación:** Dos roles lógicos de ejecución no siempre significan dos pods creados de nuevo. Los reintentos, la reconexión con pods existentes y la ejecución diferida también afectan el número de pods activos.
 
 </details>
 
@@ -64,7 +64,7 @@ Basado en Airflow 3.3.1 y Kubernetes provider 10.21.0. Comprueba la estructura d
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:** No. Permite la taint; también pueden hacer falta selectores o afinidad requerida.
+**Respuesta:** No. Permite programar el pod en un nodo con ese taint; también pueden hacer falta selectores o afinidad obligatoria.
 
 **Explicación:** Los pods de KPO usan la planificación estándar de Kubernetes. Un pool dedicado no elimina los fallos de nodo, la reclamación de instancias Spot ni la presión del disco.
 
@@ -182,7 +182,7 @@ on_kill_action="delete_pod",
 
 **Respuesta:** Inspecciona el valor final combinado y el pod admitido; luego verifica por separado la representación, las etiquetas de la instancia de tarea y la ejecución real.
 
-**Explicación:** La función de combinación revisada puede heredar el valor True base en lugar del False falsy. `dry_run` no demuestra que se haya admitido el pod ni que la tarea haya tenido éxito; las comprobaciones locales del capítulo no sustituyen la ejecución en el clúster.
+**Explicación:** La función de combinación revisada puede conservar el valor True de la plantilla base en vez de aplicar False, al tratarlo como un valor vacío. `dry_run` no demuestra que se haya admitido el pod ni que la tarea haya tenido éxito; las comprobaciones locales del capítulo no sustituyen la ejecución en el clúster.
 
 </details>
 

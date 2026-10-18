@@ -1,46 +1,52 @@
 # 運用ガイド
 
-> **最終更新**: February 23, 2026
+> **最終更新日**: 2026年9月12日
 
-このセクションでは、EKS Auto Mode 環境向けの production operations guide（本番運用ガイド）を提供します。Terraform による infrastructure provisioning、CI/CD pipelines、GitOps ベースのデプロイ、scaling、observability、resource optimization、upgrades を扱います。
+このセクションでは、EKS Auto Mode 環境の本番運用ガイドを提供します。Terraform によるインフラのプロビジョニング、CI/CD パイプライン、GitOps によるデプロイ、スケーリング、オブザーバビリティ、リソース最適化、アップグレードを扱います。
 
 ---
 
 ## 対象読者
 
-- **Platform Engineers** EKS Auto Mode で production environment を構築する方
-- **Infrastructure Engineers** Terraform/Terragrunt ベースの IaC を運用する方
-- **DevOps Engineers** GitLab CI と ArgoCD で CI/CD pipelines を構築する方
-- **SREs** Prometheus、Grafana、Loki observability stacks を運用する方
+- **プラットフォームエンジニア**: EKS Auto Mode の本番環境を構築する方
+- **インフラエンジニア**: Terraform／Terragrunt ベースの IaC を運用する方
+- **DevOps エンジニア**: GitLab CI と ArgoCD で CI/CD パイプラインを構築する方
+- **SRE**: Prometheus、Grafana、Loki のオブザーバビリティスタックを運用する方
 
 ---
 
 ## 前提条件
 
-この運用ガイドを開始する前に、以下に習熟していることを確認してください。
+この運用ガイドを始める前に、以下の知識や経験があることを確認してください。
 
 - [EKS Auto Mode の開始方法](../eks-auto-mode/01-getting-started.md)
-- Terraform の基礎（resources、modules、state management）
-- [Kubernetes Core Concepts](../core/01-cluster-architecture.md)
-- kubectl と Helm CLI の経験
+- Terraform の基礎 (リソース、モジュール、state 管理)
+- [Kubernetes の基本概念](../core/01-cluster-architecture.md)
+- kubectl と Helm CLI の使用経験
 
 ---
 
 ## 目次
 
-| # | Document | Key Topics |
+| # | ドキュメント | 主なトピック |
 |---|----------|------------|
-| 01 | [Terraform 3-Layer Infrastructure Setup](./01-infrastructure-setup.md) | VPC、EKS Auto Mode、3-Layer Terraform による Pod Identity |
-| 02 | [NLB Weighted Routing and Blue/Green](./02-infrastructure-advanced.md) | Dual cluster architecture、NLB weights、DNS routing |
-| 03 | [CI Pipelines](./03-ci-pipelines.md) | ECR、GitLab Runner、GitHub ARC、multi-platform builds |
-| 04 | [ArgoCD Multi-Cluster](./04-gitops-multi-cluster.md) | Hub-spoke、ApplicationSet、IAM Identity Center SSO |
-| 05 | [GitOps Automation](./05-gitops-automation.md) | Atlantis、FluxCD、Terraform Cloud、AIOps |
-| 06 | [Scaling Strategies](./06-scaling-strategies.md) | HPA custom metrics、KEDA、VPA、Spot utilization |
-| 07 | [Operational Alert Configuration](./07-observability-alerts.md) | Network/CPU/Disk/Auto Mode node termination alerts |
-| 08 | [Observability Analysis](./08-observability-analysis.md) | Logs/Metrics/Traces correlation、PromQL、LogQL、TraceQL |
-| 09 | [Observability Stack Operations](./09-observability-stack.md) | Loki、Tempo、Prometheus/AMP installation and operations |
-| 10 | [Resource Optimization](./10-resource-optimization.md) | Requests/Limits、JVM tuning、framework-specific guide |
-| 11 | [EKS Upgrades](./11-upgrade-operations.md) | Auto Mode zero-downtime upgrade、blue/green strategy |
+| 01 | [Terraform の 3 層インフラ設定](./01-infrastructure-setup.md) | VPC、EKS Auto Mode、3 層 Terraform による Pod Identity |
+| 02 | [NLB の重み付けルーティングと Blue/Green](./02-infrastructure-advanced.md) | デュアルクラスター構成、NLB の重み、DNS ルーティング |
+| 03 | [CI パイプライン](./03-ci-pipelines.md) | ECR、GitLab Runner、GitHub ARC、マルチプラットフォームビルド |
+| 04 | [ArgoCD のマルチクラスター運用](./04-gitops-multi-cluster.md) | ハブ・スポーク、ApplicationSet、IAM Identity Center SSO |
+| 05 | [GitOps の自動化](./05-gitops-automation.md) | Atlantis、FluxCD、Terraform Cloud、AIOps |
+| 06 | [スケーリング戦略](./06-scaling-strategies.md) | HPA カスタムメトリクス、KEDA、VPA、Spot の活用 |
+| 07 | [運用アラートの設定](./07-observability-alerts.md) | ネットワーク／CPU／ディスク／Auto Mode ノード終了のアラート |
+| 08 | [オブザーバビリティ分析](./08-observability-analysis.md) | ログ／メトリクス／トレースの相関、PromQL、LogQL、TraceQL |
+| 09 | [オブザーバビリティスタックの運用](./09-observability-stack.md) | Loki、Tempo、Prometheus／AMP の導入と運用 |
+| 10 | [リソース最適化](./10-resource-optimization.md) | Requests／Limits、JVM 調整、フレームワーク別ガイド |
+| 11 | [EKS のアップグレード](./11-upgrade-operations.md) | 段階的な Auto Mode アップグレード、Blue/Green 戦略 |
+| 12 | [イベント時のキャパシティ計画](./12-event-capacity-planning.md) | トラフィックイベント、キャパシティと復旧の計画 |
+| 13 | [FinOps コスト管理](./13-finops-cost-platform.md) | コストの可視化、配賦、最適化 |
+| 14 | [Tekton パイプライン](./14-tekton-pipelines.md) | Kubernetes ネイティブ CI パイプライン |
+| 15 | [ゾーン別クラスター運用](./15-zonal-operations-guide.md) | LB の重み切り替えと TargetGroupBinding、ネイティブロールバック、Kafka／Redis／Aurora の AZ 固定読み取り |
+| 16 | [トラブルシューティング手順書](./16-troubleshooting-playbook.md) | 症状から診断、原因、修正まで: Pending／ImagePull／CrashLoop／NotReady／PVC、IRSA、VPC CNI、Karpenter、kubectl チートシート |
+| 17 | [EKS Spot の本番実験](./17-spot-production-experiments.md) | 中断、並行する回収、フォールバック、結果記録、SLO／コスト評価、ロールバック |
 
 ---
 
@@ -48,72 +54,75 @@
 
 ### 推奨順序
 
-1. **Infrastructure** (01-02): Terraform で VPC/EKS をプロビジョニングする
-2. **CI/CD** (03-05): Pipelines と GitOps deployment を構築する
-3. **Scaling** (06): Workloads 向けの scaling strategies を確立する
-4. **Observability** (07-09): Monitoring、alerting、analysis systems を構築する
-5. **Optimization** (10): Resource efficiency と cost optimization
-6. **Upgrades** (11): Zero-downtime upgrade procedures を確立する
+1. **インフラストラクチャ** (01–02): Terraform で VPC／EKS をプロビジョニングする
+2. **CI/CD** (03–05): パイプラインと GitOps によるデプロイを構築する
+3. **スケーリング** (06): ワークロードのスケーリング戦略を確立する
+4. **オブザーバビリティ** (07–09): 監視、アラート、分析の仕組みを構築する
+5. **最適化** (10): リソース効率とコストを最適化する
+6. **アップグレード** (11): 可用性と復旧手順を検証する
+7. **専門的な運用** (12–16): キャパシティイベント、FinOps、Tekton、ゾーン別運用、トラブルシューティング
 
 ### ロール別
 
-| Role | Priority Documents |
+| ロール | 優先して読むドキュメント |
 |------|-------------------|
-| Platform Engineer | 01, 02, 04, 11 |
-| DevOps Engineer | 03, 04, 05 |
+| プラットフォームエンジニア | 01, 02, 04, 11 |
+| DevOps エンジニア | 03, 04, 05 |
 | SRE | 06, 07, 08, 09, 10 |
-| Infrastructure Engineer | 01, 02, 11 |
+| インフラエンジニア | 01, 02, 11 |
 
 ---
 
 ## 既存ドキュメントとの関係
 
-この運用ガイドは、既存の concept documentation を、実践的で code-focused なガイドで補完します。
+この運用ガイドは、概念ドキュメントを実践的でコードを中心とした手順で補完します。
 
-### Concept Documentation
-- [EKS Auto Mode](../eks-auto-mode/README.md) - Architecture and concepts
-- [ArgoCD](../gitops/argocd/README.md) - GitOps fundamentals
-- [KEDA](../autoscaling/01-keda.md) - Event-driven autoscaling concepts
-- [Karpenter](../autoscaling/02-karpenter.md) - Node provisioning concepts
+### 概念ドキュメント
+
+- [EKS Auto Mode](../eks-auto-mode/README.md) - アーキテクチャと概念
+- [ArgoCD](../gitops/argocd/README.md) - GitOps の基礎
+- [KEDA](../autoscaling/01-keda.md) - イベント駆動型オートスケーリングの概念
+- [Karpenter](../autoscaling/02-karpenter.md) - ノードプロビジョニングの概念
 
 ### この運用ガイド
-- Production infrastructure 向けの Terraform HCL code
-- Kubernetes resources 向けの YAML manifests
-- Observability 向けの PromQL/LogQL queries
-- Operational automation 向けの Bash scripts
-- Validation を含む step-by-step procedures
+
+- 本番インフラ向け Terraform HCL コード
+- Kubernetes リソースの YAML マニフェスト
+- オブザーバビリティ用 PromQL／LogQL クエリ
+- 運用自動化用 Bash スクリプト
+- 検証手順を含む段階的な手順
 
 ---
 
 ## クイックリファレンス
 
-### 一般的な運用
+### よくある運用作業
 
-| Task | Document | Section |
+| 作業 | ドキュメント | セクション |
 |------|----------|---------|
-| 新しい EKS cluster を作成 | [01-infrastructure-setup](./01-infrastructure-setup.md) | 3-Layer Terraform |
-| ArgoCD に新しい application を追加 | [04-gitops-multi-cluster](./04-gitops-multi-cluster.md) | ApplicationSet |
-| Custom metrics で HPA を設定 | [06-scaling-strategies](./06-scaling-strategies.md) | Custom Metrics |
-| 新しい service 向けに alerting を設定 | [07-observability-alerts](./07-observability-alerts.md) | Alert Rules |
-| EKS version をアップグレード | [11-upgrade-operations](./11-upgrade-operations.md) | Auto Mode Upgrade |
+| 新しい EKS クラスターを作成する | [01-infrastructure-setup](./01-infrastructure-setup.md) | 3 層 Terraform |
+| ArgoCD にアプリケーションを追加する | [04-gitops-multi-cluster](./04-gitops-multi-cluster.md) | ApplicationSet |
+| カスタムメトリクスで HPA を設定する | [06-scaling-strategies](./06-scaling-strategies.md) | カスタムメトリクス |
+| 新しいサービスのアラートを設定する | [07-observability-alerts](./07-observability-alerts.md) | アラートルール |
+| EKS バージョンをアップグレードする | [11-upgrade-operations](./11-upgrade-operations.md) | Auto Mode のアップグレード |
 
-### 緊急時手順
+### 緊急時の手順
 
-| Scenario | Document | Section |
+| 状況 | ドキュメント | セクション |
 |----------|----------|---------|
-| Deployment をロールバック | [04-gitops-multi-cluster](./04-gitops-multi-cluster.md) | Rollback |
-| EKS upgrade をロールバック | [11-upgrade-operations](./11-upgrade-operations.md) | Blue/Green Rollback |
-| Cost 削減のために scale down | [06-scaling-strategies](./06-scaling-strategies.md) | Emergency Scale |
-| 失敗している pods をデバッグ | [08-observability-analysis](./08-observability-analysis.md) | Log Analysis |
+| デプロイをロールバックする | [04-gitops-multi-cluster](./04-gitops-multi-cluster.md) | ロールバック |
+| EKS アップグレードをロールバックする | [11-upgrade-operations](./11-upgrade-operations.md) | ネイティブロールバックの適用条件または Blue/Green の切り戻し |
+| 需要と可用性を確認してキャパシティを調整する | [06-scaling-strategies](./06-scaling-strategies.md) | キャパシティとスケーリングポリシー |
+| Pod の障害をデバッグする | [16-troubleshooting-playbook](./16-troubleshooting-playbook.md) | 症状に基づく診断 |
 
 ---
 
-## コントリビュート
+## コントリビューション
 
-新しい operational procedures を追加する場合:
+新しい運用手順を追加するときは、次の点を守ってください。
 
-1. 実践的な code examples（Terraform、YAML、bash）を含める
-2. 各 procedure に validation steps を提供する
-3. 該当する場合は rollback procedures を文書化する
-4. Monitoring 向けの関連する PromQL/LogQL queries を追加する
-5. 関連する concept documentation を cross-reference する
+1. 実用的なコード例 (Terraform、YAML、bash) を含める
+2. 各手順に検証方法を示す
+3. 該当する場合はロールバック手順を記載する
+4. 監視用の関連 PromQL／LogQL クエリを追加する
+5. 関連する概念ドキュメントへのリンクを追加する

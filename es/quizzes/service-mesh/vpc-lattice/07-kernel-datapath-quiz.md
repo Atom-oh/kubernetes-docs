@@ -33,7 +33,7 @@ Lattice no usa el rango de enlace local en su sentido original de «direcciones 
 **Respuesta: B) El hook `OUTPUT` del espacio de nombres de red del pod: el tráfico de Lattice también es saliente, así que coincide con la regla REDIRECT**
 
 **Explicación:**
-El contenedor init de la malla instala reglas de iptables dentro del espacio de nombres de red del pod que REDIRECT todo el tráfico saliente al puerto de Envoy. El tráfico dirigido a Lattice también es saliente, así que coincide con la regla; Envoy no encuentra `169.254.171.x` en su configuración de clúster y falla. La colisión ocurre dentro del pod porque las reglas de netfilter son específicas de cada espacio de nombres de red.
+El contenedor init de la malla instala reglas de iptables dentro del espacio de nombres de red del pod que redirigen (REDIRECT) todo el tráfico saliente al puerto de Envoy. El tráfico dirigido a Lattice también es saliente, así que coincide con la regla; Envoy no encuentra `169.254.171.x` en su configuración de clúster y falla. La colisión ocurre dentro del pod porque las reglas de netfilter son específicas de cada espacio de nombres de red.
 </details>
 
 3. ¿Cómo se debe diagnosticar una solicitud interceptada?
@@ -49,7 +49,7 @@ El contenedor init de la malla instala reglas de iptables dentro del espacio de 
 **Respuesta: B) Inspecciona la política real de salida de Envoy, la ruta y el error; los destinos desconocidos pueden reenviarse o rechazarse**
 
 **Explicación:**
-Ver una solicitud en el registro del proxy demuestra que pasó por él, no que haya una única causa de fallo. Verifica el comportamiento elegido para omitir la interceptación o firmar, en lugar de suponer que fallará de inmediato.
+Ver una solicitud en el registro del proxy demuestra que pasó por él, no que haya una única causa de fallo. Verifica el comportamiento configurado para omitir la interceptación y firmar la solicitud, en lugar de suponer que fallará de inmediato.
 </details>
 
 4. Se registró el CIDR de excepción, pero el fallo sigue ocurriendo «a veces». ¿Cuál es la causa más probable?
@@ -81,7 +81,7 @@ Excluir solo IPv4 en un clúster de doble pila significa que el cliente que reci
 **Respuesta: B) El paquete firmado que envía el proxy también se dirige al rango de Lattice; sin una excepción de UID, se redirige a sí mismo y entra en un bucle**
 
 **Explicación:**
-El paquete firmado que emite el proxy también se dirige a `169.254.171.x`. Sin la excepción de UID, vuelve a coincidir con la regla REDIRECT y entra en un bucle. Por lo tanto, el proxy se ejecuta con un UID dedicado (101 en la implementación de referencia) y el tráfico que proviene de él hace `RETURN` mediante la coincidencia `owner` de netfilter (`-m owner --uid-owner`). **El `runAsUser` del contenedor del proxy y el UID de iptables deben coincidir** (es el eslabón más frágil al personalizar manifiestos).
+El paquete firmado que emite el proxy también se dirige a `169.254.171.x`. Sin la excepción de UID, vuelve a coincidir con la regla REDIRECT y entra en un bucle. Por lo tanto, el proxy se ejecuta con un UID dedicado (101 en la implementación de referencia) y netfilter aplica `RETURN` al tráfico que se origina en él mediante la coincidencia `owner` (`-m owner --uid-owner`). **El `runAsUser` del contenedor del proxy y el UID de iptables deben coincidir** (es el eslabón más frágil al personalizar manifiestos).
 </details>
 
 6. ¿Por qué el enfoque de proxy de egreso carga más conntrack que el enfoque de biblioteca compartida?
@@ -97,7 +97,7 @@ El paquete firmado que emite el proxy también se dirige a `169.254.171.x`. Sin 
 **Respuesta: B) REDIRECT en el espacio de nombres de red del pod es DNAT y debe recordarse para deshacerlo; además, la conexión del proxy a Lattice añade entradas**
 
 **Explicación:**
-Un proxy de firma crea segmentos de conexión locales y upstream, mientras que el pool de conexiones y las opciones de espacio de nombres/NAT cambian el costo de seguimiento. Inspecciona las tablas del pod y del nodo, y los mapas eBPF, en vez de suponer un incremento fijo en la tabla del nodo.
+Un proxy de firma crea segmentos de conexión locales y hacia Lattice, mientras que la reutilización de conexiones y las opciones de espacio de nombres/NAT modifican la carga de seguimiento. Inspecciona las tablas del pod y del nodo, y los mapas eBPF, en vez de suponer un incremento fijo en la tabla del nodo.
 </details>
 
 7. ¿Qué demuestra la visibilidad de una captura de paquetes?
@@ -110,7 +110,7 @@ Un proxy de firma crea segmentos de conexión locales y upstream, mientras que e
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Interpreta la captura según emisor/receptor, dirección, interfaz y espacio de nombres; después, correlaciónala con otras pruebas**
+**Respuesta: B) Interpreta la captura según emisor/receptor, dirección, interfaz y espacio de nombres; después, correlaciónala con otras evidencias**
 
 **Explicación:**
 Un paquete entrante rechazado antes de entregarse no aparece en el receptor. Un paquete saliente puede ser visible en el emisor antes de que un grupo de seguridad externo lo descarte. La falta de respuestas por sí sola no demuestra un fallo del grupo de seguridad.
@@ -129,5 +129,5 @@ Un paquete entrante rechazado antes de entregarse no aparece en el receptor. Un 
 **Respuesta: B) Divergencia del estado de los nodos: diferencias de grupos de seguridad, versiones mixtas del kernel, distintos ajustes de conntrack, sincronización del reloj y si se reiniciaron los pods**
 
 **Explicación:**
-Un fallo total apunta a la configuración o la autenticación; **un fallo limitado a ciertos nodos apunta a una divergencia del estado de los nodos**. Entre las causas posibles están las diferencias de grupos de seguridad por grupo de nodos; kernels mixtos 6.1/6.18 debido a AMI `kernel-default`; distintas configuraciones de conntrack según el momento de inicio; la sincronización del reloj, que puede provocar una desviación de cinco minutos en `x-amz-date`; y cambios de anotaciones que no se aplicaron a los pods existentes. El patrón de «algunos nodos» reduce el alcance de la búsqueda.
+Un fallo total apunta a la configuración o la autenticación; **un fallo limitado a ciertos nodos apunta a una divergencia del estado de los nodos**. Entre las causas posibles están las diferencias de grupos de seguridad por grupo de nodos; kernels mixtos 6.1/6.18 debido a AMI `kernel-default`; distintas configuraciones de conntrack según el momento de inicio; la sincronización del reloj, que puede provocar una desviación de cinco minutos en `x-amz-date`; y cambios de anotaciones que no se aplicaron a los pods existentes. El patrón de «algunos nodos» acota la búsqueda.
 </details>

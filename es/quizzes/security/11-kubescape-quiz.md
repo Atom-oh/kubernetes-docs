@@ -1,6 +1,6 @@
 # Cuestionario de Kubescape
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 16 de octubre de 2026
 
 ## Preguntas
 
@@ -36,7 +36,7 @@ Kubescape se unió a CNCF el 13 de diciembre de 2022 y pasó a Incubating el 13 
 
 **Respuesta: B) Registrar las versiones del binario/de la política e inspeccionar la lista real**
 
-Use kubescape list frameworks y list controls --framework NSA. La instantánea revisada de NSA contiene 26 controles, cuya aplicabilidad se determina mediante la entrada. Conserve los hashes de las políticas al comparar puntuaciones.
+Ejecute `kubescape list frameworks` y `kubescape list controls --framework NSA`. La instantánea revisada de NSA contiene 26 controles; su aplicabilidad depende de la entrada. Conserve los hashes de las políticas al comparar puntuaciones.
 
 </details>
 
@@ -54,7 +54,7 @@ Use kubescape list frameworks y list controls --framework NSA. La instantánea r
 
 **Respuesta: B) Puede analizar el clúster del kubeconfig actual**
 
-CI debe pasar un archivo local explícito existente y rechazar destinos vacíos o inexistentes. --keep-local, una caché aislada y una política fijada no sustituyen la comprobación del alcance de entrada.
+CI debe pasar un archivo local existente especificado explícitamente y rechazar destinos vacíos o inexistentes. --keep-local, una caché aislada y una política fijada no sustituyen la comprobación del alcance de entrada.
 
 </details>
 
@@ -72,7 +72,7 @@ CI debe pasar un archivo local explícito existente y rechazar destinos vacíos 
 
 **Respuesta: B) La CLI gestiona análisis explícitos/ad hoc; el Operator ejecuta capacidades continuas/programadas habilitadas**
 
-Chart 1.40.4 genera la imagen del scanner 4.0.13, mientras que la CLI local probada es 4.0.14. El alcance y los permisos de nodo/imagen/tiempo de ejecución/remediación requieren elecciones y validación independientes.
+Chart 1.40.4 genera la imagen del scanner 4.0.13, mientras que la CLI local probada es 4.0.16. El alcance relativo a nodos, imágenes, ejecución y remediación, así como los permisos, requiere decisiones y validación independientes.
 
 </details>
 
@@ -108,7 +108,7 @@ El Pod inseguro sintético produjo compliance 55 y score 62.5. Lea summaryDetail
 
 **Respuesta: B) Sale con 1 porque no se alcanza el cumplimiento mínimo**
 
-El mismo fixture devolvió la salida 0 con el umbral 55 y la salida 1 con 56. La versión 4.0.14 acepta el obsoleto --fail-threshold, pero ignora su valor; no lo use como puerta.
+El mismo fixture devolvió la salida 0 con el umbral 55 y la salida 1 con 56. La versión 4.0.16 acepta la opción obsoleta --fail-threshold, pero ignora su valor; no la utilice como criterio de aprobación.
 
 </details>
 
@@ -126,7 +126,7 @@ El mismo fixture devolvió la salida 0 con el umbral 55 y la salida 1 con 56. La
 
 **Respuesta: B) Comparar el alcance y el acceso reales de nodo/CIS frente a workload/configuración**
 
-Los control planes administrados de EKS, los manifests locales y el acceso a archivos del nodo ofrecen visibilidad diferente. Distinga las comprobaciones no disponibles/no evaluadas de las aprobadas y seleccione las herramientas en consecuencia.
+Los planos de control administrados de EKS, los manifests locales y el acceso a archivos del nodo ofrecen visibilidad diferente. Distinga las comprobaciones no disponibles/no evaluadas de las aprobadas y seleccione las herramientas en consecuencia.
 
 </details>
 
@@ -144,7 +144,7 @@ Los control planes administrados de EKS, los manifests locales y el acceso a arc
 
 **Respuesta: C) Verificar los IDs/nombres de controles actuales y el alcance de la recopilación**
 
-El bundle revisado asigna C-0035 a Administrative Roles y C-0036/0039 a comprobaciones de admisión de validación/mutación. Los RoleBindings tienen ámbito de namespace; el análisis estático no valida automáticamente IAM externo.
+El paquete revisado asigna C-0035 a Administrative Roles y C-0036/0039 a comprobaciones de admisión de validación/mutación. Los RoleBindings se limitan a un namespace; el análisis estático no valida automáticamente IAM externo.
 
 </details>
 
@@ -187,7 +187,7 @@ En la prueba, alertOnly reconoció un fallo sin cambiar compliance. exclude-cont
 ## Cálculo de puntuación
 
 - 9–10: Comprensión sólida
-- 7–8: Repase los conceptos de alcance/puerta no acertados
+- 7–8: Repase los conceptos de alcance y criterios de aprobación que no haya dominado
 - 6 o menos: Revise la guía y los ejemplos probados
 
 ## Documentación relacionada

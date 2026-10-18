@@ -1,8 +1,8 @@
 # Parte 1: Arquitectura de la plataforma PII de SageMaker Qwen
 
-> **Última actualización**: September 12, 2026. El diagrama representa un diseño objetivo; ninguna de las dos rutas de entrenamiento con GPU se ejecutó en el registro histórico de AWS.
+> **Última actualización**: 12 de septiembre de 2026. El diagrama representa un diseño objetivo; ninguna de las dos rutas de entrenamiento con GPU se ejecutó en el registro histórico de AWS.
 
-La ejecución con GPU está bloqueada porque la versión fijada de PyTorch 2.8 DLC llegó al fin de su ciclo de parches. Primero, sigue los requisitos de actualización a un entorno de ejecución compatible del [capítulo de ejecución](03-sagemaker-mlflow-execution.md).
+La ejecución con GPU está bloqueada porque la versión fijada de PyTorch 2.8 DLC llegó al fin del soporte de parches. Primero, sigue los requisitos de actualización a un entorno de ejecución compatible del [capítulo de ejecución](03-sagemaker-mlflow-execution.md).
 
 ![Diseño objetivo: ejecución administrada y en EKS, extracción de candidatos, procesamiento determinista, seguimiento de agregados y limpieza de recursos propios.](../../.gitbook/assets/en-ai-ml-sagemaker-ai-01-platform-architecture-0.png)
 
@@ -31,7 +31,7 @@ Controla los artefactos que contengan texto de origen o correspondencias de toke
 | Datos | Canal de entrada de S3 | Descargas mediante el SDK de S3 con permisos de AWS acotados al ServiceAccount |
 | Ciclo de vida | Distinguir la terminación del Job de la limpieza de Apps/buckets externos | Exportar los resultados y luego recuperar los recursos temporales propios |
 
-Un Training Job o un límite de namespace/Job no completan automáticamente el aislamiento de seguridad. Verifica los IAM/service accounts, la red, el almacenamiento, el acceso a los endpoints/MLflow y la configuración del contenedor reales. La ruta de EKS usa la identidad de cargas de trabajo mediante su ServiceAccount y la cadena de credenciales del SDK. No coloca URL presignadas con credenciales bearer en los valores del entorno del Pod; verifica el SHA-256 del manifiesto de entrada y la propiedad del bucket.
+Un Training Job o un límite de namespace/Job no completan automáticamente el aislamiento de seguridad. Verifica los IAM/service accounts, la red, el almacenamiento, el acceso a los endpoints/MLflow y la configuración del contenedor reales. La ruta de EKS usa la identidad de cargas de trabajo mediante su ServiceAccount y la cadena de credenciales del SDK. No coloca URL prefirmadas (credenciales al portador) en los valores del entorno del Pod; verifica el SHA-256 del manifiesto de entrada y la propiedad del bucket.
 
 La comparación requiere la configuración, los hashes de las particiones, el código de entrenamiento/evaluación y el número de pasos, además de las revisiones del modelo/tokenizador, los digests de las imágenes, las dependencias transitivas, CUDA/controladores/hardware y la configuración de decodificación. Una semilla fija no garantiza resultados idénticos en GPU entre entornos. requirements.lock fija los paquetes directos, no todo el entorno transitivo.
 
@@ -39,7 +39,7 @@ La comparación requiere la configuración, los hashes de las particiones, el c�
 
 La línea base es Qwen/Qwen3-30B-A3B-Instruct-2507. La ficha del modelo describe una arquitectura MoE de **30.5B parámetros totales / 3.3B parámetros activos**, con comportamiento sin razonamiento. Los parámetros activos no representan todos los pesos almacenados ni la memoria GPU necesaria. No se presenta como el modelo más reciente ni se afirma que se haya demostrado que cabe en una GPU concreta.
 
-La revisión del repositorio del modelo observada durante la revisión fue `0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe`. El cargador/configuración actual usa el ID del modelo sin fijar explícitamente esa revisión. Fija las revisiones del modelo/tokenizador y los artefactos antes de afirmar que la ejecución es reproducible.
+El identificador de revisión del repositorio del modelo observado durante la auditoría fue `0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe`. El cargador/configuración actual usa el ID del modelo sin fijar explícitamente esa revisión. Fija las revisiones del modelo/tokenizador y los artefactos antes de afirmar que la ejecución es reproducible.
 
 | Configuración | Configuración propuesta |
 | --- | --- |
@@ -54,7 +54,7 @@ Estos valores no son mediciones de un entrenamiento exitoso, de una calidad sufi
 
 ## 4. Gobernanza y preparación para la ejecución
 
-Este experimento comprueba el dominio/perfil previsto, la pertenencia de quien realiza la llamada y el acceso a MLflow antes de enviar trabajos con GPU. CreateProject membershipAssignments puede incluir la propiedad en la misma solicitud, pero no garantiza la reversión atómica de todo el aprovisionamiento. También se deben comprobar por separado el estado ACTIVE del proyecto y la preparación de las herramientas/entornos requeridos.
+Este experimento comprueba el dominio/perfil previsto, la pertenencia del perfil de quien realiza la llamada y el acceso a MLflow antes de enviar trabajos con GPU. CreateProject membershipAssignments puede incluir la propiedad en la misma solicitud, pero no garantiza la reversión atómica de todo el aprovisionamiento. También se deben comprobar por separado el estado ACTIVE del proyecto y la preparación de las herramientas/entornos requeridos.
 
 Como muestran los intentos históricos, pueden existir recursos como una App antes de que falle la creación del proyecto. Combina las comprobaciones previas de permisos con un inventario posterior a la creación y acciones de compensación. Limita la limpieza a los recursos propios de esta ejecución y no deduzcas que quedan recursos actuales a partir de registros antiguos. Sigue el [capítulo de Unified Studio](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
 para conocer los límites de identidad y eliminación.

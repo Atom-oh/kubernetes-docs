@@ -1,13 +1,13 @@
 # Cuestionario sobre fundamentos de blockchain
 
-Este cuestionario evalúa tu comprensión del consenso, los árboles de Merkle, la finalización y las características operativas.
+Este cuestionario evalúa tu comprensión del consenso, los árboles de Merkle, la finalidad y las características operativas.
 
 ## Preguntas de opción múltiple
 
 1. ¿Cómo se deben comparar los modelos de tolerancia a fallos?
-   - A) Blockchain es distribuido, mientras que etcd es de un solo nodo
+   - A) La blockchain es distribuida, mientras que etcd es de un solo nodo
    - B) Compara el consenso elegido: etcd/Raft es CFT; algunas blockchains usan BFT, mientras que Fabric con permisos también puede usar Raft CFT
-   - C) Blockchain ofrece coherencia sólida, mientras que etcd ofrece coherencia eventual
+   - C) La blockchain ofrece consistencia fuerte, mientras que etcd ofrece coherencia eventual
    - D) etcd no usa criptografía
 
 <details>
@@ -38,7 +38,7 @@ Los nodos completos, los clientes ligeros y los modelos de distribución de dato
 
 3. ¿Cuál es el beneficio principal de un árbol de Merkle?
    - A) Comprime el tamaño de los bloques
-   - B) Una prueba de inclusión de Merkle crece como log N respecto del número N de transacciones, lo que permite verificar sin tener toda la cadena y sirve de base para clientes ligeros
+   - B) Una prueba de inclusión de Merkle crece proporcionalmente a log N, donde N es el número de transacciones, lo que permite verificar sin tener toda la cadena y sirve de base para clientes ligeros
    - C) Garantiza el orden de las transacciones
    - D) Acelera el consenso
 
@@ -46,7 +46,7 @@ Los nodos completos, los clientes ligeros y los modelos de distribución de dato
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una prueba de inclusión de Merkle crece como log N respecto del número N de transacciones, lo que permite verificar sin tener toda la cadena y sirve de base para clientes ligeros**
+**Respuesta: B) Una prueba de inclusión de Merkle crece proporcionalmente a log N, donde N es el número de transacciones, lo que permite verificar sin tener toda la cadena y sirve de base para clientes ligeros**
 
 **Explicación:**
 Como los hashes de las transacciones se combinan por pares hacia arriba en un árbol binario, para demostrar que una transacción está incluida solo hacen falta los hashes de sus nodos hermanos. Incluso en un bloque con un millón de transacciones, la prueba tiene unos 20 hashes. Esto permite usar clientes ligeros y sirve de base para decidir cómo integrar blockchain con sistemas existentes: ¿se debe ejecutar un nodo completo o basta con una verificación ligera?
@@ -68,7 +68,7 @@ Como los hashes de las transacciones se combinan por pares hacia arriba en un á
 En un entorno que permite participación anónima, la identidad por sí sola no impide que una parte cree muchas identidades (un ataque Sybil). PoW requiere un costo de cómputo; PoS requiere capital y el riesgo de slashing. La familia BFT **restringe desde el inicio quiénes participan**, evitando así el problema y permitiendo alcanzar el consenso mediante votación, sin la electricidad de PoW ni la participación de PoS. Esta es la base técnica para que los servicios financieros elijan cadenas de consorcio.
 </details>
 
-5. ¿Por qué la finalización es el concepto más importante para las operaciones de infraestructura?
+5. ¿Por qué la finalidad es el concepto más importante para las operaciones de infraestructura?
    - A) Determina la velocidad del consenso
    - B) Los datos más recientes que devuelve un nodo pueden no estar finalizados; una reorganización cambia la respuesta
    - C) Determina el tamaño de bloque
@@ -81,12 +81,12 @@ En un entorno que permite participación anónima, la identidad por sí sola no 
 **Respuesta: B) Los datos más recientes que devuelve un nodo pueden no estar finalizados; una reorganización cambia la respuesta**
 
 **Explicación:**
-Un nodo responde según la cadena más reciente que conoce, y si ese bloque se reorganiza después, cambia la respuesta. Esto causa incidentes reales: confirmar un depósito según el bloque más reciente y actuar, solo para que una reorganización lo elimine; o distribuir solicitudes entre nodos cuyas alturas de cadena difieren y obtener respuestas distintas a la misma pregunta. Por lo tanto, la aplicación debe exigir un número de confirmaciones, y la infraestructura debe incluir el estado de sincronización en las comprobaciones de readiness y supervisar la divergencia de altura de la cadena.
+Un nodo responde según la cadena más reciente que conoce, y si ese bloque se reorganiza después, cambia la respuesta. Esto causa incidentes reales: confirmar un depósito según el bloque más reciente y actuar, solo para que una reorganización lo elimine; o distribuir solicitudes entre nodos cuyas alturas de cadena difieren y obtener respuestas distintas a la misma pregunta. Por lo tanto, la aplicación debe exigir un número de confirmaciones, y la infraestructura debe incluir el estado de sincronización en las comprobaciones de disponibilidad (readiness) y supervisar la divergencia de altura de la cadena.
 </details>
 
-6. ¿Por qué un nodo blockchain necesita un volumen persistente?
+6. ¿Por qué un nodo de blockchain necesita un volumen persistente?
    - A) No se pueden recuperar los datos de la cadena desde la red
-   - B) El estado se puede volver a reproducir a partir del historial, pero el proceso tarda y durante ese tiempo el nodo no puede atender solicitudes
+   - B) El estado puede reconstruirse a partir del historial, pero el proceso tarda y durante ese tiempo el nodo no puede atender solicitudes
    - C) Kubernetes requiere volúmenes persistentes para StatefulSets
    - D) Las claves se almacenan en el directorio de datos
 
@@ -94,15 +94,15 @@ Un nodo responde según la cadena más reciente que conoce, y si ese bloque se r
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El estado se puede volver a reproducir a partir del historial, pero el proceso tarda y durante ese tiempo el nodo no puede atender solicitudes**
+**Respuesta: B) El estado puede reconstruirse a partir del historial, pero el proceso tarda y durante ese tiempo el nodo no puede atender solicitudes**
 
 **Explicación:**
-El estado de un nodo (saldos, almacenamiento de contratos) se puede derivar volviendo a reproducir el historial de bloques, así que en teoría se puede reconstruir. Sin embargo, una sincronización completa que verifica y vuelve a reproducir desde el bloque génesis tarda un tiempo proporcional a la antigüedad de la cadena; con cientos de GB a varios TB de datos, puede tardar días. Si se pierde el estado al reemplazar un pod, el nodo no puede atender solicitudes durante ese tiempo, por lo que el volumen persistente es obligatorio.
+El estado de un nodo (saldos, almacenamiento de contratos) se puede derivar procesando de nuevo el historial de bloques, así que en teoría se puede reconstruir. Sin embargo, una sincronización completa que verifica y procesa de nuevo la cadena desde el bloque génesis tarda un tiempo proporcional a la antigüedad de la cadena; con cientos de GB a varios TB de datos, puede tardar días. Si se pierde el estado al reemplazar un pod, el nodo no puede atender solicitudes durante ese tiempo, por lo que el volumen persistente es obligatorio.
 </details>
 
 7. ¿Cómo se deben gestionar las actualizaciones de clientes para un hard fork?
    - A) Aumenta el tamaño de la imagen de contenedor
-   - B) Prueba en canary y distribuye clientes compatibles con el fork antes de la activación; después, evalúa por separado una reversión incompatible
+   - B) Prueba mediante un despliegue canary y distribuye clientes compatibles con la bifurcación antes de su activación; luego, evalúa por separado la reversión a una versión incompatible
    - C) Aumenta el tiempo de reinicio de los pods
    - D) Hay que volver a escribir las políticas de red
 
@@ -110,7 +110,7 @@ El estado de un nodo (saldos, almacenamiento de contratos) se puede derivar volv
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Prueba en canary y distribuye clientes compatibles con el fork antes de la activación; después, evalúa por separado una reversión incompatible**
+**Respuesta: B) Prueba mediante un despliegue canary y distribuye clientes compatibles con la bifurcación antes de su activación; luego, evalúa por separado la reversión a una versión incompatible**
 
 **Explicación:**
 El protocolo se activa en un punto definido, pero instalar pronto un cliente compatible no significa necesariamente abandonar la cadena actual. Completa la preparación de toda la flota antes de la fecha límite externa.

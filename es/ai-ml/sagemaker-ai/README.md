@@ -1,8 +1,8 @@
 # Ajuste fino de Qwen para PII con SageMaker AI
 
-> **Última actualización**: September 16, 2026
+> **Última actualización**: 16 de septiembre de 2026
 
-Incluye ejercicios de CPU con datos sintéticos e instrucciones de QLoRA. Un entorno de ejecución independiente completó una prueba de humo real con GPU el September 16, 2026. Las observaciones de aprovisionamiento del September 1 siguen siendo registros históricos.
+Incluye ejercicios de CPU con datos sintéticos e instrucciones de QLoRA. Un entorno de ejecución independiente completó una prueba de humo real con GPU el 16 de septiembre de 2026. Las observaciones de aprovisionamiento del 1 de septiembre siguen siendo registros históricos.
 
 Esta guía enseña cómo entrenar y evaluar un modelo que extrae candidatos de PII de documentos. Defina el contrato de anotación, divida y aumente los datos sin filtraciones, elija la configuración de QLoRA y mida tanto las omisiones como el enmascaramiento excesivo.
 
@@ -14,18 +14,18 @@ El modelo genera candidatos `TYPE<TAB>ORIGINAL`. El código de Python los valida
 | --- | --- | --- |
 | 1 | [Datos sintéticos y aumento](06-data-augmentation-workshop.md) | Contratos de anotación, separación por familia, aumento solo para entrenamiento, auditorías de fuente/etiqueta |
 | 2 | [Entrenamiento QLoRA y el flujo de trabajo de SageMaker](05-qlora-finetuning-workshop.md) | NF4, LoRA, máscaras de pérdida, módulos objetivo reales, presupuestos de lotes/pasos, ajuste y diagnóstico |
-| 3 | [Evaluación de PII y canalizaciones de enmascaramiento](07-pii-evaluation-release.md) | Recall/F1, PII residual, enmascaramiento en documentos negativos, evaluación final y aceptación |
+| 3 | [Evaluación de PII y canalizaciones de enmascaramiento](07-pii-evaluation-release.md) | exhaustividad/F1, PII residual, enmascaramiento en documentos negativos, evaluación final y aceptación |
 | 4 | [Contratos de ejecución de SageMaker AI y MLflow](03-sagemaker-mlflow-execution.md) | Paquetes fuente, canales de S3, Training Jobs, artefactos y limpieza |
 
 Comience con datos y evaluación si puede usar Python 3.12 y JSONL. Ninguno de los ejercicios de CPU necesita una cuenta de AWS ni pesos de modelo. El recorrido de entrenamiento y el procedimiento de comprobación de GPU son distintos de la evidencia de un entrenamiento con GPU completado.
 
-El nuevo ejercicio de aumento divide 40 familias sintéticas antes de aumentar solo el entrenamiento. Su conjunto de datos independiente no sobrescribe el corpus histórico del generador 1.0.0 de 2,200 registros. Las puntuaciones de ejercicios pequeños u oráculo no son afirmaciones sobre el rendimiento del modelo en el mundo real.
+El nuevo ejercicio de aumento divide 40 familias sintéticas antes de aumentar solo el entrenamiento. Su conjunto de datos independiente no sobrescribe el corpus histórico del generador 1.0.0 de 2.200 registros. Las puntuaciones de ejercicios pequeños u oráculo no son afirmaciones sobre el rendimiento del modelo en el mundo real.
 
 ## Preparación para la ejecución de SageMaker {#sagemaker-execution-readiness}
 
-El [recibo real de la prueba de humo con GPU](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json) registra una ruta independiente de PyTorch 2.11/AL2023/CUDA 13 el September 16, 2026. Carga el mismo modelo Qwen en NF4 y aplica LoRA de rango 16 a cuatro proyecciones de atención. Cuatro pasos del optimizador produjeron pesos de adaptador modificados con estados guardados/recargados coincidentes. Los 1,140 segundos facturables implican aproximadamente USD 1.46 de cómputo de GPU, sin incluir almacenamiento, registros, impuestos ni ajustes.
+El [registro de la prueba de humo real con GPU](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json) registra una ruta independiente de PyTorch 2.11/AL2023/CUDA 13 el 16 de septiembre de 2026. Carga el mismo modelo Qwen en NF4 y aplica LoRA de rango 16 a cuatro proyecciones de atención. Cuatro pasos del optimizador produjeron pesos de adaptador modificados con estados guardados/recargados coincidentes. Los 1.140 segundos facturables implican aproximadamente 1,46 USD de cómputo de GPU, sin incluir almacenamiento, registros, impuestos ni ajustes.
 
-La generación abarcó solo cuatro documentos de validación sintéticos. La línea base tuvo F1 de entidad de 1.0000, pero solo 2/4 respuestas con formato correcto. El modelo ajustado tuvo F1 de 0.8125 y 4/4 respuestas con formato correcto, a la vez que añadió seis pares de entidades de falsos positivos. **Una ejecución exitosa no es evidencia de una calidad mejorada.** Ese día se envió un trabajo completo de 600 pasos; este recibo no contiene resultados finales de prueba. El trabajo completo selecciona un punto de control según la pérdida de validación antes de evaluar un conjunto de prueba independiente de 400 documentos. Consulte la [configuración de ejecución y retención de artefactos](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/README.md#recorded-gpu-execution-september-16-2026).
+La generación abarcó solo cuatro documentos de validación sintéticos. La línea base tuvo F1 de entidad de 1.0000, pero solo 2/4 respuestas con formato correcto. El modelo ajustado tuvo F1 de 0.8125 y 4/4 respuestas con formato correcto, a la vez que añadió seis pares de entidades de falsos positivos. **Una ejecución exitosa no es evidencia de una mejora de la calidad.** Ese día se envió un trabajo completo de 600 pasos; este registro no contiene resultados finales de prueba. El trabajo completo selecciona un punto de control según la pérdida de validación antes de evaluar un conjunto de prueba independiente de 400 documentos. Consulte la [configuración de ejecución y retención de artefactos](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/README.md#recorded-gpu-execution-september-16-2026).
 
 El paquete histórico propone entrenamiento de Qwen/Qwen3-30B-A3B-Instruct-2507 mediante un SageMaker Training Job administrado o un EKS GPU Job efímero. Ninguna ruta de GPU tiene registrado un éxito integral de extremo a extremo.
 
@@ -48,7 +48,7 @@ El DLC histórico de PyTorch 2.8 fijado de esa ruta terminó el soporte de parch
 - El registro de AWS del 2026-09-01 cubre las rutas de fallo de cuotas y aprovisionamiento de App/proyecto de MLflow; se detuvo antes del envío a GPU.
 - Ese registro limpió los recursos de experimento de App/S3/IAM, pero dejó un proyecto de Unified Studio. Se necesita un inventario nuevo para establecer su estado actual.
 
-No envíe fuentes, valores extraídos, asignaciones de tokens ni finalizaciones sin procesar a registros generales ni a parámetros/etiquetas de MLflow. Compruebe también el contenido de autolog/tracing y de los artefactos en el entorno de ejecución. Las asignaciones reversibles, los adaptadores entrenados y los inventarios privados de recursos son artefactos distintos con requisitos independientes de retención/acceso.
+No envíe fuentes, valores extraídos, asignaciones de tokens ni respuestas generadas sin procesar a registros generales ni a parámetros/etiquetas de MLflow. Compruebe también el contenido de autolog/tracing y de los artefactos en el entorno de ejecución. Las asignaciones reversibles, los adaptadores entrenados y los inventarios privados de recursos son artefactos distintos con requisitos independientes de retención/acceso.
 
 Paquete de ejemplo: `examples/ai-ml/qwen-pii-finetuning/`. Cada taller proporciona su CLI exacta y un ejemplo de salida.
 

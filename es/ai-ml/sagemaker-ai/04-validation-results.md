@@ -1,14 +1,14 @@
 # Parte 5: Resultados de validación de PII de Qwen en SageMaker basados en hechos
 
-> **Última actualización**: September 12, 2026
-> **Fecha de validación de AWS**: September 1, 2026
-> **Estado histórico**: bloqueado antes del entrenamiento en GPU; registro de recursos residuales fechado el September 2
+> **Última actualización**: 12 de septiembre de 2026
+> **Fecha de validación de AWS**: 1 de septiembre de 2026
+> **Estado histórico**: bloqueado antes del entrenamiento en GPU; registro de recursos residuales fechado el 2 de septiembre
 
 ## Conclusión
 
 Este capítulo describe los **registros del experimento del 1 al 2 de septiembre de 2026** del repositorio. Conserva las comprobaciones locales, los intentos de aprovisionamiento de AWS y la limpieza parcial observados en ese momento; no es una consulta nueva del estado de la cuenta. La revisión de la fuente del 12 de septiembre detectó defectos adicionales de tokenización, evaluación, ejecución y limpieza que las 30 pruebas originales no detectaron.
 
-El tercer intento de aprovisionamiento omitió la pertenencia al proyecto, lo que impidió que quien hizo la llamada eliminara el proyecto creado. Se detuvo la creación de más recursos, por lo que **no se ejecutó ni el SageMaker Training Job ni el EKS GPU Job**.
+El tercer intento de aprovisionamiento omitió la pertenencia al proyecto, lo que impidió que el solicitante eliminara el proyecto creado. Se detuvo la creación de más recursos, por lo que **no se ejecutó ni el SageMaker Training Job ni el EKS GPU Job**.
 
 ## Hechos verificados
 
@@ -39,7 +39,7 @@ La figura muestra las **comprobaciones locales, la revisión previa de AWS, los 
 |---|---|---|---|
 | 1 | La MLflow App llegó al estado `Created`, pero el script inicial esperó un estado `ACTIVE` inexistente para la App | no iniciado | Se eliminaron la App, S3 y IAM; 0 recursos restantes |
 | 2 | El dominio de Unified Studio rechazó las etiquetas personalizadas de recursos del proyecto | no iniciado | Se eliminaron la App, S3 y IAM; 0 recursos restantes |
-| 3 | Se creó el proyecto sin incluir al perfil del grupo de roles de quien hizo la llamada entre sus miembros | no iniciado | Se eliminaron la App, S3 y IAM; 1 proyecto restante |
+| 3 | Se creó el proyecto sin incluir el perfil del grupo de roles del solicitante entre sus miembros | no iniciado | Se eliminaron la App, S3 y IAM; 1 proyecto restante |
 
 ## Correcciones aplicadas
 

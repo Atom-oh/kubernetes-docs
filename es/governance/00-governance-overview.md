@@ -12,7 +12,7 @@ cientos de ingenieros en varias marcas, dominios y servicios.
 - ¿Cuántas cuentas debemos crear?
 - ¿Se deben compartir las VPC o mantenerlas separadas?
 - ¿Cada equipo debe tener su propio clúster de EKS o se deben compartir los clústeres?
-- ¿Estos tres límites (Account/VPC/EKS) y el límite de datos deben coincidir uno a uno?
+- ¿Estos tres límites (cuenta/VPC/EKS) y el límite de datos deben coincidir uno a uno?
 
 Esta sección trata las decisiones de estandarización para entornos grandes con
 varias cuentas y clústeres de EKS. Las restricciones de los servicios se comprueban
@@ -21,7 +21,7 @@ separación y los umbrales de prueba de concepto son propuestas que la organizac
 debe validar. No establece las conclusiones de una revisión privada concreta ni el
 éxito en producción de ninguna empresa.
 
-## 2. Por qué se deben evaluar por separado los límites de Account, VPC, EKS y datos
+## 2. Por qué se deben evaluar por separado los límites de cuenta de AWS, VPC, EKS y datos
 
 El error más común es crear una cuenta por equipo o marca, y asociar
 automáticamente una VPC y un clúster de EKS dedicados a cada cuenta: una **fórmula
@@ -33,9 +33,9 @@ La alternativa que propone esta sección es **evaluar cada límite de forma inde
 
 | Límite | Criterios de evaluación |
 |---|---|
-| Account | Requisitos de seguridad, cuotas de servicio, costo/responsabilidad, ciclo de vida |
+| Cuenta de AWS | Requisitos de seguridad, cuotas de servicio, costo/titularidad, ciclo de vida |
 | VPC | Política de red, zona de confianza, requisitos de conectividad |
-| EKS | Radio de impacto del runtime, requisitos de aislamiento de inquilinos, SLO |
+| EKS | Radio de impacto en tiempo de ejecución, requisitos de aislamiento de tenants y SLO |
 | Datos | Propiedad de los datos, límite regulatorio, responsabilidad de copia de seguridad/recuperación |
 
 Así se pueden tomar decisiones más precisas, como «esta carga de trabajo no necesita
@@ -73,7 +73,7 @@ cada caso, la sección posterior sobre [marco de decisión y diseño de prueba d
 ## 5. Un ID estable de carga de trabajo y metadatos mutables
 
 Las reorganizaciones, consolidaciones de marcas y renombramientos de equipos
-seguirán ocurriendo. Si los límites de Account o VPC dependen directamente de los
+seguirán ocurriendo. Si los límites de cuenta o VPC dependen directamente de los
 nombres de los equipos o las marcas, cada reorganización se convierte en una
 migración de infraestructura.
 
@@ -82,7 +82,7 @@ dominio, la marca, el equipo, el CUJ (recorrido crítico del usuario), el entorn
 clase de datos y el SLO como **metadatos mutables** asociados a ese ID. Los equipos
 cambian con las reorganizaciones, pero los dominios (capacidades empresariales)
 son relativamente estables; por eso, un dominio es una base mejor para los límites
-de Account que un equipo.
+de cuenta que un equipo.
 
 ## 6. Contenido de esta sección
 

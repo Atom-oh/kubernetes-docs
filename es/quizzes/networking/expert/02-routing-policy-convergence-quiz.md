@@ -49,7 +49,7 @@ Son ejercicios de razonamiento, no afirmaciones de que se haya ejecutado un labo
 </details>
 
 4. ¿Qué resuelve un route reflector y qué se debe comprobar igualmente?
-   - A) Crea todas las rutas de underlay que faltan, así que los clientes no necesitan un IGP.
+   - A) Crea todas las rutas que faltan de la red subyacente (underlay), así que los clientes no necesitan un IGP.
    - B) Reduce los requisitos de sesiones iBGP; los clientes siguen necesitando next hops utilizables y pruebas de reenvío.
    - C) Garantiza que todos los clientes vean todas las rutas alternativas.
 
@@ -105,7 +105,7 @@ Son ejercicios de razonamiento, no afirmaciones de que se haya ejecutado un labo
 </details>
 
 8. Antes de aplicar el cambio de política del cuaderno de trabajo, c1 ya tiene una preferencia local explícita de 150. ¿Qué se debe hacer?
-   - A) Detente y establece la base prevista en vez de eliminar una política existente.
+   - A) Detente y define el estado base previsto en vez de eliminar una política existente.
    - B) Supón 100 de todos modos porque es un valor predeterminado común.
    - C) Aplica 200, luego elimina el ajuste y considera que eso restaura exactamente la configuración.
 
@@ -114,7 +114,7 @@ Son ejercicios de razonamiento, no afirmaciones de que se haya ejecutado un labo
 
 **Respuesta: A**
 
-**Explicación:** El procedimiento inverso suministrado supone que no hay ningún ajuste explícito y que la preferencia efectiva es 100. Eliminar un valor 150 preexistente no restauraría el estado original. El estado previo conocido forma parte de la autorización y la reproducibilidad, no es una anotación opcional.
+**Explicación:** La configuración inversa proporcionada supone que no hay ningún ajuste explícito y que la preferencia efectiva es 100. Eliminar un valor 150 preexistente no restauraría el estado original. El estado previo conocido forma parte de la autorización y la reproducibilidad, no es una anotación opcional.
 
 </details>
 
@@ -146,4 +146,4 @@ Son ejercicios de razonamiento, no afirmaciones de que se haya ejecutado un labo
 
 </details>
 
-Finalización: explica cada respuesta y adjunta al cuaderno de trabajo una matriz de referencia/cambio/fallo/restauración, o marca el trabajo práctico como **no ejecutado**.
+Finalización: explica cada respuesta y adjunta al cuaderno de trabajo una matriz de línea base/cambio/fallo/restauración, o marca el trabajo práctico como **no ejecutado**.

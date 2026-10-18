@@ -7,7 +7,7 @@
 <details>
 <summary>显示答案</summary>
 
-Debezium 是一个 source，会将快照/WAL 变更发送到 Kafka；S3 sink 会将 Kafka 记录发送到 S3。请检查每个插件的格式和投递行为。
+Debezium 是源连接器，会将快照/WAL 变更发送到 Kafka；S3 接收端连接器（sink）会将 Kafka 记录发送到 S3。请检查每个插件的格式和投递行为。
 
 </details>
 
@@ -16,7 +16,7 @@ Debezium 是一个 source，会将快照/WAL 变更发送到 Kafka；S3 sink 会
 <details>
 <summary>显示答案</summary>
 
-不能。示例会归档包含操作和前后数据的 CDC 事件。要物化当前状态，需要处理键、删除/tombstone、顺序和重放。
+不能。示例会归档包含操作以及变更前后数据的 CDC 事件。要物化当前状态，需要处理键、删除/墓碑记录（tombstone）、顺序和重放。
 
 </details>
 
@@ -25,7 +25,7 @@ Debezium 是一个 source，会将快照/WAL 变更发送到 Kafka；S3 sink 会
 <details>
 <summary>显示答案</summary>
 
-Kafka broker 会协调该组；选出的 worker leader 会计算分配方案。worker 故障可能触发延迟重新分配和重放，这与 task 故障不同。
+Kafka broker 会协调该组；选出的主工作进程（worker leader）会计算分配方案。工作进程故障可能触发延迟重新分配和重放，这与任务故障不同。
 
 </details>
 
@@ -34,7 +34,7 @@ Kafka broker 会协调该组；选出的 worker leader 会计算分配方案。w
 <details>
 <summary>显示答案</summary>
 
-可以运行，但不具备分布式 worker 故障转移能力。Strimzi KafkaConnect 管理分布式模式。增加 worker 不会自动让单个 task 的 connector 并行化。
+可以运行，但不具备分布式工作进程故障转移能力。Strimzi KafkaConnect 管理分布式模式。增加工作进程不会自动让只使用一个任务的连接器并行化。
 
 </details>
 
@@ -43,7 +43,7 @@ Kafka broker 会协调该组；选出的 worker leader 会计算分配方案。w
 <details>
 <summary>显示答案</summary>
 
-operator 可能会将其协调回 CR 中的期望状态。请使用 CR 作为变更途径，并限制 Kubernetes 更新和 Connect REST 访问。
+Operator 可能会将连接器协调回 CR 中的期望状态。请使用 CR 作为变更途径，并限制 Kubernetes 更新和 Connect REST 访问。
 
 </details>
 
@@ -52,7 +52,7 @@ operator 可能会将其协调回 CR 中的期望状态。请使用 CR 作为变
 <details>
 <summary>显示答案</summary>
 
-`strimzi.io/use-connector-resources: "true"` 和 `kafka.strimzi.io/v1`。v1 迁移包含 groupId 和内部 topic 名称等字段；仅更改 apiVersion 并不足够。
+`strimzi.io/use-connector-resources: "true"` 和 `kafka.strimzi.io/v1`。v1 迁移包含 groupId 和内部主题名称等字段；仅更改 apiVersion 并不足够。
 
 </details>
 
@@ -61,7 +61,7 @@ operator 可能会将其协调回 CR 中的期望状态。请使用 CR 作为变
 <details>
 <summary>显示答案</summary>
 
-指定插件版本、URL、校验和以及输出镜像标签。维护有效的推送 Secret 和镜像拉取权限；ECR token 会在 12 小时后过期。运行时 S3 身份与构建推送身份验证是分开的。
+指定插件版本、URL、校验和以及输出镜像标签。维护有效的推送 Secret 和镜像拉取权限；ECR 令牌会在 12 小时后过期。运行时 S3 身份与构建推送身份验证是分开的。
 
 </details>
 
@@ -70,7 +70,7 @@ operator 可能会将其协调回 CR 中的期望状态。请使用 CR 作为变
 <details>
 <summary>显示答案</summary>
 
-MirrorSourceConnector 会生成源/目标 offset 映射；MirrorCheckpointConnector 使用这些映射来转换源组的提交 offset。不能假定源和目标 offset 相等。
+MirrorSourceConnector 会生成源/目标偏移量映射；MirrorCheckpointConnector 使用这些映射来转换源消费组提交的偏移量。不能假定源和目标偏移量相等。
 
 </details>
 
@@ -79,16 +79,16 @@ MirrorSourceConnector 会生成源/目标 offset 映射；MirrorCheckpointConnec
 <details>
 <summary>显示答案</summary>
 
-它使用 `<source-alias>.<topic>`，并检测是否循环回到来源链中已存在的目标 alias。它不会排除所有带前缀的 topic；向第三个集群进行多跳复制可能是合理的。
+它使用 `<source-alias>.<topic>`，并检测是否循环回到来源链中已存在的目标别名。它不会排除所有带前缀的主题；向第三个集群进行多跳复制可能是合理的。
 
 </details>
 
-## 10. 除了 MM2 之外，主动-被动故障转移还需要做哪些准备？
+## 10. 除了 MM2 之外，主备故障切换还需要做哪些准备？
 
 <details>
 <summary>显示答案</summary>
 
-隔离旧的写入方，测量复制/checkpoint 的最新程度，验证目标权限和 schema，更改 endpoint/订阅，并验证恢复的位置。如果源无法恢复，未复制的数据可能会丢失；还要测量重复重放情况。
+阻止旧写入方继续写入，测量复制数据与检查点的更新及时性，验证目标权限和数据模式（schema），更改端点/订阅，并验证恢复后的消费位置。如果源无法恢复，未复制的数据可能会丢失；还要测量重复重放情况。
 
 </details>
 
@@ -97,7 +97,7 @@ MirrorSourceConnector 会生成源/目标 offset 映射；MirrorCheckpointConnec
 <details>
 <summary>显示答案</summary>
 
-不能。该 task 可以在不读取源数据的情况下发送 heartbeat。还要检查分区进度、错误和 checkpoint 的最新程度。请区分这个 Apache 类与 Strimzi 1.3 的 v1 CRD 所支持的字段。
+不能。该任务可以在不读取源数据的情况下发送心跳。还要检查分区进度、错误和检查点是否及时更新。请区分这个 Apache 类与 Strimzi 1.3 的 v1 CRD 所支持的字段。
 
 </details>
 
@@ -106,7 +106,7 @@ MirrorSourceConnector 会生成源/目标 offset 映射；MirrorCheckpointConnec
 <details>
 <summary>显示答案</summary>
 
-`spec.configStorageTopic`、`spec.offsetStorageTopic` 和 `spec.statusStorageTopic`。config topic 应使用压缩策略且分区数为 1。使用 spec.groupId 设置 worker 组；sink 组的 offset 则是独立的。
+`spec.configStorageTopic`、`spec.offsetStorageTopic` 和 `spec.statusStorageTopic`。配置主题应采用日志压实（compaction）策略，且分区数为 1。使用 spec.groupId 设置工作进程组；接收端消费组的偏移量则是独立的。
 
 </details>
 
@@ -115,7 +115,7 @@ MirrorSourceConnector 会生成源/目标 offset 映射；MirrorCheckpointConnec
 <details>
 <summary>显示答案</summary>
 
-不会。Kafka 4.3.1 会处理选定的字面 topic ACL，排除 ALLOW WRITE，并将 ALLOW ALL 降级为 READ。它不会迁移所有用户、集群策略或外部 IAM 策略。示例会单独管理目标策略。
+不会。Kafka 4.3.1 会处理选定的字面量（literal）主题 ACL，排除 ALLOW WRITE，并将 ALLOW ALL 降级为 READ。它不会迁移所有用户、集群策略或外部 IAM 策略。示例会单独管理目标策略。
 
 </details>
 
@@ -124,7 +124,7 @@ MirrorSourceConnector 会生成源/目标 offset 映射；MirrorCheckpointConnec
 <details>
 <summary>显示答案</summary>
 
-它测量目标确认时间减去记录时间戳，结果会受到时钟偏差、时间戳模式和重放的影响。在目标区域 worker 的目标 producer 上启用压缩，无法减少已经跨区域传输的源 fetch 流量。
+它测量目标确认时间减去记录时间戳，结果会受到时钟偏差、时间戳模式和重放的影响。在目标区域工作进程的目标生产者上启用压缩，无法减少已经跨区域传输的源数据拉取流量。
 
 </details>
 
@@ -133,7 +133,7 @@ MirrorSourceConnector 会生成源/目标 offset 映射；MirrorCheckpointConnec
 <details>
 <summary>显示答案</summary>
 
-`spec.target` 和 `spec.mirrors[].source`。目标需要 alias、bootstrapServers、groupId 和三个内部 topic 名称。不要使用旧的 connectCluster/clusters/heartbeatConnector 结构。
+`spec.target` 和 `spec.mirrors[].source`。目标需要 alias、bootstrapServers、groupId 和三个内部主题名称。不要使用旧的 connectCluster/clusters/heartbeatConnector 结构。
 
 </details>
 
@@ -170,7 +170,7 @@ spec:
     snapshot.mode: initial
 ```
 
-准备逻辑复制、权限、publication 和合适的 replica identity。通过允许的 Secret-directory provider 读取密码，并验证数据库 TLS 主机名。它使用一个 task；请监控停滞 slot 保留的 WAL。
+准备逻辑复制、权限、发布对象（publication）和合适的复制标识（replica identity）。通过获准的 Secret 目录凭据提供器读取密码，并验证数据库 TLS 主机名。它使用一个任务；请监控停滞的复制槽保留的 WAL。
 
 </details>
 
@@ -179,7 +179,7 @@ spec:
 <details>
 <summary>显示答案</summary>
 
-匹配源/checkpoint 复制策略和 offset-syncs 位置，并启用 `sync.group.offsets.enabled=true`。需要有效的映射/checkpoint 和相应权限，而且目标组必须处于非活动状态或不存在。不会覆盖活动 consumer。请使用本章 mm2.yaml 中的目标/源结构。
+匹配源连接器/检查点连接器的复制策略和 offset-syncs 位置，并启用 `sync.group.offsets.enabled=true`。需要有效的映射/检查点和相应权限，而且目标消费组必须处于非活动状态或不存在。不会覆盖活动消费者。请使用本章 mm2.yaml 中的目标/源结构。
 
 </details>
 
@@ -188,7 +188,7 @@ spec:
 <details>
 <summary>显示答案</summary>
 
-不能。Identity 会丢失来源前缀信息，也不具备默认策略中等效的循环检测能力。请设计方向性的 topic 所有权、过滤器、写入策略和切换方案。topic 过滤器不会自动解决数据冲突或重复问题。
+不能。Identity 会丢失来源前缀信息，也不具备默认策略中等效的循环检测能力。请按复制方向明确主题归属，并设计过滤器、写入策略和切换方案。主题过滤器不会自动解决数据冲突或重复问题。
 
 </details>
 

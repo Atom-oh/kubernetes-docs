@@ -1,52 +1,25 @@
-# Session Affinity
+# セッションアフィニティ
 
-Session Affinity（または Sticky Session）は、同じユーザーからのリクエストを同じ Pod にルーティングする手法です。
+Session Affinity（Sticky Session とも呼ばれます）は、同じ hash key を持つ request 間に緩やかな親和性を与える手法です。Pod の割り当てが恒久的に固定されることを保証するものではありません。
 
 ## 目次
 
-1. [Session Affinity の概要](#session-affinity-overview)
+1. [セッションアフィニティの概要](#session-affinity-overview)
 2. [Consistent Hash ベース](#consistent-hash-based)
 3. [Cookie ベース](#cookie-based)
-4. [Header ベース (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#http-header-based)
-5. [実践例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#consistent-hash-based)
+4. [HTTP Header ベース](#http-header-based)
+5. [Source IP ベース](#source-ip-based)
+6. [運用上の考慮事項](#operational-considerations)
 
-<span id="session-affinity-overview"></span>
+## セッションアフィニティの概要 {#session-affinity-overview}
 
-## Session Affinity の概要
+![user ID を含む client request が load balancer によって hash 化され、常に同じ Pod に routing される consistent-hash session affinity の図。他の Pod replica はその session では使われません。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-10-session-affinity-0.png)
 
-```mermaid
-flowchart TB
-    User[User A]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-10-session-affinity-0.html)
 
-    subgraph LB["Load Balancer"]
-        Hash[Consistent Hash<br/>Based on User ID]
-    end
+## Consistent Hash ベース {#consistent-hash-based}
 
-    subgraph Pods["Pods"]
-        Pod1[Pod 1<br/>Session A]
-        Pod2[Pod 2]
-        Pod3[Pod 3]
-    end
-
-    User -->|user_id=123| Hash
-    Hash -->|Always Same| Pod1
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class User user;
-    class Hash lb;
-    class Pod1,Pod2,Pod3 pod;
-```
-
-<span id="consistent-hash-based"></span>
-
-## Consistent Hash ベース
-
-### HTTP Header ベース
+### HTTP Header ベース {#http-header-based}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -61,9 +34,7 @@ spec:
         httpHeaderName: "x-user-id"
 ```
 
-<span id="cookie-based"></span>
-
-### Cookie ベース
+### Cookie ベース {#cookie-based}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -80,7 +51,7 @@ spec:
           ttl: 0s  # Cookie expiration time (0s = session cookie)
 ```
 
-### Source IP ベース
+### Source IP ベース {#source-ip-based}
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -94,6 +65,14 @@ spec:
       consistentHash:
         useSourceIp: true
 ```
+
+## 運用上の考慮事項 {#operational-considerations}
+
+この図は、endpoint の集合が変わらず、各 proxy から見た endpoint も同じであることを前提とします。Pod の追加／削除や locality による endpoint の違いによって、request の割り当て先が変わることがあります。割り当て変更や Pod 障害が起きても安全なように、session state を保存してください。
+
+同じ host に対して、これらの DestinationRule のいずれか 1 つを選択してください。HTTP header／cookie の hash には HTTP 処理が必要です。header がない場合、user を特定できません。`ttl: 0s` は cookie がないときに session cookie を作成しますが、browser がその cookie を返す必要があります。cookie の attribute と有効期間は、アプリケーションの要件に合わせてください。
+
+Source-IP hashing は proxy から見える source address を使います。NAT や途中の load balancer によって複数 client が 1 つの address に集約されることがあります。これに依存する前に、信頼する proxy と client IP の取り扱いを確認してください。これらの DestinationRule の例は sidecar の動作を示しています。waypoint の feature support は別途確認してください。
 
 ## 参考資料
 

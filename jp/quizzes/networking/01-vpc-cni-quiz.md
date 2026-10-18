@@ -1,147 +1,131 @@
 # Amazon VPC CNI クイズ
 
-以下の問題で、Amazon VPC CNI の理解度を確認します。
+2026年9月11日に、[VPC CNI ガイド](../../networking/01-vpc-cni.md)と一次資料に基づいてレビューしました。
 
----
+## 1. 標準的な EKS Linux EC2 ノードで IPAMD が行うことは何ですか？
 
-1. VPC CNI における IPAMD (L-IPAM Daemon) の主な役割は何ですか？
-   - A) Pod DNS 設定の管理
-   - B) ENI と IP アドレスの事前割り当ておよび管理
-   - C) Network Policy の適用
-   - D) ノード間トラフィックの暗号化
+- A. すべての Pod の DNS アプリケーション設定を管理する
+- B. Pod ネットワーク用に通常の ENI／IP 割り当てプールを維持する
+- C. ネットワークポリシーコントローラーを置き換える
+- D. ノード間のすべての通信を暗号化する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) ENI と IP アドレスの事前割り当ておよび管理**
+**解答: B. Pod ネットワーク用に通常の ENI／IP 割り当てプールを維持する**
 
-**解説:**
-IPAMD (L-IPAM Daemon) は各ノードで稼働する daemon であり、ENI (Elastic Network Interface) を管理し、Pod が作成されたときに IP を迅速に割り当てられるよう IP アドレスを事前割り当てします。CNI Binary は kubelet によって呼び出され、IPAMD から IP を受け取り、Pod network namespace を設定します。
+コンテナランタイムが CNI バイナリを呼び出し、Pod のアドレスを要求して sandbox のネットワークを構成します。IPAMD は関連するアドレスプールを管理します。Windows、Fargate、Auto Mode では管理経路が異なります。
 
 </details>
 
----
+## 2. Secondary IP モードと prefix モードでは、IPv4 の割り当てがどう異なりますか？
 
-2. Secondary IP mode と Prefix Delegation mode の主な違いは何ですか？
-   - A) Secondary IP は IPv6 のみをサポートし、Prefix Delegation は IPv4 のみをサポートする
-   - B) Secondary IP は個別の IP を割り当て、Prefix Delegation は /28 prefix (16 IP) を割り当てる
-   - C) Secondary IP は EKS 専用であり、Prefix Delegation は self-managed cluster 専用である
-   - D) Secondary IP は overlay network を使用し、Prefix Delegation は direct routing を使用する
+- A. IPv6 に対応するのは Secondary IP モードだけである
+- B. Secondary IP モードは個別のアドレスを割り当て、IPv4 prefix モードは 16 アドレスを含む /28 ブロックを割り当てる
+- C. Prefix モードは kubelet の Pod 上限をなくす
+- D. Prefix モードは枯渇したサブネットに空き容量を作る
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Secondary IP は個別の IP を割り当て、Prefix Delegation は /28 prefix (16 IP) を割り当てる**
+**解答: B. Secondary IP モードは個別のアドレスを割り当て、IPv4 prefix モードは 16 アドレスを含む /28 ブロックを割り当てる**
 
-**解説:**
-Secondary IP mode は各 ENI に個別の IP アドレスを1つずつ割り当てる一方、Prefix Delegation mode は /28 IPv4 prefix (16 IP) をまとめて割り当てます。これにより、ノードあたりでより多くの Pod を実行でき、IP 割り当て速度も向上します。
+Prefix モードには対応ハードウェアと連続したアドレスブロックが必要です。割り当ては引き続きサブネットのアドレスを消費し、warm target によって未使用アドレスが予約される場合もあります。IPv6 では /80 prefix を使います。EKS は dual-stack の Pod／Service を提供しません。
 
 </details>
 
----
+## 3. 従来の m5.large secondary IPv4 起動時計算で 29 が得られるのはなぜですか？
 
-3. VPC CNI で m5.large instance の最大 Pod 数が 29 である理由は何ですか？
-   - A) Kubernetes のデフォルト上限が 29 であるため
-   - B) 最大 3 ENI × ENI あたり 10 IP = 30 から、Primary IP 用の ENI 数 (3) を引くため
-   - C) AWS soft limit によって制限されるため
-   - D) VPC subnet サイズによって制限されるため
+- A. Kubernetes はすべてのノードを常に 29 に制限する
+- B. `3 × (10 − 1) + 2 = 29`
+- C. `3 × 10 − 3 = 29`
+- D. 29 はすべてのサブネットのサイズである
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 最大 3 ENI × ENI あたり 10 IP = 30 から、Primary IP 用の ENI 数 (3) を引くため**
+**解答: B. `3 × (10 − 1) + 2 = 29`**
 
-**解説:**
-VPC CNI における最大 Pod 数は、(ENI 数 × ENI あたりの IP 数) - ENI 数として計算されます。m5.large は ENI あたり 10 個の IPv4 アドレスを持つ最大 3 個の ENI をサポートします。各 ENI の Primary IP はノードによって使用されるため、(3 × 10) - 3 = 27 です。実際の数は host networking Pod やその他の要因により多少異なる場合があります。
+ENI は 3 個あり、それぞれ IPv4 アドレス枠を 10 個持ちます。各 ENI のプライマリ枠を除くと、通常のセカンダリアドレスは 27 個です。従来の式では hostNetwork を使うシステム Pod 2 個を加算します。これは現在のあらゆる環境に適用される容量上限ではありません。prefix、SGPP、kubelet 上限、リソースによって解釈が変わります。
 
 </details>
 
----
+## 4. `WARM_IP_TARGET` が指定するものは何ですか？
 
-4. WARM_IP_TARGET environment variable の目的は何ですか？
-   - A) Pod に割り当て可能な IP の最大数を設定する
-   - B) 各ノードで事前割り当てする予備 IP の数を設定する
-   - C) cluster 全体の IP 総数を制限する
-   - D) IP アドレスの TTL (Time To Live) を設定する
+- A. Pod の最大数
+- B. 通常の割り当てに使えるよう確保する空きアドレス数の目標
+- C. クラスター全体のアドレスクォータ
+- D. アドレスの有効期間
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) 各ノードで事前割り当てする予備 IP の数を設定する**
+**解答: B. 通常の割り当てに使えるよう確保する空きアドレス数の目標**
 
-**解説:**
-WARM_IP_TARGET は、IPAMD が各ノードで事前割り当てする予備 IP の数を制御します。これにより、新しい Pod が作成されたときに IP をすぐに利用できます。値を大きくすると Pod の起動は高速化しますが、より多くの IP を使用します。一方、値を小さくすると IP 効率は向上しますが、Pod の起動が遅くなる場合があります。
+`MINIMUM_IP_TARGET` は、割り当て済みアドレスの合計数に対する下限です。これらの IP target は warm ENI／prefix の戦略より優先されますが、prefix サイズ単位の割り当ては引き続き適用されます。実測した需要、変動量、アドレス空間、API の動作に基づいて値を選んでください。
 
 </details>
 
----
+## 5. EKS ネイティブのネットワークポリシーについて、正しい説明はどれですか？
 
-5. VPC CNI の native Network Policy サポートに関する正しい記述はどれですか？
-   - A) Network Policy を強制するために内部で Calico を使用する
-   - B) v1.14 以降、native eBPF-based Network Policy をサポートする
-   - C) EKS では Network Policy はサポートされていない
-   - D) Network Policy を強制するために iptables を使用する
+- A. VPC CNI は内部で Calico を実行する
+- B. 標準の eBPF ポリシーは 1.14 で導入されたが、現在もプラットフォーム／バージョンと opt-in の条件がある
+- C. Windows と Fargate にも自動的に適用される
+- D. 有効にすると、単独の Pod にも必ず確実に適用される
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) v1.14 以降、native eBPF-based Network Policy をサポートする**
+**解答: B. 標準の eBPF ポリシーは 1.14 で導入されたが、現在もプラットフォーム／バージョンと opt-in の条件がある**
 
-**解説:**
-VPC CNI v1.14 以降、eBPF に基づく native Kubernetes Network Policy がサポートされています。以前は Calico のような個別の Network Policy engine が必要でしたが、現在は VPC CNI 自体が標準の Kubernetes NetworkPolicy resource を処理できます。
+レビュー対象の 1.23 構成では、設定済みのポリシーコントローラーと `aws-eks-nodeagent` を使います。現行の EKS ガイダンスには、EC2 Linux、コントローラー管理対象の Pod、および Service／container port の条件が含まれます。標準の起動モードではルール解決中に通信が許可されます。strict 起動動作は別途意図して選択するものです。
 
 </details>
 
----
+## 6. ENIConfig を使うカスタムネットワーキングで実現できることは何ですか？
 
-6. Custom Networking (ENIConfig) を使用する主な目的は何ですか？
-   - A) Pod DNS server 設定のカスタマイズ
-   - B) ノードとは異なる subnet から Pod IP を割り当てる
-   - C) カスタム CNI plugin のインストール
-   - D) ノードの network interface の名前変更
+- A. DNS サーバーを置き換える
+- B. ノードの既定設定とは別に選択したサブネット／セキュリティグループから Pod のアドレスを割り当てる
+- C. CIDR を追加すると既存 Pod を自動で移行する
+- D. 重複するルートを自動的に削除する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) ノードとは異なる subnet から Pod IP を割り当てる**
+**解答: B. ノードの既定設定とは別に選択したサブネット／セキュリティグループから Pod のアドレスを割り当てる**
 
-**解説:**
-Custom Networking は ENIConfig CRD を使用して、ノードとは異なる subnet から Pod IP を割り当てます。これは、ノード subnet の IP が不足している場合、Pod に異なる security group を適用する必要がある場合、またはノードと Pod の network を分離する必要がある場合に有用です。通常は Secondary CIDR (例: 100.64.0.0/16) とともに使用されます。
+実際に存在する同一 AZ のリソースを設定し、カスタムネットワーキングを有効にして、意図したノードラベルまたはアノテーションから ENIConfig を選択します。明示的なアノテーションはラベルより優先されます。CIDR／サブネットを新設しただけでは、既存 Pod は移動せず、必要なルートや権限もすべて用意されるわけではありません。
 
 </details>
 
----
+## 7. 対応 EC2 ノードの SGPP では、trunk と branch インターフェイスはどのように動作しますか？
 
-7. per-Pod Security Group 機能における Trunk ENI と Branch ENI の役割は何ですか？
-   - A) Trunk ENI は外部トラフィックを処理し、Branch ENI は内部トラフィックを処理する
-   - B) Trunk ENI は Branch ENI をホストするノードのメイン ENI であり、Branch ENI は各 Pod に割り当てられる virtual ENI である
-   - C) Trunk ENI は IPv4 用であり、Branch ENI は IPv6 用である
-   - D) Trunk ENI と Branch ENI は同一の役割を果たす
+- A. trunk は常にプライマリの eth0 である
+- B. コントローラーが追加の trunk ENI を接続し、選択された Pod が使う branch インターフェイスを関連付ける
+- C. 2 つの名前はそれぞれ IPv4 と IPv6 を表す
+- D. Prefix delegation により branch Pod の上限が 16 倍になる
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B) Trunk ENI は Branch ENI をホストするノードのメイン ENI であり、Branch ENI は各 Pod に割り当てられる virtual ENI である**
+**解答: B. コントローラーが追加の trunk ENI を接続し、選択された Pod が使う branch インターフェイスを関連付ける**
 
-**解説:**
-per-Pod Security Group は Trunk/Branch ENI architecture を使用します。Trunk ENI は複数の Branch ENI をホストする、ノードにアタッチされたメイン ENI です。Branch ENI は各 Pod に割り当てられる virtual network interface であり、独立した AWS Security Group enforcement を可能にします。これにより、Pod レベルで詳細な network security control が可能になります。
+trunk はプライマリ ENI ではなく、追加のインターフェイスです。対応インスタンスタイプ、コントローラー／IAM、実際のセキュリティグループルールが前提条件です。Fargate は別の管理経路を使います。SGPP は Windows／Auto Mode ではサポートされません。一方、EKS サービスガイドには、条件を満たした場合の IPv6 サポートが記載されています。
 
 </details>
 
----
+## 8. IP 枯渇に対する不適切な既定対応はどれですか？
 
-8. IP 枯渇問題に対する効果的な解決策ではないものはどれですか？
-   - A) Prefix Delegation を有効にする
-   - B) Secondary CIDR を追加する
-   - C) すべての Pod を host network mode に切り替える
-   - D) 専用 Pod subnet を使用する Custom Networking を使用する
+- A. Prefix delegation を検討する前に、連続した prefix の空きとハードウェアを確認する
+- B. キャパシティが不足する場合は追加 CIDR／サブネットとワークロードの移行を計画する
+- C. 通常の Pod アドレス割り当てを回避するため、すべてのワークロードを hostNetwork に切り替える
+- D. カスタムネットワーキングと、実測に基づく warm target の調整を検討する
 
 <details>
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C) すべての Pod を host network mode に切り替える**
+**解答: C. 通常の Pod アドレス割り当てを回避するため、すべてのワークロードを hostNetwork に切り替える**
 
-**解説:**
-すべての Pod を host network mode (`hostNetwork: true`) で実行すると技術的には IP 割り当て問題を解決できますが、Pod 間の network isolation がなくなり、port conflict を引き起こす可能性があるため、実用的な解決策ではありません。IP 枯渇に対する適切な解決策には、Prefix Delegation の有効化、Secondary CIDR の追加、Custom Networking の使用、および WARM_IP_TARGET の tuning が含まれます。
+すべてを hostNetwork に変更すると分離とポートの動作が変わるため、一般的なキャパシティ対策にはなりません。アドレス枯渇、prefix の断片化、ENI 上限、kubelet のキャパシティ、API エラーをそれぞれ切り分けてください。Prefix delegation でサブネットにないアドレスを作ることはできません。
 
 </details>

@@ -2,11 +2,11 @@
 
 审核日期：2026年10月16日，依据 edge-26.10.1 和 charts 2026.10.1。完整的前置条件和验证范围请参阅[安装指南](../../../service-mesh/linkerd/01-installation.md)。
 
-### 1. 应如何获取本指南使用的确切公共 CLI？
+### 1. 应如何获取本指南指定版本的公开发布 CLI？
 
 A. 假设任何名为 linkerd 的软件包都是相同版本
 
-B. 为操作系统/架构选择官方 edge-26.10.1 资源，验证其校验和及客户端版本
+B. 选择适用于所用操作系统/架构的官方 edge-26.10.1 下载文件，验证其校验和及客户端版本
 
 C. 使用 kubectl install linkerd
 
@@ -17,7 +17,7 @@ D. 向无法解析该标志的安装程序传递 --version stable-2.16.0
 
 **答案：B**
 
-本指南固定使用官方发布资源。安装程序替代方案使用 LINKERD2_VERSION，而旧版安装脚本已弃用，现在默认使用 edge。稳定版发行使用供应商指南。Windows 有一个 windows.exe 发布资源；不要臆造 windows-amd64.exe 文件名。
+本指南固定使用官方发布版本的下载文件。如果改用安装程序，则通过 LINKERD2_VERSION 指定版本；旧版安装脚本已弃用，现在默认使用 edge。稳定版发行应遵循供应商的说明。Windows 发布版本提供 windows.exe 下载文件；不要臆造 windows-amd64.exe 文件名。
 
 </details>
 
@@ -36,7 +36,7 @@ D. linkerd install --dry-run
 
 **答案：B**
 
-check --pre 会检查 API 访问权限、Kubernetes 最低版本、Gateway API 前置条件以及安装权限/设置。它不能证明与之后发布的每个 Kubernetes 版本都兼容。请查阅确切的版本矩阵；如果选择了 CNI 安装路径，请使用了解 CNI 的标志。
+check --pre 会检查 API 访问权限、Kubernetes 最低版本、Gateway API 前置条件以及安装权限/设置。它不能证明与之后发布的每个 Kubernetes 版本都兼容。请查阅对应版本的兼容性矩阵；如果选择了 CNI 安装路径，请使用适用于 CNI 安装的参数。
 
 </details>
 
@@ -44,7 +44,7 @@ check --pre 会检查 API 访问权限、Kubernetes 最低版本、Gateway API �
 
 A. 一个 Envoy 镜像
 
-B. 公共信任锚和签发者证书/私钥，或受支持的已配置签发者密钥集成
+B. 公共信任锚和签发者证书/私钥，或已配置且受支持的签发者 Secret 集成
 
 C. 每个代理 Pod 中的根 CA 私钥
 
@@ -55,7 +55,7 @@ D. 一个 Prometheus 配置文件
 
 **答案：B**
 
-对于此路径，控制平面 Helm chart 不会生成工作负载身份 CA 材料。请提供公共信任锚和签发者签名凭据。将根私钥保存在 Kubernetes 之外。外部签发者密钥集成需要相应的 scheme/owner 配置。
+对于此路径，控制平面 Helm Chart 不会生成工作负载身份 CA 材料。请提供公共信任锚和签发者签名凭据。将根私钥保存在 Kubernetes 之外。外部签发者 Secret 集成需要配置相应的凭据方案（scheme）及管理方（owner）。
 
 </details>
 
@@ -93,7 +93,7 @@ D. HTTP 流量 tap
 
 **答案：C**
 
-Viz 提供指标/仪表板/tap 功能。金丝雀部署的推进需要单独的交付控制器和分析策略。当前的 Viz chart 提供指向外部 Grafana 的链接；grafana.enabled 不会部署或禁用随附的 Grafana。
+Viz 提供指标/仪表板/tap 功能。金丝雀部署的推进需要单独的交付控制器和分析策略。当前的 Viz Chart 提供指向外部 Grafana 的链接；grafana.enabled 不会部署或禁用随附的 Grafana。
 
 </details>
 
@@ -112,7 +112,7 @@ D. Gateway Load Balancer GENEVE 设备路径
 
 **答案：C**
 
-Linkerd 网关传输应使用 TCP 直通。NLB 选择内部型还是面向互联网型，取决于网络需求中的 scheme，而不是另一种负载均衡器产品。本指南中的内部 NLB 示例假设由 AWS Load Balancer Controller 管理，并且远程网络/探测路径可达。
+Linkerd 网关传输应使用 TCP 直通。NLB 的内部型或面向互联网型是根据网络需求选择的访问类型（scheme），并非不同的负载均衡器产品。本指南中的内部 NLB 示例假设由 AWS Load Balancer Controller 管理，并且远程网络/探测路径可达。
 
 </details>
 
@@ -131,7 +131,7 @@ D. 删除 CA，然后重新安装所有内容
 
 **答案：B**
 
-首先检查目标版本的兼容性/发行说明以及当前运行状况。保留信任凭据，通过各资源所有者进行更新，然后重新创建预期的应用程序 Pod，以接收新代理。CLI 扩展使用 install 渲染更新；viz upgrade 不是子命令。遵循受支持的版本偏差范围，并在删除资源前检查 prune 输出。
+首先检查目标版本的兼容性/发行说明以及当前运行状况。保留信任凭据，由各资源的管理方执行更新，然后重新创建需要更新代理的应用程序 Pod，使其使用新代理。CLI 扩展使用 install 渲染更新清单；viz upgrade 不是子命令。遵循受支持的版本偏差范围，并在删除资源前检查 prune 输出。
 
 </details>
 
@@ -150,7 +150,7 @@ D. 为每个现有应用程序 Pod 注入代理
 
 **答案：B**
 
-此命令会输出清单。实际安装由 kubectl apply 或所选的部署所有者执行。Gateway API 前置条件与默认的 Linkerd CRD 输出分开处理，之后再安装控制平面。
+此命令会输出清单。实际安装由 kubectl apply 或所选的部署管理方执行。Gateway API 前置条件与默认的 Linkerd CRD 输出分开处理，之后再安装控制平面。
 
 </details>
 
@@ -169,7 +169,7 @@ D. 忽略追踪标头，因为代理可以重建所有应用程序跨度
 
 **答案：B**
 
-此 CLI 没有 jaeger 子命令，公共 linkerd-jaeger chart 的历史版本也早于所选发行版。请使用当前的追踪数据路径，并验证接收器/导出器的兼容性。指标/拓扑图不等同于已收集的分布式追踪数据。
+此 CLI 没有 jaeger 子命令，公开发布的 linkerd-jaeger Chart 的历史版本也早于所选发行版。请使用当前的追踪数据路径，并验证接收器/导出器的兼容性。指标/拓扑图不等同于已收集的分布式追踪数据。
 
 </details>
 
@@ -188,7 +188,7 @@ D. 强制卸载以忽略仍已注入代理的工作负载
 
 **答案：B**
 
-通过工作负载所有者移除所有注入来源，重新创建并验证应用程序 Pod，然后通过各自的所有者移除已安装的扩展以及控制平面/CRD。删除 CRD 会移除其自定义资源。请单独检查 CNI 清理和命名空间所有权，并考虑网格安全性/路由功能丧失的影响。
+由工作负载管理方移除所有注入来源，重新创建并验证应用程序 Pod，然后由各自的管理方移除已安装的扩展以及控制平面/CRD。删除 CRD 会移除其自定义资源。请单独检查 CNI 清理和命名空间所有权，并考虑网格安全性/路由功能丧失的影响。
 
 </details>
 

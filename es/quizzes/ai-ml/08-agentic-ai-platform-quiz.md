@@ -1,4 +1,4 @@
-# Cuestionario de Plataforma de IA Agéntica en EKS
+# Cuestionario: plataforma de IA agéntica en EKS
 
 Veinte preguntas sobre las APIs actuales, los límites de ejecución y los límites de validación.
 
@@ -23,7 +23,7 @@ Un gateway/plugin compatible gestiona el enrutamiento, el acceso y los límites 
 <details>
 <summary>Respuesta y explicación</summary>
 
-La dimensión real del embedding, la revisión del modelo, la normalización, la métrica y el comportamiento de ingesta/consulta. Un campo de tenant por sí solo no es aislamiento; aplique un alcance de recuperación autenticado con filtros del lado del servidor.
+La dimensión real del embedding, la revisión del modelo, la normalización, la métrica y el comportamiento de ingesta/consulta. Un campo que identifica al tenant no proporciona aislamiento por sí solo; limite la recuperación según la identidad autenticada mediante filtros del lado del servidor.
 </details>
 
 ## 4. ¿Qué modelo de control proporciona LangGraph?
@@ -66,12 +66,12 @@ Distinga el aislamiento entre instancias MIG del uso compartido dentro de una so
 No. La planificación puede admitir trabajo en cada paso, pero los presupuestos de tokens, la capacidad de KV, la concurrencia y los límites de cola pueden provocar espera. Mida el comportamiento real de la carga de trabajo.
 </details>
 
-## 9. ¿Cuándo significa un tamaño de chunk de 1000 exactamente 1000 tokens?
+## 9. ¿Cuándo equivale el tamaño de un fragmento a exactamente 1000 tokens?
 
 <details>
 <summary>Respuesta y explicación</summary>
 
-Cuando el splitter seleccionado mide tokens con el tokenizador adecuado. RecursiveCharacterTextSplitter usa por defecto conteos de caracteres. Evalúe conjuntamente los límites del modelo, las unidades semánticas y la calidad de recuperación.
+Cuando el separador seleccionado mide tokens con el tokenizador adecuado. RecursiveCharacterTextSplitter cuenta caracteres de forma predeterminada. Evalúe conjuntamente los límites del modelo, las unidades semánticas y la calidad de recuperación.
 </details>
 
 ## 10. ¿Qué debe comprobarse para el autoscaling de vLLM?
@@ -79,7 +79,7 @@ Cuando el splitter seleccionado mide tokens con el tokenizador adecuado. Recursi
 <details>
 <summary>Respuesta y explicación</summary>
 
-Los nombres reales de las métricas vllm:, las etiquetas de modelo/Pod, los adaptadores, las señales de cola/latencia y un único responsable del escalado. La asignación no es la utilización de GPU; evite que HPA/KEDA compitan por el control de las mismas réplicas.
+Los nombres reales de las métricas vllm:, las etiquetas del modelo y del Pod, los adaptadores, las señales de cola/latencia y un único responsable del escalado. La asignación no es la utilización de GPU; evite que HPA/KEDA compitan por el control de las mismas réplicas.
 </details>
 
 ## 11. ¿Qué almacena la KV cache?
@@ -111,7 +111,7 @@ Necesita RRF o una fusión de puntuaciones calibrada, filtros de autorización e
 <details>
 <summary>Respuesta y explicación</summary>
 
-Use from_conn_string como gestor de contexto. :memory: no es duradero y un DSN de PostgreSQL no es SQLite. Leer el historial por sí solo no reproduce ni reanuda la ejecución, y thread_id no es autenticación.
+Utilice `from_conn_string` como gestor de contexto. `:memory:` no es duradero y un DSN de PostgreSQL no es SQLite. Leer el historial por sí solo no reproduce ni reanuda la ejecución, y thread_id no es autenticación.
 </details>
 
 ## 15. ¿Qué particionan TP y PP?
@@ -127,7 +127,7 @@ TP particiona las operaciones dentro de las capas; PP particiona las etapas de c
 <details>
 <summary>Respuesta y explicación</summary>
 
-Use la imagen/modelo fijados, el ejemplo de GPU/cache/startupProbe y ClusterIP de la [guía de vLLM](../../ai-ml/02-vllm-deployment.md). Prepare el namespace, los drivers y los dispositivos. Las comprobaciones de esquema sin inferencia no establecen rendimiento ni disponibilidad.
+Siga el ejemplo de la [guía de vLLM](../../ai-ml/02-vllm-deployment.md), con las versiones fijadas de la imagen y el modelo, la configuración de GPU y caché, `startupProbe` y el servicio ClusterIP. Prepare el namespace, los drivers y los dispositivos. Las comprobaciones de esquema sin inferencia no establecen rendimiento ni disponibilidad.
 </details>
 
 ## 17. Ejercicio: ¿qué deben validar el despliegue de Langfuse y el tracing en Python?
@@ -143,7 +143,7 @@ Use el ejemplo del SDK actual del [capítulo](../../ai-ml/03-agentic-ai-platform
 <details>
 <summary>Respuesta y explicación</summary>
 
-Mantenga la pregunta original separada de search_query, establezca límites de reintentos y de recursión, genere con evidencia, reescriba dentro del presupuesto y luego absténgase cuando no se encuentre ninguna. El capítulo verifica estas rutas y la reapertura de SQLite usando callbacks deterministas locales.
+Mantenga la pregunta original separada de search_query, establezca límites de reintentos y de recursión, genere con evidencia, reescriba dentro del presupuesto y, si no se encuentra evidencia, absténgase. El capítulo verifica estas rutas y la reapertura de SQLite usando callbacks deterministas locales.
 </details>
 
 ## 19. Avanzado: ¿qué límites importan en un agente de consultoría financiera?
@@ -151,7 +151,7 @@ Mantenga la pregunta original separada de search_query, establezca límites de r
 <details>
 <summary>Respuesta y explicación</summary>
 
-Diseñe un alcance autenticado de tenant/cuenta, permisos de recuperación, egress hacia el proveedor, herramientas con privilegios mínimos/idempotentes/aprobadas, registro mínimo de datos sensibles, auditoría y traspaso a una persona. No sobrescriba un requires_human=true existente con false en una rama posterior. El nombre de una función compliance_check o una decisión del LLM no certifica el cumplimiento normativo.
+Diseñe un alcance autenticado de tenant/cuenta, permisos de recuperación, salida de red hacia el proveedor, herramientas con privilegios mínimos/idempotentes/aprobadas, registro mínimo de datos sensibles, auditoría y traspaso a una persona. No sobrescriba un requires_human=true existente con false en una rama posterior. El nombre de una función compliance_check o una decisión del LLM no certifica el cumplimiento normativo.
 </details>
 
 ## 20. Avanzado: ¿cómo deben validarse el enrutamiento multimodelo, las pruebas A/B y la optimización de costes?
@@ -159,7 +159,7 @@ Diseñe un alcance autenticado de tenant/cuenta, permisos de recuperación, egre
 <details>
 <summary>Respuesta y explicación</summary>
 
-Use adaptadores/credenciales de proveedor y rechace cuando ningún candidato cumpla las restricciones de proveedor permitido, presupuesto y calidad. Implemente una asignación A/B estable, consumidores de enrutamiento reales y guardrails medidos. Las claves de caché incluyen las revisiones de tenant/autorización/modelo/recuperación; las estimaciones de coste incluyen las llamadas de enrutamiento, los reintentos, las cachés y los costes fijos de GPU. Los porcentajes de ahorro inventados no son resultados.
+Use adaptadores/credenciales de proveedor y rechace cuando ningún candidato cumpla las restricciones de proveedor permitido, presupuesto y calidad. Implemente una asignación A/B estable, consumidores de enrutamiento reales y controles de protección medidos. Las claves de caché incluyen las revisiones de tenant/autorización/modelo/recuperación; las estimaciones de coste incluyen las llamadas de enrutamiento, los reintentos, las cachés y los costes fijos de GPU. Los porcentajes de ahorro inventados no son resultados.
 </details>
 
 [Volver al capítulo](../../ai-ml/03-agentic-ai-platform.md)

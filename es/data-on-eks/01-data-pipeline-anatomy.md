@@ -1,12 +1,12 @@
 # Anatomía de una canalización de datos moderna: cinco roles
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: 12 de septiembre de 2026
 
 ::: tip Dónde encaja este documento
 Comprende los roles de Kafka, Spark, Airflow y Flink, así como los contratos entre los componentes de la canalización.
 :::
 
-Las fuentes, la ingesta, el almacenamiento, el procesamiento y el consumo son **roles conceptuales**. Los productos no tienen por qué desempeñar exactamente un solo rol, y no todas las canalizaciones tienen que almacenar los datos antes de procesarlos. Los flujos pueden procesarse antes de almacenarse; las transformaciones pueden ejecutarse dentro de un almacén de datos. Define primero los contratos de esquema, actualidad, retención, reproducción y duplicación de resultados.
+Las fuentes, la ingesta, el almacenamiento, el procesamiento y el consumo son **roles conceptuales**. Los productos no tienen por qué desempeñar exactamente un solo rol, y no todas las canalizaciones tienen que almacenar los datos antes de procesarlos. Los flujos pueden procesarse antes de almacenarse; las transformaciones pueden ejecutarse dentro de un almacén de datos. Define primero los contratos de esquema, frescura de los datos, retención, reproducción y duplicación de resultados.
 
 ![Las rutas de ejemplo conservan los datos ingeridos en un lago o procesan flujos directamente; las transformaciones de Spark y del almacén de datos alimentan la inteligencia empresarial, mientras que Flink alimenta el aprendizaje automático y las API](../.gitbook/assets/en-data-on-eks-01-data-pipeline-anatomy-0.png)
 
@@ -60,7 +60,7 @@ La inteligencia empresarial, los informes, los almacenes de características de 
 ## Operaciones transversales
 
 - **Orquestación**: Herramientas como Airflow gestionan dependencias, cronogramas y reintentos para trabajos orientados a lotes. No son motores que procesen cada evento de flujo, y tener dos canalizaciones no implica automáticamente que se necesite Airflow.
-- **Contratos de esquema**: La compatibilidad del registro se aplica en las rutas de registro, serialización o CI donde se realizan las comprobaciones. No bloquea automáticamente todos los cambios de DDL en las bases de datos de origen ni los cambios semánticos del negocio. Vincula la [política de compatibilidad](./kafka/04-schema-registry.md) con pruebas reales de consumidores.
+- **Contratos de esquema**: La compatibilidad de Schema Registry se aplica en las rutas de registro, serialización o CI donde se realizan las comprobaciones. No bloquea automáticamente todos los cambios de DDL en las bases de datos de origen ni los cambios semánticos del negocio. Vincula la [política de compatibilidad](./kafka/04-schema-registry.md) con pruebas reales de consumidores.
 - **Observabilidad**: Inspecciona el linaje, la actualidad, los datos faltantes/duplicados, las métricas de calidad y el historial de recuperación.
 
 ## Desde la perspectiva de EKS

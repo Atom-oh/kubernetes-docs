@@ -8,7 +8,7 @@ Este cuestionario evalúa tu comprensión de la estructura de SPIFFE/SPIRE, el p
    - A) El formato URI no puede expresar direcciones IP
    - B) La identidad debe seguir siendo la misma sin importar dónde se planifique la carga de trabajo ni cómo cambie su IP
    - C) La información de red se transporta por separado en el SVID
-   - D) Exponer IP supone un riesgo de seguridad
+   - D) Exponer direcciones IP supone un riesgo de seguridad
 
 <details>
 
@@ -22,7 +22,7 @@ Un SPIFFE ID tiene el formato `spiffe://<trust-domain>/<workload-path>`, donde l
 
 2. En la atestación de cargas de trabajo de SPIRE, ¿en qué momento se resuelve de manera decisiva el problema de inicialización de confianza?
    - A) Cuando la carga de trabajo presenta un token preinstalado
-   - B) El agente usa información de pares proporcionada por el kernel bajo un modelo de kernel/atestador de confianza y contrasta los selectores de la carga de trabajo
+   - B) El agente utiliza información del proceso cliente proporcionada por el kernel, dentro de un modelo que confía en el kernel y en el atestador, y la contrasta con los selectores de la carga de trabajo
    - C) Cuando el servidor firma el SVID
    - D) Cuando Envoy recibe el certificado mediante SDS
 
@@ -30,7 +30,7 @@ Un SPIFFE ID tiene el formato `spiffe://<trust-domain>/<workload-path>`, donde l
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El agente usa información de pares proporcionada por el kernel bajo un modelo de kernel/atestador de confianza y contrasta los selectores de la carga de trabajo**
+**Respuesta: B) El agente utiliza información del proceso cliente proporcionada por el kernel, dentro de un modelo que confía en el kernel y en el atestador, y la contrasta con los selectores de la carga de trabajo**
 
 **Explicación:**
 Esto evita pedirle a la carga de trabajo que inicie la confianza con un secreto compartido de aplicación preestablecido. No es una garantía incondicional contra la vulneración del host, selectores deficientes o una configuración incorrecta del atestador.
@@ -49,7 +49,7 @@ Esto evita pedirle a la carga de trabajo que inicie la confianza con un secreto 
 **Respuesta: B) Los tiempos de vida cortos limitan el tiempo de utilidad de las credenciales, pero no reemplazan la respuesta a vulneraciones ni los controles de autorización**
 
 **Explicación:**
-Revisa la renovación, el almacenamiento en runtime, la exposición a repetición y el comportamiento de denegación/revocación de emergencia. Las credenciales que vencen siguen conteniendo secretos y no son seguras automáticamente hasta su vencimiento.
+Revisa la renovación, el almacenamiento en runtime, la exposición a ataques de repetición y el comportamiento de denegación o revocación de emergencia. Las credenciales que vencen siguen conteniendo secretos y no son seguras automáticamente hasta su vencimiento.
 </details>
 
 4. ¿Cuáles son las dos similitudes estructurales entre SPIFFE/SPIRE y IAM Auth de Lattice?
